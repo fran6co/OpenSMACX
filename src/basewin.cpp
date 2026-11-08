@@ -42,6 +42,7 @@
 #include "basewin.h"
 #include "win.h"
 #include "subinterface.h"
+#include "rectangle_operations.h"
 // Homed BaseWin bodies call the free helpers the archive binds by address:
 // set_base/best_specialist (base.h), parse_says (general.h), radius_move
 // (map.h), do_all_draws (temp.h), text_open (text.h), and construct the
@@ -963,8 +964,8 @@ void BaseWin::draw_support() {
     const RECT area = rect1_;
     mapWin_.init(2, 0);
     mapWin_.field_1DD6C_ >>= 1;
-    const int height = mapWin_.pixel_height();
     const int width = mapWin_.pixel_width();
+    const int height = mapWin_.pixel_height();
     mapWin_.field_1DD70_ = 0x200402;
     int zoom;
     for (zoom = 2; zoom > -15; --zoom) {
@@ -1329,12 +1330,7 @@ void BaseWin::on_mouse_move(int x, int y) {
     MainInterfaceGlobal.set_cursor(sprite, 7, 9);
 }
 
-void BaseWin::show_panel_help(int x, int y, int label_offset, Win *window) {
-    char *text = label_get(label_offset / 4);
-    window->client_to_screen(&x, &y);
-    RECT point = {x, y, x, y};
-    window->set_bubble_text(text, &point);
-}
+void __stdcall bubble_me_elmo2(char *text, int x, int y);
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004160F0 0x00416514 0x00416534 0x0041649B
 // ORIGINAL: 0x004160F0 ?iface_click@BaseWin@@QAEXHHHH@Z 0x004160F0-0x00416512
@@ -1354,20 +1350,23 @@ void BaseWin::iface_click(int x, int y, int right, int is_double) {
     if (!is_visible() || (IsMultiplayerNet && NetDaemonNet.primary_state_.leading_words_[2])) return;
     int position, type;
     if (spot1_.check(x, y, &position, &type) < 0) {
-        if (right && in_box(x, y, &population_rect_)) {
-            show_panel_help(x, y, 0xCA4, &MainInterfaceGlobal);
-            return;
+        // Panel help only answers a right click (0x4161A3).
+        if (right) {
+            if (in_box(x, y, &population_rect_)) {
+                ::bubble_me_elmo2(StringTable.get(Labels.strings_ptr[0xCA4 / 4]), x, y);
+                return;
+            }
+            if (in_box(x, y, &interface_help_rect_)) {
+                ::bubble_me_elmo2(StringTable.get(Labels.strings_ptr[0xC9C / 4]), x, y);
+                return;
+            }
+            if (in_box(x, y, &garrison_rect_)) {
+                ::bubble_me_elmo2(StringTable.get(Labels.strings_ptr[0xCA0 / 4]), x, y);
+                return;
+            }
+            if (in_box(x, y, &queue_help_rect_))
+                ::bubble_me_elmo2(StringTable.get(Labels.strings_ptr[0xCD0 / 4]), x, y);
         }
-        if (in_box(x, y, &interface_help_rect_)) {
-            show_panel_help(x, y, 0xC9C, &MainInterfaceGlobal);
-            return;
-        }
-        if (in_box(x, y, &garrison_rect_)) {
-            show_panel_help(x, y, 0xCA0, &MainInterfaceGlobal);
-            return;
-        }
-        if (in_box(x, y, &queue_help_rect_))
-            show_panel_help(x, y, 0xCD0, &MainInterfaceGlobal);
         if (!in_box(x, y, &population_rect_)) return;
         type = 1;
     }
@@ -1378,15 +1377,19 @@ void BaseWin::iface_click(int x, int y, int right, int is_double) {
         && !(PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 1)
         && type != 6) return;
     if (is_double) return;
-    if (field_40B4C_ == 0 && type == 1) position = -1;
-    // Original416514's eight entries are indexed by type-1; the retained
-    // seed's ordinal switch incorrectly assigned queue and garrison types.
+    if (field_40B4C_ == 0 && type == 1) {
+        // The image stores type 1 back (0x416484) before clearing position.
+        type = 1;
+        position = -1;
+    }
+    // Original416514's eight entries are indexed by type-1; the image lays
+    // the arms out as 1, 8, 7, 6, 5.
     switch (type) {
     case 1: pop_click(position, x, y, right); return;
-    case 5: production(0, 0); break;
-    case 6:
-    case 7: garrison_click(position, x, y, right); return;
     case 8: queue_click(position, x, y, right); return;
+    case 7: garrison_click(position, x, y, right); return;
+    case 6: garrison_click(position, x, y, right); return;
+    case 5: production(0, 0); break;
     }
 }
 
@@ -1408,62 +1411,62 @@ void BaseWin::click(int x, int y, int right, int is_double) {
     if (right) {
         if (in_box(x, y, &rect1_)) {
             if (field_40AFC_ == 0) {
-                show_panel_help(x, y, 0xC98, this);
+                bubble_me_elmo2(StringTable.get(Labels.strings_ptr[0xC98 / 4]), x, y);
                 return;
             }
             if (field_40AFC_ == 2) {
-                show_panel_help(x, y, 0xC20, this);
+                bubble_me_elmo2(StringTable.get(Labels.strings_ptr[0xC20 / 4]), x, y);
                 return;
             }
             if (field_40AFC_ == 1) {
-                show_panel_help(x, y, 0xC24, this);
+                bubble_me_elmo2(StringTable.get(Labels.strings_ptr[0xC24 / 4]), x, y);
             }
             return;
         }
         if (in_box(x, y, &commerce_outer_rect_)) {
             if (Players[Bases[focusedBaseID_].faction_id_current].rule_flags & 0x80) {
-                show_panel_help(x, y, 0x1190, this);
+                bubble_me_elmo2(StringTable.get(Labels.strings_ptr[0x1190 / 4]), x, y);
                 return;
             }
-            show_panel_help(x, y, 0xC74, this);
+            bubble_me_elmo2(StringTable.get(Labels.strings_ptr[0xC74 / 4]), x, y);
             return;
         }
         if (in_box(x, y, &facilities_help_rect_)) {
-            show_panel_help(x, y, 0xC78, this);
+            bubble_me_elmo2(StringTable.get(Labels.strings_ptr[0xC78 / 4]), x, y);
             return;
         }
         if (in_box(x, y, &nutrient_outer_rect_)) {
-            show_panel_help(x, y, 0xC7C, this);
+            bubble_me_elmo2(StringTable.get(Labels.strings_ptr[0xC7C / 4]), x, y);
             return;
         }
         if (in_box(x, y, &expenses_help_rects_[0])
             && (WinScreenWidth == 0x400 || !flatButtons_[17].selected_state())) {
-            show_panel_help(x, y, 0xC80, this);
+            bubble_me_elmo2(StringTable.get(Labels.strings_ptr[0xC80 / 4]), x, y);
             return;
         }
         if (in_box(x, y, &expenses_help_rects_[2])
             && (WinScreenWidth == 0x400 || !flatButtons_[17].selected_state())) {
-            show_panel_help(x, y, 0xC84, this);
+            bubble_me_elmo2(StringTable.get(Labels.strings_ptr[0xC84 / 4]), x, y);
             return;
         }
         if (in_box(x, y, &expenses_help_rects_[1])
             && (WinScreenWidth == 0x400 || !flatButtons_[17].selected_state())) {
-            show_panel_help(x, y, 0xC88, this);
+            bubble_me_elmo2(StringTable.get(Labels.strings_ptr[0xC88 / 4]), x, y);
             return;
         }
         if (in_box(x, y, &expenses_help_rects_[3])
             && (WinScreenWidth == 0x400 || flatButtons_[17].selected_state())) {
-            show_panel_help(x, y, 0xC8C, this);
+            bubble_me_elmo2(StringTable.get(Labels.strings_ptr[0xC8C / 4]), x, y);
             return;
         }
         if (in_box(x, y, &expenses_help_rects_[4])
             && (WinScreenWidth == 0x400 || flatButtons_[17].selected_state())) {
-            show_panel_help(x, y, 0xC90, this);
+            bubble_me_elmo2(StringTable.get(Labels.strings_ptr[0xC90 / 4]), x, y);
             return;
         }
         if (in_box(x, y, &expenses_help_rects_[5])
             && (WinScreenWidth == 0x400 || flatButtons_[17].selected_state())) {
-            show_panel_help(x, y, 0xC94, this);
+            bubble_me_elmo2(StringTable.get(Labels.strings_ptr[0xC94 / 4]), x, y);
             return;
         }
     }
@@ -2418,116 +2421,138 @@ void BaseWin::next() {
 void BaseWin::draw_queue(int update_mode) {
     Font row_font;
     Font compact_font;
-    Buffer *canvas = static_cast<Buffer *>(&MainInterfaceGlobal);
-    if (update_mode != 0 && !is_visible()) return;
+    // The image wraps the whole panel in this test (0x4150C7 jumps to the
+    // Font teardown) rather than returning early.
+    if (update_mode == 0 || is_visible()) {
+        // One RECT local is the outer clip and later each row (EBP-2C).
+        RECT row = queue_outer_rect_;
+        RECT saved_clip = MainInterfaceGlobal.current_clip();
+        MainInterfaceGlobal.set_clip(&row);
+        MainInterfaceGlobal.box_sprite(&queue_outer_rect_, &InterfaceBoxStyles[3]);
 
-    RECT saved_clip = canvas->current_clip();
-    RECT outer = queue_outer_rect_;
-    canvas->set_clip(&outer);
-    canvas->box_sprite(&queue_outer_rect_, &InterfaceBoxStyles[3]);
-
-    const bool low_resolution = WinScreenWidth == 0x320;
-    row_font.init(DefaultFontFace, low_resolution ? 10 : 12, 0);
-    row_font.unk_1_ = 4;
-    compact_font.init(DefaultFontFace, low_resolution ? 8 : 10, 0);
-    compact_font.unk_1_ = 4;
-    spot1_.kill_type(8);
-
-    RECT title = queue_title_rect_;
-    canvas->box_sprite(&title, &InterfaceBoxStyles[6]);
-    title.left += 3;
-    title.top += 3;
-    title.right -= 3;
-    title.bottom -= 3;
-    canvas->set_font(&font1_, nullptr, nullptr, nullptr);
-    canvas->set_text_color(TextColourTable[82], TextColourTable[83], 1, 1);
-    StringTemp[0] = 0;
-    strcat(StringTemp, label_get(479));
-    CharUpperA(StringTemp);
-    canvas->write_cent_l(StringTemp, &title, strlen(StringTemp));
-
-    canvas->set_font(&row_font, nullptr, nullptr, nullptr);
-    RECT content = queue_content_rect_;
-    canvas->box_sprite(&content, &InterfaceBoxStyles[0]);
-    const int margin = low_resolution ? 5 : 2;
-    content.left += margin;
-    content.top += margin;
-    content.right -= margin;
-    content.bottom -= margin;
-
-    int row_top = content.top;
-    for (int queue_index = 1; queue_index <= 8; ++queue_index) {
-        canvas->set_font(&row_font, nullptr, nullptr, nullptr);
-        const int row_height = row_font.line_advance();
-        RECT row = {content.left, row_top, content.right, row_top + row_height};
-        spot1_.add(queue_index + 2, 8, row.left, row.top,
-                   row.right - row.left, row_height);
-
-        const bool selected = selected_queue_slot_ == queue_index
-            || field_40B30_ == static_cast<uint32_t>(queue_index);
-        if (selected) {
-            Buffer *pattern = selected_queue_slot_ == queue_index
-                ? InterfaceBoxStyles[29].mask_ : InterfaceBoxStyles[27].mask_;
-            canvas->tile(pattern, row.left, row.top, row.left, row.top,
-                         row.right - row.left, row.bottom - row.top);
+        if (WinScreenWidth == 0x320) {
+            row_font.init(DefaultFontFace, 10, 0);
+            row_font.unk_1_ = 4;
+            compact_font.init(DefaultFontFace, 8, 0);
+        } else {
+            row_font.init(DefaultFontFace, 12, 0);
+            row_font.unk_1_ = 4;
+            compact_font.init(DefaultFontFace, 10, 0);
         }
+        compact_font.unk_1_ = 4;
+        spot1_.kill_type(8);
 
+        // One RECT local serves the title and then the content panel (EBP-1C).
+        RECT content = queue_title_rect_;
+        MainInterfaceGlobal.box_sprite(&content, &InterfaceBoxStyles[6]);
+        content.left += 3;
+        content.right -= 3;
+        content.top += 3;
+        content.bottom -= 3;
+        MainInterfaceGlobal.set_font(&font1_, nullptr, nullptr, nullptr);
+        MainInterfaceGlobal.set_text_color(TextColourTable[82], TextColourTable[83], 1, 1);
         StringTemp[0] = 0;
-        char number[64];
-        _itoa(queue_index, number, 10);
-        strcat(StringTemp, number);
-        strcat(StringTemp, ". ");
+        strcat(StringTemp, label_get(479));
+        CharUpperA(StringTemp);
+        MainInterfaceGlobal.write_cent_l(StringTemp, &content);
 
-        char item_name[256];
-        item_name[0] = 0;
-        if (queue_index > static_cast<int>(BaseCurrent->queue_size)) {
-            canvas->set_text_color(TextColourTable[138], TextColourTable[139], 1, 1);
-            strcat(item_name, label_get(460));
+        MainInterfaceGlobal.set_font(&row_font, nullptr, nullptr, nullptr);
+        content = queue_content_rect_;
+        MainInterfaceGlobal.box_sprite(&content, &InterfaceBoxStyles[0]);
+        // The sides always move in by 5; only the vertical margin depends on
+        // the 800-pixel layout (0x4152E8..0x41530B).
+        if (WinScreenWidth == 0x320) {
+            content.left += 5;
+            content.right -= 5;
+            content.top += 5;
+            content.bottom -= 5;
         } else {
-            canvas->set_text_color(TextColourTable[136], TextColourTable[137], 1, 1);
-            const int production = BaseCurrent->queue_production_id[queue_index];
-            if (production >= 0) {
-                strcat(item_name, VehPrototypes[production].veh_name);
+            content.left += 5;
+            content.right -= 5;
+            content.top += 2;
+            content.bottom -= 2;
+        }
+
+        int row_top = content.top;
+        row = content;
+        MainInterfaceGlobal.set_font(&row_font, nullptr, nullptr, nullptr);
+        for (int queue_index = 1; queue_index <= 8; ++queue_index) {
+            MainInterfaceGlobal.set_font(&row_font, nullptr, nullptr, nullptr);
+            set_rectangle_dimensions(&row, content.left, row_top, content.right - content.left,
+                                     font_line_advance(row_font));
+            spot1_.add(queue_index + 2, 8, row.left, row.top,
+                       row.right - row.left, row.bottom - row.top);
+
+            if (selected_queue_slot_ == queue_index) {
+                MainInterfaceGlobal.tile(InterfaceBoxStyles[29].mask_, row.left, row.top, row.left, row.top,
+                             row.right - row.left, row.bottom - row.top);
+            } else if (field_40B30_ == static_cast<uint32_t>(queue_index)) {
+                MainInterfaceGlobal.tile(InterfaceBoxStyles[27].mask_, row.left, row.top, row.left, row.top,
+                             row.right - row.left, row.bottom - row.top);
+            }
+
+            StringTemp[0] = 0;
+            char number[80];
+            _itoa(queue_index, number, 10);
+            strcat(StringTemp, number);
+            strcat(StringTemp, ". ");
+
+            RECT text_rect = row;
+            char item_name[256];
+            item_name[0] = 0;
+            if (queue_index > static_cast<int>(BaseCurrent->queue_size)) {
+                MainInterfaceGlobal.set_text_color(TextColourTable[138], TextColourTable[139], 1, 1);
+                strcat(item_name, StringTable.get(Labels.strings_ptr[460]));
             } else {
-                // Facility.name is already an LPSTR; resolve it through the
-                // shared Strings API as the other facility-name callers do.
-                strcat(item_name, StringTable.get(
-                    Facility[-production].name));
+                MainInterfaceGlobal.set_text_color(TextColourTable[136], TextColourTable[137], 1, 1);
+                const int production = BaseCurrent->queue_production_id[queue_index];
+                if (production >= 0) {
+                    strcat(item_name, VehPrototypes[production].veh_name);
+                } else {
+                    // Facility.name is already an LPSTR; resolve it through the
+                    // shared Strings API as the other facility-name callers do.
+                    const int facility = -production;
+                    strcat(item_name, StringTable.get(Facility[facility].name));
+                }
             }
-        }
-        if (selected) canvas->set_text_color(0x41, -1, 1, 1);
-        const char *display_name = item_name;
-        if (Language == 0 && strncmp(item_name, "The ", 4) == 0) {
-            display_name += 4;
-        }
-        strcat(StringTemp, display_name);
+            if (selected_queue_slot_ == queue_index
+                || field_40B30_ == static_cast<uint32_t>(queue_index)) {
+                MainInterfaceGlobal.set_text_color(0x41, -1, 1, 1);
+            }
+            char *display_name = item_name;
+            if (Language == 0 && strncmp(item_name, "The ", 4) == 0) {
+                display_name = item_name + 4;
+            }
+            strcat(StringTemp, display_name);
 
-        RECT text_rect = row;
-        if (row_font.width(StringTemp) <= text_rect.right - text_rect.left) {
-            canvas->set_clip(&text_rect);
-            canvas->write_l(StringTemp, &text_rect, strlen(StringTemp));
-            canvas->restore_clip();
-        } else {
-            canvas->set_font(&compact_font, nullptr, nullptr, nullptr);
-            const bool truncated = compact_font.width(StringTemp)
-                > text_rect.right - text_rect.left;
-            if (truncated) text_rect.right -= compact_font.width("+");
-            canvas->set_clip(&text_rect);
-            if (StringTemp[0] != 0) {
-                canvas->write_l(StringTemp, &text_rect, strlen(StringTemp));
+            if (row_font.width(StringTemp) <= text_rect.right - text_rect.left) {
+                MainInterfaceGlobal.set_clip(&text_rect);
+                MainInterfaceGlobal.write_l(StringTemp, &text_rect);
+                MainInterfaceGlobal.restore_clip();
+            } else {
+                MainInterfaceGlobal.set_font(&compact_font, nullptr, nullptr, nullptr);
+                int truncated;
+                if (compact_font.width(StringTemp) > text_rect.right - text_rect.left) {
+                    text_rect.right -= compact_font.width("+");
+                    truncated = 1;
+                } else {
+                    truncated = 0;
+                }
+                MainInterfaceGlobal.set_clip(&text_rect);
+                MainInterfaceGlobal.write_l(StringTemp, &text_rect);
+                MainInterfaceGlobal.restore_clip();
+                if (truncated) {
+                    text_rect.left = text_rect.right;
+                    MainInterfaceGlobal.write_l("+", &text_rect);
+                }
             }
-            canvas->restore_clip();
-            if (truncated) {
-                text_rect.left = text_rect.right;
-                canvas->write_l("+", &text_rect, 1);
-            }
+            row_top += font_line_advance(row_font);
         }
-        row_top += row_font.line_advance();
+
+        if (update_mode != 0) MainInterfaceGlobal.update(&queue_content_rect_, nullptr);
+        else MainInterfaceGlobal.soft_update(&queue_content_rect_);
+        MainInterfaceGlobal.set_clip(&saved_clip);
     }
-
-    if (update_mode != 0) MainInterfaceGlobal.update(&queue_content_rect_, nullptr);
-    else MainInterfaceGlobal.soft_update(&queue_content_rect_);
-    canvas->set_clip(&saved_clip);
 }
 
 // ORIGINAL: 0x0040E360 ?draw_production@BaseWin@@QAEXH@Z 0x0040E360-0x0040F0E5;0x00651ACD-0x00651AF8 FILE
@@ -4087,37 +4112,24 @@ void BaseWin::draw_energy_alloc(int a1) {
 // climbs prev_veh_id_stack and then walks next_veh_id_stack.
 void BaseWin::draw_garrison(int update_mode) {
     Font font;
-    int stack_count = 0;
 
-    RECT *const rect = &garrison_rect_;
-    RECT clip_rect = *rect;
+    RECT clip_rect = garrison_rect_;
     RECT saved_clip = MainInterfaceGlobal.current_clip();
     MainInterfaceGlobal.set_clip(&clip_rect);
 
     font.init(DefaultFontFace, 0xc, 0);
 
-    // The row pitch every garrison line uses: `height_ + unk_1_` when the
-    // font's own ascent adjustment is not negative, `line_height_` when it is.
-    const int metric_adjustment = font.unk_1_;
-    int line_height;
-    if (metric_adjustment >= 0) {
-        const int font_height = font.pixel_height();
-        line_height = static_cast<int32_t>(
-            static_cast<uint32_t>(font_height) +
-            static_cast<uint32_t>(metric_adjustment));
-    } else {
-        line_height = font.line_height();
-    }
+    const int line_height = font_line_advance(font);
 
-    RECT frame_rect = *rect;
+    RECT frame_rect = garrison_rect_;
     MainInterfaceGlobal.tile(InterfaceBoxStyles[9].mask_, frame_rect.left, frame_rect.top,
                  frame_rect.left, frame_rect.top, frame_rect.right - frame_rect.left,
                  frame_rect.bottom - frame_rect.top);
     MainInterfaceGlobal.box_sprite(&frame_rect, &InterfaceBoxStyles[3]);
 
     frame_rect.left += 3;
-    frame_rect.top += 3;
     frame_rect.right -= 3;
+    frame_rect.top += 3;
     frame_rect.bottom -= 3;
 
     // Type 6 is the garrison's own highlight spot; the panel clears it before
@@ -4138,6 +4150,7 @@ void BaseWin::draw_garrison(int update_mode) {
     int vehicle = initial_vehicle;
     int capacity;
     if (vehicle >= 0) {
+        int stack_count = 0;
         while (Vehs[vehicle].prev_veh_id_stack >= 0) {
             vehicle = Vehs[vehicle].prev_veh_id_stack;
         }
@@ -4439,14 +4452,13 @@ void BaseWin::bubble_me_elmo2(char *text, int x, int y) {
 // that lands it, so it lives beside the class rather than on it.
 */
 void __stdcall bubble_me_elmo2(char *text, int x, int y) {
-    Win *win = &MainInterfaceGlobal;
-    win->client_to_screen(&x, &y);
+    MainInterfaceGlobal.client_to_screen(&x, &y);
     RECT rect;
     rect.left = x;
     rect.top = y;
     rect.right = x;
     rect.bottom = y;
-    win->set_bubble_text(text, &rect);
+    MainInterfaceGlobal.Win::set_bubble_text(text, &rect);
 }
 
 // Fixed-slot bindings carried from 0041de60.cpp
@@ -4531,49 +4543,32 @@ void BaseWin::on_button_clicked(int button_id) {
     TutorialWindow.reset();
     if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] != 3) return;
     ok_callback();
-    if (button_id == 1009 || button_id == 1010) {
-        int vehicle = veh_at(BaseCurrent->x, BaseCurrent->y);
-        if (vehicle < 0) return;
-        if (button_id == 1009) {
-            // Original41D9FE/41DA15 follows nonnegative links. The retained
-            // seed had reversed this condition, indexing a negative id.
-            while (Vehs[vehicle].next_veh_id_stack >= 0)
-                vehicle = Vehs[vehicle].next_veh_id_stack;
-            veh_promote(vehicle);
-        } else veh_demote(vehicle);
-        redraw();
-        return;
-    }
-    const unsigned selection = static_cast<unsigned>(button_id) + 2u;
-    if (selection > 23) return;
-    // Original's 24-entry table at41DA6C is not the ordinal switch the
-    // retained seed printed. Two close entries and two governor entries
-    // share their bodies; the no-op entries are deliberately unhandled.
-    switch (selection) {
-    case 22:
+    // One switch: VC6 splits it into the -2..21 table at 0x41DA6C and the
+    // two vehicle-stack compares for 1009/1010.
+    switch (button_id) {
+    case 20:
         selected_queue_slot_ = BaseCurrent->queue_size + 1;
         if (selected_queue_slot_ >= 10) selected_queue_slot_ = 9;
         draw_queue(1);
         if (!prodPicker_.is_visible()) production(selected_queue_slot_, 0);
         return;
-    case 0:
-    case 2: {
+    case -2:
+    case 0: {
         const int visible = TutWinBaseWindow.is_visible();
         zoom_wait_pending_ = 0;
         time_.stop();
         if (TutWinBaseWindow.is_visible()) TutWinBaseWindow.release_iface_mode();
         do_all_draws();
-        if (visible && ConsoleGlobal.cursor_active_ && ConsoleGlobal.selected_vehicle_ >= 0
-            && !ConsoleGlobal.tile_in_view(Vehs[ConsoleGlobal.selected_vehicle_].x,
-                Vehs[ConsoleGlobal.selected_vehicle_].y, 2)) ConsoleGlobal.center();
+        if (!visible || !ConsoleGlobal.cursor_active_ || ConsoleGlobal.selected_vehicle_ < 0) return;
+        if (ConsoleGlobal.tile_in_view(Vehs[ConsoleGlobal.selected_vehicle_].x,
+                Vehs[ConsoleGlobal.selected_vehicle_].y, 2)) return;
+        ConsoleGlobal.center();
         return;
     }
-    case 3: rename(); return;
-    case 4: prev(); return;
-    case 5: next(); return;
-    case 14: production(0, 0); return;
-    case 15: hurry(); return;
-    case 10:
+    case 1: rename(); return;
+    case 12: production(0, 0); return;
+    case 13: hurry(); return;
+    case 8:
         if (BaseCurrent->faction_id_current != ConsoleGlobal.faction_id_
             && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) return;
         if (BaseCurrent->governor & 0x80000000u) {
@@ -4582,47 +4577,87 @@ void BaseWin::on_button_clicked(int button_id) {
             MainInterfaceGlobal.redraw();
         } else gov_on(0);
         return;
-    case 20:
-    case 21:
+    case 18:
+    case 19:
         if (BaseCurrent->faction_id_current == ConsoleGlobal.faction_id_
             || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) governor(0);
         return;
-    case 6:
-    case 7:
-    case 8:
-    case 9:
+    case 4:
         if (BaseCurrent->faction_id_current == ConsoleGlobal.faction_id_
-            || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW))
-            gov_on(1 << (24 + selection - 6));
+            || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) gov_on(0x1000000);
         return;
-    case 11:
-    case 12:
-    case 13: {
-        const int mode = selection == 11 ? 2 : (selection == 12 ? 0 : 1);
-        if (static_cast<int>(field_40AFC_) != mode) {
-            field_40AFC_ = mode;
+    case 5:
+        if (BaseCurrent->faction_id_current == ConsoleGlobal.faction_id_
+            || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) gov_on(0x2000000);
+        return;
+    case 6:
+        if (BaseCurrent->faction_id_current == ConsoleGlobal.faction_id_
+            || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) gov_on(0x4000000);
+        return;
+    case 7:
+        if (BaseCurrent->faction_id_current == ConsoleGlobal.faction_id_
+            || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) gov_on(0x8000000);
+        return;
+    case 10:
+        if (field_40AFC_ != 0) {
+            field_40AFC_ = 0;
             redraw();
         }
         return;
-    }
-    case 19: {
-        const bool selected = flatButtons_[17].selected_state() != 0;
+    case 9:
+        if (field_40AFC_ != 2) {
+            field_40AFC_ = 2;
+            redraw();
+        }
+        return;
+    case 11:
+        if (field_40AFC_ != 1) {
+            field_40AFC_ = 1;
+            redraw();
+        }
+        return;
+    case 17:
         StringTemp[0] = 0;
-        strcat(StringTemp, label_get((selected ? 0xA4C : 0xA50) / 4));
-        CharUpperA(StringTemp);
-        flatButtons_[17].set_name(StringTemp);
-        flatButtons_[17].set(selected ? 0 : 1);
+        if (flatButtons_[17].selected_state()) {
+            strcat(StringTemp, label_get(0xA4C / 4));
+            CharUpperA(StringTemp);
+            flatButtons_[17].set_name(StringTemp);
+            flatButtons_[17].set(0);
+        } else {
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xA50 / 4]));
+            CharUpperA(StringTemp);
+            flatButtons_[17].set_name(StringTemp);
+            flatButtons_[17].set(1);
+        }
         draw_expenses(1);
         return;
-    }
-    case 18:
+    case 2: prev(); return;
+    case 3: next(); return;
+    case 16:
         if (BaseCurrent->faction_id_current == ConsoleGlobal.faction_id_
             || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) staple_the_bastards();
         return;
-    case 23:
+    case 21:
         if (BaseCurrent->faction_id_current == ConsoleGlobal.faction_id_
             || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) base_editor();
         return;
+    case 1009: {
+        int vehicle = veh_at(BaseCurrent->x, BaseCurrent->y);
+        if (vehicle < 0) return;
+        // Original 0x41D9FE/0x41DA15 follows nonnegative next links.
+        while (Vehs[vehicle].next_veh_id_stack >= 0)
+            vehicle = Vehs[vehicle].next_veh_id_stack;
+        veh_promote(vehicle);
+        redraw();
+        return;
+    }
+    case 1010: {
+        const int vehicle = veh_at(BaseCurrent->x, BaseCurrent->y);
+        if (vehicle < 0) return;
+        veh_demote(vehicle);
+        redraw();
+        return;
+    }
     }
 }
 
@@ -6545,22 +6580,30 @@ void BaseWin::draw_pop(int update_mode) {
     }
     MainInterfaceGlobal.set_clip(&saved_clip);
 }
+namespace {
+void base_panel_inset(RECT &rect, int amount);
+}
+
 // ORIGINAL: 0x00410870 ?draw_commerce@BaseWin@@QAEXH@Z 0x00410870-0x00411235;0x00651B22-0x00651B37
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x004108CC-0x00410A95 copies/clips three BaseWin rectangles, initializes a Font, draws the title and sets the report palette", "image:0x00410B3C-0x00410D54 counts the first 70 Base facility bits and 64 SecretProject homes at the current base, weights projects five, then formats the alien score or sanction warning", "image:0x00410D54-0x0041111C selects partner rows and formats receipts, pact/treaty status, unequal exchanges and sanctions from Base/PlayerData fields", "image:0x004111DE-0x00411211 updates the outer rectangle and restores the clip"], "reason": "Recover the commerce panel's alien score and normal-faction partner rows through owned BaseWin rectangles, typed Base/SecretProject/diplomacy state and source-owned commerce ledgers; original compiler/reference/runtime proof remains separate."}
 // TRIED: SEH-framed function with one real local object (`Font font;`, matching the single ??0Font/??1Font pair) reproduced via plain RAII, same as 0x004ADB70. Diverges at #12 (sim 0.53), not chased further given time. The "own faction" index scan, both box_sprite/set_font/ set_text_color RECT setups, and the tail (soft_update vs update on a1, restore clip) are a direct instruction-level transcription off raw disassembly. The per-faction commerce-report loop body (the `slot` loop building relation strings via write_l) and the military-score ELSE branch are adapted from Ghidra with real field offsets and real calls but approximated message-selection logic - not verified call-for-call against raw bytes given the remaining budget.
 void BaseWin::draw_commerce(int update_mode) {
+    Font font;
+    // The image finds the current base's index first (0x4108A0..0x4108CA).
+    int current_base_id;
+    for (int candidate = 0; candidate < GameDataStateStorage.fields_.base_current_count_; ++candidate) {
+        if (&Bases[candidate] == BaseCurrent) current_base_id = candidate;
+    }
+    RECT outer = commerce_outer_rect_;
     RECT saved_clip = Buffer::current_clip();
-    Buffer::set_clip(&commerce_outer_rect_);
+    Buffer::set_clip(&outer);
     Buffer::box_sprite(&commerce_outer_rect_, &InterfaceBoxStyles[3]);
 
-    Font font;
     font.init(DefaultFontFace, 10, 1);
-    RECT title = commerce_title_rect_;
-    Buffer::box_sprite(&title, &InterfaceBoxStyles[6]);
-    title.left += 3;
-    title.top += 3;
-    title.right -= 3;
-    title.bottom -= 3;
+    // One RECT local serves the title and then the report panel (EBP-24).
+    RECT report = commerce_title_rect_;
+    Buffer::box_sprite(&report, &InterfaceBoxStyles[6]);
+    base_panel_inset(report, 3);
     Buffer::set_font(&font1_, nullptr, nullptr, nullptr);
     Buffer::set_text_color(TextColourTable[82], TextColourTable[83], 1, 1);
     const int faction = Bases[focusedBaseID_].faction_id_current;
@@ -6571,25 +6614,18 @@ void BaseWin::draw_commerce(int update_mode) {
         strcat(StringTemp, label_get(313));
         CharUpperA(StringTemp);
     }
-    Buffer::write_cent_l(StringTemp, &title, strlen(StringTemp));
+    Buffer::write_cent_l(StringTemp, &report);
 
     Buffer::set_font(&font, nullptr, nullptr, nullptr);
     Buffer::set_text_color(TextColourTable[104], TextColourTable[105], 1, 1);
-    RECT report = commerce_report_rect_;
+    report = commerce_report_rect_;
     Buffer::box_sprite(&report, &InterfaceBoxStyles[0]);
-    report.left += 3;
-    report.top += 3;
-    report.right -= 3;
-    report.bottom -= 3;
+    base_panel_inset(report, 3);
     const int row_pitch = (report.bottom - report.top) / 6;
     int row_y = report.top;
     bool wrote_row = false;
     if ((Players[BaseCurrent->faction_id_current].rule_flags & RFLAG_ALIEN) != 0) {
         Buffer::set_font(&font1_, nullptr, nullptr, nullptr);
-        int current_base_id;
-        for (int candidate = 0; candidate < GameDataStateStorage.fields_.base_current_count_; ++candidate) {
-            if (&Bases[candidate] == BaseCurrent) current_base_id = candidate;
-        }
         int score = 0;
         for (int facility = 0; facility < 70; ++facility) {
             if ((BaseCurrent->facilities_built[facility >> 3] &
@@ -6707,31 +6743,27 @@ void BaseWin::draw_commerce(int update_mode) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00411240.cpp:1912-2151", "src/basewin.h:nutrient rectangles and sprites3_", "src/base.h:Base nutrients_accumulated and nutrient_surplus", "src/base.cpp:BaseIDCurrentSelected and cost_factor", "image:0x00682B20-0x00682B28 nutrient punctuation"], "reason": "Render the growth grid and caption through owned BaseWin rectangles, sprites, current Base and label table. Retain the instruction-level seed for restoration rather than hardcoding its self/global addresses."}
 // TRIED: literal transcription of Ghidra's (clean, non-SEH-mangled) pseudocode, mapping the three unlabelled thiscall calls (0x618EA0/0x618EE0/0x618F40) onto BaseWin's already-declared UNK4/UNK7/UNK6 slots by call-site position and declaring the other dozen FUN_ helpers as plain cdecl free functions (their true receiver/convention was not established) compiles and matches the arithmetic/branch structure, but the original installs a real SEH frame (fs:[0] chain) that this body does not reproduce since nothing here needs unwind-safety in the C++ source; diverges from the framed build around #2.
 void BaseWin::draw_nutrients(int update_mode) {
+    Font font;
+    RECT outer = nutrient_outer_rect_;
     RECT saved_clip = Buffer::current_clip();
-    Buffer::set_clip(&nutrient_outer_rect_);
+    Buffer::set_clip(&outer);
     Buffer::box_sprite(&nutrient_outer_rect_, &InterfaceBoxStyles[3]);
 
-    Font font;
     font.init(DefaultFontFace, WinScreenWidth == 800 ? 10 : 12, 0);
-    RECT title = nutrient_title_rect_;
-    Buffer::box_sprite(&title, &InterfaceBoxStyles[6]);
-    title.left += 3;
-    title.top += 3;
-    title.right -= 3;
-    title.bottom -= 3;
+    // One RECT local serves the title and then the content panel (EBP-1C).
+    RECT content = nutrient_title_rect_;
+    Buffer::box_sprite(&content, &InterfaceBoxStyles[6]);
+    base_panel_inset(content, 3);
     Buffer::set_font(&font1_, nullptr, nullptr, nullptr);
     Buffer::set_text_color(TextColourTable[82], TextColourTable[83], 1, 1);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(520));
     CharUpperA(StringTemp);
-    Buffer::write_cent_l(StringTemp, &title, strlen(StringTemp));
+    Buffer::write_cent_l(StringTemp, &content);
 
-    RECT content = nutrient_content_rect_;
+    content = nutrient_content_rect_;
     Buffer::box_sprite(&content, &InterfaceBoxStyles[0]);
-    content.left += 3;
-    content.top += 3;
-    content.right -= 3;
-    content.bottom -= 3;
+    base_panel_inset(content, 3);
     Buffer::set_font(&font, nullptr, nullptr, nullptr);
     Buffer::set_text_color(TextColourTable[104], TextColourTable[105], 1, 1);
     const int line_height = font.line_advance();
@@ -7037,8 +7069,8 @@ int base_panel_signed(uint32_t value) {
         : -1 - static_cast<int>(0xFFFFFFFFu - value);
 }
 void base_panel_inset(RECT &rect, int amount) {
-    rect.left += amount; rect.top += amount;
-    rect.right -= amount; rect.bottom -= amount;
+    rect.left += amount; rect.right -= amount;
+    rect.top += amount; rect.bottom -= amount;
 }
 int base_native_clamp(int value, int lower, int upper) {
     // Both limits and their order are explicit in the original branches.
@@ -7225,27 +7257,33 @@ void BaseWin::dismiss_garrison_selection() {
 // TRIED: literal per-instruction register/stack transcription (eax/ebx/ecx/edx/esi/edi + s_XX stack slots + RECT groups rectA/rectB/rect28/rectScroll), goto-based control flow mirroring every branch; diverges at instr #9 (early prologue push/mov shape), not chased further given function size (2577 bytes).
 void BaseWin::draw_supported(int update_mode) {
     Font font;
-    RECT saved_clip = MainInterfaceGlobal.current_clip();
     RECT outer = interface_help_rect_;
+    RECT saved_clip = MainInterfaceGlobal.current_clip();
     MainInterfaceGlobal.set_clip(&outer);
     MainInterfaceGlobal.box_sprite(&interface_help_rect_, &InterfaceBoxStyles[3]);
     font.init(DefaultFontFace, 10, 1);
     spot1_.kill_type(7);
-    RECT title = supported_title_rect_;
-    MainInterfaceGlobal.box_sprite(&title, &InterfaceBoxStyles[6]);
-    base_panel_inset(title, 3);
+    // One RECT local serves the title and then the content panel (EBP-28).
+    RECT content = supported_title_rect_;
+    MainInterfaceGlobal.box_sprite(&content, &InterfaceBoxStyles[6]);
+    base_panel_inset(content, 3);
     MainInterfaceGlobal.set_font(&font1_, 0, 0, 0);
     MainInterfaceGlobal.set_text_color(TextColourTable[82], TextColourTable[83], 1, 1);
     StringTemp[0] = 0; strcat(StringTemp, label_get(0x100 / 4)); CharUpperA(StringTemp);
-    MainInterfaceGlobal.write_cent_l(StringTemp, &title, static_cast<int>(strlen(StringTemp)));
+    MainInterfaceGlobal.write_cent_l(StringTemp, &content);
     MainInterfaceGlobal.set_font(&font, 0, 0, 0);
-    RECT content = supported_content_rect_;
+    content = supported_content_rect_;
     MainInterfaceGlobal.box_sprite(&content, &InterfaceBoxStyles[0]);
     base_panel_inset(content, 3);
     const int faction = BaseCurrent->faction_id_current;
     const int scale = MapWinCaptionScale, divisor = MapWinCaptionDivisor;
-    SpriteScaleNumerator = scale > 0 ? scale : 10;
-    SpriteScaleDenominator = scale > 0 ? divisor : 16;
+    if (scale > 0) {
+        SpriteScaleNumerator = scale;
+        SpriteScaleDenominator = divisor;
+    } else {
+        SpriteScaleNumerator = 10;
+        SpriteScaleDenominator = 16;
+    }
     const int vehicle_width = scale > 0 ? scale * 100 / divisor : 62;
     const int vehicle_height = scale > 0 ? scale * 75 / divisor : 46;
     const int icon_width = scale > 0 ? scale * 22 / divisor : 13;
@@ -7256,23 +7294,23 @@ void BaseWin::draw_supported(int update_mode) {
             && Vehs[i].home_base_id == BaseIDCurrentSelected) ++count;
     const int columns = base_native_clamp((content.right - content.left - 12) / vehicle_width, 1, 3);
     const int rows = base_native_clamp((columns + count - 1) / columns, 1, 3);
-    const int used_columns = count < columns ? count : columns;
     int horizontal_offset;
     if (count > columns * rows) {
-        horizontal_offset = (content.right - content.left - used_columns * vehicle_width - 12) / 2;
-        RECT scroll_rect = {content.right - 12, content.top, content.right, content.bottom};
+        horizontal_offset = (content.right - content.left - min(count, columns) * vehicle_width - 12) / 2;
+        RECT scroll_rect = content;
+        scroll_rect.left = content.right - 12;
         scroll_small();
         scroll2_.init(&scroll_rect, &MainInterfaceGlobal, 2, 0);
         scroll2_.set_range(0, rows - 1); scroll2_.set_pos(static_cast<int>(field_40B14_));
         scroll2_.set_paging((columns - 1) * rows); scroll2_.show(0); scroll_normal();
         field_40B20_ = 1;
     } else {
-        horizontal_offset = (content.right - content.left - used_columns * vehicle_width) / 2;
+        horizontal_offset = (content.right - content.left - min(count, columns) * vehicle_width) / 2;
         scroll2_.close(); field_40B20_ = 0;
     }
-    const int start_x = content.left + horizontal_offset;
+    int y = content.top + (content.bottom - rows * vehicle_height - content.top) / 2;
+    const int start_x = horizontal_offset + content.left;
     int x = start_x;
-    int y = content.top + (content.bottom - content.top - rows * vehicle_height) / 2;
     int ordinal = -1, drawn = 0, drawn_rows = 0;
     // Native EBP-50 first reads40CF5B/40D023 precede the sole write40D05C.
     // Retain that uninitialized first use and previous-row pitch thereafter;
@@ -7285,8 +7323,14 @@ void BaseWin::draw_supported(int update_mode) {
         if (field_40B20_ && (ordinal < static_cast<int>(field_40B14_) * columns
             || ordinal >= (static_cast<int>(field_40B14_) + rows) * columns)) continue;
         veh_draw(&MainInterfaceGlobal, vehicle_id, x, y, -6, 72, 0);
-        SpriteScaleNumerator = MapWinCaptionScale > 0 ? MapWinCaptionScale : 10;
-        SpriteScaleDenominator = MapWinCaptionScale > 0 ? MapWinCaptionDivisor : 16;
+        if (MapWinCaptionScale > 0) {
+            SpriteScaleNumerator = MapWinCaptionScale;
+            SpriteScaleDenominator = MapWinCaptionDivisor;
+        } else {
+            SpriteScaleNumerator = 10;
+            SpriteScaleDenominator = 16;
+        }
+        const int icon_y = y - icon_offset + vehicle_height;
         int support = 0, total = 0, convoy_yield; // native yield only read in convoy arm
         if (Vehs[vehicle_id].state & 0x10u) {
             const int pending_support = PlayersData[faction].soc_effect_pending.values_[SocialEffect::SUPPORT];
@@ -7307,7 +7351,6 @@ void BaseWin::draw_supported(int update_mode) {
             }
         }
         if (total != 0) {
-            const int icon_y = y + vehicle_height - icon_offset;
             int icon_x = x;
             if (Vehs[vehicle_id].state & 0x400000u) {
                 base_panel_sprite(g_PEACE_SIGN_SPRITES[0], &MainInterfaceGlobal, icon_x, icon_y);
@@ -7315,10 +7358,8 @@ void BaseWin::draw_supported(int update_mode) {
             } else if (Vehs[vehicle_id].state & 0x200000u) {
                 // The original recomputes this live helper and police value
                 // on every iteration, including the terminating test.
-                for (int i = 0;; ++i) {
-                    const int facility = has_fac_built(35, BaseIDCurrentSelected);
-                    const int peace = 1 + (PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE] + 2 * facility <= -5);
-                    if (i >= peace) break;
+                for (int i = 0; i < 1 + (PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE]
+                         + 2 * has_fac_built(35, BaseIDCurrentSelected) <= -5); ++i) {
                     base_panel_sprite(g_PEACE_SIGN_SPRITES[1], &MainInterfaceGlobal, icon_x, icon_y);
                     icon_x += icon_pitch;
                 }
@@ -7360,27 +7401,28 @@ void BaseWin::draw_supported(int update_mode) {
 // TRIED: automatic `Font font;` local (real ctor/dtor from the class, matching draw_psych's precedent) to get the compiler-generated SEH try-finally frame, instead of hand-rolled ExceptionList plumbing; VCall::slot001 retyped to take an int (Scroll vtable slot 1 dispatch with arg 0). Traced the real bytes (not just Ghidra, which mislabels several stack slots by a constant in the Font-adjacent region) for the rowHeight formula ((font.unk_1_>=0) ? font.height_+font.unk_1_ : font.line_height_) and the Spot::add(facId,2,left,y,width,rowHeight) arg order. Not chased to byte-exact given size (1788 bytes / SEH frame).
 void BaseWin::draw_facilities(int update_mode) {
     Font font;
-    RECT saved_clip = Buffer::current_clip();
     RECT outer = facilities_help_rect_;
+    RECT saved_clip = Buffer::current_clip();
     Buffer::set_clip(&outer); spot2_.kill_type(2);
     font.init(DefaultFontFace, WinScreenWidth != 800 ? 12 : 10, 0);
     Buffer::box_sprite(&facilities_help_rect_, &InterfaceBoxStyles[3]);
     StringTemp[0] = 0;
-    RECT title = facilities_title_rect_;
-    Buffer::box_sprite(&title, &InterfaceBoxStyles[6]); base_panel_inset(title, 3);
+    // One RECT local serves the title and then the content panel (EBP-20).
+    RECT content = facilities_title_rect_;
+    Buffer::box_sprite(&content, &InterfaceBoxStyles[6]); base_panel_inset(content, 3);
     Buffer::set_font(&font1_, 0, 0, 0);
     strcat(StringTemp, label_get(0x110 / 4));
     Buffer::set_text_color(TextColourTable[82], TextColourTable[83], 1, 1);
     CharUpperA(StringTemp);
-    Buffer::write_cent_l(StringTemp, &title, static_cast<int>(strlen(StringTemp)));
+    Buffer::write_cent_l(StringTemp, &content);
     Buffer::set_font(&font, 0, 0, 0);
     Buffer::set_text_color(TextColourTable[104], TextColourTable[105], 1, 1);
-    RECT content = rect2_;
+    content = rect2_;
     if (flatButtons_[21].is_visible()) content.bottom = rect20_.top;
     Buffer::box_sprite(&content, &InterfaceBoxStyles[0]); base_panel_inset(content, 3);
-    const int row_height = font.line_advance();
+    const int row_height = font_line_advance(font);
     int capacity = (content.bottom - content.top) / row_height;
-    if (row_height * capacity + font.pixel_height() <= content.bottom - content.top) ++capacity;
+    if (font_line_advance(font) * capacity + font.pixel_height() <= content.bottom - content.top) ++capacity;
     int count = 0;
     for (int facility = 0; facility < 134; ++facility) {
         bool present = false;
