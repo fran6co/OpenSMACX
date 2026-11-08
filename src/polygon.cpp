@@ -224,7 +224,8 @@ int __cdecl polygon(Buffer *buffer, Vert *vertices, int count, int color) {
                         minimum_vertex = vertex;
                     }
                     if (vertices[vertex].y > maximum_y) {
-                        maximum_y = vertices[vertex].y;
+                        // volatile: stand-in for the image's reload of vertices[vertex].y at 0x006266D1; no plain spelling found
+                        maximum_y = *(volatile int *)&vertices[vertex].y;
                         PolygonBottomVertex = vertex;
                     }
                 }
@@ -362,7 +363,8 @@ int __cdecl polygon_dest(Buffer *buffer, Vert *vertices, int count, unsigned cha
                         minimum_vertex = vertex;
                     }
                     if (vertices[vertex].y > maximum_y) {
-                        maximum_y = vertices[vertex].y;
+                        // volatile: stand-in for the image's reload of vertices[vertex].y at 0x00626EC1; no plain spelling found
+                        maximum_y = *(volatile int *)&vertices[vertex].y;
                         PolygonBottomVertex = vertex;
                     }
                 }

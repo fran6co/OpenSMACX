@@ -1512,14 +1512,17 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int count, Vert *uv) {
                 top = i;
             }
             if (v->y > max_y) {
-                max_y = v->y;
+                // volatile: stand-in for the image's reload of v->y in the max branch; no plain spelling found
+                int y = *(volatile int *)&v->y;
                 TextureRasterMaxYIndex = i;
+                max_y = y;
             }
             if (v->x < min_x) {
                 min_x = v->x;
             }
             if (v->x > max_x) {
-                max_x = v->x;
+                // volatile: stand-in for the image's reload of v->x in the max branch; no plain spelling found
+                max_x = *(volatile int *)&v->x;
             }
         }
         if (min_y < max_y) {
@@ -1764,14 +1767,17 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int use_eight_vertices)
                 top = i;
             }
             if (v->y > max_y) {
-                max_y = v->y;
+                // volatile: stand-in for the image's reload of v->y in the max branch; no plain spelling found
+                int y = *(volatile int *)&v->y;
                 TextureRasterMaxYIndex = i;
+                max_y = y;
             }
             if (v->x < min_x) {
                 min_x = v->x;
             }
             if (v->x > max_x) {
-                max_x = v->x;
+                // volatile: stand-in for the image's reload of v->x in the max branch; no plain spelling found
+                max_x = *(volatile int *)&v->x;
             }
         }
         if (min_y < max_y) {
@@ -2035,14 +2041,17 @@ void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv
                 top = i;
             }
             if (v->y > max_y) {
-                max_y = v->y;
+                // volatile: stand-in for the image's reload of v->y in the max branch; no plain spelling found
+                int y = *(volatile int *)&v->y;
                 TextureRasterMaxYIndex = i;
+                max_y = y;
             }
             if (v->x < min_x) {
                 min_x = v->x;
             }
             if (v->x > max_x) {
-                max_x = v->x;
+                // volatile: stand-in for the image's reload of v->x in the max branch; no plain spelling found
+                max_x = *(volatile int *)&v->x;
             }
         }
         if (min_y < max_y) {
@@ -3858,14 +3867,17 @@ int Texture::draw_trans2(Buffer *buffer, Vert *vertices, int use_eight_vertices)
                 top = i;
             }
             if (v->y > max_y) {
-                max_y = v->y;
+                // volatile: stand-in for the image's reload of v->y in the max branch; no plain spelling found
+                int y = *(volatile int *)&v->y;
                 TextureRasterMaxYIndex = i;
+                max_y = y;
             }
             if (v->x < min_x) {
                 min_x = v->x;
             }
             if (v->x > max_x) {
-                max_x = v->x;
+                // volatile: stand-in for the image's reload of v->x in the max branch; no plain spelling found
+                max_x = *(volatile int *)&v->x;
             }
         }
         if (min_y < max_y) {
@@ -7499,14 +7511,17 @@ void Texture::sub_620a10(Buffer *buffer, Vert *vertices, int count, Vert *uv,
                 top = i;
             }
             if (v->y > max_y) {
-                max_y = v->y;
+                // volatile: stand-in for the image's reload of v->y in the max branch; no plain spelling found
+                int y = *(volatile int *)&v->y;
                 TextureRasterMaxYIndex = i;
+                max_y = y;
             }
             if (v->x < min_x) {
                 min_x = v->x;
             }
             if (v->x > max_x) {
-                max_x = v->x;
+                // volatile: stand-in for the image's reload of v->x in the max branch; no plain spelling found
+                max_x = *(volatile int *)&v->x;
             }
         }
         if (min_y < max_y) {
@@ -10201,9 +10216,9 @@ void __cdecl sub_620640(EdgeScan *left, EdgeScan *right) {
 static void texture_keyed_shade_edge_step(EdgeScan &e) {
     e.accumA += e.deltaA;
     e.accumB += e.deltaB;
-    e.fracAccum += e.fracDelta;
     e.accumC += e.deltaC;
     e.accumD += e.deltaD;
+    e.fracAccum += e.fracDelta;
     if (e.fracAccum > 0) {
         e.accumC += e.extraDeltaC;
         e.fracAccum -= e.fracSub;
@@ -10581,7 +10596,8 @@ void Texture::sub_61f0d0(Buffer *param_2, Vert *param_3, int *param_4,
                                 top = i;
                             }
                             if (param_3[i].y > max_y) {
-                                max_y = param_3[i].y;
+                                // volatile: stand-in for the image's reload of param_3[i].y at 0x0061F231; no plain spelling found
+                                max_y = *(volatile int *)&param_3[i].y;
                                 TextureRasterMaxYIndex = i;
                             }
                         }
@@ -10686,14 +10702,17 @@ void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv
                 top = i;
             }
             if (v->y > max_y) {
-                max_y = v->y;
+                // volatile: stand-in for the image's reload of v->y in the max branch; no plain spelling found
+                int y = *(volatile int *)&v->y;
                 TextureRasterMaxYIndex = i;
+                max_y = y;
             }
             if (v->x < min_x) {
                 min_x = v->x;
             }
             if (v->x > max_x) {
-                max_x = v->x;
+                // volatile: stand-in for the image's reload of v->x in the max branch; no plain spelling found
+                max_x = *(volatile int *)&v->x;
             }
         }
         if (min_y < max_y) {
