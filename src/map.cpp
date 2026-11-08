@@ -844,47 +844,6 @@ Status: Complete
 
 
 
-/*
-Purpose: Quickly check for unit related zone of control conflicts. If a ZOC conflict is found, store
-         the coordinates of the tile inside ZOC pointers.
-// ORIGINAL: 0x00593830 ?quick_zoc@@YAXHHHHHPAH0@Z 0x00593830-0x005939FC
-// TRIED: 12/152, 0.873 similar (best flag set /Oi-) - call count already
-//            matches the image (`call_diff` agrees). First divergence is
-//            is_ocean's own known plateau (`xor ecx,ecx` before the
-//            map_tiles() pointer load in the image, this tree loads the
-//            pointer first) - same root cause as is_ocean's standalone note.
-// symbol    ?quick_zoc@@YAXHHHHHPAH0@Z
-// size      460 bytes
-// prototype void (__cdecl ?quick_zoc@@YAXHHHHHPAH0@Z)(int xCoordSrc, int yCoordSrc, int factionID, int xCoordDst, int yCoordDst, int* xCoordZoc, int* yCoordZoc)
-// callers   1   call targets   1
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x00644F3A
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl quick_zoc(int x_src, int y_src, int faction_id, int x_dst, int y_dst,
-                       int *x_zoc, int *y_zoc) {
-    BOOL is_src_ocean = is_ocean(x_src, y_src);
-    int search_zoc = -1;
-    for (uint32_t i = 0; i < 8; i++) {
-        int x_radius = wrap_map_x(x_src + VehMoveDeltaX[i]);
-        int y_radius = y_src + VehMoveDeltaY[i];
-        if (on_map(x_radius, y_radius)) {
-            int owner = veh_who(x_radius, y_radius);
-            if (owner >= 0 && owner != faction_id
-                && is_ocean(x_radius, y_radius) == is_src_ocean
-                && !(PlayersData[faction_id].diplo_treaties[owner] & DTREATY_PACT)) {
-                int proximity = vector_dist(x_radius, y_radius, x_dst, y_dst);
-                if (proximity >= search_zoc) {
-                    search_zoc = proximity;
-                    *x_zoc = x_radius;
-                    *y_zoc = y_radius;
-                }
-            }
-        }
-    }
-}
 
 /*
 Purpose: Determine if the specified offsets are within the range radius.

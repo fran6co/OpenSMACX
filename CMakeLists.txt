@@ -289,6 +289,7 @@ set(OPENSMACX_SOURCES
     src/timer_messages.cpp
     src/enemy.cpp
     src/veh.cpp
+    src/orders.cpp
     src/battle.cpp
     src/veh_stack.cpp
     src/vehicle_render.cpp
@@ -427,6 +428,7 @@ set_source_files_properties(
     src/faction_dialogue.cpp
     src/faction_network.cpp
     src/veh.cpp
+    src/orders.cpp
     src/battle.cpp
     src/veh_stack.cpp
     src/vehicle_render.cpp
@@ -572,6 +574,7 @@ set_property(SOURCE
     src/faction.cpp
     src/tutwin.cpp
     src/veh.cpp
+    src/orders.cpp
     src/battle.cpp
     src/veh_stack.cpp
     src/enemy.cpp

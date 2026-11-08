@@ -18,8 +18,7 @@
 // The popup-wrapper TU (0x0048C060-0x0048D4EA): parse_it and the popp,
 // popt, popv and popb wrappers, the vehicle sprite callbacks and veh_pick.
 // The boundary is inferred from the image; the original file name is
-// unknown. veh_sprite_click and veh_sprite_double_click (0x0048CF50,
-// 0x0048D010) also belong here but are still owned by veh.cpp.
+// unknown.
 #include "stdafx.h"
 #include "popup.h"
 #include "xpops.h"
@@ -39,6 +38,8 @@
 #include "spritebox.h"
 #include "sprite.h"
 #include "buffer.h"
+#include "netmsg.h"  // NetMsgPrimary - the sprite callbacks pop INJAIL
+#include "netdaemon.h"  // NetDaemonNet - the sprite callbacks lock and synch
 
 
 // Read a script section into the shared substitution buffer. The text
@@ -280,6 +281,78 @@ int __cdecl sub_48cf00(BasePop *owner, int vehicle) {
         first_vehicle_sprite, nullptr, vehicle);
     owner->set_redraw_callback(veh_sprite_draw);
     return result;
+}
+
+/*
+Purpose: The single-click handler for a fleet sprite: in a net game a
+         selectable, idle, unbusy unit is simply taken; a jailed unit pops
+         INJAIL; otherwise the click runs the net lock round-trip (lock,
+         wake, synch, unlock) before returning.
+
+// ORIGINAL: 0x0048CF50 ?veh_sprite_click@@YAHH@Z 0x0048CF50-0x0048D006 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["veh.h already declares the exact cdecl callback signature and console.cpp installs this function as the sprite click callback.","The body uses the existing Veh array, NetMsgPrimary, NetDaemonNet, and declared selection/wake/sync helpers; lock, wake, sync, await, and unlock order is preserved.","The literal at pinned 0x00686B5C is exactly `49 4e 4a 41 49 4c 00` (`INJAIL\\0`); replacing the fixed pointer alias with the source literal preserves the label bytes without an executable-address dependency.","The callback remains the existing cdecl function, not a guessed member or generated adapter; native symbol/reference measurement remains separate."],"reason":"Move the existing registered click callback into veh.cpp, replace only its verified INJAIL text pointer with the equivalent source literal, and preserve every return/call path."}
+// size      182 bytes
+// prototype int (__cdecl ?veh_sprite_click@@YAHH@Z)(int a1)
+// callers   ?   call targets   7
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047A890 0x00531020 0x005310F0 0x00531480 0x00593220 0x005C1A20 0x005C1C40 0x005C1D70
+Return Value: 1 when the click only selects the unit, else 0
+Status: Coverage transcription - claim pending re-measurement
+*/
+int __cdecl veh_sprite_click(int veh_id) {
+    if (IsMultiplayerNet != 0 && veh_selectable(veh_id) != 0
+        && Vehs[veh_id].order == ORDER_NONE
+        && (Vehs[veh_id].state & 0x8004200) == 0) {
+        return 1;
+    }
+    if (veh_jail(veh_id) != 0) {
+        NetMsgPrimary.pop("INJAIL", 5000, 0, 0);
+        return 0;
+    }
+    if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, 0) == 0) {
+        veh_wake(veh_id);
+        synch_veh(veh_id);
+        NetDaemonNet.await_synch();
+        NetDaemonNet.unlock_veh();
+    }
+    return 0;
+}
+
+/*
+Purpose: The double-click twin: the same net-select shortcut and INJAIL
+         pop, but the lock failure path returns early and a completed
+         lock round-trip reports the unit taken.
+
+// ORIGINAL: 0x0048D010 ?veh_sprite_double_click@@YAHH@Z 0x0048D010-0x0048D0CD FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["veh.h already declares the exact cdecl callback signature and console.cpp installs this function as the sprite double-click callback.","The body uses the existing Veh array, NetMsgPrimary, NetDaemonNet, and declared selection/wake/sync helpers; lock failure still returns before the wake/sync path.","The literal at pinned 0x00686B64 is exactly `49 4e 4a 41 49 4c 00` (`INJAIL\\0`); replacing the fixed pointer alias with the source literal preserves the label bytes without an executable-address dependency.","The callback remains the existing cdecl function, not a guessed member or generated adapter; native symbol/reference measurement remains separate."],"reason":"Move the existing registered double-click callback into veh.cpp, replace only its verified INJAIL text pointer with the equivalent source literal, and preserve its distinct lock-failure return."}
+// size      189 bytes
+// prototype int (__cdecl ?veh_sprite_double_click@@YAHH@Z)(int a1)
+// callers   ?   call targets   7
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047A890 0x00531020 0x005310F0 0x00531480 0x00593220 0x005C1A20 0x005C1C40 0x005C1D70
+Return Value: 1 when the double-click takes the unit, else 0
+Status: Coverage transcription - claim pending re-measurement
+*/
+int __cdecl veh_sprite_double_click(int veh_id) {
+    if (IsMultiplayerNet != 0 && veh_selectable(veh_id) != 0
+        && Vehs[veh_id].order == ORDER_NONE
+        && (Vehs[veh_id].state & 0x8004200) == 0) {
+        return 1;
+    }
+    if (veh_jail(veh_id) != 0) {
+        NetMsgPrimary.pop("INJAIL", 5000, 0, 0);
+        return 0;
+    }
+    if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, 0) != 0) {
+        return 0;
+    }
+    veh_wake(veh_id);
+    synch_veh(veh_id);
+    NetDaemonNet.await_synch();
+    NetDaemonNet.unlock_veh();
+    return 1;
 }
 
 // ORIGINAL: 0x0048D0D0 ?veh_pick@@YAHHPBDH@Z 0x0048D0D0-0x0048D4EA;0x006585CB-0x006586B3
