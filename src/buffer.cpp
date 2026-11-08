@@ -3973,17 +3973,10 @@ int Buffer::write_cent_l(LPSTR text, RECT *rect, int len) {
     // reserves 0x10 bytes - exactly a RECT - and reads the four edges out of
     // the caller's copy into it before doing anything else.
     RECT area = *rect;
-    const int left = area.left;
-    const int top = area.top;
-    const int right = area.right;
-    const int bottom = area.bottom;
     if (!fonts_[0] || !fonts_[0]->is_initialized()) {
         return 3;
     }
-    // FIVE STRLEN CALLS in this body: the `MIN` macro used twice, each
-    // evaluating its argument twice, and a fifth for the measurement below.
-    // The guards are `< 0` and `== 0` reaching the same epilogue, exactly as
-    // in the other overload.
+    // FIVE STRLEN CALLS: the `MIN` macro used twice, plus the measurement.
     if (BUFFER_MIN(static_cast<int>(strlen(text)), len) < 0) {
         goto no_text;
     }
@@ -3992,15 +3985,11 @@ int Buffer::write_cent_l(LPSTR text, RECT *rect, int len) {
     no_text:
         return 0;
     }
-    // THE WHOLE STRING, not the clamped count: this overload measures with a
-    // fresh strlen where the other centres on the truncated text. That
-    // asymmetry is in the bytes.
+    // THE WHOLE STRING, not the clamped count: a fresh strlen, as in the image.
     const int drawn = text_width(text, static_cast<int>(strlen(text)));
-    const int x_coord = left + (right - drawn - left) / 2;
-    if (!fonts_[0]) {
-        fonts_[0] = FontDefault;
-    }
-    const int y_coord = top + (bottom - fonts_[0]->height_ - top) / 2;
+    const int x_coord = area.left + (area.right - drawn - area.left) / 2;
+    // text_height() re-tests font1_ and rebinds FontDefault (0x005DD1F6).
+    const int y_coord = area.top + (area.bottom - text_height() - area.top) / 2;
     return write_multi_font_raw_l(text, x_coord, y_coord, len);
 }
 
@@ -7466,15 +7455,16 @@ int Buffer::wrap(char *text, int x, int y, int width) {
         }
         y += text_line_height();
 
+        int carry = field_14_;
         field_18_++;
-        if (field_14_ != 0) {
-            width -= field_14_;
-            x += field_14_;
+        if (carry != 0) {
             field_14_ = 0;
+            width -= carry;
+            x += carry;
         }
 
         str = nextStr;
-    } while (nextStr != 0);
+    } while (str != 0);
     return y;
 }
 
@@ -10234,8 +10224,9 @@ int Buffer::write_vertical(char *text, RECT *area) {
     int width = area->right - area->left;
     char one_character[2];
     one_character[1] = 0;
-    while (*text != 0) {
-        one_character[0] = *text++;
+    char *p = text;
+    while (*p != 0) {
+        one_character[0] = *p++;
         write_cent_text(one_character, x, y, width);
         y += advance;
     }

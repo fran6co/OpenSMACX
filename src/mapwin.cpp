@@ -1594,7 +1594,7 @@ void MapWin::set_center(int x, int y, int draw_type) {
     if (this == static_cast<MapWin *>(&ConsoleGlobal)) {
         destination = DestinationVehicleId;
         if (destination >= 0 &&
-            (Vehs[destination].faction_id == ConsoleGlobal.faction_id_ ||
+            (ConsoleGlobal.faction_id_ == Vehs[destination].faction_id ||
              (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) &&
             !(GameDataStateStorage.fields_.game_more_preferences_ & 0x2000000)) {
             ConsoleGlobal.cover_window_.fill(9);
@@ -6270,12 +6270,12 @@ void MapWin::draw_wars() {
     Buffer::set_font(font, 0, 0, 0);
 
     for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+        int width = character_width;
         StringTemp[0] = '\0';
         parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
         strcat(StringTemp, Players[faction].noun_faction);
         strcat(StringTemp, ": ");
         Buffer::set_text_color(InfoFactionTextColors[faction], 0, 1, 1);
-        int width = character_width;
         width = Buffer::write_l(StringTemp, width, y);
         if (max_width <= width) {
             max_width = width;
@@ -7788,10 +7788,14 @@ void MapWin::calculate_dimensions() {
         MapWinPrimaryCorner.bottom = y;
         const int columns = field_1DDCC_;
         const int rows = field_1DDD0_;
-        MapWinPrimaryCorner.left = x - columns + 4;
-        MapWinPrimaryCorner.right = columns + x - 4;
-        MapWinPrimaryCorner.top = y - rows + 4;
-        MapWinPrimaryCorner.bottom = y + rows - 6;
+        MapWinPrimaryCorner.left -= columns;
+        MapWinPrimaryCorner.right += columns;
+        MapWinPrimaryCorner.top -= rows;
+        MapWinPrimaryCorner.bottom += rows;
+        MapWinPrimaryCorner.left += 4;
+        MapWinPrimaryCorner.right -= 4;
+        MapWinPrimaryCorner.top += 4;
+        MapWinPrimaryCorner.bottom -= 6;
     }
     const int half_x = MapLongitudeBounds / 2;
     if (field_1DDCC_ > half_x) {

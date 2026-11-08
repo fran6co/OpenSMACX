@@ -4181,7 +4181,7 @@ void __cdecl Win::OnPaletteChanged(void * hwnd, void * lparam) {
 // icon first, not `== 0` with the maximise icon first.
 void Win::redo_caption_buttons() {
     int w = field_128_;
-    int x = client_rect_.right - w * 2 - client_rect_.left -
+    int x = client_rect_.right - 2 * w - client_rect_.left -
             border_thickness_ - caption_height_ - 2;
     if (close_button_ != 0) {
         close_button_->move(x, w);
@@ -8062,10 +8062,10 @@ void __cdecl Win::update_screen(RECT *area, Win *window) {
         if (WinFlipSprite != 0) {
             // original 9B7A30 is RECT.left, 9B7A34 is RECT.top
             RECT rectangle;
-            rectangle.top = WinFlipSpriteX;
             rectangle.left = WinFlipSpriteY;
-            rectangle.right = WinFlipSpriteY + WinClipWidth;
-            rectangle.bottom = WinFlipSpriteX + WinClipHeight;
+            rectangle.top = WinFlipSpriteX;
+            rectangle.right = WinClipWidth + WinFlipSpriteY;
+            rectangle.bottom = WinClipHeight + WinFlipSpriteX;
             // IAT 669338 is USER32!IntersectRect.
             if (area == 0 || IntersectRect(&rectangle, &rectangle, area) != 0) {
                 Win::screen_buffer_.copy(
@@ -8535,14 +8535,12 @@ void Win::paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left,
     if (y_origin != 0) {
         rows = 1;
     }
-    int span_x = clip_width - x_origin;
-    cols += span_x / tile_width;
-    int span_y = clip_height - y_origin;
-    rows += span_y / neg_tile_height;
-    if (span_x % tile_width != 0) {
+    cols += (clip_width - x_origin) / tile_width;
+    rows += (clip_height - y_origin) / neg_tile_height;
+    if ((clip_width - x_origin) % tile_width != 0) {
         ++cols;
     }
-    if (span_y % neg_tile_height != 0) {
+    if ((clip_height - y_origin) % neg_tile_height != 0) {
         ++rows;
     }
 
