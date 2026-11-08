@@ -1826,6 +1826,65 @@ void CouncWin::draw_leader(int factionID) {
     soft_update(&rect);
 }
 
+// ORIGINAL: 0x00428350 ?council@@YAXHHH@Z 0x00428350-0x0042854E BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["historical retired seed src/recovered/units/00428350.cpp", "recovery/tasks/council-atrocity-owner-oct5.json", "complete pinned native instruction/argument review and current compiler-observed function symbol", "actual-product-source host parser/directed-row/wrap controls; prior fixed-address scaffold mismatches retained as Git provenance"], "reason": "Complete semantic policy recovery through genuine source-owned window/player/global APIs, directed field relations, fresh callback reads and native parser/default ordering. Historical byte restoration and runtime acceptance remain unfinished."}
+// symbol    ?council@@YAXHHH@Z
+void __cdecl council(int faction_id, int proposal, int target_faction) {
+    const int original_governor = GameDataStateStorage.fields_.governor_faction_;
+
+    for (int actor = 1; actor < MaxPlayerNum; ++actor) {
+        for (int peer = 1; peer < actor; ++peer) {
+            if ((Players[peer].rule_flags & RFLAG_ALIEN) == 0 &&
+                (Players[actor].rule_flags & RFLAG_ALIEN) == 0) {
+                treaty_on(actor, peer, DTREATY_COMMLINK);
+            }
+        }
+    }
+
+    if (!IsMultiplayerPBEM || CouncilPbemGate == 0) {
+        if (proposal != 0) {
+            PlayersData[target_faction].council_call_turn =
+                GameDataStateStorage.fields_.turn_current_num_;
+        }
+        GameDataStateStorage.fields_.council_last_resolution_turn_[proposal] =
+            GameDataStateStorage.fields_.turn_current_num_;
+    } else {
+        // PBEM resumes the stored council call in place of the arguments.
+        faction_id = CouncilPbemGate;
+        proposal = static_cast<int>(CouncilWindow.field_A1C_);
+        target_faction = static_cast<int>(CouncilWindow.field_A20_);
+    }
+
+    if (faction_id != ConsoleGlobal.faction_id_ ||
+        (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
+         (1 << faction_id)) == 0) {
+        GenderDefault = Players[faction_id].is_leader_female;
+        PluralityDefault = FALSE;
+        parse_says(0, Players[faction_id].title_leader, -1, -1);
+        GenderDefault = Players[faction_id].is_leader_female;
+        PluralityDefault = FALSE;
+        parse_says(1, Players[faction_id].name_leader, -1, -1);
+        parse_say(2, Proposal[proposal].name, -1, -1);
+        popp(ScriptPopupFile, "CALLSCOUNCIL", 0, "council_sm.pcx", 0);
+    }
+
+    GameDataStateStorage.fields_.game_state_ |= 0x10000u;
+    CouncilWindow.init(proposal, target_faction);
+
+    if (proposal == 0 &&
+        GameDataStateStorage.fields_.governor_faction_ == ConsoleGlobal.faction_id_ &&
+        original_governor != ConsoleGlobal.faction_id_ &&
+        IsMultiplayerNet == 0 &&
+        (!IsMultiplayerPBEM || CouncilPbemGate == 0)) {
+        if ((PlayersData[ConsoleGlobal.faction_id_].flags &
+             PFLAG_BEEN_ELECTED_GOVERNOR) == 0) {
+            PlayersData[ConsoleGlobal.faction_id_].flags |=
+                PFLAG_BEEN_ELECTED_GOVERNOR;
+            popp(ScriptPopupFile, "GOVERNOR", 0, "council_sm.pcx", 0);
+        }
+    }
+}
+
 // ---------------------------------------------------------------------------
 // DEFINED IN THE HEADER, CLAIMED HERE.
 //

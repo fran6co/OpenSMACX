@@ -146,6 +146,7 @@ set(OPENSMACX_SOURCES
     src/alphanet_records.cpp
     src/autosound.cpp
     src/base.cpp
+    src/score.cpp
     src/base_compute.cpp
     src/basebutton.cpp
     src/basepop.cpp
@@ -158,9 +159,7 @@ set(OPENSMACX_SOURCES
     src/dialogs.cpp
     src/faction.cpp
     src/faction_treaty.cpp
-    src/faction_diplomacy.cpp
-    src/faction_dialogue.cpp
-    src/faction_network.cpp
+    src/aggression.cpp
     src/famewin.cpp
     src/filemap.cpp
     src/flatbutton.cpp
@@ -424,9 +423,7 @@ set_source_files_properties(
     src/world.cpp
     src/faction.cpp
     src/faction_treaty.cpp
-    src/faction_diplomacy.cpp
-    src/faction_dialogue.cpp
-    src/faction_network.cpp
+    src/aggression.cpp
     src/veh.cpp
     src/orders.cpp
     src/battle.cpp
@@ -538,6 +535,7 @@ set_source_files_properties(src/alphanet.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Mixed generic/application owners retain their independently measured defaults.
 set_source_files_properties(
     src/base.cpp
+    src/score.cpp
     src/base_compute.cpp
     src/multiwin.cpp
     src/socialwin.cpp
@@ -572,6 +570,8 @@ set_property(SOURCE
     src/alpha.cpp
     src/base.cpp
     src/faction.cpp
+    src/aggression.cpp
+    src/score.cpp
     src/tutwin.cpp
     src/veh.cpp
     src/orders.cpp
@@ -797,7 +797,10 @@ target_compile_options(OpenSMACX PRIVATE $<$<COMPILE_LANGUAGE:CXX>:/W4>)
 set(OPENSMACX_UNPOOLED_SOURCES
     src/faction.cpp
     src/faction_treaty.cpp
+    src/aggression.cpp
     src/enemy.cpp
+    src/probe.cpp
+    src/councwin.cpp
     src/turn.cpp
     src/setup.cpp
     src/colortables.cpp

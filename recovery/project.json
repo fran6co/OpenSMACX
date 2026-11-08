@@ -1263,7 +1263,11 @@
           "/TP",
           "/Zm200",
           "/GX",
-          "/O2",
+          "/Og",
+          "/Oi",
+          "/Ot",
+          "/Gs",
+          "/Gy",
           "/Ob2",
           "-MT",
           "/W4",
@@ -1597,17 +1601,22 @@
           "-c"
         ]
       },
-      "src/faction_diplomacy.cpp": {
+      "src/aggression.cpp": {
         "flags": [
           "/nologo",
           "/TP",
           "/Zm200",
           "/GX",
-          "/O2",
+          "/Og",
+          "/Oi",
+          "/Ot",
+          "/Gs",
+          "/Gy",
           "/Ob2",
           "-MT",
           "/W4",
           "/Oy-",
+          "/Z7",
           "-c"
         ]
       },
@@ -2170,6 +2179,39 @@
           "/Ot",
           "/Gs",
           "/Gy",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "/Z7",
+          "-c"
+        ]
+      },
+      "src/probe.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/Og",
+          "/Oi",
+          "/Ot",
+          "/Gs",
+          "/Gy",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/score.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
           "/Ob2",
           "-MT",
           "/W4",

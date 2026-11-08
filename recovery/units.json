@@ -326,7 +326,7 @@
       "name": "FactionNetworkDiplomacy",
       "start": "0x005391C0",
       "end_exclusive": "0x00539460",
-      "recovered_tu": "src/faction_network.cpp",
+      "recovered_tu": "src/faction.cpp",
       "reason": "Inferred complete network treaty and agenda operation core: the three treaty updates and their three agenda counterparts form one complete paired helper set.",
       "evidence": [
         "The whole-home frontier reports all six mapped primary identities in one band, with no foreign mapped identities and no nonpadding gaps.",

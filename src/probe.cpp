@@ -23,31 +23,13 @@
 #include "veh.h"
 #include "strings.h"
 #include "map.h"
+#include "faction_inline.h"  // has_treaty, expanded in corner_market
 
 extern uint32_t LockEnableMask;  // 0x009A64E8, defined in lock.cpp
 
 BOOL ProbeHasAlgoEnhancement;  // 0x00945B30
 uint32_t ProbeTargetFactionID;  // 0x00945B34
 BOOL ProbeTargetHasHSA;  // 0x00945B38
-
-/*
-Purpose: Calculate the amount of energy that can be stolen from a base based on its population.
-// ORIGINAL: 0x0050C4B0 ?steal_energy@@YAHH@Z 0x0050C4B0-0x0050C504 BYTE_EXACT
-// size      84 bytes
-// prototype int (__cdecl ?steal_energy@@YAHH@Z)(int baseID)
-// callers   1   call targets   0
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     (none)
-Return Value: Energy
-Status: Complete
-*/
-int __cdecl steal_energy(int base_id) {
-    uint32_t faction_id = Bases[base_id].faction_id_current;
-    int energy = PlayersData[faction_id].energy_reserves;
-    return (energy <= 0) ? 0
-        : ((energy * Bases[base_id].population_size) / (PlayersData[faction_id].pop_total + 1));
-}
 
 /*
 Purpose: Calculate how vulnerable the coordinates are for the specified faction based on how far
@@ -206,6 +188,32 @@ int __cdecl mind_control(int base_id, int faction_id, BOOL is_corner_market) {
 #pragma optimize("", on)
 
 /*
+Purpose: Calculate the cost for the faction to corner the Global Energy Market (Economic Victory).
+// ORIGINAL: 0x0059EE50 ?corner_market@@YAHH@Z 0x0059EE50-0x0059EEDD BYTE_EXACT
+// size      141 bytes
+// prototype int (__cdecl ?corner_market@@YAHH@Z)(int factionID)
+// callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0059EA80
+Return Value: Cost to corner the Global Energy Market
+Status: Complete
+*/
+int __cdecl corner_market(int faction_id) {
+    int cost = 0;
+    for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
+        uint32_t target_faction_id = Bases[i].faction_id_current;
+        if (target_faction_id != faction_id) {
+            if (!has_treaty(target_faction_id, faction_id, DTREATY_PACT)
+                || !has_treaty(target_faction_id, faction_id, DTREATY_HAVE_SURRENDERED)) {
+                cost += mind_control(i, faction_id, true);
+            }
+        }
+    }
+    return (cost < 1000) ? 1000 : cost;
+}
+
+/*
 Purpose: Calculate the success and survival rates for a probe action based on the probe's morale and
          the difficulty of the action. These are used to generate a chances probability string for
          provided id. A baseID is an optional parameter to factor in its probe defenses.
@@ -316,6 +324,7 @@ int __cdecl success_rates(int id, int morale, int diff_modifier, int base_id) {
 #include "game.h"
 #include "base.h"
 #include "map.h"
+#include "faction_inline.h"  // has_treaty, expanded in corner_market
 #include "random.h"
 #include "veh.h"
 #include <cstdlib>
