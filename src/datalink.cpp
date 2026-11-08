@@ -2609,7 +2609,7 @@ Purpose: List the advanced concepts, the second CONCEPTS.TXT section.
 
          Same reader walk as set_cat_concept, with the ids starting at 10000
          so the two lists cannot collide.
-// ORIGINAL: 0x0042B490 ?set_cat_adv_concept@Datalink@@QAEXXZ 0x0042B490-0x0042B62A FILE
+// ORIGINAL: 0x0042B490 ?set_cat_adv_concept@Datalink@@QAEXXZ 0x0042B490-0x0042B62A FILE BYTE_EXACT
 // MISMATCH 32/127, first divergence at 10. TRIED: the reader walk spelled exactly as set_cat_concept's, with the early return as the image's inverted `!= 0`.
 // size      410 bytes
 // prototype void (__thiscall ?set_cat_adv_concept@Datalink@@QAEXXZ)(Datalink* this)
