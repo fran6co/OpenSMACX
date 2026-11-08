@@ -143,3 +143,122 @@ def test_a_library_call_target_is_checked_against_its_component_origin(tmp_path,
         [], component_reference_objects([moved]) + [("?table@@3PAHA", TABLE)]))
     assert result.verdict == "SHAPE_EXACT"
     assert "?g@@YAXXZ+0x0: source 0x00403000, image 0x00402000" in result.diagnostic
+
+
+# ------------------------------------------------------------ string literals
+
+LITERAL_AT = 0x00688CA4
+
+
+def literal_obj(name: str, literal: bytes, addend: int = 0) -> bytes:
+    """`push offset <name>+addend; ret`, the literal in a second `.data` section."""
+    code = b"\x68" + struct.pack("<i", addend) + b"\xC3"    # DIR32 at 1
+    names = ["?f@@YAXXZ", name]
+    raw_ptr = 20 + 2 * 40
+    data_ptr = raw_ptr + len(code)
+    reloc_ptr = data_ptr + len(literal)
+    relocs = struct.pack("<IIH", 1, 1, 0x0006)
+    sym_ptr = reloc_ptr + len(relocs)
+    header = struct.pack("<HHIIIHH", 0x14C, 2, 0, sym_ptr, len(names), 0, 0)
+    text = struct.pack("<8sIIIIIIHHI", b".text\x00\x00\x00", 0, 0, len(code),
+                       raw_ptr, reloc_ptr, 0, 1, 0, 0x60000020)
+    data = struct.pack("<8sIIIIIIHHI", b".data\x00\x00\x00", 0, 0, len(literal),
+                       data_ptr, 0, 0, 0, 0, 0xC0300040)
+    entries, strtab, offset = b"", b"", 4
+    for index, symbol in enumerate(names):
+        storage = 2 if index == 0 else (3 if symbol.startswith("$SG") else 2)
+        entries += (bytes(4) + struct.pack("<I", offset)
+                    + struct.pack("<IhHBB", 0, index + 1, 0x20 if index == 0 else 0, storage, 0))
+        strtab += symbol.encode() + b"\0"
+        offset += len(symbol) + 1
+    return (header + text + data + code + literal + relocs + entries
+            + struct.pack("<I", 4 + len(strtab)) + strtab)
+
+
+LITERAL_MARKED = """// ORIGINAL: 0x00401000 ?f@@YAXXZ 0x00401000-0x00401006
+void f() {
+}
+"""
+
+
+def measure_literal(tmp_path, monkeypatch, obj, image_strings, pushed=LITERAL_AT):
+    """Compare `obj` against an image pushing `pushed`, whose data holds `image_strings`."""
+    path = tmp_path / "x.cpp"
+    path.write_text(LITERAL_MARKED)
+    record = read_file(path)[0]
+    code = b"\x68" + struct.pack("<I", pushed) + b"\xC3"
+    monkeypatch.setattr(asm, "original_asm", lambda *_args, **_kw: Listing(
+        code=code, base=BASE, mask=frozenset(range(1, 5))))
+
+    def pe_bytes(_exe, address, size):
+        for start, raw in image_strings.items():
+            if start <= address and address + size <= start + len(raw):
+                return raw[address - start:address - start + size]
+        raise ValueError(f"0x{address:08X} is in no section")
+    monkeypatch.setattr(asm, "_pe_bytes", pe_bytes)
+    compiled = asm.subject_asm(obj, record)
+    return asm.compare_subject(record, "unused.exe", compiled, targets=ReferenceTargets())
+
+
+def test_a_literal_reference_carries_the_object_bytes(tmp_path):
+    path = tmp_path / "x.cpp"
+    path.write_text(LITERAL_MARKED)
+    compiled = asm.subject_asm(literal_obj("$SG1234", b"NOTINTRIAD\0\0"), read_file(path)[0])
+    assert compiled.references == (CodeReference(1, False, "$SG1234", 3, 0, b"NOTINTRIAD\0"),)
+
+
+def test_a_wrong_string_literal_is_not_byte_exact(tmp_path, monkeypatch):
+    """Console::terraform pushed "NOTINTRIAD" where the image pushes "TERRASEA"."""
+    result = measure_literal(tmp_path, monkeypatch, literal_obj("$SG1234", b"NOTINTRIAD\0\0"),
+                             {LITERAL_AT: b"TERRASEA\0\0\0\0NOTINTRIAD\0\0"})
+    assert result.verdict == "SHAPE_EXACT"
+    assert "literal 'NOTINTRIAD' vs image 'TERRASEA'" in result.diagnostic
+
+
+def test_the_same_text_at_another_address_is_byte_exact(tmp_path, monkeypatch):
+    """Pooled and unpooled copies share text, not addresses; only text is asked."""
+    image = {LITERAL_AT: b"TERRASEA\0\0\0\0"}
+    assert measure_literal(tmp_path, monkeypatch, literal_obj("$SG1234", b"TERRASEA\0\0\0\0"),
+                           image).verdict == "BYTE_EXACT"
+    pooled = "??_C@_08ABCDEFGH@TERRASEA?$AA@"
+    assert measure_literal(tmp_path, monkeypatch, literal_obj(pooled, b"TERRASEA\0"),
+                           image).verdict == "BYTE_EXACT"
+
+
+def test_a_literal_is_compared_through_its_terminator(tmp_path, monkeypatch):
+    """A prefix of the image's text is a different string."""
+    result = measure_literal(tmp_path, monkeypatch, literal_obj("$SG1", b"TERRA\0\0\0"),
+                             {LITERAL_AT: b"TERRASEA\0\0\0\0"})
+    assert result.verdict == "SHAPE_EXACT"
+    assert "literal 'TERRA' vs image 'TERRASEA'" in result.diagnostic
+
+
+def test_a_literal_addend_reads_both_sides_at_the_same_offset(tmp_path, monkeypatch):
+    obj = literal_obj("$SG1", b"XTERRASEA\0\0\0", addend=1)
+    image = {LITERAL_AT - 1: b"YTERRASEA\0\0\0"}
+    assert measure_literal(tmp_path, monkeypatch, obj, image).verdict == "BYTE_EXACT"
+    result = measure_literal(tmp_path, monkeypatch, obj, {LITERAL_AT - 1: b"XTERRALAND\0\0"})
+    assert result.verdict == "SHAPE_EXACT"
+    assert "$SG1+0x1: literal 'TERRASEA' vs image 'TERRALAND'" in result.diagnostic
+
+
+def test_a_wide_literal_ends_at_an_aligned_nul_pair(tmp_path, monkeypatch):
+    wide = "AB".encode("utf-16-le") + b"\0\0"
+    name = "??_C@_1G@ABCDEFGH@?$AAA?$AAB?$AA?$AA@"
+    image = {LITERAL_AT: wide + "C".encode("utf-16-le") + b"\0\0"}
+    assert measure_literal(tmp_path, monkeypatch, literal_obj(name, wide), image).verdict == "BYTE_EXACT"
+    other = {LITERAL_AT: "AC".encode("utf-16-le") + b"\0\0"}
+    assert measure_literal(tmp_path, monkeypatch, literal_obj(name, wide), other).verdict == "SHAPE_EXACT"
+
+
+def test_an_unreadable_image_literal_is_not_byte_exact(tmp_path, monkeypatch):
+    result = measure_literal(tmp_path, monkeypatch, literal_obj("$SG1", b"TERRASEA\0"), {})
+    assert result.verdict == "SHAPE_EXACT"
+    assert "unreadable" in result.diagnostic
+
+
+def test_other_static_data_stays_masked(tmp_path, monkeypatch):
+    """Only literal symbols are read; other unbound data is unchanged."""
+    result = measure_literal(tmp_path, monkeypatch, literal_obj("_table", b"TERRA\0"),
+                             {LITERAL_AT: b"OTHER\0"})
+    assert result.verdict == "BYTE_EXACT"

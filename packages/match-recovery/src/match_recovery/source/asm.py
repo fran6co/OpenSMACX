@@ -774,13 +774,44 @@ class CodeReference:
     """One relocated field of a compiled body: where, how, and to what.
 
     `offset` is into the listing's `code`; `addend` is the object's own field,
-    which is what the linker adds to the target's address.
+    which is what the linker adds to the target's address. `literal` holds a
+    string-literal target's bytes from `addend` through its terminator - see
+    `string_literal_bytes` - and is None for every other target.
     """
     offset: int
     relative: bool                   # REL32 rather than DIR32
     symbol: str
     storage: int                     # COFF storage class: 2 external, 3 static
     addend: int
+    literal: bytes | None = None
+
+
+def string_literal_bytes(obj, symbol, addend: int) -> bytes | None:
+    """A string literal's bytes in `obj` from `addend` through its terminator.
+
+    VC6 names an unpooled literal `$SG<n>` (static, in `.data`) and a pooled
+    one `??_C@...` (a `/GF` COMDAT; `??_C@_1` is wide, terminated by an
+    aligned NUL pair). Any other symbol, an addend outside the section, or a
+    missing terminator answers None and the field stays masked. The bytes are
+    the object's own section contents, never the image's.
+    """
+    if not symbol.name.startswith(("$SG", "??_C@")) or not 0 < symbol.section <= len(obj.sections):
+        return None
+    data = obj.sections[symbol.section - 1].data
+    start = symbol.value + addend
+    if not 0 <= start < len(data):
+        return None
+    width = 2 if symbol.name.startswith("??_C@_1") else 1
+    for end in range(start, len(data) - width + 1, width):
+        if data[end:end + width] == bytes(width):
+            return data[start:end + width]
+    return None
+
+
+def _render_literal(raw: bytes) -> str:
+    text = raw.rstrip(b"\0").decode("latin-1")
+    shown = repr(text)[1:-1]
+    return "'" + (shown if len(shown) <= 60 else shown[:57] + "...") + "'"
 
 
 @dataclass(frozen=True)
@@ -855,12 +886,14 @@ def _subject_references(obj: bytes, record: DecompilationState,
         if target is None or not 0 <= offset <= code_size - 4:
             continue
         addend = int.from_bytes(section.data[va:va + 4], "little", signed=True)
-        rows.append(CodeReference(offset, kind == 0x0014, target.name, target.storage, addend))
+        rows.append(CodeReference(offset, kind == 0x0014, target.name, target.storage, addend,
+                                  string_literal_bytes(parsed, target, addend)))
     return tuple(rows)
 
 
 def reference_mismatches(original: Listing, compiled: Listing,
-                         targets: ReferenceTargets | None, host: Path) -> list[str]:
+                         targets: ReferenceTargets | None, host: Path,
+                         image=None) -> list[str]:
     """Relocated fields whose bound target plus addend is not the image's.
 
     THE MASK HIDES TWO FACTS, not one: which symbol a field names, and how far
@@ -871,13 +904,25 @@ def reference_mismatches(original: Listing, compiled: Listing,
     fields whose symbol has an independent source binding are asked; the rest
     remain masked. Offsets are positional, so this is meaningful only once
     the masked comparison already agrees over the whole extent.
+
+    A STRING LITERAL HAS NO BINDING BUT CARRIES ITS VALUE. `push "NOTINTRIAD"`
+    and `push "TERRASEA"` differ only in a masked field, yet the literal's
+    bytes are in the object. When `image(address, size)` reads the original
+    image, an absolute field naming a literal is asked whether the image's
+    bytes at its address (the same addend included) are the literal's,
+    through the terminator. Content, not address: a pooled and an unpooled
+    copy of the same text both pass.
     """
-    if targets is None:
-        return []
     out = []
     for reference in compiled.references:
-        address = targets.address(reference, host)
-        if address is None or reference.offset + 4 > len(original.code):
+        if reference.offset + 4 > len(original.code):
+            continue
+        address = targets.address(reference, host) if targets is not None else None
+        if address is None:
+            if reference.literal is not None and image is not None and not reference.relative:
+                wrong = _literal_mismatch(original, reference, image)
+                if wrong:
+                    out.append(wrong)
             continue
         value = address + reference.addend
         if reference.relative:
@@ -890,6 +935,38 @@ def reference_mismatches(original: Listing, compiled: Listing,
             out.append(f"+0x{reference.offset:X} {reference.symbol}"
                        f"{reference.addend:+#x}: source 0x{expected:08X}, image 0x{actual:08X}")
     return out
+
+
+def _literal_mismatch(original: Listing, reference: CodeReference, image) -> str | None:
+    """A diagnostic when the image's bytes at the field's address are not the literal."""
+    observed = int.from_bytes(original.code[reference.offset:reference.offset + 4], "little")
+    expected = reference.literal
+    try:
+        found = image(observed, len(expected))
+    except ValueError:
+        found = None
+    if found == expected:
+        return None
+    label = f"+0x{reference.offset:X} {reference.symbol}{reference.addend:+#x}: literal {_render_literal(expected)}"
+    if found is None:
+        return f"{label} vs image 0x{observed:08X} unreadable"
+    width = 2 if reference.symbol.startswith("??_C@_1") else 1
+    shown = b""
+    while len(shown) < 256:          # the image's own text, for the reader
+        try:
+            unit = image(observed + len(shown), width)
+        except ValueError:
+            break
+        if unit == bytes(width):
+            break
+        shown += unit
+    return f"{label} vs image {_render_literal(shown)} at 0x{observed:08X}"
+
+
+def image_reader(exe: Path | str):
+    """`image(address, size)` over the original image, for `reference_mismatches`."""
+    exe = Path(exe)
+    return lambda address, size: _pe_bytes(exe, address, size)
 
 
 @dataclass(frozen=True)
@@ -1369,7 +1446,8 @@ def compare_regions(pairs: tuple[tuple[Listing, Listing], ...], *,
 def eh_region_listings(compiled: RegionCandidate, bound, image: PeImage) -> list[tuple[Listing, Listing]]:
     """(original, compiled) listings of each bound EH region, relocations masked on both sides."""
     pairs = []
-    symbols = Coff(compiled.object_bytes).symbols
+    parsed = Coff(compiled.object_bytes)
+    symbols = parsed.symbols
     for region in bound:
         low = region.original.start
         original = Listing(image.read(region.original), low,
@@ -1379,9 +1457,10 @@ def eh_region_listings(compiled: RegionCandidate, bound, image: PeImage) -> list
         references = tuple(
             CodeReference(item.offset, item.kind == RelocationKind.RELATIVE32,
                           symbols[int(item.target)].name, symbols[int(item.target)].storage,
-                          int.from_bytes(region.code[item.offset:item.offset + 4],
-                                         "little", signed=True))
-            for item in region.relocations)
+                          addend, string_literal_bytes(parsed, symbols[int(item.target)], addend))
+            for item in region.relocations
+            for addend in (int.from_bytes(region.code[item.offset:item.offset + 4],
+                                          "little", signed=True),))
         candidate = Listing(region.code, low,
                             mask=frozenset(item.offset + byte
                                 for item in region.relocations for byte in range(4)),
@@ -1450,7 +1529,8 @@ def compare_subject(record: DecompilationState, exe: Path | str,
                 tuple(pairs), alignments=tuple(region.alignment for region in bound))
             if comparison.verdict is Tier.BYTE_EXACT:
                 wrong = [item for original, candidate in pairs
-                         for item in reference_mismatches(original, candidate, targets, record.path)]
+                         for item in reference_mismatches(original, candidate, targets, record.path,
+                                                          image_reader(exe))]
                 if wrong:
                     reason = "relocated field differs from its bound target: " + "; ".join(wrong)
                     comparison = replace(comparison, verdict=Tier.SHAPE_EXACT,
@@ -1479,7 +1559,7 @@ def compare_subject(record: DecompilationState, exe: Path | str,
             pass
     result = compare_asm(original, compiled)
     if result.verdict is Tier.BYTE_EXACT:
-        wrong = reference_mismatches(original, compiled, targets, record.path)
+        wrong = reference_mismatches(original, compiled, targets, record.path, image_reader(exe))
         if wrong:
             # The instructions and every unrelocated byte agree; a bound
             # target or its offset does not. That is a wrong constant.
@@ -2128,9 +2208,10 @@ def compare_unit(records, exe: Path | str, source: Path | str,
                     CodeReference(relocation.offset, relocation.kind == RelocationKind.RELATIVE32,
                                   obj.symbols[int(relocation.target)].name,
                                   obj.symbols[int(relocation.target)].storage,
-                                  int.from_bytes(code[relocation.offset:relocation.offset + 4],
-                                                 "little", signed=True))
-                    for relocation in relocations)
+                                  addend, string_literal_bytes(obj, obj.symbols[int(relocation.target)], addend))
+                    for relocation in relocations
+                    for addend in (int.from_bytes(code[relocation.offset:relocation.offset + 4],
+                                                  "little", signed=True),))
                 compiled = Listing(code=code[:parent_size], base=parent.address,
                                    mask=compiled_mask, flags=label, references=references)
                 image_code = _pe_bytes(Path(exe), parent.address, parent_size)
@@ -2139,7 +2220,8 @@ def compare_unit(records, exe: Path | str, source: Path | str,
                     mask=_image_mask(Path(exe), parent.address,
                                      parent.address + parent_size))
                 parent_result = compare_asm(original_parent, compiled)
-                wrong = (reference_mismatches(original_parent, compiled, targets, parent.path)
+                wrong = (reference_mismatches(original_parent, compiled, targets, parent.path,
+                                              image_reader(exe))
                          if parent_result.verdict is Tier.BYTE_EXACT else [])
                 if wrong:
                     reason = "relocated field differs from its bound target: " + "; ".join(wrong)
