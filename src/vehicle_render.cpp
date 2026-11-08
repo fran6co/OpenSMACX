@@ -751,12 +751,15 @@ void __cdecl vehdraw_setup() {
 void __cdecl vehdraw_construct_vehicle(int veh_id, Caviar *renderer) {
     renderer->reset_objects();
     int proto_id = Vehs[veh_id].proto_id;
-    const int initial_chassis = VehPrototypes[proto_id].chassis_id;
-    if (initial_chassis == 0) {
-        const int weapon = VehPrototypes[proto_id].weapon_id;
-        renderer->set_scaling(renderer->get_scaling() *
-            ((weapon < 3 || weapon == 21) ? 1.25f : 0.8f));
-    } else if (initial_chassis == 1 && VehPrototypes[proto_id].weapon_id == 21) {
+    if (VehPrototypes[proto_id].chassis_id == 0) {
+        if (VehPrototypes[proto_id].weapon_id < 3
+            || VehPrototypes[proto_id].weapon_id == 21) {
+            renderer->set_scaling(renderer->get_scaling() * 1.25f);
+        } else {
+            renderer->set_scaling(renderer->get_scaling() * 0.8f);
+        }
+    } else if (VehPrototypes[proto_id].chassis_id == 1
+               && VehPrototypes[proto_id].weapon_id == 21) {
         renderer->set_scaling(renderer->get_scaling() * 1.25f);
     }
     int morale;
@@ -764,26 +767,40 @@ void __cdecl vehdraw_construct_vehicle(int veh_id, Caviar *renderer) {
     else morale = static_cast<int>(morale_alien(veh_id, ConsoleGlobal.faction_id_));
     // Morale calculation may change the vehicle/prototype state.
     proto_id = Vehs[veh_id].proto_id;
-    if (proto_id == 8 || proto_id == 9 || proto_id == 10) {
-        const int maximum = proto_id == 10 ? 7 : 6;
-        if (morale < 0) morale = 0;
-        else if (morale > maximum) morale = maximum;
-        const int base = proto_id == 8 ? 12 : (proto_id == 9 ? 6 : 5);
-        renderer->set_scaling(static_cast<float>(
-            static_cast<double>(renderer->get_scaling()) * (morale + base) * 0.125f));
-        if (proto_id == 8)
-            renderer->add_object(&g_NW_CAVIARDATA, VehDrawAnimationStep % 5 + 30);
-        else if (proto_id == 9)
-            renderer->add_object(&g_NI_CAVIARDATA, VehDrawAnimationStep % 5 + 30);
-        else
-            renderer->add_object(&g_NLC_CAVIARDATA, VehDrawAnimationStep);
+    switch (proto_id) {
+    case 8:
+        if (morale >= 0) {
+            if (morale > 6) morale = 6;
+        } else {
+            morale = 0;
+        }
+        renderer->set_scaling(renderer->get_scaling() * (morale + 12) * 0.125f);
+        renderer->add_object(&g_NW_CAVIARDATA, VehDrawAnimationStep % 5 + 30);
+        return;
+    case 9:
+        if (morale >= 0) {
+            if (morale > 6) morale = 6;
+        } else {
+            morale = 0;
+        }
+        renderer->set_scaling(renderer->get_scaling() * (morale + 6) * 0.125f);
+        renderer->add_object(&g_NI_CAVIARDATA, VehDrawAnimationStep % 5 + 30);
+        return;
+    case 10:
+        if (morale >= 0) {
+            if (morale > 7) morale = 7;
+        } else {
+            morale = 0;
+        }
+        renderer->set_scaling(renderer->get_scaling() * (morale + 5) * 0.125f);
+        renderer->add_object(&g_NLC_CAVIARDATA, VehDrawAnimationStep);
         return;
     }
     const uint32_t abilities = VehPrototypes[proto_id].ability_flags;
     const int reactor = VehPrototypes[proto_id].reactor_id;
     const int weapon = VehPrototypes[proto_id].weapon_id;
-    int chassis = VehPrototypes[proto_id].chassis_id;
     const int armor = VehPrototypes[proto_id].armor_id;
+    int chassis = VehPrototypes[proto_id].chassis_id;
     const int faction_id = Vehs[veh_id].faction_id;
     renderer->reset_objects();
     if (weapon == 21 && chassis == 1 && Armor[armor].defense_rating <= 1) chassis = 0;

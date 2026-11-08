@@ -1675,30 +1675,28 @@ void __cdecl say_orders(char *text, int veh_id) {
     char number[80];
     char suffix[80];
     char prefix[80];
-    Veh &vehicle = Vehs[veh_id];
-    const uint32_t state = vehicle.state;
+    const uint32_t state = Vehs[veh_id].state;
 
-    const bool prefix_state = vehicle.waypoint_count <= vehicle.patrol_current_point;
+    const bool prefix_state = Vehs[veh_id].patrol_current_point >= Vehs[veh_id].waypoint_count;
     if ((state & 0x00000200u) != 0
         && (state & 0x01000200u) != 0x01000200u
         && ((state & 0x02000200u) != 0x02000200u || prefix_state)) {
         ::strcat(text, "(");
-        if (vehicle.order_auto_type == 10) {
+        if (Vehs[veh_id].order_auto_type == 10) {
             prefix[0] = '\0';
             ::strcat(prefix, label_get(0x6F0 / 4));
-            const int base_id = base_at(vehicle.waypoint_x[1],
-                                        vehicle.waypoint_y[1]);
+            const int base_id = base_at(Vehs[veh_id].waypoint_x[1],
+                                        Vehs[veh_id].waypoint_y[1]);
             if (base_id >= 0) {
                 parse_says(0, Bases[base_id].name_string, -1, -1);
                 parse_string(prefix, suffix);
                 ::strcat(text, suffix);
             }
-        } else if (vehicle.order_auto_type == 11) {
+        } else if (Vehs[veh_id].order_auto_type == 11) {
             ::strcat(text, label_get(0x6F4 / 4));
-        } else if (VehPrototypes[vehicle.proto_id].plan == 9
-                   && vehicle.order_auto_type != 0) {
-            ::strcat(text, label_get((0x62C
-                + vehicle.order_auto_type * 4) / 4));
+        } else if (VehPrototypes[Vehs[veh_id].proto_id].plan == 9
+                   && Vehs[veh_id].order_auto_type != 0) {
+            ::strcat(text, label_get(0x62C / 4 + Vehs[veh_id].order_auto_type));
         } else {
             ::strcat(text, label_get(0x62C / 4));
         }
@@ -1706,7 +1704,7 @@ void __cdecl say_orders(char *text, int veh_id) {
         ::strcat(text, " ");
     }
 
-    const uint32_t state_after_prefix = vehicle.state;
+    const uint32_t state_after_prefix = Vehs[veh_id].state;
     if ((state_after_prefix & 0x00004000u) != 0) {
         ::strcat(text, vehicle_order_rule_text(Order[26].order));
         return;
@@ -1715,10 +1713,10 @@ void __cdecl say_orders(char *text, int veh_id) {
     if ((state_after_prefix & 0x01000200u) == 0x01000200u) {
         ::strcat(text, label_get(0x65C / 4));
         ::strcat(text, ": ");
-        for (int index = 0; index < vehicle.waypoint_count + 1; ++index) {
-            say_loc(text, vehicle.waypoint_x[index],
-                    vehicle.waypoint_y[index], 0, 2, 0);
-            if (index < vehicle.waypoint_count) {
+        for (int index = 0; index < Vehs[veh_id].waypoint_count + 1; ++index) {
+            say_loc(text, Vehs[veh_id].waypoint_x[index],
+                    Vehs[veh_id].waypoint_y[index], 0, 2, 0);
+            if (index < Vehs[veh_id].waypoint_count) {
                 ::strcat(text, " ");
                 ::strcat(text, label_get(0x660 / 4));
                 ::strcat(text, " ");
@@ -1727,31 +1725,27 @@ void __cdecl say_orders(char *text, int veh_id) {
         return;
     }
 
-    const int tile_index = vehicle.y * MapLongitude
-                        + (vehicle.x >> 1);
-    const uint8_t altitude = MapTiles[tile_index].climate & 0xE0;
-    const int terrain_row = altitude < 0x60 ? 1 : 0;
-    const unsigned int order_index =
-        static_cast<unsigned char>(vehicle.order) & 0x3F;
-    const RulesOrder &order = Order[order_index];
-    const LPSTR order_label = terrain_row ? order.order_sea : order.order;
-    ::strcat(text, vehicle_order_rule_text(order_label));
+    // The sea flag indexes the order's land/sea label pair directly.
+    const int tile_index = Vehs[veh_id].y * MapLongitude
+                        + (Vehs[veh_id].x >> 1);
+    const int sea = (MapTiles[tile_index].climate & ~0x1F) < 0x60;
+    ::strcat(text, vehicle_order_rule_text((&Order[Vehs[veh_id].order & 0x3F].order)[sea]));
 
-    if (vehicle.order == ORDER_CONVOY) {
+    if (Vehs[veh_id].order == ORDER_CONVOY) {
         ::strcat(text, " ");
-        ::strcat(text, StringTable.get(
-            Resource[vehicle.order_auto_type].name_plural));
-        const int base_id = base_at(vehicle.x, vehicle.y);
+        char *name = Resource[Vehs[veh_id].order_auto_type].name_plural;
+        ::strcat(text, StringTable.get(name));
+        const int base_id = base_at(Vehs[veh_id].x, Vehs[veh_id].y);
         if (base_id >= 0) {
             ::strcat(text, " ");
             ::strcat(text, label_get(0x6C8 / 4));
             ::strcat(text, " ");
-            say_base(text, vehicle.home_base_id);
+            say_base(text, Vehs[veh_id].home_base_id);
         } else {
             ::strcat(text, "(");
             const int yield = resource_yield(
-                vehicle.order_auto_type, vehicle.faction_id,
-                vehicle.home_base_id, vehicle.x, vehicle.y);
+                Vehs[veh_id].order_auto_type, Vehs[veh_id].faction_id,
+                Vehs[veh_id].home_base_id, Vehs[veh_id].x, Vehs[veh_id].y);
             _itoa(yield, number, 10);
             ::strcat(text, number);
             ::strcat(text, label_get(0x5EC / 4));
@@ -1760,33 +1754,31 @@ void __cdecl say_orders(char *text, int veh_id) {
         }
     }
 
-    if ((static_cast<unsigned char>(vehicle.order) & 0x3F) == ORDER_MOVE_TO) {
+    if ((static_cast<unsigned char>(Vehs[veh_id].order) & 0x3F) == ORDER_MOVE_TO) {
         ::strcat(text, " ");
-        const bool has_patrol_route =
-            (vehicle.state & 0x02000200u) == 0x02000200u
-            && vehicle.patrol_current_point < vehicle.waypoint_count;
-        const int location_mode = has_patrol_route ? 2 : 1;
-        say_loc(text, vehicle.waypoint_x[0], vehicle.waypoint_y[0],
-                0, location_mode, 0);
-        if ((vehicle.state & 0x02000200u) == 0x02000200u &&
-            vehicle.patrol_current_point < vehicle.waypoint_count &&
-            vehicle.waypoint_count != 0) {
-            for (int index = 0; index < vehicle.waypoint_count; ++index) {
+        say_loc(text, Vehs[veh_id].waypoint_x[0], Vehs[veh_id].waypoint_y[0], 0,
+                ((Vehs[veh_id].state & 0x02000200u) == 0x02000200u
+                 && Vehs[veh_id].patrol_current_point < Vehs[veh_id].waypoint_count)
+                    ? 2 : 1,
+                0);
+        if ((Vehs[veh_id].state & 0x02000200u) == 0x02000200u &&
+            Vehs[veh_id].patrol_current_point < Vehs[veh_id].waypoint_count) {
+            for (int index = 0; index < Vehs[veh_id].waypoint_count; ++index) {
                 ::strcat(text, " ");
                 ::strcat(text, label_get(0x664 / 4));
                 ::strcat(text, " ");
-                say_loc(text, vehicle.waypoint_x[index + 1],
-                        vehicle.waypoint_y[index + 1], 0, 2, 0);
+                say_loc(text, Vehs[veh_id].waypoint_x[index + 1],
+                        Vehs[veh_id].waypoint_y[index + 1], 0, 2, 0);
             }
         }
     }
-    if (vehicle.order == ORDER_MOVE) {
+    if (Vehs[veh_id].order == ORDER_MOVE) {
         ::strcat(text, " ");
-        ::strcat(text, compass_name(vehicle.waypoint_x[0]));
+        ::strcat(text, compass_name(Vehs[veh_id].waypoint_x[0]));
     }
-    if (vehicle.order == ORDER_ROAD_TO || vehicle.order == ORDER_MAGTUBE_TO) {
+    if (Vehs[veh_id].order == ORDER_ROAD_TO || Vehs[veh_id].order == ORDER_MAGTUBE_TO) {
         ::strcat(text, " ");
-        say_loc(text, vehicle.waypoint_x[0], vehicle.waypoint_y[0],
+        say_loc(text, Vehs[veh_id].waypoint_x[0], Vehs[veh_id].waypoint_y[0],
                 0, 2, 0);
     }
 }

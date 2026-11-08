@@ -64,100 +64,6 @@
 #include "mapwin.h"
 // Private pure branches shared with host controls; every helper has internal
 // linkage in each translation unit that includes this implementation fragment.
-static bool listbox_hit_single_row(int *remaining, int text_span,
-                                   int line_height) {
-    *remaining -= text_span * line_height;
-    return *remaining < 0;
-}
-
-struct ListBoxHitSpanContext {
-    StringList *items;
-};
-
-static bool listbox_y_span_hit(int y_offset, int top, int count,
-                               int line_height,
-                               ListBoxHitSpanContext *span_context,
-                               int *position) {
-    if (count <= 0 || y_offset < 0) return false;
-    StringList &items = *span_context->items;
-    int remaining = y_offset;
-    int cursor = top - 1;
-    if (cursor <= count - 1) {
-        items.current_ = items.head_;
-        if (cursor < 0) {
-            if (abs(cursor) > count) return false;
-            int index = abs(cursor);
-            while (index > 0) {
-                --index;
-                items.current_ = items.current_->previous;
-            }
-            cursor += count;
-            items.current_position_ = cursor;
-        } else {
-            int index = cursor;
-            while (index > 0) {
-                --index;
-                items.current_ = items.current_->next;
-            }
-            items.current_position_ = cursor;
-        }
-    }
-
-    int steps = count;
-    while (steps > 0) {
-        StringStructEntry *const head = items.head_;
-        if (head != 0) {
-            items.current_ = items.current_->next;
-            int next_position = items.current_position_ + 1;
-            items.current_position_ = next_position;
-            if (next_position == count) {
-                items.current_position_ = 0;
-            }
-        }
-        StringStructEntry *const entry = items.current_;
-        int span = 0;
-        if (entry != 0) {
-            StringStructPayload *const payload = items.current_entry();
-            span = static_cast<int>(payload->field_C_);
-        }
-        if (listbox_hit_single_row(&remaining, span, line_height)) {
-            *position = items.current_position_;
-            return true;
-        }
-        --steps;
-    }
-    return false;
-}
-
-static bool listbox_grid_hit_position(int x_offset, int y_offset, int top,
-                                      int count, int rows, int column_width,
-                                      int row_height, int *position) {
-    // Keep x86 signed division behavior, including negative x offsets. The
-    // seed divides these exact offsets without a bounds clamp.
-    const int column = x_offset / column_width;
-    const int row = y_offset / row_height;
-    const int offset = column * rows + row;
-    if (offset >= count) return false;
-    const int candidate = top + offset;
-    if (candidate >= count) return false;
-    *position = candidate;
-    return true;
-}
-
-static bool listbox_hit_position_for_mode(int layout_mode, int x, int y,
-        int top, int count, int x_origin, int y_origin, int rows,
-        int column_width, int row_height, int line_height,
-        ListBoxHitSpanContext *context, int *position) {
-    const int y_offset = y - y_origin;
-    if (count <= 0 || y_offset < 0) return false;
-    if (layout_mode == 1) {
-        return listbox_y_span_hit(y_offset, top, count, line_height,
-                                  context, position);
-    }
-    return listbox_grid_hit_position(x - x_origin, y_offset, top, count, rows,
-                                     column_width, row_height, position);
-}
-
 // Returns 1 for a navigation move, 0 for a handled arrow at its boundary or
 // in a one-column layout, and -1 for the type-ahead arm.
 static int listbox_navigation_target(int arm, int layout_mode, int rows,
@@ -181,23 +87,6 @@ static int listbox_navigation_target(int arm, int layout_mode, int rows,
     }
     *target = position;
     return 1;
-}
-
-static bool listbox_clear_old_selection(bool control_down) {
-    return !control_down;
-}
-
-// -1 preserves the existing flag, 0 clears it, and 1 sets it.
-static int listbox_click_selection_action(int index, int item_count,
-        int position, int low, int high, bool wraps_to_last,
-        bool shift_down, bool control_down, bool was_selected) {
-    if (shift_down) {
-        if ((index >= low && index <= high)
-                || (wraps_to_last && index == item_count - 1)) return 1;
-        return control_down ? -1 : 0;
-    }
-    if (index != position) return control_down ? -1 : 0;
-    return control_down && was_selected ? 0 : 1;
 }
 
 static int listbox_typeahead_lower_input(unsigned char input) {
@@ -1165,39 +1054,28 @@ int ListBox::calculate_dimensions() {
 
     int visible_rows = static_cast<int>(Dialog::field_50_);
     int rows = Dialog::item_list_.entry_count_;
-    if (visible_rows <= rows) rows = visible_rows;
+    if (!(rows < visible_rows)) rows = visible_rows;
     Dialog::row_count_ = rows;
 
     int max_width = 0;
-    int n = 0;
-    if (Dialog::item_list_.entry_count_ > 0) {
-        do {
-            char *name;
-            StringStructEntry *head = Dialog::item_list_.head_;
-            if (head != 0) {
-                Dialog::item_list_.current_ = Dialog::item_list_.current_->next;
-                Dialog::item_list_.current_position_ = static_cast<int32_t>(
-                    static_cast<uint32_t>(Dialog::item_list_.current_position_) + 1u);
-                if (Dialog::item_list_.current_position_ == Dialog::item_list_.entry_count_)
-                    Dialog::item_list_.current_position_ = 0;
-            }
-            if (Dialog::item_list_.current_ == 0) {
-                name = 0;
-            } else {
-                // Retain the original null-payload text read when head is null.
-                StringStructPayload *payload = head == 0
-                    ? 0 : Dialog::item_list_.current_->string_payload();
-                name = payload->text;
-            }
-            int width = Buffer::text_width(name);
-            if (max_width < width) max_width = width;
-            ++n;
-        } while (n < Dialog::item_list_.entry_count_);
-        if (max_width != 0) goto have_width;
+    for (int n = 0; n < Dialog::item_list_.entry_count_; ++n) {
+        char *name;
+        StringList *const list = &this->Dialog::item_list_;
+        StringStructEntry *head = list->head_;
+        if (head != 0) {
+            list->current_ = list->current_->next;
+            if (++list->current_position_ == list->entry_count_)
+                list->current_position_ = 0;
+        }
+        // Retain the original null-payload text read when head is null.
+        name = list->current_ != 0
+            ? (head != 0 ? list->current_->string_payload() : 0)->text
+            : 0;
+        int width = Buffer::text_width(name);
+        if (width > max_width) max_width = width;
     }
-    max_width = static_cast<int>(Dialog::field_2C_);
+    if (max_width == 0) max_width = static_cast<int>(Dialog::field_2C_);
 
-have_width:
     // Use unsigned intermediates for the original x86 dword wraparound.
     Dialog::field_64_ = Dialog::field_44_ + 2u + field_2C_ * 2u
                      + Dialog::field_34_ + static_cast<uint32_t>(max_width);
@@ -1215,7 +1093,7 @@ have_width:
             uint32_t width_bits = Dialog::field_64_ + Dialog::field_40_ * 2u;
             int width = static_cast<int32_t>(width_bits);
             int min_width = static_cast<int32_t>(Dialog::field_2C_);
-            if (width < min_width) width = min_width;
+            if (min_width > width) width = min_width;
             Dialog::field_5C_ = static_cast<uint32_t>(width);
             Dialog::field_64_ = Dialog::field_5C_ - Dialog::field_40_ * 2u;
         } else {
@@ -1229,7 +1107,7 @@ have_width:
                                 + Dialog::field_40_ * 2u - Dialog::field_44_;
             int width = static_cast<int32_t>(width_bits);
             int min_width = static_cast<int32_t>(Dialog::field_2C_);
-            if (width < min_width) width = min_width;
+            if (min_width > width) width = min_width;
             Dialog::field_5C_ = static_cast<uint32_t>(width);
         }
         Dialog::column_count_ = Dialog::field_4C_;
@@ -1259,15 +1137,15 @@ have_width:
             uint32_t product = static_cast<uint32_t>(Dialog::row_count_)
                              * static_cast<uint32_t>(Dialog::column_count_);
             if (static_cast<int32_t>(product) < static_cast<int32_t>(field_20_)) {
-                if (columns < 2) {
-                    Dialog::field_5C_ = static_cast<uint32_t>(Dialog::field_2C_)
-                                     - static_cast<uint32_t>(ScrollDefaultThickness);
-                    Dialog::column_count_ = 1;
-                } else {
+                if (columns > 1) {
                     Dialog::field_60_ = static_cast<uint32_t>(Dialog::field_30_)
                                      - static_cast<uint32_t>(ScrollDefaultThickness);
                     Dialog::row_count_ = static_cast<int32_t>(Dialog::field_60_)
                                       / static_cast<int32_t>(Dialog::field_68_);
+                } else {
+                    Dialog::field_5C_ = static_cast<uint32_t>(Dialog::field_2C_)
+                                     - static_cast<uint32_t>(ScrollDefaultThickness);
+                    Dialog::column_count_ = 1;
                 }
             }
         }
@@ -1281,9 +1159,7 @@ have_width:
     if (static_cast<int32_t>(Dialog::item_list_.entry_count_)
         <= static_cast<int32_t>(height_numerator)
            / static_cast<int32_t>(height_denominator)) {
-        if ((Dialog::field_20_ & 2) == 0) {
-            Dialog::field_64_ = Dialog::field_5C_ - Dialog::field_40_ * 2u;
-        } else {
+        if ((Dialog::field_20_ & 2) != 0) {
             uint32_t width_numerator = Dialog::field_5C_
                                      - Dialog::field_40_ * 2u
                                      + static_cast<uint32_t>(margin);
@@ -1291,6 +1167,8 @@ have_width:
                 static_cast<int32_t>(width_numerator)
                 / Dialog::column_count_)
                 - static_cast<uint32_t>(margin);
+        } else {
+            Dialog::field_64_ = Dialog::field_5C_ - Dialog::field_40_ * 2u;
         }
     }
 
@@ -1298,7 +1176,7 @@ have_width:
                         * static_cast<uint32_t>(Dialog::column_count_);
     field_1C_ = total_bits;
     int total = static_cast<int32_t>(total_bits);
-    if (total < static_cast<int32_t>(field_20_)) {
+    if (static_cast<int32_t>(field_20_) > total) {
         if (1 < Dialog::column_count_) {
             if ((iFlags_ & 0x40) == 0)
                 Dialog::field_60_ += ScrollDefaultThickness;
@@ -1341,11 +1219,6 @@ int ListBox::attach(GraphicWin *a1, int a2, int a3, int a4) {
         return 7;
     }
 
-    GraphicWin &graphic = *this;
-    Dialog &dialog = *this;
-    Win &window = graphic;
-    Buffer &buffer = graphic;
-
     int flags = (a4 & 0xfffffff3) | 0x20;
     iFlags_ = static_cast<uint32_t>(flags);
 
@@ -1354,17 +1227,17 @@ int ListBox::attach(GraphicWin *a1, int a2, int a3, int a4) {
         if (dim_result != 7) {
             return dim_result;
         }
-        dialog.field_5C_ = dialog.field_2C_;
-        dialog.field_60_ = dialog.field_30_;
-        dialog.column_count_ = 1;
-        dialog.row_count_ = 1;
+        Dialog::field_5C_ = Dialog::field_2C_;
+        Dialog::field_60_ = Dialog::field_30_;
+        Dialog::column_count_ = 1;
+        Dialog::row_count_ = 1;
     }
 
-    dialog.window_x_ = a2;
-    dialog.window_y_ = a3;
+    Dialog::window_x_ = a2;
+    Dialog::window_y_ = a3;
 
     if (static_cast<int32_t>(field_20_) > static_cast<int32_t>(field_1C_)) {
-        if (dialog.column_count_ > 1) {
+        if (Dialog::column_count_ > 1) {
             flags |= 4;
         } else {
             flags |= 8;
@@ -1378,69 +1251,61 @@ int ListBox::attach(GraphicWin *a1, int a2, int a3, int a4) {
         flags |= 0x800;
     }
 
-    int init_result = graphic.init(
+    // Width is Dialog +0x5C and height +0x60.
+    int init_result = GraphicWin::init(
         a2, a3,
-        static_cast<int32_t>(dialog.field_60_),
-        static_cast<int32_t>(dialog.field_5C_),
+        static_cast<int32_t>(Dialog::field_5C_),
+        static_cast<int32_t>(Dialog::field_60_),
         0, flags, a1, 0, 0);
     if (init_result != 0) {
         return init_result;
     }
 
     if (flags & 8) {
-        window.set_vert_range(0, dialog.item_list_.entry_count_ - 1);
-        window.set_vert_paging(dialog.row_count_ - 1);
+        set_vert_range(0, Dialog::item_list_.entry_count_ - 1);
+        set_vert_paging(Dialog::row_count_ - 1);
     } else if (flags & 4) {
-        int numerator = dialog.item_list_.entry_count_;
-        int quotient = numerator / dialog.row_count_;
-        window.set_horz_range(0, quotient - 1);
-        window.set_horz_paging(dialog.column_count_);
+        set_horz_range(0, Dialog::item_list_.entry_count_ / Dialog::row_count_ - 1);
+        set_horz_paging(Dialog::column_count_);
     }
 
-    if (dialog.item_list_.entry_count_ == 0) {
+    if (Dialog::item_list_.entry_count_ == 0) {
         field_18_ = 0;
     } else {
-        while (static_cast<int32_t>(dialog.selected_position_)
-               >= static_cast<int32_t>(field_1C_ + field_18_)) {
-            int step;
-            if (dialog.column_count_ > 1) {
-                step = dialog.row_count_;
-            } else {
-                step = 1;
-            }
-            field_18_ += static_cast<uint32_t>(step);
+        while (static_cast<int32_t>(Dialog::selected_position_)
+               >= static_cast<int32_t>(field_18_ + field_1C_)) {
+            field_18_ += static_cast<uint32_t>(
+                Dialog::column_count_ > 1 ? Dialog::row_count_ : 1);
         }
     }
 
     if (static_cast<int32_t>(field_20_) > static_cast<int32_t>(field_1C_)) {
-        if (dialog.column_count_ > 1) {
-            window.set_horz_pos(static_cast<int32_t>(field_18_));
+        if (Dialog::column_count_ > 1) {
+            set_horz_pos(static_cast<int32_t>(field_18_));
         } else {
-            window.set_vert_pos(static_cast<int32_t>(field_18_));
+            set_vert_pos(static_cast<int32_t>(field_18_));
         }
     }
 
-    buffer.set_text_color(
-        static_cast<int>(dialog.text_color_a_),
-        static_cast<int>(dialog.text_color_b_),
-        static_cast<int>(dialog.text_color_c_),
-        static_cast<int>(dialog.text_color_d_));
-    buffer.set_text_color2(
-        static_cast<int>(dialog.text_color_2a_),
-        static_cast<int>(dialog.text_color_2b_),
-        static_cast<int>(dialog.text_color_2c_),
-        static_cast<int>(dialog.text_color_2d_));
-    buffer.set_text_color3(
-        static_cast<int>(dialog.text_color_3a_),
-        static_cast<int>(dialog.text_color_3b_),
-        static_cast<int>(dialog.text_color_3c_),
-        static_cast<int>(dialog.text_color_3d_));
-    buffer.set_font(dialog.font1_, dialog.font2_, dialog.font3_, 0);
+    Buffer::set_text_color(
+        static_cast<int>(Dialog::text_color_a_),
+        static_cast<int>(Dialog::text_color_b_),
+        static_cast<int>(Dialog::text_color_c_),
+        static_cast<int>(Dialog::text_color_d_));
+    Buffer::set_text_color2(
+        static_cast<int>(Dialog::text_color_2a_),
+        static_cast<int>(Dialog::text_color_2b_),
+        static_cast<int>(Dialog::text_color_2c_),
+        static_cast<int>(Dialog::text_color_2d_));
+    Buffer::set_text_color3(
+        static_cast<int>(Dialog::text_color_3a_),
+        static_cast<int>(Dialog::text_color_3b_),
+        static_cast<int>(Dialog::text_color_3c_),
+        static_cast<int>(Dialog::text_color_3d_));
+    Buffer::set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
 
-    window.set_vert_pos(static_cast<int32_t>(field_18_));
-    int position = static_cast<int32_t>(field_18_);
-    int quotient = position / dialog.column_count_;
-    window.set_horz_pos(quotient);
+    set_vert_pos(static_cast<int32_t>(field_18_));
+    set_horz_pos(static_cast<int32_t>(field_18_) / Dialog::column_count_);
 
     return 0;
 }
@@ -1616,27 +1481,6 @@ int ListBox::update_changes() {
     return 0;
 }
 
-// Seed provenance: 0x0060AA60/0x0060CBC0 calculate an entry hit from the
-// Dialog row/column metrics, while 0x0060AF90 walks the same StringList for
-// keyboard typeahead. Dialogs::on_left_down/on_mouse_move/on_key_down route
-// kind 2 to these ListBox handlers; the retained seed spells the entered
-// GraphicWin/virtual-Dialog displacements as raw offsets. This helper uses
-// the declared virtual bases and payload members instead.
-static bool listbox_hit_position(ListBox *list, int x, int y, int top,
-                                 int *position) {
-    Dialog &dialog = *list;
-    StringList &items = dialog.item_list_;
-    ListBoxHitSpanContext context = { &items };
-    return listbox_hit_position_for_mode(
-        dialog.column_count_, x, y, top, items.entry_count_,
-        static_cast<int>(dialog.field_40_),
-        static_cast<int>(dialog.field_38_),
-        dialog.row_count_,
-        static_cast<int>(dialog.field_64_ + dialog.field_44_),
-        static_cast<int>(dialog.field_68_ + dialog.field_44_),
-        static_cast<int>(dialog.field_68_ + dialog.field_44_), &context,
-        position);
-}
 
 // The pinned byte map at 0x0060B4EC is indexed by VK - 0x25: bytes 0..3 map
 // to arrows and every remaining byte in the 0x25..0x68 range maps to 4.
@@ -1645,6 +1489,40 @@ static int listbox_key_dispatch_arm(int key) {
     if (key < 0x25 || key > 0x68) return 4;
     const int table_index = key - 0x25;
     return table_index < 4 ? table_index : 4;
+}
+
+// The current payload, or null when the list head is null.
+static inline StringStructPayload *listbox_current_payload(StringStruct *list) {
+    return list->head_ != 0 ? list->current_->string_payload() : 0;
+}
+
+// StringStruct::seek_pos in the single-tail form the image's ListBox walks use (one
+// current_position_ store after both arms), as dialog.cpp's dialog_seek_pos.
+static inline int listbox_seek_pos(StringStruct *list, int a1) {
+    AbsFnT abs_fn = reinterpret_cast<AbsFnT>(&abs);
+    if (a1 > list->entry_count_ - 1) {
+        return 0;
+    }
+    list->current_ = list->head_;
+    if (a1 < 0) {
+        if (abs_fn(a1) > list->entry_count_) {
+            return 0;
+        }
+        int i = abs_fn(a1);
+        while (i > 0) {
+            --i;
+            list->current_ = list->current_->previous;
+        }
+        a1 += list->entry_count_;
+    } else {
+        int i = a1;
+        while (i > 0) {
+            --i;
+            list->current_ = list->current_->next;
+        }
+    }
+    list->current_position_ = a1;
+    return 1;
 }
 
 // Instruction/caller provenance retained in Git history of the deleted seed
@@ -1660,45 +1538,74 @@ static int listbox_key_dispatch_arm(int key) {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060aa60.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
 // symbol    ?on_left_down@ListBox@@UAEXHH@Z
 void ListBox::on_left_down(int x, int y) {
-    GraphicWin *window = this;
-    WinCallbackWindow = window->parent_window();
-    int position;
-    if (!listbox_hit_position(this, x, y, static_cast<int>(field_18_),
-                              &position)) {
-        return;
-    }
+    WinCallbackWindow = parent_window();
+    if (Dialog::item_list_.entry_count_ == 0) return;
+    y -= static_cast<int>(Dialog::field_38_);
+    if (y < 0) return;
 
-    const int previous = Dialog::selected_position_;
-    if (field_4_ != 0 && position != previous) {
-        const bool control = (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
-        const bool shift = (GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0;
-        const bool wrapped_initial_shift = shift && previous < 0;
-        const int anchor = previous < 0 ? position : previous;
-        const int low = (anchor < position) ? anchor : position;
-        const int high = (anchor > position) ? anchor : position;
-        const int interval_low = wrapped_initial_shift ? 0 : low;
-        if (listbox_clear_old_selection(control)) {
-            for (int index = 0; index < Dialog::item_list_.entry_count_; ++index) {
-                if (!Dialog::item_list_.seek_pos(index)) continue;
-                StringStructPayload *payload =
-                    Dialog::item_list_.current_entry();
-                if (payload != 0) payload->field_8_ = 0;
+    int position;
+    if (Dialog::column_count_ != 1) {
+        position = (x - Dialog::field_40_)
+                       / (Dialog::field_64_ + static_cast<int>(Dialog::field_44_))
+                       * Dialog::row_count_
+                   + y / (Dialog::field_68_ + static_cast<int>(Dialog::field_44_));
+    } else {
+        listbox_seek_pos(&this->Dialog::item_list_, static_cast<int>(field_18_) - 1);
+        position = 0;
+        for (int rows = Dialog::item_list_.entry_count_; rows > 0 && y >= 0; --rows) {
+            ++position;
+            StringList *const list = &this->Dialog::item_list_;
+            if (list->head_ != 0) {
+                list->current_ = list->current_->next;
+                if (++list->current_position_ == list->entry_count_)
+                    list->current_position_ = 0;
+            }
+            const int span = list->current_ != 0
+                ? static_cast<int>(list->current_entry()->field_C_) : 0;
+            y -= (Dialog::field_68_ + static_cast<int>(Dialog::field_44_)) * span;
+        }
+        if (position == 0) return;
+        --position;
+    }
+    if (position >= static_cast<int>(field_1C_)) return;
+    const int clicked = static_cast<int>(field_18_) + position;
+    if (clicked >= Dialog::item_list_.entry_count_) return;
+
+    if (field_4_ != 0 && clicked != Dialog::selected_position_) {
+        if (!(GetAsyncKeyState(VK_CONTROL) & 0x8000)) {
+            // Without Ctrl the old selection is cleared first.
+            listbox_seek_pos(&this->Dialog::item_list_, -1);
+            const int count = Dialog::item_list_.entry_count_;
+            for (int index = 0; index < count; ++index) {
+                StringList *const list = &this->Dialog::item_list_;
+                list->next_entry()->field_8_ = 0;
             }
         }
-        for (int index = 0; index < Dialog::item_list_.entry_count_; ++index) {
-            if (!Dialog::item_list_.seek_pos(index)) continue;
-            StringStructPayload *payload = Dialog::item_list_.current_entry();
-            if (payload == 0) continue;
-            const int action = listbox_click_selection_action(
-                index, Dialog::item_list_.entry_count_, position, interval_low,
-                high, wrapped_initial_shift, shift, control,
-                payload->field_8_ != 0);
-            if (action >= 0) payload->field_8_ = action;
+        if (GetAsyncKeyState(VK_SHIFT) & 0x8000) {
+            if (clicked > Dialog::selected_position_) {
+                listbox_seek_pos(&this->Dialog::item_list_, Dialog::selected_position_ - 1);
+                for (int index = Dialog::selected_position_; index <= clicked; ++index) {
+                    Dialog::item_list_.next_entry()->field_8_ = 1;
+                }
+            } else {
+                listbox_seek_pos(&this->Dialog::item_list_, clicked - 1);
+                for (int index = clicked; index <= Dialog::selected_position_; ++index) {
+                    Dialog::item_list_.next_entry()->field_8_ = 1;
+                }
+            }
+        } else {
+            listbox_seek_pos(&this->Dialog::item_list_, clicked);
+            StringList *const list = &this->Dialog::item_list_;
+            if (listbox_current_payload(list)->field_8_ != 0) {
+                listbox_current_payload(list)->field_8_ = 0;
+            } else {
+                listbox_current_payload(list)->field_8_ = 1;
+            }
         }
     }
-    set_selected_pos(position, 1);
-    if ((Dialog::field_20_ & 4) != 0 && window->parent_window() != 0) {
-        window->parent_window()->on_button_clicked(-1);
+    set_selected_pos(clicked, 1);
+    if ((Dialog::field_20_ & 4) != 0 && parent_window() != 0) {
+        parent_window()->on_button_clicked(-1);
     }
 }
 
@@ -1711,106 +1618,58 @@ void ListBox::on_left_down(int x, int y) {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060cbc0.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
 // symbol    ?on_mouse_move@ListBox@@UAEXHH@Z
 void ListBox::on_mouse_move(int x, int y) {
-    Dialog &dialog = *this;
-    StringList &items = dialog.item_list_;
-    const int top = static_cast<int>(field_18_);
-    const int y_offset = y - static_cast<int>(dialog.field_38_);
-    int position = -1;
-    bool position_found = false;
-    if (items.entry_count_ > 0 && y_offset >= 0) {
-        if (dialog.column_count_ != 1) {
-            const int x_offset = x - dialog.field_40_;
-            const int column = x_offset
-                / (dialog.field_64_ + static_cast<int>(dialog.field_44_));
-            const int row = y_offset
-                / (dialog.field_68_ + static_cast<int>(dialog.field_44_));
-            const int candidate = top + column * dialog.row_count_ + row;
-            if (candidate < items.entry_count_) {
-                position = candidate;
-                position_found = true;
-            }
-        } else {
-            int scroll = top - 1;
-            if (scroll <= items.entry_count_ - 1) {
-                items.current_ = items.head_;
-                if (scroll < 0) {
-                    if (abs(scroll) <= items.entry_count_) {
-                        int steps = abs(scroll);
-                        while (steps > 0) {
-                            --steps;
-                            items.current_ = items.current_->previous;
-                        }
-                        scroll += items.entry_count_;
-                        items.current_position_ = scroll;
-                    }
-                } else {
-                    int steps = scroll;
-                    while (steps > 0) {
-                        --steps;
-                        items.current_ = items.current_->next;
-                    }
-                    items.current_position_ = scroll;
-                }
-            }
-
-            int remaining = y_offset;
-            int rows_remaining = items.entry_count_;
-            int traversed = 0;
-            while (rows_remaining > 0 && remaining >= 0) {
-                ++traversed;
-                StringStructEntry *const head = items.head_;
-                if (head != 0) {
-                    items.current_ = items.current_->next;
-                    int current_position = items.current_position_ + 1;
-                    items.current_position_ = current_position;
-                    if (current_position == items.entry_count_) {
-                        items.current_position_ = 0;
-                    }
-                }
-
-                StringStructEntry *const entry = items.current_;
-                int span = 0;
-                if (entry != 0) {
-                    // The original retains a null payload read when a cursor
-                    // survives after the list head has been cleared.
-                    StringStructPayload *const payload = head != 0
-                        ? entry->string_payload() : 0;
-                    span = static_cast<int>(payload->field_C_);
-                }
-                remaining -= (dialog.field_68_
-                              + static_cast<int>(dialog.field_44_)) * span;
-                --rows_remaining;
-            }
-            if (traversed != 0) {
-                const int candidate = top + traversed - 1;
-                if (candidate < items.entry_count_) {
-                    position = candidate;
-                    position_found = true;
-                }
-            }
-        }
-    }
-    if (!position_found) {
-        return;
-    }
+    int position;
+    if (Dialog::item_list_.entry_count_ == 0) return;
     const int previous_hover = static_cast<int>(Dialog::field_F0_);
+    y -= static_cast<int>(Dialog::field_38_);
+    if (y < 0) return;
+
+    if (Dialog::column_count_ != 1) {
+        position = (x - Dialog::field_40_)
+                       / (Dialog::field_64_ + static_cast<int>(Dialog::field_44_))
+                       * Dialog::row_count_
+                   + y / (Dialog::field_68_ + static_cast<int>(Dialog::field_44_));
+    } else {
+        listbox_seek_pos(&this->Dialog::item_list_, static_cast<int>(field_18_) - 1);
+        position = 0;
+        for (int rows = Dialog::item_list_.entry_count_; rows > 0 && y >= 0; --rows) {
+            ++position;
+            StringList *const list = &this->Dialog::item_list_;
+            StringStructEntry *const head = list->head_;
+            if (head != 0) {
+                list->current_ = list->current_->next;
+                if (++list->current_position_ == list->entry_count_)
+                    list->current_position_ = 0;
+            }
+            // The original retains a null payload read when a cursor
+            // survives after the list head has been cleared.
+            const int span = list->current_ != 0
+                ? static_cast<int>((head != 0 ? list->current_->string_payload() : 0)->field_C_)
+                : 0;
+            y -= (Dialog::field_68_ + static_cast<int>(Dialog::field_44_)) * span;
+        }
+        if (position == 0) return;
+        --position;
+    }
+
+    position += static_cast<int>(field_18_);
+    if (position >= Dialog::item_list_.entry_count_) return;
     if (position == Dialog::selected_position_) {
-        if (previous_hover == -1) return;
+        if (static_cast<int>(Dialog::field_F0_) == -1) return;
         Dialog::field_F0_ = static_cast<uint32_t>(-1);
         ListBoxDrawOffset = previous_hover - static_cast<int>(field_18_);
         draw_item(previous_hover);
-        static_cast<GraphicWin *>(this)->soft_update();
-        return;
+    } else {
+        Dialog::field_F0_ = static_cast<uint32_t>(position);
+        if (static_cast<int>(Dialog::field_F0_) == previous_hover) return;
+        if (previous_hover != -1) {
+            ListBoxDrawOffset = previous_hover - static_cast<int>(field_18_);
+            draw_item(previous_hover);
+        }
+        ListBoxDrawOffset = static_cast<int>(Dialog::field_F0_) - static_cast<int>(field_18_);
+        draw_item(static_cast<int>(Dialog::field_F0_));
     }
-    if (previous_hover == position) return;
-    Dialog::field_F0_ = static_cast<uint32_t>(position);
-    if (previous_hover != -1) {
-        ListBoxDrawOffset = previous_hover - static_cast<int>(field_18_);
-        draw_item(previous_hover);
-    }
-    ListBoxDrawOffset = position - static_cast<int>(field_18_);
-    draw_item(position);
-    static_cast<GraphicWin *>(this)->soft_update();
+    GraphicWin::soft_update();
 }
 
 // 0x0060AF90's table at 0x60B4EC maps VK_LEFT/UP/RIGHT/DOWN to four
@@ -1937,78 +1796,45 @@ void ListBox::UNK1(int direction) {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060c350.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
 // symbol    ?on_redraw@ListBox@@UAEXXZ
 void ListBox::on_redraw() {
-    GraphicWin &window = *this;
-    Win *parent = window.parent_window();
+    Win *parent = parent_window();
     if (parent == 0) return;
     WinCallbackWindow = parent;
-    Buffer *buffer = &window;
-    buffer->restore_clip();
+    Buffer::restore_clip();
 
-    bool handled = false;
-    if (fill_callback_ != 0 && fill_callback_(&window, 0, 0, 0) != 0) {
-        handled = true;
-    }
-    if (!handled && parent != 0 &&
-        parent->on_dialog_back_draw(&window)
-            != 0) {
-        handled = true;
-    }
-    if (!handled) {
-        if ((iFlags_ & 0x80000u) != 0) {
-            parent = window.parent_window();
-            if (parent != 0) {
-                GraphicWin *parent_graphic = static_cast<GraphicWin *>(parent);
-                parent_graphic->copy(buffer,
-                    Dialog::window_x_, Dialog::window_y_, 0, 0,
-                    window.pixel_width(), -window.pixel_height());
-            } else {
-                window.fill(Dialog::window_x_);
-            }
+    if ((fill_callback_ == 0 || fill_callback_(this, 0, 0, 0) == 0)
+        && parent->on_dialog_back_draw(this) == 0) {
+        if ((iFlags_ & 0x80000u) != 0 && (parent = parent_window()) != 0) {
+            static_cast<GraphicWin *>(parent)->copy(this,
+                Dialog::window_x_, Dialog::window_y_, 0, 0,
+                pixel_width(), pixel_height());
         } else {
-            window.fill(Dialog::window_x_);
+            fill(static_cast<int>(Dialog::field_6C_));
         }
     }
 
-    RECT border = *window.buffer_working_rect();
-    int edge = 0;
-    if (listbox_frame_edge_count(Dialog::field_6C_) > 0) {
-        do {
-            buffer->box(&border, static_cast<int>(Dialog::field_64_),
-                        static_cast<int>(Dialog::field_68_));
-            ++border.left;
-            ++border.top;
-            --border.right;
-            --border.bottom;
-            ++edge;
-        } while (edge < listbox_frame_edge_count(Dialog::field_6C_));
+    // Frame colours and edge count live at Dialog +0xAC/+0xB0/+0xB4.
+    RECT border = *buffer_working_rect();
+    for (int edge = 0; edge < listbox_frame_edge_count(Dialog::field_B4_); ++edge) {
+        Buffer::box(&border, static_cast<int>(Dialog::field_AC_),
+                    static_cast<int>(Dialog::field_B0_));
+        ++border.left;
+        --border.right;
+        ++border.top;
+        --border.bottom;
     }
 
     if (Dialog::item_list_.entry_count_ == 0) return;
-    Dialog::item_list_.seek_pos(static_cast<int>(field_18_) - 1);
+    listbox_seek_pos(&this->Dialog::item_list_, static_cast<int>(field_18_) - 1);
 
     ListBoxDrawOffset = 0;
-    int column = 0;
-    if (Dialog::column_count_ > 0) {
-        do {
-            int rows = Dialog::row_count_;
-            int row = 0;
-            if (rows > 0) {
-                do {
-                    draw_item(static_cast<int>(field_18_) + ListBoxDrawOffset);
-                    ++ListBoxDrawOffset;
-
-                    const int remaining = Dialog::item_list_.entry_count_
-                        - static_cast<int>(field_18_);
-                    if (ListBoxDrawOffset == remaining) {
-                        break;
-                    }
-
-                    rows = Dialog::row_count_;
-                    ++row;
-                } while (row < rows);
+    for (int column = 0; column < Dialog::column_count_; ++column) {
+        for (int row = 0; row < Dialog::row_count_; ++row) {
+            draw_item(static_cast<int>(field_18_) + ListBoxDrawOffset);
+            if (++ListBoxDrawOffset
+                == Dialog::item_list_.entry_count_ - static_cast<int>(field_18_)) {
+                break;
             }
-            ++column;
-        } while (column < Dialog::column_count_);
+        }
     }
 }
 

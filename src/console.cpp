@@ -3324,29 +3324,32 @@ Purpose: Edit one faction's four AI priority toggles through the checkbox
 void Console::set_ai(int faction_id) {
     // The pinned reads/writes at 96CDC0..96CDCC are the four named priority
     // fields at PlayersData + 0x3E0..0x3EC (VC6 CodeView offsets 992..1004).
-    int flags = (PlayersData[faction_id].ai_growth != 0) ? 1 : 0;
-    if (PlayersData[faction_id].ai_tech != 0) {
+    int *growth = &PlayersData[faction_id].ai_growth;
+    int *tech = &PlayersData[faction_id].ai_tech;
+    int *wealth = &PlayersData[faction_id].ai_wealth;
+    int *power = &PlayersData[faction_id].ai_power;
+    int flags = (*growth != 0) ? 1 : 0;
+    if (*tech != 0) {
         flags |= 2;
     } else {
         flags &= ~2;
     }
-    if (PlayersData[faction_id].ai_wealth != 0) {
+    if (*wealth != 0) {
         flags |= 4;
     } else {
         flags &= ~4;
     }
-    if (PlayersData[faction_id].ai_power != 0) {
+    if (*power != 0) {
         flags |= 8;
     } else {
         flags &= ~8;
     }
     PopupWriteCheckState = static_cast<int>(flags);
     if (x_pop_short(ConsoleStrTechRandom, 1, (NullCallback)0) >= 0) {
-        const signed char answer = static_cast<signed char>(PopupWriteCheckState);
-        PlayersData[faction_id].ai_growth = answer & 1;
-        PlayersData[faction_id].ai_tech = (answer & 2) >> 1;
-        PlayersData[faction_id].ai_wealth = (answer & 4) >> 2;
-        PlayersData[faction_id].ai_power = (answer & 8) >> 3;
+        *growth = (char)PopupWriteCheckState & 1;
+        *tech = ((char)PopupWriteCheckState & 2) >> 1;
+        *wealth = ((char)PopupWriteCheckState & 4) >> 2;
+        *power = ((char)PopupWriteCheckState & 8) >> 3;
         synch_ai(faction_id);
     }
 }
