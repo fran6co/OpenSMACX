@@ -207,6 +207,10 @@ class BasePop : public GraphicWin {
   void on_redraw();
 
  public:
+  // Wave index popup_wave_callback plays (+0x2F68); callers store 0x1C, 0x20, 9.
+  void set_wave(int wave) { text_block_a_.field_104_ = wave; }
+
+ public:
   // STATIC, AND THE CATALOGUED NAME IS WRONG. It reads
   // `?set_def_ok_text@BasePop@@QAAHPAD@Z` - QAA, a `__cdecl` MEMBER, which
   // would push `this` as the first argument. The image reads its string from

@@ -15,10 +15,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
-// ORIGINAL: 0x004213A0 ??_GProdPicker@@UAEPAXI@Z 0x004213A0-0x004213C1 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x004213A0-0x004213C1", "Pinned class constructor ??0ProdPicker@@QAE@XZ at 0x00492420 stores original class/view table VA 0x66a250 at 0x00492679 (mov dword ptr [esi], 0x66a250); the current genuine owner vftable ??_7ProdPicker@@6BWin@@@ selects generated ??_GProdPicker@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_EProdPicker@@UAEPAXI@Z (mode 2).", "Pinned ??_GProdPicker@@UAEPAXI@Z at 0x004213A0 calls the source-mapped ??1ProdPicker@@QAE@XZ at 0x00421100, then tests byte ptr [ebp + 8], 1; je 0x4213ba bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/prodpicker.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original ProdPicker scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
-// symbol    ??_GProdPicker@@UAEPAXI@Z
-// kind      game
 #include "stdafx.h"
 #include "font_metrics.h"
 #include "interface_fonts.h"
@@ -1125,13 +1121,6 @@ ProdPicker::ProdPicker() {
     field_A14_ = 0;
     field_A838_ = 0x6C;
     field_A83C_ = 0x5E;
-}
-
-// ORIGINAL: 0x00421100 ??1ProdPicker@@QAE@XZ 0x00421100-0x00421392;0x00651250-0x00651376 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:1b3ed0614446d5283fe4cbd2392cbb64b49db601:src/recovered/units/00421100.cpp", "source:src/prodpicker.h", "git:c96a47e3f89e8792c8514ac2ca79259ab6f42c3e:src/recovered/units/00421100.cpp", "Historical seed spelling ??1ProdPicker@@QAE@XZ; current source mapping ??1ProdPicker@@QAE@XZ; emitted symbol ??1ProdPicker@@UAE@XZ.", "Historical seed funclet identifies FlatButton destructor0x406880; nine embedded FlatButton members require genuine external destructor/lifetime behavior, not synthesized verification scaffolding. The actual GraphicWin-derived virtual destructor emits UAE rather than the catalogue QAE spelling."], "reason": "Home the ProdPicker destructor in its real owning TU; typed embedded members own their cleanup after close(), replacing the external hand-offset teardown forwarder. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
-// symbol    ??1ProdPicker@@UAE@XZ
-ProdPicker::~ProdPicker() {
-    close();
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.

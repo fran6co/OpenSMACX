@@ -1003,8 +1003,7 @@ void DiploPop::draw_info() {
             strcat(StringTemp, label_get(0x90 / 4));
             strcat(StringTemp, ": ");
             char amount[80];
-            _itoa(PlayersData[faction].energy_reserves -
-                      static_cast<int>(PlayersData[faction].hurry_cost_total),
+            _itoa(PlayersData[faction].energy_reserves - PlayersData[faction].hurry_cost_total,
                   amount, 10);
             strcat(StringTemp, amount);
             text_y = canvas->write_l(StringTemp, text_x, text_y,

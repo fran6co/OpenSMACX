@@ -15,6 +15,10 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+// ORIGINAL: 0x004213A0 ??_GProdPicker@@UAEPAXI@Z 0x004213A0-0x004213C1 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x004213A0-0x004213C1", "Pinned class constructor ??0ProdPicker@@QAE@XZ at 0x00492420 stores original class/view table VA 0x66a250 at 0x00492679 (mov dword ptr [esi], 0x66a250); the current genuine owner vftable ??_7ProdPicker@@6BWin@@@ selects generated ??_GProdPicker@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_EProdPicker@@UAEPAXI@Z (mode 2).", "Pinned ??_GProdPicker@@UAEPAXI@Z at 0x004213A0 calls the source-mapped ??1ProdPicker@@QAE@XZ at 0x00421100, then tests byte ptr [ebp + 8], 1; je 0x4213ba bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/prodpicker.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original ProdPicker scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
+// symbol    ??_GProdPicker@@UAEPAXI@Z
+// kind      game
 // ORIGINAL: 0x004213D0 ??_GBaseWin@@UAEPAXI@Z 0x004213D0-0x004213F1 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x004213D0-0x004213F1", "Pinned class constructor ??0BaseWin@@QAE@XZ at 0x00408490 stores original class/view table VA 0x66a40c at 0x004086E5 (mov dword ptr [esi], 0x66a40c); the current genuine owner vftable ??_7BaseWin@@6BWin@@@ selects generated ??_GBaseWin@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_EBaseWin@@UAEPAXI@Z (mode 2).", "Pinned ??_GBaseWin@@UAEPAXI@Z at 0x004213D0 calls the source-mapped ??1BaseWin@@QAE@XZ at 0x00420A70, then tests byte ptr [ebp + 8], 1; je 0x4213ea bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/basewin.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original BaseWin scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
 // symbol    ??_GBaseWin@@UAEPAXI@Z
@@ -2136,21 +2140,27 @@ static char *hurry_next_item() {
     return StringTemp;
 }
 
-// stand-in: BasePop exposes no setter for text_block_a_.field_104_ (Popup
-// +0x2F68, the wave index popup_wave_callback plays); the image stores it here.
-#define HURRY_SET_WAVE(popup, wave) (*reinterpret_cast<int *>(reinterpret_cast<char *>(&(popup)) + 0x2F68) = (wave))
+// Energy left after this turn's pending multiplayer hurry payments.
+// stand-in: hurry spells this through the helper at three of its six sites
+// and inline at the rest. The mix steers VC6's /Ob2 budget so the ~Popup
+// teardowns at the early returns inline as deeply as the image's (only the
+// HURRYPAYMENT return still inlines one FlatButton too many).
+static int hurry_energy(int faction_id) {
+    return PlayersData[faction_id].energy_reserves - PlayersData[faction_id].hurry_cost_total;
+}
+
 // ORIGINAL: 0x00418DF0 ?hurry@BaseWin@@QAEXXZ 0x00418DF0-0x00419A8E;0x0065221C-0x0065249C
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00418df0.cpp", "image:0x00418DF0-0x00419A8E native control-flow and operand review", "source:src/basewin.h", "source:src/base.h"], "reason": "Recover full hurry pricing, dialog, payment, lock and Base update flow through source-owned Base/PlayerData/UI state; retain native signed 32-bit arithmetic and callback-time reloads. Shared energy-mirror producer/consumer bodies remain seed-only, so that object's source binding is not proof of end-to-end energy runtime behavior."}
 // TRIED: `Popup popup;` RAII with raw popup-relative offsets for scroll_/flat_button/dialogs_/spot_/sprite_/heap_ reproduces the close cascades' shape and offsets (cross-checked against the scaffold's independently-derived field layout), but the success-path teardown ends with a manual GraphicWin dtor call rather than suppressing the compiler's own implicit ~Popup() at the closing brace, which the original does not emit on that path; MISMATCH #2.
 void BaseWin::hurry() {
+    int faction_id;  // declared first: the image keeps lock_held at [ebp-0x14]
     int lock_held = 0;
     Popup popup;
     compute_selected_base();
     if (Bases[focusedBaseID_].faction_id_current != ConsoleGlobal.faction_id_
         && (GameDataStateStorage.fields_.game_state_ & 0x80u) == 0) return;
 
-    // hurry_cost_total is declared uint32_t; the image compares it signed.
-    int faction_id = BaseCurrent->faction_id_current;
+    faction_id = BaseCurrent->faction_id_current;
     int production_id = BaseCurrent->queue_production_id[0];
     int facility_id = -production_id;
     int item_cost = production_id >= 0
@@ -2175,21 +2185,21 @@ void BaseWin::hurry() {
         ? VehPrototypes[production_id].veh_name
         : StringTable.get(Facility[facility_id].name), -1, -1);
     parse_num(0, cost);
-    parse_num(1, PlayersData[faction_id].energy_reserves - static_cast<int>(PlayersData[faction_id].hurry_cost_total));
+    parse_num(1, hurry_energy(faction_id));
     popup.start(PopupStartCaption, "HURRY", -1, 0, 0, 0);
     if ((BaseCurrent->state & 2u) != 0
         && (BaseCurrent->queue_production_id[0] >= 0 || BaseCurrent->queue_production_id[0] <= -0x41)) {
         popup.start(PopupStartCaption, "HURRYDRONE", -1, 0, 0x80, 0);
-        HURRY_SET_WAVE(popup, 0x1C);
-    } else if (PlayersData[faction_id].energy_reserves - static_cast<int>(PlayersData[faction_id].hurry_cost_total) >= 0) {
+        popup.set_wave(0x1C);
+    } else if (hurry_energy(faction_id) >= 0) {
         if (X_text_open(ScriptPopupFile, "HURRYOPTIONS")) return;
         popup.dialogs().item(hurry_next_item(), 0);
         hurry_next_item();
-        if (PlayersData[faction_id].energy_reserves - static_cast<int>(PlayersData[faction_id].hurry_cost_total) >= cost) {
+        if (PlayersData[faction_id].energy_reserves - PlayersData[faction_id].hurry_cost_total >= cost) {
             popup.dialogs().item(StringTemp, 1);
-            HURRY_SET_WAVE(popup, 0x20);
+            popup.set_wave(0x20);
         } else {
-            HURRY_SET_WAVE(popup, 9);
+            popup.set_wave(9);
         }
         popup.dialogs().item(hurry_next_item(), 2);
         if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) return;
@@ -2209,15 +2219,12 @@ void BaseWin::hurry() {
         return;
     }
     if (choice > 1) {
-        parse_num(0, min(cost, PlayersData[faction_id].energy_reserves
-                               - static_cast<int>(PlayersData[faction_id].hurry_cost_total)));
-        if (X_pop_ask_number("HURRYPAYMENT", min(cost, PlayersData[faction_id].energy_reserves
-                                                       - static_cast<int>(PlayersData[faction_id].hurry_cost_total)), 0)) {
+        parse_num(0, min(cost, hurry_energy(faction_id)));
+        if (X_pop_ask_number("HURRYPAYMENT", min(cost, PlayersData[faction_id].energy_reserves - PlayersData[faction_id].hurry_cost_total), 0)) {
             if (lock_held) NetDaemonNet.unlock_base(BaseIDCurrentSelected);
             return;
         }
-        const int available = PlayersData[faction_id].energy_reserves
-            - static_cast<int>(PlayersData[faction_id].hurry_cost_total);
+        const int available = PlayersData[faction_id].energy_reserves - PlayersData[faction_id].hurry_cost_total;
         int payment;
         if (ParseNumTable[0] < 0 || available < 0) payment = 0;
         else if (ParseNumTable[0] > available) payment = available;
@@ -7437,12 +7444,30 @@ int BaseWin::on_key_click(int repeat, int key) {
     return ConsoleGlobal.Console::on_key_click(repeat, key);
 }
 
+// ~ProdPicker sits between ~BaseWin and the deleting destructors in the image,
+// and ~BaseWin inlines it (states 40-58), so it shares this TU. It must be an
+// explicit inline defined before ~BaseWin: /Ob2 auto-inlining refuses it, and
+// a later definition is not inlined even when marked inline. ??_GProdPicker's
+// out-of-line call keeps the COMDAT body that prodpicker.cpp's vtable links to.
+// ORIGINAL: 0x00421100 ??1ProdPicker@@QAE@XZ 0x00421100-0x00421392;0x00651250-0x00651376 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:1b3ed0614446d5283fe4cbd2392cbb64b49db601:src/recovered/units/00421100.cpp", "source:src/prodpicker.h", "git:c96a47e3f89e8792c8514ac2ca79259ab6f42c3e:src/recovered/units/00421100.cpp", "Historical seed spelling ??1ProdPicker@@QAE@XZ; current source mapping ??1ProdPicker@@QAE@XZ; emitted symbol ??1ProdPicker@@UAE@XZ.", "Historical seed funclet identifies FlatButton destructor0x406880; nine embedded FlatButton members require genuine external destructor/lifetime behavior, not synthesized verification scaffolding. The actual GraphicWin-derived virtual destructor emits UAE rather than the catalogue QAE spelling."], "reason": "Home the ProdPicker destructor in its real owning TU; typed embedded members own their cleanup after close(), replacing the external hand-offset teardown forwarder. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
+// symbol    ??1ProdPicker@@UAE@XZ
+inline ProdPicker::~ProdPicker() {
+    close();
+}
+
 // 00420A70..00420F8E plus original cleanup/virtual-base teardown regions.
 // All member/base destructors execute implicitly in reverse declaration order.
 // ORIGINAL: 0x00420A70 ??1BaseWin@@QAE@XZ 0x00420A70-0x00420F8E;0x00650E20-0x00651184
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00420A70; retired seed provenance git:1432fed4:src/unrecovered/00420a70.cpp; all original spans and historical obligations retained.", "image:41E8D0 initializes existing Font/FlatButton/Sprite/RECT and Caviar camera members; 420A70 tears down the same declaration order.", "image:41AF5B supplies ConsoleGlobal GraphicWin virtual-base receiver939444; qualified Console callback leaves the result intact.", "image:40B8F8 borrows the vehicle-ID pointer in NetDaemon row1 payload; normal menu cancel-1 reads inherited GraphicWinA0C. Undefined icon-spacing/invalid-index/modal-borrow inputs remain explicit."], "reason": "Genuine BaseWin owner with actual members, automatic base/member lifetimes and native callback receivers, not fixed executable-address forwarding or raw self-offset access."}
 // symbol    ??1BaseWin@@UAE@XZ
-BaseWin::~BaseWin() {}
+// stand-in: dead store that emits nothing but raises ~BaseWin's /Ob2 budget.
+// Without it scroll3_'s first FlatButton inlines and prodPicker_.prod_b_'s
+// ~StringList does not; the image has the opposite.
+BaseWin::~BaseWin() {
+    if (0) field_40B00_ = 1;
+}
+
 
 // Original init: 0041E8D0..00420A3D; cleanup funclet 00652A94..00652AA9.
 #include "stdafx.h"

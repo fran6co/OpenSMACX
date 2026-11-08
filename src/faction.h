@@ -396,7 +396,7 @@ struct PlayerData {
     uint32_t diplo_mind_control[8]; // total action value against this player by each faction
     uint32_t stolen_data_count[8]; // probe procured research data (tech/map) per faction
     int energy_reserves; // current energy credits
-    uint32_t hurry_cost_total; // Net MP: Total paid energy to hurry production (current turn)
+    int hurry_cost_total; // Net MP: total energy paid to hurry production this turn; hurry compares it signed
     SocialCategory soc_category_pending;
     SocialCategory soc_category_active;
     int soc_upheaval_cost_paid;
