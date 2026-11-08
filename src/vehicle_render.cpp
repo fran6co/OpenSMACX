@@ -745,7 +745,7 @@ void __cdecl vehdraw_setup() {
 }
 
 
-// ORIGINAL: 0x004C1D20 ?vehdraw_construct_vehicle@@YAHHPAUCaviar@@@Z 0x004C1D20-0x004C202D
+// ORIGINAL: 0x004C1D20 ?vehdraw_construct_vehicle@@YAHHPAUCaviar@@@Z 0x004C1D20-0x004C202D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original resets renderer count before scaling and reloads prototype identity after morale calculation. Ordinary fields are byte-zero-extended, armor defense uses signed comparison, and faction comes from the current vehicle. Native special prototypes 8/9/10 clamp morale before scaling and choose their actual animated model.", "The repeated ordinary final reactor selection is expressed through the genuine shared reactor operation. Catalogued integer return is not consumed by mapped callers; original exits expose incidental register contents, not a supported result."], "reason": "Recover vehicle model assembly from genuine vehicle/prototype state and loaded CaviarData owners."}
 // symbol    ?vehdraw_construct_vehicle@@YAXHPAVCaviar@@@Z
 void __cdecl vehdraw_construct_vehicle(int veh_id, Caviar *renderer) {

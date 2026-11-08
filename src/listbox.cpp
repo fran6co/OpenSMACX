@@ -1792,7 +1792,7 @@ void ListBox::UNK1(int direction) {
 // then clips, honors optional list/parent paint callbacks, copies or fills the
 // backing surface, draws nested border edges, and paints the nested grid.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0060C350 ?on_redraw@ListBox@@QAEXXZ 0x0060C350-0x0060C5C4
+// ORIGINAL: 0x0060C350 ?on_redraw@ListBox@@QAEXXZ 0x0060C350-0x0060C5C4 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060c350.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
 // symbol    ?on_redraw@ListBox@@UAEXXZ
 void ListBox::on_redraw() {
