@@ -1366,6 +1366,30 @@ def compare_regions(pairs: tuple[tuple[Listing, Listing], ...], *,
     )
 
 
+def eh_region_listings(compiled: RegionCandidate, bound, image: PeImage) -> list[tuple[Listing, Listing]]:
+    """(original, compiled) listings of each bound EH region, relocations masked on both sides."""
+    pairs = []
+    symbols = Coff(compiled.object_bytes).symbols
+    for region in bound:
+        low = region.original.start
+        original = Listing(image.read(region.original), low,
+                           mask=frozenset(offset + byte
+                               for offset in image.absolute_sites(region.original)
+                               for byte in range(4)))
+        references = tuple(
+            CodeReference(item.offset, item.kind == RelocationKind.RELATIVE32,
+                          symbols[int(item.target)].name, symbols[int(item.target)].storage,
+                          int.from_bytes(region.code[item.offset:item.offset + 4],
+                                         "little", signed=True))
+            for item in region.relocations)
+        candidate = Listing(region.code, low,
+                            mask=frozenset(item.offset + byte
+                                for item in region.relocations for byte in range(4)),
+                            flags=compiled.flags, references=references)
+        pairs.append((original, candidate))
+    return pairs
+
+
 def compare_subject(record: DecompilationState, exe: Path | str,
                     compiled: Listing | RegionCandidate, *,
                     targets: ReferenceTargets | None = None) -> AsmComparison:
@@ -1421,25 +1445,7 @@ def compare_subject(record: DecompilationState, exe: Path | str,
                         flags=compiled.flags,
                         diagnostic=diagnostic,
                     )
-            pairs = []
-            symbols = Coff(compiled.object_bytes).symbols
-            for region in bound:
-                low = region.original.start
-                original = Listing(image.read(region.original), low,
-                                   mask=frozenset(offset + byte
-                                       for offset in image.absolute_sites(region.original)
-                                       for byte in range(4)))
-                references = tuple(
-                    CodeReference(item.offset, item.kind == RelocationKind.RELATIVE32,
-                                  symbols[int(item.target)].name, symbols[int(item.target)].storage,
-                                  int.from_bytes(region.code[item.offset:item.offset + 4],
-                                                 "little", signed=True))
-                    for item in region.relocations)
-                candidate = Listing(region.code, low,
-                                    mask=frozenset(item.offset + byte
-                                        for item in region.relocations for byte in range(4)),
-                                    flags=compiled.flags, references=references)
-                pairs.append((original, candidate))
+            pairs = eh_region_listings(compiled, bound, image)
             comparison = compare_regions(
                 tuple(pairs), alignments=tuple(region.alignment for region in bound))
             if comparison.verdict is Tier.BYTE_EXACT:

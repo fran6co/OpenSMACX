@@ -131,6 +131,16 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 def _main(args):
     try:
+        if args.command == "permute" and args.resources is not None and args.jobs > 1:
+            # One owner leases distinct slots; each concurrent compile child gets one.
+            from .resources import resource_environments
+            if args.slot_environments:
+                raise ValueError("--slot and --resources are alternative compiler slot sources")
+            path = args.resources if args.resources.is_absolute() else args.root / args.resources
+            with resource_environments(read_json(path), [args.root.resolve()], args.jobs,
+                                       timeout=args.resource_timeout) as leased:
+                args.leased_slots = leased
+                return _dispatch(args)
         if args.command != "worktree" and getattr(args, "resources", None) is not None:
             from .resources import resource_environment
             roots = [args.root.resolve()]

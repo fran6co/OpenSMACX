@@ -5026,7 +5026,9 @@ span pairs, and MSVC listings. No original-source line attribution is inferred.
 # Source-spelling search
 
 `recover permute <address-or-emitted-symbol> --image <pinned-image> [--in <host>]
-[--iterations N] [--seed S] [--time-limit SEC] [--keep-best <path>] [--operator NAME]`
+[--iterations N] [--seed S] [--time-limit SEC] [--keep-best <path>] [--operator NAME]
+[--jobs N (--resources <pool> | --slot VAR=VALUE ...)] [--probe-sweep [--probe-sizes 1,2,..]
+[--probe-forms flat,nested]]`
 searches body spellings of one near-miss function. Each trial applies one to three
 token-level transforms inside the target body only (adjacent independent statement
 swaps, declaration reordering, commutative operand swaps, comparison flips,
@@ -5048,3 +5050,33 @@ improvement, so Ctrl-C keeps the best so far. Exit 0 means an exact variant was
 found, 1 not, 3 refused. Apply a variant by hand, then `measure` and `record`.
 Transforms are spellings, not equivalence proofs; bodies with source markers,
 raw strings or preprocessor splicing refuse.
+
+Primary/EH span pairs are scored by EH unwind topology first: unmatched
+predecessor states (sequence-aligned) plus any cleanup-action count difference,
+then the summed region instruction distance, which is computed even when the
+topology differs so teardown near-misses have a gradient.
+
+`--jobs N` compiles trials concurrently, one compiler slot per compile. With
+`--resources <pool>` the command leases N distinct slots at once (busy or
+quarantined slots are skipped; too few refuse); each `--slot VAR=VALUE[,...]`
+instead names one caller-provisioned, unleased slot environment (for example
+`--slot VC6_PREFIX=/prefix/a --slot VC6_PREFIX=/prefix/b`), whose variables must be
+declared compiler environment inputs and whose environments must be distinct.
+Each slot is one executor process that keeps its environment for the run; every
+slot must reproduce the direct compile before any trial is scored. Trials still
+use the adapter's private overlay tree, so they never write the source. Search
+rounds derive candidates from the round's current text until N are uncached,
+compile them together and apply acceptance in generation order: a run is
+reproducible for one seed and job count, but differs from a run with another
+job count (`--jobs 1` is the serial search). Hunk minimization batches the same way.
+
+`--operator budget_probe` (opt-in, never a default) inserts, resizes or removes a
+marked stand-in dead /Ob2 budget probe: a call `permute_budget_probe_<N>(2);` (or
+the nested form) whose file-scope helper of N chained `if (x == k) x = c;` is
+spliced before the target's comment/marker block. It folds to no code but spends
+the caller's inline budget, which moves EH teardown inlining. `--probe-sweep`
+replaces the random search by scoring every single-probe placement (each statement
+boundary and block end, `--probe-sizes`, `--probe-forms flat,nested`) and ranks
+them in the summary. A best variant containing a probe is evidence about where the
+original spent budget, not recovered code: find a genuine spelling with the same
+effect before recording.

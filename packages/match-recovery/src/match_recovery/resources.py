@@ -86,14 +86,57 @@ def _slots(configuration, roots):
 
 
 @contextmanager
+def _claim(name, directory):
+    """Hold one slot's kernel lock and ownership marker; None when busy or quarantined."""
+    with ExitStack() as stack:
+        try:
+            stack.enter_context(file_lock(directory / LOCK, timeout=0, guarded=True))
+        except TimeoutError:
+            yield None
+            return
+        marker = directory / ACTIVE
+        try:
+            descriptor = os.open(marker, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        except FileExistsError:
+            # Do not infer descendant termination from a stale PID.
+            yield None
+            return
+        ownership = json.dumps({"schema_version": 1, "pid": os.getpid(), "slot": name,
+                                "nonce": uuid.uuid4().hex}).encode()
+        with os.fdopen(descriptor, "wb") as stream:
+            stream.write(ownership)
+            stream.flush()
+            os.fsync(stream.fileno())
+            identity = os.fstat(stream.fileno())
+        releasable = True
+        try:
+            yield name
+        except BaseException as error:
+            releasable = isinstance(error, Exception)
+            raise
+        finally:
+            if releasable:
+                current = marker.lstat()
+                if (marker.is_symlink() or current.st_nlink != 1
+                        or (current.st_dev, current.st_ino) != (identity.st_dev, identity.st_ino)
+                        or marker.read_bytes() != ownership):
+                    raise ValueError("resource ownership marker changed; preserve it for inspection")
+                marker.unlink()
+
+
+def _check_timeout(timeout):
+    if type(timeout) not in (int, float) or not math.isfinite(timeout) or not 0 <= timeout <= 3600:
+        raise ValueError("resource timeout must be finite and between 0 and 3600 seconds")
+
+
+@contextmanager
 def resource_environment(configuration, roots, *, timeout=0):
     """Lease one provisioned resource for a whole run; busy pools refuse boundedly.
 
     Configuration is coordinator-owned. It must assign different actual compiler
     resources to different directories; a generic allocator cannot infer that.
     """
-    if type(timeout) not in (int, float) or not math.isfinite(timeout) or not 0 <= timeout <= 3600:
-        raise ValueError("resource timeout must be finite and between 0 and 3600 seconds")
+    _check_timeout(timeout)
     if not roots:
         raise ValueError("resource allocation requires a project checkout")
     if INHERITED in os.environ:
@@ -105,49 +148,66 @@ def resource_environment(configuration, roots, *, timeout=0):
         deadline = time.monotonic() + timeout
         while True:
             for name, directory, environment in slots:
-                with ExitStack() as stack:
-                    try:
-                        stack.enter_context(file_lock(directory / LOCK, timeout=0, guarded=True))
-                    except TimeoutError:
+                with _claim(name, directory) as claimed:
+                    if claimed is None:
                         continue
-                    marker = directory / ACTIVE
-                    try:
-                        descriptor = os.open(marker, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-                    except FileExistsError:
-                        # Do not infer descendant termination from a stale PID.
-                        continue
-                    ownership = json.dumps({"schema_version": 1, "pid": os.getpid(), "slot": name,
-                                            "nonce": uuid.uuid4().hex}).encode()
-                    with os.fdopen(descriptor, "wb") as stream:
-                        stream.write(ownership)
-                        stream.flush()
-                        os.fsync(stream.fileno())
-                        identity = os.fstat(stream.fileno())
                     allocated = {**environment, INHERITED: "1"}
                     before = {key: os.environ.get(key) for key in allocated}
-                    releasable = True
                     try:
                         os.environ.update(allocated)
                         yield name
-                    except BaseException as error:
-                        releasable = isinstance(error, Exception)
-                        raise
                     finally:
                         for key, value in before.items():
                             if value is None:
                                 os.environ.pop(key, None)
                             else:
                                 os.environ[key] = value
-                        if releasable:
-                            current = marker.lstat()
-                            if (marker.is_symlink() or current.st_nlink != 1
-                                    or (current.st_dev, current.st_ino) != (identity.st_dev, identity.st_ino)
-                                    or marker.read_bytes() != ownership):
-                                raise ValueError("resource ownership marker changed; preserve it for inspection")
-                            marker.unlink()
                     return
             if time.monotonic() >= deadline:
                 raise TimeoutError("no resource slot available (busy or interrupted; inspect provisioned slots)")
+            time.sleep(min(0.05, max(0, deadline - time.monotonic())))
+    finally:
+        _environment_lock.release()
+
+
+@contextmanager
+def resource_environments(configuration, roots, count, *, timeout=0):
+    """Lease ``count`` distinct slots at once for one parallel owner.
+
+    Yields ``[(name, environment)]`` without changing this process's
+    environment: the owner hands each environment (plus the inheritance
+    marker) to exactly one child, which must not allocate again. Busy or
+    quarantined slots are skipped; too few free slots refuse boundedly and
+    release whatever was claimed.
+    """
+    _check_timeout(timeout)
+    if type(count) is not int or count < 1:
+        raise ValueError("resource count must be a positive integer")
+    if not roots:
+        raise ValueError("resource allocation requires a project checkout")
+    if INHERITED in os.environ:
+        raise ValueError("nested commands must inherit the allocated resource, not allocate again")
+    if not _environment_lock.acquire(blocking=False):
+        raise ValueError("resource environment is already allocated in this process")
+    try:
+        slots = _slots(configuration, roots)
+        if count > len(slots):
+            raise ValueError("resource count exceeds the configured slots")
+        deadline = time.monotonic() + timeout
+        while True:
+            with ExitStack() as stack:
+                leased = []
+                for name, directory, environment in slots:
+                    if len(leased) == count:
+                        break
+                    if stack.enter_context(_claim(name, directory)) is not None:
+                        leased.append((name, {**environment, INHERITED: "1"}))
+                if len(leased) == count:
+                    yield leased
+                    return
+            if time.monotonic() >= deadline:
+                raise TimeoutError(f"fewer than {count} resource slots available "
+                                   "(busy or interrupted; inspect provisioned slots)")
             time.sleep(min(0.05, max(0, deadline - time.monotonic())))
     finally:
         _environment_lock.release()

@@ -21,10 +21,12 @@ from .coff_replica import object_signature
 from .compiler import Compiler
 from .measurement import Measurement
 from .pe_coff import Coff
-from .permute import Score, Unsupported, search, tokenize
+from .permute import (PROBE_FORMS, PROBE_SIZES, Score, Unsupported, probe_calls, probe_helpers,
+                      probe_variants, search, tokenize)
 from .source import Mode, State
-from .source.asm import (AsmComparison, Listing, RegionCandidate, _data_divergence, _split_at,
-                         compare_unit, original_asm, shared_spans, subject_asm)
+from .source.asm import (AsmComparison, Listing, RegionCandidate, _data_divergence, _image_bytes, _split_at,
+                         compare_unit, eh_region_listings, original_asm, shared_spans, subject_asm)
+from .source.eh_regions import bind_eh_regions
 from .source.body import resolve_body
 from .source.mangled import qualified_name
 from .source.model import Tier
@@ -34,6 +36,7 @@ from .source_selection import (compilation_context, measurement_reference_target
                                selected_source_records, snapshot_mappings)
 
 _SCALE = 1000          # one differing instruction outweighs any byte tie-break
+_TOPOLOGY = 1000       # one differing EH unwind state outweighs any instruction distance
 _PROTECTED = ("ORIGINAL:", "BYTE_EXACT")
 
 
@@ -82,6 +85,177 @@ def comparison_distance(comparison: AsmComparison) -> tuple[int, int]:
     """Coarser fallback for EH region pairs: positional instruction disagreement."""
     return (comparison.original_instructions + comparison.compiled_instructions
             - 2 * comparison.matching_instructions, 0)
+
+
+def eh_distance(candidate: RegionCandidate, record, image) -> dict | None:
+    """EH unwind topology and per-region instruction distance; None when the regions do not bind.
+
+    The topology distance counts unmatched predecessor states on either side
+    (aligned like a sequence diff) plus any cleanup-action count difference,
+    so an extra or missing teardown state costs one. Region instruction
+    distances are summed with ``listing_distance`` even when the topology
+    differs, so a near miss still has a gradient. Ordering only, never a verdict.
+    """
+    from .pe_coff import PeImage
+    import hashlib
+    raw = _image_bytes(Path(image))
+    view = PeImage(raw, hashlib.sha256(raw).hexdigest())
+    try:
+        bound = bind_eh_regions(candidate.object_bytes, candidate.emitted_symbol, view, record.image_spans)
+        pairs = eh_region_listings(candidate, bound, view)
+    except ValueError:
+        return None
+    ownership = bound[0].ownership
+    original, compiled = ownership.original_predecessors, ownership.compiled_predecessors
+    matcher = difflib.SequenceMatcher(None, original, compiled, autojunk=False)
+    matched = sum(block.size for block in matcher.get_matching_blocks())
+    topology = (len(original) + len(compiled) - 2 * matched
+                + abs(len(ownership.original_actions) - len(ownership.compiled_actions)))
+    instructions = differing = 0
+    for left, right in pairs:
+        count, size = listing_distance(left, right)
+        instructions += count
+        differing += size
+    return {"eh_topology_distance": topology, "original_eh_states": len(original),
+            "compiled_eh_states": len(compiled), "instruction_distance": instructions,
+            "byte_distance": differing}
+
+
+# ------------------------------------------------------- parallel compiles
+
+_SLOT = {}
+
+
+def _slot_initialize(root: str, profile: str, environment: dict, binding) -> None:
+    """Executor process bound to exactly one compiler slot for its whole life."""
+    from .framework_runtime import initialize_worker
+    import os
+    initialize_worker(binding)
+    os.environ.update(environment)
+    _SLOT.update(root=root, profile=profile)
+
+
+def _slot_compiler() -> Compiler:
+    if "compiler" not in _SLOT:
+        _SLOT["compiler"] = Compiler(Path(_SLOT["root"]), profile=_SLOT["profile"])
+    return _SLOT["compiler"]
+
+
+def _slot_compile(unit: str, host: str | None, data: bytes | None, grid) -> list:
+    """Compile one overlay text for each flag set; ``("failed", diagnostic)`` ends the grid."""
+    _SLOT_COMPILER = _slot_compiler()
+    results = []
+    for flags in grid:
+        try:
+            if host is None:
+                results.append(("object", bytes(_SLOT_COMPILER(Path(unit), (), tuple(flags)))))
+            else:
+                results.append(("object", bytes(_SLOT_COMPILER.overlay(Path(unit), {host: data}, (),
+                                                                       tuple(flags)))))
+        except ValueError as error:
+            if not str(error).startswith("compiler command failed"):
+                raise
+            results.append(("failed", str(error)[:300]))
+            break
+    return results
+
+
+class SlotPool:
+    """One single-process executor per compiler slot; jobs go to whichever slot is free.
+
+    Results come back in submission order, so a caller's trajectory never
+    depends on which slot finished first. Every overlay compile already runs
+    in the compiler adapter's private temporary tree; the slot only separates
+    the compiler installation/prefix state between concurrent compiles.
+    """
+
+    def __init__(self, root: Path, profile: str, slots):
+        from concurrent.futures import ProcessPoolExecutor
+        import multiprocessing
+        import os
+        from .framework_runtime import export_binding
+        self.names = [name for name, _environment in slots]
+        binding = export_binding()
+        # Workers start lazily from the dispatching threads: never fork a threaded parent.
+        context = multiprocessing.get_context("spawn" if os.name == "nt" else "forkserver")
+        self.executors = [ProcessPoolExecutor(max_workers=1, mp_context=context, initializer=_slot_initialize,
+                                              initargs=(str(root), profile, dict(environment), binding))
+                          for _name, environment in slots]
+        self.busy = [0.0] * len(self.executors)
+
+    def __len__(self):
+        return len(self.executors)
+
+    def run(self, function, jobs, *, slot: int | None = None) -> list:
+        """``function(*job)`` for each job; with ``slot`` every job runs there."""
+        if slot is not None:
+            return [self.executors[slot].submit(function, *job).result() for job in jobs]
+        import queue
+        import threading
+        work = queue.SimpleQueue()
+        for index, job in enumerate(jobs):
+            work.put((index, job))
+        results, errors = [None] * len(jobs), []
+
+        def drain(number):
+            while not errors:
+                try:
+                    index, job = work.get_nowait()
+                except queue.Empty:
+                    return
+                started = time.monotonic()
+                try:
+                    results[index] = self.executors[number].submit(function, *job).result()
+                except BaseException as error:
+                    errors.append(error)
+                    return
+                finally:
+                    self.busy[number] += time.monotonic() - started
+        threads = [threading.Thread(target=drain, args=(number,), daemon=True)
+                   for number in range(len(self.executors))]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        if errors:
+            raise errors[0]
+        return results
+
+    def close(self, *, cancel: bool = False):
+        for executor in self.executors:
+            executor.shutdown(wait=not cancel, cancel_futures=cancel)
+
+
+def _checked_slots(root: Path, slots) -> list:
+    if not slots:
+        return []
+    slots = [(name, dict(environment)) for name, environment in slots]
+    declared = read_json_compiler_environment(root)
+    keys = None
+    for name, environment in slots:
+        if not environment or any(type(key) is not str or type(value) is not str
+                                  for key, value in environment.items()):
+            raise ValueError("compiler slot environment requires string variables")
+        variables = set(environment) - {"MATCH_RECOVERY_RESOURCE_LEASE"}
+        if not variables <= declared:
+            raise ValueError("compiler slot variables must be declared compiler environment inputs")
+        if keys is not None and keys != variables:
+            raise ValueError("all compiler slots must set the same environment variables")
+        keys = variables
+    if len({tuple(sorted(environment.items())) for _name, environment in slots}) != len(slots):
+        raise ValueError("concurrent compiler slots must have distinct environments")
+    if len({name for name, _environment in slots}) != len(slots):
+        raise ValueError("compiler slot names must be distinct")
+    return slots
+
+
+def read_json_compiler_environment(root: Path) -> set:
+    from .records import read_json
+    compiler = read_json(root / "recovery/project.json").get("compiler", {})
+    declared = compiler.get("environment") if isinstance(compiler, dict) else None
+    if not isinstance(declared, list):
+        raise ValueError("project compiler configuration declares no environment inputs")
+    return {"PATH", *declared}
 
 
 # ----------------------------------------------------------------- source
@@ -155,14 +329,55 @@ def _ignored_destination(root: Path, path: Path, settings) -> Path:
     return path
 
 
+def _helper_offset(prefix: str) -> int:
+    """A file-scope line start before the target definition and its comments/markers.
+
+    Just after the last top-level delimiter (``;``, ``}``, ``{`` or a
+    preprocessor line) preceding the definition, at the next line start that
+    is not inside a comment, so marker comments stay attached to their
+    definition and nothing lands inside a block comment.
+    """
+    tokens = tokenize(prefix)
+    significant = [token for token in tokens if token.kind not in ("ws", "comment")]
+    # Drop the definition head (everything after the last delimiter).
+    offset = 0
+    for token in reversed(significant[:-1] if significant and significant[-1].text == "{" else significant):
+        if token.kind == "pp" or token.text in (";", "}", "{"):
+            offset = token.end
+            break
+    if offset:
+        newline = prefix.find("\n", offset)
+        offset = len(prefix) if newline < 0 else newline + 1
+    for token in tokens:
+        if token.kind == "comment" and token.start < offset < token.end:
+            newline = prefix.find("\n", token.end)
+            offset = len(prefix) if newline < 0 else newline + 1
+    return offset
+
+
 def permute_source(root: Path, target: str, *, image: Path, in_file=None, iterations=200, seed=0,
-                   time_limit=None, keep_best=None, operators=None, progress=None, compiler=None):
+                   time_limit=None, keep_best=None, operators=None, progress=None, compiler=None,
+                   slots=None, probe_sweep=False, probe_sizes=None, probe_forms=None):
+    """Search body spellings of one mapped function; ``slots`` compiles trials concurrently.
+
+    ``slots`` is ``[(name, environment)]``, one distinct provisioned compiler
+    slot per concurrent compile (leased by the caller or explicitly supplied).
+    ``probe_sweep`` replaces the random search by an exhaustive ranking of
+    single dead-budget-probe placements (marked stand-ins, never recovery).
+    """
     root = Path(root).resolve()
     settings = Measurement.read(root)
     image = (image if image.is_absolute() else root / image).resolve()
     with image.open("rb") as stream:
         if file_digest(stream, "sha256").hexdigest() != image_pin(root, settings.source):
             raise ValueError("permute requires the configured pinned original image")
+    slots = _checked_slots(root, slots)
+    if compiler is not None and slots:
+        raise ValueError("an injected compiler and compiler slots are alternatives")
+    probe_sizes = tuple(probe_sizes or PROBE_SIZES)
+    probe_forms = tuple(probe_forms or PROBE_FORMS)
+    if any(type(size) is not int or size < 1 for size in probe_sizes) or set(probe_forms) - set(PROBE_FORMS):
+        raise ValueError("probe sizes must be positive integers and forms one of " + ", ".join(PROBE_FORMS))
     metadata = {"operation": "permute", "target": target}
     before = settings.snapshot(root, metadata)
     snapshot = source_snapshot(root, allow_empty=True)
@@ -195,50 +410,76 @@ def permute_source(root: Path, target: str, *, image: Path, in_file=None, iterat
         raise ValueError("target body contains source mapping markers; refusing to mutate it")
     if any(word in original_body for word in _PROTECTED):
         raise ValueError("target body contains ORIGINAL/BYTE_EXACT text; refusing to mutate it")
+    if probe_calls(original_body):
+        raise ValueError("target body already contains permute budget probes; remove them first")
     try:
         tokenize(original_body)
     except Unsupported as error:
         raise ValueError(f"target body is outside the supported token grammar: {error}") from error
+    helper_at = []
     destination = _ignored_destination(
         root, Path(keep_best) if keep_best else Path("build/recovery/permute") / record.address_hex / host_path.name,
         settings)
 
-    compiler = compiler if compiler is not None else Compiler(root, profile=settings.compiler_profile)
+    pool = SlotPool(root, settings.compiler_profile, slots) if slots else None
+    if pool is None:
+        compiler = compiler if compiler is not None else Compiler(root, profile=settings.compiler_profile)
     shared = shared_spans(mappings)
     references = measurement_reference_targets(root, settings, snapshot)
     timings = {"compile_seconds": 0.0}
     failures = []
     originals = {}
 
-    def compile_text(text: str, flags):
+    def compile_grid(text: str | None, flag_sets=grid) -> list:
+        """[("object", bytes) | ("failed", diagnostic)] per flag set; None text compiles the real file."""
+        if pool is not None:
+            return compile_texts([text])[0]
         started = time.monotonic()
+        results = []
         try:
-            return bytes(compiler.overlay(unit, {host: text.encode("utf-8")}, (), flags))
+            for flags in flag_sets:
+                try:
+                    results.append(("object", bytes(compiler(unit, (), flags) if text is None else
+                                                     compiler.overlay(unit, {host: text.encode("utf-8")}, (), flags))))
+                except ValueError as error:
+                    if not str(error).startswith("compiler command failed"):
+                        raise
+                    results.append(("failed", str(error)[:300]))
+                    break
+            return results
         finally:
             timings["compile_seconds"] += time.monotonic() - started
 
-    # Control: the overlay route must reproduce the direct compile before any score means anything.
-    direct = bytes(compiler(unit, (), grid[0]))
-    replica = compile_text(host_text, grid[0])
-    if object_signature(Coff(direct)) != object_signature(Coff(replica)):
-        raise ValueError("unchanged overlay replica differs physically from the direct compile")
+    def compile_texts(text_list) -> list:
+        if pool is None:
+            return [compile_grid(text) for text in text_list]
+        started = time.monotonic()
+        try:
+            return pool.run(_slot_compile, [(str(unit), None if text is None else host,
+                                             None if text is None else text.encode("utf-8"), grid)
+                                            for text in text_list])
+        finally:
+            timings["compile_seconds"] += time.monotonic() - started
 
     def splice(body_text: str) -> str:
         if any(body_text.count(word) != original_body.count(word) for word in _PROTECTED):
             raise ValueError("a mutation touched ORIGINAL/BYTE_EXACT text")
-        return prefix + body_text + suffix
-
-    def score(body_text: str):
-        text = splice(body_text)
-        raws = {}
-        for flags in grid:
+        helpers = probe_helpers(body_text)
+        if not helpers:
+            return prefix + body_text + suffix
+        if not helper_at:
             try:
-                raws[flags] = compile_text(text, flags)
-            except ValueError as error:
-                if not str(error).startswith("compiler command failed"):
-                    raise
-                failures.append(str(error)[:300])
-                return None
+                helper_at.append(_helper_offset(prefix))
+            except Unsupported as error:
+                raise ValueError(f"cannot place budget probe helpers before the target: {error}") from error
+        at = helper_at[0]
+        return prefix[:at] + helpers + "\n" + prefix[at:] + body_text + suffix
+
+    def score_objects(results):
+        if not results or results[-1][0] == "failed" or len(results) != len(grid):
+            failures.append(results[-1][1] if results else "no compile result")
+            return None
+        raws = {flags: data for flags, (_kind, data) in zip(grid, results)}
         measured = compare_unit([record], image, unit, (), grid, shared,
                                 compiler=lambda _path, _arguments, trial: raws[tuple(trial)],
                                 root=root, targets=references)
@@ -248,12 +489,18 @@ def permute_source(root: Path, target: str, *, image: Path, in_file=None, iterat
             return None
         exact = comparison.verdict is Tier.BYTE_EXACT
         best = None
+        eh = None
         for flags in grid:
             try:
                 listing = subject_asm(raws[flags], record, " ".join(flags))
             except ValueError:
                 continue
             if isinstance(listing, RegionCandidate):
+                found = eh_distance(listing, record, image)
+                if found is not None:
+                    value = (found["eh_topology_distance"], found["instruction_distance"], found["byte_distance"])
+                    if best is None or value < best:
+                        best, eh = value, found
                 continue
             original = originals.setdefault(None, original_asm(record, image))
             if len(listing.code) > len(original.code):
@@ -263,17 +510,30 @@ def permute_source(root: Path, target: str, *, image: Path, in_file=None, iterat
                     original = originals[len(listing.code)]
                 except ValueError:
                     pass
-            value = listing_distance(original, listing)
+            value = (0, *listing_distance(original, listing))
             best = value if best is None or value < best else best
-        instructions, differing = best if best is not None else comparison_distance(comparison)
-        distance = 0 if exact else max(1, instructions * _SCALE + min(differing, _SCALE - 1))
-        return Score(distance, exact, {
+        topology, instructions, differing = best if best is not None else (0, *comparison_distance(comparison))
+        distance = 0 if exact else max(1, (topology * _TOPOLOGY + instructions) * _SCALE
+                                       + min(differing, _SCALE - 1))
+        detail = {
             "verdict": comparison.verdict.value, "instruction_distance": instructions,
             "byte_distance": differing, "matching_instructions": comparison.matching_instructions,
             "original_instructions": comparison.original_instructions,
             "compiled_instructions": comparison.compiled_instructions,
             "first_divergence": comparison.first_divergence,
-            "allocation_only": comparison.allocation_only})
+            "allocation_only": comparison.allocation_only}
+        if eh is not None:
+            detail.update(eh_topology_distance=eh["eh_topology_distance"],
+                          original_eh_states=eh["original_eh_states"], compiled_eh_states=eh["compiled_eh_states"])
+        if comparison.diagnostic:
+            detail["diagnostic"] = comparison.diagnostic[:300]
+        return Score(distance, exact, detail)
+
+    def score(body_text: str):
+        return score_objects(compile_grid(splice(body_text)))
+
+    def score_many(body_texts):
+        return [score_objects(results) for results in compile_texts([splice(text) for text in body_texts])]
 
     def unified(body_text: str) -> str:
         return "".join(difflib.unified_diff(
@@ -296,30 +556,71 @@ def permute_source(root: Path, target: str, *, image: Path, in_file=None, iterat
                       "exact": bool(value and value.exact),
                       "mutations": [item.description for item in applied]})
 
-    started = time.monotonic()
-    result = search(original_body, score, iterations=iterations, seed=seed, time_limit=time_limit,
-                    parameters=parameters, operators=operators, scale=_SCALE,
-                    on_improve=keep, on_trial=trial)
-    elapsed = time.monotonic() - started
+    sweep = None
+    try:
+        # Control: the overlay route must reproduce the direct compile before any score means anything,
+        # on every slot, so concurrent trials are scored against one compiler behavior.
+        if pool is None:
+            direct = compile_grid(None, grid[:1])
+            replicas = [compile_grid(host_text, grid[:1])]
+        else:
+            direct = pool.run(_slot_compile, [(str(unit), None, None, grid[:1])], slot=0)[0]
+            replicas = [pool.run(_slot_compile, [(str(unit), host, host_text.encode("utf-8"), grid[:1])],
+                                 slot=number)[0] for number in range(len(pool))]
+        if direct[0][0] != "object" or any(row[0][0] != "object" for row in replicas):
+            raise ValueError("unchanged source does not compile through the configured compiler")
+        signature = object_signature(Coff(direct[0][1]))
+        if any(object_signature(Coff(row[0][1])) != signature for row in replicas):
+            raise ValueError("unchanged overlay replica differs physically from the direct compile"
+                             + (" on some compiler slot" if pool is not None else ""))
+        control_compiles = 1 + len(replicas)
+
+        started = time.monotonic()
+        if probe_sweep:
+            sweep = _probe_sweep(original_body, parameters, probe_sizes, probe_forms, score, score_many,
+                                 pool is not None, keep, time_limit, progress)
+            result = sweep["result"]
+        else:
+            result = search(original_body, score, iterations=iterations, seed=seed, time_limit=time_limit,
+                            parameters=parameters, operators=operators, scale=_SCALE,
+                            on_improve=keep, on_trial=trial,
+                            batch_scorer=score_many if pool is not None else None,
+                            batch=len(pool) if pool is not None else 1)
+        elapsed = time.monotonic() - started
+    except BaseException:
+        if pool is not None:
+            pool.close(cancel=True)
+            pool = None
+        raise
+    finally:
+        if pool is not None:
+            busy = list(pool.busy)
+            pool.close()
     keep(result.best_text, result.best)
     # A changed input makes the scores stale; keep the variant for review but never call it exact.
     stale = (settings.snapshot(root, metadata) != before
              or host_path.read_text(encoding="utf-8") != host_text)
     compiles = result.compiles * len(grid)
     outputs["summary"] = str(destination) + ".json"
+    stand_in = bool(probe_calls(result.best_text))
     summary = {
         "schema_version": 1, "operation": "permute",
         "result": "unknown" if stale else "pass" if result.best.exact else "fail",
         "inputs_changed": stale,
         "address": record.address_hex, "name": record.name, "symbol": record.symbol or record.name,
         "source": host, "translation_unit": unit_relative, "flag_sets": [list(flags) for flags in grid],
+        "mode": "probe_sweep" if probe_sweep else "search",
         "seed": seed, "iterations": result.iterations, "iteration_limit": iterations,
         "time_limit": time_limit, "stop_reason": result.stop_reason, "interrupted": result.interrupted,
         "exact": result.best.exact,
         "start": {"distance": result.start.distance, **result.start.detail},
         "best": {"distance": result.best.distance, **result.best.detail},
         "improved": result.best.distance < result.start.distance,
-        "compiles": compiles + 2, "search_compiles": compiles, "control_compiles": 2,
+        "best_contains_stand_in_probe": stand_in,
+        "compiler_slots": [name for name, _environment in slots] if slots else None,
+        "jobs": len(slots) if slots else 1,
+        "compiles": compiles + control_compiles, "search_compiles": compiles,
+        "control_compiles": control_compiles,
         "compile_failures": result.compile_failures, "cache_hits": result.cache_hits,
         "minimize_compiles": result.minimize_compiles * len(grid), "reverted_hunks": result.reverted_hunks,
         "accepted_moves": result.accepted, "elapsed_seconds": round(elapsed, 3),
@@ -333,5 +634,72 @@ def permute_source(root: Path, target: str, *, image: Path, in_file=None, iterat
             "the real source was not edited; review the variant, apply it by hand, then measure and record",
             "mutations are spelling transforms, not equivalence proofs; the byte match is the behavioral test",
             "no claims are banked; strict references, structure and linked preservation are not evaluated"]}
+    if slots:
+        summary["slot_busy_seconds"] = [round(value, 3) for value in busy]
+        summary["limitations"].append(
+            "concurrent trials are batched per round: the trajectory is reproducible for one seed and job count, "
+            "but differs from a run with another job count")
+    if sweep is not None:
+        counts = {}
+        for row in sweep["ranking"]:
+            key = (row["eh_topology_distance"], row["compiled_eh_states"], row["distance"])
+            counts[key] = counts.get(key, 0) + 1
+        summary["probe_sweep"] = {
+            "variants": sweep["variants"], "sizes": list(probe_sizes), "forms": list(probe_forms),
+            "ranking": sweep["ranking"][:25], "complete": sweep["complete"],
+            "unchanged": sum(row["distance"] == result.start.distance for row in sweep["ranking"]),
+            "outcomes": [{"eh_topology_distance": topology, "compiled_eh_states": states, "distance": distance,
+                          "variants": number}
+                         for (topology, states, distance), number in sorted(
+                             counts.items(), key=lambda item: (item[0][2], item[0][0] or 0))][:20]}
+    if stand_in:
+        summary["limitations"].append(
+            "the best variant contains a marked stand-in dead budget probe: it is evidence about the original's "
+            "/Ob2 inline budget, not recovered code; replace it with a genuine spelling before recording")
     Path(outputs["summary"]).write_text(json.dumps(summary, indent=2, sort_keys=True))
     return summary
+
+
+def _probe_sweep(original_body, parameters, sizes, forms, score, score_many, parallel, keep, time_limit, progress):
+    """Score every single-probe placement; deterministic ranking by (distance, size, order)."""
+    from .permute import SearchResult
+    started = time.monotonic()
+    start = score(original_body) if not parallel else score_many([original_body])[0]
+    if start is None:
+        raise ValueError("the unchanged body does not compile through the scorer")
+    result = SearchResult(start=start, best=start, best_text=original_body, compiles=1, stop_reason="sweep")
+    variants = probe_variants(original_body, parameters, sizes=sizes, forms=forms)
+    ranking, complete = [], True
+    chunk = 32
+    try:
+        for low in range(0, len(variants), chunk):
+            if time_limit is not None and time.monotonic() - started >= time_limit:
+                complete, result.stop_reason = False, "time_limit"
+                break
+            part = variants[low:low + chunk]
+            texts = [text for _description, text in part]
+            scores = score_many(texts) if parallel else [score(text) for text in texts]
+            for offset, ((description, text), value) in enumerate(zip(part, scores)):
+                number = low + offset + 1
+                result.iterations = number
+                result.compiles += 1
+                if progress is not None:
+                    progress({"iteration": number, "distance": None if value is None else value.distance,
+                              "exact": bool(value and value.exact), "mutations": [description]})
+                if value is None:
+                    result.compile_failures += 1
+                    continue
+                ranking.append({"order": number, "probe": description, "distance": value.distance,
+                                "exact": value.exact, **{key: value.detail.get(key) for key in (
+                                    "eh_topology_distance", "compiled_eh_states", "original_eh_states",
+                                    "instruction_distance", "byte_distance", "verdict")}})
+                if value.distance < result.best.distance or (value.exact and not result.best.exact):
+                    result.best, result.best_text = value, text
+                    result.improvements.append({"iteration": number, "distance": value.distance,
+                                                "exact": value.exact, "mutations": [description]})
+                    keep(text, value)
+    except KeyboardInterrupt:
+        complete, result.interrupted, result.stop_reason = False, True, "interrupted"
+    ranking.sort(key=lambda row: (row["distance"], row["order"]))
+    result.elapsed_seconds = time.monotonic() - started
+    return {"result": result, "ranking": ranking, "variants": len(variants), "complete": complete}

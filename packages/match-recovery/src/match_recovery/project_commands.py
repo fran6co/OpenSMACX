@@ -174,6 +174,18 @@ def register(commands):
     permute.add_argument("--operator", dest="operators", action="append",
                          help="Restrict to named mutation operators; repeat for several")
     permute.add_argument("--quiet", action="store_true", help="No per-trial progress on stderr")
+    permute.add_argument("--jobs", type=int, default=1,
+                         help="Concurrent trial compiles, each on its own compiler slot: leased from --resources, "
+                              "or the --slot environments; trials are batched per round, deterministic per seed and jobs")
+    permute.add_argument("--slot", dest="slot_environments", action="append", default=[],
+                         metavar="VAR=VALUE[,VAR=VALUE]",
+                         help="One caller-provisioned compiler slot environment (e.g. VC6_PREFIX=/path); repeat per slot. "
+                              "Unleased: the caller vouches that slots are distinct and otherwise idle")
+    permute.add_argument("--probe-sweep", action="store_true",
+                         help="Instead of the random search, compile every single dead-budget-probe placement "
+                              "(stand-in) and rank them by EH topology and instruction distance")
+    permute.add_argument("--probe-sizes", help="Comma-separated chained-if counts for budget probes (default 1,2,4,6,8,12,16,20,24,32)")
+    permute.add_argument("--probe-forms", help="Comma-separated probe forms: flat,nested (default both)")
     grouping = commands.add_parser("partition", help="Derive provisional ownership units, not historical TU claims")
     grouping.add_argument("--root", type=Path, default=Path.cwd())
     grouping.add_argument("--group", help="A source-derived class or component group identity")
@@ -313,6 +325,19 @@ def register(commands):
     proposing.add_argument("--archive", type=Path, required=True)
 
 
+def _slot_environment(value: str) -> dict:
+    """``VAR=VALUE[,VAR=VALUE]`` for one explicit compiler slot."""
+    import re
+    environment = {}
+    for item in value.split(","):
+        name, separator, setting = item.partition("=")
+        if (not separator or not re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]*", name) or not setting
+                or "\0" in setting or name in environment):
+            raise ValueError("--slot needs VAR=VALUE assignments with distinct variable names")
+        environment[name] = setting
+    return environment
+
+
 def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
     """Native configured operations; driver/compiler commands have separate contracts."""
     if arguments.get("command") == "record":
@@ -397,11 +422,37 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
             distance = "no-compile" if event["distance"] is None else event["distance"]
             print(f"permute: trial {event['iteration']} distance {distance}: "
                   + "; ".join(event["mutations"])[:160], file=sys.stderr, flush=True)
+        slots = arguments.get("leased_slots")
+        explicit = [_slot_environment(value) for value in arguments.get("slot_environments") or ()]
+        jobs = arguments.get("jobs", 1)
+        if type(jobs) is not int or jobs < 1:
+            raise ValueError("permute jobs must be a positive integer")
+        if explicit:
+            if slots or arguments.get("resources") is not None:
+                raise ValueError("--slot and --resources are alternative compiler slot sources")
+            if jobs not in (1, len(explicit)):
+                raise ValueError("--jobs must equal the number of --slot environments")
+            slots = [(f"slot-{index}", environment) for index, environment in enumerate(explicit)]
+        elif jobs > 1 and not slots:
+            raise ValueError("permute --jobs above 1 needs distinct compiler slots: --resources or --slot")
+
+        def numbers(value, name):
+            try:
+                result = tuple(int(item) for item in value.split(","))
+            except ValueError as error:
+                raise ValueError(f"{name} must be comma-separated positive integers") from error
+            if not result or any(item < 1 for item in result):
+                raise ValueError(f"{name} must be comma-separated positive integers")
+            return result
+        sizes = numbers(arguments["probe_sizes"], "--probe-sizes") if arguments.get("probe_sizes") else None
+        forms = tuple(arguments["probe_forms"].split(",")) if arguments.get("probe_forms") else None
         output = permute_source(root, arguments["target"], image=arguments["image"],
                                 in_file=arguments.get("in_file"), iterations=arguments.get("iterations", 200),
                                 seed=arguments.get("seed", 0), time_limit=arguments.get("time_limit"),
                                 keep_best=arguments.get("keep_best"), operators=operators,
-                                progress=None if arguments.get("quiet") else report)
+                                progress=None if arguments.get("quiet") else report,
+                                slots=slots or None, probe_sweep=arguments.get("probe_sweep", False),
+                                probe_sizes=sizes, probe_forms=forms)
         return {"pass": 0, "fail": 1, "unknown": 3}[output["result"]], output
     if arguments.get("command") == "measure":
         from .source_measure import measure_source

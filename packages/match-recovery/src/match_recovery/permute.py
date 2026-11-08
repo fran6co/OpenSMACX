@@ -1061,6 +1061,143 @@ def split_declarations(body: Body) -> list[Mutation]:
     return sites
 
 
+# ------------------------------------------------------ dead budget probes
+#
+# VC6 /Ob2 gives each caller an inline budget spent on call sites in source
+# order; a fully inlined static helper of chained ``if (x == k) x = c;`` called
+# with a constant folds to no code but still spends it. Placing one in a
+# caller changes which later inline candidates (destructor teardowns, small
+# helpers) fit, and so the EH unwind topology. The probe is a marked stand-in:
+# it is never recovered code, only evidence about where the original spent
+# budget. ``probe_helpers`` derives the file-scope helper definitions that the
+# probe calls in a body need; the source driver splices them before the target.
+
+PROBE_PREFIX = "permute_budget_probe_"
+PROBE_FORMS = ("flat", "nested")
+PROBE_SIZES = (1, 2, 4, 6, 8, 12, 16, 20, 24, 32)
+PROBE_ARGUMENT = 2
+PROBE_LIMIT = 2              # probes the random search may hold at once
+_PROBE_NOTE = "/* stand-in: dead budget probe */"
+_PROBE_CALL = re.compile(r"\b" + PROBE_PREFIX + r"(nested_)?([1-9][0-9]*)\(" + str(PROBE_ARGUMENT)
+                         + r"\); " + re.escape(_PROBE_NOTE) + r"(?:[ \t]*\n[ \t]*)?")
+
+
+def probe_name(size: int, form: str = "flat") -> str:
+    if type(size) is not int or size < 1 or form not in PROBE_FORMS:
+        raise ValueError("budget probe needs a positive size and a known form")
+    return PROBE_PREFIX + ("nested_" if form == "nested" else "") + str(size)
+
+
+def probe_call(size: int, form: str = "flat") -> str:
+    return f"{probe_name(size, form)}({PROBE_ARGUMENT}); {_PROBE_NOTE}"
+
+
+def probe_calls(text: str) -> list[tuple[int, int, int, str]]:
+    """(start, end, size, form) of every probe call statement in a body."""
+    return [(match.start(), match.end(), int(match[2]), "nested" if match[1] else "flat")
+            for match in _PROBE_CALL.finditer(text)]
+
+
+def probe_helpers(text: str) -> str:
+    """File-scope stand-in definitions for the probes a body calls; empty when none."""
+    flat, nested = set(), set()
+    for _start, _end, size, form in probe_calls(text):
+        (nested if form == "nested" else flat).add(size)
+    flat |= nested
+    out = []
+    for size in sorted(flat):
+        lines = "".join(f"    if (x == {k}) x = {3 * k + 1};\n" for k in range(size))
+        out.append(f"// stand-in: dead /Ob2 budget probe from recover permute; not recovered code.\n"
+                   f"static int {probe_name(size)}(int x)\n{{\n{lines}    return x;\n}}\n")
+    for size in sorted(nested):
+        inner = probe_name(size)
+        out.append(f"// stand-in: nested dead /Ob2 budget probe from recover permute; not recovered code.\n"
+                   f"static int {probe_name(size, 'nested')}(int x)\n{{\n"
+                   f"    if ({inner}(x) == 0) return 1;\n    return {inner}(x + 1);\n}}\n")
+    return "".join(out)
+
+
+def probe_positions(body: Body) -> list[tuple[int, str]]:
+    """(character offset, label) of every statement boundary inside a block.
+
+    Before each statement that is not a label, and before each block's
+    closing brace. Labels are skipped: the statement after one is included.
+    """
+    seen, positions = set(), []
+
+    def add(offset, label):
+        if offset not in seen:
+            seen.add(offset)
+            positions.append((offset, label))
+
+    def line(offset):
+        return body.text.count("\n", 0, offset) + 1
+
+    lists = [(body.statements, len(body.text))]
+    for node in body.walk():
+        if node.kind == "block":
+            lists.append((node.children, body.sig[node.end - 1].start))
+    for statements, closing in lists:
+        for node in statements:
+            if node.kind in ("label", "pp"):
+                continue
+            offset = body.sig[node.start].start
+            add(offset, f"line {line(offset)} before `{' '.join(body.source(node.start, node.end).split())[:40]}`")
+        add(closing, f"line {line(closing)} at block end")
+    return sorted(positions)
+
+
+def _probe_insertion(text: str, offset: int, call: str) -> str:
+    line_start = text.rfind("\n", 0, offset) + 1
+    indent = text[line_start:offset]
+    if indent.strip():
+        return call + " "
+    return call + "\n" + indent
+
+
+def insert_probe(text: str, offset: int, size: int, form: str = "flat") -> str:
+    return text[:offset] + _probe_insertion(text, offset, probe_call(size, form)) + text[offset:]
+
+
+def budget_probes(body: Body, *, sizes=PROBE_SIZES, forms=PROBE_FORMS,
+                  limit: int = PROBE_LIMIT) -> list[Mutation]:
+    """Insert, resize or remove a marked dead budget probe (opt-in stand-in operator)."""
+    sites = []
+    present = probe_calls(body.text)
+    for start, end, size, form in present:
+        sites.append(Mutation("budget_probe", start, end, "", f"remove {form} probe {size}"))
+        for other in sizes:
+            if other != size:
+                call = probe_call(other, form)
+                sites.append(Mutation("budget_probe", start, start + len(probe_call(size, form)), call,
+                                      f"resize {form} probe {size} -> {other}"))
+    if len(present) >= limit:
+        return sites
+    occupied = {start for start, *_ in present}
+    for offset, label in probe_positions(body):
+        if offset in occupied:
+            continue
+        for form in forms:
+            for size in sizes:
+                call = probe_call(size, form)
+                sites.append(Mutation("budget_probe", offset, offset,
+                                      _probe_insertion(body.text, offset, call),
+                                      f"{form} probe {size} {label}"))
+    return sites
+
+
+def probe_variants(text: str, parameters: str = "", *, sizes=PROBE_SIZES,
+                   forms=PROBE_FORMS) -> list[tuple[str, str]]:
+    """Every single-probe variant of a body, as (description, text), in sweep order."""
+    body = Body(text, parameters)
+    variants = []
+    for offset, label in probe_positions(body):
+        for form in forms:
+            for size in sizes:
+                variants.append((f"{form} probe {size} {label}", insert_probe(text, offset, size, form)))
+    return variants
+
+
 OPERATORS = {
     "split_declaration": split_declarations,
     "swap_statements": swap_adjacent,
@@ -1075,12 +1212,18 @@ OPERATORS = {
     "shift_multiply": shift_multiply,
     "temporary": temporaries,
 }
+# Stand-in operators insert marked non-recovered code; they run only when named.
+OPT_IN_OPERATORS = {
+    "budget_probe": budget_probes,
+}
+DEFAULT_OPERATORS = tuple(OPERATORS)
+OPERATORS.update(OPT_IN_OPERATORS)
 
 
 def mutation_sites(text: str, parameters: str = "", operators=None) -> list[Mutation]:
     body = Body(text, parameters)
     sites = []
-    for name in (operators or OPERATORS):
+    for name in (operators or DEFAULT_OPERATORS):
         sites.extend(OPERATORS[name](body))
     return sites
 
@@ -1119,10 +1262,23 @@ def _normalized(text: str) -> str:
     return " ".join(t.text for t in tokenize(text) if t.kind not in ("ws", "comment"))
 
 
+def _score_many(texts, scorer, batch_scorer):
+    """Scores in input order; a batch scorer may evaluate them concurrently."""
+    if not texts:
+        return []
+    if batch_scorer is None:
+        return [scorer(item) for item in texts]
+    scores = list(batch_scorer(list(texts)))
+    if len(scores) != len(texts):
+        raise ValueError("batch scorer must return one score per variant")
+    return scores
+
+
 def search(text: str, scorer, *, iterations: int = 200, seed: int = 0, time_limit: float | None = None,
            parameters: str = "", operators=None, equal_accept: float = 0.4, temperature: float = 0.3,
            restart_after: int = 40, max_chain: int = 3, scale: int = 1,
-           on_improve=None, on_trial=None, clock=time.monotonic, minimize: bool = True) -> SearchResult:
+           on_improve=None, on_trial=None, clock=time.monotonic, minimize: bool = True,
+           batch_scorer=None, batch: int = 1) -> SearchResult:
     """Seeded hill climbing with annealing over body spellings.
 
     ``scorer(body_text)`` returns a ``Score`` or None when the variant does
@@ -1131,12 +1287,22 @@ def search(text: str, scorer, *, iterations: int = 200, seed: int = 0, time_limi
     ones with ``exp(-delta / (scale * T))``, ``T`` falling linearly to zero.
     KeyboardInterrupt stops the loop and returns the best result so far.
     With ``minimize`` the best variant's unneeded line hunks are then reverted.
+
+    With ``batch`` > 1 each round derives candidates from the round's current
+    text until it holds ``batch`` uncached ones (at most ``4 * batch``
+    derivations; exactly one when ``batch`` is 1), scores those together through
+    ``batch_scorer(texts)`` (which may compile them concurrently), then applies
+    acceptance to them in generation order. The trajectory depends only on the
+    seed and ``batch``, never on completion order; ``batch`` 1 is the serial
+    search. Each candidate counts as one iteration.
     """
     if type(iterations) is not int or iterations < 0:
         raise ValueError("iterations must be a nonnegative integer")
+    if type(batch) is not int or batch < 1:
+        raise ValueError("batch must be a positive integer")
     rng = random.Random(seed)
     started = clock()
-    start = scorer(text)
+    start = scorer(text) if batch_scorer is None else _score_many([text], scorer, batch_scorer)[0]
     if start is None:
         raise ValueError("the unchanged body does not compile through the scorer")
     result = SearchResult(start=start, best=start, best_text=text, compiles=1)
@@ -1147,96 +1313,126 @@ def search(text: str, scorer, *, iterations: int = 200, seed: int = 0, time_limi
         result.stop_reason = "already_exact"
         result.elapsed_seconds = clock() - started
         return result
+
+    def derive(base):
+        candidate, applied = base, []
+        chain = 1 + (rng.random() < 0.25) + (rng.random() < 0.1)
+        for _ in range(min(chain, max_chain)):
+            try:
+                sites = mutation_sites(candidate, parameters, operators)
+            except Unsupported:
+                sites = []
+            if not sites:
+                break
+            by_operator = {}
+            for site in sites:
+                by_operator.setdefault(site.operator, []).append(site)
+            # Choose an operator first so one prolific operator cannot starve the rest.
+            site = rng.choice(by_operator[rng.choice(sorted(by_operator))])
+            try:
+                following = site.apply(candidate)
+                _normalized(following)
+            except Unsupported:
+                continue
+            candidate = following
+            applied.append(site)
+        return candidate, applied
+
     try:
-        for iteration in range(1, iterations + 1):
+        iteration = 0
+        stopped = False
+        while iteration < iterations and not stopped:
             if time_limit is not None and clock() - started >= time_limit:
                 result.stop_reason = "time_limit"
                 break
-            result.iterations = iteration
-            candidate, applied = current, []
-            chain = 1 + (rng.random() < 0.25) + (rng.random() < 0.1)
-            for _ in range(min(chain, max_chain)):
-                try:
-                    sites = mutation_sites(candidate, parameters, operators)
-                except Unsupported:
-                    sites = []
-                if not sites:
+            # Generate the round from the round's current text.
+            # Cached spellings cost nothing, so a round keeps deriving until it holds
+            # ``batch`` uncached candidates (bounded, so a saturated space still ends rounds).
+            round_, pending = [], {}
+            for _ in range(min(1 if batch == 1 else 4 * batch, iterations - iteration)):
+                if len(pending) >= batch:
                     break
-                by_operator = {}
-                for site in sites:
-                    by_operator.setdefault(site.operator, []).append(site)
-                # Choose an operator first so one prolific operator cannot starve the rest.
-                site = rng.choice(by_operator[rng.choice(sorted(by_operator))])
-                try:
-                    following = site.apply(candidate)
-                    _normalized(following)
-                except Unsupported:
+                iteration += 1
+                candidate, applied = derive(current)
+                if not applied:
+                    round_.append((iteration, None, None, applied))
                     continue
-                candidate = following
-                applied.append(site)
-            if not applied:
-                result.no_sites += 1
-                continue
-            key = _normalized(candidate)
-            stats = result.operator_stats.setdefault(applied[-1].operator,
-                                                     {"tried": 0, "failed": 0, "improved": 0})
-            stats["tried"] += 1
-            if key in seen:
-                result.cache_hits += 1
-                score = seen[key]
-            else:
-                score = scorer(candidate)
-                result.compiles += 1
+                key = _normalized(candidate)
+                if key not in seen and key not in pending:
+                    pending[key] = candidate
+                round_.append((iteration, candidate, key, applied))
+            keys = list(pending)
+            for key, score in zip(keys, _score_many([pending[key] for key in keys], scorer, batch_scorer)):
                 seen[key] = score
-                if on_trial is not None:
-                    on_trial(iteration, score, applied)
-            if score is None:
-                result.compile_failures += 1
-                stats["failed"] += 1
-                continue
-            delta = score.distance - current_score.distance
-            progress = iteration / max(1, iterations)
-            heat = temperature * max(0.0, 1.0 - progress)
-            if (delta < 0 or (delta == 0 and rng.random() < equal_accept)
-                    or (delta > 0 and heat > 0 and rng.random() < math.exp(-delta / (scale * heat)))):
-                current, current_score = candidate, score
-                result.accepted += 1
-            if score.distance < result.best.distance or (score.exact and not result.best.exact):
-                result.best, result.best_text = score, candidate
-                stats["improved"] += 1
-                since_improvement = 0
-                result.improvements.append({"iteration": iteration, "distance": score.distance,
-                                            "exact": score.exact,
-                                            "mutations": [m.description for m in applied]})
-                if on_improve is not None:
-                    on_improve(candidate, score)
-                if score.exact:
-                    result.stop_reason = "exact"
-                    break
-            else:
-                since_improvement += 1
-                if since_improvement >= restart_after:
-                    current, current_score, since_improvement = result.best_text, result.best, 0
+            fresh = set(keys)
+            # Apply acceptance in generation order.
+            for number, candidate, key, applied in round_:
+                result.iterations = number
+                if candidate is None:
+                    result.no_sites += 1
+                    continue
+                stats = result.operator_stats.setdefault(applied[-1].operator,
+                                                         {"tried": 0, "failed": 0, "improved": 0})
+                stats["tried"] += 1
+                score = seen[key]
+                if key in fresh:
+                    fresh.discard(key)
+                    result.compiles += 1
+                    if on_trial is not None:
+                        on_trial(number, score, applied)
+                else:
+                    result.cache_hits += 1
+                if score is None:
+                    result.compile_failures += 1
+                    stats["failed"] += 1
+                    continue
+                delta = score.distance - current_score.distance
+                progress = number / max(1, iterations)
+                heat = temperature * max(0.0, 1.0 - progress)
+                if (delta < 0 or (delta == 0 and rng.random() < equal_accept)
+                        or (delta > 0 and heat > 0 and rng.random() < math.exp(-delta / (scale * heat)))):
+                    current, current_score = candidate, score
+                    result.accepted += 1
+                if score.distance < result.best.distance or (score.exact and not result.best.exact):
+                    result.best, result.best_text = score, candidate
+                    stats["improved"] += 1
+                    since_improvement = 0
+                    result.improvements.append({"iteration": number, "distance": score.distance,
+                                                "exact": score.exact,
+                                                "mutations": [m.description for m in applied]})
+                    if on_improve is not None:
+                        on_improve(candidate, score)
+                    if score.exact:
+                        result.stop_reason = "exact"
+                        stopped = True
+                        break
+                else:
+                    since_improvement += 1
+                    if since_improvement >= restart_after:
+                        current, current_score, since_improvement = result.best_text, result.best, 0
         else:
-            result.stop_reason = "iterations"
+            if not stopped and not result.stop_reason:
+                result.stop_reason = "iterations"
     except KeyboardInterrupt:
         result.interrupted = True
         result.stop_reason = "interrupted"
     if minimize and not result.interrupted and result.best_text != text:
         try:
-            _minimize(text, result, scorer, seen)
+            _minimize(text, result, scorer, seen, batch_scorer)
         except KeyboardInterrupt:
             result.interrupted = True
     result.elapsed_seconds = clock() - started
     return result
 
 
-def _minimize(original: str, result: SearchResult, scorer, seen: dict) -> None:
+def _minimize(original: str, result: SearchResult, scorer, seen: dict, batch_scorer=None) -> None:
     """Revert line hunks of the best variant that its score does not need.
 
     Annealing accepts neutral moves, so the best text drifts. Each hunk is
     reverted alone; the revert is kept when the score is no worse (and still
-    exact when it was exact). The best score never gets worse.
+    exact when it was exact). The best score never gets worse. A batch scorer
+    evaluates every single-hunk revert of a pass together; the kept revert is
+    the same one the serial pass keeps (the last qualifying hunk).
     """
     import difflib
     while True:
@@ -1248,6 +1444,7 @@ def _minimize(original: str, result: SearchResult, scorer, seen: dict) -> None:
                 hunks.extend((tag, i1 + k, i1 + k + 1, j1 + k, j1 + k + 1) for k in range(i2 - i1))
             elif tag != "equal":
                 hunks.append((tag, i1, i2, j1, j2))
+        candidates = []
         for _tag, i1, i2, j1, j2 in reversed(hunks):
             candidate = "".join(after[:j1] + before[i1:i2] + after[j2:])
             try:
@@ -1255,7 +1452,20 @@ def _minimize(original: str, result: SearchResult, scorer, seen: dict) -> None:
                 Body(candidate)
             except Unsupported:
                 continue
-            if key in seen:
+            candidates.append((candidate, key))
+        fresh = set()
+        if batch_scorer is not None:
+            texts = {key: candidate for candidate, key in candidates if key not in seen}
+            for key, score in zip(texts, _score_many(list(texts.values()), scorer, batch_scorer)):
+                seen[key] = score
+                result.compiles += 1
+                result.minimize_compiles += 1
+            fresh = set(texts)
+        for candidate, key in candidates:
+            if key in fresh:
+                score = seen[key]
+                fresh.discard(key)
+            elif key in seen:
                 score = seen[key]
                 result.cache_hits += 1
             else:
