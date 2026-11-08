@@ -995,6 +995,21 @@
           "-c"
         ]
       },
+      "src/battle.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "/Z7",
+          "-c"
+        ]
+      },
       "src/veh_stack.cpp": {
         "flags": [
           "/nologo",
@@ -1655,20 +1670,6 @@
           "/Ob1",
           "-MT",
           "/W4",
-          "-c"
-        ]
-      },
-      "src/vehicle_orders.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "/O2",
-          "/Ob2",
-          "-MT",
-          "/W4",
-          "/Oy-",
           "-c"
         ]
       },

@@ -196,26 +196,3 @@ int __cdecl armor_val(int proto_id, int faction_id) {
     }
     return defense * 2;
 }
-
-/*
-Purpose: Check whether the specified unit is a planet buster.
-// ORIGINAL: 0x00500520 ?planet_buster@@YAHH@Z 0x00500520-0x00500556 BYTE_EXACT
-// symbol    ?planet_buster@@YAIH@Z
-// size      54 bytes
-// prototype int (__cdecl ?planet_buster@@YAHH@Z)(int vehID)
-// callers   4   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: Reactor id if planet buster, otherwise 0
-Status: Complete
-*/
-// Historical body-location rationale retained below; the ordinary definition
-// now owns this mapping, while veh.h provides only its declaration.
-// BODY IN veh.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
-uint32_t __cdecl planet_buster(int veh_id) {
-    return planet_buster2(Vehs[veh_id].proto_id);
-}

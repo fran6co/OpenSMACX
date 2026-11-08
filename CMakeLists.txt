@@ -290,13 +290,13 @@ set(OPENSMACX_SOURCES
     src/string_table.cpp
     src/string_formatting.cpp
     src/technology.cpp
-    src/terraforming.cpp
     src/terraforming_actions.cpp
     src/text.cpp
     src/time.cpp
     src/timer_messages.cpp
     src/enemy.cpp
     src/veh.cpp
+    src/battle.cpp
     src/veh_stack.cpp
     src/vehicle_render.cpp
     src/veh_queries.cpp
@@ -304,7 +304,6 @@ set(OPENSMACX_SOURCES
     src/prototype_history.cpp
     src/vehicle_strategy.cpp
     src/vehicle_stats.cpp
-    src/vehicle_orders.cpp
     src/vehicle_cost.cpp
     src/vector.cpp
     src/win.cpp
@@ -437,6 +436,7 @@ set_source_files_properties(
     src/faction_dialogue.cpp
     src/faction_network.cpp
     src/veh.cpp
+    src/battle.cpp
     src/veh_stack.cpp
     src/vehicle_render.cpp
     src/veh_queries.cpp
@@ -448,7 +448,6 @@ set_source_files_properties(
 # on its existing owner profile.
 set_source_files_properties(
     src/vehicle_cost.cpp
-    src/vehicle_orders.cpp
     src/vehicle_strategy.cpp
     src/vehicle_stats.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
@@ -587,6 +586,7 @@ set_property(SOURCE
     src/faction.cpp
     src/tutwin.cpp
     src/veh.cpp
+    src/battle.cpp
     src/veh_stack.cpp
     src/enemy.cpp
     src/string_table.cpp
@@ -660,7 +660,7 @@ set_source_files_properties(src/header_io.cpp src/crt_random.cpp
 set_source_files_properties(src/application_math.cpp src/application_text.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Terraforming providers and actions retain their pinned EBP-based frames.
-set_property(SOURCE src/terraforming.cpp src/terraforming_actions.cpp APPEND PROPERTY COMPILE_OPTIONS "/Oy-")
+set_property(SOURCE src/terraforming_actions.cpp APPEND PROPERTY COMPILE_OPTIONS "/Oy-")
 add_executable(OpenSMACX ${OPENSMACX_SOURCES})
 
 # Terrain, media decoder and GraphicWin lookup data remain local derivatives of

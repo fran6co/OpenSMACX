@@ -1526,6 +1526,147 @@ static const char *vehicle_order_rule_text(LPSTR encoded_id) {
     return StringTable.get(encoded_id);
 }
 
+// has_fac_built_call() (real bitmask() call, general.h bitmask_call) is now
+// declared in base.h, which this file already includes - no local
+// redeclaration needed.
+
+/*
+Purpose: Generate an output string for the specified unit's morale.
+// ORIGINAL: 0x004B3FD0 ?say_morale@@YAXPADHH@Z 0x004B3FD0-0x004B43BF
+// LEVER: std::string -> strcat, matching the say_stats family (calls went
+//        from 16, mostly basic_string internals, to 10; strcat count now
+//        exactly 7, matching the image). TRIED: crèche/brood-pit was
+//        already the correct asymmetric if/else-if here, unlike
+//        get_basic_offense - no change needed.
+// LEVER: the ternary feeding the first strcat's `Strings::get()` argument
+//        rewritten as an if/else with the strcat duplicated into each arm -
+//        the image has 2 static call sites (one per branch) and the ternary
+//        let the compiler merge them to 1. call_diff went from 10 (image 14)
+//        to 11; best flag set's exact-instruction count nearly doubled,
+//        13/313 -> 26/313 at /O2 /GR- /Oy- /GX.
+// TRIED: `bitmask_call` forwarder for the crèche/brood-pit
+//        `has_fac_built()` sites (general.h, the same lever that helped
+//        base.cpp's pop_goal) - tried on the sibling morale_veh (0x5C0E40)
+//        first and reverted there, similarity fell at every flag set; not
+//        retried here on that evidence. Still open: the same bitmask() x3
+//        auto-inline wall (see get_basic_offense, 0x5015B0) accounts for the
+//        remaining call-count gap (11 vs 14: 3x bitmask via has_fac_built).
+// size      1007 bytes
+// prototype void (__cdecl ?say_morale@@YAXPADHH@Z)(int8* moraleOutput, int vehID, int factionIDvsNative)
+// callers   2   call targets   5
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3A50 0x0050BA00 0x005C0E40 0x006169A0 0x00645470
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl say_morale(LPSTR morale_output, int veh_id, int faction_id_vs_native) {
+    // TODO: Look into inconsistencies related to morale display
+    int morale = morale_veh(veh_id, false, faction_id_vs_native);
+    int faction_id = Vehs[veh_id].faction_id;
+    // LEVER: std::string -> raw strcat() straight onto morale_output, per
+    // the say_stats family above. The image's own `calls` list is 7 strcat
+    // sites, not a string builder: this fill, the drone-riot " (-)", " "
+    // and "(" as TWO separate strcat calls (not one " (" literal), the
+    // "+" loop body, ")", and the designate-defender "(d)".
+    if (Vehs[veh_id].proto_id < MaxVehProtoFactionNum &&
+        (get_proto_offense_rating(Vehs[veh_id].proto_id) < 0 || Vehs[veh_id].proto_id == BSC_SPORE_LAUNCHER)) {
+        strcat(morale_output, StringTable.get(Morale[morale].name_lifecycle));
+    } else {
+        strcat(morale_output, StringTable.get(Morale[morale].name));
+    }
+    if (VehPrototypes[Vehs[veh_id].proto_id].plan < PLAN_COLONIZATION) {
+        int morale_penalty = 0;
+        int home_base_id = Vehs[veh_id].home_base_id;
+        if (home_base_id >= 0 && Bases[home_base_id].state & BSTATE_DRONE_RIOTS_ACTIVE && morale > 0
+            && !(Players[faction_id].rule_flags & RFLAG_MORALE)) {
+            strcat(morale_output, " (-)");
+            morale_penalty = 1;
+        }
+        VehMoraleModifierCount = 0;
+        int base_id = base_at(Vehs[veh_id].x, Vehs[veh_id].y);
+        if (base_id >= 0 && morale < 6) {
+            if (has_fac(FAC_CHILDREN_CRECHE, base_id, 0)) {
+                VehMoraleModifierCount++;
+                int morale_active = range(PlayersData[faction_id].soc_effect_active.values_[SocialEffect::MORALE], -4, 4);
+                if (morale_active <= -2) {
+                    morale_active++;
+                }
+                if (morale_active < 0) {
+                    int morale_cap = morale + VehMoraleModifierCount;
+                    do {
+                        if (morale_cap >= 6) {
+                            break;
+                        }
+                        VehMoraleModifierCount++;
+                        morale_cap++;
+                        morale_active++;
+                    } while (morale_active < 0);
+                }
+                if(has_fac(FAC_BROOD_PIT, base_id, 0) && Vehs[veh_id].proto_id < MaxVehProtoFactionNum
+                    && (get_proto_offense_rating(Vehs[veh_id].proto_id) < 0 || Vehs[veh_id].proto_id == BSC_SPORE_LAUNCHER)) {
+                    VehMoraleModifierCount++;
+                }
+            } else if (morale < 6 && has_fac(FAC_BROOD_PIT, base_id, 0)
+                && Vehs[veh_id].proto_id < MaxVehProtoFactionNum
+                && (get_proto_offense_rating(Vehs[veh_id].proto_id) < 0 || Vehs[veh_id].proto_id == BSC_SPORE_LAUNCHER)) {
+                VehMoraleModifierCount++;
+                int morale_active = range(PlayersData[faction_id].soc_effect_active.values_[SocialEffect::MORALE], -4, 4);
+                if (morale_active <= -2) {
+                    morale_active++;
+                }
+                if (morale_active < 0) {
+                    int morale_cap = morale + VehMoraleModifierCount;
+                    do {
+                        if (morale_cap >= 6) {
+                            break;
+                        }
+                        VehMoraleModifierCount++;
+                        morale_cap++;
+                        morale_active++;
+                    } while (morale_active < 0);
+                }
+            }
+        }
+        int morale_pending = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::MORALE];
+        if (morale_pending == 2 || morale_pending == 3) {
+            VehMoraleModifierCount++;
+        }
+        if (!morale && !VehMoraleModifierCount) {
+            VehMoraleModifierCount = 1;
+        }
+        if(VehMoraleModifierCount) {
+            strcat(morale_output, " ");
+            strcat(morale_output, "(");
+            for (int i = 0; i < VehMoraleModifierCount; i++) {
+                strcat(morale_output, "+");
+            }
+            strcat(morale_output, ")");
+        }
+        VehMoraleModifierCount -= morale_penalty;
+        if (Vehs[veh_id].state & VSTATE_DESIGNATE_DEFENDER) {
+            strcat(morale_output, "(d)");
+        }
+    }
+    // TODO: assumes at least 1032 char nulled buffer (stringTemp), eventually remove
+}
+
+/*
+Purpose: Get the morale string for the specified unit and store it in the stringTemp buffer.
+// ORIGINAL: 0x004B43C0 ?say_morale@@YAXHH@Z 0x004B43C0-0x004B43DA BYTE_EXACT
+// size      26 bytes
+// prototype void (__cdecl ?say_morale@@YAXHH@Z)(int vehID, int factionID)
+// callers   4   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004B3FD0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl say_morale(int veh_id, int faction_id_vs_native) {
+    say_morale(StringTemp, veh_id, faction_id_vs_native);
+}
+
 // ORIGINAL: 0x004B43E0 ?say_orders@@YAXPADH@Z 0x004B43E0-0x004B496D
 // RECOVERY_BINDING: v1 {"evidence": ["git:eff92f20c0edb9c702224c574918f09a95579182:src/recovered/units/004b43e0.cpp: complete original identity/span and historical scaffolding measurement", "Pinned4B5C17 passes StatusWin::draw_active vehicle_id to4B43E0", "96C9B0 is Order[26].order; original ORDERS parser populates this shared record", "Seed g_96c878x/stride12 is Order; g_94615cx/stride8 is Resource.name_plural; g_945d48x/stride4 is parsed Compass", "recovery/tasks/say-orders-owner-oct5.json", "recovery/tests/test_say_orders_actual_source.py"], "reason": "Recover complete vehicle order text builder through genuine vehicle, base, map and parsed rules owners; replace only the old executable forwarder. Native caller passes vehicle_id, not prototype_id. Preserve original branch, buffer and index behavior; parsed Compass/Resource pointer-shaped string IDs retain their current representation pending separate type cleanup."}
 // Historical seed observation: complete scaffold measured MISMATCH at3;
