@@ -6677,10 +6677,10 @@ void MapWin::draw_base_dest(int draw_type) {
             const int triad = get_proto_triad(proto_id);
             if (state == 0x01000200U && (field_1DD70_ & 0x400000U)) {
                 for (int i = 0; i < Vehs[veh_id].waypoint_count + (Vehs[veh_id].waypoint_count > 1); ++i) {
-                    const int start = i % (Vehs[veh_id].waypoint_count + 1);
-                    const int finish = (i + 1) % (Vehs[veh_id].waypoint_count + 1);
-                    dest_line(Vehs[veh_id].waypoint_x[start], Vehs[veh_id].waypoint_y[start],
-                              Vehs[veh_id].waypoint_x[finish], Vehs[veh_id].waypoint_y[finish],
+                    dest_line(Vehs[veh_id].waypoint_x[i % (Vehs[veh_id].waypoint_count + 1)],
+                              Vehs[veh_id].waypoint_y[i % (Vehs[veh_id].waypoint_count + 1)],
+                              Vehs[veh_id].waypoint_x[(i + 1) % (Vehs[veh_id].waypoint_count + 1)],
+                              Vehs[veh_id].waypoint_y[(i + 1) % (Vehs[veh_id].waypoint_count + 1)],
                               Vehs[veh_id].proto_id, Vehs[veh_id].faction_id, triad,
                               (Vehs[veh_id].state & 0x01000200U) == 0x01000200U, 3, 5, 0);
                 }
@@ -7650,19 +7650,19 @@ void MapWin::compute_lighting_table() {
         signed char *output = MapLightingTable + quadrant * 49;
         for (int row = -3; row + 4 < 8; ++row) {
             signed char *cell = output;
-            for (int column = -3; column + 4 < 8; ++column, ++cell) {
+            for (int column = -3, flip = 3; column + 4 < 8; --flip, ++column, ++cell) {
                 switch (quadrant) {
                 case 0:
                     x = row;
                     y = column;
                     break;
                 case 1:
-                    x = -column;
+                    x = flip;
                     y = row;
                     break;
                 case 2:
                     x = -row;
-                    y = -column;
+                    y = flip;
                     break;
                 case 3:
                     x = column;
@@ -7708,6 +7708,16 @@ void MapWin::compute_lighting_table() {
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00470550
 
+// The image's neighbour wraps reload MapLongitudeBounds per arm, unlike
+// wrap_map_x's cached bound.
+static inline int gpl_wrap(int x) {
+    if (!(MapIsFlat & 1)) {
+        if (x < 0) return x + MapLongitudeBounds;
+        if (x >= (int)MapLongitudeBounds) return x - MapLongitudeBounds;
+    }
+    return x;
+}
+
 int MapWin::get_point_light(int x, int y, int corner) {
     int total = 0;
     int localLight = 0;
@@ -7739,9 +7749,9 @@ int MapWin::get_point_light(int x, int y, int corner) {
     }
 
     for (int j = 0; j < 4; ++j) {
-        total += get_brighting(wrap_map_x(x + CornerOffsetX[corner - 1][j]),
+        total += get_brighting(gpl_wrap(x + CornerOffsetX[corner - 1][j]),
                                y + CornerOffsetY[corner - 1][j], (j - 3) & 3);
-        total += get_brighting(wrap_map_x(x + CornerOffsetX[corner - 1][j]),
+        total += get_brighting(gpl_wrap(x + CornerOffsetX[corner - 1][j]),
                                y + CornerOffsetY[corner - 1][j], (j - 2) & 3);
     }
 
