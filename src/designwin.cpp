@@ -3582,6 +3582,10 @@ void DesignWin::on_left_click(int xCoord, int yCoord) {
 }
 
 // ORIGINAL: 0x00439A20 ?on_key_click@DesignWin@@QAEHHH@Z 0x00439A20-0x00439B3B FILE
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00439A20 0x00439B3C 0x00439B60 0x00439A47
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x00439A20 0x00439B60 0x00439BBD 0x00439A41
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00439A20 0x00439BC0 0x00439BCC 0x00439B08
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x00439A20 0x00439BCC 0x00439BF5 0x00439B02
 // symbol    ?on_key_click@DesignWin@@UAEHHH@Z
 // size      283 bytes
 // prototype int (__thiscall ?on_key_click@DesignWin@@QAEHHH@Z)(DesignWin* this, int, int)
@@ -3596,7 +3600,6 @@ void DesignWin::on_left_click(int xCoord, int yCoord) {
 // argument forwards 6 or 7 the same way. Always answers 1.
 int DesignWin::on_key_click(int a1, int a2) {
     TutorialWindow.reset();
-    int moved;
     switch (a2) {
     case 0x25:
     case 0x64:
@@ -3608,6 +3611,7 @@ int DesignWin::on_key_click(int a1, int a2) {
         break;
     case 0x21:
     case 0x69: {
+        int moved;
         moved = (prototype_stack_start_ + ProtoSortCount - 9) % ProtoSortCount;
         prototype_stack_start_ = (moved < 0) ? 0 : moved;
         draw_stack();
@@ -3615,6 +3619,7 @@ int DesignWin::on_key_click(int a1, int a2) {
     }
     case 0x22:
     case 0x63: {
+        int moved;
         moved = (prototype_stack_start_ + ProtoSortCount + 9) % ProtoSortCount;
         prototype_stack_start_ = (moved < 0) ? 0 : moved;
         draw_stack();
