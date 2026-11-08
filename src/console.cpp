@@ -3346,10 +3346,11 @@ void Console::set_ai(int faction_id) {
     }
     PopupWriteCheckState = static_cast<int>(flags);
     if (x_pop_short(ConsoleStrTechRandom, 1, (NullCallback)0) >= 0) {
-        *growth = (char)PopupWriteCheckState & 1;
-        *tech = ((char)PopupWriteCheckState & 2) >> 1;
-        *wealth = ((char)PopupWriteCheckState & 4) >> 2;
-        *power = ((char)PopupWriteCheckState & 8) >> 3;
+        // The image shifts with shr: the masks are unsigned.
+        *growth = (char)PopupWriteCheckState & 1u;
+        *tech = ((char)PopupWriteCheckState & 2u) >> 1;
+        *wealth = ((char)PopupWriteCheckState & 4u) >> 2;
+        *power = ((char)PopupWriteCheckState & 8u) >> 3;
         synch_ai(faction_id);
     }
 }
@@ -3621,7 +3622,9 @@ void Console::on_post_redraw_nc_buffer(Buffer *buffer, int which) {
         Sprite *const handle = &sprite_b_;
         handle->draw(buffer, handle->transparent_index(),
                      buffer->dib_.bmiHeader.biWidth - handle->width(),
-                     track_height() - sprite_b_.height() / 2 + field_23D88_ -
+                     // stand-in: negated half-height first; the plain order loads
+                     // the virtual-base pointer into eax instead of ecx.
+                     -(sprite_b_.height() / 2) + track_height() + field_23D88_ -
                          bottom_border(),
                      1, 1);
         handle->draw(buffer, handle->transparent_index(),
