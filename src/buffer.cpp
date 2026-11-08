@@ -1355,28 +1355,10 @@ const size_t PcxHeaderSize = 0x80;
 Purpose: Decode a PCX image out of memory into this buffer, then install the
          256 colours that follow it and publish them through the palette.
 // ORIGINAL: 0x005E2690 ?load_pcx@Buffer@@QAEHPAEKPAVPalette@@HH@Z 0x005E2690-0x005E2AF7
-// TRIED: byte-exactness in this pass. Best measured is 0.22 similar
-// (6-25/374 instructions across the flag sets), and the divergence is not
-// one small edit: the frame is 0x100 against the image's 0xfc, `this` and
-// `data` swap registers throughout (esi/edi/ebx allocated differently from
-// the first instruction on).
-// LEVER (measured, did not move the score): duplicated `sync_to_palette`'s
-// body inline here rather than calling it, since `osmx calls` shows the
-// image never reaches 0x005DE8F0 from this address - `Palette::get_rgbquad`
-// and `SetDIBColorTable` are open-coded at 0x005E2A1C and 0x005E2A7C. This
-// is the correct call graph (`sync_to_palette` itself stays BYTE_EXACT for
-// its 24 other callers), but similarity does not move on it - best measured
-// stays ~0.21-0.22 across flag sets - because the register-allocation
-// divergence starts at instruction 0, before any of the inlined code is
-// reached. Kept for call-graph fidelity; do not re-chase similarity from
-// this alone.
-// LEVER (measured 2026-08-29, moved the counts): `get_hdc` and
-// `release_hdc` are ALSO open-coded by the image here - vtable GetDC at
-// 0x005E2A56 and ReleaseDC at 0x005E2AB3 with both counts and the hdc2_
-// publishes between - and writing both protocols out (Win::init_class
-// idiom) took the compiled body 253 -> 311 instructions and agreement
-// 5/374 -> 22/374, and `call_diff` stopped reporting FEWER. The remaining
-// delta is frame layout (0x94 against 0xfc), not missing code.
+// sync_to_palette, get_data and free_data are called and expand inline; the
+// owner is fetched twice; `run` is a byte local, which fills the 0xfc frame.
+// Earlier open-coded palette publish set has_palette_/palette_ even without
+// pixel storage; the original skips them under sync_to_palette's guard.
 // symbol    ?load_pcx@Buffer@@QAEHPAEKPAVPalette@@HH@Z
 // size      1127 bytes
 // prototype int (__thiscall ?load_pcx@Buffer@@QAEHPAEKPAVPalette@@HH@Z)(Buffer* this, unsigned int8*, unsigned int, Palette*, int, int)
@@ -1386,7 +1368,7 @@ Purpose: Decode a PCX image out of memory into this buffer, then install the
 // calls     0x005D7670 0x005FE560 0x005FE650 0x006453E0 0x006458F0 0x00645930 0x006465F0
 Return Value: 0 on success, 3 for a bad argument or an unusable header,
               7 for no pixel storage, or whatever `init` returned
-Status: WIP
+Status: Complete
 
 PROMOTED FROM src/unrecovered/005e2690.cpp, which is deleted, and it is
 mostly SHORTER than that unit rather than merely renamed. Three blocks it
@@ -1415,10 +1397,6 @@ int Buffer::load_pcx(BYTE *data, DWORD size, Palette *palette,
         return 3;
     }
 
-    // The image is 374 instructions; after open-coding `sync_to_palette`
-    // AND `get_hdc`/`release_hdc` (all three are called in the call form and
-    // all three are inline in the image) this tree compiles 311. The rest of
-    // the gap is frame layout: the image reserves 0xfc where ours is 0x94.
     // The shipped assets carry a watermark ahead of the PCX itself.
     //
     // `strlen` THREE TIMES, not hoisted. The image calls it at 0x005E26B7,
@@ -1433,6 +1411,7 @@ int Buffer::load_pcx(BYTE *data, DWORD size, Palette *palette,
 
     PcxHeaderView header;
     memcpy(&header, data, sizeof(header));
+    const uint8_t *source = data + PcxHeaderSize;
     if (header.manufacturer != 0x0A || header.encoding != 1) {
         return 3;
     }
@@ -1442,20 +1421,21 @@ int Buffer::load_pcx(BYTE *data, DWORD size, Palette *palette,
 
     const int width = header.x_max - header.x_min + 1;
     const int height = header.y_max - header.y_min + 1;
-    const int bits_per_pixel = header.bits_per_pixel;
-    const int planes = header.planes;
-    const uint16_t bytes_per_line = header.bytes_per_line;
 
-    GraphicWin *const owner = get_graphic_win();
-    const int sized = (owner == 0)
-        ? init(width, height, static_cast<int>(init_flags_), nullptr)
-        : owner->resize(width, height, 1);
+    // The owner is fetched twice: once for the test, again for the call.
+    const int sized = (get_graphic_win() != 0)
+        ? get_graphic_win()->resize(width, height, 1)
+        : init(width, height, static_cast<int>(init_flags_), nullptr);
     if (sized != 0) {
         return sized;
     }
-    if ((1 << bits_per_pixel) * planes != 256) {
+    if ((1 << header.bits_per_pixel) * header.planes != 256) {
         return 3;
     }
+    const int row_bytes =
+        (8 / header.bits_per_pixel) * header.bytes_per_line * header.planes;
+    int outstanding = row_bytes * height;
+    int filled = 0;
 
     uint8_t *pixels = static_cast<uint8_t *>(acquire_pixels());
     if (pixels == nullptr) {
@@ -1465,16 +1445,14 @@ int Buffer::load_pcx(BYTE *data, DWORD size, Palette *palette,
     // RLE: a byte with both top bits set is a run length and the byte after
     // it is the value; anything else is one literal pixel. `colour_base`
     // shifts every pixel into its slice of the palette.
-    const int row_bytes = (8 / bits_per_pixel) * bytes_per_line * planes;
-    const uint8_t *source = data + PcxHeaderSize;
-    int outstanding = row_bytes * height;
-    int filled = 0;
     while (outstanding != 0) {
-        int run = 1;
+        uint8_t run;
         uint8_t value = *source++;
         if ((value & 0xC0) == 0xC0) {
             run = value & 0x3F;
             value = *source++;
+        } else {
+            run = 1;
         }
         memset(pixels, static_cast<uint8_t>(colour_base + value),
                static_cast<size_t>(run));
@@ -1483,7 +1461,7 @@ int Buffer::load_pcx(BYTE *data, DWORD size, Palette *palette,
         outstanding -= run;
         // A row ends short of the buffer's stride, so step over the gap and
         // give back whatever the run overshot by.
-        if (row_bytes <= filled) {
+        if (filled >= row_bytes) {
             pixels += static_cast<int>(stride_) - filled;
             outstanding += filled - row_bytes;
             filled = 0;
@@ -1494,13 +1472,11 @@ int Buffer::load_pcx(BYTE *data, DWORD size, Palette *palette,
     // The palette is the last 0x300 bytes of the file: 256 RGB triples,
     // stored here as BGR0 quads from `colour_base` onwards.
     const uint8_t *entry = data + size - 0x300;
-    for (int index = 0; index < colour_count; ++index) {
-        RGBQUAD &colour = dib_.bmiColors[colour_base + index];
-        colour.rgbRed = entry[0];
-        colour.rgbGreen = entry[1];
-        colour.rgbBlue = entry[2];
-        colour.rgbReserved = 0;
-        entry += 3;
+    for (int index = colour_base; index < colour_base + colour_count; ++index) {
+        dib_.bmiColors[index].rgbRed = *entry++;
+        dib_.bmiColors[index].rgbGreen = *entry++;
+        dib_.bmiColors[index].rgbBlue = *entry++;
+        dib_.bmiColors[index].rgbReserved = 0;
     }
     field_580_ = static_cast<uint8_t>(colour_base);
 
@@ -1508,62 +1484,10 @@ int Buffer::load_pcx(BYTE *data, DWORD size, Palette *palette,
         return 0;
     }
     palette->set_from_dib(&dib_);
-    // sync_to_palette (0x005DE8F0, BYTE_EXACT elsewhere) is OPEN-CODED here
-    // by the image - Palette::get_rgbquad at 0x005E2A1C and SetDIBColorTable
-    // through [0x006690B4] at 0x005E2A7C are both emitted inline rather than
-    // called through the standalone function - so the body is duplicated
-    // rather than called.
-    if (palette_seed_ != palette->seed_) {
-        palette_seed_ = palette->seed_;
-        RGBQUAD *const table = dib_.bmiColors;
-        palette->get_rgbquad(table, 0, 0x100);
-        // get_hdc and release_hdc, written out: the image inlines the whole
-        // acquire protocol here (vtable GetDC at 0x005E2A56, ReleaseDC at
-        // 0x005E2AB3, both counts and the hdc2_ publishes in between), and
-        // the call form leaves ~60 instructions of this body unaccounted
-        // for. Same idiom as Win::init_class.
-        if (locked_bits_ != 0) {
-            get_graphic_win();
-        }
-        IDirectDrawSurface2 *const surface = surface_;
-        HDC acquired;
-        if (surface == nullptr) {
-            hdc2_ = hdc_;
-            ++hdc_lock_count_;
-            acquired = hdc_;
-        } else if (hdc2_ != nullptr) {
-            ++hdc_lock_count_;
-            acquired = hdc2_;
-        } else {
-            if (surface->GetDC(&hdc2_) != 0) {
-                get_graphic_win();
-            }
-            ++hdc_lock_count_;
-            acquired = hdc2_;
-        }
-        if (acquired != nullptr) {
-            SetDIBColorTable(hdc2_, 0, 0x100, table);
-            // release_hdc(1), written out the same way.
-            if (surface_ == nullptr) {
-                --hdc_lock_count_;
-                if (hdc_lock_count_ <= 0) {
-                    hdc2_ = nullptr;
-                    hdc_lock_count_ = 0;
-                }
-            } else {
-                --hdc_lock_count_;
-                if (hdc2_ != nullptr && hdc_lock_count_ <= 0) {
-                    if (surface_->ReleaseDC(hdc2_) != 0) {
-                        get_graphic_win();
-                    }
-                    hdc_lock_count_ = 0;
-                    hdc2_ = nullptr;
-                }
-            }
-        }
-    }
-    has_palette_ = 1;
-    palette_ = palette;
+    // sync_to_palette expands inline here: its dib_bits_ guard skips the
+    // publish and the has_palette_/palette_ stores, and the result is
+    // discarded.
+    sync_to_palette(palette);
     return 0;
 }
 
@@ -5881,7 +5805,7 @@ int Buffer::wrap_cent(Font *font_override, char *text, int x_coord, int y_coord,
 // calls     0x005DC410 0x006453E0
 
 
-int Buffer::wrap_height(char * text, int max_width) {
+int Buffer::wrap_height(char * text, int width) {
         if (text == 0) {
         return 0;
     }
@@ -5889,21 +5813,19 @@ int Buffer::wrap_height(char * text, int max_width) {
     BufferStrHeight = 0;
     field_14_ = field_10_;
     int total = 0;
-    int width = max_width;
-    char *str = text;
     do {
-        int len = strlen(str);
+        int len = strlen(text);
         int lineWidth = width;
-        char *next = find_line_break_l(str, &lineWidth, len);
+        char *next = find_line_break_l(text, &lineWidth, len);
         BufferStrHeight = 0;
         total += text_line_height();
-        str = next;
+        text = next;
         field_18_ = field_18_ + 1;
         if (field_14_ != 0) {
             width -= field_14_;
             field_14_ = 0;
         }
-    } while (str != 0);
+    } while (text != 0);
     return total;
 }
 
@@ -8024,8 +7946,9 @@ int Buffer::change_color(RECT *area, int find_color, int replace_color) {
 
 int Buffer::write_pcx(char *filename) {
     Filemap map;
+    PcxHeaderView header;
 
-    char name[300];
+    char name[80];
     name[0] = '\0';
     strcat(name, filename);
     if (memrchr(name, name + strlen(name), '.') == 0) {
@@ -8043,15 +7966,18 @@ int Buffer::write_pcx(char *filename) {
     const uint8_t *bits = static_cast<const uint8_t *>(locked_bits_);
     unsigned char *view = static_cast<unsigned char *>(map.create(
         name, static_cast<uint32_t>(width * height * -2 + 0x80), 1));
-    if (view != 0) {
-        PcxHeaderView header;
+    if (view == 0) {
+        free_data(1);
+        return 4;
+    }
+    {
         header.manufacturer = 10;  // the ZSoft manufacturer byte
         header.version = 5;        // version 3.0: a 256-entry palette follows
         header.encoding = 1;       // run-length encoded
         header.bits_per_pixel = 8; // eight bits per plane
         header.x_min = 0;
         header.y_min = 0;
-        header.x_max = static_cast<short>(dib_.bmiHeader.biWidth) - 1;
+        header.x_max = static_cast<short>(dib_.bmiHeader.biWidth - 1);
         header.y_max = -1 - static_cast<short>(dib_.bmiHeader.biHeight);
         header.h_res = 0;
         header.v_res = 0;
@@ -8063,69 +7989,48 @@ int Buffer::write_pcx(char *filename) {
         header.screen_height = 0;
         memcpy(view, &header, sizeof(header));
 
-        unsigned char *out = view + 0x80;
+        // The mapped view itself is the output cursor past the header.
+        view += 0x80;
         // Original5DF7BC reads the row count after the header-copy call.
         int rows_left = -dib_.bmiHeader.biHeight;
-        if (rows_left > 0) {
-            do {
-                unsigned int col = 0;
-                const int row_width = stride_;
-                if (row_width != 0) {
+        if (rows_left > 0) do {
+            unsigned int col = 0;
+            while (col < stride_) {
+                const uint8_t value = bits[col];
+                uint8_t count = 1;
+                if (value == bits[col + 1]) {
+                    unsigned int probe = col + 1;
                     do {
-                        const uint8_t value = bits[col];
-                        unsigned int run = 1;
-                        uint8_t count = 1;
-                        if (value == bits[col + 1]) {
-                            unsigned int probe = col + 1;
-                            do {
-                                if (static_cast<unsigned int>(row_width) <= probe
-                                    || count > 0x3e) {
-                                    break;
-                                }
-                                count = count + 1;
-                                run = count;
-                                probe = count + col;
-                            } while (value == bits[probe]);
-                            if (count < 2) {
-                                if (value > 0x3f) {
-                                    *out++ =
-                                        static_cast<uint8_t>(count | 0xc0);
-                                }
-                            } else {
-                                *out++ = static_cast<uint8_t>(count | 0xc0);
-                            }
-                        } else {
-                            if (value > 0x3f) {
-                                *out++ = static_cast<uint8_t>(count | 0xc0);
-                            }
+                        if (probe >= stride_ || count >= 0x3f) {
+                            break;
                         }
-                        *out++ = value;
-                        col += run;
-                    } while (col < static_cast<unsigned int>(row_width));
+                        count++;
+                        probe = count + col;
+                    } while (value == bits[probe]);
                 }
-                bits += stride_;
-                --rows_left;
-            } while (rows_left != 0);
-        }
-        *out++ = 0xc;
+                if (count > 1 || value >= 0x40) {
+                    *view++ = static_cast<uint8_t>(count | 0xc0);
+                }
+                *view++ = value;
+                col += count;
+            }
+            bits += stride_;
+        } while (--rows_left != 0);
+        *view++ = 0xc;
 
         // PCX wants RGB triplets; the DIB table is BGRX, so each entry is
         // written red, green, blue past the blue byte it starts on.
         const RGBQUAD *table = dib_.bmiColors;
         for (int entry = 0; entry < 0x100; ++entry) {
-            out[0] = table[entry].rgbRed;
-            out[1] = table[entry].rgbGreen;
-            out[2] = table[entry].rgbBlue;
-            out += 3;
+            *view++ = table[entry].rgbRed;
+            *view++ = table[entry].rgbGreen;
+            *view++ = table[entry].rgbBlue;
         }
 
         free_data(1);
-        map.close(out);
+        map.close(view);
         return 0;
     }
-
-    free_data(1);
-    return 4;
 }
 
 
@@ -8144,16 +8049,13 @@ int Buffer::write_pcx(char *filename) {
 // then the rows bottom-up (`biHeight` is stored negative). 1 reports a file
 // that would not open.
 int Buffer::write_bmp(char *filename) {
-    // Block-scoped so its slot overlaps the inlined Lock descriptor; the
-    // 0xC0 size is inferred from the image's 0xF8 frame.
-    FILE *file;
-    {
-        char name[0xC0];
-        name[0] = '\0';
-        strcat(name, filename);
-        strcat(name, ".bmp");
-        file = env_open(name, "w+b");
-    }
+    // 80 bytes: the image's 0xF8 frame holds a dword, both headers, this
+    // name and the Lock descriptor side by side, none overlapping.
+    char name[80];
+    name[0] = '\0';
+    strcat(name, filename);
+    strcat(name, ".bmp");
+    FILE *file = env_open(name, "w+b");
     if (file == 0) {
         return 1;
     }
@@ -8163,24 +8065,21 @@ int Buffer::write_bmp(char *filename) {
         return 3;
     }
 
-    const int width = dib_.bmiHeader.biWidth;
-    const int height = dib_.bmiHeader.biHeight;
-
     BITMAPFILEHEADER file_header;
     BITMAPINFOHEADER info_header;
     file_header.bfType = *reinterpret_cast<const WORD *>("BM");
-    file_header.bfSize = static_cast<DWORD>(0x436 - stride_ * height);
+    file_header.bfSize = static_cast<DWORD>(0x436 - stride_ * dib_.bmiHeader.biHeight);
+    file_header.bfOffBits = 0x436;
     file_header.bfReserved1 = 0;
     file_header.bfReserved2 = 0;
-    file_header.bfOffBits = 0x436;
 
     info_header.biSize = 0x28;
-    info_header.biWidth = width;
-    info_header.biHeight = -height;
+    info_header.biWidth = dib_.bmiHeader.biWidth;
+    info_header.biHeight = -dib_.bmiHeader.biHeight;
     info_header.biPlanes = 1;
     info_header.biBitCount = 8;
     info_header.biCompression = BI_RGB;
-    info_header.biSizeImage = -(width * height);
+    info_header.biSizeImage = -(dib_.bmiHeader.biWidth * dib_.bmiHeader.biHeight);
     info_header.biXPelsPerMeter = 0;
     info_header.biYPelsPerMeter = 0;
     info_header.biClrUsed = 0x100;
@@ -8197,13 +8096,9 @@ int Buffer::write_bmp(char *filename) {
     const int current_height = dib_.bmiHeader.biHeight;
     uint8_t *row = static_cast<uint8_t *>(locked_bits_)
         - (current_height + 1) * static_cast<int>(stride_);
-    int rows = -current_height;
-    if (rows > 0) {
-        do {
-            fwrite(row, dib_.bmiHeader.biWidth, 1, file);
-            row -= stride_;
-            rows--;
-        } while (rows != 0);
+    for (int i = 0; i < -current_height; i++) {
+        fwrite(row, dib_.bmiHeader.biWidth, 1, file);
+        row -= stride_;
     }
 
     free_data(1);
@@ -10450,50 +10345,15 @@ int Buffer::write_strings_height(StringList *strings, int width, int flags) {
             fonts_[0] = FontDefault;
         }
         total_height = fonts_[0]->line_advance();
-        field_18_ = 0;
-        field_14_ = field_10_;
-        markup_pending_ = 0;
-        BufferFlyingWidth = width;
-        BufferFlyingY = 0;
-        BufferStrHeight = 0;
-        wrap_height_flying(nullptr);
+        wrap_height_flying(nullptr, width);
     } else if (payload == 2) {
-        char *text = strings->head_ != 0 ? strings->current_entry()->text : 0;
-        if (text != 0) {
-            field_18_ = 0;
-            BufferStrHeight = 0;
-            field_14_ = field_10_;
-            int remaining_width = width;
-            do {
-                const int len = strlen(text);
-                int break_width = remaining_width;
-                text = find_line_break_l(text, &break_width, len);
-                BufferStrHeight = 0;
-                total_height += text_line_height();
-                field_18_ = field_18_ + 1;
-                if (field_14_ != 0) {
-                    remaining_width -= field_14_;
-                    field_14_ = 0;
-                }
-            } while (text != 0);
-        }
-        field_18_ = 0;
-        field_14_ = field_10_;
-        markup_pending_ = 0;
-        BufferStrHeight = 0;
-        BufferFlyingWidth = width;
-        BufferFlyingY = 0;
-        wrap_height_flying(nullptr);
+        // The image expands wrap_height inline here and calls it below.
+        total_height = wrap_height(
+            strings->head_ != 0 ? strings->current_entry()->text : 0, width);
+        wrap_height_flying(nullptr, width);
     } else {
-        const int id = strings->head_ != 0 ? strings->current_->id : 0;
-        char *text = strings->head_ != 0 ? strings->current_entry()->text : 0;
-        field_18_ = 0;
-        field_14_ = field_10_;
-        markup_pending_ = 0;
-        BufferStrHeight = 0;
-        BufferFlyingWidth = width;
-        BufferFlyingY = 0;
-        wrap_height_flying(text);
+        wrap_height_flying(
+            strings->head_ != 0 ? strings->current_entry()->text : 0, width);
     }
 
     if (strings->current_position_ < strings->entry_count_ - 1) {
