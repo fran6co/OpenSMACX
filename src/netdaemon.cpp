@@ -3928,13 +3928,24 @@ bool NetDaemon::process_file_transfer_message(char *message,
 // ORIGINAL: 0x0052ED40 ?send_files@NetDaemon@@QAEHXZ 0x0052ED40-0x0052F517;0x0065E0B0-0x0065E0C2
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned52ED40..52F517 and cold65E0B0..65E0C2; retained git:b0d788d3e0ebc4d5b4c20acb834cd37455e53c67:src/unrecovered/0052ed40.cpp.", "Coupled F05..F0F receiver recovery and Net group methods are reviewed together under netdaemon-player-lifecycle-recovery; native protocol anomalies remain explicit."], "reason": "Recover the complete file-transfer producer on the genuine daemon, player, group and file-map owners; packet intervals retain the native protocol rather than fixed executable aliases."}
 // TRIED: automatic `Filemap fm;` local (real ctor/dtor, matching the draw_facilities Font precedent) for the compiler-generated SEH frame; retyped the scaffold's `_mkdir`/`sub_634280` externs (declared nullary) to the params the call sites need; IAT slots identified by matching Ghidra's WinAPI names to arg count/order: 0x669110 GetModuleFileNameA, 0x6690e4 GetCurrentDirectoryA, 0x669114 SetCurrentDirectoryA, 0x6690e0 FindFirstFileA, 0x669118 FindNextFileA, 0x66911c FindClose, 0x669130 GetFileSize, 0x669330 GetAsyncKeyState. Ghidra's local_50/uStack_4c/local_48 naming for the FILD operand looked offset from the real ebp deltas (same SEH-prolog quirk seen on other functions this batch); traced the real bytes instead and the fild reduces to plain (double)GetFileSize()*ratio. Not chased to byte-exact given size (2025 bytes, largest in batch).
+// Every lobby slot's transfer status has reached the given level.
+static inline int netdaemon_slots_reached(NetDaemon *daemon, uint8_t level) {
+    for (int slot = 0; slot < NetDaemonNet.player_count_; ++slot) {
+        if (daemon->process_slots_[slot + 1].status_bytes_[0] < level) return 0;
+    }
+    return 1;
+}
+
 int NetDaemon::send_files() {
-    Filemap filemap;
+    NetDaemonFileControlPacket control;
+    WIN32_FIND_DATAA found_file;
+    char path_copy[0x104];
+    NetDaemonFilePathPacket path_message;
     uint32_t send_mask = 0;
     int group_handle = 0;
-    const unsigned long local_player_id = NetDaemonNet.local_player_id();
+    Filemap filemap;
     NetDaemonNet.channels_[1].trailing_words_[9] = 0;
-    const int local_index = NetDaemonNet.pid_2_idx(local_player_id);
+    const int local_index = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());
     netdaemon_set_file_index_records(netdaemon_allocate_file_index_records());
 
     char executable_path[0x104];
@@ -3943,44 +3954,22 @@ int NetDaemon::send_files() {
     if (last_separator != 0) last_separator[1] = '\0';
 
     if (primary_state_.leading_words_[0] != 0 && NetDaemonNet.player_count_ > 0) {
-        for (int slot = 1; slot <= NetDaemonNet.player_count_; ++slot) {
-            if (local_index != slot) send_mask |= 1U << (slot & 31);
-            process_slots_[slot].status_bytes_[0] =
-                static_cast<uint8_t>(local_index == slot ? 2 : 0);
+        for (int index = 0; index < NetDaemonNet.player_count_; ++index) {
+            if (local_index != index + 1) send_mask |= 1U << (index + 1);
+            process_slots_[index + 1].status_bytes_[0] =
+                static_cast<uint8_t>(local_index == index + 1 ? 2 : 0);
         }
     }
 
-    if (primary_state_.leading_words_[0] == 0) {
-        while (NetDaemonFileTransferMode != 1) {
-            unsigned long sender, channel;
-            void *packet = NetDaemonNet.Net::get(&sender, &channel);
-            if (packet != 0)
-                process_message(static_cast<char *>(packet), channel,
-                                static_cast<int>(sender));
-        }
-
-        NetDaemonFileControlPacket announce;
-        announce.opcode = 0xF0F;
-        announce.source_player = local_index;
-        Net::send(&announce, 0x20,
-            static_cast<unsigned long>(host_player_id()), 1);
-
-        SaveNameBuffer[0] = '\0';
-        strcat(SaveNameBuffer, executable_path);
-        strcat(SaveNameBuffer, NetDaemonFileTransferPath);
-        filefind_set_alternative(SaveNameBuffer);
-    } else {
-        char path_copy[0x104];
+    if (primary_state_.leading_words_[0] != 0) {
         path_copy[0] = '\0';
         strcat(path_copy, SaveNameBuffer);
         char *relative_path = path_copy;
         if (path_copy[1] == ':') {
             relative_path = path_copy + strlen(executable_path);
         }
-
         NetDaemonFileTransferPath[0] = '\0';
         strcat(NetDaemonFileTransferPath, relative_path);
-        NetDaemonFilePathPacket path_message;
         path_message.opcode = 0xF05;
         path_message.path[0] = '\0';
         strcat(path_message.path, NetDaemonFileTransferPath);
@@ -3995,199 +3984,177 @@ int NetDaemon::send_files() {
                                     static_cast<int>(sender));
             } while (NetDaemonFileTransferAckMask != send_mask);
         }
-    }
-
-    char previous_directory[0x104];
-    GetCurrentDirectoryA(sizeof previous_directory, previous_directory);
-    const BOOL changed_directory = SetCurrentDirectoryA(SaveNameBuffer);
-    if (changed_directory == 0 && primary_state_.leading_words_[0] == 0) {
-        if (_mkdir(SaveNameBuffer) == 0) SetCurrentDirectoryA(SaveNameBuffer);
-    }
-
-    int file_count = 0;
-    if (primary_state_.leading_words_[0] == 0) {
-        for (;;) {
-            if (NetDaemonFileTransferMode == 3 ||
-                NetDaemonNet.channels_[1].trailing_words_[9] != 0) goto cleanup;
-            if ((GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0) break;
-            do_draw();
+    } else {
+        while (NetDaemonFileTransferMode != 1) {
             unsigned long sender, channel;
             void *packet = NetDaemonNet.Net::get(&sender, &channel);
             if (packet != 0)
                 process_message(static_cast<char *>(packet), channel,
                                 static_cast<int>(sender));
         }
-        NetDaemonNet.channels_[1].trailing_words_[9] = 1;
-        pop_close();
-    } else {
-        WIN32_FIND_DATAA found_file;
+        control.opcode = 0xF0F;
+        control.source_player = local_index;
+        Net::send(&control, 0x20,
+            static_cast<unsigned long>(host_player_id()), 1);
+        SaveNameBuffer[0] = '\0';
+        strcat(SaveNameBuffer, executable_path);
+        strcat(SaveNameBuffer, NetDaemonFileTransferPath);
+        filefind_set_alternative(SaveNameBuffer);
+    }
+
+    char previous_directory[0x104];
+    GetCurrentDirectoryA(sizeof previous_directory, previous_directory);
+    if (SetCurrentDirectoryA(SaveNameBuffer) == 0 && primary_state_.leading_words_[0] == 0
+        && _mkdir(SaveNameBuffer) == 0) {
+        SetCurrentDirectoryA(SaveNameBuffer);
+    }
+
+    int file_count = 0;
+    if (primary_state_.leading_words_[0] != 0) {
         HANDLE find_handle = FindFirstFileA("*.*", &found_file);
         if (find_handle != 0) {
             do {
                 if ((found_file.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0) {
-                    NetDaemonFileIndexRecord &record =
-                        netdaemon_file_index_records()[file_count];
-                    record.opcode = 0xF06;
-                    record.source_player = local_index;
-                    record.ready_flags = 0;
-                    record.chunk_count = (found_file.nFileSizeLow + 0x800) >> 11;
-                    record.file_index = static_cast<uint8_t>(file_count);
-                    record.file_size = found_file.nFileSizeLow;
-                    const uint8_t checksum = checksum_file(found_file.cFileName);
-                    // Native reloads the shared table after checksum_file,
-                    // then again when selecting the outgoing record.
-                    NetDaemonFileIndexRecord &checked_record =
-                        netdaemon_file_index_records()[file_count];
-                    checked_record.checksum = checksum;
-                    checked_record.filename[0] = '\0';
-                    strcat(checked_record.filename, found_file.cFileName);
+                    netdaemon_file_index_records()[file_count].opcode = 0xF06;
+                    netdaemon_file_index_records()[file_count].source_player = local_index;
+                    netdaemon_file_index_records()[file_count].ready_flags = 0;
+                    netdaemon_file_index_records()[file_count].chunk_count =
+                        (found_file.nFileSizeLow + 0x800) >> 11;
+                    netdaemon_file_index_records()[file_count].file_index =
+                        static_cast<uint8_t>(file_count);
+                    netdaemon_file_index_records()[file_count].file_size =
+                        found_file.nFileSizeLow;
+                    netdaemon_file_index_records()[file_count].checksum =
+                        checksum_file(found_file.cFileName);
+                    netdaemon_file_index_records()[file_count].filename[0] = '\0';
+                    strcat(netdaemon_file_index_records()[file_count].filename,
+                           found_file.cFileName);
                     send_message(reinterpret_cast<char *>(
-                        netdaemon_file_index_records() + file_count), 0x11C, 0);
+                        &netdaemon_file_index_records()[file_count]), 0x11C, 0);
                     ++file_count;
                 }
             } while (FindNextFileA(find_handle, &found_file) != 0);
         }
 
-        NetDaemonFileControlPacket list_done;
-        list_done.opcode = 0xF07;
-        list_done.state = 2;
-        send_message(reinterpret_cast<char *>(&list_done), 0x20, 0);
+        control.opcode = 0xF07;
+        control.state = 2;
+        send_message(reinterpret_cast<char *>(&control), 0x20, 0);
         FindClose(find_handle);
 
-        for (;;) {
+        do {
             do_draw();
             unsigned long sender, channel;
             void *packet = NetDaemonNet.Net::get(&sender, &channel);
             if (packet != 0)
                 process_message(static_cast<char *>(packet), channel,
                                 static_cast<int>(sender));
-            if (NetDaemonNet.player_count_ < 1) break;
-            bool all_present = true;
-            for (int slot = 1; slot <= NetDaemonNet.player_count_; ++slot) {
-                if (process_slots_[slot].status_bytes_[0] == 0) {
-                    all_present = false;
-                    break;
-                }
-            }
-            if (all_present) break;
-        }
+        } while (!netdaemon_slots_reached(this, 1));
 
-        NetDaemonFileIndexRecord *records = netdaemon_file_index_records();
         int ready_count = 0;
         for (int i = 0; i < file_count; ++i)
-            if (records[i].ready_flags != 0) ++ready_count;
+            if (netdaemon_file_index_records()[i].ready_flags != 0) ++ready_count;
 
-        NetDaemonFileChunkPacket *send_buffer = ::new (mem_get(0x820))
-            NetDaemonFileChunkPacket;
+        NetDaemonFileChunkPacket *send_buffer =
+            static_cast<NetDaemonFileChunkPacket *>(mem_get(0x820));
         send_buffer->opcode = 0xF0B;
         for (int file_index = 0; file_index < file_count; ++file_index) {
             if ((GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0) {
                 NetDaemonNet.channels_[1].trailing_words_[9] = 1;
                 goto cleanup;
             }
-            NetDaemonFileIndexRecord &record =
-                netdaemon_file_index_records()[file_index];
-            const uint32_t ready_flags = record.ready_flags;
+            const uint32_t ready_flags =
+                netdaemon_file_index_records()[file_index].ready_flags;
             if (ready_flags == 0) continue;
 
-            parse_says(0, record.filename, -1, -1);
+            parse_says(0, netdaemon_file_index_records()[file_index].filename, -1, -1);
             parse_num(0, ready_count--);
             PopupModalState = 6;
             pop_close();
-            x_pop_caption_flags(ScriptPopupFile, "MPSENDFILE",
-                                0x214200, 0);
+            x_pop_caption_flags(ScriptPopupFile, "MPSENDFILE", 0x214200, 0);
             PopupModalState = 0;
             send_buffer->file_index = file_index;
 
             if (group_handle != 0) delete_group(group_handle);
             group_handle = create_group(const_cast<char *>("temp"));
-            for (int slot = 1; slot < 8; ++slot) {
-                if ((ready_flags & (1U << (slot & 31))) != 0)
-                    add_to_group(group_handle, process_slots_[slot].pid_);
+            for (int member = 1; member < 8; ++member) {
+                if ((ready_flags & (1U << member)) != 0)
+                    add_to_group(group_handle, process_slots_[member].pid_);
             }
 
             if (filemap.open_read(
                     netdaemon_file_index_records()[file_index].filename, TRUE) != 0) {
-                const DWORD original_size = GetFileSize(filemap.get_handle(), 0);
-                const float compressed_capacity_ratio = 1.01f;
                 unsigned long compressed_capacity = static_cast<unsigned long>(
-                    static_cast<double>(original_size) *
-                    static_cast<double>(compressed_capacity_ratio));
-                void *compressed = mem_get(static_cast<int>(compressed_capacity));
-                const DWORD input_size = GetFileSize(filemap.get_handle(), 0);
-                compress(static_cast<unsigned char *>(compressed),
-                    reinterpret_cast<unsigned long *>(&compressed_capacity),
-                    static_cast<unsigned char *>(filemap.get_view()), input_size);
+                    GetFileSize(filemap.get_handle(), 0) * 1.01f);
+                unsigned char *compressed =
+                    static_cast<unsigned char *>(mem_get(static_cast<int>(compressed_capacity)));
+                compress(compressed, &compressed_capacity,
+                         static_cast<unsigned char *>(filemap.get_view()),
+                         GetFileSize(filemap.get_handle(), 0));
                 send_buffer->compressed_size = compressed_capacity;
 
-                const unsigned char *source =
-                    static_cast<const unsigned char *>(compressed);
-                const uint32_t capacity_word = static_cast<uint32_t>(compressed_capacity);
-                const uint32_t end_word = static_cast<uint32_t>(
-                    reinterpret_cast<uintptr_t>(compressed)) + capacity_word;
-                int32_t remaining;
-                memcpy(&remaining, &capacity_word, sizeof remaining);
+                unsigned char *const end = compressed + compressed_capacity;
+                unsigned char *source = compressed;
                 int chunk_index = 0;
-                while (remaining > 0x7FF) {
+                int remaining = end - source;
+                while (remaining >= 0x800) {
                     do_draw();
                     memmove(send_buffer->payload, source, 0x800);
                     remaining -= 0x800;
+                    send_buffer->chunk_index = chunk_index;
                     source += 0x800;
-                    send_buffer->chunk_index = chunk_index++;
                     send_group(send_buffer, 0x820, group_handle, 1);
+                    ++chunk_index;
                 }
                 send_buffer->chunk_index = chunk_index;
-                // The final native branch compares unsigned pointer words,
-                // not the signed full-chunk remainder. Retain its wrapping
-                // subtraction/addition without asserting allocation capacity
-                // or the fault/neighbor effects of malformed compressor output.
-                const uint32_t source_word = static_cast<uint32_t>(
-                    reinterpret_cast<uintptr_t>(source));
-                if (end_word > source_word) {
-                    const uint32_t tail_length = end_word - source_word;
+                if (end > source) {
+                    const int tail_length = end - source;
                     memmove(send_buffer->payload, source, tail_length);
-                    const uint32_t packet_word = tail_length + 0x20u;
-                    int32_t packet_length;
-                    memcpy(&packet_length, &packet_word, sizeof packet_length);
-                    send_group(send_buffer, packet_length, group_handle, 1);
+                    send_group(send_buffer, tail_length + 0x20, group_handle, 1);
                 }
                 filemap.close();
                 if (compressed != 0) free(compressed);
             }
         }
-        free(send_buffer);
+        if (send_buffer != 0) free(send_buffer);
 
-        for (;;) {
-            if ((GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0) break;
+    wait_for_files:
+        if ((GetAsyncKeyState(VK_ESCAPE) & 0x8000) == 0) {
             unsigned long sender, channel;
             void *packet = NetDaemonNet.Net::get(&sender, &channel);
             if (packet != 0)
                 process_message(static_cast<char *>(packet), channel,
                                 static_cast<int>(sender));
             do_draw();
-            if (NetDaemonNet.player_count_ < 1) break;
-            int slot = 1;
-            while (slot <= NetDaemonNet.player_count_ &&
-                   process_slots_[slot].status_bytes_[0] > 1)
-                ++slot;
-            if (slot > NetDaemonNet.player_count_) break;
+            if (!netdaemon_slots_reached(this, 2)) goto wait_for_files;
         }
-        NetDaemonFileControlPacket transfer_done;
-        transfer_done.opcode = 0xF07;
-        transfer_done.state = 3;
-        send_message(reinterpret_cast<char *>(&transfer_done), 0x20, 0);
+        control.opcode = 0xF07;
+        control.state = 3;
+        send_message(reinterpret_cast<char *>(&control), 0x20, 0);
+    } else {
+        while (NetDaemonFileTransferMode != 3
+               && NetDaemonNet.channels_[1].trailing_words_[9] == 0) {
+            if ((GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0) {
+                NetDaemonNet.channels_[1].trailing_words_[9] = 1;
+                pop_close();
+                break;
+            }
+            do_draw();
+            unsigned long sender, channel;
+            void *packet = NetDaemonNet.Net::get(&sender, &channel);
+            if (packet != 0)
+                process_message(static_cast<char *>(packet), channel,
+                                static_cast<int>(sender));
+        }
     }
 
 cleanup:
     pop_close();
     do_all_draws();
     SetCurrentDirectoryA(previous_directory);
-    void *list_storage = netdaemon_file_index_records();
-    if (list_storage != 0) free(list_storage);
-    const int result = static_cast<int>(NetDaemonNet.channels_[1].trailing_words_[9]);
+    if (netdaemon_file_index_records() != 0) free(netdaemon_file_index_records());
     netdaemon_set_file_index_records(0);
     NetDaemonFileTransferMode = 0;
-    return result;
+    return static_cast<int>(NetDaemonNet.channels_[1].trailing_words_[9]);
 }
 
 // Source-projected candidates for selected original
@@ -7400,7 +7367,10 @@ airdrop:
                     NetMsgPrimary.pop("AWAITEXEC", 0, 2, nullptr);
                 }
                 wait_task();
-                receive();
+                // stand-in: a constant member pointer keeps receive out of
+                // line here, as the image's inlined await_exec(1) left it.
+                int (NetDaemon::*const receive_call)() = &NetDaemon::receive;
+                (this->*receive_call)();
                 locks_.check_global();
                 check_spock();
             }
@@ -7597,16 +7567,7 @@ int NetDaemon::order_veh(int veh_id, int direction, int mode) {
                 *flag = 0;
             }
         }
-        if (IsMultiplayerNet != 0) {
-            log_say("Client releasing lock", ConsoleGlobal.faction_id_, 0, 0);
-            message_data(0x2212, 0, 0, 0, 0, 0);
-            channels_[1].leading_words_[3] = 0;
-            channels_[1].leading_words_[2] = 0;
-            channels_[1].trailing_words_[5] = 0;
-            channels_[1].trailing_words_[4] = 0;
-        }
-        channels_[0].payload_.vehicle_selection_follow = 0;
-        channels_[1].trailing_words_[3] = 0;
+        unlock_veh();
         return 0;
     }
 
@@ -7618,8 +7579,7 @@ int NetDaemon::order_veh(int veh_id, int direction, int mode) {
 
     if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_INFO_WARFARE &&
         base_id >= 0 && faction != Bases[base_id].faction_id_current) {
-        const int stack_vehicle = veh_at(x, y);
-        if (stack_check(stack_vehicle, 2, PLAN_INFO_WARFARE, -1, -1) == 0 &&
+        if (stack_check(veh_at(x, y), 2, PLAN_INFO_WARFARE, -1, -1) == 0 &&
             !good_base) {
             if (add_global() == 0) goto send_move;
             goto global_failed;
@@ -7637,16 +7597,7 @@ send_move:
             const int waited = wait("AWAITEXEC", flag, 1, 2000);
             NetDaemonWaitTicks += waited;
             log_say("Client received acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
-            if (IsMultiplayerNet != 0) {
-                log_say("Client releasing lock", ConsoleGlobal.faction_id_, 0, 0);
-                message_data(0x2212, 0, 0, 0, 0, 0);
-                *flag = 0;
-                channels_[1].leading_words_[2] = 0;
-                channels_[1].trailing_words_[5] = 0;
-                channels_[1].trailing_words_[4] = 0;
-            }
-            channels_[0].payload_.vehicle_selection_follow = 0;
-            channels_[1].trailing_words_[3] = 0;
+            unlock_veh();
             *flag = 0;
         }
 
@@ -7722,16 +7673,7 @@ send_move:
 release_lock_only:
     // Native 0x005320CF is the short failure tail used by a rejected order
     // or exhausted movement. It does not clear/synchronize the vehicle.
-    if (IsMultiplayerNet != 0) {
-        log_say("Client releasing lock", ConsoleGlobal.faction_id_, 0, 0);
-        message_data(0x2212, 0, 0, 0, 0, 0);
-        channels_[1].leading_words_[3] = 0;
-        channels_[1].leading_words_[2] = 0;
-        channels_[1].trailing_words_[5] = 0;
-        channels_[1].trailing_words_[4] = 0;
-    }
-    channels_[0].payload_.vehicle_selection_follow = 0;
-    channels_[1].trailing_words_[3] = 0;
+    unlock_veh();
     return 0;
 
 global_failed:
@@ -7752,16 +7694,7 @@ global_failed:
             *flag = 0;
         }
     }
-    if (IsMultiplayerNet != 0) {
-        log_say("Client releasing lock", ConsoleGlobal.faction_id_, 0, 0);
-        message_data(0x2212, 0, 0, 0, 0, 0);
-        channels_[1].leading_words_[3] = 0;
-        channels_[1].leading_words_[2] = 0;
-        channels_[1].trailing_words_[5] = 0;
-        channels_[1].trailing_words_[4] = 0;
-    }
-    channels_[0].payload_.vehicle_selection_follow = 0;
-    channels_[1].trailing_words_[3] = 0;
+    unlock_veh();
     NetMsgPrimary.pop("GLOBALFAILED", 5000, 0, nullptr);
     return 0;
 }

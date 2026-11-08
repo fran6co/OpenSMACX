@@ -1295,10 +1295,7 @@ void Net::check_polling() {
     if (NetDirectPlay == 0) {
         return;
     }
-    DWORD (WINAPI *const now)() = timeGetTime;
-    const DWORD initial_tick = now();
-    const DWORD keepalive_threshold = initial_tick - 2000U;
-    if (keepalive_threshold <= poll_time_DC_) {
+    if (timeGetTime() - 2000U <= poll_time_DC_) {
         return;
     }
     if (NetKeepAliveBusy != 0) {
@@ -1306,7 +1303,7 @@ void Net::check_polling() {
     }
     NetKeepAliveBusy = 1;
     send_packet_type(0, 0, 0, 0x20, 0);
-    poll_time_DC_ = now();
+    poll_time_DC_ = timeGetTime();
     NetKeepAliveBusy = 0;
     if (NetReapBusy != 0) {
         return;
@@ -1314,56 +1311,46 @@ void Net::check_polling() {
     NetReapBusy = 1;
     if ((voice_flags_D8_ & 0x40000) != 0) {
         if (local_player_id_ == host_player_id_) {
-            // Every slot: a live player who is not the one the timer words
-            // name and whose stamp is older than the threshold is cut, and a
-            // successful cut stamps the time of the cut.
-            int count = 0x10;
-            do {
-                NetPlayer &player = players_[0x10 - count];
-                if (player.field_0_ != 0
-                    && player.field_0_ != local_player_id_) {
-                    const DWORD stamp = player.stamp_10_;
-                    if (stamp != 0) {
-                        const DWORD tick = now();
-                        if (tick - stamp > poll_timeout_E0_
-                            && drop_player(players_[0x10 - count].field_0_, 0) == 0) {
-                            players_[0x10 - count].stamp_10_ = now();
-                        }
+            // Every slot: a live player other than this one whose stamp is
+            // older than the timeout is cut; a successful cut restamps it.
+            NetPlayer *player = players_;
+            for (int count = 0x10; count != 0; --count, ++player) {
+                if (player->field_0_ != 0 && player->field_0_ != local_player_id_) {
+                    const DWORD stamp = player->stamp_10_;
+                    if (stamp != 0 && timeGetTime() - stamp > poll_timeout_E0_
+                        && drop_player(player->field_0_, 0) == 0) {
+                        player->stamp_10_ = timeGetTime();
                     }
                 }
-                --count;
-            } while (count != 0);
+            }
             NetReapBusy = 0;
             return;
         }
         if (local_player_id_ == players_[1].field_0_) {
-            const DWORD stamp = players_->stamp_10_;
-            if (stamp != 0) {
-                const DWORD tick = now();
-                if (tick - stamp > poll_timeout_E0_
-                    && drop_player(players_->field_0_, 0) == 0) {
-                    players_->stamp_10_ = now();
-                    NetReapBusy = 0;
-                    return;
-                }
+            const DWORD stamp = players_[0].stamp_10_;
+            if (stamp != 0 && timeGetTime() - stamp > poll_timeout_E0_
+                && drop_player(players_[0].field_0_, 0) == 0) {
+                players_[0].stamp_10_ = timeGetTime();
+                NetReapBusy = 0;
+                return;
             }
         } else {
-            // Neither timer word names a player this table holds, so both
-            // leading slots are stale: cut the lot.
-            for (int checked = 0; checked < 2; ++checked) {
-                const DWORD stamp = players_[checked].stamp_10_;
-                if (stamp == 0) {
+            // Neither leading row is this player: both stale cuts the lot.
+            uint32_t *const stamps = &players_[0].stamp_10_;
+            uint32_t *stamp = stamps;
+            for (int checked = 0; checked < 2; ++checked, stamp += 0x16) {
+                const DWORD value = *stamp;
+                if (value == 0) {
                     return;
                 }
-                const DWORD tick = timeGetTime();
-                if (tick - stamp < poll_timeout_E0_) {
+                if (timeGetTime() - value < poll_timeout_E0_) {
                     return;
                 }
             }
             if (drop_player(0xFFFFFFFF, 0) == 0) {
-                uint32_t cut = timeGetTime();
+                const DWORD cut = timeGetTime();
                 players_[1].stamp_10_ = cut;
-                players_[0].stamp_10_ = cut;
+                *stamps = cut;
             }
         }
     }

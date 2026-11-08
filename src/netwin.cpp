@@ -1725,8 +1725,9 @@ static void pick_send_state() {
     send_session_packet(NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id()), 0);
 }
 
-// Number/planet pickers and rule clicks load the destination before copying
-// (47E147/47EA57/47B9B5), unlike the other six scalar pickers.
+// Rule clicks load the destination before copying (47B9B5). The number and
+// planet pickers use pick_send_state; their image's edx-vs-eax choice for
+// the destination load remains an open register tie.
 static void pick_send_state_with_captured_target() {
     NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());
     const int target = NetDaemonNet.host_player_id();
@@ -2292,10 +2293,10 @@ void NetWin::pick_clouds() {
     pop_menu.init();
     Dialogs &dialogs = pop_menu.dialogs();
     int index = 0;
-    char *label = label_get(0xFE4 / 4);
+    char *label = StringTable.get(Labels.strings_ptr[0xFE4 / 4]);
     dialogs.item(label, index);
     for (int slot = 0; slot < 3; ++slot) {
-        label = label_get(slot + 0xF84 / 4);
+        label = StringTable.get(Labels.strings_ptr[slot + 0xF84 / 4]);
         dialogs.item(label, slot + 1);
     }
     int x;
@@ -2328,10 +2329,10 @@ void NetWin::pick_ocean() {
     pop_menu.init();
     Dialogs &dialogs = pop_menu.dialogs();
     int index = 0;
-    char *label = label_get(0xFE4 / 4);
+    char *label = StringTable.get(Labels.strings_ptr[0xFE4 / 4]);
     dialogs.item(label, index);
     for (int slot = 0; slot < 3; ++slot) {
-        label = label_get(slot + 0xF60 / 4);
+        label = StringTable.get(Labels.strings_ptr[slot + 0xF60 / 4]);
         dialogs.item(label, slot + 1);
     }
     int x;
@@ -2364,10 +2365,10 @@ void NetWin::pick_erosion() {
     pop_menu.init();
     Dialogs &dialogs = pop_menu.dialogs();
     int index = 0;
-    char *label = label_get(0xFE4 / 4);
+    char *label = StringTable.get(Labels.strings_ptr[0xFE4 / 4]);
     dialogs.item(label, index);
     for (int slot = 0; slot < 3; ++slot) {
-        label = label_get(slot + 0xF6C / 4);
+        label = StringTable.get(Labels.strings_ptr[slot + 0xF6C / 4]);
         dialogs.item(label, slot + 1);
     }
     int x;
@@ -2400,10 +2401,10 @@ void NetWin::pick_native() {
     pop_menu.init();
     Dialogs &dialogs = pop_menu.dialogs();
     int index = 0;
-    char *label = label_get(0xFE4 / 4);
+    char *label = StringTable.get(Labels.strings_ptr[0xFE4 / 4]);
     dialogs.item(label, index);
     for (int slot = 0; slot < 3; ++slot) {
-        label = label_get(slot + 0xF90 / 4);
+        label = StringTable.get(Labels.strings_ptr[slot + 0xF90 / 4]);
         dialogs.item(label, slot + 1);
     }
     int x;
@@ -2436,7 +2437,8 @@ void NetWin::pick_planet_size() {
     PopMenu pop_menu;
     pop_menu.init();
     Dialogs &dialogs = pop_menu.dialogs();
-    dialogs.item(label_get(0xFE4 / 4), 0);
+    char *label = StringTable.get(Labels.strings_ptr[0xFE4 / 4]);
+    dialogs.item(label, 0);
     // Native 47E9F4 reloads the bound after each owned-dialog insertion.
     for (int index = 0; index < NetWinPlanetSizeLabelCount; ++index) {
         dialogs.item(world_size_labels_[index], index + 1);
@@ -2448,7 +2450,7 @@ void NetWin::pick_planet_size() {
         NetWinSessionOptions.fields_.planet_size_ =
             static_cast<unsigned char>(answer - 1);
     }
-    pick_send_state_with_captured_target();
+    pick_send_state();
 }
 
 static void netwin_set_rect(RECT *rect, int left, int top, int right, int bottom) {
@@ -2700,12 +2702,12 @@ void NetWin::pick_num_players() {
     PopMenu pop_menu;
     pop_menu.init();
     Dialogs &dialogs = pop_menu.dialogs();
+    char number[0x28];
     int first = NetDaemonNet.player_count_;
-    if (first < 2) {
+    if (first <= 2) {
         first = 2;
     }
     for (int count = first; count < 8; ++count) {
-        char number[0xA];
         StringTemp[0] = 0;
         _itoa(count, number, 10);
         strcat(StringTemp, number);
@@ -2716,13 +2718,10 @@ void NetWin::pick_num_players() {
     int answer = pick_answer_at(*this, pop_menu, &x, &y);
     if (answer >= 0) {
         // Native 47E11A..47E132 retains the pre-modal lower bound.
-        int count = static_cast<int>(static_cast<uint32_t>(answer) +
-                                     static_cast<uint32_t>(first));
-        if (count < 2) count = 2;
-        else if (count > 7) count = 7;
-        NetWinSessionOptions.fields_.player_count_ = static_cast<unsigned char>(count);
+        NetWinSessionOptions.fields_.player_count_ =
+            static_cast<unsigned char>(range(answer + first, 2, 7));
     }
-    pick_send_state_with_captured_target();
+    pick_send_state();
 }
 
 /*
