@@ -7110,7 +7110,7 @@ void Win::left_down_event(int x, int y, int from_parent) {
 
 // ===== homed from src/unrecovered/005ef110.cpp =====
 
-// ORIGINAL: 0x005EF110 ?nonclient_to_client@Win@@QAEXPAURECT@@@Z 0x005EF110-0x005EF1D1 FILE
+// ORIGINAL: 0x005EF110 ?nonclient_to_client@Win@@QAEXPAURECT@@@Z 0x005EF110-0x005EF1D1 FILE BYTE_EXACT
 // symbol    ?nonclient_to_client@Win@@QAEXPAUtagRECT@@@Z
 // notes     the RECT overload; the coordinate-pair form shares the name
 //           and marker_symbols resolves to whichever comes first.
