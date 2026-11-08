@@ -281,7 +281,7 @@ OPENSMACX_NOINLINE
 // no prior push are three plain __cdecl arguments (float*, float, int),
 // matching the Ghidra hint's arity.
 // symbol    ?vox_part_behind@@YA_NPBUVOX_Vect@@MPBUVoxCameraBlock@@@Z
-// ORIGINAL: 0x006282E0 sub_6282e0 0x006282E0-0x00628377
+// ORIGINAL: 0x006282E0 sub_6282e0 0x006282E0-0x00628377 BYTE_EXACT
 // symbol    ?vox_part_behind@@YA_NPBUVOX_Vect@@MPBUVoxCameraBlock@@@Z
 bool __cdecl vox_part_behind(const VOX_Vect *position, float extent,
                              const VoxCameraBlock *view) {
