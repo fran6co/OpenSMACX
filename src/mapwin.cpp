@@ -2542,12 +2542,11 @@ void MapWin::draw_vehicles(int tile_x, int tile_y, int pixel_x, int pixel_y,
             int cursor_tile_x;
             int cursor_tile_y;
             pixel_to_tile(mouse_x, mouse_y, &cursor_tile_x, &cursor_tile_y);
-            const int delta_x = abs(cursor_tile_x - Vehs[ConsoleGlobal.selected_vehicle_].x);
-            const int adjusted_x =
-                (MapIsFlat & 1) == 0 && static_cast<int>(MapLongitude) < delta_x
-                    ? static_cast<int>(MapLongitudeBounds) - delta_x : delta_x;
-            const int delta_y = abs(cursor_tile_y - Vehs[ConsoleGlobal.selected_vehicle_].y);
-            if (((delta_y + adjusted_x) & ~1) <= 2) return;
+            if ((mapwin_route_distance(cursor_tile_x, cursor_tile_y,
+                                       Vehs[ConsoleGlobal.selected_vehicle_].x,
+                                       Vehs[ConsoleGlobal.selected_vehicle_].y) & ~1) <= 2) {
+                return;
+            }
             draw_state = 0x403;
         }
     } else {
@@ -7710,8 +7709,8 @@ void MapWin::calculate_dimensions() {
     const int half_height = unit * 2;
     const int tile_height = unit * 4;
     field_1DDC4_ = half_height;
-    const int tile_width = half_height * 4;
     field_1DDBC_ = half_height * 2;
+    const int tile_width = half_height * 4;
     field_1DDC0_ = half_height;
     tile_pixel_width_ = tile_width;
     tile_pixel_height_ = tile_height;
@@ -7726,8 +7725,8 @@ void MapWin::calculate_dimensions() {
         MapWinPrimaryCorner.top = y;
         MapWinPrimaryCorner.right = x;
         MapWinPrimaryCorner.bottom = y;
-        const int columns = field_1DDCC_;
         const int rows = field_1DDD0_;
+        const int columns = field_1DDCC_;
         MapWinPrimaryCorner.left -= columns;
         MapWinPrimaryCorner.right += columns;
         MapWinPrimaryCorner.top -= rows;
@@ -7737,19 +7736,15 @@ void MapWin::calculate_dimensions() {
         MapWinPrimaryCorner.top += 4;
         MapWinPrimaryCorner.bottom -= 6;
     }
-    const int half_x = MapLongitudeBounds / 2;
-    if (field_1DDCC_ > half_x) {
-        field_1DDCC_ = half_x;
-        const int used_width = field_1DDCC_ * tile_pixel_width_;
-        field_1DDD4_ = half_x + 1;
-        field_1DDAC_ = (pixel_width() - used_width) / 2;
+    if (field_1DDCC_ > MapLongitudeBounds / 2) {
+        field_1DDCC_ = MapLongitudeBounds / 2;
+        field_1DDD4_ = field_1DDCC_ + 1;
+        field_1DDAC_ = (pixel_width() - field_1DDCC_ * tile_pixel_width_) / 2;
     }
-    const int half_y = MapLatitudeBounds / 2;
-    if (field_1DDD0_ > half_y) {
-        field_1DDD0_ = half_y;
-        const int used_height = field_1DDD0_ * tile_pixel_height_;
-        field_1DDD8_ = half_y + 1;
-        field_1DDB0_ = -((dib_.bmiHeader.biHeight + used_height) / 2);
+    if (field_1DDD0_ > MapLatitudeBounds / 2) {
+        field_1DDD0_ = MapLatitudeBounds / 2;
+        field_1DDD8_ = field_1DDD0_ + 1;
+        field_1DDB0_ = (pixel_height() - tile_pixel_height_ * field_1DDD0_) / 2;
     }
     field_1DDCC_ = field_1DDCC_ < MapLongitudeBounds / 2 ? field_1DDCC_
                                                          : MapLongitudeBounds / 2;
