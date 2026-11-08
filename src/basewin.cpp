@@ -1233,12 +1233,14 @@ void BaseWin::staple_the_bastards() {
         && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) return;
     const int faction = BaseCurrent->faction_id_current;
     parse_says(0, BaseCurrent->name_string, -1, -1);
+    // stand-in: a function pointer keeps has_fac out of line, as the image calls it.
+    BOOL (__cdecl *const has_facility)(int, int, int) = has_fac;
     const int police = PlayersData[faction].soc_effect_active.values_[SocialEffect::POLICE]
-        + has_fac(0x23, BaseIDCurrentSelected, 0) * 2;
+        + has_facility(0x23, BaseIDCurrentSelected, 0) * 2;
     // Each original popup arm reads the rule flag and script after the
     // preceding service calls, including the final multiplayer lock.
     if (police < 0) {
-        if (Players[faction].rule_flags & 0x80) {
+        if (Players[faction].rule_flags & 0x80u) {
             popp(ScriptPopupFile, "NERVESTAPLEHELLNO", 0, "Alopdir.pcx", nullptr);
         } else {
             popp(ScriptPopupFile, "NERVESTAPLEHELLNO", 0, "talent_sm.pcx", nullptr);
@@ -1246,7 +1248,7 @@ void BaseWin::staple_the_bastards() {
         return;
     }
     if (BaseCurrent->nerve_staple_turns_left) {
-        if (Players[faction].rule_flags & 0x80) {
+        if (Players[faction].rule_flags & 0x80u) {
             popp(ScriptPopupFile, "NERVESTAPLED", 0, "ALdrone_sm.pcx", nullptr);
         } else {
             popp(ScriptPopupFile, "NERVESTAPLED", 0, "drone_sm.pcx", nullptr);
@@ -1254,14 +1256,13 @@ void BaseWin::staple_the_bastards() {
         return;
     }
     if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) return;
-    if (Players[faction].rule_flags & 0x80) {
+    if (Players[faction].rule_flags & 0x80u) {
         if (!popp(ScriptPopupFile, "NERVESTAPLE", 0, "ALdrone_sm.pcx", nullptr)) {
             NetDaemonNet.unlock_base(BaseIDCurrentSelected);
             return;
         }
     } else if (!popp(ScriptPopupFile, "NERVESTAPLE", 0, "drone_sm.pcx", nullptr)) {
-        NetDaemonNet.unlock_base(BaseIDCurrentSelected);
-        return;
+        goto unlock;
     }
     if (IsMultiplayerNet) {
         message_data(0x2414, 0, BaseIDCurrentSelected, 0, 0, 0);
@@ -1270,6 +1271,7 @@ void BaseWin::staple_the_bastards() {
         return;
     }
     action_staple(BaseIDCurrentSelected);
+unlock:
     NetDaemonNet.unlock_base(BaseIDCurrentSelected);
 }
 
@@ -5155,40 +5157,56 @@ void BaseWin::on_redraw() {
 // The seed's four 0x0096CDC0..0x0096CDCC indexed words are
 // PlayersData[faction].ai_growth/ai_tech/ai_wealth/ai_power: each index step
 // is 2099 dwords, the established 0x20CC-byte PlayerData stride.
+// stand-in: BaseButton's private field_A74_ is written by offset. The image
+// addresses it from BaseWin's this, not through the button pointer that
+// clear_auxiliary_state_for_disabled_button uses; a public field would replace it.
 void BaseWin::update_gov_buttons() {
     const int faction = BaseCurrent->faction_id_current;
-    flatButtons_[8].set((BaseCurrent->governor & GOV_ACTIVE) != 0);
-    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << faction)) != 0
-            ? (BaseCurrent->governor & GOV_PRIORITY_EXPLORE) != 0 && (BaseCurrent->governor & GOV_ACTIVE) != 0
-            : PlayersData[faction].ai_growth != 0) {
+    flatButtons_[8].set(BaseCurrent->governor >> 31);
+    const int mask = 1 << faction;
+    if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & mask
+            ? (BaseCurrent->governor & GOV_PRIORITY_EXPLORE) && (BaseCurrent->governor & GOV_ACTIVE)
+            : PlayersData[faction].ai_growth) {
         flatButtons_[4].set(1);
     } else {
         flatButtons_[4].set(0);
-        flatButtons_[4].clear_auxiliary_state_for_disabled_button();
+        if (*reinterpret_cast<uint32_t *>(reinterpret_cast<char *>(&flatButtons_[4]) + 0xA74)) {
+            *reinterpret_cast<uint32_t *>(reinterpret_cast<char *>(&flatButtons_[4]) + 0xA74) = 0;
+            flatButtons_[4].redraw();
+        }
     }
-    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << faction)) != 0
-            ? (BaseCurrent->governor & GOV_PRIORITY_DISCOVER) != 0 && (BaseCurrent->governor & GOV_ACTIVE) != 0
-            : PlayersData[faction].ai_tech != 0) {
+    if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & mask
+            ? (BaseCurrent->governor & GOV_PRIORITY_DISCOVER) && (BaseCurrent->governor & GOV_ACTIVE)
+            : PlayersData[faction].ai_tech) {
         flatButtons_[5].set(1);
     } else {
         flatButtons_[5].set(0);
-        flatButtons_[5].clear_auxiliary_state_for_disabled_button();
+        if (*reinterpret_cast<uint32_t *>(reinterpret_cast<char *>(&flatButtons_[5]) + 0xA74)) {
+            *reinterpret_cast<uint32_t *>(reinterpret_cast<char *>(&flatButtons_[5]) + 0xA74) = 0;
+            flatButtons_[5].redraw();
+        }
     }
-    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << faction)) != 0
-            ? (BaseCurrent->governor & GOV_PRIORITY_BUILD) != 0 && (BaseCurrent->governor & GOV_ACTIVE) != 0
-            : PlayersData[faction].ai_wealth != 0) {
+    if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & mask
+            ? (BaseCurrent->governor & GOV_PRIORITY_BUILD) && (BaseCurrent->governor & GOV_ACTIVE)
+            : PlayersData[faction].ai_wealth) {
         flatButtons_[6].set(1);
     } else {
         flatButtons_[6].set(0);
-        flatButtons_[6].clear_auxiliary_state_for_disabled_button();
+        if (*reinterpret_cast<uint32_t *>(reinterpret_cast<char *>(&flatButtons_[6]) + 0xA74)) {
+            *reinterpret_cast<uint32_t *>(reinterpret_cast<char *>(&flatButtons_[6]) + 0xA74) = 0;
+            flatButtons_[6].redraw();
+        }
     }
-    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << faction)) != 0
-            ? (BaseCurrent->governor & GOV_PRIORITY_CONQUER) != 0 && (BaseCurrent->governor & GOV_ACTIVE) != 0
-            : PlayersData[faction].ai_power != 0) {
+    if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & mask
+            ? (BaseCurrent->governor & GOV_PRIORITY_CONQUER) && (BaseCurrent->governor & GOV_ACTIVE)
+            : PlayersData[faction].ai_power) {
         flatButtons_[7].set(1);
     } else {
         flatButtons_[7].set(0);
-        flatButtons_[7].clear_auxiliary_state_for_disabled_button();
+        if (*reinterpret_cast<uint32_t *>(reinterpret_cast<char *>(&flatButtons_[7]) + 0xA74)) {
+            *reinterpret_cast<uint32_t *>(reinterpret_cast<char *>(&flatButtons_[7]) + 0xA74) = 0;
+            flatButtons_[7].redraw();
+        }
     }
 }
 // ORIGINAL: 0x00412AA0 ?draw_expenses@BaseWin@@QAEXH@Z 0x00412AA0-0x00414B38;0x00651B61-0x00651B76
@@ -6226,8 +6244,9 @@ void BaseWin::draw_misc(int update_mode) {
 
     Font *font = find_font(12, 0);
     Buffer::set_font(font, nullptr, nullptr, nullptr);
-    int y = (panel.bottom - font_line_advance(*font) * 3 - panel.top) / 2 + panel.top;
+    const int height = font_line_advance(*font) * 3;
     int x = panel.left;
+    int y = (panel.bottom - height - panel.top) / 2 + panel.top;
 
     Buffer::set_text_color(TextColourTable[104], TextColourTable[105], 1, 1);
     StringTemp[0] = 0;
