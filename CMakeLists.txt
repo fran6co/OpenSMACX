@@ -318,7 +318,6 @@ set(OPENSMACX_SOURCES
     src/veh_queries.cpp
     src/vehicle_storage.cpp
     src/prototype_history.cpp
-    src/vehicle_strategy.cpp
     src/vehicle_stats.cpp
     src/vehicle_cost.cpp
     src/vector.cpp
@@ -462,7 +461,6 @@ set_source_files_properties(
 # on its existing owner profile.
 set_source_files_properties(
     src/vehicle_cost.cpp
-    src/vehicle_strategy.cpp
     src/vehicle_stats.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve original frame-based accesses in the remaining application owners.

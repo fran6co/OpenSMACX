@@ -611,6 +611,129 @@ BOOL __cdecl want_monolith(int veh_id) {
 }
 
 /*
+Purpose: Calculate the armor strategy for the specified armor id.
+// ORIGINAL: 0x0057D270 ?arm_strat@@YAHHH@Z 0x0057D270-0x0057D2D5 BYTE_EXACT
+// size      101 bytes
+// prototype int (__cdecl ?arm_strat@@YAHHH@Z)(int armorID, int factionID)
+// callers   7   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00501500
+Return Value: Armor strategy
+Status: Complete
+*/
+int __cdecl arm_strat(int armor_id, int faction_id) {
+    if (!ExpansionEnabled && armor_id > ARM_PSI_DEFENSE) {
+        return 1;
+    }
+    int8_t defense_rating = Armor[armor_id].defense_rating;
+    if (defense_rating < 0) {
+        return psi_factor((Rules.psi_combat_ratio_def[TRIAD_LAND]
+            * PlayersData[faction_id].enemy_best_weapon_value)
+            / Rules.psi_combat_ratio_atk[TRIAD_LAND], faction_id, false, false);
+    }
+    return defense_rating;
+}
+
+/*
+Purpose: Calculate the weapon strategy for the specified weapon id.
+// ORIGINAL: 0x0057D2E0 ?weap_strat@@YAHHH@Z 0x0057D2E0-0x0057D35D BYTE_EXACT
+// LEVER: the `!ExpansionEnabled && (a || b || c)` guard was three SEPARATE early-return `if`s under one outer `if (!ExpansionEnabled)`, not one `||` chain - the image has THREE distinct `mov eax,1; pop ebp; ret` blocks (no shared tail), which VC6 only emits for three genuinely separate `return` statements. Same `int8_t` / `(int)` cast pair as arm_strat for the byte read and the signed division.
+// size      125 bytes
+// prototype int (__cdecl ?weap_strat@@YAHHH@Z)(int weaponID, int factionID)
+// callers   7   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00501500
+Return Value: Weapon strategy
+Status: Complete
+*/
+int __cdecl weap_strat(int weapon_id, int faction_id) {
+    if (!ExpansionEnabled) {
+        if (weapon_id == WPN_RESONANCE_LASER) {
+            return 1;
+        }
+        if (weapon_id == WPN_RESONANCE_BOLT) {
+            return 1;
+        }
+        if (weapon_id == WPN_STRING_DISRUPTOR) {
+            return 1;
+        }
+    }
+    int8_t offense_rating = Weapon[weapon_id].offense_rating;
+    if (offense_rating < 0) {
+        return psi_factor((Rules.psi_combat_ratio_atk[TRIAD_LAND]
+            * PlayersData[faction_id].enemy_best_armor_value)
+            / Rules.psi_combat_ratio_def[TRIAD_LAND], faction_id, true, false);
+    }
+    return offense_rating;
+}
+
+/*
+Purpose: Calculate the weapon value for the specified prototype.
+// ORIGINAL: 0x0057D360 ?weap_val@@YAHHH@Z 0x0057D360-0x0057D3ED BYTE_EXACT
+// size      141 bytes
+// prototype int (__cdecl ?weap_val@@YAHHH@Z)(int protoID, int factionID)
+// callers   5   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00501500
+Return Value: Weapon value
+Status: Complete
+*/
+int __cdecl weap_val(int proto_id, int faction_id) {
+    return weap_strat(VehPrototypes[proto_id].weapon_id, faction_id);
+}
+
+/*
+Purpose: Calculate the armor value for the specified armor id.
+// ORIGINAL: 0x0057D3F0 ?arm_val@@YAHHH@Z 0x0057D3F0-0x0057D471 BYTE_EXACT
+// size      129 bytes
+// prototype int (__cdecl ?arm_val@@YAHHH@Z)(int armorID, int factionID)
+// callers   3   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00501500
+// LEVER: WRONG CALLEE - arm_strat() (0x0057D270, own out-of-line function)
+//        is hand-inlined at this site, matching the image's one call
+//        (psi_factor), not arm_strat. Best similarity 0.980 (14->44 of 48).
+// Superseded: this was one TU with veh.cpp, so the direct call inlines.
+Return Value: Armor value
+Status: Complete
+*/
+int __cdecl arm_val(int armor_id, int faction_id) {
+    // The separate `*= 2` keeps prune_protos' inlined doubling at the merge.
+    int defense;
+    if (faction_id >= 0) {
+        defense = arm_strat(armor_id, faction_id);
+    } else {
+        defense = Armor[armor_id].defense_rating;
+    }
+    defense *= 2;
+    return defense;
+}
+
+/*
+Purpose: Calculate the armor value for the specified prototype.
+// ORIGINAL: 0x0057D480 ?armor_val@@YAHHH@Z 0x0057D480-0x0057D50D BYTE_EXACT
+// size      141 bytes
+// prototype int (__cdecl ?armor_val@@YAHHH@Z)(int protoID, int factionID)
+// callers   2   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00501500
+// LEVER: WRONG CALLEE - arm_val() (0x0057D3F0) and arm_strat() (0x0057D270)
+//        are both hand-inlined at this site, matching the image's one call
+//        (psi_factor), not arm_val. Best similarity 0.981.
+// Superseded: this was one TU with veh.cpp, so the direct call inlines.
+Return Value: Armor value
+Status: Complete
+*/
+int __cdecl armor_val(int proto_id, int faction_id) {
+    return arm_val(VehPrototypes[proto_id].armor_id, faction_id);
+}
+
+/*
 Purpose: Calculate the carrying/transport capacity for the specified chassis, abilities and reactor.
 // ORIGINAL: 0x0057D510 ?transport_val@@YAHHHH@Z 0x0057D510-0x0057D556 BYTE_EXACT
 // LEVER: uint32_t -> int; image uses signed division (cdq/sub/sar) for `/2`, not shr
@@ -2211,28 +2334,8 @@ int __cdecl propose_proto(int faction_id, int chassis_id, int weapon_id,
         return 2;
     }
 
-    if (!ExpansionEnabled && weapon_id == 12) {
-        offense_factor = 1;
-    } else if (!ExpansionEnabled && weapon_id == 13) {
-        offense_factor = 1;
-    } else if (!ExpansionEnabled && weapon_id == 14) {
-        offense_factor = 1;
-    } else if (Weapon[weapon_id].offense_rating < 0) {
-        offense_factor = psi_factor(PlayersData[faction_id].enemy_best_armor_value
-            * (int)Rules.psi_combat_ratio_atk[TRIAD_LAND]
-            / (int)Rules.psi_combat_ratio_def[TRIAD_LAND], faction_id, TRUE, FALSE);
-    } else {
-        offense_factor = Weapon[weapon_id].offense_rating;
-    }
-    if (!ExpansionEnabled && armor_id > 9) {
-        defense_factor = 1;
-    } else if (Armor[armor_id].defense_rating < 0) {
-        defense_factor = psi_factor(PlayersData[faction_id].enemy_best_weapon_value
-            * (int)Rules.psi_combat_ratio_def[TRIAD_LAND]
-            / (int)Rules.psi_combat_ratio_atk[TRIAD_LAND], faction_id, FALSE, FALSE);
-    } else {
-        defense_factor = Armor[armor_id].defense_rating;
-    }
+    offense_factor = weap_strat(weapon_id, faction_id);
+    defense_factor = arm_strat(armor_id, faction_id);
 
     for (int walk = 0; walk < 2 * MaxVehProtoFactionNum; walk++) {
         int slot = walk % MaxVehProtoFactionNum
@@ -2305,31 +2408,9 @@ int __cdecl propose_proto(int faction_id, int chassis_id, int weapon_id,
                 && !((VehPrototypes[slot].ability_flags ^ ability_flags)
                     & PrototypeAbilitySimilarityMask)) {
                 int other_weapon = VehPrototypes[slot].weapon_id;
-                int other_offense;
-                if (!ExpansionEnabled && other_weapon == 12) {
-                    other_offense = 1;
-                } else if (!ExpansionEnabled && other_weapon == 13) {
-                    other_offense = 1;
-                } else if (!ExpansionEnabled && other_weapon == 14) {
-                    other_offense = 1;
-                } else if (Weapon[other_weapon].offense_rating < 0) {
-                    other_offense = psi_factor(PlayersData[faction_id].enemy_best_armor_value
-                        * (int)Rules.psi_combat_ratio_atk[TRIAD_LAND]
-                        / (int)Rules.psi_combat_ratio_def[TRIAD_LAND], faction_id, TRUE, FALSE);
-                } else {
-                    other_offense = Weapon[other_weapon].offense_rating;
-                }
+                int other_offense = weap_strat(other_weapon, faction_id);
                 int other_armor = VehPrototypes[slot].armor_id;
-                int other_defense;
-                if (!ExpansionEnabled && other_armor > 9) {
-                    other_defense = 1;
-                } else if (Armor[other_armor].defense_rating < 0) {
-                    other_defense = psi_factor(PlayersData[faction_id].enemy_best_weapon_value
-                        * (int)Rules.psi_combat_ratio_def[TRIAD_LAND]
-                        / (int)Rules.psi_combat_ratio_atk[TRIAD_LAND], faction_id, FALSE, FALSE);
-                } else {
-                    other_defense = Armor[other_armor].defense_rating;
-                }
+                int other_defense = arm_strat(other_armor, faction_id);
                 int highest_plus = (other_offense > other_defense)
                     ? other_offense : other_defense;
                 int highest = highest_plus;
@@ -2561,33 +2642,9 @@ static inline void parse_prototype_report(int parse_id, int design_id) {
     parse_says(parse_id, StringTemp, -1, -1);
 }
 
-// stand-in: arm_strat/arm_val (0x57D270/0x57D3F0, vehicle_strategy.cpp) are
-// inlined here by the image, so they were one original unit; local copies
-// until the units merge.
-static inline int prune_arm_strat(int armor_id, int faction_id) {
-    if (!ExpansionEnabled && armor_id > ARM_PSI_DEFENSE) {
-        return 1;
-    }
-    int8_t defense_rating = Armor[armor_id].defense_rating;
-    if (defense_rating < 0) {
-        return psi_factor((Rules.psi_combat_ratio_def[TRIAD_LAND]
-            * PlayersData[faction_id].enemy_best_weapon_value)
-            / Rules.psi_combat_ratio_atk[TRIAD_LAND], faction_id, false, false);
-    }
-    return defense_rating;
-}
-
-static inline int prune_arm_val(int armor_id, int faction_id) {
-    if (faction_id >= 0) {
-        return prune_arm_strat(armor_id, faction_id) * 2;
-    }
-    return Armor[armor_id].defense_rating * 2;
-}
-
 // ORIGINAL: 0x0057F4B0 ?prune_protos@@YAXHHH@Z 0x0057F4B0-0x00580859
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0057f4b0.cpp; image:0x0057F4B0-0x00580859", "Completion propagation:0x0057F4BF-0x0057F693", "LockEnableMask separates retirement modes, unlocked epilogue returns:0x0057F699-0x0057F6AD;0x0057FCF3-0x0057FCFA", "Lower-reactor early marks:0x0057F7C8-0x0057F7DB;0x0057FA95-0x0057FAA0", "Locked replacement/target banks and non-positive armor bypass:0x0057FD13-0x005802A9;0x0057FEC2-0x0057FFC6", "Queue presence and callback-sensitive prompt/rewrite/unlock/report:0x005802AA-0x00580852"], "reason": "Recover typed completion and both mutually exclusive prototype-retirement modes in the genuine vehicle-design owner. Loaded weapon/armor/chassis rules, faction design banks and active/queued counts determine obsolescence; owned Base queues and NetDaemon locking supply production migration, with native local prompt and multiplayer report ordering. Preserve the complete seed and original spans as evidence; this structural interpretation is not a measured matching claim."}
-// Rewritten from the image 2026-11-08 (0.85 full-text); remaining gaps are register ties and
-// the inlined arm_val doubling, which the image applies after the merge.
+// Rewritten from the image 2026-11-08 (0.85 full-text); remaining gaps are register ties.
 void __cdecl prune_protos(int faction_id, int prototype_id, int options) {
     if (prototype_id < MaxVehProtoFactionNum
         || VehPrototypes[prototype_id].flags & PROTO_TYPED_COMPLETE) {
@@ -2692,8 +2749,8 @@ void __cdecl prune_protos(int faction_id, int prototype_id, int options) {
                     if (VehPrototypes[cand].armor_id != VehPrototypes[target_id].armor_id) {
                         continue;
                     }
-                } else if (prune_arm_val(VehPrototypes[cand].armor_id, faction_id)
-                           > prune_arm_val(VehPrototypes[target_id].armor_id, faction_id)) {
+                } else if (armor_val(cand, faction_id)
+                           > armor_val(target_id, faction_id)) {
                     continue;
                 }
                         if (Chassis[VehPrototypes[cand].chassis_id].speed
@@ -2748,8 +2805,8 @@ void __cdecl prune_protos(int faction_id, int prototype_id, int options) {
                     if (VehPrototypes[peer].armor_id != VehPrototypes[target_id].armor_id) {
                         continue;
                     }
-                } else if (prune_arm_val(VehPrototypes[peer].armor_id, faction_id)
-                           > prune_arm_val(VehPrototypes[target_id].armor_id, faction_id)) {
+                } else if (armor_val(peer, faction_id)
+                           > armor_val(target_id, faction_id)) {
                     continue;
                 }
                     if (Chassis[VehPrototypes[peer].chassis_id].speed
@@ -2824,8 +2881,8 @@ void __cdecl prune_protos(int faction_id, int prototype_id, int options) {
                     if (VehPrototypes[tid].armor_id != VehPrototypes[rid].armor_id) {
                         continue;
                     }
-                } else if (prune_arm_val(VehPrototypes[tid].armor_id, faction_id)
-                           > prune_arm_val(VehPrototypes[rid].armor_id, faction_id)) {
+                } else if (armor_val(tid, faction_id)
+                           > armor_val(rid, faction_id)) {
                     continue;
                 }
             if (VehPrototypes[tid].plan != 3) {
@@ -3027,1337 +3084,773 @@ int __cdecl study_artifact(int veh_id) {
 
 
 
-// consider_designs owner support
-struct ConsiderDesignsProposalState {
-    VehPrototype &prototype;
-    int selected_weapon_id;
-    int selected_armor_id;
-    int reactor_id;
-    int &armor_scale_value;
-    ConsiderDesignsProposalState(VehPrototype &prototype_value,
-                                 int weapon_id, int armor_id, int reactor,
-                                 int &shared_armor_scale_value)
-        : prototype(prototype_value), selected_weapon_id(weapon_id),
-          selected_armor_id(armor_id), reactor_id(reactor),
-          armor_scale_value(shared_armor_scale_value) {}
-};
-static int consider_designs_weapon_defense_limit(int reactor_id,
-                                                 int armor_scale_value,
-                                                 int offense_rating) {
-    const int numerator = armor_scale_value * (2 << reactor_id) * 4;
-    const int quotient = numerator / offense_rating;
-    if (quotient < 2 || offense_rating < 2) return 2;
-    return quotient > offense_rating ? offense_rating : quotient;
-}
-static int consider_designs_plan_one_limit(int reactor_id,
-                                            int armor_scale_value,
-                                            int offense_rating) {
-    return consider_designs_weapon_defense_limit(
-        reactor_id, armor_scale_value, offense_rating);
-}
-static bool consider_designs_plan_proposal(int faction_id, int plan,
-                                            ConsiderDesignsProposalState &state) {
-    VehPrototype &prototype = state.prototype;
-    const int chassis_id = prototype.chassis_id;
-    const int abilities = static_cast<int>(prototype.ability_flags);
-    const int category = prototype.unk_1;
-    const int reactor_id = state.reactor_id;
-    if (plan == 0 || plan == 4) {
-        if (state.selected_weapon_id < 0) return false;
-        propose_proto(faction_id, chassis_id, state.selected_weapon_id,
-                      prototype.armor_id, abilities, reactor_id,
-                      category, 0);
-        return true;
-    }
-    if (plan == 1) {
-        int candidate_armor_id = prototype.armor_id;
-        if (state.selected_weapon_id >= 0) {
-            state.armor_scale_value = state.reactor_id == 1 ? 2 : 1;
-            if (state.selected_armor_id >= 0) {
-                const int reactor_limit =
-                    consider_designs_plan_one_limit(
-                        reactor_id,
-                        state.armor_scale_value,
-                        Weapon[state.selected_weapon_id].offense_rating);
-                if (Armor[state.selected_armor_id].defense_rating <=
-                    reactor_limit) {
-                    candidate_armor_id = state.selected_armor_id;
-                }
-            }
-            propose_proto(faction_id, chassis_id, state.selected_weapon_id,
-                          candidate_armor_id, abilities, reactor_id,
-                          category, 0);
-            return true;
-        }
-        state.armor_scale_value = state.reactor_id == 1 ? 2 : 1;
-        const int offense_rating = Weapon[prototype.weapon_id].offense_rating;
-        const int reactor_limit =
-            consider_designs_weapon_defense_limit(
-                reactor_id, state.armor_scale_value, offense_rating);
-        if (Armor[state.selected_armor_id].defense_rating > reactor_limit)
-            return false;
-        propose_proto(faction_id, chassis_id, prototype.weapon_id,
-                      state.selected_armor_id, abilities, reactor_id,
-                      category, 0);
-        return true;
-    }
-    if (plan == 2) {
-        if (state.selected_armor_id < 0) return false;
-        propose_proto(faction_id, chassis_id, prototype.weapon_id,
-                      state.selected_armor_id, abilities, reactor_id,
-                      category, 0);
-        return true;
-    }
-    if (plan == 6) {
-        int candidate_armor_id = prototype.armor_id;
-        int candidate_weapon_id = prototype.weapon_id;
-        const PlayerData &player_data = PlayersData[faction_id];
-        const int design_budget = player_data.ai_power + player_data.ai_growth +
-            (reactor_id * reactor_id < 5 ? 5 : reactor_id * reactor_id);
-        if (state.selected_weapon_id >= 0) {
-            const int weapon_candidate_cost = static_cast<int>(proto_cost(
-                chassis_id, state.selected_weapon_id, candidate_armor_id,
-                abilities, reactor_id));
-            if (weapon_candidate_cost <= design_budget)
-                candidate_weapon_id = state.selected_weapon_id;
-        }
-        if (state.selected_armor_id >= 0) {
-            const int armor_candidate_cost = static_cast<int>(proto_cost(
-                chassis_id, candidate_weapon_id, state.selected_armor_id,
-                abilities, reactor_id));
-            if (armor_candidate_cost <= design_budget) {
-                candidate_armor_id = state.selected_armor_id;
-            } else if (candidate_armor_id != state.selected_armor_id &&
-                       candidate_weapon_id != state.selected_weapon_id) {
-                return false;
-            }
-        } else if (candidate_armor_id != state.selected_armor_id &&
-                   candidate_weapon_id != state.selected_weapon_id) {
-            return false;
-        }
-        propose_proto(faction_id, chassis_id, candidate_weapon_id,
-                      candidate_armor_id, abilities, reactor_id,
-                      category, 0);
-        return true;
-    }
-    return false;
-}
-struct ConsiderDesignsTailInput {
-    int prototypes_remaining;
-    int weighted_other_faction_score;
-    int reactor_id;
-    int reactor_capacity;
-    int armor_scale_value;
-};
-struct ConsiderDesignsTailOutput {
-    int chassis_id;
-    int weapon_id;
-    int armor_id;
-    int reactor_id;
-    uint32_t project_relation_mask;
-    uint32_t ability_flags;
-    uint32_t plan12_abilities;
-    bool plan12_technology_known;
-    bool tail_redirects_to_582218;
-    bool continue_prototype_loop;
-};
-static int consider_designs_tail_half(int value) {
-    const int adjusted = value - (value < 0 ? -1 : 0);
-    return adjusted >> 1;
-}
-static int consider_designs_tail_defense_limit(int reactor_capacity,
-                                                int armor_scale_value,
-                                                int armor_cost_cap,
-                                                int offense_rating) {
-    int limit = ((armor_scale_value * reactor_capacity) * 4) / offense_rating;
-    if (limit < 2 || offense_rating < 2) {
-        limit = 2;
-    } else if (limit > offense_rating) {
-        limit = offense_rating;
-    }
-    const int half_budget = consider_designs_tail_half(armor_cost_cap);
-    if (limit <= half_budget) limit = half_budget;
-    if (limit < 1) limit = 1;
-    if (limit > 0x63) limit = 0x63;
-    return limit;
-}
-static ConsiderDesignsTailOutput consider_designs_strategy_tail(
-    int faction_id, const ConsiderDesignsTailInput &input) {
-    ConsiderDesignsTailOutput output = {
-        -1, -1, -1, input.reactor_id, 0, 0, 0, false, false, false
-    };
-    if (input.prototypes_remaining != 1) {
-        output.continue_prototype_loop = true;
-        return output;
-    }
-    const uint32_t faction_mask = 1u << faction_id;
-    const PlayerData &faction_data = PlayersData[faction_id];
-    uint32_t other_faction_mask = 0;
-    if (Players[faction_id].rule_sharetech <= 0 &&
-        (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) == 0) {
-        for (int other = 1; other < MaxPlayerNum; ++other) {
-            const uint32_t other_mask = 1u << other;
-            if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & other_mask) == 0) continue;
-            int relation_flags = 0;
-            const int project_access = great_satan(other, 0);
-            if (project_access == 0) {
-                if (faction_data.diff_level >= DLVL_THINKER ||
-                    (GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY) != 0) {
-                    relation_flags = 0x10;
-                }
-                relation_flags |= 0x20;
-                if ((faction_data.diplo_treaties[other] & relation_flags) == 0)
-                    continue;
-            }
-            const int other_share_tech = Players[other].rule_sharetech;
-            if (other_share_tech > 0) {
-                other_faction_mask |= 0x3;
-                continue;
-            }
-            const int first_project_base = GameDataStateStorage.fields_.secret_project_.dream_twister();
-            if (first_project_base >= 0 &&
-                Bases[first_project_base].faction_id_current == other)
-                other_faction_mask |= 0x1;
-            const int second_project_base = GameDataStateStorage.fields_.secret_project_.neural_amplifier();
-            if (second_project_base >= 0 &&
-                Bases[second_project_base].faction_id_current == other)
-                other_faction_mask |= 0x2;
-        }
-    }
-    output.project_relation_mask = other_faction_mask;
-    output.chassis_id = pick_chassis(faction_id, 0, 1);
-    int ability_flags = 0;
-    int chosen_weapon_id = 0;
-    int chosen_armor_id = 0;
-    int best_defense_twice = -1;
-    int first_armor_id = 0;
-    if (output.chassis_id >= 0) {
-    for (int armor_id = 0; armor_id < MaxArmorNum; ++armor_id) {
-        const RulesArmor &armor = Armor[armor_id];
-        if (!has_tech(armor.preq_tech, faction_id)) continue;
-        if (armor.cost > 0x63 || armor.defense_rating < 0) continue;
-        int defense_value = armor.defense_rating;
-        if (faction_id >= 0 && ExpansionEnabled == 0 && armor_id > 9)
-            defense_value = 1;
-        const int defense_twice = defense_value + defense_value;
-        if (defense_twice < best_defense_twice) continue;
-        best_defense_twice = defense_twice;
-        first_armor_id = armor_id;
-    }
-    add_abil(&ability_flags, ABL_COMM_JAMMER, faction_id);
-    bool trained_gate = faction_data.ai_fight < 0;
-    if (!trained_gate && faction_data.soc_effect_pending.values_[SocialEffect::MORALE] < 0 &&
-        ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) == 0 ||
-         Players[faction_id].rule_morale < 0)) {
-        trained_gate = true;
-    }
-    if (trained_gate) add_abil(&ability_flags, ABL_TRAINED, faction_id);
-    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) == 0 &&
-        (faction_data.enemy_best_psi_offense >=
-             faction_data.enemy_best_weapon_value * 2 ||
-         (other_faction_mask & 0x1) != 0)) {
-        add_abil(&ability_flags, ABL_TRANCE, faction_id);
-    }
-    if (has_tech(Ability[18].preq_tech, faction_id) &&
-        (ability_flags == 0 ||
-         has_tech(Rules.tech_two_spec_abilities, faction_id))) {
-        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) == 0 &&
-            (other_faction_mask != 0 ||
-             (faction_data.planet_ecology >= 4 &&
-              faction_data.soc_effect_pending.values_[SocialEffect::INDUSTRY] <= 0))) {
-            ability_flags |= ABL_TRANCE;
-        }
-    }
-    chosen_weapon_id = weapon_budget(faction_id, 1, 0);
-    int weapon_budget_cap = 2;
-    int current_cost = 0;
-    int next_cost = 0;
-    for (;;) {
-        const int candidate_weapon_id = weapon_budget(faction_id,
-                                                      weapon_budget_cap, 0);
-        if (candidate_weapon_id == chosen_weapon_id) break;
-        current_cost = static_cast<int>(proto_cost(
-            output.chassis_id, chosen_weapon_id, first_armor_id,
-            ability_flags, input.reactor_id));
-        next_cost = static_cast<int>(proto_cost(
-            output.chassis_id, candidate_weapon_id, first_armor_id,
-            ability_flags, input.reactor_id));
-        if (next_cost > current_cost) break;
-        chosen_weapon_id = candidate_weapon_id;
-        ++weapon_budget_cap;
-    }
-    chosen_armor_id = first_armor_id;
-    if (Armor[chosen_armor_id].defense_rating > 1 ||
-        DesignConsiderArmor == 0) {
-        propose_proto(faction_id, output.chassis_id, chosen_weapon_id,
-                      chosen_armor_id, ability_flags, input.reactor_id,
-                      2, 0);
-    }
-    if (has_tech(Ability[18].preq_tech, faction_id) &&
-        (ability_flags & ABL_TRANCE) == 0 &&
-        (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) == 0 &&
-        ((faction_data.planet_ecology >= 4 &&
-          faction_data.soc_effect_pending.values_[SocialEffect::INDUSTRY] <= 0) ||
-         (other_faction_mask & 0x3) != 0)) {
-        propose_proto(faction_id, output.chassis_id, chosen_weapon_id,
-                      chosen_armor_id, ABL_TRANCE, input.reactor_id,
-                      0x12, 0);
-        ability_flags = ABL_TRANCE;
-    }
-    if (has_tech(Ability[8].preq_tech, faction_id) &&
-        (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) == 0 &&
-        (faction_data.unk_66 != 0 || faction_data.unk_68 != 0)) {
-        propose_proto(faction_id, output.chassis_id, chosen_weapon_id,
-                      chosen_armor_id, ABL_AAA, input.reactor_id,
-                      0x14, 0);
-        ability_flags = ABL_AAA;
-    }
-    }
-    output.chassis_id = pick_chassis(faction_id, 0, 1);
-    if (output.chassis_id < 0) {
-        output.weapon_id = chosen_weapon_id;
-        output.armor_id = chosen_armor_id;
-        output.ability_flags = static_cast<uint32_t>(ability_flags);
-        output.plan12_abilities = output.ability_flags;
-        output.tail_redirects_to_582218 = true;
-        return output;
-    }
-    ability_flags = 0;
-    const int doubled_reactor_capacity = input.reactor_capacity * 2;
-    int armor_cost_cap = 1;
-    const int initial_division = 2 / doubled_reactor_capacity;
-    const int power_target = faction_data.ai_power + 5;
-    if (initial_division <= power_target) {
-        int candidate_cap = 2;
-        for (;;) {
-            const int triangular = ((candidate_cap + 1) * candidate_cap) / 2;
-            if (triangular / doubled_reactor_capacity > power_target) break;
-            ++candidate_cap;
-        }
-        armor_cost_cap = candidate_cap;
-    }
-    const int armor_cost_limit =
-        (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) != 0
-            ? 0x63
-            : armor_cost_cap;
-    const int budget_weapon_id = weapon_budget(faction_id, armor_cost_limit, 0);
-    const int offense_rating = Weapon[budget_weapon_id].offense_rating;
-    int armor_defense_limit = consider_designs_tail_defense_limit(
-        input.reactor_capacity, input.armor_scale_value, armor_cost_cap,
-        offense_rating);
-    best_defense_twice = -1;
-    chosen_armor_id = 0;
-    for (int armor_id = 0; armor_id < MaxArmorNum; ++armor_id) {
-        const RulesArmor &armor = Armor[armor_id];
-        if (!has_tech(armor.preq_tech, faction_id) ||
-            armor.cost > armor_defense_limit || armor.defense_rating < 0)
-            continue;
-        int defense_value = armor.defense_rating;
-        if (faction_id >= 0 && ExpansionEnabled == 0 && armor_id > 9)
-            defense_value = 1;
-        const int defense_twice = defense_value + defense_value;
-        if (defense_twice < best_defense_twice) continue;
-        best_defense_twice = defense_twice;
-        chosen_armor_id = armor_id;
-    }
-    const int selected_armor_defense = Armor[chosen_armor_id].defense_rating;
-    int weapon_offense_cursor = Weapon[budget_weapon_id].offense_rating;
-    int weapon_cost_target = faction_data.ai_power + 5;
-    int cost_numerator = (weapon_offense_cursor + 1) * selected_armor_defense;
-    int offense_step = selected_armor_defense;
-    int denominator = doubled_reactor_capacity;
-    while (cost_numerator / denominator <= weapon_cost_target) {
-        ++weapon_offense_cursor;
-        cost_numerator += offense_step;
-    }
-    chosen_weapon_id = weapon_budget(faction_id, weapon_offense_cursor, 0);
-    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) == 0 &&
-        faction_data.unk_66 > faction_data.unk_105 * 2 &&
-        faction_data.unk_66 > 1 &&
-        faction_data.unk_66 > faction_data.unk_106) {
-        add_abil(&ability_flags, ABL_AAA, faction_id);
-    }
-    if (GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_UN_CHARTER] >
-            GameDataStateStorage.fields_.council_resolution_count_[PROP_REINSTATE_UN_CHARTER] &&
-        faction_data.ai_fight + faction_data.ai_power > 0 &&
-        (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) == 0) {
-        add_abil(&ability_flags, ABL_NERVE_GAS, faction_id);
-    }
-    if (input.weighted_other_faction_score != 0 &&
-        input.weighted_other_faction_score >
-            1 - faction_data.ai_fight && faction_data.ai_fight >= 0 &&
-        (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) == 0) {
-        add_abil(&ability_flags, ABL_NERVE_GAS, faction_id);
-    }
-    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) == 0) {
-        const int scaled_armor = faction_data.best_armor_value * 3;
-        const int defense_ratio = consider_designs_tail_half(scaled_armor);
-        const int enemy_psi_defense = faction_data.enemy_best_psi_defense;
-        const int selected_weapon_half = consider_designs_tail_half(
-            Weapon[chosen_weapon_id].offense_rating);
-        const bool armor_comparison_passed =
-            enemy_psi_defense >= defense_ratio;
-        const bool add_artillery =
-            (armor_comparison_passed &&
-             enemy_psi_defense > selected_weapon_half) ||
-            other_faction_mask != 0;
-        if (add_artillery) add_abil(&ability_flags, ABL_ARTILLERY, faction_id);
-    }
-    if (faction_data.current_num_bases >= 8 &&
-        faction_data.ranking >= 6 &&
-        (faction_data.ai_wealth != 0 || faction_data.ai_tech != 0)) {
-        add_abil(&ability_flags, ABL_CLEAN_REACTOR, faction_id);
-    }
-    if (Players[faction_id].rule_morale < 0)
-        add_abil(&ability_flags, ABL_TRAINED, faction_id);
-    const int budget_weapon_offense = Weapon[budget_weapon_id].offense_rating;
-    const int selected_weapon_offense = Weapon[chosen_weapon_id].offense_rating;
-    if (budget_weapon_offense > 1 && ability_flags == 0 &&
-        faction_data.ai_tech > 0 &&
-        faction_data.enemy_best_land_speed > 1 &&
-        faction_data.enemy_best_weapon_value >=
-            faction_data.best_armor_value * 2) {
-        add_abil(&ability_flags, ABL_COMM_JAMMER, faction_id);
-    }
-    if (ability_flags == 0 &&
-        (faction_data.ai_fight < 0 ||
-         (faction_data.soc_effect_pending.values_[SocialEffect::MORALE] < 0 &&
-          (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) == 0))) {
-        add_abil(&ability_flags, ABL_TRAINED, faction_id);
-    }
-    const bool eligible_for_category_three =
-        selected_weapon_offense > 2 ||
-        (selected_weapon_offense > 1 && budget_weapon_offense > 1) ||
-        DesignConsiderOverride != 0;
-    if (!eligible_for_category_three) {
-        output.weapon_id = chosen_weapon_id;
-        output.armor_id = chosen_armor_id;
-        output.reactor_id = input.reactor_id;
-        output.ability_flags = static_cast<uint32_t>(ability_flags);
-        output.plan12_abilities = output.ability_flags;
-        output.tail_redirects_to_582218 = true;
-        return output;
-    }
-    if (has_tech(Ability[10].preq_tech, faction_id) &&
-        (ability_flags == 0 ||
-         has_tech(Rules.tech_two_spec_abilities, faction_id))) {
-        ability_flags |= ABL_ANTIGRAV_STRUTS;
-    }
-    propose_proto(faction_id, output.chassis_id, chosen_weapon_id,
-                  chosen_armor_id, ability_flags, input.reactor_id, 3, 0);
-    ability_flags &= ~static_cast<int>(ABL_ANTIGRAV_STRUTS);
-    if (!has_tech(Rules.tech_two_spec_abilities, faction_id))
-        ability_flags = 0;
-    if (has_tech(Ability[4].preq_tech, faction_id) &&
-        (ability_flags == 0 ||
-         has_tech(Rules.tech_two_spec_abilities, faction_id))) {
-        propose_proto(faction_id, output.chassis_id, chosen_weapon_id,
-                      chosen_armor_id, ability_flags | ABL_DROP_POD,
-                      input.reactor_id, 0xB, 0);
-    }
-    output.plan12_technology_known =
-        has_tech(Ability[3].preq_tech, faction_id) != 0;
-    output.tail_redirects_to_582218 = !output.plan12_technology_known;
-    output.weapon_id = chosen_weapon_id;
-    output.armor_id = chosen_armor_id;
-    output.reactor_id = input.reactor_id;
-    output.ability_flags = static_cast<uint32_t>(ability_flags);
-    output.plan12_abilities = output.plan12_technology_known
-        ? (output.ability_flags | ABL_AMPHIBIOUS)
-        : output.ability_flags;
-    return output;
-}
-struct ConsiderDesignSelectionState {
-    int chassis_id;
-    int weapon_id;
-    int armor_id;
-    int reactor_id;
-    int ability_flags;
-};
-static void consider_designs_plan2_fallback(int faction_id,
-                                             ConsiderDesignSelectionState& state) {
-    state.ability_flags = 0;
-    const int chassis_id = pick_chassis(faction_id, 0, 2);
-    if (chassis_id < 0) {
-        return;
-    }
-    int best_armor_score = -1;
-    int best_armor_id = 0;
-    for (int armor_id = 0; armor_id < MaxArmorNum; ++armor_id) {
-        if (!has_tech(Armor[armor_id].preq_tech, faction_id)
-            || Armor[armor_id].cost > 1
-            || Armor[armor_id].defense_rating < 0) {
-            continue;
-        }
-        int defense_compare;
-        if (faction_id >= 0 && !ExpansionEnabled && armor_id > 9) {
-            defense_compare = 1;
-        } else {
-            defense_compare = Armor[armor_id].defense_rating;
-        }
-        defense_compare *= 2;
-        if (defense_compare >= best_armor_score) {
-            best_armor_score = defense_compare;
-            best_armor_id = armor_id;
-        }
-    }
-    if (has_tech(Ability[0].preq_tech, faction_id)) {
-        state.ability_flags |= 0x1;
-    }
-    if (has_tech(Ability[13].preq_tech, faction_id)
-        && (state.ability_flags == 0
-            || has_tech(Rules.tech_two_spec_abilities, faction_id))) {
-        state.ability_flags |= 0x2000;
-    }
-    propose_proto(faction_id, chassis_id, 0x12, best_armor_id,
-                  static_cast<int>(state.ability_flags), state.reactor_id,
-                  -1, 0);
-}
-static void consider_designs_tech_selection(int faction_id,
-                                             ConsiderDesignSelectionState& state,
-                                             bool emit_category_c_proposal) {
-    if (emit_category_c_proposal
-        && has_tech(Ability[3].preq_tech, faction_id)) {
-        propose_proto(faction_id, state.chassis_id, state.weapon_id,
-                      state.armor_id, state.ability_flags | 0x8,
-                      state.reactor_id, 0xC, 0);
-    }
-    state.weapon_id = weapon_budget(faction_id, 0x63, 0);
-    if (!has_tech(Ability[15].preq_tech, faction_id)) {
-        return;
-    }
-    const int picked_chassis = pick_chassis(faction_id, 0, 1);
-    state.chassis_id = picked_chassis;
-    if (picked_chassis < 0) {
-        return;
-    }
-    int best_armor_score = -1;
-    int selected_armor = 0;
-    for (int armor_id = 0; armor_id < MaxArmorNum; ++armor_id) {
-        if (!has_tech(Armor[armor_id].preq_tech, faction_id)
-            || Armor[armor_id].cost > 1
-            || Armor[armor_id].defense_rating < 0) {
-            continue;
-        }
-        int defense_compare;
-        if (faction_id >= 0 && !ExpansionEnabled && armor_id > 9) {
-            defense_compare = 1;
-        } else {
-            defense_compare = Armor[armor_id].defense_rating;
-        }
-        defense_compare *= 2;
-        if (defense_compare >= best_armor_score) {
-            best_armor_score = defense_compare;
-            selected_armor = armor_id;
-        }
-    }
-    state.armor_id = selected_armor;
-    for (int attempt = 0; attempt < 100; ++attempt) {
-        const int current_chassis = state.chassis_id;
-        bool chassis_changed = false;
-        if (Chassis[current_chassis].speed == 1) {
-            const int faster_chassis = pick_chassis(faction_id, 0, 2);
-            if (faster_chassis >= 0 && faster_chassis != current_chassis) {
-                const int current_chassis_cost = proto_cost(
-                    current_chassis, state.weapon_id, state.armor_id,
-                    state.ability_flags, state.reactor_id);
-                const int faster_chassis_cost = proto_cost(
-                    faster_chassis, state.weapon_id, state.armor_id,
-                    state.ability_flags, state.reactor_id);
-                const int relaxed_limit = state.reactor_id + 5;
-                const int parity_limit = current_chassis_cost + (faction_id & 1) + 1;
-                if ((faster_chassis_cost <= relaxed_limit
-                        && faster_chassis_cost <= parity_limit)
-                    || (faster_chassis_cost > relaxed_limit
-                        && faster_chassis_cost <= current_chassis_cost)) {
-                    state.chassis_id = faster_chassis;
-                    chassis_changed = true;
-                }
-            }
-        }
-        best_armor_score = -1;
-        int replacement_armor = 0;
-        for (int armor_id = 0; armor_id < MaxArmorNum; ++armor_id) {
-            if (!has_tech(Armor[armor_id].preq_tech, faction_id)
-                || Armor[armor_id].cost
-                    > Armor[state.armor_id].defense_rating + 1
-                || Armor[armor_id].defense_rating < 0) {
-                continue;
-            }
-            int defense_compare;
-            if (faction_id >= 0 && !ExpansionEnabled && armor_id > 9) {
-                defense_compare = 1;
-            } else {
-                defense_compare = Armor[armor_id].defense_rating;
-            }
-            defense_compare *= 2;
-            if (defense_compare >= best_armor_score) {
-                best_armor_score = defense_compare;
-                replacement_armor = armor_id;
-            }
-        }
-        if (Armor[replacement_armor].defense_rating
-            > Armor[state.armor_id].defense_rating) {
-            const int old_armor_cost = proto_cost(
-                state.chassis_id, state.weapon_id, state.armor_id,
-                state.ability_flags, state.reactor_id);
-            const int new_armor_cost = proto_cost(
-                state.chassis_id, state.weapon_id, replacement_armor,
-                state.ability_flags, state.reactor_id);
-            if (new_armor_cost <= old_armor_cost) {
-                state.armor_id = replacement_armor;
-            }
-        }
-        if (!chassis_changed) {
-            break;
-        }
-    }
-    if (!has_tech(Ability[15].preq_tech, faction_id)
-        || has_tech(Rules.tech_two_spec_abilities, faction_id)) {
-        add_abil(&state.ability_flags, 0x20000, faction_id);
-        add_abil(&state.ability_flags, 0x400, faction_id);
-        add_abil(&state.ability_flags, 0x2, faction_id);
-    }
-    const int armor_strength = 3 * Armor[state.armor_id].defense_rating;
-    if (Weapon[state.weapon_id].offense_rating >= armor_strength
-        || has_tech(Ability[15].preq_tech, faction_id)
-        || DesignConsiderOverride != 0) {
-        propose_proto(faction_id, state.chassis_id, state.weapon_id,
-                      state.armor_id, state.ability_flags,
-                      state.reactor_id, 1, 0);
-    }
-}
-static void consider_designs_plan3_selection(
-    int faction_id, ConsiderDesignSelectionState& state,
-    int reactor_cost_scale, int weighted_diplomatic_score,
-    int project_relation_mask) {
-    int chassis_id = pick_chassis(faction_id, 0, 3);
-    if (chassis_id < 0) {
-        chassis_id = pick_chassis(faction_id, 0, 2);
-    }
-    state.chassis_id = chassis_id;
-    if (chassis_id < 0) {
-        return;
-    }
-    state.ability_flags = 0;
-    const PlayerData& faction_data = PlayersData[faction_id];
-    const int pressure_limit = faction_data.ai_power + faction_data.ai_fight
-        + 2 * state.reactor_id + 3;
-    int max_weapon_cost = 0;
-    for (int cost = 4; cost / reactor_cost_scale <= pressure_limit; cost += 2) {
-        ++max_weapon_cost;
-    }
-    const unsigned int faction_lock_bit = 1u << faction_id;
-    const bool design_locked =
-        ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu) & faction_lock_bit) != 0;
-    if (design_locked) {
-        max_weapon_cost = 0x63;
-    }
-    state.weapon_id = weapon_budget(faction_id, max_weapon_cost, 0);
-    int best_armor_score = -1;
-    int selected_armor = 0;
-    for (int armor_id = 0; armor_id < MaxArmorNum; ++armor_id) {
-        if (!has_tech(Armor[armor_id].preq_tech, faction_id)
-            || Armor[armor_id].cost > 1
-            || Armor[armor_id].defense_rating < 0) {
-            continue;
-        }
-        int defense_compare;
-        if (faction_id >= 0 && !ExpansionEnabled && armor_id > 9) {
-            defense_compare = 1;
-        } else {
-            defense_compare = Armor[armor_id].defense_rating;
-        }
-        defense_compare *= 2;
-        if (defense_compare >= best_armor_score) {
-            best_armor_score = defense_compare;
-            selected_armor = armor_id;
-        }
-    }
-    state.armor_id = selected_armor;
-    const int selected_offense = Weapon[state.weapon_id].offense_rating;
-    for (int attempt = 0; attempt < 100; ++attempt) {
-        if (Armor[state.armor_id].defense_rating >= selected_offense - 1) {
-            break;
-        }
-        int maximum_candidate_cost = selected_offense / 2;
-        if (maximum_candidate_cost < Armor[state.armor_id].defense_rating + 1) {
-            maximum_candidate_cost = Armor[state.armor_id].defense_rating + 1;
-        }
-        best_armor_score = -1;
-        int replacement_armor = 0;
-        for (int armor_id = 0; armor_id < MaxArmorNum; ++armor_id) {
-            if (!has_tech(Armor[armor_id].preq_tech, faction_id)
-                || Armor[armor_id].cost > maximum_candidate_cost
-                || Armor[armor_id].defense_rating < 0) {
-                continue;
-            }
-            int defense_compare;
-            if (faction_id >= 0 && !ExpansionEnabled && armor_id > 9) {
-                defense_compare = 1;
-            } else {
-                defense_compare = Armor[armor_id].defense_rating;
-            }
-            defense_compare *= 2;
-            if (defense_compare >= best_armor_score) {
-                best_armor_score = defense_compare;
-                replacement_armor = armor_id;
-            }
-        }
-        if (Armor[replacement_armor].defense_rating
-            <= Armor[state.armor_id].defense_rating) {
-            break;
-        }
-        const int replacement_cost = static_cast<int>(proto_cost(
-            state.chassis_id, state.weapon_id, replacement_armor,
-            state.ability_flags, state.reactor_id));
-        const int cost_limit = faction_data.ai_power + faction_data.ai_fight
-            + state.reactor_id + 3;
-        if (replacement_cost > cost_limit) {
-            break;
-        }
-        state.armor_id = replacement_armor;
-    }
-    if (weighted_diplomatic_score != 0
-        && weighted_diplomatic_score > 3 - faction_data.ai_fight
-        && faction_data.ai_fight >= 0 && !design_locked) {
-        add_abil(&state.ability_flags, 0x100000, faction_id);
-    }
-    if (GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_UN_CHARTER]
-            > GameDataStateStorage.fields_.council_resolution_count_[PROP_REINSTATE_UN_CHARTER]
-        && faction_data.ai_power + faction_data.ai_fight > 0
-        && !design_locked) {
-        add_abil(&state.ability_flags, 0x100000, faction_id);
-    }
-    if (!design_locked && (project_relation_mask & 2) != 0) {
-        add_abil(&state.ability_flags, 0x800, faction_id);
-    }
-    bool add_protective_ability = Players[faction_id].rule_morale < 0;
-    if (!add_protective_ability && faction_data.ai_fight > 0
-        && faction_data.soc_effect_pending.values_[SocialEffect::INDUSTRY] >= 0) {
-        add_protective_ability = true;
-    }
-    if (!add_protective_ability
-        && (faction_data.ai_fight <= 0
-            || faction_data.soc_effect_pending.values_[SocialEffect::INDUSTRY] < 0)
-        && faction_data.soc_effect_pending.values_[SocialEffect::MORALE] < 0 && !design_locked) {
-        add_protective_ability = true;
-    }
-    if (add_protective_ability) {
-        add_abil(&state.ability_flags, 0x4000, faction_id);
-    }
-    if (has_tech(Ability[10].preq_tech, faction_id)
-        && (state.ability_flags == 0
-            || has_tech(Rules.tech_two_spec_abilities, faction_id))) {
-        state.ability_flags |= 0x400;
-    }
-    propose_proto(faction_id, state.chassis_id, state.weapon_id,
-                  state.armor_id, state.ability_flags, state.reactor_id,
-                  4, 0);
-}
-static bool consider_designs_plan1_ability_selection(
-    int faction_id, ConsiderDesignSelectionState& state,
-    int project_relation_mask) {
-    state.chassis_id = pick_chassis(faction_id, 1, 0);
-    if (state.chassis_id < 0) {
-        return false;
-    }
-    state.ability_flags = 0;
-    const PlayerData& faction_data = PlayersData[faction_id];
-    const unsigned int faction_lock_bit = 1u << faction_id;
-    const bool design_locked =
-        ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu) & faction_lock_bit) != 0;
-    if (faction_data.unk_66 > faction_data.unk_106
-        && faction_data.unk_66 > faction_data.unk_105
-        && !design_locked) {
-        add_abil(&state.ability_flags, 0x100, faction_id);
-    }
-    add_abil(&state.ability_flags, 0x2, faction_id);
-    add_abil(&state.ability_flags, 0x100, faction_id);
-    if ((project_relation_mask & 1) != 0
-        && has_tech(Ability[18].preq_tech, faction_id)
-        && (state.ability_flags == 0
-            || has_tech(Rules.tech_two_spec_abilities, faction_id))) {
-        state.ability_flags |= 0x40000;
-    }
-    if (has_tech(Ability[8].preq_tech, faction_id)
-        && (state.ability_flags & 0x100) == 0
-        && bit_count(state.ability_flags) < 2
-        && (state.ability_flags == 0
-            || has_tech(Rules.tech_two_spec_abilities, faction_id))) {
-        state.ability_flags |= 0x100;
-    }
-    if (has_tech(Ability[1].preq_tech, faction_id)
-        && (state.ability_flags & 0x2) == 0
-        && bit_count(state.ability_flags) < 2
-        && (state.ability_flags == 0
-            || has_tech(Rules.tech_two_spec_abilities, faction_id))) {
-        state.ability_flags |= 0x2;
-    }
-    return true;
-}
-static int consider_designs_region3_best_armor(int faction_id, int maximum_cost) {
-    int best_score = -1;
-    int best_armor = 0;
-    for (int armor_id = 0; armor_id < MaxArmorNum; ++armor_id) {
-        if (!has_tech(Armor[armor_id].preq_tech, faction_id)
-            || Armor[armor_id].cost > maximum_cost
-            || Armor[armor_id].defense_rating < 0) {
-            continue;
-        }
-        int defense_compare;
-        if (faction_id >= 0 && !ExpansionEnabled && armor_id > 9) {
-            defense_compare = 1;
-        } else {
-            defense_compare = Armor[armor_id].defense_rating;
-        }
-        defense_compare *= 2;
-        if (defense_compare >= best_score) {
-            best_score = defense_compare;
-            best_armor = armor_id;
-        }
-    }
-    return best_armor;
-}
-static void consider_designs_weapon_and_armor_choices(
-    int faction_id, ConsiderDesignSelectionState& state) {
-    const PlayerData& faction_data = PlayersData[faction_id];
-    state.weapon_id = weapon_budget(faction_id, 1, 0);
-    state.armor_id = consider_designs_region3_best_armor(faction_id, 1);
-    for (int attempt = 0; attempt < 100; ++attempt) {
-        const int original_weapon = state.weapon_id;
-        int candidate_weapon = original_weapon;
-        for (int step = 1; step < 4 && candidate_weapon == original_weapon; ++step) {
-            const int maximum_offense = Weapon[original_weapon].offense_rating + step;
-            candidate_weapon = weapon_budget(faction_id, maximum_offense, 0);
-        }
-        bool weapon_changed = false;
-        if (candidate_weapon != original_weapon) {
-            const int reactor_margin = 2 * state.reactor_id - state.reactor_id / 2;
-            const int budget_margin = reactor_margin < 5 ? 5 : reactor_margin;
-            const int candidate_cost = static_cast<int>(proto_cost(
-                state.chassis_id, candidate_weapon, state.armor_id,
-                0, state.reactor_id));
-            const int cost_limit = faction_data.ai_power + faction_data.ai_growth
-                + budget_margin;
-            if (candidate_cost <= cost_limit) {
-                state.weapon_id = candidate_weapon;
-                weapon_changed = true;
-            }
-        }
-        bool armor_changed = false;
-        const int current_armor = state.armor_id;
-        int candidate_armor = current_armor;
-        for (int cost_step = 1; cost_step < 4 && candidate_armor == current_armor;
-             ++cost_step) {
-            const int maximum_armor_cost =
-                Armor[current_armor].defense_rating + cost_step;
-            candidate_armor = consider_designs_region3_best_armor(
-                faction_id, maximum_armor_cost);
-        }
-        if (candidate_armor != current_armor
-            && Armor[candidate_armor].defense_rating
-                > Armor[current_armor].defense_rating) {
-            const int reactor_margin = 2 * state.reactor_id - state.reactor_id / 2;
-            const int budget_margin = reactor_margin < 5 ? 5 : reactor_margin;
-            const int candidate_cost = static_cast<int>(proto_cost(
-                state.chassis_id, state.weapon_id, candidate_armor,
-                state.ability_flags, state.reactor_id));
-            const int cost_limit = faction_data.ai_power + faction_data.ai_growth
-                + budget_margin;
-            if (candidate_cost <= cost_limit) {
-                state.armor_id = candidate_armor;
-                armor_changed = true;
-            }
-        }
-        if (!weapon_changed && !armor_changed) {
-            break;
-        }
-    }
-    const unsigned int faction_lock_bit = 1u << faction_id;
-    const bool design_locked =
-        ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu) & faction_lock_bit) != 0;
-    const int category_six_weapon = design_locked
-        ? weapon_budget(faction_id, 0x63, 0) : state.weapon_id;
-    if (Weapon[category_six_weapon].offense_rating >= 1) {
-        propose_proto(faction_id, state.chassis_id, category_six_weapon,
-                      state.armor_id, state.ability_flags,
-                      state.reactor_id, 6, 0);
-    }
-    if (design_locked) {
-        return;
-    }
-    state.weapon_id = weapon_budget(faction_id, 1, 0);
-    state.armor_id = consider_designs_region3_best_armor(faction_id, 0x63);
-    state.ability_flags = 0;
-    add_abil(&state.ability_flags, 0x100, faction_id);
-    if (has_tech(Ability[1].preq_tech, faction_id)
-        && has_tech(Rules.tech_two_spec_abilities, faction_id)) {
-        state.ability_flags |= 0x2;
-    }
-    if (Armor[state.armor_id].defense_rating > 1) {
-        propose_proto(faction_id, state.chassis_id, state.weapon_id,
-                      state.armor_id, state.ability_flags,
-                      state.reactor_id, 0x15, 0);
-    }
-}
-struct ConsiderDesignRegion1State {
-    int diplomatic_score;
-    int reactor_tier;
-    int best_weapon_id;
-    int best_armor_id;
-    int weapon_cost_limit;
-    bool prototype_scan_available;
-    uint32_t native_var_18;
-};
-static int consider_designs_post_58318b_best_armor(int faction_id,
-                                                    int maximum_cost) {
-    int best_id = 0;
-    int best_priority = -1;
-    for (int armor_id = 0; armor_id < MaxArmorNum; ++armor_id) {
-        const RulesArmor &armor = Armor[armor_id];
-        if (!has_tech(armor.preq_tech, faction_id)
-            || armor.cost > maximum_cost || armor.defense_rating < 0)
-            continue;
-        int priority = armor.defense_rating;
-        if (faction_id >= 0 && !ExpansionEnabled && armor_id > 9)
-            priority = 1;
-        priority *= 2;
-        if (priority >= best_priority) {
-            best_priority = priority;
-            best_id = armor_id;
-        }
-    }
-    return best_id;
-}
-static int consider_designs_middle_best_armor(int faction_id,
-                                               int maximum_cost) {
-    int best_id = 0;
-    int best_priority = -1;
-    for (int armor_id = 0; armor_id < MaxArmorNum; ++armor_id) {
-        const RulesArmor &armor = Armor[armor_id];
-        if (!has_tech(armor.preq_tech, faction_id)
-            || armor.cost > maximum_cost || armor.defense_rating < 0)
-            continue;
-        int priority = armor.defense_rating;
-        if (faction_id >= 0 && ExpansionEnabled == 0 && armor_id > 9)
-            priority = 1;
-        priority *= 2;
-        if (priority >= best_priority) {
-            best_priority = priority;
-            best_id = armor_id;
-        }
-    }
-    return best_id;
-}
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x00581260 0x00583C90 0x00583CAC 0x00581628
 // ORIGINAL: 0x00581260 ?consider_designs@@YAXH@Z 0x00581260-0x00583C8F
 // RECOVERY_BINDING: v1 {"reason":"Recover the complete AI prototype-selection operation through typed faction, rules, prototype and proposal owners, with the original signed faction argument and shared armor-scale lifetime across the strategy routes.","evidence":["Pinned original 0x00581260-0x00583C8F; native dispatch plans 0/4,1,2,6 and skipped 3/5; native negative-armor sentinel gate.","Independent full-owner and proposal-budget reviews; retained mechanical seed TRIED records its unverified shared-push argument history."]}
 // TRIED: mechanical register/stack-slot goto transliteration (304 labels, one 7-case switch off 0x0094A37D, 6375-line body): compiles, MISMATCH sim 0.80 on /O2 /Oy- framed. Cross-branch shared-push args (26 pushes never traced to a specific call by the linear model) are a known soft spot - values landed but not re-verified by hand past the two spots that broke arg *counts* outright.
 // kind      game
 void __cdecl consider_designs(int faction_id) {
-    ConsiderDesignRegion1State state = {0, 1, -1, -1, 0, false, 0};
-FirstProposedPrototype = -1;
-state.diplomatic_score = 0;
-for (int other_faction = 1; other_faction < MaxPlayerNum; ++other_faction) {
-    if (other_faction == faction_id) {
-        continue;
-    }
-    const uint32_t treaty =
-        PlayersData[faction_id].diplo_treaties[other_faction];
-    if ((treaty & DTREATY_ATROCITY_VICTIM) != 0) {
-        state.diplomatic_score +=
-            (PlayersData[other_faction].atrocities + 2) / 3;
-        continue;
-    }
-    if ((treaty & DTREATY_WANT_REVENGE) == 0) {
-        continue;
-    }
-    const uint32_t other_bit = 1u << other_faction;
-    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & other_bit) != 0) {
-        const bool other_ranks_higher =
-            PlayersData[other_faction].ranking
-                > PlayersData[faction_id].ranking;
-        bool add_rivalry_score = other_ranks_higher;
-        if (!add_rivalry_score) {
-            add_rivalry_score =
-                PlayersData[other_faction].diplo_unk4[faction_id]
-                    > PlayersData[faction_id].diplo_unk4[other_faction];
-        }
-        if (add_rivalry_score) {
-            state.diplomatic_score += static_cast<int>((GameDataStateStorage.fields_.game_rules_ >> 6) & 1u);
-        }
-    }
-    state.diplomatic_score +=
-        (PlayersData[other_faction].integrity_blemishes - 1) / 4;
-}
-enemy_capabilities(faction_id);
-state.reactor_tier = 1;
-for (int reactor_index = MaxReactorNum - 1; reactor_index >= 0;
-     --reactor_index) {
-    if (has_tech(Reactor[reactor_index].preq_tech, faction_id)) {
-        state.reactor_tier = reactor_index + 1;
-        break;
-    }
-}
-state.best_weapon_id = -1;
-state.best_armor_id = -1;
-state.weapon_cost_limit = 2 << state.reactor_tier;
-for (int weapon_id = 0; weapon_id < MaxWeaponNum; ++weapon_id) {
-    const RulesWeapon &weapon = Weapon[weapon_id];
-    if (!has_tech(weapon.preq_tech, faction_id)) {
-        continue;
-    }
-    const int offense_rating = weapon.offense_rating;
-    if (offense_rating <= 0 || offense_rating >= 0x63 || weapon_id == 23) {
-        continue;
-    }
-    if (state.best_weapon_id >= 0
-        && Weapon[state.best_weapon_id].offense_rating > offense_rating) {
-        continue;
-    }
-    for (int candidate_ordinal = 0; candidate_ordinal < 128;
-         ++candidate_ordinal) {
-        const int prototype_id = candidate_ordinal < MaxVehProtoFactionNum
-            ? candidate_ordinal
-            : faction_id * MaxVehProtoFactionNum
-                + candidate_ordinal - MaxVehProtoFactionNum;
-        const VehPrototype &prototype = VehPrototypes[prototype_id];
-        if ((prototype.flags & 1u) == 0
-            || (prototype.obsolete_factions & (1u << faction_id)) != 0) {
+    // Rewritten from the image 2026-11-08 block by block.
+    FirstProposedPrototype = -1;
+    int war_score = 0;
+    for (int i = 1; i < MaxPlayerNum; i++) {
+        if (i == faction_id) {
             continue;
         }
-        if (prototype_id < MaxVehProtoFactionNum
-            && !has_tech(prototype.preq_tech, faction_id)) {
-            continue;
-        }
-        if (Chassis[prototype.chassis_id].missile != 0) {
-            continue;
-        }
-        if (Weapon[prototype.weapon_id].offense_rating >= offense_rating) {
-            continue;
-        }
-        state.best_weapon_id = weapon_id;
-    }
-}
-for (int armor_id = 0; armor_id < MaxArmorNum; ++armor_id) {
-    const RulesArmor &armor = Armor[armor_id];
-    if (!has_tech(armor.preq_tech, faction_id)) {
-        continue;
-    }
-    const int defense_rating = armor.defense_rating;
-    if (defense_rating <= 1) {
-        continue;
-    }
-    if (state.best_armor_id >= 0
-        && Armor[state.best_armor_id].defense_rating > defense_rating) {
-        continue;
-    }
-    for (int candidate_ordinal = 0; candidate_ordinal < 128;
-         ++candidate_ordinal) {
-        const int prototype_id = candidate_ordinal < MaxVehProtoFactionNum
-            ? candidate_ordinal
-            : faction_id * MaxVehProtoFactionNum
-                + candidate_ordinal - MaxVehProtoFactionNum;
-        const VehPrototype &prototype = VehPrototypes[prototype_id];
-        if ((prototype.flags & 1u) == 0
-            || (prototype.obsolete_factions & (1u << faction_id)) != 0) {
-            continue;
-        }
-        if (prototype_id < MaxVehProtoFactionNum
-            && !has_tech(prototype.preq_tech, faction_id)) {
-            continue;
-        }
-        if (Armor[prototype.armor_id].defense_rating >= defense_rating) {
-            continue;
-        }
-        state.best_armor_id = armor_id;
-    }
-}
-state.prototype_scan_available = state.best_weapon_id >= 0
-    || state.best_armor_id >= 0;
-    int shared_armor_scale_value = 0;
-    if (state.prototype_scan_available) {
-        for (int slot = 0; slot < MaxVehProtoFactionNum; ++slot) {
-            const int prototype_id = faction_id * MaxVehProtoFactionNum + slot;
-            VehPrototype &prototype = VehPrototypes[prototype_id];
-            const uint32_t faction_bit = 1u << faction_id;
-            if ((prototype.flags & 1u) == 0
-                || (prototype.obsolete_factions & faction_bit) != 0
-                || Chassis[prototype.chassis_id].missile != 0) {
-                continue;
+        uint32_t treaty = PlayersData[faction_id].diplo_treaties[i];
+        if (treaty & DTREATY_ATROCITY_VICTIM) {
+            war_score += (PlayersData[i].atrocities + 2) / 3;
+        } else if (treaty & DTREATY_WANT_REVENGE) {
+            if (is_human(i)
+                && (PlayersData[i].ranking > PlayersData[faction_id].ranking
+                    || PlayersData[i].diplo_unk4[faction_id]
+                       > PlayersData[faction_id].diplo_unk4[i])) {
+                war_score += (GameDataStateStorage.fields_.game_rules_ >> 6) & 1;
             }
-            if (prototype_id < MaxVehProtoFactionNum
-                && !has_tech(prototype.preq_tech, faction_id)) {
-                continue;
-            }
-            ConsiderDesignsProposalState proposal(
-                prototype, state.best_weapon_id, state.best_armor_id,
-                state.reactor_tier, shared_armor_scale_value);
-            consider_designs_plan_proposal(faction_id, prototype.plan,
-                                           proposal);
+            war_score += (PlayersData[i].integrity_blemishes - 1) / 4;
         }
     }
-    const ConsiderDesignsTailInput tail_input = {
-        1, state.diplomatic_score, state.reactor_tier,
-        2 << state.reactor_tier, shared_armor_scale_value
-    };
-    ConsiderDesignsTailOutput tail =
-        consider_designs_strategy_tail(faction_id, tail_input);
-    if (tail.continue_prototype_loop) return;
-    ConsiderDesignSelectionState selection = {
-        tail.chassis_id, tail.weapon_id, tail.armor_id, tail.reactor_id,
-        static_cast<int>(tail.ability_flags)
-    };
-    state.native_var_18 = tail.project_relation_mask;
-    consider_designs_tech_selection(
-        faction_id, selection, !tail.tail_redirects_to_582218);
-    consider_designs_plan3_selection(
-        faction_id, selection, 2 << state.reactor_tier,
-        state.diplomatic_score, static_cast<int>(state.native_var_18));
-int fallback_chassis_id = pick_chassis(faction_id, 0, 3);
-if (fallback_chassis_id < 0) {
-    fallback_chassis_id = pick_chassis(faction_id, 0, 2);
-}
-int fallback_ability_flags = 0;
-if (fallback_chassis_id < 0) {
-    fallback_chassis_id = pick_chassis(faction_id, 0, 1);
-    add_abil(&fallback_ability_flags, ABL_ANTIGRAV_STRUTS, faction_id);
-}
-if (fallback_chassis_id >= 0) {
-    const int minimum_weapon_id = weapon_budget(faction_id, 2, 0);
-    bool special_weapon_gate_passed = true;
-    if (Weapon[minimum_weapon_id].offense_rating < 2
-        && DesignConsiderOverride == 0) {
-        special_weapon_gate_passed =
-            has_tech(Ability[11].preq_tech, faction_id)
-            && ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu) & (1u << faction_id)) == 0;
-    }
-    if (special_weapon_gate_passed) {
-        const int selected_weapon_id = weapon_budget(faction_id, 1, 0);
-        int selected_armor_id = 0;
-        int best_armor_priority = -1;
-        for (int armor_id = 0; armor_id < MaxArmorNum; ++armor_id) {
-            const RulesArmor &armor = Armor[armor_id];
-            if (!has_tech(armor.preq_tech, faction_id)
-                || armor.cost > 1
-                || armor.defense_rating < 0) {
-                continue;
-            }
-            int armor_priority = armor.defense_rating;
-            if (faction_id >= 0 && !ExpansionEnabled && armor_id > 9) {
-                armor_priority = 1;
-            }
-            armor_priority *= 2;
-            if (armor_priority >= best_armor_priority) {
-                best_armor_priority = armor_priority;
-                selected_armor_id = armor_id;
-            }
+    enemy_capabilities(faction_id);
+    int reactor = best_reactor(faction_id);
+    int reactor_power = 2 << reactor;
+    int new_armor = -1;
+    int new_weapon = -1;
+    // The image keeps one slot for the armor scan index and the plan-1 factor,
+    // and reads it again in the offensive block: one variable.
+    int scratch;
+    int weapon_id;
+    for (weapon_id = 0; weapon_id < MaxWeaponNum; weapon_id++) {
+        if (!has_tech(Weapon[weapon_id].preq_tech, faction_id)
+            || Weapon[weapon_id].offense_rating <= 0
+            || Weapon[weapon_id].offense_rating >= 99
+            || weapon_id == WPN_CONVENTIONAL_PAYLOAD) {
+            continue;
         }
-        const bool has_empathic_tech =
-            has_tech(Ability[11].preq_tech, faction_id);
-        if (has_empathic_tech
-            && ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu) & (1u << faction_id)) == 0) {
-            fallback_ability_flags |= ABL_EMPATHIC;
-            if (has_tech(Rules.tech_two_spec_abilities, faction_id)) {
-                if (has_tech(Ability[10].preq_tech, faction_id)) {
-                    fallback_ability_flags |= ABL_ANTIGRAV_STRUTS;
-                } else if (has_tech(Ability[14].preq_tech, faction_id)) {
-                    fallback_ability_flags |= ABL_TRAINED;
+        if (new_weapon >= 0
+            && Weapon[new_weapon].offense_rating > Weapon[weapon_id].offense_rating) {
+            continue;
+        }
+        for (int i = 0; i < 2 * MaxVehProtoFactionNum; i++) {
+            int proto_id = i % MaxVehProtoFactionNum;
+            if (i >= MaxVehProtoFactionNum) {
+                proto_id += faction_id * MaxVehProtoFactionNum;
+            }
+            if ((VehPrototypes[proto_id].flags & PROTO_ACTIVE)
+                && !(VehPrototypes[proto_id].obsolete_factions & (1 << faction_id))
+                && (proto_id >= MaxVehProtoFactionNum
+                    || has_tech(VehPrototypes[proto_id].preq_tech, faction_id))
+                && !Chassis[VehPrototypes[proto_id].chassis_id].missile) {
+                if (Weapon[VehPrototypes[proto_id].weapon_id].offense_rating
+                    >= Weapon[weapon_id].offense_rating) {
+                    break;
                 }
+                new_weapon = weapon_id;
             }
-        } else {
-            if (fallback_ability_flags == 0) {
-                add_abil(&fallback_ability_flags, ABL_DEEP_RADAR, faction_id);
-                if (fallback_ability_flags == 0) {
-                    add_abil(&fallback_ability_flags, ABL_CLOAKED, faction_id);
+        }
+    }
+    for (scratch = 0; scratch < MaxArmorNum; scratch++) {
+        if (!has_tech(Armor[scratch].preq_tech, faction_id)
+            || Armor[scratch].defense_rating <= 1) {
+            continue;
+        }
+        if (new_armor >= 0
+            && Armor[new_armor].defense_rating > Armor[scratch].defense_rating) {
+            continue;
+        }
+        for (int i = 0; i < 2 * MaxVehProtoFactionNum; i++) {
+            int proto_id = i % MaxVehProtoFactionNum;
+            if (i >= MaxVehProtoFactionNum) {
+                proto_id += faction_id * MaxVehProtoFactionNum;
+            }
+            if ((VehPrototypes[proto_id].flags & PROTO_ACTIVE)
+                && !(VehPrototypes[proto_id].obsolete_factions & (1 << faction_id))
+                && (proto_id >= MaxVehProtoFactionNum
+                    || has_tech(VehPrototypes[proto_id].preq_tech, faction_id))) {
+                if (Armor[VehPrototypes[proto_id].armor_id].defense_rating
+                    >= Armor[scratch].defense_rating) {
+                    break;
                 }
+                new_armor = scratch;
             }
-            if (has_tech(Ability[10].preq_tech, faction_id)) {
-                if (has_tech(Rules.tech_two_spec_abilities, faction_id)) {
-                    fallback_ability_flags |= ABL_ANTIGRAV_STRUTS;
+        }
+    }
+    if (new_weapon >= 0 || new_armor >= 0) {
+        for (int i = 0; i < MaxVehProtoFactionNum; i++) {
+            int proto_id = faction_id * MaxVehProtoFactionNum + i;
+            if (!(VehPrototypes[proto_id].flags & PROTO_ACTIVE)
+                || VehPrototypes[proto_id].obsolete_factions & (1 << faction_id)) {
+                continue;
+            }
+            int chassis_id = VehPrototypes[proto_id].chassis_id;
+            if (Chassis[chassis_id].missile) {
+                continue;
+            }
+            int weapon;
+            int armor;
+            switch (VehPrototypes[proto_id].plan) {
+            case PLAN_OFFENSIVE:
+            case PLAN_AIR_SUPERIORITY:
+                if (new_weapon >= 0) {
+                    propose_proto(faction_id, chassis_id, new_weapon,
+                                  VehPrototypes[proto_id].armor_id,
+                                  VehPrototypes[proto_id].ability_flags, reactor,
+                                  VehPrototypes[proto_id].unk_1, 0);
+                }
+                break;
+            case PLAN_COMBAT:
+                if (new_weapon >= 0) {
+                    armor = VehPrototypes[proto_id].armor_id;
+                    if (new_armor >= 0) {
+                        scratch = (reactor == 1) ? 2 : 1;
+                        int offense = Weapon[new_weapon].offense_rating;
+                        int limit = scratch * reactor_power * 4 / offense;
+                        if (limit < 2 || offense < 2) {
+                            limit = 2;
+                        } else if (limit > offense) {
+                            limit = offense;
+                        }
+                        if (Armor[new_armor].defense_rating <= limit) {
+                            armor = new_armor;
+                        }
+                    }
+                    propose_proto(faction_id, chassis_id, new_weapon, armor,
+                                  VehPrototypes[proto_id].ability_flags, reactor,
+                                  VehPrototypes[proto_id].unk_1, 0);
                 } else {
-                    fallback_ability_flags = ABL_ANTIGRAV_STRUTS;
+                    scratch = (reactor == 1) ? 2 : 1;
+                    weapon = VehPrototypes[proto_id].weapon_id;
+                    int offense = Weapon[weapon].offense_rating;
+                    int limit = scratch * reactor_power * 4 / offense;
+                    if (limit < 2 || offense < 2) {
+                        offense = 2;
+                    } else if (limit <= offense) {
+                        offense = limit;
+                    }
+                    if (Armor[new_armor].defense_rating <= offense) {
+                        propose_proto(faction_id, chassis_id, weapon, new_armor,
+                                      VehPrototypes[proto_id].ability_flags, reactor,
+                                      VehPrototypes[proto_id].unk_1, 0);
+                    }
                 }
+                break;
+            case PLAN_DEFENSIVE:
+                if (new_armor >= 0) {
+                    propose_proto(faction_id, chassis_id,
+                                  VehPrototypes[proto_id].weapon_id, new_armor,
+                                  VehPrototypes[proto_id].ability_flags, reactor,
+                                  VehPrototypes[proto_id].unk_1, 0);
+                }
+                break;
+            case PLAN_NAVAL_SUPERIORITY:
+                armor = VehPrototypes[proto_id].armor_id;
+                weapon = VehPrototypes[proto_id].weapon_id;
+                if (new_weapon >= 0) {
+                    int margin = 5;
+                    if (reactor * reactor >= 5) {
+                        margin = reactor * reactor;
+                    }
+                    if (proto_cost(chassis_id, new_weapon, armor,
+                                   VehPrototypes[proto_id].ability_flags, reactor)
+                        <= PlayersData[faction_id].ai_growth
+                           + PlayersData[faction_id].ai_power + margin) {
+                        weapon = new_weapon;
+                    }
+                }
+                {
+                    BOOL upgrade = false;
+                    if (new_armor >= 0) {
+                        int margin = 5;
+                        if (reactor * reactor >= 5) {
+                            margin = reactor * reactor;
+                        }
+                        if (proto_cost(chassis_id, weapon, new_armor,
+                                       VehPrototypes[proto_id].ability_flags, reactor)
+                            <= PlayersData[faction_id].ai_growth
+                               + PlayersData[faction_id].ai_power + margin) {
+                            upgrade = true;
+                        }
+                    }
+                    if (upgrade) {
+                        armor = new_armor;
+                    } else if (armor != new_armor && weapon != new_weapon) {
+                        break;
+                    }
+                }
+                propose_proto(faction_id, chassis_id, weapon, armor,
+                              VehPrototypes[proto_id].ability_flags, reactor,
+                              VehPrototypes[proto_id].unk_1, 0);
+                break;
             }
         }
-        const int design_category =
-            (fallback_ability_flags & ABL_TRANCE) != 0 ? 19 : 10;
-        propose_proto(faction_id, fallback_chassis_id, selected_weapon_id,
-                      selected_armor_id, fallback_ability_flags,
-                      state.reactor_tier, design_category, 0);
     }
-}
-    if (consider_designs_plan1_ability_selection(
-            faction_id, selection, static_cast<int>(state.native_var_18))) {
-        consider_designs_weapon_and_armor_choices(faction_id, selection);
-    }
-const int sea_chassis_id = pick_chassis(faction_id, TRIAD_SEA, 0);
-if (sea_chassis_id >= 0) {
-    int selected_armor_id =
-        consider_designs_post_58318b_best_armor(faction_id, 1);
-    int selected_weapon_id = weapon_budget(faction_id, -7, 0);
-    const PlayerData &player_data = PlayersData[faction_id];
-    if (player_data.unk_66 > player_data.unk_106
-        && player_data.unk_66 > player_data.unk_105) {
-        selected_armor_id =
-            consider_designs_post_58318b_best_armor(faction_id, 0x63);
-    }
-    propose_proto(faction_id, sea_chassis_id, selected_weapon_id,
-                  selected_armor_id, 0, state.reactor_tier, 7, 0);
-    int proposal_chassis_id = sea_chassis_id;
-    if (proposal_chassis_id != 3
-        && has_tech(Chassis[3].preq_tech, faction_id)) {
-        proposal_chassis_id = 3;
-    }
-    selected_armor_id =
-        consider_designs_post_58318b_best_armor(faction_id, 1);
-    selected_weapon_id = weapon_budget(faction_id, -9, 0);
-    int ability_flags = 0;
-    add_abil(&ability_flags, ABL_SUPER_TERRAFORMER, faction_id);
-    add_abil(&ability_flags, ABL_FUNGICIDAL, faction_id);
-    if (ability_flags == ABL_SUPER_TERRAFORMER
-        && has_tech(Ability[13].preq_tech, faction_id)
-        && has_tech(Rules.tech_two_spec_abilities, faction_id)) {
-        ability_flags |= ABL_FUNGICIDAL;
-    }
-    if (selected_weapon_id >= 0) {
-        propose_proto(faction_id, proposal_chassis_id, selected_weapon_id,
-                      selected_armor_id, ability_flags, state.reactor_tier,
-                      0xF, 0);
-    }
-    ability_flags = 0;
-    selected_weapon_id = weapon_budget(faction_id, -8, 0);
-    if (selected_weapon_id >= 0) {
-        propose_proto(faction_id, proposal_chassis_id, selected_weapon_id,
-                      selected_armor_id, ability_flags, state.reactor_tier,
-                      0x10, 0);
-    }
-}
-int chassis_id = pick_chassis(faction_id, TRIAD_AIR, 0);
-if (chassis_id >= 0) {
-    int weapon_id = weapon_budget(faction_id, 0x63, 0);
-    int armor_id = consider_designs_middle_best_armor(faction_id, 1);
-    int ability_flags = 0;
-    const PlayerData &faction_data = PlayersData[faction_id];
-    const uint32_t faction_bit = 1u << faction_id;
-    if (faction_data.diff_level >= 6
-        && (faction_data.ai_tech != 0 || faction_data.ai_growth != 0)
-        && (faction_data.ai_power != 0 || faction_data.ai_fight < 1)) {
-        add_abil(&ability_flags, ABL_CLEAN_REACTOR, faction_id);
-    }
-    if ((state.native_var_18 & 2) != 0)
-        add_abil(&ability_flags, ABL_EMPATHIC, faction_id);
-    if (state.diplomatic_score != 0
-        && state.diplomatic_score > 5 - faction_data.ai_fight
-        && faction_data.ai_fight >= 0
-        && ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu) & (faction_bit & 0xFFu)) == 0) {
-        add_abil(&ability_flags, ABL_NERVE_GAS, faction_id);
-    }
-    if (GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_UN_CHARTER]
-            > GameDataStateStorage.fields_.council_resolution_count_[PROP_REINSTATE_UN_CHARTER]
-        && faction_data.ai_fight + faction_data.ai_power > 0
-        && ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu) & (faction_bit & 0xFFu)) == 0) {
-        add_abil(&ability_flags, ABL_NERVE_GAS, faction_id);
-    }
-    if (has_tech(Ability[1].preq_tech, faction_id)
-        && (ability_flags == 0
-            || has_tech(Rules.tech_two_spec_abilities, faction_id))) {
-        ability_flags |= ABL_DEEP_RADAR;
-    }
-    propose_proto(faction_id, chassis_id, weapon_id, armor_id, ability_flags,
-                  state.reactor_tier, 8, 0);
-    weapon_id = weapon_budget(faction_id, 0x63, 0);
-    ability_flags = ABL_AIR_SUPERIORITY;
-    if (has_tech(Ability[1].preq_tech, faction_id)
-        && has_tech(Rules.tech_two_spec_abilities, faction_id)) {
-        ability_flags |= ABL_DEEP_RADAR;
-    } else if ((state.native_var_18 & 1) != 0
-               && has_tech(Ability[18].preq_tech, faction_id)
-               && has_tech(Rules.tech_two_spec_abilities, faction_id)) {
-        ability_flags |= ABL_TRANCE;
-    }
-    propose_proto(faction_id, chassis_id, weapon_id, armor_id, ability_flags,
-                  state.reactor_tier, 9, 0);
-}
-chassis_id = pick_chassis(faction_id, TRIAD_AIR, -2);
-if (chassis_id >= 0) {
-    const int weapon_id = weapon_budget(faction_id, 0x63, 0);
-    const int armor_id = consider_designs_middle_best_armor(faction_id, 1);
-    int ability_flags = 0;
-    const PlayerData &faction_data = PlayersData[faction_id];
-    const uint32_t faction_bit = 1u << faction_id;
-    if (faction_data.diff_level >= 6
-        && (faction_data.ai_tech != 0 || faction_data.ai_growth != 0)
-        && (faction_data.ai_power != 0 || faction_data.ai_fight < 1)) {
-        add_abil(&ability_flags, ABL_CLEAN_REACTOR, faction_id);
-    }
-    if ((state.native_var_18 & 2) != 0)
-        add_abil(&ability_flags, ABL_EMPATHIC, faction_id);
-    if (state.diplomatic_score != 0
-        && state.diplomatic_score > 4 - faction_data.ai_fight
-        && faction_data.ai_fight >= 0
-        && ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu) & (faction_bit & 0xFFu)) == 0) {
-        add_abil(&ability_flags, ABL_NERVE_GAS, faction_id);
-    }
-    if (GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_UN_CHARTER]
-            > GameDataStateStorage.fields_.council_resolution_count_[PROP_REINSTATE_UN_CHARTER]
-        && faction_data.ai_fight + faction_data.ai_power > 0
-        && ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu) & (faction_bit & 0xFFu)) == 0) {
-        add_abil(&ability_flags, ABL_NERVE_GAS, faction_id);
-    }
-    if (has_tech(Ability[1].preq_tech, faction_id)
-        && (ability_flags == 0
-            || has_tech(Rules.tech_two_spec_abilities, faction_id))) {
-        ability_flags |= ABL_DEEP_RADAR;
-    }
-    propose_proto(faction_id, chassis_id, weapon_id, armor_id, ability_flags,
-                  state.reactor_tier, 0x11, 0);
-}
-chassis_id = pick_chassis(faction_id, TRIAD_AIR, -1);
-if (chassis_id >= 0) {
-    int armor_id = consider_designs_middle_best_armor(faction_id, 1);
-    int ability_flags = 0;
-    if (has_tech(Weapon[23].preq_tech, faction_id)) {
-        propose_proto(faction_id, chassis_id, 23, armor_id, ability_flags,
-                      state.reactor_tier, 0xD, 0);
-    }
-    if (has_tech(Weapon[24].preq_tech, faction_id)) {
-        propose_proto(faction_id, chassis_id, 24, armor_id, ability_flags,
-                      state.reactor_tier, 0x16, 0);
-    }
-    if (has_tech(Weapon[25].preq_tech, faction_id)) {
-        propose_proto(faction_id, chassis_id, 25, armor_id, ability_flags,
-                      state.reactor_tier, 0x17, 0);
-    }
-    int regular_weapon_id = -1;
-    for (int candidate_weapon_id = 0; candidate_weapon_id < MaxWeaponNum;
-         ++candidate_weapon_id) {
-        if (!has_tech(Weapon[candidate_weapon_id].preq_tech, faction_id)
-            || Weapon[candidate_weapon_id].offense_rating < 0x63) {
-            continue;
+    // Threat bits from human rivals: 1 psi/Dream Twister, 2 psi/Neural Amplifier.
+    uint32_t threats = 0;
+    if (Players[faction_id].rule_psi <= 0 && !is_human(faction_id)) {
+        for (int i = 1; i < MaxPlayerNum; i++) {
+            if (!is_human(i)) {
+                continue;
+            }
+            if (!great_satan(i, 0)) {
+                uint32_t mask = (PlayersData[faction_id].diff_level >= DLVL_THINKER
+                    || GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY)
+                    ? DTREATY_VENDETTA : 0;
+                if (!(PlayersData[faction_id].diplo_treaties[i]
+                      & (mask | DTREATY_WANT_REVENGE))) {
+                    continue;
+                }
+            }
+            if (Players[i].rule_psi > 0 || has_project(SP_DREAM_TWISTER, i)) {
+                threats |= 1;
+            }
+            if (Players[i].rule_psi > 0 || has_project(SP_NEURAL_AMPLIFIER, i)) {
+                threats |= 2;
+            }
         }
-        regular_weapon_id = candidate_weapon_id;
-        break;
     }
-    if (regular_weapon_id >= 0) {
-        propose_proto(faction_id, chassis_id, regular_weapon_id, armor_id,
-                      ability_flags, state.reactor_tier, 0xE, 0);
+    int ability;
+    int chassis = pick_chassis(faction_id, TRIAD_LAND, 1);
+    int weapon;
+    int armor;
+    if (chassis >= 0) {
+        ability = 0;
+        armor = armor_budget(faction_id, 99);
+        add_abil(&ability, ABL_COMM_JAMMER, faction_id);
+        if (PlayersData[faction_id].ai_fight < 0
+            || (PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::MORALE] < 0
+                && !is_human(faction_id))
+            || Players[faction_id].rule_morale < 0) {
+            add_abil(&ability, ABL_TRAINED, faction_id);
+        }
+        if (!is_human(faction_id)
+            && (PlayersData[faction_id].enemy_best_psi_offense
+                >= PlayersData[faction_id].enemy_best_weapon_value * 2
+                || threats & 1)) {
+            add_abil(&ability, ABL_TRANCE, faction_id);
+        }
+        if (has_tech(Ability[abil_bit(ABL_TRANCE)].preq_tech, faction_id)
+            && (!ability || has_tech(Rules.tech_two_spec_abilities, faction_id))
+            && !is_human(faction_id)
+            && (threats
+                || (PlayersData[faction_id].planet_ecology >= 4
+                    && PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::MORALE] <= 0))) {
+            ability |= ABL_TRANCE;
+        }
+        weapon = weapon_budget(faction_id, 1, 0);
+        int cost = 2;
+        while (true) {
+            int next = weapon_budget(faction_id, cost, 0);
+            if (next == weapon) {
+                break;
+            }
+            int weapon_cost = proto_cost(chassis, weapon, armor, ability, reactor);
+            if (proto_cost(chassis, next, armor, ability, reactor) > weapon_cost) {
+                break;
+            }
+            weapon = next;
+            cost++;
+        }
+        if (Armor[armor].defense_rating > 1 || DesignConsiderOverride) {
+            propose_proto(faction_id, chassis, weapon, armor, ability, reactor, 2, 0);
+        }
+        if (has_tech(Ability[abil_bit(ABL_TRANCE)].preq_tech, faction_id)
+            && !(ability & ABL_TRANCE) && !is_human(faction_id)
+            && ((PlayersData[faction_id].planet_ecology >= 4
+                 && PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::MORALE] <= 0)
+                | threats)) {
+            ability = ABL_TRANCE;
+            propose_proto(faction_id, chassis, weapon, armor, ability, reactor, 0x12, 0);
+        }
+        if (has_tech(Ability[abil_bit(ABL_AAA)].preq_tech, faction_id)
+            && !is_human(faction_id)
+            && (PlayersData[faction_id].unk_66 || PlayersData[faction_id].unk_68)) {
+            ability = ABL_AAA;
+            propose_proto(faction_id, chassis, weapon, armor, ability, reactor, 0x14, 0);
+        }
     }
-}
-if (state.reactor_tier <= 1
-    && !has_tech(Ability[0].preq_tech, faction_id)) {
-    if (!has_tech(Ability[13].preq_tech, faction_id)) {
-        return;
+    chassis = pick_chassis(faction_id, TRIAD_LAND, 1);
+    if (chassis >= 0) {
+        int divisor = reactor_power * 2;
+        int budget = 1;
+        ability = 0;
+        for (int k = 2; (k + 1) / 2 * k / divisor <= PlayersData[faction_id].ai_power + 5; k++) {
+            budget++;
+        }
+        weapon = weapon_budget(faction_id, is_human(faction_id) ? 99 : budget, 0);
+        int offense = Weapon[weapon].offense_rating;
+        int limit = scratch * reactor_power * 4 / offense;
+        if (limit < 2 || offense < 2) {
+            offense = 2;
+        } else if (limit <= offense) {
+            offense = limit;
+        }
+        if (offense <= budget / 2) {
+            offense = budget / 2;
+        }
+        int armor_cost = range(offense, 1, 99);
+        scratch = armor_budget(faction_id, armor_cost);
+        int weapon_cost = Weapon[weapon].offense_rating;
+        for (int x = (weapon_cost + 1) * Armor[scratch].defense_rating;
+             x / divisor <= PlayersData[faction_id].ai_power + 5;
+             x += Armor[scratch].defense_rating) {
+            weapon_cost++;
+        }
+        weapon = weapon_budget(faction_id, weapon_cost, 0);
+        if (!is_human(faction_id)
+            && PlayersData[faction_id].unk_66 > PlayersData[faction_id].unk_105 * 2
+            && PlayersData[faction_id].unk_66 > 1
+            && PlayersData[faction_id].unk_66 > PlayersData[faction_id].unk_106) {
+            add_abil(&ability, ABL_AAA, faction_id);
+        }
+        if (GameDataStateStorage.fields_.council_resolution_count_[8]
+            > GameDataStateStorage.fields_.council_resolution_count_[9]
+            && PlayersData[faction_id].ai_fight + PlayersData[faction_id].ai_power > 0
+            && !is_human(faction_id)) {
+            add_abil(&ability, ABL_NERVE_GAS, faction_id);
+        }
+        if (war_score && war_score > 1 - PlayersData[faction_id].ai_fight
+            && PlayersData[faction_id].ai_fight >= 0) {
+            if (is_human(faction_id)) {
+                goto skip_empath;
+            }
+            add_abil(&ability, ABL_NERVE_GAS, faction_id);
+        }
+        if (!is_human(faction_id)
+            && ((PlayersData[faction_id].enemy_best_psi_defense
+                 >= PlayersData[faction_id].best_armor_value * 3 / 2
+                 && PlayersData[faction_id].enemy_best_psi_defense
+                    > Weapon[weapon].offense_rating / 2)
+                || threats)) {
+            add_abil(&ability, ABL_EMPATHIC, faction_id);
+        }
+skip_empath:
+        if (PlayersData[faction_id].current_num_bases >= 8
+            && PlayersData[faction_id].ranking >= 6
+            && (PlayersData[faction_id].ai_wealth || PlayersData[faction_id].ai_tech)) {
+            add_abil(&ability, ABL_CLEAN_REACTOR, faction_id);
+        }
+        if (Players[faction_id].rule_morale < 0) {
+            add_abil(&ability, ABL_TRAINED, faction_id);
+        }
+        if (Armor[scratch].defense_rating > 1 && !ability
+            && PlayersData[faction_id].ai_tech > 0
+            && PlayersData[faction_id].enemy_best_land_speed > 1
+            && PlayersData[faction_id].enemy_best_weapon_value
+               >= PlayersData[faction_id].best_armor_value * 2) {
+            add_abil(&ability, ABL_COMM_JAMMER, faction_id);
+        }
+        if (!ability
+            && (PlayersData[faction_id].ai_fight < 0
+                || (PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::MORALE] < 0
+                    && !is_human(faction_id)))) {
+            add_abil(&ability, ABL_TRAINED, faction_id);
+        }
+        if (has_tech(Ability[abil_bit(ABL_ANTIGRAV_STRUTS)].preq_tech, faction_id)
+            && (!ability || has_tech(Rules.tech_two_spec_abilities, faction_id))) {
+            ability |= ABL_ANTIGRAV_STRUTS;
+        }
+        if ((Weapon[weapon].offense_rating > 1 && Armor[scratch].defense_rating > 1)
+            || Weapon[weapon].offense_rating > 2 || DesignConsiderOverride) {
+            propose_proto(faction_id, chassis, weapon, scratch, ability, reactor, 3, 0);
+            ability &= ~ABL_ANTIGRAV_STRUTS;
+            if (!has_tech(Rules.tech_two_spec_abilities, faction_id)) {
+                ability = 0;
+            }
+            if (has_tech(Ability[abil_bit(ABL_DROP_POD)].preq_tech, faction_id)) {
+                propose_proto(faction_id, chassis, weapon, scratch,
+                              ability | ABL_DROP_POD, reactor, 0xB, 0);
+            }
+            if (has_tech(Ability[abil_bit(ABL_AMPHIBIOUS)].preq_tech, faction_id)) {
+                propose_proto(faction_id, chassis, weapon, scratch,
+                              ability | ABL_AMPHIBIOUS, reactor, 0xC, 0);
+            }
+        }
     }
-    chassis_id = pick_chassis(faction_id, TRIAD_LAND, 1);
-    if (chassis_id < 0) return;
-    const int armor_id = consider_designs_middle_best_armor(faction_id, 1);
-    propose_proto(faction_id, chassis_id, 0x12, armor_id, ABL_FUNGICIDAL,
-                  state.reactor_tier, -1, 0);
-    return;
-}
-    consider_designs_plan2_fallback(faction_id, selection);
+    weapon = weapon_budget(faction_id, 99, 0);
+    if (has_tech(Ability[abil_bit(ABL_ARTILLERY)].preq_tech, faction_id)
+        && (chassis = pick_chassis(faction_id, TRIAD_LAND, 1)) >= 0) {
+        ability = 0;
+        armor = armor_budget(faction_id, 1);
+        int better_armor;
+        for (int round = 0; round < 100; round++) {
+            BOOL faster = false;
+            int alt_chassis;
+            if (Chassis[chassis].speed == 1
+                && (alt_chassis = pick_chassis(faction_id, TRIAD_LAND, 2)) >= 0
+                && alt_chassis != chassis) {
+                if ((proto_cost(alt_chassis, weapon, armor, ability, reactor) <= reactor + 5
+                     && proto_cost(alt_chassis, weapon, armor, ability, reactor) <= proto_cost(chassis, weapon, armor, ability, reactor) + (faction_id & 1) + 1)
+                    || proto_cost(alt_chassis, weapon, armor, ability, reactor) <= proto_cost(chassis, weapon, armor, ability, reactor)) {
+                    chassis = alt_chassis;
+                    faster = true;
+                }
+            }
+            better_armor = armor_budget(faction_id, Armor[armor].defense_rating + 1);
+            if (Armor[better_armor].defense_rating > Armor[armor].defense_rating
+                && proto_cost(chassis, weapon, better_armor, ability, reactor)
+                   <= proto_cost(chassis, weapon, armor, ability, reactor)) {
+                armor = better_armor;
+            } else if (!faster) {
+                break;
+            }
+        }
+        if (!has_tech(Ability[abil_bit(ABL_ARTILLERY)].preq_tech, faction_id)
+            || has_tech(Rules.tech_two_spec_abilities, faction_id)) {
+            add_abil(&ability, ABL_BLINK_DISPLACER, faction_id);
+            add_abil(&ability, ABL_ANTIGRAV_STRUTS, faction_id);
+            add_abil(&ability, ABL_DEEP_RADAR, faction_id);
+            proto_cost(chassis, weapon, better_armor, ability, reactor);
+        }
+        if (has_tech(Ability[abil_bit(ABL_ARTILLERY)].preq_tech, faction_id)) {
+            ability |= ABL_ARTILLERY;
+        }
+        if (Weapon[weapon].offense_rating >= Armor[armor].defense_rating * 3
+            || has_tech(Ability[abil_bit(ABL_ARTILLERY)].preq_tech, faction_id)
+            || DesignConsiderOverride) {
+            propose_proto(faction_id, chassis, weapon, armor, ability, reactor, 1, 0);
+        }
+    }
+    chassis = pick_chassis(faction_id, TRIAD_LAND, 3);
+    if (chassis >= 0 || (chassis = pick_chassis(faction_id, TRIAD_LAND, 2)) >= 0) {
+        ability = 0;
+        armor = armor_budget(faction_id, 1);
+        int round;
+        int budget = 0;
+        int k = 2;
+        do {
+            k += 2;
+            budget++;
+        } while (k / reactor_power <= PlayersData[faction_id].ai_power + reactor * 2
+                 + PlayersData[faction_id].ai_fight + 3);
+        if (is_human(faction_id)) {
+            budget = 99;
+        }
+        weapon = weapon_budget(faction_id, budget, 0);
+        for (round = 0; round < 100; round++) {
+            if (Armor[armor].defense_rating >= Weapon[weapon].offense_rating - 1) {
+                break;
+            }
+            int cost = Weapon[weapon].offense_rating / 2;
+            if (cost <= Armor[armor].defense_rating + 1) {
+                cost = Armor[armor].defense_rating + 1;
+            }
+            int better_armor = armor_budget(faction_id, cost);
+            if (Armor[better_armor].defense_rating <= Armor[armor].defense_rating
+                || proto_cost(chassis, weapon, better_armor, ability, reactor)
+                   > PlayersData[faction_id].ai_power + PlayersData[faction_id].ai_fight
+                     + reactor + 3) {
+                break;
+            }
+            armor = better_armor;
+        }
+        if (war_score && war_score > 3 - PlayersData[faction_id].ai_fight
+            && PlayersData[faction_id].ai_fight >= 0 && !is_human(faction_id)) {
+            add_abil(&ability, ABL_NERVE_GAS, faction_id);
+        }
+        if (GameDataStateStorage.fields_.council_resolution_count_[8]
+            > GameDataStateStorage.fields_.council_resolution_count_[9]
+            && PlayersData[faction_id].ai_power + PlayersData[faction_id].ai_fight > 0) {
+            if (is_human(faction_id)) {
+                goto skip_empath4;
+            }
+            add_abil(&ability, ABL_NERVE_GAS, faction_id);
+        }
+        if (!is_human(faction_id) && threats & 2) {
+            add_abil(&ability, ABL_EMPATHIC, faction_id);
+        }
+skip_empath4:
+        if (Players[faction_id].rule_morale < 0
+            || (PlayersData[faction_id].ai_fight > 0
+                && PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::INDUSTRY] >= 0)
+            || (PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::MORALE] < 0
+                && !is_human(faction_id))) {
+            add_abil(&ability, ABL_TRAINED, faction_id);
+        }
+        if (has_tech(Ability[abil_bit(ABL_ANTIGRAV_STRUTS)].preq_tech, faction_id)
+            && (!ability || has_tech(Rules.tech_two_spec_abilities, faction_id))) {
+            ability |= ABL_ANTIGRAV_STRUTS;
+        }
+        propose_proto(faction_id, chassis, weapon, armor, ability, reactor, 4, 0);
+    }
+    ability = 0;
+    chassis = pick_chassis(faction_id, TRIAD_LAND, 3);
+    if (chassis < 0) {
+        chassis = pick_chassis(faction_id, TRIAD_LAND, 2);
+        if (chassis < 0) {
+            chassis = pick_chassis(faction_id, TRIAD_LAND, 1);
+            add_abil(&ability, ABL_ANTIGRAV_STRUTS, faction_id);
+        }
+    }
+    if (chassis >= 0) {
+        if (Weapon[weapon_budget(faction_id, 2, 0)].offense_rating >= 2
+            || DesignConsiderOverride
+            || (has_tech(Ability[abil_bit(ABL_EMPATHIC)].preq_tech, faction_id)
+                && !is_human(faction_id))) {
+            weapon = weapon_budget(faction_id, 1, 0);
+            armor = armor_budget(faction_id, 1);
+            if (has_tech(Ability[abil_bit(ABL_EMPATHIC)].preq_tech, faction_id)
+                && !is_human(faction_id)) {
+                ability |= ABL_EMPATHIC;
+                if (has_tech(Rules.tech_two_spec_abilities, faction_id)) {
+                    if (has_tech(Ability[abil_bit(ABL_ANTIGRAV_STRUTS)].preq_tech, faction_id)) {
+                        ability |= ABL_ANTIGRAV_STRUTS;
+                    } else if (has_tech(Ability[abil_bit(ABL_TRAINED)].preq_tech, faction_id)) {
+                        ability |= ABL_TRAINED;
+                    }
+                }
+            } else {
+                if (!ability) {
+                    add_abil(&ability, ABL_DEEP_RADAR, faction_id);
+                    if (!ability) {
+                        add_abil(&ability, ABL_CLOAKED, faction_id);
+                    }
+                }
+                if (has_tech(Ability[abil_bit(ABL_ANTIGRAV_STRUTS)].preq_tech, faction_id)) {
+                    if (has_tech(Rules.tech_two_spec_abilities, faction_id)) {
+                        ability |= ABL_ANTIGRAV_STRUTS;
+                    } else {
+                        ability = ABL_ANTIGRAV_STRUTS;
+                    }
+                }
+            }
+            propose_proto(faction_id, chassis, weapon, armor, ability, reactor,
+                          (ability & ABL_TRANCE) ? 19 : 10, 0);
+        }
+    }
+    chassis = pick_chassis(faction_id, TRIAD_SEA, 0);
+    if (chassis >= 0) {
+        ability = 0;
+        if (PlayersData[faction_id].unk_66 > PlayersData[faction_id].unk_106
+            && PlayersData[faction_id].unk_66 > PlayersData[faction_id].unk_105
+            && !is_human(faction_id)) {
+            add_abil(&ability, ABL_AAA, faction_id);
+        }
+        add_abil(&ability, ABL_DEEP_RADAR, faction_id);
+        add_abil(&ability, ABL_AAA, faction_id);
+        if (threats & 1
+            && has_tech(Ability[abil_bit(ABL_TRANCE)].preq_tech, faction_id)
+            && (!ability || has_tech(Rules.tech_two_spec_abilities, faction_id))) {
+            ability |= ABL_TRANCE;
+        }
+        if (has_tech(Ability[abil_bit(ABL_AAA)].preq_tech, faction_id)
+            && !(ability & ABL_AAA) && bit_count(ability) < 2
+            && (!ability || has_tech(Rules.tech_two_spec_abilities, faction_id))) {
+            ability |= ABL_AAA;
+        }
+        if (has_tech(Ability[abil_bit(ABL_DEEP_RADAR)].preq_tech, faction_id)
+            && !(ability & ABL_DEEP_RADAR) && bit_count(ability) < 2
+            && (!ability || has_tech(Rules.tech_two_spec_abilities, faction_id))) {
+            ability |= ABL_DEEP_RADAR;
+        }
+        weapon = weapon_budget(faction_id, 1, 0);
+        armor = armor_budget(faction_id, 1);
+        for (int round = 0; round < 100; round++) {
+            int next = weapon;
+            BOOL upgraded = false;
+            for (int k = 1; k < 4 && next == weapon; k++) {
+                next = weapon_budget(faction_id, Weapon[weapon].offense_rating + k, 0);
+            }
+            if (next != weapon) {
+                int margin = reactor * 2 - reactor / 2;
+                if (margin < 5) {
+                    margin = 5;
+                }
+                if (proto_cost(chassis, next, armor, 0, reactor)
+                    <= PlayersData[faction_id].ai_power + PlayersData[faction_id].ai_growth
+                       + margin) {
+                    weapon = next;
+                    upgraded = true;
+                }
+            }
+            int next_armor = armor;
+            for (int step = 1; step < 4 && next_armor == armor; step++) {
+                next_armor = armor_budget(faction_id, Armor[armor].defense_rating + step);
+            }
+            if (next_armor != armor
+                && Armor[next_armor].defense_rating > Armor[armor].defense_rating) {
+                int margin = 5;
+                if (reactor * 2 - reactor / 2 >= 5) {
+                    margin = reactor * 2 - reactor / 2;
+                }
+                if (proto_cost(chassis, weapon, next_armor, ability, reactor)
+                    <= PlayersData[faction_id].ai_power + PlayersData[faction_id].ai_growth
+                       + margin) {
+                    armor = next_armor;
+                    continue;
+                }
+            }
+            if (!upgraded) {
+                break;
+            }
+        }
+        if (is_human(faction_id)) {
+            weapon = weapon_budget(faction_id, 99, 0);
+        }
+        if (Weapon[weapon].offense_rating >= 1) {
+            propose_proto(faction_id, chassis, weapon, armor, ability, reactor, 6, 0);
+        }
+        if (!is_human(faction_id)) {
+            weapon = weapon_budget(faction_id, 1, 0);
+            armor = armor_budget(faction_id, 99);
+            ability = 0;
+            add_abil(&ability, ABL_AAA, faction_id);
+            if (has_tech(Ability[abil_bit(ABL_DEEP_RADAR)].preq_tech, faction_id)
+                && has_tech(Rules.tech_two_spec_abilities, faction_id)) {
+                ability |= ABL_DEEP_RADAR;
+            }
+            if (Armor[armor].defense_rating > 1) {
+                propose_proto(faction_id, chassis, weapon, armor, ability, reactor, 0x15, 0);
+            }
+        }
+    }
+    chassis = pick_chassis(faction_id, TRIAD_SEA, 0);
+    if (chassis >= 0) {
+        ability = 0;
+        armor = armor_budget(faction_id, 1);
+        weapon = weapon_budget(faction_id, -7, 0);
+        if (PlayersData[faction_id].unk_66 > PlayersData[faction_id].unk_106
+            && PlayersData[faction_id].unk_66 > PlayersData[faction_id].unk_105) {
+            armor = armor_budget(faction_id, 99);
+        }
+        propose_proto(faction_id, chassis, weapon, armor, ability, reactor, 7, 0);
+        ability = 0;
+        if (chassis != CHSI_FOIL && has_tech(Chassis[CHSI_FOIL].preq_tech, faction_id)) {
+            chassis = CHSI_FOIL;
+        }
+        armor = armor_budget(faction_id, 1);
+        weapon = weapon_budget(faction_id, -9, 0);
+        add_abil(&ability, ABL_SUPER_TERRAFORMER, faction_id);
+        add_abil(&ability, ABL_FUNGICIDAL, faction_id);
+        if (ability == ABL_SUPER_TERRAFORMER
+            && has_tech(Ability[abil_bit(ABL_FUNGICIDAL)].preq_tech, faction_id)
+            && has_tech(Rules.tech_two_spec_abilities, faction_id)) {
+            ability |= ABL_FUNGICIDAL;
+        }
+        if (weapon >= 0) {
+            propose_proto(faction_id, chassis, weapon, armor, ability, reactor, 0xF, 0);
+        }
+        ability = 0;
+        weapon = weapon_budget(faction_id, -8, 0);
+        if (weapon >= 0) {
+            propose_proto(faction_id, chassis, weapon, armor, ability, reactor, 0x10, 0);
+        }
+    }
+    chassis = pick_chassis(faction_id, TRIAD_AIR, 0);
+    if (chassis >= 0) {
+        weapon = weapon_budget(faction_id, 99, 0);
+        armor = armor_budget(faction_id, 1);
+        ability = 0;
+        if (PlayersData[faction_id].ranking >= 6
+            && (PlayersData[faction_id].ai_wealth || PlayersData[faction_id].ai_tech)
+            && (!PlayersData[faction_id].ai_power || PlayersData[faction_id].ai_fight < 1)) {
+            add_abil(&ability, ABL_CLEAN_REACTOR, faction_id);
+        }
+        if (threats & 2) {
+            add_abil(&ability, ABL_EMPATHIC, faction_id);
+        }
+        if (war_score && war_score > 5 - PlayersData[faction_id].ai_fight
+            && PlayersData[faction_id].ai_fight >= 0 && !is_human(faction_id)) {
+            add_abil(&ability, ABL_NERVE_GAS, faction_id);
+        }
+        if (GameDataStateStorage.fields_.council_resolution_count_[8]
+            > GameDataStateStorage.fields_.council_resolution_count_[9]
+            && PlayersData[faction_id].ai_fight + PlayersData[faction_id].ai_power > 0
+            && !is_human(faction_id)) {
+            add_abil(&ability, ABL_NERVE_GAS, faction_id);
+        }
+        if (has_tech(Ability[abil_bit(ABL_DEEP_RADAR)].preq_tech, faction_id)
+            && (!ability || has_tech(Rules.tech_two_spec_abilities, faction_id))) {
+            ability |= ABL_DEEP_RADAR;
+        }
+        propose_proto(faction_id, chassis, weapon, armor, ability, reactor, 8, 0);
+        weapon = weapon_budget(faction_id, 99, 0);
+        ability = ABL_AIR_SUPERIORITY;
+        if (has_tech(Ability[abil_bit(ABL_DEEP_RADAR)].preq_tech, faction_id)
+            && has_tech(Rules.tech_two_spec_abilities, faction_id)) {
+            ability |= ABL_DEEP_RADAR;
+        } else if (threats & 1
+                   && has_tech(Ability[abil_bit(ABL_TRANCE)].preq_tech, faction_id)
+                   && has_tech(Rules.tech_two_spec_abilities, faction_id)) {
+            ability |= ABL_TRANCE;
+        }
+        propose_proto(faction_id, chassis, weapon, armor, ability, reactor, 9, 0);
+    }
+    chassis = pick_chassis(faction_id, TRIAD_AIR, -2);
+    if (chassis >= 0) {
+        weapon = weapon_budget(faction_id, 99, 0);
+        armor = armor_budget(faction_id, 1);
+        ability = 0;
+        if (PlayersData[faction_id].ranking >= 6
+            && (PlayersData[faction_id].ai_wealth || PlayersData[faction_id].ai_tech)
+            && (!PlayersData[faction_id].ai_power || PlayersData[faction_id].ai_fight < 1)) {
+            add_abil(&ability, ABL_CLEAN_REACTOR, faction_id);
+        }
+        if (threats & 2) {
+            add_abil(&ability, ABL_EMPATHIC, faction_id);
+        }
+        if (war_score && war_score > 4 - PlayersData[faction_id].ai_fight
+            && PlayersData[faction_id].ai_fight >= 0 && !is_human(faction_id)) {
+            add_abil(&ability, ABL_NERVE_GAS, faction_id);
+        }
+        if (GameDataStateStorage.fields_.council_resolution_count_[8]
+            > GameDataStateStorage.fields_.council_resolution_count_[9]
+            && PlayersData[faction_id].ai_fight + PlayersData[faction_id].ai_power > 0
+            && !is_human(faction_id)) {
+            add_abil(&ability, ABL_NERVE_GAS, faction_id);
+        }
+        if (has_tech(Ability[abil_bit(ABL_DEEP_RADAR)].preq_tech, faction_id)
+            && (!ability || has_tech(Rules.tech_two_spec_abilities, faction_id))) {
+            ability |= ABL_DEEP_RADAR;
+        }
+        propose_proto(faction_id, chassis, weapon, armor, ability, reactor, 0x11, 0);
+    }
+    chassis = pick_chassis(faction_id, TRIAD_AIR, -1);
+    if (chassis >= 0) {
+        armor = armor_budget(faction_id, 1);
+        ability = 0;
+        if (has_tech(Weapon[WPN_CONVENTIONAL_PAYLOAD].preq_tech, faction_id)) {
+            propose_proto(faction_id, chassis, WPN_CONVENTIONAL_PAYLOAD, armor, ability,
+                          reactor, 0xD, 0);
+        }
+        if (has_tech(Weapon[WPN_TECTONIC_PAYLOAD].preq_tech, faction_id)) {
+            propose_proto(faction_id, chassis, WPN_TECTONIC_PAYLOAD, armor, ability,
+                          reactor, 0x16, 0);
+        }
+        if (has_tech(Weapon[WPN_FUNGAL_PAYLOAD].preq_tech, faction_id)) {
+            propose_proto(faction_id, chassis, WPN_FUNGAL_PAYLOAD, armor, ability,
+                          reactor, 0x17, 0);
+        }
+        for (weapon = 0; weapon < MaxWeaponNum; weapon++) {
+            if (has_tech(Weapon[weapon].preq_tech, faction_id)
+                && Weapon[weapon].offense_rating >= 99) {
+                propose_proto(faction_id, chassis, weapon, armor, ability, reactor, 0xE, 0);
+                break;
+            }
+        }
+    }
+    ability = 0;
+    if (reactor <= 1 && !has_tech(Ability[abil_bit(ABL_SUPER_TERRAFORMER)].preq_tech,
+                                  faction_id)) {
+        if (has_tech(Ability[abil_bit(ABL_FUNGICIDAL)].preq_tech, faction_id)
+            && (chassis = pick_chassis(faction_id, TRIAD_LAND, 1)) >= 0) {
+            armor = armor_budget(faction_id, 1);
+            ability = ABL_FUNGICIDAL;
+            propose_proto(faction_id, chassis, WPN_TERRAFORMING_UNIT, armor, ability,
+                          reactor, -1, 0);
+        }
+    } else {
+        chassis = pick_chassis(faction_id, TRIAD_LAND, 2);
+        if (chassis >= 0) {
+            armor = armor_budget(faction_id, 1);
+            if (has_tech(Ability[abil_bit(ABL_SUPER_TERRAFORMER)].preq_tech, faction_id)) {
+                ability |= ABL_SUPER_TERRAFORMER;
+            }
+            if (has_tech(Ability[abil_bit(ABL_FUNGICIDAL)].preq_tech, faction_id)
+                && (!ability || has_tech(Rules.tech_two_spec_abilities, faction_id))) {
+                ability |= ABL_FUNGICIDAL;
+            }
+            propose_proto(faction_id, chassis, WPN_TERRAFORMING_UNIT, armor, ability,
+                          reactor, -1, 0);
+        }
+    }
 }
 
 
