@@ -1249,7 +1249,7 @@ void MapWin::on_sys_close() {
 // Original0x0046F8C0 resets the side panels before dispatching one of the four
 // map-window buttons. The fourth button toggles the custom world-scale label.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0046F8C0 ?on_button_clicked@MapWin@@QAEXH@Z 0x0046F8C0-0x0046F9E6 FILE
+// ORIGINAL: 0x0046F8C0 ?on_button_clicked@MapWin@@QAEXH@Z 0x0046F8C0-0x0046F9E6 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0046f8c0.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
 // symbol    ?on_button_clicked@MapWin@@UAEXH@Z
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0046F8C0 0x0046F9E8 0x0046F9F8 0x0046F8E6
