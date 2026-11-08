@@ -1608,22 +1608,18 @@ Purpose: Track the report scrollbar's committed position and repaint the
 void ReportWin::on_scrolled(int, int pos) {
     field_C0FC_ = pos;
     switch (ReportIfGlobal.field_8_) {
+    case 2: redraw(); break;
+    case 3: redraw(); break;
+    case 4: redraw(); break;
     case 5:
         reset();
         draw_projects();
         soft_update();
-        return;
-    case 3:
-    case 6:
-    case 8:
-        redraw();
-        return;
-    case 0:
-    case 2:
-    case 4:
-    case 7:
-        redraw();
         break;
+    case 6: redraw(); break;
+    case 7: redraw(); break;
+    case 8: redraw(); break;
+    case 0: redraw(); break;
     }
 }
 
@@ -1635,22 +1631,18 @@ void ReportWin::on_scrolled(int, int pos) {
 void ReportWin::on_scrolling(int, int pos) {
     field_C0FC_ = pos;
     switch (ReportIfGlobal.field_8_) {
+    case 2: redraw(); break;
+    case 3: redraw(); break;
+    case 4: redraw(); break;
     case 5:
         reset();
         draw_projects();
         soft_update();
-        return;
-    case 3:
-    case 6:
-    case 8:
-        redraw();
-        return;
-    case 0:
-    case 2:
-    case 4:
-    case 7:
-        redraw();
         break;
+    case 6: redraw(); break;
+    case 7: redraw(); break;
+    case 8: redraw(); break;
+    case 0: redraw(); break;
     }
 }
 

@@ -134,8 +134,8 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   // clears selection/row state afterwards. Keep those two effects separate.
   void set_report_text_color(int color) { field_10_ = color; }
   void reset_report_selection() {
-    field_14_ = static_cast<uint32_t>(-1);
     field_2C_ = 0;
+    field_14_ = static_cast<uint32_t>(-1);
   }
   // ReportIf's lab color callback does not replace drawing/filling hooks.
   void set_write_callback(WriteCallback callback) { write_callback_ = callback; }
