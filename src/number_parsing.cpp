@@ -113,6 +113,223 @@ int __cdecl stoi(LPCSTR str) {
 }
 
 /*
+Purpose: Swap two 32-bit variables with the original XOR sequence; if both
+         pointers alias, the sequence produces zero.
+// ORIGINAL: 0x00628A50 ?swap@@YAXPAHPAH@Z 0x00628A50-0x00628A73 BYTE_EXACT
+// body      src/number_parsing.cpp
+// symbol    ?swap@@YAXPAH0@Z
+// size      35 bytes
+// prototype void (__cdecl ?swap@@YAXPAHPAH@Z)(int*, int*)
+// callers   14   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+// Integer swap's source owner is out of line here; the byte overload stays
+// inline in general.h. This is a source ownership decision, not proof of the
+// original translation-unit boundary.
+void __cdecl swap(int *var1, int *var2) {
+    *var1 ^= *var2;
+    *var2 ^= *var1;
+    *var1 ^= *var2;
+}
+
+
+/*
+Purpose: Swap the values of two 8-bit variables. Added an additional check when swapping the same
+         memory location.
+// ORIGINAL: 0x00628A80 ?swap@@YAXPAEPAE@Z 0x00628A80-0x00628AA3 BYTE_EXACT
+// body      src/number_parsing.cpp
+// symbol    ?swap@@YAXPAE0@Z
+// size      35 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+// BODY IN general.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
+
+MEASURED void __cdecl swap(uint8_t *var1, uint8_t *var2) {
+    *var1 ^= *var2;
+    *var2 ^= *var1;
+    *var1 ^= *var2;
+}
+
+/*
+Purpose: Count the number of signed bits set. Added a fix to prevent an infinite loop.
+// ORIGINAL: 0x00628AB0 ?bit_count_signed@@YAHH@Z 0x00628AB0-0x00628AC2 BYTE_EXACT
+// symbol    ?bit_count_signed@@YAHH@Z
+// size      18 bytes
+// prototype 
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: Bit count
+Status: Complete
+*/
+int __cdecl bit_count_signed(int input) {
+    uint32_t count = 0;
+    if (input) {
+        do {
+            input >>= 1;
+            count++;
+        } while (input);
+    }
+    return count;
+}
+
+
+/*
+Purpose: Shift the numerator to the left by 16 then divide by the denominator. NOTE: the shipped
+         code has no divide-by-zero guard; see the BUG comment on the body below.
+// ORIGINAL: 0x00628AD0 ?fixed_div@@YAHJJ@Z 0x00628AD0-0x00628AEC BYTE_EXACT
+// symbol    ?fixed_div@@YAHHH@Z
+// size      28 bytes
+// prototype 
+// callers   7   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// TRIED: still MISMATCH. The image's three-instruction dividend
+//   construction - `edx = numerator >> 16` (arithmetic) and `eax = numerator
+//   << 16`, i.e. `(int64_t)numerator << 16` built directly in EDX:EAX - never
+//   falls out of `((int64_t)numerator << 16) / denominator` here at any flag
+//   set tried. This compiler always promotes `denominator` to a full 64-bit
+//   value first (a `cdq`-and-`call` sequence to a 64-bit shift helper, then
+//   another call to a 64-bit divide helper - 16-28 instructions depending on
+//   flags, never the image's 13), where the image gets a single hardware
+//   `idiv` on a 64-bit dividend against a 32-bit memory operand. That native
+//   widen-then-idiv form usually comes from inline assembly, which is off
+//   the table here; no plain-C rephrasing tried reproduces it.
+Return Value: Quotient
+Status: Complete
+*/
+// BUG IN THE ORIGINAL: no divide-by-zero guard. The image is `sar edx,0x10;
+// shl eax,0x10; idiv dword ptr [ebp+0xc]` with no test of the divisor
+// beforehand - a `denominator == 0` call faults on the `idiv`, exactly like
+// this reproduction now does. The previous body's `if (!denominator) return
+// 0;` is not in the shipped bytes (13 instructions there, not 15) and is
+// left out deliberately; adding it back defeats the match, it does not fix
+// one.
+// Fidelity limitation: the pinned 0x00628ADF instruction is a 32-bit IDIV,
+// which also faults when the quotient does not fit EAX. This wide division
+// followed by an int conversion does not express that quotient-overflow trap;
+// the out-of-range quotient domain remains an unresolved original-fidelity
+// obligation. Do not synthesize a fault path here.
+// Hand-written assembly: EDX:EAX built by sar/shl without cdq, then idiv; result via local.
+int __cdecl fixed_div(int numerator, int denominator) {
+    int result;
+    __asm {
+        mov edx, numerator
+        mov eax, edx
+        sar edx, 0x10
+        shl eax, 0x10
+        idiv denominator
+        mov result, eax
+    }
+    return result;
+}
+
+/*
+Purpose: Reverse string search for the last occurrence of the specified character. Replaced the
+         original searching logic with strrchr() that does same thing. The end parameter can be 
+         removed in the future.
+// ORIGINAL: 0x00628AF0 ?memrchr@@YAHPBX0H@Z 0x00628AF0-0x00628B23 BYTE_EXACT
+// LEVER: `calls (none)` in the annotation, and the image proves it - a
+// hand-rolled backward byte scan (`cmp byte ptr [eax], bl; je found; dec
+// eax; dec ecx; jne loop`), never a call to `strrchr`. The old body called
+// it, which is exactly the call-a-helper-the-image-inlines defect: `osmx
+// calls` on this address shows zero calls, and a body that makes one is
+// running a different program even when the answer often agrees. Restoring
+// the loop (scan starts AT `end` itself, walking backward while `count =
+// end - start` byte compares remain) moved MISMATCH-wrong-shape (20
+// instructions, mostly not agreeing) to a same-instruction-count MISMATCH,
+// 0.704 similar under /O1.
+// TRIED: splitting `!start`/`!end` into two `if`s (image compiles
+// `a || b` to the identical sequential-test-same-target shape already), and
+// a `for(;;){...; if(count==0) break;}` in place of `do {...} while(count)`
+// - neither changed the score. `const char *const s = start; const char
+// *const e = end;` locals ahead of the null checks also made no difference
+// (identical codegen at every flag set) - VC6 already treats the unmodified
+// parameters as the same registers. The remaining gap is the image keeping
+// `start` live in `ebx` for the whole function and using ONE comparison per
+// iteration, where every flag set tried here rotates the loop (duplicates
+// the compare to peel the first iteration) and spills `count` back through
+// the `start` parameter's own stack slot instead of a register - the same
+// unreproduced "push ecx" frame-slot pattern as `findnum` just above it.
+// TRIED (2026-09-03, probed against cl 12.00.8168 in isolation): six single-
+// exit shapes meant to reach the image's shared epilogue and its
+// `mov [ebp-4],eax; mov eax,[ebp-4]` store-reload of the return value -
+// a `result` local assigned on every path then returned once, an
+// initialised `result = 0` with `break` out of the loop, a `goto done`
+// past the assignment, a `while (count-- > 0)` form, a ternary for the
+// not-found value, and a `p` local returned from the outer scope - none
+// produced a memory-homed return value; VC6 kept every one in esi/eax and
+// emitted a separate early-return epilogue instead of a shared one. The
+// image also loads BOTH parameters into registers before testing
+// (`mov ebx,[ebp+8]; and ebx,ebx` / `mov ecx,[ebp+0xc]; and ecx,ecx`),
+// packs `value` into `bl` over the dead `start`, and scans with
+// `dec eax; dec ecx; jne` and no peeled compare - none of which any flag
+// set or spelling here reaches. CONTEXT WORTH WEIGHING BEFORE GRINDING:
+// this address sits between `fixed_div` (0x00628AD0, `idiv` on a
+// hand-built edx:eax dividend) and `findnum` (0x00628B30), with
+// `checksum`/`checksum_file`/`checksum_password` (0x00538FE0-0x005390C0,
+// confirmed hand-written by handwritten_asm.py) a screen away - five small
+// utilities whose shipped bytes are all compiler-unreachable idioms. Treat
+// the ceiling here as semantic equivalence and say so, rather than
+// continuing to search source shapes.
+// symbol    ?memrchr@@YAPBDPBD0D@Z
+// size      51 bytes
+// prototype
+// callers   6   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: Position of character or NULL if not found.
+Status: Complete
+*/
+// Hand-written assembly: `and reg,reg` null tests, dec/jne scan, result via local.
+const char *__cdecl memrchr(LPCSTR start, LPCSTR end, char value) {
+    const char *result;
+    __asm {
+        mov ebx, start
+        and ebx, ebx
+        je not_found
+        mov ecx, end
+        and ecx, ecx
+        je not_found
+        mov eax, ecx
+        sub ecx, ebx
+        and ecx, ecx
+        je not_found
+        mov bl, value
+    scan:
+        cmp byte ptr [eax], bl
+        je found
+        dec eax
+        dec ecx
+        jne scan
+    not_found:
+        xor eax, eax
+    found:
+        mov result, eax
+    }
+    return result;
+}
+
+
+
+/*
 Purpose: Locates the first number in a string.
 // ORIGINAL: 0x00628B30 ?findnum@@YAHPAD@Z 0x00628B30-0x00628B69 BYTE_EXACT
 // LEVER: the image reads its digit bounds from memory - `mov dl, byte ptr

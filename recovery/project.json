@@ -1495,6 +1495,48 @@
           "-c"
         ]
       },
+      "src/filefind.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Z7",
+          "-c"
+        ]
+      },
+      "src/parse.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Z7",
+          "-c"
+        ]
+      },
+      "src/trig.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Z7",
+          "-c"
+        ]
+      },
       "src/multidebug.cpp": {
         "flags": [
           "/nologo",

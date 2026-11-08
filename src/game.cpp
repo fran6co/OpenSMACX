@@ -303,81 +303,6 @@ int NextTurnReady;
 int NetUpkeepPhase;
 
 
-/*
-Purpose: Handle creation of pop-up message on Planetfall.
-// ORIGINAL: 0x00589180 ?planetfall@@YAXH@Z 0x00589180-0x00589329 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x00589180-0x00589329 calls parse_says with slots 2, 3, 0, 1 in that order; the four text pointers are Player.title_leader (+0x4C), name_leader (+0x34), adj_name_faction (+0x304), and noun_faction (+0x2E4).", "Pinned default writes are ordered: PluralityDefault=0 before slot 2; GenderDefault=is_leader_female before slot 2; then GenderDefault and PluralityDefault=0 before slot 3; slot 0 inherits those defaults; finally noun_gender then is_noun_plural before slot 1. general.h binds those defaults to 0x009BBFEC/0x009BBFF0.", "Pinned Player records begin at 0x00946A50 with 0x59C stride; rule_flags is +0x508 and alien bit 0x80 is tested directly. The image uppercases the copied filename via CharUpperA then calls the pinned _strcmp entry at 0x00645660 for exact USURPER/FUNGBOY comparisons; this preserves the raw flag test and exact string behavior, not is_alien_faction's expansion gate or case-insensitive comparison.", "Pinned UI key construction clears and appends PLANETFALLX for an alien USURPER, PLANETFALLF for exact FUNGBOY, otherwise PLANETFALL. It uses shared StringTemp at 0x009B86A0. Nonzero TurnCurrentNum at 0x009A64D4 gates parse_num(0, turn), the 64-slot project scan, and a final appended '2' suffix before X_pop(StringTemp, 0); zero turn skips all three.", "The project scan reads the 64 dword SecretProject array at 0x009A6514, accepts nonnegative base owners matching faction_id, and calls the int-input parse_say(4, Facility[70+project].name, -1, -1) for each match. The typed sources are GameDataStateWindowFields::secret_project_, Base.faction_id_current, and RulesFacility.name; the generated body uses has_project without adding bounds or error-path changes.", "The previous TRIED finding remains verbatim as history; this rationale records the pinned call/global/UI mapping only. Existing ORIGINAL identity and complete 425-byte span remain; no exactness/semantic claim is granted."], "reason": "Recover Planetfall's ordered parser defaults, shared scratch-buffer popup key, current-turn project context and source-owned faction/project state from the pinned body."}
-// size      425 bytes
-// prototype void (__cdecl ?planetfall@@YAXH@Z)(int factionID)
-// callers   2   call targets   6
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x005BF310 0x00625E30 0x00625E50 0x00625EC0 0x00645470 0x00645660
-// indirect  0x0058923D
-// TRIED: not resolved this pass. The image's FOUR `parse_says`
-//        (0x00625EC0) call sites write the gender/plurality arguments to
-//        FIXED GLOBALS (0x9bbfec/0x9bbff0) individually before each call
-//        rather than through `parse_set`, in an ORDER that does not match
-//        this body's own call order (id 2, then 3, then 0, then 1 - not
-//        0, 2, 3, 1), and the calls list also names 0x00625E30 (parse_num)
-//        AND 0x00625E50 (parse_say, the int-input overload) - this body
-//        calls parse_num once and never parse_say, so one of its calls is
-//        the wrong callee. Left at 11/125 for a pass that can trace which
-//        source line the int-input `parse_say` belongs to.
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl planetfall(int faction_id) {
-    PluralityDefault = 0;
-    GenderDefault = Players[faction_id].is_leader_female;
-    parse_says(2, Players[faction_id].title_leader, -1, -1);
-
-    GenderDefault = Players[faction_id].is_leader_female;
-    PluralityDefault = 0;
-    parse_says(3, Players[faction_id].name_leader, -1, -1);
-    parse_says(0, Players[faction_id].adj_name_faction, -1, -1);
-
-    GenderDefault = Players[faction_id].noun_gender;
-    PluralityDefault = Players[faction_id].is_noun_plural;
-    parse_says(1, Players[faction_id].noun_faction, -1, -1);
-
-    StringTemp[0] = 0;
-    strcat(StringTemp, Players[faction_id].filename);
-    CharUpperA(StringTemp);
-    if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0
-        && strcmp(StringTemp, "USURPER") == 0) {
-        StringTemp[0] = 0;
-        strcat(StringTemp, "PLANETFALLX");
-    } else if (strcmp(StringTemp, "FUNGBOY") == 0) {
-        StringTemp[0] = 0;
-        strcat(StringTemp, "PLANETFALLF");
-    } else {
-        StringTemp[0] = 0;
-        strcat(StringTemp, "PLANETFALL");
-    }
-
-    const int turn = GameDataStateStorage.fields_.turn_current_num_;
-    if (turn != 0) {
-        parse_num(0, turn);
-        for (int project = 0; project < MaxSecretProjectNum; ++project) {
-            // Open-coded has_project: the image materializes the owner test.
-            int base_id = GameDataStateStorage.fields_.secret_project_.project_base[project];
-            BOOL owned;
-            if (base_id < 0) {
-                owned = false;
-            } else {
-                owned = (Bases[base_id].faction_id_current == faction_id);
-            }
-            if (owned) {
-                parse_say(4, Facility[FacilitySPStart + project].name,
-                          -1, -1);
-            }
-        }
-        strcat(StringTemp, "2");
-    }
-
-    X_pop(StringTemp, 0);
-}
 
 // ---------------------------------------------------------------------------
 // Merged from the retired src/game_recovery.cpp on 2026-08-20, following
@@ -1384,6 +1309,11 @@ static const char EmptyMapName[] = "?";
 // RECOVERY_OBJECT: v1 0x00690F58 _LatestMapPreference
 static const char LatestMapPreference[] = "Latest Map";
 
+// Distinct writable string cells observed at the original call sites.
+// These role names do not claim original source names or allocation bounds.
+// RECOVERY_OBJECT: v1 0x00690F64 _InitialAutoSaveDeletePath
+static char InitialAutoSaveDeletePath[] = "saves\\auto\\Alpha Centauri Autosave 1.SAV";
+
 // The original 0x691B34 pointer cell refers to the separate text at
 // 0x691BEC; keep the pointer and its four-byte NUL-terminated pointee distinct.
 // RECOVERY_OBJECT: v1 0x00691BEC ?SaveGameFileExtensionText@@3PADA
@@ -1452,6 +1382,224 @@ extern "C" int __cdecl sub_5a6510(int x, int y) {
     }
     return -1;
 }
+
+/*
+Purpose: Determine if the specified offsets are within the range radius.
+// ORIGINAL: 0x005A65A0 ?radius_move@@YAHHHH@Z 0x005A65A0-0x005A65D0 BYTE_EXACT
+// size      48 bytes
+// prototype int (__cdecl ?radius_move@@YAHHHH@Z)(int xCoord, int yCoord, int range)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: Range radius, otherwise -1 if not within range
+Status: Complete
+*/
+// Historical visibility note: the pinned image emits this body and also
+// calls it at different sites. The definition is now colocated with its
+// canonical marker; this pilot does not establish original TU provenance.
+
+
+int __cdecl radius_move(int x_radius_off, int y_radius_off, int range) {
+    for (int i = 0; i < range; i++) {
+        if (x_radius_off == RadiusOffsetX[i] && y_radius_off == RadiusOffsetY[i]) {
+            return i; // radius
+        }
+    }
+    return -1;
+}
+
+/*
+Purpose: Determine if the specified two tiles are within the range radius of each other.
+// ORIGINAL: 0x005A65D0 ?radius_move@@YAHHHHHH@Z 0x005A65D0-0x005A662C BYTE_EXACT
+// size      92 bytes
+// prototype int (__cdecl ?radius_move@@YAHHHHHH@Z)(int xCoordSrc, int yCoordSrc, int xCoordDst, int yCoordDst, int range)
+// callers   4   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// LEVER: two fixes, 0.709 -> 0.902 similar (3/40 raw, best flag set /O2 /Gy
+//        /GR- /Oy- /GX). (1) BUG IN THIS RECOVERY (not the original): the
+//        wraparound test compared against the precomputed `MapLongitude`
+//        global and adjusted by `MapLongitudeBounds` - a mismatched pair. The
+//        image reads ONLY `MapLongitudeBounds` (0x949870) here, computing its
+//        own `/2` inline via `cdq; sub; sar` for the threshold and using the
+//        UNHALVED value for the adjustment - the exact shape compass_move
+//        (0x005A6630) already documents, with `MapLongitudeBounds` where
+//        compass_move uses `MapLongitude`. Rewriting both threshold checks as
+//        `-((int)MapLongitudeBounds / 2)` / `((int)MapLongitudeBounds / 2)`
+//        and the adjustment as `MapLongitudeBounds` fixed the division shape.
+//        (2) Declaring `int y_radius_off = y_dst - y_src;` BEFORE
+//        `x_radius_off` (rather than evaluating `y_dst - y_src` inline at the
+//        tail call) matches the image computing the y-difference early,
+//        interleaved with the x-difference - moved 0.800 -> 0.902.
+// TRIED: remaining gap is an esi/ecx register swap running through the
+//            whole body - same register-allocation plateau as the rest of
+//            this file's xrange/on_map-loop family. Not chased further.
+Return Value: Range radius, otherwise -1 if not within range
+Status: Complete
+*/
+int __cdecl radius_move(int x_src, int y_src, int x_dst, int y_dst, int range) {
+    int x_radius_off = x_dst - x_src;
+    if (x_radius_off < -((int)MapLongitudeBounds / 2)) {
+        x_radius_off += MapLongitudeBounds;
+    }
+    if (x_radius_off > ((int)MapLongitudeBounds / 2)) {
+        x_radius_off -= MapLongitudeBounds;
+    }
+    int y_radius_off = y_dst - y_src;
+    return radius_move(x_radius_off, y_radius_off, range);
+}
+
+/*
+Purpose: Determine if the specified two tiles are within the radius directionally of each other.
+// ORIGINAL: 0x005A6630 ?compass_move@@YAHHHHH@Z 0x005A6630-0x005A66E0 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"Use the original full longitude bound for signed half-width thresholds and wrap adjustments, not the half-width tile-row stride.","evidence":["Pinned5A663A loads949870 MapLongitudeBounds into ESI; subsequent thresholds halve this register and wrapping adds/subtracts its unhalved value.","MapLongitude is the distinct68FAF0 packed-row stride; the historical LEVER below incorrectly interpreted the masked relocation target."]}
+// Historical LEVER (superseded wrong-global interpretation): this body had been copy-adapted from radius_move's wraparound test (compare against MapLongitude, adjust by MapLongitudeBounds), but the image never loads MapLongitudeBounds here at all - it computes `MapLongitude / 2` (a signed `cdq; sub; sar` halving, done twice) as the threshold AND adjusts by the un-halved `MapLongitude` itself. Matching that literally (`x_radius_off < -(ML/2)` / `+= ML`, and the mirrored upper bound) is BYTE_EXACT.
+// size      176 bytes
+// prototype int (__cdecl ?compass_move@@YAHHHHH@Z)(int xCoordSrc, int yCoordSrc, int xCoordDst, int yCoordDst)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: Range radius, otherwise -1 if not within range
+Status: Complete
+*/
+int __cdecl compass_move(int x_src, int y_src, int x_dst, int y_dst) {
+    int x_radius_off = x_dst - x_src;
+    if (x_radius_off < -((int)MapLongitudeBounds / 2)) {
+        x_radius_off += MapLongitudeBounds;
+    }
+    if (x_radius_off > ((int)MapLongitudeBounds / 2)) {
+        x_radius_off -= MapLongitudeBounds;
+    }
+    int y_radius_off = y_dst - y_src;
+    int direction_x = (x_radius_off > 0) ? 1 : (x_radius_off >= 0) - 1;
+    int direction_y = (y_radius_off > 0) ? 1 : (y_radius_off >= 0) - 1;
+    for (int i = 0; i < 9; i++) {
+        if (direction_x == (VehMoveDeltaX[i] > 0 ? 1 : (VehMoveDeltaX[i] >= 0) - 1)
+            && direction_y == (VehMoveDeltaY[i] > 0 ? 1 : (VehMoveDeltaY[i] >= 0) - 1)) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+// ORIGINAL: 0x005A66E0 ?encrypt_write@@YAHPAXIIPAUFILE@@@Z 0x005A66E0-0x005A67A8 FILE BYTE_EXACT
+// symbol    ?encrypt_write@@YAHPAXIIPAU_iobuf@@@Z
+// this tree's FILE is struct _iobuf, so the tag differs from the image's
+// TRIED: nothing ruled out; the [ebp+0xb]/[ebp+0xf]/[ebp+0x13] scratch bytes are stack-slot reuse of the first three parameters' high byte, not real locals - modelled as plain unsigned char key1/key2/byte1/byte2 instead. MISMATCH #3, push vs mov, whole-function frame order
+// working copy - scaffold materialised by --work
+// size      200 bytes
+// prototype int (__cdecl ?encrypt_write@@YAHPAXIIPAUFILE@@@Z)(void*, unsigned int, unsigned int, FILE* file)
+// callers   3   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x00644EF2 0x0064603F
+int __cdecl encrypt_write(void *data, unsigned int size, unsigned int count,
+                          FILE *file) {
+    unsigned int raw_size = size * count;
+    unsigned int padded = raw_size;
+    if ((raw_size & 1) != 0) {
+        padded = raw_size + 1;
+    }
+    unsigned char *buf = reinterpret_cast<unsigned char *>(mem_get(padded));
+    if (buf == 0) {
+        return 0;
+    }
+    unsigned char *src = reinterpret_cast<unsigned char *>(data);
+    unsigned char *dst = buf;
+    unsigned char key1 = 0x80;
+    unsigned char key2 = 0x80;
+    for (unsigned int i = 0; i < padded / 2; ++i) {
+        key2 = key2 + 1;
+        key1 = key1 - 1;
+        unsigned char byte1 = *src++;
+        unsigned char byte2;
+        if (i < raw_size) {
+            byte2 = *src++;
+        } else {
+            byte2 = 0;
+        }
+        if (byte1 != 0) {
+            unsigned char value = byte1 ^ key2;
+            if (value != 0) {
+                byte1 = value;
+            }
+        }
+        if (byte2 != 0) {
+            unsigned char value = byte2 ^ key1;
+            if (value != 0) {
+                byte2 = value;
+            }
+        }
+        *dst++ = byte2;
+        *dst++ = byte1;
+    }
+    int result = fwrite(buf, padded, 1, file);
+    free(buf);
+    return result;
+}
+
+// ORIGINAL: 0x005A67B0 ?encrypt_read@@YAHPAXIIPAUFILE@@@Z 0x005A67B0-0x005A6886 FILE
+// symbol    ?encrypt_read@@YAHPAXIIPAU_iobuf@@@Z
+// this tree's FILE is struct _iobuf, so the tag differs from the image's
+// working copy - scaffold materialised by --work
+// NOTE: mirrors encrypt_write; remaining gap is the src load/increment
+//        schedule (image: inc esi; mov cl,[esi-1]; inc esi).
+// size      214 bytes
+// prototype int (__cdecl ?encrypt_read@@YAHPAXIIPAUFILE@@@Z)(void* buffer, unsigned int block, unsigned int count, FILE* file)
+// callers   3   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x00644EF2 0x00646178
+int __cdecl encrypt_read(void *data, unsigned int size, unsigned int count,
+                         FILE *file) {
+    unsigned int padded = size * count;
+    unsigned int remaining = padded;
+    if (padded & 1) {
+        padded++;
+    }
+    unsigned char *buf = reinterpret_cast<unsigned char *>(mem_get(padded));
+    if (buf == 0) {
+        return 0;
+    }
+    unsigned char *src = buf;
+    if (!fread(src, padded, 1, file)) {
+        free(buf);
+        return 0;
+    }
+    unsigned char *dst = reinterpret_cast<unsigned char *>(data);
+    unsigned char key1 = 0x80;
+    unsigned char key2 = 0x80;
+    for (unsigned int i = padded / 2; i != 0; --i) {
+        key2 = key2 + 1;
+        key1 = key1 - 1;
+        unsigned char byte2 = src[1];
+        unsigned char byte1 = src[0];
+        src += 2;
+        if (byte2 != 0) {
+            unsigned char value = byte2 ^ key2;
+            if (value != 0) {
+                byte2 = value;
+            }
+        }
+        if (byte1 != 0) {
+            unsigned char value = byte1 ^ key1;
+            if (value != 0) {
+                byte1 = value;
+            }
+        }
+        *dst++ = byte2;
+        if (remaining > 1) {
+            *dst++ = byte1;
+        }
+        remaining -= 2;
+    }
+    free(buf);
+    return 1;
+}
+
 
 // ORIGINAL: 0x005A6890 ?game_io@@YAHHPAUFILE@@@Z 0x005A6890-0x005A6AC0 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005a6890.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover the six ordered MapWin member transfers through standard buffered or encrypted I/O and shared transaction state, not raw self offsets."}
@@ -1918,6 +2066,128 @@ void __cdecl save_map() {
     prefs_put(LatestMapPreference, preference_value);
     save_map_daemon(name);
 }
+
+/*
+Purpose: Delete the initial auto-save game file.
+// ORIGINAL: 0x005ABD10 ?kill_auto_save@@YAXXZ 0x005ABD10-0x005ABD1C BYTE_EXACT
+// size      12 bytes
+// prototype 
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00646950
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl kill_auto_save() {
+    remove(InitialAutoSaveDeletePath);
+}
+
+/*
+Purpose: Handle the creation and management of the auto-save game files.
+// ORIGINAL: 0x005ABD20 ?auto_save@@YAXXZ 0x005ABD20-0x005ABE39 BYTE_EXACT
+// TRIED (2026-09-03, probed against cl 12.00.8168 in isolation): the
+//   image's split cleanup - a batched `add esp, 0x1c` covering the seven
+//   `remove` calls and then `pop ecx` for the trailing `save_daemon`, so 0x1c
+//   + 4 rather than this tree's single `add esp, 0x20` - is the per-call
+//   cleanup merged by peephole with a size-shaped `pop ecx` on the last one.
+//   Probed with a two-branch function shaped like this one (7 same-callee
+//   calls then a different one-arg callee, then a mixed run): /O2 defers all
+//   eight into one `add esp, 0x20` and elides nothing else; /O1, /O2 /Os and
+//   /O1 /Oy keep the `pop ecx` but replace the pushes with
+//   `mov dword ptr [esp], imm32` argument-slot reuse, which the image does
+//   NOT have (it pushes every argument); /O2 /Os and /O2 /G6 likewise. No
+//   combination of /O1//O2 /Os//Ot /Ob0 /Oi- /Oy- /G5//G6 in FLAG_SETS or
+//   outside them produces fresh pushes, a partial batched `add esp`, AND a
+//   trailing `pop ecx` - which reads as this translation unit having been
+//   compiled with the stack-pop deferral off, a setting the flag space here
+//   does not model. listing_diff agrees the ONLY two differences in the body
+//   are those cleanups (image 66 instructions, this tree 64); 28/66 is the
+//   byte-shift cost of the two bytes they add, not four divergent
+//   instructions.
+// TRIED: 28/66, 0.954 similar - as close as this gets. Both branches'
+//            call sequences end with the image cleaning the LAST call's
+//            single pushed argument via `pop ecx` (1 byte) rather than
+//            folding it into the preceding `add esp, N` that cleans the
+//            other calls in the run; this body folds all of them into one
+//            `add esp`. Pure VC6 stack-cleanup-size heuristic across a run
+//            of same-shaped `__cdecl` calls, not a source-form lever.
+// size      281 bytes
+// prototype 
+// callers   9   call targets   3
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005A94F0 0x00646950 0x006469F7
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl auto_save() {
+    if (!IsMultiplayerPBEM || IsMultiplayerNet) { // auto-saving disabled for PBEM/HotSeat games
+        if (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN && !(GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR)) {
+            remove("saves\\auto\\Alpha Centauri Autosave 30.SAV");
+            remove("saves\\auto\\Alpha Centauri Autosave 20.SAV");
+            remove("saves\\auto\\Alpha Centauri Autosave 10.SAV");
+            remove("saves\\auto\\Alpha Centauri Autosave 5.SAV");
+            remove("saves\\auto\\Alpha Centauri Autosave 4.SAV");
+            remove("saves\\auto\\Alpha Centauri Autosave 3.SAV");
+            remove("saves\\auto\\Alpha Centauri Autosave 2.SAV");
+        } else { // standard auto saves
+            if (!(GameDataStateStorage.fields_.turn_current_num_ % 10)) {
+                remove("saves\\auto\\Alpha Centauri Autosave 30.SAV");
+                rename("saves\\auto\\Alpha Centauri Autosave 20.SAV",
+                    "saves\\auto\\Alpha Centauri Autosave 30.SAV");
+                rename("saves\\auto\\Alpha Centauri Autosave 10.SAV",
+                    "saves\\auto\\Alpha Centauri Autosave 20.SAV");
+                save_daemon(const_cast<char *>("saves\\auto\\Alpha Centauri Autosave 10"));
+            }
+            remove("saves\\auto\\Alpha Centauri Autosave 5.SAV");
+            rename("saves\\auto\\Alpha Centauri Autosave 4.SAV",
+                "saves\\auto\\Alpha Centauri Autosave 5.SAV");
+            rename("saves\\auto\\Alpha Centauri Autosave 3.SAV",
+                "saves\\auto\\Alpha Centauri Autosave 4.SAV");
+            rename("saves\\auto\\Alpha Centauri Autosave 2.SAV",
+                "saves\\auto\\Alpha Centauri Autosave 3.SAV");
+            rename("saves\\auto\\Alpha Centauri Autosave 1.SAV",
+                "saves\\auto\\Alpha Centauri Autosave 2.SAV");
+        }
+        save_daemon(const_cast<char *>("saves\\auto\\Alpha Centauri Autosave 1"));
+    }
+}
+
+/*
+Purpose: Extended auto-saving regardless of the game type or settings for debug purposes.
+Original Offset: n/a
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl auto_save_debug() {
+    if (GameDataStateStorage.fields_.turn_current_num_ == 1) {
+        remove("saves\\auto\\Alpha Centauri Autosave Turn 1.SAV");
+        save_daemon(const_cast<char *>("saves\\auto\\Alpha Centauri Autosave Turn 1"));
+    }
+    if (!(GameDataStateStorage.fields_.turn_current_num_ % 10)) {
+        remove("saves\\auto\\Alpha Centauri Autosave 500.SAV");
+        char save_path_new[45];
+        char save_path_old[45];
+        for (int i = 0; i < 490; i += 10) {
+            sprintf_s(save_path_old, 45, "saves\\auto\\Alpha Centauri Autosave %d.SAV", 490 - i);
+            sprintf_s(save_path_new, 45, "saves\\auto\\Alpha Centauri Autosave %d.SAV", 500 - i);
+            rename(save_path_old, save_path_new);
+        }
+        save_daemon(const_cast<char *>("saves\\auto\\Alpha Centauri Autosave 10"));
+    }
+    remove("saves\\auto\\Alpha Centauri Autosave 5.SAV");
+    rename("saves\\auto\\Alpha Centauri Autosave 4.SAV",
+        "saves\\auto\\Alpha Centauri Autosave 5.SAV");
+    rename("saves\\auto\\Alpha Centauri Autosave 3.SAV",
+        "saves\\auto\\Alpha Centauri Autosave 4.SAV");
+    rename("saves\\auto\\Alpha Centauri Autosave 2.SAV",
+        "saves\\auto\\Alpha Centauri Autosave 3.SAV");
+    rename("saves\\auto\\Alpha Centauri Autosave 1.SAV",
+        "saves\\auto\\Alpha Centauri Autosave 2.SAV");
+    save_daemon(const_cast<char *>("saves\\auto\\Alpha Centauri Autosave 1"));
+}
+
 
 // HISTORICAL DEFERRED ANALYSIS (retained from prior source; body below supersedes status): confirmed tractable shape, not yet landed - 1983 lines of Ghidra decompilation and 196 conditionals is more than this pass could hand-verify, but the structure is now characterised: Overwhelmingly mechanical: 220 of 256 call sites are __fwrite(60)/__fread(60)/?encrypt_write@@(50)/?encrypt_read@@(50); the other 36 are ?mem_get@@(4)/_memcpy(4)/_free(4)/_abs(4)/ _strcpy(3)/_strlen(2)/?game_io@@(2)/?add@StringStruct@@(2)/ ?map_write@@/?map_read@@/?clear_scenario@@/?clear_monuments@@/ ?clear_bunglist@@/?bit_count@@ (1 each). This is a save/load serializer, field after field. a2 selects the direction: the FIRST call is FUN_0064603f(local_378) when a2!=0 (write: pack current globals into a 0x31C-byte header buffer before writing it) vs FUN_00646178(local_378,0x31C,1,a1) when a2==0 (read: fread that many bytes off `a1` first). Confirmed against the raw disasm's branch on a2 at function entry. The named blockers are ONE gate, not many: `if (local_74 < 0xb)` (local_74 is the version field inside that same 0x31C legacy header) guards roughly 10 raw copy-loops migrating the OLD struct layout into the CURRENT globals (`?9a6490` region) - this is the whole "legacy-struct migration block" and it is READ-ONLY-PATH dead code on any save from version >= 0xb, i.e. every save this binary itself produces. It is real work to transcribe (found 0x2C/0x40/0x16-element copy loops in the first 120 Ghidra lines alone) but it is bounded and separable from the ~220 I/O calls. Frame is 0x374 bytes (from the brief) - count locals against it before landing; a batch of seven diverged only at the prologue over this exact mistake.
 // Complete source-owned serializer body; historical byte and seed obligations remain.
@@ -2964,65 +3234,6 @@ int __cdecl do_unity_crash(int x, int y, int faction_id) {
     return 0;
 }
 
-// ORIGINAL: 0x00588F90 ?alien_start@@YAXXZ 0x00588F90-0x0058917C BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:99d6e72bcd5ae3be3566222736528cb0dc57935c:src/recovered/units/00588f90.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json; preserve original extents and historical seed lessons. Ordinary owned literals have pinned content provenance, not exact original data-allocation claims."], "reason": "Recover first-turn alien faction suppression through real Player filename/rules, lock masks, descending Base/Veh lifetimes and faction records."}
-void __cdecl alien_start() {
-    static const char alien_filename_a[] = "FUNGBOY";
-    static const char alien_filename_b[] = "FUNGBOY";
-
-    if (GameDataStateStorage.fields_.turn_current_num_ != 0 || ExpansionEnabled == 0) {
-        return;
-    }
-
-    const int local_faction = ConsoleGlobal.faction_id_;
-    if ((Players[local_faction].rule_flags & RFLAG_ALIEN) != 0) {
-        return;
-    }
-
-    StringTemp[0] = 0;
-    strcat(StringTemp, Players[local_faction].filename);
-    CharUpperA(StringTemp);
-    if (strcmp(StringTemp, alien_filename_a) == 0) {
-        return;
-    }
-
-    for (int faction_id = 1; faction_id < MaxPlayerNum; ++faction_id) {
-        if (is_human(faction_id) || IsMultiplayerPBEM != 0 ||
-            IsMultiplayerNet != 0) {
-            continue;
-        }
-
-        StringTemp[0] = 0;
-        strcat(StringTemp, Players[faction_id].filename);
-        CharUpperA(StringTemp);
-        if ((Players[faction_id].rule_flags & RFLAG_ALIEN) == 0 &&
-            strcmp(StringTemp, alien_filename_b) != 0) {
-            continue;
-        }
-
-        GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &= ~(1 << faction_id);
-        GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &= ~(1 << faction_id);
-
-        for (int base_id = GameDataStateStorage.fields_.base_current_count_ - 1; base_id >= 0; --base_id) {
-            if (Bases[base_id].faction_id_current == faction_id) {
-                base_kill(base_id);
-            }
-        }
-
-        // veh_kill compacts the vehicle table; the original checks the live
-        // count before dereferencing each descending id.
-        for (int veh_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1; veh_id >= 0; --veh_id) {
-            if (veh_id < GameDataStateStorage.fields_.vehicle_current_count_ &&
-                Vehs[veh_id].faction_id == faction_id) {
-                veh_kill(veh_id);
-            }
-        }
-
-        PlayersData[faction_id].current_num_bases = 0;
-        PlayersData[faction_id].flags = 0xFFFFFFFFU;
-        PlayersData[faction_id].diff_level = -1;
-    }
-}
 
 // ORIGINAL: 0x00444D90 ?diplo@@YAXHH@Z 0x00444D90-0x00444DA7 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:f178e8db:src/recovered/00444d90.cpp complete original identity/spans and historical claims/findings.", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x444d90 full native body review.", "source:src/game.cpp existing real state owners; no executable-address alias or synthetic receiver."], "reason": "Recover the complete short helper through established source-owned diplomacy, vehicle, text or window state; preserve signed sentinel behavior, original receiver/argument order and conditional callbacks."}

@@ -291,3 +291,42 @@ int MCIVideo::status() {
 int MCIVideo::is_playing() {
     return static_cast<int>(field_0_ & 1U);
 }
+
+
+// RECOVERY_IMPORT: v1 __imp__GetDC@4 USER32.dll name:GetDC
+// RECOVERY_IMPORT: v1 __imp__ReleaseDC@8 USER32.dll name:ReleaseDC
+// ---------------------------------------------------------------------------
+// THE MOVIE FRAME BLIT (0x00600330), homed 2026-09-06.
+//
+// An MCIVideo member, not a Win one: the receiver's +8 is the GetDC/ReleaseDC
+// window and its +0x46C..+0x478 are the four BitBlt destination arguments,
+// which is MCIVideo's field run (alphamovie.h), not Win's (sizeof(Win) is
+// 0x444, short of every offset here). get_hdc/release_hdc ARE Win's - they are
+// static, so any member can call them.
+// ---------------------------------------------------------------------------
+
+// ORIGINAL: 0x00600330 sub_600330 0x00600330-0x00600393 BYTE_EXACT
+// symbol    ?blit_frame@MCIVideo@@QAEXXZ
+// LEVER: the owner is the field run, not the catalogue - the image's span
+//        0x00600320 (is_playing) is the byte before it and MCIVideo is the
+//        only class in the tree whose fields reach 0x478.
+void MCIVideo::blit_frame() {
+    if (target_window_ == 0) {
+        return;
+    }
+
+    HDC hdc = GetDC(window_handle_);
+    if (hdc == nullptr) {
+        return;
+    }
+
+    // The image pushes the eight BitBlt arguments first, calls get_hdc in the
+    // middle of them and pushes its return as BitBlt's own first argument - a
+    // static call with no arguments of its own, wedged into the argument
+    // build. Spelled as the nested call it is.
+    BitBlt(Win::get_hdc(), blit_x_, blit_y_, blit_width_, blit_height_, hdc, 0,
+           0, SRCCOPY);
+
+    Win::release_hdc();
+    ReleaseDC(window_handle_, hdc);
+}

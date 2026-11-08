@@ -85,44 +85,6 @@ Sprite *ScrollDefaultBackground;  // 0x009B8E20
 // single-record spellings; the induction "wall" they record was the record
 // itself. Separate globals made 0x006051D0 and 0x00605370 BYTE_EXACT.
 
-// The original setters populate the same twelve sprite slots in four
-// triplets. These are source-owned sprite pointers, not addresses in the old
-// executable. Index 14 is an untouched gap; index 16 is another process
-// default that neither setter changes.
-static __forceinline void set_scroll_icon_defaults(Sprite *arrows,
-                                                    Sprite *filler,
-                                                    int thickness) {
-    ScrollDefaultSpriteUp[0] = &arrows[0];
-    ScrollDefaultSpriteUp[1] = &arrows[1];
-    ScrollDefaultSpriteUp[2] = &arrows[2];
-    ScrollDefaultSpriteDown[0] = &arrows[3];
-    ScrollDefaultSpriteDown[1] = &arrows[4];
-    ScrollDefaultSpriteDown[2] = &arrows[5];
-    ScrollDefaultSpriteLeft[0] = &arrows[6];
-    ScrollDefaultSpriteLeft[1] = &arrows[7];
-    ScrollDefaultSpriteLeft[2] = &arrows[8];
-    ScrollDefaultSpriteRight[0] = &arrows[9];
-    ScrollDefaultSpriteRight[1] = &arrows[10];
-    ScrollDefaultSpriteRight[2] = &arrows[11];
-    ScrollDefaultThumb = filler;
-    ScrollDefaultThickness = thickness;
-}
-
-// ORIGINAL: 0x00588340 ?scroll_normal@@YAXXZ 0x00588340-0x005883CD BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence":["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00588340.cpp","source:src/sprite.cpp","source:src/scroll.cpp:ScrollCloseDynamicDefaults"],"reason":"Populate the source-owned Scroll defaults from the normal-sized sprite objects and restore the normal thickness; retain the exact historical seed as a restoration obligation."}
-// LEVER: plain sequential stores of the scaffold's own fixed-address globals (`*g_dst = (int)g_src;`) - no address arithmetic here, so the `static T *const` spelling is exactly right, no `extern` rebind needed.
-void __cdecl scroll_normal() {
-    set_scroll_icon_defaults(g_SCROLL_BAR_ARROW_ICON_SPRITES,
-                             &g_SCROLL_BAR_FILLER_ICON_SPRITES, 20);
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005883D0 ?scroll_small@@YAXXZ 0x005883D0-0x0058845D BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence":["source:src/unrecovered/005883d0.cpp","source:src/sprite.cpp","source:src/scroll.cpp:ScrollCloseDynamicDefaults"],"reason":"Populate the same source-owned Scroll defaults from the small sprite objects and restore the small thickness; no fixed executable sprite addresses remain in this body."}
-void __cdecl scroll_small() {
-    set_scroll_icon_defaults(g_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES,
-                             &g_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE, 12);
-}
 
 namespace {
 

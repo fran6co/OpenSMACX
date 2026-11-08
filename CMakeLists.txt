@@ -153,7 +153,6 @@ set(OPENSMACX_SOURCES
     src/console_menu_policy.cpp
     src/alpha.cpp
     src/alphasave.cpp
-    src/factionprofilewin.cpp
     src/main.cpp
     src/multiwin.cpp
     src/matrix3.cpp
@@ -197,6 +196,9 @@ set(OPENSMACX_SOURCES
     src/application_math.cpp
     src/application_text.cpp
     src/general.cpp
+    src/filefind.cpp
+    src/parse.cpp
+    src/trig.cpp
     src/danger.cpp
     src/directdraw.cpp
     src/number_parsing.cpp
@@ -530,7 +532,6 @@ set_source_files_properties(
 # Preserve measured frame-based accesses in the core application cohort.
 # Mixed or non-improving owners retain their measured default recipes.
 set_source_files_properties(
-    src/factionprofilewin.cpp
     src/interlude.cpp
     src/netmsg.cpp
     src/playerlock.cpp
@@ -636,6 +637,9 @@ set_property(SOURCE
     src/designwin.cpp
     src/diplowin.cpp
     src/general.cpp
+    src/filefind.cpp
+    src/parse.cpp
+    src/trig.cpp
     src/infowin.cpp
     src/menu.cpp
     src/messagewin.cpp

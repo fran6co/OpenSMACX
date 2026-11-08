@@ -3238,6 +3238,56 @@ extern "C" void __fastcall sub_5d3f50(MediaRuntime *runtime) {
 }
 
 
+// Historical TRIED (2026-09-06): the first general.cpp trial failed
+// at link because the CRT did not resolve _enable; the old note also
+// recorded that dos.h treated _disable/_enable as calls and VC6 had no
+// intrin.h declaration. Retained finding: this body requires a pragma
+// intrinsic, not the header's callable fallback. The explicit pragma
+// above selects the compiler's instruction lowering instead of CRT calls.
+// Original pushad/popad restores volatile caller registers too; ordinary
+// C++ does not promise that stronger behavior. The conversion and I/O order
+// have a C++ owner; native exactness and extra register preservation stay open.
+// ORIGINAL: 0x005D4240 sub_5d4240 0x005D4240-0x005D427C BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x005D4240-0x005D427C: complete60-byte listing performs cli, selects DAC index0, writes256 RGB triplets from four-byte-spaced input, then sti", "build/recovery/palette-intrinsic-control-oct6.cpp: VC6 pragma intrinsic control has no unresolved helpers and emits physical cli/out/sti; it does not execute privileged I/O", "src/general.h: existing free __cdecl sub_5d4240(unsigned char*) declaration; source preserves that ABI rather than fabricating a Palette receiver or caller", "src/general.cpp: existing DOS/conio includes were specifically retained for this hardware routine"], "reason": "Own the original VGA DAC operation in the existing general hardware-helper TU. Preserve index selection, 256 four-byte-stride RGB conversions, output order and interrupt enable; retain the original full span/history while explicitly leaving pushad/popad volatile-register restoration as a native exactness obligation. No hardware port access is run by the host control."}
+// symbol    ?sub_5d4240@@YAXPAE@Z
+// Hand-written assembly routine: pushad/cli/out to the VGA DAC/sti/popad/leave.
+__declspec(naked) void __cdecl sub_5d4240(unsigned char *palette_rgb) {
+    __asm {
+        push ebp
+        mov ebp, esp
+        push esi
+        push edi
+        pushad
+        cli
+        mov ebx, [ebp + 8]
+        xor eax, eax
+        mov edx, 0x3c8
+        out dx, al
+        mov edx, 0x3c9
+        mov ecx, 0x100
+    dac_loop:
+        mov al, [ebx]
+        shr al, 2
+        out dx, al
+        mov al, [ebx + 1]
+        shr al, 2
+        out dx, al
+        mov al, [ebx + 2]
+        shr al, 2
+        out dx, al
+        add ebx, 4
+        dec ecx
+        jne dac_loop
+        sti
+        popad
+        pop edi
+        pop esi
+        leave
+        ret
+    }
+}
+
+
 // ORIGINAL: 0x005D427C sub_5d427c 0x005D427C-0x005D439F BYTE_EXACT
 // symbol    _sub_5d427c
 // TRIED: entry uses pushal/popal (all eight registers saved and restored) around the whole body with cld and only rep movsb/ rep movsd inside, which VC6 never emits for ordinary compiled C++ - this is very likely inline assembly in the original source, which the rules here bar reproducing. Transcribed Ghidra's decompilation (already a faithful read of the byte stream) into plain C++ instead: a byte-oriented decoder that walks a control word one bit at a time, alternating literal dword/byte copies from the source with back-reference copies from already-written output, matching an LZ-style unpacker. No `__asm`; this compiles but will not reach the original's register-saving shape.
