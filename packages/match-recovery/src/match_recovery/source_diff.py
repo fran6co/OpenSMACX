@@ -14,7 +14,8 @@ from .measurement import Measurement
 from .model import Span
 from .pe_coff import Coff, PeImage
 from .source import Mode, State
-from .source.asm import compare_unit, shared_spans
+from .source.asm import AsmComparison, compare_unit, shared_spans
+from .source.model import Tier
 from .source.eh_regions import bind_eh_regions
 from .source_inventory import image_pin, source_snapshot
 from .source_selection import (compilation_context, measurement_reference_targets, select_records,
@@ -117,13 +118,31 @@ def _generate(root, target, *, image, in_file, output, flag_set):
             raise ValueError("compiler source anchors lie outside the selected source file")
         spans = tuple(record.image_spans)
         regions = []
+        region_notes = []
         if len(spans) == 2:
-            pairs = bind_eh_regions(raw, symbol, original, spans)
-            for pair in pairs:
-                regions.append({"role": pair.role.value, "original_start": pair.original.start,
-                                "original": _instructions(original.read(pair.original), pair.original.start),
-                                "compiled": _instructions(pair.code, 0, pair.relocations, obj,
-                                                          lines if pair.role.value == "root" else None)})
+            try:
+                pairs = bind_eh_regions(raw, symbol, original, spans)
+            except ValueError as error:
+                # Diagnostic view only: show each compiled code section in
+                # order against each original span without EH binding proof.
+                region_notes.append("EH regions not bound (" + str(error)
+                                    + "); regions are paired in order for display only")
+                pairs = None
+            if pairs is not None:
+                for pair in pairs:
+                    regions.append({"role": pair.role.value, "original_start": pair.original.start,
+                                    "original": _instructions(original.read(pair.original), pair.original.start),
+                                    "compiled": _instructions(pair.code, 0, pair.relocations, obj,
+                                                              lines if pair.role.value == "root" else None)})
+            else:
+                for index, (number, low_high) in enumerate(zip(obj.code_sections(function), spans)):
+                    span = Span(*low_high)
+                    section_code, section_relocations, _ = obj.section_subject(number)
+                    regions.append({"role": "root" if index == 0 else "unbound cold region",
+                                    "original_start": span.start,
+                                    "original": _instructions(original.read(span), span.start),
+                                    "compiled": _instructions(section_code, 0, section_relocations, obj,
+                                                              lines if index == 0 else None)})
         elif len(spans) == 1:
             span = Span(*spans[0])
             regions.append({"role": "root", "original_start": span.start,
@@ -131,21 +150,46 @@ def _generate(root, target, *, image, in_file, output, flag_set):
                             "compiled": _instructions(code, 0, relocations, obj, lines)})
         else:
             raise ValueError("diff does not support this mapping's span layout")
+        invocations = 2
+
         def observed(path, arguments, trial):
-            if path != unit or arguments or trial != flags:
-                raise ValueError("unobserved comparison recipe")
-            return raw
+            # Reuse the listed object for its own recipe. The strict
+            # associated verifier also compiles evidence dependencies and
+            # layout-flag variants (other units, extra trial tokens); those
+            # are fresh compiles, not a reason to refuse the comparison.
+            nonlocal invocations
+            if Path(path).resolve() == unit.resolve() and not arguments and tuple(trial) == tuple(flags):
+                return raw
+            invocations += 1
+            return compiler(path, arguments, trial)
         measured = compare_unit([record], image, unit, (), (flags,), shared_spans(mappings),
                                 compiler=observed, root=root, strict_command_for=lambda _: (),
-                                targets=measurement_reference_targets(root, settings))
+                                targets=measurement_reference_targets(root, settings),
+                                diagnostics=True)
         comparison = measured.results[0][1]
         if isinstance(comparison, str):
-            raise ValueError(comparison)
+            comparison = AsmComparison(verdict=Tier.REFUSED, diagnostic=comparison,
+                                       diagnostic_comparison={
+                                           "authoritative": False, "claimable": False,
+                                           "available": False,
+                                           "reason": "comparison unresolved: " + comparison})
+        diagnostic = comparison.diagnostic_comparison
+        notice = f"Strict verdict: {comparison.verdict}"
+        if comparison.diagnostic:
+            notice += f" ({comparison.diagnostic})"
+        if diagnostic and diagnostic.get("available"):
+            notice += (f" • DIAGNOSTIC ONLY, not claimable: masked {diagnostic['masked_verdict']}, "
+                       f"similarity {diagnostic['similarity']:.3f}, "
+                       f"{diagnostic['matching_instructions']}/{diagnostic['original_instructions']} "
+                       f"original instructions positionally equal")
+        if region_notes:
+            notice += " • " + "; ".join(region_notes)
         source_numbers = [n for n in lines.values() if n is not None]
         first, last = min(source_numbers), max(source_numbers)
         payload = {"title": symbol, "source_path": source_path.relative_to(root).as_posix(),
                    "source_lines": [{"number": n, "text": text} for n, text in enumerate(source_text.splitlines(), 1)
-                                    if first <= n <= last], "regions": regions}
+                                    if first <= n <= last], "regions": regions,
+                   "notice": notice}
         document = render_diff(payload)
         if (settings.snapshot(root, {"operation": "diff", "target": target}) != before
                 or config_path.read_bytes() != config_bytes or image.read_bytes() != original_bytes
@@ -156,11 +200,16 @@ def _generate(root, target, *, image, in_file, output, flag_set):
         temporary.replace(output)
     return {"operation": "diff", "result": "pass", "output": str(output),
             "source_sha256": sha256(source_text.encode()).hexdigest(), "image_sha256": pin,
-            "compiler_invocations": 2, "flags": list(flags), "comparison": asdict(comparison),
+            "compiler_invocations": invocations, "flags": list(flags), "comparison": asdict(comparison),
+            "strict_verdict": str(comparison.verdict),
+            **({"diagnostic_similarity": diagnostic["similarity"]}
+               if diagnostic and diagnostic.get("available") else {}),
+            "region_notes": region_notes,
             "source_path": source_path.relative_to(root).as_posix(),
             "declared_body_path": record.body or None,
             "body_attribution": "not_checked_diagnostic_only",
             "limitations": ["Diagnostic view, not reference, structure, linked preservation or game acceptance.",
+                            "comparison.diagnostic_comparison/diagnostic_similarity are non-authoritative and never claimable; the strict verdict stands.",
                             "Source attribution is compiler-reported and may move under optimization.",
                             "Captured source quotes can describe inlined code; this viewer does not qualify the declared body binding.",
                             "Refresh this command after editing; original source lines are unknown."]}

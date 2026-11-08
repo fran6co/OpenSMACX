@@ -36,7 +36,8 @@ def _unit(job):
     return compare_unit(records, image, path, (), flags, shared,
                         compiler=Compiler(root, profile=profile),
                         fragment_pairs=fragment_pairs, root=root,
-                        strict_command_for=lambda _path: (), targets=targets)
+                        strict_command_for=lambda _path: (), targets=targets,
+                        diagnostics=True)
 
 
 def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1, linked_current=False):
@@ -185,6 +186,11 @@ def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1, li
             row.update(result="unknown", verdict="UNRESOLVED", diagnostic=value)
         elif isinstance(value, AsmComparison):
             row.update(asdict(value))
+            if row.get("diagnostic_comparison") is None:
+                row.pop("diagnostic_comparison", None)
+            elif row["diagnostic_comparison"].get("available"):
+                # Beside, never instead of, the strict verdict.
+                row["diagnostic_similarity"] = row["diagnostic_comparison"]["similarity"]
             row["result"] = ("pass" if value.verdict == Tier.BYTE_EXACT else
                              "unknown" if value.verdict in (Tier.NO_COMPILE, Tier.REFUSED, Tier.SHARED_TAIL) else "fail")
         else:
@@ -237,6 +243,7 @@ def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1, li
             "reused_attempts": sum(unit.reused_attempts for unit in units), "input_fingerprint": digest(before),
             "limitations": ["selected current spellings only; no source claims are banked, demoted or reverted",
                             "masked-byte comparison is not strict reference, structure, preservation, build/link or runtime proof",
+                            "diagnostic_comparison/diagnostic_similarity on refused or strictly failed rows are non-authoritative and never claimable",
                             "missing recipes remain unavailable; compiler interaction owns any explicitly configured seed policy",
                             "use task variants for private candidate decks with scope and damage controls"]}
     if linked_current:

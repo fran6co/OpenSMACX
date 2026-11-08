@@ -1033,6 +1033,12 @@ class AsmComparison:
                                           # `code`, relocations discounted
     diagnostic: str = ""            # compiler, refusal or comparison context
     flags: str = ""                 # the flag set that produced `compiled`
+    # NON-AUTHORITATIVE. Only set on a REFUSED/unscored (or strictly failed
+    # associated) verdict when the caller asked for diagnostics: a legacy
+    # relocation-masked comparison of whatever compiled body and original
+    # span(s) could be obtained. It never changes `verdict`, is never
+    # claimable, and recording never requests it. See `diagnostic_comparison`.
+    diagnostic_comparison: dict | None = None
 
 
 def _discounted(instruction, mask: frozenset[int], base: int) -> bytes:
@@ -1198,8 +1204,12 @@ def compare_asm(original: Listing, compiled: Listing) -> AsmComparison:
 
     # DECODED FROM THE BYTES, not parsed back out of the rendering: the
     # sequences are a fact about the code, and the text is a view of it.
+    # NO AUTOJUNK: difflib's default heuristic discards every element that
+    # is more than 1% of a 200+ item sequence - `mov`, `push`, `call` - so a
+    # large body scored near zero however close it was (0x004986D0: 0.07
+    # with the heuristic, 0.79 without, on the same listings).
     similarity = difflib.SequenceMatcher(
-        None, original.mnemonics, compiled.mnemonics).ratio()
+        None, original.mnemonics, compiled.mnemonics, autojunk=False).ratio()
 
     # THE TAIL IS PART OF THE ANSWER. A body whose instructions all agree
     # and whose jump table does not has not reproduced the function.
@@ -1660,6 +1670,146 @@ def compare_record(record: DecompilationState, exe: Path | str,
                           compiler=compiler, retry_compile=retry_compile, targets=targets)
 
 
+DIAGNOSTIC_BASIS = (
+    "non-authoritative relocation-masked comparison of the compiled body against "
+    "the original span(s); the strict verdict and its refusal stand, nothing here "
+    "is claimable, and references, associated data, EH metadata and extents are "
+    "not verified")
+
+
+def diagnostic_payload(comparison: AsmComparison, *, basis: str = DIAGNOSTIC_BASIS,
+                       regions: int = 1, notes: tuple[str, ...] = ()) -> dict:
+    """The JSON shape of a diagnostic-only comparison; never a verdict."""
+    return {
+        "authoritative": False, "claimable": False, "basis": basis,
+        "masked_verdict": str(comparison.verdict),
+        "similarity": comparison.mnemonic_similarity,
+        "original_instructions": comparison.original_instructions,
+        "compiled_instructions": comparison.compiled_instructions,
+        "matching_instructions": comparison.matching_instructions,
+        "first_divergence": comparison.first_divergence,
+        "context": comparison.context,
+        "compared_bytes": comparison.compared_bytes,
+        "masked_bytes": comparison.masked_bytes,
+        "data_bytes": comparison.data_bytes,
+        "data_divergence": comparison.data_divergence,
+        "differing_constants": comparison.differing_constants,
+        "regions": regions, "flags": comparison.flags,
+        "notes": [*notes, *([comparison.diagnostic] if comparison.diagnostic else [])],
+    }
+
+
+def _combine_diagnostic_regions(results: list[AsmComparison]) -> AsmComparison:
+    weights = [max(row.original_instructions, row.compiled_instructions, 1) for row in results]
+    rank = {tier: index for index, tier in enumerate((Tier.BYTE_EXACT, Tier.SHAPE_EXACT,
+                                                     Tier.MNEMONIC_ONLY, Tier.MISMATCH))}
+    failed = next((index for index, row in enumerate(results) if row.verdict != Tier.BYTE_EXACT), None)
+    offset = sum(row.original_instructions for row in results[:failed]) if failed is not None else 0
+    first = results[failed] if failed is not None else None
+    return AsmComparison(
+        verdict=max((row.verdict for row in results), key=lambda tier: rank.get(tier, len(rank))),
+        compared_bytes=sum(row.compared_bytes for row in results),
+        masked_bytes=sum(row.masked_bytes for row in results),
+        original_instructions=sum(row.original_instructions for row in results),
+        compiled_instructions=sum(row.compiled_instructions for row in results),
+        matching_instructions=sum(row.matching_instructions for row in results),
+        mnemonic_similarity=sum(row.mnemonic_similarity * weight
+                                for row, weight in zip(results, weights)) / sum(weights),
+        first_divergence=(offset + first.first_divergence
+                          if first is not None and first.first_divergence is not None else None),
+        context=first.context if first is not None else ([], []),
+        data_bytes=sum(row.data_bytes for row in results),
+        allocation_only="", flags=results[0].flags)
+
+
+def _diagnostic_listings(obj: bytes, record: DecompilationState, exe: Path,
+                         label: str) -> tuple[list[tuple[Listing, Listing]], tuple[str, ...]]:
+    """Best-effort (original, compiled) region pairs; no EH/extent proof."""
+    spans = sorted(record.image_spans)
+    if not spans:
+        raise ValueError("the record carries no original spans")
+    if len(spans) == 1:
+        compiled = subject_asm(obj, record, label)
+        original = original_asm(record, exe)
+        if len(compiled.code) > len(original.code):
+            try:
+                original = original_asm(record, exe, extent=len(compiled.code))
+            except ValueError:
+                pass
+        return [(original, compiled)], ()
+    parsed = Coff(obj)
+    wanted = record.symbol or record.name
+    try:
+        root = parsed.function(wanted)
+    except ValueError:
+        if record.symbol:
+            raise
+        root = parsed.function("_" + record.name)
+    sections = parsed.code_sections(root)
+    notes = []
+    if len(sections) != len(spans):
+        notes.append(f"compiled code sections ({len(sections)}) and original spans ({len(spans)}) "
+                     "differ in number; only paired regions in order are compared")
+    pairs = []
+    for (low, high), number in zip(spans, sections):
+        code, relocations, _alignment = parsed.section_subject(number)
+        mask = frozenset(item.offset + byte for item in relocations for byte in range(4)
+                         if item.offset + byte < len(code))
+        compiled = Listing(code=code, base=low, mask=mask, flags=label)
+        end = len(compiled.code)
+        while end > 0 and compiled.code[end - 1] in (0x90, 0xCC):
+            end -= 1
+        compiled = replace(compiled, code=compiled.code[:end],
+                           mask=frozenset(item for item in mask if item < end))
+        image_code = _pe_bytes(exe, low, high - low)
+        cut = len(image_code)
+        while cut > 0 and image_code[cut - 1] in (0x90, 0xCC):
+            cut -= 1
+        original = Listing(code=image_code[:cut], base=low, mask=_image_mask(exe, low, low + cut))
+        pairs.append((original, compiled))
+    return pairs, tuple(notes)
+
+
+def diagnostic_comparison(record: DecompilationState, exe: Path | str, source: Path | str,
+                          command, attempts, *, compiler) -> dict:
+    """Best-of-trials masked comparison for a record the strict path refused.
+
+    DIAGNOSTIC ONLY. A refusal says the claim cannot be decided; it does not
+    say how close the body is, and a recovery loop that sees only REFUSED has
+    nothing to work toward. This reuses the legacy masked comparer on the
+    compiled COMDAT(s) and the original span(s) without any of the strict
+    preconditions (association cells, EH action graphs, FPO extents,
+    CodeView labels). The result is reported beside, never instead of, the
+    strict verdict.
+    """
+    exe = Path(exe)
+    best, best_notes, best_regions, errors = None, (), 1, []
+    for attempt in attempts:
+        if isinstance(attempt, str):
+            arguments, label = tuple(shlex.split(attempt)), attempt
+        else:
+            arguments = tuple(attempt)
+            label = shlex.join(arguments)
+        try:
+            obj = compiler(Path(source), tuple(command), arguments)
+            pairs, notes = _diagnostic_listings(obj, record, exe, label)
+            if not pairs:
+                raise ValueError("no compiled region pairs with an original span")
+            results = [compare_asm(original, compiled) for original, compiled in pairs]
+            result = results[0] if len(results) == 1 else _combine_diagnostic_regions(results)
+        except (OSError, ValueError, CompileFailed, struct.error) as error:
+            errors.append(str(error))
+            continue
+        if best is None or _better(result, best):
+            best, best_notes, best_regions = result, notes, len(pairs)
+        if best.verdict is Tier.BYTE_EXACT:
+            break
+    if best is None:
+        return {"authoritative": False, "claimable": False, "available": False,
+                "reason": errors[0] if errors else "no compiler trial produced a comparable body"}
+    return {"available": True, **diagnostic_payload(best, regions=best_regions, notes=best_notes)}
+
+
 @dataclass(frozen=True)
 class UnitComparison:
     """Disposable measurements in selection order; never source claims.
@@ -1677,7 +1827,8 @@ def compare_unit(records, exe: Path | str, source: Path | str,
                  shared: frozenset = frozenset(), *, compiler,
                  retry_compile=None, fragment_pairs=(), root: Path | None = None,
                  strict_command_for=None, associated_bindings=None,
-                 targets: ReferenceTargets | None = None) -> UnitComparison:
+                 targets: ReferenceTargets | None = None,
+                 diagnostics: bool = False) -> UnitComparison:
     """Measure one TU's selected mappings with one compile per flag trial.
 
     Use the same per-function selection, span refusals, missing-symbol retries
@@ -1686,6 +1837,10 @@ def compare_unit(records, exe: Path | str, source: Path | str,
     discards measured siblings. The caller owns whole-project input freshness
     and publication; this function also refuses changed candidate/marker files.
     No objects, scores or failures are cached across calls.
+
+    `diagnostics=True` (measure/diff only, never recording) attaches a
+    non-authoritative `diagnostic_comparison` to refused, unscored or
+    strictly failed associated results; verdicts are unchanged.
     """
     records = tuple(records)
     if not records:
@@ -1999,7 +2154,13 @@ def compare_unit(records, exe: Path | str, source: Path | str,
                     child_result = AsmComparison(
                         verdict=Tier.REFUSED,
                         diagnostic="fragment slice is not claimable until the complete parent extent matches",
-                        flags=label)
+                        flags=label,
+                        diagnostic_comparison=(diagnostic_payload(
+                            child_result, regions=1,
+                            notes=("fragment slice compared within the compiled parent COMDAT; "
+                                   f"parent masked verdict {parent_result.verdict}, "
+                                   f"similarity {parent_result.mnemonic_similarity:.3f}",))
+                            if diagnostics else None))
                 if best_parent is None or _better(parent_result, best_parent):
                     best_parent, best_child = parent_result, child_result
                 if parent_result.verdict is Tier.BYTE_EXACT:
@@ -2038,6 +2199,14 @@ def compare_unit(records, exe: Path | str, source: Path | str,
                                         targets=targets)
             except (OSError, ValueError) as error:
                 result = str(error)
+        if (diagnostics and isinstance(result, AsmComparison)
+                and result.diagnostic_comparison is None
+                and record.function_fragment is None and record.mode is not Mode.UNBOUND
+                and (result.verdict in (Tier.REFUSED, Tier.SHARED_TAIL)
+                     or (record_key in associated_results
+                         and result.verdict is not Tier.BYTE_EXACT))):
+            result = replace(result, diagnostic_comparison=diagnostic_comparison(
+                record, exe, source, command, attempts, compiler=shared_compile))
         results.append((record, result))
     current()
     return UnitComparison(tuple(results), count, reused)

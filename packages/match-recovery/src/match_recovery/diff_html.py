@@ -54,7 +54,7 @@ def render_diff(payload: dict[str, Any]) -> str:
     """Return offline HTML for source-linked original/compiled instruction regions.
 
     ``payload`` has ``title``, ``source_path``, ``source_lines`` (rows with
-    ``number`` and ``text``), and ``regions``. Each region has ``role``,
+    ``number`` and ``text``), optional ``notice`` text, and ``regions``. Each region has ``role``,
     ``original_start``, ``original`` and ``compiled`` instruction arrays.
     Instruction rows carry ``offset``, optional ``address``, ``bytes``,
     ``mnemonic``, ``operands``, ``relocations`` and optional ``source_line``.
@@ -71,6 +71,7 @@ def render_diff(payload: dict[str, Any]) -> str:
         "title": title,
         "source_path": source_path,
         "source_lines": source_lines,
+        "notice": str(payload.get("notice", "")),
         "regions": [
             {
                 "role": str(region.get("role", "region")),
@@ -87,14 +88,14 @@ def render_diff(payload: dict[str, Any]) -> str:
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>__TITLE__</title><style>
 :root{color-scheme:dark;--bg:#10151d;--panel:#171f2a;--line:#293545;--fg:#e5edf7;--muted:#9aabc0;--accent:#77c7ff}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 system-ui,sans-serif}header{position:sticky;top:0;z-index:5;background:#111923f2;border-bottom:1px solid var(--line);padding:12px 18px}h1{font-size:18px;margin:0 0 6px}.meta{color:var(--muted);font-size:12px;overflow-wrap:anywhere}.toolbar{display:flex;gap:8px;align-items:center;margin-top:9px;flex-wrap:wrap}button{background:#243346;color:var(--fg);border:1px solid #42546a;border-radius:6px;padding:6px 10px;cursor:pointer}button:hover,button.on{border-color:var(--accent);color:var(--accent)}#status{color:var(--muted);margin-left:auto}main{padding:14px;display:grid;grid-template-columns:minmax(300px,35%) minmax(0,65%);gap:14px;height:calc(100vh - 130px)}section{background:var(--panel);border:1px solid var(--line);border-radius:9px;min-width:0;overflow:hidden;display:flex;flex-direction:column}.pane-title{padding:9px 12px;border-bottom:1px solid var(--line);font-weight:650}.scroll{overflow:auto;min-height:0;flex:1}.notice{color:#ffd27b;font-size:12px;padding:8px 12px;border-bottom:1px solid var(--line)}.source{margin:0;padding:8px 0;font:12px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre}.source-line{display:block;padding:0 10px;cursor:pointer}.source-line:hover,.source-line.sel{background:#253a4e}.ln{display:inline-block;width:50px;color:#71859c;user-select:none}.region-label{padding:8px 10px;background:#202b39;color:var(--accent);font-size:12px;font-weight:700;border-block:1px solid var(--line)}.asm-head,.diff-row{display:grid;grid-template-columns:1fr 1fr}.asm-head{background:#131a23;position:sticky;top:0;z-index:2;border-bottom:1px solid var(--line)}.asm-head div{padding:8px 10px;font-weight:650}.asm-head div+div,.cell+.cell{border-left:1px solid #263342}.diff-row{border-bottom:1px solid #202c39;min-height:31px}.cell{min-width:0;padding:4px 8px;font:11px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere;cursor:pointer}.cell.empty{background:#121820;cursor:default}.addr{color:#a5b5c9}.bytes{color:#72859b}.ins{color:#e0e8f1}.reloc{color:#9dcfff;display:block}.src-ref{color:#9be2b3;display:block;font-size:10px}.diff-row.same{opacity:.65}.diff-row.operand{background:#332b1b}.diff-row.added .right{background:#163222}.diff-row.removed .left{background:#351d24}.diff-row.sel{outline:1px solid var(--accent);outline-offset:-1px}.diff-row.filtered{display:none}@media(max-width:900px){main{grid-template-columns:1fr;height:auto}.scroll{max-height:55vh}}
-</style></head><body><header><h1 id="heading">__TITLE__</h1><div id="source-path" class="meta"></div><div class="toolbar"><button id="prev">← Previous difference</button><button id="next">Next difference →</button><button id="changes">Changes only</button><button id="cold">Show cold regions</button><span id="status"></span></div></header>
+</style></head><body><header><h1 id="heading">__TITLE__</h1><div id="source-path" class="meta"></div><div id="verdict" class="meta"></div><div class="toolbar"><button id="prev">← Previous difference</button><button id="next">Next difference →</button><button id="changes">Changes only</button><button id="cold">Show cold regions</button><span id="status"></span></div></header>
 <main><section><div class="pane-title">Source</div><div class="notice">Source highlights follow supplied compiler listing anchors. Alignment is heuristic navigation only; all instructions remain available.</div><div id="source-pane" class="scroll"><pre id="source" class="source"></pre></div></section><section><div class="pane-title">Instruction comparison <span class="meta">• original address / compiled address or section offset</span></div><div class="asm-head"><div>Original</div><div>Compiled</div></div><div id="assembly" class="scroll"></div></section></main>
 <script>
 const D=__DATA__;
 const $=id=>document.getElementById(id);
 const hex=n=>{if(n===null||n===undefined)return "—";let v=Number(n);return Number.isFinite(v)?"0x"+v.toString(16).toUpperCase():String(n)};
 const text=(tag,value,cls)=>{let n=document.createElement(tag);if(cls)n.className=cls;n.textContent=value===null||value===undefined?"":String(value);return n};
-$("heading").textContent=D.title;$("source-path").textContent=D.source_path;
+$("heading").textContent=D.title;$("source-path").textContent=D.source_path;$("verdict").textContent=D.notice;
 for(const line of D.source_lines){let node=document.createElement("span");node.className="source-line";node.dataset.line=String(line.number);node.append(text("span",line.number,"ln"));node.append(document.createTextNode(String(line.text)));node.addEventListener("click",()=>selectLine(line.number));$("source").append(node)}
 function cell(instr,side){let box=document.createElement("div");box.className="cell "+side;if(!instr){box.classList.add("empty");return box}let mapped=side==="right"&&instr.source_line!==null&&instr.source_line!==undefined;box.dataset.line=mapped?String(instr.source_line):"";let coord=side==="left"?(instr.address??instr.offset):instr.offset;box.append(text("span",hex(coord),"addr"),document.createTextNode(" "),text("span",instr.bytes,"bytes"),document.createTextNode(" "),text("span",[instr.mnemonic,instr.operands].filter(Boolean).join(" "),"ins"));if(mapped)box.append(text("span","C++:"+instr.source_line,"src-ref"));for(const relocation of instr.relocations||[])box.append(text("span","↳ relocation → "+relocation,"reloc"));return box}
 const regionNodes=[];let sequence=0;
