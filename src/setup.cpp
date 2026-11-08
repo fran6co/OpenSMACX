@@ -1740,12 +1740,13 @@ int __cdecl eliminate_player(int faction, int conqueror) {
     parse_says(4, get_his_her(faction, 0), -1, -1);
     StringTemp[0] = '\0';
     strcat(StringTemp, "WIPEOUT");
-    char number[80];
     if (!successor) {
+        char number[80];
         _itoa(2, number, 10);
         strcat(StringTemp, number);
     } else {
         if (successor == ConsoleGlobal.faction_id_) strcat(StringTemp, "YOU");
+        char number[80];
         _itoa(restored != 0, number, 10);
         strcat(StringTemp, number);
     }
@@ -1833,11 +1834,12 @@ extern int TutorialFlags2;
 
 // ORIGINAL: 0x005B3920 ?setup_game@@YAXH@Z 0x005B3920-0x005B4201
 // RECOVERY_BINDING: v1 {"evidence": ["Retained setup owner full native seed and independent full-body review; corrected shared social-effect seen state and pre-callback player labels; actual-source setup controls; no historical byte claim copied."], "reason": "Recover complete game setup using actual source-owned reset storage, player construction and diplomacy initialization; preserve native callback order and final time-warp versus balance branch."}
-// TRIED: diverges at #3 (prologue-adjacent instruction scheduling, original 'push' vs rebuilt 'and'); did not chase further. Body is a full structural transcription adapted from Ghidra and cross-checked against raw disassembly for every call's argument order (verified agenda_on/set_treaty/set_agenda push order by hand against the raw bytes - Ghidra had them right), the AI-faction placement loop, the diplomacy name-matching double loop, and the two zero/fill loop families. Fixed two Ghidra-vs-disasm gaps: local_68 is 12 ints (the zeroing loop bound is 0xc), not the 4 Ghidra inferred from the first few accesses, and CharUpperA is an indirect call through the import thunk at 0x66931C, not a direct symbol.
+// Rewritten from the image (2026-11-08, 0.76 -> 0.98): the beginner-prefs bit
+// lives in AlphaIniPrefs.preferences, agenda_on takes (outer, inner), each
+// faction's ideology is reset to -1/0/-1 before the draw, and the effect scan
+// indexes values_ directly. Left: the social loop's i/rejected register choice
+// and the image's separate (unpooled) "BELIEVE"/"DRONE"/"HIVE" literals.
 void __cdecl setup_game(int reload) {
-    // This initializer deliberately retains the native order: profile state,
-    // transient game state, player construction, then optional diplomacy.
-    GameDataStateStorage.fields_.game_tech_achieved_[MaxTechnologyNum - 1] = 0;
     GameDataStateStorage.fields_.legacy_game_save_name_[0] = 0;
 
     // The image passes zero-filled 0x945E78/0x945E7C strings to these keys.
@@ -1848,10 +1850,10 @@ void __cdecl setup_game(int reload) {
     if (GameDataStateStorage.fields_.diff_level_current_ == 0 && reload == 0 &&
         prefs_get("DontResetBeginnerPrefs", 0, 0) == 0) {
         prefs_load(1);
-        GameDataStateStorage.fields_.game_rules_ |= 0x20;
+        AlphaIniPrefs.preferences |= 0x20;
         prefs_put("DontResetBeginnerPrefs", 0, 0);
     }
-    if (IsMultiplayerNet) GameDataStateStorage.fields_.game_rules_ &= ~0x20u;
+    if (IsMultiplayerNet) AlphaIniPrefs.preferences &= ~0x20u;
     prefs_use();
 
     ScenarioSave.objective_achieve_points = 0;
@@ -1873,14 +1875,10 @@ void __cdecl setup_game(int reload) {
     GameDataStateStorage.fields_.terraform_announced_mask_[0] = 0;
     GameDataStateStorage.fields_.terraform_announced_mask_[1] = 0;
     GameDataStateStorage.fields_.tutwin_flags_9a64bc_ = 0;
+    GameDataStateStorage.fields_.turn_current_num_ = 0;
+    GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ = 0xFF;
     GameDataStateStorage.fields_.base_current_count_ = 0;
     GameDataStateStorage.fields_.game_setup_reset_word_ = 0;
-    GameDataStateStorage.fields_.turn_current_num_ = 0;
-    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & ~0x0000FF00u) | 0x0000FF00u;
-    GameDataStateStorage.fields_.climate_rise_step_ = 0;
-    GameDataStateStorage.fields_.climate_rise_limit_ = 0;
-    GameDataStateStorage.fields_.climate_rise_accum_ = 0;
-    GameDataStateStorage.fields_.climate_sea_level_delta_ = 0;
     clear_all_offers();
     clear_hotseat_chat();
     clear_council_notify();
@@ -1891,65 +1889,46 @@ void __cdecl setup_game(int reload) {
         GameDataStateStorage.fields_.council_resolution_count_[proposal] = 0;
         GameDataStateStorage.fields_.council_last_resolution_turn_[proposal] = -9999;
     }
+    GameDataStateStorage.fields_.climate_rise_step_ = 0;
+    GameDataStateStorage.fields_.climate_rise_limit_ = 0;
+    GameDataStateStorage.fields_.climate_rise_accum_ = 0;
+    GameDataStateStorage.fields_.climate_sea_level_delta_ = 0;
 
     if (!IsMultiplayerNet && reload != 0 && GameRestartQueued == 0)
         GameDataStateStorage.fields_.game_state_ |= 0xE0;
 
-    // The reset words and pending-diplomacy matrix have independent source owners.
-    for (int technology = 0; technology < MaxTechnologyNum; ++technology)
-        GameDataStateStorage.fields_.game_tech_achieved_[technology] = 0;
+    memset(GameDataStateStorage.fields_.game_tech_achieved_, 0,
+           sizeof GameDataStateStorage.fields_.game_tech_achieved_);
     memset(&GameDataStateStorage.fields_.secret_project_, 0xFF, sizeof GameDataStateStorage.fields_.secret_project_);
     memset(ReplayEvents, 0, sizeof ReplayEvents);
     memset(FactionRankingHistory, 0, sizeof FactionRankingHistory);
-    GameDataStateStorage.fields_.sunspot_duration_ = 0;
-    GameDataStateStorage.fields_.mount_planet_x_ = 0;
-    GameDataStateStorage.fields_.mount_planet_y_ = 0;
-    GameDataStateStorage.fields_.dust_cloud_duration_ = 0;
-    GameDataStateStorage.fields_.save_daemon_state_word_ = 0;
-    GameDataStateStorage.fields_.scenario_victory_facility_ = 0;
-    GameDataStateStorage.fields_.global_energy_event_state_ = 0;
-    GameDataStateStorage.fields_.net_turn_flags_ = 0;
-    GameDataStateStorage.fields_.net_turn_faction_ = 0;
-    GameDataStateStorage.fields_.ecology_event_accumulator_ = 0;
+    // One block clear of the ten event words sunspot_duration_ through
+    // ecology_event_accumulator_ (+0x370..+0x394), as the image's rep stosd.
+    memset(&GameDataStateStorage.fields_.sunspot_duration_, 0,
+           offsetof(GameDataStateWindowFields, ecology_event_accumulator_) + sizeof(int)
+           - offsetof(GameDataStateWindowFields, sunspot_duration_));
 
-    if ((GameDataStateStorage.fields_.game_state_ & 0x01000000u) != 0) {
-        int placed = 1;
-        int seen_social_effects[12] = {0};
-        for (int social_faction = 1; social_faction < MaxPlayerNum; ++social_faction) {
+    if (GameDataStateStorage.fields_.game_state_ & 0x01000000u) {
+        int seen_social_models[12];
+        memset(seen_social_models, 0, sizeof seen_social_models);
+        for (int social_faction = 1; social_faction < MaxPlayerNum; social_faction++) {
             int rejected = 0;
             int category;
             int model;
+            Players[social_faction].soc_ideology_category = -1;
+            Players[social_faction].soc_ideology_model = 0;
+            Players[social_faction].soc_ideology_effect = -1;
             do {
                 category = rand() % 3;
                 model = rand() % 3 + 1;
-                const int effect_index = category * 3 + model;
-                if (seen_social_effects[effect_index] == 0) break;
-                ++rejected;
-                if (rejected >= placed + 1) break;
-            } while (true);
-            ++placed;
-            if (rejected <= placed) {
+                if (!seen_social_models[category * 3 + model]) break;
+            } while (++rejected < social_faction + 1);
+            if (rejected <= social_faction + 1) {
                 Players[social_faction].soc_ideology_category = category;
                 Players[social_faction].soc_ideology_model = model;
-                seen_social_effects[category * 3 + model] = 1;
-                const SocialEffect &effects =
-                    SocialCategories[category].model_effect[model];
-                for (int effect = 0; effect < 11; ++effect) {
-                    int value = 0;
-                    switch (effect) {
-                    case 0: value = effects.values_[SocialEffect::ECONOMY]; break;
-                    case 1: value = effects.values_[SocialEffect::EFFICIENCY]; break;
-                    case 2: value = effects.values_[SocialEffect::SUPPORT]; break;
-                    case 3: value = effects.values_[SocialEffect::TALENT]; break;
-                    case 4: value = effects.values_[SocialEffect::MORALE]; break;
-                    case 5: value = effects.values_[SocialEffect::POLICE]; break;
-                    case 6: value = effects.values_[SocialEffect::GROWTH]; break;
-                    case 7: value = effects.values_[SocialEffect::PLANET]; break;
-                    case 8: value = effects.values_[SocialEffect::PROBE]; break;
-                    case 9: value = effects.values_[SocialEffect::INDUSTRY]; break;
-                    case 10: value = effects.values_[SocialEffect::RESEARCH]; break;
-                    }
-                    if (value > 0) {
+                seen_social_models[category * 3 + model] = 1;
+                for (int effect = 0; effect < 11; effect++) {
+                    if (SocialCategories[category].model_effect[model].values_[effect] > 0) {
                         Players[social_faction].soc_ideology_effect = effect;
                         break;
                     }
@@ -1959,17 +1938,19 @@ void __cdecl setup_game(int reload) {
     }
 
     int setup_results[MaxPlayerNum];
-    for (int human_setup_faction = 0; human_setup_faction < MaxPlayerNum; ++human_setup_faction) {
-        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << human_setup_faction)) != 0) {
-            setup_player(human_setup_faction, -1 - reload, 0);
-            setup_results[human_setup_faction] = 0;
+    char first_key[24];
+    char second_key[24];
+    for (int human_faction = 0; human_faction < MaxPlayerNum; human_faction++) {
+        if (is_human(human_faction)) {
+            setup_player(human_faction, -1 - reload, 0);
+            setup_results[human_faction] = 0;
         }
     }
     memset(TectonicDetonationCount, 0, sizeof TectonicDetonationCount);
-    for (int computer_setup_faction = 0; computer_setup_faction < MaxPlayerNum; ++computer_setup_faction) {
-        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << computer_setup_faction)) == 0) {
-            setup_player(computer_setup_faction, -1 - reload, 0);
-            setup_results[computer_setup_faction] = 0;
+    for (int computer_faction = 0; computer_faction < MaxPlayerNum; computer_faction++) {
+        if (!is_human(computer_faction)) {
+            setup_player(computer_faction, -1 - reload, 0);
+            setup_results[computer_faction] = 0;
         }
     }
 
@@ -1979,87 +1960,77 @@ void __cdecl setup_game(int reload) {
 
     // The original publishes the default human's labels before the optional
     // new-game diplomacy/time-warp branch, whose callbacks observe them.
-    strcpy(Players[0].formal_name_faction, label_get(245));
-    strcpy(Players[0].noun_faction, label_get(245));
-    strcpy(Players[0].adj_name_faction, label_get(244));
+    strcpy(Players[0].formal_name_faction, StringTable.get(Labels.strings_ptr[245]));
+    strcpy(Players[0].noun_faction, StringTable.get(Labels.strings_ptr[245]));
+    strcpy(Players[0].adj_name_faction, StringTable.get(Labels.strings_ptr[244]));
 
     if (reload == 0) {
-        // The native random-pair bookkeeping visits factions 1..7. A marked
-        // faction first gets paired with a distinct random faction; an
-        // optional Player::rule_flags bit then asks for a second pair.
-        for (int pair_faction = 1; pair_faction < MaxPlayerNum; ++pair_faction) {
+        // Pair every unpaired social_faction with a distinct random partner.
+        for (int pair_faction = 1; pair_faction < MaxPlayerNum; pair_faction++) {
             if (setup_results[pair_faction] == 0) {
                 int tries = 0;
                 int other;
                 do {
                     do {
                         other = rand() % 7 + 1;
-                        ++tries;
+                        tries++;
                     } while (other == pair_faction);
                 } while ((setup_results[other] != 0 &&
                           (tries < 200 ||
-                           (tries < 400 &&
-                            (Players[other].rule_flags & 0x1000) == 0))) ||
-                         ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << pair_faction)) != 0 &&
-                          (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << other)) != 0 && tries < 100));
-                ++setup_results[pair_faction];
-                ++setup_results[other];
+                           (tries < 400 && !(Players[other].rule_flags & 0x1000)))) ||
+                         (((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << pair_faction)) &&
+                          ((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << other)) &&
+                          tries < 100));
+                setup_results[pair_faction]++;
+                setup_results[other]++;
             }
         }
 
-        for (int extra_pair_faction = 1; extra_pair_faction < MaxPlayerNum; ++extra_pair_faction) {
-            if (setup_results[extra_pair_faction] < 2 &&
-                (Players[extra_pair_faction].rule_flags & 0x1000) != 0) {
+        // Factions with rule flag 0x1000 ask for a second pair.
+        for (int extra_faction = 1; extra_faction < MaxPlayerNum; extra_faction++) {
+            if (setup_results[extra_faction] <= 1 && (Players[extra_faction].rule_flags & 0x1000)) {
                 int tries = 0;
                 int other;
                 do {
                     do {
                         other = rand() % 7 + 1;
-                    } while (other == extra_pair_faction);
-                } while ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << extra_pair_faction)) != 0 &&
-                         (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << other)) != 0 &&
-                         (++tries, tries < 200));
-                ++setup_results[extra_pair_faction];
-                ++setup_results[other];
+                    } while (other == extra_faction);
+                } while (((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << extra_faction)) &&
+                         ((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << other)) &&
+                         ++tries < 200);
+                setup_results[extra_faction]++;
+                setup_results[other]++;
             }
         }
 
-        if (!IsMultiplayerNet || (GameDataStateStorage.fields_.game_rules_ & 0x40u) != 0) {
-            if ((GameDataStateStorage.fields_.game_state_ & 0x00800000u) == 0) {
-                static const char *const pairs[][2] = {
-                    {"PEACE", "SPARTANS"}, {"GAIANS", "MORGAN"},
-                    {"HIVE", "BELIEVE"}, {"UNIV", "BELIEVE"},
-                    {"FUNGBOY", "BELIEVE"}, {"PEACE", "PIRATES"},
-                    {"DRONE", "PIRATES"}, {"DRONE", "MORGAN"},
-                    {"DRONE", "HIVE"}, {"ANGELS", "HIVE"},
-                    {"ANGELS", "CYBORG"}
-                };
-                for (int first = 1; first < MaxPlayerNum; ++first) {
-                    for (int second = 1; second < MaxPlayerNum; ++second) {
+        if (!IsMultiplayerNet || (GameDataStateStorage.fields_.game_rules_ & 0x40)) {
+            if (!(GameDataStateStorage.fields_.game_state_ & 0x00800000u)) {
+                for (int first = 1; first < MaxPlayerNum; first++) {
+                    for (int second = 1; second < MaxPlayerNum; second++) {
                         if (first != second) {
-                            char first_key[24];
-                            char second_key[24];
                             first_key[0] = 0;
                             second_key[0] = 0;
                             strcat(first_key, Players[first].search_key);
                             strcat(second_key, Players[second].search_key);
                             CharUpperA(first_key);
                             CharUpperA(second_key);
-
-                            bool matched = false;
-                            for (int pair = 0; pair < 11; ++pair) {
-                                if (!strcmp(first_key, pairs[pair][0]) &&
-                                    !strcmp(second_key, pairs[pair][1])) {
-                                    matched = true;
-                                    break;
-                                }
+                            if ((!strcmp(first_key, "PEACE") && !strcmp(second_key, "SPARTANS"))
+                                || (!strcmp(first_key, "GAIANS") && !strcmp(second_key, "MORGAN"))
+                                || (!strcmp(first_key, "HIVE") && !strcmp(second_key, "BELIEVE"))
+                                || (!strcmp(first_key, "UNIV") && !strcmp(second_key, "BELIEVE"))
+                                || (!strcmp(first_key, "FUNGBOY") && !strcmp(second_key, "BELIEVE"))
+                                || (!strcmp(first_key, "PEACE") && !strcmp(second_key, "PIRATES"))
+                                || (!strcmp(first_key, "DRONE") && !strcmp(second_key, "PIRATES"))
+                                || (!strcmp(first_key, "DRONE") && !strcmp(second_key, "MORGAN"))
+                                || (!strcmp(first_key, "DRONE") && !strcmp(second_key, "HIVE"))
+                                || (!strcmp(first_key, "ANGELS") && !strcmp(second_key, "HIVE"))
+                                || (!strcmp(first_key, "ANGELS") && !strcmp(second_key, "CYBORG"))
+                                || (Players[first].rule_flags & RFLAG_ALIEN)
+                                || (Players[second].rule_flags & RFLAG_ALIEN)) {
+                                agenda_on(first, second, 0x200);
                             }
-                            if (matched || (Players[first].rule_flags & RFLAG_ALIEN) != 0 ||
-                                (Players[second].rule_flags & RFLAG_ALIEN) != 0)
-                                agenda_on(second, first, 0x200);
-
-                            if ((Players[first].rule_flags & RFLAG_ALIEN) != 0 &&
-                                (Players[second].rule_flags & RFLAG_ALIEN) != 0) {
+                            if ((Players[first].rule_flags & RFLAG_ALIEN)
+                                && (Players[second].rule_flags & RFLAG_ALIEN)) {
                                 set_treaty(second, first, 0xC80C0C38, 1);
                                 set_agenda(second, first, 0x2C2D, 1);
                             }
@@ -2067,44 +2038,30 @@ void __cdecl setup_game(int reload) {
                     }
                 }
             } else {
-                unsigned int rules_snapshot = GameDataStateStorage.fields_.game_rules_;
-                for (int network_faction = 1; network_faction < MaxPlayerNum; ++network_faction) {
-                    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << network_faction)) != 0) {
-                        int required = ((rules_snapshot >> 6) & 1u) +
-                            (PlayersData[network_faction].diff_level > 2 ? 1 : 0);
-                        int assigned = 0;
-                        while (assigned < required) {
+                for (int network_faction = 1; network_faction < MaxPlayerNum; network_faction++) {
+                    if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << network_faction)) {
+                        for (int assigned = 0; assigned < (int)((GameDataStateStorage.fields_.game_rules_ >> 6) & 1)
+                                 + (PlayersData[network_faction].diff_level >= 3); assigned++) {
                             int tries = 0;
                             int other;
-                            for (;;) {
+                            do {
                                 other = rand() % 7 + 1;
-                                ++tries;
-                                if (tries > 99) break;
-                                if ((PlayersData[other].diplo_agenda[network_faction] & 0x200) == 0) {
-                                    const unsigned int other_bit = 1u << other;
-                                    const bool alive = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (other_bit << 8)) != 0;
-                                    const bool human = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & other_bit) != 0;
-                                    if (alive && !human) break;
-                                }
-                            }
+                            } while (++tries < 100
+                                     && ((PlayersData[other].diplo_agenda[network_faction] & 0x200)
+                                         || !is_alive(other) || is_human(other)));
                             if (tries < 100) agenda_on(other, network_faction, 0x200);
-                            ++assigned;
-                            rules_snapshot = GameDataStateStorage.fields_.game_rules_;
-                            required = ((rules_snapshot >> 6) & 1u) +
-                                (PlayersData[network_faction].diff_level > 2 ? 1 : 0);
                         }
                     }
                 }
             }
         }
 
-        if ((GameDataStateStorage.fields_.game_rules_ & 0x80u) != 0) {
+        if (GameDataStateStorage.fields_.game_rules_ & 0x80) {
             time_warp();
             return;
         }
         balance();
     }
-
 }
 
 /*

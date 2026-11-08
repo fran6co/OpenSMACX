@@ -4803,8 +4803,8 @@ void __cdecl base_change(int base_id, int production_id) {
     int loss;
     if (Rules.retool_pct_pen_prod_chg
         && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction))
-        && base_making(Bases[base_id].production_id_last, base_id)
-            != base_making(Bases[base_id].queue_production_id[0], base_id)
+        && base_making(Bases[base_id].queue_production_id[0], base_id)
+            != base_making(Bases[base_id].production_id_last, base_id)
         && Bases[base_id].minerals_accumulated_2 > static_cast<int>(Rules.retool_exemption)) {
         loss = Bases[base_id].minerals_accumulated_2
              - (Bases[base_id].minerals_accumulated_2 - static_cast<int>(Rules.retool_exemption))
@@ -12139,7 +12139,8 @@ int __cdecl base_upkeep(int base_id) {
         TutWinBaseWindow.on_redraw();
     }
     if (BaseProductionZoomRequested != 0) {
-        const uint32_t state_for_zoom = GameDataStateStorage.fields_.game_state_;
+        // stand-in: the low-byte read VC6 narrows to without the volatile below.
+        const uint8_t state_for_zoom = static_cast<uint8_t>(GameDataStateStorage.fields_.game_state_);
         if ((state_for_zoom & 1u) == 0 || (state_for_zoom & 8u) != 0) {
             log_say("UPKEEP zoom-to-base", base_id, 0, 0);
             TutWinBaseWindow.zoom(base_id, 1);
@@ -12160,7 +12161,11 @@ int __cdecl base_upkeep(int base_id) {
     }
     if (BaseCurrent->nerve_staple_turns_left != 0) --BaseCurrent->nerve_staple_turns_left;
     BaseCurrent->state &= 0xFFDFFFF7u;
-    if (((GameDataStateStorage.fields_.turn_current_num_ + BaseIDCurrentSelected) & 7) == 0) {
+    // stand-in: a volatile read forces the image's turn-then-base load order;
+    // every plain spelling of the sum loads BaseIDCurrentSelected first.
+    const int turn = *(volatile int *)&GameDataStateStorage.fields_.turn_current_num_;
+    const int selected = BaseIDCurrentSelected;
+    if (((selected + turn) & 7) == 0) {
         BaseCurrent->state &= 0xFFEFFFFFu;
     }
     return 0;

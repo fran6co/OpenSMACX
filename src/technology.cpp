@@ -770,6 +770,8 @@ Purpose: Check to see whether provided faction can research a specific technolog
 Return Value: Is tech available to faction? true/false
 Status: Complete
 */
+// The image calls tech_avail out of line from tech_ai.
+#pragma auto_inline(off)
 BOOL __cdecl tech_avail(int tech_id, int faction_id) {
     if (has_tech(tech_id, faction_id) || tech_id >= MaxTechnologyNum || (!ExpansionEnabled
         && (tech_id == TECH_PRPSYCH || tech_id == TECH_FLDMOD || tech_id == TECH_ADAPDOC
@@ -793,6 +795,7 @@ BOOL __cdecl tech_avail(int tech_id, int faction_id) {
     }
     return (has_tech(preq_tech_1, faction_id) && has_tech(preq_tech_2, faction_id));
 }
+#pragma auto_inline(on)
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005BADC0 ?tech_secret@@YAXHH@Z 0x005BADC0-0x005BAE54 BYTE_EXACT
