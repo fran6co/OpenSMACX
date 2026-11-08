@@ -4149,7 +4149,7 @@ void DesignWin::draw_reactor(int redraw) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00435B30 ?draw_special_1@DesignWin@@QAEXH@Z 0x00435B30-0x00435DD1 FILE
+// ORIGINAL: 0x00435B30 ?draw_special_1@DesignWin@@QAEXH@Z 0x00435B30-0x00435DD1 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00435b30.cpp", "RulesAbility and StringTable in src/veh.h and src/strings.h", "DesignWin::protoAbilityID1_ and panel/font members in src/designwin.h"], "reason": "Draw the first selected special ability through the typed ability record and the existing DesignWin panel, font and selection state."}
 void DesignWin::draw_special_1(int redraw) {
     (void)redraw;
@@ -4195,7 +4195,7 @@ void DesignWin::draw_special_1(int redraw) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00435DE0 ?draw_special_2@DesignWin@@QAEXH@Z 0x00435DE0-0x00436081 FILE
+// ORIGINAL: 0x00435DE0 ?draw_special_2@DesignWin@@QAEXH@Z 0x00435DE0-0x00436081 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00435de0.cpp", "RulesAbility and StringTable in src/veh.h and src/strings.h", "DesignWin::protoAbilityID2_ and panel/font members in src/designwin.h"], "reason": "Draw the second selected special ability through the typed ability record and the existing DesignWin panel, font and selection state."}
 void DesignWin::draw_special_2(int redraw) {
     (void)redraw;

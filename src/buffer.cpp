@@ -4232,7 +4232,7 @@ void Buffer::release_buff_sprite() {
     shared_sprite_.pcBits_ = 0;
 }
 
-// ORIGINAL: 0x005D84C0 ?draw@Buffer@@QAEHPAVBuffer@@HHHHH@Z 0x005D84C0-0x005D8646
+// ORIGINAL: 0x005D84C0 ?draw@Buffer@@QAEHPAVBuffer@@HHHHH@Z 0x005D84C0-0x005D8646 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original5D84C0 ends ret18 and forwards the software path to Sprite5E4B4A;5D8370 ends ret10 and is a distinct four-argument overload. The previous six-argument forwarder selected the wrong ABI.", "Original5D84F5 calls source SetColorKey and5D854C destination Blt;5D854F returns the scale denominator. Initializer5D71D0 and cleanup5D71F0 establish the shared Sprite at9B3A50 whose fields the fallback borrows."], "reason": "Recover the six-argument Buffer draw in its owning class using real surfaces and the shared Sprite object; retain the same-span seed."}
 // TRIED: none confirmed byte-exact; MISMATCH #2 'push' vs 'mov' - the two indirect vtable-slot calls (0x74 and 0x14 on the sprite pointers) push their receiver as an explicit first stack argument rather than loading it into ecx, so they are modelled as raw __stdcall function-pointer calls here rather than C++ virtual dispatch; the real calling convention on those two slots is unconfirmed.
 // symbol    ?draw@Buffer@@QAEHPAV1@HHHHH@Z
@@ -4309,7 +4309,7 @@ int Buffer::draw_mono(Buffer *target, int transparent, int x, int y,
     return result;
 }
 
-// ORIGINAL: 0x005D8370 ?draw@Buffer@@QAEHPAVBuffer@@HHH@Z 0x005D8370-0x005D84B7
+// ORIGINAL: 0x005D8370 ?draw@Buffer@@QAEHPAVBuffer@@HHH@Z 0x005D8370-0x005D84B7 BYTE_EXACT
 // symbol    ?draw@Buffer@@QAEHPAV1@HHH@Z
 //           The image spells the leading `Buffer *` as `PAVBuffer@@`; VC6 emits
 //           the back-reference `PAV1@` for the same type, so the fact names what
