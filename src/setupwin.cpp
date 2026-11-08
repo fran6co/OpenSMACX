@@ -565,9 +565,10 @@ void SetupWin::close() {
 // ORIGINAL: 0x004AE790 ??1SetupWin@@QAE@XZ 0x004AE790-0x004AE99E;0x006596A0-0x006596F5
 // RECOVERY_BINDING: v1 {"evidence": ["git:de91fffe:src/recovered/units/004ae790.cpp", "image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/ui-eight-owner-coverage.json", "Original entry 0x004ae790; physical VC6 COFF emitted symbol ??1SetupWin@@UAE@XZ.", "Pinned standalone destructor 4AE790 restores SetupWin vptrs, performs close-state/Buffer/Spot/list cleanup, then destroys its actual members and GraphicWin base.", "All 13 mapped newgame calls to 4AD9C0 follow identical derived vptr restoration and precede member/base destruction: compiler-expanded destructor-body calls, not explicit pre-destruction closes.", "Pinned Popup close404900 and BasePop destructor4064D0 are distinct identities; terminal Popup close calls likewise belong to generated Popup destruction. Preserve config_game nonterminal close before object reuse.", "size_of_planet and custom_planet declare Popup before SetupWin; map_menu/top_menu declare SetupWin before Popup; config_game declares Popup before SetupWin. Reverse automatic destruction reproduces the observed owner order.", "Pinned size_of_planet success writes UnkBitfield1 before SetupWin destruction; config_game mode-bit2 success converges on common destruction. Automatic lifetimes cover both without duplicate terminal close calls."], "reason": "Recover SetupWin cleanup through its genuine members and ordinary destructor lifetime. The destructor invokes close once before compiler-owned member/base teardown; callers rely on automatic destruction rather than duplicate explicit closes. Original normal/error/exceptional cleanup and historical matching obligations remain; no new matching claim."}
 // symbol    ??1SetupWin@@UAE@XZ
-SetupWin::~SetupWin() {
-    close();
-}
+// body      src/setupwin.h
+// Inline in setupwin.h: every newgame.cpp caller expands it (their FuncInfo
+// shows the GraphicWin/Buffer/Spot/StringList/Buffer teardown states); the
+// deleting destructor 0x004AE760 still calls this emitted copy.
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004AE3E0 0x004AE4A0 0x004AE4B4 0x004AE3FE
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x004AE3E0 0x004AE4B4 0x004AE4D0 0x004AE3F8

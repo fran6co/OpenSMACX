@@ -391,58 +391,57 @@ map_menu_retry:
 
     DefaultPrefs.map_type = static_cast<uint32_t>(choice);
     prefs_save(0);
-    if (choice < 5) {
-        switch (choice) {
-        case 0:
-        case 1:
-            if (size_of_planet(quick_start) != 0) goto map_menu_retry;
-            if (MapSetupStatus != 0) {
-                if (choice == 1) {
-                    if (custom_planet(1, quick_start) != 0) {
-                        choice = 1;
-                        goto map_menu_retry;
-                    }
-                    goto map_menu_configure;
+map_menu_dispatch:
+    switch (choice) {
+    case 0:
+    case 1:
+        if (size_of_planet(quick_start) != 0) goto map_menu_retry;
+        if (MapSetupStatus != 0) {
+            if (choice == 1) {
+                // A cancelled custom planet re-runs the size choice, not the menu.
+                if (custom_planet(1, quick_start) != 0) {
+                    choice = 1;
+                    goto map_menu_dispatch;
                 }
-                if (IsMultiplayerNet == 0) {
-                    const int roll = rand();
-                    int category = (roll % 7 + 1) / 2;
-                    if (category < 0) category = 0;
-                    else if (category > 2) category = 2;
-                    MapOceanCoverage = static_cast<uint32_t>(2 - category);
-                } else {
-                    MapOceanCoverage = 0;
-                }
-                uint32_t land_bits = 2u - static_cast<uint32_t>(MapOceanCoverage);
-                memcpy(&MapLandCoverage, &land_bits, sizeof(MapLandCoverage));
-                const int life_roll = rand();
-                MapErosiveForces = 1;
-                MapPlanetaryOrbit = 1;
-                MapCloudCover = 1;
-                MapNativeLifeForms = static_cast<uint32_t>((life_roll % 6 + 5) / 5);
+                break;
             }
-            goto map_menu_configure;
-        case 2:
-            if (load_map_daemon(const_cast<char *>(MapXPlanetPath)) != 0)
-                goto map_menu_retry;
-            world_climate();
-            goto map_menu_configure;
-        case 3:
-            if (load_map_daemon(const_cast<char *>(MapXPlanetXPath)) != 0)
-                goto map_menu_retry;
-            world_climate();
-            goto map_menu_configure;
-        default:
-            if (load_map() == 0) {
-                world_climate();
-                goto map_menu_configure;
+            if (IsMultiplayerNet == 0) {
+                const int roll = rand();
+                int category = (roll % 7 + 1) / 2;
+                if (category < 0) category = 0;
+                else if (category > 2) category = 2;
+                MapOceanCoverage = static_cast<uint32_t>(2 - category);
+            } else {
+                MapOceanCoverage = 0;
             }
-            quick_start = 0;
-            goto map_menu_retry;
+            uint32_t land_bits = 2u - static_cast<uint32_t>(MapOceanCoverage);
+            memcpy(&MapLandCoverage, &land_bits, sizeof(MapLandCoverage));
+            const int life_roll = rand();
+            MapErosiveForces = 1;
+            MapPlanetaryOrbit = 1;
+            MapCloudCover = 1;
+            MapNativeLifeForms = static_cast<uint32_t>((life_roll % 6 + 5) / 5);
         }
+        break;
+    case 2:
+        if (load_map_daemon(const_cast<char *>(MapXPlanetPath)) != 0)
+            goto map_menu_retry;
+        world_climate();
+        break;
+    case 3:
+        if (load_map_daemon(const_cast<char *>(MapXPlanetXPath)) != 0)
+            goto map_menu_retry;
+        world_climate();
+        break;
+    case 4:
+        if (load_map() == 0) {
+            world_climate();
+            break;
+        }
+        quick_start = 0;
+        goto map_menu_retry;
     }
 
-map_menu_configure:
     if (config_game(quick_start) == 0) return 0;
     goto map_menu_retry;
 }

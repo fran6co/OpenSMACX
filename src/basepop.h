@@ -552,6 +552,12 @@ class BasePop : public GraphicWin {
     field_3104_ = 2;
     field_3108_ = 1;
   }
+  // veh_pick stores 1 and 2 here (0x48D14E..0x48D16C) before its SpriteBox pair.
+  // stand-in: only a TU defining BASEPOP_SET_SPRITE_LAYOUT sees this inline;
+  // its visible body flips register ties in 18 unrelated TUs.
+#ifdef BASEPOP_SET_SPRITE_LAYOUT
+  void set_sprite_layout(uint32_t a, uint32_t b) { field_3104_ = a; field_3108_ = b; }
+#endif
   void select_owned_picture() { caller_sprite_ = &sprite_; }
   bool picture_enabled() const { return dialogs_.SpriteBox::list_.entry_count_ != 0; }
   void set_caller_picture(Sprite *picture) { caller_sprite_ = picture; }
