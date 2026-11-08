@@ -7573,33 +7573,31 @@ int MapWin::get_brighting(int x, int y, int corner) {
 }
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00470420 0x00470538 0x00470548 0x00470483
-// ORIGINAL: 0x00470420 ?compute_lighting_table@MapWin@@QAEXXZ 0x00470420-0x00470536
+// ORIGINAL: 0x00470420 ?compute_lighting_table@MapWin@@QAEXXZ 0x00470420-0x00470536 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["The original 0x00470420..0x00470536 body fills four 49-byte tables using quick_root; its retired transcription remains in Git history","src/mapwin.cpp: MapLightingTable bounds 0x007F6688..0x007F674C and corner_light_value/get_brighting consumers","src/general.h: quick_root(int)","Pinned470420..470536 never consumes incoming ECX: first ECX access at470460 is MOV ECX,-3 before all quadrant dispatch; startup471033 makes the direct call without setting a receiver. The initializer is static and writes the shared lighting tables."],"reason":"Build the four 7-by-7 signed corner-light tables in their source-owned storage using the existing integer-root routine."}
 // symbol    ?compute_lighting_table@MapWin@@SAXXZ
 void MapWin::compute_lighting_table() {
     int x;
     int y;
     for (int quadrant = 0; quadrant < 4; ++quadrant) {
-        signed char *output = MapLightingTable + quadrant * 49;
-        for (int row = -3; row + 4 < 8; ++row) {
-            signed char *cell = output;
-            for (int column = -3, flip = 3; column + 4 < 8; --flip, ++column, ++cell) {
+        for (int i = 1; i < 8; ++i) {
+            for (int j = 1; j < 8; ++j) {
                 switch (quadrant) {
                 case 0:
-                    x = row;
-                    y = column;
+                    x = i - 4;
+                    y = j - 4;
                     break;
                 case 1:
-                    x = flip;
-                    y = row;
+                    x = 4 - j;
+                    y = i - 4;
                     break;
                 case 2:
-                    x = -row;
-                    y = flip;
+                    x = 4 - i;
+                    y = 4 - j;
                     break;
                 case 3:
-                    x = column;
-                    y = -row;
+                    x = j - 4;
+                    y = 4 - i;
                     break;
                 }
                 x *= 100;
@@ -7609,9 +7607,8 @@ void MapWin::compute_lighting_table() {
                 if (root != 0) {
                     light /= root;
                 }
-                *cell = static_cast<signed char>(light);
+                MapLightingTable[quadrant * 49 + i * 7 + j - 8] = static_cast<signed char>(light);
             }
-            output = cell;
         }
     }
 }
