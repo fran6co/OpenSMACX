@@ -29,7 +29,6 @@
         "anonymous fixed-address global": 0,
         "word_state.cpp markers": 3,
         "span_math.cpp markers": 1,
-        "table_storage.cpp markers": 1,
         "stringstruct.cpp markers": 26
       },
       "counters": [
@@ -43,12 +42,6 @@
           "name": "span_math.cpp markers",
           "kind": "text",
           "path": "src/span_math.cpp",
-          "pattern": "ORIGINAL: 0x"
-        },
-        {
-          "name": "table_storage.cpp markers",
-          "kind": "text",
-          "path": "src/table_storage.cpp",
           "pattern": "ORIGINAL: 0x"
         },
         {

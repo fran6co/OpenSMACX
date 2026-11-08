@@ -120,18 +120,6 @@ int Spot::add(int position, int type, int left, int top, int length, int width) 
     return index;
 }
 
-// ORIGINAL: 0x0047A6F0 ?UNK3@MultiWin@@QAEHHHPAURECT@@@Z 0x0047A6F0-0x0047A71E BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["task:rectangle-owner-overloads", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x47a6f0", "seed:src/recovered/0047a6f0.cpp all identity/spans/claims and parsed discoveries retained; seed retirement requires fresh verification.", "source:src/multiwin.h caller receiver evidence and existing genuine Spot/Buffer interfaces."], "reason": "Recover genuine existing-owner rectangle convenience method. Original catalog MultiWin attribution is contradicted by unchanged receiver forwarding and typed Spot/Buffer callee evidence; original identity and historical obligations are retained, not renamed or newly banked."}
-// symbol    ?add@Spot@@QAEHHHPAUtagRECT@@@Z
-#pragma inline_depth(0)
-#pragma optimize("y", off)
-int Spot::add(int position, int type, RECT *rect) {
-    return add(position, type, rect->left, rect->top, rect->right - rect->left, 
-        rect->bottom - rect->top);
-}
-#pragma inline_depth(8)
-#pragma optimize("", on)
-
 /*
 Purpose: Remove all spots at a specific position.
 // ORIGINAL: 0x005FA9C0 ?kill_pos@Spot@@QAEXH@Z 0x005FA9C0-0x005FAA04 BYTE_EXACT

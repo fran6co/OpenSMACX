@@ -158,7 +158,6 @@ set(OPENSMACX_SOURCES
     src/multiwin.cpp
     src/matrix3.cpp
     src/filebox.cpp
-    src/table_storage.cpp
     src/span_math.cpp
     src/scale_adjustment.cpp
     src/technology_queries.cpp
@@ -226,7 +225,6 @@ set(OPENSMACX_SOURCES
     src/alphamovie.cpp
     src/mci_video.cpp
     src/movie_media.cpp
-    src/movie_media_surface.cpp
     src/movie_media_decoder.cpp
     src/movie_media_decoder_uv.asm
     src/movie_decoder_frame.cpp

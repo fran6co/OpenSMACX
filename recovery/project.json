@@ -318,20 +318,6 @@
           "-c"
         ]
       },
-      "src/caviar/caviar_chain.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "/O2",
-          "/Ob1",
-          "-MT",
-          "/W4",
-          "/Z7",
-          "-c"
-        ]
-      },
       "src/datalink.cpp": {
         "flags": [
           "/nologo",
@@ -1613,46 +1599,7 @@
           "-c"
         ]
       },
-      "src/caviar/caviar_io.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "/O2",
-          "/Ob1",
-          "-MT",
-          "/W4",
-          "-c"
-        ]
-      },
       "src/caviar/caviar_geometry.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "/O2",
-          "/Ob1",
-          "-MT",
-          "/W4",
-          "-c"
-        ]
-      },
-      "src/caviar/caviar_record.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "/O2",
-          "/Ob1",
-          "-MT",
-          "/W4",
-          "-c"
-        ]
-      },
-      "src/caviar/caviar_error.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -1827,19 +1774,6 @@
           "-MT",
           "/W4",
           "/Z7",
-          "-c"
-        ]
-      },
-      "src/movie_media_surface.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "/O2",
-          "/Ob2",
-          "-MT",
-          "/W4",
           "-c"
         ]
       },

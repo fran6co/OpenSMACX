@@ -93,13 +93,27 @@ static const char *vox_msg_unsupported_pixel_slot = vox_msg_unsupported_pixel; /
 // color buffer depth", "Error reading user data chunk" - and the CVR loader
 // (0x00638620..0x00638DE0) hands the last five of them to vox_stage_error.
 // The parser retains these message pointers; the exact-reader and allocator
-// messages live with their shared callback operations in caviar_io.cpp.
+// messages sit between them, beside their shared callback operations below.
 // The eight engine messages above stay literals because their callers push
 // the address straight out.
 // RECOVERY_OBJECT: v1 0x006989D0 _vox_msg_bad_file_format
 static const char *const vox_msg_bad_file_format = "Bad file format";  // 0x006989D0
+// Historical spelling evidence: the image loads the No-room pointer slot
+// before pushing it (`mov edx,[0x6989d8] / push edx`); a literal array changed
+// that instruction shape. These retain the existing pointer declarations.
+// These descriptive pointer names bind only the independently observed starts.
+// Original containing allocation, string extents and lifetime stay unknown.
+// RECOVERY_OBJECT: v1 0x006989D4 _vox_msg_reading_file
+static const char *const vox_msg_reading_file = "Reading file";        // 0x006989D4
+// RECOVERY_OBJECT: v1 0x006989D8 _vox_msg_no_room
+static const char *const vox_msg_no_room = "No room";                  // 0x006989D8
 // RECOVERY_OBJECT: v1 0x006989E0 _vox_msg_user_chunk
 static const char *const vox_msg_user_chunk = "Error reading user data chunk"; // 0x006989E0
+
+// These operations share the configured Caviar callback table, not its
+// storage. Error staging stays in the engine owner. This source grouping
+// does not assert a recovered historical translation-unit boundary.
+extern "C" void __cdecl vox_stage_error(const char *message);
 
 
 // The loader's two float constants, .rdata 0x00670FE8 and 0x00670FEC. The
@@ -313,6 +327,136 @@ void __cdecl caviar_free_record(CvrRecord *record) {
     }
 
     vox_free_slot(record);
+}
+
+
+/*
+Purpose: Walk a node chain and return the node the walk stops at. Each node
+         is {uint8_t flags; ...; float extent; int next_offset}: bit 0 of the
+         flags byte says a next node exists, +8 is the extent and +0xc the
+         byte offset to it. The walk continues while the extent, scaled by
+         the caller's factor, stays at or under the cut, and stops at the
+         node BEFORE one whose scaled extent is past it.
+// ORIGINAL: 0x006385D0 sub_6385d0 0x006385D0-0x00638611 FILE BYTE_EXACT
+// symbol    _vox_walk_scaled_chain
+// size      65 bytes
+// callers   3   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+//
+// HOMED from src/recovered/units/006385d0.cpp.
+// NAMED 2026-09-04 from the body's own arithmetic: a flags/offset chain walked
+// while a scaled float stays under a constant. Its binding g_00670fe8 is the
+// 1.4142f at 0x00670FE8, vox_sqrt_two here.
+// LEVER: BYTE_EXACT on the FPU operand order. Each extent is read into its
+//        OWN local first and multiplied afterwards - `float extent =
+//        *(float *)(cursor + 8);` then `extent * scale` - which is what makes
+//        VC6 load the node's extent into st(0) and `fmul` the caller's
+//        factor, the image's order. Writing the product as one expression
+//        (`*(float *)(cursor + 8) * scale`, either operand order, named local
+//        or not) loads [esp+8] first and fmul's the node: 15 of 23.
+Return Value: the node the walk stopped at.
+*/
+extern "C" CvrShape *__cdecl vox_walk_scaled_chain(CvrShape *node, float scale) {
+    CvrShape *cursor = node;
+    unsigned char flags = static_cast<unsigned char>(cursor->field_0_);
+    while (flags & 1) {
+        // The extent is read into its own local first: the image loads the
+        // node's extent into st(0) and multiplies by the caller's factor, so
+        // the read has to be a statement of its own ahead of the multiply.
+        float extent = cursor->scale_;
+        // FCOMP/FNSTSW tests C0, so unordered products continue as well as
+        // values below the cut. A negated '<' would stop on NaN instead.
+        if (extent * scale >= vox_sqrt_two) {
+            break;
+        }
+        CvrShape *next = reinterpret_cast<CvrShape *>(
+            reinterpret_cast<unsigned char *>(cursor) + cursor->next_shape_offset_);
+        float next_extent = next->scale_;
+        // The second image gate accepts C0 or C3, including unordered.
+        if (next_extent * scale > vox_sqrt_two) {
+            break;
+        }
+        flags = static_cast<unsigned char>(next->field_0_);
+        cursor = next;
+    }
+    return cursor;
+}
+
+#define vox_read_slot (CaviarOutputMessageWindow.io_read_)
+
+/*
+Purpose: Allocate through the engine's alloc slot into *out, staging "No room"
+         and reporting failure when the slot returns nothing.
+// ORIGINAL: 0x00638620 sub_638620 0x00638620-0x0063864E FILE BYTE_EXACT
+// symbol    _vox_alloc_block
+// size      46 bytes
+// callers   8   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// indirect  0x00638625
+//
+// CLAIMED BYTE_EXACT in its scaffold, homed 2026-09-04 and re-measured here.
+// Its two bindings are named from the image: g_009c0b80 is the engine's alloc
+// slot - slot 0 of the six vx_* callbacks, formerly vox_alloc_slot - and
+// g_006989d8 is the "No room" message slot, vox_msg_no_room here.
+//
+// HOMED from src/recovered/units/00638620.cpp.
+Return Value: 0 with *out filled, or -1 with the message staged.
+*/
+extern "C" int __cdecl vox_alloc_block(int size, void *out_storage) {
+    void *block = CaviarOutputMessageWindow.io_allocate_((unsigned long)size);
+    // The callback API publishes one native pointer representation into a
+    // caller-owned pointer slot. Byte copying avoids treating T** as void**.
+    // Publish before staging failure, exactly like the original entry point.
+    memcpy(out_storage, &block, sizeof(block));
+    if (block == 0) {
+        vox_stage_error(vox_msg_no_room);
+        return -1;
+    }
+    return 0;
+}
+
+/*
+Purpose: Read EXACTLY count bytes through the engine's read slot: loop until
+         the accumulated total reaches the request, and stage "Reading file"
+         the moment the slot answers negative.
+// ORIGINAL: 0x00638650 sub_638650 0x00638650-0x006386A8 FILE BYTE_EXACT
+// symbol    _vox_read_exact
+// size      88 bytes
+// callers   15   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// indirect  0x00638670
+//
+// HOMED from src/recovered/units/00638650.cpp. Its two bindings are named
+// from the image: g_009c0b88 is the read slot - slot 2 of the six vx_*
+// callbacks Caviar::init_class installs, this file's vox_read_slot - and
+// g_006989d4 is the "Reading file" message slot.
+// TRIED: the image dedicates ALL FOUR callee-saved registers here - ebx/ebp
+//        hold the buffer and the fd for the whole loop, esi the running
+//        total, edi the count - and reaches for them in the order
+//        count/total/buffer/fd. Every spelling of this body allocates two
+//        fewer registers and loads the arguments at their use, 39
+//        instructions against the image's 45 at /O2 (17 agreeing, first
+//        divergence at instruction 7, the loop's register set); the /Oy- set
+//        scores a higher SIMILARITY (0.739) with a frame the image does not
+//        have, so `measure` reports 1 of 45. No spelling tried made VC6
+//        dedicate ebp as a callee-saved register - the receiver-spill wall.
+//        /c /O2 /Gy /GR- /GX.
+Return Value: 0 when the full count was read, -1 when the slot went negative.
+*/
+extern "C" int __cdecl vox_read_exact(int fd, void *buffer, int count) {
+    for (int total = 0; total < count; ) {
+        int read = vox_read_slot((unsigned long)fd,
+                                 (char *)buffer + total, count - total);
+        if (read < 0) {
+            vox_stage_error(vox_msg_reading_file);
+            return -1;
+        }
+        total += read;
+    }
+    return 0;
 }
 
 
@@ -923,6 +1067,89 @@ char __cdecl vox_init_callbacks(const VoxIoCallbacks *callbacks, int flag) {
 
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x006393C0 0x00639614 0x00639628 0x006395B5
+// 0x00639380, the engine's shutdown hook, is a nullsub - a function whose
+// whole body is one `ret`. close_class calls it, so a body that does nothing
+// is the faithful spelling; the engine module owns its definition.
+// ORIGINAL: 0x00639380 nullsub_16 0x00639380-0x00639381 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:0x00639380-0x00639381 is a single RET", "source:src/caviar.cpp Caviar::close_class calls vox_engine_close for the original shutdown hook", "pinned/current owner facts identify one original caller; the source body remains deliberately empty"], "reason": "Rehome the no-op shutdown-hook identity onto the already-called, out-of-line vox_engine_close owner; no separate adapter body is retained."}
+// symbol    ?vox_engine_close@@YAXXZ
+// kind      game
+void vox_engine_close() {
+}
+
+/*
+ * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
+ * Copyright (C) 2013-2021 Brendan Casey
+ *
+ * OpenSMACX is free software: you can redistribute it and / or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ */
+#include "stdafx.h"
+#include "caviar.h"
+#include <string.h>
+
+// Shared Caviar message service. Its callers retain a real call boundary;
+// the grouping and filename do not establish an original translation unit.
+
+/*
+Purpose: Stage the engine's ERROR MESSAGE: copy the caller's string into
+         the shared buffer vox_message_buffer (0x9C0D60). Named
+         vox_stage_error 2026-08-30 from the buffer's readers - the engine
+         clears it to NUL before each use (0x0063830E), strlen-tests it and
+         stages a default when empty (0x006383F1, "Error reading user data
+         chunk"), and copies a staged default out of it wholesale
+         (0x0063FA61) - every vox_* error path stages through here first.
+         The
+         catalogued nullary-int contract is wrong on both counts - the body
+         reads a real stack argument, and `return 0;` would insert an
+         `xor eax,eax` ahead of the expansion's `and ecx,3`.
+// ORIGINAL: 0x00639390 sub_639390 0x00639390-0x006393B9 FILE BYTE_EXACT
+// symbol    _vox_stage_error
+// size      41 bytes
+// callers   12   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+//
+// LEVER: stdafx.h's `#pragma function(strcpy)` makes every strcpy a call,
+//        but the image INLINES this one (`repne scasb` + `rep movsd/movsb`
+//        is VC6's /Oi expansion). A TU-local `#pragma intrinsic(strcpy)`
+//        just above the body restores the expansion at exactly this one
+//        site - destination as a literal `(char *)0x009C0D60` so the
+//        immediate folds - and BYTE_EXACT fell out first try. The pragma
+//        sits below every other body in this file, none of which calls
+//        strcpy, so nothing else can move.
+//
+// PROMOTED from src/recovered/00639390.cpp.
+Return Value: n/a
+*/
+// The image INLINES this one strcpy - the `repne scasb` + `rep movsd/movsb`
+// tail is VC6's own /Oi expansion, and calling strcpy while discarding the
+// result is what reproduces it. Every other string op in the shipped image
+// is an out-of-line call, which is why stdafx.h turns the four string
+// routines into calls tree-wide - so this one TU-local pragma restores the
+// expansion exactly where the image has it. Placed below every other body
+// in this file, none of which calls strcpy, so nothing else can move.
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+#pragma intrinsic(strcpy)
+#endif
+// The engine's staged-message slot, 0x009C0D60 in the image - real storage
+// now. Every error arm writes it via vox_stage_error; the engine clears it,
+// strlen-tests it and reads it back (0x0063830E/0x006383F1/0x0063FA61 - the
+// last copies 27 bytes, so the slot holds at least that; the image's extent
+// is unpinned, 0x100 is comfortable).
+
+extern "C" void __cdecl vox_stage_error(const char *message) {
+    strcpy(CaviarOutputMessageWindow.message_, message);
+}
+// Restore stdafx.h's out-of-line strcpy for the bodies that follow.
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+#pragma function(strcpy)
+#endif
+
+
 /*
 Purpose: Create the scene render record: allocate it, copy the colour and
          shadow tables for the descriptor's pixel size, fill the clip bounds
@@ -1054,4 +1281,44 @@ VoxRenderRecord *__cdecl vox_create_record(
     }
     vox_record_count += 1;
     return record;
+}
+
+
+/*
+Purpose: Release a render record and the four tables it owns, then drop the
+         count of records in existence. The colour and shadow tables and the
+         two ramp pointer arrays are each freed only when non-null; the record
+         itself is freed whatever it holds.
+// ORIGINAL: 0x00639630 sub_639630 0x00639630-0x00639694 BYTE_EXACT
+// symbol    ?vox_release_record@@YAXPAUVoxRenderRecord@@@Z
+// size      100 bytes
+// prototype void (__cdecl sub_639630)(int param_1)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// indirect  0x0063963D 0x0063964E 0x0063965F 0x00639670 0x0063967A
+//
+// Historical homing evidence (2026-09-05): the record it tears down is the one VoxRenderRecord
+// models and its caller is Caviar::close_class. Every release still uses
+// the engine's live release callback, shared with caviar_free_record.
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl vox_release_record(VoxRenderRecord *record) {
+    if (record->colour_table_ != 0) {
+        CaviarOutputMessageWindow.io_release_(record->colour_table_);
+    }
+    if (record->shadow_table_ != 0) {
+        CaviarOutputMessageWindow.io_release_(record->shadow_table_);
+    }
+    if (record->ramp_a_ptr_ != 0) {
+        CaviarOutputMessageWindow.io_release_(record->ramp_a_ptr_);
+    }
+    if (record->ramp_b_ptr_ != 0) {
+        CaviarOutputMessageWindow.io_release_(record->ramp_b_ptr_);
+    }
+    CaviarOutputMessageWindow.io_release_(record);
+    if (vox_record_count != 0) {
+        --vox_record_count;
+    }
 }

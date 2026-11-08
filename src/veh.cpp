@@ -72,13 +72,29 @@ int __cdecl popp(const char *title, const char *label, int channel,
 
 extern uint32_t LockEnableMask;  // 0x009A64E8, defined in lock.cpp
 
-extern int DesignConsiderPrototype;
-extern uint32_t DesignConsiderAbilities;
-extern int DesignConsiderWeapon;
-extern int DesignConsiderChassis;
-extern int DesignConsiderReactor;
-extern int DesignConsiderArmor;
-extern int DesignConsiderOverride;
+// The automatic-design editor exchanges these fields with consider_designs
+// (0x00581260). setup_veh writes them, enables the override, then reloads
+// the resulting component choices. Their shared consumer remains unfinished.
+// RECOVERY_OBJECT: v2 0x0093FC34 0x0093FC38 ?DesignConsiderAbilities@@3IA 0x0043E490
+uint32_t DesignConsiderAbilities;
+// RECOVERY_OBJECT: v2 0x0093FC38 0x0093FC3C ?DesignConsiderPrototype@@3HA 0x0043E490
+int DesignConsiderPrototype;
+// RECOVERY_OBJECT: v2 0x0093FC3C 0x0093FC40 ?DesignConsiderWeapon@@3HA 0x0043E490
+int DesignConsiderWeapon;
+// RECOVERY_OBJECT: v2 0x0093FC40 0x0093FC44 ?DesignConsiderChassis@@3HA 0x0043E490
+int DesignConsiderChassis;
+// propose_proto exchanges its sixth (reactor) argument with the editor at
+// 0x580F07; both original writes use this independent four-byte scalar.
+// RECOVERY_OBJECT: v2 0x0093FC44 0x0093FC48 ?DesignConsiderReactor@@3HA 0x00580860
+int DesignConsiderReactor;
+// Workshop583FA2 publishes its faction here; preview583DB5/583DC1 reloads
+// it around veh_fake. This is distinct from the preceding reactor scalar.
+// RECOVERY_OBJECT: v2 0x0093FC48 0x0093FC4C ?WorkshopFaction@@3HA 0x00583E30
+int WorkshopFaction;
+// RECOVERY_OBJECT: v2 0x0093FC50 0x0093FC54 ?DesignConsiderArmor@@3HA 0x0043E490
+int DesignConsiderArmor;
+// RECOVERY_OBJECT: v2 0x0093FC54 0x0093FC58 ?DesignConsiderOverride@@3HA 0x0043E490
+int DesignConsiderOverride;
 
 // Native580B51/580BF7 test immediate ability masks, not executable globals.
 static const uint32_t PrototypeAbilityCompatibilityMask = 0x0044AE1Bu;
@@ -88,6 +104,11 @@ static const uint32_t PrototypeAbilitySimilarityMask = 0x0048841Au;
 // first selected prototype only while the scalar remains negative.
 // RECOVERY_OBJECT: v2 0x0068F0F0 0x0068F0F4 ?FirstProposedPrototype@@3HA 0x00580860
 int FirstProposedPrototype = -1;
+// Preview583CD7 and workshop583F9A read this signed zoom, initially -6.
+// Its four-byte initializer is independently backed by the pinned image;
+// the preceding FirstProposedPrototype ends at this address, exclusively.
+// RECOVERY_OBJECT: v2 0x0068F0F4 0x0068F0F8 ?WorkshopPreviewZoom@@3HA 0x00583CD0
+int WorkshopPreviewZoom = -6;
 
 // Compose a readable prototype name from the already-loaded design rules.
 // Rule-string fields retain pointer-bit values validated by the loaded rules.
@@ -3588,6 +3609,78 @@ void __cdecl prune_protos(int faction_id, int prototype_id, int options) {
     }
 }
 
+/*
+Purpose: Determine whether a faction is able to jump up the tech tree for the specified tech.
+// ORIGINAL: 0x0057CE50 ?valid_tech_leap@@YAHHH@Z 0x0057CE50-0x0057CF9E BYTE_EXACT
+// size      334 bytes
+// prototype int (__cdecl ?valid_tech_leap@@YAHHH@Z)(int techID, int factionID)
+// callers   1   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0057F0B0 0x005B9F20
+Return Value: Is a tech leap possible? true/false
+Status: Complete
+*/
+// TRIED: has_tech_call() (technology.h) exists for exactly this - a real
+// out-of-line has_tech() the way best_specialist (base.cpp) needs one - but
+// that idiom only works CROSS-TU. has_tech's `MEASURED inline` body lives in
+// technology.h, included at the top of THIS file, so it is visible to every
+// function below it uniformly; there is no position in technology.cpp where
+// valid_tech_leap could sit "before" it the way tech_avail's own marker
+// describes (that split predates has_tech's move into the header and no
+// longer holds - tech_avail measures MISMATCH here too, not BYTE_EXACT).
+// `#pragma inline_depth(0)` around this function has NO effect (measured):
+// it limits the RECURSION depth of nested inline expansion, not whether a
+// direct, first-level call to an explicitly `inline` function expands, and
+// neither does `/Ob0` on this flag set. has_tech_call still reads correctly
+// here even though it does not yet reproduce the image's real `call
+// 0x5b9f20` at these 4 sites - fixing it needs has_tech's definition moved
+// out of the header, which has ~108 other call sites across the tree and is
+// out of scope for this body.
+//   (STALE: has_tech_call DOES reproduce the image's four `call 0x5b9f20`
+//   now - call_diff agrees on every call this body makes.)
+// LEVER: the nine failure paths share one out-of-line `return false` because
+//   they are `||`-combined conditions (pattern: `if (a || b) return 0;`), not
+//   separate guards or a goto; the two `return true;` sites then stay inline.
+// LEVER: indexed loops, not pointer locals - `Reactor[i].preq_tech`,
+//   `Weapon[i].preq_tech`, `Weapon[i].offense_rating`. The image strength-
+//   reduces each into a field pointer and keeps the weapon counter alive
+//   (`shl esi, 4; movsx ecx, byte ptr [esi + 0x94ae68]`) only because the
+//   body indexes the array again; a `RulesWeapon *weapon` local read the
+//   field off the pointer and lost the call/shl/add/movsx order.
+BOOL __cdecl valid_tech_leap(int tech_id, int faction_id) {
+    if (Technology[tech_id].preq_tech_1 >= 0
+        && (!has_tech(Technology[Technology[tech_id].preq_tech_1].preq_tech_1, faction_id)
+            || !has_tech(Technology[Technology[tech_id].preq_tech_1].preq_tech_2, faction_id))) {
+        return false; // missing a prerequisite of the 1st prerequisite
+    }
+    if (Technology[tech_id].preq_tech_2 >= 0
+        && (!has_tech(Technology[Technology[tech_id].preq_tech_2].preq_tech_1, faction_id)
+            || !has_tech(Technology[Technology[tech_id].preq_tech_2].preq_tech_2, faction_id))) {
+        return false; // missing a prerequisite of the 2nd prerequisite
+    }
+    if (Technology[tech_id].preq_tech_1 <= TechDisabled
+        || Technology[tech_id].preq_tech_2 <= TechDisabled) {
+        return false; // disabled
+    }
+    for (int i = 0; i < MaxReactorNum; i++) {
+        if (tech_id == Reactor[i].preq_tech) {
+            return false; // leap not possible for reactor tech
+        }
+    }
+    for (int j = 0; j < MaxWeaponNum; j++) {
+        if (Weapon[j].preq_tech == tech_id) { // may end early if 2 weapons have the same preq
+            // `ranking` is compared signed in the image (`jg`).
+            if (PlayersData[faction_id].ranking > 2 // lowest two ranking factions
+                || Weapon[j].offense_rating > weapon_budget(faction_id, 99, false) + 2) {
+                return false;
+            }
+            return true;
+        }
+    }
+    return true;
+}
+
 // ORIGINAL: 0x0057CFA0 ?study_artifact@@YAHH@Z 0x0057CFA0-0x0057D1E8 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Consume the actual vehicle after snapshotting its location/faction, preserve the translator-base bypass and artifact link state, then choose eligible technology through genuine faction/Technology owners. No byte/reference or runtime claim is granted.","evidence":["git:0de05de6:src/unrecovered/0057cfa0.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/scenario-artifact-unity-owner-coverage.json","Original full span and native physical COFF emitted symbol ?study_artifact@@YAHH@Z; existing source owns all referenced storage and services."]}
 // TRIED: direct pointer-cast field reads/multiply-based offsets instead of the lea-chain scaling; diverges at instr #3 (prologue push/save order)
@@ -4424,6 +4517,231 @@ skip_empath4:
 }
 
 
+
+
+// ORIGINAL: 0x00583CB0 ?design_new_veh@@YAXHH@Z 0x00583CB0-0x00583CC7 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Retired exact seed git:5da70027:src/recovered/00583cb0.cpp preserves the23byte original wrapper and direct43E9A0 exec call; designwin.cpp owns the actual71F2B0 singleton and corresponding exec identity."], "reason": "Dispatch the two original design arguments through the genuine source-owned TutWinDesWindow singleton and its DesignWin::exec method, not an original-address receiver."}
+void __cdecl design_new_veh(int faction_id, int prototype_id) {
+    TutWinDesWindow.exec(faction_id, prototype_id);
+}
+
+static int workshop_signed_bits(unsigned int bits) {
+    return bits <= 0x7fffffffu ? static_cast<int>(bits)
+        : -1 - static_cast<int>(0xffffffffu - bits);
+}
+
+static int workshop_scaled_dimension(int dimension, int numerator,
+                                     int denominator) {
+    const int product = workshop_signed_bits(
+        static_cast<unsigned int>(dimension) *
+        static_cast<unsigned int>(numerator));
+    return product / denominator;
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00583CD0 ?hq_list_draw@@YAXPAUGraphicWin@@HHHHH@Z 0x00583CD0-0x00583E2A BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned native583CD0..583E2A: signed scaling and centering, active bit0, shared zoom68F0F4 initial-6 and mutable faction93FC48, fake vehicle5C1D50, obsolete order byte11, Buffer secondary base444, veh_draw5594F0 and unity scale epilogue. Retained src/recovered/units/00583cd0.cpp; recovery/tasks/designwin-owner-coverage.json coupled callback authorization; no original-address aliases."], "reason": "Recover the workshop prototype preview through actual GraphicWin Buffer inheritance, VehPrototype and Veh owners, source-owned zoom/faction storage and sprite scaling. Preserve the seed identity and original span; catalogue struct spelling differs from the actual GraphicWin class symbol. No matching claim is granted."}
+// symbol    ?hq_list_draw@@YAXPAVGraphicWin@@HHHHH@Z
+void __cdecl hq_list_draw(GraphicWin *window, int prototype, int flags,
+                          int x, int y, int height) {
+    const int zoom = WorkshopPreviewZoom;
+    const int scale = MapWinCaptionScale;
+    x += (flags & 1) ? (scale > 0 ? 132 * scale / MapWinCaptionDivisor
+                                  : 132 * (WorkshopPreviewZoom + 16) / 16)
+                     : 0;
+    if ((VehPrototypes[prototype].flags & 1) == 0) return;
+
+    const int draw_height = scale > 0 ? 75 * scale / MapWinCaptionDivisor
+                                      : 75 * (WorkshopPreviewZoom + 16) / 16;
+    y += (height - draw_height) / 2;
+    if (scale > 0) {
+        SpriteScaleNumerator = scale;
+        SpriteScaleDenominator = MapWinCaptionDivisor;
+    } else {
+        SpriteScaleDenominator = 16;
+        SpriteScaleNumerator = WorkshopPreviewZoom + 16;
+    }
+    const int vehicle = veh_fake(prototype, WorkshopFaction);
+    if (VehPrototypes[prototype].obsolete_factions & (1 << WorkshopFaction))
+        Vehs[vehicle].order = 1;
+    veh_draw(window ? static_cast<Buffer *>(window) : 0,
+             vehicle, x, y, zoom, 0x2044, 0);
+    // The original publishes unity, rather than restoring the previous scale.
+    SpriteScaleNumerator = 1;
+    SpriteScaleDenominator = 1;
+}
+
+extern uint32_t UpgradePromptAnswered;
+
+// ORIGINAL: 0x00583E30 ?design_workshop@@YAHHH@Z 0x00583E30-0x00584B4B;0x0065FFD0-0x00660239
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned583E30..584B4B and65FFD0..660239; preserved git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00583e30.cpp; mode-zero list bypass, nonzero64-prototype scan,128 sorted list rows, ordered0/2/3/4/default action chain and native Popup cleanup funclets.", "Native5842DB tests priorflags8 before setting200; upgrade scan skips selected/inactive rows, passes faction/replacement/selected/zero, reports only scan exhaustion and rebuilds the entire list. Rename5845AE copies shared prompt result into the prototype name. Callback60BCDF return is discarded; real hq_list_draw owns preview behavior.", "Existing DesignWin/Popup/Dialog owners, WorkshopFaction/PreviewZoom and source-owned prototype/player storage; recovery/tasks/designwin-owner-coverage.json. Existing NetMsgPrimary fixed-address facade and unfinished callee behavior remain separate dependencies; no byte, runtime or game acceptance claim."], "reason": "Recover the complete production workshop dependency through real lexical Popup lifetime, typed dialog and prototype ownership, native list/action flow and source-owned preview callback. Preserve its original identity, seed and historical obligations instead of a link-only placeholder."}
+// TRIED: the two "layout" division computations (0x583F94-0x584054) simplified the signed-rounding cdq/and/sar idiom to a plain shift for the likely-positive case; the upgrade-candidate scan (0x5843D5-0x5843EB) approximated the per-slot style comparison rather than tracing every register precisely.
+int __cdecl design_workshop(int faction_id, int mode) {
+    Popup popup;
+    char number[16];
+
+    // Native mode zero skips the automatic-design search and enters the list.
+    if (mode != 0) {
+        int best_score = 0;
+        int best_prototype = -1;
+        const int faction_first = faction_id * MaxVehProtoFactionNum;
+        for (int slot = 0; slot < MaxVehProtoFactionNum; ++slot) {
+            const int prototype_id = faction_first + slot;
+            const VehPrototype &prototype = VehPrototypes[prototype_id];
+            int score;
+            if ((prototype.flags & PROTO_ACTIVE) != 0) {
+                if ((prototype.obsolete_factions & (1 << faction_id)) == 0)
+                    continue;
+                if (PlayersData[faction_id].proto_id_active[prototype_id] != 0)
+                    continue;
+                score = 0x384 - PlayersData[faction_id].proto_id_queue[prototype_id];
+            } else {
+                score = 0x3e7;
+            }
+            if (score > best_score) {
+                best_score = score;
+                best_prototype = prototype_id;
+            }
+        }
+        if (best_prototype >= 0)
+            return TutWinDesWindow.exec(faction_id, best_prototype);
+    }
+
+    for (;;) {
+        proto_sort(faction_id);
+        popups_medium();
+        popup.start(PopupStartCaption, "DESIGNSHOP", -1, 0, 2, 0);
+        WorkshopFaction = faction_id;
+        PopupModalState = 5;
+        popup.dialogs().set_callbacks(&hq_list_draw, 0, 0);
+
+        const int caption_scale = MapWinCaptionScale;
+        const int caption_divisor = MapWinCaptionDivisor;
+        const int metric = WorkshopPreviewZoom;
+        int width = caption_scale > 0
+            ? workshop_scaled_dimension(132, caption_scale, caption_divisor)
+            : workshop_scaled_dimension(132, workshop_signed_bits(static_cast<unsigned int>(metric) + 16u), 16);
+        int height = caption_scale > 0
+            ? workshop_scaled_dimension(75, caption_scale, caption_divisor)
+            : workshop_scaled_dimension(75, workshop_signed_bits(static_cast<unsigned int>(metric) + 16u), 16);
+        Dialog &dialog = static_cast<Dialog &>(popup.dialogs());
+        dialog.field_34_ = workshop_signed_bits(static_cast<unsigned int>(width) * 2u + 3u);
+        dialog.field_48_ = height;
+        dialog.field_50_ = 8;
+
+        for (int row = 0; row < 128; ++row) {
+            const int prototype_id = ProtoSortIds[row];
+            const int prototype_faction = prototype_id / MaxVehProtoFactionNum;
+            if (prototype_faction != 0 && prototype_faction != faction_id)
+                continue;
+            const VehPrototype &prototype = VehPrototypes[prototype_id];
+            const bool active = (prototype.flags & PROTO_ACTIVE) != 0;
+            if (active && prototype_faction != 0
+                && !has_tech(prototype.preq_tech, faction_id))
+                continue;
+
+            StringTemp[0] = 0;
+            if (active) {
+                const bool obsolete =
+                    (prototype.obsolete_factions & (1 << faction_id)) != 0;
+                if (obsolete) strcat(StringTemp, "-");
+                strcat(StringTemp, prototype.veh_name);
+                strcat(StringTemp, "|");
+                if (obsolete) {
+                    strcat(StringTemp, label_get(0x368 / 4));
+                    strcat(StringTemp, ", ");
+                }
+                if ((prototype.flags & 4) == 0 && prototype_id >= 64) {
+                    strcat(StringTemp, label_get(0x2e4 / 4));
+                    strcat(StringTemp, ", ");
+                }
+                strcat(StringTemp, label_get(0x160 / 4));
+                strcat(StringTemp, ": ");
+                _itoa(workshop_signed_bits(static_cast<unsigned int>(cost_factor(faction_id, 1, -1)) * prototype.cost),
+                      number, 10);
+                strcat(StringTemp, number);
+                strcat(StringTemp, ", ");
+                say_stats(StringTemp, prototype_id, 0);
+            } else if (prototype_faction == 0) {
+                strcat(StringTemp, "- ");
+                strcat(StringTemp, label_get(0x1b8 / 4));
+                strcat(StringTemp, " -");
+            } else {
+                continue;
+            }
+            popup.dialogs().item(StringTemp, prototype_id);
+        }
+
+        const int selected = popup.BasePop::exec(0, 0);
+        popups_normal();
+        g_FX.play(0xf);
+        const uint32_t action = popup.input_poll_state();
+        if (action == 0)
+            return -1;
+        if (action == 2) {
+            char *prototype_name = VehPrototypes[selected].veh_name;
+            if (X_pop_ask("DESIGNNAME", 31, prototype_name, 0, 0) != 0)
+                return -1;
+            strcpy(prototype_name, ParseStrBuffer[0].str);
+            synch_proto(selected);
+            return -1;
+        }
+        if (action == 3) {
+            VehPrototype &prototype = VehPrototypes[selected];
+            if ((prototype.obsolete_factions & (1 << faction_id)) != 0) {
+                if ((prototype.flags & 0x8) != 0)
+                    prototype.flags |= 0x200;
+                prototype.flags |= 8;
+            } else {
+                prototype.flags &= static_cast<uint16_t>(~(0x200 | 8));
+            }
+            prototype.obsolete_factions ^= static_cast<uint8_t>(1 << faction_id);
+            synch_obs(selected);
+            continue;
+        }
+        if (action == 4) {
+            if (NetDaemonNet.lock(2, -1, -1, 0, -1, -1) != 0)
+                continue;
+            UpgradePromptAnswered = 0;
+            int replacement = -1;
+            const VehPrototype &old = VehPrototypes[selected];
+            int scanned = 0;
+            for (int slot = 0; slot < MaxVehProtoFactionNum; ++slot) {
+                scanned = slot;
+                const int candidate_id = faction_id * MaxVehProtoFactionNum + slot;
+                if (candidate_id == selected) continue;
+                const VehPrototype &candidate = VehPrototypes[candidate_id];
+                if ((candidate.flags & PROTO_ACTIVE) == 0) continue;
+                if ((candidate.obsolete_factions & (1 << faction_id)) != 0)
+                    continue;
+                if ((candidate.flags & 4) == 0) continue;
+                if (candidate.plan != old.plan || candidate.unk_1 != old.unk_1)
+                    continue;
+                if (Chassis[candidate.chassis_id].triad
+                    == Chassis[old.chassis_id].triad) {
+                    replacement = candidate_id;
+                    break;
+                }
+            }
+            if (replacement < 0) scanned = MaxVehProtoFactionNum;
+            if (replacement >= 0)
+                upgrade_prototype(faction_id, replacement, selected, 0);
+            NetDaemonNet.unlock();
+            if (scanned >= MaxVehProtoFactionNum) {
+                const char *icon = (Players[faction_id].rule_flags & 0x80)
+                    ? "alunit_sm.pcx" : "unit_sm.pcx";
+                popp(ScriptPopupFile, "NOUPGRADE", 0, icon, 0);
+            }
+            continue;
+        }
+        if (selected < MaxVehProtoFactionNum) {
+            NetMsgPrimary.pop("DESIGNNO", 0x1388, 0, 0);
+            return -1;
+        }
+        VehPrototypes[selected].flags &= static_cast<uint16_t>(~0x80);
+        return TutWinDesWindow.exec(faction_id, selected);
+    }
+}
 
 
 /*

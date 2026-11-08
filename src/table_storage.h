@@ -20,7 +20,7 @@ struct PointerTripletTable {
     uint32_t field_08_;
 
     // The mapped body and unresolved original-owner notes are retained with
-    // the out-of-line definition in table_storage.cpp.
+    // the out-of-line definition in caviar.cpp.
     void release_contents();
 };
 

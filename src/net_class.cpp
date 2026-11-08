@@ -31,6 +31,11 @@
 // RECOVERY_BINDING: v1 {"evidence": ["git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/unrecovered/00401760.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the transferred historical seed findings and complete original spans.", "git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/unrecovered/00401760.cpp", "Historical seed spelling ?add@ServiceStruct@@QAEHH@Z; current source mapping ?add@ServiceStruct@@QAEHH@Z; emitted symbol ?add@ServiceProviderList@@QAEHH@Z."], "reason": "Original allocates entry1C/payload20 and invokes provider hook. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
 // TRIED: goto-preserving transcription of the Ghidra decompile (3-tier Heap::get/mem_get fallback, twice per node-type A/B, VCall slot0 insert callback); diverges at insn #7 in the prologue/local register allocation, not in the control-flow shape
 // symbol    ?add@ServiceProviderList@@QAEHH@Z
+// sub_631050 constructs the AlphaNetLedger whose inline constructor emits this.
+// ORIGINAL: 0x00401C80 SessionStruct::SessionStruct 0x00401C80-0x00401CD8 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Retired seed: src/recovered/units/00401c80.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Session base tables669408/669404 and five cleared circular-list fields."}
+// body src/alphanet_inline.h
+// symbol    ??0AlphaNetStringStruct@@QAE@XZ
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00402350 sub_402350 0x00402350-0x0040239B FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00402350.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-24, calls4023A0, publishes owner, tests deletion bit1 and conditionally frees complete receiver."}
@@ -93,6 +98,7 @@
 #include <new>
 #include <cstring>
 #include "net_class.h"
+#include "net_session_picker.h"  // the session picker window sub_631050 owns
 #include "alphanet.h"
 #include "alphanet_inline.h"
 #include "popup.h"    // pop_caption / pop_caption_value_title, drop_player's asks
@@ -425,6 +431,9 @@ Return Value: 7 with no DirectPlay session, 0x10 with no list, 1 when the
          enumeration reported a failure, else 0
 Status: Coverage transcription - unclaimed body
 */
+// stand-in: auto_inline(off) keeps sub_631050's two direct calls (0x0062E420)
+// now that it shares this TU; VC6 auto-inlines the first one otherwise (C4711).
+#pragma auto_inline(off)
 int Net::enumerate_sessions(AlphaNetLedger *ledger, const char *password) {
     if (NetDirectPlay == 0) return 7;
     if (ledger == 0) return 0x10;
@@ -444,6 +453,7 @@ int Net::enumerate_sessions(AlphaNetLedger *ledger, const char *password) {
     seek_ledger_pos(ledger, -1);
     return 0;
 }
+#pragma auto_inline(on)
 
 Net::Net() {
     // voice_tx_ (0x58), jackal_voice_rx_ (0xB0), three queues (0xE8..0x14B)
@@ -2265,6 +2275,188 @@ int Net::choose_service() {
     // the source-owned C++ spelling of that lifetime operation.
     delete popup;
     return result;
+}
+
+namespace {
+
+// 0x631050 brackets its stack-owned session structures with the shared
+// StringAllocationHeap handoff. Declare this before those objects so it
+// restores the incoming value after their natural destruction.
+struct SessionPickerAllocationHandoff {
+  Heap *saved_;
+  SessionPickerAllocationHandoff() : saved_(StringAllocationHeap) {
+    StringAllocationHeap = 0;
+  }
+  ~SessionPickerAllocationHandoff() { StringAllocationHeap = saved_; }
+};
+
+}  // namespace
+
+// Descriptive method name only. The pinned 0x631050 entry proves a Net
+// receiver, but not its original source identifier. The original local window
+// is constructed/closed here; the separate modal BasePop is obtained from
+// PopupAllocHook and owns the menus and EditGroup fields below.
+// ORIGINAL: 0x00631050 sub_631050 0x00631050-0x00631A06;0x00663528-0x0066372B FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor/destructor calls and direct accesses establish the GraphicWin base, ordered Time/Heap/ListBox/PushButton/list members, and observed tail through +0x37A4. The descriptive owner name and complete original allocation remain unproved.", "The integer timer adapter checks nonzero context; the distinct nullary focus member does not. Pinned table 0x670DDC establishes slot 12 at 0x670E0C -> 0x63C9D0 and slot 44 at 0x670E8C -> 0x63C3A0. Automatic owner destruction replaces manual table staging and executable-address forwarding.", "The Net caller retains one automatic picker, original unchecked copies and invalid-node error paths, and password-pointer reloads after modal execution. Indirect event linkage, precise unwind correspondence, historical matching and full linked/runtime fidelity remain obligations."], "reason": "Typed session-picker ownership and its Net receiver-backed caller, preserving the original entries and compiler-generated lifetime identities."}
+// symbol    ?session_picker_dialog@Net@@QAEHXZ
+// TRIED: no ESP-relative frame (raw buffer + manual calls, not a real frame pointer omission); the entry receiver (`mov edi,ecx`) and Ghidra's `param_2` are not recoverable under the mandated 0-arg `__cdecl` signature, so both are read from placeholder storage instead of a real caller-supplied value; sub_63bb20/ sub_63bd10/sub_4e34b0/sub_4e3350/sub_4080b0/fn_00401c80/ fn_00401ce0/fn_00402970 called with no receiver/args since their declared prototypes are 0-arg extern "C" and changing them would break linkage to the real symbol.
+int Net::session_picker_dialog() {
+  SessionPickerAllocationHandoff allocation_handoff;
+  AlphaNetLedger available_sessions;
+  NetSessionPickerWin picker;
+  int result = 0;
+  NetAllocationNode *selected_session = 0;
+
+  // Native checks Net+0x6E0 before allocating the modal popup. The one
+  // 0x63BD10 call in each teardown is the local picker's destructor body,
+  // which the compiler expands before natural member/base destruction; do
+  // not add a second explicit close here.
+  if (buffer_6E0_ == 0) {
+    return 0;
+  }
+
+  BasePop *popup = PopupAllocHook();
+  if (popup == 0) {
+    return 4;
+  }
+
+  static char choose_title[] = "Would you like to...?";
+  static char create_or_join[] = "Start a new session or...";
+  static char find_session[] = "Search for an existing one?";
+  static char no_sessions[] =
+      "No sessions are currently running.  Would you like to try again?";
+  static char yes_text[] = "Yes";
+  static char no_text[] = "No";
+  static char create_text[] = "Create Session";
+  static char session_name_text[] = "Session Name:";
+  static char player_limit_text[] = "Maximum Players:";
+  static char session_password_text[] = "Session Password (Optional):";
+  static char player_name_text[] = "Your Name:";
+  static char password_required_text[] =
+      "Password required for this session:";
+
+  if (popup->init(0x10, 0) != 0) goto session_picker_cleanup;
+  popup->string(choose_title);
+  popup->dialogs().Dialogs::item(create_or_join, 0);
+  popup->dialogs().Dialogs::item(find_session, 1);
+
+  if (popup->exec(0, 0) == 0) goto session_picker_create;
+
+  for (;;) {
+    if (enumerate_sessions(&available_sessions, 0) != 0) {
+      result = 0;
+      goto session_picker_cleanup;
+    }
+
+    if (available_sessions.entry_count_ == 0) {
+      if (popup->init(0x10, 0) != 0) goto session_picker_cleanup;
+      popup->string(no_sessions);
+      popup->dialogs().Dialogs::item(yes_text, 0);
+      popup->dialogs().Dialogs::item(no_text, 1);
+      popup->button(create_text);
+      const int retry_choice = popup->exec(0, 0);
+      if (popup->input_poll_state() == 1) goto session_picker_create;
+      if (retry_choice != 0) {
+        // The original calls exit(2) on this affirmative-looking branch.
+        exit(2);
+      }
+      continue;
+    }
+
+    if (popup->init(0x42, 0) != 0) goto session_picker_cleanup;
+    available_sessions.seek_pos(-1);
+    int row = 0;
+    while (row < available_sessions.entry_count_) {
+      NetAllocationNode *session = available_sessions.next_entry();
+      char *name = session == 0 ? 0 : session->session_name_;
+      popup->dialogs().Dialogs::item(name, row);
+      ++row;
+    }
+    popup->button(create_text);
+
+    const int selected_row = popup->exec(0, 0);
+    if (selected_row == -1) {
+      result = 0;
+      goto session_picker_cleanup;
+    }
+    if (popup->input_poll_state() == 1) goto session_picker_create;
+
+    available_sessions.seek_pos(selected_row);
+    selected_session = available_sessions.head_ == 0
+        ? 0 : available_sessions.current_->payload_;
+    goto session_picker_credentials;
+  }
+
+session_picker_create:
+  for (;;) {
+    if (popup->init(0x44, 0) != 0) {
+      result = 0;
+      goto session_picker_cleanup;
+    }
+    popup->set_width(0x190);
+    char default_players[16];
+    _itoa(0x10, default_players, 10);
+    popup->dialogs().EditGroup::edit(session_name_text, 0, 0x32);
+    popup->dialogs().EditGroup::edit(player_limit_text, default_players, 2);
+    popup->dialogs().EditGroup::edit(session_password_text, 0, 0x32);
+    // Native 0x63156D resolves the Dialog virtual-base displacement from
+    // Dialogs' vbtable, then writes 1 to Dialog::field_4C_. Qualification is
+    // required so C++ applies that genuine shared-virtual-base adjustment.
+    popup->dialogs().Dialog::field_4C_ = 1;
+    ParseStrBuffer[0].str[0] = 0;
+    ParseStrBuffer[1].str[0] = 0;
+    ParseStrBuffer[2].str[0] = 0;
+
+    if (popup->exec(0, 0) == -1) {
+      result = 0;
+      goto session_picker_cleanup;
+    }
+    if (ParseStrBuffer[1].str[0] != 0 &&
+        atoi(ParseStrBuffer[1].str) > 0x10) {
+      continue;
+    }
+
+    // The native local begins at frame+0x58 and the following integer-to-text
+    // buffer begins at frame+0x70, leaving 0x18 bytes for this unchecked
+    // strcat destination. Preserve that small local rather than widening it.
+    char session_name[0x18];
+    session_name[0] = 0;
+    strcat(session_name, ParseStrBuffer[0].str);
+    char *password = ParseStrBuffer[2].str[0] == 0
+        ? 0 : ParseStrBuffer[2].str;
+    NetAllocationNode *created = create_session(
+        session_name, atoi(ParseStrBuffer[1].str), password);
+    if (created == 0) goto session_picker_cleanup;
+    selected_session = created;
+    goto session_picker_credentials;
+  }
+
+session_picker_credentials:
+  if (popup->init(4, 0) != 0) goto session_picker_cleanup;
+  popup->dialogs().EditGroup::edit(player_name_text, 0, 0x32);
+  if (selected_session->password_ != 0 &&
+      selected_session->password_[0] != 0) {
+    popup->dialogs().EditGroup::edit(password_required_text, 0, 0x32);
+  }
+  if (popup->exec(0, 0) == -1) goto session_picker_cleanup;
+  // The pinned code reloads the node's password pointer after the modal
+  // dialog. If a password is now present it uses both parse buffers; if not,
+  // it snapshots the player name through the native unchecked strcat local
+  // and passes a null password (not the empty second parse buffer).
+  if (selected_session->password_ != 0 &&
+      selected_session->password_[0] != 0) {
+    result = join_session(selected_session, ParseStrBuffer[0].str,
+                           ParseStrBuffer[1].str);
+  } else {
+    char player_name[0x18];
+    player_name[0] = 0;
+    strcat(player_name, ParseStrBuffer[0].str);
+    result = join_session(selected_session, player_name, 0);
+  }
+
+session_picker_cleanup:
+  delete popup;
+  return result;
 }
 
 // Unreferenced in the pinned image (no call, jump or data reference).

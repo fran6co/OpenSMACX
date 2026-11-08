@@ -14,10 +14,6 @@ set(CMAKE_CXX_FLAGS_DEBUG "/Z7 /Ob0 /Od /Oy-")
 add_library(caviar STATIC
     caviar_geometry.cpp
     caviar_loader.cpp
-    caviar_chain.cpp
-    caviar_io.cpp
-    caviar_record.cpp
-    caviar_error.cpp
     caviar_scene.cpp
     caviar_cpu.cpp
     caviar_raster.cpp
@@ -49,10 +45,6 @@ set_property(TARGET caviar PROPERTY COMPILE_OPTIONS ${_caviar_options})
 set(CAVIAR_VC5_SOURCES
     caviar_geometry.cpp
     caviar_loader.cpp
-    caviar_chain.cpp
-    caviar_io.cpp
-    caviar_record.cpp
-    caviar_error.cpp
     caviar_raster.cpp caviar_scene.cpp)
 # The library was built without automatic inlining (/Ob1): the image calls
 # small helpers out of line where /Ob2 would inline them. /Ob1 follows the
@@ -60,5 +52,5 @@ set(CAVIAR_VC5_SOURCES
 set_property(SOURCE ${CAVIAR_VC5_SOURCES} APPEND PROPERTY COMPILE_OPTIONS "--compiler=vc5" "$<$<CONFIG:Release,RelWithDebInfo>:/Ob1>")
 
 # Native member-reference verification needs these owners' CodeView types.
-set_property(SOURCE caviar_chain.cpp caviar_scene.cpp caviar_raster.cpp caviar_loader.cpp
+set_property(SOURCE caviar_scene.cpp caviar_raster.cpp caviar_loader.cpp
     APPEND PROPERTY COMPILE_OPTIONS "/Z7")

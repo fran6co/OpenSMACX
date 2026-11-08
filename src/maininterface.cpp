@@ -2710,32 +2710,6 @@ int MainInterface::on_iface_dialog_item_back_draw(GraphicWin *, int, int,
     return 0;
 }
 
-// ORIGINAL: 0x004B1B70 ?bubble_me_elmo2@SocialWin@@QAGXPADHH@Z 0x004B1B70-0x004B1BB2 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["task:datalink-interface-callback-owner", "Pinned4B1B70..4B1BB2 is a three-argument stdcall callback using explicit MainInterfaceGlobal7AE820 and its primary Win base. Historical SocialWin label remains canonical identity but does not imply a receiver. Converts coordinates before passing a point RECT to Win5F83D0.", "historical seed:src/recovered/004b1b70.cpp"], "reason": "Recover typed UI helper in its genuine source owner, retaining original identity, spans and historical obligations; remove superseded fixed-address seed."}
-// symbol    ?main_interface_bubble_callback@@YGXPADHH@Z
-void __stdcall main_interface_bubble_callback(char *text, int x, int y) {
-    MainInterfaceGlobal.client_to_screen(&x, &y);
-    RECT rectangle;
-    rectangle.left = x;
-    rectangle.top = y;
-    rectangle.right = x;
-    rectangle.bottom = y;
-    MainInterfaceGlobal.Win::set_bubble_text(text, &rectangle);
-}
-
-// ORIGINAL: 0x004396B0 ?bubble_me_elmo2@DesignWin@@QAGXPADHH@Z 0x004396B0-0x004396F2 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/units/004396b0.cpp", "task:owned-helper-coverage-batch", "Pinned4396B0 ignores incomingECX, consumes text/x/y from stack and returns ret0C; MainInterfaceGlobal7AE820 is the actual receiver. Historical DesignWin label retained, no caller/owning table claim. Distinct original entry and body from existing4B1B70, never a shared-span alias."], "reason": "Recover a complete native helper through genuine source owners and SDK calls, preserving original identity, extent and historical obligations. Source home is not proof of original TU or complete-game acceptance."}
-// symbol    ?main_interface_bubble_callback_4396b0@@YGXPADHH@Z
-void __stdcall main_interface_bubble_callback_4396b0(char *text, int x, int y) {
-    MainInterfaceGlobal.client_to_screen(&x, &y);
-    RECT point;
-    point.left = x;
-    point.top = y;
-    point.right = x;
-    point.bottom = y;
-    MainInterfaceGlobal.Win::set_bubble_text(text, &point);
-}
-
 /*
 // ORIGINAL: 0x004325B0 ??1ButtonGroup@@QAE@XZ 0x004325B0-0x004325B5 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original4325B0..4325B5 jumps to ButtonGroup::close62B7F0.", "MainInterface constructor45EF10 constructs four embedded ButtonGroup objects at offset1E878, stride94, with original destructor callback4325B0.", "PrefWin finalizer48D540 loads its ButtonGroup object8577F0 and jumps directly to close62B7F0; an out-of-line-only destructor adds an incorrect intermediate target.", "Ordinary inline destruction preserves cleanup while the real MainInterface member array naturally requires the standalone callback. No dummy use, export, virtualness or compiler-policy change."], "reason": "ButtonGroup owns the inline destructor body. This current translation unit emits its standalone array-lifetime entry; original translation-unit provenance remains unknown."}

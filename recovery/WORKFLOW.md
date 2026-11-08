@@ -85,8 +85,9 @@ the real `SharedWordValue` object with its paired setter/toggle is declared in
 `shared_word.h` and owned by `help.cpp`, the original help unit. That is genuine source ownership, not evidence for the
 word's semantic domain, caller set or lifetime. The `leaf_recoveries.*` collection
 has been retired after its identities were transferred to current source homes.
-The remaining bounded state, span arithmetic and table cleanup bodies live in
-`word_state.*`, `span_math.*` and `table_storage.*`; all five mappings retain
+The remaining bounded state and span arithmetic bodies live in `word_state.*`
+and `span_math.*`; the table cleanup body (declared in `table_storage.h`) moved
+into `caviar.cpp`, whose address band contains it. All five mappings retain
 explicit structural obligations. Their provisional types do not establish
 original class identity, complete layout or lifetime. Superseded source files are
 removed only after their owners retain identity, claims and useful

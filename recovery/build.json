@@ -30,10 +30,6 @@
       {"archive": "src/jackal/jackal.lib", "object": "src/jackal/CMakeFiles/jackal.dir/rectangle.cpp.obj", "member": "src/jackal/CMakeFiles/jackal.dir/rectangle.cpp.obj"},
       {"archive": "src/caviar/caviar.lib", "object": "src/caviar/CMakeFiles/caviar.dir/caviar_geometry.cpp.obj", "member": "src/caviar/CMakeFiles/caviar.dir/caviar_geometry.cpp.obj"},
       {"archive": "src/caviar/caviar.lib", "object": "src/caviar/CMakeFiles/caviar.dir/caviar_loader.cpp.obj", "member": "src/caviar/CMakeFiles/caviar.dir/caviar_loader.cpp.obj"},
-      {"archive": "src/caviar/caviar.lib", "object": "src/caviar/CMakeFiles/caviar.dir/caviar_chain.cpp.obj", "member": "src/caviar/CMakeFiles/caviar.dir/caviar_chain.cpp.obj"},
-      {"archive": "src/caviar/caviar.lib", "object": "src/caviar/CMakeFiles/caviar.dir/caviar_io.cpp.obj", "member": "src/caviar/CMakeFiles/caviar.dir/caviar_io.cpp.obj"},
-      {"archive": "src/caviar/caviar.lib", "object": "src/caviar/CMakeFiles/caviar.dir/caviar_record.cpp.obj", "member": "src/caviar/CMakeFiles/caviar.dir/caviar_record.cpp.obj"},
-      {"archive": "src/caviar/caviar.lib", "object": "src/caviar/CMakeFiles/caviar.dir/caviar_error.cpp.obj", "member": "src/caviar/CMakeFiles/caviar.dir/caviar_error.cpp.obj"},
       {"archive": "src/caviar/caviar.lib", "object": "src/caviar/CMakeFiles/caviar.dir/caviar_scene.cpp.obj", "member": "src/caviar/CMakeFiles/caviar.dir/caviar_scene.cpp.obj"},
       {"archive": "src/caviar/caviar.lib", "object": "src/caviar/CMakeFiles/caviar.dir/caviar_cpu.cpp.obj", "member": "src/caviar/CMakeFiles/caviar.dir/caviar_cpu.cpp.obj"},
       {"archive": "src/caviar/caviar.lib", "object": "src/caviar/CMakeFiles/caviar.dir/caviar_raster.cpp.obj", "member": "src/caviar/CMakeFiles/caviar.dir/caviar_raster.cpp.obj"}
