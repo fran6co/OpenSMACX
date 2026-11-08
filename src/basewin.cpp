@@ -962,7 +962,9 @@ void BaseWin::draw_support() {
     fill(&rect1_, 0);
     const RECT area = rect1_;
     mapWin_.init(2, 0);
-    mapWin_.field_1DD6C_ = static_cast<int>(mapWin_.field_1DD6C_) >> 1;
+    // stand-in: the image shifts this field as a signed int (sar); a signed
+    // compound shift keeps the original schedule. Field is likely int.
+    *reinterpret_cast<int *>(&mapWin_.field_1DD6C_) >>= 1;
     const int height = mapWin_.pixel_height();
     const int width = mapWin_.pixel_width();
     mapWin_.field_1DD70_ = 0x200402;
@@ -1485,6 +1487,16 @@ void BaseWin::click(int x, int y, int right, int is_double) {
     }
 }
 
+// The image evaluates the destination conversion before the sprite index.
+static inline void psych_sprite(Buffer *destination, Sprite *sprite, int x, int y) {
+    sprite->draw(destination, sprite->transparent_index(), x, y);
+}
+
+static inline int psych_specialist_type(int i) {
+    return i >= 16 ? best_specialist()
+        : (static_cast<int>(BaseCurrent->spec[i >> 3]) >> ((i & 7) * 4)) & 15;
+}
+
 // Draw one row using the original population-sized spacing. The stage counts
 // are snapshots, but the number of content citizens and specialists is read
 // again after each Sprite draw. Packed specialist types must be valid 0..6;
@@ -1494,63 +1506,57 @@ void BaseWin::click(int x, int y, int right, int is_double) {
 void BaseWin::psych_row(int x, int y, int width, int sprite_width,
                        int talents, int drones, int super_drones) {
     Random random;
-    int spacing = sprite_width;
+    int spacing;
     const int population = BaseCurrent->population_size;
-    if (population > 1) {
+    if (population <= 1) {
+        spacing = sprite_width;
+    } else {
         const int available = (width - sprite_width) / (population - 1);
         if (available < 1 || sprite_width < 1) {
             spacing = 1;
         } else if (available <= sprite_width) {
             spacing = available;
+        } else {
+            spacing = sprite_width;
         }
     }
     random.reseed(timeGetTime());
     int i;
     if (ExpansionEnabled && (Players[BaseCurrent->faction_id_current].rule_flags & 0x80)) {
         for (i = 0; i < talents; i++) {
-            g_AL_CITIZEN_SM_CURSOR_SPRITES[0].draw(this,
-                g_AL_CITIZEN_SM_CURSOR_SPRITES[0].transparent_index(), x, y);
+            psych_sprite(this, &g_AL_CITIZEN_SM_CURSOR_SPRITES[0], x, y);
             x += spacing;
         }
         for (i = 0; i < BaseCurrent->population_size - BaseCurrent->specialist_total
                  - talents - drones; i++) {
-            g_AL_CITIZEN_SM_CURSOR_SPRITES[1].draw(this,
-                g_AL_CITIZEN_SM_CURSOR_SPRITES[1].transparent_index(), x, y);
+            psych_sprite(this, &g_AL_CITIZEN_SM_CURSOR_SPRITES[1], x, y);
             x += spacing;
         }
         for (i = 0; i < drones; i++) {
-            Sprite &sprite = g_AL_CITIZEN_SM_CURSOR_SPRITES[2 + (i >= drones - super_drones)];
-            sprite.draw(this, sprite.transparent_index(), x, y);
+            psych_sprite(this, &g_AL_CITIZEN_SM_CURSOR_SPRITES[i >= drones - super_drones ? 3 : 2], x, y);
             x += spacing;
         }
         for (i = 0; i < BaseCurrent->specialist_total; i++) {
-            Sprite &sprite = g_AL_SPECIALIST_SM_CURSOR_SPRITES[i >= 16
-                ? best_specialist() : (static_cast<int>(BaseCurrent->spec[i >> 3]) >> ((i & 7) * 4)) & 15];
-            sprite.draw(this, sprite.transparent_index(), x, y);
+            psych_sprite(this, &g_AL_SPECIALIST_SM_CURSOR_SPRITES[psych_specialist_type(i)], x, y);
             x += spacing;
         }
     } else {
         for (i = 0; i < talents; i++) {
-            Sprite &sprite = g_CITIZEN_SM_CURSOR_SPRITES[random.get(0, 2) * 4];
-            sprite.draw(this, sprite.transparent_index(), x, y);
+            psych_sprite(this, &g_CITIZEN_SM_CURSOR_SPRITES[random.get(0, 2) * 4], x, y);
             x += spacing;
         }
         for (i = 0; i < BaseCurrent->population_size - BaseCurrent->specialist_total
                  - talents - drones; i++) {
-            Sprite &sprite = g_CITIZEN_SM_CURSOR_SPRITES[random.get(0, 2) * 4 + 1];
-            sprite.draw(this, sprite.transparent_index(), x, y);
+            psych_sprite(this, &g_CITIZEN_SM_CURSOR_SPRITES[random.get(0, 2) * 4 + 1], x, y);
             x += spacing;
         }
         for (i = 0; i < drones; i++) {
-            Sprite &sprite = g_CITIZEN_SM_CURSOR_SPRITES[random.get(0, 2) * 4 + 2
-                + (i >= drones - super_drones)];
-            sprite.draw(this, sprite.transparent_index(), x, y);
+            psych_sprite(this, &g_CITIZEN_SM_CURSOR_SPRITES[random.get(0, 2) * 4
+                + (i >= drones - super_drones ? 3 : 2)], x, y);
             x += spacing;
         }
         for (i = 0; i < BaseCurrent->specialist_total; i++) {
-            Sprite &sprite = g_SPECIALIST_SM_CURSOR_SPRITES[i >= 16
-                ? best_specialist() : (static_cast<int>(BaseCurrent->spec[i >> 3]) >> ((i & 7) * 4)) & 15];
-            sprite.draw(this, sprite.transparent_index(), x, y);
+            psych_sprite(this, &g_SPECIALIST_SM_CURSOR_SPRITES[psych_specialist_type(i)], x, y);
             x += spacing;
         }
     }
@@ -1578,8 +1584,8 @@ void BaseWin::draw_psych() {
     MapWinCaptionDivisor = 38;
     Buffer::set_font(&font, 0, 0, 0);
     const int text_offset = row_pitch / 2 - font.pixel_height() / 2;
-    int y = panel.top + 2;
     int stage = 0;
+    int y = panel.top + 2;
     for (int row = 0; row < 5; ++row) {
         if (stage != 0) {
             while (stage < 5
@@ -1620,12 +1626,9 @@ void BaseWin::draw_psych() {
                 break;
             }
             Buffer::set_text_color(TextColourTable[114], TextColourTable[115], 1, 1);
-            char *const text = StringTemp;
-            if (text != 0) {
-                Buffer::write_cent_l(text, caption_x, y + text_offset - 2, half_width,
-                    static_cast<int>(strlen(text)));
-            }
-            psych_row(panel.left + 2, y, half_width, g_CITIZEN_SM_CURSOR_SPRITES[0].width() + 1,
+            Buffer::write_cent_text(StringTemp, caption_x, y + text_offset - 2, half_width);
+            const int row_x = panel.left + 2;
+            psych_row(row_x, y, half_width, g_CITIZEN_SM_CURSOR_SPRITES[0].width() + 1,
                 BasePsychTalents[stage], BasePsychDrones[stage], BasePsychSuperDrones[stage]);
         }
         y += row_pitch;
@@ -4086,11 +4089,12 @@ void BaseWin::draw_energy_alloc(int a1) {
 // climbs prev_veh_id_stack and then walks next_veh_id_stack.
 void BaseWin::draw_garrison(int update_mode) {
     Font font;
-    Buffer *canvas = static_cast<Buffer *>(&MainInterfaceGlobal);
+    int stack_count = 0;
 
-    RECT saved_clip = canvas->current_clip();
-    RECT clip_rect = garrison_rect_;
-    canvas->set_clip(&clip_rect);
+    RECT *const rect = &garrison_rect_;
+    RECT clip_rect = *rect;
+    RECT saved_clip = MainInterfaceGlobal.current_clip();
+    MainInterfaceGlobal.set_clip(&clip_rect);
 
     font.init(DefaultFontFace, 0xc, 0);
 
@@ -4107,22 +4111,11 @@ void BaseWin::draw_garrison(int update_mode) {
         line_height = font.line_height();
     }
 
-    int left = garrison_rect_.left;
-    int top = garrison_rect_.top;
-    int right = garrison_rect_.right;
-    int width = right - left;
-    int bottom = garrison_rect_.bottom;
-    int height = bottom - top;
-    canvas->tile(InterfaceBoxStyles[9].mask_, left, top,
-                 left, top, width, height);
-
-    RECT frame_rect;
-    frame_rect.left = left;
-    frame_rect.top = top;
-    frame_rect.right = right;
-    frame_rect.bottom = bottom;
-    canvas->box_sprite(&frame_rect,
-                       &InterfaceBoxStyles[3]);
+    RECT frame_rect = *rect;
+    MainInterfaceGlobal.tile(InterfaceBoxStyles[9].mask_, frame_rect.left, frame_rect.top,
+                 frame_rect.left, frame_rect.top, frame_rect.right - frame_rect.left,
+                 frame_rect.bottom - frame_rect.top);
+    MainInterfaceGlobal.box_sprite(&frame_rect, &InterfaceBoxStyles[3]);
 
     frame_rect.left += 3;
     frame_rect.top += 3;
@@ -4140,14 +4133,16 @@ void BaseWin::draw_garrison(int update_mode) {
         spacing = 0x38;
     }
 
-    int initial_vehicle = veh_at(BaseCurrent->x, BaseCurrent->y);
+    // stand-in: named coordinates load x before y, as the image does.
+    const int base_x = BaseCurrent->x;
+    const int base_y = BaseCurrent->y;
+    int initial_vehicle = veh_at(base_x, base_y);
     int vehicle = initial_vehicle;
     int capacity;
     if (vehicle >= 0) {
         while (Vehs[vehicle].prev_veh_id_stack >= 0) {
             vehicle = Vehs[vehicle].prev_veh_id_stack;
         }
-        int stack_count = 0;
         for (int at = vehicle; at >= 0; at = Vehs[at].next_veh_id_stack) {
             ++stack_count;
         }
@@ -4167,26 +4162,31 @@ void BaseWin::draw_garrison(int update_mode) {
         }
     }
 
+    int column_left = frame_rect.left;
+    int top = frame_rect.top;
     // Keep the veh_at result across the button callbacks, then find the head
     // again: the original rereads previous links at 0x4105F6..0x410626.
     vehicle = initial_vehicle;
+    int column;
     if (vehicle >= 0) {
+        column = 0;
         while (Vehs[vehicle].prev_veh_id_stack >= 0) {
             vehicle = Vehs[vehicle].prev_veh_id_stack;
         }
     }
 
-    int column = 0;
-    int column_left = frame_rect.left;
+
     while (vehicle >= 0 && column < capacity) {
-        canvas->set_clip(column_left, frame_rect.top, spacing,
+        MainInterfaceGlobal.set_clip(column_left, top, spacing,
                          frame_rect.bottom - frame_rect.top);
-        veh_draw(canvas, vehicle, column_left, frame_rect.top, -7, 72, 0);
-        veh_draw(canvas, vehicle, column_left, frame_rect.top, 0, 0x1800, 0);
+        veh_draw(&MainInterfaceGlobal, vehicle, column_left, top, -7, 72, 0);
+        veh_draw(&MainInterfaceGlobal, vehicle, column_left, top, 0, 0x1800, 0);
 
         StringTemp[0] = 0;
-        say_stats_3(StringTemp, Vehs[vehicle].proto_id);
-        if ((GameDataStateStorage.fields_.game_state_ & 0x1040) == 0x1040) {
+        const int proto = Vehs[vehicle].proto_id;
+        say_stats_3(StringTemp, proto);
+        if ((GameDataStateStorage.fields_.game_state_ & 0x40)
+            && (GameDataStateStorage.fields_.game_state_ & 0x1000)) {
             char number[80];
             strcat(StringTemp, " ");
             strcat(StringTemp, "(");
@@ -4194,8 +4194,8 @@ void BaseWin::draw_garrison(int update_mode) {
             strcat(StringTemp, number);
             strcat(StringTemp, ")");
         }
-        canvas->set_font(&font, nullptr, nullptr, nullptr);
-        canvas->set_text_color(TextColourTable[112], TextColourTable[113], 1, 1);
+        MainInterfaceGlobal.set_font(&font, nullptr, nullptr, nullptr);
+        MainInterfaceGlobal.set_text_color(TextColourTable[112], TextColourTable[113], 1, 1);
         // Text width is recomputed after the calls above, independently of
         // overflow-adjusted column spacing (0x41074A..0x41079D).
         int text_spacing;
@@ -4204,20 +4204,24 @@ void BaseWin::draw_garrison(int update_mode) {
         } else {
             text_spacing = 0x38;
         }
-        canvas->write_cent_l(StringTemp, column_left,
-                             frame_rect.bottom - line_height + 6, text_spacing,
-                             strlen(StringTemp));
-        spot1_.add(vehicle, 6, column_left, frame_rect.top,
-                   spacing + 5, frame_rect.bottom - frame_rect.top);
+        MainInterfaceGlobal.write_cent_text(StringTemp, column_left,
+                             frame_rect.bottom - line_height + 6, text_spacing);
+        const int cell_height = frame_rect.bottom - frame_rect.top;
+        frame_rect.left = column_left;
+        frame_rect.top = top;
+        frame_rect.right = column_left + spacing + 5;
+        frame_rect.bottom = top + cell_height;
+        spot1_.add(vehicle, 6, frame_rect.left, frame_rect.top,
+                   frame_rect.right - frame_rect.left, frame_rect.bottom - frame_rect.top);
         column_left += spacing + 5;
-        vehicle = Vehs[vehicle].next_veh_id_stack;
+        if (vehicle >= 0) vehicle = Vehs[vehicle].next_veh_id_stack;
         ++column;
     }
 
-    canvas->restore_clip();
+    MainInterfaceGlobal.restore_clip();
     if (update_mode != 0) MainInterfaceGlobal.update(&garrison_rect_, nullptr);
     else MainInterfaceGlobal.soft_update(&garrison_rect_);
-    canvas->set_clip(&saved_clip);
+    MainInterfaceGlobal.set_clip(&saved_clip);
 }
 
 // ORIGINAL: 0x0041AFD0 ?on_left_up@BaseWin@@QAEXHH@Z 0x0041AFD0-0x0041B10D FILE BYTE_EXACT
@@ -6547,21 +6551,20 @@ void BaseWin::draw_pop(int update_mode) {
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x004108CC-0x00410A95 copies/clips three BaseWin rectangles, initializes a Font, draws the title and sets the report palette", "image:0x00410B3C-0x00410D54 counts the first 70 Base facility bits and 64 SecretProject homes at the current base, weights projects five, then formats the alien score or sanction warning", "image:0x00410D54-0x0041111C selects partner rows and formats receipts, pact/treaty status, unequal exchanges and sanctions from Base/PlayerData fields", "image:0x004111DE-0x00411211 updates the outer rectangle and restores the clip"], "reason": "Recover the commerce panel's alien score and normal-faction partner rows through owned BaseWin rectangles, typed Base/SecretProject/diplomacy state and source-owned commerce ledgers; original compiler/reference/runtime proof remains separate."}
 // TRIED: SEH-framed function with one real local object (`Font font;`, matching the single ??0Font/??1Font pair) reproduced via plain RAII, same as 0x004ADB70. Diverges at #12 (sim 0.53), not chased further given time. The "own faction" index scan, both box_sprite/set_font/ set_text_color RECT setups, and the tail (soft_update vs update on a1, restore clip) are a direct instruction-level transcription off raw disassembly. The per-faction commerce-report loop body (the `slot` loop building relation strings via write_l) and the military-score ELSE branch are adapted from Ghidra with real field offsets and real calls but approximated message-selection logic - not verified call-for-call against raw bytes given the remaining budget.
 void BaseWin::draw_commerce(int update_mode) {
-    Buffer *canvas = this;
-    RECT saved_clip = canvas->current_clip();
-    canvas->set_clip(&commerce_outer_rect_);
-    canvas->box_sprite(&commerce_outer_rect_, &InterfaceBoxStyles[3]);
+    RECT saved_clip = Buffer::current_clip();
+    Buffer::set_clip(&commerce_outer_rect_);
+    Buffer::box_sprite(&commerce_outer_rect_, &InterfaceBoxStyles[3]);
 
     Font font;
     font.init(DefaultFontFace, 10, 1);
     RECT title = commerce_title_rect_;
-    canvas->box_sprite(&title, &InterfaceBoxStyles[6]);
+    Buffer::box_sprite(&title, &InterfaceBoxStyles[6]);
     title.left += 3;
     title.top += 3;
     title.right -= 3;
     title.bottom -= 3;
-    canvas->set_font(&font1_, nullptr, nullptr, nullptr);
-    canvas->set_text_color(TextColourTable[82], TextColourTable[83], 1, 1);
+    Buffer::set_font(&font1_, nullptr, nullptr, nullptr);
+    Buffer::set_text_color(TextColourTable[82], TextColourTable[83], 1, 1);
     const int faction = Bases[focusedBaseID_].faction_id_current;
     StringTemp[0] = 0;
     if ((Players[faction].rule_flags & RFLAG_ALIEN) != 0) {
@@ -6570,12 +6573,12 @@ void BaseWin::draw_commerce(int update_mode) {
         strcat(StringTemp, label_get(313));
         CharUpperA(StringTemp);
     }
-    canvas->write_cent_l(StringTemp, &title, strlen(StringTemp));
+    Buffer::write_cent_l(StringTemp, &title, strlen(StringTemp));
 
-    canvas->set_font(&font, nullptr, nullptr, nullptr);
-    canvas->set_text_color(TextColourTable[104], TextColourTable[105], 1, 1);
+    Buffer::set_font(&font, nullptr, nullptr, nullptr);
+    Buffer::set_text_color(TextColourTable[104], TextColourTable[105], 1, 1);
     RECT report = commerce_report_rect_;
-    canvas->box_sprite(&report, &InterfaceBoxStyles[0]);
+    Buffer::box_sprite(&report, &InterfaceBoxStyles[0]);
     report.left += 3;
     report.top += 3;
     report.right -= 3;
@@ -6584,7 +6587,7 @@ void BaseWin::draw_commerce(int update_mode) {
     int row_y = report.top;
     bool wrote_row = false;
     if ((Players[BaseCurrent->faction_id_current].rule_flags & RFLAG_ALIEN) != 0) {
-        canvas->set_font(&font1_, nullptr, nullptr, nullptr);
+        Buffer::set_font(&font1_, nullptr, nullptr, nullptr);
         int current_base_id;
         for (int candidate = 0; candidate < GameDataStateStorage.fields_.base_current_count_; ++candidate) {
             if (&Bases[candidate] == BaseCurrent) current_base_id = candidate;
@@ -6608,11 +6611,11 @@ void BaseWin::draw_commerce(int update_mode) {
         score /= 2;
         StringTemp[0] = 0;
         if (PlayersData[BaseCurrent->faction_id_current].sanction_turns != 0) {
-            canvas->set_text_color(TextColourTable[110], TextColourTable[111], 1, 1);
+            Buffer::set_text_color(TextColourTable[110], TextColourTable[111], 1, 1);
             strcat(StringTemp, label_get(1125));
             wrote_row = true;
         } else if (score != 0) {
-            canvas->set_text_color(0xFF, -1, 1, 1);
+            Buffer::set_text_color(0xFF, -1, 1, 1);
             char number[32];
             strcat(StringTemp, "+");
             _itoa(score, number, 10);
@@ -6623,7 +6626,7 @@ void BaseWin::draw_commerce(int update_mode) {
         }
         if (wrote_row) {
             CharUpperA(StringTemp);
-            canvas->write_cent_l(StringTemp, &report, strlen(StringTemp));
+            Buffer::write_cent_l(StringTemp, &report, strlen(StringTemp));
         }
     } else {
         const int owner = BaseCurrent->faction_id_current;
@@ -6640,7 +6643,7 @@ void BaseWin::draw_commerce(int update_mode) {
             wrote_row = true;
             GenderDefault = Players[partner].noun_gender;
             PluralityDefault = Players[partner].is_noun_plural;
-            canvas->set_text_color(ChatItemIdTable[partner], -1, 1, 1);
+            Buffer::set_text_color(ChatItemIdTable[partner], -1, 1, 1);
             StringTemp[0] = 0;
             strcat(StringTemp, Players[partner].noun_faction);
             CharUpperA(StringTemp);
@@ -6652,7 +6655,7 @@ void BaseWin::draw_commerce(int update_mode) {
                 _itoa(BaseCommerceReceipts[slot], amount, 10);
                 strcat(StringTemp, amount);
             }
-            canvas->write_l(StringTemp, report.left, row_y, strlen(StringTemp));
+            Buffer::write_l(StringTemp, report.left, row_y, strlen(StringTemp));
 
             StringTemp[0] = 0;
             const int detail_y = static_cast<int32_t>(
@@ -6660,7 +6663,7 @@ void BaseWin::draw_commerce(int update_mode) {
                 static_cast<uint32_t>(font.pixel_height()) + 1U);
             int text_end;
             if (own_sanctions != 0 || partner_sanctions != 0) {
-                canvas->set_text_color(TextColourTable[110], TextColourTable[111], 1, 1);
+                Buffer::set_text_color(TextColourTable[110], TextColourTable[111], 1, 1);
                 strcat(StringTemp, label_get(450));
                 strcat(StringTemp, " (");
                 char turns[32];
@@ -6669,12 +6672,12 @@ void BaseWin::draw_commerce(int update_mode) {
                 strcat(StringTemp, turns);
                 strcat(StringTemp, ")");
                 CharUpperA(StringTemp);
-                text_end = canvas->write_l(StringTemp, report.left + 5,
+                text_end = Buffer::write_l(StringTemp, report.left + 5,
                                            detail_y, strlen(StringTemp));
             } else {
                 strcat(StringTemp, label_get((PlayersData[owner].diplo_treaties[partner]
                                               & DTREATY_PACT) != 0 ? 645 : 644));
-                text_end = canvas->write_l(StringTemp, report.left + 5,
+                text_end = Buffer::write_l(StringTemp, report.left + 5,
                                            detail_y, strlen(StringTemp));
             }
             if (BaseCommercePartnerReceipts[slot] != BaseCommerceReceipts[slot]) {
@@ -6686,54 +6689,53 @@ void BaseWin::draw_commerce(int update_mode) {
                 _itoa(BaseCommercePartnerReceipts[slot], partner_amount, 10);
                 strcat(StringTemp, partner_amount);
                 strcat(StringTemp, ")");
-                canvas->write_l(StringTemp, text_end, detail_y, strlen(StringTemp));
+                Buffer::write_l(StringTemp, text_end, detail_y, strlen(StringTemp));
             }
             row_y += row_pitch;
         }
     }
     if (!wrote_row) {
-        canvas->set_font(&font1_, nullptr, nullptr, nullptr);
-        canvas->set_text_color(TextColourTable[104], TextColourTable[105], 1, 1);
+        Buffer::set_font(&font1_, nullptr, nullptr, nullptr);
+        Buffer::set_text_color(TextColourTable[104], TextColourTable[105], 1, 1);
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(25));
-        canvas->write_cent_l(StringTemp, &commerce_report_rect_, strlen(StringTemp));
+        Buffer::write_cent_l(StringTemp, &commerce_report_rect_, strlen(StringTemp));
     }
     if (update_mode == 0) MainInterfaceGlobal.soft_update(&commerce_outer_rect_);
     else MainInterfaceGlobal.update(&commerce_outer_rect_, nullptr);
-    canvas->set_clip(&saved_clip);
+    Buffer::set_clip(&saved_clip);
 }
 // ORIGINAL: 0x00411240 ?draw_nutrients@BaseWin@@QAEXH@Z 0x00411240-0x00411973;0x00651B37-0x00651B4C
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00411240.cpp:1912-2151", "src/basewin.h:nutrient rectangles and sprites3_", "src/base.h:Base nutrients_accumulated and nutrient_surplus", "src/base.cpp:BaseIDCurrentSelected and cost_factor", "image:0x00682B20-0x00682B28 nutrient punctuation"], "reason": "Render the growth grid and caption through owned BaseWin rectangles, sprites, current Base and label table. Retain the instruction-level seed for restoration rather than hardcoding its self/global addresses."}
 // TRIED: literal transcription of Ghidra's (clean, non-SEH-mangled) pseudocode, mapping the three unlabelled thiscall calls (0x618EA0/0x618EE0/0x618F40) onto BaseWin's already-declared UNK4/UNK7/UNK6 slots by call-site position and declaring the other dozen FUN_ helpers as plain cdecl free functions (their true receiver/convention was not established) compiles and matches the arithmetic/branch structure, but the original installs a real SEH frame (fs:[0] chain) that this body does not reproduce since nothing here needs unwind-safety in the C++ source; diverges from the framed build around #2.
 void BaseWin::draw_nutrients(int update_mode) {
-    Buffer *canvas = this;
-    RECT saved_clip = canvas->current_clip();
-    canvas->set_clip(&nutrient_outer_rect_);
-    canvas->box_sprite(&nutrient_outer_rect_, &InterfaceBoxStyles[3]);
+    RECT saved_clip = Buffer::current_clip();
+    Buffer::set_clip(&nutrient_outer_rect_);
+    Buffer::box_sprite(&nutrient_outer_rect_, &InterfaceBoxStyles[3]);
 
     Font font;
     font.init(DefaultFontFace, WinScreenWidth == 800 ? 10 : 12, 0);
     RECT title = nutrient_title_rect_;
-    canvas->box_sprite(&title, &InterfaceBoxStyles[6]);
+    Buffer::box_sprite(&title, &InterfaceBoxStyles[6]);
     title.left += 3;
     title.top += 3;
     title.right -= 3;
     title.bottom -= 3;
-    canvas->set_font(&font1_, nullptr, nullptr, nullptr);
-    canvas->set_text_color(TextColourTable[82], TextColourTable[83], 1, 1);
+    Buffer::set_font(&font1_, nullptr, nullptr, nullptr);
+    Buffer::set_text_color(TextColourTable[82], TextColourTable[83], 1, 1);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(520));
     CharUpperA(StringTemp);
-    canvas->write_cent_l(StringTemp, &title, strlen(StringTemp));
+    Buffer::write_cent_l(StringTemp, &title, strlen(StringTemp));
 
     RECT content = nutrient_content_rect_;
-    canvas->box_sprite(&content, &InterfaceBoxStyles[0]);
+    Buffer::box_sprite(&content, &InterfaceBoxStyles[0]);
     content.left += 3;
     content.top += 3;
     content.right -= 3;
     content.bottom -= 3;
-    canvas->set_font(&font, nullptr, nullptr, nullptr);
-    canvas->set_text_color(TextColourTable[104], TextColourTable[105], 1, 1);
+    Buffer::set_font(&font, nullptr, nullptr, nullptr);
+    Buffer::set_text_color(TextColourTable[104], TextColourTable[105], 1, 1);
     const int line_height = font.line_advance();
     const int grid_bottom = content.bottom - 2 * line_height;
     const int stored = BaseCurrent->nutrients_accumulated;
@@ -6769,17 +6771,17 @@ void BaseWin::draw_nutrients(int update_mode) {
                              top + (row + 1) * cell_height - 1};
                 if (index < stored) {
                     if (cell_height < 8) GraphicWin::fill(&cell, 0x95);
-                    else canvas->tile(&sprites3_[1], cell.left, cell.top,
+                    else Buffer::tile(&sprites3_[1], cell.left, cell.top,
                                       cell.left, cell.top, cell_width - 1, cell_height - 1);
                 } else {
-                    if (cell_height > 7) canvas->tile(&sprites3_[0], cell.left, cell.top,
+                    if (cell_height > 7) Buffer::tile(&sprites3_[0], cell.left, cell.top,
                                       cell.left, cell.top, cell_width - 1, cell_height - 1);
                     else GraphicWin::fill(&cell, 0x98);
                 }
                 if (surplus < 0 && index >= stored + surplus && index < stored)
-                    canvas->box(&cell, 0x6c, 0x6c);
+                    Buffer::box(&cell, 0x6c, 0x6c);
                 else if (surplus > 0 && index >= stored && index < stored + surplus)
-                    canvas->box(&cell, 0x95, 0x95);
+                    Buffer::box(&cell, 0x95, 0x95);
             }
         }
     }
@@ -6809,12 +6811,12 @@ void BaseWin::draw_nutrients(int update_mode) {
         strcat(StringTemp, " ");
         strcat(StringTemp, label_get(turns == 1 ? 48 : 49));
     }
-    canvas->write_cent_l(StringTemp, content.left,
+    Buffer::write_cent_l(StringTemp, content.left,
                          content.bottom - line_height - 2,
                          content.right - content.left, strlen(StringTemp));
     if (update_mode == 0) MainInterfaceGlobal.soft_update(&nutrient_outer_rect_);
     else MainInterfaceGlobal.update(&nutrient_outer_rect_, nullptr);
-    canvas->set_clip(&saved_clip);
+    Buffer::set_clip(&saved_clip);
 }
 
 // ORIGINAL: 0x0041B790 ?base_editor_fac@BaseWin@@QAEXXZ 0x0041B790-0x0041BBBC;0x0065249C-0x0065255E
@@ -6952,16 +6954,19 @@ void BaseWin::base_editor_copy(int copy_to) {
     // selected base; the original does not filter it from this menu.
     for (int group = 0; group < 2; ++group) {
         for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
-            if (group == 0 ? Bases[base].faction_id_current != BaseCurrent->faction_id_current
-                           : Bases[base].faction_id_current == BaseCurrent->faction_id_current) continue;
+            if (group == 0) {
+                if (Bases[base].faction_id_current != BaseCurrent->faction_id_current) continue;
+            } else if (Bases[base].faction_id_current == BaseCurrent->faction_id_current) {
+                continue;
+            }
             StringTemp[0] = 0;
             strcat(StringTemp, Bases[base].name_string);
             strcat(StringTemp, "|");
             const int faction = Bases[base].faction_id_current;
-            PluralityDefault = Players[faction].is_noun_plural;
-            GenderDefault = Players[faction].noun_gender;
+            parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
             strcat(StringTemp, Players[faction].noun_faction);
             popup.dialogs().item(StringTemp, base);
+
         }
     }
     const int selection = popup.exec(0, 0);
@@ -7222,23 +7227,22 @@ void BaseWin::dismiss_garrison_selection() {
 // TRIED: literal per-instruction register/stack transcription (eax/ebx/ecx/edx/esi/edi + s_XX stack slots + RECT groups rectA/rectB/rect28/rectScroll), goto-based control flow mirroring every branch; diverges at instr #9 (early prologue push/mov shape), not chased further given function size (2577 bytes).
 void BaseWin::draw_supported(int update_mode) {
     Font font;
-    Buffer *canvas = &MainInterfaceGlobal;
-    RECT saved_clip = canvas->current_clip();
+    RECT saved_clip = MainInterfaceGlobal.current_clip();
     RECT outer = interface_help_rect_;
-    canvas->set_clip(&outer);
-    canvas->box_sprite(&interface_help_rect_, &InterfaceBoxStyles[3]);
+    MainInterfaceGlobal.set_clip(&outer);
+    MainInterfaceGlobal.box_sprite(&interface_help_rect_, &InterfaceBoxStyles[3]);
     font.init(DefaultFontFace, 10, 1);
     spot1_.kill_type(7);
     RECT title = supported_title_rect_;
-    canvas->box_sprite(&title, &InterfaceBoxStyles[6]);
+    MainInterfaceGlobal.box_sprite(&title, &InterfaceBoxStyles[6]);
     base_panel_inset(title, 3);
-    canvas->set_font(&font1_, 0, 0, 0);
-    canvas->set_text_color(TextColourTable[82], TextColourTable[83], 1, 1);
+    MainInterfaceGlobal.set_font(&font1_, 0, 0, 0);
+    MainInterfaceGlobal.set_text_color(TextColourTable[82], TextColourTable[83], 1, 1);
     StringTemp[0] = 0; strcat(StringTemp, label_get(0x100 / 4)); CharUpperA(StringTemp);
-    canvas->write_cent_l(StringTemp, &title, static_cast<int>(strlen(StringTemp)));
-    canvas->set_font(&font, 0, 0, 0);
+    MainInterfaceGlobal.write_cent_l(StringTemp, &title, static_cast<int>(strlen(StringTemp)));
+    MainInterfaceGlobal.set_font(&font, 0, 0, 0);
     RECT content = supported_content_rect_;
-    canvas->box_sprite(&content, &InterfaceBoxStyles[0]);
+    MainInterfaceGlobal.box_sprite(&content, &InterfaceBoxStyles[0]);
     base_panel_inset(content, 3);
     const int faction = BaseCurrent->faction_id_current;
     const int scale = MapWinCaptionScale, divisor = MapWinCaptionDivisor;
@@ -7282,7 +7286,7 @@ void BaseWin::draw_supported(int update_mode) {
         ++ordinal;
         if (field_40B20_ && (ordinal < static_cast<int>(field_40B14_) * columns
             || ordinal >= (static_cast<int>(field_40B14_) + rows) * columns)) continue;
-        veh_draw(canvas, vehicle_id, x, y, -6, 72, 0);
+        veh_draw(&MainInterfaceGlobal, vehicle_id, x, y, -6, 72, 0);
         SpriteScaleNumerator = MapWinCaptionScale > 0 ? MapWinCaptionScale : 10;
         SpriteScaleDenominator = MapWinCaptionScale > 0 ? MapWinCaptionDivisor : 16;
         int support = 0, total = 0, convoy_yield; // native yield only read in convoy arm
@@ -7308,7 +7312,7 @@ void BaseWin::draw_supported(int update_mode) {
             const int icon_y = y + vehicle_height - icon_offset;
             int icon_x = x;
             if (Vehs[vehicle_id].state & 0x400000u) {
-                base_panel_sprite(g_PEACE_SIGN_SPRITES[0], canvas, icon_x, icon_y);
+                base_panel_sprite(g_PEACE_SIGN_SPRITES[0], &MainInterfaceGlobal, icon_x, icon_y);
                 icon_x += icon_pitch;
             } else if (Vehs[vehicle_id].state & 0x200000u) {
                 // The original recomputes this live helper and police value
@@ -7317,7 +7321,7 @@ void BaseWin::draw_supported(int update_mode) {
                     const int facility = has_fac_built(35, BaseIDCurrentSelected);
                     const int peace = 1 + (PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE] + 2 * facility <= -5);
                     if (i >= peace) break;
-                    base_panel_sprite(g_PEACE_SIGN_SPRITES[1], canvas, icon_x, icon_y);
+                    base_panel_sprite(g_PEACE_SIGN_SPRITES[1], &MainInterfaceGlobal, icon_x, icon_y);
                     icon_x += icon_pitch;
                 }
             }
@@ -7325,16 +7329,16 @@ void BaseWin::draw_supported(int update_mode) {
                 ? base_native_clamp((vehicle_width - icon_width) / (total - 1), 1, icon_width)
                 : icon_width;
             for (int i = support; i > 0; --i) {
-                base_panel_sprite(g_ICONS_GENERAL_SPRITES[5], canvas, icon_x, icon_y);
+                base_panel_sprite(g_ICONS_GENERAL_SPRITES[5], &MainInterfaceGlobal, icon_x, icon_y);
                 icon_x += icon_pitch;
             }
             if (VehPrototypes[Vehs[vehicle_id].proto_id].plan == 10 && Vehs[vehicle_id].order == 3) {
                 if (base_convoy_tile(Vehs[vehicle_id])) {
                     base_panel_sprite(g_ICONS_GENERAL_SPRITES[1 + 4 * Vehs[vehicle_id].order_auto_type],
-                                      canvas, icon_x, icon_y);
+                                      &MainInterfaceGlobal, icon_x, icon_y);
                 } else for (int i = convoy_yield; i > 0; --i) {
                     base_panel_sprite(g_ICONS_GENERAL_SPRITES[2 + 4 * Vehs[vehicle_id].order_auto_type],
-                                      canvas, icon_x, icon_y);
+                                      &MainInterfaceGlobal, icon_x, icon_y);
                     icon_x += icon_pitch;
                 }
             }
@@ -7349,7 +7353,7 @@ void BaseWin::draw_supported(int update_mode) {
     SpriteScaleNumerator = SpriteScaleDenominator = 1;
     if (update_mode) MainInterfaceGlobal.update(&interface_help_rect_, 0);
     else MainInterfaceGlobal.soft_update(&interface_help_rect_);
-    canvas->set_clip(&saved_clip);
+    MainInterfaceGlobal.set_clip(&saved_clip);
 }
 
 // 0040FCC0..004103A7, EH cleanup00651AF8..00651B0D.
@@ -7358,25 +7362,24 @@ void BaseWin::draw_supported(int update_mode) {
 // TRIED: automatic `Font font;` local (real ctor/dtor from the class, matching draw_psych's precedent) to get the compiler-generated SEH try-finally frame, instead of hand-rolled ExceptionList plumbing; VCall::slot001 retyped to take an int (Scroll vtable slot 1 dispatch with arg 0). Traced the real bytes (not just Ghidra, which mislabels several stack slots by a constant in the Font-adjacent region) for the rowHeight formula ((font.unk_1_>=0) ? font.height_+font.unk_1_ : font.line_height_) and the Spot::add(facId,2,left,y,width,rowHeight) arg order. Not chased to byte-exact given size (1788 bytes / SEH frame).
 void BaseWin::draw_facilities(int update_mode) {
     Font font;
-    Buffer *canvas = this;
-    RECT saved_clip = canvas->current_clip();
+    RECT saved_clip = Buffer::current_clip();
     RECT outer = facilities_help_rect_;
-    canvas->set_clip(&outer); spot2_.kill_type(2);
+    Buffer::set_clip(&outer); spot2_.kill_type(2);
     font.init(DefaultFontFace, WinScreenWidth != 800 ? 12 : 10, 0);
-    canvas->box_sprite(&facilities_help_rect_, &InterfaceBoxStyles[3]);
+    Buffer::box_sprite(&facilities_help_rect_, &InterfaceBoxStyles[3]);
     StringTemp[0] = 0;
     RECT title = facilities_title_rect_;
-    canvas->box_sprite(&title, &InterfaceBoxStyles[6]); base_panel_inset(title, 3);
-    canvas->set_font(&font1_, 0, 0, 0);
+    Buffer::box_sprite(&title, &InterfaceBoxStyles[6]); base_panel_inset(title, 3);
+    Buffer::set_font(&font1_, 0, 0, 0);
     strcat(StringTemp, label_get(0x110 / 4));
-    canvas->set_text_color(TextColourTable[82], TextColourTable[83], 1, 1);
+    Buffer::set_text_color(TextColourTable[82], TextColourTable[83], 1, 1);
     CharUpperA(StringTemp);
-    canvas->write_cent_l(StringTemp, &title, static_cast<int>(strlen(StringTemp)));
-    canvas->set_font(&font, 0, 0, 0);
-    canvas->set_text_color(TextColourTable[104], TextColourTable[105], 1, 1);
+    Buffer::write_cent_l(StringTemp, &title, static_cast<int>(strlen(StringTemp)));
+    Buffer::set_font(&font, 0, 0, 0);
+    Buffer::set_text_color(TextColourTable[104], TextColourTable[105], 1, 1);
     RECT content = rect2_;
     if (flatButtons_[21].is_visible()) content.bottom = rect20_.top;
-    canvas->box_sprite(&content, &InterfaceBoxStyles[0]); base_panel_inset(content, 3);
+    Buffer::box_sprite(&content, &InterfaceBoxStyles[0]); base_panel_inset(content, 3);
     const int row_height = font.line_advance();
     int capacity = (content.bottom - content.top) / row_height;
     if (row_height * capacity + font.pixel_height() <= content.bottom - content.top) ++capacity;
@@ -7411,8 +7414,8 @@ void BaseWin::draw_facilities(int update_mode) {
         StringTemp[0] = 0;
         if (redundant(facility, BaseCurrent->faction_id_current)) {
             if (facility < 65 && has_fac_built(facility, BaseIDCurrentSelected)) strcat(StringTemp, "*");
-            canvas->set_text_color(TextColourTable[124], TextColourTable[125], 1, 1);
-        } else canvas->set_text_color(TextColourTable[122], TextColourTable[123], 1, 1);
+            Buffer::set_text_color(TextColourTable[124], TextColourTable[125], 1, 1);
+        } else Buffer::set_text_color(TextColourTable[122], TextColourTable[123], 1, 1);
         strcat(StringTemp, StringTable.get(Facility[facility].name));
         if (facility == 8 && (BaseCurrent->state & 0x400u)) {
             strcat(StringTemp, " "); strcat(StringTemp, "(");
@@ -7426,13 +7429,13 @@ void BaseWin::draw_facilities(int update_mode) {
             if (last_space) *last_space = 0;
             else StringTemp[length - 1] = 0;
         }
-        canvas->write_l(StringTemp, content.left + 1, y, static_cast<int>(strlen(StringTemp)));
+        Buffer::write_l(StringTemp, content.left + 1, y, static_cast<int>(strlen(StringTemp)));
         spot2_.add(facility, 2, content.left, y, width, row_height);
         y += row_height;
     }
     if (update_mode) update(&facilities_help_rect_, 0);
     else soft_update(&facilities_help_rect_);
-    canvas->set_clip(&saved_clip);
+    Buffer::set_clip(&saved_clip);
 }
 
 // 0041AF50..0041AF69. Native immediate939444 is ConsoleGlobal's real
