@@ -1288,7 +1288,7 @@ evaluate_existing_state:
                         return;
                     }
                     const int candidate_rank = great_satan(candidate, FALSE)
-                                                   ? static_cast<int>(PlayersData[candidate].ranking)
+                                                   ? PlayersData[candidate].ranking
                                                    : 0;
                     if (existing_ally_count <= candidate_rank) {
                         treaty_on(faction_id, faction_id_with, DTREATY_PACT);
@@ -2391,8 +2391,8 @@ void __cdecl enemy_diplomacy(int faction_id) {
                     if (actor_tech_half > diplo_add(other_tech_half, 5))
                         score = diplo_sub(score, 1);
 
-                    if (static_cast<int>(PlayersData[human_peer].ranking) >
-                            diplo_add(static_cast<int>(PlayersData[faction_id].ranking), 1) &&
+                    if (PlayersData[human_peer].ranking >
+                            diplo_add(PlayersData[faction_id].ranking, 1) &&
                         PlayersData[human_peer].diff_level != 0)
                         score = diplo_add(score, 1);
                 }
@@ -2412,7 +2412,7 @@ void __cdecl enemy_diplomacy(int faction_id) {
                 }
 
                 if ((GameDataStateStorage.fields_.game_rules_ & 0x1000u) != 0 &&
-                    static_cast<int>(PlayersData[faction_id].ranking) < 6 &&
+                    PlayersData[faction_id].ranking < 6 &&
                     GameDataStateStorage.fields_.turn_current_num_ >= 200 &&
                     score >= 0)
                     score = -1;
@@ -2455,9 +2455,9 @@ void __cdecl enemy_diplomacy(int faction_id) {
                     score = diplo_sub(score, 1);
 
                 const int actor_rank =
-                    static_cast<int>(PlayersData[faction_id].ranking);
+                    PlayersData[faction_id].ranking;
                 const int other_rank =
-                    static_cast<int>(PlayersData[human_peer].ranking);
+                    PlayersData[human_peer].ranking;
                 if (actor_rank >= 6 && other_rank >= 6) {
                     score = diplo_add(score, 3);
                 } else if (actor_rank >= 5 && other_rank >= 5) {
@@ -2490,8 +2490,8 @@ void __cdecl enemy_diplomacy(int faction_id) {
             relation = PlayersData[faction_id].diplo_treaties[human_peer];
             if ((relation & DTREATY_PACT) != 0 &&
                 (GameDataStateStorage.fields_.game_rules_ & 0x1000u) != 0 &&
-                static_cast<int>(PlayersData[human_peer].ranking) >
-                    static_cast<int>(PlayersData[faction_id].ranking) &&
+                PlayersData[human_peer].ranking >
+                    PlayersData[faction_id].ranking &&
                 GameDataStateStorage.fields_.turn_current_num_ >= 200 && score > 0)
                 score = 0;
 

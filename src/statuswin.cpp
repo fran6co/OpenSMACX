@@ -1325,7 +1325,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
             const int condition_label = has_fac_built(FAC_HEADQUARTERS,
                                                        base_id) ? 0x5c4 :
                 base.population_size < 2 ? 0x2f0 :
-                base.population_size > static_cast<int>(Rules.pop_limit_sans_hab_complex)
+                base.population_size > Rules.pop_limit_sans_hab_complex
                     ? 0x570 : 0x2f4;
             strcat(StringTemp, label_get(condition_label / 4));
             line_y = screen->wrap_cent(StringTemp, content_x, line_y,

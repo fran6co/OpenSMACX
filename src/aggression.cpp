@@ -213,8 +213,8 @@ void __cdecl double_cross(int faction_id, int partner_id, int victim_id) {
                 int reputation = PlayersData[faction_id].global_reputation - 1;
                 PlayersData[faction_id].global_reputation = reputation < 0 ? 0 : reputation;
                 if ((great_satan(faction_id, 0)
-                        || ((int)PlayersData[faction_id].ranking >= 6
-                            && (int)PlayersData[partner_id].ranking <= 4))
+                        || (PlayersData[faction_id].ranking >= 6
+                            && PlayersData[partner_id].ranking <= 4))
                     && victim_id < 0 && !treaty_active) {
                     PlayersData[faction_id].integrity_blemishes++;
                     PlayersData[partner_id].diplo_betrayed[faction_id]++;

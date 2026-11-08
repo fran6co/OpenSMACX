@@ -532,8 +532,8 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
                 } else {
                     int hex = hex_cost(proto_id, faction_id, x_next, y_next, x_cur, y_cur,
                         speed_max);
-                    if (unk1 & 0x8 && hex < (int)Rules.move_rate_roads - 1) {
-                        hex = (int)Rules.move_rate_roads - 1;
+                    if (unk1 & 0x8 && hex < Rules.move_rate_roads - 1) {
+                        hex = Rules.move_rate_roads - 1;
                     }
                     new_cost = hex * 16 + cur_cost + 8;
                     if ((tile->climate & 0xE0) > (map_loc(x_cur, y_cur)->climate & 0xE0)) {
@@ -545,7 +545,7 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
                 }
                 if ((unk1 & 0x10) && (tile->bit & BIT_FUNGUS)
                     && (tile->climate & 0xE0) >= ALT_BIT_OCEAN_SHELF) {
-                    new_cost += 6 * (int)Rules.move_rate_roads;
+                    new_cost += 6 * Rules.move_rate_roads;
                 }
                 if (faction_id < 0) {
                     // a neutral scan: cost alone decides
@@ -770,8 +770,8 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
         }
         if (!(unk1 & 0x1)) {
             int hex = hex_cost(proto_id, faction_id, x_src, y_src, x_next, y_next, speed_max);
-            if (unk1 & 0x8 && hex < (int)Rules.move_rate_roads - 1) {
-                hex = (int)Rules.move_rate_roads - 1;
+            if (unk1 & 0x8 && hex < Rules.move_rate_roads - 1) {
+                hex = Rules.move_rate_roads - 1;
             }
             cost += hex * 16;
             if (!is_sea
@@ -912,7 +912,7 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
             }
         }
         if (unk2 >= 0 && unk2 < 8 && (i ^ 4) == unk2) {
-            cost += 20 * (int)Rules.move_rate_roads; // do not double back
+            cost += 20 * Rules.move_rate_roads; // do not double back
         }
         int score = cost * 2 + (i & 1); // prefer cardinal steps on ties
         if (score <= best_score) {
@@ -1010,7 +1010,7 @@ int Path::move(int veh_id, int faction_id) {
     // caching one value for both compares. The inner store is also
     // `or ah, 0x10` (bit 12, 0x1000), not `or dh, 1` (bit 8, 0x100) again -
     // a different bit than the outer one.
-    } else if (veh_moves(veh_id) <= static_cast<int>(Rules.move_rate_roads)) {
+    } else if (veh_moves(veh_id) <= Rules.move_rate_roads) {
         flags |= 0x100;
         if (veh_moves(veh_id) <= (uint32_t)((Vehs[veh_id].proto_id != BSC_MIND_WORMS) + 1)) {
             flags |= 0x1000;

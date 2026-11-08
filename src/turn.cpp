@@ -777,7 +777,7 @@ void __cdecl random_events(int mode) {
         case 1: {
             const int required_rank =
                 (GameDataStateStorage.fields_.turn_current_num_ >= 150) ? 5 : 4;
-            if (static_cast<int>(PlayersData[faction_id].ranking) <
+            if (PlayersData[faction_id].ranking <
                 required_rank) break;
             base.event |= BEVENT_FAMINE;
             strcat(StringTemp, "FAMINE");
@@ -810,7 +810,7 @@ void __cdecl random_events(int mode) {
         case 3: {
             const int required_rank =
                 (GameDataStateStorage.fields_.turn_current_num_ >= 150) ? 5 : 4;
-            if (static_cast<int>(PlayersData[faction_id].ranking) <
+            if (PlayersData[faction_id].ranking <
                 required_rank) break;
             base.event |= BEVENT_BUST;
             strcat(StringTemp, "BUST");
@@ -840,7 +840,7 @@ void __cdecl random_events(int mode) {
         case 5: {
             const int required_rank =
                 (GameDataStateStorage.fields_.turn_current_num_ >= 150) ? 5 : 4;
-            if (static_cast<int>(PlayersData[faction_id].ranking) <
+            if (PlayersData[faction_id].ranking <
                 required_rank) break;
             base.event |= BEVENT_CLOUD_COVER;
             strcat(StringTemp, "CLOUDCOVER");
@@ -1558,7 +1558,7 @@ void __cdecl random_events(int mode) {
             if (!has_energy_bank) {
                 const int minimum_ranking =
                     (GameDataStateStorage.fields_.turn_current_num_ >= 150) ? 5 : 4;
-                if (static_cast<int>(PlayersData[faction_id].ranking) <
+                if (PlayersData[faction_id].ranking <
                     minimum_ranking) break;
             }
             bool event_found = false;
@@ -1638,7 +1638,7 @@ void __cdecl random_events(int mode) {
             }
             const int minimum_ranking =
                 (GameDataStateStorage.fields_.turn_current_num_ >= 150) ? 5 : 4;
-            if (static_cast<int>(PlayersData[faction_id].ranking) <
+            if (PlayersData[faction_id].ranking <
                 minimum_ranking) break;
             PlayersData[faction_id].tech_accumulated = 0;
             PlayersData[faction_id].net_random_event = 0;
@@ -2626,7 +2626,7 @@ void __cdecl reset_territory() {
             // `& 0xE0` gives `and cl, 0xE0 / cmp cl, 0x60 / sbb / neg` instead.
             BOOL is_ocean_tile = (tile->climate & ~0x1F) < (ALT_SHORE_LINE << 5);
             if (base_id >= 0) {
-                int max_dist = (int)Rules.territory_max_dist_base;
+                int max_dist = Rules.territory_max_dist_base;
                 if (is_ocean_tile) {
                     max_dist >>= 1;
                 }
@@ -2728,7 +2728,7 @@ void __cdecl reset_territory() {
                 }
                 // BaseFindDist loads first in the image.
                 int dist = BaseFindDist;
-                int limit = (int)Rules.territory_max_dist_base;
+                int limit = Rules.territory_max_dist_base;
                 if (dist < limit || dist > limit + limit) {
                     continue;
                 }
@@ -3032,7 +3032,7 @@ int __cdecl generators(int faction_id, int *count_out) {
     for (int index = 0; index < GameDataStateStorage.fields_.base_current_count_; ++index) {
         if (Bases[index].faction_id_current == faction_id && has_fac(0x28, index, 0)) {
             if (Bases[index].population_size
-                >= static_cast<int>(Rules.size_base_subspace_gen)) {
+                >= Rules.size_base_subspace_gen) {
                 ++count;
             } else if (count_out != 0) {
                 ++*count_out;
@@ -3166,13 +3166,13 @@ int __cdecl end_of_game(int check_victory) {
                         if (static_cast<unsigned char>(base.faction_id_current) ==
                                 faction_id &&
                             has_fac(0x28, base_id, 0) != 0 &&
-                            static_cast<int>(Rules.size_base_subspace_gen) <=
+                            Rules.size_base_subspace_gen <=
                                 static_cast<int>(base.population_size)) {
                             ++generator_count;
                         }
                     }
                 }
-                if (static_cast<int>(Rules.subspace_generators_needed) <=
+                if (Rules.subspace_generators_needed <=
                     generator_count) {
                     data.flags |= PlayerGeneratorWin;
                     if (faction_id == ConsoleGlobal.faction_id_) {

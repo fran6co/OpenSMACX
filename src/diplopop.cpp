@@ -1018,7 +1018,7 @@ void DiploPop::draw_info() {
                                            static_cast<int>(strlen(StringTemp)));
 
         StringTemp[0] = '\0';
-        int might_index = 7 - static_cast<int>(PlayersData[faction].ranking);
+        int might_index = 7 - PlayersData[faction].ranking;
         if (might_index < 0) might_index = 0;
         else if (might_index > 6) might_index = 6;
         char *const might = StringTable.get(Might[might_index].adj_start);

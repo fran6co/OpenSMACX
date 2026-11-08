@@ -150,7 +150,7 @@ Purpose: Generate stats string for specified prototype. Replaced existing non-sa
 //            difference; plateaus on the def_rating address computation
 //            (shl 4 + disp vs add const + shl 4), 4 spellings tried.
 // LEVER 2026-09-03: the speed division is SIGNED - `speed_proto(proto_id) /
-//            (int)Rules.move_rate_roads` gives the image's `cdq / idiv`,
+//            Rules.move_rate_roads` gives the image's `cdq / idiv`,
 //            where the uncast `uint32_t` field gave `xor edx,edx / div`.
 //            Same cast now at all three say_stats* sites (0x57D7D0,
 //            0x57D8E0, 0x57DAA0).
@@ -180,7 +180,7 @@ void __cdecl say_stats_3(LPSTR stat, int proto_id) {
         say_defense(stat, proto_id);
     }
     strcat(stat, Stats3DefenseSpeedSeparatorText);
-    int speed = speed_proto(proto_id) / (int)Rules.move_rate_roads;
+    int speed = speed_proto(proto_id) / Rules.move_rate_roads;
     _itoa(speed, num_buf, 10);
     strcat(stat, num_buf);
     if (VehPrototypes[proto_id].reactor_id > RECT_FISSION) {
@@ -228,7 +228,7 @@ void __cdecl say_stats_2(LPSTR stat, int proto_id) {
         say_defense(stat, proto_id);
     }
     strcat(stat, "-");
-    int speed = speed_proto(proto_id) / (int)Rules.move_rate_roads;
+    int speed = speed_proto(proto_id) / Rules.move_rate_roads;
     _itoa(speed, num_buf, 10);
     strcat(stat, num_buf);
     if (get_proto_triad(proto_id) == TRIAD_SEA) {
@@ -321,7 +321,7 @@ append_defense_tail:
             say_defense(stat, proto_id);
         }
         strcat(stat, custom_spacer ? custom_spacer : "/");
-        int speed = speed_proto(proto_id) / (int)Rules.move_rate_roads;
+        int speed = speed_proto(proto_id) / Rules.move_rate_roads;
         _itoa(speed, num_buf, 10);
         strcat(stat, num_buf);
     } else {

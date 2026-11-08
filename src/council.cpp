@@ -476,7 +476,7 @@ proposal_next:
     }
 
     turn = GameDataStateStorage.fields_.turn_current_num_;
-    council_delay = static_cast<int>(Rules.min_turns_councils);
+    council_delay = Rules.min_turns_councils;
     if (selected_item != 0) {
         if ((GameDataStateStorage.fields_.game_state_ & 0x80) != 0 && (GameDataStateStorage.fields_.game_state_ & 0x1000) != 0
                 && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) != 0) {
@@ -925,7 +925,7 @@ int __cdecl wants_prop(int faction, int proposal, int option) {
                         if ((humans & option_bit) != 0) {
                             if (IsMultiplayerNet != 0 &&
                                 option == static_cast<int>(GameDataStateStorage.fields_.ranking_faction_id_unk1_) &&
-                                static_cast<int>(PlayersData[option].ranking) >= 5) {
+                                PlayersData[option].ranking >= 5) {
                                 --score;
                             } else if (option != static_cast<int>(GameDataStateStorage.fields_.ranking_faction_id_unk1_) ||
                                        PlayersData[option].diff_level < 2) {

@@ -2153,7 +2153,7 @@ void MapWin::dest_line(int x1, int y1, int x2, int y2, int proto_id,
                 if (proto_id >= 0) {
                     MapDestinationCost += hex_cost(
                         proto_id, faction, prev_x, prev_y, x, y,
-                        speed_proto(proto_id) == static_cast<int>(Rules.move_rate_roads));
+                        speed_proto(proto_id) == Rules.move_rate_roads);
                 }
                 if (mapwin_tile_visible(this, prev_x, prev_y) ||
                     mapwin_tile_visible(this, x, y)) {
@@ -2183,7 +2183,7 @@ void MapWin::dest_line(int x1, int y1, int x2, int y2, int proto_id,
 
     if (fallback) {
         MapDestinationCost = (mapwin_route_distance(x1, y1, x2, y2) >> 1) *
-                             static_cast<int>(Rules.move_rate_roads);
+                             Rules.move_rate_roads;
         direct_dest_line(x1, y1, x2, y2, triad, pattern_on, pattern_off, cover);
     }
 }

@@ -2393,7 +2393,7 @@ int __cdecl tech_rate(int faction_id) {
         - tech_rate_sign(PlayersData[faction_id].soc_effect_base.values_[SocialEffect::RESEARCH]), 1, 99999);
     if (Rules.tech_discovery_rate_pct_std != 100) {
         discovery_rate = 100 * discovery_rate
-            / static_cast<int>(Rules.tech_discovery_rate_pct_std);
+            / Rules.tech_discovery_rate_pct_std;
     }
     if (Players[faction_id].rule_techcost != 100) {
         discovery_rate = discovery_rate * Players[faction_id].rule_techcost / 100;

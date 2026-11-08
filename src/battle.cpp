@@ -3115,12 +3115,12 @@ struct BattleFightArtilleryRoll {
 static BattleFightArtilleryRoll battle_fight_artillery_roll_v2(
     int defender_id, int x_coord, int y_coord, int attacker_offense,
     int defender_defense, int target_base_id) {
-    int denominator = static_cast<int>(Rules.artillery_dmg_denom) *
+    int denominator = Rules.artillery_dmg_denom *
                       defender_defense;
     if (denominator < 1) denominator = 1;
     else if (denominator > 9999999) denominator = 9999999;
 
-    int damage = static_cast<int>(Rules.artillery_dmg_num) *
+    int damage = Rules.artillery_dmg_num *
                  attacker_offense / denominator + 1;
     if (damage < 1) damage = 1;
     else if (damage > 999) damage = 999;
@@ -6715,7 +6715,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
         if (movement_charge < 0) movement_charge = 0;
         if (movement_charge > 999) movement_charge = 999;
     } else {
-        movement_charge = static_cast<int>(Rules.move_rate_roads);
+        movement_charge = Rules.move_rate_roads;
     }
 
     int attacker_combat = 0; // Native mutable local [-0x14].

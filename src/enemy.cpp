@@ -4835,7 +4835,7 @@ int __cdecl enemy_planet_buster(int vehicle_id) {
                         && (GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_UN_CHARTER]
                                 <= GameDataStateStorage.fields_.council_resolution_count_[PROP_REINSTATE_UN_CHARTER]
                             || PlayersData[faction_id].ai_fight < 1))
-                    || (int)PlayersData[target_faction].ranking < (int)PlayersData[faction_id].ranking
+                    || PlayersData[target_faction].ranking < PlayersData[faction_id].ranking
                     || !reputation(target_faction, faction_id))) {
                 continue;
             }
@@ -4850,7 +4850,7 @@ int __cdecl enemy_planet_buster(int vehicle_id) {
                                 <= GameDataStateStorage.fields_.council_resolution_count_[PROP_REINSTATE_UN_CHARTER]) {
                             continue;
                         }
-                        if ((int)PlayersData[target_faction].ranking > (int)PlayersData[faction_id].ranking) {
+                        if (PlayersData[target_faction].ranking > PlayersData[faction_id].ranking) {
                             continue;
                         }
                     }
@@ -4867,7 +4867,7 @@ int __cdecl enemy_planet_buster(int vehicle_id) {
                         if (score < 4) {
                             continue;
                         }
-                        if ((int)PlayersData[faction_id].ranking > (int)PlayersData[target_faction].ranking) {
+                        if (PlayersData[faction_id].ranking > PlayersData[target_faction].ranking) {
                             continue;
                         }
                     }
@@ -5827,7 +5827,7 @@ static SeaScoringExit enemy_move_sea_scoring(EnemyMoveFullFrame &enemy_frame) {
                 if (reject_tile) continue;
             }
             enemy_frame.local_80 = -1;
-            if (veh_moves(enemy_frame.vehicle_id) >= (int)Rules.move_rate_roads &&
+            if (veh_moves(enemy_frame.vehicle_id) >= Rules.move_rate_roads &&
                 enemy_frame.local_7c && movement_gate >= 1) {
                 enemy_frame.local_28 = -1;
                 enemy_frame.local_30 = 0;
@@ -7999,7 +7999,7 @@ label_56e011: {
                     f.local_4c = has_pact;
                     if (has_pact) {
                         score *= 2;
-                        if (static_cast<int>(PlayersData[base.faction_id_current].ranking) < 6 ||
+                        if (PlayersData[base.faction_id_current].ranking < 6 ||
                             (relation & 0x01000000u) != 0) continue;
                     }
                     if ((relation & 2u) != 0) score *= 2;
@@ -9571,14 +9571,14 @@ label_577361:
             case 0:
                 if(friendly&&!f.local_98)score+=stack_check(unit,2,2,-1,-1)*4;
                 score-=stack_check(unit,2,0,-1,-1)*2;
-                score-=hex_cost(f.local_ac,f.local_c,f.local_18,f.local_14,x,y,0)/(int)Rules.move_rate_roads;
+                score-=hex_cost(f.local_ac,f.local_c,f.local_18,f.local_14,x,y,0)/Rules.move_rate_roads;
                 break;
             case 1:if(zoc_veh(x,y,f.local_c))score+=defense_value(f.local_c,x,y,f.vehicle_id,-1)*2;break;
             case 2:
                 if(zoc_veh(x,y,f.local_c))score+=defense_value(f.local_c,x,y,f.vehicle_id,-1)*2;
                 if(friendly&&!f.local_98)score+=stack_check(unit,2,0,-1,-1)*4-stack_check(unit,2,2,-1,-1)*2;
                 break;
-            case 3:score-=hex_cost(f.local_ac,f.local_c,f.local_18,f.local_14,x,y,0)/(int)Rules.move_rate_roads;break;
+            case 3:score-=hex_cost(f.local_ac,f.local_c,f.local_18,f.local_14,x,y,0)/Rules.move_rate_roads;break;
             case 6:score+=stack_check(unit,2,7,-1,-1)*4-stack_check(unit,2,6,-1,-1)*2;break;
             case 7:if(!f.local_98)score+=stack_check(unit,2,6,-1,-1)*4;
                 score-=stack_check(unit,2,7,-1,-1)*8;break;
@@ -9653,7 +9653,7 @@ label_577361:
                             if(tactical_offense(f.vehicle_id)&&(treaty&0x810u)){
                                 combat=1;
                                 int odds=battle_fight(f.vehicle_id,pos-1,0,0,&unit);
-                                if(f.local_b4|| (veh_moves(f.vehicle_id)<(int)Rules.move_rate_roads&&f.local_ac!=8)||
+                                if(f.local_b4|| (veh_moves(f.vehicle_id)<Rules.move_rate_roads&&f.local_ac!=8)||
                                     (!f.local_64&&f.local_50>=1)){
                                     const int reverse=battle_fight(unit,(pos+3)&7,0,0,0);
                                     if(reverse){const int damage=f.local_b4?f.local_b4+1:0;

@@ -105,7 +105,7 @@ BOOL __cdecl valid_tech_leap(int tech_id, int faction_id) {
     for (int j = 0; j < MaxWeaponNum; j++) {
         if (Weapon[j].preq_tech == tech_id) { // may end early if 2 weapons have the same preq
             // `ranking` is compared signed in the image (`jg`).
-            if ((int)PlayersData[faction_id].ranking > 2 // lowest two ranking factions
+            if (PlayersData[faction_id].ranking > 2 // lowest two ranking factions
                 || Weapon[j].offense_rating > weapon_budget(faction_id, 99, false) + 2) {
                 return false;
             }

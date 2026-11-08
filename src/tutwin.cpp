@@ -1496,7 +1496,7 @@ void TutWin::tour1() {
     x = TutWinBaseWindow.expenses_help_rects_[1].left + (TutWinBaseWindow.expenses_help_rects_[1].right - TutWinBaseWindow.expenses_help_rects_[1].left) / 2;
     y = TutWinBaseWindow.expenses_help_rects_[1].top + (TutWinBaseWindow.expenses_help_rects_[1].bottom - TutWinBaseWindow.expenses_help_rects_[1].top) / 2;
     TutWinBaseWindow.client_to_screen(&x, &y);
-    parse_num(0, static_cast<int>(Rules.nutrient_req_citizen));
+    parse_num(0, Rules.nutrient_req_citizen);
     if (tut_win(MapWinTable[0], "TOUR1NUT", x, y, 0, 2, -1, -1) == 0) return;
     x = TutWinBaseWindow.expenses_help_rects_[2].left + (TutWinBaseWindow.expenses_help_rects_[2].right - TutWinBaseWindow.expenses_help_rects_[2].left) / 2;
     y = TutWinBaseWindow.expenses_help_rects_[2].top + (TutWinBaseWindow.expenses_help_rects_[2].bottom - TutWinBaseWindow.expenses_help_rects_[2].top) / 2;

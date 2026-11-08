@@ -155,7 +155,7 @@ void BaseWin::farm_click(int x, int y, int) {
         for (int i = field_40B50_; i < BaseCurrent->specialist_total; ++i) {
             const int next = i + 1;
             const int type = next >= 16 ? best_specialist()
-                : (static_cast<int>(BaseCurrent->spec[next >> 3]) >> ((next & 7) * 4)) & 15;
+                : (BaseCurrent->spec[next >> 3] >> ((next & 7) * 4)) & 15;
             if (next < 17) {
                 BaseCurrent->spec[i >> 3] &= ~(15 << ((i & 7) * 4));
                 BaseCurrent->spec[i >> 3] |= type << ((i & 7) * 4);
@@ -212,7 +212,7 @@ void BaseWin::farm_click(int x, int y, int) {
                     if (tile_y < 0 || tile_y >= MapLatitudeBounds || tile_x < 0 || tile_x >= MapLongitudeBounds
                         || !(BaseCurrent->resource_sqr_radius & (1u << i))) continue;
                     const int nutrient_divisor = range(BaseCurrent->intake_2[RSC_NUTRIENTS]
-                        - BaseCurrent->population_size * static_cast<int>(Rules.nutrient_req_citizen), 1, 99);
+                        - BaseCurrent->population_size * Rules.nutrient_req_citizen, 1, 99);
                     int score = resource_yield(0, faction, BaseIDCurrentSelected, tile_x, tile_y)
                         * (growth + 3) * 4 / nutrient_divisor;
                     const int mineral_divisor = range(BaseCurrent->intake_2[RSC_MINERALS]
@@ -271,7 +271,7 @@ void BaseWin::pop_click(int position, int, int, int) {
         const int faction = BaseCurrent->faction_id_current;
         if (!has_tech(citizen.preq_tech, faction)
             || (has_tech(citizen.obsol_tech, faction) && i != current)) continue;
-        if (BaseCurrent->population_size < static_cast<int>(Rules.min_base_size_specialists)
+        if (BaseCurrent->population_size < Rules.min_base_size_specialists
             && citizen.psych_bonus < 2) { too_small = true; continue; }
         strcpy(StringTemp, StringTable.get(citizen.singular_name));
         strcat(StringTemp, "|");
@@ -402,7 +402,7 @@ void BaseWin::queue_click(int row, int x, int y, int right) {
             for (int i = 0; i < 10; ++i) {
                 int entry = BaseCurrent->queue_production_id[i];
                 if (entry >= 0)
-                    entry += static_cast<unsigned char>(VehPrototypes[entry].unk_1) << 16;
+                    entry += VehPrototypes[entry].unk_1 << 16;
                 PlayersData[faction].saved_queue_items[picked][i] = entry;
             }
             synch_template(faction);
@@ -420,13 +420,13 @@ void BaseWin::queue_click(int row, int x, int y, int right) {
                 if (stored >= 0) {
                     entry = stored & 0xFFFF;
                     const unsigned category = static_cast<unsigned>(stored) >> 16;
-                    if (static_cast<unsigned char>(VehPrototypes[entry].unk_1) != category
+                    if (VehPrototypes[entry].unk_1 != category
                         || (VehPrototypes[entry].obsolete_factions & (1u << faction))) {
                         for (int k = 0; k < 64; ++k) {
                             const int candidate = faction * 64 + k;
                             const VehPrototype &prototype = VehPrototypes[candidate];
                             if ((prototype.flags & 1) && !(prototype.obsolete_factions & (1u << faction))
-                                && static_cast<unsigned char>(prototype.unk_1) == category) entry = candidate;
+                                && prototype.unk_1 == category) entry = candidate;
                         }
                     }
                 }
@@ -703,13 +703,13 @@ void BaseWin::draw_flash(int redraw_mode) {
                 strcat(StringTemp, ": ");
                 // The original calls speed again in the positive branch.
                 const int moves = range(speed(vehicle_id, 0) - vehicle.moves_expended, 0, 999);
-                const int divisor = static_cast<int>(Rules.move_rate_roads);
+                const int divisor = Rules.move_rate_roads;
                 strcat(StringTemp, _itoa(moves / divisor, number, 10));
                 if (moves % divisor) {
                     strcat(StringTemp, " ");
                     strcat(StringTemp, _itoa(moves % divisor, number, 10));
                     strcat(StringTemp, "/");
-                    strcat(StringTemp, _itoa(static_cast<int>(Rules.move_rate_roads), number, 10));
+                    strcat(StringTemp, _itoa(Rules.move_rate_roads, number, 10));
                 }
             }
             y = canvas.wrap_cent(StringTemp, x, y, text_width);
@@ -724,9 +724,9 @@ void BaseWin::draw_flash(int redraw_mode) {
             const int moves = speed(vehicle_id, 0) * (missile + (remaining == 0)
                                                      - vehicle.terraforming_turns)
                               - vehicle.moves_expended;
-            strcat(StringTemp, _itoa(moves / static_cast<int>(Rules.move_rate_roads), number, 10));
+            strcat(StringTemp, _itoa(moves / Rules.move_rate_roads, number, 10));
             strcat(StringTemp, "/");
-            strcat(StringTemp, _itoa(speed(vehicle_id, 0) * missile / static_cast<int>(Rules.move_rate_roads),
+            strcat(StringTemp, _itoa(speed(vehicle_id, 0) * missile / Rules.move_rate_roads,
                                     number, 10));
             canvas.set_text_color(0xFA, -1, 1, 1);
             if (vehicle.terraforming_turns != 0 && vehicle.terraforming_turns >= missile / 2)
@@ -1312,7 +1312,7 @@ void BaseWin::on_mouse_move(int x, int y) {
         const int specialist = field_40B50_;
         if (specialist >= 0) {
             cursor = (specialist >= 16 ? best_specialist()
-                : (static_cast<int>(BaseCurrent->spec[specialist >> 3]) >> ((specialist & 7) * 4)) & 15) + 4;
+                : (BaseCurrent->spec[specialist >> 3] >> ((specialist & 7) * 4)) & 15) + 4;
         } else {
             cursor = 1;
         }
@@ -1492,7 +1492,7 @@ static inline void psych_sprite(Buffer *destination, Sprite *sprite, int x, int 
 
 static inline int psych_specialist_type(int i) {
     return i >= 16 ? best_specialist()
-        : (static_cast<int>(BaseCurrent->spec[i >> 3]) >> ((i & 7) * 4)) & 15;
+        : (BaseCurrent->spec[i >> 3] >> ((i & 7) * 4)) & 15;
 }
 
 // Draw one row using the original population-sized spacing. The stage counts
@@ -1704,7 +1704,7 @@ static bool apply_retool_cost_prompt(BaseWin &window, Popup &popup,
     if (PlayersData[faction_snapshot].diff_level <= 1
         || Rules.retool_pct_pen_prod_chg == 0
         || BaseCurrent->minerals_accumulated_2
-               <= static_cast<int>(Rules.retool_exemption)
+               <= Rules.retool_exemption
         || window.displayed_production_id() == -0x45) {
         BaseCurrent->minerals_accumulated =
             BaseCurrent->minerals_accumulated_2;
@@ -1729,15 +1729,15 @@ static bool apply_retool_cost_prompt(BaseWin &window, Popup &popup,
     set_production_parse_name(0, BaseCurrent->queue_production_id[0]);
     set_production_parse_name(1, normalized_id);
 
-    const int exemption = static_cast<int>(Rules.retool_exemption);
-    const int percent = static_cast<int>(Rules.retool_pct_pen_prod_chg);
+    const int exemption = Rules.retool_exemption;
+    const int percent = Rules.retool_pct_pen_prod_chg;
     const int reserve = BaseCurrent->minerals_accumulated_2;
     const int proposed_reserve = production_add(
         exemption, production_mul(production_sub(reserve, exemption),
                                   production_sub(100, percent)) / 100);
 
     parse_num(0, percent);
-    parse_num(1, static_cast<int>(Rules.retool_exemption));
+    parse_num(1, Rules.retool_exemption);
     parse_num(2, production_sub(BaseCurrent->minerals_accumulated, proposed_reserve));
 
     // Image literals at 0x682BC0 and 0x682BD0 were read from the pinned PE:
@@ -1746,7 +1746,7 @@ static bool apply_retool_cost_prompt(BaseWin &window, Popup &popup,
     StringTemp[0] = 0;
     strcat(StringTemp, "RETOOLPENALTY");
     char strictness_text[0x50];
-    _itoa(static_cast<int>(Rules.retool_strictness), strictness_text, 10);
+    _itoa(Rules.retool_strictness, strictness_text, 10);
     strcat(StringTemp, strictness_text);
     if (Rules.retool_exemption != 0) strcat(StringTemp, "A");
 
@@ -2176,7 +2176,7 @@ void BaseWin::hurry() {
         minerals = BaseCurrent->minerals_accumulated;
         if (minerals < cost_factor(BaseCurrent->faction_id_current, 1, -1) * 4) cost *= 2;
     }
-    if (minerals < static_cast<int>(Rules.retool_exemption)) cost *= 2;
+    if (minerals < Rules.retool_exemption) cost *= 2;
     if (GameDataStateStorage.fields_.secret_project_.voice_of_planet() >= 0) cost *= 2;
     if (Players[faction_id].rule_hurry != 100) cost = Players[faction_id].rule_hurry * cost / 100;
     if (cost <= 0) return;
@@ -5016,7 +5016,7 @@ void BaseWin::on_iface_mouse_move(int a1, int a2) {
             const int specialist = field_40B50_;
             if (specialist >= 0) {
                 cursor = (specialist >= 16 ? best_specialist()
-                    : (static_cast<int>(BaseCurrent->spec[specialist >> 3]) >> ((specialist & 7) * 4)) & 15) + 4;
+                    : (BaseCurrent->spec[specialist >> 3] >> ((specialist & 7) * 4)) & 15) + 4;
                 if (cursor < 4) cursor = 1;
             }
         }
@@ -6500,7 +6500,7 @@ void BaseWin::draw_pop(int update_mode) {
             } else {
                 const int specialist = i - (BaseCurrent->population_size - BaseCurrent->specialist_total);
                 const int type = specialist >= 16 ? best_specialist()
-                    : (static_cast<int>(BaseCurrent->spec[specialist >> 3]) >> ((specialist & 7) * 4)) & 15;
+                    : (BaseCurrent->spec[specialist >> 3] >> ((specialist & 7) * 4)) & 15;
                 specialist_counts[type]++;
                 g_AL_SPECIALIST_LG_CURSOR_SPRITES[type].draw(&MainInterfaceGlobal,
                     g_AL_SPECIALIST_LG_CURSOR_SPRITES[type].transparent_index(),
@@ -6526,7 +6526,7 @@ void BaseWin::draw_pop(int update_mode) {
             } else {
                 const int specialist = i - (BaseCurrent->population_size - BaseCurrent->specialist_total);
                 const int type = specialist >= 16 ? best_specialist()
-                    : (static_cast<int>(BaseCurrent->spec[specialist >> 3]) >> ((specialist & 7) * 4)) & 15;
+                    : (BaseCurrent->spec[specialist >> 3] >> ((specialist & 7) * 4)) & 15;
                 specialist_counts[type]++;
                 g_SPECIALIST_LG_CURSOR_SPRITES[type].draw(&MainInterfaceGlobal,
                     g_SPECIALIST_LG_CURSOR_SPRITES[type].transparent_index(),

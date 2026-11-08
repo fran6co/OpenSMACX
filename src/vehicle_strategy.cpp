@@ -37,9 +37,9 @@ int __cdecl arm_strat(int armor_id, int faction_id) {
     }
     int8_t defense_rating = Armor[armor_id].defense_rating;
     if (defense_rating < 0) {
-        return psi_factor(((int)Rules.psi_combat_ratio_def[TRIAD_LAND]
+        return psi_factor((Rules.psi_combat_ratio_def[TRIAD_LAND]
             * PlayersData[faction_id].enemy_best_weapon_value)
-            / (int)Rules.psi_combat_ratio_atk[TRIAD_LAND], faction_id, false, false);
+            / Rules.psi_combat_ratio_atk[TRIAD_LAND], faction_id, false, false);
     }
     return defense_rating;
 }
@@ -71,9 +71,9 @@ int __cdecl weap_strat(int weapon_id, int faction_id) {
     }
     int8_t offense_rating = Weapon[weapon_id].offense_rating;
     if (offense_rating < 0) {
-        return psi_factor(((int)Rules.psi_combat_ratio_atk[TRIAD_LAND]
+        return psi_factor((Rules.psi_combat_ratio_atk[TRIAD_LAND]
             * PlayersData[faction_id].enemy_best_armor_value)
-            / (int)Rules.psi_combat_ratio_def[TRIAD_LAND], faction_id, true, false);
+            / Rules.psi_combat_ratio_def[TRIAD_LAND], faction_id, true, false);
     }
     return offense_rating;
 }
@@ -109,9 +109,9 @@ int __cdecl weap_val(int proto_id, int faction_id) {
     }
     int8_t offense_rating = Weapon[weapon_id].offense_rating;
     if (offense_rating < 0) {
-        return psi_factor(((int)Rules.psi_combat_ratio_atk[TRIAD_LAND]
+        return psi_factor((Rules.psi_combat_ratio_atk[TRIAD_LAND]
             * PlayersData[faction_id].enemy_best_armor_value)
-            / (int)Rules.psi_combat_ratio_def[TRIAD_LAND], faction_id, true, false);
+            / Rules.psi_combat_ratio_def[TRIAD_LAND], faction_id, true, false);
     }
     return offense_rating;
 }
@@ -143,9 +143,9 @@ int __cdecl arm_val(int armor_id, int faction_id) {
         } else {
             int8_t defense_rating = Armor[armor_id].defense_rating;
             if (defense_rating < 0) {
-                defense = psi_factor(((int)Rules.psi_combat_ratio_def[TRIAD_LAND]
+                defense = psi_factor((Rules.psi_combat_ratio_def[TRIAD_LAND]
                     * PlayersData[faction_id].enemy_best_weapon_value)
-                    / (int)Rules.psi_combat_ratio_atk[TRIAD_LAND], faction_id, false, false);
+                    / Rules.psi_combat_ratio_atk[TRIAD_LAND], faction_id, false, false);
             } else {
                 defense = defense_rating;
             }
@@ -184,9 +184,9 @@ int __cdecl armor_val(int proto_id, int faction_id) {
         } else {
             int8_t defense_rating = Armor[armor_id].defense_rating;
             if (defense_rating < 0) {
-                defense = psi_factor(((int)Rules.psi_combat_ratio_def[TRIAD_LAND]
+                defense = psi_factor((Rules.psi_combat_ratio_def[TRIAD_LAND]
                     * PlayersData[faction_id].enemy_best_weapon_value)
-                    / (int)Rules.psi_combat_ratio_atk[TRIAD_LAND], faction_id, false, false);
+                    / Rules.psi_combat_ratio_atk[TRIAD_LAND], faction_id, false, false);
             } else {
                 defense = defense_rating;
             }

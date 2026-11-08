@@ -694,7 +694,7 @@ void __cdecl vehdraw_unk1(Buffer *buffer, int vehicle_id, int x, int y,
 void __cdecl vehdraw_compute_facet_normals() {
     // 0x93341C is ConsoleGlobal + MapWin::field_1DD6C_, initialized to 25
     // or 8 by MapWin::calculate_dimensions. It is not an independent global.
-    const int baseline = (int)ConsoleGlobal.field_1DD6C_;
+    const int baseline = ConsoleGlobal.field_1DD6C_;
     int index = 0;
     for (int i = 30; i < 240; i += 30) {
         const float height_i = (float)((i >> 2) - baseline);

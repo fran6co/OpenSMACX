@@ -1379,7 +1379,7 @@ int __cdecl action_home(int veh_id, int flags) {
         reach += (int)speed(veh_id, false)
             * ((hp_left - 1) / VehPrototypes[veh.proto_id].reactor_id);
     }
-    const int max_dist = reach / (int)Rules.move_rate_roads;
+    const int max_dist = reach / Rules.move_rate_roads;
 
     for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
         const int base_faction = Bases[base_id].faction_id_current;
@@ -1441,7 +1441,7 @@ int __cdecl action_home(int veh_id, int flags) {
             int dist = home_dist(veh_x, veh_y, Vehs[other_id].x, Vehs[other_id].y);
             if ((flags & 1) || flags == 4) {
                 if (!is_human(faction_id)) {
-                    dist += (int)speed(other_id, false) / (int)Rules.move_rate_roads;
+                    dist += (int)speed(other_id, false) / Rules.move_rate_roads;
                 }
                 if (VehPrototypes[Vehs[other_id].proto_id].plan == PLAN_SUPPLY_CONVOY) {
                     // Recomputed raw, without the bias just added above.
@@ -1449,7 +1449,7 @@ int __cdecl action_home(int veh_id, int flags) {
                     const int x_part = x_dist(veh_x, Vehs[other_id].x);
                     const int moves = range((int)speed(veh_id, false)
                                             - veh.moves_expended, 0, 999);
-                    if ((x_part + abs(veh_y - other_y)) >> 1 > moves / (int)Rules.move_rate_roads) {
+                    if ((x_part + abs(veh_y - other_y)) >> 1 > moves / Rules.move_rate_roads) {
                         continue; // the convoy is not reachable this turn
                     }
                 }
@@ -2552,7 +2552,7 @@ void __cdecl action_give(int vehicle_id, int faction_id) {
                     VehPrototypes[Vehs[i].proto_id].armor_id,
                     VehPrototypes[Vehs[i].proto_id].ability_flags,
                     VehPrototypes[Vehs[i].proto_id].reactor_id,
-                    (uint8_t)VehPrototypes[Vehs[i].proto_id].unk_1, nullptr);
+                    VehPrototypes[Vehs[i].proto_id].unk_1, nullptr);
                 if (proto_id < 0) {
                     for (int j = 0; j < MaxVehProtoFactionNum; j++) {
                         id = faction_id * MaxVehProtoFactionNum + j;

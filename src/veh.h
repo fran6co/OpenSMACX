@@ -565,7 +565,7 @@ struct VehPrototype {
     uint8_t carry_capacity;
     uint8_t cost;
     uint8_t plan;
-    int8_t unk_1; // some kind of internal prototype category?
+    uint8_t unk_1; // some kind of internal prototype category?
     uint8_t obsolete_factions; // faction bitfield of those who marked this prototype obsolete
     int8_t combat_factions; // faction bitfield for those that have seen it in combat (atk/def)
     int8_t icon_offset;

@@ -3292,9 +3292,9 @@ label_5a4b28:
                                         target_faction_id), -1, -1);
 
             const int actor_rank =
-                static_cast<int>(PlayersData[actor_faction_id].ranking);
+                PlayersData[actor_faction_id].ranking;
             const int target_rank =
-                static_cast<int>(PlayersData[target_faction_id].ranking);
+                PlayersData[target_faction_id].ranking;
             const int actor_tech_rank =
                 PlayersData[actor_faction_id].tech_ranking;
             const int target_tech_rank =
