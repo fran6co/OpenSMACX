@@ -24,6 +24,7 @@
 // symbol    ??0ServiceProviderList@@QAE@XZ
 // ORIGINAL: 0x004016C0 ?close@ServiceStruct@@QAEXXZ 0x004016C0-0x00401759 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/004016c0.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed.", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/004016c0.cpp"], "reason": "Receiver virtual-base adjustment -1C, provider-base tables and list walk; no saved-owner publication tail. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// compile_context src/alphanet.cpp
 // kind      game
 // symbol    ??1ServiceProviderList@@UAE@XZ
 // ORIGINAL: 0x00401760 ?add@ServiceStruct@@QAEHH@Z 0x00401760-0x00401B73 FILE
@@ -63,6 +64,7 @@
 // symbol    ??_DServiceList@@QAEXXZ
 // ORIGINAL: 0x004E3730 sub_4e3730 0x004E3730-0x004E3888;0x0065C880-0x0065C895 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/unrecovered/004e3730.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the transferred historical seed findings and complete original spans.", "git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/unrecovered/004e3730.cpp", "Historical seed spelling sub_4e3730; current source mapping sub_4e3730; emitted symbol ??1ServiceList@@UAE@XZ."], "reason": "Receiver-24 stages provider-derived66EB20/66EB1C, walk then provider base; retained65C880 EH span. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
+// compile_context src/alphanet.cpp
 // TRIED: same shape as 0x004E3350's `ClassX::sub_4e3350` (own-stage list teardown at vtable 0x66eb20/0x66eb1c, then the same 0x6693d4/0x6693d0 pair the real `?close@ServiceStruct@@QAEXXZ` (0x004016c0, referenced from this function's unwind funclet at 0x0065C880) uses, on the member at `this-0x24`) - no SEH frame modelled, same precedent as 0x004C86D0/0x00538D10 and this function's sibling at 0x004E3350. 0.496 mnemonic similarity, first divergence at #2 (dropped SEH prologue).
 // symbol    ??1ServiceList@@UAE@XZ
 // ORIGINAL: 0x004E3890 sub_4e3890 0x004E3890-0x004E38DB FILE BYTE_EXACT
@@ -244,24 +246,7 @@ static const GUID KeptServiceProviderGuid = {
 // boundaries; each empty-option restore returns to command-line optimization.
 // `inline` lets /Ob2 expand it in Net::close (0x0062E010) and the receiver's
 // generated destructors; MEASURED keeps the out-of-line copy emitted.
-#pragma optimize("y", off)
-inline void JackalVoiceRx::clear() {
-    if (head_) {
-        for (int removed = 0; removed < count_; ++removed) {
-            cursor_ = head_->next_;
-            Sound *payload = head_->payload_;
-            on_remove(payload);
-            delete payload;
-            head_->payload_ = 0;
-            delete head_;
-            head_ = cursor_;
-        }
-        head_ = 0;
-        cursor_index_ = 0;
-        count_ = 0;
-    }
-}
-#pragma optimize("", on)
+// body src/net_class.h
 
 
 int JackalVoiceRx::on_insert(void *) { return 0; }
@@ -625,13 +610,12 @@ void Net::close() {
 
 
 // ORIGINAL: 0x004E34D0 ??1Net@@QAE@XZ 0x004E34D0-0x004E365C;0x0065C810-0x0065C876 BYTE_EXACT
+// compile_context src/alphanet.cpp
 // kind      game
 // symbol    ??1Net@@QAE@XZ
 // LEVER: call_diff said MORE, 8 calls against the image's 7, and all three causes were real defects rather than encoding ones. (1) `voice_tx_.VoiceTx::~VoiceTx()` was written out in the body of a REAL destructor whose `voice_tx_` is a REAL member, so VC6 emitted the destruction TWICE - once here and once after the body, where the image has it. (2) 0x004E3529 `call 0x402970` is StringStruct::remove_all entered on the list at sub1 - 0x24, and (3) 0x004E353A `call 0x401be0` is leaf_recoveries.cpp's sub_401be0 on sub1 - 8. Both went through no-argument `NetVectorTeardownHelper*()` forwarders, which is an indirect call the image does not make AND a receiver it does pass. call_diff is now clean.
 // TRIED: 12 of 110 even so, and the ceiling is not spelling. THE IMAGE'S BODY IS COMPILER-GENERATED MEMBER TEARDOWN, and this tree writes it out by hand. The image carries EIGHT EH state stores into [ebp - 4] - 5 before `Net::close`, 6 before remove_all, 4 before sub_401be0, then 3, 2, 1 for the three NetFifos, 0 for the container at 0xB0 and -1 at the end - and VC6 emits those ONLY for members it is destroying itself. The order is exactly reverse declaration order, which is the evidence: the objects in the 0x72C..0x750 region go first, then the fifos at 0x130, 0x10C, 0xE8, then the 0xB0 container, then `voice_tx_` at 0x58. `field_E8_[0x6C]` is precisely three 0x24-byte NetFifos, so the three explicit `reinterpret_cast<NetFifo *>(self + N)->~NetFifo()` calls in this body are the compiler's job; so is the 0xB0 walk and the 0x72C list. Declaring those members - and dropping the matching explicit construction from Net::Net, which double_construction.py will then flag - is what this body needs, and it is a layout job rather than a spelling one.
-#pragma optimize("y", off)
-Net::~Net() { close(); }
-#pragma optimize("", on)
+// body src/net_class.h
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 1.
@@ -2211,7 +2195,8 @@ int Net::poll_services(ServiceList *list) {
     ServiceEnumTarget = list;
     const HRESULT result = DirectPlayEnumerateA(enumerate_provider_callback, 0);
     ServiceEnumTarget = 0;
-    return result != 0;
+    if (result != 0) return 1;
+    return 0;
 }
 
 // 0x009BE4C0 - the DPCAPS the service join reads the provider's latency out
@@ -2238,24 +2223,26 @@ int Net::choose_service() {
     BasePop *popup = PopupAllocHook();
     if (popup == 0) return 4;
 
-    int result = 1;
-    if (guid_6E8_ != 0) {
-        if (poll_services(&providers) == 0 &&
-            popup->start(const_cast<char *>("jackal"), "SELECTSERVICE",
-                         -1, 0, 0x42, 0) == 0) {
+    // poll_services' own status (0x10 / 7 / enumeration failure) and
+    // start's failure code both become the result.
+    int result = poll_services(&providers);
+    if (result == 0) {
+        result = popup->start(const_cast<char *>("jackal"), "SELECTSERVICE",
+                              -1, 0, 0x42, 0);
+        if (result == 0) {
             providers.seek_pos(-1);
             for (int row = 0; row < providers.entry_count_; ++row) {
                 providers.next_entry();
                 char *name;
-                if (providers.current_ == 0) {
-                    name = 0;
-                } else {
-                    ServiceStruct *payload = providers.head_ == 0
-                        ? static_cast<ServiceStruct *>(0)
-                        : providers.current_->payload_;
+                if (providers.current_ != 0) {
+                    ServiceStruct *payload = providers.head_ != 0
+                        ? providers.current_->payload_
+                        : static_cast<ServiceStruct *>(0);
                     // Preserve the original null+4 fault if current_ is live
                     // while head_ is null; do not turn it into a safe row.
                     name = payload->name_;
+                } else {
+                    name = 0;
                 }
                 popup->dialogs().item(name, row);
             }
@@ -2265,14 +2252,12 @@ int Net::choose_service() {
                 result = 1;
             } else {
                 providers.seek_pos(selected); // original ignores failure
-                ServiceStruct *service = providers.head_ == 0
-                    ? static_cast<ServiceStruct *>(0)
-                    : providers.current_->payload_;
+                ServiceStruct *service = providers.head_ != 0
+                    ? providers.current_->payload_
+                    : static_cast<ServiceStruct *>(0);
                 result = join_service(service);
             }
         }
-    } else {
-        result = 7;
     }
 
     // The pinned method calls vtable slot zero with argument 1 on every path
@@ -3476,12 +3461,7 @@ NetTextListBase::~NetTextListBase() {
 
 
 
-#pragma optimize("y", off)
-NetUnk72C::~NetUnk72C() {
-    close();
-    // Natural base destruction supplies the distinct second list stage.
-}
-#pragma optimize("", on)
+// NetUnk72C::~NetUnk72C: body in net_class.h (inlined by ~Net).
 
 
 
@@ -3770,9 +3750,8 @@ int ServiceProviderList::on_insert(ServiceStruct *) { return 0; }
 
 void ServiceProviderList::on_remove(ServiceStruct *) { }
 
-int ServiceProviderList::seek_pos(int position) { return seek_owned_list(this, position); }
-
-ServiceStruct *ServiceProviderList::next_entry() { return next_owned_list(this); }
+// ServiceProviderList::seek_pos is inline in net_class.h; next_entry lives in
+// alphanet_records.cpp (choose_service and pick_service call it out of line).
 
 // Original401760 installs6693C4 at each entry's allocation base (+0x14).
 // Its deleting slot targets402C20, shared with StringStructEntry. The real
@@ -3819,11 +3798,7 @@ int ServiceProviderList::add(int id) {
 #pragma optimize("", on)
 
 
-#pragma optimize("y", off)
-ServiceProviderList::~ServiceProviderList() {
-    close();
-}
-#pragma optimize("", on)
+// ServiceProviderList::~ServiceProviderList: body in alphanet_inline.h.
 
 
 void ServiceList::on_remove(ServiceStruct *payload) {
@@ -3833,11 +3808,8 @@ void ServiceList::on_remove(ServiceStruct *payload) {
     }
 }
 
-#pragma optimize("y", off)
-ServiceList::~ServiceList() {
-    close();
-}
-#pragma optimize("", on)
+// ServiceList::~ServiceList lives in alphanet.cpp: choose_service (0x00630D70)
+// calls it out of line, while pick_service (0x004E26E0) expands it.
 
 
 BOOL __stdcall enumerate_session_callback(LPCDPSESSIONDESC2 descriptor,
@@ -4539,6 +4511,7 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
 #endif
 // ORIGINAL: 0x004E3710 sub_4e3710 0x004E3710-0x004E372B FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x004E3710..0x004E372A adjusts ECX by +0x58, calls 0x00402DD0, restores vptr 0x006693AC, republishes saved owner to 0x009B3374, and returns", "pinned Net, AlphaNet, and NetDaemon cleanup continuations pass the embedded complete NetAllocationNode receiver to 0x004E3710; helper reads no caller-frame state", "src/net_class.h declares NetAllocationNode virtually derives from StringAllocationBase, with vbtable 0x00669430 and base at +0x58; the captured allocator owner is at +4"], "reason": "Bind the pinned generated NetAllocationNode virtual-base cleanup entry to its genuine StringAllocationBase subobject and allocator-owner stage."}
+// compile_context src/alphanet.cpp
 // kind game
 // symbol    ??_DNetAllocationNode@@QAEXXZ
 // RECOVERY_GENERATED: v1 vbtable 0x006693DC 0x006693E4 ??_8ServiceProviderList@@7B@ 0x00401660

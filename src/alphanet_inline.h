@@ -78,3 +78,11 @@ inline NetAllocationNode::NetAllocationNode() {
     // independent virtual base consumes the now-cleared handoff.
 }
 #pragma optimize("", on)
+
+// Visible to alphanet.cpp: ~ServiceList (0x004E3730) expands it there.
+// 0x004016C0 is the standalone copy.
+#pragma optimize("y", off)
+inline ServiceProviderList::~ServiceProviderList() {
+    close();
+}
+#pragma optimize("", on)

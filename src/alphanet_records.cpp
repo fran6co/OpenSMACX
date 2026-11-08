@@ -329,3 +329,4 @@ void AlphaNetLedgerEntry::operator delete(void *memory) {
 }
 
 NetAllocationNode *AlphaNetStringStruct::next_entry() { return next_owned_list(this); }
+ServiceStruct *ServiceProviderList::next_entry() { return next_owned_list(this); }

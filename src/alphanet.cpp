@@ -257,35 +257,34 @@ int AlphaNet::pick_service(int *allow_pbem) {
     if (buffer_6E0_ == 0) return 7;
     BasePop *popup = PopupAllocHook();
     if (popup == 0) return 4;
-    int result;
-    if (poll_services(&providers) != 0 ||
-        popup->start(AlphaNetServiceScript, "SELECTSERVICE", -1, 0, 0x42, 0) != 0) {
-        result = 1;
-    } else {
-        providers.seek_pos(-1);
-        for (int row = 0; row < providers.entry_count_; ++row) {
-            providers.next_entry();
-            char *name;
-            if (providers.current_ == 0) name = 0;
-            else {
-                ServiceStruct *payload = providers.head_ == 0 ? 0 : providers.current_->payload_;
-                // Original inconsistent-list path dereferences null+4 here.
-                name = payload->name_;
+    int result = poll_services(&providers);
+    if (result == 0) {
+        result = popup->start(AlphaNetServiceScript, "SELECTSERVICE", -1, 0, 0x42, 0);
+        if (result == 0) {
+            providers.seek_pos(-1);
+            for (int row = 0; row < providers.entry_count_; ++row) {
+                providers.next_entry();
+                char *name;
+                if (providers.current_ != 0) {
+                    ServiceStruct *payload = providers.head_ != 0 ? providers.current_->payload_ : 0;
+                    // Original inconsistent-list path dereferences null+4 here.
+                    name = payload->name_;
+                } else {
+                    name = 0;
+                }
+                popup->dialogs().Dialogs::item(name, row);
             }
-            popup->dialogs().Dialogs::item(name, row);
-        }
-        if (allow_pbem != 0) popup->dialogs().Dialogs::item(label_get(0x1128 / 4), 9999);
-        const int selected = popup->exec(0, 0);
-        if (selected == -1) result = 1;
-        else if (selected == 9999) {
-            result = 0;
-            if (allow_pbem != 0) *allow_pbem = 1;
-        } else {
-            // Native selection starts at the head even when the popup's row
-            // lies outside the circular list's signed indexing domain.
-            if (providers.seek_pos(selected) == 0) providers.seek_pos(0);
-            ServiceStruct *payload = providers.head_ == 0 ? 0 : providers.current_->payload_;
-            result = join_service(payload);
+            if (allow_pbem != 0) popup->dialogs().Dialogs::item(label_get(0x1128 / 4), 9999);
+            const int selected = popup->exec(0, 0);
+            if (selected == -1) result = 1;
+            else if (selected == 9999) {
+                result = 0;
+                if (allow_pbem != 0) *allow_pbem = 1;
+            } else {
+                providers.seek_pos(selected); // original ignores failure
+                ServiceStruct *payload = providers.head_ != 0 ? providers.current_->payload_ : 0;
+                result = join_service(payload);
+            }
         }
     }
     delete popup;
@@ -406,3 +405,11 @@ connected:
     voice_hotkey_4c_ = 0x100DC;
     return 0;
 }
+
+// Defined in this TU: Net::choose_service (0x00630D70) never expands it,
+// while pick_service expands its final teardown.
+#pragma optimize("y", off)
+ServiceList::~ServiceList() {
+    close();
+}
+#pragma optimize("", on)

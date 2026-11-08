@@ -158,6 +158,29 @@ inline JackalVoiceRx::JackalVoiceRx() {
 inline JackalVoiceRx::~JackalVoiceRx() {
   close();
 }
+// Header-visible: ~Net (0x004E34D0) expands it; 0x00538EC0 is the
+// out-of-line copy ~AlphaNet/~NetDaemon call.
+// stand-in: a TU defining JACKALVOICERX_CLEAR_OUT_OF_LINE sees only the
+// declaration; netdaemon.cpp does, so ~AlphaNet calls it as the image does,
+// and console_commands.cpp does, as the visible body flips its register ties.
+#ifndef JACKALVOICERX_CLEAR_OUT_OF_LINE
+inline void JackalVoiceRx::clear() {
+  if (head_) {
+    for (int removed = 0; removed < count_; ++removed) {
+      cursor_ = head_->next_;
+      Sound *payload = head_->payload_;
+      on_remove(payload);
+      delete payload;
+      head_->payload_ = 0;
+      delete head_;
+      head_ = cursor_;
+    }
+    head_ = 0;
+    cursor_index_ = 0;
+    count_ = 0;
+  }
+}
+#endif
 #pragma optimize("", on)
 
 // The list subobject at Net+0x72C, not the receiver at Net+0xB0.
@@ -233,6 +256,15 @@ class NetUnk72C : public NetTextListBase {
   const char *source_text_;                 // +1C, borrowed hook input
   uint32_t field_20_;                       // +20, role not established
 };
+
+// Inline: ~Net and its inlined copies in ~AlphaNet/~NetDaemon expand this
+// body; 0x004023A0 is the standalone frame-retaining copy.
+#pragma optimize("y", off)
+inline NetUnk72C::~NetUnk72C() {
+  close();
+  // Natural base destruction supplies the distinct second list stage.
+}
+#pragma optimize("", on)
 
 // Provisional name for the distinct allocation-owning node at Net+0x700.
 // Original construction at 0x0062D763 installs a vbptr at relative zero:
@@ -389,7 +421,29 @@ class ServiceProviderList : public virtual StringAllocationBase {
         remove_all();
         current_position_ = 0;
     }
-    int seek_pos(int position);
+    // Inline: choose_service/pick_service expand it, calling abs out of line.
+    int seek_pos(int position) {
+        AbsFnT abs_fn = &abs;
+        if (position > entry_count_ - 1) return 0;
+        current_ = head_;
+        if (position < 0) {
+            if (abs_fn(position) > entry_count_) return 0;
+            int remaining = abs_fn(position);
+            while (remaining > 0) {
+                --remaining;
+                current_ = current_->previous_;
+            }
+            position += entry_count_;
+        } else {
+            int remaining = position;
+            while (remaining > 0) {
+                --remaining;
+                current_ = current_->next_;
+            }
+        }
+        current_position_ = position;
+        return 1;
+    }
     ServiceStruct *next_entry();
     ServiceListEntry *head_;      // +8
     ServiceListEntry *current_;   // +C
@@ -661,6 +715,12 @@ class Net {
 };
 
 static_assert(sizeof(Net) == 0x768, "Net ends before AlphaNet's player count");
+
+// Inline: ~AlphaNet/~NetDaemon (0x00538B60/0x00538D10) expand this body and
+// its member teardown; 0x004E34D0 is the standalone frame-retaining copy.
+#pragma optimize("y", off)
+inline Net::~Net() { close(); }
+#pragma optimize("", on)
 
 
 
