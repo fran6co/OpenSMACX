@@ -43,7 +43,9 @@ Palette g_PALETTE2;  // 0x009523A0, the preferences gamma working palette
 // InfoWin's normal/revealed primary and secondary colour pairs are [22..29],
 // initialized by the same swatch walk as every other interface colour. The
 // historical InfoTextColors identity names this slice, not another allocation.
-// RECOVERY_OBJECT: v1 0x008C6B5C ?TextColourTable@@3PAHA
+// textcolor_init's eleven swatch loops tile 0x008C6B5C..0x008C6E68 exactly
+// (the last ends `cmp esi, 0x8c6e68`), so the run is bounded at 195 ints.
+// RECOVERY_OBJECT: v2 0x008C6B5C 0x008C6E68 ?TextColourTable@@3PAHA 0x004BA220
 // RECOVERY_OBJECT: v5 0x008C6BB4 0x008C6BD4 ?InfoTextColors@@3PAY01HA 0x00458420 member ?TextColourTable@@3PAHA [22:30]
 int TextColourTable[195];
 

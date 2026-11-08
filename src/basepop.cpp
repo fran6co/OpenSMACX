@@ -1321,10 +1321,12 @@ func_popup_alloc *PopupAllocHook = &BasePop::basepop_alloc;
 // file section - and the image pushes its ADDRESS as an immediate
 // (`push 0x9b8aa8`), which is a decayed array. Through a `char *`
 // variable it is a load and a push instead.
-// EXTENT IS A FLOOR: nothing recovered bounds the writes into it, so
-// 256 is this tree's usual caption size rather than a measured one.
-// RECOVERY_OBJECT: v1 0x009B8AA8 ?PopupStartCaption@@3PADA
-char PopupStartCaption[256];  // 0x009B8AA8
+// SIXTEEN BYTES. The next object, BasePopDefaultBlock2E64, starts at
+// 0x009B8AB8, and the only writer, set_def_file (0x006043D0), refuses any
+// name longer than 12 characters (`cmp eax, 0xc / ja`) before its strcat,
+// so at most 13 bytes are stored: an 8.3 file name and its terminator.
+// RECOVERY_OBJECT: v2 0x009B8AA8 0x009B8AB8 ?PopupStartCaption@@3PADA 0x006043D0
+char PopupStartCaption[16];  // 0x009B8AA8
 
 // RECOVERY_OBJECT: v1 0x009B8D80 ?BasePopDefaultOkText@@3PADA
 char *BasePopDefaultOkText;      // 0x009B8D80

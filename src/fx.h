@@ -50,7 +50,10 @@ class FX {
   // RECOVERY_MEMBER: v4 FX effects_ Effect[97] 0x0 0x28EC 0x004482A0
   Effect effects_[97];
 
-  // FX::init writes -1 here; engine_pitch uses the signed index.
+ public:
+  // FX::init writes -1 here; engine_pitch uses the signed index. ambience()
+  // also clears it on g_FX directly (original 0x00446C59 stores -1 to
+  // 0x0074C5E4 = g_FX + 0x28EC), so it is a public member.
   // RECOVERY_MEMBER: v1 FX engine_effect_index_ 0x28EC 0x00446B10
   int engine_effect_index_;  // 0x28EC
 };

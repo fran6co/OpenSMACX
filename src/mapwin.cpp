@@ -127,14 +127,6 @@ MapPanelRect MapPanelRects[2];
 // RECOVERY_OBJECT: v2 0x00939EDC 0x00939EE0 ?MapPanelDirtyMask@@3IA 0x0046FA20
 uint32_t MapPanelDirtyMask;
 
-// Distinct original zero-filled words consumed by MapWin::UNK5. Their
-// domain names and other writers are not yet established; retain
-// address-derived names rather than aliasing them to screen metrics.
-// RECOVERY_OBJECT: v1 0x008EA0B0 ?MapPanelGeometryWord008EA0B0@@3HA
-int MapPanelGeometryWord008EA0B0;
-// RECOVERY_OBJECT: v1 0x008EA0B8 ?MapPanelGeometryWord008EA0B8@@3HA
-int MapPanelGeometryWord008EA0B8;
-
 // 0x007D3C28..0x007D3C38 - rectangle published by calculate_dimensions for
 // the primary window: west/north/east/south map-view bounds, also consumed by
 // MapWin::focus's base-window hit test.
@@ -154,6 +146,273 @@ namespace {
 int mapwin_dest_add(int left, int right);
 int mapwin_dest_sub(int left, int right);
 int mapwin_dest_mul(int left, int right);
+}
+
+/*
+Purpose: Shore-edge detail for one corner of a tile whose scan found the coast.
+Original Offset: n/a
+Return Value: Detail value for the corner
+Status: Complete
+
+MSVC emitted each of the four occurrences as a four-entry jump table guarded by
+an unsigned `cmp corner, 3 / ja`, with the out-of-range arm falling through to
+the shared `return detail` after `detail` had already been loaded with 60. A
+corner outside 0..3 is therefore 60 rather than undefined, and a negative one
+takes the same arm because the compare is unsigned.
+
+The four tables hold only two distinct values between them, 57 at 00462684 and
+67 at 0046259F, and re-indexed by the direction the scan was looking in they
+collapse to one rule: coast above the corner reads 67, coast below it reads 57.
+That is the same 60 +7 / -3 shading the corner arm applies arithmetically.
+*/
+__forceinline static int alt_shore_detail(int corner, int west, int north, int east, int south) {
+    int detail = 60;
+    switch (corner) {
+      case 0:
+        detail = west;
+        break;
+      case 1:
+        detail = north;
+        break;
+      case 2:
+        detail = east;
+        break;
+      case 3:
+        detail = south;
+        break;
+    }
+    return detail;
+}
+
+/*
+Purpose: Is any of the eight tiles a tile's odd-q ring holds land?
+// ORIGINAL: 0x004620C0 sub_4620c0 0x004620C0-0x00462184 FILE BYTE_EXACT
+// symbol    ?is_land_near@@YAHHH@Z
+// NO IMAGE CALLER AND NO IMAGE REFERENCE AT ALL, so the name is derived from
+//        the body, not from a catalogue entry. The eight offsets it walks are
+//        the first eight entries of map.h's VehMoveDeltaX/VehMoveDeltaY - the
+//        image's own copies of those tables are 0x0066EF50 and 0x0066EF74,
+//        and the ninth entry is the tile itself, which this skips. "Land" is
+//        the altitude nibble of `climate` reaching ALT_BIT_SHORE_LINE, the
+//        same test is_ocean() inverts.
+// TRIED: nullary contract head (reads [ebp+8]/[ebp+0xc], no ecx use -> 2
+//        plain int args, not __thiscall).
+// TRIED: 3/68 after `!on_map(x, y)` for the guard and `& 0xE0` for the
+//        altitude nibble (this one the image NARROWS to `and al,0xe0 / cmp
+//        eax,0x60`, the opposite of 0x00591E90 next to it, so `& ~0x1F` is
+//        wrong here). The wall is the prologue: the image spends `push ecx`
+//        on a stack slot before its callee-saved pushes and keeps
+//        `MapIsFlat & 1` in it, reloading it every iteration along with the
+//        `x` and `y` parameters, where this tree enregisters the flag in EBX
+//        and the arguments - the receiver-spill wall the brief documents for
+//        the Palette bodies. 68 instructions against 75 and every one after
+//        the slot is register-shifted. Left here.
+// size      196 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: Is land within the ring? true/false
+Status: Complete
+*/
+BOOL __cdecl is_land_near(int x, int y) {
+    if (!on_map(x, y)) {
+        return false;
+    }
+    for (int i = 0; i < 8; i++) {
+        int x_radius = wrap_map_x(x + VehMoveDeltaX[i]);
+        int y_radius = y + VehMoveDeltaY[i];
+        if (on_map(x_radius, y_radius)
+            && (map_loc(x_radius, y_radius)->climate & ~0x1F) >= ALT_BIT_SHORE_LINE) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/*
+Purpose: Interpolate the rendered altitude detail at one point of a tile's
+         terrain polygon, so that the map renderer can slope the tile towards
+         its neighbours and break the contour at the water's edge.
+// ORIGINAL: 0x00462190 ?alt_get_ocean_detail@@YAHHHHH@Z 0x00462190-0x00462699
+// LEVER: call_diff --all flagged this body as making 1 call the image does not
+//        (`0 vs 1 - MORE`) - `alt_shore_detail`'s switch has a jump table, which VC6's
+//        automatic /Ob2 inlining did not fold at all four call sites without an explicit
+//        hint. `__forceinline` on `alt_shore_detail` brought call_diff back to agreement
+//        (image and tree both make 0 direct calls, 4 indirect jumps apiece) and moved
+//        6/431 agreeing instructions to 9/431.
+// TRIED: remaining mismatch starts at the prologue - image is `sub esp, 0xc` (3
+//            spill slots), this tree is `sub esp, 8` (2) - the same "image spills a
+//            local the tree keeps in a register" shape as 0x00532A90/0x00532B70, on a
+//            431-instruction body. Not chased further at this size.
+// TRIED: 2026-11-08 rewrite from the image after the move into mapwin.cpp:
+//        range(v, 0, 79) gives the image's clamp block order, wrap_map_x its
+//        `x < 0` first wrap, and a `detail = 60; switch` helper its preloaded
+//        `mov eax, 0x3c` before the `cmp/ja`. Control flow now follows the
+//        image block for block (18/431 from 13/431). The wall is allocation:
+//        the image keeps `corner` in EBX and spills the MapIsFlat & 1 CSE to
+//        [ebp-8] and the corner-loop counter to [ebp-0xc] (`sub esp, 0xc`);
+//        this tree gives EBX to the flag and keeps one slot. A 600 s permute
+//        found no exact spelling.
+// size      1289 bytes
+// prototype 
+// callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: Altitude detail, 0 to 79; 0 for a tile off the map
+Status: Complete
+
+`corner` selects one of the tile's four diamond corners - 0 west, 1 north,
+2 east, 3 south - and `point` selects which point of the polygon near that
+corner is being asked about:
+
+    point 0   the tile's own centre, so its own contour byte unaltered
+    point 1   the edge midpoint on one side of the corner
+    point 2   the corner itself
+    point 3   the edge midpoint on the other side
+
+and the value is the mean of the tiles that touch that point: one for the
+centre, two for an edge midpoint, four for a corner. Every term is clamped to
+0..79 before it is summed, and the mean is an arithmetic shift rather than a
+division because every term is then non-negative.
+
+The corner case applies the relief bias that gives the coast its lip: +7 when
+the tile above the corner is at ALT_BIT_SHORE_LINE or above, -3 when the tile
+below it is. Those two are CornerOffset[corner][1] and [corner][3], the same
+two tiles the two edge midpoints average against.
+
+The centre and edge-midpoint cases instead look for a shoreline crossing. The
+tile's own altitude decides which way round the test goes, and a crossing
+returns one of two fixed details, 57 or 67, chosen by corner - so a polygon
+point that straddles the waterline is pinned to a constant instead of being
+interpolated.
+
+An off-map neighbour contributes nothing but does not shrink the divisor, so a
+point on the edge of the map reads at half or a quarter depth. That is the
+original's arithmetic, not an omission here.
+
+Verification note: THE ORIGINAL BOUNDS-CHECKS `corner` IN ONE HALF OF ITSELF
+AND NOT THE OTHER. All four shore switches guard it with an unsigned
+`cmp / ja`, while `shl esi, 4` at 004622ED and `shl ebx, 4` at 0046239B index
+the sixteen-entry offset tables with no check at all, so `corner == 4` in the
+original reads the Y table as the X table and a negative one reads below the
+array. It is latent: the sole caller, MapWin::gen_terrain_poly, derives the
+argument from a value it has already reduced. This recovery reproduces the
+guarded half exactly and leaves the unguarded half as an out-of-range index
+rather than hard-coding the adjacent table, so an even `point` with a `corner`
+outside 0..3 is unreachable-and-unspecified here where it is
+unreachable-and-accidental there.
+
+Verification note: THE THREE-STEP SCAN IS TWO-THIRDS DEAD, in the original as
+much as here. Its body reads MapTiles, MapIsFlat and the two bounds and writes
+nothing, so an iteration that does not return is unobservable. It can only
+return on `point == 1 && i == 0` or `point == 3 && i == 2`, so iteration 1
+never returns for any input, iteration 2 never returns for point 1, iteration 0
+never returns for point 3, and for point 0 - or any point that is even and not
+2 - the entire loop cannot return at all. It is transcribed as written because
+it is what 004624BE through 0046256A and 004625AB through 00462657 execute.
+The sweep's two surviving `i < 3` -> `i <= 3` mutants are that fact: a fourth
+iteration matches neither `i == 0` nor `i == 2` and so cannot return either.
+
+Verification note: the scan's own direction arithmetic proves it further. The
+scan starts at `corner * 2 - 4` and (c*2-4) & 7 == (1 + c*2 + 3) & 7, so
+iteration 0 tests exactly the neighbour point 1 averaged against; likewise
+(c*2-2) & 7 == (3 + c*2 + 3) & 7, so iteration 2 tests point 3's. The scan
+never looks at a tile the average did not already read.
+
+Verification note: THE LOWER CLAMP ARMS CANNOT FIRE. `contour` is a uint8_t
+field, so the value fed to each `if (v < 0) v = 0;` is in 0..255 and the arm is
+unreachable; only the upper arm can act. The original tests it all the same
+(00462262, 004622A5, 0046235B), so fifteen mutants survive across the three
+sites - the `0 -> 1` and the drop of each `v = 0`, the `0 -> 1` in each
+`if (v < 0)`, and each `< -> <=`, which for v == 0 assigns 0 to a 0. The three
+`> -> >=` on the upper arm are equivalent for the same reason: they assign 79
+to a 79. The final clamp before the return is NOT in that class - point 2's -3
+can take the mean below zero and its +7 can take it past 79, and point 0
+returns a raw contour byte that can be up to 255 - but its own `0 -> 1` and
+`< -> <=` are still equivalent, because `detail == 0` returns 0 either way, and
+so is its `> -> >=` at 79.
+*/
+int __cdecl alt_get_ocean_detail(int x, int y, int corner, int point) {
+    if (!on_map(x, y)) {
+        return 0;
+    }
+    int detail;
+    if (!point) {
+        detail = map_loc(x, y)->contour;
+    } else if (point & 1) {
+        // An edge midpoint: this tile averaged with the one across that edge.
+        int dir = (point + corner * 2 + 3) & 7;
+        int x_edge = wrap_map_x(x + VehMoveDeltaX[dir]);
+        int y_edge = y + VehMoveDeltaY[dir];
+        detail = range(map_loc(x, y)->contour, 0, 79);
+        if (on_map(x_edge, y_edge)) {
+            detail += range(map_loc(x_edge, y_edge)->contour, 0, 79);
+        }
+        detail >>= 1;
+    } else {
+        // The corner itself: the four tiles that meet there.
+        detail = 0;
+        for (int i = 0; i < 4; i++) {
+            int x_meet = wrap_map_x(x + CornerOffsetX[corner][i]);
+            int y_meet = y + CornerOffsetY[corner][i];
+            if (on_map(x_meet, y_meet)) {
+                detail += range(map_loc(x_meet, y_meet)->contour, 0, 79);
+            }
+        }
+        detail >>= 2;
+    }
+    if (point == 2) {
+        int x_above = wrap_map_x(x + CornerOffsetX[corner][1]);
+        int y_above = y + CornerOffsetY[corner][1];
+        if (on_map(x_above, y_above)
+            && (map_loc(x_above, y_above)->climate & ~0x1F) >= ALT_BIT_SHORE_LINE) {
+            detail += 7;
+        }
+        int x_below = wrap_map_x(x + CornerOffsetX[corner][3]);
+        int y_below = y + CornerOffsetY[corner][3];
+        if (on_map(x_below, y_below)
+            && (map_loc(x_below, y_below)->climate & ~0x1F) >= ALT_BIT_SHORE_LINE) {
+            detail -= 3;
+        }
+    } else if ((map_loc(x, y)->climate & ~0x1F) < ALT_BIT_SHORE_LINE) {
+        // Water looking for land.
+        int dir = corner * 2 - 4;
+        for (int i = 0; i < 3; i++, dir++) {
+            int x_scan = wrap_map_x(x + VehMoveDeltaX[dir & 7]);
+            int y_scan = y + VehMoveDeltaY[dir & 7];
+            if (on_map(x_scan, y_scan)
+                && (map_loc(x_scan, y_scan)->climate & ~0x1F) >= ALT_BIT_SHORE_LINE) {
+                if (point == 1) {
+                    if (!i) {
+                        return alt_shore_detail(corner, 57, 67, 67, 57);
+                    }
+                } else if (point == 3 && i == 2) {
+                    return alt_shore_detail(corner, 67, 67, 57, 57);
+                }
+            }
+        }
+    } else {
+        // Land looking for water.
+        int dir = corner * 2 - 4;
+        for (int i = 0; i < 3; i++, dir++) {
+            int x_scan = wrap_map_x(x + VehMoveDeltaX[dir & 7]);
+            int y_scan = y + VehMoveDeltaY[dir & 7];
+            if (on_map(x_scan, y_scan)
+                && (map_loc(x_scan, y_scan)->climate & ~0x1F) < ALT_BIT_SHORE_LINE) {
+                if (point == 1) {
+                    if (!i) {
+                        return alt_shore_detail(corner, 67, 57, 57, 67);
+                    }
+                } else if (point == 3 && i == 2) {
+                    return alt_shore_detail(corner, 57, 57, 67, 67);
+                }
+            }
+        }
+    }
+    return range(detail, 0, 79);
 }
 
 // The active map bounds, panel layouts, faction caption records and tutorial
@@ -196,15 +455,18 @@ Status: Coverage transcription - unclaimed body, seed
         git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0046fa20.cpp retained.
 */
 // MapPanelRect is RECT-shaped; the image inlines set_rectangle_dimensions
-// for both panels (the right edge is x + width).
+// for both panels (the right edge is x + width). The absolute 0x008EA0B0 and
+// 0x008EA0B8 reads are WorldClimateWorldWin (0x008E9F60) + 0x150 / + 0x158,
+// its Win::client_rect_.top / .bottom (client_rect_ is Win + 0x14C), inside
+// the 0x239D4-byte WorldWin rather than two separate words.
 void MapWin::UNK5(int panel) {
     if (panel != 0) {
         const int width = ConsoleGlobal.dib_.bmiHeader.biWidth;
         set_rectangle_dimensions(reinterpret_cast<RECT *>(&MapPanelRects[panel]),
                                  (width * 3) / 4, 0, width / 4,
-                                 (MapPanelGeometryWord008EA0B0 -
+                                 (WorldClimateWorldWin.client_rect().top -
                                   ConsoleGlobal.dib_.bmiHeader.biHeight -
-                                  MapPanelGeometryWord008EA0B8) / 2);
+                                  WorldClimateWorldWin.client_rect().bottom) / 2);
     } else {
         int right;
         if (IsMultiplayerNet != 0) {
@@ -213,9 +475,9 @@ void MapWin::UNK5(int panel) {
             right = ConsoleGlobal.dib_.bmiHeader.biWidth;
         }
         set_rectangle_dimensions(reinterpret_cast<RECT *>(&MapPanelRects[0]), 0, 0, right,
-                                 MapPanelGeometryWord008EA0B0 -
+                                 WorldClimateWorldWin.client_rect().top -
                                  ConsoleGlobal.dib_.bmiHeader.biHeight -
-                                 MapPanelGeometryWord008EA0B8);
+                                 WorldClimateWorldWin.client_rect().bottom);
     }
     MapPanelDirtyMask |= 1 << panel;
 }

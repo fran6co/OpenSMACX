@@ -81,12 +81,10 @@ FactionAmbience *FactionMusic = nullptr;
 // RECOVERY_OBJECT: v1 0x00683BF4 ?LastAmbienceVehicle@@3HA
 int LastAmbienceVehicle = -1;
 
-// These exact cells are source-owned here; the transition marker's wider
-// external lifetime census remains open for 0x0074C5E4.
+// This exact cell is source-owned here. The former AmbienceTransitionMarker
+// at 0x0074C5E4 is g_FX.engine_effect_index_ (g_FX 0x00749CF8 + 0x28EC).
 // RECOVERY_OBJECT: v2 0x00683BF0 0x00683BF4 ?AmbienceCurrentEffect@@3HA 0x00446B54
 int AmbienceCurrentEffect = -1;
-// RECOVERY_OBJECT: v2 0x0074C5E4 0x0074C5E8 ?AmbienceTransitionMarker@@3HA 0x00446C59
-int AmbienceTransitionMarker = 0;
 
 // Original447DD0 individually reads/writes each four-byte sequencer cell.
 // RECOVERY_OBJECT: v1 0x00683C30 _AAmbiencePass
@@ -285,7 +283,11 @@ Wave g_PASSOVER_WAVE;  // 0x0074D9D0
 // Here the same recovered constructors run through this build's own
 // startup, and the matching destructors close them at exit. Addresses of
 // the ones documented individually live beside their definitions.
-// RECOVERY_OBJECT: v1 0x00749CF8 ?g_FX@@3VFX@@A
+// 0x28F0 bytes: 97 Effects of 0x6C, then engine_effect_index_ at +0x28EC
+// (written absolutely by ambience at 0x00446C59); the next object starts at
+// 0x0074C5E8. The historical AmbienceTransitionMarker identity is that member.
+// RECOVERY_OBJECT: v2 0x00749CF8 0x0074C5E8 ?g_FX@@3VFX@@A 0x004482A0
+// RECOVERY_OBJECT: v3 0x0074C5E4 0x0074C5E8 ?AmbienceTransitionMarker@@3HA 0x00446C59 member ?g_FX@@3VFX@@A engine_effect_index_
 FX g_FX;
 
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
@@ -1002,7 +1004,7 @@ int __cdecl ambience(int ambience_id) {
         return ambience_id;
     }
 
-    AmbienceTransitionMarker = -1;
+    g_FX.engine_effect_index_ = -1;
     const int previous_effect = AmbienceCurrentEffect;
     if (previous_effect >= 0) {
         g_FX.effect(previous_effect).fade();

@@ -58,9 +58,9 @@ typedef BasePop *(__cdecl func_popup_alloc)();
 extern func_popup_alloc *PopupAllocHook;
 
 // Shared startup-caption storage consumed by BasePop configuration/start and
-// Popup convenience callers. The existing name and 256-byte extent remain
-// provisional; the image proves the address and writes, not the full extent.
-extern char PopupStartCaption[256];
+// Popup convenience callers. Sixteen bytes: the next object starts at
+// 0x009B8AB8 and set_def_file stores at most 13 (see basepop.cpp).
+extern char PopupStartCaption[16];
 
  /*
   * BasePop class
