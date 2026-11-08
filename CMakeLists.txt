@@ -163,7 +163,6 @@ set(OPENSMACX_SOURCES
     src/scale_adjustment.cpp
     src/technology_queries.cpp
     src/byte_utilities.cpp
-    src/shared_word.cpp
     src/fx.cpp
     src/alphanet.cpp
     src/alphanet_records.cpp
@@ -220,6 +219,7 @@ set(OPENSMACX_SOURCES
     src/video.cpp
     src/video_queue.cpp
     src/datalink.cpp
+    src/help.cpp
     src/datalink_entries.cpp
     src/netwin.cpp
     src/socialwin.cpp
@@ -402,6 +402,7 @@ set_source_files_properties(
 # keeping Win and the application-wide compiler defaults unchanged.
 set_source_files_properties(
     src/datalink.cpp
+    src/help.cpp
     src/datalink_entries.cpp
     src/maininterface.cpp
     src/console.cpp
@@ -658,7 +659,6 @@ set_property(SOURCE
 # Keep these measured frame-based helper owners on their explicit source profile.
 set_source_files_properties(
     src/byte_utilities.cpp
-    src/shared_word.cpp
     src/span_math.cpp
     src/scale_adjustment.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")

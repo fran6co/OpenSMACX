@@ -380,12 +380,6 @@ char PopupLinkMatchText[64] = "homelink";              // 0x006827B8
 char PopupLinkOpenVerb[16] = "open";                    // 0x006827DC
 // RECOVERY_OBJECT: v1 0x006827C4 ?PopupLinkTarget@@3PADA
 char PopupLinkTarget[128] = "http:\\\\www.firaxis.com"; // 0x006827C4
-// Native4050A0 publishes this buffer and44CBD0 consumes it. The existing
-// 256-byte source capacity is retained; original allocation bounds unverified.
-// RECOVERY_OBJECT: v1 0x007591C8 ?PopupPendingLink@@3PADA
-char PopupPendingLink[256];    // 0x007591C8
-// RECOVERY_OBJECT: v1 0x007592C8 ?PopupPendingLinkFlag@@3HA
-int PopupPendingLinkFlag;      // 0x007592C8
 
 /*
 Purpose: Start a popup from just a label, defaulting the rest.
@@ -1644,30 +1638,6 @@ void Popup::on_scrolling(int first, int second) {
     dialogs_.on_scrolling(first, second);
 }
 
-// Superseded seed removal retains historical Git provenance below.
-// ORIGINAL: 0x0044CBD0 sub_44cbd0 0x0044CBD0-0x0044CC18 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/units/0044cbd0.cpp", "task:popup-linked-dialog-helper-owners", "Pinned44CBD0 clears pending flag before each two-argument X_pop5BF310. Existing Popup::on_link_clicked produces link and flag; caller/name remain provisional."], "reason": "Recover this complete operation in its genuine C++ popup/diplomacy owner using actual members, virtual dispatch and typed shared dependencies; retain original identity, spans, claims and seed discoveries."}
-// symbol    ?popup_pending_link_dialog@@YAXPBD@Z
-void __cdecl popup_pending_link_dialog(const char *label) {
-    PopupPendingLinkFlag = 0;
-    X_pop(label, 0);
-    while (PopupPendingLinkFlag != 0) {
-        PopupPendingLinkFlag = 0;
-        X_pop(PopupPendingLink, 0);
-    }
-}
-
-// Superseded seed removal retains historical Git provenance below.
-// ORIGINAL: 0x0044CA90 sub_44ca90 0x0044CA90-0x0044CABA BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/0044ca90.cpp", "task:popup-linked-dialog-helper-owners", "Pinned44CA90 reads Players[faction].filename with59C stride, literal DATALINKS68469C and typed caption-label wrapper5BF330; original caller and helper name remain unestablished."], "reason": "Recover this complete operation in its genuine C++ popup/diplomacy owner using actual members, virtual dispatch and typed shared dependencies; retain original identity, spans, claims and seed discoveries."}
-// symbol    ?popup_faction_datalinks@@YAHH@Z
-int __cdecl popup_faction_datalinks(int faction_id) {
-    // Native44CA90 uses this exact NUL-terminated label. Both comparison
-    // profiles emit its independent ten-byte literal COMDAT in this TU.
-    // RECOVERY_LITERAL: v1 0x0068469C 0x006846A6 ??_C@_09COKO@DATALINKS?$AA@ 0x0044CA90
-    return X_pop(Players[faction_id].filename, "DATALINKS",
-                               0);
-}
 
 // Historical seed lifetime hypotheses used duplicate locals and raw placement storage.
 // Native receiver evidence supersedes those models; genuine embedded member lifetimes now own cleanup.

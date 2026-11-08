@@ -80,8 +80,8 @@ note beside the recovered code in a configured, built product CPP. These notes
 are not implementations, matches, resolved prototypes or proof of dead original
 code. Other genuine owner no-ops are unaffected. The former `global_arith.*` collection is retired:
 PrefWin geometry storage/initializers are owned in `prefwin_geometry.*`, and
-the real `SharedWordValue` object with its paired setter/toggle is owned in
-`shared_word.*`. That is genuine source ownership, not evidence for the
+the real `SharedWordValue` object with its paired setter/toggle is declared in
+`shared_word.h` and owned by `help.cpp`, the original help unit. That is genuine source ownership, not evidence for the
 word's semantic domain, caller set or lifetime. The `leaf_recoveries.*` collection
 has been retired after its identities were transferred to current source homes.
 The remaining bounded state, span arithmetic and table cleanup bodies live in
