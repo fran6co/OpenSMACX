@@ -214,6 +214,14 @@ void __cdecl popup_wave_callback(BasePopTextBlock *popup, int);
 int __cdecl popv(char *caption, const char *label, int vehicle, int flags);
 int __cdecl popp(const char *caption, const char *label, int flags,
                  const char *picture, int (__cdecl *callback)());
+extern char *ScriptPopupFile;   // 0x00691B0C, game.h
+// Header inline: callers expand it to the five-argument form above; only
+// battle_fight and probe call the copy at 0x0050B970, which sits with
+// battle's unit-end header inlines.
+MEASURED inline int __cdecl popp(const char *label, const char *body,
+                                 int(__cdecl *callback)()) {   // 0050B970
+    return popp(ScriptPopupFile, label, 0, body, callback);
+}
 // The five-argument popup button helper and wave playback entry point are
 // implemented in this owner translation unit. LPCSTR is const char * here.
 int __cdecl popb(const char *text_label, int warning_mask, int sound_id,

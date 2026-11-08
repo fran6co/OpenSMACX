@@ -729,7 +729,12 @@ int __cdecl transport_val(int chassis_id, int ability, int reactor_id);
 void __cdecl say_offense(LPSTR stat, int proto_id);
 void __cdecl say_defense(LPSTR stat, int proto_id);
 void __cdecl say_stats_3(LPSTR stat, int proto_id);
-void __cdecl say_stats_3(int proto_id);
+// Header inline: say_stats_3(int) expands in place; only battle_fight's
+// late reports call the copy at 0x0050B9A0 (battle's unit-end inlines).
+extern char StringTemp[1032];   // 0x009B86A0, strings.h
+MEASURED inline void __cdecl say_stats_3(int proto_id) {   // 0050B9A0
+    say_stats_3(StringTemp, proto_id);
+}
 void __cdecl say_stats_2(LPSTR stat, int proto_id);
 void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer);
 int __cdecl best_reactor(int faction_id);
@@ -935,8 +940,12 @@ int __cdecl interceptor(int faction_id, int opposing_faction, int target_x, int 
 // Source-owned monolith repair and morale-upgrade interaction.
 void __cdecl monolith(int vehicle_id);
 
-// Source-owned original helper; identity and behavior evidence are in its TU.
-int __cdecl veh_next_stack_id(int veh_id);
+// Header inline: the image expands the next-in-stack step in place across
+// ~25 units; only battle_fight and probe call the copy at 0x0050B8F0.
+MEASURED inline int __cdecl veh_next_stack_id(int veh_id) {   // 0050B8F0
+  if (veh_id < 0) return veh_id;
+  return Vehs[veh_id].next_veh_id_stack;
+}
 
 // Existing source-owned APIs used by enemy movement.
 int __cdecl air_power(int vehicle_id, int faction_base_distance, int movement_zone, int *current_x, int *current_y);

@@ -51,7 +51,7 @@ class NetMsg : public Popup {
   // real NetMsg and the call a real member call.
   void pop(const char *label, int duration, int channel,
            const char *target);
-  static void __cdecl pop(const char *label, const char *target);
+  static MEASURED void __cdecl pop(const char *label, const char *target);
 
  private:
   static void __cdecl timer_daemon(int token);
@@ -68,3 +68,14 @@ class NetMsg : public Popup {
 // follow the original dynamic initializer/atexit evidence.
 extern NetMsg NetMsgPrimary;
 extern NetMsg NetMsgSecondary;
+
+// Header inlines: the image expands both lifetime forms of the primary
+// message in place across ~25 units; only budget-exhausted giants
+// (battle_fight, probe) call the copies at 0x0050B9C0 (+5000) and
+// 0x0050B9E0 (-5000), which sit with battle's unit-end header inlines.
+MEASURED inline void __cdecl veh_battle_msg(char *label, char *icon) {   // 0050B9C0
+    NetMsgPrimary.pop(label, 5000, 0, icon);
+}
+MEASURED inline void __cdecl NetMsg::pop(const char *label, const char *target) {   // 0050B9E0
+    NetMsgPrimary.pop(label, -5000, 0, target);
+}

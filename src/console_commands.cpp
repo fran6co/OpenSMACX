@@ -6538,7 +6538,9 @@ void Console::corner_the_market() { // 0x004E2000
     const int amount = corner_market(faction_id);
     parse_num(0, amount);
     // Unsigned sum straight into the call: the image adds into ECX.
-    parse_num(1, game_year(GameDataStateStorage.fields_.turn_current_num_ + Rules.turns_corner_gbl_energy_mrkt));
+    // stand-in: the int cast (as at the two later game_year reports) keeps the
+    // ecx/edx tie once the netmsg/popup/veh header inlines are visible.
+    parse_num(1, static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_ + Rules.turns_corner_gbl_energy_mrkt)));
 
     if (PlayersData[faction_id].corner_market_turn > GameDataStateStorage.fields_.turn_current_num_) {
         parse_num(0, static_cast<int>(game_year(PlayersData[faction_id].corner_market_turn)));

@@ -2475,18 +2475,25 @@ int __cdecl battle_fight(int veh_id, int dir, int mode, int allow_interceptor,
 
 // One-level HP helper (chunk 2). Use it only where the image keeps proto_power's
 // inner range(reactor, 1, 100) as `call 0x422F00` and inlines the outer
-// 0..9999 clamp (0x5087B5, 0x508A81, 0x508DFE, 0x508F21). Everywhere else the
-// expression is written out.
+// 0..9999 clamp (0x506EDD/0x506F3F, 0x508069/0x5080C6, 0x5087B5, 0x508A81,
+// 0x508DFE, 0x508F21). Everywhere else the expression is written out.
 static inline int veh_cur_hp(int veh_id) {
     return range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999);
 }
 
-// Defined later in battle.cpp (0x0050B970 and 0x0050B9C0). These declarations
-// are needed because battle_fight now calls them directly.
-int __cdecl popp(const char *label, const char *body, int(__cdecl *callback)());
-void __cdecl veh_battle_msg(char *label, char *icon);
 
 // ---------------------------------------------------------------------------
+
+// 0x50A863 / 0x50AC0D: the stack's combat units, the same call order at both
+// sites: (2,12), (1), (2,8), (2,11), (2,10).
+static inline int stack_combat_units(int veh_id) {
+    int c12 = stack_check(veh_id, 2, PLAN_ALIEN_ARTIFACT, -1, -1);
+    int n = stack_check(veh_id, 1, -1, -1, -1) - c12;
+    n -= stack_check(veh_id, 2, PLAN_COLONIZATION, -1, -1);
+    n -= stack_check(veh_id, 2, PLAN_INFO_WARFARE, -1, -1);
+    n -= stack_check(veh_id, 2, PLAN_SUPPLY_CONVOY, -1, -1);
+    return n;
+}
 
 // ORIGINAL: 0x00506AF0 ?battle_fight@@YAHHHHHHHPAH@Z 0x00506AF0-0x0050B893 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x00506AF0-0x0050B893", "git:0b1a6229e8c4bf0dfd2193f776e65a613f7ca0c5:src/unrecovered/00506af0.cpp original identity/span and complete seed history", "source:src/veh.cpp existing five-argument wrapper, seven-argument callers and typed combat ownership", "native:507D83,507EC7,50888F,508C32 write the real ConsoleStatusWin member at +0x15D4", "source:src/statuswin.h existing field_15D4_ and narrow source-owned setter", "source:src/game.h IsMultiplayerPBEM existing 0x0093A95C owner", "native:50AAF1-50AB18 keeps the last valid stack predecessor before the negative sentinel"], "reason": "Recover complete combat resolution in the existing vehicle owner using real vehicle, faction, base, map, network and UI objects. Preserve original branch/callback order, unsafe paths, full span and historical seed lessons. The native -0x138 string scratch capacity and malformed-name frame corruption effects remain unresolved restoration obligations; the provisional 0xA0 local is not an exact source-array claim."}
@@ -2636,8 +2643,8 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
     battle_compute(veh_id, def_id, &att_strength, &def_strength, mode);
 
     // 0x506EAB: hit points (the inner range() is the out-of-line call here)
-    att_hp = range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999);
-    def_hp = range(proto_power(def_id) - Vehs[def_id].dmg_incurred, 0, 9999);
+    att_hp = veh_cur_hp(veh_id);
+    def_hp = veh_cur_hp(def_id);
 
     // 0x506F6D: psi factors
     if (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating >= 0 &&
@@ -3004,8 +3011,8 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
 
         {
             // 0x508034: these products do NOT include the psi factors
-            int att_odds = range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999) * att_strength;   // esi
-            int def_odds = range(proto_power(def_id) - Vehs[def_id].dmg_incurred, 0, 9999) * def_strength;   // edi
+            int att_odds = veh_cur_hp(veh_id) * att_strength;   // esi
+            int def_odds = veh_cur_hp(def_id) * def_strength;   // edi
             // 0x5080FC: the minimum is tested once per divisor, not after each division
             for (int div = 2; div < (att_odds < def_odds ? att_odds : def_odds); div++) {
                 while (att_odds && def_odds && !(att_odds % div) && !(def_odds % div)) {
@@ -3044,19 +3051,19 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
         }
         if (popp(ScriptPopupFile,
                  (Vehs[veh_id].dmg_incurred || Vehs[def_id].dmg_incurred) ? "GOODIDEA2" : "GOODIDEA",
-                 0, "hasty_sm.pcx", 0)) {
-            goto L_508358;
+                 0, "hasty_sm.pcx", 0) == 0) {
+            // 0x508301
+            g_BattleWin.pulse_timer();
+            if (NetDaemonNet.channels_[0].leading_words_[3] & 2) {
+                Vehs[veh_id].moves_expended -= static_cast<uint8_t>(move_charge);
+            }
+            Vehs[veh_id].order = ORDER_NONE;
+            Vehs[veh_id].state &= 0xFCFFBDFF;
+            ConsoleStatusWin.reset();
+            ConsoleStatusWin.redraw();
+            return 1;
         }
-        // 0x508301
-        g_BattleWin.pulse_timer();
-        if (NetDaemonNet.channels_[0].leading_words_[3] & 2) {
-            Vehs[veh_id].moves_expended -= static_cast<uint8_t>(move_charge);
-        }
-        Vehs[veh_id].order = ORDER_NONE;
-        Vehs[veh_id].state &= 0xFCFFBDFF;
-        ConsoleStatusWin.reset();
-        ConsoleStatusWin.redraw();
-        return 1;
+        goto L_508358;
     }
     goto L_50835D;
 
@@ -3607,295 +3614,259 @@ L_509980:
     if (captured != 0 || disengaged != 0) {
         goto L_50b203;
     }
-    if (atk_left == 0) {
-        goto L_50af13;
-    }
-
-    // 0x50A478: the attacker won
-    PlayersData[att_faction].diplo_unk3[def_faction]++;
-    PlayersData[att_faction].diplo_unk4[def_faction]++;
-    FactionTurnCombatWins[att_faction]++;
-    FactionTurnCombatLosses[def_faction]++;
-    if (IsMultiplayerNet && def_faction == ConsoleGlobal.faction_id_) {
-        // 0x50A4E5 (clear/say_stats_3/get_adjective/veh_battle_msg inlined here)
-        parse_says(0, VehPrototypes[Vehs[def_id].proto_id].veh_name, -1, -1);
-        clear();
-        say_stats_3(Vehs[def_id].proto_id);
-        parse_says(1, StringTemp, -1, -1);
-        parse_says(2, get_adjective(att_faction), -1, -1);
-        parse_says(3, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
-        clear();
-        say_stats_3(Vehs[veh_id].proto_id);
-        parse_says(4, StringTemp, -1, -1);
-        int report_base = base_find(target_x, target_y, -1, -1, -1, ConsoleGlobal.faction_id_);
-        if (report_base >= 0) {
-            parse_says(5, Bases[report_base].name_string, -1, -1);
-        }
-        veh_battle_msg("COMBATLOSS", 0);
-    } else if (IsMultiplayerPBEM &&
-               (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction))) {
-        // 0x50A61D
-        parse_says(0, VehPrototypes[Vehs[def_id].proto_id].veh_name, -1, -1);
-        clear();
-        say_stats_3(Vehs[def_id].proto_id);
-        parse_says(1, StringTemp, -1, -1);
-        parse_says(2, get_adjective(att_faction), -1, -1);
-        parse_says(3, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
-        clear();
-        say_stats_3(Vehs[veh_id].proto_id);
-        parse_says(4, StringTemp, -1, -1);
-        int report_base = base_find(target_x, target_y, -1, -1, -1, def_faction);
-        if (report_base >= 0) {
-            parse_says(5, Bases[report_base].name_string, -1, -1);
-        }
-        POP3("COMBATLOSS", def_faction, target_x, target_y);   // inlined to POP3(s, 0, f, x, y)
-    }
-
-    // 0x50A730: kill the defender alone, or damage the whole stack
-    if (base_id < 0
-        && !(map_loc(target_x, target_y)->bit & BIT_BUNKER)
-        && get_triad(def_id) != TRIAD_AIR
-        && get_triad(veh_id) != TRIAD_AIR
-        && VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_INFO_WARFARE
-        && VehPrototypes[Vehs[def_id].proto_id].plan != PLAN_NAVAL_SUPERIORITY) {
-        // 0x50A7C8
-        if (stack_check(def_id, 2, PLAN_COLONIZATION, -1, -1) == 0
-            || (map_loc(target_x, target_y)->climate & 0xE0) < 0x60) {
-            goto L_50a904;
-        }
-    }
-    // 0x50A80E
-    if (VehPrototypes[Vehs[def_id].proto_id].plan == PLAN_ALIEN_ARTIFACT) {
-        goto L_50a904;
-    }
-    if (att_faction != 0) {
-        // 0x50A831
-        if (veh_cargo(def_id) != 0 && base_id < 0
-            && VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_INFO_WARFARE) {
-            goto L_50a904;
-        }
-        // 0x50A863
-        if (VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_INFO_WARFARE) {
-            // call order: (2,12), (1), (2,8), (2,11), (2,10)
-            int c12 = stack_check(def_id, 2, PLAN_ALIEN_ARTIFACT, -1, -1);
-            int n = stack_check(def_id, 1, -1, -1, -1) - c12;
-            n -= stack_check(def_id, 2, PLAN_COLONIZATION, -1, -1);
-            n -= stack_check(def_id, 2, PLAN_INFO_WARFARE, -1, -1);
-            n -= stack_check(def_id, 2, PLAN_SUPPLY_CONVOY, -1, -1);
-            if (n <= 1) {
-                goto L_50a904;
+    if (atk_left != 0) {
+        // 0x50A478: the attacker won
+        PlayersData[att_faction].diplo_unk3[def_faction]++;
+        PlayersData[att_faction].diplo_unk4[def_faction]++;
+        FactionTurnCombatWins[att_faction]++;
+        FactionTurnCombatLosses[def_faction]++;
+        if (IsMultiplayerNet && def_faction == ConsoleGlobal.faction_id_) {
+            // 0x50A4E5 (clear/say_stats_3/get_adjective/veh_battle_msg inlined here)
+            parse_says(0, VehPrototypes[Vehs[def_id].proto_id].veh_name, -1, -1);
+            clear();
+            say_stats_3(Vehs[def_id].proto_id);
+            parse_says(1, StringTemp, -1, -1);
+            parse_says(2, get_adjective(att_faction), -1, -1);
+            parse_says(3, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
+            clear();
+            say_stats_3(Vehs[veh_id].proto_id);
+            parse_says(4, StringTemp, -1, -1);
+            int report_base = base_find(target_x, target_y, -1, -1, -1, ConsoleGlobal.faction_id_);
+            if (report_base >= 0) {
+                parse_says(5, Bases[report_base].name_string, -1, -1);
             }
-        }
-    }
-    // 0x50A8DC: kill just the defender
-    battle_kill(def_id, &kill_count, &booty_count, &husk_energy, veh_id, att_faction);
-    goto L_50ac8b;   // (EDI is reloaded from stack_id at 0x50A8F9)
-
-L_50a904:
-    {
-    // 0x50A904: damage the whole defending stack
-    stack_veh(def_id, 0);
-    // veh_top(def_id) inlined; the first prev-link read goes through [ebp-0x08]
-    for (int v = veh_top(def_id); v >= 0; v = veh_next_stack_id(v)) {   // next inlined at 0x50AACD
-        int v_proto = Vehs[v].proto_id;
-        // 0x50A94B
-        if (Chassis[VehPrototypes[v_proto].chassis_id].triad == TRIAD_LAND
-            && (map_loc(target_x, target_y)->climate & 0xE0) < 0x60   // sea tile
-            && base_who(target_x, target_y) < 0                        // inlined
-            && !(Vehs[v].order == ORDER_SENTRY_BOARD
-                 && Vehs[v].waypoint_x[0] != def_id
-                 && Vehs[v].waypoint_x[0] >= 0)) {
-            // 0x50A9E0: a land unit carried at sea takes all its HP (byte add)
-            Vehs[v].dmg_incurred += range(proto_power(v) - Vehs[v].dmg_incurred, 0, 9999);
-        } else if (v != def_id) {
-            // 0x50AA4C
-            int plan = VehPrototypes[v_proto].plan;
-            if (plan == PLAN_ALIEN_ARTIFACT || plan == PLAN_COLONIZATION
-                || plan == PLAN_INFO_WARFARE || plan == PLAN_SUPPLY_CONVOY) {
-                continue;   // 0x50AACD
+            veh_battle_msg("COMBATLOSS", 0);
+        } else if (IsMultiplayerPBEM &&
+                   (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction))) {
+            // 0x50A61D
+            parse_says(0, VehPrototypes[Vehs[def_id].proto_id].veh_name, -1, -1);
+            clear();
+            say_stats_3(Vehs[def_id].proto_id);
+            parse_says(1, StringTemp, -1, -1);
+            parse_says(2, get_adjective(att_faction), -1, -1);
+            parse_says(3, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
+            clear();
+            say_stats_3(Vehs[veh_id].proto_id);
+            parse_says(4, StringTemp, -1, -1);
+            int report_base = base_find(target_x, target_y, -1, -1, -1, def_faction);
+            if (report_base >= 0) {
+                parse_says(5, Bases[report_base].name_string, -1, -1);
             }
+            POP3("COMBATLOSS", def_faction, target_x, target_y);   // inlined to POP3(s, 0, f, x, y)
         }
-        // 0x50AA62: collateral damage. Psi weapons use the victim's reactor
-        int reactor = (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating < 0)
-                          ? VehPrototypes[Vehs[v].proto_id].reactor_id
-                          : VehPrototypes[Vehs[veh_id].proto_id].reactor_id;
-        Vehs[v].dmg_incurred += reactor * 3;   // 8-bit imul/add
-        Vehs[v].state |= VSTATE_UNK_4;
-        damaged_count++;
-    }
 
-    // 0x50AAE0: remove the stack's dead units
-    atk_id_adj = veh_id;
-    if (def_id >= 0) {
-        // veh_top(def_id) inlined again (first link via [ebp-0x08])
-        int v = veh_top(def_id);
-        while (v >= 0) {
-            // 0x50AB1E
-            int next = Vehs[v].next_veh_id_stack;
-            // the outer range() is CALLED here (0x422F00); proto_power stays inlined
-            if (range(proto_power(v) - Vehs[v].dmg_incurred, 0, 9999) <= 0
-                || Vehs[v].faction_id == 0) {
-                // 0x50AB9B
-                if (battle_kill(v, &kill_count, &booty_count, &husk_energy,
-                                atk_id_adj, att_faction)) {
-                    if (atk_id_adj > v) {
-                        atk_id_adj--;
-                    }
-                    if (next > v) {
-                        next--;
+        // 0x50A730: kill the defender alone, or damage the whole stack
+        if ((base_id >= 0
+             || (map_loc(target_x, target_y)->bit & BIT_BUNKER)
+             || get_triad(def_id) == TRIAD_AIR
+             || get_triad(veh_id) == TRIAD_AIR
+             || VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_INFO_WARFARE
+             || VehPrototypes[Vehs[def_id].proto_id].plan == PLAN_NAVAL_SUPERIORITY
+             || (stack_check(def_id, 2, PLAN_COLONIZATION, -1, -1) != 0
+                 && (map_loc(target_x, target_y)->climate & 0xE0) >= 0x60))
+            && VehPrototypes[Vehs[def_id].proto_id].plan != PLAN_ALIEN_ARTIFACT
+            && (att_faction == 0
+                || ((veh_cargo(def_id) == 0 || base_id >= 0
+                     || VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_INFO_WARFARE)
+                    && (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_INFO_WARFARE
+                        || stack_combat_units(def_id) > 1)))) {
+            // 0x50A8DC: kill just the defender
+            battle_kill(def_id, &kill_count, &booty_count, &husk_energy, veh_id, att_faction);
+        } else {
+            // 0x50A904: damage the whole defending stack
+            stack_veh(def_id, 0);
+            // veh_top(def_id) inlined; the first prev-link read goes through [ebp-0x08]
+            for (int v = veh_top(def_id); v >= 0; v = veh_next_stack_id(v)) {   // next inlined at 0x50AACD
+                int v_proto = Vehs[v].proto_id;
+                // 0x50A94B
+                if (Chassis[VehPrototypes[v_proto].chassis_id].triad == TRIAD_LAND
+                    && (map_loc(target_x, target_y)->climate & 0xE0) < 0x60   // sea tile
+                    && base_who(target_x, target_y) < 0                        // inlined
+                    && !(Vehs[v].order == ORDER_SENTRY_BOARD
+                         && Vehs[v].waypoint_x[0] != def_id
+                         && Vehs[v].waypoint_x[0] >= 0)) {
+                    // 0x50A9E0: a land unit carried at sea takes all its HP (byte add)
+                    Vehs[v].dmg_incurred += range(proto_power(v) - Vehs[v].dmg_incurred, 0, 9999);
+                } else if (v != def_id) {
+                    // 0x50AA4C
+                    int plan = VehPrototypes[v_proto].plan;
+                    if (plan == PLAN_ALIEN_ARTIFACT || plan == PLAN_COLONIZATION
+                        || plan == PLAN_INFO_WARFARE || plan == PLAN_SUPPLY_CONVOY) {
+                        continue;   // 0x50AACD
                     }
                 }
+                // 0x50AA62: collateral damage. Psi weapons use the victim's reactor
+                int reactor = (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating < 0)
+                                  ? VehPrototypes[Vehs[v].proto_id].reactor_id
+                                  : VehPrototypes[Vehs[veh_id].proto_id].reactor_id;
+                Vehs[v].dmg_incurred += reactor * 3;   // 8-bit imul/add
+                Vehs[v].state |= VSTATE_UNK_4;
+                damaged_count++;
             }
-            v = next;   // 0x50ABC9
-        }
-    }
-    // 0x50ABD3 (sets/dec/and idiom)
-    {
-        int t = damaged_count - (kill_count + booty_count);
-        damaged_count = t < 0 ? 0 : t;
-    }
-    stack_id = stack_fix(veh_at(target_x, target_y));
-    if (stack_id >= 0) {
-        // 0x50AC0D call order: (2,12), (1), (2,8), (2,11), (2,10)
-        int c12 = stack_check(stack_id, 2, PLAN_ALIEN_ARTIFACT, -1, -1);
-        int n = stack_check(stack_id, 1, -1, -1, -1) - c12;
-        n -= stack_check(stack_id, 2, PLAN_COLONIZATION, -1, -1);
-        n -= stack_check(stack_id, 2, PLAN_INFO_WARFARE, -1, -1);
-        n -= stack_check(stack_id, 2, PLAN_SUPPLY_CONVOY, -1, -1);
-        if (n == 0) {
-            // only non-combat units are left
-            battle_kill_stack(stack_id, &kill_count, &booty_count, &husk_energy,
-                              veh_id, att_faction);
-            damaged_count = 0;
-        }
-    }
-    }
 
-L_50ac8b:
-    // 0x50AC8B: base consequences (EDI = stack_id on both entries)
-    if (base_id >= 0) {
-        Bases[base_id].state |= BSTATE_COMBAT_LOSS_LAST_TURN;
-        if (!is_ocean(src_x, src_y)
-            && (!is_objective(base_id) || Bases[base_id].population_size > 1)
-            && !has_fac(FAC_PERIMETER_DEFENSE, base_id, 0)       // called (0x421670)
-            && !has_fac(FAC_TACHYON_FIELD, base_id, 0)
-            && !has_project(SP_CITIZENS_DEFENSE_FORCE, def_faction)   // called
-            // unguarded: stack_id may be -1 here
-            && Weapon[VehPrototypes[Vehs[stack_id].proto_id].weapon_id].offense_rating != 0
-            && att_faction != 0
-            && veh_who(target_x, target_y) < 0                   // called (0x500250)
-            && (PlayersData[def_faction].diff_level != 0
-                || !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction)))) {
-            // 0x50AD8E
-            if (--Bases[base_id].population_size <= 0) {
-                nerve_gas = 0;
-                base_kill(base_id);
-                base_id = -1;
-                for (int i = 0; i < 8; i++) {
-                    synch_bit(target_x, target_y, i);
+            // 0x50AAE0: remove the stack's dead units
+            atk_id_adj = veh_id;
+            if (def_id >= 0) {
+                // veh_top(def_id) inlined again (first link via [ebp-0x08])
+                int v = veh_top(def_id);
+                while (v >= 0) {
+                    // 0x50AB1E
+                    int next = Vehs[v].next_veh_id_stack;
+                    // the outer range() is CALLED here (0x422F00); proto_power stays inlined
+                    if (range(proto_power(v) - Vehs[v].dmg_incurred, 0, 9999) <= 0
+                        || Vehs[v].faction_id == 0) {
+                        // 0x50AB9B
+                        if (battle_kill(v, &kill_count, &booty_count, &husk_energy,
+                                        atk_id_adj, att_faction)) {
+                            if (atk_id_adj > v) {
+                                atk_id_adj--;
+                            }
+                            if (next > v) {
+                                next--;
+                            }
+                        }
+                    }
+                    v = next;   // 0x50ABC9
                 }
-                draw_map(1);
-                // 0x50ADDC (shared with 0x50AEAD)
-                if (eliminate_player(def_faction, att_faction)) {
-                    pact_report = 0;
-                }
-                goto L_50aebf;
             }
-            // 0x50ADF8
-            Bases[base_id].faction_pop_size_intel[att_faction] = Bases[base_id].population_size;
-        }
-        // 0x50AE02
-        if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction))) {
-            base_reset(base_id, 0);
-        }
-        if (nerve_gas != 0) {
-            // 0x50AE2B: nerve_gas becomes the number of citizens killed
-            int pop = Bases[base_id].population_size;
-            nerve_gas = (pop + 1) / 2;
-            Bases[base_id].population_size = pop - nerve_gas;   // byte
-            if (is_objective(base_id)) {
-                int p = Bases[base_id].population_size;
-                Bases[base_id].population_size = p < 1 ? 1 : p;   // unconditional store
+            // 0x50ABD3 (sets/dec/and idiom)
+            {
+                int t = damaged_count - (kill_count + booty_count);
+                damaged_count = t < 0 ? 0 : t;
             }
-            // 0x50AE6C
-            if (Bases[base_id].population_size <= 0) {
-                base_kill(base_id);
-                base_id = -1;
-                for (int i = 0; i < 8; i++) {
-                    synch_bit(target_x, target_y, i);
+            stack_id = stack_fix(veh_at(target_x, target_y));
+            if (stack_id >= 0) {
+                if (stack_combat_units(stack_id) == 0) {
+                    // only non-combat units are left
+                    battle_kill_stack(stack_id, &kill_count, &booty_count, &husk_energy,
+                                      veh_id, att_faction);
+                    damaged_count = 0;
                 }
-                draw_map(1);
-                // cross-jumps to 0x50ADDC
-                if (eliminate_player(def_faction, att_faction)) {
-                    pact_report = 0;
-                }
-            } else {
-                // 0x50AEB2
-                spot_base(base_id, att_faction);
             }
         }
+
+        // 0x50AC8B: base consequences (EDI = stack_id on both entries)
+        if (base_id >= 0) {
+            Bases[base_id].state |= BSTATE_COMBAT_LOSS_LAST_TURN;
+            if (!is_ocean(src_x, src_y)
+                && (!is_objective(base_id) || Bases[base_id].population_size > 1)
+                && !has_fac(FAC_PERIMETER_DEFENSE, base_id, 0)       // called (0x421670)
+                && !has_fac(FAC_TACHYON_FIELD, base_id, 0)
+                && !has_project(SP_CITIZENS_DEFENSE_FORCE, def_faction)   // called
+                // unguarded: stack_id may be -1 here
+                && Weapon[VehPrototypes[Vehs[stack_id].proto_id].weapon_id].offense_rating != 0
+                && att_faction != 0
+                && veh_who(target_x, target_y) < 0                   // called (0x500250)
+                && (PlayersData[def_faction].diff_level != 0
+                    || !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction)))) {
+                // 0x50AD8E
+                if (--Bases[base_id].population_size <= 0) {
+                    nerve_gas = 0;
+                    base_kill(base_id);
+                    base_id = -1;
+                    for (int i = 0; i < 8; i++) {
+                        synch_bit(target_x, target_y, i);
+                    }
+                    draw_map(1);
+                    // 0x50ADDC (shared with 0x50AEAD)
+                    if (eliminate_player(def_faction, att_faction)) {
+                        pact_report = 0;
+                    }
+                    goto L_50aebf;
+                }
+                // 0x50ADF8
+                Bases[base_id].faction_pop_size_intel[att_faction] = Bases[base_id].population_size;
+            }
+            // 0x50AE02
+            if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction))) {
+                base_reset(base_id, 0);
+            }
+            if (nerve_gas != 0) {
+                // 0x50AE2B: nerve_gas becomes the number of citizens killed
+                int pop = Bases[base_id].population_size;
+                nerve_gas = (pop + 1) / 2;
+                Bases[base_id].population_size = pop - nerve_gas;   // byte
+                if (is_objective(base_id)) {
+                    int p = Bases[base_id].population_size;
+                    Bases[base_id].population_size = p < 1 ? 1 : p;   // unconditional store
+                }
+                // 0x50AE6C
+                if (Bases[base_id].population_size <= 0) {
+                    base_kill(base_id);
+                    base_id = -1;
+                    for (int i = 0; i < 8; i++) {
+                        synch_bit(target_x, target_y, i);
+                    }
+                    draw_map(1);
+                    // cross-jumps to 0x50ADDC
+                    if (eliminate_player(def_faction, att_faction)) {
+                        pact_report = 0;
+                    }
+                } else {
+                    // 0x50AEB2
+                    spot_base(base_id, att_faction);
+                }
+            }
 L_50aebf:
-        // 0x50AEBF
-        if (veh_who(target_x, target_y) < 0
-            && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction))
-            && base_id >= 0) {
-            invasions(base_id);
+            // 0x50AEBF
+            if (veh_who(target_x, target_y) < 0
+                && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction))
+                && base_id >= 0) {
+                invasions(base_id);
+            }
+        }
+        // 0x50AEF3
+        if (att_faction != 0 && def_faction != 0) {
+            mon_enemy_destroyed(att_faction, def_faction);   // shared call at 0x50B1B4
+        }
+    } else {
+        // 0x50AF13: the defender won (helpers are called here, not inlined)
+        FactionTurnCombatWins[def_faction]++;
+        FactionTurnCombatLosses[att_faction]++;
+        if (IsMultiplayerNet && def_faction == ConsoleGlobal.faction_id_) {
+            // 0x50AF50
+            parse_says(0, VehPrototypes[Vehs[def_id].proto_id].veh_name, -1, -1);
+            clear();
+            say_stats_3(Vehs[def_id].proto_id);
+            parse_says(1, StringTemp, -1, -1);
+            parse_says(2, get_adjective(att_faction), -1, -1);
+            parse_says(3, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
+            clear();
+            say_stats_3(Vehs[veh_id].proto_id);
+            parse_says(4, StringTemp, -1, -1);
+            int report_base = base_find(target_x, target_y, -1, -1, -1, ConsoleGlobal.faction_id_);
+            if (report_base >= 0) {
+                parse_says(5, Bases[report_base].name_string, -1, -1);
+            }
+            veh_battle_msg("COMBATWIN", 0);
+        } else if (IsMultiplayerPBEM &&
+                   (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction))) {
+            // 0x50B068
+            parse_says(0, VehPrototypes[Vehs[def_id].proto_id].veh_name, -1, -1);
+            clear();
+            say_stats_3(Vehs[def_id].proto_id);
+            parse_says(1, StringTemp, -1, -1);
+            parse_says(2, get_adjective(att_faction), -1, -1);
+            parse_says(3, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
+            clear();
+            say_stats_3(Vehs[veh_id].proto_id);
+            parse_says(4, StringTemp, -1, -1);
+            int report_base = base_find(target_x, target_y, -1, -1, -1, def_faction);
+            if (report_base >= 0) {
+                parse_says(5, Bases[report_base].name_string, -1, -1);
+            }
+            POP3("COMBATWIN", def_faction, target_x, target_y);   // 0x50B8D0
+        }
+        // 0x50B157
+        stack_veh(veh_id, 1);
+        battle_kill_stack(veh_id, &kill_count, &booty_count, &husk_energy, -1, def_faction);
+        PlayersData[def_faction].diplo_unk3[att_faction]++;
+        PlayersData[def_faction].diplo_unk4[att_faction]++;
+        if (att_faction != 0 && def_faction != 0) {
+            mon_enemy_destroyed(def_faction, att_faction);
         }
     }
-    // 0x50AEF3
-    if (att_faction != 0 && def_faction != 0) {
-        mon_enemy_destroyed(att_faction, def_faction);   // shared call at 0x50B1B4
-    }
-    goto L_50b1bc;
 
-L_50af13:
-    // 0x50AF13: the defender won (helpers are called here, not inlined)
-    FactionTurnCombatWins[def_faction]++;
-    FactionTurnCombatLosses[att_faction]++;
-    if (IsMultiplayerNet && def_faction == ConsoleGlobal.faction_id_) {
-        // 0x50AF50
-        parse_says(0, VehPrototypes[Vehs[def_id].proto_id].veh_name, -1, -1);
-        clear();
-        say_stats_3(Vehs[def_id].proto_id);
-        parse_says(1, StringTemp, -1, -1);
-        parse_says(2, get_adjective(att_faction), -1, -1);
-        parse_says(3, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
-        clear();
-        say_stats_3(Vehs[veh_id].proto_id);
-        parse_says(4, StringTemp, -1, -1);
-        int report_base = base_find(target_x, target_y, -1, -1, -1, ConsoleGlobal.faction_id_);
-        if (report_base >= 0) {
-            parse_says(5, Bases[report_base].name_string, -1, -1);
-        }
-        veh_battle_msg("COMBATWIN", 0);
-    } else if (IsMultiplayerPBEM &&
-               (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction))) {
-        // 0x50B068
-        parse_says(0, VehPrototypes[Vehs[def_id].proto_id].veh_name, -1, -1);
-        clear();
-        say_stats_3(Vehs[def_id].proto_id);
-        parse_says(1, StringTemp, -1, -1);
-        parse_says(2, get_adjective(att_faction), -1, -1);
-        parse_says(3, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
-        clear();
-        say_stats_3(Vehs[veh_id].proto_id);
-        parse_says(4, StringTemp, -1, -1);
-        int report_base = base_find(target_x, target_y, -1, -1, -1, def_faction);
-        if (report_base >= 0) {
-            parse_says(5, Bases[report_base].name_string, -1, -1);
-        }
-        POP3("COMBATWIN", def_faction, target_x, target_y);   // 0x50B8D0
-    }
-    // 0x50B157
-    stack_veh(veh_id, 1);
-    battle_kill_stack(veh_id, &kill_count, &booty_count, &husk_energy, -1, def_faction);
-    PlayersData[def_faction].diplo_unk3[att_faction]++;
-    PlayersData[def_faction].diplo_unk4[att_faction]++;
-    if (att_faction != 0 && def_faction != 0) {
-        mon_enemy_destroyed(def_faction, att_faction);
-    }
-
-L_50b1bc:
     // 0x50B1BC
     if (booty_count != 0
         && !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction))
@@ -4079,17 +4050,16 @@ L_50b203:
 
 // ORIGINAL: 0x0050B8F0 sub_50b8f0 0x0050B8F0-0x0050B90A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:f178e8db:src/recovered/0050b8f0.cpp complete original identity/spans and historical claims/findings.", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x50b8f0 full native body review.", "source:src/veh.cpp existing real state owners; no executable-address alias or synthetic receiver."], "reason": "Recover the complete short helper through established source-owned diplomacy, vehicle, text or window state; preserve signed sentinel behavior, original receiver/argument order and conditional callbacks."}
+// body src/veh.h
 // symbol    ?veh_next_stack_id@@YAHH@Z
-int __cdecl veh_next_stack_id(int veh_id) {
-  if (veh_id < 0) return veh_id;
-  return Vehs[veh_id].next_veh_id_stack;
-}
+// BODY IN veh.h, as `MEASURED inline`.
 
 // ===== veh.cpp, P2 wave 2: the order verbs =====
 
 /*
 Purpose: Open a popup with the climate title and a body, no buttons.
 // ORIGINAL: 0x0050B970 ?popp@@YAHPBDPBDP6AHXZ@Z 0x0050B970-0x0050B991 BYTE_EXACT
+// body src/popup.h
 // size      33 bytes
 // prototype int (__cdecl ?popp@@YAHPBDPBDP6AHXZ@Z)(const char *label, const char *body, int (__cdecl *callback)())
 // callers   2   call targets   1
@@ -4109,13 +4079,12 @@ Purpose: Open a popup with the climate title and a body, no buttons.
 Return Value: whatever the five-argument popp returns.
 Status: BYTE_EXACT.
 */
-int __cdecl popp(const char *label, const char *body, int(__cdecl *callback)()) {
-    return popp(ScriptPopupFile, label, 0, body, callback);
-}
+// BODY IN popup.h, as `MEASURED inline`.
 
 /*
 Purpose: Generate prototype stats using stringTemp buffer.
 // ORIGINAL: 0x0050B9A0 ?say_stats_3@@YAXH@Z 0x0050B9A0-0x0050B9B6 BYTE_EXACT
+// body src/veh.h
 // size      22 bytes
 // prototype void (__cdecl ?say_stats_3@@YAXH@Z)(int protoID)
 // callers   1   call targets   1
@@ -4125,13 +4094,12 @@ Purpose: Generate prototype stats using stringTemp buffer.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl say_stats_3(int proto_id) {
-    say_stats_3(StringTemp, proto_id);
-}
+// BODY IN veh.h, as `MEASURED inline`.
 
 /*
 Purpose: Pop a battle message with its portrait.
 // ORIGINAL: 0x0050B9C0 sub_50b9c0 0x0050B9C0-0x0050B9DE BYTE_EXACT
+// body src/netmsg.h
 // size      30 bytes
 // prototype void (__cdecl sub_50b9c0)(char *label, char *icon)
 // callers   1   call targets   1
@@ -4146,7 +4114,5 @@ Purpose: Pop a battle message with its portrait.
 Return Value: n/a
 Status: BYTE_EXACT.
 */
-void __cdecl veh_battle_msg(char *label, char *icon) {
-    NetMsgPrimary.pop(label, 5000, 0, icon);
-}
+// BODY IN netmsg.h, as `MEASURED inline`.
 
