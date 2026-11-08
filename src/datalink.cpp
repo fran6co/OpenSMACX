@@ -1018,6 +1018,23 @@ static inline char *dl_current_text(StringList *list) {
     return list->head_ != 0 ? list->current_->string_payload()->text : 0;
 }
 
+// stand-in: the two topic helpers below spend the concept draws' /Ob2
+// budget so their Popup teardowns call ~FlatButton out of line, as the
+// image's EH tables show; the pointer argument keeps the late history_ load.
+static inline void dl_title_text(ListBox *box, int id) {
+    StringTemp[0] = 0;
+    box->item_list_.seek_id(id);
+    strcat(StringTemp, dl_current_text(&box->item_list_));
+    CharUpperA(StringTemp);
+}
+static inline void dl_topic_id(char *prefix, int *n) {
+    StringTemp[0] = 0;
+    strcat(StringTemp, prefix);
+    char number[80];
+    int value = *n;
+    _itoa(value, number, 10);
+    strcat(StringTemp, number);
+}
 // ORIGINAL: 0x0042C2E0 ?draw_concept@Datalink@@QAEXXZ 0x0042C2E0-0x0042C64D;0x0065358E-0x00653650
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x42C2E0", "git:8e3029104ab590bec35cc6932e637765b2ea4074:src/recovered/units/0042c2e0.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
 void Datalink::draw_concept() {
@@ -1025,16 +1042,9 @@ void Datalink::draw_concept() {
     int id = history_[0];
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
-    StringTemp[0] = 0;
-    listBox_.item_list_.seek_id(id);
-    strcat(StringTemp, dl_current_text(&listBox_.item_list_));
-    CharUpperA(StringTemp);
+    dl_title_text(&listBox_, id);
     write_cent_l(StringTemp, &title_rect_);
-    StringTemp[0] = 0;
-    strcat(StringTemp, "CONCEPT");
-    char number[80];
-    _itoa(history_[0], number, 10);
-    strcat(StringTemp, number);
+    dl_topic_id("CONCEPT", &history_[0]);
     concept_box_.clear();
     concept_box_.strings().load("CONCEPTSX", StringTemp, 1, 0);
     concept_box_.add_fixup();
@@ -1049,16 +1059,9 @@ void Datalink::draw_adv_concept() {
     int id = history_[0] + 10000;
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
-    StringTemp[0] = 0;
-    listBox_.item_list_.seek_id(id);
-    strcat(StringTemp, dl_current_text(&listBox_.item_list_));
-    CharUpperA(StringTemp);
+    dl_title_text(&listBox_, id);
     write_cent_l(StringTemp, &title_rect_);
-    StringTemp[0] = 0;
-    strcat(StringTemp, "ADVCONCEPT");
-    char number[80];
-    _itoa(history_[0], number, 10);
-    strcat(StringTemp, number);
+    dl_topic_id("ADVCONCEPT", &history_[0]);
     concept_box_.clear();
     concept_box_.strings().load("CONCEPTSX", StringTemp, 1, 0);
     concept_box_.add_fixup();

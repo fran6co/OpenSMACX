@@ -2025,27 +2025,26 @@ void NetWin::pick_faction(int slot) {
 #endif
 void NetWin::pick_diff(int slot) {
     PopMenu pop_menu;
+    NetWinLobbyRow row;
+    row.reset();
     pop_menu.init();
 
     for (int index = 0; index < 6; ++index) {
-        pop_menu.dialogs().item(StringTable.get(Difficulty[index]), index);
+        char *label = StringTable.get(Difficulty[index]);
+        pop_menu.dialogs().item(label, index);
     }
 
-    const int answer = pick_answer(*this, pop_menu);
-    NetWinLobbyRow row;
+    int x;
+    int y;
+    get_mouse_pos(&x, &y);
+    client_to_screen(&x, &y);
+    const int answer = pop_menu.exec(x, y, pick_daemon_callback);
     memcpy(&row, &NetWinLobbyRows.rows_[slot], sizeof(row));
     if (answer >= 0) {
         row.field_2_ = static_cast<uint8_t>(answer);
     }
-
-    if (slot >= 1) {
-        NetWinLobbySinglePacket packet;
-        packet.header_.set_opcode(0x2F04);
-        packet.header_.slot_ = slot;
-        packet.header_.field_8_ = 0;
-        memcpy(&packet.row_, &row, sizeof(packet.row_));
-        NetDaemonNet.Net::send(&packet, sizeof(packet), NetDaemonNet.host_player_id(), 1);
-    }
+    // 47D081: sub_47b1d0 inlined, its row reset and null test included.
+    sub_47b1d0(slot, &row);
 }
 
 // ORIGINAL: 0x0047D300 ?pick_map@NetWin@@QAEXXZ 0x0047D300-0x0047E003;0x00656BC5-0x00656D9D
@@ -3554,9 +3553,9 @@ void __cdecl sub_47b1d0(int faction_id, void *payload) {
     NetWinLobbySinglePacket packet;
     packet.row_.reset();
     if (faction_id >= 1 && payload != 0) {
-        packet.header_.field_8_ = 0;
         packet.header_.set_opcode(0x2F04);
         packet.header_.slot_ = faction_id;
+        packet.header_.field_8_ = 0;
         memcpy(&packet.row_, payload, sizeof(packet.row_));
         NetDaemonNet.Net::send(
             &packet, sizeof(packet), NetDaemonNet.host_player_id(), 1);

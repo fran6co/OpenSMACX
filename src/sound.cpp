@@ -486,6 +486,10 @@ extern "C" void __cdecl sub_4c6060() {
 // The loader above inlines its table clears; every later memset in this TU
 // is a real CRT call in the image.
 #pragma function(memset)
+// stand-in: a nothrow redeclaration. The image's derived audio constructors
+// (Wave, Ambience, 0x004C75B0) call memset without opening a base-complete
+// unwind state, so the original treated this call as non-throwing.
+extern "C" void * __cdecl memset(void *, int, size_t) throw();
 
 // Construct the Sound-owned fields after the fade prefix. The original
 // flags clear covers one complete dword and does not initialize delay_.
@@ -2925,10 +2929,8 @@ char *NameTable::get_name() {
 // TRIED: SHARED_TAIL - the 0x4c8450/0x659f20 unwind-handler span is COMDAT-folded with another function's handler, so no tier is reachable regardless of body. Left as a plain field-write transcription (no SEH frame modeled) for the next pass.
 Midi::Midi() {
     memset(&field_54_, 0, 1);
-    volatile uint8_t &mode = field_54_;
-    volatile uint32_t &flags = flags_40_;
-    mode |= 1;
-    flags |= 8;
+    field_54_ |= 1;
+    flags_40_ |= 8;
 }
 
 /*
