@@ -337,7 +337,7 @@ class MapWin : public virtual GraphicWin {
   TextureStore textures_a_[4];      // 0xC
   TextureStore textures_b_[0xC4];   // 0x98C
   TextureStore texture_store_;      // 0x1DB0C
-  uint32_t field_1DD6C_;  // 0x1DD6C
+  int field_1DD6C_;  // 0x1DD6C
   // on_resize suppresses image-button refresh when the high bit is set.
   // RECOVERY_MEMBER: v1 MapWin field_1DD70_ 0x1DD70 0x0046FA00
   uint32_t field_1DD70_;  // 0x1DD70

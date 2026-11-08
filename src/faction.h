@@ -335,7 +335,7 @@ struct Player {
     int rule_sharetech;
     int rule_commerce;
     // RECOVERY_MEMBER: v1 Player rule_flags 0x508 0x0052BF60
-    int rule_flags;
+    uint32_t rule_flags;
     int faction_bonus_count;
     int faction_bonus_id[8];
     int faction_bonus_val1[8];
@@ -364,7 +364,7 @@ static_assert(sizeof(Player) == 0x59C,
 
 struct PlayerData {
     uint32_t flags; // see PlayerFlagsBitfield
-    uint32_t ranking; // 0 (lowest) to 7 (highest) rank ; used to determine #MIGHT
+    int ranking; // 0 (lowest) to 7 (highest) rank ; used to determine #MIGHT
     int diff_level;
     uint32_t base_name_offset; // keep track which base names have been used
     uint32_t base_sea_name_offset; // keep track which sea base names have been used

@@ -962,9 +962,7 @@ void BaseWin::draw_support() {
     fill(&rect1_, 0);
     const RECT area = rect1_;
     mapWin_.init(2, 0);
-    // stand-in: the image shifts this field as a signed int (sar); a signed
-    // compound shift keeps the original schedule. Field is likely int.
-    *reinterpret_cast<int *>(&mapWin_.field_1DD6C_) >>= 1;
+    mapWin_.field_1DD6C_ >>= 1;
     const int height = mapWin_.pixel_height();
     const int width = mapWin_.pixel_width();
     mapWin_.field_1DD70_ = 0x200402;

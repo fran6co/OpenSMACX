@@ -370,7 +370,7 @@ struct Base {
     * Isn't correct when specialist_total is 0, not reset? Or Governor actively controlling specs?
     */
     // RECOVERY_MEMBER: v1 Base spec 0x84 0x004E80B0
-    uint32_t spec[2]; // specialist types
+    int spec[2]; // specialist types
     // RECOVERY_MEMBER: v1 Base facilities_built 0x8C 0x004E80B0
     uint8_t facilities_built[12];
     int mineral_surplus_final;
