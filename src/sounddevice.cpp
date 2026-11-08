@@ -16,18 +16,6 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
-// ORIGINAL: 0x004C5C80 ??__Eg_MIDI_DEVICE@@YAXXZ 0x004C5C80-0x004C5C96 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: lifecycle helper direct receiver/constructor/destructor/atexit instructions", "docs/recovery/derived-prototypes.csv historical dynamic initializer/destructor identity; fresh native sounddevice.cpp COFF confirms object and lifecycle relocation targets"], "reason": "MIDI construction and atexit registration at original receiver 0x0090D950; emitted by ordinary source-owned global lifetime, not a handwritten wrapper; terminal alignment NOPs excluded"}
-// symbol    _$E21
-// ORIGINAL: 0x004C5CA0 ??__Fg_MIDI_DEVICE@@YAXXZ 0x004C5CA0-0x004C5CAA FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: lifecycle helper direct receiver/constructor/destructor/atexit instructions", "docs/recovery/derived-prototypes.csv historical dynamic initializer/destructor identity; fresh native sounddevice.cpp COFF confirms object and lifecycle relocation targets"], "reason": "MIDI static destruction tail call at original receiver 0x0090D950; emitted by ordinary source-owned global lifetime, not a handwritten wrapper; terminal alignment NOPs excluded"}
-// symbol    _$E19
-// ORIGINAL: 0x004C5CB0 ??__Eg_WAVE_IN_DEVICE@@YAXXZ 0x004C5CB0-0x004C5CC6 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: lifecycle helper direct receiver/constructor/destructor/atexit instructions", "docs/recovery/derived-prototypes.csv historical dynamic initializer/destructor identity; fresh native sounddevice.cpp COFF confirms object and lifecycle relocation targets"], "reason": "Wave-In construction and atexit registration at original receiver 0x0090DB50; emitted by ordinary source-owned global lifetime, not a handwritten wrapper; terminal alignment NOPs excluded"}
-// symbol    _$E26
-// ORIGINAL: 0x004C5CD0 ??__Fg_WAVE_IN_DEVICE@@YAXXZ 0x004C5CD0-0x004C5CDA FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: lifecycle helper direct receiver/constructor/destructor/atexit instructions", "docs/recovery/derived-prototypes.csv historical dynamic initializer/destructor identity; fresh native sounddevice.cpp COFF confirms object and lifecycle relocation targets"], "reason": "Wave-In static destruction tail call at original receiver 0x0090DB50; emitted by ordinary source-owned global lifetime, not a handwritten wrapper; terminal alignment NOPs excluded"}
-// symbol    _$E24
 #include "sounddevice.h"
 #include "wave_device.h"
 #include "wave.h"
@@ -42,34 +30,6 @@
 #pragma function(memset)
 #endif
 
-// Pinned local CRT slots 0x682608/60C/610 select Wave, Midi, Wave-In startup
-// helpers 0x4C5C50/80/B0 and their cleanup helpers 0x4C5C70/A0/D0. The real
-// object declarations below follow that observed local sequence. This does not
-// establish wider CRT order or full object extents; bindings remain start-only.
-// ====================
-// The process wave device, 0x0090D978 in the image - REAL STORAGE carrying
-// the public name wave.h's consumers read. It was `Wave_Device g_WAVE_DEVICE`
-// beside the `Wave_Device *const WaveDeviceGlobal = (Wave_Device *)0x0090D978`
-// binding in wave.h naming terranx.exe data that is unmapped in a standalone
-// build; the object and the binding were the same address, so the object now
-// carries the public name and every `WaveDeviceGlobal->` call site reaches it
-// directly, the folded `mov ecx, imm32` receivers relocated.
-// The 0x1A4-byte device ends where SoundChainTail begins at 0x0090DB1C.
-// RECOVERY_OBJECT: v2 0x0090D978 0x0090DB1C ?WaveDeviceGlobal@@3VWave_Device@@A 0x00491380
-Wave_Device WaveDeviceGlobal;  // 0x0090D978
-
-
-// RECOVERY_OBJECT: v1 0x0090D950 ?g_MIDI_DEVICE@@3VMidi_Device@@A
-Midi_Device g_MIDI_DEVICE;
-// RECOVERY_OBJECT: v1 0x0090DB50 ?g_WAVE_IN_DEVICE@@3VWave_In_Device@@A
-Wave_In_Device g_WAVE_IN_DEVICE;
-// The release-hook guard, 0x0090DB7C in the image: init_sound zeroes it when
-// the device fails to come up and sets it once the hook is live, and the
-// wave teardown paths run the release slot only while it reads nonzero. Was
-// `int *const WaveDeviceReleaseGuard = (int *)0x0090DB7C` (wave.h) and a
-// `g_0090db7c` static in sound.cpp - the same terranx.exe dword twice.
-// RECOVERY_OBJECT: v1 0x0090DB7C ?WaveDeviceReleaseGuard@@3HA
-int WaveDeviceReleaseGuard;  // 0x0090DB7C
 
 
 
@@ -955,12 +915,6 @@ int Wave_In_Device::release() {
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
-// ORIGINAL: 0x004C5C50 sub_4c5c50 0x004C5C50-0x004C5C66 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x682608 selects startup 0x4c5c50..0x4c5c66 and registers cleanup 0x4c5c70..0x4c5c7a. Complete root decode proves the exclusive RET/JMP endpoints.", "The source-owned object ?WaveDeviceGlobal@@3VWave_Device@@A is selected by physical COFF constructor/destructor relocations; current emitted initializer is identified by the adjacent symbol fact. Original receiver 0x90d978 belongs to this real global; preserve its class lifetime and registration.", "Buffer relative declaration order is PCX, interface array, middle, vehicle, special-text owner, Sprite, shared Buffer. Generated helpers are compiler output, not hand-authored address callbacks. Selected same-owner order does not establish full CRT order, dependency provider, linked preservation or runtime/game acceptance. Guarded cleanup is a separate unfinished obligation."], "reason": "Bind original init operation to the genuine C++ lifetime of ?WaveDeviceGlobal@@3VWave_Device@@A; retain original behavior and remaining matching obligations."}
-// symbol    _$E16
-// ORIGINAL: 0x004C5C70 sub_4c5c70 0x004C5C70-0x004C5C7A FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x682608 selects startup 0x4c5c50..0x4c5c66 and registers cleanup 0x4c5c70..0x4c5c7a. Complete root decode proves the exclusive RET/JMP endpoints.", "The source-owned object ?WaveDeviceGlobal@@3VWave_Device@@A is selected by physical COFF constructor/destructor relocations; current emitted finalizer is identified by the adjacent symbol fact. Original receiver 0x90d978 belongs to this real global; preserve its class lifetime and registration.", "Buffer relative declaration order is PCX, interface array, middle, vehicle, special-text owner, Sprite, shared Buffer. Generated helpers are compiler output, not hand-authored address callbacks. Selected same-owner order does not establish full CRT order, dependency provider, linked preservation or runtime/game acceptance. Guarded cleanup is a separate unfinished obligation."], "reason": "Bind original fini operation to the genuine C++ lifetime of ?WaveDeviceGlobal@@3VWave_Device@@A; retain original behavior and remaining matching obligations."}
-// symbol    _$E14
 #include "stdafx.h"
 #include "wave.h"
 #include "wave_device.h"

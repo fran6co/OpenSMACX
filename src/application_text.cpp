@@ -24,19 +24,6 @@
 #include "faction.h"
 #include "console.h"
 #include <cstring>
-
-// Read a script section into the shared substitution buffer. The text
-// reader owns TextBufferGetPtr; parse_string supplies the substitutions.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0048C060 ?parse_it@@YAXPADPBD@Z 0x0048C060-0x0048C099 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned48C060..48C099 clears StringTemp9B86A0, calls X_text_open5BECA0, then text_get5FD570 and parse_string625880(TextBufferGetPtr9B7D00,StringTemp) on success.", "src/recovered/units/0048c060.cpp retains this same original identity, complete57-byte span and historical BYTE_EXACT claim; Quayle redraw4956D0 passes Holobook filename and BOOKTITLE/BOOKINTRO/BOOKLIST section names."], "reason": "Recover the filename/section wrapper using the real shared text and substitution owners; the existing seed retains its historical matching obligation."}
-void __cdecl parse_it(char *file_name, const char *section) {
-    StringTemp[0] = 0;
-    if (X_text_open(file_name, section) == 0) {
-        text_get();
-        parse_string(TextBufferGetPtr, StringTemp);
-    }
-}
 // ORIGINAL: 0x00584D30 sub_584d30 0x00584D30-0x00584D52 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:5167ec56aaa9031de73f42c05fbc3bdd0bad0201:src/recovered/00584d30.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x584d30 complete original body; independent source-owner review.", "source:src/general.cpp and corresponding header own real receiver/dependencies; count-zero copy underflow is intentionally unchanged."], "reason": "Complete typed application helper; retain original call ordering, argument contract and historical obligation."}
 // symbol    ?sub_584d30@@YAPADPAD0I@Z

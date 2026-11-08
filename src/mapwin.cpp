@@ -8121,7 +8121,6 @@ void MapWin::clear_terrain() {
         }
     }
 }
-
 // Compiler-generated Win-branch capture adjustor from the genuine
 // MapWin override and virtual GraphicWin base; no handwritten thunk body.
 /*
@@ -8193,43 +8192,6 @@ Status: Complete
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor span at 0x004626E0 stores table 0x0066A57C; exact cell 0x0066A600 is 0x00421920.", "The complete original thunk bytes at 0x00421920 tail to pinned target 0x0046F700.", "Fresh full build build-fpcqf1x8: ??_7MapWin@@6BWin@@@+0x84 COFF relocation selects ?on_nc_left_down@MapWin@@$4PPPPPPPM@A@AEXHH@Z; thunk bytes and its unique relative tail relocation target ?on_nc_left_down@MapWin@@UAEXHH@Z.", "The owner compile receipt inputs were unchanged and match current files at proposal emission; selected output is observed in the fresh MAP/PE but this proposal does not claim complete link-preservation acceptance.", "Historical source kind `game`, original identity/name, complete span, and parsed claims/lessons are checked unchanged after native-writer readback."], "reason": "The pinned MapWin constructor at 0x004626E0 installs the ??_7MapWin@@6BWin@@@ address point; its exact slot cell at +0x84 selects original identity 0x00421920. The fresh full-build owner COFF vftable relocation selects the compiler-generated thunk ?on_nc_left_down@MapWin@@$4PPPPPPPM@A@AEXHH@Z, whose unique physical relative tail targets ?on_nc_left_down@MapWin@@UAEXHH@Z. The original marker name and complete source history remain attached to this FILE identity."}
 // kind      game
 // symbol    ?on_nc_left_down@MapWin@@$4PPPPPPPM@A@AEXHH@Z
-/*
-Purpose: Range-and-parity screen test for one map coordinate: halve the
-         base coordinate read through the map geometry pointer, quarter the
-         map height, wrap the sum into range against half the height, and
-         report whether the requested half-coordinate falls inside the
-         computed band.
-
-// ORIGINAL: 0x004468F0 sub_4468f0 0x004468F0-0x0044695B FILE BYTE_EXACT
-// symbol    _sub_4468f0
-// size      107 bytes
-// prototype
-// callers   0   call targets   0
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     (none)
-Status: Coverage transcription - unclaimed body (direct transcription of
-        the seed's materialised /O2 arithmetic; no caller in the product
-        yet, so the body stands on its own disassembly).
-*/
-extern "C" int __cdecl sub_4468f0(int a1) {
-    const int center = MapWinTable[0]->center_x_ / 2;
-    const int quarter = MapLongitudeBounds / 4;
-    const int half_width = MapLongitudeBounds / 2;
-    const int half = a1 / 2;
-    int limit = quarter + center;
-    if (limit > half_width) {
-        limit -= half_width;
-    }
-    if (center < quarter) {
-        if (half <= center || half >= limit) {
-            return -1;
-        }
-    } else if (half < center && half > limit) {
-        return -1;
-    }
-    return 1;
-}
 // ORIGINAL: 0x004210D0 sub_4210d0 0x004210D0-0x004210E7 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x004210D0..0x004210E6 adjusts ECX by +0x21A6C, calls MapWin destructor 0x00420F90, calls GraphicWin destructor 0x005D4DD0, then returns", "pinned BaseWin and replay cleanup continuations pass the complete embedded MapWin address in ECX before tail-jumping to 0x004210D0; helper uses its own receiver and does not read caller-frame state", "src/mapwin.h declares MapWin publicly virtually derives from GraphicWin; its pinned vbtable 0x0066C870 supplies the +0x21A6C virtual-base offset"], "reason": "Bind the pinned generated MapWin virtual-base teardown entry to the real MapWin object and its GraphicWin virtual base while retaining the canonical MapWin marker home."}
 // compile_context src/basewin.cpp

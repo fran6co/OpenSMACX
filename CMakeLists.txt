@@ -133,10 +133,8 @@ set(OPENSMACX_SOURCES
     src/factionprofilewin.cpp
     src/main.cpp
     src/multiwin.cpp
-    src/midi.cpp
     src/matrix3.cpp
     src/filebox.cpp
-    src/word_state.cpp
     src/table_storage.cpp
     src/span_math.cpp
     src/scale_adjustment.cpp
@@ -144,10 +142,8 @@ set(OPENSMACX_SOURCES
     src/byte_utilities.cpp
     src/shared_word.cpp
     src/fx.cpp
-    src/fx_wave_resources.cpp
     src/alphanet.cpp
     src/alphanet_records.cpp
-    src/ambience.cpp
     src/autosound.cpp
     src/base.cpp
     src/base_compute.cpp
@@ -258,7 +254,6 @@ set(OPENSMACX_SOURCES
     src/uv2player.cpp
     src/dipedit.cpp
     src/sound.cpp
-    src/sound_type.cpp
     src/spritebox.cpp
     src/listbox.cpp
     src/net_class.cpp
@@ -285,7 +280,6 @@ set(OPENSMACX_SOURCES
     src/stringbox.cpp
     src/stringlist.cpp
     src/stringstruct.cpp
-    src/name_table.cpp
     src/strings.cpp
     src/string_table.cpp
     src/string_formatting.cpp
@@ -376,12 +370,10 @@ add_subdirectory(src/caviar)
 # application's default compiler flags.
 set_source_files_properties(
     src/wave.cpp
-    src/fx_wave_resources.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # The Midi, device-wrapper and sound-loader bodies also retain frame-based
 # argument accesses in the measured application release profile.
 set_source_files_properties(
-    src/midi.cpp
     src/sounddevice.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve the frame-based argument accesses in these interface owners while
@@ -421,7 +413,7 @@ set_source_files_properties(src/interface_palette.cpp src/interface_fonts.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # The co-located Sound-family lifetimes retain the original frame-based
 # cleanup/deleting entries. Release already supplies /Ob2 for base inlining.
-set_source_files_properties(src/sound.cpp src/sound_type.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
+set_source_files_properties(src/sound.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve original frame-based argument and local-slot accesses in these core
 # owners while keeping application-wide compiler defaults unchanged.
 # World generation keeps its existing map.cpp profile after source separation;
@@ -523,12 +515,10 @@ set_source_files_properties(
     src/battlewin.cpp
     src/lock.cpp
     src/monuwin.cpp
-    src/name_table.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve measured frame-based accesses in the core application cohort.
 # Mixed or non-improving owners retain their measured default recipes.
 set_source_files_properties(
-    src/ambience.cpp
     src/factionprofilewin.cpp
     src/interlude.cpp
     src/netmsg.cpp
@@ -592,7 +582,8 @@ set_property(SOURCE
     src/string_table.cpp
     src/strings.cpp
     src/sounddevice.cpp
-    src/ambience.cpp
+    src/fx.cpp
+    src/sound.cpp
     src/netmsg.cpp
     src/reportif.cpp
     src/console.cpp

@@ -6095,66 +6095,6 @@ void Console::set_screen_geometry() {
     StatusFlags |= 1u;
 }
 
-// ORIGINAL: 0x0048D0D0 ?veh_pick@@YAHHPBDH@Z 0x0048D0D0-0x0048D4EA;0x006585CB-0x006586B3
-// RECOVERY_BINDING: v1 {"evidence": ["image:terranx_original.exe:0x48d0d0 hot and cold spans; private full-body native-order review and actual-source callback/lifetime controls.", "git:decce96da7981b60ac91563a8323362cdab2e250:src/unrecovered/0048d0d0.cpp", "source:src/basepop.h:typed SpriteBox click callback at BasePop+3160; native CodeView and producer/consumer evidence."], "reason": "Recover the complete picker/supply operation through genuine Popup, Sprite, Veh, Base and network owners; preserve full original spans and seed findings without a new matching claim."}
-// TRIED: declaring BOTH `Popup();` (matched: this disassembly calls Popup's own ctor at 0x4048a0, not BasePop+Scroll separately) AND `~Popup();` (declaration only, no body) on the Popup class lets `Popup pop;` be a real local without the compiler synthesising-and-EMITTING its own ~Popup() - the destructor declaration alone suppresses synthesis, so scope-exit just calls the external symbol once. This compiles clean (unlike 0x00405140, which hit the one-external-symbol error from an implicit ~Popup()). The extensive widget teardown after the `if (a3 != 0)` branch (FlatButton/BaseButton/Dialogs/Dialog/ Spot/Heap) is called through small raw-byte-buffer casts rather than real locals, since those types have no declared constructors in this scaffold and a real local would risk the same implicit-synthesis problem. Reaches MISMATCH #11 ('push' vs 'lea'); did not chase the exact field-store sequence (callback pointers, vtable resets) further.
-int __cdecl veh_pick(int veh_id, const char *label, int flags) {
-    // Native constructs Popup first at 0x48D0FB, then Sprite at 0x48D108.
-    Popup popup;
-    Sprite sprite;
-    sprite.create_blank(0x64, 0x4B, WinFillColour);
-    const int popup_flags = (flags != 0 ? 0x40 : 0) | 0x800;
-    popup.start(PopupStartCaption, label, -1, 0, popup_flags, 0);
-
-    int listed_count = 0;
-    int listed_vehicle = veh_id;
-    if (listed_vehicle >= 0) {
-        int previous_vehicle = Vehs[listed_vehicle].prev_veh_id_stack;
-        while (previous_vehicle >= 0) {
-            listed_vehicle = previous_vehicle;
-            previous_vehicle = Vehs[listed_vehicle].prev_veh_id_stack;
-        }
-
-        if (listed_vehicle >= 0) {
-            do {
-                say_morale(listed_vehicle, 0);
-                StringTemp[0] = '\0';
-                ::strcat(StringTemp, " ");
-                const int prototype = Vehs[listed_vehicle].proto_id;
-                ::strcat(StringTemp, VehPrototypes[prototype].veh_name);
-                popup.dialogs().SpriteBox::sprite(
-                    &sprite, StringTemp, listed_vehicle);
-
-                // Native fetches the next stack link after the sprite call.
-                const int next_vehicle = Vehs[listed_vehicle].next_veh_id_stack;
-                ++listed_count;
-                listed_vehicle = next_vehicle;
-            } while (listed_vehicle >= 0);
-        }
-    }
-
-    if (listed_count == 0) {
-        // Native empty path closes the independent Sprite before Popup.
-        sprite.close();
-        popup.close();
-        return -1;
-    }
-
-    popup.set_redraw_callback(veh_sprite_draw);
-    popup.dialogs().SpriteBox::set_redraw_callback(veh_sprite_draw);
-    popup.set_sprite_click_callback(veh_sprite_click);
-    popup.set_sprite_double_click_callback(veh_sprite_double_click);
-
-    PopupModalState = 6;
-    const int result = popup.exec(0, 0);
-    PopupModalState = 0;
-
-    // Native successful path closes Popup before the local Sprite.
-    popup.close();
-    sprite.close();
-    return result;
-}
-
 
 static int supply_wrap_add(int left, int right) {
     return static_cast<int>(static_cast<uint32_t>(left) +

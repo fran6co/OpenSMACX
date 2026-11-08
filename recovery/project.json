@@ -581,6 +581,7 @@
           "-MT",
           "/W4",
           "/Oy-",
+          "/Z7",
           "-c"
         ]
       },
@@ -1055,21 +1056,6 @@
         ]
       },
       "src/designwin.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "/O2",
-          "/Ob2",
-          "-MT",
-          "/W4",
-          "/Oy-",
-          "/Z7",
-          "-c"
-        ]
-      },
-      "src/ambience.cpp": {
         "flags": [
           "/nologo",
           "/TP",
@@ -1770,20 +1756,6 @@
           "-c"
         ]
       },
-      "src/name_table.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "/O2",
-          "/Ob2",
-          "-MT",
-          "/W4",
-          "/Oy-",
-          "-c"
-        ]
-      },
       "src/fx.cpp": {
         "flags": [
           "/nologo",
@@ -1795,6 +1767,7 @@
           "-MT",
           "/W4",
           "/Oy-",
+          "/Z7",
           "-c"
         ]
       },
@@ -2023,20 +1996,6 @@
           "-c"
         ]
       },
-      "src/sound_type.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "/O2",
-          "/Ob2",
-          "-MT",
-          "/W4",
-          "/Oy-",
-          "-c"
-        ]
-      },
       "src/vehicle_render.cpp": {
         "flags": [
           "/nologo",
@@ -2049,20 +2008,6 @@
           "/W4",
           "/Oy-",
           "/Z7",
-          "-c"
-        ]
-      },
-      "src/fx_wave_resources.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "/O2",
-          "/Ob2",
-          "-MT",
-          "/W4",
-          "/Oy-",
           "-c"
         ]
       },
