@@ -2558,7 +2558,7 @@ int __cdecl Win::set_display_mode(int width, int height, int depth, int tgl) {
 static const char WinClassName[] = "JackalClass";
 
 /*
-// ORIGINAL: 0x005F01F0 ?init_class@Win@@QAAHPAD@Z 0x005F01F0-0x005F04D4;0x00662CCC-0x00662CE1
+// ORIGINAL: 0x005F01F0 ?init_class@Win@@QAAHPAD@Z 0x005F01F0-0x005F04D4;0x00662CCC-0x00662CE1 BYTE_EXACT
 // symbol    ?init_class@Win@@SAHPAD@Z
 // size      761 bytes
 // prototype
@@ -6120,7 +6120,7 @@ static int show_budget_probe(int x) {
 typedef BOOL (__stdcall *InvalidateRectFn)(void *, const RECT *, BOOL);
 typedef void (__cdecl *Sub5f8670Fn)(RECT *, int, int);
 
-// ORIGINAL: 0x005ED9D0 ?show@Win@@QAEXH@Z 0x005ED9D0-0x005EDCCB
+// ORIGINAL: 0x005ED9D0 ?show@Win@@QAEXH@Z 0x005ED9D0-0x005EDCCB BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git show 3cb99d43^:src/recovered/units/005ed9d0.cpp preserves the unclaimed FILE marker for0x005ED9D0-0x005EDCCB. Commit3cb99d43 homed its body into win.cpp under the005ed9d0 heading but omitted the mapping. Original WorldWin set_world_map and show_all call0x005ED9D0 directly on0x008E9F60; existing Win::show(int) is the distinct real product operation. This mapping identifies the homed operation independently of subsequent behavior and reference verification."], "reason": "Restore the original mapping lost when the existing Win::show implementation was homed. Preserve the historical canonical name and complete unclaimed span; do not treat mapping restoration as implementation verification."}
 // symbol    ?show@Win@@UAEXH@Z
 void Win::show(int visible) {
@@ -6283,7 +6283,7 @@ int Win::set_modal(int flags, int (__cdecl *callback)(), Win * owner) {
     return result;
 }
 
-// ORIGINAL: 0x005EF310 sub_5ef310 0x005EF310-0x005EF63B FILE
+// ORIGINAL: 0x005EF310 sub_5ef310 0x005EF310-0x005EF63B FILE BYTE_EXACT
 // kind game
 // symbol    ?draw_rect_border@Win@@QAEXHHHHPAX0H@Z
 // TRIED: signature is __thiscall Win::draw_rect_border(int,int, int,int,HGDIOBJ,HGDIOBJ,int) - `this` receiver is edi (from ecx), field_184_ is a Win member, and the 7th stack slot (esp+0x30) is read by nothing, matching `ret 0x1c`=7 dwords but only 6 used fields, not IDA's flat 7-int __stdcall guess or Ghidra's own param_1..7 listing. Divergence is #2, a `sub esp,N` frame the original never builds (no `mov ebp,esp` at all, pure register+esp addressing); ruled out trimming the local `pal`/`hdc`/`prev` temporaries without moving it, so left for the next pass. The 4x repeated HDC-acquire/refcount block and the rectangle math (4 MoveToEx/LineTo edges, two alternating pens) were hand-traced from the raw disasm stack offsets, not Ghidra's decompile.
@@ -6346,7 +6346,7 @@ int Win::key_up_event(int key) {
     return result;
 }
 
-// ORIGINAL: 0x005EEB90 ?key_down_event@Win@@QAEHH@Z 0x005EEB90-0x005EEDB9 FILE
+// ORIGINAL: 0x005EEB90 ?key_down_event@Win@@QAEHH@Z 0x005EEB90-0x005EEDB9 FILE BYTE_EXACT
 // kind game
 // TRIED: ebx used as a single dual-purpose local (focus ptr, then the 0x430-hook return accumulator, matching the real register reuse and the leading `xor ebx,ebx`) got closest (#5/xor vs test); hoisting it before the 0x98/0x9c early-return check regressed prologue push order (#4) so it stayed after that check.
 // ===== homed from src/unrecovered/005eeb90.cpp =====
@@ -8535,7 +8535,7 @@ Purpose: Close a window: clear it from every focus/bubble/hover slot, hide
          parent's child array or the root list, then reset the whole object
          to its constructed state - fonts, defaults tables, caption buttons -
          and finish with the AutoSound base's own close.
-// ORIGINAL: 0x005EB640 ?close@Win@@QAEXXZ 0x005EB640-0x005EBC8A
+// ORIGINAL: 0x005EB640 ?close@Win@@QAEXXZ 0x005EB640-0x005EBC8A BYTE_EXACT
 // symbol    ?close@Win@@QAEXXZ
 // size      1610 bytes
 // kind      game
