@@ -1498,104 +1498,99 @@ activate:
 // ORIGINAL: 0x004D3470 ?terraform@Console@@QAEXHH@Z 0x004D3470-0x004D5277;0x0065A559-0x0065AB02 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004d3470.cpp", "image:terranx_original.exe:0x004D3470", "image:terranx_original.exe:0x004D4973,0x004D4CA6"], "reason": "Recover terraforming through the Console receiver, Map bit storage, typed order descriptors and real vehicle/network lock lifecycle. Native lock failure refunds without unlocking; conflict names distinguish sea and land. Popup owns teardown, not handwritten vtable cleanup."}
 // TRIED: full-function transcription (all ~30 validation branches, the 6-way terraform-type switch incl. borehole/aquifer neighbor scans and the raise/lower-terrain payment+territory/treaty flow, the post-switch lock/exec/unlock tail) using validated Veh/Map/VehPrototype/Chassis record layouts from src/veh.h and src/map.h; Popup RAII lever (`Popup popup;` + plain `return;`) for all teardown/SEH machinery, never hand-written. MISMATCH #2: rebuilt frame is 4 bytes larger than the original's 0x5398, so every ebp-relative offset drifts from the prologue on - not a control-flow or call-order defect, a local-variable-count difference in the /O2 stack layout that was not tracked down further. Two inline uses of a materialized `VehRec *veh` pointer were already removed in favor of re-deriving `g_vehs[a1].field` at each site (matched the original's shape and recovered 8 of that 12-byte gap); the remaining 4 bytes are still open. Approximated without full confidence: the exact terraformID reassignment thresholds in the a2==0/a2==5 auto-select block, the case-0x10/0x11 payment/steps-count arithmetic, and which register (`edx`) still holds `altBits` vs a freshly reloaded value at a few of the later bit tests - transcribed as re-reads of tile fields rather than a persisted local where raw-disasm register lineage got ambiguous after ~40 intervening instructions.
-void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
+void Console::terraform(int vehicle_id, int terraform_id) { // 0x004D3470
     Popup popup;
 
-    // The native entry tests the current vehicle prototype's plan before
-    // reading its map tile.  0x004D34C6 compares VehPrototype::plan to 9.
-    const int entry_proto_id = Vehs[vehicle_id].proto_id;
-    if (VehPrototypes[entry_proto_id].plan != 9) {
+    const int proto_id = Vehs[vehicle_id].proto_id;
+    if (VehPrototypes[proto_id].plan != 9) {
         NetMsgPrimary.pop("NEEDTERRAFORMERS", 5000, 0, nullptr);
         return;
     }
 
-    // Original 0x004D3521..0x004D3585 snapshots the selected vehicle's
-    // coordinates, classifies altitude from climate & 0xE0, and permits AIR
-    // chassis on either terrain.  The even/odd map-column convention is the
-    // same one used by map_loc throughout the typed map owner.
     const int x = Vehs[vehicle_id].x;
     const int y = Vehs[vehicle_id].y;
     Map *const tile = map_loc(x, y);
-    const int altitude = tile->climate & 0xE0;
-    const int is_sea = altitude < 0x60;
-    const int chassis_id = VehPrototypes[entry_proto_id].chassis_id;
-    const int triad = Chassis[chassis_id].triad;
+    const int is_sea = (tile->climate & ~0x1F) < 0x60;
+    const uint8_t triad = Chassis[VehPrototypes[proto_id].chassis_id].triad;
     if (triad != TRIAD_AIR && is_sea != (triad == TRIAD_SEA)) {
-        NetMsgPrimary.pop("NOTINTRIAD", 5000, 0, nullptr);
+        NetMsgPrimary.pop("TERRASEA", 5000, 0, nullptr);
         return;
     }
 
-    // Preserve the native order substitution rules: an existing road can
-    // become a magtube; a farm request can remove fungus or select soil
-    // enrichment.  The prereq comparison is >= -1, exactly as the native
-    // signed DWORD comparison at 0x004D35EA / 0x004D361F.
-    int terraform_id = requested_terraform;
+    // An existing road upgrades to a magtube; a farm request removes fungus
+    // or selects soil enrichment.
     if (terraform_id == TERRA_ROAD) {
         if ((tile->bit & BIT_ROAD) != 0 &&
-            (is_sea ? Terraforming[TERRA_MAGTUBE].prerequisite_tech[1]
-                    : Terraforming[TERRA_MAGTUBE].prerequisite_tech[0]) >= -1) {
+            Terraforming[TERRA_MAGTUBE].prerequisite_tech[is_sea] >= -1) {
             terraform_id = TERRA_MAGTUBE;
         }
     } else if (terraform_id == TERRA_FARM) {
-        if ((tile->bit & BIT_FUNGUS) != 0 && altitude >= 0x40) {
+        if ((tile->bit & BIT_FUNGUS) != 0 && (tile->climate & ~0x1F) >= 0x40) {
             terraform_id = TERRA_REMOVE_FUNGUS;
-        } else if ((tile->bit & BIT_FARM) != 0 && altitude >= 0x60 &&
-                   (is_sea ? Terraforming[TERRA_SOIL_ENR].prerequisite_tech[1]
-                           : Terraforming[TERRA_SOIL_ENR].prerequisite_tech[0]) >= -1) {
+        } else if ((tile->bit & BIT_FARM) != 0 && (tile->climate & ~0x1F) >= 0x60 &&
+                   Terraforming[TERRA_SOIL_ENR].prerequisite_tech[is_sea] >= -1) {
             terraform_id = TERRA_SOIL_ENR;
         }
     }
 
-    // Native auto-selection only rewrites the ordinary road/farm requests;
-    // explicit Soil Enricher remains a separate order and is validated below.
+    // order and order_sea are read as a two-entry run.
+    parse_says(6, (&Order[terraform_id + 4].order)[is_sea], -1, -1);
 
-    // 0x004D3632 passes the selected Order label directly to parse_says;
-    // it is not a StringTable key. The native table starts at Order[4].
-    char *order_label = is_sea ? Order[terraform_id + 4].order_sea
-                               : Order[terraform_id + 4].order;
-    parse_says(6, order_label, -1, -1);
+    if (Terraforming[terraform_id].prerequisite_tech[is_sea] < -1) {
+        if (Terraforming[terraform_id].prerequisite_tech[!is_sea] < -1) {
+            NetMsgPrimary.pop("NOTATALL", 5000, 0, nullptr);
+        } else if (is_sea) {
+            NetMsgPrimary.pop("NOTATSEA", 5000, 0, nullptr);
+        } else {
+            NetMsgPrimary.pop("NOTONLAND", 5000, 0, nullptr);
+        }
+        return;
+    }
+    if (terraform_id == TERRA_SOIL_ENR) {
+        if ((bit_at(x, y) & BIT_FARM) == 0) {
+            return;
+        }
+    } else if (terraform_id == TERRA_MAGTUBE) {
+        if ((bit_at(x, y) & BIT_ROAD) == 0) {
+            return;
+        }
+    }
 
-    // The first availability check is based on each terrain row's typed
-    // prerequisite; < -1 means no availability in that environment.
-    const int selected_prerequisite = is_sea
-        ? Terraforming[terraform_id].prerequisite_tech[1]
-        : Terraforming[terraform_id].prerequisite_tech[0];
-    if (selected_prerequisite < -1) {
-        const int other_prerequisite = is_sea
-            ? Terraforming[terraform_id].prerequisite_tech[0]
-            : Terraforming[terraform_id].prerequisite_tech[1];
-        const char *message = other_prerequisite < -1 ? "NOTATALL"
-            : is_sea ? "NOTATSEA" : "NOTONLAND";
-        NetMsgPrimary.pop(message, 5000, 0, nullptr);
+    if (!terrain_avail(terraform_id, is_sea, faction_id_) &&
+        (terraform_id != TERRA_REMOVE_FUNGUS ||
+         !has_abil(Vehs[vehicle_id].proto_id, 0x2000))) {
+        StringTemp[0] = 0;
+        say_tech(StringTemp, Terraforming[terraform_id].prerequisite_tech[is_sea], 0);
+        parse_says(0, StringTemp, -1, -1);
+        if (terraform_id == TERRA_MAGTUBE) {
+            NetMsgPrimary.pop("HASROAD", 5000, 0, nullptr);
+        } else if (terraform_id == TERRA_SOIL_ENR) {
+            NetMsgPrimary.pop("HASFARM", 5000, 0, nullptr);
+        } else {
+            NetMsgPrimary.pop("NOTUNTILTECH", 5000, 0, nullptr);
+        }
         return;
     }
 
-    if (terraform_id == TERRA_SOIL_ENR && (tile->bit & BIT_FARM) == 0) {
+    if (base_who(x, y) >= 0) {
+        NetMsgPrimary.pop("NOTBASE", 5000, 0, nullptr);
         return;
     }
-    if (terraform_id == TERRA_MAGTUBE && (tile->bit & BIT_ROAD) == 0) {
-        return;
-    }
-
-    const uint32_t terrain_bit = Terraforming[terraform_id].bit;
-    if (terrain_bit != 0 && (tile->bit & terrain_bit) == terrain_bit) {
-        char *current_improvement = is_sea
-            ? Terraforming[terraform_id].name_sea
-            : Terraforming[terraform_id].name;
-        parse_says(0, current_improvement, -1, -1);
+    if (Terraforming[terraform_id].bit != 0 &&
+        (bit_at(x, y) & Terraforming[terraform_id].bit) == Terraforming[terraform_id].bit) {
+        // name and name_sea are read as a two-entry run.
+        parse_says(0, (&Terraforming[terraform_id].name)[is_sea], -1, -1);
         NetMsgPrimary.pop("ALREADYBUILT", 5000, 0, nullptr);
         return;
     }
-    if ((tile->bit & BIT_MONOLITH) != 0 && terrain_bit != 0 &&
+    if ((bit_at(x, y) & BIT_MONOLITH) != 0 && Terraforming[terraform_id].bit != 0 &&
         terraform_id != TERRA_ROAD && terraform_id != TERRA_MAGTUBE &&
         terraform_id != TERRA_PLANT_FUNGUS) {
         NetMsgPrimary.pop("NOTONMONOLITH", 5000, 0, nullptr);
         return;
     }
-
-    if (is_sea && altitude < 0x40 &&
-        terraform_id != TERRA_RAISE_LAND &&
-        terraform_id != TERRA_LOWER_LAND) {
+    if (is_sea && (map_loc(x, y)->climate & ~0x1F) < 0x40 &&
+        terraform_id != TERRA_RAISE_LAND && terraform_id != TERRA_LOWER_LAND) {
         if ((Players[faction_id_].rule_flags & RFLAG_AQUATIC) == 0) {
             NetMsgPrimary.pop("LOWTIDAL", 5000, 0, nullptr);
             return;
@@ -1606,107 +1601,54 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
         }
     }
 
-    // 0x004D3B3B identifies volcano squares in Map::bit2. The native warning
-    // differs by one literal suffix when the improvement itself is not in
-    // the volatile group.
-    const uint32_t volcano_state = tile->bit2;
-    if ((volcano_state & 0x80000002u) == 2u) {
-        const uint32_t volatile_bits = Terraforming[terraform_id].bit;
-        if ((volatile_bits & 0x208000u) != 0 ||
-            (volcano_state & 0xFF000000u) == 0) {
-            StringTemp[0] = 0;
-            strcat(StringTemp, "NOTONVOLCANO");
-            if ((volatile_bits & 0x208000u) == 0) {
-                strcat(StringTemp, "1");
-            }
-            NetMsgPrimary.pop(StringTemp, 5000, 0, nullptr);
-            return;
+    // Map::bit2 identifies volcano squares; the warning gains a "1" suffix
+    // when the improvement itself is not in the volatile group.
+    const uint32_t volcano_state = bit2_at(x, y);
+    if ((volcano_state & 0x80000002u) == 2u &&
+        ((Terraforming[terraform_id].bit & 0x208000u) != 0 ||
+         (volcano_state & 0xFF000000u) == 0)) {
+        StringTemp[0] = 0;
+        strcat(StringTemp, "NOTONVOLCANO");
+        if ((Terraforming[terraform_id].bit & 0x208000u) == 0) {
+            strcat(StringTemp, "1");
         }
+        NetMsgPrimary.pop(StringTemp, 5000, 0, nullptr);
+        return;
     }
-
-    if (!is_sea && (map_loc(x, y)->val3 & 0xC0) > 0x40 &&
-        (terrain_bit & 0x208000u) != 0) {
+    if (!is_sea && rocky_at(x, y) > 0x40 &&
+        (Terraforming[terraform_id].bit & 0x208000u) != 0) {
         NetMsgPrimary.pop("NOTINROCKY", 5000, 0, nullptr);
         return;
     }
 
-    // Existing fungus requires the corresponding rules tech. TechDisabled is
-    // the native sentinel selecting the generic label; otherwise say_tech
-    // materializes the configured technology name into StringTemp first.
-    if ((tile->bit & BIT_FUNGUS) != 0 && altitude >= 0x40) {
-        const int fungus_tech = Rules.tech_improve_fungus_sqr;
-        if ((terrain_bit & 4u) != 0 && !has_tech(fungus_tech, faction_id_)) {
-            const char *message = "NOTINFUNGUS";
-            if (fungus_tech >= 0) {
-                StringTemp[0] = 0;
-                say_tech(StringTemp, fungus_tech, 0);
-                parse_says(0, StringTemp, -1, -1);
-                message = "NOTYETFUNGUS";
-            }
-            NetMsgPrimary.pop(message, 5000, 0, nullptr);
-            return;
-        }
-    } else if ((tile->bit & BIT_FUNGUS) != 0) {
-        const int road_tech = Rules.tech_build_roads_fungus;
-        if (!has_tech(road_tech, faction_id_)) {
-            const char *message = "NOTINFUNGUS";
-            if (road_tech >= 0) {
-                StringTemp[0] = 0;
-                say_tech(StringTemp, road_tech, 0);
-                parse_says(0, StringTemp, -1, -1);
-                message = "NOTYETFUNGUS";
-            }
-            NetMsgPrimary.pop(message, 5000, 0, nullptr);
-            return;
-        }
-    }
-
-    // Native terrain_avail checks the selected prerequisite against the
-    // faction's known technologies, with the Weather Paradigm and terraforming
-    // abilities handled by that existing owner.  The earlier numeric check
-    // above only distinguishes an unavailable terrain type/environment.
-    if (!terrain_avail(terraform_id, is_sea, faction_id_)) {
-        if (terraform_id == TERRA_REMOVE_FUNGUS &&
-            has_abil(Vehs[vehicle_id].proto_id, 0x2000)) {
-            // Native former ability bypass at 0x004D37E7..0x004D380D.
-        } else {
-            const int prerequisite = is_sea
-                ? Terraforming[terraform_id].prerequisite_tech[1]
-                : Terraforming[terraform_id].prerequisite_tech[0];
-            if (prerequisite >= TechNone) {
-                StringTemp[0] = 0;
-                say_tech(StringTemp, prerequisite, 0);
-                parse_says(0, StringTemp, -1, -1);
-            }
-            const char *message = terraform_id == TERRA_MAGTUBE ? "HASROAD"
-                : terraform_id == TERRA_SOIL_ENR ? "HASFARM" : "NOTUNTILTECH";
-            NetMsgPrimary.pop(message, 5000, 0, nullptr);
-            return;
-        }
-    }
-
-    if (terraform_id == TERRA_RAISE_LAND ||
-        terraform_id == TERRA_LOWER_LAND) {
-        if ((GameDataStateStorage.fields_.game_rules_ & 0x00800000u) != 0) {
-            NetMsgPrimary.pop("NOTINSCENARIO", 5000, 0, nullptr);
-            return;
-        }
-        if (terraform_id == TERRA_RAISE_LAND) {
-            if (altitude >= 0x60) {
-                if (altitude >= 0xC0) {
-                    NetMsgPrimary.pop("TOOHIGH", 5000, 0, nullptr);
-                    return;
+    // Fungus squares need the roads-in-fungus tech for a road and the
+    // fungus-improvement tech for any other improvement.
+    if ((bit_at(x, y) & BIT_FUNGUS) != 0 && (map_loc(x, y)->climate & ~0x1F) >= 0x40) {
+        const uint32_t improvement = Terraforming[terraform_id].bit;
+        if ((improvement & BIT_ROAD) != 0) {
+            if (!has_tech(Rules.tech_build_roads_fungus, faction_id_)) {
+                if (Rules.tech_build_roads_fungus < 0) {
+                    NetMsgPrimary.pop("NOTINFUNGUS", 5000, 0, nullptr);
+                } else {
+                    StringTemp[0] = 0;
+                    say_tech(StringTemp, Rules.tech_build_roads_fungus, 0);
+                    parse_says(0, StringTemp, -1, -1);
+                    NetMsgPrimary.pop("NOTYETFUNGUS", 5000, 0, nullptr);
                 }
-            } else if (altitude >= 0x40) {
-                NetMsgPrimary.pop("SEATOOHIGH", 5000, 0, nullptr);
                 return;
             }
-        } else if (altitude == 0) {
-            // Original (0x4D454D): no return; the order is given anyway.
-            NetMsgPrimary.pop("SEATOOLOW", 5000, 0, nullptr);
-        } else if (altitude == 0x60) {
-            NetMsgPrimary.pop("TOOLOW", 5000, 0, nullptr);
-            return;
+        } else if (improvement != 0) {
+            if (!has_tech(Rules.tech_improve_fungus_sqr, faction_id_)) {
+                if (Rules.tech_improve_fungus_sqr < 0) {
+                    NetMsgPrimary.pop("NOTINFUNGUS", 5000, 0, nullptr);
+                } else {
+                    StringTemp[0] = 0;
+                    say_tech(StringTemp, Rules.tech_improve_fungus_sqr, 0);
+                    parse_says(0, StringTemp, -1, -1);
+                    NetMsgPrimary.pop("NOTYETFUNGUS", 5000, 0, nullptr);
+                }
+                return;
+            }
         }
     }
 
@@ -1719,39 +1661,26 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
         break;
 
     case TERRA_THERMAL_BORE: {
-        const int own_altitude_level = tile->climate >> 5;
-        for (int borehole_direction = 0; borehole_direction < 8;
-             ++borehole_direction) {
-            int adjacent_x = x + VehMoveDeltaX[borehole_direction];
-            if ((MapIsFlat & 1) == 0) {
-                if (adjacent_x < 0) adjacent_x += MapLongitudeBounds;
-                else if (adjacent_x >= MapLongitudeBounds) {
-                    adjacent_x -= MapLongitudeBounds;
-                }
-            }
-            const int adjacent_y = y + VehMoveDeltaY[borehole_direction];
-            if (adjacent_y < 0 || adjacent_y >= MapLatitudeBounds ||
-                adjacent_x < 0 || adjacent_x >= MapLongitudeBounds) {
+        const int own_level = alt_at(x, y);
+        for (int i = 0; i < 8; ++i) {
+            const int adjacent_x = wrap_map_x(x + VehMoveDeltaX[i]);
+            const int adjacent_y = y + VehMoveDeltaY[i];
+            if (!on_map(adjacent_x, adjacent_y) ||
+                alt_at(adjacent_x, adjacent_y) < 3) {
                 continue;
             }
-            const Map *const adjacent_tile = map_loc(adjacent_x, adjacent_y);
-            if ((adjacent_tile->climate & 0xE0) <= 0x5F) {
-                continue;
-            }
-            if ((adjacent_tile->bit & BIT_THERMAL_BORE) != 0) {
+            if ((bit_at(adjacent_x, adjacent_y) & BIT_THERMAL_BORE) != 0) {
                 X_pop("TWOBOREHOLES", nullptr);
                 return;
             }
-            for (int nearby_vehicle = veh_at(adjacent_x, adjacent_y);
-                 nearby_vehicle >= 0;
-                 nearby_vehicle = Vehs[nearby_vehicle].next_veh_id_stack) {
-                if (Vehs[nearby_vehicle].faction_id == faction_id_ &&
-                    Vehs[nearby_vehicle].order == 0x12) {
+            for (int veh = veh_at(adjacent_x, adjacent_y); veh >= 0;
+                 veh = Vehs[veh].next_veh_id_stack) {
+                if (Vehs[veh].faction_id == faction_id_ && Vehs[veh].order == 0x12) {
                     X_pop("TWOBOREHOLES", nullptr);
                     return;
                 }
             }
-            if ((adjacent_tile->climate >> 5) < own_altitude_level) {
+            if (alt_at(adjacent_x, adjacent_y) < own_level) {
                 X_pop("NOBOREHOLE", nullptr);
                 return;
             }
@@ -1760,36 +1689,22 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
     }
 
     case TERRA_AQUIFER: {
-        int aquifer_direction;
-        for (aquifer_direction = 0; aquifer_direction < 8;
-             ++aquifer_direction) {
-            int adjacent_x = x + VehMoveDeltaX[aquifer_direction];
-            if ((MapIsFlat & 1) == 0) {
-                if (adjacent_x < 0) adjacent_x += MapLongitudeBounds;
-                else if (adjacent_x >= MapLongitudeBounds) {
-                    adjacent_x -= MapLongitudeBounds;
-                }
+        // A river on any adjacent land square refuses the aquifer.
+        for (int i = 0; i < 8; ++i) {
+            const int adjacent_x = wrap_map_x(x + VehMoveDeltaX[i]);
+            const int adjacent_y = y + VehMoveDeltaY[i];
+            if (on_map(adjacent_x, adjacent_y) &&
+                !is_ocean(adjacent_x, adjacent_y) &&
+                (bit_at(adjacent_x, adjacent_y) & BIT_RIVER) != 0) {
+                NetMsgPrimary.pop("NOAQUIFER", 5000, 0, nullptr);
+                return;
             }
-            const int adjacent_y = y + VehMoveDeltaY[aquifer_direction];
-            if (adjacent_y < 0 || adjacent_y >= MapLatitudeBounds ||
-                adjacent_x < 0 || adjacent_x >= MapLongitudeBounds) {
-                continue;
-            }
-            const Map *const adjacent_tile = map_loc(adjacent_x, adjacent_y);
-            if ((adjacent_tile->climate & 0xE0) > 0x5F &&
-                (adjacent_tile->bit & BIT_RIVER) != 0) {
-                break;
-            }
-        }
-        if (aquifer_direction == 8) {
-            NetMsgPrimary.pop("NOAQUIFER", 5000, 0, nullptr);
-            return;
         }
         break;
     }
 
     case TERRA_LEVEL_TERRAIN:
-        if ((map_loc(x, y)->val3 & 0xC0) == 0) {
+        if (rocky_at(x, y) == 0) {
             X_pop("TOOFLAT", nullptr);
             return;
         }
@@ -1797,23 +1712,47 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
 
     case TERRA_RAISE_LAND:
     case TERRA_LOWER_LAND: {
+        if ((GameDataStateStorage.fields_.game_rules_ & 0x00800000u) != 0) {
+            NetMsgPrimary.pop("NOTINSCENARIO", 5000, 0, nullptr);
+            return;
+        }
+        if (terraform_id == TERRA_RAISE_LAND) {
+            const int level = alt_at(x, y);
+            if (level < 3) {
+                if (level >= 2) {
+                    NetMsgPrimary.pop("SEATOOHIGH", 5000, 0, nullptr);
+                    return;
+                }
+            } else if (level >= 6) {
+                NetMsgPrimary.pop("TOOHIGH", 5000, 0, nullptr);
+                return;
+            }
+        } else if (terraform_id == TERRA_LOWER_LAND) {
+            const int level = alt_at(x, y);
+            if (level < 3) {
+                if (level == 0) {
+                    // No return: the order is given anyway.
+                    NetMsgPrimary.pop("SEATOOLOW", 5000, 0, nullptr);
+                }
+            } else if (level <= 3) {
+                NetMsgPrimary.pop("TOOLOW", 5000, 0, nullptr);
+                return;
+            }
+        }
+
         log_say("Want to terraform", faction_id_, 0, 0);
-        int payment_amount = 0;
+        int payment = 0;
         if (stack_check(vehicle_id, 9, terraform_id + 4, -1, -1) == 0) {
-            const int cost = terraform_cost(x, y, faction_id_);
-            if (cost != 0) {
-                payment_amount = cost;
-                parse_num(0, cost);
+            payment = terraform_cost(x, y, faction_id_);
+            if (payment != 0) {
+                parse_num(0, payment);
                 parse_num(1, PlayersData[faction_id_].energy_reserves);
                 StringTemp[0] = 0;
                 strcat(StringTemp, "TERRACOST");
-                popup.start(PopupStartCaption, StringTemp, -1, nullptr, 0,
-                            nullptr);
-
-                if (PlayersData[faction_id_].energy_reserves >= payment_amount) {
-                    popup.start(PopupStartCaption,
-                                terraform_id == TERRA_LOWER_LAND ? "DOWN" : "UP",
-                                -1, nullptr, 0x80, nullptr);
+                strcat(StringTemp, terraform_id == TERRA_LOWER_LAND ? "DOWN" : "UP");
+                popup.start(PopupStartCaption, StringTemp, -1, nullptr, 0, nullptr);
+                if (PlayersData[faction_id_].energy_reserves >= payment) {
+                    popup.start(PopupStartCaption, "TERRAPAY", -1, nullptr, 0x80, nullptr);
                     log_say("Offering option to pay", 0, 0, 0);
                 }
                 if (popup.exec(0, nullptr) == 0) {
@@ -1821,7 +1760,7 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
                     return;
                 }
                 log_say("Took option to pay", 0, 0, 0);
-                PlayersData[faction_id_].energy_reserves -= payment_amount;
+                PlayersData[faction_id_].energy_reserves -= payment;
                 synch_energy(faction_id_);
                 update_data(0);
             }
@@ -1829,66 +1768,52 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
 
         int steps = 1;
         if (terraform_id == TERRA_RAISE_LAND) {
-            int level = (tile->climate >> 5) + 1;
-            if (level > 6) {
-                level = 6;
-                steps = RadiusRange[level - 3];
-            } else if (level > 3) {
+            const int level = range((alt_at(x, y)) + 1, 0, 6);
+            if (level > 3) {
                 steps = RadiusRange[level - 3];
             }
         } else {
-            int level = (tile->climate >> 5) - 1;
-            if (level < 0) {
-                level = 0;
-            }
+            const int level = range((alt_at(x, y)) - 1, 0, 6);
             if (level < 3) {
-                steps = RadiusRange[4 - level];
+                int depth = 3 - level;
+                if (depth < 0) {
+                    depth = -depth;
+                }
+                steps = RadiusRange[depth + 1];
             }
         }
 
-        int terraform_offset;
-        for (terraform_offset = 0; terraform_offset < steps;
-             ++terraform_offset) {
-            int affected_x = x + RadiusOffsetX[terraform_offset];
-            if ((MapIsFlat & 1) == 0) {
-                if (affected_x < 0) {
-                    affected_x += MapLongitudeBounds;
-                } else if (affected_x >= MapLongitudeBounds) {
-                    affected_x -= MapLongitudeBounds;
-                }
-            }
-            const int affected_y = y + RadiusOffsetY[terraform_offset];
-            if (affected_y < 0 || affected_y >= MapLatitudeBounds ||
-                affected_x < 0 || affected_x >= MapLongitudeBounds) {
+        for (int i = 0; i < steps; ++i) {
+            const int affected_x = wrap_map_x(x + RadiusOffsetX[i]);
+            const int affected_y = y + RadiusOffsetY[i];
+            if (!on_map(affected_x, affected_y)) {
                 continue;
             }
-
-            const int target_faction = whose_territory(
-                faction_id_, affected_x, affected_y, nullptr, nullptr);
+            const int target_faction = whose_territory(faction_id_, affected_x, affected_y,
+                                                       nullptr, 0);
             if (target_faction < 0 || target_faction == faction_id_ ||
-                (PlayersData[faction_id_].diplo_treaties[target_faction] &
-                 7) == 0) {
+                (PlayersData[faction_id_].diplo_treaties[target_faction] & 7) == 0) {
                 continue;
             }
-
+            // A failed lock refunds without unlocking.
             if (NetDaemonNet.lock_veh(&vehicle_id, 2, -1, -1, 0) != 0) {
-                if (payment_amount != 0) {
-                    PlayersData[faction_id_].energy_reserves += payment_amount;
+                if (payment != 0) {
+                    PlayersData[faction_id_].energy_reserves += payment;
                     synch_energy(faction_id_);
                     update_data(0);
                 }
                 return;
             }
             if (break_treaty(faction_id_, target_faction, 7) != 0) {
-                if (payment_amount != 0) {
-                    PlayersData[faction_id_].energy_reserves += payment_amount;
+                if (payment != 0) {
+                    PlayersData[faction_id_].energy_reserves += payment;
                     synch_energy(faction_id_);
                     update_data(0);
                 }
                 NetDaemonNet.unlock_veh();
                 return;
             }
-            if (IsMultiplayerNet != 0) {
+            if (IsMultiplayerNet) {
                 message_data(0x2440, 0, faction_id_, target_faction, -1, 0);
                 NetDaemonNet.await_exec(1);
             } else {
@@ -1906,26 +1831,20 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
         break;
     }
 
-    // The common post-dispatch pass reloads the original map tile before
-    // checking the selected order against incompatible terrain descriptors.
-    Map *const final_tile = map_loc(x, y);
-    if (terraform_id != TERRA_REMOVE_FUNGUS &&
-        terraform_id != TERRA_RAISE_LAND &&
+    if (terraform_id != TERRA_REMOVE_FUNGUS && terraform_id != TERRA_RAISE_LAND &&
         terraform_id != TERRA_LOWER_LAND) {
-        const int final_altitude = final_tile->climate & 0xE0;
-        if (final_altitude > 0x3F) {
+        const int final_altitude = (map_loc(x, y)->climate & ~0x1F);
+        if (final_altitude >= 0x40) {
             const uint32_t conflict =
-                Terraforming[terraform_id].bit_incompatible & final_tile->bit;
+                Terraforming[terraform_id].bit_incompatible & bit_at(x, y);
             if (conflict != 0) {
-                int conflict_index;
-                for (conflict_index = 0; conflict_index < 20;
-                     ++conflict_index) {
-                    if ((Terraforming[conflict_index].bit & conflict) != 0) {
-                        char *conflicting_name = final_altitude < 0x60
-                            ? Terraforming[conflict_index].name_sea
-                            : Terraforming[conflict_index].name;
-                        parse_says(0, conflicting_name, -1, -1);
-                        if (X_pop("MIMIMI", nullptr) == 0) return;
+                for (int i = 0; i < 20; ++i) {
+                    if ((Terraforming[i].bit & conflict) != 0) {
+                        // name and name_sea are read as a two-entry run.
+                        parse_says(0, (&Terraforming[i].name)[final_altitude < 0x60], -1, -1);
+                        if (X_pop("MIMIMI", nullptr) == 0) {
+                            return;
+                        }
                         break;
                     }
                 }
@@ -1936,27 +1855,23 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
     if (NetDaemonNet.channels_[1].leading_words_[3] != 0) {
         log_say("I think I've already got my lock", 0, 0, 0);
     }
-    if (NetDaemonNet.channels_[1].leading_words_[3] == 0) {
-        if (NetDaemonNet.lock_veh(&vehicle_id, 0, -1, -1, 0) != 0) return;
-    }
-
-    Vehs[vehicle_id].order = static_cast<uint8_t>(terraform_id + 4);
-    synch_veh(vehicle_id);
-    log_say("Issuing Vehicle Orders", vehicle_id, terraform_id + 4, 0);
-    if (IsMultiplayerNet == 0) {
-        NetDaemonNet.unlock_veh();
-    } else {
-        const int current_speed = speed(vehicle_id, 0);
-        const int movement_remaining =
-            current_speed - Vehs[vehicle_id].moves_expended;
-        if (movement_remaining > 0) {
-            NetDaemonNet.action(vehicle_id, 1);
+    if (NetDaemonNet.channels_[1].leading_words_[3] != 0 ||
+        NetDaemonNet.lock_veh(&vehicle_id, 0, -1, -1, 0) == 0) {
+        Vehs[vehicle_id].order = static_cast<uint8_t>(terraform_id + 4);
+        synch_veh(vehicle_id);
+        log_say("Issuing Vehicle Orders", vehicle_id, terraform_id + 4, 0);
+        if (IsMultiplayerNet) {
+            if (range(speed(vehicle_id, 0) - Vehs[vehicle_id].moves_expended, 0, 999)) {
+                NetDaemonNet.action(vehicle_id, 1);
+            } else {
+                NetDaemonNet.unlock_veh();
+            }
         } else {
             NetDaemonNet.unlock_veh();
         }
+        log_say("Finished issuing orders", vehicle_id, terraform_id + 4, 0);
+        field_23BE4_ = 0;
     }
-    log_say("Finished issuing orders", vehicle_id, terraform_id + 4, 0);
-    field_23BE4_ = 0;
 }
 
 /*
@@ -3979,9 +3894,10 @@ void DipEdit::init(int faction_index) {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(866));
     strcat(StringTemp, " ");
-    GenderDefault = Players[faction_index_].noun_gender;
-    PluralityDefault = Players[faction_index_].is_noun_plural;
-    strcat(StringTemp, Players[faction_index_].noun_faction);
+    Player *const own = &Players[faction_index_];
+    GenderDefault = own->noun_gender;
+    PluralityDefault = own->is_noun_plural;
+    strcat(StringTemp, own->noun_faction);
     CharUpperA(StringTemp);
 
     rect.left += 4;
@@ -3989,6 +3905,10 @@ void DipEdit::init(int faction_index) {
     rect.top += 4;
     rect.bottom = rect.top + 0x14;
     box_sprite(&rect, &InterfaceBoxStyles[0]);
+    rect.left += 3;
+    rect.right -= 3;
+    rect.top += 3;
+    rect.bottom -= 3;
 
     set_font(find_font(0x10, 0), 0, 0, 0);
     set_text_color(TextColourTable[180], TextColourTable[181], 1, 1);
@@ -4013,14 +3933,6 @@ void DipEdit::init(int faction_index) {
     // re-armed last so the row ends up highlighted.
     list_box_.close();
     list_box_.Dialog::init(&rect, 0);
-    list_box_.field_6C_ = 9;
-    list_box_.Dialog::field_20_ &= ~4;
-    list_box_.field_2C_ = 0;
-    list_box_.field_44_ = 0;
-    list_box_.field_B4_ = 0;
-    list_box_.set_dialog_font(&font_, 0, 0);
-    list_box_.attach(this, rect.left, rect.bottom, 0x1000120);
-    list_box_.show(0);
 
     selected_target_ = faction_index_;
     for (int i = 1; i < MaxPlayerNum; i++) {
@@ -4037,6 +3949,15 @@ void DipEdit::init(int faction_index) {
             list_box_.set_selected_id(i);
         }
     }
+
+    list_box_.field_6C_ = 9;
+    list_box_.Dialog::field_20_ &= ~4;
+    list_box_.field_2C_ = 0;
+    list_box_.field_44_ = 0;
+    list_box_.field_B4_ = 0;
+    list_box_.set_dialog_font(&font_, 0, 0);
+    list_box_.attach(this, rect.left, rect.top, 0x1000120);
+    list_box_.show(0);
 
     // The treaty checkboxes: one item per DTREATY flag, the last two in the
     // second (+8) bank of the status table, exactly the set do_check writes
@@ -4056,8 +3977,7 @@ void DipEdit::init(int faction_index) {
     check_box_.item(label_get(645), DTREATY_PACT, 0);
     check_box_.item(label_get(868), DTREATY_HAVE_INFILTRATOR, 0);
     check_box_.item(label_get(869), DTREATY_WANT_TO_TALK, 0);
-    check_box_.item(label_get(870), DTREATY_WANT_REVENGE,
-                    DTREATY_WANT_REVENGE);
+    check_box_.item(label_get(870), DTREATY_WANT_REVENGE, 0);
     check_box_.item(label_get(871), DTREATY_HAVE_SURRENDERED, 0);
     check_box_.item(label_get(872), DTREATY_SHALL_BETRAY, 0);
     check_box_.item(label_get(873), DTREATY_ATROCITY_VICTIM, 0);
@@ -4065,7 +3985,7 @@ void DipEdit::init(int faction_index) {
                     | DTREATY_COMMLINK, 0);
     check_box_.item(label_get(894), static_cast<int>(0x80000000U)
                     | DTREATY_WANT_TO_TALK, 0);
-    check_box_.attach(this, rect.left, rect.bottom, DTREATY_WANT_REVENGE);
+    check_box_.attach(this, rect.left, rect.top, DTREATY_WANT_REVENGE);
     check_box_.show(0);
 
     // The button row: start from the frame rectangle, inset it to the strip,
@@ -4077,27 +3997,35 @@ void DipEdit::init(int faction_index) {
     rect.right -= 4;
     rect.bottom -= 4;
     rect.right = (rect.right - rect.left + 2) / 4 + rect.left - 2;
-    rect.top = rect2_.bottom - 24;
+    rect.top = rect.bottom - 0x14;
 
-    int step = rect.right - rect.left + 2;
     flat_button5_.init(label_get(876), 3, rect.left, rect.top,
                        rect.right - rect.left, rect.bottom - rect.top, this, 0);
     flat_button5_.redraw();
     flat_button5_.show(0);
-    rect.left += step;
-    rect.right += step;
+    {
+        const int step = rect.right - rect.left + 2;
+        rect.left += step;
+        rect.right += step;
+    }
     flat_button4_.init(label_get(222), 2, rect.left, rect.top,
                        rect.right - rect.left, rect.bottom - rect.top, this, 0);
     flat_button4_.redraw();
     flat_button4_.show(0);
-    rect.left += step;
-    rect.right += step;
-    flat_button3_.init(label_get(863), 1, rect.left, rect.top,
+    {
+        const int step = rect.right - rect.left + 2;
+        rect.left += step;
+        rect.right += step;
+    }
+    flat_button3_.init(label_get(867), 1, rect.left, rect.top,
                        rect.right - rect.left, rect.bottom - rect.top, this, 0);
     flat_button3_.redraw();
     flat_button3_.show(0);
-    rect.left += step;
-    rect.right += step;
+    {
+        const int step = rect.right - rect.left + 2;
+        rect.left += step;
+        rect.right += step;
+    }
     flat_button1_.init(label_get(101), -1, rect.left, rect.top,
                        rect.right - rect.left, rect.bottom - rect.top, this, 0);
     flat_button1_.redraw();
@@ -4353,31 +4281,30 @@ void Console::editor_personality() {
         PopupWriteCheckState &= ~0x400;
     }
 
-    PlayerData &data = PlayersData[faction];
     if (x_pop_short("AIEDITOR", 0x41, nullptr) < 0) {
         return;
     }
 
-    data.flags &= ~0x03C00000u;
-    data.flags_ext &= ~0x20u;
+    PlayersData[faction].flags &= ~0x03C00000u;
+    PlayersData[faction].flags_ext &= ~0x20u;
     const char low = static_cast<char>(PopupWriteCheckState);
-    data.ai_growth = (low & 1) != 0;
-    data.ai_tech = ((low & 2) >> 1) != 0;
-    data.ai_wealth = ((low & 4) >> 2) != 0;
-    data.ai_power = ((low & 8) >> 3) != 0;
+    PlayersData[faction].ai_growth = (low & 1) != 0;
+    PlayersData[faction].ai_tech = ((low & 2) >> 1) != 0;
+    PlayersData[faction].ai_wealth = ((low & 4) >> 2) != 0;
+    PlayersData[faction].ai_power = ((low & 8) >> 3) != 0;
     const unsigned int accepted = PopupWriteCheckState;
     if ((accepted & 0x10u) && !(accepted & 0x20u)) {
-        data.ai_fight = 1;
+        PlayersData[faction].ai_fight = 1;
     } else if ((accepted & 0x20u) && !(accepted & 0x10u)) {
-        data.ai_fight = -1;
+        PlayersData[faction].ai_fight = -1;
     } else {
-        data.ai_fight = 0;
+        PlayersData[faction].ai_fight = 0;
     }
-    if (accepted & 0x40u) data.flags |= 0x00800000u;
-    if (accepted & 0x80u) data.flags |= 0x00400000u;
-    if (accepted & 0x100u) data.flags |= 0x01000000u;
-    if (accepted & 0x200u) data.flags |= 0x02000000u;
-    if (accepted & 0x400u) data.flags_ext |= 0x20u;
+    if (accepted & 0x40u) PlayersData[faction].flags |= 0x00800000u;
+    if (accepted & 0x80u) PlayersData[faction].flags |= 0x00400000u;
+    if (accepted & 0x100u) PlayersData[faction].flags |= 0x01000000u;
+    if (accepted & 0x200u) PlayersData[faction].flags |= 0x02000000u;
+    if (accepted & 0x400u) PlayersData[faction].flags_ext |= 0x20u;
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -4808,7 +4735,7 @@ Purpose: Customise one faction's leader and faction names: pick the faction on
 */
 void Console::custom_my_faction() {
     Popup popup;
-    char name_buf[0x104];
+    char name_buf[0x100];
     int faction_idx;
 
     const unsigned char state = static_cast<unsigned char>(GameDataStateStorage.fields_.game_state_);
