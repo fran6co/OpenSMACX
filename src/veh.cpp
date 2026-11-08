@@ -766,6 +766,8 @@ Purpose: Calculate the carrying/transport capacity for the specified chassis, ab
 Return Value: Transport capacity
 Status: Complete
 */
+// make_proto calls it out of line in the image.
+#pragma auto_inline(off)
 int __cdecl transport_val(int chassis_id, int ability, int reactor_id) {
     int transport = Chassis[chassis_id].cargo;
     if (Chassis[chassis_id].triad == TRIAD_SEA) {
@@ -779,6 +781,7 @@ int __cdecl transport_val(int chassis_id, int ability, int reactor_id) {
     }
     return transport;
 }
+#pragma auto_inline(on)
 
 
 
@@ -1047,25 +1050,14 @@ Purpose: Calculates cost of the prototype based on various factors. Optimized lo
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
-// TRIED: reordering the checks to the ORIGINAL's actual sequence (missile check AFTER
-//   the triad-based armor/speed adjustments, not before; the AFLAG_COST_INC_LAND_UNIT
-//   check as a second standalone loop over Ability[] that only runs for TRIAD_LAND,
-//   not folded into the main loop; the all-four-costs==1 override applied at the very
-//   END overriding a fully-computed proto_mod, not as an early-out) - confirmed by
-//   reading the full disassembly instruction-by-instruction and cross-referencing struct
-//   offsets (RulesChassis.missile @0x4D, RulesAbility.cost_factor via a pointer walked by
-//   sizeof(RulesAbility)=0x1C). This IS the original's control flow, but agreement is
-//   still only ~3/247 instructions: the image reserves locals with `sub esp,0x14` and
-//   reuses parameter/local stack slots for later values (armor_id's slot becomes
-//   speed_cost; weap_cost's slot becomes combat_mod) in a way this tree's compiler does
-//   not reproduce from equivalent-looking C. Left at MISMATCH; the control-flow structure
-//   is now faithful even though the byte encoding is not.
+// Rewritten from the image: one live weapon-cost variable that becomes combat_mod,
+//   no zero-armor guard in the ratio case, separate land increment, final >> 2.
 Return Value: Cost of prototype
 Status: Complete
 */
 int __cdecl proto_cost(int chassis_id, int weapon_id, int armor_id,
                             int ability, int reactor_id) {
-    uint8_t weap_cost = Weapon[weapon_id].cost;
+    int combat_mod = Weapon[weapon_id].cost;
     int armor_cost = Armor[armor_id].cost;
     int speed_cost = Chassis[chassis_id].cost;
     int abil_modifier = 0;
@@ -1076,19 +1068,17 @@ int __cdecl proto_cost(int chassis_id, int weapon_id, int armor_id,
                     abil_modifier++; // Increased cost with more than one ability
                 }
                 int factor = Ability[i].cost_factor;
-                if (factor > 0) { // 1+ = Straight Cost; 25% increase per unit of cost
+                if (factor >= 0) { // 1+ = Straight Cost; 25% increase per unit of cost
                     abil_modifier += factor;
                 } else {
                     switch (factor) {
                       // Increases w/ ratio of weapon to armor: 0, 1, or 2. Rounded DOWN.
-                      // Never higher than 2.
+                      // Never higher than 2. The original has no zero-armor guard here.
                       case -1:
-                        if (armor_cost) {
-                            abil_modifier += range(weap_cost / armor_cost, 0, 2);
-                        }
+                        abil_modifier += range(combat_mod / armor_cost, 0, 2);
                         break;
                       case -2: // Increases w/ weapon value
-                        abil_modifier += weap_cost - 1;
+                        abil_modifier += combat_mod - 1;
                         break;
                       case -3: // Increases w/ armor value
                         abil_modifier += armor_cost - 1;
@@ -1097,16 +1087,13 @@ int __cdecl proto_cost(int chassis_id, int weapon_id, int armor_id,
                         abil_modifier += speed_cost - 1;
                         break;
                       case -5: // Increases w/ weapon+armor value
-                        abil_modifier += weap_cost + armor_cost - 2;
+                        abil_modifier += combat_mod + armor_cost - 2;
                         break;
                       case -6: // Increases w/ weapon+speed value
-                        abil_modifier += weap_cost + speed_cost - 2;
+                        abil_modifier += combat_mod + speed_cost - 2;
                         break;
                       case -7: // Increases w/ armor+speed value
                         abil_modifier += armor_cost + speed_cost - 2;
-                        break;
-                      case 0: // None
-                      default:
                         break;
                     }
                 }
@@ -1133,11 +1120,10 @@ int __cdecl proto_cost(int chassis_id, int weapon_id, int armor_id,
         }
     }
     if (Chassis[chassis_id].missile && Weapon[weapon_id].offense_rating >= 99) {
-        return weap_cost;
+        return Weapon[weapon_id].cost;
     }
-    int combat_mod = armor_cost / 2 + 1;
-    if (combat_mod < weap_cost) { // which ever is greater
-        combat_mod = weap_cost;
+    if (armor_cost / 2 + 1 > combat_mod) { // which ever is greater
+        combat_mod = armor_cost / 2 + 1;
     }
     // (2 << n) == 2^(n + 1) ; (2 << n) / 2 == 2 ^ n;
     int proto_mod = ((speed_cost + armor_cost) * combat_mod + ((2 << reactor_id) / 2))
@@ -1147,24 +1133,27 @@ int __cdecl proto_cost(int chassis_id, int weapon_id, int armor_id,
     }
     if (Weapon[weapon_id].cost > 1 && Armor[armor_id].cost > 1) {
         proto_mod++;
-        if (triad == TRIAD_LAND && speed_cost > 1) {
-            proto_mod++;
-        }
+    }
+    if (Chassis[chassis_id].triad == TRIAD_LAND && Weapon[weapon_id].cost > 1 && Armor[armor_id].cost > 1
+        && speed_cost > 1) {
+        proto_mod++;
     }
     // excludes sea probes
-    if (triad == TRIAD_SEA && Weapon[weapon_id].mode != WPN_MODE_INFOWAR) {
-        proto_mod = (proto_mod + 1) / 2;
+    if (triad == TRIAD_SEA) {
+        if (Weapon[weapon_id].mode != WPN_MODE_INFOWAR) {
+            proto_mod = (proto_mod + 1) / 2;
+        }
     } else if (triad == TRIAD_AIR) {
         proto_mod /= (Weapon[weapon_id].mode > WPN_MODE_MISSILE) ? 2 : 4; // Non-combat : Combat
     }
-    int reactor_mod = (reactor_id * 3 + 1) / 2;
-    if (proto_mod < reactor_mod) { // which ever is greater
+    int reactor_mod = reactor_id * 2 - reactor_id / 2;
+    if (proto_mod <= reactor_mod) { // which ever is greater
         proto_mod = reactor_mod;
     }
     if (combat_mod == 1 && armor_cost == 1 && speed_cost == 1 && reactor_id == RECT_FISSION) {
         proto_mod = 1;
     }
-    return (proto_mod * (abil_modifier + 4) + 2) / 4;
+    return (proto_mod * (abil_modifier + 4) + 2) >> 2;
 }
 
 /*
@@ -1175,15 +1164,8 @@ Purpose: Create a new prototype. Sets initial values for everything except veh_n
 // callers   4   call targets   4
 // kind      game
 // flags     frame;sp_ready;purged_ok
-// TRIED: nothing tried yet beyond inspection - call_diff agrees on call count/targets,
-//   so the divergence (5/361 agreeing, ~0.14 similar) is all in the opening loop. The image
-//   computes `i % MaxVehProtoFactionNum` there with the full MSVC signed-modulo-by-constant
-//   sign-correction sequence (`and 0x8000003f; jns; dec; or 0xffffffc0; inc`), which this
-//   loop's straightforward `i % MaxVehProtoFactionNum` on a provably-nonnegative `i` does not
-//   emit - the compiler proves `i>=0` and just masks. Left as MISMATCH; the loop bound/shape
-//   likely needs rewriting closer to the disassembly's own register-level computation
-//   (proto_id itself, not `i`, appears to be the value being modulo'd in several places) to
-//   close this, and that is a bigger rewrite than this pass budgeted for one function.
+// Rewritten from the image: the land plan reads the stored prototype ids, the
+//   speed >= 2 / >= 3 unk_1 tests are independent (no else), transport_val stays a call.
 // calls     0x0057D510 0x005A5A60 0x005B9F20 0x005BF1F0
 Return Value: n/a
 Status: Complete
@@ -1191,88 +1173,92 @@ Status: Complete
 void __cdecl make_proto(int proto_id, int chassis_id, int weapon_id, int armor_id,
                         int ability, int reactor_id) {
     int unk_local_1 = 0; // TODO: Identify
+    BOOL cond3 = false;
+    BOOL cond2 = false;
+    BOOL cond1 = false;
     if (proto_id >= MaxVehProtoFactionNum) {
-        BOOL cond1 = false;
-        BOOL cond2 = false;
-        BOOL cond3 = false;
         int proto_id_loop;
         for (int i = 0; i < 128; i++) {
             proto_id_loop = i % MaxVehProtoFactionNum;
-            if ((i % MaxVehProtoFactionNum) != i) {
+            if (proto_id_loop != i) {
                 proto_id_loop += proto_id - proto_id % MaxVehProtoFactionNum;
             }
-            int flags_check = VehPrototypes[proto_id_loop].flags;
-            if (flags_check & PROTO_ACTIVE) {
-                if ((proto_id_loop < MaxVehProtoFactionNum &&
-                    has_tech(VehPrototypes[proto_id_loop].preq_tech,
-                        proto_id / MaxVehProtoFactionNum))
-                    || (proto_id_loop >= MaxVehProtoFactionNum
-                        && (flags_check & PROTO_TYPED_COMPLETE))) {
-                    uint32_t loop_weapon_id = VehPrototypes[proto_id_loop].weapon_id;
-                    if (loop_weapon_id == weapon_id) {
-                        cond1 = true;
-                    }
-                    uint32_t loop_armor_id = VehPrototypes[proto_id_loop].armor_id;
-                    if (loop_armor_id == armor_id) {
-                        cond2 = true;
-                    }
-                    uint32_t loop_chassis_id = VehPrototypes[proto_id_loop].chassis_id;
-                    if (loop_chassis_id == chassis_id) {
-                        cond3 = true;
-                    }
-                    int off_rating = Weapon[weapon_id].offense_rating;
-                    if (off_rating > 0 && Weapon[loop_weapon_id].offense_rating >= off_rating) {
-                        cond1 = true;
-                    }
-                    int def_rating = Armor[armor_id].defense_rating;
-                    if (def_rating > 0 && Armor[loop_armor_id].defense_rating >= def_rating) {
-                        cond2 = true;
-                    }
-                    if (Chassis[chassis_id].triad == Chassis[loop_chassis_id].triad
-                        && Chassis[loop_chassis_id].speed >= Chassis[chassis_id].speed) {
-                        cond3 = true;
-                    }
+            int16_t flags_check = VehPrototypes[proto_id_loop].flags;
+            if (!(flags_check & PROTO_ACTIVE)) {
+                continue;
+            }
+            if (proto_id_loop < MaxVehProtoFactionNum) {
+                if (!has_tech(VehPrototypes[proto_id_loop].preq_tech,
+                        proto_id / MaxVehProtoFactionNum)) {
+                    continue;
                 }
+            } else if (!(flags_check & PROTO_TYPED_COMPLETE)) {
+                continue;
+            }
+            uint32_t loop_weapon_id = VehPrototypes[proto_id_loop].weapon_id;
+            if (weapon_id == loop_weapon_id) {
+                cond1 = true;
+            }
+            uint32_t loop_armor_id = VehPrototypes[proto_id_loop].armor_id;
+            if (armor_id == loop_armor_id) {
+                cond2 = true;
+            }
+            uint32_t loop_chassis_id = VehPrototypes[proto_id_loop].chassis_id;
+            if (chassis_id == loop_chassis_id) {
+                cond3 = true;
+            }
+            int8_t off_rating = Weapon[weapon_id].offense_rating;
+            if (off_rating > 0 && Weapon[loop_weapon_id].offense_rating >= off_rating) {
+                cond1 = true;
+            }
+            int8_t def_rating = Armor[armor_id].defense_rating;
+            if (def_rating > 0 && Armor[loop_armor_id].defense_rating >= def_rating) {
+                cond2 = true;
+            }
+            if (Chassis[chassis_id].triad == Chassis[loop_chassis_id].triad
+                && Chassis[loop_chassis_id].speed >= Chassis[chassis_id].speed) {
+                cond3 = true;
             }
         }
         if (cond1 && cond2 && cond3) {
-            unk_local_1 = (proto_id_loop >= MaxVehProtoFactionNum
-                && VehPrototypes[proto_id_loop].flags & 0x10) ? 3 : 1;
+            unk_local_1 = 1;
+            if (proto_id_loop >= MaxVehProtoFactionNum
+                && VehPrototypes[proto_id_loop].flags & 0x10) {
+                unk_local_1 = 3;
+            }
         }
     }
+    VehPrototypes[proto_id].reactor_id = (uint8_t)reactor_id;
     VehPrototypes[proto_id].chassis_id = (uint8_t)chassis_id;
     VehPrototypes[proto_id].weapon_id = (uint8_t)weapon_id;
     VehPrototypes[proto_id].armor_id = (uint8_t)armor_id;
     VehPrototypes[proto_id].ability_flags = ability;
-    VehPrototypes[proto_id].reactor_id = (uint8_t)reactor_id;
     VehPrototypes[proto_id].cost = (uint8_t)proto_cost(chassis_id, weapon_id, armor_id, ability,
         reactor_id);
     VehPrototypes[proto_id].carry_capacity = (Weapon[weapon_id].mode == WPN_MODE_TRANSPORT)
-        ? (uint8_t)transport_val(chassis_id, ability, reactor_id) : 0;
+        ? transport_val(chassis_id, ability, reactor_id) : 0;
     // set plan & unk1
     if (Chassis[chassis_id].missile) {
-        if (Weapon[weapon_id].offense_rating < 99) { // non-PB missiles
-            if (weapon_id == WPN_TECTONIC_PAYLOAD) {
-                VehPrototypes[proto_id].plan = PLAN_TECTONIC_MISSILE;
-                VehPrototypes[proto_id].unk_1 = 22;
-            } else if (weapon_id == WPN_FUNGAL_PAYLOAD) {
-                VehPrototypes[proto_id].plan = PLAN_FUNGAL_MISSILE;
-                VehPrototypes[proto_id].unk_1 = 23;
-            } else { // Conventional Payload
-                VehPrototypes[proto_id].plan = PLAN_OFFENSIVE;
-                VehPrototypes[proto_id].unk_1 = 13;
-            }
-        } else {
+        if (Weapon[weapon_id].offense_rating >= 99) {
             VehPrototypes[proto_id].plan = PLAN_PLANET_BUSTER;
             VehPrototypes[proto_id].unk_1 = 14;
+        } else if (weapon_id == WPN_TECTONIC_PAYLOAD) {
+            VehPrototypes[proto_id].plan = PLAN_TECTONIC_MISSILE;
+            VehPrototypes[proto_id].unk_1 = 22;
+        } else if (weapon_id == WPN_FUNGAL_PAYLOAD) {
+            VehPrototypes[proto_id].plan = PLAN_FUNGAL_MISSILE;
+            VehPrototypes[proto_id].unk_1 = 23;
+        } else { // Conventional Payload
+            VehPrototypes[proto_id].plan = PLAN_OFFENSIVE;
+            VehPrototypes[proto_id].unk_1 = 13;
         }
     } else if (Weapon[weapon_id].mode >= WPN_MODE_TRANSPORT) { // Non-combat
         VehPrototypes[proto_id].plan = Weapon[weapon_id].mode;
         VehPrototypes[proto_id].unk_1 = Weapon[weapon_id].mode + 0x20;
-    } else if (Chassis[chassis_id].triad == TRIAD_SEA) { // combat sea
+    } else if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_SEA) { // combat sea
         VehPrototypes[proto_id].plan = PLAN_NAVAL_SUPERIORITY;
         VehPrototypes[proto_id].unk_1 = 6; // same value as plan
-    } else if (Chassis[chassis_id].triad == TRIAD_AIR) { // combat air
+    } else if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_AIR) { // combat air
         if (has_abil(proto_id, ABL_AIR_SUPERIORITY)) {
             VehPrototypes[proto_id].plan = PLAN_AIR_SUPERIORITY;
             VehPrototypes[proto_id].unk_1 = 9;
@@ -1280,51 +1266,57 @@ void __cdecl make_proto(int proto_id, int chassis_id, int weapon_id, int armor_i
             VehPrototypes[proto_id].plan = PLAN_OFFENSIVE;
             VehPrototypes[proto_id].unk_1 = 8;
         }
-    } else { // TRIAD_LAND combat unit
+    } else { // TRIAD_LAND combat unit; reads go through the stored prototype ids
         VehPrototypes[proto_id].plan = PLAN_OFFENSIVE;
-        if (Armor[armor_id].defense_rating > 1) {
+        if (Armor[VehPrototypes[proto_id].armor_id].defense_rating > 1) {
             VehPrototypes[proto_id].plan = PLAN_DEFENSIVE;
         }
-        if (Weapon[weapon_id].offense_rating >= Armor[armor_id].defense_rating
+        if (Weapon[VehPrototypes[proto_id].weapon_id].offense_rating >= Armor[VehPrototypes[proto_id].armor_id].defense_rating
             && VehPrototypes[proto_id].plan == PLAN_DEFENSIVE) {
             VehPrototypes[proto_id].plan = PLAN_COMBAT;
         }
-        if (Chassis[chassis_id].speed > 1
-            && Weapon[weapon_id].offense_rating > Armor[armor_id].defense_rating) {
+        if (Chassis[VehPrototypes[proto_id].chassis_id].speed > 1
+            && Weapon[VehPrototypes[proto_id].weapon_id].offense_rating > Armor[VehPrototypes[proto_id].armor_id].defense_rating) {
             VehPrototypes[proto_id].plan = PLAN_OFFENSIVE;
         }
         if (ability & (ABL_ARTILLERY | ABL_DROP_POD | ABL_AMPHIBIOUS)) {
             VehPrototypes[proto_id].plan = PLAN_OFFENSIVE;
         }
         VehPrototypes[proto_id].unk_1 = 3;
-        if (Armor[armor_id].defense_rating > Weapon[weapon_id].offense_rating) {
+        if (Armor[VehPrototypes[proto_id].armor_id].defense_rating > Weapon[VehPrototypes[proto_id].weapon_id].offense_rating) {
             VehPrototypes[proto_id].unk_1 = 2;
         }
-        if (Weapon[weapon_id].offense_rating > Armor[armor_id].defense_rating * 2) {
+        if (Weapon[VehPrototypes[proto_id].weapon_id].offense_rating > Armor[VehPrototypes[proto_id].armor_id].defense_rating * 2) {
             VehPrototypes[proto_id].unk_1 = 1;
         }
-        // changed from '>= 2' since '>= 3' will always overwrite it
-        if (Chassis[chassis_id].speed == 2) {
+        if (Chassis[VehPrototypes[proto_id].chassis_id].speed >= 2) {
             VehPrototypes[proto_id].unk_1 = 4;
-        } else if (Chassis[chassis_id].speed >= 3) { // added else, if speed <= 2 would always skip
+        }
+        if (Chassis[VehPrototypes[proto_id].chassis_id].speed >= 3) {
             VehPrototypes[proto_id].unk_1 = 5;
         }
-        if (Weapon[weapon_id].offense_rating == 1 && Armor[armor_id].defense_rating == 1) {
-            if (Chassis[chassis_id].speed > 1) {
+        if (Weapon[VehPrototypes[proto_id].weapon_id].offense_rating == 1
+            && Armor[VehPrototypes[proto_id].armor_id].defense_rating == 1) {
+            VehPrototypes[proto_id].unk_1 = 10;
+            if (Chassis[VehPrototypes[proto_id].chassis_id].speed > 1) {
                 VehPrototypes[proto_id].plan = PLAN_RECONNAISANCE;
             }
             if (has_abil(proto_id, ABL_POLICE_2X)) {
                 VehPrototypes[proto_id].plan = PLAN_DEFENSIVE;
             }
-            VehPrototypes[proto_id].unk_1 = 10;
         }
     }
     // set final values
+    VehPrototypes[proto_id].flags = PROTO_ACTIVE;
+    if (unk_local_1) {
+        VehPrototypes[proto_id].flags = 0x105;
+        if (unk_local_1 & 2) {
+            VehPrototypes[proto_id].flags = 0x115;
+        }
+    }
     VehPrototypes[proto_id].obsolete_factions = 0;
-    VehPrototypes[proto_id].combat_factions = (proto_id >= MaxVehProtoFactionNum) ?
-        1 << (proto_id / MaxVehProtoFactionNum) : -1;
-    VehPrototypes[proto_id].flags = unk_local_1
-        ? ((unk_local_1 & 2) ? 0x115 : 0x105) : PROTO_ACTIVE;
+    VehPrototypes[proto_id].combat_factions = (proto_id < MaxVehProtoFactionNum) ?
+        0xFF : 1 << (proto_id / MaxVehProtoFactionNum);
     VehPrototypes[proto_id].icon_offset = -1;
 }
 
@@ -2572,228 +2564,204 @@ dispatch_event:
 
 // ORIGINAL: 0x00580860 ?propose_proto@@YAHHHHHHHHPAD@Z 0x00580860-0x00581168
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned580860..581168:580B89 excludes predefined allocation;580B92 obsolete scoring follows compatible return;580CF5 reuses proposed offense stack value, not faction ID.", "Pinned580F98 inactive-slot flag40;5810B5/5810FA skip negative production IDs;58112D reloads inclusive queue bound; existing VehPrototype, PlayerData and Base owners.", "recovery/tasks/vehicle-special-actions-coverage.json immutable baseline and coordinator-reviewed source; retained git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00580860.cpp"], "reason": "Recover complete typed prototype proposal with compatibility-first selection, faction-only allocation, native similarity scoring, override staging, live prototype flags, naming and inclusive signed queue rewrites. Preserve original identity and retained seeds; naming/pruning callees remain separately unfinished and no matching or runtime acceptance is claimed."}
+// Rewritten from the image 2026-11-08 to 0.98 (one register tie in the compatibility
+//   test leaves a reload of ability_flags in the found block).
 // TRIED: Ghidra pseudocode used as primary source (call arg orders for is_bunged, psi_factor x4, has_tech, retire_proto, make_proto, name_proto, prune_protos all independently confirmed against raw disasm push order - none needed fixing), with the one known-recurring bug fixed: DAT_009ab898 is a byte array with real record stride 0x34, not Ghidra's 2-byte-scaled 0x1a (same defect class as 0x004AB600's 0x9ab898 use). Compiles; not chased to byte-exact given size (2312 bytes, dense per-record scoring loop).
 int __cdecl propose_proto(int faction_id, int chassis_id, int weapon_id,
                           int armor_id, int ability_flags, int reactor_id,
                           int design_category, char *requested_name) {
-    const uint8_t faction_bit = static_cast<uint8_t>(1u << (faction_id & 0x1f));
     int offense_factor;
     int defense_factor;
     int best_prototype = -1;
     int best_score = 0;
 
-    if (DesignConsiderOverride == 0) {
-        if (is_bunged(faction_id, chassis_id, weapon_id, armor_id,
-                      ability_flags, reactor_id)) {
+    if (DesignConsiderOverride) {
+        if (DesignConsiderPrototype >= 0 && DesignConsiderPrototype != design_category) {
             return -1;
         }
-    } else if (DesignConsiderPrototype >= 0
-               && DesignConsiderPrototype != design_category) {
+    } else if (is_bunged(faction_id, chassis_id, weapon_id, armor_id,
+                         ability_flags, reactor_id)) {
         return -1;
     }
 
     if (Chassis[chassis_id].speed == 1
         && Armor[armor_id].defense_rating == 1
         && Weapon[weapon_id].offense_rating == 1
-        && DesignConsiderOverride == 0) {
+        && !DesignConsiderOverride) {
         return 2;
     }
 
-    if (!ExpansionEnabled && weapon_id >= 12 && weapon_id <= 14) {
+    if (!ExpansionEnabled && weapon_id == 12) {
+        offense_factor = 1;
+    } else if (!ExpansionEnabled && weapon_id == 13) {
+        offense_factor = 1;
+    } else if (!ExpansionEnabled && weapon_id == 14) {
         offense_factor = 1;
     } else if (Weapon[weapon_id].offense_rating < 0) {
-        const int ratio = static_cast<int>(PlayersData[faction_id].enemy_best_armor_value)
-            * static_cast<int>(Rules.psi_combat_ratio_atk[TRIAD_LAND])
-            / static_cast<int>(Rules.psi_combat_ratio_def[TRIAD_LAND]);
-        offense_factor = psi_factor(ratio, faction_id, TRUE, FALSE);
+        offense_factor = psi_factor(PlayersData[faction_id].enemy_best_armor_value
+            * (int)Rules.psi_combat_ratio_atk[TRIAD_LAND]
+            / (int)Rules.psi_combat_ratio_def[TRIAD_LAND], faction_id, TRUE, FALSE);
     } else {
         offense_factor = Weapon[weapon_id].offense_rating;
     }
-
     if (!ExpansionEnabled && armor_id > 9) {
         defense_factor = 1;
+    } else if (Armor[armor_id].defense_rating < 0) {
+        defense_factor = psi_factor(PlayersData[faction_id].enemy_best_weapon_value
+            * (int)Rules.psi_combat_ratio_def[TRIAD_LAND]
+            / (int)Rules.psi_combat_ratio_atk[TRIAD_LAND], faction_id, FALSE, FALSE);
     } else {
-        if (Armor[armor_id].defense_rating < 0) {
-            const int ratio = static_cast<int>(PlayersData[faction_id].enemy_best_weapon_value)
-                * static_cast<int>(Rules.psi_combat_ratio_def[TRIAD_LAND])
-                / static_cast<int>(Rules.psi_combat_ratio_atk[TRIAD_LAND]);
-            defense_factor = psi_factor(ratio, faction_id, FALSE, FALSE);
-        } else {
-            defense_factor = Armor[armor_id].defense_rating;
-        }
+        defense_factor = Armor[armor_id].defense_rating;
     }
 
-    for (int walk = 0; walk < 2 * MaxVehProtoFactionNum; ++walk) {
-        const int slot = (walk < MaxVehProtoFactionNum)
-            ? walk : faction_id * MaxVehProtoFactionNum + (walk & 0x3f);
-        VehPrototype &candidate = VehPrototypes[slot];
-        int contribution = 0;
-        bool has_contribution = false;
-        if (slot >= MaxVehProtoFactionNum) {
-            const bool is_active = (candidate.flags & PROTO_ACTIVE) != 0;
-            const bool obsolete_to_faction =
-                (candidate.obsolete_factions & faction_bit) != 0;
-            const unsigned int active =
-                PlayersData[faction_id].proto_id_active[slot];
-            const unsigned int queued =
-                PlayersData[faction_id].proto_id_queue[slot];
-
-            // Native 580A11..580A71 gives obsolete, unused faction designs
-            // their category score before the generic scoring path: 0x2000
-            // for the same category, 0x1000 otherwise. This requires both
-            // active and queued counts to be zero.
-            if (is_active && obsolete_to_faction && active == 0 && queued == 0) {
-                contribution = (design_category == candidate.unk_1)
-                    ? 0x2000 : 0x1000;
-                has_contribution = true;
-            } else if (!is_active) {
-                contribution = 0x800;
-                has_contribution = true;
-            }
-        } else {
-            if ((candidate.flags & PROTO_ACTIVE) == 0
-                || !has_tech(candidate.preq_tech, faction_id)) {
+    for (int walk = 0; walk < 2 * MaxVehProtoFactionNum; walk++) {
+        int slot = walk % MaxVehProtoFactionNum
+            + ((walk >= MaxVehProtoFactionNum) ? faction_id * MaxVehProtoFactionNum : 0);
+        int contribution;
+        if (slot >= MaxVehProtoFactionNum
+            && VehPrototypes[slot].flags & PROTO_ACTIVE
+            && VehPrototypes[slot].obsolete_factions & (1 << faction_id)
+            && !PlayersData[faction_id].proto_id_active[slot]
+            && !PlayersData[faction_id].proto_id_queue[slot]) {
+            contribution = (design_category == (uint8_t)VehPrototypes[slot].unk_1)
+                ? 0x2000 : 0x1000;
+            goto score;
+        }
+        if (!(VehPrototypes[slot].flags & PROTO_ACTIVE)) {
+            if (slot < MaxVehProtoFactionNum) {
                 continue;
             }
+            contribution = 0x800;
+            goto score;
         }
-
-        if (!has_contribution) {
-                if (candidate.chassis_id == chassis_id
-                    && candidate.weapon_id == weapon_id
-                    && candidate.armor_id == armor_id
-                    && candidate.ability_flags == static_cast<uint32_t>(ability_flags)
-                    && candidate.reactor_id == reactor_id
-                    && DesignConsiderOverride == 0
-                    && (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) != 0) {
-                    return -1;
+        if (slot < MaxVehProtoFactionNum
+            && !has_tech(VehPrototypes[slot].preq_tech, faction_id)) {
+            continue;
+        }
+        if (VehPrototypes[slot].chassis_id == chassis_id
+            && VehPrototypes[slot].weapon_id == weapon_id
+            && VehPrototypes[slot].armor_id == armor_id
+            && (uint32_t)ability_flags == VehPrototypes[slot].ability_flags
+            && VehPrototypes[slot].reactor_id == reactor_id
+            && !DesignConsiderOverride
+            && GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id)) {
+            return -1;
+        }
+        if (VehPrototypes[slot].chassis_id == chassis_id
+            && VehPrototypes[slot].weapon_id == weapon_id
+            && VehPrototypes[slot].armor_id == armor_id
+            && !((VehPrototypes[slot].ability_flags ^ ability_flags)
+                & PrototypeAbilityCompatibilityMask)
+            && ((VehPrototypes[slot].ability_flags & ability_flags)
+                    == VehPrototypes[slot].ability_flags
+                || !is_human(faction_id))
+            && VehPrototypes[slot].reactor_id == reactor_id) {
+            if (design_category == -2) {
+                VehPrototypes[slot].flags |= PROTO_TYPED_COMPLETE;
+            }
+            if (DesignConsiderOverride && DesignConsiderOverride <= 2) {
+                DesignConsiderAbilities = ability_flags;
+                DesignConsiderWeapon = weapon_id;
+                DesignConsiderArmor = armor_id;
+                DesignConsiderChassis = chassis_id;
+                DesignConsiderReactor = reactor_id;
+                DesignConsiderOverride = 2;
+            }
+            VehPrototypes[slot].obsolete_factions &= ~(1 << faction_id);
+            return slot;
+        }
+        if (slot < MaxVehProtoFactionNum) {
+            continue;
+        }
+        {
+            int faction_bit = 1 << faction_id;
+            if (VehPrototypes[slot].obsolete_factions & faction_bit
+                && !PlayersData[faction_id].proto_id_active[slot]) {
+                contribution = 0x400;
+                goto score;
+            }
+            if (VehPrototypes[slot].chassis_id == chassis_id
+                && VehPrototypes[slot].reactor_id == reactor_id
+                && !((VehPrototypes[slot].ability_flags ^ ability_flags)
+                    & PrototypeAbilitySimilarityMask)) {
+                int other_weapon = VehPrototypes[slot].weapon_id;
+                int other_offense;
+                if (!ExpansionEnabled && other_weapon == 12) {
+                    other_offense = 1;
+                } else if (!ExpansionEnabled && other_weapon == 13) {
+                    other_offense = 1;
+                } else if (!ExpansionEnabled && other_weapon == 14) {
+                    other_offense = 1;
+                } else if (Weapon[other_weapon].offense_rating < 0) {
+                    other_offense = psi_factor(PlayersData[faction_id].enemy_best_armor_value
+                        * (int)Rules.psi_combat_ratio_atk[TRIAD_LAND]
+                        / (int)Rules.psi_combat_ratio_def[TRIAD_LAND], faction_id, TRUE, FALSE);
+                } else {
+                    other_offense = Weapon[other_weapon].offense_rating;
                 }
-
-                if (candidate.chassis_id == chassis_id
-                    && candidate.weapon_id == weapon_id
-                    && candidate.armor_id == armor_id
-                    && candidate.reactor_id == reactor_id
-                    && ((candidate.ability_flags ^ static_cast<uint32_t>(ability_flags))
-                        & PrototypeAbilityCompatibilityMask) == 0
-                    && ((candidate.ability_flags & static_cast<uint32_t>(ability_flags))
-                        == candidate.ability_flags
-                        || (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) == 0)) {
-                    if (design_category == -2) {
-                        candidate.flags |= PROTO_TYPED_COMPLETE;
-                    }
-                    if (DesignConsiderOverride != 0
-                        && DesignConsiderOverride < 3) {
-                        DesignConsiderAbilities = static_cast<uint32_t>(ability_flags);
-                        DesignConsiderWeapon = weapon_id;
-                        DesignConsiderArmor = armor_id;
-                        DesignConsiderChassis = chassis_id;
-                        DesignConsiderReactor = reactor_id;
-                        DesignConsiderOverride = 2;
-                    }
-                    candidate.obsolete_factions &= static_cast<uint8_t>(~faction_bit);
+                int other_armor = VehPrototypes[slot].armor_id;
+                int other_defense;
+                if (!ExpansionEnabled && other_armor > 9) {
+                    other_defense = 1;
+                } else if (Armor[other_armor].defense_rating < 0) {
+                    other_defense = psi_factor(PlayersData[faction_id].enemy_best_weapon_value
+                        * (int)Rules.psi_combat_ratio_def[TRIAD_LAND]
+                        / (int)Rules.psi_combat_ratio_atk[TRIAD_LAND], faction_id, FALSE, FALSE);
+                } else {
+                    other_defense = Armor[other_armor].defense_rating;
+                }
+                int highest_plus = (other_offense > other_defense)
+                    ? other_offense : other_defense;
+                int highest = highest_plus;
+                if (other_offense == other_defense) {
+                    highest_plus++;
+                }
+                if (offense_factor < highest
+                    && ((offense_factor - other_offense >= 0)
+                        ? offense_factor - other_offense : other_offense - offense_factor) < 2
+                    && defense_factor < highest_plus
+                    && ((defense_factor - other_defense >= 0)
+                        ? defense_factor - other_defense : other_defense - defense_factor) < 2
+                    && !(faction_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)
+                    && strcmp(Players[faction_id].filename, "UNIV")) {
                     return slot;
                 }
-
-                // Predefined designs may be reused above, but cannot be
-                // chosen as allocation slots (580B89..580B8C).
-                if (slot < MaxVehProtoFactionNum) continue;
-                uint32_t comparison_bit = faction_bit;
-                if (slot > 0x3f) {
-                    // Compatibility has precedence over the obsolete score:
-                    // queued obsolete designs can still be reused as-is.
-                    if ((candidate.obsolete_factions & faction_bit) != 0
-                        && PlayersData[faction_id].proto_id_active[slot] == 0) {
-                        contribution = 0x400;
-                        has_contribution = true;
-                    }
-                    if (!has_contribution
-                        && candidate.chassis_id == chassis_id
-                        && candidate.reactor_id == reactor_id
-                        && ((candidate.ability_flags
-                             ^ static_cast<uint32_t>(ability_flags))
-                            & PrototypeAbilitySimilarityMask) == 0) {
-                        const int other_weapon = candidate.weapon_id;
-                        int other_offense;
-                        if (!ExpansionEnabled && other_weapon >= 12
-                            && other_weapon <= 14) {
-                            other_offense = 1;
-                        } else if (Weapon[other_weapon].offense_rating < 0) {
-                            const int ratio = static_cast<int>(
-                                PlayersData[faction_id].enemy_best_armor_value)
-                                * static_cast<int>(Rules.psi_combat_ratio_atk[TRIAD_LAND])
-                                / static_cast<int>(Rules.psi_combat_ratio_def[TRIAD_LAND]);
-                            other_offense = psi_factor(ratio, faction_id, TRUE, FALSE);
-                        } else {
-                            other_offense = Weapon[other_weapon].offense_rating;
-                        }
-
-                        const int other_armor = candidate.armor_id;
-                        int other_defense;
-                        if (!ExpansionEnabled && other_armor > 9) {
-                            other_defense = 1;
-                        } else if (Armor[other_armor].defense_rating < 0) {
-                            const int ratio = static_cast<int>(
-                                PlayersData[faction_id].enemy_best_weapon_value)
-                                * static_cast<int>(Rules.psi_combat_ratio_def[TRIAD_LAND])
-                                / static_cast<int>(Rules.psi_combat_ratio_atk[TRIAD_LAND]);
-                            other_defense = psi_factor(ratio, faction_id, FALSE, FALSE);
-                        } else {
-                            other_defense = Armor[other_armor].defense_rating;
-                        }
-
-                        const int highest = (other_offense > other_defense)
-                            ? other_offense : other_defense;
-                        const int highest_plus = (other_offense == other_defense)
-                            ? highest + 1 : highest;
-                        if (offense_factor < highest) {
-                            int offense_distance = offense_factor - other_offense;
-                            if (offense_distance < 0) offense_distance = -offense_distance;
-                            if (offense_distance < 2 && defense_factor < highest_plus) {
-                                int defense_distance = defense_factor - other_defense;
-                                if (defense_distance < 0) defense_distance = -defense_distance;
-                                if (defense_distance < 2
-                                    && (comparison_bit & GameDataStateStorage.fields_.lock_masks_.enable_mask_) == 0
-                                    && std::strcmp(Players[faction_id].filename, "UNIV") != 0) {
-                                    return slot;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (!has_contribution
-                    && (candidate.unk_1 == design_category
-                        || (PlayersData[faction_id].proto_id_active[slot] == 0
-                            && PlayersData[faction_id].proto_id_queue[slot] == 0))) {
-                    const unsigned int active =
-                        PlayersData[faction_id].proto_id_active[slot];
-                    unsigned int base_score = active == 0 ? 0x240 : 0x40;
-                    if ((candidate.obsolete_factions & comparison_bit) != 0) {
-                        base_score |= 0x100;
-                    }
-                    const unsigned int queued =
-                        PlayersData[faction_id].proto_id_queue[slot];
-                    if (queued == 0) base_score |= 0x80;
-                    unsigned int penalty = candidate.cost * active + queued;
-                    if (penalty > 0x3f) penalty = 0x3f;
-                    contribution = static_cast<int>(base_score - penalty);
-                    has_contribution = true;
-                }
+            }
+            if ((uint8_t)VehPrototypes[slot].unk_1 != design_category
+                && (PlayersData[faction_id].proto_id_active[slot]
+                    || PlayersData[faction_id].proto_id_queue[slot])) {
+                continue;
+            }
+            contribution = 0x40;
+            if (!PlayersData[faction_id].proto_id_active[slot]) {
+                contribution = 0x240;
+            }
+            if (VehPrototypes[slot].obsolete_factions & faction_bit) {
+                contribution |= 0x100;
+            }
+            if (!PlayersData[faction_id].proto_id_queue[slot]) {
+                contribution |= 0x80;
+            }
+            contribution -= range(VehPrototypes[slot].cost
+                * PlayersData[faction_id].proto_id_active[slot]
+                + PlayersData[faction_id].proto_id_queue[slot], 0, 0x3F);
         }
-
-        if (has_contribution && best_score < contribution) {
+    score:
+        if (contribution > best_score) {
             best_score = contribution;
             best_prototype = slot;
         }
     }
 
-    if (best_prototype < 0) return -1;
-
-    if (DesignConsiderOverride != 0) {
-        if (DesignConsiderOverride < 3) {
+    if (best_prototype < 0) {
+        return -1;
+    }
+    if (DesignConsiderOverride) {
+        if (DesignConsiderOverride <= 2) {
             DesignConsiderWeapon = weapon_id;
             DesignConsiderArmor = armor_id;
             DesignConsiderChassis = chassis_id;
-            DesignConsiderAbilities = static_cast<uint32_t>(ability_flags);
+            DesignConsiderAbilities = ability_flags;
             DesignConsiderReactor = reactor_id;
             DesignConsiderPrototype = design_category;
             DesignConsiderOverride = 3;
@@ -2801,76 +2769,74 @@ int __cdecl propose_proto(int faction_id, int chassis_id, int weapon_id,
         return -1;
     }
 
-    VehPrototype &selected = VehPrototypes[best_prototype];
-    const bool was_active = (selected.flags & PROTO_ACTIVE) != 0;
-    if (was_active && !IsMultiplayerNet) {
+    int was_inactive = !(VehPrototypes[best_prototype].flags & PROTO_ACTIVE);
+    if (VehPrototypes[best_prototype].flags & PROTO_ACTIVE && !IsMultiplayerNet) {
         retire_proto(best_prototype, faction_id);
     }
-    make_proto(best_prototype, chassis_id, weapon_id, armor_id,
-               ability_flags, reactor_id);
-    if (design_category == -2 || GameDataStateStorage.fields_.diff_level_current_ < 2) {
-        selected.flags |= PROTO_TYPED_COMPLETE;
+    make_proto(best_prototype, chassis_id, weapon_id, armor_id, ability_flags, reactor_id);
+    if (design_category == -2) {
+        VehPrototypes[best_prototype].flags |= PROTO_TYPED_COMPLETE;
     }
-    if (!was_active) selected.flags |= 0x40;
-    selected.flags |= 0x80;
+    if (GameDataStateStorage.fields_.diff_level_current_ <= 1) {
+        VehPrototypes[best_prototype].flags |= PROTO_TYPED_COMPLETE;
+    }
+    if (was_inactive) {
+        VehPrototypes[best_prototype].flags |= 0x40;
+    }
+    VehPrototypes[best_prototype].flags |= 0x80;
     if (design_category >= 0) {
-        selected.unk_1 = static_cast<int8_t>(design_category);
-        if (design_category == 10) selected.plan = 3;
+        VehPrototypes[best_prototype].unk_1 = (int8_t)design_category;
+        if (design_category == 10) {
+            VehPrototypes[best_prototype].plan = PLAN_RECONNAISANCE;
+        }
     }
 
-    if (requested_name == nullptr) {
+    if (requested_name) {
+        strcpy(VehPrototypes[best_prototype].veh_name, requested_name);
+        for (int other = 0; other < MaxVehProtoNum; other++) {
+            if (other != best_prototype) {
+                int other_faction = other / MaxVehProtoFactionNum;
+                if ((!other_faction || other_faction == faction_id)
+                    && !strcmp(VehPrototypes[best_prototype].veh_name,
+                        VehPrototypes[other].veh_name)) {
+                    strcat(VehPrototypes[best_prototype].veh_name, "*");
+                    other = -1;
+                }
+            }
+        }
+    } else {
         char generated_name[256];
         name_proto(generated_name, best_prototype, faction_id, chassis_id,
                    weapon_id, armor_id, ability_flags, reactor_id);
-        ::strncpy(selected.veh_name, generated_name, sizeof(selected.veh_name));
-        selected.veh_name[sizeof(selected.veh_name) - 1] = '\0';
-        selected.flags &= static_cast<uint16_t>(~PROTO_CUSTOM_NAME_SET);
-    } else {
-        std::strcpy(selected.veh_name, requested_name);
-        for (int other = 0; other < MaxVehProtoNum; ++other) {
-            const int other_faction = other / MaxVehProtoFactionNum;
-            if (other != best_prototype
-                && (other_faction == 0 || other_faction == faction_id)
-                && std::strcmp(selected.veh_name, VehPrototypes[other].veh_name) == 0) {
-                ::strcat(selected.veh_name, "*");
-                other = -1;
-            }
-        }
+        strncpy(VehPrototypes[best_prototype].veh_name, generated_name, 32);
+        VehPrototypes[best_prototype].veh_name[31] = '\0';
+        VehPrototypes[best_prototype].flags &= ~PROTO_CUSTOM_NAME_SET;
     }
 
     prune_protos(faction_id, best_prototype, 0);
-    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
-        Base &base = Bases[base_id];
-        if (base.faction_id_current != faction_id) continue;
-        const int last_queue_slot = static_cast<int>(base.queue_size);
-        if (last_queue_slot < 0) continue;
-
-        // The native loop first walks through the inclusive queue range and
-        // stops at the first obsolete design in this category. It then makes
-        // a second pass over that same inclusive range and rewrites every
-        // matching entry (rather than only the one found by the first scan).
-        for (int probe_slot = 0; probe_slot <= last_queue_slot; ++probe_slot) {
-            const int queued = base.queue_production_id[probe_slot];
-            if (queued < 0) continue;
-            const VehPrototype &queued_prototype = VehPrototypes[queued];
-            if ((queued_prototype.obsolete_factions & faction_bit) != 0
-                && queued_prototype.unk_1 == selected.unk_1) {
-                break;
+    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
+        if (Bases[base_id].faction_id_current == faction_id) {
+            // The first scan's result is unused; the second rewrites every match.
+            int probe;
+            for (probe = 0; probe <= Bases[base_id].queue_size; probe++) {
+                int queued = Bases[base_id].queue_production_id[probe];
+                if (queued >= 0 && VehPrototypes[queued].obsolete_factions & (1 << faction_id)
+                    && VehPrototypes[queued].unk_1 == VehPrototypes[best_prototype].unk_1) {
+                    break;
+                }
             }
-        }
-        for (int queue_slot = 0;
-             queue_slot <= static_cast<int>(base.queue_size); ++queue_slot) {
-            const int queued = base.queue_production_id[queue_slot];
-            if (queued < 0) continue;
-            const VehPrototype &queued_prototype = VehPrototypes[queued];
-            if ((queued_prototype.obsolete_factions & faction_bit) != 0
-                && queued_prototype.unk_1 == selected.unk_1) {
-                base.queue_production_id[queue_slot] = best_prototype;
+            for (int queue_slot = 0; queue_slot <= Bases[base_id].queue_size; queue_slot++) {
+                int queued = Bases[base_id].queue_production_id[queue_slot];
+                if (queued >= 0 && VehPrototypes[queued].obsolete_factions & (1 << faction_id)
+                    && VehPrototypes[queued].unk_1 == VehPrototypes[best_prototype].unk_1) {
+                    Bases[base_id].queue_production_id[queue_slot] = best_prototype;
+                }
             }
         }
     }
-
-    if (FirstProposedPrototype < 0) FirstProposedPrototype = best_prototype;
+    if (FirstProposedPrototype < 0) {
+        FirstProposedPrototype = best_prototype;
+    }
     return best_prototype;
 }
 
