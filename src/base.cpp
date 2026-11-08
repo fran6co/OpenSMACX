@@ -5464,7 +5464,8 @@ Purpose: Find the best specialist available to the current base with more weight
 //   `Base *base_current = BaseCurrent();` before the loop and reassigning it
 //   right after `has_tech_call` (not inside the `if`, since the image
 //   reloads even when the call returns false) reproduces that exactly.
-//   44/44 BYTE_EXACT.
+//   44/44 BYTE_EXACT. Direct BaseCurrent reads also measure exact and let
+//   base_doctors' inlined copies share the post-has_tech reload.
 // symbol    ?best_specialist@@YAIXZ
 // size      112 bytes
 // prototype
@@ -5479,13 +5480,10 @@ Status: Complete
 inline uint32_t  __cdecl best_specialist() {
     int current_bonus = -999;
     uint32_t citizen_id = 0;
-    Base *base_current = BaseCurrent;
     for (int i = 0; i < MaxSpecialistNum; i++) {
-        BOOL known = has_tech(Citizen[i].preq_tech, base_current->faction_id_current);
-        base_current = BaseCurrent;
-        if (known) {
+        if (has_tech(Citizen[i].preq_tech, BaseCurrent->faction_id_current)) {
             uint32_t bonus = Citizen[i].psych_bonus * 3;
-            if (base_current->population_size >= (int)Rules.min_base_size_specialists) {
+            if (BaseCurrent->population_size >= (int)Rules.min_base_size_specialists) {
                 bonus += Citizen[i].ops_bonus + Citizen[i].research_bonus;
             }
             if ((int)bonus > current_bonus) {
@@ -6134,9 +6132,10 @@ next_spread_tile:
                             }
                             bool create = unit_kind == 8;
                             if (!create) {
+                                // The image reads current_num_bases (+0x105C) here.
                                 ++spawn_gate_count;
                                 create = spawn_gate_count
-                                        < ecology_wrapped_double(PlayersData[faction].pop_total) / 3
+                                        < ecology_wrapped_double(PlayersData[faction].current_num_bases) / 3
                                     && spawn_gate_count < PlayersData[faction].planet_ecology / 3;
                             }
                             if (create) {
@@ -6605,7 +6604,8 @@ void __cdecl base_check_support() {
     if (!(BaseCurrent->state & BSTATE_DRONE_RIOTS_ACTIVE)) {
         return;
     }
-    if (PlayersData[faction].soc_effect_pending.values_[SocialEffect::MORALE]
+    // The image reads POLICE (+0x260) here, as base_doctors does.
+    if (PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE]
             + 2 * has_fac(0x23, BaseIDCurrentSelected, 0) > -3) {
         return;
     }
@@ -8529,12 +8529,30 @@ int __cdecl pop_goal_fac(int base_id) {
 // kind      game
 // TRIED: near-verbatim transcription of the (clean, non-SEH) Ghidra output with DAT_/FUN_ substituted for the catalogued globals and callees, and `*(char**)g_0090ea30` for the base-pointer dereference; the two duplicated "pick best doctor" loops are written out twice (matching the original's own duplication) rather than factored into a helper, to avoid the one-external-symbol risk seen on 0x00405140. Reaches MISMATCH #6 ('xor' vs 'push'); did not chase the exact register/stack layout further given the function's size.
 // Defined after best_specialist and pop_goal_fac: the image inlines both.
+// stand-in: the image calls has_fac (0x421670) out of line in base_doctors.
+// The two helpers also shrink base_doctors, so its /Ob2 budget leaves the
+// has_fac calls in its pop_goal_fac copy out of line as in the image.
+static inline BOOL selected_base_has_fac_call(int facility_id) {
+    BOOL (__cdecl *const has_fac_call)(int, int, int) = has_fac;
+    return has_fac_call(facility_id, BaseIDCurrentSelected, 0);
+}
+static inline void doctors_add_specialist() {
+    int best = best_specialist();
+    int slot = BaseCurrent->specialist_total++;
+    if (slot < 16) {
+        const int word = slot >> 3;
+        const int shift = (slot & 7) * 4;
+        BaseCurrent->spec[word] &= ~(15 << shift);
+        BaseCurrent->spec[word] |= best << shift;
+    }
+}
+
 void __cdecl base_doctors() {
     int faction = BaseCurrent->faction_id_current;
     int riot_adjust;
     if ((BaseCurrent->state & BSTATE_DRONE_RIOTS_ACTIVE) != 0
         && PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE]
-               + selected_base_has_fac(FAC_BROOD_PIT) * 2 < -1
+               + selected_base_has_fac_call(FAC_BROOD_PIT) * 2 < -1
         && !pop_goal_fac(BaseIDCurrentSelected)
         && (((has_project(SP_CLONING_VATS, faction) || BaseCurrentGrowthRate >= 6)
              && Rules.nutrient_req_citizen != 0
@@ -8554,12 +8572,7 @@ void __cdecl base_doctors() {
         if (BaseNutrientAdequate
             && BaseCurrent->drone_total + riot_adjust > BaseCurrent->talent_total
             && !has_project(SP_TELEPATHIC_MATRIX, faction)) {
-            int best = best_specialist();
-            int slot = BaseCurrent->specialist_total++;
-            if (slot < 16) {
-                BaseCurrent->spec[slot >> 3] &= ~(15 << ((slot & 7) * 4));
-                BaseCurrent->spec[slot >> 3] |= best << ((slot & 7) * 4);
-            }
+            doctors_add_specialist();
             BaseComputedID = BaseIDCurrentSelected;
             base_support();
             base_yield();
@@ -8569,8 +8582,8 @@ void __cdecl base_doctors() {
             if (BaseCurrent->drone_total + riot_adjust <= BaseCurrent->talent_total) {
                 if (UnkGlobal0093A934 == 0) return;
                 if (faction != ConsoleGlobal.faction_id_) return;
-                if (PlayersData[faction].se_alloc_psych > 1) return;
-                if (BaseCurrent->specialist_total - BaseCurrent->specialist_unk_1 < 2) return;
+                if (PlayersData[faction].se_alloc_psych >= 2) return;
+                if (BaseCurrent->specialist_total - BaseCurrent->specialist_unk_1 <= 1) return;
                 const int production = BaseCurrent->queue_production_id[0];
                 if (production == -6 || production == -11 || production == -12
                     || production == -17 || production == -18) return;
@@ -8600,12 +8613,7 @@ void __cdecl base_doctors() {
             base_energy();
             if (BaseCurrent->drone_total + riot_adjust > BaseCurrent->talent_total
                 && !has_project(SP_TELEPATHIC_MATRIX, faction)) {
-                int best = best_specialist();
-                int slot = BaseCurrent->specialist_total++;
-                if (slot < 16) {
-                    BaseCurrent->spec[slot >> 3] &= ~(15 << ((slot & 7) * 4));
-                    BaseCurrent->spec[slot >> 3] |= best << ((slot & 7) * 4);
-                }
+                doctors_add_specialist();
                 return;
             }
             if (old_total <= BaseCurrent->specialist_total) return;
