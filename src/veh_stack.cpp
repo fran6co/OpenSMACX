@@ -55,8 +55,8 @@ The dirty-tile arm is deliberately narrow. It fires only for the LOCAL faction,
 only the first time that faction sees the tile, and not at all under omniscient
 view or once the faction's map has been revealed outright - four conditions
 which between them mean it is the interactive map's repaint hint rather than
-game state. `bit2 |= 0x400000` and `UnkBitfield1 |= 1` are the same pair
-climate_set() sets at 00591A80 and carry the same unidentified meaning.
+game state. `bit2 |= 0x400000` and `WorldClimateWorldWin.field_239BC_ |= 1` are the same pair
+climate_set() sets at 00591A80 (WorldWin::on_redraw consumes that bit).
 */
 
 void __cdecl spot_tile(int x, int y, int faction_id) {
@@ -73,7 +73,7 @@ void __cdecl spot_tile(int x, int y, int faction_id) {
         && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
         && !(PlayersData[faction_id].flags & PFLAG_MAP_REVEALED)) {
         tile->bit2 |= 0x400000; // TODO: identify value
-        UnkBitfield1 |= 1; // TODO: identify global + value
+        WorldClimateWorldWin.field_239BC_ |= 1;
     }
     tile->visibility |= (uint8_t)(1 << faction_id);
     synch_bit(x, y, faction_id);
@@ -725,7 +725,7 @@ void __cdecl spot_all(int source_vehicle_id, int toggle) {
                 ((remembered_bits ^ tile->bit) & 0xFFFFFFFCu) != 0;
             if (unseen) {
                 tile->bit2 |= 0x400000u;
-                UnkBitfield1 |= 1u;
+                WorldClimateWorldWin.field_239BC_ |= 1u;
             }
             const int minimum_tier = (offset >= 9) ? 3 : 2;
             if ((unseen || memory_changed) &&
@@ -778,7 +778,7 @@ void __cdecl spot_all(int source_vehicle_id, int toggle) {
             (PlayersData[source_faction_id].flags &
              PFLAG_MAP_REVEALED) == 0 && unseen) {
             tile->bit2 |= 0x400000u;
-            UnkBitfield1 |= 1u;
+            WorldClimateWorldWin.field_239BC_ |= 1u;
         }
         if (source_faction_id != 0)
             tile->bit_visible[source_faction_id - 1] = tile->bit;
@@ -799,7 +799,7 @@ void __cdecl spot_all(int source_vehicle_id, int toggle) {
                     (PlayersData[source_faction_id].flags &
                      PFLAG_MAP_REVEALED) == 0) {
                     base_tile->bit2 |= 0x400000u;
-                    UnkBitfield1 |= 1u;
+                    WorldClimateWorldWin.field_239BC_ |= 1u;
                 }
                 if (source_faction_id != 0)
                     base_tile->bit_visible[source_faction_id - 1] =
@@ -966,7 +966,7 @@ for (int contact_pass = 0; contact_pass != 2; ++contact_pass) {
                         (PlayersData[source_faction_id].flags &
                          PFLAG_MAP_REVEALED) == 0) {
                         tile->bit2 |= 0x400000u;
-                        UnkBitfield1 |= 1u;
+                        WorldClimateWorldWin.field_239BC_ |= 1u;
                     }
                     tile->visibility |= source_faction_mask;
                     synch_bit(base.x, base.y, source_faction_id);

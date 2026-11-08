@@ -288,7 +288,8 @@ CaviarData g_SAS_CAVIARDATA;  // 0x00787E48
 // RECOVERY_OBJECT: v1 0x00799228 ?g_SCD_CAVIARDATA@@3UCaviarData@@A
 CaviarData g_SCD_CAVIARDATA;  // 0x00799228
 
-// RECOVERY_OBJECT: v1 0x007ACC90 ?g_SCJ_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x007ACCA0, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x007ACC90 0x007ACC9C ?g_SCJ_CAVIARDATA@@3UCaviarData@@A 0x0044D260
 CaviarData g_SCJ_CAVIARDATA;  // 0x007ACC90
 
 // RECOVERY_OBJECT: v1 0x0077A578 ?g_SAGS_CAVIARDATA@@3UCaviarData@@A
@@ -300,7 +301,8 @@ CaviarData g_SFT_CAVIARDATA;  // 0x0079A6B0
 // RECOVERY_OBJECT: v1 0x007765B0 ?g_VHR_CAVIARDATA1@@3UCaviarData@@A
 CaviarData g_VHR_CAVIARDATA1;  // 0x007765B0
 
-// RECOVERY_OBJECT: v1 0x0078A5E0 ?g_SHT_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x0078A5F0, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x0078A5E0 0x0078A5EC ?g_SHT_CAVIARDATA@@3UCaviarData@@A 0x0044D320
 CaviarData g_SHT_CAVIARDATA;  // 0x0078A5E0
 
 // RECOVERY_OBJECT: v1 0x0078A300 ?g_SRB_CAVIARDATA@@3UCaviarData@@A
@@ -309,16 +311,20 @@ CaviarData g_SRB_CAVIARDATA;  // 0x0078A300
 // RECOVERY_OBJECT: v1 0x007AC030 ?g_ASAS_CAVIARDATA@@3UCaviarData@@A
 CaviarData g_ASAS_CAVIARDATA;  // 0x007AC030
 
-// RECOVERY_OBJECT: v1 0x007ACCC0 ?g_RESLASER_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x007ACCD0, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x007ACCC0 0x007ACCCC ?g_RESLASER_CAVIARDATA@@3UCaviarData@@A 0x0044D3B0
 CaviarData g_RESLASER_CAVIARDATA;  // 0x007ACCC0
 
-// RECOVERY_OBJECT: v1 0x007A7900 ?g_RESBOLT_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x007A7910, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x007A7900 0x007A790C ?g_RESBOLT_CAVIARDATA@@3UCaviarData@@A 0x0044D3E0
 CaviarData g_RESBOLT_CAVIARDATA;  // 0x007A7900
 
-// RECOVERY_OBJECT: v1 0x007ACC10 ?g_FUNLOAD_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x007ACC20, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x007ACC10 0x007ACC1C ?g_FUNLOAD_CAVIARDATA@@3UCaviarData@@A 0x00432DE5
 CaviarData g_FUNLOAD_CAVIARDATA;  // 0x007ACC10
 
-// RECOVERY_OBJECT: v1 0x00788028 ?g_TECLOAD_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x00788038, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x00788028 0x00788034 ?g_TECLOAD_CAVIARDATA@@3UCaviarData@@A 0x00432DB7
 CaviarData g_TECLOAD_CAVIARDATA;  // 0x00788028
 
 // RECOVERY_OBJECT: v1 0x00799E38 ?g_SP_DISSWAVE_CAVIARDATA@@3UCaviarData@@A
@@ -333,34 +339,44 @@ CaviarData g_SP_NANOO_CAVIARDATA;  // 0x0075AEF0
 // RECOVERY_OBJECT: v1 0x007AD130 ?g_SP_SOPORIFIC_CAVIARDATA@@3UCaviarData@@A
 CaviarData g_SP_SOPORIFIC_CAVIARDATA;  // 0x007AD130
 
-// RECOVERY_OBJECT: v1 0x007AD040 ?g_AA01_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x007AD050, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x007AD040 0x007AD04C ?g_AA01_CAVIARDATA@@3UCaviarData@@A 0x0044D530
 CaviarData g_AA01_CAVIARDATA;  // 0x007AD040
 
-// RECOVERY_OBJECT: v1 0x0075AFC0 ?g_AA_ROVER_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x0075AFD0, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x0075AFC0 0x0075AFCC ?g_AA_ROVER_CAVIARDATA@@3UCaviarData@@A 0x0044D560
 CaviarData g_AA_ROVER_CAVIARDATA;  // 0x0075AFC0
 
-// RECOVERY_OBJECT: v1 0x00779288 ?g_AA_WING_CAVIARDATA@@3PAUCaviarData@@A
+// Extent: compiled sizeof 0x18; next mapped object at 0x007792A0.
+// RECOVERY_OBJECT: v2 0x00779288 0x007792A0 ?g_AA_WING_CAVIARDATA@@3PAUCaviarData@@A 0x0044D59E
 CaviarData g_AA_WING_CAVIARDATA[2];  // 0x00779288, 0xc stride
 
-// RECOVERY_OBJECT: v1 0x0078A610 ?g_ACP_CAVIARDATA@@3PAUCaviarData@@A
+// Extent: compiled sizeof 0x30; next mapped object at 0x0078A640.
+// RECOVERY_OBJECT: v2 0x0078A610 0x0078A640 ?g_ACP_CAVIARDATA@@3PAUCaviarData@@A 0x0044D5EE
 CaviarData g_ACP_CAVIARDATA[4];  // 0x0078A610, 0xc stride
 
-// RECOVERY_OBJECT: v1 0x0079A6F0 ?g_AX_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x0079A700, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x0079A6F0 0x0079A6FC ?g_AX_CAVIARDATA@@3UCaviarData@@A 0x0044D630
 CaviarData g_AX_CAVIARDATA;  // 0x0079A6F0
 
-// RECOVERY_OBJECT: v1 0x00789A50 ?g_AA_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x00789A60, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x00789A50 0x00789A5C ?g_AA_CAVIARDATA@@3UCaviarData@@A 0x004242AB
 CaviarData g_AA_CAVIARDATA;  // 0x00789A50
 
-// RECOVERY_OBJECT: v1 0x0078A600 ?g_ACOLPOD_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x0078A610, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x0078A600 0x0078A60C ?g_ACOLPOD_CAVIARDATA@@3UCaviarData@@A 0x0044D690
 CaviarData g_ACOLPOD_CAVIARDATA;  // 0x0078A600
 
-// RECOVERY_OBJECT: v1 0x00787E60 ?g_AT_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x00787E70, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x00787E60 0x00787E6C ?g_AT_CAVIARDATA@@3UCaviarData@@A 0x0044D6C0
 CaviarData g_AT_CAVIARDATA;  // 0x00787E60
 
-// RECOVERY_OBJECT: v1 0x007880C0 ?g_VTA_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x007880D0, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x007880C0 0x007880CC ?g_VTA_CAVIARDATA@@3UCaviarData@@A 0x0044D6F0
 CaviarData g_VTA_CAVIARDATA;  // 0x007880C0
 
-// RECOVERY_OBJECT: v1 0x007ABFC0 ?g_ATP_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x007ABFD0, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x007ABFC0 0x007ABFCC ?g_ATP_CAVIARDATA@@3UCaviarData@@A 0x0044D720
 CaviarData g_ATP_CAVIARDATA;  // 0x007ABFC0
 
 // RECOVERY_OBJECT: v1 0x0078A510 ?g_SSFA_CAVIARDATA@@3UCaviarData@@A
@@ -372,55 +388,71 @@ CaviarData g_SFTA_CAVIARDATA;  // 0x0079A640
 // RECOVERY_OBJECT: v1 0x007871C0 ?g_VW00_CAVIARDATA@@3UCaviarData@@A
 CaviarData g_VW00_CAVIARDATA;  // 0x007871C0
 
-// RECOVERY_OBJECT: v1 0x0079A700 ?g_VIPTAWL_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x0079A710, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x0079A700 0x0079A70C ?g_VIPTAWL_CAVIARDATA@@3UCaviarData@@A 0x0044D7E0
 CaviarData g_VIPTAWL_CAVIARDATA;  // 0x0079A700
 
-// RECOVERY_OBJECT: v1 0x007AB3F0 ?g_VIPTASGN_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x007AB400, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x007AB3F0 0x007AB3FC ?g_VIPTASGN_CAVIARDATA@@3UCaviarData@@A 0x0044D810
 CaviarData g_VIPTASGN_CAVIARDATA;  // 0x007AB3F0
 
-// RECOVERY_OBJECT: v1 0x007795A0 ?g_VIPTAPSI_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x007795B0, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x007795A0 0x007795AC ?g_VIPTAPSI_CAVIARDATA@@3UCaviarData@@A 0x0044D840
 CaviarData g_VIPTAPSI_CAVIARDATA;  // 0x007795A0
 
 // RECOVERY_OBJECT: v1 0x00799628 ?g_VIPTR_CAVIARDATA@@3PAUCaviarData@@A
 CaviarData g_VIPTR_CAVIARDATA[4];  // 0x00799628, 0xc stride
 
-// RECOVERY_OBJECT: v1 0x007791D0 ?g_VIPTA_CAVIARDATA@@3PAUCaviarData@@A
+// Extent: compiled sizeof 0x18; next mapped object at 0x007791E8.
+// RECOVERY_OBJECT: v2 0x007791D0 0x007791E8 ?g_VIPTA_CAVIARDATA@@3PAUCaviarData@@A 0x0044D8CE
 CaviarData g_VIPTA_CAVIARDATA[2];  // 0x007791D0, 0xc stride
 
-// RECOVERY_OBJECT: v1 0x0078A500 ?g_PTMOD_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x0078A510, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x0078A500 0x0078A50C ?g_PTMOD_CAVIARDATA@@3UCaviarData@@A 0x0044D910
 CaviarData g_PTMOD_CAVIARDATA;  // 0x0078A500
 
-// RECOVERY_OBJECT: v1 0x00779230 ?g_VB_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x00779240, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x00779230 0x0077923C ?g_VB_CAVIARDATA@@3UCaviarData@@A 0x0044D940
 CaviarData g_VB_CAVIARDATA;  // 0x00779230
 
-// RECOVERY_OBJECT: v1 0x0078E968 ?g_VBP_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x0078E978, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x0078E968 0x0078E974 ?g_VBP_CAVIARDATA@@3UCaviarData@@A 0x00423422
 CaviarData g_VBP_CAVIARDATA;
 
-// RECOVERY_OBJECT: v1 0x0075AED0 ?g_VGMC_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x0075AEE0, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x0075AED0 0x0075AEDC ?g_VGMC_CAVIARDATA@@3UCaviarData@@A 0x0044D9A0
 CaviarData g_VGMC_CAVIARDATA;  // 0x0075AED0
 
-// RECOVERY_OBJECT: v1 0x0076EBE0 ?g_VGMCP_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; no image references to the following 0x24 bytes.
+// RECOVERY_OBJECT: v2 0x0076EBE0 0x0076EBEC ?g_VGMCP_CAVIARDATA@@3UCaviarData@@A 0x0044D9D0
 CaviarData g_VGMCP_CAVIARDATA;  // 0x0076EBE0
 
-// RECOVERY_OBJECT: v1 0x0075B848 ?g_VLIGHTS_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x0075B858, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x0075B848 0x0075B854 ?g_VLIGHTS_CAVIARDATA@@3UCaviarData@@A 0x0044DA00
 CaviarData g_VLIGHTS_CAVIARDATA;  // 0x0075B848
 
-// RECOVERY_OBJECT: v1 0x007592D0 ?g_VPT_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x007592E0, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x007592D0 0x007592DC ?g_VPT_CAVIARDATA@@3UCaviarData@@A 0x0044DA30
 CaviarData g_VPT_CAVIARDATA;  // 0x007592D0
 
-// RECOVERY_OBJECT: v1 0x0075AF00 ?g_A_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x0075AF10, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x0075AF00 0x0075AF0C ?g_A_CAVIARDATA@@3UCaviarData@@A 0x0044DA60
 CaviarData g_A_CAVIARDATA;  // 0x0075AF00
 
-// RECOVERY_OBJECT: v1 0x0078A490 ?g_APWALL_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x0078A4A0, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x0078A490 0x0078A49C ?g_APWALL_CAVIARDATA@@3UCaviarData@@A 0x0044DA90
 CaviarData g_APWALL_CAVIARDATA;  // 0x0078A490
 
-// RECOVERY_OBJECT: v1 0x007AD120 ?g_ASGEN_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x007AD130, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x007AD120 0x007AD12C ?g_ASGEN_CAVIARDATA@@3UCaviarData@@A 0x0044DAC0
 CaviarData g_ASGEN_CAVIARDATA;  // 0x007AD120
 
-// RECOVERY_OBJECT: v1 0x007ACCB0 ?g_APSID_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x007ACCC0, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x007ACCB0 0x007ACCBC ?g_APSID_CAVIARDATA@@3UCaviarData@@A 0x0044DAF0
 CaviarData g_APSID_CAVIARDATA;  // 0x007ACCB0
 
-// RECOVERY_OBJECT: v1 0x007AD0E0 ?g_VA01_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x007AD0F0, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x007AD0E0 0x007AD0EC ?g_VA01_CAVIARDATA@@3UCaviarData@@A 0x0044DB20
 CaviarData g_VA01_CAVIARDATA;  // 0x007AD0E0
 
 // RECOVERY_OBJECT: v1 0x0076E560 ?g_VR_CAVIARDATA@@3PAUCaviarData@@A
@@ -429,124 +461,162 @@ CaviarData g_VR_CAVIARDATA[4];  // 0x0076E560, 0xc stride
 // RECOVERY_OBJECT: v1 0x00779560 ?g_VHR_CAVIARDATA2@@3UCaviarData@@A
 CaviarData g_VHR_CAVIARDATA2;  // 0x00779560
 
-// RECOVERY_OBJECT: v1 0x0075ADB8 ?g_VRC_CAVIARDATA@@3PAUCaviarData@@A
+// Extent: compiled sizeof 0x30; next mapped object at 0x0075ADE8.
+// RECOVERY_OBJECT: v2 0x0075ADB8 0x0075ADE8 ?g_VRC_CAVIARDATA@@3PAUCaviarData@@A 0x0044DBDE
 CaviarData g_VRC_CAVIARDATA[4];  // 0x0075ADB8, 0xc stride
 
-// RECOVERY_OBJECT: v1 0x0078B740 ?g_VI_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x0078B750, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x0078B740 0x0078B74C ?g_VI_CAVIARDATA@@3UCaviarData@@A 0x0044DC20
 CaviarData g_VI_CAVIARDATA;  // 0x0078B740
 
-// RECOVERY_OBJECT: v1 0x0077A5B8 ?g_VGMT_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x0077A5C8, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x0077A5B8 0x0077A5C4 ?g_VGMT_CAVIARDATA@@3UCaviarData@@A 0x0044DC50
 CaviarData g_VGMT_CAVIARDATA;  // 0x0077A5B8
 
-// RECOVERY_OBJECT: v1 0x0078B720 ?g_VGMTP_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x0078B730, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x0078B720 0x0078B72C ?g_VGMTP_CAVIARDATA@@3UCaviarData@@A 0x0044DC80
 CaviarData g_VGMTP_CAVIARDATA;  // 0x0078B720
 
 // RECOVERY_OBJECT: v1 0x007ACF90 ?g_UNUSED_CAVIARDATA_VAR2@@3UCaviarData@@A
 CaviarData g_UNUSED_CAVIARDATA_VAR2;  // 0x007ACF90
 
-// RECOVERY_OBJECT: v1 0x007796A0 ?g_VWNTU_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x007796B0, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x007796A0 0x007796AC ?g_VWNTU_CAVIARDATA@@3UCaviarData@@A 0x0044DCE0
 CaviarData g_VWNTU_CAVIARDATA;  // 0x007796A0
 
-// RECOVERY_OBJECT: v1 0x0075AD78 ?g_VT_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x0075AD88, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x0075AD78 0x0075AD84 ?g_VT_CAVIARDATA@@3UCaviarData@@A 0x0044DD10
 CaviarData g_VT_CAVIARDATA;  // 0x0075AD78
 
-// RECOVERY_OBJECT: v1 0x007ACD60 ?g_DROP_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x007ACD70, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x007ACD60 0x007ACD6C ?g_DROP_CAVIARDATA@@3UCaviarData@@A 0x0044DD40
 CaviarData g_DROP_CAVIARDATA;  // 0x007ACD60
 
-// RECOVERY_OBJECT: v1 0x0076EBD0 ?g_DROPLET_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x0076EBE0, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x0076EBD0 0x0076EBDC ?g_DROPLET_CAVIARDATA@@3UCaviarData@@A 0x0044DD70
 CaviarData g_DROPLET_CAVIARDATA;  // 0x0076EBD0
 
-// RECOVERY_OBJECT: v1 0x007AD170 ?g_VCL_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x007AD180, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x007AD170 0x007AD17C ?g_VCL_CAVIARDATA@@3UCaviarData@@A 0x0044DDA0
 CaviarData g_VCL_CAVIARDATA;  // 0x007AD170
 
 // RECOVERY_OBJECT: v1 0x007795F0 ?g_UNUSED_CAVIARDATA_VAR3@@3PAUCaviarData@@A
 CaviarData g_UNUSED_CAVIARDATA_VAR3[2];  // 0x007795F0, 0xc stride
 
-// RECOVERY_OBJECT: v1 0x00789B58 ?g_VCLT00_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x00789B68, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x00789B58 0x00789B64 ?g_VCLT00_CAVIARDATA@@3UCaviarData@@A 0x0044DE20
 CaviarData g_VCLT00_CAVIARDATA;  // 0x00789B58
 
-// RECOVERY_OBJECT: v1 0x00779608 ?g_VHT_VBP_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x00779618, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x00779608 0x00779614 ?g_VHT_VBP_CAVIARDATA@@3UCaviarData@@A 0x0044DE50
 CaviarData g_VHT_VBP_CAVIARDATA;  // 0x00779608
 
-// RECOVERY_OBJECT: v1 0x0078A640 ?g_VHTP_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x0078A650, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x0078A640 0x0078A64C ?g_VHTP_CAVIARDATA@@3UCaviarData@@A 0x0044DE80
 CaviarData g_VHTP_CAVIARDATA;  // 0x0078A640
 
-// RECOVERY_OBJECT: v1 0x00779648 ?g_VHTA0_CAVIARDATA@@3PAUCaviarData@@A
+// Extent: compiled sizeof 0x18; next mapped object at 0x00779660.
+// RECOVERY_OBJECT: v2 0x00779648 0x00779660 ?g_VHTA0_CAVIARDATA@@3PAUCaviarData@@A 0x0044DEBE
 CaviarData g_VHTA0_CAVIARDATA[2];  // 0x00779648, 0xc stride
 
-// RECOVERY_OBJECT: v1 0x00759310 ?g_VHTTP_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x00759320, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x00759310 0x0075931C ?g_VHTTP_CAVIARDATA@@3UCaviarData@@A 0x0044DF00
 CaviarData g_VHTTP_CAVIARDATA;  // 0x00759310
 
-// RECOVERY_OBJECT: v1 0x0078B750 ?g_VHTTPA0_CAVIARDATA@@3PAUCaviarData@@A
+// Extent: compiled sizeof 0x24; next mapped object 0x0078B778, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x0078B750 0x0078B774 ?g_VHTTPA0_CAVIARDATA@@3PAUCaviarData@@A 0x0044DF3E
 CaviarData g_VHTTPA0_CAVIARDATA[3];  // 0x0078B750, 0xc stride
 
-// RECOVERY_OBJECT: v1 0x007A6820 ?g_VSP_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x007A6830, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x007A6820 0x007A682C ?g_VSP_CAVIARDATA@@3UCaviarData@@A 0x0044DF80
 CaviarData g_VSP_CAVIARDATA;  // 0x007A6820
 
-// RECOVERY_OBJECT: v1 0x00779270 ?g_VSPA0_CAVIARDATA@@3PAUCaviarData@@A
+// Extent: compiled sizeof 0x18; next mapped object at 0x00779288.
+// RECOVERY_OBJECT: v2 0x00779270 0x00779288 ?g_VSPA0_CAVIARDATA@@3PAUCaviarData@@A 0x0044DFBE
 CaviarData g_VSPA0_CAVIARDATA[2];  // 0x00779270, 0xc stride
 
-// RECOVERY_OBJECT: v1 0x007A7290 ?g_VSPTF_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x007A72A0, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x007A7290 0x007A729C ?g_VSPTF_CAVIARDATA@@3UCaviarData@@A 0x0044E000
 CaviarData g_VSPTF_CAVIARDATA;  // 0x007A7290
 
-// RECOVERY_OBJECT: v1 0x007A7280 ?g_VSPTB_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x007A7290, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x007A7280 0x007A728C ?g_VSPTB_CAVIARDATA@@3UCaviarData@@A 0x0044E030
 CaviarData g_VSPTB_CAVIARDATA;  // 0x007A7280
 
-// RECOVERY_OBJECT: v1 0x007ACC50 ?g_VFL_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x007ACC60, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x007ACC50 0x007ACC5C ?g_VFL_CAVIARDATA@@3UCaviarData@@A 0x0044E060
 CaviarData g_VFL_CAVIARDATA;  // 0x007ACC50
 
-// RECOVERY_OBJECT: v1 0x007A7240 ?g_VGS_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x007A7250, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x007A7240 0x007A724C ?g_VGS_CAVIARDATA@@3UCaviarData@@A 0x0044E090
 CaviarData g_VGS_CAVIARDATA;  // 0x007A7240
 
-// RECOVERY_OBJECT: v1 0x00798BF0 ?g_VGSP_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x00798C00, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x00798BF0 0x00798BFC ?g_VGSP_CAVIARDATA@@3UCaviarData@@A 0x0044E0C0
 CaviarData g_VGSP_CAVIARDATA;  // 0x00798BF0
 
-// RECOVERY_OBJECT: v1 0x007795B0 ?g_VJTP_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x007795C0, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x007795B0 0x007795BC ?g_VJTP_CAVIARDATA@@3UCaviarData@@A 0x0044E0F0
 CaviarData g_VJTP_CAVIARDATA;  // 0x007795B0
 
-// RECOVERY_OBJECT: v1 0x0078A2B8 ?g_VJT0_CAVIARDATA@@3PAUCaviarData@@A
+// Extent: compiled sizeof 0x18; next mapped object at 0x0078A2D0.
+// RECOVERY_OBJECT: v2 0x0078A2B8 0x0078A2D0 ?g_VJT0_CAVIARDATA@@3PAUCaviarData@@A 0x0044E12E
 CaviarData g_VJT0_CAVIARDATA[2];  // 0x0078A2B8, 0xc stride
 
-// RECOVERY_OBJECT: v1 0x0075AEE0 ?g_VCU_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x0075AEF0, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x0075AEE0 0x0075AEEC ?g_VCU_CAVIARDATA@@3UCaviarData@@A 0x0044E170
 CaviarData g_VCU_CAVIARDATA;  // 0x0075AEE0
 
-// RECOVERY_OBJECT: v1 0x0075B440 ?g_VCUP_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x0075B450, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x0075B440 0x0075B44C ?g_VCUP_CAVIARDATA@@3UCaviarData@@A 0x0044E1A0
 CaviarData g_VCUP_CAVIARDATA;  // 0x0075B440
 
-// RECOVERY_OBJECT: v1 0x0078CAB8 ?g_VCUA0_CAVIARDATA@@3PAUCaviarData@@A
+// Extent: compiled sizeof 0x18; next mapped object at 0x0078CAD0.
+// RECOVERY_OBJECT: v2 0x0078CAB8 0x0078CAD0 ?g_VCUA0_CAVIARDATA@@3PAUCaviarData@@A 0x0044E1DE
 CaviarData g_VCUA0_CAVIARDATA[2];  // 0x0078CAB8, 0xc stride
 
-// RECOVERY_OBJECT: v1 0x0075B088 ?g_VCUW_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x0075B098, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x0075B088 0x0075B094 ?g_VCUW_CAVIARDATA@@3UCaviarData@@A 0x0044E220
 CaviarData g_VCUW_CAVIARDATA;  // 0x0075B088
 
-// RECOVERY_OBJECT: v1 0x0079A680 ?g_VCT_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x0079A690, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x0079A680 0x0079A68C ?g_VCT_CAVIARDATA@@3UCaviarData@@A 0x0044E250
 CaviarData g_VCT_CAVIARDATA;  // 0x0079A680
 
-// RECOVERY_OBJECT: v1 0x007ACFA0 ?g_VCTP_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x007ACFB0, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x007ACFA0 0x007ACFAC ?g_VCTP_CAVIARDATA@@3UCaviarData@@A 0x0044E280
 CaviarData g_VCTP_CAVIARDATA;  // 0x007ACFA0
 
-// RECOVERY_OBJECT: v1 0x0076E890 ?g_VCTB_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x0076E8A0, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x0076E890 0x0076E89C ?g_VCTB_CAVIARDATA@@3UCaviarData@@A 0x0044E2B0
 CaviarData g_VCTB_CAVIARDATA;  // 0x0076E890
 
-// RECOVERY_OBJECT: v1 0x0079A628 ?g_VCT0_CAVIARDATA@@3PAUCaviarData@@A
+// Extent: compiled sizeof 0x18; next mapped object at 0x0079A640.
+// RECOVERY_OBJECT: v2 0x0079A628 0x0079A640 ?g_VCT0_CAVIARDATA@@3PAUCaviarData@@A 0x0044E2EE
 CaviarData g_VCT0_CAVIARDATA[2];  // 0x0079A628, 0xc stride
 
-// RECOVERY_OBJECT: v1 0x0078B730 ?g_VWNTT_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x0078B740, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x0078B730 0x0078B73C ?g_VWNTT_CAVIARDATA@@3UCaviarData@@A 0x0044E330
 CaviarData g_VWNTT_CAVIARDATA;  // 0x0078B730
 
-// RECOVERY_OBJECT: v1 0x0078DE20 ?g_VWNST_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x0078DE30, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x0078DE20 0x0078DE2C ?g_VWNST_CAVIARDATA@@3UCaviarData@@A 0x0044E360
 CaviarData g_VWNST_CAVIARDATA;  // 0x0078DE20
 
-// RECOVERY_OBJECT: v1 0x007AC1A0 ?g_VWNAA_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x007AC1B0, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x007AC1A0 0x007AC1AC ?g_VWNAA_CAVIARDATA@@3UCaviarData@@A 0x0044E390
 CaviarData g_VWNAA_CAVIARDATA;  // 0x007AC1A0
 
-// RECOVERY_OBJECT: v1 0x00787100 ?g_VW_CAVIARDATA@@3PAUCaviarData@@A
+// Extent: compiled sizeof 0xc0; next mapped object at 0x007871C0.
+// RECOVERY_OBJECT: v2 0x00787100 0x007871C0 ?g_VW_CAVIARDATA@@3PAUCaviarData@@A 0x0044E3CE
 CaviarData g_VW_CAVIARDATA[16];  // 0x00787100, 0xc stride
 
-// RECOVERY_OBJECT: v1 0x00791D78 ?g_VM_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x00791D88, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x00791D78 0x00791D84 ?g_VM_CAVIARDATA@@3UCaviarData@@A 0x00432D86
 CaviarData g_VM_CAVIARDATA;  // 0x00791D78
 
-// RECOVERY_OBJECT: v1 0x0078A5F0 ?g_VM13_CAVIARDATA@@3UCaviarData@@A
+// Extent: compiled sizeof 0xc; next mapped object 0x0078A600, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x0078A5F0 0x0078A5FC ?g_VM13_CAVIARDATA@@3UCaviarData@@A 0x00432D63
 CaviarData g_VM13_CAVIARDATA;  // 0x0078A5F0
 
 // RECOVERY_OBJECT: v1 0x0076E9B0 ?g_VPBR0_CAVIARDATA@@3PAUCaviarData@@A

@@ -49,7 +49,14 @@ RECT WorldMapBounds;
 
 // MapWin::UNK5's absolute 0x008EA0B0/0x008EA0B8 reads are this object's
 // inherited Win::client_rect_.top/.bottom (+0x150/+0x158), not separate words.
-// RECOVERY_OBJECT: v1 0x008E9F60 ?WorldClimateWorldWin@@3VWorldWin@@A
+// Extent: init 0x004C49A0 writes through +0x239D0 and absolute 0x0090D930
+// (viewport_outline_enabled_) is that last dword; sizeof(WorldWin) is 0x239D4,
+// and 0x90D934-0x90D938 before MapInputEnabled is unreferenced.
+// RECOVERY_OBJECT: v2 0x008E9F60 0x0090D934 ?WorldClimateWorldWin@@3VWorldWin@@A 0x004C4BF0
+// The former UnkBitfield1 (0x0090D91C) is this object's field_239BC_ (+0x239BC):
+// WorldWin's own methods read/write [this+0x239BC], and on_redraw consumes the
+// 1/2/4/8 bits other units set at the absolute address.
+// RECOVERY_OBJECT: v3 0x0090D91C 0x0090D920 ?UnkBitfield1@@3IA 0x0048FEEC member ?WorldClimateWorldWin@@3VWorldWin@@A field_239BC_
 // RECOVERY_OBJECT: v3 0x008EA0B0 ?MapPanelGeometryWord008EA0B0@@3HA member ?WorldClimateWorldWin@@3VWorldWin@@A client_rect_.top
 // RECOVERY_OBJECT: v3 0x008EA0B8 ?MapPanelGeometryWord008EA0B8@@3HA member ?WorldClimateWorldWin@@3VWorldWin@@A client_rect_.bottom
 WorldWin WorldClimateWorldWin;

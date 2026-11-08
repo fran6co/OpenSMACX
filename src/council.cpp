@@ -65,7 +65,8 @@ int CouncilNotifyPluralSlots[8];
 // here; net_upkeep 5294D3..529536 sends them and resets each to -1. Their
 // initial image bytes are twelve FF bytes. The producer stores faction,
 // proposal and selected faction in that order; keep the existing shared array.
-// RECOVERY_OBJECT: v1 0x0068BF38 ?CouncilPendingMessageArgs@@3PAHA
+// Extent: compiled sizeof 0xc; int[3]; net_upkeep resets the three; later hits are not references.
+// RECOVERY_OBJECT: v2 0x0068BF38 0x0068BF44 ?CouncilPendingMessageArgs@@3PAHA 0x005294D3
 int CouncilPendingMessageArgs[3] = {-1, -1, -1};
 
 // Original .data text, as bounded by the pinned image's terminating NULs.

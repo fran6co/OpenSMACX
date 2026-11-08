@@ -2,7 +2,8 @@
 
 // Original starts are supported by the detection stores and renderer reads;
 // neighbouring addresses do not establish complete original allocation bounds.
-// RECOVERY_OBJECT: v1 0x009C0830 ?CaviarVoxelAlgoFlag@@3EA
+// Extent: compiled sizeof 0x1; next mapped object 0x009C0834, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x009C0830 0x009C0831 ?CaviarVoxelAlgoFlag@@3EA 0x0061861E
 unsigned char CaviarVoxelAlgoFlag = 0;
 // RECOVERY_OBJECT: v1 0x009C0B70 ?vox_cpu_vendor@@3EA
 unsigned char vox_cpu_vendor = 0;

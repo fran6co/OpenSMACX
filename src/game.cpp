@@ -23,13 +23,6 @@
 // symbol    _$E18
 #include "stdafx.h"
 
-// Shared game-state change bits, written by base/vehicle/faction/technology
-// operations. Preserve the existing spelling and zero initialization: the
-// full original meaning, extent and persistence contract remain unresolved.
-// Original dword bit word: climate_set and set_dirty set distinct bits.
-// Bound: scalar; every original access is a dword at the start, never indexed, and the following bytes are never referenced.
-// RECOVERY_OBJECT: v2 0x0090D91C 0x0090D920 ?UnkBitfield1@@3IA 0x0048FEEC
-uint32_t UnkBitfield1;  // 0x0090D91C
 #include <shellapi.h>
 #include <ctype.h> // yearmotize preserves the original signed-byte CRT arguments.
 #include <stddef.h>
@@ -1884,7 +1877,7 @@ int __cdecl load_daemon(LPCSTR path, int linearize_contours) {
                     IsMultiplayerPBEM = 1;
                     check_tamper();
                 }
-                UnkBitfield1 |= 4;
+                WorldClimateWorldWin.field_239BC_ |= 4;
             }
         }
     }
@@ -2959,7 +2952,7 @@ int __cdecl do_unity_crash(int x, int y, int faction_id) {
         }
         if (faction_id == ConsoleGlobal.faction_id_) {
             draw_map(1);
-            UnkBitfield1 |= 4;
+            WorldClimateWorldWin.field_239BC_ |= 4;
             WorldClimateWorldWin.GraphicWin::redraw();
             g_FX.play(0x16);
             NetMsgPrimary.pop("UNITYRADAR", -5000, 0, "foundradar_sm.pcx");

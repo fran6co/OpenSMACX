@@ -2363,7 +2363,7 @@ void __cdecl action_tectonic(int vehicle_id, int x, int y) {
             popp(ScriptPopupFile, "TECMOFIED", 0, "tectonic_sm.pcx", nullptr);
         }
         ++TectonicDetonationCount[Vehs[vehicle_id].faction_id];
-        UnkBitfield1 |= 4;
+        WorldClimateWorldWin.field_239BC_ |= 4;
     }
 }
 
@@ -2499,7 +2499,7 @@ void __cdecl action_fungal(int vehicle_id, int x, int y) {
     if ((map_loc(x, y)->climate & ~0x1F) >= ALT_BIT_SHORE_LINE) {
         veh_init(BSC_FUNGAL_TOWER, 0, x, y);
     }
-    UnkBitfield1 |= 4;
+    WorldClimateWorldWin.field_239BC_ |= 4;
     if (focused_on_spread) {
         parse_says(0, Bases[base_id].name_string, -1, -1);
         parse_set(Players[Vehs[vehicle_id].faction_id].is_leader_female, 0);

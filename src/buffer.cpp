@@ -8636,7 +8636,8 @@ int BufferFlyingWidth;
 // establish allocation extent, initialization or lifetime.
 // RECOVERY_OBJECT: v1 0x009B3A9C ?BufferStrHeight@@3HA
 int BufferStrHeight;  // 0x009B3A9C
-// RECOVERY_OBJECT: v1 0x00682820 ?BufferJoinSpace@@3QBDB
+// Extent: compiled sizeof 0x2; next mapped object 0x00682824, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x00682820 0x00682822 ?BufferJoinSpace@@3QBDB 0x00405223
 extern const char BufferJoinSpace[] = " ";
 // RECOVERY_OBJECT: v1 0x00696CD8 ?BufferMeasureSpace@@3QBDB
 extern const char BufferMeasureSpace[] = " ";

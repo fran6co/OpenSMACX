@@ -47,13 +47,16 @@ static char InitialAutoSaveDeletePath[] = "saves\\auto\\Alpha Centauri Autosave 
 // &FilefindPath.last_path at 0x009B8198 + 0x200, not a pointer variable.
 // RECOVERY_OBJECT: v1 0x009B8198 ?FilefindPath@@3UFilefind@@A
 Filefind FilefindPath;  // 0x009B8198
-// RECOVERY_OBJECT: v1 0x009BB570 ?ParseStrPlurality@@3PAHA
+// Extent: compiled sizeof 0x28; next mapped object at 0x009BB598.
+// RECOVERY_OBJECT: v2 0x009BB570 0x009BB598 ?ParseStrPlurality@@3PAHA 0x00625B42
 int ParseStrPlurality[10];  // 0x009BB570; parse-family table, zero-initialized.
 // RECOVERY_OBJECT: v2 0x009BB598 0x009BB5C0 ?ParseNumTable@@3PAHA 0x00625E30
 int ParseNumTable[10];      // 0x009BB598
-// RECOVERY_OBJECT: v1 0x009BB5C0 ?ParseStrGender@@3PAHA
+// Extent: compiled sizeof 0x28; next mapped object at 0x009BB5E8.
+// RECOVERY_OBJECT: v2 0x009BB5C0 0x009BB5E8 ?ParseStrGender@@3PAHA 0x00625B3B
 int ParseStrGender[10];     // 0x009BB5C0
-// RECOVERY_OBJECT: v1 0x009BB5E8 ?ParseStrBuffer@@3PAUchar256@@A
+// Extent: compiled sizeof 0xa00; next mapped object 0x009BBFEC, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x009BB5E8 0x009BBFE8 ?ParseStrBuffer@@3PAUchar256@@A 0x00409B5E
 char256 ParseStrBuffer[10]; // 0x009BB5E8
 #include "movie_media.h"
 #include "alpha.h"

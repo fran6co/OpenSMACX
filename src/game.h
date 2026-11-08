@@ -531,4 +531,4 @@ struct SaveNameDefaultStorage {
     char save_equal_default_[1];
 };
 extern SaveNameDefaultStorage SaveNameDefaultStorageGlobal;
-extern uint32_t UnkBitfield1;  // 0x0090D91C, shared game-state change bits
+// The former UnkBitfield1 (0x0090D91C) is WorldClimateWorldWin.field_239BC_.

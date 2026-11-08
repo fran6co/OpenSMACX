@@ -22,7 +22,8 @@
 // the address is terranx.exe's data, unmapped in a standalone build.
 // set_language (0x00627100) is exactly `mov eax, [esp+4];
 // mov dword ptr [0x9BC054], eax; ret`.
-// RECOVERY_OBJECT: v1 0x009BC054 ?Language@@3IA
+// Extent: compiled sizeof 0x4; dword-only; 0x9BC058 is a separate object stored by 0x006277BA.
+// RECOVERY_OBJECT: v2 0x009BC054 0x009BC058 ?Language@@3IA 0x00415535
 uint32_t Language;  // 0x009BC054
 
 /*

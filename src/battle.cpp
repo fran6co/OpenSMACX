@@ -1544,19 +1544,23 @@ LPSTR VehBattleDisplayTerrain;
 
 // get_basic_offense/get_basic_defense write the two side values; battle_report
 // reads the selected value at 0x004227DC.
-// RECOVERY_OBJECT: v1 0x00912420 ?VehBasicBattleMorale@@3PAIA
+// Extent: compiled sizeof 0x8; next mapped object at 0x00912428.
+// RECOVERY_OBJECT: v2 0x00912420 0x00912428 ?VehBasicBattleMorale@@3PAIA 0x004227DC
 uint32_t VehBasicBattleMorale[2];  // 0x00912420
 // Original battle_init at 0x00501D32 clears the start; add_bat at 0x00501D5D/0x00501D70 indexes counters; no bounds claim.
-// RECOVERY_OBJECT: v1 0x00915614 ?VehBattleModCount@@3PAIA
+// Extent: compiled sizeof 0x8; next mapped object at 0x0091561C.
+// RECOVERY_OBJECT: v2 0x00915614 0x0091561C ?VehBattleModCount@@3PAIA 0x0042287B
 uint32_t VehBattleModCount[2];  // 0x00915614
 // Original battle_init/planet_busting write 0x0091561C; kill and alt_set read it.
 // RECOVERY_OBJECT: v1 0x0091561C ?VehBattleUnkTgl@@3HA
 BOOL VehBattleUnkTgl;  // 0x0091561C
 // add_bat/battle_compute write indexed modifiers; battle_report reads them.
-// RECOVERY_OBJECT: v1 0x009155F0 ?VehBattleModifier@@3PAHA
+// Extent: compiled sizeof 0x20; next mapped object 0x00915614, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x009155F0 0x00915610 ?VehBattleModifier@@3PAHA 0x004228A3
 int VehBattleModifier[8];  // 0x009155F0
 // add_bat/battle_compute fill rows consumed by battle_report.
-// RECOVERY_OBJECT: v1 0x0090F554 ?VehBattleDisplay@@3PAY0FA@DA
+// Extent: compiled sizeof 0x280; next mapped object at 0x0090F7D4.
+// RECOVERY_OBJECT: v2 0x0090F554 0x0090F7D4 ?VehBattleDisplay@@3PAY0FA@DA 0x004228A9
 char VehBattleDisplay[8][80];  // 0x0090F554
 
 // boom temporarily suppresses one vehicle while redrawing the affected tile,
@@ -3915,7 +3919,7 @@ static BattleFightPreRoundStateV7 battle_fight_prepare_pre_round_v7(
     if (VehPrototypes[attacker_proto_id].plan == PLAN_PLANET_BUSTER &&
         VehPrototypes[attacker_proto_id].reactor_id != 0) {
         planet_busting(attacker_id, target_x, target_y);
-        UnkBitfield1 |= 4;
+        WorldClimateWorldWin.field_239BC_ |= 4;
         state.early_return = 1;
         return state;
     }

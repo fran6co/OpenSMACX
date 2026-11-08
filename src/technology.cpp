@@ -965,7 +965,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
 
         if (faction_id == ConsoleGlobal.faction_id_) {
             draw_map(1);
-            UnkBitfield1 |= 4;
+            WorldClimateWorldWin.field_239BC_ |= 4;
             WorldClimateWorldWin.GraphicWin::redraw();
         }
         return;

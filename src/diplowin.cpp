@@ -78,7 +78,8 @@ DiploWin::DiploWin() {}
 
 // The executable constructs the singleton and all 64 transcript lists with
 // static lifetime; their typed constructors/destructors own their storage.
-// RECOVERY_OBJECT: v1 0x0073ACD8 ?DiploWindow@@3VDiploWin@@A
+// Extent: compiled sizeof 0xe5f0; 0x7492C8 unreferenced; CommlinkPending is 0x7492CC.
+// RECOVERY_OBJECT: v2 0x0073ACD8 0x007492C8 ?DiploWindow@@3VDiploWin@@A 0x004253F3
 // Original static initializer440F00 and teardown440F20 establish lifetime;
 // StringBox745060 and StringList747BD0 are embedded members, not extra globals.
 DiploWin DiploWindow;

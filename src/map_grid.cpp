@@ -545,7 +545,7 @@ void __cdecl alt_set(int x, int y, int altitude) {
 done:
     map_loc(x, y)->climate = static_cast<uint8_t>((map_loc(x, y)->climate & 0x1F) |
                                                   (altitude << 5));
-    UnkBitfield1 |= 4;
+    WorldClimateWorldWin.field_239BC_ |= 4;
 }
 // Semantic owner for shared altitude operations: current world-generation
 // callers are in world.cpp, while these canonical bodies share this TU.
@@ -675,7 +675,7 @@ void __cdecl climate_set(int x, int y, int rainfall) {
     tile->climate &= 0xE7;
     tile->climate |= (rainfall & 3) << 3;
     tile->bit2 |= 0x400000; // TODO: identify value
-    UnkBitfield1 |= 1; // TODO: identify global + value
+    WorldClimateWorldWin.field_239BC_ |= 1;
 }
 // BODY IN map.h, as `MEASURED inline`: the image writes it out at
 // some call sites and calls it at others, and a .cpp definition is only ever
@@ -823,7 +823,7 @@ void __cdecl rocky_set(int x, int y, int rocky) {
     Map *tile = map_loc(x, y);
     tile->val3 = static_cast<uint8_t>((tile->val3 & 0x3F) | (rocky << 6));
     tile->bit2 |= 0x400000; // TODO: identify value
-    UnkBitfield1 |= 1; // TODO: identify variable + value
+    WorldClimateWorldWin.field_239BC_ |= 1;
 }
 /*
 Purpose: Set the using faction id for the specified tile.
@@ -999,7 +999,7 @@ void __cdecl code_set(int x, int y, int code) {
     // instead. Taking `&tile->bit2` once is what produces the image's lea.
     uint32_t *const field = &map_loc(x, y)->bit2;
     *field = (*field & 0xFFFFFF) | (static_cast<uint32_t>(code) << 24);
-    UnkBitfield1 |= 4; // TODO: identify variable + value
+    WorldClimateWorldWin.field_239BC_ |= 4;
 }
 /*
 Purpose: Synchronize the actual tile bit with the faction visible bit.
@@ -1739,10 +1739,10 @@ void __cdecl set_dirty() {
             }
             y++;
         } while (y < MapLatitudeBounds);
-        UnkBitfield1 |= 4;
+        WorldClimateWorldWin.field_239BC_ |= 4;
         return;
     }
-    UnkBitfield1 |= 4;
+    WorldClimateWorldWin.field_239BC_ |= 4;
 }
 // ORIGINAL: 0x00592AF0 ?clear_dirty@@YAXXZ 0x00592AF0-0x00592B3C FILE BYTE_EXACT
 // size      76 bytes

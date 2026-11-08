@@ -757,7 +757,7 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
     iVar15 = local_28;
     owner_set(local_28, local_1c, faction_id);
     draw_map(1);
-    UnkBitfield1 |= 2;
+    WorldClimateWorldWin.field_239BC_ |= 2;
     WorldClimateWorldWin.redraw();
 
     GenderDefault = Players[faction_id].noun_gender;

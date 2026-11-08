@@ -3390,7 +3390,7 @@ void Console::load_proc(int save_slot, int faction_id) {
         GameDataStateStorage.fields_.game_state_ |= 0xE0;
         do_all_draws();
         ::draw_map(1);
-        UnkBitfield1 |= 4;
+        WorldClimateWorldWin.field_239BC_ |= 4;
         WorldClimateWorldWin.GraphicWin::redraw();
     }
     alpha_menu_.check(selected_vehicle_);

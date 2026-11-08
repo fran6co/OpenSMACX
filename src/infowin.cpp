@@ -49,7 +49,9 @@
 
 // Process-wide InfoWin lifecycle; original table callback 0x004562C0
 // constructs the object at 0x007AD2A0 and registers its teardown.
-// RECOVERY_OBJECT: v1 0x007AD2A0 ?ConsoleInfoWin@@3VInfoWin@@A
+// Extent: ctor 0x00459500 builds button_ (PushButton, asserted 0xB00) at +0x9D0,
+// ending at 0x14D0; 0x7AE770-0x7AE778 before IfaceIdToSlotStorage is unreferenced.
+// RECOVERY_OBJECT: v2 0x007AD2A0 0x007AE770 ?ConsoleInfoWin@@3VInfoWin@@A 0x004562C0
 InfoWin ConsoleInfoWin;
 void __cdecl help_any();
 

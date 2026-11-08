@@ -52,6 +52,7 @@
 #include "tutwin.h"
 #include "rectangle_operations.h"
 #include "wave_device.h"
+#include "worldwin.h"
 
 int __cdecl X_text_open(char *src_file_id, const char *section_id);
 void __cdecl slide_show(GraphicWin *window, int mode);
@@ -511,7 +512,7 @@ void PrefWin::destroy() {
     field_A5C_ = 0;
   }
   draw_map(1);
-  UnkBitfield1 |= 4;
+  WorldClimateWorldWin.field_239BC_ |= 4;
   okButton_.set_pressed_visual(0);
   cancelButton_.set_pressed_visual(0);
   slide_hide(this, 0);

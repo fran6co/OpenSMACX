@@ -360,7 +360,8 @@ Status: Complete
 // Here the same recovered constructors run through this build's own
 // startup, and the matching destructors close them at exit. Addresses of
 // the ones documented individually live beside their definitions.
-// RECOVERY_OBJECT: v1 0x006EEED8 ?g_BattleWin@@3VBattleWin@@A
+// Extent: compiled sizeof 0xa0; next mapped object 0x006EEF7C, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x006EEED8 0x006EEF78 ?g_BattleWin@@3VBattleWin@@A 0x004219B0
 BattleWin g_BattleWin;  // 0x006EEED8
 
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====

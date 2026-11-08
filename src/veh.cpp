@@ -390,9 +390,11 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
 // 0x009A64C8
 // RECOVERY_OBJECT: v1 0x009B2280 ?VehDropLiftVehID@@3HA
 int VehDropLiftVehID;  // 0x009B2280
-// RECOVERY_OBJECT: v1 0x009B2278 ?VehLiftX@@3HA
+// Extent: compiled sizeof 0x4; next mapped object at 0x009B227C.
+// RECOVERY_OBJECT: v2 0x009B2278 0x009B227C ?VehLiftX@@3HA 0x004BF928
 int VehLiftX;  // 0x009B2278
-// RECOVERY_OBJECT: v1 0x009B2284 ?VehLiftY@@3HA
+// Extent: compiled sizeof 0x4; 0x9B2288 unreferenced; VehBitError is 0x9B228C.
+// RECOVERY_OBJECT: v2 0x009B2284 0x009B2288 ?VehLiftY@@3HA 0x004BF932
 int VehLiftY;  // 0x009B2284
 BOOL VehBitError;  // 0x009B228C
 int VehMoraleModifierCount; // only used by say_morale(), optimize to local var?

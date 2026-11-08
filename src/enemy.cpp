@@ -4304,7 +4304,8 @@ int __cdecl coast_or_border(int x_point_a, int y_point_a, int x_point_b,
 // Native 56FE51 passes this storage address to message_base. Only its
 // initial NUL byte is established; the historical complete capacity,
 // TU/name and indirect writes remain unknown. This is a start-only view.
-// RECOVERY_OBJECT: v1 0x0093FC30 ?EnemyBuildBaseMessageText@@3PADA
+// Extent: compiled sizeof 0x1; next mapped object 0x0093FC34, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x0093FC30 0x0093FC31 ?EnemyBuildBaseMessageText@@3PADA 0x0056FE51
 char EnemyBuildBaseMessageText[1] = {0};
 
 // Complete owner assembly. Native stack words are stored only on proven edges.

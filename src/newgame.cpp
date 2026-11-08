@@ -221,7 +221,7 @@ size_complete:
         map_init();
         Paths.init();
     }
-    UnkBitfield1 |= 8;
+    WorldClimateWorldWin.field_239BC_ |= 8;
     return 0;
 }
 
@@ -762,7 +762,7 @@ int __cdecl multiplayer_init(int startup_mode) {
 
                 map_init();
                 Paths.init();
-                UnkBitfield1 |= 8;
+                WorldClimateWorldWin.field_239BC_ |= 8;
 
                 if (IsMultiplayerNet == 0) {
                     int v = (rand() % 7 + 1) / 2;

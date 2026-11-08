@@ -3065,7 +3065,8 @@ static const signed char AltLightBit1[113] = {
 };
 // Keep loader-zero storage mutable: absence of observed direct writers is
 // not proof that computed or indirect writes never occur.
-// RECOVERY_OBJECT: v1 0x007F6750 _AltLightBit200
+// Extent: compiled sizeof 0x71; next mapped object 0x007F67C4, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x007F6750 0x007F67C1 _AltLightBit200 0x00470818
 static signed char AltLightBit200[113];
 
 // Four mutable ocean-shade quads, shared across terrain calls. The renderer

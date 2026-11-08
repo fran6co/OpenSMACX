@@ -27,7 +27,8 @@
 #include "mapwin.h"
 
 // Original 0x004E12D8/0x005C5A5E pass the shared Path receiver; no parent allocation or lifecycle claim.
-// RECOVERY_OBJECT: v1 0x00945B00 ?Paths@@3VPath@@A
+// Extent: compiled sizeof 0x2c; initial storage is eleven zero words; 0x945B2C unreferenced, probe globals from 0x945B30.
+// RECOVERY_OBJECT: v2 0x00945B00 0x00945B2C ?Paths@@3VPath@@A 0x004667A3
 Path Paths;                                              // 0x00945B00
 
 // `memset` is a REAL CALL in this file's image bodies - init (0x0059A220),

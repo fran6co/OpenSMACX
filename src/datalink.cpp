@@ -120,7 +120,9 @@ static void datalink_vehicle_append_tech(int tech) {
 // `Datalink *const DatalinkMain` binding used to name (see datalink.h). Plain
 // data, not a call target; the Datalink constructor that builds it runs from
 // the game's class bring-up, as in the image.
-// RECOVERY_OBJECT: v1 0x00703EA0 ?DatalinkMain@@3VDatalink@@A
+// Extent: sizeof(Datalink) 0x1B394 (datalink.h assert; ctor 0x00428FC0 and exec
+// reach stringBox_ ending there); 0x71F234-0x71F238 is unreferenced padding.
+// RECOVERY_OBJECT: v2 0x00703EA0 0x0071F234 ?DatalinkMain@@3VDatalink@@A 0x00428FC0
 Datalink DatalinkMain;  // 0x00703EA0
 
 // Member/base lifetimes run naturally in declaration order. The original

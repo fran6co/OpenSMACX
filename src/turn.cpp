@@ -2658,7 +2658,7 @@ void __cdecl reset_territory() {
             }
             if (owner != tile->territory) {
                 tile->bit2 |= 0x400000; // TODO: identify value
-                UnkBitfield1 |= 1; // TODO: identify global + value
+                WorldClimateWorldWin.field_239BC_ |= 1;
             }
             tile->territory = (int8_t)owner;
             if (owner < 0) {
@@ -4587,7 +4587,7 @@ void __cdecl control_turn() {
                     ConsoleGlobal.cover_window_.Win::hide();
                     ConsoleInfoWin.set_timer_suppression(0);
                     ConsoleStatusWin.on_redraw();
-                    UnkBitfield1 |= 4;
+                    WorldClimateWorldWin.field_239BC_ |= 4;
                     WorldClimateWorldWin.show_all();
                     WorldClimateWorldWin.redraw();
                     MainInterfaceGlobal.string_box_.Win::show(0);

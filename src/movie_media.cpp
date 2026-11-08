@@ -104,7 +104,8 @@ inline int media_fixed_mul(int factor, int value) {
 // Minimum source table read by native builders 5CC940 and 5CD2D0. Their
 // indexed accesses cover 64 DWORDs at 0x691F4C..0x69204B; this does not claim
 // an extent for surrounding original data.
-// RECOVERY_OBJECT: v1 0x00691F4C _media_block_transform_weights
+// Extent: compiled sizeof 0x100; next mapped object at 0x0069204C.
+// RECOVERY_OBJECT: v2 0x00691F4C 0x0069204C _media_block_transform_weights 0x005CCE6A
 static const DWORD media_block_transform_weights[64] = {
     8192, 5906, 6270, 6967, 8192, 10426, 15137, 29692,
     5906, 4258, 4520, 5023, 5906, 7517, 10913, 21407,

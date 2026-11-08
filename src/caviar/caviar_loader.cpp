@@ -49,7 +49,8 @@ uint32_t vox_unk_9c0b78 = 0;    // 0x009C0B78, zeroed on accepted CPU report
 // 1 GenuineIntel, 2 AuthenticAMD.
 // Original 6395EC/6395F2 increments and 639680/63968D decrements this counter.
 // Bind its observed start; an exclusive original allocation is not established.
-// RECOVERY_OBJECT: v1 0x009BE69C ?vox_record_count@@3IA
+// Extent: compiled sizeof 0x4; next mapped object at 0x009BE6A0.
+// RECOVERY_OBJECT: v2 0x009BE69C 0x009BE6A0 ?vox_record_count@@3IA 0x006395EC
 uint32_t vox_record_count = 0;  // 0x009BE69C, records created, bumped per create
 
 // The pixel-size dispatch tables the engine's two dispatchers (sub_63ad60

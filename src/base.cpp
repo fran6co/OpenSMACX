@@ -1033,7 +1033,7 @@ int __cdecl base_init(int faction_id, int x, int y) {
     base_nutrient();
     base_minerals();
     base_energy();
-    UnkBitfield1 |= 2;
+    WorldClimateWorldWin.field_239BC_ |= 2;
     return base_id;
 }
 
@@ -1217,7 +1217,7 @@ void __cdecl base_kill(int base_id) {
         base_mark(i);
     }
     reset_territory();
-    UnkBitfield1 |= 2;
+    WorldClimateWorldWin.field_239BC_ |= 2;
 }
 #pragma intrinsic(memcpy)
 

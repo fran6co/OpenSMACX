@@ -562,11 +562,13 @@ Sprite *FactionDiplomacyPortraits[MaxPlayerNum] = {
 
 // 0x009A650C
 // 0x009A6510
-// RECOVERY_OBJECT: v1 0x0093FA74 ?DiploFriction@@3HA
+// Extent: compiled sizeof 0x4; next mapped object at 0x0093FA78.
+// RECOVERY_OBJECT: v2 0x0093FA74 0x0093FA78 ?DiploFriction@@3HA 0x00427F4F
 int DiploFriction;  // 0x0093FA74 // not always bounded, should it be 0-20?
 // RECOVERY_OBJECT: v1 0x0093FABC ?DiploFrictionFactionIDWith@@3IA
 uint32_t DiploFrictionFactionIDWith;  // 0x0093FABC
-// RECOVERY_OBJECT: v1 0x0093FAC0 ?DiploFrictionFactionID@@3IA
+// Extent: compiled sizeof 0x4; next mapped object at 0x0093FAC4.
+// RECOVERY_OBJECT: v2 0x0093FAC0 0x0093FAC4 ?DiploFrictionFactionID@@3IA 0x00456D16
 uint32_t DiploFrictionFactionID;  // 0x0093FAC0
 // Both are outputs of scan_prototypes() and both hold a prototype id or -1.
 // buy_tech (0x005401A0) reads the first, lazily recomputing it with
@@ -3281,7 +3283,7 @@ void __cdecl trade_maps(int faction_id, int other_faction_id) {
 
     if (faction_id == ConsoleGlobal.faction_id_ ||
         other_faction_id == ConsoleGlobal.faction_id_) {
-        UnkBitfield1 |= 4;
+        WorldClimateWorldWin.field_239BC_ |= 4;
         WorldClimateWorldWin.GraphicWin::redraw();
         draw_map(1);
     }

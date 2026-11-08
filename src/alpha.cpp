@@ -150,7 +150,8 @@ RulesWorldbuilder WorldBuilder;
 // prefs_load (0x0059DCF0) stores every field in place - `mov dword ptr
 // [0x94B464], eax` for preferences through custom_world at 0x0094B480
 // (bounded by the `cmp esi, 0x94B49C` loop tail at 0x0059E4D9).
-// RECOVERY_OBJECT: v1 0x0094B464 ?AlphaIniPrefs@@3UAlphaIniPref@@A
+// Extent: compiled sizeof 0x38; prefs_load loop ends at `cmp esi, 0x94B49C` (0x0059E4D9).
+// RECOVERY_OBJECT: v2 0x0094B464 0x0094B49C ?AlphaIniPrefs@@3UAlphaIniPref@@A 0x0047D4A4
 AlphaIniPref AlphaIniPrefs;                         // 0x0094B464
 DefaultPref DefaultPrefs;                           // 0x0094B350
 

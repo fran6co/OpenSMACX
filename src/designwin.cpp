@@ -2815,7 +2815,8 @@ void DesignWin::close() {
 // game's own init populates, exactly as the image leaves it.
 // The vehicle chassis animation queries this same window's Win base at
 // 0x004C2BE9; the original receiver is the complete object at 0x0071F2B0.
-// RECOVERY_OBJECT: v1 0x0071F2B0 ?TutWinDesWindow@@3VDesignWin@@A
+// Extent: compiled sizeof 0x145b8; next mapped object 0x0073396C, gap unreferenced.
+// RECOVERY_OBJECT: v2 0x0071F2B0 0x00733868 ?TutWinDesWindow@@3VDesignWin@@A 0x00417DFC
 DesignWin TutWinDesWindow;  // 0x0071F2B0
 // Original CRT slots 0x00682078/0x0068207C construct DesignWin before Wave;
 // their registered destructors run in reverse order.
