@@ -755,129 +755,6 @@ void __cdecl base_yield() {
     }
 }
 
-namespace {
-
-// The original repeats this choice in each direction of its worker/specialist
-// search. Keep the scoring and packed storage in Base's own representation.
-int base_doctors_best_specialist() {
-    int best = CITIZEN_TECHNICIAN;
-    int best_score = -999;
-    for (int type = 0; type < MaxSpecialistNum; ++type) {
-        Base *base = BaseCurrent;
-        if (!has_tech(Citizen[type].preq_tech, base->faction_id_current)) continue;
-        base = BaseCurrent;
-        int score = Citizen[type].psych_bonus * 3;
-        if (base->population_size >= static_cast<int>(Rules.min_base_size_specialists)) {
-            score += Citizen[type].ops_bonus + Citizen[type].research_bonus;
-        }
-        if (score > best_score) {
-            best = type;
-            best_score = score;
-        }
-    }
-    return best;
-}
-
-void base_doctors_add_specialist() {
-    const int best = base_doctors_best_specialist();
-    const int slot = BaseCurrent->specialist_total++;
-    if (slot < 16) {
-        BaseCurrent->spec[slot >> 3] &= ~(15 << ((slot & 7) * 4));
-        BaseCurrent->spec[slot >> 3] |= best << ((slot & 7) * 4);
-    }
-}
-
-} // namespace
-
-// ORIGINAL: 0x004F5F30 ?base_doctors@@YAXXZ 0x004F5F30-0x004F650C
-// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/004f5f30.cpp", "source:src/base.h"], "reason": "Recover the selected Base's complete specialist/worker adjustment, riot eligibility, Matrix-gated removal and console warning paths through typed Base, citizen, Rules and project state. Preserve selected-base versus entry-faction distinctions and live BaseCurrent reloads across callbacks. Original unsafe accesses, full identity, seed history and matching/restoration obligations remain; no byte, ABI or runtime acceptance is implied."}
-// kind      game
-// TRIED: near-verbatim transcription of the (clean, non-SEH) Ghidra output with DAT_/FUN_ substituted for the catalogued globals and callees, and `*(char**)g_0090ea30` for the base-pointer dereference; the two duplicated "pick best doctor" loops are written out twice (matching the original's own duplication) rather than factored into a helper, to avoid the one-external-symbol risk seen on 0x00405140. Reaches MISMATCH #6 ('xor' vs 'push'); did not chase the exact register/stack layout further given the function's size.
-void __cdecl base_doctors() {
-    Base *base = BaseCurrent;
-    const int faction = base->faction_id_current;
-    int riot_doctor_adjustment;
-    if ((base->state & BSTATE_DRONE_RIOTS_ACTIVE) != 0
-        && PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE]
-               + selected_base_has_fac(FAC_BROOD_PIT) * 2 < -1
-        && !pop_goal_fac(BaseIDCurrentSelected)
-        && (((has_project(SP_CLONING_VATS, faction) || BaseCurrentGrowthRate >= 6)
-             && Rules.nutrient_req_citizen != 0
-             && BaseCurrent->nutrient_surplus >= static_cast<int>(Rules.nutrient_req_citizen))
-            || BaseCurrent->nutrient_surplus + BaseCurrent->nutrients_accumulated
-                   >= cost_factor(faction, 0, BaseIDCurrentSelected)
-                          * (BaseCurrent->population_size + 1))) {
-        riot_doctor_adjustment = 1;
-    } else {
-        riot_doctor_adjustment = 0;
-    }
-    // Native branch setup reloads the current Base after each callback-bearing
-    // riot path.
-    base = BaseCurrent;
-
-    const int faction_bit = 1 << faction;
-    for (int loop_counter = 1; ; ) {
-        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_
-             & faction_bit) != 0) {
-            if ((base->governor & GOV_MANAGES_CITIZENS_SPECS) == 0) return;
-            if ((base->governor & GOV_ACTIVE) == 0) return;
-        }
-
-        if (BaseNutrientAdequate == 0
-            || base->drone_total + riot_doctor_adjustment <= base->talent_total
-            || has_project(SP_TELEPATHIC_MATRIX, faction)) {
-            const int old_specialist_total = base->specialist_total;
-            if (old_specialist_total - base->specialist_unk_1 <= 0) return;
-            if ((base->state & BSTATE_DRONE_RIOTS_ACTIVE) != 0) return;
-            if (base->drone_total != 0
-                && base->drone_total + riot_doctor_adjustment >= base->talent_total
-                && !has_project(SP_TELEPATHIC_MATRIX, faction)) {
-                return;
-            }
-            base->specialist_total = old_specialist_total - 1;
-            BaseComputedID = BaseIDCurrentSelected;
-            base_support();
-            base_yield();
-            base_nutrient();
-            base_minerals();
-            base_energy();
-            base = BaseCurrent;
-            if (base->drone_total + riot_doctor_adjustment > base->talent_total
-                && !has_project(SP_TELEPATHIC_MATRIX, faction)) {
-                base_doctors_add_specialist();
-                return;
-            }
-            if (old_specialist_total <= base->specialist_total) return;
-        } else {
-            base_doctors_add_specialist();
-            BaseComputedID = BaseIDCurrentSelected;
-            base_support();
-            base_yield();
-            base_nutrient();
-            base_minerals();
-            base_energy();
-            base = BaseCurrent;
-            if (base->drone_total + riot_doctor_adjustment <= base->talent_total) {
-                if (UnkGlobal0093A934 == 0) return;
-                if (faction != ConsoleGlobal.faction_id_) return;
-                if (PlayersData[faction].se_alloc_psych > 1) return;
-                if (base->specialist_total - base->specialist_unk_1 < 2) return;
-                const int production = base->queue_production_id[0];
-                if (production == -6 || production == -11 || production == -12
-                    || production == -17 || production == -18) return;
-                if (production == 8 && has_project(SP_VIRTUAL_WORLD, faction)) return;
-                if ((Players[faction].rule_flags & RFLAG_ALIEN) != 0) {
-                    popb("PSYCHREQUEST", 0, -1, "Alopdir.pcx", 0);
-                } else {
-                    popb("PSYCHREQUEST", 0, -1, "talent_sm.pcx", 0);
-                }
-                return;
-            }
-        }
-
-        if (++loop_counter >= 10) return;
-    }
-}
 
 /*
 Purpose: Reset every base of one faction: the faction's bases are visited in
@@ -1183,13 +1060,15 @@ static inline int base_kill_find(int x, int y, int faction_id) {
 // ORIGINAL: 0x004E5250 ?base_kill@@YAXH@Z 0x004E5250-0x004E5A58
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004e5250.cpp: canonical identity, original spans and retained seed history", "source:src/base.h: real Base storage and lifecycle contracts", "source:recovery/tasks/base-lifecycle-owner-closure.json: bounded coordinator authorization"], "reason": "The original base destruction operation belongs to the Base owner and repairs real faction/project/base/vehicle references and count/selection state rather than forwarding into the original executable."}
 // TRIED: full line-by-line transcription landed (MISMATCH #3, prologue push/mov divergence); stack-slot reuse across phases not replicated (used per-phase named locals instead), and the two adjustor-thunk virtual calls (vtable[1] read as delta, then slot0 on the adjusted `this`) route through VCall with a manually computed adjusted receiver rather than the shim alone.
+// The image calls the CRT memcpy for the record compaction.
+#pragma function(memcpy)
 void __cdecl base_kill(int base_id) {
     int veh_id;
     int x = Bases[base_id].x;
     int y = Bases[base_id].y;
     int faction_id = Bases[base_id].faction_id_current;
     if (has_fac(FAC_HEADQUARTERS, base_id, 0)
-        && GameDataStateStorage.fields_.turn_current_num_ < PlayersData[faction_id].corner_market_turn
+        && PlayersData[faction_id].corner_market_turn > GameDataStateStorage.fields_.turn_current_num_
         && PlayersData[faction_id].corner_market_active) {
         PlayersData[faction_id].corner_market_turn = 0;
         PlayersData[faction_id].corner_market_active = 0;
@@ -1231,7 +1110,7 @@ void __cdecl base_kill(int base_id) {
             (GameDataStateStorage.fields_.base_current_count_ - base_id - 1) * sizeof(Base));
     }
     GameDataStateStorage.fields_.base_current_count_--;
-    if (BaseComputedID == base_id) {
+    if (base_id == BaseComputedID) {
         BaseComputedID = -1;
     }
     for (veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
@@ -1340,6 +1219,7 @@ void __cdecl base_kill(int base_id) {
     reset_territory();
     UnkBitfield1 |= 2;
 }
+#pragma intrinsic(memcpy)
 
 // Complete base_build was moved here from its retired seed:
 // src/unrecovered/004f81a0.cpp. Its original findings remain below.
@@ -5595,7 +5475,8 @@ Purpose: Find the best specialist available to the current base with more weight
 Return Value: Best citizen id (always going to be 1, 4, or 6 based on default weights)
 Status: Complete
 */
-uint32_t  __cdecl best_specialist() {
+// inline: base_doctors (0x004F5F30) expands this body twice; the standalone stays emitted.
+inline uint32_t  __cdecl best_specialist() {
     int current_bonus = -999;
     uint32_t citizen_id = 0;
     Base *base_current = BaseCurrent;
@@ -6764,11 +6645,10 @@ void __cdecl base_check_support() {
         int dx = x_dist(vx, bx);
         int cost = range(VehPrototypes[Vehs[veh_id].proto_id].cost, 1, 99);
         int score = ((dx + abs(vy - by)) >> 1) * 100 / cost;
-        uint8_t plan = VehPrototypes[Vehs[veh_id].proto_id].plan;
-        if (plan == PLAN_DEFENSIVE) {
+        if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_DEFENSIVE) {
             score += score;
         }
-        if (plan == PLAN_COMBAT) {
+        if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_COMBAT) {
             score /= 2;
         }
         if (score > best_score) {
@@ -8137,7 +8017,8 @@ void __cdecl base_minerals() {
     if (BaseCurrent->eco_damage < 0) {
         BaseCurrent->eco_damage = 0;
     }
-    if (ascending(faction_id) && GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_TRANSCENDENCE) {
+    // Inline Voice of Planet test (ascending's body); the image never calls it here.
+    if (base_project(SP_VOICE_OF_PLANET) != SP_Unbuilt && GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_TRANSCENDENCE) {
         BaseCurrent->eco_damage *= 2;
     }
     if (GameDataStateStorage.fields_.game_state_ & STATE_PERIHELION_ACTIVE) {
@@ -8641,6 +8522,95 @@ int __cdecl pop_goal_fac(int base_id) {
         return FAC_HABITATION_DOME;
     }
     return 0; // Pop hasn't reached capacity or Base already has Hab Complex and Dome
+}
+
+// ORIGINAL: 0x004F5F30 ?base_doctors@@YAXXZ 0x004F5F30-0x004F650C
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/004f5f30.cpp", "source:src/base.h"], "reason": "Recover the selected Base's complete specialist/worker adjustment, riot eligibility, Matrix-gated removal and console warning paths through typed Base, citizen, Rules and project state. Preserve selected-base versus entry-faction distinctions and live BaseCurrent reloads across callbacks. Original unsafe accesses, full identity, seed history and matching/restoration obligations remain; no byte, ABI or runtime acceptance is implied."}
+// kind      game
+// TRIED: near-verbatim transcription of the (clean, non-SEH) Ghidra output with DAT_/FUN_ substituted for the catalogued globals and callees, and `*(char**)g_0090ea30` for the base-pointer dereference; the two duplicated "pick best doctor" loops are written out twice (matching the original's own duplication) rather than factored into a helper, to avoid the one-external-symbol risk seen on 0x00405140. Reaches MISMATCH #6 ('xor' vs 'push'); did not chase the exact register/stack layout further given the function's size.
+// Defined after best_specialist and pop_goal_fac: the image inlines both.
+void __cdecl base_doctors() {
+    int faction = BaseCurrent->faction_id_current;
+    int riot_adjust;
+    if ((BaseCurrent->state & BSTATE_DRONE_RIOTS_ACTIVE) != 0
+        && PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE]
+               + selected_base_has_fac(FAC_BROOD_PIT) * 2 < -1
+        && !pop_goal_fac(BaseIDCurrentSelected)
+        && (((has_project(SP_CLONING_VATS, faction) || BaseCurrentGrowthRate >= 6)
+             && Rules.nutrient_req_citizen != 0
+             && BaseCurrent->nutrient_surplus >= static_cast<int>(Rules.nutrient_req_citizen))
+            || BaseCurrent->nutrient_surplus + BaseCurrent->nutrients_accumulated
+                   >= cost_factor(faction, 0, BaseIDCurrentSelected)
+                          * (BaseCurrent->population_size + 1))) {
+        riot_adjust = 1;
+    } else {
+        riot_adjust = 0;
+    }
+    for (int loop = 1; loop < 10; loop++) {
+        if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction)) {
+            if (!(BaseCurrent->governor & GOV_MANAGES_CITIZENS_SPECS)) return;
+            if (!(BaseCurrent->governor & GOV_ACTIVE)) return;
+        }
+        if (BaseNutrientAdequate
+            && BaseCurrent->drone_total + riot_adjust > BaseCurrent->talent_total
+            && !has_project(SP_TELEPATHIC_MATRIX, faction)) {
+            int best = best_specialist();
+            int slot = BaseCurrent->specialist_total++;
+            if (slot < 16) {
+                BaseCurrent->spec[slot >> 3] &= ~(15 << ((slot & 7) * 4));
+                BaseCurrent->spec[slot >> 3] |= best << ((slot & 7) * 4);
+            }
+            BaseComputedID = BaseIDCurrentSelected;
+            base_support();
+            base_yield();
+            base_nutrient();
+            base_minerals();
+            base_energy();
+            if (BaseCurrent->drone_total + riot_adjust <= BaseCurrent->talent_total) {
+                if (UnkGlobal0093A934 == 0) return;
+                if (faction != ConsoleGlobal.faction_id_) return;
+                if (PlayersData[faction].se_alloc_psych > 1) return;
+                if (BaseCurrent->specialist_total - BaseCurrent->specialist_unk_1 < 2) return;
+                const int production = BaseCurrent->queue_production_id[0];
+                if (production == -6 || production == -11 || production == -12
+                    || production == -17 || production == -18) return;
+                if (production == 8 && has_project(SP_VIRTUAL_WORLD, faction)) return;
+                if ((Players[faction].rule_flags & RFLAG_ALIEN) != 0) {
+                    popb("PSYCHREQUEST", 0, -1, "Alopdir.pcx", 0);
+                } else {
+                    popb("PSYCHREQUEST", 0, -1, "talent_sm.pcx", 0);
+                }
+                return;
+            }
+        } else {
+            int old_total = BaseCurrent->specialist_total;
+            if (old_total - BaseCurrent->specialist_unk_1 <= 0) return;
+            if (BaseCurrent->state & BSTATE_DRONE_RIOTS_ACTIVE) return;
+            if (BaseCurrent->drone_total
+                && BaseCurrent->drone_total + riot_adjust >= BaseCurrent->talent_total
+                && !has_project(SP_TELEPATHIC_MATRIX, faction)) {
+                return;
+            }
+            BaseCurrent->specialist_total = old_total - 1;
+            BaseComputedID = BaseIDCurrentSelected;
+            base_support();
+            base_yield();
+            base_nutrient();
+            base_minerals();
+            base_energy();
+            if (BaseCurrent->drone_total + riot_adjust > BaseCurrent->talent_total
+                && !has_project(SP_TELEPATHIC_MATRIX, faction)) {
+                int best = best_specialist();
+                int slot = BaseCurrent->specialist_total++;
+                if (slot < 16) {
+                    BaseCurrent->spec[slot >> 3] &= ~(15 << ((slot & 7) * 4));
+                    BaseCurrent->spec[slot >> 3] |= best << ((slot & 7) * 4);
+                }
+                return;
+            }
+            if (old_total <= BaseCurrent->specialist_total) return;
+        }
+    }
 }
 
 /*
