@@ -95,417 +95,274 @@ static const char *prototype_rule_name(LPSTR string_id) {
     return StringTable.get(string_id);
 }
 
-static const char *prototype_reactor_name(int reactor_id) {
-    if (reactor_id == 0) {
-        // Preserve the original reactor-0 alias to palette storage preceding
-        // Reactor[0]. Strings::get only range-checks this borrowed address;
-        // it is not claimed to be text and is not dereferenced here.
-        return StringTable.get(const_cast<char *>(static_cast<const char *>(
-            g_PALETTE2.animation_colours(4))));
-    }
-    return prototype_rule_name(Reactor[reactor_id - 1].name_short);
-}
-
-static void add_prototype_name_suffix(char *name, const char *suffix,
-                                     bool &suffix_exhausted) {
-    char *last_suffix = 0;
-    for (char *found = strstr(name, suffix);
-         found != 0;
-         found = strstr(found + 1, suffix)) {
-        last_suffix = found;
-    }
-    if (last_suffix == 0
-        || strlen(last_suffix) > strlen(suffix) + 1) {
-        ::strcat(name, " ");
-        ::strcat(name, suffix);
-        ::strcat(name, "2");
-        return;
-    }
-    const size_t name_length = strlen(name);
-    const char final_character = name[name_length - 1];
-    if (final_character < '2' || final_character > '8') {
-        suffix_exhausted = true;
+// Bump a trailing digit of the last duplicate suffix, or append " <suffix>2".
+static inline void name_proto_suffix(char *name, int &exhausted) {
+    char *found = 0;
+    do {
+        found = strstr(found ? found + 1 : name, label_get(0xE5C / 4));
+    } while (found && strstr(found + 1, label_get(0xE5C / 4)));
+    if (found && strlen(found) <= strlen(label_get(0xE5C / 4)) + 1) {
+        char *last = &name[strlen(name) - 1];
+        if (*last >= '2' && *last < '9') {
+            (*last)++;
+        } else {
+            exhausted = 1;
+        }
     } else {
-        name[name_length - 1] = final_character + 1;
+        char number[80];
+        strcat(name, " ");
+        strcat(name, label_get(0xE5C / 4));
+        _itoa(2, number, 10);
+        strcat(name, number);
     }
 }
-
-static const char *prototype_collision_name_bytes(int candidate_id) {
-    if (candidate_id == -1) {
-        // The native negative candidate starts at Ability[27].abbreviation's
-        // object-representation bytes and continues through later fields and
-        // Ability[28]. Derive that view from the complete array object, not
-        // from a pointer to the member; keep strcmp's original unbounded read.
-        const unsigned char *const ability_bytes =
-            reinterpret_cast<const unsigned char *>(&Ability);
-        const size_t name_offset =
-            27 * sizeof Ability[0] + offsetof(RulesAbility, abbreviation);
-        return reinterpret_cast<const char *>(ability_bytes + name_offset);
-    }
-    return VehPrototypes[candidate_id].veh_name;
-}
-
-static void apply_prototype_name_collisions(
-    char *output, char *alternate_name, int prototype_id, int faction_id,
-    int chassis_id, int weapon_id, int armor_id, int ability_flags,
-    int reactor_id, int primary_alternate_difference, int &gendered_form,
-    const char *duplicate_suffix) {
-    bool suffix_exhausted = false;
-    for (int candidate_id = 0; candidate_id < MaxVehProtoNum;
-         ++candidate_id) {
-        const VehPrototype &candidate = VehPrototypes[candidate_id];
-        const int candidate_faction = candidate_id / MaxVehProtoFactionNum;
-        const bool candidate_is_other_design =
-            candidate.chassis_id != chassis_id
-            || candidate.weapon_id != weapon_id
-            || candidate.armor_id != armor_id
-            || candidate.reactor_id != reactor_id
-            || candidate.ability_flags != static_cast<uint32_t>(ability_flags);
-        if (candidate_id == prototype_id
-            || (candidate_faction != 0 && candidate_faction != faction_id)
-            || !candidate_is_other_design) {
-            continue;
-        }
-
-        if (!suffix_exhausted
-            && std::strcmp(output, candidate.veh_name) == 0) {
-            if (primary_alternate_difference != 0) gendered_form = 1;
-            add_prototype_name_suffix(output, duplicate_suffix,
-                                      suffix_exhausted);
-            // The original resets ESI before its alternate comparison even
-            // when primary and alternate forms differ.
-            candidate_id = -1;
-        }
-        if (primary_alternate_difference != 0
-            && std::strcmp(alternate_name + 1,
-                           prototype_collision_name_bytes(candidate_id)) == 0) {
-            gendered_form = 0;
-            add_prototype_name_suffix(alternate_name + 1, duplicate_suffix,
-                                      suffix_exhausted);
-            candidate_id = -1;
-        }
-    }
-}
-
 
 // ORIGINAL: 0x0057E040 ?name_proto@@YAXPADHHHHHHH@Z 0x0057E040-0x0057EF95
 // RECOVERY_BINDING: v1 {"evidence": ["git:2f89503ec251ffc8b9ff894998c01944c173a4fb:src/unrecovered/0057e040.cpp;image:0x0057E040-0x0057EF95", "pinned image:0x0057EE10 or esi,-1;0x0057EE13 test edi,edi;0x0057EE1B..0x0057EE35 builds VehPrototypes[-1].veh_name and calls strcmp", "pinned image:0x0057EF67..0x0057EF71 resets ESI after a matched alternate suffix and increments/restarts at zero", "Owned accidental storage:Ability base0x009AB538,stride0x1C,abbreviation+8 =>0x009AB834 = VehPrototypes base0x009AB868-0x34;source:src/veh.h RulesAbility;source:src/alpha.cpp ability loader", "git:2f89503ec251ffc8b9ff894998c01944c173a4fb:src/unrecovered/0057e040.cpp"], "reason": "Complete the original duplicate-name candidate loop, including its unconditional primary-collision restart before the differing-form alternate compare and its alternate-collision restart. The -1 candidate name view points to the source-owned object representation of Ability[27].abbreviation, preserving the native pointer-field-byte comparison instead of resolving the pointed-to rule string. The original unbounded strcmp read extent beyond that member remains unresolved; preserve its unsafe read/overflow behavior as an obligation. Full span and prior source/history remain intact; no byte-exact or runtime acceptance is claimed."}
 
-// TRIED: near-direct Ghidra transcription (this decompile had no extraout/jumptable warnings); table strides and Strings::get call sites were cross-checked against the disassembly, but the exact if/else vs goto shape of the two long fallback chains was not re-derived instruction-by-instruction, so byte-exactness is unlikely even though structure matches.
+// Rewritten from the image 2026-11-08 (0.94 mnemonic); the image keeps output in ebx for the
+// whole function and VC6 does not here.
 void __cdecl name_proto(char *output, int prototype_id, int faction_id,
                         int chassis_id, int weapon_id, int armor_id,
                         int ability_flags, int reactor_id) {
-    output[0] = '\0';
-    for (int ability_id = 0; ability_id < MaxAbilityNum; ++ability_id) {
-        if ((static_cast<uint32_t>(ability_flags) & (1u << ability_id)) == 0) {
-            continue;
+    *output = '\0';
+    for (int ability_id = 0; ability_id < MaxAbilityNum; ability_id++) {
+        if (ability_flags & (1 << ability_id)
+            && strlen(StringTable.get(Ability[ability_id].abbreviation))
+            && (ability_id != abil_index(ABL_AIR_SUPERIORITY)
+                || Chassis[chassis_id].triad != TRIAD_AIR)
+            && ability_id != abil_index(ABL_ARTILLERY)
+            && (ability_id != abil_index(ABL_AMPHIBIOUS)
+                || Chassis[chassis_id].speed != 1
+                || Weapon[weapon_id].offense_rating < Armor[armor_id].defense_rating
+                || ability_flags & ABL_ARTILLERY)) {
+            strcat(output, StringTable.get(Ability[ability_id].abbreviation));
+            strcat(output, " ");
+            break;
         }
-        const char *abbreviation = StringTable.get(
-            Ability[ability_id].abbreviation);
-        if (::strlen(abbreviation) == 0) continue;
-        const RulesChassis &chassis = Chassis[chassis_id];
-        if (ability_id == 5 && chassis.triad == TRIAD_AIR) continue;
-        if (ability_id == 15) continue;
-        if (ability_id == 3 && chassis.speed == 1
-            && Weapon[weapon_id].offense_rating
-                >= Armor[armor_id].defense_rating
-            && (ability_flags & 0x8000) == 0) {
-            continue;
-        }
-        abbreviation = StringTable.get(Ability[ability_id].abbreviation);
-        ::strcat(output, abbreviation);
-        ::strcat(output, " ");
-        break;
     }
-
-    char alternate_name[257];
-    alternate_name[0] = '\0';
-    ::strcpy(alternate_name + 1, output);
-    const RulesChassis &chassis = Chassis[chassis_id];
-    const RulesWeapon &weapon = Weapon[weapon_id];
-    const RulesArmor &armor = Armor[armor_id];
-    int name_form_quality = 0;
-    int chassis_is_not_basic = 0;
-    if (weapon.mode < 3) {
-        int name_combat_rating;
-        int name_rating_limit;
-        if (weapon.offense_rating < armor.defense_rating) {
-            name_combat_rating = 6;
+    char alternate[256];
+    strcpy(alternate, output);
+    int quality = 0;
+    int not_sea;
+    if (Weapon[weapon_id].mode < 3) {
+        int combat;
+        int limit;
+        if (Armor[armor_id].defense_rating <= Weapon[weapon_id].offense_rating) {
+            combat = 3;
+            limit = Armor[armor_id].defense_rating;
         } else {
-            name_combat_rating = 3;
-            name_rating_limit = armor.defense_rating;
+            combat = 6;
+            limit = Weapon[weapon_id].offense_rating;
         }
-        if (weapon.offense_rating < armor.defense_rating) {
-            name_rating_limit = weapon.offense_rating;
+        if (Chassis[chassis_id].triad == TRIAD_SEA) {
+            combat++;
         }
-        if (chassis.triad == TRIAD_SEA) {
-            ++name_combat_rating;
+        if (Chassis[chassis_id].triad == TRIAD_AIR) {
+            combat += combat / 2;
         }
-        if (chassis.triad == TRIAD_AIR) {
-            name_combat_rating += name_combat_rating / 2;
+        if (limit > combat) {
+            quality = 1;
         }
-        name_form_quality = name_combat_rating < name_rating_limit;
-        chassis_is_not_basic = chassis.triad != TRIAD_SEA;
-        const char *large_offense_form = StringTable.get(chassis.offsv_lrg_name);
-        bool has_paired_large_forms = false;
-        if (strlen(large_offense_form) != 0) {
-            const char *large_defense_form = StringTable.get(chassis.defsv_lrg_name);
-            has_paired_large_forms = strlen(large_defense_form) != 0;
+        not_sea = Chassis[chassis_id].triad != TRIAD_SEA;
+        if (!strlen(StringTable.get(Chassis[chassis_id].offsv_lrg_name))
+            || !strlen(StringTable.get(Chassis[chassis_id].defsv_lrg_name))) {
+            quality = 0;
         }
-        if (!has_paired_large_forms) name_form_quality = 0;
     }
-
-    const int weapon_rating = weapon.offense_rating;
-    bool has_gendered_name_branch = false;
-    int gendered_form = (reactor_id - 1 ^ faction_id) & 1;
-    const VehPrototype &named_prototype = VehPrototypes[prototype_id];
-    if (named_prototype.unk_1 == 10
-        && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << (faction_id & 0x1f))) == 0
-        && chassis.speed > 1) {
-        has_gendered_name_branch = true;
-    } else if (weapon_rating <= chassis.speed
-               && armor.defense_rating <= chassis.speed
-               && weapon_rating >= 0
-               && chassis.triad == TRIAD_LAND) {
-        has_gendered_name_branch = true;
-    }
-
-    bool has_unique_chassis_form = false;
-    if (has_gendered_name_branch && weapon.mode < 3) {
-        if (!has_abil(prototype_id, ABL_POLICE_2X)) {
-            int chassis_form_label = weapon_rating < 2 ? 0x248 : 0x2d8;
-            const char *chassis_form = label_get(chassis_form_label / 4);
-            ::strcat(output, chassis_form);
-            ::strcat(alternate_name + 1, chassis_form);
-        } else {
-            size_t primary_length = strlen(output);
-            if (primary_length != 0) output[primary_length - 1] = '\0';
-            size_t alternate_length = strlen(alternate_name + 1);
-            if (alternate_length != 0) {
-                const size_t shortened_length = strlen(output);
-                alternate_name[shortened_length] = '\0';
+    int gendered = (reactor_id - 1 ^ faction_id) & 1;
+    int unique = 0;
+    if ((VehPrototypes[prototype_id].unk_1 == 10 && !is_human(faction_id)
+         && Chassis[chassis_id].speed > 1)
+        || (Chassis[chassis_id].speed >= Weapon[weapon_id].offense_rating
+            && Chassis[chassis_id].speed >= Armor[armor_id].defense_rating
+            && Weapon[weapon_id].offense_rating >= 0
+            && Chassis[chassis_id].triad == TRIAD_LAND)) {
+        if (Weapon[weapon_id].mode < 3) {
+            if (has_abil(prototype_id, ABL_POLICE_2X)) {
+                if (strlen(output)) {
+                    output[strlen(output) - 1] = '\0';
+                }
+                if (strlen(alternate)) {
+                    alternate[strlen(output) - 1] = '\0';
+                }
+            } else if (Weapon[weapon_id].offense_rating >= 2) {
+                strcat(output, label_get(0x2D8 / 4));
+                strcat(alternate, label_get(0x2D8 / 4));
+            } else {
+                strcat(output, label_get(0x248 / 4));
+                strcat(alternate, label_get(0x248 / 4));
             }
+            unique = 1;
+            gendered = Chassis[chassis_id].speed > 1;
         }
-        has_unique_chassis_form = true;
-        gendered_form = chassis.speed > 1;
     }
-
-    int lower_reactor_design = 0;
-    if (!has_unique_chassis_form) {
-        for (int walk = 0; walk < 2 * MaxVehProtoFactionNum; ++walk) {
-            const int candidate_id = walk < MaxVehProtoFactionNum
-                ? walk : faction_id * MaxVehProtoFactionNum + (walk & 0x3f);
-            const VehPrototype &candidate = VehPrototypes[candidate_id];
-            if ((candidate.flags & PROTO_ACTIVE) != 0
-                && candidate.plan == named_prototype.plan
-                && candidate.chassis_id == chassis_id) {
-                if (candidate.reactor_id >= named_prototype.reactor_id) {
-                    lower_reactor_design = 0;
+    int lower = 0;
+    if (!unique) {
+        for (int walk = 0; walk < 2 * MaxVehProtoFactionNum; walk++) {
+            const int id = walk % MaxVehProtoFactionNum
+                + (walk < MaxVehProtoFactionNum ? 0 : faction_id * MaxVehProtoFactionNum);
+            if (VehPrototypes[id].flags & PROTO_ACTIVE
+                && VehPrototypes[id].plan == VehPrototypes[prototype_id].plan
+                && VehPrototypes[id].chassis_id == VehPrototypes[prototype_id].chassis_id) {
+                if (VehPrototypes[id].reactor_id >= VehPrototypes[prototype_id].reactor_id) {
+                    lower = 0;
                     break;
                 }
-                lower_reactor_design = 1;
+                lower = 1;
             }
         }
     }
-
-    const char *weapon_short_name = prototype_rule_name(weapon.name_short);
-    const char *alternate_form = "";
-    bool handled_name_case = false;
-    if (weapon_rating < armor.defense_rating
-        && weapon.mode < 3
-        && weapon_rating >= 0
-        && (static_cast<uint32_t>(ability_flags) & ABL_ARTILLERY) == 0) {
-        if (!has_unique_chassis_form) {
-            gendered_form ^= static_cast<uint8_t>(armor.defense_rating) & 1;
-            const char *component_name = lower_reactor_design == 0
-                ? prototype_rule_name(armor.name_short)
-                : prototype_reactor_name(reactor_id);
-            ::strcat(output, component_name);
-            ::strcat(alternate_name + 1, component_name);
+    if (Armor[armor_id].defense_rating > Weapon[weapon_id].offense_rating
+        && Weapon[weapon_id].mode < 3 && Weapon[weapon_id].offense_rating >= 0
+        && !(ability_flags & ABL_ARTILLERY)) {
+        if (!unique) {
+            gendered ^= Armor[armor_id].defense_rating & 1;
+            if (lower) {
+                strcat(output, StringTable.get(Reactor[reactor_id - 1].name_short));
+                strcat(alternate, StringTable.get(Reactor[reactor_id - 1].name_short));
+            } else {
+                strcat(output, StringTable.get(Armor[armor_id].name_short));
+                strcat(alternate, StringTable.get(Armor[armor_id].name_short));
+            }
         }
-        ::strcat(output, " ");
-        ::strcat(alternate_name + 1, " ");
-        ::strcat(output, prototype_rule_name(chassis.defsv_1_name));
-
-        if (!has_unique_chassis_form || (prototype_id & 1) == 0) {
-            alternate_form = prototype_rule_name(
-                name_form_quality == 0 || chassis_is_not_basic != 0
-                    ? chassis.defsv_2_name : chassis.defsv_lrg_name);
+        strcat(output, " ");
+        strcat(alternate, " ");
+        strcat(output, StringTable.get(Chassis[chassis_id].defsv_1_name));
+        if (unique && prototype_id & 1) {
+            strcat(alternate, StringTable.get(quality && not_sea
+                ? Chassis[chassis_id].defsv_lrg_name : Chassis[chassis_id].defsv_1_name));
         } else {
-            alternate_form = prototype_rule_name(
-                name_form_quality == 0 || chassis_is_not_basic == 0
-                    ? chassis.defsv_1_name : chassis.defsv_lrg_name);
+            strcat(alternate, StringTable.get(quality && !not_sea
+                ? Chassis[chassis_id].defsv_lrg_name : Chassis[chassis_id].defsv_2_name));
         }
-        handled_name_case = true;
+    } else if (Chassis[chassis_id].triad == TRIAD_AIR && ability_flags & ABL_AIR_SUPERIORITY
+               && Weapon[weapon_id].mode < 3 && Weapon[weapon_id].offense_rating >= 0) {
+        if (!unique) {
+            if (lower) {
+                strcat(output, StringTable.get(Reactor[reactor_id - 1].name_short));
+                strcat(alternate, StringTable.get(Reactor[reactor_id - 1].name_short));
+            } else {
+                strcat(output, StringTable.get(Weapon[weapon_id].name_short));
+                strcat(alternate, StringTable.get(Weapon[weapon_id].name_short));
+            }
+        }
+        strcat(output, " ");
+        strcat(alternate, " ");
+        strcat(output, StringTable.get(Chassis[chassis_id].defsv_1_name));
+        if (unique && prototype_id & 1) {
+            strcat(alternate, StringTable.get(quality && not_sea
+                ? Chassis[chassis_id].defsv_lrg_name : Chassis[chassis_id].defsv_1_name));
+        } else {
+            strcat(alternate, StringTable.get(quality && !not_sea
+                ? Chassis[chassis_id].defsv_lrg_name : Chassis[chassis_id].defsv_2_name));
+        }
+    } else if (Chassis[chassis_id].missile && Weapon[weapon_id].offense_rating >= 99) {
+        strcat(output, StringTable.get(Reactor[reactor_id - 1].name_short));
+        strcat(alternate, StringTable.get(Reactor[reactor_id - 1].name_short));
+        strcat(output, " ");
+        strcat(alternate, " ");
+        strcat(output, StringTable.get(Weapon[weapon_id].name_short));
+        strcat(alternate, StringTable.get(Weapon[weapon_id].name_short));
+    } else if (Chassis[chassis_id].missile && (weapon_id == 24 || weapon_id == 25)) {
+        strcat(output, StringTable.get(Weapon[weapon_id].name_short));
+        strcat(alternate, StringTable.get(Weapon[weapon_id].name_short));
+        strcat(output, " ");
+        strcat(alternate, " ");
+        strcat(output, StringTable.get(Reactor[reactor_id - 1].name_short));
+        strcat(alternate, StringTable.get(Reactor[reactor_id - 1].name_short));
+        strcat(output, " ");
+        strcat(alternate, " ");
+        strcat(output, StringTable.get(Chassis[chassis_id].offsv_1_name));
+        strcat(alternate, StringTable.get(Chassis[chassis_id].offsv_1_name));
     } else {
-        const bool air_superiority_name_case =
-            chassis.triad == TRIAD_AIR
-            && (static_cast<uint32_t>(ability_flags) & ABL_AIR_SUPERIORITY) != 0
-            && weapon.mode < 3 && weapon_rating >= 0;
-        if (air_superiority_name_case) {
-            if (!has_unique_chassis_form) {
-                const char *component_name = lower_reactor_design != 0
-                    ? prototype_reactor_name(reactor_id) : weapon_short_name;
-                ::strcat(output, component_name);
-                ::strcat(alternate_name + 1, component_name);
+        if (Weapon[weapon_id].mode >= 3 && chassis_id) {
+            if (reactor_id > 1) {
+                strcat(output, StringTable.get(Reactor[reactor_id - 1].name_short));
+                strcat(alternate, StringTable.get(Reactor[reactor_id - 1].name_short));
+                strcat(output, " ");
+                strcat(alternate, " ");
             }
-            ::strcat(output, " ");
-            ::strcat(alternate_name + 1, " ");
-            ::strcat(output, prototype_rule_name(chassis.defsv_1_name));
-            if (has_unique_chassis_form && (prototype_id & 1) != 0) {
-                alternate_form = prototype_rule_name(
-                    name_form_quality != 0 && chassis_is_not_basic != 0
-                        ? chassis.defsv_lrg_name : chassis.defsv_1_name);
-            } else {
-                alternate_form = prototype_rule_name(
-                    name_form_quality != 0 && chassis_is_not_basic == 0
-                        ? chassis.defsv_lrg_name : chassis.defsv_2_name);
-            }
-            handled_name_case = true;
-        } else {
-            if (chassis.missile != 0) {
-                if (weapon_rating > 'b') {
-                    const char *reactor_name = prototype_reactor_name(reactor_id);
-                    ::strcat(output, reactor_name);
-                    ::strcat(alternate_name + 1, reactor_name);
-                    ::strcat(output, " ");
-                    ::strcat(alternate_name + 1, " ");
-                    ::strcat(output, weapon_short_name);
-                    ::strcat(alternate_name + 1, weapon_short_name);
-                    alternate_form = "";
-                    handled_name_case = true;
-                } else if (weapon_id == 0x18 || weapon_id == 0x19) {
-                    const char *reactor_name = prototype_reactor_name(reactor_id);
-                    ::strcat(output, weapon_short_name);
-                    ::strcat(alternate_name + 1, weapon_short_name);
-                    ::strcat(output, " ");
-                    ::strcat(alternate_name + 1, " ");
-                    ::strcat(output, reactor_name);
-                    ::strcat(alternate_name + 1, reactor_name);
-                    ::strcat(output, " ");
-                    ::strcat(alternate_name + 1, " ");
-                    alternate_form = prototype_rule_name(chassis.offsv_1_name);
-                    ::strcat(output, alternate_form);
-                    ::strcat(alternate_name + 1, alternate_form);
-                    alternate_form = "";
-                    handled_name_case = true;
-                }
-            }
-        }
-
-        if (!handled_name_case) {
-            if (weapon.mode > 2 && chassis_id != 0) {
-                if (reactor_id > 1) {
-                    const char *reactor_name = prototype_reactor_name(reactor_id);
-                    ::strcat(output, reactor_name);
-                    ::strcat(alternate_name + 1, reactor_name);
-                    ::strcat(output, " ");
-                    ::strcat(alternate_name + 1, " ");
-                }
-                const bool special_vehicle_mode =
-                    weapon.mode == 7 && chassis_id == 3;
-                const bool special_air_mode =
-                    weapon.mode == 9 && chassis.triad == TRIAD_LAND
-                    && strchr(output, ' ') != 0;
-                if (!special_vehicle_mode && !special_air_mode) {
-                    if ((weapon.mode == 8 || weapon.mode == 9)
-                        && chassis_id == 3) {
-                        alternate_form = label_get(0x28c / 4);
-                        ::strcat(output, alternate_form);
-                        ::strcat(alternate_name + 1, alternate_form);
-                    } else {
-                        ::strcat(output,
-                                 prototype_rule_name(chassis.offsv_lrg_name));
-                        alternate_form =
-                            prototype_rule_name(chassis.offsv_2_name);
-                        ::strcat(alternate_name + 1, alternate_form);
-                    }
-                    ::strcat(output, " ");
-                    ::strcat(alternate_name + 1, " ");
-                }
-            }
-
-            if (!has_unique_chassis_form) {
-                gendered_form ^= static_cast<uint8_t>(weapon_rating) & 1;
-                ::strcat(output, weapon_short_name);
-                ::strcat(alternate_name + 1, weapon_short_name);
-            }
-
-            if (weapon.mode > 2) {
-                handled_name_case = true;
-                alternate_form = "";
-            } else if ((static_cast<uint32_t>(ability_flags) & ABL_ARTILLERY) == 0) {
-                if ((static_cast<uint32_t>(ability_flags) & ABL_AMPHIBIOUS) == 0
-                    || chassis.speed != 1
-                    || weapon_rating <= armor.defense_rating) {
-                    ::strcat(output, " ");
-                    if (lower_reactor_design == 0) {
-                        alternate_form = prototype_rule_name(
-                            name_form_quality == 0 || chassis_is_not_basic == 0
-                                ? chassis.offsv_1_name : chassis.offsv_lrg_name);
-                        ::strcat(output, alternate_form);
-                    } else {
-                        ::strcat(output, prototype_reactor_name(reactor_id));
-                    }
-                    ::strcat(alternate_name + 1, " ");
-                    alternate_form = lower_reactor_design != 0
-                        ? prototype_reactor_name(reactor_id)
-                        : prototype_rule_name(
-                            name_form_quality == 0 || chassis_is_not_basic != 0
-                                ? chassis.offsv_2_name : chassis.offsv_lrg_name);
-                    handled_name_case = true;
+            if ((Weapon[weapon_id].mode != 7 || chassis_id != 3)
+                && (Weapon[weapon_id].mode != 9 || Chassis[chassis_id].triad != TRIAD_LAND
+                    || !strchr(output, ' '))) {
+                if ((Weapon[weapon_id].mode == 8 || Weapon[weapon_id].mode == 9)
+                    && chassis_id == 3) {
+                    strcat(output, label_get(0x28C / 4));
+                    strcat(alternate, label_get(0x28C / 4));
                 } else {
-                    ::strcat(output, " ");
-                    alternate_form = label_get(0x998 / 4);
-                    ::strcat(output, alternate_form);
-                    ::strcat(alternate_name + 1, " ");
-                    alternate_form = label_get(0x99c / 4);
-                    handled_name_case = true;
+                    strcat(output, StringTable.get(Chassis[chassis_id].offsv_1_name));
+                    strcat(alternate, StringTable.get(Chassis[chassis_id].offsv_2_name));
                 }
-            } else {
-                ::strcat(output, " ");
-                alternate_form = label_get(0x87c / 4);
-                ::strcat(output, alternate_form);
-                ::strcat(alternate_name + 1, " ");
-                alternate_form = label_get(0x880 / 4);
-                handled_name_case = true;
+                strcat(output, " ");
+                strcat(alternate, " ");
             }
         }
-
-        if (!handled_name_case) {
-            if (!has_unique_chassis_form) {
-                const char *component_name = lower_reactor_design == 0
-                    ? weapon_short_name : prototype_reactor_name(reactor_id);
-                ::strcat(output, component_name);
-                ::strcat(alternate_name + 1, component_name);
-            }
-            ::strcat(output, " ");
-            ::strcat(alternate_name + 1, " ");
-            ::strcat(output, prototype_rule_name(chassis.defsv_1_name));
-            if (!has_unique_chassis_form || (prototype_id & 1) == 0) {
-                alternate_form = prototype_rule_name(
-                    name_form_quality == 0 || chassis_is_not_basic != 0
-                        ? chassis.defsv_2_name : chassis.defsv_lrg_name);
+        if (!unique) {
+            gendered ^= Weapon[weapon_id].offense_rating & 1;
+            strcat(output, StringTable.get(Weapon[weapon_id].name_short));
+            strcat(alternate, StringTable.get(Weapon[weapon_id].name_short));
+        }
+        if (Weapon[weapon_id].mode < 3) {
+            if (ability_flags & ABL_ARTILLERY) {
+                strcat(output, " ");
+                strcat(output, label_get(0x87C / 4));
+                strcat(alternate, " ");
+                strcat(alternate, label_get(0x880 / 4));
+            } else if (ability_flags & ABL_AMPHIBIOUS && Chassis[chassis_id].speed == 1
+                       && Weapon[weapon_id].offense_rating > Armor[armor_id].defense_rating) {
+                strcat(output, " ");
+                strcat(output, label_get(0x998 / 4));
+                strcat(alternate, " ");
+                strcat(alternate, label_get(0x99C / 4));
             } else {
-                alternate_form = prototype_rule_name(
-                    name_form_quality == 0 || chassis_is_not_basic == 0
-                        ? chassis.defsv_1_name : chassis.defsv_lrg_name);
+                strcat(output, " ");
+                if (lower) {
+                    strcat(output, StringTable.get(Reactor[reactor_id - 1].name_short));
+                } else {
+                    strcat(output, StringTable.get(quality && not_sea
+                        ? Chassis[chassis_id].offsv_lrg_name : Chassis[chassis_id].offsv_1_name));
+                }
+                strcat(alternate, " ");
+                if (lower) {
+                    strcat(alternate, StringTable.get(Reactor[reactor_id - 1].name_short));
+                } else {
+                    strcat(alternate, StringTable.get(quality && !not_sea
+                        ? Chassis[chassis_id].offsv_lrg_name : Chassis[chassis_id].offsv_2_name));
+                }
             }
         }
     }
-
-    ::strcat(alternate_name + 1, alternate_form);
-
-    const int primary_alternate_difference =
-        std::strcmp(output, alternate_name + 1);
-    const char *duplicate_suffix = label_get(0xe5c / 4);
-    apply_prototype_name_collisions(
-        output, alternate_name, prototype_id, faction_id, chassis_id,
-        weapon_id, armor_id, ability_flags, reactor_id,
-        primary_alternate_difference, gendered_form, duplicate_suffix);
-
-    if (gendered_form != 0) {
-        ::strcpy(output, alternate_name + 1);
+    const int same = !strcmp(output, alternate);
+    int exhausted = 0;
+    for (int proto_id = 0; proto_id < MaxVehProtoNum; proto_id++) {
+        if (proto_id == prototype_id) continue;
+        const int proto_faction = proto_id / MaxVehProtoFactionNum;
+        if (proto_faction && proto_faction != faction_id) continue;
+        if (VehPrototypes[proto_id].chassis_id == chassis_id
+            && VehPrototypes[proto_id].weapon_id == weapon_id
+            && VehPrototypes[proto_id].armor_id == armor_id
+            && VehPrototypes[proto_id].reactor_id == reactor_id
+            && VehPrototypes[proto_id].ability_flags == (uint32_t)ability_flags) {
+            continue;
+        }
+        if (!exhausted && !strcmp(output, VehPrototypes[proto_id].veh_name)) {
+            if (!same) {
+                gendered = 1;
+            }
+            name_proto_suffix(output, exhausted);
+            proto_id = -1;
+        }
+        // BUG(original): after a restart proto_id is -1 here, so this reads
+        // the name slot just before VehPrototypes[0].
+        if (!same && !strcmp(alternate, VehPrototypes[proto_id].veh_name)) {
+            gendered = 0;
+            name_proto_suffix(alternate, exhausted);
+            proto_id = -1;
+        }
+    }
+    if (gendered) {
+        strcpy(output, alternate);
     }
 }
 
@@ -1505,1059 +1362,822 @@ void __cdecl base_kill(int base_id);
 
 
 
-namespace goody_box_detail {
-
-static Map *tile_at(int x, int y) {
-    return &MapTiles[MapLongitude * y + (x >> 1)];
-}
-
-static int wrap_x(int x) {
-    if (!(MapIsFlat & 1)) {
-        if (x < 0) x += MapLongitudeBounds;
-        else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
-    }
-    return x;
-}
-
-static int on_map(int x, int y) {
-    return x >= 0 && x < MapLongitudeBounds
-        && y >= 0 && y < MapLatitudeBounds;
-}
-
-// Convert 32-bit two's-complement bits without implementation-defined casts.
-static int signed_from_bits(uint32_t bits) {
-    if (bits <= 0x7FFFFFFFu) return (int)bits;
-    return -1 - (int)(~bits);
-}
-
-// Native CDQ/SUB/SAR: negative inputs add one before arithmetic shift, so
-// this is truncation toward zero (not floor division).
-static int native_half(int value) {
-    const uint32_t bits = (uint32_t)value;
-    const uint32_t corrected = bits - (value < 0 ? 0xFFFFFFFFu : 0u);
-    return signed_from_bits((corrected >> 1)
-        | (corrected & 0x80000000u));
-}
-
-// Native add wraps to32 bits before signed normalized remainder by8.
-// Negative remainder is not repaired into a positive array index: the
-// original's invalid negative-turn/table cases remain unverified obligations.
-static int rotated_spawn_index(int location, int turn) {
-    return signed_from_bits((uint32_t)location + (uint32_t)turn) % 8;
-}
-
-static int native_threshold_passes(int event_id, uint32_t game_state,
-                                   int owned_distance, int terrain_factor,
-                                   int native_lifeforms) {
-    const uint32_t game_factor = ((game_state & 0x00100000u) != 0) + 1u;
-    const uint32_t lhs = game_factor * (uint32_t)owned_distance;
-    const uint32_t population = 4u - (uint32_t)native_lifeforms;
-    const uint32_t rhs = (uint32_t)(event_id - 13) * (uint32_t)terrain_factor
-                       + population * 2u;
-    return signed_from_bits(lhs) >= signed_from_bits(rhs);
-}
-
-static void redraw_world() {
-    world_climate();
-    draw_map(1);
-}
-
-static int reveal_nearby_terrain(int x, int y, int faction_id,
-                                 int native_terrain, int local) {
-    const int source_region = tile_at(x, y)->region;
-    for (int radius = 0; radius < 121; ++radius) {
-        int tx = x + RadiusOffsetX[radius];
-        if (!(MapIsFlat & 1)) {
-            if (tx < 0) tx += MapLongitudeBounds;
-            else if (tx >= MapLongitudeBounds) tx -= MapLongitudeBounds;
-        }
-        const int ty = y + RadiusOffsetY[radius];
-        if (!on_map(tx, ty)) continue;
-        if (native_terrain) {
-            Map *nearby_tile = tile_at(tx, ty);
-            if ((nearby_tile->climate & 0xE0) >= 0x60) continue;
-            if (nearby_tile->region != source_region) continue;
-        }
-        spot_loc(tx, ty, faction_id);
-    }
-    if (local) {
-        g_FX.play(0x16);
-        NetMsgPrimary.pop(native_terrain ? "GOODYSONAR" : "GOODYVIEW",
-                          5000, 0,
-                          native_terrain ? "supply_sm.pcx" : 0);
-        g_FX.fade(0x16);
-    }
-    draw_map(1);
-    return 0;
-}
-
-static int relocation_random_below(int bound) {
-    if (bound != 1 && bound > 1) return rand() % bound;
-    return 0;
-}
-
-static uint32_t normalized_crt_mask_draw() {
-    uint32_t value = (uint32_t)rand() & 0x80000001u;
-    if (value & 0x80000000u)
-        value = (value & 1u) ? 0xFFFFFFFFu : 0;
-    return value;
-}
-
-static uint32_t normalized_crt_mask_3_draw() {
-    uint32_t value = (uint32_t)rand() & 0x80000003u;
-    if (value & 0x80000000u)
-        value = ((value - 1u) | 0xFFFFFFFCu) + 1u;
-    return value;
-}
-
-static int reroll_event(int y, int &attempt, int &event_id) {
-    // Native draws %14 before checking the retry limit, increments attempt
-    // zero to one, and promotes attempt two to three before boundary draws.
-    event_id = rand() % 14;
-    if (attempt) {
-        if (attempt >= 3) return 0;
-        if (attempt == 2) attempt = 3;
-    } else {
-        attempt = 1;
-    }
-    if ((y == 0 || y == MapLatitudeBounds - 1) && rand() % 3 == 0)
-        event_id = 12;
-    if (rand() % 100 == 0) event_id = 18;
-    return 1;
-}
-
-static int relocate_vehicle(int veh_id, int x, int y, int faction_id,
-                            int native_terrain, int local) {
-    const int proto_id = Vehs[veh_id].proto_id;
-    const int plan = VehPrototypes[proto_id].plan;
-    const int chassis_id = VehPrototypes[proto_id].chassis_id;
-    int radius_limit;
-    if (Chassis[chassis_id].triad == 0 && plan != 8) {
-        radius_limit = (plan != 9 ? 0x10 : 0) + 8;
-    } else {
-        const uint32_t coin = goody_box_detail::normalized_crt_mask_draw();
-        if (coin == 0) return 0;
-        radius_limit = 8;
-    }
-
-    const int source_region = tile_at(x, y)->region;
-    int attempts = 0;
-    int target_x = 0;
-    int target_y = 0;
-    for (;;) {
-        int raw_x = relocation_random_below(MapLongitudeBounds);
-        const int raw_y = relocation_random_below(MapLatitudeBounds);
-        int adjusted_x = raw_x;
-        if (raw_x & 1) adjusted_x = raw_x - 1;
-        if (raw_y & 1) adjusted_x += 1;
-        target_x = adjusted_x;
-        target_y = raw_y;
-        ++attempts;
-        if (attempts >= 1000) return 0;
-
-        if (!on_map(target_x, target_y)) continue;
-        Map *target = tile_at(target_x, target_y);
-        if (((target->climate & 0xE0) < 0x60) != native_terrain) continue;
-        if (target->region != source_region) continue;
-        if ((target->bit & 3u) != 0 && (target->val3 & 0x0F) < 8) continue;
-        if (zoc_any(target_x, target_y, faction_id) != 0) continue;
-        if (PlayersData[faction_id].flags & 0x200u) continue;
-        if (target->visibility & (1u << (faction_id & 0x1F))) continue;
-
-        int x_distance = abs(x - target_x);
-        if (!(MapIsFlat & 1) && MapLongitude < x_distance)
-            // Pinned57B6B8/57B6FE subtract from949870 full map width;
-            // the preceding68FAF0 comparison uses only the half-width stride.
-            x_distance = MapLongitudeBounds - x_distance;
-        const int manhattan_distance = abs(y - target_y) + x_distance;
-        // Native first rejects a close site using the even-rounded full
-        // Manhattan sum, then independently halves that sum for radius.
-        if ((manhattan_distance & ~1) <= 8) continue;
-        const int distance = manhattan_distance >> 1;
-        if (distance <= radius_limit) break;
-    }
-
-    if (local) {
-        NetMsgPrimary.pop(native_terrain ? "GOODYWAVE" : "GOODYGATE",
-                          -5000, 0, native_terrain ? "stars_sm.pcx" : 0);
-    }
-    Vehs[veh_id].moves_expended = 0;
-    Vehs[veh_id].order = 0;
-    Vehs[veh_id].state &= 0xFCFFFDFFu;
-    const int moved_stack = stack_veh(veh_id, 1);
-    stack_put(moved_stack, target_x, target_y);
-    if (Vehs[veh_id].faction_id != ConsoleGlobal.faction_id_) {
-        draw_tile(x, y, 2);
-    } else {
-        draw_tile_fixup(x, y, has_abil(proto_id, 2), 2);
-    }
-    if (local) {
-        ConsoleGlobal.focus(target_x, target_y, faction_id);
-        MapWinTable[0]->redraw();
-    }
-    spot_all(veh_id, 1);
-    return 1;
-}
-
-static int local_player(int faction_id) {
-    return ConsoleGlobal.faction_id_ == faction_id;
-}
-
-static void notify_energy(int faction_id, int amount, int native_side, int local) {
-    PlayersData[faction_id].energy_reserves += amount;
-    if (local) {
-        parse_num(0, amount);
-        g_FX.play(0x16);
-        NetMsgPrimary.pop(native_side ? "GOODYHYDROGEN" : "GOODYURANIUM",
-                          -5000, 0,
-                          native_side ? "supply_sm.pcx" : 0);
-        g_FX.fade(0x16);
-        ConsoleInfoWin.on_redraw();
-    }
-}
-
-static int give_random_technology(int faction_id, int notify, int forced,
-                                  int native_terrain) {
-    const int start = rand();
-    for (int count = 0; count < 89; ++count) {
-        const int tech_id = (start % 89 + count) % 89;
-        if (has_tech(tech_id, faction_id)) continue;
-        if (!tech_avail(tech_id, faction_id)) continue;
-        if (tech_is_preq(tech_id, 0x30, 9999)
-            && !GameDataStateStorage.fields_.game_tech_achieved_[TECH_BRAIN])
-            continue;
-        const RulesTechnology &definition = Technology[tech_id];
-        int terminal_prerequisites = 0;
-        const int prerequisites[2] = { definition.preq_tech_1,
-                                        definition.preq_tech_2 };
-        for (int slot = 0; slot < 2; ++slot) {
-            const int parent = prerequisites[slot];
-            if (parent == -1) ++terminal_prerequisites;
-            else if (parent >= 0
-                     && Technology[parent].preq_tech_1 == -1
-                     && Technology[parent].preq_tech_2 == -1) {
-                ++terminal_prerequisites;
-                break;
-            }
-        }
-        if (terminal_prerequisites < 2) continue;
-        if (tech_id == 0x4E || tech_id == 0x4F || tech_id == 0x51
-            || tech_id == 0x52 || tech_id == 0x53) continue;
-        if (!forced) ++PlayersData[faction_id].tech_achieved;
-        if (notify) {
-            clear();
-            says("GOODYDATA");
-            if (IsMultiplayerNet) {
-                says("1");
-                parse_say(0, Technology[tech_id].name, -1, -1);
-            }
-            NetMsgPrimary.pop(StringTemp,
-                              native_terrain ? 5000 : -5000, 0,
-                              "supply_sm.pcx");
-        }
-        tech_achieved(faction_id, tech_id, -1, 0);
-        // tech_achieved owns its normal count increment. Native forced gifts
-        // cancel that increment after the callback, while unforced gifts keep
-        // it in addition to the pre-callback count recorded above.
-        if (forced) --PlayersData[faction_id].tech_achieved;
-        return tech_id;
-    }
-    return -1;
-}
-
-} // namespace goody_box_detail
 
 
 // ORIGINAL: 0x0057A660 ?goody_box@@YAHHH@Z 0x0057A660-0x0057CDE6
 // RECOVERY_BINDING: v1 {"evidence": ["task:goody-box-owner", "pinned:57A660..57CDE6 whole dispatcher; original two-int ABI, unused second parameter and seed findings preserved.", "pinned:A8D2 live vehicle x/y retry reload; spawned vehicle prototype/chassis triad read after veh_init; separate event9 and cases12..17 radius paths.", "pinned:B4D8..B874 relocation stack_veh/stack_put/render/focus/spot_all order;CC16..CDE6 retry/resource/overflow gates;A9A1 GameRules reload.", "source:existing Veh/PlayerData/Base/Map/technology declarations and bounded shared radius arrays; map-window public draw_tile_fixup APIs own original render calls.", "historical seed:src/unrecovered/0057a660.cpp mapping and parsed dispatch findings retained."], "reason": "Recover the complete original pod outcome dispatcher through source-owned vehicle, faction, base, technology and map state; retain original identity/spans and historical seed findings, without executable calls or raw storage aliases."}
-// DEFERRED: structurally the most promising remaining shape in this batch, not yet landed. Frame is only 0x34 bytes (plain locals, no embedded C++ objects), and the function is a dispatcher: a 26-entry jump table at 0x0057A9BF (targets listed in this file's own brief, already resolved from the image - cases 12-17 share one target 0x0057C5C8, and two more small tables at 0x0057C451/0x0057C531 handle an 8-way and 4-way sub-dispatch off the tail of that). That makes this closer to "26 mostly-independent small case bodies" than one tangled 10KB function - each case is a self-contained goody-box outcome (energy, new tech, new unit, mines, artifact, ...), calling _rand(29x)/?pop@NetMsg@@(25x, the popup message)/ ?bit_set@@(15x, faction tech/facility grant)/?veh_init@@(9x, spawn a unit)/?parse_says@@/?play@FX@@/?draw_tile@@/?base_find@@ - none of which chain into the register-computed multi-field arithmetic that made the two smaller functions in this batch unsafe to rush. Still 3172 instructions / 1243 Ghidra lines total, too much for this pass in the time remaining.
+// Rewritten from the image 2026-11-08 (0.86 full-text): the redirect cases continue a real
+// dispatch loop, which is what makes VC6 lay their checks out before the case bodies.
 int __cdecl goody_box(int veh_id, int type) {
-    (void)type; // Native has no read of [ebp+0x0C].
+    int retry = 0;
     int x = Vehs[veh_id].x;
     int y = Vehs[veh_id].y;
     const int faction_id = Vehs[veh_id].faction_id;
-    const int native_terrain = (goody_box_detail::tile_at(x, y)->climate & 0xE0) < 0x60;
-
-    // Native order: crash guard returns before counters or seeded RNG mutation.
-    if (do_unity_crash(x, y, faction_id)) return 0;
-    const int local = goody_box_detail::local_player(faction_id);
-
-    PlayerData &faction = PlayersData[faction_id];
-    ++faction.unk_94; // original 0x96EA20; setup_player clears the DWORD.
-    if (IsMultiplayerNet) my_srand((int)ScenarioSave.starting_mission_year + faction.unk_94 * 0x25);
-    if (faction.soc_effect_pending.values_[SocialEffect::RESEARCH] * -5 <= GameDataStateStorage.fields_.turn_current_num_
-        && !(GameDataStateStorage.fields_.game_rules_ & 0x04000000u))
-        ++faction.tech_accumulated;
-
-    const int base_id = base_find(x, y);
-    Map *tile = goody_box_detail::tile_at(x, y);
+    const int is_sea = is_ocean(x, y);
+    if (do_unity_crash(x, y, faction_id)) {
+        return 0;
+    }
+    const int is_local = faction_id == ConsoleGlobal.faction_id_;
+    PlayersData[faction_id].unk_94++;
+    if (IsMultiplayerNet) {
+        my_srand(MapRandSeed + PlayersData[faction_id].unk_94 * 37);
+    }
+    if (GameDataStateStorage.fields_.turn_current_num_
+            >= PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::RESEARCH] * -5
+        && !(GameDataStateStorage.fields_.game_rules_ & 0x4000000)) {
+        PlayersData[faction_id].tech_accumulated++;
+    }
     int forced = 0;
-    int event_id = 0;
-    int attempt = 0;
-    if ((tile->bit & 0x0C000000u)
-        && (faction.current_num_bases == 0
+    int kind;
+    const int base_id = base_find(x, y);
+    Map *tile = map_loc(x, y);
+    const int region = tile->region;
+    const uint32_t bits = tile->bit;
+    if (bits & 0xC000000
+        && (!PlayersData[faction_id].current_num_bases
             || (base_id >= 0 && Bases[base_id].faction_id_current == faction_id))) {
-        event_id = 10 - ((tile->bit & 0x04000000u) != 0);
+        kind = (bits & 0x4000000) ? 9 : 10;
         forced = 1;
-        bit_set(x, y, 0x0C000000, FALSE);
+        bit_set(x, y, 0xC000000, 0);
     } else if (BaseFindDist <= 2 && base_id >= 0
                && Bases[base_id].faction_id_current != faction_id) {
-        event_id = 0x10;
-        forced = 1;
-    } else if (((tile->bit & 0x20u)
-                && (tile->climate & 0xE0u) >= 0x40u)
-               || native_terrain) {
-        // Native enters its shared reroll block here: %14, optional edge %3,
-        // then %100. These draws precede the event loop's chassis test.
-        // Native retry target 57A8D2 reloads the vehicle coordinates before
-        // its first random draw. The entry terrain classification above stays
-        // captured, but subsequent map lookups use the reloaded coordinates.
+        kind = 16;
+        retry = 1;
+    } else if ((!(bits & 0x20) || (tile->climate & ~0x1F) < 0x40) && !is_sea) {
+        int odds = (BaseFindDist > 12 && PlayersData[faction_id].region_total_bases[region])
+            ? 20 : 40;
+        if ((VehPrototypes[Vehs[veh_id].proto_id].plan == 9
+             && (BaseFindDist < 12 || GameDataStateStorage.fields_.turn_current_num_ < 40))
+            || VehPrototypes[Vehs[veh_id].proto_id].plan == 8) {
+            odds += 10;
+        }
+        kind = bounded_crt_random(odds);
+    } else {
+reroll:
         x = Vehs[veh_id].x;
         y = Vehs[veh_id].y;
-        tile = goody_box_detail::tile_at(x, y);
-        if (!goody_box_detail::reroll_event(y, attempt, event_id))
+        kind = rand() % 14;
+        if (!retry) {
+            retry = 1;
+        } else if (retry > 2) {
             return 0;
-    } else {
-        int chance = (BaseFindDist <= 0x0C
-                      || !faction.region_total_bases[tile->region])
-                   ? 0x28 : 0x14;
-        const int plan = VehPrototypes[Vehs[veh_id].proto_id].plan;
-        if ((plan == 9 && (BaseFindDist < 0x0C || GameDataStateStorage.fields_.turn_current_num_ < 0x28))
-            || plan == 8) chance += 10;
-        if (chance > 1) event_id = rand() % chance;
+        } else if (retry == 2) {
+            retry = 3;
+        }
+        if ((!y || y == MapLatitudeBounds - 1) && !(rand() % 3)) {
+            kind = 12;
+        }
+        if (!(rand() % 100)) {
+            kind = 18;
+        }
     }
 
-    while (attempt <= 3) {
-        if (VehPrototypes[Vehs[veh_id].proto_id].plan == 12
-            && rand() % 3 == 0
-            && !(Vehs[veh_id].flags & 0x20u))
-            event_id = 9999;
-dispatch_event:
-        switch (event_id) {
-        case 0: { // credits
-            const int threshold = native_terrain ? 0x64 : 0x32;
-            const int base_amount = GameDataStateStorage.fields_.turn_current_num_ >= threshold ? 0x32 : 0x19;
-            const int amount = (rand() % (native_terrain ? 4 : 3) + 1)
-                             * base_amount;
-            goody_box_detail::notify_energy(faction_id, amount,
-                                               native_terrain, local);
+    for (;;) {
+    if (VehPrototypes[Vehs[veh_id].proto_id].plan == 12 && !(rand() % 3)
+        && !(Vehs[veh_id].flags & 0x20)) {
+        kind = 9999;
+    }
+    switch (kind) {
+    case 0: {
+        const int roll = bounded_crt_random(is_sea + 3);
+        const int amount = (GameDataStateStorage.fields_.turn_current_num_ >= (is_sea ? 100 : 50)
+            ? 50 : 25) * (roll + 1);
+        PlayersData[faction_id].energy_reserves += amount;
+        if (is_local) {
+            parse_num(0, amount);
+            g_FX.play(0x16);
+            NetMsgPrimary.pop(is_sea ? "GOODYHYDROGEN" : "GOODYURANIUM", -5000, 0,
+                              is_sea ? 0 : "supply_sm.pcx");
+            g_FX.fade(0x16);
+            ConsoleInfoWin.on_redraw();
+        }
+        return 0;
+    }
+    case 1: {
+        if (is_sea) goto reroll;
+        if (map_loc(x, y)->bit & 0x80) goto reroll;
+        for (int i = 0; i < 9; i++) {
+            const int tx = wrap_map_x(x + RadiusOffsetX[i]);
+            const int ty = y + RadiusOffsetY[i];
+            if (on_map(tx, ty) && (map_loc(tx, ty)->bit & 0x80 || is_ocean(tx, ty))) {
+                goto reroll;
+            }
+        }
+        if (is_local) {
+            g_FX.play(0x26);
+            NetMsgPrimary.pop("GOODYRIVER", 5000, 0, "supply_sm.pcx");
+        }
+        bit_set(x, y, 0x100, 1);
+        world_climate();
+        draw_map(1);
+        return 0;
+    }
+    case 2:
+        if (is_sea || (map_loc(x, y)->climate & ~0x1F) >= 0xA0) {
+            for (int i = 0; i < 121; i++) {
+                const int tx = wrap_map_x(x + RadiusOffsetX[i]);
+                const int ty = y + RadiusOffsetY[i];
+                if (on_map(tx, ty)
+                    && (!is_sea || (is_ocean(tx, ty)
+                                    && map_loc(x, y)->region == map_loc(tx, ty)->region))) {
+                    spot_loc(tx, ty, faction_id);
+                }
+            }
+            if (is_local) {
+                g_FX.play(0x16);
+                NetMsgPrimary.pop(is_sea ? "GOODYSONAR" : "GOODYVIEW", 5000, 0, "supply_sm.pcx");
+                g_FX.fade(0x16);
+                draw_map(1);
+            }
             return 0;
         }
-        case 1: { // remove fungus and update the climate
-            if (!native_terrain && !(tile->bit & 0x80u)) {
-                int offset = 0;
-                for (; offset < 9; ++offset) {
-                    int nx = x + RadiusOffsetX[offset];
-                    if (!(MapIsFlat & 1)) {
-                        if (nx < 0) nx += MapLongitudeBounds;
-                        else if (nx >= MapLongitudeBounds) nx -= MapLongitudeBounds;
-                    }
-                    const int ny = y + RadiusOffsetY[offset];
-                    if (goody_box_detail::on_map(nx, ny)) {
-                        const Map *nearby_tile = goody_box_detail::tile_at(nx, ny);
-                        if ((nearby_tile->bit & 0x80u)
-                            || ((nearby_tile->climate & 0xE0u) < 0x60u))
-                            break;
-                    }
+        if (GameDataStateStorage.fields_.turn_current_num_ >= 50) goto reroll;
+        kind = 8;
+        continue;
+    case 3: {
+        if (GameDataStateStorage.fields_.game_rules_ & 0x1000000
+            && GameDataStateStorage.fields_.diff_level_current_ <= 1) {
+            goto reroll;
+        }
+        if ((map_loc(x, y)->climate & ~0x1F) > 0x80) goto reroll;
+        if (PlayersData[faction_id].current_num_bases < 2) goto reroll;
+        if (is_sea) goto reroll;
+        if (IsMultiplayerNet) goto reroll;
+        if (bounded_crt_random(PlayersData[faction_id].unk_96 * 2 + 2)) goto reroll;
+        PlayersData[faction_id].unk_96++;
+        g_FX.play(8);
+        world_raise_alt(x, y);
+        world_raise_alt(x, y);
+        for (int i = 0; i < 25; i++) {
+            const int tx = wrap_map_x(x + RadiusOffsetX[i]);
+            const int ty = y + RadiusOffsetY[i];
+            if (on_map(tx, ty)) {
+                if (map_loc(tx, ty)->bit & 4 && !(rand() % 3)) {
+                    bit_set(tx, ty, 4, 0);
+                    synch_bit(tx, ty, faction_id);
                 }
-                if (offset == 9) {
-                    if (local) {
-                        g_FX.play(0x26);
-                        NetMsgPrimary.pop("GOODYRIVER", 5000, 0,
-                                          "supply_sm.pcx");
+                if (i < 9) {
+                    rocky_set(tx, ty, minerals_at(tx, ty));
+                }
+            }
+        }
+        world_climate();
+        draw_map(1);
+        if (is_local) {
+            NetMsgPrimary.pop("GOODYQUAKE", -5000, 0, "quake_sm.pcx");
+            if (tut_check(0x800)) {
+                TutorialWindow.tut_map("TERRAFORM", x, y, -1, 0, 0, -1, -1);
+            }
+        }
+        return 0;
+    }
+    case 4: {
+        if (!is_sea && GameDataStateStorage.fields_.game_state_ & 0x100000) {
+            kind = 7;
+            continue;
+        }
+        if (IsMultiplayerNet) goto reroll;
+        if (VehPrototypes[Vehs[veh_id].proto_id].plan == 12) goto reroll;
+        if (GameDataStateStorage.fields_.game_rules_ & 0x1000000
+            && GameDataStateStorage.fields_.diff_level_current_ <= 1) {
+            goto reroll;
+        }
+        if (GameDataStateStorage.fields_.turn_current_num_ < 25
+            || (GameDataStateStorage.fields_.turn_current_num_ < 50
+                && GameDataStateStorage.fields_.diff_level_current_ < 2)) {
+            kind = 8;
+            continue;
+        }
+        int attempts = 0;
+        const int region = map_loc(x, y)->region;
+        int radius;
+        if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_LAND
+            && VehPrototypes[Vehs[veh_id].proto_id].plan != 8) {
+            radius = (VehPrototypes[Vehs[veh_id].proto_id].plan != 9 ? 16 : 0) + 8;
+        } else {
+            if (!(rand() % 2)) goto reroll;
+            radius = 8;
+        }
+        int tx;
+        int ty;
+        for (;;) {
+            const int rx = bounded_crt_random(MapLongitudeBounds);
+            tx = rx;
+            ty = bounded_crt_random(MapLatitudeBounds);
+            if (rx & 1) {
+                tx = rx - 1;
+            }
+            if (ty & 1) {
+                tx++;
+            }
+            if (++attempts >= 1000) break;
+            if (is_ocean(tx, ty) == is_sea && map_loc(tx, ty)->region == region
+                && anything_at(tx, ty) < 0 && !zoc_any(tx, ty, faction_id)
+                && !(PlayersData[faction_id].flags & 0x200)
+                && !(map_loc(tx, ty)->visibility & (1 << faction_id))
+                && patrol_dist(x, y, tx, ty) > 4 && patrol_dist(x, y, tx, ty) <= radius) {
+                break;
+            }
+        }
+        if (attempts >= 1000) goto reroll;
+        if (is_local) {
+            NetMsgPrimary.pop(is_sea ? "GOODYWAVE" : "GOODYGATE", -5000, 0,
+                              is_sea ? 0 : "stars_sm.pcx");
+        }
+        Vehs[veh_id].moves_expended = 0;
+        Vehs[veh_id].order = 0;
+        Vehs[veh_id].state &= 0xFCFFFDFF;
+        stack_put(stack_veh(veh_id, 1), tx, ty);
+        if (Vehs[veh_id].faction_id == ConsoleGlobal.faction_id_) {
+            draw_tile_fixup(x, y, has_abil(Vehs[veh_id].proto_id, ABL_DEEP_RADAR), 2);
+        } else {
+            draw_tile(x, y, 2);
+        }
+        if (is_local) {
+            ConsoleGlobal.focus(tx, ty, faction_id);
+            WorldClimateWorldWin.redraw();
+        }
+        spot_all(veh_id, 1);
+        return 0;
+    }
+    case 5: {
+        if (GameDataStateStorage.fields_.game_state_ & 0x100000 && !is_sea) {
+            kind = 7;
+            continue;
+        }
+        const int base_id = base_find(x, y, faction_id);
+        if (!IsMultiplayerNet && base_id >= 0) {
+            const int item = Bases[base_id].queue_production_id[0];
+            if (item > -70) {
+                int cost;
+                if (item >= 0) {
+                    if (VehPrototypes[item].plan == 8 && Bases[base_id].population_size == 1) {
+                        goto reroll;
                     }
-                    bit_set(x, y, 0x100, TRUE);
-                    goody_box_detail::redraw_world();
+                    cost = veh_cost(item, base_id, 0);
+                    parse_says(0, VehPrototypes[item].veh_name, -1, -1);
+                } else {
+                    const int facility_id = -item;
+                    cost = Facility[facility_id].cost;
+                    parse_say(0, Facility[facility_id].name, -1, -1);
+                }
+                const int minerals = cost_factor(faction_id, 1, -1) * cost;
+                if (Bases[base_id].minerals_accumulated < minerals * 3 / 4) {
+                    Bases[base_id].minerals_accumulated = minerals;
+                    if (is_local) {
+                        parse_says(1, Bases[base_id].name_string, -1, -1);
+                        if (is_sea) {
+                            NetMsgPrimary.pop("GOODYBUILD", -5000, 0, "indbm_sm.pcx");
+                        } else {
+                            NetMsgPrimary.pop("GOODYBUILD", -5000, 0, "indbm_sm.pcx");
+                        }
+                    }
                     return 0;
                 }
             }
-            break;
         }
-        case 2: {
-            // Native sonar walks 121 entries from the radius-offset table. Water-origin
-            // pods constrain the pass to the same water region; land-origin
-            // pods reveal every valid tile in that native table walk.
-            if (native_terrain || (tile->climate & 0xE0) >= 0xA0)
-                return goody_box_detail::reveal_nearby_terrain(
-                    x, y, faction_id, native_terrain, local);
-            if (GameDataStateStorage.fields_.turn_current_num_ >= 0x32) break;
-            event_id = 8;
-            goto dispatch_event; // Native shared dispatch skips the chassis reroll.
+        if (is_sea) goto reroll;
+        if (GameDataStateStorage.fields_.game_rules_ & 0x40000) goto reroll;
+        int artifacts = PlayersData[faction_id].proto_id_active[7];
+        for (int b = 0; b < GameDataStateStorage.fields_.base_current_count_; b++) {
+            if (Bases[b].faction_id_current == faction_id && Bases[b].state & 0x400) {
+                artifacts++;
+            }
         }
-        case 3: { // tectonic shift
-            const int original_change_count = faction.unk_96;
-            const uint32_t doubled_changes =
-                (uint32_t)original_change_count * 2u;
-            const int32_t tectonic_denominator =
-                (int32_t)(doubled_changes + 2u);
-            const int32_t denominator_minus_one =
-                (int32_t)(doubled_changes + 1u);
-            const int eligible_by_preference =
-                !(GameDataStateStorage.fields_.game_rules_ & 0x01000000u) || GameDataStateStorage.fields_.diff_level_current_ >= 2;
-            if (eligible_by_preference && (tile->climate & 0xE0) <= 0x80
-                && faction.current_num_bases >= 2 && !native_terrain
-                && !IsMultiplayerNet
-                && (tectonic_denominator == 1
-                    || denominator_minus_one <= -1
-                    || rand() % tectonic_denominator == 0)) {
-                ++faction.unk_96;
-                g_FX.play(8);
-                world_raise_alt(x, y);
-                world_raise_alt(x, y);
-                for (int radius = 0; radius < 25; ++radius) {
-                    const int nx = goody_box_detail::wrap_x(x + RadiusOffsetX[radius]);
-                    const int ny = y + RadiusOffsetY[radius];
-                    if (!goody_box_detail::on_map(nx, ny)) continue;
-                    Map *nearby_tile = goody_box_detail::tile_at(nx, ny);
-                    if (nearby_tile->bit & 4u) {
-                        if (rand() % 3 == 0) {
-                            bit_set(nx, ny, 4, FALSE);
-                            synch_bit(nx, ny, faction_id);
-                        }
-                    }
-                    if (radius <= 8) rocky_set(nx, ny, minerals_at(nx, ny));
-                }
-                goody_box_detail::redraw_world();
-                if (local) {
-                    NetMsgPrimary.pop("GOODYQUAKE", -5000, 0, "quake_sm.pcx");
-                    if (tut_check(0x800))
-                        TutorialWindow.tut_map("TERRAFORM", x, y, -1,
-                                              0, 0, -1, -1);
-                }
-                return 0;
-            }
-            break;
+        if (artifacts >= PlayersData[faction_id].current_num_bases
+            && !(GameDataStateStorage.fields_.game_state_ & 0x40000)) {
+            goto reroll;
         }
-        case 4: {
-            const int plan = VehPrototypes[Vehs[veh_id].proto_id].plan;
-            if (native_terrain || !(GameDataStateStorage.fields_.game_state_ & 0x00100000u)) {
-                if (IsMultiplayerNet || plan == 12
-                    || ((GameDataStateStorage.fields_.game_rules_ & 0x01000000u) && GameDataStateStorage.fields_.diff_level_current_ <= 1))
-                    break;
-                if (GameDataStateStorage.fields_.turn_current_num_ >= 0x19
-                    && (GameDataStateStorage.fields_.turn_current_num_ >= 0x32 || GameDataStateStorage.fields_.diff_level_current_ >= 2)) {
-                    if (goody_box_detail::relocate_vehicle(
-                            veh_id, x, y, faction_id, native_terrain, local))
-                        return 0;
-                    break;
-                }
-                event_id = 8;
-                goto dispatch_event;
-            }
-            event_id = 7;
-            goto dispatch_event;
+    }
+    case 6: {
+        if (GameDataStateStorage.fields_.game_rules_ & 0x40000) goto reroll;
+        if (retry > 1 && kind == 6) {
+            kind = 5;
+            continue;
         }
-        case 5: {
-            if ((GameDataStateStorage.fields_.game_state_ & 0x00100000u) && !native_terrain) {
-                event_id = 7;
-                goto dispatch_event;
-            }
-            const int owned_base_id = base_find(x, y, faction_id);
-            if (!IsMultiplayerNet && owned_base_id >= 0) {
-                const int production = (int)Bases[owned_base_id].queue_size;
-                if (production >= -0x45) {
-                    int production_cost;
-                    if (production >= 0) {
-                        if (VehPrototypes[production].plan == 8
-                            && Bases[owned_base_id].faction_id_current == 1)
-                            break;
-                        production_cost = veh_cost(production, owned_base_id, 0);
-                        parse_says(0, VehPrototypes[production].veh_name,
-                                   -1, -1);
-                    } else {
-                        const int facility_id = -production;
-                        production_cost = Facility[facility_id].cost;
-                        parse_say(0, Facility[facility_id].name, -1, -1);
-                    }
-                    const uint32_t adjusted_bits =
-                        (uint32_t)cost_factor(faction_id, 1, -1)
-                        * (uint32_t)production_cost;
-                    const int adjusted_cost = (int32_t)adjusted_bits;
-                    const uint32_t three_quarters = adjusted_bits * 3u;
-                    const uint32_t sign_adjust =
-                        (three_quarters & 0x80000000u) ? 3u : 0u;
-                    const int minimum_progress = (int32_t)
-                        (three_quarters + sign_adjust) >> 2;
-                    if (Bases[owned_base_id].minerals_accumulated
-                        < minimum_progress) {
-                        Bases[owned_base_id].minerals_accumulated = adjusted_cost;
-                        if (local) {
-                            parse_says(1, Bases[owned_base_id].name_string,
-                                       -1, -1);
-                            NetMsgPrimary.pop("GOODYBUILD", -5000, 0,
-                                              "indbm_sm.pcx");
-                        }
-                        return 0;
-                    }
+        if (is_sea && stack_check(veh_id, 8, -1, -1, -1) <= 0) goto reroll;
+        if (IsMultiplayerNet && !(GameDataStateStorage.fields_.game_state_ & 0x40000)) {
+            for (int i = 1; i < MaxPlayerNum; i++) {
+                if (i != faction_id && is_human(i)
+                    && PlayersData[faction_id].unk_95 > PlayersData[i].unk_95) {
+                    goto reroll;
                 }
             }
-            if (native_terrain || (GameDataStateStorage.fields_.game_rules_ & 0x00040000u)) break;
-
-            uint32_t supported = faction.proto_id_active[7];
-            for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
-                if (Bases[base].faction_id_current == faction_id
-                    && (Bases[base].state & 0x400u))
-                    ++supported;
-            }
-            if (faction.current_num_bases <= (int)supported
-                && !(GameDataStateStorage.fields_.game_state_ & 0x00040000u))
-                break;
-            event_id = 6;
-            goto dispatch_event;
         }
-        case 6: {
-            if (GameDataStateStorage.fields_.game_rules_ & 0x00040000u) break;
-            if (attempt <= 1 || event_id != 6) {
-                if (native_terrain
-                    && stack_check(veh_id, 8, -1, -1, -1) <= 0)
-                    break;
-                int share_artifact =
-                    !IsMultiplayerNet || (GameDataStateStorage.fields_.game_state_ & 0x00040000u);
-                if (!share_artifact) {
-                    share_artifact = 1;
-                    for (int other = 1; other < 8; ++other) {
-                        if (other == faction_id) continue;
-                        if (!(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << other))) continue;
-                        if (PlayersData[other].unk_95 < faction.unk_95) {
-                            share_artifact = 0;
-                            break;
-                        }
-                    }
-                }
-                if (share_artifact) {
-                    ++faction.unk_95;
-                    const int plan = VehPrototypes[Vehs[veh_id].proto_id].plan;
-                    if (plan != 12) {
-                        const int new_vehicle = veh_init(7, faction_id, x, y);
-                        if (new_vehicle < 0) return 0;
-                        veh_skip(new_vehicle);
-                        draw_tile(x, y, 2);
-                        if (local) {
-                            NetMsgPrimary.pop("GOODYARTIFACT", -5000, 0,
-                                              "art_dis_sm.pcx");
-                            g_FX.fade(0x1B);
-                        }
-                        return 0;
-                    }
-                    break;
-                }
-                break; // one allied owner is ahead in the native counter test.
-            }
-            event_id = 5;
-            goto dispatch_event;
-        }
-        case 7: {
-            if ((GameDataStateStorage.fields_.game_rules_ & 0x00200000u)
-                || ((GameDataStateStorage.fields_.game_rules_ & 0x01000000u) && GameDataStateStorage.fields_.diff_level_current_ <= 1)
-                || attempt > 1)
-                break;
-            if (native_terrain) {
-                event_id = 8;
-                goto dispatch_event;
-            }
-            base_find(x, y);
-            if (BaseFindDist < 3) break;
-            if (IsMultiplayerNet && faction_id == GameDataStateStorage.fields_.ranking_faction_id_unk2_
-                && !goody_box_detail::normalized_crt_mask_draw())
-                break;
-            int tower_roll = goody_box_detail::normalized_crt_mask_draw();
-            int may_make_tower = tower_roll != 0 && ExpansionEnabled;
-            int made_tower = 0;
-            if (local) {
-                g_FX.play(9);
-                NetMsgPrimary.pop("GOODYFUNGUS", -5000, 0, "fung_sm.pcx");
-            }
-            site_radius(x, y, 0);
-            for (int radius = 0; radius < 9; ++radius) {
-                const int nx = goody_box_detail::wrap_x(x + RadiusOffsetX[radius]);
-                const int ny = y + RadiusOffsetY[radius];
-                if (!goody_box_detail::on_map(nx, ny)) continue;
-                Map *nearby_tile = goody_box_detail::tile_at(nx, ny);
-                if ((nearby_tile->climate & 0xE0u) >= 0x40u) {
-                    bit_set(nx, ny, 0x20, TRUE);
-                    bit_set(nx, ny, 0x0028805C, FALSE);
-                    synch_bit(nx, ny, faction_id);
-                    if (!made_tower && may_make_tower) {
-                        if (goody_box_detail::normalized_crt_mask_draw()) {
-                            const int occupancy = nearby_tile->bit & 3u;
-                            if ((!occupancy || (nearby_tile->val3 & 0x0F) >= 8)
-                                && ExpansionEnabled
-                                && (nearby_tile->climate & 0xE0u) >= 0x60u) {
-                                veh_init(0x13, 0, nx, ny);
-                                may_make_tower = 0;
-                                made_tower = 1;
-                            }
-                        }
-                    }
-                    draw_tile(nx, ny, 2);
-                }
-            }
+        PlayersData[faction_id].unk_95++;
+        if (VehPrototypes[Vehs[veh_id].proto_id].plan == 12) goto reroll;
+        const int artifact_id = veh_init(BSC_ALIEN_ARTIFACT, faction_id, x, y);
+        if (artifact_id < 0) {
             return 0;
         }
-        case 8: // monolith
-            if (!(GameDataStateStorage.fields_.game_rules_ & 0x00020000u) && !bonus_at(x, y, 0)
-                && !native_terrain) {
-                site_radius(x, y, 0);
-                bit_set(x, y, 0x2000, TRUE);
-                bit_set(x, y, 0x20, FALSE);
-                synch_bit(x, y, faction_id);
-                draw_tiles(x, y, 2);
-                monolith(veh_id);
-                return 0;
+        veh_skip(artifact_id);
+        draw_tile(x, y, 2);
+        if (is_local) {
+            if (is_sea) {
+                NetMsgPrimary.pop("GOODYARTIFACT", -5000, 0, "art_dis_sm.pcx");
+            } else {
+                NetMsgPrimary.pop("GOODYARTIFACT", -5000, 0, "art_dis_sm.pcx");
             }
-            break;
-        case 9: { // native lifeforms
-            if ((GameDataStateStorage.fields_.net_turn_flags_ & 1u)
-                || GameDataStateStorage.fields_.game_tech_achieved_[TECH_ORBITAL]
-                || (native_terrain
-                    && stack_check(veh_id, 8, -1, -1, -1) <= 0))
-                break;
-            int proto_id = 11;
-            if (GameDataStateStorage.fields_.game_tech_achieved_[TECH_FOSSIL]
-                && rand() % 3 == 0
-                && !faction.proto_id_active[12]) {
-                base_find(x, y, faction_id);
-                if (BaseFindDist <= speed_proto(12) * 3)
-                    proto_id = 12;
-            }
-
-            int spawn_x = x;
-            int spawn_y = y;
-            const int active_native = faction.proto_id_active[13];
-            int location_chance = active_native + 3;
-            if (Chassis[tile->region].speed <= 0x32)
-                location_chance = active_native + 2;
-            if (active_native <= 1
-                && (location_chance == 1 || location_chance <= 0
-                    || rand() % location_chance == 0)) {
-                if (native_terrain) {
-                    proto_id = 13;
-                } else {
-                    int found = 0;
-                    for (int radius = 0; radius < 8; ++radius) {
-                        const int index = radius;
-                        const int nx = goody_box_detail::wrap_x(
-                            x + VehMoveDeltaX[index]);
-                        const int ny = y + VehMoveDeltaY[index];
-                        if (!goody_box_detail::on_map(nx, ny)) continue;
-                        Map *nearby_tile = goody_box_detail::tile_at(nx, ny);
-                        if ((nearby_tile->climate & 0xE0u) <= 0x5Fu
-                            && Chassis[nearby_tile->region].speed >= 0x50) {
-                            spawn_x = nx;
-                            spawn_y = ny;
-                            proto_id = 13;
-                            found = 1;
-                            break;
-                        }
-                    }
-                    (void)found;
-                }
-            }
-
-            const int native_total = faction.proto_id_active[11]
-                                   + faction.proto_id_active[12]
-                                   + faction.proto_id_active[13];
-            if (faction.proto_id_active[proto_id]
-                && !(native_total <= (faction.current_num_bases + 1) / 2
-                     && faction.proto_id_active[proto_id] < 2)) {
-                const uint32_t variant =
-                    goody_box_detail::normalized_crt_mask_draw();
-                event_id = (int)(variant + 12u);
-                goto dispatch_event;
-            }
-            if (proto_id == 11 && rand() % 5 == 0 && ExpansionEnabled) {
-                int alien_tech = 0;
-                for (int other = 1; other < 8; ++other) {
-                    if (has_tech(0x52, other) && alien_tech < 1)
-                        alien_tech = 1;
-                    if (has_tech(0x53, other)) alien_tech = 2;
-                }
-                proto_id = alien_tech >= 2 ? 18 : (alien_tech ? 17 : 16);
-            }
-            const int new_vehicle = veh_init(proto_id, faction_id,
-                                             spawn_x, spawn_y);
-            if (new_vehicle < 0) break;
-            if (forced || GameDataStateStorage.fields_.turn_current_num_ <= 0x31)
-                Vehs[new_vehicle].home_base_id = -1;
-            const uint16_t native_order_bits =
-                proto_id == 16 ? 2u : proto_id == 17 ? 4u
-                : proto_id == 18 ? 6u : 2u;
-            Vehs[new_vehicle].morale = (uint8_t)native_order_bits;
-            if (native_terrain
-                && !Chassis[VehPrototypes[
-                    Vehs[new_vehicle].proto_id].chassis_id].triad)
-                sleep(new_vehicle);
-            if (local) {
-                parse_says(0, VehPrototypes[proto_id].veh_name, -1, -1);
-                const int alien_proto =
-                    proto_id == 16 || proto_id == 17 || proto_id == 18;
-                NetMsgPrimary.pop(alien_proto ? "OGREPOD" : "GOODYPOD",
-                    native_terrain ? 5000 : -5000, 0,
-                    alien_proto ? "ogre_sm.pcx" : "supply_sm.pcx");
-            }
-            return 0;
+            g_FX.fade(0x1B);
         }
-        case 10: // treaty gift
-            if (GameDataStateStorage.fields_.net_turn_flags_ & 2u) break;
-            {
-                const uint32_t gift_roll =
-                    goody_box_detail::normalized_crt_mask_3_draw();
-                if (gift_roll == 0) {
-                  const int other = rand() % 7 + 1;
-                  const uint32_t other_bit = 1u << other;
-                  const uint32_t live_players = GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
-                  const uint32_t human_players = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu;
-                  const int disallowed_human_pair =
-                      !(human_players & (1u << faction_id))
-                      || (human_players & other_bit);
-                  if (other != faction_id
-                    && (live_players & other_bit)
-                    && !disallowed_human_pair
-                    && !(Players[other].rule_flags & 0x80u)
-                    && !(PlayersData[faction_id].diplo_treaties[other] & 8u)) {
-                      treaty_on(faction_id, other, 8);
-                      if (local) {
-                          GenderDefault = Players[other].is_leader_female;
-                          PluralityDefault = 0;
-                          parse_says(0, Players[other].title_leader,
-                                     -1, -1);
-                          GenderDefault = Players[other].is_leader_female;
-                          PluralityDefault = 0;
-                          parse_says(1, Players[other].name_leader,
-                                     -1, -1);
-                          GenderDefault = Players[other].noun_gender;
-                          PluralityDefault = Players[other].is_noun_plural;
-                          parse_says(2, Players[other].noun_faction,
-                                     -1, -1);
-                      NetMsgPrimary.pop("GOODYCOMM",
-                          native_terrain ? 5000 : -5000, 0,
-                              native_terrain ? "supply_sm.pcx" : 0);
-                      }
-                      return 0;
-                  }
+        return 0;
+    }
+    case 7: {
+        if (GameDataStateStorage.fields_.game_rules_ & 0x200000) goto reroll;
+        if (GameDataStateStorage.fields_.game_rules_ & 0x1000000
+            && GameDataStateStorage.fields_.diff_level_current_ <= 1) {
+            goto reroll;
+        }
+        if (retry > 1) goto reroll;
+        if (is_sea) {
+            kind = 8;
+            continue;
+        }
+        base_find(x, y);
+        if (BaseFindDist < 3) goto reroll;
+        if (IsMultiplayerNet && faction_id == GameDataStateStorage.fields_.ranking_faction_id_unk2_
+            && !(rand() % 2)) {
+            goto reroll;
+        }
+        int spawned = 0;
+        int spawn_ok = 0;
+        if (rand() % 2 && ExpansionEnabled) {
+            spawn_ok = 1;
+        }
+        if (is_local) {
+            g_FX.play(9);
+            NetMsgPrimary.pop("GOODYFUNGUS", -5000, 0, "fung_sm.pcx");
+        }
+        site_radius(x, y, 0);
+        for (int i = 0; i < 9; i++) {
+            const int tx = wrap_map_x(x + RadiusOffsetX[i]);
+            const int ty = y + RadiusOffsetY[i];
+            if (on_map(tx, ty) && (map_loc(tx, ty)->climate & ~0x1F) >= 0x40) {
+                bit_set(tx, ty, 0x20, 1);
+                bit_set(tx, ty, 0x28805C, 0);
+                synch_bit(tx, ty, faction_id);
+                if (!spawned && spawn_ok == 1 && rand() % 2 && anything_at(tx, ty) == -1
+                    && ExpansionEnabled && !is_ocean(tx, ty)) {
+                    veh_init(BSC_FUNGAL_TOWER, 0, tx, ty);
+                    spawn_ok = 0;
+                    spawned = 1;
                 }
+                draw_tile(tx, ty, 2);
             }
-            if (GameDataStateStorage.fields_.game_rules_ & 0x04000000u) break;
-            if (IsMultiplayerNet && !forced) {
-                int behind_peer = 0;
-                for (int other = 1; other < 8; ++other) {
-                    const uint32_t bit = 1u << other;
-                    if (other == faction_id || !(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & bit))
-                        continue;
-                    const PlayerData &peer = PlayersData[other];
-                    if (peer.unk_97 + 1 < faction.unk_97
-                        && (peer.ranking < faction.ranking
-                            || peer.tech_ranking < faction.tech_ranking)) {
-                        behind_peer = 1;
+        }
+        return 0;
+    }
+    case 8:
+        if (GameDataStateStorage.fields_.game_rules_ & 0x20000) goto reroll;
+        if (bonus_at(x, y, 0)) goto reroll;
+        if (is_sea) goto reroll;
+        site_radius(x, y, 0);
+        bit_set(x, y, 0x2000, 1);
+        bit_set(x, y, 0x20, 0);
+        synch_bit(x, y, faction_id);
+        draw_tiles(x, y, 2);
+        monolith(veh_id);
+        return 0;
+    case 9: {
+        if (GameDataStateStorage.fields_.net_turn_flags_ & 1) goto reroll;
+        if (GameDataStateStorage.fields_.game_tech_achieved_[TECH_ORBITAL]) goto reroll;
+        if (is_sea && stack_check(veh_id, 8, -1, -1, -1) <= 0) goto reroll;
+        int unit_id = BSC_UNITY_ROVER;
+        if (GameDataStateStorage.fields_.game_tech_achieved_[TECH_FOSSIL] && !(rand() % 3)
+            && !PlayersData[faction_id].proto_id_active[BSC_UNITY_SCOUT_CHOPPER]) {
+            base_find(x, y, faction_id);
+            if (BaseFindDist <= speed_proto(BSC_UNITY_SCOUT_CHOPPER) * 3) {
+                unit_id = BSC_UNITY_SCOUT_CHOPPER;
+            }
+        }
+        int odds = PlayersData[faction_id].proto_id_active[BSC_UNITY_FOIL] + 3;
+        if (Continents[map_loc(x, y)->region].tile_count <= 50) {
+            odds--;
+        }
+        if (PlayersData[faction_id].proto_id_active[BSC_UNITY_FOIL] < 2
+            && !bounded_crt_random(odds)) {
+            if (is_sea) {
+                unit_id = BSC_UNITY_FOIL;
+            } else {
+                for (int i = 0; i < 8; i++) {
+                    const int tx = wrap_map_x(x + VehMoveDeltaX[i]);
+                    const int ty = y + VehMoveDeltaY[i];
+                    if (on_map(tx, ty) && is_ocean(tx, ty)
+                        && Continents[map_loc(tx, ty)->region].tile_count >= 80) {
+                        x = tx;
+                        y = ty;
+                        unit_id = BSC_UNITY_FOIL;
                         break;
                     }
                 }
-                if (behind_peer) break;
             }
-                if (goody_box_detail::give_random_technology(
-                        faction_id, local, forced, native_terrain) >= 0)
+        }
+        if (PlayersData[faction_id].proto_id_active[unit_id]
+            && (PlayersData[faction_id].proto_id_active[BSC_UNITY_ROVER]
+                    + PlayersData[faction_id].proto_id_active[BSC_UNITY_SCOUT_CHOPPER]
+                    + PlayersData[faction_id].proto_id_active[BSC_UNITY_FOIL]
+                    > (PlayersData[faction_id].current_num_bases + 1) / 2
+                || PlayersData[faction_id].proto_id_active[unit_id] > 1)) {
+            kind = rand() % 2 + 12;
+            x = Vehs[veh_id].x;
+            y = Vehs[veh_id].y;
+            continue;
+        }
+        int level = 0;
+        if (unit_id == BSC_UNITY_ROVER && !(rand() % 5) && ExpansionEnabled) {
+            for (int i = 1; i < MaxPlayerNum; i++) {
+                if (has_tech(82, i) && level < 1) {
+                    level = 1;
+                }
+                if (has_tech(83, i)) {
+                    level = 2;
+                }
+            }
+            unit_id = BSC_BATTLE_OGRE_MK1;
+            if (level > 0) {
+                unit_id = BSC_BATTLE_OGRE_MK2;
+            }
+            if (level > 1) {
+                unit_id = BSC_BATTLE_OGRE_MK3;
+            }
+        }
+        const int spawn_id = veh_init(unit_id, faction_id, x, y);
+        if (spawn_id < 0) goto reroll;
+        if (forced || GameDataStateStorage.fields_.turn_current_num_ < 50) {
+            Vehs[spawn_id].home_base_id = -1;
+        }
+        Vehs[spawn_id].morale = 2;
+        if (unit_id == BSC_BATTLE_OGRE_MK1) {
+            Vehs[spawn_id].morale = 2;
+        } else if (unit_id == BSC_BATTLE_OGRE_MK2) {
+            Vehs[spawn_id].morale = 4;
+        } else if (unit_id == BSC_BATTLE_OGRE_MK3) {
+            Vehs[spawn_id].morale = 6;
+        }
+        if (is_sea && Chassis[VehPrototypes[Vehs[spawn_id].proto_id].chassis_id].triad == TRIAD_LAND) {
+            sleep(spawn_id);
+        }
+        if (is_local) {
+            parse_says(0, VehPrototypes[unit_id].veh_name, -1, -1);
+            if (unit_id == BSC_BATTLE_OGRE_MK1 || unit_id == BSC_BATTLE_OGRE_MK2 || unit_id == BSC_BATTLE_OGRE_MK3) {
+                if (is_sea) {
+                    NetMsgPrimary.pop("OGREPOD", 5000, 0, "ogre_sm.pcx");
+                } else {
+                    NetMsgPrimary.pop("OGREPOD", -5000, 0, "ogre_sm.pcx");
+                }
+            } else if (is_sea) {
+                NetMsgPrimary.pop("GOODYPOD", 5000, 0, "supply_sm.pcx");
+            } else {
+                NetMsgPrimary.pop("GOODYPOD", -5000, 0, "supply_sm.pcx");
+            }
+        }
+        return 0;
+    }
+    case 10: {
+        if (GameDataStateStorage.fields_.net_turn_flags_ & 2) goto reroll;
+        if (!(rand() % 4)) {
+            const int other = rand() % 7 + 1;
+            if (other != faction_id
+                && !(PlayersData[faction_id].diplo_treaties[other] & DTREATY_COMMLINK)
+                && is_alive(other) && !is_human(other) && is_human(faction_id)
+                && !(Players[other].rule_flags & RFLAG_ALIEN)) {
+                treaty_on(faction_id, other, DTREATY_COMMLINK);
+                if (is_local) {
+                    parse_set(Players[other].is_leader_female, 0);
+                    parse_says(0, Players[other].title_leader, -1, -1);
+                    parse_set(Players[other].is_leader_female, 0);
+                    parse_says(1, Players[other].name_leader, -1, -1);
+                    parse_set(Players[other].noun_gender, Players[other].is_noun_plural);
+                    parse_says(2, Players[other].noun_faction, -1, -1);
+                    if (is_sea) {
+                        NetMsgPrimary.pop("GOODYCOMM", 5000, 0, "supply_sm.pcx");
+                    } else {
+                        NetMsgPrimary.pop("GOODYCOMM", -5000, 0, "supply_sm.pcx");
+                    }
+                }
                 return 0;
-            break;
-        case 11: { // fungus/altitude terrain conversion
-            if (tile->region == 0 || tile->region == 0x3F
-                || (!native_terrain && (tile->val3 & 0xC0u) > 0x40u))
-                break;
-            if ((tile->climate & 0xE0u) <= 0x3Fu) {
-                event_id = 12;
-                goto dispatch_event;
             }
-            int32_t conversion = 0;
-            if (!native_terrain) {
-                base_find(x, y);
-                if (BaseFindDist < 3) break;
-                conversion = (int32_t)
-                    goody_box_detail::normalized_crt_mask_3_draw();
+        }
+        if (GameDataStateStorage.fields_.game_rules_ & 0x4000000) goto reroll;
+        if (IsMultiplayerNet && !forced) {
+            for (int i = 1; i < MaxPlayerNum; i++) {
+                if (i != faction_id && is_human(i)
+                    && PlayersData[faction_id].unk_97 > PlayersData[i].unk_97 + 1
+                    && (PlayersData[faction_id].ranking > PlayersData[i].ranking
+                        || PlayersData[faction_id].tech_ranking > PlayersData[i].tech_ranking)) {
+                    goto reroll;
+                }
             }
-            site_radius(x, y, 0);
-            int converted = 0;
-            for (int radius = 0; radius < 9; ++radius) {
-                if (radius != 0
-                    && rand() % (conversion > 1 ? 2 : 3) == 0)
-                    continue;
-                const int nx = goody_box_detail::wrap_x(
-                    x + RadiusOffsetX[radius]);
-                const int ny = y + RadiusOffsetY[radius];
-                if (!goody_box_detail::on_map(nx, ny)) continue;
-                Map *nearby_tile = goody_box_detail::tile_at(nx, ny);
-                if ((nearby_tile->bit & 0x00100000u) && radius != 0) continue;
-                if (native_terrain) {
-                    if ((nearby_tile->climate & 0xE0u) > 0x5Fu) continue;
-                    if ((nearby_tile->climate & 0xE0u) <= 0x3Fu) {
-                        if (radius != 0) continue;
-                        alt_set_both(nx, ny, 2);
+        }
+        const int start = rand() % 89;
+        int i;
+        int tech_id;
+        for (i = 0; i < 89; i++) {
+            tech_id = (start + i) % 89;
+            if (has_tech(tech_id, faction_id)) continue;
+            if (!tech_avail(tech_id, faction_id)) continue;
+            if (tech_is_preq(tech_id, TECH_BRAIN, 9999)
+                && !GameDataStateStorage.fields_.game_tech_achieved_[TECH_BRAIN]) {
+                continue;
+            }
+            int roots = 0;
+            for (int j = 0; j < 2; j++) {
+                const int preq = (&Technology[tech_id].preq_tech_1)[j];
+                if (preq == -1) {
+                    roots++;
+                }
+                if (preq >= 0 && Technology[preq].preq_tech_1 == -1
+                    && Technology[preq].preq_tech_2 == -1) {
+                    roots++;
+                    break;
+                }
+            }
+            if (roots >= 2) break;
+        }
+        if (i >= 89) goto reroll;
+        if (tech_id == 78 || tech_id == 79 || tech_id == 81 || tech_id == 82 || tech_id == 83) {
+            goto reroll;
+        }
+        if (!forced) {
+            PlayersData[faction_id].unk_97++;
+        }
+        if (is_local) {
+            StringTemp[0] = '\0';
+            strcat(StringTemp, "GOODYDATA");
+            if (IsMultiplayerNet) {
+                strcat(StringTemp, "1");
+                parse_say(0, Technology[tech_id].name, -1, -1);
+            }
+            if (is_sea) {
+                NetMsgPrimary.pop(StringTemp, 5000, 0, "supply_sm.pcx");
+            } else {
+                NetMsgPrimary.pop(StringTemp, -5000, 0, "supply_sm.pcx");
+            }
+        }
+        tech_achieved(faction_id, tech_id, 0, 0);
+        if (forced) {
+            PlayersData[faction_id].tech_ranking--;
+        }
+        return 0;
+    }
+    case 11: {
+        if (bad_reg(map_loc(x, y)->region)) goto reroll;
+        if (!is_sea && (map_loc(x, y)->val3 & ~0x3F) > 0x40) goto reroll;
+        if ((map_loc(x, y)->climate & ~0x1F) < 0x40) {
+            kind = 12;
+            continue;
+        }
+        int which;
+        if (!is_sea) {
+            base_find(x, y);
+            if (BaseFindDist < 3) goto reroll;
+            which = rand() % 4;
+        } else {
+            which = 0;
+        }
+        site_radius(x, y, 0);
+        int changed = 0;
+        for (int i = 0; i < 9; i++) {
+            if (i && !bounded_crt_random(3 - (which > 1))) continue;
+            const int tx = wrap_map_x(x + RadiusOffsetX[i]);
+            const int ty = y + RadiusOffsetY[i];
+            if (!on_map(tx, ty)) continue;
+            if (i && map_loc(tx, ty)->bit & 0x100000) continue;
+            if (!is_sea) {
+                if (is_ocean(tx, ty)) continue;
+                const int rocky = map_loc(tx, ty)->val3 & ~0x3F;
+                if (rocky > 0x40 && which < 2) continue;
+                if (!rocky && which == 2) continue;
+            } else {
+                const int altitude = map_loc(tx, ty)->climate & ~0x1F;
+                if (altitude >= 0x60) continue;
+                if (altitude < 0x40) {
+                    if (i) continue;
+                    alt_set_both(tx, ty, 2);
+                }
+            }
+            bit_set(tx, ty, 0x288070, 0);
+            if (is_sea) {
+                bit_set(tx, ty, 0x8000, 1);
+            } else {
+                switch (which) {
+                case 0:
+                    bit_set(tx, ty, 0x200000, 1);
+                    bit_set(tx, ty, 0x8050, 0);
+                    break;
+                case 1:
+                    bit_set(tx, ty, 0x8000, 1);
+                    bit_set(tx, ty, 0x200000, 0);
+                    break;
+                case 2:
+                    bit_set(tx, ty, 0x14, 1);
+                    bit_set(tx, ty, 0x200040, 0);
+                    break;
+                case 3:
+                    bit_set(tx, ty, 0x40, 1);
+                    bit_set(tx, ty, 0x200010, 0);
+                    break;
+                }
+            }
+            synch_bit(tx, ty, faction_id);
+            draw_tile(tx, ty, 2);
+            changed++;
+        }
+        if (!changed) goto reroll;
+        if (is_local) {
+            if (is_sea) {
+                NetMsgPrimary.pop("GOODYKELP", -5000, 0, "kelp_sm.pcx");
+                return 0;
+            }
+            switch (which) {
+            case 0:
+                NetMsgPrimary.pop("GOODYFOREST", -5000, 0, "forgr_sm.pcx");
+                return 0;
+            case 1:
+                NetMsgPrimary.pop("GOODYFARM", -5000, 0, "forgr_sm.pcx");
+                return 0;
+            case 2:
+                NetMsgPrimary.pop("GOODYMINE", -5000, 0, "supply_sm.pcx");
+                return 0;
+            case 3:
+                NetMsgPrimary.pop("GOODYSOLAR", -5000, 0, "supply_sm.pcx");
+                return 0;
+            }
+        }
+        return 0;
+    }
+    case 12:
+    case 13:
+    case 14:
+    case 15:
+    case 16:
+    case 17: {
+        int spore = 0;
+        if (GameDataStateStorage.fields_.game_rules_ & 0x200000) goto reroll;
+        if (GameDataStateStorage.fields_.game_rules_ & 0x1000000
+            && GameDataStateStorage.fields_.diff_level_current_ <= 1) {
+            goto reroll;
+        }
+        base_find(x, y, faction_id);
+        const int own_dist = BaseFindDist;
+        base_find(x, y);
+        if (BaseFindDist <= 1) goto reroll;
+        if (kind > 13) {
+            const int terrain = (map_loc(x, y)->bit & 0x20
+                                 && (map_loc(x, y)->climate & ~0x1F) >= 0x40) ? 2 : 4;
+            if ((GameDataStateStorage.fields_.game_state_ & 0x100000 ? 2 : 1) * own_dist
+                < (kind - 13) * terrain + (4 - MapNativeLifeForms) * 2) {
+                goto reroll;
+            }
+        }
+        if (IsMultiplayerNet && faction_id == GameDataStateStorage.fields_.ranking_faction_id_unk2_
+            && !(rand() % 2)) {
+            goto reroll;
+        }
+        if (is_sea) {
+            if (kind > (GameDataStateStorage.fields_.game_state_ >> 20 & 1) + 12) goto reroll;
+            Vehs[veh_id].moves_expended += Rules.move_rate_roads;
+        }
+        int spawned = 0;
+        for (int i = 0; i < 8;) {
+            const int dir = (GameDataStateStorage.fields_.turn_current_num_ + i) % 8;
+            const int tx = wrap_map_x(x + VehMoveDeltaX[dir]);
+            const int ty = y + VehMoveDeltaY[dir];
+            if (on_map(tx, ty) && is_ocean(tx, ty) == is_sea && anything_at(tx, ty) < 0) {
+                if (is_sea) {
+                    const int isle_id = veh_init(BSC_ISLE_OF_THE_DEEP, 0, tx, ty);
+                    if (isle_id >= 0) {
+                        spawned++;
+                        Vehs[isle_id].visibility |= map_loc(tx, ty)->visibility;
+                        int count = rand() % 2 + 1;
+                        if (count >= veh_cargo(isle_id)) {
+                            count = veh_cargo(isle_id);
+                        }
+                        for (; count > 0; count--) {
+                            if (!(rand() % 5) && ExpansionEnabled) {
+                                veh_init(BSC_SPORE_LAUNCHER, 0, tx, ty);
+                                spore = 1;
+                            } else {
+                                veh_init(BSC_MIND_WORMS, 0, tx, ty);
+                            }
+                        }
+                        break;
                     }
                 } else {
-                    if ((nearby_tile->climate & 0xE0u) < 0x60u) continue;
-                    if ((nearby_tile->val3 & 0xC0u) > 0x40u && conversion < 2)
-                        continue;
-                    if (!(nearby_tile->val3 & 0xC0u) && conversion == 2) continue;
-                }
-                bit_set(nx, ny, 0x00288070, FALSE);
-                if (native_terrain) bit_set(nx, ny, 0x8000, TRUE);
-                else if (conversion == 0) {
-                    bit_set(nx, ny, 0x200000, TRUE);
-                    bit_set(nx, ny, 0x8050, FALSE);
-                } else if (conversion == 1) {
-                    bit_set(nx, ny, 0x8000, TRUE);
-                    bit_set(nx, ny, 0x200000, FALSE);
-                } else if (conversion == 2) {
-                    bit_set(nx, ny, 0x14, TRUE);
-                    bit_set(nx, ny, 0x200040, FALSE);
-                } else if (conversion == 3) {
-                    bit_set(nx, ny, 0x40, TRUE);
-                    bit_set(nx, ny, 0x200010, FALSE);
-                } else continue;
-                synch_bit(nx, ny, faction_id);
-                draw_tile(nx, ny, 2);
-                ++converted;
-            }
-            if (converted && local) {
-                const char *message = native_terrain ? "GOODYKELP"
-                    : conversion == 0 ? "GOODYFOREST"
-                    : conversion == 1 ? "GOODYFARM"
-                    : conversion == 2 ? "GOODYMINE" : "GOODYSOLAR";
-                const char *icon = native_terrain ? "kelp_sm.pcx"
-                    : conversion <= 1 ? "forgr_sm.pcx" : "supply_sm.pcx";
-                NetMsgPrimary.pop(message, -5000, 0, icon);
-            }
-            if (converted) return 0;
-            break;
-        }
-        case 12: case 13: case 14: case 15: case 16: case 17: {
-            if ((GameDataStateStorage.fields_.game_rules_ & 0x00200000u)
-                || ((GameDataStateStorage.fields_.game_rules_ & 0x01000000u) && GameDataStateStorage.fields_.diff_level_current_ <= 1))
-                break;
-            base_find(x, y, faction_id);
-            const int owned_base_distance = BaseFindDist;
-            base_find(x, y);
-            if (BaseFindDist <= 1) break;
-            if (event_id >= 14) {
-                const int terrain_factor =
-                    (tile->bit & 0x20u) && (tile->climate & 0xE0u) >= 0x40u
-                    ? 2 : 4;
-                if (!goody_box_detail::native_threshold_passes(
-                        event_id, GameDataStateStorage.fields_.game_state_, owned_base_distance,
-                        terrain_factor, (int)MapNativeLifeForms))
-                    break;
-            }
-            if (IsMultiplayerNet && faction_id == GameDataStateStorage.fields_.ranking_faction_id_unk2_
-                && !goody_box_detail::normalized_crt_mask_draw())
-                break;
-            if (native_terrain && event_id > 12
-                + ((GameDataStateStorage.fields_.game_state_ & 0x00100000u) != 0))
-                break;
-
-            if (native_terrain)
-                Vehs[veh_id].order_auto_type = (uint8_t)
-                    (Vehs[veh_id].order_auto_type + Rules.move_rate_roads);
-
-            int created_units = 0;
-            int created_mind_worm = 0;
-            int location = 0;
-            while (location < 8) {
-                // Native57C6F5..57C7A1 performs no per-location RNG
-                // rejection; event11's separate conversion loop owns that draw.
-                const int radius = goody_box_detail::rotated_spawn_index(
-                    location, GameDataStateStorage.fields_.turn_current_num_);
-                const int nx = goody_box_detail::wrap_x(
-                    x + VehMoveDeltaX[radius]);
-                const int ny = y + VehMoveDeltaY[radius];
-                if (goody_box_detail::on_map(nx, ny)) {
-                    Map *nearby_tile = goody_box_detail::tile_at(nx, ny);
-                    const int climate_matches =
-                        ((nearby_tile->climate & 0xE0u) < 0x60u)
-                            == native_terrain;
-                    const int unoccupied = !(nearby_tile->bit & 3u)
-                                        || (nearby_tile->val2 & 0x0Fu) >= 8;
-                    if (climate_matches && unoccupied) {
-                        if (native_terrain) {
-                            const int worm = veh_init(9, 0, nx, ny);
-                            if (worm >= 0) {
-                                ++created_units;
-                                Vehs[worm].visibility |= nearby_tile->visibility;
-                                int cargo_count = (int32_t)(
-                                    goody_box_detail::normalized_crt_mask_draw()
-                                    + 1u);
-                                const int cargo_limit = veh_cargo(worm);
-                                if (cargo_count >= cargo_limit)
-                                    cargo_count = veh_cargo(worm);
-                                else
-                                    cargo_count = (int32_t)cargo_count;
-                                for (int cargo = 0; cargo < cargo_count; ++cargo) {
-                                    if (rand() % 5 || !ExpansionEnabled) {
-                                        veh_init(8, 0, nx, ny);
-                                    } else {
-                                        veh_init(15, 0, nx, ny);
-                                        created_mind_worm = 1;
-                                    }
-                                }
-                                // Native success flows directly to its own
-                                // cargo/notification tail, not the nonnative stepper.
+                    base_find(tx, ty);
+                    if (BaseFindDist > 1) {
+                        int worm_id;
+                        if (!(rand() % 5) && ExpansionEnabled) {
+                            worm_id = veh_init(BSC_SPORE_LAUNCHER, 0, tx, ty);
+                            spore = 1;
+                        } else {
+                            worm_id = veh_init(BSC_MIND_WORMS, 0, tx, ty);
+                        }
+                        if (worm_id >= 0) {
+                            spawned++;
+                            Vehs[worm_id].visibility |= map_loc(tx, ty)->visibility;
+                            draw_tile(tx, ty, 2);
+                            if (kind > (GameDataStateStorage.fields_.game_state_ & 0x100000 ? 13 : 12)
+                                || GameDataStateStorage.fields_.turn_current_num_ < 15
+                                || BaseFindDist <= 3) {
                                 break;
                             }
-                        } else {
-                            base_find(nx, ny);
-                            if (BaseFindDist >= 2) {
-                                const int proto =
-                                    (rand() % 5 || !ExpansionEnabled) ? 8 : 15;
-                                const int created = veh_init(proto, 0, nx, ny);
-                                if (proto == 15) created_mind_worm = 1;
-                                if (created >= 0) {
-                                    ++created_units;
-                                    Vehs[created].visibility |= nearby_tile->visibility;
-                                    draw_tile(nx, ny, 2);
-                                    const int state_limit =
-                                        (int)(((GameDataStateStorage.fields_.game_state_ & 0x00100000u)
-                                              | 0x00C00000u) >> 20);
-                                    if (state_limit < event_id
-                                        || GameDataStateStorage.fields_.turn_current_num_ < 0x0F
-                                        || BaseFindDist <= 3)
-                                        location = 8;
-                                }
-                            }
                         }
                     }
                 }
-                if (location >= 8) break;
-                if (created_units) {
-                    int step = 5 - goody_box_detail::native_half(
-                        faction.current_num_bases);
-                    if (step < 1) step = 1;
-                    if (step >= 5) step = 4;
-                    location += step;
-                } else {
-                    ++location;
-                }
-                if (created_units && location >= 8) break;
             }
-            if (created_units) {
-                if (local) {
-                    g_FX.play(0x11);
-                    const char *message = native_terrain ? "GOODYISLE"
-                                                        : "GOODYWORMS";
-                    const char *icon = native_terrain ? "isle_sm.pcx"
-                        : (created_mind_worm ? "sporlnch_sm.pcx"
-                                             : "mindworm_sm.pcx");
-                    NetMsgPrimary.pop(message, -5000, 0, icon);
-                    g_FX.fade(0x11);
-                }
-                return 0;
-            }
-            break;
+            i += spawned ? range(5 - PlayersData[faction_id].current_num_bases / 2, 1, 4) : 1;
         }
-        case 18: { // duplicate a vehicle after native/peer eligibility checks
-            if (native_terrain) {
-                uint32_t native_roll = (uint32_t)rand() & 0x80000003u;
-                int eligible = native_roll == 0;
-                if ((int32_t)native_roll <= -1)
-                    eligible = (((native_roll - 1u) | 0xFFFFFFFCu)
-                                == 0xFFFFFFFFu);
-                if (!eligible) break;
-            } else if (!Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id]
-                            .offense_rating) {
-                break;
+        if (!spawned) goto reroll;
+        if (is_local) {
+            g_FX.play(0x11);
+            if (spore) {
+                NetMsgPrimary.pop(is_sea ? "GOODYISLE" : "GOODYWORMS", -5000, 0,
+                                  is_sea ? "isle_sm.pcx" : "sporlnch_sm.pcx");
+            } else {
+                NetMsgPrimary.pop(is_sea ? "GOODYISLE" : "GOODYWORMS", -5000, 0,
+                                  is_sea ? "isle_sm.pcx" : "mindworm_sm.pcx");
             }
-            if (VehPrototypes[Vehs[veh_id].proto_id].plan == 12)
-                break;
-
-            int peer_can_receive = !IsMultiplayerNet;
-            if (IsMultiplayerNet) {
-                int peer_ahead = 0;
-                peer_can_receive = 1;
-                for (int other = 1; other < 8; ++other) {
-                    const uint32_t bit = 1u << other;
-                    if (other == faction_id
-                        || !(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (bit << 8))
-                        || !(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & bit))
-                        continue;
-                    const int peer_total = PlayersData[other].total_mil_veh;
-                    if (native_terrain) {
-                        if (faction.unk_70 <= PlayersData[other].unk_70)
-                            peer_ahead = 1;
-                    } else if (faction.total_mil_veh <= peer_total) {
-                        peer_ahead = 1;
-                    }
-                    if (peer_total < goody_box_detail::native_half(
-                            (int)faction.total_mil_veh)) {
-                        peer_can_receive = 0;
-                        break;
-                    }
-                }
-                if (!peer_ahead) peer_can_receive = 0;
-            }
-            if (!peer_can_receive) break;
-
-            const int clone = veh_init(Vehs[veh_id].proto_id,
-                                       Vehs[veh_id].faction_id, x, y);
-            if (clone < 0) break;
-            Vehs[clone].home_base_id = -1;
-            Vehs[clone].morale = Vehs[veh_id].morale;
-            Vehs[clone].dmg_incurred = Vehs[veh_id].dmg_incurred;
-            parse_says(0, VehPrototypes[Vehs[veh_id].proto_id].veh_name,
-                       -1, -1);
-            if (local)
-                NetMsgPrimary.pop("GOODYCLONE", -5000, 0, "clone_sm.pcx");
-            return 0;
+            g_FX.fade(0x11);
         }
-        case 9999: // Unity crash cleanup reached only after the entry guard
-            if (local)
-                NetMsgPrimary.pop(native_terrain ? "GOODYWHIRLPOOL"
-                                                 : "GOODYVANISH",
-                                  5000, 0, 0);
-            kill(veh_id);
-            return 1;
-        default:
-            break;
-        }
-
-        // Unknown/high event ids enter the native overflow arm, whose retry
-        // counter guard precedes site-claim side effects.
-        if (event_id > 18) {
-            if (attempt >= 2) return 0;
-
-            // Only native overflow/default event ids reach this narrow
-            // site-claim path. Ordinary failed cases reroll directly.
-            const int fallback_allowed =
-                ((!native_terrain || (tile->climate & 0xE0u) >= 0x40u)
-                 && (!(tile->bit & 0x20u) || (tile->climate & 0xE0u) <= 0x3Fu)
-                 && y >= 2 && y < MapLatitudeBounds - 2
-                 && !(GameDataStateStorage.fields_.game_rules_ & 0x00010000u));
-            if (fallback_allowed) {
-                bit_set(x, y, 0x400, TRUE);
-                const int existing_bonus = bonus_at(x, y, 0);
-                site_radius(x, y, 0);
-                if (local && existing_bonus) {
-                    if (existing_bonus == 1) wave_it(0x28);
-                    else if (existing_bonus == 2) wave_it(0x2A);
-                    else if (existing_bonus == 3) {
-                        ambience(0xD2);
-                        wave_it(0x29);
-                    }
-                    parse_say(0, Labels.strings_ptr[0x5B + existing_bonus],
-                              -1, -1);
-                    NetMsgPrimary.pop("GOODYRESOURCE", 5000, 0,
-                                      "supply_sm.pcx");
-                }
-                draw_tile(x, y, 2);
-                if (rand() % 3 == 0) return 0;
-                if (attempt != 0) return 0;
-                attempt = 2;
-            }
-        }
-        // Match the common native retry target, including calls that follow a
-        // failed arm which may have changed the source unit's live location.
-        x = Vehs[veh_id].x;
-        y = Vehs[veh_id].y;
-        tile = goody_box_detail::tile_at(x, y);
-        if (!goody_box_detail::reroll_event(y, attempt, event_id))
-            return 0;
+        return 0;
     }
-    return 0;
+    case 18: {
+        if (is_sea) {
+            if (rand() % 4) goto reroll;
+        } else if (!Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating) {
+            goto reroll;
+        }
+        if (VehPrototypes[Vehs[veh_id].proto_id].plan == 12) goto reroll;
+        if (IsMultiplayerNet) {
+            int any = 0;
+            const uint32_t alive = GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
+            for (int i = 1; i < MaxPlayerNum; i++) {
+                if (alive & (1 << i) && is_human(i) && i != faction_id) {
+                    if (is_sea) {
+                        if (PlayersData[i].unk_70 >= PlayersData[faction_id].unk_70) {
+                            any = 1;
+                        }
+                    } else if (PlayersData[i].total_mil_veh >= PlayersData[faction_id].total_mil_veh) {
+                        any = 1;
+                    }
+                    if (PlayersData[i].total_mil_veh < PlayersData[faction_id].total_mil_veh / 2) {
+                        goto reroll;
+                    }
+                }
+            }
+            if (!any) goto reroll;
+        }
+        const int clone_id = veh_init(Vehs[veh_id].proto_id, faction_id, x, y);
+        if (clone_id < 0) goto reroll;
+        Vehs[clone_id].home_base_id = -1;
+        Vehs[clone_id].morale = Vehs[veh_id].morale;
+        Vehs[clone_id].dmg_incurred = Vehs[veh_id].dmg_incurred;
+        parse_says(0, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
+        if (is_local) {
+            NetMsgPrimary.pop("GOODYCLONE", -5000, 0, "clone_sm.pcx");
+        }
+        return 0;
+    }
+    case 9999:
+        if (is_local) {
+            NetMsgPrimary.pop(is_sea ? "GOODYWHIRLPOOL" : "GOODYVANISH", 5000, 0, 0);
+        }
+        kill(veh_id);
+        return 1;
+    default: {
+        if (retry > 1) {
+            return 0;
+        }
+        if (is_sea && (map_loc(x, y)->climate & ~0x1F) < 0x40) goto reroll;
+        if (map_loc(x, y)->bit & 0x20 && (map_loc(x, y)->climate & ~0x1F) >= 0x40) goto reroll;
+        if (y <= 1) goto reroll;
+        if (y >= MapLatitudeBounds - 2) goto reroll;
+        if (GameDataStateStorage.fields_.game_rules_ & 0x10000) goto reroll;
+        bit_set(x, y, 0x400, 1);
+        const int resource = bonus_at(x, y, 0);
+        site_radius(x, y, 0);
+        if (is_local && resource) {
+            if (resource == 1) {
+                wave_it(0x28);
+            } else if (resource == 2) {
+                wave_it(0x2A);
+            } else if (resource == 3) {
+                ambience(0xD2);
+                wave_it(0x29);
+            }
+            parse_say(0, Labels.strings_ptr[91 + resource], -1, -1);
+            NetMsgPrimary.pop("GOODYRESOURCE", 5000, 0, "supply_sm.pcx");
+        }
+        draw_tile(x, y, 2);
+        if (rand() % 3 && !retry) {
+            retry = 2;
+            goto reroll;
+        }
+        return 0;
+    }
+    }
+    }
 }
 
 
@@ -2922,21 +2542,7 @@ void __cdecl retire_proto(int prototype_id, int faction_id) {
     }
 }
 
-static int prototype_armor_strength(const VehPrototype &design,
-                                    int faction_id) {
-    const int armor_id = design.armor_id;
-    if (!ExpansionEnabled && armor_id > 9) return 1;
-    if (Armor[armor_id].defense_rating < 0) {
-        const int ratio = static_cast<int>(
-            PlayersData[faction_id].enemy_best_weapon_value)
-            * static_cast<int>(Rules.psi_combat_ratio_def[TRIAD_LAND])
-            / static_cast<int>(Rules.psi_combat_ratio_atk[TRIAD_LAND]);
-        return psi_factor(ratio, faction_id, FALSE, FALSE);
-    }
-    return static_cast<int>(Armor[armor_id].defense_rating);
-}
-
-static void parse_prototype_report(int parse_id, int design_id) {
+static inline void parse_prototype_report(int parse_id, int design_id) {
     StringTemp[0] = '\0';
     ::strcat(StringTemp, VehPrototypes[design_id].veh_name);
     ::strcat(StringTemp, " ");
@@ -2955,451 +2561,404 @@ static void parse_prototype_report(int parse_id, int design_id) {
     parse_says(parse_id, StringTemp, -1, -1);
 }
 
+// stand-in: arm_strat/arm_val (0x57D270/0x57D3F0, vehicle_strategy.cpp) are
+// inlined here by the image, so they were one original unit; local copies
+// until the units merge.
+static inline int prune_arm_strat(int armor_id, int faction_id) {
+    if (!ExpansionEnabled && armor_id > ARM_PSI_DEFENSE) {
+        return 1;
+    }
+    int8_t defense_rating = Armor[armor_id].defense_rating;
+    if (defense_rating < 0) {
+        return psi_factor((Rules.psi_combat_ratio_def[TRIAD_LAND]
+            * PlayersData[faction_id].enemy_best_weapon_value)
+            / Rules.psi_combat_ratio_atk[TRIAD_LAND], faction_id, false, false);
+    }
+    return defense_rating;
+}
+
+static inline int prune_arm_val(int armor_id, int faction_id) {
+    if (faction_id >= 0) {
+        return prune_arm_strat(armor_id, faction_id) * 2;
+    }
+    return Armor[armor_id].defense_rating * 2;
+}
+
 // ORIGINAL: 0x0057F4B0 ?prune_protos@@YAXHHH@Z 0x0057F4B0-0x00580859
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0057f4b0.cpp; image:0x0057F4B0-0x00580859", "Completion propagation:0x0057F4BF-0x0057F693", "LockEnableMask separates retirement modes, unlocked epilogue returns:0x0057F699-0x0057F6AD;0x0057FCF3-0x0057FCFA", "Lower-reactor early marks:0x0057F7C8-0x0057F7DB;0x0057FA95-0x0057FAA0", "Locked replacement/target banks and non-positive armor bypass:0x0057FD13-0x005802A9;0x0057FEC2-0x0057FFC6", "Queue presence and callback-sensitive prompt/rewrite/unlock/report:0x005802AA-0x00580852"], "reason": "Recover typed completion and both mutually exclusive prototype-retirement modes in the genuine vehicle-design owner. Loaded weapon/armor/chassis rules, faction design banks and active/queued counts determine obsolescence; owned Base queues and NetDaemon locking supply production migration, with native local prompt and multiplayer report ordering. Preserve the complete seed and original spans as evidence; this structural interpretation is not a measured matching claim."}
-// TRIED: full goto-per-branch literal transcription of all 1404 instructions (register vars + B/W/D/SB/SW byte-address macros); compiles and matches control flow/field offsets/call order but diverges at instr #0 (prologue/frame layout, MSVC's register allocation for this huge frame is not reproduced by hand).
+// Rewritten from the image 2026-11-08 (0.85 full-text); remaining gaps are register ties and
+// the inlined arm_val doubling, which the image applies after the merge.
 void __cdecl prune_protos(int faction_id, int prototype_id, int options) {
-    const int faction_base = faction_id * MaxVehProtoFactionNum;
-    const bool can_mark_typed_completions = prototype_id < MaxVehProtoFactionNum
-        || (VehPrototypes[prototype_id].flags & PROTO_TYPED_COMPLETE) != 0;
-    if (can_mark_typed_completions) {
-      for (int local_slot = 0; local_slot < MaxVehProtoFactionNum; ++local_slot) {
-        VehPrototype &prototype = VehPrototypes[faction_base + local_slot];
-        if ((prototype.flags & PROTO_ACTIVE) == 0
-            || (prototype.flags & PROTO_TYPED_COMPLETE) != 0) {
-            continue;
-        }
-
-        bool has_better_weapon = false;
-        bool has_better_armor = false;
-        bool has_better_chassis = false;
-        for (int walk = 0; walk < 2 * MaxVehProtoFactionNum; ++walk) {
-            const int candidate_id = (walk < MaxVehProtoFactionNum)
-                ? walk : faction_base + (walk & 0x3f);
-            const VehPrototype &candidate = VehPrototypes[candidate_id];
-            if ((candidate.flags & PROTO_ACTIVE) == 0) continue;
-            if (candidate_id < MaxVehProtoFactionNum) {
-                if (!has_tech(candidate.preq_tech, faction_id)) continue;
-            } else if ((candidate.flags & PROTO_TYPED_COMPLETE) == 0) {
+    if (prototype_id < MaxVehProtoFactionNum
+        || VehPrototypes[prototype_id].flags & PROTO_TYPED_COMPLETE) {
+        for (int i = 0; i < MaxVehProtoFactionNum; i++) {
+            const int proto_id = faction_id * MaxVehProtoFactionNum + i;
+            if (!(VehPrototypes[proto_id].flags & PROTO_ACTIVE)
+                || VehPrototypes[proto_id].flags & PROTO_TYPED_COMPLETE) {
                 continue;
             }
-
-            if (candidate.weapon_id == prototype.weapon_id) {
-                has_better_weapon = true;
-            }
-            if (candidate.armor_id == prototype.armor_id) {
-                has_better_armor = true;
-            }
-            if (candidate.chassis_id == prototype.chassis_id) {
-                has_better_chassis = true;
-            }
-
-            const int candidate_weapon_rating =
-                Weapon[candidate.weapon_id].offense_rating;
-            const int proposed_weapon_rating =
-                Weapon[prototype.weapon_id].offense_rating;
-            if (proposed_weapon_rating > 0
-                && candidate_weapon_rating >= proposed_weapon_rating) {
-                has_better_weapon = true;
-            }
-            const int candidate_armor_rating =
-                Armor[candidate.armor_id].defense_rating;
-            const int proposed_armor_rating =
-                Armor[prototype.armor_id].defense_rating;
-            if (proposed_armor_rating > 0
-                && candidate_armor_rating >= proposed_armor_rating) {
-                has_better_armor = true;
-            }
-            if (Chassis[candidate.chassis_id].triad
-                    == Chassis[prototype.chassis_id].triad
-                && Chassis[candidate.chassis_id].speed
-                    >= Chassis[prototype.chassis_id].speed) {
-                has_better_chassis = true;
-            }
-        }
-
-        if (has_better_weapon && has_better_armor && has_better_chassis) {
-            prototype.flags |= static_cast<uint16_t>(PROTO_TYPED_COMPLETE | 0x100);
-        }
-      }
-    }
-
-    // Native 57F69C..57FCF9 processes each faction target in two ordered
-    // walks: typed targets compare against the predefined bank first, then
-    // every eligible target compares against its faction peers. The first
-    // walk has a lower-reactor early mark; the peer walk likewise marks a
-    // lower-reactor peer before later chassis, carry, rating and ability
-    // checks. The cross-prototype region is skipped while this faction is
-    // locked; its automatic-prune tail has a separate native entry path.
-    const uint8_t faction_bit = static_cast<uint8_t>(1u << (faction_id & 0x1f));
-    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) == 0) {
-    // The first native obsolescence walk compares faction designs with the
-    // predefined bank too. Preserve its prerequisite and unsupported-weapon
-    // exclusions before applying the exact-equivalence subcase.
-    for (int target_slot = 0; target_slot < MaxVehProtoFactionNum; ++target_slot) {
-        const int target_id = faction_base + target_slot;
-        const VehPrototype &target = VehPrototypes[target_id];
-        if ((target.flags & PROTO_ACTIVE) == 0
-            || (target.obsolete_factions & faction_bit) != 0) {
-            continue;
-        }
-        if (target_id < MaxVehProtoFactionNum
-            && !has_tech(target.preq_tech, faction_id)) {
-            continue;
-        }
-        // Native 57F81A sends an untyped faction target directly to the
-        // faction-prototype pass. Predefined targets pass directly; faction
-        // targets require the typed-complete flag.
-        const bool compare_typed_peers = target_id < MaxVehProtoFactionNum
-            || (target.flags & PROTO_TYPED_COMPLETE) != 0;
-        if (compare_typed_peers) {
-        for (int candidate_id = 0; candidate_id < MaxVehProtoFactionNum;
-             ++candidate_id) {
-            VehPrototype &candidate = VehPrototypes[candidate_id];
-            if (candidate_id == target_id || candidate_id == 15
-                || (candidate.flags & PROTO_ACTIVE) == 0
-                || Weapon[candidate.weapon_id].offense_rating < 0
-                || candidate.plan != target.plan
-                || candidate.unk_1 != target.unk_1
-                || Chassis[candidate.chassis_id].triad
-                    != Chassis[target.chassis_id].triad) {
-                continue;
-            }
-            // Native 57F7C8..57F9D2 marks a lower-reactor, non-psi
-            // predefined design immediately after the triad check. This
-            // dominance branch intentionally precedes range, carry, rating,
-            // and ability comparisons.
-            if (candidate.reactor_id < target.reactor_id) {
-                candidate.obsolete_factions |= faction_bit;
-                if (options != 0) synch_obs(candidate_id);
-                continue;
-            }
-            if (Chassis[candidate.chassis_id].range
-                    != Chassis[target.chassis_id].range
-                || Chassis[candidate.chassis_id].speed
-                    > Chassis[target.chassis_id].speed
-                || candidate.carry_capacity > target.carry_capacity
-                || bit_count(static_cast<int>(candidate.ability_flags
-                                               & target.ability_flags))
-                    < bit_count(static_cast<int>(candidate.ability_flags))
-                || ((candidate.ability_flags ^ target.ability_flags)
-                    & 0x00408418u) != 0) {
-                continue;
-            }
-            const int candidate_offense =
-                Weapon[candidate.weapon_id].offense_rating;
-            const int target_offense = Weapon[target.weapon_id].offense_rating;
-            const bool equivalent_weapon = candidate_offense > 0
-                ? candidate_offense <= target_offense
-                : candidate.weapon_id == target.weapon_id;
-            const int candidate_defense =
-                Armor[candidate.armor_id].defense_rating;
-            const bool equivalent_armor = candidate_defense > 0
-                ? 2 * prototype_armor_strength(candidate, faction_id)
-                    <= 2 * prototype_armor_strength(target, faction_id)
-                : candidate.armor_id == target.armor_id;
-            if (!equivalent_weapon || !equivalent_armor) continue;
-            candidate.obsolete_factions |= faction_bit;
-            if (options != 0) synch_obs(candidate_id);
-        }
-        }
-
-        // Native peer comparisons follow the predefined scan for this same
-        // target, before the outer target index advances.
-        for (int peer_slot = 0; peer_slot < MaxVehProtoFactionNum; ++peer_slot) {
-            if (peer_slot == target_slot) continue;
-            VehPrototype &peer = VehPrototypes[faction_base + peer_slot];
-            if ((peer.flags & PROTO_ACTIVE) == 0
-                || peer.plan != target.plan
-                || peer.unk_1 != target.unk_1
-                || Chassis[peer.chassis_id].triad
-                    != Chassis[target.chassis_id].triad
-                || (!compare_typed_peers
-                    && (peer.flags & PROTO_TYPED_COMPLETE) != 0)) {
-                continue;
-            }
-            if (peer.reactor_id < target.reactor_id) {
-                peer.obsolete_factions |= faction_bit;
-                if (options != 0) synch_obs(faction_base + peer_slot);
-                continue;
-            }
-            if (Chassis[peer.chassis_id].range
-                    != Chassis[target.chassis_id].range
-                || Chassis[peer.chassis_id].speed
-                    > Chassis[target.chassis_id].speed
-                || peer.carry_capacity > target.carry_capacity) {
-                continue;
-            }
-            if (((peer.flags & PROTO_TYPED_COMPLETE) != 0
-                 && bit_count(static_cast<int>(peer.ability_flags
-                                              & target.ability_flags))
-                    < bit_count(static_cast<int>(peer.ability_flags)))
-                || ((peer.ability_flags ^ target.ability_flags)
-                    & 0x00408418u) != 0) {
-                continue;
-            }
-            const int peer_offense = Weapon[peer.weapon_id].offense_rating;
-            const int target_offense = Weapon[target.weapon_id].offense_rating;
-            const bool equivalent_weapon = peer_offense > 0
-                ? peer_offense <= target_offense
-                : peer.weapon_id == target.weapon_id;
-            const int peer_defense = Armor[peer.armor_id].defense_rating;
-            const bool equivalent_armor = peer_defense > 0
-                ? 2 * prototype_armor_strength(peer, faction_id)
-                    <= 2 * prototype_armor_strength(target, faction_id)
-                : peer.armor_id == target.armor_id;
-            if (!equivalent_weapon || !equivalent_armor) continue;
-            peer.obsolete_factions |= faction_bit;
-            if (options != 0) synch_obs(faction_base + peer_slot);
-        }
-    }
-        // This mode returns at 57FCF3 even if a synchronization callback
-        // changes LockEnableMask; it cannot enter the automatic mode.
-        return;
-    }
-
-    // Native 57FD13..5802A9 is reachable from the locked-faction branch and
-    // additionally requires multiplayer or the single-player preference.
-    // The outer design is the possible replacement; the inner design is the
-    // design that receives the faction's obsolete bit.
-    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) != 0
-        && (IsMultiplayerNet != 0
-            || (GameDataStateStorage.fields_.game_more_preferences_ & MPREF_BSC_AUTO_PRUNE_OBS_VEH) != 0)) {
-        for (int replacement_walk = 0;
-             replacement_walk < 2 * MaxVehProtoFactionNum;
-             ++replacement_walk) {
-            const int replacement_id = replacement_walk < MaxVehProtoFactionNum
-                ? replacement_walk
-                : faction_base + (replacement_walk & 0x3f);
-            const VehPrototype &replacement = VehPrototypes[replacement_id];
-            if (replacement_id < MaxVehProtoFactionNum
-                && !has_tech(replacement.preq_tech, faction_id)) {
-                continue;
-            }
-            if ((replacement.flags & PROTO_ACTIVE) == 0
-                || (replacement.obsolete_factions & faction_bit) != 0) {
-                continue;
-            }
-
-            for (int target_walk = 0;
-                 target_walk < 2 * MaxVehProtoFactionNum;
-                 ++target_walk) {
-                const int target_id = target_walk < MaxVehProtoFactionNum
-                    ? target_walk : faction_base + (target_walk & 0x3f);
-                if (target_walk == replacement_walk) continue;
-                VehPrototype &target = VehPrototypes[target_id];
-                if ((target.flags & PROTO_ACTIVE) == 0
-                    || (target.obsolete_factions & faction_bit) != 0
-                    || (target.flags & 0x0200) != 0
-                    || (target_id < MaxVehProtoFactionNum
-                        && (target_id == 15
-                            || Weapon[target.weapon_id].offense_rating < 0))) {
+            int chassis_done = 0;
+            int armor_done = 0;
+            int weapon_done = 0;
+            for (int walk = 0; walk < 2 * MaxVehProtoFactionNum; walk++) {
+                const int id = walk % MaxVehProtoFactionNum
+                    + (walk < MaxVehProtoFactionNum ? 0 : faction_id * MaxVehProtoFactionNum);
+                if (!(VehPrototypes[id].flags & PROTO_ACTIVE)) continue;
+                if (id < MaxVehProtoFactionNum) {
+                    if (!has_tech(VehPrototypes[id].preq_tech, faction_id)) continue;
+                } else if (!(VehPrototypes[id].flags & PROTO_TYPED_COMPLETE)) {
                     continue;
                 }
-                // Native 57FE2C..FE51 allows predefined replacements and
-                // typed-complete faction replacements through directly. An
-                // untyped faction replacement is limited to untyped faction
-                // targets; it does not compare against predefined targets.
-                if (replacement_id >= MaxVehProtoFactionNum
-                    && (replacement.flags & PROTO_TYPED_COMPLETE) == 0
-                    && (target_id < MaxVehProtoFactionNum
-                        || (target.flags & PROTO_TYPED_COMPLETE) != 0)) {
+                if (VehPrototypes[id].weapon_id == VehPrototypes[proto_id].weapon_id) {
+                    weapon_done = 1;
+                }
+                if (VehPrototypes[id].armor_id == VehPrototypes[proto_id].armor_id) {
+                    armor_done = 1;
+                }
+                if (VehPrototypes[id].chassis_id == VehPrototypes[proto_id].chassis_id) {
+                    chassis_done = 1;
+                }
+                if (Weapon[VehPrototypes[proto_id].weapon_id].offense_rating > 0
+                    && Weapon[VehPrototypes[id].weapon_id].offense_rating
+                        >= Weapon[VehPrototypes[proto_id].weapon_id].offense_rating) {
+                    weapon_done = 1;
+                }
+                if (Armor[VehPrototypes[proto_id].armor_id].defense_rating > 0
+                    && Armor[VehPrototypes[id].armor_id].defense_rating
+                        >= Armor[VehPrototypes[proto_id].armor_id].defense_rating) {
+                    armor_done = 1;
+                }
+                if (Chassis[VehPrototypes[proto_id].chassis_id].triad
+                        == Chassis[VehPrototypes[id].chassis_id].triad
+                    && Chassis[VehPrototypes[id].chassis_id].speed
+                        >= Chassis[VehPrototypes[proto_id].chassis_id].speed) {
+                    chassis_done = 1;
+                }
+            }
+            if (weapon_done && armor_done && chassis_done) {
+                VehPrototypes[proto_id].flags |= PROTO_TYPED_COMPLETE | 0x100;
+            }
+        }
+    }
+
+    if (!is_human(faction_id)) {
+        for (int i = 0; i < MaxVehProtoFactionNum; i++) {
+            const int target_id = faction_id * MaxVehProtoFactionNum + i;
+            if (!(VehPrototypes[target_id].flags & PROTO_ACTIVE)
+                || VehPrototypes[target_id].obsolete_factions & (1 << faction_id)) {
+                continue;
+            }
+            if (target_id < MaxVehProtoFactionNum
+                && !has_tech(VehPrototypes[target_id].preq_tech, faction_id)) {
+                continue;
+            }
+            int typed;
+            if (target_id < MaxVehProtoFactionNum
+                || VehPrototypes[target_id].flags & PROTO_TYPED_COMPLETE) {
+                typed = 1;
+                for (int cand = 0; cand < MaxVehProtoFactionNum; cand++) {
+                    if (!(VehPrototypes[cand].flags & PROTO_ACTIVE)) continue;
+                    if (cand == target_id) continue;
+                    if (cand < MaxVehProtoFactionNum
+                        && (Weapon[VehPrototypes[cand].weapon_id].offense_rating < 0
+                            || cand == BSC_SPORE_LAUNCHER)) {
+                        continue;
+                    }
+                    if (VehPrototypes[cand].unk_1 != VehPrototypes[target_id].unk_1) continue;
+                    if (Chassis[VehPrototypes[cand].chassis_id].triad
+                        != Chassis[VehPrototypes[target_id].chassis_id].triad) {
+                        continue;
+                    }
+                    if (VehPrototypes[cand].plan != VehPrototypes[target_id].plan) continue;
+                    if (VehPrototypes[cand].reactor_id >= VehPrototypes[target_id].reactor_id
+                        || Weapon[VehPrototypes[cand].weapon_id].offense_rating < 0) {
+                        if (Chassis[VehPrototypes[cand].chassis_id].range
+                            != Chassis[VehPrototypes[target_id].chassis_id].range) {
+                            continue;
+                        }
+                        if (Weapon[VehPrototypes[cand].weapon_id].offense_rating <= 0) {
+                            if (VehPrototypes[cand].weapon_id != VehPrototypes[target_id].weapon_id) {
+                                continue;
+                            }
+                        } else if (Weapon[VehPrototypes[cand].weapon_id].offense_rating
+                                   > Weapon[VehPrototypes[target_id].weapon_id].offense_rating) {
+                            continue;
+                        }
+                        if (VehPrototypes[cand].carry_capacity
+                            > VehPrototypes[target_id].carry_capacity) {
+                            continue;
+                        }
+                        if (Armor[VehPrototypes[cand].armor_id].defense_rating <= 0) {
+                    if (VehPrototypes[cand].armor_id != VehPrototypes[target_id].armor_id) {
+                        continue;
+                    }
+                } else if (prune_arm_val(VehPrototypes[cand].armor_id, faction_id)
+                           > prune_arm_val(VehPrototypes[target_id].armor_id, faction_id)) {
                     continue;
                 }
-
-                if (replacement.plan != target.plan
-                    || Chassis[target.chassis_id].range
-                        != Chassis[VehPrototypes[prototype_id].chassis_id].range
-                    || Chassis[replacement.chassis_id].triad
-                        != Chassis[target.chassis_id].triad
-                    || Chassis[target.chassis_id].speed
-                        > Chassis[replacement.chassis_id].speed
-                    || target.carry_capacity > replacement.carry_capacity
-                    || ((target.flags & 0x0008) != 0
-                        && target.reactor_id >= replacement.reactor_id)) {
+                        if (Chassis[VehPrototypes[cand].chassis_id].speed
+                            > Chassis[VehPrototypes[target_id].chassis_id].speed) {
+                            continue;
+                        }
+                        if (bit_count(VehPrototypes[cand].ability_flags
+                                      & VehPrototypes[target_id].ability_flags)
+                            < bit_count(VehPrototypes[cand].ability_flags)) {
+                            continue;
+                        }
+                        if ((VehPrototypes[cand].ability_flags
+                             ^ VehPrototypes[target_id].ability_flags) & 0x408418) {
+                            continue;
+                        }
+                    }
+                    VehPrototypes[cand].obsolete_factions |= 1 << faction_id;
+                    if (options) synch_obs(cand);
+                }
+            } else {
+                typed = 0;
+            }
+            for (int j = 0; j < MaxVehProtoFactionNum; j++) {
+                const int peer = faction_id * MaxVehProtoFactionNum + j;
+                if (!(VehPrototypes[peer].flags & PROTO_ACTIVE)) continue;
+                if (peer == target_id) continue;
+                if (VehPrototypes[peer].unk_1 != VehPrototypes[target_id].unk_1) continue;
+                if (Chassis[VehPrototypes[peer].chassis_id].triad
+                    != Chassis[VehPrototypes[target_id].chassis_id].triad) {
                     continue;
                 }
-
-                if (target.plan != 3) {
-                    if ((Weapon[replacement.weapon_id].offense_rating > 1)
-                            != (Weapon[target.weapon_id].offense_rating > 1)
-                        || (Armor[replacement.armor_id].defense_rating > 1)
-                            != (Armor[target.armor_id].defense_rating > 1)) {
+                if (VehPrototypes[peer].plan != VehPrototypes[target_id].plan) continue;
+                if (!typed && VehPrototypes[peer].flags & PROTO_TYPED_COMPLETE) continue;
+                if (VehPrototypes[peer].reactor_id >= VehPrototypes[target_id].reactor_id) {
+                    if (VehPrototypes[peer].carry_capacity
+                        > VehPrototypes[target_id].carry_capacity) {
+                        continue;
+                    }
+                    if (Chassis[VehPrototypes[peer].chassis_id].range
+                        != Chassis[VehPrototypes[target_id].chassis_id].range) {
+                        continue;
+                    }
+                    if (Weapon[VehPrototypes[peer].weapon_id].offense_rating <= 0) {
+                        if (VehPrototypes[peer].weapon_id != VehPrototypes[target_id].weapon_id) {
+                            continue;
+                        }
+                    } else if (Weapon[VehPrototypes[peer].weapon_id].offense_rating
+                               > Weapon[VehPrototypes[target_id].weapon_id].offense_rating) {
+                        continue;
+                    }
+                    if (Armor[VehPrototypes[peer].armor_id].defense_rating <= 0) {
+                    if (VehPrototypes[peer].armor_id != VehPrototypes[target_id].armor_id) {
+                        continue;
+                    }
+                } else if (prune_arm_val(VehPrototypes[peer].armor_id, faction_id)
+                           > prune_arm_val(VehPrototypes[target_id].armor_id, faction_id)) {
+                    continue;
+                }
+                    if (Chassis[VehPrototypes[peer].chassis_id].speed
+                        > Chassis[VehPrototypes[target_id].chassis_id].speed) {
+                        continue;
+                    }
+                    if (VehPrototypes[peer].flags & PROTO_TYPED_COMPLETE
+                        && bit_count(VehPrototypes[target_id].ability_flags
+                                     & VehPrototypes[peer].ability_flags)
+                            < bit_count(VehPrototypes[peer].ability_flags)) {
+                        continue;
+                    }
+                    if ((VehPrototypes[target_id].ability_flags
+                         ^ VehPrototypes[peer].ability_flags) & 0x408418) {
                         continue;
                     }
                 }
-                if ((Weapon[target.weapon_id].offense_rating <= 0
-                     && replacement.weapon_id != target.weapon_id)
-                    || (Weapon[target.weapon_id].offense_rating > 0
-                        && Weapon[target.weapon_id].offense_rating
-                            > Weapon[replacement.weapon_id].offense_rating)
-                    || (Armor[target.armor_id].defense_rating <= 0
-                        && replacement.armor_id != target.armor_id)) {
-                    continue;
-                }
-                if ((Armor[target.armor_id].defense_rating > 0
-                     && 2 * prototype_armor_strength(target, faction_id)
-                        > 2 * prototype_armor_strength(replacement, faction_id))
-                    || target.reactor_id > replacement.reactor_id) {
-                    continue;
-                }
+                VehPrototypes[peer].obsolete_factions |= 1 << faction_id;
+                if (options) synch_obs(peer);
+            }
+        }
+        return;
+    }
 
-                const uint32_t ability_difference =
-                    replacement.ability_flags ^ target.ability_flags;
-                if ((ability_difference & 0xfffbd5fcu) != 0) continue;
-                if (ability_difference != 0) {
-                    const bool replacement_covers_target =
-                        (replacement.ability_flags & target.ability_flags)
-                            == target.ability_flags;
-                    if (target.reactor_id >= replacement.reactor_id
-                        && !replacement_covers_target) {
-                        if (replacement_id < MaxVehProtoFactionNum
-                            || PlayersData[faction_id]
-                                .proto_id_active[target_id] != 0
-                            || PlayersData[faction_id]
-                                .proto_id_queue[target_id] != 0) {
+    if (!IsMultiplayerNet
+        && !(GameDataStateStorage.fields_.game_more_preferences_ & MPREF_BSC_AUTO_PRUNE_OBS_VEH)) {
+        return;
+    }
+    for (int rwalk = 0; rwalk < 2 * MaxVehProtoFactionNum; rwalk++) {
+        int rid = rwalk % MaxVehProtoFactionNum;
+        if (rwalk >= MaxVehProtoFactionNum) {
+            rid += faction_id * MaxVehProtoFactionNum;
+        } else if (!has_tech(VehPrototypes[rid].preq_tech, faction_id)) {
+            continue;
+        }
+        if (VehPrototypes[rid].obsolete_factions & (1 << faction_id)) continue;
+        if (!(VehPrototypes[rid].flags & PROTO_ACTIVE)) continue;
+        for (int twalk = 0; twalk < 2 * MaxVehProtoFactionNum; twalk++) {
+            int tid = twalk % MaxVehProtoFactionNum;
+            if (twalk >= MaxVehProtoFactionNum) {
+                tid += faction_id * MaxVehProtoFactionNum;
+            }
+            if (twalk == rwalk) continue;
+            if (!(VehPrototypes[tid].flags & PROTO_ACTIVE)) continue;
+            if (VehPrototypes[tid].obsolete_factions & (1 << faction_id)) continue;
+            if (tid < MaxVehProtoFactionNum
+                && (Weapon[VehPrototypes[tid].weapon_id].offense_rating < 0
+                    || tid == BSC_SPORE_LAUNCHER)) {
+                continue;
+            }
+            if (VehPrototypes[tid].flags & 0x200) continue;
+            int prototyped = (VehPrototypes[tid].flags & 8u) >> 3;
+            if (rid >= MaxVehProtoFactionNum
+                && !(VehPrototypes[rid].flags & PROTO_TYPED_COMPLETE)
+                && (tid < MaxVehProtoFactionNum
+                    || VehPrototypes[tid].flags & PROTO_TYPED_COMPLETE)) {
+                continue;
+            }
+            if (prototyped
+                && VehPrototypes[tid].reactor_id >= VehPrototypes[rid].reactor_id) {
+                continue;
+            }
+            if (Weapon[VehPrototypes[tid].weapon_id].offense_rating <= 0) {
+                        if (VehPrototypes[tid].weapon_id != VehPrototypes[rid].weapon_id) {
                             continue;
                         }
+                    } else if (Weapon[VehPrototypes[tid].weapon_id].offense_rating
+                               > Weapon[VehPrototypes[rid].weapon_id].offense_rating) {
+                        continue;
                     }
-                }
-                if ((target.flags & 0x0008) != 0
-                    && (replacement.unk_1 != target.unk_1
-                        || (replacement.ability_flags & target.ability_flags)
-                            != target.ability_flags)) {
+            if (Armor[VehPrototypes[tid].armor_id].defense_rating <= 0) {
+                    if (VehPrototypes[tid].armor_id != VehPrototypes[rid].armor_id) {
+                        continue;
+                    }
+                } else if (prune_arm_val(VehPrototypes[tid].armor_id, faction_id)
+                           > prune_arm_val(VehPrototypes[rid].armor_id, faction_id)) {
                     continue;
                 }
-
-                // Without a reactor advantage, a more expensive replacement
-                // cannot retire a predefined or flag-8 target.
-                if (target.cost < replacement.cost
-                    && target.reactor_id >= replacement.reactor_id
-                    && (target_id < MaxVehProtoFactionNum
-                        || (target.flags & 0x0008) != 0)) {
+            if (VehPrototypes[tid].plan != 3) {
+                if ((Weapon[VehPrototypes[tid].weapon_id].offense_rating > 1)
+                    != (Weapon[VehPrototypes[rid].weapon_id].offense_rating > 1)) {
                     continue;
                 }
-
-                if ((target_id < MaxVehProtoFactionNum
-                     || replacement_id < MaxVehProtoFactionNum)
-                    && target.chassis_id == replacement.chassis_id
-                    && target.weapon_id == replacement.weapon_id
-                    && target.armor_id == replacement.armor_id
-                    && target.reactor_id == replacement.reactor_id) {
+                if ((Armor[VehPrototypes[tid].armor_id].defense_rating > 1)
+                    != (Armor[VehPrototypes[rid].armor_id].defense_rating > 1)) {
                     continue;
                 }
-
-                if (target_id == prototype_id) {
-                    target.flags |= 0x0008;
-                    if (options != 0) synch_obs(target_id);
+            }
+            if (VehPrototypes[tid].reactor_id > VehPrototypes[rid].reactor_id) continue;
+            if (VehPrototypes[tid].carry_capacity > VehPrototypes[rid].carry_capacity) continue;
+            if (Chassis[VehPrototypes[tid].chassis_id].range
+                != Chassis[VehPrototypes[prototype_id].chassis_id].range) {
+                continue;
+            }
+            if (Chassis[VehPrototypes[tid].chassis_id].triad
+                != Chassis[VehPrototypes[rid].chassis_id].triad) {
+                continue;
+            }
+            if (Chassis[VehPrototypes[tid].chassis_id].speed
+                > Chassis[VehPrototypes[rid].chassis_id].speed) {
+                continue;
+            }
+            if (VehPrototypes[tid].ability_flags != VehPrototypes[rid].ability_flags) {
+                if ((VehPrototypes[rid].ability_flags ^ VehPrototypes[tid].ability_flags)
+                    & 0xFFFBD5FC) {
                     continue;
                 }
-                target.obsolete_factions |= faction_bit;
-                if (options != 0) synch_obs(target_id);
-                if (target_id < MaxVehProtoFactionNum
-                    && !has_tech(target.preq_tech, faction_id)) {
+                if (VehPrototypes[tid].reactor_id >= VehPrototypes[rid].reactor_id
+                    && (VehPrototypes[rid].ability_flags & VehPrototypes[tid].ability_flags)
+                        != VehPrototypes[tid].ability_flags) {
+                    if (rid < MaxVehProtoFactionNum) continue;
+                    if (PlayersData[faction_id].proto_id_active[tid]) continue;
+                    if (PlayersData[faction_id].proto_id_queue[tid]) continue;
+                }
+            }
+            if (VehPrototypes[tid].plan != VehPrototypes[rid].plan) continue;
+            if (prototyped) {
+                if (VehPrototypes[tid].unk_1 != VehPrototypes[rid].unk_1) continue;
+                if ((VehPrototypes[rid].ability_flags & VehPrototypes[tid].ability_flags)
+                    != VehPrototypes[tid].ability_flags) {
                     continue;
                 }
-
-                // The native affected-base walk rewrites every queued
-                // reference to the now-obsolete design to its replacement.
-                bool retained_obsolete_target = false;
-                bool upgrade_choice_latch = false;
-                bool processed_any_owned_base = false;
-                bool has_queued_obsolete_prototype = false;
-                for (int queued_base_id = 0;
-                     queued_base_id < GameDataStateStorage.fields_.base_current_count_; ++queued_base_id) {
-                    const Base &base = Bases[queued_base_id];
-                    if (base.faction_id_current != faction_id) continue;
-                    const int queue_size =
-                        static_cast<int32_t>(base.queue_size);
-                    if (queue_size < 0) continue;
-                    for (int queue_slot = 0; queue_slot <= queue_size;
-                         ++queue_slot) {
-                        if (base.queue_production_id[queue_slot] == target_id) {
-                            has_queued_obsolete_prototype = true;
-                            break;
+            }
+            if (VehPrototypes[tid].cost < VehPrototypes[rid].cost
+                && VehPrototypes[tid].reactor_id >= VehPrototypes[rid].reactor_id) {
+                if (tid < MaxVehProtoFactionNum) continue;
+                if (VehPrototypes[tid].flags & 8) continue;
+            }
+            if (VehPrototypes[tid].weapon_id == VehPrototypes[rid].weapon_id
+                && VehPrototypes[tid].armor_id == VehPrototypes[rid].armor_id
+                && VehPrototypes[tid].chassis_id == VehPrototypes[rid].chassis_id
+                && VehPrototypes[tid].reactor_id == VehPrototypes[rid].reactor_id
+                && (tid < MaxVehProtoFactionNum || rid < MaxVehProtoFactionNum)) {
+                continue;
+            }
+            if (tid == prototype_id) {
+                VehPrototypes[tid].flags |= 8;
+                if (options) synch_obs(tid);
+                continue;
+            }
+            const uint8_t bit = static_cast<uint8_t>(1 << faction_id);
+            VehPrototypes[tid].obsolete_factions |= bit;
+            if (options) synch_obs(tid);
+            int processed = 0;
+            int latch = 0;
+            if (tid < MaxVehProtoFactionNum
+                && !has_tech(VehPrototypes[tid].preq_tech, faction_id)) {
+                continue;
+            }
+            int found = 0;
+            for (int b = 0; b < GameDataStateStorage.fields_.base_current_count_; b++) {
+                if (Bases[b].faction_id_current == faction_id) {
+                    for (int q = 0; q <= Bases[b].queue_size; q++) {
+                        if (Bases[b].queue_production_id[q] == tid) {
+                            found = 1;
+                            goto searched;
                         }
                     }
-                    if (has_queued_obsolete_prototype) break;
                 }
-                if (!has_queued_obsolete_prototype) continue;
-                for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
-                    Base &base = Bases[base_id];
-                    if (base.faction_id_current != faction_id) continue;
-
-                    int production_upgrade_choice = 0;
-                    bool parse_local_reports = IsMultiplayerNet == 0
-                        && faction_id == ConsoleGlobal.faction_id_
-                        && !processed_any_owned_base;
-                    if (!parse_local_reports && options != 0) {
-                        if (NetDaemonNet.lock_base(base_id, 0, -1, -1) != 0) {
-                            continue;
+            }
+        searched:
+            for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_;
+                 base_id++) {
+                if (Bases[base_id].faction_id_current != faction_id) continue;
+                if ((!IsMultiplayerNet && faction_id == ConsoleGlobal.faction_id_
+                     && found && !processed)
+                    || (found && (!options
+                                  || !NetDaemonNet.lock_base(base_id, 0, -1, -1)))) {
+                    if (!IsMultiplayerNet && faction_id == ConsoleGlobal.faction_id_
+                        && !processed) {
+                        parse_prototype_report(0, tid);
+                        parse_prototype_report(1, rid);
+                        int choice = 1;
+                        if (!(VehPrototypes[tid].flags & 0x200) && !latch) {
+                            choice = X_pop("ASKPRODUPGRADE", 0);
+                            if (choice > 1) latch = 1;
                         }
-                        // Native rechecks live multiplayer/local/processed
-                        // state after locking before choosing the parse path.
-                        parse_local_reports = IsMultiplayerNet == 0
-                            && faction_id == ConsoleGlobal.faction_id_
-                            && !processed_any_owned_base;
-                    }
-                    if (parse_local_reports) {
-                        // The first local single-player base publishes both
-                        // reports before consulting the live manual flag.
-                        parse_prototype_report(0, target_id);
-                        parse_prototype_report(1, replacement_id);
-                        if ((target.flags & 0x0200) == 0
-                            && !upgrade_choice_latch) {
-                            production_upgrade_choice =
-                                X_pop("ASKPRODUPGRADE", 0);
-                            if (production_upgrade_choice > 1) {
-                                upgrade_choice_latch = true;
+                        if (!latch && (VehPrototypes[tid].flags & 0x200 || choice == 1)) {
+                            VehPrototypes[tid].obsolete_factions &= ~bit;
+                            if (VehPrototypes[tid].flags & 8) {
+                                VehPrototypes[tid].flags |= 0x200;
                             }
+                            VehPrototypes[tid].flags |= 8;
+                            goto next_target;
                         }
                     }
-                    // Reload after report/prompt callbacks; manual retention
-                    // belongs only to this local parse path.
-                    if (parse_local_reports
-                        && production_upgrade_choice <= 1
-                        && ((target.flags & 0x0200) != 0
-                            || production_upgrade_choice == 1)) {
-                        target.obsolete_factions &=
-                            static_cast<uint8_t>(~faction_bit);
-                        if ((target.flags & 0x0008) != 0) {
-                            target.flags |= 0x0200;
-                        }
-                        target.flags |= 0x0008;
-                        retained_obsolete_target = true;
-                        break;
-                    }
-
-                    processed_any_owned_base = true;
-                    const int queue_size =
-                        static_cast<int32_t>(base.queue_size);
-                    if (queue_size >= 0) {
-                        for (int queue_slot = 0; queue_slot <= queue_size;
-                             ++queue_slot) {
-                            if (base.queue_production_id[queue_slot] == target_id) {
-                                base.queue_production_id[queue_slot] = replacement_id;
-                            }
+                    processed = 1;
+                    for (int q = 0; q <= Bases[base_id].queue_size; q++) {
+                        if (Bases[base_id].queue_production_id[q] == tid) {
+                            Bases[base_id].queue_production_id[q] = rid;
                         }
                     }
-                    if (IsMultiplayerNet != 0 && options != 0) {
+                    if (IsMultiplayerNet && options) {
                         NetDaemonNet.unlock_base(base_id);
                     }
                 }
-
-                if (retained_obsolete_target) continue;
-                if (IsMultiplayerNet != 0 && processed_any_owned_base
-                    && faction_id == ConsoleGlobal.faction_id_) {
-                    parse_prototype_report(0, target_id);
-                    parse_prototype_report(1, replacement_id);
-                    const char *picture =
-                        (Players[faction_id].rule_flags & RFLAG_ALIEN) != 0
-                            ? "alunit_sm.pcx" : "unit_sm.pcx";
-                    popp(ScriptPopupFile, "PRODUPGRADE", 0, picture, 0);
+            }
+            if (processed && IsMultiplayerNet && faction_id == ConsoleGlobal.faction_id_) {
+                parse_prototype_report(0, tid);
+                parse_prototype_report(1, rid);
+                if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+                    popp(ScriptPopupFile, "PRODUPGRADE", 0, "alunit_sm.pcx", 0);
+                } else {
+                    popp(ScriptPopupFile, "PRODUPGRADE", 0, "unit_sm.pcx", 0);
                 }
             }
+        next_target:;
         }
     }
-
 }
 
 // ORIGINAL: 0x0057CFA0 ?study_artifact@@YAHH@Z 0x0057CFA0-0x0057D1E8 BYTE_EXACT
