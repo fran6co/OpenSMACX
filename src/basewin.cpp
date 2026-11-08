@@ -7458,7 +7458,7 @@ inline ProdPicker::~ProdPicker() {
 
 // 00420A70..00420F8E plus original cleanup/virtual-base teardown regions.
 // All member/base destructors execute implicitly in reverse declaration order.
-// ORIGINAL: 0x00420A70 ??1BaseWin@@QAE@XZ 0x00420A70-0x00420F8E;0x00650E20-0x00651184
+// ORIGINAL: 0x00420A70 ??1BaseWin@@QAE@XZ 0x00420A70-0x00420F8E;0x00650E20-0x00651184 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00420A70; retired seed provenance git:1432fed4:src/unrecovered/00420a70.cpp; all original spans and historical obligations retained.", "image:41E8D0 initializes existing Font/FlatButton/Sprite/RECT and Caviar camera members; 420A70 tears down the same declaration order.", "image:41AF5B supplies ConsoleGlobal GraphicWin virtual-base receiver939444; qualified Console callback leaves the result intact.", "image:40B8F8 borrows the vehicle-ID pointer in NetDaemon row1 payload; normal menu cancel-1 reads inherited GraphicWinA0C. Undefined icon-spacing/invalid-index/modal-borrow inputs remain explicit."], "reason": "Genuine BaseWin owner with actual members, automatic base/member lifetimes and native callback receivers, not fixed executable-address forwarding or raw self-offset access."}
 // symbol    ??1BaseWin@@UAE@XZ
 // stand-in: dead store that emits nothing but raises ~BaseWin's /Ob2 budget.
