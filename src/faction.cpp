@@ -693,14 +693,13 @@ Status: Complete
 // spells its independently observed inline field/grammar operation directly.
 // BODY IN faction.h, as `MEASURED inline`: name_base (base.cpp) is the caller
 // that needs it folded in place, matching the image.
-// enemies_war/enemies_treaty call it out of line in the image.
-#pragma auto_inline(off)
+// enemies_war/enemies_treaty call it out of line in the image; communicate
+// expands its early sites, so it stays an ordinary /Ob2 candidate here.
 MEASURED LPSTR __cdecl get_noun(int faction_id) {
     GenderDefault = Players[faction_id].noun_gender;
     PluralityDefault = Players[faction_id].is_noun_plural;
     return Players[faction_id].noun_faction;
 }
-#pragma auto_inline(on)
 
 /*
 Purpose: Determine whether automatic contact is enabled for net or PBEM games.
@@ -1027,7 +1026,7 @@ Purpose: Add friction between the two specified factions.
 Return Value: n/a
 Status: Complete
 */
-// Only communicate (which expands nothing) calls it out of line; the other
+// communicate calls it out of line once its /Ob2 budget is spent; the other
 // diplomacy functions expand it.
 void __cdecl cause_friction(int faction_id, int faction_id_with, int friction) {
     // diplo_friction is the same 2099-stride view sixteen dwords past the
@@ -9065,40 +9064,22 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
     }
 }
 
-// Hand-written diplomacy sequences that the image repeats in place.
-#define COMMUNICATE_LOCK()                                                   \
-    log_say(DiploLabelGettingDIPLOMATICLOCK, 0, 0, 0);                       \
-    timeGetTime();                                                           \
-    while (!ExitTurnLoop && NetDaemonNet.add_global()) {                     \
-        check_spock();                                                       \
-        timeGetTime();                                                       \
-    }
-#define COMMUNICATE_UNLOCK()                                                 \
-    log_say(DiploLabelReleasingDIPLOMATICLOCK, 0, 0, 0);                     \
-    NetDaemonNet.unlock();
-#define COMMUNICATE_FRICTION(amount)                                         \
-    PlayersData[faction_id_with].diplo_friction[faction_id] = range(         \
-        PlayersData[faction_id_with].diplo_friction[faction_id] + (amount),  \
-        0, 20);                                                              \
-    if (DiploFrictionFactionID == faction_id_with &&                         \
-        DiploFrictionFactionIDWith == faction_id) {                          \
-        DiploFriction += (amount);                                           \
-    }
-#define COMMUNICATE_WITHDRAW(a, b)                                           \
-    if (IsMultiplayerNet) {                                                  \
-        log_say(DiploLabelSendingWITHDRAWAL, (a), (b), 0);                   \
-        message_data(0x244A, 0, (a), (b), 0, 0);                             \
-        NetDaemonNet.await_diplo(0x44A);                                     \
-    } else {                                                                 \
-        do_withdrawal((a), (b));                                             \
-    }
-
+// stand-in: dead /Ob2 budget probe (folds away, spends budget).
+static int communicate_budget_probe(int x) {
+    if (x == 1) x = 2;
+    if (x == 3) x = 4;
+    if (x == 5) x = 6;
+    if (x == 7) x = 8;
+    if (x == 9) x = 10;
+    if (x == 11) x = 12;
+    if (x == 13) x = 14;
+    if (x == 15) x = 16;
+    return x;
+}
 // Complete retained communicate continuation; the prior unfinished
 // binding/history below remains a historical restoration obligation.
 int communicate_round_down_multiple(int value, int step);
 
-// The image expands no inline helper anywhere in communicate.
-#pragma inline_depth(0)
 // ORIGINAL: 0x0054FFD0 ?communicate@@YAXHHH@Z 0x0054FFD0-0x00558980;0x0065FF4F-0x0065FF64
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x0054FFD0-0x00558980;0x0065FF4F-0x0065FF64", "source:src/unrecovered/0054ffd0.cpp:retained-seed", "task:base-colony-economy-coverage-wave:diplomacy-communicate-link-continuity-20261003", "Retired seed src/unrecovered/0054ffd0.cpp retains its complete original identity, hot/cold spans and historical findings in this owner", "SocialEffect.values_ is the genuine eleven-word indexed owner; original out-of-domain selector effects remain unresolved", "recovery/tests/test_communicate_owner.py: actual-source bounded behavior and mutation controls", "recovery/tasks/owner-coverage-wave-oct6.json"], "reason": "Recover the complete diplomacy conversation, topic and action paths through real faction, Base, social-effect array and UI owners, preserving original unchecked selectors, arithmetic, error and uninitialized-state behavior. Prior unfinished decision retained as history: Explicitly unfinished owner body for link continuity while complete communicate hot/cold behavior remains under recovery. The seed and original mapping are retained; this empty body does not implement diplomacy, reproduce its bytes or satisfy the pending dependency."}
 // TRIED: the seven-way relationship-topic greeting text build (war/ vendetta/truce/treaty/pact, chosen via has_treaty bits and distance, each with its own get_adjective_leader/ get_noun_phrase string chain and jump-table case 0-6) was collapsed to one generic diplomacy_caption() + say_num(0) call. The diplomacy_menu() result loop and its 8-way action dispatch (cases 0/1-2/3/4/5/6/7) were read from the raw disassembly (no Ghidra hypothesis was reliable there either) and reproduced with real callee names/order; the patience/ loop-exit condition nesting is approximated, not exact.
@@ -9109,7 +9090,6 @@ int communicate_stack_c;
 int communicate_stack_2c;
 int communicate_territory_base_id;
 int communicate_getout_result;
-int communicate_late_contact_base_id;
 int communicate_late_contact_best_tech;
 int communicate_late_contact_best_tech_value;
 int communicate_late_contact_bully_random, communicate_late_contact_choice;
@@ -9191,6 +9171,8 @@ int communicate_stack_34 = 0;
 int communicate_stack_54 = 0;
 int communicate_stack_1c = 0;
 int communicate_stack_48 = 0;
+// stand-in: the image calls range out of line in these early frictions.
+int (__cdecl *const communicate_range)(int, int, int) = range;
 Popup popup;
 PopupDialogFactionID = faction_id_with;
 DiplomacyActive = 1;
@@ -9211,14 +9193,24 @@ if (communicate_stack_44) {
         if (model) {
             int pending = PlayersData[faction_id].soc_category_pending.models_[category];
             if (pending && pending != model) {
-                COMMUNICATE_FRICTION(3);
+                PlayersData[faction_id_with].diplo_friction[faction_id] = communicate_range(
+                    PlayersData[faction_id_with].diplo_friction[faction_id] + 3, 0, 20);
+                if (DiploFrictionFactionID == faction_id_with &&
+                    DiploFrictionFactionIDWith == faction_id) {
+                    DiploFriction += 3;
+                }
             }
         }
     }
     int effect = Players[faction_id_with].soc_ideology_effect;
     if (effect >= 0 &&
         PlayersData[faction_id].soc_effect_pending.values_[effect] < 0) {
-        COMMUNICATE_FRICTION(3);
+        PlayersData[faction_id_with].diplo_friction[faction_id] = communicate_range(
+            PlayersData[faction_id_with].diplo_friction[faction_id] + 3, 0, 20);
+        if (DiploFrictionFactionID == faction_id_with &&
+            DiploFrictionFactionIDWith == faction_id) {
+            DiploFriction += 3;
+        }
     }
 }
 diplomacy_check(faction_id, faction_id_with, 1);
@@ -9243,20 +9235,12 @@ if (dialogue_flags & 0x2C) {
                                 Bases[communicate_territory_base_id].y, faction_id);
         }
         parse_says(0, Bases[communicate_territory_base_id].name_string, -1, -1);
-        GenderDefault = Players[faction_id_with].is_leader_female;
-        PluralityDefault = 0;
-        parse_says(1, Players[faction_id_with].title_leader, -1, -1);
-        GenderDefault = Players[faction_id_with].is_leader_female;
-        PluralityDefault = 0;
-        parse_says(2, Players[faction_id_with].name_leader, -1, -1);
-        GenderDefault = Players[faction_id].is_leader_female;
-        PluralityDefault = 0;
-        parse_says(3, Players[faction_id].title_leader, -1, -1);
-        GenderDefault = Players[faction_id].is_leader_female;
-        PluralityDefault = 0;
-        parse_says(4, Players[faction_id].name_leader, -1, -1);
-        parse_says(5, Players[faction_id].adj_insult_faction, -1, -1);
-        parse_says(6, Players[faction_id_with].adj_name_faction, -1, -1);
+        parse_says(1, get_title(faction_id_with), -1, -1);
+        parse_says(2, get_name(faction_id_with), -1, -1);
+        parse_says(3, get_title(faction_id), -1, -1);
+        parse_says(4, get_name(faction_id), -1, -1);
+        parse_says(5, get_adjective_insult_faction(faction_id), -1, -1);
+        parse_says(6, get_adjective(faction_id_with), -1, -1);
         StringTemp[0] = 0;
         strcat(StringTemp, "GETOUT");
         _itoa(random(0, 5) + 1, communicate_getout_number, 10);
@@ -9264,9 +9248,9 @@ if (dialogue_flags & 0x2C) {
         communicate_getout_result = X_pops(StringTemp, 0x100000,
                             FactionDiplomacyPortraits[faction_id_with], pop_wait);
         if (!communicate_getout_result) {
-            COMMUNICATE_LOCK();
-            COMMUNICATE_WITHDRAW(faction_id_with, faction_id);
-            COMMUNICATE_UNLOCK();
+            diplo_lock(0);
+            net_withdrawal(faction_id_with, faction_id, 1);
+            diplo_unlock();
         } else if (communicate_getout_result == 1) {
             if (DiploScratchFA60 &&
                 ((PlayersData[faction_id_with].diplo_treaties[faction_id] & 0x800) ||
@@ -9283,33 +9267,26 @@ if (dialogue_flags & 0x2C) {
                     has_agenda(faction_id_with, faction_id, 4);
                 goto communicate_late_contact_vendetta_after_set_mode;
             }
-            COMMUNICATE_LOCK();
-            COMMUNICATE_WITHDRAW(faction_id_with, faction_id);
-            COMMUNICATE_WITHDRAW(faction_id, faction_id_with);
-            COMMUNICATE_UNLOCK();
+            diplo_lock(0);
+            net_withdrawal(faction_id_with, faction_id, 1);
+            net_withdrawal(faction_id, faction_id_with, 1);
+            diplo_unlock();
             X_pops("BOTHOUT", 0x100000,
                    FactionDiplomacyPortraits[faction_id_with], pop_wait);
         } else {
-            COMMUNICATE_FRICTION(10);
-            COMMUNICATE_LOCK();
-            if (IsMultiplayerNet) {
-                log_say(DiploLabelSendingDOUBLECROSS, faction_id, faction_id_with, -1);
-                message_data(0x2440, 0, faction_id, faction_id_with, -1, 0);
-                NetDaemonNet.await_diplo(0x440);
-            } else {
-                double_cross(faction_id, faction_id_with, -1);
+            PlayersData[faction_id_with].diplo_friction[faction_id] = communicate_range(
+                PlayersData[faction_id_with].diplo_friction[faction_id] + 10, 0, 20);
+            if (DiploFrictionFactionID == faction_id_with &&
+                DiploFrictionFactionIDWith == faction_id) {
+                DiploFriction += 10;
             }
-            COMMUNICATE_UNLOCK();
-            GenderDefault = Players[faction_id].is_leader_female;
-            PluralityDefault = 0;
-            parse_says(0, Players[faction_id].title_leader, -1, -1);
-            GenderDefault = Players[faction_id].is_leader_female;
-            PluralityDefault = 0;
-            parse_says(1, Players[faction_id].name_leader, -1, -1);
-            GenderDefault = Players[faction_id].is_leader_female;
-            PluralityDefault = 0;
-            parse_says(2, Players[faction_id].insult_leader, -1, -1);
-            parse_says(3, Players[faction_id].adj_insult_faction, -1, -1);
+            diplo_lock(0);
+            net_double_cross(faction_id, faction_id_with, -1, 1);
+            diplo_unlock();
+            parse_says(0, get_title(faction_id), -1, -1);
+            parse_says(1, get_name(faction_id), -1, -1);
+            parse_says(2, get_insult_leader(faction_id), -1, -1);
+            parse_says(3, get_adjective_insult_faction(faction_id), -1, -1);
             StringTemp[0] = 0;
             strcat(StringTemp, "OUTRAGE");
             _itoa(random(0, 3) + 1, communicate_outrage_number, 10);
@@ -9321,13 +9298,7 @@ if (dialogue_flags & 0x2C) {
     } else if (dialogue_flags & 8) {
         territory(faction_id_with, faction_id, 0, &communicate_territory_base_id, 0);
         if (dialogue_flags & 0x10) {
-            if (IsMultiplayerNet) {
-                log_say(DiploLabelSendingSETTREATY, faction_id, faction_id_with, 0x400);
-                message_data(0x2443, 0, faction_id, faction_id_with, 0x400, 1);
-                NetDaemonNet.await_diplo(0x443);
-            } else {
-                set_treaty(faction_id, faction_id_with, 0x400, 1);
-            }
+            net_set_treaty(faction_id, faction_id_with, 0x400, 1, 1);
         }
         if (Bases[communicate_territory_base_id].faction_id_current != faction_id &&
             !(Bases[communicate_territory_base_id].visibility & (1 << faction_id))) {
@@ -9353,7 +9324,7 @@ if (dialogue_flags & 0x2C) {
             draw_map(1);
         }
         parse_says(0, Bases[communicate_territory_base_id].name_string, -1, -1);
-        parse_says(1, Players[faction_id_with].adj_name_faction, -1, -1);
+        parse_says(1, get_adjective(faction_id_with), -1, -1);
         X_pops("INOURTERRITORY2", 0x100000,
                FactionDiplomacyPortraits[faction_id_with], pop_wait);
     }
@@ -9366,47 +9337,19 @@ if (!mode) {
     PlayersData[faction_id_with].diplo_patience[faction_id] = 0;
     PlayersData[faction_id].diplo_spoke[faction_id_with] =
         GameDataStateStorage.fields_.turn_current_num_;
-    if (IsMultiplayerNet) {
-        log_say(DiploLabelSendingTREATYOFF, faction_id_with, faction_id, 0x4000000);
-        message_data(0x2442, 0, faction_id_with, faction_id, 0x4000000, 0);
-        NetDaemonNet.await_diplo(0x442);
-    } else {
-        treaty_off(faction_id_with, faction_id, 0x4000000);
-    }
-    if (IsMultiplayerNet) {
-        log_say(DiploLabelSendingAGENDAOFF, faction_id_with, faction_id, 0x100);
-        message_data(0x2445, 0, faction_id_with, faction_id, 0x100, 0);
-        NetDaemonNet.await_diplo(0x445);
-    } else {
-        agenda_off(faction_id_with, faction_id, 0x100);
-    }
+    net_treaty_off(faction_id_with, faction_id, 0x4000000, 1);
+    net_agenda_off(faction_id_with, faction_id, 0x100, 1);
     if (!(PlayersData[faction_id_with].diplo_treaties[faction_id] & 0x10000) &&
         dialogue_flags < 4) {
-        if (IsMultiplayerNet) {
-            log_say(DiploLabelSendingTREATYOFF, faction_id_with, faction_id, 4);
-            message_data(0x2442, 0, faction_id_with, faction_id, 4, 0);
-            NetDaemonNet.await_diplo(0x442);
-        } else {
-            treaty_off(faction_id_with, faction_id, 4);
-        }
+        net_treaty_off(faction_id_with, faction_id, 4, 1);
     }
 } else {
     if (PlayersData[faction_id].diplo_treaties[faction_id_with] & 0x2000) {
         PlayersData[faction_id_with].diplo_patience[faction_id] = 0;
-        if (IsMultiplayerNet) {
-            log_say(DiploLabelSendingTREATYOFF, faction_id_with, faction_id, 0x100);
-            message_data(0x2442, 0, faction_id_with, faction_id, 0x100, 0);
-            NetDaemonNet.await_diplo(0x442);
-        } else {
-            treaty_off(faction_id_with, faction_id, 0x100);
-        }
+        net_treaty_off(faction_id_with, faction_id, 0x100, 1);
     }
-    PluralityDefault = 0;
-    GenderDefault = Players[faction_id].is_leader_female;
-    parse_says(2, Players[faction_id].title_leader, -1, -1);
-    PluralityDefault = 0;
-    GenderDefault = Players[faction_id].is_leader_female;
-    parse_says(3, Players[faction_id].name_leader, -1, -1);
+    parse_says(2, get_title(faction_id), -1, -1);
+    parse_says(3, get_name(faction_id), -1, -1);
     if (!communicate_stack_44) {
         int treaties = PlayersData[faction_id_with].diplo_treaties[faction_id];
         int patience_limit;
@@ -9423,18 +9366,12 @@ if (!mode) {
                 diplomacy_caption(faction_id, faction_id_with);
             }
             if (PlayersData[faction_id].diplo_treaties[faction_id_with] & 3) {
-                PluralityDefault = 0;
-                GenderDefault = Players[faction_id_with].is_leader_female;
-                parse_says(0, Players[faction_id_with].title_leader, -1, -1);
-                PluralityDefault = 0;
-                GenderDefault = Players[faction_id_with].is_leader_female;
-                parse_says(1, Players[faction_id_with].name_leader, -1, -1);
+                parse_says(0, get_title(faction_id_with), -1, -1);
+                parse_says(1, get_name(faction_id_with), -1, -1);
                 X_pops("NOPATIENCEFRIEND", 0x100000,
                        FactionDiplomacyPortraits[faction_id_with], pop_wait);
             } else {
-                GenderDefault = Players[faction_id_with].noun_gender;
-                PluralityDefault = Players[faction_id_with].is_noun_plural;
-                parse_says(0, Players[faction_id_with].noun_faction, -1, -1);
+                parse_says(0, get_noun(faction_id_with), -1, -1);
                 X_pops("NOPATIENCE", 0x100000,
                        FactionDiplomacyPortraits[faction_id_with], pop_wait);
             }
@@ -9472,7 +9409,7 @@ if (PlayersData[DiploScratchF7E8].mil_strength_1 >=
         PlayersData[faction_id_with].mil_strength_1 * 2 &&
     PlayersData[faction_id_with].energy_reserves >= 10) {
 communicate_plea_reserves = PlayersData[faction_id_with].energy_reserves;
-communicate_plea_amount = communicate_plea_reserves / 2 / 25 * 25;
+communicate_plea_amount = communicate_round_down_multiple(communicate_plea_reserves / 2, 25);
 if (communicate_plea_amount < 25) {
     communicate_plea_amount = communicate_plea_reserves;
     if (communicate_plea_reserves >= 25) {
@@ -9480,19 +9417,13 @@ if (communicate_plea_amount < 25) {
     }
 }
 parse_num(0, communicate_plea_amount);
-PluralityDefault = 0;
-GenderDefault = Players[DiploScratchF7E8].is_leader_female;
-parse_says(0, Players[DiploScratchF7E8].title_leader, -1, -1);
-PluralityDefault = 0;
-GenderDefault = Players[DiploScratchF7E8].is_leader_female;
-parse_says(1, Players[DiploScratchF7E8].name_leader, -1, -1);
-GenderDefault = Players[DiploScratchF7E8].noun_gender;
-PluralityDefault = Players[DiploScratchF7E8].is_noun_plural;
-parse_says(2, Players[DiploScratchF7E8].noun_faction, -1, -1);
+parse_says(0, get_title(DiploScratchF7E8), -1, -1);
+parse_says(1, get_name(DiploScratchF7E8), -1, -1);
+parse_says(2, get_noun(DiploScratchF7E8), -1, -1);
 parse_says(3, get_pact_hood(faction_id, faction_id_with), -1, -1);
 parse_says(5, get_pact_hood(faction_id, DiploScratchF7E8), -1, -1);
 parse_says(6, get_his_her(DiploScratchF7E8, 0), -1, -1);
-parse_says(8, Players[DiploScratchF7E8].adj_insult_leader, -1, -1);
+parse_says(8, get_adjective_insult_leader(DiploScratchF7E8), -1, -1);
 parse_says(9, get_phrase(DiploScratchF7E8, 2), -1, -1);
 StringTemp[0] = 0;
 strcat(StringTemp, "PLEA");
@@ -9505,48 +9436,17 @@ if (DiploScratchF800 >= 0) {
 }
 if (X_pops(StringTemp, 0x100000,
             FactionDiplomacyPortraits[faction_id_with], pop_wait)) {
-COMMUNICATE_LOCK();
+diplo_lock(0);
 pact_of_brotherhood(faction_id, faction_id_with);
-if (IsMultiplayerNet) {
-    log_say(DiploLabelSendingTREATYOFF, faction_id, faction_id_with, 0x60);
-    message_data(0x2442, 0, faction_id, faction_id_with, 0x60, 0);
-} else {
-    treaty_off(faction_id, faction_id_with, 0x60);
-}
-communicate_stack_2c = DiploScratchF7E8;
-if (IsMultiplayerNet) {
-    log_say(DiploLabelSendingDOUBLECROSS, faction_id, communicate_stack_2c, faction_id_with);
-    message_data(0x2440, 0, faction_id, communicate_stack_2c, faction_id_with, 0);
-} else {
-    double_cross(faction_id, communicate_stack_2c, faction_id_with);
-}
+net_treaty_off(faction_id, faction_id_with, 0x60, 0);
+net_double_cross(faction_id, DiploScratchF7E8, faction_id_with, 0);
 if (DiploScratchF800 >= 0) {
-    communicate_stack_14 = DiploScratchF800;
-    if (IsMultiplayerNet) {
-        log_say(DiploLabelSendingTECH, faction_id, communicate_stack_14, faction_id_with);
-        message_data(0x244B, 0, faction_id, communicate_stack_14, faction_id_with, 0);
-    } else {
-        tech_achieved(faction_id, communicate_stack_14, faction_id_with, 0);
-    }
+    net_tech(faction_id, DiploScratchF800, faction_id_with, 0);
     DiploScratchF800 = -1;
 }
-communicate_stack_2c = -communicate_plea_amount;
-if (IsMultiplayerNet) {
-    log_say(DiploLabelSendingENERGY, faction_id_with, communicate_stack_2c, faction_id);
-    message_data(0x2447, 0, faction_id_with, communicate_stack_2c, faction_id,
-                 communicate_plea_amount);
-    NetDaemonNet.await_diplo(0x447);
-} else {
-    if (faction_id_with) {
-        PlayersData[faction_id_with].energy_reserves += communicate_stack_2c;
-    }
-    if (faction_id) {
-        PlayersData[faction_id].energy_reserves += communicate_plea_amount;
-    }
-    ConsoleGlobal.update_data(1);
-}
+net_energy(faction_id_with, -communicate_plea_amount, faction_id, communicate_plea_amount, 1);
 communicate_stack_14 = 1;
-COMMUNICATE_UNLOCK();
+diplo_unlock();
 DiploScratchFA8C = DiploScratchF7E8;
 DiploScratchF7E8 = 0;
 DiploScratchFA98 = 0;
@@ -9558,69 +9458,37 @@ DiploScratchFA4C = 0;
 communicate_stack_34 = 1;
 goto communicate_tech_greeting_done;
 } else {
-    if (IsMultiplayerNet) {
-        log_say(DiploLabelSendingTREATYON, faction_id, faction_id_with, 0x800000);
-        message_data(0x2441, 0, faction_id, faction_id_with, 0x800000, 0);
-    } else {
-        treaty_on(faction_id, faction_id_with, 0x800000);
-    }
-    if (IsMultiplayerNet) {
-        log_say(DiploLabelSendingTREATYOFF, faction_id, faction_id_with, 0x1000000);
-        message_data(0x2442, 0, faction_id, faction_id_with, 0x1000000, 0);
-    } else {
-        treaty_off(faction_id, faction_id_with, 0x1000000);
-    }
+    net_treaty_on(faction_id, faction_id_with, 0x800000, 0);
+    net_treaty_off(faction_id, faction_id_with, 0x1000000, 0);
     DiploScratchF7B8 = DiploScratchF7E8;
     goto communicate_tech_greeting_done;
 }
 } else {
 
-PluralityDefault = 0;
-GenderDefault = Players[DiploScratchF7E8].is_leader_female;
-parse_says(0, Players[DiploScratchF7E8].title_leader, -1, -1);
-PluralityDefault = 0;
-GenderDefault = Players[DiploScratchF7E8].is_leader_female;
-parse_says(1, Players[DiploScratchF7E8].name_leader, -1, -1);
-GenderDefault = Players[DiploScratchF7E8].noun_gender;
-PluralityDefault = Players[DiploScratchF7E8].is_noun_plural;
-parse_says(2, Players[DiploScratchF7E8].noun_faction, -1, -1);
+parse_says(0, get_title(DiploScratchF7E8), -1, -1);
+parse_says(1, get_name(DiploScratchF7E8), -1, -1);
+parse_says(2, get_noun(DiploScratchF7E8), -1, -1);
 parse_says(3, get_him_her(DiploScratchF7E8, 0), -1, -1);
 parse_says(4, get_pact_hood(faction_id, faction_id_with), -1, -1);
-PluralityDefault = 0;
-GenderDefault = Players[faction_id].is_leader_female;
-parse_says(5, Players[faction_id].title_leader, -1, -1);
+parse_says(5, get_title(faction_id), -1, -1);
 parse_says(6, get_pact(DiploScratchF7E8), -1, -1);
 StringTemp[0] = 0;
 strcat(StringTemp, "PROPOSE");
 if (PlayersData[faction_id].diplo_treaties[DiploScratchF7E8] & 1) {
     strcat(StringTemp, "PACT");
-    PluralityDefault = 0;
-    GenderDefault = Players[faction_id_with].is_leader_female;
-    parse_says(8, Players[faction_id_with].title_leader, -1, -1);
+    parse_says(8, get_title(faction_id_with), -1, -1);
     parse_says(9, get_phrase(DiploScratchF7E8, 2), -1, -1);
 } else {
-    parse_says(8, Players[DiploScratchF7E8].adj_insult_faction, -1, -1);
+    parse_says(8, get_adjective_insult_faction(DiploScratchF7E8), -1, -1);
     parse_says(9, get_phrase(DiploScratchF7E8, 5), -1, -1);
 }
 if (X_pops(StringTemp, 0x100000,
             FactionDiplomacyPortraits[faction_id_with], pop_wait)) {
-COMMUNICATE_LOCK();
+diplo_lock(0);
 pact_of_brotherhood(faction_id, faction_id_with);
-if (IsMultiplayerNet) {
-    log_say(DiploLabelSendingTREATYOFF, faction_id, faction_id_with, 0x60);
-    message_data(0x2442, 0, faction_id, faction_id_with, 0x60, 0);
-} else {
-    treaty_off(faction_id, faction_id_with, 0x60);
-}
-communicate_stack_2c = DiploScratchF7E8;
-if (IsMultiplayerNet) {
-    log_say(DiploLabelSendingDOUBLECROSS, faction_id, communicate_stack_2c, faction_id_with);
-    message_data(0x2440, 0, faction_id, communicate_stack_2c, faction_id_with, 0);
-    NetDaemonNet.await_diplo(0x440);
-} else {
-    double_cross(faction_id, communicate_stack_2c, faction_id_with);
-}
-COMMUNICATE_UNLOCK();
+net_treaty_off(faction_id, faction_id_with, 0x60, 0);
+net_double_cross(faction_id, DiploScratchF7E8, faction_id_with, 1);
+diplo_unlock();
 DiploScratchFA8C = DiploScratchF7E8;
 DiploScratchF7E8 = 0;
 DiploScratchFA98 = 0;
@@ -9632,19 +9500,10 @@ DiploScratchFA4C = 0;
 communicate_stack_34 = 1;
 goto communicate_tech_greeting_done;
 } else {
-    if (IsMultiplayerNet) {
-        log_say(DiploLabelSendingTREATYON, faction_id, faction_id_with, 0x800000);
-        message_data(0x2441, 0, faction_id, faction_id_with, 0x800000, 0);
-    } else {
-        treaty_on(faction_id, faction_id_with, 0x800000);
-    }
-    if (IsMultiplayerNet) {
-        log_say(DiploLabelSendingTREATYOFF, faction_id, faction_id_with, 0x1000000);
-        message_data(0x2442, 0, faction_id, faction_id_with, 0x1000000, 0);
-    } else {
-        treaty_off(faction_id, faction_id_with, 0x1000000);
-    }
+    net_treaty_on(faction_id, faction_id_with, 0x800000, 0);
+    net_treaty_off(faction_id, faction_id_with, 0x1000000, 0);
     DiploScratchF7B8 = DiploScratchF7E8;
+    diplomacy_caption(faction_id, faction_id_with);
     goto communicate_tech_greeting_done;
 }
 }
@@ -9665,18 +9524,12 @@ if (DiploScratchF7E8 &&
      (PlayersData[faction_id_with].diplo_treaties[faction_id] & 1)) &&
     wants_to_speak(faction_id, faction_id_with)) {
     parse_says(0, get_pact(DiploScratchF7E8), -1, -1);
-    PluralityDefault = 0;
-    GenderDefault = Players[DiploScratchF7E8].is_leader_female;
-    parse_says(1, Players[DiploScratchF7E8].title_leader, -1, -1);
-    PluralityDefault = 0;
-    GenderDefault = Players[DiploScratchF7E8].is_leader_female;
-    parse_says(2, Players[DiploScratchF7E8].name_leader, -1, -1);
-    GenderDefault = Players[DiploScratchF7E8].noun_gender;
-    PluralityDefault = Players[DiploScratchF7E8].is_noun_plural;
-    parse_says(3, Players[DiploScratchF7E8].noun_faction, -1, -1);
+    parse_says(1, get_title(DiploScratchF7E8), -1, -1);
+    parse_says(2, get_name(DiploScratchF7E8), -1, -1);
+    parse_says(3, get_noun(DiploScratchF7E8), -1, -1);
     parse_says(4, get_his_her(DiploScratchF7E8, 0), -1, -1);
     parse_says(5, get_him_her(DiploScratchF7E8, 0), -1, -1);
-    parse_says(6, Players[DiploScratchF7E8].adj_name_faction, -1, -1);
+    parse_says(6, get_adjective(DiploScratchF7E8), -1, -1);
     communicate_demand_suffix[0] = 0;
     if ((PlayersData[faction_id].diplo_treaties[faction_id_with] & 1) &&
         ((PlayersData[faction_id].diplo_treaties[faction_id_with] & 0x2000) ||
@@ -9700,8 +9553,8 @@ if (DiploScratchF7E8 &&
         communicate_demand_variant = 2;
         if (random(0, 2)) {
             strcat(communicate_demand_suffix, "a");
-            parse_says(8, Players[DiploScratchF7E8].adj_insult_leader, -1, -1);
-            parse_says(9, Players[DiploScratchF7E8].adj_insult_faction, -1, -1);
+            parse_says(8, get_adjective_insult_leader(DiploScratchF7E8), -1, -1);
+            parse_says(9, get_adjective_insult_faction(DiploScratchF7E8), -1, -1);
         } else {
             strcat(communicate_demand_suffix, "b");
             parse_says(8, get_noun_phrase(faction_id_with, 9), -1, -1);
@@ -9736,44 +9589,17 @@ if (DiploScratchF7E8 &&
                        PlayersData[faction_id].mil_strength_1) {
             DiploScratchFA60 = 1;
         }
-        if (IsMultiplayerNet) {
-            log_say(DiploLabelSendingTREATYON, faction_id, faction_id_with, 0x800000);
-            message_data(0x2441, 0, faction_id, faction_id_with, 0x800000, 0);
-        } else {
-            treaty_on(faction_id, faction_id_with, 0x800000);
-        }
-        if (IsMultiplayerNet) {
-            log_say(DiploLabelSendingTREATYOFF, faction_id, faction_id_with, 0x1000000);
-            message_data(0x2442, 0, faction_id, faction_id_with, 0x1000000, 0);
-        } else {
-            treaty_off(faction_id, faction_id_with, 0x1000000);
-        }
+        net_treaty_on(faction_id, faction_id_with, 0x800000, 0);
+        net_treaty_off(faction_id, faction_id_with, 0x1000000, 0);
         DiploScratchF7B8 = DiploScratchF7E8;
         diplomacy_caption(faction_id, faction_id_with);
         goto communicate_menu_continuation;
     }
-    COMMUNICATE_LOCK();
-    if (IsMultiplayerNet) {
-        log_say(DiploLabelSendingTREATYON, faction_id, faction_id_with, 0x1000000);
-        message_data(0x2441, 0, faction_id, faction_id_with, 0x1000000, 0);
-    } else {
-        treaty_on(faction_id, faction_id_with, 0x1000000);
-    }
-    if (IsMultiplayerNet) {
-        log_say(DiploLabelSendingTREATYOFF, faction_id, faction_id_with, 0x800000);
-        message_data(0x2442, 0, faction_id, faction_id_with, 0x800000, 0);
-    } else {
-        treaty_off(faction_id, faction_id_with, 0x800000);
-    }
-    communicate_stack_2c = DiploScratchF7E8;
-    if (IsMultiplayerNet) {
-        log_say(DiploLabelSendingDOUBLECROSS, faction_id, communicate_stack_2c, faction_id_with);
-        message_data(0x2440, 0, faction_id, communicate_stack_2c, faction_id_with, 0);
-        NetDaemonNet.await_diplo(0x440);
-    } else {
-        double_cross(faction_id, communicate_stack_2c, faction_id_with);
-    }
-    COMMUNICATE_UNLOCK();
+    diplo_lock(0);
+    net_treaty_on(faction_id, faction_id_with, 0x1000000, 0);
+    net_treaty_off(faction_id, faction_id_with, 0x800000, 0);
+    net_double_cross(faction_id, DiploScratchF7E8, faction_id_with, 1);
+    diplo_unlock();
     DiploScratchFA8C = DiploScratchF7E8;
     DiploScratchF7E8 = 0;
     communicate_stack_20 = 1;
@@ -9800,15 +9626,9 @@ if (DiploScratchF7D4 &&
     !(Players[faction_id].rule_flags & 0x80) &&
     !(Players[faction_id_with].rule_flags & 0x80) &&
     wants_to_speak(faction_id, faction_id_with)) {
-    PluralityDefault = 0;
-    GenderDefault = Players[DiploScratchF7D4].is_leader_female;
-    parse_says(0, Players[DiploScratchF7D4].title_leader, -1, -1);
-    PluralityDefault = 0;
-    GenderDefault = Players[DiploScratchF7D4].is_leader_female;
-    parse_says(1, Players[DiploScratchF7D4].name_leader, -1, -1);
-    GenderDefault = Players[DiploScratchF7D4].noun_gender;
-    PluralityDefault = Players[DiploScratchF7D4].is_noun_plural;
-    parse_says(2, Players[DiploScratchF7D4].noun_faction, -1, -1);
+    parse_says(0, get_title(DiploScratchF7D4), -1, -1);
+    parse_says(1, get_name(DiploScratchF7D4), -1, -1);
+    parse_says(2, get_noun(DiploScratchF7D4), -1, -1);
     parse_says(3, get_phrase(DiploScratchF7D4, 5), -1, -1);
     parse_says(4, get_pact_hood(faction_id, faction_id_with), -1, -1);
     if (Players[DiploScratchF7E8].rule_flags & 0x80) {
@@ -9816,77 +9636,28 @@ if (DiploScratchF7D4 &&
                     FactionDiplomacyPortraits[faction_id_with], pop_wait)) {
             goto communicate_menu_continuation;
         }
-        COMMUNICATE_LOCK();
-        communicate_temp = DiploScratchF7D4;
-        if (IsMultiplayerNet) {
-            log_say(DiploLabelSendingSETTREATY, faction_id, communicate_temp, 0x10000000);
-            message_data(0x2443, 0, faction_id, communicate_temp, 0x10000000, 1);
-        } else {
-            set_treaty(faction_id, communicate_temp, 0x10000000, 1);
-        }
+        diplo_lock(0);
+        net_set_treaty(faction_id, DiploScratchF7D4, 0x10000000, 1, 0);
         pact_of_brotherhood(faction_id, faction_id_with);
-        if (IsMultiplayerNet) {
-            log_say(DiploLabelSendingTREATYON, faction_id, faction_id_with, 0x1000000);
-            message_data(0x2441, 0, faction_id, faction_id_with, 0x1000000, 0);
-        } else {
-            treaty_on(faction_id, faction_id_with, 0x1000000);
-        }
-        if (IsMultiplayerNet) {
-            log_say(DiploLabelSendingTREATYOFF, faction_id, faction_id_with, 0x800000);
-            message_data(0x2442, 0, faction_id, faction_id_with, 0x800000, 0);
-        } else {
-            treaty_off(faction_id, faction_id_with, 0x800000);
-        }
-        communicate_temp = DiploScratchF7D4;
-        if (IsMultiplayerNet) {
-            log_say(DiploLabelSendingDOUBLECROSS, faction_id, communicate_temp, faction_id_with);
-            message_data(0x2440, 0, faction_id, communicate_temp, faction_id_with, 0);
-            NetDaemonNet.await_diplo(0x440);
-        } else {
-            double_cross(faction_id, communicate_temp, faction_id_with);
-        }
-        communicate_temp = DiploScratchF7D4;
-        if (IsMultiplayerNet) {
-            log_say(DiploLabelSendingTREATYON, faction_id, communicate_temp, 0x8000008);
-            message_data(0x2441, 0, faction_id, communicate_temp, 0x8000008, 0);
-        } else {
-            treaty_on(faction_id, communicate_temp, 0x8000008);
-        }
-        COMMUNICATE_UNLOCK();
+        net_treaty_on(faction_id, faction_id_with, 0x1000000, 0);
+        net_treaty_off(faction_id, faction_id_with, 0x800000, 0);
+        net_double_cross(faction_id, DiploScratchF7D4, faction_id_with, 1);
+        net_treaty_on(faction_id, DiploScratchF7D4, 0x8000008, 0);
+        diplo_unlock();
     } else {
         if (!X_pops("INTRODUCEENEMY", 0x100000,
                     FactionDiplomacyPortraits[faction_id_with], pop_wait)) {
             goto communicate_menu_continuation;
         }
-        COMMUNICATE_LOCK();
-        communicate_temp = DiploScratchF7D4;
-        if (IsMultiplayerNet) {
-            log_say(DiploLabelSendingSETTREATY, faction_id, communicate_temp, 0x10000000);
-            message_data(0x2443, 0, faction_id, communicate_temp, 0x10000000, 1);
-        } else {
-            set_treaty(faction_id, communicate_temp, 0x10000000, 1);
-        }
+        diplo_lock(0);
+        net_set_treaty(faction_id, DiploScratchF7D4, 0x10000000, 1, 0);
         pact_of_brotherhood(faction_id, faction_id_with);
-        if (IsMultiplayerNet) {
-            log_say(DiploLabelSendingTREATYON, faction_id, faction_id_with, 0x1000000);
-            message_data(0x2441, 0, faction_id, faction_id_with, 0x1000000, 0);
-        } else {
-            treaty_on(faction_id, faction_id_with, 0x1000000);
-        }
-        if (IsMultiplayerNet) {
-            log_say(DiploLabelSendingTREATYOFF, faction_id, faction_id_with, 0x800000);
-            message_data(0x2442, 0, faction_id, faction_id_with, 0x800000, 0);
-        } else {
-            treaty_off(faction_id, faction_id_with, 0x800000);
-        }
-        communicate_temp = DiploScratchF7D4;
-        if (IsMultiplayerNet) {
-            log_say(DiploLabelSendingDOUBLECROSS, faction_id, communicate_temp, faction_id_with);
-            message_data(0x2440, 0, faction_id, communicate_temp, faction_id_with, 0);
-            NetDaemonNet.await_diplo(0x440);
-        } else {
-            double_cross(faction_id, communicate_temp, faction_id_with);
-        }
+        net_treaty_on(faction_id, faction_id_with, 0x1000000, 0);
+        net_treaty_off(faction_id, faction_id_with, 0x800000, 0);
+        net_double_cross(faction_id, DiploScratchF7D4, faction_id_with, 1);
+        // stand-in: spend the rest of the /Ob2 budget, so the image's first
+        // out-of-line calls (net_treaty_on, diplo_unlock at 0x5524D8) follow.
+        communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); 
         net_treaty_on(faction_id, DiploScratchF7D4, 0x8000008, 0);
         diplo_unlock();
     }
@@ -10345,15 +10116,11 @@ if (DiploScratchFA88 > 0 &&
             if (!random(0, 2) ||
                 !(DiploScratchFA60 || (DiploScratchFA64 && DiploScratchFA90) ||
                   DiploScratchFA50 || DiploScratchFAA0)) {
-                DiploScratchFA88 = communicate_bribe_half;
-                goto communicate_bribe_pay;
+                goto communicate_bribe_half_pay;
             }
             X_pops("HALFBRIBE", 0x100000,
                    FactionDiplomacyPortraits[faction_id_with], pop_wait);
-communicate_bribe_refuse:
-            net_treaty_off(faction_id_with, faction_id, 0x1000000, 0);
-            communicate_stack_38 = 1;
-            goto communicate_post_contact_preparation;
+            goto communicate_bribe_refuse;
         }
         communicate_bribe_weasel = 0;
         if (great_satan(faction_id, 0) || (DiploScratchFA64 && DiploScratchFA90) ||
@@ -10373,25 +10140,29 @@ communicate_bribe_refuse:
             parse_num(2, communicate_bribe_half);
             X_pops("WEASELEDOUT", 0x100000,
                    FactionDiplomacyPortraits[faction_id_with], pop_wait);
+communicate_bribe_half_pay:
             DiploScratchFA88 = communicate_bribe_half;
             goto communicate_bribe_pay;
         }
     }
-    if (!communicate_bribe_result) {
-        goto communicate_bribe_refuse;
-    }
+    if (communicate_bribe_result) {
 communicate_bribe_pay:
-    communicate_stack_20 = 1;
-    if (communicate_stack_c == 10 && PlayersData[faction_id].diplo_unk1[faction_id_with]) {
-        PlayersData[faction_id].diplo_unk1[faction_id_with]--;
-    }
-    net_energy(faction_id, -DiploScratchFA88, faction_id_with, DiploScratchFA88, 1);
-    ConsoleInfoWin.set_redraw_phase(0);
-    ConsoleGlobal.update_data(0);
-    diplomacy_caption(faction_id, faction_id_with);
-    net_treaty_on(faction_id_with, faction_id, 0x5000000, 0);
-    if (communicate_stack_50) {
-        net_treaty_on(faction_id_with, faction_id, 4, 1);
+        communicate_stack_20 = 1;
+        if (communicate_stack_c == 10 && PlayersData[faction_id].diplo_unk1[faction_id_with]) {
+            PlayersData[faction_id].diplo_unk1[faction_id_with]--;
+        }
+        net_energy(faction_id, -DiploScratchFA88, faction_id_with, DiploScratchFA88, 1);
+        ConsoleInfoWin.redraw_phase_ = 0;
+        ConsoleGlobal.update_data(0);
+        diplomacy_caption(faction_id, faction_id_with);
+        net_treaty_on(faction_id_with, faction_id, 0x5000000, 0);
+        if (communicate_stack_50) {
+            net_treaty_on(faction_id_with, faction_id, 4, 1);
+        }
+    } else {
+communicate_bribe_refuse:
+        net_treaty_off(faction_id_with, faction_id, 0x1000000, 0);
+        communicate_stack_38 = 1;
     }
 }
 communicate_post_contact_preparation:
@@ -10955,8 +10726,8 @@ PlayersData[faction_id].diplo_spoke[faction_id_with] = GameDataStateStorage.fiel
 clear();
 parse_says(0, get_title(faction_id), -1, -1);
 parse_says(1, get_name(faction_id), -1, -1);
-parse_says(2, get_adjective_leader(faction_id), -1, -1);
-parse_says(3, get_adjective_insult_faction(faction_id), -1, -1);
+parse_says(2, get_adjective_insult_faction(faction_id), -1, -1);
+parse_says(3, get_adjective_leader(faction_id), -1, -1);
 parse_says(4, get_phrase(faction_id_with, 13), -1, -1);
 parse_says(5, get_noun_phrase(faction_id, 10), -1, -1);
 says("BULLY");
@@ -10984,7 +10755,7 @@ clear();
 parse_says(0, get_title(faction_id), -1, -1);
 parse_says(1, get_name(faction_id), -1, -1);
 parse_says(2, get_adjective_insult_leader(faction_id), -1, -1);
-parse_says(3, get_adjective_leader(faction_id), -1, -1);
+parse_says(3, get_adjective_insult_faction(faction_id), -1, -1);
 parse_says(4, get_noun_phrase(faction_id, 8), -1, -1);
 parse_says(5, get_phrase(faction_id, 3), -1, -1);
 parse_says(6, get_phrase(faction_id_with, 13), -1, -1);
@@ -11285,7 +11056,7 @@ if (has_treaty(faction_id_with, faction_id, 0x10) && wants_to_speak(faction_id, 
                     communicate_stack_54 = 1;
                     net_energy(faction_id_with, -communicate_truce_energy, faction_id,
                                communicate_truce_energy, 1);
-                    ConsoleInfoWin.set_redraw_phase(0);
+                    ConsoleInfoWin.redraw_phase_ = 0;
                     ConsoleGlobal.update_data(0);
                 }
             }
@@ -11359,7 +11130,7 @@ communicate_late_truce_tech_complete:
                 }
                 net_energy(faction_id, PlayersData[faction_id_with].energy_reserves,
                            faction_id_with, -PlayersData[faction_id_with].energy_reserves, 1);
-                ConsoleInfoWin.set_redraw_phase(0);
+                ConsoleInfoWin.redraw_phase_ = 0;
                 ConsoleGlobal.update_data(0);
                 PlayersData[faction_id].diplo_friction[faction_id_with] = 0;
                 net_treaty_off(faction_id_with, faction_id, 0x20, 1);
@@ -11589,7 +11360,7 @@ if (communicate_late_offer_eligible != 0) {
                 communicate_stack_1c = 0;
                 net_energy(faction_id_with, (0 - communicate_late_energy_offer),
                            faction_id, communicate_late_energy_offer, 1);
-                ConsoleInfoWin.set_redraw_phase(0);
+                ConsoleInfoWin.redraw_phase_ = 0;
                 ConsoleGlobal.update_data(0);
             }
         }
@@ -11635,9 +11406,13 @@ if (!communicate_stack_34) {
         } else if (has_treaty(faction_id_with, faction_id, 1)) {
             X_pops("REBUFFEDPACT", 0x100000,
                    FactionDiplomacyPortraits[faction_id_with], pop_wait);
+        } else if (has_treaty(faction_id, faction_id_with, 6)) {
+            X_pops("REBUFFEDTREATY", 0x100000,
+                   FactionDiplomacyPortraits[faction_id_with], pop_wait);
+            mention_prototypes(faction_id, faction_id_with);
         } else {
-            X_pops(has_treaty(faction_id, faction_id_with, 6) ? "REBUFFEDTREATY" : "REBUFFED",
-                   0x100000, FactionDiplomacyPortraits[faction_id_with], pop_wait);
+            X_pops("REBUFFED", 0x100000,
+                   FactionDiplomacyPortraits[faction_id_with], pop_wait);
             mention_prototypes(faction_id, faction_id_with);
         }
     } else if (mode) {
@@ -11704,9 +11479,14 @@ if (!communicate_stack_34) {
         PlayersData[faction_id].diplo_wrongs[communicate_wronged_id] = 0;
         clear();
         says("WRONGED");
-        says(has_treaty(faction_id_with, communicate_wronged_id, 0x10) ? "ENEMY"
-             : (PlayersData[faction_id_with].mil_strength_1 >
-                PlayersData[faction_id].mil_strength_1 ? "MIGHTY" : "MEEK"));
+        if (has_treaty(faction_id_with, communicate_wronged_id, 0x10)) {
+            says("ENEMY");
+        } else if (PlayersData[faction_id_with].mil_strength_1 >
+                   PlayersData[faction_id].mil_strength_1) {
+            says("MIGHTY");
+        } else {
+            says("MEEK");
+        }
         X_pops(StringTemp, 0x100000,
                FactionDiplomacyPortraits[faction_id_with], pop_wait);
         mention_prototypes(faction_id, faction_id_with);
@@ -12011,13 +11791,13 @@ if (has_treaty(faction_id, faction_id_with, 1) != 0 &&
     }
 }
 if (has_treaty(faction_id_with, faction_id, 3) == 0) { // 0x558392
-    communicate_late_contact_base_id = -1;
+    communicate_territory_base_id = -1;
     if (territory(faction_id_with, faction_id, 0,
-                  &communicate_late_contact_base_id, 0) != 0) {
-        spot_base(communicate_late_contact_base_id, faction_id);
+                  &communicate_territory_base_id, 0) != 0) {
+        spot_base(communicate_territory_base_id, faction_id);
         MapWinTable[0]->focus(
-            Bases[communicate_late_contact_base_id].x,
-            Bases[communicate_late_contact_base_id].y);
+            Bases[communicate_territory_base_id].x,
+            Bases[communicate_territory_base_id].y);
         parse_says(1, get_adjective(faction_id_with), -1, -1);
         X_pops("TERRITORY", 0x00100000,
                      FactionDiplomacyPortraits[faction_id_with], pop_wait);
@@ -12197,11 +11977,6 @@ communicate_popup_destructor: // cold span 0x65FF4F..0x65FF64
 ; // The automatic Popup generates both normal and exceptional destruction.
 
 }
-#undef COMMUNICATE_LOCK
-#undef COMMUNICATE_UNLOCK
-#undef COMMUNICATE_FRICTION
-#undef COMMUNICATE_WITHDRAW
-#pragma inline_depth(8)
 
 
 /*

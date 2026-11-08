@@ -125,11 +125,16 @@ class InfoWin {
   int active_pane_;  // 0x80
   uint32_t field_84_;  // 0x84
   int pane_states_[2];  // 0x88, timer_change cycles these modulo eight
+ public:
+  // Public: communicate stores it directly (0x553F26, 0x556712, 0x556A07,
+  // 0x5571B7) where its inline budget is already spent.
   // Original +0x90: Console::editor_save (0x004E09E0) writes 7 here
   // before redrawing the fixed InfoWin at 0x007AD2A0. This is member
   // storage, not a separate global at 0x007AD330; other values are unnamed.
   // RECOVERY_MEMBER: v1 InfoWin redraw_phase_ 0x90 0x004E09E0
   int redraw_phase_;
+
+ private:
   uint32_t field_94_;  // 0x94
   uint8_t field_98_[0x10];  // 0x98
   int32_t field_A8_;
