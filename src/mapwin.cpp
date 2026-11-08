@@ -6260,7 +6260,7 @@ void MapWin::draw_legend() {
 // the map. The row and column indices both omit faction zero, the native-life
 // record, exactly as the original table bounds do.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004698D0 ?draw_wars@MapWin@@QAEXXZ 0x004698D0-0x00469B32 FILE
+// ORIGINAL: 0x004698D0 ?draw_wars@MapWin@@QAEXXZ 0x004698D0-0x00469B32 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004698d0.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
 void MapWin::draw_wars() {
     Font *const font = &font_b_;
