@@ -418,7 +418,9 @@ def test_associated_refusal_keeps_selected_dependency_reason(tmp_path, monkeypat
         return {"result": Result.UNKNOWN,
                 "functions": [{"address": f"{records[0].address:08X}",
                                "result": Result.PASS}],
-                "selected_evidence": {"checks": [{"result": Result.UNKNOWN,
+                "selected_evidence": {"checks": [{"result": Result.PASS, "reason": "unrelated pass"},
+                                                 {"result": Result.UNKNOWN, "unit": "data/g.cc",
+                                                   "symbol": "_g",
                                                    "reason": "transitive object _g has no bound extent"}]}}
 
     monkeypatch.setattr(asm, "verify_records", unknown_dependency)
@@ -427,7 +429,8 @@ def test_associated_refusal_keeps_selected_dependency_reason(tmp_path, monkeypat
                            root=root, strict_command_for=lambda _path: ())
     observed = compare.results[0][1]
     assert observed.verdict is Tier.REFUSED
-    assert observed.diagnostic == "transitive object _g has no bound extent"
+    assert observed.diagnostic == ("selected evidence _g in data/g.cc is unknown: "
+                                   "transitive object _g has no bound extent")
 
 
 def test_associated_refusal_reports_the_failing_variant_reason(tmp_path, monkeypatch):
@@ -451,6 +454,49 @@ def test_associated_refusal_reports_the_failing_variant_reason(tmp_path, monkeyp
     observed = compare.results[0][1]
     assert observed.verdict is Tier.REFUSED
     assert observed.diagnostic == "FPO metadata extent differs"
+
+
+def test_failed_body_reports_its_own_proof_not_an_unrelated_evidence_reason(tmp_path, monkeypatch):
+    # 0x005166D0 regression: a byte-failed body with no row reason was shown
+    # with a sibling dependency's CodeView refusal instead of its own bytes.
+    from match_recovery.source import asm
+
+    root, _task, raw = project(tmp_path)
+    records = read_file(root / "code/unit.cc")
+    start = records[0].address
+
+    def failed_body(*_args, **_kwargs):
+        return {"result": Result.UNKNOWN,
+                "functions": [{"address": f"{start:08X}", "result": Result.FAIL,
+                               "variants": [{"result": Result.FAIL, "boundary": Result.PASS,
+                                             "bytes": Result.FAIL, "references": Result.PASS,
+                                             "differing_offsets": [0x1DD],
+                                             "comparison_span": {"start": start, "end": start + 0x200}}]}],
+                "selected_evidence": {"checks": [{"result": Result.UNKNOWN, "unit": "code/other.cc",
+                                                   "symbol": "_other",
+                                                   "reason": "requires one standalone CodeView type section"}]}}
+
+    monkeypatch.setattr(asm, "verify_records", failed_body)
+    observed = compare_unit(records, root / "image.exe", root / "code/unit.cc", (),
+                            (("first",),), compiler=lambda *_: raw,
+                            root=root, strict_command_for=lambda _path: ()).results[0][1]
+    assert observed.verdict is Tier.MISMATCH
+    assert observed.diagnostic == ("strict body proof failed: 1 non-relocation byte(s) differ at "
+                                   f"+0x1dd ({start + 0x1DD:#010x})")
+
+
+def test_strict_row_reason_names_reference_failures_and_stays_silent_without_evidence():
+    from match_recovery.source.asm import strict_row_reason
+
+    row = {"result": Result.FAIL, "variants": [
+        {"result": Result.PASS, "differing_offsets": [1]},
+        {"result": Result.FAIL, "bytes": Result.PASS, "references": Result.FAIL,
+         "missing_absolute_relocations": [8],
+         "relocations": [{"offset": 3, "symbol": "_g", "result": Result.FAIL},
+                         {"offset": 9, "symbol": "_h", "result": Result.PASS}]}]}
+    assert strict_row_reason(row) == ("strict body proof failed: original absolute relocation(s) "
+                                      "missing at +0x8; relocated target(s) differ: +0x3 _g")
+    assert strict_row_reason({"result": Result.UNKNOWN, "variants": [{"result": Result.UNKNOWN}]}) is None
 
 
 def test_associated_owner_verdict_does_not_depend_on_selected_file_mates(tmp_path, monkeypatch):
@@ -480,7 +526,8 @@ def test_associated_owner_verdict_does_not_depend_on_selected_file_mates(tmp_pat
         return {"result": Result.UNKNOWN if blocked else Result.PASS,
                 "functions": [{"address": f"{record.address:08X}", "result": Result.PASS}
                               for record in selection],
-                "selected_evidence": {"checks": [{"result": Result.UNKNOWN,
+                "selected_evidence": {"checks": [{"result": Result.UNKNOWN, "unit": "code/unit.cc",
+                                                   "symbol": "_mate_object",
                                                    "reason": "mate object has no bound extent"}]
                                       if blocked else []}}
 
@@ -494,7 +541,8 @@ def test_associated_owner_verdict_does_not_depend_on_selected_file_mates(tmp_pat
     assert together[claimed.address] == alone[claimed.address]
     # The blocked mate keeps its own refusal and reason.
     assert together[unclaimed.address].verdict is Tier.REFUSED
-    assert together[unclaimed.address].diagnostic == "mate object has no bound extent"
+    assert together[unclaimed.address].diagnostic == (
+        "selected evidence _mate_object in code/unit.cc is unknown: mate object has no bound extent")
     assert calls == [(claimed.address,), (claimed.address, unclaimed.address),
                      (claimed.address,), (unclaimed.address,)]
 

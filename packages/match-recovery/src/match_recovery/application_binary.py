@@ -822,10 +822,26 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
     observed_grid = {}
     graph_trial_grid = {}
 
-    def effective(unit, requested):
+    def _effective(unit, requested):
         suffix = settings.layout_flags if settings.layout_flags and requested[-len(settings.layout_flags):] == settings.layout_flags else ()
         base = requested[:-len(suffix)] if suffix else requested
         return settings.effective_flags(unit, base) + suffix
+
+    # Record evidence compiles some owners only for their data: extents,
+    # contents and relocations, never a compared code body. Bounded extents
+    # need the configured debug types (VC6 emits no .debug$T without /Z7),
+    # so such owners get the layout suffix. Units hosting a selected,
+    # fragment or shared body keep exactly their measured flags.
+    body_units = ({item.unit for item in bindings if item.origin.entity_id in selected}
+                  | {item.unit for item in fragment_bindings}
+                  | {item.object_unit for item in shared_bindings if item.object_unit is not None})
+
+    def effective(unit, requested):
+        flags = _effective(unit, requested)
+        if (record_evidence and settings.layout_flags and unit not in body_units
+                and not all(flag in flags for flag in settings.layout_flags)):
+            flags = tuple(flags) + tuple(settings.layout_flags)
+        return flags
 
     def record_graph_trial(unit, unit_flags, graph_flags, outcome):
         rows = graph_trial_grid.setdefault(unit, [])

@@ -1908,6 +1908,50 @@ class UnitComparison:
     reused_attempts: int
 
 
+def strict_row_reason(row: dict, *, limit: int = 4) -> str | None:
+    """Describe a non-passing strict function row from its own proof fields.
+
+    Only the row's (or its non-passing flag variants') boundary, byte and
+    reference components are consulted. Returns None when they say nothing,
+    so a caller can fall back to explicitly labelled evidence-check reasons.
+    """
+    def addresses(variant, offsets):
+        start = (variant.get("comparison_span") or {}).get("start")
+        shown = ", ".join(f"+{offset:#x}" + (f" ({start + offset:#010x})" if isinstance(start, int) else "")
+                          for offset in offsets[:limit])
+        return shown + (f" and {len(offsets) - limit} more" if len(offsets) > limit else "")
+
+    variants = [variant for variant in row.get("variants", ())
+                if isinstance(variant, dict) and variant.get("result") != Result.PASS]
+    for variant in (*variants, row):
+        parts = []
+        if variant.get("boundary") == Result.FAIL:
+            parts.append("compiled boundary differs")
+        offsets = variant.get("differing_offsets") or []
+        if offsets:
+            parts.append(f"{len(offsets)} non-relocation byte(s) differ at " + addresses(variant, offsets))
+        elif variant.get("bytes") == Result.FAIL:
+            parts.append("body bytes differ")
+        for field, label in (("missing_absolute_relocations", "original absolute relocation(s) missing at"),
+                             ("extra_absolute_relocations", "extra compiled absolute relocation(s) at"),
+                             ("unexpected_constant_base_relocations", "rebased constant(s) at")):
+            sites = variant.get(field) or []
+            if sites:
+                parts.append(f"{label} " + addresses(variant, sites))
+        wrong = [item for item in variant.get("relocations", ()) or ()
+                 if isinstance(item, dict) and item.get("result") == Result.FAIL]
+        if wrong:
+            parts.append("relocated target(s) differ: " + ", ".join(
+                f"+{item.get('offset', 0):#x} {item.get('symbol', item.get('target'))}"
+                + (f" ({item['reason']})" if item.get("reason") else "")
+                for item in wrong[:limit]) + (f" and {len(wrong) - limit} more" if len(wrong) > limit else ""))
+        if not parts and variant.get("references") == Result.FAIL:
+            parts.append("references differ")
+        if parts:
+            return "strict body proof failed: " + "; ".join(parts)
+    return None
+
+
 def compare_unit(records, exe: Path | str, source: Path | str,
                  command: list[str], flags: tuple | str,
                  shared: frozenset = frozenset(), *, compiler,
@@ -2061,10 +2105,16 @@ def compare_unit(records, exe: Path | str, source: Path | str,
                                        if isinstance(variant, dict)
                                        and variant.get("result") != Result.PASS
                                        and variant.get("reason")), None)
+                if not diagnostic and row:
+                    # A failed body proof states its own component results;
+                    # never let an unrelated evidence check stand in for it.
+                    diagnostic = strict_row_reason(row)
                 if not diagnostic:
                     checks = strict.get("selected_evidence", {}).get("checks", [])
-                    diagnostic = next((item.get("reason") for item in checks
-                                       if item.get("reason")), None)
+                    diagnostic = next((f"selected evidence {item.get('symbol')} in {item.get('unit')} "
+                                       f"is {item.get('result')}: {item['reason']}"
+                                       for item in checks
+                                       if item.get("reason") and item.get("result") != Result.PASS), None)
                 if not diagnostic and row:
                     reference_report = row.get("diagnostic")
                     if isinstance(reference_report, dict):

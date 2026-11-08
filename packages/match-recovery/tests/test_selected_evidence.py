@@ -56,7 +56,7 @@ def image_fixture():
     return bytes(raw)
 
 
-def project(tmp_path):
+def project(tmp_path, *, layout_flags=()):
     (tmp_path / "code").mkdir()
     (tmp_path / "data").mkdir()
     (tmp_path / "recovery").mkdir()
@@ -84,7 +84,7 @@ def project(tmp_path):
         "source": {"image_pin": "code/PIN", "address_space": "pe:va",
                    "roots": ["code", "data"], "include_paths": ["code", "data"]},
         "measurement": {"backend": "pe-coff-i386", "compiler_profile": "synthetic",
-                        "flag_sets": [["first"], ["second"]], "layout_flags": [],
+                        "flag_sets": [["first"], ["second"]], "layout_flags": list(layout_flags),
                         "unit_extensions": [".cc"], "inputs": [], "input_roots": []},
     }))
     return tmp_path
@@ -133,6 +133,28 @@ def test_selected_code_follows_transitive_pointer_target_but_ignores_unrelated_d
     assert {row["symbol"] for row in report["object_definitions"]} == {"_g", "_h"}
     assert report["compile_attempts"] == 3
     assert report["selected_evidence"]["trials"][0]["result"] == Result.PASS
+
+
+def test_evidence_only_owners_compile_with_layout_types_but_selected_body_keeps_its_flags(tmp_path):
+    # VC6 emits no .debug$T without /Z7, so an evidence-only owner compiled
+    # with its own profile could never bound a referenced object's extent.
+    root = project(tmp_path, layout_flags=("types",))
+    calls = []
+    report = verify(root, good_compiler(calls))
+    assert report["result"] == Result.PASS, report
+    assert calls == [("code/caller.cc", ("first",)),
+                     ("data/global.cc", ("first", "types")),
+                     ("data/target.cc", ("first", "types"))]
+
+
+def test_evidence_only_owner_layout_types_are_not_repeated(tmp_path):
+    root = project(tmp_path, layout_flags=("types",))
+    calls = []
+    report = verify(root, good_compiler(calls), flag_sets=(("first", "types"),))
+    assert report["result"] == Result.PASS, report
+    assert calls == [("code/caller.cc", ("first", "types")),
+                     ("data/global.cc", ("first", "types")),
+                     ("data/target.cc", ("first", "types"))]
 
 
 def _unbound_marker(address, symbol, end):
