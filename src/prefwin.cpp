@@ -368,10 +368,10 @@ void PrefWin::init() {
     volume_toggles[toggle_redraw]->redraw();
   }
   // The state stores precede all hide callbacks, in main/SFX/voice/music order.
-  volumeMainToggle_.set_selected_state(0);
-  volumeSFXToggle_.set_selected_state(0);
-  volumeVoiceToggle_.set_selected_state(0);
-  volumeMusicToggle_.set_selected_state(0);
+  volumeMainToggle_.field_A18_ = 0;
+  volumeSFXToggle_.field_A18_ = 0;
+  volumeVoiceToggle_.field_A18_ = 0;
+  volumeMusicToggle_.field_A18_ = 0;
   for (unsigned int toggle_hide = 0; toggle_hide < 4; ++toggle_hide)
     volume_toggles[toggle_hide]->hide();
 
@@ -401,9 +401,9 @@ void PrefWin::init() {
     footer_buttons[footer_index]->Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
     footer_buttons[footer_index]->redraw();
   }
-  restoreDefaultButton_.set_selected_state(0);
-  okButton_.set_selected_state(0);
-  cancelButton_.set_selected_state(0);
+  restoreDefaultButton_.field_A18_ = 0;
+  okButton_.field_A18_ = 0;
+  cancelButton_.field_A18_ = 0;
   for (unsigned int footer_hide = 0; footer_hide < 3; ++footer_hide)
     footer_buttons[footer_hide]->hide();
 
@@ -413,7 +413,7 @@ void PrefWin::init() {
       PrefWinGeometryValue_857898 - 0x17 + PrefWinGeometryValue_8578A4,
       PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
       preference_window(), 0);
-  moreButton_.set_selected_state(0);
+  moreButton_.field_A18_ = 0;
   moreButton_.hide();
   Win::hide();
 }
@@ -449,10 +449,10 @@ void PrefWin::display(int page) {
   Buffer::box_sprite(&inner, &InterfaceBoxStyles[9]);
   Buffer::box_sprite(&buttons, &InterfaceBoxStyles[18]);
   get_preferences();
-  volumeMainToggle_.set_selected_state(0);
-  if (volumeMusicToggle_.selected_state()) volumeMainToggle_.set_selected_state(1);
-  if (volumeVoiceToggle_.selected_state()) volumeMainToggle_.set_selected_state(1);
-  if (volumeSFXToggle_.selected_state()) volumeMainToggle_.set_selected_state(1);
+  volumeMainToggle_.field_A18_ = 0;
+  if (volumeMusicToggle_.field_A18_) volumeMainToggle_.field_A18_ = 1;
+  if (volumeVoiceToggle_.field_A18_) volumeMainToggle_.field_A18_ = 1;
+  if (volumeSFXToggle_.field_A18_) volumeMainToggle_.field_A18_ = 1;
   change_volume_button_text(0x55);
   redraw_option();
   redraw_volume();
@@ -705,9 +705,9 @@ void PrefWin::set_preferences() {
   if (audioVisPrefCheckBox_.get_state_id(0x44)) prefsAVPending_ |= PREF_AV_SLIDING_WINDOWS;
   if (audioVisPrefCheckBox_.get_state_id(0x45)) morePrefsAVPending_ |= MPREF_AV_SLIDING_SCROLLBARS;
   if (audioVisPrefCheckBox_.get_state_id(0x16)) morePrefsAVPending_ |= MPREF_AV_WHOLE_VEH_BLINKS;
-  if (volumeVoiceToggle_.selected_state()) morePrefsAVPending_ |= MPREF_AV_VOLUME_VOICE_TOGGLE;
-  if (volumeSFXToggle_.selected_state()) prefsAVPending_ |= PREF_AV_VOLUME_SFX_TOGGLE;
-  if (volumeMusicToggle_.selected_state()) prefsAVPending_ |= PREF_AV_VOLUME_MUSIC_TOGGLE;
+  if (volumeVoiceToggle_.field_A18_) morePrefsAVPending_ |= MPREF_AV_VOLUME_VOICE_TOGGLE;
+  if (volumeSFXToggle_.field_A18_) prefsAVPending_ |= PREF_AV_VOLUME_SFX_TOGGLE;
+  if (volumeMusicToggle_.field_A18_) prefsAVPending_ |= PREF_AV_VOLUME_MUSIC_TOGGLE;
   if (warnPrefCheckBox_.get_state_id(0x2B)) warningsPending_ |= WARN_STOP_NEW_FAC_BUILT;
   if (warnPrefCheckBox_.get_state_id(0x2C)) warningsPending_ |= WARN_STOP_NON_COMBAT_VEH_BUILT;
   if (warnPrefCheckBox_.get_state_id(0x2D)) warningsPending_ |= WARN_STOP_COMBAT_VEH_BUILT;
@@ -883,25 +883,25 @@ void PrefWin::get_preferences() {
     switch (id) {
       case 0x3F:
         if (morePrefsAVPending_ & bit) {
-          volumeVoiceToggle_.set_selected_state(1);
+          volumeVoiceToggle_.field_A18_ = 1;
         } else {
-          volumeVoiceToggle_.set_selected_state(0);
+          volumeVoiceToggle_.field_A18_ = 0;
         }
         change_volume_button_text(0x57);
         break;
       case 0x3E:
         if (prefs & bit) {
-          volumeSFXToggle_.set_selected_state(1);
+          volumeSFXToggle_.field_A18_ = 1;
         } else {
-          volumeSFXToggle_.set_selected_state(0);
+          volumeSFXToggle_.field_A18_ = 0;
         }
         change_volume_button_text(0x56);
         break;
       case 0x3D:
         if (prefs & bit) {
-          volumeMusicToggle_.set_selected_state(1);
+          volumeMusicToggle_.field_A18_ = 1;
         } else {
-          volumeMusicToggle_.set_selected_state(0);
+          volumeMusicToggle_.field_A18_ = 0;
         }
         change_volume_button_text(0x58);
         break;
@@ -1069,10 +1069,10 @@ void PrefWin::on_button_clicked(int button_id) {
       warningsPending_ = default_warn();
       prefsMapPending_ = default_prefs();
       morePrefsMapPending_ = default_prefs2();
-      volumeMainToggle_.set_selected_state(1);
-      volumeVoiceToggle_.set_selected_state(1);
-      volumeSFXToggle_.set_selected_state(1);
-      volumeMusicToggle_.set_selected_state(1);
+      volumeMainToggle_.field_A18_ = 1;
+      volumeVoiceToggle_.field_A18_ = 1;
+      volumeSFXToggle_.field_A18_ = 1;
+      volumeMusicToggle_.field_A18_ = 1;
       volumeMainScroll_.set_pos(0x7F);
       WaveDeviceGlobal.set_volume(0x7F);
       volumeVoiceScroll_.set_pos(0x7F);
@@ -1118,25 +1118,25 @@ void PrefWin::redraw_volume() {
 void PrefWin::change_volume_button_text(int button_id) {
   switch (button_id) {
     case 0x57:
-      if (!volumeVoiceToggle_.selected_state())
+      if (!volumeVoiceToggle_.field_A18_)
         volumeVoiceToggle_.set_name(StringTable.get(Labels.strings_ptr[0x43A]));
       else
         volumeVoiceToggle_.set_name(StringTable.get(Labels.strings_ptr[0x43B]));
       return;
     case 0x56:
-      if (!volumeSFXToggle_.selected_state())
+      if (!volumeSFXToggle_.field_A18_)
         volumeSFXToggle_.set_name(StringTable.get(Labels.strings_ptr[0x43C]));
       else
         volumeSFXToggle_.set_name(StringTable.get(Labels.strings_ptr[0x43D]));
       return;
     case 0x58:
-      if (!volumeMusicToggle_.selected_state())
+      if (!volumeMusicToggle_.field_A18_)
         volumeMusicToggle_.set_name(StringTable.get(Labels.strings_ptr[0x43E]));
       else
         volumeMusicToggle_.set_name(StringTable.get(Labels.strings_ptr[0x43F]));
       return;
     case 0x55:
-      if (!volumeMainToggle_.selected_state())
+      if (!volumeMainToggle_.field_A18_)
         volumeMainToggle_.set_name(StringTable.get(Labels.strings_ptr[0x438]));
       else
         volumeMainToggle_.set_name(StringTable.get(Labels.strings_ptr[0x439]));
@@ -1153,48 +1153,48 @@ void PrefWin::change_volume_button_text(int button_id) {
 void PrefWin::change_volume_button_state(int button_id) {
   switch (button_id) {
     case 0x57: {
-      if (volumeVoiceToggle_.selected_state()) {
-        volumeVoiceToggle_.set_selected_state(0);
+      if (volumeVoiceToggle_.field_A18_) {
+        volumeVoiceToggle_.field_A18_ = 0;
         WaveDeviceGlobal.disable_group(0);
         return;
       }
-      const int main_selected = volumeMainToggle_.selected_state();
-      volumeVoiceToggle_.set_selected_state(1);
+      const int main_selected = volumeMainToggle_.field_A18_;
+      volumeVoiceToggle_.field_A18_ = 1;
       if (!main_selected) {
-        volumeMainToggle_.set_selected_state(1);
+        volumeMainToggle_.field_A18_ = 1;
         change_volume_button_text(0x55);
       }
       WaveDeviceGlobal.enable_group(0);
       return;
     }
     case 0x56: {
-      if (volumeSFXToggle_.selected_state()) {
+      if (volumeSFXToggle_.field_A18_) {
         WaveDeviceGlobal.disable_group(1);
-        volumeSFXToggle_.set_selected_state(0);
+        volumeSFXToggle_.field_A18_ = 0;
         return;
       }
-      const int main_selected = volumeMainToggle_.selected_state();
-      volumeSFXToggle_.set_selected_state(1);
+      const int main_selected = volumeMainToggle_.field_A18_;
+      volumeSFXToggle_.field_A18_ = 1;
       if (!main_selected) {
-        volumeMainToggle_.set_selected_state(1);
+        volumeMainToggle_.field_A18_ = 1;
         change_volume_button_text(0x55);
       }
       WaveDeviceGlobal.enable_group(1);
       return;
     }
     case 0x58: {
-      if (volumeMusicToggle_.selected_state()) {
+      if (volumeMusicToggle_.field_A18_) {
         if (FactionMusic) {
           delete FactionMusic;
           FactionMusic = nullptr;
         }
-        volumeMusicToggle_.set_selected_state(0);
+        volumeMusicToggle_.field_A18_ = 0;
         return;
       }
-      const int main_selected = volumeMainToggle_.selected_state();
-      volumeMusicToggle_.set_selected_state(1);
+      const int main_selected = volumeMainToggle_.field_A18_;
+      volumeMusicToggle_.field_A18_ = 1;
       if (!main_selected) {
-        volumeMainToggle_.set_selected_state(1);
+        volumeMainToggle_.field_A18_ = 1;
         change_volume_button_text(0x55);
       }
       GameDataStateStorage.fields_.game_preferences_ |= PREF_AV_VOLUME_MUSIC_TOGGLE;
@@ -1203,19 +1203,19 @@ void PrefWin::change_volume_button_state(int button_id) {
       return;
     }
     case 0x55:
-      if (volumeMainToggle_.selected_state()) {
-        volumeMainToggle_.set_selected_state(0);
-        volumeMusicToggle_.set_selected_state(0);
-        volumeVoiceToggle_.set_selected_state(0);
-        volumeSFXToggle_.set_selected_state(0);
+      if (volumeMainToggle_.field_A18_) {
+        volumeMainToggle_.field_A18_ = 0;
+        volumeMusicToggle_.field_A18_ = 0;
+        volumeVoiceToggle_.field_A18_ = 0;
+        volumeSFXToggle_.field_A18_ = 0;
         WaveDeviceGlobal.disable();
         GameDataStateStorage.fields_.game_preferences_ &= ~0xC00u;
         GameDataStateStorage.fields_.game_more_preferences_ &= ~0x4000u;
       } else {
-        volumeMainToggle_.set_selected_state(1);
-        volumeMusicToggle_.set_selected_state(1);
-        volumeVoiceToggle_.set_selected_state(1);
-        volumeSFXToggle_.set_selected_state(1);
+        volumeMainToggle_.field_A18_ = 1;
+        volumeMusicToggle_.field_A18_ = 1;
+        volumeVoiceToggle_.field_A18_ = 1;
+        volumeSFXToggle_.field_A18_ = 1;
         WaveDeviceGlobal.enable();
       }
       change_volume_button_text(0x58);

@@ -2089,7 +2089,7 @@ void SocialWin::draw_mouseover() {
             }
             int value;
             if (hover_selection_ == -2) {
-                value = PlayersData[factionID_].soc_effect_base.values_[effect];
+                value = SOCIAL_ABS(PlayersData[factionID_].soc_effect_base.values_[effect]);
             } else {
                 if (has_project(SP_CLONING_VATS, factionID_)
                     && ((category == 2 && model == 1) || (category == 3 && model == 3))
@@ -2100,9 +2100,9 @@ void SocialWin::draw_mouseover() {
                     && SocialCategories[3].model_effect[1].values_[effect] < 0) {
                     continue;
                 }
-                value = SocialCategories[category].model_effect[model].values_[effect];
+                value = SOCIAL_ABS(SocialCategories[category].model_effect[model].values_[effect]);
             }
-            count += SOCIAL_ABS(value) != 0;
+            count += value != 0;
         }
 
         const int line_height = effectIcons_[0].height();
@@ -2160,8 +2160,8 @@ void SocialWin::draw_mouseover() {
                                                + (value >= 0 ? 2 : 1)],
                                  &MainInterfaceGlobal, rect.left + 0x10, rect.top);
 
-                StringTemp[0] = 0;
                 rect.left = rect.left + 0x10 + effectIcons_[0].width();
+                StringTemp[0] = 0;
                 strcat(StringTemp, SocialEffects[effect].set2);
                 social_write_l(StringTemp, &rect);
                 rect.left = rect.left - 0x10 - effectIcons_[0].width();

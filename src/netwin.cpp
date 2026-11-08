@@ -1220,7 +1220,7 @@ Status: Coverage transcription - unclaimed body
 void NetWin::draw_player_names() {
     spot_.kill_type(2);
     spot_.kill_type(5);
-    int pid_idx = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());
+    int pid_idx = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id_);
     Buffer::box_sprite(&setup_rects_[5],
                        &InterfaceBoxStyles[3]);
     RECT *title_rect = &setup_rects_[4];
@@ -1283,7 +1283,7 @@ void NetWin::draw_player_names() {
 
         RECT field = *name_rect;
         if (NetWinSessionData.fields_.mode_ == 0 || NetWinSessionData.fields_.mode_ == 1) {
-            if (row + 1 == NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id())) {
+            if (row + 1 == NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id_)) {
                 Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
                 arrow.draw(this, arrow.transparent_index(),
                            field.right - 0xA,

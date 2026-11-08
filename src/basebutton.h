@@ -126,7 +126,11 @@ class BaseButton : public GraphicWin {
 
  private:
   uint32_t field_A14_;  // 0x0a14
+ public:
+  // PrefWin reads and stores the volume toggles' word directly; the inline
+  // selected_state accessor/setter pair blocks the image's load/store order.
   uint32_t field_A18_;
+ private:
   Time time1_;
   uint32_t field_A44_;
   uint32_t field_A48_;
