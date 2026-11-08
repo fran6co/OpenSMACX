@@ -1596,7 +1596,7 @@ void ReportWin::UNK1(int position, int minimum, int maximum, int page_size) {
 }
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00498180 0x004981D8 0x004981FC 0x00498199
-// ORIGINAL: 0x00498180 ?on_scrolled@ReportWin@@QAEXHH@Z 0x00498180-0x004981D8
+// ORIGINAL: 0x00498180 ?on_scrolled@ReportWin@@QAEXHH@Z 0x00498180-0x004981D8 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: src/recovered/units/00498180.cpp records the original 0x00498180-0x004981D8 handler and page dispatch.", "src/reportwin.h places field_C0FC_ at 0xC0FC; src/graphicwin.h identifies redraw as Win slot 62."], "reason": "Home the ReportWin scrollbar callback using its declared position member and inherited redraw virtual."}
 // symbol    ?on_scrolled@ReportWin@@UAEXHH@Z
 // Deleted seed provenance: git:c2e28f62c941b2012636504516275bc26988ee80:src/recovered/units/00498180.cpp
@@ -1624,7 +1624,7 @@ void ReportWin::on_scrolled(int, int pos) {
 }
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00498200 0x00498258 0x0049827C 0x00498219
-// ORIGINAL: 0x00498200 ?on_scrolling@ReportWin@@QAEXHH@Z 0x00498200-0x00498258
+// ORIGINAL: 0x00498200 ?on_scrolling@ReportWin@@QAEXHH@Z 0x00498200-0x00498258 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: src/recovered/units/00498200.cpp records the original 0x00498200-0x00498258 handler and page dispatch.", "src/reportwin.h places field_C0FC_ at 0xC0FC; src/graphicwin.h identifies redraw as Win slot 62."], "reason": "Home the ReportWin scroll-in-progress callback using the same source-owned position and redraw behavior."}
 // symbol    ?on_scrolling@ReportWin@@UAEXHH@Z
 // Deleted seed provenance: git:c2e28f62c941b2012636504516275bc26988ee80:src/recovered/units/00498200.cpp
@@ -1784,7 +1784,7 @@ int ReportWin::on_key_click(int, int code) {
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004986D0 0x004989A8 0x004989CC 0x00498745
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004986D0 0x004989CC 0x004989E4 0x0049888D
-// ORIGINAL: 0x004986D0 ?on_button_clicked@ReportWin@@QAEXH@Z 0x004986D0-0x004989A8
+// ORIGINAL: 0x004986D0 ?on_button_clicked@ReportWin@@QAEXH@Z 0x004986D0-0x004989A8 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:a538e0a3:src/recovered/units/004986d0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 // symbol    ?on_button_clicked@ReportWin@@UAEXH@Z
 void ReportWin::on_button_clicked(int id) {
@@ -4707,7 +4707,7 @@ void __cdecl bl_daemon(int context) {
 }
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004A4060 0x004A4194 0x004A41C4 0x004A407D
-// ORIGINAL: 0x004A4060 ?bl_anim@ReportIf@@QAEXXZ 0x004A4060-0x004A4191
+// ORIGINAL: 0x004A4060 ?bl_anim@ReportIf@@QAEXXZ 0x004A4060-0x004A4191 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: source:src/recovered/units/004a4060.cpp", "source:src/reportif.h", "source:src/worldwin.h", "source:src/reportwin.h", "source:src/sprite.h"], "reason": "Advance ReportIf animation with the declared sprite run and coordinate state, drawing to the WorldClimateWorldWin Buffer base and stopping the ReportWin-owned Time at terminal frame 10."}
 void ReportIf::bl_anim() {
     WorldClimateWorldWin.redraw();
@@ -5418,7 +5418,7 @@ void ReportIf::on_iface_button_toggled(int, int) {
 }
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004A6D70 0x004A6FD8 0x004A6FFC 0x004A6F18
-// ORIGINAL: 0x004A6D70 ?on_iface_group_clicked@ReportIf@@QAEXHHH@Z 0x004A6D70-0x004A6FD7 FILE
+// ORIGINAL: 0x004A6D70 ?on_iface_group_clicked@ReportIf@@QAEXHHH@Z 0x004A6D70-0x004A6FD7 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: src/recovered/units/004a6d70.cpp retained original identity, full spans and seed history", "recovery/tasks/interface-contract-report-closure.json authorized coupled owner recovery", "original:0x4a6d70 complete control/data-access audit; ReportIf declarations and genuine ReportWin control storage"], "reason": "Recover ReportIf's group callback from the retained seed through its genuine SubInterface owner and ReportWin controls. Its current emitted virtual symbol is recorded separately from the historical catalogue spelling."}
 // symbol    ?on_iface_group_clicked@ReportIf@@UAEXHHH@Z
 void ReportIf::on_iface_group_clicked(int group, int, int item) {
