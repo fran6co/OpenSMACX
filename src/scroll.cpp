@@ -445,7 +445,7 @@ void Scroll::close() {
 /*
 Purpose: Initialize the scrollbar track and its two optional embedded arrow
          buttons, choosing horizontal or vertical sprites from the layout.
-// ORIGINAL: 0x006054D0 ?init@Scroll@@QAEHHHHHPAUWin@@HH@Z 0x006054D0-0x0060583F FILE
+// ORIGINAL: 0x006054D0 ?init@Scroll@@QAEHHHHHPAUWin@@HH@Z 0x006054D0-0x0060583F FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["source:src/unrecovered/006054d0.cpp","original:0x00605701-0x00605788","source:src/scroll.h:Scroll","source:src/flatbutton.h:FlatButton"],"reason":"Home the primary initializer on Scroll's real hierarchy and embedded buttons. The executable's branch/register data corrects the seed's zero-size horizontal right button, while generic inherited settings are encapsulated by FlatButton."}
 // symbol    ?init@Scroll@@QAEHHHHHPAVWin@@HH@Z
 // Native60569A..6056A6 and6057A1..6057AD place each arrow triplet in
