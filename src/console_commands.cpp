@@ -4749,9 +4749,7 @@ void Console::custom_my_faction() {
     }
 
     // The question's wording follows the leader's current gender.
-    strcpy(name_buf, StringTable.get(Players[faction_idx].is_leader_female
-                                         ? Labels.strings_ptr[0x2E3]
-                                         : Labels.strings_ptr[0x2E2]));
+    strcpy(name_buf, Players[faction_idx].is_leader_female ? label_get(0x2E3) : label_get(0x2E2));
 
     popup.start(PopupStartCaption, ConsoleStrCustomNames, -1, nullptr, 0x44);
     popup.dialogs().edit(dip_label(0x2B8 / 4), Players[faction_idx].name_leader, 0x17);
