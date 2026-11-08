@@ -3070,60 +3070,17 @@ static signed char AltLightBit200[113];
 
 // Four mutable ocean-shade quads, shared across terrain calls. The renderer
 // publishes each cell before passing these same slices to Texture painters,
-// which may clamp the cells in place. Original storage is7F6644..7F6684.
-// The last DWORD is also the first four bytes addressed by the biased
-// corner-light lookup below; that consumer must observe this same owner.
+// which may clamp the cells in place. Original storage is 7F6644..7F6684.
 // RECOVERY_OBJECT: v2 0x007F6644 0x007F6684 _OceanCornerShades 0x004632D0
 static int OceanCornerShades[16];
 
-// The initializer at 0x00470420 writes four consecutive 49-byte corner-light
-// tables. This storage begins after the separately owned ocean-shade tail and
-// ends at the observed exclusive boundary 0x007F674C.
+// The initializer at 0x00470420 writes four consecutive 7x7 corner-light
+// tables (0x007F6688..0x007F674C). get_brighting indexes run k as
+// [k*49 + v*7 + w - 8] for altitude-detail nibbles v, w, unchecked, so a zero
+// nibble reads in front of the run (for run 0, the ocean-shade tail and the
+// alignment gap before this table) and nibbles above 7 read past it.
 // RECOVERY_OBJECT: v2 0x007F6688 0x007F674C ?MapLightingTable@@3PACA 0x00470420
 signed char MapLightingTable[4 * 49];
-
-// These separate four-byte source windows cover the exceptional get_brighting
-// indices immediately before and after MapLightingTable. The pinned PE places
-// both inside the RW .data virtual-zero-fill tail, so their initial bytes are
-// zero. The windows establish only these observed access extents: they do not
-// identify original variables, a shared allocation, or permanent zero values.
-// No direct writer was found; indirect writers and aliases remain unresolved.
-// RECOVERY_OBJECT: v2 0x007F6684 0x007F6688 _MapLightingLeadingReadWindow 0x00470550
-static signed char MapLightingLeadingReadWindow[4];
-// RECOVERY_OBJECT: v2 0x007F674C 0x007F6750 _MapLightingTrailingReadWindow 0x00470550
-static signed char MapLightingTrailingReadWindow[4];
-
-// get_brighting reads each corner from the biased base 0x007F6680 as
-//
-//     lea ebx, [eax*8] / sub ebx, eax            ; v * 7
-//     movsx ebx, byte ptr [ebx + eax + 0x7f6680] ; [v*7 + w]
-//
-// where v and w are the two altitude-detail nibbles the visibility record
-// holds for the two tiles that meet at that corner. `get_brighting`
-// (0x00470550) indexes the four runs with the constants 0x7F6680, 0x7F66B1,
-// 0x7F66E2 and 0x7F6713, so the stride is 0x31 = 49 = 7*7 and this one base
-// serves all four.
-//
-// Nibbles are not restricted to 1..7: preserve the complete 0..15 domain.
-// Index 0..3 aliases the final OceanCornerShades DWORD; 4..7 and 204..207
-// use the bounded startup-zero windows above; 8..203 address the generated
-// table; and 208..267 address AltLightBit200[0..59]. The windows are separate
-// source views, not a claim about an original aggregate or allocation.
-// PE zero-fill proves only their initial bytes; runtime aliases/writers remain
-// an obligation rather than an assumption that these values stay zero.
-
-static __forceinline signed char corner_light_value(int biased_index) {
-    if (biased_index < 8) {
-        return MapLightingLeadingReadWindow[biased_index - 4];
-    }
-    if (biased_index < 8 + 4 * 49) {
-        return MapLightingTable[biased_index - 8];
-    }
-    if (biased_index < 208) {
-        return MapLightingTrailingReadWindow[biased_index - 204];
-    }
-    return AltLightBit200[biased_index - 208];
-}
 
 // 0x00685684 and the five tables behind it - THE ALTITUDE BONUS LOOKUP
 // `get_alt` walks. 0x00685684 is the direction table (five bytes a direction,
@@ -7537,10 +7494,8 @@ static __forceinline TerrainCacheEntry *brighting_tile(
 // ORIGINAL: 0x00470550 ?get_brighting@MapWin@@QAEHHHH@Z 0x00470550-0x00470776 FILE
 // RECOVERY_BINDING: v1 {"reason":"Read current lighting storage without adding lazy initialization or table writes to brightness lookup.","evidence":["Pinned470550..470776 calls get_alt four times and dispatches its lookup through470778;470704/47071D/470736/47074C read signed table bytes directly, without calling the initializer or quick_root.","mapwin_system_init at471030 owns the explicit compute_lighting_table call;470420..470536 owns the four49-byte table writes. Lookup before startup must retain the existing zero-initialized storage rather than generate values on demand."]}
 // HOMED 2026-09-04 from the 0x00470550 artifact. 16/202 in the tree. The
-// Historical note: the four absolute table constants 0x7F6680/0x7F66B1/
-// 0x7F66E2/0x7F6713 were formerly modeled as one raw CornerLightTable base
-// plus stride 0x31. The bounded source-owned views above now replace that
-// fallback while preserving the observed byte windows and aliases.
+// The image reads all four runs through the one biased base
+// MapLightingTable - 8 (0x7F6680, +0x31/+0x62/+0x93), without range checks.
 // TRIED: chained-OR bounds check vs nested ifs, and caching `this` in a named local before the owned_==0 check - none change when the compiler spills `this` to [ebp-4] relative to the row/col bound-check jumps (MISMATCH #6 'push' vs 'mov'); not chased further. Switch-table index math (v1..v4 nibble packing, per-case table*7 stride) is a faithful transcription.
 // working copy - scaffold materialised by --work
 // size      550 bytes
@@ -7552,91 +7507,68 @@ static __forceinline TerrainCacheEntry *brighting_tile(
 
 
 int MapWin::get_brighting(int x, int y, int corner) {
-    int row = y;
-    int col = x;
-    if (row < 0 || row >= MapLatitudeBounds || col < 0 || col >= MapLongitudeBounds) {
+    if (!on_map(x, y)) {
         return 0;
     }
+    int v0;
     if (owned_ == 0) {
-        return -0x80;
+        v0 = 0;
+    } else {
+        v0 = brighting_tile(owned_, y, x >> 1)->brightness[corner];
     }
-    int colHalf = col >> 1;
-    TerrainCacheEntry *tile = brighting_tile(owned_, row, colHalf);
-    unsigned int v0 = tile->brightness[corner];
     if (v0 != 0xff) {
-        return (int)v0 - 0x80;
+        return v0 - 0x80;
     }
-    unsigned char terrain = *(unsigned char *)map_loc(col, row);
-    if ((terrain & 0xe0) < 0x60) {
-        tile->brightness[corner] = 0x80;
+    if (alt_at(x, y) < ALT_SHORE_LINE) {
+        brighting_tile(owned_, y, x >> 1)->brightness[corner] = 0x80;
         return 0;
     }
-    get_alt(col, row, 1);
+    get_alt(x, y, 1);
     int v1;
     if (owned_ == 0) {
         v1 = 0;
     } else {
-        TerrainCacheEntry *t = brighting_tile(owned_, row, colHalf);
-        v1 = t->altitude_detail & 0xf;
+        v1 = brighting_tile(owned_, y, x >> 1)->altitude_detail & 0xf;
     }
-    get_alt(col, row, 2);
+    get_alt(x, y, 2);
     int v2;
     if (owned_ == 0) {
         v2 = 0;
     } else {
-        TerrainCacheEntry *t = brighting_tile(owned_, row, colHalf);
-        v2 = (t->altitude_detail >> 4) & 0xf;
+        v2 = (brighting_tile(owned_, y, x >> 1)->altitude_detail >> 4) & 0xf;
     }
-    get_alt(col, row, 3);
+    get_alt(x, y, 3);
     int v3;
     if (owned_ == 0) {
         v3 = 0;
     } else {
-        TerrainCacheEntry *t = brighting_tile(owned_, row, colHalf);
-        v3 = (t->altitude_detail >> 8) & 0xf;
+        v3 = (brighting_tile(owned_, y, x >> 1)->altitude_detail >> 8) & 0xf;
     }
-    get_alt(col, row, 4);
+    get_alt(x, y, 4);
     int v4;
     if (owned_ == 0) {
         v4 = 0;
     } else {
-        TerrainCacheEntry *t = brighting_tile(owned_, row, colHalf);
-        v4 = t->altitude_detail >> 12;
+        v4 = brighting_tile(owned_, y, x >> 1)->altitude_detail >> 12;
     }
-    int result;
+    // The original indexes each 7x7 run from nibble 1 without a range check;
+    // a zero nibble reads the bytes in front of the run.
     switch (corner) {
-    case 0: {
-        const int index = v1 * 7 + v2;
-        if (index < 4) {
-            // Original470704's biased base7F6680 selects the bytes of the
-            // last ocean shade. Decode the x86 little-endian signed byte
-            // without an out-of-bounds array or a separate shadow owner.
-            const unsigned int byte =
-                (static_cast<unsigned int>(OceanCornerShades[15]) >>
-                 (index * 8)) & 0xffU;
-            result = byte < 0x80U ? static_cast<int>(byte)
-                                  : static_cast<int>(byte) - 0x100;
-        } else {
-            result = corner_light_value(index);
-        }
+    case 0:
+        v0 = MapLightingTable[v1 * 7 + v2 - 8];
         break;
-    }
     case 1:
-        result = corner_light_value(0x31 + v2 * 7 + v3);
+        v0 = MapLightingTable[v2 * 7 + v3 + 0x31 - 8];
         break;
     case 2:
-        result = corner_light_value(0x62 + v3 * 7 + v4);
+        v0 = MapLightingTable[v3 * 7 + v4 + 0x62 - 8];
         break;
     case 3:
-        result = corner_light_value(0x93 + v4 * 7 + v1);
-        break;
-    default:
-        result = (int)v0;
+        v0 = MapLightingTable[v4 * 7 + v1 + 0x93 - 8];
         break;
     }
-    TerrainCacheEntry *finalTile = brighting_tile(owned_, row, colHalf);
-    finalTile->brightness[corner] = (unsigned char)(result + 0x80);
-    return result;
+    brighting_tile(owned_, y, x >> 1)->brightness[corner] = (unsigned char)(v0 + 0x80);
+    return v0;
 }
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00470420 0x00470538 0x00470548 0x00470483
