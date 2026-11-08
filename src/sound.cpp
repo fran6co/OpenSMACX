@@ -1321,7 +1321,7 @@ Purpose: Build the inherited Sound/Fade state once, then initialize Wave's
          is a direct base-method call in the original. The compiler owns
          construction tables and exception cleanup; the historical spelling
          experiments below predate recovery of the fade base.
-// ORIGINAL: 0x004C66E0 ??0Wave@@QAE@XZ 0x004C66E0-0x004C67B6;0x00659EF4-0x00659F06
+// ORIGINAL: 0x004C66E0 ??0Wave@@QAE@XZ 0x004C66E0-0x004C67B6;0x00659EF4-0x00659F06 BYTE_EXACT
 // TRIED: 3/73 - the image carries an SEH unwind frame here (`push -1 /
 //            push 0x659efc / mov eax,fs:[0] / ...`), the same symptom as
 //            FlatButton::FlatButton() (flatbutton.cpp) and
@@ -2922,7 +2922,7 @@ char *NameTable::get_name() {
 // span at 0x4c8450/0x659f20/0x659f28 that is PART of this same function
 // (the "spans" list is multi-range). The SEH frame is not modeled here -
 // see TRIED.
-// ORIGINAL: 0x004C75B0 sub_4c75b0 0x004C75B0-0x004C766D;0x00659F20-0x00659F32 FILE
+// ORIGINAL: 0x004C75B0 sub_4c75b0 0x004C75B0-0x004C766D;0x00659F20-0x00659F32 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/unrecovered/004c75b0.cpp", "src/midi.h", "src/ambience.h"], "reason": "Original Sound-to-Midi constructor staging and byte54 state identify the genuine Midi owner. Historical seed mapping includes the already shared unwind helper; its overlap remains a restoration limitation, not a newly inferred independent function extent."}
 // symbol    ??0Midi@@QAE@XZ
 // Historical SHARED_TAIL observation below predates the independent source identity for 0x004C8450; retain it as prior trial context, not a current span classification.
@@ -4506,7 +4506,7 @@ Purpose: Build the ambience. The original constructs in four vtable stages -
          clear is four bytes wide, this one is a single byte, so 0x55..0x57
          keep whatever the storage held - and nothing at or above 0x58 is
          written at all, which is what pins the shared base's extent there.
-// ORIGINAL: 0x004C8460 ??0Ambience@@QAE@XZ 0x004C8460-0x004C852D;0x00659F4C-0x00659F5E
+// ORIGINAL: 0x004C8460 ??0Ambience@@QAE@XZ 0x004C8460-0x004C852D;0x00659F4C-0x00659F5E BYTE_EXACT
 // TRIED: dropping `volatile` off `object`/`bytes` measured 0/72
 //   agreeing both ways (the function diverges at instruction 0, the
 //   omitted SEH prologue, before reaching these stores), but it shrank

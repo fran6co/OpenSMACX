@@ -1035,7 +1035,7 @@ static inline void dl_topic_id(char *prefix, int *n) {
     _itoa(value, number, 10);
     strcat(StringTemp, number);
 }
-// ORIGINAL: 0x0042C2E0 ?draw_concept@Datalink@@QAEXXZ 0x0042C2E0-0x0042C64D;0x0065358E-0x00653650
+// ORIGINAL: 0x0042C2E0 ?draw_concept@Datalink@@QAEXXZ 0x0042C2E0-0x0042C64D;0x0065358E-0x00653650 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x42C2E0", "git:8e3029104ab590bec35cc6932e637765b2ea4074:src/recovered/units/0042c2e0.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
 void Datalink::draw_concept() {
     Popup popup;
@@ -1052,7 +1052,7 @@ void Datalink::draw_concept() {
     soft_update(&description_rect_);
 }
 
-// ORIGINAL: 0x0042C650 ?draw_adv_concept@Datalink@@QAEXXZ 0x0042C650-0x0042C9C0;0x00653650-0x00653712
+// ORIGINAL: 0x0042C650 ?draw_adv_concept@Datalink@@QAEXXZ 0x0042C650-0x0042C9C0;0x00653650-0x00653712 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x42C650", "git:8e3029104ab590bec35cc6932e637765b2ea4074:src/recovered/units/0042c650.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
 void Datalink::draw_adv_concept() {
     Popup popup;
