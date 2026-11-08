@@ -4120,7 +4120,8 @@ void DesignWin::draw_reactor(int redraw) {
     char *name = Reactor[protoReactorType_ - 1].name;
     strcat(StringTemp, StringTable.get(name));
     CharUpperA(StringTemp);
-    int height = Buffer::wrap_height(StringTemp, area.right - area.left);
+    // stand-in: operand order flips the render midpoint's left/right loads.
+    int height = Buffer::wrap_height(StringTemp, -area.left + area.right);
     area.bottom = area.bottom - 5 - height - font1_.pixel_height();
 
     caviar_.reset_objects();

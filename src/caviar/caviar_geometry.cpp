@@ -285,16 +285,15 @@ OPENSMACX_NOINLINE
 // symbol    ?vox_part_behind@@YA_NPBUVOX_Vect@@MPBUVoxCameraBlock@@@Z
 bool __cdecl vox_part_behind(const VOX_Vect *position, float extent,
                              const VoxCameraBlock *view) {
-    const CaviarChannelBounds &clip = view->bounds_;
-    if (position->values[2] < clip.lead_[3]) return true;
-    if (position->values[2] > clip.lead_[4]) return true;
+    if (position->values[2] < view->bounds_.lead_[3]) return true;
+    if (position->values[2] > view->bounds_.lead_[4]) return true;
     float delta = extent * CaviarSceneProjectionScratch.projected_scale_;
     delta *= CaviarBoundsRadiusScale;
     if (position->values[0] < -delta) return true;
     if (position->values[0] >
-        static_cast<float>(clip.values_[4]) + delta) return true;
+        static_cast<float>(view->bounds_.values_[4]) + delta) return true;
     if (position->values[1] < -delta) return true;
     if (position->values[1] >
-        static_cast<float>(clip.values_[5]) + delta) return true;
+        static_cast<float>(view->bounds_.values_[5]) + delta) return true;
     return false;
 }
