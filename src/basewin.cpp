@@ -5157,9 +5157,8 @@ void BaseWin::on_redraw() {
 // The seed's four 0x0096CDC0..0x0096CDCC indexed words are
 // PlayersData[faction].ai_growth/ai_tech/ai_wealth/ai_power: each index step
 // is 2099 dwords, the established 0x20CC-byte PlayerData stride.
-// stand-in: BaseButton's private field_A74_ is written by offset. The image
-// addresses it from BaseWin's this, not through the button pointer that
-// clear_auxiliary_state_for_disabled_button uses; a public field would replace it.
+// The image addresses field_A74_ from BaseWin's this, not through the button
+// pointer that clear_auxiliary_state_for_disabled_button uses.
 void BaseWin::update_gov_buttons() {
     const int faction = BaseCurrent->faction_id_current;
     flatButtons_[8].set(BaseCurrent->governor >> 31);
@@ -5170,8 +5169,8 @@ void BaseWin::update_gov_buttons() {
         flatButtons_[4].set(1);
     } else {
         flatButtons_[4].set(0);
-        if (*reinterpret_cast<uint32_t *>(reinterpret_cast<char *>(&flatButtons_[4]) + 0xA74)) {
-            *reinterpret_cast<uint32_t *>(reinterpret_cast<char *>(&flatButtons_[4]) + 0xA74) = 0;
+        if (flatButtons_[4].field_A74_) {
+            flatButtons_[4].field_A74_ = 0;
             flatButtons_[4].redraw();
         }
     }
@@ -5181,8 +5180,8 @@ void BaseWin::update_gov_buttons() {
         flatButtons_[5].set(1);
     } else {
         flatButtons_[5].set(0);
-        if (*reinterpret_cast<uint32_t *>(reinterpret_cast<char *>(&flatButtons_[5]) + 0xA74)) {
-            *reinterpret_cast<uint32_t *>(reinterpret_cast<char *>(&flatButtons_[5]) + 0xA74) = 0;
+        if (flatButtons_[5].field_A74_) {
+            flatButtons_[5].field_A74_ = 0;
             flatButtons_[5].redraw();
         }
     }
@@ -5192,8 +5191,8 @@ void BaseWin::update_gov_buttons() {
         flatButtons_[6].set(1);
     } else {
         flatButtons_[6].set(0);
-        if (*reinterpret_cast<uint32_t *>(reinterpret_cast<char *>(&flatButtons_[6]) + 0xA74)) {
-            *reinterpret_cast<uint32_t *>(reinterpret_cast<char *>(&flatButtons_[6]) + 0xA74) = 0;
+        if (flatButtons_[6].field_A74_) {
+            flatButtons_[6].field_A74_ = 0;
             flatButtons_[6].redraw();
         }
     }
@@ -5203,8 +5202,8 @@ void BaseWin::update_gov_buttons() {
         flatButtons_[7].set(1);
     } else {
         flatButtons_[7].set(0);
-        if (*reinterpret_cast<uint32_t *>(reinterpret_cast<char *>(&flatButtons_[7]) + 0xA74)) {
-            *reinterpret_cast<uint32_t *>(reinterpret_cast<char *>(&flatButtons_[7]) + 0xA74) = 0;
+        if (flatButtons_[7].field_A74_) {
+            flatButtons_[7].field_A74_ = 0;
             flatButtons_[7].redraw();
         }
     }

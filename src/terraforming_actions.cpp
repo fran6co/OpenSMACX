@@ -1,3 +1,6 @@
+// stand-in: file-state lever. seek_id's visible header body flips a register
+// tie in action_give (0x004CEDE0); this TU never calls seek_id.
+#define STRINGSTRUCT_SEEK_ID_OUT_OF_LINE
 /*
  * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
  * Copyright (C) 2013-2021 Brendan Casey

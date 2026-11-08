@@ -255,7 +255,7 @@ class StringStruct : public virtual StringAllocationBase {
   // resolves the claims.
   StringStructPayload *current_entry();
   MEASURED StringStructPayload *next_entry();
-  int seek_id(int id);
+  MEASURED int seek_id(int id);
   MEASURED void remove_all();
 
   // 0x00401100 appends an entry and payload, then invokes the insertion hook.
@@ -488,6 +488,27 @@ MEASURED inline StringStructPayload *StringStruct::next_entry() {
     }
     return current_->string_payload();
 }
+
+// 0x00401560 is called by CheckBox::on_left_down and expanded inline by
+// Datalink::draw_concept/draw_adv_concept; MEASURED keeps the copy emitted.
+// A TU that defines STRINGSTRUCT_SEEK_ID_OUT_OF_LINE sees only the
+// declaration and calls 0x00401560 (CheckBox::on_left_down).
+#ifndef STRINGSTRUCT_SEEK_ID_OUT_OF_LINE
+MEASURED inline int StringStruct::seek_id(int id) {
+    if (head_) {
+        current_position_ = 0;
+        current_ = head_;
+        for (int traversed = 0; traversed < entry_count_; traversed++) {
+            if (current_->id == id) {
+                return 1;
+            }
+            current_position_++;
+            current_ = current_->next;
+        }
+    }
+    return 0;
+}
+#endif
 
 #include "name_table.h"
 

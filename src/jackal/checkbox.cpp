@@ -1,3 +1,6 @@
+// stand-in: hide seek_id's header body so on_left_down calls 0x00401560
+// out of line twice, as the image does; Datalink inlines it.
+#define STRINGSTRUCT_SEEK_ID_OUT_OF_LINE
 /*
  * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
  * Copyright (C) 2013-2021 Brendan Casey

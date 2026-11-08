@@ -131,7 +131,11 @@ class BaseButton : public GraphicWin {
   uint32_t field_A44_;
   uint32_t field_A48_;
   Time time2_;
+ public:
+  // PUBLIC: BaseWin::update_gov_buttons clears it from BaseWin's this
+  // (flatButtons_[n].field_A74_), not through a button-pointer helper.
   uint32_t field_A74_;
+ private:
   uint32_t field_A78_;
  protected:
   // Derived painters read the live label after drawing the button surface.

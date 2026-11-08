@@ -257,6 +257,7 @@ Status: Complete
 /*
 Purpose: Position the string-list cursor at the first matching item ID.
 // ORIGINAL: 0x00401560 ?seek_id@StringStruct@@QAEHH@Z 0x00401560-0x004015AE BYTE_EXACT
+// body src/stringstruct.h
 // size      78 bytes
 // prototype int (__thiscall ?seek_id@StringStruct@@QAEHH@Z)(StringStruct* this, int)
 // callers   1   call targets   0
@@ -267,20 +268,9 @@ Purpose: Position the string-list cursor at the first matching item ID.
 Return Value: One when found, otherwise zero
 Status: Complete
 */
-int StringStruct::seek_id(int id) {
-    if (head_) {
-        current_position_ = 0;
-        current_ = head_;
-        for (int traversed = 0; traversed < entry_count_; traversed++) {
-            if (current_->id == id) {
-                return 1;
-            }
-            current_position_++;
-            current_ = current_->next;
-        }
-    }
-    return 0;
-}
+// MEASURED inline, defined in stringstruct.h: the image calls this from
+// CheckBox::on_left_down and inlines it in Datalink::draw_concept and
+// draw_adv_concept. The definition moved; the claim is unchanged.
 
 
 extern "C" int __cdecl string_struct_seek_id_source(StringStruct *self, int id) {
