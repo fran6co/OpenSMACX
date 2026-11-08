@@ -741,13 +741,15 @@ void NetWin::prepare_game() {
     int i;
     for (i = 0; i < faction_count; i++) {
         if (faction_records_[i].active_ == 0) {
-            used_mask |= 1u << i;
+            const int bit = 1 << i;
+            used_mask |= bit;
         }
     }
     int seat;
     for (seat = 1; seat < 8; seat++) {
         if (NetWinLobbyRows.rows_[seat].faction_or_color_ != -1) {
-            used_mask |= 1u << NetWinLobbyRows.rows_[seat].faction_or_color_;
+            const int bit = 1 << NetWinLobbyRows.rows_[seat].faction_or_color_;
+            used_mask |= bit;
         }
     }
     int needed = 0;
@@ -798,15 +800,15 @@ void NetWin::prepare_game() {
     } else {
         for (seat = 2; seat < 8; seat++) {
             char *const leader_name = NetWinLobbyRows.rows_[seat].leader_name_;
-            int duplicates = 0;
+            needed = 0;
             for (int earlier = 1; earlier < seat; earlier++) {
                 if (!strcmp(leader_name, NetWinLobbyRows.rows_[earlier].leader_name_)) {
-                    duplicates++;
+                    needed++;
                 }
             }
-            if (duplicates) {
+            if (needed) {
                 char suffix[80];
-                _itoa(duplicates, suffix, 10);
+                _itoa(needed, suffix, 10);
                 strcat(leader_name, suffix);
             }
         }
@@ -819,15 +821,15 @@ void NetWin::prepare_game() {
             compute_faction_modifiers(i);
         }
         for (seat = 1; seat < 8; seat++) {
-            const int faction = NetDaemonNet.process_slots_[seat].identity_;
-            PlayersData[faction].diff_level =
-                static_cast<int8_t>(NetDaemonNet.process_slots_[seat].field_26_);
+            const AlphaNetProcessSlot &process = NetDaemonNet.process_slots_[seat];
+            const int faction = process.identity_;
+            PlayersData[faction].diff_level = static_cast<int8_t>(process.field_26_);
             if (!(hidden_mask & (1u << seat))) {
                 const NetWinLobbyRow &row = NetWinLobbyRows.rows_[seat];
                 strcpy(Players[faction].name_leader, row.leader_name_);
                 strcpy(Players[faction].formal_name_faction, row.formal_faction_name_);
                 strcpy(Players[faction].noun_faction, row.noun_faction_);
-                strcpy(Players[faction].adj_faction, row.adjective_faction_);
+                strcpy(Players[faction].adj_name_faction, row.adjective_faction_);
                 strcpy(Players[faction].title_leader, row.leader_title_);
                 strcpy(Players[faction].adj_leader, row.adjective_leader_);
                 Players[faction].is_leader_female = row.tail_[0];
@@ -1255,40 +1257,39 @@ void NetWin::draw_player_names() {
     spot_.kill_type(2);
     spot_.kill_type(5);
     int pid_idx = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());
-    Buffer *buffer = static_cast<Buffer *>(this);
-    buffer->box_sprite(&setup_rects_[5],
+    Buffer::box_sprite(&setup_rects_[5],
                        &InterfaceBoxStyles[3]);
     RECT *title_rect = &setup_rects_[4];
-    buffer->box_sprite(title_rect, &InterfaceBoxStyles[6]);
+    Buffer::box_sprite(title_rect, &InterfaceBoxStyles[6]);
 
     StringTemp[0] = 0;
     strcat(StringTemp,
            label_get(0x414 / 4));
     CharUpperA(StringTemp);
-    buffer->set_font(find_font(0xE, 1), 0, 0, 0);
-    buffer->set_text_color(0xE1, -1, 1, 1);
+    Buffer::set_font(find_font(0xE, 1), 0, 0, 0);
+    Buffer::set_text_color(0xE1, -1, 1, 1);
     if (StringTemp != 0) {
-        buffer->write_cent_l(StringTemp, title_rect,
+        Buffer::write_cent_l(StringTemp, title_rect,
                              strlen(StringTemp));
     }
 
     NetWinLobbyRow *lobby_row = &NetWinLobbyRows.rows_[1];
-    AlphaNetProcessSlot *slot_record = NetDaemonNet.process_slots_ + 1;
-    RECT *rects = &setup_rects_[6];
-    for (int row = 0; row < 7;
-         ++row, ++lobby_row, slot_record += 1) {
+    AlphaNetProcessSlot *slot_record = &NetDaemonNet.process_slots_[1];
+    for (int row = 0; row < 7; ++row, ++lobby_row, ++slot_record) {
         if (NetWinSessionData.fields_.mode_ == 3
             && row >= faction_records_[0].record_type_) {
             break;
         }
-        RECT *name_rect = &rects[row * 3];
-        RECT *colour_rect = &rects[row * 3 + 3];
-        RECT *row_rect = &rects[row * 3 + 6];
+        RECT *row_rect = &setup_rects_[row + 36];
+        RECT *name_rect = &setup_rects_[row + 6];
+        RECT *colour_rect = &setup_rects_[row + 27];
+        Buffer::box_sprite(name_rect, &InterfaceBoxStyles[0]);
+        Buffer::box_sprite(colour_rect, &InterfaceBoxStyles[0]);
 
         // The ready glyph: element 2 when the record block's leading byte
         // says the slot holds a player.
         int ready = lobby_row->ready_or_occupied_ != 0 ? 2 : 0;
-        buffer->box_sprite(row_rect, &InterfaceBoxStyles[48 + ready]);
+        Buffer::box_sprite(row_rect, &InterfaceBoxStyles[48 + ready]);
 
         if (NetWinSessionData.fields_.mode_ == 3 && lobby_row->prefix_ == -1) {
             continue;
@@ -1296,32 +1297,31 @@ void NetWin::draw_player_names() {
 
         // The lock chip: the chosen faction's own id field against the
         // record's claim dword, only while the eighth word is 2 or 3.
-        signed char mode = lobby_row->faction_or_color_;
-        int locked;
+        const signed char mode = lobby_row->faction_or_color_;
+        int locked = 0;
         if (NetWinSessionData.fields_.mode_ == 2 || NetWinSessionData.fields_.mode_ == 3) {
-            locked = 0;
             if (mode != -1) {
-                unsigned long claimed = lobby_row->owner_;
-                unsigned long owned = faction_records_[mode].owner_;
-                locked = owned != 0 && owned != claimed;
+                const unsigned long owned = faction_records_[mode].owner_;
+                if (owned != 0 && owned != lobby_row->owner_) {
+                    locked = 1;
+                }
             }
-        } else {
-            locked = lobby_row->owner_ != 0;
+        } else if (lobby_row->owner_ != 0) {
+            locked = 1;
         }
-        Sprite &chip = locked ? g_IFACE_LOCK_SPRITES[1]
-                              : g_IFACE_LOCK_SPRITES[0];
-        chip.draw(buffer, chip.transparent_index(), colour_rect->left + 1,
-                  colour_rect->top, 1, 1);
+        if (locked) {
+            g_IFACE_LOCK_SPRITES[1].draw(this, g_IFACE_LOCK_SPRITES[1].transparent_index(),
+                                         colour_rect->left + 1, colour_rect->top, 1, 1);
+        } else {
+            g_IFACE_LOCK_SPRITES[0].draw(this, g_IFACE_LOCK_SPRITES[0].transparent_index(),
+                                         colour_rect->left + 1, colour_rect->top, 1, 1);
+        }
 
-        // The name field: inset, then the row text.
         RECT field = *name_rect;
-        field.left += 4;
-        field.right -= 4;
-
         if (NetWinSessionData.fields_.mode_ == 0 || NetWinSessionData.fields_.mode_ == 1) {
             if (row + 1 == NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id())) {
                 Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
-                arrow.draw(buffer, arrow.transparent_index(),
+                arrow.draw(this, arrow.transparent_index(),
                            field.right - 0xA,
                            field.top
                                + (field.bottom - arrow.height() - field.top)
@@ -1329,9 +1329,14 @@ void NetWin::draw_player_names() {
             }
         }
 
-        buffer->set_font(find_font(0xE, 1), 0, 0, 0);
-        buffer->set_text_color(get_player_color(row + 1), 0, 1, 1);
-        buffer->set_clip(&field);
+        Buffer::set_font(find_font(0xE, 1), 0, 0, 0);
+        Buffer::set_text_color(get_player_color(row + 1), 0, 1, 1);
+        // The name field: the rectangle again, inset by four.
+        field.left = name_rect->left + 4;
+        field.top = name_rect->top;
+        field.right = name_rect->right - 4;
+        field.bottom = name_rect->bottom;
+        Buffer::set_clip(&field);
 
         StringTemp[0] = 0;
         if (lobby_row->prefix_ == -1) {
@@ -1340,36 +1345,35 @@ void NetWin::draw_player_names() {
             strcat(StringTemp,
                    NetDaemonNet.get_player_name(slot_record->pid_));
         }
-        if (static_cast<uint8_t>(lobby_row->faction_or_color_) != 0xFF) {
+        if (lobby_row->faction_or_color_ != -1) {
             strcat(StringTemp, ": ");
             strcat(StringTemp, " ");
-            strcat(StringTemp,
-                   lobby_row->leader_name_);
-            if (slot_record > NetDaemonNet.process_slots_ + 1) {
-                // Count the static records whose name text matches, and
-                // append the tally when there is more than one.
-                int matches = 0;
-                const char *name = lobby_row->leader_name_;
+            strcat(StringTemp, lobby_row->leader_name_);
+            // Count the earlier rows whose name text matches, and append
+            // the tally when there is one.
+            int matches = 0;
+            if (slot_record > &NetDaemonNet.process_slots_[1]) {
                 const NetWinLobbyRow *scan = &NetWinLobbyRows.rows_[1];
                 for (int seen = row; seen != 0; --seen) {
-                    if (strcmp(name, scan->leader_name_) == 0) {
+                    if (strcmp(scan->leader_name_, lobby_row->leader_name_) == 0) {
                         ++matches;
                     }
                     ++scan;
                 }
                 if (matches != 0) {
-                    char tally[0xA];
+                    char tally[0x50];
                     _itoa(matches, tally, 10);
                     strcat(StringTemp, tally);
                 }
             }
         }
         if (StringTemp != 0) {
-            buffer->write_l(StringTemp, &field, strlen(StringTemp));
+            Buffer::write_l(StringTemp, &field, strlen(StringTemp));
         }
-        buffer->restore_clip();
+        Buffer::restore_clip();
 
-        ::UnionRect(name_rect, row_rect, &field);
+        // 4807B7: the union lands in the text rectangle.
+        ::UnionRect(&field, row_rect, name_rect);
 
         spot_.add(row, 2, row_rect->left, row_rect->top,
                   row_rect->right - row_rect->left,
@@ -1386,13 +1390,12 @@ void NetWin::draw_player_names() {
     }
 
     if (NetDaemonNet.primary_state_.leading_words_[0] == 0) {
-        // Not connected: the left button takes the connect label.
-        unsigned char color =
-            static_cast<uint8_t>(NetWinLobbyRows.rows_[pid_idx].faction_or_color_);
-        const LPSTR label = color != 0
-            ? Labels.strings_ptr[0x1054 / 4]
-            : Labels.strings_ptr[0x1050 / 4];
-        flatButton1_.set_name(StringTable.get(label));
+        // Not connected: the left button's label follows the local row's
+        // ready byte (480 8A9).
+        flatButton1_.set_name(StringTable.get(
+            NetWinLobbyRows.rows_[pid_idx].ready_or_occupied_ != 0
+                ? Labels.strings_ptr[0x1054 / 4]
+                : Labels.strings_ptr[0x1050 / 4]));
         flatButton1_.redraw();
     }
 }
@@ -2714,7 +2717,9 @@ void NetWin::pick_num_players() {
     }
     int x;
     int y;
-    int answer = pick_answer_at(*this, pop_menu, &x, &y);
+    get_mouse_pos(&x, &y);
+    client_to_screen(&x, &y);
+    int answer = pop_menu.exec(x, y, pick_daemon_callback);
     if (answer >= 0) {
         // Native 47E11A..47E132 retains the pre-modal lower bound.
         NetWinSessionOptions.fields_.player_count_ =
@@ -3315,7 +3320,8 @@ do not replace those unspecified bytes with a deterministic zero fill.
 #pragma function(memcpy)
 #endif
 void NetWin::on_button_clicked(int clicked_id) {
-    NetWinConstructedLobbyRow row;
+    NetWinLobbyRow row;
+    row.reset();
     if (clicked_id == -2) {
         field_7614_ = -1;
         return;
@@ -3326,21 +3332,16 @@ void NetWin::on_button_clicked(int clicked_id) {
 
     const int local_slot = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());
     if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
-        uint8_t &ready = NetWinLobbyRows.rows_[local_slot].ready_or_occupied_;
-        const int slot_count = NetDaemonNet.player_count_ + 1;
-        int slot = 1;
-        ready = 1;
-        if (slot_count > 1) {
-            do {
-                if (NetWinLobbyRows.rows_[slot].ready_or_occupied_ == 0) {
-                    break;
-                }
-                ++slot;
-            } while (slot < slot_count);
+        NetWinLobbyRows.rows_[local_slot].ready_or_occupied_ = 1;
+        int slot;
+        for (slot = 1; slot < NetDaemonNet.player_count_ + 1; ++slot) {
+            if (NetWinLobbyRows.rows_[slot].ready_or_occupied_ == 0) {
+                break;
+            }
         }
-        ready = 0;
+        NetWinLobbyRows.rows_[local_slot].ready_or_occupied_ = 0;
 
-        if (slot != slot_count &&
+        if (slot != NetDaemonNet.player_count_ + 1 &&
             X_pop(ScriptPopupFile, "NOTALLREADY",
                                 0) != 0) {
             return;
@@ -3348,24 +3349,18 @@ void NetWin::on_button_clicked(int clicked_id) {
 
         const int transport = NetWinSessionData.fields_.mode_;
         if (transport == 2 || transport == 3) {
-            const NetWinFactionRecord *const records =
-                static_cast<const NetWinFactionRecord *>(faction_records_);
             for (int faction = 1; faction < 8; ++faction) {
-                const uint32_t owner = records[faction].owner_;
-                if (owner != 0) {
-                    const int scan_count = NetDaemonNet.player_count_ + 1;
-                    int scan = 1;
-                    if (scan_count > 1) {
-                        do {
-                            if (NetWinLobbyRows.rows_[scan].faction_or_color_ ==
-                                faction) {
-                                break;
-                            }
-                            ++scan;
-                        } while (scan < scan_count);
+                if (faction_records_[faction].owner_ != 0) {
+                    int scan;
+                    for (scan = 1; scan < NetDaemonNet.player_count_ + 1; ++scan) {
+                        if (NetWinLobbyRows.rows_[scan].faction_or_color_ ==
+                            faction) {
+                            break;
+                        }
                     }
-                    if (scan == scan_count ||
-                        owner != NetWinLobbyRows.rows_[scan].owner_) {
+                    if (scan == NetDaemonNet.player_count_ + 1 ||
+                        faction_records_[faction].owner_ !=
+                            NetWinLobbyRows.rows_[scan].owner_) {
                         X_pop(ScriptPopupFile,
                                             "PASSWORDSNOTVALIDATED", 0);
                         NetWinLobbyLeavePacket packet;
@@ -3382,43 +3377,27 @@ void NetWin::on_button_clicked(int clicked_id) {
         for (int ready_slot = 1; ready_slot < ready_count; ++ready_slot) {
             NetWinLobbyRows.rows_[ready_slot].ready_or_occupied_ = 1;
         }
-
-        struct ButtonFullLobbyPacket {
-            NetWinLobbyPacketHeader header_;
-            NetWinConstructedLobbyRow rows_[7];
-        } packet;
-        static_assert(sizeof(ButtonFullLobbyPacket) == 0xA74,
-                      "button full lobby message size");
-        static_assert(offsetof(ButtonFullLobbyPacket, rows_) == 0x10,
-                      "button full lobby payload offset");
+        // 47B5B6..47B639: send_all_player_packets(-1)'s body.
+        NetWinLobbyFullPacket packet;
+        NetWinLobbyRow *row_out = packet.rows_;
+        for (int count = 7; count != 0; --count) {
+            row_out->reset();
+            ++row_out;
+        }
         if (NetDaemonNet.primary_state_.leading_words_[0] == 0) {
             return;
         }
         packet.header_.set_opcode(0x0F04);
         packet.header_.slot_ = -1;
         packet.header_.field_8_ = 0;
-        memcpy(static_cast<void *>(packet.rows_), &NetWinLobbyRows.rows_[1], sizeof(packet.rows_));
+        memcpy(packet.rows_, &NetWinLobbyRows.rows_[1], sizeof(packet.rows_));
         packet.header_.opcode_ |= 0x4000;
         NetDaemonNet.Net::send(&packet, sizeof(packet), 0, 1);
     } else {
-        memcpy(&row.payload_, &NetWinLobbyRows.rows_[local_slot], sizeof(row.payload_));
-        row.payload_.ready_or_occupied_ = row.payload_.ready_or_occupied_ == 0 ? 1 : 0;
-        struct ButtonSingleLobbyPacket {
-            NetWinLobbyPacketHeader header_;
-            NetWinConstructedLobbyRow row_;
-        } packet;
-        static_assert(sizeof(ButtonSingleLobbyPacket) == 0x18C,
-                      "button single lobby message size");
-        static_assert(offsetof(ButtonSingleLobbyPacket, row_) == 0x10,
-                      "button single lobby payload offset");
-        if (local_slot >= 1) {
-            packet.header_.set_opcode(0x2F04);
-            packet.header_.slot_ = local_slot;
-            packet.header_.field_8_ = 0;
-            memcpy(static_cast<void *>(&packet.row_), &row.payload_, sizeof(packet.row_));
-            NetDaemonNet.Net::send(&packet, sizeof(packet),
-                                   NetDaemonNet.host_player_id(), 1);
-        }
+        memcpy(&row, &NetWinLobbyRows.rows_[local_slot], sizeof(row));
+        row.ready_or_occupied_ = row.ready_or_occupied_ == 0;
+        // 47B6AF: sub_47b1d0 inlined, its row reset and null test included.
+        sub_47b1d0(local_slot, &row);
     }
 }
 
