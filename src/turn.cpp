@@ -1842,29 +1842,6 @@ void __cdecl random_events(int mode) {
 
 }
 
-static int alien_random_x() {
-    if (MapLongitudeBounds <= 1) return 0;
-    return rand() % MapLongitudeBounds;
-}
-
-static int alien_random_y() {
-    if (MapLatitudeBounds <= 1) return 0;
-    return rand() % MapLatitudeBounds;
-}
-
-static int alien_normalize_x(int x) {
-    if ((MapIsFlat & 1) == 0) {
-        if (x < 0) x += MapLongitudeBounds;
-        else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
-    }
-    return x;
-}
-
-static int alien_signed_wrap(uint32_t value) {
-    if (value <= 0x7fffffffu) return static_cast<int>(value);
-    return -1 - static_cast<int>(~value);
-}
-
 static bool alien_local_vehicle_visible(int vehicle_id, int faction) {
     const Veh &vehicle = Vehs[vehicle_id];
     if (vehicle.faction_id == faction && (vehicle.flags & 0x440) != 0x440) {
@@ -1882,167 +1859,143 @@ static bool alien_tile_vehicle_visible(int vehicle_id, int faction) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:99d6e72bcd5ae3be3566222736528cb0dc57935c:src/unrecovered/00522180.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json; preserve original extents and historical seed lessons. Ordinary owned literals have pinned content provenance, not exact original data-allocation claims."], "reason": "Recover native-life spread and spawning through real Map/PlayerData/Base/Veh/UI owners. Preserve native-life versus difficulty operands and the complementary signed JL/JGE pair with one saved wrapped limit; the original reproduction tail is unreachable by that pair. Do not invent guards or entry edges. No matching or game acceptance claim."}
 // TRIED: near-literal transcription of Ghidra (reliable here, no unaff_* registers, all callees are free functions except MapWin::focus and NetMsg::pop, whose `this` (g_007d3c3c, g_00805338) came from raw disasm since Ghidra drops it); the CONCAT31(...)&0xffffffdf idiom simplified to (uVar13|uVar14)& 0xffffffdf since uVar14's low byte is always 0. Diverges at insn #3 (xor vs mov), likely register-zeroing choice.
 void __cdecl alien_fauna() {
-    bool final_spore_launcher_spawned = false;
-    int spread_rounds = MapArea /
-        (((GameDataStateStorage.fields_.turn_current_num_ + ((GameDataStateStorage.fields_.turn_current_num_ >> 31) & 3)) >> 2) + 0x20);
+    int very_early = 0;          // [ebp-0x20], zeroed in the prologue
+    int spore_launcher = 0;      // [ebp-0x34], zeroed in the prologue
+    int x;
+    int y;
+    // Function-scope neighbour coordinates: written by the spread scan and the
+    // radius scan; the goody spawn below redraws whatever they last held.
+    int x2;
+    int y2;
+    int region;   // live from the transport search into the population tail
+    int base_id;  // shared by the spread notice and the sampler
 
-    for (int attempt = 0; attempt < spread_rounds; ++attempt) {
-        const int raw_x = alien_random_x();
-        const int y = alien_random_y();
-        const int x = ((y & 1) - (raw_x & 1)) + raw_x;
-        if (y < 0 || y >= MapLatitudeBounds || x < 0 || x >= MapLongitudeBounds) {
+    // Fungus/kelp spread.
+    for (int i = 0; i < MapArea / (GameDataStateStorage.fields_.turn_current_num_ / 4 + 32); ++i) {
+        x = bounded_crt_random(MapLongitudeBounds);
+        y = bounded_crt_random(MapLatitudeBounds);
+        x = (y & 1) - (x & 1) + x;
+        if (!on_map(x, y)) continue;
+
+        const BOOL ocean = is_ocean(x, y);
+        const uint32_t bit = map_loc(x, y)->bit;
+        if (ocean) {
+            if (!(bit & BIT_FARM)) continue;
+        } else if (!(bit & BIT_FOREST)) {
             continue;
         }
 
-        Map &origin = *map_loc(x, y);
-        const bool land = (origin.climate & 0xe0) < 0x60;
-        const uint32_t spread_bit = land ? 0x8000u : 0x200000u;
-        if ((origin.bit & spread_bit) == 0) continue;
-
-        int best_x = -1;
-        int best_y = -1;
         int best_score = 0;
-        for (int direction = 0; direction < 8; ++direction) {
-            const int candidate_x = alien_normalize_x(x + VehMoveDeltaX[direction]);
-            const int candidate_y = y + VehMoveDeltaY[direction];
-            if (candidate_y < 0 || candidate_y >= MapLatitudeBounds ||
-                candidate_x < 0 || candidate_x >= MapLongitudeBounds) {
-                continue;
-            }
-            const Map &candidate = *map_loc(candidate_x, candidate_y);
-            const uint8_t climate = candidate.climate;
-            const int altitude = climate >> 5;
-            if (((climate & 0xe0) < 0x60) != land || altitude <= 1 ||
-                (altitude >= 5 && (climate & 0x18) == 0)) {
-                continue;
-            }
-            if ((candidate.bit2 & 0x80000002u) == 2 ||
-                (candidate.bit2 & 0x80000040u) == 0x40) {
-                continue;
-            }
-            const int score = (3 - ((climate >> 3) & 3)) * 4 -
-                              (candidate.val3 >> 6);
-            if ((candidate.val3 & 0xc0) <= 0x40 &&
-                (candidate.bit & 0x208051u) == 0 && score > best_score) {
-                best_x = candidate_x;
-                best_y = candidate_y;
+        int best_x = -1;
+        int best_y;  // original leaves this uninitialised
+        for (int dir = 0; dir < 8; ++dir) {
+            x2 = wrap_map_x(x + VehMoveDeltaX[dir]);
+            y2 = y + VehMoveDeltaY[dir];
+            if (!on_map(x2, y2)) continue;
+            Map *cand = map_loc(x2, y2);
+            const int climate = cand->climate;
+            if (((climate & 0xE0) < ALT_BIT_SHORE_LINE) != ocean) continue;
+            const int alt = climate >> 5;
+            if (alt < 2) continue;
+            if (alt > 4 && !(climate & (RAINFALL_RAINY | RAINFALL_MOIST))) continue;
+            if ((cand->bit2 & 0x80000002) == 2) continue;
+            if ((cand->bit2 & 0x80000040) == 0x40) continue;
+            const int score = (3 - ((climate >> 3) & 3)) * 4 - (cand->val3 >> 6);
+            if ((cand->val3 & 0xC0) > 0x40) continue;
+            if (cand->bit & (BIT_FOREST | BIT_FARM | BIT_SOLAR_TIDAL | BIT_MINE |
+                             BIT_BASE_IN_TILE)) continue;
+            if (score > best_score) {
                 best_score = score;
+                best_x = x2;
+                best_y = y2;
             }
         }
+        if (best_x < 0) continue;
 
-        if (best_x >= 0) {
-            Map &spread = *map_loc(best_x, best_y);
-            if ((spread.bit & spread_bit) == 0) {
-                spread.bit = (spread.bit | spread_bit) & ~0x20u;
-                const int local_faction = ConsoleGlobal.faction_id_;
-                for (int faction = 1; faction < MaxPlayerNum; ++faction) {
-                    const bool omniscient = (PlayersData[faction].flags & 0x200) != 0;
-                    const bool origin_visible =
-                        (origin.visibility & (1u << faction)) != 0;
-                    if (!omniscient && !origin_visible) continue;
-                    if ((origin.bit_visible[faction - 1] & spread_bit) == 0) continue;
-                    spread.bit_visible[faction - 1] =
-                        (spread.bit_visible[faction - 1] | spread_bit) & ~0x20u;
-                    if (faction != local_faction) continue;
+        Map *spread = map_loc(best_x, best_y);
+        const uint32_t spread_bit = ocean ? BIT_FARM : BIT_FOREST;
+        if (spread->bit & spread_bit) continue;
+        spread->bit = (spread->bit | spread_bit) & ~BIT_FUNGUS;
 
-                    const int base_id = base_find(x, y, -1, -1, -1,
-                                                  local_faction);
-                    if (base_id < 0 ||
-                        Bases[base_id].faction_id_current != local_faction ||
-                        (BaseFindDist > 3 &&
-                         whose_territory(local_faction, x, y, 0, 0) != local_faction)) {
-                        draw_tiles(x, y, 2);
-                    } else {
-                        if (MapWinTable[0]->focus(x, y) == 0) draw_tiles(x, y, 2);
-                        parse_says(0, Bases[base_id].name_string, -1, -1);
-                        if (land) POP2("KELPGROWS", "kelp_sm.pcx", -1);
-                        else POP2("FORESTGROWS", "forest_sm.pcx", -1);
-                    }
-                }
+        for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+            if (!(PlayersData[faction].flags & PFLAG_MAP_REVEALED) &&
+                !(map_loc(x, y)->visibility & (1 << faction))) continue;
+            if (!(map_loc(x, y)->bit_visible[faction - 1] & spread_bit)) continue;
+            spread->bit_visible[faction - 1] =
+                (spread->bit_visible[faction - 1] | spread_bit) & ~BIT_FUNGUS;
+            if (faction != ConsoleGlobal.faction_id_) continue;
+
+            base_id = base_find(x, y, -1, -1, -1, ConsoleGlobal.faction_id_);
+            if (base_id >= 0 &&
+                Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_ &&
+                (BaseFindDist <= 3 ||
+                 whose_territory(ConsoleGlobal.faction_id_, x, y, 0, 0) ==
+                     ConsoleGlobal.faction_id_)) {
+                if (!MapWinTable[0]->focus(x, y)) draw_tiles(x, y, 2);
+                parse_says(0, Bases[base_id].name_string, -1, -1);
+                if (ocean) POP2("KELPGROWS", "kelp_sm.pcx", -1);
+                else POP2("FORESTGROWS", "forgr_sm.pcx", -1);
+            } else {
+                draw_tiles(x, y, 2);
             }
         }
     }
 
-    if ((GameDataStateStorage.fields_.game_rules_ & 0x200000u) != 0) return;
-    const uint32_t early_limit_bits =
-        ((3u - MapNativeLifeForms) * 10u -
-         static_cast<uint32_t>(GameDataStateStorage.fields_.diff_level_current_)) * 2u;
-    const int early_limit = alien_signed_wrap(early_limit_bits);
-    const bool very_early = GameDataStateStorage.fields_.turn_current_num_ < early_limit;
-    if (GameDataStateStorage.fields_.secret_project_.voice_of_planet() != -1 || GameDataStateStorage.fields_.vehicle_current_count_ > 0x6ff) return;
+    if (GameDataStateStorage.fields_.game_rules_ & RULES_SCN_NO_NATIVE_LIFE) return;
+    if (GameDataStateStorage.fields_.turn_current_num_ <
+        ((3 - MapNativeLifeForms) * 10 - GameDataStateStorage.fields_.diff_level_current_) * 2) {
+        very_early = 1;
+    }
+    if (GameDataStateStorage.fields_.secret_project_.voice_of_planet() != -1) return;
+    if (GameDataStateStorage.fields_.vehicle_current_count_ >= 0x700) return;
 
-    const uint32_t transport_period_bits =
-        (5u - MapNativeLifeForms) * 2u;
-    const int transport_period = alien_signed_wrap(transport_period_bits);
-    if (GameDataStateStorage.fields_.turn_current_num_ % transport_period == 0) {
-        int x = 0;
-        int y = 0;
-        int region = 0;
+    // Sea transport (Isle of the Deep / Sealurk) drop.
+    if (GameDataStateStorage.fields_.turn_current_num_ % ((5 - MapNativeLifeForms) * 2) == 0) {
         int tries = 0;
-        bool found = false;
-        // The native counter advances after each location is read and jumps
-        // before testing location 1000. It consumes 1000 samples but can
-        // accept only one of the first 999.
-        for (;;) {
-            x = alien_random_x();
-            y = alien_random_y();
-            const int odd_x = ((y & 1) - (x & 1)) + x;
-            Map &tile = *map_loc(odd_x, y);
-            region = tile.region;
-            const int altitude = tile.climate & 0xe0;
-            ++tries;
-            if (tries >= 1000) break;
-            if ((tile.bit & 0x20) != 0 && altitude >= 0x40 &&
-                altitude <= 0x5f && (tile.bit & 3) == 0 &&
-                (tile.val2 & 0x0f) >= 8 &&
-                (region & 0x3f) != 0x3f && (region & 0x3f) != 0 &&
-                Continents[region].tile_count >= 0x32) {
-                x = odd_x;
-                found = true;
-                break;
-            }
-        }
+        // The counter advances before the tests, so the 1000th sample is
+        // never tested. Accept: fungus land, or an unoccupied ocean tile in a
+        // valid region of at least 50 tiles.
+        do {
+            x = bounded_crt_random(MapLongitudeBounds);
+            y = bounded_crt_random(MapLatitudeBounds);
+            x = (y & 1) - (x & 1) + x;  // no on_map check in the original
+            region = map_loc(x, y)->region;
+            if (++tries >= 1000) break;
+        } while (!(((map_loc(x, y)->bit & BIT_FUNGUS) &&
+                    (map_loc(x, y)->climate & 0xE0) >= ALT_BIT_OCEAN_SHELF) ||
+                   (is_ocean(x, y) && anything_at(x, y) < 0 && !bad_reg(region) &&
+                    Continents[region].tile_count >= 50)));
 
-        if (found) {
-            const uint32_t cargo_denominator_bits =
-                ((8u - MapNativeLifeForms) * 4u -
-                 static_cast<uint32_t>(GameDataStateStorage.fields_.diff_level_current_)) * 4u;
-            const int cargo_denominator =
-                alien_signed_wrap(cargo_denominator_bits);
-            const uint32_t cargo_numerator_bits =
-                (((GameDataStateStorage.fields_.game_state_ & 0x100000u) != 0) ? 2u : 1u) *
-                static_cast<uint32_t>(GameDataStateStorage.fields_.turn_current_num_);
-            const int cargo_numerator = alien_signed_wrap(cargo_numerator_bits);
-            const int cargo_quotient = cargo_numerator / cargo_denominator;
-            int cargo_count = alien_signed_wrap(
-                static_cast<uint32_t>(cargo_quotient) +
-                MapNativeLifeForms + 1u);
-            if (very_early) cargo_count = 1;
-            if (!ExpansionEnabled || (timeGetTime() & 1) == 0) {
-                const int sea_unit = veh_init(9, 0, x, y);
-                if (sea_unit >= 0) {
-                    const int cargo = veh_cargo(sea_unit);
-                    if (cargo <= cargo_count) cargo_count = cargo;
-                    while (cargo_count > 0) {
-                        const int prototype = (rand() % 5 == 0 && ExpansionEnabled)
-                            ? 15 : 8;
-                        // The native call is sleep(veh_init(...)); it neither
-                        // promotes these mindworms nor checks the returned id.
-                        sleep(veh_init(prototype, 0, x, y));
-                        --cargo_count;
-                    }
-                    veh_promote(sea_unit);
-                    if (GameDataStateStorage.fields_.game_tech_achieved_[TECH_CENTPSI] != 0 ||
-                        GameDataStateStorage.fields_.game_tech_achieved_[TECH_QUANTUM] != 0) {
+        if (tries < 1000) {
+            int cargo = ((GameDataStateStorage.fields_.game_state_ & STATE_PERIHELION_ACTIVE) ? 2 : 1) *
+                        GameDataStateStorage.fields_.turn_current_num_ /
+                        (((8 - MapNativeLifeForms) * 4 -
+                          GameDataStateStorage.fields_.diff_level_current_) * 4) +
+                        MapNativeLifeForms + 1;
+            if (very_early) cargo = 1;
+
+            // The image duplicates the tech test in both arms (only the
+            // veh_init(10) call is tail-merged).
+            if (ExpansionEnabled && (timeGetTime() & 1)) {
+                const int veh_id = veh_init(14, 0, x, y);
+                if (veh_id >= 0) {
+                    veh_promote(veh_id);
+                    if (GameDataStateStorage.fields_.game_tech_achieved_[TECH_CENTPSI] ||
+                        GameDataStateStorage.fields_.game_tech_achieved_[TECH_QUANTUM]) {
                         veh_init(10, 0, x, y);
                     }
                 }
             } else {
-                const int sea_unit = veh_init(14, 0, x, y);
-                if (sea_unit >= 0) {
-                    veh_promote(sea_unit);
-                    if (GameDataStateStorage.fields_.game_tech_achieved_[TECH_CENTPSI] != 0 ||
-                        GameDataStateStorage.fields_.game_tech_achieved_[TECH_QUANTUM] != 0) {
+                const int veh_id = veh_init(9, 0, x, y);
+                if (veh_id >= 0) {
+                    // min(): veh_cargo is evaluated twice when it is the smaller.
+                    cargo = cargo < veh_cargo(veh_id) ? cargo : veh_cargo(veh_id);
+                    for (; cargo > 0; --cargo) {
+                        sleep(veh_init((rand() % 5 == 0 && ExpansionEnabled) ? 15 : 8, 0, x, y));
+                    }
+                    veh_promote(veh_id);
+                    if (GameDataStateStorage.fields_.game_tech_achieved_[TECH_CENTPSI] ||
+                        GameDataStateStorage.fields_.game_tech_achieved_[TECH_QUANTUM]) {
                         veh_init(10, 0, x, y);
                     }
                 }
@@ -2050,155 +2003,109 @@ void __cdecl alien_fauna() {
         }
     }
 
-    int local_life_attempt = 0;
-    int last_x = 0;
-    int last_y = 0;
-    int last_region = 0;
-    int last_base = -1;
-    // Original (0x522BE9): the last spread-scan neighbour persists across
-    // samples (never initialised) and is what the goody spawn redraws.
-    int nx;
-    int ny;
-    for (;;) {
-        int x = alien_random_x();
-        const int y = alien_random_y();
-        x = ((y & 1) - (x & 1)) + x;
-        last_x = x;
-        last_y = y;
-        if (x >= 0 && x < MapLongitudeBounds && y >= 0 && y < MapLatitudeBounds) {
-            Map &tile = *map_loc(x, y);
-            const int altitude = tile.climate & 0xe0;
-            if (altitude >= 0x60 && (tile.bit & 0x20) != 0 &&
-                (altitude & 0xe0) >= 0x40) {
-                last_region = tile.region;
-                if ((last_region & 0x3f) != 0x3f && (last_region & 0x3f) != 0 &&
-                    ((tile.bit & 1) == 0 || (tile.val2 & 0x0f) >= 8)) {
-                    last_base = base_find(x, y, -1, last_region, -1, -1);
-                    if ((tile.bit & 2) != 0) {
-                        const int faction = tile.val2 & 0x0f;
-                        if (faction < MaxPlayerNum) {
-                            if (faction != 0 &&
-                                (last_base < 0 || BaseFindDist > 2)) {
-                                for (int direction = 0; direction < 16; ++direction) {
-                                    nx = alien_normalize_x(
-                                        x + RadiusOffsetX[9 + direction]);
-                                    ny = y + RadiusOffsetY[9 + direction];
-                                    if (nx < 0 || nx >= MapLongitudeBounds ||
-                                        ny < 0 || ny >= MapLatitudeBounds) continue;
-                                    Map &neighbor = *map_loc(nx, ny);
-                                    if ((neighbor.climate & 0xe0) < 0x60 ||
-                                        (PlayersData[faction].flags & 0x200) != 0 ||
-                                        (neighbor.visibility & (1u << faction)) != 0 ||
-                                        ((neighbor.bit & 3) != 0 &&
-                                         (neighbor.val2 & 0x0f) < MaxPlayerNum) ||
-                                        zoc_any(nx, ny, 0) != 0) continue;
-                                    const int prototype = (rand() % 5 == 0 && ExpansionEnabled)
-                                        ? 15 : 8;
-                                    const int spawned = veh_init(prototype, 0, nx, ny);
-                                    if (spawned >= 0 &&
-                                        alien_tile_vehicle_visible(spawned,
-                                                                   ConsoleGlobal.faction_id_)) {
-                                        draw_tile(nx, ny, 2);
-                                    }
-                                    break;
-                                }
-                            }
-                            // The native faction nibble is 0..7 here, so its
-                            // signed jump is always taken; retain that skip of
-                            // the following goody branch.
-                            goto alien_sample_complete;
-                        }
-                    }
+    // Native-life sampler. A do/while: no entry test on the limit.
+    int attempt = 0;
+    do {
+        x = bounded_crt_random(MapLongitudeBounds);
+        y = bounded_crt_random(MapLatitudeBounds);
+        x = (y & 1) - (x & 1) + x;  // no on_map check in the original
+        Map *tile = map_loc(x, y);
+        if ((tile->climate & 0xE0) < ALT_BIT_SHORE_LINE) continue;
+        if (!(tile->bit & BIT_FUNGUS)) continue;
+        if ((tile->climate & 0xE0) < ALT_BIT_OCEAN_SHELF) continue;
+        region = tile->region;
+        if (bad_reg(region)) continue;
+        if (base_who(x, y) >= 0) continue;
 
-                    if (BaseFindDist > 1 && BaseFindDist < 6 &&
-                        (tile.bit & 0x20) != 0 && altitude >= 0x40 &&
-                        goody_at(x, y) == 0) {
-                        const int prototype = (rand() % 5 == 0 && ExpansionEnabled)
-                            ? 15 : 8;
-                        const int spawned = veh_init(prototype, 0, x, y);
-                        if (spawned >= 0 &&
-                            alien_tile_vehicle_visible(spawned,
-                                                       ConsoleGlobal.faction_id_)) {
-                            draw_tile(nx, ny, 2);
-                        }
-                    }
+        base_id = base_find(x, y, -1, region, -1, -1);
+        const int owner = veh_who(x, y);
+        if (owner > 0 && (base_id < 0 || BaseFindDist > 2)) {
+            // Spawn beside an unaware faction's unit, out of its sight.
+            for (int i = 0; i < 16; ++i) {
+                x2 = wrap_map_x(x + RadiusOffsetX[9 + i]);
+                y2 = y + RadiusOffsetY[9 + i];
+                if (!on_map(x2, y2)) continue;
+                if (is_ocean(x2, y2)) continue;
+                if (PlayersData[owner].flags & PFLAG_MAP_REVEALED) continue;
+                if (map_loc(x2, y2)->visibility & (1 << owner)) continue;
+                if (anything_at(x2, y2) >= 0) continue;
+                if (zoc_any(x2, y2, 0)) continue;
+                const int veh_id = veh_init(
+                    (rand() % 5 == 0 && ExpansionEnabled) ? 15 : 8, 0, x2, y2);
+                if (veh_id >= 0 &&
+                    alien_tile_vehicle_visible(veh_id, ConsoleGlobal.faction_id_)) {
+                    draw_tile(x2, y2, 2);
                 }
+                break;
             }
         }
+        if (owner >= 0) continue;
 
-alien_sample_complete:
-        ++local_life_attempt;
-        const uint32_t native_limit_bits = MapNativeLifeForms * 2u + 2u;
-        const int native_limit = alien_signed_wrap(native_limit_bits);
-        // Native JL returns to the sampler when count is below the limit.
-        if (local_life_attempt < native_limit) continue;
-        // The native JGE immediately after JL uses the same saved limit and
-        // exits before the following population block. Preserve that block's
-        // proven-unreachable placement without inventing a path into it.
-        if (local_life_attempt >= native_limit) return;
-        {
-                int spawn_count;
-                if (very_early) {
-                    spawn_count = 1;
-                } else {
-                    if (GameDataStateStorage.fields_.game_tech_achieved_[TECH_CENTPSI] != 0 ||
-                        GameDataStateStorage.fields_.game_tech_achieved_[TECH_QUANTUM] != 0) {
-                        veh_init(10, 0, last_x, last_y);
-                    }
-                    const int population = last_base >= 0
-                        ? Bases[last_base].population_size : 0;
-                    const uint32_t spawn_count_bits =
-                        static_cast<uint32_t>(population) *
-                        (((GameDataStateStorage.fields_.game_state_ & 0x100000u) != 0) + 1u) *
-                        (MapNativeLifeForms + 1u) + 3u;
-                    spawn_count = alien_signed_wrap(spawn_count_bits);
-                    spawn_count = (spawn_count + ((spawn_count >> 31) & 3)) >> 2;
-                }
-
-                int direction = 0x15;
-                bool base_notice_sent = false;
-                for (int count = 0; count < spawn_count; ++count) {
-                    int nx;
-                    int ny;
-                    Map *neighbor;
-                    do {
-                        do {
-                            direction = (direction + 1) % 0x15;
-                            nx = alien_normalize_x(x + RadiusOffsetX[direction]);
-                            ny = y + RadiusOffsetY[direction];
-                        } while (nx < 0 || nx >= MapLongitudeBounds ||
-                                 ny < 0 || ny >= MapLatitudeBounds);
-                        neighbor = map_loc(nx, ny);
-                    } while ((neighbor->bit & 0x20) == 0 ||
-                             (neighbor->climate & 0xe0) < 0x40 ||
-                             neighbor->region != last_region ||
-                             ((neighbor->bit & 3) != 0 &&
-                              (neighbor->val2 & 0x0f) < MaxPlayerNum &&
-                              (neighbor->val2 & 0x0f) != 0));
-
-                    const int prototype = (rand() % 5 == 0 && ExpansionEnabled)
-                        ? 15 : 8;
-                    const int spawned = veh_init(prototype, 0, nx, ny);
-                    if (prototype == 15) final_spore_launcher_spawned = true;
-                    const bool visible = alien_tile_vehicle_visible(
-                        spawned, ConsoleGlobal.faction_id_);
-                    if (visible) draw_tile(nx, ny, 2);
-
-                    if (!base_notice_sent && last_base >= 0 &&
-                        Bases[last_base].faction_id_current ==
-                            ConsoleGlobal.faction_id_ &&
-                        (((PlayersData[ConsoleGlobal.faction_id_].flags & 0x200) != 0) ||
-                         ((map_loc(nx, ny)->visibility &
-                           (1u << ConsoleGlobal.faction_id_)) != 0)) && visible) {
-                        base_notice_sent = true;
-                        parse_says(0, Bases[last_base].name_string, -1, -1);
-                        NetMsgPrimary.pop("XMINDWORMS", -0x1388, 0,
-                            final_spore_launcher_spawned ? "sporlnch_sm.pcx" :
-                                                          "mindworm_sm.pcx");
-                    }
-                }
+        if (BaseFindDist > 1 && BaseFindDist < 6 &&
+            (map_loc(x, y)->bit & BIT_FUNGUS) &&
+            (map_loc(x, y)->climate & 0xE0) >= ALT_BIT_OCEAN_SHELF &&
+            !goody_at(x, y)) {
+            const int veh_id = veh_init(
+                (rand() % 5 == 0 && ExpansionEnabled) ? 15 : 8, 0, x, y);
+            // Original bug: redraws the stale (x2, y2), not the spawn tile.
+            if (veh_id >= 0 &&
+                alien_tile_vehicle_visible(veh_id, ConsoleGlobal.faction_id_)) {
+                draw_tile(x2, y2, 2);
             }
-        return;
+        }
+    } while (++attempt < MapNativeLifeForms * 2 + 2);
+
+    // Unreachable: the loop only exits with attempt at the limit.
+    if (attempt >= MapNativeLifeForms * 2 + 2) return;
+
+    int count;
+    if (!very_early) {
+        if (GameDataStateStorage.fields_.game_tech_achieved_[TECH_CENTPSI] ||
+            GameDataStateStorage.fields_.game_tech_achieved_[TECH_QUANTUM]) {
+            veh_init(10, 0, x, y);
+        }
+        // Unguarded Bases[base_id] read.
+        count = (Bases[base_id].population_size *
+                 ((GameDataStateStorage.fields_.game_state_ & STATE_PERIHELION_ACTIVE) ? 2 : 1) *
+                 (MapNativeLifeForms + 1) + 3) / 4;
+    } else {
+        count = 1;
+    }
+
+    int direction = 21;
+    int notice_sent = 0;
+    for (int n = 0; n < count; ++n) {
+        do {
+            direction = (direction + 1) % 21;
+            x2 = wrap_map_x(x + RadiusOffsetX[direction]);
+            y2 = y + RadiusOffsetY[direction];
+        } while (!on_map(x2, y2) ||
+                 !(map_loc(x2, y2)->bit & BIT_FUNGUS) ||
+                 (map_loc(x2, y2)->climate & 0xE0) < ALT_BIT_OCEAN_SHELF ||
+                 map_loc(x2, y2)->region != region ||
+                 anything_at(x2, y2) > 0);
+
+        int veh_id;
+        if (rand() % 5 == 0 && ExpansionEnabled) {
+            veh_id = veh_init(15, 0, x2, y2);
+            spore_launcher = 1;
+        } else {
+            veh_id = veh_init(8, 0, x2, y2);
+        }
+        // No veh_id < 0 check here in the original.
+        if (alien_tile_vehicle_visible(veh_id, ConsoleGlobal.faction_id_)) {
+            draw_tile(x2, y2, 2);
+        }
+        if (!notice_sent &&
+            Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_ &&
+            ((PlayersData[ConsoleGlobal.faction_id_].flags & PFLAG_MAP_REVEALED) ||
+             (map_loc(x2, y2)->visibility & (1 << ConsoleGlobal.faction_id_))) &&
+            alien_tile_vehicle_visible(veh_id, ConsoleGlobal.faction_id_)) {
+            notice_sent = 1;
+            parse_says(0, Bases[base_id].name_string, -1, -1);
+            NetMsgPrimary.pop("XMINDWORMS", -5000, 0,
+                              spore_launcher ? "sporlnch_sm.pcx" : "mindworm_sm.pcx");
+        }
     }
 }
 
@@ -3138,362 +3045,316 @@ void parse_player_identity(int faction_id) {
 int __cdecl end_of_game(int check_victory) {
     char year_text[80];
     int score_items[9];
-    int winner_score;
-    unsigned int winner = 0xFFFFFFFFu;
-    unsigned int selected_faction = 0xFFFFFFFFu;
-    int current_reason;
-    bool show_ending_interlude = false;
+    int score;
+    int selected_faction = -1;
+    // stand-in: the image calls the out-of-line has_fac COMDAT (0x00421670)
+    // here; the header inline would otherwise be expanded.
+    BOOL (__cdecl *const has_facility)(int, int, int) = has_fac;
 
     if ((GameDataStateStorage.fields_.game_state_ & EndgameRecorded) != 0 &&
         (GameDataStateStorage.fields_.game_state_ & EndgamePresented) != 0) {
         return 0;
     }
 
-    if ((GameDataStateStorage.fields_.game_state_ & EndgameRecorded) == 0) {
-        if (check_victory != 0) {
-            if (static_cast<int>(ScenarioSave.ending_mission_year) <=
-                static_cast<int>(GameDataStateStorage.fields_.mission_year_current_)) {
-                GameDataStateStorage.fields_.game_state_ |= EndgameRecorded;
-                EndgameExitReason = EndgameReason8;
-            }
-
-            current_reason = EndgameExitReason;
-            for (int faction_id = 1; faction_id < 8; ++faction_id) {
-                const unsigned int faction_bit = 1u << (faction_id & 0x1F);
-                if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) &
-                     faction_bit) == 0) {
-                    continue;
-                }
-
-                Player &player = Players[faction_id];
-                PlayerData &data = PlayersData[faction_id];
-                int generator_count = 0;
-                if ((player.rule_flags & RFLAG_ALIEN) != 0) {
-                    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
-                        const Base &base = Bases[base_id];
-                        if (static_cast<unsigned char>(base.faction_id_current) ==
-                                faction_id &&
-                            has_fac(0x28, base_id, 0) != 0 &&
-                            Rules.size_base_subspace_gen <=
-                                static_cast<int>(base.population_size)) {
-                            ++generator_count;
-                        }
-                    }
-                }
-                if (Rules.subspace_generators_needed <=
-                    generator_count) {
-                    data.flags |= PlayerGeneratorWin;
-                    if (faction_id == ConsoleGlobal.faction_id_) {
-                        current_reason = EndgameReason16;
-                        EndgameExitReason = current_reason;
-                    } else if ((data.diplo_treaties[
-                                    ConsoleGlobal.faction_id_] & 1u) == 0 ||
-                               (GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_COOPERATIVE) == 0) {
-                        if (current_reason != EndgameReason16 &&
-                            current_reason != EndgameReason17) {
-                            current_reason = EndgameReason18;
-                            EndgameExitReason = current_reason;
-                        }
-                    } else if (current_reason != EndgameReason16) {
-                        current_reason = EndgameReason17;
-                        EndgameExitReason = current_reason;
-                    }
-                    GameDataStateStorage.fields_.game_state_ |= EndgameRecorded;
-                    if (selected_faction == 0xFFFFFFFFu ||
-                        faction_id == ConsoleGlobal.faction_id_) {
-                        selected_faction = faction_id;
-                    }
-                    GameDataStateStorage.fields_.net_turn_flags_ |= 0x80u;
-                }
-
-                if (data.corner_market_turn < 1 ||
-                    data.corner_market_turn != GameDataStateStorage.fields_.turn_current_num_ ||
-                    data.corner_market_active < 1) {
-                    if (((faction_bit & static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) !=
-                         0 || (GameDataStateStorage.fields_.game_rules_ & RULES_SCN_VICT_SOLO_MISSION) == 0) &&
-                        ScenarioSave.objective_req_victory > 0 &&
-                        num_objectives(faction_id,
-                            GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_COOPERATIVE) >=
-                            ScenarioSave.objective_req_victory) {
-                        GameDataStateStorage.fields_.game_state_ |= EndgameRecorded;
-                        EndgameExitReason = EndgameReason9;
-                        current_reason = EndgameReason9;
-                        if (selected_faction == 0xFFFFFFFFu ||
-                            faction_id == ConsoleGlobal.faction_id_) {
-                            selected_faction = faction_id;
-                        }
-                    }
-                } else {
-                    const bool is_current_faction =
-                        faction_id == ConsoleGlobal.faction_id_;
-                    data.flags |= PlayerConquestWin;
-                    if (is_current_faction) {
-                        current_reason = EndgameReason12;
-                        EndgameExitReason = current_reason;
-                    } else if ((data.diplo_treaties[
-                                    ConsoleGlobal.faction_id_] & 1u) == 0 ||
-                               (GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_COOPERATIVE) == 0) {
-                        if (current_reason != EndgameReason12 &&
-                            current_reason != EndgameReason13) {
-                            current_reason = EndgameReason14;
-                            EndgameExitReason = current_reason;
-                        }
-                    } else if (current_reason != EndgameReason12) {
-                        current_reason = EndgameReason13;
-                        EndgameExitReason = current_reason;
-                    }
-                    GameDataStateStorage.fields_.game_state_ |= EndgameRecorded | STATE_VICTORY_ECONOMIC;
-                    selected_faction = faction_id;
-                    if (faction_id == ConsoleGlobal.faction_id_) break;
-                }
-            }
+    if ((GameDataStateStorage.fields_.game_state_ & EndgameRecorded) == 0 &&
+        check_victory != 0) {
+        if (static_cast<int>(GameDataStateStorage.fields_.mission_year_current_) >=
+            static_cast<int>(ScenarioSave.ending_mission_year)) {
+            GameDataStateStorage.fields_.game_state_ |= EndgameRecorded;
+            EndgameExitReason = EndgameReason8;
         }
-        if ((GameDataStateStorage.fields_.game_state_ & EndgameRecorded) == 0) {
-            // The retained body handles the retirement warning here, before
-            // returning for the ordinary no-result path. The scenario warning
-            // has a different string pair and also fires ten years early.
-            if (check_victory != 0 &&
-                (GameDataStateStorage.fields_.game_state_ & STATE_IS_SCENARIO) == 0 &&
-                GameDataStateStorage.fields_.mission_year_current_ == ScenarioSave.ending_mission_year - 20) {
-                parse_num(0, static_cast<int>(ScenarioSave.ending_mission_year));
-                StringTemp[0] = 0;
-                _itoa(static_cast<int>(ScenarioSave.ending_mission_year), year_text, 10);
-                strcat(StringTemp, year_text);
-                parse_says(0, StringTemp, -1, -1);
-                X_pop("RETIREWARNING", 0);
-            } else if (check_victory != 0 &&
-                       (GameDataStateStorage.fields_.game_state_ & STATE_IS_SCENARIO) != 0 &&
-                       (GameDataStateStorage.fields_.mission_year_current_ == ScenarioSave.ending_mission_year - 20 ||
-                        GameDataStateStorage.fields_.mission_year_current_ == ScenarioSave.ending_mission_year - 10)) {
-                parse_num(0, static_cast<int>(ScenarioSave.ending_mission_year));
-                StringTemp[0] = 0;
-                _itoa(static_cast<int>(ScenarioSave.ending_mission_year), year_text, 10);
-                strcat(StringTemp, year_text);
-                parse_says(0, StringTemp, -1, -1);
-                X_pop(const_cast<char *>("SCENARIOWARNING"),
-                                    "SCENARIO", nullptr);
+
+        for (int faction_id = 1; faction_id < 8; ++faction_id) {
+            const unsigned int faction_bit = 1u << faction_id;
+            if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) &
+                 faction_bit) == 0) {
+                continue;
             }
-            return 0;
+
+            int generator_count = 0;
+            if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0) {
+                for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
+                    if (static_cast<unsigned char>(Bases[base_id].faction_id_current) == faction_id &&
+                        has_facility(0x28, base_id, 0) &&
+                        static_cast<int>(Bases[base_id].population_size) >=
+                            Rules.size_base_subspace_gen) {
+                        ++generator_count;
+                    }
+                }
+            }
+            if (generator_count >= Rules.subspace_generators_needed) {
+                PlayersData[faction_id].flags |= PlayerGeneratorWin;
+                if (faction_id == ConsoleGlobal.faction_id_) {
+                    EndgameExitReason = EndgameReason16;
+                } else if ((PlayersData[faction_id].diplo_treaties[ConsoleGlobal.faction_id_] & 1) != 0 &&
+                           (GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_COOPERATIVE) != 0) {
+                    if (EndgameExitReason != EndgameReason16) {
+                        EndgameExitReason = EndgameReason17;
+                    }
+                } else if (EndgameExitReason != EndgameReason16 &&
+                           EndgameExitReason != EndgameReason17) {
+                    EndgameExitReason = EndgameReason18;
+                }
+                GameDataStateStorage.fields_.game_state_ |= EndgameRecorded;
+                if (selected_faction < 0 || faction_id == ConsoleGlobal.faction_id_) {
+                    selected_faction = faction_id;
+                }
+                GameDataStateStorage.fields_.net_turn_flags_ |= 0x80u;
+            }
+
+            if (PlayersData[faction_id].corner_market_turn > 0 &&
+                PlayersData[faction_id].corner_market_turn == GameDataStateStorage.fields_.turn_current_num_ &&
+                PlayersData[faction_id].corner_market_active > 0) {
+                PlayersData[faction_id].flags |= PlayerConquestWin;
+                if (faction_id == ConsoleGlobal.faction_id_) {
+                    EndgameExitReason = EndgameReason12;
+                } else if ((PlayersData[faction_id].diplo_treaties[ConsoleGlobal.faction_id_] & 1) != 0 &&
+                           (GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_COOPERATIVE) != 0) {
+                    if (EndgameExitReason != EndgameReason12) {
+                        EndgameExitReason = EndgameReason13;
+                    }
+                } else if (EndgameExitReason != EndgameReason12 &&
+                           EndgameExitReason != EndgameReason13) {
+                    EndgameExitReason = EndgameReason14;
+                }
+                GameDataStateStorage.fields_.game_state_ |= EndgameRecorded | STATE_VICTORY_ECONOMIC;
+                selected_faction = faction_id;
+                if (faction_id == ConsoleGlobal.faction_id_) {
+                    break;
+                }
+            } else if (((faction_bit & static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) != 0 ||
+                        (GameDataStateStorage.fields_.game_rules_ & RULES_SCN_VICT_SOLO_MISSION) == 0) &&
+                       static_cast<int>(ScenarioSave.objectives_sudden_death_victory) >= 1 &&
+                       num_objectives(faction_id,
+                           GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_COOPERATIVE) >=
+                           static_cast<int>(ScenarioSave.objectives_sudden_death_victory)) {
+                GameDataStateStorage.fields_.game_state_ |= EndgameRecorded;
+                EndgameExitReason = EndgameReason9;
+                if (selected_faction < 0 || faction_id == ConsoleGlobal.faction_id_) {
+                    selected_faction = faction_id;
+                }
+            }
         }
     }
 
-    if ((GameDataStateStorage.fields_.game_state_ & EndgamePresented) != 0) return 0;
+    if (check_victory != 0) {
+        if ((GameDataStateStorage.fields_.game_state_ & STATE_IS_SCENARIO) == 0 &&
+            (GameDataStateStorage.fields_.game_state_ & EndgameRecorded) == 0 &&
+            static_cast<int>(GameDataStateStorage.fields_.mission_year_current_) ==
+                static_cast<int>(ScenarioSave.ending_mission_year) - 20) {
+            parse_num(0, static_cast<int>(ScenarioSave.ending_mission_year));
+            StringTemp[0] = 0;
+            _itoa(static_cast<int>(ScenarioSave.ending_mission_year), year_text, 10);
+            strcat(StringTemp, year_text);
+            parse_says(0, StringTemp, -1, -1);
+            X_pop("RETIREWARNING", 0);
+        } else if ((GameDataStateStorage.fields_.game_state_ & STATE_IS_SCENARIO) != 0 &&
+                   (GameDataStateStorage.fields_.game_state_ & EndgameRecorded) == 0 &&
+                   (static_cast<int>(GameDataStateStorage.fields_.mission_year_current_) ==
+                        static_cast<int>(ScenarioSave.ending_mission_year) - 20 ||
+                    static_cast<int>(GameDataStateStorage.fields_.mission_year_current_) ==
+                        static_cast<int>(ScenarioSave.ending_mission_year) - 10)) {
+            parse_num(0, static_cast<int>(ScenarioSave.ending_mission_year));
+            StringTemp[0] = 0;
+            _itoa(static_cast<int>(ScenarioSave.ending_mission_year), year_text, 10);
+            strcat(StringTemp, year_text);
+            parse_says(0, StringTemp, -1, -1);
+            X_pop(const_cast<char *>("SCENARIO"), "SCENARIOWARNING", 0);
+        }
+    }
 
-    winner = 0;
-    int winner_data_index = 0;
+    if ((GameDataStateStorage.fields_.game_state_ & EndgameRecorded) == 0) {
+        return 0;
+    }
+    if ((GameDataStateStorage.fields_.game_state_ & EndgamePresented) != 0) {
+        return 0;
+    }
+
+    int winner = 0;
     for (int faction_id = 1; faction_id < 8; ++faction_id) {
         const uint32_t flags = PlayersData[faction_id].flags;
         if ((flags & PlayerEndgameFlagA) != 0) {
-            winner_data_index = faction_id;
             winner = faction_id;
         }
         if ((flags & PlayerEndgameFlagB) != 0 &&
             (winner == 0 ||
-             (PlayersData[winner]
-                  .diplo_treaties[ConsoleGlobal.faction_id_] & 1u) != 0 ||
-             winner == static_cast<unsigned int>(ConsoleGlobal.faction_id_))) {
-            winner_data_index = faction_id;
+             (PlayersData[winner].diplo_treaties[ConsoleGlobal.faction_id_] & 1) != 0 ||
+             winner == ConsoleGlobal.faction_id_)) {
             winner = faction_id;
         }
     }
 
-    current_reason = EndgameExitReason;
-    switch (current_reason) {
-    case 1:
-    case 2:
-    case 3:
+    int roll_credits = 0;
+    switch (EndgameExitReason) {
+    case EndgameReason1:
+    case EndgameReason2:
+    case EndgameReason3:
+        roll_credits = 1;
         break;
-    case 6:
-        popp(ScriptPopupFile, "DIPLOMATICVICTORY", 0,
-             "dipvic_sm.pcx", 0);
-        break;
-    case 7:
+    case EndgameReason7:
         if ((GameDataStateStorage.fields_.game_preferences_ & PREF_AV_SECRET_PROJECT_MOVIES) != 0) {
-            if ((Players[ConsoleGlobal.faction_id_].rule_flags & 0x80) != 0) {
+            if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
                 amovie_project("losealien");
-            } else if (Players[ConsoleGlobal.faction_id_].is_leader_female != 0) {
-                amovie_project("losewoman");
             } else {
-                amovie_project("loseman");
+                amovie_project(const_cast<char *>(
+                    Players[ConsoleGlobal.faction_id_].is_leader_female ? "losewoman" : "loseman"));
             }
         }
         break;
-    case 8:
+    case EndgameReason15:
+        if (Language != 0) {
+            X_pop("YOULOSE2", 0);
+        }
+        break;
+    case EndgameReason8:
         parse_num(0, static_cast<int>(GameDataStateStorage.fields_.mission_year_current_));
         StringTemp[0] = 0;
         say_year(StringTemp);
         parse_says(0, StringTemp, -1, -1);
-        if ((GameDataStateStorage.fields_.game_state_ & EndgameNetResults) == 0) {
-            X_pop("TIMELIMIT", 0);
-        } else if (ScenarioSave.objective_req_victory == 0 ||
-                   (GameDataStateStorage.fields_.game_state_ & EndgameScoreMode) != 0) {
-            winner_score = -9999;
-            winner = ConsoleGlobal.faction_id_;
-            for (int faction_id = 1; faction_id < 8; ++faction_id) {
-                const unsigned int faction_bit = 1u << (faction_id & 0x1F);
-                if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) &
-                     faction_bit) != 0) {
-                    int score;
-                    if ((GameDataStateStorage.fields_.game_state_ & EndgameScoreMode) == 0) {
-                        score = num_objectives(faction_id,
-                            GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_COOPERATIVE);
-                    } else {
-                        compute_score(faction_id, &score, score_items, 1);
-                    }
-                    if (winner_score < score ||
-                        (winner_score == score &&
-                         faction_id == ConsoleGlobal.faction_id_)) {
-                        winner = faction_id;
-                        winner_score = score;
+        if ((GameDataStateStorage.fields_.game_state_ & EndgameNetResults) != 0) {
+            if (ScenarioSave.objective_req_victory != 0 &&
+                (GameDataStateStorage.fields_.game_state_ & EndgameScoreMode) == 0) {
+                X_pop(const_cast<char *>("SCENARIO"), "SCENTIMELIMIT", 0);
+            } else {
+                int best_faction = ConsoleGlobal.faction_id_;
+                int best_score = -9999;
+                for (int faction_id = 1; faction_id < 8; ++faction_id) {
+                    if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) &
+                         (1u << faction_id)) != 0) {
+                        if ((GameDataStateStorage.fields_.game_state_ & EndgameScoreMode) != 0) {
+                            compute_score(faction_id, &score, score_items, 1);
+                        } else {
+                            score = num_objectives(faction_id,
+                                GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_COOPERATIVE);
+                        }
+                        if (score > best_score ||
+                            (score == best_score && faction_id == ConsoleGlobal.faction_id_)) {
+                            best_faction = faction_id;
+                            best_score = score;
+                        }
                     }
                 }
+                parse_player_identity(best_faction);
+                if (best_faction == ConsoleGlobal.faction_id_) {
+                    X_pop(const_cast<char *>("SCENARIO"), "SCENTIMEWIN", 0);
+                } else {
+                    X_pop(const_cast<char *>("SCENARIO"), "SCENTIMELOSS", 0);
+                }
             }
-            GenderDefault = Players[winner].is_leader_female;
-            PluralityDefault = 0;
-            parse_says(0, Players[winner].title_leader, -1, -1);
-            GenderDefault = Players[winner].is_leader_female;
-            PluralityDefault = 0;
-            parse_says(1, Players[winner].name_leader, -1, -1);
-            GenderDefault = Players[winner].noun_gender;
-            PluralityDefault = Players[winner].is_noun_plural;
-            parse_says(2, Players[winner].noun_faction, -1, -1);
-            X_pop(const_cast<char *>("SCENTIMEWIN"),
-                                "SCENARIO", nullptr);
         } else {
-            X_pop(const_cast<char *>("SCENARIO"),
-                                "SCENTIMELIMIT", nullptr);
+            X_pop("TIMELIMIT", 0);
         }
         break;
-    case 9:
-        PluralityDefault = 0;
-        GenderDefault = Players[selected_faction].is_leader_female;
-        parse_says(0, Players[selected_faction].title_leader, -1, -1);
-        GenderDefault = Players[winner].is_leader_female;
-        PluralityDefault = 0;
-        parse_says(1, Players[winner].name_leader, -1, -1);
-        GenderDefault = Players[winner].noun_gender;
-        PluralityDefault = Players[winner].is_noun_plural;
-        parse_says(2, Players[winner].noun_faction, -1, -1);
-        if (winner == static_cast<unsigned int>(ConsoleGlobal.faction_id_)) {
-            X_pop(const_cast<char *>("SCENARIO"),
-                                "SUDDENDEATH0", nullptr);
+    case EndgameReason6:
+        popp(ScriptPopupFile, "DIPLOMATICVICTORY", 0, "dipvic_sm.pcx", 0);
+        break;
+    case EndgameReason10:
+        parse_player_identity(winner);
+        popp(ScriptPopupFile, "DIPLOMATICCOOP", 0, "dipvic_sm.pcx", 0);
+        break;
+    case EndgameReason11:
+        parse_player_identity(winner);
+        popp(ScriptPopupFile,
+             (PlayersData[winner].diplo_treaties[ConsoleGlobal.faction_id_] & 0x40020u) != 0
+                 ? "DIPLOMATICLOSE2" : "DIPLOMATICLOSE",
+             0, "dipvic_sm.pcx", 0);
+        break;
+    case EndgameReason12:
+        popp(ScriptPopupFile, "ECONOMICVICTORY", 0, "econwin_sm.pcx", 0);
+        break;
+    case EndgameReason13:
+        parse_player_identity(winner);
+        popp(ScriptPopupFile, "ECONOMICCOOP", 0, "econwin_sm.pcx", 0);
+        break;
+    case EndgameReason14:
+        parse_player_identity(winner);
+        popp(ScriptPopupFile,
+             (PlayersData[winner].diplo_treaties[ConsoleGlobal.faction_id_] & 0x40020u) != 0
+                 ? "ECONOMICLOSE2" : "ECONOMICLOSE",
+             0, "econwin_sm.pcx", 0);
+        break;
+    case EndgameReason9:
+        // The sudden-death text names the selected faction, not the winner.
+        parse_player_identity(selected_faction);
+        if (selected_faction == ConsoleGlobal.faction_id_) {
+            X_pop(const_cast<char *>("SCENARIO"), "SUDDENDEATH0", 0);
         } else {
-            X_pop(const_cast<char *>("SCENARIO"),
-                                "SUDDENDEATH", nullptr);
+            X_pop(const_cast<char *>("SCENARIO"), "SUDDENDEATH", 0);
         }
         break;
-    case 10:
-    case 11:
-    case 13:
-    case 14:
-        parse_player_identity(static_cast<int>(winner));
-        if (current_reason == 10) {
-            popp(ScriptPopupFile, "DIPLOMATICCOOP", 0,
-                 "dipvic_sm.pcx", 0);
-        } else if (current_reason == 11) {
-            const char *label =
-                (PlayersData[winner]
-                     .diplo_treaties[ConsoleGlobal.faction_id_] & 0x40020u) != 0
-                    ? "DIPLOMATICLOSE2" : "DIPLOMATICLOSE";
-            popp(ScriptPopupFile, label, 0, "dipvic_sm.pcx", 0);
-        } else if (current_reason == 13) {
-            popp(ScriptPopupFile, "ECONOMICCOOP", 0,
-                 "econwin_sm.pcx", 0);
-        } else {
-            const char *label =
-                (PlayersData[winner]
-                     .diplo_treaties[ConsoleGlobal.faction_id_] & 0x40020u) != 0
-                    ? "ECONOMICLOSE2" : "ECONOMICLOSE";
-            popp(ScriptPopupFile, label, 0, "econwin_sm.pcx", 0);
-        }
-        break;
-    case 12:
-        popp(ScriptPopupFile, "ECONOMICVICTORY", 0,
-             "econwin_sm.pcx", 0);
-        break;
-    case 15:
-        if (Language != 0) X_pop("YOULOSE2", 0);
-        break;
-    case 16:
+    case EndgameReason16:
         interlude(0x20, 0, 4, 0);
-        parse_player_identity(static_cast<int>(winner));
-        popp(ScriptPopupFile, "ENDBEACON", 0,
-             "beacon_sm.pcx", 0);
+        parse_player_identity(winner);
+        popp(ScriptPopupFile, "ENDBEACON", 0, "beacon_sm.pcx", 0);
         if ((GameDataStateStorage.fields_.game_preferences_ & PREF_AV_SECRET_PROJECT_MOVIES) != 0) {
             StringTemp[0] = 0;
             strcat(StringTemp, Players[ConsoleGlobal.faction_id_].filename);
             CharUpperA(StringTemp);
-            if (strcmp(StringTemp, "CARETAKE") == 0) {
-                amovie_project("close_ct");
-            } else {
+            if (strcmp(StringTemp, "CARETAKE") != 0) {
                 amovie_project("close_us");
+            } else {
+                amovie_project("close_ct");
             }
         }
         break;
-    case 17:
-        parse_player_identity(static_cast<int>(winner));
-        popp(ScriptPopupFile, "ENDBEACONCOOP", 0,
-             "beacon_sm.pcx", 0);
+    case EndgameReason17:
+        parse_player_identity(winner);
+        popp(ScriptPopupFile, "ENDBEACONCOOP", 0, "beacon_sm.pcx", 0);
         break;
-    case 18:
-        if ((Players[ConsoleGlobal.faction_id_].rule_flags & 0x80) == 0) {
+    case EndgameReason18:
+        if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) == 0) {
             GenderDefault = Players[winner].noun_gender;
             PluralityDefault = Players[winner].is_noun_plural;
             interlude(0x1D, Players[winner].noun_faction, 1, 0);
         }
-        parse_player_identity(static_cast<int>(winner));
-        popp(ScriptPopupFile, "ENDBEACONLOSE", 0,
-             "beaconlose_sm.pcx", 0);
-        break;
-    default:
+        parse_player_identity(winner);
+        popp(ScriptPopupFile, "ENDBEACONLOSE", 0, "beaconlose_sm.pcx", 0);
         break;
     }
 
-    switch (current_reason) {
-    case 4:
-    case 5:
-    case 6:
-    case 12:
-        winner = ConsoleGlobal.faction_id_;
-        mon_winning_unify(static_cast<int>(winner), -1);
+    switch (EndgameExitReason) {
+    case EndgameReason4:
+    case EndgameReason5:
+    case EndgameReason6:
+    case EndgameReason12:
+        mon_winning_unify(ConsoleGlobal.faction_id_, -1);
         break;
-    case 10:
-    case 13:
-        mon_winning_unify(static_cast<int>(winner), -1);
-        mon_winning_unify(ConsoleGlobal.faction_id_, static_cast<int>(winner));
+    case EndgameReason10:
+    case EndgameReason13:
+        mon_winning_unify(winner, -1);
+        mon_winning_unify(ConsoleGlobal.faction_id_, winner);
         break;
-    case 11:
-    case 14:
-        mon_winning_unify(static_cast<int>(winner), -1);
-        break;
-    default:
+    case EndgameReason11:
+    case EndgameReason14:
+        mon_winning_unify(winner, -1);
         break;
     }
 
     if ((GameDataStateStorage.fields_.game_preferences_ & PREF_AV_INTERLUDES_DISABLED) == 0) {
-        switch (current_reason) {
-        case 4:
-        case 6:
-        case 12:
-            if ((Players[ConsoleGlobal.faction_id_].rule_flags & 0x80) == 0)
-                interlude(0x13, 0, 4, 0);
-            else
+        switch (EndgameExitReason) {
+        case EndgameReason4:
+        case EndgameReason6:
+        case EndgameReason12:
+            if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
                 interlude(0x21, 0, 4, 0);
-            show_ending_interlude = true;
+            } else {
+                interlude(0x13, 0, 4, 0);
+            }
+            roll_credits = 1;
             break;
-        case 5:
-        case 10:
-        case 13:
+        case EndgameReason5:
+        case EndgameReason10:
+        case EndgameReason13:
             interlude(0x14, 0, 4, 0);
-            show_ending_interlude = true;
-            break;
-        default:
+            roll_credits = 1;
             break;
         }
     }
 
-    if ((current_reason == 1 || current_reason == 2 || current_reason == 3) ||
-        show_ending_interlude) {
+    // The image materializes the 1..3 test and ORs it with the flag (no
+    // short circuit), hence the bitwise `|`.
+    if ((EndgameExitReason == EndgameReason1 || EndgameExitReason == EndgameReason2 ||
+         EndgameExitReason == EndgameReason3) | roll_credits) {
         show_credits();
     }
     report_score(1);
@@ -3503,9 +3364,10 @@ int __cdecl end_of_game(int check_victory) {
     }
     show_replay();
     GameDataStateStorage.fields_.game_state_ |= EndgamePresented;
-    if (IsMultiplayerNet == 0 && current_reason != 7 &&
-        popp(ScriptPopupFile, "GAMEOVERMAN", 0, "stars_sm.pcx", 0) != 0) {
-        return 0;
+    if (IsMultiplayerNet == 0 && EndgameExitReason != EndgameReason7) {
+        if (popp(ScriptPopupFile, "GAMEOVERMAN", 0, "stars_sm.pcx", 0) != 0) {
+            return 0;
+        }
     }
     GameRestartQueued = (IsMultiplayerNet == 0);
     if (IsMultiplayerNet != 0) {

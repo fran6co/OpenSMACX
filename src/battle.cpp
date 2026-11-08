@@ -202,177 +202,114 @@ uint32_t __cdecl planet_buster(int veh_id) {
     return planet_buster2(Vehs[veh_id].proto_id);
 }
 
-static int shoot_signed_bits(unsigned int bits) {
-    return bits <= 0x7fffffffu ? static_cast<int>(bits)
-        : -1 - static_cast<int>(0xffffffffu - bits);
-}
-
-static int shoot_wrapped_subtract(int left, int right) {
-    return shoot_signed_bits(static_cast<unsigned int>(left) -
-                             static_cast<unsigned int>(right));
-}
-
 // ORIGINAL: 0x00500560 ?shoot@@YAHHHHH@Z 0x00500560-0x00500B51
 // RECOVERY_BINDING: v1 {"evidence": ["task:planet-strike-owner", "pinned:0x00500560 complete native span; real Veh, PlayerData, Base and Console declarations establish accessed storage.", "pinned:shoot6B7/7C2 live satellite inventory reloads; bonus success bypasses decrement; dword counter/subtraction wrapping retained.", "pinned:planetE16/E29 attacker-row PACT; territory callback follows radius interception; kill/draw precede intercept return; warning coordinates precede popupD0C.", "source:map.cpp bounded shared radius tables and veh.cpp TerraformDrownedBaseId; effect59 is the typed FX child observed by the native wait.", "historical seed:src/unrecovered/00500560.cpp original mapping and useful findings retained."], "reason": "Recover the complete original strike operation through genuine vehicle, faction, base, console, effect and shared map-table owners; preserve original identity/spans and seed findings without executable storage or calls."}
 // TRIED: structural transcription (two proximity scan loops with early-exit gotos, extern lever on the three lea-taken-as-pointer table bases 0097d053/00946d34/00946d54) compiles and matches to instr #6 (prologue: original zeroes edi with `xor`, rebuilt uses `mov`).
 int __cdecl shoot(int atk_factionID, int def_factionID, int xDest, int yDest) {
     int adjacent_flechette = 0;
-    for (int i = 0; i < 25 && !adjacent_flechette; ++i) {
-        int x = xDest + RadiusOffsetX[i];
-        if (!(MapIsFlat & 1)) {
-            if (x < 0) x += MapLongitudeBounds;
-            else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
-        }
-        const int y = yDest + RadiusOffsetY[i];
-        if (y < 0 || y >= MapLatitudeBounds || x < 0 || x >= MapLongitudeBounds)
-            continue;
-        const int base_id = base_at(x, y);
-        if (base_id >= 0 && Bases[base_id].faction_id_current != atk_factionID &&
-            has_fac(FAC_FLECHETTE_DEFENSE_SYS, base_id, 0))
-            adjacent_flechette = 1;
-    }
-
-    const int deployed_at_start = shoot_signed_bits(
-        PlayersData[def_factionID].satellites_[3]);
-    if (deployed_at_start == 0 && !adjacent_flechette)
-        return 0;
-
-    int bonus_hit = 0;
-    const int bonus_rounds = shoot_wrapped_subtract(
-        deployed_at_start,
-        shoot_signed_bits(PlayersData[def_factionID].sat_odp_deployed));
-    if (bonus_rounds > 0) {
-        for (int i = 0; i < bonus_rounds; ++i) {
-            ++PlayersData[def_factionID].sat_odp_deployed;
-            if (rand() % 100 > 0x31) {
-                bonus_hit = 1;
-                break;
+    for (int i = 0; i < 25; ++i) {
+        if (!adjacent_flechette) {
+            const int x = wrap_map_x(RadiusOffsetX[i] + xDest);
+            const int y = RadiusOffsetY[i] + yDest;
+            if (on_map(x, y)) {
+                const int base_id = base_at(x, y);
+                if (base_id >= 0 && Bases[base_id].faction_id_current != atk_factionID
+                    && has_fac(FAC_FLECHETTE_DEFENSE_SYS, base_id, 0)) {
+                    adjacent_flechette = 1;
+                }
             }
         }
     }
-
-    int shots_left = shoot_wrapped_subtract(
-        shoot_signed_bits(PlayersData[def_factionID].satellites_[3]),
-        shoot_signed_bits(PlayersData[def_factionID].sat_odp_deployed));
-    if (shots_left < 0) shots_left = 0;
-    else if (shots_left > 9999) shots_left = 9999;
-
-    const char *message_icon = 0;
-    const char *message_label = 0;
+    if (!PlayersData[def_factionID].satellites_[3] && !adjacent_flechette) {
+        return 0;
+    }
+    int bonus_hit = 0;
+    const int bonus_rounds = static_cast<int>(PlayersData[def_factionID].satellites_[3]
+        - PlayersData[def_factionID].sat_odp_deployed);
+    for (int round = 0; round < bonus_rounds; ++round) {
+        ++PlayersData[def_factionID].sat_odp_deployed;
+        if (rand() % 100 >= 50) {
+            bonus_hit = 1;
+            break;
+        }
+    }
+    const int shots_left = range(static_cast<int>(PlayersData[def_factionID].satellites_[3]
+        - PlayersData[def_factionID].sat_odp_deployed), 0, 9999);
     if (!bonus_hit) {
         for (int i = 0; i < 25; ++i) {
-            int x = xDest + RadiusOffsetX[i];
-            if (!(MapIsFlat & 1)) {
-                if (x < 0) x += MapLongitudeBounds;
-                else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
-            }
-            const int y = yDest + RadiusOffsetY[i];
-            if (y < 0 || y >= MapLatitudeBounds || x < 0 || x >= MapLongitudeBounds)
+            const int x = wrap_map_x(RadiusOffsetX[i] + xDest);
+            const int y = RadiusOffsetY[i] + yDest;
+            if (!on_map(x, y)) {
                 continue;
+            }
             const int base_id = base_at(x, y);
-            if (base_id < 0 || Bases[base_id].faction_id_current == atk_factionID ||
-                !has_fac(FAC_FLECHETTE_DEFENSE_SYS, base_id, 0))
-                continue;
-            if (rand() % 100 >= 0x32)
-                continue;
-
-            parse_says(0, Bases[base_id].name_string, -1, -1);
-            if (def_factionID == ConsoleGlobal.faction_id_) {
-                parse_says(1, Players[atk_factionID].adj_name_faction, -1, -1);
-                message_icon = "space_sm.pcx";
-                message_label = "WESHOTIT2";
-            } else {
-                if (atk_factionID != ConsoleGlobal.faction_id_)
-                    return 1;
-                parse_says(1, Players[Bases[base_id].faction_id_current].adj_name_faction,
-                           -1, -1);
-                message_icon = "space_sm.pcx";
-                message_label = "THEYSHOTIT2";
+            if (base_id >= 0 && Bases[base_id].faction_id_current != atk_factionID
+                && has_fac(FAC_FLECHETTE_DEFENSE_SYS, base_id, 0)
+                && rand() % 100 < 50) {
+                parse_says(0, Bases[base_id].name_string, -1, -1);
+                if (def_factionID == ConsoleGlobal.faction_id_) {
+                    parse_says(1, Players[atk_factionID].adj_name_faction, -1, -1);
+                    popp(ScriptPopupFile, "WESHOTIT2", 0, "space_sm.pcx", 0);
+                } else if (atk_factionID == ConsoleGlobal.faction_id_) {
+                    parse_says(1, Players[Bases[base_id].faction_id_current].adj_name_faction,
+                               -1, -1);
+                    popp(ScriptPopupFile, "THEYSHOTIT2", 0, "space_sm.pcx", 0);
+                }
+                return 1;
             }
-            goto show_message;
         }
-    }
-
-    if (bonus_hit)
-        goto report_hit;
-
-    // Native rereads the live inventory at 0x5007bf after the Flechette scan.
-    if (PlayersData[def_factionID].satellites_[3] == 0)
-        goto no_ammunition;
-
-    if (!IsMultiplayerNet &&
-        (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << (def_factionID & 0x1f))) != 0) {
-        if (def_factionID == ConsoleGlobal.faction_id_) {
-            parse_num(0, PlayersData[def_factionID].satellites_[3]);
-            const int base_id = base_find(xDest, yDest);
-            parse_says(0, Bases[base_id].name_string, -1, -1);
-            parse_says(1, Players[atk_factionID].adj_name_faction, -1, -1);
-            if (popp(ScriptPopupFile, "BUSTERSAC", 0, "space_sm.pcx", 0) != 0)
-                goto shot_declined;
+        // The live inventory is reread after the Flechette scan.
+        if (!PlayersData[def_factionID].satellites_[3]) {
+            goto failed;
+        }
+        if (!IsMultiplayerNet
+            && (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << def_factionID))) {
+            if (def_factionID == ConsoleGlobal.faction_id_) {
+                parse_num(0, PlayersData[def_factionID].satellites_[3]);
+                parse_says(0, Bases[base_find(xDest, yDest)].name_string, -1, -1);
+                parse_says(1, Players[atk_factionID].adj_name_faction, -1, -1);
+                if (popp(ScriptPopupFile, "BUSTERSAC", 0, "space_sm.pcx", 0)) {
+                    goto failed;
+                }
+            } else if (atk_factionID == ConsoleGlobal.faction_id_) {
+                GenderDefault = Players[def_factionID].noun_gender;
+                PluralityDefault = Players[def_factionID].is_noun_plural;
+                parse_says(0, Players[def_factionID].noun_faction, -1, -1);
+                popp(ScriptPopupFile, "THEYMUSTSAC", 0, "space_sm.pcx", 0);
+            }
+        } else if (def_factionID == ConsoleGlobal.faction_id_) {
+            popp(ScriptPopupFile, "WEMUSTSAC", 0, "space_sm.pcx", 0);
         } else if (atk_factionID == ConsoleGlobal.faction_id_) {
             GenderDefault = Players[def_factionID].noun_gender;
             PluralityDefault = Players[def_factionID].is_noun_plural;
             parse_says(0, Players[def_factionID].noun_faction, -1, -1);
             popp(ScriptPopupFile, "THEYMUSTSAC", 0, "space_sm.pcx", 0);
         }
-    } else {
-        if (def_factionID != ConsoleGlobal.faction_id_) {
-            if (atk_factionID == ConsoleGlobal.faction_id_) {
-                GenderDefault = Players[def_factionID].noun_gender;
-                PluralityDefault = Players[def_factionID].is_noun_plural;
-                parse_says(0, Players[def_factionID].noun_faction, -1, -1);
-                popp(ScriptPopupFile, "THEYMUSTSAC", 0, "space_sm.pcx", 0);
-            }
-        } else {
-            popp(ScriptPopupFile, "WEMUSTSAC", 0, "space_sm.pcx", 0);
-            goto expend_shot;
+        --PlayersData[def_factionID].satellites_[3];
+        if (static_cast<int>(PlayersData[def_factionID].satellites_[3]
+                - PlayersData[def_factionID].sat_odp_deployed) < 0) {
+            PlayersData[def_factionID].sat_odp_deployed = PlayersData[def_factionID].satellites_[3];
         }
     }
-
-expend_shot:
-    --PlayersData[def_factionID].satellites_[3];
-    if (shoot_wrapped_subtract(
-            shoot_signed_bits(PlayersData[def_factionID].satellites_[3]),
-            shoot_signed_bits(PlayersData[def_factionID].sat_odp_deployed)) < 0)
-        PlayersData[def_factionID].sat_odp_deployed =
-            PlayersData[def_factionID].satellites_[3];
-
-report_hit:
     {
-        const int faction_base = base_find(xDest, yDest, def_factionID);
-        const int base_id = faction_base < 0 ? base_find(xDest, yDest) : faction_base;
+        int base_id = base_find(xDest, yDest, def_factionID);
+        if (base_id < 0) {
+            base_id = base_find(xDest, yDest);
+        }
         parse_says(0, Bases[base_id].name_string, -1, -1);
         parse_num(0, PlayersData[def_factionID].satellites_[3]);
         parse_num(1, shots_left);
         if (def_factionID == ConsoleGlobal.faction_id_) {
             parse_says(1, Players[atk_factionID].adj_name_faction, -1, -1);
-            message_icon = "space_sm.pcx";
-            message_label = "WESHOTIT";
-        } else {
-            if (atk_factionID != ConsoleGlobal.faction_id_)
-                return 1;
-            parse_says(1, Players[def_factionID].adj_name_faction, -1, -1);
-            message_icon = "space_sm.pcx";
-            message_label = "THEYSHOTIT";
-        }
-    }
-show_message:
-    popp(ScriptPopupFile, message_label, 0, message_icon, 0);
-    return 1;
-
-shot_declined:
-    if (adjacent_flechette) {
-        if (def_factionID == ConsoleGlobal.faction_id_) {
-            parse_says(1, Players[atk_factionID].adj_name_faction, -1, -1);
-            popp(ScriptPopupFile, "WEFAILEDFLECHETTE", 0, "space_sm.pcx", 0);
+            popp(ScriptPopupFile, "WESHOTIT", 0, "space_sm.pcx", 0);
         } else if (atk_factionID == ConsoleGlobal.faction_id_) {
             parse_says(1, Players[def_factionID].adj_name_faction, -1, -1);
-            popp(ScriptPopupFile, "THEYFAILEDFLECHETTE", 0, "space_sm.pcx", 0);
+            popp(ScriptPopupFile, "THEYSHOTIT", 0, "space_sm.pcx", 0);
         }
     }
-    return 0;
+    return 1;
 
-no_ammunition:
+failed:
     if (adjacent_flechette) {
         if (def_factionID == ConsoleGlobal.faction_id_) {
             parse_says(1, Players[atk_factionID].adj_name_faction, -1, -1);
@@ -385,18 +322,23 @@ no_ammunition:
     return 0;
 }
 
+// Inlined: the doubled vector_dist halved once.
+static inline int patrol_dist(int x_a, int y_a, int x_b, int y_b) {
+    return (x_dist(x_a, x_b) + abs(y_a - y_b)) >> 1;
+}
+
 // ORIGINAL: 0x00500B60 ?planet_busting@@YAHHHH@Z 0x00500B60-0x005010BB
 // RECOVERY_BINDING: v1 {"evidence": ["task:planet-strike-owner", "pinned:0x00500B60 complete native span; real Veh, PlayerData, Base and Console declarations establish accessed storage.", "pinned:shoot6B7/7C2 live satellite inventory reloads; bonus success bypasses decrement; dword counter/subtraction wrapping retained.", "pinned:planetE16/E29 attacker-row PACT; territory callback follows radius interception; kill/draw precede intercept return; warning coordinates precede popupD0C.", "source:map.cpp bounded shared radius tables and veh.cpp TerraformDrownedBaseId; effect59 is the typed FX child observed by the native wait.", "historical seed:src/unrecovered/00500b60.cpp original mapping and useful findings retained."], "reason": "Recover the complete original strike operation through genuine vehicle, faction, base, console, effect and shared map-table owners; preserve original identity/spans and seed findings without executable storage or calls."}
 int __cdecl planet_busting(int veh_id, int x, int y) {
-    const Veh &weapon_vehicle = Vehs[veh_id];
-    const int faction = weapon_vehicle.faction_id;
+    int offset;
+    int intercepted = 0;
+    const int faction = Vehs[veh_id].faction_id;
     ConsoleGlobal.focus(x, y, faction);
 
-    const int proto_id = weapon_vehicle.proto_id;
-    const VehPrototype &weapon_prototype = VehPrototypes[proto_id];
+    const int proto_id = Vehs[veh_id].proto_id;
     const int bust_level =
-        weapon_prototype.plan == PLAN_PLANET_BUSTER
-            ? weapon_prototype.reactor_id : 0;
+        VehPrototypes[proto_id].plan == PLAN_PLANET_BUSTER
+            ? VehPrototypes[proto_id].reactor_id : 0;
     // Native indexes the parallel pattern-count table at 0x66F8C4. Its
     // values are the radius cardinalities 1,9,25,... used by RadiusOffsetX/Y.
     const int weapon_count = RadiusRange[bust_level];
@@ -414,24 +356,17 @@ int __cdecl planet_busting(int veh_id, int x, int y) {
         parse_says(2, Players[faction].noun_faction, -1, -1);
         parse_says(3, Bases[nearest_base].name_string, -1, -1);
 
-        const int dx = abs(Bases[nearest_base].x - x);
-        const int wrapped_dx = (!(MapIsFlat & 1) && dx > MapLongitude)
-            ? MapLongitudeBounds - dx : dx;
-        const int dy = abs(Bases[nearest_base].y - y);
-        const char *const sound = (((dy + wrapped_dx) >> 1) <= bust_level)
+        const char *const sound =
+            (patrol_dist(Bases[nearest_base].x, Bases[nearest_base].y, x, y) <= bust_level)
             ? "baseobl_sm.pcx" : "astp_sm.pcx";
         popp(ScriptPopupFile, "PLANETBUSTER", 0, sound, 0);
     }
 
-    int notified[MaxPlayerNum] = {0};
-    int intercepted = 0;
-    for (int offset = 0; offset < weapon_count; ++offset) {
-        int blast_x = x + RadiusOffsetX[offset];
-        if (!(MapIsFlat & 1)) {
-            if (blast_x < 0) blast_x += MapLongitudeBounds;
-            else if (blast_x >= MapLongitudeBounds) blast_x -= MapLongitudeBounds;
-        }
-        const int blast_y = y + RadiusOffsetY[offset];
+    int notified[MaxPlayerNum];
+    memset(notified, 0, sizeof(notified));
+    for (offset = 0; offset < weapon_count; ++offset) {
+        const int blast_x = wrap_map_x(RadiusOffsetX[offset] + x);
+        const int blast_y = RadiusOffsetY[offset] + y;
         if (!on_map(blast_x, blast_y)) continue;
 
         const int base_id = base_at(blast_x, blast_y);
@@ -468,8 +403,8 @@ int __cdecl planet_busting(int veh_id, int x, int y) {
     if (intercepted != 0) return intercepted;
 
     VehBattleUnkTgl = 1;
-    int blame_base = -1;
     int blame_vehicle = -1;
+    int blame_base = -1;
     for (int lower = 0; lower < bust_level; ++lower) {
         world_lower_alt(x, y);
     }
@@ -479,19 +414,17 @@ int __cdecl planet_busting(int veh_id, int x, int y) {
     BoomAnimationLevel = bust_level;
     boom(x, y, 0x20);
 
-    for (int offset2 = 0; offset2 < weapon_count; ++offset2) {
-        int blast_x = x + RadiusOffsetX[offset2];
-        if (!(MapIsFlat & 1)) {
-            if (blast_x < 0) blast_x += MapLongitudeBounds;
-            else if (blast_x >= MapLongitudeBounds) blast_x -= MapLongitudeBounds;
-        }
-        const int blast_y = y + RadiusOffsetY[offset2];
+    for (offset = 0; offset < weapon_count; ++offset) {
+        const int blast_x = wrap_map_x(RadiusOffsetX[offset] + x);
+        const int blast_y = RadiusOffsetY[offset] + y;
         if (!on_map(blast_x, blast_y)) continue;
 
         const int base_id = base_at(blast_x, blast_y);
         if (base_id >= 0) {
-            const int defender = Bases[base_id].faction_id_current;
-            if (blame_base < 0 && defender != faction) blame_base = defender;
+            if (blame_base < 0) {
+                const int defender = Bases[base_id].faction_id_current;
+                if (defender != faction) blame_base = defender;
+            }
             base_kill(base_id);
         }
         const int stack_id = stack_fix(veh_at(blast_x, blast_y));
@@ -515,9 +448,8 @@ int __cdecl planet_busting(int veh_id, int x, int y) {
     boom(x, y, 0x11);
     boom(x, y, 0x12);
     major_atrocity(faction, blame_base);
-    // Original successful terminal EAX is unspecified; its observed caller
-    // discards it. This is a source completion value, not an exact-return claim.
-    return 0;
+    // No final return (C4715), as in the image: EAX is whatever
+    // major_atrocity left; its observed caller discards it.
 }
 
 /*
@@ -769,12 +701,13 @@ int __cdecl get_basic_offense(int veh_id_atk, int veh_id_def, int psi_combat_typ
     if (unk_tgl) {
         morale = range(morale, 1, 6);
     }
+    int morale_factor = morale + 6;
     int offense = offense_proto(veh_atk->proto_id, veh_id_def, is_bombard);
     if (psi_combat_type) {
         offense = psi_factor(offense, faction_id_atk, true, false);
     }
     VehBasicBattleMorale[unk_tgl != 0] = morale;
-    return offense * (morale + 6) * 4;
+    return offense * morale_factor * 4;
 }
 
 /*
@@ -1440,6 +1373,14 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
     }
 }
 
+// proto_power() by prototype: best_defender expands it twice.
+static inline int best_defender_power(int proto_id) {
+    if (VehPrototypes[proto_id].plan == PLAN_ALIEN_ARTIFACT) {
+        return 1;
+    }
+    return range(VehPrototypes[proto_id].reactor_id, 1, 100) * 10;
+}
+
 /*
 Purpose: Determine the best defender in a stack.
 // ORIGINAL: 0x005044D0 ?best_defender@@YAHHHH@Z 0x005044D0-0x00504A9B
@@ -1473,64 +1414,69 @@ int __cdecl best_defender(int veh_id_def, int veh_id_atk, BOOL check_artillery) 
     int base_id_def = base_at(x_def, y_def);
     int defender_search = -999;
     int best_def_veh_id = veh_id_def;
-    for (int i = veh_top(veh_id_def); i >= 0; i = Vehs[i].next_veh_id_stack) {
-        uint32_t proto_id_def = Vehs[i].proto_id;
-        if ((get_proto_triad(proto_id_def) != TRIAD_LAND || !is_ocean_def && base_id_def >= 0)
-            && (VehPrototypes[Vehs[veh_id_atk].proto_id].plan != PLAN_INFO_WARFARE
-                || VehPrototypes[proto_id_def].plan == PLAN_INFO_WARFARE)) {
-            uint32_t combat_type = (can_arty(proto_id_def, true)
-                && can_arty(Vehs[veh_id_atk].proto_id, true)) ? 2 : 0;
-            if (veh_id_atk >= 0 && get_triad(veh_id_atk) != TRIAD_AIR
-                && has_abil(proto_id_def, ABL_AIR_SUPERIORITY)
-                && !is_proto_missile(proto_id_def) && !is_missile(veh_id_atk)
-                && get_offense_rating(veh_id_atk) > 0 && get_defense_rating(veh_id_atk) > 0
-                && get_proto_offense_rating(proto_id_def) > 0) {
-                combat_type |= 0xA; // air combat
-                if (get_proto_triad(proto_id_def) == TRIAD_AIR) {
-                    combat_type |= 0x10;
-                }
+    for (veh_id_def = veh_top(veh_id_def); veh_id_def >= 0;
+        veh_id_def = Vehs[veh_id_def].next_veh_id_stack) {
+        // A land unit at sea outside a base is aboard a transport.
+        if (get_proto_triad(Vehs[veh_id_def].proto_id) == TRIAD_LAND && is_ocean_def && base_id_def < 0) {
+            continue;
+        }
+        if (VehPrototypes[Vehs[veh_id_atk].proto_id].plan == PLAN_INFO_WARFARE
+            && VehPrototypes[Vehs[veh_id_def].proto_id].plan != PLAN_INFO_WARFARE) {
+            continue;
+        }
+        uint32_t combat_type = (can_arty(Vehs[veh_id_def].proto_id, true)
+            && can_arty(Vehs[veh_id_atk].proto_id, true)) ? 2 : 0;
+        if (veh_id_atk >= 0 && get_triad(veh_id_atk) == TRIAD_AIR
+            && has_abil(Vehs[veh_id_def].proto_id, ABL_AIR_SUPERIORITY)
+            && !is_missile(veh_id_def) && !is_missile(veh_id_atk)
+            && get_offense_rating(veh_id_atk) > 0 && get_defense_rating(veh_id_atk) > 0
+            && get_offense_rating(veh_id_def) > 0) {
+            combat_type |= 0xA; // air combat
+            if (get_triad(veh_id_def) == TRIAD_AIR) {
+                combat_type |= 0x10;
             }
-            int offense_output;
-            int defense_output;
-            battle_compute(veh_id_atk, i, &offense_output, &defense_output, combat_type);
-            if (!offense_output) {
-                break;
-            }
-            int proto_pwr_def = proto_power(i);
-            int def_modifier = (((((range(proto_pwr_def - Vehs[i].dmg_incurred, 0, 9999)
-                * defense_output) / proto_pwr_def) * offense) / offense_output) / 8)
-                - get_proto_offense_rating(proto_id_def);
-            uint32_t plan_def = VehPrototypes[proto_id_def].plan;
-            if (plan_def < PLAN_COLONIZATION || plan_def == PLAN_TERRAFORMING) {
-                def_modifier *= 16;
-            }
-            if (veh_id_atk >= 0 && get_triad(veh_id_atk) == TRIAD_AIR
-                && has_abil(proto_id_def, ABL_AIR_SUPERIORITY)
-                && get_proto_triad(proto_id_def) == TRIAD_AIR
-                && !is_proto_missile(proto_id_def) && !is_missile(veh_id_atk)) {
+        }
+        int offense_output;
+        int defense_output;
+        battle_compute(veh_id_atk, veh_id_def, &offense_output, &defense_output, combat_type);
+        if (!offense_output) {
+            break;
+        }
+        int proto_id_def = Vehs[veh_id_def].proto_id;
+        defense_output = range(best_defender_power(proto_id_def) - Vehs[veh_id_def].dmg_incurred, 0, 9999)
+            * defense_output / best_defender_power(proto_id_def);
+        int def_modifier = defense_output * offense / offense_output / 8
+            - get_proto_offense_rating(proto_id_def);
+        uint8_t plan_def = VehPrototypes[proto_id_def].plan;
+        if (plan_def < PLAN_COLONIZATION || plan_def == PLAN_TERRAFORMING) {
+            def_modifier *= 16;
+        }
+        if (veh_id_atk >= 0 && get_triad(veh_id_atk) == TRIAD_AIR
+            && has_abil(Vehs[veh_id_def].proto_id, ABL_AIR_SUPERIORITY)
+            && get_triad(veh_id_def) == TRIAD_AIR
+            && !is_missile(veh_id_def) && !is_missile(veh_id_atk)) {
+            def_modifier += 0x80000;
+        } else if (veh_id_atk >= 0 && get_triad(veh_id_atk) == TRIAD_AIR
+            && has_abil(Vehs[veh_id_atk].proto_id, ABL_AIR_SUPERIORITY)
+            && get_triad(veh_id_def) == TRIAD_AIR && base_id_def < 0
+            && !(bit_at(x_def, y_def) & BIT_AIRBASE)
+            && !stack_check(veh_id_def, 6, ABL_CARRIER, -1, -1)
+            && !is_missile(veh_id_def) && !is_missile(veh_id_atk)) {
+            def_modifier += 0x80000;
+        } else if (check_artillery) {
+            if (can_arty(Vehs[veh_id_def].proto_id, true)) {
                 def_modifier += 0x80000;
-            } else if (veh_id_atk >= 0 && get_triad(veh_id_atk) == TRIAD_AIR
-                && has_abil(Vehs[veh_id_atk].proto_id, ABL_AIR_SUPERIORITY)
-                && get_proto_triad(proto_id_def) == TRIAD_AIR && base_id_def < 0
-                && !(bit_at(x_def, y_def) & BIT_AIRBASE)
-                && !stack_check(veh_id_def, 6, ABL_CARRIER, -1, -1)
-                && !is_proto_missile(proto_id_def) && !is_missile(veh_id_atk)) {
-                def_modifier += 0x80000;
-            } else if (check_artillery) {
-                if (can_arty(proto_id_def, true)) {
-                    def_modifier += 0x80000;
-                }
-            } else if ((!stack_check(veh_id_def, 3, TRIAD_AIR, -1, -1) || base_id_def >= 0
-                || bit_at(x_def, y_def) & BIT_AIRBASE
-                || stack_check(veh_id_def, 6, ABL_CARRIER, -1, -1))
-                && Vehs[i].state & VSTATE_DESIGNATE_DEFENDER) {
-                def_modifier += 0x80000;
             }
-            int defense = i + (def_modifier << 11);
-            if (defense > defender_search) {
-                defender_search = defense;
-                best_def_veh_id = i;
-            }
+        } else if ((!stack_check(veh_id_def, 3, TRIAD_AIR, -1, -1) || base_id_def >= 0
+            || bit_at(x_def, y_def) & BIT_AIRBASE
+            || stack_check(veh_id_def, 6, ABL_CARRIER, -1, -1))
+            && Vehs[veh_id_def].state & VSTATE_DESIGNATE_DEFENDER) {
+            def_modifier += 0x80000;
+        }
+        int defense = veh_id_def + (def_modifier << 11);
+        if (defense > defender_search) {
+            defender_search = defense;
+            best_def_veh_id = veh_id_def;
         }
     }
     return best_def_veh_id;
@@ -2106,12 +2052,11 @@ int __cdecl battle_kill(int vehicle_id, int *attacker_count_out,
     PlayersData[faction_id].proto_id_lost[Vehs[vehicle_id].proto_id]++;
 
     if (killer_id >= 0 && killer_id != vehicle_id && Vehs[killer_id].faction_id > 0) {
-        const int y = Vehs[killer_id].y;
-        const int x = Vehs[killer_id].x;
-        if (on_map(x, y)
+        if (on_map(Vehs[killer_id].x, Vehs[killer_id].y)
             && VehPrototypes[Vehs[vehicle_id].proto_id].plan == PLAN_ALIEN_ARTIFACT
             && !Chassis[VehPrototypes[Vehs[killer_id].proto_id].chassis_id].missile
-            && (!is_ocean(x, y) || stack_check(killer_id, 8, -1, -1, -1) > 0
+            && (!is_ocean(Vehs[killer_id].x, Vehs[killer_id].y)
+                || stack_check(killer_id, 8, -1, -1, -1) > 0
                 || Vehs[vehicle_id].flags & 0x20)) {
             // An artifact is captured, not destroyed.
             veh_lift(vehicle_id);
@@ -2404,11 +2349,6 @@ void __cdecl invasions(int base_id) {
     }
 }
 
-// Inlined: the doubled vector_dist halved once.
-static inline int patrol_dist(int x_a, int y_a, int x_b, int y_b) {
-    return (x_dist(x_a, x_b) + abs(y_a - y_b)) >> 1;
-}
-
 // ORIGINAL: 0x00506650 ?interceptor@@YAHHHHH@Z 0x00506650-0x00506A53
 // RECOVERY_BINDING: v1 {"evidence": ["git:99d6e72bcd5ae3be3566222736528cb0dc57935c:src/unrecovered/00506650.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json; preserve original extents and historical seed lessons. Ordinary owned literals have pinned content provenance, not exact original data-allocation claims."], "reason": "Recover full interception selection, tie-breaking, callback-bearing presentation and motion through genuine vehicles, rules, base lookup, Console and NetMsg owners."}
 // TRIED: local var/register order (early prologue push/xor order diverges at insn #5); structure and calls match Ghidra decompile faithfully
@@ -2430,11 +2370,13 @@ int __cdecl interceptor(int faction_id, int opposing_faction,
             if (offense >= 1) {
                 weight = offense;
             }
+            // stand-in: a function pointer keeps this range() out of line, as the image calls it.
+            int (__cdecl *const range_fn)(int, int, int) = range;
             const int power = VehPrototypes[proto_id].plan == PLAN_ALIEN_ARTIFACT
-                ? 1 : range(VehPrototypes[proto_id].reactor_id, 1, 100) * 10;
-            const int score = weight * range(power - Vehs[vehicle_id].dmg_incurred, 0, 9999);
-            if (score >= best_score) {
-                best_score = score;
+                ? 1 : range_fn(VehPrototypes[proto_id].reactor_id, 1, 100) * 10;
+            weight *= range(power - Vehs[vehicle_id].dmg_incurred, 0, 9999);
+            if (weight >= best_score) {
+                best_score = weight;
                 best_vehicle = vehicle_id;
             }
         }
@@ -2525,4101 +2467,26 @@ int __cdecl battle_fight(int veh_id, int dir, int mode, int allow_interceptor,
                         odds_out);
 }
 
-// Complete combat-resolution owner for the original 506AF0..50B893 span.
-// Helpers share the original mutable argument/local state and genuine owners.
-// The local [-0x138] model uses a provisional 0xA0 collision-free interval;
-// the original declared extent and malformed-name overflow effects remain
-// unproved. No matching or runtime claim follows from this representation.
-
 #include <stdint.h>
 #include <string.h>
 
 #include "battlewin.h"
 #include "council.h"
 
-// Retained fragment: battle-fight-nerve-cancel-v1.cpp
-// Private typed translation of the cancellation epilogue shared by the two
-// native nerve-gas confirmation branches. Call only when their specific
-// `popp(...)` return is zero. The branch itself is not represented here.
-//
-// Callbacks have already run when this function begins. Deliberately reload
-// NetDaemon timing storage now rather than carrying a pre-popp snapshot.
-static int battle_fight_nerve_gas_cancel(int attacker_id,
-                                         int movement_charge) {
-    g_BattleWin.pulse_timer();
-
-    if ((NetDaemonNet.channels_[0].leading_words_[3] & 2) != 0) {
-        const int8_t signed_charge = static_cast<int8_t>(movement_charge);
-        Vehs[attacker_id].moves_expended = static_cast<uint8_t>(
-            static_cast<int>(Vehs[attacker_id].moves_expended) -
-            static_cast<int>(signed_charge));
-    }
-
-    Vehs[attacker_id].order = 0;
-    Vehs[attacker_id].state &= 0xFCFFBDFFU;
-    ConsoleStatusWin.reset();
-    ConsoleStatusWin.redraw();
-    return 1;
-}
-// Retained fragment: battle-rounds-subagent/battle-fight-precombat-gaps-v4.cpp
-// Corrected private v4 translation of two pre-combat gaps. This supersedes
-// v3 only as a proposed composition source; v3 remains immutable evidence.
-
-// Native 0x507132..0x5073D8. `permission_slot` is mutable native arg [ebp+1c].
-static int battle_fight_nerve_gas_precombat_v4(
-    int attacker_id, int defender_id, int attacker_faction,
-    int defender_faction, int &permission_slot, int &nerve_gas_active) {
-    nerve_gas_active = 0;
-    const int attacker_proto = Vehs[attacker_id].proto_id;
-    const int defender_proto = Vehs[defender_id].proto_id;
-    if (!has_abil(attacker_proto, ABL_NERVE_GAS) ||
-        Weapon[VehPrototypes[attacker_proto].weapon_id].offense_rating < 0 ||
-        Armor[VehPrototypes[defender_proto].armor_id].defense_rating < 0)
-        return 0;
-    if (IsMultiplayerNet &&
-        (NetDaemonNet.channels_[0].leading_words_[3] & 1) == 0)
-        return 0;
-
-    const uint32_t attacker_bit =
-        1u << (static_cast<unsigned>(attacker_faction) & 0x1Fu);
-    const bool attacker_is_human = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & attacker_bit) != 0;
-    Vehs[attacker_id].state &= ~VSTATE_USED_NERVE_GAS;
-    permission_slot = static_cast<int>(Vehs[attacker_id].state);
-
-    // Native 0x5071E1/1E7 enters this prompt only for the local human
-    // attacker. The defender's humanity is deliberately not part of it.
-    if (attacker_faction == ConsoleGlobal.faction_id_ && attacker_is_human) {
-        parse_says(0, VehPrototypes[attacker_proto].veh_name, -1, -1);
-        parse_say(1, Ability[abil_index(ABL_NERVE_GAS)].name, -1, -1);
-        g_BattleWin.stop_timer();
-        if (popp(ScriptPopupFile, "USENERVE", 0, "biohazd_sm.pcx", 0) != 0)
-            Vehs[attacker_id].state |= VSTATE_USED_NERVE_GAS;
-        g_BattleWin.pulse_timer();
-    } else if (!attacker_is_human) {
-        // The native outer routing is local+human => prompt, otherwise route
-        // onward; 0x50728D then explicitly skips policy for remaining humans.
-        // Consequently this AI policy subblock executes iff attacker is AI.
-        const bool defender_is_human =
-            (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << (static_cast<unsigned>(defender_faction) &
-                                     0x1Fu))) != 0;
-        const uint32_t relation =
-            PlayersData[attacker_faction].diplo_treaties[defender_faction];
-        if ((relation & DTREATY_ATROCITY_VICTIM) != 0 ||
-            (PlayersData[attacker_faction].flags &
-             PFLAG_COMMIT_ATROCIT_WANTONLY) != 0 ||
-            (defender_is_human &&
-             GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_UN_CHARTER] >
-                 GameDataStateStorage.fields_.council_resolution_count_[PROP_REINSTATE_UN_CHARTER])) {
-            Vehs[attacker_id].state |= VSTATE_USED_NERVE_GAS;
-        } else if (defender_is_human &&
-                   (relation & DTREATY_WANT_REVENGE) != 0) {
-            int rivalry_adjustment = 0;
-            if ((GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY) != 0 &&
-                (PlayersData[attacker_faction].ranking <
-                     PlayersData[defender_faction].ranking ||
-                 PlayersData[attacker_faction].diplo_unk4[defender_faction] <
-                     PlayersData[defender_faction].diplo_unk4[attacker_faction])) {
-                rivalry_adjustment = (PlayersData[attacker_faction].ai_fight + 1) * 3;
-            }
-            if (PlayersData[defender_faction].integrity_blemishes +
-                    rivalry_adjustment >= 6) {
-                Vehs[attacker_id].state =
-                    static_cast<uint32_t>(permission_slot) | VSTATE_USED_NERVE_GAS;
-            }
-        }
-    }
-
-    if (IsMultiplayerNet) synch_veh(attacker_id);
-    if ((NetDaemonNet.channels_[0].leading_words_[3] & 2) != 0 &&
-        (Vehs[attacker_id].state & VSTATE_USED_NERVE_GAS) != 0)
-        nerve_gas_active = 1;
-    return 1;
-}
-
-// Native 0x50752A..0x5077D6; identical to the disassembly-validated v3
-// translation. Caller supplies the enclosing local, initialized to zero.
-static bool battle_fight_precombat_diplomacy_v4(
-    int attacker_id, int defender_id, int attacker_faction,
-    int defender_faction, int &diplomacy_report_mode) {
-    Vehs[attacker_id].state |= VSTATE_UNK_40;
-    if (VehPrototypes[Vehs[attacker_id].proto_id].plan == PLAN_INFO_WARFARE ||
-        VehPrototypes[Vehs[defender_id].proto_id].plan == PLAN_ALIEN_ARTIFACT)
-        return false;
-
-    const uint32_t defender_human_bit =
-        1u << (static_cast<unsigned>(defender_faction) & 0x1Fu);
-    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & defender_human_bit) != 0) {
-        const uint32_t attacker_to_defender =
-            PlayersData[attacker_faction].diplo_treaties[defender_faction];
-        const uint32_t defender_to_attacker =
-            PlayersData[defender_faction].diplo_treaties[attacker_faction];
-        const bool notify =
-            (attacker_to_defender & (DTREATY_TREATY | DTREATY_TRUCE)) != 0 ||
-            ((attacker_to_defender & DTREATY_COMMLINK) == 0 &&
-             (defender_to_attacker & DTREATY_UNK_800) != 0 &&
-             (attacker_to_defender & DTREATY_VENDETTA) == 0);
-        if (notify) {
-            if (defender_faction == ConsoleGlobal.faction_id_) {
-                GenderDefault = Players[attacker_faction].is_leader_female;
-                PluralityDefault = 0;
-                parse_says(0, Players[attacker_faction].title_leader, -1, -1);
-                GenderDefault = Players[attacker_faction].is_leader_female;
-                PluralityDefault = 0;
-                parse_says(1, Players[attacker_faction].name_leader, -1, -1);
-                GenderDefault = Players[attacker_faction].noun_gender;
-                PluralityDefault = Players[attacker_faction].is_noun_plural;
-                parse_says(2, Players[attacker_faction].noun_faction, -1, -1);
-                NetMsgPrimary.pop("PACTATTACKING", -5000, 0, 0);
-            } else if (IsMultiplayerPBEM) {
-                GenderDefault = Players[attacker_faction].is_leader_female;
-                PluralityDefault = 0;
-                parse_says(0, Players[attacker_faction].title_leader, -1, -1);
-                GenderDefault = Players[attacker_faction].is_leader_female;
-                PluralityDefault = 0;
-                parse_says(1, Players[attacker_faction].name_leader, -1, -1);
-                GenderDefault = Players[attacker_faction].noun_gender;
-                PluralityDefault = Players[attacker_faction].is_noun_plural;
-                parse_says(2, Players[attacker_faction].noun_faction, -1, -1);
-                POP2("PACTATTACKED", 0, -1 - defender_faction);
-            }
-            PlayersData[attacker_faction].diplo_spoke[defender_faction] =
-                GameDataStateStorage.fields_.turn_current_num_;
-        }
-        return true;
-    }
-
-    const bool treaty =
-        ((PlayersData[defender_faction].diplo_treaties[attacker_faction] |
-          PlayersData[attacker_faction].diplo_treaties[defender_faction]) &
-         DTREATY_TREATY) != 0;
-    const int local_faction = ConsoleGlobal.faction_id_;
-    if (treaty && attacker_faction != local_faction &&
-        defender_faction != local_faction) {
-        if ((PlayersData[local_faction].diplo_treaties[defender_faction] &
-             DTREATY_PACT) != 0) {
-            diplomacy_report_mode = 2;
-        } else if ((PlayersData[local_faction].diplo_treaties[attacker_faction] &
-                    DTREATY_PACT) != 0) {
-            diplomacy_report_mode = 3;
-        } else if ((GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0) {
-            diplomacy_report_mode = 1;
-        }
-    }
-    return true;
-}
-// Retained fragment: battle-rounds-subagent/battle-fight-precombat-v2.cpp
-// Private, body-ready C++ blocks for battle_fight pre-combat transaction.
-// This packet owns only the explicitly bounded native blocks listed below;
-// it does not claim to fill every edge from 0x507132 through 0x50835D.
-
-// Native 0x5073D8..0x50752A, ordinary flags/movement charge block.
-// Inputs correspond to live enclosing locals: target_base_id [-0x20],
-// movement_charge [-0x24], source_mode [+0x18], and attacker combat
-// strength [-0x14]. Attacker combat is a reference
-// because the native writes attacker combat strength in place.
-static int battle_fight_precombat_commit_v2(
-    int attacker_id, int defender_id, int attacker_faction,
-    int target_base_id, int movement_charge,
-    int source_mode, int &attacker_combat) {
-    if (target_base_id >= 0) {
-        Vehs[attacker_id].state &= ~VSTATE_UNK_40000;
-    }
-
-    // 0x5073EF..0x5074DA. 0x93E904 is the existing
-    // NetDaemonNet.lock_state_[1].leading_words_[3] member (netdaemon.cpp's
-    // address/layout notes), not a new global alias.
-    if ((Vehs[attacker_id].state & VSTATE_UNK_1000) == 0 &&
-        (NetDaemonNet.channels_[0].leading_words_[3] & 2) != 0) {
-        if (attacker_faction != 0 &&
-            VehPrototypes[Vehs[attacker_id].proto_id].plan != 15 &&
-            VehPrototypes[Vehs[attacker_id].proto_id].plan !=
-                PLAN_COLONIZATION) {
-            int remaining_moves = range(
-                speed(attacker_id, 0) - Vehs[attacker_id].moves_expended,
-                0, 999);
-            if (Rules.move_rate_roads >= 0) {
-                if (remaining_moves > Rules.move_rate_roads)
-                    remaining_moves = Rules.move_rate_roads;
-            } else {
-                remaining_moves = 0;
-            }
-
-            // Preserve native two IDIVs, signed intermediate arithmetic and
-            // unguarded denominator: no new zero-rate policy is invented.
-            attacker_combat =
-                (remaining_moves * attacker_combat) / Rules.move_rate_roads;
-            const int modifier =
-                ((remaining_moves - Rules.move_rate_roads) * 100) /
-                Rules.move_rate_roads;
-            if (modifier != 0 && VehBattleModCount[0] <= 3)
-                add_bat(0, modifier, label_get(0x153));
-        }
-
-        if (source_mode != 1) {
-            Vehs[attacker_id].moves_expended = static_cast<uint8_t>(
-                static_cast<unsigned int>(Vehs[attacker_id].moves_expended) +
-                static_cast<unsigned int>(movement_charge));
-        }
-    }
-
-    // Native reloads both vehicle state words after the intervening calls.
-    Vehs[attacker_id].state =
-        (Vehs[attacker_id].state & ~VSTATE_UNK_1000) | VSTATE_UNK_4;
-    Vehs[defender_id].state |= VSTATE_UNK_4;
-    if ((NetDaemonNet.channels_[0].leading_words_[3] & 2) == 0)
-        return 0; // exact native early return at 0x507521
-    Vehs[attacker_id].state |= VSTATE_UNK_40;
-    return 1; // fall-through to 0x50752A
-}
-
-// Native 0x5077D6..0x5078DC act-of-aggression call and territory-pact sweep.
-// All treaty_on and cause_friction calls are retained in native order, with
-// the relation reread after treaty mutation.
-static void battle_fight_territory_pact_sweep_v2(
-    int attacker_faction, int defender_faction, int target_x, int target_y) {
-    act_of_aggression(attacker_faction, defender_faction);
-    Map *const target = map_loc(target_x, target_y);
-    for (int candidate = 1; candidate < MaxPlayerNum; ++candidate) {
-        if (candidate == attacker_faction || candidate == defender_faction)
-            continue;
-        if (target->territory != candidate) continue;
-        if ((PlayersData[attacker_faction].diplo_treaties[candidate] &
-             DTREATY_PACT) == 0) continue;
-
-        const uint32_t defender_view =
-            PlayersData[defender_faction].diplo_treaties[candidate];
-        if ((defender_view & DTREATY_VENDETTA) != 0 ||
-            (defender_view & DTREATY_COMMLINK) == 0) continue;
-        if (PlayersData[defender_faction].mil_strength_1 <=
-            PlayersData[candidate].mil_strength_1) continue;
-
-        treaty_on(candidate, defender_faction, DTREATY_WANT_TO_TALK);
-        if ((PlayersData[candidate].diplo_treaties[defender_faction] &
-             0x00800000u) != 0)
-            cause_friction(defender_faction, candidate, 3);
-    }
-}
-// Retained fragment: battle-rounds-subagent/battle-fight-preprompt-residual-v3.cpp
-// Private typed residual fragments for battle_fight. These keep the native
-// local boundary explicit; they are not a complete battle_fight body.
-
-static int32_t battle_fight_wrap_mul_residual_v2(int32_t left, int32_t right) {
-    const uint32_t bits = static_cast<uint32_t>(left) *
-                          static_cast<uint32_t>(right);
-    if (bits <= 0x7FFFFFFFu) return static_cast<int32_t>(bits);
-    return -1 - static_cast<int32_t>(0xFFFFFFFFu - bits);
-}
-
-static int battle_fight_ceil_half_residual_v2(int value) {
-    const int quotient = value / 2;
-    return quotient + ((value % 2) > 0 ? 1 : 0);
-}
-
-// Native 0x5078DC..0x5080FC. Result values describe the exact continuation:
-// 0 => leave live pressure products for 0x5080FC reduction;
-// 1 => native returned 1 after declining a confirmation;
-// 2 => native branched directly to 0x50835D (caller resumes that shared tail).
-// `*_remaining_power` and `*_power_factor` are the already-populated locals
-// [-0x60], [-0x68], [-0x5c], [-0x70]; their native order is retained below.
-static int battle_fight_pre_prompt_residual_v2(
-    int attacker_id, int defender_id,
-    int attacker_faction, int defender_faction,
-    int x_coord, int y_coord, int source_mode,
-    int target_base_id, int combat_type, int interceptor_result,
-    int movement_charge, int &attacker_combat, int &defender_combat,
-    int attacker_remaining_power, int attacker_power_factor,
-    int defender_remaining_power, int defender_power_factor,
-    int nerve_gas_active, int &local_base_context,
-    int &attacker_power_product, int &defender_power_product,
-    int *attacker_proto_snapshot_out = 0,
-    int *defender_proto_snapshot_out = 0) {
-    if (nerve_gas_active != 0) {
-        attacker_combat += attacker_combat / 2;
-        if (VehBattleModCount[0] <= 3)
-            add_bat(0, 50, label_get(0x155));
-    }
-
-    if (IsMultiplayerNet)
-        log_say("Battle Resolution!", attacker_id, combat_type, 0);
-
-    const int attacker_proto = Vehs[attacker_id].proto_id;
-    const int defender_proto = Vehs[defender_id].proto_id;
-    if (attacker_proto_snapshot_out != 0)
-        *attacker_proto_snapshot_out = attacker_proto;
-    if (defender_proto_snapshot_out != 0)
-        *defender_proto_snapshot_out = defender_proto;
-    const int attacker_chassis = VehPrototypes[attacker_proto].chassis_id;
-    const int defender_chassis = VehPrototypes[defender_proto].chassis_id;
-    const uint32_t attacker_bit =
-        1u << (static_cast<unsigned>(attacker_faction) & 0x1Fu);
-    const uint32_t defender_bit =
-        1u << (static_cast<unsigned>(defender_faction) & 0x1Fu);
-    const bool attacker_is_human = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & attacker_bit) != 0;
-    const bool defender_is_human = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & defender_bit) != 0;
-    const int difficulty_floor = attacker_faction == 0 ? 3 : 2;
-
-    // Native's two asymmetric human-vs-AI difficulty corrections.
-    if (PlayersData[defender_faction].diff_level < difficulty_floor &&
-        attacker_is_human && !defender_is_human) {
-        const int numerator =
-            (PlayersData[defender_faction].diff_level + 1) * attacker_combat;
-        attacker_combat = (numerator + 3) / 4;
-    }
-    if (PlayersData[attacker_faction].diff_level < difficulty_floor &&
-        attacker_is_human && !defender_is_human) {
-        const int numerator =
-            (4 - PlayersData[attacker_faction].diff_level) * attacker_combat;
-        attacker_combat = battle_fight_ceil_half_residual_v2(numerator);
-    }
-
-    // Player-0's terrainformer-defense rule, visibility split, and local-base
-    // consequences. Local faction 0 is the native alien faction, not UI local.
-    if (attacker_faction == 0) {
-        if (!defender_is_human) {
-            if (VehPrototypes[defender_proto].plan != PLAN_TERRAFORMING) {
-                attacker_combat =
-                    ((PlayersData[defender_faction].diff_level + 8) *
-                     attacker_combat) / 16;
-            } else {
-                attacker_combat /= 2;
-                const uint32_t local_bit =
-                    1u << (static_cast<unsigned>(ConsoleGlobal.faction_id_) & 0x1Fu);
-                const uint16_t defender_stack_state = static_cast<uint16_t>(
-                    Vehs[defender_id].next_veh_id_stack);
-                if ((GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) == 0 &&
-                    !IsMultiplayerNet &&
-                    !(defender_faction == ConsoleGlobal.faction_id_ &&
-                      (defender_stack_state & 0x440u) != 0x440u) &&
-                    (Vehs[defender_id].visibility & local_bit) == 0)
-                    attacker_combat /= 2;
-            }
-        }
-
-        if (target_base_id >= 0) {
-            if (defender_faction == ConsoleGlobal.faction_id_)
-                local_base_context = 1;
-            if (PlayersData[defender_faction].current_num_bases <= 1)
-                attacker_combat /= 2;
-            if (GameDataStateStorage.fields_.turn_current_num_ <= 0x31) attacker_combat /= 2;
-            int bit_offset = 0;
-            int bit_mask = 0;
-            bitmask(1, &bit_offset, &bit_mask);
-            (void)bit_offset;
-            if ((Bases[target_base_id].intake_2[RSC_PSI] & bit_mask) != 0 &&
-                PlayersData[defender_faction].current_num_bases <= 3)
-                attacker_combat /= 2;
-        }
-    }
-
-    if (GameDataStateStorage.fields_.turn_current_num_ < 0x0F) {
-        if (attacker_faction == 0) attacker_combat /= 3;
-        if (defender_faction == 0) defender_combat /= 2;
-    }
-    if (target_base_id >= 0 && Chassis[attacker_chassis].triad == TRIAD_AIR)
-        Bases[target_base_id].state |= BSTATE_UNK_100000;
-
-    // This is the native human/local/no-interceptor status presentation gate.
-    const bool odds_prompt_gate =
-        (NetDaemonNet.channels_[0].leading_words_[3] & 1) != 0 &&
-        interceptor_result == 0 && attacker_is_human &&
-        attacker_faction == ConsoleGlobal.faction_id_ && source_mode == 0 &&
-        Chassis[attacker_chassis].missile == 0 &&
-        (Vehs[attacker_id].state & (VSTATE_UNK_200 | VSTATE_EXPLORE)) == 0;
-
-    attacker_power_product = battle_fight_wrap_mul_residual_v2(
-        battle_fight_wrap_mul_residual_v2(attacker_remaining_power,
-                                          attacker_power_factor),
-        attacker_combat);
-    defender_power_product = battle_fight_wrap_mul_residual_v2(
-        battle_fight_wrap_mul_residual_v2(defender_remaining_power,
-                                          defender_power_factor),
-        defender_combat);
-
-    // Native jumps directly to 0x507E7E when twice attack pressure reaches
-    // defense pressure. The opposing edge first draws the battle view and
-    // offers the BADIDEA abort confirmation.
-    if (!odds_prompt_gate ||
-        battle_fight_wrap_mul_residual_v2(attacker_power_product, 2) <
-            defender_power_product) {
-        if (odds_prompt_gate) {
-            g_BattleWin.set_iface_mode();
-            g_BattleWin.clear();
-            ConsoleStatusWin.draw(attacker_id, combat_type,
-                                  attacker_combat, defender_combat, 0);
-            // Native writes ConsoleStatusWin +0x15D4 immediately after draw.
-            ConsoleStatusWin.set_field_15D4(1);
-
-            GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
-            PluralityDefault = 0;
-            parse_says(0, Players[ConsoleGlobal.faction_id_].title_leader,
-                       -1, -1);
-            parse_says(1, Players[ConsoleGlobal.faction_id_].name_leader,
-                       -1, -1);
-
-            const bool attacker_is_local =
-                attacker_faction == ConsoleGlobal.faction_id_;
-            const bool defender_is_local =
-                defender_faction == ConsoleGlobal.faction_id_;
-            if ((attacker_is_local || defender_is_local) && !IsMultiplayerNet &&
-                (get_offense_rating(attacker_id) < 0 ||
-                 get_defense_rating(defender_id) < 0) &&
-                tut_check2(2) != 0) {
-                TutorialWindow.tut_map("PSICOMBAT", x_coord, y_coord,
-                                       attacker_is_local ? attacker_id : combat_type,
-                                       0, 1, -1, -1);
-            }
-
-            g_BattleWin.stop_timer();
-            const int popup_result =
-                popp(ScriptPopupFile, "BADIDEA", 0, "hasty_sm.pcx", 0);
-            if (popup_result == 0)
-                return battle_fight_nerve_gas_cancel(attacker_id,
-                                                      movement_charge);
-            g_BattleWin.pulse_timer();
-            return 2; // accepted BADIDEA popup, native edge to 0x50835D
-        }
-        return 2; // no status gate: native's outer caller continues at 0x50835D
-    }
-
-    // Strength-report preference branch: build the two display strings and
-    // leave their power products at the exact 0x5080FC reducer boundary.
-    if ((GameDataStateStorage.fields_.game_more_preferences_ & MPREF_ADV_CONFIRM_ODDS_BF_ATTACKING) == 0)
-        return 2; // native branch 0x507E86 -> 0x50835D
-
-    g_BattleWin.set_iface_mode();
-    g_BattleWin.clear();
-    ConsoleStatusWin.draw(attacker_id, combat_type,
-                          attacker_combat, defender_combat, 0);
-    // Native writes ConsoleStatusWin +0x15D4 immediately after draw.
-    ConsoleStatusWin.set_field_15D4(1);
-    GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
-    PluralityDefault = 0;
-    parse_says(0, Players[ConsoleGlobal.faction_id_].title_leader, -1, -1);
-    parse_says(1, Players[ConsoleGlobal.faction_id_].name_leader, -1, -1);
-
-    StringTemp[0] = '\0';
-    say_num(attacker_combat >> 8);
-    says(".");
-    say_num(((attacker_combat & 0xFF) * 10) >> 8);
-    parse_says(2, StringTemp, -1, -1);
-    StringTemp[0] = '\0';
-    say_num(defender_combat >> 8);
-    says(".");
-    say_num(((defender_combat & 0xFF) * 10) >> 8);
-    parse_says(3, StringTemp, -1, -1);
-    return 0; // native falls into the 0x5080FC paired-product reducer
-}
-
-// Native 0x5082A2..0x50835D consumes the two reduced products produced by the
-// paired reduction boundary. Return 1 means the caller must return 1 now;
-// return 0 means the confirmation was accepted and execution joins at 835D.
-static int battle_fight_strength_prompt_residual_v2(
-    int attacker_id, int defender_id, int movement_charge,
-    int attacker_power_product, int defender_power_product) {
-    g_BattleWin.stop_timer();
-    parse_num(0, attacker_power_product);
-    parse_num(1, defender_power_product);
-
-    const char *prompt =
-        (Vehs[attacker_id].dmg_incurred != 0 ||
-         Vehs[defender_id].dmg_incurred != 0)
-            ? "GOODIDEA2" : "GOODIDEA";
-    if (popp(ScriptPopupFile, prompt, 0, "hasty_sm.pcx", 0) != 0) {
-        g_BattleWin.pulse_timer(); // native 0x508358, then join 0x50835D
-    return 0;
-}
-    // Decline: reload the multiplayer slot after popp's callback, then apply
-    // the low-byte signed movement rollback and exact state/order cleanup.
-    g_BattleWin.pulse_timer();
-    if ((NetDaemonNet.channels_[0].leading_words_[3] & 2) != 0) {
-        const int8_t signed_charge = static_cast<int8_t>(movement_charge);
-        Vehs[attacker_id].moves_expended = static_cast<uint8_t>(
-            static_cast<int>(Vehs[attacker_id].moves_expended) -
-            static_cast<int>(signed_charge));
-    }
-    Vehs[attacker_id].order = 0;
-    Vehs[attacker_id].state &= ~(VSTATE_UNK_200 | VSTATE_EXPLORE |
-                                  VSTATE_UNK_1000000 | VSTATE_UNK_2000000);
-    ConsoleStatusWin.reset();
-    ConsoleStatusWin.redraw();
-    return 1; // native return 1 at 0x50834C..57
-}
-
-// Retained fragment: battle-capture-subagent/battle-fight-strength-pair-reduction-v5.cpp
-// Corrected immutable source fragment for native 0x005080FC..0x005082A2.
-// The values are the live paired strength products in native ESI/EDI at the
-// first common-divisor test. Native repeatedly removes a shared divisor,
-// then independently applies paired magnitude reductions. Both references
-// are output locals consumed by the continuation after 0x5082A2.
-static void battle_fight_reduce_strength_pair_v5(
-    int &attacker_strength_product, int &defender_strength_product) {
-    int common_divisor = 2;
-    for (;;) {
-        const int smaller = attacker_strength_product < defender_strength_product
-                          ? attacker_strength_product
-                          : defender_strength_product;
-        if (common_divisor >= smaller) break;
-        if (attacker_strength_product == 0 ||
-            defender_strength_product == 0 ||
-            attacker_strength_product % common_divisor != 0 ||
-            defender_strength_product % common_divisor != 0) {
-            ++common_divisor;
-            continue;
-        }
-
-        attacker_strength_product /= common_divisor;
-        defender_strength_product /= common_divisor;
-        if (attacker_strength_product != 0) continue;
-        ++common_divisor;
-    }
-
-    // Exact paired thresholds/divisors from pinned Kuna native-source lines
-    // 137126..137142. These source-confirmed divisors correct v4's five
-    // mistaken entries (the 20000/10000 stage was already correct).
-    while (attacker_strength_product >= 20000 &&
-           defender_strength_product >= 20000) {
-        attacker_strength_product /= 10000;
-        defender_strength_product /= 10000;
-    }
-    while (attacker_strength_product >= 10000 &&
-           defender_strength_product >= 10000) {
-        attacker_strength_product /= 5000;
-        defender_strength_product /= 5000;
-    }
-    while (attacker_strength_product >= 2000 &&
-           defender_strength_product >= 2000) {
-        attacker_strength_product /= 1000;
-        defender_strength_product /= 1000;
-    }
-    while (attacker_strength_product >= 1000 &&
-           defender_strength_product >= 1000) {
-        attacker_strength_product /= 500;
-        defender_strength_product /= 500;
-    }
-    while (attacker_strength_product >= 200 &&
-           defender_strength_product >= 200) {
-        attacker_strength_product /= 100;
-        defender_strength_product /= 100;
-    }
-    while (attacker_strength_product >= 100 &&
-           defender_strength_product >= 100) {
-        attacker_strength_product /= 50;
-        defender_strength_product /= 50;
-    }
-}
-// Retained fragment: battle-fight-artillery-roll-v2.cpp
-// Immutable v2 of the 50856C..50876A typed roll fragment. Unlike v1, this
-// returns the native minimum-survivor threshold because the following
-// animation decision compares the defender's pre-hit damage against it.
-struct BattleFightArtilleryRoll {
-    int damage;
-    int minimum_remaining;
-};
-
-static BattleFightArtilleryRoll battle_fight_artillery_roll_v2(
-    int defender_id, int x_coord, int y_coord, int attacker_offense,
-    int defender_defense, int target_base_id) {
-    int denominator = Rules.artillery_dmg_denom *
-                      defender_defense;
-    if (denominator < 1) denominator = 1;
-    else if (denominator > 9999999) denominator = 9999999;
-
-    int damage = Rules.artillery_dmg_num *
-                 attacker_offense / denominator + 1;
-    if (damage < 1) damage = 1;
-    else if (damage > 999) damage = 999;
-    if (damage != 1) damage = std::rand() % damage;
-    else damage = 0;
-
-    const VehPrototype &proto = VehPrototypes[Vehs[defender_id].proto_id];
-    const int chassis_id = proto.chassis_id;
-    const Map &tile = *map_loc(x_coord, y_coord);
-    int maximum_damage_percent;
-    if (target_base_id >= 0 || (tile.bit & 0x800u) != 0) {
-        maximum_damage_percent = static_cast<int>(
-            Rules.max_pct_dmg_art_vs_unit_base_bnkr);
-    } else if (Chassis[chassis_id].triad != TRIAD_LAND) {
-        maximum_damage_percent = static_cast<int>(
-            Rules.max_pct_dmg_art_vs_units_sea);
-    } else {
-        maximum_damage_percent = static_cast<int>(
-            Rules.max_pct_dmg_art_vs_units_open);
-    }
-
-    int minimum_remaining;
-    if (target_base_id >= 0 || (tile.bit & 0x800u) != 0) {
-        const int hp = proto.plan == PLAN_ALIEN_ARTIFACT
-                     ? 1 : range(static_cast<int>(proto.reactor_id), 1, 100) * 10;
-        minimum_remaining =
-            ((100 - maximum_damage_percent) * hp + 99) / 100;
-    } else if (proto.plan == PLAN_ALIEN_ARTIFACT) {
-        minimum_remaining = (199 - maximum_damage_percent) / 100;
-    } else if (proto.reactor_id > 100) {
-        minimum_remaining =
-            ((100 - maximum_damage_percent) * 1000 + 99) / 100;
-    } else {
-        const int hp = range(static_cast<int>(proto.reactor_id), 1, 100) * 10;
-        minimum_remaining =
-            ((100 - maximum_damage_percent) * hp + 99) / 100;
-    }
-
-    int remaining = static_cast<int>(proto.plan == PLAN_ALIEN_ARTIFACT
-        ? 1 : range(static_cast<int>(proto.reactor_id), 1, 100) * 10) -
-        Vehs[defender_id].dmg_incurred;
-    if (remaining < 0) remaining = 0;
-    else if (remaining > 9999) remaining = 9999;
-    while (damage > 0 && remaining - damage < minimum_remaining) --damage;
-
-    BattleFightArtilleryRoll result;
-    result.damage = damage;
-    result.minimum_remaining = minimum_remaining;
-    return result;
-}
-// Retained fragment: battle-fight-artillery-cleanup-v1.cpp
-// Private typed translation of the source-mode artillery cleanup at native
-// 5087E0..508B4F. This intentionally takes the original faction/base inputs:
-// stack-kill callbacks can mutate the vehicles and the target stack is
-// reacquired after every kill, as in the executable.
-static int battle_fight_artillery_cleanup(int target_x,
-                                          int target_y,
-                                          int attacker_faction,
-                                          int defender_faction,
-                                          int target_base_id) {
-    int vehicle_id = stack_fix(veh_at(target_x, target_y));
-    while (vehicle_id >= 0) {
-        const int proto_id = Vehs[vehicle_id].proto_id;
-        const VehPrototype &proto = VehPrototypes[proto_id];
-        const int hit_points = proto.plan == PLAN_ALIEN_ARTIFACT
-                             ? 1
-                             : range(static_cast<int>(proto.reactor_id),
-                                     1, 100) * 10;
-        const int remaining = hit_points - Vehs[vehicle_id].dmg_incurred;
-        if (remaining > 0) {
-            vehicle_id = Vehs[vehicle_id].next_veh_id_stack;
-            continue;
-        }
-
-        stack_veh(vehicle_id, 2);
-        stack_kill(vehicle_id);
-        vehicle_id = stack_fix(veh_at(target_x, target_y));
-        ++PlayersData[attacker_faction].diplo_unk3[defender_faction];
-        ++PlayersData[attacker_faction].diplo_unk4[defender_faction];
-    }
-
-    draw_tile_fixup(target_x, target_y, 1, 2);
-    if (target_base_id >= 0 &&
-        (GameDataStateStorage.fields_.lock_masks_.enable_mask_ &
-         (1u << (static_cast<unsigned>(defender_faction) & 0x1Fu))) == 0) {
-        base_reset(target_base_id, 0);
-    }
-    return 0;
-}
-// Retained fragment: battle-fight-artillery-mode-v1.cpp
-// Private typed translation of the native source-mode (combat_type == 1)
-// stack transaction, 0x50835D..0x508B4F. It is still an insertion helper,
-// not a complete battle_fight body. The parent body must pass its captured
-// source coordinates, best defender, target base and report predicate, and
-// the real StatusWin accessor for its +0x15D4 write.
-//
-// This helper preserves live stack links and the callback ordering. In
-// particular it reads the next vehicle after the UI callbacks and reacquires
-// the complete target stack after each kill.
-static bool battle_fight_should_show_artillery(int attacker_id,
-                                                int defender_id,
-                                                int attacker_faction,
-                                                int defender_faction) {
-    const int local_faction = ConsoleGlobal.faction_id_;
-    bool show = attacker_faction == local_faction ||
-                defender_faction == local_faction ||
-                (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0;
-    const uint32_t local_bit =
-        1u << (static_cast<unsigned>(local_faction) & 0x1Fu);
-    const bool attacker_is_locally_visible =
-        (Vehs[attacker_id].visibility & local_bit) != 0;
-    const bool defender_is_locally_visible =
-        (Vehs[defender_id].visibility & local_bit) != 0;
-    const bool any_relevant_unit_seen =
-        (attacker_faction == local_faction &&
-        (Vehs[attacker_id].flags & 0x440u) != 0x440u) ||
-        attacker_is_locally_visible ||
-        (defender_faction == local_faction &&
-         (Vehs[defender_id].flags & 0x440u) != 0x440u) ||
-        defender_is_locally_visible;
-    const uint32_t local_to_attacker =
-        PlayersData[local_faction].diplo_treaties[attacker_faction];
-    const bool visibility_preference = (local_to_attacker & 1u) != 0
-                                     ? (GameDataStateStorage.fields_.game_preferences_ & 0x8000u) != 0
-                                     : (GameDataStateStorage.fields_.game_preferences_ & 4u) != 0;
-    if (visibility_preference) show = show || any_relevant_unit_seen;
-    return show;
-}
-
-static int battle_fight_source_mode(int attacker_id,
-                                   int selected_defender_id,
-                                   int attacker_faction,
-                                   int defender_faction,
-                                   int target_x,
-                                   int target_y,
-                                   int source_x,
-                                   int source_y,
-                                   int target_base_id) {
-    const bool show_report = battle_fight_should_show_artillery(
-        attacker_id, selected_defender_id, attacker_faction, defender_faction);
-    add_goal(defender_faction, 0x10, 4, target_x, target_y, -1);
-    add_goal(defender_faction, 0, 4, source_x, source_y, -1);
-    if (target_base_id >= 0) {
-        Bases[target_base_id].state |= BSTATE_UNK_200000;
-        Bases[target_base_id].event |= BEVENT_UNK_100;
-    }
-
-    int first_defender = selected_defender_id;
-    while (first_defender >= 0 &&
-           Vehs[first_defender].prev_veh_id_stack >= 0) {
-        first_defender = Vehs[first_defender].prev_veh_id_stack;
-    }
-
-    int defender_id = first_defender;
-    while (defender_id >= 0) {
-        const int defender_proto_id = Vehs[defender_id].proto_id;
-        const int attacker_proto_id = Vehs[attacker_id].proto_id;
-        const Map &target_tile = *map_loc(target_x, target_y);
-        const bool may_be_hit =
-            Chassis[VehPrototypes[defender_proto_id].chassis_id].triad !=
-                TRIAD_AIR ||
-            has_abil(attacker_proto_id, ABL_AIR_SUPERIORITY) ||
-            target_base_id >= 0 || (target_tile.bit & 0x40000u) != 0;
-
-        if (may_be_hit) {
-            veh_skip(attacker_id);
-            int attacker_offense;
-            int defender_defense;
-            battle_compute(attacker_id, defender_id, &attacker_offense,
-                           &defender_defense, 1);
-            const BattleFightArtilleryRoll roll =
-                battle_fight_artillery_roll_v2(
-                    defender_id, target_x, target_y, attacker_offense,
-                    defender_defense, target_base_id);
-
-            int boom_after_hit = 0;
-            if (show_report) {
-                VehDrawSelection689F2C = defender_id;
-                Vehs[attacker_id].visibility |= static_cast<uint8_t>(
-                    1u << (static_cast<unsigned>(defender_faction) & 0x1Fu));
-                VehDrawSelection689F28 = attacker_id;
-                if (ConsoleGlobal.focus(target_x, target_y,
-                                        attacker_faction) == 0) {
-                    draw_tile(source_x, source_y, 2);
-                    draw_tile(target_x, target_y, 2);
-                }
-                g_BattleWin.set_iface_mode();
-                g_BattleWin.clear();
-                ConsoleStatusWin.draw(attacker_id, defender_id,
-                                      attacker_offense, defender_defense, 1);
-                // Pinned 0x50888F writes the StatusWin member, not local -0x88.
-                ConsoleStatusWin.set_field_15D4(1);
-                flush_input();
-
-                const Veh &target_before_damage = Vehs[defender_id];
-                if (roll.minimum_remaining == 0 ||
-                    target_before_damage.dmg_incurred !=
-                        roll.minimum_remaining ||
-                    target_before_damage.next_veh_id_stack < 0) {
-                    boom(target_x, target_y, 0);
-                    boom_after_hit = 1;
-                }
-            }
-
-            // This is a byte store in the image. Keep the wrap/truncation
-            // explicit rather than allowing integer promotion to widen it.
-            Vehs[defender_id].dmg_incurred = static_cast<uint8_t>(
-                static_cast<unsigned>(Vehs[defender_id].dmg_incurred) +
-                static_cast<unsigned>(roll.damage));
-            Vehs[defender_id].state |= VSTATE_UNK_4;
-            if (VehPrototypes[Vehs[defender_id].proto_id].plan ==
-                PLAN_TERRAFORMING) {
-                Vehs[defender_id].terraforming_turns = 0;
-            }
-            if (target_base_id < 0) {
-                Vehs[defender_id].state |= VSTATE_UNK_8;
-            }
-
-            if (show_report) {
-                ConsoleStatusWin.draw(attacker_id, defender_id,
-                                      attacker_offense, defender_defense, 1);
-                draw_tile(target_x, target_y, 2);
-                VehDrawSelection689F28 = -1;
-                VehDrawSelection689F2C = -1;
-                if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x10u) != 0) {
-                    g_BattleWin.stop_timer();
-                    popp(ScriptPopupFile, "BATTLEPAUSE", 0,
-                         "batwon_sm.pcx", 0);
-                    g_BattleWin.pulse_timer();
-                    if (ConsoleGroupAction != 0) {
-                        GameDataStateStorage.fields_.game_more_preferences_ &= ~0x10u;
-                        prefs_save(0);
-                    }
-                } else {
-                    const bool shift_down =
-                        (GetAsyncKeyState(0x10) & 0x8000) != 0;
-                    if (!shift_down && (GameDataStateStorage.fields_.game_preferences_ & 8u) == 0 &&
-                        IsMultiplayerNet == 0 && boom_after_hit != 0) {
-                        clock_wait(200);
-                    }
-                }
-            }
-        }
-
-        // The native follows the possibly callback-mutated linked-list
-        // member, rather than the next ID captured before presentation.
-        defender_id = Vehs[defender_id].next_veh_id_stack;
-    }
-
-    return battle_fight_artillery_cleanup(
-        target_x, target_y, attacker_faction, defender_faction,
-        target_base_id);
-}
-// Retained fragment: battle-fight-post-prompt-v1.cpp
-// Private typed insertion for native 0x50835D's shared prelude, executed
-// after the nerve-gas prompts and before the artillery/ordinary-combat split.
-// `base_name_copy` is the native 80-byte frame buffer retained for the later
-// result/report path; the source owner must keep it live through that tail.
-static void battle_fight_post_prompt_setup(int attacker_id,
-                                           int attacker_faction,
-                                           int defender_faction,
-                                           int nerve_gas,
-                                           int target_base_id,
-                                           char *base_name_copy,
-                                           char *native_text_buffer_minus_138 = 0) {
-    if (nerve_gas != 0) {
-        atrocity(attacker_faction, defender_faction,
-                 target_base_id >= 0, 0);
-    }
-
-    // Native writes the distinct C-string destination at [-0x138] before
-    // the mode split. Its provisional source representation is supplied by
-    // the outer owner; this does not assert the original declared capacity.
-    if (native_text_buffer_minus_138 != 0) {
-        native_text_buffer_minus_138[0] = '\0';
-        if (target_base_id >= 0) {
-            strcpy(native_text_buffer_minus_138,
-                   Bases[target_base_id].name_string);
-        }
-    }
-
-    base_name_copy[0] = '\0';
-    if (target_base_id >= 0) {
-        strcpy(base_name_copy, Bases[target_base_id].name_string);
-    }
-
-    if (Vehs[attacker_id].order == 0x18) {
-        Vehs[attacker_id].order = 0;
-        Vehs[attacker_id].state &= ~(VSTATE_UNK_200 | VSTATE_EXPLORE |
-                                     VSTATE_UNK_1000000 |
-                                     VSTATE_UNK_2000000);
-    }
-}
-// Retained fragment: battle-entry-subagent/battle-fight-normal-post-prompt-v1.cpp
-// Private typed translation of the ordinary (non-source-mode) continuation
-// from native 0x50835D to its fallthrough at 0x508B50. The shared effects at
-// 0x50835D..0x5083D6 remain in battle_fight_post_prompt_setup(); include that
-// definition before this fragment. This helper does not define battle_fight
-// and does not replace the separate source-mode artillery owner.
-#include <stdint.h>
-
-enum BattleFightPostPromptRouteV1 {
-    BATTLE_FIGHT_POST_PROMPT_SOURCE_MODE_V1 = 0,
-    BATTLE_FIGHT_POST_PROMPT_NORMAL_V1 = 1
-};
-
-// `attacker_id` and `selected_defender_id` are numeric Veh IDs. `combat_type`
-// is the current mutable +0x18 frame value. The three output references model
-// the native live +0x1c, [-0x78], and [-0x88] storage, respectively.
-static BattleFightPostPromptRouteV1 battle_fight_normal_post_prompt_v1(
-    int attacker_id,
-    int selected_defender_id,
-    int attacker_faction_snapshot,
-    int defender_faction_snapshot,
-    int nerve_gas_active,
-    int target_base_id,
-    char *base_name_copy_80,
-    char *native_text_buffer_minus_138,
-    int &combat_type_plus_18,
-    int &report_selector_plus_1c,
-    int &visibility_gate_minus_78,
-    int &status_animation_flag_minus_88) {
-    battle_fight_post_prompt_setup(
-        attacker_id, attacker_faction_snapshot, defender_faction_snapshot,
-        nerve_gas_active, target_base_id, base_name_copy_80,
-        native_text_buffer_minus_138);
-
-    const int local_faction = ConsoleGlobal.faction_id_;
-
-    // Native 0x5083D6..0x5083E0: selector defaults to 0 unless either
-    // cached participant faction is local; independently clear the status
-    // animation local before the mode split.
-    status_animation_flag_minus_88 = 0;
-
-    // Native 0x5083D6..0x508401: cached participant faction ownership turns
-    // the selector on; otherwise bit 0x80 of GameState is the fallback.
-    report_selector_plus_1c =
-        (attacker_faction_snapshot == local_faction ||
-         defender_faction_snapshot == local_faction ||
-         (static_cast<uint8_t>(GameDataStateStorage.fields_.game_state_) & 0x80u) != 0) ? 1 : 0;
-
-    // Native 0x508401..0x50846E: decide whether at least one participant is
-    // locally seen. Owner-controlled units count as seen unless both native
-    // status bits (0x40 and 0x400) are set; visibility is then tested as an
-    // 8-bit faction mask. X86 masks variable shift counts to five bits.
-    const uint8_t local_bit = static_cast<uint8_t>(
-        1u << (static_cast<uint32_t>(local_faction) & 0x1Fu));
-    const Veh &attacker = Vehs[attacker_id];
-    const Veh &defender = Vehs[selected_defender_id];
-    const int attacker_seen_by_owner =
-        attacker.faction_id == local_faction &&
-        (attacker.flags & 0x440u) != 0x440u;
-    const int attacker_seen_by_mask = (attacker.visibility & local_bit) != 0;
-    const int defender_seen_by_owner =
-        defender.faction_id == local_faction &&
-        (defender.flags & 0x440u) != 0x440u;
-    const int defender_seen_by_mask = (defender.visibility & local_bit) != 0;
-    visibility_gate_minus_78 =
-        attacker_seen_by_owner || attacker_seen_by_mask ||
-        defender_seen_by_owner || defender_seen_by_mask;
-
-    // Native 0x50846E..0x5084A8 selects a preference according to the local
-    // faction's treaty bit toward the attacker, then ORs the live visibility
-    // gate into +0x1c only when that preference is enabled.
-    const uint32_t treaty = PlayersData[local_faction].diplo_treaties[
-        attacker_faction_snapshot];
-    const uint32_t preference_mask = (treaty & 1u) != 0 ? 0x8000u : 4u;
-    if ((GameDataStateStorage.fields_.game_preferences_ & preference_mask) != 0)
-        report_selector_plus_1c |= visibility_gate_minus_78;
-
-    // Native 0x5084A8..0x5084AE uses an equality test, not a bit test:
-    // exactly mode 1 enters the already-owned artillery transaction; every
-    // other current +0x18 value falls through at 0x508B50.
-    return combat_type_plus_18 == 1
-        ? BATTLE_FIGHT_POST_PROMPT_SOURCE_MODE_V1
-        : BATTLE_FIGHT_POST_PROMPT_NORMAL_V1;
-}
-// Retained fragment: battle-rounds-subagent/battle-fight-round-loop-v4.cpp
-// Private v3 in-context reconstruction of native battle_fight
-// 0x005090D7..0x00509827. This is a C++98 owner fragment, not a complete
-// function and not a paste-ready body: the enclosing body must bind the
-// measured locals and the small unresolved/global adapters below.
-#include <stdlib.h>
-
-enum BattleFightRoundExitV4 {
-    BFR_CONTINUE_ROUND_V4,
-    BFR_TO_509983_AFTERMATH_V4,
-    BFR_TO_509923_SELECTED_RETREAT_V4,
-    BFR_TO_509980_TRANSITION_V4,
-    BFR_TO_509827_OWNERSHIP_ENTRY_V4
-};
-
-struct BattleFightRoundFrameV4 {
-    int attacker_id;                 // Numeric +0x08 vehicle-ID argument; native [-0x04] is a row offset.
-    int defender_id;                 // Numeric original selected defender ID from [-0x40]; native [-0x08] itself is a row offset.
-    int retreating_faction;          // [ebp-0xc], live defender faction
-    int attacker_combat_value;       // [ebp-0x14]
-    int &selected_defender_id;       // Live alias of numeric current stack-head ID [-0x18].
-    int defender_combat_value;       // [ebp-0x1c]
-    int round_or_candidate_index;    // [ebp-0x24]
-    int coordinate_y_minus_28;       // [ebp-0x28]
-    int coordinate_x_minus_2c;       // [ebp-0x2c]
-    int attacker_x;                  // [ebp-0x30]
-    int attacker_y;                  // [ebp-0x34]
-    int post_hit_handoff_gate;       // [ebp-0x48]
-    int &execute_display;            // Alias of live +0x1c report/display selector at this phase.
-    int &mutable_second_argument;    // Alias of the live +0x0c function argument.
-    int attacker_faction_local_50;   // [ebp-0x50], overwritten at 0x50991A
-    int x;                            // [ebp+0x10]
-    int y;                            // [ebp+0x14]
-    int &source_mode;                // Alias of live +0x18 source/combat-mode argument.
-    int defender_hit_step;           // low byte of [ebp-0x68]
-    int attacker_hit_step;           // low byte of [ebp-0x70]
-    int display_scale;               // [ebp-0x6c], same slot in both branches
-    int best_direction;              // [ebp-0x74]
-    int marine_detach_budget;        // [ebp-0x80], intentionally neutral name
-    int best_direction_score;        // [ebp-0x8c]
-    int transition_type;             // [ebp-0x54], set to 2 or 1 before UI call
-    int candidate_x_plus_20;         // Live native candidate X scratch [ebp+0x20].
-    int candidate_y_minus_34;        // Live native candidate Y scratch [-0x34].
-
-    BattleFightRoundFrameV4(int &second_arg, int &mode_arg, int &display_arg,
-                             int &stack_head_arg)
-        : selected_defender_id(stack_head_arg), execute_display(display_arg),
-          mutable_second_argument(second_arg), source_mode(mode_arg) {}
-};
-
-// These adapters are only for still-unbound state/call boundaries. The
-// implementation below owns the order and branching. A coordinator binding
-// may supply current-faction lookup (native global 0x9A6554), source-mode
-// booleans, name storage, and the native status-window member call. Other
-// operations below use existing typed project APIs directly at integration.
-struct BattleFightRoundBindingsV4 {
-    // Native 0x9A6554 global, still lacking a source owner.
-    int (*current_faction)();
-    void (*status_draw)(int attacker_id, int selected_defender_id,
-                        int attack_value, int defense_value, int source_mode);
-    void (*boom)(int x, int y, int effect);
-    void (*redraw_tile)(int x, int y, int mode);
-    void (*redraw_tile_fixup)(int x, int y, int flags, int mode);
-};
-
-static int battle_fight_round_remaining_v4(int vehicle_id) {
-    return proto_power(vehicle_id) - Vehs[vehicle_id].dmg_incurred;
-}
-
-static int battle_fight_round_capacity_valid_v4(int remaining) {
-    if (remaining < 0) return 0;
-    if (remaining <= 9999 && remaining == 0) return 0;
-    return 1;
-}
-
-static int battle_fight_round_band_changed_v4(int new_damage,
-                                               int damage_step,
-                                               int scale) {
-    const int divisor = damage_step * scale;
-    // Preserve x86 signed IDIV truncation toward zero; expected nonzero
-    // divisor is guaranteed by the caller's native scale/hit gates.
-    return new_damage / divisor != (new_damage - damage_step) / divisor;
-}
-
-static int battle_fight_round_candidate_v4(
-    BattleFightRoundFrameV4 &f, BattleFightRoundBindingsV4 &b,
-    int direction, int &candidate_x, int &candidate_y, int &score) {
-    candidate_x = f.x + VehMoveDeltaX[direction];
-    if (!(MapIsFlat & 1)) {
-        if (candidate_x < 0) candidate_x += MapLongitudeBounds;
-        else if (candidate_x >= MapLongitudeBounds)
-            candidate_x -= MapLongitudeBounds;
-    }
-    candidate_y = f.y + VehMoveDeltaY[direction];
-    if (candidate_y < 0 || candidate_y >= MapLatitudeBounds) return 0;
-    if (candidate_x < 0 || candidate_x >= MapLongitudeBounds) return 0;
-    if (zoc_move(candidate_x, candidate_y, f.retreating_faction) != 0) return 0;
-
-    const int triad = Chassis[VehPrototypes[
-        Vehs[f.defender_id].proto_id].chassis_id].triad;
-    if (triad != TRIAD_AIR) {
-        const int candidate_is_ocean =
-            (map_loc(candidate_x, candidate_y)->climate & 0xe0) < 0x60;
-        if (candidate_is_ocean != (triad == TRIAD_SEA)) return 0;
-    }
-    if (goody_at(candidate_x, candidate_y) != 0) return 0;
-
-    Map *tile = map_loc(candidate_x, candidate_y);
-    if ((tile->bit & BIT_FUNGUS) &&
-        (tile->climate & 0xe0) >= 0x40) {
-        const int current_faction = b.current_faction();
-        if (current_faction < 0 ||
-            Bases[current_faction].faction_id_current != f.retreating_faction) {
-            const int defender_proto = Vehs[f.defender_id].proto_id;
-            if (defender_proto >= 0x40 ||
-                (get_proto_offense_rating(defender_proto) >= 0 &&
-                 defender_proto != 0x0f)) return 0;
-        }
-    }
-
-    if (tile->bit & (BIT_BASE_IN_TILE | BIT_VEH_IN_TILE)) {
-        const int owner = tile->val2 & 0x0f;
-        if (owner < 0 || owner >= 8 || owner == f.retreating_faction) return 0;
-        if (!(PlayersData[owner].diplo_treaties[f.retreating_faction] & DTREATY_PACT))
-            return 0;
-    }
-
-    int d = direction - (f.mutable_second_argument ^ 4);
-    if (d < 0) d = -d;
-    d &= 7;
-    if (d > 4) d = 8 - d;
-    if (d <= 2) return 0;
-    score = d;
-    return 1;
-}
-
-// Native 0x50973A..0x509824. Keep the unguarded Bases[base_id] read: the
-// pinned code calls base_find(x,y) and immediately reads both fields even if
-// that returns a negative value. This is an observed precondition, not a
-// structural recommendation.
-static void battle_fight_detachment_stack_v4(BattleFightRoundFrameV4 &f) {
-    f.mutable_second_argument = Vehs[f.defender_id].faction_id;
-    f.attacker_faction_local_50 = Vehs[f.attacker_id].faction_id;
-    int first = f.selected_defender_id;
-    if (first < 0) return; // exact jump to 0x509827
-    int previous = Vehs[first].prev_veh_id_stack;
-    while (previous >= 0) {
-        first = previous;
-        previous = Vehs[first].prev_veh_id_stack;
-    }
-    if (first < 0) return; // exact jump to 0x509827
-
-    int unit_id = first;
-    while (unit_id >= 0) {
-        Vehs[unit_id].faction_id = Vehs[f.attacker_id].faction_id;
-        const int proto_id = Vehs[unit_id].proto_id;
-        parse_says(0, VehPrototypes[proto_id].veh_name, -1, -1);
-        const int base_id = base_find(f.x, f.y);
-        if (Bases[base_id].faction_id_current ==
-                Vehs[f.attacker_id].faction_id &&
-            Bases[base_id].population_size >= 3) {
-            Vehs[unit_id].home_base_id = static_cast<int16_t>(base_id);
-        } else {
-            Vehs[unit_id].home_base_id = -1;
-        }
-        veh_skip(unit_id);
-        // Native reloads the stack link after veh_skip rather than keeping a
-        // pre-callback snapshot.
-        unit_id = Vehs[unit_id].next_veh_id_stack;
-    }
-}
-
-// Executes the measured span and returns the exact native destination label.
-// The enclosing function must refresh this frame's mapped locals after any
-// callback that can mutate them, as native explicitly reloads those locations.
-static BattleFightRoundExitV4 battle_fight_round_loop_v4(
-    BattleFightRoundFrameV4 &f, BattleFightRoundBindingsV4 &b) {
-    for (;;) { // native 0x5090D7 back-edge; not a generic both-alive loop
-        if (!battle_fight_round_capacity_valid_v4(
-                battle_fight_round_remaining_v4(f.attacker_id)))
-            return BFR_TO_509983_AFTERMATH_V4;
-        if (!battle_fight_round_capacity_valid_v4(
-                battle_fight_round_remaining_v4(f.defender_id)))
-            return BFR_TO_509983_AFTERMATH_V4;
-
-        // Native consumes zero draws for values <= 1, otherwise attacker first.
-        const int attacker_roll = f.attacker_combat_value > 1
-            ? rand() % f.attacker_combat_value : 0;
-        const int defender_roll = f.defender_combat_value > 1
-            ? rand() % f.defender_combat_value : 0;
-
-        if (attacker_roll > defender_roll) {
-            // Defender takes [ebp-0x68], using modulo-256 byte addition.
-            const int new_damage =
-                (Vehs[f.defender_id].dmg_incurred + f.defender_hit_step) & 0xff;
-            Vehs[f.defender_id].dmg_incurred = new_damage;
-            if (f.execute_display && f.display_scale &&
-                battle_fight_round_band_changed_v4(new_damage,
-                    f.defender_hit_step, f.display_scale)) {
-                f.transition_type = 2;
-                b.status_draw(f.attacker_id, f.selected_defender_id,
-                    f.attacker_combat_value, f.defender_combat_value,
-                    f.source_mode);
-                b.boom(f.x, f.y, 1);
-                if (battle_fight_round_capacity_valid_v4(
-                        battle_fight_round_remaining_v4(f.defender_id))) {
-                    b.redraw_tile(f.coordinate_x_minus_2c,
-                                  f.coordinate_y_minus_28, 2);
-                    b.redraw_tile(f.x, f.y, 2);
-                }
-                if (f.post_hit_handoff_gate) return BFR_TO_509980_TRANSITION_V4;
-            }
-
-            // [ebp-0x80] is independent carried state. This test and the
-            // optional third random draw occur only after the presentation.
-            if (f.marine_detach_budget &&
-                battle_fight_round_capacity_valid_v4(
-                    battle_fight_round_remaining_v4(f.defender_id))) {
-                f.marine_detach_budget -= f.defender_hit_step;
-                if (f.marine_detach_budget <= 0 && rand() % 100 < 50) {
-                    battle_fight_detachment_stack_v4(f);
-                    return BFR_TO_509827_OWNERSHIP_ENTRY_V4;
-                }
-            }
-        } else {
-            // Tie is defender win: attacker takes [ebp-0x70].
-            const int new_damage =
-                (Vehs[f.attacker_id].dmg_incurred + f.attacker_hit_step) & 0xff;
-            Vehs[f.attacker_id].dmg_incurred = new_damage;
-            if (f.execute_display && f.display_scale &&
-                battle_fight_round_band_changed_v4(new_damage,
-                    f.attacker_hit_step, f.display_scale)) {
-                f.transition_type = 1;
-                b.status_draw(f.attacker_id, f.selected_defender_id,
-                    f.attacker_combat_value, f.defender_combat_value,
-                    f.source_mode);
-                b.boom(f.coordinate_x_minus_2c,
-                       f.coordinate_y_minus_28, 9);
-                if (battle_fight_round_capacity_valid_v4(
-                        battle_fight_round_remaining_v4(f.attacker_id))) {
-                    b.redraw_tile(f.coordinate_x_minus_2c,
-                                  f.coordinate_y_minus_28, 2);
-                    b.redraw_tile_fixup(f.x, f.y, 2, 2);
-                }
-                if (f.post_hit_handoff_gate) return BFR_TO_509980_TRANSITION_V4;
-            }
-            // Native's 0x9735 tail jumps straight to 0x5090D7. The local
-            // [ebp-0x24] gate and direction scan belong only to the defender-
-            // hit path above.
-            continue;
-        }
-
-        if (f.round_or_candidate_index == 0) continue; // 50936C -> 5090D7
-        const int attacker_remaining = battle_fight_round_remaining_v4(f.attacker_id);
-        if (!battle_fight_round_capacity_valid_v4(attacker_remaining)) continue;
-        f.round_or_candidate_index -= f.defender_hit_step;
-        if (f.round_or_candidate_index > 0) continue;
-
-        f.best_direction = -1;
-        f.best_direction_score = 0;
-        f.round_or_candidate_index = 0;
-        for (int direction = 0; direction < 8; ++direction) {
-            int candidate_x = 0, candidate_y = 0, candidate_score = 0;
-            if (battle_fight_round_candidate_v4(f, b, direction,
-                    candidate_x, candidate_y, candidate_score) &&
-                candidate_score > f.best_direction_score) {
-                f.best_direction_score = candidate_score;
-                f.best_direction = direction;
-                f.candidate_x_plus_20 = candidate_x;
-                f.candidate_y_minus_34 = candidate_y;
-            }
-            f.round_or_candidate_index = direction + 1;
-        }
-        if (f.best_direction < 0) {
-            f.round_or_candidate_index = 0;
-            continue;
-        }
-        return BFR_TO_509923_SELECTED_RETREAT_V4;
-    }
-}
-// Retained fragment: battle-rounds-subagent/battle-fight-pre-round-v9.cpp
-// Private corrected typed translation v9 of battle_fight 0x508B50..0x5090D7. The caller's
-// live [-0x18] slot is explicit and is not assumed equal to the defender ID.
-// This remains a fragment, not a full battle_fight implementation.
-
-// Catalog identity is `int __cdecl ?planet_busting@@YAHHHH@Z`; the retained
-// seed has no compiled source owner yet. Native call sites ignore EAX, so this
-// fragment also discards the result without claiming its success semantics.
-extern int __cdecl planet_busting(int veh_id, int x, int y);
-
-struct BattleFightPreRoundStateV7 {
-    int round_scan_gate_minus_24;
-    int detachment_roll_budget_minus_80;
-    int damage_band_scale_minus_6c;
-    int post_hit_handoff_gate_minus_48;
-    int status_animation_flag_minus_88;
-    int transition_type_minus_54;
-    int early_return;
-    int return_value;
-};
-
-static int battle_fight_remaining_hit_points_v7(int veh_id) {
+// One-level HP helper (chunk 2). Use it only where the image keeps proto_power's
+// inner range(reactor, 1, 100) as `call 0x422F00` and inlines the outer
+// 0..9999 clamp (0x5087B5, 0x508A81, 0x508DFE, 0x508F21). Everywhere else the
+// expression is written out.
+static inline int veh_cur_hp(int veh_id) {
     return range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999);
 }
 
-static BattleFightPreRoundStateV7 battle_fight_prepare_pre_round_v7(
-    int attacker_id,
-    int defender_id,
-    int &native_minus_18_vehicle,
-    int target_x,
-    int target_y,
-    int source_x,
-    int source_y,
-    int &source_mode,
-    int &show_report,
-    int attacker_combat,
-    int defender_combat,
-    int combat_type,
-    int target_base_id,
-    int &direction,
-    int *status_animation_flag) {
-    BattleFightPreRoundStateV7 state;
-    state.round_scan_gate_minus_24 = 0;
-    state.detachment_roll_budget_minus_80 = 0;
-    state.damage_band_scale_minus_6c = 0;
-    state.post_hit_handoff_gate_minus_48 = 0;
-    state.status_animation_flag_minus_88 = 0;
-    state.transition_type_minus_54 = 0;
-    state.early_return = 0;
-    state.return_value = 0;
-
-    const int attacker_proto_id = Vehs[attacker_id].proto_id;
-    const int defender_proto_id = Vehs[defender_id].proto_id;
-    const int attacker_faction = Vehs[attacker_id].faction_id;
-    const int defender_faction = Vehs[defender_id].faction_id;
-    const int attacker_chassis_id =
-        VehPrototypes[attacker_proto_id].chassis_id;
-    const int defender_chassis_id =
-        VehPrototypes[defender_proto_id].chassis_id;
-
-    if (source_mode != 0)
-        add_goal(defender_faction, 0x10, 2, target_x, target_y, -1);
-
-    if (show_report != 0) {
-        if (IsMultiplayerNet != 0 &&
-            TutWinBaseWindow.zoom_wait_pending_ != 0) {
-            // Native sets live [-0x88] at 0x508B88 before selection, focus,
-            // drawing, and callbacks. Caller initialized it at 0x5083E0.
-            state.status_animation_flag_minus_88 = 1;
-            *status_animation_flag = 1;
-        }
-        Vehs[attacker_id].visibility |= static_cast<uint8_t>(
-            1u << (static_cast<unsigned>(defender_faction) & 0x1Fu));
-        VehDrawSelection689F28 = attacker_id;
-        VehDrawSelection689F2C = defender_id;
-        const int focus_result =
-            ConsoleGlobal.focus(target_x, target_y, attacker_faction);
-        if (focus_result == 0) {
-            draw_tile(source_x, source_y, 2);
-            draw_tile(target_x, target_y, 2);
-        }
-
-        stack_veh(attacker_id, 1);
-        g_BattleWin.set_iface_mode();
-        g_BattleWin.clear();
-        ConsoleStatusWin.draw(attacker_id, native_minus_18_vehicle,
-                              attacker_combat, defender_combat, source_mode);
-        // Native private ConsoleStatusWin +0x15D4 = 1 immediately after draw.
-        // Owner integration needs an approved member/friend access path.
-        ConsoleStatusWin.set_field_15D4(1);
-        flush_input();
-
-        // Native tests the high byte returned by this exact query (0x508C43..4D).
-        const short shift_state = GetAsyncKeyState(0x10);
-        if ((shift_state & 0x8000) == 0 && (source_mode & 1) == 0)
-            veh_scoot(attacker_id, source_x, source_y, direction, 1);
-        stack_put(attacker_id, source_x, source_y);
-        draw_tile(source_x, source_y, 2);
-        draw_tile(target_x, target_y, 2);
-    }
-
-    const int attacker_weapon_id =
-        VehPrototypes[attacker_proto_id].weapon_id;
-    const int attacker_tri = Chassis[attacker_chassis_id].triad;
-    const int defender_tri = Chassis[defender_chassis_id].triad;
-
-    // Native [-0x24] begins as zero, then becomes ceil(remaining HP/2) only
-    // under its complete directional-scan gate. Calls use native [-0x18].
-    const int slot_vehicle_speed = speed(native_minus_18_vehicle, 1);
-    const int attacker_speed = speed(attacker_id, 1);
-    if (attacker_speed < slot_vehicle_speed && source_mode == 0 &&
-        Weapon[attacker_weapon_id].offense_rating >= 0 &&
-        (Vehs[defender_id].state & VSTATE_UNK_40) == 0 &&
-        attacker_tri != TRIAD_AIR && defender_tri != TRIAD_AIR &&
-        (!has_abil(attacker_proto_id, 0x200) ||
-         has_abil(defender_proto_id, 0x2000000)) &&
-        Vehs[defender_id].order != 2 && target_base_id < 0 &&
-        (map_loc(target_x, target_y)->bit & 0x40800u) == 0 &&
-        stack_check(native_minus_18_vehicle, 1, -1, -1, -1) == 1) {
-        state.round_scan_gate_minus_24 =
-            (battle_fight_remaining_hit_points_v7(defender_id) + 1) / 2;
-    }
-
-    const Map *target_tile = map_loc(target_x, target_y);
-    if (has_abil(attacker_proto_id, ABL_MARINE_DETACHMENT) &&
-        attacker_tri == TRIAD_SEA && (target_tile->climate & 0xE0u) < 0x60u &&
-        defender_tri == TRIAD_SEA &&
-        (defender_chassis_id >= 0x40 ||
-         (Weapon[attacker_weapon_id].offense_rating >= 0 &&
-          defender_proto_id != 0x0F)) && target_base_id < 0) {
-        state.detachment_roll_budget_minus_80 =
-            (battle_fight_remaining_hit_points_v7(defender_id) * 2) / 3;
-    }
-
-    if (VehPrototypes[attacker_proto_id].plan == PLAN_PLANET_BUSTER &&
-        VehPrototypes[attacker_proto_id].reactor_id != 0) {
-        planet_busting(attacker_id, target_x, target_y);
-        WorldClimateWorldWin.field_239BC_ |= 4;
-        state.early_return = 1;
-        return state;
-    }
-
-    state.damage_band_scale_minus_6c =
-        attacker_tri == TRIAD_LAND && !IsMultiplayerNet ? 3 : 0;
-    state.transition_type_minus_54 = 0;
-    if (attacker_tri != TRIAD_LAND || IsMultiplayerNet) {
-        const int remaining =
-            battle_fight_remaining_hit_points_v7(defender_id);
-        boom(target_x, target_y, 2 - (remaining != 0));
-    }
-    if ((source_mode & 2) != 0 &&
-        ((attacker_tri == TRIAD_SEA) != (defender_tri == TRIAD_SEA)))
-        state.post_hit_handoff_gate_minus_48 = 1;
-
-    (void)combat_type;
-    return state;
-}
-
-
-
-
-// Retained fragment: battle-rounds-subagent/battle-fight-followthrough-v2.cpp
-// Private typed fragment for battle_fight native range 0x509827..0x509923.
-// Not a complete function or an integration-ready replacement. The frame
-// local aliases passed here must be rebound from the complete owner body.
-// Retained fragment: battle-rounds-subagent/battle-fight-transition-controls-v2.h
-// Small pure branch controls shared with the private host test. These helpers
-// model only the exact equality gates; callers must supply fresh values at
-// each native read site, especially after popp callbacks.
-static inline int battle_fight_transition_is_local_v2(int faction_id,
-                                                      int current_faction) {
-    return faction_id == current_faction;
-}
-
-static inline int battle_fight_transition_uses_fixup_v2(int tile_owner,
-                                                        int current_faction) {
-    return tile_owner == current_faction;
-}
-
-// Expected owner headers at integration: veh.h, map.h, mapwin.h, console.h,
-// faction.h, game.h, popup.h, general.h, log.h.
-// mapwin.h owns draw_tile(); the original 0x46AF90 declaration currently
-// lives in console.cpp and should be made available through its owner header.
-
-// Native 0x509827..0x509923 is reached with these frame facts already live:
-//   - `native_second_argument` ([ebp+0x0C]) was overwritten at 0x509753 with
-//     the defender faction id; it is not the requested direction anymore.
-//   - `attacker_faction_local_50` ([ebp-0x50]) is the attacker faction read at
-//     0x50974D, then overwritten with 1 at 0x50991A after local notifications.
-//     Both it and the second argument are deliberately mutable frame values.
-//   - the attacker vehicle pointer is re-read at the ownership/redraw sites;
-//     don't replace those loads with either cached faction snapshot.
-//
-// This transition only translates the typed tile ownership, redraw and local
-// notification sequence. It does not own the preceding capture decision or
-// the destination at 0x509980.
-static void battle_fight_ownership_transition_v2(
-    int x, int y, int &native_second_argument,
-    int &attacker_faction_local_50, int attacker_veh_id) {
-    bit_set(x, y, BIT_SUPPLY_REMOVE, TRUE);
-    owner_set(x, y, Vehs[attacker_veh_id].faction_id);
-
-    // The native reloads Vehs[attacker_veh_id].faction_id after owner_set.
-    if (battle_fight_transition_uses_fixup_v2(
-            Vehs[attacker_veh_id].faction_id, ConsoleGlobal.faction_id_)) {
-        draw_tile_fixup(x, y, 1, 2);
-    } else {
-        draw_tile(x, y, 2);
-    }
-
-    // The aliased original second-argument slot is the defender faction here.
-    // It remains mutable state owned by battle_fight; this helper never restores
-    // the earlier direction value.
-    if (battle_fight_transition_is_local_v2(
-            attacker_faction_local_50, ConsoleGlobal.faction_id_)) {
-        parse_says(1, Players[native_second_argument].adj_name_faction, -1, -1);
-        popp(ScriptPopupFile, "WEMARINEDETACH", 0, "navun_sm.pcx", 0);
-    }
-    if (battle_fight_transition_is_local_v2(
-            native_second_argument, ConsoleGlobal.faction_id_)) {
-        parse_says(1, Players[attacker_faction_local_50].adj_name_faction, -1, -1);
-        popp(ScriptPopupFile, "THEYMARINEDETACH", 0, "navun_sm.pcx", 0);
-    }
-    log_say("Detachment", 0, 0, 0);
-    attacker_faction_local_50 = 1; // exact 0x50991A local-flag overwrite
-}
-// Retained fragment: battle-capture-subagent/battle-fight-outcome-threshold-v2.cpp
-// Source-mode translation of the native control-flow block
-// 0x00509923..0x00509F10. The second integer parameter slot is intentionally
-// passed by reference: the original writes the computed health limit back to
-// [ebp+0x0C] and tests that mutated word after subsequent UI callbacks.
-//
-// `take_candidate_stack_path` represents the incoming edge to 0x509923; the
-// alternate edge from 0x509921 lands directly at the common 0x509980 label,
-// with its already-established locals. `display_latch`, `outcome_gate`, and
-// `branch_selector` retain neutral names because the image only establishes
-// their comparisons here, not a defensible domain meaning.
-static int battle_fight_health_limit_509923_v2(int vehicle_id) {
-    const Veh &vehicle = Vehs[vehicle_id];
-    const VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
-    int health = prototype.plan == PLAN_ALIEN_ARTIFACT
-               ? 1
-               : (prototype.reactor_id < 1 ? 1
-                  : (prototype.reactor_id > 100 ? 100
-                     : prototype.reactor_id)) * 10;
-    health -= vehicle.dmg_incurred;
-    if (health < 0) health = 0;
-    if (health > 9999) health = 9999;
-    return health;
-}
-
-static int battle_fight_boom_flags_9_or_10_v2(int remaining_health) {
-    return remaining_health != 0 ? 9 : 10;
-}
-
-static int battle_fight_boom_flags_8_or_10_v2(int remaining_health) {
-    return remaining_health != 0 ? 8 : 10;
-}
-
-static int battle_fight_boom_flags_1_or_0_v2(int remaining_health) {
-    return remaining_health != 0 ? 1 : 0;
-}
-
-static int battle_fight_boom_flags_1_or_2_v2(int remaining_health) {
-    return remaining_health != 0 ? 1 : 2;
-}
-
-static int battle_fight_boom_flags_0_or_2_v2(int remaining_health) {
-    return remaining_health != 0 ? 0 : 2;
-}
-
-static int battle_fight_outcome_threshold_block_v2(
-    int take_candidate_stack_path, int direction_index,
-    int anchor_x, int anchor_y, int target_x, int target_y,
-    int candidate_x, int candidate_y,
-    int stack_vehicle_id, int attacker_vehicle_id, int defender_vehicle_id,
-    int &second_argument_slot, int allow_interceptor, int gate_78,
-    int &display_latch, int &outcome_gate, int &branch_selector,
-    int status_local_18, int status_local_14, int status_local_1c,
-    int source_mode) {
-
-    if (take_candidate_stack_path) {
-        candidate_x = target_x + VehMoveDeltaX[direction_index];
-        if ((MapIsFlat & 1) == 0) {
-            if (candidate_x < 0) {
-                candidate_x += MapLongitudeBounds;
-            } else if (candidate_x >= MapLongitudeBounds) {
-                candidate_x -= MapLongitudeBounds;
-            }
-        }
-        candidate_y = target_y + VehMoveDeltaY[direction_index];
-        const int moved_stack_vehicle = stack_veh(stack_vehicle_id, 1);
-        stack_put(moved_stack_vehicle, candidate_x, candidate_y);
-        display_latch = 1;
-    }
-
-    // 0x509980: the original reconstructs the attacker power limit and stores
-    // it into its second stack-argument slot, even though that slot began as a
-    // distinct source parameter.
-    second_argument_slot = battle_fight_health_limit_509923_v2(
-        attacker_vehicle_id);
-
-    // `[ebp+0x1C] == 0 && [ebp-0x78] == 0` branches directly to 0x509F1D,
-    // outside this block. Return 0 means the caller continues there without
-    // selection-global clearing.
-    if (allow_interceptor == 0 && gate_78 == 0) {
-        return 0;
-    }
-
-    draw_tile_fixup(anchor_x, anchor_y, target_x, target_y, 2, 2);
-    if (display_latch == 0 &&
-        !((anchor_x == candidate_x && anchor_y == candidate_y) ||
-          (target_x == candidate_x && target_y == candidate_y))) {
-        draw_tile_fixup(candidate_x, candidate_y, 2, 2);
-    }
-
-    if (allow_interceptor == 0) {
-        return 0;
-    }
-
-    ConsoleStatusWin.draw(attacker_vehicle_id, status_local_18,
-                          status_local_14, status_local_1c, source_mode);
-    if (display_latch != 0) {
-        goto clear_draw_selection;
-    }
-
-    // All reads below occur after the status callback, matching the native
-    // reloads of the mutated parameter slot and selector locals.
-    if (second_argument_slot != 0) {
-        if (outcome_gate == 0) {
-            if (branch_selector == 2) {
-                if (IsMultiplayerNet) {
-                    goto defender_tile_boom_8_10;
-                }
-                const int defender_health =
-                    battle_fight_health_limit_509923_v2(defender_vehicle_id);
-                if (defender_health != 0) {
-                    goto clear_draw_selection;
-                }
-                goto defender_tile_boom_8_10;
-            }
-            if (IsMultiplayerNet) {
-                goto defender_tile_boom_8_10;
-            }
-            goto defender_limit_test;
-        }
-
-        if (outcome_gate != 1 && !IsMultiplayerNet) {
-            const int attacker_health =
-                battle_fight_health_limit_509923_v2(attacker_vehicle_id);
-            boom(anchor_x, anchor_y,
-                 battle_fight_boom_flags_9_or_10_v2(attacker_health));
-        }
-        goto defender_limit_test;
-    }
-
-    // The zero-valued mutated argument has a separate selector path.
-    if (outcome_gate == 0) {
-        goto attacker_limit_test;
-    }
-    if (branch_selector == 2 || IsMultiplayerNet) {
-        goto defender_tile_boom_1_0;
-    }
-    goto defender_tile_boom_8_10;
-
-defender_limit_test:
-    {
-        const int defender_health =
-            battle_fight_health_limit_509923_v2(defender_vehicle_id);
-        boom(target_x, target_y,
-             battle_fight_boom_flags_9_or_10_v2(defender_health));
-    }
-    goto clear_draw_selection;
-
-defender_tile_boom_8_10:
-    {
-        const int defender_health =
-            battle_fight_health_limit_509923_v2(defender_vehicle_id);
-        boom(target_x, target_y,
-             battle_fight_boom_flags_8_or_10_v2(defender_health));
-    }
-    goto clear_draw_selection;
-
-defender_tile_boom_1_0:
-    {
-        const int defender_health =
-            battle_fight_health_limit_509923_v2(defender_vehicle_id);
-        boom(target_x, target_y,
-             battle_fight_boom_flags_1_or_0_v2(defender_health));
-    }
-    goto attacker_candidate_boom_1_2;
-
-attacker_limit_test:
-    if (branch_selector == 1 || IsMultiplayerNet) {
-        goto attacker_origin_boom_0_2;
-    }
-    {
-        const int attacker_health =
-            battle_fight_health_limit_509923_v2(attacker_vehicle_id);
-        boom(anchor_x, anchor_y,
-             battle_fight_boom_flags_1_or_2_v2(attacker_health));
-    }
-    goto clear_draw_selection;
-
-attacker_origin_boom_0_2:
-    {
-        const int attacker_health =
-            battle_fight_health_limit_509923_v2(attacker_vehicle_id);
-        if (attacker_health > 0 && !IsMultiplayerNet) {
-            goto clear_draw_selection;
-        }
-        // The native recomputes this health expression after its multiplayer
-        // test; do not reuse a value across callbacks or shared-state reads.
-        const int live_attacker_health =
-            battle_fight_health_limit_509923_v2(attacker_vehicle_id);
-        boom(anchor_x, anchor_y,
-             battle_fight_boom_flags_0_or_2_v2(live_attacker_health));
-    }
-    goto clear_draw_selection;
-
-attacker_candidate_boom_1_2:
-    {
-        const int attacker_health =
-            battle_fight_health_limit_509923_v2(attacker_vehicle_id);
-        boom(anchor_x, anchor_y,
-             battle_fight_boom_flags_1_or_2_v2(attacker_health));
-    }
-    goto clear_draw_selection;
-
-clear_draw_selection:
-    VehDrawSelection689F28 = -1;
-    VehDrawSelection689F2C = -1;
-    return 1;
-}
-// Retained fragment: battle-report-subagent/battle-fight-late-composition-v2.cpp
-// Private C++98 composition packet for the native continuation
-// [0x50A119,0x50B893). It is intended for insertion after the owning project
-// headers; this is not a second battle_fight definition or a source mapping.
-//
-// This packet composes already-frozen typed blocks in native join order. The
-// component bodies remain in their original private artifacts so each retains
-// its own evidence and host control. No executable address calls are used.
-#include <stdint.h>
-#include <string.h>
-
-// Retained fragment: battle-report-subagent/battle-fight-report-fragments-v1.cpp
-// Private typed pieces for the report/diplomacy interval 0x50A119..0x50A72D.
-// Inclusion-context candidates only; this does not define battle_fight.
-// Include the owning headers for Map, faction, veh, base, game, general,
-// netmsg, popup and temp declarations before using these helpers.
-
-static void battle_fight_note_third_faction_v1(
-    int target_x, int target_y, int attacker_faction, int defender_faction) {
-    Map *target_tile = map_loc(target_x, target_y);
-    const int third_faction = target_tile->territory;
-    if ((target_tile->climate & 0xE0u) < 0x60u ||
-        third_faction == attacker_faction ||
-        third_faction == defender_faction ||
-        (PlayersData[third_faction].diplo_treaties[defender_faction] & 0x10u) == 0 ||
-        (PlayersData[third_faction].diplo_treaties[attacker_faction] & 0x7u) == 0) {
-        return;
-    }
-
-    if (PlayersData[attacker_faction].diplo_unk1[third_faction] == 0) {
-        PlayersData[attacker_faction].diplo_unk1[third_faction] = 1;
-    }
-    cause_friction(third_faction, attacker_faction, -1);
-}
-
-static void battle_fight_record_directional_outcome_v1(
-    int attacker_faction, int defender_faction) {
-    ++PlayersData[attacker_faction].diplo_unk3[defender_faction];
-    ++PlayersData[attacker_faction].diplo_unk4[defender_faction];
-    ++FactionTurnCombatWins[attacker_faction];
-    ++FactionTurnCombatLosses[defender_faction];
-}
-
-// The native literal IDs stay caller-supplied until the project pins their
-// string-table identities. The report mode boolean is also deliberately
-// supplied by the enclosing exact branch; it does not assign semantics to
-// the unresolved native `dat_93a95c` owner.
-static void battle_fight_emit_result_notice_v1(
-    int report_variant,
-    const char *message_label,
-    int attacker_prototype_id,
-    int defender_prototype_id,
-    int attacker_faction,
-    int defender_faction,
-    int target_x,
-    int target_y) {
-    parse_says(0, VehPrototypes[attacker_prototype_id].veh_name, -1, -1);
-    StringTemp[0] = '\0';
-    say_stats_3(StringTemp, defender_prototype_id);
-    parse_says(1, StringTemp, -1, -1);
-    parse_says(2, get_adjective(attacker_faction), -1, -1);
-    parse_says(3, VehPrototypes[attacker_prototype_id].veh_name, -1, -1);
-    StringTemp[0] = '\0';
-    say_stats_3(StringTemp, attacker_prototype_id);
-    parse_says(4, StringTemp, -1, -1);
-
-    const int local_faction = ConsoleGlobal.faction_id_;
-    const int base_faction = report_variant == 0 ? local_faction : defender_faction;
-    const int base_id = base_find(target_x, target_y, -1, -1, -1, base_faction);
-    if (base_id >= 0) {
-        parse_says(5, Bases[base_id].name_string, -1, -1);
-    }
-
-    if (report_variant == 0) {
-        NetMsgPrimary.pop(message_label, 5000, 0, 0);
-    } else {
-        POP3(message_label, 0, defender_faction, target_x, target_y);
-    }
-}
-// Retained fragment: battle-report-subagent/battle-fight-strength-promotion-v2.cpp
-// Private typed translation of the strength/morale/promotion path at
-// 0x50A1B3..0x50A44D. This is a sub-branch helper, not battle_fight.
-// Inclusion context needs veh.h, general.h and <stdint.h>/<stdlib.h>.
-
-// x86 IMUL writes the low signed 32 bits. Spell the wrap explicitly so the
-// source multiplication order does not rely on signed-overflow behavior.
-static int32_t battle_fight_mul_i32_v2(int32_t left, int32_t right) {
-    const uint32_t product = static_cast<uint32_t>(left) *
-                             static_cast<uint32_t>(right);
-    if (product <= 0x7FFFFFFFu) {
-        return static_cast<int32_t>(product);
-    }
-    return -1 - static_cast<int32_t>(~product);
-}
-
-static int battle_fight_reactor_hp_v2(int vehicle_id) {
-    const int proto_id = Vehs[vehicle_id].proto_id;
-    const VehPrototype &prototype = VehPrototypes[proto_id];
-    int maximum_hp = prototype.plan == PLAN_ALIEN_ARTIFACT
-        ? 1
-        : range(static_cast<int>(prototype.reactor_id), 1, 100) * 10;
-    int remaining_hp = maximum_hp -
-                       static_cast<int>(Vehs[vehicle_id].dmg_incurred);
-    if (remaining_hp < 0) {
-        remaining_hp = 0;
-    } else if (remaining_hp > 9999) {
-        remaining_hp = 9999;
-    }
-    return remaining_hp;
-}
-
-// `direction_stack_slot` is a reference on purpose: before this address range
-// the native writes to [ebp+0x0c]. The branch must use the live slot value,
-// not an immutable copy of the original ABI argument.
-//
-// `cached_attacker_hp` and `cached_defender_hp` are the already-established
-// stack locals at [ebp-0x60] and [ebp-0x5c], respectively. `strength_14` and
-// `strength_1c` are the mutable battle_compute outputs at [ebp-0x14] and
-// [ebp-0x1c]. Do not add zero-divisor guards: the native uses signed IDIV at
-// these exact sites and has no guard here.
-static void battle_fight_strength_promotion_path_v2(
-    int &direction_stack_slot,
-    int attacker_vehicle_id,
-    int defender_vehicle_id,
-    int attacker_faction,
-    int defender_faction,
-    int target_base_id,
-    int cached_attacker_hp,
-    int cached_defender_hp,
-    int &strength_14,
-    int &strength_1c) {
-    const int direction_value = direction_stack_slot;
-
-    if (direction_value != 0) {
-        // 0x50A1BE..0x50A234: recompute current attacker HP after earlier
-        // callbacks, then apply the three native multiply/divide stages.
-        int attacker_proto_id = Vehs[attacker_vehicle_id].proto_id;
-        int attacker_reactor = static_cast<int>(
-            VehPrototypes[attacker_proto_id].reactor_id);
-        const int current_attacker_hp =
-            battle_fight_reactor_hp_v2(attacker_vehicle_id);
-        int32_t scaled = battle_fight_mul_i32_v2(
-            attacker_reactor, current_attacker_hp);
-        scaled = battle_fight_mul_i32_v2(scaled, strength_14);
-        strength_14 = static_cast<int>(scaled / cached_attacker_hp);
-
-        // 0x50A237..0x50A296: defender artifact capacity is one; otherwise
-        // use reactor range*10. The cached defender HP is [ebp-0x5c].
-        const int defender_proto_id = Vehs[defender_vehicle_id].proto_id;
-        const int defender_plan = VehPrototypes[defender_proto_id].plan;
-        const int defender_reactor = static_cast<int>(
-            VehPrototypes[defender_proto_id].reactor_id);
-        const int defender_maximum_hp = defender_plan == PLAN_ALIEN_ARTIFACT
-            ? 1
-            : range(defender_reactor, 1, 100) * 10;
-        scaled = battle_fight_mul_i32_v2(defender_reactor,
-                                         cached_defender_hp);
-        scaled = battle_fight_mul_i32_v2(scaled, strength_1c);
-        strength_1c = static_cast<int>(scaled / defender_maximum_hp);
-
-        // The native tests the defender's captured plan byte, then asks for
-        // attacker morale. `promote` may mutate vehicle/prototype state, so
-        // no Veh reference survives it; the home-base word is reloaded after.
-        if (defender_plan != PLAN_ALIEN_ARTIFACT) {
-            if (morale_veh(attacker_vehicle_id, 1, 0) >= 2) {
-                const int total_strength = strength_14 + strength_1c;
-                int roll = 0;
-                if (total_strength > 1) {
-                    roll = rand() % total_strength;
-                }
-                if (strength_1c >= roll) {
-                    promote(attacker_vehicle_id);
-                }
-            } else {
-                promote(attacker_vehicle_id);
-            }
-        }
-
-        if (attacker_faction == 0) {
-            Vehs[attacker_vehicle_id].home_base_id =
-                Vehs[defender_vehicle_id].home_base_id;
-        }
-        return;
-    }
-
-    // 0x50A2F7..0x50A3D8: reverse branch. Snapshot the attacker plan at the
-    // same point as the native; the later promotion gate uses that byte.
-    const int attacker_proto_id = Vehs[attacker_vehicle_id].proto_id;
-    const int attacker_plan = VehPrototypes[attacker_proto_id].plan;
-    const int attacker_reactor = static_cast<int>(
-        VehPrototypes[attacker_proto_id].reactor_id);
-    const int attacker_maximum_hp = attacker_plan == PLAN_ALIEN_ARTIFACT
-        ? 1
-        : range(attacker_reactor, 1, 100) * 10;
-    int32_t scaled = battle_fight_mul_i32_v2(attacker_reactor,
-                                             cached_attacker_hp);
-    scaled = battle_fight_mul_i32_v2(scaled, strength_14);
-    strength_14 = static_cast<int>(scaled / attacker_maximum_hp);
-
-    const int defender_proto_id = Vehs[defender_vehicle_id].proto_id;
-    const int defender_reactor = static_cast<int>(
-        VehPrototypes[defender_proto_id].reactor_id);
-    const int current_defender_hp =
-        battle_fight_reactor_hp_v2(defender_vehicle_id);
-    scaled = battle_fight_mul_i32_v2(defender_reactor,
-                                     current_defender_hp);
-    scaled = battle_fight_mul_i32_v2(scaled, strength_1c);
-    strength_1c = static_cast<int>(scaled / cached_defender_hp);
-
-    if (attacker_plan != PLAN_ALIEN_ARTIFACT) {
-        if (morale_veh(defender_vehicle_id, 1, 0) >= 2) {
-            const int total_strength = strength_14 + strength_1c;
-            int roll = 0;
-            if (total_strength > 1) {
-                roll = rand() % total_strength;
-            }
-            if (strength_14 < roll &&
-                (target_base_id < 0 ||
-                 morale_veh(defender_vehicle_id, 1, 0) >= 4)) {
-                // 0x50A432: no promotion on this edge.
-            } else {
-                promote(defender_vehicle_id);
-            }
-        } else {
-            promote(defender_vehicle_id);
-        }
-    }
-
-    if (defender_faction == 0) {
-        Vehs[defender_vehicle_id].home_base_id =
-            Vehs[attacker_vehicle_id].home_base_id;
-    }
-}
-// Retained fragment: battle-report-subagent/battle-fight-report-context-v3.cpp
-// Private context bridge for the native A119 -> A1B3 -> A44D path. Unlike
-// report-context-v2, it derives whether A119 is entered from the pinned
-// incoming predicates instead of accepting a caller-supplied boolean.
-// Include report-fragments-v1.cpp and strength-promotion-v2.cpp first.
-enum BattleFightA119PreStrengthRouteV3 {
-    BATTLE_FIGHT_A119_RETURN_AT_A110_V3 = 0,
-    BATTLE_FIGHT_A119_FALL_THROUGH_TO_A1B3_V3 = 1
-};
-
-// Native A119's SAR EBP+0x10,1. This spells arithmetic shift for negative
-// values without relying on implementation-defined signed right shift.
-static int battle_fight_arithmetic_half_v3(int value) {
-    int half = value / 2;
-    if (value < 0 && value % 2 != 0) {
-        --half;
-    }
-    return half;
-}
-
-// Incoming predecessor decision immediately before A119. The current-HP
-// helper is the already typed native formula (special plan value 0x0C => 1;
-// otherwise clamp reactor 1..100, multiply by 10, subtract damage, clamp
-// remaining HP to 0..9999). Call order/short-circuiting mirrors the five
-// conditional branches at 9F28, 9F7D, 9F8C, 9FE2 and 9FF2.
-static BattleFightA119PreStrengthRouteV3
-battle_fight_route_before_a119_v3(
-    int frame_minus_48,
-    int attacker_vehicle_id,
-    int defender_vehicle_id) {
-    if (frame_minus_48 == 0) {
-        return BATTLE_FIGHT_A119_FALL_THROUGH_TO_A1B3_V3;
-    }
-    if (battle_fight_reactor_hp_v2(attacker_vehicle_id) == 0) {
-        return BATTLE_FIGHT_A119_FALL_THROUGH_TO_A1B3_V3;
-    }
-    if (battle_fight_reactor_hp_v2(defender_vehicle_id) == 0) {
-        return BATTLE_FIGHT_A119_FALL_THROUGH_TO_A1B3_V3;
-    }
-    // With all three predicates false, native takes its A110 return path. If
-    // the 0x93F660/local-defender conditions there match, the COMBATSURVIVE
-    // report occurs before return; that report body is outside this bridge.
-    return BATTLE_FIGHT_A119_RETURN_AT_A110_V3;
-}
-
-// On the A119 route, preserve the native +0x20 write and then execute A119's
-// optional third-faction diplomacy work before the A1B3 strength helper.
-// Return-at-A110 is reported to the caller; caller must perform the native
-// optional survival-report gate/body and return, not run the A1B3 path.
-static BattleFightA119PreStrengthRouteV3
-battle_fight_a119_to_a44d_context_v3(
-    int frame_minus_48,
-    int target_x,
-    int target_y,
-    int attacker_faction,
-    int defender_faction,
-    int &direction_stack_slot,
-    int attacker_vehicle_id,
-    int defender_vehicle_id,
-    int target_base_id,
-    int cached_attacker_hp,
-    int cached_defender_hp,
-    int &strength_14,
-    int &strength_1c,
-    int &frame_plus_20) {
-    const BattleFightA119PreStrengthRouteV3 route =
-        battle_fight_route_before_a119_v3(
-            frame_minus_48, attacker_vehicle_id, defender_vehicle_id);
-    if (route == BATTLE_FIGHT_A119_RETURN_AT_A110_V3) {
-        return route;
-    }
-
-    frame_plus_20 = battle_fight_arithmetic_half_v3(target_x);
-    battle_fight_note_third_faction_v1(
-        target_x, target_y, attacker_faction, defender_faction);
-    battle_fight_strength_promotion_path_v2(
-        direction_stack_slot, attacker_vehicle_id, defender_vehicle_id,
-        attacker_faction, defender_faction, target_base_id,
-        cached_attacker_hp, cached_defender_hp, strength_14, strength_1c);
-    return BATTLE_FIGHT_A119_FALL_THROUGH_TO_A1B3_V3;
-}
-// Retained fragment: battle-capture-subagent/battle-fight-report-tail-v3.cpp
-// Source-mode translation of the bounded native tail 0x00509F10..0x0050A119.
-// All locals are supplied explicitly. `attacker_health_limit_slot` is the
-// live [ebp+0x0C] slot written by the preceding native block; this bounded
-// continuation does not read or write that slot. The separate health values
-// below are freshly reconstructed from the vehicles, matching the native
-// reloads in this tail.
-static int battle_fight_health_limit_report_tail_v3(int vehicle_id) {
-    const Veh &vehicle = Vehs[vehicle_id];
-    const VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
-    int health = prototype.plan == PLAN_ALIEN_ARTIFACT
-               ? 1
-               : (prototype.reactor_id < 1 ? 1
-                  : (prototype.reactor_id > 100 ? 100
-                     : prototype.reactor_id)) * 10;
-    health -= vehicle.dmg_incurred;
-    return health;
-}
-
-static int battle_fight_report_tail_v3(
-    int outcome_gate_local_48, int attacker_faction_local_10,
-    int attacker_vehicle_id, int defender_vehicle_id,
-    int report_faction_local_0c, int stats_proto_local_18,
-    int x_argument_10, int y_argument_14, const char *report_label,
-    int &attacker_health_limit_slot) {
-
-    // The slot is intentionally retained in the signature to make its
-    // continuity from the preceding block explicit. No read/write occurs in
-    // 0x509F10..0x50A119.
-    (void)attacker_health_limit_slot;
-
-    VehDrawSelection689F28 = -1;
-    VehDrawSelection689F2C = -1;
-    if (outcome_gate_local_48 == 0) {
-        return 0;
-    }
-
-    const int attacker_health =
-        battle_fight_health_limit_report_tail_v3(attacker_vehicle_id);
-    if (attacker_health < 0 ||
-        (attacker_health <= 9999 && attacker_health == 0)) {
-        return 0;
-    }
-    const int defender_health =
-        battle_fight_health_limit_report_tail_v3(defender_vehicle_id);
-    if (defender_health < 0 ||
-        (defender_health <= 9999 && defender_health == 0)) {
-        return 0;
-    }
-
-    if (!IsMultiplayerNet || report_faction_local_0c != ConsoleGlobal.faction_id_) {
-        return 0;
-    }
-
-    const int defender_proto_id = Vehs[defender_vehicle_id].proto_id;
-    parse_says(0, VehPrototypes[defender_proto_id].veh_name, -1, -1);
-
-    StringTemp[0] = '\0';
-    say_stats_3(StringTemp, stats_proto_local_18);
-    parse_says(1, StringTemp, -1, -1);
-
-    parse_says(2, Players[attacker_faction_local_10].adj_name_faction,
-               -1, -1);
-
-    const int attacker_proto_id = Vehs[attacker_vehicle_id].proto_id;
-    parse_says(3, VehPrototypes[attacker_proto_id].veh_name, -1, -1);
-
-    // The native reloads the attacker's prototype id after parse_says(3).
-    const int stats_attacker_proto_id = Vehs[attacker_vehicle_id].proto_id;
-    StringTemp[0] = '\0';
-    say_stats_3(StringTemp, stats_attacker_proto_id);
-    parse_says(4, StringTemp, -1, -1);
-
-    const int local_faction = ConsoleGlobal.faction_id_;
-    const int base_id = base_find(x_argument_10, y_argument_14,
-                                  -1, -1, -1, local_faction);
-    if (base_id >= 0) {
-        parse_says(5, Bases[base_id].name_string, -1, -1);
-    }
-
-    NetMsgPrimary.pop(report_label, 5000, 0, 0);
-    return 0;
-}
-// Retained fragment: battle-killoutcome-subagent/battle-fight-killoutcome-typed-v3.cpp
-// Exact typed route selection for battle_fight 0x50A730..0x50A80D.
-// Return labels retain their native destinations; they intentionally do not
-// claim behavioral names. Requires map.h and veh.h.
-enum BattleFightNativeRouteV3 {
-    BATTLE_FIGHT_NATIVE_ROUTE_A80E_V3 = 0,
-    BATTLE_FIGHT_NATIVE_ROUTE_A904_V3 = 1
-};
-
-static BattleFightNativeRouteV3 battle_fight_route_capture_gate_v3(
-    int frame_minus_20,
-    int frame_minus_18,
-    int defender_vehicle_id,
-    int attacker_vehicle_id,
-    int target_x,
-    int target_y) {
-    if (frame_minus_20 >= 0) {
-        return BATTLE_FIGHT_NATIVE_ROUTE_A80E_V3;
-    }
-
-    const Map *tile_before_stack_check = map_loc(target_x, target_y);
-    if ((tile_before_stack_check->bit & 0x800u) != 0) {
-        return BATTLE_FIGHT_NATIVE_ROUTE_A80E_V3;
-    }
-
-    const int defender_plan =
-        VehPrototypes[Vehs[defender_vehicle_id].proto_id].plan;
-    if (defender_plan == 2) {
-        return BATTLE_FIGHT_NATIVE_ROUTE_A80E_V3;
-    }
-
-    const int attacker_plan =
-        VehPrototypes[Vehs[attacker_vehicle_id].proto_id].plan;
-    if (attacker_plan == 2) {
-        return BATTLE_FIGHT_NATIVE_ROUTE_A80E_V3;
-    }
-    if (attacker_plan == 11) {
-        return BATTLE_FIGHT_NATIVE_ROUTE_A80E_V3;
-    }
-    if (defender_plan == 6) {
-        return BATTLE_FIGHT_NATIVE_ROUTE_A80E_V3;
-    }
-
-    if (stack_check(frame_minus_18, 2, 8, -1, -1) == 0) {
-        return BATTLE_FIGHT_NATIVE_ROUTE_A904_V3;
-    }
-
-    // Native reloads the target tile after stack_check; do not reuse the
-    // pre-callback climate byte.
-    const Map *tile_after_stack_check = map_loc(target_x, target_y);
-    if ((tile_after_stack_check->climate & 0xE0u) < 0x60u) {
-        return BATTLE_FIGHT_NATIVE_ROUTE_A904_V3;
-    }
-    return BATTLE_FIGHT_NATIVE_ROUTE_A80E_V3;
-}
-// Retained fragment: battle-killoutcome-subagent/battle-fight-killoutcome-typed-v4.cpp
-// Exact branch/call translation for battle_fight 0x50A80E..0x50A903.
-// Requires veh.h. Native frame/register inputs keep neutral identities; the
-// selector calls battle_kill and distinguishes the native A904 / AC8B joins.
-enum BattleFightNativeRouteA80E_V4 {
-    BATTLE_FIGHT_NATIVE_ROUTE_A904_V4 = 0,
-    BATTLE_FIGHT_NATIVE_ROUTE_AC8B_AFTER_KILL_V4 = 1
-};
-
-static void battle_fight_call_kill_then_reload_v4(
-    int frame_minus_18_vehicle_id,
-    int *frame_minus_38,
-    int *frame_minus_30,
-    int *frame_minus_58,
-    int original_vehicle_id,
-    int frame_minus_10,
-    const int *frame_minus_40,
-    int *native_edi_after_kill) {
-    battle_kill(frame_minus_18_vehicle_id,
-                frame_minus_38,
-                frame_minus_30,
-                frame_minus_58,
-                original_vehicle_id,
-                frame_minus_10);
-    // Native reload at A8F9 occurs only after battle_kill returns.
-    *native_edi_after_kill = *frame_minus_40;
-}
-
-static BattleFightNativeRouteA80E_V4 battle_fight_route_or_kill_v4(
-    int native_esi_before_test,
-    int frame_minus_20,
-    int frame_minus_18_vehicle_id,
-    int defender_vehicle_id,
-    int attacker_vehicle_id,
-    int *frame_minus_38,
-    int *frame_minus_30,
-    int *frame_minus_58,
-    int original_vehicle_id,
-    int frame_minus_10,
-    const int *frame_minus_40,
-    int *native_edi_after_kill) {
-    if (VehPrototypes[Vehs[defender_vehicle_id].proto_id].plan == 12) {
-        return BATTLE_FIGHT_NATIVE_ROUTE_A904_V4;
-    }
-
-    if (native_esi_before_test == 0) {
-        battle_fight_call_kill_then_reload_v4(
-            frame_minus_18_vehicle_id, frame_minus_38, frame_minus_30,
-            frame_minus_58, original_vehicle_id, frame_minus_10,
-            frame_minus_40, native_edi_after_kill);
-        return BATTLE_FIGHT_NATIVE_ROUTE_AC8B_AFTER_KILL_V4;
-    }
-
-    if (veh_cargo(frame_minus_18_vehicle_id) != 0 && frame_minus_20 < 0 &&
-        VehPrototypes[Vehs[attacker_vehicle_id].proto_id].plan != 11) {
-        return BATTLE_FIGHT_NATIVE_ROUTE_A904_V4;
-    }
-
-    if (VehPrototypes[Vehs[attacker_vehicle_id].proto_id].plan == 11) {
-        battle_fight_call_kill_then_reload_v4(
-            frame_minus_18_vehicle_id, frame_minus_38, frame_minus_30,
-            frame_minus_58, original_vehicle_id, frame_minus_10,
-            frame_minus_40, native_edi_after_kill);
-        return BATTLE_FIGHT_NATIVE_ROUTE_AC8B_AFTER_KILL_V4;
-    }
-
-    int stack_difference =
-        stack_check(frame_minus_18_vehicle_id, 2, 12, -1, -1);
-    stack_difference =
-        stack_check(frame_minus_18_vehicle_id, 1, -1, -1, -1) - stack_difference;
-    stack_difference -= stack_check(frame_minus_18_vehicle_id, 2, 8, -1, -1);
-    stack_difference -= stack_check(frame_minus_18_vehicle_id, 2, 11, -1, -1);
-    stack_difference -= stack_check(frame_minus_18_vehicle_id, 2, 10, -1, -1);
-
-    if (stack_difference <= 1) {
-        return BATTLE_FIGHT_NATIVE_ROUTE_A904_V4;
-    }
-
-    battle_fight_call_kill_then_reload_v4(
-        frame_minus_18_vehicle_id, frame_minus_38, frame_minus_30,
-        frame_minus_58, original_vehicle_id, frame_minus_10,
-        frame_minus_40, native_edi_after_kill);
-    return BATTLE_FIGHT_NATIVE_ROUTE_AC8B_AFTER_KILL_V4;
-}
-// Retained fragment: battle-killoutcome-subagent/battle-fight-rearm-loop-v1.cpp
-// Typed source fragment for the native battle_fight stack-removal/rearm path
-// beginning at label 0x50A904 and joining at 0x50AAE0. This is not a complete
-// battle_fight body. It is entered only on native edges to 0x50A904; callers
-// must preserve the distinct kill path ending at 0x50A8FF.
-//
-// `frame_vehicle_id` is the source-level vehicle ID corresponding to the
-// record base held in EDI at 0x50A91C; the neutral frame mapping stays an
-// explicit caller input. `vehicle_to_test` is native [ebp-0x18] (the selected
-// defender). The
-// `source_mode_slot` is the mutable fifth integer argument, incremented once
-// for every unit that reaches 0x50AAB1.
-//
-// Native instruction source: pinned image SHA-256
-// 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf,
-// [0x50A904,0x50AAE0). Kuna export was consulted only as CFG commentary.
-static void battle_fight_rearm_loop_v1(
-    int frame_vehicle_id,
-    int vehicle_to_test,
-    int attacker_vehicle_id,
-    int target_x,
-    int target_y,
-    int &source_mode_slot) {
-    // 0x50A904..0x50A90F: detach/normalize through the existing stack owner.
-    stack_veh(vehicle_to_test, 0);
-    if (vehicle_to_test < 0) {
-        return;
-    }
-
-    // 0x50A91C..0x50A940: EDI supplies the first previous-link load, while
-    // ESI ([ebp-0x18]) is the initial vehicle id if that link is already -1.
-    int vehicle_id = vehicle_to_test;
-    int previous = Vehs[frame_vehicle_id].prev_veh_id_stack;
-    while (previous >= 0) {
-        vehicle_id = previous;
-        previous = Vehs[vehicle_id].prev_veh_id_stack;
-    }
-
-    // The native follows the mutable next link after completing each vehicle
-    // update. No Veh reference is retained across a game callback.
-    while (vehicle_id >= 0) {
-        const int current_proto_id = Vehs[vehicle_id].proto_id;
-        const int current_chassis_id =
-            VehPrototypes[current_proto_id].chassis_id;
-        const int current_triad = Chassis[current_chassis_id].triad;
-        const Map *tile = map_loc(target_x, target_y);
-
-        // 0x50A96C..0x50A9DE. Preserve the ordered alternative branches:
-        // non-land chassis, high-altitude terrain, a supply/open owner tile,
-        // or the native order/waypoint relation all skip the HP reset.
-        const bool exposed_or_special_tile =
-            current_triad != TRIAD_LAND ||
-            (tile->climate & 0xE0u) >= 0x60u ||
-            ((tile->bit & 1u) != 0 && (tile->val2 & 0x0Fu) <= 7u) ||
-            (Vehs[vehicle_id].order == 1 &&
-             Vehs[vehicle_id].waypoint_x[0] != vehicle_to_test &&
-             Vehs[vehicle_id].waypoint_x[0] >= 0);
-
-        if (!exposed_or_special_tile) {
-            // 0x50A9E0..0x50AA45. This path computes max HP minus existing
-            // damage, then adds that remainder back to the byte. The apparent
-            // over-9999 branch is retained even though the typed HP domain is
-            // bounded by the native reactor table.
-            const int current_reactor = static_cast<int>(
-                VehPrototypes[current_proto_id].reactor_id);
-            const int maximum_damage =
-                VehPrototypes[current_proto_id].plan == PLAN_ALIEN_ARTIFACT
-                    ? 1
-                    : range(current_reactor, 1, 100) * 10;
-            const unsigned char old_damage = Vehs[vehicle_id].dmg_incurred;
-            int remaining = maximum_damage - static_cast<int>(old_damage);
-            if (remaining < 0) {
-                remaining = 0;
-            } else if (remaining > 9999) {
-                // Native byte addition: old damage + 15, truncated to 8 bits.
-                Vehs[vehicle_id].dmg_incurred = static_cast<uint8_t>(
-                    static_cast<unsigned>(old_damage) + 15u);
-                goto native_post_damage;
-            }
-            Vehs[vehicle_id].dmg_incurred = static_cast<uint8_t>(
-                static_cast<unsigned>(old_damage) +
-                static_cast<unsigned>(remaining));
-        } else if (vehicle_id != vehicle_to_test) {
-            // 0x50AA4C..0x50AACD: only non-selected units with one of these
-            // four plans bypass the shared 3x-reactor/state/source-mode tail.
-            const int current_plan = VehPrototypes[current_proto_id].plan;
-            if (current_plan == PLAN_ALIEN_ARTIFACT ||
-                current_plan == PLAN_COLONIZATION ||
-                current_plan == PLAN_INFO_WARFARE ||
-                current_plan == PLAN_SUPPLY_CONVOY) {
-                vehicle_id = Vehs[vehicle_id].next_veh_id_stack;
-                continue;
-            }
-        }
-
-native_post_damage:
-        {
-            // 0x50AA62..0x50AACD. RulesWeapon::mode is read as a signed byte
-            // by the image despite its current storage type being uint8_t.
-            // A nonnegative mode selects the attacker's reactor; otherwise
-            // the current stack unit's reactor supplies the multiplier.
-            const int attacker_proto_id = Vehs[attacker_vehicle_id].proto_id;
-            const int attacker_weapon_id =
-                VehPrototypes[attacker_proto_id].weapon_id;
-            const int multiplier_reactor =
-                static_cast<int8_t>(Weapon[attacker_weapon_id].mode) >= 0
-                    ? static_cast<int>(VehPrototypes[attacker_proto_id].reactor_id)
-                    : static_cast<int>(VehPrototypes[current_proto_id].reactor_id);
-            const int byte_delta = static_cast<int>(
-                static_cast<int8_t>(static_cast<uint8_t>(multiplier_reactor * 3)));
-            Vehs[vehicle_id].dmg_incurred = static_cast<uint8_t>(
-                static_cast<unsigned>(Vehs[vehicle_id].dmg_incurred) +
-                static_cast<unsigned>(static_cast<uint8_t>(byte_delta)));
-            ++source_mode_slot;
-            Vehs[vehicle_id].state |= VSTATE_UNK_4;
-        }
-
-        vehicle_id = Vehs[vehicle_id].next_veh_id_stack;
-    }
-
-}
-// Retained fragment: battle-killoutcome-subagent/battle-fight-killoutcome-typed-v22.cpp
-// Private corrected translation of native battle_fight [0x50AAE0,0x50AC8B).
-// v6 is preserved unchanged; v22 fixes a proven linked-stack traversal
-// liveness error from the pinned 0x50AAF1..AB18 sequence.
-enum BattleFightRemovalRouteV22 {
-    BATTLE_FIGHT_REMOVAL_ROUTE_AC8B_V22 = 0
-};
-
-static BattleFightRemovalRouteV22 battle_fight_remove_damaged_stack_v22(
-    int frame_minus_18_vehicle_id,
-    int frame_minus_8_vehicle_id,
-    int frame_minus_10_value,
-    int original_vehicle_id,
-    int *frame_plus_20_mutable,
-    int *frame_minus_38,
-    int *frame_minus_30,
-    int *frame_minus_58,
-    int frame_plus_10_x,
-    int frame_plus_14_y,
-    int *frame_plus_18_mutable) {
-    *frame_plus_20_mutable = original_vehicle_id;
-    if (frame_minus_18_vehicle_id >= 0) {
-        // Native EDI is seeded from [-0x18]. The predecessor at [-0x08]
-        // replaces it only while nonnegative; when the next link is -1, EDI
-        // retains the last valid member rather than the sentinel.
-        int vehicle_id = frame_minus_18_vehicle_id;
-        int predecessor = Vehs[frame_minus_8_vehicle_id].prev_veh_id_stack;
-        while (predecessor >= 0) {
-            vehicle_id = predecessor;
-            predecessor = Vehs[vehicle_id].prev_veh_id_stack;
-        }
-
-        while (vehicle_id >= 0) {
-            int next_vehicle_id = Vehs[vehicle_id].next_veh_id_stack;
-            const int prototype_id = Vehs[vehicle_id].proto_id;
-            const int max_damage =
-                VehPrototypes[prototype_id].plan == PLAN_ALIEN_ARTIFACT
-                    ? 1
-                    : range(static_cast<int>(VehPrototypes[prototype_id].reactor_id),
-                            1, 100) * 10;
-            const int remaining_damage = range(
-                max_damage - static_cast<int>(Vehs[vehicle_id].dmg_incurred),
-                0, 9999);
-
-            if (remaining_damage <= 0 || Vehs[vehicle_id].faction_id == 0) {
-                const int killed = battle_kill(
-                    vehicle_id, frame_minus_38, frame_minus_30,
-                    frame_minus_58, *frame_plus_20_mutable,
-                    frame_minus_10_value);
-                if (killed != 0) {
-                    if (*frame_plus_20_mutable > vehicle_id) {
-                        --*frame_plus_20_mutable;
-                    }
-                    if (next_vehicle_id > vehicle_id) {
-                        --next_vehicle_id;
-                    }
-                }
-            }
-
-            vehicle_id = next_vehicle_id;
-        }
-    }
-
-    const int adjusted_frame_plus_18 =
-        *frame_plus_18_mutable - (*frame_minus_38 + *frame_minus_30);
-    *frame_plus_18_mutable = adjusted_frame_plus_18 < 0
-                                 ? 0
-                                 : adjusted_frame_plus_18;
-    int stack_id = stack_fix(veh_at(frame_plus_10_x, frame_plus_14_y));
-    if (stack_id >= 0) {
-        const int check_12 = stack_check(stack_id, 2, 12, -1, -1);
-        const int check_1 = stack_check(stack_id, 1, -1, -1, -1);
-        int difference = check_1 - check_12;
-        difference -= stack_check(stack_id, 2, 8, -1, -1);
-        difference -= stack_check(stack_id, 2, 11, -1, -1);
-        difference -= stack_check(stack_id, 2, 10, -1, -1);
-
-        if (difference == 0) {
-            battle_kill_stack(stack_id, frame_minus_38, frame_minus_30,
-                              frame_minus_58, frame_minus_18_vehicle_id, -1);
-            *frame_plus_18_mutable = 0;
-        }
-    }
-    return BATTLE_FIGHT_REMOVAL_ROUTE_AC8B_V22;
-}
-// Retained fragment: battle-fight-base-objective-v1.cpp
-// Private typed translation of battle_fight 0x0050AC8B..0x0050AF13.
-// Include after the enclosing owner has declared the ordinary locals.  The
-// three references correspond to live stack values, not immutable arguments:
-// base_id is [ebp-0x20], population_half is [ebp-0x3c], and
-// frame_result is [ebp-0x44].
-
-enum BattleFightBaseRouteV1 {
-    BATTLE_FIGHT_BASE_TO_B1B4_V1,
-    BATTLE_FIGHT_BASE_TO_B1BC_V1
-};
-
-static void battle_fight_sync_killed_base_v1(int x, int y, int defender_faction,
-                                             int attacker_faction,
-                                             int &frame_result) {
-    for (int faction_id = 0; faction_id < 8; ++faction_id) {
-        synch_bit(x, y, faction_id);
-    }
-    draw_map(1);
-    if (eliminate_player(defender_faction, attacker_faction)) {
-        frame_result = 0;
-    }
-}
-
-static BattleFightBaseRouteV1 battle_fight_base_objective_v1(
-    int &base_id, int target_x, int target_y, int target_stack,
-    int attacker_tile_x, int attacker_tile_y, int attacker_faction,
-    int defender_faction, int &population_half, int &frame_result) {
-    if (base_id >= 0) {
-        Base &base = Bases[base_id];
-        base.state |= BSTATE_COMBAT_LOSS_LAST_TURN;
-
-        if (!is_ocean(attacker_tile_x, attacker_tile_y)
-            && !(is_objective(base_id) && base.population_size <= 1)
-            && !has_fac(FAC_PERIMETER_DEFENSE, base_id, 0)
-            && !has_fac(FAC_TACHYON_FIELD, base_id, 0)
-            && !has_project(SP_CITIZENS_DEFENSE_FORCE, defender_faction)) {
-            const int target_proto = Vehs[target_stack].proto_id;
-            const int target_weapon = VehPrototypes[target_proto].weapon_id;
-            const bool target_has_offense =
-                Weapon[target_weapon].offense_rating != 0;
-            if (target_has_offense && attacker_faction != 0
-                && veh_who(target_x, target_y) < 0
-                && !(PlayersData[defender_faction].current_num_bases == 0
-                     && is_human(defender_faction))) {
-                --base.population_size;
-                if (base.population_size <= 0) {
-                    population_half = 0;
-                    base_kill(base_id);
-                    base_id = -1;
-                    battle_fight_sync_killed_base_v1(
-                        target_x, target_y, defender_faction,
-                        attacker_faction, frame_result);
-                    goto battle_fight_base_factions_v1;
-                }
-                base.faction_pop_size_intel[attacker_faction] =
-                    static_cast<uint8_t>(base.population_size);
-            }
-        }
-
-        if (!is_human(defender_faction)) {
-            base_reset(base_id, 0);
-        }
-
-        if (population_half != 0) {
-            int half = (static_cast<int>(base.population_size) + 1) / 2;
-            population_half = half;
-            base.population_size = static_cast<int8_t>(
-                static_cast<int>(base.population_size) - half);
-            if (is_objective(base_id) && base.population_size < 1) {
-                base.population_size = 1;
-            }
-            if (base.population_size <= 0) {
-                base_kill(base_id);
-                base_id = -1;
-                battle_fight_sync_killed_base_v1(
-                    target_x, target_y, defender_faction,
-                    attacker_faction, frame_result);
-                goto battle_fight_base_factions_v1;
-            }
-            spot_base(base_id, attacker_faction);
-        }
-    }
-
-    if (veh_who(target_x, target_y) < 0
-        && !is_human(defender_faction) && base_id >= 0) {
-        invasions(base_id);
-    }
-
-battle_fight_base_factions_v1:
-    if (attacker_faction != 0 && defender_faction != 0) {
-        return BATTLE_FIGHT_BASE_TO_B1B4_V1;
-    }
-    return BATTLE_FIGHT_BASE_TO_B1BC_V1;
-}
-// Retained fragment: battle-killoutcome-subagent/battle-fight-killoutcome-typed-v2.cpp
-// Private, inclusion-context typed fragments for battle_fight native
-// 0x50A8DC..0x50A8FF, 0x50AD8E..0x50ADD4, and 0x50B157..0x50B1BC.
-// This is not a standalone battle_fight body. It requires base.h, map.h,
-// mapwin.h, and veh.h. Unresolved frame values retain neutral names.
-
-// Native 0x50A8DC pushes the six values in reverse order for this call.
-// Its return value is ignored; all three pointed-to counters are live outputs.
-static void battle_fight_call_kill_frame_value_v2(
-    int frame_minus_18,
-    int *frame_minus_38,
-    int *frame_minus_30,
-    int *frame_minus_58,
-    int original_vehicle_id,
-    int frame_minus_10) {
-    battle_kill(frame_minus_18,
-                frame_minus_38,
-                frame_minus_30,
-                frame_minus_58,
-                original_vehicle_id,
-                frame_minus_10);
-}
-
-// Native 0x50B157 passes the original vehicle as the stack root, reuses the
-// same output locals in the exact order, supplies killer_id=-1, and supplies
-// the current native ESI value as credit_faction. The caller must pass the
-// freshly live ESI value at the call site, not a faction snapshot from earlier
-// callbacks.
-static void battle_fight_call_stack_kill_v2(
-    int original_vehicle_id,
-    int *frame_minus_38,
-    int *frame_minus_30,
-    int *frame_minus_58,
-    int frame_esi_at_call) {
-    battle_kill_stack(original_vehicle_id,
-                      frame_minus_38,
-                      frame_minus_30,
-                      frame_minus_58,
-                      -1,
-                      frame_esi_at_call);
-}
-
-// Exact leaf transition at native 0x50AD8E..0x50ADD4. Caller reaches this
-// only after the preceding opaque base-damage eligibility sequence selected
-// this population update. true means native follows the base-destroyed path;
-// it does not mean the entire later continuation is complete.
-static bool battle_fight_apply_base_population_loss_v2(
-    int base_id,
-    int attacker_faction,
-    int target_x,
-    int target_y,
-    int *frame_minus_20,
-    int *frame_minus_3c,
-    int defender_faction,
-    int *frame_minus_44) {
-    const uint8_t population_bits = static_cast<uint8_t>(Bases[base_id].population_size);
-    const int8_t population_after = static_cast<int8_t>(
-        static_cast<uint8_t>(population_bits - 1u));
-    Bases[base_id].population_size = population_after;
-
-    if (population_after > 0) {
-        Bases[base_id].faction_pop_size_intel[attacker_faction] =
-            static_cast<uint8_t>(population_after);
-        return false;
-    }
-
-    // Native sets this output before base_kill, then destroys the base. Do not
-    // read Bases[base_id] after the lifecycle callback.
-    *frame_minus_3c = 0;
-    base_kill(base_id);
-    *frame_minus_20 = -1;
-
-    // 0x00591E50 receives the same target x/y and faction ids 0 through 7.
-    // Preserve the eight calls and their order after base_kill.
-    for (int faction = 0; faction < 8; ++faction) {
-        synch_bit(target_x, target_y, faction);
-    }
-    draw_map(1);
-    if (eliminate_player(defender_faction, attacker_faction)) {
-        *frame_minus_44 = 0;
-    }
-    return true;
-}
-// Retained fragment: battle-killoutcome-subagent/battle-fight-killoutcome-typed-v7.cpp
-// Typed redraw branch battle_fight [0x50B2FA,0x50B354).
-// Requires mapwin.h and temp.h; the map-window owner header declares the
-// typed overload used by this native redraw branch.
-enum BattleFightRedrawRouteV7 {
-    BATTLE_FIGHT_REDRAW_ROUTE_B639_V7 = 0,
-    BATTLE_FIGHT_REDRAW_ROUTE_B354_V7 = 1
-};
-
-static BattleFightRedrawRouteV7 battle_fight_redraw_pair_v7(
-    int frame_plus_1c,
-    int frame_plus_0c,
-    int frame_minus_2c_x,
-    int frame_minus_28_y,
-    int frame_plus_10_x,
-    int frame_plus_14_y) {
-    if (frame_plus_1c == 0) {
-        return BATTLE_FIGHT_REDRAW_ROUTE_B639_V7;
-    }
-
-    if (frame_plus_0c != 0) {
-        draw_tile(frame_minus_2c_x, frame_minus_28_y, 1);
-        draw_tile_fixup(frame_plus_10_x, frame_plus_14_y, 2, 1);
-    } else {
-        draw_tile_fixup(frame_minus_2c_x, frame_minus_28_y, 2, 1);
-        draw_tile(frame_plus_10_x, frame_plus_14_y, 1);
-    }
-    do_all_draws();
-    return BATTLE_FIGHT_REDRAW_ROUTE_B354_V7;
-}
-// The v4 route adapter uses this two-value native join enum. Define only the
-// enum here: do not include or call the disputed v8 AD1A..AF13 body. That
-// whole native interval is composed from battle_fight_base_objective_v1.
-enum BattleFightBaseContinuationRouteV8 {
-    BATTLE_FIGHT_BASE_ROUTE_B1B4_V8 = 0,
-    BATTLE_FIGHT_BASE_ROUTE_B1BC_V8 = 1
-};
-// Retained fragment: battle-report-subagent/battle-fight-post-outcome-v4.cpp
-// Private insertion-context translation for battle_fight's post-outcome
-// blocks [0x50AF13,0x50B2FA) and [0x50B354,0x50B63F). This is not a complete
-// battle_fight definition. Include the owning project headers plus existing
-// battle-fight-killoutcome-typed-v2.cpp, typed-v7.cpp and typed-v8.cpp.
-// Pinned native message labels in this span are emitted as ordinary text.
-// 0x00477210's existing recovered unit identifies mon_enemy_destroyed, but
-// that seed unit has no public owner header yet; retain this direct symbol
-// dependency until its real declaration is homed.
-void __cdecl mon_enemy_destroyed(int faction_id, int faction_id_with);
-
-// The base-destruction continuation added by killoutcome-typed-v8 selects
-// these same two native edges. Keep the route explicit: B1B4 invokes the
-// monument callback, whereas B1BC begins the shared treaty-friction block.
-enum BattleFightReportContinuationRouteV4 {
-    BATTLE_FIGHT_REPORT_ROUTE_B1B4_V4 = 0,
-    BATTLE_FIGHT_REPORT_ROUTE_B1BC_V4 = 1
-};
-
-static void battle_fight_b203_score_and_neighbor_refresh_v4(
-    int &direction_stack_slot,
-    int &native_plus8_loop_slot,
-    int attacker_faction,
-    int target_x,
-    int target_y,
-    int frame_minus_58,
-    int &frame_minus_40_last_vehicle);
-
-static void battle_fight_b1bc_treaty_tail_v4(
-    int attacker_faction,
-    int defender_faction,
-    int *frame_minus_30) {
-    // Shared native B1BC..B203 block. The pointer is live because prior
-    // report/kill callbacks can change the output local.
-    if (*frame_minus_30 != 0 &&
-        (static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
-         static_cast<uint8_t>(1u <<
-             (static_cast<uint32_t>(defender_faction) & 0x1Fu))) == 0 &&
-        has_treaty(attacker_faction, defender_faction, 0x10) == 0) {
-        cause_friction(defender_faction, attacker_faction, 5);
-        treaty_on(attacker_faction, defender_faction, 0x2000);
-    }
-}
-
-static void battle_fight_resume_report_route_v4(
-    BattleFightReportContinuationRouteV4 route,
-    int attacker_faction,
-    int defender_faction,
-    int *frame_minus_30) {
-    if (route == BATTLE_FIGHT_REPORT_ROUTE_B1B4_V4) {
-        // Native pushes EDI then ESI; cdecl therefore receives defender,
-        // attacker. This is also the v8 direct incoming B1B4 edge.
-        mon_enemy_destroyed(defender_faction, attacker_faction);
-    }
-    battle_fight_b1bc_treaty_tail_v4(
-        attacker_faction, defender_faction, frame_minus_30);
-}
-
-// Incoming composition for killoutcome-typed-v8: that fragment owns the
-// AE..AF route choice and stops at B1B4/B1BC. Both edges rejoin at B203 after
-// the shared callback/treaty continuation here.
-static void battle_fight_base_route_to_b2fa_v4(
-    BattleFightBaseContinuationRouteV8 route,
-    int attacker_faction,
-    int defender_faction,
-    int *frame_minus_30,
-    int &direction_stack_slot,
-    int &native_plus8_loop_slot,
-    int target_x,
-    int target_y,
-    int frame_minus_58,
-    int &frame_minus_40_last_vehicle) {
-    battle_fight_resume_report_route_v4(
-        route == BATTLE_FIGHT_BASE_ROUTE_B1B4_V8
-            ? BATTLE_FIGHT_REPORT_ROUTE_B1B4_V4
-            : BATTLE_FIGHT_REPORT_ROUTE_B1BC_V4,
-        attacker_faction, defender_faction, frame_minus_30);
-    battle_fight_b203_score_and_neighbor_refresh_v4(
-        direction_stack_slot, native_plus8_loop_slot, attacker_faction,
-        target_x, target_y, frame_minus_58, frame_minus_40_last_vehicle);
-}
-
-// Exact typed path from the alternate-direction report entry through the
-// B203 join. The two report arms remain distinct; `opaque_report_gate` is the
-// unresolved 0x93A95C state, not a renamed game option.
-static void battle_fight_after_outcome_af13_to_b203_v4(
-    int original_vehicle_id,
-    int &native_plus8_loop_slot,
-    Veh &attacker_vehicle_record,
-    Veh &defender_vehicle_record,
-    int attacker_faction,
-    int defender_faction,
-    int target_x,
-    int target_y,
-    int opaque_report_gate,
-    int *frame_minus_38,
-    int *frame_minus_30,
-    int *frame_minus_58) {
-    const int multiplayer_gate_value = IsMultiplayerNet;
-
-    // Native's alternate-direction result accounting is defender wins / the
-    // attacker's losses, distinct from the preceding nonzero-direction arm.
-    ++FactionTurnCombatWins[defender_faction];
-    ++FactionTurnCombatLosses[attacker_faction];
-
-    if (multiplayer_gate_value != 0 &&
-        defender_faction == ConsoleGlobal.faction_id_) {
-        int proto_id = defender_vehicle_record.proto_id;
-        parse_says(0, VehPrototypes[proto_id].veh_name, -1, -1);
-        clear();
-        proto_id = defender_vehicle_record.proto_id;
-        say_stats_3(proto_id);
-        parse_says(1, StringTemp, -1, -1);
-
-        parse_says(2, get_adjective(attacker_faction), -1, -1);
-
-        proto_id = attacker_vehicle_record.proto_id;
-        parse_says(3, VehPrototypes[proto_id].veh_name, -1, -1);
-        clear();
-        proto_id = attacker_vehicle_record.proto_id;
-        say_stats_3(proto_id);
-        parse_says(4, StringTemp, -1, -1);
-
-        const int base_id = base_find(target_x, target_y, -1, -1, -1,
-                                      ConsoleGlobal.faction_id_);
-        if (base_id >= 0) {
-            parse_says(5, Bases[base_id].name_string, -1, -1);
-        }
-        NetMsgPrimary.pop("COMBATWIN", 5000, 0, 0);
-    } else if (opaque_report_gate != 0 &&
-               ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
-                 static_cast<uint8_t>(1u <<
-                     (static_cast<uint32_t>(defender_faction) & 0x1Fu))) != 0)) {
-        int proto_id = defender_vehicle_record.proto_id;
-        parse_says(0, VehPrototypes[proto_id].veh_name, -1, -1);
-        clear();
-        proto_id = defender_vehicle_record.proto_id;
-        say_stats_3(proto_id);
-        parse_says(1, StringTemp, -1, -1);
-
-        parse_says(2, get_adjective(attacker_faction), -1, -1);
-
-        proto_id = attacker_vehicle_record.proto_id;
-        parse_says(3, VehPrototypes[proto_id].veh_name, -1, -1);
-        clear();
-        proto_id = attacker_vehicle_record.proto_id;
-        say_stats_3(proto_id);
-        parse_says(4, StringTemp, -1, -1);
-
-        const int base_id = base_find(target_x, target_y, -1, -1, -1,
-                                      defender_faction);
-        if (base_id >= 0) {
-            parse_says(5, Bases[base_id].name_string, -1, -1);
-        }
-        POP3("COMBATWIN", 0, defender_faction,
-             target_x, target_y);
-    }
-
-    // 0x50B157..0x50B1BC: callbacks may mutate vehicle records, so carry the
-    // vehicle ID and re-index rather than keeping a Veh& across calls.
-    native_plus8_loop_slot = original_vehicle_id;
-    stack_veh(native_plus8_loop_slot, 1);
-    battle_fight_call_stack_kill_v2(
-        native_plus8_loop_slot, frame_minus_38, frame_minus_30,
-        frame_minus_58, defender_faction);
-
-    // Native pair-array order at B190 is defender row, attacker column.
-    ++PlayersData[defender_faction].diplo_unk3[attacker_faction];
-    ++PlayersData[defender_faction].diplo_unk4[attacker_faction];
-    // AF13's local entry takes the exact native B1AE tests. The distinct
-    // v8 route is passed to battle_fight_resume_report_route_v4 by the outer
-    // base-destruction caller and can enter directly at B1B4 or B1BC.
-    const BattleFightReportContinuationRouteV4 route =
-        attacker_faction != 0 && defender_faction != 0
-            ? BATTLE_FIGHT_REPORT_ROUTE_B1B4_V4
-            : BATTLE_FIGHT_REPORT_ROUTE_B1BC_V4;
-    battle_fight_resume_report_route_v4(
-        route, attacker_faction, defender_faction, frame_minus_30);
-}
-
-// Shared B203 score/UI loop. This block is reached from multiple native
-// predecessors (including the nonzero-direction A730 route), so the mutable
-// +0x0C/+0x08 slots and output locals are supplied live by the caller.
-static void battle_fight_b203_score_and_neighbor_refresh_v4(
-    int &direction_stack_slot,
-    int &native_plus8_loop_slot,
-    int attacker_faction,
-    int target_x,
-    int target_y,
-    int frame_minus_58,
-    int &frame_minus_40_last_vehicle) {
-    if (direction_stack_slot == 0 || frame_minus_58 == 0) {
-        return;
-    }
-
-    PlayersData[attacker_faction].energy_reserves += frame_minus_58;
-    ConsoleGlobal.update_data(0);
-
-    native_plus8_loop_slot = 0;
-    while (native_plus8_loop_slot < 0x20) {
-        const int neighbor_index = native_plus8_loop_slot / 4;
-        const int neighbor_x = wrap_map_x(target_x + VehMoveDeltaX[neighbor_index]);
-        const int neighbor_y = target_y + VehMoveDeltaY[neighbor_index];
-        if (on_map(neighbor_x, neighbor_y)) {
-            frame_minus_40_last_vehicle = veh_at(neighbor_x, neighbor_y);
-            int vehicle_id = frame_minus_40_last_vehicle;
-            while (vehicle_id >= 0) {
-                // Visibility and the packed word are reread after each draw
-                // callback; do not retain a record reference across it.
-                if (Vehs[vehicle_id].visibility == 0) {
-                    const uint16_t old_word = Vehs[vehicle_id].unk_1;
-                    const int old_direction = (old_word >> 3) & 3;
-                    Vehs[vehicle_id].unk_1 = static_cast<uint16_t>(
-                        old_word & static_cast<uint16_t>(~(old_direction * 8)));
-                    const int next_direction = range(old_direction + 1, 0, 3);
-                    Vehs[vehicle_id].unk_1 = static_cast<uint16_t>(
-                        Vehs[vehicle_id].unk_1 |
-                        static_cast<uint16_t>(next_direction << 3));
-                    draw_tile(neighbor_x, neighbor_y, 2);
-                }
-                vehicle_id = Vehs[vehicle_id].prev_veh_id_stack;
-            }
-        }
-        native_plus8_loop_slot += 4;
-    }
-}
-
-// Concrete in-context bridge for AF13 -> B203 -> B2FA. On the native AF13
-// edge the parameter slot is ordinarily zero, but it remains a reference
-// because earlier native callbacks may have mutated that slot.
-static void battle_fight_af13_to_b2fa_v4(
-    int original_vehicle_id,
-    int &direction_stack_slot,
-    int &native_plus8_loop_slot,
-    Veh &attacker_vehicle_record,
-    Veh &defender_vehicle_record,
-    int attacker_faction,
-    int defender_faction,
-    int target_x,
-    int target_y,
-    int opaque_report_gate,
-    int *frame_minus_38,
-    int *frame_minus_30,
-    int *frame_minus_58,
-    int &frame_minus_40_last_vehicle) {
-    battle_fight_after_outcome_af13_to_b203_v4(
-        original_vehicle_id, native_plus8_loop_slot,
-        attacker_vehicle_record, defender_vehicle_record,
-        attacker_faction, defender_faction, target_x, target_y,
-        opaque_report_gate, frame_minus_38, frame_minus_30,
-        frame_minus_58);
-    battle_fight_b203_score_and_neighbor_refresh_v4(
-        direction_stack_slot, native_plus8_loop_slot, attacker_faction,
-        target_x, target_y, *frame_minus_58,
-        frame_minus_40_last_vehicle);
-}
-
-// Typed post-redraw notification/UI continuation [B354,B63F). It ends at the
-// native join; the existing typed-v1 selector helper owns B63F..B6F6.
-static void battle_fight_post_redraw_notifications_v4(
-    int direction_snapshot_at_b308,
-    int attacker_faction,
-    int defender_faction,
-    int frame_minus_18,
-    int frame_minus_30,
-    int frame_minus_38,
-    int frame_minus_3c,
-    int frame_minus_40,
-    int frame_minus_58,
-    int frame_minus_64,
-    int frame_minus_88,
-    const char *native_text_buffer) {
-    const int local_faction_at_b354 = ConsoleGlobal.faction_id_;
-
-    bool frame_minus_30_notice_done = false;
-    if (direction_snapshot_at_b308 != 0 && frame_minus_58 != 0 &&
-        attacker_faction == local_faction_at_b354) {
-        parse_num(0, frame_minus_58);
-        NetMsgPrimary.pop("HUSKS", 5000, 0, 0);
-        if (frame_minus_30 != 0) {
-            frame_minus_30_notice_done = true;
-            parse_num(0, frame_minus_30);
-            const int local_faction_after_notice = ConsoleGlobal.faction_id_;
-            if (defender_faction == local_faction_after_notice) {
-                clear();
-                says("THEIRBOOTY");
-                if (has_treaty(attacker_faction, defender_faction, 0x10)) {
-                    say_num(range(frame_minus_30, 1, 2));
-                    NetMsgPrimary.pop(StringTemp, 5000, 0, 0);
-                } else {
-                    parse_says(0, get_noun(attacker_faction), -1, -1);
-                    say_num(3);
-                    NetMsgPrimary.pop(StringTemp, 5000, 0, 0);
-                }
-            } else if (attacker_faction == local_faction_after_notice) {
-                clear();
-                says("OURBOOTY");
-                say_num(range(frame_minus_30, 1, 2));
-                NetMsgPrimary.pop(StringTemp, 5000, 0, 0);
-            }
-        }
-    } else {
-        if (frame_minus_38 > 1 || frame_minus_18 != 0) {
-            const int local_faction = ConsoleGlobal.faction_id_;
-            if (attacker_faction == local_faction ||
-                defender_faction == local_faction) {
-                parse_num(0, frame_minus_38);
-                parse_num(1, frame_minus_30);
-                clear();
-                const bool attacker_is_local = attacker_faction == local_faction;
-                const bool input_is_nonzero = direction_snapshot_at_b308 != 0;
-                if (attacker_is_local == input_is_nonzero) {
-                    says("NUMGOT");
-                } else {
-                    says("NUMLOST");
-                }
-                if (frame_minus_38 > 1 && frame_minus_18 != 0) {
-                    says("2");
-                } else if (frame_minus_38 <= 1 && frame_minus_18 != 0) {
-                    says("1");
-                }
-                NetMsgPrimary.pop(StringTemp, 5000, 0, 0);
-            }
-        }
-    }
-
-    if (!frame_minus_30_notice_done && frame_minus_30 != 0) {
-        parse_num(0, frame_minus_30);
-        const int local_faction = ConsoleGlobal.faction_id_;
-        if (defender_faction != local_faction) {
-            if (attacker_faction == local_faction) {
-                clear();
-                says("OURBOOTY");
-                say_num(range(frame_minus_30, 1, 2));
-                NetMsgPrimary.pop(StringTemp, 5000, 0, 0);
-            }
-        } else {
-            clear();
-            says("THEIRBOOTY");
-            if (has_treaty(attacker_faction, defender_faction, 0x10)) {
-                say_num(range(frame_minus_30, 1, 2));
-                NetMsgPrimary.pop(StringTemp, 5000, 0, 0);
-            } else {
-                parse_says(0, get_noun(attacker_faction), -1, -1);
-                say_num(3);
-                NetMsgPrimary.pop(StringTemp, 5000, 0, 0);
-            }
-        }
-    }
-
-    if (frame_minus_3c != 0 && strlen(native_text_buffer) != 0) {
-        parse_says(0, native_text_buffer, -1, -1);
-        NetMsgPrimary.pop("NERVEGAS", 5000, 0, 0);
-    }
-
-    if (frame_minus_64 != 0) {
-        const int proto_id = Vehs[frame_minus_40].proto_id;
-        parse_says(0, VehPrototypes[proto_id].veh_name, -1, -1);
-        parse_says(1, get_adjective(defender_faction), -1, -1);
-        const int local_faction = ConsoleGlobal.faction_id_;
-        if (defender_faction == local_faction) {
-            NetMsgPrimary.pop("WEDISENGAGED", 5000, 0, 0);
-        } else if (attacker_faction == local_faction) {
-            NetMsgPrimary.pop("THEYDISENGAGED", 5000, 0, 0);
-        }
-    }
-
-    ConsoleStatusWin.redraw();
-    if (frame_minus_88 != 0) {
-        TutWinBaseWindow.focus();
-        MainInterfaceGlobal.redraw();
-        do_all_draws();
-    }
-
-    if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x10u) != 0) {
-        g_BattleWin.stop_timer();
-        popp(ScriptPopupFile, "BATTLEPAUSE", 0, "batwon_sm.pcx", 0);
-        g_BattleWin.pulse_timer();
-        if (ConsoleGroupAction != 0) {
-            GameDataStateStorage.fields_.game_more_preferences_ &= ~0x10u;
-            prefs_save(0);
-        }
-    }
-}
-
-// Ordered join from the already-translated native redraw pair to B354, then
-// this report/UI tail. B639 is a genuine bypass and belongs to the later
-// final/selector route, not the B354 notification body.
-static int battle_fight_b2fa_to_b63f_v4(
-    int frame_plus_1c,
-    int direction_snapshot_at_b308,
-    int frame_minus_2c_x,
-    int frame_minus_28_y,
-    int frame_plus_10_x,
-    int frame_plus_14_y,
-    int attacker_faction,
-    int defender_faction,
-    int frame_minus_18,
-    int frame_minus_30,
-    int frame_minus_38,
-    int frame_minus_3c,
-    int frame_minus_40,
-    int frame_minus_58,
-    int frame_minus_64,
-    int frame_minus_88,
-    const char *native_text_buffer) {
-    const BattleFightRedrawRouteV7 redraw_route =
-        battle_fight_redraw_pair_v7(
-            frame_plus_1c, direction_snapshot_at_b308,
-            frame_minus_2c_x, frame_minus_28_y,
-            frame_plus_10_x, frame_plus_14_y);
-    if (redraw_route == BATTLE_FIGHT_REDRAW_ROUTE_B639_V7) {
-        return 0;
-    }
-    battle_fight_post_redraw_notifications_v4(
-        direction_snapshot_at_b308, attacker_faction, defender_faction, frame_minus_18,
-        frame_minus_30, frame_minus_38, frame_minus_3c,
-        frame_minus_40, frame_minus_58, frame_minus_64,
-        frame_minus_88, native_text_buffer);
-    return 1;
-}
-// Retained fragment: battle-killoutcome-subagent/battle-fight-killoutcome-typed-v1.cpp
-// Complete native selector switch at battle_fight 0x50B63F..0x50B6F6.
-// The selector's semantic meaning remains unresolved. The caller supplies the
-// native literal pointers; these are values, not newly assigned message names.
-// Requires faction.h (get_adjective/get_noun), general.h (parse_says), and
-// netmsg.h (NetMsgPrimary).
-static void battle_fight_emit_selector_notice_v1(
-    int native_selector,
-    int attacker_faction,
-    int defender_faction,
-    const char *selector_one_label,
-    const char *selector_two_label,
-    const char *selector_three_label) {
-    const char *message = 0;
-
-    switch (native_selector) {
-    case 1:
-        parse_says(0, get_adjective(attacker_faction), -1, -1);
-        parse_says(1, get_noun(defender_faction), -1, -1);
-        message = selector_one_label;
-        break;
-    case 2:
-        parse_says(0, get_adjective(attacker_faction), -1, -1);
-        parse_says(1, get_noun(defender_faction), -1, -1);
-        message = selector_two_label;
-        break;
-    case 3:
-        parse_says(0, get_noun(attacker_faction), -1, -1);
-        parse_says(1, get_noun(defender_faction), -1, -1);
-        message = selector_three_label;
-        break;
-    default:
-        return;
-    }
-
-    NetMsg::pop(message, 0);
-}
-// Retained fragment: battle-final-tail-subagent/battle-fight-final-block-v5.cpp
-// Private typed reconstruction of native battle_fight 0x50B6F7..0x50B893.
-// Inclusion-context fragment only; not the complete battle_fight body.
-#include <stdint.h>
-
-// The reference aliases the enclosing body's live [ebp+0x0c] parameter slot.
-// Native reloads that slot after interlude at 0x50B755; a by-value snapshot is
-// not equivalent if the callback mutates the slot. Earlier native stores also
-// mean its value need not equal the caller's original direction argument.
-static int battle_fight_final_block_v5(
-    int &parameter_slot_value,
-    int target_x,
-    int target_y,
-    int attacker_prototype_id,
-    int defender_prototype_id,
-    int attacker_faction,
-    int defender_faction,
-    int run_interlude,
-    int target_base_id) {
-    VehPrototypes[attacker_prototype_id].combat_factions = static_cast<int8_t>(
-        static_cast<uint8_t>(VehPrototypes[attacker_prototype_id].combat_factions) |
-        static_cast<uint8_t>(1u << (static_cast<uint8_t>(defender_faction) & 0x1f)));
-    VehPrototypes[defender_prototype_id].combat_factions = static_cast<int8_t>(
-        static_cast<uint8_t>(VehPrototypes[defender_prototype_id].combat_factions) |
-        static_cast<uint8_t>(1u << (static_cast<uint8_t>(attacker_faction) & 0x1f)));
-
-    if (run_interlude != 0) {
-        interlude(0, 0, 1, 0);
-    }
-
-    // 0x50B755 observes the reference's current value after interlude.
-    if (parameter_slot_value == 0) {
-        return 0;
-    }
-    int result = 1; // native EBX; kill below clears it.
-
-    // 0x50B765 reloads VehSelectionFollowLimit after interlude. Keep the
-    // numeric slot ID, then re-index Vehs after each callback (no stale ref).
-    const int turn_vehicle_id = GameDataStateStorage.fields_.vehicle_selection_follow_limit_;
-    int turn_chassis_id =
-        VehPrototypes[Vehs[turn_vehicle_id].proto_id].chassis_id;
-
-    // Native RulesChassis offsets +0x7A and +0x7D are element 4 and element 7
-    // of this existing byte-array owner; their game meaning remains unknown.
-    const uint8_t triad = Chassis[turn_chassis_id].triad;
-    if (triad == TRIAD_AIR &&
-        Chassis[turn_chassis_id].sprite_unk2_y_off[4] == 1) {
-        // 0x50B799/0x50B7A2: exact air + byte==1 case does not skip.
-    } else if (triad == TRIAD_SEA || triad == TRIAD_AIR) {
-        veh_skip(turn_vehicle_id);
-        // Native byte addition wraps modulo 256; callback may mutate the slot.
-        Vehs[turn_vehicle_id].moves_expended = static_cast<uint8_t>(
-            Vehs[turn_vehicle_id].moves_expended + Rules.move_rate_roads);
-    }
-
-    // Native reloads prototype/chassis after veh_skip, then kill() and clear
-    // EBX if byte +0x7D is nonzero.
-    turn_chassis_id = VehPrototypes[Vehs[turn_vehicle_id].proto_id].chassis_id;
-    if (Chassis[turn_chassis_id].sprite_unk2_y_off[7] != 0) {
-        kill(turn_vehicle_id);
-        result = 0;
-    }
-
-    // 0x50B81C..0x50B842 gates the final special return. veh_who is called
-    // only if the attacker faction bit is absent and target_base_id is valid;
-    // its return is tested, not ignored: nonnegative bypasses the special arm.
-    const uint8_t attacker_bit = static_cast<uint8_t>(
-        1u << (static_cast<uint8_t>(attacker_faction) & 0x1f));
-    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & attacker_bit) == 0 && target_base_id >= 0 &&
-        veh_who(target_x, target_y) < 0) {
-        turn_chassis_id = VehPrototypes[Vehs[turn_vehicle_id].proto_id].chassis_id;
-        if (Chassis[turn_chassis_id].triad == TRIAD_AIR &&
-            Chassis[turn_chassis_id].sprite_unk2_y_off[4] != 0 &&
-            static_cast<int>(Vehs[turn_vehicle_id].terraforming_turns) + 1 >=
-                Chassis[turn_chassis_id].sprite_unk2_y_off[4]) {
-            return 1;
-        }
-    }
-    return result;
-}
-
-// Composition-local spelling of outcome-join-v4 with its verified 0x93A95C
-// owner read directly at the alternate-notice predicate. This preserves the
-// counters and both distinct notice forms while avoiding a frame snapshot of
-// IsMultiplayerPBEM. The source owner is game.h/game.cpp, not an opaque slot.
-enum BattleFightOutcomeJoinV4 {
-    BATTLE_FIGHT_OUTCOME_JOIN_A730_V4 = 0,
-    BATTLE_FIGHT_OUTCOME_JOIN_AF13_V4 = 1,
-    BATTLE_FIGHT_OUTCOME_JOIN_B203_V4 = 2
-};
-
-static BattleFightOutcomeJoinV4 battle_fight_outcome_join_live_v1(
-    int frame_minus_50,
-    int &frame_minus_64,
-    int &direction_parameter_plus_0c,
-    int &source_mode_parameter_plus_18,
-    int &frame_minus_38,
-    int &frame_minus_30,
-    int &frame_minus_58,
-    Veh &attacker_record_minus_04,
-    Veh &defender_record_minus_08,
-    int attacker_faction_minus_10,
-    int defender_faction_minus_0c,
-    int target_x_plus_10,
-    int target_y_plus_14) {
-    const int minus_50_was_nonzero = frame_minus_50 != 0;
-    frame_minus_38 = 0;
-    frame_minus_30 = 0;
-    frame_minus_58 = 0;
-    source_mode_parameter_plus_18 = 0;
-
-    if (minus_50_was_nonzero) {
-        return BATTLE_FIGHT_OUTCOME_JOIN_B203_V4;
-    }
-    if (frame_minus_64 != 0) {
-        return BATTLE_FIGHT_OUTCOME_JOIN_B203_V4;
-    }
-    if (direction_parameter_plus_0c == 0) {
-        return BATTLE_FIGHT_OUTCOME_JOIN_AF13_V4;
-    }
-
-    int pair_attack_count = PlayersData[attacker_faction_minus_10].diplo_unk3[
-        defender_faction_minus_0c];
-    PlayersData[attacker_faction_minus_10].diplo_unk3[
-        defender_faction_minus_0c] = pair_attack_count + 1;
-    int pair_diplomacy_count = PlayersData[attacker_faction_minus_10].diplo_unk4[
-        defender_faction_minus_0c];
-    int attacker_wins = FactionTurnCombatWins[attacker_faction_minus_10];
-    PlayersData[attacker_faction_minus_10].diplo_unk4[
-        defender_faction_minus_0c] = pair_diplomacy_count + 1;
-    int defender_losses = FactionTurnCombatLosses[defender_faction_minus_0c];
-    const int multiplayer_at_native_load = IsMultiplayerNet;
-    FactionTurnCombatWins[attacker_faction_minus_10] = attacker_wins + 1;
-    FactionTurnCombatLosses[defender_faction_minus_0c] = defender_losses + 1;
-
-    if (multiplayer_at_native_load != 0 &&
-        defender_faction_minus_0c == ConsoleGlobal.faction_id_) {
-        int proto_id = defender_record_minus_08.proto_id;
-        parse_says(0, VehPrototypes[proto_id].veh_name, -1, -1);
-        StringTemp[0] = '\0';
-        proto_id = defender_record_minus_08.proto_id;
-        say_stats_3(StringTemp, proto_id);
-        parse_says(1, StringTemp, -1, -1);
-        parse_says(2, get_adjective(attacker_faction_minus_10), -1, -1);
-        proto_id = attacker_record_minus_04.proto_id;
-        parse_says(3, VehPrototypes[proto_id].veh_name, -1, -1);
-        StringTemp[0] = '\0';
-        proto_id = attacker_record_minus_04.proto_id;
-        say_stats_3(StringTemp, proto_id);
-        parse_says(4, StringTemp, -1, -1);
-        const int local_faction_at_native_base_find = ConsoleGlobal.faction_id_;
-        const int base_id = base_find(
-            target_x_plus_10, target_y_plus_14, -1, -1, -1,
-            local_faction_at_native_base_find);
-        if (base_id >= 0) {
-            parse_says(5, Bases[base_id].name_string, -1, -1);
-        }
-        NetMsgPrimary.pop("COMBATLOSS", 5000, 0, 0);
-        return BATTLE_FIGHT_OUTCOME_JOIN_A730_V4;
-    }
-
-    const uint8_t defender_bit = static_cast<uint8_t>(
-        1u << (static_cast<uint32_t>(defender_faction_minus_0c) & 0x1Fu));
-    if (IsMultiplayerPBEM == 0 ||
-        (static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & defender_bit) == 0) {
-        return BATTLE_FIGHT_OUTCOME_JOIN_A730_V4;
-    }
-
-    int proto_id = defender_record_minus_08.proto_id;
-    parse_says(0, VehPrototypes[proto_id].veh_name, -1, -1);
-    StringTemp[0] = '\0';
-    proto_id = defender_record_minus_08.proto_id;
-    say_stats_3(StringTemp, proto_id);
-    parse_says(1, StringTemp, -1, -1);
-    parse_says(2, get_adjective(attacker_faction_minus_10), -1, -1);
-    proto_id = attacker_record_minus_04.proto_id;
-    parse_says(3, VehPrototypes[proto_id].veh_name, -1, -1);
-    StringTemp[0] = '\0';
-    proto_id = attacker_record_minus_04.proto_id;
-    say_stats_3(StringTemp, proto_id);
-    parse_says(4, StringTemp, -1, -1);
-    const int base_id = base_find(
-        target_x_plus_10, target_y_plus_14, -1, -1, -1,
-        defender_faction_minus_0c);
-    if (base_id >= 0) {
-        parse_says(5, Bases[base_id].name_string, -1, -1);
-    }
-    POP3("COMBATLOSS", static_cast<const char *>(0),
-         defender_faction_minus_0c, target_x_plus_10, target_y_plus_14);
-    return BATTLE_FIGHT_OUTCOME_JOIN_A730_V4;
-}
-
-// AF13 route copied from post-outcome-v4 solely to bind the now-known PBEM
-// global at its native branch, after the ordered counters and the local
-// NetMsg branch. All notice/callback order remains the frozen v4 order.
-static void battle_fight_after_outcome_af13_live_v1(
-    int original_vehicle_id,
-    int &native_plus8_loop_slot,
-    Veh &attacker_vehicle_record,
-    Veh &defender_vehicle_record,
-    int attacker_faction,
-    int defender_faction,
-    int target_x,
-    int target_y,
-    int *frame_minus_38,
-    int *frame_minus_30,
-    int *frame_minus_58) {
-    const int multiplayer_gate_value = IsMultiplayerNet;
-    ++FactionTurnCombatWins[defender_faction];
-    ++FactionTurnCombatLosses[attacker_faction];
-
-    if (multiplayer_gate_value != 0 &&
-        defender_faction == ConsoleGlobal.faction_id_) {
-        int proto_id = defender_vehicle_record.proto_id;
-        parse_says(0, VehPrototypes[proto_id].veh_name, -1, -1);
-        clear();
-        proto_id = defender_vehicle_record.proto_id;
-        say_stats_3(proto_id);
-        parse_says(1, StringTemp, -1, -1);
-        parse_says(2, get_adjective(attacker_faction), -1, -1);
-        proto_id = attacker_vehicle_record.proto_id;
-        parse_says(3, VehPrototypes[proto_id].veh_name, -1, -1);
-        clear();
-        proto_id = attacker_vehicle_record.proto_id;
-        say_stats_3(proto_id);
-        parse_says(4, StringTemp, -1, -1);
-        const int base_id = base_find(target_x, target_y, -1, -1, -1,
-                                      ConsoleGlobal.faction_id_);
-        if (base_id >= 0) {
-            parse_says(5, Bases[base_id].name_string, -1, -1);
-        }
-        NetMsgPrimary.pop("COMBATWIN", 5000, 0, 0);
-    } else if (IsMultiplayerPBEM != 0 &&
-               ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
-                 static_cast<uint8_t>(1u <<
-                     (static_cast<uint32_t>(defender_faction) & 0x1Fu))) != 0)) {
-        int proto_id = defender_vehicle_record.proto_id;
-        parse_says(0, VehPrototypes[proto_id].veh_name, -1, -1);
-        clear();
-        proto_id = defender_vehicle_record.proto_id;
-        say_stats_3(proto_id);
-        parse_says(1, StringTemp, -1, -1);
-        parse_says(2, get_adjective(attacker_faction), -1, -1);
-        proto_id = attacker_vehicle_record.proto_id;
-        parse_says(3, VehPrototypes[proto_id].veh_name, -1, -1);
-        clear();
-        proto_id = attacker_vehicle_record.proto_id;
-        say_stats_3(proto_id);
-        parse_says(4, StringTemp, -1, -1);
-        const int base_id = base_find(target_x, target_y, -1, -1, -1,
-                                      defender_faction);
-        if (base_id >= 0) {
-            parse_says(5, Bases[base_id].name_string, -1, -1);
-        }
-        POP3("COMBATWIN", static_cast<const char *>(0), defender_faction,
-             target_x, target_y);
-    }
-
-    native_plus8_loop_slot = original_vehicle_id;
-    stack_veh(native_plus8_loop_slot, 1);
-    battle_fight_call_stack_kill_v2(
-        native_plus8_loop_slot, frame_minus_38, frame_minus_30,
-        frame_minus_58, defender_faction);
-    ++PlayersData[defender_faction].diplo_unk3[attacker_faction];
-    ++PlayersData[defender_faction].diplo_unk4[attacker_faction];
-
-    const BattleFightReportContinuationRouteV4 route =
-        attacker_faction != 0 && defender_faction != 0
-            ? BATTLE_FIGHT_REPORT_ROUTE_B1B4_V4
-            : BATTLE_FIGHT_REPORT_ROUTE_B1BC_V4;
-    battle_fight_resume_report_route_v4(
-        route, attacker_faction, defender_faction, frame_minus_30);
-}
-
-static void battle_fight_af13_to_b2fa_live_v1(
-    int original_vehicle_id,
-    int &direction_stack_slot,
-    int &native_plus8_loop_slot,
-    Veh &attacker_vehicle_record,
-    Veh &defender_vehicle_record,
-    int attacker_faction,
-    int defender_faction,
-    int target_x,
-    int target_y,
-    int *frame_minus_38,
-    int *frame_minus_30,
-    int *frame_minus_58,
-    int &frame_minus_40_last_vehicle) {
-    battle_fight_after_outcome_af13_live_v1(
-        original_vehicle_id, native_plus8_loop_slot,
-        attacker_vehicle_record, defender_vehicle_record,
-        attacker_faction, defender_faction, target_x, target_y,
-        frame_minus_38, frame_minus_30, frame_minus_58);
-    battle_fight_b203_score_and_neighbor_refresh_v4(
-        direction_stack_slot, native_plus8_loop_slot,
-        attacker_faction, target_x, target_y, *frame_minus_58,
-        frame_minus_40_last_vehicle);
-}
-
-// Every field is a source-frame value or a pointer to that live value. The
-// packet deliberately avoids a byte-layout struct pretending to be EBP: the
-// owning body constructs this view from its real locals and argument slots.
-// Offsets remain in member names wherever identity is still uncertain.
-struct BattleFightLateFrameV1 {
-    int frame_minus_48;
-    int frame_minus_50;
-    // Aliases the outer status_animation_flag local, whose native producers
-    // include the zero at 0x5083E0 and the conditional one at 0x508B88; B354
-    // reloads this live value at the mapped [ebp-0x88] use.
-    int *status_animation_flag_minus_88;
-    int frame_minus_90_proto;
-    int frame_minus_94_proto;
-
-    int attacker_vehicle_id;
-    int defender_vehicle_id;
-    int frame_minus_18_vehicle_id;
-    int frame_minus_8_vehicle_id;
-    int frame_vehicle_id_at_a904;
-    int frame_minus_10;
-    int attacker_faction;
-    int defender_faction;
-    int target_x;
-    int target_y;
-    int attacker_tile_x_minus_2c;
-    int attacker_tile_y_minus_28;
-    int target_stack_id; // overwritten by the native AC01 live stack lookup.
-    int target_base_id;
-    int stats_proto_minus_18;
-    int cached_attacker_hp_minus_60;
-    int cached_defender_hp_minus_5c;
-    int native_esi_before_a80e_test;
-    const char *native_text_buffer_minus_138;
-
-    int *direction_slot_plus_0c;
-    int *source_mode_slot_plus_18;
-    int *frame_plus_08_loop_slot;
-    int *frame_plus_1c;
-    int *frame_plus_20;
-    int *frame_minus_20;
-    int *frame_minus_18;
-    int *frame_minus_38;
-    int *frame_minus_30;
-    int *frame_minus_3c;
-    int *frame_minus_40;
-    int *frame_minus_44;
-    int *frame_minus_58;
-    int *frame_minus_64_slot;
-    // Points at the owning body's existing char base_name_copy[80]; this
-    // continuation retains the live buffer and never creates/clears a copy.
-    char *base_name_copy_80;
-
-    // These are fixed-table records, but their fields are re-read after every
-    // callback by the called blocks. Preserve the selected -0x8 EDI value at
-    // A730 as a pointer, never as a cached prototype/faction scalar.
-    Veh *attacker_record_minus_04;
-    Veh *defender_record_minus_08;
-    Veh *continuation_edi_at_a730;
-};
-
-enum BattleFightLateEntryRouteV1 {
-    BATTLE_FIGHT_LATE_RETURN_A110_V1 = 0,
-    BATTLE_FIGHT_LATE_JOIN_A730_V1 = 1,
-    BATTLE_FIGHT_LATE_JOIN_AF13_V1 = 2,
-    BATTLE_FIGHT_LATE_JOIN_B203_V1 = 3
-};
-
-// Compose the first live fork and A44D report block. A110's survival notice
-// reads IsMultiplayerNet and the local faction at its native gate. The
-// alternate A44D notice rereads IsMultiplayerPBEM at its predicate after the
-// ordered counters; neither owner is accepted from a caller snapshot.
-static BattleFightLateEntryRouteV1 battle_fight_late_enter_v1(
-    BattleFightLateFrameV1 &frame,
-    int &strength_14,
-    int &strength_1c,
-    int &frame_plus_20_value) {
-    const BattleFightA119PreStrengthRouteV3 incoming =
-        battle_fight_route_before_a119_v3(
-            frame.frame_minus_48,
-            frame.attacker_vehicle_id,
-            frame.defender_vehicle_id);
-
-    if (incoming == BATTLE_FIGHT_A119_RETURN_AT_A110_V3) {
-        if (IsMultiplayerNet != 0 &&
-            frame.defender_faction == ConsoleGlobal.faction_id_) {
-            battle_fight_report_tail_v3(
-                1, frame.attacker_faction,
-                frame.attacker_vehicle_id, frame.defender_vehicle_id,
-                frame.defender_faction, frame.stats_proto_minus_18,
-                frame.target_x, frame.target_y, "COMBATSURVIVE",
-                *frame.direction_slot_plus_0c);
-        }
-        return BATTLE_FIGHT_LATE_RETURN_A110_V1;
-    }
-
-    // A119's arithmetic SAR store is unconditional on its incoming edge and
-    // precedes map/diplomacy callbacks. +0x20 is later reused as scratch at
-    // AAE0; the same live slot is retained through both lifetimes.
-    frame_plus_20_value = battle_fight_arithmetic_half_v3(frame.target_x);
-    *frame.frame_plus_20 = frame_plus_20_value;
-    battle_fight_note_third_faction_v1(
-        frame.target_x, frame.target_y,
-        frame.attacker_faction, frame.defender_faction);
-    battle_fight_strength_promotion_path_v2(
-        *frame.direction_slot_plus_0c,
-        frame.attacker_vehicle_id, frame.defender_vehicle_id,
-        frame.attacker_faction, frame.defender_faction,
-        frame.target_base_id,
-        frame.cached_attacker_hp_minus_60,
-        frame.cached_defender_hp_minus_5c,
-        strength_14, strength_1c);
-
-    const BattleFightOutcomeJoinV4 join = battle_fight_outcome_join_live_v1(
-        frame.frame_minus_50,
-        *frame.frame_minus_64_slot,
-        *frame.direction_slot_plus_0c,
-        *frame.source_mode_slot_plus_18,
-        *frame.frame_minus_38,
-        *frame.frame_minus_30,
-        *frame.frame_minus_58,
-        *frame.attacker_record_minus_04,
-        *frame.defender_record_minus_08,
-        frame.attacker_faction, frame.defender_faction,
-        frame.target_x, frame.target_y);
-
-    if (join == BATTLE_FIGHT_OUTCOME_JOIN_A730_V4) {
-        // All native A730 predecessors establish EDI=[ebp-8]. Retain the
-        // source pointer across the next composed stage; use record fields
-        // live rather than snapshotting them.
-        frame.continuation_edi_at_a730 = frame.defender_record_minus_08;
-        return BATTLE_FIGHT_LATE_JOIN_A730_V1;
-    }
-    if (join == BATTLE_FIGHT_OUTCOME_JOIN_AF13_V4) {
-        return BATTLE_FIGHT_LATE_JOIN_AF13_V1;
-    }
-    return BATTLE_FIGHT_LATE_JOIN_B203_V1;
-}
-
-// Compose the A730 selector, A80E kill branch, A904 rearm loop, AAE0 removal,
-// and AC8B..AF13 base/objective branch. The frame locals that cannot yet be
-// semantically named remain supplied under their proven offsets.
-static void battle_fight_late_capture_to_b2fa_v1(
-    BattleFightLateFrameV1 &frame) {
-    BattleFightNativeRouteV3 capture_route =
-        battle_fight_route_capture_gate_v3(
-            *frame.frame_minus_20, *frame.frame_minus_18,
-            frame.defender_vehicle_id, frame.attacker_vehicle_id,
-            frame.target_x, frame.target_y);
-
-    if (capture_route == BATTLE_FIGHT_NATIVE_ROUTE_A80E_V3) {
-        const BattleFightNativeRouteA80E_V4 kill_route =
-            battle_fight_route_or_kill_v4(
-                frame.native_esi_before_a80e_test,
-                *frame.frame_minus_20, *frame.frame_minus_18,
-                frame.defender_vehicle_id, frame.attacker_vehicle_id,
-                frame.frame_minus_38, frame.frame_minus_30,
-                frame.frame_minus_58, frame.attacker_vehicle_id,
-                frame.frame_minus_10, frame.frame_minus_40,
-                frame.frame_minus_40);
-        if (kill_route == BATTLE_FIGHT_NATIVE_ROUTE_A904_V4) {
-            capture_route = BATTLE_FIGHT_NATIVE_ROUTE_A904_V3;
-        } else {
-            capture_route = BATTLE_FIGHT_NATIVE_ROUTE_A80E_V3;
-        }
-    }
-
-    if (capture_route == BATTLE_FIGHT_NATIVE_ROUTE_A904_V3) {
-        battle_fight_rearm_loop_v1(
-            frame.frame_vehicle_id_at_a904,
-            *frame.frame_minus_18,
-            frame.attacker_vehicle_id,
-            frame.target_x, frame.target_y,
-            *frame.source_mode_slot_plus_18);
-        battle_fight_remove_damaged_stack_v22(
-            *frame.frame_minus_18,
-            frame.frame_minus_8_vehicle_id,
-            frame.frame_minus_10,
-            frame.attacker_vehicle_id,
-            frame.frame_plus_20,
-            frame.frame_minus_38,
-            frame.frame_minus_30,
-            frame.frame_minus_58,
-            frame.target_x, frame.target_y,
-            frame.source_mode_slot_plus_18);
-    }
-
-    // Native 0x50AC01 reacquires the target's live normalized stack after
-    // the A730/A80E/A904 mutation callbacks; never reuse the entry stack head.
-    frame.target_stack_id = stack_fix(veh_at(frame.target_x, frame.target_y));
-    const BattleFightBaseRouteV1 base_route =
-        battle_fight_base_objective_v1(
-            *frame.frame_minus_20,
-            frame.target_x, frame.target_y, frame.target_stack_id,
-            frame.attacker_tile_x_minus_2c,
-            frame.attacker_tile_y_minus_28,
-            frame.attacker_faction, frame.defender_faction,
-            *frame.frame_minus_3c, *frame.frame_minus_44);
-    const BattleFightBaseContinuationRouteV8 continuation_route =
-        base_route == BATTLE_FIGHT_BASE_TO_B1B4_V1
-            ? BATTLE_FIGHT_BASE_ROUTE_B1B4_V8
-            : BATTLE_FIGHT_BASE_ROUTE_B1BC_V8;
-    battle_fight_base_route_to_b2fa_v4(
-        continuation_route,
-        frame.attacker_faction, frame.defender_faction,
-        frame.frame_minus_30,
-        *frame.direction_slot_plus_0c,
-        *frame.frame_plus_08_loop_slot,
-        frame.target_x, frame.target_y,
-        *frame.frame_minus_58,
-        *frame.frame_minus_40);
-}
-
-// Join all three incoming arms at B2FA, then follow the B2FA/B354/B63F and
-// B6F7 tail. Both B639 bypass and the B354 notification route continue at
-// B63F; selector values outside 1..3 emit no notice but still reach B6F7.
-static int battle_fight_late_finish_b2fa_v1(
-    BattleFightLateFrameV1 &frame,
-    int direction_snapshot_at_b308,
-    int frame_minus_78_interlude_gate) {
-    (void)battle_fight_b2fa_to_b63f_v4(
-        *frame.frame_plus_1c, direction_snapshot_at_b308,
-        frame.attacker_tile_x_minus_2c, frame.attacker_tile_y_minus_28,
-        frame.target_x, frame.target_y,
-        frame.attacker_faction, frame.defender_faction,
-        *frame.frame_minus_18,
-        *frame.frame_minus_30, *frame.frame_minus_38,
-        *frame.frame_minus_3c,
-        *frame.frame_minus_40,
-        *frame.frame_minus_58,
-        *frame.frame_minus_64_slot,
-        *frame.status_animation_flag_minus_88,
-        frame.native_text_buffer_minus_138);
-
-    battle_fight_emit_selector_notice_v1(
-        *frame.frame_minus_44,
-        frame.attacker_faction, frame.defender_faction,
-        "VENDETTAREPORT", "PACTATTACKED", "PACTATTACKING");
-
-    return battle_fight_final_block_v5(
-        *frame.direction_slot_plus_0c,
-        frame.target_x, frame.target_y,
-        frame.frame_minus_90_proto, frame.frame_minus_94_proto,
-        frame.attacker_faction, frame.defender_faction,
-        frame_minus_78_interlude_gate,
-        *frame.frame_minus_20);
-}
-
-// End-to-end dispatcher for the native continuation. The A730 branch must
-// pass through `battle_fight_late_capture_to_b2fa_v1`; AF13 enters its own
-// ordered accounting path; B203 enters the shared score/neighbor block.
-// `battle_fight_af13_to_b2fa_v4` is intentionally invoked here only for the
-// AF13 edge so it cannot double-count the A44D A730 arm.
-static int battle_fight_late_compose_v1(
-    BattleFightLateFrameV1 &frame,
-    int &strength_14,
-    int &strength_1c,
-    int &frame_plus_20_value,
-    int direction_snapshot_at_b308,
-    int frame_minus_78_interlude_gate) {
-    const BattleFightLateEntryRouteV1 route = battle_fight_late_enter_v1(
-        frame, strength_14, strength_1c, frame_plus_20_value);
-    if (route == BATTLE_FIGHT_LATE_RETURN_A110_V1) {
-        return 0;
-    }
-
-    if (route == BATTLE_FIGHT_LATE_JOIN_A730_V1) {
-        battle_fight_late_capture_to_b2fa_v1(frame);
-    } else if (route == BATTLE_FIGHT_LATE_JOIN_AF13_V1) {
-        battle_fight_af13_to_b2fa_live_v1(
-            frame.attacker_vehicle_id,
-            *frame.direction_slot_plus_0c,
-            *frame.frame_plus_08_loop_slot,
-            *frame.attacker_record_minus_04,
-            *frame.defender_record_minus_08,
-            frame.attacker_faction, frame.defender_faction,
-            frame.target_x, frame.target_y,
-            frame.frame_minus_38,
-            frame.frame_minus_30,
-            frame.frame_minus_58,
-            *frame.frame_minus_40);
-    } else {
-        battle_fight_b203_score_and_neighbor_refresh_v4(
-            *frame.direction_slot_plus_0c,
-            *frame.frame_plus_08_loop_slot,
-            frame.attacker_faction,
-            frame.target_x, frame.target_y,
-            *frame.frame_minus_58,
-            *frame.frame_minus_40);
-    }
-
-    return battle_fight_late_finish_b2fa_v1(
-        frame, direction_snapshot_at_b308,
-        frame_minus_78_interlude_gate);
-}
-
-// Retained fragment: battle-report-subagent/battle-fight-a110-a119-orchestrator-v1.cpp
-// Private flattened composition of the pre-strength A110/A119 fork through
-// the A1B3 strength join. This is a helper for composing the owning body, not
-// a complete battle_fight definition or a source mapping.
-// Include strength-promotion-v2.cpp, report-fragments-v1.cpp,
-// report-context-v3.cpp and report-tail-v3.cpp first.
-enum BattleFightPreStrengthJoinV1 {
-    BATTLE_FIGHT_PRESTRENGTH_RETURN_A110_V1 = 0,
-    BATTLE_FIGHT_PRESTRENGTH_JOIN_A44D_V1 = 1
-};
-
-// `frame_minus_48`, `stats_proto_minus_18`, `attacker_faction_minus_10`,
-// and `direction_slot_plus_0c` preserve neutral native frame identities.
-// The latter is in/out because earlier battle code overwrites the ABI slot.
-// `frame_plus_20` is written only on the A119 edge.
-static BattleFightPreStrengthJoinV1
-battle_fight_a110_a119_orchestrator_v1(
-    int frame_minus_48,
-    int attacker_vehicle_id,
-    int defender_vehicle_id,
-    int attacker_faction,
-    int attacker_faction_minus_10,
-    int defender_faction,
-    int target_x,
-    int target_y,
-    int target_base_id,
-    int stats_proto_minus_18,
-    int cached_attacker_hp_minus_60,
-    int cached_defender_hp_minus_5c,
-    int &direction_slot_plus_0c,
-    int &strength_14,
-    int &strength_1c,
-    int &frame_plus_20) {
-    const BattleFightA119PreStrengthRouteV3 route =
-        battle_fight_route_before_a119_v3(
-            frame_minus_48, attacker_vehicle_id, defender_vehicle_id);
-
-    if (route == BATTLE_FIGHT_A119_RETURN_AT_A110_V3) {
-        // Native A110's optional network/local-defender COMBATSURVIVE report
-        // has already passed the raw health/mode edge tests above.
-        battle_fight_report_tail_v3(
-            1, attacker_faction_minus_10, attacker_vehicle_id,
-            defender_vehicle_id, defender_faction, stats_proto_minus_18,
-            target_x, target_y, "COMBATSURVIVE", direction_slot_plus_0c);
-        return BATTLE_FIGHT_PRESTRENGTH_RETURN_A110_V1;
-    }
-
-    // Every A119 entry executes signed arithmetic SAR(+0x10,1) into +0x20
-    // before map/treaty work, including the no-friction case.
-    frame_plus_20 = battle_fight_arithmetic_half_v3(target_x);
-    battle_fight_note_third_faction_v1(
-        target_x, target_y, attacker_faction, defender_faction);
-    battle_fight_strength_promotion_path_v2(
-        direction_slot_plus_0c, attacker_vehicle_id, defender_vehicle_id,
-        attacker_faction, defender_faction, target_base_id,
-        cached_attacker_hp_minus_60, cached_defender_hp_minus_5c,
-        strength_14, strength_1c);
-    return BATTLE_FIGHT_PRESTRENGTH_JOIN_A44D_V1;
-}
-// Retained fragment: battle-rounds-subagent/battle-fight-mid-composition-v3.cpp
-// C++98 in-context composition for the live-alias battle_fight mid-CFG packets.
-// Include the declared round, ownership, threshold, A110/A119 and support
-// fragments before this file. This is an insertion fragment, not a complete
-// battle_fight definition; native-local producers at 0x508C96..0x5090D7 are
-// applied by battle_fight_apply_mid_frame_producers_v1 before entry here.
-
-enum BattleFightMidComposedExitV3 {
-    BATTLE_FIGHT_MID_RETURN_AT_A110_V3 = 0,
-    BATTLE_FIGHT_MID_JOIN_A44D_V3 = 1
-};
-
-// These fields are native witnesses, not inferred domain names. In
-// particular, `second_argument_slot` is the same mutable [ebp+0x0C] word that
-// changes from direction to defender faction and then health limit.
-struct BattleFightMidNativeSlotsV3 {
-    int target_x;
-    int target_y;
-    int target_base_id_minus_20;
-    int anchor_x_minus_2c;
-    int anchor_y_minus_28;
-    int *candidate_x_plus_20;
-    int *candidate_y_minus_34;
-    int *second_argument_slot_plus_0c;
-    int *attacker_faction_slot_minus_50;
-    int *display_latch_minus_64;
-    int *outcome_gate_minus_48;
-    int *branch_selector_minus_54;
-    int *odds_gate_minus_78;
-    int *display_selector_slot_plus_1c;
-    int *stack_vehicle_slot_minus_18;
-    int status_value_minus_14;
-    int status_value_minus_1c;
-    int *source_mode_slot_plus_18;
-    int attacker_faction_minus_10;
-    int defender_faction_minus_0c;
-    int stats_proto_minus_18;
-    int cached_attacker_hp_minus_60;
-    int cached_defender_hp_minus_5c;
-    int *strength_14;
-    int *strength_1c;
-    int *frame_plus_20;
-};
-
-// Executes the composed 0x5090D7..0x50A44D route. The covered requested
-// subrange ends at 0x50A119; on A119 this function continues only because the
-// already-frozen A110/A119 owner helper carries the same live frame into its
-// explicit A44D join. Every input is bound by the enclosing native frame.
-static BattleFightMidComposedExitV3 battle_fight_compose_mid_cfg_v3(
-    BattleFightRoundFrameV4 &round_frame,
-    BattleFightRoundBindingsV4 &round_bindings,
-    BattleFightMidNativeSlotsV3 &s) {
-    const BattleFightRoundExitV4 round_exit =
-        battle_fight_round_loop_v4(round_frame, round_bindings);
-
-    // The loop writes these native scratch slots only when a better retreat
-    // candidate wins the exact score comparison.
-    if (round_exit == BFR_TO_509923_SELECTED_RETREAT_V4) {
-        *s.candidate_x_plus_20 = round_frame.candidate_x_plus_20;
-        *s.candidate_y_minus_34 = round_frame.candidate_y_minus_34;
-    }
-
-    if (round_exit == BFR_TO_509827_OWNERSHIP_ENTRY_V4) {
-        battle_fight_ownership_transition_v2(
-            s.target_x, s.target_y, *s.second_argument_slot_plus_0c,
-            *s.attacker_faction_slot_minus_50, round_frame.attacker_id);
-    }
-
-    const int selected_retreat =
-        round_exit == BFR_TO_509923_SELECTED_RETREAT_V4;
-    const int direction_index = selected_retreat
-        ? round_frame.best_direction : 0;
-    const int threshold_result = battle_fight_outcome_threshold_block_v2(
-        selected_retreat, direction_index,
-        s.anchor_x_minus_2c, s.anchor_y_minus_28,
-        s.target_x, s.target_y,
-        *s.candidate_x_plus_20, *s.candidate_y_minus_34,
-        *s.stack_vehicle_slot_minus_18, round_frame.attacker_id,
-        round_frame.defender_id,
-        *s.second_argument_slot_plus_0c, *s.display_selector_slot_plus_1c,
-        *s.odds_gate_minus_78, *s.display_latch_minus_64,
-        *s.outcome_gate_minus_48, *s.branch_selector_minus_54,
-        *s.stack_vehicle_slot_minus_18, s.status_value_minus_14,
-        s.status_value_minus_1c, *s.source_mode_slot_plus_18);
-
-    // Threshold result 1 already clears the two globals at native 0x509F10.
-    // Result 0 branches to 0x509F1D, whose first common effect is that clear.
-    if (threshold_result == 0) {
-        VehDrawSelection689F28 = -1;
-        VehDrawSelection689F2C = -1;
-    }
-
-    const BattleFightPreStrengthJoinV1 outcome_join =
-        battle_fight_a110_a119_orchestrator_v1(
-            *s.outcome_gate_minus_48, round_frame.attacker_id,
-            round_frame.defender_id, s.attacker_faction_minus_10,
-            *s.attacker_faction_slot_minus_50,
-            s.defender_faction_minus_0c, s.target_x, s.target_y,
-            s.target_base_id_minus_20, s.stats_proto_minus_18,
-            s.cached_attacker_hp_minus_60, s.cached_defender_hp_minus_5c,
-            *s.second_argument_slot_plus_0c, *s.strength_14,
-            *s.strength_1c, *s.frame_plus_20);
-    if (outcome_join == BATTLE_FIGHT_PRESTRENGTH_RETURN_A110_V1)
-        return BATTLE_FIGHT_MID_RETURN_AT_A110_V3;
-    return BATTLE_FIGHT_MID_JOIN_A44D_V3;
-}
-// Retained fragment: battle-rounds-subagent/battle-fight-mid-owner-v7.cpp
-// Private C++98 integration block. Required fragments, in order, are the
-// alias-aware round-loop-v3, ownership/follow-through/threshold helpers,
-// mid dispatcher-v2, and corrected pre-round-v6. This does not define the
-// full mapped battle_fight function.
-
-enum BattleFightMidOwnerExitV7 {
-    BATTLE_FIGHT_MID_EARLY_RETURN_ZERO_V7 = 0,
-    BATTLE_FIGHT_MID_RETURN_AT_A110_V7 = 1,
-    BATTLE_FIGHT_MID_JOIN_A44D_V7 = 2
-};
-
-struct BattleFightMidPreRoundInputsV7 {
-    int source_x;
-    int source_y;
-    int combat_type;
-    int *status_animation_flag_minus_88;
-};
-
-// Native 0x9A6554 is SecretProject.pholus_mutagen: a BASE ID, not a faction
-// ID. The round candidate then checks Bases[base_id].faction_id_current.
-static int battle_fight_pholus_project_base_v3() {
-    return GameDataStateStorage.fields_.secret_project_.pholus_mutagen();
-}
-
-// All stack witnesses have already been produced at their native sites.
-// `slots.stack_vehicle_minus_18` is kept distinct from `round_frame.defender_id`;
-// [+0x0c], [-0x50], [-0x48], [-0x54], and +0x20 remain live storage aliases.
-static BattleFightMidOwnerExitV7 battle_fight_mid_owner_v7(
-    BattleFightRoundFrameV4 &round_frame,
-    BattleFightRoundBindingsV4 &round_bindings,
-    BattleFightMidNativeSlotsV3 &slots,
-    const BattleFightMidPreRoundInputsV7 &pre_inputs) {
-    round_bindings.current_faction = battle_fight_pholus_project_base_v3;
-
-    const BattleFightPreRoundStateV7 pre_round =
-        battle_fight_prepare_pre_round_v7(
-            round_frame.attacker_id, round_frame.defender_id,
-            *slots.stack_vehicle_slot_minus_18,
-            slots.target_x, slots.target_y,
-            pre_inputs.source_x, pre_inputs.source_y,
-            *slots.source_mode_slot_plus_18, *slots.display_selector_slot_plus_1c,
-            round_frame.attacker_combat_value,
-            round_frame.defender_combat_value,
-            pre_inputs.combat_type, slots.target_base_id_minus_20,
-            round_frame.mutable_second_argument,
-            pre_inputs.status_animation_flag_minus_88);
-    if (pre_round.early_return != 0)
-        return BATTLE_FIGHT_MID_EARLY_RETURN_ZERO_V7;
-
-    // Producers at 0x508C96..0x5090D7 write their exact live frame slots.
-    round_frame.round_or_candidate_index =
-        pre_round.round_scan_gate_minus_24;
-    round_frame.marine_detach_budget =
-        pre_round.detachment_roll_budget_minus_80;
-    round_frame.display_scale = pre_round.damage_band_scale_minus_6c;
-    round_frame.post_hit_handoff_gate =
-        pre_round.post_hit_handoff_gate_minus_48;
-    round_frame.transition_type = pre_round.transition_type_minus_54;
-
-    // Bind references, not copies: the native mutates and later reloads these
-    // stack words in the ownership, threshold, capture, and A119 branches.
-    slots.second_argument_slot_plus_0c =
-        &round_frame.mutable_second_argument;
-    slots.attacker_faction_slot_minus_50 =
-        &round_frame.attacker_faction_local_50;
-    slots.outcome_gate_minus_48 = &round_frame.post_hit_handoff_gate;
-    slots.branch_selector_minus_54 = &round_frame.transition_type;
-
-    const BattleFightMidComposedExitV3 exit =
-        battle_fight_compose_mid_cfg_v3(round_frame, round_bindings, slots);
-    return exit == BATTLE_FIGHT_MID_RETURN_AT_A110_V3
-        ? BATTLE_FIGHT_MID_RETURN_AT_A110_V7
-        : BATTLE_FIGHT_MID_JOIN_A44D_V7;
-}
-
-// Retained fragment: battle-report-subagent/battle-fight-after-a44d-composition-v3.cpp
-// Private corrected A44D continuation for use after the mid-owner v3 block.
-// This does not rerun A110/A119. The native B2FA helper reads the live -0x88
-// status flag only after its redraw callbacks, through the pointer correction
-// in battle-fight-b2fa-live-flag-v1.cpp.
-// Retained fragment: battle-fight-b2fa-live-flag-v1.cpp
-// Private correction for the B2FA -> B354 continuation. The native redraw
-// callbacks run before B354 reads [ebp-0x88], so that slot must be dereferenced
-// after those callbacks instead of copied at B2FA entry.
-static int battle_fight_b2fa_to_b63f_live_v1(
-    int frame_plus_1c,
-    int direction_snapshot_at_b308,
-    int frame_minus_2c_x,
-    int frame_minus_28_y,
-    int frame_plus_10_x,
-    int frame_plus_14_y,
-    int attacker_faction,
-    int defender_faction,
-    int frame_minus_18,
-    int frame_minus_30,
-    int frame_minus_38,
-    int frame_minus_3c,
-    int frame_minus_40,
-    int frame_minus_58,
-    int frame_minus_64,
-    int *frame_minus_88_live,
-    const char *native_text_buffer) {
-    const BattleFightRedrawRouteV7 redraw_route =
-        battle_fight_redraw_pair_v7(
-            frame_plus_1c, direction_snapshot_at_b308,
-            frame_minus_2c_x, frame_minus_28_y,
-            frame_plus_10_x, frame_plus_14_y);
-    if (redraw_route == BATTLE_FIGHT_REDRAW_ROUTE_B639_V7)
-        return 0;
-
-    battle_fight_post_redraw_notifications_v4(
-        direction_snapshot_at_b308, attacker_faction, defender_faction,
-        frame_minus_18, frame_minus_30, frame_minus_38, frame_minus_3c,
-        frame_minus_40, frame_minus_58, frame_minus_64,
-        *frame_minus_88_live, native_text_buffer);
-    return 1;
-}
-
-static int battle_fight_late_finish_b2fa_live_v1(
-    BattleFightLateFrameV1 &frame,
-    int direction_snapshot_at_b308,
-    int frame_minus_78_interlude_gate) {
-    (void)battle_fight_b2fa_to_b63f_live_v1(
-        *frame.frame_plus_1c, direction_snapshot_at_b308,
-        frame.attacker_tile_x_minus_2c, frame.attacker_tile_y_minus_28,
-        frame.target_x, frame.target_y,
-        frame.attacker_faction, frame.defender_faction,
-        *frame.frame_minus_18,
-        *frame.frame_minus_30, *frame.frame_minus_38,
-        *frame.frame_minus_3c,
-        *frame.frame_minus_40,
-        *frame.frame_minus_58,
-        *frame.frame_minus_64_slot,
-        frame.status_animation_flag_minus_88,
-        frame.native_text_buffer_minus_138);
-
-    battle_fight_emit_selector_notice_v1(
-        *frame.frame_minus_44,
-        frame.attacker_faction, frame.defender_faction,
-        "VENDETTAREPORT", "PACTATTACKED", "PACTATTACKING");
-
-    return battle_fight_final_block_v5(
-        *frame.direction_slot_plus_0c,
-        frame.target_x, frame.target_y,
-        frame.frame_minus_90_proto, frame.frame_minus_94_proto,
-        frame.attacker_faction, frame.defender_faction,
-        frame_minus_78_interlude_gate,
-        *frame.frame_minus_20);
-}
-
-static int battle_fight_after_a44d_compose_v3(
-    BattleFightLateFrameV1 &frame,
-    int frame_minus_78_interlude_gate) {
-    const BattleFightOutcomeJoinV4 join = battle_fight_outcome_join_live_v1(
-        frame.frame_minus_50,
-        *frame.frame_minus_64_slot,
-        *frame.direction_slot_plus_0c,
-        *frame.source_mode_slot_plus_18,
-        *frame.frame_minus_38,
-        *frame.frame_minus_30,
-        *frame.frame_minus_58,
-        *frame.attacker_record_minus_04,
-        *frame.defender_record_minus_08,
-        frame.attacker_faction,
-        frame.defender_faction,
-        frame.target_x,
-        frame.target_y);
-
-    if (join == BATTLE_FIGHT_OUTCOME_JOIN_A730_V4) {
-        frame.continuation_edi_at_a730 = frame.defender_record_minus_08;
-        battle_fight_late_capture_to_b2fa_v1(frame);
-    } else if (join == BATTLE_FIGHT_OUTCOME_JOIN_AF13_V4) {
-        battle_fight_af13_to_b2fa_live_v1(
-            frame.attacker_vehicle_id,
-            *frame.direction_slot_plus_0c,
-            *frame.frame_plus_08_loop_slot,
-            *frame.attacker_record_minus_04,
-            *frame.defender_record_minus_08,
-            frame.attacker_faction,
-            frame.defender_faction,
-            frame.target_x,
-            frame.target_y,
-            frame.frame_minus_38,
-            frame.frame_minus_30,
-            frame.frame_minus_58,
-            *frame.frame_minus_40);
-    } else {
-        battle_fight_b203_score_and_neighbor_refresh_v4(
-            *frame.direction_slot_plus_0c,
-            *frame.frame_plus_08_loop_slot,
-            frame.attacker_faction,
-            frame.target_x,
-            frame.target_y,
-            *frame.frame_minus_58,
-            *frame.frame_minus_40);
-    }
-
-    // Native loads the live direction at B308 after route callbacks; keep this
-    // read adjacent to the redraw continuation rather than snapshotting earlier.
-    const int direction_snapshot_at_b308 = *frame.direction_slot_plus_0c;
-    return battle_fight_late_finish_b2fa_live_v1(
-        frame, direction_snapshot_at_b308,
-        frame_minus_78_interlude_gate);
-}
-
-// The preceding private fragments supply the translated round, outcome and
-// report owners. Their real typed APIs are bound below; no fixed-address
-// executable calls are introduced by the enclosing function.
-static void battle_fight_round_status_draw_v1(
-    int attacker_id, int defender_id, int attack_value, int defense_value,
-    int source_mode) {
-    ConsoleStatusWin.draw(attacker_id, defender_id, attack_value,
-                          defense_value, source_mode);
-}
-
-static void battle_fight_round_boom_v1(int x, int y, int effect) {
-    (void)boom(x, y, effect);
-}
-
-static void battle_fight_round_redraw_tile_v1(int x, int y, int mode) {
-    draw_tile(x, y, mode);
-}
-
-// Native `draw_tile_fixup` is a typed source function declared by mapwin.h,
-// not an executable trampoline.
-static void battle_fight_round_redraw_fixup_v1(
-    int x, int y, int flags, int mode) {
-    draw_tile_fixup(x, y, flags, mode);
-}
+// Defined later in battle.cpp (0x0050B970 and 0x0050B9C0). These declarations
+// are needed because battle_fight now calls them directly.
+int __cdecl popp(const char *label, const char *body, int(__cdecl *callback)());
+void __cdecl veh_battle_msg(char *label, char *icon);
+
+// ---------------------------------------------------------------------------
 
 // ORIGINAL: 0x00506AF0 ?battle_fight@@YAHHHHHHHPAH@Z 0x00506AF0-0x0050B893 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x00506AF0-0x0050B893", "git:0b1a6229e8c4bf0dfd2193f776e65a613f7ca0c5:src/unrecovered/00506af0.cpp original identity/span and complete seed history", "source:src/veh.cpp existing five-argument wrapper, seven-argument callers and typed combat ownership", "native:507D83,507EC7,50888F,508C32 write the real ConsoleStatusWin member at +0x15D4", "source:src/statuswin.h existing field_15D4_ and narrow source-owned setter", "source:src/game.h IsMultiplayerPBEM existing 0x0093A95C owner", "native:50AAF1-50AB18 keeps the last valid stack predecessor before the negative sentinel"], "reason": "Recover complete combat resolution in the existing vehicle owner using real vehicle, faction, base, map, network and UI objects. Preserve original branch/callback order, unsafe paths, full span and historical seed lessons. The native -0x138 string scratch capacity and malformed-name frame corruption effects remain unresolved restoration obligations; the provisional 0xA0 local is not an exact source-array claim."}
@@ -6633,372 +2500,1585 @@ static void battle_fight_round_redraw_fixup_v1(
 // indirect  0x005089D9 0x00508C43
 // TRIED: mismatch #3 - this is a heavy approximation of a 19875-byte, ~2400-line-of-pseudocode combat resolver. Only the arty/declare-war guard and the offense/defense value clamp (attacker/defender via Vehs[]/VehPrototypes[] at 0x952828/0x9AB868, stride 0x34) are transcribed with real confidence; best_defender()'s argument order is guessed, the a6==0 "odds only" formula is reconstructed from the Ghidra hypothesis rather than the raw disassembly, and the a6!=0 combat-execution path (auto-war declaration, diplomacy-table updates at 0x96C9F8 stride 0x20CC, nerve-gas prompts, combat log) is replaced with a plain battle_compute()+morale_veh() call rather than transcribed.
 int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
-                         int source_mode, int allow_interceptor,
-                         int *odds_out) {
-    const int incoming_source_mode = source_mode;
-    int &combat_type = source_mode; // Native mutable [ebp+0x18].
-    const int source_x = Vehs[veh_id].x;
-    const int source_y = Vehs[veh_id].y;
-    const Veh &initial_attacker = Vehs[veh_id];
-    const int attacker_proto = initial_attacker.proto_id;
-    const int attacker_chassis = VehPrototypes[attacker_proto].chassis_id;
-    const int attacker_faction = initial_attacker.faction_id;
+                         int mode, int allow_interceptor, int *odds_out) {
+    // [ebp+0x08] veh_id      attacker. Reused 0x50B236.. as dir_i.
+    // [ebp+0x0c] dir         attack direction (withdraw scan 0x5095CC). Reused
+    //                        as old_def_faction (0x509753) and atk_left (0x5099DB).
+    // [ebp+0x18] mode        incoming source_mode. Rewritten at 0x506B60 with the
+    //                        combat mode (bit0 artillery, bit1 duel, |=0x1A air).
+    //                        Reused as bombard_boomed (0x50880A) and
+    //                        damaged_count (0x50A45D).
+    // [ebp+0x1c] allow_interceptor  live until 0x50700F. Reused as nerve_state
+    //                        (0x5071DE), the pact-sweep tile (0x50781C) and display
+    //                        (0x5083F2..), plus compiler spills (0x507A4B, 0x507BD2).
+    // [ebp+0x20] odds_out    odds-only path only. Reused as rx (0x509422) and
+    //                        atk_id_adj (0x50AAE8). half_x (0x50A129) is a CSE.
+    int pact_report = 0;    // [ebp-0x44] 1 VENDETTAREPORT, 2 PACTATTACKED, 3 PACTATTACKING
+    int disengaged = 0;     // [ebp-0x64] defender withdrew (0x509979)
+    int local_base = 0;     // [ebp-0x84] alien hit a LOCAL base -> interlude at the end
+    int intercepted = 0;    // [ebp-0x34] interceptor() result
+    int captured = 0;       // [ebp-0x50] marine detachment captured the stack (0x50991A)
+    int def_faction;        // [ebp-0x0c]
+    int att_faction;        // [ebp-0x10]
+    int att_strength;       // [ebp-0x14] battle_compute offense out
+    int def_id;             // [ebp-0x18] best defender; bombard: stack walker
+    int def_strength;       // [ebp-0x1c] battle_compute defense out
+    int base_id;            // [ebp-0x20] base_at(target) or -1
+    int move_charge;        // [ebp-0x24] movement charged for the attack
+    int retreat;            // [ebp-0x24] withdraw HP budget (0x508C9F)
+    int scan_dir;           // [ebp-0x24] withdraw scan index (0x509400)
+    int src_y;              // [ebp-0x28] attacker tile y
+    int src_x;              // [ebp-0x2c] attacker tile x
+    int booty_count;        // [ebp-0x30] battle_kill 3rd out
+    int ry;                 // [ebp-0x34] withdraw candidate y
+    int kill_count;         // [ebp-0x38] battle_kill 2nd out
+    int nerve_gas;          // [ebp-0x3c] nerve-gas flag; 0x50AE3D reuses it as the
+                            //   citizens-killed count (the same nonzero test follows)
+    int stack_id;           // [ebp-0x40] copy of best_defender(), then the target
+                            //   stack (0x50AC08), then the neighbour walker (0x50B276)
+    int single;             // [ebp-0x48] one-exchange duel flag
+    int att_bit;            // [ebp-0x4c] 1 << att_faction
+    int captor;             // [ebp-0x50] attacker faction during the capture (0x509758)
+    int last_hit;           // [ebp-0x54] 0 / 1 attacker hit last / 2 defender hit last
+    int husk_energy;        // [ebp-0x58] battle_kill 4th out
+    int def_hp;             // [ebp-0x5c] defender HP before combat
+    int att_hp;             // [ebp-0x60] attacker HP before combat
+    int def_step;           // [ebp-0x68] 1, or the defender's reactor (psi combat):
+                            //   HP per hit to the defender and the attacker's odds factor
+    int round_div;          // [ebp-0x6c] 3, or 0 for missiles / net game
+    int atk_step;           // [ebp-0x70] 1, or the attacker's reactor (psi combat)
+    int best_dir;           // [ebp-0x74] withdraw direction (-1 none)
+    int any_visible;        // [ebp-0x78] attacker or defender visible to the local faction
+    int marine;             // [ebp-0x80] marine-detachment HP budget
+    int zoom_refresh;       // [ebp-0x88] net-game zoom refresh latch
+    int best_angle;         // [ebp-0x8c] best withdraw angle score
+    int att_proto;          // [ebp-0x90] Vehs[veh_id].proto_id snapshot
+    int def_proto;          // [ebp-0x94] Vehs[def_id].proto_id snapshot
+    char nerve_base_name[0x50];  // [ebp-0x138] up to -0xE9; base name for NERVEGAS
+                                 //   ([ebp-0xE8] is the inlined say_num() buffer)
+    int target_veh;         // esi: veh_at(target), then stack_fix()
+    uint32_t nerve_state;   // [ebp+0x1c] attacker state & ~VSTATE_USED_NERVE_GAS
+    int display;            // [ebp+0x1c] show this battle on screen
+    int rx;                 // [ebp+0x20] withdraw candidate x
+    int atk_id_adj;         // [ebp+0x20] veh_id adjusted for battle_kill compaction
+    int old_def_faction;    // [ebp+0x0c] defender faction before the capture
+    int atk_left;           // [ebp+0x0c] attacker HP after the rounds (0..9999)
+    int bombard_boomed;     // [ebp+0x18] bombard display drew the boom
+    int damaged_count;      // [ebp+0x18] collateral-damaged unit count
+    int dir_i;              // [ebp+0x08] neighbour loop index
 
-    // Native 506B18..6B6C tests the incoming value, then writes the selected
-    // combat mode back to the same +0x18 argument slot.
-    if (incoming_source_mode == 0 &&
-        (can_arty(attacker_proto, 1) == 0 ||
-         Chassis[attacker_chassis].triad != 0)) {
-        combat_type = 0;
+    // 0x506B03: initial mode
+    if (mode != 0 ||
+        (can_arty(Vehs[veh_id].proto_id, TRUE) &&
+         Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_LAND)) {
+        mode = 1;
     } else {
-        combat_type = 1;
+        mode = 0;
     }
 
-    const int target_vehicle = veh_at(target_x, target_y);
-    if (can_arty(attacker_proto, 1) != 0 &&
-        Chassis[attacker_chassis].triad == 1) {
-        const int high_terrain = map_loc(target_x, target_y)->climate & 0xE0;
-        if (high_terrain >= 0x60) {
-            const int eligible = stack_check(target_vehicle, 3, 2, -1, -1);
-            const int all = stack_check(target_vehicle, 1, -1, -1, -1);
-            const Map *tile_after_checks = map_loc(target_x, target_y);
-            if (eligible < all ||
-                ((tile_after_checks->bit & 1u) != 0 &&
-                 (tile_after_checks->val2 & 0x0Fu) < 8)) {
-                combat_type = 1;
+    // 0x506B6C
+    src_x = Vehs[veh_id].x;
+    src_y = Vehs[veh_id].y;
+    att_faction = Vehs[veh_id].faction_id;
+    target_veh = veh_at(target_x, target_y);
+    if (can_arty(Vehs[veh_id].proto_id, TRUE) &&
+        Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_SEA &&
+        !is_ocean(target_x, target_y)) {
+        // 0x506C12
+        if (stack_check(target_veh, 3, TRIAD_AIR, -1, -1) <
+                stack_check(target_veh, 1, -1, -1, -1) ||
+            base_who(target_x, target_y) >= 0) {
+            mode = 1;
+        }
+    }
+
+    // 0x506C74: the triad and missile tests read the ATTACKER's chassis
+    target_veh = stack_fix(target_veh);
+    if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_AIR &&
+        !Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].missile &&
+        !stack_check(target_veh, 6, ABL_AIR_SUPERIORITY, -1, -1) &&
+        allow_interceptor &&
+        (NetDaemonNet.channels_[0].leading_words_[3] & 2)) {
+        intercepted = interceptor(Vehs[target_veh].faction_id, att_faction,
+                                  target_x, target_y);
+    }
+
+    // 0x506CFE
+    def_id = stack_id = best_defender(target_veh, veh_id, mode);
+    def_faction = Vehs[def_id].faction_id;
+    base_id = base_at(target_x, target_y);
+
+    // 0x506D33
+    if (can_arty(Vehs[veh_id].proto_id, TRUE) && can_arty(Vehs[def_id].proto_id, TRUE)) {
+        if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_LAND ||
+            mode || !is_ocean(target_x, target_y)) {
+            mode |= 2;
+        }
+    }
+
+    // 0x506DCE
+    if (has_abil(Vehs[def_id].proto_id, ABL_AIR_SUPERIORITY) &&
+        Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_AIR &&
+        !Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].missile &&
+        !Chassis[VehPrototypes[Vehs[def_id].proto_id].chassis_id].missile &&
+        Chassis[VehPrototypes[Vehs[def_id].proto_id].chassis_id].triad == TRIAD_AIR) {
+        mode |= 0x1A;
+    }
+
+    // 0x506E50: movement charge
+    if ((mode & 3) && mode < 4) {
+        move_charge = veh_moves(veh_id);
+    } else {
+        move_charge = Rules.move_rate_roads;
+    }
+
+    // 0x506E95
+    battle_compute(veh_id, def_id, &att_strength, &def_strength, mode);
+
+    // 0x506EAB: hit points (the inner range() is the out-of-line call here)
+    att_hp = range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999);
+    def_hp = range(proto_power(def_id) - Vehs[def_id].dmg_incurred, 0, 9999);
+
+    // 0x506F6D: psi factors
+    if (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating >= 0 &&
+        Armor[VehPrototypes[Vehs[def_id].proto_id].armor_id].defense_rating >= 0) {
+        def_step = 1;
+    } else {
+        def_step = VehPrototypes[Vehs[def_id].proto_id].reactor_id;
+    }
+    if (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating >= 0 &&
+        Armor[VehPrototypes[Vehs[def_id].proto_id].armor_id].defense_rating >= 0) {
+        atk_step = 1;
+    } else {
+        atk_step = VehPrototypes[Vehs[veh_id].proto_id].reactor_id;
+    }
+
+    // 0x507007: odds-only query (proto_power fully inlined here, range included)
+    if (!allow_interceptor) {
+        int att_odds = att_hp * def_step * att_strength / proto_power(veh_id);
+        int def_odds = def_hp * atk_step * def_strength / proto_power(def_id);
+        if (odds_out) {
+            *odds_out = def_id;
+        }
+        return ((mode & 1) ? 4 : 8) * att_odds / (def_odds + 1);
+    }
+
+    // 0x5070C6: automatic war declaration
+    att_bit = 1 << att_faction;
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & att_bit) &&
+        VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_INFO_WARFARE &&
+        (VehPrototypes[Vehs[def_id].proto_id].plan != PLAN_ALIEN_ARTIFACT || base_id >= 0) &&
+        (NetDaemonNet.channels_[0].leading_words_[3] & 1) &&
+        (!IsMultiplayerNet || !intercepted)) {
+        if (break_treaty(att_faction, def_faction,
+                         DTREATY_PACT | DTREATY_TREATY | DTREATY_COMMLINK)) {
+            return 2;
+        }
+    }
+
+    // 0x507132: nerve gas
+    nerve_gas = 0;
+    if (has_abil(Vehs[veh_id].proto_id, ABL_NERVE_GAS) &&
+        Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating >= 0 &&
+        Armor[VehPrototypes[Vehs[def_id].proto_id].armor_id].defense_rating >= 0) {
+        // 0x5071A7: in a net game without bit 0 this skips the clear and synch_veh
+        // but still runs the 0x5073BC test
+        if (!IsMultiplayerNet || (NetDaemonNet.channels_[0].leading_words_[3] & 1)) {
+            nerve_state = Vehs[veh_id].state & ~VSTATE_USED_NERVE_GAS;
+            Vehs[veh_id].state = nerve_state;
+            if (att_faction == ConsoleGlobal.faction_id_ &&
+                (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & att_bit)) {
+                // 0x5071F0
+                parse_says(0, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
+                parse_say(1, Ability[abil_index(ABL_NERVE_GAS)].name, -1, -1);
+                g_BattleWin.stop_timer();
+                if (popp(ScriptPopupFile, "USENERVE", 0, "biohazd_sm.pcx", 0)) {
+                    Vehs[veh_id].state |= VSTATE_USED_NERVE_GAS;
+                }
+                g_BattleWin.pulse_timer();
+            } else if (!(att_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)) {
+                // 0x507295: AI attacker policy
+                int def_human = (1 << def_faction) &
+                                GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
+                if ((PlayersData[att_faction].diplo_treaties[def_faction] & DTREATY_ATROCITY_VICTIM) ||
+                    (PlayersData[att_faction].flags & PFLAG_COMMIT_ATROCIT_WANTONLY) ||
+                    (def_human &&
+                     GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_UN_CHARTER] >
+                         GameDataStateStorage.fields_.council_resolution_count_[PROP_REINSTATE_UN_CHARTER])) {
+                    Vehs[veh_id].state = nerve_state | VSTATE_USED_NERVE_GAS;
+                } else if (def_human &&
+                           (PlayersData[att_faction].diplo_treaties[def_faction] & DTREATY_WANT_REVENGE)) {
+                    int rivalry;
+                    if ((GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY) &&
+                        (PlayersData[def_faction].ranking > PlayersData[att_faction].ranking ||
+                         PlayersData[def_faction].diplo_unk4[att_faction] >
+                             PlayersData[att_faction].diplo_unk4[def_faction])) {
+                        rivalry = (PlayersData[att_faction].ai_fight + 1) * 3;
+                    } else {
+                        rivalry = 0;
+                    }
+                    if (PlayersData[def_faction].integrity_blemishes + rivalry >= 6) {
+                        Vehs[veh_id].state = nerve_state | VSTATE_USED_NERVE_GAS;
+                    }
+                }
+            }
+            // 0x5073A7
+            if (IsMultiplayerNet) {
+                synch_veh(veh_id);
+            }
+        }
+        // 0x5073BC
+        if ((NetDaemonNet.channels_[0].leading_words_[3] & 2) &&
+            (Vehs[veh_id].state & VSTATE_USED_NERVE_GAS)) {
+            nerve_gas = 1;
+        }
+    }
+
+    // 0x5073D8
+    if (base_id >= 0) {
+        Vehs[veh_id].state &= ~VSTATE_UNK_40000;
+    }
+    if (!(Vehs[veh_id].state & VSTATE_UNK_1000) &&
+        (NetDaemonNet.channels_[0].leading_words_[3] & 2)) {
+        // 0x507405
+        if (att_faction != 0 &&
+            Vehs[veh_id].proto_id != BSC_SPORE_LAUNCHER &&
+            Vehs[veh_id].proto_id != BSC_MIND_WORMS) {
+            int moves = range(veh_moves(veh_id), 0, Rules.move_rate_roads);
+            att_strength = moves * att_strength / Rules.move_rate_roads;
+            // inlined add_bat: label_get() runs before the modifier is computed
+            add_bat(0, (moves - Rules.move_rate_roads) * 100 / Rules.move_rate_roads,
+                    label_get(0x153));
+        }
+        // 0x5074DD
+        if (mode != 1) {
+            Vehs[veh_id].moves_expended += static_cast<uint8_t>(move_charge);
+        }
+    }
+
+    // 0x5074F4
+    Vehs[veh_id].state = (Vehs[veh_id].state & ~VSTATE_UNK_1000) | VSTATE_UNK_4;
+    Vehs[def_id].state |= VSTATE_UNK_4;
+    if (!(NetDaemonNet.channels_[0].leading_words_[3] & 2)) {
+        return 0;
+    }
+    Vehs[veh_id].state |= VSTATE_UNK_40;
+
+    // 0x507531: pre-combat diplomacy. Probe attackers and artifact defenders skip
+    // it, act_of_aggression and the pact sweep.
+    if (VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_INFO_WARFARE &&
+        VehPrototypes[Vehs[def_id].proto_id].plan != PLAN_ALIEN_ARTIFACT) {
+        bool notify = false;
+        if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction)) {
+            // 0x507583: the DEFENDER's view of the attacker
+            uint32_t d2a = PlayersData[def_faction].diplo_treaties[att_faction];
+            if (d2a & (DTREATY_TREATY | DTREATY_TRUCE)) {
+                notify = true;
+            } else if (((d2a & DTREATY_COMMLINK) ||
+                        (PlayersData[att_faction].diplo_treaties[def_faction] & DTREATY_UNK_800)) &&
+                       !(d2a & DTREATY_VENDETTA)) {
+                notify = true;
+            }
+        }
+        if (notify) {
+            // 0x5075D4
+            if (def_faction == ConsoleGlobal.faction_id_) {
+                PluralityDefault = 0;
+                GenderDefault = Players[att_faction].is_leader_female;
+                parse_says(0, Players[att_faction].title_leader, -1, -1);
+                GenderDefault = Players[att_faction].is_leader_female;
+                PluralityDefault = 0;
+                parse_says(1, Players[att_faction].name_leader, -1, -1);
+                GenderDefault = Players[att_faction].noun_gender;
+                PluralityDefault = Players[att_faction].is_noun_plural;
+                parse_says(2, Players[att_faction].noun_faction, -1, -1);
+                NetMsgPrimary.pop("SURPRISE", -5000, 0, 0);
+            } else if (IsMultiplayerPBEM) {
+                // 0x507696
+                PluralityDefault = 0;
+                GenderDefault = Players[att_faction].is_leader_female;
+                parse_says(0, Players[att_faction].title_leader, -1, -1);
+                GenderDefault = Players[att_faction].is_leader_female;
+                PluralityDefault = 0;
+                parse_says(1, Players[att_faction].name_leader, -1, -1);
+                GenderDefault = Players[att_faction].noun_gender;
+                PluralityDefault = Players[att_faction].is_noun_plural;
+                parse_says(2, Players[att_faction].noun_faction, -1, -1);
+                POP2("SURPRISE", 0, -1 - def_faction);
+            }
+            // 0x507679 / 0x507731 (each branch has its own copy)
+            PlayersData[def_faction].diplo_spoke[att_faction] =
+                GameDataStateStorage.fields_.turn_current_num_;
+        } else {
+            // 0x507744: AI defender, or a human defender that is not notified
+            if ((PlayersData[att_faction].diplo_treaties[def_faction] & DTREATY_TREATY) ||
+                (PlayersData[def_faction].diplo_treaties[att_faction] & DTREATY_TREATY)) {
+                if (att_faction != ConsoleGlobal.faction_id_ &&
+                    def_faction != ConsoleGlobal.faction_id_) {
+                    if (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[def_faction] & DTREATY_PACT) {
+                        pact_report = 2;
+                    } else if (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[att_faction] & DTREATY_PACT) {
+                        pact_report = 3;
+                    } else if (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) {
+                        pact_report = 1;
+                    }
+                }
+            }
+        }
+
+        // 0x5077D6
+        act_of_aggression(att_faction, def_faction);
+        // The sweep reads the ATTACKER's tile, not the target
+        Map *src_tile = map_loc(src_x, src_y);   // [ebp+0x1c]
+        for (int i = 1; i < MaxPlayerNum; i++) {
+            if (i == att_faction || i == def_faction) {
+                continue;
+            }
+            if (src_tile->territory != i) {
+                continue;
+            }
+            if (!(PlayersData[att_faction].diplo_treaties[i] & DTREATY_PACT)) {
+                continue;
+            }
+            uint32_t d2i = PlayersData[def_faction].diplo_treaties[i];
+            if ((d2i & DTREATY_VENDETTA) || !(d2i & DTREATY_COMMLINK)) {
+                continue;
+            }
+            if (PlayersData[def_faction].mil_strength_1 <= PlayersData[i].mil_strength_1) {
+                continue;
+            }
+            treaty_on(i, def_faction, DTREATY_WANT_TO_TALK);
+            if (PlayersData[i].diplo_treaties[def_faction] & DTREATY_UNK_800000) {
+                cause_friction(def_faction, i, 3);
             }
         }
     }
 
-    const int target_stack = stack_fix(target_vehicle);
-    const int target_stack_proto = Vehs[target_stack].proto_id;
-    const int target_stack_chassis =
-        VehPrototypes[target_stack_proto].chassis_id;
-    const int target_stack_faction = Vehs[target_stack].faction_id;
-    int interceptor_result = 0; // Native [-0x34], later candidate-Y scratch.
-    if (Chassis[target_stack_chassis].triad == 2 &&
-        Chassis[target_stack_chassis].missile == 0 &&
-        stack_check(target_stack, 6, ABL_AIR_SUPERIORITY, -1, -1) == 0 &&
-        allow_interceptor != 0 &&
-        (NetDaemonNet.channels_[0].leading_words_[3] & 2u) != 0) {
-        interceptor_result = interceptor(target_stack_faction,
-                                         attacker_faction,
-                                         target_x, target_y);
+    // 0x5078E2: nerve gas bonus (inlined add_bat; label_get runs unconditionally)
+    if (nerve_gas) {
+        att_strength += att_strength / 2;
+        add_bat(0, 50, label_get(0x155));
     }
 
-    int defender_id = static_cast<int>(
-        best_defender(target_stack, veh_id, combat_type));
-    int current_stack_head = defender_id; // Native [-0x18], same initial ID.
-    int native_minus40 = defender_id;     // Distinct live native [-0x40].
-    const int defender_proto = Vehs[defender_id].proto_id;
-    const int defender_chassis = VehPrototypes[defender_proto].chassis_id;
-    const int defender_faction = Vehs[defender_id].faction_id;
-    int target_base_id = base_at(target_x, target_y); // Native [-0x20].
-    const int attacker_proto_after_interceptor = Vehs[veh_id].proto_id;
-    const int attacker_chassis_after_interceptor =
-        VehPrototypes[attacker_proto_after_interceptor].chassis_id;
-
-    if (can_arty(attacker_proto_after_interceptor, 1) != 0 &&
-        can_arty(defender_proto, 1) != 0 &&
-        (Chassis[attacker_chassis_after_interceptor].triad == 0 ||
-         combat_type != 0 ||
-         (map_loc(target_x, target_y)->climate & 0xE0) >= 0x60)) {
-        combat_type |= 2;
-    }
-    if (has_abil(defender_proto, ABL_AIR_SUPERIORITY) != 0 &&
-        Chassis[attacker_chassis_after_interceptor].triad == 2 &&
-        Chassis[attacker_chassis_after_interceptor].missile == 0 &&
-        Chassis[defender_chassis].missile == 0 &&
-        Chassis[defender_chassis].triad == 2) {
-        combat_type |= 0x1A;
+    // 0x507944
+    if (IsMultiplayerNet) {
+        log_say("Battle Resolution!", veh_id, def_id, 0);
     }
 
-    int movement_charge;
-    if ((combat_type & 3) != 0 && combat_type < 4) {
-        movement_charge = speed(veh_id, 0) - Vehs[veh_id].moves_expended;
-        if (movement_charge < 0) movement_charge = 0;
-        if (movement_charge > 999) movement_charge = 999;
-    } else {
-        movement_charge = Rules.move_rate_roads;
+    // 0x507964
+    att_proto = Vehs[veh_id].proto_id;
+    def_proto = Vehs[def_id].proto_id;
+    if ((att_faction == ConsoleGlobal.faction_id_ || def_faction == ConsoleGlobal.faction_id_) &&
+        !IsMultiplayerNet &&
+        (Weapon[VehPrototypes[att_proto].weapon_id].offense_rating < 0 ||
+         Armor[VehPrototypes[def_proto].armor_id].defense_rating < 0) &&
+        tut_check2(2)) {
+        TutorialWindow.tut_map("PSICOMBAT", target_x, target_y,
+                               att_faction == ConsoleGlobal.faction_id_ ? veh_id : def_id,
+                               0, 1, -1, -1);
     }
 
-    int attacker_combat = 0; // Native mutable local [-0x14].
-    int defender_combat = 0; // Native mutable local [-0x1c].
-    battle_compute(veh_id, defender_id, &attacker_combat, &defender_combat,
-                   combat_type);
-    const int attacker_battle_proto = Vehs[veh_id].proto_id;
-    const VehPrototype &attacker_definition =
-        VehPrototypes[attacker_battle_proto];
-    const VehPrototype &defender_definition = VehPrototypes[defender_proto];
-    int defender_hit_step;
-    int attacker_hit_step;
-    if (Weapon[attacker_definition.weapon_id].offense_rating >= 0 &&
-        Armor[defender_definition.armor_id].defense_rating >= 0) {
-        defender_hit_step = 1;
-        attacker_hit_step = 1;
-    } else {
-        defender_hit_step = defender_definition.reactor_id;
-        attacker_hit_step = attacker_definition.reactor_id;
-    }
-    int attacker_remaining = attacker_definition.plan == 0x0C
-        ? 1 : range(attacker_definition.reactor_id, 1, 100) * 10;
-    attacker_remaining -= initial_attacker.dmg_incurred;
-    if (attacker_remaining < 0) attacker_remaining = 0;
-    if (attacker_remaining > 9999) attacker_remaining = 9999;
-    int defender_remaining = defender_definition.plan == 0x0C
-        ? 1 : range(defender_definition.reactor_id, 1, 100) * 10;
-    defender_remaining -= Vehs[defender_id].dmg_incurred;
-    if (defender_remaining < 0) defender_remaining = 0;
-    if (defender_remaining > 9999) defender_remaining = 9999;
-
-    int defender_psi_factor = 1;
-    int attacker_psi_factor = 1;
-    if (Weapon[attacker_definition.weapon_id].offense_rating < 0 ||
-        Armor[defender_definition.armor_id].defense_rating < 0) {
-        defender_psi_factor = defender_definition.reactor_id;
-        attacker_psi_factor = attacker_definition.reactor_id;
-    }
-    if (allow_interceptor == 0) {
-        const int attacker_reactor_factor = attacker_definition.plan == 0x0C
-            ? 1 : range(attacker_definition.reactor_id, 1, 100) * 10;
-        const int defender_reactor_factor = defender_definition.plan == 0x0C
-            ? 1 : range(defender_definition.reactor_id, 1, 100) * 10;
-        union SignedProduct {
-            unsigned int bits;
-            int value;
-        } attack_first, attack_second, defense_first, defense_second,
-          odds_numerator, odds_denominator;
-        attack_first.bits = static_cast<unsigned int>(attacker_remaining) *
-                            static_cast<unsigned int>(defender_psi_factor);
-        attack_second.bits = static_cast<unsigned int>(attack_first.value) *
-                             static_cast<unsigned int>(attacker_combat);
-        const int attack_ratio = attack_second.value / attacker_reactor_factor;
-        defense_first.bits = static_cast<unsigned int>(defender_remaining) *
-                             static_cast<unsigned int>(attacker_psi_factor);
-        defense_second.bits = static_cast<unsigned int>(defense_first.value) *
-                              static_cast<unsigned int>(defender_combat);
-        const int defense_ratio = defense_second.value / defender_reactor_factor;
-        if (odds_out != 0) *odds_out = defender_id;
-        odds_numerator.bits = static_cast<unsigned int>(
-            (combat_type & 1) != 0 ? 4 : 8) *
-            static_cast<unsigned int>(attack_ratio);
-        odds_denominator.bits = static_cast<unsigned int>(defense_ratio) + 1u;
-        return odds_numerator.value / odds_denominator.value;
-    }
-
-    const unsigned int attacker_lock_bit =
-        1u << (static_cast<unsigned int>(attacker_faction) & 0x1Fu);
-    if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
-         static_cast<unsigned char>(attacker_lock_bit)) != 0 &&
-        attacker_definition.plan != 0x0B &&
-        (defender_definition.plan != 0x0C || target_base_id >= 0) &&
-        (NetDaemonNet.channels_[0].leading_words_[3] & 1u) != 0 &&
-        (IsMultiplayerNet == 0 || interceptor_result == 0) &&
-        break_treaty(attacker_faction, defender_faction, 0x0B) != 0) {
-        return 2;
-    }
-
-    int nerve_gas_active = 0;
-    battle_fight_nerve_gas_precombat_v4(
-        veh_id, defender_id, attacker_faction, defender_faction,
-        allow_interceptor, nerve_gas_active);
-    if (battle_fight_precombat_commit_v2(
-            veh_id, defender_id, attacker_faction, target_base_id,
-            movement_charge, combat_type, attacker_combat) == 0) {
-        return 0;
-    }
-
-    int diplomacy_report_mode = 0;
-    battle_fight_precombat_diplomacy_v4(
-        veh_id, defender_id, attacker_faction, defender_faction,
-        diplomacy_report_mode);
-    battle_fight_territory_pact_sweep_v2(
-        attacker_faction, defender_faction, target_x, target_y);
-
-    int native_minus84 = 0;
-    int attacker_strength_product = 0;
-    int defender_strength_product = 0;
-    int attacker_proto_snapshot = 0;
-    int defender_proto_snapshot = 0;
-    const int prompt_result = battle_fight_pre_prompt_residual_v2(
-        veh_id, defender_id, attacker_faction, defender_faction,
-        target_x, target_y, combat_type, target_base_id, combat_type,
-        interceptor_result, movement_charge, attacker_combat, defender_combat,
-        attacker_remaining, defender_psi_factor, defender_remaining,
-        attacker_psi_factor, nerve_gas_active, native_minus84,
-        attacker_strength_product, defender_strength_product,
-        &attacker_proto_snapshot, &defender_proto_snapshot);
-    if (prompt_result == 1) return 1;
-    if (prompt_result == 0) {
-        battle_fight_reduce_strength_pair_v5(attacker_strength_product,
-                                             defender_strength_product);
-        if (battle_fight_strength_prompt_residual_v2(
-                veh_id, defender_id, movement_charge,
-                attacker_strength_product, defender_strength_product) != 0) {
-            return 1;
+    // 0x507A17: difficulty corrections
+    {
+        int diff_floor = att_faction ? 2 : 3;   // esi
+        if (PlayersData[def_faction].diff_level < diff_floor &&
+            (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction)) &&
+            !(att_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)) {
+            att_strength = (PlayersData[def_faction].diff_level + 1) * att_strength / 4;
+        }
+        if (PlayersData[att_faction].diff_level < diff_floor &&
+            (att_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) &&
+            !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction))) {
+            att_strength = (4 - PlayersData[att_faction].diff_level) * att_strength / 2;
         }
     }
 
-    char base_name_copy[80];
-    char native_text_minus138[0xA0]; // Provisional collision-boundary model.
-    int status_animation_flag = 0; // Native [-0x88], read after callbacks.
-    int &report_selector = allow_interceptor; // Same live native +0x1c slot.
-    int native_minus78 = 0;
-    const BattleFightPostPromptRouteV1 post_prompt_route =
-        battle_fight_normal_post_prompt_v1(
-            veh_id, defender_id, attacker_faction, defender_faction,
-            nerve_gas_active, target_base_id, base_name_copy,
-            native_text_minus138, combat_type, report_selector,
-            native_minus78, status_animation_flag);
-    if (post_prompt_route == BATTLE_FIGHT_POST_PROMPT_SOURCE_MODE_V1) {
-        return battle_fight_source_mode(
-            veh_id, defender_id, attacker_faction, defender_faction,
-            target_x, target_y, source_x, source_y, target_base_id);
+    // 0x507AD3: alien attacker
+    if (att_faction == 0) {
+        if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction))) {
+            if (VehPrototypes[Vehs[def_id].proto_id].plan == PLAN_TERRAFORMING) {
+                att_strength /= 2;
+                if (!(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) &&
+                    !IsMultiplayerNet &&
+                    (Vehs[def_id].faction_id != ConsoleGlobal.faction_id_ ||
+                     (Vehs[def_id].flags & (VFLAG_LURKER | VFLAG_INVISIBLE)) ==
+                         (VFLAG_LURKER | VFLAG_INVISIBLE)) &&
+                    !(Vehs[def_id].visibility & (1 << ConsoleGlobal.faction_id_))) {
+                    att_strength /= 2;
+                }
+            } else {
+                // 0x507B6B: PlayerData +0x04 is `ranking`, not diff_level
+                att_strength = (PlayersData[def_faction].ranking + 8) * att_strength / 16;
+            }
+        }
+        // 0x507B85
+        if (base_id >= 0) {
+            if (def_faction == ConsoleGlobal.faction_id_) {
+                local_base = 1;
+            }
+            if (PlayersData[def_faction].current_num_bases <= 1) {
+                att_strength /= 2;
+            }
+            if (GameDataStateStorage.fields_.turn_current_num_ < 50) {
+                att_strength /= 2;
+            }
+            // 0x507BCF: inlined has_fac (its bitmask() out-params use [ebp+0x1c]/[ebp+0x20])
+            if (has_fac(FAC_HEADQUARTERS, base_id, 0) &&
+                PlayersData[def_faction].current_num_bases < 4) {
+                att_strength /= 2;
+            }
+        }
     }
 
-    // Continuation locals are deliberately single storage objects across the
-    // round, threshold, kill, and presentation paths. Later stages only get
-    // pointers/references to these values; no source-coordinate aliases are
-    // made from [-0x30] or [-0x34].
-    int native_minus24 = 0;
-    int native_minus30 = 0;
-    int native_minus34 = interceptor_result;
-    int native_minus38 = 0;
-    int native_minus3c = nerve_gas_active;
-    int native_minus44 = diplomacy_report_mode;
-    int native_minus48 = 0;
-    int native_minus50 = 0;
-    int native_minus54 = 0;
-    int native_minus58 = 0;
-    int native_minus64 = 0;
-    int native_minus68 = defender_hit_step;
-    int native_minus70 = attacker_hit_step;
-    int native_minus6c = 0;
-    int native_minus74 = 0;
-    int native_minus80 = 0;
-    int native_minus8c = 0;
-    int native_plus20_scratch = 0; // Separate int after odds-only return.
-
-    BattleFightRoundFrameV4 round_frame(
-        dir, combat_type, report_selector, current_stack_head);
-    round_frame.attacker_id = veh_id;
-    round_frame.defender_id = defender_id;
-    round_frame.retreating_faction = defender_faction;
-    round_frame.attacker_combat_value = attacker_combat;
-    round_frame.defender_combat_value = defender_combat;
-    round_frame.round_or_candidate_index = native_minus24;
-    round_frame.coordinate_y_minus_28 = source_y;
-    round_frame.coordinate_x_minus_2c = source_x;
-    round_frame.attacker_x = 0; // Unused legacy field; not native [-0x30].
-    round_frame.attacker_y = 0; // Unused legacy field; not native [-0x34].
-    round_frame.post_hit_handoff_gate = native_minus48;
-    round_frame.attacker_faction_local_50 = native_minus50;
-    round_frame.x = target_x;
-    round_frame.y = target_y;
-    round_frame.defender_hit_step = native_minus68;
-    round_frame.attacker_hit_step = native_minus70;
-    round_frame.display_scale = native_minus6c;
-    round_frame.best_direction = native_minus74;
-    round_frame.marine_detach_budget = native_minus80;
-    round_frame.best_direction_score = native_minus8c;
-    round_frame.transition_type = native_minus54;
-    round_frame.candidate_x_plus_20 = native_plus20_scratch;
-    round_frame.candidate_y_minus_34 = native_minus34;
-
-    BattleFightRoundBindingsV4 round_bindings;
-    round_bindings.current_faction = battle_fight_pholus_project_base_v3;
-    round_bindings.status_draw = battle_fight_round_status_draw_v1;
-    round_bindings.boom = battle_fight_round_boom_v1;
-    round_bindings.redraw_tile = battle_fight_round_redraw_tile_v1;
-    round_bindings.redraw_tile_fixup = battle_fight_round_redraw_fixup_v1;
-
-    BattleFightMidNativeSlotsV3 mid_slots;
-    mid_slots.target_x = target_x;
-    mid_slots.target_y = target_y;
-    mid_slots.target_base_id_minus_20 = target_base_id;
-    mid_slots.anchor_x_minus_2c = source_x;
-    mid_slots.anchor_y_minus_28 = source_y;
-    mid_slots.candidate_x_plus_20 = &native_plus20_scratch;
-    mid_slots.candidate_y_minus_34 = &native_minus34;
-    mid_slots.second_argument_slot_plus_0c = &dir;
-    mid_slots.attacker_faction_slot_minus_50 =
-        &round_frame.attacker_faction_local_50;
-    mid_slots.display_latch_minus_64 = &native_minus64;
-    mid_slots.outcome_gate_minus_48 = &round_frame.post_hit_handoff_gate;
-    mid_slots.branch_selector_minus_54 = &round_frame.transition_type;
-    mid_slots.odds_gate_minus_78 = &native_minus78;
-    mid_slots.display_selector_slot_plus_1c = &report_selector;
-    mid_slots.stack_vehicle_slot_minus_18 = &current_stack_head;
-    mid_slots.status_value_minus_14 = attacker_combat;
-    mid_slots.status_value_minus_1c = defender_combat;
-    mid_slots.source_mode_slot_plus_18 = &combat_type;
-    mid_slots.attacker_faction_minus_10 = attacker_faction;
-    mid_slots.defender_faction_minus_0c = defender_faction;
-    mid_slots.stats_proto_minus_18 = current_stack_head;
-    mid_slots.cached_attacker_hp_minus_60 = attacker_remaining;
-    mid_slots.cached_defender_hp_minus_5c = defender_remaining;
-    mid_slots.strength_14 = &attacker_combat;
-    mid_slots.strength_1c = &defender_combat;
-    mid_slots.frame_plus_20 = &native_plus20_scratch;
-
-    BattleFightMidPreRoundInputsV7 pre_round_inputs;
-    pre_round_inputs.source_x = source_x;
-    pre_round_inputs.source_y = source_y;
-    pre_round_inputs.combat_type = combat_type;
-    pre_round_inputs.status_animation_flag_minus_88 =
-        &status_animation_flag;
-
-    const BattleFightMidOwnerExitV7 mid_exit = battle_fight_mid_owner_v7(
-        round_frame, round_bindings, mid_slots, pre_round_inputs);
-    if (mid_exit == BATTLE_FIGHT_MID_EARLY_RETURN_ZERO_V7 ||
-        mid_exit == BATTLE_FIGHT_MID_RETURN_AT_A110_V7) {
-        return 0;
+    // 0x507C22: early-game damping
+    if (GameDataStateStorage.fields_.turn_current_num_ < 15) {
+        if (att_faction == 0) {
+            att_strength /= 3;
+        }
+        if (def_faction == 0) {
+            def_strength /= 2;
+        }
     }
 
-    BattleFightLateFrameV1 late_frame;
-    late_frame.frame_minus_48 = round_frame.post_hit_handoff_gate;
-    late_frame.frame_minus_50 = round_frame.attacker_faction_local_50;
-    late_frame.status_animation_flag_minus_88 = &status_animation_flag;
-    late_frame.frame_minus_90_proto = attacker_proto_snapshot;
-    late_frame.frame_minus_94_proto = defender_proto_snapshot;
-    late_frame.attacker_vehicle_id = veh_id;
-    late_frame.defender_vehicle_id = defender_id;
-    late_frame.frame_minus_18_vehicle_id = current_stack_head;
-    late_frame.frame_minus_8_vehicle_id = defender_id;
-    late_frame.frame_vehicle_id_at_a904 = defender_id;
-    late_frame.frame_minus_10 = attacker_faction;
-    late_frame.attacker_faction = attacker_faction;
-    late_frame.defender_faction = defender_faction;
-    late_frame.target_x = target_x;
-    late_frame.target_y = target_y;
-    late_frame.attacker_tile_x_minus_2c = source_x;
-    late_frame.attacker_tile_y_minus_28 = source_y;
-    late_frame.target_stack_id = -1; // AC01 reacquires before its use.
-    late_frame.target_base_id = target_base_id;
-    late_frame.stats_proto_minus_18 = current_stack_head;
-    late_frame.cached_attacker_hp_minus_60 = attacker_remaining;
-    late_frame.cached_defender_hp_minus_5c = defender_remaining;
-    late_frame.native_esi_before_a80e_test = attacker_faction;
-    late_frame.native_text_buffer_minus_138 = native_text_minus138;
-    late_frame.direction_slot_plus_0c = &dir;
-    late_frame.source_mode_slot_plus_18 = &combat_type;
-    late_frame.frame_plus_08_loop_slot = &veh_id;
-    late_frame.frame_plus_1c = &report_selector;
-    late_frame.frame_plus_20 = &native_plus20_scratch;
-    late_frame.frame_minus_20 = &target_base_id;
-    late_frame.frame_minus_18 = &current_stack_head;
-    late_frame.frame_minus_38 = &native_minus38;
-    late_frame.frame_minus_30 = &native_minus30;
-    late_frame.frame_minus_3c = &native_minus3c;
-    late_frame.frame_minus_40 = &native_minus40;
-    late_frame.frame_minus_44 = &native_minus44;
-    late_frame.frame_minus_58 = &native_minus58;
-    late_frame.frame_minus_64_slot = &native_minus64;
-    late_frame.base_name_copy_80 = base_name_copy;
-    late_frame.attacker_record_minus_04 = &Vehs[veh_id];
-    late_frame.defender_record_minus_08 = &Vehs[defender_id];
-    late_frame.continuation_edi_at_a730 = &Vehs[defender_id];
-    return battle_fight_after_a44d_compose_v3(late_frame, native_minus78);
+    // 0x507C5C
+    if (base_id >= 0 &&
+        Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_AIR) {
+        Bases[base_id].state |= BSTATE_UNK_100000;
+    }
+
+    // 0x507CA4: local human odds prompts
+    if ((NetDaemonNet.channels_[0].leading_words_[3] & 1) && !intercepted &&
+        (static_cast<uint8_t>(att_bit) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) &&
+        att_faction == ConsoleGlobal.faction_id_ && mode == 0 &&
+        !Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].missile &&
+        !(Vehs[veh_id].state & (VSTATE_UNK_200 | VSTATE_EXPLORE))) {
+        if (2 * (att_hp * def_step * att_strength) < def_hp * atk_step * def_strength) {
+            // 0x507D48: BADIDEA
+            g_BattleWin.set_iface_mode();
+            g_BattleWin.clear();
+            ConsoleStatusWin.draw(veh_id, def_id, att_strength, def_strength, 0);
+            ConsoleStatusWin.set_field_15D4(1);
+            PluralityDefault = 0;
+            GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
+            parse_says(0, Players[ConsoleGlobal.faction_id_].title_leader, -1, -1);
+            PluralityDefault = 0;
+            GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
+            parse_says(1, Players[ConsoleGlobal.faction_id_].name_leader, -1, -1);
+            g_BattleWin.stop_timer();
+            if (popp(ScriptPopupFile, "BADIDEA", 0, "hasty_sm.pcx", 0)) {
+                goto L_508358;
+            }
+            // 0x507E26
+            g_BattleWin.pulse_timer();
+            if (NetDaemonNet.channels_[0].leading_words_[3] & 2) {
+                Vehs[veh_id].moves_expended -= static_cast<uint8_t>(move_charge);
+            }
+            Vehs[veh_id].order = ORDER_NONE;
+            Vehs[veh_id].state &= 0xFCFFBDFF;
+            ConsoleStatusWin.reset();
+            ConsoleStatusWin.redraw();
+            return 1;
+        }
+
+        // 0x507E7E: GOODIDEA
+        if (!(GameDataStateStorage.fields_.game_more_preferences_ & MPREF_ADV_CONFIRM_ODDS_BF_ATTACKING)) {
+            goto L_50835D;
+        }
+        g_BattleWin.set_iface_mode();
+        g_BattleWin.clear();
+        ConsoleStatusWin.draw(veh_id, def_id, att_strength, def_strength, 0);
+        ConsoleStatusWin.set_field_15D4(1);
+        PluralityDefault = 0;
+        GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
+        parse_says(0, Players[ConsoleGlobal.faction_id_].title_leader, -1, -1);
+        PluralityDefault = 0;
+        GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
+        parse_says(1, Players[ConsoleGlobal.faction_id_].name_leader, -1, -1);
+        // 0x507F36: inlined say_num(). "." is a direct strcat call, not says()
+        StringTemp[0] = '\0';
+        say_num(att_strength >> 8);
+        strcat(StringTemp, ".");
+        say_num(((att_strength & 0xFF) * 10) >> 8);
+        parse_says(2, StringTemp, -1, -1);
+        StringTemp[0] = '\0';
+        say_num(def_strength >> 8);
+        strcat(StringTemp, ".");
+        say_num(((def_strength & 0xFF) * 10) >> 8);
+        parse_says(3, StringTemp, -1, -1);
+
+        {
+            // 0x508034: these products do NOT include the psi factors
+            int att_odds = range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999) * att_strength;   // esi
+            int def_odds = range(proto_power(def_id) - Vehs[def_id].dmg_incurred, 0, 9999) * def_strength;   // edi
+            // 0x5080FC: the minimum is tested once per divisor, not after each division
+            for (int div = 2; div < (att_odds < def_odds ? att_odds : def_odds); div++) {
+                while (att_odds && def_odds && !(att_odds % div) && !(def_odds % div)) {
+                    att_odds /= div;
+                    def_odds /= div;
+                }
+            }
+            while (att_odds >= 20000 && def_odds >= 20000) {
+                att_odds /= 10000;
+                def_odds /= 10000;
+            }
+            while (att_odds >= 10000 && def_odds >= 10000) {
+                att_odds /= 5000;
+                def_odds /= 5000;
+            }
+            while (att_odds >= 2000 && def_odds >= 2000) {
+                att_odds /= 1000;
+                def_odds /= 1000;
+            }
+            while (att_odds >= 1000 && def_odds >= 1000) {
+                att_odds /= 500;
+                def_odds /= 500;
+            }
+            while (att_odds >= 200 && def_odds >= 200) {
+                att_odds /= 100;
+                def_odds /= 100;
+            }
+            while (att_odds >= 100 && def_odds >= 100) {
+                att_odds /= 50;
+                def_odds /= 50;
+            }
+            // 0x5082A2
+            g_BattleWin.stop_timer();
+            parse_num(0, att_odds);
+            parse_num(1, def_odds);
+        }
+        if (popp(ScriptPopupFile,
+                 (Vehs[veh_id].dmg_incurred || Vehs[def_id].dmg_incurred) ? "GOODIDEA2" : "GOODIDEA",
+                 0, "hasty_sm.pcx", 0)) {
+            goto L_508358;
+        }
+        // 0x508301
+        g_BattleWin.pulse_timer();
+        if (NetDaemonNet.channels_[0].leading_words_[3] & 2) {
+            Vehs[veh_id].moves_expended -= static_cast<uint8_t>(move_charge);
+        }
+        Vehs[veh_id].order = ORDER_NONE;
+        Vehs[veh_id].state &= 0xFCFFBDFF;
+        ConsoleStatusWin.reset();
+        ConsoleStatusWin.redraw();
+        return 1;
+    }
+    goto L_50835D;
+
+L_508358:
+    g_BattleWin.pulse_timer();
+
+L_50835D:
+    // 0x50835D: shared post-prompt tail
+    if (nerve_gas) {
+        atrocity(att_faction, def_faction, base_id >= 0, 0);
+        nerve_base_name[0] = '\0';
+        if (base_id >= 0) {
+            strcpy(nerve_base_name, Bases[base_id].name_string);
+        }
+    }
+
+    // 0x5083AC
+    if (Vehs[veh_id].order == ORDER_MOVE_TO) {
+        Vehs[veh_id].order = ORDER_NONE;
+        Vehs[veh_id].state &= 0xFCFFBDFF;
+    }
+
+    // 0x5083D6
+    zoom_refresh = 0;
+    if (att_faction == ConsoleGlobal.faction_id_ || def_faction == ConsoleGlobal.faction_id_ ||
+        (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) {
+        display = 1;
+    } else {
+        display = 0;
+    }
+
+    // 0x508401: Vehs[].flags (+0x08) masked with 0x440, plus Vehs[].visibility (+0x27)
+    if ((Vehs[veh_id].faction_id == ConsoleGlobal.faction_id_ &&
+         (Vehs[veh_id].flags & (VFLAG_LURKER | VFLAG_INVISIBLE)) != (VFLAG_LURKER | VFLAG_INVISIBLE)) ||
+        (Vehs[veh_id].visibility & (1 << ConsoleGlobal.faction_id_)) ||
+        (Vehs[def_id].faction_id == ConsoleGlobal.faction_id_ &&
+         (Vehs[def_id].flags & (VFLAG_LURKER | VFLAG_INVISIBLE)) != (VFLAG_LURKER | VFLAG_INVISIBLE)) ||
+        (Vehs[def_id].visibility & (1 << ConsoleGlobal.faction_id_))) {
+        any_visible = 1;
+    } else {
+        any_visible = 0;
+    }
+
+    // 0x50846E
+    if ((PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[att_faction] & DTREATY_PACT)
+            ? (GameDataStateStorage.fields_.game_preferences_ & PREF_BSC_DONT_QUICK_MOVE_ALLY_VEH)
+            : (GameDataStateStorage.fields_.game_preferences_ & PREF_BSC_DONT_QUICK_MOVE_ENEMY_VEH)) {
+        display |= any_visible;
+    }
+
+    // 0x5084A8
+    if (mode == 1) {
+        // ---- 0x5084B4: artillery bombardment of the whole stack -------------
+        add_goal(def_faction, 0x10, 4, target_x, target_y, -1);
+        add_goal(def_faction, 0, 4, src_x, src_y, -1);
+        if (base_id >= 0) {
+            Bases[base_id].state |= BSTATE_UNK_200000;
+            Bases[base_id].event |= BEVENT_UNK_100;
+        }
+
+        // 0x508513: inlined veh_top. On a negative def_id the image jumps to the
+        // sweep without storing (the stored value would be the same -1).
+        // 0x508A0D: the step is inlined veh_next_stack_id ([ebp-0x18] is the walker)
+        for (def_id = veh_top(def_id); def_id >= 0; def_id = veh_next_stack_id(def_id)) {
+            // 0x508550 ([ebp-0x08] rebased onto def_id)
+            if (Chassis[VehPrototypes[Vehs[def_id].proto_id].chassis_id].triad == TRIAD_AIR &&
+                !has_abil(Vehs[veh_id].proto_id, ABL_AIR_SUPERIORITY) &&
+                base_id < 0 &&
+                !(map_loc(target_x, target_y)->bit & BIT_AIRBASE)) {
+                continue;
+            }
+            // 0x5085CE
+            veh_skip(veh_id);
+            battle_compute(veh_id, def_id, &att_strength, &def_strength, 1);
+            int denom = range(Rules.artillery_dmg_denom * def_strength, 1, 9999999);   // ecx
+            int dmg_max = range(Rules.artillery_dmg_num * att_strength / denom + 1, 1, 999);   // esi
+            int dmg = bounded_crt_random(dmg_max);   // edi, then ebx
+            // 0x50864B .. 0x50876A: never take the unit below `keep`
+            int keep;   // esi
+            if (base_id < 0 && !(map_loc(target_x, target_y)->bit & BIT_BUNKER)) {
+                keep = (100 - (Chassis[VehPrototypes[Vehs[def_id].proto_id].chassis_id].triad == TRIAD_LAND
+                                   ? Rules.max_pct_dmg_art_vs_units_open
+                                   : Rules.max_pct_dmg_art_vs_units_sea))
+                       * proto_power(def_id) + 99;
+            } else {
+                // 0x508712
+                keep = (100 - Rules.max_pct_dmg_art_vs_unit_base_bnkr) * proto_power(def_id) + 99;
+            }
+            keep /= 100;   // 0x50876A
+            // 0x50876F
+            for (; dmg > 0; dmg--) {
+                if (veh_cur_hp(def_id) - dmg >= keep) {   // 0x5087B5 calls range
+                    break;
+                }
+            }
+
+            // 0x5087EC
+            if (display) {
+                bombard_boomed = 0;
+                VehDrawSelection689F2C = def_id;
+                Vehs[veh_id].visibility |= static_cast<uint8_t>(1 << def_faction);
+                VehDrawSelection689F28 = veh_id;
+                if (!ConsoleGlobal.focus(target_x, target_y, att_faction)) {
+                    draw_tile(src_x, src_y, 2);
+                    draw_tile(target_x, target_y, 2);
+                }
+                g_BattleWin.set_iface_mode();
+                g_BattleWin.clear();
+                ConsoleStatusWin.draw(veh_id, def_id, att_strength, def_strength, 1);
+                ConsoleStatusWin.set_field_15D4(1);
+                flush_input();
+                // 0x50889E: the image also tests `def_id < 0`
+                if (keep == 0 || Vehs[def_id].dmg_incurred != keep || def_id < 0 ||
+                    Vehs[def_id].next_veh_id_stack < 0) {
+                    boom(target_x, target_y, 0);
+                    bombard_boomed = 1;
+                }
+            }
+            // 0x5088E6
+            Vehs[def_id].dmg_incurred += static_cast<uint8_t>(dmg);
+            Vehs[def_id].state |= VSTATE_UNK_4;
+            if (VehPrototypes[Vehs[def_id].proto_id].plan == PLAN_TERRAFORMING) {
+                Vehs[def_id].terraforming_turns = 0;
+            }
+            if (base_id < 0) {
+                Vehs[def_id].state |= VSTATE_UNK_8;
+            }
+            // 0x508936
+            if (display) {
+                ConsoleStatusWin.draw(veh_id, def_id, att_strength, def_strength, 1);
+                draw_tile(target_x, target_y, 2);
+                VehDrawSelection689F28 = -1;
+                VehDrawSelection689F2C = -1;
+                if (GameDataStateStorage.fields_.game_more_preferences_ & MPREF_ADV_PAUSE_AFTER_BATTLES) {
+                    g_BattleWin.stop_timer();
+                    popp(ScriptPopupFile, "BATTLEPAUSE", 0, "batwon_sm.pcx", 0);
+                    g_BattleWin.pulse_timer();
+                    if (ConsoleGroupAction) {
+                        GameDataStateStorage.fields_.game_more_preferences_ &= ~MPREF_ADV_PAUSE_AFTER_BATTLES;
+                        prefs_save(0);
+                    }
+                } else if ((GetAsyncKeyState(VK_SHIFT) & 0xFF00) == 0   // mov dl,ah / test dl,dl
+                           && !(GameDataStateStorage.fields_.game_preferences_ & PREF_ADV_FAST_BATTLE_RESOLUTION)
+                           && !IsMultiplayerNet && bombard_boomed) {
+                    clock_wait(200);
+                }
+            }
+        }
+
+        // 0x508A29: kill the units the bombardment left without HP
+        for (int k = stack_fix(veh_at(target_x, target_y)); k >= 0; ) {   // esi
+            if (veh_cur_hp(k) < 1) {   // 0x508A81 calls range
+                stack_veh(k, 2);
+                stack_kill(k);
+                k = stack_fix(veh_at(target_x, target_y));
+                PlayersData[att_faction].diplo_unk3[def_faction]++;
+                PlayersData[att_faction].diplo_unk4[def_faction]++;
+            } else {
+                k = veh_next_stack_id(k);   // inlined
+            }
+        }
+        // 0x508B12
+        draw_tile_fixup(target_x, target_y, 1, 2);
+        if (base_id >= 0 &&
+            !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction))) {
+            base_reset(base_id, 0);
+        }
+        return 0;   // 0x508B47
+    }
+
+    // ---- 0x508B50: ordinary / duel combat (mode != 1) ----------------------
+    if (mode != 0) {
+        add_goal(def_faction, 0x10, 2, target_x, target_y, -1);
+    }
+    // 0x508B6B
+    if (display) {
+        if (IsMultiplayerNet && TutWinBaseWindow.zoom_wait_pending_) {
+            zoom_refresh = 1;
+        }
+        Vehs[veh_id].visibility |= static_cast<uint8_t>(1 << def_faction);
+        VehDrawSelection689F28 = veh_id;
+        VehDrawSelection689F2C = def_id;
+        if (!ConsoleGlobal.focus(target_x, target_y, att_faction)) {
+            draw_tile(src_x, src_y, 2);
+            draw_tile(target_x, target_y, 2);
+        }
+        stack_veh(veh_id, 1);
+        g_BattleWin.set_iface_mode();
+        g_BattleWin.clear();
+        ConsoleStatusWin.draw(veh_id, def_id, att_strength, def_strength, mode);
+        ConsoleStatusWin.set_field_15D4(1);
+        flush_input();
+        if ((GetAsyncKeyState(VK_SHIFT) & 0xFF00) == 0 && !(mode & 1)) {   // 0x508C49
+            veh_scoot(veh_id, src_x, src_y, dir, 1);
+        }
+        stack_put(veh_id, src_x, src_y);
+        draw_tile(src_x, src_y, 2);
+        draw_tile(target_x, target_y, 2);
+    }
+
+    // 0x508C99: withdraw threshold. speed(def_id) is called before speed(veh_id).
+    retreat = 0;
+    if (speed(def_id, 1) > speed(veh_id, 1)
+        && mode == 0
+        && get_offense_rating(def_id) != 0
+        && !(Vehs[def_id].state & VSTATE_UNK_40)
+        && get_triad(veh_id) != TRIAD_AIR
+        && get_triad(def_id) != TRIAD_AIR
+        && (!has_abil(Vehs[veh_id].proto_id, ABL_COMM_JAMMER)
+            || has_abil(Vehs[def_id].proto_id, ABL_DISSOCIATIVE_WAVE))
+        && Vehs[def_id].order != ORDER_HOLD
+        && base_id < 0
+        && !(map_loc(target_x, target_y)->bit & (BIT_BUNKER | BIT_AIRBASE))
+        && stack_check(def_id, 1, -1, -1, -1) == 1) {
+        retreat = (veh_cur_hp(def_id) + 1) / 2;   // 0x508DFE calls range
+    }
+
+    // 0x508E30: marine detachment threshold
+    marine = 0;
+    if (has_abil(Vehs[veh_id].proto_id, ABL_MARINE_DETACHMENT)
+        && get_triad(veh_id) == TRIAD_SEA
+        && is_ocean(target_x, target_y)
+        && get_triad(def_id) == TRIAD_SEA
+        // not a native unit: proto < 64 && (psi weapon || spore launcher)
+        && !(Vehs[def_id].proto_id < MaxVehProtoFactionNum
+             && (get_offense_rating(def_id) < 0
+                 || Vehs[def_id].proto_id == BSC_SPORE_LAUNCHER))
+        && base_id < 0) {
+        marine = veh_cur_hp(def_id) * 2 / 3;   // 0x508F21 calls range
+    }
+
+    // 0x508F5E: planet buster (planet_buster2 inlined on the attacker proto)
+    if (planet_buster2(Vehs[veh_id].proto_id)) {
+        planet_busting(veh_id, target_x, target_y);
+        WorldClimateWorldWin.field_239BC_ |= 4;
+        return 0;   // 0x508FA5
+    }
+
+    // 0x508FB5
+    round_div = (!is_missile(veh_id) && !IsMultiplayerNet) ? 3 : 0;
+    last_hit = 0;
+    if (is_missile(veh_id) || IsMultiplayerNet) {
+        boom(target_x, target_y,
+             2 - (range(proto_power(def_id) - Vehs[def_id].dmg_incurred, 0, 9999) != 0));
+    }
+    // 0x50906C
+    single = ((mode & 2)
+              && ((get_triad(veh_id) == TRIAD_SEA) != (get_triad(def_id) == TRIAD_SEA)))
+             ? 1 : 0;
+
+    // ---- 0x5090D7: combat rounds ---------------------------------------------
+    // The two loop-top tests jump to 0x509983, i.e. L_509980 without its reload.
+    for (;;) {
+        if (range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999) == 0) break;
+        if (range(proto_power(def_id) - Vehs[def_id].dmg_incurred, 0, 9999) == 0) break;
+
+        // 0x5091A5: the attacker draws first; the compare is signed
+        int roll_atk = bounded_crt_random(att_strength);   // edi
+        int roll_def = bounded_crt_random(def_strength);   // edx
+
+        if (roll_atk > roll_def) {
+            // 0x5091DB: the defender takes def_step
+            int dmg = static_cast<uint8_t>(
+                Vehs[def_id].dmg_incurred += static_cast<uint8_t>(def_step));
+            if (display && round_div &&
+                dmg / (round_div * def_step) != (dmg - def_step) / (round_div * def_step)) {
+                // ((dmg - def_step) / div is evaluated first and spilled to [ebp-0x74].)
+                last_hit = 2;
+                ConsoleStatusWin.draw(veh_id, def_id, att_strength, def_strength, mode);
+                boom(target_x, target_y, 1);
+                if (range(proto_power(def_id) - Vehs[def_id].dmg_incurred, 0, 9999) != 0) {
+                    draw_tile(src_x, src_y, 2);
+                    draw_tile(target_x, target_y, 2);
+                }
+                if (single) break;   // 0x5092E1 -> 0x509980
+            }
+            // 0x5092EA: marines
+            if (marine &&
+                range(proto_power(def_id) - Vehs[def_id].dmg_incurred, 0, 9999) != 0) {
+                marine -= def_step;
+                if (marine <= 0 && rand() % 100 < 50) goto L_50973a;
+            }
+            // 0x50936C: withdrawal (the defender's HP, [ebp-0x08])
+            if (retreat == 0) continue;
+            if (range(proto_power(def_id) - Vehs[def_id].dmg_incurred, 0, 9999) == 0) continue;
+            retreat -= def_step;
+            if (retreat > 0) continue;
+
+            // 0x5093F1: pick the free tile that turns furthest from the attack.
+            // rx/ry are written for every examined direction.
+            best_dir = -1;
+            best_angle = 0;
+            for (scan_dir = 0; scan_dir < 8; scan_dir++) {
+                rx = wrap_map_x(VehMoveDeltaX[scan_dir] + target_x);
+                ry = VehMoveDeltaY[scan_dir] + target_y;
+                if (!on_map(rx, ry)) continue;
+                if (zoc_move(rx, ry, def_faction)) continue;
+                int triad = get_triad(def_id);
+                if (triad != TRIAD_AIR &&
+                    is_ocean(rx, ry) != (triad == TRIAD_SEA)) continue;
+                if (goody_at(rx, ry)) continue;
+                Map *tile = map_loc(rx, ry);   // ecx, reused by anything_at below
+                if ((tile->bit & BIT_FUNGUS) && (tile->climate & 0xE0) >= 0x40
+                    && !has_project(SP_PHOLUS_MUTAGEN, def_faction)) {
+                    int dp = Vehs[def_id].proto_id;
+                    if (dp >= MaxVehProtoFactionNum) continue;
+                    if (get_proto_offense_rating(dp) >= 0 && dp != BSC_SPORE_LAUNCHER) continue;
+                }
+                // 0x509594
+                int who = anything_at(rx, ry);
+                if (who >= 0 && who != def_faction &&
+                    !(PlayersData[who].diplo_treaties[def_faction] & DTREATY_PACT)) continue;
+                // 0x5095CC: angular distance from the reversed attack direction
+                int angle = scan_dir - (dir ^ 4);
+                if (angle < 0) angle = (dir ^ 4) - scan_dir;
+                angle &= 7;
+                if (angle > 4) angle = 8 - angle;
+                if (angle > 2 && angle > best_angle) {
+                    best_angle = angle;
+                    best_dir = scan_dir;
+                }
+            }
+            // 0x509612
+            if (best_dir >= 0) goto L_509923;
+            retreat = 0;
+        } else {
+            // 0x509629: the attacker takes atk_step (ties go to the defender)
+            int dmg = static_cast<uint8_t>(
+                Vehs[veh_id].dmg_incurred += static_cast<uint8_t>(atk_step));
+            if (!display) continue;
+            if (!round_div) continue;
+            if (dmg / (round_div * atk_step) == (dmg - atk_step) / (round_div * atk_step)) continue;
+            last_hit = 1;
+            ConsoleStatusWin.draw(veh_id, def_id, att_strength, def_strength, mode);
+            boom(src_x, src_y, 9);
+            if (range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999) != 0) {
+                draw_tile(src_x, src_y, 2);
+                draw_tile(target_x, target_y, 2);
+            }
+            if (single) break;   // 0x50972F -> 0x509980
+        }
+    }
+    goto L_509980;
+
+    // ---- 0x50973A: the marine detachment captures the defender's stack -------
+L_50973a:
+    old_def_faction = Vehs[def_id].faction_id;
+    captor = Vehs[veh_id].faction_id;
+    if (def_id >= 0) {
+        for (int c = veh_top(def_id); c >= 0; c = veh_next_stack_id(c)) {   // edi
+            Vehs[c].faction_id = Vehs[veh_id].faction_id;
+            parse_says(0, VehPrototypes[Vehs[c].proto_id].veh_name, -1, -1);
+            int home = base_find(target_x, target_y);
+            // Unguarded: Bases[-1] is read when base_find finds none
+            if (Bases[home].faction_id_current == Vehs[veh_id].faction_id
+                && Bases[home].population_size >= 3) {
+                Vehs[c].home_base_id = static_cast<int16_t>(home);
+            } else {
+                Vehs[c].home_base_id = -1;
+            }
+            veh_skip(c);
+        }
+    }
+    // 0x509827
+    bit_set(target_x, target_y, BIT_SUPPLY_REMOVE, 1);
+    owner_set(target_x, target_y, Vehs[veh_id].faction_id);
+    if (Vehs[veh_id].faction_id == ConsoleGlobal.faction_id_) {
+        draw_tile_fixup(target_x, target_y, 1, 2);
+    } else {
+        draw_tile(target_x, target_y, 2);
+    }
+    if (captor == ConsoleGlobal.faction_id_) {
+        parse_says(1, Players[old_def_faction].adj_name_faction, -1, -1);
+        popp(ScriptPopupFile, "WEMARINEDETACH", 0, "navun_sm.pcx", 0);
+    }
+    if (old_def_faction == ConsoleGlobal.faction_id_) {
+        parse_says(1, Players[captor].adj_name_faction, -1, -1);
+        popp(ScriptPopupFile, "THEYMARINEDETACH", 0, "navun_sm.pcx", 0);
+    }
+    log_say("Detachment", 0, 0, 0);
+    captured = 1;   // 0x50991A
+    goto L_509980;
+
+    // ---- 0x509923: the defender withdraws to best_dir ------------------------
+L_509923:
+    rx = wrap_map_x(VehMoveDeltaX[best_dir] + target_x);
+    ry = VehMoveDeltaY[best_dir] + target_y;
+    stack_put(stack_veh(def_id, 1), rx, ry);
+    disengaged = 1;
+
+    // ---- 0x509980: outcome display -------------------------------------------
+L_509980:
+    atk_left = range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999);
+    if (display || any_visible) {
+        draw_tile_fixup(src_x, src_y, target_x, target_y, 2, 2);   // 0x46B040
+        if (disengaged && (src_x != rx || src_y != ry) && (target_x != rx || target_y != ry)) {
+            draw_tile_fixup(rx, ry, 2, 2);
+        }
+        if (display) {   // 0x509A54
+            ConsoleStatusWin.draw(veh_id, def_id, att_strength, def_strength, mode);
+            if (!disengaged) {   // 0x509A7F
+                if (atk_left != 0) {
+                    if (single) {
+                        // 0x509A9E
+                        if (last_hit != 1 && !IsMultiplayerNet) {
+                            boom(src_x, src_y,
+                                 (2 - (range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999) != 0)) | 8);
+                        }
+                        // 0x509B44
+                        boom(target_x, target_y,
+                             (2 - (range(proto_power(def_id) - Vehs[def_id].dmg_incurred, 0, 9999) != 0)) | 8);
+                    } else if (last_hit == 2) {
+                        // 0x509BBF
+                        if (IsMultiplayerNet ||
+                            range(proto_power(def_id) - Vehs[def_id].dmg_incurred, 0, 9999) == 0) {
+                            // 0x509C2F
+                            boom(target_x, target_y,
+                                 (range(proto_power(def_id) - Vehs[def_id].dmg_incurred, 0, 9999) != 0 ? 0 : 2) | 8);
+                        }
+                    } else if (IsMultiplayerNet) {
+                        // 0x509C2C
+                        boom(target_x, target_y,
+                             (range(proto_power(def_id) - Vehs[def_id].dmg_incurred, 0, 9999) != 0 ? 0 : 2) | 8);
+                    } else {
+                        // 0x509B44
+                        boom(target_x, target_y,
+                             (2 - (range(proto_power(def_id) - Vehs[def_id].dmg_incurred, 0, 9999) != 0)) | 8);
+                    }
+                } else if (single) {
+                    // 0x509CB4: attacker destroyed in a one-exchange duel
+                    if (last_hit != 2 && !IsMultiplayerNet) {
+                        boom(target_x, target_y,
+                             range(proto_power(def_id) - Vehs[def_id].dmg_incurred, 0, 9999) != 0);
+                    }
+                    // 0x509D42 (clamp/push at 0x509E1A)
+                    boom(src_x, src_y,
+                         2 - (range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999) != 0));
+                } else {
+                    // 0x509DB2: attacker destroyed
+                    if (last_hit != 1 && !IsMultiplayerNet) {
+                        // 0x509DC8
+                        boom(src_x, src_y,
+                             2 - (range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999) != 0));
+                    } else if (range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999) == 0 ||
+                               IsMultiplayerNet) {
+                        // 0x509E48 / 0x509EB3: the HP expression is evaluated again
+                        boom(src_x, src_y,
+                             range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999) != 0 ? 0 : 2);
+                    }
+                }
+            }
+            // 0x509F10
+            VehDrawSelection689F28 = -1;
+            VehDrawSelection689F2C = -1;
+        }
+    }
+
+    // 0x509F1D: a one-exchange duel in which both units survive
+    if (single &&
+        range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999) != 0 &&
+        range(proto_power(def_id) - Vehs[def_id].dmg_incurred, 0, 9999) != 0) {
+        // 0x509FF8
+        if (IsMultiplayerNet && def_faction == ConsoleGlobal.faction_id_) {
+            parse_says(0, VehPrototypes[Vehs[def_id].proto_id].veh_name, -1, -1);
+            // BUG(original): passes the defender VEHICLE id, not its proto id.
+            // (clear() + say_stats_3(int) are inlined by the image here.)
+            clear();
+            say_stats_3(def_id);
+            parse_says(1, StringTemp, -1, -1);
+            parse_says(2, get_adjective(att_faction), -1, -1);   // inlined
+            parse_says(3, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
+            clear();
+            say_stats_3(Vehs[veh_id].proto_id);
+            parse_says(4, StringTemp, -1, -1);
+            int report_base = base_find(target_x, target_y, -1, -1, -1, ConsoleGlobal.faction_id_);
+            if (report_base >= 0) {
+                parse_says(5, Bases[report_base].name_string, -1, -1);
+            }
+            veh_battle_msg("COMBATSURVIVE", 0);   // inlined NetMsgPrimary.pop(label, 5000, 0, 0)
+        }
+        return 0;   // 0x50A110
+    }
+
+    // 0x50A119: someone died (or the defender withdrew / was captured)
+    {
+        Map *tile = map_loc(target_x, target_y);
+        if ((tile->climate & 0xE0) >= 0x60) {   // land (alt >= 3)
+            int owner = tile->territory;        // movsx: may be -1 (unguarded)
+            if (owner != att_faction && owner != def_faction
+                && (PlayersData[owner].diplo_treaties[def_faction] & DTREATY_VENDETTA)
+                && (PlayersData[owner].diplo_treaties[att_faction]
+                    & (DTREATY_PACT | DTREATY_TREATY | DTREATY_TRUCE))) {
+                if (!PlayersData[att_faction].diplo_unk1[owner]) {
+                    PlayersData[att_faction].diplo_unk1[owner] = 1;
+                }
+                cause_friction(owner, att_faction, -1);
+            }
+        }
+    }
+
+    // 0x50A1B3: rescale strengths and promotions
+    if (atk_left != 0) {
+        // the attacker survived
+        att_strength = VehPrototypes[Vehs[veh_id].proto_id].reactor_id
+                       * range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999)
+                       * att_strength / att_hp;
+        // 0x50A237
+        def_strength = VehPrototypes[Vehs[def_id].proto_id].reactor_id * def_hp
+                       * def_strength / proto_power(def_id);
+        if (VehPrototypes[Vehs[def_id].proto_id].plan != PLAN_ALIEN_ARTIFACT) {
+            // 0x50A29E (rand at 0x64601D; signed compare)
+            if (morale_veh(veh_id, 1, 0) <= 1
+                || static_cast<int>(bounded_crt_random(att_strength + def_strength)) <= def_strength) {
+                promote(veh_id);
+            }
+        }
+        // 0x50A2DD
+        if (att_faction == 0) {
+            Vehs[veh_id].home_base_id = Vehs[def_id].home_base_id;
+        }
+    } else {
+        // 0x50A2F7: the defender survived
+        att_strength = VehPrototypes[Vehs[veh_id].proto_id].reactor_id * att_hp
+                       * att_strength / proto_power(veh_id);
+        // 0x50A357
+        def_strength = VehPrototypes[Vehs[def_id].proto_id].reactor_id
+                       * range(proto_power(def_id) - Vehs[def_id].dmg_incurred, 0, 9999)
+                       * def_strength / def_hp;
+        if (VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_ALIEN_ARTIFACT) {
+            // 0x50A3DA
+            if (morale_veh(def_id, 1, 0) <= 1
+                || static_cast<int>(bounded_crt_random(att_strength + def_strength)) <= att_strength
+                || (base_id >= 0 && morale_veh(def_id, 1, 0) < 4)) {
+                promote(def_id);
+            }
+        }
+        // 0x50A432
+        if (def_faction == 0) {
+            Vehs[def_id].home_base_id = Vehs[veh_id].home_base_id;
+        }
+    }
+
+    // 0x50A44D
+    kill_count = 0;
+    booty_count = 0;
+    husk_energy = 0;
+    damaged_count = 0;
+    if (captured != 0 || disengaged != 0) {
+        goto L_50b203;
+    }
+    if (atk_left == 0) {
+        goto L_50af13;
+    }
+
+    // 0x50A478: the attacker won
+    PlayersData[att_faction].diplo_unk3[def_faction]++;
+    PlayersData[att_faction].diplo_unk4[def_faction]++;
+    FactionTurnCombatWins[att_faction]++;
+    FactionTurnCombatLosses[def_faction]++;
+    if (IsMultiplayerNet && def_faction == ConsoleGlobal.faction_id_) {
+        // 0x50A4E5 (clear/say_stats_3/get_adjective/veh_battle_msg inlined here)
+        parse_says(0, VehPrototypes[Vehs[def_id].proto_id].veh_name, -1, -1);
+        clear();
+        say_stats_3(Vehs[def_id].proto_id);
+        parse_says(1, StringTemp, -1, -1);
+        parse_says(2, get_adjective(att_faction), -1, -1);
+        parse_says(3, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
+        clear();
+        say_stats_3(Vehs[veh_id].proto_id);
+        parse_says(4, StringTemp, -1, -1);
+        int report_base = base_find(target_x, target_y, -1, -1, -1, ConsoleGlobal.faction_id_);
+        if (report_base >= 0) {
+            parse_says(5, Bases[report_base].name_string, -1, -1);
+        }
+        veh_battle_msg("COMBATLOSS", 0);
+    } else if (IsMultiplayerPBEM &&
+               (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction))) {
+        // 0x50A61D
+        parse_says(0, VehPrototypes[Vehs[def_id].proto_id].veh_name, -1, -1);
+        clear();
+        say_stats_3(Vehs[def_id].proto_id);
+        parse_says(1, StringTemp, -1, -1);
+        parse_says(2, get_adjective(att_faction), -1, -1);
+        parse_says(3, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
+        clear();
+        say_stats_3(Vehs[veh_id].proto_id);
+        parse_says(4, StringTemp, -1, -1);
+        int report_base = base_find(target_x, target_y, -1, -1, -1, def_faction);
+        if (report_base >= 0) {
+            parse_says(5, Bases[report_base].name_string, -1, -1);
+        }
+        POP3("COMBATLOSS", def_faction, target_x, target_y);   // inlined to POP3(s, 0, f, x, y)
+    }
+
+    // 0x50A730: kill the defender alone, or damage the whole stack
+    if (base_id < 0
+        && !(map_loc(target_x, target_y)->bit & BIT_BUNKER)
+        && get_triad(def_id) != TRIAD_AIR
+        && get_triad(veh_id) != TRIAD_AIR
+        && VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_INFO_WARFARE
+        && VehPrototypes[Vehs[def_id].proto_id].plan != PLAN_NAVAL_SUPERIORITY) {
+        // 0x50A7C8
+        if (stack_check(def_id, 2, PLAN_COLONIZATION, -1, -1) == 0
+            || (map_loc(target_x, target_y)->climate & 0xE0) < 0x60) {
+            goto L_50a904;
+        }
+    }
+    // 0x50A80E
+    if (VehPrototypes[Vehs[def_id].proto_id].plan == PLAN_ALIEN_ARTIFACT) {
+        goto L_50a904;
+    }
+    if (att_faction != 0) {
+        // 0x50A831
+        if (veh_cargo(def_id) != 0 && base_id < 0
+            && VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_INFO_WARFARE) {
+            goto L_50a904;
+        }
+        // 0x50A863
+        if (VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_INFO_WARFARE) {
+            // call order: (2,12), (1), (2,8), (2,11), (2,10)
+            int c12 = stack_check(def_id, 2, PLAN_ALIEN_ARTIFACT, -1, -1);
+            int n = stack_check(def_id, 1, -1, -1, -1) - c12;
+            n -= stack_check(def_id, 2, PLAN_COLONIZATION, -1, -1);
+            n -= stack_check(def_id, 2, PLAN_INFO_WARFARE, -1, -1);
+            n -= stack_check(def_id, 2, PLAN_SUPPLY_CONVOY, -1, -1);
+            if (n <= 1) {
+                goto L_50a904;
+            }
+        }
+    }
+    // 0x50A8DC: kill just the defender
+    battle_kill(def_id, &kill_count, &booty_count, &husk_energy, veh_id, att_faction);
+    goto L_50ac8b;   // (EDI is reloaded from stack_id at 0x50A8F9)
+
+L_50a904:
+    {
+    // 0x50A904: damage the whole defending stack
+    stack_veh(def_id, 0);
+    // veh_top(def_id) inlined; the first prev-link read goes through [ebp-0x08]
+    for (int v = veh_top(def_id); v >= 0; v = veh_next_stack_id(v)) {   // next inlined at 0x50AACD
+        int v_proto = Vehs[v].proto_id;
+        // 0x50A94B
+        if (Chassis[VehPrototypes[v_proto].chassis_id].triad == TRIAD_LAND
+            && (map_loc(target_x, target_y)->climate & 0xE0) < 0x60   // sea tile
+            && base_who(target_x, target_y) < 0                        // inlined
+            && !(Vehs[v].order == ORDER_SENTRY_BOARD
+                 && Vehs[v].waypoint_x[0] != def_id
+                 && Vehs[v].waypoint_x[0] >= 0)) {
+            // 0x50A9E0: a land unit carried at sea takes all its HP (byte add)
+            Vehs[v].dmg_incurred += range(proto_power(v) - Vehs[v].dmg_incurred, 0, 9999);
+        } else if (v != def_id) {
+            // 0x50AA4C
+            int plan = VehPrototypes[v_proto].plan;
+            if (plan == PLAN_ALIEN_ARTIFACT || plan == PLAN_COLONIZATION
+                || plan == PLAN_INFO_WARFARE || plan == PLAN_SUPPLY_CONVOY) {
+                continue;   // 0x50AACD
+            }
+        }
+        // 0x50AA62: collateral damage. Psi weapons use the victim's reactor
+        int reactor = (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating < 0)
+                          ? VehPrototypes[Vehs[v].proto_id].reactor_id
+                          : VehPrototypes[Vehs[veh_id].proto_id].reactor_id;
+        Vehs[v].dmg_incurred += reactor * 3;   // 8-bit imul/add
+        Vehs[v].state |= VSTATE_UNK_4;
+        damaged_count++;
+    }
+
+    // 0x50AAE0: remove the stack's dead units
+    atk_id_adj = veh_id;
+    if (def_id >= 0) {
+        // veh_top(def_id) inlined again (first link via [ebp-0x08])
+        int v = veh_top(def_id);
+        while (v >= 0) {
+            // 0x50AB1E
+            int next = Vehs[v].next_veh_id_stack;
+            // the outer range() is CALLED here (0x422F00); proto_power stays inlined
+            if (range(proto_power(v) - Vehs[v].dmg_incurred, 0, 9999) <= 0
+                || Vehs[v].faction_id == 0) {
+                // 0x50AB9B
+                if (battle_kill(v, &kill_count, &booty_count, &husk_energy,
+                                atk_id_adj, att_faction)) {
+                    if (atk_id_adj > v) {
+                        atk_id_adj--;
+                    }
+                    if (next > v) {
+                        next--;
+                    }
+                }
+            }
+            v = next;   // 0x50ABC9
+        }
+    }
+    // 0x50ABD3 (sets/dec/and idiom)
+    {
+        int t = damaged_count - (kill_count + booty_count);
+        damaged_count = t < 0 ? 0 : t;
+    }
+    stack_id = stack_fix(veh_at(target_x, target_y));
+    if (stack_id >= 0) {
+        // 0x50AC0D call order: (2,12), (1), (2,8), (2,11), (2,10)
+        int c12 = stack_check(stack_id, 2, PLAN_ALIEN_ARTIFACT, -1, -1);
+        int n = stack_check(stack_id, 1, -1, -1, -1) - c12;
+        n -= stack_check(stack_id, 2, PLAN_COLONIZATION, -1, -1);
+        n -= stack_check(stack_id, 2, PLAN_INFO_WARFARE, -1, -1);
+        n -= stack_check(stack_id, 2, PLAN_SUPPLY_CONVOY, -1, -1);
+        if (n == 0) {
+            // only non-combat units are left
+            battle_kill_stack(stack_id, &kill_count, &booty_count, &husk_energy,
+                              veh_id, att_faction);
+            damaged_count = 0;
+        }
+    }
+    }
+
+L_50ac8b:
+    // 0x50AC8B: base consequences (EDI = stack_id on both entries)
+    if (base_id >= 0) {
+        Bases[base_id].state |= BSTATE_COMBAT_LOSS_LAST_TURN;
+        if (!is_ocean(src_x, src_y)
+            && (!is_objective(base_id) || Bases[base_id].population_size > 1)
+            && !has_fac(FAC_PERIMETER_DEFENSE, base_id, 0)       // called (0x421670)
+            && !has_fac(FAC_TACHYON_FIELD, base_id, 0)
+            && !has_project(SP_CITIZENS_DEFENSE_FORCE, def_faction)   // called
+            // unguarded: stack_id may be -1 here
+            && Weapon[VehPrototypes[Vehs[stack_id].proto_id].weapon_id].offense_rating != 0
+            && att_faction != 0
+            && veh_who(target_x, target_y) < 0                   // called (0x500250)
+            && (PlayersData[def_faction].diff_level != 0
+                || !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction)))) {
+            // 0x50AD8E
+            if (--Bases[base_id].population_size <= 0) {
+                nerve_gas = 0;
+                base_kill(base_id);
+                base_id = -1;
+                for (int i = 0; i < 8; i++) {
+                    synch_bit(target_x, target_y, i);
+                }
+                draw_map(1);
+                // 0x50ADDC (shared with 0x50AEAD)
+                if (eliminate_player(def_faction, att_faction)) {
+                    pact_report = 0;
+                }
+                goto L_50aebf;
+            }
+            // 0x50ADF8
+            Bases[base_id].faction_pop_size_intel[att_faction] = Bases[base_id].population_size;
+        }
+        // 0x50AE02
+        if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction))) {
+            base_reset(base_id, 0);
+        }
+        if (nerve_gas != 0) {
+            // 0x50AE2B: nerve_gas becomes the number of citizens killed
+            int pop = Bases[base_id].population_size;
+            nerve_gas = (pop + 1) / 2;
+            Bases[base_id].population_size = pop - nerve_gas;   // byte
+            if (is_objective(base_id)) {
+                int p = Bases[base_id].population_size;
+                Bases[base_id].population_size = p < 1 ? 1 : p;   // unconditional store
+            }
+            // 0x50AE6C
+            if (Bases[base_id].population_size <= 0) {
+                base_kill(base_id);
+                base_id = -1;
+                for (int i = 0; i < 8; i++) {
+                    synch_bit(target_x, target_y, i);
+                }
+                draw_map(1);
+                // cross-jumps to 0x50ADDC
+                if (eliminate_player(def_faction, att_faction)) {
+                    pact_report = 0;
+                }
+            } else {
+                // 0x50AEB2
+                spot_base(base_id, att_faction);
+            }
+        }
+L_50aebf:
+        // 0x50AEBF
+        if (veh_who(target_x, target_y) < 0
+            && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction))
+            && base_id >= 0) {
+            invasions(base_id);
+        }
+    }
+    // 0x50AEF3
+    if (att_faction != 0 && def_faction != 0) {
+        mon_enemy_destroyed(att_faction, def_faction);   // shared call at 0x50B1B4
+    }
+    goto L_50b1bc;
+
+L_50af13:
+    // 0x50AF13: the defender won (helpers are called here, not inlined)
+    FactionTurnCombatWins[def_faction]++;
+    FactionTurnCombatLosses[att_faction]++;
+    if (IsMultiplayerNet && def_faction == ConsoleGlobal.faction_id_) {
+        // 0x50AF50
+        parse_says(0, VehPrototypes[Vehs[def_id].proto_id].veh_name, -1, -1);
+        clear();
+        say_stats_3(Vehs[def_id].proto_id);
+        parse_says(1, StringTemp, -1, -1);
+        parse_says(2, get_adjective(att_faction), -1, -1);
+        parse_says(3, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
+        clear();
+        say_stats_3(Vehs[veh_id].proto_id);
+        parse_says(4, StringTemp, -1, -1);
+        int report_base = base_find(target_x, target_y, -1, -1, -1, ConsoleGlobal.faction_id_);
+        if (report_base >= 0) {
+            parse_says(5, Bases[report_base].name_string, -1, -1);
+        }
+        veh_battle_msg("COMBATWIN", 0);
+    } else if (IsMultiplayerPBEM &&
+               (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction))) {
+        // 0x50B068
+        parse_says(0, VehPrototypes[Vehs[def_id].proto_id].veh_name, -1, -1);
+        clear();
+        say_stats_3(Vehs[def_id].proto_id);
+        parse_says(1, StringTemp, -1, -1);
+        parse_says(2, get_adjective(att_faction), -1, -1);
+        parse_says(3, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
+        clear();
+        say_stats_3(Vehs[veh_id].proto_id);
+        parse_says(4, StringTemp, -1, -1);
+        int report_base = base_find(target_x, target_y, -1, -1, -1, def_faction);
+        if (report_base >= 0) {
+            parse_says(5, Bases[report_base].name_string, -1, -1);
+        }
+        POP3("COMBATWIN", def_faction, target_x, target_y);   // 0x50B8D0
+    }
+    // 0x50B157
+    stack_veh(veh_id, 1);
+    battle_kill_stack(veh_id, &kill_count, &booty_count, &husk_energy, -1, def_faction);
+    PlayersData[def_faction].diplo_unk3[att_faction]++;
+    PlayersData[def_faction].diplo_unk4[att_faction]++;
+    if (att_faction != 0 && def_faction != 0) {
+        mon_enemy_destroyed(def_faction, att_faction);
+    }
+
+L_50b1bc:
+    // 0x50B1BC
+    if (booty_count != 0
+        && !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction))
+        && !has_treaty(att_faction, def_faction, DTREATY_VENDETTA)) {   // called (0x5002F0)
+        cause_friction(def_faction, att_faction, 5);
+        treaty_on(att_faction, def_faction, DTREATY_WANT_TO_TALK);
+    }
+
+L_50b203:
+    // 0x50B203: energy from native kills, and angering neighbouring natives
+    if (atk_left != 0 && husk_energy != 0) {
+        PlayersData[att_faction].energy_reserves += husk_energy;
+        ConsoleGlobal.update_data(0);
+        for (dir_i = 0; dir_i < 8; dir_i++) {   // [ebp+0x08], stored as dir_i*4
+            int nx = xrange(target_x + VehMoveDeltaX[dir_i]);   // called
+            int ny = target_y + VehMoveDeltaY[dir_i];
+            if (on_map(nx, ny)) {   // called (0x4712A0)
+                for (stack_id = veh_at(nx, ny); stack_id >= 0;
+                     stack_id = veh_next_stack_id(stack_id)) {   // called (0x50B8F0)
+                    if (Vehs[stack_id].faction_id == 0) {
+                        // flags bits 3..4: +1, clamped by range(.., 0, 3) (called)
+                        int16_t f = Vehs[stack_id].flags;
+                        int lvl = (f >> 3) & 3;
+                        Vehs[stack_id].flags = f & ~(lvl << 3);
+                        Vehs[stack_id].flags |= range(lvl + 1, 0, 3) << 3;
+                        draw_tile(nx, ny, 2);
+                    }
+                }
+            }
+        }
+    }
+
+    // 0x50B2FA: on-screen aftermath
+    if (display != 0) {
+        if (atk_left != 0) {
+            draw_tile(src_x, src_y, 1);
+            draw_tile_fixup(target_x, target_y, 2, 1);
+        } else {
+            draw_tile_fixup(src_x, src_y, 2, 1);
+            draw_tile(target_x, target_y, 1);
+        }
+        do_all_draws();
+        // 0x50B354 (the local faction is loaded once into ECX for 0x50B370/0x50B424/0x50B428)
+        if (atk_left != 0 && husk_energy != 0 && att_faction == ConsoleGlobal.faction_id_) {
+            // 0x50B378
+            parse_num(0, husk_energy);
+            veh_battle_msg("HUSKS", 0);
+        } else if (kill_count > 1 || damaged_count != 0) {
+            // 0x50B40E / 0x50B421
+            if (att_faction == ConsoleGlobal.faction_id_ || def_faction == ConsoleGlobal.faction_id_) {
+                parse_num(0, kill_count);
+                parse_num(1, damaged_count);
+                clear();
+                says((att_faction == ConsoleGlobal.faction_id_) == (atk_left != 0) ? "NUMGOT" : "NUMLOST");
+                if (kill_count > 1) {
+                    if (damaged_count) {
+                        says("2");
+                    }
+                } else if (damaged_count) {
+                    says("1");
+                }
+                veh_battle_msg(StringTemp, 0);
+            }
+        }
+        // 0x50B392
+        if (booty_count != 0) {
+            parse_num(0, booty_count);
+            if (def_faction == ConsoleGlobal.faction_id_) {
+                clear();
+                says("THEIRBOOTY");
+                if (has_treaty(att_faction, def_faction, DTREATY_VENDETTA)) {
+                    // 0x50B4AF
+                    say_num(range(booty_count, 1, 2));   // range called
+                    veh_battle_msg(StringTemp, 0);
+                } else {
+                    parse_says(0, get_noun(att_faction), -1, -1);
+                    say_num(3);
+                    veh_battle_msg(StringTemp, 0);
+                }
+            } else if (att_faction == ConsoleGlobal.faction_id_) {
+                // 0x50B4DA
+                clear();
+                says("OURBOOTY");
+                say_num(range(booty_count, 1, 2));
+                veh_battle_msg(StringTemp, 0);
+            }
+        }
+        // 0x50B50B
+        if (nerve_gas != 0 && strlen(nerve_base_name) != 0) {
+            parse_says(0, nerve_base_name, -1, -1);
+            veh_battle_msg("NERVEGAS", 0);
+        }
+        // 0x50B546
+        if (disengaged != 0) {
+            parse_says(0, VehPrototypes[Vehs[stack_id].proto_id].veh_name, -1, -1);
+            parse_says(1, get_adjective(def_faction), -1, -1);
+            if (def_faction == ConsoleGlobal.faction_id_) {
+                veh_battle_msg("WEDISENGAGED", 0);
+            } else if (att_faction == ConsoleGlobal.faction_id_) {
+                veh_battle_msg("THEYDISENGAGED", 0);
+            }
+        }
+        // 0x50B5B7
+        ConsoleStatusWin.redraw();
+        if (zoom_refresh != 0) {
+            TutWinBaseWindow.focus();
+            MainInterfaceGlobal.redraw();   // GraphicWin::redraw 0x5D5A70 on 0x7AE820
+            do_all_draws();
+        }
+        if (GameDataStateStorage.fields_.game_more_preferences_ & MPREF_ADV_PAUSE_AFTER_BATTLES) {
+            g_BattleWin.stop_timer();
+            popp("BATTLEPAUSE", "batwon_sm.pcx", 0);   // 3-arg popp (0x50B970)
+            g_BattleWin.pulse_timer();
+            if (ConsoleGroupAction) {
+                GameDataStateStorage.fields_.game_more_preferences_ &= ~MPREF_ADV_PAUSE_AFTER_BATTLES;
+                prefs_save(0);
+            }
+        }
+    }
+
+    // 0x50B63F: treaty reports (EDI = att_faction, ESI = def_faction)
+    switch (pact_report) {
+    case 1:
+        parse_says(0, get_adjective(att_faction), -1, -1);
+        parse_says(1, get_noun(def_faction), -1, -1);
+        NetMsg::pop("VENDETTAREPORT", 0);
+        break;
+    case 2:
+        parse_says(0, get_adjective(att_faction), -1, -1);
+        parse_says(1, get_noun(def_faction), -1, -1);
+        NetMsg::pop("PACTATTACKED", 0);
+        break;
+    case 3:
+        parse_says(0, get_noun(att_faction), -1, -1);
+        parse_says(1, get_noun(def_faction), -1, -1);
+        NetMsg::pop("PACTATTACKING", 0);
+        break;
+    }
+
+    // 0x50B6F7: mark both prototypes as seen in combat
+    VehPrototypes[att_proto].combat_factions |= 1 << def_faction;
+    VehPrototypes[def_proto].combat_factions |= 1 << att_faction;
+    if (local_base != 0) {
+        interlude(0, 0, 1, 0);
+    }
+    if (atk_left == 0) {
+        return 0;   // 0x50B75C
+    }
+
+    // 0x50B765: the attacker survived; the vehicle in 0x9A64DC pays moves
+    {
+        int cur = GameDataStateStorage.fields_.vehicle_selection_follow_limit_;   // 0x9A64DC
+        int chas = VehPrototypes[Vehs[cur].proto_id].chassis_id;
+        if (Chassis[chas].triad == TRIAD_AIR) {
+            if (Chassis[chas].range != 1) {
+                veh_skip(cur);
+                Vehs[cur].moves_expended += Rules.move_rate_roads;   // byte add, 0x949738
+            }
+        } else if (Chassis[chas].triad == TRIAD_SEA) {
+            veh_skip(cur);
+            Vehs[cur].moves_expended += Rules.move_rate_roads;
+        }
+        // 0x50B7E4
+        int result = 1;   // EBX
+        if (Chassis[VehPrototypes[Vehs[cur].proto_id].chassis_id].missile) {
+            kill(cur);
+            result = 0;
+        }
+        // 0x50B81C
+        if (!(static_cast<uint8_t>(att_bit) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) &&
+            base_id >= 0 && veh_who(target_x, target_y) < 0) {
+            int c = VehPrototypes[Vehs[cur].proto_id].chassis_id;
+            if (Chassis[c].triad == TRIAD_AIR && Chassis[c].range != 0
+                && Vehs[cur].terraforming_turns + 1 >= Chassis[c].range) {
+                return 1;
+            }
+        }
+        return result;
+    }
 }
 
 // ORIGINAL: 0x0050B8F0 sub_50b8f0 0x0050B8F0-0x0050B90A BYTE_EXACT

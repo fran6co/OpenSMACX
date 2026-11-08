@@ -1090,14 +1090,6 @@ void __cdecl compute_faction_modifiers(int faction_id) {
     }
 }
 
-static int lifecycle_wrap_x(int x) {
-    if (!(MapIsFlat & 1)) {
-        if (x < 0) x += MapLongitudeBounds;
-        else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
-    }
-    return x;
-}
-
 static uint8_t lifecycle_faction_mask(int faction) {
     return static_cast<uint8_t>(1u << (faction & 31));
 }
@@ -1106,24 +1098,9 @@ static bool lifecycle_is_fresh(int conqueror) {
     return GameDataStateStorage.fields_.turn_current_num_ == 0 || conqueror == -282;
 }
 
-static int lifecycle_distance(int x, int y, int other_x, int other_y) {
-    int dx = abs(x - other_x);
-    if (!(MapIsFlat & 1) && dx > static_cast<int>(MapLongitude)) dx = MapLongitudeBounds - dx;
-    dx = abs(dx);
-    const int dy = abs(y - other_y);
-    const int hi = dx > dy ? dx : dy;
-    const int lo = dx < dy ? dx : dy;
-    return hi - ((((dx + dy) >> 1) - lo + 1) >> 1);
-}
-
 static void lifecycle_clear_social(SocialEffect &effect) {
     SocialEffect zero = {0};
     effect = zero;
-}
-
-static void lifecycle_add_social(SocialEffect &effect, int index, int value) {
-    // Original unchecked indexed operation on the true eleven-word array.
-    effect.values_[index] += value;
 }
 
 static void lifecycle_reset_faction(int faction) {
@@ -1234,18 +1211,17 @@ int __cdecl setup_player(int faction, int conqueror, int retry) {
     p.tech_cost = -1;
     p.last_turn_new_base = GameDataStateStorage.fields_.turn_current_num_;
     for (int other = 0; other < 8; ++other) {
-        if (lifecycle_is_fresh(conqueror)) {
+        // 5B1413: the respawn arm (treaty_off) is the then-block.
+        if (!lifecycle_is_fresh(conqueror)) treaty_off(faction, other, 0x9000ff48);
+        else {
             p.diplo_treaties[other] = p.diplo_merc[other] = 0;
             int limit = ((GameDataStateStorage.fields_.game_rules_ & 0x40) ? 5 : GameDataStateStorage.fields_.diff_level_current_) * 3 + 8;
-            int friction = limit <= 1 ? 1 : rand() % limit;
-            if (friction < 1) friction = 1;
-            if (friction > 16) friction = 16;
-            p.diplo_friction[other] = friction;
+            p.diplo_friction[other] = range(bounded_crt_random(limit), 1, 16);
             p.diplo_wrongs[other] = p.diplo_betrayed[other] = p.diplo_unk3[other] = 0;
             p.diplo_patience[other] = 0;
             p.diplo_spoke[other] = -1;
             p.diplo_unk4[other] = p.diplo_unk1[other] = 0;
-        } else treaty_off(faction, other, 0x9000ff48);
+        }
         p.loan_balance[other] = p.loan_payment[other] = p.unk_12[other] = 0;
     }
     for (int proto = 0; proto < 512; ++proto) {
@@ -1254,8 +1230,8 @@ int __cdecl setup_player(int faction, int conqueror, int retry) {
     }
     if (lifecycle_is_fresh(conqueror)) {
         for (int goal = 0; goal < 12; ++goal) p.tech_pact_shared_goals[goal] = 0;
-        // The original clears22 words and then one byte, leaving the last
-        // three bytes of this92-byte field unchanged.
+        // The original clears 22 words and then one byte, leaving the last
+        // three bytes of this 92-byte field unchanged.
         for (int source = 0; source < 89; ++source) p.tech_trade_source[source] = 0;
         for (int announced = 0; announced < 9; ++announced) p.facility_announced[announced] = 0;
         for (int satellite = 0; satellite < 4; ++satellite) p.satellites_[satellite] = 0;
@@ -1269,9 +1245,10 @@ int __cdecl setup_player(int faction, int conqueror, int retry) {
     p.best_weapon_value = p.best_armor_value = p.best_land_speed = 0;
     p.enemy_best_weapon_value = p.enemy_best_armor_value = p.enemy_best_land_speed = 0;
     p.best_psi_offense = p.best_psi_defense = p.enemy_best_psi_offense = p.enemy_best_psi_defense = 0;
-    if (!faction || !((GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & lifecycle_faction_mask(faction))) return 0;
+    if (!faction) return 0;
+    if (!is_alive(faction)) return 0;
     if (conqueror < -1 && conqueror != -282) {
-        GameDataStateStorage.fields_.lock_masks_.enable_mask_ &= ~(static_cast<uint32_t>(lifecycle_faction_mask(faction)) << 8);
+        GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &= ~(1 << faction);
         return 0;
     }
 
@@ -1283,26 +1260,20 @@ int __cdecl setup_player(int faction, int conqueror, int retry) {
     Map *tile = 0;
 search:
     {
-        int margin = (1024 - attempts) * MapLongitudeBounds / 8192;
-        if (margin < 0) margin = 0;
-        if (margin > 9999) margin = 9999;
-        int inset = (MapIsFlat & 1) ? margin * 2 : 0;
-        int width = MapLongitudeBounds - inset;
-        x = ((MapIsFlat & 1) ? margin : 0) + (width <= 1 ? 0 : rand() % width);
-        margin = (1024 - attempts) * MapLatitudeBounds / 8192;
-        if (margin < 0) margin = 0;
-        if (margin > 9999) margin = 9999;
-        int height = MapLatitudeBounds - 2 * margin;
-        y = margin + (height <= 1 ? 0 : rand() % height);
+        int margin = range((1024 - attempts) * MapLongitudeBounds / 8192, 0, 9999);
+        x = ((MapIsFlat & 1) ? margin : 0)
+            + bounded_crt_random(MapLongitudeBounds - ((MapIsFlat & 1) ? margin * 2 : 0));
+        margin = range((1024 - attempts) * MapLatitudeBounds / 8192, 0, 9999);
+        y = margin + bounded_crt_random(MapLatitudeBounds - margin * 2);
         if (x & 1) --x;
-        if (y & 1) ++x;
+        if (y & 1) ++x;  // Original: an odd y adjusts x.
         isolation = 32;
         for (int ring = 0; ring < 8; ++ring) {
-            const int begin = ring ? RadiusRange[ring] : 0;
-            for (int offset = begin; offset < RadiusRange[ring + 1]; ++offset) {
-                int rx = lifecycle_wrap_x(x + RadiusOffsetX[offset]);
+            // RadiusRange[ring] ends ring `ring`; ring 0 is the centre only.
+            for (int offset = ring ? RadiusRange[ring - 1] : 0; offset < RadiusRange[ring]; ++offset) {
+                int rx = wrap_map_x(x + RadiusOffsetX[offset]);
                 int ry = y + RadiusOffsetY[offset];
-                if (rx >= 0 && rx < MapLongitudeBounds && ry >= 0 && ry < MapLatitudeBounds) {
+                if (on_map(rx, ry)) {
                     uint32_t landmark = map_loc(rx, ry)->bit2;
                     if (landmark && static_cast<int>(landmark & 0xff000000) > 0) {
                         isolation = ring;
@@ -1314,20 +1285,22 @@ search:
         }
         area_quality = 0;
         for (int offset2 = 0; offset2 < 21; ++offset2) {
-            int rx = lifecycle_wrap_x(x + RadiusOffsetX[offset2]);
+            int rx = wrap_map_x(x + RadiusOffsetX[offset2]);
             int ry = y + RadiusOffsetY[offset2];
-            if (rx < 0 || rx >= MapLongitudeBounds || ry < 0 || ry >= MapLatitudeBounds) continue;
+            if (!on_map(rx, ry)) continue;
             Map &square = *map_loc(rx, ry);
-            const int altitude = square.climate & 0xe0;
-            if (!(definition.rule_flags & 0x100)) {
-                if ((!(square.bit & 0x20) || altitude < 0x40)
-                    && altitude > 0x5f && (square.val3 & 0xc0) < 0x41
-                    && (square.climate & 0x18)) ++area_quality;
-            } else if (!(square.bit & 0x20) || altitude < 0x40)
-                area_quality += (2 - (square.climate >> 5)) * 2 + 1;
+            if (definition.rule_flags & 0x100) {
+                if ((square.bit & 0x20) && (square.climate & 0xe0) >= 0x40) continue;
+                area_quality += (2 - (square.climate >> 5)) * 2;
+            } else {
+                if ((square.bit & 0x20) && (square.climate & 0xe0) >= 0x40) continue;
+                if ((square.climate & 0xe0) < 0x60 || (square.val3 & 0xc0) > 0x40
+                    || !(square.climate & 0x18)) continue;
+            }
+            ++area_quality;  // 5B1914: shared by both arms.
         }
         if (definition.rule_flags & 0x100) area_quality /= 3;
-        region = map_loc(x, y)->region;
+        region = region_at(x, y);
         occupied = 0;
         for (int player = 1; player < 8; ++player)
             if (PlayersData[player].region_total_bases[region]) occupied |= 1 << player;
@@ -1336,109 +1309,117 @@ search:
         if (nearest < 0) BaseFindDist = 32;
         if (lifecycle_is_fresh(conqueror)) {
             for (int vehicle2 = 0; vehicle2 < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle2) {
-                if (map_loc(Vehs[vehicle2].x, Vehs[vehicle2].y)->region != region) continue;
+                if (region_at(Vehs[vehicle2].x, Vehs[vehicle2].y) != region) continue;
                 occupied |= 1 << Vehs[vehicle2].faction_id;
-                int distance = lifecycle_distance(x, y, Vehs[vehicle2].x, Vehs[vehicle2].y);
+                int distance = vector_dist(x, y, Vehs[vehicle2].x, Vehs[vehicle2].y);
                 if (distance < BaseFindDist) BaseFindDist = distance;
             }
         }
         ++attempts;
-        if (attempts < 1025 || ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & lifecycle_faction_mask(faction)) && GameDataStateStorage.fields_.turn_current_num_ == 0)) {
+        if (attempts <= 1024 || (is_human(faction) && !GameDataStateStorage.fields_.turn_current_num_)) {
             tile = map_loc(x, y);
             int altitude = tile->climate & 0xe0;
             bool bad_altitude = (definition.rule_flags & 0x100) ? altitude > 0x40 : altitude < 0x60;
-            if (bad_altitude || ((tile->bit & 0x20) && altitude > 0x3f)
+            if (bad_altitude || ((tile->bit & 0x20) && altitude >= 0x40)
                 || (!(definition.rule_flags & 0x100) && (tile->val3 & 0xc0) > 0x40)) goto search;
             int separation = lifecycle_is_fresh(conqueror) ? 6 : 12;
-            spacing_relaxation = attempts / 64;
             if (separation * MapAreaSqRoot / 56 > BaseFindDist
-                || altitude >= 0xa0 || ((tile->bit & 3) && (tile->val2 & 15) <= 7)
-                || y <= 1 || y >= MapLatitudeBounds - 2
-                || 12 - attempts / 80 > area_quality
-                || (16 - spacing_relaxation) * MapAreaSqRoot / 56 > BaseFindDist
-                || (lifecycle_is_fresh(conqueror) && attempts <= 899 && 36 - spacing_relaxation > Continents[region].tile_count)) goto search;
+                || altitude >= 0xa0 || anything_at(x, y) >= 0
+                || y < 2 || y >= MapLatitudeBounds - 2
+                || 12 - attempts / 80 > area_quality) goto search;
+            spacing_relaxation = attempts / 64;
+            if ((16 - spacing_relaxation) * MapAreaSqRoot / 56 > BaseFindDist
+                || (lifecycle_is_fresh(conqueror) && attempts < 900
+                    && 36 - spacing_relaxation > Continents[region].tile_count)) goto search;
             if (!(definition.rule_flags & 0x100)) {
-                int handicap = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & lifecycle_faction_mask(faction)) ? (6 - GameDataStateStorage.fields_.diff_level_current_) * 8 : 8;
+                int handicap = is_human(faction) ? (6 - GameDataStateStorage.fields_.diff_level_current_) * 8 : 8;
                 // Native5B1CEB LEA/5B1CF5 IMUL preserve low-dword arithmetic.
                 if (static_cast<int>(Continents[region].open_terrain
                     * (static_cast<uint32_t>(MapOceanCoverage) + 1u)) / 2
                     < 24 + handicap - GameDataStateStorage.fields_.turn_current_num_ / 16 - attempts / 16) goto search;
             }
-            int difficulty = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & lifecycle_faction_mask(faction)) ? GameDataStateStorage.fields_.diff_level_current_ : 3;
+            int difficulty = is_human(faction) ? GameDataStateStorage.fields_.diff_level_current_ : 3;
             if ((5 - difficulty) * 48 - GameDataStateStorage.fields_.turn_current_num_ / 16 - attempts / 4 > Continents[region].tile_count
                 || (occupied && conqueror != -282
                     && 64 - spacing_relaxation > Continents[region].tile_count / (bit_count(occupied) + 1))) goto search;
-            int quality = (tile->bit & 0x1000) ? 0 : tile->val2 >> 4;
-            if (!(tile->bit & 0x1000) && !quality) {
-                quality = world_site(x, y, 0);
-                site_set(x, y, quality);
+            int quality;
+            if (tile->bit & 0x1000) quality = 0;
+            else {
+                quality = tile->val2 >> 4;
+                if (!quality) {
+                    quality = world_site(x, y, 0);
+                    site_set(x, y, quality);
+                }
             }
             if ((15 - spacing_relaxation > quality && !GameDataStateStorage.fields_.turn_current_num_ && !(GameDataStateStorage.fields_.game_rules_ & 0x10))
                 || (!(definition.rule_flags & 0x100) && ((1024 - attempts) / 128 > isolation || !isolation))
-                || (GameDataStateStorage.fields_.turn_current_num_ && conqueror != -282 && tile->territory >= 1)
+                || (GameDataStateStorage.fields_.turn_current_num_ && conqueror != -282 && tile->territory > 0)
                 || (nearest >= 0 && Bases[nearest].faction_id_current == conqueror
-                    && map_loc(Bases[nearest].x, Bases[nearest].y)->region == region)) goto search;
+                    && region_at(Bases[nearest].x, Bases[nearest].y) == region)) goto search;
         } else failed = 1;
     }
     if (p.flags & 0x1000) failed = 1;
-    if (!failed || retry != 0) {
+    if (!failed || retry) {
         if (lifecycle_is_fresh(conqueror)) {
             int best = -1, best_offset = 0;
             for (int offset3 = 0; offset3 < 21; ++offset3) {
-                int rx = lifecycle_wrap_x(x + RadiusOffsetX[offset3]);
+                int rx = wrap_map_x(x + RadiusOffsetX[offset3]);
                 int ry = y + RadiusOffsetY[offset3];
-                if (rx < 0 || rx >= MapLongitudeBounds || ry < 0 || ry >= MapLatitudeBounds) continue;
+                if (!on_map(rx, ry)) continue;
                 Map &candidate = *map_loc(rx, ry);
                 int altitude = candidate.climate & 0xe0;
                 if ((altitude < 0x60) != ((definition.rule_flags >> 8) & 1)
                     || candidate.region != region || altitude >= 0xa0
                     || ((candidate.bit & 0x20) && altitude >= 0x40)
-                    || ((candidate.bit & 3) && (candidate.val2 & 15) <= 7)) continue;
+                    || anything_at(rx, ry) >= 0) continue;
                 base_find(rx, ry);
-                // Original5B204E checks distance from the old center, not
-                // from this candidate. Keep that quirk when choosing a site.
+                // Original 5B204E measures from the old centre, not from
+                // this candidate. Keep that quirk when choosing a site.
                 for (int vehicle3 = 0; vehicle3 < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle3) {
-                    int distance = lifecycle_distance(x, y, Vehs[vehicle3].x, Vehs[vehicle3].y);
+                    int distance = vector_dist(x, y, Vehs[vehicle3].x, Vehs[vehicle3].y);
                     if (distance < BaseFindDist) BaseFindDist = distance;
                 }
-                if (BaseFindDist <= 5) continue;
-                int quality = (candidate.bit & 0x1000) ? 0 : candidate.val2 >> 4;
-                if (!(candidate.bit & 0x1000) && !quality) {
-                    quality = world_site(rx, ry, 0);
-                    site_set(rx, ry, quality);
+                if (BaseFindDist < 6) continue;
+                int quality;
+                if (candidate.bit & 0x1000) quality = 0;
+                else {
+                    quality = candidate.val2 >> 4;
+                    if (!quality) {
+                        quality = world_site(rx, ry, 0);
+                        site_set(rx, ry, quality);
+                    }
                 }
                 for (int neighbor = 0; neighbor < 8; ++neighbor) {
-                    int nx = lifecycle_wrap_x(rx + VehMoveDeltaX[neighbor]);
+                    int nx = wrap_map_x(rx + VehMoveDeltaX[neighbor]);
                     int ny = ry + VehMoveDeltaY[neighbor];
-                    if (nx < 0 || nx >= MapLongitudeBounds || ny < 0 || ny >= MapLatitudeBounds) continue;
-                    int altitude2 = map_loc(nx, ny)->climate >> 5;
-                    if (!(definition.rule_flags & 0x100)) {
-                        if (altitude2 < 3) { ++quality; break; }
-                    } else quality += 2 - altitude2;
+                    if (!on_map(nx, ny)) continue;
+                    if (definition.rule_flags & 0x100) quality += 2 - (map_loc(nx, ny)->climate >> 5);
+                    else if ((map_loc(nx, ny)->climate & 0xe0) < 0x60) { ++quality; break; }
                 }
                 if (quality > best) { best = quality; best_offset = offset3; }
             }
-            x = lifecycle_wrap_x(x + RadiusOffsetX[best_offset]);
+            x = wrap_map_x(x + RadiusOffsetX[best_offset]);
             y += RadiusOffsetY[best_offset];
         }
-        if (retry != 0) failed = 0;
-        if (!failed && (lifecycle_is_fresh(conqueror) || !(GameDataStateStorage.fields_.game_rules_ & 1)) && GameDataStateStorage.fields_.turn_current_num_ < 101) goto respawn;
+        if (retry) failed = 0;
     }
-    if (!retry) {
-        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & lifecycle_faction_mask(faction)) && !IsMultiplayerNet) {
+    // 5B227E..5B22A2: every rejected placement still respawns on a retry.
+    if ((failed || (!lifecycle_is_fresh(conqueror) && (GameDataStateStorage.fields_.game_rules_ & 1))
+        || GameDataStateStorage.fields_.turn_current_num_ > 100) && !retry) {
+        if (is_human(faction) && !IsMultiplayerNet) {
             EndgameExitReason = 7;
-            GameDataStateStorage.fields_.lock_masks_.enable_mask_ &= ~(static_cast<uint32_t>(lifecycle_faction_mask(faction)) << 8);
+            GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &= ~(1 << faction);
             GameDataStateStorage.fields_.game_state_ |= 1;
             return 0;
         }
         p.unk_102 = 0;
-        GameDataStateStorage.fields_.lock_masks_.enable_mask_ &= ~(static_cast<uint32_t>(lifecycle_faction_mask(faction)) << 8);
+        GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &= ~(1 << faction);
         int selected = faction == static_cast<int>(GameDataStateStorage.fields_.faction_rankings_[7])
             ? static_cast<int>(GameDataStateStorage.fields_.faction_rankings_[6])
             : static_cast<int>(GameDataStateStorage.fields_.faction_rankings_[7]);
         int survivors = 0, partners = 0;
         for (int survivor = 1; survivor < 8; ++survivor) {
-            if (!((GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & (1 << survivor))) continue;
+            if (!is_alive(survivor)) continue;
             ++survivors;
             uint32_t treaty = PlayersData[survivor].diplo_treaties[ConsoleGlobal.faction_id_];
             if (!IsMultiplayerNet && (treaty & 1) && (treaty & 0x2000000)) { --survivors; continue; }
@@ -1491,7 +1472,9 @@ search:
                 IsMultiplayerNet = 0;
                 ExitTurnLoop = 1;
             }
-            X_pop(!conqueror && !Language ? "YOULOSE2" : "YOULOSE", 0);
+            // 5B2504: two full call setups, tail-merged at 5B2520.
+            if (!conqueror && !Language) X_pop("YOULOSE2", 0);
+            else X_pop("YOULOSE", 0);
             if (faction == ConsoleGlobal.faction_id_) {
                 GameDataStateStorage.fields_.game_state_ |= 1;
                 EndgameExitReason = conqueror ? 7 : 15;
@@ -1499,25 +1482,24 @@ search:
             }
         }
         if (survivors - partners < 2) {
-            if (!partners) {
-                if (selected == ConsoleGlobal.faction_id_) {
-                    popp(ScriptPopupFile, "CONQSING", 0, "conq_sm.pcx", 0);
-                    if (!EndgameExitReason) EndgameExitReason = 4;
-                }
-            } else {
+            if (partners) {
                 popp(ScriptPopupFile, "CONQCOOP", 0, "conq_sm.pcx", 0);
                 if (!EndgameExitReason) EndgameExitReason = 5;
+            } else if (selected == ConsoleGlobal.faction_id_) {
+                popp(ScriptPopupFile, "CONQSING", 0, "conq_sm.pcx", 0);
+                if (!EndgameExitReason) EndgameExitReason = 4;
             }
             GameDataStateStorage.fields_.game_state_ |= 0x2001;
         }
         return 0;
     }
-respawn:
     p.se_alloc_labs = 5;
     p.se_alloc_psych = 0;
-    if (lifecycle_is_fresh(conqueror) && GameDataStateStorage.fields_.diff_level_current_ > 1) {
+    if (lifecycle_is_fresh(conqueror) && GameDataStateStorage.fields_.diff_level_current_ >= 2) {
         if ((p.ai_wealth || p.ai_tech) && rand() % 4 == 0) p.flags_ext |= 8;
-        strcpy(StringTemp, definition.filename);
+        // 5B2643: clear-and-append, not strcpy.
+        StringTemp[0] = 0;
+        strcat(StringTemp, definition.filename);
         CharUpperA(StringTemp);
         if (!strcmp(StringTemp, "ANGELS")) p.flags_ext |= 8;
         if (definition.rule_flags & 0x100) { p.flags_ext |= 4; p.flags |= 0x8000000; }
@@ -1528,26 +1510,27 @@ respawn:
         if (rand() % 6 == 0) p.flags_ext |= 2;
         if (rand() % 6 == 0) p.flags_ext |= 1;
         if (rand() % 5 == 0) p.flags_ext |= 0x40;
-        if (((GameDataStateStorage.fields_.game_rules_ & 0x40) || GameDataStateStorage.fields_.diff_level_current_ > 3)
+        if (((GameDataStateStorage.fields_.game_rules_ & 0x40) || GameDataStateStorage.fields_.diff_level_current_ >= 4)
             && -static_cast<int>((GameDataStateStorage.fields_.game_rules_ & 0x40) != 0) < p.ai_fight
             && rand() % 4 == 0) p.flags_ext |= 0x20;
-        if (((GameDataStateStorage.fields_.game_rules_ & 0x40) || GameDataStateStorage.fields_.diff_level_current_ > 3)
+        if (((GameDataStateStorage.fields_.game_rules_ & 0x40) || GameDataStateStorage.fields_.diff_level_current_ >= 4)
             && -static_cast<int>((GameDataStateStorage.fields_.game_rules_ & 0x40) != 0) < p.ai_fight
             && rand() % 4 == 0) {
             p.flags |= 0x1000000;
             if (rand() % 2 == 0) p.flags |= 0x2000000;
         }
         if (p.ai_power || p.ai_fight > 0) {
-            if (Continents[region].tile_count > 399 && rand() % 4 == 0) p.flags |= 0x4000000;
-            if (rand() % (Continents[region].tile_count > 250 ? 6 : 4) == 0) p.flags |= 0x8000000;
+            if (Continents[region].tile_count >= 400 && rand() % 4 == 0) p.flags |= 0x4000000;
+            // 5B28BB: guarded CRT draw, so a bound of 1 would always pass.
+            if (!bounded_crt_random(Continents[region].tile_count > 250 ? 6 : 4)) p.flags |= 0x8000000;
             if (rand() % 4 == 0) p.flags |= 0x10000000;
         }
     }
     for (int offset4 = 0; offset4 < 21; ++offset4) {
-        int rx = lifecycle_wrap_x(x + RadiusOffsetX[offset4]);
+        int rx = wrap_map_x(x + RadiusOffsetX[offset4]);
         int ry = y + RadiusOffsetY[offset4];
-        if (rx >= 0 && rx < MapLongitudeBounds && ry >= 0 && ry < MapLatitudeBounds) {
-            map_loc(rx, ry)->visibility |= lifecycle_faction_mask(faction);
+        if (on_map(rx, ry)) {
+            map_loc(rx, ry)->visibility |= 1 << faction;
             synch_bit(rx, ry, faction);
         }
     }
@@ -1566,8 +1549,7 @@ respawn:
                 int research = p.soc_effect_base.values_[SocialEffect::RESEARCH] > 0 ? 1 : p.soc_effect_base.values_[SocialEffect::RESEARCH] < 0 ? -1 : 0;
                 int morale = p.soc_effect_base.values_[SocialEffect::MORALE] > 0 ? 1 : p.soc_effect_base.values_[SocialEffect::MORALE] < 0 ? -1 : 0;
                 if (learned >= research - morale + 1) break;
-                int technology = tech_ai(faction);
-                tech_achieved(faction, technology, 0, 0);
+                tech_achieved(faction, tech_ai(faction), 0, 0);
                 ++learned;
             }
             p.energy_reserves += definition.rule_energy / 2;
@@ -1581,14 +1563,30 @@ respawn:
             }
         }
     }
-    if (lifecycle_is_fresh(conqueror)) {
-        if ((!IsMultiplayerNet && !(GameDataStateStorage.fields_.game_rules_ & 0x10)) || (GameDataStateStorage.fields_.game_rules_ & 0x80)) {
+    // 5B2AE8: the respawn arm is the then-block; each arm keeps its own
+    // pair of veh_init calls (the image tail-merges only the second).
+    if (!lifecycle_is_fresh(conqueror)) {
+        int vehicle6;
+        if (definition.rule_flags & 0x100) {
+            veh_init(0x15, faction, x, y);
+            vehicle6 = veh_init(4, faction, x, y);
+        } else {
+            veh_init(0, faction, x, y);
+            vehicle6 = veh_init(1, faction, x, y);
+        }
+        veh_demote(vehicle6);
+    } else {
+        if ((!IsMultiplayerNet && !(GameDataStateStorage.fields_.game_rules_ & 0x10))
+            || (GameDataStateStorage.fields_.game_rules_ & 0x80)) {
             int base = base_init(faction, x, y);
-            strcpy(StringTemp, definition.filename);
+            StringTemp[0] = 0;
+            strcat(StringTemp, definition.filename);
             CharUpperA(StringTemp);
-            if ((!strcmp(StringTemp, "FUNGBOY") || (definition.rule_flags & 0x80)) && conqueror == -282)
-                Bases[base].population_size = 3;
-        } else veh_init((definition.rule_flags & 0x100) ? 0x15 : 0, faction, x, y);
+            // Two independent tests (5B2BFA, 5B2C18), each with its own store.
+            if (!strcmp(StringTemp, "FUNGBOY") && conqueror == -282) Bases[base].population_size = 3;
+            if ((definition.rule_flags & 0x80) && conqueror == -282) Bases[base].population_size = 3;
+        } else if (definition.rule_flags & 0x100) veh_init(0x15, faction, x, y);
+        else veh_init(0, faction, x, y);
         if (!(definition.rule_flags & 0x100)) {
             int vehicle4 = veh_init(scout, faction, x, y);
             Vehs[vehicle4].home_base_id = -1;
@@ -1604,41 +1602,35 @@ respawn:
         }
         int coast = is_coast(x, y, 0);
         if (coast && (GameDataStateStorage.fields_.diff_level_current_ > 1 || IsMultiplayerNet
-            || Continents[region].tile_count < 33)) {
+            || Continents[region].tile_count <= 32)) {
             // Both naval tests reuse the original coast-direction index.
-            region = map_loc(x, y)->region;
+            region = region_at(x, y);
             if (IsMultiplayerNet
-                && Continents[region].tile_count / (bit_count(occupied) + 1) < 76
-                && (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & lifecycle_faction_mask(faction))) {
-                int vessel = veh_init(0xd, faction, lifecycle_wrap_x(x + RadiusOffsetX[coast]), y + RadiusOffsetY[coast]);
+                && Continents[region].tile_count / (bit_count(occupied) + 1) <= 75
+                && is_human(faction)) {
+                int vessel = veh_init(0xd, faction, wrap_map_x(x + RadiusOffsetX[coast]), y + RadiusOffsetY[coast]);
                 Vehs[vessel].morale = 2;
                 veh_demote(vessel);
                 Vehs[vessel].home_base_id = -1;
             }
-            if (Continents[region].tile_count / (bit_count(occupied) + 1) < 51) {
-                int vessel2 = veh_init(0xd, faction, lifecycle_wrap_x(x + RadiusOffsetX[coast]), y + RadiusOffsetY[coast]);
+            if (Continents[region].tile_count / (bit_count(occupied) + 1) <= 50) {
+                int vessel2 = veh_init(0xd, faction, wrap_map_x(x + RadiusOffsetX[coast]), y + RadiusOffsetY[coast]);
                 Vehs[vessel2].morale = 2;
                 veh_demote(vessel2);
                 Vehs[vessel2].home_base_id = -1;
             }
         }
-    } else {
-        veh_init((definition.rule_flags & 0x100) ? 0x15 : 0, faction, x, y);
-        int vehicle6 = veh_init((definition.rule_flags & 0x100) ? 4 : 1, faction, x, y);
-        veh_demote(vehicle6);
     }
     if (lifecycle_is_fresh(conqueror)) {
-        lifecycle_clear_social(p.soc_effect_base);
-        for (int bonus2 = 0; bonus2 < definition.faction_bonus_count; ++bonus2) {
-            if (definition.faction_bonus_id[bonus2] == 3)
-                lifecycle_add_social(p.soc_effect_base, definition.faction_bonus_val1[bonus2], definition.faction_bonus_val2[bonus2]);
-        }
+        // 5B2E7C..5B2ED2 is this TU's compute_faction_modifiers, inlined.
+        compute_faction_modifiers(faction);
         for (int bonus3 = 0; bonus3 < definition.faction_bonus_count; ++bonus3) {
-            if (definition.faction_bonus_id[bonus3] != 1) continue;
-            int vehicle7 = veh_init(definition.faction_bonus_val1[bonus3], faction, x, y);
-            Vehs[vehicle7].home_base_id = -1;
-            veh_demote(vehicle7);
-            if (!definition.faction_bonus_val1[bonus3]) p.flags |= 0x100;
+            if (definition.faction_bonus_id[bonus3] == 1) {
+                int vehicle7 = veh_init(definition.faction_bonus_val1[bonus3], faction, x, y);
+                Vehs[vehicle7].home_base_id = -1;
+                veh_demote(vehicle7);
+                if (!definition.faction_bonus_val1[bonus3]) p.flags |= 0x100;
+            }
         }
         if (ExpansionEnabled && (definition.rule_flags & 0x80)) {
             int vehicle8 = veh_init(0x10, faction, x, y);
@@ -1649,11 +1641,14 @@ respawn:
             veh_demote(vehicle8);
         }
         if (definition.rule_flags & 0x100) {
-            if (!(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & lifecycle_faction_mask(faction))) {
+            if (!is_human(faction)) {
                 int prototype = conqueror;
                 for (int local_proto2 = 0; local_proto2 < 64; ++local_proto2) {
                     int index = faction * 64 + local_proto2;
-                    if (!(VehPrototypes[index].flags & 1)) { prototype = index; break; }
+                    if (!(VehPrototypes[index].flags & 1)) {
+                        prototype = index;
+                        local_proto2 = 64;  // 5B2FD7: index forced, no jump out.
+                    }
                 }
                 // If no free design exists, the original retains conqueror
                 // as the index. No recovery-added guard is inserted.
@@ -1682,18 +1677,25 @@ respawn:
             if ((definition.rule_flags & 0x100) ? triad != 1 : triad != 0) continue;
             int value = armor_val(prototype2, faction) * 8 - weap_val(prototype2, faction);
             if (value > defense_value) { defense_value = value; defense = prototype2; }
-            value = Chassis[design.chassis_id].speed + (armor_val(prototype2, faction) + weap_val(prototype2, faction) * 2) * 2;
+            // 5B316D: weap_val is called before armor_val here.
+            value = Chassis[design.chassis_id].speed + (weap_val(prototype2, faction) * 2 + armor_val(prototype2, faction)) * 2;
             if (value > attack_value) { attack_value = value; attack = prototype2; }
             value = Chassis[design.chassis_id].speed * 4 - weap_val(prototype2, faction) - armor_val(prototype2, faction);
             if (value > fast_value && Chassis[design.chassis_id].speed > 1) { fast_value = value; fast = prototype2; }
         }
-        int colony = veh_init((definition.rule_flags & 0x100) ? 0x15 : 0, faction, x, y);
+        // 5B3210/5B32DA: two full call setups per test, tail-merged.
+        int colony;
+        if (definition.rule_flags & 0x100) colony = veh_init(0x15, faction, x, y);
+        else colony = veh_init(0, faction, x, y);
         veh_init(defense, faction, x, y);
         if (GameDataStateStorage.fields_.turn_current_num_ > 20 && fast >= 0) veh_init(fast, faction, x, y);
         if (GameDataStateStorage.fields_.turn_current_num_ > 40 && attack >= 0) veh_init(attack, faction, x, y);
         if (GameDataStateStorage.fields_.turn_current_num_ > 60 && defense >= 0) veh_init(defense, faction, x, y);
         if (GameDataStateStorage.fields_.turn_current_num_ > 80 && attack >= 0) veh_init(attack, faction, x, y);
-        if (GameDataStateStorage.fields_.turn_current_num_ > 100) veh_init((definition.rule_flags & 0x100) ? 0x15 : 0, faction, x, y);
+        if (GameDataStateStorage.fields_.turn_current_num_ > 100) {
+            if (definition.rule_flags & 0x100) veh_init(0x15, faction, x, y);
+            else veh_init(0, faction, x, y);
+        }
         veh_promote(colony);
         p.unk_26 = p.tech_ranking * 3 / 4;
     }
@@ -2344,31 +2346,29 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
     // setup
     int fight_val;
     int unk_val1 = -1;
-    if (!output) {
-        if (is_human(faction_id)) {
+    if (output) {
+        if (growth_val < 0) {
             return;
-        } else {
+        } else if (growth_val > 100) {
+            unk_val1 = growth_val - 100;
             growth_val = PlayersData[faction_id].ai_growth;
             tech_val = PlayersData[faction_id].ai_tech;
             wealth_val = PlayersData[faction_id].ai_wealth;
             power_val = PlayersData[faction_id].ai_power;
             fight_val = PlayersData[faction_id].ai_fight;
+        } else if (power_val) {
+            fight_val = 1;
+        } else {
+            fight_val = wealth_val ? -1 : 0;
         }
-    } else if (growth_val < 0) {
+    } else if (is_human(faction_id)) {
         return;
-    } else if (growth_val > 100) {
-        unk_val1 = growth_val - 100;
+    } else {
         growth_val = PlayersData[faction_id].ai_growth;
         tech_val = PlayersData[faction_id].ai_tech;
         wealth_val = PlayersData[faction_id].ai_wealth;
         power_val = PlayersData[faction_id].ai_power;
         fight_val = PlayersData[faction_id].ai_fight;
-    } else {
-        if (!power_val) {
-            fight_val = -(wealth_val != 0);
-        } else {
-            fight_val = 1;
-        }
     }
     // Four choices for each of four categories: original 5B4831..5B483F.
     uint32_t unk_val2 = 4;
