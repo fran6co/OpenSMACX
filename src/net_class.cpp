@@ -2211,7 +2211,7 @@ static DPCAPS NetServiceCaps;  // 0x009BE4C0
 // RECOVERY_OBJECT: v2 0x00697578 0x00697585 _NetZoneLauncher 0x0062E2A0
 static char NetZoneLauncher[] = "mplaynow.exe";
 
-// ORIGINAL: 0x00630D70 sub_630d70 0x00630D70-0x00631044;0x006634FF-0x00663528
+// ORIGINAL: 0x00630D70 sub_630d70 0x00630D70-0x00631044;0x006634FF-0x00663528 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x00630D70 reads Net provider storage at +0x6E0/+0x6E8 and enumerates into the source-owned ServiceList callback target.", "Pinned 0x004E38E0 adjusts to ServiceList at receiver+0x24, calls its real destructor, then restores the saved StringAllocationHeap owner.", "Pinned 0x006634FF..0x00663528 is retained as the original EH cleanup span of this identity.", "The complete 0x004E38E0..0x004E38FB entry is separately mapped as address-derived sub_4e38e0 to the current generated ??_DServiceList symbol; this caller's EH tail remains in the parent mapping.", "Popup allocation uses the BasePop-owned PopupAllocHook declaration, reached through popup.h; dialog item insertion uses BasePop::dialogs() public accessor."], "reason": "Recover the provider chooser on the real Net owner using ServiceList, the StringAllocationHeap handoff, BasePop, Dialogs and join_service."}
 // symbol    ?choose_service@Net@@QAEHXZ
 int Net::choose_service() {
