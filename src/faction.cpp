@@ -3463,6 +3463,14 @@ int __cdecl diplomacy_menu(int faction_id, int faction_id_with) {
     return popup.exec(0, pop_wait);
 }
 
+// stand-in: the noun-form setup plus parse_says pair recurs across many TUs
+// and was likely a shared inline; as a TU helper its /Ob2 cost spends the
+// budget the image spends before pact_ends' Popup teardown.
+static void say_faction_noun(int slot, int faction) {
+    parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
+    parse_says(slot, Players[faction].noun_faction, -1, -1);
+}
+
 /*
 Purpose: Determine the value of the specified base between the requester and the respondent faction.
          This valuation could be triggered either from a gift, a threat or a base swap.
@@ -3699,8 +3707,11 @@ void __cdecl pact_ends(int faction_id, int partner_id) {
     Popup popup;
     PopupDialogFactionID = partner_id;
     treaty_off(faction_id, partner_id, 1);
-    const int withdraw_actor = pact_withdraw(faction_id, partner_id);
-    const int withdraw_partner = pact_withdraw(partner_id, faction_id);
+    // stand-in: an array keeps both results in fresh frame slots, as the
+    // image does, instead of the parameter homes.
+    int withdraw[2];
+    withdraw[0] = pact_withdraw(faction_id, partner_id);
+    withdraw[1] = pact_withdraw(partner_id, faction_id);
     draw_map(1);
 
     if (faction_id != ConsoleGlobal.faction_id_ && partner_id != ConsoleGlobal.faction_id_) {
@@ -3709,30 +3720,26 @@ void __cdecl pact_ends(int faction_id, int partner_id) {
             || (static_cast<uint8_t>(GameDataStateStorage.fields_.game_state_) & 0x80)
             || (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction_id] & 1)
             || (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[partner_id] & 1)) {
-            parse_set(Players[faction_id].noun_gender, Players[faction_id].is_noun_plural);
-            parse_says(0, Players[faction_id].noun_faction, -1, -1);
-            parse_set(Players[partner_id].noun_gender, Players[partner_id].is_noun_plural);
-            parse_says(1, Players[partner_id].noun_faction, -1, -1);
+            say_faction_noun(0, faction_id);
+            say_faction_noun(1, partner_id);
             parse_says(2, get_pact_hood(faction_id, partner_id), -1, -1);
             X_pop("ENDPACT3", 0);
         }
     } else {
         int use_withdraw;
         if (faction_id == ConsoleGlobal.faction_id_) {
-            parse_set(Players[partner_id].noun_gender, Players[partner_id].is_noun_plural);
-            parse_says(0, Players[partner_id].noun_faction, -1, -1);
+            say_faction_noun(0, partner_id);
             parse_says(1, Players[partner_id].adj_name_faction, -1, -1);
-            use_withdraw = withdraw_actor;
+            use_withdraw = withdraw[0];
         } else {
-            parse_set(Players[faction_id].noun_gender, Players[faction_id].is_noun_plural);
-            parse_says(0, Players[faction_id].noun_faction, -1, -1);
+            say_faction_noun(0, faction_id);
             parse_says(1, Players[faction_id].adj_name_faction, -1, -1);
-            use_withdraw = withdraw_partner;
+            use_withdraw = withdraw[1];
         }
         parse_num(0, use_withdraw);
         parse_says(2, get_pact_hood(faction_id, partner_id), -1, -1);
         popup.start(PopupStartCaption, "ENDPACT1", -1, nullptr,
-                    (IsMultiplayerNet ? 0 : 0x100000), nullptr);
+                    (IsMultiplayerNet ? 0 : 0x100000));
         if (use_withdraw) {
             popup.start(PopupStartCaption, "ENDPACT2", -1, nullptr,
                         (IsMultiplayerNet ? 0 : 0x100000) | 0x80, nullptr);

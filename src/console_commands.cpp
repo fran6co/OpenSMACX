@@ -140,6 +140,9 @@ extern int __cdecl pop_wait();
 // lever. It gives corner_the_market (0x004E2000) the image's ecx/edx choice for
 // its Rules + turn sum; without it the tie flips with unrelated TU content.
 int __cdecl corner_market(int faction_id);                   // 0x0059EE50 ?corner_market@@YAHH@Z
+// stand-in: a second file-state lever for the same tie, needed after the
+// editor_eliminate/editor_view/editor_diplomacy rewrites.
+int __cdecl eliminate_player(int faction_id, int a2);       // 0x005B3380
 
 // Original go_to writes this flag around the PlanWindow selection callback.
 // RECOVERY_OBJECT: v1 0x00688348 ?GoToPreviewActive@@3HA
@@ -3456,7 +3459,6 @@ Status: Complete
 */
 void DipEdit::on_button_clicked(int button_id) {
     Popup popup;
-    char number_text[0x50];
 
     PopupModalState = 6;
 
@@ -3508,9 +3510,9 @@ void DipEdit::on_button_clicked(int button_id) {
 
         do_check();
     } else if (button_id == 2) {
-        GenderDefault = Players[faction_index_].noun_gender;
-        PluralityDefault = Players[faction_index_].is_noun_plural;
-        parse_says(0, Players[faction_index_].noun_faction, -1, -1);
+        const int faction = faction_index_;
+        parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
+        parse_says(0, Players[faction].noun_faction, -1, -1);
         if (X_pop_ask_number("EDITINTEGRITY",
                 PlayersData[faction_index_].integrity_blemishes,
                 0) == 0) {
@@ -3518,29 +3520,21 @@ void DipEdit::on_button_clicked(int button_id) {
                 = ParseNumTable[0];
         }
     } else if (button_id == 3) {
-        GenderDefault = Players[faction_index_].noun_gender;
-        PluralityDefault = Players[faction_index_].is_noun_plural;
-        parse_says(0, Players[faction_index_].noun_faction, -1, -1);
+        const int faction = faction_index_;
+        parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
+        parse_says(0, Players[faction].noun_faction, -1, -1);
         popup.start(PopupStartCaption, "EDITATROCITY", -1, nullptr, 0x44,
                     nullptr);
 
         StringTemp[0] = '\0';
-        _itoa(PlayersData[faction_index_].atrocities,
-              number_text, 10);
-        strcat(StringTemp, number_text);
+        say_num(PlayersData[faction_index_].atrocities);
         // The caption id is read out of the label blob the way the image reads it:
         // `mov eax, ds:0x9b90f8; mov ecx, [eax + 0xdb4]`.
-        popup.dialogs().edit(StringTable.get(
-                                     Labels.strings_ptr[877]),
-            StringTemp, 20);
+        popup.dialogs().edit(label_get(877), StringTemp, 20);
 
         StringTemp[0] = '\0';
-        _itoa(PlayersData[faction_index_].major_atrocities,
-              number_text, 10);
-        strcat(StringTemp, number_text);
-        popup.dialogs().edit(StringTable.get(
-                                     Labels.strings_ptr[878]),
-            StringTemp, 20);
+        say_num(PlayersData[faction_index_].major_atrocities);
+        popup.dialogs().edit(label_get(878), StringTemp, 20);
 
         if (popup.exec(0, 0) == 0) {
             PlayersData[faction_index_].atrocities
@@ -4145,42 +4139,12 @@ Purpose: Open the diplomacy editor. A modal list popup asks which faction to
 */
 void Console::editor_diplomacy() {
     DipEdit edit;
-
-    // Read before the popup exists: the image caches the faction in a local
-    // across the whole item loop and the two popup calls, which cannot be
-    // the global re-read - either of those calls could store through its
-    // char* argument.
-    int faction = ConsoleGlobal.faction_id_;
-
-    int result;
-    {
-        Popup popup;
-
-        PopupModalState = 6;
-        popup.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40);
-
-        // Players[0] is the native-life faction and is not offered; the loop
-        // is over the seven playable ones, each item text the faction noun.
-        for (int i = 1; i < MaxPlayerNum; i++) {
-            GenderDefault = Players[i].noun_gender;
-            PluralityDefault = Players[i].is_noun_plural;
-            popup.dialogs().item(Players[i].noun_faction, i);
-        }
-
-        // BasePop's default answer: when the player accepts without picking,
-        // the popup hands back the faction already being played.
-        if (faction >= 0) {
-            popup.set_value(faction);
-        }
-
-        result = popup.exec(0, 0);
-        PopupModalState = 0;
-    }
-
+    // The image inlines editor_who here: its nested start is the out-of-line
+    // five-argument form and the default faction is a spilled parameter.
+    const int result = editor_who(ConsoleGlobal.faction_id_, 1);
     if (result < 0) {
         return;
     }
-
     edit.init(result);
 }
 
@@ -5205,6 +5169,30 @@ void Console::editor_veh() {
         return;
     }
 }
+// stand-in: TU helpers that /Ob2 inlines into editor_view; their cost spends
+// the inline budget the image spends before its Popup teardowns. The editor
+// button toggle recurs in editor_fast, game.cpp and console.cpp, so it was
+// likely a shared inline in the original.
+static void update_editor_button() {
+    const unsigned char view_state = static_cast<unsigned char>(GameDataStateStorage.fields_.game_state_);
+    if ((view_state & 0x80u) && (view_state & 0x40u)) {
+        MainInterfaceGlobal.flat_button_[2].show(0);
+    } else {
+        MainInterfaceGlobal.flat_button_[2].hide();
+    }
+}
+
+static void focus_cursor_base(int selected) {
+    const int base_id = base_find(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                  ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_],
+                  selected);
+    if (base_id >= 0) {
+        ConsoleGlobal.focus(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                            ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_],
+                            ConsoleGlobal.faction_id_);
+    }
+}
+
 
 // ORIGINAL: 0x004DF4F0 ?editor_view@Console@@QAEXXZ 0x004DF4F0-0x004DFAD0;0x0065BE73-0x0065BFB1
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004df4f0.cpp records the original entry and full body/unwind spans; retained seed is not accepted source structure.", "Task console-scenario-owner-wave and its native grants authorize the thirteen owner methods, typed persistent editor state, existing Popup item sorting, and genuine technology-bit storage. Original instructions resolve callee argument roles and field ownership; dual configured compiler trials and host controls are diagnostics, not acceptance."], "reason": "Recover the selected scenario-editor operation in its existing typed Console owner, retaining its original spans, seed provenance and historical obligations."}
@@ -5217,8 +5205,8 @@ void Console::editor_view() {
         if (!is_alive(faction)) {
             continue;
         }
-        parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
         StringTemp[0] = 0;
+        parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
         strcat(StringTemp, Players[faction].formal_name_faction);
         strcat(StringTemp, "(");
         parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
@@ -5261,12 +5249,7 @@ void Console::editor_view() {
 
     GameDataStateStorage.fields_.game_state_ &= ~0x80u;
     desktop_update();
-    const unsigned char view_state = static_cast<unsigned char>(GameDataStateStorage.fields_.game_state_);
-    if ((view_state & 0x80u) && (view_state & 0x40u)) {
-        MainInterfaceGlobal.flat_button_[2].show(0);
-    } else {
-        MainInterfaceGlobal.flat_button_[2].hide();
-    }
+    update_editor_button();
     if (!is_human(selected)) {
         parse_set(Players[selected].noun_gender, Players[selected].is_noun_plural);
         parse_says(0, Players[selected].noun_faction, -1, -1);
@@ -5281,13 +5264,7 @@ void Console::editor_view() {
     }
 
     ConsoleGlobal.faction_id_ = selected;
-    if (base_find(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
-                  ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_],
-                  selected) >= 0) {
-        ConsoleGlobal.focus(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
-                            ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_],
-                            ConsoleGlobal.faction_id_);
-    }
+    focus_cursor_base(selected);
     ConsoleGlobal.set_view(1);
     ::draw_map(1);
 }
@@ -5553,6 +5530,16 @@ void Console::editor_reload() {
     compute_faction_modifiers(faction);
 }
 
+// stand-in: a TU helper that /Ob2 inlines; its cost spends the inline budget
+// the image spends before editor_eliminate's early-return teardown.
+static void kill_faction_bases(int faction) {
+    for (int base = GameDataStateStorage.fields_.base_current_count_ - 1; base >= 0; --base) {
+        if (Bases[base].faction_id_current == faction) {
+            base_kill(base);
+        }
+    }
+}
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004E05E0 ?editor_eliminate@Console@@QAEXXZ 0x004E05E0-0x004E09A1;0x0065C1AB-0x0065C2AF
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004e05e0.cpp records the original entry and full body/unwind spans; retained seed is not accepted source structure.", "Task console-scenario-owner-wave and its native grants authorize the thirteen owner methods, typed persistent editor state, existing Popup item sorting, and genuine technology-bit storage. Original instructions resolve callee argument roles and field ownership; dual configured compiler trials and host controls are diagnostics, not acceptance."], "reason": "Recover the selected scenario-editor operation in its existing typed Console owner, retaining its original spans, seed provenance and historical obligations."}
@@ -5572,19 +5559,10 @@ void Console::editor_eliminate() {
         return;
     }
 
-    const unsigned char faction_bit = static_cast<unsigned char>(1u << faction);
-    // The original loads both bytes, then stores human before alive; retain
-    // the rest of the shared lock-mask DWORD unchanged.
-    GameDataLockMaskBytes &status = GameDataStateStorage.fields_.lock_masks_.bytes_;
-    const uint8_t human_mask = status.human_mask_;
-    const uint8_t alive_mask = status.alive_mask_;
-    status.human_mask_ = human_mask & static_cast<uint8_t>(~faction_bit);
-    status.alive_mask_ = alive_mask & static_cast<uint8_t>(~faction_bit);
-    for (int base = GameDataStateStorage.fields_.base_current_count_ - 1; base >= 0; --base) {
-        if (Bases[base].faction_id_current == faction) {
-            base_kill(base);
-        }
-    }
+    const uint8_t mask = static_cast<uint8_t>(~(1 << faction));
+    GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &= mask;
+    GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &= mask;
+    kill_faction_bases(faction);
     ::draw_map(1);
     eliminate_player(faction, -2);
 }
