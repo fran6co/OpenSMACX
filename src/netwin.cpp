@@ -250,7 +250,7 @@ static void netwin_pcx_name(const char *name) {
 }
 
 /*
-// ORIGINAL: 0x00481FD0 ?setup_faction_data@NetWin@@QAEXPAUMessageFactionData@@@Z 0x00481FD0-0x00482488;0x006574E9-0x006574FE FILE
+// ORIGINAL: 0x00481FD0 ?setup_faction_data@NetWin@@QAEXPAUMessageFactionData@@@Z 0x00481FD0-0x00482488;0x006574E9-0x006574FE FILE BYTE_EXACT
 // size      1229 bytes
 // prototype void (__thiscall ?setup_faction_data@NetWin@@QAEXPAUMessageFactionData@@@Z)(NetWin* this, MessageFactionData*)
 // callers   3   call targets   15
@@ -693,7 +693,7 @@ void NetWin::config_players() {
 
 // Private recovered body for the native 0x00482D90 roster finalizer.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00482D90 ?prepare_game@NetWin@@QAEXXZ 0x00482D90-0x0048318E;0x006574FE-0x00657510
+// ORIGINAL: 0x00482D90 ?prepare_game@NetWin@@QAEXXZ 0x00482D90-0x0048318E;0x006574FE-0x00657510 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00482d90.cpp", "recovery/tasks/netwin-owner-coverage.json"], "reason": "Recover complete lobby game preparation through real faction records, AlphaNet process-slot ownership, player data and Random lifecycle. Native low-five-bit shifts, signed difficulty and copied status extent preserved; seed and historical obligations retained."}
 void NetWin::prepare_game() {
     Random random;
@@ -1732,7 +1732,7 @@ Purpose: Dispatch a lobby spot click to the map/options/faction/player action
          represented by that spot. Rule toggles update the typed session state
          and send the opcode/options-only 0x2F02 state packet. The original
          leaves the intervening header bytes uninitialized.
-// ORIGINAL: 0x0047B760 ?on_left_click@NetWin@@QAEXHH@Z 0x0047B760-0x0047BAF6
+// ORIGINAL: 0x0047B760 ?on_left_click@NetWin@@QAEXHH@Z 0x0047B760-0x0047BAF6 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned47B9C7/47B9D7/47B9DD: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
 // symbol    ?on_left_click@NetWin@@UAEXHH@Z
 */
@@ -2009,7 +2009,7 @@ void NetWin::pick_faction(int slot) {
 #pragma intrinsic(memcpy)
 #endif
 
-// ORIGINAL: 0x0047CF40 ?pick_diff@NetWin@@QAEXH@Z 0x0047CF40-0x0047D2F4;0x00656AED-0x00656BC5
+// ORIGINAL: 0x0047CF40 ?pick_diff@NetWin@@QAEXH@Z 0x0047CF40-0x0047D2F4;0x00656AED-0x00656BC5 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/recovered/units/0047cf40.cpp:NetWin::pick_diff", "src/netwin.cpp:pick_global_diff and sibling pickers", "src/netwin.cpp:NetWinLobbySinglePacket and NetWin::on_button_clicked", "Pinned47D0C7/47D0D0/47D0D6: opcode word, slot dword and +8 zero; copied row+10 and send18C. +2..3/+C..F are untouched."], "reason": "Recover the per-slot difficulty picker using the established popup objects, difficulty text table, typed lobby row and typed single-row packet."}
 #if defined(_MSC_VER) && _MSC_VER == 1200
 #pragma function(memcpy)
@@ -2273,7 +2273,7 @@ void NetWin::pick_map() {
 Purpose: The cloud-cover picker: a popup titled from the string table with
          the two cloud options, the answer stored in the ninth slot's cloud
          byte and sent to the peer.
-// ORIGINAL: 0x0047F5F0 ?pick_clouds@NetWin@@QAEXXZ 0x0047F5F0-0x0047F91C;0x00657385-0x0065745D FILE
+// ORIGINAL: 0x0047F5F0 ?pick_clouds@NetWin@@QAEXXZ 0x0047F5F0-0x0047F91C;0x00657385-0x0065745D FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned47F721/47F735/47F73B: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
 // size      1028 bytes
 // prototype void (__thiscall ?pick_clouds@NetWin@@QAEXXZ)(NetWin* this)
@@ -2309,7 +2309,7 @@ void NetWin::pick_clouds() {
 /*
 Purpose: The ocean-coverage picker: the same popup walk with the three ocean
          options; the answer lands in the ninth slot's ocean byte.
-// ORIGINAL: 0x0047EC60 ?pick_ocean@NetWin@@QAEXXZ 0x0047EC60-0x0047EF8C;0x006570FD-0x006571D5 FILE
+// ORIGINAL: 0x0047EC60 ?pick_ocean@NetWin@@QAEXXZ 0x0047EC60-0x0047EF8C;0x006570FD-0x006571D5 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned47ED91/47EDA5/47EDAB: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
 // size      1028 bytes
 // prototype void (__thiscall ?pick_ocean@NetWin@@QAEXXZ)(NetWin* this)
@@ -2345,7 +2345,7 @@ void NetWin::pick_ocean() {
 /*
 Purpose: The erosion picker: the same popup walk with the three erosion
          options; the answer lands in the ninth slot's erosion byte.
-// ORIGINAL: 0x0047EF90 ?pick_erosion@NetWin@@QAEXXZ 0x0047EF90-0x0047F2BC;0x006571D5-0x006572AD FILE
+// ORIGINAL: 0x0047EF90 ?pick_erosion@NetWin@@QAEXXZ 0x0047EF90-0x0047F2BC;0x006571D5-0x006572AD FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned47F0C1/47F0D5/47F0DB: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
 // size      1028 bytes
 // prototype void (__thiscall ?pick_erosion@NetWin@@QAEXXZ)(NetWin* this)
@@ -2381,7 +2381,7 @@ void NetWin::pick_erosion() {
 /*
 Purpose: The native-life picker: the same popup walk with the three fungal
          options; the answer lands in the ninth slot's native byte.
-// ORIGINAL: 0x0047F2C0 ?pick_native@NetWin@@QAEXXZ 0x0047F2C0-0x0047F5EC;0x006572AD-0x00657385 FILE
+// ORIGINAL: 0x0047F2C0 ?pick_native@NetWin@@QAEXXZ 0x0047F2C0-0x0047F5EC;0x006572AD-0x00657385 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned47F3F1/47F405/47F40B: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
 // size      1028 bytes
 // prototype void (__thiscall ?pick_native@NetWin@@QAEXXZ)(NetWin* this)
@@ -2418,7 +2418,7 @@ void NetWin::pick_native() {
 Purpose: The planet-size picker: a popup with the title and one entry per
          name in the 0x80-stride name block at 0x6614, counted by the word at
          0x80A6F0; the answer lands in the ninth slot's planet byte.
-// ORIGINAL: 0x0047E930 ?pick_planet_size@NetWin@@QAEXXZ 0x0047E930-0x0047EC60;0x00657025-0x006570FD FILE
+// ORIGINAL: 0x0047E930 ?pick_planet_size@NetWin@@QAEXXZ 0x0047E930-0x0047EC60;0x00657025-0x006570FD FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned47EA6D/47EA7A/47EA80: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
 // size      1032 bytes
 // prototype void (__thiscall ?pick_planet_size@NetWin@@QAEXXZ)(NetWin* this)
@@ -2725,7 +2725,7 @@ void NetWin::pick_num_players() {
 Purpose: The global-difficulty picker: a popup with the title and the six
          difficulty names off alpha's table; the ninth slot's global byte
          stores the answer.
-// ORIGINAL: 0x0047E340 ?pick_global_diff@NetWin@@QAEXXZ 0x0047E340-0x0047E640;0x00656E75-0x00656F4D FILE
+// ORIGINAL: 0x0047E340 ?pick_global_diff@NetWin@@QAEXXZ 0x0047E340-0x0047E640;0x00656E75-0x00656F4D FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned47E445/47E459/47E45F: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
 // size      984 bytes
 // prototype void (__thiscall ?pick_global_diff@NetWin@@QAEXXZ)(NetWin* this)
@@ -2759,7 +2759,7 @@ void NetWin::pick_global_diff() {
 Purpose: The time-control picker: the popup is filled by the source-owned
          time-control list builder, then the same
          modal walk; the ninth slot's time byte stores the answer.
-// ORIGINAL: 0x0047E640 ?pick_time@NetWin@@QAEXXZ 0x0047E640-0x0047E924;0x00656F4D-0x00657025 FILE
+// ORIGINAL: 0x0047E640 ?pick_time@NetWin@@QAEXXZ 0x0047E640-0x0047E924;0x00656F4D-0x00657025 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned47E72A/47E73E/47E744: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
 // size      956 bytes
 // prototype void (__thiscall ?pick_time@NetWin@@QAEXXZ)(NetWin* this)
