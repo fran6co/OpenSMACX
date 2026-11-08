@@ -157,3 +157,34 @@ def test_fpo_sibling_opt_in_runs_complete_source_codeview_proof():
     obj.sections = (*obj.sections[:2], replace(obj.sections[2], flags=0x62501040))
     with pytest.raises(ValueError):
         validate_fpo_object(obj, 2, root, source_codeview=True)
+
+
+def user_label_case(coff_name):
+    obj, root, *rest = case(label_name="select_page_2")
+    obj.symbols[5] = replace(obj.symbols[5], name=coff_name)
+    return (obj, root, *rest)
+
+
+def test_vc6_decorated_user_label_matches_its_codeview_identifier():
+    # VC6 names a goto/__asm label `$<identifier>$<serial>` in COFF while
+    # S_LABEL32 keeps the bare identifier (observed in real VC6 objects, e.g.
+    # `$failed$51461` / `failed`, `$count_loop$60502` / `count_loop`).
+    report = compare_associated_code(*user_label_case("$select_page_2$61732"))
+    assert report["result"] == Result.PASS
+
+
+@pytest.mark.parametrize("coff_name", ["$select_page_2$", "$select_page_2$0617",
+    "$select_page_2$61x", "$select_page_2$61$2", "$select_page$61732", "select_page_2$61732",
+    "$$select_page_2$61732", "$select_page_2$-1", "$L61732"])
+def test_other_user_label_spellings_never_pass(coff_name):
+    with pytest.raises(ValueError, match="unique owned root label"):
+        compare_associated_code(*user_label_case(coff_name))
+
+
+def test_label_name_rule_is_exact_or_vc6_decoration():
+    from match_recovery.linked_codeview import label_names_agree
+    assert label_names_agree("$L52070", "$L52070")
+    assert label_names_agree("failed", "$failed$51461")
+    assert not label_names_agree("$L52070", "$$L52070$1")
+    assert not label_names_agree("a.b", "$a.b$1")
+    assert not label_names_agree("", "$$1")

@@ -125,3 +125,58 @@ def test_historical_tree_detects_newer_product_work_without_reverting(tree, dama
             else: path.write_bytes(b"newer")
     assert not replica.exists()
     if damage == "changed": assert path.read_bytes() == b"newer"
+
+
+@pytest.fixture
+def unit_tree(tmp_path):
+    (tmp_path / "code/sub").mkdir(parents=True)
+    (tmp_path / "code/unit.cc").write_bytes(b'#include "sub/Head.h"\nint f();\n')
+    (tmp_path / "code/sub/head.h").write_bytes(b'  #  include <deep.h> // trailing\n')
+    (tmp_path / "code/deep.h").write_bytes(b"#pragma once\n")
+    (tmp_path / "code/other.cc").write_bytes(b"int other;\n")
+    (tmp_path / "code/forced.h").write_bytes(b"#define X\n")
+    return tmp_path
+
+
+def test_include_closure_is_a_casefolded_lexical_superset(unit_tree):
+    from match_recovery.source_replica import include_closure
+    files = replica_snapshot(unit_tree, ("code",))
+    assert include_closure(files, "code/unit.cc") == {"head.h", "deep.h"}
+    spliced = {**files, "code/unit.cc": b'#inc\\\nlude "deep.h"\n#if 0\n#include "never.h"\n#endif\n'}
+    assert include_closure(spliced, "code/unit.cc") == {"deep.h", "never.h"}
+    for directive in (b"#include MACRO\n", b"#import <x.tlb>\n", b'#pragma include_alias("a.h", "b.h")\n'):
+        assert include_closure({**files, "code/unit.cc": directive}, "code/unit.cc") is None
+
+
+def test_unit_guard_ignores_edits_outside_its_include_closure(unit_tree):
+    with source_replica(unit_tree, ("code",), {"code/unit.cc": b'#include "sub/head.h"\n'},
+                        source="code/unit.cc") as replica:
+        (unit_tree / "code/other.cc").write_bytes(b"int changed;\n")
+        (unit_tree / "code/unrelated.h").write_bytes(b"new\n")
+    assert not replica.exists()
+
+
+@pytest.mark.parametrize("damage", ["unit", "header", "nested", "shadow", "removed", "forced"])
+def test_unit_guard_still_refuses_changes_to_its_inputs(unit_tree, damage):
+    with pytest.raises(ValueError, match="inputs changed"):
+        with source_replica(unit_tree, ("code",), {}, source="code/unit.cc",
+                            forced=("code/forced.h",)):
+            if damage == "unit":
+                (unit_tree / "code/unit.cc").write_bytes(b"changed\n")
+            elif damage == "header":
+                (unit_tree / "code/sub/head.h").write_bytes(b"changed\n")
+            elif damage == "nested":
+                (unit_tree / "code/deep.h").write_bytes(b"changed\n")
+            elif damage == "shadow":
+                (unit_tree / "code/HEAD.H").write_bytes(b"shadowing\n")
+            elif damage == "removed":
+                (unit_tree / "code/deep.h").unlink()
+            else:
+                (unit_tree / "code/forced.h").write_bytes(b"changed\n")
+
+
+def test_undeterminable_closure_keeps_the_whole_tree_guard(unit_tree):
+    (unit_tree / "code/unit.cc").write_bytes(b"#include HEADER\n")
+    with pytest.raises(ValueError, match="inputs changed"):
+        with source_replica(unit_tree, ("code",), {}, source="code/unit.cc"):
+            (unit_tree / "code/other.cc").write_bytes(b"int changed;\n")

@@ -71,6 +71,22 @@ def _variant_arguments(arguments, root, replica, roots):
     return tuple(output)
 
 
+def _forced_includes(arguments, root):
+    """Project-relative /FI inputs; external ones are outside every replica."""
+    forced, iterator = [], iter(arguments)
+    for word in iterator:
+        prefix = next((prefix for prefix in ("/FI", "-FI") if word.startswith(prefix)), None)
+        if prefix is None:
+            continue
+        value = word[len(prefix):] or next(iterator, "")
+        if value.startswith(('Z:', 'z:')):
+            value = value[2:].replace('\\', '/')
+        path = Path(value)
+        if path.is_absolute() and path.is_relative_to(root):
+            forced.append(path.relative_to(root).as_posix())
+    return tuple(forced)
+
+
 def compile_overlay(root: Path, source: Path, replacements: dict[str, bytes], command: tuple[str, ...], flags: tuple[str, ...],
                     *, tree_roots: tuple[str, ...] | None = None) -> bytes:
     """Compile a TU with all proposed headers/bodies in one private tree.
@@ -92,7 +108,14 @@ def compile_overlay(root: Path, source: Path, replacements: dict[str, bytes], co
     # Do not inject absolute #line filenames: VC6 uses those during quote-include
     # lookup, mixing original and copied headers and defeating #pragma once.
     # __FILE__ data differences must fail the caller's replica control instead.
-    materialize = source_replica if tree_roots is None else source_tree
+    if tree_roots is None:
+        # The replica guard covers this TU, its forced includes and their
+        # lexical include closure; edits elsewhere cannot reach this compile.
+        materialize = lambda *args, **options: source_replica(
+            *args, source=source.relative_to(root).as_posix(),
+            forced=_forced_includes((*command, *flags), root), **options)
+    else:
+        materialize = source_tree
     with materialize(root, roots, replacements, artifacts="build/recovery/variants") as replica:
         return compile_object(replica / source.relative_to(root),
                               _variant_arguments(command, root, replica, roots),

@@ -7,6 +7,7 @@ Executable relocation decoding remains deliberately separate from SECREL/SECTION
 
 from collections import Counter
 from dataclasses import asdict
+import re
 import struct
 
 from .codeview_procedures import (decode_procedure, S_GPROC32_ST, S_LPROC32_ST, S_END,
@@ -18,13 +19,63 @@ from .pdb_contributions import bound_contributions
 from .pe_coff import weak_external
 
 
-def source_procedure(obj, number, root, *, local_addresses=False):
+_USER_LABEL = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+_LABEL_SERIAL = re.compile(r"[1-9][0-9]*")
+
+
+def label_names_agree(codeview, coff):
+    """Match one S_LABEL32 name to its COFF label symbol name.
+
+    VC6 compiler-generated labels (``$L52070``) carry the same name in both
+    places. A user label (C++ ``goto`` target or ``__asm`` label) keeps its
+    source identifier in CodeView while the COFF symbol is decorated as
+    ``$<identifier>$<serial>``, the serial sharing the compiler's decimal label
+    counter. Any other spelling is refused.
+    """
+    if codeview == coff:
+        return True
+    if not _USER_LABEL.fullmatch(codeview) or not coff.startswith(f"${codeview}$"):
+        return False
+    return _LABEL_SERIAL.fullmatch(coff[len(codeview) + 2:]) is not None
+
+
+def _eh_tail_labels(data, obj, eh_tail):
+    """Frame VC6's leading S_LABEL32 records for a function's `.text$x` tail.
+
+    VC6 writes one label record per EH-tail label before the procedure itself.
+    Each must be a complete, unpadded, zero-coordinate record; its binding is
+    checked by the caller against exact relocation pairs.
+    """
+    labels, at = [], 0
+    while at + 4 <= len(data):
+        size, kind = struct.unpack_from("<HH", data, at)
+        if kind != S_LABEL32_ST:
+            break
+        if size < 10 or at + 2 + size > len(data):
+            raise ValueError("truncated CodeView EH-tail label record")
+        offset, section, flags, length = struct.unpack_from("<IHBB", data, at + 4)
+        if offset or section or flags or size != 10 + length or not length:
+            raise ValueError("unsupported CodeView EH-tail label record")
+        labels.append((at, data[at + 12:at + 12 + length].decode("ascii")))
+        at += 2 + size
+    if not labels or len(labels) > len(obj.sections[eh_tail - 1].data):
+        raise ValueError("EH-tail CodeView block lacks its leading tail labels")
+    return labels, at
+
+
+def source_procedure(obj, number, root, *, local_addresses=False, eh_tail=None):
     """Validate complete COFF ownership and exact typed relocation pairs.
 
     Optional local addresses admit only unnamed untyped data and ordinary
     named labels, each bound to one unique local symbol in this root. This
     proves object-local coordinates, not original types or PDB correspondence.
+    `eh_tail` (with local addresses) names the root's caller-proved `.text$x`
+    section; its leading compiler labels must bind uniquely into that tail.
     """
+    if eh_tail is not None and (not local_addresses or type(eh_tail) is not int
+                                or obj.associations.get(eh_tail) != root.section
+                                or obj.sections[eh_tail - 1].name != ".text$x"):
+        raise ValueError("CodeView EH-tail labels require one associative .text$x tail")
     if (type(local_addresses) is not bool
             or type(number) is not int or not 1 <= number <= len(obj.sections)
             or obj.symbols.get(root.index) != root or obj.function(root.name) != root
@@ -36,7 +87,8 @@ def source_procedure(obj, number, root, *, local_addresses=False):
             or obj.associations.get(number) != root.section or number in obj.associations.values()
             or sum(parent == root.section and obj.sections[child - 1].name == ".debug$S"
                    for child, parent in obj.associations.items()) != 1
-            or (not local_addresses and section.relocations != ((32, root.index, 11), (36, root.index, 10)))):
+            or (not local_addresses and section.relocations != ((32, root.index, 11), (36, root.index, 10)))
+            or (eh_tail is not None and eh_tail in obj.associations.values())):
         raise ValueError("unsupported associated CodeView ownership or relocation pair")
     symbols = [symbol for symbol in obj.symbols.values() if symbol.section == number]
     if len(symbols) != 1:
@@ -55,7 +107,8 @@ def source_procedure(obj, number, root, *, local_addresses=False):
     if any(symbol.storage == 105 and weak_external(obj, symbol)[0].index == definition.index
            for symbol in obj.symbols.values()):
         raise ValueError("CodeView child has a weak address alias")
-    procedure = decode_procedure(section.data, local_addresses=local_addresses)
+    tail_labels, start = _eh_tail_labels(section.data, obj, eh_tail) if eh_tail is not None else ((), 0)
+    procedure = decode_procedure(section.data[start:], base_offset=start, local_addresses=local_addresses)
     if (procedure.parent or procedure.end or procedure.next or procedure.offset or procedure.section
             or procedure.kind != (S_GPROC32_ST if root.storage == 2 else S_LPROC32_ST)):
         raise ValueError("CodeView source procedure has unsupported links, binding addends or visibility")
@@ -64,10 +117,29 @@ def source_procedure(obj, number, root, *, local_addresses=False):
             or len(code.data) != procedure.length + (-procedure.length % code.alignment)
             or any(byte not in (0x90, 0xCC) for byte in code.data[procedure.length:])):
         raise ValueError("CodeView procedure extent leaves non-alignment function bytes")
-    expected = [(32, root.index, 11), (36, root.index, 10)]
     by_offset = {offset: (offset, index, kind) for offset, index, kind in section.relocations}
     if len(by_offset) != len(section.relocations):
         raise ValueError("CodeView child has duplicate relocation offsets")
+    expected = []
+    if eh_tail is not None:
+        tail = obj.sections[eh_tail - 1]
+        tail_counts = Counter(symbol.value for symbol in obj.symbols.values()
+                              if symbol.section == eh_tail and symbol.storage == 6)
+        tail_used = set()
+        for record_offset, label in tail_labels:
+            at = record_offset + 4
+            pairs = [by_offset.get(at), by_offset.get(at + 4)]
+            if (any(pair is None for pair in pairs) or pairs[0][2] != 11
+                    or pairs[1] != (at + 4, pairs[0][1], 10)):
+                raise ValueError("CodeView EH-tail label lacks an exact SECREL/SECTION pair")
+            target = obj.symbols.get(pairs[0][1])
+            if (target is None or target.section != eh_tail or target.storage != 6 or target.type
+                    or not 0 <= target.value < len(tail.data) or target.index in tail_used
+                    or tail_counts[target.value] != 1 or target.name != label):
+                raise ValueError("CodeView EH-tail label lacks a unique owned tail label")
+            tail_used.add(target.index)
+            expected.extend(pairs)
+    expected.extend([(start + 32, root.index, 11), (start + 36, root.index, 10)])
     label_counts = Counter(symbol.value for symbol in obj.symbols.values()
                            if symbol.section == root.section and symbol.storage == 6)
     used = set()
@@ -93,7 +165,7 @@ def source_procedure(obj, number, root, *, local_addresses=False):
                 or target.type or not 0 <= target.value < procedure.length
                 or target.index in used
                 or label_counts[target.value] != 1
-                or (address.kind == S_LABEL32_ST and address.name != target.name)):
+                or (address.kind == S_LABEL32_ST and not label_names_agree(address.name, target.name))):
             raise ValueError("CodeView local address lacks a unique owned root label")
         used.add(target.index)
         expected.extend(pairs)

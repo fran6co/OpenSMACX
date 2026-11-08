@@ -302,7 +302,10 @@ def _locate_body(record, relative: str, texts: dict, symbol_format: str, root: P
     from .local_variants import _bound_function_body_bytes, _marker_identity
     text = texts[relative]
     markers = tuple(_marker_identity(row) for row in read_text(text, record.path))
-    names = [qualified_name(record.symbol or ""), record.name]
+    # The mapping row's name is usually its mangled symbol; the lexical walk
+    # needs the qualified C++ name. The walk itself stays bound to this
+    # record's ORIGINAL address and marker interval, so overloads resolve.
+    names = [qualified_name(record.symbol or ""), qualified_name(record.name or ""), record.name]
     for name in dict.fromkeys(name for name in names if name):
         try:
             low, high = _bound_function_body_bytes(text, name, record.path, record, markers)
@@ -318,6 +321,26 @@ def _locate_body(record, relative: str, texts: dict, symbol_format: str, root: P
 
 
 # ------------------------------------------------------------------ driver
+
+def _trial_object(unit: Path, raws: dict, dependencies: dict, compile_dependency, path, arguments, trial) -> bytes:
+    """The trial's own TU object, or an unchanged dependency TU compiled once.
+
+    Strict associated-data verification also compiles the selected evidence
+    closure: other translation units under their own recipes. Those files are
+    not mutated, so their real objects are compiled once and reused; the trial
+    overlay never stands in for another unit or another flag set.
+    """
+    trial = tuple(trial)
+    if Path(path).resolve() == Path(unit).resolve():
+        if tuple(arguments) or trial not in raws:
+            raise ValueError("compiler command failed: permute trial grid lacks "
+                             f"the requested target flags {' '.join(trial)}")
+        return raws[trial]
+    key = (Path(path).resolve(), tuple(arguments), trial)
+    if key not in dependencies:
+        dependencies[key] = compile_dependency(*key)
+    return dependencies[key]
+
 
 def _ignored_destination(root: Path, path: Path, settings) -> Path:
     path = (path if path.is_absolute() else root / path).absolute()
@@ -475,13 +498,32 @@ def permute_source(root: Path, target: str, *, image: Path, in_file=None, iterat
         at = helper_at[0]
         return prefix[:at] + helpers + "\n" + prefix[at:] + body_text + suffix
 
+    dependencies = {}
+
+    def compile_dependency(path, arguments, trial):
+        started = time.monotonic()
+        try:
+            if pool is None:
+                return bytes(compiler(path, arguments, trial))
+            if arguments:
+                raise ValueError("compiler slot dependencies take no extra arguments")
+            (kind, data), = pool.run(_slot_compile, [(str(path), None, None, (trial,))], slot=0)[0]
+            if kind != "object":
+                raise ValueError(data)
+            return data
+        finally:
+            timings["compile_seconds"] += time.monotonic() - started
+
+    def trial_object(raws, path, arguments, trial):
+        return _trial_object(unit, raws, dependencies, compile_dependency, path, arguments, trial)
+
     def score_objects(results):
         if not results or results[-1][0] == "failed" or len(results) != len(grid):
             failures.append(results[-1][1] if results else "no compile result")
             return None
         raws = {flags: data for flags, (_kind, data) in zip(grid, results)}
         measured = compare_unit([record], image, unit, (), grid, shared,
-                                compiler=lambda _path, _arguments, trial: raws[tuple(trial)],
+                                compiler=lambda path, arguments, trial: trial_object(raws, path, arguments, trial),
                                 root=root, targets=references)
         comparison = measured.results[0][1]
         if isinstance(comparison, str):

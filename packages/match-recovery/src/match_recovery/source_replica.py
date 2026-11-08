@@ -6,6 +6,7 @@ helper does not establish equivalence between original and replica builds.
 
 from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
+import re
 import subprocess
 import tempfile
 
@@ -44,6 +45,51 @@ def replica_snapshot(root, roots):
             else:
                 raise ValueError(f"source replica requires regular files: {path.relative_to(root)}")
     return result
+
+
+_SPLICE = re.compile(rb"\\\r?\n")
+_DIRECTIVE = re.compile(rb"^[ \t]*#[ \t]*(include|import|pragma[ \t]+include_alias)\b(.*)$", re.M)
+_LITERAL = re.compile(rb"[ \t]*(?:\"([^\"\r\n]+)\"|<([^>\r\n]+)>)")
+
+
+def include_closure(files, source, forced=()):
+    """Casefolded basenames of every file a TU can include, or None if unknown.
+
+    A lexical superset: every line-start ``#include "..."``/``<...>`` counts,
+    whatever its conditional context, and a name matches every replica file
+    with that basename (case-insensitively, as VC6 resolves under Wine). Any
+    computed include, ``#import`` or ``include_alias`` makes the set unknown.
+    """
+    pending, names, seen = [source, *forced], set(), set()
+    by_name = {}
+    for name, data in files.items():
+        if data is not None:
+            by_name.setdefault(PurePosixPath(name).name.casefold(), []).append(name)
+    while pending:
+        current = pending.pop()
+        if current in seen:
+            continue
+        seen.add(current)
+        data = files.get(current)
+        if data is None:
+            continue
+        for match in _DIRECTIVE.finditer(_SPLICE.sub(b"", data)):
+            literal = _LITERAL.match(match.group(2))
+            if match.group(1) != b"include" or literal is None:
+                return None
+            target = (literal.group(1) or literal.group(2)).decode("latin-1").replace("\\", "/")
+            key = PurePosixPath(target).name.casefold()
+            names.add(key)
+            pending.extend(by_name.get(key, ()))
+    return frozenset(names)
+
+
+def _guarded(snapshot, source, forced, closure):
+    if closure is None:
+        return snapshot
+    return {name: data for name, data in snapshot.items()
+            if data is not None and (name == source or name in forced
+                                     or PurePosixPath(name).name.casefold() in closure)}
 
 
 def snapshot_digest(snapshot):
@@ -114,7 +160,8 @@ def artifact_parent(root: Path, artifacts: str, *, excluded_roots=()) -> Path:
 
 
 @contextmanager
-def source_replica(root: Path, roots: tuple[str, ...], replacements: dict[str, bytes], *, artifacts: str | None = None):
+def source_replica(root: Path, roots: tuple[str, ...], replacements: dict[str, bytes], *, artifacts: str | None = None,
+                   source: str | None = None, forced: tuple[str, ...] = ()):
     """Yield a private tree, then reject changed originals even on failure.
 
     Replacement paths must already exist in explicit roots. Every file in those
@@ -123,6 +170,11 @@ def source_replica(root: Path, roots: tuple[str, ...], replacements: dict[str, b
     External dependencies remain the caller's freshness responsibility.
     If artifacts is supplied, temporary copies stay in that verified-ignored
     project directory; otherwise the platform temporary directory is used.
+
+    The compile reads only the copied snapshot. Given the compiled ``source``
+    (and ``forced`` include files), the freshness guard covers that TU and its
+    lexical include closure (see ``include_closure``), so unrelated edits do
+    not void it; an undeterminable closure keeps the whole-tree guard.
     """
     root = root.resolve()
     roots = replica_roots(roots)
@@ -138,6 +190,15 @@ def source_replica(root: Path, roots: tuple[str, ...], replacements: dict[str, b
     before = replica_snapshot(root, roots)
     if any(before.get(name) is None for name in replacements):
         raise ValueError("source replica replacements must name existing files in its roots")
+    closure = None
+    if source is not None:
+        relative_path(source)
+        for name in forced:
+            relative_path(name)
+        if before.get(source) is None:
+            raise ValueError("source replica guard source must name an existing file in its roots")
+        closure = include_closure({**before, **replacements}, source, forced)
+    guarded = _guarded(before, source, forced, closure)
     try:
         with tempfile.TemporaryDirectory(prefix="recover-source-", dir=parent) as temporary:
             destination = Path(temporary)
@@ -151,5 +212,5 @@ def source_replica(root: Path, roots: tuple[str, ...], replacements: dict[str, b
                 path.write_bytes(data)
             yield destination
     finally:
-        if replica_snapshot(root, roots) != before:
+        if _guarded(replica_snapshot(root, roots), source, forced, closure) != guarded:
             raise ValueError("source replica inputs changed during compilation")

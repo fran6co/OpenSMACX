@@ -416,16 +416,21 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
                 raise ValueError("code sections require one entry and at most one uniquely associated recorded tail")
             associated = tuple(item for item in associated_bindings
                                if item.owner.entity_id == binding.origin.entity_id)
-            if associated and (member_functions or len(layout) != 1 or binding.source_spans
+            # A two-section layout is the function's own `.text$x` EH region;
+            # switch data stays bound to the primary body (layout[0]) and the
+            # tail is compared on its own, exactly as without switch data.
+            if associated and (member_functions or len(layout) not in (1, 2) or binding.source_spans
                                or any(item.unit != binding.unit for item in associated)
                                or any(item.parent_entity_id == binding.origin.entity_id for item in fragments)):
                 raise ValueError("associated data requires one independent product source body, not a fragment or EH layout")
             proofs = []
-            for number, span in layout:
+            for position, (number, span) in enumerate(layout):
                 code, relocations, alignment = obj.section_subject(number)
-                if associated:
+                if associated and position == 0:
                     from .associated_binary import compare_associated_code
-                    proof = compare_associated_code(obj, subject, span, image, associated, targets)
+                    proof = compare_associated_code(
+                        obj, subject, span, image, associated, targets,
+                        eh_tail=layout[1][0] if len(layout) == 2 else None)
                 else:
                     proof = compare_bound_code(span, image.read(span), code, relocations, targets,
                                                original_absolute_sites=image.absolute_sites(span), alignment=alignment)

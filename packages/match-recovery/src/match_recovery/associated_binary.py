@@ -481,13 +481,19 @@ def _binding_witness(binding: AssociatedDataBinding) -> dict:
 
 def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeImage,
                             bindings: Sequence[AssociatedDataBinding],
-                            targets: Mapping[str, int | AbsoluteConstant | BoundedTarget | CompilerArtifact]) -> dict:
+                            targets: Mapping[str, int | AbsoluteConstant | BoundedTarget | CompilerArtifact],
+                            *, eh_tail: int | None = None) -> dict:
     """Compare one root code COMDAT and explicitly declared adjacent data.
 
     `span` remains the independently mapped function body. The comparison
     envelope ends at the last declared data span; it does not revise source
     function identity or establish final-link selection/runtime behavior.
     Unsupported evidence raises ValueError so callers preserve UNKNOWN.
+
+    `eh_tail` names the caller's separately mapped `.text$x` EH region of
+    this same function. It admits exactly that one associative code child and
+    exactly one `.xdata$x` FuncInfo child; the caller compares the tail
+    itself. Switch data still belongs only to the primary root body.
     """
     if type(obj) is not Coff or type(subject) is not Symbol or type(image) is not PeImage:
         raise ValueError("associated proof requires native Coff, Symbol, and PeImage values")
@@ -512,15 +518,29 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
         raise ValueError("associated proof refuses an associative root COMDAT")
     associated_children = [child for child, parent in obj.associations.items()
                            if parent == section_number]
+    if eh_tail is not None:
+        tails = [child for child in associated_children if obj.sections[child - 1].name == ".text$x"]
+        funcinfo = [child for child in associated_children if obj.sections[child - 1].name == ".xdata$x"]
+        if (type(eh_tail) is not int or tails != [eh_tail] or len(funcinfo) != 1
+                or obj.code_sections(subject) != (section_number, eh_tail)
+                or obj.sections[eh_tail - 1].flags != 0x60501020
+                or obj.sections[funcinfo[0] - 1].flags != 0x40401040
+                or any(child in obj.associations.values() for child in (eh_tail, funcinfo[0]))):
+            raise ValueError("associated proof requires one exact .text$x EH tail and .xdata$x FuncInfo child")
+        eh_children = {eh_tail, funcinfo[0]}
+    else:
+        eh_children = set()
     debug_witnesses = []
     fpo_children = []
     for child in associated_children:
         name = obj.sections[child - 1].name
+        if child in eh_children:
+            continue
         if name == ".debug$F":
             fpo_children.append(child)
         elif name == ".debug$S":
             from .linked_codeview import source_procedure
-            procedure = source_procedure(obj, child, subject, local_addresses=True)
+            procedure = source_procedure(obj, child, subject, local_addresses=True, eh_tail=eh_tail)
             debug_procedure = asdict(procedure)
             for record in debug_procedure["records"]:
                 record["padding"] = record["padding"].hex()
