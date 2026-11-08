@@ -1460,18 +1460,18 @@ void ReportWin::right_menu(int base_id, int x, int y) {
         || reportwin_input_blocked()) return;
     client_to_screen(&x, &y);
     menu.init(0);
-    menu.add_item(1, label_get(0x894 / 4));
-    menu.add_item(100, label_get(0x910 / 4));
+    menu.add_item(1, StringTable.get(Labels.strings_ptr[0x894 / 4]));
+    menu.add_item(100, StringTable.get(Labels.strings_ptr[0x910 / 4]));
     menu.add_separator(99);
-    menu.add_item(2, label_get(0x898 / 4));
-    menu.add_item(3, label_get(0x89C / 4));
+    menu.add_item(2, StringTable.get(Labels.strings_ptr[0x898 / 4]));
+    menu.add_item(3, StringTable.get(Labels.strings_ptr[0x89C / 4]));
     menu.add_separator(99);
-    menu.add_item(4, label_get(0x8A0 / 4));
-    menu.add_item(5, label_get(0x8A4 / 4));
-    menu.add_item(6, label_get(0x8A8 / 4));
-    menu.add_item(7, label_get(0x8AC / 4));
-    menu.add_item(8, label_get(0xBFC / 4));
-    menu.add_item(9, label_get(0xA54 / 4));
+    menu.add_item(4, StringTable.get(Labels.strings_ptr[0x8A0 / 4]));
+    menu.add_item(5, StringTable.get(Labels.strings_ptr[0x8A4 / 4]));
+    menu.add_item(6, StringTable.get(Labels.strings_ptr[0x8A8 / 4]));
+    menu.add_item(7, StringTable.get(Labels.strings_ptr[0x8AC / 4]));
+    menu.add_item(8, StringTable.get(Labels.strings_ptr[0xBFC / 4]));
+    menu.add_item(9, StringTable.get(Labels.strings_ptr[0xA54 / 4]));
     menu.show(x, y, pop_expire);
     if (GameDataStateStorage.fields_.game_state_ & 0x800) return;
     const int selected = menu.get_selected();
@@ -1490,7 +1490,7 @@ void ReportWin::right_menu(int base_id, int x, int y) {
         case 5: TutWinBaseWindow.gov_on(0x2000000); break;
         case 6: TutWinBaseWindow.gov_on(0x4000000); break;
         case 7: TutWinBaseWindow.gov_on(0x8000000); break;
-        case 8: BaseCurrent->state &= 0x7FFFFFFF; break;
+        case 8: BaseCurrent->governor &= 0x7FFFFFFF; break;
         case 9: TutWinBaseWindow.governor(0); break;
         case 100:
             MapWinTable[0]->set_center(BaseCurrent->x, BaseCurrent->y, 1);
@@ -1654,6 +1654,30 @@ void ReportWin::on_scrolling(int, int pos) {
     }
 }
 
+// F2..F8 and the category arrows select a report page the same way.
+static inline void report_key_page(int page) {
+    ReportIfGlobal.field_8_ = page;
+    if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 5) {
+        ReportIfGlobal.report(page, ReportIfGlobal.report_faction_id(), 0);
+    } else {
+        Win &modal_window = ReportWinGlobal;
+        modal_window.set_modal(0, pop_wait, &MainInterfaceGlobal);
+    }
+}
+
+static inline void report_key_rotate(int moved) {
+    ReportIfGlobal.field_8_ = moved % 7 + 2;
+    switch (ReportIfGlobal.field_8_) {
+    case 2: report_key_page(2); break;
+    case 3: report_key_page(3); break;
+    case 4: report_key_page(4); break;
+    case 5: report_key_page(5); break;
+    case 6: report_key_page(6); break;
+    case 7: report_key_page(7); break;
+    case 8: report_key_page(8); break;
+    }
+}
+
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00498280 0x00498694 0x004986B4 0x00498470
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00498280 0x004986B4 0x004986D0 0x004984A8
 /*
@@ -1705,195 +1729,60 @@ int ReportWin::on_key_click(int, int code) {
         on_button_clicked(1);
         return 1;
     }
-    if (code > 0x70 && code < 0x78) {
+    if (code >= 0x71 && code <= 0x77) {
         if (ReportIfGlobal.field_8_ == code - 0x6F) {
             ReportWinGlobal.Win::release_modal();
             ReportIfGlobal.SubInterface::release_iface_mode();
             return 1;
         }
-        if (code == 0x71) goto select_page_2;
-        if (code == 0x72) {
-select_page_3:
-            ReportIfGlobal.field_8_ = 3;
-            if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 5) {
-                ReportIfGlobal.report(3,
-                                      ReportIfGlobal.report_faction_id(), 0);
-                return 1;
-            }
-            goto modal_report;
-        }
-        if (code == 0x73) {
-select_page_4:
-            ReportIfGlobal.field_8_ = 4;
-            if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 5) {
-                ReportIfGlobal.report(4,
-                                      ReportIfGlobal.report_faction_id(), 0);
-                return 1;
-            }
-            goto modal_report;
-        }
-        if (code == 0x74) {
-select_page_5:
-            ReportIfGlobal.field_8_ = 5;
-            if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 5) {
-                ReportIfGlobal.report(5,
-                                      ReportIfGlobal.report_faction_id(), 0);
-                return 1;
-            }
-            goto modal_report;
-        }
-        if (code == 0x75) {
-select_page_6:
-            ReportIfGlobal.field_8_ = 6;
-            if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 5) {
-                ReportIfGlobal.report(6,
-                                      ReportIfGlobal.report_faction_id(), 0);
-                return 1;
-            }
-            goto modal_report;
-        }
-        if (code == 0x76) {
-select_page_7:
-            ReportIfGlobal.field_8_ = 7;
-            if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 5) {
-                ReportIfGlobal.report(7,
-                                      ReportIfGlobal.report_faction_id(), 0);
-                return 1;
-            }
-            goto modal_report;
-        }
-        {
-select_page_8:
-            ReportIfGlobal.field_8_ = 8;
-            if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 5) {
-                ReportIfGlobal.report(8,
-                                      ReportIfGlobal.report_faction_id(), 0);
-                return 1;
-            }
-            goto modal_report;
-        }
-select_page_2:
-        ReportIfGlobal.field_8_ = 2;
-        if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 5) {
-            ReportIfGlobal.report(2, ReportIfGlobal.report_faction_id(), 0);
-            return 1;
-        }
-modal_report:
-        Win &modal_window = ReportWinGlobal;
-        modal_window.set_modal(0, pop_wait, &MainInterfaceGlobal);
+        if (code == 0x71) report_key_page(2);
+        else if (code == 0x72) report_key_page(3);
+        else if (code == 0x73) report_key_page(4);
+        else if (code == 0x74) report_key_page(5);
+        else if (code == 0x75) report_key_page(6);
+        else if (code == 0x76) report_key_page(7);
+        else if (code == 0x77) report_key_page(8);
         return 1;
     }
-
     if (code < 0x21 || code > 0x28) {
-        if ((code < 0x30 || code > 0x5A) && code != 0x1B) {
-            return 1;
+        if ((code >= 0x30 && code <= 0x5A) || code == 0x1B) {
+            ReportWinGlobal.Win::release_modal();
+            ReportIfGlobal.SubInterface::release_iface_mode();
         }
-        ReportWinGlobal.Win::release_modal();
-        ReportIfGlobal.SubInterface::release_iface_mode();
         return 1;
     }
-
-    if (code == 0x25 || code == 0x27) {
-        int moved = (code == 0x25) ? (ReportIfGlobal.field_8_ + 4)
-                                   : (ReportIfGlobal.field_8_ + 6);
-        int remainder = moved % 7;
-        ReportIfGlobal.field_8_ = remainder + 2;
-
-        switch (remainder) {
-        case 0: goto select_page_2;
-        case 1: goto select_page_3;
-        case 2: goto select_page_4;
-        case 3: goto select_page_5;
-        case 4: goto select_page_6;
-        case 5: goto select_page_7;
-        case 6: goto select_page_8;
-        default: return 1;
-        }
-    }
-
     switch (code) {
-    case 0x21: {
-        if (field_C0F8_ == 0) {
-            return 1;
-        }
-        int range_maximum = static_cast<int>(field_C104_);
-        int range_minimum = static_cast<int>(field_C100_);
-        int target = static_cast<int>(field_C0FC_) -
-                     static_cast<int>(field_C108_);
-        if (range_minimum <= target && range_minimum <= range_maximum) {
-            range_minimum = target;
-            if (range_maximum < target) {
-                range_minimum = range_maximum;
-            }
-        }
-        field_C0FC_ = static_cast<uint32_t>(range_minimum);
+    case 0x25:
+        report_key_rotate(ReportIfGlobal.field_8_ + 4);
+        return 1;
+    case 0x27:
+        report_key_rotate(ReportIfGlobal.field_8_ + 6);
+        return 1;
+    case 0x26:
+        if (field_C0F8_ == 0) return 1;
+        field_C0FC_ = range(field_C0FC_ - 1, field_C100_, field_C104_);
         break;
-    }
-    case 0x22: {
-        if (field_C0F8_ == 0) {
-            return 1;
-        }
-        int range_maximum = static_cast<int>(field_C104_);
-        int range_minimum = static_cast<int>(field_C100_);
-        int target = static_cast<int>(field_C108_) +
-                     static_cast<int>(field_C0FC_);
-        if (range_minimum <= target && range_minimum <= range_maximum) {
-            range_minimum = target;
-            if (range_maximum < target) {
-                range_minimum = range_maximum;
-            }
-        }
-        field_C0FC_ = static_cast<uint32_t>(range_minimum);
+    case 0x28:
+        if (field_C0F8_ == 0) return 1;
+        field_C0FC_ = range(field_C0FC_ + 1, field_C100_, field_C104_);
         break;
-    }
-    case 0x23:
-        if (field_C0F8_ == 0) {
-            return 1;
-        }
-        field_C0FC_ = field_C104_;
+    case 0x21:
+        if (field_C0F8_ == 0) return 1;
+        field_C0FC_ = range(field_C0FC_ - field_C108_, field_C100_, field_C104_);
+        break;
+    case 0x22:
+        if (field_C0F8_ == 0) return 1;
+        field_C0FC_ = range(field_C108_ + field_C0FC_, field_C100_, field_C104_);
         break;
     case 0x24:
-        if (field_C0F8_ == 0) {
-            return 1;
-        }
+        if (field_C0F8_ == 0) return 1;
         field_C0FC_ = field_C100_;
         break;
-    case 0x26: {
-        if (field_C0F8_ == 0) {
-            return 1;
-        }
-        int range_maximum = static_cast<int>(field_C104_);
-        int range_minimum = static_cast<int>(field_C100_);
-        int target = static_cast<int>(field_C0FC_) - 1;
-        if (range_minimum <= target && range_minimum <= range_maximum) {
-            range_minimum = target;
-            if (range_maximum < target) {
-                range_minimum = range_maximum;
-            }
-        }
-        field_C0FC_ = static_cast<uint32_t>(range_minimum);
+    case 0x23:
+        if (field_C0F8_ == 0) return 1;
+        field_C0FC_ = field_C104_;
         break;
     }
-    case 0x28: {
-        if (field_C0F8_ == 0) {
-            return 1;
-        }
-        int range_maximum = static_cast<int>(field_C104_);
-        int range_minimum = static_cast<int>(field_C100_);
-        int target = static_cast<int>(field_C0FC_) + 1;
-        if (range_minimum <= target && range_minimum <= range_maximum) {
-            range_minimum = target;
-            if (range_maximum < target) {
-                range_minimum = range_maximum;
-            }
-        }
-        field_C0FC_ = static_cast<uint32_t>(range_minimum);
-        break;
-    }
-    default:
-        break;
-    }
-
     if (field_C0F8_ != 0) {
         scroll_.set_pos(field_C0FC_);
         redraw();
@@ -1907,8 +1796,7 @@ modal_report:
 // RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:a538e0a3:src/recovered/units/004986d0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 // symbol    ?on_button_clicked@ReportWin@@UAEXH@Z
 void ReportWin::on_button_clicked(int id) {
-    const bool datalink_mode = IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 8;
-    const int page = ReportIfGlobal.field_8_;
+    const int datalink_mode = IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 8;
     if (id < 0x378) {
         if (datalink_mode) return;
         if (id == 9) {
@@ -1917,9 +1805,13 @@ void ReportWin::on_button_clicked(int id) {
             return;
         }
         if (id != 1) return;
-        switch (page) {
-            case 0: DatalinkMain.exec(15, ReportIfGlobal.report_selection_); return;
-            case 2: DatalinkMain.exec(14, static_cast<int>(field_FAB8_) == -1 ? 62 : field_FAB8_); return;
+        switch (ReportIfGlobal.field_8_) {
+            case 2: {
+                int tech = field_FAB8_;
+                if (tech + 1 == 0) tech = 62;
+                DatalinkMain.exec(14, tech);
+                return;
+            }
             case 3: DatalinkMain.exec(0, 43); return;
             case 4: DatalinkMain.exec(10, 29); return;
             case 5: {
@@ -1936,20 +1828,21 @@ void ReportWin::on_button_clicked(int id) {
             case 6: DatalinkMain.exec(14, Facility[65].preq_tech); return;
             case 7: DatalinkMain.exec(3, 7); return;
             case 8: DatalinkMain.exec(1, 4); return;
+            case 0: DatalinkMain.exec(15, ReportIfGlobal.report_selection_); return;
         }
         return;
     }
-    if (page == 2) {
+    if (ReportIfGlobal.field_8_ == 2) {
         const int old_tech = field_FAB8_;
+        id -= 0x378;
         switch (id) {
-            case 0x379: field_FAB8_ = Technology[old_tech].preq_tech_1; break;
-            case 0x37A: field_FAB8_ = Technology[old_tech].preq_tech_2; break;
-            case 0x37B: case 0x37C: case 0x37D: case 0x37E: {
+            case 1: field_FAB8_ = Technology[old_tech].preq_tech_1; break;
+            case 2: field_FAB8_ = Technology[old_tech].preq_tech_2; break;
+            case 3: case 4: case 5: case 6: {
                 int count = 0;
                 for (int i = 0; i < 178; ++i) {
-                    int preq = (i & 1) ? Technology[i >> 1].preq_tech_2
-                                       : Technology[i >> 1].preq_tech_1;
-                    if (preq == old_tech && ++count == id - 0x37A) {
+                    if ((&Technology[i >> 1].preq_tech_1)[i & 1] == old_tech
+                        && ++count == id - 2) {
                         field_FAB8_ = i >> 1;
                     }
                 }
@@ -1957,16 +1850,18 @@ void ReportWin::on_button_clicked(int id) {
             }
         }
         ReportIfGlobal.listBox1_.set_selected_id(field_FAB8_);
-        if (datalink_mode) DatalinkMain.set_index(field_FAB8_, 0);
-        else redraw();
+        if (!datalink_mode) redraw();
+        else DatalinkMain.set_index(field_FAB8_, 0);
         return;
     }
-    if (page == 6 && id == 0xD3E) {
+    if (ReportIfGlobal.field_8_ == 6 && id == 0xD3E) {
         const int target = ReportIfGlobal.buttonGroup3_.field_84_;
-        const int type = static_cast<int>(ReportIfGlobal.buttonGroup4_.field_84_) - 65;
-        if (target > 0 && target < 8 && type >= 0 && type < 5) {
-            sat_attack(ConsoleGlobal.faction_id_, target, type);
-            return;
+        if (target > 0 && target < 8) {
+            const int type = static_cast<int>(ReportIfGlobal.buttonGroup4_.field_84_) - 65;
+            if (type >= 0 && type < 5) {
+                sat_attack(ConsoleGlobal.faction_id_, target, type);
+                return;
+            }
         }
         flatButton9_.hide();
     }
@@ -4588,8 +4483,7 @@ Status: Report dispatch and state transition recovered; the referenced page
         acceptance remain separate obligations.
 */
 void ReportIf::report(int report_id, int faction_id, int selection) {
-    const int previous_page = report_page_history_[0];
-    switch (previous_page) {
+    switch (report_page_history_[0]) {
     case 2:
         listBox1_.close();
         flatButton1_.hide();
@@ -4602,14 +4496,18 @@ void ReportIf::report(int report_id, int faction_id, int selection) {
         listBox1_.close();
         listBox2_.close();
         break;
+    case 1:
+    case 8:
+        break;
     case 4:
         close_ops();
         break;
     case 5:
         if (field_8_ != 4 && field_8_ != 5) {
             WorldClimateWorldWin.hide_all();
-            MainInterfaceGlobal.flat_button_[6].hide();
-            MainInterfaceGlobal.flat_button_[7].hide();
+            for (int i = 6; i <= 7; ++i) {
+                MainInterfaceGlobal.flat_button_[i].hide();
+            }
         }
         break;
     case 6:
@@ -4622,43 +4520,37 @@ void ReportIf::report(int report_id, int faction_id, int selection) {
         break;
     }
 
-    // The original category run is 2..8; category 1 has no report page or
-    // typed control in the class layout. Zero denotes the intel list.
-    if (previous_page >= 2 && previous_page <= 8) {
-        FlatButton &old_button = flatButtonsB_[previous_page - 2];
-        old_button.set_report_page_state(-1);
-        old_button.redraw();
+    // The original tests only for a positive page: page 1 indexes the
+    // control before the category run, exactly as the image does.
+    if (report_page_history_[0] > 0) {
+        flatButtonsB_[report_page_history_[0] - 2].set_report_page_state(-1);
+        flatButtonsB_[report_page_history_[0] - 2].redraw();
     }
-    if (report_id >= 2 && report_id <= 8) {
-        FlatButton &new_button = flatButtonsB_[report_id - 2];
-        new_button.set_report_page_state(2);
-        new_button.redraw();
+    if (report_id > 0) {
+        flatButtonsB_[report_id - 2].set_report_page_state(2);
+        flatButtonsB_[report_id - 2].redraw();
     }
 
     report_selection_ = selection;
     field_8_ = report_id;
     report_faction_id_ = faction_id;
 
-    if (previous_page != 2 && ReportWinGlobal.shared_report_selection() != -1) {
-        int next_focus;
+    if (report_page_history_[0] != 2 && ReportWinGlobal.shared_report_selection() + 1 != 0) {
         if (!(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
             && (GameDataStateStorage.fields_.game_rules_ & RULES_BLIND_RESEARCH)) {
-            if (ReportWinGlobal.shared_research_focus() >= 0 && ReportWinGlobal.shared_research_focus() <= 0x59
-                && has_tech(ReportWinGlobal.shared_research_focus(), faction_id)) {
-                next_focus = ReportWinGlobal.shared_research_focus();
-            } else {
-                next_focus = ReportWinGlobal.shared_research_focus();
+            if (!(ReportWinGlobal.shared_research_focus() >= 0
+                  && ReportWinGlobal.shared_research_focus() <= 0x59
+                  && has_tech(ReportWinGlobal.shared_research_focus(), faction_id))) {
                 for (int tech_id = 0; tech_id < 0x59; ++tech_id) {
-                    if (has_tech(tech_id, faction_id)) {
-                        next_focus = tech_id;
+                    if (has_tech(tech_id, report_faction_id_)) {
+                        ReportWinGlobal.shared_research_focus() = tech_id;
                         break;
                     }
                 }
             }
         } else {
-            next_focus = PlayersData[faction_id].tech_id_researching;
+            ReportWinGlobal.shared_research_focus() = PlayersData[faction_id].tech_id_researching;
         }
-        ReportWinGlobal.shared_research_focus() = next_focus;
         if (ReportWinGlobal.shared_research_focus() < 0 || ReportWinGlobal.shared_research_focus() > 0x59) {
             ReportWinGlobal.shared_research_focus() = 0;
         }
@@ -4673,9 +4565,11 @@ void ReportIf::report(int report_id, int faction_id, int selection) {
         report_page_history_[index] = report_page_history_[index - 1];
     }
     report_page_history_[0] = field_8_;
-    const int current_page = report_page_history_[0];
-    if (current_page == 4 || current_page == 5 || current_page == 7) {
-        if (current_page != report_page_history_[1] || report_topic_changed_) {
+    if (field_8_ == 4 || field_8_ == 5 || field_8_ == 7) {
+        if (field_8_ != report_page_history_[1]) {
+            ReportWinGlobal.field_E270_ = 1;
+        }
+        if (report_topic_changed_) {
             ReportWinGlobal.field_E270_ = 1;
             report_topic_changed_ = 0;
         }
@@ -4688,7 +4582,6 @@ void ReportIf::report(int report_id, int faction_id, int selection) {
 
     reset();
     switch (field_8_) {
-    case 0: draw_intel(); break;
     case 2: draw_labs(); break;
     case 3: draw_energy(); break;
     case 4: draw_ops(); break;
@@ -4696,6 +4589,7 @@ void ReportIf::report(int report_id, int faction_id, int selection) {
     case 6: draw_sat(); break;
     case 7: draw_security(); break;
     case 8: draw_score(); break;
+    case 0: draw_intel(); break;
     }
     MainInterfaceGlobal.soft_update();
     ReportWinGlobal.redraw();
@@ -4825,35 +4719,46 @@ void __cdecl bl_daemon(int context) {
 // RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: source:src/recovered/units/004a4060.cpp", "source:src/reportif.h", "source:src/worldwin.h", "source:src/reportwin.h", "source:src/sprite.h"], "reason": "Advance ReportIf animation with the declared sprite run and coordinate state, drawing to the WorldClimateWorldWin Buffer base and stopping the ReportWin-owned Time at terminal frame 10."}
 void ReportIf::bl_anim() {
     WorldClimateWorldWin.redraw();
-    Buffer *const destination = static_cast<Buffer *>(&WorldClimateWorldWin);
     switch (animation_state_) {
     case -1:
     case 0:
     case 8:
-    case 9:
-        spritesB_[0].draw(destination, spritesB_[0].transparent_index(),
-                          animation_x_, animation_y_);
+    case 9: {
+        Buffer *destination = static_cast<Buffer *>(&WorldClimateWorldWin);
+        Sprite *sprite = &spritesB_[0];
+        sprite->draw(destination,
+                     sprite->transparent_index(), animation_x_, animation_y_);
         ++animation_state_;
         return;
-    case 1:
-    case 7:
-        spritesB_[1].draw(destination, spritesB_[1].transparent_index(),
-                          animation_x_, animation_y_);
+    }
+    case 3:
+    case 5: {
+        Buffer *destination = static_cast<Buffer *>(&WorldClimateWorldWin);
+        Sprite *sprite = &spritesB_[3];
+        sprite->draw(destination,
+                     sprite->transparent_index(), animation_x_, animation_y_);
         ++animation_state_;
         return;
+    }
     case 2:
     case 4:
-    case 6:
-        spritesB_[2].draw(destination, spritesB_[2].transparent_index(),
-                          animation_x_, animation_y_);
+    case 6: {
+        Buffer *destination = static_cast<Buffer *>(&WorldClimateWorldWin);
+        Sprite *sprite = &spritesB_[2];
+        sprite->draw(destination,
+                     sprite->transparent_index(), animation_x_, animation_y_);
         ++animation_state_;
         return;
-    case 3:
-    case 5:
-        spritesB_[3].draw(destination, spritesB_[3].transparent_index(),
-                          animation_x_, animation_y_);
+    }
+    case 1:
+    case 7: {
+        Buffer *destination = static_cast<Buffer *>(&WorldClimateWorldWin);
+        Sprite *sprite = &spritesB_[1];
+        sprite->draw(destination,
+                     sprite->transparent_index(), animation_x_, animation_y_);
         ++animation_state_;
         return;
+    }
     case 10:
         ReportWinGlobal.time1_.stop();
         break;
@@ -5275,14 +5180,55 @@ void ReportIf::on_iface_mouse_leave(int, int) {
 // RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: src/recovered/units/004a6050.cpp retained original identity, full spans and seed history", "recovery/tasks/interface-contract-report-closure.json authorized coupled owner recovery", "original:0x4a6050 complete control/data-access audit; ReportIf declarations and genuine ReportWin control storage"], "reason": "Recover ReportIf's selection callback from the retained seed through its genuine SubInterface owner and ReportWin controls. Its current emitted virtual symbol is recorded separately from the historical catalogue spelling."}
 // symbol    ?on_iface_selected@ReportIf@@UAEXHH@Z
 void ReportIf::on_iface_selected(int item, int) {
-    if (ReportIfGlobal.field_8_ == 2) {
-        if (item < 0x400) {
-            ReportWinGlobal.shared_research_focus() = item;
+    switch (ReportIfGlobal.field_8_) {
+    case 4:
+        if (item >= 1 && item <= 8) {
+            for (int i = 0; i < 0x200; ++i) {
+                sort_entries_[i].base_id = i;
+                sort_entries_[i].value = 0;
+                sort_entries_[i].sorted_base_id = i;
+                sort_entries_[i].sorted_value = 0;
+            }
+            for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
+                set_base(base);
+                base_compute(0);
+                int &value = sort_entries_[base].value;
+                // Original loads are D4/D0/100/108/104, not the seed's
+                // half-sized Ghidra offsets 6A/68/80/84/82.
+                switch (item) {
+                case 1: value = BaseCurrent->mineral_surplus; break;
+                case 2: value = BaseCurrent->nutrient_surplus; break;
+                case 3: value = BaseCurrent->economy_total; break;
+                case 4: value = BaseCurrent->labs_total; break;
+                case 5: value = BaseCurrent->psych_total; break;
+                case 6: value = BaseCurrent->population_size; break;
+                case 7: {
+                    int vehicle = veh_at(BaseCurrent->x, BaseCurrent->y);
+                    if (vehicle >= 0) {
+                        while (Vehs[vehicle].prev_veh_id_stack >= 0)
+                            vehicle = Vehs[vehicle].prev_veh_id_stack;
+                        for (; vehicle >= 0; vehicle = Vehs[vehicle].next_veh_id_stack)
+                            ++value;
+                    }
+                    break;
+                }
+                case 8:
+                    for (int facility = 0; facility < 70; ++facility)
+                        if (BaseCurrent->facilities_built[facility / 8] & (1 << (facility % 8)))
+                            ++value;
+                    for (int project = 0; project < 64; ++project)
+                        if (GameDataStateStorage.fields_.secret_project_.project_base[project] == base)
+                            value += 5;
+                    break;
+                }
+                sort_entries_[base].sorted_value = value;
+            }
+            merge_sort(0, GameDataStateStorage.fields_.base_current_count_ - 1);
+            ReportWinGlobal.field_5A08_ = item;
             ReportWinGlobal.redraw();
-        } else {
-            TutWinBaseWindow.zoom(item - 0x400, 0);
         }
-    } else if (ReportIfGlobal.field_8_ == 3) {
+        break;
+    case 3:
         if (item < 0x400) {
             ReportWinGlobal.shared_report_selection() = item;
             ReportWinGlobal.field_59B0_ = 0;
@@ -5295,49 +5241,15 @@ void ReportIf::on_iface_selected(int item, int) {
         ReportWinGlobal.reset();
         ReportWinGlobal.draw_energy();
         ReportWinGlobal.soft_update();
-    } else if (ReportIfGlobal.field_8_ == 4 && item >= 1 && item <= 8) {
-        for (int i = 0; i < 0x200; ++i) {
-            sort_entries_[i].base_id = i;
-            sort_entries_[i].value = 0;
-            sort_entries_[i].sorted_base_id = i;
-            sort_entries_[i].sorted_value = 0;
+        break;
+    case 2:
+        if (item < 0x400) {
+            ReportWinGlobal.shared_research_focus() = item;
+            ReportWinGlobal.redraw();
+        } else {
+            TutWinBaseWindow.zoom(item - 0x400, 0);
         }
-        for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
-            set_base(base);
-            base_compute(0);
-            int &value = sort_entries_[base].value;
-            // Original loads are D4/D0/100/108/104, not the seed's
-            // half-sized Ghidra offsets 6A/68/80/84/82.
-            switch (item) {
-            case 1: value = BaseCurrent->mineral_surplus; break;
-            case 2: value = BaseCurrent->nutrient_surplus; break;
-            case 3: value = BaseCurrent->economy_total; break;
-            case 4: value = BaseCurrent->labs_total; break;
-            case 5: value = BaseCurrent->psych_total; break;
-            case 6: value = BaseCurrent->population_size; break;
-            case 7: {
-                int vehicle = veh_at(BaseCurrent->x, BaseCurrent->y);
-                if (vehicle >= 0) {
-                    while (Vehs[vehicle].prev_veh_id_stack >= 0)
-                        vehicle = Vehs[vehicle].prev_veh_id_stack;
-                    for (; vehicle >= 0; vehicle = Vehs[vehicle].next_veh_id_stack)
-                        ++value;
-                }
-                break;
-            }
-            case 8:
-                for (int facility = 0; facility < 70; ++facility)
-                    if (BaseCurrent->facilities_built[facility / 8] & (1 << (facility % 8)))
-                        ++value;
-                for (int project = 0; project < 64; ++project)
-                    if (base_project(project) == base) value += 5;
-                break;
-            }
-            sort_entries_[base].sorted_value = value;
-        }
-        merge_sort(0, GameDataStateStorage.fields_.base_current_count_ - 1);
-        ReportWinGlobal.field_5A08_ = item;
-        ReportWinGlobal.redraw();
+        break;
     }
 }
 
@@ -5522,34 +5434,29 @@ void ReportIf::on_iface_group_clicked(int group, int, int item) {
         switch (item) {
         case 0x92:
             field_1E1D8_ = 1;
-            goto redraw_tail;
+            break;
         case 0x93:
             field_1E1D8_ = 0;
-            goto redraw_tail;
-        default:
-            goto map_mode;
+            break;
         }
-    }
-    if (group == 4) {
+    } else if (group == 4) {
         if (item == 0xD0B) {
             flatButton5_.hide(); flatButton6_.hide(); flatButton7_.hide();
             flatButton8_.hide(); flatButton9_.hide(); flatButton10_.hide();
             flatButton11_.hide();
-            goto redraw_tail;
+        } else {
+            flatButton5_.show(0); flatButton6_.show(0); flatButton7_.show(0);
+            flatButton8_.show(0); flatButton9_.show(0); flatButton10_.show(0);
+            flatButton11_.show(0);
         }
-        flatButton5_.show(0); flatButton6_.show(0); flatButton7_.show(0);
-        flatButton8_.show(0); flatButton9_.show(0); flatButton10_.show(0);
-        flatButton11_.show(0);
     } else if (group == 0x6A) {
         ReportWinGlobal.flatButton9_.reset_field_A9C_if_ungrouped();
         ReportWinGlobal.flatButton9_.Win::hide();
     } else if (group == 0xCE) {
         ReportWinGlobal.flatButton9_.Win::show(0);
     }
-map_mode:
     if (item == 0x3EE) WorldClimateWorldWin.set_world_map();
     else if (item == 0x3EF) WorldClimateWorldWin.set_detail_map();
-redraw_tail:
     if (field_1E234_ == 0) {
         on_redraw();
         MainInterfaceGlobal.soft_update();
@@ -5979,7 +5886,7 @@ void ReportIf::close_energy() {
 void ReportIf::draw_ops() {
     if (report_page_history_[1] != 4 && report_page_history_[1] != 5) {
         WorldClimateWorldWin.show_all();
-        for (int button = 6; button < 8; ++button) {
+        for (int button = 6; button <= 7; ++button) {
             MainInterfaceGlobal.flat_button_[button].show(0);
         }
     }
