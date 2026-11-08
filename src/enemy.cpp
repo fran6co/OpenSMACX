@@ -2003,25 +2003,41 @@ over, and both survivors are equivalences rather than untested behaviour.
     writes a local the callee cannot see. Neither statement observes the other's effect, in
     either order.
 */
+// map_loc spelled through MapTiles; map.h's map_tiles() form flips the
+// MapLongitude/tile-base register tie here.
+static inline Map *set_course_tile(int x, int y) {
+    return &MapTiles[(x >> 1) + y * MapLongitude];
+}
+
+// wrap_map_x reading MapLongitudeBounds at each use instead of through
+// map.h's local; that local flips the image's lea operand order.
+static inline int set_course_wrap_x(int x) {
+    if (!(MapIsFlat & 1)) {
+        if (x < 0) return x + MapLongitudeBounds;
+        if (x >= MapLongitudeBounds) return x - MapLongitudeBounds;
+    }
+    return x;
+}
+
 void __cdecl set_course(int veh_id, char type, int x, int y) {
     Veh &veh = Vehs[veh_id];
-    int veh_region = map_loc(veh.x, veh.y)->region;
+    int veh_region = set_course_tile(veh.x, veh.y)->region;
     int base_id = base_at(veh.x, veh.y);
-    Map *destination = map_loc(x, y);
+    Map *destination = set_course_tile(x, y);
     int dst_region = destination->region;
     if (veh_region == dst_region
-        && (map_loc(veh.x, veh.y)->climate & ~0x1F) < ALT_BIT_SHORE_LINE) {
+        && (set_course_tile(veh.x, veh.y)->climate & ~0x1F) < ALT_BIT_SHORE_LINE) {
         go_to(veh_id, type, x, y);
         return;
     }
     int best_frontage = ((destination->climate & ~0x1F) >= ALT_BIT_SHORE_LINE) ? 0 : -1;
     for (int i = 0; i < 21; i++) {   // the destination's own base radius
-        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
+        int x_radius = set_course_wrap_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (!on_map(x_radius, y_radius)) {
             continue;
         }
-        Map *anchorage = map_loc(x_radius, y_radius);
+        Map *anchorage = set_course_tile(x_radius, y_radius);
         if ((anchorage->climate & ~0x1F) >= ALT_BIT_SHORE_LINE) {
             continue;
         }
@@ -2039,7 +2055,7 @@ void __cdecl set_course(int veh_id, char type, int x, int y) {
             if (!on_map(x_adj, y_adj)) {
                 continue;
             }
-            Map *shore = map_loc(x_adj, y_adj);
+            Map *shore = set_course_tile(x_adj, y_adj);
             if ((shore->climate & ~0x1F) < ALT_BIT_SHORE_LINE) {
                 continue;
             }
@@ -3158,18 +3174,24 @@ the only caller - passes a unit's own sign-extended coordinates.
 //        (0 disagree); best flag set's similarity 0.782 -> 0.883
 //        (/O2 /Oi- /GR- /Oy- /GX).
 */
+// region_at spelled through MapTiles; map.h's map_tiles() form flips the
+// MapLongitude/tile-base register tie here.
+static inline int alien_region_at(int x, int y) {
+    return MapTiles[(x >> 1) + y * MapLongitude].region;
+}
+
 int __cdecl alien_base(int veh_id, int x, int y) {
     int best_value = 9999;
     BaseFindDist = 9999;
     int base_id_best = -1;
-    const int region = region_at(x, y);
+    const int region = alien_region_at(x, y);
     for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
         if (Vehs[veh_id].proto_id == BSC_SEALURK) {
-            if (region < MaxRegionLandNum && region != (int)region_at(Bases[base_id].x, Bases[base_id].y)
+            if (region < MaxRegionLandNum && region != (int)alien_region_at(Bases[base_id].x, Bases[base_id].y)
                 && !base_on_sea(base_id, region)) {
                 continue;
             }
-        } else if (region < MaxRegionLandNum && region != (int)region_at(Bases[base_id].x, Bases[base_id].y)) {
+        } else if (region < MaxRegionLandNum && region != (int)alien_region_at(Bases[base_id].x, Bases[base_id].y)) {
             continue;
         }
         const int base_y = Bases[base_id].y;

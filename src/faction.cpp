@@ -6138,7 +6138,7 @@ int __cdecl propose_treaty(int actor, int other)
             offer_taken = 1;
             int friction_units = 0;
             int divisor = 2;
-            int remaining = treaty_score / 10;
+            int remaining = treaty_score / 5;
             int chunk = 10;
             while (remaining > 0) {
                 friction_units += range(remaining, 0, chunk) / divisor;
@@ -8124,7 +8124,7 @@ int __cdecl do_withdrawal(int faction_id, int other_faction_id) {
     for (int veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; ++veh_id) {
         if (Vehs[veh_id].faction_id != other_faction_id) continue;
         const int proto_id = Vehs[veh_id].proto_id;
-        if (VehPrototypes[proto_id].armor_id == 0x0B) continue;
+        if (VehPrototypes[proto_id].plan == PLAN_INFO_WARFARE) continue;
 
         const int x = Vehs[veh_id].x;
         const int y = Vehs[veh_id].y;
@@ -8165,7 +8165,9 @@ int __cdecl do_withdrawal(int faction_id, int other_faction_id) {
 
         const int base_id = base_find(x, y, other_faction_id);
         if (base_id >= 0) {
-            veh_drop(veh_lift(veh_id), Bases[base_id].x, Bases[base_id].y);
+            const int base_y = Bases[base_id].y;
+            const int base_x = Bases[base_id].x;
+            veh_drop(veh_lift(veh_id), base_x, base_y);
             Vehs[veh_id].visibility = 0;
             Vehs[veh_id].order = ORDER_NONE;
             Vehs[veh_id].state &= 0xFCFFBDFF;

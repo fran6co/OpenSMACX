@@ -4259,7 +4259,7 @@ void __cdecl faction_upkeep(int faction_id) {
             && has_tech(Rules.tech_economic_victory, faction_id)
             && (GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_ECONOMIC)) {
             PlayersData[faction_id].corner_market_turn =
-                Rules.turns_corner_gbl_energy_mrkt + GameDataStateStorage.fields_.turn_current_num_;
+                GameDataStateStorage.fields_.turn_current_num_ + Rules.turns_corner_gbl_energy_mrkt;
             PlayersData[faction_id].corner_market_active = corner_market(faction_id);
             PlayersData[faction_id].energy_reserves -= corner_market(faction_id);
             parse_set(Players[faction_id].is_leader_female, 0);
