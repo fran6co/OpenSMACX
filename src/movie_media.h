@@ -56,7 +56,8 @@ struct MediaPixelFormat {
   DWORD combined_component_mask;                     // +44
   DWORD total_component_bits;                        // +48
 
-  void sub_5cc450();                                 // ORIGINAL 005CC450
+  // 5CBE30 passes its runtime in EDX (5CC0F2); 5CC450 never reads it.
+  void __fastcall sub_5cc450(MediaRuntime *unused_runtime); // ORIGINAL 005CC450
 };
 
 struct MediaPaletteLookupStorage {
@@ -120,7 +121,8 @@ struct MediaDescriptor {
   BYTE unresolved_original_storage_88_8b[4];      // +88..+8b
   DWORD elapsed_ticks;                           // +8c
   LONG progress_counter;                         // +90; Interlocked increments
-  LONG progress_value;                           // +94
+  // Shared with the media worker thread; the image reloads it per test.
+  volatile LONG progress_value;                  // +94
   LONG state;                                    // +98; mixed atomic/plain use
   HWND window;                                   // +9c
   HMMIO stream;                                  // +a0
@@ -227,15 +229,18 @@ struct MediaRuntime {
   DWORD format_dispatch_60;                       // +060; parser-written; dispatches 0/7/10
   MediaQueueRecord output_records[24];            // +064..+1e3
   MediaQueueRecord read_records[24];              // +1e4..+363
-  LONG buffer_setup_finished;                     // +364
+  // +364/+380/+384 are shared with the media worker thread; the image
+  // loads each into a register before every compare.
+  volatile LONG buffer_setup_finished;            // +364
   DWORD playback_buffer_bytes;                    // +368
-  DWORD playback_cursor;                          // +36c
+  // Also advanced by the 5CDFA0 output thread; 5CE4B0 orders its store.
+  volatile DWORD playback_cursor;                 // +36c
   LONG output_consumer_cursor;                    // +370
   LONG output_producer_cursor;                    // +374
   LONG read_consumer_cursor;                      // +378
   LONG read_producer_cursor;                      // +37c
-  LONG pending_read_records;                      // +380
-  LONG pending_output_records;                    // +384
+  volatile LONG pending_read_records;             // +380
+  volatile LONG pending_output_records;           // +384
   LONG read_counter;                              // +388
   LONG output_counter;                            // +38c
   LONG output_lock_word;                          // +390
