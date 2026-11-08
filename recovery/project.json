@@ -500,17 +500,6 @@
           "-c"
         ]
       },
-      "src/dipedit.cpp": {
-        "flags": [
-          "/c",
-          "/O2",
-          "/Gy",
-          "/GR-",
-          "/Oy-",
-          "/GX",
-          "/Ob1"
-        ]
-      },
       "src/prefwin_geometry.cpp": {
         "flags": [
           "/c",

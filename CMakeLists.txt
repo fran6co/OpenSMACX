@@ -252,7 +252,6 @@ set(OPENSMACX_SOURCES
     src/console.cpp
     src/console_commands.cpp
     src/uv2player.cpp
-    src/dipedit.cpp
     src/sound.cpp
     src/spritebox.cpp
     src/listbox.cpp
@@ -498,7 +497,6 @@ set_source_files_properties(
     src/messagewin.cpp
     src/setupwin.cpp
     src/path.cpp
-    src/dipedit.cpp
     src/picktech.cpp
     src/pickwin.cpp
     src/council.cpp
@@ -549,13 +547,11 @@ set_source_files_properties(
 # Keep memory-call selection at TU scope; this is an evidence-led build policy,
 # not proof of the original command line. Source byte loops retain inline fills.
 set_property(SOURCE src/buffer.cpp APPEND PROPERTY COMPILE_OPTIONS "/Oi-")
-# Preserve original out-of-line close/bit-helper calls in these owners.
-# Append so DipEdit keeps its independently measured frame-based context.
+# Preserve original out-of-line close/bit-helper calls in this owner.
 # Video and MCI use separate implementation units under default app inlining.
 # This optimized matching exception must not override Debug's /Ob0.
 set_property(SOURCE
     src/pulldown.cpp
-    src/dipedit.cpp
     APPEND PROPERTY COMPILE_OPTIONS "$<$<NOT:$<CONFIG:Debug>>:/Ob1>")
 # Preserve the original frame-based AlphaMovie owner context without changing
 # its independently measured /Ob2 inlining policy.

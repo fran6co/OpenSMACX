@@ -78,7 +78,7 @@
   */
 class DipEdit : public GraphicWin {
  public:
-  // 0x004DB080 (?init@DipEdit@@QAEXH@Z), defined in src/dipedit.cpp. The int
+  // 0x004DB080 (?init@DipEdit@@QAEXH@Z), defined in src/console_commands.cpp. The int
   // is the faction whose status the window opens on: init stores it straight
   // into faction_index_ (`mov dword ptr [esi+0xa1c], ecx` at 0x004DB0BA) and
   // then seeds selected_target_ from it.
@@ -109,15 +109,15 @@ class DipEdit : public GraphicWin {
   void sync_agenda_bit(int bit);   // 0x004DA7E0 (catalogue ?UNK2@)
   void set_treaty_bit(int bit);    // 0x004DA870 (catalogue ?UNK3@)
   void set_agenda_bit(int bit);    // 0x004DA900 (catalogue ?UNK4@)
-  // 0x004D9DE0, defined in src/dipedit.cpp. The click handler the five
+  // 0x004D9DE0, defined in src/console_commands.cpp. The click handler the five
   // FlatButtons share: `a1` is the control id, -1 being the window's own
   // close row (release_modal and nothing else), 1 the treaty/agenda row,
   // 2 the integrity prompt and 3 the atrocity prompt.
   void on_button_clicked(int button_id);
-  // 0x004DA990, defined in src/dipedit.cpp.
+  // 0x004DA990, defined in src/console_commands.cpp.
 
   void read_check();
-  void do_check();  // 0x004DADA0, defined in src/dipedit.cpp
+  void do_check();  // 0x004DADA0, defined in src/console_commands.cpp
   DipEdit() { ; }
   // NO USER DESTRUCTOR: ??1DipEdit (0x004E2240) is compiler-generated. The
   // image has no vptr stores at its entry (a user-declared empty dtor emits

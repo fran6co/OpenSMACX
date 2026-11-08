@@ -149,38 +149,6 @@ Status: Complete
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
 
-// Current structural interpretation supersedes the seed-history binding's
-// integer parallel-base rationale: pinned 4D5F92 loads arg0 as the parallel
-// cursor and 4D5F95 loads arg1 as the sorted values. The body advances both by
-// four bytes and passes adjacent int cells to swap(int *, int *).
-// This sorting family is homed beside application numeric primitives; this does
-// not assert an original translation-unit boundary or identify either array's
-// application-level owner. No direct native caller establishes such a domain.
-// The original integer address arithmetic's invalid-pointer/address-wrap
-// domain and 32-bit count-1 overflow behavior are not resolved by this typed
-// source contract. This is not an exactness or bug-fix claim.
-/*
-Purpose: Bubble-sort one int array descending while applying the identical
-         exchanges to a parallel array addressed relative to it.
-// ORIGINAL: 0x004D5F70 sub_4d5f70 0x004D5F70-0x004D5FE6 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original4D5F70..4D5FE6; retired seed git:b18d3ac8:src/unrecovered/004d5f70.cpp records the same identity and spans.", "The pinned body calls integer swap at 0x628A50; the typed declaration and implementation are owned by general.h/general.cpp.", "The parallel array is reached by the same base-plus-index arithmetic the seed measured."], "reason": "Coverage transcription of the paired bubble sort with the source-owned integer swap; the parallel-array base stays an int because no owning array is named anywhere in the tree."}
-// symbol    _sub_4d5f70
-Status: Coverage transcription - unclaimed body
-*/
-extern "C" void __cdecl sub_4d5f70(int *parallel, int *values, int count) {
-    int swapped;
-    do {
-        swapped = 0;
-        for (int i = 0; i < count - 1; ++i) {
-            if (values[i] < values[i + 1]) {
-                swapped = 1;
-                swap(&values[i], &values[i + 1]);
-                swap(&parallel[i], &parallel[i + 1]);
-            }
-        }
-    } while (swapped != 0);
-}
-
 /*
 Purpose: For the count, sort both id and value arrays by the least to greatest value (ascending).
 // ORIGINAL: 0x005B5690 ?sort@@YAXHPAHPAH@Z 0x005B5690-0x005B56F5 BYTE_EXACT

@@ -1057,38 +1057,6 @@ extern "C" int __cdecl sub_4e7f80(int radius_index) {
     return sum;
 }
 
-/*
-Purpose: Bubble-sort an id list into base-name order: repeatedly walk the
-         caller's id array comparing the named Bases records case-blind,
-         swapping neighbours whose names order backwards, until a pass
-         makes no swap.
-
-// ORIGINAL: 0x004D5FF0 sub_4d5ff0 0x004D5FF0-0x004D606E FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence":["The pinned routine repeatedly compares Bases[id].name_string using case-insensitive string comparison and swaps neighboring entries in the caller-owned id list.","The current Base array/count are source-owned in base.h/base.cpp; the global address-derived identity remains sub_4d5ff0, not a newly named Base method.","The one-element/negative-count early return, repeated bubble passes, comparator polarity, and caller-list mutation are preserved."],"reason":"Move the existing base-name id sort to the owner of its genuine Base storage while retaining the original global identity and exact comparison/swap control flow."}
-// symbol    _sub_4d5ff0
-// size      126 bytes
-// prototype
-// callers   0   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00628A50 0x0064FD20
-Return Value: n/a
-Status: Coverage transcription - unclaimed body
-*/
-// DEC wraps at entry; the comparison latch reloads the live base count.
-extern "C" void __cdecl sub_4d5ff0(int *id_list) {
-    int did_swap;
-    do {
-        did_swap = 0;
-        for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_ - 1; i++) {
-            if (_stricmp(Bases[id_list[i]].name_string, Bases[id_list[i + 1]].name_string) > 0) {
-                did_swap = 1;
-                swap(&id_list[i], &id_list[i + 1]);
-            }
-        }
-    } while (did_swap);
-}
-
 // ORIGINAL: 0x004E4B80 ?base_init@@YAHHHH@Z 0x004E4B80-0x004E5250
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004e4b80.cpp: canonical identity, original spans and retained seed history", "source:src/base.h: real Base storage and lifecycle contracts", "source:recovery/tasks/base-lifecycle-owner-closure.json: bounded coordinator authorization"], "reason": "The original base creation operation owns initialization of Bases records and faction base counts; source expresses real Base/PlayerData fields, facility bitmaps, technology and named UI/replay dependencies."}
 // TRIED: `>= 0x200` guard (matches original cmp/jl) over `> 0x1ff` moved divergence #4->#12; raw byte-offset arithmetic on the fixed 0x97dXXX/0x96XXXX globals (record stride 0x134, per-faction stride 0x20cc) rather than the Base struct - field order in src/base.h is only size-checked, not per-field, and several 0x97d0cc-family writes index past their nominal field width (a genuine original OOB-write reproduced faithfully). Not chased to byte-exact given size (1744 bytes / ~330 asm lines).
