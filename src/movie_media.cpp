@@ -2538,7 +2538,7 @@ extern "C" void __fastcall sub_5cd980(MediaRuntime *runtime,
   }
 }
 
-// ORIGINAL: 0x005CDA30 sub_5cda30 0x005CDA30-0x005CDAC4
+// ORIGINAL: 0x005CDA30 sub_5cda30 0x005CDA30-0x005CDAC4 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x5CDA30 reloads runtime descriptor after each 0x5D1278 call before the width test and after the inner loop before the height test.", "The packed-output helper 0x5D2536 writes through the supplied byte destination using memcpy. The flags 0x800 path in 0x5CC940 takes caller-owned provided_output_base_4c without a no-alias contract, so output can alter descriptor storage or the runtime descriptor pointer.", "No in-tree caller is shown deliberately creating that alias; preserve its defined source effects without asserting that normal playback exercises it. Context initialization, pitch/block increments and unchecked dereferences remain unchanged."], "reason": "Retain live descriptor bounds around each pixel-block decode instead of caching a descriptor reference across output stores. This preserves the original permitted alias effects and unchecked loop behavior."}
 // TRIED: nothing forced the `push ecx`-as-spill-slot / `pop ecx` prologue trick the original uses for one local; plain locals compile 6 bytes shorter (142 vs 148), diverging early
 // symbol    @sub_5cda30@20
@@ -2552,6 +2552,8 @@ extern "C" void __fastcall sub_5cda30(MediaRuntime *runtime,
   runtime->decoder_context_3f8.predictor_4fc = 0;
   runtime->decoder_context_3f8.predictor_4f8 = 0;
   (void)unused;
+  // The image reloads pitch from its incoming stack slot at 0x5CDA95 per row.
+  const volatile unsigned int &pitch_reload = pitch;
   BYTE *row_destination = destination;
   for (DWORD block_y = 0; block_y < runtime->descriptor->output_height_60;
        block_y += 0x10) {
@@ -2562,7 +2564,7 @@ extern "C" void __fastcall sub_5cda30(MediaRuntime *runtime,
                  &runtime->decoder_context_3f8);
       block_destination += 0x20;
     }
-    row_destination += pitch / 2 * 32;
+    row_destination += pitch_reload / 2 * 32;
   }
 }
 
