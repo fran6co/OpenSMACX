@@ -1354,7 +1354,7 @@ const size_t PcxHeaderSize = 0x80;
 /*
 Purpose: Decode a PCX image out of memory into this buffer, then install the
          256 colours that follow it and publish them through the palette.
-// ORIGINAL: 0x005E2690 ?load_pcx@Buffer@@QAEHPAEKPAVPalette@@HH@Z 0x005E2690-0x005E2AF7
+// ORIGINAL: 0x005E2690 ?load_pcx@Buffer@@QAEHPAEKPAVPalette@@HH@Z 0x005E2690-0x005E2AF7 BYTE_EXACT
 // sync_to_palette, get_data and free_data are called and expand inline; the
 // owner is fetched twice; `run` is a byte local, which fills the 0xfc frame.
 // Earlier open-coded palette publish set has_palette_/palette_ even without
@@ -8034,7 +8034,7 @@ int Buffer::write_pcx(char *filename) {
 }
 
 
-// ORIGINAL: 0x005DF910 ?write_bmp@Buffer@@QAEHPAD@Z 0x005DF910-0x005DFB3F
+// ORIGINAL: 0x005DF910 ?write_bmp@Buffer@@QAEHPAD@Z 0x005DF910-0x005DFB3F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned write_bmp epilogue ends with RET4 at5DFB3C..5DFB3F;5DFB3F is alignment NOP. The independent5DFB40..5DFB48 body is MOV EAX,8;RET16, corroborated by both IDA catalogues. It is not writer padding or a writer cold block.", "Historical unclaimed seed extent5DF910..5DFB48 is retained here as provenance. The separate5DFB40 entry has no established C++ owner or signature; do not count it implemented by this writer, create an adapter, or infer ownership merely from adjacency. No byte claim was attached to the combined extent."], "reason": "Bind the BMP writer only to its reachable original body; the old seed extent swallowed a separate still-unowned constant-return entry."}
 // size      559 bytes
 // prototype int (__thiscall ?write_bmp@Buffer@@QAEHPAD@Z)(Buffer* this, char*)
