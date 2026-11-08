@@ -7138,12 +7138,16 @@ void Win::left_down_event(int x, int y, int from_parent) {
 // bar height, scroll.cpp as a scrollbar thickness, and NOTHING in the tree
 // writes it, so neither name is evidenced over the other.
 void Win::nonclient_to_client(RECT * rect) {
+    // stand-in: reading 0x009B8DD4 through a pointer local reproduces the
+    // image's border-block registers (it matched with the old fixed-address
+    // binding); plain reads of the global do not.
+    int *thickness = &ScrollDefaultThickness;
     if (rect != 0) {
         if ((iFlags_ & 4) != 0) {
-            rect->bottom -= ScrollDefaultThickness;
+            rect->bottom -= *thickness;
         }
         if ((iFlags_ & 8) != 0) {
-            rect->right -= ScrollDefaultThickness;
+            rect->right -= *thickness;
         }
         if (((iFlags_ & 0x400) != 0) || ((iFlags_ & 0x11) != 0)) {
             int border = border_thickness_;

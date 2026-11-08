@@ -2556,9 +2556,10 @@ void Console::move_cursor(int direction) {
         ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_]);
     int new_y = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_] +
                 VehMoveDeltaY[direction];
-    if (!set_cursor(new_x, new_y)) {
-        console_map_win()->focus(new_x, new_y);
+    if (set_cursor(new_x, new_y)) {
+        return;
     }
+    console_map_win()->focus(new_x, new_y);
 }
 
 // ORIGINAL: 0x005147E0 ?set_cursor@Console@@QAEXHH@Z 0x005147E0-0x0051487D FILE BYTE_EXACT

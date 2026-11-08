@@ -924,19 +924,7 @@ int Popup::on_exec() {
     const int total = unit_ids_.entry_count_;
     StringTemp[0] = 0;
 
-    if (unit_ids_.entry_count_ - 1 >= -1) {
-        unit_ids_.current_ = unit_ids_.head_;
-        if (abs(-1) <= unit_ids_.entry_count_) {
-            int n = abs(-1);
-            if (n > 0) {
-                do {
-                    n--;
-                    unit_ids_.current_ = unit_ids_.current_->previous;
-                } while (n != 0);
-            }
-            unit_ids_.current_position_ = unit_ids_.entry_count_ - 1;
-        }
-    }
+    unit_ids_.seek_pos(-1);
 
     for (int i = 0; i < total; i++) {
         if (i != 0) {

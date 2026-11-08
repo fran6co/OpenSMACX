@@ -6008,8 +6008,8 @@ void MapWin::draw_wars() {
     Buffer::set_font(font, 0, 0, 0);
 
     for (int faction = 1; faction < MaxPlayerNum; ++faction) {
-        parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
         StringTemp[0] = '\0';
+        parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
         strcat(StringTemp, Players[faction].noun_faction);
         strcat(StringTemp, ": ");
         Buffer::set_text_color(InfoFactionTextColors[faction], 0, 1, 1);

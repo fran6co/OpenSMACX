@@ -2920,10 +2920,14 @@ void Console::editor_terrain() {
         }
         StringTemp[0] = 0;
         strcat(StringTemp, StringTable.get(Terraforming[index].name));
+        // stand-in: named local keeps name_sea's load in eax ahead of `mov ecx, StringTable` (pattern 133).
+        char *name_sea = Terraforming[index].name_sea;
         if (strcmp(StringTable.get(Terraforming[index].name),
-                   StringTable.get(Terraforming[index].name_sea)) != 0) {
+                   StringTable.get(name_sea)) != 0) {
             strcat(StringTemp, "/");
-            strcat(StringTemp, StringTable.get(Terraforming[index].name_sea));
+            // stand-in: a second named local, as above; reusing name_sea keeps it in a register.
+            char *sea_label = Terraforming[index].name_sea;
+            strcat(StringTemp, StringTable.get(sea_label));
         }
         popup.dialogs().item(StringTemp, index);
         if (index == MapEditorPaintId - 6) {
