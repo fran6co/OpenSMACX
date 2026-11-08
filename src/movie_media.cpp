@@ -1757,7 +1757,7 @@ int MediaRuntime::setup_sound_device() {
   return 0;
 }
 
-// ORIGINAL: 0x005CE4B0 sub_5ce4b0 0x005CE4B0-0x005CE61A
+// ORIGINAL: 0x005CE4B0 sub_5ce4b0 0x005CE4B0-0x005CE61A BYTE_EXACT
 // symbol    ?create_playback_buffer@MediaRuntime@@QAEHXZ
 // kind      game
 // TRIED: `ecx` does real work with no stack access at entry (reads `[ecx]` before any `[ebp+..]`), so this is a __thiscall member - written as `ClassX::sub_5ce4b0()`, same precedent as 0x004E3300's ClassX::sub_4e3300. The six indirect calls are DirectDraw-COM-shaped (self pushed explicitly alongside the args, not via ECX), spelled with `__stdcall` function-pointer typedefs per call site rather than a shared VCall shim, since two calls land on offset 0xc through DIFFERENT vtables (one via `[this+0x54]`, two via `this->[0]->0x5c`) with different arities (4 args vs 2). Local DDSURFACEDESC/DDPIXELFORMAT-like scratch structs are modelled as plain structs, not the overlapping/self-referential stack layout the original build (a nested pointer field pointing back into the same frame) - not chased further. 0.83 mnemonic similarity; first divergence at #3 is the prologue register-save order, which follows from local-variable layout this body does not reproduce.
@@ -2424,7 +2424,7 @@ extern "C" void __cdecl sub_5caab0(void *argument) {
 }
 #pragma inline_depth(8)
 
-// ORIGINAL: 0x005CD750 sub_5cd750 0x005CD750-0x005CD8C5
+// ORIGINAL: 0x005CD750 sub_5cd750 0x005CD750-0x005CD8C5 BYTE_EXACT
 // TRIED: `extern "C" int __cdecl sub_5cd750()` fallback head; the entry `mov esi,ecx / mov [ebp-4],edx` with no stack reads is __fastcall(int*, uint*), so the signature was changed.
 // symbol    @sub_5cd750@8
 // kind      game
