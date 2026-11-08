@@ -34,10 +34,8 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682078 selects initializer0x432850..0x432866, registering exit0x432870..0x43287a. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x71f2b0 bound to?TutWinDesWindow@@3VDesignWin@@A.", "Original startup instruction evidence: [[\"0x432850\", \"mov\", \"ecx, 0x71f2b0\"], [\"0x432855\", \"call\", \"0x434480\"], [\"0x43285a\", \"push\", \"0x432870\"], [\"0x43285f\", \"call\", \"0x645398\"], [\"0x432864\", \"pop\", \"ecx\"], [\"0x432865\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x432870\", \"mov\", \"ecx, 0x71f2b0\"], [\"0x432875\", \"jmp\", \"0x43ecb0\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/designwin.cpp COFF selects _$E21 via .CRT$XCU, registering _$E19. Startup relocation targets: [\"?TutWinDesWindow@@3VDesignWin@@A\", \"??0DesignWin@@QAE@XZ\", \"_$E19\", \"_atexit\"]; exit targets: [\"?TutWinDesWindow@@3VDesignWin@@A\", \"??1DesignWin@@UAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f2dc; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned ?TutWinDesWindow@@3VDesignWin@@A; preserve complete original identity and remaining restoration/structure obligations."}
 // symbol    _$E14
 #include "stdafx.h"
-// stand-in: file-state lever (pattern 142). One member declaration here flips
-// the VC6 operand-order tie in draw_armor (0x00435580, top/bottom loads) that
-// the 2026-11-07 map.h/veh.h/win.h header changes flipped; no source spelling
-// found. Not referenced anywhere.
+// Stand-in for the witnessed DesignWin TU declaration that preserves the
+// compiler's operand tie in draw_armor (0x00435400).
 struct DesignWinFileStateStandIn {
     void unused();
 };
@@ -337,13 +335,87 @@ int SelectPartWin::on_key_click(int, int key) {
     const int first_cached = field_2B60_;
     const int highlight = field_2B80_;
 
+    // Case blocks follow the image's block order.
     switch (key - 13) {
-        case 0:  // 13, Enter: release modal
-            release_modal();
-            break;
         case 14:  // 27, escape: drop the selection, then release modal
             field_2B80_ = -1;
             release_modal();
+            break;
+        case 0:  // 13, Enter: release modal
+            release_modal();
+            break;
+        case 25:   // 38, up
+        case 91: { // 104, numpad 8
+            const int per_row = field_2B6C_;
+            if (highlight < per_row) return 1;
+            do {
+                field_2B80_ -= per_row;
+            } while (field_2B80_ >= first_cached + field_2B64_);
+            if (field_2B80_ < first_cached) {
+                field_2B60_ = first_cached - per_row;
+                scroll_.set_pos(scroll_.position_ - 1);
+            }
+            break;
+        }
+        case 27:   // 40, down
+        case 85: { // 98, numpad 2
+            const int per_row = field_2B6C_;
+            const int count = field_2B74_;
+            if (highlight > count - per_row - 1) {
+                if (count <= field_2B64_) return 1;
+                scroll_.set_pos(scroll_.position_ + 1);
+                field_2B60_ = field_2B6C_ * scroll_.position_;
+            } else {
+                do {
+                    field_2B80_ += per_row;
+                } while (field_2B80_ < first_cached);
+                if (field_2B80_ >= first_cached + field_2B64_) {
+                    field_2B60_ = first_cached + per_row;
+                    scroll_.set_pos(scroll_.position_ + 1);
+                }
+            }
+            break;
+        }
+        case 24:   // 37, left
+        case 87: { // 100, numpad 4
+            const int per_row = field_2B6C_;
+            const int row_start = highlight / per_row * per_row;
+            int limit = per_row + row_start - 1;
+            if (limit >= field_2B74_ - 1) {
+                limit = field_2B74_ - 1;
+            }
+            const int target = highlight - 1;
+            field_2B80_ = target;
+            field_2B80_ = (target < row_start || limit < row_start)
+                ? row_start : (target > limit ? limit : target);
+            break;
+        }
+        case 26:   // 39, right
+        case 89: { // 102, numpad 6
+            const int per_row = field_2B6C_;
+            const int row_start = highlight / per_row * per_row;
+            int limit = per_row + row_start - 1;
+            if (limit >= field_2B74_ - 1) {
+                limit = field_2B74_ - 1;
+            }
+            const int target = highlight + 1;
+            field_2B80_ = target;
+            field_2B80_ = (target < row_start || limit < row_start)
+                ? row_start : (target > limit ? limit : target);
+            break;
+        }
+        case 22: {  // 35, end: highlight the last entry, re-anchor its row
+            const int count = field_2B74_;
+            field_2B80_ = count - 1;
+            if (field_2B64_ < count) {
+                field_2B60_ = field_2B6C_ * ((count - 1) / field_2B6C_ + 1)
+                    - field_2B64_;
+            }
+            break;
+        }
+        case 23:  // 36, home: clear both anchor slots
+            field_2B60_ = 0;
+            field_2B80_ = 0;
             break;
         case 20:  // 33, page up
             if (field_2B74_ <= field_2B64_) return 1;
@@ -355,104 +427,13 @@ int SelectPartWin::on_key_click(int, int key) {
             scroll_.set_pos(scroll_.paging_ + scroll_.position_);
             field_2B60_ = field_2B6C_ * scroll_.position_;
             break;
-        case 22: {  // 35, end: highlight the last entry, re-anchor its row
-            const int count = field_2B74_;
-            field_2B80_ = count - 1;
-            if (field_2B64_ < count) {
-                field_2B60_ =
-                    field_2B6C_ *
-                        ((count - 1) /
-                             field_2B6C_ +
-                         1) -
-                    field_2B64_;
-            }
-            break;
-        }
-        case 23:  // 36, home: clear both anchor slots
-            field_2B60_ = 0;
-            field_2B80_ = 0;
-            break;
-        case 24:   // 37, left
-        case 87: { // 100, numpad 4
-            const int per_row =
-                field_2B6C_;
-            const int row_start = highlight / per_row * per_row;
-            int limit = row_start + per_row - 1;
-            if (limit >
-                field_2B74_ - 1) {
-                limit = field_2B74_ - 1;
-            }
-            const int target = highlight - 1;
-            field_2B80_ = target;
-            if (target < row_start || limit < row_start) {
-                field_2B80_ = row_start;
-            } else if (target > limit) {
-                field_2B80_ = limit;
-            }
-            break;
-        }
-        case 26:   // 39, right
-        case 89: { // 102, numpad 6
-            const int per_row =
-                field_2B6C_;
-            const int row_start = highlight / per_row * per_row;
-            int limit = row_start + per_row - 1;
-            if (limit >
-                field_2B74_ - 1) {
-                limit = field_2B74_ - 1;
-            }
-            const int target = highlight + 1;
-            field_2B80_ = target;
-            if (target < row_start || limit < row_start) {
-                field_2B80_ = row_start;
-            } else if (target > limit) {
-                field_2B80_ = limit;
-            }
-            break;
-        }
-        case 25:   // 38, up
-        case 91: { // 104, numpad 8
-            const int per_row =
-                field_2B6C_;
-            if (highlight < per_row) return 1;
-            do {
-                field_2B80_ -= per_row;
-            } while (field_2B80_ >= first_cached + field_2B64_);
-            if (field_2B80_ < first_cached) {
-                field_2B60_ -= per_row;
-                scroll_.set_pos(scroll_.position_ - 1);
-            }
-            break;
-        }
-        case 27:   // 40, down
-        case 85: { // 98, numpad 2
-            const int per_row =
-                field_2B6C_;
-            const int count = field_2B74_;
-            if (highlight > count - per_row - 1) {
-                if (count <= field_2B64_) return 1;
-                scroll_.set_pos(scroll_.position_ + 1);
-                field_2B60_ = per_row * scroll_.position_;
-            } else {
-                int moved = field_2B80_;
-                do {
-                    moved += per_row;
-                } while (moved < first_cached);
-                field_2B80_ = moved;
-                if (moved >= first_cached + field_2B64_) {
-                    field_2B60_ = first_cached + per_row;
-                    scroll_.set_pos(scroll_.position_ + 1);
-                }
-            }
-            break;
-        }
         default:
             break;
     }
 
-    if (field_2B60_ != first_cached) {
+    if (first_cached != field_2B60_) {
         redraw();
-    } else if (field_2B80_ != highlight) {
+    } else if (highlight != field_2B80_) {
         draw_part(highlight, 0);
         field_4648_ = draw_part(field_2B80_, 1);
     }
@@ -587,7 +568,7 @@ Purpose: Draw one entry of the design parts list: translate the entry index
          to whichever of the four part drawers the window's mode field
          selects; out-of-range entries tile the background sprite instead.
 
-// ORIGINAL: 0x00433D60 ?draw_part@SelectPartWin@@QAEHHH@Z 0x00433D60-0x00433F1D FILE
+// ORIGINAL: 0x00433D60 ?draw_part@SelectPartWin@@QAEHHH@Z 0x00433D60-0x00433F1D FILE BYTE_EXACT
 // symbol   ?draw_part@SelectPartWin@@QAEHHH@Z
 // size      445 bytes
 // prototype int (__thiscall ?draw_part@SelectPartWin@@QAEHHH@Z)(SelectPartWin* this, int, int)
@@ -605,14 +586,13 @@ Status: Coverage transcription - unclaimed body; historical seed at
 #pragma optimize("y", off)
 int SelectPartWin::draw_part(int a1, int a2) {
     if (a1 >= field_2B60_ && a1 < field_2B60_ + field_2B64_) {
-        int index = a1 - field_2B60_;
-        int top = index / field_2B6C_ * 94 + 4;
-        int x = index % field_2B6C_ * 108 + 4;
+        int top = (a1 - field_2B60_) / field_2B6C_ * 94 + 4;
+        int x = (a1 - field_2B60_) % field_2B6C_ * 108 + 4;
         RECT rect;
-        rect.top = top;
-        rect.bottom = top + 91;
         rect.left = x + 23;
+        rect.top = top;
         rect.right = x + 128;
+        rect.bottom = top + 91;
         if (a1 >= field_2B74_) {
             Buffer::tile(&TutWinBaseWindow.sprite6_, rect.left, rect.top,
                          rect.left, rect.top, rect.right - rect.left,
@@ -5047,7 +5027,7 @@ void DesignWin::draw_stack() {
 
     rc.bottom -= 3;
     rc.left = field_CBC_rect_.right + 3;
-    rc.right = static_cast<int>(field_CCC_) - 3;
+    rc.right = field_CBC_rect_.right - 3;
     const int spacer = (rc.right - rc.left + 2) / 10 - 2;
     rc.top += 3;
     int x_base = rc.left;
@@ -5121,11 +5101,14 @@ void DesignWin::draw_stack() {
             MainInterfaceGlobal.Buffer::set_font(&font, 0, 0, 0);
             MainInterfaceGlobal.Buffer::wrap_cent(StringTemp, &rc);
 
-            x_base += spacer + 2;
-            rc.top -= 2;
-            rc.left += spacer;
-            rc.bottom += 2;
-            rc.right += spacer + 4;
+            const int step = spacer + 2;
+            x_base += step;
+            rc.left -= inset;
+            rc.top -= inset;
+            rc.right += inset;
+            rc.bottom += inset;
+            rc.left += step;
+            rc.right += step;
             MainInterfaceGlobal.Buffer::restore_clip();
         } else {
             const int unit_id = veh_fake(proto_id, factionID_);
@@ -5164,13 +5147,11 @@ void DesignWin::draw_stack() {
 
             label.left += 3;
             label.right -= 3;
-            if (StringTemp[0] != '\0') {
-                while (font.width(StringTemp) > label.right - label.left) {
-                    StringTemp[strlen(StringTemp) - 1] = '\0';
-                    if (StringTemp[0] == '\0') {
-                        break;
-                    }
+            while (StringTemp[0] != '\0') {
+                if (font.width(StringTemp) <= label.right - label.left) {
+                    break;
                 }
+                StringTemp[strlen(StringTemp) - 1] = '\0';
             }
             char *space = strchr(StringTemp, ' ');
             if (space != 0) {
@@ -5201,11 +5182,14 @@ void DesignWin::draw_stack() {
             spot1_.add(proto_id, 0, rc.left, rc.top, rc.right - rc.left,
                        rc.bottom - rc.top);
 
-            x_base += spacer + 2;
-            rc.top -= 2;
-            rc.left += spacer;
-            rc.bottom += 2;
-            rc.right += spacer + 4;
+            const int step = spacer + 2;
+            x_base += step;
+            rc.left -= inset;
+            rc.top -= inset;
+            rc.right += inset;
+            rc.bottom += inset;
+            rc.left += step;
+            rc.right += step;
         }
     }
 
