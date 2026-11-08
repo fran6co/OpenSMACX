@@ -347,8 +347,9 @@ static inline int base_specialist_type(int index) {
 
 static inline void base_specialist_set(int index, int type) {
     if (index < 16) {
-        BaseCurrent->spec[index >> 3] &= ~(0xF << ((index & 7) * 4));
-        BaseCurrent->spec[index >> 3] |= type << ((index & 7) * 4);
+        int word = index >> 3;
+        BaseCurrent->spec[word] &= ~(0xF << ((index & 7) * 4));
+        BaseCurrent->spec[word] |= type << ((index & 7) * 4);
     }
 }
 
@@ -641,6 +642,17 @@ assign_specialists:
 // faction efficiency adjustment, Network Backbone research credits and the final
 // energy-production special case. Historical byte and restoration obligations
 // remain attached to the complete original span.
+// Recovery name: candidate specialist yields at least the old one's
+// ops/psych/research bonuses.
+static inline BOOL citizen_covers(int candidate, int specialist) {
+    for (int k = 0; k < 3; k++) {
+        if ((&Citizen[candidate].ops_bonus)[k] < (&Citizen[specialist].ops_bonus)[k]) {
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
+
 // ORIGINAL: 0x004EB560 ?base_energy@@YAXXZ 0x004EB560-0x004EC3A6
 // RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/004eb560.cpp", "image:0x004EB560-0x004EC3A6 ranks the selected base and publishes seven commerce pairs at 0x0090EA10/0x0090E964; its commerce base doubles when 0x009A6628 is below 0x009A6624", "source:src/base.h", "source:src/faction.h"], "reason": "Recover the selected-base energy pass through typed Base, PlayerData, Player, Citizen, secret-project and shared-ledger owners, including trade, upkeep, specialist, facility, research-efficiency and final production stages. This source mapping makes no exactness claim; preserve historical claims and seed findings as restoration obligations."}
 // kind      game
@@ -768,14 +780,7 @@ void __cdecl base_energy() {
             for (int candidate = 0; candidate < 7; candidate++) {
                 if (has_tech(Citizen[candidate].preq_tech, faction)
                     && !has_tech(Citizen[candidate].obsol_tech, faction)) {
-                    int k;
-                    for (k = 0; k < 3; k++) {
-                        if ((&Citizen[candidate].ops_bonus)[k]
-                            < (&Citizen[specialist].ops_bonus)[k]) {
-                            break;
-                        }
-                    }
-                    if (k >= 3) {
+                    if (citizen_covers(candidate, specialist)) {
                         specialist = candidate;
                         base_specialist_set(citizen, specialist);
                         break;
@@ -880,7 +885,7 @@ void __cdecl base_energy() {
                    ? range(efficiency, -4, 4) - 4
                    : 4 - range(efficiency, -4, 4)) * 2;
     if (imbalance && penalty) {
-        if (labs_share > 10 - labs_share - psych_share) {
+        if (labs_share > 10 - PlayersData[faction].se_alloc_labs - PlayersData[faction].se_alloc_psych) {
             BaseCurrent->labs_total =
                 ((100 - range(penalty * imbalance, 0, 40)) * BaseCurrent->labs_total + 50) / 100;
             BaseCurrent->economy_total =
@@ -937,9 +942,9 @@ int __cdecl base_init(int faction_id, int x, int y) {
     Bases[base_id].minerals_accumulated = 0;
     Bases[base_id].nutrients_accumulated = 0;
     Bases[base_id].nerve_staple_count = 0;
-    // stand-in: the image clears the land and sea slots with one dword store.
-    *reinterpret_cast<int32_t *>(&Bases[base_id].auto_forward_slots[Base::AutoForwardLand]) = -1;
-    Bases[base_id].auto_forward_slots[Base::AutoForwardAir] = -1;
+    for (int slot = 0; slot < Base::AutoForwardSlotCount; slot++) {
+        Bases[base_id].auto_forward_slots[slot] = -1;
+    }
     Bases[base_id].queue_size = 0;
     base_first(base_id);
     if (!GameDataStateStorage.fields_.turn_current_num_) {
@@ -5660,10 +5665,11 @@ Purpose: Calculate the cost factor for the specified faction and resource type. 
 Return Value: Cost factor
 Status: Complete
 */
-int __cdecl cost_factor(int faction_id, int rsc_type, int base_id) {
 // Bound: six difficulty dwords; the next mapped string starts at 0x00689390.
-// RECOVERY_OBJECT: v2 0x00689378 0x00689390 _?diff_cost_base@?1??cost_factor@@YAHHHH@Z@4QBHB 0x004E448E
-    static const int diff_cost_base[] = { 13, 12, 11, 10, 8, 7 };
+// Writable .data in the image (0x00689378), so not const.
+// RECOVERY_OBJECT: v4 0x00689378 0x00689390 _?diff_cost_base@?1??cost_factor@@YAHHHH@Z@4QBHB 0x004E448E target _diff_cost_base
+static int diff_cost_base[] = { 13, 12, 11, 10, 8, 7 };
+int __cdecl cost_factor(int faction_id, int rsc_type, int base_id) {
     int factor = is_human(faction_id) ? 10 : diff_cost_base[GameDataStateStorage.fields_.diff_level_current_]
         - (great_satan(GameDataStateStorage.fields_.faction_rankings_[7], false) != 0)
         - (!IsMultiplayerNet && is_human(GameDataStateStorage.fields_.faction_rankings_[7]));
@@ -6604,6 +6610,47 @@ void __cdecl set_fac_announced(uint32_t faction_id, uint32_t facility_id, BOOL s
 }
 
 /*
+Purpose: Check if coordinates are considered near or on coast. Radius (excludes actual coordinates)
+         can either be all the squares directly around the coordinates or same as Base '+' radius.
+// ORIGINAL: 0x004E49D0 ?is_coast@@YAHHHH@Z 0x004E49D0-0x004E4A91 BYTE_EXACT
+// TRIED: 9/76, 0.84 similar plateau across every flag set. The image
+//            uses TWO induction variables for the loop (an unscaled count
+//            in [ebp-4] and a byte offset in edi, incremented in lockstep)
+//            and defers loading `MapIsFlat` to AFTER the "loop won't run"
+//            guard; this tree's -O2 always collapses to one induction
+//            variable and hoists the `MapIsFlat` read before that guard,
+//            regardless of whether the source calls `xrange`/`on_map` or
+//            inlines their logic by hand (tried both, identical score).
+//            `is_ocean`'s own comparison also narrows to a byte `cmp/jb`
+//            here where the image keeps the 32-bit `cmp edx,0x60`/`jl` -
+//            same root cause as is_ocean's own standalone plateau.
+// size      193 bytes
+// prototype int (__cdecl ?is_coast@@YAHHHH@Z)(int xCoord, int yCoord, int isBaseRadius)
+// callers   10   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: Neighbor index 1..8 or 1..20, or 0 if no qualifying ocean neighbor is found.
+Status: Complete
+*/
+// Current restored contract: return the qualifying neighbor's index (1..8 or 1..20), or 0.
+int __cdecl is_coast(int x, int y, BOOL is_base_radius) {
+    int i = 1;
+    int radius = is_base_radius ? 21 : 9;
+    if (i >= radius) {
+        return 0;
+    }
+    for (; i < radius; i++) {
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
+        int y_radius = y + RadiusOffsetY[i];
+        if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
+            return i;
+        }
+    }
+    return 0;
+}
+
+/*
 Purpose: Determine what unit the specified base should start building 1st then add it to the queue.
 // ORIGINAL: 0x004E4AA0 ?base_first@@YAXH@Z 0x004E4AA0-0x004E4B7B BYTE_EXACT
 // size      219 bytes
@@ -7503,15 +7550,10 @@ therefore observable.
 */
 void __cdecl base_support() {
     int faction_id = BaseCurrent->faction_id_current;
-    // Unrolled in the image: each ConvoyTo/ConvoyFrom pair written explicitly.
-    BaseCurrentConvoyTo[0] = 0;
-    BaseCurrentConvoyFrom[0] = 0;
-    BaseCurrentConvoyTo[1] = 0;
-    BaseCurrentConvoyFrom[1] = 0;
-    BaseCurrentConvoyTo[2] = 0;
-    BaseCurrentConvoyFrom[2] = 0;
-    BaseCurrentConvoyTo[3] = 0;
-    BaseCurrentConvoyFrom[3] = 0;
+    for (int rsc = 0; rsc < 4; rsc++) {
+        BaseCurrentConvoyTo[rsc] = 0;
+        BaseCurrentConvoyFrom[rsc] = 0;
+    }
     BaseCurrentVehPacifismCount = 0;
     BaseCurrentForcesMaintCount = 0;
     BaseCurrentForcesSupported = 0;
@@ -7595,17 +7637,16 @@ void __cdecl base_support() {
         if (!has_abil(Vehs[veh_id].proto_id, ABL_CLEAN_REACTOR)) {
             // Native life in fungus (psi weapon on a predefined prototype, or
             // prototype 15, the Sea Lurk) is supported for free.
-            int proto_id = Vehs[veh_id].proto_id;
             Map *tile;
-            if (proto_id >= MaxVehProtoFactionNum
-                || (Weapon[VehPrototypes[proto_id].weapon_id].offense_rating >= 0
-                    && proto_id != 15)
+            if (Vehs[veh_id].proto_id >= MaxVehProtoFactionNum
+                || (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating >= 0
+                    && Vehs[veh_id].proto_id != 15)
                 || !((tile = map_loc(Vehs[veh_id].x, Vehs[veh_id].y))->bit & BIT_FUNGUS)
                 || (tile->climate & ~0x1F) < ALT_BIT_OCEAN_SHELF) {
                 BaseCurrentForcesSupported++;
                 int support = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::SUPPORT];
                 if ((int)BaseCurrentForcesSupported > free_support[range(support + 4, 0, 7)]
-                    && !has_abil(proto_id, ABL_CLEAN_REACTOR)) {
+                    && !has_abil(Vehs[veh_id].proto_id, ABL_CLEAN_REACTOR)) {
                     BaseCurrentForcesMaintCount++;
                     Vehs[veh_id].state |= VSTATE_REQUIRES_SUPPORT;
                     BaseCurrentForcesMaintCost += (support <= -4) + 1;
@@ -10409,14 +10450,14 @@ int __cdecl base_growth() {
                 continue;
             }
             int bits = bit_at(x2, y2);
-            if ((bits & BIT_FUNGUS) && (map_loc(x2, y2)->climate & 0xE0) >= 0x40
+            if ((bits & BIT_FUNGUS) && (map_loc(x2, y2)->climate & ~0x1F) >= 0x40
                 && PlayersData[owner].tech_fungus_[RSC_NUTRIENTS] > 1) {
                 continue;
             }
-            uint8_t climate = map_loc(x2, y2)->climate;
+            int climate = map_loc(x2, y2)->climate;
             int rainfall = (climate >> 3) & 3;
             if (BaseCurrent->resource_sqr_radius & (1 << i)) {
-                if (((bits & BIT_FUNGUS) && (climate & 0xE0) >= 0x40)
+                if (((bits & BIT_FUNGUS) && (climate & ~0x1F) >= 0x40)
                     || (bits & BIT_FOREST)
                     || (map_loc(x2, y2)->val3 & 0xC0) == 0x80
                     || !rainfall) {

@@ -402,18 +402,17 @@ struct Base {
     int psych_total;
     int labs_total;
     int unk_10;
-    // The original row exposes a four-word storage span here, not evidence
-    // for a declared four-element route array: the first three words are the
-    // land/sea/air destinations and the fourth is reserved. The click handler
-    // directly indexes the span and can write slot 3 for an unexpected
-    // nonnegative dialog result, so keep that word in the typed view without
-    // initializing or remapping it as a route.
+    // Three route words: land/sea/air destinations. base_init clears them
+    // with one counted fill (dword +0x110, word +0x114), the save import and
+    // the route loops walk exactly three, and +0x116 is alignment padding.
+    // The click handler indexes the array directly and can write index 3
+    // (the padding word) for an unexpected nonnegative dialog result.
     enum AutoForwardSlot {
         AutoForwardLand = 0,
         AutoForwardSea = 1,
         AutoForwardAir = 2,
-        AutoForwardReserved = 3,
-        AutoForwardSlotCount = 4
+        AutoForwardPadding = 3,
+        AutoForwardSlotCount = 3
     };
     // RECOVERY_MEMBER: v1 Base auto_forward_slots 0x110 0x0046D5D0
     int16_t auto_forward_slots[AutoForwardSlotCount];

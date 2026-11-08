@@ -763,47 +763,6 @@ Status: Complete
 */
 
 /*
-Purpose: Check if coordinates are considered near or on coast. Radius (excludes actual coordinates)
-         can either be all the squares directly around the coordinates or same as Base '+' radius.
-// ORIGINAL: 0x004E49D0 ?is_coast@@YAHHHH@Z 0x004E49D0-0x004E4A91 BYTE_EXACT
-// TRIED: 9/76, 0.84 similar plateau across every flag set. The image
-//            uses TWO induction variables for the loop (an unscaled count
-//            in [ebp-4] and a byte offset in edi, incremented in lockstep)
-//            and defers loading `MapIsFlat` to AFTER the "loop won't run"
-//            guard; this tree's -O2 always collapses to one induction
-//            variable and hoists the `MapIsFlat` read before that guard,
-//            regardless of whether the source calls `xrange`/`on_map` or
-//            inlines their logic by hand (tried both, identical score).
-//            `is_ocean`'s own comparison also narrows to a byte `cmp/jb`
-//            here where the image keeps the 32-bit `cmp edx,0x60`/`jl` -
-//            same root cause as is_ocean's own standalone plateau.
-// size      193 bytes
-// prototype int (__cdecl ?is_coast@@YAHHHH@Z)(int xCoord, int yCoord, int isBaseRadius)
-// callers   10   call targets   0
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     (none)
-Return Value: Neighbor index 1..8 or 1..20, or 0 if no qualifying ocean neighbor is found.
-Status: Complete
-*/
-// Current restored contract: return the qualifying neighbor's index (1..8 or 1..20), or 0.
-int __cdecl is_coast(int x, int y, BOOL is_base_radius) {
-    int i = 1;
-    int radius = is_base_radius ? 21 : 9;
-    if (i >= radius) {
-        return 0;
-    }
-    for (; i < radius; i++) {
-        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
-        int y_radius = y + RadiusOffsetY[i];
-        if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
-            return i;
-        }
-    }
-    return 0;
-}
-
-/*
 Purpose: Check whether the specified tile is part of an ocean.
 // ORIGINAL: 0x005001E0 ?is_ocean@@YAHHH@Z 0x005001E0-0x00500211 BYTE_EXACT
 // body      src/map.h
