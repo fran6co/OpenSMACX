@@ -17,7 +17,9 @@
  */
 // World-generation algorithms; shared Map storage remains in map.cpp.
 #include "stdafx.h"
-#include "popup.h"
+// No direct popup.h include: world.cpp uses no Popup, and popup.h ahead of
+// map.h flips the x/y reload order in world_volcano (0x005C6DB0). It still
+// arrives later through netmsg.h, which is harmless.
 #include "general.h"
 #include "crt_random_inline.h"
 #include "win.h"
