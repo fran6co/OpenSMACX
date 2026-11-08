@@ -416,7 +416,8 @@ static bool order_veh_direction8_stack_allows_popup(int veh_id) {
 
     while (stack_veh_id >= 0) {
         const Veh &stack_vehicle = Vehs[stack_veh_id];
-        if (has_abil(stack_vehicle.proto_id, ABL_CARRIER)) {
+        // Original bug (0x5963C7): tests the mover, not the stack member.
+        if (has_abil(Vehs[veh_id].proto_id, ABL_CARRIER)) {
             return false;
         }
 

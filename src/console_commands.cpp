@@ -1702,8 +1702,8 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
                 return;
             }
         } else if (altitude == 0) {
+            // Original (0x4D454D): no return; the order is given anyway.
             NetMsgPrimary.pop("SEATOOLOW", 5000, 0, nullptr);
-            return;
         } else if (altitude == 0x60) {
             NetMsgPrimary.pop("TOOLOW", 5000, 0, nullptr);
             return;

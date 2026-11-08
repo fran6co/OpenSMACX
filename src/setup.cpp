@@ -365,6 +365,9 @@ static int time_warp_find_prototype(int faction_id, int plan) {
 // RECOVERY_BINDING: v1 {"evidence": ["Independent pinned full-span review by report_draw_labs_review; retained game-setup-owner-wave full body and actual-source controls for three profiles, land/aquatic sites, path modes and native relocation."], "reason": "Recover complete accelerated-start setup with typed faction, base, prototype, map and Path owners; preserve callback-sensitive region rereads and native facility/path order. External unfinished callees remain explicit."}
 // TRIED: MISMATCH #0 push/sub at prologue; full-body transcription from Ghidra hypothesis, corrected against raw disasm for: has_tech arg counts (Ghidra folded a dangling outer-call push into two call sites), Path::find(8 ints) called through g_00945b00, veh_lift/veh_drop split (veh_lift returns a value the mangled YAX hid; PROPOSAL: veh_lift should be `int veh_lift(int)`), and per-field pointer widths (short/byte) recovered from `movsx word/byte ptr` on every g_0097d0xx/g_009ab8xx/g_0096xxxx access since the scaffold's g_ globals are declared int* uniformly.
 void __cdecl time_warp() {
+    // One vehicle id local ([ebp-8]) holds most veh_init results and the
+    // closing vehicle loop index; the smallest-base morale store reuses it.
+    int veh_id;
     const int variation = rand() % 3;
     int scenario_turn;
     int initial_research;
@@ -462,22 +465,22 @@ void __cdecl time_warp() {
         VehPrototypes[opening_prototype].flags |= 4;
         int opening_vehicle = veh_init(opening_prototype, faction_id,
                                        starting_base.x, starting_base.y);
-        Vehs[opening_vehicle].waypoint_count = 2;
+        Vehs[opening_vehicle].order = ORDER_HOLD;
         ++Vehs[opening_vehicle].morale;
         opening_vehicle = veh_init(opening_prototype, faction_id,
                                    starting_base.x, starting_base.y);
-        Vehs[opening_vehicle].waypoint_count = 2;
+        Vehs[opening_vehicle].order = ORDER_HOLD;
         const int third_prototype =
             ExpansionEnabled == 0 || (player.rule_flags & RFLAG_AQUATIC) == 0 ? 1 : 4;
-        veh_init(third_prototype, faction_id, starting_base.x, starting_base.y);
+        veh_id = veh_init(third_prototype, faction_id, starting_base.x, starting_base.y);
 
         const int plan_one_prototype = time_warp_find_prototype(faction_id, 1);
         if (plan_one_prototype >= 0) {
             VehPrototypes[plan_one_prototype].flags |= 4;
-            const int vehicle = veh_init(plan_one_prototype, faction_id,
-                                         starting_base.x, starting_base.y);
-            ++Vehs[vehicle].morale;
-            if (plan_one_prototype == BSC_MIND_WORMS) Vehs[vehicle].morale = 2;
+            veh_id = veh_init(plan_one_prototype, faction_id,
+                              starting_base.x, starting_base.y);
+            ++Vehs[veh_id].morale;
+            if (plan_one_prototype == BSC_MIND_WORMS) Vehs[veh_id].morale = 2;
         }
 
         const int plan_zero_prototype = time_warp_find_prototype(faction_id, 0);
@@ -489,17 +492,17 @@ void __cdecl time_warp() {
                 const int fallback = time_warp_find_prototype(faction_id, 1);
                 if (fallback >= 0) {
                     VehPrototypes[fallback].flags |= 4;
-                    const int vehicle = veh_init(fallback, faction_id,
-                                                 starting_base.x, starting_base.y);
-                    if (fallback == BSC_MIND_WORMS) Vehs[vehicle].morale = 2;
+                    veh_id = veh_init(fallback, faction_id,
+                                      starting_base.x, starting_base.y);
+                    if (fallback == BSC_MIND_WORMS) Vehs[veh_id].morale = 2;
                 }
             } else {
-                int vehicle = veh_init(plan_zero_prototype, faction_id,
-                                       starting_base.x, starting_base.y);
-                ++Vehs[vehicle].morale;
+                veh_id = veh_init(plan_zero_prototype, faction_id,
+                                  starting_base.x, starting_base.y);
+                ++Vehs[veh_id].morale;
                 if (player_data.net_random_event > 0)
-                    veh_init(plan_zero_prototype, faction_id,
-                             starting_base.x, starting_base.y);
+                    veh_id = veh_init(plan_zero_prototype, faction_id,
+                                      starting_base.x, starting_base.y);
             }
         }
 
@@ -638,16 +641,17 @@ void __cdecl time_warp() {
                         set_fac(FAC_COMMAND_CENTER, smallest_base_id, 1);
                         int garrison = time_warp_find_prototype(faction_id, 1);
                         if (garrison >= 0) {
-                            VehPrototypes[garrison].flags |= 4;
-                            int new_vehicle = veh_init(garrison, faction_id,
-                                                       smallest_base.x, smallest_base.y);
-                            if (garrison == BSC_MIND_WORMS) Vehs[new_vehicle].morale = 2;
+                            // Original bug (0x5AFDB2..0x5AFDC5): the result
+                            // is discarded and the earlier veh_id gets morale.
+                            veh_init(garrison, faction_id,
+                                     smallest_base.x, smallest_base.y);
+                            if (garrison == BSC_MIND_WORMS) Vehs[veh_id].morale = 2;
                         }
-                        if (ExpansionEnabled == 0 ||
-                            (player.rule_flags & RFLAG_AQUATIC) == 0)
+                        // Native 0x5AFD7F tests only the aquatic rule here.
+                        if ((player.rule_flags & RFLAG_AQUATIC) == 0)
                             veh_init(0, faction_id, smallest_base.x, smallest_base.y);
                         else
-                            veh_init(21, faction_id, last_base_x, last_base_y);
+                            veh_id = veh_init(21, faction_id, last_base_x, last_base_y);
                         veh_init(7, faction_id, smallest_base.x, smallest_base.y);
                     }
                 }
@@ -661,18 +665,18 @@ void __cdecl time_warp() {
             if (new_base.population_size > 3) set_fac(FAC_RECYCLING_TANKS, new_base_id, 1);
             new_base.nutrients_accumulated = static_cast<int>(new_base.population_size) * 10 / 2;
 
-            int new_vehicle = veh_init(opening_prototype, faction_id, best_x, best_y);
-            if (opening_prototype == BSC_MIND_WORMS) Vehs[new_vehicle].morale = 2;
-            Vehs[new_vehicle].waypoint_count = 2;
+            veh_id = veh_init(opening_prototype, faction_id, best_x, best_y);
+            if (opening_prototype == BSC_MIND_WORMS) Vehs[veh_id].morale = 2;
+            Vehs[veh_id].order = ORDER_HOLD;
             if (new_base.population_size > 2) {
-                new_vehicle = veh_init(opening_prototype, faction_id, best_x, best_y);
-                if (opening_prototype == BSC_MIND_WORMS) Vehs[new_vehicle].morale = 2;
-                Vehs[new_vehicle].waypoint_count = 2;
+                veh_id = veh_init(opening_prototype, faction_id, best_x, best_y);
+                if (opening_prototype == BSC_MIND_WORMS) Vehs[veh_id].morale = 2;
+                Vehs[veh_id].order = ORDER_HOLD;
             }
             if (player_data.ai_fight != 0 || new_base.population_size > 3) {
                 const int defender_prototype =
                     (player.rule_flags & RFLAG_AQUATIC) != 0 ? 4 : 1;
-                veh_init(defender_prototype, faction_id, best_x, best_y);
+                veh_id = veh_init(defender_prototype, faction_id, best_x, best_y);
             }
 
             const Map *new_base_tile = map_loc(best_x, best_y);
@@ -696,9 +700,9 @@ void __cdecl time_warp() {
                     }
                     veh_init(has_foil_technology ? BSC_TRANSPORT_FOIL : BSC_UNITY_FOIL,
                              faction_id, coast_x, coast_y);
-                    const int sleeping_vehicle = veh_init(BSC_UNITY_ROVER, faction_id,
-                                                          coast_x, coast_y);
-                    sleep(sleeping_vehicle);
+                    veh_id = veh_init(BSC_UNITY_ROVER, faction_id,
+                                      coast_x, coast_y);
+                    sleep(veh_id);
                     placed_coastal_group = true;
                     break;
                 }
@@ -790,8 +794,8 @@ void __cdecl time_warp() {
         }
         AiResearchBatchActive = 0;
 
-        for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
-            Veh &vehicle = Vehs[vehicle_id];
+        for (veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; ++veh_id) {
+            Veh &vehicle = Vehs[veh_id];
             if (vehicle.faction_id != faction_id ||
                 VehPrototypes[vehicle.proto_id].plan != 9) continue;
             const int native_triad = Chassis[VehPrototypes[vehicle.proto_id].chassis_id].triad;
@@ -821,7 +825,7 @@ void __cdecl time_warp() {
                     quality += 2;
                 if (quality > best_quality) {
                     best_quality = quality;
-                    veh_drop(veh_lift(vehicle_id), destination_x, destination_y);
+                    veh_drop(veh_lift(veh_id), destination_x, destination_y);
                 }
             }
         }
@@ -945,8 +949,9 @@ void __cdecl balance() {
             if (!(Players[faction_id].rule_flags & RFLAG_AQUATIC)) {
                 vehicle_id = veh_init(0, faction_id, x, y);
             }
-            // The aquatic branch clears the stack link of the original unit.
-            Vehs[vehicle_id].next_veh_id_stack = -1;
+            // Native 0x5B08C6 clears home_base_id (+0x2E); the aquatic
+            // branch applies it to the earlier unit.
+            Vehs[vehicle_id].home_base_id = -1;
         }
         if (GameDataStateStorage.fields_.diff_level_current_ < 2) {
             deficit = (deficit + 1) / 2;

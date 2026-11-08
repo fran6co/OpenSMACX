@@ -835,7 +835,8 @@ void FameWin::demote(int rank) {
 // three separate passes sharing one counter. Residual: parse_set store order.
 #pragma optimize("y", off)
 void FameWin::try_to_add_me() {
-  if ((GameDataStateStorage.fields_.game_preferences_ & 0x20) != 0) return;
+  // Native 0x44A666/0x44A922 test game_state_ (0x9A64C0) throughout.
+  if ((GameDataStateStorage.fields_.game_state_ & 0x20) != 0) return;
 
   factionID_ = ConsoleGlobal.faction_id_;
   compute_score(ConsoleGlobal.faction_id_, nullptr, nullptr, 0);
@@ -898,15 +899,15 @@ void FameWin::try_to_add_me() {
 
   record.field_20 = static_cast<uint8_t>(PlayersData[factionID_].diff_level);
   if ((GameDataStateStorage.fields_.game_rules_ & 0x400) != 0) record.present |= 2;
-  if ((GameDataStateStorage.fields_.game_preferences_ & 0x2000) != 0) {
+  if ((GameDataStateStorage.fields_.game_state_ & 0x2000) != 0) {
     record.present |= 8;
-  } else if ((GameDataStateStorage.fields_.game_preferences_ & 0x400000) != 0) {
+  } else if ((GameDataStateStorage.fields_.game_state_ & 0x400000) != 0) {
     record.present |= 0x10;
-  } else if ((GameDataStateStorage.fields_.game_preferences_ & 0x200000) != 0) {
+  } else if ((GameDataStateStorage.fields_.game_state_ & 0x200000) != 0) {
     record.present |= 0x20;
-  } else if (PlayersData[factionID_].unk_109 != 0) {
+  } else if (PlayersData[factionID_].score_items_[6] != 0) {
     record.present |= 4;
-  } else if ((GameDataStateStorage.fields_.game_preferences_ & 0x10) != 0) {
+  } else if ((GameDataStateStorage.fields_.game_state_ & 0x10) != 0) {
     record.present |= 0x40;
   }
 

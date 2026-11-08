@@ -131,7 +131,7 @@ void MessageWin::on_selected(int code, int) {
         remove_selected_message();
         InterfaceMessageWin.listBox_.set_selected_pos(-1, 1);
         InterfaceMessageWin.listBox_.update_changes();
-        if (InterfaceMessageWin.listBox_.item_list_.head_ == 0) {
+        if (InterfaceMessageWin.listBox_.item_list_.entry_count_ == 0) {
             MainInterfaceGlobal.button_group(0).set(1001, 1);
         }
     }

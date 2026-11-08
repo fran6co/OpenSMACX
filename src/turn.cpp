@@ -1068,7 +1068,11 @@ void __cdecl random_events(int mode) {
                 static_cast<unsigned int>(1u << ConsoleGlobal.faction_id_);
             visible = (Bases[selected_base_id].visibility & local_mask) != 0;
         }
+        // Original (0x51FBEC..0x51FE0B): `shown` is 1 for a visible event
+        // base, then i+1 for each later viewer/PBEM base; POP2 gets shown-1.
+        int shown = 0;
         if (visible) {
+            shown = 1;
             ConsoleGlobal.focus(Bases[selected_base_id].x,
                                 Bases[selected_base_id].y,
                                 ConsoleGlobal.faction_id_);
@@ -1111,13 +1115,13 @@ void __cdecl random_events(int mode) {
             if (candidate_faction == ConsoleGlobal.faction_id_) {
                 ConsoleGlobal.focus(candidate_x, candidate_y,
                                     ConsoleGlobal.faction_id_);
-                visible = true;
+                shown = candidate_id + 1;
             } else if (IsMultiplayerPBEM) {
-                visible = true;
+                shown = candidate_id + 1;
             }
         }
 
-        if (visible) (void)POP2("PROMETHEUS0", "biohazd_sm.pcx", 0);
+        if (shown) (void)POP2("PROMETHEUS0", "biohazd_sm.pcx", shown - 1);
         return;
     }
 
@@ -2051,6 +2055,10 @@ void __cdecl alien_fauna() {
     int last_y = 0;
     int last_region = 0;
     int last_base = -1;
+    // Original (0x522BE9): the last spread-scan neighbour persists across
+    // samples (never initialised) and is what the goody spawn redraws.
+    int nx;
+    int ny;
     for (;;) {
         int x = alien_random_x();
         const int y = alien_random_y();
@@ -2072,9 +2080,9 @@ void __cdecl alien_fauna() {
                             if (faction != 0 &&
                                 (last_base < 0 || BaseFindDist > 2)) {
                                 for (int direction = 0; direction < 16; ++direction) {
-                                    const int nx = alien_normalize_x(
+                                    nx = alien_normalize_x(
                                         x + RadiusOffsetX[9 + direction]);
-                                    const int ny = y + RadiusOffsetY[9 + direction];
+                                    ny = y + RadiusOffsetY[9 + direction];
                                     if (nx < 0 || nx >= MapLongitudeBounds ||
                                         ny < 0 || ny >= MapLatitudeBounds) continue;
                                     Map &neighbor = *map_loc(nx, ny);
@@ -2111,7 +2119,7 @@ void __cdecl alien_fauna() {
                         if (spawned >= 0 &&
                             alien_tile_vehicle_visible(spawned,
                                                        ConsoleGlobal.faction_id_)) {
-                            draw_tile(x, y, 2);
+                            draw_tile(nx, ny, 2);
                         }
                     }
                 }

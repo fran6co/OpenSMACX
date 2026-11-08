@@ -797,7 +797,8 @@ int __cdecl multiplayer_init(int startup_mode) {
             const int count = NetDaemonNet.player_count_;
             for (int i = 0; i != count; ++i) {
                 const int8_t faction = NetDaemonNet.process_slots_[i + 1].identity_;
-                PlayersData[static_cast<int>(faction)].unk_99 =
+                // Native 0x58DE3D stores PlayerData +0x2088 (unk_102).
+                PlayersData[static_cast<int>(faction)].unk_102 =
                     NetWinLobbyRows.rows_[i + 1].owner_;
             }
         }

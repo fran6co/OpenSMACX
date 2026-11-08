@@ -3937,6 +3937,10 @@ static inline int netdaemon_slots_reached(NetDaemon *daemon, uint8_t level) {
     return 1;
 }
 
+// Native 0x52F315/0x52F364 call CRT memcpy (0x645930) for both chunks.
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 int NetDaemon::send_files() {
     NetDaemonFileControlPacket control;
     WIN32_FIND_DATAA found_file;
@@ -4099,7 +4103,7 @@ int NetDaemon::send_files() {
                 int remaining = end - source;
                 while (remaining >= 0x800) {
                     do_draw();
-                    memmove(send_buffer->payload, source, 0x800);
+                    memcpy(send_buffer->payload, source, 0x800);
                     remaining -= 0x800;
                     send_buffer->chunk_index = chunk_index;
                     source += 0x800;
@@ -4109,7 +4113,7 @@ int NetDaemon::send_files() {
                 send_buffer->chunk_index = chunk_index;
                 if (end > source) {
                     const int tail_length = end - source;
-                    memmove(send_buffer->payload, source, tail_length);
+                    memcpy(send_buffer->payload, source, tail_length);
                     send_group(send_buffer, tail_length + 0x20, group_handle, 1);
                 }
                 filemap.close();
@@ -4157,6 +4161,9 @@ cleanup:
     NetDaemonFileTransferMode = 0;
     return static_cast<int>(NetDaemonNet.channels_[1].trailing_words_[9]);
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
 
 // Source-projected candidates for selected original
 // NetDaemon::process_message arms. These helpers are not separately mapped

@@ -218,7 +218,8 @@ float __cdecl vox_stage_scene(
         const float shadow_x = context->shadow_vector_.values[0] * inverse_shadow_z;
         const float shadow_y = context->shadow_vector_.values[1] * inverse_shadow_z;
         CaviarProjectionShadowBasis.values[0][2] = -shadow_x;
-        CaviarProjectionShadowBasis.values[2][2] = -shadow_y;
+        // Native 0x639B77 stores to +0x14 ([1][2]).
+        CaviarProjectionShadowBasis.values[1][2] = -shadow_y;
         vox_matrix_vector_mul(CaviarProjectionShadowBasis.values,
                               context->state_.scene_offset_.values,
                               scratch.shadow_centre_.values);
@@ -264,8 +265,9 @@ float __cdecl vox_stage_scene(
         scratch.shadow_radius_x_ = static_cast<float>(_hypot(
             static_cast<double>(scratch.shadow_matrix_.values[0][0]),
             static_cast<double>(scratch.shadow_matrix_.values[0][2])));
+        // Native 0x639D0B: the second radius reads [1][1] and [1][2].
         scratch.shadow_radius_y_ = static_cast<float>(_hypot(
-            static_cast<double>(scratch.shadow_matrix_.values[1][0]),
+            static_cast<double>(scratch.shadow_matrix_.values[1][1]),
             static_cast<double>(scratch.shadow_matrix_.values[1][2])));
         if (scratch.shadow_radius_x_ < CaviarProjectionNearPositiveEpsilon)
             scratch.shadow_radius_x_ = CaviarProjectionNearPositiveEpsilon;

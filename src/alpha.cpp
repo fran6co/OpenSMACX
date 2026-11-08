@@ -2094,15 +2094,8 @@ Status: Complete
 // (0x0059DEFB-area, 0x0059E228, 0x0059E314, 0x0059E400 - all inlined in the
 // image, no `call` to a separate function at all) need the body available
 // beforehand.
-inline LPSTR __cdecl prefs_get_binary(int value) {
-    // NOT a local buffer/std::string: the image builds this directly into
-    // the global `StringTemp` (0x009B86A0) - `mov byte ptr [0x9b86a0], 0`
-    // then a `strcat` per bit at, e.g., 0x0059DEF8-0x0059DF58 - and the
-    // caller uses THAT buffer as the `default_value` argument to the
-    // (likewise inlined) string `prefs_get` immediately after. A
-    // std::string return here forces an SEH frame onto every caller that
-    // the image's plain `push ebp` prologue does not have.
-    StringTemp[0] = 0;
+// Appends the bits of `value` to StringTemp without clearing it first.
+inline LPSTR __cdecl prefs_append_binary(int value) {
     for (int shift = 31, non_pad = 0; shift >= 0; shift--) {
         if ((1 << shift) & value) {
             non_pad = 1;
@@ -2112,6 +2105,18 @@ inline LPSTR __cdecl prefs_get_binary(int value) {
         }
     }
     return StringTemp;
+}
+
+inline LPSTR __cdecl prefs_get_binary(int value) {
+    // NOT a local buffer/std::string: the image builds this directly into
+    // the global `StringTemp` (0x009B86A0) - `mov byte ptr [0x9b86a0], 0`
+    // then a `strcat` per bit at, e.g., 0x0059DEF8-0x0059DF58 - and the
+    // caller uses THAT buffer as the `default_value` argument to the
+    // (likewise inlined) string `prefs_get` immediately after. A
+    // std::string return here forces an SEH frame onto every caller that
+    // the image's plain `push ebp` prologue does not have.
+    StringTemp[0] = 0;
+    return prefs_append_binary(value);
 }
 
 /*
@@ -2139,11 +2144,14 @@ void __cdecl prefs_load(BOOL use_default) {
     DefaultPrefs.top_menu = text_item_number();
     prefs_get("Faction", 1, false);
     DefaultPrefs.faction_id = text_item_number();
+    // Original (0x59DEF8): StringTemp is cleared before default_prefs()'s
+    // Laptop query, whose int prefs_get leaves "0" there; the bits append.
+    StringTemp[0] = 0;
     uint32_t prefs = default_prefs();
     if (DefaultPrefs.difficulty < DLVL_TALENT) {
         prefs |= PREF_BSC_TUTORIAL_MSGS;
     }
-    prefs_get("Preferences", prefs_get_binary(prefs), use_default);
+    prefs_get("Preferences", prefs_append_binary(prefs), use_default);
     AlphaIniPrefs.preferences = text_item_binary();
     prefs_get("More Preferences", prefs_get_binary(default_prefs2()), use_default);
     AlphaIniPrefs.more_preferences = text_item_binary();

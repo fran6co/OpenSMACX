@@ -545,8 +545,9 @@ int CouncWin::make_resolution(int resolve) {
             for (int faction = 1; faction < MaxPlayerNum; ++faction) {
                 if ((human_factions & (1 << faction)) != 0 &&
                     faction != console_faction) {
-                    CouncilNotifyFormSlots[faction - 1] = static_cast<int>(field_A1C_);
-                    CouncilNotifyPluralSlots[faction - 1] = static_cast<int>(field_A24_);
+                    // Native 0x42462F indexes the slot by faction itself.
+                    CouncilNotifyFormSlots[faction] = static_cast<int>(field_A1C_);
+                    CouncilNotifyPluralSlots[faction] = static_cast<int>(field_A24_);
                 }
             }
         }
@@ -1257,7 +1258,8 @@ void CouncWin::on_button_clicked(int button_id) {
 
     case -2:
         if (field_A24_ == 0
-            && ((static_cast<uint8_t>(GameDataStateStorage.fields_.game_more_preferences_) & 0x40) == 0
+            // Native 0x424B09 tests game_state_ (0x9A64C0).
+            && ((static_cast<uint8_t>(GameDataStateStorage.fields_.game_state_) & 0x40) == 0
                 || IsMultiplayerNet || IsMultiplayerPBEM)
             && (!IsMultiplayerPBEM || leader_label_kind_[ConsoleGlobal.faction_id_] == 0)) {
             // Wait while any human vote is already cast.

@@ -1186,7 +1186,8 @@ void __cdecl enemy_strategy(int faction_id) {
             if (2 * own_bases
                     * (faction_data.ai_growth - faction_data.ai_wealth
                        + regional_threshold)
-                > 2 * controlled_area) {
+                // Original (0x562E5B): faction 0's count plus our own.
+                > PlayersData[0].unk_80[region] + controlled_area) {
                 const int half_bases = (own_bases + 1) / 2;
                 if (area_delta / half_bases + faction_data.unk_82[region]
                     < 2 * regional_threshold) {
@@ -3803,13 +3804,10 @@ int __cdecl air_power(int a1, int a2, int a3, int *a4, int *a5) {
                 if (actor_plan == 8) attacker.terraforming_turns = 0;
             } else {
                 int closest_base_distance = 9999;
-                for (base_id = 0;
-                     base_id < GameDataStateStorage.fields_.base_current_count_;
-                     ++base_id) {
+                // Original (0x5682A2): all MaxBaseNum slots, own faction only.
+                for (base_id = 0; base_id < MaxBaseNum; ++base_id) {
                     const Base &base = Bases[base_id];
-                    const int base_faction = base.faction_id_current;
-                    if (base_faction == faction_id
-                        || (PlayersData[faction_id].diplo_treaties[base_faction] & 1) != 0) {
+                    if (base.faction_id_current == faction_id) {
                         const int distance_from_target = cursor_dist(
                             *a4, *a5, base.x, base.y);
                         if (distance_from_target
@@ -3900,9 +3898,8 @@ int __cdecl air_power(int a1, int a2, int a3, int *a4, int *a5) {
                     attacker.terraforming_turns = 0;
             } else {
                 int closest_base_distance = 9999;
-                for (base_id = 0;
-                     base_id < GameDataStateStorage.fields_.base_current_count_;
-                     ++base_id) {
+                // Original (0x568726): all MaxBaseNum slots.
+                for (base_id = 0; base_id < MaxBaseNum; ++base_id) {
                     const Base &base = Bases[base_id];
                     if (base.faction_id_current == faction_id) {
                         const int distance_from_target = cursor_dist(
@@ -4070,14 +4067,10 @@ int __cdecl air_power(int a1, int a2, int a3, int *a4, int *a5) {
                                          - Rules.move_rate_roads) {
                     int closest_base_distance = 9999;
                     int base_index;
-                    for (base_index = 0;
-                         base_index < GameDataStateStorage.fields_.base_current_count_;
-                         ++base_index) {
+                    // Original (0x568EAC): all MaxBaseNum slots, own only.
+                    for (base_index = 0; base_index < MaxBaseNum; ++base_index) {
                         const Base &base = Bases[base_index];
-                        const int base_faction = base.faction_id_current;
-                        if (base_faction != faction_id
-                            && (PlayersData[base_faction]
-                                    .diplo_treaties[faction_id] & 1) == 0)
+                        if (base.faction_id_current != faction_id)
                             continue;
                         const int target_to_base = cursor_dist(
                             *a4, *a5, base.x, base.y);

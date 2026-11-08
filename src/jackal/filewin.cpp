@@ -199,13 +199,16 @@ void FileWin::UNK4() {
     if (strcmp(edit_box_.text_, "..") == 0) {
         status = 2;
     } else {
-        char *const suffix = strrchr(name_buffer, '.');
+        // Native 0x614755/0x6147AC call memrchr (0x628AF0), not strrchr.
+        char *const suffix = const_cast<char *>(
+            memrchr(name_buffer, name_buffer + strlen(name_buffer), '.'));
         status = 0;
         if (suffix != name_buffer && extension_count_ > 0) {
             for (int extension_index = 0;
                  extension_index < extension_count_; ++extension_index) {
                 if (suffix == 0) {
-                    char *const appended_suffix = strrchr(name_buffer, '.');
+                    char *const appended_suffix = const_cast<char *>(
+                        memrchr(name_buffer, name_buffer + strlen(name_buffer), '.'));
                     if (appended_suffix != 0) *appended_suffix = 0;
                     strcat(name_buffer, extension_filters_[extension_index]);
                 }

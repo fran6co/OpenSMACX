@@ -366,6 +366,10 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
         unk1 &= ~0x40;
     }
     BOOL threat = unk1 & 0x80;
+    // Original ([ebp-0x2c], 0x59A8E5..0x59A942 and 0x59B44E): one start-ZOC
+    // slot, written only on the gated paths; otherwise it keeps a stale or
+    // uninitialised value.
+    int zoc;
     int mask_treaty = 0;    // treaty partners whose land the planner must not cross
     int mask_truce = 0;     // truce partners ditto
     int mask_vendetta = 0;  // vendetta enemies with a base in the destination region
@@ -453,10 +457,12 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
                 // 0x0059A8E0 joins the queue tail; cheaper queued routes remain.
                 continue;
             }
-            int zoc = 0;
-            if ((unk1 & 0x40) && faction_id > 0 && cur_cost > 1
-                && (map_loc(x_cur, y_cur)->climate & 0xE0) >= ALT_BIT_SHORE_LINE) {
-                zoc = zoc_path(x_cur, y_cur, faction_id);
+            if ((unk1 & 0x40) && faction_id > 0 && cur_cost > 1) {
+                if ((map_loc(x_cur, y_cur)->climate & 0xE0) < ALT_BIT_SHORE_LINE) {
+                    zoc = 0;
+                } else {
+                    zoc = zoc_path(x_cur, y_cur, faction_id);
+                }
             }
             int cur_threat_mode = 0;
             if (threat && faction_id > 0 && mask_vendetta
@@ -733,10 +739,12 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
         }
     }
     // reconstruction: read the first step back out of the table, from the source
-    int zoc = 0;
-    if ((unk1 & 0x40) && faction_id > 0
-        && (map_loc(x_src, y_src)->climate & 0xE0) >= ALT_BIT_SHORE_LINE) {
-        zoc = zoc_path(x_src, y_src, faction_id);
+    if ((unk1 & 0x40) && faction_id > 0) {
+        if ((map_loc(x_src, y_src)->climate & 0xE0) < ALT_BIT_SHORE_LINE) {
+            zoc = 0;
+        } else {
+            zoc = zoc_path(x_src, y_src, faction_id);
+        }
     }
     int cur_threat_mode = 0;
     if (threat && faction_id > 0 && mask_vendetta

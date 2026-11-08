@@ -2117,17 +2117,17 @@ static void game_data_migrate_legacy_base(Base &base,
     memcpy(&base.psych_total, row + 0x100, 4);
     memcpy(&base.labs_total, row + 0x104, 4);
     memcpy(&base.unk_10, row + 0x108, 4);
-    memcpy(&base.spec[0], row + 0x10C, 2);
-    memcpy(&base.spec[1], row + 0x10E, 2);
-    memcpy(reinterpret_cast<unsigned char *>(&base.spec[1]) + 2,
-           row + 0x110, 2);
-    memcpy(base.facilities_built, row + 0x114, 4);
-    memcpy(base.facilities_built + 4, row + 0x118, 4);
-    memcpy(base.facilities_built + 8, row + 0x11C, 4);
-    memcpy(&base.mineral_surplus_final, row + 0x120, 4);
-    memcpy(&base.minerals_accumulated_2, row + 0x124, 4);
-    memcpy(&base.unk_6, row + 0x128, 4);
-    memcpy(&base.unk_7, row + 0x12C, 4);
+    // Native 0x5A80B3..0x5A8120: three words into +0x110 (the fourth,
+    // +0x116, is not copied), then +0x118..+0x130 from row +0x114..+0x12C.
+    for (int slot = 0; slot < 3; ++slot)
+        memcpy(&base.auto_forward_slots[slot], row + 0x10C + slot * 2, 2);
+    memcpy(&base.talent_total, row + 0x114, 4);
+    memcpy(&base.drone_total, row + 0x118, 4);
+    memcpy(&base.super_drone_total, row + 0x11C, 4);
+    int *const lane_g[] = {&base.random_event_turns, &base.nerve_staple_count,
+                           &base.unk_11, &base.location};
+    for (int tail = 0; tail < 4; ++tail)
+        memcpy(lane_g[tail], row + 0x120 + tail * 4, 4);
 
     for (int item = 0; item < 10; ++item) {
         if (base.queue_production_id[item] <= -0x22)

@@ -1263,6 +1263,9 @@ char DatalinkConceptFile[] = "TITLES";
 char DatalinkConceptSection[] = "CONCEPTSX";
 // RECOVERY_OBJECT: v2 0x00683310 0x0068331A ?DatalinkAdvConceptFile@@3PADA 0x0042B490
 char DatalinkAdvConceptFile[] = "ADVTITLES";
+// Native 0x0042B490 pushes its own "CONCEPTSX" copy, not 0x00683300's.
+// RECOVERY_OBJECT: v2 0x0068331C 0x00683326 ?DatalinkAdvConceptSection@@3PADA 0x0042B490
+char DatalinkAdvConceptSection[] = "CONCEPTSX";
 
 /*
  * The rules tables the remaining fillers walk. Each is named from what its
@@ -3020,7 +3023,7 @@ Return Value: n/a
 Status: Complete
 */
 void Datalink::set_cat_adv_concept() {
-    if (text_open(DatalinkConceptSection, DatalinkAdvConceptFile) != 0) {
+    if (text_open(DatalinkAdvConceptSection, DatalinkAdvConceptFile) != 0) {
         return;
     }
 

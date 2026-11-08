@@ -349,36 +349,37 @@ void __cdecl buy_council_vote(int faction, int other, int proposal, int choice) 
             else if (choice == -1) headline = "YEA";
             if (headline != 0) {
                 strcat(StringTemp, headline);
-            } else {
-                PluralityDefault = 0;
-                GenderDefault = Players[faction].is_leader_female;
-                parse_says(2, Players[faction].name_leader, -1, -1);
-                GenderDefault = Players[faction].is_leader_female;
-                PluralityDefault = 0;
-                parse_says(3, Players[faction].title_leader, -1, -1);
-                PluralityDefault = 0;
-                GenderDefault = Players[choice].is_leader_female;
-                parse_says(6, Players[choice].name_leader, -1, -1);
-                GenderDefault = Players[choice].is_leader_female;
-                PluralityDefault = 0;
-                parse_says(8, Players[choice].title_leader, -1, -1);
-                parse_num(0, choice);
-                if (DiploScratchFAA8 >= 0) {
-                    parse_say(0, Technology[DiploScratchFAA8].name, -1, -1);
-                    if (DiploScratchFA18 < 0) {
+            }
+            // Original (0x53F569): the leader reads run for every headline,
+            // so choice < 0 indexes before the Players table.
+            PluralityDefault = 0;
+            GenderDefault = Players[faction].is_leader_female;
+            parse_says(2, Players[faction].name_leader, -1, -1);
+            GenderDefault = Players[faction].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(3, Players[faction].title_leader, -1, -1);
+            PluralityDefault = 0;
+            GenderDefault = Players[choice].is_leader_female;
+            parse_says(6, Players[choice].name_leader, -1, -1);
+            GenderDefault = Players[choice].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(8, Players[choice].title_leader, -1, -1);
+            parse_num(0, votes);
+            if (DiploScratchFAA8 >= 0) {
+                parse_say(0, Technology[DiploScratchFAA8].name, -1, -1);
+                if (DiploScratchFA18 < 0) {
                     strcat(StringTemp, "1");
+                } else {
+                    parse_say(1, Technology[DiploScratchFA18].name, -1, -1);
+                    if (DiploScratchFA1C < 0) {
+                        strcat(StringTemp, "2");
                     } else {
-                        parse_say(1, Technology[DiploScratchFA18].name, -1, -1);
-                        if (DiploScratchFA1C < 0) {
-                            strcat(StringTemp, "2");
+                        parse_say(4, Technology[DiploScratchFA1C].name, -1, -1);
+                        if (DiploScratchFA28 >= 0) {
+                            parse_say(5, Technology[DiploScratchFA28].name, -1, -1);
+                            strcat(StringTemp, "4");
                         } else {
-                            parse_say(4, Technology[DiploScratchFA1C].name, -1, -1);
-                            if (DiploScratchFA28 >= 0) {
-                                parse_say(5, Technology[DiploScratchFA28].name, -1, -1);
-                                strcat(StringTemp, "4");
-                            } else {
-                                strcat(StringTemp, "3");
-                            }
+                            strcat(StringTemp, "3");
                         }
                     }
                 }

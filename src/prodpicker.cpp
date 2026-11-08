@@ -977,11 +977,11 @@ int ProdPicker::exec(Base *base, int factionId, GraphicWin *owner, int modal) {
     }
 
     if (field_B68_ == 0) {
-        set_modal(0, pop_wait, 0);
+        set_modal(0, pop_expire, 0);
     } else {
         for (int buttonToSuppress = 0; buttonToSuppress < 22; ++buttonToSuppress)
             TutWinBaseWindow.flatButtons_[buttonToSuppress].set_input_suppressed(1);
-        set_modal(0, pop_wait, &MainInterfaceGlobal);
+        set_modal(0, pop_expire, &MainInterfaceGlobal);
         for (int buttonToRestore = 0; buttonToRestore < 22; ++buttonToRestore)
             TutWinBaseWindow.flatButtons_[buttonToRestore].set_input_suppressed(0);
     }

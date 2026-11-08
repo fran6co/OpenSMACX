@@ -4472,8 +4472,8 @@ void DesignWin::draw_vehicle(int redraw) {
         && Armor[armor_id].defense_rating > 1
         && Weapon[weapon_id].cost > 1) {
         strcat(StringTemp, "!");
-        screen->set_text_color(TextColourTable[46], TextColourTable[47], 1, 1);
-        screen->set_text_color2(TextColourTable[46], TextColourTable[47], 1, 1);
+        screen->set_text_color(TextColourTable[110], TextColourTable[111], 1, 1);
+        screen->set_text_color2(TextColourTable[110], TextColourTable[111], 1, 1);
     }
     CharUpperA(StringTemp);
     screen->write_cent_l(StringTemp, &dest, static_cast<int>(strlen(StringTemp)));
@@ -4568,8 +4568,8 @@ void DesignWin::draw_vehicle(int redraw) {
                 && Armor[armor_id].defense_rating > 1
                 && Weapon[weapon_id].cost > 1) {
                 strcat(StringTemp, "!");
-                screen->set_text_color(TextColourTable[46], TextColourTable[47], 1, 1);
-                screen->set_text_color2(TextColourTable[46], TextColourTable[47], 1, 1);
+                screen->set_text_color(TextColourTable[110], TextColourTable[111], 1, 1);
+                screen->set_text_color2(TextColourTable[110], TextColourTable[111], 1, 1);
             }
             CharUpperA(StringTemp);
             slen = static_cast<unsigned int>(strlen(StringTemp));
@@ -4577,8 +4577,8 @@ void DesignWin::draw_vehicle(int redraw) {
                                  static_cast<int>(slen));
         }
     } else {
-        screen->set_text_color(TextColourTable[46], TextColourTable[47], 1, 1);
-        screen->set_text_color2(TextColourTable[46], TextColourTable[47], 1, 1);
+        screen->set_text_color(TextColourTable[110], TextColourTable[111], 1, 1);
+        screen->set_text_color2(TextColourTable[110], TextColourTable[111], 1, 1);
         if ((static_cast<int>(field_CE8_) / 0xc) % 3 != 0) {
             StringTemp[0] = 0;
             strcat(StringTemp, label_get(0xe40 / 4));

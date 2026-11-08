@@ -7064,7 +7064,7 @@ void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
     if (Vehs[vehicle_id].faction_id != ConsoleGlobal.faction_id_) return;
     if (IsMultiplayerNet && (NetDaemonNet.channels_[1].leading_words_[2]
         || NetDaemonNet.channels_[1].payload_.flags || ConsoleControlTurnActive)) return;
-    if (!right && (GameDataStateStorage.fields_.game_preferences_ & 0x40000u)) {
+    if (!right && (GameDataStateStorage.fields_.game_more_preferences_ & 0x40000u)) {
         if (IsMultiplayerNet && veh_selectable(vehicle_id)
             && Vehs[vehicle_id].order == 0
             && !(Vehs[vehicle_id].state & 0x8004200u)) {

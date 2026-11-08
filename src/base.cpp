@@ -9844,9 +9844,8 @@ void __cdecl base_terraform(int force_improve) {
         const int zoc_owner = zoc_move(x, y, faction);
         if (zoc_owner >= 0) {
             if (zoc_owner == 1) continue;
-            const int treaty_index = zoc_owner - 1;
-            if (treaty_index >= 0 && treaty_index < MaxPlayerNum &&
-                (PlayersData[faction].diplo_treaties[treaty_index] & 0x0C30) != 0)
+            // Original bug (0x4ED6FA): zoc_owner 0 reads diplo_treaties[-1].
+            if ((PlayersData[faction].diplo_treaties[zoc_owner - 1] & 0x0C30) != 0)
                 continue;
             const unsigned int occupant = tile.val2 & 0x0F;
             if ((tile.bit & 0x3u) != 0 && occupant <= 7) continue;
@@ -12478,9 +12477,10 @@ after_popup:
                     if (best_faction <= 0) return;
                     const unsigned char human_mask =
                         static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
-                    if ((human_mask & faction_bit(faction_id)) == 0 ||
-                        (human_mask & faction_bit(best_faction)) == 0 ||
-                        (Players[best_faction].rule_flags & RFLAG_ALIEN)) return;
+                    // Native 0x4F5669..0x4F5685: either side human suffices.
+                    if ((human_mask & faction_bit(faction_id)) == 0 &&
+                        (human_mask & faction_bit(best_faction)) == 0) return;
+                    if (Players[best_faction].rule_flags & RFLAG_ALIEN) return;
 
                     const int old_x = BaseCurrent->x;
                     const int old_y = BaseCurrent->y;
