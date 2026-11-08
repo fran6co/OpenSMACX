@@ -3600,7 +3600,7 @@ int __cdecl value_of_base(int base_id, int faction_id_req, int faction_id_res,
             value += VehPrototypes[Vehs[veh].proto_id].cost * 2;
         }
     }
-    if (!_stricmp(Players[faction_id_req].filename, "BELIEVE")) {
+    if (!strcmp(Players[faction_id_req].filename, "BELIEVE")) {
         value *= 2;
     }
     if (is_objective(base_id)) {
