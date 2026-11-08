@@ -110,3 +110,36 @@ def test_local_targets_are_scoped_to_their_host(tmp_path):
     original = Listing(code=bytes(4), base=BASE)
     compiled = Listing(code=bytes(4), base=BASE, references=(local,))
     assert reference_mismatches(original, compiled, targets, host)
+
+
+RUNTIME_COMPONENT = """// RECOVERY_COMPONENT_BEGIN v1
+// {
+//   "archive_sha256": "%s",
+//   "component": {"component_id": "crt", "delivery": "toolchain", "evidence": ["test"],
+//                 "ownership": "runtime", "version": "test"},
+//   "kind": "toolchain_component", "absolute_symbols": [],
+//   "license_evidence": "test",
+//   "schema_version": 1,
+//   "image": {"sha256": "%s", "address_space": "pe:va"},
+//   "bindings": [
+//     {"evidence": "test", "origin": "0x00402000", "spans": ["0x00402000-0x00402010"],
+//      "symbol": "?g@@YAXXZ", "unit": "build/intel/mt_obj/g.obj"}
+//   ]
+// }
+// RECOVERY_COMPONENT_END
+""" % ("1" * 64, "2" * 64)
+
+
+def test_a_library_call_target_is_checked_against_its_component_origin(tmp_path, monkeypatch):
+    """`_stricmp` called where the image calls `_strcmp` once measured BYTE_EXACT."""
+    from match_recovery.component_source import parse_component
+    from match_recovery.source_selection import component_reference_objects
+    manifest = parse_component(RUNTIME_COMPONENT)
+    objects = component_reference_objects([manifest]) + [("?table@@3PAHA", TABLE)]
+    assert ("?g@@YAXXZ", CALLEE) in objects
+    assert measure(tmp_path, monkeypatch, -0x12C0, build_reference_targets([], objects)).verdict == "BYTE_EXACT"
+    moved = parse_component(RUNTIME_COMPONENT.replace("0x00402000", "0x00403000").replace("0x00402010", "0x00403010"))
+    result = measure(tmp_path, monkeypatch, -0x12C0, build_reference_targets(
+        [], component_reference_objects([moved]) + [("?table@@3PAHA", TABLE)]))
+    assert result.verdict == "SHAPE_EXACT"
+    assert "?g@@YAXXZ+0x0: source 0x00403000, image 0x00402000" in result.diagnostic

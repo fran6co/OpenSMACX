@@ -164,9 +164,9 @@ def select_records(records, targets, host, symbol_format):
 def measurement_reference_targets(root, settings, snapshot=None):
     """Source-bound original addresses for relocated fields in measurements.
 
-    Function mappings and direct object bindings only, seeds and fragments
-    excluded; names bound to more than one address are dropped. Everything
-    else stays masked. See `source.asm.reference_mismatches`.
+    Function mappings, direct object bindings and component (library)
+    origins, seeds and fragments excluded; names bound to more than one
+    address are dropped. Everything else stays masked. See `source.asm.reference_mismatches`.
     """
     from .object_source import parse_objects
     from .source.asm import build_reference_targets
@@ -197,4 +197,42 @@ def measurement_reference_targets(root, settings, snapshot=None):
             continue
         objects.extend((item.emitted_symbol, item.origin.address) for item in bindings
                        if item.parent_symbol is None and not item.target_local)
+    # Library origins declared by the dependency companions. A call to the
+    # wrong runtime routine (_stricmp for _strcmp) is otherwise masked.
+    from .ownership_source import component_manifests
+    try:
+        manifests = component_manifests(snapshot)
+    except ValueError:
+        manifests = []
+    objects.extend(component_reference_objects(manifests))
     return build_reference_targets(functions, objects)
+
+
+def component_reference_objects(manifests):
+    """(emitted symbol, original address) pairs a component annotation declares.
+
+    Declared original origins, not fresh archive verification: they only ask
+    the image whether a reference names the declared routine, never resolve a
+    link. Function bindings, code-entry anchors, external data anchors, data
+    starts and absolute constants (their value) contribute; an import thunk
+    contributes its short-record function symbol (`__imp__X@N` less `__imp_`),
+    while the `__imp_` pointer itself stays masked. Ambiguity is left to
+    `build_reference_targets`, which drops names bound to several addresses.
+    """
+    from .components import SystemImportManifest, ToolchainManifest
+    rows = []
+    for manifest in manifests:
+        if isinstance(manifest, SystemImportManifest):
+            rows.extend((item.import_symbol[len("__imp_"):], item.origin.address)
+                        for item in manifest.bindings if item.import_symbol.startswith("__imp_"))
+            continue
+        rows.extend((item.symbol, item.origin.address) for item in manifest.bindings)
+        if isinstance(manifest, ToolchainManifest):
+            rows.extend((anchor.name, section.span.start + anchor.offset)
+                        for section in manifest.code_sections for anchor in section.entries)
+            rows.extend((anchor.name, section.span.start + anchor.offset)
+                        for section in manifest.data_sections for anchor in section.symbols
+                        if anchor.storage == 2)
+            rows.extend((item.symbol, item.origin.address) for item in manifest.data_starts)
+            rows.extend((item.symbol, item.value) for item in manifest.absolute_symbols)
+    return rows
