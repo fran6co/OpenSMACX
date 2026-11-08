@@ -2613,7 +2613,7 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
                         continue;
                     }
                     Map *radius_tile = map_loc(x_radius, y_radius);
-                    if ((radius_tile->climate & 0xE0) >= ALT_BIT_SHORE_LINE) {
+                    if ((radius_tile->climate & ~0x1F) >= ALT_BIT_SHORE_LINE) {
                         continue;   // land
                     }
                     if (radius_tile->bit & BIT_MINE) {

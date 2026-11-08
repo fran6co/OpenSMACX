@@ -4081,26 +4081,26 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
     char *const buf = StringTemp;
     char numbuf[80];
     char idbuf[64];
-    bool flushed;
+    char flushed;
     int idx;
 
     if (a4 < 0 || a4 == 2) {
 
     // ---- section 1: reactor records (0x9527f8, stride 0xc, match +8) ----
-    flushed = false;
+    flushed = 0;
     idx = 0;
     *buf = 0;
     for (idx = 0; idx < MaxReactorNum; ++idx) {
         const RulesReactor &record = Reactor[idx];
         if (record.preq_tech == a2) {
             if (a4 < 0) {
-                if (flushed) {
-                    strcat(buf, ", ");
-                } else {
+                if (!flushed) {
                     strcat(buf, "^");
                     char *s = label_get(0x234 / 4);
                     strcat(buf, s);
                     strcat(buf, ": ");
+                } else {
+                    strcat(buf, ", ");
                 }
             } else {
                 strcat(buf, "^");
@@ -4109,10 +4109,10 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
                                                                   idx + 1);
             char *link = StringTable.get(record.name);
             help_create_link(buf, reinterpret_cast<char *>(link), idbuf);
-            flushed = (*buf != 0);
-            if (a4 >= 0 && *buf != 0) {
+            flushed = *buf;
+            if (a4 >= 0 && flushed) {
                 a1(buf);
-                flushed = false;
+                flushed = 0;
                 *buf = 0;
             }
         }
@@ -4120,20 +4120,20 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
     if (a4 < 0 && flushed) a1(buf);
 
     // ---- section 2: chassis records (0x94a330, stride 0x90, match +0x8e) ----
-    flushed = false;
+    flushed = 0;
     idx = 0;
     *buf = 0;
     for (idx = 0; idx < MaxChassisNum; ++idx) {
         const RulesChassis &record = Chassis[idx];
         if (record.preq_tech == a2) {
             if (a4 < 0) {
-                if (flushed) {
-                    strcat(buf, ", ");
-                } else {
+                if (!flushed) {
                     strcat(buf, "^");
                     char *s = label_get(0x120 / 4);
                     strcat(buf, s);
                     strcat(buf, ": ");
+                } else {
+                    strcat(buf, ", ");
                 }
             } else {
                 strcat(buf, "^");
@@ -4149,10 +4149,10 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             _itoa(record.speed, numbuf, 10);
             strcat(buf, numbuf);
             strcat(buf, ")");
-            flushed = (*buf != 0);
-            if (a4 >= 0 && *buf != 0) {
+            flushed = *buf;
+            if (a4 >= 0 && flushed) {
                 a1(buf);
-                flushed = false;
+                flushed = 0;
                 *buf = 0;
             }
         }
@@ -4160,127 +4160,116 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
     if (a4 < 0 && flushed) a1(buf);
 
     // ---- section 3: weapon records (0x94ae60, stride 0x10, match +0xc) ----
-    flushed = false;
+    flushed = 0;
     idx = 0;
     *buf = 0;
     for (idx = 0; idx < MaxWeaponNum; ++idx) {
-        const RulesWeapon &record = Weapon[idx];
-        if (record.preq_tech == a2) {
+        if (Weapon[idx].preq_tech == a2) {
             if (a4 < 0) {
-                if (flushed) {
-                    strcat(buf, ", ");
-                } else {
+                if (!flushed) {
                     strcat(buf, "^");
                     char *s = label_get(0x124 / 4);
                     strcat(buf, s);
                     strcat(buf, ": ");
+                } else {
+                    strcat(buf, ", ");
                 }
             } else {
                 strcat(buf, "^");
             }
             DatalinkMain.construct_id(idbuf, 6,
                                                                   idx);
-            char *link = StringTable.get(record.name);
-            strcat(buf, "$LINK<");
-            strcat(buf, link);
-            strcat(buf, "=");
-            strcat(buf, idbuf);
-            strcat(buf, ">");
+            char *link = StringTable.get(Weapon[idx].name);
+            help_create_link(buf, link, idbuf);
             TechnologyHelpEntryKind = 0x63;
-            TechnologyHelpEntryName = record.name;
+            TechnologyHelpEntryName = Weapon[idx].name;
             strcat(buf, " ");
-            char *s2 = label_get(0x310 / 4);
-            strcat(buf, s2);
             strcat(buf, "(");
-            unsigned char kind = static_cast<unsigned char>(record.offense_rating);
-            if (static_cast<char>(kind) >= 0) {
-                if (record.mode < 3) {
-                    _itoa(kind, numbuf, 10);
-                    strcat(buf, numbuf);
-                } else {
-                    char *s3 = label_get(0x200 / 4);
-                    strcat(buf, s3);
-                }
+            if (Weapon[idx].offense_rating < 0) {
+                strcat(buf, label_get(0x310 / 4));
+            } else if (Weapon[idx].mode < 3) {
+                _itoa(Weapon[idx].offense_rating, numbuf, 10);
+                strcat(buf, numbuf);
             } else {
-                char *s4 = label_get(0x310 / 4);
-                strcat(buf, s4);
+                strcat(buf, label_get(0x200 / 4));
             }
             strcat(buf, ")");
-            flushed = (*buf != 0);
-            if (a4 >= 0 && *buf != 0) {
-                a1(buf);
-                flushed = false;
-                *buf = 0;
+            if (a4 >= 0) {
+                flushed = *buf;
+                if (flushed) {
+                    a1(buf);
+                    flushed = 0;
+                    *buf = 0;
+                }
+            } else {
+                flushed = *buf;
             }
         }
     }
     if (a4 < 0 && flushed) a1(buf);
 
     // ---- section 4: armor records (0x94f278, stride 0x10, match +0xc) ----
-    flushed = false;
+    flushed = 0;
     idx = 0;
     *buf = 0;
     for (idx = 0; idx < MaxArmorNum; ++idx) {
-        const RulesArmor &record = Armor[idx];
-        if (record.preq_tech == a2) {
+        if (Armor[idx].preq_tech == a2) {
             if (a4 < 0) {
-                if (flushed) {
-                    strcat(buf, ", ");
-                } else {
+                if (!flushed) {
                     strcat(buf, "^");
                     char *s = label_get(0x128 / 4);
                     strcat(buf, s);
                     strcat(buf, ": ");
+                } else {
+                    strcat(buf, ", ");
                 }
             } else {
                 strcat(buf, "^");
             }
             DatalinkMain.construct_id(idbuf, 7,
                                                                   idx);
-            char *link = StringTable.get(record.name);
-            strcat(buf, "$LINK<");
-            strcat(buf, link);
-            strcat(buf, "=");
-            strcat(buf, idbuf);
-            strcat(buf, ">");
+            char *link = StringTable.get(Armor[idx].name);
+            help_create_link(buf, link, idbuf);
             TechnologyHelpEntryKind = 0x64;
-            TechnologyHelpEntryName = record.name;
+            TechnologyHelpEntryName = Armor[idx].name;
             strcat(buf, " ");
             strcat(buf, "(");
-            char kind2 = record.defense_rating;
-            if (kind2 >= 0) {
-                _itoa(static_cast<unsigned char>(kind2), numbuf, 10);
-                strcat(buf, numbuf);
+            if (Armor[idx].defense_rating < 0) {
+                strcat(buf, label_get(0x310 / 4));
             } else {
-                char *s2 = label_get(0x310 / 4);
-                strcat(buf, s2);
+                _itoa(Armor[idx].defense_rating, numbuf, 10);
+                strcat(buf, numbuf);
             }
             strcat(buf, ")");
-            flushed = (*buf != 0);
-            if (a4 >= 0 && *buf != 0) {
-                a1(buf);
-                flushed = false;
-                *buf = 0;
+            if (a4 >= 0) {
+                flushed = *buf;
+                if (flushed) {
+                    a1(buf);
+                    flushed = 0;
+                    *buf = 0;
+                }
+            } else {
+                flushed = *buf;
             }
         }
     }
     if (a4 < 0 && flushed) a1(buf);
 
     // ---- section 5: ability records (0x9ab538, stride 0x1c, match +0x18) ----
-    flushed = false;
+    flushed = 0;
     idx = 0;
     *buf = 0;
     for (idx = 0; idx < MaxAbilityNum; ++idx) {
         const RulesAbility &record = Ability[idx];
         if (record.preq_tech == a2) {
             if (a4 < 0) {
-                if (flushed) {
-                    strcat(buf, ", ");
-                } else {
+                if (!flushed) {
                     strcat(buf, "^");
                     char *s = label_get(0x12C / 4);
                     strcat(buf, s);
                     strcat(buf, ": ");
+                } else {
+                    strcat(buf, ", ");
                 }
             } else {
                 strcat(buf, "^");
@@ -4288,16 +4277,16 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             DatalinkMain.construct_id(idbuf, 8,
                                                                   idx);
             char *link = StringTable.get(record.name);
-            strcat(buf, "$LINK<");
-            strcat(buf, link);
-            strcat(buf, "=");
-            strcat(buf, idbuf);
-            strcat(buf, ">");
-            flushed = (*buf != 0);
-            if (a4 >= 0 && *buf != 0) {
-                a1(buf);
-                flushed = false;
-                *buf = 0;
+            help_create_link(buf, link, idbuf);
+            if (a4 >= 0) {
+                flushed = *buf;
+                if (flushed) {
+                    a1(buf);
+                    flushed = 0;
+                    *buf = 0;
+                }
+            } else {
+                flushed = *buf;
             }
         }
     }
@@ -4312,24 +4301,20 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             if ((record.flags & 1) == 0) continue;
             if (record.preq_tech != a2) continue;
             if (a4 < 0) {
-                if (*buf != 0) {
-                    strcat(buf, ", ");
-                } else {
+                if (*buf == 0) {
                     strcat(buf, "^");
                     char *s = label_get(0x318 / 4);
                     strcat(buf, s);
                     strcat(buf, ": ");
+                } else {
+                    strcat(buf, ", ");
                 }
             } else {
                 strcat(buf, "^");
             }
             DatalinkMain.construct_id(idbuf, 3,
                                                                   ctr);
-            strcat(buf, "$LINK<");
-            strcat(buf, const_cast<char *>(record.veh_name));
-            strcat(buf, "=");
-            strcat(buf, idbuf);
-            strcat(buf, ">");
+            help_create_link(buf, const_cast<char *>(record.veh_name), idbuf);
             if (a4 >= 0 && *buf != 0) {
                 a1(buf);
                 *buf = 0;
@@ -4350,13 +4335,13 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
                          (record.free_tech == a2);
             if (!match) continue;
             if (a4 < 0) {
-                if (*buf != 0) {
-                    strcat(buf, ", ");
-                } else {
+                if (*buf == 0) {
                     strcat(buf, "^");
                     char *s = label_get(0x110 / 4);
                     strcat(buf, s);
                     strcat(buf, ": ");
+                } else {
+                    strcat(buf, ", ");
                 }
             } else {
                 strcat(buf, "^");
@@ -4369,11 +4354,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
                                                                   category,
                                                                   ctr);
             char *link = StringTable.get(record.name);
-            strcat(buf, "$LINK<");
-            strcat(buf, link);
-            strcat(buf, "=");
-            strcat(buf, idbuf);
-            strcat(buf, ">");
+            help_create_link(buf, link, idbuf);
             if (record.free_tech == a2) {
                 strcat(buf, " ");
                 char *s2 = label_get(0x4DC / 4);
@@ -4392,42 +4373,34 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
 
     // ---- section 8: social-category prerequisites, groups of 4 (0x94b014); section 9 follows in the same gate ----
     if ((a4 < 0) || (a4 == 3)) {
-        int idBase = 1;
-        int outerIndex = 0;
         *buf = 0;
+        int outerIndex = 0;
         do {
             for (int j = 0; j < 4; ++j) {
                 if (SocialCategories[outerIndex].preq_tech[j] == a2) {
                     if (a4 < 0) {
-                        if (*buf != 0) {
+                        if (*buf == 0) {
                             strcat(buf, "^");
-                        } else {
-                            strcat(buf,
-                                   "^");
                             char *s = label_get(0x118 / 4);
                             strcat(buf, s);
-                            strcat(buf,
-                                   ": ");
+                            strcat(buf, ": ");
+                        } else {
+                            strcat(buf, ", ");
                         }
                     } else {
                         strcat(buf, "^");
                     }
                     DatalinkMain.construct_id(
-                        idbuf, 0xC, idBase + j);
+                        idbuf, 0xC, outerIndex * 5 + j + 1);
                     char *link = StringTable.get(
                         SocialCategories[outerIndex].name[j]);
-                    strcat(buf, "$LINK<");
-                    strcat(buf, link);
-                    strcat(buf, "=");
-                    strcat(buf, idbuf);
-                    strcat(buf, ">");
+                    help_create_link(buf, link, idbuf);
                     if (*buf != 0) {
                         a1(buf);
                     }
                 }
             }
             ++outerIndex;
-            idBase += 5;
         } while (outerIndex < MaxSocialCatNum);
 
         // ---- section 9: citizen prerequisites (0x946020, stride 0x1c, match +8) ----
@@ -4437,13 +4410,13 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             const RulesCitizen &record = Citizen[idx];
             if (record.preq_tech != a2) continue;
             if (a4 < 0) {
-                if (*buf != 0) {
-                    strcat(buf, ", ");
-                } else {
+                if (*buf == 0) {
                     strcat(buf, "^");
                     char *s = label_get(0x4CC / 4);
                     strcat(buf, s);
                     strcat(buf, ": ");
+                } else {
+                    strcat(buf, ", ");
                 }
             } else {
                 strcat(buf, "^");
@@ -4466,13 +4439,13 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
                          (record.preq_tech_2 == a2);
             if (!match) continue;
             if (a4 < 0) {
-                if (*buf != 0) {
-                    strcat(buf, ", ");
-                } else {
+                if (*buf == 0) {
                     strcat(buf, "^");
                     char *s = label_get(0x130 / 4);
                     strcat(buf, s);
                     strcat(buf, ": ");
+                } else {
+                    strcat(buf, ", ");
                 }
             } else {
                 strcat(buf, "^");
@@ -4480,11 +4453,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             DatalinkMain.construct_id(idbuf, 0xE,
                                                                   ctr);
             char *link = StringTable.get(record.name);
-            strcat(buf, "$LINK<");
-            strcat(buf, link);
-            strcat(buf, "=");
-            strcat(buf, idbuf);
-            strcat(buf, ">");
+            help_create_link(buf, link, idbuf);
             if (a4 >= 0 && *buf != 0) {
                 a1(buf);
                 *buf = 0;

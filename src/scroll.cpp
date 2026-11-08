@@ -463,6 +463,9 @@ int Scroll::init(int x, int y, int width, int height, Win *parent,
         return 7;
     }
 
+    // stand-in: the image calls expand_rect out of line only here (its other
+    // callers inline it); a local const pointer keeps VC6 from inlining it.
+    RECT *(__cdecl *const expand_rect)(RECT *, int, int) = ::expand_rect;
     close();
     field_A14_ |= static_cast<uint32_t>(options);
     field_A18_ = static_cast<uint32_t>(setting);
@@ -519,11 +522,13 @@ int Scroll::init(int x, int y, int width, int height, Win *parent,
         }
         flat_button_left_.set_scroll_icons(first_icons[0], first_icons[1],
                                            first_icons[2]);
-        flat_button_left_.color_ = color_;
-        flat_button_left_.bevel_thickness_ = bevel_thickness_;
-        flat_button_left_.bevel_upper_ = bevel_upper_;
-        flat_button_left_.bevel_lower_ = bevel_lower_;
-        flat_button_left_.field_AA0_ = 0;
+        // volatile: stand-in for the image's strict load/store pairs at 0x006056B2
+        // (no hoisted loads); no plain spelling found.
+        *reinterpret_cast<volatile uint32_t *>(&flat_button_left_.color_) = color_;
+        *reinterpret_cast<volatile uint32_t *>(&flat_button_left_.bevel_thickness_) = bevel_thickness_;
+        *reinterpret_cast<volatile uint32_t *>(&flat_button_left_.bevel_upper_) = bevel_upper_;
+        *reinterpret_cast<volatile uint32_t *>(&flat_button_left_.bevel_lower_) = bevel_lower_;
+        *reinterpret_cast<volatile uint32_t *>(&flat_button_left_.field_AA0_) = 0;
         flat_button_left_.field_A44_ = 0x32;
         flat_button_left_.redraw();
 
@@ -545,17 +550,19 @@ int Scroll::init(int x, int y, int width, int height, Win *parent,
         }
         flat_button_right_.set_scroll_icons(second_icons[0], second_icons[1],
                                             second_icons[2]);
-        flat_button_right_.color_ = color_;
-        flat_button_right_.bevel_thickness_ = bevel_thickness_;
-        flat_button_right_.bevel_upper_ = bevel_upper_;
-        flat_button_right_.bevel_lower_ = bevel_lower_;
-        flat_button_right_.field_AA0_ = 0;
+        // volatile: stand-in for the image's strict load/store pairs at 0x006057B9
+        // (no hoisted loads); no plain spelling found.
+        *reinterpret_cast<volatile uint32_t *>(&flat_button_right_.color_) = color_;
+        *reinterpret_cast<volatile uint32_t *>(&flat_button_right_.bevel_thickness_) = bevel_thickness_;
+        *reinterpret_cast<volatile uint32_t *>(&flat_button_right_.bevel_upper_) = bevel_upper_;
+        *reinterpret_cast<volatile uint32_t *>(&flat_button_right_.bevel_lower_) = bevel_lower_;
+        *reinterpret_cast<volatile uint32_t *>(&flat_button_right_.field_AA0_) = 0;
         flat_button_right_.field_A44_ = 0x32;
         flat_button_right_.redraw();
     }
 
-    position_ = range_minimum_;
     field_A3C_ = 0xFFFFFFFFU;
+    position_ = range_minimum_;
     show(0);
     ScrollNonClientInit = 0;
     return 0;
