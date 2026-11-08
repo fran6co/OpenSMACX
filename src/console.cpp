@@ -3460,14 +3460,15 @@ void Console::zoom_to_upkeep_base() {
 
 
 // The CUSTOMTIME accept path clamps every re-parsed field to 0..9999.
+// stand-in: early-return spelling; its smaller /Ob2 cost leaves the
+// budget the image spends on the final Popup teardown.
 static int parse_turn_time_clamped(const char256 &text) {
     int value = atoi(text.str);
-    if (value < 0) {
-        value = 0;
-    } else if (value > 0x270F) {
-        value = 0x270F;
+    if (value >= 0) {
+        if (value > 0x270F) return 0x270F;
+        return value;
     }
-    return value;
+    return 0;
 }
 
 
@@ -3510,14 +3511,30 @@ void Console::time_controls() {
     if (result == 5) {
         // The seven editable turn times go through the parser in this order,
         // then the accept path re-parses and clamps all seven fields of the
-        // active TimeControl row.
-        parse_field_number(0, TimeControl[5].base);
-        parse_field_number(1, TimeControl[5].unit);
-        parse_field_number(2, TimeControl[5].event);
-        parse_field_number(3, TimeControl[5].turn);
-        parse_field_number(4, TimeControl[5].extra);
-        parse_field_number(result, TimeControl[5].refresh);
-        parse_field_number(6, TimeControl[5].accumulated);
+        // active TimeControl row. Written out rather than through
+        // parse_field_number: the extra helper level spends inline budget
+        // the image keeps for its teardown.
+        StringTemp[0] = 0;
+        say_num(TimeControl[5].base);
+        parse_says(0, StringTemp, -1, -1);
+        StringTemp[0] = 0;
+        say_num(TimeControl[5].unit);
+        parse_says(1, StringTemp, -1, -1);
+        StringTemp[0] = 0;
+        say_num(TimeControl[5].event);
+        parse_says(2, StringTemp, -1, -1);
+        StringTemp[0] = 0;
+        say_num(TimeControl[5].turn);
+        parse_says(3, StringTemp, -1, -1);
+        StringTemp[0] = 0;
+        say_num(TimeControl[5].extra);
+        parse_says(4, StringTemp, -1, -1);
+        StringTemp[0] = 0;
+        say_num(TimeControl[5].refresh);
+        parse_says(result, StringTemp, -1, -1);
+        StringTemp[0] = 0;
+        say_num(TimeControl[5].accumulated);
+        parse_says(6, StringTemp, -1, -1);
 
         popup.start(PopupStartCaption, ConsoleStrCustomTime, -1, nullptr, 0x44, nullptr);
         if (popup.exec(0, 0) >= 0) {
