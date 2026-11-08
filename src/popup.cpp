@@ -822,10 +822,9 @@ int Popup::set_picture(Sprite *picture, int mode, char *text) {
 
 // ORIGINAL: 0x0050B8D0 ?POP3@@YAXPBDHHH@Z 0x0050B8D0-0x0050B8EF BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["original:terranx_original.exe:0x0050B8D0-0x0050B8EF", "source:src/popup.cpp:typed owner", "source:src/popup.h:POP3 overload declarations", "original:0x004055A0 full POP3 target", "seed:retained original source identity 0x0050B8D0"], "reason": "The short POP3 entry is a typed overload that delegates its original arguments to the full POP3 owner."}
+// body src/popup.h
 // symbol    ?POP3@@YAXPBDHHH@Z
-void __cdecl POP3(const char *section, int mode, int x, int y) {
-    POP3(section, static_cast<const char *>(0), mode, x, y);
-}
+// BODY IN popup.h, as `MEASURED inline`.
 
 // ORIGINAL: 0x00405140 ?POP2@@YAHPBDPBDH@Z 0x00405140-0x0040559B;0x0065078F-0x00650839
 // RECOVERY_BINDING: v1 {"evidence": ["pinned 0x405140..0x40559B builds BasePop at EBP-0x5390 and Scroll at EBP-0x2160 (= BasePop+0x3230), then installs Popup primary vptr 0x6695C8 and Buffer-base vptr 0x6695C0", "pinned normal and cold cleanup spans 0x65078F..0x650839 show Scroll/BasePop close and destructor order; current Popup::~Popup calls close, then compiler-owned Scroll and BasePop teardown", "source:src/popup.h Popup inherits BasePop and owns Scroll scroll_ at 0x3230; current sizeof(Popup) is 0x537C", "source:src/basepop.h unit_ids_, owned_picture(), set_caller_picture(); source:src/stringstruct.h entry payload/previous links and StringList::add", "source:src/strings.h StringTemp; src/popup.h PopupStartCaption; src/game.h IsMultiplayerPBEM; src/game_data_state_window.h lock_masks_.bytes_.human_mask_/alive_mask_ and game_warnings_; src/messagewin.h MessageWinDeferredBaseMessages[8]; src/base.h Bases[].faction_id_current; src/mapwin.h MainInterfaceGlobal", "the original rec=0x93A800..<0x93A950 walk advances by 0x30, yielding exactly queue indexes 1..7; keep that bound and the unchecked indexing behavior", "both original spans and seed history remain attached to this identity; the historical TRIED/mismatch notes remain obligations, not current owner claims"], "reason": "Recover POP2 on the real Popup object: its pinned local has Popup's vptr plus Buffer-base vptr, with BasePop at frame offset -0x5390 and its owned Scroll exactly at +0x3230. Popup construction/destruction now follows the actual class lifetime; the body keeps the original queue, text, warning, image and return paths."}

@@ -2789,9 +2789,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
                 GenderDefault = Players[att_faction].is_leader_female;
                 PluralityDefault = 0;
                 parse_says(1, Players[att_faction].name_leader, -1, -1);
-                GenderDefault = Players[att_faction].noun_gender;
-                PluralityDefault = Players[att_faction].is_noun_plural;
-                parse_says(2, Players[att_faction].noun_faction, -1, -1);
+                parse_says(2, get_noun(att_faction), -1, -1);
                 NetMsgPrimary.pop("SURPRISE", -5000, 0, 0);
             } else if (IsMultiplayerPBEM) {
                 // 0x507696
@@ -2801,9 +2799,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
                 GenderDefault = Players[att_faction].is_leader_female;
                 PluralityDefault = 0;
                 parse_says(1, Players[att_faction].name_leader, -1, -1);
-                GenderDefault = Players[att_faction].noun_gender;
-                PluralityDefault = Players[att_faction].is_noun_plural;
-                parse_says(2, Players[att_faction].noun_faction, -1, -1);
+                parse_says(2, get_noun(att_faction), -1, -1);
                 POP2("SURPRISE", 0, -1 - def_faction);
             }
             // 0x507679 / 0x507731 (each branch has its own copy)
@@ -2995,12 +2991,12 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
         GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
         parse_says(1, Players[ConsoleGlobal.faction_id_].name_leader, -1, -1);
         // 0x507F36: inlined say_num(). "." is a direct strcat call, not says()
-        StringTemp[0] = '\0';
+        clear();
         say_num(att_strength >> 8);
         strcat(StringTemp, ".");
         say_num(((att_strength & 0xFF) * 10) >> 8);
         parse_says(2, StringTemp, -1, -1);
-        StringTemp[0] = '\0';
+        clear();
         say_num(def_strength >> 8);
         strcat(StringTemp, ".");
         say_num(((def_strength & 0xFF) * 10) >> 8);
@@ -3433,11 +3429,11 @@ L_50973a:
         draw_tile(target_x, target_y, 2);
     }
     if (captor == ConsoleGlobal.faction_id_) {
-        parse_says(1, Players[old_def_faction].adj_name_faction, -1, -1);
+        parse_says(1, get_adjective(old_def_faction), -1, -1);
         popp(ScriptPopupFile, "WEMARINEDETACH", 0, "navun_sm.pcx", 0);
     }
     if (old_def_faction == ConsoleGlobal.faction_id_) {
-        parse_says(1, Players[captor].adj_name_faction, -1, -1);
+        parse_says(1, get_adjective(captor), -1, -1);
         popp(ScriptPopupFile, "THEYMARINEDETACH", 0, "navun_sm.pcx", 0);
     }
     log_say("Detachment", 0, 0, 0);

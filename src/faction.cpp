@@ -646,7 +646,7 @@ Status: Complete
 /*
 Purpose: Get the faction's name adjective.
 // ORIGINAL: 0x0050B910 ?get_adjective@@YAHH@Z 0x0050B910-0x0050B92A BYTE_EXACT
-// body      src/faction.cpp
+// body      src/faction.h
 // symbol    ?get_adjective@@YAPADH@Z
 // size      26 bytes
 // prototype int (__cdecl ?get_adjective@@YAHH@Z)(int factionID)
@@ -657,18 +657,13 @@ Purpose: Get the faction's name adjective.
 Return Value: Faction name adjective
 Status: Complete
 */
-// Historical placement rationale: the image writes this helper out at some
-// call sites and calls it at others. Keep its original call/inlined behavior
-// available to the compiler through this ordinary faction.cpp definition.
-MEASURED LPSTR __cdecl get_adjective(int faction_id) {
-    return Players[faction_id].adj_name_faction;
-}
+// BODY IN faction.h, as `MEASURED inline`.
 
 
 /*
 Purpose: Get the faction's noun.
 // ORIGINAL: 0x0050B930 ?get_noun@@YAHH@Z 0x0050B930-0x0050B964 BYTE_EXACT
-// body      src/faction.cpp
+// body      src/faction.h
 // LEVER: calling `parse_set(...)` grouped the two field reads together (matching
 //        the image's read/read/store/store order) but gave the temps the wrong
 //        registers (edx for gender, ecx for plurality). Assigning `GenderDefault`
@@ -689,17 +684,7 @@ Purpose: Get the faction's noun.
 Return Value: Faction noun
 Status: Complete
 */
-// Historical source-placement note: the ordinary API now lives here; name_base
-// spells its independently observed inline field/grammar operation directly.
-// BODY IN faction.h, as `MEASURED inline`: name_base (base.cpp) is the caller
-// that needs it folded in place, matching the image.
-// enemies_war/enemies_treaty call it out of line in the image; communicate
-// expands its early sites, so it stays an ordinary /Ob2 candidate here.
-MEASURED LPSTR __cdecl get_noun(int faction_id) {
-    GenderDefault = Players[faction_id].noun_gender;
-    PluralityDefault = Players[faction_id].is_noun_plural;
-    return Players[faction_id].noun_faction;
-}
+// BODY IN faction.h, as `MEASURED inline`.
 
 /*
 Purpose: Determine whether automatic contact is enabled for net or PBEM games.

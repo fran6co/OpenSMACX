@@ -1026,7 +1026,12 @@ void __cdecl wait_loop();
 int __cdecl spying(int subject);
 
 MEASURED int __cdecl has_treaty(int faction_id, int faction_id_with, int treaty);
-MEASURED LPSTR __cdecl get_adjective(int faction_id);
+// Header inline: the image expands get_adjective in place across many units
+// and only budget-exhausted giants (battle_fight, communicate, probe) call
+// the out-of-line copy at 0x0050B910, emitted at the end of battle's unit.
+MEASURED inline LPSTR __cdecl get_adjective(int faction_id) {   // 0050B910
+    return Players[faction_id].adj_name_faction;
+}
 
 // Faction dialogue forms. The leader-name/title/insult forms also select
 // singular grammar and the leader's gender for the next parse_says call.
@@ -1061,7 +1066,14 @@ MEASURED int __cdecl social_upheaval(int faction_id, SocialCategory *category_ne
 // Historical inline rationale: name_base (base.cpp) needs this folded in
 // place - the image never calls get_noun out of line there. The verified
 // name_base path now spells its own inline field/grammar operation.
-MEASURED LPSTR __cdecl get_noun(int faction_id);
+// Header inline: the image expands get_noun in place across many units; only
+// budget-exhausted giants (battle_fight, communicate, enemies_war,
+// enemies_treaty, probe) call the copy at 0x0050B930.
+MEASURED inline LPSTR __cdecl get_noun(int faction_id) {   // 0050B930
+    GenderDefault = Players[faction_id].noun_gender;
+    PluralityDefault = Players[faction_id].is_noun_plural;
+    return Players[faction_id].noun_faction;
+}
 
 int __cdecl setup_player(int faction_id, int conqueror, int retry);
 int __cdecl eliminate_player(int faction_id, int conqueror);

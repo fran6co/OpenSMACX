@@ -223,9 +223,13 @@ void __cdecl veh_sprite_draw(Sprite *sprite, GraphicWin *owner, int vehicle,
                             int x, int y);
 
 /* Original popup convenience overloads recovered in popup.cpp. */
-void __cdecl POP3(const char *section, int mode, int x, int y);
 void __cdecl POP3(const char *section, const char *unused, int recipient,
                   int x, int y);
+// Header inline: popup.cpp and battle_fight's early report expand it in place;
+// battle_fight's late COMBATWIN report calls the copy at 0x0050B8D0.
+MEASURED inline void __cdecl POP3(const char *section, int mode, int x, int y) {   // 0050B8D0
+    POP3(section, static_cast<const char *>(0), mode, x, y);
+}
 
 // Existing source owner: popup.cpp, original 0x00405140.
 int __cdecl POP2(const char *caption, const char *image, int base_id);

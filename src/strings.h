@@ -33,7 +33,12 @@
 extern char StringTemp[1032];    // 0x009B86A0
 
 // Shared scratch-buffer operations adjacent in the original executable.
-void __cdecl clear();
+// clear() is a header inline: the image writes `mov byte [StringTemp], 0` in
+// place in most units, and only budget-exhausted giants (base_build,
+// battle_fight, communicate, probe) call the out-of-line copy at 0x00500120.
+MEASURED inline void __cdecl clear() {   // 00500120
+    StringTemp[0] = 0;
+}
 void __cdecl says(const char *text);
 
 void __cdecl say_reactor(char *output, int reactor_id, int with_detail);
