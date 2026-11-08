@@ -1632,58 +1632,6 @@ void BaseWin::draw_psych() {
     Buffer::set_clip(&saved_clip);
 }
 
-namespace {
-int hurry_signed_bits(uint32_t value) {
-    return value <= 0x7FFFFFFFu ? static_cast<int>(value)
-        : -1 - static_cast<int>(0xFFFFFFFFu - value);
-}
-int hurry_add(int left, int right) {
-    return hurry_signed_bits(static_cast<uint32_t>(left) + static_cast<uint32_t>(right));
-}
-int hurry_sub(int left, int right) {
-    return hurry_signed_bits(static_cast<uint32_t>(left) - static_cast<uint32_t>(right));
-}
-int hurry_mul(int left, int right) {
-    return hurry_signed_bits(static_cast<uint32_t>(left) * static_cast<uint32_t>(right));
-}
-struct HurryPrice { int adjusted_cost; int gross_cost; };
-HurryPrice hurry_price(int base_id, int production_id, int accounting_faction) {
-    const int negative_id = hurry_sub(0, production_id);
-    const int item_cost = production_id >= 0 ? veh_cost(production_id, base_id, 0)
-                                             : Facility[negative_id].cost;
-    Base *live_base = BaseCurrent;
-    const int factor_faction = live_base->faction_id_current;
-    const int gross_cost = hurry_mul(cost_factor(factor_faction, 1, -1), item_cost);
-    live_base = BaseCurrent;
-    const int current_production_id = live_base->queue_production_id[0];
-    int current_minerals = live_base->minerals_accumulated;
-    const int remaining = hurry_sub(gross_cost, current_minerals);
-    int cost = current_production_id >= 0
-        ? hurry_add(hurry_mul(remaining, remaining) / 20, hurry_add(remaining, remaining))
-        : hurry_add(remaining, remaining);
-    if (negative_id >= 0x46) {
-        cost = hurry_add(cost, cost);
-        live_base = BaseCurrent;
-        const int low_minerals = live_base->minerals_accumulated;
-        current_minerals = low_minerals;
-        const int second_factor_faction = live_base->faction_id_current;
-        if (low_minerals < hurry_mul(cost_factor(second_factor_faction, 1, -1), 4))
-            cost = hurry_add(cost, cost);
-    }
-    if (current_minerals < static_cast<int>(Rules.retool_exemption)) cost = hurry_add(cost, cost);
-    if (GameDataStateStorage.fields_.secret_project_.voice_of_planet() >= 0) cost = hurry_add(cost, cost);
-    const int hurry_percent = Players[accounting_faction].rule_hurry;
-    if (hurry_percent != 100) cost = hurry_mul(hurry_percent, cost) / 100;
-    HurryPrice result = {cost, gross_cost};
-    return result;
-}
-char *expand_hurry_dialog_item() {
-    char *source = text_get();
-    StringTemp[0] = 0;
-    parse_string(source, StringTemp);
-    return StringTemp;
-}
-} // namespace
 
 static int production_signed_bits(uint32_t bits) {
     return bits <= 0x7FFFFFFFu ? static_cast<int>(bits)
@@ -2180,125 +2128,118 @@ void BaseWin::production(int a1, int a2) {
     }
 }
 
+// Reads the next text line and expands it into StringTemp.
+static char *hurry_next_item() {
+    text_get();
+    StringTemp[0] = 0;
+    parse_string(TextBufferGetPtr, StringTemp);
+    return StringTemp;
+}
+
+// stand-in: BasePop exposes no setter for text_block_a_.field_104_ (Popup
+// +0x2F68, the wave index popup_wave_callback plays); the image stores it here.
+#define HURRY_SET_WAVE(popup, wave) (*reinterpret_cast<int *>(reinterpret_cast<char *>(&(popup)) + 0x2F68) = (wave))
 // ORIGINAL: 0x00418DF0 ?hurry@BaseWin@@QAEXXZ 0x00418DF0-0x00419A8E;0x0065221C-0x0065249C
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00418df0.cpp", "image:0x00418DF0-0x00419A8E native control-flow and operand review", "source:src/basewin.h", "source:src/base.h"], "reason": "Recover full hurry pricing, dialog, payment, lock and Base update flow through source-owned Base/PlayerData/UI state; retain native signed 32-bit arithmetic and callback-time reloads. Shared energy-mirror producer/consumer bodies remain seed-only, so that object's source binding is not proof of end-to-end energy runtime behavior."}
 // TRIED: `Popup popup;` RAII with raw popup-relative offsets for scroll_/flat_button/dialogs_/spot_/sprite_/heap_ reproduces the close cascades' shape and offsets (cross-checked against the scaffold's independently-derived field layout), but the success-path teardown ends with a manual GraphicWin dtor call rather than suppressing the compiler's own implicit ~Popup() at the closing brace, which the original does not emit on that path; MISMATCH #2.
 void BaseWin::hurry() {
-    Popup popup;
     int lock_held = 0;
-    int selection_result = 0;
-    int payment = 0;
+    Popup popup;
     compute_selected_base();
-    const int entry_base_id = focused_base_id();
-    if (Bases[entry_base_id].faction_id_current != ConsoleGlobal.faction_id_
+    if (Bases[focusedBaseID_].faction_id_current != ConsoleGlobal.faction_id_
         && (GameDataStateStorage.fields_.game_state_ & 0x80u) == 0) return;
 
-    const int base_id = BaseIDCurrentSelected;
-    Base *base = BaseCurrent;
-    const int production_id = base->queue_production_id[0];
-    const int negative_production_id = hurry_sub(0, production_id);
-    const int faction_id = base->faction_id_current;
-    const HurryPrice price = hurry_price(base_id, production_id, faction_id);
-    const int cost = price.adjusted_cost;
-    int mineral_target = price.gross_cost;
+    // hurry_cost_total is declared uint32_t; the image compares it signed.
+    int faction_id = BaseCurrent->faction_id_current;
+    int production_id = BaseCurrent->queue_production_id[0];
+    int facility_id = -production_id;
+    int item_cost = production_id >= 0
+        ? veh_cost(production_id, BaseIDCurrentSelected, 0) : Facility[facility_id].cost;
+    int mineral_cost = cost_factor(BaseCurrent->faction_id_current, 1, -1) * item_cost;
+    int minerals = BaseCurrent->minerals_accumulated;
+    const int remaining = mineral_cost - minerals;
+    int cost = BaseCurrent->queue_production_id[0] >= 0
+        ? remaining * remaining / 20 + remaining * 2 : remaining * 2;
+    if (facility_id >= 70) {
+        cost *= 2;
+        minerals = BaseCurrent->minerals_accumulated;
+        if (minerals < cost_factor(BaseCurrent->faction_id_current, 1, -1) * 4) cost *= 2;
+    }
+    if (minerals < static_cast<int>(Rules.retool_exemption)) cost *= 2;
+    if (GameDataStateStorage.fields_.secret_project_.voice_of_planet() >= 0) cost *= 2;
+    if (Players[faction_id].rule_hurry != 100) cost = Players[faction_id].rule_hurry * cost / 100;
     if (cost <= 0) return;
 
     parse_says(0, BaseCurrent->name_string, -1, -1);
-    base = BaseCurrent;
-    const int current_production_id = base->queue_production_id[0];
-    if (current_production_id >= 0) {
-        parse_says(1, VehPrototypes[production_id].veh_name, -1, -1);
-    } else {
-        parse_says(1, StringTable.get(
-            Facility[negative_production_id].name), -1, -1);
-    }
+    parse_says(1, BaseCurrent->queue_production_id[0] >= 0
+        ? VehPrototypes[production_id].veh_name
+        : StringTable.get(Facility[facility_id].name), -1, -1);
     parse_num(0, cost);
-    parse_num(1, hurry_sub(PlayersData[faction_id].energy_reserves,
-                          PlayersData[faction_id].hurry_cost_total));
+    parse_num(1, PlayersData[faction_id].energy_reserves - static_cast<int>(PlayersData[faction_id].hurry_cost_total));
     popup.start(PopupStartCaption, "HURRY", -1, 0, 0, 0);
-
-    base = BaseCurrent;
-    const int drone_production_id = base->queue_production_id[0];
-    if ((base->state & 2u) == 0
-        || (drone_production_id < 0 && drone_production_id > -0x41)) {
-        const int available = hurry_sub(PlayersData[faction_id].energy_reserves,
-                                        PlayersData[faction_id].hurry_cost_total);
-        if (available >= 0) {
-            if (X_text_open(ScriptPopupFile, "HURRYOPTIONS") != 0) return;
-            popup.dialogs().item(expand_hurry_dialog_item(), 0);
-            char *full_payment_item = expand_hurry_dialog_item();
-            const int available_after_expansion = hurry_sub(
-                PlayersData[faction_id].energy_reserves,
-                PlayersData[faction_id].hurry_cost_total);
-            if (available_after_expansion >= cost)
-                popup.dialogs().item(full_payment_item, 1);
-            popup.dialogs().item(expand_hurry_dialog_item(), 2);
-            if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1) != 0) return;
-            lock_held = 1;
-        }
-    } else {
+    if ((BaseCurrent->state & 2u) != 0
+        && (BaseCurrent->queue_production_id[0] >= 0 || BaseCurrent->queue_production_id[0] <= -0x41)) {
         popup.start(PopupStartCaption, "HURRYDRONE", -1, 0, 0x80, 0);
+        HURRY_SET_WAVE(popup, 0x1C);
+    } else if (PlayersData[faction_id].energy_reserves - static_cast<int>(PlayersData[faction_id].hurry_cost_total) >= 0) {
+        if (X_text_open(ScriptPopupFile, "HURRYOPTIONS")) return;
+        popup.dialogs().item(hurry_next_item(), 0);
+        hurry_next_item();
+        if (PlayersData[faction_id].energy_reserves - static_cast<int>(PlayersData[faction_id].hurry_cost_total) >= cost) {
+            popup.dialogs().item(StringTemp, 1);
+            HURRY_SET_WAVE(popup, 0x20);
+        } else {
+            HURRY_SET_WAVE(popup, 9);
+        }
+        popup.dialogs().item(hurry_next_item(), 2);
+        if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) return;
+        lock_held = 1;
     }
 
-    selection_result = popup.exec(0, ConsoleControlTurnActive ? 0 : pop_expire);
+    const int choice = popup.exec(0, ConsoleControlTurnActive ? 0 : pop_expire);
     g_FX.play(0x0F);
     compute_selected_base();
-    if (selection_result < 1 || (GameDataStateStorage.fields_.game_state_ & 0x800u) != 0) {
+    if (choice < 1 || (GameDataStateStorage.fields_.game_state_ & 0x800u) != 0) {
         if (lock_held) NetDaemonNet.unlock_base(BaseIDCurrentSelected);
         return;
     }
-    base = BaseCurrent;
-    if ((base->state & 0x40000000u) != 0) {
+    if ((BaseCurrent->state & 0x40000000u) != 0) {
         X_pop("PARTIALONCE", 0);
         if (lock_held) NetDaemonNet.unlock_base(BaseIDCurrentSelected);
         return;
     }
-
-    if (selection_result > 1) {
-        int available = hurry_sub(PlayersData[faction_id].energy_reserves,
-                                  PlayersData[faction_id].hurry_cost_total);
-        int ask_amount = cost;
-        if (ask_amount > available) ask_amount = available;
-        parse_num(0, ask_amount);
-        available = hurry_sub(PlayersData[faction_id].energy_reserves,
-                              PlayersData[faction_id].hurry_cost_total);
-        ask_amount = cost;
-        if (ask_amount > available) ask_amount = available;
-        if (X_pop_ask_number("HURRYPAYMENT", ask_amount, 0) != 0) {
+    if (choice > 1) {
+        parse_num(0, min(cost, PlayersData[faction_id].energy_reserves
+                               - static_cast<int>(PlayersData[faction_id].hurry_cost_total)));
+        if (X_pop_ask_number("HURRYPAYMENT", min(cost, PlayersData[faction_id].energy_reserves
+                                                       - static_cast<int>(PlayersData[faction_id].hurry_cost_total)), 0)) {
             if (lock_held) NetDaemonNet.unlock_base(BaseIDCurrentSelected);
             return;
         }
-        available = hurry_sub(PlayersData[faction_id].energy_reserves,
-                              PlayersData[faction_id].hurry_cost_total);
-        payment = ParseNumTable[0];
-        if (payment < 0 || available < 0) payment = 0;
-        else if (payment > available) payment = available;
-        const int current_minerals = BaseCurrent->minerals_accumulated;
-        mineral_target = hurry_add(
-            hurry_mul(hurry_sub(price.gross_cost, current_minerals), payment)
-                / price.adjusted_cost,
-            current_minerals);
+        const int available = PlayersData[faction_id].energy_reserves
+            - static_cast<int>(PlayersData[faction_id].hurry_cost_total);
+        int payment;
+        if (ParseNumTable[0] < 0 || available < 0) payment = 0;
+        else if (ParseNumTable[0] > available) payment = available;
+        else payment = ParseNumTable[0];
+        mineral_cost = (mineral_cost - BaseCurrent->minerals_accumulated) * payment / cost
+            + BaseCurrent->minerals_accumulated;
+        cost = payment;
         BaseCurrent->state |= 0x40000000u;
-    } else {
-        payment = cost;
     }
-
     if (IsMultiplayerNet && ConsoleControlTurnActive) {
-        PlayersData[faction_id].hurry_cost_total = hurry_add(
-            PlayersData[faction_id].hurry_cost_total, payment);
+        PlayersData[faction_id].hurry_cost_total += cost;
     } else {
-        PlayersData[faction_id].energy_reserves = hurry_sub(
-            PlayersData[faction_id].energy_reserves, payment);
-        CurrentFactionEnergyReserves = hurry_sub(CurrentFactionEnergyReserves, payment);
+        PlayersData[faction_id].energy_reserves -= cost;
+        CurrentFactionEnergyReserves -= cost;
         if (IsMultiplayerNet) synch_energy(faction_id);
     }
-    field_40B38_ = mineral_target;
-    BaseCurrent->minerals_accumulated_2 = mineral_target;
-    BaseCurrent->minerals_accumulated = mineral_target;
+    field_40B38_ = mineral_cost;
+    BaseCurrent->minerals_accumulated_2 = mineral_cost;
+    BaseCurrent->minerals_accumulated = mineral_cost;
     BaseCurrent->production_id_last = BaseCurrent->queue_production_id[0];
     log_say("BASE: hurried production", BaseIDCurrentSelected, 0, 0);
     NetDaemonNet.unlock_base(BaseIDCurrentSelected);
-    lock_held = 0;
     redraw();
     MainInterfaceGlobal.redraw();
     ConsoleInfoWin.set_redraw_phase(0);
@@ -7004,12 +6945,12 @@ void BaseWin::base_editor_copy(int copy_to) {
     // selected base; the original does not filter it from this menu.
     for (int group = 0; group < 2; ++group) {
         for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
-            const int faction = Bases[base].faction_id_current;
-            if (group == 0 ? faction != BaseCurrent->faction_id_current
-                           : faction == BaseCurrent->faction_id_current) continue;
+            if (group == 0 ? Bases[base].faction_id_current != BaseCurrent->faction_id_current
+                           : Bases[base].faction_id_current == BaseCurrent->faction_id_current) continue;
             StringTemp[0] = 0;
             strcat(StringTemp, Bases[base].name_string);
             strcat(StringTemp, "|");
+            const int faction = Bases[base].faction_id_current;
             PluralityDefault = Players[faction].is_noun_plural;
             GenderDefault = Players[faction].noun_gender;
             strcat(StringTemp, Players[faction].noun_faction);
@@ -7020,16 +6961,20 @@ void BaseWin::base_editor_copy(int copy_to) {
     PopupModalState = 0;
     if (selection < 0) return;
     for (int byte = 0; byte < 9; ++byte) {
-        if (!copy_to) {
-            BaseCurrent->facilities_built[byte] = Bases[selection].facilities_built[byte];
-        } else if (selection < 9998) {
-            Bases[selection].facilities_built[byte] = BaseCurrent->facilities_built[byte];
-        } else {
-            for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
-                if (base == BaseIDCurrentSelected) continue;
-                if (selection == 9998 && Bases[base].faction_id_current != BaseCurrent->faction_id_current) continue;
-                Bases[base].facilities_built[byte] = BaseCurrent->facilities_built[byte];
+        if (copy_to) {
+            if (selection >= 9998) {
+                for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
+                    if (base != BaseIDCurrentSelected
+                        && (selection != 9998
+                            || Bases[base].faction_id_current == BaseCurrent->faction_id_current)) {
+                        Bases[base].facilities_built[byte] = BaseCurrent->facilities_built[byte];
+                    }
+                }
+            } else {
+                Bases[selection].facilities_built[byte] = BaseCurrent->facilities_built[byte];
             }
+        } else {
+            BaseCurrent->facilities_built[byte] = Bases[selection].facilities_built[byte];
         }
     }
     redraw();

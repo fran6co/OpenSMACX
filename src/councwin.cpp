@@ -1144,56 +1144,58 @@ void CouncWin::on_redraw() {
 
 // Slot 44 of the front vtable - the catalogue's
 // ?on_button_clicked@CouncWin@@QAEXH@Z, 0x00424870, 1983 bytes.
+// Every living human faction is seated in the council (field_A44_ bits).
+static int council_humans_present(uint32_t seated) {
+    const uint32_t masks = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
+    const int humans = masks & 0xFF;
+    const int alive = (masks >> 8) & 0xFF;
+    return (static_cast<int>(seated) & alive & humans) == humans;
+}
+
 // ORIGINAL: 0x00424870 ?on_button_clicked@CouncWin@@QAEXH@Z 0x00424870-0x0042502F;0x00652D40-0x00652EC7 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00424870.cpp", "image:terranx_original.exe:0x00424870", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
 // TRIED: jump table (8 entries at 0x425030) transcribed as a real switch on `a1+2`, matching case targets exactly; the two vtable calls ([this]+0x64 and [this]+0xe8) use original_slot/ORIGINAL rather than a raw __thiscall function-pointer cast (C4234). The ~20-stage widget-teardown cascade (Scroll/2xFlatButton/BasePop/Spot/Dialogs/ Dialog/Sprite closes, twice-inlined in the original for the early-close vs. fallthrough paths) is approximated by a single `popup.close()`; the substantive vote/call-vote/close-decision logic (set_vote, council_get_vote, message_data/NetMsg::pop gating, the eligible-faction Dialogs::item loop, BasePop::exec) is transcribed with real field offsets. Compiles; diverges #10.
 // symbol    ?on_button_clicked@CouncWin@@UAEXH@Z
 void CouncWin::on_button_clicked(int button_id) {
     Popup popup;
-    bool popup_closed = false;
 
     switch (button_id) {
     case 1:
     case 2:
     case 3:
         if (field_A24_ == 0) {
-            if (!IsMultiplayerNet) {
-                set_vote(ConsoleGlobal.faction_id_, -button_id);
-            } else {
-                const uint8_t humans = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
-                const uint8_t alive = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8);
-                if (((field_A44_ & alive) & humans) == humans) {
-                    message_data(0x2601, 0, ConsoleGlobal.faction_id_, -button_id, 0, 0);
-                } else {
+            if (IsMultiplayerNet) {
+                if (!council_humans_present(field_A44_)) {
                     NetMsgPrimary.pop("VOTING", 0x1388, 1, nullptr);
+                } else {
+                    message_data(0x2601, 0, ConsoleGlobal.faction_id_, -button_id, 0, 0);
                 }
+            } else {
+                set_vote(ConsoleGlobal.faction_id_, -button_id);
             }
         }
         break;
 
     case 4:
         if (field_A24_ == 0) {
-            const uint8_t humans = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
-            const uint8_t alive = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8);
-            if (!IsMultiplayerNet || (((field_A44_ & alive) & humans) == humans)) {
+            if (IsMultiplayerNet && !council_humans_present(field_A44_)) {
+                NetMsgPrimary.pop("VOTING", 0x1388, 1, nullptr);
+            } else {
                 popup.start(PopupStartCaption, "GOVVOTE", -1, nullptr, 0x200040, nullptr);
-
-                int picture_width = 0;
-                int picture_height = 0;
+                int picture_width;
+                int picture_height;
                 if (Buffer::get_pcx_dimensions("council_sm.pcx", &picture_width,
-                                               &picture_height) == 0 &&
-                    popup.owned_picture().init(
-                        const_cast<char *>("council_sm.pcx"), picture_width,
-                        picture_height) == 0) {
+                                               &picture_height) == 0
+                    && popup.owned_picture().init(const_cast<char *>("council_sm.pcx"),
+                                                  picture_width, picture_height) == 0) {
                     popup.select_owned_picture();
                 }
-
                 Dialogs &options = popup.dialogs();
                 options.item(label_get(0x7c4 / 4), 0);
                 for (int faction = 1; faction < MaxPlayerNum; ++faction) {
-                    if ((Players[faction].rule_flags & RFLAG_ALIEN) == 0 &&
-                        (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &
-                         (1u << (faction & 0x1f))) != 0 && eligible(faction) != 0) {
+                    if ((Players[faction].rule_flags & RFLAG_ALIEN) == 0
+                        && (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << faction)) != 0
+                        && eligible(faction) != 0) {
                         StringTemp[0] = '\0';
                         GenderDefault = Players[faction].is_leader_female;
                         PluralityDefault = 0;
@@ -1201,18 +1203,15 @@ void CouncWin::on_button_clicked(int button_id) {
                         options.item(StringTemp, faction);
                     }
                 }
-
                 int result = popup.exec(0, pop_wait);
                 if (result >= 0) {
                     if (result == 0) result = -3;
-                    if (!IsMultiplayerNet) {
-                        set_vote(ConsoleGlobal.faction_id_, result);
-                    } else {
+                    if (IsMultiplayerNet) {
                         message_data(0x2601, 0, ConsoleGlobal.faction_id_, result, 0, 0);
+                    } else {
+                        set_vote(ConsoleGlobal.faction_id_, result);
                     }
                 }
-            } else {
-                NetMsgPrimary.pop("VOTING", 0x1388, 1, nullptr);
             }
         }
         break;
@@ -1221,46 +1220,22 @@ void CouncWin::on_button_clicked(int button_id) {
         on_key_click(0, 0x0d);
         break;
 
-    case -2: {
-        bool close_council = field_A24_ != 0;
-        bool check_local_vote = false;
-        if (!close_council) {
-            if ((static_cast<uint8_t>(GameDataStateStorage.fields_.game_more_preferences_) & 0x40) != 0 &&
-                !IsMultiplayerNet) {
-                if (!IsMultiplayerPBEM) {
-                    close_council = true;
-                } else {
-                    check_local_vote = true;
-                }
-            } else if (IsMultiplayerPBEM) {
-                check_local_vote = true;
+    case -2:
+        if (field_A24_ == 0
+            && ((static_cast<uint8_t>(GameDataStateStorage.fields_.game_more_preferences_) & 0x40) == 0
+                || IsMultiplayerNet || IsMultiplayerPBEM)
+            && (!IsMultiplayerPBEM || leader_label_kind_[ConsoleGlobal.faction_id_] == 0)) {
+            // Wait while any human vote is already cast.
+            int faction;
+            for (faction = 0; faction < MaxPlayerNum; ++faction) {
+                if ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)
+                     & (1u << faction)) != 0 && leader_label_kind_[faction] != 0) return;
             }
-            if (check_local_vote && leader_label_kind_[ConsoleGlobal.faction_id_] != 0) {
-                close_council = true;
-            }
-        }
-
-        if (!close_council) {
-            const uint8_t human_factions = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
-            bool human_vote_exists = false;
-            for (int faction = 0; faction < MaxPlayerNum; ++faction) {
-                if ((human_factions & (1u << (faction & 0x1f))) != 0 &&
-                    leader_label_kind_[faction] != 0) {
-                    human_vote_exists = true;
-                    break;
-                }
-            }
-            if (human_vote_exists) {
-                popup.close();
-                popup_closed = true;
-            } else {
-                for (int faction = 0; faction < MaxPlayerNum; ++faction) {
-                    const uint8_t current_humans = GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
-                    if (leader_label_kind_[faction] == 0 &&
-                        (current_humans & (1u << (faction & 0x1f))) == 0) {
-                        leader_label_kind_[faction] = static_cast<uint32_t>(council_get_vote(
-                            faction, static_cast<int>(field_A1C_), static_cast<int>(field_A20_)));
-                    }
+            for (faction = 0; faction < MaxPlayerNum; ++faction) {
+                if (leader_label_kind_[faction] == 0
+                    && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << faction)) == 0) {
+                    leader_label_kind_[faction] = static_cast<uint32_t>(council_get_vote(
+                        faction, static_cast<int>(field_A1C_), static_cast<int>(field_A20_)));
                 }
             }
         } else {
@@ -1281,14 +1256,9 @@ void CouncWin::on_button_clicked(int button_id) {
             }
         }
         break;
-    }
 
     default:
         break;
-    }
-
-    if (!popup_closed) {
-        popup.close();
     }
 }
 
