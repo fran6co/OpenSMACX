@@ -1042,7 +1042,7 @@ int __cdecl veh_health(int veh_id) {
 /*
 Purpose: Calculates cost of the prototype based on various factors. Optimized logic flow from
          the original without any differences to the final calculation.
-// ORIGINAL: 0x005A5A60 ?proto_cost@@YAHHHHHH@Z 0x005A5A60-0x005A5CE1
+// ORIGINAL: 0x005A5A60 ?proto_cost@@YAHHHHHH@Z 0x005A5A60-0x005A5CE1 BYTE_EXACT
 // symbol    ?proto_cost@@YAHHHHHH@Z
 // size      641 bytes
 // prototype int (__cdecl ?proto_cost@@YAHHHHHH@Z)(int chassisType, int weapType, int armorType, int ability, int reactorType)
@@ -1158,7 +1158,7 @@ int __cdecl proto_cost(int chassis_id, int weapon_id, int armor_id,
 
 /*
 Purpose: Create a new prototype. Sets initial values for everything except veh_name and preq_tech.
-// ORIGINAL: 0x005A5D40 ?make_proto@@YAXHHHHHH@Z 0x005A5D40-0x005A6269
+// ORIGINAL: 0x005A5D40 ?make_proto@@YAXHHHHHH@Z 0x005A5D40-0x005A6269 BYTE_EXACT
 // size      1321 bytes
 // prototype void (__cdecl ?make_proto@@YAXHHHHHH@Z)(int protoID, int chassisType, int weapType, int armorType, int ability, int reactorType)
 // callers   4   call targets   4
