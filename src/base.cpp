@@ -250,7 +250,7 @@ Purpose: Sum one base's terrain yields into the selected Base's intake_2
          passes' result into BaseCurrent's nutrient/mineral/energy/unused
          intake_2 word, returning the sum.
 
-// ORIGINAL: 0x004E7E50 sub_4e7e50 0x004E7E50-0x004E7F64 FILE
+// ORIGINAL: 0x004E7E50 sub_4e7e50 0x004E7E50-0x004E7F64 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["The body reads the existing BaseCurrent/Bases layout (x, y, faction, state and contiguous intake_2 words), Map records, map bounds, and declared crop_yield/mine_yield/energy_yield APIs.","The function's fourth pass deliberately clears TileYieldRestricted; the body and original pass order are carried unchanged.","The identity remains the unmangled global sub_4e7e50; no original class name is inferred from its Base dataflow."],"reason":"Place the complete existing base-radius yield routine beside its genuine Base/Map dependencies without renaming it, changing pass order, or normalizing the original state updates."}
 // symbol    _sub_4e7e50
 // TRIED: various expression orderings for the x/y base+offset sums and the wrap-around guard placement all keep the divergence at the first instructions (register allocation for edx/ecx/a1 differs from the original's push-ebx/push-esi-before-movsx order).
@@ -295,7 +295,7 @@ Purpose: The sibling pass of sub_4e7e50: identical walk and tile gating,
          but each pass's yield is SUBTRACTED from the matching intake_2
          word while the same value still accumulates into the sum.
 
-// ORIGINAL: 0x004E7F80 sub_4e7f80 0x004E7F80-0x004E8094 FILE
+// ORIGINAL: 0x004E7F80 sub_4e7f80 0x004E7F80-0x004E8094 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["The body reads the existing BaseCurrent/Bases layout, Map records, map bounds, and declared crop_yield/mine_yield/energy_yield APIs.","This is the subtracting sibling of 0x004E7E50; the original sum still accumulates positive yield values while intake_2 is decremented.","The identity remains the unmangled global sub_4e7f80; no original class name is inferred from its Base dataflow."],"reason":"Place the complete subtracting base-radius yield routine beside its genuine Base/Map dependencies, preserving its distinct subtraction and positive return-sum behavior."}
 // symbol    _sub_4e7f80
 // TRIED: the same prologue register-allocation divergence as its 0x004E7E50 sibling.
@@ -7982,7 +7982,7 @@ int BasePsychSuperDrones[5];
 
 /*
 Purpose: Calculate the current base's psych values.
-// ORIGINAL: 0x004EA540 ?base_psych@@YAXXZ 0x004EA540-0x004EB481
+// ORIGINAL: 0x004EA540 ?base_psych@@YAXXZ 0x004EA540-0x004EB481 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x004EA540-0x004EB481 complete original body; 0x004EA712-0x004EA722 clamps the first NoDrone adjustment immediately, and 0x004EAA23-0x004EAA3E applies signed talent rather than police.", "image:0x004EAB85,0x004EACD1,0x004EAE30,0x004EB209,0x004EB3D1 publish the five independent stage histories; draw_psych and base_growth remain seed-only consumers.", "image:0x004EAEDF-0x004EB0C5 scans fresh vehicle stacks in two passes with repeated ability queries; 0x004EB0CA-0x004EB0E3 uses a signed pacifism-count comparison.", "image:0x004EA946 and 0x004EB44E-0x004EB45E use talent=i-4 and matrix row=i-1; original social_ai at 0x005B50DB-0x005B511A instead consumes row=clamp(talent+4,0,7). Preserve the original one-step discrepancy."], "reason": "Recover the complete five-stage psych calculation and shared stage histories, including social simulations followed by the actual case, using genuine base, faction, project and vehicle state. Existing partial source was not a verified prefix."}
 // Historical compiler lesson: the first facility queries are real has_fac
 // calls, followed by real bitmask calls for hospitals, punishment and brood
