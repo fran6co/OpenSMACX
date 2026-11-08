@@ -162,7 +162,6 @@ set(OPENSMACX_SOURCES
     src/span_math.cpp
     src/scale_adjustment.cpp
     src/technology_queries.cpp
-    src/byte_utilities.cpp
     src/fx.cpp
     src/alphanet.cpp
     src/alphanet_records.cpp
@@ -203,7 +202,6 @@ set(OPENSMACX_SOURCES
     src/directdraw.cpp
     src/number_parsing.cpp
     src/scenario_undo.cpp
-    src/header_io.cpp
     src/crt_random.cpp
     src/graphicwin.cpp
     src/graphicwin_events.cpp
@@ -317,8 +315,6 @@ set(OPENSMACX_SOURCES
     src/vehicle_render.cpp
     src/veh_queries.cpp
     src/vehicle_storage.cpp
-    src/prototype_history.cpp
-    src/vehicle_stats.cpp
     src/vehicle_cost.cpp
     src/vector.cpp
     src/win.cpp
@@ -453,7 +449,6 @@ set_source_files_properties(
     src/veh_stack.cpp
     src/vehicle_render.cpp
     src/veh_queries.cpp
-    src/prototype_history.cpp
     src/enemy.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve the mapped frame-based vehicle owners after their source split.
@@ -461,7 +456,6 @@ set_source_files_properties(
 # on its existing owner profile.
 set_source_files_properties(
     src/vehicle_cost.cpp
-    src/vehicle_stats.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve original frame-based accesses in the remaining application owners.
 # Keep all other source recipes on their independently measured defaults.
@@ -632,7 +626,6 @@ set_property(SOURCE
     src/prefwin.cpp
     src/log.cpp
     src/newtechwin.cpp
-    src/prototype_history.cpp
     src/console_commands.cpp
     src/net_class.cpp
     src/sprite.cpp
@@ -656,7 +649,6 @@ set_property(SOURCE
     APPEND PROPERTY COMPILE_OPTIONS "/Z7")
 # Keep these measured frame-based helper owners on their explicit source profile.
 set_source_files_properties(
-    src/byte_utilities.cpp
     src/span_math.cpp
     src/scale_adjustment.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
@@ -666,7 +658,7 @@ set_source_files_properties(src/time.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve the measured frame-based contexts of the shared stream wrappers.
 # General's unrelated helpers retain their independently measured default recipe.
-set_source_files_properties(src/header_io.cpp src/crt_random.cpp
+set_source_files_properties(src/crt_random.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Application arithmetic and text utilities use the established frame profile.
 # The remaining General helpers retain their existing source recipe.

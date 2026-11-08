@@ -611,6 +611,69 @@ BOOL __cdecl want_monolith(int veh_id) {
 }
 
 /*
+Purpose: Read the specified header from a file. This assumes the header string buffer is at least 
+         256 characters. TODO: Replace built-in versions of _fgetc and change return to std::string.
+// ORIGINAL: 0x0057D1F0 ?header_check@@YAXPADPAUFILE@@@Z 0x0057D1F0-0x0057D235 BYTE_EXACT
+// LEVER: `header_chr` as `char` (not `int`) so the compare/store stay byte
+//        width; `int i` declared and zeroed BEFORE the first `fgetc` call,
+//        not inside the guard block; and the do-while-with-break rewritten
+//        as a plain `while (header_chr) { if (++i >= 256) break; ... }` -
+//        the do-while shape let VC6 fold the loop counter's first
+//        increment into its initial value and rotate the loop, which the
+//        image's own top-tested-counter / bottom-tested-char shape never
+//        does.
+// symbol    ?header_check@@YAXPADPAU_iobuf@@@Z
+// size      69 bytes
+// prototype void (__cdecl ?header_check@@YAXPADPAUFILE@@@Z)(int8* header, FILE* file)
+// callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00646855
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl header_check(LPSTR header, FILE *file) {
+    int i = 0;
+    char header_chr = (char)fgetc(file);
+    *header++ = header_chr;
+    while (header_chr) {
+        if (++i >= 256) {
+            break;
+        }
+        header_chr = (char)fgetc(file);
+        *header++ = header_chr;
+    }
+    fgetc(file);
+}
+
+/*
+Purpose: Write the specified header to a file. TODO: Replace built-in versions of _fputc.
+// ORIGINAL: 0x0057D240 ?header_write@@YAXPADPAUFILE@@@Z 0x0057D240-0x0057D270 BYTE_EXACT
+// LEVER: `header_chr` as `char`, not `int` - the image keeps the byte in
+//        `bl` for the loop's `test bl,bl` and only sign-extends it
+//        (`movsx eax, bl`) at the `fputc` push, which is the local matching
+//        the width it reads from.
+// symbol    ?header_write@@YAXPBDPAU_iobuf@@@Z
+// size      48 bytes
+// prototype 
+// callers   2   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00646886
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl header_write(LPCSTR header, FILE *file) {
+    char header_chr;
+    do {
+        header_chr = *header++;
+        fputc(header_chr, file);
+    } while (header_chr);
+    fputc(0x1A, file);
+}
+
+
+/*
 Purpose: Calculate the armor strategy for the specified armor id.
 // ORIGINAL: 0x0057D270 ?arm_strat@@YAHHH@Z 0x0057D270-0x0057D2D5 BYTE_EXACT
 // size      101 bytes
@@ -760,6 +823,513 @@ int __cdecl transport_val(int chassis_id, int ability, int reactor_id) {
         transport = (3 * transport + 1) / 2; // +50%, rounded up
     }
     return transport;
+}
+#pragma auto_inline(on)
+
+// Writable formatter strings at distinct pinned operand addresses.
+// These names describe their uses; original allocation bounds remain unknown.
+// RECOVERY_OBJECT: v1 0x0068F118 _DefenseAAAOpenText
+static char DefenseAAAOpenText[] = "<";
+// RECOVERY_OBJECT: v1 0x0068F11C _DefenseCommJammerText
+static char DefenseCommJammerText[] = "+";
+// RECOVERY_OBJECT: v1 0x0068F120 _DefenseTranceText
+static char DefenseTranceText[] = "t";
+// RECOVERY_OBJECT: v1 0x0068F124 _DefenseAAACloseText
+static char DefenseAAACloseText[] = ">";
+// RECOVERY_OBJECT: v1 0x0068F128 _DefensePulseText
+static char DefensePulseText[] = "p";
+// RECOVERY_OBJECT: v1 0x0068F12C _DefenseResonanceText
+static char DefenseResonanceText[] = "r";
+// RECOVERY_OBJECT: v1 0x0068F130 _Stats3OffenseUnknownText
+static char Stats3OffenseUnknownText[] = "?";
+// RECOVERY_OBJECT: v1 0x0068F134 _Stats3OffenseExtremeText
+static char Stats3OffenseExtremeText[] = "*";
+// RECOVERY_OBJECT: v1 0x0068F138 _Stats3OffenseDefenseSeparatorText
+static char Stats3OffenseDefenseSeparatorText[] = "-";
+// RECOVERY_OBJECT: v1 0x0068F13C _Stats3DefenseUnknownText
+static char Stats3DefenseUnknownText[] = "?";
+// RECOVERY_OBJECT: v1 0x0068F140 _Stats3DefenseSpeedSeparatorText
+static char Stats3DefenseSpeedSeparatorText[] = "-";
+// RECOVERY_OBJECT: v1 0x0068F144 _Stats3ReactorPrefixText
+static char Stats3ReactorPrefixText[] = "*";
+/*
+Purpose: Generate offensive display string for the specified prototype. Replaced existing non-safe
+         strcat with string. Original function took a 2nd parameter with char buffer and didn't
+         return anything.
+// ORIGINAL: 0x0057D560 ?say_offense@@YAXPADH@Z 0x0057D560-0x0057D6C5 BYTE_EXACT
+// size      357 bytes
+// prototype void (__cdecl ?say_offense@@YAXPADH@Z)(int8*, int protoID)
+// callers   3   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF1F0 0x005C0DB0 0x005C1150 0x00645470 0x0064FC88
+Return Value: Offensive display string
+Status: Complete
+*/
+void __cdecl say_offense(LPSTR stat, int proto_id) {
+    char num_buf[80];
+    if (has_abil(proto_id, ABL_AIR_SUPERIORITY)) {
+        strcat(stat, "<");
+    }
+    if (can_arty(proto_id, true)) {
+        strcat(stat, "(");
+    }
+    int off_rating = offense_proto(proto_id, -1, 0);
+    _itoa(off_rating, num_buf, 10);
+    strcat(stat, num_buf);
+    if (has_abil(proto_id, ABL_DROP_POD)) {
+        strcat(stat, "^");
+    }
+    if (has_abil(proto_id, ABL_AMPHIBIOUS)) {
+        strcat(stat, "~");
+    }
+    if (has_abil(proto_id, ABL_NERVE_GAS)) {
+        strcat(stat, "x");
+    }
+    if (has_abil(proto_id, ABL_EMPATHIC)) {
+        strcat(stat, "e");
+    }
+    if (has_abil(proto_id, ABL_BLINK_DISPLACER)) {
+        strcat(stat, "!");
+    }
+    if (can_arty(proto_id, true)) {
+        strcat(stat, ")");
+    }
+    if (has_abil(proto_id, ABL_AIR_SUPERIORITY)) {
+        strcat(stat, ">");
+    }
+    uint8_t weapon_id = VehPrototypes[proto_id].weapon_id;
+    if (weapon_id == WPN_RESONANCE_LASER || weapon_id == WPN_RESONANCE_BOLT) {
+        strcat(stat, "r");
+    }
+}
+/*
+Purpose: Generate defense display string for the specified prototype. Replaced existing non-safe
+         strcat with string. Original function took a 2nd parameter with char buffer and didn't
+         return anything.
+// ORIGINAL: 0x0057D6D0 ?say_defense@@YAXPADH@Z 0x0057D6D0-0x0057D7C4 BYTE_EXACT
+// size      244 bytes
+// prototype void (__cdecl ?say_defense@@YAXPADH@Z)(int8*, int protoID)
+// callers   3   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF1F0 0x005C1290 0x00645470 0x0064FC88
+Return Value: Defense display string
+Status: Complete
+*/
+void __cdecl say_defense(LPSTR stat, int proto_id) {
+    char num_buf[80];
+    if (has_abil(proto_id, ABL_AAA)) {
+        strcat(stat, DefenseAAAOpenText);
+    }
+    int def_rating = armor_proto(proto_id, -1, 0);
+    _itoa(def_rating, num_buf, 10);
+    strcat(stat, num_buf);
+    if (has_abil(proto_id, ABL_COMM_JAMMER)) {
+        strcat(stat, DefenseCommJammerText);
+    }
+    if (has_abil(proto_id, ABL_TRANCE)) {
+        strcat(stat, DefenseTranceText);
+    }
+    if (has_abil(proto_id, ABL_AAA)) {
+        strcat(stat, DefenseAAACloseText);
+    }
+    if (VehPrototypes[proto_id].armor_id == ARM_PULSE_3_ARMOR
+        || VehPrototypes[proto_id].armor_id == ARM_PULSE_8_ARMOR) {
+        strcat(stat, DefensePulseText);
+    }
+    if (VehPrototypes[proto_id].armor_id == ARM_RESONANCE_3_ARMOR
+        || VehPrototypes[proto_id].armor_id == ARM_RESONANCE_8_ARMOR) {
+        strcat(stat, DefenseResonanceText);
+    }
+}
+/*
+Purpose: Generate stats string for specified prototype. Replaced existing non-safe strcat with
+         string. Reworked to integrate with existing C code.
+// ORIGINAL: 0x0057D7D0 ?say_stats_3@@YAXPADH@Z 0x0057D7D0-0x0057D8D3 BYTE_EXACT
+// TRIED: else-if branch order off_rating<0/off_rating<99/else folded the "?"
+//            and "*" strcat tails together (29/92); reordering to
+//            off_rating<0/off_rating>=99/else (matching the disasm's own branch
+//            order) got to 51/92. def_rating stored to a named int8_t local, or
+//            inlined as Armor[...].armor_id].defense_rating, made no further
+//            difference; plateaus on the def_rating address computation
+//            (shl 4 + disp vs add const + shl 4), 4 spellings tried.
+// LEVER 2026-09-03: the speed division is SIGNED - `speed_proto(proto_id) /
+//            Rules.move_rate_roads` gives the image's `cdq / idiv`,
+//            where the uncast `uint32_t` field gave `xor edx,edx / div`.
+//            Same cast now at all three say_stats* sites (0x57D7D0,
+//            0x57D8E0, 0x57DAA0).
+// size      259 bytes
+// prototype void (__cdecl ?say_stats_3@@YAXPADH@Z)(int8*, int protoID)
+// callers   13   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0057D560 0x0057D6D0 0x005C13B0 0x00645470 0x0064FC88
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl say_stats_3(LPSTR stat, int proto_id) {
+    char num_buf[80];
+    int8_t off_rating = get_proto_offense_rating(proto_id);
+    if (off_rating < 0) {
+        strcat(stat, Stats3OffenseUnknownText); // PSI
+    } else if (off_rating >= 99) {
+        strcat(stat, Stats3OffenseExtremeText);
+    } else {
+        say_offense(stat, proto_id);
+    }
+    strcat(stat, Stats3OffenseDefenseSeparatorText);
+    if (get_proto_defense_rating(proto_id) < 0) {
+        strcat(stat, Stats3DefenseUnknownText);
+    } else {
+        say_defense(stat, proto_id);
+    }
+    strcat(stat, Stats3DefenseSpeedSeparatorText);
+    int speed = speed_proto(proto_id) / Rules.move_rate_roads;
+    _itoa(speed, num_buf, 10);
+    strcat(stat, num_buf);
+    if (VehPrototypes[proto_id].reactor_id > RECT_FISSION) {
+        strcat(stat, Stats3ReactorPrefixText);
+        _itoa(VehPrototypes[proto_id].reactor_id, num_buf, 10);
+        strcat(stat, num_buf);
+    }
+}
+/*
+Purpose: Generate stats string for specified prototype. List whether prototype is psi, sea or air.
+         Replaced existing non-safe strcat with string. Reworked to integrate with existing C code.
+// ORIGINAL: 0x0057D8E0 ?say_stats_2@@YAXPADH@Z 0x0057D8E0-0x0057DA94 BYTE_EXACT
+// TRIED: label_get(196/163/162) calls (25/140); open-coding
+//            StringTable.get((int)*((LPSTR*)Labels.strings_ptr + N)) plus the
+//            off_rating<0/>=99/else branch order got to 58/140. def_rating via
+//            get_proto_defense_rating() vs inlined Armor[...] made no further
+//            difference; plateaus on the same shl-vs-add-const address split
+//            seen at 0x0057D7D0. Call count is 19/21 (call_diff): same
+//            get(Labels[196])+strcat 'Psi' CSE across the off_rating<0 and
+//            def_rating<0 arms as 0x0057DAA0 - the compiler shares the pair,
+//            the image keeps two call sites.
+// size      436 bytes
+// prototype void (__cdecl ?say_stats_2@@YAXPADH@Z)(int8*, int protoID)
+// callers   4   call targets   6
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0057D560 0x0057D6D0 0x005C13B0 0x006169A0 0x00645470 0x0064FC88
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl say_stats_2(LPSTR stat, int proto_id) {
+    char num_buf[80];
+    int8_t off_rating = get_proto_offense_rating(proto_id);
+    if (off_rating < 0) {
+        strcat(stat, label_get(196)); // 'Psi'
+    } else if (off_rating >= 99) {
+        strcat(stat, "*");
+    } else {
+        say_offense(stat, proto_id);
+    }
+    strcat(stat, "-");
+    if (get_proto_defense_rating(proto_id) < 0) {
+        strcat(stat, label_get(196)); // 'Psi'
+    } else {
+        say_defense(stat, proto_id);
+    }
+    strcat(stat, "-");
+    int speed = speed_proto(proto_id) / Rules.move_rate_roads;
+    _itoa(speed, num_buf, 10);
+    strcat(stat, num_buf);
+    if (get_proto_triad(proto_id) == TRIAD_SEA) {
+        strcat(stat, " ");
+        strcat(stat, label_get(163)); // 'Sea'
+    }
+    if (get_proto_triad(proto_id) == TRIAD_AIR) {
+        strcat(stat, " ");
+        strcat(stat, label_get(162)); // 'Air'
+    }
+    if (VehPrototypes[proto_id].reactor_id > 1) {
+        strcat(stat, "*");
+        _itoa(VehPrototypes[proto_id].reactor_id, num_buf, 10);
+        strcat(stat, num_buf);
+    }
+}
+/*
+Purpose: Generate verbose stats string for specified prototype. Used by Design Workshop and Military
+         Command Nexus. Replaced existing non-safe strcat with string. Reworked to integrate with
+         existing C code.
+// ORIGINAL: 0x0057DAA0 ?say_stats@@YAXPADHPAD@Z 0x0057DAA0-0x0057DED8
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:57DCEA-57DCF0 strcat references682E90 comma-space-NUL", "pinned:57DDF0 triad arms separately append682820 space-NUL before localized Sea/Air labels"], "reason": "Retain the original comma-space separator followed by the separate triad space. The visible doubled space is original formatting, not a new output correction. Complete formatter matching and runtime remain obligations."}
+// symbol    ?say_stats@@YAXPADH0@Z
+// TRIED: std::string body called 82 vs the image's 44 (call_diff); rebuilt
+//            as char pointer + strcat/sprintf in the image's own branch shape (goto
+//            shared "defense+spacer+speed" tail, matching the two physical
+//            jumps into 0x57dd70) got the call count to 42/44. label_get(N)
+//            calls had to become the open-coded
+//            StringTable.get((int)*((LPSTR*)Labels.strings_ptr + N)) - the
+//            image never calls a separate label helper here. The
+//            `custom_spacer ? custom_spacer : "/"` after the offense append
+//            is two strcat call sites in the image (if/else, not a ternary
+//            merged into one call); the same spacer after the defense append
+//            IS one call site (a shared "push ebx or literal, then push+call"
+//            tail) - only the first needed splitting.
+//            Still 2 calls short: the compiler CSEs the two identical
+//            `StringTable.get(Labels[196])` + strcat 'Psi' pairs (one on the
+//            off_rating<0 arm, one on the def_rating<0 arm) into one shared
+//            block, where the image keeps them as two separate call sites.
+//            No source spelling tried defeated that merge. Also plateaus on
+//            prologue shape (push ebp/mov ebp,esp/sub esp,0x50 vs an
+//            esp-relative frame) picked by the flag search's own similarity
+//            metric; forcing /Oy- narrows but does not close it.
+// size      1080 bytes
+// prototype void (__cdecl ?say_stats@@YAXPADHPAD@Z)(int8*, int protoID, int8*)
+// callers   2   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0057D560 0x0057D6D0 0x005C13B0 0x006169A0 0x00645470 0x0064FC88
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer) {
+    char num_buf[80];
+    if (VehPrototypes[proto_id].plan == PLAN_RECONNAISANCE && get_proto_triad(proto_id) == TRIAD_LAND && get_proto_offense_rating(proto_id) == 1 && get_proto_defense_rating(proto_id) == 1
+        && !VehPrototypes[proto_id].ability_flags) {
+        strcat(stat, StringTable.get(PlansFullName[3])); // 'Explore/Defense'
+        strcat(stat, ", ");
+    } else if (Weapon[VehPrototypes[proto_id].weapon_id].mode < 3) { // Projectile, energy, missile
+        strcat(stat, StringTable.get((VehPrototypes[proto_id].plan != PLAN_DEFENSIVE || (get_proto_offense_rating(proto_id) >= 0 && get_proto_offense_rating(proto_id) <= get_proto_defense_rating(proto_id)))
+            ? PlansShortName[VehPrototypes[proto_id].plan] : Labels.strings_ptr[312])); // 'Combat'
+        strcat(stat, ", ");
+    }
+    if (get_proto_offense_rating(proto_id) < 0 || Weapon[VehPrototypes[proto_id].weapon_id].mode < 3) {
+        if (get_proto_offense_rating(proto_id) < 0) {
+            strcat(stat, StringTable.get(Labels.strings_ptr[196])); // 'Psi'
+        } else {
+            say_offense(stat, proto_id);
+        }
+        if (custom_spacer) {
+            strcat(stat, custom_spacer);
+        } else {
+            strcat(stat, "/");
+        }
+        goto append_defense_tail;
+    } else if (get_proto_defense_rating(proto_id) != 1 || VehPrototypes[proto_id].ability_flags || (Chassis[VehPrototypes[proto_id].chassis_id].speed != 1
+        && (Weapon[VehPrototypes[proto_id].weapon_id].mode != WPN_MODE_TRANSPORT || VehPrototypes[proto_id].chassis_id != CHSI_FOIL))) {
+        strcat(stat, StringTable.get(PlansShortName[Weapon[VehPrototypes[proto_id].weapon_id].mode]));
+        if (VehPrototypes[proto_id].plan == PLAN_NAVAL_TRANSPORT) {
+            strcat(stat, "(");
+            _itoa(VehPrototypes[proto_id].carry_capacity, num_buf, 10);
+            strcat(stat, num_buf);
+            strcat(stat, ")");
+        }
+        strcat(stat, ", ");
+append_defense_tail:
+        if (get_proto_defense_rating(proto_id) < 0) {
+            strcat(stat, StringTable.get(Labels.strings_ptr[196])); // 'Psi'
+        } else {
+            say_defense(stat, proto_id);
+        }
+        strcat(stat, custom_spacer ? custom_spacer : "/");
+        int speed = speed_proto(proto_id) / Rules.move_rate_roads;
+        _itoa(speed, num_buf, 10);
+        strcat(stat, num_buf);
+    } else {
+        strcat(stat, StringTable.get(PlansFullName[Weapon[VehPrototypes[proto_id].weapon_id].mode]));
+        if (VehPrototypes[proto_id].plan == PLAN_NAVAL_TRANSPORT) {
+            strcat(stat, "(");
+            _itoa(VehPrototypes[proto_id].carry_capacity, num_buf, 10);
+            strcat(stat, num_buf);
+            strcat(stat, ")");
+        }
+        if (get_proto_triad(proto_id)) { // sea, air
+            strcat(stat, ", "); // Original separator; the later triad space remains.
+        }
+    }
+    if (get_proto_triad(proto_id) == TRIAD_SEA) {
+        strcat(stat, " ");
+        strcat(stat, StringTable.get(Labels.strings_ptr[163])); // 'Sea'
+    }
+    if (get_proto_triad(proto_id) == TRIAD_AIR) {
+        strcat(stat, " ");
+        strcat(stat, StringTable.get(Labels.strings_ptr[162])); // 'Air'
+    }
+    if (VehPrototypes[proto_id].reactor_id > 1) {
+        strcat(stat, " ");
+        strcat(stat, "(");
+        strcat(stat, "*");
+        _itoa(VehPrototypes[proto_id].reactor_id, num_buf, 10);
+        strcat(stat, num_buf);
+        strcat(stat, ")");
+    }
+}
+
+
+/*
+Purpose: Fill the eight bytes at a pointer with 0xff.
+
+             push ebp / mov ebp,esp / mov eax,[ebp+8] / mov cl,0xff
+             mov dword [eax],0xffffffff / mov byte [eax+4],cl ... [eax+7],cl
+             pop ebp / ret
+
+         One argument and a bare `ret`, so __cdecl - the caller cleans, and
+         nothing here needs to know whether it passes more. The original
+         writes the first four bytes as a dword and the next four one at a
+         time; the result is eight 0xff bytes either way.
+
+// HISTORICAL scaffold role: SCAFFOLD Transitional leaf collection, not completed genuine owner recovery; preserve body evidence during owner migration.
+// ORIGINAL: 0x0057DEE0 sub_57dee0 0x0057DEE0-0x0057DEFC BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned 0x0057DEE0-0x0057DEFC: cdecl pointer argument; writes exactly the 8-byte range [target,target+8) to 0xFF, plain ret", "Pinned instruction stream is a bounded eight-byte memory write with no receiver, global, or struct-field interpretation.", "Source family: src/byte_utilities.cpp owns a bounded byte-fill utility; no original function name or translation-unit claim is made."], "reason": "Own this complete bounded byte-fill utility. The descriptive API makes no original symbol or translation-unit claim."}
+// symbol    ?fill_eight_bytes_ff@@YAXPAX@Z
+// historical original marker: 0x0057DEE0 sub_57dee0 0x0057DEE0-0x0057DEFC BYTE_EXACT
+// historical scaffold emitted-symbol hint: ?leaf_0057dee0_redirect@@YAXPAX@Z
+// size      28 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+
+void __cdecl fill_eight_bytes_ff(void *target) {
+    const uint32_t fill_word = 0xFFFFFFFFU;
+    std::memcpy(target, &fill_word, sizeof(fill_word));
+    uint8_t *const bytes = static_cast<uint8_t *>(target);
+    const uint8_t fill = 0xFF;
+    bytes[4] = fill;
+    bytes[5] = fill;
+    bytes[6] = fill;
+    bytes[7] = fill;
+}
+
+
+// The private prototype-history owner keeps its storage and readers/writers
+// together. The original source filename is unknown. The predicate is called
+// out of line from propose_proto5808B3, which tests full EAX at5808BB; both
+// original predicate exits define full EAX.
+
+// The faction prototype-design list. 0x0094B558, eight factions x 64 entries x
+// 8 bytes - one entry is VehPrototype's ability_flags dword followed by its
+// chassis/weapon/armor/reactor bytes, which is exactly the 8 bytes
+// 0x0057DF30 copies in. clear_bunglist (0x0057DF00) fills a faction's 64 with
+// -1 then 0xFF, which is why the comparison bytes sit at +4..+7 and the dword
+// at +0.
+struct ProtoBung {
+    uint32_t ability_flags;
+    uint8_t chassis_id;
+    uint8_t weapon_id;
+    uint8_t armor_id;
+    uint8_t reactor_id;
+};
+static_assert(sizeof(ProtoBung) == 8, "Prototype history record stride");
+static_assert(offsetof(ProtoBung, chassis_id) == 4,
+              "Prototype history component offset");
+// Eight faction histories, 64 records each. Initial loaded storage is zero.
+// Native clear57DF00 uses base94B558+5 then stores at -5..+2; the former
+// address alias started five bytes too early and corrupted the preceding data.
+// RECOVERY_OBJECT: v2 0x0094B558 0x0094C558 _BungList 0x0057DF00
+static ProtoBung BungList[8][64];
+
+bool veh_bung_copy_chunk(size_t offset, unsigned char *packet, size_t count,
+                         bool packet_to_owner) {
+    if (count == 0) return true;
+    unsigned char *owner = reinterpret_cast<unsigned char *>(&BungList);
+    const uint32_t native_offset = static_cast<uint32_t>(offset);
+    if (packet_to_owner) memmove(owner + native_offset, packet, count);
+    else memmove(packet, owner + native_offset, count);
+    return true;
+}
+
+/*
+Purpose: Empty one faction's prototype-design run.
+// ORIGINAL: 0x0057DF00 ?clear_bunglist@@YAXH@Z 0x0057DF00-0x0057DF2F BYTE_EXACT
+// size      47 bytes
+// prototype void (__cdecl ?clear_bunglist@@YAXH@Z)(int factionID)
+// callers   3   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// HOMED from src/recovered/0057df00.cpp, 2026-09-04 - the first of this
+// file's archive-only claims to move into the build. The scaffold's
+// `entry[-5]` / `entry[-1]` byte arithmetic expects a pointer to the weapon
+// byte (+5), not the record base. Typed members express the actual stores.
+Return Value: n/a
+Historical byte claim remains a restoration obligation. The typed owner fixes
+the former reference-target error; a masked-byte match did not detect it.
+*/
+// The image inlines fill_eight_bytes_ff (0x0057DEE0) here, so the two share a TU.
+void __cdecl clear_bunglist(int faction_id) {
+    for (int i = 0; i < 64; i++) {
+        fill_eight_bytes_ff(&BungList[faction_id][i]);
+    }
+}
+
+int __cdecl veh_game_data_bunglist(FILE *file, int format_version) {
+    if (format_version >= 6) {
+        return game_data_transfer_block(file, &BungList[0][0], sizeof(BungList));
+    }
+    for (int faction = 0; faction < 8; ++faction) clear_bunglist(faction);
+    return 1;
+}
+
+/*
+Purpose: Record a prototype design in the faction's run.
+// ORIGINAL: 0x0057DF30 sub_57df30 0x0057DF30-0x0057DFB2 BYTE_EXACT
+// size      130 bytes
+// prototype void (__cdecl sub_57df30)(int factionID, int protoID)
+// symbol    ?proto_bung_put@@YAXHH@Z
+//           The image's catalogue name is an uninformative `sub_`; this tree
+//           names what the body does. Renames update this fact, not the bytes.
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// HOMED from src/unrecovered/0057df30.cpp, 2026-09-04.
+// TRIED: a separate pointer variable for the RMW counter slot ('mov' then a
+//        stray 'lea' to materialise the address) - indexing the array
+//        directly drops the divergence from #10 to #22. MISMATCH remains open.
+Return Value: n/a
+Status: MISMATCH.
+*/
+// stand-in: retire_proto and propose_proto call these out of line in the
+// image; in one TU /Ob2 would otherwise inline them.
+#pragma auto_inline(off)
+void __cdecl proto_bung_put(int faction_id, int proto_id) {
+    const int slot = PlayersData[faction_id].prototype_history_cursor;
+    PlayersData[faction_id].prototype_history_cursor = (slot + 1) % 64;
+    BungList[faction_id][slot].ability_flags = VehPrototypes[proto_id].ability_flags;
+    BungList[faction_id][slot].chassis_id = VehPrototypes[proto_id].chassis_id;
+    BungList[faction_id][slot].weapon_id = VehPrototypes[proto_id].weapon_id;
+    BungList[faction_id][slot].armor_id = VehPrototypes[proto_id].armor_id;
+    BungList[faction_id][slot].reactor_id = VehPrototypes[proto_id].reactor_id;
+}
+
+/*
+Purpose: Was this exact prototype design already recorded for this faction?
+// ORIGINAL: 0x0057DFC0 ?is_bunged@@YA_NHHHHHH@Z 0x0057DFC0-0x0057E037 BYTE_EXACT
+// symbol    ?is_bunged@@YAHHHHHHH@Z
+// size      119 bytes
+// prototype bool (__cdecl ?is_bunged@@YA_NHHHHHH@Z)(int factionID, int chassisID, int weaponID, int armorID, int abilityFlags, int reactorID)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// HOMED from src/unrecovered/0057dfc0.cpp, 2026-09-04.
+Return Value: 1 when the faction's design run already holds the tuple.
+Status: MISMATCH.
+*/
+int __cdecl is_bunged(int faction_id, int chassis_id, int weapon_id,
+                       int armor_id, int ability_flags, int reactor_id) {
+    if ((1u << faction_id) & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_) {
+        int i = 0;
+        for (; i < 0x40; ++i) {
+            const ProtoBung &entry = BungList[faction_id][i];
+            if (entry.chassis_id == chassis_id && entry.weapon_id == weapon_id &&
+                entry.armor_id == armor_id &&
+                entry.ability_flags == (uint32_t)ability_flags &&
+                entry.reactor_id == reactor_id) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 #pragma auto_inline(on)
 

@@ -374,7 +374,7 @@
       "name": "VehicleStatsText",
       "start": "0x0057D560",
       "end_exclusive": "0x0057DED8",
-      "recovered_tu": "src/vehicle_stats.cpp",
+      "recovered_tu": "src/veh.cpp",
       "reason": "Inferred complete vehicle-stat text formatter core, grouped by the offense/defense/stats display family and its source-owned text fragments.",
       "evidence": [
         "The whole-home frontier reports all five mapped primary identities in one band, with no foreign mapped identities and no nonpadding gaps.",

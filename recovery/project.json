@@ -1123,21 +1123,6 @@
           "-c"
         ]
       },
-      "src/prototype_history.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "/O2",
-          "/Ob2",
-          "-MT",
-          "/W4",
-          "/Oy-",
-          "/Z7",
-          "-c"
-        ]
-      },
       "src/win.cpp": {
         "flags": [
           "/nologo",
@@ -1365,20 +1350,6 @@
           "/Ob2",
           "-MT",
           "/W4",
-          "-c"
-        ]
-      },
-      "src/vehicle_stats.cpp": {
-        "flags": [
-          "/nologo",
-          "/TP",
-          "/Zm200",
-          "/GX",
-          "/O2",
-          "/Ob2",
-          "-MT",
-          "/W4",
-          "/Oy-",
           "-c"
         ]
       },
