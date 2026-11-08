@@ -888,12 +888,12 @@ static void report_intel_label(int label) {
     strcat(StringTemp, "]");
 }
 static void report_append_leader(const Player &player) {
-    GenderDefault = player.is_leader_female;
     PluralityDefault = 0;
+    GenderDefault = player.is_leader_female;
     strcat(StringTemp, player.title_leader);
     strcat(StringTemp, " ");
-    GenderDefault = player.is_leader_female;
     PluralityDefault = 0;
+    GenderDefault = player.is_leader_female;
     strcat(StringTemp, player.name_leader);
     strcat(StringTemp, " ");
     strcat(StringTemp, label_get(0x2D0 / 4));
@@ -3893,13 +3893,10 @@ void __cdecl sat_edit(int report_faction_id, int target_faction_id, int satellit
             // The original compares the signed result of a wrapping 32-bit
             // subtraction, not the two unsigned counters.
             if (satellite_type == 3
-                && (int)(PlayersData[target_faction_id].satellites_[3]
+                && (int)(PlayersData[target_faction_id].satellites_[satellite_type]
                     - PlayersData[target_faction_id].sat_odp_deployed) < 0) {
                 PlayersData[target_faction_id].sat_odp_deployed =
-                    PlayersData[target_faction_id].satellites_[3];
-                see_map_check();
-                ReportWinGlobal.redraw();
-                return;
+                    PlayersData[target_faction_id].satellites_[satellite_type];
             }
         } else {
             PlayersData[target_faction_id].satellites_[satellite_type]++;
@@ -3923,7 +3920,8 @@ void ReportWin::draw_security() {
     const int faction_id = ReportIfGlobal.report_faction_id_;
     RECT title = {energy_panel_rect_.left + 3, energy_panel_rect_.top + 3,
                   energy_panel_rect_.right - 3, energy_panel_rect_.top + field_E268_ + 9};
-    RECT row = {title.left, title.bottom + 2, title.right, title.bottom + 43};
+    RECT row = {energy_panel_rect_.left + 3, title.bottom + 2,
+                energy_panel_rect_.right - 3, title.bottom + 43};
     Buffer::box_sprite(&energy_panel_rect_, &InterfaceBoxStyles[0]);
     Buffer::box_sprite(&title, &InterfaceBoxStyles[1]);
     const int rows = (energy_panel_rect_.bottom - row.top) / 43;
@@ -3941,9 +3939,11 @@ void ReportWin::draw_security() {
     ++title.bottom;
     spot_.kill_type(0);
 
+    int id;
     int last_row = -1;
-    for (int i = 0; i < 128; ++i) {
-        const int id = i < 64 ? i : faction_id * 64 - 64 + i;
+    int i;
+    for (i = 0; i < 128; ++i) {
+        id = i < 64 ? i : faction_id * 64 - 64 + i;
         if ((VehPrototypes[id].flags & 1) == 0) continue;
         if (ReportIfGlobal.field_1E244_ < 4) {
             if (ReportIfGlobal.field_1E244_ < 3) {
@@ -3953,9 +3953,9 @@ void ReportWin::draw_security() {
                 continue;
             }
         }
-        if ((PlayersData[faction_id].proto_id_queue[id] > 0)
+        if ((PlayersData[faction_id].proto_id_active[id] > 0)
             + PlayersData[faction_id].proto_id_lost[id]
-            + (PlayersData[faction_id].proto_id_active[id] > 0) != 0) {
+            + (PlayersData[faction_id].proto_id_queue[id] > 0) != 0) {
             ++last_row;
         }
     }
@@ -3971,14 +3971,14 @@ void ReportWin::draw_security() {
         field_C100_ = 0;
         field_C104_ = last_row;
         scroll_.set_range(0, last_row);
-        scroll_.paging_ = field_C108_;
+        scroll_.set_paging(field_C108_);
         scroll_.set_pos(field_C0FC_);
         field_E270_ = 0;
     }
     if (last_row + 1 == 0) return;
-    int ordinal = -1;
-    for (int index = 0; index < 128; ++index) {
-        const int id = index < 64 ? index : faction_id * 64 - 64 + index;
+    last_row = -1;
+    for (i = 0; i < 128; ++i) {
+        id = i < 64 ? i : faction_id * 64 - 64 + i;
         if ((VehPrototypes[id].flags & 1) == 0) continue;
         if (ReportIfGlobal.field_1E244_ < 4) {
             if (ReportIfGlobal.field_1E244_ < 3) {
@@ -3988,16 +3988,17 @@ void ReportWin::draw_security() {
                 continue;
             }
         }
-        if ((PlayersData[faction_id].proto_id_queue[id] > 0)
-            + (PlayersData[faction_id].proto_id_active[id] > 0)
+        if ((PlayersData[faction_id].proto_id_active[id] > 0)
+            + (PlayersData[faction_id].proto_id_queue[id] > 0)
             + PlayersData[faction_id].proto_id_lost[id] == 0) continue;
-        ++ordinal;
-        if (ordinal < field_C0FC_ || ordinal >= rows + field_C0FC_) continue;
-        if (ordinal - field_C0FC_ != 0) {
+        ++last_row;
+        if (last_row < static_cast<int>(field_C0FC_)
+            || last_row >= rows + static_cast<int>(field_C0FC_)) continue;
+        if (last_row - field_C0FC_ != 0) {
             row.top += 43;
             row.bottom += 43;
         }
-        if (selected_prototypes_[index / 32] & (1 << (index % 32))) {
+        if (selected_prototypes_[i / 32] & (1 << (i % 32))) {
             Buffer::box_sprite(&row, &InterfaceBoxStyles[2]);
             Buffer::box_sprite(&row, &InterfaceBoxStyles[5]);
         } else {
@@ -4006,8 +4007,9 @@ void ReportWin::draw_security() {
         spot_.add(id, 0, row.left, row.top, row.right - row.left, row.bottom - row.top);
         rect1_.top = row.top;
         const int text_y = row.top - static_cast<int>(field_E268_) / 2 + 21;
+        const int vehicle_y = row.top + 2;
         const int vehicle = veh_fake(id, faction_id);
-        veh_draw(this, vehicle, energy_panel_rect_.left, row.top + 2, -6, 8, 0);
+        veh_draw(this, vehicle, energy_panel_rect_.left, vehicle_y, -6, 8, 0);
         Buffer::set_text_color(0x99, -1, 1, 1);
         Buffer::set_text_color2(0xF2, -1, 1, 1);
         Buffer::set_text_color3(0xF9, -1, 1, 1);
@@ -4257,12 +4259,11 @@ void ReportWin::draw_score() {
 // ORIGINAL: 0x004A2210 ?draw_intel@ReportWin@@QAEXXZ 0x004A2210-0x004A345F
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/004a2210.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 void ReportWin::draw_intel() {
-    const int viewer = ReportIfGlobal.report_faction_id();
-    const int subject = ReportIfGlobal.report_selection_;
+    const int viewer = ReportIfGlobal.report_faction_id_;
     RECT title = {energy_panel_rect_.left + 3, energy_panel_rect_.top + 3,
                   energy_panel_rect_.right - 3,
                   energy_panel_rect_.top + static_cast<int>(field_E268_) + 9};
-    RECT body = {title.left, title.bottom + 2, title.right,
+    RECT body = {energy_panel_rect_.left + 3, title.bottom + 2, energy_panel_rect_.right - 3,
                  energy_panel_rect_.bottom - 3};
     Buffer::box_sprite(&energy_panel_rect_, &InterfaceBoxStyles[0]);
     Buffer::box_sprite(&title, &InterfaceBoxStyles[1]);
@@ -4283,10 +4284,11 @@ void ReportWin::draw_intel() {
     rect1_.top = body.top + 4;
     rect1_.right = body.right - body.left - 8;
     rect1_.bottom = rect1_.right;
-    const bool informed = (GameDataStateStorage.fields_.game_state_ & 0x80) || spying(subject) ||
+    const int subject = ReportIfGlobal.report_selection_;
+    const int informed = (GameDataStateStorage.fields_.game_state_ & 0x80) || spying(subject) ||
         (PlayersData[viewer].diplo_treaties[subject] & 1);
-    Sprite *portrait = FactionDiplomacyPortraits[subject];
-    portrait->draw(this, portrait->transparent_index(), rect1_.left, rect1_.top);
+    FactionDiplomacyPortraits[subject]->draw(this, FactionDiplomacyPortraits[subject]->transparent_index(),
+                                             rect1_.left, rect1_.top);
     const int text_x = rect1_.left + 158;
     StringTemp[0] = 0;
     strcat(StringTemp, "[");
@@ -4478,14 +4480,12 @@ void ReportIf::init() {
         spritesB_[dot].extract(&image, WinFillColour, 0, 0, 12, 12, 0);
     }
     image.load_pcx("report.pcx", 0, 10, 0xEC);
-    Sprite *sprite = spritesA_;
     int x = 0;
     for (int row = 0; row < 7; ++row) {
         int y = 0;
         for (int column = 0; column < 3; ++column) {
-            sprite->extract(&image, WinFillColour, x, y, 30, 36, 0);
+            spritesA_[row * 3 + column].extract(&image, WinFillColour, x, y, 30, 36, 0);
             y += 35;
-            ++sprite;
         }
         x += 29;
     }
@@ -5912,7 +5912,8 @@ void ReportIf::draw_energy() {
             _itoa(EnergyFacilityCounts[facility], text_a, 10);
             strcat(StringTemp, text_a);
             strcat(StringTemp, " ");
-            strcat(StringTemp, StringTable.get(Facility[facility].name));
+            char *name = Facility[facility].name;
+            strcat(StringTemp, StringTable.get(name));
             strcat(StringTemp, "|");
             strcat(StringTemp, "-");
             if (has_project(SP_PLANETARY_ENERGY_GRID, report_faction_id_)) {
