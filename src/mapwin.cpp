@@ -7491,7 +7491,7 @@ static __forceinline TerrainCacheEntry *brighting_tile(
 // Fixed-slot bindings carried from 00470550.cpp
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00470550 0x00470778 0x00470788 0x004706EE
-// ORIGINAL: 0x00470550 ?get_brighting@MapWin@@QAEHHHH@Z 0x00470550-0x00470776 FILE
+// ORIGINAL: 0x00470550 ?get_brighting@MapWin@@QAEHHHH@Z 0x00470550-0x00470776 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Read current lighting storage without adding lazy initialization or table writes to brightness lookup.","evidence":["Pinned470550..470776 calls get_alt four times and dispatches its lookup through470778;470704/47071D/470736/47074C read signed table bytes directly, without calling the initializer or quick_root.","mapwin_system_init at471030 owns the explicit compute_lighting_table call;470420..470536 owns the four49-byte table writes. Lookup before startup must retain the existing zero-initialized storage rather than generate values on demand."]}
 // HOMED 2026-09-04 from the 0x00470550 artifact. 16/202 in the tree. The
 // The image reads all four runs through the one biased base
