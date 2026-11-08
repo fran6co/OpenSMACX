@@ -3431,7 +3431,7 @@ Purpose: The handler the diplomatic-edit window's FlatButtons share. The int is
          popup runs, cleared as soon as exec returns. The -1 row returns
          WITHOUT clearing it, which the image does too (0x004DA45B is on the
          common exit path only).
-// ORIGINAL: 0x004D9DE0 ?on_button_clicked@DipEdit@@QAEXH@Z 0x004D9DE0-0x004DA73F;0x0065B347-0x0065B469
+// ORIGINAL: 0x004D9DE0 ?on_button_clicked@DipEdit@@QAEXH@Z 0x004D9DE0-0x004DA73F;0x0065B347-0x0065B469 BYTE_EXACT
 // symbol    ?on_button_clicked@DipEdit@@UAEXH@Z
 //           Q->U 2026-09-06, Win's front slots 44/45 taking the image's
 //           own names (on_button_clicked / on_button_toggled): the body is
@@ -4116,7 +4116,7 @@ Purpose: Open the diplomacy editor. A modal list popup asks which faction to
          construction the image has no ??0DipEdit for: every member
          constructor is inlined here, then init() runs and the scope-end
          teardown destroys it.
-// ORIGINAL: 0x004DB870 ?editor_diplomacy@Console@@QAEXXZ 0x004DB870-0x004DBB40;0x0065B469-0x0065B55F
+// ORIGINAL: 0x004DB870 ?editor_diplomacy@Console@@QAEXXZ 0x004DB870-0x004DBB40;0x0065B469-0x0065B55F BYTE_EXACT
 // size      966 bytes
 // prototype void (__thiscall ?editor_diplomacy@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   22
@@ -4678,7 +4678,7 @@ static inline void popup_check_state(unsigned int flags, unsigned int mask, int 
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004DC860 ?editor_scen_victory@Console@@QAEXXZ 0x004DC860-0x004DCCB4;0x0065B5CC-0x0065B6A4
+// ORIGINAL: 0x004DC860 ?editor_scen_victory@Console@@QAEXXZ 0x004DC860-0x004DCCB4;0x0065B5CC-0x0065B6A4 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004dc860.cpp records the original entry and full body/unwind spans; retained seed is not accepted source structure.", "Task console-scenario-owner-wave and its native grants authorize the thirteen owner methods, typed persistent editor state, existing Popup item sorting, and genuine technology-bit storage. Original instructions resolve callee argument roles and field ownership; dual configured compiler trials and host controls are diagnostics, not acceptance."], "reason": "Recover the selected scenario-editor operation in its existing typed Console owner, retaining its original spans, seed provenance and historical obligations."}
 void Console::editor_scen_victory() {
     Popup popup;
