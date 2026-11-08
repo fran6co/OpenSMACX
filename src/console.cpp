@@ -3828,16 +3828,17 @@ void Console::cursor_key(int, int character, int) {
         break;
     case 'p': {
         const unsigned int shown = MapWinTable[0]->field_1DD70_ & 0x400000;
-        // The walk re-reads the window through its slot after each store.
-        for (MapWin **slot = &MapWinTable[0];
-             slot < &MapWinTable[MapWinTableSlots]; ++slot) {
-            if (!*slot || (slot != &MapWinTable[0] && !(*slot)->view_active_)) continue;
+        // The walk re-reads the window through its slot after each store; an
+        // int index, which VC6 strength-reduces to the slot pointer with the
+        // image's signed bound compare (jl).
+        for (int i = 0; i < MapWinTableSlots; i++) {
+            if (!MapWinTable[i] || (i != 0 && !MapWinTable[i]->view_active_)) continue;
             if (!shown) {
-                (*slot)->field_1DD70_ |= 0x400000;
-                (*slot)->draw_base_dest(1);
+                MapWinTable[i]->field_1DD70_ |= 0x400000;
+                MapWinTable[i]->draw_base_dest(1);
             } else {
-                (*slot)->field_1DD70_ &= ~0x400000u;
-                (*slot)->draw_map(1);
+                MapWinTable[i]->field_1DD70_ &= ~0x400000u;
+                MapWinTable[i]->draw_map(1);
             }
         }
         break;
