@@ -3304,7 +3304,7 @@ The original writes only the opcode and each path's selected header/payload
 fields. Reserved header bytes and the leave-packet tail remain uninitialized;
 do not replace those unspecified bytes with a deterministic zero fill.
 */
-// ORIGINAL: 0x0047B450 ?on_button_clicked@NetWin@@QAEXH@Z 0x0047B450-0x0047B746 FILE
+// ORIGINAL: 0x0047B450 ?on_button_clicked@NetWin@@QAEXH@Z 0x0047B450-0x0047B746 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["The original NetWin constructor installs primary vtable 0x0066CCEC; inherited Win slot 44 at 0x0066CD9C targets 0x0047B450.", "NetDaemon::on_player_deleted directly calls 0x0047B450 with NetWinDialog as receiver and -2 as argument; retired seed git:7eb4d2e7:src/unrecovered/0047b450.cpp records the historical body.", "Pinned47B5FD..47B639/47B664..47B675/47B701..47B738: full and single packets write opcode word, slot and +8 zero then copied rows; leave writes only opcode word. +2..3/+C..F and leave tail are untouched."], "reason": "NetWin owns the lobby button handler as its inherited Win callback and shares the typed lobby rows and session storage with its network senders."}
 // symbol    ?on_button_clicked@NetWin@@UAEXH@Z
 // TRIED: no SEH frame here (plain `sub esp,0xd9c`, no fs:[0] chain), so this is a direct disassembly transcription rather than a lever candidate. Used one flat byte buffer plus raw `base - N` stores/memcpy matching each `ebp - N` write and each record's 0x17c-byte stride, rather than named locals, since the frame mixes several differently-shaped record buffers with no natural C struct boundary between them.
