@@ -5152,7 +5152,7 @@ void BaseWin::on_redraw() {
 // The redraw callback reaches these separately owned panels. Their historical
 // seed bodies are retained; these link-only bodies do not pretend to paint.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0041E560 ?update_gov_buttons@BaseWin@@QAEXXZ 0x0041E560-0x0041E788
+// ORIGINAL: 0x0041E560 ?update_gov_buttons@BaseWin@@QAEXXZ 0x0041E560-0x0041E788 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0041e560.cpp", "src/basewin.h", "src/base.h", "src/faction.h", "src/basebutton.h"], "reason": "Recover governor-priority button state through BaseCurrent, typed PlayerData AI preferences, the BaseWin FlatButton array and BaseButton's owned auxiliary state. The retained seed remains the measurement reference."}
 // The seed's four 0x0096CDC0..0x0096CDCC indexed words are
 // PlayersData[faction].ai_growth/ai_tech/ai_wealth/ai_power: each index step
@@ -6226,7 +6226,7 @@ void BaseWin::draw_info(int update_mode) {
     MainInterfaceGlobal.Buffer::set_clip(&previous_clip);
 }
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00415730 ?draw_misc@BaseWin@@QAEXH@Z 0x00415730-0x00415B15
+// ORIGINAL: 0x00415730 ?draw_misc@BaseWin@@QAEXH@Z 0x00415730-0x00415B15 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00415730.cpp", "src/basewin.h", "src/alpha.h", "src/faction.h", "src/base.h", "src/interface_palette.cpp", "src/jackal/font.h"], "reason": "Recover the miscellaneous base panel through its owned rectangle, label and string table, live Base and PlayerData fields, font line advance, and shared palette rather than executable addresses and raw self-offsets. The retained seed remains for byte restoration."}
 void BaseWin::draw_misc(int update_mode) {
     RECT panel = rect5_;
