@@ -23,10 +23,12 @@
 // RECOVERY_IMPORT: v1 __imp__timeSetEvent@20 WINMM.dll name:timeSetEvent
 
 // Original 0x00616860 stores this; 0x00616870 clears it; callbacks load the Time* cell, not its pointee.
-// RECOVERY_OBJECT: v1 0x009B90D0 ?TimeModal@Time@@2PAV1@A
+// One pointer dword; the next referenced storage is StringTable at 0x009B90D8.
+// RECOVERY_OBJECT: v2 0x009B90D0 0x009B90D4 ?TimeModal@Time@@2PAV1@A 0x00616870
 Time *Time::TimeModal;
-// Original 0x00616880/0x00616886 increments this class user count; 0x00616890 decrements; start only.
-// RECOVERY_OBJECT: v1 0x009B90CC ?TimeInitCount@Time@@2HA
+// Original 0x00616880/0x00616886 increments this class user count; 0x00616890 decrements.
+// One int dword, ending where TimeModal begins.
+// RECOVERY_OBJECT: v2 0x009B90CC 0x009B90D0 ?TimeInitCount@Time@@2HA 0x00616880
 int Time::TimeInitCount;
 
 /*

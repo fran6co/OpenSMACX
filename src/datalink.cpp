@@ -2636,7 +2636,8 @@ void Datalink::set_cat_adv_concept() {
             _itoa(index + 10000, digits, 10);
             strcat(StringTemp, digits);
         }
-        listBox_.item(StringTemp, index++ + 10000);
+        const int id = index++;
+        listBox_.item(StringTemp, 10000 + id);
         text_get();
     }
     text_close();

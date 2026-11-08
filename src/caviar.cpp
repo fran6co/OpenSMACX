@@ -61,8 +61,11 @@ const float CaviarCameraDistance = -10000.0f;
 // RECOVERY_OBJECT: v3 0x009C09FC ?CaviarProjectionScratchFC@@3MA member ?CaviarKernelProjectionWindow@@3TCaviarKernelProjectionWindowCandidate@@A current_views_.tail_.scratch_fc_
 // RECOVERY_OBJECT: v3 0x009C0A00 ?CaviarProjectionScratchA00@@3MA member ?CaviarKernelProjectionWindow@@3TCaviarKernelProjectionWindowCandidate@@A current_views_.tail_.scratch_a00_
 // RECOVERY_OBJECT: v3 0x009C0A04 ?CaviarProjectionScratchA04@@3MA member ?CaviarKernelProjectionWindow@@3TCaviarKernelProjectionWindowCandidate@@A current_views_.tail_.scratch_a04_
-// RECOVERY_OBJECT: v3 0x009C0B90 ?CaviarProjectionOutputWords@@3PAIA member ?CaviarOutputMessageWindow@@3UCaviarOutputMessageWindowCandidate@@A io_seek_
+// RECOVERY_OBJECT: v3 0x009C0B90 0x009C0B94 ?CaviarProjectionOutputWords@@3PAIA 0x006392E0 member ?CaviarOutputMessageWindow@@3UCaviarOutputMessageWindowCandidate@@A io_seek_
 CaviarKernelProjectionWindowCandidate CaviarKernelProjectionWindow = {0};
+// 6392E0 copies the six callbacks to 9C0B80, the window's start; the separately
+// mapped vox_clip_bottom_ at 9C0E60 bounds its 0x2E0 bytes.
+// RECOVERY_OBJECT: v2 0x009C0B80 0x009C0E60 ?CaviarOutputMessageWindow@@3UCaviarOutputMessageWindowCandidate@@A 0x006392E0
 CaviarOutputMessageWindowCandidate CaviarOutputMessageWindow = {0};
 // RECOVERY_OBJECT: v1 0x009C0A40 ?CaviarFixedPointProjection@@3UCaviarFixedPointProjectionMatrix@@A
 CaviarFixedPointProjectionMatrix CaviarFixedPointProjection = {0}; // 0x009C0A40

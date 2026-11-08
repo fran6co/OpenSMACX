@@ -823,7 +823,8 @@ set(OPENSMACX_UNPOOLED_SOURCES
     src/colortables.cpp
     src/console_commands.cpp
     src/base.cpp
-    src/veh.cpp)
+    src/veh.cpp
+    src/game.cpp)
 function(opensmacx_apply_optimization target)
     get_target_property(target_sources ${target} SOURCES)
     get_target_property(target_dir ${target} SOURCE_DIR)

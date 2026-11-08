@@ -237,7 +237,10 @@ void __cdecl clear_all_offers() {
 // net_control_turn copies the duration to the distinct live wait accumulator.
 // Historical object identity moved to GameDataStateStorage; see the transport manifest.
 
-// RECOVERY_OBJECT: v3 0x0094B4D8 ?GameWireOpaque_94B4D8@@3PAEA member ?ScenarioSave@@3UScenarioSaveState@@A wire_opaque_94b4d8
+// game_data transfers 0x98 bytes from 0x0094B4C0 (5A8337); Mandate ends at its
+// start and the next referenced storage is 0x0094B558.
+// RECOVERY_OBJECT: v2 0x0094B4C0 0x0094B558 ?ScenarioSave@@3UScenarioSaveState@@A 0x005A6AC0
+// RECOVERY_OBJECT: v3 0x0094B4D8 0x0094B558 ?GameWireOpaque_94B4D8@@3PAEA 0x005A6AC0 member ?ScenarioSave@@3UScenarioSaveState@@A wire_opaque_94b4d8
 ScenarioSaveState ScenarioSave;
 typedef char ScenarioSaveStateHasNativeExtent[
     sizeof(ScenarioSaveState) == 0x98 ? 1 : -1];

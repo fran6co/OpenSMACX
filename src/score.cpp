@@ -65,7 +65,8 @@
 #include "interlude.h"
 
 // Score/ranking state: allocated in this TU's .bss, beside ReplayWin's.
-// RECOVERY_OBJECT: v4 0x00945DD8 ?FactionRankingsUnk@@3PAIA target ?FactionRankingsUnk@@3PAHA
+// rankings' max scans (5AC8F1..5AC904) walk 0x00945DDC up to the 0x00945DF8 end.
+// RECOVERY_OBJECT: v4 0x00945DD8 0x00945DF8 ?FactionRankingsUnk@@3PAIA 0x005AC690 target ?FactionRankingsUnk@@3PAHA
 // The producer computes signed ranking scores and stores -1 while selecting
 // winners; numeric consumers and pinned great_satan SETGE use signed ints.
 // Game/network serialization copies this 0x20-byte array unchanged.

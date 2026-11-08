@@ -52,8 +52,10 @@
 #include "xpops.h"
 
 // Source-owned process Council object. The original init receiver establishes
-// its identity, not a complete global bound or runtime-initializer proof.
-// RECOVERY_OBJECT: v1 0x006FEC80 ?CouncilWindow@@3VCouncWin@@A
+// its identity, not a runtime-initializer proof. Its 0x515C-byte bound: the
+// ctor/dtor (4286C4, 42856F) iterate buttons_ as 6 x 0xB4C from +0xD94, ending
+// at +0x515C; the next referenced storage is 0x00703DE0.
+// RECOVERY_OBJECT: v2 0x006FEC80 0x00703DDC ?CouncilWindow@@3VCouncWin@@A 0x00428550
 CouncWin CouncilWindow;
 #include "strings.h"     // StringTemp
 #include "console.h"     // ConsoleGlobal's local faction id
