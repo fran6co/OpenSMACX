@@ -53,11 +53,12 @@ shared declarations, inline providers, local data and startup ordering, but does
 not alone establish original filenames or guarantee byte equality.
 
 The user's first milestone is **complete byte-exact source recovery, bug for
-bug with the pinned original executable**. Fixes, safety improvements and other
-intentional behavior changes belong to a subsequent milestone. This ordering
-supersedes earlier prospective bug-fix permissions, including the alien-movement
-current-tile fallback; retain those proposals separately rather than publishing
-them as the faithful implementation.
+bug with the pinned original executable**. This repository is a faithful
+source reconstruction for preservation (user decision, 2026-11-08): fixes,
+safety improvements and other intentional behavior changes belong to a fork,
+never to this repository. This supersedes earlier prospective bug-fix
+permissions, including the alien-movement current-tile fallback; those
+proposals are for a fork, not the faithful implementation.
 
 The immediate working priority is **complete compiling function coverage**, using
 large parallel full-owner batches and semantically faithful implementations.
@@ -173,8 +174,8 @@ Before declaring the first milestone complete, establish all of the following:
 Undefined behavior requires evidence of the original compiler/runtime effects;
 it is not permission to choose a convenient result. Record unresolved effects as
 remaining obligations. No current coverage count, historical claim ledger or
-bounded host test proves this milestone. Once independently verified, preserve a
-Git checkpoint of the faithful source before implementing fixes or improvements.
+bounded host test proves this milestone. Once independently verified, tag a Git
+checkpoint of the faithful source; a fork can start from it.
 
 ## Evidence-led recovery queue and bounded matching pass
 

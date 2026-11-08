@@ -78,8 +78,11 @@ Functions and original spans remain measurement units, not scheduling boundaries
 This manual regrouping authorization does not weaken native automatic acceptance.
 
 First milestone: complete byte-exact source recovery, bug for bug with the pinned
-original. Bug fixes and improvements come afterward; this supersedes earlier
-prospective fix approvals. Compiling function coverage is effectively complete;
+original. This repository is a faithful source reconstruction for preservation
+(user decision, 2026-11-08): game bug fixes, improvements and other changes
+belong to a fork, never here; this supersedes earlier prospective fix
+approvals. Later cleanup here only makes the source more faithful (for example
+replacing marked stand-ins with the original's spelling). Compiling function coverage is effectively complete;
 the immediate priority is now byte matching under the lean loop above. Coverage
 is not final milestone completion. See `recovery/WORKFLOW.md`, "Milestone order". Preserve original
 quirks and evidence; do not silently normalize unsafe/error paths.
