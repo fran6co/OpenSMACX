@@ -1246,8 +1246,8 @@ void __stdcall sub_5f86a0(Sound *sound);
 extern void (*WinFlipHook)();          // 0x009B7A48
 extern Font *WinBubbleFont;            // 0x009B7A54
 extern int WinBubbleFillColour;        // 0x009B7A64
-extern const int WinBubbleTextColour;  // 0x00696D2C
-extern const int WinBubbleEdgeColour;  // 0x00696D30
+extern int WinBubbleTextColour;        // 0x00696D2C
+extern int WinBubbleEdgeColour;        // 0x00696D30
 extern Sprite *WinFlipSprite;          // 0x009B7A2C
 extern int WinFlipSpriteY;             // 0x009B7A30
 extern int WinFlipSpriteX;             // 0x009B7A34

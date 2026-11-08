@@ -616,8 +616,10 @@ void __cdecl blink_timer(int a1) {
     draw_cursor();
 
     const int blink_col = HIBYTE(GetAsyncKeyState(1));
+    // The image reads WinInstance into esi before GetFocus (0x0050EB28).
+    const HINSTANCE instance = WinInstance;
     if (reinterpret_cast<HINSTANCE>(GetWindowLongA(GetFocus(), GWL_HINSTANCE))
-        != WinInstance) {
+        != instance) {
         return;
     }
     if (TutorialWindow.is_visible() != 0) return;
@@ -652,27 +654,12 @@ void __cdecl blink_timer(int a1) {
         (*slot)->client_to_screen(&mouse_x, &mouse_y);
 
         if (mouse_x == 0) {
-            col -= ((*slot)->field_1DDCC_ + 2) / 3;
-            if ((MapIsFlat & 1) == 0) {
-                if (col < 0) {
-                    col += MapLongitudeBounds;
-                } else if (col >= MapLongitudeBounds) {
-                    col -= MapLongitudeBounds;
-                }
-            }
+            col = wrap_map_x(col - ((*slot)->field_1DDCC_ + 2) / 3);
         }
 
         if (mouse_x >= WinScreenWidth - 0xA
             && mouse_x < WinScreenWidth + 0xA) {
-            int next_col = ((*slot)->field_1DDCC_ + 2) / 3 + col;
-            if ((MapIsFlat & 1) == 0) {
-                if (next_col < 0) {
-                    next_col += MapLongitudeBounds;
-                } else if (next_col >= MapLongitudeBounds) {
-                    next_col -= MapLongitudeBounds;
-                }
-            }
-            col = next_col;
+            col = wrap_map_x(((*slot)->field_1DDCC_ + 2) / 3 + col);
         }
 
         if (mouse_y == 0 && (*slot)->field_1DDA8_ > -2) {
@@ -697,13 +684,9 @@ void __cdecl blink_timer(int a1) {
                 const int max_shift = (2 - count) * 2 - start
                                     + MapLatitudeBounds;
                 const int requested = ((*slot)->field_1DDD0_ + 2) / 3;
-                int delta;
-                if (requested < 0 || max_shift < 0) {
-                    delta = 0;
-                } else if (requested > max_shift) {
-                    delta = max_shift;
-                } else {
-                    delta = requested;
+                int delta = 0;
+                if (requested >= 0 && max_shift >= 0) {
+                    delta = requested > max_shift ? max_shift : requested;
                 }
                 row += delta;
             }
@@ -3845,15 +3828,16 @@ void Console::cursor_key(int, int character, int) {
         break;
     case 'p': {
         const unsigned int shown = MapWinTable[0]->field_1DD70_ & 0x400000;
-        for (int i = 0; i < static_cast<int>(MapWinTableSlots); ++i) {
-            MapWin *const window = MapWinTable[i];
-            if (!window || (i && !window->view_active_)) continue;
+        // The walk re-reads the window through its slot after each store.
+        for (MapWin **slot = &MapWinTable[0];
+             slot < &MapWinTable[MapWinTableSlots]; ++slot) {
+            if (!*slot || (slot != &MapWinTable[0] && !(*slot)->view_active_)) continue;
             if (!shown) {
-                window->field_1DD70_ |= 0x400000;
-                window->draw_base_dest(1);
+                (*slot)->field_1DD70_ |= 0x400000;
+                (*slot)->draw_base_dest(1);
             } else {
-                window->field_1DD70_ &= ~0x400000u;
-                window->draw_map(1);
+                (*slot)->field_1DD70_ &= ~0x400000u;
+                (*slot)->draw_map(1);
             }
         }
         break;

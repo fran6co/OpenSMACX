@@ -982,8 +982,8 @@ void (*WinFlipHook)();
 // last two are in `.data` and both hold 255.
 Font *WinBubbleFont;
 int WinBubbleFillColour;
-const int WinBubbleTextColour = 255;   // 0x00696D2C
-const int WinBubbleEdgeColour = 255;   // 0x00696D30
+int WinBubbleTextColour = 255;         // 0x00696D2C
+int WinBubbleEdgeColour = 255;         // 0x00696D30
 // 0x009B7A2C and the pair below it: a sprite drawn over the screen after the
 // bubble, at 0x009B7A34 across and 0x009B7A30 down. Its frame comes from its
 // own `cTransparentIndex_` at +8.
@@ -1064,10 +1064,12 @@ Purpose: Present the screen buffer: draw the bubble text over it, flip or
 //        does release_hdc's GDI ReleaseDC, and the unclipped arm blits the
 //        flipped surface INTO the back buffer (0x005EFFC8 is
 //        DirectDrawBackBuffer->Blt(.., DirectDrawSurface, ..)).
-// TRIED: what is left needs win.h: the image reads WinBubbleEdgeColour and
-//        WinBubbleTextColour from .data (0x00696D30/2C), so they are not
-//        `const`; and the palette block's release_hdc is a call at 0x005F014B
-//        while the other two are inline (a nested-inline fingerprint).
+// LEVER (2026-11-08, 0.959 -> 0.996): the bubble colours are plain .data
+//        ints (no const), the palette block's release_hdc is a forced call
+//        (0x005F014B), and both rectangle blocks adjust left, right, top,
+//        bottom in that order. Left: split is ebx where the image has ebp
+//        (left temp swapped), and the last inlined release_hdc zeroes esi
+//        where the image stores an immediate; a 720 s permute found neither.
 Return Value: n/a
 Status: WIP
 
@@ -1124,8 +1126,8 @@ void __cdecl Win::flip(RECT *area) {
         // rectangle where the image shrinks it - and the block below undid
         // the wrong two the same way.
         WinBubbleRect.left += 1;
-        WinBubbleRect.top += 1;
         WinBubbleRect.right -= 1;
+        WinBubbleRect.top += 1;
         WinBubbleRect.bottom -= 1;
         Win::screen_buffer_.fill(&WinBubbleRect, WinBubbleFillColour);
         Win::screen_buffer_.set_font(WinBubbleFont, nullptr, nullptr, nullptr);
@@ -1164,8 +1166,8 @@ void __cdecl Win::flip(RECT *area) {
         // performs neither. This tree ran both unconditionally, which moved
         // WinBubbleRect by one every frame.
         WinBubbleRect.left -= 1;
-        WinBubbleRect.top -= 1;
         WinBubbleRect.right += 1;
+        WinBubbleRect.top -= 1;
         WinBubbleRect.bottom += 1;
         if (area != nullptr) {
             Win::screen_buffer_.set_clip(&Win::screen_buffer_.rect2_);
@@ -1234,7 +1236,10 @@ void __cdecl Win::flip(RECT *area) {
         if (palette_dc != nullptr) {
             SelectPalette(palette_dc, PaletteInitialized, FALSE);
             RealizePalette(WinSharedHdc);
-            release_hdc();
+            // stand-in: the image calls release_hdc here (0x005F014B) and
+            // inlines the other two; a local function pointer forces the call.
+            void (*const release)() = &Win::release_hdc;
+            release();
         }
     }
 
