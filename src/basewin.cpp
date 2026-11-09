@@ -1230,7 +1230,7 @@ void BaseWin::rename() {
     draw_radius(BaseCurrent->x, BaseCurrent->y, 3, 2);
 }
 
-// ORIGINAL: 0x0041B4F0 ?staple_the_bastards@BaseWin@@QAEXXZ 0x0041B4F0-0x0041B78D
+// ORIGINAL: 0x0041B4F0 ?staple_the_bastards@BaseWin@@QAEXXZ 0x0041B4F0-0x0041B78D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/recovered/units/0041b4f0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
 void BaseWin::staple_the_bastards() {
     compute_selected_base();
@@ -1238,7 +1238,8 @@ void BaseWin::staple_the_bastards() {
         && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) return;
     const int faction = BaseCurrent->faction_id_current;
     parse_says(0, BaseCurrent->name_string, -1, -1);
-    // stand-in: a function pointer keeps has_fac out of line, as the image calls it.
+    // WORKAROUND(noinline): a function pointer keeps the MEASURED inline has_fac
+    // out of line; the image calls 0x00421670 here (0x0041B5C5).
     BOOL (__cdecl *const has_facility)(int, int, int) = has_fac;
     const int police = PlayersData[faction].soc_effect_active.values_[SocialEffect::POLICE]
         + has_facility(0x23, BaseIDCurrentSelected, 0) * 2;
@@ -1267,20 +1268,19 @@ void BaseWin::staple_the_bastards() {
             return;
         }
     } else if (!popp(ScriptPopupFile, "NERVESTAPLE", 0, "drone_sm.pcx", nullptr)) {
-        goto unlock;
+        NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+        return;
     }
     if (IsMultiplayerNet) {
         message_data(0x2414, 0, BaseIDCurrentSelected, 0, 0, 0);
         NetDaemonNet.await_exec(1);
-        NetDaemonNet.unlock_base(BaseIDCurrentSelected);
-        return;
+    } else {
+        action_staple(BaseIDCurrentSelected);
     }
-    action_staple(BaseIDCurrentSelected);
-unlock:
     NetDaemonNet.unlock_base(BaseIDCurrentSelected);
 }
 
-// ORIGINAL: 0x0041B1F0 ?on_mouse_move@BaseWin@@QAEXHH@Z 0x0041B1F0-0x0041B491
+// ORIGINAL: 0x0041B1F0 ?on_mouse_move@BaseWin@@QAEXHH@Z 0x0041B1F0-0x0041B491 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/recovered/units/0041b1f0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
 // symbol    ?on_mouse_move@BaseWin@@UAEXHH@Z
 void BaseWin::on_mouse_move(int x, int y) {
@@ -1318,16 +1318,21 @@ void BaseWin::on_mouse_move(int x, int y) {
             cursor = 1;
         }
     }
-    Sprite *sprite;
     if (ExpansionEnabled && (Players[BaseCurrent->faction_id_current].rule_flags & 0x80)) {
-        sprite = cursor >= 4 ? &g_AL_SPECIALIST_SM_CURSOR_SPRITES[cursor - 4]
-                             : &g_AL_CITIZEN_SM_CURSOR_SPRITES[cursor];
+        if (cursor >= 4) {
+            set_cursor(&g_AL_SPECIALIST_SM_CURSOR_SPRITES[cursor - 4], 7, 9);
+            MainInterfaceGlobal.set_cursor(&g_AL_SPECIALIST_SM_CURSOR_SPRITES[cursor - 4], 7, 9);
+        } else {
+            set_cursor(&g_AL_CITIZEN_SM_CURSOR_SPRITES[cursor], 7, 9);
+            MainInterfaceGlobal.set_cursor(&g_AL_CITIZEN_SM_CURSOR_SPRITES[cursor], 7, 9);
+        }
+    } else if (cursor >= 4) {
+        set_cursor(&g_SPECIALIST_SM_CURSOR_SPRITES[cursor - 4], 7, 9);
+        MainInterfaceGlobal.set_cursor(&g_SPECIALIST_SM_CURSOR_SPRITES[cursor - 4], 7, 9);
     } else {
-        sprite = cursor >= 4 ? &g_SPECIALIST_SM_CURSOR_SPRITES[cursor - 4]
-                             : &g_CITIZEN_SM_CURSOR_SPRITES[cursor + 4];
+        set_cursor(&g_CITIZEN_SM_CURSOR_SPRITES[cursor + 4], 7, 9);
+        MainInterfaceGlobal.set_cursor(&g_CITIZEN_SM_CURSOR_SPRITES[cursor + 4], 7, 9);
     }
-    set_cursor(sprite, 7, 9);
-    MainInterfaceGlobal.set_cursor(sprite, 7, 9);
 }
 
 void __stdcall bubble_me_elmo2(char *text, int x, int y);
@@ -4994,7 +4999,7 @@ Purpose: Handle pointer movement over BaseWin, including queue hover, drag
 // flags     frame;sp_ready;purged_ok
 // calls     0x005F7E90 0x005F8500 0x005FAB00 0x005EC7C0 0x004E39D0
 */
-// ORIGINAL: 0x0041DF50 ?on_iface_mouse_move@BaseWin@@QAEXHH@Z 0x0041DF50-0x0041E3DC
+// ORIGINAL: 0x0041DF50 ?on_iface_mouse_move@BaseWin@@QAEXHH@Z 0x0041DF50-0x0041E3DC BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/recovered/units/0041df50.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
 // symbol    ?on_iface_mouse_move@BaseWin@@UAEXHH@Z
 void BaseWin::on_iface_mouse_move(int a1, int a2) {
@@ -5041,8 +5046,7 @@ void BaseWin::on_iface_mouse_move(int a1, int a2) {
         if (field_40B4C_ != type) {
             field_40B54_ = 2;
         } else if (field_40B4C_ == 0 && farm_get(field_40B44_, field_40B48_) >= 0) {
-            const int current = farm_get(a1, a2);
-            field_40B54_ = (farm_get(field_40B44_, field_40B48_) != current) + 1;
+            field_40B54_ = (farm_get(field_40B44_, field_40B48_) != farm_get(a1, a2)) + 1;
         } else if (field_40B4C_ == 1) {
             field_40B54_ = (position != field_40B50_) + 1;
         }
@@ -5055,24 +5059,22 @@ void BaseWin::on_iface_mouse_move(int a1, int a2) {
                 if (cursor < 4) cursor = 1;
             }
         }
+        // The image keeps two cursor tails (0x41E38B specialists, 0x41E3B8
+        // citizens); identically spelled calls are cross-jumped into one.
         if (ExpansionEnabled && (Players[BaseCurrent->faction_id_current].rule_flags & 0x80)) {
             if (cursor >= 4) {
-                Sprite *sprite = &g_AL_SPECIALIST_LG_CURSOR_SPRITES[cursor - 4];
-                set_cursor(sprite, 19, 24);
-                MainInterfaceGlobal.set_cursor(sprite, 19, 24);
+                set_cursor(&g_AL_SPECIALIST_LG_CURSOR_SPRITES[cursor - 4], 19, 24);
+                MainInterfaceGlobal.set_cursor(&g_AL_SPECIALIST_LG_CURSOR_SPRITES[cursor - 4], 19, 24);
             } else {
-                Sprite *sprite = &g_AL_CITIZEN_LG_CURSOR_SPRITES[cursor];
-                set_cursor(sprite, 19, 24);
-                MainInterfaceGlobal.set_cursor(sprite, 19, 24);
+                this->set_cursor(&g_AL_CITIZEN_LG_CURSOR_SPRITES[cursor], 19, 24);
+                MainInterfaceGlobal.set_cursor(&g_AL_CITIZEN_LG_CURSOR_SPRITES[cursor], 19, 24);
             }
         } else if (cursor >= 4) {
-            Sprite *sprite = &g_SPECIALIST_LG_CURSOR_SPRITES[cursor - 4];
-            set_cursor(sprite, 19, 24);
-            MainInterfaceGlobal.set_cursor(sprite, 19, 24);
+            set_cursor(&g_SPECIALIST_LG_CURSOR_SPRITES[cursor - 4], 19, 24);
+            MainInterfaceGlobal.set_cursor(&g_SPECIALIST_LG_CURSOR_SPRITES[cursor - 4], 19, 24);
         } else {
-            Sprite *sprite = &g_CITIZEN_LG_CURSOR_SPRITES[cursor + 4];
-            set_cursor(sprite, 19, 24);
-            MainInterfaceGlobal.set_cursor(sprite, 19, 24);
+            this->set_cursor(&g_CITIZEN_LG_CURSOR_SPRITES[cursor + 4], 19, 24);
+            MainInterfaceGlobal.set_cursor(&g_CITIZEN_LG_CURSOR_SPRITES[cursor + 4], 19, 24);
         }
     }
 }
