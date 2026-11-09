@@ -1,5 +1,6 @@
 """Generation isolation/refusal controls; real compiler controls live separately."""
 
+import hashlib
 import json
 import sys
 
@@ -237,3 +238,33 @@ root, output = Path(sys.argv[1]), Path(sys.argv[2])
         generated = next((compiler.root / "build/preparation").glob("build-*/generated.cc"))
         assert compiler.units == frozenset([generated.relative_to(compiler.root).as_posix()])
         assert generated.is_file() and not (generated.parent / "nested/generated.cc").exists()
+
+
+def test_only_database_referenced_preparation_artifacts_are_inputs(prepared):
+    live = next((prepared / "build/preparation").glob("build-*/generated.h")).parent
+    stale = prepared / "build/preparation/build-stale"
+    stale.mkdir()
+    (stale / "old.h").write_bytes(b"unreferenced retained context")
+    settings = Measurement.read(prepared)
+    live_name = live.relative_to(prepared).as_posix()
+    assert live_name in settings.input_roots
+    assert "build/preparation" not in settings.input_roots
+    assert not any(root.startswith("build/preparation/build-stale") for root in settings.input_roots)
+    inputs = settings.snapshot(prepared, {})["inputs"]
+    assert f"{live_name}/generated.h" in inputs
+    assert "build/preparation/build-stale/old.h" not in inputs
+
+
+def test_referenced_preparation_file_is_pinned_and_missing_database_pins_everything(prepared):
+    forced = prepared / "build/preparation/forced.h"
+    forced.write_bytes(b"forced include")
+    database = prepared / "build/commands.json"
+    rows = json.loads(database.read_text())
+    rows[0]["arguments"].append("/FI" + str(forced))
+    database.write_text(json.dumps(rows))
+    settings = Measurement.read(prepared)
+    assert "build/preparation/forced.h" in settings.inputs
+    assert "build/preparation/forced.h" not in settings.input_roots
+    assert settings.snapshot(prepared, {})["inputs"]["build/preparation/forced.h"] == hashlib.sha256(b"forced include").hexdigest()
+    database.unlink()
+    assert "build/preparation" in Measurement.read(prepared).input_roots

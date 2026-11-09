@@ -15,6 +15,30 @@ from .source_config import SourceConfiguration
 from .toolchain import snapshot as toolchain_snapshot
 
 
+def _referenced_artifacts(root: Path, artifacts: str, database) -> tuple[str, ...]:
+    """Name each first-level artifact subdirectory the compilation database uses.
+
+    Paths are matched textually in the database (absolute through the given or
+    resolved root, or relative), so arguments, directories and outputs all
+    count. A missing or unreadable database pins the whole artifact cache.
+    """
+    relative_path(artifacts)
+    if not isinstance(database, str):
+        return (artifacts,)
+    try:
+        relative_path(database)
+        text = (root / database).read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError, ValueError):
+        return (artifacts,)
+    spellings = {artifacts, os.fspath(root / artifacts), os.fspath(root.resolve() / artifacts)}
+    pattern = re.compile("(?:" + "|".join(re.escape(item) for item in sorted(spellings, key=len, reverse=True))
+                         + r")[/\\]([^/\\\"\s]+)")
+    names = {match.group(1) for match in pattern.finditer(text)}
+    if any(name in (".", "..") for name in names):
+        return (artifacts,)
+    return tuple(sorted(f"{artifacts}/{name}" for name in names))
+
+
 @dataclass(frozen=True)
 class Measurement:
     backend: str
@@ -85,10 +109,16 @@ class Measurement:
             preparation = Build.read(root, key="preparation")
             # Recipe generation can supply forced includes or other compiler
             # context. Pin its policy and generated contents, not just the JSON
-            # database. Conservative whole-cache invalidation is intentional;
-            # an unobserved generated header must never lend stale evidence.
-            inputs = tuple(sorted({*inputs, preparation.path, *preparation.inputs}))
-            roots.update((*preparation.input_roots, preparation.artifacts))
+            # database. Every artifact subdirectory the configured database
+            # names is pinned whole; retained build directories that no recipe
+            # names cannot be read by any configured compile, so they are not
+            # inputs. Without a readable database the whole cache is pinned.
+            mappings = project.get("mappings", {})
+            database = mappings.get("compile_commands") if isinstance(mappings, dict) else None
+            referenced = _referenced_artifacts(root, preparation.artifacts, database)
+            artifact_files = {path for path in referenced if (root / path).is_file()}
+            inputs = tuple(sorted({*inputs, preparation.path, *preparation.inputs, *artifact_files}))
+            roots.update((*preparation.input_roots, *(set(referenced) - artifact_files)))
             environment.update(preparation.environment)
         for path in inputs:
             relative_path(path)
