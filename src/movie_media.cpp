@@ -133,13 +133,13 @@ extern "C" int __fastcall sub_5cbc00(
   int rounded_a;
   int max_a;
   if (sample < 0) {
-    max_a = 1 << bits;
     rounded_a = (sample - (1 << (7 - bits))) / divisor;
+    max_a = 1 << bits;
     if (rounded_a < 1 - max_a) rounded_a = 1 - max_a;
   } else {
-    max_a = 1 << bits;
     rounded_a = ((1 << (7 - bits)) + sample) / divisor;
-    if (max_a - 1 < rounded_a) rounded_a = max_a - 1;
+    max_a = 1 << bits;
+    if (rounded_a > max_a - 1) rounded_a = max_a - 1;
   }
 
   bits = component_b_bits;
@@ -154,7 +154,7 @@ extern "C" int __fastcall sub_5cbc00(
   } else {
     rounded_b = ((1 << (7 - bits)) + component_a) / divisor;
     max_b = 1 << bits;
-    if (max_b - 1 < rounded_b) rounded_b = max_b - 1;
+    if (rounded_b > max_b - 1) rounded_b = max_b - 1;
   }
 
   bits = component_c_bits;
@@ -1925,12 +1925,12 @@ void MediaRuntime::sub_5cb6c0() {
     IDirectDrawSurface2 *target =
         (flags & 0x08000000) != 0 ? descriptor->surface_18 : descriptor->surface_14;
     if (descriptor->pixel_format.total_component_bits == 8) {
-      BYTE *out = palette_entries;
-      for (int i = 0; i < 0x300; i += 3, out += 4) {
-        out[0] = descriptor->palette_rgb_triplets_b0[i];
-        out[1] = descriptor->palette_rgb_triplets_b0[i + 1];
-        out[2] = descriptor->palette_rgb_triplets_b0[i + 2];
-        out[3] = 0;
+      PALETTEENTRY *out = (PALETTEENTRY *)palette_entries;
+      for (int i = 0; i < 0x100; ++i) {
+        out[i].peRed = descriptor->palette_rgb_triplets_b0[i * 3];
+        out[i].peGreen = descriptor->palette_rgb_triplets_b0[i * 3 + 1];
+        out[i].peBlue = descriptor->palette_rgb_triplets_b0[i * 3 + 2];
+        out[i].peFlags = 0;
       }
     }
 
