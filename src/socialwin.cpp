@@ -748,10 +748,11 @@ static inline void social_write_l_at(char *text, int x, int y) {
 
 // Operand-twice magnitude, as the image re-derives it at each use.
 #define SOCIAL_ABS(x) ((x) < 0 ? -(x) : (x))
-// The same magnitude with the opposite branch polarity (draw_info).
+// The same magnitude with the opposite branch polarity (draw_info, and
+// draw_social's zero test, where the image threads it per switch case).
 #define SOCIAL_MAGNITUDE(x) ((x) >= 0 ? (x) : -(x))
-// ORIGINAL: 0x004AF310 ?draw_social@SocialWin@@QAEXH@Z 0x004AF310-0x004AF8BC FILE
-// TRIED: transcribed directly from the disassembly (Ghidra's own decompilation agreed on the control flow and formulas once its confusing overlapping-stack-slot local numbering was resolved against the raw ebp-relative offsets) - the header/derived RECT pair, the per-row avail==0 header-only path, the count-then- draw two-pass loop over the fixed 11-entry table at 0x94b2cc (index 3 excluded), and the `this!=0 ? obj : 0` guard before each Sprite::draw. Draw receivers are the big/small Sprite sub-objects themselves (`bigIcon->draw(buffer, ...)`), not the Buffer - an early draft called the wrong receiver and was fixed before landing. MISMATCH #0 (`push`/`sub` prologue) on a 1452-byte function with a deeply nested sign-magnitude classification loop - not chased to byte-exactness, this is a structural transcription.
+// ORIGINAL: 0x004AF310 ?draw_social@SocialWin@@QAEXH@Z 0x004AF310-0x004AF8BC FILE BYTE_EXACT
+// TRIED: transcribed directly from the disassembly (Ghidra's own decompilation agreed on the control flow and formulas once its confusing overlapping-stack-slot local numbering was resolved against the raw ebp-relative offsets) - the header/derived RECT pair, the per-row avail==0 header-only path, the count-then- draw two-pass loop over the fixed 11-entry table at 0x94b2cc (index 3 excluded), and the `this!=0 ? obj : 0` guard before each Sprite::draw. Draw receivers are the big/small Sprite sub-objects themselves (`bigIcon->draw(buffer, ...)`), not the Buffer - an early draft called the wrong receiver and was fixed before landing. Byte-exact once the zero test used SOCIAL_MAGNITUDE (the image's shared neg block has the `x >= 0 ? x : -x` polarity) and the icon index multiplied effect by 9 inside each arm (the image keeps a separate effect*9 induction variable).
 // working copy - scaffold materialised by --work
 // size      1452 bytes
 // prototype void (__thiscall ?draw_social@SocialWin@@QAEXH@Z)(SocialWin* this, int socCategory)
@@ -864,7 +865,7 @@ void SocialWin::draw_social(int a1) {
                     }
                     break;
                 }
-                if (SOCIAL_ABS(value) == 0) {
+                if (SOCIAL_MAGNITUDE(value) == 0) {
                     continue;
                 }
                 if (SOCIAL_ABS(value) > 1) {
@@ -872,7 +873,7 @@ void SocialWin::draw_social(int a1) {
                     social_draw_icon(number, this, x, rect.bottom - number->height());
                     x += socEngModifierNums_[0].source_width() + 1;
                 }
-                social_draw_icon(&effectIcons_[6 + (effect < 3 ? effect : effect - 1) * 9
+                social_draw_icon(&effectIcons_[(effect < 3 ? effect * 9 : (effect - 1) * 9) + 6
                                                + (value >= 1 ? 2 : 1)],
                                  this, x, y);
                 x += effectIcons_[0].width() + 1;
@@ -2156,7 +2157,7 @@ void SocialWin::draw_mouseover() {
                 strcat(StringTemp, number);
                 social_write_l(StringTemp, &rect);
 
-                social_draw_icon(&effectIcons_[6 + (effect < 3 ? effect : effect - 1) * 9
+                social_draw_icon(&effectIcons_[(effect < 3 ? effect * 9 : (effect - 1) * 9) + 6
                                                + (value >= 0 ? 2 : 1)],
                                  &MainInterfaceGlobal, rect.left + 0x10, rect.top);
 
@@ -2223,13 +2224,11 @@ void SocialWin::draw_info() {
         - PlayersData[factionID_].soc_upheaval_cost_paid;
 
     int x = rect.left;
-    int text_y;
-    int row_y;
+    int y;
     if (WinScreenWidth == 800) {
-        text_y = font_line_advance(font5_) + rect.top;
+        y = font_line_advance(font5_) + rect.top;
     } else {
-        text_y = ((rect.bottom - font_line_advance(font5_) * 2) - rect.top) / 2 + rect.top;
-        row_y = text_y;
+        y = ((rect.bottom - font_line_advance(font5_) * 2) - rect.top) / 2 + rect.top;
     }
 
     StringTemp[0] = 0;
@@ -2239,9 +2238,9 @@ void SocialWin::draw_info() {
     _itoa(NetIncomeGlobal, number, 10);
     strcat(StringTemp, number);
     MainInterfaceGlobal.Buffer::set_text_color(0xa0, -1, 1, 1);
-    social_write_l_at(StringTemp, x, text_y);
+    social_write_l_at(StringTemp, x, y);
 
-    text_y += font_line_advance(font5_);
+    y += font_line_advance(font5_);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(150));
     strcat(StringTemp, SocialWinColonSpaceText);
@@ -2249,13 +2248,13 @@ void SocialWin::draw_info() {
     strcat(StringTemp, number);
     strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, label_get(49));
-    social_write_l_at(StringTemp, x, text_y);
+    social_write_l_at(StringTemp, x, y);
 
     if (WinScreenWidth == 800) {
-        row_y = text_y + font_line_advance(font5_);
+        y += font_line_advance(font5_);
     } else {
         x += (rect.right - rect.left) / 2;
-        row_y = text_y - font_line_advance(font5_);
+        y -= font_line_advance(font5_);
     }
 
     int imbalance = PlayersData[factionID_].se_alloc_psych
@@ -2296,8 +2295,8 @@ void SocialWin::draw_info() {
             strcat(StringTemp, label_get(169));
         }
         MainInterfaceGlobal.Buffer::set_text_color(0xf9, -1, 1, 1);
-        social_write_l_at(StringTemp, x, row_y);
-        row_y += font_line_advance(font5_);
+        social_write_l_at(StringTemp, x, y);
+        y += font_line_advance(font5_);
     }
 
     if (upheaval < 0) {
@@ -2310,7 +2309,7 @@ void SocialWin::draw_info() {
         strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, label_get(351));
         MainInterfaceGlobal.Buffer::set_text_color(0xa0, -1, 1, 1);
-        social_write_l_at(StringTemp, x, row_y);
+        social_write_l_at(StringTemp, x, y);
     } else if (upheaval > 0) {
         MainInterfaceGlobal.Buffer::set_text_color(0xf9, -1, 1, 1);
         StringTemp[0] = 0;
@@ -2320,7 +2319,7 @@ void SocialWin::draw_info() {
         strcat(StringTemp, number);
         strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, label_get(351));
-        social_write_l_at(StringTemp, x, row_y);
+        social_write_l_at(StringTemp, x, y);
     }
 
     MainInterfaceGlobal.soft_update(&tutRect14_);
