@@ -3287,16 +3287,23 @@ int DiploScratchFAD4;
 // Original54DD57 resets this selector;54E3F9/54E6FD store modal faction
 // choices, subsequently used to select Player records and by buy_tech mode13.
 // Initial image word is zero; other producer coverage remains unfinished.
-// RECOVERY_OBJECT: v1 0x0093FA5C ?DiploScratchFA5C@@3HA
-int DiploScratchFA5C;
+// File-static like the base IDs below: threaten's inlined
+// net_double_cross(.., cell, ..) loads it into EAX and copies it to EBX
+// (549FBC), the internal-linkage pattern.
+// RECOVERY_OBJECT: v4 0x0093FA5C ?DiploScratchFA5C@@3HA target _DiploScratchFA5C
+static int DiploScratchFA5C;
 
 // Original54D410 selects these independent DWORD cells as offered/requested
 // base IDs. Initial words are zero; allocation extent and other producers
 // remain unverified, so these are start-only bindings, not a bounded layout claim.
-// RECOVERY_OBJECT: v1 0x0093FA30 ?DiploScratchFA30@@3HA
-int DiploScratchFA30;
-// RECOVERY_OBJECT: v1 0x0093FA7C ?DiploScratchFA7C@@3HA
-int DiploScratchFA7C;
+// File-static: only this TU uses them, and where base_swap inlines
+// net_cede_base(cell, ...) the image loads the cell into EAX and copies it to
+// the callee-saved register (54D6F3, 54D742, 54DA6D, 54DBF8; threaten 54A70C).
+// VC6 emits that copy only for internal-linkage data, not an external int.
+// RECOVERY_OBJECT: v4 0x0093FA30 ?DiploScratchFA30@@3HA target _DiploScratchFA30
+static int DiploScratchFA30;
+// RECOVERY_OBJECT: v4 0x0093FA7C ?DiploScratchFA7C@@3HA target _DiploScratchFA7C
+static int DiploScratchFA7C;
 
 namespace {
 // Every source line is consumed even when its menu item is suppressed.
@@ -4414,7 +4421,7 @@ void __cdecl make_gift(int giver, int receiver) {
 
 }
 
-// ORIGINAL: 0x0054D410 ?base_swap@@YAXHH@Z 0x0054D410-0x0054DC8C
+// ORIGINAL: 0x0054D410 ?base_swap@@YAXHH@Z 0x0054D410-0x0054DC8C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:diplomacy-actions-owner-coverage", "Pinned original54D410-54DC8C; caller54F77E", "historical seed:src/unrecovered/0054d410.cpp", "Independent native review:54D483/54D4FF name pointers;54D4AC/54D52E former owner;54D5C2-54D5E4 facilities; original dialogue keys and energy/tech/base transfer tuples."], "reason": "Recover complete base exchange, energy purchase and all-technology settlement with real Base/PlayerData fields, original lock/transfer order and source-owned selectors. Native Base+5 is former owner, Base+13h is the name start. Preserve catalogue void ABI: its sole caller does not consume a result."}
 // symbol    ?base_swap@@YAHHH@Z
 // TRIED: transcribed full Ghidra structure (verified against raw disasm: value_of_base/parse_says/X_pops/log_say arg order, the parameter-slot reuse where [ebp+0xc] becomes the swap `amount`). Compiles; diverges at #7 (register alloc), close for a 2172-byte function with 10 return sites.
@@ -4492,69 +4499,72 @@ int __cdecl base_swap(int faction_id_res, int faction_id_req) {
                 diplo_mul(PlayersData[faction_id_req].ranking, 2);
             if (GameDataStateStorage.fields_.faction_rankings_[7] == static_cast<uint32_t>(faction_id_res)) amount = diplo_mul(amount, 2);
 
-            if ((DiplomacyProposalMode != 5 && DiplomacyProposalMode != 2)
-                || static_cast<int>(PlayersData[faction_id_res].energy_reserves) < amount) {
-                if (DiplomacyProposalMode == 5) {
-                    parse_num(0, amount);
-                    X_pops("NOBASESWAP", 0x100000,
-                           FactionDiplomacyPortraits[faction_id_req], pop_wait);
-                    return 1;
-                }
-                if (DiplomacyProposalMode != 4 && DiplomacyProposalMode != 2) {
-                    parse_num(0, amount);
-                    X_pops("NOBASESWAP", 0x100000,
-                           FactionDiplomacyPortraits[faction_id_req], pop_wait);
-                    return 1;
-                }
-
-                int transferable_tech_value = 0;
-                int tech_id;
-                for (tech_id = 0; tech_id < MaxTechnologyNum; ++tech_id) {
-                    if (!has_tech(tech_id, faction_id_req) &&
-                        has_tech(tech_id, faction_id_res)) {
-                        transferable_tech_value = diplo_add(transferable_tech_value,
-                                                          tech_val(tech_id, faction_id_req, 1));
+            if (DiplomacyProposalMode == 5 || DiplomacyProposalMode == 2) {
+                if (static_cast<int>(PlayersData[faction_id_res].energy_reserves) < amount) {
+                    if (DiplomacyProposalMode == 5) {
+                        parse_num(0, amount);
+                        X_pops("NOBASESWAP", 0x100000,
+                               FactionDiplomacyPortraits[faction_id_req], pop_wait);
+                        return 1;
                     }
-                }
-                if (!((PlayersData[faction_id_req].tech_ranking / 2 >
-                 PlayersData[faction_id_res].tech_ranking / 2 + 2) ||
-                (diplo_mul(diplo_add(GameDataStateStorage.fields_.turn_current_num_, 7) / 8, transferable_tech_value) < amount))) {
-                    PluralityDefault = 0;
-                    GenderDefault = Players[faction_id_req].is_leader_female;
-                    parse_says(2, Players[faction_id_req].name_leader, -1, -1);
-                    if (X_pops("TECHBASESWAP", 0x100000,
+                } else {
+                    parse_num(0, amount);
+                    if (X_pops("PAYBASESWAP", 0x100000,
                                FactionDiplomacyPortraits[faction_id_req], pop_wait) == 0)
                         return 1;
 
                     diplo_lock(0);
-                    for (tech_id = 0; tech_id < MaxTechnologyNum; ++tech_id) {
-                        if (!has_tech(tech_id, faction_id_req) &&
-                            has_tech(tech_id, faction_id_res)) {
-                            net_tech(faction_id_req, tech_id, faction_id_res, 0);
-                        }
-                    }
+                    net_energy(faction_id_res, -amount, faction_id_req, amount, 0);
                     net_cede_base(DiploScratchFA7C, faction_id_res, 1);
                     diplo_unlock();
                     X_pops("BASEOK", 0x100000,
                            FactionDiplomacyPortraits[faction_id_req], pop_wait);
                     return 0;
                 }
-                X_pops("NOBASESWAP2", 0x100000,
+            }
+            if (DiplomacyProposalMode != 4 && DiplomacyProposalMode != 2) {
+                parse_num(0, amount);
+                X_pops("NOBASESWAP", 0x100000,
                        FactionDiplomacyPortraits[faction_id_req], pop_wait);
                 return 1;
             }
-            parse_num(0, amount);
-            if (X_pops("PAYBASESWAP", 0x100000,
-                       FactionDiplomacyPortraits[faction_id_req], pop_wait) == 0)
-                return 1;
 
-            diplo_lock(0);
-            net_energy(faction_id_res, -amount, faction_id_req, amount, 0);
-            net_cede_base(DiploScratchFA7C, faction_id_res, 1);
-            diplo_unlock();
-            X_pops("BASEOK", 0x100000,
+            int transferable_tech_value = 0;
+            int tech_id;
+            for (tech_id = 0; tech_id < MaxTechnologyNum; ++tech_id) {
+                if (!has_tech(tech_id, faction_id_req) &&
+                    has_tech(tech_id, faction_id_res)) {
+                    transferable_tech_value = diplo_add(transferable_tech_value,
+                                                      tech_val(tech_id, faction_id_req, 1));
+                }
+            }
+            if (!((PlayersData[faction_id_req].tech_ranking / 2 >
+                   PlayersData[faction_id_res].tech_ranking / 2 + 2) ||
+                  (diplo_mul(diplo_add(GameDataStateStorage.fields_.turn_current_num_, 7) / 8,
+                             transferable_tech_value) < amount))) {
+                PluralityDefault = 0;
+                GenderDefault = Players[faction_id_req].is_leader_female;
+                parse_says(2, Players[faction_id_req].name_leader, -1, -1);
+                if (X_pops("TECHBASESWAP", 0x100000,
+                           FactionDiplomacyPortraits[faction_id_req], pop_wait) == 0)
+                    return 1;
+
+                diplo_lock(0);
+                for (tech_id = 0; tech_id < MaxTechnologyNum; ++tech_id) {
+                    if (!has_tech(tech_id, faction_id_req) &&
+                        has_tech(tech_id, faction_id_res)) {
+                        net_tech(faction_id_req, tech_id, faction_id_res, 0);
+                    }
+                }
+                net_cede_base(DiploScratchFA7C, faction_id_res, 1);
+                diplo_unlock();
+                X_pops("BASEOK", 0x100000,
+                       FactionDiplomacyPortraits[faction_id_req], pop_wait);
+                return 0;
+            }
+            X_pops("NOBASESWAP2", 0x100000,
                    FactionDiplomacyPortraits[faction_id_req], pop_wait);
-            return 0;
+            return 1;
         }
     }
     return 1;
@@ -6206,7 +6216,7 @@ int __cdecl propose_treaty(int actor, int other)
 // RECOVERY_OBJECT: v1 0x0093FA34 ?DiploScratchFA34@@3HA
 int DiploScratchFA34;
 
-// ORIGINAL: 0x00549930 ?threaten@@YAXHH@Z 0x00549930-0x0054ACB9
+// ORIGINAL: 0x00549930 ?threaten@@YAXHH@Z 0x00549930-0x0054ACB9 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:diplomacy-actions-owner-coverage", "Pinned549930-54ACB9 decoded span and native literal keys68DC8C-68DD18", "Fresh physical COFF PlayerData20CC:ai_fight3DC,region_total_bases117C,commerce304,tech_ranking35C;549930 directedmood;54A537-54A57F baserefusal;54A5C2 basevaluation", "historical seed:src/unrecovered/00549930.cpp"], "reason": "Recover complete faction threat, provocation, war request, energy and technology extortion, base cession and pact termination flows through typed faction/player/base/map and network owners. Native byte-indexed96DB5C is the declared regional base-count member at117C, not the force-rating array at127C. Preserve original identity and seed findings; coverage-first source is not byte-exact or game acceptance."}
 // symbol    ?threaten@@YAXHH@Z
 // TRIED: full-function transcription (~370 instructions, sim 0.69 vs original at /O2 /Oy-); diverges at instr #4 in the prologue frame shape. Approximated: log_say's 2nd-4th args where the decompiler elided them (derived from the paired message_data call's matching args, confirmed against raw disasm on 2/2 spot checks); the fa98 mood-recompute arithmetic order taken from Ghidra rather than re-derived by hand.
