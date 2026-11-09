@@ -90,7 +90,7 @@ class Texture {
 
  public:
   // homed from 00619d80.cpp
-  int draw_trans2(Buffer *buffer, Vert *verts, int a3);
+  void draw_trans2(Buffer *buffer, Vert *verts, int a3);
 
  public:
   Texture();

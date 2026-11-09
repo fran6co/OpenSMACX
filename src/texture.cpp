@@ -3806,9 +3806,9 @@ void Texture::draw_coast(Buffer *buffer, Vert *vertices, int *zvals, Texture *co
     __asm finit
 }
 
-// ORIGINAL: 0x00619D80 Texture::draw_trans2 0x00619D80-0x0061A23F FILE
+// ORIGINAL: 0x00619D80 Texture::draw_trans2 0x00619D80-0x0061A23F FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Recover the transparent rasterizer's geometry argument as the shared Vert coordinate-pair type.","evidence":["The pinned original publishes the argument into geometry pointer cell 0x9BB4F4, reads signed x/y at offsets0/4 and advances by8. Current typed edge setup consumes that same shared Vert pointer.","The historical decorated name was generated seed metadata, not original debug type evidence. No incoming producer is established; this binds the consumer contract, not original source spelling."]}
-// symbol    ?draw_trans2@Texture@@QAEHPAVBuffer@@PAUVert@@H@Z
+// symbol    ?draw_trans2@Texture@@QAEXPAVBuffer@@PAUVert@@H@Z
 // TRIED: MISMATCH #4 (push vs mov, prologue) on a 1215-byte function whose own Ghidra decompilation admits it lost the x87 stack (float10/extraout_ST0/in_ST2 markers). Transcribed structure: get_data, min/max vertex scan, two setup_edge calls, an outer per-scanline loop with periodic edge-refresh (mirrors the counter/threshold DDA shape already used at 0x005D9FB0's sibling), and a packed dual-accumulator inner blend loop transcribed instruction-by-instruction from the raw asm (0x61A17C-0x61A1F2) rather than Ghidra's CONCAT/CARRY text. The perspective slope (1/dz, du, dv) is modelled as plain persistent `double`s refreshed only when dz>0 - matching WHEN the original recomputes, not its literal FPU choreography. EdgeScan is opaque (setup_edge is itself unrecovered); the 13-field local struct order is inferred from read/write order, not a confirmed layout.
 // working copy - scaffold materialised by --work
 // size      1215 bytes
@@ -3824,10 +3824,9 @@ void Texture::draw_coast(Buffer *buffer, Vert *vertices, int *zvals, Texture *co
 // This supersedes the former local-overlay interpretation above.
 
 // 0x0061A240's body with the borrowed_ guard and an unkeyed copy span. The
-// image never sets EAX before ret, so the original was likely void; the
-// declared int return is kept and returns 0. Declaring it void in texture.h
-// (symbol QAEX) measures BYTE_EXACT; with int only the final XOR EAX differs.
-int Texture::draw_trans2(Buffer *buffer, Vert *vertices, int use_eight_vertices) {
+// image never sets EAX before ret and nothing calls it, so it returns void
+// (symbol QAEX); the former int return measured one extra XOR EAX.
+void Texture::draw_trans2(Buffer *buffer, Vert *vertices, int use_eight_vertices) {
     TextureRasterPixelBase = buffer->get_data();
     // Hand-written assembly: the blitters reset the FPU with FINIT.
     __asm finit
@@ -4051,7 +4050,6 @@ int Texture::draw_trans2(Buffer *buffer, Vert *vertices, int use_eight_vertices)
         buffer->free_data(1);
     }
     __asm finit
-    return 0;
 }
 
 // ORIGINAL: 0x00622DB0 Texture::draw_trans_3 0x00622DB0-0x006233C0 FILE BYTE_EXACT
