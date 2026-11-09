@@ -57,7 +57,7 @@ Loop tools: `recover measure` takes about 5 s. `recover check-matches --unit
 <tu>` or `--since <rev>` measures only the affected TUs (never a full pass;
 `--baseline <report>` lists what moved, `--output <ignored path>` keeps the
 report). `recover permute <addr> --jobs N` searches body spellings without a
-task. Framework changes that speed up this loop are allowed alongside measured
+task; `--candidates <deck.json>` ranks your own spellings of the body instead. Framework changes that speed up this loop are allowed alongside measured
 matching blockers.
 
 Unchanged: faithful bug-for-bug recovery; no `_emit`, copied machine code, or
