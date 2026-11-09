@@ -1,7 +1,8 @@
 """Complete bounded CV5/ST procedure blocks, not linked correspondence.
 
 Supported records are PROCSYM32 (S_[GL]PROC32_ST), REGSYM
-(S_REGISTER_ST), BPRELSYM32 (S_BPREL32_ST), and S_END, from Microsoft's
+(S_REGISTER_ST), BPRELSYM32 (S_BPREL32_ST), UDTSYM (S_UDT_ST, a
+function-scope typedef/class name with no address), and S_END, from Microsoft's
 https://github.com/microsoft/microsoft-pdb/blob/master/include/cvinfo.h .
 COFF associated blocks have no stream signature or record padding; the supported
 PDB form has zero-padded four-byte records. Type indices and scope links remain
@@ -19,6 +20,7 @@ from .codeview import Cursor
 
 S_END = 0x0006
 S_REGISTER_ST = 0x1001
+S_UDT_ST = 0x1003
 S_BPREL32_ST = 0x1006
 S_LPROC32_ST = 0x100A
 S_GPROC32_ST = 0x100B
@@ -45,6 +47,14 @@ class Local:
     name: str
     register: int | None = None
     frame_offset: int | None = None
+
+
+@dataclass(frozen=True)
+class LocalType:
+    """A procedure-scope S_UDT_ST name; it owns no storage or address."""
+
+    type_index: int
+    name: str
 
 
 @dataclass(frozen=True)
@@ -75,6 +85,7 @@ class Procedure:
     locals: tuple[Local, ...]
     records: tuple[Record, ...]
     addresses: tuple[LocalAddress, ...] = ()
+    types: tuple[LocalType, ...] = ()
 
     @property
     def end_record_offset(self):
@@ -107,7 +118,7 @@ def decode_procedure(data: bytes, *, alignment=1, base_offset=0, local_addresses
     if (type(base_offset) is not int or not 0 <= base_offset <= 0xFFFFFFFF
             or base_offset + len(data) > 0x100000000 or base_offset % alignment):
         raise ValueError("invalid CodeView procedure stream offset")
-    stream, records, locals_, addresses = Cursor(data), [], [], []
+    stream, records, locals_, addresses, types = Cursor(data), [], [], [], []
     fields = None
     ended = False
     while stream.at < len(data):
@@ -137,6 +148,11 @@ def decode_procedure(data: bytes, *, alignment=1, base_offset=0, local_addresses
         elif kind == S_BPREL32_ST:
             offset, index, name = record.number("<i"), record.number("<I"), record.name()
             locals_.append(Local(kind, index, name, frame_offset=offset))
+        elif kind == S_UDT_ST:
+            index, name = record.number("<I"), record.name()
+            if not index or not name:
+                raise ValueError("CodeView local UDT lacks a type or name")
+            types.append(LocalType(index, name))
         elif local_addresses and kind == S_LDATA32_ST:
             index, offset, section = record.number("<I"), record.number("<I"), record.number("<H")
             addresses.append(LocalAddress(kind, base_offset + at, offset, section,
@@ -162,4 +178,5 @@ def decode_procedure(data: bytes, *, alignment=1, base_offset=0, local_addresses
             break
     if not ended:
         raise ValueError("CodeView procedure lacks a terminal S_END")
-    return Procedure(**fields, locals=tuple(locals_), records=tuple(records), addresses=tuple(addresses))
+    return Procedure(**fields, locals=tuple(locals_), records=tuple(records), addresses=tuple(addresses),
+                     types=tuple(types))

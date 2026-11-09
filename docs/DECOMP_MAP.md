@@ -473,8 +473,14 @@ variable. Keep ordinary inline C++ literals, not measurement-only global variabl
 
 Native verification compares fresh, separately bounded emitted storage and then
 uses the address only for references in its owning TU. Current i386 support requires
-an independent literal COMDAT with its own complete extent; ordinary/static or
-ambiguous storage remains unknown. Embedded-NUL and wide data use the full section,
+an independent literal COMDAT with its own complete extent, or an unpooled VC6
+`$SGn` string label in ordinary non-COMDAT `.data`/`.bss`. A `$SG` label's extent
+runs to the next label (or the section end); it must hold no relocation or alias,
+the declared span must end at the terminator, and only zero alignment padding may
+follow it. `$SG` numbers are positional within the TU: adding or removing an earlier
+literal renumbers them, and a stale binding then names a missing or different label
+and refuses or fails rather than passing. Other ordinary/static or ambiguous
+storage remains unknown. Embedded-NUL and wide data use the full section,
 not a first-terminator guess. Bindings do not prove linker selection or lifetime.
 Use the pure `literal_writer.write_literal_bytes` for reviewed additions against
 the complete parsed source snapshot. It preserves existing source bytes and

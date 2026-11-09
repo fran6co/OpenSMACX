@@ -1493,40 +1493,43 @@ def compare_subject(record: DecompilationState, exe: Path | str,
             bound = bind_eh_regions(compiled.object_bytes, compiled.emitted_symbol,
                                     image, record.image_spans)
             ownership = bound[0].ownership
+            # A valid but different EH topology or action is a MISMATCH. The
+            # raw region comparison still runs, so the row keeps its byte
+            # similarity; it can never become BYTE_EXACT.
+            structural_diagnostic = None
             if ownership.original_predecessors != ownership.compiled_predecessors:
-                return AsmComparison(
-                    verdict=Tier.MISMATCH,
-                    flags=compiled.flags,
-                    diagnostic=(
-                        "valid EH unwind predecessor topology differs: "
-                        f"original={ownership.original_predecessors!r}, "
-                        f"compiled={ownership.compiled_predecessors!r}"),
-                )
-            if len(ownership.original_actions) != len(ownership.compiled_actions):
-                return AsmComparison(
-                    verdict=Tier.MISMATCH,
-                    flags=compiled.flags,
-                    diagnostic="valid EH cleanup action counts differ",
-                )
+                structural_diagnostic = (
+                    "valid EH unwind predecessor topology differs: "
+                    f"original={ownership.original_predecessors!r}, "
+                    f"compiled={ownership.compiled_predecessors!r}")
+            elif ownership.original_null_states != ownership.compiled_null_states:
+                structural_diagnostic = (
+                    "valid EH null-cleanup states differ: "
+                    f"original={ownership.original_null_states!r}, "
+                    f"compiled={ownership.compiled_null_states!r}")
+            elif len(ownership.original_actions) != len(ownership.compiled_actions):
+                structural_diagnostic = "valid EH cleanup action counts differ"
             frame_semantic_diagnostic = None
-            for index, (original_action, compiled_action) in enumerate(zip(
-                    ownership.original_actions, ownership.compiled_actions)):
-                difference = eh_action_semantic_difference(
-                    original_action, compiled_action, index)
-                if difference is None:
-                    continue
-                category, diagnostic = difference
-                if category == "frame-transfer":
-                    frame_semantic_diagnostic = diagnostic
-                else:
-                    return AsmComparison(
-                        verdict=Tier.MISMATCH,
-                        flags=compiled.flags,
-                        diagnostic=diagnostic,
-                    )
+            if structural_diagnostic is None:
+                for index, (original_action, compiled_action) in enumerate(zip(
+                        ownership.original_actions, ownership.compiled_actions)):
+                    difference = eh_action_semantic_difference(
+                        original_action, compiled_action, index)
+                    if difference is None:
+                        continue
+                    category, diagnostic = difference
+                    if category == "frame-transfer":
+                        frame_semantic_diagnostic = diagnostic
+                    else:
+                        structural_diagnostic = diagnostic
+                        break
             pairs = eh_region_listings(compiled, bound, image)
             comparison = compare_regions(
                 tuple(pairs), alignments=tuple(region.alignment for region in bound))
+            if structural_diagnostic is not None:
+                return replace(comparison, verdict=Tier.MISMATCH, flags=compiled.flags,
+                               diagnostic=(structural_diagnostic + "; raw region comparison: "
+                                           + comparison.diagnostic))
             if comparison.verdict is Tier.BYTE_EXACT:
                 wrong = [item for original, candidate in pairs
                          for item in reference_mismatches(original, candidate, targets, record.path,

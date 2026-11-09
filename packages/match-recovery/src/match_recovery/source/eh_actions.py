@@ -10,6 +10,12 @@ class EHActionKind(StrEnum):
     # The frame slot's source-level meaning is not encoded by this action kind.
     FRAME_SLOT_CALL_CLEANUP = "frame_slot_call_cleanup"
     ARRAY_DESTRUCTOR = "array_destructor"
+    # ``lea eax,[ebp+d]``: the array is itself a frame local, not a pointer
+    # loaded from a frame slot.
+    FRAME_ARRAY_DESTRUCTOR = "frame_array_destructor"
+    # A subobject reached through a possibly-null pointer conversion: VC6
+    # materializes ``p ? p - adjust : 0`` in a frame temporary first.
+    NULL_CHECKED_FRAME_TRANSFER = "null_checked_frame_transfer"
 
 
 class EHTransferRole(StrEnum):
@@ -41,6 +47,15 @@ class EHFrameGuardFact:
 
 
 @dataclass(frozen=True)
+class EHNullConversionFact:
+    """Constants of one null-checked pointer conversion before a cleanup."""
+
+    null_test_adjustment: int
+    conversion_adjustment: int
+    temporary_displacement: int
+
+
+@dataclass(frozen=True)
 class EHActionFact:
     """Decoded action boundary and the operands needed for physical binding."""
 
@@ -54,6 +69,7 @@ class EHActionFact:
     base_adjustment: int | None = None
     scratch_register: str | None = None
     guard: EHFrameGuardFact | None = None
+    conversion: EHNullConversionFact | None = None
 
 
 def resolve_transfer(action: EHActionFact, *, role: EHTransferRole,

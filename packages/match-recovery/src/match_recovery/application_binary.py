@@ -832,9 +832,13 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
     # need the configured debug types (VC6 emits no .debug$T without /Z7),
     # so such owners get the layout suffix. Units hosting a selected,
     # fragment or shared body keep exactly their measured flags.
+    # A unit merely declaring RECOVERY_SHARED copies is not a body host for
+    # this selection; it becomes one only when the evidence closure below
+    # actually checks one of its shared bodies (see the recompile loop).
     body_units = ({item.unit for item in bindings if item.origin.entity_id in selected}
                   | {item.unit for item in fragment_bindings}
-                  | {item.object_unit for item in shared_bindings if item.object_unit is not None})
+                  | {item.object_unit for item in shared_bindings
+                     if item.object_unit is not None and item.evidence.entity_id in selected})
 
     def effective(unit, requested):
         flags = _effective(unit, requested)
@@ -888,39 +892,58 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
                                        shared_bindings, literal_bindings,
                                        unit_extensions=settings.unit_extensions,
                                        context_targets=externals)
-            while pending := evidence.units - objects.keys() - errors.keys():
-                dependency_units.update(pending)
-                for unit in sorted(pending):
-                    try:
-                        if Path(unit).suffix not in settings.unit_extensions:
-                            raise ValueError("selected evidence owner is not a configured translation unit")
-                        unit_flags = effective(unit, flags)
-                        command = commands.get(unit)
-                        if command is None:
-                            command = tuple(command_for(root / unit))
-                            commands[unit] = command
-                        effective_by_unit[unit] = list(unit_flags)
-                        observed_grid.setdefault(unit, [])
-                        if list(unit_flags) not in observed_grid[unit]:
-                            observed_grid[unit].append(list(unit_flags))
-                        cache_key = (unit, command, unit_flags)
-                        if cache_key not in object_cache:
-                            attempts += 1
-                            if compiler is None:
-                                compiler = Compiler(root, profile=settings.compiler_profile)
-                            try:
-                                object_cache[cache_key] = (Coff(compiler(root / unit, command, unit_flags)), None)
-                            except (OSError, ValueError) as error:
-                                object_cache[cache_key] = (None, str(error))
-                        obj, error = object_cache[cache_key]
-                        if error is not None:
-                            errors[unit] = error
-                            record_graph_trial(unit, unit_flags, flags, "failed")
-                        else:
-                            objects[unit] = obj
-                            record_graph_trial(unit, unit_flags, flags, "compiled")
-                    except (OSError, ValueError) as error:
-                        errors[unit] = str(error)
+            while True:
+                while pending := evidence.units - objects.keys() - errors.keys():
+                    dependency_units.update(pending)
+                    for unit in sorted(pending):
+                        try:
+                            if Path(unit).suffix not in settings.unit_extensions:
+                                raise ValueError("selected evidence owner is not a configured translation unit")
+                            unit_flags = effective(unit, flags)
+                            command = commands.get(unit)
+                            if command is None:
+                                command = tuple(command_for(root / unit))
+                                commands[unit] = command
+                            effective_by_unit[unit] = list(unit_flags)
+                            observed_grid.setdefault(unit, [])
+                            if list(unit_flags) not in observed_grid[unit]:
+                                observed_grid[unit].append(list(unit_flags))
+                            cache_key = (unit, command, unit_flags)
+                            if cache_key not in object_cache:
+                                attempts += 1
+                                if compiler is None:
+                                    compiler = Compiler(root, profile=settings.compiler_profile)
+                                try:
+                                    object_cache[cache_key] = (Coff(compiler(root / unit, command, unit_flags)), None)
+                                except (OSError, ValueError) as error:
+                                    object_cache[cache_key] = (None, str(error))
+                            obj, error = object_cache[cache_key]
+                            if error is not None:
+                                errors[unit] = error
+                                record_graph_trial(unit, unit_flags, flags, "failed")
+                            else:
+                                objects[unit] = obj
+                                record_graph_trial(unit, unit_flags, flags, "compiled")
+                        except (OSError, ValueError) as error:
+                            errors[unit] = str(error)
+                    evidence = select_evidence(bindings, selected, objects, object_bindings,
+                                               generated_bindings, import_bindings,
+                                               shared_bindings, literal_bindings,
+                                               unit_extensions=settings.unit_extensions,
+                                               context_targets=externals)
+                # A shared body the closure now checks must come from its
+                # host's measured flags, never an evidence-only /Z7 compile.
+                hosts = {item.object_unit for item in evidence.shared
+                         if item.object_unit is not None and item.object_unit not in body_units
+                         and (item.object_unit in objects or item.object_unit in errors)
+                         and effective_by_unit.get(item.object_unit)
+                         != list(_effective(item.object_unit, flags))}
+                if not hosts:
+                    break
+                body_units.update(hosts)
+                for unit in hosts:
+                    objects.pop(unit, None)
+                    errors.pop(unit, None)
                 evidence = select_evidence(bindings, selected, objects, object_bindings,
                                            generated_bindings, import_bindings,
                                            shared_bindings, literal_bindings,

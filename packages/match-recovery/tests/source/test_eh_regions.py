@@ -1066,16 +1066,24 @@ def test_rejects_original_direct_relative_edge_into_cold_child():
 
 
 def test_rejects_original_cleanup_count_above_explicit_resource_cap():
-    with pytest.raises(ValueError, match="action cap"):
-        _linear_fixture((8,) * 65)
+    from match_recovery.source import eh_regions
+    count = eh_regions._MAX_CLEANUP_ACTIONS + 1
+    with pytest.raises(ValueError, match="resource cap"):
+        eh_regions._unwind_map(bytes(8 * count), count, base=0, first_action=0)
 
 
 def test_rejects_compiled_cleanup_count_above_explicit_resource_cap():
+    from match_recovery.source import eh_regions
+    action = b"\x8b\x4d\xf0\xe9\0\0\0\0"
+    stub = b"\xb8\0\0\0\0\xe9\0\0\0\0"
+    eh_regions._cold_layout(action * eh_regions._MAX_CLEANUP_ACTIONS + stub)
     with pytest.raises(ValueError, match="action cap"):
-        _linear_fixture((8,), object_widths=(8,) * 65)
+        eh_regions._cold_layout(action * (eh_regions._MAX_CLEANUP_ACTIONS + 1) + stub)
 
 
-@pytest.mark.parametrize("count", [16, 64])
+# VC6 emits one state per constructed object: base_production has 151 and
+# upgrade 116, so the resource cap must not be an EH-shape limit.
+@pytest.mark.parametrize("count", [16, 64, 90])
 def test_accepts_supported_linear_action_count(count):
     root, cold = _linear_fixture((8,) * count)
     assert len(root.ownership.original_cleanups) == count
@@ -1731,7 +1739,7 @@ def test_original_action_inventory_is_independent_of_compiled_action_inventory()
     "wrong_state_count", "missing_second_action_relocation",
     "extra_second_action_relocation", "second_action_shape", "second_action_jump",
     "original_second_map_wrong_state", "original_second_map_wrong_action",
-    "original_second_map_duplicate_action", "original_wrong_state_count",
+    "original_second_map_duplicate_action",
     "original_second_map_gap",
     "original_second_action_shape", "original_second_action_jump",
     "local_target_nonzero_addend", "local_target_wrong_name", "local_target_not_function",
@@ -1750,6 +1758,17 @@ def test_refuses_damaged_two_action_ownership_graph(damage):
         _bind(spans=TWO_SPANS, object_cold_size=32,
               object_damage=damage if not damage.startswith("original_") else None,
               image_damage=damage if damage.startswith("original_") else None)
+
+
+def test_original_extra_zero_state_is_a_null_cleanup_not_a_refusal():
+    # A third FuncInfo state whose map row is (0, 0): VC6's null cleanup with
+    # predecessor 0. It binds, and the comparison sees the topology change.
+    root, _cold = _bind(spans=TWO_SPANS, object_cold_size=32,
+                        image_damage="original_wrong_state_count")
+    ownership = root.ownership
+    assert ownership.original_null_states == (2,)
+    assert ownership.compiled_null_states == ()
+    assert ownership.original_predecessors != ownership.compiled_predecessors
 
 
 @pytest.mark.parametrize("damage", ["malformed_handler_prefix"])

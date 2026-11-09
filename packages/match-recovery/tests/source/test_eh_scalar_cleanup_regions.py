@@ -441,7 +441,7 @@ def test_bound_object_resolves_only_the_proved_local_funcinfo_reference():
     ("wrong_info_field", "COFF FuncInfo is not an associated root-owned data section"),
     ("handler_info_addend", "COFF handler FuncInfo pointer has a nonzero addend"),
     ("bad_predecessor", "COFF unwind predecessor is not a sentinel or earlier state"),
-    ("wrong_count", "COFF FuncInfo does not have a supported bounded cleanup layout"),
+    ("wrong_count", "COFF FuncInfo data section has unsupported bounds or permissions"),
     ("call_addend", "COFF frame-local cleanup lacks one unambiguous external function relocation"),
 ])
 def test_unowned_or_changed_eh_funcinfo_is_not_promoted(damage, expected_reason):

@@ -16,19 +16,79 @@ from .model import Result
 
 MAX_LITERAL_BYTES = 1024 * 1024
 _VC6_REAL8 = re.compile(r"__real@8@[0-9a-f]{20}", re.ASCII)
+_VC6_STATIC_STRING = re.compile(r"\$SG[0-9]+", re.ASCII)
+_MAX_STATIC_ALIGNMENT = 8  # VC6 default /Zp8 natural alignment limit
 
 
-def literal_storage(obj, name):
+def _static_string_storage(obj, symbol, declared_size):
+    """Observe one unpooled VC6 ``$SG`` string inside its TU's ``.data``.
+
+    Without ``/Gf`` VC6 emits each string literal as a static ``$SGn`` label
+    in the ordinary multi-entry data section (an empty one in ``.bss``). The label value is the start.
+    Its extent ends at the next label in that section (or the section end).
+    Only an all-zero alignment tail may follow the declared extent, so the
+    declared bound covers every content byte. The tail must end exactly at
+    the next start rounded to a power-of-two alignment. A relocation inside
+    the extent, an alias at the same start or a COMDAT section refuses.
+    """
+    section = obj.sections[symbol.section - 1]
+    storage = section.flags & (0x40 | 0x80)
+    if (section.flags & (0x20 | 0x20000000 | 0x1000) or not section.flags & 0x40000000
+            or section.name.startswith(".tls") or storage not in (0x40, 0x80)
+            or section.name.split("$")[0] != (".data", ".bss")[storage == 0x80]):
+        raise ValueError("static string literal requires ordinary non-COMDAT .data/.bss storage")
+    size = obj.section_sizes[symbol.section - 1]
+    # An empty "" literal is emitted as one zero-filled .bss byte.
+    data = bytes(size) if storage == 0x80 and not section.data else section.data
+    if len(data) != size:
+        raise ValueError("unsupported static string literal raw/zero-fill storage extent")
+    starts = [item.value for item in obj.symbols.values()
+              if item.section == symbol.section and item.index != symbol.index
+              and not (item.name == section.name and item.storage == 3 and item.value == 0)]
+    if symbol.value in starts:
+        raise ValueError("static string literal shares its start with another definition or label")
+    following = [value for value in starts if value > symbol.value]
+    end = min(following) if following else size
+    start = symbol.value
+    if (type(declared_size) is not int or not 0 < declared_size <= end - start
+            or end - start > MAX_LITERAL_BYTES):
+        raise ValueError("declared static string literal extent exceeds its emitted label extent")
+    stored = start + declared_size
+    if any(offset < end and start < offset + 4 for offset, _target, _kind in section.relocations):
+        raise ValueError("static string literal storage contains relocations")
+    contents, tail = data[start:stored], data[stored:end]
+    if contents[-1:] != b"\0" or any(tail):
+        raise ValueError("static string literal extent must include its terminator and leave only zero padding")
+    if tail:
+        alignment = 1
+        while alignment < _MAX_STATIC_ALIGNMENT and end % (alignment * 2) == 0:
+            alignment *= 2
+        if -(-stored // alignment) * alignment != end:
+            raise ValueError("static string literal tail is not alignment padding before the next label")
+    return contents, {"symbol": symbol.name, "section": symbol.section, "offset": start,
+                      "size": declared_size, "label_extent": end - start, "flags": section.flags,
+                      "basis": "static_string_label"}
+
+
+def literal_storage(obj, name, declared_size=None):
     """Observe a whole independent MSVC string or VC6 double literal.
 
     Names select the declared candidate; they do not establish original
-    identity. Static/ordinary/associative or multi-entry storage needs another
-    extent witness and remains unsupported, never truncated to a C string.
+    identity. A static ``$SGn`` string label in multi-entry data is bounded
+    by its declared size, checked against the label extent (see
+    ``_static_string_storage``). Other static/ordinary/associative storage
+    needs another extent witness and remains unsupported, never truncated to
+    a C string.
     """
     definitions = [symbol for symbol in obj.symbols.values() if symbol.name == name]
     if len(definitions) != 1:
         raise ValueError("literal requires one unambiguous same-TU symbol")
     symbol = definitions[0]
+    if _VC6_STATIC_STRING.fullmatch(name):
+        if (symbol.section <= 0 or symbol.storage != 3 or symbol.type
+                or obj.auxiliary.get(symbol.index)):
+            raise ValueError("unsupported static string literal definition")
+        return _static_string_storage(obj, symbol, declared_size)
     numeric = _VC6_REAL8.fullmatch(name) is not None
     if (not (name.startswith("??_C@") or numeric)
             or symbol.section <= 0 or symbol.storage != 2
@@ -80,7 +140,8 @@ def check_literals(bindings, objects, image, *, errors=None):
         try:
             if binding.unit not in objects:
                 raise ValueError((errors or {}).get(binding.unit, "literal owner was not compiled"))
-            contents, storage = literal_storage(objects[binding.unit], binding.symbol)
+            contents, storage = literal_storage(objects[binding.unit], binding.symbol,
+                                                binding.span.end - binding.span.start)
             row.update(definition=Result.PASS, compiler_storage=storage)
             numeric = _VC6_REAL8.fullmatch(binding.symbol) is not None
             sections = [flags for (span, _, _), flags in zip(image.sections, image.section_flags)

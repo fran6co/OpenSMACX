@@ -360,3 +360,93 @@ def test_unproved_merged_literal_never_borrows_the_object_target():
     row, = check_objects([function], objects, image, external_targets={NAME: 0x402003},
                          literal_targets=unresolved, merged_literal_names=(NAME,))
     assert row["result"] != "pass" and row["references"] != "pass", row
+
+
+def static_string_object(data=b"xy\0\0rb\0\0", labels=(0, 4), target=1, *, section=b".data",
+                         flags=0xC0300040, data_relocation=None, raw=True):
+    """Unpooled VC6 TU: ``$SGn`` static labels inside one multi-entry data section."""
+    code = b"\xa1" + bytes(4) + b"\x90" * 11
+    base = 100
+    stored = data if raw else b""
+    reloc = struct.pack("<IIH", 1, 3 + target, 6)
+    data_reloc = struct.pack("<IIH", *data_relocation, 6) if data_relocation else b""
+    payload = code + stored + reloc + data_reloc
+    symbols = (b"_f".ljust(8, b"\0") + struct.pack("<IhHBB", 0, 1, 0x20, 2, 0)
+               + section.ljust(8, b"\0") + struct.pack("<IhHBB", 0, 2, 0, 3, 1)
+               + struct.pack("<IHHIHB3s", len(data), int(bool(data_relocation)), 0, 0, 0, 0, bytes(3)))
+    for number, value in enumerate(labels, 1):
+        symbols += f"$SG{number}".encode().ljust(8, b"\0") + struct.pack("<IhHBB", value, 2, 0, 3, 0)
+    header = struct.pack("<HHIIIHH", 0x14C, 2, 0, base + len(payload), 3 + len(labels), 0, 0)
+    text = b".text\0\0\0" + struct.pack("<IIIIIIHHI", 0, 0, 16, base,
+        base + 16 + len(stored), 0, 1, 0, 0x60501020)
+    section_header = section.ljust(8, b"\0") + struct.pack("<IIIIIIHHI", 0, 0, len(data),
+        base + 16 if raw else 0, base + 26 + len(stored) if data_relocation else 0,
+        0, int(bool(data_relocation)), 0, flags)
+    return header + text + section_header + payload + symbols + struct.pack("<I", 4)
+
+
+def static_fixture(size=3, symbol="$SG2", **options):
+    original = b"\xa1" + struct.pack("<I", 0x402000) + b"\x90" * 11
+    raw = image_with_literal(original, b"rb\0")  # .rdata "rb\0\0X\0": padded like the TU.
+    pin = hashlib.sha256(raw).hexdigest()
+    origin = Origin(pin, "pe:va", 0x401000)
+    literal = LiteralBinding(Origin(pin, "pe:va", 0x402000), Span(0x402000, 0x402000 + size),
+                             symbol, "code/a.cc", 1, origin)
+    function = FunctionBinding(origin, (Span(0x401000, 0x401010),), "_f", literal.unit)
+    return literal, function, {literal.unit: Coff(static_string_object(**options))}, PeImage(raw, pin)
+
+
+@pytest.mark.parametrize("size", [3, 4])
+def test_unpooled_static_string_label_resolves_within_multi_entry_data(size):
+    literal, function, objects, image = static_fixture(size)
+    targets, rows = check_literals([literal], objects, image)
+    assert rows[0]["definition"] == rows[0]["content"] == "pass", rows
+    assert rows[0]["compiler_storage"]["basis"] == "static_string_label"
+    assert rows[0]["compiler_storage"]["offset"] == 4
+    assert targets == {(literal.unit, "$SG2"): BoundedTarget(literal.span)}
+    row, = check_objects([function], objects, image, literal_targets=targets)
+    assert row["result"] == "pass", row
+
+
+def test_empty_static_string_label_in_bss_is_zero_filled():
+    literal, _, objects, _ = static_fixture()
+    obj = Coff(static_string_object(bytes(1), labels=(0,), target=0, section=b".bss",
+                                    flags=0xC0300080, raw=False))
+    contents, storage = literal_storage(obj, "$SG1", 1)
+    assert contents == b"\0" and storage["basis"] == "static_string_label"
+
+
+@pytest.mark.parametrize("damage", ["truncated", "overlong", "unterminated", "wide_tail", "alias",
+                                    "relocated", "other_section", "executable", "external", "unbound"])
+def test_bad_static_string_label_never_supplies_a_target(damage):
+    size, symbol, options = 3, "$SG2", {}
+    if damage == "truncated":
+        size = 2  # Declared bound would hide the terminator.
+    elif damage == "overlong":
+        options = {"data": b"xy\0\0rb\0\0", "labels": (0, 4, 7)}
+        size = 4  # Crosses the next label.
+    elif damage == "unterminated":
+        options = {"data": b"xy\0\0rbcd", "labels": (0, 4)}
+        size = 4
+    elif damage == "wide_tail":
+        options = {"data": b"xy\0\0rb\0\0" + bytes(8) + b"q\0\0\0", "labels": (0, 4, 16)}
+    elif damage == "alias":
+        options = {"labels": (0, 4, 4)}
+    elif damage == "relocated":
+        options = {"data_relocation": (4, 0)}
+    elif damage == "other_section":
+        options = {"section": b".CRT$XCU"}
+    elif damage == "executable":
+        options = {"flags": 0x60300020}
+    elif damage == "unbound":
+        symbol = "$SG7"
+    literal, function, objects, image = static_fixture(size, symbol, **options)
+    if damage == "external":
+        raw = bytearray(static_string_object())
+        raw[-4 - 18 + 16] = 2  # $SG2 storage class: external, not a static label.
+        objects[literal.unit] = Coff(bytes(raw))
+    targets, rows = check_literals([literal], objects, image)
+    assert targets == {(literal.unit, symbol): None}, rows
+    assert rows[0]["content"] != "pass"
+    row, = check_objects([function], objects, image, literal_targets=targets)
+    assert row["result"] != "pass", row

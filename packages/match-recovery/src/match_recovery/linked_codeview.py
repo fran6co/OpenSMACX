@@ -228,9 +228,13 @@ def procedure_correspondence(source, target, source_types, target_types):
                             for local in value.locals]
     if locals_(source) != locals_(target):
         raise ValueError("CodeView linked local metadata differs from its source")
+    if [item.name for item in source.types] != [item.name for item in target.types]:
+        raise ValueError("CodeView linked local type names differ from their source")
     types = compare_type_roots(source_types,
-        (source.type_index, *(item.type_index for item in source.locals)), target_types,
-        (target.type_index, *(item.type_index for item in target.locals)))
+        (source.type_index, *(item.type_index for item in source.locals),
+         *(item.type_index for item in source.types)), target_types,
+        (target.type_index, *(item.type_index for item in target.locals),
+         *(item.type_index for item in target.types)))
     return {"format": "codeview5_procedure", **{field: getattr(source, field) for field in fields},
             "locals": locals_(source), "types": types}
 

@@ -6,7 +6,8 @@ import struct
 import pytest
 
 from match_recovery.codeview_procedures import (
-    decode_procedure, S_END, S_REGISTER_ST, S_BPREL32_ST, S_LPROC32_ST, S_GPROC32_ST,
+    decode_procedure, LocalType, S_END, S_REGISTER_ST, S_BPREL32_ST, S_LPROC32_ST, S_GPROC32_ST,
+    S_UDT_ST,
 )
 
 
@@ -44,7 +45,7 @@ def test_complete_unpadded_coff_procedure_preserves_every_field_and_local():
         "offset": 0, "section": 0, "flags": 1, "name": "Owner::add",
         "locals": ({"kind": S_REGISTER_ST, "type_index": 0x1001, "name": "this", "register": 18, "frame_offset": None},
                    {"kind": S_BPREL32_ST, "type_index": 0x74, "name": "input", "register": None, "frame_offset": 8}),
-        "addresses": (),
+        "addresses": (), "types": (),
         "records": ({"offset": 0, "size": 50, "kind": S_GPROC32_ST, "padding": b""},
                     {"offset": 50, "size": 15, "kind": S_REGISTER_ST, "padding": b""},
                     {"offset": 65, "size": 18, "kind": S_BPREL32_ST, "padding": b""},
@@ -97,6 +98,17 @@ def test_unknown_or_nested_records_are_not_skipped(kind):
     raw = procedure(locals_=[(kind, b"opaque")])
     with pytest.raises(ValueError, match="unsupported"):
         decode_procedure(raw)
+
+
+def test_function_scope_udt_is_a_typed_name_not_a_local():
+    # Win::window_proc 0x5F0650 declares a function-scope type (S_UDT_ST).
+    udt = (S_UDT_ST, struct.pack("<I", 0x1234) + name("Local"))
+    result = decode_procedure(procedure(locals_=[udt]))
+    assert result.types == (LocalType(0x1234, "Local"),) and result.locals == ()
+    for damaged in (struct.pack("<I", 0) + name("Local"), struct.pack("<I", 0x1234) + name(""),
+                    struct.pack("<I", 0x1234) + name("Local") + b"x"):
+        with pytest.raises(ValueError):
+            decode_procedure(procedure(locals_=[(S_UDT_ST, damaged)]))
 
 
 @pytest.mark.parametrize("kind", [S_END, S_REGISTER_ST, S_BPREL32_ST, 0x9])

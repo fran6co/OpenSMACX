@@ -166,7 +166,9 @@ def test_valid_but_different_predecessor_topology_is_not_byte_exact(tmp_path):
     result = compare_subject(row, image, candidate)
 
     assert result.verdict == Tier.MISMATCH
-    assert result.compared_bytes == 0
+    # Identical bytes still cannot pass a different topology; the raw region
+    # comparison is kept only so the row reports its similarity.
+    assert result.compared_bytes > 0 and result.mnemonic_similarity == 1.0
     assert "valid EH unwind predecessor topology differs" in result.diagnostic
     assert repr(original_predecessors) in result.diagnostic
     assert repr(compiled_predecessors) in result.diagnostic

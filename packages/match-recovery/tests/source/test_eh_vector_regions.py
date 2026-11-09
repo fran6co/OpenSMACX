@@ -27,7 +27,7 @@ RUNTIME_VA = BASE + 0x1F10
 
 def _array_action(*, count=3, stride=12, frame_disp=-16, base_adjust=0x234,
                   count_width=1, stride_width=1, frame_width=1, add_width=4,
-                  add_form="accumulator",
+                  add_form="accumulator", frame_form="load",
                   callback=CALLBACK_VA, helper=HELPER_VA, damage=None):
     """Encode the bounded push/push/push/load/add/push/call/ret action."""
     code = bytearray(b"\x68" + struct.pack("<I", callback))
@@ -41,12 +41,13 @@ def _array_action(*, count=3, stride=12, frame_disp=-16, base_adjust=0x234,
             code.extend(b"\x68" + struct.pack("<I", value))
         else:
             raise ValueError("push immediate width must be 1 or 4")
+    opcode = {"load": 0x8B, "lea": 0x8D}[frame_form]  # mov eax,[ebp+d] / lea eax,[ebp+d]
     if frame_width == 1:
         if not -128 <= frame_disp <= 127:
             raise ValueError("disp8 fixture is out of range")
-        code.extend((0x8B, 0x45, frame_disp & 0xFF))
+        code.extend((opcode, 0x45, frame_disp & 0xFF))
     elif frame_width == 4:
-        code.extend(b"\x8B\x85" + struct.pack("<i", frame_disp))
+        code.extend(bytes((opcode, 0x85)) + struct.pack("<i", frame_disp))
     else:
         raise ValueError("frame displacement width must be 1 or 4")
     if add_form == "none":
@@ -102,6 +103,17 @@ def _tail_action(width=8, *, target=TAIL_VA, damage=None):
     elif width == 14:
         code = bytearray(b"\x8B\x4D\xF0\x81\xC1\x4C\x14\0\0\xE9\0\0\0\0")
         operand = 10
+    elif width == "null_checked":
+        # base_production 0x65CDD9: p ? p - 0x144 : 0 in [ebp-0x5434], +0x18, jmp dtor.
+        code = bytearray.fromhex(
+            "8b45f0 2d88010000 85c0 7411 8b4df0 81e944010000 898dccabffff eb0a"
+            "c785ccabffff00000000 8b8dccabffff 83c118 e900000000")
+        operand = len(code) - 4
+    elif width == "null_checked_bad_join":
+        code = bytearray.fromhex(
+            "8b45f0 2d88010000 85c0 7411 8b4df0 81e944010000 898dccabffff eb09"
+            "c785ccabffff00000000 8b8dccabffff 83c118 e900000000")
+        operand = len(code) - 4
     else:
         raise ValueError("tail action width must be 8, 11, or 14")
     if damage == "short_jump":
@@ -116,7 +128,8 @@ def _tail_action(width=8, *, target=TAIL_VA, damage=None):
 def _build(actions, *, object_array=None, original_array=None,
            object_damage=None, original_damage=None, map_damage=None,
            object_map_damage=None, original_callback_sites=True,
-           original_reloc_damage=None, object_reloc_damage=None):
+           original_reloc_damage=None, object_reloc_damage=None,
+           original_null_states=(), object_null_states=None):
     """Serialize a PE32 and a three-section COFF object for public APIs."""
     action_specs = []
     for index, spec in enumerate(actions):
@@ -235,20 +248,34 @@ def _build(actions, *, object_array=None, original_array=None,
 
     # Original FuncInfo and state/action table; COFF stores corresponding
     # relocated zero-addend references in its associated .xdata COMDAT.
-    n = len(actions)
+    if object_null_states is None:
+        object_null_states = original_null_states
+
+    def state_rows(null_states):
+        # Real actions fill the non-null states in order; null rows are (pred, 0).
+        rows, real = [], iter(range(len(actions)))
+        for state in range(len(actions) + len(null_states)):
+            rows.append(None if state in null_states else next(real))
+        return rows
+
+    original_rows, object_rows = state_rows(original_null_states), state_rows(object_null_states)
+    n = len(original_rows)
     info_size = 32 + 8 * n
     original_info = bytearray(info_size)
     struct.pack_into("<8I", original_info, 0, 0x19930520, n,
                      original_info_at + 32, 0, 0, 0, 0, 0)
-    object_info = bytearray(info_size)
-    struct.pack_into("<8I", object_info, 0, 0x19930520, n, 0, 0, 0, 0, 0, 0)
+    object_info = bytearray(32 + 8 * len(object_rows))
+    struct.pack_into("<8I", object_info, 0, 0x19930520, len(object_rows), 0, 0, 0, 0, 0, 0)
     info_relocs = [(8, "unwind", 6)]
-    for index, (o_start, c_start) in enumerate(zip(original_starts, object_starts)):
+    for index, action in enumerate(original_rows):
         predecessor = 0xFFFFFFFF if index == 0 else index - 1
-        struct.pack_into("<II", original_info, 32 + 8 * index,
-                         predecessor, COLD_VA + o_start)
+        struct.pack_into("<II", original_info, 32 + 8 * index, predecessor,
+                         0 if action is None else COLD_VA + original_starts[action])
+    for index, action in enumerate(object_rows):
+        predecessor = 0xFFFFFFFF if index == 0 else index - 1
         struct.pack_into("<II", object_info, 32 + 8 * index, predecessor, 0)
-        info_relocs.append((36 + 8 * index, f"action{index}", 6))
+        if action is not None:
+            info_relocs.append((36 + 8 * index, f"action{action}", 6))
     if map_damage == "bad_predecessor":
         struct.pack_into("<I", original_info, 32 + 8, 1)
     elif map_damage == "bad_action":
@@ -347,7 +374,8 @@ def _build(actions, *, object_array=None, original_array=None,
     rdata[:info_size] = original_info
     base_sites.extend([0x1100 + original_handler_offset + 1,
                        0x4000 + 8])
-    base_sites.extend(0x4000 + 36 + 8 * index for index in range(n))
+    base_sites.extend(0x4000 + 36 + 8 * index for index, action in enumerate(original_rows)
+                      if action is not None)
     if original_reloc_damage == "moved_callback_site" and original_array is not None:
         expected_site = 0x1100 + original_starts[original_array] + 1
         base_sites = [site + 1 if site == expected_site else site for site in base_sites]
@@ -586,3 +614,61 @@ def test_physical_binding_does_not_claim_callback_symbol_identity():
     assert regions[0].ownership.compiled_actions[0].transfers[0].target == (
         "??1OtherElement@@QAE@XZ")
 
+
+
+def test_frame_local_array_destructor_is_its_own_action_kind(tmp_path):
+    # load_game 0x661F05: push cb; push 3; push 0x2c; lea eax,[ebp-0xb84]; push eax; call; ret
+    values = {"count": 3, "stride": 0x2C, "frame_disp": -0xB84, "frame_width": 4,
+              "base_adjust": 0, "add_form": "none", "frame_form": "lea"}
+    _obj, regions, result = _measure(_build([("array", values), ("tail", 8)]), tmp_path)
+    assert result.verdict.value == "BYTE_EXACT", result
+    original, compiled = (regions[0].ownership.original_actions[0],
+                          regions[0].ownership.compiled_actions[0])
+    assert original.kind is compiled.kind is EHActionKind.FRAME_ARRAY_DESTRUCTOR
+    assert original.frame_displacement == compiled.frame_displacement == -0xB84
+    # A frame-local array never compares equal to an array pointer slot.
+    loaded = dict(values, frame_form="load")
+    _obj, _regions, mismatch = _measure(
+        _build([("array", values), ("tail", 8)], object_array=0, object_damage=loaded), tmp_path)
+    assert mismatch.verdict.value == "MISMATCH", mismatch
+
+
+def test_null_checked_conversion_cleanup_binds_with_its_constants(tmp_path):
+    _obj, regions, result = _measure(_build([("tail", 8), ("tail", "null_checked")]), tmp_path)
+    assert result.verdict.value == "BYTE_EXACT", result
+    original = regions[0].ownership.original_actions[1]
+    assert original.kind is EHActionKind.NULL_CHECKED_FRAME_TRANSFER
+    compiled = regions[0].ownership.compiled_actions[1]
+    assert (compiled.kind, compiled.conversion) == (original.kind, original.conversion)
+    assert (original.frame_displacement, original.base_adjustment) == (-0x10, 0x18)
+    conversion = original.conversion
+    assert (conversion.null_test_adjustment, conversion.conversion_adjustment,
+            conversion.temporary_displacement) == (-0x188, -0x144, -0x5434)
+    assert original.end - original.start == 53
+
+
+def test_null_checked_conversion_with_misdirected_join_refuses():
+    with pytest.raises(ValueError):
+        obj_data, image, spans, *_ = _build([("tail", 8), ("tail", "null_checked_bad_join")])
+        bind_eh_regions(obj_data, ROOT_NAME, image, spans)
+
+
+def test_null_cleanup_states_bind_and_must_agree(tmp_path):
+    # upgrade's FuncInfo carries states whose unwind action is 0 (no cleanup).
+    fixture = _build([("tail", 8), ("tail", 11)], original_null_states=(1, 3))
+    _obj, regions, result = _measure(fixture, tmp_path)
+    assert result.verdict.value == "BYTE_EXACT", result
+    ownership = regions[0].ownership
+    assert ownership.original_null_states == ownership.compiled_null_states == (1, 3)
+    assert len(ownership.original_predecessors) == 4
+    moved = _build([("tail", 8), ("tail", 11)], original_null_states=(1, 3),
+                   object_null_states=(2, 3))
+    _obj, _regions, mismatch = _measure(moved, tmp_path)
+    assert mismatch.verdict.value == "MISMATCH"
+    assert "null-cleanup states differ" in mismatch.diagnostic
+
+
+def test_only_null_cleanup_states_refuse():
+    from match_recovery.source import eh_regions
+    with pytest.raises(ValueError, match="no real cleanup"):
+        eh_regions._unwind_map(b"\xff" * 4 + bytes(4) + bytes(8), 2, base=0x1000, first_action=0x1000)

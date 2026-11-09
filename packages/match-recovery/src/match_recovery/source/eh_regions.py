@@ -18,8 +18,8 @@ from capstone import CS_ARCH_X86, CS_GRP_CALL, CS_GRP_JUMP, CS_MODE_32, Cs, x86
 from ..binary import Relocation, RelocationKind
 from ..model import Span
 from ..pe_coff import Coff, PeImage, Symbol
-from .eh_actions import (EHActionFact, EHActionKind, EHFrameGuardFact, EHTransferFact,
-                         EHTransferRole, resolve_transfer)
+from .eh_actions import (EHActionFact, EHActionKind, EHFrameGuardFact, EHNullConversionFact,
+                         EHTransferFact, EHTransferRole, resolve_transfer)
 
 
 _CODE = 0x00000020
@@ -30,8 +30,8 @@ _WRITE = 0x80000000
 _COMDAT = 0x00001000
 _FUNCINFO_MAGIC = 0x19930520
 _FUNCINFO_HEADER_SIZE = 32
-_MAX_CLEANUP_ACTIONS = 64
-_MAX_ACTION_SIZE = 34
+_MAX_CLEANUP_ACTIONS = 512
+_MAX_ACTION_SIZE = 64
 _HANDLER_STUB_SIZE = 10
 _MAX_COLD_SIZE = _MAX_CLEANUP_ACTIONS * _MAX_ACTION_SIZE + _HANDLER_STUB_SIZE
 _MAX_LOCAL_EH_DEPTH = 4
@@ -40,6 +40,10 @@ _EH_RUNTIME = "___CxxFrameHandler"
 
 _ENGINE = Cs(CS_ARCH_X86, CS_MODE_32)
 _ENGINE.detail = True
+_ARRAY_KINDS = frozenset((EHActionKind.ARRAY_DESTRUCTOR, EHActionKind.FRAME_ARRAY_DESTRUCTOR))
+_CLEANUP_TRANSFER_KINDS = frozenset((EHActionKind.FRAME_TRANSFER,
+                                     EHActionKind.FRAME_SLOT_CALL_CLEANUP,
+                                     EHActionKind.NULL_CHECKED_FRAME_TRANSFER))
 
 
 class EHRegionRole(StrEnum):
@@ -69,6 +73,9 @@ class EHOwnershipEvidence:
     compiled_runtime_symbol: str
     original_actions: tuple[EHActionFact, ...]
     compiled_actions: tuple[EHActionFact, ...]
+    # States whose unwind action is VC6's null cleanup (no bytes, no target).
+    original_null_states: tuple[int, ...] = ()
+    compiled_null_states: tuple[int, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -92,7 +99,16 @@ def eh_action_semantic_difference(original: EHActionFact,
         return "ordinary", f"valid EH action kind differs at index {index}"
     if original.guard != compiled.guard:
         return "ordinary", f"valid EH frame guard differs at index {index}"
-    if original.kind is EHActionKind.ARRAY_DESTRUCTOR:
+    if original.kind is EHActionKind.NULL_CHECKED_FRAME_TRANSFER:
+        original_facts = (original.frame_displacement, original.base_adjustment,
+                          original.scratch_register, original.conversion)
+        compiled_facts = (compiled.frame_displacement, compiled.base_adjustment,
+                          compiled.scratch_register, compiled.conversion)
+        if original_facts != compiled_facts:
+            return ("ordinary",
+                    f"valid EH null-checked conversion semantics differ at index {index}: "
+                    f"original={original_facts!r}, compiled={compiled_facts!r}")
+    elif original.kind in _ARRAY_KINDS:
         original_facts = (original.element_count, original.element_size,
                           original.frame_displacement, original.base_adjustment,
                           original.scratch_register)
@@ -331,6 +347,115 @@ def _array_adjustment(instruction) -> int | None:
     return ((value + 2**31) % 2**32) - 2**31
 
 
+def _frame_array_address(instruction) -> int | None:
+    """``lea eax,[ebp+d]`` naming a frame-local array base (disp8 or disp32)."""
+    if (instruction.mnemonic != "lea" or len(instruction.operands) != 2
+            or not _is_reg(instruction.operands[0], x86.X86_REG_EAX)
+            or instruction.operands[1].type != x86.X86_OP_MEM):
+        return None
+    memory = instruction.operands[1].mem
+    if memory.base != x86.X86_REG_EBP or memory.index != 0 or memory.segment != 0:
+        return None
+    if ((instruction.size == 3 and instruction.bytes[:2] == b"\x8d\x45"
+         and instruction.encoding.disp_size == 1)
+            or (instruction.size == 6 and instruction.bytes[:2] == b"\x8d\x85"
+                and instruction.encoding.disp_size == 4)):
+        return memory.disp
+    return None
+
+
+def _ebp_slot(instruction, mnemonic: str, register: int | None, *, store: bool = False) -> int | None:
+    """Exact ``mov reg,[ebp+d]`` (or the store form) with disp8/disp32 encoding."""
+    if instruction.mnemonic != mnemonic or len(instruction.operands) != 2:
+        return None
+    memory_operand, other = ((instruction.operands[0], instruction.operands[1]) if store
+                             else (instruction.operands[1], instruction.operands[0]))
+    if memory_operand.type != x86.X86_OP_MEM or memory_operand.size != 4:
+        return None
+    memory = memory_operand.mem
+    if memory.base != x86.X86_REG_EBP or memory.index != 0 or memory.segment != 0:
+        return None
+    if register is None:
+        if other.type != x86.X86_OP_IMM or other.imm != 0 or instruction.encoding.imm_size != 4:
+            return None
+        opcode = b"\xc7"
+    else:
+        if not _is_reg(other, register):
+            return None
+        opcode = b"\x89" if store else b"\x8b"
+    if instruction.bytes[:1] != opcode or instruction.encoding.disp_size not in (1, 4):
+        return None
+    return memory.disp
+
+
+def _register_immediate(instruction, register: int) -> int | None:
+    """Signed net ``add/sub reg, imm`` in its canonical imm8/imm32 encodings."""
+    if (instruction.mnemonic not in ("add", "sub") or len(instruction.operands) != 2
+            or not _is_reg(instruction.operands[0], register)
+            or instruction.operands[1].type != x86.X86_OP_IMM):
+        return None
+    lead = instruction.bytes[:1]
+    if not ((lead == b"\x83" and instruction.size == 3 and instruction.encoding.imm_size == 1)
+            or (lead == b"\x81" and instruction.size == 6 and instruction.encoding.imm_size == 4)
+            or (register == x86.X86_REG_EAX and instruction.size == 5
+                and lead == (b"\x05" if instruction.mnemonic == "add" else b"\x2d")
+                and instruction.encoding.imm_size == 4)):
+        return None
+    value = instruction.operands[1].imm * (1 if instruction.mnemonic == "add" else -1)
+    return ((value + 2**31) % 2**32) - 2**31
+
+
+def _null_checked_conversion(instructions, code_base: int) -> EHActionFact | None:
+    """VC6's cleanup of a subobject reached by a null-checked conversion.
+
+    Observed shape (base_production, go_to, upgrade)::
+
+        mov eax,[ebp+d]; sub eax,k1; test eax,eax; je NULL
+        mov ecx,[ebp+d]; sub ecx,k2; mov [ebp+t],ecx; jmp JOIN
+        NULL: mov dword [ebp+t],0
+        JOIN: mov ecx,[ebp+t]; add ecx,k3; jmp cleanup
+
+    Both internal branches must land exactly on NULL/JOIN; only the final
+    REL32 transfer leaves the action.
+    """
+    (load, null_adjust, test, skip, reload, convert, store, join_jump,
+     null_store, join_load, member_adjust, target) = instructions
+    displacement = _ebp_slot(load, "mov", x86.X86_REG_EAX)
+    k1 = _register_immediate(null_adjust, x86.X86_REG_EAX)
+    k2 = _register_immediate(convert, x86.X86_REG_ECX)
+    k3 = _register_immediate(member_adjust, x86.X86_REG_ECX)
+    temporary = _ebp_slot(store, "mov", x86.X86_REG_ECX, store=True)
+
+    def short_or_near(item, mnemonic, short, near, destination):
+        return (item.mnemonic == mnemonic and len(item.operands) == 1
+                and item.operands[0].type == x86.X86_OP_IMM
+                and item.operands[0].imm == destination
+                and ((item.size == 2 and item.bytes[:1] == short)
+                     or (item.size == len(near) + 4 and item.bytes[:len(near)] == near)))
+
+    if (displacement is None or displacement == 0 or k1 is None or k2 is None or k3 is None
+            or temporary is None or temporary == displacement
+            or test.bytes != b"\x85\xc0"
+            or not short_or_near(skip, "je", b"\x74", b"\x0f\x84", null_store.address)
+            or _ebp_slot(reload, "mov", x86.X86_REG_ECX) != displacement
+            or not short_or_near(join_jump, "jmp", b"\xeb", b"\xe9", join_load.address)
+            or _ebp_slot(null_store, "mov", None, store=True) != temporary
+            or _ebp_slot(join_load, "mov", x86.X86_REG_ECX) != temporary
+            or target.mnemonic != "jmp" or target.size != 5 or target.bytes[:1] != b"\xe9"
+            or len(target.operands) != 1 or target.operands[0].type != x86.X86_OP_IMM
+            or target.encoding.imm_offset != 1 or target.encoding.imm_size != 4):
+        return None
+    start = instructions[0].address - code_base
+    end = target.address + target.size - code_base
+    transfer = EHTransferFact(
+        EHTransferRole.CLEANUP, target.address + target.encoding.imm_offset - code_base,
+        4, "REL32", None, target.operands[0].imm & 0xFFFFFFFF, None)
+    return EHActionFact(EHActionKind.NULL_CHECKED_FRAME_TRANSFER, start, end, (transfer,),
+                        frame_displacement=displacement, base_adjustment=k3,
+                        scratch_register="ecx",
+                        conversion=EHNullConversionFact(k1, k2, temporary))
+
+
 def _cleanup_action(instructions, *, code_base: int = 0) -> EHActionFact:
     """Decode one complete bounded action into typed transfer facts."""
     if not instructions:
@@ -346,7 +471,8 @@ def _cleanup_action(instructions, *, code_base: int = 0) -> EHActionFact:
         load, mask, test, skip = instructions[:4]
         ret = instructions[-1]
         guarded = (
-            load.size == 3 and load.bytes[:2] == b"\x8b\x45"
+            ((load.size == 3 and load.bytes[:2] == b"\x8b\x45" and load.encoding.disp_size == 1)
+             or (load.size == 6 and load.bytes[:2] == b"\x8b\x85" and load.encoding.disp_size == 4))
             and len(load.operands) == 2
             and _is_reg(load.operands[0], x86.X86_REG_EAX)
             and load.operands[1].type == x86.X86_OP_MEM
@@ -354,7 +480,6 @@ def _cleanup_action(instructions, *, code_base: int = 0) -> EHActionFact:
             and load.operands[1].mem.base == x86.X86_REG_EBP
             and load.operands[1].mem.index == 0
             and load.operands[1].mem.segment == 0
-            and load.encoding.disp_size == 1
             and load.operands[1].mem.disp != 0
             and load.operands[1].mem.disp % 4 == 0
             and mask.bytes in (b"\x83\xe0\x01", b"\x83\xe0\x02")
@@ -382,6 +507,10 @@ def _cleanup_action(instructions, *, code_base: int = 0) -> EHActionFact:
         count = _is_imm_push(count_push)
         element_size = _is_imm_push(size_push)
         displacement = _frame_array_load(frame_load)
+        kind = EHActionKind.ARRAY_DESTRUCTOR
+        if displacement is None and len(instructions) == 7:
+            displacement = _frame_array_address(frame_load)
+            kind = EHActionKind.FRAME_ARRAY_DESTRUCTOR
         base_adjustment = (_array_adjustment(instructions[4])
                            if len(instructions) == 8 else 0)
         if (callback.mnemonic == "push" and callback.bytes[:1] == b"\x68"
@@ -409,7 +538,7 @@ def _cleanup_action(instructions, *, code_base: int = 0) -> EHActionFact:
                                call.address + call.encoding.imm_offset - code_base,
                                4, "REL32", None, call.operands[0].imm & 0xFFFFFFFF, None),
             )
-            return EHActionFact(EHActionKind.ARRAY_DESTRUCTOR, start, end,
+            return EHActionFact(kind, start, end,
                                 transfers, count, element_size, displacement,
                                 base_adjustment, "eax")
 
@@ -452,6 +581,11 @@ def _cleanup_action(instructions, *, code_base: int = 0) -> EHActionFact:
                 frame_displacement=displacement, base_adjustment=0,
                 scratch_register="eax")
 
+    if len(instructions) == 12:
+        conversion = _null_checked_conversion(instructions, code_base)
+        if conversion is not None:
+            return conversion
+
     target_instruction = None
     first = instructions[0]
     frame_displacement = None
@@ -477,8 +611,10 @@ def _cleanup_action(instructions, *, code_base: int = 0) -> EHActionFact:
           and first.operands[1].mem.base == x86.X86_REG_EBP
           and first.operands[1].mem.index == 0
           and first.operands[1].mem.segment == 0
-          and first.size == 3 and first.bytes[:2] == b"\x8b\x4d"
-          and first.encoding.disp_size == 1):
+          and ((first.size == 3 and first.bytes[:2] == b"\x8b\x4d"
+                and first.encoding.disp_size == 1)
+               or (first.size == 6 and first.bytes[:2] == b"\x8b\x8d"
+                   and first.encoding.disp_size == 4))):
         target_instruction = instructions[-1]
         frame_displacement = first.operands[1].mem.disp
         if len(instructions) == 3:
@@ -561,7 +697,9 @@ def _unwind_map(data: bytes, count: int, *, base: int,
 
     FuncInfo row order is state order, not code-address order. Keep the action
     pointers in that order for predecessor validation and comparison; callers
-    that need byte extents sort a separate view of the pointers.
+    that need byte extents sort a separate view of the pointers. A zero action
+    is VC6's null cleanup for a state with nothing to destroy; it is returned
+    as zero and owns no bytes. At least one state must have a real action.
     """
     if not 1 <= count <= _MAX_CLEANUP_ACTIONS:
         raise ValueError("EH cleanup action count exceeds the bounded resource cap")
@@ -573,13 +711,16 @@ def _unwind_map(data: bytes, count: int, *, base: int,
         predecessor, action = entries[index * 2:index * 2 + 2]
         if predecessor != 0xFFFFFFFF and predecessor >= index:
             raise ValueError("EH unwind predecessor is not a sentinel or earlier state")
-        if action < base:
+        if action and action < base:
             raise ValueError("EH unwind action lies before the bounded cleanup region")
         predecessors.append(predecessor)
         actions.append(action)
-    if len(set(actions)) != count:
+    real = [action for action in actions if action]
+    if not real:
+        raise ValueError("EH unwind map has no real cleanup action")
+    if len(set(real)) != len(real):
         raise ValueError("EH unwind action starts are duplicated")
-    if min(actions) != first_action:
+    if min(real) != first_action:
         raise ValueError("EH unwind actions do not begin at the bounded first cleanup")
     return tuple(actions), tuple(predecessors)
 
@@ -604,8 +745,7 @@ def _action_targets(code: bytes, base: int, starts: tuple[int, ...],
             raise ValueError("EH action does not exactly cover its mapped boundary")
         primary_transfer = (next((item for item in action.transfers
                                   if item.role is EHTransferRole.CLEANUP), None)
-                            if action.kind in (EHActionKind.FRAME_TRANSFER,
-                                               EHActionKind.FRAME_SLOT_CALL_CLEANUP) else
+                            if action.kind in _CLEANUP_TRANSFER_KINDS else
                             next((item for item in action.transfers
                                   if item.role is EHTransferRole.HELPER), None))
         if primary_transfer is None or not isinstance(primary_transfer.target, int):
@@ -644,6 +784,9 @@ def _original_eh(image: PeImage, primary: Span, cold: Span):
     map_data = image.read(map_span)
     original_cleanups, original_predecessors = _unwind_map(
         map_data, max_state, base=cold.start, first_action=cold.start)
+    original_null_states = tuple(index for index, action in enumerate(original_cleanups)
+                                 if not action)
+    original_cleanups = tuple(action for action in original_cleanups if action)
     if any(action >= handler for action in original_cleanups):
         raise ValueError("original unwind action starts at or beyond its handler")
     original_action_starts = original_cleanups
@@ -669,12 +812,13 @@ def _original_eh(image: PeImage, primary: Span, cold: Span):
                 callback_sites.add(transfer.operand_offset)
     if image.absolute_sites(Span(func_info, func_info + 12)) != frozenset({8}):
         raise ValueError("original FuncInfo unwind-map pointer lacks its exact HIGHLOW site")
-    expected_map_sites = frozenset(4 + 8 * index for index in range(max_state))
+    real_states = tuple(index for index in range(max_state) if index not in original_null_states)
+    expected_map_sites = frozenset(4 + 8 * index for index in real_states)
     if image.absolute_sites(map_span) != expected_map_sites:
         raise ValueError("original unwind cleanup pointer lacks its exact HIGHLOW site")
     if image.absolute_sites(Span(handler, cold.end)) != frozenset({info_offset - handler_offset}):
         raise ValueError("original handler FuncInfo pointer lacks its exact HIGHLOW site")
-    expected_fi_sites = frozenset({8} | {36 + 8 * index for index in range(max_state)})
+    expected_fi_sites = frozenset({8} | {36 + 8 * index for index in real_states})
     if image.absolute_sites(fi_span) != expected_fi_sites:
         raise ValueError("original FuncInfo has unexpected HIGHLOW sites in its bounded bundle")
     expected_cold_sites = callback_sites | {info_offset}
@@ -682,7 +826,7 @@ def _original_eh(image: PeImage, primary: Span, cold: Span):
         raise ValueError("original cold region has unexpected HIGHLOW sites outside the handler pointer")
     return (handler_offset, handler, func_info, cold.start, tuple(cleanup_targets),
             runtime_target, original_action_starts, original_predecessors,
-            tuple(original_actions))
+            tuple(original_actions), original_null_states)
 
 
 def _associated_root(obj: Coff, section: int, root: int) -> bool:
@@ -991,7 +1135,7 @@ def _validate_local_complete_destructor(
             walk.active.add(child_number)
             try:
                 (_section, _code, _relocs, _alignment, info_number, _runtime,
-                 _handler, _dtors, _starts, _preds) = _object_child_and_info(
+                 _handler, _dtors, _starts, _preds, _nulls) = _object_child_and_info(
                      obj, symbol, child_number, walk=walk, depth=depth + 1)
                 _info_section, _info_code, _info_relocs, _info_alignment = _relocations(
                     obj, info_number)
@@ -1045,20 +1189,19 @@ def _cold_layout(code: bytes) -> tuple[int, tuple[EHActionFact, ...], int, int, 
                     parsed = _cleanup_action(candidate, code_base=0)
                 except ValueError:
                     parsed = None
-                if parsed is not None and parsed.kind is EHActionKind.ARRAY_DESTRUCTOR:
+                if parsed is not None and parsed.kind in _ARRAY_KINDS:
                     if action is not None:
                         raise ValueError("COFF EH array action has ambiguous bounded decoding")
                     action, consumed = parsed, length
         else:
-            for length in (2, 3, 5, 7, 8):
+            for length in (2, 3, 5, 7, 8, 12):
                 if index + length > len(instructions):
                     continue
                 try:
                     parsed = _cleanup_action(instructions[index:index + length], code_base=0)
                 except ValueError:
                     continue
-                if parsed.kind in (EHActionKind.FRAME_TRANSFER,
-                                   EHActionKind.FRAME_SLOT_CALL_CLEANUP):
+                if parsed.kind in _CLEANUP_TRANSFER_KINDS:
                     if action is not None:
                         raise ValueError("COFF EH action has ambiguous bounded decoding")
                     action, consumed = parsed, length
@@ -1076,9 +1219,35 @@ def _cold_layout(code: bytes) -> tuple[int, tuple[EHActionFact, ...], int, int, 
             handler_offset + 6, tuple(starts))
 
 
+def _code_extent(obj: Coff, section: int, code: bytes, relocations) -> int:
+    """Instruction bytes before a trailing VC6 switch table in a root COMDAT.
+
+    VC6 appends jump/selector tables after the function's code; the table
+    starts at a same-section label referenced by a DIR32. Admit the first such
+    label after which every relocation is a DIR32 table entry to a
+    same-section label and before which every byte decodes. Without one the
+    whole section must decode.
+    """
+    def label(item):
+        target = obj.symbols[int(item.target)]
+        return (item.kind is RelocationKind.ABSOLUTE32 and target.section == section
+                and target.storage == 6)
+
+    starts = sorted({obj.symbols[int(item.target)].value for item in relocations
+                     if label(item)})
+    for start in starts:
+        if not 0 < start < len(code):
+            continue
+        if not all(label(item) for item in relocations if item.offset >= start):
+            continue
+        if sum(item.size for item in _ENGINE.disasm(code[:start], 0)) == start:
+            return start
+    return len(code)
+
+
 def _object_push_edge(obj: Coff, root: Symbol, child: int, handler_offset: int) -> None:
     _section, code, relocations, _alignment = _relocations(obj, root.section)
-    instructions = _decoded(code, 0)
+    instructions = _decoded(code[:_code_extent(obj, root.section, code, relocations)], 0)
     expected = _registration_push(instructions, 0)
     if expected is None:
         raise ValueError("COFF root lacks one complete EH registration chain")
@@ -1200,7 +1369,10 @@ def _object_child_and_info(obj: Coff, root: Symbol, child: int, *,
     data_section = obj.sections[data_section_number - 1]
     data_flags = data_section.flags
     action_count = len(action_shapes)
-    if (len(data_section.data) != _FUNCINFO_HEADER_SIZE + 8 * action_count
+    state_count = (struct.unpack_from("<I", data_section.data, 4)[0]
+                   if len(data_section.data) >= 8 else 0)
+    if (not action_count <= state_count <= _MAX_CLEANUP_ACTIONS
+            or len(data_section.data) != _FUNCINFO_HEADER_SIZE + 8 * state_count
             or data_section.flags & (_CODE | _EXECUTE | _WRITE)
             or not data_flags & _INITIALIZED_DATA or not data_flags & _READ
             or not data_flags & _COMDAT
@@ -1232,28 +1404,34 @@ def _object_child_and_info(obj: Coff, root: Symbol, child: int, *,
 
     fields = struct.unpack("<8I", data_section.data[:_FUNCINFO_HEADER_SIZE])
     magic, max_state, raw_unwind, try_count, try_map, ip_count, ip_map, es_types = fields
-    if (magic != _FUNCINFO_MAGIC or max_state != action_count or raw_unwind != 0
+    if (magic != _FUNCINFO_MAGIC or max_state != state_count or raw_unwind != 0
             or any((try_count, try_map, ip_count, ip_map, es_types))):
         raise ValueError("COFF FuncInfo does not have a supported bounded cleanup layout")
     unwind_symbol = _reloc_at(obj, data_section_number, 8, RelocationKind.ABSOLUTE32)
-    map_entries = struct.unpack_from("<" + "I" * (2 * action_count),
+    map_entries = struct.unpack_from("<" + "I" * (2 * state_count),
                                      data_section.data, _FUNCINFO_HEADER_SIZE)
-    compiled_predecessors = []
-    for index in range(action_count):
+    relocated_slots = {offset for offset, _index, _kind in data_section.relocations}
+    compiled_predecessors, real_states, compiled_null_states = [], [], []
+    for index in range(state_count):
         predecessor, action_addend = map_entries[index * 2:index * 2 + 2]
         if ((predecessor != 0xFFFFFFFF and predecessor >= index)
                 or action_addend != 0):
             raise ValueError("COFF unwind predecessor is not a sentinel or earlier state")
         compiled_predecessors.append(predecessor)
+        # An unrelocated zero action is the null cleanup of this state.
+        (real_states if _FUNCINFO_HEADER_SIZE + 4 + 8 * index in relocated_slots
+         else compiled_null_states).append(index)
+    if len(real_states) != action_count:
+        raise ValueError("COFF unwind map does not own exactly the child cleanup entries")
     cleanup_symbols = [
         _reloc_at(obj, data_section_number, _FUNCINFO_HEADER_SIZE + 4 + 8 * index,
                   RelocationKind.ABSOLUTE32)
-        for index in range(action_count)
+        for index in real_states
     ]
     all_data_relocs = data_section.relocations
     expected_data_relocs = {(8, 6)} | {
         (_FUNCINFO_HEADER_SIZE + 4 + 8 * index, 6)
-        for index in range(action_count)
+        for index in real_states
     }
     if {(offset, kind) for offset, _index, kind in all_data_relocs} != expected_data_relocs:
         raise ValueError("COFF FuncInfo contains missing or unsupported relocations")
@@ -1268,7 +1446,7 @@ def _object_child_and_info(obj: Coff, root: Symbol, child: int, *,
     return (child_section, child_code, child_relocs, child_alignment,
             data_section_number, runtime.name, handler_offset,
             tuple(compiled_actions_by_start[offset] for offset in cleanup_offsets),
-            cleanup_offsets, tuple(compiled_predecessors))
+            cleanup_offsets, tuple(compiled_predecessors), tuple(compiled_null_states))
 
 
 def bind_eh_regions(raw_object: bytes, emitted_symbol: str, original_image: PeImage,
@@ -1288,7 +1466,8 @@ def bind_eh_regions(raw_object: bytes, emitted_symbol: str, original_image: PeIm
     primary, cold = _checked_spans(spans)
     (original_handler_offset, original_handler, original_func_info,
      original_cleanup, original_cleanup_targets, original_runtime,
-     original_action_starts, original_predecessors, original_actions) = _original_eh(
+     original_action_starts, original_predecessors, original_actions,
+     original_null_states) = _original_eh(
          original_image, primary, cold)
 
     obj = Coff(raw_object)
@@ -1315,7 +1494,7 @@ def bind_eh_regions(raw_object: bytes, emitted_symbol: str, original_image: PeIm
     (_child_section, child_code, child_relocs, child_alignment,
      info_section, runtime_symbol, object_handler_offset,
      compiled_actions, compiled_action_starts,
-     compiled_predecessors) = _object_child_and_info(
+     compiled_predecessors, compiled_null_states) = _object_child_and_info(
          obj, root, child, walk=walk, depth=0)
     if handler_offset != object_handler_offset:
         raise ValueError("COFF EH handler offset changed during ownership validation")
@@ -1340,6 +1519,8 @@ def bind_eh_regions(raw_object: bytes, emitted_symbol: str, original_image: PeIm
         compiled_runtime_symbol=runtime_symbol,
         original_actions=original_actions,
         compiled_actions=compiled_actions,
+        original_null_states=original_null_states,
+        compiled_null_states=compiled_null_states,
     )
     return (
         EHRegionPair(EHRegionRole.ROOT, primary, root.section, root_code,
@@ -1366,7 +1547,8 @@ def eh_funcinfo_reference_target(raw_object: bytes, emitted_symbol: str,
     if not isinstance(resolved_targets, Mapping):
         raise ValueError("EH reference proof requires current-object resolved targets")
     ownership = root_region.ownership
-    if ownership.original_predecessors != ownership.compiled_predecessors:
+    if (ownership.original_predecessors != ownership.compiled_predecessors
+            or ownership.original_null_states != ownership.compiled_null_states):
         raise ValueError("EH FuncInfo reference has changed predecessor topology")
     if len(ownership.original_actions) != len(ownership.compiled_actions):
         raise ValueError("EH FuncInfo reference has changed action count")
@@ -1383,9 +1565,7 @@ def eh_funcinfo_reference_target(raw_object: bytes, emitted_symbol: str,
 
     for index, (original_action, compiled_action) in enumerate(zip(
             ownership.original_actions, ownership.compiled_actions, strict=True)):
-        if original_action.kind not in (EHActionKind.ARRAY_DESTRUCTOR,
-                                        EHActionKind.FRAME_TRANSFER,
-                                        EHActionKind.FRAME_SLOT_CALL_CLEANUP):
+        if original_action.kind not in _ARRAY_KINDS | _CLEANUP_TRANSFER_KINDS:
             raise ValueError("EH FuncInfo reference has an unsupported action kind")
         difference = eh_action_semantic_difference(
             original_action, compiled_action, index)

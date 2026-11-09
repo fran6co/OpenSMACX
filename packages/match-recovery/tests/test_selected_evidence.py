@@ -147,6 +147,23 @@ def test_evidence_only_owners_compile_with_layout_types_but_selected_body_keeps_
                      ("data/target.cc", ("first", "types"))]
 
 
+def test_unchecked_shared_copy_host_still_gets_layout_types(tmp_path):
+    # basewin.cpp regression (cursor_key 0x5166D0): an owner that merely
+    # declares RECOVERY_SHARED copies is not a body host for a selection
+    # that only needs one of its objects.
+    root = project(tmp_path, layout_flags=("types",))
+    global_source = root / "data/global.cc"
+    global_source.write_text(global_source.read_text()
+                             + "// RECOVERY_SHARED: v1 0x00401010 0x00401011 _shared 0x00401010\n"
+                             "int shared() { return 0; }\n")
+    calls = []
+    report = verify(root, good_compiler(calls))
+    assert report["result"] == Result.PASS, report
+    assert calls == [("code/caller.cc", ("first",)),
+                     ("data/global.cc", ("first", "types")),
+                     ("data/target.cc", ("first", "types"))]
+
+
 def test_evidence_only_owner_layout_types_are_not_repeated(tmp_path):
     root = project(tmp_path, layout_flags=("types",))
     calls = []

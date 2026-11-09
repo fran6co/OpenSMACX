@@ -258,10 +258,11 @@ def test_wrong_mov_sub_operands_refuse(side, operation):
 
 
 @pytest.mark.parametrize("action", [
-    # Address-size/operand-size prefixes and MOV disp32 are outside the exact
-    # bounded encoding family, even when a decoder can parse the instructions.
+    # Address-size/operand-size prefixes are outside the exact bounded
+    # encoding family, even when a decoder can parse the instructions.
     b"\x66\x8b\x4d\xf0\x83\xe9\x0c\xe9\0\0\0\0",
-    b"\x8b\x8d\xf0\xff\xff\xff\x83\xe9\x0c\xe9\0\0\0\0",
+    # MOV disp32 with a non-canonical SIB encoding of the same EBP slot.
+    b"\x8b\x8c\x25\xf0\xff\xff\xff\x83\xe9\x0c\xe9\0\0\0\0",
     b"\x67\x8b\x4d\xf0\x83\xe9\x0c\xe9\0\0\0\0",
     # A call or short branch is not the required complete rel32 JMP transfer.
     b"\x8b\x4d\xf0\x83\xe9\x0c\xe8\0\0\0\0",
@@ -272,6 +273,13 @@ def test_wrong_mov_sub_operands_refuse(side, operation):
 def test_frame_action_rejects_prefix_width_branch_and_trailing_variants(action):
     with pytest.raises(ValueError):
         _cleanup_action(_decoded(action, 0), code_base=0)
+
+
+def test_frame_action_admits_vc6_disp32_slot_load():
+    # sub_631050 0x6636F2-style: a frame slot beyond disp8 range.
+    action = _cleanup_action(_decoded(b"\x8b\x8d\x24\xc8\xff\xff\x83\xe9\x1c\xe9\0\0\0\0", 0),
+                             code_base=0)
+    assert (action.frame_displacement, action.base_adjustment) == (-0x37DC, -0x1C)
 
 
 @pytest.mark.parametrize("damage", [
