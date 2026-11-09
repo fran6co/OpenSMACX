@@ -315,7 +315,7 @@ void __cdecl clear_player_messages(int faction) {
     FactionTurnCombatWins[faction] = 0;
 }
 
-// ORIGINAL: 0x0051E530 sub_51e530 0x0051E530-0x0051E6ED
+// ORIGINAL: 0x0051E530 sub_51e530 0x0051E530-0x0051E6ED BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0051e530.cpp", "Pinned original01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_player_message_state_behavior.py"], "reason": "Recover the complete player-message display_player_messages operation through existing StringList/MessageWin owners and eight faction combat-summary counters. Preserve deletion hooks, live count reloads, reset/display order and retained original seed; no new measured claim."}
 // symbol    ?display_player_messages@@YAHH@Z
 // TRIED: char* record-base arithmetic (self+0x30*a1 relative to 0x93a7b0) with adjustor-thunk VCall dispatch (slot000/slot001) for the two destroy-list virtual calls; reaches #13
@@ -324,7 +324,9 @@ static inline int deferred_message_id(StringList &items) {
     return items.head_ != 0 ? items.current_->id : 0;
 }
 static inline char *deferred_message_text(StringList &items) {
-    return items.head_ != 0 ? items.current_->string_payload()->text : 0;
+    return items.head_ != 0
+               ? (*(StringStructEntry *volatile *)&(items.current_))->string_payload()->text
+               : 0;
 }
 
 // StringStruct::seek_pos in the image's single-tail form (one
