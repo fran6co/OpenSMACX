@@ -180,7 +180,10 @@ void __cdecl colortables_init_faction(int faction_id) {
     DWORD start_time;
     PALETTEENTRY tint;
     HSV hsv;
-    unsigned char *body_table;
+    int row;
+    int color;
+    const unsigned char *source_palette;
+    PALETTEENTRY shade;
 
     StringTemp[0] = '\0';
     strcat(StringTemp, filename);
@@ -213,39 +216,43 @@ void __cdecl colortables_init_faction(int faction_id) {
     refresh_tables = 0;
     view = static_cast<unsigned char *>(cache_file.open(StringTemp, 1));
     start_time = timeGetTime();
+    // The values-file create retry is a loop back edge; mismatches and the
+    // table-create retry below jump to check_values. The table-create retry
+    // arrives with StringTemp still naming the output .tmp file.
+    for (;;) {
 check_values:
-    if (view != nullptr && !palettes_differ) {
-        if (memcmp(&weight_by_faction[faction_id], view, 4) != 0) {
+        if (view != nullptr && !palettes_differ) {
+            if (memcmp(&weight_by_faction[faction_id], view, 4) != 0) {
+                view = nullptr;
+                goto check_values;
+            }
+            view += 4;
+            if (memcmp(&territory_index_by_faction[faction_id], view, 4) != 0) {
+                view = nullptr;
+                goto check_values;
+            }
+            view += 4;
+            if (memcmp(&body_tint_index_by_faction[faction_id], view, 4) == 0) {
+                goto open_tables;
+            }
             view = nullptr;
             goto check_values;
         }
-        view += 4;
-        if (memcmp(&territory_index_by_faction[faction_id], view, 4) != 0) {
-            view = nullptr;
-            goto check_values;
+        view = static_cast<unsigned char *>(cache_file.create(StringTemp, 0x80, 1));
+        if (view == nullptr) {
+            if (timeGetTime() - start_time < 0xBB8) {
+                continue;
+            }
+        } else {
+            memcpy(view, &weight_by_faction[faction_id], 4);
+            view += 4;
+            memcpy(view, &territory_index_by_faction[faction_id], 4);
+            view += 4;
+            memcpy(view, &body_tint_index_by_faction[faction_id], 4);
+            view += 4;
+            cache_file.close(view);
         }
-        view += 4;
-        if (memcmp(&body_tint_index_by_faction[faction_id], view, 4) == 0) {
-            goto open_tables;
-        }
-        view = nullptr;
-        goto check_values;
-    }
-    // The native retry edge from the table-create loop below returns here
-    // with StringTemp still naming the output .tmp file.
-    view = static_cast<unsigned char *>(cache_file.create(StringTemp, 0x80, 1));
-    if (view == nullptr) {
-        if (timeGetTime() - start_time < 0xBB8) {
-            goto check_values;
-        }
-    } else {
-        memcpy(view, &weight_by_faction[faction_id], 4);
-        view += 4;
-        memcpy(view, &territory_index_by_faction[faction_id], 4);
-        view += 4;
-        memcpy(view, &body_tint_index_by_faction[faction_id], 4);
-        view += 4;
-        cache_file.close(view);
+        break;
     }
     refresh_tables = 1;
 open_tables:
@@ -279,26 +286,22 @@ open_tables:
     view += 0x100;
     tint = g_PALETTE1.entries()[body_tint_index_by_faction[faction_id]];
     RGB_to_HSV(&tint, &hsv);
-    body_table = &BodyTintColorTables[faction_id][0][0];
-    {
-        for (int row = 0; row < 0x1800; row += 0x100) {
-            const unsigned char *source_palette =
-                g_VBP_CAVIARDATA.record()->palette_ + row + 0x302;
-            for (int color = 0; color < 256; ++color) {
-                PALETTEENTRY shade = g_PALETTE1.entries()[source_palette[color]];
-                shade.peRed = static_cast<unsigned char>(static_cast<int>(
-                    shade.peRed * static_cast<float>(tint.peRed) * (1.0f / 255.0f)));
-                shade.peGreen = static_cast<unsigned char>(static_cast<int>(
-                    shade.peGreen * static_cast<float>(tint.peGreen) * (1.0f / 255.0f)));
-                shade.peBlue = static_cast<unsigned char>(static_cast<int>(
-                    shade.peBlue * static_cast<float>(tint.peBlue) * (1.0f / 255.0f)));
-                body_table[row + color] = static_cast<unsigned char>(
-                    g_PALETTE1.get_nearest_palette_index(
-                        shade.peRed, shade.peGreen, shade.peBlue, 0));
-            }
+    for (row = 0; row < 24; ++row) {
+        source_palette = g_VBP_CAVIARDATA.record()->palette_ + row * 256 + 0x302;
+        for (color = 0; color < 256; ++color) {
+            shade = g_PALETTE1.entries()[source_palette[color]];
+            shade.peRed = static_cast<unsigned char>(static_cast<int>(
+                shade.peRed * static_cast<float>(tint.peRed) * (1.0f / 255.0f)));
+            shade.peGreen = static_cast<unsigned char>(static_cast<int>(
+                shade.peGreen * static_cast<float>(tint.peGreen) * (1.0f / 255.0f)));
+            shade.peBlue = static_cast<unsigned char>(static_cast<int>(
+                shade.peBlue * static_cast<float>(tint.peBlue) * (1.0f / 255.0f)));
+            BodyTintColorTables[faction_id][row][color] = static_cast<unsigned char>(
+                g_PALETTE1.get_nearest_palette_index(
+                    shade.peRed, shade.peGreen, shade.peBlue, 0));
         }
     }
-    memcpy(view, body_table, 0xC000);
+    memcpy(view, BodyTintColorTables[faction_id], 0xC000);
 done:
     cache_file.close();
 }
