@@ -190,6 +190,9 @@ def register(commands):
                               "(stand-in) and rank them by EH topology and instruction distance")
     permute.add_argument("--probe-sizes", help="Comma-separated chained-if counts for budget probes (default 1,2,4,6,8,12,16,20,24,32)")
     permute.add_argument("--probe-forms", help="Comma-separated probe forms: flat,nested (default both)")
+    permute.add_argument("--candidates", type=Path,
+                         help="Rank caller-written body spellings from a JSON deck instead of searching "
+                              "(schema 1: {candidates: {name: {body: text} | {replace: [{before, after}]}}})")
     grouping = commands.add_parser("partition", help="Derive provisional ownership units, not historical TU claims")
     grouping.add_argument("--root", type=Path, default=Path.cwd())
     grouping.add_argument("--group", help="A source-derived class or component group identity")
@@ -456,7 +459,8 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
                                 keep_best=arguments.get("keep_best"), operators=operators,
                                 progress=None if arguments.get("quiet") else report,
                                 slots=slots or None, probe_sweep=arguments.get("probe_sweep", False),
-                                probe_sizes=sizes, probe_forms=forms)
+                                probe_sizes=sizes, probe_forms=forms,
+                                candidates=read_json(arguments["candidates"]) if arguments.get("candidates") else None)
         return {"pass": 0, "fail": 1, "unknown": 3}[output["result"]], output
     if arguments.get("command") == "measure":
         from .source_measure import measure_source

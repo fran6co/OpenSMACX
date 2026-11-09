@@ -380,13 +380,15 @@ def _helper_offset(prefix: str) -> int:
 
 def permute_source(root: Path, target: str, *, image: Path, in_file=None, iterations=200, seed=0,
                    time_limit=None, keep_best=None, operators=None, progress=None, compiler=None,
-                   slots=None, probe_sweep=False, probe_sizes=None, probe_forms=None):
+                   slots=None, probe_sweep=False, probe_sizes=None, probe_forms=None, candidates=None):
     """Search body spellings of one mapped function; ``slots`` compiles trials concurrently.
 
     ``slots`` is ``[(name, environment)]``, one distinct provisioned compiler
     slot per concurrent compile (leased by the caller or explicitly supplied).
     ``probe_sweep`` replaces the random search by an exhaustive ranking of
     single dead-budget-probe placements (marked stand-ins, never recovery).
+    ``candidates`` (a parsed deck, see ``candidate_variants``) instead ranks
+    caller-written body spellings of the target function.
     """
     root = Path(root).resolve()
     settings = Measurement.read(root)
@@ -439,6 +441,11 @@ def permute_source(root: Path, target: str, *, image: Path, in_file=None, iterat
         tokenize(original_body)
     except Unsupported as error:
         raise ValueError(f"target body is outside the supported token grammar: {error}") from error
+    candidate_rows = None
+    if candidates is not None:
+        if probe_sweep:
+            raise ValueError("candidate decks and probe sweeps are alternatives")
+        candidate_rows = candidate_variants(candidates, original_body)
     helper_at = []
     destination = _ignored_destination(
         root, Path(keep_best) if keep_best else Path("build/recovery/permute") / record.address_hex / host_path.name,
@@ -618,9 +625,9 @@ def permute_source(root: Path, target: str, *, image: Path, in_file=None, iterat
         control_compiles = 1 + len(replicas)
 
         started = time.monotonic()
-        if probe_sweep:
+        if probe_sweep or candidate_rows is not None:
             sweep = _probe_sweep(original_body, parameters, probe_sizes, probe_forms, score, score_many,
-                                 pool is not None, keep, time_limit, progress)
+                                 pool is not None, keep, time_limit, progress, variants=candidate_rows)
             result = sweep["result"]
         else:
             result = search(original_body, score, iterations=iterations, seed=seed, time_limit=time_limit,
@@ -651,7 +658,7 @@ def permute_source(root: Path, target: str, *, image: Path, in_file=None, iterat
         "inputs_changed": stale,
         "address": record.address_hex, "name": record.name, "symbol": record.symbol or record.name,
         "source": host, "translation_unit": unit_relative, "flag_sets": [list(flags) for flags in grid],
-        "mode": "probe_sweep" if probe_sweep else "search",
+        "mode": "probe_sweep" if probe_sweep else "candidates" if candidate_rows is not None else "search",
         "seed": seed, "iterations": result.iterations, "iteration_limit": iterations,
         "time_limit": time_limit, "stop_reason": result.stop_reason, "interrupted": result.interrupted,
         "exact": result.best.exact,
@@ -681,6 +688,11 @@ def permute_source(root: Path, target: str, *, image: Path, in_file=None, iterat
         summary["limitations"].append(
             "concurrent trials are batched per round: the trajectory is reproducible for one seed and job count, "
             "but differs from a run with another job count")
+    if sweep is not None and candidate_rows is not None:
+        summary["candidates"] = {"variants": sweep["variants"], "complete": sweep["complete"],
+                                 "ranking": [{key: value for key, value in row.items() if key != "probe"}
+                                             | {"candidate": row["probe"]} for row in sweep["ranking"]]}
+        sweep = None
     if sweep is not None:
         counts = {}
         for row in sweep["ranking"]:
@@ -702,15 +714,55 @@ def permute_source(root: Path, target: str, *, image: Path, in_file=None, iterat
     return summary
 
 
-def _probe_sweep(original_body, parameters, sizes, forms, score, score_many, parallel, keep, time_limit, progress):
-    """Score every single-probe placement; deterministic ranking by (distance, size, order)."""
+def candidate_variants(deck, original_body: str) -> list[tuple[str, str]]:
+    """Expand a candidate deck into ``[(name, body text)]`` for the target body.
+
+    Deck schema 1: ``{"schema_version": 1, "candidates": {name: spec}}`` where
+    ``spec`` is ``{"body": text}`` (the whole text between the braces) or
+    ``{"replace": [{"before": text, "after": text}, ...]}`` applied in order to
+    the current body, each ``before`` occurring exactly once. Mapping markers
+    and claim text are refused; candidates never edit other files.
+    """
+    if (not isinstance(deck, dict) or deck.get("schema_version") != 1
+            or set(deck) != {"schema_version", "candidates"}
+            or not isinstance(deck["candidates"], dict) or not deck["candidates"]):
+        raise ValueError("candidate deck requires schema_version 1 and a nonempty candidates object")
+    rows = []
+    for name, spec in deck["candidates"].items():
+        if not isinstance(name, str) or not name or not isinstance(spec, dict) or len(spec) != 1:
+            raise ValueError("each candidate needs a name and exactly one of body or replace")
+        if "body" in spec:
+            text = spec["body"]
+            if not isinstance(text, str):
+                raise ValueError(f"candidate {name!r} body must be text")
+        elif "replace" in spec and isinstance(spec["replace"], list) and spec["replace"]:
+            text = original_body
+            for edit in spec["replace"]:
+                if (not isinstance(edit, dict) or set(edit) != {"before", "after"}
+                        or not all(isinstance(edit[key], str) for key in edit) or not edit["before"]):
+                    raise ValueError(f"candidate {name!r} replacements need before/after text")
+                if text.count(edit["before"]) != 1:
+                    raise ValueError(f"candidate {name!r}: replacement text must occur exactly once")
+                text = text.replace(edit["before"], edit["after"], 1)
+        else:
+            raise ValueError(f"candidate {name!r} needs a body or a nonempty replace list")
+        if any(word in text for word in _PROTECTED):
+            raise ValueError(f"candidate {name!r} contains mapping or claim text")
+        rows.append((name, text))
+    return rows
+
+
+def _probe_sweep(original_body, parameters, sizes, forms, score, score_many, parallel, keep, time_limit, progress,
+                 variants=None):
+    """Score every single-probe placement (or the given variants); ranking by (distance, order)."""
     from .permute import SearchResult
     started = time.monotonic()
     start = score(original_body) if not parallel else score_many([original_body])[0]
     if start is None:
         raise ValueError("the unchanged body does not compile through the scorer")
     result = SearchResult(start=start, best=start, best_text=original_body, compiles=1, stop_reason="sweep")
-    variants = probe_variants(original_body, parameters, sizes=sizes, forms=forms)
+    if variants is None:
+        variants = probe_variants(original_body, parameters, sizes=sizes, forms=forms)
     ranking, complete = [], True
     chunk = 32
     try:

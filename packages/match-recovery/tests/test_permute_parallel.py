@@ -259,3 +259,19 @@ def test_probe_helpers_land_at_file_scope_before_marker_comments():
     at = _helper_offset(prefix)
     assert prefix[at:].startswith("\n/*\nPurpose:")
     assert _helper_offset("// ORIGINAL: 0x1 g\nvoid g() {") == 0
+
+
+def test_candidate_deck_expands_bodies_and_anchored_replacements():
+    from match_recovery.source_permute import candidate_variants
+    body = "\n    int x = a + b;\n    return x;\n"
+    rows = candidate_variants({"schema_version": 1, "candidates": {
+        "whole": {"body": "\n    return a + b;\n"},
+        "edit": {"replace": [{"before": "a + b", "after": "b + a"}]}}}, body)
+    assert rows == [("whole", "\n    return a + b;\n"), ("edit", "\n    int x = b + a;\n    return x;\n")]
+    for deck, message in (
+            ({"schema_version": 2, "candidates": {"x": {"body": ""}}}, "schema_version 1"),
+            ({"schema_version": 1, "candidates": {"x": {"replace": [{"before": "x", "after": "y"}]}}}, "exactly once"),
+            ({"schema_version": 1, "candidates": {"x": {"body": "// ORIGINAL: 0x1"}}}, "claim text"),
+            ({"schema_version": 1, "candidates": {"x": {"body": "a", "replace": []}}}, "exactly one of")):
+        with pytest.raises(ValueError, match=message):
+            candidate_variants(deck, body)
