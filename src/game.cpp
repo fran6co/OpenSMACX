@@ -3166,11 +3166,20 @@ int GameDataPlayerCountSnapshot;
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x005BED20 0x005BEFE0 0x005BEFF0 0x005BED70
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x005BED20 0x005BEFF0 0x005BF004 0x005BED6A
-// ORIGINAL: 0x005BED20 ?do_unity_crash@@YAHHHH@Z 0x005BED20-0x005BEFDF
+// ORIGINAL: 0x005BED20 ?do_unity_crash@@YAHHHH@Z 0x005BED20-0x005BEFDF BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Recover Map bit2 event dispatch, spawn/morale and turn-based energy awards, and the live Base table radar scan with real UI/audio objects. The seed note calling this a unit scan is historical; the original stride134 and nativeBase count prove Bases. No byte/reference or runtime claim is granted.","evidence":["git:3f579310:src/unrecovered/005bed20.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/scenario-artifact-unity-owner-coverage.json","Original full span and native physical COFF emitted symbol ?do_unity_crash@@YAHHHH@Z; existing source owns all referenced storage and services."]}
 // NOTE: code bytes match the image with relocations masked; recover measure
 //       refuses it while ConsoleInfoWin/WorldClimateWorldWin lack bounded
 //       object spans. The image keeps two "unitfound_sm.pcx" literals (unpooled).
+// RECOVERY_LITERAL: v1 0x00691BF8 0x00691C09 $SG66403 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C0C 0x00691C19 $SG66404 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C1C 0x00691C2D $SG66407 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C30 0x00691C3B $SG66408 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C3C 0x00691C4C $SG66411 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C4C 0x00691C58 $SG66412 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C58 0x00691C60 $SG66419 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C60 0x00691C72 $SG66421 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C74 0x00691C7F $SG66422 0x005BED20
 int __cdecl do_unity_crash(int x, int y, int faction_id) {
     const uint32_t event = MapTiles[static_cast<int>(MapLongitude) * y + (x >> 1)].bit2;
     if ((event & 0x80004000u) != 0x4000u) {

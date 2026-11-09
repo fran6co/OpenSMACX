@@ -3787,7 +3787,7 @@ void Console::on_nc_mouse_move(int x_coord, int y_coord) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x005166D0 0x005168B8 0x005168D0 0x005166F2
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x005166D0 0x005168D0 0x00516921 0x005166EC
-// ORIGINAL: 0x005166D0 ?cursor_key@Console@@QAEXHHH@Z 0x005166D0-0x005168B7
+// ORIGINAL: 0x005166D0 ?cursor_key@Console@@QAEXHHH@Z 0x005166D0-0x005168B7 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005166d0.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
 void Console::cursor_key(int, int character, int) {
     switch (character) {

@@ -1452,7 +1452,7 @@ void ReportWin::on_left_double_click(int x, int y) {
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00497AC0 0x00497E6C 0x00497E98 0x00497D5D
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x00497AC0 0x00497E98 0x00497EFC 0x00497D57
-// ORIGINAL: 0x00497AC0 ?right_menu@ReportWin@@QAEXHHH@Z 0x00497AC0-0x00497E69;0x00659420-0x00659435
+// ORIGINAL: 0x00497AC0 ?right_menu@ReportWin@@QAEXHHH@Z 0x00497AC0-0x00497E69;0x00659420-0x00659435 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:649230f6:src/recovered/units/00497ac0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 void ReportWin::right_menu(int base_id, int x, int y) {
     PullDown menu;
