@@ -2472,6 +2472,12 @@ static inline int mapwin_next_in_stack(int vehicle) {
 void MapWin::draw_vehicles(int tile_x, int tile_y, int pixel_x, int pixel_y,
                            int faction_id) {
     int draw_state = 2;
+    // Function scope, not the cursor block: the image packs the spilled
+    // vehicle y into draw_state's slot and gives these their own slots below.
+    int mouse_x;
+    int mouse_y;
+    int cursor_tile_x;
+    int cursor_tile_y;
     if (MapBaseDisplayOverride == 0 && ControlTurnPhase == 0 &&
         (GameDataStateStorage.fields_.game_rules_ & 0x80) == 0) {
         return;
@@ -2536,11 +2542,7 @@ void MapWin::draw_vehicles(int tile_x, int tile_y, int pixel_x, int pixel_y,
             Vehs[target].order == 0 && ConsoleGlobal.survey_mode_ == 0 &&
             (IsMultiplayerNet == 0 || ConsoleControlTurnActive == 0)) {
             if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x200U) != 0) return;
-            int mouse_x;
-            int mouse_y;
             get_mouse_pos(&mouse_x, &mouse_y);
-            int cursor_tile_x;
-            int cursor_tile_y;
             pixel_to_tile(mouse_x, mouse_y, &cursor_tile_x, &cursor_tile_y);
             if ((mapwin_route_distance(cursor_tile_x, cursor_tile_y,
                                        Vehs[ConsoleGlobal.selected_vehicle_].x,
@@ -2556,21 +2558,17 @@ void MapWin::draw_vehicles(int tile_x, int tile_y, int pixel_x, int pixel_y,
     }
 
     if ((field_1DD70_ & 0x00200000U) != 0) {
-        target = veh_at(tile_x, tile_y);
-        if (target < 0) return;
-        while (Vehs[target].home_base_id !=
-               static_cast<int16_t>(TutWinBaseWindow.focused_base_id())) {
-            target = Vehs[target].next_veh_id_stack;
-            if (target < 0) return;
+        for (target = veh_at(tile_x, tile_y); target >= 0;
+             target = Vehs[target].next_veh_id_stack) {
+            if (Vehs[target].home_base_id == TutWinBaseWindow.focused_base_id()) break;
         }
     }
     if (target < 0) return;
 
     if ((GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) == 0) {
-        const Veh &vehicle = Vehs[target];
-        if (vehicle.faction_id != ConsoleGlobal.faction_id_ ||
-            (vehicle.flags & 0x440U) == 0x440U) {
-            if ((vehicle.visibility & (1U << ConsoleGlobal.faction_id_)) == 0)
+        if (Vehs[target].faction_id != ConsoleGlobal.faction_id_ ||
+            (Vehs[target].flags & 0x440U) == 0x440U) {
+            if ((Vehs[target].visibility & (1U << ConsoleGlobal.faction_id_)) == 0)
                 return;
         }
     }
@@ -7016,10 +7014,13 @@ void MapWin::init_dummy() {
 
 // The zoom-dependent altitude scale every get_alt adjustment multiplies by.
 static inline int get_alt_scale(MapWin *w, int count) {
+    int scale;
     if (MapWinCaptionScale > 0) {
-        return MapWinCaptionScale * count / MapWinCaptionDivisor;
+        scale = MapWinCaptionScale * count / MapWinCaptionDivisor;
+    } else {
+        scale = (w->zoom_offset_ + 0x10) * count / 16;
     }
-    return (w->zoom_offset_ + 0x10) * count / 16;
+    return scale;
 }
 
 // Cache writes for one corner altitude and its detail nibble.
@@ -7689,7 +7690,7 @@ int MapWin::get_point_light(int x, int y, int corner) {
 
 // Fixed-slot bindings carried from 00462980.cpp
 
-// ORIGINAL: 0x00462980 ?calculate_dimensions@MapWin@@QAEXXZ 0x00462980-0x00462EFA FILE
+// ORIGINAL: 0x00462980 ?calculate_dimensions@MapWin@@QAEXXZ 0x00462980-0x00462EFA FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned462D82/462DB1 load initial or bypass count;462DA2/462DEB/462E1A reload after each row. Third pass keeps the prior count and retests owned_ at462DF8.", "Pinned stores brightness0..3 and altitude4..8; terrain/detail9..11 remain untouched. No allocation, range guard or safety fix is introduced.", "GraphicWin inherits Win then Buffer; Win size0x444 and Buffer DIB biWidth/biHeight0x80/0x84 identify GraphicWin offsets0x4C4/0x4C8. MapWin virtually inherits GraphicWin and Console inherits MapWin.", "Pinned462A23/462A57/462B23 read width and462A3E/462A77/462B6A read stored signed height independently. Pinned463058 onward compares pixel width before negative stored height; the short circuit and output-write paths are retained.", "Pinned Font init calls462E5D/462E9C/462EE1 load the LPCSTR global691B2C for fonts A/C/B with styles0/2/1. interface_fonts.h declares LPCSTR DefaultFontFace; font.h declares Font::init(LPCSTR,int,int); each call reloads the global pointer."], "reason": "Invalidate the existing cache through named brightness/altitude fields while retaining the original shared signed area-count flow. Use the genuine virtual GraphicWin/Buffer DIB members rather than a fixed MapWin base displacement; preserve original read points and signed-height arithmetic. Restore Font::init pointer arguments rather than treating a font-name character as an address."}
 // size      1402 bytes
 // prototype void (__thiscall ?calculate_dimensions@MapWin@@QAEXXZ)(MapWin* this)
@@ -7705,19 +7706,20 @@ void MapWin::calculate_dimensions() {
     if (zoom_scale < 1) {
         field_1DDC8_ = 1;
     }
-    const int unit = field_1DDC8_;
-    const int half_height = unit * 2;
-    const int tile_height = unit * 4;
-    field_1DDC4_ = half_height;
-    field_1DDBC_ = half_height * 2;
-    const int tile_width = half_height * 4;
-    field_1DDC0_ = half_height;
+    // The sizes are derived from the stored fields (VC6 forwards the stored
+    // values), with only tile_width a local. The image divides with signed
+    // IDIV; mapwin.h still declares field_1DDBC_..field_1DDC8_ uint32_t, so
+    // the reads feeding a division are cast to int.
+    field_1DDC4_ = field_1DDC8_ * 2;
+    field_1DDBC_ = field_1DDC4_ * 2;
+    field_1DDC0_ = field_1DDC4_;
+    const int tile_width = field_1DDC4_ * 4;
     tile_pixel_width_ = tile_width;
-    tile_pixel_height_ = tile_height;
+    tile_pixel_height_ = field_1DDC8_ * 4;
     field_1DDCC_ = (pixel_width() + tile_width - 1) / tile_width;
-    field_1DDD0_ = (tile_height - dib_.bmiHeader.biHeight + half_height - 1) / tile_height;
-    field_1DDD4_ = (pixel_width() + half_height * 2 + tile_width - 1) / tile_width;
-    field_1DDD8_ = (tile_height - dib_.bmiHeader.biHeight + half_height - 1) / tile_height;
+    field_1DDD0_ = (tile_pixel_height_ - dib_.bmiHeader.biHeight + static_cast<int>(field_1DDC4_) - 1) / tile_pixel_height_;
+    field_1DDD4_ = (pixel_width() + static_cast<int>(field_1DDC0_) * 2 + tile_width - 1) / tile_width;
+    field_1DDD8_ = (tile_pixel_height_ - dib_.bmiHeader.biHeight + static_cast<int>(field_1DDC4_) - 1) / tile_pixel_height_;
     if (this == static_cast<MapWin *>(&ConsoleGlobal)) {
         const int y = center_y_;
         const int x = center_x_;
