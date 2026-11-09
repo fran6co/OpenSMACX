@@ -31,11 +31,34 @@ guidance below and in `recovery/WORKFLOW.md`:
    commit must still build and link (`cmake --build build`), and
    `recover check-claims` must stay clean.
 5. Framework/package work is frozen unless a measured matching problem is
-   blocked by it.
+   blocked by it, or it speeds up this loop (see "Loop tools" below).
 6. Priority: fix regressed claims first (they were exact before), then
    unclaimed functions ranked by translation unit and similarity.
 7. Parallel workers each own one source file (conflict domain); the coordinator
    commits and integrates. Workers may still use isolated worktrees.
+
+Byte-exact first, workarounds allowed (user decision, 2026-11-09): reach 100%
+byte-exact functions first, even with less-than-ideal code, then run cleanup
+passes that reconstruct the headers and remove the workarounds. When the
+original header context (inline status, declaration set, field type) is
+unknown, a function may use a marked stand-in, tagged on its line or just
+above it as `// WORKAROUND(<inline|noinline|type|decl|volatile>): <evidence>`
+so the cleanup pass can find it. VC6's controls are limited (see
+`recovery/COMPILER_EVIDENCE.md`, "VC6 inline controls"): `__forceinline`
+forces an expansion but does not spend the /Ob2 budget the original expansion
+did; `#pragma inline_depth(0)` disables every expansion including forced ones;
+there is no `noinline`, so keeping one call site out of line needs a
+non-inline declaration with an `inline` twin for the expanded sites. Prefer a
+real source fix whenever a break can be explained; a header change goes in
+during this phase only when `recover check-matches --since <base> --baseline
+<report>` shows gains and no losses.
+
+Loop tools: `recover measure` takes about 5 s. `recover check-matches --unit
+<tu>` or `--since <rev>` measures only the affected TUs (never a full pass;
+`--baseline <report>` lists what moved, `--output <ignored path>` keeps the
+report). `recover permute <addr> --jobs N` searches body spellings without a
+task. Framework changes that speed up this loop are allowed alongside measured
+matching blockers.
 
 Unchanged: faithful bug-for-bug recovery; no `_emit`, copied machine code, or
 fixed-address calls; never hand-edit `ORIGINAL:`/`BYTE_EXACT` markers;

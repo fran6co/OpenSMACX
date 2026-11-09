@@ -84,7 +84,9 @@ policy is in `WORKFLOW.md`; no spelling trick overrides that policy.
   those consumers did not restore the original calls. Definition visibility
   across this compiling TU matters; source order alone does not isolate this
   body from VC6's inliner. Preserve the constructor claims and investigate original TU
-  visibility/compiler policy rather than forcing a local noinline workaround.
+  visibility/compiler policy. (Since 2026-11-09 a marked `WORKAROUND(noinline)`
+  is allowed until every function is exact; the visibility question stays open
+  for the cleanup pass.)
 - Bounded unchanged-source Sound controls do not support an `/Ob1` fix:
   replacing only `/Ob2` with `/Ob1` leaves both Voice constructor misses and
   loses masked matches for `release_sound` and `Sound::Sound`. Removing the
@@ -107,7 +109,9 @@ policy is in `WORKFLOW.md`; no spelling trick overrides that policy.
   established. This is a constraint on inline visibility and provider placement,
   not proof of a historical object boundary or an integrated recovery. Do not
   manufacture constructor uses, export attributes or noinline controls to hide
-  the remaining emission question. The diagnostic overlays are not source claims.
+  the remaining emission question; since 2026-11-09 such controls are allowed
+  only as marked `WORKAROUND(...)` stand-ins that the cleanup pass must remove.
+  The diagnostic overlays are not source claims.
 - A simpler subsequent control needs no header changes: omitting only the
   `set_type` definition from the current compiling Sound unit restores both
   Voice constructor rows while retaining both standalone base-constructor
@@ -473,3 +477,28 @@ is not yet wired into the supplied recovery driver.
   decisions. Where the image calls a callee out of line late in a caller,
   the original budget ran out there; that is a source question about
   statement order, caller size or callee spelling, not a flag question.
+- VC6 inline controls (2026-11-09 scratch experiments, /O2 /Ob2 /GX -MT,
+  the project's vc6-cl): what each control can and cannot do, for marked
+  workarounds while the original header context is unknown.
+  - `__forceinline` expands under normal /Ob2 and does not spend the
+    caller's /Ob2 budget: with 40 later calls to a mid-size inline helper,
+    a forced large callee left 29 of them out of line, the same as without
+    it, while the same callee as plain `inline` left 31 out of line. So
+    forcing a call site the original inlined naturally can change later
+    inline decisions in a caller near its budget limit; check the whole
+    caller after forcing.
+  - Inside `#pragma inline_depth(0)` nothing inlines, `__forceinline`
+    included (C4714 "marked as __forceinline not inlined"). There is no
+    "off by default, force the exceptions" region; `inline_depth(0)` fits
+    only callers whose original expansions are all calls.
+  - `#pragma auto_inline(off)` around a caller does not stop functions
+    declared `inline`. Around a callee's own definition it stops automatic
+    expansion of that callee when it is not declared `inline`.
+  - VC6 has no `__declspec(noinline)` (C2485). Calling through `(&f)(x)`,
+    `(*f)(x)` or a member-function pointer still expands an inline `f`.
+  - So a single out-of-line call site of an `inline` helper needs the body
+    to be invisible there: a non-inline declaration of the real function
+    (defined under `auto_inline(off)` in its owning TU), with an `inline`
+    twin of the same body for the sites the original expanded. A plain
+    `inline` twin spends budget as the original expansion did; a
+    `__forceinline` twin does not.
