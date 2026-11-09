@@ -230,3 +230,19 @@ def test_summary_retains_regression_identity(mapped, capsys):
     report = json.loads(capsys.readouterr().out)
     assert report["measured"] == 2 and "measurements" not in report
     assert report["regressed"][0]["path"] == "engine/family.cc"
+
+
+def test_scoped_check_measures_only_selected_units_and_never_passes(mapped, capsys):
+    run(mapped)
+    commit(mapped, "Measured source")
+    full = check(mapped)
+    assert full["result"] == "pass" and "scope" not in full
+    scoped = check(mapped, units={"engine/family.cc"})
+    assert scoped["result"] == "unknown" and scoped["scope"]["scoped_result"] == "pass"
+    assert scoped["scope"]["complete"] is False and scoped["counts"] == {"pass": 2}
+    assert [row["verdict"] for row in scoped["measurements"]] == [row["verdict"] for row in full["measurements"]]
+    empty = check(mapped, units=set())
+    assert empty["result"] == "unknown" and empty["claims"] == 0 and empty["scope"]["omitted"]["measurement_groups"] == 1
+    code = main(["check-matches", "--root", str(mapped), "--image", "original/input.exe", "--unit", "engine/family.cc"])
+    report = json.loads(capsys.readouterr().out)
+    assert code == 3 and report["scope"]["scoped_result"] == "pass"

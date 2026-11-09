@@ -84,6 +84,10 @@ def register(commands):
     matches.add_argument("--root", type=Path, default=Path.cwd())
     matches.add_argument("--image", type=Path, required=True)
     matches.add_argument("--jobs", type=int, default=1, help="Concurrent TUs; must fit isolated compiler capacity")
+    matches.add_argument("--since", help="Measure only TUs a change since this revision can affect; never a full pass")
+    matches.add_argument("--unit", dest="units", action="append", help="Measure this TU too (repeatable); never a full pass")
+    matches.add_argument("--baseline", type=Path, help="Saved full report to diff against (display only)")
+    matches.add_argument("--output", type=Path, help="Also write the full report here (must be Git-ignored)")
     matches.add_argument("--summary", action="store_true")
     layout = commands.add_parser("check-layout", help="Freshly check source-owned layout expectations across product TUs; not full structure proof")
     layout.add_argument("--root", type=Path, default=Path.cwd())
@@ -486,7 +490,37 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
         return output["exit_code"], output
     if arguments.get("command") == "check-matches":
         from .match_check import check_matches
-        output = check_matches(root, arguments["image"], jobs=arguments.get("jobs", 1))
+        units, scope = None, None
+        if arguments.get("since") or arguments.get("units"):
+            from .match_scope import affected_units, changed_files
+            from .measurement import Measurement
+            settings = Measurement.read(root)
+            database = settings.source.path(root, read_json(root / "recovery/project.json")["mappings"]["compile_commands"])
+            units, scope = set(), {"since": arguments.get("since"), "requested_units": arguments.get("units") or []}
+            if arguments.get("since"):
+                affected = affected_units(root, settings, database.read_bytes(),
+                                          changed_files(root, arguments["since"]), since=arguments["since"])
+                scope.update({key: value for key, value in affected.items() if key != "units"})
+                if affected["units"] is None:
+                    units = None
+                else:
+                    units.update(affected["units"])
+            if units is not None:
+                units.update(Path(name).as_posix() for name in arguments.get("units") or [])
+        output = check_matches(root, arguments["image"], jobs=arguments.get("jobs", 1), units=units, scope=scope)
+        if units is None and scope is not None:
+            output["scope"] = {**scope, "complete": True}
+        if arguments.get("baseline"):
+            from .match_delta import compare_match_reports
+            output["delta"] = compare_match_reports(read_json(arguments["baseline"]), output)
+        if arguments.get("output"):
+            import json
+            import subprocess
+            destination = arguments["output"].resolve()
+            if subprocess.run(["git", "check-ignore", "-q", "--", str(destination)], cwd=root).returncode != 0:
+                raise ValueError("check-matches --output must name a Git-ignored path")
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_text(json.dumps(output, indent=2) + "\n")
         if arguments.get("summary"):
             output["measured"] = len(output.pop("measurements"))
         return {"pass": 0, "fail": 1, "unknown": 3}[output["result"]], output

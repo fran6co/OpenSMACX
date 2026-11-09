@@ -99,14 +99,20 @@ def _observation(root, record, observed, *, built, source):
     return row
 
 
-def check_matches(root: Path, image: Path, *, jobs: int = 1) -> dict:
+def check_matches(root: Path, image: Path, *, jobs: int = 1, units=None, scope=None) -> dict:
     """Ask every current claim and discover unclaimed matches in product TUs.
 
     Compiler recipe selection stays behind the configured compiler boundary.
     Missing seed recipes are unknown, not an implicit borrowed environment.
     A built claim that loses its compiled subject fails the obligation check;
     unsupported non-TU hosts remain visible and unmeasurable.
+
+    ``units`` (project-relative translation units) restricts measurement to
+    those units. A scoped report is never ``pass``: omitted claims are not
+    measured, so a clean scope reports ``unknown`` with ``scope.scoped_result``.
     """
+    if units is not None:
+        units = {Path(name).as_posix() for name in units}
     root = root.resolve()
     if type(jobs) is not int or jobs < 1:
         raise ValueError("match-check jobs must be a positive integer")
@@ -208,6 +214,13 @@ def check_matches(root: Path, image: Path, *, jobs: int = 1) -> dict:
             pair = pair_by_record.get(record_key)
             if pair is not None and pair not in pairs_by_path[group_key]:
                 pairs_by_path[group_key].append(pair)
+    omitted = None
+    if units is not None:
+        kept = {key: value for key, value in groups.items() if key[0].relative_to(root).as_posix() in units}
+        omitted = {"measurement_groups": len(groups) - len(kept), "unsupported_hosts": len(unsupported),
+                   "component_claims": len(component_selected)}
+        groups = defaultdict(list, kept)
+        unsupported, component_selected = [], {}
     references = measurement_reference_targets(root, settings, source_index)
     work = [(root, settings.compiler_profile, unit_path, group, image,
              settings.flags_for(unit_path.relative_to(root).as_posix()), shared,
@@ -279,6 +292,13 @@ def check_matches(root: Path, image: Path, *, jobs: int = 1) -> dict:
     if unclaimed_unbound_unknowns:
         counts["unknown"] += unclaimed_unbound_unknowns
     result = "fail" if counts["fail"] else "unknown" if counts["unknown"] or not claims else "pass"
+    scope_report = None
+    if units is not None:
+        # Omitted units are unmeasured, so a clean scope is never a pass.
+        scope_report = {**(scope or {}), "complete": False, "units": sorted(units),
+                        "omitted": omitted, "scoped_result": result}
+        if result == "pass":
+            result = "unknown"
     unclaimed = [row for row in rows if not row["byte_obligation"] and not row["shape_obligation"]]
     return {
         "schema_version": 1, "check": "historical_source_matches", "result": result,
@@ -307,6 +327,7 @@ def check_matches(root: Path, image: Path, *, jobs: int = 1) -> dict:
         "compile_attempts": sum(unit.compile_attempts for unit in measurements),
         "reused_attempts": sum(unit.reused_attempts for unit in measurements),
         "external_build_inputs": external, "input_fingerprint": digest(before),
+        **({"scope": scope_report} if scope_report is not None else {}),
         "persisted": False, "ready_for_collection": False,
         "limitations": ["historical masked-byte obligations, not strict reference or structural correctness",
                         "source-history identity coverage, source integrity and intended build ownership are separate checks",
