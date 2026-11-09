@@ -593,7 +593,7 @@ Purpose: Cut a width x height rectangle at (x, y) out of a locked buffer into
          CRT otherwise, then fill in the two per-vertex u/v arrays the
          rasterisers interpolate across: `corners_` gets the four corners and
          `cornersAndMids_` those four plus the four edge midpoints.
-// ORIGINAL: 0x00619710 ?extract@Texture@@QAEHPAUBuffer@@HHHHPAUTexHeap@@@Z 0x00619710-0x006198DE
+// ORIGINAL: 0x00619710 ?extract@Texture@@QAEHPAUBuffer@@HHHHPAUTexHeap@@@Z 0x00619710-0x006198DE BYTE_EXACT
 // symbol    ?extract@Texture@@QAEHPAVBuffer@@HHHHPAUTexHeap@@@Z
 //            the image spells `Buffer` as a struct (PAU) and this tree declares
 //            it `class`, so VC6 decorates PAV. Same bytes, differing name -
@@ -670,13 +670,11 @@ int Texture::extract(Buffer *buffer, int x, int y, int width, int height,
         int h = static_cast<int>(iHeight_);
         int widthMinus1 = w - 1;
         int heightMinus1 = h - 1;
-        int widthHalfMinus1 = w / 2 - 1;
-        int heightHalfMinus1 = h / 2 - 1;
         corners_[0].x = 0;
         corners_[0].y = 0;
         corners_[1].x = widthMinus1;
         corners_[2].x = widthMinus1;
-        cornersAndMids_[1].x = widthHalfMinus1;
+        cornersAndMids_[1].x = w / 2 - 1;
         cornersAndMids_[2].x = widthMinus1;
         cornersAndMids_[3].x = widthMinus1;
         cornersAndMids_[4].x = widthMinus1;
@@ -691,11 +689,11 @@ int Texture::extract(Buffer *buffer, int x, int y, int width, int height,
         cornersAndMids_[0].y = 0;
         cornersAndMids_[1].y = 0;
         cornersAndMids_[2].y = 0;
-        cornersAndMids_[3].y = heightHalfMinus1;
-        cornersAndMids_[5].x = widthHalfMinus1;
+        cornersAndMids_[3].y = h / 2 - 1;
+        cornersAndMids_[5].x = w / 2 - 1;
         cornersAndMids_[6].x = 0;
         cornersAndMids_[7].x = 0;
-        cornersAndMids_[7].y = heightHalfMinus1;
+        cornersAndMids_[7].y = h / 2 - 1;
         return 0;
     }
 
@@ -1445,7 +1443,7 @@ int __cdecl Texture::setup_edge(EdgeScan *edge, int vertex_index) {
 
 // Fixed-slot bindings carried from 006198e0.cpp
 
-// ORIGINAL: 0x006198E0 ?draw_trans@Texture@@QAEXPAUBuffer@@PAUVert@@HPAUVert@@@Z 0x006198E0-0x00619D7F FILE
+// ORIGINAL: 0x006198E0 ?draw_trans@Texture@@QAEXPAUBuffer@@PAUVert@@HPAUVert@@@Z 0x006198E0-0x00619D7F FILE BYTE_EXACT
 // symbol    ?draw_trans@Texture@@QAEXPAVBuffer@@PAUVert@@H1@Z
 //            the image spells `Buffer` and `Texture` as structs (PAU) and the
 //            two setups as `QAA`, a __cdecl member taking no receiver; this tree
@@ -1481,6 +1479,10 @@ int __cdecl Texture::setup_edge(EdgeScan *edge, int vertex_index) {
 // arithmetic; exact FISTP results/status under every caller control-word
 // state, invalid geometry, aliasing and runtime effects remain unproved.
 void Texture::draw_trans(Buffer *buffer, Vert *vertices, int count, Vert *uv) {
+    // Function-scope edges: the image frames them above the x extents
+    // (left at EBP-0x78, min_x/max_x at EBP-0x80/-0x7C).
+    EdgeScan left;
+    EdgeScan right;
     TextureRasterPixelBase = buffer->get_data();
     // Hand-written assembly: the blitters reset the FPU with FINIT.
     __asm finit
@@ -1498,31 +1500,27 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int count, Vert *uv) {
         TextureRasterClipLeft = clip->left;
         TextureRasterClipBottom = clip->bottom;
         TextureRasterClipTop = clip->top;
-        int min_y = 0x7fff;
         int max_y = -0x7ffd;
-        int min_x = 0x7fff;
+        int min_y = 0x7fff;
         int max_x = -0x7ffd;
+        int min_x = 0x7fff;
         int top;
-        EdgeScan left;
-        EdgeScan right;
-        Vert *v = vertices;
-        for (int i = 0; i < count; ++i, ++v) {
-            if (v->y < min_y) {
-                min_y = v->y;
+        // Same scan as 0x0061A760: tests read the argument, extents come from
+        // the published TextureRasterEdgeVerticesB copy (max-branch reloads).
+        for (int i = 0; i < count; ++i) {
+            if (vertices[i].y < min_y) {
+                min_y = TextureRasterEdgeVerticesB[i].y;
                 top = i;
             }
-            if (v->y > max_y) {
-                // volatile: stand-in for the image's reload of v->y in the max branch; no plain spelling found
-                int y = *(volatile int *)&v->y;
+            if (vertices[i].y > max_y) {
+                max_y = TextureRasterEdgeVerticesB[i].y;
                 TextureRasterMaxYIndex = i;
-                max_y = y;
             }
-            if (v->x < min_x) {
-                min_x = v->x;
+            if (vertices[i].x < min_x) {
+                min_x = TextureRasterEdgeVerticesB[i].x;
             }
-            if (v->x > max_x) {
-                // volatile: stand-in for the image's reload of v->x in the max branch; no plain spelling found
-                max_x = *(volatile int *)&v->x;
+            if (vertices[i].x > max_x) {
+                max_x = TextureRasterEdgeVerticesB[i].x;
             }
         }
         if (min_y < max_y) {
@@ -1548,13 +1546,14 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int count, Vert *uv) {
                         fld1
                     }
                     int span = (right.accumC - left.accumC) << 16;
-                    int delta;
+                    int dv;
+                    int du;
                     if (span > 0) {
-                        delta = right.accumB - left.accumB;
-                        __asm fild delta
-                        delta = right.accumA - left.accumA;
+                        dv = right.accumB - left.accumB;
+                        __asm fild dv
+                        du = right.accumA - left.accumA;
                         __asm {
-                            fild delta
+                            fild du
                             fild span
                             fdivr st, st(3)
                         }
@@ -1598,11 +1597,11 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int count, Vert *uv) {
                             }
                             span = (right.accumC - left.accumC) << 16;
                             if (span > 0) {
-                                delta = right.accumB - left.accumB;
-                                __asm fild delta
-                                delta = right.accumA - left.accumA;
+                                dv = right.accumB - left.accumB;
+                                __asm fild dv
+                                du = right.accumA - left.accumA;
                                 __asm {
-                                    fild delta
+                                    fild du
                                     fild span
                                     fdivr st, st(3)
                                 }
@@ -1709,7 +1708,7 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int count, Vert *uv) {
 // RECOVERY_OBJECT: v1 0x009BB548 ?TextureRasterKey@@3IA
 unsigned int TextureRasterKey;
 
-// ORIGINAL: 0x0061A240 ?draw_trans@Texture@@QAEXPAUBuffer@@PAUVert@@H@Z 0x0061A240-0x0061A753 FILE
+// ORIGINAL: 0x0061A240 ?draw_trans@Texture@@QAEXPAUBuffer@@PAUVert@@H@Z 0x0061A240-0x0061A753 FILE BYTE_EXACT
 // symbol    ?draw_trans@Texture@@QAEXPAVBuffer@@PAUVert@@H@Z
 //            the image spells `Buffer` and `Texture` as structs (PAU) and the
 //            two setups as `QAA`, a __cdecl member taking no receiver; this tree
@@ -1726,9 +1725,10 @@ unsigned int TextureRasterKey;
 // packs U/V fractions and a pixel count into registers, including ESP. It is
 // color-key copying, not a jump table.
 // The FPU blocks and the span loop are original hand-written assembly. With
-// asm present VC6 keeps the dead x-extent scan, as the image does. Remaining
-// gap: the image's vertex loop keeps the walked pointer in ECX and re-reads
-// the vertex in the max branches.
+// asm present VC6 keeps the dead x-extent scan, as the image does. The scan
+// tests the argument array and takes each new extent from the published
+// TextureRasterEdgeVerticesB copy; that differing expression is why the image
+// re-reads the vertex in the max branches (0x0061A32F, 0x0061A34E).
 void Texture::draw_trans(Buffer *buffer, Vert *vertices, int use_eight_vertices) {
     TextureRasterPixelBase = buffer->get_data();
     // Hand-written assembly: the blitters reset the FPU with FINIT.
@@ -1760,24 +1760,20 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int use_eight_vertices)
         int top;
         EdgeScan left;
         EdgeScan right;
-        Vert *v = vertices;
-        for (int i = 0; i < TextureRasterVertexCount; ++i, ++v) {
-            if (v->y < min_y) {
-                min_y = v->y;
+        for (int i = 0; i < TextureRasterVertexCount; ++i) {
+            if (vertices[i].y < min_y) {
+                min_y = TextureRasterEdgeVerticesB[i].y;
                 top = i;
             }
-            if (v->y > max_y) {
-                // volatile: stand-in for the image's reload of v->y in the max branch; no plain spelling found
-                int y = *(volatile int *)&v->y;
+            if (vertices[i].y > max_y) {
+                max_y = TextureRasterEdgeVerticesB[i].y;
                 TextureRasterMaxYIndex = i;
-                max_y = y;
             }
-            if (v->x < min_x) {
-                min_x = v->x;
+            if (vertices[i].x < min_x) {
+                min_x = TextureRasterEdgeVerticesB[i].x;
             }
-            if (v->x > max_x) {
-                // volatile: stand-in for the image's reload of v->x in the max branch; no plain spelling found
-                max_x = *(volatile int *)&v->x;
+            if (vertices[i].x > max_x) {
+                max_x = TextureRasterEdgeVerticesB[i].x;
             }
         }
         if (min_y < max_y) {
@@ -1980,7 +1976,7 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int use_eight_vertices)
     __asm finit
 }
 
-// ORIGINAL: 0x0061A760 ?draw_upper_threshold_trans@Texture@@QAEXPAUBuffer@@PAUVert@@PAHHPAUVert@@H@Z 0x0061A760-0x0061AC53 FILE
+// ORIGINAL: 0x0061A760 ?draw_upper_threshold_trans@Texture@@QAEXPAUBuffer@@PAUVert@@PAHHPAUVert@@H@Z 0x0061A760-0x0061AC53 FILE BYTE_EXACT
 // symbol    ?draw_color_key@Texture@@QAEXPAVBuffer@@PAUVert@@H1@Z
 //            the image spells `Buffer` and `Texture` as structs (PAU) and the
 //            two setups as `QAA`, a __cdecl member taking no receiver; this tree
@@ -2015,8 +2011,8 @@ void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv
     TextureRasterEdgeVerticesB = vertices;
     TextureRasterScratch544 = pixels_;
     TextureRowPitchScratch = static_cast<int>(iWidth_);
-    TextureRasterEdgeVerticesA = uv;
     TextureRasterTextureHeight = static_cast<int>(iHeight_);
+    TextureRasterEdgeVerticesA = uv;
     TextureRasterVertexCount = count;
     TextureRasterLightThreshold = static_cast<int>(TextureRasterKey);
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
@@ -2029,29 +2025,29 @@ void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv
         TextureRasterClipTop = clip->top;
         int min_y = 0x7fff;
         int max_y = -0x7ffd;
-        int min_x = 0x7fff;
         int max_x = -0x7ffd;
+        int min_x = 0x7fff;
         int top;
         EdgeScan left;
         EdgeScan right;
-        Vert *v = vertices;
-        for (int i = 0; i < count; ++i, ++v) {
-            if (v->y < min_y) {
-                min_y = v->y;
+        // The scan tests the argument array but takes each new extent from
+        // the just-published TextureRasterEdgeVerticesB copy: VC6 forwards the
+        // cell onto the same walked pointer, yet the differing expression
+        // defeats CSE, so the max branches reload Y/X (0x0061A831, 0x0061A850).
+        for (int i = 0; i < count; ++i) {
+            if (vertices[i].y < min_y) {
+                min_y = TextureRasterEdgeVerticesB[i].y;
                 top = i;
             }
-            if (v->y > max_y) {
-                // volatile: stand-in for the image's reload of v->y in the max branch; no plain spelling found
-                int y = *(volatile int *)&v->y;
+            if (vertices[i].y > max_y) {
+                max_y = TextureRasterEdgeVerticesB[i].y;
                 TextureRasterMaxYIndex = i;
-                max_y = y;
             }
-            if (v->x < min_x) {
-                min_x = v->x;
+            if (vertices[i].x < min_x) {
+                min_x = TextureRasterEdgeVerticesB[i].x;
             }
-            if (v->x > max_x) {
-                // volatile: stand-in for the image's reload of v->x in the max branch; no plain spelling found
-                max_x = *(volatile int *)&v->x;
+            if (vertices[i].x > max_x) {
+                max_x = TextureRasterEdgeVerticesB[i].x;
             }
         }
         if (min_y < max_y) {
@@ -3829,7 +3825,8 @@ void Texture::draw_coast(Buffer *buffer, Vert *vertices, int *zvals, Texture *co
 
 // 0x0061A240's body with the borrowed_ guard and an unkeyed copy span. The
 // image never sets EAX before ret, so the original was likely void; the
-// declared int return is kept and returns 0.
+// declared int return is kept and returns 0. Declaring it void in texture.h
+// (symbol QAEX) measures BYTE_EXACT; with int only the final XOR EAX differs.
 int Texture::draw_trans2(Buffer *buffer, Vert *vertices, int use_eight_vertices) {
     TextureRasterPixelBase = buffer->get_data();
     // Hand-written assembly: the blitters reset the FPU with FINIT.
@@ -3860,24 +3857,22 @@ int Texture::draw_trans2(Buffer *buffer, Vert *vertices, int use_eight_vertices)
         int top;
         EdgeScan left;
         EdgeScan right;
-        Vert *v = vertices;
-        for (int i = 0; i < TextureRasterVertexCount; ++i, ++v) {
-            if (v->y < min_y) {
-                min_y = v->y;
+        // Same scan as 0x0061A240: tests read the argument, extents come from
+        // the published TextureRasterEdgeVerticesB copy (max-branch reloads).
+        for (int i = 0; i < TextureRasterVertexCount; ++i) {
+            if (vertices[i].y < min_y) {
+                min_y = TextureRasterEdgeVerticesB[i].y;
                 top = i;
             }
-            if (v->y > max_y) {
-                // volatile: stand-in for the image's reload of v->y in the max branch; no plain spelling found
-                int y = *(volatile int *)&v->y;
+            if (vertices[i].y > max_y) {
+                max_y = TextureRasterEdgeVerticesB[i].y;
                 TextureRasterMaxYIndex = i;
-                max_y = y;
             }
-            if (v->x < min_x) {
-                min_x = v->x;
+            if (vertices[i].x < min_x) {
+                min_x = TextureRasterEdgeVerticesB[i].x;
             }
-            if (v->x > max_x) {
-                // volatile: stand-in for the image's reload of v->x in the max branch; no plain spelling found
-                max_x = *(volatile int *)&v->x;
+            if (vertices[i].x > max_x) {
+                max_x = TextureRasterEdgeVerticesB[i].x;
             }
         }
         if (min_y < max_y) {
@@ -7432,7 +7427,7 @@ void Texture::sub_61b780(Buffer *buffer, Vert *vertices, int *zvals, int mode) {
 
 // Fixed-slot bindings carried from 00620a10.cpp
 
-// ORIGINAL: 0x00620A10 sub_620a10 0x00620A10-0x006212A4 FILE
+// ORIGINAL: 0x00620A10 sub_620a10 0x00620A10-0x006212A4 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Recover the affine rasterizer's two vertex-array arguments as the existing Vert type instead of passing pointers through int.","evidence":["Pinned 0x620A10 stores stack arguments at EBP+0x0C/+0x14 unchanged into shared vertex-pointer cells 0x9BB4F4/0x9BB490; 0x620AE1..0x620B1C indexes the first at eight-byte stride and reads signed x/y at offsets 0/+4.","The complete mapped 0x624CA0 wrapper forwards both pointer values unchanged when its final argument is -1; both shared cells are consumed as Vert arrays by the existing typed edge setup.","Historical decorated seed symbols and IDA int4 guesses were generated hypotheses, not independent original C++ type evidence. The recovered pointer contract follows actual uses; unobserved upstream producers and original type spelling remain unknown."]}
 // CURRENT BODY STATUS: multirow keyed affine pixel traversal restored;
 // exact x87 status/packed carry equivalence remains restoration debt.
@@ -7497,31 +7492,29 @@ void Texture::sub_620a10(Buffer *buffer, Vert *vertices, int count, Vert *uv,
         TextureRasterClipLeft = clip->left;
         TextureRasterClipBottom = clip->bottom;
         TextureRasterClipTop = clip->top;
-        int min_y = 0x7fff;
         int max_y = -0x7ffd;
-        int min_x = 0x7fff;
+        int min_y = 0x7fff;
         int max_x = -0x7ffd;
+        int min_x = 0x7fff;
         int top;
         EdgeScan left;
         EdgeScan right;
-        Vert *v = vertices;
-        for (int i = 0; i < count; ++i, ++v) {
-            if (v->y < min_y) {
-                min_y = v->y;
+        // Same scan as 0x0061A760: tests read the argument, extents come from
+        // the published TextureRasterEdgeVerticesB copy (max-branch reloads).
+        for (int i = 0; i < count; ++i) {
+            if (vertices[i].y < min_y) {
+                min_y = TextureRasterEdgeVerticesB[i].y;
                 top = i;
             }
-            if (v->y > max_y) {
-                // volatile: stand-in for the image's reload of v->y in the max branch; no plain spelling found
-                int y = *(volatile int *)&v->y;
+            if (vertices[i].y > max_y) {
+                max_y = TextureRasterEdgeVerticesB[i].y;
                 TextureRasterMaxYIndex = i;
-                max_y = y;
             }
-            if (v->x < min_x) {
-                min_x = v->x;
+            if (vertices[i].x < min_x) {
+                min_x = TextureRasterEdgeVerticesB[i].x;
             }
-            if (v->x > max_x) {
-                // volatile: stand-in for the image's reload of v->x in the max branch; no plain spelling found
-                max_x = *(volatile int *)&v->x;
+            if (vertices[i].x > max_x) {
+                max_x = TextureRasterEdgeVerticesB[i].x;
             }
         }
         if (min_y < max_y) {
@@ -10596,7 +10589,9 @@ void Texture::sub_61f0d0(Buffer *param_2, Vert *param_3, int *param_4,
                                 top = i;
                             }
                             if (param_3[i].y > max_y) {
-                                // volatile: stand-in for the image's reload of param_3[i].y at 0x0061F231; no plain spelling found
+                                // WORKAROUND(volatile): stand-in for the image's reload of param_3[i].y at
+                                // 0x0061F231. The TextureRasterEdgeVerticesB spelling that explains the
+                                // sibling scans (0x0061A240 etc.) is CSE'd here; no plain spelling found.
                                 max_y = *(volatile int *)&param_3[i].y;
                                 TextureRasterMaxYIndex = i;
                             }
@@ -10642,7 +10637,7 @@ void Texture::sub_61f0d0(Buffer *param_2, Vert *param_3, int *param_4,
     }
 }
 
-// ORIGINAL: 0x006239E0 Texture::draw_upper_threshold_trans2 0x006239E0-0x00623F44 FILE
+// ORIGINAL: 0x006239E0 Texture::draw_upper_threshold_trans2 0x006239E0-0x00623F44 FILE BYTE_EXACT
 // symbol    ?draw_color_key@Texture@@QAEXPAVBuffer@@PAUVert@@H1H@Z
 // TRIED: MISMATCH #0. The inner scanline blitter uses ESP itself as the per-span pixel counter (push ebp; mov esp,ecx; ...; sub esp, 0x10000; jns loop; mov esp,[global]; pop ebp) - that shape only comes from hand-written __asm in the original source, which is barred here, so byte-exactness is out of reach for this function. Body is a faithful high-level port instead: verified EdgeScan field offsets (f[3]/f[4] int accum, f[5]/f[6] step, f[7]/f[8] fractional accum/step, f[9]-f[12] periodic correction) by hand-tracing both mirrored update blocks (0x623C47 and 0x623C9E) against raw ebp-relative offsets, not Ghidra's renumbered locals, which are off by a few bytes from the real frame. Per-pixel texture/threshold loop transcribed from Ghidra's CONCAT/CARRY reconstruction via local concat22/ concat11/concat31/carry4/carry2 helpers.
 // size      1380 bytes
@@ -10676,8 +10671,8 @@ void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv
     TextureRasterEdgeVerticesB = vertices;
     TextureRasterScratch544 = pixels_;
     TextureRowPitchScratch = static_cast<int>(iWidth_);
-    TextureRasterEdgeVerticesA = uv;
     TextureRasterTextureHeight = static_cast<int>(iHeight_);
+    TextureRasterEdgeVerticesA = uv;
     TextureRasterVertexCount = count;
     TextureRasterLightThreshold = static_cast<int>(TextureRasterKey);
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
@@ -10688,31 +10683,29 @@ void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv
         TextureRasterClipLeft = clip->left;
         TextureRasterClipBottom = clip->bottom;
         TextureRasterClipTop = clip->top;
-        int min_y = 0x7fff;
         int max_y = -0x7ffd;
-        int min_x = 0x7fff;
+        int min_y = 0x7fff;
         int max_x = -0x7ffd;
+        int min_x = 0x7fff;
         int top;
         EdgeScan left;
         EdgeScan right;
-        Vert *v = vertices;
-        for (int i = 0; i < count; ++i, ++v) {
-            if (v->y < min_y) {
-                min_y = v->y;
+        // Same scan as 0x0061A760: tests read the argument, extents come from
+        // the published TextureRasterEdgeVerticesB copy (max-branch reloads).
+        for (int i = 0; i < count; ++i) {
+            if (vertices[i].y < min_y) {
+                min_y = TextureRasterEdgeVerticesB[i].y;
                 top = i;
             }
-            if (v->y > max_y) {
-                // volatile: stand-in for the image's reload of v->y in the max branch; no plain spelling found
-                int y = *(volatile int *)&v->y;
+            if (vertices[i].y > max_y) {
+                max_y = TextureRasterEdgeVerticesB[i].y;
                 TextureRasterMaxYIndex = i;
-                max_y = y;
             }
-            if (v->x < min_x) {
-                min_x = v->x;
+            if (vertices[i].x < min_x) {
+                min_x = TextureRasterEdgeVerticesB[i].x;
             }
-            if (v->x > max_x) {
-                // volatile: stand-in for the image's reload of v->x in the max branch; no plain spelling found
-                max_x = *(volatile int *)&v->x;
+            if (vertices[i].x > max_x) {
+                max_x = TextureRasterEdgeVerticesB[i].x;
             }
         }
         if (min_y < max_y) {
