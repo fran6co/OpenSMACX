@@ -67,6 +67,7 @@ struct DesignWinFileStateStandIn {
 #include "netdaemon.h"  // synch_proto, message_data, NetDaemonNet
 #include "xpops.h"      // x_pop_caption_label
 #include "console.h"    // ConsoleGlobal.faction_id_ is the local faction
+#include "rectangle_operations.h"
 #include <cstring>
 
 // The part picker and its DesignWin callers share implementation visibility.
@@ -315,7 +316,7 @@ Purpose: Answer the design-parts list's keyboard navigation: the arrow keys
          including unhandled keys, invokes slot 63; boundary-key early
          returns do not.
 
-// ORIGINAL: 0x00433A10 ?on_key_click@SelectPartWin@@QAEHHH@Z 0x00433A10-0x00433CD0 FILE
+// ORIGINAL: 0x00433A10 ?on_key_click@SelectPartWin@@QAEHHH@Z 0x00433A10-0x00433CD0 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["The original SelectPartWin vtable at 0x0066B2B8 selects 0x00433A10 at inherited slot 25.", "The pinned key table dispatches Enter, Escape, navigation keys and their numpad equivalents; original seed at git:85463515:src/unrecovered/00433a10.cpp."], "reason": "The real SelectPartWin override in slot 25 owns keyboard navigation of its Scroll and selection members."}
 // symbol   ?on_key_click@SelectPartWin@@UAEHHH@Z
 // size      704 bytes
@@ -335,7 +336,11 @@ int SelectPartWin::on_key_click(int, int key) {
     const int first_cached = field_2B60_;
     const int highlight = field_2B80_;
 
-    // Case blocks follow the image's block order.
+    // Case blocks follow the image's block order. Scroll's position/paging
+    // are read through its inline accessors: a direct member read lets VC6
+    // hoist the position load above the anchor store (0x00433AA2), and the
+    // row width is re-read from the field rather than a local so the limit
+    // forms as [per_row + row_start - 1] (0x00433B65).
     switch (key - 13) {
         case 14:  // 27, escape: drop the selection, then release modal
             field_2B80_ = -1;
@@ -353,7 +358,7 @@ int SelectPartWin::on_key_click(int, int key) {
             } while (field_2B80_ >= first_cached + field_2B64_);
             if (field_2B80_ < first_cached) {
                 field_2B60_ = first_cached - per_row;
-                scroll_.set_pos(scroll_.position_ - 1);
+                scroll_.set_pos(scroll_.position() - 1);
             }
             break;
         }
@@ -363,24 +368,23 @@ int SelectPartWin::on_key_click(int, int key) {
             const int count = field_2B74_;
             if (highlight > count - per_row - 1) {
                 if (count <= field_2B64_) return 1;
-                scroll_.set_pos(scroll_.position_ + 1);
-                field_2B60_ = field_2B6C_ * scroll_.position_;
+                scroll_.set_pos(scroll_.position() + 1);
+                field_2B60_ = field_2B6C_ * scroll_.position();
             } else {
                 do {
                     field_2B80_ += per_row;
                 } while (field_2B80_ < first_cached);
                 if (field_2B80_ >= first_cached + field_2B64_) {
                     field_2B60_ = first_cached + per_row;
-                    scroll_.set_pos(scroll_.position_ + 1);
+                    scroll_.set_pos(scroll_.position() + 1);
                 }
             }
             break;
         }
         case 24:   // 37, left
         case 87: { // 100, numpad 4
-            const int per_row = field_2B6C_;
-            const int row_start = highlight / per_row * per_row;
-            int limit = per_row + row_start - 1;
+            const int row_start = highlight / field_2B6C_ * field_2B6C_;
+            int limit = row_start + field_2B6C_ - 1;
             if (limit >= field_2B74_ - 1) {
                 limit = field_2B74_ - 1;
             }
@@ -392,9 +396,8 @@ int SelectPartWin::on_key_click(int, int key) {
         }
         case 26:   // 39, right
         case 89: { // 102, numpad 6
-            const int per_row = field_2B6C_;
-            const int row_start = highlight / per_row * per_row;
-            int limit = per_row + row_start - 1;
+            const int row_start = highlight / field_2B6C_ * field_2B6C_;
+            int limit = row_start + field_2B6C_ - 1;
             if (limit >= field_2B74_ - 1) {
                 limit = field_2B74_ - 1;
             }
@@ -419,13 +422,13 @@ int SelectPartWin::on_key_click(int, int key) {
             break;
         case 20:  // 33, page up
             if (field_2B74_ <= field_2B64_) return 1;
-            scroll_.set_pos(scroll_.position_ - scroll_.paging_);
-            field_2B60_ = field_2B6C_ * scroll_.position_;
+            scroll_.set_pos(scroll_.position() - scroll_.paging());
+            field_2B60_ = field_2B6C_ * scroll_.position();
             break;
         case 21:  // 34, page down
             if (field_2B74_ <= field_2B64_) return 1;
-            scroll_.set_pos(scroll_.paging_ + scroll_.position_);
-            field_2B60_ = field_2B6C_ * scroll_.position_;
+            scroll_.set_pos(scroll_.paging() + scroll_.position());
+            field_2B60_ = field_2B6C_ * scroll_.position();
             break;
         default:
             break;
@@ -5006,7 +5009,7 @@ void DesignWin::select_reactor() {
     on_update();
 }
 
-// ORIGINAL: 0x0043D510 ?draw_stack@DesignWin@@QAEXXZ 0x0043D510-0x0043DD43;0x006546DA-0x006546EC FILE
+// ORIGINAL: 0x0043D510 ?draw_stack@DesignWin@@QAEXXZ 0x0043D510-0x0043DD43;0x006546DA-0x006546EC FILE BYTE_EXACT
 // size      2117 bytes
 // prototype void (__thiscall ?draw_stack@DesignWin@@QAEXXZ)(DesignWin* this)
 // callers   5   call targets   25
@@ -5030,11 +5033,14 @@ void DesignWin::draw_stack() {
                                      rc.right - rc.left, rc.bottom - rc.top);
     MainInterfaceGlobal.Buffer::box_sprite(&rc, &InterfaceBoxStyles[3]);
 
+    // The strip spans from the stack frame's right edge to the left edge of
+    // the neighbouring rectangle at +0xCCC (`mov eax,[ebx+0xccc]` at
+    // 0x0043D5BC), not back to the frame's own right edge.
     rc.bottom -= 3;
-    rc.left = field_CBC_rect_.right + 3;
-    rc.right = field_CBC_rect_.right - 3;
-    const int spacer = (rc.right - rc.left + 2) / 10 - 2;
+    rc.right = field_CCC_ - 3;
     rc.top += 3;
+    rc.left = field_CBC_rect_.right + 3;
+    const int spacer = (rc.right - rc.left + 2) / 10 - 2;
     int x_base = rc.left;
     const int y_base = rc.top;
 
@@ -5043,10 +5049,10 @@ void DesignWin::draw_stack() {
     MainInterfaceGlobal.Buffer::set_font(&font, 0, 0, 0);
     spot1_.kill_type(0);
 
-    rc.bottom = rc.bottom - rc.top + y_base;
-    rc.left = x_base;
-    rc.top = y_base;
-    rc.right = x_base + spacer;
+    // The image takes the height first, (bottom - top) + y_base, as the
+    // shared origin/dimensions operation does; a written-out field update
+    // reassociates to bottom + (y_base - top).
+    set_rectangle_dimensions(&rc, x_base, y_base, spacer, rc.bottom - rc.top);
 
     // Re-rank through the source-owned map helper and its shared sort state.
     proto_sort_2(factionID_);
@@ -5099,9 +5105,7 @@ void DesignWin::draw_stack() {
             strcat(StringTemp, label_get(0x1B8 / 4));
             strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, "#");
-            char digits[80];
-            _itoa(proto_id % 64 + 1, digits, 10);
-            strcat(StringTemp, digits);
+            say_num(proto_id % 64 + 1);
             MainInterfaceGlobal.Buffer::set_text_color(0x9F, -1, 1, 1);
             MainInterfaceGlobal.Buffer::set_font(&font, 0, 0, 0);
             MainInterfaceGlobal.Buffer::wrap_cent(StringTemp, &rc);
@@ -5109,8 +5113,8 @@ void DesignWin::draw_stack() {
             const int step = spacer + 2;
             x_base += step;
             rc.left -= inset;
-            rc.top -= inset;
             rc.right += inset;
+            rc.top -= inset;
             rc.bottom += inset;
             rc.left += step;
             rc.right += step;
@@ -5138,22 +5142,20 @@ void DesignWin::draw_stack() {
                 strcat(StringTemp, label_get(0xE40 / 4));
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, "(");
-                char digits[80];
-                _itoa(proto_id % 64 + 1, digits, 10);
-                strcat(StringTemp, digits);
+                say_num(proto_id % 64 + 1);
                 strcat(StringTemp, ")");
             } else {
-                char digits[80];
-                _itoa(proto_id % 64 + 1, digits, 10);
-                strcat(StringTemp, digits);
+                say_num(proto_id % 64 + 1);
                 strcat(StringTemp, ". ");
                 strcat(StringTemp, VehPrototypes[proto_id].veh_name);
             }
-
             label.left += 3;
             label.right -= 3;
             while (StringTemp[0] != '\0') {
-                if (font.width(StringTemp) <= label.right - label.left) {
+                // Measured before the width call and held in edi across it
+                // (0x0043DB0C..0x0043DB11).
+                const int available = label.right - label.left;
+                if (font.width(StringTemp) <= available) {
                     break;
                 }
                 StringTemp[strlen(StringTemp) - 1] = '\0';
@@ -5173,14 +5175,16 @@ void DesignWin::draw_stack() {
             label = rc;
             label.top = label.bottom - font_line_advance(font);
             StringTemp[0] = '\0';
-            say_stats_3(StringTemp, Vehs[unit_id].proto_id);
+            // A named local as in BaseWin::draw_garrison's identical stats
+            // line; the inline expression shifts the debug suffix's scratch
+            // registers (0x0043DC3B onward) by one.
+            const int stats_proto_id = Vehs[unit_id].proto_id;
+            say_stats_3(StringTemp, stats_proto_id);
             if ((GameDataStateStorage.fields_.game_state_ & 0x40)
                 && (GameDataStateStorage.fields_.game_state_ & 0x1000)) {
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, "(");
-                char digits[80];
-                _itoa(proto_id, digits, 10);
-                strcat(StringTemp, digits);
+                say_num(proto_id);
                 strcat(StringTemp, ")");
             }
             MainInterfaceGlobal.Buffer::write_cent_l(StringTemp, &label);
@@ -5190,8 +5194,8 @@ void DesignWin::draw_stack() {
             const int step = spacer + 2;
             x_base += step;
             rc.left -= inset;
-            rc.top -= inset;
             rc.right += inset;
+            rc.top -= inset;
             rc.bottom += inset;
             rc.left += step;
             rc.right += step;
