@@ -217,6 +217,23 @@ def preparation(root, commands=None):
     configuration(root, lambda project: project.update(preparation="recovery/prepare.json"))
 
 
+REFERENCING_GENERATOR = (
+    "import json, sys\n"
+    "from pathlib import Path\n"
+    "build, rows = Path(sys.argv[1]), json.loads(sys.argv[2])\n"
+    "(build / 'generated.h').write_text('generated context')\n"
+    "for row in rows:\n"
+    "    if 'arguments' in row: row['arguments'].append('/FI' + str(build / 'generated.h'))\n"
+    "    else: row['command'] += ' /FI' + str(build / 'generated.h')\n"
+    "(build / 'commands.json').write_text(json.dumps(rows))\n")
+
+
+def referencing_preparation(root):
+    """Prepared database that force-includes a header from its own build directory."""
+    rows = (root / "build/commands.json").read_text()
+    preparation(root, [{"argv": [sys.executable, "-c", REFERENCING_GENERATOR, "{build}", rows], "timeout": 10}])
+
+
 def reference_policy(root):
     (root / "notes").mkdir()
     (root / "scripts").mkdir()
@@ -289,19 +306,25 @@ def test_wrong_image_refuses_before_preparation_writes(configured, observed):
 def test_generated_context_changes_invalidate_standalone_measurements(configured):
     from match_recovery.measurement import Measurement
     from match_recovery.preparation import prepare_project
-    preparation(configured)
+    referencing_preparation(configured)
     report = prepare_project(configured)
     header = configured / report["directory"] / "generated.h"
     header.write_text("original generated context")
     settings = Measurement.read(configured)
     before = settings.snapshot(configured, {})
+    # A retained build directory no recipe names cannot be read by any
+    # configured compile; a referenced directory is pinned whole.
+    stale = configured / "build/preparation/build-stale"
+    stale.mkdir()
+    (stale / "generated.h").write_text("stale retained context")
+    assert settings.snapshot(configured, {}) == before
     header.write_text("changed generated context")
     assert settings.snapshot(configured, {}) != before
     assert "recovery/prepare.json" in before["inputs"]
 
 
 def test_generated_context_changes_mid_gate_stop_compiler_sweeps(configured, observed, monkeypatch):
-    preparation(configured)
+    referencing_preparation(configured)
     def mutate(*_):
         directory, = (configured / "build/preparation").glob("build-*")
         (directory / "generated.h").write_text("concurrent generated input")
