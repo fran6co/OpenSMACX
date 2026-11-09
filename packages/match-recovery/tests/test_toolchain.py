@@ -276,3 +276,23 @@ def test_forked_child_does_not_inherit_locked_parent_cache(compiler_project, ext
             os._exit(0 if clean else 1)
     _, status = os.waitpid(child, 0)
     assert os.waitstatus_to_exitcode(status) == 0
+
+
+def test_discovery_runs_once_per_policy_and_reruns_when_policy_changes(compiler_project, external, monkeypatch, cache_mode):
+    configure(compiler_project, external)
+    original, calls = implementation.invoke, []
+    def counted(*args, **kwargs):
+        calls.append(args)
+        return original(*args, **kwargs)
+    monkeypatch.setattr(implementation, "invoke", counted)
+    first = snapshot(compiler_project)
+    second = snapshot(compiler_project)
+    assert second == first
+    cached = cache_mode == "on" and os.name == "posix"
+    assert len(calls) == (1 if cached else 2)
+    monkeypatch.setenv("TEST_SDK_OPTION", "changed policy")
+    snapshot(compiler_project)
+    assert len(calls) == (2 if cached else 3)
+    # A cached description never hides a changed declared input.
+    (external / "sdk/type.h").write_bytes(b"layout-B")
+    assert snapshot(compiler_project) != first

@@ -23,6 +23,7 @@ from .records import read_json
 
 
 _observations = OrderedDict()
+_descriptions = OrderedDict()
 _CACHE_LIMIT = 16
 _cache_lock = threading.Lock()
 
@@ -30,9 +31,10 @@ _cache_lock = threading.Lock()
 def _after_fork():
     # A child must not inherit a lock held by a vanished parent thread, or an
     # observation from a different process lifetime.
-    global _cache_lock, _observations
+    global _cache_lock, _observations, _descriptions
     _cache_lock = threading.Lock()
     _observations = OrderedDict()
+    _descriptions = OrderedDict()
 
 
 if hasattr(os, "register_at_fork"):
@@ -107,22 +109,35 @@ def snapshot(root):
         return result
 
     before = policy()
-    code, description = invoke(command, root, "", {"schema_version": 1, "operation": "toolchain_inputs"})
-    if code != 0:
-        raise ValueError("toolchain input discovery failed")
-    if (set(description) != {"schema_version", "files", "directories"}
-            or type(description["schema_version"]) is not int or description["schema_version"] != 1
-            or any(not isinstance(description[key], dict) for key in ("files", "directories"))
-            or not (description["files"] or description["directories"])
-            or set(description["files"]) & set(description["directories"])):
-        raise ValueError("invalid toolchain input description")
-
     # Windows ctime is not a reliable content-change timestamp. Default to fresh
     # reads there; unusual/noncoherent filesystems can disable caching explicitly.
     mode = os.environ.get("MATCH_RECOVERY_TOOLCHAIN_CACHE", "on")
     if mode not in ("on", "off"):
         raise ValueError("MATCH_RECOVERY_TOOLCHAIN_CACHE must be on or off")
     caching = os.name == "posix" and mode == "on"
+    # Discovery is a pure function of the declared policy (project inputs and
+    # hashed environment). Within one process, reuse its description for an
+    # identical policy; the inventory below still re-reads every declared path,
+    # so a moved, removed or changed toolchain input is still observed.
+    policy_key = digest(before)
+    with _cache_lock:
+        description = deepcopy(_descriptions.get(policy_key)) if caching else None
+    if description is None:
+        code, description = invoke(command, root, "", {"schema_version": 1, "operation": "toolchain_inputs"})
+        if code != 0:
+            raise ValueError("toolchain input discovery failed")
+    if (set(description) != {"schema_version", "files", "directories"}
+            or type(description["schema_version"]) is not int or description["schema_version"] != 1
+            or any(not isinstance(description[key], dict) for key in ("files", "directories"))
+            or not (description["files"] or description["directories"])
+            or set(description["files"]) & set(description["directories"])):
+        raise ValueError("invalid toolchain input description")
+    if caching:
+        with _cache_lock:
+            _descriptions[policy_key] = deepcopy(description)
+            _descriptions.move_to_end(policy_key)
+            while len(_descriptions) > _CACHE_LIMIT:
+                _descriptions.popitem(last=False)
     key = digest({"policy": before, "description": description})
     groups, entries = _inventory(description)
 
