@@ -373,7 +373,7 @@ int MessageWin::UNK2(int, char *text, int) {
 // four-argument return (`ret 0x10`) is more reliable than the old catalogue
 // prototype, which omitted the unused fourth argument.
 // ORIGINAL: 0x004714D0 ?UNK3@MessageWin@@QAEHHHPAD@Z 0x004714D0-0x0047152B BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004714d0.cpp", "image:0x004714D0"], "reason": "The archived MessageWin list variant packs map coordinates; its ret 0x10 proves a fourth unused stack argument absent from the catalogue prototype."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004714d0.cpp", "image:0x004714D0"], "reason": "The archived MessageWin list variant packs map coordinates; its ret 0x10 proves a fourth unused stack argument absent from the catalogue prototype."}
 // TRIED: the scaffolding's 3-arg UNK3 declaration can't express the `ret 0x10` 4th unused stack param, so wrote a 4-arg shim method on a derived class instead; diverges at #6 (lea vs mov)
 // symbol    ?UNK3@MessageWin@@QAEHHHPADH@Z
 int MessageWin::UNK3(int x, int y, char *text, int) {
@@ -388,7 +388,7 @@ int MessageWin::UNK3(int x, int y, char *text, int) {
 // 0x004717A0. The list's real Dialog base owns the entry chain and its
 // allocator. Keep the containing ListBox open while removing its rows.
 // ORIGINAL: 0x004717A0 ?clear@MessageWin@@QAEXXZ 0x004717A0-0x00471864 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004717a0.cpp", "image:0x004717A0"], "reason": "The archived MessageWin reset walks the embedded ListBox Dialog entries and clears the same pane state and button group."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004717a0.cpp", "image:0x004717A0"], "reason": "The archived MessageWin reset walks the embedded ListBox Dialog entries and clears the same pane state and button group."}
 // TRIED: MISMATCH, closest at 194/196 bytes (mnemonic_similarity 0.99, 1 edit). Same embedded-manager close-and-relink shape as SetupWin::close/Dialog::init, but reached through a vbtable: `listBox_.vbtable_pointer_` (self+0x64) is a pointer to a displacement table, slot 2 (`[vtbl+8]`) is the byte displacement to the virtual base holding the manager - `char *base = self + vbtable[2] + 0x120;` reproduces the `[edx+ebx+0x128]`/`lea esi,[edx+ebx+0x120]` addressing exactly. Only the SECOND vtable-adjustment "deleting dtor" call (vtbl[1] read as a displacement, this-adjusted, that pointer's own vtbl[0] called with arg 1) still diverges by a handful of instructions - the same register-allocator nuance as the second call site in 0x004AD9C0 and 0x00609730, not chased further.
 void MessageWin::clear() {
     ConsoleGlobal.message_count_ = 0;
@@ -402,7 +402,7 @@ void MessageWin::clear() {
 // 0x00471870. The original passes the list's GraphicWin to the callback;
 // its embedded Buffer is a real C++ base, and the arrow is a real Sprite.
 // ORIGINAL: 0x00471870 ?listbox_draw@MessageWin@@QAAHPAUGraphicWin@@HHHHH@Z 0x00471870-0x004718BF BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/00471870.cpp", "image:0x00471870"], "reason": "The archived callback draws the real interface arrow Sprite into the supplied GraphicWin Buffer and is installed by MessageWin init. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/00471870.cpp", "image:0x00471870"], "reason": "The archived callback draws the real interface arrow Sprite into the supplied GraphicWin Buffer and is installed by MessageWin init. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
 // symbol    ?listbox_draw@MessageWin@@SAXPAVGraphicWin@@HHHHH@Z
 void __cdecl MessageWin::listbox_draw(GraphicWin *target, int, int, int left,
@@ -428,7 +428,7 @@ int __cdecl MessageWin::listbox_fill(GraphicWin *target, int, int, RECT *) {
 // Original identity and current emitted callback symbol are retained separately.
 // Returning zero lets ListBox continue rendering the row after setting its colors.
 // ORIGINAL: 0x00471FD0 ?listbox_write@MessageWin@@QAAHPAUGraphicWin@@HHPAURECT@@PAD@Z 0x00471FD0-0x0047201F BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/00471fd0.cpp", "image:0x00471FD0"], "reason": "The archived callback selects two text colors for the supplied GraphicWin Buffer and is installed by MessageWin init. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/00471fd0.cpp", "image:0x00471FD0"], "reason": "The archived callback selects two text colors for the supplied GraphicWin Buffer and is installed by MessageWin init. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
 // symbol    ?listbox_write@MessageWin@@SAHPAVGraphicWin@@HHPAUtagRECT@@PAD@Z
 int __cdecl MessageWin::listbox_write(GraphicWin *target, int item_id, int,
@@ -482,7 +482,7 @@ void MessageWin::init() {
 // Real MessageWinDeferredBaseMessages array lifecycle, compiler-generated.
 /*
 // ORIGINAL: 0x0051DF80 sub_51df80 0x0051DF80-0x0051DFA4 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:9203a1cb6d256f6b33dd55a8d4ac395fa90a6b02:src/recovered/units/0051df80.cpp", "image:0x51df80", "source:src/messagewin.cpp"], "reason": "The native eight-StringList array at93A7B0 has30-byte stride, constructor4450B0 and complete teardown406820. The real typed MessageWinDeferredBaseMessages owns forward construction with atexit registration and reverse derived/base destruction. Preserve original identity, complete spans and historical claims; generated delegation is current lowering, not exact layout or linked-selection proof."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:ac4a630920605babb8184f2126ed77052521a59e:src/recovered/units/0051df80.cpp", "image:0x51df80", "source:src/messagewin.cpp"], "reason": "The native eight-StringList array at93A7B0 has30-byte stride, constructor4450B0 and complete teardown406820. The real typed MessageWinDeferredBaseMessages owns forward construction with atexit registration and reverse derived/base destruction. Preserve original identity, complete spans and historical claims; generated delegation is current lowering, not exact layout or linked-selection proof."}
 // symbol    _$E21
 */
 // Historical seed finding: The standalone initializer scaffold was reported measured exact in prose, but had no formal byte claim; do not grant one from that report.
@@ -490,7 +490,7 @@ void MessageWin::init() {
 // Real MessageWinDeferredBaseMessages array lifecycle, compiler-generated.
 /*
 // ORIGINAL: 0x0051DFB0 sub_51dfb0 0x0051DFB0-0x0051DFC4 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:9203a1cb6d256f6b33dd55a8d4ac395fa90a6b02:src/recovered/units/0051dfb0.cpp", "image:0x51dfb0", "source:src/messagewin.cpp"], "reason": "The native eight-StringList array at93A7B0 has30-byte stride, constructor4450B0 and complete teardown406820. The real typed MessageWinDeferredBaseMessages owns forward construction with atexit registration and reverse derived/base destruction. Preserve original identity, complete spans and historical claims; generated delegation is current lowering, not exact layout or linked-selection proof."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:ac4a630920605babb8184f2126ed77052521a59e:src/recovered/units/0051dfb0.cpp", "image:0x51dfb0", "source:src/messagewin.cpp"], "reason": "The native eight-StringList array at93A7B0 has30-byte stride, constructor4450B0 and complete teardown406820. The real typed MessageWinDeferredBaseMessages owns forward construction with atexit registration and reverse derived/base destruction. Preserve original identity, complete spans and historical claims; generated delegation is current lowering, not exact layout or linked-selection proof."}
 // symbol    _$E19
 */
 // Historical seed finding: The old free __thiscall callback prototype failed VC6 C4234; opaque callback pointers were a scaffold workaround. Real class-array destruction supplies the typed compiler helper.

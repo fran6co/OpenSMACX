@@ -147,7 +147,7 @@ the unclaimed body shape while preserving the original object relationship.
 // Initialize the plan display using its inherited MapWin and virtual
 // GraphicWin state. The image does not read the caption argument.
 // ORIGINAL: 0x0048BC60 ?init@PlanWin@@QAEXPAD@Z 0x0048BC60-0x0048BCC5 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x0048BC60-0x0048BCC5;git:a899c9ea:src/recovered/units/0048bc60.cpp", "source:src/planwin.h:PlanWin;source:src/mapwin.h:MapWin;source:src/buffer.h:Buffer"], "reason": "The PlanWin member initializes its inherited MapWin fields and its own Buffer from the virtual GraphicWin dimensions, preserving the observed object relationships."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x0048BC60-0x0048BCC5;git:f2db92dc:src/recovered/units/0048bc60.cpp", "source:src/planwin.h:PlanWin;source:src/mapwin.h:MapWin;source:src/buffer.h:Buffer"], "reason": "The PlanWin member initializes its inherited MapWin fields and its own Buffer from the virtual GraphicWin dimensions, preserving the observed object relationships."}
 void PlanWin::init(char *) {
     field_21A68_ = 1;
     line_count_ = 0;
@@ -190,7 +190,7 @@ static inline int plan_horizontal_midpoint(int left, int right) {
 
 // Center the view between two horizontal pairs and their vertical spans.
 // ORIGINAL: 0x0048B450 ?find_view@PlanWin@@QAEXHHHHHHHH@Z 0x0048B450-0x0048B629 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x0048B450-0x0048B629;git:a899c9ea:src/recovered/units/0048b450.cpp", "source:src/map.h:MapLongitudeBounds,MapIsFlat;source:src/mapwin.h:center_x_,center_y_"], "reason": "The eight-argument PlanWin member selects the horizontal center of two map-view pairs and their vertical midpoint using inherited MapWin view fields."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x0048B450-0x0048B629;git:f2db92dc:src/recovered/units/0048b450.cpp", "source:src/map.h:MapLongitudeBounds,MapIsFlat;source:src/mapwin.h:center_x_,center_y_"], "reason": "The eight-argument PlanWin member selects the horizontal center of two map-view pairs and their vertical midpoint using inherited MapWin view fields."}
 void PlanWin::find_view(int x1, int y1, int x2, int y2,
                         int x3, int y3, int x4, int y4) {
     const int first_y = (y1 + y2) / 2;
@@ -204,7 +204,7 @@ void PlanWin::find_view(int x1, int y1, int x2, int y2,
 
 // Zoom until both selected points and their neighboring tiles fit the view.
 // ORIGINAL: 0x0048B630 ?opticenter@PlanWin@@QAEXHHHHH@Z 0x0048B630-0x0048B8D6
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x0048B630-0x0048B8D6;git:a899c9ea:src/recovered/units/0048b630.cpp", "source:src/map.h:RadiusOffsetX,RadiusOffsetY;source:src/mapwin.h:viewport fields"], "reason": "The PlanWin member varies the inherited MapWin zoom until the selected two points and their radius samples fit the calculated viewport."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x0048B630-0x0048B8D6;git:f2db92dc:src/recovered/units/0048b630.cpp", "source:src/map.h:RadiusOffsetX,RadiusOffsetY;source:src/mapwin.h:viewport fields"], "reason": "The PlanWin member varies the inherited MapWin zoom until the selected two points and their radius samples fit the calculated viewport."}
 void PlanWin::opticenter(int x1, int y1, int x2, int y2, int force_redraw) {
     const int32_t old_zoom = zoom_offset_;
     const uint32_t old_x = center_x_;
@@ -305,7 +305,7 @@ done:
 // Zoom around the current center until one point's neighborhood no longer
 // fits, then repaint the inherited GraphicWin surface if the view changed.
 // ORIGINAL: 0x0048B8E0 ?monocenter@PlanWin@@QAEXHHH@Z 0x0048B8E0-0x0048BAA1
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x0048B8E0-0x0048BAA1;git:a899c9ea:src/recovered/units/0048b8e0.cpp", "source:src/planwin.h:PlanWin;source:src/map.h:RadiusOffsetX,RadiusOffsetY;source:src/buffer.h:Buffer"], "reason": "The PlanWin member varies inherited MapWin zoom until one point and its neighborhood fit, then redraws its real GraphicWin surface and owned Buffer."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x0048B8E0-0x0048BAA1;git:f2db92dc:src/recovered/units/0048b8e0.cpp", "source:src/planwin.h:PlanWin;source:src/map.h:RadiusOffsetX,RadiusOffsetY;source:src/buffer.h:Buffer"], "reason": "The PlanWin member varies inherited MapWin zoom until one point and its neighborhood fit, then redraws its real GraphicWin surface and owned Buffer."}
 void PlanWin::monocenter(int x, int y, int force_redraw) {
     const int32_t old_zoom = zoom_offset_;
     const uint32_t old_x = center_x_;
@@ -532,7 +532,7 @@ void PlanWin::add_line(int x1, int y1, int x2, int y2, int color) {
 }
 
 // ORIGINAL: 0x0048AE90 ?add_line@PlanWin@@QAEXHHH@Z 0x0048AE90-0x0048AF14 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["The original overload treats its first two arguments as Base indices and reads their source-owned signed x/y members before storing the four coordinates and color in the same PlanWin arrays.", "Base::x and Base::y are declared at offsets 0 and 2 with RECOVERY_MEMBER evidence; PlanWin's line arrays occupy +0x21FFC and +0x2200C.", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/0048ae90.cpp"], "reason": "Home the base-to-base plan line using the existing Base and PlanWin members instead of address arithmetic. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["The original overload treats its first two arguments as Base indices and reads their source-owned signed x/y members before storing the four coordinates and color in the same PlanWin arrays.", "Base::x and Base::y are declared at offsets 0 and 2 with RECOVERY_MEMBER evidence; PlanWin's line arrays occupy +0x21FFC and +0x2200C.", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/unrecovered/0048ae90.cpp"], "reason": "Home the base-to-base plan line using the existing Base and PlanWin members instead of address arithmetic. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 void PlanWin::add_line(int base_id1, int base_id2, int color) {
     const int second_y = Bases[base_id2].y;
     const int second_x = Bases[base_id2].x;

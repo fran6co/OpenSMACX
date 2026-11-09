@@ -424,7 +424,7 @@ void __cdecl alt_put_detail(int x, int y, int detail) {
     map_loc(x, y)->contour = detail;
 }
 // ORIGINAL: 0x00591290 ?alt_set@@YAXHHH@Z 0x00591290-0x00591894
-// RECOVERY_BINDING: v1 {"evidence": ["git:1fe327399e8313c7d34d3b190f391eeeafdb0c28:src/unrecovered/00591290.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json"], "reason": "Recover signed altitude changes through real Map/Base/Veh/faction owners, preserving native submersion, facility, compaction and callback paths. Explicit unsigned shift retains x86 low-byte altitude encoding without C++ signed-shift undefined behavior. Historical mappings and seed lessons are retained; no new byte/layout/runtime/linked-preservation claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:7e269a283e888ff1ee459699529fb7ce8c44b171:src/unrecovered/00591290.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json"], "reason": "Recover signed altitude changes through real Map/Base/Veh/faction owners, preserving native submersion, facility, compaction and callback paths. Explicit unsigned shift retains x86 low-byte altitude encoding without C++ signed-shift undefined behavior. Historical mappings and seed lessons are retained; no new byte/layout/runtime/linked-preservation claim."}
 // TRIED: no Ghidra hint for this one - straight register-variable/goto transcription from the raw disassembly (44-byte tile struct, 0x833-stride owner tables, round-to-zero /2 idiom, extern lever on the lea-taken 0x00946d54 table). Compiles; diverges at instruction #0 (push vs mov), so the prologue/frame shape itself differs, not yet investigated further.
 void __cdecl alt_set(int x, int y, int altitude) {
     static char submerged_title[] = "BASESUBMERGED";
@@ -1551,7 +1551,7 @@ remove_landmark:
     }
 }
 // ORIGINAL: 0x005927D0 ?delete_landmark@@YAXHH@Z 0x005927D0-0x00592938
-// RECOVERY_BINDING: v1 {"evidence": ["git:1fe327399e8313c7d34d3b190f391eeeafdb0c28:src/recovered/units/005927d0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json"], "reason": "Recover landmark clearing through real Map members, shared source-owned lookup arrays and MapWin callbacks. Preserve the duplicate Flat-table clear, numeric9,999,999 cache sentinel, store-before-clear order and native absence of extra window/bounds guards. Historical mappings and seed lessons are retained; no new byte/layout/runtime/linked-preservation claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:7e269a283e888ff1ee459699529fb7ce8c44b171:src/recovered/units/005927d0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json"], "reason": "Recover landmark clearing through real Map members, shared source-owned lookup arrays and MapWin callbacks. Preserve the duplicate Flat-table clear, numeric9,999,999 cache sentinel, store-before-clear order and native absence of extra window/bounds guards. Historical mappings and seed lessons are retained; no new byte/layout/runtime/linked-preservation claim."}
 void __cdecl delete_landmark(int x, int y) {
     uint32_t *const field = &map_loc(x, y)->bit2;
     const uint32_t old_flags = *field;

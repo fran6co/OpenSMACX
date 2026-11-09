@@ -3,7 +3,7 @@
 Relevant observations extracted from the retired agent brief. They are historical
 starting points, not current measurements or universal rules. The original brief
 and its complete experiments remain available with
-`git show b7f45b19:docs/recovery/AGENT_BRIEF.md`. Current ownership and verification
+`git show 12aeb250:docs/recovery/AGENT_BRIEF.md`. Current ownership and verification
 policy is in `WORKFLOW.md`; no spelling trick overrides that policy.
 
 ## Structural questions first
@@ -301,7 +301,7 @@ strict references, original dependency identity, linked retention or runtime pro
 Keep executable-derived reports and compiler artifacts ignored; the selected
 production toolchain remains unchanged.
 
-A separate control at `d3f8c3332` compared Font, Datalink and Base under their
+A separate control at `4fd8d6fa2` compared Font, Datalink and Base under their
 unchanged actual application recipes: 213 mapped records, eighteen compiles
 across the installed and retained SP3 frontend/backend sets. Each TU/profile
 passed whole-object unchanged-overlay and target-body damage controls; the
@@ -315,7 +315,7 @@ cohorts. Both experiments retain the installed linker, headers and libraries;
 neither establishes a complete historical SP3 build environment.
 
 Later retained evidence covers additional domains. The Oct25 physical SP3
-application build at `b4dcea86699cf23d6ce8afe91f81634b49f318be` contains
+application build at `17e8fcb44f29fe84dc8f43f4a21f7cf460c4c314` contains
 193 application objects, including Caviar and NetFifo, with compiler product
 11/build8447 witnesses. Its classification delta lists no Caviar or NetFifo
 verdict change. These are older source inputs, not current-source qualification
@@ -420,7 +420,7 @@ paired tried) restores all three of 0x6280E0, 0x628150 and 0x628290, so
   function that has not changed.
 - A SIB or operand-order wall on one body is not by itself evidence about
   that body's spelling. The x87 case above was measured directly. The SIB
-  case was observed when 802fb262f matched the loader. The old `[ecx+esi]`
+  case was observed when 3ffb814d8 matched the loader. The old `[ecx+esi]`
   vs `[esi+ecx]` wall at 0x638717 closed there with a real spelling change
   (writing through the struct field). Try spellings first, then the state.
 - The geometry include (`<float.h>`) was chosen for the state it produces.

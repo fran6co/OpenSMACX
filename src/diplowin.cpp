@@ -115,7 +115,7 @@ void __cdecl DiploWin::string_callback(int faction_id, int unused) {
 }
 
 // ORIGINAL: 0x00443F10 ?exec@DiploWin@@QAEXHH@Z 0x00443F10-0x00444D8B
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00443f10.cpp", "image:terranx_original.exe:443F10-444D8B; callback4412A0 and transcript lifecycle440F30/440F60"], "reason": "Recover the full diplomacy window lifecycle using real base/member controls, singleton transcripts and bilateral offer storage; original catalogue extent retained."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00443f10.cpp", "image:terranx_original.exe:443F10-444D8B; callback4412A0 and transcript lifecycle440F30/440F60"], "reason": "Recover the full diplomacy window lifecycle using real base/member controls, singleton transcripts and bilateral offer storage; original catalogue extent retained."}
 // TRIED: the ~500-instruction layout-RECT tree (this+0xedc onward, built by repeatedly splitting/insetting a screen rect) is approximated at the right field offsets with plausible rather than register-derived values; likewise the AI offer-table indexing (0x7388d8/0x7388e0/0x7388e8/0x738928, 9-wide rows keyed by ab4/ab8) is a simplified approximation, not the exact addressing. The widget init/call sequence (Spot::init, GraphicWin::init/fill, box_sprite, StringBox::init, EditBox::init, the 13-button BaseButton loop, add_offer/rand dispatch, message_data/iface teardown) is transcribed in order with matching argument counts. MISMATCH #20 (layout block, lea vs sub).
 void DiploWin::exec(int faction_id, int faction_id_with) {
   spot_.init(100);
@@ -606,7 +606,7 @@ int DiploWin::on_iface_dialog_item_back_draw(GraphicWin *window, int, int item,
 }
 
 // ORIGINAL: 0x00443C70 ?on_status@DiploWin@@QAEXH@Z 0x00443C70-0x00443D77 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original constructor444FC0 establishes GraphicWin+0, SubInterface+A14 and member construction order; secondary table66B5E0 gives nineteen callback slots and adjusted receivers.", "Redraw4436C0, status443C70 and painter443E50 inspected over declared original spans; source rectangle/control owners preserve native offsets. Palette colors reuse TextColourTable[80-2*item]/[81-2*item]. Localized title producer and full extents remain unknown.", "recovery/tasks/interface-contract-report-closure.json; root coordinator owns import and independent compilation; no current byte, structural or runtime acceptance is implied.", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/00443c70.cpp"], "reason": "Recover the genuine DiploWin GraphicWin/SubInterface owner with typed callbacks and automatic base/member lifetimes; retain independent seed history and restoration obligations. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original constructor444FC0 establishes GraphicWin+0, SubInterface+A14 and member construction order; secondary table66B5E0 gives nineteen callback slots and adjusted receivers.", "Redraw4436C0, status443C70 and painter443E50 inspected over declared original spans; source rectangle/control owners preserve native offsets. Palette colors reuse TextColourTable[80-2*item]/[81-2*item]. Localized title producer and full extents remain unknown.", "recovery/tasks/interface-contract-report-closure.json; root coordinator owns import and independent compilation; no current byte, structural or runtime acceptance is implied.", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/00443c70.cpp"], "reason": "Recover the genuine DiploWin GraphicWin/SubInterface owner with typed callbacks and automatic base/member lifetimes; retain independent seed history and restoration obligations. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
 // symbol ?on_status@DiploWin@@UAEXH@Z
 void DiploWin::on_status(int mode) {
@@ -667,7 +667,7 @@ char DiploKnownTechClose[2] = ")";
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00443170 0x004436A0 0x004436B8 0x00443480
 // ORIGINAL: 0x00443170 ?draw_offers@DiploWin@@QAEXXZ 0x00443170-0x0044369F
-// RECOVERY_BINDING: v1 {"evidence": ["git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/units/00443170.cpp"], "reason": "Typed offer-panel rendering, technology/energy/treaty/faction labels and Spot ownership, replacing seed raw offsets."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:def4db5d8cde1ddd00c5735adc0e3cd230ec02b8:src/recovered/units/00443170.cpp"], "reason": "Typed offer-panel rendering, technology/energy/treaty/faction labels and Spot ownership, replacing seed raw offsets."}
 void DiploWin::draw_offers() {
     Buffer *surface = this;
     int line_height = find_font(14, 0)->line_advance();
@@ -748,7 +748,7 @@ int __cdecl diplo_lock(int timeout);
 void __cdecl diplo_unlock();
 
 // ORIGINAL: 0x004426F0 ?check_done@DiploWin@@QAEXXZ 0x004426F0-0x00442736 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/004426f0.cpp"], "reason": "Rehome seed into typed DiploWin owner; states and counterpart are source members."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:def4db5d8cde1ddd00c5735adc0e3cd230ec02b8:src/recovered/004426f0.cpp"], "reason": "Rehome seed into typed DiploWin owner; states and counterpart are source members."}
 void DiploWin::check_done() {
     if (offer_state_[0] == 1 && offer_state_[1] == 1) {
         message_data(0x150A, faction_id_with_, 0, 0, 0, 0);
@@ -760,7 +760,7 @@ void DiploWin::check_done() {
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00442740 0x004429A0 0x004429B8 0x004427F0
 // ORIGINAL: 0x00442740 ?do_it@DiploWin@@QAEXXZ 0x00442740-0x0044299D
-// RECOVERY_BINDING: v1 {"evidence": ["git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/units/00442740.cpp"], "reason": "Rehome exchange execution into source-owned DiploWin arrays and faction/network globals."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:def4db5d8cde1ddd00c5735adc0e3cd230ec02b8:src/recovered/units/00442740.cpp"], "reason": "Rehome exchange execution into source-owned DiploWin arrays and faction/network globals."}
 void DiploWin::do_it() {
     if ((faction_id_ <= faction_id_with_ || IsMultiplayerPBEM != 0)
         && CommlinkPending < 2) {
@@ -821,7 +821,7 @@ void DiploWin::do_it() {
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00442A10 0x00442D98 0x00442DB4 0x00442C50
 // ORIGINAL: 0x00442A10 ?draw_who@DiploWin@@QAEXXZ 0x00442A10-0x00442D98
-// RECOVERY_BINDING: v1 {"evidence": ["git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/units/00442a10.cpp"], "reason": "Typed DiploWin party rendering using source-owned FactionArt datalink portraits, rectangles and label storage."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:def4db5d8cde1ddd00c5735adc0e3cd230ec02b8:src/recovered/units/00442a10.cpp"], "reason": "Typed DiploWin party rendering using source-owned FactionArt datalink portraits, rectangles and label storage."}
 void DiploWin::draw_who() {
     if (faction_id_ <= 0) return;
     int faction = faction_id_;
@@ -876,7 +876,7 @@ void DiploWin::draw_who() {
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00442DC0 0x0044314C 0x00443168 0x00443000
 // ORIGINAL: 0x00442DC0 ?draw_whom@DiploWin@@QAEXXZ 0x00442DC0-0x00443149
-// RECOVERY_BINDING: v1 {"evidence": ["git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/units/00442dc0.cpp"], "reason": "Typed DiploWin party rendering using source-owned FactionArt datalink portraits, rectangles and label storage."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:def4db5d8cde1ddd00c5735adc0e3cd230ec02b8:src/recovered/units/00442dc0.cpp"], "reason": "Typed DiploWin party rendering using source-owned FactionArt datalink portraits, rectangles and label storage."}
 void DiploWin::draw_whom() {
     if (faction_id_ <= 0) return;
     int faction = faction_id_with_;
@@ -1470,7 +1470,7 @@ found:
 // Compiler-generated source-owned lifecycle entry; no handwritten wrapper.
 /*
 // ORIGINAL: 0x00440F30 sub_440f30 0x00440F30-0x00440F54 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:bcad94a018ff94737abb85df10d24ca7aa405b1a:src/recovered/00440f30.cpp", "pinned:terranx_original lifecycle0x440f30", "source:src/diplowin.cpp"], "reason": "Generated complete initializer for the genuine64-element DiplomacyTranscriptLists array composes array construction and registration of reverse array destruction. Preserve complete original spans, catalogue names, claims and historical lessons; current compiler emission is not a fresh grant or linked selection proof."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:c02baa72365fcd4a910683a3dc9b3c39399a9191:src/recovered/00440f30.cpp", "pinned:terranx_original lifecycle0x440f30", "source:src/diplowin.cpp"], "reason": "Generated complete initializer for the genuine64-element DiplomacyTranscriptLists array composes array construction and registration of reverse array destruction. Preserve complete original spans, catalogue names, claims and historical lessons; current compiler emission is not a fresh grant or linked selection proof."}
 // symbol    _$E21
 */
 
@@ -1480,7 +1480,7 @@ found:
 // Compiler-generated source-owned lifecycle entry; no handwritten wrapper.
 /*
 // ORIGINAL: 0x00440F60 sub_440f60 0x00440F60-0x00440F74 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:bcad94a018ff94737abb85df10d24ca7aa405b1a:src/recovered/units/00440f60.cpp", "pinned:terranx_original lifecycle0x440f60", "source:src/diplowin.cpp"], "reason": "Generated reverse array teardown owns the complete DiplomacyTranscriptLists64-element StringList lifecycle. Preserve complete original spans, catalogue names, claims and historical lessons; current compiler emission is not a fresh grant or linked selection proof."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:c02baa72365fcd4a910683a3dc9b3c39399a9191:src/recovered/units/00440f60.cpp", "pinned:terranx_original lifecycle0x440f60", "source:src/diplowin.cpp"], "reason": "Generated reverse array teardown owns the complete DiplomacyTranscriptLists64-element StringList lifecycle. Preserve complete original spans, catalogue names, claims and historical lessons; current compiler emission is not a fresh grant or linked selection proof."}
 // symbol    _$E19
 */
 
@@ -1490,7 +1490,7 @@ found:
 // Compiler-generated source-owned lifecycle entry; no handwritten wrapper.
 /*
 // ORIGINAL: 0x004450B0 sub_4450b0 0x004450B0-0x0044511C FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:bcad94a018ff94737abb85df10d24ca7aa405b1a:src/leaf_recoveries.cpp", "pinned:terranx_original lifecycle0x4450b0", "source:src/diplowin.cpp"], "reason": "The actual compiler-generated StringList constructor owns virtual-base allocation capture, inherited field initialization and both derived table transitions. This replaces the raw-address leaf transcription without changing StringList members. Preserve complete original spans, catalogue names, claims and historical lessons; current compiler emission is not a fresh grant or linked selection proof."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:c02baa72365fcd4a910683a3dc9b3c39399a9191:src/leaf_recoveries.cpp", "pinned:terranx_original lifecycle0x4450b0", "source:src/diplowin.cpp"], "reason": "The actual compiler-generated StringList constructor owns virtual-base allocation capture, inherited field initialization and both derived table transitions. This replaces the raw-address leaf transcription without changing StringList members. Preserve complete original spans, catalogue names, claims and historical lessons; current compiler emission is not a fresh grant or linked selection proof."}
 // symbol    ??0StringList@@QAE@XZ
 // TRIED: homed into game.cpp (its real TU) 2026-09-03 and reverted for one reason:
 // TRIED: plain constructor with raw pointer-offset writes (eax=ecx=this, returns this implicitly). Diverges at instr #2: original pushes ecx for a compiler-generated [ebp-4] unwind-context local (a partially-constructed-object marker) that a plain non-throwing body never allocates.

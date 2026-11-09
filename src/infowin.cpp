@@ -104,7 +104,7 @@ static int infowin_best_stat_faction(int current_faction, uint8_t alive,
 }
 
 // ORIGINAL: 0x00456300 ?setup_text@InfoWin@@QAEXXZ 0x00456300-0x0045838D
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00456300.cpp; pinned body00456300..0045838D", "Native eight-way jump table004583A8; pane-state normalization is signed remainder modulo8. Font+0C is natural line height, separately from adjusted row pitch.", "Native ranking scores use indices1..7; history reads signed16 samples with incrementing turn stride/divisor. Best-stat ties select later living factions, region sums use indices5..66.", "Rules string fields are real heap pointers produced by text_item_string/Strings::put; Strings::get retains a historical32-bit integer address ABI. Explicit call-boundary conversions do not make these fields ordinal indices.", "recovery/tasks/infowin-ownership.json; complete-owner scope expansion retained; actual-source host damage controls and fresh native compilation required"], "reason": "Recover the complete information-pane text and chart builder through genuine InfoWin rows, Font metrics, faction/rules storage and Buffer graphics. Preserve the existing original identity, seed and historical obligations; this binding is not a matching, runtime or acceptance claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00456300.cpp; pinned body00456300..0045838D", "Native eight-way jump table004583A8; pane-state normalization is signed remainder modulo8. Font+0C is natural line height, separately from adjusted row pitch.", "Native ranking scores use indices1..7; history reads signed16 samples with incrementing turn stride/divisor. Best-stat ties select later living factions, region sums use indices5..66.", "Rules string fields are real heap pointers produced by text_item_string/Strings::put; Strings::get retains a historical32-bit integer address ABI. Explicit call-boundary conversions do not make these fields ordinal indices.", "recovery/tasks/infowin-ownership.json; complete-owner scope expansion retained; actual-source host damage controls and fresh native compilation required"], "reason": "Recover the complete information-pane text and chart builder through genuine InfoWin rows, Font metrics, faction/rules storage and Buffer graphics. Preserve the existing original identity, seed and historical obligations; this binding is not a matching, runtime or acceptance claim."}
 // TRIED: frame size does not match 0x504 (many named char[256]/int temps vs the original's smaller register-heavy layout); the 25/19/11-entry jump tables were treated as compiler-generated unwind dispatch (never reproduced) rather than real cases 8-24; CharUpperA and several graphics helpers in the case 4/5 ranking bar-chart panel were stubbed rather than fully modelled.
 void InfoWin::setup_text() {
     const int faction = ConsoleGlobal.faction_id_;
@@ -652,7 +652,7 @@ RECT InfoPanelBounds;
 // live Win screen width, and reads the GraphicWin virtual base's DIB height
 // through ConsoleGlobal. `pixel_height()` handles its top-down sign.
 // ORIGINAL: 0x00458D60 ?UNK4@InfoWin@@QAEXXZ 0x00458D60-0x00458DBB BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x00458D60-0x00458DBB compares the cached interface-width object at 0x00939E5C", "git:3a14c197:src/recovered/units/00458d60.cpp", "source:src/game.h:IfaceScreenWidth", "source:src/console.h:GraphicWin virtual base", "source:src/buffer.h:Dib"], "reason": "The original stores one RECT at 0x00939EF8, selecting its extent from IfaceScreenWidth and the Console GraphicWin Buffer DIB height; the source name describes the observed behavior, not the catalog placeholder UNK4."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00458D60-0x00458DBB compares the cached interface-width object at 0x00939E5C", "git:9e39965b:src/recovered/units/00458d60.cpp", "source:src/game.h:IfaceScreenWidth", "source:src/console.h:GraphicWin virtual base", "source:src/buffer.h:Dib"], "reason": "The original stores one RECT at 0x00939EF8, selecting its extent from IfaceScreenWidth and the Console GraphicWin Buffer DIB height; the source name describes the observed behavior, not the catalog placeholder UNK4."}
 // symbol    ?configure_panel_bounds@InfoWin@@QAEXXZ
 void InfoWin::configure_panel_bounds() {
     int panel_width;
@@ -673,7 +673,7 @@ void InfoWin::configure_panel_bounds() {
 }
 
 // ORIGINAL: 0x004592A0 ?init@InfoWin@@QAEXXZ 0x004592A0-0x00459414
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x004592A0-0x00459414", "git:3a14c197:src/recovered/units/004592a0.cpp", "source:src/infowin.h:owned members", "source:src/maininterface.h:info_panel_frame_"], "reason": "Initialize the typed InfoWin pane states, font, paired pane rectangles, bounds and timer callback in the owner; the original reads MainInterfaceGlobal+0xDA0 as one panel RECT and conditionally initializes the shared panel extent."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x004592A0-0x00459414", "git:9e39965b:src/recovered/units/004592a0.cpp", "source:src/infowin.h:owned members", "source:src/maininterface.h:info_panel_frame_"], "reason": "Initialize the typed InfoWin pane states, font, paired pane rectangles, bounds and timer callback in the owner; the original reads MainInterfaceGlobal+0xDA0 as one panel RECT and conditionally initializes the shared panel extent."}
 void InfoWin::init() {
     pane_states_[0] = -1;
     pane_states_[1] = -1;
@@ -713,7 +713,7 @@ void InfoWin::init() {
 // The timer dispatches a plain C callback. Its argument is forwarded as the
 // timer stage, while the process-wide information window owns the state.
 // ORIGINAL: 0x00459260 ?timer_daemon@InfoWin@@QAAXH@Z 0x00459260-0x0045927C BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x00459260-0x0045927C", "git:c732d1a0:src/recovered/00459260.cpp", "source:src/console.cpp:ConsoleInfoWin", "source:src/map.cpp:WorldClimateSkipTerrainClear"], "reason": "The stack-only callback forwards its tick argument to the process-wide InfoWin timer_proc unless climate terrain clearing is active; the old Q-prefixed catalog label is not evidence for an instance receiver."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00459260-0x0045927C", "git:8e72de62:src/recovered/00459260.cpp", "source:src/console.cpp:ConsoleInfoWin", "source:src/map.cpp:WorldClimateSkipTerrainClear"], "reason": "The stack-only callback forwards its tick argument to the process-wide InfoWin timer_proc unless climate terrain clearing is active; the old Q-prefixed catalog label is not evidence for an instance receiver."}
 // symbol    ?timer_daemon@InfoWin@@SAXH@Z
 void __cdecl InfoWin::timer_daemon(int tick) {
     if (WorldClimateSkipTerrainClear == 0) {
@@ -760,7 +760,7 @@ void InfoWin::timer_proc(int a1) {
 // Advance the selected information pane through its valid display states,
 // then repaint the newly selected pane.
 // ORIGINAL: 0x00458FF0 ?timer_change@InfoWin@@QAEXH@Z 0x00458FF0-0x00459141 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a:src/recovered/units/00458ff0.cpp", "source:src/infowin.h", "source:src/game.cpp:InterfaceBoxStyles", "pinned:0x004590C7-0x004590DF clears 0x007AF174, 0x007AF17C, 0x007AF178 and 0x007AF180 after successful state_valid", "source:MainInterfaceGlobal at 0x007AE820 has its GraphicWin Buffer subobject at +0x444; those destinations are Buffer +0x510, +0x518, +0x514 and +0x51C", "source:Buffer::reset_text_state clears the existing fields in that original order; InfoWin::draw_text uses the same owner operation"], "reason": "Home the timed pane transition with owned InfoWin state, pane rectangle and box style. The former animation-counter alias actually addressed MainInterfaceGlobal's Buffer text state; reset those members after the successful validity loop, preserving the original store order and callbacks."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:c4c11a8a:src/recovered/units/00458ff0.cpp", "source:src/infowin.h", "source:src/game.cpp:InterfaceBoxStyles", "pinned:0x004590C7-0x004590DF clears 0x007AF174, 0x007AF17C, 0x007AF178 and 0x007AF180 after successful state_valid", "source:MainInterfaceGlobal at 0x007AE820 has its GraphicWin Buffer subobject at +0x444; those destinations are Buffer +0x510, +0x518, +0x514 and +0x51C", "source:Buffer::reset_text_state clears the existing fields in that original order; InfoWin::draw_text uses the same owner operation"], "reason": "Home the timed pane transition with owned InfoWin state, pane rectangle and box style. The former animation-counter alias actually addressed MainInterfaceGlobal's Buffer text state; reset those members after the successful validity loop, preserving the original store order and callbacks."}
 void InfoWin::timer_change(int) {
     if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] != 0) return;
 
@@ -961,7 +961,7 @@ void InfoWin::on_left_click(int, int) {
 // addresses or a manually scaled 0x20CC stride.
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00458DC0 0x00458EDC 0x00458F0C 0x00458DE6
 // ORIGINAL: 0x00458DC0 ?state_valid@InfoWin@@QAEHH@Z 0x00458DC0-0x00458EDA BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x00458DC0-0x00458EDA; jump table 0x00458EDC-0x00458F0C", "source:src/faction.h:PlayerData.diff_level and diplo_treaties", "git:6455075f:src/unrecovered/00458dc0.cpp"], "reason": "Recover InfoWin mode eligibility using game state and typed faction difficulty/contact fields; switch destinations checked in original image; retired seed is a hint, not product code."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00458DC0-0x00458EDA; jump table 0x00458EDC-0x00458F0C", "source:src/faction.h:PlayerData.diff_level and diplo_treaties", "git:b4928ace:src/unrecovered/00458dc0.cpp"], "reason": "Recover InfoWin mode eligibility using game state and typed faction difficulty/contact fields; switch destinations checked in original image; retired seed is a hint, not product code."}
 int InfoWin::state_valid(int state) {
     if (state == 0) {
         return 1;
@@ -1119,7 +1119,7 @@ void InfoWin::on_right_click(int a, int b) {
 // same as its selected slot; PullDown owns that translation.
 #pragma auto_inline(off)
 // ORIGINAL: 0x004589C0 ?right_menu@InfoWin@@QAEXHH@Z 0x004589C0-0x00458D3A;0x00655280-0x00655295
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x004589C0-0x00458D3A", "image:0x00655280-0x00655295", "git:e3121de9:src/recovered/units/004589c0.cpp", "source:src/pulldown.h:get_selected_id"], "reason": "Home the information-pane context menu with the real PullDown item-ID API, source-owned label table, pane state and MainInterface renderer; retain the original secondary EH span as a restoration obligation."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x004589C0-0x00458D3A", "image:0x00655280-0x00655295", "git:bfa66ccf:src/recovered/units/004589c0.cpp", "source:src/pulldown.h:get_selected_id"], "reason": "Home the information-pane context menu with the real PullDown item-ID API, source-owned label table, pane state and MainInterface renderer; retain the original secondary EH span as a restoration obligation."}
 void InfoWin::right_menu(int x, int y) {
     PullDown menu;
     MainInterfaceGlobal.client_to_screen(&x, &y);

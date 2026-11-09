@@ -1700,7 +1700,7 @@ void __cdecl set_course(int veh_id, char type, int x, int y) {
 }
 
 // ORIGINAL: 0x00564B90 ?assemble_passengers@@YAXHHH@Z 0x00564B90-0x00564D90 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:99d6e72bcd5ae3be3566222736528cb0dc57935c:src/recovered/units/00564b90.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json; preserve original extents and historical seed lessons. Ordinary owned literals have pinned content provenance, not exact original data-allocation claims."], "reason": "Recover full passenger-goal orchestration with real region_total_bases and unk_77 arrays, vendetta/contiguity tests and colony/defend/attack/scout goal order."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:6e78872480ef8b4a486516e322f23e9f8652665d:src/recovered/units/00564b90.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json; preserve original extents and historical seed lessons. Ordinary owned literals have pinned content provenance, not exact original data-allocation claims."], "reason": "Recover full passenger-goal orchestration with real region_total_bases and unk_77 arrays, vendetta/contiguity tests and colony/defend/attack/scout goal order."}
 void __cdecl assemble_passengers(int base_id, int mode, int priority) {
     const int x = Bases[base_id].x;
     const int y = Bases[base_id].y;
@@ -1777,7 +1777,7 @@ Purpose: Say whether a convoy-to-nearest-base order is possible from a tile:
 //           (the mon_* family wall), so the body is not measured exact.
 Return Value: 0 impossible, 1 possible
 Status: Coverage transcription - unclaimed body, seed
-        git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00564d90.cpp retained.
+        git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00564d90.cpp retained.
 LEVER: veh_at nested in the stack_check call, an indexed Bases[i] loop, and
         x_dist plus vector_dist(int, int) as inline helpers.
 */
@@ -1953,7 +1953,7 @@ Purpose: Return 1 immediately for a unity-bonus tile. Otherwise select the
 // calls     0x004E3A50 0x00592030
 Return Value: 1 for the bonus or a qualifying neighbor, 0 otherwise.
 Status: Coverage transcription - unclaimed body. The original mapping and
-        seed evidence remain in git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00565160.cpp without a
+        seed evidence remain in git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00565160.cpp without a
         BYTE_EXACT claim. VehMoveDeltaX/Y provide the scan order, Bases
         provide the x/y/owner triple, PlayersData owns the pact flags, and
         Map owns the climate and fungus bits. The image calls bonus_at out
@@ -3173,7 +3173,7 @@ move_direction:
 // Aircraft/missile movement and target selection, preserving the five-argument ABI.
 
 // ORIGINAL: 0x005678C0 ?air_power@@YAHHHHPAH0@Z 0x005678C0-0x0056A89E
-// RECOVERY_BINDING: v1 {"evidence": ["git:846a0ba2a949fc3692ce8bc7ccb7f5020f9e0d9f:src/unrecovered/005678c0.cpp complete original identity/span and historical lessons", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x005678C0-0x0056A89E full native body and independently reviewed field/callback/branch evidence.", "source:src/veh.cpp and existing veh/map/base/game/netdaemon declarations; existing TU-local seven-argument battle_fight overload, no fake wrapper or executable-address dependency."], "reason": "Complete aircraft and missile movement/target selection through actual vehicle, map, player and base owners; original nullness, callbacks and range/ordering behavior retained."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a50869c814a45a64bd9129441505354050a1c934:src/unrecovered/005678c0.cpp complete original identity/span and historical lessons", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x005678C0-0x0056A89E full native body and independently reviewed field/callback/branch evidence.", "source:src/veh.cpp and existing veh/map/base/game/netdaemon declarations; existing TU-local seven-argument battle_fight overload, no fake wrapper or executable-address dependency."], "reason": "Complete aircraft and missile movement/target selection through actual vehicle, map, player and base owners; original nullness, callbacks and range/ordering behavior retained."}
 // TRIED: MISMATCH #4 mov/push at prologue; full-body transcription from Ghidra hypothesis, corrected against raw disasm for: veh_at (declared 2-arg, several call sites showed 6 - a dangling outer push for the immediately-following stack_check(int,int,int,int,int) 5-arg call), veh_lift/veh_drop split (PROPOSAL: veh_lift should be `int veh_lift(int)`, its mangled YAX return hides a real value the caller forwards into veh_drop's first arg), and the VEH struct field widths (short at 0x952828/2a/3c/3e/44/46, byte at 0x952836/38/39/4d/4e/4f/50/51/53) recovered from `movsx word/byte ptr [reg+ADDR]` on every g_009528xx access, since the scaffold's g_ globals are declared int* uniformly.
 int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
     if (Vehs[veh_id].order == ORDER_MOVE_TO
@@ -4311,7 +4311,7 @@ char EnemyBuildBaseMessageText[1] = {0};
 // Complete owner assembly. Native stack words are stored only on proven edges.
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0056B5B0 0x00579208 0x00579238 0x00577DD3
 // ORIGINAL: 0x0056B5B0 ?enemy_move@@YAHH@Z 0x0056B5B0-0x00579208 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["git:9d6ac074ba331b079a584bc73bfd0ce20699a9b4:src/unrecovered/0056b5b0.cpp is deleted seed history; its original identity, full span, claims and useful lessons are retained here through the source writer.", "Pinned instructions establish distinct raw route/damage flags, integer stack priority, saved versus live callback reads, and original unguarded/uninitialized error paths.", "Complete selected, strategic, nonsea, sea and tactical continuations execute once; helpers do not introduce new original identities.", "Vehicle, prototype, PlayerData and Base fields use their real source owners; original matching and full runtime restoration obligations remain."], "reason": "Complete typed per-vehicle enemy movement owner with one path-dependent raw frame and genuine product owners; superseded executable forwarding and scaffold are removed together."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:ac587b44f8a4f670c7c73f0dfa434885adc49ebf:src/unrecovered/0056b5b0.cpp is deleted seed history; its original identity, full span, claims and useful lessons are retained here through the source writer.", "Pinned instructions establish distinct raw route/damage flags, integer stack priority, saved versus live callback reads, and original unguarded/uninitialized error paths.", "Complete selected, strategic, nonsea, sea and tactical continuations execute once; helpers do not introduce new original identities.", "Vehicle, prototype, PlayerData and Base fields use their real source owners; original matching and full runtime restoration obligations remain."], "reason": "Complete typed per-vehicle enemy movement owner with one path-dependent raw frame and genuine product owners; superseded executable forwarding and scaffold are removed together."}
 // kind game
 int __cdecl enemy_move(int veh_id) {
     // One variable per original frame slot; the original reuses several of

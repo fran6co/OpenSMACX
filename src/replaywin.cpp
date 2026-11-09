@@ -49,7 +49,7 @@ char ReplayLocalizedTitle[4];
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005AD720 ?init@ReplayWin@@QAEXXZ 0x005AD720-0x005AD99A
-// RECOVERY_BINDING: v1 {"evidence": ["git:c4098269:src/recovered/units/005ad720.cpp", "src/replaywin.h owns GraphicWin, MapWin, FlatButton and Time at the original offsets", "src/console.h ConsoleGlobal cursor history occupies 0x009392B8/0x009392C0/0x00939340"], "reason": "Initialize the real replay window and its owned controls, using Console cursor history and typed shared styles instead of fixed addresses and vtable arithmetic; retain the seed for byte restoration."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:823b6fba:src/recovered/units/005ad720.cpp", "src/replaywin.h owns GraphicWin, MapWin, FlatButton and Time at the original offsets", "src/console.h ConsoleGlobal cursor history occupies 0x009392B8/0x009392C0/0x00939340"], "reason": "Initialize the real replay window and its owned controls, using Console cursor history and typed shared styles instead of fixed addresses and vtable arithmetic; retain the seed for byte restoration."}
 // symbol    ?init@ReplayWin@@QAEXXZ
 void ReplayWin::init() {
     field_A14_ = 0;
@@ -147,12 +147,12 @@ void __cdecl show_replay() {
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005ADF10 ??1ReplayWin@@QAE@XZ 0x005ADF10-0x005AE0A8;0x00662360-0x0066244C BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x005ADBF0 constructs GraphicWin, MapWin, FlatButton and Time at offsets 0, 0x2320, 0x247A0 and 0x252EC", "image:0x005ADF32 destructs Time at 0x252EC before FlatButton at 0x247A0", "git:d7a40721:src/recovered/units/005adf10.cpp", "src/replaywin.h declares all three complete subobjects"], "reason": "Let C++ destroy ReplayWin's real members in reverse construction order instead of forwarding the complete destructor to original image code."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x005ADBF0 constructs GraphicWin, MapWin, FlatButton and Time at offsets 0, 0x2320, 0x247A0 and 0x252EC", "image:0x005ADF32 destructs Time at 0x252EC before FlatButton at 0x247A0", "git:8b63d843:src/recovered/units/005adf10.cpp", "src/replaywin.h declares all three complete subobjects"], "reason": "Let C++ destroy ReplayWin's real members in reverse construction order instead of forwarding the complete destructor to original image code."}
 // symbol    ??1ReplayWin@@UAE@XZ
 // The implicit virtual destructor follows the typed member/base lifetime.
 
 // ORIGINAL: 0x005AD610 ?on_redraw@ReplayWin@@QAEXXZ 0x005AD610-0x005AD71F BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:d7a40721:src/recovered/units/005ad610.cpp", "image:0x005AD610-0x005AD71F", "src/replaywin.h map_win_ and year_label_", "src/buffer.h InterfaceBoxStyles[9] and [6]", "src/maininterface.h MainInterfaceGlobal.font1_ at original 0x007CFE8C", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/005ad610.cpp"], "reason": "Paint the replay title through real GraphicWin/Buffer bases, shared style and font owners, then dispatch the embedded MapWin's virtual redraw; retain the exact seed for byte restoration. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:8b63d843:src/recovered/units/005ad610.cpp", "image:0x005AD610-0x005AD71F", "src/replaywin.h map_win_ and year_label_", "src/buffer.h InterfaceBoxStyles[9] and [6]", "src/maininterface.h MainInterfaceGlobal.font1_ at original 0x007CFE8C", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/005ad610.cpp"], "reason": "Paint the replay title through real GraphicWin/Buffer bases, shared style and font owners, then dispatch the embedded MapWin's virtual redraw; retain the exact seed for byte restoration. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
 // symbol    ?on_redraw@ReplayWin@@UAEXXZ
 void ReplayWin::on_redraw() {
@@ -182,7 +182,7 @@ void ReplayWin::on_redraw() {
 }
 
 // ORIGINAL: 0x005AD470 sub_5ad470 0x005AD470-0x005AD4C0 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:7ba7935c:src/recovered/units/005ad470.cpp", "src/replaywin.h ReplayWin base_sites_ at 0xA20", "0x005AD560 make_bases consumes the same 512 records", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/005ad470.cpp"], "reason": "Own insertion in ReplayWin rather than an isolated raw-offset table class; retain the byte-exact seed for restoration. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:bb13ae85:src/recovered/units/005ad470.cpp", "src/replaywin.h ReplayWin base_sites_ at 0xA20", "0x005AD560 make_bases consumes the same 512 records", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/005ad470.cpp"], "reason": "Own insertion in ReplayWin rather than an isolated raw-offset table class; retain the byte-exact seed for restoration. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
 // symbol    ?add_base_site@ReplayWin@@QAEXHHH@Z
 void ReplayWin::add_base_site(int x, int y, int faction_id) {
@@ -197,7 +197,7 @@ void ReplayWin::add_base_site(int x, int y, int faction_id) {
 }
 
 // ORIGINAL: 0x005AD4C0 sub_5ad4c0 0x005AD4C0-0x005AD500 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:7ba7935c:src/leaf_recoveries.cpp", "src/replaywin.h ReplayWin base_sites_ at 0xA20", "Superseded interpretation retained for history: prior binding treated standalone EAX scan/address residue as a three-times-slot result and512 miss sentinel. No observed consumer establishes that result contract.", "Pinned5ADACF..5ADB03 inlines the update operation: EAX scans512 sites, ECX becomes3*slot only for the faction-store address, and5ADB47 overwritesEAX with event_offset before any result use. Source timer_callback is the sole current caller and discards the operation result.", "Pinned standalone5AD4C0..5AD500 returns with residual scan/addressEAX and performs the same first-match mutation/no-match no-op. Use a genuine void member operation; original nominal return type is unproved."], "reason": "Recover the keyed site update as a void ReplayWin operation; preserve the observed first-match mutation and no-match no-op without manufacturing an independently consumed result from address/index residue. Retain original identity/spans/claims and the superseded result interpretation as history."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:bb13ae85:src/leaf_recoveries.cpp", "src/replaywin.h ReplayWin base_sites_ at 0xA20", "Superseded interpretation retained for history: prior binding treated standalone EAX scan/address residue as a three-times-slot result and512 miss sentinel. No observed consumer establishes that result contract.", "Pinned5ADACF..5ADB03 inlines the update operation: EAX scans512 sites, ECX becomes3*slot only for the faction-store address, and5ADB47 overwritesEAX with event_offset before any result use. Source timer_callback is the sole current caller and discards the operation result.", "Pinned standalone5AD4C0..5AD500 returns with residual scan/addressEAX and performs the same first-match mutation/no-match no-op. Use a genuine void member operation; original nominal return type is unproved."], "reason": "Recover the keyed site update as a void ReplayWin operation; preserve the observed first-match mutation and no-match no-op without manufacturing an independently consumed result from address/index residue. Retain original identity/spans/claims and the superseded result interpretation as history."}
 // symbol    ?update_base_site@ReplayWin@@QAEXHHH@Z
 void ReplayWin::update_base_site(int x, int y, int faction_id) {
     for (int index = 0; index < 512; ++index) {
@@ -209,7 +209,7 @@ void ReplayWin::update_base_site(int x, int y, int faction_id) {
 }
 
 // ORIGINAL: 0x005AD500 sub_5ad500 0x005AD500-0x005AD560 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:7ba7935c:src/unrecovered/005ad500.cpp", "src/replaywin.h ReplayWin base_sites_ at 0xA20", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/005ad500.cpp"], "reason": "Recover keyed site invalidation on the real ReplayWin owner rather than a raw-offset table stand-in; retain the exact seed as restoration evidence. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:bb13ae85:src/unrecovered/005ad500.cpp", "src/replaywin.h ReplayWin base_sites_ at 0xA20", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/unrecovered/005ad500.cpp"], "reason": "Recover keyed site invalidation on the real ReplayWin owner rather than a raw-offset table stand-in; retain the exact seed as restoration evidence. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
 // symbol    ?remove_base_site@ReplayWin@@QAEXHHH@Z
 void ReplayWin::remove_base_site(int x, int y, int) {
@@ -225,7 +225,7 @@ void ReplayWin::remove_base_site(int x, int y, int) {
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005AD9E0 ?timer_callback@ReplayWin@@QAEXXZ 0x005AD9E0-0x005ADBCC BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:7f24e1c4:src/recovered/units/005ad9e0.cpp", "image:0x005AD9E0-0x005ADBCC", "src/replaywin.h replay_turn_, event_offset_, year_label_ and base_sites_", "src/win.h release_modal slot58 and redraw slot62"], "reason": "Consume typed replay events and update the ReplayWin-owned site table; replace the original-image forwarder without raw self-offsets or vtable shims. The retained seed remains a restoration input, not a product body."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a98446ad:src/recovered/units/005ad9e0.cpp", "image:0x005AD9E0-0x005ADBCC", "src/replaywin.h replay_turn_, event_offset_, year_label_ and base_sites_", "src/win.h release_modal slot58 and redraw slot62"], "reason": "Consume typed replay events and update the ReplayWin-owned site table; replace the original-image forwarder without raw self-offsets or vtable shims. The retained seed remains a restoration input, not a product body."}
 #pragma function(memcpy)
 void ReplayWin::timer_callback() {
     if (replay_turn_ >= GameDataStateStorage.fields_.turn_current_num_) {
@@ -275,7 +275,7 @@ void ReplayWin::timer_callback() {
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005ADE80 ?replay_base@@YAXHHHH@Z 0x005ADE80-0x005ADF03 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x005ADE80-0x005ADF03 logs Replay Base and Replay Base Info, packs four arguments and TurnCurrentNum into eight bytes at 0x00950324 plus the byte counter at 0x009469F8, then adds eight", "git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005b3920.cpp clears 0x800 dwords of that buffer; ReplayWin timer_callback reads the same eight-byte records"], "reason": "Own replay-event storage and byte-length accounting in the replay subsystem, replacing fixed-address writes with a typed event record."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x005ADE80-0x005ADF03 logs Replay Base and Replay Base Info, packs four arguments and TurnCurrentNum into eight bytes at 0x00950324 plus the byte counter at 0x009469F8, then adds eight", "git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005b3920.cpp clears 0x800 dwords of that buffer; ReplayWin timer_callback reads the same eight-byte records"], "reason": "Own replay-event storage and byte-length accounting in the replay subsystem, replacing fixed-address writes with a typed event record."}
 void __cdecl replay_base(int type, int x, int y, int faction_id) {
 // RECOVERY_LITERAL: v1 0x00691444 0x00691450 ??_C@_0M@EHHJ@Replay?5Base?$AA@ 0x005ADE80
     log_say("Replay Base", x, y, faction_id);

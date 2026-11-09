@@ -715,7 +715,7 @@ void __cdecl rankings(int apply_ranks) {
 
 
 // ORIGINAL: 0x005ACBE0 ?compute_score@@YAXHPAHPAHH@Z 0x005ACBE0-0x005AD3AD
-// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/005acbe0.cpp", "source:src/faction.h", "image:complete original instructions and independent storage/lifecycle evidence"], "reason": "Recover all original faction-score branches, recursive updates and publication in the base/objective domain through genuine Base, PlayerData and Rules fields; original signed population, word wrapping, bonus order and malformed-state paths remain explicit."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/005acbe0.cpp", "source:src/faction.h", "image:complete original instructions and independent storage/lifecycle evidence"], "reason": "Recover all original faction-score branches, recursive updates and publication in the base/objective domain through genuine Base, PlayerData and Rules fields; original signed population, word wrapping, bonus order and malformed-state paths remain explicit."}
 // symbol    ?compute_score@@YAXHPAH0H@Z
 // LEVER: plain int arithmetic; owner != faction branch first; set_base kept
 //        out of line (auto_inline off); has_project for both project scans;

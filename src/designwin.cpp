@@ -82,7 +82,7 @@ void __cdecl scroll_show(GraphicWin *window, Scroll *scroll);
 void __cdecl scroll_hide(GraphicWin *window, Scroll *scroll);
 
 // ORIGINAL: 0x00433F70 ?exec@SelectPartWin@@QAEHHHHHHHHHHHPAE@Z 0x00433F70-0x0043446F;0x00653F5A-0x00653F6F FILE
-// RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a:src/unrecovered/00433f70.cpp", "SelectPartWin member layout in src/selectpartwin.h", "Caviar renderer API in src/caviar.h", "RulesChassis/RulesWeapon/RulesArmor/RulesReactor in src/veh.h"], "reason": "Implement the shared part-picker modal with typed window, buffer, renderer, scroll and rules-table members while retaining the unresolved image-owned renderer/modal seams."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:c4c11a8a:src/unrecovered/00433f70.cpp", "SelectPartWin member layout in src/selectpartwin.h", "Caviar renderer API in src/caviar.h", "RulesChassis/RulesWeapon/RulesArmor/RulesReactor in src/veh.h"], "reason": "Implement the shared part-picker modal with typed window, buffer, renderer, scroll and rules-table members while retaining the unresolved image-owned renderer/modal seams."}
 int SelectPartWin::exec(int x, int y, int faction, int kind, int selected,
                         int chassis, int weapon, int armor, int abilities,
                         int reactor, unsigned char *palette) {
@@ -290,7 +290,7 @@ Purpose: Construct the SelectPartWin frame: the GraphicWin base, the Scroll
 //           registers no unwinding; real members would).
 Return Value: n/a
 Status: Coverage transcription - unclaimed body, seed
-        git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004328b0.cpp retained.
+        git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004328b0.cpp retained.
 */
 SelectPartWin::SelectPartWin() {
     field_2B6C_ = 0;
@@ -316,7 +316,7 @@ Purpose: Answer the design-parts list's keyboard navigation: the arrow keys
          returns do not.
 
 // ORIGINAL: 0x00433A10 ?on_key_click@SelectPartWin@@QAEHHH@Z 0x00433A10-0x00433CD0 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["The original SelectPartWin vtable at 0x0066B2B8 selects 0x00433A10 at inherited slot 25.", "The pinned key table dispatches Enter, Escape, navigation keys and their numpad equivalents; original seed at git:08336bcc:src/unrecovered/00433a10.cpp."], "reason": "The real SelectPartWin override in slot 25 owns keyboard navigation of its Scroll and selection members."}
+// RECOVERY_BINDING: v1 {"evidence": ["The original SelectPartWin vtable at 0x0066B2B8 selects 0x00433A10 at inherited slot 25.", "The pinned key table dispatches Enter, Escape, navigation keys and their numpad equivalents; original seed at git:85463515:src/unrecovered/00433a10.cpp."], "reason": "The real SelectPartWin override in slot 25 owns keyboard navigation of its Scroll and selection members."}
 // symbol   ?on_key_click@SelectPartWin@@UAEHHH@Z
 // size      704 bytes
 // prototype int (__thiscall ?on_key_click@SelectPartWin@@QAEHHH@Z)(SelectPartWin* this, int, int)
@@ -326,7 +326,7 @@ Purpose: Answer the design-parts list's keyboard navigation: the arrow keys
 // calls     0x00433D60 0x00605D20
 Return Value: 1 for every key, handled or not
 Status: Coverage transcription - unclaimed body; historical seed at
-        git:08336bcc:src/unrecovered/00433a10.cpp. The switch below is spelled
+        git:85463515:src/unrecovered/00433a10.cpp. The switch below is spelled
         over `key - 13` because that is the subtraction the image folds into
         its two-level jump-table index; the numpad keys share their arrow
         blocks exactly as the image's table cells do.
@@ -463,17 +463,17 @@ void SelectPartWin::on_scrolling(int a1, int a2) {
 // 0x0043EE10 destructor seed: reset and close the enclosing GraphicWin and
 // owned Buffer, then let C++ destroy Font, Buffer, Caviar, Scroll and the base
 // in reverse construction order. The compiler owns both vptrs and EH unwind.
-// Source seed: git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/recovered/units/0043ee10.cpp (measured MISMATCH).
+// Source seed: git:0e184947304cbb843b26264d5145e9b9b452cf16:src/recovered/units/0043ee10.cpp (measured MISMATCH).
 // ORIGINAL: 0x0043EE10 ??1SelectPartWin@@UAE@XZ 0x0043EE10-0x0043EF6A;0x00654720-0x006547AC BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original seed git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/recovered/units/0043ee10.cpp; its original spans and historical obligations are retained.", "SelectPartWin constructor 0x004328B0 establishes GraphicWin, Scroll+0xA14, Caviar+0x2B9C, Buffer+0x406C and Font members+0x45F4/+0x461C.", "The historical QAE destructor spelling is superseded by UAE from the actual GraphicWin-derived virtual destructor; automatic reverse member/base teardown remains owned by SelectPartWin.", "git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/recovered/units/0043ee10.cpp", "Historical seed spelling ??1SelectPartWin@@QAE@XZ; current source mapping ??1SelectPartWin@@UAE@XZ; emitted symbol ??1SelectPartWin@@UAE@XZ."], "reason": "The original complete destructor resets/closes the GraphicWin and embedded Buffer before reverse member destruction. The real SelectPartWin destructor owns that lifecycle. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original seed git:0e184947304cbb843b26264d5145e9b9b452cf16:src/recovered/units/0043ee10.cpp; its original spans and historical obligations are retained.", "SelectPartWin constructor 0x004328B0 establishes GraphicWin, Scroll+0xA14, Caviar+0x2B9C, Buffer+0x406C and Font members+0x45F4/+0x461C.", "The historical QAE destructor spelling is superseded by UAE from the actual GraphicWin-derived virtual destructor; automatic reverse member/base teardown remains owned by SelectPartWin.", "git:0e184947304cbb843b26264d5145e9b9b452cf16:src/recovered/units/0043ee10.cpp", "Historical seed spelling ??1SelectPartWin@@QAE@XZ; current source mapping ??1SelectPartWin@@UAE@XZ; emitted symbol ??1SelectPartWin@@UAE@XZ."], "reason": "The original complete destructor resets/closes the GraphicWin and embedded Buffer before reverse member destruction. The real SelectPartWin destructor owns that lifecycle. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
 SelectPartWin::~SelectPartWin() {
     close();
 }
 
 // 0x004339C0 on_redraw: redraw only the visible cells, selecting the current
-// highlight. Historical seed: git:08336bcc:src/recovered/units/004339c0.cpp.
+// highlight. Historical seed: git:85463515:src/recovered/units/004339c0.cpp.
 // ORIGINAL: 0x004339C0 ?on_redraw@SelectPartWin@@UAEXXZ 0x004339C0-0x00433A02 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original seed at git:08336bcc:src/recovered/units/004339c0.cpp; its original spans and historical obligations are retained.", "SelectPartWin constructor 0x004328B0 establishes GraphicWin, Scroll+0xA14, Caviar+0x2B9C, Buffer+0x406C and Font members+0x45F4/+0x461C."], "reason": "The SelectPartWin primary vtable at 0x0066B2B8 selects this original body in slot 12; the real GraphicWin-derived override retains its provisional inherited name."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original seed at git:85463515:src/recovered/units/004339c0.cpp; its original spans and historical obligations are retained.", "SelectPartWin constructor 0x004328B0 establishes GraphicWin, Scroll+0xA14, Caviar+0x2B9C, Buffer+0x406C and Font members+0x45F4/+0x461C."], "reason": "The SelectPartWin primary vtable at 0x0066B2B8 selects this original body in slot 12; the real GraphicWin-derived override retains its provisional inherited name."}
 void SelectPartWin::on_redraw() {
     for (int i = field_2B60_; i < field_2B60_ + field_2B64_; ++i) {
         draw_part(i, field_2B80_ == i);
@@ -484,9 +484,9 @@ void SelectPartWin::on_redraw() {
 // Win slot 17 is still provisionally named on_mouse_move. The image's
 // SelectPartWin vtable selects this body at slot 17. Grid cells are 108x94
 // with a 4px inset.
-// Historical seed: git:08336bcc:src/recovered/units/00433820.cpp (measured MISMATCH).
+// Historical seed: git:85463515:src/recovered/units/00433820.cpp (measured MISMATCH).
 // ORIGINAL: 0x00433820 ?on_mouse_feedback@SelectPartWin@@UAEXHH@Z 0x00433820-0x00433934 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original seed at git:08336bcc:src/recovered/units/00433820.cpp; its original spans and historical obligations are retained.", "SelectPartWin constructor 0x004328B0 establishes GraphicWin, Scroll+0xA14, Caviar+0x2B9C, Buffer+0x406C and Font members+0x45F4/+0x461C."], "reason": "The SelectPartWin primary vtable at 0x0066B2B8 selects this original body in slot 17; the real GraphicWin-derived override retains its provisional inherited name."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original seed at git:85463515:src/recovered/units/00433820.cpp; its original spans and historical obligations are retained.", "SelectPartWin constructor 0x004328B0 establishes GraphicWin, Scroll+0xA14, Caviar+0x2B9C, Buffer+0x406C and Font members+0x45F4/+0x461C."], "reason": "The SelectPartWin primary vtable at 0x0066B2B8 selects this original body in slot 17; the real GraphicWin-derived override retains its provisional inherited name."}
 // symbol    ?on_mouse_move@SelectPartWin@@UAEXHH@Z
 void SelectPartWin::on_mouse_move(int x, int y) {
     // Nested range tests (not one &&-chain) give the image's register choice.
@@ -519,9 +519,9 @@ void SelectPartWin::on_mouse_move(int x, int y) {
 
 // 0x00433940 on_left_up: release the pointer capture and modal state after
 // forwarding the point through the real inherited feedback virtual.
-// Historical seed: git:08336bcc:src/unrecovered/00433940.cpp.
+// Historical seed: git:85463515:src/unrecovered/00433940.cpp.
 // ORIGINAL: 0x00433940 ?vslot_21@SelectPartWin@@UAEXHH@Z 0x00433940-0x004339BF BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original seed at git:08336bcc:src/unrecovered/00433940.cpp; its original spans and historical obligations are retained.", "SelectPartWin constructor 0x004328B0 establishes GraphicWin, Scroll+0xA14, Caviar+0x2B9C, Buffer+0x406C and Font members+0x45F4/+0x461C."], "reason": "The SelectPartWin primary vtable at 0x0066B2B8 selects this original body in slot 21; the real GraphicWin-derived override retains its provisional inherited name."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original seed at git:85463515:src/unrecovered/00433940.cpp; its original spans and historical obligations are retained.", "SelectPartWin constructor 0x004328B0 establishes GraphicWin, Scroll+0xA14, Caviar+0x2B9C, Buffer+0x406C and Font members+0x45F4/+0x461C."], "reason": "The SelectPartWin primary vtable at 0x0066B2B8 selects this original body in slot 21; the real GraphicWin-derived override retains its provisional inherited name."}
 // symbol    ?on_left_up@SelectPartWin@@UAEXHH@Z
 void SelectPartWin::on_left_up(int x, int y) {
     on_mouse_move(x, y);
@@ -544,9 +544,9 @@ void SelectPartWin::on_left_up(int x, int y) {
 }
 
 // 0x00433F30 on_scrolled: the Scroll reports its row in the second argument.
-// Historical seed: git:08336bcc:src/recovered/00433f30.cpp (image-only exact).
+// Historical seed: git:85463515:src/recovered/00433f30.cpp (image-only exact).
 // ORIGINAL: 0x00433F30 ?vslot_48@SelectPartWin@@UAEXHH@Z 0x00433F30-0x00433F4F BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original seed at git:08336bcc:src/recovered/00433f30.cpp; its original spans and historical obligations are retained.", "SelectPartWin constructor 0x004328B0 establishes GraphicWin, Scroll+0xA14, Caviar+0x2B9C, Buffer+0x406C and Font members+0x45F4/+0x461C."], "reason": "The SelectPartWin primary vtable at 0x0066B2B8 selects this original body in slot 48; the real GraphicWin-derived override retains its provisional inherited name."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original seed at git:85463515:src/recovered/00433f30.cpp; its original spans and historical obligations are retained.", "SelectPartWin constructor 0x004328B0 establishes GraphicWin, Scroll+0xA14, Caviar+0x2B9C, Buffer+0x406C and Font members+0x45F4/+0x461C."], "reason": "The SelectPartWin primary vtable at 0x0066B2B8 selects this original body in slot 48; the real GraphicWin-derived override retains its provisional inherited name."}
 // symbol    ?on_scrolled@SelectPartWin@@UAEXHH@Z
 void SelectPartWin::on_scrolled(int, int row) {
     field_2B60_ = field_2B6C_ * row;
@@ -581,7 +581,7 @@ Purpose: Draw one entry of the design parts list: translate the entry index
 //           functions and the switch calls them by name.
 Return Value: 1 the cell was drawn or tiled, 0 the index was past the table
 Status: Coverage transcription - unclaimed body; historical seed at
-        git:08336bcc:src/unrecovered/00433d60.cpp.
+        git:85463515:src/unrecovered/00433d60.cpp.
 */
 #pragma optimize("y", off)
 int SelectPartWin::draw_part(int a1, int a2) {
@@ -648,7 +648,7 @@ Purpose: Draw one chassis entry's label and render: find the a1'th enabled
 //           does. Not measured exact.
 Return Value: 1 the entry was drawn, 0 the index ran past the table
 Status: Coverage transcription - unclaimed body; historical seed at
-        git:08336bcc:src/unrecovered/004329b0.cpp.
+        git:85463515:src/unrecovered/004329b0.cpp.
 */
 #pragma optimize("y", off)
 int SelectPartWin::draw_chassis(int a1, RECT *a2, int a3) {
@@ -735,7 +735,7 @@ Purpose: Draw one reactor entry of the design parts list: find the a1'th
 //           edi). Not measured exact.
 Return Value: 1 the entry was drawn, 0 the index ran past the table
 Status: Coverage transcription - unclaimed body; historical seed at
-        git:08336bcc:src/unrecovered/00433520.cpp.
+        git:85463515:src/unrecovered/00433520.cpp.
 */
 #pragma optimize("y", off)
 int SelectPartWin::draw_reactor(int a1, RECT *a2, int a3) {
@@ -819,7 +819,7 @@ Purpose: Draw one armor entry of the design parts list: missile chassis select
 //           allocation difference, not chased further. Not measured exact.
 Return Value: 1 the entry was drawn, 0 the index ran past the table
 Status: Coverage transcription - unclaimed body; historical seed at
-        git:08336bcc:src/unrecovered/00433170.cpp.
+        git:85463515:src/unrecovered/00433170.cpp.
 */
 #pragma optimize("y", off)
 int SelectPartWin::draw_armor(int a1, RECT *a2, int a3) {
@@ -930,7 +930,7 @@ Purpose: Draw one weapon entry of the design parts list: find the a1'th
 //           ESP-frame prologue shape, not control flow. Not measured exact.
 Return Value: 1 the entry was drawn, 0 the index ran past the table
 Status: Coverage transcription - unclaimed body; historical seed at
-        git:08336bcc:src/unrecovered/00432cc0.cpp.
+        git:85463515:src/unrecovered/00432cc0.cpp.
 */
 #pragma optimize("y", off)
 int SelectPartWin::draw_weapon(int a1, RECT *a2, int a3) {
@@ -1146,7 +1146,7 @@ char DesignPredefinedName[4];
 char DesignAutomaticName[4];
 
 // ORIGINAL: 0x00434480 ??0DesignWin@@QAE@XZ 0x00434480-0x004345B5;0x00653F6F-0x00653FFE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/units/00434480.cpp"], "reason": "Natural bases and embedded members construct once; original initializes editor component state after their construction."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:def4db5d8cde1ddd00c5735adc0e3cd230ec02b8:src/recovered/units/00434480.cpp"], "reason": "Natural bases and embedded members construct once; original initializes editor component state after their construction."}
 DesignWin::DesignWin() {
     factionID_ = 0;
     protoID_ = 0;
@@ -1562,7 +1562,7 @@ void __stdcall main_interface_bubble_callback_4396b0(char *text, int x, int y) {
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00439700 0x00439948 0x00439960 0x00439745
 // ORIGINAL: 0x00439700 ?on_right_click@DesignWin@@QAEXHH@Z 0x00439700-0x00439948 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/units/00439700.cpp"], "reason": "Spot palette categories select localized help labels; the two ability categories share a label."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:def4db5d8cde1ddd00c5735adc0e3cd230ec02b8:src/recovered/units/00439700.cpp"], "reason": "Spot palette categories select localized help labels; the two ability categories share a label."}
 // symbol    ?on_right_click@DesignWin@@UAEXHH@Z
 void DesignWin::on_right_click(int x, int y) {
     TutorialWindow.reset();
@@ -1592,7 +1592,7 @@ void DesignWin::on_right_click(int x, int y) {
 }
 
 // ORIGINAL: 0x004379A0 ?on_redraw@DesignWin@@QAEXXZ 0x004379A0-0x00437B95 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/units/004379a0.cpp;InterfaceBoxStyles source ownership in src/game.cpp;MainInterface primary_font and working rectangle"], "reason": "Restore the design frame and caption through real screen and embedded Buffer objects, redraw all editor panels, and frame the union of the lower panels."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:def4db5d8cde1ddd00c5735adc0e3cd230ec02b8:src/recovered/units/004379a0.cpp;InterfaceBoxStyles source ownership in src/game.cpp;MainInterface primary_font and working rectangle"], "reason": "Restore the design frame and caption through real screen and embedded Buffer objects, redraw all editor panels, and frame the union of the lower panels."}
 // symbol    ?on_redraw@DesignWin@@UAEXXZ
 void DesignWin::on_redraw() {
     MainInterfaceGlobal.Buffer::restore_clip();
@@ -1634,7 +1634,7 @@ void DesignWin::on_redraw() {
 }
 
 // ORIGINAL: 0x0043E490 ?setup_veh@DesignWin@@QAEXHH@Z 0x0043E490-0x0043E952 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x43E496,0x43E6D1;git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/units/0043e490.cpp"], "reason": "Original first argument is the prototype and second enables automatic component selection; real prototype records, component tables and shared design state preserve each branch."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x43E496,0x43E6D1;git:def4db5d8cde1ddd00c5735adc0e3cd230ec02b8:src/recovered/units/0043e490.cpp"], "reason": "Original first argument is the prototype and second enables automatic component selection; real prototype records, component tables and shared design state preserve each branch."}
 // Exact once VehPrototype::flags is a signed 16-bit field: the image narrows
 // every `flags &= ~bit` to a byte `and` (0x0043E4E4, 0x0043E687, 0x0043E909).
 void DesignWin::setup_veh(int proto_id, int automatic) {
@@ -1772,7 +1772,7 @@ void DesignWin::setup_veh(int proto_id, int automatic) {
 }
 
 // ORIGINAL: 0x0043BE30 ?select_name@DesignWin@@QAEXXZ 0x0043BE30-0x0043BF4C BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/units/0043be30.cpp;ParseStrBuffer in src/general.h;image:0x6838F4 DESIGNNAME;typed32-byte prototype name"], "reason": "Prompt for the prototype name through the shared popup helper, preserve cancellation and unchanged-name paths, update its custom-name flag and redraw through the genuine virtual update slot."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:def4db5d8cde1ddd00c5735adc0e3cd230ec02b8:src/recovered/units/0043be30.cpp;ParseStrBuffer in src/general.h;image:0x6838F4 DESIGNNAME;typed32-byte prototype name"], "reason": "Prompt for the prototype name through the shared popup helper, preserve cancellation and unchanged-name paths, update its custom-name flag and redraw through the genuine virtual update slot."}
 void DesignWin::select_name() {
     char name[80];
     strcpy(name, prototype_name_);
@@ -2528,7 +2528,7 @@ void DesignWin::on_status(int mode) {
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005FAB00 0x005169F0
 // ORIGINAL: 0x0043D220 ?on_iface_left_click@DesignWin@@QAEXHH@Z 0x0043D220-0x0043D281 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x43D243,0x43D260,0x43D274;git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/units/0043d220.cpp"], "reason": "Interface secondary-base callback selects a stack prototype and invokes setup plus virtual redraw through the genuine DesignWin inheritance."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x43D243,0x43D260,0x43D274;git:def4db5d8cde1ddd00c5735adc0e3cd230ec02b8:src/recovered/units/0043d220.cpp"], "reason": "Interface secondary-base callback selects a stack prototype and invokes setup plus virtual redraw through the genuine DesignWin inheritance."}
 // symbol    ?on_iface_left_click@DesignWin@@UAEXHH@Z
 void DesignWin::on_iface_left_click(int a1, int a2) {
     int position;
@@ -3399,7 +3399,7 @@ int DesignWin::exec(int faction_id, int prototype_id) {
 
 
 // ORIGINAL: 0x0043C170 ?timer_function@DesignWin@@QAAXH@Z 0x0043C170-0x0043C19B BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/0043c170.cpp;Time cdecl callback interface"], "reason": "Receiver-free timer callback reloads the shared active design owner between preview drawing and rectangle update, then draws the tutorial arrow."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:def4db5d8cde1ddd00c5735adc0e3cd230ec02b8:src/recovered/0043c170.cpp;Time cdecl callback interface"], "reason": "Receiver-free timer callback reloads the shared active design owner between preview drawing and rectangle update, then draws the tutorial arrow."}
 // symbol    ?timer_function@DesignWin@@SAXH@Z
 void __cdecl DesignWin::timer_function(int) {
     DesignWin *window = DesignWindowSelf;
@@ -3509,7 +3509,7 @@ void DesignWin::shut_that_badboy_down() {
 // calls timeKillEvent/KillTimer/flush_timer - genuinely not a leaf) leaves
 // ecx holding the caller's value on return. src/time.h's
 // `release_modal` declaration (00616870) is what this tree calls; the unit that
-// carried that body was folded away (commit 619631a0), and it showed
+// carried that body was folded away (commit 2944d83b), and it showed
 // `Time::release_modal()` never touches `this` (`TimeModal =
 // nullptr;`), so the no-reload choice the original compiler made is only
 // explainable by whole-translation-unit visibility into that callee's body
@@ -3819,7 +3819,7 @@ void DesignWin::suggest_abil(int ability) {
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00434BC0 ?draw_chassis@DesignWin@@QAEXH@Z 0x00434BC0-0x00434F36 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:434BC0..434F36", "historical seed git:20b88b523:src/recovered/units/00434bc0.cpp preserves the full renderer, palette sequence, imported uppercase call, title/name wrap branch, unchecked triad lookup and exact 0x90 chassis stride", "src/designwin.h:component_panel_rects_[component_panel_chassis], component fields, font1_/font2_, caviar_; src/veh.h:RulesChassis/Chassis/Triad; src/interface_palette.cpp:TextColourTable; src/strings.h:StringTemp/StringTable"], "reason": "Restore the complete chassis editor panel through the real DesignWin, Caviar, RulesChassis, string and palette owners. Preserve native callback order, line geometry, width-dependent wrapping and unchecked localized triad indexing; retain the original identity and span without a new byte claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:434BC0..434F36", "historical seed git:f30e8c53a:src/recovered/units/00434bc0.cpp preserves the full renderer, palette sequence, imported uppercase call, title/name wrap branch, unchecked triad lookup and exact 0x90 chassis stride", "src/designwin.h:component_panel_rects_[component_panel_chassis], component fields, font1_/font2_, caviar_; src/veh.h:RulesChassis/Chassis/Triad; src/interface_palette.cpp:TextColourTable; src/strings.h:StringTemp/StringTable"], "reason": "Restore the complete chassis editor panel through the real DesignWin, Caviar, RulesChassis, string and palette owners. Preserve native callback order, line geometry, width-dependent wrapping and unchecked localized triad indexing; retain the original identity and span without a new byte claim."}
 extern int TextColourTable[195];
 
 void DesignWin::draw_chassis(int redraw) {
@@ -3892,7 +3892,7 @@ extern int TextColourTable[195];
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00434F40 ?draw_weapon@DesignWin@@QAEXH@Z 0x00434F40-0x004353FF BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:09f23e99:src/designwin.cpp preserves the original identity and historical seed provenance", "Pinned434F40..4353FF reads real DesignWin panel/font/selection members, VW00 at7871C0 and TextColourTable swatches156..161", "src/caviar.cpp:g_VW00_CAVIARDATA and src/interface_palette.cpp:textcolor_init own model and palette storage"], "reason": "Render the weapon heading, model, localized name and offense/cost detail through genuine source-owned objects; preserve live callback reads and original 32-bit coordinate arithmetic."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:b89ac340:src/designwin.cpp preserves the original identity and historical seed provenance", "Pinned434F40..4353FF reads real DesignWin panel/font/selection members, VW00 at7871C0 and TextColourTable swatches156..161", "src/caviar.cpp:g_VW00_CAVIARDATA and src/interface_palette.cpp:textcolor_init own model and palette storage"], "reason": "Render the weapon heading, model, localized name and offense/cost detail through genuine source-owned objects; preserve live callback reads and original 32-bit coordinate arithmetic."}
 void DesignWin::draw_weapon(int redraw) {
     (void)redraw;
     int width;
@@ -3993,7 +3993,7 @@ void DesignWin::draw_weapon(int redraw) {
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00435400 ?draw_armor@DesignWin@@QAEXH@Z 0x00435400-0x00435800 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:fd72c001:src/designwin.cpp preserves original identity and historical seed provenance", "Pinned435400..435800 reads live armor selection, signed defense at rule+8 and unsigned mode at+9", "src/caviar.h:Caviar::render_multi_table_dest and src/game.h:ArmorTransparentColorTables"], "reason": "Render the armor heading, transparent or ordinary preview, localized name and conditional defense detail through genuine source objects; preserve callback reads and native text geometry."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:56b061ee:src/designwin.cpp preserves original identity and historical seed provenance", "Pinned435400..435800 reads live armor selection, signed defense at rule+8 and unsigned mode at+9", "src/caviar.h:Caviar::render_multi_table_dest and src/game.h:ArmorTransparentColorTables"], "reason": "Render the armor heading, transparent or ordinary preview, localized name and conditional defense detail through genuine source objects; preserve callback reads and native text geometry."}
 void DesignWin::draw_armor(int redraw) {
     (void)redraw;
     int width;
@@ -4074,7 +4074,7 @@ void DesignWin::draw_armor(int redraw) {
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00435800 ?draw_reactor@DesignWin@@QAEXH@Z 0x00435800-0x00435B29 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:fd72c001:src/designwin.cpp preserves original identity and historical seed provenance", "Pinned435800..435B29 uses1-based reactor selection, ability bit8000 and wrap_cent return as numeric-row top", "src/alpha.cpp reactor loader and src/veh.h:RulesReactor establish interned name pointers and12-byte records"], "reason": "Render the reactor heading, ability-prefixed description, model and live numeric selection through genuine source objects; retain native font reads and wrap-return geometry."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:56b061ee:src/designwin.cpp preserves original identity and historical seed provenance", "Pinned435800..435B29 uses1-based reactor selection, ability bit8000 and wrap_cent return as numeric-row top", "src/alpha.cpp reactor loader and src/veh.h:RulesReactor establish interned name pointers and12-byte records"], "reason": "Render the reactor heading, ability-prefixed description, model and live numeric selection through genuine source objects; retain native font reads and wrap-return geometry."}
 void DesignWin::draw_reactor(int redraw) {
     (void)redraw;
     RECT area = component_panel_rects_[component_panel_reactor];
@@ -4224,7 +4224,7 @@ void DesignWin::draw_special_2(int redraw) {
 }
 
 // ORIGINAL: 0x00436090 ?draw_vehicle@DesignWin@@QAEXH@Z 0x00436090-0x00437999 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/veh.h:VehPrototype is size 0x34; row 63 begins at 0x009AC534 and fields at 0x20,0x24-0x27,0x2E own the observed stores", "source:src/designwin.cpp:UNK3, draw_vehicle and draw_flash share VehPrototypes[0x3f] preview storage", "source:src/designwin.h:draw_special_2(int), draw_special_1(int), draw_vehicle(int), draw_flash(), draw_info() are declared DesignWin methods", "source:src/veh.cpp:abil_cond(int,int,int,int) is the existing __cdecl definition at 0x00584B50", "historical seed (Git tree 01a84efe; retired from the live source tree): src/unrecovered/00436090.cpp; preserve its original draw_vehicle identity, spans and TRIED lesson"], "reason": "Publish the editor preview scratch through the real 0x34-stride VehPrototype row 63, and close its repaint/ability-validation calls through the declared DesignWin methods and existing cdecl abil_cond owner."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/veh.h:VehPrototype is size 0x34; row 63 begins at 0x009AC534 and fields at 0x20,0x24-0x27,0x2E own the observed stores", "source:src/designwin.cpp:UNK3, draw_vehicle and draw_flash share VehPrototypes[0x3f] preview storage", "source:src/designwin.h:draw_special_2(int), draw_special_1(int), draw_vehicle(int), draw_flash(), draw_info() are declared DesignWin methods", "source:src/veh.cpp:abil_cond(int,int,int,int) is the existing __cdecl definition at 0x00584B50", "historical seed (Git tree 15fe30a4; retired from the live source tree): src/unrecovered/00436090.cpp; preserve its original draw_vehicle identity, spans and TRIED lesson"], "reason": "Publish the editor preview scratch through the real 0x34-stride VehPrototype row 63, and close its repaint/ability-validation calls through the declared DesignWin methods and existing cdecl abil_cond owner."}
 // TRIED: full transcription (mnemonic_similarity 0.576, 930/1780 original mnemonics in common); two Font structs are embedded back to back at +0x14568 (detail line font) and +0x14590 (name font), each with the compiler inlining `unk1<0 ? line_height_ : height_+unk1` at every call site rather than through a getter - kept as a helper here. First divergence is in the opening RECT-copy prologue (four field reads compiled as one push/lea shuffle in the original vs plain assignment here).
 void DesignWin::draw_vehicle(int redraw) {
     (void)redraw;
@@ -4725,7 +4725,7 @@ void DesignWin::draw_vehicle(int redraw) {
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004346A0 ?draw_info@DesignWin@@QAEXXZ 0x004346A0-0x00434BB4;0x00653FFE-0x00654010
-// RECOVERY_BINDING: v1 {"evidence": ["task:design-info-owner", "pinned:4346A0..434BB4 primary body and653FFE..654010 Font cleanup/EH span; real stack Font owns normal and exceptional cleanup.", "pinned:MainInterfaceGlobal Buffer receiver7AEC64; actual inheritance selects +444; InterfaceBoxStyles[3]/[0] at78D5A0/78D528.", "pinned:replacement loop348C1..34A2C retains later-wins selected-ID stores and current-category rereads; typed PlayerData active/queue arrays.", "pinned:fallback literals682820/682E9C/68354C/682E98 and USER32 CharUpperA; historical seed git:bb602081^:src/recovered/units/004346a0.cpp."], "reason": "Recover the information-panel renderer and selection scan through genuine DesignWin members, MainInterface Buffer inheritance, typed prototype/faction arrays and automatic Font lifetime; preserve original primary and compiler cleanup spans."}
+// RECOVERY_BINDING: v1 {"evidence": ["task:design-info-owner", "pinned:4346A0..434BB4 primary body and653FFE..654010 Font cleanup/EH span; real stack Font owns normal and exceptional cleanup.", "pinned:MainInterfaceGlobal Buffer receiver7AEC64; actual inheritance selects +444; InterfaceBoxStyles[3]/[0] at78D5A0/78D528.", "pinned:replacement loop348C1..34A2C retains later-wins selected-ID stores and current-category rereads; typed PlayerData active/queue arrays.", "pinned:fallback literals682820/682E9C/68354C/682E98 and USER32 CharUpperA; historical seed git:59cb5d02^:src/recovered/units/004346a0.cpp."], "reason": "Recover the information-panel renderer and selection scan through genuine DesignWin members, MainInterface Buffer inheritance, typed prototype/faction arrays and automatic Font lifetime; preserve original primary and compiler cleanup spans."}
 void DesignWin::draw_info() {
     Font font;
     RECT panel = info_panel_rect_;
@@ -4825,7 +4825,7 @@ void DesignWin::draw_info() {
 
 
 // ORIGINAL: 0x00439F20 ?select_chassis@DesignWin@@QAEXXZ 0x00439F20-0x0043A300;0x006541FC-0x00654281 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a:src/recovered/units/00439f20.cpp", "RulesChassis in src/veh.h", "DesignWin component members in src/designwin.h", "SelectPartWin::exec homed from git:2c2c407fba69ba73e4556995d5cc2cf85e3e0308:src/selectpartwin.cpp to src/designwin.cpp"], "reason": "Open the chassis picker, translate its eligible-row result into the chassis table, preserve chassis-dependent weapon and ability constraints, and redraw the design preview."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:c4c11a8a:src/recovered/units/00439f20.cpp", "RulesChassis in src/veh.h", "DesignWin component members in src/designwin.h", "SelectPartWin::exec homed from git:b949aeb4428b591965bb48bc674e8159b67bf730:src/selectpartwin.cpp to src/designwin.cpp"], "reason": "Open the chassis picker, translate its eligible-row result into the chassis table, preserve chassis-dependent weapon and ability constraints, and redraw the design preview."}
 void DesignWin::select_chassis() {
     SelectPartWin picker;
     const int row = picker_row_before(protoChassisType_, Chassis,
@@ -4885,7 +4885,7 @@ void DesignWin::select_chassis() {
 }
 
 // ORIGINAL: 0x0043A300 ?select_weapon@DesignWin@@QAEXXZ 0x0043A300-0x0043A754;0x00654281-0x00654306 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a:src/recovered/units/0043a300.cpp", "RulesWeapon/RulesArmor in src/veh.h", "DesignWin component members in src/designwin.h", "SelectPartWin::exec homed from git:2c2c407fba69ba73e4556995d5cc2cf85e3e0308:src/selectpartwin.cpp to src/designwin.cpp"], "reason": "Open the weapon picker, apply the selected record's chassis restrictions, update implicit abilities, and redraw the design preview."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:c4c11a8a:src/recovered/units/0043a300.cpp", "RulesWeapon/RulesArmor in src/veh.h", "DesignWin component members in src/designwin.h", "SelectPartWin::exec homed from git:b949aeb4428b591965bb48bc674e8159b67bf730:src/selectpartwin.cpp to src/designwin.cpp"], "reason": "Open the weapon picker, apply the selected record's chassis restrictions, update implicit abilities, and redraw the design preview."}
 void DesignWin::select_weapon() {
     SelectPartWin picker;
     const int row = picker_row_before(protoWeaponType_, Weapon, MaxWeaponNum);
@@ -4959,7 +4959,7 @@ void DesignWin::select_weapon() {
 }
 
 // ORIGINAL: 0x0043A760 ?select_armor@DesignWin@@QAEXXZ 0x0043A760-0x0043A9F8;0x00654306-0x0065438B BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a:src/recovered/units/0043a760.cpp", "RulesArmor/RulesWeapon in src/veh.h", "DesignWin component members in src/designwin.h", "SelectPartWin::exec homed from git:2c2c407fba69ba73e4556995d5cc2cf85e3e0308:src/selectpartwin.cpp to src/designwin.cpp"], "reason": "Open the armor picker, preserve the armor/weapon compatibility suggestion, and redraw the design preview."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:c4c11a8a:src/recovered/units/0043a760.cpp", "RulesArmor/RulesWeapon in src/veh.h", "DesignWin component members in src/designwin.h", "SelectPartWin::exec homed from git:b949aeb4428b591965bb48bc674e8159b67bf730:src/selectpartwin.cpp to src/designwin.cpp"], "reason": "Open the armor picker, preserve the armor/weapon compatibility suggestion, and redraw the design preview."}
 void DesignWin::select_armor() {
     SelectPartWin picker;
     const int row = picker_row_before(protoArmorType_, Armor, MaxArmorNum);
@@ -4984,7 +4984,7 @@ void DesignWin::select_armor() {
 }
 
 // ORIGINAL: 0x0043AA00 ?select_reactor@DesignWin@@QAEXXZ 0x0043AA00-0x0043AC69;0x0065438B-0x00654410 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a:src/unrecovered/0043aa00.cpp", "RulesReactor in src/veh.h", "DesignWin component members in src/designwin.h", "SelectPartWin::exec homed from git:2c2c407fba69ba73e4556995d5cc2cf85e3e0308:src/selectpartwin.cpp to src/designwin.cpp"], "reason": "Open the reactor picker, translate its enabled-row result, update the reactor selection, and redraw the design preview."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:c4c11a8a:src/unrecovered/0043aa00.cpp", "RulesReactor in src/veh.h", "DesignWin component members in src/designwin.h", "SelectPartWin::exec homed from git:b949aeb4428b591965bb48bc674e8159b67bf730:src/selectpartwin.cpp to src/designwin.cpp"], "reason": "Open the reactor picker, translate its enabled-row result, update the reactor selection, and redraw the design preview."}
 void DesignWin::select_reactor() {
     SelectPartWin picker;
     const int row = picker_row_before(protoReactorType_, Reactor,

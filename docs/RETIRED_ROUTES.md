@@ -32,7 +32,7 @@ runs on. That is not a state somebody sees and tolerates for a while; it is
 what a suite nobody runs looks like from the inside.
 
 The corroborating measurement: `test_agent_brief.py`'s prose bound was failing
-at `52e624fb`, **the commit that introduced the bound**, and stayed red through
+at `055f0bfd`, **the commit that introduced the bound**, and stayed red through
 every commit after it. A check that has never once been green is not enforcing
 anything, and neither is a green one nobody reads — which is the argument that
 settled this. Green and red were equally uninformative here, so the split
@@ -530,7 +530,7 @@ import — gave a different picture:
 The 18 test-only tools are the interesting group, because they LOOK healthy: a
 CMake registration runs a test for each, and both registration gates go green.
 Neither gate checks that a test PASSES, which is how `analyze_delegates` sat
-failing on a ModuleNotFoundError since 271114cf.
+failing on a ModuleNotFoundError since d643055b.
 
 Retired here, with what each was for:
 
@@ -643,7 +643,7 @@ committed. It could not fail, and nothing said so, because it also sat in the
 EXEMPT set of `tools/verify_checks_can_fail.py` back when that set held fourteen
 names — the one place that would have asked was told not to.
 
-Commit `e8306017` fixed it: read the UNION of every set the file has held across
+Commit `3d4ee346` fixed it: read the UNION of every set the file has held across
 the whole history via two `git cat-file` batches (28 revisions in 7 ms), and
 give it a real damage case — a throwaway 13-revision repository that adds twelve
 aliases one per commit, drops one in a thirteenth commit, and leaves the tree
@@ -694,9 +694,9 @@ Measured against the tree on 2026-08-13, by restoring the tool and joining
 every finding to `src/*.h`: **180 of the 198 are already fixed**, zero agree
 with the `.def` alias, 10 are genuinely live and 8 are undetermined (ambiguous
 stems: `init`, `get`, `territory`, `has_fac_built`, `base_lose_minerals`).
-Commit 78038809 (2026-08-05) *"Correct 174 recovered signatures against their
+Commit 8bf6a492 (2026-08-05) *"Correct 174 recovered signatures against their
 own mangled names"* changed 174 declarations in `src/` and never touched the
-`.def`, whose aliases were last written 2026-07-11 (c6f5a1f0). The audit's
+`.def`, whose aliases were last written 2026-07-11 (0d9a413f). The audit's
 premise — "the GCC symbol each alias maps to, which the compiler produced from
 the committed source" — stopped holding on 2026-08-05, and **its `BASELINE`
 ratchet could not notice, because a frozen file cannot move.** The work the 44
@@ -726,7 +726,7 @@ mutation run can see.
 
 **A COUNT RATCHET WAS PROVED BLIND HERE, AND THE PROOF NEARLY WENT WITH THE
 TEST FILE.** `test_a_rename_that_keeps_the_count_still_fails` recorded a real
-incident (312b5cf3, 2026-08-01): one alias was removed and another added, so
+incident (10547db6, 2026-08-01): one alias was removed and another added, so
 the export COUNT was unchanged at 467 and only a SET DIFFERENCE caught it. This
 repository is built out of count ratchets — `BASELINE`, `GATE_CHECK_FLOOR`,
 `PREFIX_FAMILY_FLOOR`, `--floor 50` — and this is the one concrete case where a
@@ -782,12 +782,12 @@ none now, and says so in its heading.
 The export set is not pinned by anything today, and nothing needs it pinned
 because nothing imports by name. If a future route pins one again:
 
-* the file: `git show 72d7ea96:src/OpenSMACX.def` — 490 lines, 488 aliases; its
+* the file: `git show 91ac490e:src/OpenSMACX.def` — 490 lines, 488 aliases; its
   27-commit history is `git log --oneline -- src/OpenSMACX.def` before this
   commit;
-* the append-only guard: added in `919a7129`, and **restore the `e8306017`
+* the append-only guard: added in `b299ff20`, and **restore the `3d4ee346`
   version, not the original** — the original could not fail;
-* the signedness audit: added in `1e50f588`, with `BASELINE`
+* the signedness audit: added in `3a39cb1b`, with `BASELINE`
   `{disagreements: 199, signed_divide: 44}`, `COMPARISON_FLOOR` 300 and
   `RANKED_FLOOR` 150; its `--exe` must be passed explicitly, because with no
   executable every finding stays `unranked` and half the ratchet compares 0
@@ -939,7 +939,7 @@ decided per body by flags, spelling and class modelling, and `osmx measure`
 already compiles each body in the unit it lives in. The user closed it with
 "let's not worry about TU for now".
 
-`tools/link_order.py` made both measurements; it was deleted in 56f53bec with
+`tools/link_order.py` made both measurements; it was deleted in f6ad7b15 with
 the other unreferenced tools. Git holds it if this route is ever re-opened
 with new evidence - and the sentinel-vs-longest-run trap above is the first
 thing to re-read if it is.

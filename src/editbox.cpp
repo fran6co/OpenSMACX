@@ -32,7 +32,7 @@ static void __fastcall stop_edit_timer(Time *timer) {
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00615E40 ?caret_callback@EditBox@@QAEXH@Z 0x00615E40-0x00615E5F BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned disassembly 0x00615E40 reads its only receiver from [esp+4] and ends with a tail jump through the receiver's redraw slot", "git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00614fe0.cpp passes EditBox this as Time's integer callback payload", "src/editbox.h field_B48_ is the caret visibility state"], "reason": "Treat the timer entry as a free callback taking an EditBox pointer payload, not a member with an invented implicit receiver."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned disassembly 0x00615E40 reads its only receiver from [esp+4] and ends with a tail jump through the receiver's redraw slot", "git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00614fe0.cpp passes EditBox this as Time's integer callback payload", "src/editbox.h field_B48_ is the caret visibility state"], "reason": "Treat the timer entry as a free callback taking an EditBox pointer payload, not a member with an invented implicit receiver."}
 // symbol    ?edit_box_caret_callback@@YAXH@Z
 void __cdecl edit_box_caret_callback(int edit_box_address) {
     EditBox *const box = reinterpret_cast<EditBox *>(edit_box_address);
@@ -153,7 +153,7 @@ int EditBox::text_position(int x) {
 // 615F50. Preserve the second mask read, strict width inequality, width read
 // before the text-width call, and padding read after it.
 // ORIGINAL: 0x00615F50 ?text_fits@EditBox@@QAEHXZ 0x00615F50-0x00616029 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00615f50.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00615f50.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
 // TRIED: plain `strcat(buf, ...)` compiles to an inlined `repne scasb`/copy sequence, not the original's `call _strcat`; `#pragma function(strcat)` restores the call. Landed at 82.4% mnemonic similarity (172 vs 217 bytes): the original duplicates its `text_width` + threshold-compare tail in BOTH branches (masked and unmasked text), but this source's identical trailing 3 statements in each branch let VC6 tail-merge them into one shared block with a `jmp`, which the original does not do even though its two tails are mnemonic-for-mnemonic identical too. Tried: a shared vs per-branch `threshold`/`base` local, folding the compare inline vs a named `threshold` variable - the merge persisted across all of them.
 // symbol    ?text_fits@EditBox@@QAEHXZ
 int EditBox::text_fits() {
@@ -184,7 +184,7 @@ int EditBox::text_fits() {
 // 615630. No invented bounds clamp: preserve the original selection cases.
 // ORIGINAL: 0x00615630 ?on_key_click@EditBox@@QAEHHH@Z 0x00615630-0x00615839
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00615630.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
-// Deleted seed provenance: git:25c0645e742c23f149e0895c391a9ba79ad744cb:src/unrecovered/00615630.cpp
+// Deleted seed provenance: git:b5a8554e33a26faf238f51538994e24a254783a3:src/unrecovered/00615630.cpp
 // symbol    ?on_key_click@EditBox@@UAEHHH@Z
 int EditBox::on_key_click(int character, int) {
     if (character >= 0 && character < 0x20) return 0;
@@ -240,7 +240,7 @@ int EditBox::on_key_click(int character, int) {
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x00615840 0x00615D90 0x00615DEF 0x00615890
 // ORIGINAL: 0x00615840 ?on_key_down@EditBox@@QAEHH@Z 0x00615840-0x00615D73
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00615840.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
-// Deleted seed provenance: git:25c0645e742c23f149e0895c391a9ba79ad744cb:src/unrecovered/00615840.cpp
+// Deleted seed provenance: git:b5a8554e33a26faf238f51538994e24a254783a3:src/unrecovered/00615840.cpp
 // symbol    ?on_key_down@EditBox@@UAEHH@Z
 int EditBox::on_key_down(int key_value) {
     unsigned int key = static_cast<unsigned int>(key_value);
@@ -513,7 +513,7 @@ int EditBoxTextColor3 = 1;
 int EditBoxTextColor4 = 1;
 
 // ORIGINAL: 0x00614FE0 ?init@EditBox@@QAEHHHHHPAUWin@@H@Z 0x00614FE0-0x00615179 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00614fe0.cpp", "EditBox member offsets in src/editbox.h", "Buffer::markup_enabled_ lies at GraphicWin+0x964", "Original image values at 0x006971E8-0x006971F3"], "reason": "Initialize the real editor, base window, text buffer and owned timer; install the free caret callback rather than a synthetic vtable receiver."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00614fe0.cpp", "EditBox member offsets in src/editbox.h", "Buffer::markup_enabled_ lies at GraphicWin+0x964", "Original image values at 0x006971E8-0x006971F3"], "reason": "Initialize the real editor, base window, text buffer and owned timer; install the free caret callback rather than a synthetic vtable receiver."}
 // TRIED: same as 0x005C9860 - the scaffold's GraphicWin::init is stale as `void` (src/graphicwin.cpp's real recovery returns `int`, and this disassembly tests the return value), so a same-layout `GraphicWinInitShim` with the correct `int` return gets the call.
 // TRIED: landed at 0.92 similarity, 410 vs 409 bytes; diverges at #45 where the trailing low-byte or/and-with-1 flag update compiles to a wider `not`/`and` sequence here, and VC6 inlines the `strlen` call as `repne scasb` where the original kept a real `call`. Tried an explicit `unsigned char` low-byte read/write for the flag update instead of a 32-bit read-modify-write; same divergence point.
 // The recovered Win base is declared as a class; VC6 consequently spells its
@@ -703,7 +703,7 @@ Purpose: Replace one edit box's text: clear the cursor; if the input exceeds
          then append it and recompute the text length before repainting.
 
 // ORIGINAL: 0x006151E0 ?set_text@EditBox@@QAEXPAD@Z 0x006151E0-0x0061526A BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; original identity 0x006151E0 retains name and all original spans/claims", "src/editbox.h declares the actual EditBox::set_text class member; body uses that existing owner API", "historical source was FILE-mode in git:e9190930285ebdae9121f3ac00645c634df1efea:src/leaf_recoveries.cpp; this transfer places the unchanged C++ member definition in its actual owner TU and changes measurement mode to BODY explicitly; it does not assert historical recipe equality", "the complete source body and existing TRIED/LEVER/DEFERRED history are carried forward unchanged; only annotation mode/location and transitional SCAFFOLD classification change"], "reason": "Transfer the complete EditBox::set_text definition to its existing source owner without changing its C++ body. Keep the original FILE spans and historical claim state; BODY is the new per-member measurement scope, not a claim that the old whole-TU recipe is equivalent."}
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; original identity 0x006151E0 retains name and all original spans/claims", "src/editbox.h declares the actual EditBox::set_text class member; body uses that existing owner API", "historical source was FILE-mode in git:2874481e371cbbaa04e3375e6797f1f182abb7cb:src/leaf_recoveries.cpp; this transfer places the unchanged C++ member definition in its actual owner TU and changes measurement mode to BODY explicitly; it does not assert historical recipe equality", "the complete source body and existing TRIED/LEVER/DEFERRED history are carried forward unchanged; only annotation mode/location and transitional SCAFFOLD classification change"], "reason": "Transfer the complete EditBox::set_text definition to its existing source owner without changing its C++ body. Keep the original FILE spans and historical claim state; BODY is the new per-member measurement scope, not a claim that the old whole-TU recipe is equivalent."}
 // size      138 bytes
 // prototype void (__thiscall ?set_text@EditBox@@QAEXPAD@Z)(EditBox* this, int8*)
 // callers   1   call targets   1

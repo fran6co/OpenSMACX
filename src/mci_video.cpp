@@ -43,7 +43,7 @@ HWND MciVideoCallbackWindow;
 // palette_ is an in-object member, so its one Palette constructor call occurs
 // before this body, matching the pinned call at 0x005FFD86.
 // ORIGINAL: 0x005FFD80 ??0MCIVideo@@QAE@XZ 0x005FFD80-0x005FFDA1 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b55fcf8bd32d532e5050a5aaadf011bcff4394b5:src/recovered/005ffd80.cpp", "Pinned 0x005FFD86 calls the Palette constructor once on this+0x10, then 0x005FFD8D zeroes only the device-ID WORD at +4.", "source:src/alphamovie.h declares palette_ as an in-object MCIVideo member, so natural member construction supplies that single Palette lifetime before this constructor body."], "reason": "Bind the original MCIVideo constructor to its source owner using natural Palette member construction and the observed low-WORD/device-handle initialization, without a duplicate explicit constructor call."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:5605e9af3819b866b8de996bbf716591b4134b4f:src/recovered/005ffd80.cpp", "Pinned 0x005FFD86 calls the Palette constructor once on this+0x10, then 0x005FFD8D zeroes only the device-ID WORD at +4.", "source:src/alphamovie.h declares palette_ as an in-object MCIVideo member, so natural member construction supplies that single Palette lifetime before this constructor body."], "reason": "Bind the original MCIVideo constructor to its source owner using natural Palette member construction and the observed low-WORD/device-handle initialization, without a duplicate explicit constructor call."}
 MCIVideo::MCIVideo() {
     mciId_ = 0;
     window_handle_ = 0;
@@ -53,7 +53,7 @@ MCIVideo::MCIVideo() {
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005FFDB0 ?close@MCIVideo@@QAEXXZ 0x005FFDB0-0x005FFE3D BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b55fcf8bd32d532e5050a5aaadf011bcff4394b5:src/unrecovered/005ffdb0.cpp", "source:src/alphamovie.h:MCIVideo", "original:0x005FFDB0"], "reason": "Recover the MCI device shutdown and handle reset on its owning MCIVideo member using the pinned call sequence and existing typed state."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:5605e9af3819b866b8de996bbf716591b4134b4f:src/unrecovered/005ffdb0.cpp", "source:src/alphamovie.h:MCIVideo", "original:0x005FFDB0"], "reason": "Recover the MCI device shutdown and handle reset on its owning MCIVideo member using the pinned call sequence and existing typed state."}
 // Stop and close the MCI device, clear the window/player state, and restore
 // wave output.
 void MCIVideo::close() {

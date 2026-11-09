@@ -954,7 +954,7 @@ Status: Complete
  */
 
 // ORIGINAL: 0x00609BF0 ?UNK2@Dialog@@QAEXHHHH@Z 0x00609BF0-0x00609C60 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:de91fffe:src/recovered/units/00609bf0.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x00609bf0; physical VC6 COFF emitted symbol ?UNK2@Dialog@@QAEXHHHH@Z."]}
+// RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:391d42a9:src/recovered/units/00609bf0.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x00609bf0; physical VC6 COFF emitted symbol ?UNK2@Dialog@@QAEXHHHH@Z."]}
 // symbol    ?UNK2@Dialog@@QAEHHHHH@Z
 int Dialog::UNK2(int window, int message, int wparam, int lparam) {
     HWND hwnd = reinterpret_cast<HWND>(static_cast<LONG_PTR>(window));
@@ -979,7 +979,7 @@ int Dialog::UNK2(int window, int message, int wparam, int lparam) {
 // Compiler-generated StringList deletion; no handwritten adjustor.
 /*
 // ORIGINAL: 0x00406670 sub_406670 0x00406670-0x004066BB FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:360abf0bcf225dda7b384e46e5c26fb7bd2a3bda:src/recovered/00406670.cpp", "pinned:terranx_original:0x406670", "source:src/dialog.cpp"], "reason": "Original receives the complete StringList virtual allocation-base view at+28, runs complete StringList teardown, restores allocation owner and conditionally releases complete storage for flag bit0. Real StringList hierarchy supplies this scalar deleting entry; compile_context identifies its current natural application provider; linked selection remains unverified. Preserve all original spans, names, claims and seed discoveries; no new byte grant."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:30611dd8dcac1d36c7ad6321170c4bf4cc359561:src/recovered/00406670.cpp", "pinned:terranx_original:0x406670", "source:src/dialog.cpp"], "reason": "Original receives the complete StringList virtual allocation-base view at+28, runs complete StringList teardown, restores allocation owner and conditionally releases complete storage for flag bit0. Real StringList hierarchy supplies this scalar deleting entry; compile_context identifies its current natural application provider; linked selection remains unverified. Preserve all original spans, names, claims and seed discoveries; no new byte grant."}
 // compile_context src/alphanet.cpp
 // symbol    ??_GStringList@@UAEPAXI@Z
 */

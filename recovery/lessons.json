@@ -7,7 +7,7 @@
       "id": "dispatch-qualified-inherited-operation",
       "category": "candidate_strategy",
       "evidence": {
-        "commit": "ce2cb20809205eae313c3863ff027c5815d5d3fa",
+        "commit": "f54035b041c06764ad36034a8959e4feb81fb894",
         "witness": "commit message; src/dialogs.cpp; recovery/tests/test_dialogs_left_click_routing_oct15.py"
       },
       "requires": [
@@ -26,7 +26,7 @@
       "id": "typed-heap-node-construction",
       "category": "candidate_strategy",
       "evidence": {
-        "commit": "fc26f9089bccb73d15ab478828dac1bc782d397b",
+        "commit": "d38bbf53594cc6653f905084dd15af13b1c03b76",
         "witness": "commit message; src/wave_device.h; src/sounddevice.cpp; recovery/tests/test_wave_group_list_boundary_actual_source.py"
       },
       "requires": [
@@ -45,7 +45,7 @@
       "id": "remove-redundant-same-file-body-fact",
       "category": "candidate_strategy",
       "evidence": {
-        "commit": "5dd33a14692a9963baa1098a95c45ed3e059f029",
+        "commit": "7c1c4f14f57db8740fea9006f63e8eb62ecf8d61",
         "witness": "commit message; .opensmacx/recovery/buffer-tu-nov05x/source-review.json; .opensmacx/recovery/buffer-tu-nov05x/final-debug-line-review.json; .opensmacx/recovery/buffer-tu-nov05x/final-object-bridge.json"
       },
       "requires": [
@@ -64,7 +64,7 @@
       "id": "separate-provider-to-preserve-original-calls",
       "category": "candidate_strategy",
       "evidence": {
-        "commit": "25ab2a81d67b5f27da9e5574a2c044941f278dbe",
+        "commit": "23e4a35a23c4d159f2f9d7704850cf0d165c086f",
         "witness": "commit message; .opensmacx/recovery/sound-type-provider-nov05g/source-review-final.json; .opensmacx/recovery/sound-type-provider-nov05g/native-transitions.json"
       },
       "requires": [
@@ -84,7 +84,7 @@
       "id": "co-locate-lifetime-and-deduplicate-real-object-init",
       "category": "candidate_strategy",
       "evidence": {
-        "commit": "b791d43d867fd2d576f0f9248a797e0abd527387",
+        "commit": "ffceb28b5e957e48c43da97b7d21452e29fc5aba",
         "witness": "commit message; .opensmacx/recovery/tu-wave-nov05u/physical-owner-crosswalk.json; .opensmacx/recovery/tu-wave-nov05u/maininterface-draft.json"
       },
       "requires": [
@@ -103,8 +103,8 @@
       "id": "fieldwise-store-when-aggregate-copy-changes-observed-shape",
       "category": "candidate_strategy",
       "evidence": {
-        "commit": "bff2dd701607cd6c758a3d1b696996ba58d6e209",
-        "witness": "src/caviar.cpp: set_camera_direct ORIGINAL/LEVER/TRIED annotation and current typed member accesses; commit bff2dd701"
+        "commit": "6415da47bc55963b7d4720af5b34f41fa8d3a356",
+        "witness": "src/caviar.cpp: set_camera_direct ORIGINAL/LEVER/TRIED annotation and current typed member accesses; commit 6415da47b"
       },
       "requires": [
         "Pinned instructions show distinct scalar stores and exact offsets rather than a bulk copy.",
@@ -122,7 +122,7 @@
       "id": "nonthrow-contract-for-local-primitive-constructor",
       "category": "candidate_strategy",
       "evidence": {
-        "commit": "cdbfab91dea863e72e60da00d691158916945c8f",
+        "commit": "0edbfe0218f1256e3a5e00ad8b6a8fd7cf340e5d",
         "witness": "commit message; .opensmacx/recovery/name-table-claims-nov05m/source-review.json; .opensmacx/recovery/name-table-claims-nov05m/final-integration-review.json"
       },
       "requires": [
@@ -141,7 +141,7 @@
       "id": "loop-opcode-is-not-a-source-spelling-target",
       "category": "bounded_negative",
       "evidence": {
-        "commit": "0e5ff3f3d82b4e546cbf0cde46c7a32ccaa553ed",
+        "commit": "e4971b86c5ecf33c05773bc492dc317a2f8b7642",
         "witness": "recovery/COMPILER_EVIDENCE.md, Source-form experiments after structure; pinned Sprite::change_color at 0x005EAD9F"
       },
       "requires": [
@@ -204,7 +204,7 @@
       "id": "do-not-add-virtual-throw-contract-to-recover-one-row",
       "category": "bounded_negative",
       "evidence": {
-        "commit": "25ab2a81d67b5f27da9e5574a2c044941f278dbe",
+        "commit": "23e4a35a23c4d159f2f9d7704850cf0d165c086f",
         "witness": ".opensmacx/recovery/sound-visibility-nov05h/type-throw-review.json; .opensmacx/recovery/sound-visibility-nov05h/type-throw-native.json; .opensmacx/recovery/sound-visibility-nov05h/type-throw-proposal-decision.json"
       },
       "requires": [
@@ -282,7 +282,7 @@
       "id": "identify-dependency-entries-without-inventing-extents",
       "category": "candidate_strategy",
       "evidence": {
-        "commit": "c2000f13a8f6bbc83773a0ded7416e48648d1830",
+        "commit": "bdebd6c88636969053de2a27afd47537fe9ea9c5",
         "witness": "src/vendor/vc6-runtime.recovery.h existing sin/cos/sqrt code-section entries; packages/match-recovery/src/match_recovery/component_binary.py"
       },
       "requires": [
@@ -320,7 +320,7 @@
       "id": "propagate-qualified-dependency-code-entries",
       "category": "candidate_strategy",
       "evidence": {
-        "commit": "34de49ab4",
+        "commit": "a7f3eb00f",
         "witness": "packages/match-recovery/tests/test_toolchain_public_entries.py; .opensmacx/recovery/component-entry-routing-nov05ah/independent-review.json"
       },
       "requires": [
@@ -411,7 +411,7 @@
       "id": "share-pure-historical-parse-cache-across-workers",
       "category": "execution_strategy",
       "evidence": {
-        "commit": "0fe034c6d",
+        "commit": "f68b70e67",
         "witness": ".opensmacx/recovery/report-scroll-match-nov05an/warm-record-timing.json; cross-worktree-cache-control.json; recovery/WORKFLOW.md shared parse cache instructions"
       },
       "requires": [
@@ -429,7 +429,7 @@
       "id": "refresh-generated-lifetime-bindings-after-source-moves",
       "category": "candidate_strategy",
       "evidence": {
-        "commit": "0fe034c6d",
+        "commit": "f68b70e67",
         "witness": "src/game.cpp startup at 0x00477E10; src/reportif.cpp startups at 0x00496900 and 0x00496930; .opensmacx/recovery/tu-wave-nov05u/physical-owner-crosswalk.json; .opensmacx/recovery/tu-wave-nov05u/maininterface-draft.json; .opensmacx/recovery/report-scroll-match-nov05an/claim-review.json"
       },
       "requires": [
@@ -447,7 +447,7 @@
       "id": "measure-declared-emitting-context-before-changing-source",
       "category": "evidence_guard",
       "evidence": {
-        "commit": "88f5387ce",
+        "commit": "2c4786ba9",
         "witness": "src/basepop.cpp and src/flatbutton.cpp compile_context annotations; .opensmacx/recovery/ddinit-tu-nov05aq/selected-dtor-provider-review.json; match_recovery.source_selection.compilation_context"
       },
       "requires": [
@@ -465,7 +465,7 @@
       "id": "scope-generated-local-storage-by-emitting-unit",
       "category": "candidate_strategy",
       "evidence": {
-        "commit": "d6cf83b2f",
+        "commit": "fca73c712",
         "witness": "docs/DECOMP_MAP.md v6 local object targets; Win and CheckBox cleanup guards; packages/match-recovery/src/match_recovery/source"
       },
       "requires": [
@@ -483,7 +483,7 @@
       "id": "batch-fresh-matches-without-erasing-body-evidence",
       "category": "execution_strategy",
       "evidence": {
-        "commit": "88f5387ce",
+        "commit": "2c4786ba9",
         "witness": ".opensmacx/recovery/build-frontier-nov06as/record-confirm.json; record-additional.json; source-delta.json; final-review.json"
       },
       "requires": [

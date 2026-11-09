@@ -108,7 +108,7 @@ int __cdecl veh_find(int x, int y, int faction, int exclude);
 extern int DiploScratchFA98;  // Diplomacy producer storage defined below.
 
 // ORIGINAL: 0x0053EB50 ?buy_council_vote@@YAXHHHH@Z 0x0053EB50-0x00540193;0x0065E75A-0x0065EB33
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned53EB50..540193 and65E75A..65EB33; git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0053eb50.cpp", "Native EDI=OTHER and EBX=FACTION; peer vote query precedes OTHER query; technology valuation rereads turn after every call; promised gift and treaty state reload after modal/parser callbacks. Popup teardown is ordinary lexical destruction, without duplicate close.", "RulesTechnology.name is the heap string address returned by Strings::put, not an ordinal; parse_say takes that address through its native32-bit integer ABI. Dialogue labels verified against bounded original strings and owned as C++ literals.", "recovery/tasks/interface-contract-report-closure.json; recovery/tests/test_council_vote_purchase.py actual-source corruption controls"], "reason": "Recover complete council vote purchasing in its genuine faction owner, including the custom modal negotiation missing from the retained seed. Use lexical Popup and source-owned labels, actual player/council/network storage and calls; preserve original spans, retained seed and all historical obligations. This is not matching or game acceptance."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned53EB50..540193 and65E75A..65EB33; git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0053eb50.cpp", "Native EDI=OTHER and EBX=FACTION; peer vote query precedes OTHER query; technology valuation rereads turn after every call; promised gift and treaty state reload after modal/parser callbacks. Popup teardown is ordinary lexical destruction, without duplicate close.", "RulesTechnology.name is the heap string address returned by Strings::put, not an ordinal; parse_say takes that address through its native32-bit integer ABI. Dialogue labels verified against bounded original strings and owned as C++ literals.", "recovery/tasks/interface-contract-report-closure.json; recovery/tests/test_council_vote_purchase.py actual-source corruption controls"], "reason": "Recover complete council vote purchasing in its genuine faction owner, including the custom modal negotiation missing from the retained seed. Use lexical Popup and source-owned labels, actual player/council/network storage and calls; preserve original spans, retained seed and all historical obligations. This is not matching or game acceptance."}
 // TRIED: plain `Popup popup;` local (compiler-generated dtor order diverges from original's manual close()+~Scroll()/~BasePop() split-unwind pattern); tail dialog/ListBox/EditGroup/SpriteBox/ CheckBox construction (menuResult<1 branch) is a raw vtable- poke sequence into untyped stack buffers (aiStack_3220 etc.) that was not reproduced - only the surrounding call order was.
 void __cdecl buy_council_vote(int faction, int other, int proposal, int choice) {
     Popup popup;
@@ -484,7 +484,7 @@ commit_vote:
 extern uint32_t LockEnableMask;  // 0x009A64E8, defined in lock.cpp
 
 // ORIGINAL: 0x00559060 ?get_name@@YAPADH@Z 0x00559060-0x00559092 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:c86818d859992f5766b6584955cdba0f7694627d:src/recovered/00559060.cpp", "source:src/faction.h"], "reason": "The pinned entry returns Player::name_leader after selecting leader gender and singular grammar; Player fields have the original stride."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:5a0359249be19afbfdbfda27fdc219dda76c5a7c:src/recovered/00559060.cpp", "source:src/faction.h"], "reason": "The pinned entry returns Player::name_leader after selecting leader gender and singular grammar; Player fields have the original stride."}
 char *__cdecl get_name(int faction_id) {
     PluralityDefault = 0;
     GenderDefault = Players[faction_id].is_leader_female;
@@ -492,7 +492,7 @@ char *__cdecl get_name(int faction_id) {
 }
 
 // ORIGINAL: 0x005590A0 ?get_title@@YAPADH@Z 0x005590A0-0x005590D2 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:c86818d859992f5766b6584955cdba0f7694627d:src/recovered/005590a0.cpp", "source:src/faction.h"], "reason": "The pinned entry returns Player::title_leader after selecting leader gender and singular grammar; the Player type establishes this field and the original record stride."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:5a0359249be19afbfdbfda27fdc219dda76c5a7c:src/recovered/005590a0.cpp", "source:src/faction.h"], "reason": "The pinned entry returns Player::title_leader after selecting leader gender and singular grammar; the Player type establishes this field and the original record stride."}
 char *__cdecl get_title(int faction_id) {
     PluralityDefault = 0;
     GenderDefault = Players[faction_id].is_leader_female;
@@ -500,31 +500,31 @@ char *__cdecl get_title(int faction_id) {
 }
 
 // ORIGINAL: 0x005590E0 ?get_adjective_leader@@YAPADH@Z 0x005590E0-0x005590FA BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:c86818d859992f5766b6584955cdba0f7694627d:src/recovered/005590e0.cpp", "source:src/faction.h"], "reason": "The pinned entry returns Player::adj_leader from the typed Player row; the Player type establishes this field and the original record stride."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:5a0359249be19afbfdbfda27fdc219dda76c5a7c:src/recovered/005590e0.cpp", "source:src/faction.h"], "reason": "The pinned entry returns Player::adj_leader from the typed Player row; the Player type establishes this field and the original record stride."}
 char *__cdecl get_adjective_leader(int faction_id) {
     return Players[faction_id].adj_leader;
 }
 
 // ORIGINAL: 0x00559100 ?get_adjective_insult_leader@@YAPADH@Z 0x00559100-0x0055911A BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:c86818d859992f5766b6584955cdba0f7694627d:src/recovered/00559100.cpp", "source:src/faction.h"], "reason": "The pinned entry returns Player::adj_insult_leader from the typed Player row; the Player type establishes this field and the original record stride."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:5a0359249be19afbfdbfda27fdc219dda76c5a7c:src/recovered/00559100.cpp", "source:src/faction.h"], "reason": "The pinned entry returns Player::adj_insult_leader from the typed Player row; the Player type establishes this field and the original record stride."}
 char *__cdecl get_adjective_insult_leader(int faction_id) {
     return Players[faction_id].adj_insult_leader;
 }
 
 // ORIGINAL: 0x00559120 ?get_adjective_faction@@YAPADH@Z 0x00559120-0x0055913A BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:c86818d859992f5766b6584955cdba0f7694627d:src/recovered/00559120.cpp", "source:src/faction.h"], "reason": "The pinned entry returns Player::adj_faction from the typed Player row; the Player type establishes this field and the original record stride."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:5a0359249be19afbfdbfda27fdc219dda76c5a7c:src/recovered/00559120.cpp", "source:src/faction.h"], "reason": "The pinned entry returns Player::adj_faction from the typed Player row; the Player type establishes this field and the original record stride."}
 char *__cdecl get_adjective_faction(int faction_id) {
     return Players[faction_id].adj_faction;
 }
 
 // ORIGINAL: 0x00559140 ?get_adjective_insult_faction@@YAPADH@Z 0x00559140-0x0055915A BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:c86818d859992f5766b6584955cdba0f7694627d:src/recovered/00559140.cpp", "source:src/faction.h"], "reason": "The pinned entry returns Player::adj_insult_faction from the typed Player row; the Player type establishes this field and the original record stride."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:5a0359249be19afbfdbfda27fdc219dda76c5a7c:src/recovered/00559140.cpp", "source:src/faction.h"], "reason": "The pinned entry returns Player::adj_insult_faction from the typed Player row; the Player type establishes this field and the original record stride."}
 char *__cdecl get_adjective_insult_faction(int faction_id) {
     return Players[faction_id].adj_insult_faction;
 }
 
 // ORIGINAL: 0x00559160 ?get_insult_leader@@YAPADH@Z 0x00559160-0x00559192 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:c86818d859992f5766b6584955cdba0f7694627d:src/recovered/00559160.cpp", "source:src/faction.h"], "reason": "The pinned entry returns Player::insult_leader after selecting leader gender and singular grammar; the Player type establishes this field and the original record stride."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:5a0359249be19afbfdbfda27fdc219dda76c5a7c:src/recovered/00559160.cpp", "source:src/faction.h"], "reason": "The pinned entry returns Player::insult_leader after selecting leader gender and singular grammar; the Player type establishes this field and the original record stride."}
 char *__cdecl get_insult_leader(int faction_id) {
     PluralityDefault = 0;
     GenderDefault = Players[faction_id].is_leader_female;
@@ -2543,7 +2543,7 @@ static int diplo_tile_owner(const Map &tile) {
 }
 
 // ORIGINAL: 0x0053A980 ?diplomacy_check@@YAXHHH@Z 0x0053A980-0x0053C36E
-// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/0053a980.cpp", "source:src/faction.h", "image:0x0053A980-0x0053C36E complete instructions and independently inspected scratch uses"], "reason": "Recover the complete faction diplomacy evaluation through genuine social-category arrays, faction/base/vehicle records and source-owned shared evaluation state. Original signed divisions, retained region0 state, unchecked malformed indices and final agenda paths remain explicit; new start-only storage bindings retain allocation uncertainty."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/0053a980.cpp", "source:src/faction.h", "image:0x0053A980-0x0053C36E complete instructions and independently inspected scratch uses"], "reason": "Recover the complete faction diplomacy evaluation through genuine social-category arrays, faction/base/vehicle records and source-owned shared evaluation state. Original signed divisions, retained region0 state, unchecked malformed indices and final agenda paths remain explicit; new start-only storage bindings retain allocation uncertainty."}
 void __cdecl diplomacy_check(int faction, int other, int update) {
     DiploFrictionFactionIDWith = faction;
     DiploFrictionFactionID = other;
@@ -3005,7 +3005,7 @@ void __cdecl prepare_contact_dialog_arguments(int faction_id) {
 
 
 // ORIGINAL: 0x0053DCE0 ?wants_to_speak@@YAHHH@Z 0x0053DCE0-0x0053E46C;0x0065E622-0x0065E75A FILE
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0053dce0.cpp", "image:terranx_original.exe:0x0053DCE0"], "reason": "Recover the genuine faction contact/introduction owner using Popup lifetime, typed Player/PlayerData, real diplomacy state and portrait storage; native guards and callee order correct retained seed contradictions."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0053dce0.cpp", "image:terranx_original.exe:0x0053DCE0"], "reason": "Recover the genuine faction contact/introduction owner using Popup lifetime, typed Player/PlayerData, real diplomacy state and portrait storage; native guards and callee order correct retained seed contradictions."}
 // TRIED: this is a 27-stage SEH unwind (vtable pokes for partially- constructed FlatButton/Scroll/Dialog/Sprite/Spot/Heap locals around a `Popup` object) that could not be fully re-derived in budget; landed a single `Popup popup;` local plus the has_tech-gated / consent / diplomacy-request control flow (diplomacy_check, diplomacy_caption, parse_says, random, get_him_her, X_pops, Popup::start/exec, DiploPop::start, introduce), omitting the other ~10 locals' manual close()/dtor bookkeeping. Compiles; diverges at #17 (prologue/frame size).
 int __cdecl wants_to_speak(int faction_id, int other_faction_id) {
     Popup popup;
@@ -3082,7 +3082,7 @@ int __cdecl wants_to_speak(int faction_id, int other_faction_id) {
 }
 
 // ORIGINAL: 0x0053D360 ?introduce@@YAXHH@Z 0x0053D360-0x0053DCB9;0x0065E53A-0x0065E622 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0053d360.cpp", "image:terranx_original.exe:0x0053D360"], "reason": "Recover the genuine faction contact/introduction owner using Popup lifetime, typed Player/PlayerData, real diplomacy state and portrait storage; native guards and callee order correct retained seed contradictions."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0053d360.cpp", "image:terranx_original.exe:0x0053D360"], "reason": "Recover the genuine faction contact/introduction owner using Popup lifetime, typed Player/PlayerData, real diplomacy state and portrait storage; native guards and callee order correct retained seed contradictions."}
 // TRIED: `Popup popup;` RAII reproduces the whole BasePop/Scroll/ FlatButton/Sprite/Dialogs/Spot/Heap teardown cascade structurally (compiles, calls in the right order), but the prologue already diverges at instr #2 (mov vs push) - the frame/SEH setup this compiler emits for that one local doesn't match byte-for-byte. Field offsets into Players (0x00946A50, stride 0x59C) were cross-checked against src/faction.h's real Player layout and line up exactly.
 void __cdecl introduce(int faction_id, int other_faction_id) {
     Popup popup;
@@ -3736,7 +3736,7 @@ void __cdecl pact_ends(int faction_id, int partner_id) {
 
 
 // ORIGINAL: 0x0053C370 ?pact_withdraw@@YAHHH@Z 0x0053C370-0x0053C649 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0053c370.cpp retains original identity/spans and contradictory scaffold history.", "Pinned full-span review and genuine Player/PlayerData/Base/Veh/Map declarations own the field interpretation; Popup uses the real C++ lifecycle.", "Related intervention50BA50/pact_withdraw53C370 bodies own the coupled helper behavior. Shared proposal cell93FAB0 and map outcome93FAD8 have native producer/consumer evidence; seed-only workflow producers remain explicit obligations."], "reason": "Recover this original diplomacy identity in its genuine faction owner, preserving typed game records, shared-state lifetimes and every seed obligation. This binding is not a byte or runtime claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0053c370.cpp retains original identity/spans and contradictory scaffold history.", "Pinned full-span review and genuine Player/PlayerData/Base/Veh/Map declarations own the field interpretation; Popup uses the real C++ lifecycle.", "Related intervention50BA50/pact_withdraw53C370 bodies own the coupled helper behavior. Shared proposal cell93FAB0 and map outcome93FAD8 have native producer/consumer evidence; seed-only workflow producers remain explicit obligations."], "reason": "Recover this original diplomacy identity in its genuine faction owner, preserving typed game records, shared-state lifetimes and every seed obligation. This binding is not a byte or runtime claim."}
 // TRIED: real signature per the mangled name (int __cdecl(int,int)). Outer loop walks Veh[] (g_0095282a = &Vehs[0].y, stride 0x34 matches veh.h's static_assert; veh-2/veh/veh+0xc/veh+8/veh+0xf/veh+2/veh+0x23 line up with Veh.x/y/faction_id/proto_id/order/state/morale from veh.h). Inner loop walks Bases[] (g_0097d040/42/44 = &Bases[0].x/y/ faction_id_current, stride 0x134 matches base.h's static_assert), not "units" as an earlier sibling function's comment guessed - confirmed by cross-checking both structs' real field offsets in src/veh.h and src/base.h rather than trusting Ghidra's raw index arithmetic. `veh_lift` is called for its (used) return value right before `veh_drop`, contradicting the catalogued `void __cdecl veh_lift(int)` - proposed int return below. Compiles; diverges at instruction #11 (stack slot scheduling for the many nested locals) - not chased further given the function's size.
 int __cdecl pact_withdraw(int faction_id, int faction_id_with) {
     int lifted_count = 0;
@@ -3803,7 +3803,7 @@ int __cdecl pact_withdraw(int faction_id, int faction_id_with) {
 
 
 // ORIGINAL: 0x0053A230 ?mention_prototypes@@YAXHH@Z 0x0053A230-0x0053A496 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason":"The complete original diplomacy producer uses the existing faction, prototype, parser and network owners; the global cdecl interface and bounded span retain the seed identity.","evidence":["original:0x53a230","git:46625ff3:src/recovered/units/0053a230.cpp"]}
+// RECOVERY_BINDING: v1 {"reason":"The complete original diplomacy producer uses the existing faction, prototype, parser and network owners; the global cdecl interface and bounded span retain the seed identity.","evidence":["original:0x53a230","git:a69f0fcf:src/recovered/units/0053a230.cpp"]}
 // kind      game
 void __cdecl mention_prototypes(int faction_id, int faction_id_with) {
     PopupDialogFactionID = faction_id_with;
@@ -3883,7 +3883,7 @@ void __cdecl mention_prototypes(int faction_id, int faction_id_with) {
 }
 
 // ORIGINAL: 0x0053CAF0 ?pact_of_brotherhood@@YAXHH@Z 0x0053CAF0-0x0053CE05 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason":"The complete original diplomacy producer uses the existing faction, prototype, parser and network owners; the global cdecl interface and bounded span retain the seed identity.","evidence":["original:0x53caf0","git:46625ff3:src/recovered/units/0053caf0.cpp"]}
+// RECOVERY_BINDING: v1 {"reason":"The complete original diplomacy producer uses the existing faction, prototype, parser and network owners; the global cdecl interface and bounded span retain the seed identity.","evidence":["original:0x53caf0","git:a69f0fcf:src/recovered/units/0053caf0.cpp"]}
 // kind      game
 void __cdecl pact_of_brotherhood(int faction_id, int faction_id_with) {
     PopupDialogFactionID = faction_id_with;
@@ -3955,7 +3955,7 @@ void __cdecl pact_of_brotherhood(int faction_id, int faction_id_with) {
 }
 
 // ORIGINAL: 0x0053CE10 ?make_treaty@@YAXHH@Z 0x0053CE10-0x0053D158 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason":"The complete original diplomacy producer uses the existing faction, prototype, parser and network owners; the global cdecl interface and bounded span retain the seed identity.","evidence":["original:0x53ce10","git:46625ff3:src/recovered/units/0053ce10.cpp"]}
+// RECOVERY_BINDING: v1 {"reason":"The complete original diplomacy producer uses the existing faction, prototype, parser and network owners; the global cdecl interface and bounded span retain the seed identity.","evidence":["original:0x53ce10","git:a69f0fcf:src/recovered/units/0053ce10.cpp"]}
 // kind      game
 void __cdecl make_treaty(int faction_id, int faction_id_with) {
     PopupDialogFactionID = faction_id_with;
@@ -4032,7 +4032,7 @@ void __cdecl make_treaty(int faction_id, int faction_id_with) {
 }
 
 // ORIGINAL: 0x0053D160 ?pledge_truce@@YAXHHH@Z 0x0053D160-0x0053D351 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason":"The complete original diplomacy producer uses the existing faction, prototype, parser and network owners; the global cdecl interface and bounded span retain the seed identity.","evidence":["original:0x53d160","git:46625ff3:src/recovered/units/0053d160.cpp"]}
+// RECOVERY_BINDING: v1 {"reason":"The complete original diplomacy producer uses the existing faction, prototype, parser and network owners; the global cdecl interface and bounded span retain the seed identity.","evidence":["original:0x53d160","git:a69f0fcf:src/recovered/units/0053d160.cpp"]}
 // kind      game
 void __cdecl pledge_truce(int faction_id, int faction_id_with,
                           int show_dialogue) {
@@ -8094,7 +8094,7 @@ int __cdecl dont_withdrawal(int faction_id, int against_id) {
 
 
 // ORIGINAL: 0x00548F80 ?do_withdrawal@@YAHHH@Z 0x00548F80-0x00549264 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00548f80.cpp retains original identity/spans and contradictory scaffold history.", "Pinned full-span review and genuine Player/PlayerData/Base/Veh/Map declarations own the field interpretation; Popup uses the real C++ lifecycle.", "Related intervention50BA50/pact_withdraw53C370 bodies own the coupled helper behavior. Shared proposal cell93FAB0 and map outcome93FAD8 have native producer/consumer evidence; seed-only workflow producers remain explicit obligations."], "reason": "Recover this original diplomacy identity in its genuine faction owner, preserving typed game records, shared-state lifetimes and every seed obligation. This binding is not a byte or runtime claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00548f80.cpp retains original identity/spans and contradictory scaffold history.", "Pinned full-span review and genuine Player/PlayerData/Base/Veh/Map declarations own the field interpretation; Popup uses the real C++ lifecycle.", "Related intervention50BA50/pact_withdraw53C370 bodies own the coupled helper behavior. Shared proposal cell93FAB0 and map outcome93FAD8 have native producer/consumer evidence; seed-only workflow producers remain explicit obligations."], "reason": "Recover this original diplomacy identity in its genuine faction owner, preserving typed game records, shared-state lifetimes and every seed obligation. This binding is not a byte or runtime claim."}
 // TRIED: MISMATCH #6 'push' vs 'mov'. Tried both `if (n>0){...}` and the inverted `if (n<=0) return 0;` early-out for the outer guard; neither reproduces the original's push-esi-before-branch / xor+cmp zero-reuse pattern. veh_lift/veh_drop's second push (used as the leftover eax arg to the paired veh_drop call) is reproduced by calling veh_lift(i); veh_drop(i, x, y) as two independent statements rather than chaining a return value, since veh_lift is declared void in this unit.
 // The image tests the flat-map bit first and wraps on the fall-through.
 static inline int withdrawal_wrap_x(int x) {
@@ -8191,7 +8191,7 @@ Purpose: Test whether two factions' territories are contiguous in one map
 //           while/flag structure - not measured exact.
 Return Value: 1 a connecting path exists, 0 otherwise
 Status: Coverage transcription - unclaimed body, seed
-        git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0053a780.cpp retained.
+        git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0053a780.cpp retained.
 */
 int __cdecl contiguous(int faction_id1, int faction_id2, int region,
                        int flag) {

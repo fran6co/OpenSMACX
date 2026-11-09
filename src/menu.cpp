@@ -67,7 +67,7 @@ extern int MenuDefaultSelectionTextColor;
 Purpose: Size and initialise the menu bar window against its owner.
 */
 // ORIGINAL: 0x005FADD0 ?init@Menu@@QAEHPAUWin@@@Z 0x005FADD0-0x005FAE69 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:5190d27f:src/stringstruct.cpp:Menu_init", "image:5FAE14..5FAE3F uses parent RECT.left/top/right at13C/140/144, subtracts twice font height from top, and propagates GraphicWin init status", "image:Menu6700B0 slots90/93 and Win slot1; inherited Buffer markup cell+964", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover the genuine virtual Menu initializer through the parent frame, borrowed default font and Buffer base. Retire the raw receiver facade without preserving its incorrectly named bottom coordinate or discarded initialization status; original identity and seed history remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:896fc7fa:src/stringstruct.cpp:Menu_init", "image:5FAE14..5FAE3F uses parent RECT.left/top/right at13C/140/144, subtracts twice font height from top, and propagates GraphicWin init status", "image:Menu6700B0 slots90/93 and Win slot1; inherited Buffer markup cell+964", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover the genuine virtual Menu initializer through the parent frame, borrowed default font and Buffer base. Retire the raw receiver facade without preserving its incorrectly named bottom coordinate or discarded initialization status; original identity and seed history remain obligations."}
 // symbol    ?init@Menu@@UAEHPAVWin@@@Z
 int Menu::init(Win *owner) {
     if (owner == 0) return 3;
@@ -1712,7 +1712,7 @@ void Menu::on_adjust_pulldown_pos(int *, int *) {
 // Close the highlighted pull-down and publish the cleared selection through
 // the same redraw, input-flush, and task-pump sequence used by menu events.
 // ORIGINAL: 0x005FC620 ?hide_menus@Menu@@QAEXXZ 0x005FC620-0x005FC67C BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Retained 0x005FC620 seed, typed MenuEntry and PullDown owners, MenuSelection source global, redraw and task-pump callees", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/005fc620.cpp"], "reason": "Home the highlighted pull-down close sequence in Menu owner source Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["Retained 0x005FC620 seed, typed MenuEntry and PullDown owners, MenuSelection source global, redraw and task-pump callees", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/005fc620.cpp"], "reason": "Home the highlighted pull-down close sequence in Menu owner source Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
 void Menu::hide_menus() {
     if (field_A24_ == -1) {

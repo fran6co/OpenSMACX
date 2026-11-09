@@ -503,14 +503,14 @@ Purpose: Paint the three setup-dialog panel sprites: the map's ocean colours
          the shared InterfaceBoxStyles records (element 3 for the map, 0 for
          the pair beside it).
 // ORIGINAL: 0x0047FE80 ?UNK3@NetWin@@QAEXXZ 0x0047FE80-0x0047FEC6 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/0047fe80.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/0047fe80.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // size      70 bytes
 // prototype void (__thiscall ?UNK3@NetWin@@QAEXXZ)(NetWin* this)
 // callers   2   call targets   3
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005E2DD3
-// Historical scaffold: git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/0047fe80.cpp.
+// Historical scaffold: git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/0047fe80.cpp.
 // Its complete 70-byte span ends at FEC6; the prior owner annotation ended
 // at FEC5. Retain the full historical extent and restoration obligation.
 Return Value: n/a
@@ -532,7 +532,7 @@ Purpose: Tear the setup dialog's session state down: drop both faction-record
          the embedded controls - the spot list, the message list, the edit
          box, the check box and the front flat button's slot-90 reset.
 // ORIGINAL: 0x00481D10 ?close@NetWin@@QAEXXZ 0x00481D10-0x00481D9C FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/00481d10.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/unrecovered/00481d10.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // size      140 bytes
 // prototype void (__thiscall ?close@NetWin@@QAEXXZ)(NetWin* this)
 // callers   0   call targets   5
@@ -1833,8 +1833,8 @@ void NetWin::on_left_click(int x, int y) {
 }
 
 // ORIGINAL: 0x0047BBF0 ?pick_player@NetWin@@QAEXXZ 0x0047BBF0-0x0047C527;0x00656740-0x006568F9
-// RECOVERY_BINDING: v1 {"evidence": ["git:0db4f0dc:src/unrecovered/0047bbf0.cpp", "pinned:0x0047BBF0-0x0047C527 reads Popup/BasePop +0x3100 input-poll state, copies the 0x17c row, selects the source row's faction byte, copies Player fields or ParseStrBuffer strings, and reaches packet construction only when signed slot >= 1", "source:src/netwin.h:NetWinLobbyRow and NetWinSessionData", "source:src/faction.h:Players and Player fields", "source:src/general.h:ParseStrBuffer", "source:src/basepop.h:Popup::input_poll_state and dialogs"], "reason": "Retain the substantive typed lobby-name editor and its complete original primary/exceptional mapping; retire the unannotated generated duplicate, not its unresolved radio/default-faction and seventh gender-field behavior. The seed's synthetic stack frame and manual widget teardown are hypotheses, not additional source owners or proof of native lifetime fidelity. Complete the native custom-name modal through the existing Popup, EditGroup, lobby-row, Player, ParseStrBuffer and typed single-row packet owners. Preserve the signed faction selector, unbounded strcpy operations, one-character case-insensitive gender test, accepted/cancel paths, and native signed slot >= 1 packet condition; retain the full original primary and exceptional spans."}
-// TRIED: historical scaffold git:0db4f0dc:src/unrecovered/0047bbf0.cpp mixes an approximate
+// RECOVERY_BINDING: v1 {"evidence": ["git:f929e9e6:src/unrecovered/0047bbf0.cpp", "pinned:0x0047BBF0-0x0047C527 reads Popup/BasePop +0x3100 input-poll state, copies the 0x17c row, selects the source row's faction byte, copies Player fields or ParseStrBuffer strings, and reaches packet construction only when signed slot >= 1", "source:src/netwin.h:NetWinLobbyRow and NetWinSessionData", "source:src/faction.h:Players and Player fields", "source:src/general.h:ParseStrBuffer", "source:src/basepop.h:Popup::input_poll_state and dialogs"], "reason": "Retain the substantive typed lobby-name editor and its complete original primary/exceptional mapping; retire the unannotated generated duplicate, not its unresolved radio/default-faction and seventh gender-field behavior. The seed's synthetic stack frame and manual widget teardown are hypotheses, not additional source owners or proof of native lifetime fidelity. Complete the native custom-name modal through the existing Popup, EditGroup, lobby-row, Player, ParseStrBuffer and typed single-row packet owners. Preserve the signed faction selector, unbounded strcpy operations, one-character case-insensitive gender test, accepted/cancel paths, and native signed slot >= 1 packet condition; retain the full original primary and exceptional spans."}
+// TRIED: historical scaffold git:f929e9e6:src/unrecovered/0047bbf0.cpp mixes an approximate
 // stack-frame reconstruction with untyped widget cleanup and custom/default
 // radio selection. This source recovers the typed six-field edit and outgoing
 // lobby update; its radio/default-faction branch still needs restoration.
@@ -1939,7 +1939,7 @@ void NetWin::pick_player() {
 #endif
 
 // ORIGINAL: 0x0047C530 ?pick_faction@NetWin@@QAEXH@Z 0x0047C530-0x0047C965;0x006568F9-0x006569C4
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/recovered/units/0047c530.cpp:NetWin::pick_faction", "src/netwin.h:NetWinFactionRecord and NetWinLobbyRow", "src/netwin.cpp:NetWin::pick_pass and NetWinLobbySinglePacket", "Pinned47C819 clears EAX;47C854 stores it to [EBP-1A4], packet+8 relative to sent [EBP-1AC] at47C88A/47C89D. Opcode word/slot/row+10 are written; +2..3/+C..F remain untouched."], "reason": "Recover faction selection through the typed faction records, lobby rows, popup dialog and single-row packet."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/recovered/units/0047c530.cpp:NetWin::pick_faction", "src/netwin.h:NetWinFactionRecord and NetWinLobbyRow", "src/netwin.cpp:NetWin::pick_pass and NetWinLobbySinglePacket", "Pinned47C819 clears EAX;47C854 stores it to [EBP-1A4], packet+8 relative to sent [EBP-1AC] at47C88A/47C89D. Opcode word/slot/row+10 are written; +2..3/+C..F remain untouched."], "reason": "Recover faction selection through the typed faction records, lobby rows, popup dialog and single-row packet."}
 #if defined(_MSC_VER) && _MSC_VER == 1200
 #pragma function(memcpy)
 #endif
@@ -2010,7 +2010,7 @@ void NetWin::pick_faction(int slot) {
 #endif
 
 // ORIGINAL: 0x0047CF40 ?pick_diff@NetWin@@QAEXH@Z 0x0047CF40-0x0047D2F4;0x00656AED-0x00656BC5 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/recovered/units/0047cf40.cpp:NetWin::pick_diff", "src/netwin.cpp:pick_global_diff and sibling pickers", "src/netwin.cpp:NetWinLobbySinglePacket and NetWin::on_button_clicked", "Pinned47D0C7/47D0D0/47D0D6: opcode word, slot dword and +8 zero; copied row+10 and send18C. +2..3/+C..F are untouched."], "reason": "Recover the per-slot difficulty picker using the established popup objects, difficulty text table, typed lobby row and typed single-row packet."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/recovered/units/0047cf40.cpp:NetWin::pick_diff", "src/netwin.cpp:pick_global_diff and sibling pickers", "src/netwin.cpp:NetWinLobbySinglePacket and NetWin::on_button_clicked", "Pinned47D0C7/47D0D0/47D0D6: opcode word, slot dword and +8 zero; copied row+10 and send18C. +2..3/+C..F are untouched."], "reason": "Recover the per-slot difficulty picker using the established popup objects, difficulty text table, typed lobby row and typed single-row packet."}
 #if defined(_MSC_VER) && _MSC_VER == 1200
 #pragma function(memcpy)
 #endif
@@ -2044,7 +2044,7 @@ void NetWin::pick_diff(int slot) {
 }
 
 // ORIGINAL: 0x0047D300 ?pick_map@NetWin@@QAEXXZ 0x0047D300-0x0047E003;0x00656BC5-0x00656D9D
-// RECOVERY_BINDING: v1 {"evidence": ["git:0db4f0dc:src/unrecovered/0047d300.cpp", "source:src/netwin.h", "source:recovery/tests/test_netwin_pick_map_behavior.py", "Pinned47DC27..47DC79: full packet opcode word/slot=-1/+8 zero and A64 row bytes;47DC99..47DCC5: session168 bytes at+10 and opcode word only;47DCDC..47DCEF: leave opcode word only. Unwritten packet bytes remain unspecified."], "reason": "Retain the typed map/game picker with its complete original primary/exceptional mapping. The retired unannotated scaffold omitted the host session population, used an unconstructed scratch Dialogs receiver, and approximated the local widget aggregate. Its useful lifetime observation is that nested Popup/Scroll/FlatButton cleanup belongs to genuine member destruction, not independent manually staged objects; complete native cleanup fidelity remains an obligation."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:f929e9e6:src/unrecovered/0047d300.cpp", "source:src/netwin.h", "source:recovery/tests/test_netwin_pick_map_behavior.py", "Pinned47DC27..47DC79: full packet opcode word/slot=-1/+8 zero and A64 row bytes;47DC99..47DCC5: session168 bytes at+10 and opcode word only;47DCDC..47DCEF: leave opcode word only. Unwritten packet bytes remain unspecified."], "reason": "Retain the typed map/game picker with its complete original primary/exceptional mapping. The retired unannotated scaffold omitted the host session population, used an unconstructed scratch Dialogs receiver, and approximated the local widget aggregate. Its useful lifetime observation is that nested Popup/Scroll/FlatButton cleanup belongs to genuine member destruction, not independent manually staged objects; complete native cleanup fidelity remains an obligation."}
 // Historical observation from an earlier source state:
 // TRIED: the popup and load-map/game dispatch are transcribed; the scenario
 // host guard now uses LockEnableMask's live-faction byte. Choice zero still
@@ -2458,7 +2458,7 @@ static void netwin_set_rect(RECT *rect, int left, int top, int right, int bottom
 }
 
 // ORIGINAL: 0x00482490 ?exec@NetWin@@QAEHXZ 0x00482490-0x00482D84
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00482490.cpp; original identity and primary482490..482D84 span retained", "Pinned original 0x004824C2 pushes callback 0x00483820, count 7, stride 0x17C and the stack array at EBP-0xAB0 before calling 0x00402EE0; originally the helper calls the callback with each element as ECX. Current source uses a seven-element array of constructed payload wrappers; VC6 supplies its non-EH ??_H iterator and the wrapper constructor returns the receiver, matching the original 0x483820 ABI. 0x00483820 writes offsets 0, 1, 2, 3, 4 and 0x178, matching the constructed row payload. Global wire rows remain passive; this composition does not assert an original class hierarchy.", "recovery/tasks/netwin-owner-coverage.json; revisions1-3 authorize coupled ownership and consumer changes; no matching or runtime acceptance implied."], "reason": "Recover the complete lobby window lifecycle with typed setup rectangles, existing controls, stack-local lobby rows and real receiver-free callbacks."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00482490.cpp; original identity and primary482490..482D84 span retained", "Pinned original 0x004824C2 pushes callback 0x00483820, count 7, stride 0x17C and the stack array at EBP-0xAB0 before calling 0x00402EE0; originally the helper calls the callback with each element as ECX. Current source uses a seven-element array of constructed payload wrappers; VC6 supplies its non-EH ??_H iterator and the wrapper constructor returns the receiver, matching the original 0x483820 ABI. 0x00483820 writes offsets 0, 1, 2, 3, 4 and 0x178, matching the constructed row payload. Global wire rows remain passive; this composition does not assert an original class hierarchy.", "recovery/tasks/netwin-owner-coverage.json; revisions1-3 authorize coupled ownership and consumer changes; no matching or runtime acceptance implied."], "reason": "Recover the complete lobby window lifecycle with typed setup rectangles, existing controls, stack-local lobby rows and real receiver-free callbacks."}
 // TRIED: full transcription treating `self` as `int *` (matches the original's word-indexed field layout exactly); vtable slot057 retyped to (int,int,int) in this file's VCall, verified against raw disasm; UnionRect/CharUpperA reached via the IAT slot pattern. Reaches MISMATCH #6 'xor' vs 'mov' (register allocation), not chased further given size (2292 bytes).
 #if defined(_MSC_VER) && _MSC_VER == 1200
 #pragma function(memcpy)
@@ -2905,7 +2905,7 @@ Purpose: Route one dialog key press: Enter sends the chat line the edit box
          dialogs down the same way close() does and answers 1, everything
          else goes to the edit box's own slot-26 key handling.
 // ORIGINAL: 0x00483310 ?on_key_down@NetWin@@QAEHH@Z 0x00483310-0x00483414 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/00483310.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/00483310.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // symbol    ?on_key_down@NetWin@@UAEHH@Z
 // Current virtual override emits UAE; retain the catalogued QAE identity above.
 // size      260 bytes
@@ -2982,7 +2982,7 @@ Purpose: Retain the historical original identity while binding its current
          This is generated from NetWin's real CheckBox member lifetime; it is
          not a handwritten NetWin method or a manually staged teardown.
 // ORIGINAL: 0x004837F0 ?UNK4@NetWin@@QAEXXZ 0x004837F0-0x00483813 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/004837f0.cpp (historical NetWin catalogue interpretation and preserved seed claim)", "Consumer-emitted ??_DCheckBox@@QAEXXZ calls the CheckBox, Dialog and GraphicWin destructors at receiver+0x1C/+0xA34/+0x1C; pinned original 0x004837F9/0x00483804/0x0048380B target 0x0060E740/0x00608E10/0x005D4DD0 respectively. These are CheckBox-relative receiver adjustments, not NetWin-relative.", "src/netwin.h: NetWin owns the actual CheckBox checkBox_ member at +0x4454; ordinary member destruction emits the CheckBox complete-object helper in this consuming translation unit. No NetWin::UNK4 source callers exist."], "reason": "Keep the original NetWin catalogue identity and seed provenance as historical facts, but bind its current source identity to the genuine compiler-generated CheckBox complete-object destructor emitted for NetWin's real member. Do not hand-author cleanup or attribute the CheckBox-relative receivers to NetWin."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/004837f0.cpp (historical NetWin catalogue interpretation and preserved seed claim)", "Consumer-emitted ??_DCheckBox@@QAEXXZ calls the CheckBox, Dialog and GraphicWin destructors at receiver+0x1C/+0xA34/+0x1C; pinned original 0x004837F9/0x00483804/0x0048380B target 0x0060E740/0x00608E10/0x005D4DD0 respectively. These are CheckBox-relative receiver adjustments, not NetWin-relative.", "src/netwin.h: NetWin owns the actual CheckBox checkBox_ member at +0x4454; ordinary member destruction emits the CheckBox complete-object helper in this consuming translation unit. No NetWin::UNK4 source callers exist."], "reason": "Keep the original NetWin catalogue identity and seed provenance as historical facts, but bind its current source identity to the genuine compiler-generated CheckBox complete-object destructor emitted for NetWin's real member. Do not hand-author cleanup or attribute the CheckBox-relative receivers to NetWin."}
 // symbol    ??_DCheckBox@@QAEXXZ
 // size      35 bytes
 // prototype void (__thiscall ?UNK4@NetWin@@QAEXXZ)(NetWin* this) [historical catalogue interpretation; not the current owner]
@@ -2999,7 +2999,7 @@ Status: Compiler-generated CheckBox complete-object destructor, emitted from
 // automatic lifetime; the native explicit close calls in the archived seed
 // are not duplicated over the recovered destructor chain.
 // ORIGINAL: 0x0047C970 ?pick_pass@NetWin@@QAEHH@Z 0x0047C970-0x0047CF32;0x006569C4-0x00656AED
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0047c970.cpp", "recovery/tasks/netwin-owner-coverage.json", "Pinned47CEB9/47CED2/47CEDB..47CF03: slot dword, opcode word, explicit +8 zero, row at +10 of size17C; send18C. The opcode does not write +2..3 and +C..F is untouched."], "reason": "Recover full password dialog using genuine Popup lifecycle, input override text and shared parse output, faction validation and native sixteen-byte-header/full-row wire layout. No exactness or game acceptance claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0047c970.cpp", "recovery/tasks/netwin-owner-coverage.json", "Pinned47CEB9/47CED2/47CEDB..47CF03: slot dword, opcode word, explicit +8 zero, row at +10 of size17C; send18C. The opcode does not write +2..3 and +C..F is untouched."], "reason": "Recover full password dialog using genuine Popup lifecycle, input override text and shared parse output, faction validation and native sixteen-byte-header/full-row wire layout. No exactness or game acceptance claim."}
 // TRIED: MISMATCH #10 'push' vs 'mov' (framed build). SEH-frame password dialog: local `Popup popup;` is a real automatic object (BasePop fully laid out in the scaffold: embedded FlatButton x2 and Sprite, plus Popup's own `Scroll scroll_` which itself embeds two more FlatButtons at offsets 0xAAC/0x15F8 - matches the trailer thunks in the disassembly exactly), so ctor/dtor calls are emitted by the language rather than hand-modelled. Explicit popup.close()/ popup.scroll_.close() only where the disassembly names them, not at every scope exit. Did not attempt to reproduce the compiler's own SEH funclet layout - accepted as an "omitted as unreachable" divergence per the precedent in dialog.cpp/graphicwin.cpp.
 #if defined(_MSC_VER) && _MSC_VER == 1200
 #pragma function(memcpy)

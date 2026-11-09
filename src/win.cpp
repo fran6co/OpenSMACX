@@ -3216,7 +3216,7 @@ void __stdcall sub_5f86a0(Sound *sound) {
 // before the WM_USER-and-higher range. The network's 0x402 notification is
 // consumed by its actual owner instead of being sent to a window procedure.
 // ORIGINAL: 0x005FC7F0 ?do_task@@YAHXZ 0x005FC7F0-0x005FC8E8 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005fc7f0.cpp", "image:terranx_original.exe:0x005FC7F0", "Pinned5FC74A..757 and5FC83A..847 both poll0xF..0xF. Only high-range402 messages route ActiveNet.handle_sys_msg; null network consumes them. do_all_tasks continues until empty and calls do_net after final MsgStatus=0.", "Coordinator-owned core-pump-secret-owner-20261001 scope; preserved original seeds and historical obligations, no matching/runtime claim from binding"], "reason": "Recover the native message pump using SDK MSG/USER32, existing MsgStatus and ActiveNet storage. Preserve paint-first and low/high queue priority, helper order and dedicated network notification dispatch."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005fc7f0.cpp", "image:terranx_original.exe:0x005FC7F0", "Pinned5FC74A..757 and5FC83A..847 both poll0xF..0xF. Only high-range402 messages route ActiveNet.handle_sys_msg; null network consumes them. do_all_tasks continues until empty and calls do_net after final MsgStatus=0.", "Coordinator-owned core-pump-secret-owner-20261001 scope; preserved original seeds and historical obligations, no matching/runtime claim from binding"], "reason": "Recover the native message pump using SDK MSG/USER32, existing MsgStatus and ActiveNet storage. Preserve paint-first and low/high queue priority, helper order and dedicated network notification dispatch."}
 // TRIED: PeekMessageA/TranslateMessage/DispatchMessageA (loaded as plain function pointers from the IAT slots at 0x669358/0x66935c/ 0x669340, per the emitted globals) read into locals right after the first do_video/do_net/check_net() triple, matching the original's `mov esi,[...]` placement AFTER those three calls rather than before (moving it earlier cost the first 5 instructions). Best reached is 78.3% mnemonic similarity (#5 call vs push): the callee-register-save prologue still spills one extra value this body doesn't, not chased further. `handle_sys_msg` at 0x632db0 is a thiscall `Net` member with `this` read from 0x9be608 right before the call (`mov ecx,[0x9be608]`), not a bare cdecl call.
 int __cdecl do_task() {
     MSG message;
@@ -3257,7 +3257,7 @@ int __cdecl do_task() {
 }
 
 // ORIGINAL: 0x005FC700 ?wait_task@@YAXXZ 0x005FC700-0x005FC7E4 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005fc700.cpp", "image:terranx_original.exe:0x005FC700", "Pinned5FC74A..757 and5FC83A..847 both poll0xF..0xF. Only high-range402 messages route ActiveNet.handle_sys_msg; null network consumes them. do_all_tasks continues until empty and calls do_net after final MsgStatus=0.", "Coordinator-owned core-pump-secret-owner-20261001 scope; preserved original seeds and historical obligations, no matching/runtime claim from binding"], "reason": "Recover the native message pump using SDK MSG/USER32, existing MsgStatus and ActiveNet storage. Preserve paint-first and low/high queue priority, helper order and dedicated network notification dispatch."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005fc700.cpp", "image:terranx_original.exe:0x005FC700", "Pinned5FC74A..757 and5FC83A..847 both poll0xF..0xF. Only high-range402 messages route ActiveNet.handle_sys_msg; null network consumes them. do_all_tasks continues until empty and calls do_net after final MsgStatus=0.", "Coordinator-owned core-pump-secret-owner-20261001 scope; preserved original seeds and historical obligations, no matching/runtime claim from binding"], "reason": "Recover the native message pump using SDK MSG/USER32, existing MsgStatus and ActiveNet storage. Preserve paint-first and low/high queue priority, helper order and dedicated network notification dispatch."}
 // TRIED: 260 vs 228 bytes; VC6's /O2 loop rotation duplicates the do_video/check_net/do_net top-of-loop block into a separate call sequence instead of the original's fall-through-then-jmp reuse of one copy. Tried both `for (;;)` and `do {} while(1)` for the poll loop; both rotate the same way.
 void __cdecl wait_task() {
     MSG message;
@@ -3296,7 +3296,7 @@ void __cdecl wait_task() {
 }
 
 // ORIGINAL: 0x005FC8F0 ?do_all_tasks@@YAXXZ 0x005FC8F0-0x005FC9DE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005fc8f0.cpp", "image:terranx_original.exe:0x005FC8F0", "Pinned5FC74A..757 and5FC83A..847 both poll0xF..0xF. Only high-range402 messages route ActiveNet.handle_sys_msg; null network consumes them. do_all_tasks continues until empty and calls do_net after final MsgStatus=0.", "Coordinator-owned core-pump-secret-owner-20261001 scope; preserved original seeds and historical obligations, no matching/runtime claim from binding"], "reason": "Recover the native message pump using SDK MSG/USER32, existing MsgStatus and ActiveNet storage. Preserve paint-first and low/high queue priority, helper order and dedicated network notification dispatch."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005fc8f0.cpp", "image:terranx_original.exe:0x005FC8F0", "Pinned5FC74A..757 and5FC83A..847 both poll0xF..0xF. Only high-range402 messages route ActiveNet.handle_sys_msg; null network consumes them. do_all_tasks continues until empty and calls do_net after final MsgStatus=0.", "Coordinator-owned core-pump-secret-owner-20261001 scope; preserved original seeds and historical obligations, no matching/runtime claim from binding"], "reason": "Recover the native message pump using SDK MSG/USER32, existing MsgStatus and ActiveNet storage. Preserve paint-first and low/high queue priority, helper order and dedicated network notification dispatch."}
 // TRIED: PeekMessageA/TranslateMessage/DispatchMessageA are resolved
 // TRIED: could not reproduce the original's frameless, purely
 void __cdecl do_all_tasks() {
@@ -4920,7 +4920,7 @@ void Win::on_l_button_down(long double_click, int x, int y, unsigned int, int fr
 // ===== homed from src/recovered/units/005f6550.cpp =====
 
 // ORIGINAL: 0x005F6550 ?on_l_button_up@Win@@QAEXHHIH@Z 0x005F6550-0x005F670D FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned terranx_original.exe SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: Win primary virtual table slot 82 at cell 0x0066FF18 selects original entry 0x005F6550.", "src/win.h declares the corresponding Win virtual contract and slot; the unique typed definition in src/win.cpp is the source owner: Win::on_l_button_up is the slot-82 Win virtual.", "The complete preserved seed identity, span, formal facts, claim state, and useful historical notes are restored from 3cb99d431^:src/recovered/units/005f6550.cpp; see the digest-bound inert archive below.", "The existing typed Win body is retained unchanged. This restores source identity and evidence only; it grants no byte/semantic claim or original-TU provenance."], "reason": "Restore the preserved original Win method identity to its existing genuine Win definition using the observed current compiler symbol; retain the old source evidence and claims unchanged."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned terranx_original.exe SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: Win primary virtual table slot 82 at cell 0x0066FF18 selects original entry 0x005F6550.", "src/win.h declares the corresponding Win virtual contract and slot; the unique typed definition in src/win.cpp is the source owner: Win::on_l_button_up is the slot-82 Win virtual.", "The complete preserved seed identity, span, formal facts, claim state, and useful historical notes are restored from 2bf26a914^:src/recovered/units/005f6550.cpp; see the digest-bound inert archive below.", "The existing typed Win body is retained unchanged. This restores source identity and evidence only; it grants no byte/semantic claim or original-TU provenance."], "reason": "Restore the preserved original Win method identity to its existing genuine Win definition using the observed current compiler symbol; retain the old source evidence and claims unchanged."}
 // symbol    ?on_l_button_up@Win@@UAEXHHIH@Z
 // size      445 bytes
 // prototype void (__thiscall ?on_l_button_up@Win@@QAEXHHIH@Z)(Win* this, int, int, unsigned int, int)
@@ -5525,7 +5525,7 @@ void __cdecl Win::remove_parent(Win* window) {
 
 // ORIGINAL: 0x005F2940 ?set_rects@Win@@QAEXXZ 0x005F2940-0x005F2ABA FILE BYTE_EXACT
 // symbol    ?set_rects@Win@@UAEXXZ
-// provenance (retired seed): git:3cb99d43^:src/recovered/units/005f2940.cpp
+// provenance (retired seed): git:2bf26a91^:src/recovered/units/005f2940.cpp
 void Win::set_rects() {
     if (this->iSomeFlag_ & 2) {
         int32_t barH;
@@ -5637,7 +5637,7 @@ void Win::window_line_raw(int x2, int y2, int x1, int y1, int colour,
 // window and change the count. get_graphic_win is only the surface predicate.
 
 // ORIGINAL: 0x005F4D00 ?update@Win@@QAAXXZ 0x005F4D00-0x005F4D4D BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:3cb99d43^:src/recovered/units/005f4d00.cpp historical identity/span, no byte claim.", "image:0x005F4D00-0x005F4D4D complete body, final RET before NOP padding.", "image:0x005F4D1A,0x005F4D24,0x005F4D32 dispatch on freshly reloaded WinZOrderArray elements; getter result is only a predicate, not the update receiver.", "image:0x005F4D38 sound pump only on nonnull getter; 0x005F4D3D reloads signed count after callbacks."], "reason": "Restore the lost mapping of the extant typed Win Z-order update dispatcher. Catalogue nonstatic __cdecl signature is retained; original caller/staticness evidence remains unavailable."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:2bf26a91^:src/recovered/units/005f4d00.cpp historical identity/span, no byte claim.", "image:0x005F4D00-0x005F4D4D complete body, final RET before NOP padding.", "image:0x005F4D1A,0x005F4D24,0x005F4D32 dispatch on freshly reloaded WinZOrderArray elements; getter result is only a predicate, not the update receiver.", "image:0x005F4D38 sound pump only on nonnull getter; 0x005F4D3D reloads signed count after callbacks."], "reason": "Restore the lost mapping of the extant typed Win Z-order update dispatcher. Catalogue nonstatic __cdecl signature is retained; original caller/staticness evidence remains unavailable."}
 void __cdecl Win::update() {
     for (int i = 0; i < WinZOrderCount; ++i) {
         WinZOrderArray[i]->on_nc_paint(0, -1);
@@ -6126,7 +6126,7 @@ typedef BOOL (__stdcall *InvalidateRectFn)(void *, const RECT *, BOOL);
 typedef void (__cdecl *Sub5f8670Fn)(RECT *, int, int);
 
 // ORIGINAL: 0x005ED9D0 ?show@Win@@QAEXH@Z 0x005ED9D0-0x005EDCCB BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git show 3cb99d43^:src/recovered/units/005ed9d0.cpp preserves the unclaimed FILE marker for0x005ED9D0-0x005EDCCB. Commit3cb99d43 homed its body into win.cpp under the005ed9d0 heading but omitted the mapping. Original WorldWin set_world_map and show_all call0x005ED9D0 directly on0x008E9F60; existing Win::show(int) is the distinct real product operation. This mapping identifies the homed operation independently of subsequent behavior and reference verification."], "reason": "Restore the original mapping lost when the existing Win::show implementation was homed. Preserve the historical canonical name and complete unclaimed span; do not treat mapping restoration as implementation verification."}
+// RECOVERY_BINDING: v1 {"evidence": ["git show 2bf26a91^:src/recovered/units/005ed9d0.cpp preserves the unclaimed FILE marker for0x005ED9D0-0x005EDCCB. Commit3cb99d43 homed its body into win.cpp under the005ed9d0 heading but omitted the mapping. Original WorldWin set_world_map and show_all call0x005ED9D0 directly on0x008E9F60; existing Win::show(int) is the distinct real product operation. This mapping identifies the homed operation independently of subsequent behavior and reference verification."], "reason": "Restore the original mapping lost when the existing Win::show implementation was homed. Preserve the historical canonical name and complete unclaimed span; do not treat mapping restoration as implementation verification."}
 // symbol    ?show@Win@@UAEXH@Z
 void Win::show(int visible) {
     if ((iSomeFlag_ & 1) == 0 && (iSomeFlag_ & 4) != 0) {
@@ -6446,7 +6446,7 @@ typedef int (__stdcall *MessageBoxAFn)(void *, const char *, const char *, unsig
 
 // ORIGINAL: 0x005EBD80 ?init@Win@@QAEHHHHHPADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z 0x005EBD80-0x005EC621;0x00662C80-0x00662CCC FILE
 // symbol    ?init@Win@@QAEHHHHHPADHPAV1@PAVMenu@@PAUBorderSizing@@@Z
-// provenance (retired seed): git:3cb99d431fb928d698e7eb29afee4ac2fc664027^:src/unrecovered/005ebd80.cpp
+// provenance (retired seed): git:2bf26a9145f971d717f73fcc8193c827f8eec273^:src/unrecovered/005ebd80.cpp
 // Original spans restored from the mapping lost during homing.
 int Win::init(int x, int y, int width, int height, char * caption,
               int flags, Win * parent, Menu * menu, BorderSizing * border) {
@@ -6759,7 +6759,7 @@ init_registration_tail:
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x005F1820 0x005F2200 0x005F2250 0x005F1B3C
 // ORIGINAL: 0x005F1820 ?update_cursor@Win@@QAAHPAUWin@@H@Z 0x005F1820-0x005F2200
-// RECOVERY_BINDING: v1 {"evidence": ["git show 3cb99d43^:src/unrecovered/005f1820.cpp preserves this identity and full code span with mismatch history, not a byte claim. Its existing body is under the same homing heading in win.cpp. Entry reads two stack arguments; original body ends at5F21FF and the switch table begins at5F2200. Source binding does not establish behavior, table matching or acceptance."], "reason": "Restore the unclaimed cursor operation mapping omitted during homing. The catalogued decoration is historical; the product uses the receiver-free static Win operation."}
+// RECOVERY_BINDING: v1 {"evidence": ["git show 2bf26a91^:src/unrecovered/005f1820.cpp preserves this identity and full code span with mismatch history, not a byte claim. Its existing body is under the same homing heading in win.cpp. Entry reads two stack arguments; original body ends at5F21FF and the switch table begins at5F2200. Source binding does not establish behavior, table matching or acceptance."], "reason": "Restore the unclaimed cursor operation mapping omitted during homing. The catalogued decoration is historical; the product uses the receiver-free static Win operation."}
 // symbol    ?update_cursor@Win@@SAHPAV1@H@Z
 int __cdecl Win::update_cursor(Win *window, int tgl) {
 
@@ -7115,7 +7115,7 @@ void Win::nonclient_to_client(RECT * rect) {
 typedef int (__stdcall *IntersectRectFn)(RECT *, const RECT *, const RECT *);
 
 // ORIGINAL: 0x005F2CF0 ?on_redraw_nc@Win@@QAEXPAURECT@@H@Z 0x005F2CF0-0x005F37BA FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned terranx_original.exe SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: Win primary virtual table slot 67 at cell 0x0066FEDC selects original entry 0x005F2CF0.", "src/win.h declares the corresponding Win virtual contract and slot; the unique typed definition in src/win.cpp is the source owner: Win::on_redraw_nc is the slot-67 Win virtual.", "The complete preserved seed identity, span, formal facts, claim state, and useful historical notes are restored from 3cb99d431^:src/unrecovered/005f2cf0.cpp; see the digest-bound inert archive below.", "The existing typed Win body is retained unchanged. This restores source identity and evidence only; it grants no byte/semantic claim or original-TU provenance."], "reason": "Restore the preserved original Win method identity to its existing genuine Win definition using the observed current compiler symbol; retain the old source evidence and claims unchanged."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned terranx_original.exe SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: Win primary virtual table slot 67 at cell 0x0066FEDC selects original entry 0x005F2CF0.", "src/win.h declares the corresponding Win virtual contract and slot; the unique typed definition in src/win.cpp is the source owner: Win::on_redraw_nc is the slot-67 Win virtual.", "The complete preserved seed identity, span, formal facts, claim state, and useful historical notes are restored from 2bf26a914^:src/unrecovered/005f2cf0.cpp; see the digest-bound inert archive below.", "The existing typed Win body is retained unchanged. This restores source identity and evidence only; it grants no byte/semantic claim or original-TU provenance."], "reason": "Restore the preserved original Win method identity to its existing genuine Win definition using the observed current compiler symbol; retain the old source evidence and claims unchanged."}
 // symbol    ?on_redraw_nc@Win@@UAEXPAUtagRECT@@H@Z
 // size      2762 bytes
 // prototype void (__thiscall ?on_redraw_nc@Win@@QAEXPAURECT@@H@Z)(Win* this, RECT*, int)
@@ -7410,7 +7410,7 @@ int Win::set_cursor(HCURSOR *name) {
 
 // ORIGINAL: 0x005ED880 ?resize@Win@@QAEHHHH@Z 0x005ED880-0x005ED9B5 FILE BYTE_EXACT
 // symbol    ?resize@Win@@UAEHHHH@Z
-// Original mapping restored from git:85fc7721f56c2a5cae754b993fe04fcfec74fec1:src/unrecovered/005ed880.cpp
+// Original mapping restored from git:6fe9388940e78cd7cdf422d7f9e6d28790565108:src/unrecovered/005ed880.cpp
 // The image inlines set_rectangle_dimensions and offset_rect (0x005F8670).
 int Win::resize(int width, int height, int repaint) {
     if (repaint != 0) {
@@ -7463,7 +7463,7 @@ void Win::set_caption(char * text) {
 // ===== homed from src/unrecovered/005f5140.cpp =====
 
 // ORIGINAL: 0x005F5140 ?bring_parent_to_top@Win@@QAAXPAVWin@@@Z 0x005F5140-0x005F51F7 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git show 3cb99d43^:src/unrecovered/005f5140.cpp preserves this identity and span. Original entry loads the sole argument from the stack, never consumes incoming ECX and returns with plain ret; show at0x5EDA3E and on_r_button_down at0x5F672A each push the window and reclaim four bytes. Static versus free historical spelling is not established."], "reason": "Restore the unclaimed original mapping omitted during homing; model the receiver-free root-order operation as a static Win member. The catalogued name is not the recovered calling convention."}
+// RECOVERY_BINDING: v1 {"evidence": ["git show 2bf26a91^:src/unrecovered/005f5140.cpp preserves this identity and span. Original entry loads the sole argument from the stack, never consumes incoming ECX and returns with plain ret; show at0x5EDA3E and on_r_button_down at0x5F672A each push the window and reclaim four bytes. Static versus free historical spelling is not established."], "reason": "Restore the unclaimed original mapping omitted during homing; model the receiver-free root-order operation as a static Win member. The catalogued name is not the recovered calling convention."}
 // symbol    ?bring_parent_to_top@Win@@SAXPAV1@@Z
 void __cdecl Win::bring_parent_to_top(Win * window) {
     if (window != 0 && (window->iFlags_ & 0x2000000) == 0) {
@@ -7546,7 +7546,7 @@ void Win::client_to_nonclient(int * points, int * count) {
 
 // ===== homed from src/unrecovered/005eea90.cpp =====
 // ORIGINAL: 0x005EEA90 ?key_click_event@Win@@QAEHHH@Z 0x005EEA90-0x005EEB81 FILE BYTE_EXACT
-// provenance (retired seed): git:3cb99d43^:src/unrecovered/005eea90.cpp
+// provenance (retired seed): git:2bf26a91^:src/unrecovered/005eea90.cpp
 int Win::key_click_event(int key, int flags) {
     int result = 0;
     if ((iFlags_ & 0x200000) != 0 || (iSomeFlag_ & 8) != 0) {
@@ -8020,7 +8020,7 @@ typedef int(__stdcall *PeekMessageFn)(MsgT *, void *, unsigned int, unsigned int
 typedef int(__stdcall *Fn1)(void *);
 
 // ORIGINAL: 0x005F5D10 ?on_key@Win@@QAEXIJHI@Z 0x005F5D10-0x005F5F53 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:3cb99d43^:src/recovered/units/005f5d10.cpp:1; src/win.h slot 78; pinned original 0x005F5D4F-0x005F5DE0 reads the active Net and calls its two voice-start overloads and stop_voice"], "reason": "Restore the unclaimed original identity lost when this existing Win::on_key body was homed; retain the catalogue name separately from its current virtual emitted symbol. Original instruction decoding confirms entry and ret 0x10 at 0x005F5F50; the historical extent ends at 0x005F5F53."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:2bf26a91^:src/recovered/units/005f5d10.cpp:1; src/win.h slot 78; pinned original 0x005F5D4F-0x005F5DE0 reads the active Net and calls its two voice-start overloads and stop_voice"], "reason": "Restore the unclaimed original identity lost when this existing Win::on_key body was homed; retain the catalogue name separately from its current virtual emitted symbol. Original instruction decoding confirms entry and ret 0x10 at 0x005F5F50; the historical extent ends at 0x005F5F53."}
 // symbol    ?on_key@Win@@UAEXIJHI@Z
 void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
     (void)repeat;
@@ -8124,7 +8124,7 @@ void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
 // ===== homed from src/unrecovered/005f2680.cpp =====
 // ORIGINAL: 0x005F2680 ?OnSysCommand@Win@@QAAHPAXIHH@Z 0x005F2680-0x005F26FF FILE BYTE_EXACT
 // symbol    ?OnSysCommand@Win@@SAXPAUHWND__@@IHH@Z
-// provenance (retired seed): git:3cb99d43^:src/unrecovered/005f2680.cpp
+// provenance (retired seed): git:2bf26a91^:src/unrecovered/005f2680.cpp
 // VC6 WINDOWSX.H's Cls_OnSysCommand contract is void; HANDLE_WM_SYSCOMMAND
 // discards the callback result, and the pinned close path's void virtual call
 // leaves no deterministic EAX when no Sound child is present. Registration
@@ -8196,7 +8196,7 @@ void Win::client_to_nonclient(RECT * rect) {
 
 // ORIGINAL: 0x005EEF60 ?nonclient_to_client@Win@@QAEXPAH0@Z 0x005EEF60-0x005EF050 FILE BYTE_EXACT
 // symbol    ?nonclient_to_client@Win@@QAEXPAH0@Z
-// Original mapping restored from git:85fc7721f56c2a5cae754b993fe04fcfec74fec1:src/unrecovered/005eef60.cpp
+// Original mapping restored from git:6fe9388940e78cd7cdf422d7f9e6d28790565108:src/unrecovered/005eef60.cpp
 void Win::nonclient_to_client(int * x, int * y) {
     if (x == 0) {
         return;
@@ -8265,7 +8265,7 @@ void Win::update_window_to_buffer(Buffer * buffer) {
 // ===== homed from src/recovered/units/005f6710.cpp =====
 
 // ORIGINAL: 0x005F6710 ?on_r_button_down@Win@@QAEXJHHIH@Z 0x005F6710-0x005F687F BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git show 3cb99d43^:src/recovered/units/005f6710.cpp preserves this identity and span. The body remains in win.cpp beneath its original homing heading. Its parentless path calls the receiver-free root-order helper at0x5F672A; declaration repair changes that ABI without rewriting the handler body."], "reason": "Restore the unclaimed original mapping omitted during homing of the existing right-button handler. This binding is not a matching or behavioral claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git show 2bf26a91^:src/recovered/units/005f6710.cpp preserves this identity and span. The body remains in win.cpp beneath its original homing heading. Its parentless path calls the receiver-free root-order helper at0x5F672A; declaration repair changes that ABI without rewriting the handler body."], "reason": "Restore the unclaimed original mapping omitted during homing of the existing right-button handler. This binding is not a matching or behavioral claim."}
 // symbol    ?on_r_button_down@Win@@UAEXJHHIH@Z
 void Win::on_r_button_down(long flags, int x, int y, unsigned int keys, int dbl) {
     Win *parent = win_parent_;
@@ -9101,7 +9101,7 @@ void __cdecl Win::OnActivate(void *hwnd, unsigned int state, void *other,
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005FD2B0
 // indirect  0x005F4CD6
-// Historical spelling/call-wrapper rationale: git:de080f82:src/win.cpp
+// Historical spelling/call-wrapper rationale: git:e355e915:src/win.cpp
 // This list-wide operation is distinct from each window's virtual redraw.
 // The catalogued QAA convention is retained; its unused receiver does not
 // independently establish whether the original declaration was static.
@@ -9738,7 +9738,7 @@ void Win::dispatch_22(int a, int b, int alternate) {
 // Original source names are not established; these labels identify the
 // primary Win slots used by the recovered seed bodies.
 // ORIGINAL: 0x005EE950 sub_5ee950 0x005EE950-0x005EE9EE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:215c2e515022cafd8e44ccc77cd636a2b9b954e1:src/unrecovered/005ee950.cpp: original identity, complete span and historical receiver findings", "Win primary table66FDD0 slot23 selects404260 ret8; Sound table66E3C0 slots23/7 select4C64C0/4C6480", "Pinned Scroll60569A..6056A6 writes borrowed sprites to FlatButton+AD4/+AD8/+ADC, not AutoSound+30; the earlier mixed-Sprite rationale was based on an erroneous source setter", "recovery/tasks/win-sound-owner-oct5.json", "recovery/tests/test_win_sound_product_source.py"], "reason": "Recover complete Win coordinate dispatcher through its real primary/alternate virtual events and contextual Sound status/play receiver. The contextual Sound view is supported; complete producer and installed sound lifetime contracts remain unresolved. No Sprite interpretation follows from the corrected Scroll producer."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:b416fd6cc734910f841bfb5637b1455372489fad:src/unrecovered/005ee950.cpp: original identity, complete span and historical receiver findings", "Win primary table66FDD0 slot23 selects404260 ret8; Sound table66E3C0 slots23/7 select4C64C0/4C6480", "Pinned Scroll60569A..6056A6 writes borrowed sprites to FlatButton+AD4/+AD8/+ADC, not AutoSound+30; the earlier mixed-Sprite rationale was based on an erroneous source setter", "recovery/tasks/win-sound-owner-oct5.json", "recovery/tests/test_win_sound_product_source.py"], "reason": "Recover complete Win coordinate dispatcher through its real primary/alternate virtual events and contextual Sound status/play receiver. The contextual Sound view is supported; complete producer and installed sound lifetime contracts remain unresolved. No Sprite interpretation follows from the corrected Scroll producer."}
 // symbol    ?dispatch_23@Win@@QAEXHHH@Z
 // LEVER: [ecx+N] reads with no stack `this` -> a __thiscall receiver class (Recv5ee950), not the given __stdcall free function. Two shims: VCallSelf (slot023/036 take (int,int) on `this`) and VCallChild (slot023 returns int(), slot007 void()) on the 0x30/0x60 children - same slot index, different vtables, so one shim could not serve both.
 void Win::dispatch_23(int x, int y, int alternate) {
@@ -9770,7 +9770,7 @@ void Win::dispatch_23(int x, int y, int alternate) {
 }
 
 // ORIGINAL: 0x005EE9F0 sub_5ee9f0 0x005EE9F0-0x005EEA8E BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:215c2e515022cafd8e44ccc77cd636a2b9b954e1:src/unrecovered/005ee9f0.cpp: original identity, complete span and historical receiver findings", "Win primary table66FDD0 slot23 selects404260 ret8; Sound table66E3C0 slots23/7 select4C64C0/4C6480", "Pinned Scroll60569A..6056A6 writes borrowed sprites to FlatButton+AD4/+AD8/+ADC, not AutoSound+30; the earlier mixed-Sprite rationale was based on an erroneous source setter", "recovery/tasks/win-sound-owner-oct5.json", "recovery/tests/test_win_sound_product_source.py"], "reason": "Recover complete Win coordinate dispatcher through its real primary/alternate virtual events and contextual Sound status/play receiver. The contextual Sound view is supported; complete producer and installed sound lifetime contracts remain unresolved. No Sprite interpretation follows from the corrected Scroll producer."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:b416fd6cc734910f841bfb5637b1455372489fad:src/unrecovered/005ee9f0.cpp: original identity, complete span and historical receiver findings", "Win primary table66FDD0 slot23 selects404260 ret8; Sound table66E3C0 slots23/7 select4C64C0/4C6480", "Pinned Scroll60569A..6056A6 writes borrowed sprites to FlatButton+AD4/+AD8/+ADC, not AutoSound+30; the earlier mixed-Sprite rationale was based on an erroneous source setter", "recovery/tasks/win-sound-owner-oct5.json", "recovery/tests/test_win_sound_product_source.py"], "reason": "Recover complete Win coordinate dispatcher through its real primary/alternate virtual events and contextual Sound status/play receiver. The contextual Sound view is supported; complete producer and installed sound lifetime contracts remain unresolved. No Sprite interpretation follows from the corrected Scroll producer."}
 // symbol    ?dispatch_24@Win@@QAEXHHH@Z
 void Win::dispatch_24(int x, int y, int alternate) {
     if ((iFlags_ & 0x200000U) != 0) {
@@ -9824,7 +9824,7 @@ void __cdecl dispatch_mouse_wheel(int unused, int keys, int delta, int x, int y)
 }
 
 // ORIGINAL: 0x005FCCF0 sub_5fccf0 0x005FCCF0-0x005FCD3D BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/005fccf0.cpp"], "reason": "Recover the complete core message helper using SDK MSG/USER32, original queue ranges and callback ordering; preserve catalogue identity and historical seed obligation. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/unrecovered/005fccf0.cpp"], "reason": "Recover the complete core message helper using SDK MSG/USER32, original queue ranges and callback ordering; preserve catalogue identity and historical seed obligation. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
 // LEVER: cast the three fixed IAT slots to __stdcall function-pointer types and called through them directly
 // symbol    ?pump_key_message@@YAHXZ
@@ -9840,7 +9840,7 @@ int __cdecl pump_key_message() {
 }
 
 // ORIGINAL: 0x005FCD40 sub_5fcd40 0x005FCD40-0x005FCD97 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/005fcd40.cpp"], "reason": "Recover the complete core message helper using SDK MSG/USER32, original queue ranges and callback ordering; preserve catalogue identity and historical seed obligation. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/005fcd40.cpp"], "reason": "Recover the complete core message helper using SDK MSG/USER32, original queue ranges and callback ordering; preserve catalogue identity and historical seed obligation. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
 // symbol    ?pump_all_key_messages@@YAXXZ
 void __cdecl pump_all_key_messages() {
@@ -9857,7 +9857,7 @@ void __cdecl pump_all_key_messages() {
 }
 
 // ORIGINAL: 0x005FCDA0 sub_5fcda0 0x005FCDA0-0x005FCDE5 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/005fcda0.cpp"], "reason": "Recover the complete core message helper using SDK MSG/USER32, original queue ranges and callback ordering; preserve catalogue identity and historical seed obligation. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/005fcda0.cpp"], "reason": "Recover the complete core message helper using SDK MSG/USER32, original queue ranges and callback ordering; preserve catalogue identity and historical seed obligation. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
 // symbol    ?pump_mouse_move_message@@YAHXZ
 int __cdecl pump_mouse_move_message() {
@@ -9871,7 +9871,7 @@ int __cdecl pump_mouse_move_message() {
 }
 
 // ORIGINAL: 0x005FCDF0 sub_5fcdf0 0x005FCDF0-0x005FCEC0 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005fcdf0.cpp"], "reason": "Recover the complete core message helper using SDK MSG/USER32, original queue ranges and callback ordering; preserve catalogue identity and historical seed obligation."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005fcdf0.cpp"], "reason": "Recover the complete core message helper using SDK MSG/USER32, original queue ranges and callback ordering; preserve catalogue identity and historical seed obligation."}
 // TRIED: per-call reinterpret_cast<Proc*>(g) load (5 call sites) instead of caching Peek/Translate/Dispatch ptrs in registers once
 // symbol    ?pump_mouse_button_message@@YAHXZ
 int __cdecl pump_mouse_button_message() {
@@ -9936,7 +9936,7 @@ void __cdecl do_all_sounds() {
 }
 
 // ORIGINAL: 0x005F83B0 sub_5f83b0 0x005F83B0-0x005F83C5 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:f178e8db:src/recovered/units/005f83b0.cpp complete original identity/spans and historical claims/findings.", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x5f83b0 full native body review.", "source:src/win.cpp existing real state owners; no executable-address alias or synthetic receiver."], "reason": "Recover the complete short helper through established source-owned diplomacy, vehicle, text or window state; preserve signed sentinel behavior, original receiver/argument order and conditional callbacks."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a1347e25:src/recovered/units/005f83b0.cpp complete original identity/spans and historical claims/findings.", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x5f83b0 full native body review.", "source:src/win.cpp existing real state owners; no executable-address alias or synthetic receiver."], "reason": "Recover the complete short helper through established source-owned diplomacy, vehicle, text or window state; preserve signed sentinel behavior, original receiver/argument order and conditional callbacks."}
 // symbol    ?flip_active_bubble_text@@YAXXZ
 void __cdecl flip_active_bubble_text() {
     if (WinBubbleActive != 0)
@@ -10040,7 +10040,7 @@ void __cdecl win_window_nc_paint(HWND hwnd) {
 
 // Superseded seed removed; complete operation now belongs to Win.
 // ORIGINAL: 0x005EF640 sub_5ef640 0x005EF640-0x005EF946 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["git:f2a0fa1952cef53f4a2c6a5e60a8bea9bff9c3aa:src/unrecovered/005ef640.cpp", "pinned:terranx_original:0x5ef640", "source:src/win.h", "source:src/graphicwin.h"], "reason": "Native Win receiver and four popped arguments, top/light bottom/dark left/light right/dark HDC acquisition order. Source names are descriptive, not recovered historical spellings. Preserve all original spans and historical findings; no new matching or full acceptance claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:5091b297af78ce086d367a8da03ee93cc2be0c34:src/unrecovered/005ef640.cpp", "pinned:terranx_original:0x5ef640", "source:src/win.h", "source:src/graphicwin.h"], "reason": "Native Win receiver and four popped arguments, top/light bottom/dark left/light right/dark HDC acquisition order. Source names are descriptive, not recovered historical spellings. Preserve all original spans and historical findings; no new matching or full acceptance claim."}
 // symbol    ?draw_rect_edges@Win@@QAEXPAUtagRECT@@PAX1H@Z
 void Win::draw_rect_edges(RECT *rect, HGDIOBJ light_pen, HGDIOBJ dark_pen,
                           int unused) {
@@ -10051,7 +10051,7 @@ void Win::draw_rect_edges(RECT *rect, HGDIOBJ light_pen, HGDIOBJ dark_pen,
 
 // Superseded seed removed; complete operation now belongs to Win.
 // ORIGINAL: 0x005EFBA0 sub_5efba0 0x005EFBA0-0x005EFCF5 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:f2a0fa1952cef53f4a2c6a5e60a8bea9bff9c3aa:src/unrecovered/005efba0.cpp", "pinned:terranx_original:0x5efba0", "source:src/win.h", "source:src/graphicwin.h"], "reason": "Native Win receiver and six popped arguments, palette RGB fill and preserved HDC lease leak when brush creation fails. Source names are descriptive, not recovered historical spellings. Preserve all original spans and historical findings; no new matching or full acceptance claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:5091b297af78ce086d367a8da03ee93cc2be0c34:src/unrecovered/005efba0.cpp", "pinned:terranx_original:0x5efba0", "source:src/win.h", "source:src/graphicwin.h"], "reason": "Native Win receiver and six popped arguments, palette RGB fill and preserved HDC lease leak when brush creation fails. Source names are descriptive, not recovered historical spellings. Preserve all original spans and historical findings; no new matching or full acceptance claim."}
 // symbol    ?fill_palette_color_rect@Win@@QAEXHHHHHH@Z
 // TRIED: `ecx` used as `this` before any stack read proves __thiscall, not the IDA-guessed __stdcall(int x6); modelled as a member of a local class per the 0x004C8290 idiom. The two indirect calls through DAT_009BC498's vtable pass the interface object as an EXPLICIT stack arg (not via ecx), so they are __stdcall function pointers, not VCall thiscall slots. First divergence #5 je/jne.
 void Win::fill_palette_color_rect(int x, int y, int width, int height,
@@ -10083,7 +10083,7 @@ void Win::fill_palette_color_rect(int x, int y, int width, int height,
 
 // Superseded seed removed; complete operation now belongs to Win.
 // ORIGINAL: 0x005F37C0 sub_5f37c0 0x005F37C0-0x005F3B73 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:f2a0fa1952cef53f4a2c6a5e60a8bea9bff9c3aa:src/unrecovered/005f37c0.cpp", "pinned:terranx_original:0x5f37c0", "source:src/win.h", "source:src/graphicwin.h"], "reason": "Native Win receiver and Buffer/x/y inputs, top-down DIB damage and source-relative to destination-relative copy geometry. Source names are descriptive, not recovered historical spellings. Preserve all original spans and historical findings; no new matching or full acceptance claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:5091b297af78ce086d367a8da03ee93cc2be0c34:src/unrecovered/005f37c0.cpp", "pinned:terranx_original:0x5f37c0", "source:src/win.h", "source:src/graphicwin.h"], "reason": "Native Win receiver and Buffer/x/y inputs, top-down DIB damage and source-relative to destination-relative copy geometry. Source names are descriptive, not recovered historical spellings. Preserve all original spans and historical findings; no new matching or full acceptance claim."}
 // symbol    ?copy_edges_to_buffer@Win@@QAEXPAVBuffer@@HH@Z
 // Damage rect via set_rectangle_dimensions; edges via offset_rect on a
 // copied client RECT.
@@ -10170,7 +10170,7 @@ void Win::copy_edges_to_buffer(Buffer *target, int x, int y) {
 
 // Superseded seed removed; complete operation now belongs to Win.
 // ORIGINAL: 0x005F3B80 sub_5f3b80 0x005F3B80-0x005F4AA7 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:f2a0fa1952cef53f4a2c6a5e60a8bea9bff9c3aa:src/unrecovered/005f3b80.cpp", "pinned:terranx_original:0x5f3b80", "source:src/win.h", "source:src/graphicwin.h"], "reason": "Native current Win source and target Win receiver distinction, chained edge rectangles, clip/mode gates and distinct inherited versus allocated GraphicWin buffers. Source names are descriptive, not recovered historical spellings. Preserve all original spans and historical findings; no new matching or full acceptance claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:5091b297af78ce086d367a8da03ee93cc2be0c34:src/unrecovered/005f3b80.cpp", "pinned:terranx_original:0x5f3b80", "source:src/win.h", "source:src/graphicwin.h"], "reason": "Native current Win source and target Win receiver distinction, chained edge rectangles, clip/mode gates and distinct inherited versus allocated GraphicWin buffers. Source names are descriptive, not recovered historical spellings. Preserve all original spans and historical findings; no new matching or full acceptance claim."}
 // symbol    ?copy_border_buffers_to_window@Win@@QAEXPAV1@PAUtagRECT@@H@Z
 // Copy offsets are relative to the unclipped edge rect; the screen pass
 // reuses edge_rect for GetWindowRect. Edge offsets go through offset_rect.
@@ -10328,7 +10328,7 @@ GraphicWin *Win::get_graphic_win() { return nullptr; }
 
 // Original global Win message-pump family.
 // ORIGINAL: 0x005FC9F0 ?do_all_tasks@@YAXPAUWin@@@Z 0x005FC9F0-0x005FCA23 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x005FC9F0-0x005FCA23", "git:7c6c86d9:src/recovered/units/005fc9f0.cpp"], "reason": "Clear the real queued-window globals before polling do_net; the independently remeasured seed is retired."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x005FC9F0-0x005FCA23", "git:c1b8fa86:src/recovered/units/005fc9f0.cpp"], "reason": "Clear the real queued-window globals before polling do_net; the independently remeasured seed is retired."}
 // symbol    ?do_all_tasks@@YAXPAVWin@@@Z
 void __cdecl do_all_tasks(Win *window) {
     MsgStatus = 0;
@@ -10590,7 +10590,7 @@ Purpose: The main-window display dispatch behind the interface's
 // Historical emitted source symbol (void API): ?display_action@Win@@SAXH@Z
 // symbol    ?display_action@Win@@SAXH@Z
 // size      267 bytes
-// Deleted seed provenance: git:1ed59304110fc2098fb1dd11457fa5b0074169bd:src/unrecovered/005f2830.cpp
+// Deleted seed provenance: git:123267b4afb63f4fd3396772db0fcf89d35259c9:src/unrecovered/005f2830.cpp
 Status: Coverage transcription of the retained seed (src/unrecovered/005f2830.cpp,
         plain FILE). The seed's TRIED note stands: landed for control flow -
         the switch over {0,1,2} with the duplicated case-0/case-1 capture
@@ -11429,7 +11429,7 @@ void __cdecl Win::update_zorder() {
 // ===== homed from src/unrecovered/005f5fb0.cpp =====
 
 // ORIGINAL: 0x005F5FB0 sub_5f5fb0 0x005F5FB0-0x005F622B BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:85fc7721f56c2a5cae754b993fe04fcfec74fec1:src/unrecovered/005f5fb0.cpp", "Pinned original5F5FB0..5F622B; direct global accesses5F60DD..5F619C"], "reason": "Restore the lost homing identity for the existing Win keyboard handler; its receiver, scroll dispatch and two stack words identify this method, not the separate string matcher at5F5F60."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:6fe9388940e78cd7cdf422d7f9e6d28790565108:src/unrecovered/005f5fb0.cpp", "Pinned original5F5FB0..5F622B; direct global accesses5F60DD..5F619C"], "reason": "Restore the lost homing identity for the existing Win keyboard handler; its receiver, scroll dispatch and two stack words identify this method, not the separate string matcher at5F5F60."}
 // symbol    ?on_char@Win@@UAEXDH@Z
 // TRIED: extern "C" __stdcall(int,int) free function per IDA's guess - the spilled ecx is read back later ([esp+0x10] resolves to the "push ecx" slot itself, not a caller stack arg) and used as a Win* (scroll_vert_/scroll_horz_/key_click_event), so this is landed as Win::sub_5f5fb0(char, int) __thiscall instead; the unused 2nd stack dword explains `ret 8` with only 1 real read.
 void Win::on_char(char param2, int param3) {

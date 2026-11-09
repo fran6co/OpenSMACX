@@ -22,11 +22,11 @@
 #include <string.h>
 
 // ORIGINAL: 0x005C97C0 ??__Eg_MULTIDEBUG@@YAXXZ 0x005C97C0-0x005C97D6 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason":"The original relocated CRT entry constructs the static MultiDebug object and registers its complete teardown; bind the compiler's natural initializer, not a handwritten wrapper.","evidence":["git:24472a5a^:src/init_thunks.cpp","original:CRT slot 0x00682668 points to 0x005C97C0","original:0x005C97C0 constructs 0x009B22F0 and registers 0x005C97E0"]}
+// RECOVERY_BINDING: v1 {"reason":"The original relocated CRT entry constructs the static MultiDebug object and registers its complete teardown; bind the compiler's natural initializer, not a handwritten wrapper.","evidence":["git:40f970d6^:src/init_thunks.cpp","original:CRT slot 0x00682668 points to 0x005C97C0","original:0x005C97C0 constructs 0x009B22F0 and registers 0x005C97E0"]}
 // symbol    _$E12
 
 // ORIGINAL: 0x005C97E0 ??__Fg_MULTIDEBUG@@YAXXZ 0x005C97E0-0x005C97EA FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason":"The static object's registered teardown tail-calls its complete destructor; the compiler-generated helper owns this lifetime.","evidence":["git:24472a5a^:src/atexit_thunks.cpp","original:0x005C97E0 passes 0x009B22F0 to the complete destructor at 0x005C9E00"]}
+// RECOVERY_BINDING: v1 {"reason":"The static object's registered teardown tail-calls its complete destructor; the compiler-generated helper owns this lifetime.","evidence":["git:40f970d6^:src/atexit_thunks.cpp","original:0x005C97E0 passes 0x009B22F0 to the complete destructor at 0x005C9E00"]}
 // symbol    _$E10
 
 // Original startup constructs MultiDebug here and registers its complete
@@ -57,7 +57,7 @@ MultiDebug::MultiDebug() {
 
 // ORIGINAL: 0x005C9E00 ??1MultiDebug@@QAE@XZ 0x005C9E00-0x005C9E77;0x00662AD0-0x00662AF0 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"The retained destructor seed identifies the complete MultiDebug teardown and its Font/GraphicWin cleanup funclets; the declared members own these lifetimes.","evidence":["src/unrecovered/005c9e00.cpp","original:0x005C9E3C clears net_ before Time, Font and GraphicWin teardown","original:0x00662AD0-0x00662AF0 contains the base and font cleanup funclets"]}
-// Deleted seed provenance: git:117282ee0186f316fd18d2d25f9ae0223c8186ae:src/unrecovered/005c9e00.cpp
+// Deleted seed provenance: git:ee30a69d14801283c26950b1385f39f087e6d82b:src/unrecovered/005c9e00.cpp
 // symbol    ??1MultiDebug@@UAE@XZ
 // The complete destructor clears the session before Time, Font and GraphicWin
 // teardown. Their reverse declaration order also owns exception cleanup;

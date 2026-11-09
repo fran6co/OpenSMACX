@@ -430,7 +430,7 @@ def test_real_preservation_refusal_drives_scoped_repair_without_reverting_struct
                      {"author": "worker", "command": {"argv": ["test-worker"], "timeout": 30}}, iterations=2,
                      reviewer_configuration={"author": "reviewer", "command": {"argv": ["test-reviewer"], "timeout": 30}},
                      verify_only=True, execute=execute)
-    # a5c1c946 keeps compiled residuals distinct from linked outside-scope
+    # a34166bc keeps compiled residuals distinct from linked outside-scope
     # evidence, so the unmapped helper refuses as unqualified (unknown) rather
     # than a promoted fail; its diagnostics still drive scoped repair below.
     assert verified["stop_reason"] == "change_unknown" and verified["verification_only"]

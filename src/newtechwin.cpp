@@ -273,7 +273,7 @@ void NewTechWin::on_redraw() {
 }
 
 // ORIGINAL: 0x00483F90 ?exec@NewTechWin@@QAEXHH@Z 0x00483F90-0x0048480F
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00483f90.cpp retained full original extent; independent pinned geometry review and actual-source controls in recovery/tests/test_newtechwin_exec_behavior.py"], "reason": "Technology popup uses real embedded controls, callback receiver, shared data owners, audio and modal hyperlink dispatch."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00483f90.cpp retained full original extent; independent pinned geometry review and actual-source controls in recovery/tests/test_newtechwin_exec_behavior.py"], "reason": "Technology popup uses real embedded controls, callback receiver, shared data owners, audio and modal hyperlink dispatch."}
 // TRIED: literal transcription of the RECT-cascade prologue (traced every register's concrete value through ~150 straight-line instrs) plus the loop-over-4-StringBox body using a LOCAL scratch array (the original inset math lives on the stack, not the object's fields - the loop never writes field_AA4_ etc back). Named scaffold members (flatButtons_[3], buttonGroup_, stringBoxes_[4], stringBox2_) used directly instead of raw offsets where the class already typed them. Compiles; not chased to byte-exact given size (2175 bytes).
 void NewTechWin::exec(int technology_id, int other_faction_id) {
     field_B28_ = static_cast<uint32_t>(other_faction_id);
@@ -559,7 +559,7 @@ static const char NewTechBlurbSectionPrefix[] = "TECH";
 static const char NewTechLongSectionPrefix[] = "TECH";
 
 // ORIGINAL: 0x00483EB0 ?on_group_clicked@NewTechWin@@QAEXHH@Z 0x00483EB0-0x00483F8C BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:de91fffe:src/unrecovered/00483eb0.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x00483eb0; physical VC6 COFF emitted symbol ?on_group_clicked@NewTechWin@@QAEXHH@Z."]}
+// RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:391d42a9:src/unrecovered/00483eb0.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x00483eb0; physical VC6 COFF emitted symbol ?on_group_clicked@NewTechWin@@QAEXHH@Z."]}
 // symbol    ?on_group_clicked@NewTechWin@@UAEXHH@Z
 // TRIED: `#pragma function(strcat)` - without it VC6 inlines strcat as a scasb/movs sequence; with it plus a switch(a2){case 1: case 2:} (matching the dec/je/dec/jne shape) this reaches 0.96 mnemonic similarity, MISMATCH only on the final load()-call arg pushes.
 void NewTechWin::on_group_clicked(int, int group) {

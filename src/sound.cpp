@@ -297,7 +297,7 @@ int __cdecl init_sound(void *window, unsigned long backends) {
 }
 
 // ORIGINAL: 0x004C5D90 ?release_sound@@YAHXZ 0x004C5D90-0x004C5E42 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:bb3b3233842b050fb0840e1cc6c226e8f30f7055:src/unrecovered/004c5d90.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json"], "reason": "sound.cpp; sound.h adds only a friend declaration for existing protected Sound::device_/fname_ and the free-function prototype. Calls the current SoundDllProcs entries, Sound::detach, existing device release methods and unload_sound_dll. Complete reviewed source translation; historical claims remain restoration obligations, not proof of current matching, linked preservation or game acceptance."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:edbf268ff962712fadc389b8283e4c795b6d27a2:src/unrecovered/004c5d90.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json"], "reason": "sound.cpp; sound.h adds only a friend declaration for existing protected Sound::device_/fname_ and the free-function prototype. Calls the current SoundDllProcs entries, Sound::detach, existing device release methods and unload_sound_dll. Complete reviewed source translation; historical claims remain restoration obligations, not proof of current matching, linked preservation or game acceptance."}
 int __cdecl release_sound() {
     if (WaveDeviceReleaseGuard == 0) {
         return 1;
@@ -2923,7 +2923,7 @@ char *NameTable::get_name() {
 // (the "spans" list is multi-range). The SEH frame is not modeled here -
 // see TRIED.
 // ORIGINAL: 0x004C75B0 sub_4c75b0 0x004C75B0-0x004C766D;0x00659F20-0x00659F32 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/unrecovered/004c75b0.cpp", "src/midi.h", "src/ambience.h"], "reason": "Original Sound-to-Midi constructor staging and byte54 state identify the genuine Midi owner. Historical seed mapping includes the already shared unwind helper; its overlap remains a restoration limitation, not a newly inferred independent function extent."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:291c01ea:src/unrecovered/004c75b0.cpp", "src/midi.h", "src/ambience.h"], "reason": "Original Sound-to-Midi constructor staging and byte54 state identify the genuine Midi owner. Historical seed mapping includes the already shared unwind helper; its overlap remains a restoration limitation, not a newly inferred independent function extent."}
 // symbol    ??0Midi@@QAE@XZ
 // Historical SHARED_TAIL observation below predates the independent source identity for 0x004C8450; retain it as prior trial context, not a current span classification.
 // TRIED: SHARED_TAIL - the 0x4c8450/0x659f20 unwind-handler span is COMDAT-folded with another function's handler, so no tier is reachable regardless of body. Left as a plain field-write transcription (no SEH frame modeled) for the next pass.
@@ -2978,7 +2978,7 @@ Midi::~Midi() {
  * delegation_thunks.cpp by the same pass that recovered the child relation:
  * each is a real member whose virtual child call lets VC6 emit the
  * image's `call dword ptr [eax + slot]` itself. 28 measured BYTE_EXACT
- * on arrival (2bbecdbd); the last four were never register allocation
+ * on arrival (1b8ba49f); the last four were never register allocation
  * but the provider's overload-group vtable ordering - fixed
  * 2026-09-18 by the two neutral slotNNN names (midi.h's header note
  * carries the measured VC6 behavior and the deck that isolated it).
@@ -3645,7 +3645,7 @@ int Midi::init(char *a1, unsigned long a2) {
 
 // Original4C7CC0: replace bit0 throughout the chained Midi objects.
 // ORIGINAL: 0x004C7CC0 sub_4c7cc0 0x004C7CC0-0x004C7CEA FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/004c7cc0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:291c01ea:src/recovered/004c7cc0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
 // symbol    ?set_mode@Midi@@QAEHE@Z
 int Midi::set_mode(uint8_t mode) {
     field_54_ ^= (field_54_ ^ static_cast<uint8_t>(mode)) & 1;
@@ -3883,7 +3883,7 @@ Purpose: Release the loaded MIDI. While the sequencer at 0x3C is still
 //        fixup (see the include note above). Measured 2026-09-18: guard
 //        and hook relocations land at the image's own offsets 31 and 45.
 // LEVER: own vtable shim (not the scaffolded VCall) so slots 5/23 return int; offset 0x40 field reached by pointer arithmetic, masked &=
-// PROMOTED from git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004c7e20.cpp (scaffold BYTE_EXACT with
+// PROMOTED from git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004c7e20.cpp (scaffold BYTE_EXACT with
 //        the shim tables); this is the body's first product spelling.
 Return Value: the sequencer's unload answer on the busy path, 0 otherwise
 Status: Complete
@@ -4038,7 +4038,7 @@ int Midi::set_track_ctrl(TrackCtrl *a1) {
 }
 
 // ORIGINAL: 0x004C7F70 sub_4c7f70 0x004C7F70-0x004C7F97 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/004c7f70.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:291c01ea:src/recovered/004c7f70.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
 // symbol    ?sub_4c7f70@Midi@@UAEHHH@Z
 int Midi::sub_4c7f70(int a1, int a2) {
     Midi *const delegate = static_cast<Midi *>(device_);
@@ -4046,7 +4046,7 @@ int Midi::sub_4c7f70(int a1, int a2) {
     return 0x14;
 }
 // ORIGINAL: 0x004C7FA0 sub_4c7fa0 0x004C7FA0-0x004C7FC0 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/004c7fa0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:291c01ea:src/recovered/004c7fa0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
 // symbol    ?sub_4c7fa0@Midi@@UAE_NI@Z
 bool Midi::sub_4c7fa0(unsigned int a1) {
     Midi *const delegate = static_cast<Midi *>(device_);
@@ -4054,7 +4054,7 @@ bool Midi::sub_4c7fa0(unsigned int a1) {
     return false;
 }
 // ORIGINAL: 0x004C7FC0 sub_4c7fc0 0x004C7FC0-0x004C7FE7 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/004c7fc0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:291c01ea:src/recovered/004c7fc0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
 // symbol    ?sub_4c7fc0@Midi@@UAEHHH@Z
 int Midi::sub_4c7fc0(int a1, int a2) {
     Midi *const delegate = static_cast<Midi *>(device_);
@@ -4062,7 +4062,7 @@ int Midi::sub_4c7fc0(int a1, int a2) {
     return 0x14;
 }
 // ORIGINAL: 0x004C7FF0 sub_4c7ff0 0x004C7FF0-0x004C8017 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/004c7ff0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:291c01ea:src/recovered/004c7ff0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
 // symbol    ?sub_4c7ff0@Midi@@UAEHHH@Z
 int Midi::sub_4c7ff0(int a1, int a2) {
     Midi *const delegate = static_cast<Midi *>(device_);
@@ -4070,7 +4070,7 @@ int Midi::sub_4c7ff0(int a1, int a2) {
     return 0x14;
 }
 // ORIGINAL: 0x004C8020 sub_4c8020 0x004C8020-0x004C8043 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/units/004c8020.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:291c01ea:src/recovered/units/004c8020.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
 // symbol    ?sub_4c8020@Midi@@UAEHH@Z
 int Midi::sub_4c8020(int a1) {
     Midi *const delegate = static_cast<Midi *>(device_);
@@ -4290,7 +4290,7 @@ PairWordState *PairWordState::reset_tail() {
 
 // RECOVERY_ROLE: SCAFFOLD Provisional four-word initialization view; original containing class, complete extent and constructor-to-instance lifetime flow remain unproved. Matching the endpoint views' offsets is not a receiver ownership link.
 // ORIGINAL: 0x004C8110 sub_4c8110 0x004C8110-0x004C813B BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x004C8110-0x004C813B: complete thiscall constructor first zeroes four bytes [this+4] through memset, then stores dword [this], dword [this+8], and dword [this+0xC] in this order; [this+4] is zeroed by the actual four-byte memset call at 0x004C811B to 0x006465F0", "git:aee589a5dd0fca997773070668af4e1ff9026684:src/recovered/004c8110.cpp: historical-only seed hint // symbol ??0LegacyBlock@@QAE@XZ; this deleted seed-file spelling is not emitted as the current symbol and is not independently established as the original class", "pinned scan: no direct caller edge or absolute-address data reference to 4C8110 was found"], "reason": "Cover only the constructor's concrete four-dword initialization through a typed source view. Preserve its original span and claim; keep field roles, complete original class name, allocation extent and runtime lifetime unknown. The view is not merged with the separate time-range receiver."}
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x004C8110-0x004C813B: complete thiscall constructor first zeroes four bytes [this+4] through memset, then stores dword [this], dword [this+8], and dword [this+0xC] in this order; [this+4] is zeroed by the actual four-byte memset call at 0x004C811B to 0x006465F0", "git:e37791048e964cd8bfe9de1d210ec2d04213cdca:src/recovered/004c8110.cpp: historical-only seed hint // symbol ??0LegacyBlock@@QAE@XZ; this deleted seed-file spelling is not emitted as the current symbol and is not independently established as the original class", "pinned scan: no direct caller edge or absolute-address data reference to 4C8110 was found"], "reason": "Cover only the constructor's concrete four-dword initialization through a typed source view. Preserve its original span and claim; keep field roles, complete original class name, allocation extent and runtime lifetime unknown. The view is not merged with the separate time-range receiver."}
 // symbol    ??0RangePrefixInitializationView@@QAE@XZ
 RangePrefixInitializationView::RangePrefixInitializationView() {
     memset(&zeroed_dword_4_, 0, sizeof(zeroed_dword_4_));
@@ -4558,7 +4558,7 @@ Ambience::Ambience() {
 #pragma optimize("y", off)
 
 // ORIGINAL: 0x004C8530 ?load@Ambience@@QAEHPBD@Z 0x004C8530-0x004C85EF FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/unrecovered/004c8530.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:291c01ea:src/unrecovered/004c8530.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
 // Defined here, not in ambience.cpp: the image inlines set_mode (byte
 // parameter, stored in the dead filename slot) into this body.
 // symbol    ?load@Ambience@@UAEHPBD@Z
@@ -4581,7 +4581,7 @@ int Ambience::load(const char *filename) {
 #pragma optimize("", on)
 
 // ORIGINAL: 0x004C85F0 ?unload@Ambience@@QAEXXZ 0x004C85F0-0x004C861C FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/units/004c85f0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:291c01ea:src/recovered/units/004c85f0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
 // symbol    ?unload@Ambience@@UAEHXZ
 int Ambience::unload() {
     Midi *const delegate = static_cast<Midi *>(device_);
@@ -5274,7 +5274,7 @@ Status: Complete
 
 
 // ORIGINAL: 0x004C9330 ??_GAmbience@@UAEPAXI@Z 0x004C9330-0x004C9351 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned Midi constructor 0x004C75B0 publishes table 0x66E538 at 0x004C763F and returns without a later derived-table replacement.", "Pinned derived Ambience constructor 0x004C8460 stages the same Midi table 0x66E538 at 0x004C84EF, then publishes final Ambience table 0x66E664 at 0x004C850F.", "Midi table slot 2 at 0x66E540 selects 0x004C9330; final Ambience slot 2 at 0x66E66C instead selects 0x00448390. Both retain Midi slot 27 at 0x004C93E0.", "0x004C9330 directly calls full destructor 0x004C7670, recovered as Midi::~Midi in src/sound.cpp. The distinct Ambience deleting entry calls 0x004483C0, the five-byte tail to the same base destructor.", "The real Midi : Sound and Ambience : Midi hierarchy emits distinct deleting symbols. No authored deleting wrapper, copied body, class-layout change or claim grant is introduced.", "Earlier shared-Ambience binding at master 25f3ab658 was an emission observation, not original class-stage proof; the intermediate table does not establish final Ambience ownership. Historical labels and exactness obligations remain unchanged."], "reason": "Bind this deleting entry to the genuine Midi lifetime stage, not the later Ambience stage. Preserve the original catalog label and historical claim while correcting current class-symbol ownership."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned Midi constructor 0x004C75B0 publishes table 0x66E538 at 0x004C763F and returns without a later derived-table replacement.", "Pinned derived Ambience constructor 0x004C8460 stages the same Midi table 0x66E538 at 0x004C84EF, then publishes final Ambience table 0x66E664 at 0x004C850F.", "Midi table slot 2 at 0x66E540 selects 0x004C9330; final Ambience slot 2 at 0x66E66C instead selects 0x00448390. Both retain Midi slot 27 at 0x004C93E0.", "0x004C9330 directly calls full destructor 0x004C7670, recovered as Midi::~Midi in src/sound.cpp. The distinct Ambience deleting entry calls 0x004483C0, the five-byte tail to the same base destructor.", "The real Midi : Sound and Ambience : Midi hierarchy emits distinct deleting symbols. No authored deleting wrapper, copied body, class-layout change or claim grant is introduced.", "Earlier shared-Ambience binding at master 2b499fd9c was an emission observation, not original class-stage proof; the intermediate table does not establish final Ambience ownership. Historical labels and exactness obligations remain unchanged."], "reason": "Bind this deleting entry to the genuine Midi lifetime stage, not the later Ambience stage. Preserve the original catalog label and historical claim while correcting current class-symbol ownership."}
 // symbol    ??_GMidi@@UAEPAXI@Z
 // kind      game
 

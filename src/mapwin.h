@@ -84,7 +84,7 @@ extern uint32_t MapPanelDirtyMask;
   * that way. (The comment that used to stand here said it "cannot be written
   * as `: virtual GraphicWin`" because "the Itanium ABI this toolchain
   * follows" would place the base after the derived object; the declaration
-  * below has said `: virtual GraphicWin` since d39dac11, VC6 is the only
+  * below has said `: virtual GraphicWin` since 859e4c8a, VC6 is the only
   * compiler this tree targets, and VC6 puts the base exactly where the
   * vbtable names. The static_assert is what withdrew the claim.)
   *

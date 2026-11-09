@@ -201,7 +201,7 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   // 0x0060B530 ?draw_item@ListBox@@QAEXH@Z (3240 bytes), implemented in
   // listbox.cpp. on_scrolling reaches it twice on the ListBox front.
   // The original raw-offset transcription survives in Git history at
-  // e853f54d^:src/unrecovered/0060b530.cpp for restoration work.
+  // 077d6845^:src/unrecovered/0060b530.cpp for restoration work.
   void draw_item(int index);
   // 0x0060C7D0 ?UNK2@ListBox@@QAEHPAD@Z (336 bytes), implemented in
   // listbox.cpp using Dialog::item_list_ and StringStructEntry's real links.

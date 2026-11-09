@@ -27,7 +27,7 @@
  * arrays of eight elements (0x0055A197-0x0055A1D9), including exceptional
  * cleanup. The destructor tail-jumps to close at 0x006343D0.
  *
- * Historical notes in commit 0995e492 claimed a 75-byte value-returning
+ * Historical notes in commit 7bebb9cb claimed a 75-byte value-returning
  * subtraction probe. No reproducing source or result was retained with that
  * claim. It is not a current measurement or a constraint on this class.
  * The extra original stack slot is not a fourth component; return-object

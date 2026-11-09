@@ -344,7 +344,7 @@ Status: Complete
 // that named this move is folded into the marker's new home.
 
 // ORIGINAL: 0x00608500 ?on_mouse_move@FlatButton@@QAEXHH@Z 0x00608500-0x00608657 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:de91fffe:src/recovered/units/00608500.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x00608500; physical VC6 COFF emitted symbol ?on_mouse_move@FlatButton@@UAEXHH@Z."]}
+// RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:391d42a9:src/recovered/units/00608500.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x00608500; physical VC6 COFF emitted symbol ?on_mouse_move@FlatButton@@UAEXHH@Z."]}
 // symbol    ?on_mouse_move@FlatButton@@UAEXHH@Z
 void FlatButton::on_mouse_move(int x, int y) {
     Win *active = WinPointerOwner1;
@@ -388,7 +388,7 @@ void FlatButton::on_mouse_move(int x, int y) {
 }
 
 // ORIGINAL: 0x00608660 ?on_mouse_leave@FlatButton@@QAEXHH@Z 0x00608660-0x006086EC FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original608660..6086EC; retired seed git:117282ee:src/unrecovered/00608660.cpp records the same identity and spans.", "The pressed/hover state is basebutton.h's own model: time1_ at 0xA1C (time.h's own stop), field_A74_/field_A78_, bubble_text_ at 0xA80, plus the hover-pair slots 0x009B7ACC/0x9B7AD0/0x9B7AD4 and the buddy pointer at +0xC4 in GraphicWin's region.", "Pinned FlatButton vtable at 0x669754 selects 0x608660 in inherited Win slot 18; the body dispatches slots 17/40/62. Current Win/BaseButton/GraphicWin declarations own the callback slots, state, timer and parent fields."], "reason": "Move the complete leave callback into FlatButton's genuine slot-18 override; preserve the pinned state, timer, bubble, parent-notification and redraw order."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original608660..6086EC; retired seed git:ee30a69d:src/unrecovered/00608660.cpp records the same identity and spans.", "The pressed/hover state is basebutton.h's own model: time1_ at 0xA1C (time.h's own stop), field_A74_/field_A78_, bubble_text_ at 0xA80, plus the hover-pair slots 0x009B7ACC/0x9B7AD0/0x9B7AD4 and the buddy pointer at +0xC4 in GraphicWin's region.", "Pinned FlatButton vtable at 0x669754 selects 0x608660 in inherited Win slot 18; the body dispatches slots 17/40/62. Current Win/BaseButton/GraphicWin declarations own the callback slots, state, timer and parent fields."], "reason": "Move the complete leave callback into FlatButton's genuine slot-18 override; preserve the pinned state, timer, bubble, parent-notification and redraw order."}
 // symbol    ?on_mouse_leave@FlatButton@@UAEXHH@Z
 void FlatButton::on_mouse_leave(int x, int y) {
     Win *active = WinPointerOwner1;

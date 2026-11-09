@@ -20,7 +20,7 @@
 #include "vc6_compat.h"
 #include "sound.h"
 
-/* Midi and its provider relationship, recovered 2026-08-23 (see 2bbecdbd): the
+/* Midi and its provider relationship, recovered 2026-08-23 (see 1b8ba49f): the
  * declarations live here now, not in hypothesis_layouts.h - correct
  * work does not feed the scaffold it is meant to retire.
  *

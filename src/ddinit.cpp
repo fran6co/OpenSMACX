@@ -152,7 +152,7 @@ Purpose: Tear down whatever DirectDraw surface and device window this
 //            flag sets and settles on 177, while listing_diff compiles one
 //            set and reports 192. Do not read a regression into that gap -
 //            the body is byte-identical to the one the line below measured
-//            (checked against 3cb99d43).
+//            (checked against 2bf26a91).
 // TRIED: the one instruction of the 178 this tree does not emit is in
 //            the splash `copy` call: the image loads
 //            `ScreenBuffer.dib_.bmiHeader.biWidth` into ecx before pushing

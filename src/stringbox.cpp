@@ -50,7 +50,7 @@ int StringBox::on_link_clicked(int id, char *link) {
 // inherited virtual member; the two values are the original event code and
 // position.
 // ORIGINAL: 0x00629D40 ?on_scrolling@StringBox@@QAEXHH@Z 0x00629D40-0x00629D55 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:93d09e9c95484465004f450350b6cffe1e09f40e:src/recovered/00629d40.cpp", "src/stringbox.h: StringBox derives directly from GraphicWin", "src/win.h: Win::vslot_48(int,int)"], "reason": "Forward StringBox scroll-in-progress events through inherited Win slot 48 using its two integer arguments."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:22febd5265b4b2830ac952bedd62e5df1f423569:src/recovered/00629d40.cpp", "src/stringbox.h: StringBox derives directly from GraphicWin", "src/win.h: Win::vslot_48(int,int)"], "reason": "Forward StringBox scroll-in-progress events through inherited Win slot 48 using its two integer arguments."}
 // symbol    ?on_scrolling@StringBox@@UAEXHH@Z
 void StringBox::on_scrolling(int code, int position) {
     on_scrolled(code, position);
@@ -59,7 +59,7 @@ void StringBox::on_scrolling(int code, int position) {
 // The owned StringList handles caret parsing and ID-zero insertion; a
 // successful insertion asks the box to re-fit its visible rows.
 // ORIGINAL: 0x00629750 ?add_special@StringBox@@QAEHPAD@Z 0x00629750-0x00629774 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:93d09e9c95484465004f450350b6cffe1e09f40e:src/recovered/units/00629750.cpp", "src/stringlist.cpp StringList::add_special; src/stringstruct.h", "src/stringbox.h"], "reason": "Delegate caret-prefix parsing and ID-zero insertion to the owned StringList, then request row fitting after a successful insert."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:22febd5265b4b2830ac952bedd62e5df1f423569:src/recovered/units/00629750.cpp", "src/stringlist.cpp StringList::add_special; src/stringstruct.h", "src/stringbox.h"], "reason": "Delegate caret-prefix parsing and ID-zero insertion to the owned StringList, then request row fitting after a successful insert."}
 int StringBox::add_special(char *text) {
     const int result = stringList_.add_special(text);
     if (result != 0) {
@@ -73,7 +73,7 @@ int StringBox::add_special(char *text) {
 // cursor before closing the embedded Scroll. The list's typed removal path
 // dispatches StringList::on_remove and destroys both node types.
 // ORIGINAL: 0x00629210 ?close@StringBox@@QAEXXZ 0x00629210-0x006292C9 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:93d09e9c95484465004f450350b6cffe1e09f40e:src/unrecovered/00629210.cpp", "src/stringbox.h", "src/stringstruct.h", "src/scroll.h"], "reason": "Close the GraphicWin base, release owned StringList entries through their typed virtual removal hook, reset the list cursor, and close the embedded Scroll."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:22febd5265b4b2830ac952bedd62e5df1f423569:src/unrecovered/00629210.cpp", "src/stringbox.h", "src/stringstruct.h", "src/scroll.h"], "reason": "Close the GraphicWin base, release owned StringList entries through their typed virtual removal hook, reset the list cursor, and close the embedded Scroll."}
 void StringBox::close() {
     visible_rows_ = 0xffffffff;
     top_line_ = 0;
@@ -211,7 +211,7 @@ void StringBox::add_fixup() {
 // owner's responsibility. The typed removal path invokes the virtual
 // text-release hook instead of treating the list as raw offsets.
 // ORIGINAL: 0x00629780 ?clear@StringBox@@QAEXXZ 0x00629780-0x006298A4 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/00629780.cpp; image:0x00629780-0x006298A4; source:src/stringbox.h:StringBox; source:src/leaf_recoveries.cpp:sub_441100", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/00629780.cpp"], "reason": "Replace the old link-only shim with the real StringBox method: original code selects the borrowed or embedded StringList, destroys its entries, hides the Scroll, zeros the top line, and redraws if visible. Typed ownership expresses those effects without raw self offsets. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/00629780.cpp; image:0x00629780-0x006298A4; source:src/stringbox.h:StringBox; source:src/leaf_recoveries.cpp:sub_441100", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/00629780.cpp"], "reason": "Replace the old link-only shim with the real StringBox method: original code selects the borrowed or embedded StringList, destroys its entries, hides the Scroll, zeros the top line, and redraws if visible. Typed ownership expresses those effects without raw self offsets. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
 void StringBox::clear() {
     if (list_override_ != 0) {
@@ -277,7 +277,7 @@ void StringBox::on_redraw() {
 // position side effect and then re-fitting the visible rows.
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x006298B0 ?UNK1@StringBox@@QAEXH@Z 0x006298B0-0x0062997B BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:93d09e9c95484465004f450350b6cffe1e09f40e:src/unrecovered/006298b0.cpp", "src/stringbox.h", "src/stringstruct.h", "src/recovered/units/00629490.cpp"], "reason": "Remove the first StringList entry with the requested ID, preserve its cursor effects, and re-fit visible rows."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:22febd5265b4b2830ac952bedd62e5df1f423569:src/unrecovered/006298b0.cpp", "src/stringbox.h", "src/stringstruct.h", "src/recovered/units/00629490.cpp"], "reason": "Remove the first StringList entry with the requested ID, preserve its cursor effects, and re-fit visible rows."}
 void StringBox::UNK1(int id) {
     StringList &list = stringList_;
     if (list.head_ != 0) {
@@ -319,7 +319,7 @@ void StringBox::UNK1(int id) {
 // cursor and changing count follow the original list walk.
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00629980 ?UNK2@StringBox@@QAEXHH@Z 0x00629980-0x00629A63 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:93d09e9c95484465004f450350b6cffe1e09f40e:src/unrecovered/00629980.cpp", "src/stringbox.h", "src/stringstruct.h", "src/recovered/units/00629490.cpp"], "reason": "Retain IDs in the original descending-bound interval and remove other entries, preserving the changing-count list walk."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:22febd5265b4b2830ac952bedd62e5df1f423569:src/unrecovered/00629980.cpp", "src/stringbox.h", "src/stringstruct.h", "src/recovered/units/00629490.cpp"], "reason": "Retain IDs in the original descending-bound interval and remove other entries, preserving the changing-count list walk."}
 void StringBox::UNK2(int first_bound, int second_bound) {
     StringList &list = stringList_;
     if (list.head_ != 0) {
@@ -360,7 +360,7 @@ void StringBox::UNK2(int first_bound, int second_bound) {
 // removal changes the scrollbar fit, matching the original operation.
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00629A70 ?clip_ids@StringBox@@QAEXK@Z 0x00629A70-0x00629B69 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:93d09e9c95484465004f450350b6cffe1e09f40e:src/unrecovered/00629a70.cpp", "src/stringbox.h", "src/stringstruct.h", "src/recovered/units/00629490.cpp"], "reason": "Remove list IDs at or below the clipping count and rebase larger IDs while preserving list cursor and fit behavior."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:22febd5265b4b2830ac952bedd62e5df1f423569:src/unrecovered/00629a70.cpp", "src/stringbox.h", "src/stringstruct.h", "src/recovered/units/00629490.cpp"], "reason": "Remove list IDs at or below the clipping count and rebase larger IDs while preserving list cursor and fit behavior."}
 void StringBox::clip_ids(unsigned long count) {
     StringList &list = stringList_;
     if (list.head_ != 0) {

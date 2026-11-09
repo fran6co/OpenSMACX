@@ -168,7 +168,7 @@ double Gamma::exec(Palette *target, float initial_gamma, int apply_only) {
 }
 
 // ORIGINAL: 0x005C9520 ?adjust_palette@Gamma@@QAEXXZ 0x005C9520-0x005C95E0 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Earlier source-owned body in src/stringstruct.cpp and retained original seed at git:117282ee", "Gamma's Scroll position occupies Gamma+0x191C and Palette entries begin at Gamma+0xA68", "Original ramp writes 236 RGB triples, reseeds and sets the Palette, then calls Win slot 12"], "reason": "Keep gamma-ramp behavior in its owning translation unit and operate on Palette entries and Scroll state rather than executable addresses or object offsets."}
+// RECOVERY_BINDING: v1 {"evidence": ["Earlier source-owned body in src/stringstruct.cpp and retained original seed at git:ee30a69d", "Gamma's Scroll position occupies Gamma+0x191C and Palette entries begin at Gamma+0xA68", "Original ramp writes 236 RGB triples, reseeds and sets the Palette, then calls Win slot 12"], "reason": "Keep gamma-ramp behavior in its owning translation unit and operate on Palette entries and Scroll state rather than executable addresses or object offsets."}
 // symbol    ?adjust_palette@Gamma@@QAEXXZ
 void Gamma::adjust_palette() {
     gamma_ = static_cast<double>(scroll_.position()) * GammaPositionScale;

@@ -689,7 +689,7 @@ updates and integration; never stash, discard work or run automatic fast-forward
 setup against an established task baseline. Rebuild context and rerun checks
 after integrating changes. Do not collect/reap another agent's work unasked.
 
-## Initial evidence (2026-09-06, base 815433a4)
+## Initial evidence (2026-09-06, base 2c32884f)
 
 - New core/import tests: 44 passed before the baseline test repair.
 - Standalone framework wheel and source distribution build successfully.
@@ -709,7 +709,7 @@ after integrating changes. Do not collect/reap another agent's work unasked.
 
 ## Rebase and compiler baseline (2026-09-06)
 
-- Clean-checkpoint rebase incorporated master 8919cb7d (17 functions homed);
+- Clean-checkpoint rebase incorporated master ecd1fc08 (17 functions homed);
   framework foundation became 12ea6b40. No integration conflict.
 - Independent configure: 127 build inputs. Full unpiped old gate: exit **3**,
   2,395 total claims, 2,143 byte-verified, 38 instruction-shape matches,

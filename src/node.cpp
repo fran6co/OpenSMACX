@@ -10,7 +10,7 @@ GlobalListNode *GlobalListHead;
 GlobalListNode *GlobalListTail;
 
 // ORIGINAL: 0x004C4CB0 sub_4c4cb0 0x004C4CB0-0x004C4D01 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:ef28ddf0:src/recovered/units/004c4cb0.cpp", "git:ef28ddf0:src/unrecovered/004c4d10.cpp", "pinned:terranx_original:0x4c4cb0"], "reason": "Both complete original bodies use the same head/tail pointer cells and intrusive links at+18/+1C, with DWORD flags at+4. Recover actual pointer-member operations under a descriptive provisional owner name; preserve the original singleton repeat-enqueue defect and unflagged stale-link no-op. Original class name, allocation extent and full hierarchy remain unproved."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:8ad9026f:src/recovered/units/004c4cb0.cpp", "git:8ad9026f:src/unrecovered/004c4d10.cpp", "pinned:terranx_original:0x4c4cb0"], "reason": "Both complete original bodies use the same head/tail pointer cells and intrusive links at+18/+1C, with DWORD flags at+4. Recover actual pointer-member operations under a descriptive provisional owner name; preserve the original singleton repeat-enqueue defect and unflagged stale-link no-op. Original class name, allocation extent and full hierarchy remain unproved."}
 // symbol    ?enqueue@GlobalListNode@@QAEHXZ
 int GlobalListNode::enqueue() {
     if (next_ == 0 && previous_ == 0) {
@@ -32,7 +32,7 @@ int GlobalListNode::enqueue() {
 }
 
 // ORIGINAL: 0x004C4D10 sub_4c4d10 0x004C4D10-0x004C4D6C FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:ef28ddf0:src/recovered/units/004c4cb0.cpp", "git:ef28ddf0:src/unrecovered/004c4d10.cpp", "pinned:terranx_original:0x4c4d10"], "reason": "Both complete original bodies use the same head/tail pointer cells and intrusive links at+18/+1C, with DWORD flags at+4. Recover actual pointer-member operations under a descriptive provisional owner name; preserve the original singleton repeat-enqueue defect and unflagged stale-link no-op. Original class name, allocation extent and full hierarchy remain unproved."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:8ad9026f:src/recovered/units/004c4cb0.cpp", "git:8ad9026f:src/unrecovered/004c4d10.cpp", "pinned:terranx_original:0x4c4d10"], "reason": "Both complete original bodies use the same head/tail pointer cells and intrusive links at+18/+1C, with DWORD flags at+4. Recover actual pointer-member operations under a descriptive provisional owner name; preserve the original singleton repeat-enqueue defect and unflagged stale-link no-op. Original class name, allocation extent and full hierarchy remain unproved."}
 // symbol    ?unlink@GlobalListNode@@QAEHXZ
 int GlobalListNode::unlink() {
     if ((flags_ & 2u) == 0) {

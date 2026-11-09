@@ -204,7 +204,7 @@ WHAT GOT IT HERE, since four of the five were wrong in the first draft:
     `HWND *` aimed at fixed addresses, which cost a load each.
 */
 // The image keeps a `push ebp; mov ebp, esp` frame (flags: frame). The unit's
-// measured/production recipe is a fixed /O2 (implies /Oy) since e01651dc8,
+// measured/production recipe is a fixed /O2 (implies /Oy) since 92775e898,
 // so the frame is restored for this body alone, as X_text_open does.
 #pragma optimize("y", off)
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine,

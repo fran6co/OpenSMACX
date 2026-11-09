@@ -44,7 +44,7 @@
 #include "maininterface.h"
 
 // ORIGINAL: 0x0047A800 ?timer_daemon@NetMsg@@QAAXH@Z 0x0047A800-0x0047A85F BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/0047a800.cpp"], "reason": "Original callback token46 routes primary, other tokens route secondary; genuine static cdecl member matches native calling convention, catalogue identity preserved separately. Seed retained, no byte claim by binding. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/0047a800.cpp"], "reason": "Original callback token46 routes primary, other tokens route secondary; genuine static cdecl member matches native calling convention, catalogue identity preserved separately. Seed retained, no byte claim by binding. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
 // symbol    ?timer_daemon@NetMsg@@CAXH@Z
 void __cdecl NetMsg::timer_daemon(int token) {
@@ -255,7 +255,7 @@ void NetMsg::pop(const char *label, int duration, int channel,
 // Pinned wrapper reads [ebp+8/+0xc], uses plain RET, and callers clean both args.
 // VC6 static __cdecl control matches this shape without hidden this.
 // ORIGINAL: 0x0050B9E0 ?pop@NetMsg@@QAAXPBDPBD@Z 0x0050B9E0-0x0050B9FE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/0050b9e0.cpp"], "reason": "Complete genuine NetMsg owner implementation replaces executable aliases/forwarders; original seed establishes catalogue identity and spans, native emitted symbols are separately recorded. Full private application compile/link and both native flag sets checked; preserve seed and historical claims, no exactness granted by binding. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/0050b9e0.cpp"], "reason": "Complete genuine NetMsg owner implementation replaces executable aliases/forwarders; original seed establishes catalogue identity and spans, native emitted symbols are separately recorded. Full private application compile/link and both native flag sets checked; preserve seed and historical claims, no exactness granted by binding. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // body src/netmsg.h
 // kind      game
 // symbol    ?pop@NetMsg@@SAXPBD0@Z

@@ -747,7 +747,7 @@ Purpose: The voxel-facet bounding box: start the min/max pair at the
 // ORIGINAL: 0x0063A9D0 sub_63a9d0 0x0063A9D0-0x0063AD54
 // symbol    _sub_63a9d0
 // size      900 bytes
-// Deleted seed provenance: git:1ed59304110fc2098fb1dd11457fa5b0074169bd:src/unrecovered/0063a9d0.cpp
+// Deleted seed provenance: git:123267b4afb63f4fd3396772db0fcf89d35259c9:src/unrecovered/0063a9d0.cpp
 Status: Coverage transcription of the retained seed (src/unrecovered/0063a9d0.cpp,
         plain FILE). The seed's TRIED wall stands: the max-update predicate
         is written value-first (`local > max` against the original's

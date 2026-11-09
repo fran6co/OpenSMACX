@@ -42,7 +42,7 @@
 // rectangles below are the observed constructor-owned UI data; all storage
 // is addressed through its recovered members rather than through self+offset.
 // ORIGINAL: 0x00472230 ?init@MonuWin@@QAEHXZ 0x00472230-0x004736DA;0x00656160-0x006561EE
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x00472230; retired seed provenance git:670a036f:src/unrecovered/00472230.cpp; original spans and historical lessons retained.", "image:477C80/477B10 member order and36DC extent; primary66C880 slots12/17/19/25/44.", "image:476A50 binds singleton7F9F58 and independent count7FD634; Player59C and MonumentFaction4F4 strides.", "image:4737EE..475E58 localized owner/grammar cases; 472230/4736E0 resource, clipping, sprite and Spot accesses."], "reason": "Genuine GraphicWin-derived MonuWin owner with actual FlatButton/Spot/Buffer/Sprite members, real callback slots and automatic lifetimes; localized parser owner and grammar inputs follow the original branches rather than current-faction stand-ins."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00472230; retired seed provenance git:d8200f17:src/unrecovered/00472230.cpp; original spans and historical lessons retained.", "image:477C80/477B10 member order and36DC extent; primary66C880 slots12/17/19/25/44.", "image:476A50 binds singleton7F9F58 and independent count7FD634; Player59C and MonumentFaction4F4 strides.", "image:4737EE..475E58 localized owner/grammar cases; 472230/4736E0 resource, clipping, sprite and Spot accesses."], "reason": "Genuine GraphicWin-derived MonuWin owner with actual FlatButton/Spot/Buffer/Sprite members, real callback slots and automatic lifetimes; localized parser owner and grammar inputs follow the original branches rather than current-faction stand-ins."}
 // symbol    ?init@MonuWin@@QAEHXZ
 // TRIED: two of the ~30 unrolled RECT-translate blocks (24 + 6, roughly 15% of the function's bytes) rewritten as a loop over an offset table instead of being unrolled per-field - semantically identical, not byte-exact for that region. Flic's embedded Buffer/Palette sub-object teardown (explicit dtor calls seen at the two cleanup tails) is not modelled since Flic is opaque in this TU; only its close() call is reproduced. Everything else (branches, GraphicWin::init/Buffer::init/Flic::init/decode_frame loop/load_pcx calls/all Sprite::extract calls/both BaseButton caption-button blocks) is a direct field-offset transcription.
 int MonuWin::init() {
@@ -256,7 +256,7 @@ int MonuWin::init() {
 }
 
 // ORIGINAL: 0x004736E0 ?on_redraw@MonuWin@@QAEXXZ 0x004736E0-0x00476704;0x006561EE-0x0065622D
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x004736E0; retired seed provenance git:670a036f:src/unrecovered/004736e0.cpp; original spans and historical lessons retained.", "image:477C80/477B10 member order and36DC extent; primary66C880 slots12/17/19/25/44.", "image:476A50 binds singleton7F9F58 and independent count7FD634; Player59C and MonumentFaction4F4 strides.", "image:4737EE..475E58 localized owner/grammar cases; 472230/4736E0 resource, clipping, sprite and Spot accesses."], "reason": "Genuine GraphicWin-derived MonuWin owner with actual FlatButton/Spot/Buffer/Sprite members, real callback slots and automatic lifetimes; localized parser owner and grammar inputs follow the original branches rather than current-faction stand-ins."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x004736E0; retired seed provenance git:d8200f17:src/unrecovered/004736e0.cpp; original spans and historical lessons retained.", "image:477C80/477B10 member order and36DC extent; primary66C880 slots12/17/19/25/44.", "image:476A50 binds singleton7F9F58 and independent count7FD634; Player59C and MonumentFaction4F4 strides.", "image:4737EE..475E58 localized owner/grammar cases; 472230/4736E0 resource, clipping, sprite and Spot accesses."], "reason": "Genuine GraphicWin-derived MonuWin owner with actual FlatButton/Spot/Buffer/Sprite members, real callback slots and automatic lifetimes; localized parser owner and grammar inputs follow the original branches rather than current-faction stand-ins."}
 // symbol    ?on_redraw@MonuWin@@UAEXXZ
 void MonuWin::on_redraw() {
   // StringList's StringAllocationBase captures and clears the shared heap
@@ -1018,7 +1018,7 @@ void MonuWin::on_redraw() {
 }
 
 // ORIGINAL: 0x00476760 ?close@MonuWin@@QAEXXZ 0x00476760-0x00476774 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x00476760; retired seed provenance git:670a036f:src/recovered/00476760.cpp; original spans and historical lessons retained.", "image:477C80/477B10 member order and36DC extent; primary66C880 slots12/17/19/25/44.", "image:476A50 binds singleton7F9F58 and independent count7FD634; Player59C and MonumentFaction4F4 strides.", "image:4737EE..475E58 localized owner/grammar cases; 472230/4736E0 resource, clipping, sprite and Spot accesses."], "reason": "Genuine GraphicWin-derived MonuWin owner with actual FlatButton/Spot/Buffer/Sprite members, real callback slots and automatic lifetimes; localized parser owner and grammar inputs follow the original branches rather than current-faction stand-ins."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00476760; retired seed provenance git:d8200f17:src/recovered/00476760.cpp; original spans and historical lessons retained.", "image:477C80/477B10 member order and36DC extent; primary66C880 slots12/17/19/25/44.", "image:476A50 binds singleton7F9F58 and independent count7FD634; Player59C and MonumentFaction4F4 strides.", "image:4737EE..475E58 localized owner/grammar cases; 472230/4736E0 resource, clipping, sprite and Spot accesses."], "reason": "Genuine GraphicWin-derived MonuWin owner with actual FlatButton/Spot/Buffer/Sprite members, real callback slots and automatic lifetimes; localized parser owner and grammar inputs follow the original branches rather than current-faction stand-ins."}
 // symbol    ?close@MonuWin@@QAEXXZ
 void MonuWin::close() {
   release_modal();
@@ -1026,7 +1026,7 @@ void MonuWin::close() {
 }
 
 // ORIGINAL: 0x00476780 ?on_left_click@MonuWin@@QAEXHH@Z 0x00476780-0x00476841 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x00476780; retired seed provenance git:670a036f:src/unrecovered/00476780.cpp; original spans and historical lessons retained.", "image:477C80/477B10 member order and36DC extent; primary66C880 slots12/17/19/25/44.", "image:476A50 binds singleton7F9F58 and independent count7FD634; Player59C and MonumentFaction4F4 strides.", "image:4737EE..475E58 localized owner/grammar cases; 472230/4736E0 resource, clipping, sprite and Spot accesses."], "reason": "Genuine GraphicWin-derived MonuWin owner with actual FlatButton/Spot/Buffer/Sprite members, real callback slots and automatic lifetimes; localized parser owner and grammar inputs follow the original branches rather than current-faction stand-ins."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00476780; retired seed provenance git:d8200f17:src/unrecovered/00476780.cpp; original spans and historical lessons retained.", "image:477C80/477B10 member order and36DC extent; primary66C880 slots12/17/19/25/44.", "image:476A50 binds singleton7F9F58 and independent count7FD634; Player59C and MonumentFaction4F4 strides.", "image:4737EE..475E58 localized owner/grammar cases; 472230/4736E0 resource, clipping, sprite and Spot accesses."], "reason": "Genuine GraphicWin-derived MonuWin owner with actual FlatButton/Spot/Buffer/Sprite members, real callback slots and automatic lifetimes; localized parser owner and grammar inputs follow the original branches rather than current-faction stand-ins."}
 // symbol    ?on_left_click@MonuWin@@UAEXHH@Z
 // TRIED: fixed const-pointer global for 0x94cea0 (indexed table base, address itself scales - own raw cast used). First divergence #1 mov/push (prologue reg alloc), 214 vs 193 B.
 void MonuWin::on_left_click(int x, int y) {
@@ -1055,7 +1055,7 @@ void MonuWin::on_left_click(int x, int y) {
 }
 
 // ORIGINAL: 0x00476850 ?on_mouse_move@MonuWin@@QAEXHH@Z 0x00476850-0x004769A9 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x00476850; retired seed provenance git:670a036f:src/recovered/units/00476850.cpp; original spans and historical lessons retained.", "image:477C80/477B10 member order and36DC extent; primary66C880 slots12/17/19/25/44.", "image:476A50 binds singleton7F9F58 and independent count7FD634; Player59C and MonumentFaction4F4 strides.", "image:4737EE..475E58 localized owner/grammar cases; 472230/4736E0 resource, clipping, sprite and Spot accesses."], "reason": "Genuine GraphicWin-derived MonuWin owner with actual FlatButton/Spot/Buffer/Sprite members, real callback slots and automatic lifetimes; localized parser owner and grammar inputs follow the original branches rather than current-faction stand-ins."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00476850; retired seed provenance git:d8200f17:src/recovered/units/00476850.cpp; original spans and historical lessons retained.", "image:477C80/477B10 member order and36DC extent; primary66C880 slots12/17/19/25/44.", "image:476A50 binds singleton7F9F58 and independent count7FD634; Player59C and MonumentFaction4F4 strides.", "image:4737EE..475E58 localized owner/grammar cases; 472230/4736E0 resource, clipping, sprite and Spot accesses."], "reason": "Genuine GraphicWin-derived MonuWin owner with actual FlatButton/Spot/Buffer/Sprite members, real callback slots and automatic lifetimes; localized parser owner and grammar inputs follow the original branches rather than current-faction stand-ins."}
 // symbol    ?on_mouse_move@MonuWin@@UAEXHH@Z
 #pragma optimize("y", off)
 void MonuWin::on_mouse_move(int x, int y) {
@@ -1098,7 +1098,7 @@ void MonuWin::on_mouse_move(int x, int y) {
 #pragma optimize("", on)
 
 // ORIGINAL: 0x004769B0 ?on_button_clicked@MonuWin@@QAEXH@Z 0x004769B0-0x004769F7 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x004769B0; retired seed provenance git:670a036f:src/recovered/units/004769b0.cpp; original spans and historical lessons retained.", "image:477C80/477B10 member order and36DC extent; primary66C880 slots12/17/19/25/44.", "image:476A50 binds singleton7F9F58 and independent count7FD634; Player59C and MonumentFaction4F4 strides.", "image:4737EE..475E58 localized owner/grammar cases; 472230/4736E0 resource, clipping, sprite and Spot accesses."], "reason": "Genuine GraphicWin-derived MonuWin owner with actual FlatButton/Spot/Buffer/Sprite members, real callback slots and automatic lifetimes; localized parser owner and grammar inputs follow the original branches rather than current-faction stand-ins."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x004769B0; retired seed provenance git:d8200f17:src/recovered/units/004769b0.cpp; original spans and historical lessons retained.", "image:477C80/477B10 member order and36DC extent; primary66C880 slots12/17/19/25/44.", "image:476A50 binds singleton7F9F58 and independent count7FD634; Player59C and MonumentFaction4F4 strides.", "image:4737EE..475E58 localized owner/grammar cases; 472230/4736E0 resource, clipping, sprite and Spot accesses."], "reason": "Genuine GraphicWin-derived MonuWin owner with actual FlatButton/Spot/Buffer/Sprite members, real callback slots and automatic lifetimes; localized parser owner and grammar inputs follow the original branches rather than current-faction stand-ins."}
 // symbol    ?on_button_clicked@MonuWin@@UAEXH@Z
 void MonuWin::on_button_clicked(int id) {
   if (id != 999) {
@@ -1114,7 +1114,7 @@ void MonuWin::on_button_clicked(int id) {
 }
 
 // ORIGINAL: 0x00476A00 ?on_key_click@MonuWin@@QAEHHH@Z 0x00476A00-0x00476A42 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x00476A00; retired seed provenance git:670a036f:src/recovered/units/00476a00.cpp; original spans and historical lessons retained.", "image:477C80/477B10 member order and36DC extent; primary66C880 slots12/17/19/25/44.", "image:476A50 binds singleton7F9F58 and independent count7FD634; Player59C and MonumentFaction4F4 strides.", "image:4737EE..475E58 localized owner/grammar cases; 472230/4736E0 resource, clipping, sprite and Spot accesses."], "reason": "Genuine GraphicWin-derived MonuWin owner with actual FlatButton/Spot/Buffer/Sprite members, real callback slots and automatic lifetimes; localized parser owner and grammar inputs follow the original branches rather than current-faction stand-ins."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00476A00; retired seed provenance git:d8200f17:src/recovered/units/00476a00.cpp; original spans and historical lessons retained.", "image:477C80/477B10 member order and36DC extent; primary66C880 slots12/17/19/25/44.", "image:476A50 binds singleton7F9F58 and independent count7FD634; Player59C and MonumentFaction4F4 strides.", "image:4737EE..475E58 localized owner/grammar cases; 472230/4736E0 resource, clipping, sprite and Spot accesses."], "reason": "Genuine GraphicWin-derived MonuWin owner with actual FlatButton/Spot/Buffer/Sprite members, real callback slots and automatic lifetimes; localized parser owner and grammar inputs follow the original branches rather than current-faction stand-ins."}
 // symbol    ?on_key_click@MonuWin@@UAEHHH@Z
 int MonuWin::on_key_click(int key, int state) {
   (void)key;
@@ -1173,7 +1173,7 @@ void __cdecl monument(int from_load) {
 MonumentFaction FactionMonuments[MaxPlayerNum];
 
 // ORIGINAL: 0x00476B30 ?clear_monuments@@YAXXZ 0x00476B30-0x00476B61 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned476B30 starts its writes at94CA18 with38stride in8faction rows4F4apart; founding476B70 and secrets476DA0 establish containing-record base94CA08", "recovery/tests/test_setup_dependencies_behavior.py checks everybyte against the exact original22word mutation footprint", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/00476b30.cpp"], "reason": "Reset the shared natural monument container: clear21achieved words atrecord+10 andlatest_type atrow+498, preserving all other bytes. Historical reset-only shifted interpretation remains in Git/task history; original seed and restoration obligations are intact. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned476B30 starts its writes at94CA18 with38stride in8faction rows4F4apart; founding476B70 and secrets476DA0 establish containing-record base94CA08", "recovery/tests/test_setup_dependencies_behavior.py checks everybyte against the exact original22word mutation footprint", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/00476b30.cpp"], "reason": "Reset the shared natural monument container: clear21achieved words atrecord+10 andlatest_type atrow+498, preserving all other bytes. Historical reset-only shifted interpretation remains in Git/task history; original seed and restoration obligations are intact. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
 void __cdecl clear_monuments() {
     intptr_t latest = reinterpret_cast<intptr_t>(FactionMonuments)
@@ -1251,7 +1251,7 @@ void __cdecl mon_colony_founded(int faction_id, char *base_name) {
 }
 
 // ORIGINAL: 0x00476C90 ?mon_tech_discovered@@YAXHH@Z 0x00476C90-0x00476D93 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original00476C90 and seed git:91b86557299ab66a61f1184540338d569e780e7e:src/recovered/units/00476c90.cpp; record1 at factionstride4F4, year0, payload8, firstownerC, achieved10, firstflag14 and latesttype498 are independently established by native stores.", "The original calls game_year before alien/duplicate guards and includes all eight peer records regardless of peer flags; later qualifying first-achiever ties win."], "reason": "Recover the complete native milestone producer against genuine shared monument records, with typed peer selection and live local notification rather than executable-address table views."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original00476C90 and seed git:a75c7108cd0be125d2ace1672e14a2f5994624b6:src/recovered/units/00476c90.cpp; record1 at factionstride4F4, year0, payload8, firstownerC, achieved10, firstflag14 and latesttype498 are independently established by native stores.", "The original calls game_year before alien/duplicate guards and includes all eight peer records regardless of peer flags; later qualifying first-achiever ties win."], "reason": "Recover the complete native milestone producer against genuine shared monument records, with typed peer selection and live local notification rather than executable-address table views."}
 void __cdecl mon_tech_discovered(int faction_id, int tech_id) {
     const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
     MonumentRecord &record = FactionMonuments[faction_id].records_[1];
@@ -1355,7 +1355,7 @@ Purpose: Record the local faction's first built prototype (the mon type-3
          window when it was the local faction's own build.
 // size      254 bytes
 Status: Coverage transcription of the retained seed
-        (git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00476ee0.cpp, plain FILE). The seed's TRIED wall
+        (git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00476ee0.cpp, plain FILE). The seed's TRIED wall
         stands: the original reserves the year local with `push ecx` ahead
         of the callee-save pushes, and the C forms tried all save
         ebx/esi first. rule_flags is read as the typed dword here where
@@ -1410,7 +1410,7 @@ void __cdecl mon_prototype_built(int faction_id) {
 }
 
 // ORIGINAL: 0x00476FE0 ?mon_facility_built@@YAXHPAD@Z 0x00476FE0-0x004770F2
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 00476FE0 and seed git:fc8112d1ca80fbe743dd051511ad7e0af8454e94:src/recovered/units/00476fe0.cpp; faction stride4F4, record4, name field4C4 and24byte strncpy are established by the complete native body.", "Native first-achiever selection includes all eight peer factions; alien target and duplicate events return without updates. Local notification reads the live ConsoleGlobal owner after game_year and name copying."], "reason": "Recover the native milestone and its bounded base-name storage in the genuine shared FactionMonuments owner, not a duplicate raw table view."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 00476FE0 and seed git:e927e439956c244db241fec9d58207d347487c19:src/recovered/units/00476fe0.cpp; faction stride4F4, record4, name field4C4 and24byte strncpy are established by the complete native body.", "Native first-achiever selection includes all eight peer factions; alien target and duplicate events return without updates. Local notification reads the live ConsoleGlobal owner after game_year and name copying."], "reason": "Recover the native milestone and its bounded base-name storage in the genuine shared FactionMonuments owner, not a duplicate raw table view."}
 void __cdecl mon_facility_built(int faction_id, char *base_name) {
     const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
     MonumentRecord &record = FactionMonuments[faction_id].records_[4];
@@ -1459,7 +1459,7 @@ void __cdecl mon_facility_built(int faction_id, char *base_name) {
 }
 
 // ORIGINAL: 0x00477100 ?mon_secret_project@@YAXHH@Z 0x00477100-0x00477207 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original00477100 and seed git:91b86557299ab66a61f1184540338d569e780e7e:src/recovered/units/00477100.cpp; record5 at factionstride4F4, year0, payload8, firstownerC, achieved10, firstflag14 and latesttype498 are independently established by native stores.", "The original calls game_year before alien/duplicate guards and includes all eight peer records regardless of peer flags; later qualifying first-achiever ties win."], "reason": "Recover the complete native milestone producer against genuine shared monument records, with typed peer selection and live local notification rather than executable-address table views."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original00477100 and seed git:a75c7108cd0be125d2ace1672e14a2f5994624b6:src/recovered/units/00477100.cpp; record5 at factionstride4F4, year0, payload8, firstownerC, achieved10, firstflag14 and latesttype498 are independently established by native stores.", "The original calls game_year before alien/duplicate guards and includes all eight peer records regardless of peer flags; later qualifying first-achiever ties win."], "reason": "Recover the complete native milestone producer against genuine shared monument records, with typed peer selection and live local notification rather than executable-address table views."}
 void __cdecl mon_secret_project(int faction_id, int project_id) {
     const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
     MonumentRecord &record = FactionMonuments[faction_id].records_[5];
@@ -1504,7 +1504,7 @@ void __cdecl mon_secret_project(int faction_id, int project_id) {
 }
 
 // ORIGINAL: 0x00477210 ?mon_enemy_destroyed@@YAXHH@Z 0x00477210-0x00477320 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["task:monument-enemy-destroyed-owner original identity, spans and historical claim retained from git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/00477210.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:477210..477320 complete body; record6 stores at 94CB58/60/64/68/6C, latest_type at 94CEA0 and notification after updates.", "source:src/game.h MonumentRecord stride38, MonumentFaction stride4F4 and source bindings; game_year before all guards; Players rule_flags bit80 is alien, not unrelated game state.", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/00477210.cpp"], "reason": "Recover complete enemy-destruction milestone with genuine FactionMonuments, Players and live ConsoleGlobal ownership. Preserve target-faction fallback when prior achievements lack a first flag; later qualifying peer ties win. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["task:monument-enemy-destroyed-owner original identity, spans and historical claim retained from git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/00477210.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:477210..477320 complete body; record6 stores at 94CB58/60/64/68/6C, latest_type at 94CEA0 and notification after updates.", "source:src/game.h MonumentRecord stride38, MonumentFaction stride4F4 and source bindings; game_year before all guards; Players rule_flags bit80 is alien, not unrelated game state.", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/00477210.cpp"], "reason": "Recover complete enemy-destruction milestone with genuine FactionMonuments, Players and live ConsoleGlobal ownership. Preserve target-faction fallback when prior achievements lack a first flag; later qualifying peer ties win. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // symbol    ?mon_enemy_destroyed@@YAXHH@Z
 // kind      game
 void __cdecl mon_enemy_destroyed(int faction_id, int target_faction) {
@@ -1552,7 +1552,7 @@ void __cdecl mon_enemy_destroyed(int faction_id, int target_faction) {
 }
 
 // ORIGINAL: 0x00477320 ?mon_conquer_base@@YAXHPAD@Z 0x00477320-0x00477434 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 00477320 and seed git:fc8112d1ca80fbe743dd051511ad7e0af8454e94:src/recovered/units/00477320.cpp; faction stride4F4, record7, name field4DC and24byte strncpy are established by the complete native body.", "Native first-achiever selection includes all eight peer factions; alien target and duplicate events return without updates. Local notification reads the live ConsoleGlobal owner after game_year and name copying."], "reason": "Recover the native milestone and its bounded base-name storage in the genuine shared FactionMonuments owner, not a duplicate raw table view."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 00477320 and seed git:e927e439956c244db241fec9d58207d347487c19:src/recovered/units/00477320.cpp; faction stride4F4, record7, name field4DC and24byte strncpy are established by the complete native body.", "Native first-achiever selection includes all eight peer factions; alien target and duplicate events return without updates. Local notification reads the live ConsoleGlobal owner after game_year and name copying."], "reason": "Recover the native milestone and its bounded base-name storage in the genuine shared FactionMonuments owner, not a duplicate raw table view."}
 void __cdecl mon_conquer_base(int faction_id, char *base_name) {
     const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
     MonumentRecord &record = FactionMonuments[faction_id].records_[7];
@@ -1602,7 +1602,7 @@ void __cdecl mon_conquer_base(int faction_id, char *base_name) {
 Purpose: The type-8 trigger: the faction's first naval unit built.
 // size      254 bytes
 Status: Coverage transcription of the retained seed
-        (git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00477440.cpp, plain FILE); same shape and walls
+        (git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00477440.cpp, plain FILE); same shape and walls
         as mon_prototype_built above, over the naval record table.
 */
 // ORIGINAL: 0x00477440 ?mon_naval_unit_built@@YAXH@Z 0x00477440-0x0047753E BYTE_EXACT
@@ -1654,7 +1654,7 @@ void __cdecl mon_naval_unit_built(int faction_id) {
 Purpose: The type-9 trigger: the faction's first air unit built.
 // size      254 bytes
 Status: Coverage transcription of the retained seed
-        (git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00477540.cpp, plain FILE); same shape and walls
+        (git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00477540.cpp, plain FILE); same shape and walls
         as mon_prototype_built above, over the air record table.
 */
 // ORIGINAL: 0x00477540 ?mon_air_unit_built@@YAXH@Z 0x00477540-0x0047763E BYTE_EXACT
@@ -1706,7 +1706,7 @@ void __cdecl mon_air_unit_built(int faction_id) {
 Purpose: The type-10 trigger: the faction's first native life bred.
 // size      254 bytes
 Status: Coverage transcription of the retained seed
-        (git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00477640.cpp, plain FILE); same shape and walls
+        (git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00477640.cpp, plain FILE); same shape and walls
         as mon_prototype_built above, over the native-life record table.
 */
 // ORIGINAL: 0x00477640 ?mon_native_life_bred@@YAXH@Z 0x00477640-0x0047773E BYTE_EXACT
@@ -1758,7 +1758,7 @@ void __cdecl mon_native_life_bred(int faction_id) {
 Purpose: The type-11 trigger: the faction's first craft in space.
 // size      254 bytes
 Status: Coverage transcription of the retained seed
-        (git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00477740.cpp, plain FILE); same shape and walls
+        (git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00477740.cpp, plain FILE); same shape and walls
         as mon_prototype_built above, over the space record table.
 */
 // ORIGINAL: 0x00477740 ?mon_first_in_space@@YAXH@Z 0x00477740-0x0047783E BYTE_EXACT
@@ -1807,7 +1807,7 @@ void __cdecl mon_first_in_space(int faction_id) {
 }
 
 // ORIGINAL: 0x00477840 ?mon_built_preserve@@YAXH@Z 0x00477840-0x0047793E BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original00477840 and seed git:91b86557299ab66a61f1184540338d569e780e7e:src/unrecovered/00477840.cpp; record12 at factionstride4F4, year0, firstownerC, achieved10, firstflag14 and latesttype498 are independently established by native stores.", "The original calls game_year before alien/duplicate guards and includes all eight peer records regardless of peer flags; later qualifying first-achiever ties win."], "reason": "Recover the complete native milestone producer against genuine shared monument records, with typed peer selection and live local notification rather than executable-address table views."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original00477840 and seed git:a75c7108cd0be125d2ace1672e14a2f5994624b6:src/unrecovered/00477840.cpp; record12 at factionstride4F4, year0, firstownerC, achieved10, firstflag14 and latesttype498 are independently established by native stores.", "The original calls game_year before alien/duplicate guards and includes all eight peer records regardless of peer flags; later qualifying first-achiever ties win."], "reason": "Recover the complete native milestone producer against genuine shared monument records, with typed peer selection and live local notification rather than executable-address table views."}
 // TRIED: single `if(!(flag)&&active==0)` short-circuit form vs hoisting `winner`/`count=0` before the scan loop - both land the same MISMATCH #3 (original reserves the stack slot for `year` with `push ecx` ahead of the ebx/esi pushes; every C form tried here has the compiler push ebx/esi first instead).
 void __cdecl mon_built_preserve(int faction_id) {
     const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
@@ -1977,7 +1977,7 @@ void __cdecl mon_killed_faction(int faction_id, int counterpart) {
 // Native teardown is the reverse member order (including the two scalar
 // Sprites); typed member/base destruction supplies it without placement calls.
 // ORIGINAL: 0x00477B10 ??1MonuWin@@QAE@XZ 0x00477B10-0x00477C79;0x00655F90-0x0065607E FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x00477B10; retired seed provenance git:670a036f:src/recovered/units/00477b10.cpp; original spans and historical lessons retained.", "image:477C80/477B10 member order and36DC extent; primary66C880 slots12/17/19/25/44.", "image:476A50 binds singleton7F9F58 and independent count7FD634; Player59C and MonumentFaction4F4 strides.", "image:4737EE..475E58 localized owner/grammar cases; 472230/4736E0 resource, clipping, sprite and Spot accesses."], "reason": "Genuine GraphicWin-derived MonuWin owner with actual FlatButton/Spot/Buffer/Sprite members, real callback slots and automatic lifetimes; localized parser owner and grammar inputs follow the original branches rather than current-faction stand-ins."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00477B10; retired seed provenance git:d8200f17:src/recovered/units/00477b10.cpp; original spans and historical lessons retained.", "image:477C80/477B10 member order and36DC extent; primary66C880 slots12/17/19/25/44.", "image:476A50 binds singleton7F9F58 and independent count7FD634; Player59C and MonumentFaction4F4 strides.", "image:4737EE..475E58 localized owner/grammar cases; 472230/4736E0 resource, clipping, sprite and Spot accesses."], "reason": "Genuine GraphicWin-derived MonuWin owner with actual FlatButton/Spot/Buffer/Sprite members, real callback slots and automatic lifetimes; localized parser owner and grammar inputs follow the original branches rather than current-faction stand-ins."}
 // symbol    ??1MonuWin@@UAE@XZ
 
 // The native constructor constructs GraphicWin, both FlatButtons, Spot,
@@ -1986,6 +1986,6 @@ void __cdecl mon_killed_faction(int faction_id, int counterpart) {
 // lifetime sequence; the explicit native calls are the compiler's expansion
 // of these default constructions, not a second user body to duplicate.
 // ORIGINAL: 0x00477C80 ??0MonuWin@@QAE@XZ 0x00477C80-0x00477DC7;0x00656080-0x0065615E BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x00477C80; retired seed provenance git:670a036f:src/recovered/units/00477c80.cpp; original spans and historical lessons retained.", "image:477C80/477B10 member order and36DC extent; primary66C880 slots12/17/19/25/44.", "image:476A50 binds singleton7F9F58 and independent count7FD634; Player59C and MonumentFaction4F4 strides.", "image:4737EE..475E58 localized owner/grammar cases; 472230/4736E0 resource, clipping, sprite and Spot accesses."], "reason": "Genuine GraphicWin-derived MonuWin owner with actual FlatButton/Spot/Buffer/Sprite members, real callback slots and automatic lifetimes; localized parser owner and grammar inputs follow the original branches rather than current-faction stand-ins."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00477C80; retired seed provenance git:d8200f17:src/recovered/units/00477c80.cpp; original spans and historical lessons retained.", "image:477C80/477B10 member order and36DC extent; primary66C880 slots12/17/19/25/44.", "image:476A50 binds singleton7F9F58 and independent count7FD634; Player59C and MonumentFaction4F4 strides.", "image:4737EE..475E58 localized owner/grammar cases; 472230/4736E0 resource, clipping, sprite and Spot accesses."], "reason": "Genuine GraphicWin-derived MonuWin owner with actual FlatButton/Spot/Buffer/Sprite members, real callback slots and automatic lifetimes; localized parser owner and grammar inputs follow the original branches rather than current-faction stand-ins."}
 // symbol    ??0MonuWin@@QAE@XZ
 MonuWin::MonuWin() : GraphicWin() {}

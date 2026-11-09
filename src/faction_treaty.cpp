@@ -605,7 +605,7 @@ BOOL __cdecl wants_to_attack(int faction_id, int faction_id_tgt, int faction_id_
 
 
 // ORIGINAL: 0x0055C430 ?comm_check@@YAXHH@Z 0x0055C430-0x0055C726 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["original:0x0055C430:complete-mapped-spans", "git:13693539:src/recovered/units/0055c430.cpp", "source:src/faction.h:PlayersData-and-diplomacy-interfaces"], "reason": "Retain the original multiplayer and PBEM paths, asymmetric pending row and treaty writers. Recheck the local console and treaty state after modal notifications; forward the original actor, peer and zero mode to the separately unfinished communicate owner."}
+// RECOVERY_BINDING: v1 {"evidence": ["original:0x0055C430:complete-mapped-spans", "git:2ab1312e:src/recovered/units/0055c430.cpp", "source:src/faction.h:PlayersData-and-diplomacy-interfaces"], "reason": "Retain the original multiplayer and PBEM paths, asymmetric pending row and treaty writers. Recheck the local console and treaty state after modal notifications; forward the original actor, peer and zero mode to the separately unfinished communicate owner."}
 void __cdecl comm_check(int faction_id, int faction_id_with) {
     int human_mask = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF;
     if (!(human_mask & (1 << faction_id))) {
@@ -724,7 +724,7 @@ void __cdecl pact_attacks(int faction_id, int faction_id_with) {
 // The image calls has_project (0x004F80D0) out of line here; every other callee is a call.
 #pragma inline_depth(0)
 // ORIGINAL: 0x0055C840 ?enemies_war@@YAXHH@Z 0x0055C840-0x0055CC9A BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["original:0x0055C840:complete-mapped-spans", "git:13693539:src/recovered/units/0055c840.cpp", "source:src/faction.h:PlayersData-and-diplomacy-interfaces"], "reason": "Use genuine player treaty rows, local console, owned NetMsg and parser state for war declarations. The observed protected-notice bit is 0x1000, not 0x100000; preserve the original treaty and agenda calls and notice ordering."}
+// RECOVERY_BINDING: v1 {"evidence": ["original:0x0055C840:complete-mapped-spans", "git:2ab1312e:src/recovered/units/0055c840.cpp", "source:src/faction.h:PlayersData-and-diplomacy-interfaces"], "reason": "Use genuine player treaty rows, local console, owned NetMsg and parser state for war declarations. The observed protected-notice bit is 0x1000, not 0x100000; preserve the original treaty and agenda calls and notice ordering."}
 void __cdecl enemies_war(int faction_id, int faction_id_with) {
     if (PlayersData[faction_id].diplo_treaties[faction_id_with] & DTREATY_VENDETTA) {
         return;
@@ -854,7 +854,7 @@ void __cdecl pact_unpact(int faction_id, int faction_id_with) {
 
 
 // ORIGINAL: 0x0055CE20 ?enemies_unpact@@YAXHH@Z 0x0055CE20-0x0055D031 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["original:0x0055CE20:complete-mapped-spans", "git:13693539:src/recovered/units/0055ce20.cpp", "source:src/faction.h:PlayersData-and-diplomacy-interfaces"], "reason": "Recover pact withdrawal through genuine player rows, pact_unpact calls and the existing Empath Guild project/base ownership. Preserve directional calls, protected-notice bit 0x1000, and both-direction treaty clearing mask 0x01100001."}
+// RECOVERY_BINDING: v1 {"evidence": ["original:0x0055CE20:complete-mapped-spans", "git:2ab1312e:src/recovered/units/0055ce20.cpp", "source:src/faction.h:PlayersData-and-diplomacy-interfaces"], "reason": "Recover pact withdrawal through genuine player rows, pact_unpact calls and the existing Empath Guild project/base ownership. Preserve directional calls, protected-notice bit 0x1000, and both-direction treaty clearing mask 0x01100001."}
 void __cdecl enemies_unpact(int faction_id, int faction_id_with) {
     if ((PlayersData[faction_id].diplo_treaties[faction_id_with]
          & DTREATY_PACT) == 0) {
@@ -1036,7 +1036,7 @@ void __cdecl enemies_team_up(int faction_id, int faction_id_with,
 
 
 // ORIGINAL: 0x0055D430 ?enemies_trade_tech@@YAXHH@Z 0x0055D430-0x0055D753 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["original:0x0055D430:complete-mapped-spans", "git:13693539:src/unrecovered/0055d430.cpp", "source:src/faction.h:PlayersData-and-diplomacy-interfaces"], "reason": "Recover bilateral and conditional one-way technology transfers using typed player technology-source bytes, treaty and friction rows. The second direction intentionally uses actor source/relation but reloads the peer source for peer friction; repeated has_tech calls and signed wrapped valuation decrement are original behavior."}
+// RECOVERY_BINDING: v1 {"evidence": ["original:0x0055D430:complete-mapped-spans", "git:2ab1312e:src/unrecovered/0055d430.cpp", "source:src/faction.h:PlayersData-and-diplomacy-interfaces"], "reason": "Recover bilateral and conditional one-way technology transfers using typed player technology-source bytes, treaty and friction rows. The second direction intentionally uses actor source/relation but reloads the peer source for peer friction; repeated has_tech calls and signed wrapped valuation decrement are original behavior."}
 // TRIED: 0x20cc-stride diplomacy tables (0x96cd4c tech-source byte, 0x96c9f8 relation-flags dword, 0x96ca38 tech-level dword, 0x96cd3c tech-rank dword) rederived directly from the lea-chain address math (fac*65,*131,*1049,*2099 -> fac*0x20cc), not from Ghidra's mixed-unit indexing. Matches to #23/803 bytes; the nested-if rewrite of the has_tech/goto-LAB_0055d552 sharing is semantically equivalent but not chased for byte order.
 void __cdecl enemies_trade_tech(int faction_id, int faction_id_with) {
     int best_tech_to_faction = -1, best_tech_to_partner = -1;
@@ -1140,7 +1140,7 @@ static int faction_treaty_signed_random16() {
 
 
 // ORIGINAL: 0x0055D760 ?enemies_treaty@@YAXHHH@Z 0x0055D760-0x0055E370
-// RECOVERY_BINDING: v1 {"evidence": ["original:0x0055D760:complete-mapped-spans", "git:13693539:src/unrecovered/0055d760.cpp", "source:src/faction.h:PlayersData-and-diplomacy-interfaces", "original:0x0055D76B:actor-in-ESI;0x0055DDB8:get_noun-actor;0x0055DDC2:slot-4"], "reason": "Recover the complete original truce/treaty/pact decision paths through typed player rows, ranking, rules and genuine parser/NetMsg calls. Initial pact notices use actor noun in slot 6; both lower local-pact notices use the actor faction noun in slot 4, PACTTREATY and treaty bit 2. Keep the original signed random masking and ally scan."}
+// RECOVERY_BINDING: v1 {"evidence": ["original:0x0055D760:complete-mapped-spans", "git:2ab1312e:src/unrecovered/0055d760.cpp", "source:src/faction.h:PlayersData-and-diplomacy-interfaces", "original:0x0055D76B:actor-in-ESI;0x0055DDB8:get_noun-actor;0x0055DDC2:slot-4"], "reason": "Recover the complete original truce/treaty/pact decision paths through typed player rows, ranking, rules and genuine parser/NetMsg calls. Initial pact notices use actor noun in slot 6; both lower local-pact notices use the actor faction noun in slot 4, PACTTREATY and treaty bit 2. Keep the original signed random masking and ally scan."}
 // TRIED: shared-tail gotos (LAB_0055dab5/LAB_0055ddb9) replaced with inline duplication at each call site (same call sequence, fewer scope-crossing gotos); parse_says calls normalized to their real 4-arg form (idx, ptr, -1, -1) where Ghidra's own printout dropped the trailing -1,-1 pair pushed by a sibling call and shared across the two (get_noun/get_he_she then parse_says, same push-sharing idiom as veh_lift/veh_drop).
 void __cdecl enemies_treaty(int faction_id, int faction_id_with,
                              int check_technology) {
@@ -1410,7 +1410,7 @@ evaluate_existing_state:
 
 
 // ORIGINAL: 0x0055E370 ?encounter@@YAXHHHHHH@Z 0x0055E370-0x0055EB7A BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["original:0x0055E370:complete-mapped-spans", "git:13693539:src/unrecovered/0055e370.cpp", "source:src/faction.h:PlayersData-and-diplomacy-interfaces"], "reason": "Recover human/alien contact, tutorial notifications and AI treaty/war routing in the genuine faction owner. Coordinate checks use full MapLongitudeBounds/MapLatitudeBounds. Preserve short-circuit technology queries, the independent peer classification after actor interludes, console reloads, and classification after parser callbacks. Actor-local and peer-local tutorial paths each retain their human/alien masks and labels; two alien factions suppress all AI responses. Use the existing owned TutorialWindow."}
+// RECOVERY_BINDING: v1 {"evidence": ["original:0x0055E370:complete-mapped-spans", "git:2ab1312e:src/unrecovered/0055e370.cpp", "source:src/faction.h:PlayersData-and-diplomacy-interfaces"], "reason": "Recover human/alien contact, tutorial notifications and AI treaty/war routing in the genuine faction owner. Coordinate checks use full MapLongitudeBounds/MapLatitudeBounds. Preserve short-circuit technology queries, the independent peer classification after actor interludes, console reloads, and classification after parser callbacks. Actor-local and peer-local tutorial paths each retain their human/alien masks and labels; two alien factions suppress all AI responses. Use the existing owned TutorialWindow."}
 // TRIED: full structured transcription (verified every call-argument order and jump target against raw disasm) reaches MISMATCH #3 'push' vs 'mov' - a prologue register-allocation divergence (push ebx order), not a logic error; not chased further given function size (2058 bytes).
 void __cdecl encounter(int faction_id, int faction_id_with, int x, int y,
                        int event_flag_a, int event_flag_b) {
@@ -1957,7 +1957,7 @@ Purpose: Break a treaty between two factions and play the consequence:
 //           a2 + a1*0x833 spy-status index are the seed's proven shapes.
 Return Value: 1 a unilateral reaction fired, 0 otherwise
 Status: Coverage transcription - unclaimed body, seed
-        git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0055f770.cpp retained.
+        git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0055f770.cpp retained.
 */
 int __cdecl break_treaty(int faction_id, int target_faction_id,
                          int treaty_bits) {
@@ -2009,7 +2009,7 @@ int __cdecl break_treaty(int faction_id, int target_faction_id,
 
 // The two original opponent walks carry territory state into orbital attacks.
 // ORIGINAL: 0x0055F930 ?enemy_diplomacy@@YAXH@Z 0x0055F930-0x00560ACD
-// RECOVERY_BINDING: v1 {"reason":"Recover the complete AI diplomacy turn owner through typed faction, parser, base, project, network and orbital-attack interfaces. Preserve the two opponent walks, callback order, directed relationships and source-owned original identity; this is not a byte or game acceptance claim.","evidence":["original:0x55F930-0x560ACD; image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","git:9387eadf:src/unrecovered/0055f930.cpp","Native560404 consumes the territory result, not the faction ID; signed ranking comparisons and wrap-preserving scoring follow native instructions.","Native55FBB1 selects all human-mask peers;55FBCA/55FBDF restrict notifications to the console/contact domain. Pending flag rows here are peer then actor, unlike comm_check.","Native56004D opens encounter for treaty bit20000000;5603A6 falls through to the pending notification write;560A9B carries the selected orbital target base.","recovery/tasks/base-colony-economy-coverage-wave.json; recovery/tests/test_enemy_diplomacy_behavior.py"]}
+// RECOVERY_BINDING: v1 {"reason":"Recover the complete AI diplomacy turn owner through typed faction, parser, base, project, network and orbital-attack interfaces. Preserve the two opponent walks, callback order, directed relationships and source-owned original identity; this is not a byte or game acceptance claim.","evidence":["original:0x55F930-0x560ACD; image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","git:ebe4c952:src/unrecovered/0055f930.cpp","Native560404 consumes the territory result, not the faction ID; signed ranking comparisons and wrap-preserving scoring follow native instructions.","Native55FBB1 selects all human-mask peers;55FBCA/55FBDF restrict notifications to the console/contact domain. Pending flag rows here are peer then actor, unlike comm_check.","Native56004D opens encounter for treaty bit20000000;5603A6 falls through to the pending notification write;560A9B carries the selected orbital target base.","recovery/tasks/base-colony-economy-coverage-wave.json; recovery/tests/test_enemy_diplomacy_behavior.py"]}
 // TRIED: this is the most complex of the batch (4509 bytes of AI diplomacy state-machine over 8 faction-pair records). Landed a heavily compressed transcription: phase boundaries (early exit, two 1..7/1..8 relationship loops, war-weariness scan, satellite-defense scan) and the callee sequence are faithful, but per-faction-pair array index chains and the deep bitfield arithmetic within each phase are approximated, not a literal instruction-by-instruction transcription.
 // kind      game
 void __cdecl enemy_diplomacy(int faction_id) {

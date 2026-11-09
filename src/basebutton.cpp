@@ -39,7 +39,7 @@ uint32_t BaseButtonA98Default;  // 0x009B8E30
 #include "win_pointer.h"
 
 // ORIGINAL: 0x00406860 ?hide@BaseButton@@QAEXXZ 0x00406860-0x00406879 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original FlatButton constructor0x00607CFB installs table0x00669754; its slot2 targets the complete25-byte function0x00406860-0x00406879.", "Original0x00406860 tests the ButtonGroup pointer at+0xAA8, clears the dword at+0xA9C when null, then jumps to Win::hide0x005EDCD0. Existing BaseButton members group_ and field_A9C_ own these offsets.", "Historical seed git:b55fcf8b:src/recovered/units/00406860.cpp supplies the preserved original identity and span; the product override uses the existing GraphicWin/Win inheritance rather than raw self offsets."], "reason": "FlatButton primary vtable selects the BaseButton hide override, which conditionally clears its ungrouped state before invoking Win::hide."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original FlatButton constructor0x00607CFB installs table0x00669754; its slot2 targets the complete25-byte function0x00406860-0x00406879.", "Original0x00406860 tests the ButtonGroup pointer at+0xAA8, clears the dword at+0xA9C when null, then jumps to Win::hide0x005EDCD0. Existing BaseButton members group_ and field_A9C_ own these offsets.", "Historical seed git:5605e9af:src/recovered/units/00406860.cpp supplies the preserved original identity and span; the product override uses the existing GraphicWin/Win inheritance rather than raw self offsets."], "reason": "FlatButton primary vtable selects the BaseButton hide override, which conditionally clears its ungrouped state before invoking Win::hide."}
 // symbol    ?hide@BaseButton@@UAEXXZ
 void BaseButton::hide() {
     if (group_ == 0) {
@@ -678,7 +678,7 @@ int BaseButton::init(LPCSTR name, int id, int x, int y, int width, int height,
 }
 
 // ORIGINAL: 0x00607190 ?UNK1@BaseButton@@QAEHPAUFont@@PADHHHHPAUWin@@H@Z 0x00607190-0x0060720A FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:9db3d883:src/unrecovered/00607190.cpp", "source:src/jackal/font.h:Font::height_", "source:src/graphicwin.h:GraphicWin inherits Buffer"], "reason": "Size the button from the supplied font's own height, initialize its typed BaseButton owner, select the font on the inherited Buffer and redraw."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:cdfbd8b3:src/unrecovered/00607190.cpp", "source:src/jackal/font.h:Font::height_", "source:src/graphicwin.h:GraphicWin inherits Buffer"], "reason": "Size the button from the supplied font's own height, initialize its typed BaseButton owner, select the font on the inherited Buffer and redraw."}
 // symbol    ?UNK1@BaseButton@@QAEHPAVFont@@PADHHHHPAVWin@@H@Z
 int BaseButton::UNK1(Font *font, char *name, int id, int x, int y,
                      int width, Win *parent, int style_flag) {
@@ -695,7 +695,7 @@ int BaseButton::UNK1(Font *font, char *name, int id, int x, int y,
 }
 
 // ORIGINAL: 0x00607820 ?on_mouse_leave@BaseButton@@QAEXHH@Z 0x00607820-0x0060784D FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:9db3d883:src/recovered/units/00607820.cpp", "source:src/win.h:WinPointerOwner1/WinPointerOwner2/WinSizingFlag", "source:src/win.h:on_mouse_move is slot 17"], "reason": "Dispatch the leave feedback through the real Win virtual when this button is the active pointer owner."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:cdfbd8b3:src/recovered/units/00607820.cpp", "source:src/win.h:WinPointerOwner1/WinPointerOwner2/WinSizingFlag", "source:src/win.h:on_mouse_move is slot 17"], "reason": "Dispatch the leave feedback through the real Win virtual when this button is the active pointer owner."}
 // symbol    ?on_mouse_leave@BaseButton@@UAEXHH@Z
 void BaseButton::on_mouse_leave(int x, int y) {
     Win *active = WinPointerOwner1 ? WinPointerOwner1 : WinPointerOwner2;
@@ -705,7 +705,7 @@ void BaseButton::on_mouse_leave(int x, int y) {
 }
 
 // ORIGINAL: 0x00607C30 ?UNK2@BaseButton@@QAEXXZ 0x00607C30-0x00607C74 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/00607c30.cpp", "source:src/basebutton.cpp:BaseButton::set"], "reason": "Toggle through the already-typed value setter so redraw and parent notification use the same proven ownership path; the seed's exact claim remains a restoration obligation. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/00607c30.cpp", "source:src/basebutton.cpp:BaseButton::set"], "reason": "Toggle through the already-typed value setter so redraw and parent notification use the same proven ownership path; the seed's exact claim remains a restoration obligation. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
 void BaseButton::UNK2() {
     set(field_A18_ == 0);
@@ -791,7 +791,7 @@ void BaseButton::on_left_down(int, int) {
 // Slot 23 returns int (used as a boolean); slot 42 takes one int. The
 // scaffold's VCall types every slot void(), so a second/third shim
 // with the real trailing signature is needed for these two calls.
-// Deleted seed provenance: git:26e5eed1:src/unrecovered/00607720.cpp
+// Deleted seed provenance: git:5ab1f8ce:src/unrecovered/00607720.cpp
 // ORIGINAL: 0x00607720 ?on_left_up@BaseButton@@QAEXHH@Z 0x00607720-0x006077E6 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00607720.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x607720 complete control/data-access review and src/basebutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?on_left_up@BaseButton@@UAEXHH@Z

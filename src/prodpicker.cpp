@@ -56,7 +56,7 @@ static const float ProdPickerVehicleScaleFactor = 0.000699999975040555f;
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00493B70 0x00493BB4 0x00493BC4 0x00493B94
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x00493B70 0x00493BC4 0x00493C06 0x00493B8E
 // ORIGINAL: 0x00493B70 ?edbc_fac@ProdPicker@@QAEHH@Z 0x00493B70-0x00493BB3 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:9a9fb225:src/recovered/units/00493b70.cpp", "source:src/prodpicker.h"], "reason": "Home the category mapping in the real ProdPicker owner; this method reads no object storage and needs no fixed-image binding."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:f2a0f5dd:src/recovered/units/00493b70.cpp", "source:src/prodpicker.h"], "reason": "Home the category mapping in the real ProdPicker owner; this method reads no object storage and needs no fixed-image binding."}
 int ProdPicker::edbc_fac(int facility_id) {
     if (facility_id >= 0x46) return 1;
     switch (facility_id) {
@@ -74,7 +74,7 @@ int ProdPicker::edbc_fac(int facility_id) {
 // The original 0x009AB892/+0x009AB898 reads are plan and flags members of
 // the 0x34-byte VehPrototypes entries, not independent address constants.
 // ORIGINAL: 0x00493AF0 ?edbc_unit@ProdPicker@@QAEHH@Z 0x00493AF0-0x00493B4A FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:9a9fb225:src/unrecovered/00493af0.cpp", "source:src/veh.h:VehPrototype"], "reason": "Recover prototype category selection through the source-owned prototype array and its named plan/flags members."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:f2a0f5dd:src/unrecovered/00493af0.cpp", "source:src/veh.h:VehPrototype"], "reason": "Recover prototype category selection through the source-owned prototype array and its named plan/flags members."}
 int ProdPicker::edbc_unit(int prototype_id) {
     if (prototype_id >= 0x40 && (VehPrototypes[prototype_id].flags & 4) == 0)
         return 1;
@@ -93,7 +93,7 @@ int ProdPicker::edbc_unit(int prototype_id) {
 // The constructor owns a Scroll at +0x7120, currently explicit storage to
 // preserve construction order. Wheel events are delivered to that object.
 // ORIGINAL: 0x00493C20 ?on_mousewheel@ProdPicker@@QAEXH@Z 0x00493C20-0x00493C68 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/00493c20.cpp", "source:src/prodpicker.h", "source:src/scroll.h"], "reason": "Dispatch each wheel step through the real embedded Scroll. Preserve the original wrapped negative count and its nonpositive INT_MIN no-step path; retain the original identity, spans, historical claim and virtual member ABI."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/00493c20.cpp", "source:src/prodpicker.h", "source:src/scroll.h"], "reason": "Dispatch each wheel step through the real embedded Scroll. Preserve the original wrapped negative count and its nonpositive INT_MIN no-step path; retain the original identity, spans, historical claim and virtual member ABI."}
 // symbol    ?on_mousewheel@ProdPicker@@UAEXH@Z
 // Current virtual override emits UAE; retain the catalogued QAE identity above.
 // kind      game
@@ -278,7 +278,7 @@ void ProdPicker::on_left_click(int x, int y) {
 }
 
 // ORIGINAL: 0x00493C70 ?on_redraw@ProdPicker@@QAEXXZ 0x00493C70-0x00493CA6 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/00493c70.cpp"], "reason": "Home the redraw callback in ProdPicker; it repaints exactly the currently visible item interval through the typed draw_item operation. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/00493c70.cpp"], "reason": "Home the redraw callback in ProdPicker; it repaints exactly the currently visible item interval through the typed draw_item operation. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
 // symbol    ?on_redraw@ProdPicker@@UAEXXZ
 void ProdPicker::on_redraw() {
@@ -289,7 +289,7 @@ void ProdPicker::on_redraw() {
 }
 
 // ORIGINAL: 0x00494230 ?on_left_double_click@ProdPicker@@QAEXHH@Z 0x00494230-0x00494271 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:20b88b523285a816ba99f503d727b761b89b227f:src/recovered/units/00494230.cpp", "source:src/win.h:Win::on_left_click (candidate spelling for the inherited Win slot-19 callback; fresh emitted-symbol evidence is pending)", "source:src/prodpicker.h:ProdPicker::on_button_clicked"], "reason": "Home the measured left double click event in ProdPicker and forward its notification and button selection through inherited virtual behavior."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:f30e8c53a1277c18e33f96dcc5c056bdb9a890e6:src/recovered/units/00494230.cpp", "source:src/win.h:Win::on_left_click (candidate spelling for the inherited Win slot-19 callback; fresh emitted-symbol evidence is pending)", "source:src/prodpicker.h:ProdPicker::on_button_clicked"], "reason": "Home the measured left double click event in ProdPicker and forward its notification and button selection through inherited virtual behavior."}
 // symbol    ?on_left_double_click@ProdPicker@@UAEXHH@Z
 void ProdPicker::on_left_double_click(int x, int y) {
     on_left_click(x, y);
@@ -542,7 +542,7 @@ void __cdecl ProdPicker::UNK2(int, ProdPicker *picker) {
 }
 
 // ORIGINAL: 0x00492FA0 ?calculate@ProdPicker@@QAEXXZ 0x00492FA0-0x00493A6D FILE
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00492fa0.cpp", "Pinned original coordinator review: actual label-pointer dereference, camera word3F48F5C3, static cdecl callback ABI, row-end clamps and modal-parent/button suppression order."], "reason": "Recover ProdPicker owner behavior through existing window bases, owned StringLists/controls and typed Base/Caviar camera state; preserve historical seed identity and extents as restoration obligations, not current match claims."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00492fa0.cpp", "Pinned original coordinator review: actual label-pointer dereference, camera word3F48F5C3, static cdecl callback ABI, row-end clamps and modal-parent/button suppression order."], "reason": "Recover ProdPicker owner behavior through existing window bases, owned StringLists/controls and typed Base/Caviar camera state; preserve historical seed identity and extents as restoration obligations, not current match claims."}
 // TRIED: void return confirmed (0,1,2,3 are switch-derived flag bits; 9999/999999 are itoa() display clamps, not status codes - the single `ret` has no `mov eax,K` before it, eax at exit is whatever Font::init() last returned). Structural transcription via named ProdPicker::field_XXXX_ members instead of raw pointer casts didn't close the divergence; prologue shape differs (#0 push vs sub) from local layout, not a wrong op.
 void ProdPicker::calculate() {
     int anyTech = 0;
@@ -763,7 +763,7 @@ void ProdPicker::calculate() {
 }
 
 // ORIGINAL: 0x00494700 ?exec@ProdPicker@@QAEHPAUBase@@HPAUGraphicWin@@H@Z 0x00494700-0x0049515F;0x00658C1E-0x00658C3E FILE
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00494700.cpp", "Pinned original coordinator review: actual label-pointer dereference, camera word3F48F5C3, static cdecl callback ABI, row-end clamps and modal-parent/button suppression order."], "reason": "Recover ProdPicker owner behavior through existing window bases, owned StringLists/controls and typed Base/Caviar camera state; preserve historical seed identity and extents as restoration obligations, not current match claims."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00494700.cpp", "Pinned original coordinator review: actual label-pointer dereference, camera word3F48F5C3, static cdecl callback ABI, row-end clamps and modal-parent/button suppression order."], "reason": "Recover ProdPicker owner behavior through existing window bases, owned StringLists/controls and typed Base/Caviar camera state; preserve historical seed identity and extents as restoration obligations, not current match claims."}
 // TRIED: faithful field/call transcription (two local Buffer RAII objects, real BaseButton/Scroll/Caviar calls) diverges at instr #14 (lea vs xor), early prologue-area register choice; not chased further given the 2687-byte SEH-frame scope.
 // symbol    ?exec@ProdPicker@@QAEHPAUBase@@HPAVGraphicWin@@H@Z
 int ProdPicker::exec(Base *base, int factionId, GraphicWin *owner, int modal) {

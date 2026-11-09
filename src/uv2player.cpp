@@ -250,7 +250,7 @@ Purpose: Bring up the movie player's DirectDraw chain: clear and flip the
 Return Value: 0 after surface clearing; 1 for early/attached-surface failure;
               18 for failed display modes or clipper creation.
 Status: Coverage transcription - unclaimed body, seed
-        git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004bf4b0.cpp retained.
+        git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004bf4b0.cpp retained.
 */
 int UV2Player::play(int width, int height) {
     // Native ESI points to the member slot (+0x10C), not a cached interface.

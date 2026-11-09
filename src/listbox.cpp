@@ -631,7 +631,7 @@ Purpose: Draw one list row: the highlighted/normal text-draw tails over the
          scroll left and the row it landed on.
 
 // ORIGINAL: 0x0060B530 ?draw_item@ListBox@@QAEXH@Z 0x0060B530-0x0060C1D8
-// RECOVERY_BINDING: v1 {"evidence": ["retired seed git:e853f54d^:src/unrecovered/0060b530.cpp preserves the 3240-byte raw-offset transcription and VC6 prologue mismatch", "ListBox::on_scrolling at 0x0060C5D0 calls this row renderer twice by name; source draw callbacks at 0x004072D0 and 0x00614C50 need its draw-context write"], "reason": "Replace the empty linked placeholder with typed ListBox/Dialog/StringList row rendering while preserving historical restoration evidence."}
+// RECOVERY_BINDING: v1 {"evidence": ["retired seed git:077d6845^:src/unrecovered/0060b530.cpp preserves the 3240-byte raw-offset transcription and VC6 prologue mismatch", "ListBox::on_scrolling at 0x0060C5D0 calls this row renderer twice by name; source draw callbacks at 0x004072D0 and 0x00614C50 need its draw-context write"], "reason": "Replace the empty linked placeholder with typed ListBox/Dialog/StringList row rendering while preserving historical restoration evidence."}
 // size      3240 bytes
 // prototype void (__thiscall ?draw_item@ListBox@@QAEXH@Z)(ListBox* this, int)
 // callers   4   call targets   17
@@ -1354,7 +1354,7 @@ Purpose: Add one entry: measure the string at the current width, grow the
          list height, remember the string in the entry table and append the
          id. Returns whatever the entry append reports.
 // ORIGINAL: 0x0060C920 ?item@ListBox@@QAEHPADH@Z 0x0060C920-0x0060C9A9 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0060c920.cpp", "source:src/listbox.h", "source:src/buffer.h", "source:src/stringstruct.h", "source:src/scroll.cpp:ScrollDefaultThickness", "Pinned 0x0060C920..0x0060C9A9 measures positive available width, reads Buffer +0x18, updates ListBox +0x20, then publishes StringList text/metadata before add."], "reason": "Recover item insertion through the real Dialog list and GraphicWin Buffer base, including the shared Scroll thickness. The measured height is Buffer state, not wrap_height's return or ListBox's same-offset scroll state; preserve modulo-word accumulation and insertion result."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0060c920.cpp", "source:src/listbox.h", "source:src/buffer.h", "source:src/stringstruct.h", "source:src/scroll.cpp:ScrollDefaultThickness", "Pinned 0x0060C920..0x0060C9A9 measures positive available width, reads Buffer +0x18, updates ListBox +0x20, then publishes StringList text/metadata before add."], "reason": "Recover item insertion through the real Dialog list and GraphicWin Buffer base, including the shared Scroll thickness. The measured height is Buffer state, not wrap_height's return or ListBox's same-offset scroll state; preserve modulo-word accumulation and insertion result."}
 // size      137 bytes
 // prototype int (__thiscall ?item@ListBox@@QAEHPADH@Z)(ListBox* this, int8* lpString, int)
 // calls     0x00401100 0x005DC360

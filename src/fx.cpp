@@ -409,7 +409,7 @@ void __cdecl wave_it(int wave_id) {
 }
 
 // ORIGINAL: 0x00445650 ?ok_callback@@YAXXZ 0x00445650-0x0044569D BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:bca75cb0:src/recovered/00445650.cpp", "image:original complete function instructions", "source:src/wave.cpp"], "reason": "Home the original behavioral dependency in its base/audio domain using typed state and existing named callees; retained seed provenance and original spans remain restoration evidence, not runtime acceptance."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:bc1f9997:src/recovered/00445650.cpp", "image:original complete function instructions", "source:src/wave.cpp"], "reason": "Home the original behavioral dependency in its base/audio domain using typed state and existing named callees; retained seed provenance and original spans remain restoration evidence, not runtime acceptance."}
 void __cdecl ok_callback() {
     g_OK_WAVE.Wave::set_pitch(EffectOkPitch);
     g_OK_WAVE.Wave::play();
@@ -428,7 +428,7 @@ void __cdecl ok_callback() {
 
 // The button hover hook plays the already-owned pass-over effect.
 // ORIGINAL: 0x004456A0 ?button_hover_callback@@YAXXZ 0x004456A0-0x004456AA FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x00445BB0 Effect initializer publishes 0x004456A0 to hook 0x009B7AA0", "image:0x004456A0-0x004456AA complete MOV receiver 0x0074D9D0 and tail JMP 0x004C6920; NOP padding to independently mapped 0x004456B0", "src/flatbutton.cpp original 0x00608500 hover callback consumer; superseded seed retained in git:de91fffe", "src/wave.cpp g_PASSOVER_WAVE and Wave::play"], "reason": "Provisional behavior-derived name for the nullary button-hover sound callback installed by Effect initialization and consumed by FlatButton hover; its complete entry tail-calls play on the already-owned pass-over Wave, rather than embedding an executable address."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00445BB0 Effect initializer publishes 0x004456A0 to hook 0x009B7AA0", "image:0x004456A0-0x004456AA complete MOV receiver 0x0074D9D0 and tail JMP 0x004C6920; NOP padding to independently mapped 0x004456B0", "src/flatbutton.cpp original 0x00608500 hover callback consumer; superseded seed retained in git:391d42a9", "src/wave.cpp g_PASSOVER_WAVE and Wave::play"], "reason": "Provisional behavior-derived name for the nullary button-hover sound callback installed by Effect initialization and consumed by FlatButton hover; its complete entry tail-calls play on the already-owned pass-over Wave, rather than embedding an executable address."}
 void __cdecl button_hover_callback() {
     g_PASSOVER_WAVE.Wave::play();
 }
@@ -514,7 +514,7 @@ void __cdecl input_callback() {
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004457E0 ?load_music@@YAXH@Z 0x004457E0-0x00445BA4;0x00654CF0-0x00654D52 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/units/004457e0.cpp", "src/ambience.h", "src/midi.h", "src/fx.h"], "reason": "Original constructor staging, actual event tables and compiler-call contracts identify the genuine audio owner operation; compatible historical seed spans and claims remain available for restoration, not an acceptance verdict."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:291c01ea:src/recovered/units/004457e0.cpp", "src/ambience.h", "src/midi.h", "src/fx.h"], "reason": "Original constructor staging, actual event tables and compiler-call contracts identify the genuine audio owner operation; compatible historical seed spans and claims remain available for restoration, not an acceptance verdict."}
 void __cdecl load_music(int faction_id) {
     StringTemp[0] = 0;
     strcat(StringTemp, "fx\\");
@@ -631,7 +631,7 @@ void Effect::init(char *fname, long flags) {
 // Initialize the effect and CPU-voice banks in original call order. Qualified
 // Wave calls were direct in the executable; Effect[4].set_pitch is virtual.
 // ORIGINAL: 0x00445CD0 ?init@FX@@QAEXXZ 0x00445CD0-0x004468E1
-// RECOVERY_BINDING: v1 {"evidence": ["Existing seed git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00445cd0.cpp preserves original span445CD0..4468E1 and is retained as a hint.", "Original instructions store this+28EC=-1, publish callback4456B0, copy70words from683AD8, initialize/group the Effect array and global Wave objects, and reset37words at9BC080. The sole indirect call446034 targets Effect[4] virtual set_pitch at slot38."], "reason": "Initialize the real effect and CPU-voice banks and publish source-owned popup/audio defaults; replaces the executable-address forwarder."}
+// RECOVERY_BINDING: v1 {"evidence": ["Existing seed git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00445cd0.cpp preserves original span445CD0..4468E1 and is retained as a hint.", "Original instructions store this+28EC=-1, publish callback4456B0, copy70words from683AD8, initialize/group the Effect array and global Wave objects, and reset37words at9BC080. The sole indirect call446034 targets Effect[4] virtual set_pitch at slot38."], "reason": "Initialize the real effect and CPU-voice banks and publish source-owned popup/audio defaults; replaces the executable-address forwarder."}
 // TRIED: register-faithful transcription (self=ecx, no ebx-copy) diverges at instr #2 (mov ebx,ecx vs push) - /O2 register allocation differs for this 3089-byte, ~150-call function; not chased further.
 void FX::init() {
     engine_effect_index_ = -1;
@@ -839,7 +839,7 @@ extern "C" int __cdecl sub_4468f0(int a1) {
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00446960 ?play@FX@@QAEXHHH@Z 0x00446960-0x004469F9 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/unrecovered/00446960.cpp", "src/ambience.h", "src/midi.h", "src/fx.h"], "reason": "Original constructor staging, actual event tables and compiler-call contracts identify the genuine audio owner operation; compatible historical seed spans and claims remain available for restoration, not an acceptance verdict."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:291c01ea:src/unrecovered/00446960.cpp", "src/ambience.h", "src/midi.h", "src/fx.h"], "reason": "Original constructor staging, actual event tables and compiler-call contracts identify the genuine audio owner operation; compatible historical seed spans and claims remain available for restoration, not an acceptance verdict."}
 void FX::play(int effect, int, int) {
     if (!(GameDataStateStorage.fields_.game_preferences_ & 0x400)) return;
     if (effect == 1 || effect == 0 || effect == 2) {
@@ -869,7 +869,7 @@ void FX::play(int effect, int, int) {
 /*
 Purpose: Trigger one sound effect from the process-wide bank.
 // ORIGINAL: 0x00446A00 ?play@FX@@QAEXH@Z 0x00446A00-0x00446A8E FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original446A00..446A8E; retired seed git:117282ee:src/unrecovered/00446a00.cpp records the same identity and spans with its shr/test TRIED note kept below.", "0x009A6490 is game.h's GamePreferences and 0x0074DAA0 is popup.h's PopupWaveOwnerSlot; the receiver is fx.h's own FX with effects_ at 0x0 in 0x6C-byte Effect records, and the wave-owner slot 82 plus the effect record's slots 35/7 run through member-fn-pointer unions because the slots' signatures are not declared anywhere.", "The bit-4 release test is the seed's measured ((flags >> 4) & 1) walk, and the wave-owner refresh runs only for effect kinds 0/1/2 exactly as the seed orders them."], "reason": "Recover the sound bank's play trigger on the typed FX receiver; the shr+test release mask stays spelled as the seed measured it."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original446A00..446A8E; retired seed git:ee30a69d:src/unrecovered/00446a00.cpp records the same identity and spans with its shr/test TRIED note kept below.", "0x009A6490 is game.h's GamePreferences and 0x0074DAA0 is popup.h's PopupWaveOwnerSlot; the receiver is fx.h's own FX with effects_ at 0x0 in 0x6C-byte Effect records, and the wave-owner slot 82 plus the effect record's slots 35/7 run through member-fn-pointer unions because the slots' signatures are not declared anywhere.", "The bit-4 release test is the seed's measured ((flags >> 4) & 1) walk, and the wave-owner refresh runs only for effect kinds 0/1/2 exactly as the seed orders them."], "reason": "Recover the sound bank's play trigger on the typed FX receiver; the shr+test release mask stays spelled as the seed measured it."}
 // TRIED (seed): 141/142 bytes match (edit distance 1). Only the bit-4 test
 //         near the end differs: original is `shr ecx,4 / test cl,1`, every
 //         rephrasing tried in the scaffold still lowered to a single fused
@@ -943,7 +943,7 @@ void FX::fade(int a1) {
 /*
 Purpose: Set a selected effect's pitch through the real virtual method.
 // ORIGINAL: 0x00446AF0 ?set_pitch@FX@@QAEXHH@Z 0x00446AF0-0x00446B10 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason":"The 0x6C-stride receiver is the FX-owned Effect array, and slot 38 is Wave::set_pitch in the established virtual hierarchy.","evidence":["Original 0x00446AF0-0x00446B10 multiplies the effect index by 0x6C and dispatches slot 38 with the pitch argument.","fx.h owns Effect[97] at offset zero; wave.h declares virtual set_pitch at slot 38; git:b7e5b127:src/recovered/units/00446af0.cpp preserves the historical exact seed."]}
+// RECOVERY_BINDING: v1 {"reason":"The 0x6C-stride receiver is the FX-owned Effect array, and slot 38 is Wave::set_pitch in the established virtual hierarchy.","evidence":["Original 0x00446AF0-0x00446B10 multiplies the effect index by 0x6C and dispatches slot 38 with the pitch argument.","fx.h owns Effect[97] at offset zero; wave.h declares virtual set_pitch at slot 38; git:8b48f0bb:src/recovered/units/00446af0.cpp preserves the historical exact seed."]}
 */
 void FX::set_pitch(int effect, int pitch) {
     effects_[effect].set_pitch(pitch);
@@ -952,7 +952,7 @@ void FX::set_pitch(int effect, int pitch) {
 /*
 Purpose: Adjust the active engine effect's pitch if one is selected.
 // ORIGINAL: 0x00446B10 ?engine_pitch@FX@@QAEXH@Z 0x00446B10-0x00446B37 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason":"The trailing signed FX member selects one Effect, and the indirect call is its inherited virtual Wave::set_pitch.","evidence":["Original 0x00446B10-0x00446B37 reads signed this+0x28EC, skips negative values and calls slot 38 on the 0x6C-stride Effect array.","FX::init writes -1 to the trailing member; git:b7e5b127:src/recovered/00446b10.cpp preserves the historical exact seed and its signedness note."]}
+// RECOVERY_BINDING: v1 {"reason":"The trailing signed FX member selects one Effect, and the indirect call is its inherited virtual Wave::set_pitch.","evidence":["Original 0x00446B10-0x00446B37 reads signed this+0x28EC, skips negative values and calls slot 38 on the 0x6C-stride Effect array.","FX::init writes -1 to the trailing member; git:8b48f0bb:src/recovered/00446b10.cpp preserves the historical exact seed and its signedness note."]}
 */
 void FX::engine_pitch(int pitch) {
     if (engine_effect_index_ >= 0) {
@@ -1025,7 +1025,7 @@ int __cdecl ambience(int ambience_id) {
 // the effect played. These are real bank elements, not independent globals.
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00446D10 ?ambience_veh@@YAXH@Z 0x00446D10-0x004471EE FILE
-// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/units/00446d10.cpp", "src/ambience.h", "src/midi.h", "src/fx.h"], "reason": "Original constructor staging, actual event tables and compiler-call contracts identify the genuine audio owner operation; compatible historical seed spans and claims remain available for restoration, not an acceptance verdict."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:291c01ea:src/recovered/units/00446d10.cpp", "src/ambience.h", "src/midi.h", "src/fx.h"], "reason": "Original constructor staging, actual event tables and compiler-call contracts identify the genuine audio owner operation; compatible historical seed spans and claims remain available for restoration, not an acceptance verdict."}
 void __cdecl ambience_veh(int vehicle) {
     if (vehicle < 0) return;
     const int old = LastAmbienceVehicle;
@@ -2160,7 +2160,7 @@ void SAmbience::base_liberated() {
     }
 }
 // ORIGINAL: 0x004478D0 ??0BAmbience@@QAE@XZ 0x004478D0-0x00447911 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/units/004478d0.cpp", "src/ambience.h", "src/midi.h", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/004478d0.cpp"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:291c01ea:src/recovered/units/004478d0.cpp", "src/ambience.h", "src/midi.h", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/004478d0.cpp"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
 // symbol    ??0BAmbience@@QAE@XZ
 // RECOVERY_GENERATED: v1 vtable 0x0066B9F0 0x0066BB58 ??_7BAmbience@@6B@ 0x004478D0
@@ -2179,7 +2179,7 @@ void BAmbience::begin() {
 }
 
 // ORIGINAL: 0x00447940 ?general@BAmbience@@QAEXXZ 0x00447940-0x00447AA9 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/units/00447940.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:291c01ea:src/recovered/units/00447940.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
 // symbol    ?general@BAmbience@@UAEXXZ
 void BAmbience::general() {
     field_74_ += 500;
@@ -2238,7 +2238,7 @@ void BAmbience::design_window_hide() {
 }
 
 // ORIGINAL: 0x00447AF0 ?hostility@BAmbience@@QAEXXZ 0x00447AF0-0x00447B2D FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/units/00447af0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:291c01ea:src/recovered/units/00447af0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
 // symbol    ?hostility@BAmbience@@UAEXXZ
 void BAmbience::hostility() {
     if (!BAmbienceHostility) {
@@ -2675,7 +2675,7 @@ void Midi::advance_trackset_transposition() {
 }
 
 // ORIGINAL: 0x00447DB0 ?begin@AAmbience@@QAEXXZ 0x00447DB0-0x00447DC6 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/00447db0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:291c01ea:src/recovered/00447db0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
 // symbol    ?begin@AAmbience@@UAEXXZ
 void AAmbience::begin() {
     play();
@@ -2683,7 +2683,7 @@ void AAmbience::begin() {
 }
 
 // ORIGINAL: 0x00447DD0 ?general@AAmbience@@QAEXXZ 0x00447DD0-0x00448273 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/units/00447dd0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:291c01ea:src/recovered/units/00447dd0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
 // symbol    ?general@AAmbience@@UAEXXZ
 void AAmbience::general() {
     ++AAmbiencePass;

@@ -7,7 +7,7 @@ from match_recovery.tasks import Task, TaskStore
 
 
 ROOT = Path(__file__).resolve().parents[2]
-BASELINE = 'a9d43ab7b9175e1c78b4df967bb068eb05798151'
+BASELINE = '218c76271075ae645e8de9a72590a76a390b2b4f'
 
 
 def test_current_catalog_is_loadable_by_native_task_consumers():

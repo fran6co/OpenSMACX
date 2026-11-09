@@ -202,7 +202,7 @@ Purpose: Found a base from the built colony pod: log it, clear rock under
 // treaty-2 arm, shift-form rocky test.
 // size      741 bytes
 Status: Coverage transcription of the retained seed
-        (git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004c96e0.cpp, plain FILE). The veh record reads
+        (git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004c96e0.cpp, plain FILE). The veh record reads
         are the typed Vehs[] members (x/y, state, flags, faction_id,
         visibility); the base writes are Bases[] (governor, name_string,
         visibility, faction_id_current); the diplomacy words are
@@ -854,7 +854,7 @@ char staple_foreign_label[] = "NERVESTAPLETHEM";
 
 // The UI, network and AI callers share the same base-domain operation.
 // ORIGINAL: 0x004CA7F0 ?action_staple@@YAXH@Z 0x004CA7F0-0x004CAA4B BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:bca75cb0:src/recovered/units/004ca7f0.cpp", "image:original complete function instructions", "source:src/base.cpp"], "reason": "Home the original behavioral dependency in its base/audio domain using typed state and existing named callees; retained seed provenance and original spans remain restoration evidence, not runtime acceptance."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:bc1f9997:src/recovered/units/004ca7f0.cpp", "image:original complete function instructions", "source:src/base.cpp"], "reason": "Home the original behavioral dependency in its base/audio domain using typed state and existing named callees; retained seed provenance and original spans remain restoration evidence, not runtime acceptance."}
 void __cdecl action_staple(int base_id) {
     const int attempts = ++Bases[base_id].nerve_staple_count;
     const unsigned int faction = Bases[base_id].faction_id_current;
@@ -908,7 +908,7 @@ static inline int destroy_dist(int x_a, int y_a, int x_b, int y_b) {
 }
 
 // ORIGINAL: 0x004CAA50 ?action_destroy@@YAXHHHH@Z 0x004CAA50-0x004CB302
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004caa50.cpp", "recovery/tasks/mapwin-owner-coverage-wave.json", "Map byte+2 is val2; diplomatic treaty direction and callback rereads independently decoded from the pinned original."], "reason": "Recover the artillery and bombing destruction paths in their real vehicle owner, replacing the explicitly unfinished dependency while preserving its complete original span and all seed evidence."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004caa50.cpp", "recovery/tasks/mapwin-owner-coverage-wave.json", "Map byte+2 is val2; diplomatic treaty direction and callback rereads independently decoded from the pinned original."], "reason": "Recover the artillery and bombing destruction paths in their real vehicle owner, replacing the explicitly unfinished dependency while preserving its complete original span and all seed evidence."}
 // TRIED: Ghidra-structure translation with NetMsg::pop/Strings::get/ Console::focus receiver fixes (Ghidra flattened those three thiscalls away), boom()/whose_territory()/battle_fight()/ stack_check()/add_goal()/base_find() argument order verified against raw disasm one by one; compiles, MISMATCH #6 (early - likely the isAssault/flag18 bool-store or veh_skip's arg push order relative to the OR-mask store).
 void __cdecl action_destroy(int veh_id, int bits, int x, int y) {
     const int faction_id = Vehs[veh_id].faction_id;
@@ -1561,7 +1561,7 @@ static inline int airdrop_dist(int x_a, int y_a, int x_b, int y_b) {
 }
 
 // ORIGINAL: 0x004CC360 ?action_airdrop@@YAHHHHH@Z 0x004CC360-0x004CD051 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004cc360.cpp retained signature/extents and complete seed; no historical claim copied", "Coordinator full pinned original instruction decode 004CC360..004CD051, typed source owner fields and corrected original call/branch evidence", "recovery/tests/test_airdrop_network.py actual-body directional treaty and network reentrancy controls; not linked/runtime/game acceptance"], "reason": "Recover complete typed airdrop admission/interception, landing selection, stack movement, capture and post-drop updates. Preserve unsigned damage storage with integer thresholds and directional treaty evidence; referenced unfinished dependencies remain explicit, not game acceptance."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004cc360.cpp retained signature/extents and complete seed; no historical claim copied", "Coordinator full pinned original instruction decode 004CC360..004CD051, typed source owner fields and corrected original call/branch evidence", "recovery/tests/test_airdrop_network.py actual-body directional treaty and network reentrancy controls; not linked/runtime/game acceptance"], "reason": "Recover complete typed airdrop admission/interception, landing selection, stack movement, capture and post-drop updates. Preserve unsigned damage storage with integer thresholds and directional treaty evidence; referenced unfinished dependencies remain explicit, not game acceptance."}
 // TRIED: direct field-for-field transcription (validation chain of terrain/ZOC/treaty/AA checks, each guarding a NetMsg::pop error-return; airdrop-site scoring loop; base-capture tail) diverges at instr #7 (push vs xor), early register-allocation choice; not chased further given the 3313-byte scope.
 int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
     NetDaemonNet.channels_[0].leading_words_[3] = mode;
@@ -1863,7 +1863,7 @@ void __cdecl action_arty(int veh_id, int x, int y) {
 }
 
 // ORIGINAL: 0x004CD2F0 ?action_destruct@@YAXH@Z 0x004CD2F0-0x004CD4D1 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/recovered/units/004cd2f0.cpp", "recovery/tasks/mapwin-owner-coverage-wave.json", "Pinned instructions 4CD365 and 4CD44E identify reactor_id and PLAN_ALIEN_ARTIFACT, correcting seed cost/class labels."], "reason": "Recover vehicle self-destruction through typed reactor and plan fields, nine radius offsets and real stack lifecycle; original rereads the vehicle prototype after weap_val. Preserve seed identity and original extent without granting a byte claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/recovered/units/004cd2f0.cpp", "recovery/tasks/mapwin-owner-coverage-wave.json", "Pinned instructions 4CD365 and 4CD44E identify reactor_id and PLAN_ALIEN_ARTIFACT, correcting seed cost/class labels."], "reason": "Recover vehicle self-destruction through typed reactor and plan fields, nine radius offsets and real stack lifecycle; original rereads the vehicle prototype after weap_val. Preserve seed identity and original extent without granting a byte claim."}
 // LEVER: (0.84 -> 0.994) range()/wrap_map_x()/on_map() inlines, stack_kill
 //   kept out of line (auto_inline off at its definition), and the kill pass
 //   restarts the stack walk from an outer loop. Left: the post-break `< 0`
@@ -2151,7 +2151,7 @@ void __cdecl action_patrol(int veh_id, int x, int y) {
 }
 
 // ORIGINAL: 0x004CDAF0 ?shoot_it@@YAHHHHHH@Z 0x004CDAF0-0x004CE206
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 004CDAF0; retained seed git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004cdaf0.cpp", "recovery/tasks/vehicle-special-actions-coverage.json; native scope expansion preserves task baseline", "Native4CDBD4/4CDC08 load inventory after the first base scan;4CDC14 increments live deployed count;4CDC4B/51 snapshots bounded remaining attempts.", "Native4CDFF8..4CE018 unconditionally decrements live inventory after sacrifice callbacks and clamps deployed count;4CE059/063 reads reported inventory after parsing the base.", "Players noun_faction+2E4, noun_gender+2FC, is_noun_plural+300 and adj_name_faction+304 distinguish outcome and sacrifice text."], "reason": "Complete typed orbital-pod and Flechette interception, sacrifice, cancellation and reporting paths. Original binding began as an explicitly unfinished dependency; preserve its original spans and complete retained seed. Source implementation does not establish byte, reference, structure or runtime acceptance."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 004CDAF0; retained seed git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004cdaf0.cpp", "recovery/tasks/vehicle-special-actions-coverage.json; native scope expansion preserves task baseline", "Native4CDBD4/4CDC08 load inventory after the first base scan;4CDC14 increments live deployed count;4CDC4B/51 snapshots bounded remaining attempts.", "Native4CDFF8..4CE018 unconditionally decrements live inventory after sacrifice callbacks and clamps deployed count;4CE059/063 reads reported inventory after parsing the base.", "Players noun_faction+2E4, noun_gender+2FC, is_noun_plural+300 and adj_name_faction+304 distinguish outcome and sacrifice text."], "reason": "Complete typed orbital-pod and Flechette interception, sacrifice, cancellation and reporting paths. Original binding began as an explicitly unfinished dependency; preserve its original spans and complete retained seed. Source implementation does not establish byte, reference, structure or runtime acceptance."}
 // TRIED: mechanical Ghidra-shape transcription (int-arithmetic bases for the fixed globals, char*/int* casts sized to match each DAT_ family's stride) compiles and matches through instruction #2; not chased to byte-exact given size (1814 bytes).
 int __cdecl shoot_it(int attacker, int defender, int x, int y,
                      int fungal_attack) {
@@ -2404,7 +2404,7 @@ extern "C" void __cdecl sub_4ce6b0(int x_coord, int y_coord) {
 }
 
 // ORIGINAL: 0x004CE790 ?action_fungal@@YAXHHH@Z 0x004CE790-0x004CEDDB BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 004CE790; retained seed git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004ce790.cpp", "recovery/tasks/vehicle-special-actions-coverage.json; native scope expansion preserves task baseline", "Native4CE326/4CE7F0 kill precedes announcement; fungal EBX retains initial combat faction while later slot reads observe compacted storage;580B51/580BF7 are mask immediates, not globals."], "reason": "Typed transfer or terrain action preserves native parser, kill, interception and post-call vehicle-slot read order; retained seed remains evidence, not executable backing."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 004CE790; retained seed git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004ce790.cpp", "recovery/tasks/vehicle-special-actions-coverage.json; native scope expansion preserves task baseline", "Native4CE326/4CE7F0 kill precedes announcement; fungal EBX retains initial combat faction while later slot reads observe compacted storage;580B51/580BF7 are mask immediates, not globals."], "reason": "Typed transfer or terrain action preserves native parser, kill, interception and post-call vehicle-slot read order; retained seed remains evidence, not executable backing."}
 // TRIED: literal parameter-slot layout (a1/a2/a3 kept live as named locals rather than reused stack slots the original repurposes after FX::play/kill); diverges at instruction #5, before the base_find call, so it's a prologue register-allocation gap. Full logic (opportunistic-attack radius scan, territory check, and the fungus-spread loop with veh_init/bit_set/ world_alt_set/synch_bit/draw_tile) is landed and faithful to the byte-offset table math (record stride 0x34, faction matrix stride 0x20cc), cross-checked instruction-by-instruction against the disassembly rather than trusted from Ghidra alone.
 // The image inlines map.h's anything_at here (its dead `== -1` test survives).
 
@@ -2680,7 +2680,7 @@ void __cdecl action_gate(int veh_id, int base_id) {
 
 // Orbital combat uses the four source-owned faction satellite counters.
 // ORIGINAL: 0x004CF480 ?action_sat_attack@@YAXHHHH@Z 0x004CF480-0x004CF73E BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/004cf480.cpp", "image:0x004CF480-0x004CF73E complete instructions and outcome literals", "source:src/faction.h:PlayerData satellite array", "source:src/reportif.h", "source:src/maininterface.h"], "reason": "Recover orbital attack effects in the vehicle-action domain using real faction diplomacy, grammar, indexed satellite counters and report state. Original CRT randomness, parsing order, unchecked satellite indexing and popup outcomes are retained; existing popup and diplomacy seams remain separate obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/recovered/units/004cf480.cpp", "image:0x004CF480-0x004CF73E complete instructions and outcome literals", "source:src/faction.h:PlayerData satellite array", "source:src/reportif.h", "source:src/maininterface.h"], "reason": "Recover orbital attack effects in the vehicle-action domain using real faction diplomacy, grammar, indexed satellite counters and report state. Original CRT randomness, parsing order, unchecked satellite indexing and popup outcomes are retained; existing popup and diplomacy seams remain separate obligations."}
 void __cdecl action_sat_attack(int attacker, int target, int type, int base_id) {
     if (!(PlayersData[attacker].diplo_treaties[target] & 0x10))
         double_cross(attacker, target, -1);

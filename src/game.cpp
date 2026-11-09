@@ -131,7 +131,7 @@ GraphicWin *OpeningWindow = 0;
 // The temporary model retains the fourth record until scope exit, including
 // unwinding. A valid record with a different step count leaves its offset alone.
 // ORIGINAL: 0x0058F250 ?system_close@@YAXXZ 0x0058F250-0x0058F2E6 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:bb3b3233842b050fb0840e1cc6c226e8f30f7055:src/unrecovered/0058f250.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json", "Pinned58F27B..58F281 and58F2C4..58F2D9: virtual slot0 with deleting flag1, followed by clearing the respective global slot.", "init_opening and system_init allocate GraphicWin and secondary MapWin owners with new; Win/GraphicWin/MapWin virtual destructors and the separate close_opening path establish typed destruction/free semantics.", "recovery/tasks/game-shutdown-owner-oct26dn.json", "recovery/tests/test_system_close_actual_source.py"], "reason": "Recover system shutdown through real heap-owned GraphicWin and MapWin lifetimes: delete the opening window and secondary MapWin slots1..7, preserving each null guard and shared-slot visibility until destruction/free returns. Keep primary slot0 and the original sound, parent, window, Paths and map cleanup order. This replaces the prior mistaken show(1) translation; source recovery alone does not establish current byte exactness or game acceptance."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:edbf268ff962712fadc389b8283e4c795b6d27a2:src/unrecovered/0058f250.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json", "Pinned58F27B..58F281 and58F2C4..58F2D9: virtual slot0 with deleting flag1, followed by clearing the respective global slot.", "init_opening and system_init allocate GraphicWin and secondary MapWin owners with new; Win/GraphicWin/MapWin virtual destructors and the separate close_opening path establish typed destruction/free semantics.", "recovery/tasks/game-shutdown-owner-oct26dn.json", "recovery/tests/test_system_close_actual_source.py"], "reason": "Recover system shutdown through real heap-owned GraphicWin and MapWin lifetimes: delete the opening window and secondary MapWin slots1..7, preserving each null guard and shared-slot visibility until destruction/free returns. Keep primary slot0 and the original sound, parent, window, Paths and map cleanup order. This replaces the prior mistaken show(1) translation; source recovery alone does not establish current byte exactness or game acceptance."}
 void __cdecl system_close() {
     release_sound();
 
@@ -548,7 +548,7 @@ int __cdecl system_init() {
 // the Console splitter. Original owner TU remains unknown; game.cpp is the
 // current home because this is the startup coordinator.
 // ORIGINAL: 0x0058EE60 ?desktop_init@@YAHH@Z 0x0058EE60-0x0058EFEB BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b84036a86445148d25d4e216ac24c131e108bea8:src/unrecovered/0058ee60.cpp", "Pinned58EE60..58EFEB bounds939430..43C are Console+23D80..8C; DIB width/height come from the Console virtual Buffer base, not detached globals.", "Original startup interfaces, multiplayer/PBEM branches and two non-input pumps; OpeningWindow is deleted through its actual GraphicWin owner.", "recovery/tasks/startup-desktop-owner-oct5.json", "recovery/tests/test_startup_actual_source.py"], "reason": "Complete startup coordination through real owned windows and Console bounds; preserve the original calls, stores, redraw/cover ordering and OpeningWindow lifetime. Current source home is game.cpp, not a claim about original translation-unit ownership."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:818efd04347d6f83e98e66d75a443fb646d75aaa:src/unrecovered/0058ee60.cpp", "Pinned58EE60..58EFEB bounds939430..43C are Console+23D80..8C; DIB width/height come from the Console virtual Buffer base, not detached globals.", "Original startup interfaces, multiplayer/PBEM branches and two non-input pumps; OpeningWindow is deleted through its actual GraphicWin owner.", "recovery/tasks/startup-desktop-owner-oct5.json", "recovery/tests/test_startup_actual_source.py"], "reason": "Complete startup coordination through real owned windows and Console bounds; preserve the original calls, stores, redraw/cover ordering and OpeningWindow lifetime. Current source home is game.cpp, not a claim about original translation-unit ownership."}
 // kind      game
 // TRIED: none confirmed byte-exact; MISMATCH #5 push-count differs - the original sets up an ebp frame (push ebp/mov ebp,esp) that this body's register pressure does not need, so /O2 drops it.
 int __cdecl desktop_init(int fresh) {
@@ -1215,7 +1215,7 @@ char *__cdecl get_his_her(int faction_id, int sentence_form) {
 Purpose: Fetch the "him/her" pronoun into the shared game pronoun buffer,
          optionally upper-casing it, beside the sibling get_his_her body.
 // ORIGINAL: 0x0058FC50 ?get_him_her@@YAPADHH@Z 0x0058FC50-0x0058FCDB BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original58FC50..58FCDB; retired seed git:b18d3ac8:src/unrecovered/0058fc50.cpp records the same identity and spans.", "The fixed-address bindings rename to the tree's own models exactly as game.cpp's sibling get_his_her (0x0058FBC0) already does: Players (faction.h, the 0x167-stride first word is is_leader_female), Labels (alpha.h), StringTable (strings.h), PronounBuffer (game.h, 0x00945838) and the CharUpperA import the header supplies.", "Label code 0xC7/0xC8 and the sentence-form handling are the seed's measured behaviour."], "reason": "Home the sibling pronoun fetcher beside its shared buffer and get_his_her in the game source."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original58FC50..58FCDB; retired seed git:da8a4b7f:src/unrecovered/0058fc50.cpp records the same identity and spans.", "The fixed-address bindings rename to the tree's own models exactly as game.cpp's sibling get_his_her (0x0058FBC0) already does: Players (faction.h, the 0x167-stride first word is is_leader_female), Labels (alpha.h), StringTable (strings.h), PronounBuffer (game.h, 0x00945838) and the CharUpperA import the header supplies.", "Label code 0xC7/0xC8 and the sentence-form handling are the seed's measured behaviour."], "reason": "Home the sibling pronoun fetcher beside its shared buffer and get_his_her in the game source."}
 Return Value: PronounBuffer
 Status: Coverage transcription - unclaimed body
 */
@@ -1605,7 +1605,7 @@ int __cdecl encrypt_read(void *data, unsigned int size, unsigned int count,
 
 
 // ORIGINAL: 0x005A6890 ?game_io@@YAHHPAUFILE@@@Z 0x005A6890-0x005A6AC0 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005a6890.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover the six ordered MapWin member transfers through standard buffered or encrypted I/O and shared transaction state, not raw self offsets."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005a6890.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover the six ordered MapWin member transfers through standard buffered or encrypted I/O and shared transaction state, not raw self offsets."}
 // symbol    ?game_io@@YAHPAVMapWin@@PAU_iobuf@@@Z
 // TRIED: divergence at #4 (push edi/esi vs test) is register allocation for a1 not hoisting into a callee-saved reg; a hoisted `base` local and inline `(char*)a1+off` casts compile identically.
 int __cdecl game_io(MapWin *record, FILE *file) {
@@ -1710,7 +1710,7 @@ int __cdecl game_data_plain_transfer(FILE *file, void *buffer, unsigned int byte
 // Both map daemons call map_data out of line.
 #pragma auto_inline(off)
 // ORIGINAL: 0x005A9280 ?map_data@@YAHPAUFILE@@HH@Z 0x005A9280-0x005A94ED BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005a9280.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover complete map-data transfer including archive-header blocks, legacy version-dependent block length, failure ordering and real map_read/map_write owners."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005a9280.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover complete map-data transfer including archive-header blocks, legacy version-dependent block length, failure ordering and real map_read/map_write owners."}
 // symbol    ?map_data@@YAHPAU_iobuf@@HH@Z
 // TRIED: inline duplication of each read/write block - factored into rw_plain/rw_block helpers instead; DAT_00945d74 is written once (=0) and never again, so the encrypt branch is dead at runtime but still emitted (matches source, not a live check removed); diverges at instr #5
 int __cdecl map_data(FILE *file, int write_mode, int transfer_map_header) {
@@ -1740,7 +1740,7 @@ fail:
 #pragma auto_inline(on)
 
 // ORIGINAL: 0x005A9C10 ?load_map_daemon@@YAHPAD@Z 0x005A9C10-0x005A9DAD BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005a9c10.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover extension/header/version validation, map windows and map tiles, contour copy direction and Paths lifecycle through existing genuine owners."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005a9c10.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover extension/header/version validation, map windows and map tiles, contour copy direction and Paths lifecycle through existing genuine owners."}
 // symbol    ?load_map_daemon@@YAHPAD@Z
 // TRIED: extension check, env_open, header_check against the TERRAN/ TERRANMAP string depending on the extension, then (fread reuses the `a1` parameter's own stack slot as scratch, matching the disassembly) a MapWin close sweep, map_data, and the counter table reset/copy. Landed at 0.80 similarity; diverges at #3 on register vs stack scheduling for the extension check.
 int __cdecl load_map_daemon(char *path) {
@@ -1804,7 +1804,7 @@ int __cdecl load_map_daemon(char *path) {
 }
 
 // ORIGINAL: 0x005A94F0 ?save_daemon@@YAHPAD@Z 0x005A94F0-0x005A96C3 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:bcd1dd555eaeb189f64bcfcf6980cbe672210029:src/unrecovered/005a94f0.cpp: complete identity/span and historical return-accumulator lesson", "Pinned5A95A1..5A95CD copies eight live process records93D4FC..93E1DC to93E978..93F658", "Pinned5389F0 preserves partial alias writes through the24-entry lock-state constructor loop", "src/game.cpp: reset_saved_process_slot_state separately initializes snapshot identity bytes at93E99C+i*19C", "recovery/tasks/save-daemon-owner-oct5.json", "recovery/tests/test_save_daemon_actual_source.py"], "reason": "Recover complete daemon save operation with original mutable-pointer ABI, error statuses, side-effect order and file cleanup. Persistent snapshot is an overlapping NetDaemon storage view; its observed endpoint is a lower bound, not a proven original class size or union declaration. Existing lock-state constructor initialization and separate startup identity initializer remain unchanged."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:ee0a7309708fe62c6408f9896b1bea59ef9f288b:src/unrecovered/005a94f0.cpp: complete identity/span and historical return-accumulator lesson", "Pinned5A95A1..5A95CD copies eight live process records93D4FC..93E1DC to93E978..93F658", "Pinned5389F0 preserves partial alias writes through the24-entry lock-state constructor loop", "src/game.cpp: reset_saved_process_slot_state separately initializes snapshot identity bytes at93E99C+i*19C", "recovery/tasks/save-daemon-owner-oct5.json", "recovery/tests/test_save_daemon_actual_source.py"], "reason": "Recover complete daemon save operation with original mutable-pointer ABI, error statuses, side-effect order and file cleanup. Persistent snapshot is an overlapping NetDaemon storage view; its observed endpoint is a lower bound, not a proven original class size or union declaration. Existing lock-state constructor initialization and separate startup identity initializer remain unchanged."}
 // TRIED: `fclose`/`remove` are catalogued nullary cdecl, so they are reached through explicit function-pointer casts rather than by name (a direct call fails C2660: too many arguments). The return-value accumulator (`edi`) starts at 2 before `header_write`, becomes 3 once the first `fwrite` succeeds, and only reaches 0 once `game_data` and the second `fwrite` both succeed - the fclose/remove tail runs unconditionally, and `remove` only when the status is still nonzero. Landing the closest control-flow-faithful form (divergence starts at instruction #6, on the `inc` vs. explicit reload of the reentrancy counter).
 #if defined(_MSC_VER) && _MSC_VER == 1200
 #pragma function(memcpy)
@@ -1905,7 +1905,7 @@ int __cdecl save_map_daemon(char *path) {
 }
 
 // ORIGINAL: 0x005A9760 ?load_daemon@@YAHPADH@Z 0x005A9760-0x005A9B19 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005a9760.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover the complete load orchestration through actual windows, paths, player/base/vehicle state and PBEM/tamper lifecycle. The called game_data serializer remains explicitly unfinished; this is not working-game acceptance."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005a9760.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover the complete load orchestration through actual windows, paths, player/base/vehicle state and PBEM/tamper lifecycle. The called game_data serializer remains explicitly unfinished; this is not working-game acceptance."}
 // symbol    ?load_daemon@@YAHPBDH@Z
 // TRIED: no Ghidra decompilation was provided for this address; transcribed straight from the disassembly. The two `// indirect` sites are vtable slots 1 (takes an int) and 2 (nullary) on the static object at g_007b0cb8, dispatched through VCall as the brief's shim pattern.
 // TRIED: nothing further tried; MISMATCH #0 (push vs sub - a prologue/ stack-layout difference from the local array sizing), similarity 0.73 over 953 bytes. The "copy loop" at 0x5A9A02 is a broadcast of the value at a fixed index into all 0x20 slots of two parallel int arrays (g_009392c0, g_00939340), not a running index as first guessed.
@@ -3045,7 +3045,7 @@ int __cdecl game_data(FILE *file, int write_mode) {
 }
 
 // ORIGINAL: 0x005AB600 ?load_map@@YAHXZ 0x005AB600-0x005ABB8D;0x006620A7-0x0066221F
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005ab600.cpp", "recovery/tasks/game-save-load-owner-coverage.json", "pinned image sha256:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_load_map_behavior.py"], "reason": "Recover map loading through AlphaSave's real selected-path return and existing extension, map-daemon, multiplayer, preference, and dialog owners."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005ab600.cpp", "recovery/tasks/game-save-load-owner-coverage.json", "pinned image sha256:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_load_map_behavior.py"], "reason": "Recover map loading through AlphaSave's real selected-path return and existing extension, map-daemon, multiplayer, preference, and dialog owners."}
 // TRIED: FileBox/AlphaSave are opaque (no fields) in this scaffold, so their real stack sizes are unknown; used one raw byte buffer + placement-new/reinterpret_cast at the exact ebp-relative offsets from the disasm (incl. the manual vtable pokes before AlphaSave/Scroll/FlatButton close() calls) instead of real SEH locals. Compiles, right call order/addresses/args, sim 0.34-0.50 - the missing SEH frame and giant flat buffer (vs per-object locals) rule out byte-exact; not retried given size (1797 bytes, ~30 embedded objects).
 int __cdecl load_map() {
     FileBox file_box_lifetime;
@@ -3119,8 +3119,8 @@ int __cdecl load_map() {
 
 /*
 // ORIGINAL: 0x005A9DB0 ?yearmotize@@YAXPAD@Z 0x005A9DB0-0x005A9EB0 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:f802f71a:src/leaf_recoveries.cpp", "image:0x005A9DB0", "source:src/game.cpp"], "reason": "The complete year-digit rewrite is the helper called by save_game; move its unchanged typed body and original identity out of the generic leaf container into the game owner."}
-// TRIED: scaffold's own `isdigit()`/`_itoa()` (empty-parens fallback declarations) - redeclared under new names `my_isdigit`/ `my_itoa` with the real signatures instead (relocation is masked regardless of the symbol name, matching the existing `my_itoa` idiom in git:20b88b523285a816ba99f503d727b761b89b227f:src/recovered/units/0042abc0.cpp).
+// RECOVERY_BINDING: v1 {"evidence": ["git:11b8fdc7:src/leaf_recoveries.cpp", "image:0x005A9DB0", "source:src/game.cpp"], "reason": "The complete year-digit rewrite is the helper called by save_game; move its unchanged typed body and original identity out of the generic leaf container into the game owner."}
+// TRIED: scaffold's own `isdigit()`/`_itoa()` (empty-parens fallback declarations) - redeclared under new names `my_isdigit`/ `my_itoa` with the real signatures instead (relocation is masked regardless of the symbol name, matching the existing `my_itoa` idiom in git:f30e8c53a1277c18e33f96dcc5c056bdb9a890e6:src/recovered/units/0042abc0.cpp).
 */
 void __cdecl yearmotize(char *text) {
     char *p = text;
@@ -3167,7 +3167,7 @@ int GameDataPlayerCountSnapshot;
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x005BED20 0x005BEFE0 0x005BEFF0 0x005BED70
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x005BED20 0x005BEFF0 0x005BF004 0x005BED6A
 // ORIGINAL: 0x005BED20 ?do_unity_crash@@YAHHHH@Z 0x005BED20-0x005BEFDF
-// RECOVERY_BINDING: v1 {"reason":"Recover Map bit2 event dispatch, spawn/morale and turn-based energy awards, and the live Base table radar scan with real UI/audio objects. The seed note calling this a unit scan is historical; the original stride134 and nativeBase count prove Bases. No byte/reference or runtime claim is granted.","evidence":["git:0de05de6:src/unrecovered/005bed20.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/scenario-artifact-unity-owner-coverage.json","Original full span and native physical COFF emitted symbol ?do_unity_crash@@YAHHHH@Z; existing source owns all referenced storage and services."]}
+// RECOVERY_BINDING: v1 {"reason":"Recover Map bit2 event dispatch, spawn/morale and turn-based energy awards, and the live Base table radar scan with real UI/audio objects. The seed note calling this a unit scan is historical; the original stride134 and nativeBase count prove Bases. No byte/reference or runtime claim is granted.","evidence":["git:3f579310:src/unrecovered/005bed20.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/scenario-artifact-unity-owner-coverage.json","Original full span and native physical COFF emitted symbol ?do_unity_crash@@YAHHHH@Z; existing source owns all referenced storage and services."]}
 // NOTE: code bytes match the image with relocations masked; recover measure
 //       refuses it while ConsoleInfoWin/WorldClimateWorldWin lack bounded
 //       object spans. The image keeps two "unitfound_sm.pcx" literals (unpooled).
@@ -3239,7 +3239,7 @@ int __cdecl do_unity_crash(int x, int y, int faction_id) {
 
 
 // ORIGINAL: 0x00444D90 ?diplo@@YAXHH@Z 0x00444D90-0x00444DA7 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:f178e8db:src/recovered/00444d90.cpp complete original identity/spans and historical claims/findings.", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x444d90 full native body review.", "source:src/game.cpp existing real state owners; no executable-address alias or synthetic receiver."], "reason": "Recover the complete short helper through established source-owned diplomacy, vehicle, text or window state; preserve signed sentinel behavior, original receiver/argument order and conditional callbacks."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a1347e25:src/recovered/00444d90.cpp complete original identity/spans and historical claims/findings.", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x444d90 full native body review.", "source:src/game.cpp existing real state owners; no executable-address alias or synthetic receiver."], "reason": "Recover the complete short helper through established source-owned diplomacy, vehicle, text or window state; preserve signed sentinel behavior, original receiver/argument order and conditional callbacks."}
 // symbol    ?diplo@@YAXHH@Z
 // TRIED: homed into game.cpp (its real TU) 2026-09-03 - does not compile there: the body's only call is `DiploWin::exec` at 0x00443F10, which diplowin.h does not declare and no product TU defines yet. Declaring `void exec(int,int)` on DiploWin without a definition is a link error, so the body stays here until 0x00443F10 is homed into diplowin.cpp and `exec` declared on the class. The `#include "diplowin.h"` game.cpp needs for it is already added.
 void __cdecl diplo(int faction_id, int faction_id_with) {
@@ -3267,7 +3267,7 @@ SaveNameDefaultStorage SaveNameDefaultStorageGlobal;
 
 /*
 // ORIGINAL: 0x005A9EB0 ?save_game@@YAHH@Z 0x005A9EB0-0x005AAAA9;0x00661B40-0x00661E84 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["git:f802f71ac84cd67eae7b7f525688da0cb17cd211:src/unrecovered/005a9eb0.cpp", "image:0x5a9eb0", "task:game-save-load-complete-oct5"], "reason": "Complete original orchestration uses one FileBox and one AlphaSave; the apparent stack widgets are its real embedded objects, not independent locals. Preserve original error/retry branches, first-dot filename handling, owned selected-buffer results and all body/EH spans. Source recovery is not exact constructor/unwind or linked fidelity proof."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:11b8fdc721ac4c20f82188e965534b73d61c8531:src/unrecovered/005a9eb0.cpp", "image:0x5a9eb0", "task:game-save-load-complete-oct5"], "reason": "Complete original orchestration uses one FileBox and one AlphaSave; the apparent stack widgets are its real embedded objects, not independent locals. Preserve original error/retry branches, first-dot filename handling, owned selected-buffer results and all body/EH spans. Source recovery is not exact constructor/unwind or linked fidelity proof."}
 // TRIED: time-boxed - the filename/faction/year string build, the FileBox/FileWin set_def_name/set_def_ext/add_filter/ add_def_ext setup, prefs_get/put, the is_visible-gated AlphaSave::save vs FileBox::save dispatch and do_all_draws are transcribed against the disassembly; the failure path (daemon-reserved-name checks, save_daemon, auto_save, NetDaemon::hang_up, a large session-struct zero-fill) is a deliberate stub. MISMATCH #0, prologue only.
 */
 int __cdecl save_game(int mode) {
@@ -3458,7 +3458,7 @@ int __cdecl save_game(int mode) {
 
 /*
 // ORIGINAL: 0x005AAAB0 ?load_game@@YAHHH@Z 0x005AAAB0-0x005AB5E3;0x00661E84-0x006620A7 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["git:f802f71ac84cd67eae7b7f525688da0cb17cd211:src/unrecovered/005aaab0.cpp", "image:0x5aaab0", "task:game-save-load-complete-oct5"], "reason": "Complete original orchestration uses one FileBox and one AlphaSave; the apparent stack widgets are its real embedded objects, not independent locals. Preserve original error/retry branches, first-dot filename handling, owned selected-buffer results and all body/EH spans. Source recovery is not exact constructor/unwind or linked fidelity proof."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:11b8fdc721ac4c20f82188e965534b73d61c8531:src/unrecovered/005aaab0.cpp", "image:0x5aaab0", "task:game-save-load-complete-oct5"], "reason": "Complete original orchestration uses one FileBox and one AlphaSave; the apparent stack widgets are its real embedded objects, not independent locals. Preserve original error/retry branches, first-dot filename handling, owned selected-buffer results and all body/EH spans. Source recovery is not exact constructor/unwind or linked fidelity proof."}
 // TRIED: RAII locals (FileBox/AlphaSave/FileWin/Scroll/Sprite x7/ FlatButton x4/ListBox/Dialog/EditBox/Time) declared once at function scope in place of the original's per-branch conditionally-constructed objects (evidenced by inline vtable-pointer stores immediately before each dtor/close() in the exception funclets at 0x661E84+); AlphaSave and EditBox were given a GraphicWin base (embedded Buffer at +0x444 matches the paired GraphicWin-dtor calls on the same address) and FileBox::load/AlphaSave::load were retyped to return char* (eax used immediately as a strcpy/strncpy source, but the catalogued mangling is QAEXXZ = void) - see PROPOSALS. Diverges at instr #14 (xor vs lea); not chased further given the 3414-byte, ~15-local-object scope.
 */
 int __cdecl load_game(int mode, int load_argument) {

@@ -442,7 +442,7 @@ Status: Complete
 
 
 // ORIGINAL: 0x00404B00 ?on_redraw@Popup@@QAEXXZ 0x00404B00-0x00404B05 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:243a2cfd:src/unrecovered/00404b00.cpp;src/basepop.cpp:BasePop::on_redraw"], "reason": "Popup draw callback forwards to its real BasePop owner; image and historical seed establish the five-byte tail-call identity"}
+// RECOVERY_BINDING: v1 {"evidence": ["git:db6d1ed8:src/unrecovered/00404b00.cpp;src/basepop.cpp:BasePop::on_redraw"], "reason": "Popup draw callback forwards to its real BasePop owner; image and historical seed establish the five-byte tail-call identity"}
 // LEVER: The retired seed matched through a synthetic reinterpret-cast shim with masked relocation targets. This real inherited call preserves its measured body without retaining that false class shape.
 // symbol    ?on_redraw@Popup@@UAEXXZ
 void Popup::on_redraw() {
@@ -450,7 +450,7 @@ void Popup::on_redraw() {
 }
 
 // ORIGINAL: 0x00405050 ?on_adjust_button_placement@Popup@@QAEXPAH00@Z 0x00405050-0x00405093 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:243a2cfd:src/recovered/units/00405050.cpp;src/basepop.h:field_30AC_"], "reason": "Popup button-placement adjustment reads its inherited auto-hide mode and external window pointer, matching the original owner fields"}
+// RECOVERY_BINDING: v1 {"evidence": ["git:db6d1ed8:src/recovered/units/00405050.cpp;src/basepop.h:field_30AC_"], "reason": "Popup button-placement adjustment reads its inherited auto-hide mode and external window pointer, matching the original owner fields"}
 // symbol    ?on_adjust_button_placement@Popup@@UAEXPAH00@Z
 void Popup::on_adjust_button_placement(int *, int *y, int *) {
     if (static_cast<int>(field_30AC_) / 10000 != 1000) {
@@ -463,7 +463,7 @@ void Popup::on_adjust_button_placement(int *, int *y, int *) {
 }
 
 // ORIGINAL: 0x00406330 ?on_listbox_scroll_delete@Popup@@QAEHPAUScroll@@@Z 0x00406330-0x0040637C BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:243a2cfd:src/recovered/units/00406330.cpp;src/popup.cpp:scroll_hide"], "reason": "Popup owns the scroll lifecycle callback and forwards visibility cleanup to the existing scroll_hide helper"}
+// RECOVERY_BINDING: v1 {"evidence": ["git:db6d1ed8:src/recovered/units/00406330.cpp;src/popup.cpp:scroll_hide"], "reason": "Popup owns the scroll lifecycle callback and forwards visibility cleanup to the existing scroll_hide helper"}
 // symbol    ?on_listbox_scroll_delete@Popup@@UAEPAVScroll@@PAV2@@Z
 Scroll *Popup::on_listbox_scroll_delete(Scroll *scroll) {
     if (static_cast<int>(field_30AC_) / 10000 == 1000) {
@@ -806,7 +806,7 @@ int Popup::on_exec() {
 }
 
 // ORIGINAL: 0x00559000 sub_559000 0x00559000-0x0055903A BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["original:0x0055468E-0x005546A5:shared-Popup-receiver", "original:0x00559000-0x0055903A", "source:src/basepop.h:caller_sprite_,dialogs_", "git:b94da21d:src/recovered/units/00559000.cpp"], "reason": "The original communicate caller uses the same local Popup receiver for start and this member. Existing BasePop caller_sprite_ and owned Dialogs/SpriteBox state explain the observed member accesses. Clear only the stored caller picture when the list is nonempty; always forward the incoming picture to SpriteBox::sprite. The behavior-derived method name is provisional; the original name remains unknown."}
+// RECOVERY_BINDING: v1 {"evidence": ["original:0x0055468E-0x005546A5:shared-Popup-receiver", "original:0x00559000-0x0055903A", "source:src/basepop.h:caller_sprite_,dialogs_", "git:0af6726c:src/recovered/units/00559000.cpp"], "reason": "The original communicate caller uses the same local Popup receiver for start and this member. Existing BasePop caller_sprite_ and owned Dialogs/SpriteBox state explain the observed member accesses. Clear only the stored caller picture when the list is nonempty; always forward the incoming picture to SpriteBox::sprite. The behavior-derived method name is provisional; the original name remains unknown."}
 // symbol    ?set_picture@Popup@@QAEHPAVSprite@@HPAD@Z
 // Provisional behavior-derived name; original method name is unknown.
 // Historical seed evidence: direct ECX-relative field accesses identify a
@@ -1029,7 +1029,7 @@ void __cdecl POP3(const char *section, const char *unused, int recipient,
 extern Wave g_MENU_UP_WAVE;
 
 // ORIGINAL: 0x00404920 ?show@Popup@@QAEXH@Z 0x00404920-0x00404A7C BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:0fc167ee:src/recovered/units/00404920.cpp original identity/spans and historical exact obligation", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x404920 branch/call audit including second external_window_ test at0x404A2E", "source:src/basepop.h dialogs_ and external_window_; src/listbox.h capacity; src/maininterface.h panel_height; src/menu.cpp menu-up Wave owner"], "reason": "Restore Popup show behavior through real BasePop state, Dialog virtual base, Scroll member and qualified Win base operations; historical opaque exact scaffolding is not the product owner."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:e32d920c:src/recovered/units/00404920.cpp original identity/spans and historical exact obligation", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x404920 branch/call audit including second external_window_ test at0x404A2E", "source:src/basepop.h dialogs_ and external_window_; src/listbox.h capacity; src/maininterface.h panel_height; src/menu.cpp menu-up Wave owner"], "reason": "Restore Popup show behavior through real BasePop state, Dialog virtual base, Scroll member and qualified Win base operations; historical opaque exact scaffolding is not the product owner."}
 // symbol    ?show@Popup@@UAEXH@Z
 void Popup::show(int requested_mode) {
     if (Win::is_visible()) {
@@ -1094,7 +1094,7 @@ void __cdecl popup_set_write_check_bit(int bit_index, int enabled) {
 }
 
 // ORIGINAL: 0x00404860 ?sprite_draw_func@@YAXPAUSprite@@PAUGraphicWin@@HHH@Z 0x00404860-0x00404896 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:3f2df6224d8701da7e923701c56365402e6901cf:src/recovered/units/00404860.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x404860 complete native body and call ordering.", "source:src/buffer.cpp:g_PCX_PARSE_TEMP_BUFFER1 binds original storage 0x00798668; source:src/graphicwin.h:public Buffer secondary base supplies the original +0x444 draw receiver adjustment."], "reason": "Draw callback using the real GraphicWin Buffer secondary base, Sprite transparency and native coordinate offsets."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:0055b26d54f1ca15f91ee7b0cd93b1e99441cfe2:src/recovered/units/00404860.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x404860 complete native body and call ordering.", "source:src/buffer.cpp:g_PCX_PARSE_TEMP_BUFFER1 binds original storage 0x00798668; source:src/graphicwin.h:public Buffer secondary base supplies the original +0x444 draw receiver adjustment."], "reason": "Draw callback using the real GraphicWin Buffer secondary base, Sprite transparency and native coordinate offsets."}
 // symbol    ?sprite_draw_func@@YAXPAVSprite@@PAVGraphicWin@@HHH@Z
 void __cdecl sprite_draw_func(Sprite *sprite, GraphicWin *owner,
                               int unused, int x, int y) {
@@ -1461,7 +1461,7 @@ Purpose: Draw one dialog item's background for the popup: restore the
 //           does not reach a free function.
 Return Value: 1 the item frame was drawn, 0 the guards rejected it
 Status: Coverage transcription - unclaimed body, seed
-        git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00405b20.cpp retained.
+        git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00405b20.cpp retained.
 */
 
 int Popup::on_dialog_item_back_draw(GraphicWin *a1, int, int a3, RECT *a4) {

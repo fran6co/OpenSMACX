@@ -778,7 +778,7 @@ int __cdecl pop_wait();
 
 
 // ORIGINAL: 0x004AD3B0 ??1ReportWin@@QAE@XZ 0x004AD3B0-0x004AD6A9;0x00659140-0x006592EE FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:a538e0a3:src/recovered/units/004ad3b0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:649230f6:src/recovered/units/004ad3b0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 // symbol    ??1ReportWin@@UAE@XZ
 
 
@@ -1100,7 +1100,7 @@ static void report_sat_number(int value) {
 
 
 // ORIGINAL: 0x00496960 ?init@ReportWin@@QAEXXZ 0x00496960-0x00496BA5 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:a538e0a3:src/recovered/units/00496960.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:649230f6:src/recovered/units/00496960.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 void ReportWin::init() {
     for (int i = 0; i < 16; ++i) selected_bases_[i] = 0;
     for (int j = 0; j < 4; ++j) selected_prototypes_[j] = 0;
@@ -1180,7 +1180,7 @@ Purpose: Reset the seven report buttons, initialize the report text buffer,
          copy the current report bounds, draw both panel frames, and restore
          the inset frame rectangle after its temporary expansion.
 // ORIGINAL: 0x00496BB0 ?reset@ReportWin@@QAEXXZ 0x00496BB0-0x00496CFC BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Independent IDA/Ghidra function records agree on the original extent 0x00496BB0-0x00496CFC and classify it as game code.", "Retired recovered seed provenance: git:caf4963a:src/recovered/units/00496bb0.cpp records the button-close loop, Buffer font/color setup, rectangle copies and box_sprite calls in this order.", "docs/recovery/member-accesses.csv records reset's writes through the report geometry and embedded button/panel members; reportwin.h provides the corresponding source-owned member layout."], "reason": "Recover the report reset in its existing ReportWin owner using the declared button array, buffer storage, rectangles and shared interface box styles."}
+// RECOVERY_BINDING: v1 {"evidence": ["Independent IDA/Ghidra function records agree on the original extent 0x00496BB0-0x00496CFC and classify it as game code.", "Retired recovered seed provenance: git:c4c11a8a:src/recovered/units/00496bb0.cpp records the button-close loop, Buffer font/color setup, rectangle copies and box_sprite calls in this order.", "docs/recovery/member-accesses.csv records reset's writes through the report geometry and embedded button/panel members; reportwin.h provides the corresponding source-owned member layout."], "reason": "Recover the report reset in its existing ReportWin owner using the declared button array, buffer storage, rectangles and shared interface box styles."}
 // prototype void (__thiscall ?reset@ReportWin@@QAEXXZ)(ReportWin* this)
 // kind      game
 // calls     0x005D5890 0x005E2DD3
@@ -1216,7 +1216,7 @@ void ReportWin::reset() {
 /*
 Purpose: Repaint the report window's selected page inside the topic panel.
 // ORIGINAL: 0x00496D00 ?on_redraw@ReportWin@@QAEXXZ 0x00496D00-0x00496DE4 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original496D00..496DE4; retired seed git:117282ee:src/unrecovered/00496d00.cpp records the same identity and spans with its switch fold TRIED note kept below.", "The receiver is reportwin.h's own window: reset() is declared there (0x00496BB0), the +0x444 Buffer (set_clip is buffer.h's own) carries the topic rectangle at +0x5974, and the page selector is 0x00885F40.", "The eight page drawers are the seed's measured call targets 0x00498B30/0x0049BCD0/0x0049D540/0x0049EB10/0x0049F350/0x004A08E0/0x004A1140/0x004A2210, unrecovered members reached at their original addresses until declarations land."], "reason": "Coverage transcription of the report repaint with the page dispatch kept at the measured switch shape."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original496D00..496DE4; retired seed git:ee30a69d:src/unrecovered/00496d00.cpp records the same identity and spans with its switch fold TRIED note kept below.", "The receiver is reportwin.h's own window: reset() is declared there (0x00496BB0), the +0x444 Buffer (set_clip is buffer.h's own) carries the topic rectangle at +0x5974, and the page selector is 0x00885F40.", "The eight page drawers are the seed's measured call targets 0x00498B30/0x0049BCD0/0x0049D540/0x0049EB10/0x0049F350/0x004A08E0/0x004A1140/0x004A2210, unrecovered members reached at their original addresses until declarations land."], "reason": "Coverage transcription of the report repaint with the page dispatch kept at the measured switch shape."}
 // symbol    ?on_redraw@ReportWin@@UAEXXZ
 // TRIED (seed): a switch on the 9 cases reproduces the disassembly's eight
 //         separate trailing set_clip copies; VC6 does not tail-merge across
@@ -1243,7 +1243,7 @@ void ReportWin::on_redraw() {
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00496E10 0x00497A30 0x00497A48 0x00496E8F
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00496E10 0x00497A48 0x00497A58 0x0049708B
 // ORIGINAL: 0x00496E10 ?on_left_click@ReportWin@@QAEXHH@Z 0x00496E10-0x00497A30
-// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/00496e10.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/00496e10.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 // symbol    ?on_left_click@ReportWin@@UAEXHH@Z
 void ReportWin::on_left_click(int x, int y) {
     if (reportwin_input_blocked()) return;
@@ -1431,7 +1431,7 @@ void ReportWin::on_left_click(int x, int y) {
 
 // ORIGINAL: 0x00497A60 ?on_left_double_click@ReportWin@@QAEXHH@Z 0x00497A60-0x00497AB2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: src/recovered/units/00497a60.cpp records the original 0x00497A60-0x00497AB2 method and BYTE_EXACT claim.", "src/reportwin.h places spot_ at 0x5994; src/tutwin.h binds TutWinBaseWindow at the seed's 0x006A7628 zoom receiver."], "reason": "Home ReportWin's existing double-click handler against its declared Spot member and the verified base-window object."}
-// Deleted seed provenance: git:c2e28f62c941b2012636504516275bc26988ee80:src/recovered/units/00497a60.cpp
+// Deleted seed provenance: git:53d5fe2c1b1eff854b846b082f125794c1d0b7fe:src/recovered/units/00497a60.cpp
 // symbol    ?on_left_double_click@ReportWin@@UAEXHH@Z
 /*
 Purpose: Double-click the currently hit report spot to zoom to a base when
@@ -1453,7 +1453,7 @@ void ReportWin::on_left_double_click(int x, int y) {
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00497AC0 0x00497E6C 0x00497E98 0x00497D5D
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x00497AC0 0x00497E98 0x00497EFC 0x00497D57
 // ORIGINAL: 0x00497AC0 ?right_menu@ReportWin@@QAEXHHH@Z 0x00497AC0-0x00497E69;0x00659420-0x00659435
-// RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:a538e0a3:src/recovered/units/00497ac0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:649230f6:src/recovered/units/00497ac0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 void ReportWin::right_menu(int base_id, int x, int y) {
     PullDown menu;
     if (Bases[base_id].faction_id_current != ConsoleGlobal.faction_id_
@@ -1502,7 +1502,7 @@ void ReportWin::right_menu(int base_id, int x, int y) {
 }
 
 // ORIGINAL: 0x00497F00 ?on_right_click@ReportWin@@QAEXHH@Z 0x00497F00-0x004980EF BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:a538e0a3:src/recovered/units/00497f00.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:649230f6:src/recovered/units/00497f00.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 // symbol    ?on_right_click@ReportWin@@UAEXHH@Z
 void ReportWin::on_right_click(int x, int y) {
     if (reportwin_input_blocked()) return;
@@ -1578,7 +1578,7 @@ void ReportWin::on_mouse_leave(int, int) {
 
 // ORIGINAL: 0x00498110 ?UNK1@ReportWin@@QAEXHHHH@Z 0x00498110-0x00498174 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: src/recovered/units/00498110.cpp records the original 0x00498110-0x00498174 method and its position/range/paging updates.", "src/reportwin.h places Scroll at 0xC10C; src/scroll.h places paging_ at Scroll+0xA40, which is the seed's 0xCB4C write."], "reason": "Home ReportWin's range callback and type its embedded Scroll storage while preserving the constructor's explicit placement order."}
-// Deleted seed provenance: git:c2e28f62c941b2012636504516275bc26988ee80:src/recovered/units/00498110.cpp
+// Deleted seed provenance: git:53d5fe2c1b1eff854b846b082f125794c1d0b7fe:src/recovered/units/00498110.cpp
 /*
 Purpose: Store the active position and range, update the embedded Scroll's
          page size and position, then clear the ReportWin page-transition flag.
@@ -1599,7 +1599,7 @@ void ReportWin::UNK1(int position, int minimum, int maximum, int page_size) {
 // ORIGINAL: 0x00498180 ?on_scrolled@ReportWin@@QAEXHH@Z 0x00498180-0x004981D8 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: src/recovered/units/00498180.cpp records the original 0x00498180-0x004981D8 handler and page dispatch.", "src/reportwin.h places field_C0FC_ at 0xC0FC; src/graphicwin.h identifies redraw as Win slot 62."], "reason": "Home the ReportWin scrollbar callback using its declared position member and inherited redraw virtual."}
 // symbol    ?on_scrolled@ReportWin@@UAEXHH@Z
-// Deleted seed provenance: git:c2e28f62c941b2012636504516275bc26988ee80:src/recovered/units/00498180.cpp
+// Deleted seed provenance: git:53d5fe2c1b1eff854b846b082f125794c1d0b7fe:src/recovered/units/00498180.cpp
 /*
 Purpose: Track the report scrollbar's committed position and repaint the
          project page directly; recognized remaining pages use the window's
@@ -1627,7 +1627,7 @@ void ReportWin::on_scrolled(int, int pos) {
 // ORIGINAL: 0x00498200 ?on_scrolling@ReportWin@@QAEXHH@Z 0x00498200-0x00498258 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: src/recovered/units/00498200.cpp records the original 0x00498200-0x00498258 handler and page dispatch.", "src/reportwin.h places field_C0FC_ at 0xC0FC; src/graphicwin.h identifies redraw as Win slot 62."], "reason": "Home the ReportWin scroll-in-progress callback using the same source-owned position and redraw behavior."}
 // symbol    ?on_scrolling@ReportWin@@UAEXHH@Z
-// Deleted seed provenance: git:c2e28f62c941b2012636504516275bc26988ee80:src/recovered/units/00498200.cpp
+// Deleted seed provenance: git:53d5fe2c1b1eff854b846b082f125794c1d0b7fe:src/recovered/units/00498200.cpp
 void ReportWin::on_scrolling(int, int pos) {
     field_C0FC_ = pos;
     switch (ReportIfGlobal.field_8_) {
@@ -1785,7 +1785,7 @@ int ReportWin::on_key_click(int, int code) {
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004986D0 0x004989A8 0x004989CC 0x00498745
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004986D0 0x004989CC 0x004989E4 0x0049888D
 // ORIGINAL: 0x004986D0 ?on_button_clicked@ReportWin@@QAEXH@Z 0x004986D0-0x004989A8 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:a538e0a3:src/recovered/units/004986d0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:649230f6:src/recovered/units/004986d0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 // symbol    ?on_button_clicked@ReportWin@@UAEXH@Z
 void ReportWin::on_button_clicked(int id) {
     const int datalink_mode = IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 8;
@@ -1861,7 +1861,7 @@ void ReportWin::on_button_clicked(int id) {
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004989F0 0x00498B08 0x00498B2C 0x00498A3F
 // ORIGINAL: 0x004989F0 ?on_group_clicked@ReportWin@@QAEXHHH@Z 0x004989F0-0x00498B06 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:a538e0a3:src/recovered/units/004989f0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:649230f6:src/recovered/units/004989f0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 // symbol    ?on_group_clicked@ReportWin@@UAEXHHH@Z
 void ReportWin::on_group_clicked(int group, int, int state) {
     time2_.stop();
@@ -1887,7 +1887,7 @@ void ReportWin::on_group_clicked(int group, int, int state) {
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00498B30 0x0049B1FC 0x0049B20C 0x004992F9
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00498B30 0x0049B20C 0x0049B21C 0x004993BD
 // ORIGINAL: 0x00498B30 ?draw_labs@ReportWin@@QAEXXZ 0x00498B30-0x0049B1DC
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x00498B30-0x0049B1DC", "git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00498b30.cpp", "Retired recovered seed provenance: source:src/recovered/units/00430b30.cpp", "pinned:0x0049A5FC stores kind0x62 then0x0049A606 stores the chassis name value after the link text and before chassis detail formatting", "pinned:0x0049A7CD stores kind0x63 then0x0049A7D7 stores the weapon name value after the link text and before weapon detail formatting", "pinned:0x0049A9E1 stores kind0x64 then0x0049A9EB stores the armor name value after the link text and before armor detail formatting", "source:src/datalink.h TechnologyHelpEntryName/Kind are the independently observed 4-byte shared objects; Datalink help and tech_achieved reset use the same pair", "source:src/reportif.cpp reportwin_draw_lab_unlock_sections already traverses these same typed Chassis/Weapon/Armor rows and preserves its original lab detail and callback paths"], "reason": "The ReportWin laboratory page is shared by the ordinary report and Datalink entry renderer. Recover its real Buffer hosts, FlatButton members, technology Sprite array and ReportIf fonts; original chart geometry, status rows and unlock-list scans identify these owners. Retain the historical seed for further matching and runtime verification. Preserve the shared technology-help entry name/kind pair at the original chassis, weapon and armor emission points while keeping ReportWin's real two-pass lab/unlock rendering, existing table bounds, section order and link/detail ordering."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00498B30-0x0049B1DC", "git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00498b30.cpp", "Retired recovered seed provenance: source:src/recovered/units/00430b30.cpp", "pinned:0x0049A5FC stores kind0x62 then0x0049A606 stores the chassis name value after the link text and before chassis detail formatting", "pinned:0x0049A7CD stores kind0x63 then0x0049A7D7 stores the weapon name value after the link text and before weapon detail formatting", "pinned:0x0049A9E1 stores kind0x64 then0x0049A9EB stores the armor name value after the link text and before armor detail formatting", "source:src/datalink.h TechnologyHelpEntryName/Kind are the independently observed 4-byte shared objects; Datalink help and tech_achieved reset use the same pair", "source:src/reportif.cpp reportwin_draw_lab_unlock_sections already traverses these same typed Chassis/Weapon/Armor rows and preserves its original lab detail and callback paths"], "reason": "The ReportWin laboratory page is shared by the ordinary report and Datalink entry renderer. Recover its real Buffer hosts, FlatButton members, technology Sprite array and ReportIf fonts; original chart geometry, status rows and unlock-list scans identify these owners. Retain the historical seed for further matching and runtime verification. Preserve the shared technology-help entry name/kind pair at the original chassis, weapon and armor emission points while keeping ReportWin's real two-pass lab/unlock rendering, existing table bounds, section order and link/detail ordering."}
 // TRIED: full pixel-geometry reconstruction of the lab-tier bar chart (labs_line/FUN_0049b450/vtable-slot draw calls with exact coordinate math across up to 15 rows and 4 switch-selected sprite tables) - this pass preserves top-level branch shape and call order, not the per-row layout arithmetic.
 void ReportWin::draw_labs() {
     const int faction = ReportIfGlobal.report_faction_id_;
@@ -2283,7 +2283,7 @@ void ReportWin::draw_labs() {
 }
 
 // ORIGINAL: 0x0049B220 ?on_button_passover@ReportWin@@QAEXHH@Z 0x0049B220-0x0049B446 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x0049B220-0x0049B446 and 0x0065C0C2-0x0065C20E", "Retired recovered seed provenance: git:a538e0a3:src/recovered/units/0049b220.cpp retains the recovered seed and original claim", "source:src/reportwin.h", "source:src/reportif.h:ReportIfGlobal.field_8_"], "reason": "Recover the category-button passover drawing through the seven owned FlatButtons, shared work RECT, real host window and existing labs_line. The original seed and historical claim remain restoration obligations; current byte correspondence is measured separately."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x0049B220-0x0049B446 and 0x0065C0C2-0x0065C20E", "Retired recovered seed provenance: git:649230f6:src/recovered/units/0049b220.cpp retains the recovered seed and original claim", "source:src/reportwin.h", "source:src/reportif.h:ReportIfGlobal.field_8_"], "reason": "Recover the category-button passover drawing through the seven owned FlatButtons, shared work RECT, real host window and existing labs_line. The original seed and historical claim remain restoration obligations; current byte correspondence is measured separately."}
 // symbol    ?on_button_passover@ReportWin@@UAEXHH@Z
 void ReportWin::on_button_passover(int button_id, int state) {
     GraphicWin *host = IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 8
@@ -2559,7 +2559,7 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
 Purpose: Draw the energy page's five-panel frame and calculate the faction's
          underlying accounts. Text, row breakdowns and selection are pending.
 // ORIGINAL: 0x0049BCD0 ?draw_energy@ReportWin@@QAEXXZ 0x0049BCD0-0x0049D481 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0049bcd0.cpp", "src/reportwin.h", "src/socialwin.cpp"], "reason": "Recover the energy-page frame and shared accounting through owned ReportWin geometry and the typed energy computation; preserve the remaining row and selection work explicitly."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0049bcd0.cpp", "src/reportwin.h", "src/socialwin.cpp"], "reason": "Recover the energy-page frame and shared accounting through owned ReportWin geometry and the typed energy computation; preserve the remaining row and selection work explicitly."}
 // TRIED: byte-exact prologue - the six local RECTs the original packs into overlapping/aliased ebp slots (shared fields between the six box_sprite calls) are instead six independent RECT locals here, so the frame layout differs from the first instruction on; 765/1663 mnemonics matched (80% rebuilt/original count), all string-building "report line" blocks, the diplomacy/loan loop, both base-relations branches and the ListBox/Dialog vbtable-relative subobject calls are transcribed field-for- field and call-for-call from the disassembly (cross-checked, not just taken from Ghidra). The two `mov ecx,[x]; mov edx, [ecx+8]; ...` virtual-base lookups are reproduced as raw pointer arithmetic rather than through ListBox's own `dialog_` member, since that field's offset is unverified.
 // size      6065 bytes
 // prototype void (__thiscall ?draw_energy@ReportWin@@QAEXXZ)(ReportWin* this)
@@ -2976,7 +2976,7 @@ void ReportWin::on_selected(int selection_id, int) {
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0049D540 0x0049EAEC 0x0049EB0C 0x0049D882
 // ORIGINAL: 0x0049D540 ?draw_ops@ReportWin@@QAEXXZ 0x0049D540-0x0049EAEB;0x00659435-0x00659447
-// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/0049d540.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/0049d540.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 void ReportWin::draw_ops() {
     Buffer &canvas = *static_cast<Buffer *>(this);
     const int faction = ReportIfGlobal.report_faction_id_;
@@ -3223,7 +3223,7 @@ void ReportWin::draw_ops() {
 
 // ORIGINAL: 0x0049EB10 ?draw_projects@ReportWin@@QAEXXZ 0x0049EB10-0x0049F343
 // RECOVERY_BINDING: v1 {"evidence": ["image:terranx_original.exe:0x0049EB10-0x0049F343", "src/unrecovered/0049eb10.cpp:retained seed and trial history", "Original97CDDC=PlayersData96C9E0+7*20CC+goals19FC+70*10+base_idC; the native unsigned-byte read determines the destroyed-project faction without dereferencing Bases[-2]."], "reason": "Recover the projects page through owned ReportWin rectangles, spots and scroll state, preserving queued/completed rendering and the destroyed-owner byte alias through its real PlayerData member."}
-// Deleted seed provenance: git:c2e28f62c941b2012636504516275bc26988ee80:src/unrecovered/0049eb10.cpp
+// Deleted seed provenance: git:53d5fe2c1b1eff854b846b082f125794c1d0b7fe:src/unrecovered/0049eb10.cpp
 // TRIED: full transcription (call-argument order verified against raw disasm for add/box_sprite/draw_mono/write_l/write_cent_l/ set_text_color/Strings::get, all matched Ghidra) reaches MISMATCH #3 'mov' vs 'push' - a prologue-level register/stack allocation divergence, not a logic error; not chased further given function size (2099 bytes, nested loops with gotos).
 void ReportWin::draw_projects() {
     const int viewer = ReportIfGlobal.report_faction_id_;
@@ -3382,7 +3382,7 @@ void ReportWin::draw_projects() {
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0049F350 0x0049FE20 0x0049FE34 0x0049F758
 // ORIGINAL: 0x0049F350 ?draw_sat@ReportWin@@QAEXXZ 0x0049F350-0x0049FE1E
-// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/0049f350.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/0049f350.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 void ReportWin::draw_sat() {
     Buffer &canvas = *static_cast<Buffer *>(this);
     const int faction = ReportIfGlobal.report_faction_id();
@@ -3625,7 +3625,7 @@ void __cdecl sat_anim_daemon(int context) {
 }
 
 // ORIGINAL: 0x0049FFD0 ?start_attack@ReportWin@@QAEXHHHH@Z 0x0049FFD0-0x004A00F1 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:a538e0a3:src/recovered/units/0049ffd0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:649230f6:src/recovered/units/0049ffd0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 void ReportWin::start_attack(int attacker, int target, int type, int base_id) {
     field_F924_ = attacker;
     field_F928_ = target;
@@ -3655,7 +3655,7 @@ void ReportWin::start_attack(int attacker, int target, int type, int base_id) {
 }
 
 // ORIGINAL: 0x004A0100 ?exp_anim@ReportWin@@QAEXXZ 0x004A0100-0x004A0248 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:a538e0a3:src/recovered/units/004a0100.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:649230f6:src/recovered/units/004a0100.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 void ReportWin::exp_anim() {
     Buffer::set_clip(&satellite_rect_);
     if (field_F91C_ != 0) {
@@ -3698,7 +3698,7 @@ void __cdecl sat_expl_daemon(int context) {
 }
 
 // ORIGINAL: 0x004A0260 ?sat_attack@@YAXHHH@Z 0x004A0260-0x004A080C;0x00659447-0x00659580
-// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/004a0260.cpp", "source:src/faction.h", "image:complete original instructions and independent storage/lifecycle evidence"], "reason": "Recover satellite attack selection through a natural Popup lifetime, its owned picture and the genuine four-counter faction array, preserving original signed guards and network/local action ordering."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/004a0260.cpp", "source:src/faction.h", "image:complete original instructions and independent storage/lifecycle evidence"], "reason": "Recover satellite attack selection through a natural Popup lifetime, its owned picture and the genuine four-counter faction array, preserving original signed guards and network/local action ordering."}
 void __cdecl sat_attack(int attacker, int target, int kind) {
     Popup popup;
     if (attacker == target || target < 1) return;
@@ -3766,8 +3766,8 @@ void __cdecl sat_attack(int attacker, int target, int kind) {
 Purpose: Step one faction's satellite count for a body, with the shift-key
          downward path clamped and the seen map refreshed.
 // ORIGINAL: 0x004A0810 ?sat_edit@@YAXHHH@Z 0x004A0810-0x004A08D2 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original4A0810..4A08D2; retired seed git:117282ee:src/unrecovered/004a0810.cpp retains the same identity/spans.", "Original accesses PlayerData+808 with a word index, +814 and +364. Source satellites_[4] begins808, so814 is satellites_[3]; compiler-observed PlayerData member sat_odp_deployed is364. The shift path clamps deployed orbital-defense pods using the signed result of wrapped dword subtraction, not an unsigned counter comparison.", "GetAsyncKeyState high byte is read only after type<4 and nonzero body guards; preserve negative-index admission, counter wrap, nonzero decrement, both callback paths and direct see_map_check/GraphicWin::redraw ordering. No bounds or behavior fix."], "reason": "Recover the satellite editor through existing PlayerData satellite/deployed members while preserving original arithmetic, indexing and callback behavior."}
-// SUPERSEDED_BINDING_HISTORY: v1 {"evidence": ["Original4A0810..4A08D2; retired seed git:117282ee:src/unrecovered/004a0810.cpp records the same identity and spans.", "The three per-faction fields are PlayerData (faction.h, the 0x833-dword stride the header pins) at +0x808 (the satellite count stepped by body), +0x814 (the seen-map target) and +0x364 (the seen-map floor); the shift state comes through the USER32 GetAsyncKeyState import slot 0x00669330 that mapwin.cpp binds the same way.", "The repaint is see_map_check (faction.h's own) and redraw on the source-owned ReportWinGlobal (reportwin.h, original 0x00876478) through its inherited virtual slot."], "reason": "Coverage transcription of the satellite editor click with the PlayerData offsets documented and the repaint through the tree's own names."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original4A0810..4A08D2; retired seed git:ee30a69d:src/unrecovered/004a0810.cpp retains the same identity/spans.", "Original accesses PlayerData+808 with a word index, +814 and +364. Source satellites_[4] begins808, so814 is satellites_[3]; compiler-observed PlayerData member sat_odp_deployed is364. The shift path clamps deployed orbital-defense pods using the signed result of wrapped dword subtraction, not an unsigned counter comparison.", "GetAsyncKeyState high byte is read only after type<4 and nonzero body guards; preserve negative-index admission, counter wrap, nonzero decrement, both callback paths and direct see_map_check/GraphicWin::redraw ordering. No bounds or behavior fix."], "reason": "Recover the satellite editor through existing PlayerData satellite/deployed members while preserving original arithmetic, indexing and callback behavior."}
+// SUPERSEDED_BINDING_HISTORY: v1 {"evidence": ["Original4A0810..4A08D2; retired seed git:ee30a69d:src/unrecovered/004a0810.cpp records the same identity and spans.", "The three per-faction fields are PlayerData (faction.h, the 0x833-dword stride the header pins) at +0x808 (the satellite count stepped by body), +0x814 (the seen-map target) and +0x364 (the seen-map floor); the shift state comes through the USER32 GetAsyncKeyState import slot 0x00669330 that mapwin.cpp binds the same way.", "The repaint is see_map_check (faction.h's own) and redraw on the source-owned ReportWinGlobal (reportwin.h, original 0x00876478) through its inherited virtual slot."], "reason": "Coverage transcription of the satellite editor click with the PlayerData offsets documented and the repaint through the tree's own names."}
 Status: Coverage transcription - unclaimed body
 */
 
@@ -3794,7 +3794,7 @@ void __cdecl sat_edit(int report_faction_id, int target_faction_id, int satellit
 }
 
 // ORIGINAL: 0x004A08E0 ?draw_security@ReportWin@@QAEXXZ 0x004A08E0-0x004A1134 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/004a08e0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/004a08e0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 // Guarded full-length right-aligned write on a report canvas.
 static inline int reportwin_write_right(ReportWin *win, char *text, int x, int y) {
     if (text == 0) {
@@ -3935,7 +3935,7 @@ void ReportWin::draw_security() {
 }
 
 // ORIGINAL: 0x004A1140 ?draw_score@ReportWin@@QAEXXZ 0x004A1140-0x004A2208
-// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/004a1140.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/004a1140.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 void ReportWin::draw_score() {
     const int faction = ReportIfGlobal.report_faction_id();
     RECT title = {energy_panel_rect_.left + 3, energy_panel_rect_.top + 3,
@@ -4144,7 +4144,7 @@ void ReportWin::draw_score() {
 }
 
 // ORIGINAL: 0x004A2210 ?draw_intel@ReportWin@@QAEXXZ 0x004A2210-0x004A345F
-// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/004a2210.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/004a2210.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 void ReportWin::draw_intel() {
     const int viewer = ReportIfGlobal.report_faction_id_;
     RECT title = {energy_panel_rect_.left + 3, energy_panel_rect_.top + 3,
@@ -4674,7 +4674,7 @@ void ReportIf::reset() {
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004A3FC0 0x004A4020 0x004A4044 0x004A3FD0
 // ORIGINAL: 0x004A3FC0 ?on_redraw@ReportIf@@QAEXXZ 0x004A3FC0-0x004A401F BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:a538e0a3:src/recovered/units/004a3fc0.cpp", "image:0x004A3FC0-0x004A401F and dispatch table0x004A4020", "source:src/reportif.h"], "reason": "Recover the report-interface redraw operation through its real category member, reset and owned drawing methods. Original direct calls and nine-entry dispatch preserve the default/no-draw category without vtable or executable-address dispatch."}
+// RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:649230f6:src/recovered/units/004a3fc0.cpp", "image:0x004A3FC0-0x004A401F and dispatch table0x004A4020", "source:src/reportif.h"], "reason": "Recover the report-interface redraw operation through its real category member, reset and owned drawing methods. Original direct calls and nine-entry dispatch preserve the default/no-draw category without vtable or executable-address dispatch."}
 void ReportIf::on_redraw() {
     reset();
     switch (field_8_) {
@@ -4760,7 +4760,7 @@ void ReportIf::bl_anim() {
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004A41D0 0x004A5ED4 0x004A5EF8 0x004A5E12
 // ORIGINAL: 0x004A41D0 ?on_status@ReportIf@@QAEXH@Z 0x004A41D0-0x004A5ED2 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004a41d0.cpp retained original identity, full spans and seed history", "recovery/tasks/interface-contract-report-closure.json authorized coupled owner recovery", "original:0x4a41d0 complete control/data-access audit; ReportIf declarations and genuine ReportWin control storage"], "reason": "Recover ReportIf's status transition through its genuine SubInterface owner and ReportWin's embedded controls, following the retained original behavior. The source's emitted virtual symbol is recorded separately from the historical catalogue spelling."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004a41d0.cpp retained original identity, full spans and seed history", "recovery/tasks/interface-contract-report-closure.json authorized coupled owner recovery", "original:0x4a41d0 complete control/data-access audit; ReportIf declarations and genuine ReportWin control storage"], "reason": "Recover ReportIf's status transition through its genuine SubInterface owner and ReportWin's embedded controls, following the retained original behavior. The source's emitted virtual symbol is recorded separately from the historical catalogue spelling."}
 // TRIED: full hand transcription from raw disassembly (not Ghidra, whose &DAT_x+idx*N pseudocode over-scales by 4x on 0x96cdac/0x96c9f8 - fixed here against the raw asm multiply chain and byte tests); covers close path (switch+jump table+loops), init path (7-button report loop, 4 button groups, single-column cef..cf8, has_tech/ bitmask channel grid, spying flags, 4-way spy-report geometry, scroll/report/slide tail). First divergence is instruction #3 (prologue 'mov'/'push' scheduling) - approximate throughout, not byte-verified block by block beyond the ones cited above.
 // symbol    ?on_status@ReportIf@@UAEXH@Z
 void ReportIf::on_status(int mode) {
@@ -4978,7 +4978,7 @@ void ReportIf::on_status(int mode) {
 
 // ORIGINAL: 0x004A5F00 ?show@ReportWin@@QAEXH@Z 0x004A5F00-0x004A5F16 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/004a5f00.cpp records the original 0x004A5F00-0x004A5F16 body and BYTE_EXACT claim.", "ReportWin derives from Win and ReportIfGlobal owns the interface-mode transitions used by the seed."], "reason": "Home the existing ReportWin show identity in its class owner, retaining its measured byte-exact claim."}
-// Deleted seed provenance: git:c2e28f62c941b2012636504516275bc26988ee80:src/recovered/004a5f00.cpp
+// Deleted seed provenance: git:53d5fe2c1b1eff854b846b082f125794c1d0b7fe:src/recovered/004a5f00.cpp
 // symbol    ?show@ReportWin@@UAEXH@Z
 /*
 Purpose: Enter or leave the report interface mode only when its window changes
@@ -4993,7 +4993,7 @@ void ReportWin::show(int) {
 
 // ORIGINAL: 0x004A5F20 ?hide@ReportWin@@QAEXXZ 0x004A5F20-0x004A5F34 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: src/recovered/units/004a5f20.cpp records the original 0x004A5F20-0x004A5F34 body and BYTE_EXACT claim.", "ReportWin derives from Win and ReportIfGlobal owns the interface-mode transitions used by the seed."], "reason": "Home the existing ReportWin hide identity in its class owner, retaining its measured byte-exact claim."}
-// Deleted seed provenance: git:c2e28f62c941b2012636504516275bc26988ee80:src/recovered/units/004a5f20.cpp
+// Deleted seed provenance: git:53d5fe2c1b1eff854b846b082f125794c1d0b7fe:src/recovered/units/004a5f20.cpp
 // symbol    ?hide@ReportWin@@UAEXXZ
 void ReportWin::hide() {
     if (is_visible()) {
@@ -5266,7 +5266,7 @@ int ReportIf::on_iface_dialog_item_back_draw(::GraphicWin *, int, int, RECT *) {
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004A6330 0x004A6D2C 0x004A6D3C 0x004A6563
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004A6330 0x004A6D3C 0x004A6D58 0x004A6B41
 // ORIGINAL: 0x004A6330 ?on_iface_button_clicked@ReportIf@@QAEXH@Z 0x004A6330-0x004A6D10 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004a6330.cpp retained original identity, full spans and seed history", "recovery/tasks/interface-contract-report-closure.json authorized coupled owner recovery", "original:0x4a6330 complete control/data-access audit; ReportIf declarations and genuine ReportWin control storage"], "reason": "Recover ReportIf's button callback from the retained seed through its genuine SubInterface owner and ReportWin controls. Its current emitted virtual symbol is recorded separately from the historical catalogue spelling."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004a6330.cpp retained original identity, full spans and seed history", "recovery/tasks/interface-contract-report-closure.json authorized coupled owner recovery", "original:0x4a6330 complete control/data-access audit; ReportIf declarations and genuine ReportWin control storage"], "reason": "Recover ReportIf's button callback from the retained seed through its genuine SubInterface owner and ReportWin controls. Its current emitted virtual symbol is recorded separately from the historical catalogue spelling."}
 // TRIED: full transcription landed (MISMATCH #3). Used the brief's resolved jump tables directly (three switches, cases 0xcef-0xcf5, 0xcf0-0xcf3, and 2-8) rather than the raw `ja`+`jmp [eax*4+addr]` ranges alone. Caught a real Ghidra error via the raw bytes: every `*(uint*)(DAT_0090ea30+0x1c)` Ghidra prints is actually `[eax+0x38]` in the disassembly (`mov eax,[0x90ea30]; mov ecx,[eax+0x38]`), confirmed at both call sites that touch it. ReportIf/BaseWin/NetDaemon fields are all raw self+offset casts, not src/reportif.h's hypothesised layout, per the brief's warning.
 // symbol    ?on_iface_button_clicked@ReportIf@@UAEXH@Z
 void ReportIf::on_iface_button_clicked(int button) {
@@ -5457,7 +5457,7 @@ void ReportIf::on_iface_group_clicked(int group, int, int item) {
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004A7000 0x004A8430 0x004A8440 0x004A7D12
 // ORIGINAL: 0x004A7000 ?draw_labs@ReportIf@@QAEXXZ 0x004A7000-0x004A842F
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004a7000.cpp", "source:src/reportif.h", "source:src/base.h", "source:src/tech.h"], "reason": "Original panel identity and accesses identify ReportIf's laboratory renderer, using its lists and selection state, source-owned base rows and technology records; preserve the seed's row IDs and technology sentinel rather than substitute a different panel."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004a7000.cpp", "source:src/reportif.h", "source:src/base.h", "source:src/tech.h"], "reason": "Original panel identity and accesses identify ReportIf's laboratory renderer, using its lists and selection state, source-owned base rows and technology records; preserve the seed's row IDs and technology sentinel rather than substitute a different panel."}
 // TRIED: MISMATCH #0, sim ~0.58 (best of /O1 framed). Full structural transcription (all branches, both list modes, all 4 category bars). Approximated: the ListBox virtual-base (GraphicWin) adjustment at self+0xa384/+0x24/+0x28 uses the flattened `virtual_base_` member instead of the runtime vtable+8 lookup the original performs, so that handful of instructions differ in shape though not in intent.
 void ReportIf::draw_labs() {
     Buffer *const buffer = static_cast<Buffer *>(&MainInterfaceGlobal);
@@ -5656,7 +5656,7 @@ void ReportIf::draw_labs() {
 }
 
 // ORIGINAL: 0x004A8440 ?labs_write@@YAXPAUGraphicWin@@HHPAURECT@@PAD@Z 0x004A8440-0x004A846E FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/004a8440.cpp retained original identity, full spans and seed history", "recovery/tasks/interface-contract-report-closure.json authorized coupled owner recovery", "original:0x4a8440 complete control/data-access audit; ReportIf declarations and genuine ReportWin control storage", "Retired recovered seed provenance: git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/004a8440.cpp"], "reason": "Recover the ReportIf technology-label writer from its retained seed through the genuine ReportWin/Buffer relationship. Its current emitted symbol is recorded separately from the historical catalogue spelling; this binding adds no claim about executable return decoration. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/004a8440.cpp retained original identity, full spans and seed history", "recovery/tasks/interface-contract-report-closure.json authorized coupled owner recovery", "original:0x4a8440 complete control/data-access audit; ReportIf declarations and genuine ReportWin control storage", "Retired recovered seed provenance: git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/004a8440.cpp"], "reason": "Recover the ReportIf technology-label writer from its retained seed through the genuine ReportWin/Buffer relationship. Its current emitted symbol is recorded separately from the historical catalogue spelling; this binding adds no claim about executable return decoration. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
 // symbol    ?labs_write@@YAHPAVGraphicWin@@HHPAUtagRECT@@PAD@Z
 int __cdecl labs_write(GraphicWin *window, int technology, int, RECT *, char *) {
@@ -5674,7 +5674,7 @@ void ReportIf::close_labs() {
 }
 
 // ORIGINAL: 0x004A84A0 ?draw_energy@ReportIf@@QAEXXZ 0x004A84A0-0x004A9017
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004a84a0.cpp", "source:src/reportif.h", "image:0x004A84AE-0x004A84BC pushes mode zero then report faction for the cdecl energy_compute call"], "reason": "Original energy-panel identity maps to ReportIf's list, selection, frame and facility rows. The original cdecl push order establishes energy_compute(report_faction_id_, 0), correcting the seed's reversed displayed arguments without changing the calculation owner."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004a84a0.cpp", "source:src/reportif.h", "image:0x004A84AE-0x004A84BC pushes mode zero then report faction for the cdecl energy_compute call"], "reason": "Original energy-panel identity maps to ReportIf's list, selection, frame and facility rows. The original cdecl push order establishes energy_compute(report_faction_id_, 0), correcting the seed's reversed displayed arguments without changing the calculation owner."}
 // TRIED: raw self+offset transcription with manual ListBox/Dialog virtual-base adjustor arithmetic (vtable[+8]/[+4] thunks) for both energy-facility and support-facility ListBox blocks diverges at instr #8 (mov vs lea); not chased further given the 2935-byte, dual-listbox scope.
 void ReportIf::draw_energy() {
     char text_a[80];
@@ -5873,7 +5873,7 @@ void ReportIf::close_energy() {
 }
 
 // ORIGINAL: 0x004A9050 ?draw_ops@ReportIf@@QAEXXZ 0x004A9050-0x004A9F85
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004a9050.cpp", "source:src/reportif.h", "source:src/veh.h"], "reason": "Original operations-panel identity belongs to ReportIf's selection and list state; original indexed accesses select source-owned vehicle and prototype records, with the same row filtering and interface controls rather than a frame-only substitute."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004a9050.cpp", "source:src/reportif.h", "source:src/veh.h"], "reason": "Original operations-panel identity belongs to ReportIf's selection and list state; original indexed accesses select source-owned vehicle and prototype records, with the same row filtering and interface controls rather than a frame-only substitute."}
 // TRIED: mechanical transcription of the Ghidra decompilation with fields reached by raw `(char*)this+OFFSET` casts (ReportIf's 165-member header is not pinned against this image, so no named struct is used). All ~26 unresolved-by-name FUN_ calls were re-derived from the disassembly's own `; ?mangled@Class` comments (set_clip/box_sprite/set_font/set_text_color/ write_cent_l on the fixed Buffer at 0x7aec64, close/init/ item/attach/set_selected_id/set_dialog_font/set_dialog_text_ color[23] on the ListBox+Dialog virtual-base pair at this+0xa2d0 via the scaffold's own `dialog_`/adjustor fields, Strings::get on the fixed 0x9b90d8, set_base/base_compute/ say_base/say_year/veh_at/scroll_normal/scroll_small already declared) rather than guessed. The ten `(**(code**)(EXPR+4)) (0)` vtable dispatches were rewritten as `reinterpret_cast<VCall*>(ADDR)->slot001(0)` per the brief's one-level-cast rule, where ADDR is the object whose first 4 bytes equal Ghidra's EXPR (confirmed against the raw `mov eax,[obj]; call [eax+4]` shape at several call sites). Did not chase the prologue-class mismatch (#0, push-vs-sub) given the size of this function.
 void ReportIf::draw_ops() {
     if (report_page_history_[1] != 4 && report_page_history_[1] != 5) {
@@ -6174,7 +6174,7 @@ void ReportIf::draw_ops() {
 }
 
 // ORIGINAL: 0x004A9F90 ?close_ops@ReportIf@@QAEXXZ 0x004A9F90-0x004AA0AF BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/004a9f90.cpp", "source:src/reportif.h", "source:src/reportwin.h", "source:src/basebutton.h"], "reason": "Close the ReportIf and ReportWin operation controls through their named owners, preserve conditional map cleanup, and clear only ungrouped ReportWin BaseButton state through an encapsulated helper. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/004a9f90.cpp", "source:src/reportif.h", "source:src/reportwin.h", "source:src/basebutton.h"], "reason": "Close the ReportIf and ReportWin operation controls through their named owners, preserve conditional map cleanup, and clear only ungrouped ReportWin BaseButton state through an encapsulated helper. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
 void ReportIf::close_ops() {
     listBox1_.close();
@@ -6210,7 +6210,7 @@ void ReportIf::close_ops() {
 }
 
 // ORIGINAL: 0x004AA0B0 ?draw_projects@ReportIf@@QAEXXZ 0x004AA0B0-0x004AA921;0x00659595-0x006595C9
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004aa0b0.cpp", "source:src/reportif.h", "source:src/base.h", "source:src/stringlist.h"], "reason": "Retained spans identify ReportIf's project renderer and its cleanup code. A real local StringList owns the selected-project description; source-owned project/base records, member rectangles and controls express the original panel relationships. Empty scratch-string starts do not establish their original bounds."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004aa0b0.cpp", "source:src/reportif.h", "source:src/base.h", "source:src/stringlist.h"], "reason": "Retained spans identify ReportIf's project renderer and its cleanup code. A real local StringList owns the selected-project description; source-owned project/base records, member rectangles and controls express the original panel relationships. Empty scratch-string starts do not establish their original bounds."}
 // TRIED: full transcription landed (MISMATCH #0: original has an SEH frame - push -1/handler/fs:[0] - that this body does not reproduce). A local `StringStruct localList(0);` reproduces the constructor call, but StringStruct has no declared destructor here so no unwind funclet gets generated; the two inlined "walk head_/entry_count_, adjustor-thunk release each entry" blocks are called as `localList.remove_all()` instead of reproduced byte-for-byte. Caught one real Ghidra error: find_font is `int find_font(int,int)` (2 args, per its mangled name @@YAHHH@Z has only two H's after the this-less Y); Ghidra printed it with 3 args by misattributing an outer accumulated push meant for the following set_font call.
 void ReportIf::draw_projects() {
     StringList description;
@@ -6343,7 +6343,7 @@ void ReportIf::draw_projects() {
 }
 
 // ORIGINAL: 0x004AA930 ?close_projects@ReportIf@@QAEXXZ 0x004AA930-0x004AA964 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:4097a7c0:src/recovered/004aa930.cpp;source:src/reportif.h;source:src/worldwin.h;source:src/maininterface.h;source:src/flatbutton.h"], "reason": "Close the project report overlay by its real WorldWin and MainInterface owners when the active report is not one of the two map categories."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:f3a5011d:src/recovered/004aa930.cpp;source:src/reportif.h;source:src/worldwin.h;source:src/maininterface.h;source:src/flatbutton.h"], "reason": "Close the project report overlay by its real WorldWin and MainInterface owners when the active report is not one of the two map categories."}
 void ReportIf::close_projects() {
     const int state = field_8_;
     if (state != 4 && state != 5) {
@@ -6355,7 +6355,7 @@ void ReportIf::close_projects() {
 }
 
 // ORIGINAL: 0x004AA970 ?draw_sat@ReportIf@@QAEXXZ 0x004AA970-0x004AB54B
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004aa970.cpp", "source:src/reportif.h", "source:src/reportwin.h"], "reason": "Retained original identity maps to ReportIf's satellite panel, including its member rectangles and ReportWin help-selection control. Original scratch addresses are empty-string source starts, not writable destination arrays with inferred bounds."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004aa970.cpp", "source:src/reportif.h", "source:src/reportwin.h"], "reason": "Retained original identity maps to ReportIf's satellite panel, including its member rectangles and ReportWin help-selection control. Original scratch addresses are empty-string source starts, not writable destination arrays with inferred bounds."}
 // TRIED: raw offset casts on `this` (opaque ReportIf class, no fields declared) mirroring the two near-identical D3C-mode/else-mode text panels and the button-creation loop; matches 10 instructions before diverging. The per-faction Players-array index scaling (idx*0x167 for byte-offset 0x304, matching src/faction.h's adj_name_faction) reused from 0x0053D360's introduce().
 void ReportIf::draw_sat() {
     char paragraph[1024];
@@ -6584,7 +6584,7 @@ Purpose: Close the satellite report: hide every faction's panel button
              DIRECT `call 0x5EDCD0`, the qualified-base spelling
              Time::stop on 0x00884738 and 0x00884760
 // ORIGINAL: 0x004AB550 ?close_sat@ReportIf@@QAEXXZ 0x004AB550-0x004AB5F9 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/004ab550.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/unrecovered/004ab550.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // size      169 bytes
 // prototype void (__thiscall ?close_sat@ReportIf@@QAEXXZ)(ReportIf* this)
 // callers   2   call targets   2
@@ -6631,7 +6631,7 @@ void ReportIf::close_sat() {
 }
 
 // ORIGINAL: 0x004AB600 ?draw_security@ReportIf@@QAEXXZ 0x004AB600-0x004ABE24 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004ab600.cpp", "source:src/reportif.h", "source:src/spot.h"], "reason": "Retained identity and indexed accesses identify ReportIf's five-category security panel. Its source-owned lists and Spot rows express the original filters, count caps and lost totals; the final frame uses the first panel's bottom edge as in the original, not a geometrically normalized replacement."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004ab600.cpp", "source:src/reportif.h", "source:src/spot.h"], "reason": "Retained identity and indexed accesses identify ReportIf's five-category security panel. Its source-owned lists and Spot rows express the original filters, count caps and lost totals; the final frame uses the first panel's bottom edge as in the original, not a geometrically normalized replacement."}
 // TRIED: literal register-transliteration (eax/ecx/edx/ebx/edi locals) compiles and is a faithful line-by-line transcription (verified box_sprite/set_font/write_* arg order and the 0x9ab898 flag-byte stride=0x34 against raw disasm, not Ghidra which mis-scaled it to 0x1a); compiler emits a frameless prologue (sub) where original is framed (push ebp/mov ebp,esp) - #0 divergence. Not chased further given size (2084 bytes).
 void ReportIf::draw_security() {
     MainInterfaceGlobal.Buffer::set_clip(&field_20_);
@@ -6841,7 +6841,7 @@ void ReportIf::close_score() {
 }
 
 // ORIGINAL: 0x004AC140 ?draw_intel@ReportIf@@QAEXXZ 0x004AC140-0x004AC977
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004ac140.cpp", "source:src/reportif.h", "source:src/faction.h", "source:src/tech.h"], "reason": "Retained identity identifies ReportIf's intelligence panel. Original faction-indexed treaty accesses and technology iteration map to source-owned player data and technology records; the informed-view conditions select the same information rather than treating the panel as a link-only placeholder."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004ac140.cpp", "source:src/reportif.h", "source:src/faction.h", "source:src/tech.h"], "reason": "Retained identity identifies ReportIf's intelligence panel. Original faction-indexed treaty accesses and technology iteration map to source-owned player data and technology records; the informed-view conditions select the same information rather than treating the panel as a link-only placeholder."}
 // TRIED: full field-offset transcription off `self`, with the two embedded ListBox virtual-base dispatches done as explicit two-step vbtable-pointer/displacement reads (not flattened pointer arithmetic) and the vtable slot1 call retyped to take an int; compiles, MISMATCH #3 (early - likely the spy-flag bool-to-int store or the `test ecx,ecx` on a provably-nonzero fixed global getting folded away).
 void ReportIf::draw_intel() {
     int target = report_selection_;
@@ -7096,7 +7096,7 @@ void __cdecl report_intel(int selection) {
 }
 
 // ORIGINAL: 0x004ACC30 ?merge_sort@ReportIf@@QAEXHH@Z 0x004ACC30-0x004ACD98 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:4097a7c0:src/recovered/units/004acc30.cpp;source:src/reportif.h;source:src/base.h:BaseCurrentCount;source:src/general.h:swap"], "reason": "Recover the ReportIf base-ranking merge sort over its measured 0x200-entry, 16-byte scratch workspace, using the source-owned BaseCurrentCount bound and preserving original range normalization and key-prefetch order."}
+// RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: git:f3a5011d:src/recovered/units/004acc30.cpp;source:src/reportif.h;source:src/base.h:BaseCurrentCount;source:src/general.h:swap"], "reason": "Recover the ReportIf base-ranking merge sort over its measured 0x200-entry, 16-byte scratch workspace, using the source-owned BaseCurrentCount bound and preserving original range normalization and key-prefetch order."}
 void ReportIf::merge_sort(int first, int last) {
     const int maximum = GameDataStateStorage.fields_.base_current_count_ - 1;
     int low;

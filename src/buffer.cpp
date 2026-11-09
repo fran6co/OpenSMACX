@@ -527,7 +527,7 @@ int Buffer::draw_pie(RECT *area, int first_color, int second_color,
 // and -1 skips the write.
 // ORIGINAL: 0x005E09D0 ?line@Buffer@@QAEXHHHHHHHHH@Z 0x005E09D0-0x005E10BA
 // RECOVERY_BINDING: v1 {"evidence": ["Original4672C0 calls5E09D0 with nine stack arguments; the original ends with ret24 and belongs to Buffer.", "Original5E09D0 uses half-open clipping, inclusive endpoints and strict-positive DDA steps, preserving clipped-entry pattern phase and original failed-acquisition/modulo error paths."], "reason": "Recover the nine-argument patterned Buffer line as a genuine member, distinct from the five-argument solid overload."}
-// Deleted seed provenance: git:25c0645e742c23f149e0895c391a9ba79ad744cb:src/unrecovered/005e09d0.cpp
+// Deleted seed provenance: git:b5a8554e33a26faf238f51538994e24a254783a3:src/unrecovered/005e09d0.cpp
 // SUPERSEDED_BINDING_HISTORY: v1 {"evidence": ["Original4672C0 calls5E09D0; src/unrecovered/005e09d0.cpp retains its original span and seed.", "The original void catalogue and ignored-result call sites support the declaration; BODY GOES HERE does not implement pattern rendering."], "reason": "The non-cover direct route renderer references this nine-argument patterned Buffer line, distinct from the recovered five-argument solid overload. Its owning-TU placeholder is explicitly unfinished and only preserves linking."}
 void Buffer::line(int x1, int y1, int x2, int y2, int first_color,
                   int second_color, int pattern_on, int pattern_off, int phase) {
@@ -2883,7 +2883,7 @@ Purpose: The Buffer wide-line filler that sits between the blitter and the
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:0x005E07A0-0x005E09CB uses ECX as receiver and reads the Buffer pixel, surface, clip, lock-count and stride fields", "source:src/buffer.h declares those members and IDirectDrawSurface2* surface_ at the observed offsets", "pinned:0x005E07F5 Lock, 0x005E09B3 Unlock, and the saved 0x14-byte thiscall cleanup"], "reason": "Bind the original wide-line raster routine to Buffer's named pixel, clip, pitch and DirectDraw members."}
 // symbol    ?fill_line@Buffer@@QAEHHHHHD@Z
 // size      555 bytes
-// Deleted seed provenance: git:1ed59304110fc2098fb1dd11457fa5b0074169bd:src/unrecovered/005e07a0.cpp
+// Deleted seed provenance: git:123267b4afb63f4fd3396772db0fcf89d35259c9:src/unrecovered/005e07a0.cpp
 Status: Coverage transcription of the retained seed (src/unrecovered/005e07a0.cpp,
         plain FILE, no callees of its own). The receiver is a Buffer - the
         offsets it works through are exactly locked_bits_ (0x50), dib_bits_
@@ -7751,7 +7751,7 @@ int __stdcall Buffer::load_bmp(const char * a1, Palette * a2, int a3, int a4) {
 }
 
 // ORIGINAL: 0x005D79C0 ?resize@Buffer@@QAEXHH@Z 0x005D79C0-0x005D7A05 FILE BYTE_EXACT
-// provenance (retired seed): git:b5a9c5dd:src/recovered/units/005d79c0.cpp
+// provenance (retired seed): git:4a64ad64:src/recovered/units/005d79c0.cpp
 // A plain Buffer resizes its surface; a window-owned Buffer dispatches to
 // its GraphicWin. The original queries the owner twice before resizing.
 // calls     0x005D7670
@@ -7773,7 +7773,7 @@ void Buffer::resize(int width, int height) {
 // ---------------------------------------------------------------------------
 
 // ORIGINAL: 0x005D7B20 ?load_tga@Buffer@@QAGHPBD@Z 0x005D7B20-0x005D7B36 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/005d7b20.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/005d7b20.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // symbol    ?load_tga@Buffer@@SGHPBD@Z
 // size      22 bytes
 // prototype int (__stdcall ?load_tga@Buffer@@QAGHPBD@Z)(Buffer* this, int8*)
@@ -7789,7 +7789,7 @@ int __stdcall Buffer::load_tga(const char *filename) {
 }
 
 // ORIGINAL: 0x005D7C80 ?load_bmp@Buffer@@QAGHPBD@Z 0x005D7C80-0x005D7C96 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/005d7c80.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/005d7c80.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // symbol    ?load_bmp@Buffer@@SGHPBD@Z
 // size      22 bytes
 // prototype int (__stdcall ?load_bmp@Buffer@@QAGHPBD@Z)(Buffer* this, int8*)
@@ -7875,7 +7875,7 @@ int Buffer::copy(Buffer *destination, int src_x, int src_y, int src_w,
 
 
 // ORIGINAL: 0x005DB930 ?write_right_l@Buffer@@QAEHPAVFont@@PADPAURECT@@H@Z 0x005DB930-0x005DB984 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/005db930.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/005db930.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // symbol    ?write_right_l@Buffer@@QAEHPAVFont@@PADPAUtagRECT@@H@Z
 //           The image spells the rectangle `PAURECT@@`; windows.h declares
 //           `struct tagRECT` behind the RECT define, so the object holds
@@ -9699,8 +9699,8 @@ void Buffer::select_text_slot(int requested) {
 // ORIGINAL: 0x005DB040 ?write_strings@Buffer@@QAEHPAUStringList@@HHHH@Z 0x005DB040-0x005DB3F6 FILE
 // compile_context src/buffer.cpp
 // symbol    ?write_strings@Buffer@@QAEHPAVStringList@@HHHH@Z
-// Deleted seed provenance: git:406fd820:src/recovered/005e3730.cpp
-// TRIED: the scaffold's `extern "C" sub_5eXXXX()` externs implied the wrong conventions for their callers here (nullary cdecl); the disasm's ecx=receiver setup before each call site shows they are thiscall members (sub_5e3630/current_entry family on StringStruct with ecx=a1, sub_5e3650 on Font, sub_5e3660/ 3690/3730/3770 on Buffer with ecx=this) - redeclared as such, since relocations are masked and only the caller-side marshalling bytes are scored. Confirmed against the already- recovered src/recovered/005e3730.cpp and git:65b567af55eb22d163bbd28afcc335c340847278:src/recovered/units/005e3770.cpp (both thiscall(Buffer*,...)), and against src/leaf_recoveries.cpp's sub_5e3630/3650/3660 bodies for their real (nullary/one-int) arities. Reaches MISMATCH, 265/318 mnemonics shared (0.836), 956 vs 950 bytes, first divergence at #1 (prologue register order).
+// Deleted seed provenance: git:4014c7f4:src/recovered/005e3730.cpp
+// TRIED: the scaffold's `extern "C" sub_5eXXXX()` externs implied the wrong conventions for their callers here (nullary cdecl); the disasm's ecx=receiver setup before each call site shows they are thiscall members (sub_5e3630/current_entry family on StringStruct with ecx=a1, sub_5e3650 on Font, sub_5e3660/ 3690/3730/3770 on Buffer with ecx=this) - redeclared as such, since relocations are masked and only the caller-side marshalling bytes are scored. Confirmed against the already- recovered src/recovered/005e3730.cpp and git:276d612614085e5d57743cf8cc92903d9468e346:src/recovered/units/005e3770.cpp (both thiscall(Buffer*,...)), and against src/leaf_recoveries.cpp's sub_5e3630/3650/3660 bodies for their real (nullary/one-int) arities. Reaches MISMATCH, 265/318 mnemonics shared (0.836), 956 vs 950 bytes, first divergence at #1 (prologue register order).
 // The final word is flags, not a clipping height: bit1 retains list position.
 // Pixel clipping reads this Buffer's signed native DIB height independently.
 
@@ -10058,7 +10058,7 @@ Purpose: Publish the unit draw state and draw one unit sprite through the
 // ORIGINAL: 0x005D8C20 sub_5d8c20 0x005D8C20-0x005D8D00 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original5D8C20 fields50/54/58/6C/80/84/4A8 are Buffer locked/DIB pixels, DirectDraw surface, lock count, DIB dimensions and stride.", "Original9B3A54..78 are members of g_BUFFER_SPRITE; surface slot80 is DirectDraw Unlock, not an actor stop hook.", "Original5D8CF0 forwards four stack arguments to genuine Sprite5E66A2;5D8CF5 clears the borrowed pixels AFTER that call."], "reason": "Rehome the four-argument shared-Sprite wrapper to the real Buffer receiver, correcting the former actor/fixed-alias interpretation."}
 // symbol    ?draw_dest_unk1@Buffer@@QAEXPAV1@HHPAE@Z
-// SUPERSEDED_BINDING_HISTORY: v1 {"evidence": ["Original5D8C20..5D8D00; retired seed git:117282ee:src/unrecovered/005d8c20.cpp records the same identity and spans with its register-order TRIED note kept below.", "The shared surface sprite is buffer.cpp's g_BUFFER_SPRITE (0x009B3A50) and the published draw-state block is its 0x9B3A54..0x9B3A78 neighbour, with the transparency byte 0x00696D14; the actor countdown fields are the seed's 0x50/0x58/0x6C walks.", "The slot-0x80 dispatch is the actor's own stop hook (stdcall through vtbl+0x80), exactly as the seed calls it."], "reason": "Coverage transcription of the four-argument unit draw wrapper with the state publish and countdown walks kept at the measured order."}
+// SUPERSEDED_BINDING_HISTORY: v1 {"evidence": ["Original5D8C20..5D8D00; retired seed git:ee30a69d:src/unrecovered/005d8c20.cpp records the same identity and spans with its register-order TRIED note kept below.", "The shared surface sprite is buffer.cpp's g_BUFFER_SPRITE (0x009B3A50) and the published draw-state block is its 0x9B3A54..0x9B3A78 neighbour, with the transparency byte 0x00696D14; the actor countdown fields are the seed's 0x50/0x58/0x6C walks.", "The slot-0x80 dispatch is the actor's own stop hook (stdcall through vtbl+0x80), exactly as the seed calls it."], "reason": "Coverage transcription of the four-argument unit draw wrapper with the state publish and countdown walks kept at the measured order."}
 Status: Coverage transcription - unclaimed body
 */
 void Buffer::draw_dest_unk1(Buffer *destination, int x, int y,
@@ -10076,7 +10076,7 @@ Purpose: Publish the unit draw state and draw one unit sprite with the
 // ORIGINAL: 0x005D8D00 sub_5d8d00 0x005D8D00-0x005D8DEA FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original5D8D00 has the same real Buffer and shared Sprite member closure as5D8C20, not a distinct actor/state object.", "Original5D8DDA forwards six stack arguments to genuine Sprite5E73CC;5D8DDF clears the borrowed pixels AFTER that call."], "reason": "Rehome the six-argument shared-Sprite wrapper to the real Buffer receiver and genuine descriptor lifetime."}
 // symbol    ?draw_dest_unk1@Buffer@@QAEXPAV1@HHHHPAE@Z
-// SUPERSEDED_BINDING_HISTORY: v1 {"evidence": ["Original5D8D00..5D8DEA; retired seed git:117282ee:src/unrecovered/005d8d00.cpp records the same identity and spans with its shared TRIED note kept below.", "Same published block and actor fields as sub_5d8c20 above; the trailing two arguments ride straight through to sprite.h's six-argument draw_dest_unk1 exactly as the seed forwards them."], "reason": "Coverage transcription of the six-argument unit draw wrapper beside its four-argument twin."}
+// SUPERSEDED_BINDING_HISTORY: v1 {"evidence": ["Original5D8D00..5D8DEA; retired seed git:ee30a69d:src/unrecovered/005d8d00.cpp records the same identity and spans with its shared TRIED note kept below.", "Same published block and actor fields as sub_5d8c20 above; the trailing two arguments ride straight through to sprite.h's six-argument draw_dest_unk1 exactly as the seed forwards them."], "reason": "Coverage transcription of the six-argument unit draw wrapper beside its four-argument twin."}
 Status: Coverage transcription - unclaimed body
 */
 void Buffer::draw_dest_unk1(Buffer *destination, int x, int y,
@@ -10096,7 +10096,7 @@ Purpose: Write a vertical column of single-character centred lines: each
          fits the rectangle's height.
 // ORIGINAL: 0x005DB450 sub_5db450 0x005DB450-0x005DB571 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["Original5DB469 saves receiver RECT20, the real Buffer rect1_ clip; the prior free scaffold saved RECT30 instead.", "Original5DB450 calls Buffer set_clip and centered length writer per character; Font metrics/default source are genuine owned members, with original clip restore and null-area behavior retained."], "reason": "Rehome the vertical text writer to its actual Buffer receiver and natural existing text/Font APIs."}
-// SUPERSEDED_BINDING_HISTORY: v1 {"evidence": ["Original5DB450..5DB571; retired seed git:b18d3ac8:src/unrecovered/005db450.cpp records the same identity and spans with its receiver-analysis TRIED note kept below.", "The receiver is a Buffer (rect1_ at +0x30, font1_ at +0x52C); the two public members used are set_clip and the five-int write_cent_l, and the default font comes from font.h's FontDefault at 0x009BB484. rect1_ and font1_ are spelled as documented offsets because this free function is not a member or friend of Buffer.", "The line-advance arithmetic (line_height_ when the font's unk_1_ is negative, height_ + unk_1_ otherwise, then shrunk against the font's own height_) is Font's private layout at +0xC/+0x10 with unk_1_ at +0, exactly as the seed measured."], "reason": "Coverage transcription of the vertical caption writer with an explicit Buffer receiver; the original is thiscall, so the free spelling notes the callee-pop divergence."}
+// SUPERSEDED_BINDING_HISTORY: v1 {"evidence": ["Original5DB450..5DB571; retired seed git:da8a4b7f:src/unrecovered/005db450.cpp records the same identity and spans with its receiver-analysis TRIED note kept below.", "The receiver is a Buffer (rect1_ at +0x30, font1_ at +0x52C); the two public members used are set_clip and the five-int write_cent_l, and the default font comes from font.h's FontDefault at 0x009BB484. rect1_ and font1_ are spelled as documented offsets because this free function is not a member or friend of Buffer.", "The line-advance arithmetic (line_height_ when the font's unk_1_ is negative, height_ + unk_1_ otherwise, then shrunk against the font's own height_) is Font's private layout at +0xC/+0x10 with unk_1_ at +0, exactly as the seed measured."], "reason": "Coverage transcription of the vertical caption writer with an explicit Buffer receiver; the original is thiscall, so the free spelling notes the callee-pop divergence."}
 // symbol    ?write_vertical@Buffer@@QAEHPADPAUtagRECT@@@Z
 // TRIED: the fallback stack-only signature has the wrong arity - the real function reads ecx as a Buffer receiver (rect1_ at 0x20, font1_ at 0x52c, both matching Buffer's already-catalogued layout), then a text pointer and a RECT pointer on the stack. It draws each character of the text into a one-byte local buffer and calls write_cent_l once per character, advancing y by the font's line height each time - a vertical column of single-character lines, not a normal horizontal string write. Landed as a free stdcall function taking the receiver explicitly, rather than a Buffer member, because a new top-level type declared here to carry the method would truncate the region this file's own extractor reads at that type's own closing brace, before the real definition.
 Status: Coverage transcription - unclaimed body
@@ -10138,7 +10138,7 @@ Purpose: Wrap and centre text inside the flying-text block: measure the
          partial line in the accumulator.
 // ORIGINAL: 0x005DE320 sub_5de320 0x005DE320-0x005DE4C5 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["Original5DE320 reads9B3A90 X,9B3A94 Y,9B3A98 available width and9B3A9C running text-width accumulator; the latter already has the genuine BufferStrHeight owner.", "Original5DE372/5DE4B0 append into shared text9B33CC; record capacity is unproved and the separately documented1024-byte source proposal retains unbounded native writes.", "Original join and measured-space references682820/696CE0 use distinct source objects; width reads, procedure arguments and cursor updates preserve their native ordering."], "reason": "Rehome the centered flying-text wrapper to its actual Buffer receiver and shared source-owned accumulator."}
-// SUPERSEDED_BINDING_HISTORY: v1 {"evidence": ["Original5DE320..5DE4C5; retired seed git:b18d3ac8:src/unrecovered/005de320.cpp records the same identity and spans with its receiver TRIED note kept below.", "The flying-text state is buffer.cpp's own named binding block: FlyingTextBuf 0x009B33CC, FlyingTextY 0x009B3A94, FlyingTextHeight 0x009B3A98, with temp.h's BufferStrHeight (0x009B3A9C) as the running width accumulator; the bindings are redeclared here with the same names and addresses because they are TU-private there.", "The two one-space strings are 0x00682820 (socialwin.cpp's SpaceText) and 0x00696CE0, both measured as single-space .rdata in the pinned image beside the 0x00696CD8/CDC pair buffer.cpp's census already records."], "reason": "Coverage transcription of the flying-text wrapper with an explicit Buffer receiver; the original is thiscall, so the free spelling notes the callee-pop divergence."}
+// SUPERSEDED_BINDING_HISTORY: v1 {"evidence": ["Original5DE320..5DE4C5; retired seed git:da8a4b7f:src/unrecovered/005de320.cpp records the same identity and spans with its receiver TRIED note kept below.", "The flying-text state is buffer.cpp's own named binding block: FlyingTextBuf 0x009B33CC, FlyingTextY 0x009B3A94, FlyingTextHeight 0x009B3A98, with temp.h's BufferStrHeight (0x009B3A9C) as the running width accumulator; the bindings are redeclared here with the same names and addresses because they are TU-private there.", "The two one-space strings are 0x00682820 (socialwin.cpp's SpaceText) and 0x00696CE0, both measured as single-space .rdata in the pinned image beside the 0x00696CD8/CDC pair buffer.cpp's census already records."], "reason": "Coverage transcription of the flying-text wrapper with an explicit Buffer receiver; the original is thiscall, so the free spelling notes the callee-pop divergence."}
 // symbol    ?wrap_cent_flying@Buffer@@QAEHPAD@Z
 // TRIED: MISMATCH #2 push/sub - the disassembly reads no stack args and takes the receiver in ecx (no [ecx+N] though; it is only used to call Buffer methods), so this is modelled as a Buffer __thiscall member instead of the placeholder's free __stdcall function; stack-frame shape still differs after that.
 Status: Coverage transcription - unclaimed body
@@ -10218,7 +10218,7 @@ Purpose: The Buffer draw wrapper whose descriptor is the shared surface
 //           the back-reference `PAV1@` for the same type, the same fact the
 //           0x005D8A30 sibling records. Bytes are unchanged.
 // size      238 bytes
-// Deleted seed provenance: git:1ed59304110fc2098fb1dd11457fa5b0074169bd:src/unrecovered/005d8df0.cpp
+// Deleted seed provenance: git:123267b4afb63f4fd3396772db0fcf89d35259c9:src/unrecovered/005d8df0.cpp
 Status: Coverage promotion of the retained seed (src/unrecovered/005d8df0.cpp).
         The seed's dropped-claim note is the reason this body is here: it was
         byte-exact as a scaffold and lost its claim the day Buffer became

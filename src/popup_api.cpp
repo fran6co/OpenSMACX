@@ -812,7 +812,7 @@ int __cdecl pop_ask_number(char *label, int initial, int (__cdecl *callback)()) 
 // their own original identities; this body uses the caller's caption rather
 // than the shared default and retains the same popup state/lifetime path.
 // ORIGINAL: 0x00627C30 ?pop_ask_number@@YAHPADPADHP6AHXZ@Z 0x00627C30-0x00627CFC BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:3f34af2cde626ce68311a71f2a29818e510298d7:src/unrecovered/00627c30.cpp"], "reason": "Home the original caption-and-label numeric popup in its typed popup owner; the X_pop_ask_number routing requires both arguments and this independent original span is established by the retained seed."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:8f04e84382e6d278311ffe49ba2305afaea25ed7:src/unrecovered/00627c30.cpp"], "reason": "Home the original caption-and-label numeric popup in its typed popup owner; the X_pop_ask_number routing requires both arguments and this independent original span is established by the retained seed."}
 // symbol    ?pop_ask_number@@YAHPAD0HP6AHXZ@Z
 int __cdecl pop_ask_number(char *caption, char *label, int initial,
                            int (__cdecl *callback)()) {
@@ -887,7 +887,7 @@ int __cdecl pop_ask_number(char *label, int (__cdecl *callback)()) {
 }
 
 // ORIGINAL: 0x006272F0 ?pop_close@@YAXXZ 0x006272F0-0x00627306 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned6272F0..627306; retained git:b0d788d3e0ebc4d5b4c20acb834cd37455e53c67:src/recovered/006272f0.cpp historical byte obligation.", "PopupInstanceSlotA/B are the existing init_class-owned singleton pointer cells9BC074/78; BasePop derives through GraphicWin from the nonvirtual Win base."], "reason": "Close both source-owned singleton popups through the genuine BasePop receiver; retain the original sequential reload across the first close callback."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned6272F0..627306; retained git:06163ca7db005f89326ea0681a26af574b6ae2c3:src/recovered/006272f0.cpp historical byte obligation.", "PopupInstanceSlotA/B are the existing init_class-owned singleton pointer cells9BC074/78; BasePop derives through GraphicWin from the nonvirtual Win base."], "reason": "Close both source-owned singleton popups through the genuine BasePop receiver; retain the original sequential reload across the first close callback."}
 void __cdecl pop_close() {
     PopupInstanceSlotA->close();
     PopupInstanceSlotB->close();

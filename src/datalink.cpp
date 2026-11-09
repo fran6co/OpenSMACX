@@ -185,7 +185,7 @@ Datalink DatalinkMain;  // 0x00703EA0
 // RECOVERY_HISTORY: */
 
 // ORIGINAL: 0x00428FC0 ??0Datalink@@QAE@XZ 0x00428FC0-0x00429178;0x00653450-0x00653579 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:6201d294:src/unrecovered/00428fc0.cpp"], "reason": "Original construction and reverse teardown establish real Flic/Caviar, an eighteen-element FlatButton array and eleven Font members. The owner performs its scalar initialization/reset; genuine member/base lifetimes replace manual vtables and original-address teardown."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/00428fc0.cpp"], "reason": "Original construction and reverse teardown establish real Flic/Caviar, an eighteen-element FlatButton array and eleven Font members. The owner performs its scalar initialization/reset; genuine member/base lifetimes replace manual vtables and original-address teardown."}
 // Historical scaffold experiment, retained from the replaced seed:
 // TRIED: the scaffold's own guessed Datalink layout (FlatButton x18, 3 Fonts, raw byte fields) does not match this ctor's real member offsets at all; rebuilt from the disassembly's own lea/call offsets instead (Flic@0xa28, Caviar@0x150c, an 18x0xb4c array block@0x2a3c, ButtonGroup@0xf594, ListBox(1)@0xf628, 11 Fonts, 4 StringBoxes), using `uint8_t pad[N - sizeof(Prev)]` gaps so the compiler validates each offset by refusing a negative/zero array. Declaring explicit `~Type()` on each real member (absent from the header) is what makes MSVC synthesize the EH frame/state-byte machinery at all - matches the original prologue, all 20 constructor calls incl. exact per-member SEH checkpoint values 0x0-0x13, and the whole epilogue byte-for-byte. Only remaining diff: one `lea`/`push` scheduling swap around the array block's argument setup (register-allocator choice, not a source-form lever found).
 Datalink::Datalink() {
@@ -198,7 +198,7 @@ Datalink::Datalink() {
 // Reverse-order member/base destruction belongs to the compiler. In particular,
 // Caviar::~Caviar owns close(); this body must not close the renderer twice.
 // ORIGINAL: 0x00432290 ??1Datalink@@QAE@XZ 0x00432290-0x004325AA;0x006531D0-0x006533A2 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:6201d294:src/recovered/units/00432290.cpp"], "reason": "Original construction and reverse teardown establish real Flic/Caviar, an eighteen-element FlatButton array and eleven Font members. The owner performs its scalar initialization/reset; genuine member/base lifetimes replace manual vtables and original-address teardown."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/recovered/units/00432290.cpp"], "reason": "Original construction and reverse teardown establish real Flic/Caviar, an eighteen-element FlatButton array and eleven Font members. The owner performs its scalar initialization/reset; genuine member/base lifetimes replace manual vtables and original-address teardown."}
 // symbol    ??1Datalink@@UAE@XZ
 Datalink::~Datalink() {
     history_[0] = 0;
@@ -207,7 +207,7 @@ Datalink::~Datalink() {
 }
 
 // ORIGINAL: 0x0042C9C0 ?draw_unit@Datalink@@QAEXXZ 0x0042C9C0-0x0042D608;0x00653712-0x00653746
-// RECOVERY_BINDING: v1 {"evidence": ["git:6201d294:src/unrecovered/0042c9c0.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/0042c9c0.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
 // Historical scaffold experiment, retained from the replaced seed:
 // TRIED: RAII StringStruct local (declared ~StringStruct() to force a real dtor call) in place of the original's inlined vtable-pointer-swap destructor state machine (local_3c/ local_40/local_18/local_14) - diverges at instr #0, prologue entirely different SEH shape; the inlined dtor loop appears twice in the original (second copy is dead - guard is always false at runtime) and was not hand-modeled given the 3196-byte scope. The 7 repeated get-string/strcat/itoa/add() blocks and the veh_fake/veh_draw calls ARE transcribed field-for-field.
 void Datalink::draw_unit() {
@@ -298,7 +298,7 @@ void Datalink::draw_unit() {
     soft_update(&entry_update_rect_);
 }
 // ORIGINAL: 0x0042D610 ?draw_chassis@Datalink@@QAEXXZ 0x0042D610-0x0042DEEF;0x00653746-0x0065377A
-// RECOVERY_BINDING: v1 {"evidence": ["git:6201d294:src/unrecovered/0042d610.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/0042d610.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
 // Historical scaffold experiment, retained from the replaced seed:
 // TRIED: full transcription landed (MISMATCH #2, no SEH frame reproduced). Caught a real Ghidra error via byte-level cross check: Ghidra's `write_strings(&local_44,local_54,local_50, local_4c-local_54,0)` invents a `local_54` stack slot that never appears anywhere in the raw disassembly (only -0x50, -0x4c, -0x48, -0x44 are ever touched); the real call reads [ebp-0x50] and [ebp-0x48] for the width term. Used the StringStruct(0) local + explicit remove_all()/add(0) calls, matching this function's calls to those symbols directly (unlike the inlined form seen on other StringStruct-using functions in this batch).
 void Datalink::draw_chassis() {
@@ -368,7 +368,7 @@ void Datalink::draw_chassis() {
     soft_update(&description_rect_);
 }
 // ORIGINAL: 0x0042DEF0 ?draw_reactor@Datalink@@QAEXXZ 0x0042DEF0-0x0042E2D3;0x0065377A-0x006537AE
-// RECOVERY_BINDING: v1 {"evidence": ["git:6201d294:src/recovered/units/0042def0.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/recovered/units/0042def0.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
 void Datalink::draw_reactor() {
     StringList description;
     const int id = history_[0];
@@ -410,7 +410,7 @@ void Datalink::draw_reactor() {
     description.remove_all();
 }
 // ORIGINAL: 0x0042E2E0 ?draw_weapon@Datalink@@QAEXXZ 0x0042E2E0-0x0042E8D3;0x006537AE-0x006537E2
-// RECOVERY_BINDING: v1 {"evidence": ["git:6201d294:src/unrecovered/0042e2e0.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/0042e2e0.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
 // Historical scaffold experiment, retained from the replaced seed:
 // TRIED: the SEH __try/__finally frame and the local StringList's multiple-inheritance secondary-vtable adjustor (the two funclets at 0x006537C5/0x006537CD exist only for that); the entry-deleting virtual call is a double-indirected adjustor thunk (vtable[1] read back as a BYTE OFFSET to a second vtable pointer) that no portable dispatch can reproduce, so it goes through the VCall shim directly instead; several argument orders for batched-__cdecl-cleanup call clusters (parse_num/ parse_says/tech_name) are best-guessed from push proximity to the call, not fully hand-verified against the stack-adjustment bytes.
 void Datalink::draw_weapon() {
@@ -475,7 +475,7 @@ void Datalink::draw_weapon() {
     soft_update(&description_rect_);
 }
 // ORIGINAL: 0x0042E8E0 ?draw_defense@Datalink@@QAEXXZ 0x0042E8E0-0x0042EE26;0x006537E2-0x00653816
-// RECOVERY_BINDING: v1 {"evidence": ["git:6201d294:src/recovered/units/0042e8e0.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/recovered/units/0042e8e0.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
 void Datalink::draw_defense() {
     StringList help;
     const int armor_id = history_[0];
@@ -538,7 +538,7 @@ void Datalink::draw_defense() {
     soft_update(&description_rect_);
 }
 // ORIGINAL: 0x0042EE30 ?draw_ability@Datalink@@QAEXXZ 0x0042EE30-0x0042F468;0x00653816-0x0065384A
-// RECOVERY_BINDING: v1 {"evidence": ["git:6201d294:src/unrecovered/0042ee30.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/0042ee30.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
 // Historical scaffold experiment, retained from the replaced seed:
 // TRIED: a genuine `StringStruct local40(0);` local to pick up the compiler's own /GX SEH frame (as worked elsewhere) still diverges at instruction #2 (sub vs push) - this function's frame layout (0x98-byte locals, three linked-list teardown passes at the tail) needs more than one matching ctor call to reproduce. Landed the full field-setup/string-building/switch/ StringList::load/write_strings/StringBox path faithfully (reusing the same local as StringStruct then StringList via reinterpret_cast, matching the disassembly's own reuse of one `this` across two mangled entry points); the two vtable-walk destructor passes at the end are omitted as they only free temporaries and don't produce any value this function returns.
 void Datalink::draw_ability() {
@@ -621,7 +621,7 @@ void Datalink::draw_ability() {
     soft_update(&description_rect_);
 }
 // ORIGINAL: 0x00431180 ?draw_terraform@Datalink@@QAEXXZ 0x00431180-0x00431D51;0x00653C7A-0x00653E66
-// RECOVERY_BINDING: v1 {"evidence": ["git:6201d294:src/unrecovered/00431180.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/00431180.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
 // Historical scaffold experiment, retained from the replaced seed:
 // TRIED: no SEH/frame modelling (plain body, not try/finally); the giant local widget teardown (Popup/Scroll/2xFlatButton/Spot/Dialogs region/Sprite/2xFlatButton/Heap) modelled as one raw ebp-relative byte buffer with explicit close()/dtor calls in original order, rather than real RAII locals - the vtable-poke-then-call shape the original uses for each teardown step is not reproduced, only the call itself (identity of the call target is masked by the scorer regardless). MISMATCH at instruction #0 (prologue: no SEH frame).
 void Datalink::draw_terraform() {
@@ -717,7 +717,7 @@ void Datalink::draw_terraform() {
                   static_cast<int>(lower_description_rect_.right) - 5 - second_left, 0);
 }
 // ORIGINAL: 0x0042F490 ?draw_facility@Datalink@@QAEXXZ 0x0042F490-0x0042FAC5;0x0065384A-0x00653927
-// RECOVERY_BINDING: v1 {"evidence": ["git:6201d294:src/unrecovered/0042f490.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/0042f490.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
 // Historical scaffold experiment, retained from the replaced seed:
 // TRIED: this function's tail is a compiler-generated SEH unwind chain for ~20 local C++ objects (Popup embeds Scroll+BasePop, and BasePop already embeds Heap/2xFlatButton/Sprite/dialogs_ per the scaffold, so declaring one `Popup popup;` local reproduces a lot of that chain automatically); the separate Dialog/StringStruct/sub_4066c0 teardown calls visible in the disassembly are NOT accounted for by any local this body declares, since their true declared type/order could not be pinned down from the given evidence - left unmodelled rather than guessed. Ghidra's own decompile of this function is unusable (SEH state-machine noise, not real control flow); this body was written directly from the raw disassembly instead. popup.start()/write_strings() receiver args (the ebp-0x3274 StringList) are approximated with a fresh default-constructed local, since the real asm never visibly initializes that memory in view.
 void Datalink::draw_facility() {
@@ -778,7 +778,7 @@ void Datalink::draw_facility() {
     }
 }
 // ORIGINAL: 0x0042FAD0 ?draw_project@Datalink@@QAEXXZ 0x0042FAD0-0x00430087;0x00653927-0x006539F9
-// RECOVERY_BINDING: v1 {"evidence": ["git:6201d294:src/unrecovered/0042fad0.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/0042fad0.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
 // Historical scaffold experiment, retained from the replaced seed:
 // TRIED: exact local-object footprint for Popup's embedded destructor cascade (same shape as 0x00430C80's draw_faction) - modelled as a single `Popup popup;` with popup.close() and implicit dtor; business logic (project/tech title, cost_factor/parse_num/ tech_name/parse_says formatting, sprite draw, two write_strings panels, StringBox blurb branch) transcribed field-by-field.
 void Datalink::draw_project() {
@@ -836,7 +836,7 @@ void Datalink::draw_project() {
     }
 }
 // ORIGINAL: 0x00430090 ?draw_social@Datalink@@QAEXXZ 0x00430090-0x00430765;0x006539F9-0x00653AD6
-// RECOVERY_BINDING: v1 {"evidence": ["git:6201d294:src/unrecovered/00430090.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/00430090.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
 // Historical scaffold experiment, retained from the replaced seed:
 // TRIED: Popup popup; (RAII) for the outer object, mechanical RD()-based field reads for the tech-tier/quotient-remainder lookups, itoa/strcat scratch buffer building, and the per-faction tally loop; deliberately did NOT model the second local object built by sub_4066c0 (Dialog/Dialogs/ StringStruct/Sprite/extra FlatButtons torn down around 0x430642) - its class is unrecoverable from this brief, so popup.close() + RAII stands in for that whole cascade. NO_COMPILE C2660 (set_font arg count) fixed first; MISMATCH #0 (prologue) not chased further.
 void Datalink::draw_social() {
@@ -918,7 +918,7 @@ void Datalink::draw_social() {
     }
 }
 // ORIGINAL: 0x00430C80 ?draw_faction@Datalink@@QAEXXZ 0x00430C80-0x0043117E;0x00653BA8-0x00653C7A
-// RECOVERY_BINDING: v1 {"evidence": ["git:6201d294:src/unrecovered/00430c80.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/00430c80.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
 // Historical scaffold experiment, retained from the replaced seed:
 // TRIED: exact local-object footprint for Popup's embedded Scroll/FlatButton/ Heap/Sprite/Spot/Dialogs cascade (huge MI vtable-poke cleanup chain, 0x53a0-byte frame) - modelled as a single `Popup popup;` with popup.close() and implicit dtor instead of the full inlined destructor cascade; business logic (font/text-color/string/sprite/ popup.start branches) transcribed field-by-field from the disasm.
 void Datalink::draw_faction() {
@@ -965,7 +965,7 @@ void Datalink::draw_faction() {
 }
 
 // ORIGINAL: 0x0042A100 ?on_dialog_back_draw@Datalink@@QAEHPAUGraphicWin@@@Z 0x0042A100-0x0042A150 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x42A100", "git:8e3029104ab590bec35cc6932e637765b2ea4074:src/recovered/units/0042a100.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x42A100", "git:b7076e2d4a242bc54aa68d9b48b52eacc10f2ec0:src/recovered/units/0042a100.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
 // symbol    ?on_dialog_back_draw@Datalink@@UAEHPAVGraphicWin@@@Z
 int Datalink::on_dialog_back_draw(GraphicWin *win) {
     RECT rect = win->clip_rect();
@@ -976,7 +976,7 @@ int Datalink::on_dialog_back_draw(GraphicWin *win) {
 }
 
 // ORIGINAL: 0x0042A150 ?on_dialog_item_back_draw@Datalink@@QAEHPAUGraphicWin@@HHPAURECT@@@Z 0x0042A150-0x0042A260 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x42A150", "git:8e3029104ab590bec35cc6932e637765b2ea4074:src/unrecovered/0042a150.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x42A150", "git:b7076e2d4a242bc54aa68d9b48b52eacc10f2ec0:src/unrecovered/0042a150.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
 // symbol    ?on_dialog_item_back_draw@Datalink@@UAEHPAVGraphicWin@@HHPAUtagRECT@@@Z
 // Historical scaffold experiment, retained from the replaced seed:
 // TRIED: computing width/height/x/y once and branching only on the `tile()` colour argument folds the compiler's output to 187 bytes (vs 272) - VC6 does not hoist a same-polarity guard's body out of line (see 0x0042A100's sibling note), so each of the three `a3` cases needs its own fully-duplicated width/height/x/y/call block. That form (cand2, below) reaches 0.834 mnemonic similarity but still differs on the exact ebx/esi/edi register allocation the original chose; landing the closest.
@@ -1004,7 +1004,7 @@ int Datalink::on_dialog_item_back_draw(GraphicWin *win, int id, int mode,
 }
 
 // ORIGINAL: 0x0042BEB0 ?UNK7@Datalink@@QAEXPADPAD@Z 0x0042BEB0-0x0042BEFA BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x42BEB0", "git:8e3029104ab590bec35cc6932e637765b2ea4074:src/recovered/0042beb0.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x42BEB0", "git:b7076e2d4a242bc54aa68d9b48b52eacc10f2ec0:src/recovered/0042beb0.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
 // symbol    ?UNK7@Datalink@@QAEXPAD0@Z
 void Datalink::UNK7(char *file, char *section) {
     if (MainInterfaceTileFlag) {
@@ -1038,7 +1038,7 @@ static inline void dl_topic_id(char *prefix, int *n) {
     strcat(StringTemp, number);
 }
 // ORIGINAL: 0x0042C2E0 ?draw_concept@Datalink@@QAEXXZ 0x0042C2E0-0x0042C64D;0x0065358E-0x00653650 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x42C2E0", "git:8e3029104ab590bec35cc6932e637765b2ea4074:src/recovered/units/0042c2e0.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x42C2E0", "git:b7076e2d4a242bc54aa68d9b48b52eacc10f2ec0:src/recovered/units/0042c2e0.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
 void Datalink::draw_concept() {
     Popup popup;
     int id = history_[0];
@@ -1055,7 +1055,7 @@ void Datalink::draw_concept() {
 }
 
 // ORIGINAL: 0x0042C650 ?draw_adv_concept@Datalink@@QAEXXZ 0x0042C650-0x0042C9C0;0x00653650-0x00653712 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x42C650", "git:8e3029104ab590bec35cc6932e637765b2ea4074:src/recovered/units/0042c650.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x42C650", "git:b7076e2d4a242bc54aa68d9b48b52eacc10f2ec0:src/recovered/units/0042c650.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
 void Datalink::draw_adv_concept() {
     Popup popup;
     int id = history_[0] + 10000;
@@ -1072,7 +1072,7 @@ void Datalink::draw_adv_concept() {
 }
 
 // ORIGINAL: 0x00430770 ?draw_effect@Datalink@@QAEXXZ 0x00430770-0x00430B30;0x00653AD6-0x00653BA8 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x430770", "git:8e3029104ab590bec35cc6932e637765b2ea4074:src/recovered/units/00430770.cpp"], "reason": "Recover the preserved topic drawer with source-owned state and real popup/window lifetimes."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x430770", "git:b7076e2d4a242bc54aa68d9b48b52eacc10f2ec0:src/recovered/units/00430770.cpp"], "reason": "Recover the preserved topic drawer with source-owned state and real popup/window lifetimes."}
 void Datalink::draw_effect() {
     Popup popup;
     RECT rect = description_rect_;
@@ -1103,7 +1103,7 @@ void Datalink::draw_effect() {
 }
 
 // ORIGINAL: 0x00430B30 ?draw_tech@Datalink@@QAEXXZ 0x00430B30-0x00430C76 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x430B30", "git:8e3029104ab590bec35cc6932e637765b2ea4074:src/recovered/units/00430b30.cpp"], "reason": "Recover the preserved topic drawer with source-owned state and real popup/window lifetimes."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x430B30", "git:b7076e2d4a242bc54aa68d9b48b52eacc10f2ec0:src/recovered/units/00430b30.cpp"], "reason": "Recover the preserved topic drawer with source-owned state and real popup/window lifetimes."}
 // Inline boundary the image's register choice for the title test shows.
 static inline void append_upper_name(LPSTR name) {
     strcat(StringTemp, StringTable.get(name));
@@ -1134,7 +1134,7 @@ void Datalink::draw_tech() {
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0042BF10 0x0042C29C 0x0042C2DC 0x0042C0A0
 // ORIGINAL: 0x0042BF10 ?draw_entry@Datalink@@QAEXXZ 0x0042BF10-0x0042C29A
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x42BF10", "git:8e3029104ab590bec35cc6932e637765b2ea4074:src/recovered/units/0042bf10.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x42BF10", "git:b7076e2d4a242bc54aa68d9b48b52eacc10f2ec0:src/recovered/units/0042bf10.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
 void Datalink::draw_entry() {
     restore_clip();
     if (field_29DC_ == 2) {
@@ -1715,7 +1715,7 @@ Purpose: Parse a decimal Datalink id into its category and entry components.
          overload receives the encoded id as text from a link target.
 */
 // ORIGINAL: 0x0042A0B0 ?UNK2@Datalink@@QAEXPADPAHPAH@Z 0x0042A0B0-0x0042A0F1 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x0042A0B0-0x0042A0F1 calls atoi then stores quotient and remainder; git:08336bcc:src/recovered/units/0042a0b0.cpp contains the historical analysis and source:src/datalink.cpp:parse_id implements the matching numeric split"], "reason": "The product Datalink parser owns this text-to-category/remainder operation; its original span and name are preserved in Git provenance."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x0042A0B0-0x0042A0F1 calls atoi then stores quotient and remainder; git:85463515:src/recovered/units/0042a0b0.cpp contains the historical analysis and source:src/datalink.cpp:parse_id implements the matching numeric split"], "reason": "The product Datalink parser owns this text-to-category/remainder operation; its original span and name are preserved in Git provenance."}
 // symbol    ?UNK2@Datalink@@QAEXPADPAH1@Z
 void Datalink::UNK2(char *text, int *category, int *entry) {
     const int id = atoi(text);
@@ -2966,7 +2966,7 @@ void Datalink::on_redraw() {
 // Escape and Enter close the Datalink; other keys are delegated to its entry
 // list's Win key handler.
 // ORIGINAL: 0x00431FC0 ?on_key_click@Datalink@@QAEHHH@Z 0x00431FC0-0x00431FFB BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x00431FC0-0x00431FFB branches on key codes 0x0D and 0x1B, dynamically calls ListBox slot 26 otherwise, then Win slot 58; git:08336bcc:src/recovered/units/00431fc0.cpp; source:src/datalink.h embeds ListBox listBox_; source:src/win.h names slot 58 release_modal and slot 26 on_key_down"], "reason": "The Datalink key callback closes the modal window for Enter/Escape and delegates other keys through its embedded ListBox Win handler."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00431FC0-0x00431FFB branches on key codes 0x0D and 0x1B, dynamically calls ListBox slot 26 otherwise, then Win slot 58; git:85463515:src/recovered/units/00431fc0.cpp; source:src/datalink.h embeds ListBox listBox_; source:src/win.h names slot 58 release_modal and slot 26 on_key_down"], "reason": "The Datalink key callback closes the modal window for Enter/Escape and delegates other keys through its embedded ListBox Win handler."}
 // symbol    ?on_key_click@Datalink@@UAEHHH@Z
 int Datalink::on_key_click(int, int key) {
     if (key != 0x0D) {
@@ -2991,13 +2991,13 @@ Purpose: Show or hide the datalink status layer: the topic drawer, the
          eighteen per-category flat buttons and the entry list all follow
          the mode, and hiding it also clears the history-slot count.
 // ORIGINAL: 0x00432060 ?on_status@Datalink@@QAEXH@Z 0x00432060-0x00432152 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/00432060.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/unrecovered/00432060.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
 // LEVER: statement-order not declaration order - `this - 0xA14` (the GraphicWin-adjusted receiver used for slide_show/slide_hide, draw_entry, show, hide) is recomputed fresh inside each branch rather than hoisted once; and in the a1==0 branch the `*(self+0x2020)=0` store sits between computing the 0x126A0 vtable-slot address and dereferencing it, matching the lea/mov/mov/call order byte for byte. Vtable dispatch and the recursive `esi-0xa14` receiver both use the OriginalObject/ original_method/original_slot pointer-to-member pattern from src/original_seam.h, inlined here since the scaffold TU cannot #include project headers and `__thiscall` on a function-pointer typedef is C4234 in this cl.
 // symbol    ?on_status@Datalink@@UAEXH@Z
 // size      242 bytes
 Status: Coverage transcription of the retained seed
-        (git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/00432060.cpp), which is BYTE_EXACT in scaffold
+        (git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/unrecovered/00432060.cpp), which is BYTE_EXACT in scaffold
         form and keeps the banked claim until this body measures fresh.
         Model note, from the seed's own arithmetic: the image's receiver
         is the window at Datalink+0xA14 - its 0x2020 is field_2A34_,

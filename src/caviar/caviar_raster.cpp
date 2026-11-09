@@ -495,7 +495,7 @@ Purpose: The isometric view-matrix builder: take the caller's nine source
 // ORIGINAL: 0x0063FA80 sub_63fa80 0x0063FA80-0x0063FC92 BYTE_EXACT
 // symbol    _sub_63fa80
 // size      530 bytes
-// Deleted seed provenance: git:1ed59304110fc2098fb1dd11457fa5b0074169bd:src/unrecovered/0063fa80.cpp
+// Deleted seed provenance: git:123267b4afb63f4fd3396772db0fcf89d35259c9:src/unrecovered/0063fa80.cpp
 Status: the four .rdata words stay bindings rather than literals. The
         words they feed are named from
         the two bodies' use of the cluster: 0x009C0A40..0x4A are the six
@@ -908,7 +908,7 @@ Ownership: Global three-pointer __cdecl helper, not an invented class method.
 // ORIGINAL: 0x006401B0 sub_6401b0 0x006401B0-0x006404E2
 // symbol    _sub_6401b0
 // size      818 bytes
-// Deleted seed provenance: git:1ed59304110fc2098fb1dd11457fa5b0074169bd:src/unrecovered/006401b0.cpp
+// Deleted seed provenance: git:123267b4afb63f4fd3396772db0fcf89d35259c9:src/unrecovered/006401b0.cpp
 Status: Coverage transcription of the retained seed (src/unrecovered/006401b0.cpp,
         plain FILE). The seed's TRIED wall stands: the round-to-fixed helper
         is spelled as the ordinary `+ 0x80 >> 8` form and the multiply/add
