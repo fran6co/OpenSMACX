@@ -367,6 +367,10 @@ void __cdecl base_yield() {
     BaseCurrent->specialist_unk_1 = 0;
     BaseCurrent->resource_sqr_radius &= ~FarmUnavailableMask | 1;
 
+    // VC6 for-scope: this `i` lives to the end of the function. The image
+    // keeps it in one slot ([ebp-4]) for this loop, both specialist loops,
+    // the radius scan and the tail loops; only the worked-square reuse loop
+    // has its own counter.
     for (int i = 0; i < 4; i++) {
         if (i < 3) {
             BaseCurrent->intake_2[i] = PlayersData[faction].satellites_[i];
@@ -385,7 +389,7 @@ void __cdecl base_yield() {
     // Reuse the base's previous worked squares when every one of them can be staffed.
     if (!automatic || !UnkGlobal0093A934) {
         if (automatic) {
-            for (int i = 0; i < BaseCurrent->specialist_total; i++) {
+            for (i = 0; i < BaseCurrent->specialist_total; i++) {
                 if (!Citizen[base_specialist_type(i)].psych_bonus) {
                     BaseCurrent->specialist_unk_1++;
                 }
@@ -414,7 +418,7 @@ void __cdecl base_yield() {
     // The compaction shifts through the old end slot and then advances the
     // outer index without re-testing the slot that moved into it.
     if (automatic && BaseCurrent->specialist_total) {
-        for (int i = 0; i < BaseCurrent->specialist_unk_1 + BaseCurrent->specialist_total; i++) {
+        for (i = 0; i < BaseCurrent->specialist_unk_1 + BaseCurrent->specialist_total; i++) {
             if (!Citizen[base_specialist_type(i)].psych_bonus) {
                 for (int j = i; j < BaseCurrent->specialist_unk_1 + BaseCurrent->specialist_total; j++) {
                     base_specialist_set(j, base_specialist_type(j + 1));
@@ -472,7 +476,7 @@ void __cdecl base_yield() {
         int worst_score = 9999;
         int worst_position = -1;
         uint32_t excluded = replacing ? 0 : worked;
-        for (int i = 1; i < 21; i++) {
+        for (i = 1; i < 21; i++) {
             uint32_t bit = 1 << i;
             if (bit & (excluded | FarmUnavailableMask)) {
                 continue;
@@ -7970,7 +7974,7 @@ int __cdecl black_market(int energy) {
 
 /*
 Purpose: Calculate the base amount of talents and drones for the specified faction.
-// ORIGINAL: 0x004EA4A0 ?psych_check@@YAXHPAHPAH@Z 0x004EA4A0-0x004EA533
+// ORIGINAL: 0x004EA4A0 ?psych_check@@YAXHPAHPAH@Z 0x004EA4A0-0x004EA533 BYTE_EXACT
 // LEVER: the image clamps efficiency to zero with a BRANCHLESS
 //        `setl dl; dec edx; and edx, ecx` before adding 4 - splitting the
 //        combined ternary `efficiency < 0 ? 4 : efficiency + 4` into
@@ -8003,9 +8007,9 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl psych_check(int faction_id, int *drones, int *talents) {
-    int drones_val = 6 - (is_human(faction_id) ? PlayersData[faction_id].diff_level : DLVL_LIBRARIAN);
-    *drones = drones_val;
-    *talents = ((drones_val + 2)
+    *drones = 6 - (is_human(faction_id) ? PlayersData[faction_id].diff_level : DLVL_LIBRARIAN);
+    // The image forms `*drones + 2` from the value just stored (lea ecx,[eax+2]).
+    *talents = ((*drones + 2)
         * ((PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::EFFICIENCY] < 0
             ? 0 : PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::EFFICIENCY]) + 4)
         * MapAreaSqRoot) / 56 / 2;
@@ -10455,11 +10459,13 @@ int __cdecl base_growth() {
                 continue;
             }
             int climate = map_loc(x2, y2)->climate;
-            int rainfall = (climate >> 3) & 3;
+            // The image extracts rainfall with `shr` (unsigned) but tests
+            // `climate & ~0x1F` with a signed `jge`.
+            int rainfall = ((uint32_t)climate >> 3) & 3;
             if (BaseCurrent->resource_sqr_radius & (1 << i)) {
                 if (((bits & BIT_FUNGUS) && (climate & ~0x1F) >= 0x40)
                     || (bits & BIT_FOREST)
-                    || (map_loc(x2, y2)->val3 & 0xC0) == 0x80
+                    || (map_loc(x2, y2)->val3 & ~0x3F) == 0x80
                     || !rainfall) {
                     bad_farms++;
                 } else if (!(bits & BIT_FARM)
