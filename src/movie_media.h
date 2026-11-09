@@ -243,7 +243,7 @@ struct MediaRuntime {
   volatile LONG pending_output_records;           // +384
   LONG read_counter;                              // +388
   LONG output_counter;                            // +38c
-  LONG output_lock_word;                          // +390
+  volatile LONG output_lock_word;                 // +390
   BYTE unresolved_original_storage_394_397[4];    // +394..+397
   LONG stream_eof;                                // +398
   DWORD selected_record_kind_39c;                    // +39c; copied from record +0c

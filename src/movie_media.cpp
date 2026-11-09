@@ -1130,7 +1130,7 @@ int MediaRuntime::sub_5ce2f0() {
 
 // CRT worker entry. Its active fields are the pending output ring and the
 // DirectSound buffer interface already established by the descriptor owner.
-// ORIGINAL: 0x005CDFA0 sub_5cdfa0 0x005CDFA0-0x005CE2B0
+// ORIGINAL: 0x005CDFA0 sub_5cdfa0 0x005CDFA0-0x005CE2B0 BYTE_EXACT
 // symbol    _sub_5cdfa0
 // kind      game
 // TRIED: the brief's parameterless contract - disasm reads one cdecl stack arg at entry+4 (matches IDA's void*) and never touches ecx, so this takes a void* param, not zero args. COM slots 4/11/19/20 on the interface at *(*self+0x5c) are exactly IDirectSoundBuffer::GetCurrentPosition/Lock/Unlock/Restore; ignored Ghidra's InterlockedExchange/Increment/Decrement names for the four 0x6690xx/0x669100 calls - those are wrong guesses at an unresolved fixed address, not real symbols.
@@ -1163,9 +1163,12 @@ extern "C" void __cdecl sub_5cdfa0(void *argument) {
         else
           available = (LONG)(write_position - r->playback_cursor +
                              r->playback_buffer_bytes);
-        if (available >= (LONG)((MediaQueueRecord *)r->output_records)[r->output_consumer_cursor % 24].field_04) {
-          volatile MediaQueueRecord *record =
-              &r->output_records[r->output_consumer_cursor % 24];
+        LONG consumer = r->output_consumer_cursor;
+        if (available >= (LONG)((MediaQueueRecord *)r->output_records)[consumer % 24].field_04) {
+          // The record view is non-volatile: the image schedules its field
+          // loads freely (payload reloaded only after the first memcpy).
+          MediaQueueRecord *record =
+              (MediaQueueRecord *)&r->output_records[r->output_consumer_cursor % 24];
           LPVOID first, second;
           DWORD first_bytes, second_bytes;
           if (r->pending_output_records != 0) {
@@ -2398,10 +2401,10 @@ static __forceinline void media_worker_loop(MediaDescriptor *self) {
   InterlockedExchange(&r->descriptor->state, 5);
 }
 
-// ORIGINAL: 0x005CAAB0 sub_5caab0 0x005CAAB0-0x005CADF9
+// ORIGINAL: 0x005CAAB0 sub_5caab0 0x005CAAB0-0x005CADF9 BYTE_EXACT
 // symbol    _sub_5caab0
 // kind      game
-// TRIED: nullary extern "C" __cdecl per the contract head - IDA's own guess (void*) matches the disassembly's [esp+0x14] read, so landed as sub_5caab0(void *param); this is a _beginthread worker (GetCurrentThread/SetThreadPriority/InterlockedXxx/ Sleep/GetTickCount/_endthread). sub_5cXXXXX helpers retyped __fastcall(void*[, void*]) to match their ecx/edx-only call sites (no stack pushes); slots 9/12 are COM-style (explicit self push). Reaches #10 (mismatch inside the flag mask/store sequence); not pursued further given the size.
+// TRIED: nullary extern "C" __cdecl per the contract head - IDA's own guess (void*) matches the disassembly's [esp+0x14] read, so landed as sub_5caab0(void *param); this is a _beginthread worker (GetCurrentThread/SetThreadPriority/InterlockedXxx/ Sleep/GetTickCount/_endthread). sub_5cXXXXX helpers retyped __fastcall(void*[, void*]) to match their ecx/edx-only call sites (no stack pushes); slots 9/12 are COM-style (explicit self push). The former mismatch at instruction 168 was caused by reading shared output_lock_word as non-volatile; its volatile field type now matches the original stack-slot reload sequence.
 // Every callee is a real call in the image, sub_5cae00 included.
 #pragma inline_depth(1)
 extern "C" void __cdecl sub_5caab0(void *argument) {
