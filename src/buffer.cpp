@@ -3646,7 +3646,7 @@ int Buffer::write_l(LPSTR text, int x_coord, int y_coord, int len) {
 /*
 Purpose: Draw at most `len` characters of a string flush against a
          rectangle's left edge and vertically centred on the text font.
-// ORIGINAL: 0x005DCF40 ?write_l@Buffer@@QAEHPADPAURECT@@H@Z 0x005DCF40-0x005DD016
+// ORIGINAL: 0x005DCF40 ?write_l@Buffer@@QAEHPADPAURECT@@H@Z 0x005DCF40-0x005DD016 BYTE_EXACT
 // LEVER: a real BUG in a prior pass's REASONING, not the image: the note
 //        below used to argue the font1_ re-test/rebind at 0x005DCFCD is
 //        unreachable (the earlier null-font guard already returned), and
@@ -3711,9 +3711,14 @@ int Buffer::write_l(LPSTR text, RECT *rect, int len) {
     // evaluating its argument twice - same shape as write_cent_l/
     // write_cent_l(rect) below: `< 0` and `== 0` as two separate guards
     // sharing this body's one epilogue.
-    int limit;
-    if (BUFFER_MIN(static_cast<int>(strlen(text)), len) < 0 ||
-        (limit = BUFFER_MIN(static_cast<int>(strlen(text)), len)) == 0) {
+    // LEVER: the clamped count is stored back into `len`, as in
+    // write_cent_l(rect). With a separate `limit` local and the in-line
+    // text_height() below, VC6 swaps text and the count between EBX and EBP.
+    if (BUFFER_MIN(static_cast<int>(strlen(text)), len) < 0) {
+        return 0;
+    }
+    len = BUFFER_MIN(static_cast<int>(strlen(text)), len);
+    if (len == 0) {
         return 0;
     }
     // LEVER: the image's call list for this body is just
@@ -3722,11 +3727,13 @@ int Buffer::write_l(LPSTR text, RECT *rect, int len) {
     // wrapping int arithmetic). Using rect->left/top/bottom and
     // font1_->height_ directly, without the memcpy bit-cast, drops the two
     // extra calls the image does not make.
+    // LEVER: text_height() is called inside the expression, as in
+    // write_cent_l(rect). The image loads the height into EDX before the
+    // `sub` (0x005DCFE4); a named `font_height` local let VC6 fold the load
+    // into `sub eax, [edx+0x10]`.
     const RECT area = *rect;
-    const int font_height = text_height();
-    const int y_span = (area.bottom - font_height) - area.top;
-    const int y_coord = area.top + y_span / 2;
-    return write_multi_font_raw_l(text, area.left, y_coord, limit);
+    const int y_coord = area.top + (area.bottom - text_height() - area.top) / 2;
+    return write_multi_font_raw_l(text, area.left, y_coord, len);
 }
 
 
@@ -10115,9 +10122,13 @@ int Buffer::write_vertical(char *text, RECT *area) {
         if (advance <= fonts_[0]->height_ || advance * length <= room) break;
         --advance;
     }
+    // Measured: initialising width before y keeps `area` in ESI and `room`
+    // in EDI as the image does (86 -> 97/106). The image still loads y
+    // first and gives it EDI, width ESI; every y-before-width order tried
+    // mirrors the whole allocation instead.
+    int width = area->right - area->left;
     int y = area->top;
     int x = area->left;
-    int width = area->right - area->left;
     char one_character[2];
     one_character[1] = 0;
     char *p = text;
