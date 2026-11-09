@@ -681,8 +681,14 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
                 raise ValueError("original switch target is not a decoded parent instruction boundary")
             indirect_targets.add(target_address)
     envelope = Span(span.start, max([span.end, *(item.end for item in ordered)]))
+    # The FPO record describes the candidate's own code/data extent. When it
+    # differs from the original envelope the candidate body has another size:
+    # a measured mismatch for the comparator below, never a PASS.
+    fpo_extent_error = None
     if fpo_witness is not None and fpo_witness["code_size"] != envelope.end - envelope.start:
-        raise ValueError("FPO metadata extent differs from the full declared code/data envelope")
+        fpo_extent_error = {"kind": "fpo_extent", "evidence": envelope.start,
+                            "candidate_offset": fpo_witness["code_size"],
+                            "reason": "FPO metadata extent differs from the full declared code/data envelope"}
     original = image.read(envelope)
     containing_sections = [(index, region, size) for index, (region, _, size) in enumerate(image.sections)
                            if region.start <= envelope.start and envelope.end <= region.start + size]
@@ -822,7 +828,7 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
         if boundary_probe["boundary"] is Result.FAIL:
             return report(boundary_probe, candidate_layout_unproven=True)
 
-    candidate_anchor_errors = []
+    candidate_anchor_errors = [fpo_extent_error] if fpo_extent_error is not None else []
     for binding, original_instruction, original_operand in normalized:
         # A missing/changed candidate instruction or operand is a body
         # mismatch. When it still has the original shape, verify the actual
@@ -858,7 +864,16 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
                 if target_address not in {item.address for item in body_instructions}:
                     raise ValueError("original switch target is not a decoded parent instruction boundary")
                 cell_offset = cell - section_base
-                _symbol_target(obj, section_number, candidate, cell_offset)
+                try:
+                    _symbol_target(obj, section_number, candidate, cell_offset)
+                except ValueError as error:
+                    # The original cell is proved above; a candidate without
+                    # one local relocation at the same offset has a shifted
+                    # or different table, which is a measured body mismatch.
+                    candidate_anchor_errors.append({
+                        "kind": "switch_target_cell", "evidence": cell,
+                        "candidate_offset": cell_offset, "reason": str(error)})
+                    break
         else:
             data = image.read(binding.span)
             if image.absolute_sites(binding.span):

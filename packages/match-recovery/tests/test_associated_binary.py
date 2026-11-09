@@ -637,9 +637,10 @@ def test_three_byte_gap_requires_actual_alignment_and_complete_candidate(monkeyp
     monkeypatch.setitem(globals(), "BODY", bytes(body))
     monkeypatch.setitem(globals(), "GAP", bytes.fromhex("8d 49 00"))
     monkeypatch.setitem(globals(), "TABLE_TARGET", BASE + 20)
-    # The candidate must physically contain the target cell and its relocation.
+    # The candidate must physically contain the target cell and its relocation;
+    # a truncated candidate object cannot be compared at all.
     obj, subject, span, image, bindings, targets = fixture(truncate_candidate_at=23)
-    with pytest.raises(ValueError, match="in-bounds ABS32 relocation"):
+    with pytest.raises(ValueError, match="in-bounds ABS32 relocation|out-of-bound relocation"):
         compare_associated_code(obj, subject, span, image, bindings, targets)
 
 
@@ -1032,8 +1033,17 @@ def test_direct_candidate_cell_evidence_is_mandatory_for_pass(damage, group):
         groups=4, cell_damage=damage, cell_group=group)
     reason = {"missing": "COFF relocation", "duplicate": "overlapping",
               "relative": "ABS32", "nonlocal": "same-section"}[damage]
-    with pytest.raises(ValueError, match=reason):
-        compare_associated_code(obj, subject, span, image, bindings, targets)
+    if damage == "duplicate":
+        with pytest.raises(ValueError, match=reason):
+            compare_associated_code(obj, subject, span, image, bindings, targets)
+        return
+    # The original cell is proved independently; a candidate without one
+    # local ABS32 relocation there differs from it: a measured FAIL with the
+    # cell problem recorded, never a PASS.
+    report = compare_associated_code(obj, subject, span, image, bindings, targets)
+    assert report["result"] == Result.FAIL
+    assert report["candidate_anchors"] == Result.UNKNOWN
+    assert any(reason in row["reason"] for row in report["unsupported_candidate_anchors"])
 
 
 @pytest.mark.parametrize("kwargs", [{"candidate_change": (25, 9)}, {"cell_damage": "retarget"}])
