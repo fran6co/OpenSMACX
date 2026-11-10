@@ -416,27 +416,71 @@ void ProdPicker::on_scrolled(int, int position) {
 // TRIED: a straight port of the jump-table switch (12 case labels, two cross-case gotos folded away algebraically once traced by hand) - matches semantics and field offsets (confirmed against param_1[N] * 4 in the Ghidra dump) but the compiler's jump table shape/ordering diverges early; not chased further.
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00494280 0x00494548 0x0049456C 0x004942AF
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x00494280 0x0049456C 0x004945B4 0x004942A9
-// ORIGINAL: 0x00494280 ?on_key_click@ProdPicker@@QAEHHH@Z 0x00494280-0x00494545 FILE
+// ORIGINAL: 0x00494280 ?on_key_click@ProdPicker@@QAEHHH@Z 0x00494280-0x00494545 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00494280.cpp", "Pinned original coordinator review: actual label-pointer dereference, camera word3F48F5C3, static cdecl callback ABI, row-end clamps and modal-parent/button suppression order."], "reason": "Recover ProdPicker owner behavior through existing window bases, owned StringLists/controls and typed Base/Caviar camera state; preserve historical seed identity and extents as restoration obligations, not current match claims."}
 // symbol    ?on_key_click@ProdPicker@@UAEHHH@Z
 int ProdPicker::on_key_click(int repeat, int key) {
     (void)repeat;
     const int oldFirst = field_A77C_;
     const int oldSelection = field_A774_;
-    int position;
 
     switch (key) {
-    case 0x21: // Page Up
-        if (field_A818_ <= field_A82C_) return 1;
-        position = scroll_.position() - scroll_.paging();
-        goto update_scroll;
-    case 0x22: // Page Down
-        if (field_A818_ <= field_A82C_) return 1;
-        position = scroll_.paging() + scroll_.position();
-update_scroll:
-        scroll_.set_pos(position);
-        field_A77C_ = column_count_ * scroll_.position();
+    case 0x26: // Up; keypad 8
+    case 0x68:
+    {
+        const int step = column_count_;
+        if (oldSelection < step) return 1;
+        int current;
+        do {
+            current = field_A774_ - step;
+            field_A774_ = current;
+        } while (current >= field_A82C_ + oldFirst);
+        if (current < oldFirst) {
+            field_A77C_ = oldFirst - step;
+            scroll_.set_pos(scroll_.position() - 1);
+        }
         break;
+    }
+    case 0x28: // Down; keypad 2
+    case 0x62:
+    {
+        const int step = column_count_;
+        if (oldSelection > field_A818_ - step - 1) {
+            if (field_A818_ <= field_A82C_) return 1;
+            scroll_.set_pos(scroll_.position() + 1);
+            field_A77C_ = scroll_.position() * column_count_;
+        } else {
+            do {
+                field_A774_ += step;
+            } while (field_A774_ < oldFirst);
+            const int current = field_A774_;
+            if (current >= field_A82C_ + oldFirst) {
+                field_A77C_ = step + oldFirst;
+                scroll_.set_pos(scroll_.position() + 1);
+            }
+        }
+        break;
+    }
+    case 0x25: // Left; keypad 4
+    case 100:
+    {
+        const int first = (oldSelection / column_count_) * column_count_;
+        int last = first + column_count_ - 1;
+        if (last >= field_A818_ - 1) last = field_A818_ - 1;
+        field_A774_ = oldSelection - 1;
+        field_A774_ = range(field_A774_, first, last);
+        break;
+    }
+    case 0x27: // Right; keypad 6
+    case 0x66:
+    {
+        const int first = (oldSelection / column_count_) * column_count_;
+        int last = first + column_count_ - 1;
+        if (last >= field_A818_ - 1) last = field_A818_ - 1;
+        field_A774_ = oldSelection + 1;
+        field_A774_ = range(field_A774_, first, last);
+        break;
+    }
     case 0x23: // End
         field_A774_ = field_A818_ - 1;
         if (field_A82C_ < field_A818_)
@@ -449,81 +493,25 @@ update_scroll:
         field_A77C_ = 0;
         field_A774_ = 0;
         break;
-    case 0x25: // Left; keypad 4
-    case 100:
-    {
-        const int first = (oldSelection / column_count_) * column_count_;
-        int last = first + column_count_ - 1;
-        if (field_A818_ - 1 <= last) last = field_A818_ - 1;
-        const int previous = oldSelection - 1;
-        if (first <= previous && first <= last)
-            field_A774_ = last < previous ? last : previous;
-        else
-            field_A774_ = first;
+    case 0x21: // Page Up
+        if (field_A818_ <= field_A82C_) return 1;
+        scroll_.set_pos(scroll_.position() - scroll_.paging());
+        field_A77C_ = column_count_ * scroll_.position();
         break;
-    }
-    case 0x26: // Up; keypad 8
-    case 0x68:
-    {
-        const int step = column_count_;
-        if (oldSelection < step) return 1;
-        int current;
-        do {
-            current = field_A774_ - step;
-            field_A774_ = current;
-        } while (field_A82C_ + oldFirst <= current);
-        if (current < oldFirst) {
-            field_A77C_ = oldFirst - step;
-            scroll_.set_pos(scroll_.position() - 1);
-        }
+    case 0x22: // Page Down
+        if (field_A818_ <= field_A82C_) return 1;
+        scroll_.set_pos(scroll_.paging() + scroll_.position());
+        field_A77C_ = column_count_ * scroll_.position();
         break;
-    }
-    case 0x27: // Right; keypad 6
-    case 0x66:
-    {
-        const int first = (oldSelection / column_count_) * column_count_;
-        int last = first + column_count_ - 1;
-        if (field_A818_ - 1 <= last) last = field_A818_ - 1;
-        const int next = oldSelection + 1;
-        if (next < first || last < first) {
-            field_A774_ = first;
-        } else {
-            field_A774_ = next < last ? next : last;
-        }
-        break;
-    }
-    case 0x28: // Down; keypad 2
-    case 0x62:
-    {
-        const int step = column_count_;
-        if (field_A818_ - step - 1 < oldSelection) {
-            if (field_A818_ <= field_A82C_) return 1;
-            scroll_.set_pos(scroll_.position() + 1);
-            field_A77C_ = scroll_.position() * column_count_;
-        } else {
-            int current = field_A774_;
-            do {
-                current += step;
-            } while (current < oldFirst);
-            field_A774_ = current;
-            if (field_A82C_ + oldFirst <= current) {
-                field_A77C_ = step + oldFirst;
-                scroll_.set_pos(scroll_.position() + 1);
-            }
-        }
-        break;
-    }
     }
 
-    if (oldFirst == field_A77C_) {
-        if (oldSelection != field_A774_) {
-            field_B64_ = 0;
-            draw_item(oldSelection, 0);
-            draw_item(field_A774_, 0);
-        }
-    } else {
+    if (oldFirst != field_A77C_) {
         field_B64_ = 0;
         redraw();
+    } else if (oldSelection != field_A774_) {
+        field_B64_ = 0;
+        draw_item(oldSelection, 0);
+        draw_item(field_A774_, 0);
     }
     soft_update();
     return 1;

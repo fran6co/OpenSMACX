@@ -4592,31 +4592,28 @@ m5d2901_5d2913:
 void __fastcall sub_5d4020(MediaRuntime *runtime, unsigned char *dest,
                            unsigned char *unusedStackArg, int destStride) {
     unsigned char *src = runtime->owned_heap_638;
-    MediaDescriptor *descriptor = runtime->descriptor;
     DWORD row;
     (void)unusedStackArg;
-    if (descriptor->pixel_format.total_component_bits == 8) {
-        if ((descriptor->flags & 0x40) != 0) {
+    if (runtime->descriptor->pixel_format.total_component_bits == 8) {
+        if ((runtime->descriptor->flags & 0x40) != 0) {
             sub_5d271d(reinterpret_cast<unsigned int *>(src), dest,
-                       static_cast<int>(descriptor->output_width_64 *
-                                        descriptor->output_height_60));
+                       static_cast<int>(runtime->descriptor->output_width_64 *
+                                        runtime->descriptor->output_height_60));
             return;
         }
-        DWORD width = descriptor->output_width_64;
-        for (row = 0; row < descriptor->output_height_60; ++row) {
-            memcpy(dest, src, width);
-            descriptor = runtime->descriptor;
-            dest += (destStride >> 2) * 4;
-            width = descriptor->output_width_64;
-            src += width;
+        unsigned char *d8 = dest;
+        for (row = 0; row < runtime->descriptor->output_height_60; ++row) {
+            memcpy(d8, src, runtime->descriptor->output_width_64);
+            d8 += (destStride >> 2) * 4;
+            src += runtime->descriptor->output_width_64;
         }
         return;
     }
 
-    const DWORD *const clut = descriptor->palette_lookup_3b0.entries;
-    if ((descriptor->flags & 0x40) != 0) {
+    const DWORD *const clut = runtime->descriptor->palette_lookup_3b0.entries;
+    if ((runtime->descriptor->flags & 0x40) != 0) {
         DWORD *out = reinterpret_cast<DWORD *>(dest);
-        for (row = 0; row < descriptor->output_height_60; ++row) {
+        for (row = 0; row < runtime->descriptor->output_height_60; ++row) {
             for (DWORD column = 0;
                  column < runtime->descriptor->output_width_64; column += 8) {
                 out[0] = clut[src[0]];
@@ -4630,14 +4627,13 @@ void __fastcall sub_5d4020(MediaRuntime *runtime, unsigned char *dest,
                 src += 8;
                 out += 8;
             }
-            descriptor = runtime->descriptor;
-            out += (destStride - descriptor->output_width_64 * 4) >> 2;
+            out += (destStride - runtime->descriptor->output_width_64 * 4) >> 2;
         }
         return;
     }
 
     unsigned short *out = reinterpret_cast<unsigned short *>(dest);
-    for (row = 0; row < descriptor->output_height_60; ++row) {
+    for (row = 0; row < runtime->descriptor->output_height_60; ++row) {
         for (DWORD column = 0;
              column < runtime->descriptor->output_width_64; column += 8) {
             out[0] = static_cast<unsigned short>(clut[src[0]]);
@@ -4651,8 +4647,7 @@ void __fastcall sub_5d4020(MediaRuntime *runtime, unsigned char *dest,
             src += 8;
             out += 8;
         }
-        descriptor = runtime->descriptor;
-        out += (destStride - descriptor->output_width_64 * 2) >> 1;
+        out += (destStride - runtime->descriptor->output_width_64 * 2) >> 1;
     }
 }
 
@@ -4668,33 +4663,43 @@ void __fastcall sub_5d4020(MediaRuntime *runtime, unsigned char *dest,
 // calls     0x005D439F 0x005D4448 0x00644EF2 0x006470A6
 
 
-int __fastcall sub_5d3980(MediaRuntime *runtime, unsigned char *packet) {
-    int iVar2, iVar11, iVar13;
-    unsigned int uVar3, uVar4, uVar5, uVar6, uVar8, uVar9, uVar15;
-    void *pvVar7;
-    const unsigned char *puVar14;
-    unsigned char *puVar17;
-    int flagOK;
+// Original inline-assembly reader (VC6 never emits this neg/lea/shr form):
+// loads the DWORD that ends at p+2 and keeps its high word, i.e. the
+// little-endian 16-bit value at p. ECX is saved around the block.
+static __forceinline DWORD movie_packet_read16(const unsigned char *p) {
+    __asm {
+        push ecx
+        mov eax, p
+        mov ecx, 2
+        mov eax, dword ptr [eax + ecx - 4]
+        neg ecx
+        lea ecx, [ecx*8 + 0x20]
+        shr eax, cl
+        pop ecx
+    }
+}
 
+int __fastcall sub_5d3980(MediaRuntime *runtime, unsigned char *packet) {
+    int flagOK = 1;
     unsigned char *const previous_frame = runtime->owned_heap_63c;
-    flagOK = 1;
     runtime->owned_heap_63c = runtime->owned_heap_638;
     runtime->owned_heap_638 = previous_frame;
-    DWORD payload_word;
-    memcpy(&payload_word, packet - 2, sizeof(payload_word));
-    uVar3 = payload_word >> 0x10;
-    runtime->decoder_packet_value_620 = uVar3;
-    memcpy(&payload_word, packet, sizeof(payload_word));
-    uVar4 = payload_word >> 0x10;
-    runtime->decoder_packet_value_624 = uVar4;
-    memcpy(&payload_word, packet + 2, sizeof(payload_word));
-    uVar5 = payload_word >> 0x10;
-    runtime->decoder_packet_value_628 = uVar5;
-    memcpy(&payload_word, packet + 4, sizeof(payload_word));
-    uVar6 = payload_word >> 0x10;
-    runtime->decoder_packet_value_62c = uVar6;
-    if (uVar3 != 0) {
-        if (runtime->decoder_capacity_630 < (int)uVar3) {
+
+    const unsigned char *p = packet;
+    const DWORD motion_count = movie_packet_read16(p);
+    runtime->decoder_packet_value_620 = motion_count;
+    p = packet + 2;
+    DWORD raw_count = movie_packet_read16(p);
+    runtime->decoder_packet_value_624 = raw_count;
+    p = packet + 4;
+    const DWORD packed_count = movie_packet_read16(p);
+    runtime->decoder_packet_value_628 = packed_count;
+    p = packet + 6;
+    const DWORD index_width = movie_packet_read16(p);
+    runtime->decoder_packet_value_62c = index_width;
+
+    if (motion_count != 0) {
+        if (static_cast<int>(motion_count) > runtime->decoder_capacity_630) {
             if (runtime->motion_coordinates != 0) {
                 free(runtime->motion_coordinates);
                 runtime->motion_coordinates = 0;
@@ -4706,129 +4711,123 @@ int __fastcall sub_5d3980(MediaRuntime *runtime, unsigned char *packet) {
             }
         }
         if (runtime->motion_coordinates == 0) {
-            pvVar7 = malloc(uVar3 * 8);
-            runtime->motion_coordinates = static_cast<MediaMotionCoordinate *>(pvVar7);
-            runtime->decoder_capacity_630 = uVar3;
+            runtime->motion_coordinates = static_cast<MediaMotionCoordinate *>(
+                malloc(motion_count * 8));
+            runtime->decoder_capacity_630 = motion_count;
         }
         if (runtime->motion_pixel_offsets == 0) {
-            pvVar7 = malloc(uVar3 * 4);
-            runtime->motion_pixel_offsets = static_cast<int *>(pvVar7);
-            runtime->decoder_capacity_630 = uVar3;
+            runtime->motion_pixel_offsets = static_cast<int *>(
+                malloc(motion_count * 4));
+            runtime->decoder_capacity_630 = motion_count;
         }
-        flagOK = runtime->motion_coordinates != 0;
-        if (runtime->motion_pixel_offsets == 0) {
-            flagOK = 0;
-        }
+        if (runtime->motion_coordinates == 0) flagOK = 0;
+        if (runtime->motion_pixel_offsets == 0) flagOK = 0;
     }
-    const unsigned int count_sum = uVar5 + uVar4;
-    memcpy(&iVar13, &count_sum, sizeof(iVar13));
-    if (iVar13 != 0) {
-        if ((runtime->decoder_capacity_634 < iVar13) &&
-            (runtime->decoded_pixel_blocks != 0)) {
+
+    int block_count = packed_count + raw_count;
+    if (block_count != 0) {
+        if (block_count > runtime->decoder_capacity_634 &&
+            runtime->decoded_pixel_blocks != 0) {
             free(runtime->decoded_pixel_blocks);
             runtime->decoded_pixel_blocks = 0;
         }
         if (runtime->decoded_pixel_blocks == 0) {
-            pvVar7 = malloc(iVar13 * 0x10);
-            runtime->decoded_pixel_blocks = static_cast<MediaDecodedPixelBlock4x4 *>(pvVar7);
-            runtime->decoder_capacity_634 = iVar13;
+            runtime->decoded_pixel_blocks =
+                static_cast<MediaDecodedPixelBlock4x4 *>(malloc(block_count << 4));
+            runtime->decoder_capacity_634 = block_count;
         }
-        if (runtime->decoded_pixel_blocks == 0) {
-            return 0;
-        }
+        if (runtime->decoded_pixel_blocks == 0) return 0;
     }
+
     if (flagOK != 0) {
-        uVar15 = uVar3 * 0x14;
-        unsigned int coordinate_index = uVar3;
-        while (coordinate_index != 0) {
-            --coordinate_index;
-            MediaMotionCoordinate &coordinate =
-                runtime->motion_coordinates[coordinate_index];
-            // Original backward unpack order is y then x for each pair.
-            for (int axis = 1; axis >= 0; --axis) {
-                uVar15 = uVar15 - 10;
-                memcpy(&payload_word, packet + (uVar15 >> 3) + 0xc,
-                       sizeof(payload_word));
-                uVar8 = payload_word >> (uVar15 & 7);
-                uVar9 = uVar8 & 0x3ff;
-                if ((uVar8 & 0x200) != 0) {
-                    uVar9 = uVar9 | 0xfffffc00;
-                }
-                int &component = axis == 1 ? coordinate.y : coordinate.x;
-                memcpy(&component, &uVar9, sizeof(component));
+        const int header_bytes =
+            (static_cast<int>(motion_count * 20 + 0x1f) >> 3) & ~3;
+        const DWORD component_count = motion_count * 2;
+        const unsigned char *data = packet + 0xc;
+        DWORD bit_position = component_count * 10 - 10;
+        int *component = reinterpret_cast<int *>(runtime->motion_coordinates) +
+                         component_count;
+        for (DWORD remaining = component_count; remaining != 0; --remaining) {
+            int value = *reinterpret_cast<const DWORD *>(
+                            data + (bit_position >> 3)) >> (bit_position & 7);
+            bit_position -= 10;
+            value &= 0x3ff;
+            if (value & 0x200) value |= 0xfffffc00;
+            *--component = value;
+        }
+
+        const int *const rows = runtime->motion_row_offsets +
+                                runtime->descriptor->output_height_60;
+        for (int i = 0; i < static_cast<int>(motion_count); ++i) {
+            runtime->motion_pixel_offsets[i] =
+                rows[runtime->motion_coordinates[i].y] +
+                runtime->motion_coordinates[i].x;
+        }
+
+        data += header_bytes;
+        raw_count <<= 4;
+        if (raw_count != 0) {
+            memcpy(runtime->decoded_pixel_blocks, data, raw_count);
+        }
+        data += raw_count;
+        const DWORD packed_bytes = packed_count * 8;
+        if (packed_bytes != 0) {
+            unsigned char *block =
+                reinterpret_cast<unsigned char *>(runtime->decoded_pixel_blocks) +
+                raw_count;
+            const unsigned char *run = data;
+            for (int k = 0; k < static_cast<int>(packed_count); ++k) {
+                DWORD selectors = *reinterpret_cast<const DWORD *>(run + 4);
+                block[0xf] = run[selectors & 3];
+                selectors >>= 2;
+                block[0xe] = run[selectors & 3];
+                selectors >>= 2;
+                block[0xd] = run[selectors & 3];
+                selectors >>= 2;
+                block[0xc] = run[selectors & 3];
+                selectors >>= 2;
+                block[0xb] = run[selectors & 3];
+                selectors >>= 2;
+                block[0xa] = run[selectors & 3];
+                selectors >>= 2;
+                block[9] = run[selectors & 3];
+                selectors >>= 2;
+                block[8] = run[selectors & 3];
+                selectors >>= 2;
+                block[7] = run[selectors & 3];
+                selectors >>= 2;
+                block[6] = run[selectors & 3];
+                selectors >>= 2;
+                block[5] = run[selectors & 3];
+                selectors >>= 2;
+                block[4] = run[selectors & 3];
+                selectors >>= 2;
+                block[3] = run[selectors & 3];
+                selectors >>= 2;
+                block[2] = run[selectors & 3];
+                selectors >>= 2;
+                block[1] = run[selectors & 3];
+                selectors >>= 2;
+                block[0] = run[selectors & 3];
+                run += 8;
+                block += 0x10;
             }
         }
-        memcpy(&iVar13, &runtime->descriptor->output_height_60,
-               sizeof(iVar13));
-        int *const row_offsets = runtime->motion_row_offsets;
-        iVar11 = 0;
-        if (uVar3 != 0) {
-            do {
-                const MediaMotionCoordinate &coordinate =
-                    runtime->motion_coordinates[iVar11];
-                runtime->motion_pixel_offsets[iVar11] =
-                    row_offsets[iVar13 + coordinate.y] + coordinate.x;
-                iVar11 = iVar11 + 1;
-            } while (iVar11 < (int)uVar3);
+
+        const DWORD blocks = (runtime->descriptor->output_width_64 *
+                              runtime->descriptor->output_height_60) >> 4;
+        if ((index_width * blocks + 0x1f) & 0xffffffe0) {
+            sub_5d439f(runtime->motion_block_indices, data + packed_bytes,
+                       blocks, index_width);
         }
-        const unsigned int following_records_offset =
-            (((static_cast<int>(uVar3 * 0x14u + 0x1fu) >> 3) &
-              0xfffffffcu) + 0xcu);
-        puVar14 = packet + following_records_offset;
-        if (uVar4 != 0) {
-            memcpy(runtime->decoded_pixel_blocks, puVar14, uVar4 * 0x10);
-        }
-        puVar14 += uVar4 * 0x10;
-        if (uVar5 != 0) {
-            MediaDecodedPixelBlock4x4 *block = runtime->decoded_pixel_blocks + uVar4;
-            const unsigned char *packed_run = puVar14;
-            for (uVar3 = uVar5; uVar3 != 0; uVar3 = uVar3 - 1) {
-                puVar17 = block->pixels;
-                memcpy(&uVar4, packed_run + 4, sizeof(uVar4));
-                puVar17[0xf] = packed_run[uVar4 & 3];
-                puVar17[0xe] = packed_run[(uVar4 >> 2) & 3];
-                puVar17[0xd] = packed_run[(uVar4 >> 4) & 3];
-                puVar17[0xc] = packed_run[(uVar4 >> 6) & 3];
-                puVar17[0xb] = packed_run[(uVar4 >> 8) & 3];
-                puVar17[10] = packed_run[(uVar4 >> 10) & 3];
-                puVar17[9]  = packed_run[(uVar4 >> 0xc) & 3];
-                puVar17[8]  = packed_run[(uVar4 >> 0xe) & 3];
-                puVar17[7]  = packed_run[(uVar4 >> 0x10) & 3];
-                puVar17[6]  = packed_run[(uVar4 >> 0x12) & 3];
-                puVar17[5]  = packed_run[(uVar4 >> 0x14) & 3];
-                puVar17[4]  = packed_run[(uVar4 >> 0x16) & 3];
-                puVar17[3]  = packed_run[(uVar4 >> 0x18) & 3];
-                puVar17[2]  = packed_run[(uVar4 >> 0x1a) & 3];
-                puVar17[1]  = packed_run[(uVar4 >> 0x1c) & 3];
-                puVar17[0]  = packed_run[(uVar4 >> 0x1e) & 3];
-                packed_run += 8;
-                ++block;
-            }
-        }
-        int output_width;
-        int output_height;
-        memcpy(&output_width, &runtime->descriptor->output_width_64,
-               sizeof(output_width));
-        memcpy(&output_height, &runtime->descriptor->output_height_60,
-               sizeof(output_height));
-        uVar3 = (static_cast<unsigned int>(output_width) *
-                 static_cast<unsigned int>(output_height)) >> 4;
-        if ((uVar6 * uVar3 + 0x1f & 0xffffffe0) != 0) {
-            sub_5d439f(runtime->motion_block_indices,
-                       puVar14 + uVar5 * 8, static_cast<int>(uVar3),
-                       static_cast<int>(uVar6));
-        }
-        const DWORD final_width = runtime->descriptor->output_width_64;
-        const DWORD final_height = runtime->descriptor->output_height_60;
-        int final_pitch;
-        memcpy(&final_pitch, &final_width, sizeof(final_pitch));
-        sub_5d4448(runtime->motion_block_indices,
-                   runtime->owned_heap_63c, runtime->owned_heap_638,
-                   static_cast<int>(runtime->decoder_packet_value_620),
+        sub_5d4448(runtime->motion_block_indices, runtime->owned_heap_63c,
+                   runtime->owned_heap_638,
+                   runtime->decoder_packet_value_620,
                    runtime->motion_pixel_offsets,
-                   runtime->decoded_pixel_blocks, final_pitch,
-                   static_cast<int>(final_width >> 2),
-                   static_cast<int>(final_height >> 2));
+                   runtime->decoded_pixel_blocks,
+                   runtime->descriptor->output_width_64,
+                   runtime->descriptor->output_width_64 >> 2,
+                   runtime->descriptor->output_height_60 >> 2);
     }
     return flagOK;
 }
@@ -6540,96 +6539,178 @@ BlockHeader decode_block_header(BitState &state, bool header_enabled,
   return result;
 }
 
-// ORIGINAL: 0x005CE85C sub_5ce85c 0x005CE85C-0x005CEA09
+// ORIGINAL: 0x005CE85C sub_5ce85c 0x005CE85C-0x005CEA09 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["recovery/tasks/movie-decoder-owner-oct5.json", "pinned caller/body and shared-storage review; fresh VC6 public symbol", "Keep the semantic C++ name; body state is explicitly passed and uses the shared typed tables/bit-state owners. Do not copy executable bytes, use original-address calls, or treat a provisional owner name as native mangling."], "reason": "Faithful semantic media decoder owner recovery with normalized custom-register helper interfaces. Original identities, spans and historical findings retained; no matching, runtime or game acceptance granted."}
 // symbol    ?decode_coefficients@movie_decoder_huffman@@YAHAAUState@1@@Z
 // TRIED: MISMATCH #1 push/mov - the bit-reader state (accumulator, bits-available count, word cursor) that the original keeps in esi/edi/ebp for the whole function is modelled as ordinary locals written back once at the shared epilogue and at the single early-return branch; entry-frame shape differs first.
-int decode_coefficients(State &state) {
-  BitState &bits = state.bits;
-  uint32_t accumulator = bits.accumulator << 8;
-  int count = bits.available_bits - 8;
-  state.fill_value = low32_product(
-      arithmetic_shift_right(bits.accumulator, 24), state.scale_factor);
-  state.coefficients[0] = state.fill_value;
-
-  if (count < 0x10) {
-    const uint16_t word = static_cast<uint16_t>(pull_word(bits));
-    accumulator |= static_cast<uint32_t>(word)
-                   << ((0x10 - static_cast<int8_t>(count)) & 0x1f);
-    count += 0x10;
-  }
-
-  std::memset(state.coefficients + 1, 0, 63 * sizeof(*state.coefficients));
-  int position = 1;
-  const Tables &tables = *state.tables;
-  for (;;) {
-    uint32_t packed = tables.primary[accumulator >> 0x17];
-    const uint8_t tag = static_cast<uint8_t>(packed);
-    int new_count = count;
-    if (static_cast<int8_t>(tag) > 9) {
-      if (tag < 0x20) {
-        if (tag < 0x10) {
-          accumulator <<= 9;
-          new_count = count - 9;
-          if (new_count < 0x10) {
-            const uint16_t word = static_cast<uint16_t>(pull_word(bits));
-            accumulator |= static_cast<uint32_t>(word)
-                           << ((0x10 - static_cast<int8_t>(new_count)) & 0x1f);
-            new_count = count + 7;
-          }
-          packed = tables.secondary_a[accumulator >> 0x18];
-        } else {
-          accumulator <<= 6;
-          new_count = count - 6;
-          if (new_count < 0x10) {
-            const uint16_t word = static_cast<uint16_t>(pull_word(bits));
-            accumulator |= static_cast<uint32_t>(word)
-                           << ((0x10 - static_cast<int8_t>(new_count)) & 0x1f);
-            new_count = count + 10;
-          }
-          packed = tables.secondary_b[accumulator >> 0x18];
-        }
-      } else if (tag > 0x2f) {
-        accumulator <<= 2;
-        int final_count = count - 2;
-        if (final_count < 0x10) {
-          const uint16_t word = static_cast<uint16_t>(pull_word(bits));
-          accumulator |= static_cast<uint32_t>(word)
-                         << ((0x10 - static_cast<int8_t>(final_count)) & 0x1f);
-          final_count = count + 0xe;
-        }
-        bits.accumulator = accumulator;
-        bits.available_bits = final_count;
-        return position;
-      } else {
-        accumulator <<= 6;
-        new_count = count - 6;
-        if (new_count < 0x10) {
-          const uint16_t word = static_cast<uint16_t>(pull_word(bits));
-          accumulator |= static_cast<uint32_t>(word)
-                         << ((0x10 - static_cast<int8_t>(new_count)) & 0x1f);
-          new_count = count + 10;
-        }
-        packed = (accumulator & 0xffff0000u) | 0x10u;
-      }
-    }
-
-    count = new_count - static_cast<int>(packed & 0xff);
-    const int next_position = position + static_cast<int>((packed >> 0x10) & 0x3f);
-    accumulator <<= packed & 0x1f;
-    if (count < 0x10) {
-      const uint16_t word = static_cast<uint16_t>(pull_word(bits));
-      accumulator |= static_cast<uint32_t>(word)
-                     << ((0x10 - static_cast<int8_t>(count)) & 0x1f);
-      count += 0x10;
-    }
-    const int offset = tables.coefficient_offsets[next_position];
-    const int value = static_cast<int32_t>(packed) >> 0x16;
-    const int scale = *reinterpret_cast<const int *>(
-        reinterpret_cast<const uint8_t *>(tables.coefficient_scales) + offset);
-    *reinterpret_cast<int *>(reinterpret_cast<uint8_t *>(state.coefficients) + offset) =
-        value * scale;
-    position = next_position + 1;
+// Hand-written assembly in the original: it saves ECX/EDX alongside the
+// callee-saved registers (VC6 never does) and keeps the reader cursor,
+// accumulator and bit count in ESI/EDI/EBP for the whole walk. It works on
+// the shared movie_media_decoder_tables reader/tables directly and ignores
+// its State argument; decode_six_blocks passes only that shared state.
+// Offsets: +0x0 decoded words (DC at +0, AC from +4), +0x200 coefficient
+// byte offsets, +0x300 primary, +0xB00/+0xF00 secondary tables, +0x1400
+// scale words, +0x1500 cursor/accumulator/bit count.
+__declspec(naked) int decode_coefficients(State &) {
+  __asm {
+    push ebx
+    push ecx
+    push edx
+    push esi
+    push edi
+    push ebp
+    mov esi, dword ptr [movie_media_decoder_tables + 0x1500]
+    mov edi, dword ptr [movie_media_decoder_tables + 0x1504]
+    mov ebp, dword ptr [movie_media_decoder_tables + 0x1508]
+    mov eax, edi
+    sar eax, 0x18
+    mov ebx, offset movie_media_decoder_tables + 4
+    imul dword ptr [movie_media_decoder_tables + 0x1400]
+    mov dword ptr [movie_media_decoder_tables], eax
+    xor eax, eax
+    shl edi, 8
+    sub ebp, 8
+    cmp ebp, 0x10
+    jge dc_cleared
+    mov ax, word ptr [esi]
+    mov ecx, 0x10
+    sub ecx, ebp
+    add esi, 2
+    shl eax, cl
+    or edi, eax
+    add ebp, 0x10
+  dc_cleared:
+    xor eax, eax
+    mov ecx, 7
+  dc_clear_loop:
+    mov dword ptr [ebx], eax
+    mov dword ptr [ebx + 4], eax
+    mov dword ptr [ebx + 8], eax
+    mov dword ptr [ebx + 0xc], eax
+    mov dword ptr [ebx + 0x10], eax
+    mov dword ptr [ebx + 0x14], eax
+    mov dword ptr [ebx + 0x18], eax
+    mov dword ptr [ebx + 0x1c], eax
+    mov dword ptr [ebx + 0x20], eax
+    add ebx, 0x24
+    dec ecx
+    jne dc_clear_loop
+    mov ebx, 1
+  dc_next_symbol:
+    mov eax, edi
+    shr eax, 0x17
+    mov edx, dword ptr [movie_media_decoder_tables + 0x300 + eax*4]
+    xor eax, eax
+    cmp dl, 9
+    jle dc_store
+    cmp dl, 0x20
+    jae dc_long_class
+    cmp dl, 0x10
+    jae dc_secondary_b
+    shl edi, 9
+    sub ebp, 9
+    cmp ebp, 0x10
+    jge dc_secondary_a_ready
+    mov ax, word ptr [esi]
+    mov ecx, 0x10
+    sub ecx, ebp
+    add esi, 2
+    shl eax, cl
+    or edi, eax
+    add ebp, 0x10
+  dc_secondary_a_ready:
+    mov eax, edi
+    shr eax, 0x18
+    mov edx, dword ptr [movie_media_decoder_tables + 0xb00 + eax*4]
+    jmp dc_store
+  dc_secondary_b:
+    shl edi, 6
+    sub ebp, 6
+    cmp ebp, 0x10
+    jge dc_secondary_b_ready
+    mov ax, word ptr [esi]
+    mov ecx, 0x10
+    sub ecx, ebp
+    add esi, 2
+    shl eax, cl
+    or edi, eax
+    add ebp, 0x10
+  dc_secondary_b_ready:
+    mov eax, edi
+    shr eax, 0x18
+    mov edx, dword ptr [movie_media_decoder_tables + 0xf00 + eax*4]
+    jmp dc_store
+  dc_long_class:
+    cmp dl, 0x30
+    jae dc_terminal
+    shl edi, 6
+    sub ebp, 6
+    cmp ebp, 0x10
+    jge dc_escape_ready
+    mov ax, word ptr [esi]
+    mov ecx, 0x10
+    sub ecx, ebp
+    add esi, 2
+    shl eax, cl
+    or edi, eax
+    add ebp, 0x10
+  dc_escape_ready:
+    mov edx, edi
+    and edx, 0xffff0000
+    or edx, 0x10
+    jmp dc_store
+  dc_terminal:
+    shl edi, 2
+    sub ebp, 2
+    cmp ebp, 0x10
+    jge dc_done
+    mov ax, word ptr [esi]
+    mov ecx, 0x10
+    sub ecx, ebp
+    add esi, 2
+    shl eax, cl
+    or edi, eax
+    add ebp, 0x10
+    jmp dc_done
+  dc_store:
+    mov eax, edx
+    xor ecx, ecx
+    shr eax, 0x10
+    mov cl, dl
+    and eax, 0x3f
+    sub ebp, ecx
+    add ebx, eax
+    xor eax, eax
+    shl edi, cl
+    cmp ebp, 0x10
+    jge dc_store_ready
+    mov ax, word ptr [esi]
+    mov ecx, 0x10
+    sub ecx, ebp
+    add esi, 2
+    shl eax, cl
+    or edi, eax
+    add ebp, 0x10
+  dc_store_ready:
+    mov ecx, dword ptr [movie_media_decoder_tables + 0x200 + ebx*4]
+    mov eax, edx
+    sar eax, 0x16
+    inc ebx
+    imul dword ptr [movie_media_decoder_tables + 0x1400 + ecx]
+    mov dword ptr [movie_media_decoder_tables + ecx], eax
+    jmp dc_next_symbol
+  dc_done:
+    mov dword ptr [movie_media_decoder_tables + 0x1500], esi
+    mov dword ptr [movie_media_decoder_tables + 0x1504], edi
+    mov dword ptr [movie_media_decoder_tables + 0x1508], ebp
+    mov eax, ebx
+    pop ebp
+    pop edi
+    pop esi
+    pop edx
+    pop ecx
+    pop ebx
+    ret
   }
 }
 
@@ -6648,12 +6729,12 @@ void decode_six_blocks(SixBlockArgs &args) {
         ? args.scratch.chroma_16x8 + chroma_offsets[block - 4]
         : args.scratch.luma_16x16 + luma_offsets[block];
     if ((header.flags & flags[block]) == 0) {
-      args.coefficient_state->bits = *args.bits;
+      // 0x005CE85C reads and advances *args.bits (the shared reader) in
+      // place and leaves the scaled DC value in coefficients[0].
       const int decoded = decode_coefficients(*args.coefficient_state);
-      *args.bits = args.coefficient_state->bits;
       if (decoded == 1) {
         fill_block(target, chroma ? 0x20 : 0x40,
-                   args.coefficient_state->fill_value);
+                   args.coefficient_state->coefficients[0]);
       } else {
         args.idct_rows(target, chroma ? 8 : 0x10);
       }
