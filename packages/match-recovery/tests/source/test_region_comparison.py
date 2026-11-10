@@ -176,3 +176,17 @@ def test_data_mismatch_in_secondary_region_retains_its_aggregate_offset():
                               pair(b"\x90\x90\xc3", b"\x90\x90\xc3\xf8", base=0x408000)))
     assert result.verdict != Tier.BYTE_EXACT
     assert result.data_divergence == 4
+
+
+def test_region_jump_table_tail_is_compared_as_data():
+    # `ret`, then a 3-byte `lea ecx,[ecx+0]` pad and one relocated table cell.
+    original = Listing(b"\xc3\x8d\x49\x00\x10\x20\x40\x00", 0x401000, code_bytes=1,
+                       mask=frozenset(range(4, 8)))
+    same = Listing(b"\xc3\x8d\x49\x00\x00\x00\x00\x00", 0x401000, code_bytes=1,
+                   mask=frozenset(range(4, 8)), flags="trial")
+    assert compare_regions(((original, same),)).verdict is Tier.BYTE_EXACT
+    changed_pad = Listing(b"\xc3\x90\x90\x90\x00\x00\x00\x00", 0x401000, code_bytes=1,
+                          mask=frozenset(range(4, 8)), flags="trial")
+    assert compare_regions(((original, changed_pad),)).verdict is not Tier.BYTE_EXACT
+    with pytest.raises(ValueError, match="code/data boundaries"):
+        compare_regions(((original, Listing(same.code, 0x401000, mask=same.mask, flags="trial")),))

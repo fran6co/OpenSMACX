@@ -27,7 +27,7 @@ from ..application_binary import verify_records
 from ..binary import RelocationKind
 from ..associated_source import parse_associated
 from ..measurement import Measurement
-from ..model import Result
+from ..model import Result, Span
 from ..pe_coff import Coff, CoffRecords, PeImage
 from ..source_inventory import image_pin
 from .eh_regions import bind_eh_regions, eh_action_semantic_difference, original_eh_action_count
@@ -1376,12 +1376,15 @@ def compare_regions(pairs: tuple[tuple[Listing, Listing], ...], *,
         if previous_end is not None and original.base < previous_end:
             raise ValueError("original regions must be ordered and non-overlapping")
         previous_end = original.base + len(original.code)
+        if original.code_bytes != candidate.code_bytes or (
+                original.code_bytes is not None and len(original.code) != len(candidate.code)):
+            raise ValueError("region comparison requires matching code/data boundaries")
         for listing in (original, candidate):
-            if not listing.code or listing.code_bytes is not None:
+            if not listing.code:
                 raise ValueError("region comparison requires nonempty complete code regions")
             if any(offset < 0 or offset >= len(listing.code) for offset in listing.mask):
                 raise ValueError("region relocation mask exceeds its bytes")
-            if sum(instruction.size for instruction in listing.instructions) != len(listing.code):
+            if sum(instruction.size for instruction in listing.instructions) != listing.instruction_bytes:
                 return AsmComparison(verdict=Tier.REFUSED, flags=candidate.flags,
                                      diagnostic=f"region at 0x{original.base:08X} is not fully decoded")
     measured_pairs, fills = [], []
@@ -1485,6 +1488,22 @@ def eh_region_listings(compiled: RegionCandidate, bound, image: PeImage) -> list
                             mask=frozenset(item.offset + byte
                                 for item in region.relocations for byte in range(4)),
                             flags=compiled.flags, references=references)
+        # A switch's jump tables ride the COMDAT past the mapped code span,
+        # as in the single-span path (`_split_at`): when the candidate's
+        # instructions end exactly at the span with a terminator and the
+        # tail carries relocations, compare that tail as data against the
+        # image's own bytes after the span. Pure alignment fill keeps the
+        # region comparison's own envelope rule.
+        span_size = region.original.end - region.original.start
+        split = _split_at(candidate, span_size)
+        if (split.code_bytes == span_size
+                and any(offset >= span_size for offset in candidate.mask)):
+            extended = Span(low, low + len(region.code))
+            original = Listing(image.read(extended), low, code_bytes=span_size,
+                               mask=frozenset(offset + byte
+                                   for offset in image.absolute_sites(extended)
+                                   for byte in range(4)))
+            candidate = split
         pairs.append((original, candidate))
     return pairs
 
