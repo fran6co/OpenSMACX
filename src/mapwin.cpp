@@ -523,8 +523,11 @@ void MapWin::init(int mode, int update) {
 
     StringTemp[0] = '\0';
     if (mode != 0) {
-        strcat(StringTemp, StringTable.get(mode != 3 ? Labels.strings_ptr[0x1E]
-                                                     : Labels.strings_ptr[0x204]));
+        if (mode != 3) {
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x1E]));
+        } else {
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x204]));
+        }
     } else {
         strcat(StringTemp, label_get(0x1D));
         if (map_view_index_ != 0) {
@@ -535,10 +538,9 @@ void MapWin::init(int mode, int update) {
             strcat(StringTemp, number);
         } else {
             StringTemp[0] = '\0';
-            const Player &player = Players[ConsoleGlobal.faction_id_];
-            GenderDefault = player.noun_gender;
-            PluralityDefault = player.is_noun_plural;
-            strcat(StringTemp, player.formal_name_faction);
+            GenderDefault = Players[ConsoleGlobal.faction_id_].noun_gender;
+            PluralityDefault = Players[ConsoleGlobal.faction_id_].is_noun_plural;
+            strcat(StringTemp, Players[ConsoleGlobal.faction_id_].formal_name_faction);
             strcat(StringTemp, ": ");
             strcat(StringTemp, label_get(0));
             strcat(StringTemp, " ");
@@ -1569,8 +1571,22 @@ int MapWin::focus(int x, int y) {
     return moved;
 }
 
+// WORKAROUND(inline): map.h's wrap_map_x caches MapLongitudeBounds in a
+// const local. That extra temporary shifts VC6's register rotation in every
+// caller here: set_center (0x0046B1F0) and get_point_light (0x00470790) are
+// byte exact only with this per-arm read. The original header wrap evidently
+// had no such local; fold this back into map.h once its other callers are
+// remeasured.
+static inline int mapwin_wrap_x(int x) {
+    if (!(MapIsFlat & 1)) {
+        if (x < 0) return x + MapLongitudeBounds;
+        if (x >= (int)MapLongitudeBounds) return x - MapLongitudeBounds;
+    }
+    return x;
+}
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0046B1F0 ?set_center@MapWin@@QAEXHHH@Z 0x0046B1F0-0x0046B303
+// ORIGINAL: 0x0046B1F0 ?set_center@MapWin@@QAEXHHH@Z 0x0046B1F0-0x0046B303 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0046b1f0.cpp and original 0x0046B1F0-0x0046B303; Vehs+0xE is faction_id."], "reason": "Home map recentering with real receiver fields, destination vehicle state and redraw."}
 void MapWin::set_center(int x, int y, int draw_type) {
     TutorialWindow.reset();
@@ -1587,14 +1603,14 @@ void MapWin::set_center(int x, int y, int draw_type) {
     // The image inlines the shared wrap (one `mov eax,ebx` for both the flat
     // and in-range paths) and sets the -1 destination on the non-Console
     // path only.
-    center_x_ = wrap_map_x(x);
+    center_x_ = mapwin_wrap_x(x);
     center_y_ = y;
 
     int destination;
     if (this == static_cast<MapWin *>(&ConsoleGlobal)) {
         destination = DestinationVehicleId;
         if (destination >= 0 &&
-            (ConsoleGlobal.faction_id_ == Vehs[destination].faction_id ||
+            (Vehs[destination].faction_id == ConsoleGlobal.faction_id_ ||
              (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) &&
             !(GameDataStateStorage.fields_.game_more_preferences_ & 0x2000000)) {
             ConsoleGlobal.cover_window_.fill(9);
@@ -2070,16 +2086,11 @@ static inline int mapwin_tile_visible(MapWin *w, int x, int y) {
     return 1;
 }
 
-// Route-preview tile distance: wrapped |dx| plus |dy|.
+// Route-preview tile distance: wrapped |dx| plus |dy|. The x term is map.h's
+// x_dist; an open-coded copy with its own temporaries shifts VC6's register
+// choice in draw_vehicles (0x00466CA0).
 static inline int mapwin_route_distance(int x1, int y1, int x2, int y2) {
-    const int dx = abs(x1 - x2);
-    int wrapped;
-    if ((MapIsFlat & 1) == 0 && dx > MapLongitude) {
-        wrapped = MapLongitudeBounds - dx;
-    } else {
-        wrapped = dx;
-    }
-    return wrapped + abs(y1 - y2);
+    return x_dist(x1, x2) + abs(y1 - y2);
 }
 
 // ORIGINAL: 0x00467430 ?dest_line@MapWin@@QAEXHHHHHHHHHHH@Z 0x00467430-0x00467958 BYTE_EXACT
@@ -2188,48 +2199,6 @@ void MapWin::dest_line(int x1, int y1, int x2, int y2, int proto_id,
     }
 }
 
-namespace {
-int mouse_feedback_signed(uint32_t value) {
-    return value <= 0x7fffffffU ? static_cast<int>(value)
-                              : -1 - static_cast<int>(0xffffffffU - value);
-}
-
-int mouse_feedback_add(int left, int right) {
-    return mouse_feedback_signed(static_cast<uint32_t>(left) +
-                                 static_cast<uint32_t>(right));
-}
-
-int mouse_feedback_sub(int left, int right) {
-    return mouse_feedback_signed(static_cast<uint32_t>(left) -
-                                 static_cast<uint32_t>(right));
-}
-
-int mouse_feedback_mul(int left, int right) {
-    return mouse_feedback_signed(static_cast<uint32_t>(left) *
-                                 static_cast<uint32_t>(right));
-}
-
-void mouse_feedback_store_x(MapWin &window, int index, int value) {
-    // The UI cycles count0..3 even in repeat mode (517E0A..517E66).
-    // Thus a five-segment path genuinely writes the next physical field:
-    // x[5] at1DDF8 aliases y[0]. Do not widen the five-element array.
-    if (index == 5) {
-        window.feedback_y_[0] = value;
-    } else {
-        window.feedback_x_[index] = value;
-    }
-}
-
-void mouse_feedback_store_y(MapWin &window, int index, int value) {
-    // Original y[5] at1DE0C aliases the cached hover-X field.
-    if (index == 5) {
-        window.field_1DE0C_ = static_cast<uint32_t>(value);
-    } else {
-        window.feedback_y_[index] = value;
-    }
-}
-}
-
 // The custom title strip returns HTCLIENT; points outside it use Win's normal
 // non-client hit test through the genuine virtual GraphicWin/Win base.
 // ORIGINAL: 0x0046F660 ?on_nc_hittest@MapWin@@QAEXHH@Z 0x0046F660-0x0046F6F9 BYTE_EXACT
@@ -2249,7 +2218,7 @@ int MapWin::on_nc_hittest(int x, int y) {
 }
 
 // ORIGINAL: 0x0046F000 ?on_mouse_move@MapWin@@QAEXHH@Z 0x0046F000-0x0046F651
-// RECOVERY_BINDING: v1 {"evidence": ["Original46F000..46F651; retired seed git:5605e9af:src/unrecovered/0046f000.cpp records this identity and exact span.", "Original517DD3..517E66 permits repeat mode with waypoint count3; endpoint x[5]/y[5] physically alias y[0]/hoverX. The C++ explicitly names those fields rather than overrunning arrays.", "Original46F0E1/46F118 skip directly to CoverWindow update;46F3A2..46F3B0 retains the base-path endpoint quirk;46F5DD tests the shared string address."], "reason": "The original MapWin/PlanWin/Console Win-branch slot17 entries4218B0/48BFA0/51DE70 dispatch this two-coordinate notification. Genuine virtual inheritance owns the receiver adjustment; it is distinct from the four-argument Win mouse router."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original46F000..46F651; retired seed git:5605e9af:src/unrecovered/0046f000.cpp records this identity and exact span.", "Original517DD3..517E66 permits repeat mode with waypoint count3; endpoint x[5]/y[5] physically alias y[0]/hoverX. Original46F2EF..46F30A indexes both five-entry arrays directly, so the C++ does too.", "Original46F0E1/46F118 skip directly to CoverWindow update;46F3A2..46F3B0 retains the base-path endpoint quirk;46F5DD tests the shared string address."], "reason": "The original MapWin/PlanWin/Console Win-branch slot17 entries4218B0/48BFA0/51DE70 dispatch this two-coordinate notification. Genuine virtual inheritance owns the receiver adjustment; it is distinct from the four-argument Win mouse router."}
 // TRIED (retired seed git:5605e9af:src/unrecovered/0046f000.cpp): 'this' treated as a secondary-base receiver (MapWin front recovered via self - 0x21a6c, verified against field_1EF4C_/field_1EF50_ in the existing MapWin scaffold layout), with the per-unit waypoint loop and vbtable-adjusted set_cursor thunk transcribed mechanically field-offset-by-field-offset against raw disassembly. It compiles and reaches instruction #3 before diverging (prologue register-save order); not chased further given the function's size and fixed-point waypoint bookkeeping in the middle third.
 // symbol    ?on_mouse_move@MapWin@@UAEXHH@Z
 void MapWin::on_mouse_move(int pixel_x, int pixel_y) {
@@ -2271,133 +2240,133 @@ void MapWin::on_mouse_move(int pixel_x, int pixel_y) {
         return;
     }
 
-    if (ConsoleGlobal.selecting(tile_x, tile_y) == 0) {
+    if (ConsoleGlobal.selecting(tile_x, tile_y) != 0) {
+
+        // 46F0E1 and46F118 skip the text builder and reach the shared
+        // soft_update at46F601.
+        if (field_1DD80_ != 0) {
+            MapMouseFeedbackBusy = 1;
+            do_all_non_input();
+            MapMouseFeedbackBusy = 0;
+            if (field_1DE0C_ != static_cast<uint32_t>(tile_x) ||
+                feedback_hover_y_ != tile_y) {
+
+                ConsoleGlobal.cover_window_.fill(9);
+                field_1DE0C_ = static_cast<uint32_t>(tile_x);
+                feedback_hover_y_ = tile_y;
+
+                const int vehicle = ConsoleGlobal.selected_vehicle_;
+                if (vehicle >= 0) {
+                    feedback_proto_ = Vehs[vehicle].proto_id;
+                    feedback_repeat_ = ConsoleGlobal.field_23D10_ == 8;
+                    if (feedback_repeat_ != 0) {
+                        Vehs[vehicle].waypoint_x[Vehs[vehicle].waypoint_count] =
+                            static_cast<int16_t>(tile_x);
+                        Vehs[vehicle].waypoint_y[Vehs[vehicle].waypoint_count] =
+                            static_cast<int16_t>(tile_y);
+                    } else if (ConsoleGlobal.field_23D10_ == 1) {
+                        if ((Vehs[vehicle].state & 0x02000000U) != 0) {
+                            Vehs[vehicle].waypoint_x[Vehs[vehicle].waypoint_count] =
+                                static_cast<int16_t>(tile_x);
+                            Vehs[vehicle].waypoint_y[Vehs[vehicle].waypoint_count] =
+                                static_cast<int16_t>(tile_y);
+                        } else {
+                            Vehs[vehicle].waypoint_x[0] = static_cast<int16_t>(tile_x);
+                            Vehs[vehicle].waypoint_y[0] = static_cast<int16_t>(tile_y);
+                            Vehs[vehicle].waypoint_count = 0;
+                        }
+                    }
+                    feedback_triad_ = Chassis[VehPrototypes[Vehs[vehicle].proto_id].chassis_id].triad;
+
+                    // The original reloads both count and repeat each iteration, then
+                    // pumps before reading the next segment's coordinates/count again.
+                    for (int segment = 0;
+                         segment < Vehs[vehicle].waypoint_count + 1 +
+                                       (feedback_repeat_ != 0 && Vehs[vehicle].waypoint_count != 0);
+                         ++segment) {
+                        Win::update_cursor(0, 1);
+                        const int start_x = segment != 0 ? Vehs[vehicle].waypoint_x[segment - 1]
+                                                         : Vehs[vehicle].x;
+                        const int start_y = segment != 0 ? Vehs[vehicle].waypoint_y[segment - 1]
+                                                         : Vehs[vehicle].y;
+                        const int next = (segment + 1) % (Vehs[vehicle].waypoint_count + 2);
+                        const int end_x = next != 0 ? Vehs[vehicle].waypoint_x[next - 1]
+                                                    : Vehs[vehicle].x;
+                        const int end_y = next != 0 ? Vehs[vehicle].waypoint_y[next - 1]
+                                                    : Vehs[vehicle].y;
+                        // The UI cycles count 0..3 even in repeat mode (517E0A..517E66),
+                        // so segment + 1 can reach 5: the original indexes straight
+                        // past both five-entry arrays, x[5] landing on y[0] and y[5]
+                        // on field_1DE0C_.
+                        feedback_x_[segment] = start_x;
+                        feedback_y_[segment] = start_y;
+                        feedback_x_[segment + 1] = end_x;
+                        feedback_y_[segment + 1] = end_y;
+                        feedback_segment_count_ = segment + 1;
+                        dest_line(start_x, start_y, end_x, end_y,
+                                  feedback_proto_, ConsoleGlobal.faction_id_,
+                                  feedback_triad_, feedback_repeat_, 3, 5, 1);
+                    }
+                } else {
+                    Win::update_cursor(0, 1);
+                    feedback_proto_ = 10;
+                    feedback_x_[0] = Bases[field_1DE24_].x;
+                    feedback_y_[0] = Bases[field_1DE24_].y;
+                    // Original46F3A2 loads tile_y;46F3B0 writes the NEXT X slot.
+                    // No store initializes y[1] on this branch. Preserve this quirk.
+                    feedback_x_[1] = tile_y;
+                    feedback_triad_ = 2;
+                    feedback_repeat_ = 0;
+                    feedback_segment_count_ = 1;
+                    dest_line(feedback_x_[0], feedback_y_[0],
+                              feedback_x_[1], feedback_y_[1],
+                              feedback_proto_, ConsoleGlobal.faction_id_,
+                              feedback_triad_, feedback_repeat_, 3, 5, 1);
+                }
+
+                StringTemp[0] = '\0';
+                strcat(StringTemp, StringTable.get(
+                    ConsoleGlobal.field_23D10_ == 8 ? Labels.strings_ptr[410]
+                    : field_1DD84_ != 0           ? Labels.strings_ptr[433]
+                                                  : Labels.strings_ptr[411]));
+                strcat(StringTemp, " ");
+                say_loc(StringTemp, tile_x, tile_y, 0, 2, 0);
+                strcat(StringTemp, ": ");
+                strcat(StringTemp, label_get(412));
+                strcat(StringTemp, " = ");
+                char number[80];
+                _itoa(MapDestinationCost / Rules.move_rate_roads, number, 10);
+                strcat(StringTemp, number);
+                if (MapDestinationCost % Rules.move_rate_roads != 0) {
+                    strcat(StringTemp, " ");
+                    _itoa(MapDestinationCost % Rules.move_rate_roads, number, 10);
+                    strcat(StringTemp, number);
+                    strcat(StringTemp, "/");
+                    _itoa(Rules.move_rate_roads, number, 10);
+                    strcat(StringTemp, number);
+                }
+
+                ConsoleGlobal.cover_window_.set_text_color(0x9f, 0x41, 1, 1);
+                ConsoleGlobal.cover_window_.set_font(find_font(12, 1), 0, 0, 0);
+                const int width = ConsoleGlobal.dib_.bmiHeader.biWidth;
+                const int text_x = pixel_x -
+                    ConsoleGlobal.cover_window_.text_width(StringTemp) * pixel_x / width;
+                const int text_y = ConsoleGlobal.tile_pixel_height_ + pixel_y;
+                // 46F5DD tests StringTemp's ADDRESS, not its first character.
+                if (StringTemp) {
+                    ConsoleGlobal.cover_window_.write_l(StringTemp, text_x, text_y,
+                                                        static_cast<int>(strlen(StringTemp)));
+                }
+            }
+        }
+        ConsoleGlobal.cover_window_.soft_update();
+    } else {
         if (cursor_sprite_ != 0 || cursor_resource_id_ != 0x7f00) {
             Win::set_cursor(0x7f00);
             cursor_resource_id_ = 0x7f00;
             cursor_sprite_ = 0;
         }
-        return;
     }
-
-    // 46F0E1 and46F118 go directly to46F601, not the text builder.
-    if (field_1DD80_ == 0) {
-        ConsoleGlobal.cover_window_.soft_update();
-        return;
-    }
-    MapMouseFeedbackBusy = 1;
-    do_all_non_input();
-    MapMouseFeedbackBusy = 0;
-    if (field_1DE0C_ == static_cast<uint32_t>(tile_x) &&
-        feedback_hover_y_ == tile_y) {
-        ConsoleGlobal.cover_window_.soft_update();
-        return;
-    }
-
-    ConsoleGlobal.cover_window_.fill(9);
-    field_1DE0C_ = static_cast<uint32_t>(tile_x);
-    feedback_hover_y_ = tile_y;
-
-    const int vehicle = ConsoleGlobal.selected_vehicle_;
-    if (vehicle < 0) {
-        Win::update_cursor(0, 1);
-        feedback_proto_ = 10;
-        feedback_x_[0] = Bases[field_1DE24_].x;
-        feedback_y_[0] = Bases[field_1DE24_].y;
-        // Original46F3A2 loads tile_y;46F3B0 writes the NEXT X slot.
-        // No store initializes y[1] on this branch. Preserve this quirk.
-        feedback_x_[1] = tile_y;
-        feedback_triad_ = 2;
-        feedback_repeat_ = 0;
-        feedback_segment_count_ = 1;
-        dest_line(feedback_x_[0], feedback_y_[0],
-                  feedback_x_[1], feedback_y_[1],
-                  feedback_proto_, ConsoleGlobal.faction_id_,
-                  feedback_triad_, feedback_repeat_, 3, 5, 1);
-    } else {
-        feedback_proto_ = Vehs[vehicle].proto_id;
-        feedback_repeat_ = ConsoleGlobal.field_23D10_ == 8;
-        if (feedback_repeat_ != 0 ||
-            (ConsoleGlobal.field_23D10_ == 1 &&
-             (Vehs[vehicle].state & 0x02000000U) != 0)) {
-            Vehs[vehicle].waypoint_x[Vehs[vehicle].waypoint_count] =
-                static_cast<int16_t>(tile_x);
-            Vehs[vehicle].waypoint_y[Vehs[vehicle].waypoint_count] =
-                static_cast<int16_t>(tile_y);
-        } else if (ConsoleGlobal.field_23D10_ == 1) {
-            Vehs[vehicle].waypoint_x[0] = static_cast<int16_t>(tile_x);
-            Vehs[vehicle].waypoint_y[0] = static_cast<int16_t>(tile_y);
-            Vehs[vehicle].waypoint_count = 0;
-        }
-        feedback_triad_ = Chassis[VehPrototypes[Vehs[vehicle].proto_id].chassis_id].triad;
-
-        // The original reloads both count and repeat each iteration, then
-        // pumps before reading the next segment's coordinates/count again.
-        for (int segment = 0;
-             segment < Vehs[vehicle].waypoint_count + 1 +
-                           (feedback_repeat_ != 0 && Vehs[vehicle].waypoint_count != 0);
-             ++segment) {
-            Win::update_cursor(0, 1);
-            const int start_x = segment == 0 ? Vehs[vehicle].x
-                                            : Vehs[vehicle].waypoint_x[segment - 1];
-            const int start_y = segment == 0 ? Vehs[vehicle].y
-                                            : Vehs[vehicle].waypoint_y[segment - 1];
-            const int next = (segment + 1) % (Vehs[vehicle].waypoint_count + 2);
-            const int end_x = next == 0 ? Vehs[vehicle].x
-                                       : Vehs[vehicle].waypoint_x[next - 1];
-            const int end_y = next == 0 ? Vehs[vehicle].y
-                                       : Vehs[vehicle].waypoint_y[next - 1];
-            mouse_feedback_store_x(*this, segment, start_x);
-            mouse_feedback_store_y(*this, segment, start_y);
-            mouse_feedback_store_x(*this, segment + 1, end_x);
-            mouse_feedback_store_y(*this, segment + 1, end_y);
-            feedback_segment_count_ = segment + 1;
-            // Arguments retain the locals even when the endpoint stores
-            // alias earlier fields. They are not reloaded from the arrays.
-            dest_line(start_x, start_y, end_x, end_y,
-                      feedback_proto_, ConsoleGlobal.faction_id_,
-                      feedback_triad_, feedback_repeat_, 3, 5, 1);
-        }
-    }
-
-    StringTemp[0] = '\0';
-    if (ConsoleGlobal.field_23D10_ == 8) {
-        strcat(StringTemp, label_get(410));
-    } else if (field_1DD84_ != 0) {
-        strcat(StringTemp, label_get(433));
-    } else {
-        strcat(StringTemp, label_get(411));
-    }
-    strcat(StringTemp, " ");
-    // These are the original conversion's saved outputs, not a second call.
-    say_loc(StringTemp, tile_x, tile_y, 0, 2, 0);
-    strcat(StringTemp, ": ");
-    strcat(StringTemp, label_get(412));
-    strcat(StringTemp, " = ");
-    char number[0x40];
-    _itoa(MapDestinationCost / mouse_feedback_signed(Rules.move_rate_roads), number, 10);
-    strcat(StringTemp, number);
-    if (MapDestinationCost % mouse_feedback_signed(Rules.move_rate_roads) != 0) {
-        strcat(StringTemp, " ");
-        _itoa(MapDestinationCost % mouse_feedback_signed(Rules.move_rate_roads), number, 10);
-        strcat(StringTemp, number);
-        strcat(StringTemp, "/");
-        _itoa(mouse_feedback_signed(Rules.move_rate_roads), number, 10);
-        strcat(StringTemp, number);
-    }
-
-    ConsoleGlobal.cover_window_.set_text_color(0x9f, 0x41, 1, 1);
-    ConsoleGlobal.cover_window_.set_font(find_font(12, 1), 0, 0, 0);
-    const int width = ConsoleGlobal.dib_.bmiHeader.biWidth;
-    const int text_width = ConsoleGlobal.cover_window_.text_width(StringTemp);
-    const int text_x = mouse_feedback_sub(pixel_x,
-        mouse_feedback_mul(text_width, pixel_x) / width);
-    const int text_y = mouse_feedback_add(
-        mouse_feedback_signed(ConsoleGlobal.tile_pixel_height_), pixel_y);
-    // 46F5DD tests StringTemp's ADDRESS, not its first character. It is
-    // always nonnull for owned storage; empty strings still reach write_l.
-    ConsoleGlobal.cover_window_.write_l(StringTemp, text_x, text_y, static_cast<int>(strlen(StringTemp)));
-    ConsoleGlobal.cover_window_.soft_update();
 }
 
 namespace {
@@ -2467,7 +2436,7 @@ static inline int mapwin_next_in_stack(int vehicle) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00466CA0 ?draw_vehicles@MapWin@@QAEXHHHHH@Z 0x00466CA0-0x0046718F FILE
+// ORIGINAL: 0x00466CA0 ?draw_vehicles@MapWin@@QAEXHHHHH@Z 0x00466CA0-0x0046718F FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00466ca0.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
 void MapWin::draw_vehicles(int tile_x, int tile_y, int pixel_x, int pixel_y,
                            int faction_id) {
@@ -6792,6 +6761,11 @@ Purpose: Generate the whole visible map - background, terrain, vehicles,
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00462F00 0x004632D0 0x00466CA0 0x00467DE0 0x004688E0 0x00469720 0x004698D0 0x004712A0 0x005D5250
 */
+// WORKAROUND(noinline): the image calls on_map out of line (0x00469E4E
+// `call 0x4712a0`) right after gen_terrain_poly, so the original's /Ob2
+// budget or header context kept that site uninlined; inline_depth(0) is the
+// only VC6 control that reproduces it. gen_radius uses the same pragma.
+#pragma inline_depth(0)
 void MapWin::gen_map(int a1, int a2) {
     if (a2 == 0) {
         if ((field_1DD70_ & 0x82000000) == 0 && field_21A44_ == 0) {
@@ -6943,6 +6917,7 @@ void MapWin::gen_map(int a1, int a2) {
         draw_wars();
     }
 }
+#pragma inline_depth(8)
 
 // ORIGINAL: 0x0046A4A0 ?draw_tile@MapWin@@QAEXHHH@Z 0x0046A4A0-0x0046A52F FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
@@ -7112,7 +7087,7 @@ int MapWin::get_alt(int x, int y, int corner) {
     int alt_sum = 0;
     int count = 0;
     for (;;) {
-        int nx = wrap_map_x(CornerOffsetX[corner - 1][count] + x);
+        int nx = mapwin_wrap_x(CornerOffsetX[corner - 1][count] + x);
         int ny = CornerOffsetY[corner - 1][count] + y;
         if (!on_map(nx, ny) || (map_loc(nx, ny)->climate & ~0x1F) < 0x60) {
             sum = 0;
@@ -7140,7 +7115,7 @@ int MapWin::get_alt(int x, int y, int corner) {
     }
     // Each neighbour stores the value under its opposite corner.
     for (int opposite = -2; opposite + 2 < 4; ++opposite) {
-        int nx = wrap_map_x(CornerOffsetX[corner - 1][opposite + 2] + x);
+        int nx = mapwin_wrap_x(CornerOffsetX[corner - 1][opposite + 2] + x);
         int ny = CornerOffsetY[corner - 1][opposite + 2] + y;
         if (on_map(nx, ny)) {
             set_alt_cache(this, nx, ny, (opposite & 3) + 1, value);
@@ -7614,7 +7589,7 @@ void MapWin::compute_lighting_table() {
 }
 
 // Fixed-slot bindings carried from 00470790.cpp
-// ORIGINAL: 0x00470790 ?get_point_light@MapWin@@QAEHHHH@Z 0x00470790-0x00470917 FILE
+// ORIGINAL: 0x00470790 ?get_point_light@MapWin@@QAEHHHH@Z 0x00470790-0x00470917 FILE BYTE_EXACT
 // HOMED 2026-09-04 from the 0x00470790 artifact. 22/139 under /O2 /GX.
 // These original storage identities have named bindings here or in map.h:
 // g_00685684 = AltDirectionTable, g_00685A24/g_00685B60/g_007F6750 =
@@ -7639,15 +7614,7 @@ void MapWin::compute_lighting_table() {
 // calls     0x00470550
 
 // The image's neighbour wraps reload MapLongitudeBounds per arm, unlike
-// wrap_map_x's cached bound.
-static inline int gpl_wrap(int x) {
-    if (!(MapIsFlat & 1)) {
-        if (x < 0) return x + MapLongitudeBounds;
-        if (x >= (int)MapLongitudeBounds) return x - MapLongitudeBounds;
-    }
-    return x;
-}
-
+// wrap_map_x's cached bound (see mapwin_wrap_x).
 int MapWin::get_point_light(int x, int y, int corner) {
     int total = 0;
     int localLight = 0;
@@ -7679,9 +7646,10 @@ int MapWin::get_point_light(int x, int y, int corner) {
     }
 
     for (int j = 0; j < 4; ++j) {
-        total += get_brighting(gpl_wrap(x + CornerOffsetX[corner - 1][j]),
-                               y + CornerOffsetY[corner - 1][j], (j - 3) & 3);
-        total += get_brighting(gpl_wrap(x + CornerOffsetX[corner - 1][j]),
+        const int prev_corner = j - 3;
+        total += get_brighting(mapwin_wrap_x(x + CornerOffsetX[corner - 1][j]),
+                               y + CornerOffsetY[corner - 1][j], prev_corner & 3);
+        total += get_brighting(mapwin_wrap_x(x + CornerOffsetX[corner - 1][j]),
                                y + CornerOffsetY[corner - 1][j], (j - 2) & 3);
     }
 
