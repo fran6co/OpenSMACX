@@ -171,12 +171,24 @@ void __cdecl world_lower_alt(int x, int y) {
     }
 }
 
+// A wrap that rereads MapLongitudeBounds on each arm instead of caching it the
+// way wrap_map_x does. brush's centre/diagonal wraps and borehole's first ring
+// load the bound into the result register on both the flat and round paths
+// (0x005C2440, 0x005C72AB); wrap_map_x's cached local cannot produce that.
+static inline int world_wrap_x(int x) {
+    return (MapIsFlat & 1) ? x
+        : (x < 0 ? x + (int)MapLongitudeBounds
+                 : (x >= (int)MapLongitudeBounds ? x - (int)MapLongitudeBounds : x));
+}
+
 /*
 Purpose: Set up the brush for creating world terrain.
-// ORIGINAL: 0x005C2440 ?brush@@YAXHHH@Z 0x005C2440-0x005C27E1
+// ORIGINAL: 0x005C2440 ?brush@@YAXHHH@Z 0x005C2440-0x005C27E1 BYTE_EXACT
 // TRIED: the diagonal scan runs k = 1, 3, 5, 7 with (k+1)&7 and (k-1)&7, as
-//   the image's induction shows. Remaining gap: i/x in esi/edi swapped and the
-//   first wrap's MapLongitudeBounds loads; explicit wrap chains are worse.
+//   the image's induction shows.
+// LEVER: the centre and both diagonal-neighbour wraps reread MapLongitudeBounds
+//   per arm (world_wrap_x); the land-bridge test is the is_ocean-style
+//   `climate & ~0x1F` compare; BrushVal2 is bumped before BrushVal1.
 // size      929 bytes
 // prototype void (__cdecl ?brush@@YAXHHH@Z)(int xCoord, int yCoord, int altitude)
 // callers   1   call targets   3
@@ -192,7 +204,7 @@ void __cdecl brush(int x, int y, int altitude) {
         if (i == 2) {
             continue;
         }
-        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
+        int x_radius = world_wrap_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (!on_map(x_radius, y_radius)) {
             continue;
@@ -219,10 +231,10 @@ void __cdecl brush(int x, int y, int altitude) {
                 int x_rad_base = wrap_map_x(x_radius + VehMoveDeltaX[k]);
                 int y_rad_base = y_radius + VehMoveDeltaY[k];
                 if (on_map(x_rad_base, y_rad_base)
-                    && altitude_at(x_rad_base, y_rad_base) == ALT_BIT_SHORE_LINE) {
-                    int x_rad_base2 = wrap_map_x(x_radius + VehMoveDeltaX[(k + 1) & 7]);
+                    && (map_loc(x_rad_base, y_rad_base)->climate & ~0x1F) == ALT_BIT_SHORE_LINE) {
+                    int x_rad_base2 = world_wrap_x(x_radius + VehMoveDeltaX[(k + 1) & 7]);
                     int y_rad_base2 = y_radius + VehMoveDeltaY[(k + 1) & 7];
-                    int x_rad_base3 = wrap_map_x(x_radius + VehMoveDeltaX[(k - 1) & 7]);
+                    int x_rad_base3 = world_wrap_x(x_radius + VehMoveDeltaX[(k - 1) & 7]);
                     int y_rad_base3 = y_radius + VehMoveDeltaY[(k - 1) & 7];
                     if (on_map(x_rad_base2, y_rad_base2)
                         && on_map(x_rad_base3, y_rad_base3)
@@ -243,8 +255,8 @@ void __cdecl brush(int x, int y, int altitude) {
         if (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW && altitude > 3) {
             temp_set(x_radius, y_radius, 1);
         }
-        BrushVal1 += 1;
         BrushVal2 += 1;
+        BrushVal1 += 1;
     }
     if (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW && use_draw_radius) {
         draw_radius(x, y, 2, 2);
@@ -1892,7 +1904,7 @@ void __cdecl world_diamond(int x, int y) {
 
 /*
 Purpose: Setup the 'Freshwater Sea' landmark.
-// ORIGINAL: 0x005C6C40 ?world_fresh@@YAXHH@Z 0x005C6C40-0x005C6DA4
+// ORIGINAL: 0x005C6C40 ?world_fresh@@YAXHH@Z 0x005C6C40-0x005C6DA4 BYTE_EXACT
 // size      356 bytes
 // prototype void (__cdecl ?world_fresh@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   3
@@ -1942,19 +1954,21 @@ void __cdecl world_fresh(int x, int y) {
             return;
         }
     }
-    for (int y_it = MapLatitudeBounds - 1; y_it >= 0 ; y_it--) {
-        for (int x_it = y_it & 1; x_it < MapLongitudeBounds; x_it += 2) {
-            if (region_at(x_it, y_it) != region) {
+    // The scan reuses the x/y parameters as its cursors: lea's operand order
+    // at 0x005C6D33 ([x_search + x - 2]) follows the parameter's numbering.
+    for (y = MapLatitudeBounds - 1; y >= 0 ; y--) {
+        for (x = y & 1; x < MapLongitudeBounds; x += 2) {
+            if (region_at(x, y) != region) {
                 if (!has_set_landmark && x_search >= 0) {
-                    int x_fresh = (x_search + x_it - 2) / 2;
-                    new_landmark(((x_fresh ^ y_it) & 1) ^ x_fresh, y_it,
+                    int x_fresh = (x_search + x - 2) / 2;
+                    new_landmark(((x_fresh ^ y) & 1) ^ x_fresh, y,
                         StringTable.get(Natural[LM_FRESH].name));
                     has_set_landmark = true;
                 }
             } else {
-                bit2_set(x_it, y_it, BIT2_FRESH, true);
+                bit2_set(x, y, BIT2_FRESH, true);
                 if (x_search < 0) {
-                    x_search = x_it;
+                    x_search = x;
                 }
             }
         }
@@ -2039,13 +2053,6 @@ void __cdecl world_volcano(int x, int y, BOOL is_not_landmark) {
     }
 }
 
-// Inner wrap of the borehole ring loops: the image tests the flat bit first.
-static inline int borehole_wrap_x(int x) {
-    return (MapIsFlat & 1) ? x
-        : (x < 0 ? x + (int)MapLongitudeBounds
-                 : (x >= (int)MapLongitudeBounds ? x - (int)MapLongitudeBounds : x));
-}
-
 /*
 Purpose: Setup the 'Borehole Cluster' landmark. Added to SMAC in 3.0 patch.
 // ORIGINAL: 0x005C7020 ?world_borehole@@YAXHH@Z 0x005C7020-0x005C753B
@@ -2087,11 +2094,11 @@ void __cdecl world_borehole(int x, int y) {
         }
     }
     int seed = static_cast<int>(timeGetTime());
-    const int phase = seed & 7;
-    int val1 = 8;
-    int val2 = (phase / 3) + 5;
     int val4 = (seed >> 3) & 3;
-    int val3 = 3 - (phase % 3);
+    seed &= 7;
+    int val1 = 8;
+    int val2 = (seed / 3) + 5;
+    int val3 = 3 - (seed % 3);
     if (val4 & 2) {
         val2--;
         val3--;
@@ -2122,21 +2129,23 @@ void __cdecl world_borehole(int x, int y) {
         }
     }
     for (i = 0; i < 8; i++) {
-        int x_radius = wrap_map_x(borehole_wrap_x(x + RadiusOffsetX[val1]) + RadiusOffsetX[i + 1]);
+        int x_radius = wrap_map_x(world_wrap_x(x + RadiusOffsetX[val1]) + RadiusOffsetX[i + 1]);
         int y_radius = y + RadiusOffsetY[val1] + RadiusOffsetY[i + 1];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
             world_alt_set(x_radius, y_radius, ALT_SHORE_LINE, true);
         }
     }
     for (i = 0; i < 8; i++) {
-        int x_radius = wrap_map_x(wrap_map_x(x + RadiusOffsetX[val2]) + RadiusOffsetX[i + 1]);
+        int x_radius = wrap_map_x(x + RadiusOffsetX[val2]) + RadiusOffsetX[i + 1];
+        x_radius = wrap_map_x(x_radius);
         int y_radius = y + RadiusOffsetY[val2] + RadiusOffsetY[i + 1];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
             world_alt_set(x_radius, y_radius, ALT_SHORE_LINE, true);
         }
     }
     for (i = 0; i < 8; i++) {
-        int x_radius = wrap_map_x(wrap_map_x(x + RadiusOffsetX[val3]) + RadiusOffsetX[i + 1]);
+        int x_radius = wrap_map_x(x + RadiusOffsetX[val3]) + RadiusOffsetX[i + 1];
+        x_radius = wrap_map_x(x_radius);
         int y_radius = y + RadiusOffsetY[val3] + RadiusOffsetY[i + 1];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
             world_alt_set(x_radius, y_radius, ALT_SHORE_LINE, true);
