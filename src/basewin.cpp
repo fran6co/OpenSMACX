@@ -7585,11 +7585,7 @@ void BaseWin::init() {
     g_BASEWIN_WAVE.set_volume(65);
     g_BASEWIN_WAVE.set_pitch(300);
     const int expanded = WinScreenWidth != 800;
-    SubInterface::field_4_ = 3;
-    // The image registers the SubInterface view without a null test and
-    // stores field_4_ through the same pointer (0x0041E95A..0x0041E96F),
-    // as an unrecovered inline SubInterface member would.
-    InterfaceRegistry[3] = static_cast<SubInterface *>(this);
+    register_iface(3);
 
     // Both original resolution paths initialize these same rectangles.
     if (!expanded) {

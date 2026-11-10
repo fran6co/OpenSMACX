@@ -22,6 +22,10 @@ class SubInterface {
   void delete_iface_mode();
   void set_iface_mode();
   void release_iface_mode();
+  // Publish this interface in its registry slot: the mode field first, then
+  // the slot, both through the adjusted SubInterface pointer with no null
+  // test (SocialWin::init, BaseWin::init 0x0041E95A..0x0041E96F).
+  inline void register_iface(int slot);
 
   virtual void on_status(int mode) = 0;                              // 0
   virtual void on_iface_scrolled(int, int) = 0;                      // 1
@@ -47,6 +51,13 @@ class SubInterface {
  protected:
   uint32_t field_4_;  // 0x4, used by set_iface_mode/release_iface_mode
 };
+
+extern SubInterface *InterfaceRegistry[12];
+
+inline void SubInterface::register_iface(int slot) {
+  field_4_ = slot;
+  InterfaceRegistry[slot] = this;
+}
 
 #if defined(_M_IX86) || defined(__i386__)
 static_assert(sizeof(SubInterface) == 0x8,

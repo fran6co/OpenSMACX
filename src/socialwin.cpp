@@ -2386,8 +2386,7 @@ void SocialWin::init(int faction_id) {
     effectMaximize_ = -1;
     // The interface-mode registry's own state: the SubInterface base pointer
     // and its mode field.
-    InterfaceRegistry[2] = static_cast<SubInterface *>(this);
-    field_4_ = 2;
+    register_iface(2);
     int a1 = faction_id;
     int positive = (a1 < 0) ? 1 : 0;
     if (a1 < 0) {
