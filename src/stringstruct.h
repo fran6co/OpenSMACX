@@ -243,9 +243,41 @@ class StringStruct : public virtual StringAllocationBase {
   ~StringStruct() { close(); }
   // Drain the list and reset the cursor; the destructor runs exactly this.
   void close() {
+#ifdef STRINGSTRUCT_REMOVE_ALL_CALLED
+    remove_all_walk();
+#else
     remove_all();
+#endif
     current_position_ = 0;
   }
+#ifdef STRINGSTRUCT_REMOVE_ALL_CALLED
+  // WORKAROUND(inline): Datalink's drawers call 0x00402970 out of line for
+  // their explicit clear (0x0042CB5F, 0x0042D7CA) while the destructor walks
+  // at the end of the same functions expand the same body inline. This twin
+  // is the destructor's expansion; the TU sees remove_all() as a declaration.
+  void remove_all_walk() {
+    if (!head_) {
+      return;
+    }
+    int index = 0;
+    if (entry_count_ > 0) {
+      do {
+        StringStructEntry *const entry = head_;
+        current_ = entry->next;
+        ListPayloadBase *const payload = entry->payload;
+        on_remove(payload);
+        delete payload;
+        head_->payload = nullptr;
+        delete head_;
+        head_ = current_;
+        ++index;
+      } while (index < entry_count_);
+    }
+    head_ = nullptr;
+    current_position_ = 0;
+    entry_count_ = 0;
+  }
+#endif
   MEASURED int seek_pos(int a1);
   int current_id();
   // Both return the entry's payload node - StringStructPayload, whose +4 is
@@ -448,7 +480,7 @@ MEASURED inline int StringStruct::seek_pos(int a1) {
 // walks the list twice); MEASURED keeps the out-of-line copy emitted.
 // A TU that defines STRINGSTRUCT_REMOVE_ALL_OUT_OF_LINE sees only the
 // declaration and calls 0x00402970 (NetSessionPickerWin 0x0063C7C0).
-#ifndef STRINGSTRUCT_REMOVE_ALL_OUT_OF_LINE
+#if !defined(STRINGSTRUCT_REMOVE_ALL_OUT_OF_LINE) && !defined(STRINGSTRUCT_REMOVE_ALL_CALLED)
 MEASURED inline void StringStruct::remove_all() {
     if (!head_) {
       return;

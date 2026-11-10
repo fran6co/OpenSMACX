@@ -2,6 +2,10 @@
 // (0x00401000) out of line from every StringList local, giving the drawers
 // their three-state EH layout (cold regions 0x00653712..0x0065384A).
 #define STRINGSTRUCT_CTOR_OUT_OF_LINE
+// WORKAROUND(noinline): the drawers' explicit clear calls StringStruct::remove_all
+// (0x00402970) out of line (0x0042CB5F, 0x0042D7CA) while their destructor
+// walks expand the same body inline; see stringstruct.h.
+#define STRINGSTRUCT_REMOVE_ALL_CALLED
 /*
  * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
  * Copyright (C) 2013-2021 Brendan Casey
@@ -76,48 +80,19 @@ char *DatalinkBlurbFile = DatalinkBlurbFileText;
 // RECOVERY_OBJECT: v1 0x0071F238 ?DatalinkTerraformExtraText@@3PADA
 char DatalinkTerraformExtraText[1];
 
-static void datalink_vehicle_line_start(int label) {
+static inline void dl_body_colors(Datalink *self, int link_color) {
+    self->set_text_color(0x98, -1, 1, 1);
+    self->set_text_color2(0x96, -1, 1, 1);
+    self->set_text_color_hyper(link_color, -1, 1, 1);
+}
+static inline void dl_draw_scaled(Buffer *buffer, Sprite *sprite, int x, int y,
+                                  int numerator, int denominator) {
+    sprite->draw(buffer, sprite->transparent_index(), x, y, numerator, denominator);
+}
+static inline void dl_upper_name(LPSTR name) {
     StringTemp[0] = 0;
-    strcat(StringTemp, label_get(label));
-    strcat(StringTemp, ": ");
-    strcat(StringTemp, " ");
-    strcat(StringTemp, "{");
-}
-
-static void datalink_vehicle_line_finish(StringList &list) {
-    strcat(StringTemp, "}");
-    list.pending_text_ = StringTemp;
-    list.field_20_ = 4;
-    list.field_24_ = 0;
-    list.add(0);
-}
-
-static void datalink_vehicle_append_number(int value) {
-    char number[80];
-    _itoa(value, number, 10);
-    strcat(StringTemp, number);
-}
-
-static void datalink_vehicle_append_rating(int rating) {
-    if (rating < 0) {
-        strcat(StringTemp, label_get(0x310 / 4));
-    } else {
-        datalink_vehicle_append_number(rating);
-    }
-}
-
-static void datalink_vehicle_append_tech(int tech) {
-    char name[256];
-    name[0] = 0;
-    say_tech(name, tech, 0);
-    if (tech < 0) {
-        strcat(StringTemp, name);
-    } else {
-        char id[256];
-        id[0] = 0;
-        _itoa(tech + 140000, id, 10);
-        help_create_link(StringTemp, name, id);
-    }
+    strcat(StringTemp, StringTable.get(name));
+    CharUpperA(StringTemp);
 }
 
 // The Datalink singleton, 0x00703EA0 in the shipped image - the storage the
@@ -216,11 +191,11 @@ Datalink::~Datalink() {
 // TRIED: RAII StringStruct local (declared ~StringStruct() to force a real dtor call) in place of the original's inlined vtable-pointer-swap destructor state machine (local_3c/ local_40/local_18/local_14) - diverges at instr #0, prologue entirely different SEH shape; the inlined dtor loop appears twice in the original (second copy is dead - guard is always false at runtime) and was not hand-modeled given the 3196-byte scope. The 7 repeated get-string/strcat/itoa/add() blocks and the veh_fake/veh_draw calls ARE transcribed field-for-field.
 void Datalink::draw_unit() {
     StringList description;
+    RECT rect = description_rect_;
+    rect.left += 6;
+    rect.top += 6;
+    rect.right -= 6;
     const int id = history_[0];
-    const VehPrototype &unit = VehPrototypes[id];
-    const RulesWeapon &weapon = Weapon[unit.weapon_id];
-    const RulesArmor &armor = Armor[unit.armor_id];
-    const RulesChassis &chassis = Chassis[unit.chassis_id];
     const int vehicle = veh_fake(id, ConsoleGlobal.faction_id_);
     Vehs[vehicle].morale = 4; // 0x42CA86: Vehs+0x24, stride 0x34.
     set_clip(&illustration_rect_);
@@ -231,68 +206,166 @@ void Datalink::draw_unit() {
     set_text_color(0xE0, -1, 1, 1);
     StringTemp[0] = 0;
     // Original reloads the selected prototype id at 0x42CAEC, not fake id2048.
-    strcat(StringTemp, unit.veh_name);
+    strcat(StringTemp, VehPrototypes[id].veh_name);
     CharUpperA(StringTemp);
     write_cent_l(StringTemp, &title_rect_);
-    const int left = description_rect_.left + 9
-                   + illustration_rect_.right - illustration_rect_.left;
-    description.remove_all();
-    if (weapon.mode < 3) {
-        datalink_vehicle_line_start(0x204 / 4);
-        datalink_vehicle_append_rating(weapon.offense_rating);
-    } else {
-        StringTemp[0] = 0;
-        strcat(StringTemp, label_get(0x200 / 4));
+    rect.left += illustration_rect_.right - illustration_rect_.left + 3;
+    char number[80];
+    description.StringStruct::remove_all();
+    description.current_position_ = 0;
+    description.allocator_ = 0;
+    StringTemp[0] = 0;
+    const uint8_t mode = Weapon[VehPrototypes[id].weapon_id].mode;
+    if (mode < 3) {
+        strcat(StringTemp, label_get(0x204 / 4));
         strcat(StringTemp, ": ");
         strcat(StringTemp, " ");
-        if (weapon.mode > 6 && weapon.mode < 13) {
+        strcat(StringTemp, "{");
+        if (Weapon[VehPrototypes[id].weapon_id].offense_rating < 0) {
+            strcat(StringTemp, label_get(0x310 / 4));
+        } else {
+            _itoa(Weapon[VehPrototypes[id].weapon_id].offense_rating, number, 10);
+            strcat(StringTemp, number);
+        }
+        strcat(StringTemp, "}");
+    } else {
+        strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x200 / 4]));
+        strcat(StringTemp, ": ");
+        strcat(StringTemp, " ");
+        if (Weapon[VehPrototypes[id].weapon_id].mode >= 7
+            && Weapon[VehPrototypes[id].weapon_id].mode <= 12) {
             strcat(StringTemp, "{");
-            strcat(StringTemp, StringTable.get(weapon.name));
+            strcat(StringTemp, StringTable.get(Weapon[VehPrototypes[id].weapon_id].name));
+            strcat(StringTemp, "}");
         } else {
             strcat(StringTemp, label_get(0x204 / 4));
             strcat(StringTemp, ": ");
             strcat(StringTemp, " ");
             strcat(StringTemp, "{");
-            datalink_vehicle_append_rating(weapon.offense_rating);
+            if (Weapon[VehPrototypes[id].weapon_id].offense_rating < 0) {
+                strcat(StringTemp, label_get(0x310 / 4));
+            } else {
+                _itoa(Weapon[VehPrototypes[id].weapon_id].offense_rating, number, 10);
+                strcat(StringTemp, number);
+            }
+            strcat(StringTemp, "}");
         }
     }
-    datalink_vehicle_line_finish(description);
-    datalink_vehicle_line_start(0x154 / 4);
-    datalink_vehicle_append_rating(armor.defense_rating);
-    datalink_vehicle_line_finish(description);
-    datalink_vehicle_line_start(0x1C / 4);
-    strcat(StringTemp, StringTable.get(Triad[chassis.triad]));
+    description.pending_text_ = StringTemp;
+    description.field_20_ = 4;
+    description.field_24_ = 0;
+    description.add(0);
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x154 / 4));
+    strcat(StringTemp, ": ");
     strcat(StringTemp, " ");
-    datalink_vehicle_append_number(chassis.speed);
-    datalink_vehicle_line_finish(description);
-    if (unit.carry_capacity) {
-        datalink_vehicle_line_start(0x360 / 4);
-        datalink_vehicle_append_number(unit.carry_capacity);
-        datalink_vehicle_line_finish(description);
+    strcat(StringTemp, "{");
+    if (Armor[VehPrototypes[id].armor_id].defense_rating < 0) {
+        strcat(StringTemp, label_get(0x310 / 4));
+    } else {
+        _itoa(Armor[VehPrototypes[id].armor_id].defense_rating, number, 10);
+        strcat(StringTemp, number);
     }
-    if (chassis.triad == 2 && chassis.range) {
-        datalink_vehicle_line_start(0x30C / 4);
-        datalink_vehicle_append_number(chassis.range);
+    strcat(StringTemp, "}");
+    description.pending_text_ = StringTemp;
+    description.field_20_ = 4;
+    description.field_24_ = 0;
+    description.add(0);
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x1C / 4));
+    strcat(StringTemp, ": ");
+    strcat(StringTemp, " ");
+    strcat(StringTemp, "{");
+    strcat(StringTemp, StringTable.get(Triad[Chassis[VehPrototypes[id].chassis_id].triad]));
+    strcat(StringTemp, " ");
+    _itoa(Chassis[VehPrototypes[id].chassis_id].speed, number, 10);
+    strcat(StringTemp, number);
+    strcat(StringTemp, "}");
+    description.pending_text_ = StringTemp;
+    description.field_20_ = 4;
+    description.field_24_ = 0;
+    description.add(0);
+    if (VehPrototypes[id].carry_capacity) {
+        StringTemp[0] = 0;
+        strcat(StringTemp, label_get(0x360 / 4));
+        strcat(StringTemp, ": ");
         strcat(StringTemp, " ");
-        strcat(StringTemp, label_get(chassis.range == 1 ? 0xC0 / 4 : 0xC4 / 4));
-        datalink_vehicle_line_finish(description);
+        strcat(StringTemp, "{");
+        _itoa(VehPrototypes[id].carry_capacity, number, 10);
+        strcat(StringTemp, number);
+        strcat(StringTemp, "}");
+        description.pending_text_ = StringTemp;
+        description.field_20_ = 4;
+        description.field_24_ = 0;
+        description.add(0);
     }
-    datalink_vehicle_line_start(0x160 / 4);
-    datalink_vehicle_append_number(cost_factor(ConsoleGlobal.faction_id_, 1, -1) * unit.cost);
-    datalink_vehicle_line_finish(description);
-    datalink_vehicle_line_start(0xF24 / 4);
-    datalink_vehicle_append_tech(unit.preq_tech);
-    datalink_vehicle_line_finish(description);
+    if (Chassis[VehPrototypes[id].chassis_id].triad == 2
+        && Chassis[VehPrototypes[id].chassis_id].range) {
+        StringTemp[0] = 0;
+        strcat(StringTemp, label_get(0x30C / 4));
+        strcat(StringTemp, ": ");
+        strcat(StringTemp, " ");
+        strcat(StringTemp, "{");
+        _itoa(Chassis[VehPrototypes[id].chassis_id].range, number, 10);
+        strcat(StringTemp, number);
+        strcat(StringTemp, " ");
+        strcat(StringTemp, Chassis[VehPrototypes[id].chassis_id].range == 1
+                               ? label_get(0xC0 / 4) : label_get(0xC4 / 4));
+        strcat(StringTemp, "}");
+        description.pending_text_ = StringTemp;
+        description.field_20_ = 4;
+        description.field_24_ = 0;
+        description.add(0);
+    }
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x160 / 4));
+    strcat(StringTemp, ": ");
+    strcat(StringTemp, " ");
+    strcat(StringTemp, "{");
+    _itoa(cost_factor(ConsoleGlobal.faction_id_, 1, -1) * VehPrototypes[id].cost,
+          number, 10);
+    strcat(StringTemp, number);
+    strcat(StringTemp, "}");
+    description.pending_text_ = StringTemp;
+    description.field_20_ = 4;
+    description.field_24_ = 0;
+    description.add(0);
+    const int tech = VehPrototypes[id].preq_tech;
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0xF24 / 4));
+    strcat(StringTemp, ": ");
+    strcat(StringTemp, " ");
+    strcat(StringTemp, "{");
+    char name[256];
+    name[0] = 0;
+    say_tech(name, tech, 0);
+    if (tech >= 0) {
+        char link[256];
+        link[0] = 0;
+        _itoa(tech + 140000, number, 10);
+        strcat(link, number);
+        strcat(StringTemp, "$LINK<");
+        strcat(StringTemp, name);
+        strcat(StringTemp, "=");
+        strcat(StringTemp, link);
+        strcat(StringTemp, ">");
+    } else {
+        strcat(StringTemp, name);
+    }
+    strcat(StringTemp, "}");
+    description.pending_text_ = StringTemp;
+    description.field_20_ = 4;
+    description.field_24_ = 0;
+    description.add(0);
     set_font(&body_font_, 0, 0, &link_font_);
     set_text_color(0x98, -1, 1, 1);
     set_text_color2(0x96, -1, 1, 1);
     set_text_color_hyper(0x96, -1, 1, 1);
-    // 0x42D416 loads description right, not bottom (seed uses bottom).
-    write_strings(&description, left, description_rect_.top + 6,
-                  description_rect_.right - 6 - left, 0);
+    write_strings(&description, rect.left, rect.top, rect.right - rect.left, 0);
     StringTemp[0] = 0;
     strcat(StringTemp, "UNITDESC");
-    datalink_vehicle_append_number(id);
+    _itoa(id, number, 10);
+    strcat(StringTemp, number);
     detail_box_.clear();
     if (detail_box_.strings().load(DatalinkHelpFile, StringTemp, 1, 0) == 0) {
         detail_box_.add_fixup();
@@ -307,8 +380,11 @@ void Datalink::draw_unit() {
 // TRIED: full transcription landed (MISMATCH #2, no SEH frame reproduced). Caught a real Ghidra error via byte-level cross check: Ghidra's `write_strings(&local_44,local_54,local_50, local_4c-local_54,0)` invents a `local_54` stack slot that never appears anywhere in the raw disassembly (only -0x50, -0x4c, -0x48, -0x44 are ever touched); the real call reads [ebp-0x50] and [ebp-0x48] for the width term. Used the StringStruct(0) local + explicit remove_all()/add(0) calls, matching this function's calls to those symbols directly (unlike the inlined form seen on other StringStruct-using functions in this batch).
 void Datalink::draw_chassis() {
     StringList description;
+    RECT rect = description_rect_;
+    rect.left += 6;
+    rect.top += 6;
+    rect.right -= 6;
     const int id = history_[0];
-    const RulesChassis &chassis = Chassis[id];
     caviar_.reset_objects();
     vehdraw_construct_chassis(ConsoleGlobal.faction_id_, id, 0, 0, 1, &caviar_);
     caviar_.set_scaling(0.1f);
@@ -318,52 +394,115 @@ void Datalink::draw_chassis() {
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
     StringTemp[0] = 0;
-    strcat(StringTemp, StringTable.get(chassis.offsv_1_name));
+    strcat(StringTemp, StringTable.get(Chassis[id].offsv_1_name));
     CharUpperA(StringTemp);
     write_cent_l(StringTemp, &title_rect_);
-    const int left = description_rect_.left + 9
-                   + illustration_rect_.right - illustration_rect_.left;
-    description.remove_all();
-    datalink_vehicle_line_start(0x1C / 4);
-    strcat(StringTemp, StringTable.get(Triad[chassis.triad]));
+    rect.left += illustration_rect_.right - illustration_rect_.left + 3;
+    char number[80];
+    description.StringStruct::remove_all();
+    description.current_position_ = 0;
+    description.allocator_ = 0;
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x1C / 4));
+    strcat(StringTemp, ": ");
     strcat(StringTemp, " ");
-    datalink_vehicle_append_number(chassis.speed);
-    datalink_vehicle_line_finish(description);
-    if (chassis.cargo) {
-        datalink_vehicle_line_start(0x360 / 4);
-        datalink_vehicle_append_number(chassis.cargo);
-        if (chassis.triad == 1) {
+    strcat(StringTemp, "{");
+    strcat(StringTemp, StringTable.get(Triad[Chassis[id].triad]));
+    strcat(StringTemp, " ");
+    _itoa(Chassis[id].speed, number, 10);
+    strcat(StringTemp, number);
+    strcat(StringTemp, "}");
+    description.pending_text_ = StringTemp;
+    description.field_20_ = 4;
+    description.field_24_ = 0;
+    description.add(0);
+    if (Chassis[id].cargo) {
+        StringTemp[0] = 0;
+        strcat(StringTemp, label_get(0x360 / 4));
+        strcat(StringTemp, ": ");
+        strcat(StringTemp, " ");
+        strcat(StringTemp, "{");
+        _itoa(Chassis[id].cargo, number, 10);
+        strcat(StringTemp, number);
+        if (Chassis[id].triad == 1) {
             strcat(StringTemp, " ");
             strcat(StringTemp, label_get(0xF34 / 4));
         }
-        datalink_vehicle_line_finish(description);
+        strcat(StringTemp, "}");
+        description.pending_text_ = StringTemp;
+        description.field_20_ = 4;
+        description.field_24_ = 0;
+        description.add(0);
     }
-    if (chassis.triad == 2) {
-        datalink_vehicle_line_start(0x30C / 4);
-        if (!chassis.range) {
-            strcat(StringTemp, label_get(0xF30 / 4));
-        } else {
-            datalink_vehicle_append_number(chassis.range);
+    if (Chassis[id].triad == 2) {
+        StringTemp[0] = 0;
+        strcat(StringTemp, label_get(0x30C / 4));
+        strcat(StringTemp, ": ");
+        strcat(StringTemp, " ");
+        strcat(StringTemp, "{");
+        if (Chassis[id].range) {
+            _itoa(Chassis[id].range, number, 10);
+            strcat(StringTemp, number);
             strcat(StringTemp, " ");
-            strcat(StringTemp, label_get(chassis.range == 1 ? 0xC0 / 4 : 0xC4 / 4));
+            strcat(StringTemp, Chassis[id].range == 1 ? label_get(0xC0 / 4)
+                                                      : label_get(0xC4 / 4));
+        } else {
+            strcat(StringTemp, label_get(0xF30 / 4));
         }
-        datalink_vehicle_line_finish(description);
+        strcat(StringTemp, "}");
+        description.pending_text_ = StringTemp;
+        description.field_20_ = 4;
+        description.field_24_ = 0;
+        description.add(0);
     }
-    datalink_vehicle_line_start(0x160 / 4);
-    datalink_vehicle_append_number(chassis.cost);
-    datalink_vehicle_line_finish(description);
-    datalink_vehicle_line_start(0xF24 / 4);
-    datalink_vehicle_append_tech(chassis.preq_tech);
-    datalink_vehicle_line_finish(description);
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x160 / 4));
+    strcat(StringTemp, ": ");
+    strcat(StringTemp, " ");
+    strcat(StringTemp, "{");
+    _itoa(Chassis[id].cost, number, 10);
+    strcat(StringTemp, number);
+    strcat(StringTemp, "}");
+    description.pending_text_ = StringTemp;
+    description.field_20_ = 4;
+    description.field_24_ = 0;
+    description.add(0);
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0xF24 / 4));
+    strcat(StringTemp, ": ");
+    strcat(StringTemp, " ");
+    strcat(StringTemp, "{");
+    const int tech = Chassis[id].preq_tech;
+    char name[256];
+    name[0] = 0;
+    say_tech(name, tech, 0);
+    if (tech >= 0) {
+        char link[256];
+        link[0] = 0;
+        _itoa(tech + 140000, number, 10);
+        strcat(link, number);
+        strcat(StringTemp, "$LINK<");
+        strcat(StringTemp, name);
+        strcat(StringTemp, "=");
+        strcat(StringTemp, link);
+        strcat(StringTemp, ">");
+    } else {
+        strcat(StringTemp, name);
+    }
+    strcat(StringTemp, "}");
+    description.pending_text_ = StringTemp;
+    description.field_20_ = 4;
+    description.field_24_ = 0;
+    description.add(0);
     set_font(&body_font_, 0, 0, &link_font_);
     set_text_color(0x98, -1, 1, 1);
     set_text_color2(0x96, -1, 1, 1);
     set_text_color_hyper(0x96, -1, 1, 1);
-    write_strings(&description, left, description_rect_.top + 6,
-                  description_rect_.right - 6 - left, 0);
+    write_strings(&description, rect.left, rect.top, rect.right - rect.left, 0);
     StringTemp[0] = 0;
     strcat(StringTemp, "CHASSISDESC");
-    datalink_vehicle_append_number(id);
+    _itoa(id, number, 10);
+    strcat(StringTemp, number);
     detail_box_.clear();
     if (detail_box_.strings().load(DatalinkHelpFile, StringTemp, 1, 0) == 0) {
         detail_box_.add_fixup();
@@ -413,14 +552,17 @@ void Datalink::draw_reactor() {
     soft_update(&description_rect_);
     description.remove_all();
 }
-// ORIGINAL: 0x0042E2E0 ?draw_weapon@Datalink@@QAEXXZ 0x0042E2E0-0x0042E8D3;0x006537AE-0x006537E2
+// ORIGINAL: 0x0042E2E0 ?draw_weapon@Datalink@@QAEXXZ 0x0042E2E0-0x0042E8D3;0x006537AE-0x006537E2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/0042e2e0.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
 // Historical scaffold experiment, retained from the replaced seed:
 // TRIED: the SEH __try/__finally frame and the local StringList's multiple-inheritance secondary-vtable adjustor (the two funclets at 0x006537C5/0x006537CD exist only for that); the entry-deleting virtual call is a double-indirected adjustor thunk (vtable[1] read back as a BYTE OFFSET to a second vtable pointer) that no portable dispatch can reproduce, so it goes through the VCall shim directly instead; several argument orders for batched-__cdecl-cleanup call clusters (parse_num/ parse_says/tech_name) are best-guessed from push proximity to the call, not fully hand-verified against the stack-adjustment bytes.
 void Datalink::draw_weapon() {
     StringList description;
+    RECT rect = description_rect_;
+    rect.left += 6;
+    rect.top += 6;
+    rect.right -= 6;
     const int id = history_[0];
-    const RulesWeapon &weapon = Weapon[id];
     set_clip(&illustration_rect_);
     caviar_.reset_objects();
     if (id == 0) {
@@ -428,49 +570,58 @@ void Datalink::draw_weapon() {
     } else {
         vehdraw_construct_weapon(ConsoleGlobal.faction_id_, -1, id, &caviar_);
     }
-    caviar_.set_scaling(id == 0x10 || id == 0x17 ? 0.1f
-                         : (weapon.mode < 3 ? 0.3f : 0.2f));
+    if (id == 0x10 || id == 0x17) {
+        caviar_.set_scaling(0.1f);
+    } else if (Weapon[id].mode < 3) {
+        caviar_.set_scaling(0.3f);
+    } else {
+        caviar_.set_scaling(0.2f);
+    }
     caviar_.render(static_cast<Buffer *>(this),
                    (illustration_rect_.left + illustration_rect_.right) / 2,
                    (illustration_rect_.top + illustration_rect_.bottom) / 2, 6);
     restore_clip();
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
-    StringTemp[0] = 0;
-    strcat(StringTemp, StringTable.get(weapon.name));
-    CharUpperA(StringTemp);
+    dl_upper_name(Weapon[id].name);
     write_cent_l(StringTemp, &title_rect_);
-    const int left = description_rect_.left + 12
-                   + illustration_rect_.right - illustration_rect_.left;
+    rect.left += illustration_rect_.right - illustration_rect_.left + 6;
     StringTemp[0] = 0;
-    if (weapon.offense_rating < 0) {
+    if (Weapon[id].offense_rating < 0) {
         strcat(StringTemp, label_get(0x310 / 4));
-    } else if (weapon.mode < 3) {
-        strcat(StringTemp, StringTable.get(OffenseModes[weapon.mode].name));
+    } else if (Weapon[id].mode < 3) {
+        LPSTR mode_name = OffenseModes[Weapon[id].mode].name;
+        strcat(StringTemp, StringTable.get(mode_name));
     } else {
         strcat(StringTemp, label_get(0x200 / 4));
     }
     parse_says(1, StringTemp, -1, -1);
-    parse_num(0, weapon.offense_rating);
-    parse_num(1, weapon.cost);
-    parse_says(2, tech_name(weapon.preq_tech, 0), -1, -1);
-    parse_num(2, weapon.preq_tech + 140000);
+    const int technology = Weapon[id].preq_tech;
+    parse_num(0, Weapon[id].offense_rating);
+    parse_num(1, Weapon[id].cost);
+    parse_says(2, tech_name(technology, 0), -1, -1);
+    const int link = technology + 140000;
+    parse_num(2, link);
     StringTemp[0] = 0;
     strcat(StringTemp, "HELPWEAPON");
-    if (weapon.offense_rating == weapon.cost) {
-        datalink_vehicle_append_number(2);
+    char number[80];
+    if (Weapon[id].offense_rating == Weapon[id].cost) {
+        _itoa(2, number, 10);
+        strcat(StringTemp, number);
     }
     description.remove_all();
+    description.current_position_ = 0;
+    description.allocator_ = 0;
     description.load(DatalinkHelpFile, StringTemp, 1, 0);
-    set_font(&body_font_, 0, 0, weapon.preq_tech < 0 ? 0 : &link_font_);
+    set_font(&body_font_, 0, 0, technology >= 0 ? &link_font_ : 0);
     set_text_color(0x98, -1, 1, 1);
     set_text_color2(0x96, -1, 1, 1);
     set_text_color_hyper(0x96, -1, 1, 1);
-    write_strings(&description, left, description_rect_.top + 6,
-                  description_rect_.right - 6 - left, 0);
+    write_strings(&description, rect.left, rect.top, rect.right - rect.left, 0);
     StringTemp[0] = 0;
     strcat(StringTemp, "WEAPONDESC");
-    datalink_vehicle_append_number(id); // 0x42E711 loads saved weapon id.
+    _itoa(id, number, 10); // 0x42E711 loads saved weapon id.
+    strcat(StringTemp, number);
     detail_box_.clear();
     if (detail_box_.strings().load(DatalinkHelpFile, StringTemp, 1, 0) == 0) {
         detail_box_.add_fixup();
@@ -478,12 +629,11 @@ void Datalink::draw_weapon() {
     }
     soft_update(&description_rect_);
 }
-// ORIGINAL: 0x0042E8E0 ?draw_defense@Datalink@@QAEXXZ 0x0042E8E0-0x0042EE26;0x006537E2-0x00653816
+// ORIGINAL: 0x0042E8E0 ?draw_defense@Datalink@@QAEXXZ 0x0042E8E0-0x0042EE26;0x006537E2-0x00653816 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/recovered/units/0042e8e0.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
 void Datalink::draw_defense() {
     StringList help;
     const int armor_id = history_[0];
-    const RulesArmor &armor = Armor[armor_id];
     RECT text = description_rect_;
     text.left += 6;
     text.top += 6;
@@ -502,27 +652,32 @@ void Datalink::draw_defense() {
         } else {
             caviar_.render(static_cast<Buffer *>(this), x, y, 6);
         }
-        set_clip(buffer_working_rect());
+        restore_clip();
     }
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
-    StringTemp[0] = 0;
-    strcat(StringTemp, StringTable.get(armor.name));
-    CharUpperA(StringTemp);
+    dl_upper_name(Armor[armor_id].name);
     write_cent_l(StringTemp, &title_rect_);
     text.left += illustration_rect_.right - illustration_rect_.left + 3;
     StringTemp[0] = 0;
-    const LPSTR mode_name = armor.defense_rating < 0
-        ? Labels.strings_ptr[0x310 / 4] : DefenseModes[armor.mode].name;
-    strcat(StringTemp, StringTable.get(mode_name));
+    if (Armor[armor_id].defense_rating < 0) {
+        strcat(StringTemp, label_get(0x310 / 4));
+    } else {
+        LPSTR mode_name = DefenseModes[Armor[armor_id].mode].name;
+        strcat(StringTemp, StringTable.get(mode_name));
+    }
     parse_says(1, StringTemp, -1, -1);
-    parse_num(0, armor.defense_rating);
-    parse_says(2, tech_name(armor.preq_tech, 0), -1, -1);
-    parse_num(2, armor.preq_tech + 140000);
-    help.remove_all();
+    parse_num(0, Armor[armor_id].defense_rating);
+    const int technology = Armor[armor_id].preq_tech;
+    parse_says(2, tech_name(technology, 0), -1, -1);
+    const int link = technology + 140000;
+    parse_num(2, link);
+    help.StringStruct::remove_all();
+    help.current_position_ = 0;
+    help.allocator_ = 0;
     help.load(DatalinkHelpFile,
-              armor.defense_rating < 0 ? "HELPDEFENSE2" : "HELPDEFENSE", 1, 0);
-    set_font(&body_font_, 0, 0, armor.preq_tech < 0 ? 0 : &link_font_);
+              Armor[armor_id].defense_rating < 0 ? "HELPDEFENSE2" : "HELPDEFENSE", 1, 0);
+    set_font(&body_font_, 0, 0, technology >= 0 ? &link_font_ : 0);
     set_text_color(0x98, -1, 1, 1);
     set_text_color2(0x96, -1, 1, 1);
     set_text_color_hyper(0x96, -1, 1, 1);
@@ -541,80 +696,81 @@ void Datalink::draw_defense() {
     }
     soft_update(&description_rect_);
 }
-// ORIGINAL: 0x0042EE30 ?draw_ability@Datalink@@QAEXXZ 0x0042EE30-0x0042F468;0x00653816-0x0065384A
+// ORIGINAL: 0x0042EE30 ?draw_ability@Datalink@@QAEXXZ 0x0042EE30-0x0042F468;0x00653816-0x0065384A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/0042ee30.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
 // Historical scaffold experiment, retained from the replaced seed:
 // TRIED: a genuine `StringStruct local40(0);` local to pick up the compiler's own /GX SEH frame (as worked elsewhere) still diverges at instruction #2 (sub vs push) - this function's frame layout (0x98-byte locals, three linked-list teardown passes at the tail) needs more than one matching ctor call to reproduce. Landed the full field-setup/string-building/switch/ StringList::load/write_strings/StringBox path faithfully (reusing the same local as StringStruct then StringList via reinterpret_cast, matching the disassembly's own reuse of one `this` across two mangled entry points); the two vtable-walk destructor passes at the end are omitted as they only free temporaries and don't produce any value this function returns.
 void Datalink::draw_ability() {
     StringList help;
+    RECT rect = description_rect_;
+    rect.left += 6;
+    rect.top += 6;
+    rect.right -= 6;
     const int ability_id = history_[0];
-    const RulesAbility &ability = Ability[ability_id];
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
-    StringTemp[0] = 0;
-    strcat(StringTemp, StringTable.get(ability.name));
-    CharUpperA(StringTemp);
+    dl_upper_name(Ability[ability_id].name);
     write_cent_l(StringTemp, &title_rect_);
     StringTemp[0] = 0;
-    if (ability.cost_factor >= 0) {
-        char number[80];
-        _itoa(ability.cost_factor, number, 10);
+    char number[80];
+    if (Ability[ability_id].cost_factor >= 0) {
+        _itoa(Ability[ability_id].cost_factor, number, 10);
         strcat(StringTemp, number);
     } else {
-        switch (ability.cost_factor) {
+        switch (Ability[ability_id].cost_factor) {
         case -1:
-            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x1F0 / 4]));
+            strcat(StringTemp, label_get(0x1F0 / 4));
             strcat(StringTemp, "/");
-            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x154 / 4]));
+            strcat(StringTemp, label_get(0x154 / 4));
             break;
         case -2:
-            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x1F0 / 4]));
+            strcat(StringTemp, label_get(0x1F0 / 4));
             strcat(StringTemp, "-1");
             break;
         case -3:
-            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x154 / 4]));
+            strcat(StringTemp, label_get(0x154 / 4));
             strcat(StringTemp, "-1");
             break;
         case -4:
-            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xB14 / 4]));
+            strcat(StringTemp, label_get(0xB14 / 4));
             strcat(StringTemp, "-1");
             break;
         case -5:
-            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x1F0 / 4]));
+            strcat(StringTemp, label_get(0x1F0 / 4));
             strcat(StringTemp, "+");
-            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x154 / 4]));
+            strcat(StringTemp, label_get(0x154 / 4));
             strcat(StringTemp, "-2");
             break;
         case -6:
-            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x1F0 / 4]));
+            strcat(StringTemp, label_get(0x1F0 / 4));
             strcat(StringTemp, "+");
-            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xB14 / 4]));
+            strcat(StringTemp, label_get(0xB14 / 4));
             strcat(StringTemp, "-2");
             break;
         case -7:
-            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x154 / 4]));
+            strcat(StringTemp, label_get(0x154 / 4));
             strcat(StringTemp, "+");
-            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xB14 / 4]));
+            strcat(StringTemp, label_get(0xB14 / 4));
             strcat(StringTemp, "-2");
             break;
         }
     }
-    parse_says(1, tech_name(ability.preq_tech, 0), -1, -1);
-    parse_say(2, ability.description, -1, -1);
+    const int technology = Ability[ability_id].preq_tech;
+    parse_says(1, tech_name(technology, 0), -1, -1);
+    parse_say(2, Ability[ability_id].description, -1, -1);
     parse_says(3, StringTemp, -1, -1);
-    parse_num(0, ability.preq_tech + 140000);
-    help.remove_all();
+    parse_num(0, technology + 140000);
+    help.StringStruct::remove_all();
+    help.current_position_ = 0;
+    help.allocator_ = 0;
     help.load(DatalinkHelpFile, "HELPABIL", 1, 0);
     set_font(&body_font_, 0, 0, &link_font_);
     set_text_color(0x98, -1, 1, 1);
     set_text_color2(0x96, -1, 1, 1);
     set_text_color_hyper(0x96, -1, 1, 1);
-    write_strings(&help, description_rect_.left + 6,
-                  description_rect_.top + 6,
-                  description_rect_.right - description_rect_.left - 12, 0);
+    write_strings(&help, rect.left, rect.top, rect.right - rect.left, 0);
     StringTemp[0] = 0;
     strcat(StringTemp, "ABILDESC");
-    char number[80];
     _itoa(ability_id, number, 10);
     strcat(StringTemp, number);
     detail_box_.clear();
@@ -774,20 +930,6 @@ void Datalink::draw_terraform() {
 static inline void dl_draw_sprite(Buffer *buffer, Sprite *sprite, int x, int y) {
     sprite->draw(buffer, sprite->transparent_index(), x, y, 1, 1);
 }
-static inline void dl_body_colors(Datalink *self, int link_color) {
-    self->set_text_color(0x98, -1, 1, 1);
-    self->set_text_color2(0x96, -1, 1, 1);
-    self->set_text_color_hyper(link_color, -1, 1, 1);
-}
-static inline void dl_draw_scaled(Buffer *buffer, Sprite *sprite, int x, int y,
-                                  int numerator, int denominator) {
-    sprite->draw(buffer, sprite->transparent_index(), x, y, numerator, denominator);
-}
-static inline void dl_upper_name(LPSTR name) {
-    StringTemp[0] = 0;
-    strcat(StringTemp, StringTable.get(name));
-    CharUpperA(StringTemp);
-}
 // ORIGINAL: 0x0042F490 ?draw_facility@Datalink@@QAEXXZ 0x0042F490-0x0042FAC5;0x0065384A-0x00653927
 // RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/0042f490.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
 // Historical scaffold experiment, retained from the replaced seed:
@@ -811,7 +953,8 @@ void Datalink::draw_facility() {
     parse_num(1, fac_maint(id, ConsoleGlobal.faction_id_));
     int technology = Facility[id].preq_tech;
     parse_says(1, tech_name(technology, 0), -1, -1);
-    parse_num(2, technology + 140000);
+    const int link = technology + 140000;
+    parse_num(2, link);
     StringTemp[0] = 0;
     strcat(StringTemp, "HELPFAC");
     popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
@@ -863,7 +1006,8 @@ void Datalink::draw_project() {
     parse_num(1, Facility[id].maint);
     const int technology = Facility[id].preq_tech;
     parse_says(1, tech_name(technology, 0), -1, -1);
-    parse_num(2, technology + 140000);
+    const int link = technology + 140000;
+    parse_num(2, link);
     popup.start(DatalinkHelpFile, "HELPPROJ", -1, 0, 0, 0);
     set_font(&body_font_, 0, 0, &link_font_);
     dl_body_colors(this, 0x96);
@@ -1169,6 +1313,13 @@ static inline void append_upper_name(LPSTR name) {
     CharUpperA(StringTemp);
 }
 
+// The unpooled TU still has one "TECH" object for draw_tech and the copy
+// draw_entry expands: both sites go through this helper's literal.
+static inline void append_tech_topic() {
+    // RECOVERY_LITERAL: v1 0x006834D8 0x006834DD $SG55041 0x00430B30
+    strcat(StringTemp, "TECH");
+}
+
 void Datalink::draw_tech() {
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
@@ -1186,8 +1337,7 @@ void Datalink::draw_tech() {
     StringTemp[0] = 0;
     // One "TECH" object serves both this body (0x00430BF5) and the copy
     // draw_entry expands (0x0042C1F7): both push 0x006834D8.
-    // RECOVERY_LITERAL: v1 0x006834D8 0x006834DD ??_C@_04GLCI@TECH?$AA@ 0x00430B30
-    strcat(StringTemp, "TECH");
+    append_tech_topic();
     char number[80];
     _itoa(history_[0], number, 10);
     strcat(StringTemp, number);
@@ -1267,7 +1417,7 @@ void Datalink::draw_entry() {
         ReportIfGlobal.field_8_ = 2;
         ReportWinGlobal.draw_labs();
         StringTemp[0] = 0;
-        strcat(StringTemp, "TECH");
+        append_tech_topic();
         char number[80];
         _itoa(history_[0], number, 10);
         strcat(StringTemp, number);
