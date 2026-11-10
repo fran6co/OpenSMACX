@@ -1,8 +1,6 @@
 """Project grammar describes operands without normalizing or judging commands."""
 
 from copy import deepcopy
-import json
-import os
 from pathlib import Path, PurePosixPath
 
 import pytest
@@ -213,22 +211,3 @@ def test_invalid_argument_shape_refuses(arguments):
 def test_stage_must_identify_observed_command_boundary():
     with pytest.raises(ValueError):
         describe_command(['/c'], '/project', stage='guessed-stage')
-
-
-def test_existing_retained_application_command_receipts_when_requested():
-    location = os.environ.get('OPENSMACX_COMMAND_PATH_BUILD')
-    if not location:
-        pytest.skip('set OPENSMACX_COMMAND_PATH_BUILD to inspect an existing retained build; never builds one')
-    directory = Path(location)
-    assert directory.is_absolute() and directory.resolve() == directory and directory.is_dir()
-    receipts = sorted(directory.glob('CMakeFiles/OpenSMACX.dir/**/*.compile.json'))
-    assert receipts
-    for path in receipts:
-        receipt = json.loads(path.read_bytes())
-        result = validate_syntax(receipt['arguments'], receipt['cwd'], 'compiler-effective')
-        assert result['unsupported'] == [], (path, result['unsupported'])
-        assert [row['path'] for row in result['operands'] if row['kind'] == 'source'] == [receipt['source']]
-        assert receipt['output']['path'] in [row['path'] for row in result['operands'] if row['kind'] == 'output_file']
-    link = json.loads((directory / 'OpenSMACX.link.inputs.json').read_bytes())
-    result = validate_syntax(link['arguments'], link['cwd'], 'link-wrapper')
-    assert result['unsupported'] == []

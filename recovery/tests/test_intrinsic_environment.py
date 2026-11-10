@@ -1,7 +1,6 @@
 """Project-local intrinsic compiler controls, not application recovery proof."""
 
 import json
-import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -192,8 +191,6 @@ def test_intrinsic_selection_and_debug_damage_refuse(intrinsic_compile, extra):
     assert not output.exists() and not receipt.exists()
 
 
-@pytest.mark.skipif(os.environ.get("OPENSMACX_INTRINSIC_LINK_CONTROL") != "1",
-                    reason="explicit live compiler/linker control required")
 def test_intrinsic_pipeline_debug_links_with_vc6(intrinsic_compile):
     run, output, receipt = intrinsic_compile
     result = run()

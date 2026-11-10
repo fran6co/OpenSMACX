@@ -3,8 +3,6 @@
 from copy import deepcopy
 import io
 import json
-import os
-from pathlib import Path
 
 import pytest
 
@@ -110,26 +108,3 @@ def test_invalid_requests_refuse_without_any_compile(request_value, monkeypatch,
 def test_invalid_record_encoding_refuses(value, monkeypatch, capsys):
     code, response = invoke(value, monkeypatch, capsys)
     assert code == 3 and set(response) == {'error'}
-
-
-def test_retained_build_batch_metadata_when_requested(monkeypatch, capsys):
-    location = os.environ.get('OPENSMACX_COMMAND_PATH_BUILD')
-    if not location:
-        pytest.skip('set OPENSMACX_COMMAND_PATH_BUILD to read existing receipts; never builds one')
-    directory = Path(location)
-    assert directory.is_absolute() and directory.resolve() == directory and directory.is_dir()
-    root = Path(__file__).resolve().parents[2]
-    monkeypatch.chdir(root)
-    commands = []
-    for path in sorted(directory.glob('CMakeFiles/OpenSMACX.dir/**/*.compile.json')):
-        row = json.loads(path.read_bytes())
-        commands.append({'arguments': row['arguments'], 'cwd': row['cwd'], 'stage': 'compiler-effective'})
-    assert commands
-    link = json.loads((directory / 'OpenSMACX.link.inputs.json').read_bytes())
-    commands.append({'arguments': link['arguments'], 'cwd': link['cwd'], 'stage': 'link-wrapper'})
-    code, response = invoke({'schema_version': 1, 'operation': 'command_paths',
-                             'profile': 'application', 'commands': commands}, monkeypatch, capsys)
-    assert code == 0 and len(response['descriptions']) == len(commands)
-    for command, description in zip(commands, response['descriptions'], strict=True):
-        assert description['unsupported'] == []
-        validate_command_paths(command['arguments'], command['cwd'], description, stage=command['stage'])

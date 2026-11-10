@@ -116,12 +116,12 @@ ordered postprocessor argv/tool/input/output chain. The final object is not
 claimed to be untouched Clang output. Pipeline command comparison remains
 unsupported and refuses rather than accepting frontend-command equality. Control tests
 compare every remaining section's bytes and nonempty external-global relocation
-targets before/after stripping; the opt-in VC6 debug-link control supplies that
+targets before/after stripping; the VC6 debug-link control supplies that
 global from a genuine VC6 object. These controls are not generic transform
 semantic proofs. The route provides no debug/layout/PDB proof for its owner. Explicit
 selection, compiler/linker compatibility and a successful build do not establish
-matching or game acceptance. Live linker control is opt-in with
-`OPENSMACX_INTRINSIC_LINK_CONTROL=1`, under a coordinator-owned compiler lease.
+matching or game acceptance. The VC6 debug-link control runs with the ordinary
+project tests (about half a second).
 
 Fresh recovery application builds enable `OPENSMACX_CAPTURE_COMPILES` and export
 their application compilation database. The local wrapper's explicit
@@ -227,18 +227,18 @@ companion code/data or private data references. Associated FPO metadata is check
 against the same PDB and retained in comparison fingerprints, not silently dropped.
 The native verifier also handles VC6 deleting-destructor FPO references to an
 earlier ordinary external declaration of the independently selected definition.
-The disposable compiler control in `tests/test_fpo_declaration_compiler.py`
-exercises this emitted form and missing-PDB refusal. It does not resolve vector
+A disposable compiler control (`tests/test_fpo_declaration_compiler.py`, removed 2026-11-10 with the lean loop; Git history keeps it)
+exercised this emitted form and missing-PDB refusal. It does not resolve vector
 destructor weak calls, establish class lifetime, or grant recovery acceptance.
 Missing companions, conflicting placements and unsupported metadata refuse proof.
 These checks establish emitted-region correspondence, not C++ ownership, shared
 multi-entry code coverage, data contents, runtime behavior or recovery acceptance.
-The test-owned VC6/linker control in `tests/test_branched_eh_compiler.py`
-exercises a bounded branched unwind map through the historical whole-function
+The test-owned VC6/linker control in `tests/test_branched_eh_compiler.py` (removed 2026-11-10 with the lean loop; Git history keeps it)
+exercised a bounded branched unwind map through the historical whole-function
 comparator. It checks an unchanged object replica, a code-identical valid
 predecessor change that must mismatch, and malformed original/compiled maps
 that must refuse. Run compiler controls under a coordinator-owned compiler
-lease. `tests/test_array_eh_compiler.py` additionally requires the real compiler
+lease. `tests/test_array_eh_compiler.py` (also removed) additionally required the real compiler
 and linker to emit an array cleanup with its independent callback DIR32 and
 iterator REL32, for both external and local ordinary-destructor callbacks.
 It checks unchanged object replicas and original/compiled operand and code
@@ -249,7 +249,7 @@ validates its physical write bounds, not full FPO/PDB correspondence. These
 controls do not qualify unsupported game cleanup forms or establish original
 callback/helper identity, runtime-provider equivalence, linked preservation or
 runtime acceptance.
-`tests/test_subtracting_eh_compiler.py` uses a test-owned virtual-base hierarchy
+`tests/test_subtracting_eh_compiler.py` (also removed) used a test-owned virtual-base hierarchy
 to require actual MOV-frame/SUB/JMP cleanup emission with both immediate widths,
 and a nonvirtual control without that adjustment. Unchanged compiler replicas,
 linked root/cold comparison, valid frame/adjustment damage and malformed
@@ -376,8 +376,8 @@ rejects combining it with a separate `--sandbox` option. The installed-command
 control checks all role arguments using an intentionally absent schema, without
 calling the provider.
 Before a live recovery attempt, an explicit transport preflight can check the
-current native response schemas against all configured provider roles:
-`OPENSMACX_LIVE_PROVIDER_SCHEMA=1 uv run pytest recovery/tests/test_agent_configuration.py -k live_provider`.
+current native response schemas against all configured provider roles; its control
+(`recovery/tests/test_agent_configuration.py`) was removed 2026-11-10 with the lean loop; Git history keeps it.
 It consumes provider usage in empty temporary checkouts, with no game source,
 compiler calls or recovery authority. Ordinary tests skip it. This catches
 provider-side schema rejection that local CLI argument checks cannot detect;
@@ -1315,7 +1315,7 @@ described above. That boundary also rejects explicit inline assembly/emitted
 instructions through the native C++ source-form check; it is not a whole-program
 semantic proof. See the package README for exact coverage and limitations.
 
-`recovery/tests/test_native_acceptance_compiler.py` exercises that installed path
+`recovery/tests/test_native_acceptance_compiler.py` (removed 2026-11-10 with the lean loop; Git history keeps it) exercised that installed path
 with a freshly built test-owned executable, local compiler/build/proof commands,
 and the real whole gate and restoration/preservation checks. It rejects both a
 byte-identical wrong hierarchy in the retained build and a runtime-mismatching
@@ -1343,7 +1343,7 @@ does not infer unmapped bounds, manage worktrees or integrate recovered source.
 The separate native `recover campaign --config <standing-authorization>` now
 connects planning, isolated preparation/dispatch, optional central discovery
 handling, fresh serial integration, cleanup and another planning round. Its
-compiler-backed control is `recovery/tests/test_campaign_compiler.py`: both an
+compiler-backed control was `recovery/tests/test_campaign_compiler.py` (removed 2026-11-10 with the lean loop; Git history keeps it): both an
 existing task and a newly planned task recover genuine structure through a byte
 regression, reach fresh destination acceptance and retain the original baseline.
 Only reasoning is doubled. `campaign --resume <run-directory>` now resumes the
@@ -1368,8 +1368,8 @@ It does not supply OpenSMACX's
 missing proof coverage. Native receipts expose verified artifact paths/hashes so
 downstream work can identify the tested build without guessing a cache directory.
 
-The same file has an opt-in live-provider control:
-`OPENSMACX_LIVE_AGENT_CONTROL=1 uv run pytest -s recovery/tests/test_native_acceptance_compiler.py::test_live_worker_and_independent_reviewer_reach_native_acceptance`.
+The same (removed) file had an opt-in live-provider control,
+`test_live_worker_and_independent_reviewer_reach_native_acceptance`.
 Set an isolated `VC6_PREFIX` and verify provider availability first. This consumes
 the configured provider's usage; ordinary test runs skip it. Original COFF class
 evidence is supplied as a hint, not a claim of blind executable-only recovery.

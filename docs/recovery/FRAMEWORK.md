@@ -188,10 +188,9 @@ build caches. The native gate prepares before its measurement snapshot; standalo
 checks use coordinator-prepared recipes. The old configure CLI and legacy gate
 are removed. Native full-gate damage controls and restored-baseline comparison
 cover the replaced route.
-Those project controls now live in opt-in `recovery/tests/test_gate_controls.py`:
-full native gates in a disposable detached checkout, named stage/subject assertions,
-and guarded damage restoration. The old main-tree mutation CLI is removed.
-Ordinary anchor/safety tests are not a substitute for executing the live matrix.
+Those project controls lived in opt-in `recovery/tests/test_gate_controls.py`
+(full native gates in a disposable detached checkout), removed 2026-11-10 with the lean loop; Git history keeps it.
+The old main-tree mutation CLI is removed.
 CMake's debugger support now uses native `recover debug-sidecar`; the former
 sidecar and CodeView scripts are removed. PCH imports use recorded signatures and
 index ranges, with shared bounds-checked COFF/value parsing. Debugger hints stay

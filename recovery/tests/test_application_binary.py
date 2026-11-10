@@ -148,15 +148,18 @@ def test_missing_build_entry_is_unknown_not_borrowed(project):
     assert result["compile_attempts"] == 0
 
 
-def test_seeds_and_ambiguous_external_bindings_cannot_become_selected_source():
+def test_seeds_and_duplicate_names_cannot_become_external_source_bindings():
     origin = Origin("a" * 64, "pe:va", 0x401000)
     candidate = Candidate(origin, (Span(0x401000, 0x401001),), "src/f.cpp", 1, False, "_f")
     other = replace(candidate, origin=replace(origin, address=0x402000),
                     spans=(Span(0x402000, 0x402001),), path="src/g.cpp")
     selected = frozenset({origin.entity_id})
     bindings, refused, targets = select_bindings(partition([candidate, other]), selected)
-    assert not bindings and "_f" not in targets
-    assert refused[0]["result"] == Result.UNKNOWN
+    # Ordinary cross-TU duplicates are only tentatively TU-local (f6f41e8510):
+    # check_objects must still prove their COFF storage, and neither becomes
+    # an external relocation target.
+    assert bindings and all(binding.local_only for binding in bindings)
+    assert "_f" not in targets and not refused
     bindings, refused, targets = select_bindings(partition([replace(candidate, seed=True)]), selected)
     assert not bindings and not targets and "seeds" in refused[0]["reason"]
 

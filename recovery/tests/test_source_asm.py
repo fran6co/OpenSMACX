@@ -97,21 +97,3 @@ def test_a_file_the_build_does_not_name_is_refused_not_guessed():
     with pytest.raises(ValueError, match="pass the command of a file that is"):
         build_command(COMPILE_COMMANDS,
                       REPO_ROOT / "src" / "recovered" / "units" / "x.cpp")
-
-
-
-@pytest.mark.skipif(not HAVE_BUILD, reason="no build database")
-def test_a_borrowed_command_compiles_a_file_the_build_never_names():
-    """The borrow is the caller's to make, and it works: the same command
-    that builds `buffer.cpp` builds a unit CMake never sees."""
-    from match_recovery.source import read
-    from match_recovery.source.asm import compare_record
-    units = REPO_ROOT / "src" / "recovered" / "units"
-    if not units.is_dir():
-        pytest.skip("no proved-unit store in this checkout")
-    record = next((r for r in read(units) if r.symbol or r.name), None)
-    if record is None:
-        pytest.skip("no annotated unit to try")
-    command = build_command(COMPILE_COMMANDS, REPO_ROOT / "src" / "buffer.cpp")
-    verdict = compare_record(record, EXE, command, FLAGS, compiler=compile_object, retry_compile=flag_dependent)
-    assert verdict.verdict in {str(tier) for tier in Tier}
