@@ -1338,12 +1338,15 @@ def _object_child_and_info(obj: Coff, root: Symbol, child: int, *,
                 elif symbol.name.startswith("??1"):
                     _validate_local_complete_destructor(
                         obj, symbol, root.section, child, walk, depth)
-                elif action_index > 0:
+                elif symbol.name.startswith("??_D"):
+                    # A local whose class has virtual bases is destroyed through
+                    # its ??_D helper, in any action position (Datalink's first
+                    # local StringList: 0x00653746 transfers to 0x00406820).
                     _validate_local_destructor(obj, symbol, root.section, child,
                                                forbidden_sections=frozenset(walk.active),
                                                walk=walk)
                 else:
-                    raise ValueError("COFF first local cleanup is not a complete ??1 destructor")
+                    raise ValueError("COFF local cleanup is neither a complete ??1 nor a ??_D destructor")
                 if raw_addend != 0:
                     raise ValueError("COFF cleanup branch has a nonzero addend")
                 resolved = resolve_transfer(

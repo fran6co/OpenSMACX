@@ -338,7 +338,7 @@ def _coff(*, damage=None, cold_size=21, mode="default",
         {"name": ".xdata$x", "data": _eh_data(damage, two_actions=two_actions),
          "flags": 0x40401040, "selection": 5, "parent": 1},
     ]
-    if two_actions or damage == "first_local_defined":
+    if two_actions or damage in ("first_local_defined", "first_local_vbase"):
         sections.append({"name": ".text$l", "data": b"\xc3",
                          "flags": 0x60501020, "selection": 2, "parent": 0})
         if damage == "local_target_writable":
@@ -401,7 +401,7 @@ def _coff(*, damage=None, cold_size=21, mode="default",
     add_symbol("info", "$Tinfo", 0, 3, 0, 6 if damage == "bad_info_storage" else 3)
     add_symbol("unwind", "$Tunwind", 32, 3, 0, 6)
     add_symbol("destructor", "??1Thing@@QAE@XZ", 0, 0, 0x20, 2)
-    if two_actions or damage == "first_local_defined":
+    if two_actions or damage in ("first_local_defined", "first_local_vbase"):
         external_second = damage in {
             "second_external_destructor", "second_external_wrong_name",
             "second_external_nonzero_value", "second_external_nonfunction",
@@ -418,6 +418,8 @@ def _coff(*, damage=None, cold_size=21, mode="default",
         local_value = 1 if damage == "second_external_nonzero_value" else 0
         if damage in {"second_external_defined", "first_local_defined"}:
             local_name = "??1Time@@QAE@XZ"
+        if damage == "first_local_vbase":
+            local_name = "??_DLocal@@QAEXXZ"
         add_symbol("local_destructor", local_name, local_value, local_section, local_type, 2)
         if damage == "local_target_overlapping_owner":
             add_symbol("local_duplicate", "??_DSecond@@QAEXXZ", 0, 4, 0x20, 2)
@@ -432,7 +434,7 @@ def _coff(*, damage=None, cold_size=21, mode="default",
     if damage == "duplicate_root_relocation":
         root_relocs.append((root_handler_site, "handler", 6))
     child_relocs = [(destructor_offset,
-                     "local_destructor" if damage == "first_local_defined" else "destructor",
+                     "local_destructor" if damage in ("first_local_defined", "first_local_vbase") else "destructor",
                      20)]
     if two_actions:
         child_relocs.append((destructor_offsets[1], "local_destructor", 20))
@@ -1109,6 +1111,12 @@ def test_binds_local_complete_destructor_at_first_action_position():
     root, cold = _bind(object_damage="first_local_defined")
     assert root.ownership.cleanup_offsets == (0,)
     assert cold.ownership.handler_offset == 11
+
+
+def test_binds_local_vbase_destructor_at_first_action_position():
+    root, cold = _bind(object_damage="first_local_vbase")
+    assert root.ownership.cleanup_offsets == (0,)
+    assert cold.ownership.compiled_actions[0].transfers[0].target == "??_DLocal@@QAEXXZ"
 
 @dataclass
 class _EHFixtureSection:
