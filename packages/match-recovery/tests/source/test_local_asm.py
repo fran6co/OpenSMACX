@@ -150,5 +150,7 @@ def test_multispan_annotation_cannot_bank_only_its_local_primary_body(tmp_path):
     obj = local_coff()
     assert asm.subject_asm(obj, record).code == b"\xc3"
     damaged = replace(record, image_spans=(*record.image_spans, (0x401010, 0x401011)))
-    with pytest.raises(ValueError, match="one original image span"):
-        asm.subject_asm(obj, damaged)
+    # Never a primary-only Listing: the region candidate must prove the
+    # original EH pair before comparing, and a candidate without a cold
+    # region can only measure as MISMATCH.
+    assert isinstance(asm.subject_asm(obj, damaged), asm.RegionCandidate)

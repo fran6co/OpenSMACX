@@ -1452,6 +1452,19 @@ def _object_child_and_info(obj: Coff, root: Symbol, child: int, *,
             cleanup_offsets, tuple(compiled_predecessors), tuple(compiled_null_states))
 
 
+def original_eh_action_count(original_image: PeImage, spans: tuple[tuple[int, int], ...]) -> int:
+    """Prove the original primary/cold pair alone; its cleanup action count.
+
+    For a candidate that emits no cold region at all: the original side
+    gets the same complete validation bind_eh_regions applies, so a refusal
+    here is still an unsupported original layout.
+    """
+    if type(original_image) is not PeImage:
+        raise ValueError("EH binding requires a pinned parsed PE image")
+    primary, cold = _checked_spans(spans)
+    return len(_original_eh(original_image, primary, cold)[6])
+
+
 def bind_eh_regions(raw_object: bytes, emitted_symbol: str, original_image: PeImage,
                     spans: tuple[tuple[int, int], ...]) -> tuple[EHRegionPair, EHRegionPair]:
     """Bind the supported original primary/cold spans to rooted COFF sections.

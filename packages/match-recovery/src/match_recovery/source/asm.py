@@ -30,7 +30,7 @@ from ..measurement import Measurement
 from ..model import Result
 from ..pe_coff import Coff, CoffRecords, PeImage
 from ..source_inventory import image_pin
-from .eh_regions import bind_eh_regions, eh_action_semantic_difference
+from .eh_regions import bind_eh_regions, eh_action_semantic_difference, original_eh_action_count
 from .grammar import is_assembler_source
 from .model import DecompilationState, Mode, Tier
 
@@ -1050,7 +1050,9 @@ def subject_asm(obj: bytes, record: DecompilationState,
                              "the annotation is absent or ambiguous in this object")
         try:
             root = parsed.function(wanted)
-            if len(record.image_spans) != 2 or len(parsed.code_sections(root)) != 2:
+            # One code section: the candidate emits no cleanup region, which
+            # compare_subject measures once the original pair is proved.
+            if len(record.image_spans) != 2 or len(parsed.code_sections(root)) not in (1, 2):
                 raise ValueError("no unique root/associated-code pair")
         except ValueError as error:
             raise SpanComparisonRefused(
@@ -1489,6 +1491,9 @@ def compare_subject(record: DecompilationState, exe: Path | str,
         # This parsed view reuses exactly the legacy comparison's image bytes;
         # the digest here validates the parsed view, not an extra source claim.
         image = PeImage(raw_image, hashlib.sha256(raw_image).hexdigest())
+        parsed = Coff(compiled.object_bytes)
+        if len(parsed.code_sections(parsed.function(compiled.emitted_symbol))) == 1:
+            return _missing_eh_region(record, exe, compiled, image)
         try:
             bound = bind_eh_regions(compiled.object_bytes, compiled.emitted_symbol,
                                     image, record.image_spans)
@@ -1570,6 +1575,28 @@ def compare_subject(record: DecompilationState, exe: Path | str,
             result = replace(result, verdict=Tier.SHAPE_EXACT, allocation_only=reason,
                              diagnostic=reason)
     return result
+
+
+def _missing_eh_region(record, exe, compiled: RegionCandidate, image) -> AsmComparison:
+    """The original has a proved EH cleanup region and the candidate none.
+
+    That is the candidate's difference - a local with a destructor the
+    source does not declare, or one it does not keep live - so it is a
+    measured MISMATCH, never a match. Only the primary spans are compared,
+    for a similarity a reader and the permute scorer can use.
+    """
+    try:
+        actions = original_eh_action_count(image, record.image_spans)
+    except ValueError as error:
+        raise SpanComparisonRefused("complete EH-region measurement refused: " + str(error)) from error
+    code, mask = _coff_function_masked(compiled.object_bytes, record.name, record.symbol)
+    candidate = Listing(code=code, base=record.address, mask=mask, flags=compiled.flags)
+    primary = compare_asm(original_asm(record, exe), candidate)
+    cold_low, cold_high = record.image_spans[1]
+    return replace(primary, verdict=Tier.MISMATCH, flags=compiled.flags, diagnostic=(
+        f"candidate emits no EH cleanup region; the original's cold region "
+        f"{cold_low:#010x}-{cold_high:#010x} has {actions} cleanup action(s); "
+        f"primary-span comparison only: {primary.diagnostic}"))
 
 
 def span_refusal_reason(record: DecompilationState, exe: Path | str,

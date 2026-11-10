@@ -337,3 +337,28 @@ def test_local_nested_destructor_closure_accepts_mov_sub_action():
     owner = obj.function("??1NestedOwner@@QAE@XZ")
     walk = eh_regions._LocalEHWalk(active={10}, complete=set(), roots=1)
     eh_regions._validate_local_complete_destructor(obj, owner, 10, 11, walk, 1)
+
+
+def test_candidate_without_a_cold_region_is_a_mismatch_once_the_original_pair_is_proved(tmp_path):
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from test_binary import coff_fixture
+    from match_recovery.source.model import Tier
+    image_bytes, _object_bytes = _make_fixture()
+    image_path = tmp_path / "synthetic-no-eh.exe"
+    image_path.write_bytes(image_bytes)
+    (root_start, root_end), (cold_start, cold_end) = SPANS
+    record, = read_text(
+        f"// ORIGINAL: 0x{root_start:08X} test-owned 0x{root_start:08X}-0x{root_end:08X};"
+        f"0x{cold_start:08X}-0x{cold_end:08X} FILE\n// symbol _f\nint f() {{ return 0; }}\n",
+        "synthetic_no_eh.cpp")
+    result = compare_subject(record, image_path, subject_asm(coff_fixture(b"\xc3"), record, "no-eh"))
+    assert result.verdict is Tier.MISMATCH
+    assert result.diagnostic.startswith("candidate emits no EH cleanup region")
+    # An original pair that fails its own proof still refuses.
+    damaged, _ = _make_fixture(image_damage="original_funcinfo_magic")
+    damaged_path = tmp_path / "synthetic-no-eh-damaged.exe"     # image bytes are cached per path
+    damaged_path.write_bytes(damaged)
+    with pytest.raises(ValueError, match="FuncInfo"):
+        compare_subject(record, damaged_path, subject_asm(coff_fixture(b"\xc3"), record, "no-eh"))
