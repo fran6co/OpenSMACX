@@ -270,6 +270,20 @@ def test_keyboard_interrupt_keeps_the_best_so_far():
     assert result.best_text  # a usable variant is returned
 
 
+def test_scorer_stop_keeps_the_best_and_skips_minimizing():
+    scorer = FakeScorer("x = b + a ;")
+    calls = []
+
+    def stopping(text):
+        calls.append(text)
+        if len(calls) > 6:
+            raise permute.SearchStopped("inputs_changed", "source edited")
+        return scorer(text)
+    result = search("x = a + b + 0;", stopping, iterations=50, seed=3)
+    assert result.stop_reason == "inputs_changed" and not result.interrupted
+    assert len(calls) == 7 and result.best.distance <= result.start.distance
+
+
 def test_search_refuses_an_uncompilable_start():
     with pytest.raises(ValueError, match="does not compile"):
         search("x = a + b;", lambda text: None, iterations=1)

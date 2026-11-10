@@ -21,7 +21,7 @@ from .coff_replica import object_signature
 from .compiler import Compiler
 from .measurement import Measurement
 from .pe_coff import Coff
-from .permute import (PROBE_FORMS, PROBE_SIZES, Score, Unsupported, probe_calls, probe_helpers,
+from .permute import (PROBE_FORMS, PROBE_SIZES, Score, SearchStopped, Unsupported, probe_calls, probe_helpers,
                       probe_variants, search, tokenize)
 from .source import Mode, State
 from .source.asm import (AsmComparison, Listing, RegionCandidate, _data_divergence, _image_bytes, _split_at,
@@ -578,11 +578,24 @@ def permute_source(root: Path, target: str, *, image: Path, in_file=None, iterat
             detail["diagnostic"] = comparison.diagnostic[:300]
         return Score(distance, exact, detail)
 
+    def current(compile_call):
+        # Every overlay requires the live host to equal host_text; once it
+        # changes, each further trial would refuse. Stop and keep the best.
+        if host_path.read_text(encoding="utf-8") != host_text:
+            raise SearchStopped("inputs_changed", "the permuted source file changed during the search")
+        try:
+            return compile_call()
+        except ValueError as error:
+            if "input changed" in str(error) or "inputs changed" in str(error):
+                raise SearchStopped("inputs_changed", str(error)) from error
+            raise
+
     def score(body_text: str):
-        return score_objects(compile_grid(splice(body_text)))
+        return score_objects(current(lambda: compile_grid(splice(body_text))))
 
     def score_many(body_texts):
-        return [score_objects(results) for results in compile_texts([splice(text) for text in body_texts])]
+        return [score_objects(results)
+                for results in current(lambda: compile_texts([splice(text) for text in body_texts]))]
 
     def unified(body_text: str) -> str:
         return "".join(difflib.unified_diff(
@@ -794,6 +807,8 @@ def _probe_sweep(original_body, parameters, sizes, forms, score, score_many, par
                     keep(text, value)
     except KeyboardInterrupt:
         complete, result.interrupted, result.stop_reason = False, True, "interrupted"
+    except SearchStopped as stop:
+        complete, result.stop_reason = False, stop.reason
     ranking.sort(key=lambda row: (row["distance"], row["order"]))
     result.elapsed_seconds = time.monotonic() - started
     return {"result": result, "ranking": ranking, "variants": len(variants), "complete": complete}

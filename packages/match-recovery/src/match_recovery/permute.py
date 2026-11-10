@@ -1443,6 +1443,14 @@ class Score:
     detail: dict = field(default_factory=dict, compare=False)
 
 
+class SearchStopped(ValueError):
+    """Raised by a scorer to end the search early, keeping the best result so far."""
+
+    def __init__(self, reason: str, message: str = ""):
+        super().__init__(message or reason)
+        self.reason = reason
+
+
 @dataclass
 class SearchResult:
     start: Score
@@ -1490,7 +1498,8 @@ def search(text: str, scorer, *, iterations: int = 200, seed: int = 0, time_limi
     not compile. Lower distances are better; ``Score.exact`` ends the search.
     Equal-score moves are accepted with ``equal_accept`` probability and worse
     ones with ``exp(-delta / (scale * T))``, ``T`` falling linearly to zero.
-    KeyboardInterrupt stops the loop and returns the best result so far.
+    KeyboardInterrupt, or a ``SearchStopped`` from the scorer (its ``reason``
+    becomes ``stop_reason``), stops the loop and returns the best result so far.
     With ``minimize`` the best variant's unneeded line hunks are then reverted.
 
     With ``batch`` > 1 each round derives candidates from the round's current
@@ -1513,7 +1522,7 @@ def search(text: str, scorer, *, iterations: int = 200, seed: int = 0, time_limi
     result = SearchResult(start=start, best=start, best_text=text, compiles=1)
     seen = {_normalized(text): start}
     current, current_score = text, start
-    since_improvement = 0
+    since_improvement, halted = 0, False
     if start.exact:
         result.stop_reason = "already_exact"
         result.elapsed_seconds = clock() - started
@@ -1621,11 +1630,15 @@ def search(text: str, scorer, *, iterations: int = 200, seed: int = 0, time_limi
     except KeyboardInterrupt:
         result.interrupted = True
         result.stop_reason = "interrupted"
-    if minimize and not result.interrupted and result.best_text != text:
+    except SearchStopped as stop:
+        result.stop_reason, halted = stop.reason, True
+    if minimize and not result.interrupted and not halted and result.best_text != text:
         try:
             _minimize(text, result, scorer, seen, batch_scorer)
         except KeyboardInterrupt:
             result.interrupted = True
+        except SearchStopped as stop:
+            result.stop_reason = stop.reason
     result.elapsed_seconds = clock() - started
     return result
 
