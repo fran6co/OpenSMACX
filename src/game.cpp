@@ -1576,11 +1576,11 @@ int __cdecl encrypt_read(void *data, unsigned int size, unsigned int count,
     unsigned char key1 = 0x80;
     unsigned char key2 = 0x80;
     for (unsigned int i = padded / 2; i != 0; --i) {
+        unsigned char byte2 = src[1];
         key2 = key2 + 1;
         key1 = key1 - 1;
-        unsigned char byte2 = src[1];
-        unsigned char byte1 = src[0];
-        src += 2;
+        unsigned char byte1 = *src++;
+        src++;
         if (byte2 != 0) {
             unsigned char value = byte2 ^ key2;
             if (value != 0) {
@@ -3052,54 +3052,47 @@ int __cdecl load_map() {
     AlphaSave dialog;
     dialog.init();
 
-    char scenario_filter[16] = ".";
-    strcat(scenario_filter, MapFileExtension);
-    dialog.add_default_extension(scenario_filter);
-    char save_filter[16] = ".";
-    strcat(save_filter, SaveGameFileExtension);
-    dialog.add_default_extension(save_filter);
+    char extension[256];
+    extension[0] = '\0';
+    strcat(extension, ".");
+    strcat(extension, MapFileExtension);
+    dialog.add_default_extension(extension);
+    extension[0] = '\0';
+    strcat(extension, ".");
+    strcat(extension, SaveGameFileExtension);
+    dialog.add_default_extension(extension);
 
-    char initial_pattern[260] = "maps\\*.";
+    char initial_pattern[256];
+    initial_pattern[0] = '\0';
+    strcat(initial_pattern, "maps\\*.");
     strcat(initial_pattern, MapFileExtension);
-    LPSTR preference_name = prefs_get("Latest Map", initial_pattern, 0xFF);
-    char default_name[264];
-    strncpy(default_name, preference_name, 0xFF);
-    if (strlen(default_name) == 0) strcpy(default_name, initial_pattern);
-    dialog.set_default_filename(default_name);
+    char selected_path[256];
+    strncpy(selected_path, prefs_get("Latest Map", initial_pattern, 0), 0xFF);
+    if (strlen(selected_path) == 0) {
+        strcpy(selected_path, initial_pattern);
+    }
+    dialog.set_default_filename(selected_path);
 
     char *selected = dialog.load();
     do_all_draws();
-    if (selected == 0) return 1;
+    if (selected == 0) {
+        return 1;
+    }
 
-    char selected_path[260];
     strcpy(selected_path, selected);
-    char preference_value[260];
+    char preference_value[256];
     strcpy(preference_value, selected);
     char *dot = strchr(preference_value, '.');
-    if (dot != 0) *dot = '\0';
+    if (dot != 0) {
+        *dot = '\0';
+    }
     prefs_put("Latest Map", preference_value);
 
     const int result = load_map_daemon(selected_path);
-    if (IsMultiplayerNet != 0) {
-        if (result == 0) {
-            NetWinDialog.loaded_file_path_[0] = '\0';
-            strcat(NetWinDialog.loaded_file_path_,
-                   preference_value);
-            NetWinDialog.field_7728_ = 1;
-        } else {
-            parse_says(0, selected_path, -1, -1);
-            parse_num(0, result);
-            StringTemp[0] = '\0';
-            strcat(StringTemp, "LOAD");
-            switch (result) {
-            case 1: strcat(StringTemp, "NONE"); break;
-            case 2: strcat(StringTemp, "NOT"); break;
-            case 3: strcat(StringTemp, "OLD"); break;
-            default: strcat(StringTemp, "ERROR"); break;
-            }
-            X_pop(StringTemp, 0);
-            do_all_draws();
-        }
+    if (IsMultiplayerNet != 0 && result == 0) {
+        NetWinDialog.loaded_file_path_[0] = '\0';
+        strcat(NetWinDialog.loaded_file_path_, preference_value);
+        NetWinDialog.field_7728_ = 1;
     } else if (result != 0) {
         parse_says(0, selected_path, -1, -1);
         parse_num(0, result);
@@ -3171,15 +3164,15 @@ int GameDataPlayerCountSnapshot;
 // NOTE: code bytes match the image with relocations masked; recover measure
 //       refuses it while ConsoleInfoWin/WorldClimateWorldWin lack bounded
 //       object spans. The image keeps two "unitfound_sm.pcx" literals (unpooled).
-// RECOVERY_LITERAL: v1 0x00691BF8 0x00691C09 $SG66413 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C0C 0x00691C19 $SG66414 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C1C 0x00691C2D $SG66417 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C30 0x00691C3B $SG66418 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C3C 0x00691C4C $SG66421 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C4C 0x00691C58 $SG66422 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C58 0x00691C60 $SG66429 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C60 0x00691C72 $SG66431 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C74 0x00691C7F $SG66432 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691BF8 0x00691C09 $SG66395 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C0C 0x00691C19 $SG66396 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C1C 0x00691C2D $SG66399 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C30 0x00691C3B $SG66400 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C3C 0x00691C4C $SG66403 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C4C 0x00691C58 $SG66404 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C58 0x00691C60 $SG66411 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C60 0x00691C72 $SG66413 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C74 0x00691C7F $SG66414 0x005BED20
 int __cdecl do_unity_crash(int x, int y, int faction_id) {
     const uint32_t event = MapTiles[static_cast<int>(MapLongitude) * y + (x >> 1)].bit2;
     if ((event & 0x80004000u) != 0x4000u) {
@@ -3289,45 +3282,51 @@ int __cdecl save_game(int mode) {
     }
 
     StringTemp[0] = 0;
-    strcat(StringTemp, mode != 0 ? "scenarios\\" : "saves\\");
+    if (mode != 0) {
+        strcat(StringTemp, "scenarios\\");
+    } else {
+        strcat(StringTemp, "saves\\");
+    }
 
-    const int faction_id = ConsoleGlobal.faction_id_;
     PluralityDefault = 0;
-    GenderDefault = Players[faction_id].is_leader_female;
-    strcat(StringTemp, Players[faction_id].name_leader);
+    GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
+    strcat(StringTemp, Players[ConsoleGlobal.faction_id_].name_leader);
     strcat(StringTemp, " ");
     strcat(StringTemp, label_get(0x2D0 / 4));
     strcat(StringTemp, " ");
-    GenderDefault = Players[faction_id].noun_gender;
-    PluralityDefault = Players[faction_id].is_noun_plural;
-    strcat(StringTemp, Players[faction_id].noun_faction);
-    strcat(StringTemp, ",");
+    GenderDefault = Players[ConsoleGlobal.faction_id_].noun_gender;
+    PluralityDefault = Players[ConsoleGlobal.faction_id_].is_noun_plural;
+    strcat(StringTemp, Players[ConsoleGlobal.faction_id_].noun_faction);
+    strcat(StringTemp, ", ");
     say_year(StringTemp);
 
-    char transient_name[188];
-    strcpy(transient_name, mode != 0 ? ScenarioSaveNameBuffer
-                                    : GameDataStateStorage.fields_.legacy_game_save_name_);
-    yearmotize(transient_name);
-    char *const default_name = transient_name[0] != 0
-        ? transient_name : StringTemp;
+    char name[256];
+    if (mode != 0) {
+        strcpy(name, ScenarioSaveNameBuffer);
+        yearmotize(name);
+    } else {
+        strcpy(name, GameDataStateStorage.fields_.legacy_game_save_name_);
+        yearmotize(name);
+    }
+    if (strlen(name) != 0) {
+        file_box.set_def_name(name);
+        alpha_save.set_default_filename(name);
+    } else {
+        file_box.set_def_name(StringTemp);
+        alpha_save.set_default_filename(StringTemp);
+    }
 
-    file_box.set_def_name(default_name);
-    alpha_save.set_default_filename(default_name);
+    file_box.set_def_ext(mode != 0 ? ScenarioFileExtension : SaveGameFileExtension);
 
-    const char *const extension =
-        mode != 0 ? ScenarioFileExtension : SaveGameFileExtension;
-    file_box.set_def_ext(extension);
+    name[0] = 0;
+    strcat(name, "*.");
+    strcat(name, mode != 0 ? ScenarioFileExtension : SaveGameFileExtension);
+    file_box.add_filter(name, mode != 0 ? label_get(0x9C8 / 4) : label_get(0x674 / 4));
 
-    transient_name[0] = 0;
-    strcat(transient_name, "*.");
-    strcat(transient_name, extension);
-    file_box.add_filter(transient_name,
-                        label_get(mode != 0 ? 0x9C8 / 4 : 0x674 / 4));
-
-    transient_name[0] = 0;
-    strcat(transient_name, ".");
-    strcat(transient_name, extension);
-    alpha_save.add_default_extension(transient_name);
+    name[0] = 0;
+    strcat(name, ".");
+    strcat(name, mode != 0 ? ScenarioFileExtension : SaveGameFileExtension);
+    alpha_save.add_default_extension(name);
 
     const int use_file_box = prefs_get("WindowsFileBox", 0, 0);
     prefs_put("WindowsFileBox", use_file_box, 0);
@@ -3347,8 +3346,9 @@ int __cdecl save_game(int mode) {
 
     char filename[256];
     strcpy(filename, selected_path);
-    if (strcmp(filename, "auto\\") == 0) {
-        strcpy(StringTemp, filename);
+    // A bare "?" selection keeps the generated default name.
+    if (strcmp(filename, "?") == 0) {
+        strcpy(filename, StringTemp);
     }
 
     char filename_stem[256];
@@ -3378,29 +3378,32 @@ int __cdecl save_game(int mode) {
         default_basename = StringTemp;
     }
 
+    // Both scenario branches mark the game state and clear every faction's
+    // unk_102 (native 0x5AA456); the saved names are the whole stem.
     if (mode != 0) {
         if (_stricmp(selected_basename, default_basename) != 0) {
-            strcpy(ScenarioSaveNameBuffer, selected_basename);
-            GameDataStateStorage.fields_.game_state_ |= 0x10;
-            for (int faction = 0; faction < MaxPlayerNum; ++faction) {
-                PlayersData[faction].unk_102 = 0;
-            }
+            strcpy(ScenarioSaveNameBuffer, filename_stem);
         } else {
             strcpy(ScenarioSaveNameBuffer,
                    SaveNameDefaultStorageGlobal.scenario_equal_default_);
         }
-    } else {
-        const char *save_name = selected_basename;
-        if (_stricmp(selected_basename, default_basename) == 0) {
-            save_name = SaveNameDefaultStorageGlobal.save_equal_default_;
+        GameDataStateStorage.fields_.game_state_ |= 0x10;
+        for (int faction = 0; faction < MaxPlayerNum; ++faction) {
+            PlayersData[faction].unk_102 = 0;
         }
-        strcpy(GameDataStateStorage.fields_.legacy_game_save_name_, save_name);
-        prefs_put("Latest Save", selected_basename);
+    } else {
+        if (_stricmp(selected_basename, default_basename) != 0) {
+            strcpy(GameDataStateStorage.fields_.legacy_game_save_name_, filename_stem);
+        } else {
+            strcpy(GameDataStateStorage.fields_.legacy_game_save_name_,
+                   SaveNameDefaultStorageGlobal.save_equal_default_);
+        }
+        prefs_put("Latest Save", filename_stem);
     }
 
     const int daemon_result = save_daemon(filename);
     if (daemon_result != 0) {
-        parse_says(-1, filename, -1, 0);
+        parse_says(0, filename, -1, -1);
         X_pop("SAVEFAILED", 0);
         do_all_draws();
         return 1;
@@ -3408,7 +3411,7 @@ int __cdecl save_game(int mode) {
 
     if (IsMultiplayerPBEM != 0) {
         ExitTurnLoop = 1;
-        return 0;
+        return 1;
     }
 
     if (mode == 0 && (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) != 0) {
