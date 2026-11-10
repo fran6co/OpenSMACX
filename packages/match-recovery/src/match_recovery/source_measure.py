@@ -96,10 +96,11 @@ def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1, li
     from .source.body import has_placeholder_body
     component_owners = exact_component_record_bindings(snapshot)
     component_candidates = component_record_identity_candidates(snapshot)
+    pin = image_pin(root, settings.source)
     component_keys = set()
     for record in mappings:
         relative = record.path.relative_to(root).as_posix()
-        entity = Origin(image_pin(root, settings.source), settings.source.address_space, record.address).entity_id
+        entity = Origin(pin, settings.source.address_space, record.address).entity_id
         if (relative, entity) in component_candidates:
             component_keys.add((record.path.resolve(), record.address, record.line))
     fragment_pairs, fragment_refused = resolve_fragment_pairs(
@@ -114,7 +115,7 @@ def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1, li
     groups, unavailable, component_selected, pairs_by_path = defaultdict(list), [], {}, defaultdict(list)
     for record in selected:
         relative = record.path.relative_to(root).as_posix()
-        entity = Origin(image_pin(root, settings.source), settings.source.address_space, record.address).entity_id
+        entity = Origin(pin, settings.source.address_space, record.address).entity_id
         owner = component_owners.get((relative, entity))
         key = (record.path.resolve(), record.address, record.line)
         if record.mode is Mode.UNBOUND:
@@ -247,7 +248,6 @@ def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1, li
                             "missing recipes remain unavailable; compiler interaction owns any explicitly configured seed policy",
                             "use task variants for private candidate decks with scope and damage controls"]}
     if linked_current:
-        pin = image_pin(root, settings.source)
         selected_ids = frozenset(
             Origin(pin, settings.source.address_space, record.address).entity_id
             for record in selected)

@@ -166,10 +166,11 @@ def check_matches(root: Path, image: Path, *, jobs: int = 1, units=None, scope=N
             continue
         eligible.append(record)
     component_candidates = component_record_identity_candidates(source_index)
+    pin = image_pin(root, settings.source)
     component_keys = set()
     for record in records:
         name = record.path.relative_to(root).as_posix()
-        entity = Origin(image_pin(root, settings.source), settings.source.address_space, record.address).entity_id
+        entity = Origin(pin, settings.source.address_space, record.address).entity_id
         if (name, entity) in component_candidates:
             component_keys.add((record.path.resolve(), record.address, record.line))
     fragment_pairs, fragment_refused = resolve_fragment_pairs(
@@ -187,7 +188,7 @@ def check_matches(root: Path, image: Path, *, jobs: int = 1, units=None, scope=N
             unsupported.append(_observation(root, record, "UNBOUND mapping has no emitted body or compiler recipe",
                                             built=built, source=settings.source))
             continue
-        entity = Origin(image_pin(root, settings.source), settings.source.address_space, record.address).entity_id
+        entity = Origin(pin, settings.source.address_space, record.address).entity_id
         owner = component_owners.get((name, entity))
         record_key = (record.path.resolve(), record.address, record.line)
         if record_key in fragment_refused:

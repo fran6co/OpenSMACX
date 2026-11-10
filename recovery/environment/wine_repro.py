@@ -3,13 +3,16 @@
 This is project compiler interaction, not a recovery verdict. /Brepro removes
 the time-seeded namespace nonce but also changes predefined macros. Three fresh
 preprocessing passes must preserve source-visible text before it may be used.
+They run concurrently; an input modified after they start refuses.
 """
 
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 import hashlib
 import os
 from pathlib import Path
 import re
+import time
 
 
 ROOT_OPTION = "--repro-root="
@@ -198,16 +201,33 @@ class ReproducibleCompile:
 
     def verify(self, preprocess, *, parse_preprocessed=_preprocessed,
                stable_options=("/Brepro",)):
-        """The callback receives argv/cwd and returns unmodified stdout bytes."""
-        ordinary, files = parse_preprocessed(preprocess(_preprocess_arguments(self.original), self.cwd), self.cwd)
+        """The callback receives argv/cwd and returns unmodified stdout bytes.
+
+        It must be thread-safe: the three passes run concurrently. A write
+        that lands before they start is seen identically by all of them; one
+        that lands later may reach only some reads, so any observed input
+        modified (mtime) or replaced (ctime) since the start refuses. The
+        content snapshot taken afterwards still guards the real compile.
+        """
+        passes = [(_preprocess_arguments(self.original), self.cwd),
+                  *((_preprocess_arguments(self.stable) + list(extra), self.root)
+                    for extra in ((), stable_options))]
+        started = time.time_ns()
+        with ThreadPoolExecutor(len(passes)) as pool:
+            pending = [pool.submit(preprocess, words, directory) for words, directory in passes]
+        outputs = [future.result() for future in pending]
+        ordinary, files = parse_preprocessed(outputs[0], self.cwd)
         files.add(self.source)
         self.inputs = _snapshot(files)
-        for extra in ([], list(stable_options)):
-            self.check_inputs()
-            text, observed = parse_preprocessed(preprocess(_preprocess_arguments(self.stable) + extra, self.root), self.root)
-            self.check_inputs()
+        for path in files:
+            status = path.stat()
+            if max(status.st_mtime_ns, status.st_ctime_ns) >= started:
+                raise ValueError("compiler inputs changed during reproducibility verification: " + str(path))
+        for data in outputs[1:]:
+            text, observed = parse_preprocessed(data, self.root)
             if text != ordinary or {path.resolve() for path in observed} != {path.resolve() for path in files}:
                 raise ValueError("reproducible compilation changes preprocessing or observed inputs")
+        self.check_inputs()
         return [*self.stable, *stable_options]
 
     def check_inputs(self):

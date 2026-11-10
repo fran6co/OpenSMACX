@@ -114,8 +114,8 @@ def test_wrapper_fails_closed_on_each_preprocessing_phase(
         calls.append(command)
         if "/E" not in command:
             pytest.fail("compile ran after failed preprocessing")
-        index = len(calls)
         cwd = options["cwd"]
+        index = 1 if cwd == root / "build" else 3 if "/Brepro" in command else 2
         output_path = source if cwd == root / "build" else Path("src/unit.cpp")
         return subprocess.CompletedProcess(
             command, returncode if index == phase else 0,
@@ -124,7 +124,7 @@ def test_wrapper_fails_closed_on_each_preprocessing_phase(
 
     monkeypatch.setattr(wine, "run_tool", run)
     assert wine.main(["vc6-cl", *args]) == 3
-    assert len(calls) == phase
+    assert len(calls) == 3
     captured = capsys.readouterr()
     assert "reproducibility preprocessing failed" in captured.err
     assert captured.out == ""
@@ -141,7 +141,7 @@ def test_explicit_identity_preserves_output_and_include_destinations(invocation)
     assert result[-1] == "/Brepro" and result[-2] == "src/unit.cpp"
     assert "/Fo" + str(root / "build/unit.obj") in result
     assert "/I" + str(root / "build/../src") in result
-    assert [cwd for _, cwd in seen] == [root / "build", root, root]
+    assert sorted(str(cwd) for _, cwd in seen) == sorted(str(cwd) for cwd in (root / "build", root, root))
     assert all("/E" in words and "/c" not in words for words, _ in seen)
     assert all(not any(word.startswith("/Fo") for word in words) for words, _ in seen)
     policy.check_inputs()
@@ -154,10 +154,9 @@ def test_explicit_identity_preserves_output_and_include_destinations(invocation)
 def test_changed_code_literals_and_pragmas_refuse(invocation, phase, body):
     root, source, args = invocation
     policy = ReproducibleCompile.read("cl", args, root / "build")
-    calls = []
     def preprocess(words, cwd):
-        calls.append(words)
-        return preprocessed(source, body if len(calls) - 1 == phase else b"unchanged\n")
+        index = 0 if cwd != root else 2 if "/Brepro" in words else 1
+        return preprocessed(source, body if index == phase else b"unchanged\n")
     with pytest.raises(ValueError, match="changes preprocessing"):
         policy.verify(preprocess)
 
@@ -181,6 +180,31 @@ def test_source_edit_between_guard_passes_refuses(invocation):
         if cwd == root:
             source.write_text("int changed;\n")
         return preprocessed(source)
+    with pytest.raises(ValueError, match="inputs changed"):
+        policy.verify(preprocess)
+
+
+def test_preprocessing_passes_run_concurrently(invocation):
+    import threading
+    root, source, args = invocation
+    policy = ReproducibleCompile.read("cl", args, root / "build")
+    barrier = threading.Barrier(3, timeout=10)
+    def preprocess(words, cwd):
+        barrier.wait()
+        return preprocessed(source if cwd == root / "build" else Path("src/unit.cpp"))
+    assert policy.verify(preprocess)[-1] == "/Brepro"
+
+
+def test_input_written_after_passes_start_refuses_even_if_all_agree(invocation):
+    import threading
+    root, source, args = invocation
+    policy = ReproducibleCompile.read("cl", args, root / "build")
+    lock = threading.Lock()
+    def preprocess(words, cwd):
+        with lock:
+            # Every pass sees the same text: only the timestamp betrays it.
+            source.write_text("int value() { return 7; }\n")
+        return preprocessed(source if cwd == root / "build" else Path("src/unit.cpp"))
     with pytest.raises(ValueError, match="inputs changed"):
         policy.verify(preprocess)
 
@@ -269,7 +293,8 @@ def test_guard_failure_keeps_diagnostics_before_bounded_source_context(
     def run(command, **options):
         calls.append(command)
         assert '/E' in command and '/c' not in command
-        assert options == {'cwd': root / 'build', 'binary': True, 'explicit_compiler': True}
+        assert options == {'cwd': options['cwd'], 'binary': True, 'explicit_compiler': True}
+        assert options['cwd'] in (root / 'build', root)
         return subprocess.CompletedProcess(command, code, output, errors)
 
     monkeypatch.setattr(wine, 'run_tool', run)
@@ -277,7 +302,8 @@ def test_guard_failure_keeps_diagnostics_before_bounded_source_context(
     captured = capsys.readouterr()
     assert captured.out == ''
     assert expected in captured.err[:1800]  # Leave room for outer client error prefixes.
-    assert len(captured.err) <= 4100 and len(calls) == 1
+    # The three passes run concurrently; the ordinary pass's failure is reported.
+    assert len(captured.err) <= 4100 and len(calls) == 3
     assert not list(root.rglob('*.obj'))
     if b'C1189' in output or b'D9002' in output or b'C2065' in errors:
         assert 'expanded_source' not in captured.err
