@@ -877,10 +877,11 @@ int Net::send_group_flagged(void *data, int size, long target,
             queue_10c_.add(data, static_cast<unsigned long>(size),
                            local_player_id_, target, 0xFFFFFFFFUL);
             if (static_cast<int>(field_6DC_) < 2)
-                return static_cast<int>(field_E4_);
+                goto finish;
         }
     }
 
+    {
     const int allocation_size = size + 0x0C;
     unsigned char *const packet =
         static_cast<unsigned char *>(mem_get(allocation_size));
@@ -888,15 +889,14 @@ int Net::send_group_flagged(void *data, int size, long target,
 
     NetPacketEnvelope *const header =
         reinterpret_cast<NetPacketEnvelope *>(packet);
-    const int reliable = flags & 1;
-    if (reliable != 0) {
+    if ((flags & 1) != 0) {
         header->sequence_4_ = ++field_E4_;
     } else {
         header->sequence_4_ = 0;
     }
     if (data != 0) memcpy(packet + 8, data, static_cast<size_t>(size));
 
-    if (reliable != 0 && (voice_flags_D8_ & 0x10000000U) == 0) {
+    if ((flags & 1) != 0 && (voice_flags_D8_ & 0x10000000U) == 0) {
         // Unconfirmed reliable send. The callback marks only group members
         // whose NetPlayer flags include bit 1. NetPlayerTable is shared
         // callback context, published exactly as native.
@@ -913,8 +913,10 @@ int Net::send_group_flagged(void *data, int size, long target,
             net_group_player_callback, 0, 0);
 
         DWORD wait_timeout = 0xFFFFFFFFU;
+        // The image scans NetPlayer +8 (the flag the group callback sets),
+        // starting from the players_+0x15C pointer kept from the clear loop.
         for (index = 0; index < 16; ++index) {
-            if (players_[index].field_0_ != 0) break;
+            if (players_[index].field_8_ != 0) break;
         }
         if (index == 16) goto done;
 
@@ -1020,7 +1022,7 @@ int Net::send_group_flagged(void *data, int size, long target,
             return 0;
         }
         if (NetDirectPlay->Send(local_player_id_, static_cast<DPID>(target),
-                                reliable != 0, packet,
+                                (flags & 1) != 0, packet,
                                 static_cast<DWORD>(allocation_size)) != DP_OK) {
             free(packet);
             return 0;
@@ -1028,6 +1030,8 @@ int Net::send_group_flagged(void *data, int size, long target,
     }
 done:
     free(packet);
+    }
+finish:
     return static_cast<int>(field_E4_);
 }
 
@@ -1462,7 +1466,7 @@ int Net::create_group(char *group_name) {
 // at +8; field_C_ is the per-peer retry tick at +0xC. Existing exact 0x58
 // stride/16-slot extent is independently established by Net and player APIs.
 // ORIGINAL: 0x0062EEA0 ?send_group@Net@@QAEHPAXHJH@Z 0x0062EEA0-0x0062F38C
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned62EEA0..62F38C; retained git:06163ca7db005f89326ea0681a26af574b6ae2c3:src/unrecovered/0062eea0.cpp; genuine NetPlayer/FIFO/DirectPlay owners.", "Native62F038..62F044 selects the first nonzero player DPID, not the group callback acknowledgement flag. Native62F06E..62F080 writes only that pending/retry slot;62F14A..62F199 later reads all sixteen entries. Native62F0A2..62F0B9 initializes every base-time slot from one tick."], "reason": "Recover the original group send and retry operation through genuine Net state and the SDK, preserving its untouched pending/retry stack entries and separate full base-time initialization. The deterministic all-peer repair remains in Git history for the later improvement milestone."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned62EEA0..62F38C; retained git:06163ca7db005f89326ea0681a26af574b6ae2c3:src/unrecovered/0062eea0.cpp; genuine NetPlayer/FIFO/DirectPlay owners.", "Native62EFDD loads ESI with players_+0x15C before the clear loop and 62F036..62F044 scans [ESI] (NetPlayer +8), so the search selects the first player the group callback marked, not the first nonzero DPID. Native62F06E..62F080 writes only that pending/retry slot;62F14A..62F199 later reads all sixteen entries. Native62F0A2..62F0B9 initializes every base-time slot from one tick."], "reason": "Recover the original group send and retry operation through genuine Net state and the SDK, preserving its untouched pending/retry stack entries and separate full base-time initialization. The deterministic all-peer repair remains in Git history for the later improvement milestone."}
 #if defined(_MSC_VER) && _MSC_VER == 1200
 #pragma function(memcpy)
 #endif
@@ -1490,10 +1494,11 @@ int Net::send_group(void *data, int size, long group_id, int flags) {
             queue_10c_.add(data, static_cast<unsigned long>(size),
                            local_player_id_, group_id, 0xFFFFFFFFUL);
             if (static_cast<int>(field_6DC_) < 2)
-                return static_cast<int>(field_E4_);
+                goto finish;
         }
     }
 
+    {
     const int allocation_size = size + 0x0C;
     unsigned char *const packet =
         static_cast<unsigned char *>(mem_get(allocation_size));
@@ -1501,15 +1506,14 @@ int Net::send_group(void *data, int size, long group_id, int flags) {
 
     NetPacketEnvelope *const header =
         reinterpret_cast<NetPacketEnvelope *>(packet);
-    const int reliable = flags & 1;
-    if (reliable != 0) {
+    if ((flags & 1) != 0) {
         header->sequence_4_ = ++field_E4_;
     } else {
         header->sequence_4_ = 0;
     }
     if (data != 0) memcpy(packet + 8, data, static_cast<size_t>(size));
 
-    if (reliable != 0 && (voice_flags_D8_ & 0x10000000U) == 0) {
+    if ((flags & 1) != 0 && (voice_flags_D8_ & 0x10000000U) == 0) {
         // Unconfirmed reliable send. The callback marks only group members
         // whose NetPlayer flags include bit 1. NetPlayerTable is shared
         // callback context, published exactly as native.
@@ -1526,13 +1530,13 @@ int Net::send_group(void *data, int size, long group_id, int flags) {
             net_group_player_callback, 0, 0);
 
         DWORD wait_timeout = 0xFFFFFFFFU;
+        // The image scans NetPlayer +8 (the flag the group callback sets),
+        // starting from the players_+0x15C pointer kept from the clear loop.
         for (index = 0; index < 16; ++index) {
-            if (players_[index].field_0_ != 0) break;
+            if (players_[index].field_8_ != 0) goto found;
         }
-        if (index == 16) {
-            free(packet);
-            return static_cast<int>(field_E4_);
-        }
+        goto done;
+    found:
 
         // Original 0x62F06E..0x62F080 initializes only the selected row,
         // although the retry loop later reads every pending/retry slot.
@@ -1636,7 +1640,7 @@ int Net::send_group(void *data, int size, long group_id, int flags) {
             return 0;
         }
         if (NetDirectPlay->Send(local_player_id_, static_cast<DPID>(group_id),
-                                reliable != 0, packet,
+                                (flags & 1) != 0, packet,
                                 static_cast<DWORD>(allocation_size)) != DP_OK) {
             free(packet);
             return 0;
@@ -1644,6 +1648,8 @@ int Net::send_group(void *data, int size, long group_id, int flags) {
     }
 done:
     free(packet);
+    }
+finish:
     return static_cast<int>(field_E4_);
 }
 #if defined(_MSC_VER) && _MSC_VER == 1200
@@ -3425,7 +3431,7 @@ int __cdecl internal_receive(NetThreadInfo *thread_info) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // Historical seed observations (not fresh measurements or acceptance):
 // TRIED: EnterCriticalSection called only once per iteration - calling through `[dword ptr g_0066917c]` directly (not cached in a local like leaveCS/wait, which are each called twice) got the prologue's push/mov schedule to within 1 byte of the original.
-// ORIGINAL: 0x00632740 sub_632740 0x00632740-0x006327D2
+// ORIGINAL: 0x00632740 sub_632740 0x00632740-0x006327D2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00632740.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
 // symbol    ?net_receive_thread@@YAXPAX@Z
 static void __cdecl net_receive_thread(void *argument) {
@@ -3434,24 +3440,16 @@ static void __cdecl net_receive_thread(void *argument) {
     HANDLE events[2];
     events[0] = thread_info->events_[2];
     events[1] = thread_info->events_[3];
-    DWORD wait_result = WaitForMultipleObjects(2, events, FALSE, INFINITE);
-    if (wait_result == WAIT_OBJECT_0) {
-        do {
-            EnterCriticalSection(&thread_info->receive_lock_);
-            if (thread_info->direct_play_ == 0) {
-                LeaveCriticalSection(&thread_info->receive_lock_);
-                goto end_thread;
-            }
-            while (internal_receive(thread_info) != 0) {
-            }
+    while (WaitForMultipleObjects(2, events, FALSE, INFINITE) == WAIT_OBJECT_0) {
+        EnterCriticalSection(&thread_info->receive_lock_);
+        if (thread_info->direct_play_ == 0) {
             LeaveCriticalSection(&thread_info->receive_lock_);
-            wait_result =
-                WaitForMultipleObjects(2, events, FALSE, INFINITE);
-        } while (wait_result == WAIT_OBJECT_0);
-        _endthread();
-        return;
+            break;
+        }
+        while (internal_receive(thread_info) != 0) {
+        }
+        LeaveCriticalSection(&thread_info->receive_lock_);
     }
-end_thread:
     _endthread();
 }
 
@@ -4227,10 +4225,11 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
             queue_10c_.add(data, static_cast<unsigned long>(data_size),
                            local_player_id_, target, 0xFFFFFFFFUL);
             if (static_cast<int>(field_6DC_) < 2)
-                return static_cast<int>(field_E4_);
+                goto finish;
         }
     }
 
+    {
     const int allocation_size = data_size + 0x0C;
     unsigned char *const packet =
         static_cast<unsigned char *>(mem_get(allocation_size));
@@ -4459,6 +4458,8 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
     }
     done:
     free(packet);
+    }
+finish:
     return static_cast<int>(field_E4_);
 }
 #if defined(_MSC_VER) && _MSC_VER == 1200
@@ -4501,10 +4502,11 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
             queue_10c_.add(data, static_cast<unsigned long>(data_size),
                            local_player_id_, target, 0xFFFFFFFFUL);
             if (static_cast<int>(field_6DC_) < 2)
-                return static_cast<int>(field_E4_);
+                goto finish;
         }
     }
 
+    {
     const int allocation_size = data_size + 0x0C;
     unsigned char *const packet =
         static_cast<unsigned char *>(mem_get(allocation_size));
@@ -4748,6 +4750,8 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
     }
     done:
     free(packet);
+    }
+finish:
     return static_cast<int>(field_E4_);
 }
 #if defined(_MSC_VER) && _MSC_VER == 1200
