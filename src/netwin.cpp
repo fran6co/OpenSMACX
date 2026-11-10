@@ -1632,8 +1632,8 @@ void NetWin::draw_factions() {
             continue;
         }
 
-        RECT field = setup_rects_[13 + index];
         int mode = NetWinLobbyRows.rows_[index + 1].faction_or_color_;
+        RECT field = setup_rects_[13 + index];
         if (index + 1 == NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id())
             || (NetDaemonNet.local_player_id() == NetDaemonNet.host_player_id_
                 && NetWinLobbyRows.rows_[index + 1].prefix_ == -1)) {
@@ -1651,21 +1651,25 @@ void NetWin::draw_factions() {
         Buffer::set_clip(&field);
 
         StringTemp[0] = 0;
-        int names_differ;
+        // Native 47FFF3/480043: both name branches skip or join one shared
+        // ": <noun>" append.
         if (mode != -1) {
             strcat(StringTemp, faction_records_[mode].noun_faction_);
-            names_differ = strcmp(faction_records_[mode].noun_faction_,
-                                  NetWinLobbyRows.rows_[index + 1].noun_faction_);
+            if (strcmp(faction_records_[mode].noun_faction_,
+                       NetWinLobbyRows.rows_[index + 1].noun_faction_) == 0) {
+                goto named;
+            }
         } else {
             strcat(StringTemp, label_get(0xFE4 / 4));
-            names_differ = strcmp(label_get(0xFE4 / 4),
-                                  NetWinLobbyRows.rows_[index + 1].noun_faction_);
+            if (strcmp(label_get(0xFE4 / 4),
+                       NetWinLobbyRows.rows_[index + 1].noun_faction_) == 0) {
+                goto named;
+            }
         }
-        if (names_differ != 0) {
-            strcat(StringTemp, ": ");
-            strcat(StringTemp, " ");
-            strcat(StringTemp, NetWinLobbyRows.rows_[index + 1].noun_faction_);
-        }
+        strcat(StringTemp, ": ");
+        strcat(StringTemp, " ");
+        strcat(StringTemp, NetWinLobbyRows.rows_[index + 1].noun_faction_);
+    named:
         if (StringTemp != nullptr) {
             Buffer::write_l(StringTemp, &field, strlen(StringTemp));
         }
@@ -2683,7 +2687,7 @@ int NetWin::exec() {
 Purpose: The player-count picker: entries numbered max(2, lobby count) to 7,
          the entry itself the answer; the ninth slot's player byte stores
          count - 1.
-// ORIGINAL: 0x0047E010 ?pick_num_players@NetWin@@QAEXXZ 0x0047E010-0x0047E33B;0x00656D9D-0x00656E75 FILE
+// ORIGINAL: 0x0047E010 ?pick_num_players@NetWin@@QAEXXZ 0x0047E010-0x0047E33B;0x00656D9D-0x00656E75 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned47E15D/47E16A/47E170: copy six option dwords to packet+10, write opcode word2F02, send28. Shared pick_send_state preserves these writes; header+2..F remains unspecified."], "reason": "Recover the original options packet through genuine NetWin state and typed packet storage."}
 // size      1027 bytes
 // prototype void (__thiscall ?pick_num_players@NetWin@@QAEXXZ)(NetWin* this)
@@ -2710,9 +2714,10 @@ void NetWin::pick_num_players() {
         strcat(StringTemp, number);
         dialogs.item(StringTemp, count);
     }
-    int x;
-    int y;
-    int answer = pick_answer_at(*this, pop_menu, &x, &y);
+    // WORKAROUND(type): native 47E0E0..47E0FE keeps x at EBP-10 and y at
+    // EBP-14; separate x/y locals land swapped next to the number buffer.
+    int xy[2];
+    int answer = pick_answer_at(*this, pop_menu, &xy[1], &xy[0]);
     if (answer >= 0) {
         // Native 47E11A..47E132 retains the pre-modal lower bound.
         NetWinSessionOptions.fields_.player_count_ =
