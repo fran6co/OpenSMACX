@@ -432,10 +432,11 @@ def test_changed_original_binding_and_nonroot_subject_are_refused():
                                  image, bindings, targets)
 
 
-def test_candidate_section_cannot_attach_unmodeled_data_relocation():
+def test_candidate_relocation_over_selector_bytes_is_a_measured_mismatch():
     obj, subject, span, image, bindings, targets = fixture(extra_relocation=True)
-    with pytest.raises(ValueError, match="selector bytes"):
-        compare_associated_code(obj, subject, span, image, bindings, targets)
+    report = compare_associated_code(obj, subject, span, image, bindings, targets)
+    assert report["result"] is Result.FAIL and report["candidate_anchors"] is Result.UNKNOWN
+    assert [row["kind"] for row in report["unsupported_candidate_anchors"]] == ["switch_selector"]
 
 
 @pytest.mark.parametrize("offset,value", [(3, 0x7F), (1, 0xFA)])
@@ -626,8 +627,10 @@ def test_three_byte_lea_does_not_waive_original_or_candidate_relocations(monkeyp
     obj, subject, span, image, bindings, targets = fixture(original_gap_relocation=True)
     with pytest.raises(ValueError, match="cuts through a relocation"):
         compare_associated_code(obj, subject, span, image, bindings, targets)
+    # A candidate relocation in the gap is never waived; here it also
+    # overlaps the first table cell, which the bound comparator refuses.
     obj, subject, span, image, bindings, targets = fixture(candidate_gap_relocation=True)
-    with pytest.raises(ValueError, match="candidate COFF relocation"):
+    with pytest.raises(ValueError, match="out-of-bound relocation"):
         compare_associated_code(obj, subject, span, image, bindings, targets)
 
 

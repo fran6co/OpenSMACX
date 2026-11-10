@@ -702,6 +702,7 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
     # included in the ordinary strict comparison and is never silently skipped.
     boundaries = [span.end, *(point for data_span in ordered for point in (data_span.start, data_span.end))]
     boundaries = sorted(set(boundaries))
+    gap_anchor_errors = []
     for left, right in zip(boundaries, boundaries[1:]):
         in_data = any(data_span.start <= left and right <= data_span.end for data_span in ordered)
         if in_data:
@@ -765,7 +766,11 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
             raise ValueError("alignment gap contains an original HIGHLOW relocation")
         if any(relocation.offset < candidate_offset + len(candidate_gap)
                and candidate_offset < relocation.offset + 4 for relocation in relocations):
-            raise ValueError("alignment gap contains a candidate COFF relocation")
+            # The original gap is proved fill above; a candidate relocation
+            # there means the compiled layout differs, a measured mismatch.
+            gap_anchor_errors.append({
+                "kind": "alignment_gap", "evidence": gap.start, "candidate_offset": candidate_offset,
+                "reason": "alignment gap contains a candidate COFF relocation"})
 
     # Independently derive root-section symbol placement. A caller-supplied
     # local target may confirm this placement but cannot override it.
@@ -829,6 +834,7 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
             return report(boundary_probe, candidate_layout_unproven=True)
 
     candidate_anchor_errors = [fpo_extent_error] if fpo_extent_error is not None else []
+    candidate_anchor_errors.extend(gap_anchor_errors)
     for binding, original_instruction, original_operand in normalized:
         # A missing/changed candidate instruction or operand is a body
         # mismatch. When it still has the original shape, verify the actual
@@ -881,7 +887,11 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
             start = binding.span.start - section_base
             end = binding.span.end - section_base
             if any(offset < end and start < offset + 4 for offset, _, _ in section_relocations):
-                raise ValueError("switch selector bytes must have no candidate COFF relocations")
+                # Original selector bytes are relocation-free (checked above);
+                # candidate code or data over them is a shifted layout.
+                candidate_anchor_errors.append({
+                    "kind": "switch_selector", "evidence": binding.span.start, "candidate_offset": start,
+                    "reason": "switch selector bytes must have no candidate COFF relocations"})
             if candidate[start:end] != data:
                 # Preserve a measured data mismatch as FAIL through the normal
                 # comparator below; this branch only ensures the selector is
