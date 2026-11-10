@@ -62,6 +62,7 @@
 #include "spritebox.h"
 #include "net_class.h"
 #include "mapwin.h"
+#include "rectangle_operations.h"
 // Private pure branches shared with host controls; every helper has internal
 // linkage in each translation unit that includes this implementation fragment.
 // Returns 1 for a navigation move, 0 for a handled arrow at its boundary or
@@ -625,6 +626,45 @@ void ListBox::on_scrolling(int a, int b) {
         soft_update();
     }
 }
+// The current payload, or null when the list head is null.
+static inline StringStructPayload *listbox_current_payload(StringStruct *list) {
+    return list->head_ != 0 ? list->current_->string_payload() : 0;
+}
+
+// StringStruct::seek_pos in the single-tail form the image's ListBox walks use (one
+// current_position_ store after both arms), as dialog.cpp's dialog_seek_pos.
+static inline int listbox_seek_pos(StringStruct *list, int a1) {
+    AbsFnT abs_fn = reinterpret_cast<AbsFnT>(&abs);
+    if (a1 > list->entry_count_ - 1) {
+        return 0;
+    }
+    list->current_ = list->head_;
+    if (a1 < 0) {
+        if (abs_fn(a1) > list->entry_count_) {
+            return 0;
+        }
+        int i = abs_fn(a1);
+        while (i > 0) {
+            --i;
+            list->current_ = list->current_->previous;
+        }
+        a1 += list->entry_count_;
+    } else {
+        int i = a1;
+        while (i > 0) {
+            --i;
+            list->current_ = list->current_->next;
+        }
+    }
+    list->current_position_ = a1;
+    return 1;
+}
+
+// The current entry's text, or null when the list head is null.
+static inline char *listbox_current_text(StringStruct *list) {
+    return list->head_ != 0 ? list->current_->string_payload()->text : 0;
+}
+
 /*
 Purpose: Draw one list row: the highlighted/normal text-draw tails over the
          style-descriptor fields, reached by on_scrolling for the row the
@@ -655,93 +695,47 @@ void ListBox::draw_item(int index) {
     // quotient/remainder offsets advance left/right and top/bottom respectively
     // (0x0060B72D..0x0060B775).
     RECT row;
-    row.left = static_cast<int>(Dialog::field_40_);
-    row.top = static_cast<int>(Dialog::field_38_);
-    row.right = static_cast<int>(Dialog::field_64_)
-        - static_cast<int>(Dialog::field_40_);
-    row.bottom = static_cast<int>(Dialog::field_38_)
-        + static_cast<int>(Dialog::field_68_);
+    set_rectangle_dimensions(&row, 0, 0, Dialog::field_64_, Dialog::field_68_);
+    {
+        const int dx = Dialog::field_40_, dy = Dialog::field_38_;
+        row.left += dx; row.top += dy; row.right += dx; row.bottom += dy;
+    }
+    row.right -= Dialog::field_40_ * 2;
 
     if (Dialog::field_4C_ == 1) {
-        int scroll = static_cast<int>(field_18_) - 1;
-        if (scroll <= Dialog::item_list_.entry_count_ - 1) {
-            Dialog::item_list_.current_ = Dialog::item_list_.head_;
-            if (scroll < 0) {
-                if (abs(scroll) > Dialog::item_list_.entry_count_) {
-                    goto after_scroll_position;
-                }
-                int steps = abs(scroll);
-                while (steps > 0) {
-                    --steps;
-                    Dialog::item_list_.current_ = Dialog::item_list_.current_->previous;
-                }
-                scroll += Dialog::item_list_.entry_count_;
-            } else {
-                int steps = scroll;
-                while (steps > 0) {
-                    --steps;
-                    Dialog::item_list_.current_ = Dialog::item_list_.current_->next;
-                }
-            }
-            Dialog::item_list_.current_position_ = scroll;
-        }
-after_scroll_position:
-        int count = index - static_cast<int>(field_18_);
+        listbox_seek_pos(&this->Dialog::item_list_, static_cast<int>(field_18_) - 1);
         int occupied = 0;
-        while (count > 0) {
-            StringStructEntry *const list_head = Dialog::item_list_.head_;
-            if (list_head != 0) {
-                Dialog::item_list_.current_ = Dialog::item_list_.current_->next;
-                int position = Dialog::item_list_.current_position_ + 1;
-                Dialog::item_list_.current_position_ = position;
-                if (position == Dialog::item_list_.entry_count_) {
-                    Dialog::item_list_.current_position_ = 0;
-                }
+        for (int count = index - static_cast<int>(field_18_); count > 0; --count) {
+            StringList *const list = &this->Dialog::item_list_;
+            StringStructEntry *const head = list->head_;
+            if (head != 0) {
+                list->current_ = list->current_->next;
+                if (++list->current_position_ == list->entry_count_)
+                    list->current_position_ = 0;
             }
-            StringStructEntry *const entry = Dialog::item_list_.current_;
-            int span = 0;
-            if (entry != 0) {
-                if (list_head != 0) {
-                    span = static_cast<int>(entry->string_payload()->field_C_);
-                } else {
-                    // The pinned malformed-state path loads the word at
-                    // null+0x0c; retain the faulting volatile read rather
-                    // than turn an inconsistent stale cursor into span 0.
-                    volatile StringStructEntry *const null_entry = 0;
-                    span = static_cast<int>(reinterpret_cast<uintptr_t>(
-                        null_entry->next));
-                }
-            }
-            occupied += span;
-            --count;
+            occupied += list->current_ != 0
+                ? static_cast<int>((head != 0 ? list->current_->string_payload() : 0)->field_C_)
+                : 0;
         }
-        row.top += (static_cast<int>(Dialog::field_68_)
-                    + static_cast<int>(Dialog::field_44_)) * occupied;
-
-        StringStructEntry *const list_head = Dialog::item_list_.head_;
-        if (list_head != 0) {
-            StringStructEntry *const next = Dialog::item_list_.current_->next;
-            int position = Dialog::item_list_.current_position_ + 1;
-            Dialog::item_list_.current_position_ = position;
-            Dialog::item_list_.current_ = next;
-            if (position == Dialog::item_list_.entry_count_) {
-                Dialog::item_list_.current_position_ = 0;
-            }
+        const int offset = (static_cast<int>(Dialog::field_68_)
+                            + static_cast<int>(Dialog::field_44_)) * occupied;
+        row.top += offset;
+        row.bottom += offset;
+        StringList *const list = &this->Dialog::item_list_;
+        StringStructEntry *const head = list->head_;
+        if (head != 0) {
+            StringStructEntry *const next = list->current_->next;
+            int position = list->current_position_ + 1;
+            list->current_position_ = position;
+            list->current_ = next;
+            if (position == list->entry_count_)
+                list->current_position_ = 0;
         }
-        StringStructEntry *const entry = Dialog::item_list_.current_;
-        int span = 0;
-        if (entry != 0) {
-            if (list_head != 0) {
-                span = static_cast<int>(entry->string_payload()->field_C_);
-            } else {
-                volatile StringStructEntry *const null_entry = 0;
-                span = static_cast<int>(reinterpret_cast<uintptr_t>(
-                    null_entry->next));
-            }
-        }
-        const int gap = static_cast<int>(Dialog::field_44_);
-        row.bottom = (static_cast<int>(Dialog::field_68_) + gap) * span
-            - gap + row.top;
+        const int span = list->current_ != 0
+            ? static_cast<int>((head != 0 ? list->current_->string_payload() : 0)->field_C_)
+            : 0;
+        row.bottom = (static_cast<int>(Dialog::field_68_) + static_cast<int>(Dialog::field_44_)) * span
+            - static_cast<int>(Dialog::field_44_) + row.top;
     } else {
         const int relative = index - static_cast<int>(field_18_);
         const int columns = Dialog::row_count_;
@@ -765,14 +759,8 @@ after_scroll_position:
     if (field_4_ == 0) {
         selected = Dialog::selected_position_ == index;
     } else {
-        Dialog::item_list_.current_ = Dialog::item_list_.head_;
-        int steps = index;
-        while (steps > 0) {
-            --steps;
-            Dialog::item_list_.current_ = Dialog::item_list_.current_->next;
-        }
-        Dialog::item_list_.current_position_ = index;
-        selected = static_cast<int>(Dialog::item_list_.current_->string_payload()->field_8_);
+        listbox_seek_pos(&this->Dialog::item_list_, index);
+        selected = static_cast<int>(listbox_current_payload(&this->Dialog::item_list_)->field_8_);
     }
 
     Buffer::set_clip(&row);
@@ -862,15 +850,7 @@ after_scroll_position:
 
     // The original rechecks the live count after frame callbacks. If a
     // callback removed this row, it leaves the current cursor untouched.
-    if (index <= Dialog::item_list_.entry_count_ - 1) {
-        Dialog::item_list_.current_ = Dialog::item_list_.head_;
-        int steps = index;
-        while (steps > 0) {
-            --steps;
-            Dialog::item_list_.current_ = Dialog::item_list_.current_->next;
-        }
-        Dialog::item_list_.current_position_ = index;
-    }
+    listbox_seek_pos(&this->Dialog::item_list_, index);
 
     if (draw_callback_ != 0) {
         CurrentListBoxDraw = this;
@@ -897,44 +877,34 @@ after_scroll_position:
             + static_cast<int>(field_2C_) + 1;
         Buffer::set_clip(&row);
 
-        char *text = Dialog::item_list_.head_ == 0
-            ? 0 : Dialog::item_list_.current_->string_payload()->text;
-        char *separator = strchr(text, '|');
+        char *separator = strchr(listbox_current_text(&this->Dialog::item_list_), '|');
         if (separator == 0) {
-            if (Dialog::item_list_.head_ == 0) {
-                text = 0;
-            } else if (static_cast<int32_t>(Dialog::item_list_.current_->string_payload()->field_C_) > 1) {
-                Buffer::wrap(Dialog::item_list_.current_->string_payload()->text, &row);
-                goto unselected_text_tail;
+            if ((Dialog::item_list_.head_ != 0 ? static_cast<int32_t>(Dialog::item_list_.current_->string_payload()->field_C_) : 0) > 1) {
+                Buffer::wrap((Dialog::item_list_.head_ != 0 ? Dialog::item_list_.current_->string_payload()->text : 0), &row);
             } else {
-                text = Dialog::item_list_.current_->string_payload()->text;
-            }
-            if (text != 0) {
-                Buffer::write_l(text, &row, static_cast<int>(strlen(text)));
-            }
-            goto unselected_text_tail;
-        }
-
-        *separator = 0;
-        if (Dialog::item_list_.head_ != 0) {
-            if (static_cast<int32_t>(Dialog::item_list_.current_->string_payload()->field_C_) > 1) {
-                Buffer::wrap(Dialog::item_list_.current_->string_payload()->text, &row);
-            } else {
-                char *left_text = Dialog::item_list_.current_->string_payload()->text;
-                if (left_text != 0) {
-                    Buffer::write_l(left_text, &row,
-                                    static_cast<int>(strlen(left_text)));
+                char *text = (Dialog::item_list_.head_ != 0 ? Dialog::item_list_.current_->string_payload()->text : 0);
+                if (text != 0) {
+                    Buffer::write_l(text, &row, static_cast<int>(strlen(text)));
                 }
             }
-        }
-        *separator = '|';
-        ++separator;
-        if (separator != 0) {
-            Buffer::write_right_l(separator, &row,
-                                  static_cast<int>(strlen(separator)));
+        } else {
+            *separator = 0;
+            if ((Dialog::item_list_.head_ != 0 ? static_cast<int32_t>(Dialog::item_list_.current_->string_payload()->field_C_) : 0) > 1) {
+                Buffer::wrap((Dialog::item_list_.head_ != 0 ? Dialog::item_list_.current_->string_payload()->text : 0), &row);
+            } else {
+                char *text = (Dialog::item_list_.head_ != 0 ? Dialog::item_list_.current_->string_payload()->text : 0);
+                if (text != 0) {
+                    Buffer::write_l(text, &row, static_cast<int>(strlen(text)));
+                }
+            }
+            *separator = '|';
+            ++separator;
+            if (separator != 0) {
+                Buffer::write_right_l(separator, &row,
+                                      static_cast<int>(strlen(separator)));
+            }
         }
 
-    unselected_text_tail:
         // Both original text arms restore the inset before the final clip.
         row.left -= static_cast<int>(field_2C_) + 1;
         row.right += static_cast<int>(field_2C_) + 1;
@@ -955,44 +925,34 @@ after_scroll_position:
             + static_cast<int>(field_2C_) + 1;
         Buffer::set_clip(&row);
 
-        char *text = Dialog::item_list_.head_ == 0
-            ? 0 : Dialog::item_list_.current_->string_payload()->text;
-        char *separator = strchr(text, '|');
+        char *separator = strchr(listbox_current_text(&this->Dialog::item_list_), '|');
         if (separator == 0) {
-            if (Dialog::item_list_.head_ == 0) {
-                text = 0;
-            } else if (static_cast<int32_t>(Dialog::item_list_.current_->string_payload()->field_C_) > 1) {
-                Buffer::wrap(Dialog::item_list_.current_->string_payload()->text, &row);
-                goto selected_text_tail;
+            if ((Dialog::item_list_.head_ != 0 ? static_cast<int32_t>(Dialog::item_list_.current_->string_payload()->field_C_) : 0) > 1) {
+                Buffer::wrap((Dialog::item_list_.head_ != 0 ? Dialog::item_list_.current_->string_payload()->text : 0), &row);
             } else {
-                text = Dialog::item_list_.current_->string_payload()->text;
-            }
-            if (text != 0) {
-                Buffer::write_l(text, &row, static_cast<int>(strlen(text)));
-            }
-            goto selected_text_tail;
-        }
-
-        *separator = 0;
-        if (Dialog::item_list_.head_ != 0) {
-            if (static_cast<int32_t>(Dialog::item_list_.current_->string_payload()->field_C_) > 1) {
-                Buffer::wrap(Dialog::item_list_.current_->string_payload()->text, &row);
-            } else {
-                char *left_text = Dialog::item_list_.current_->string_payload()->text;
-                if (left_text != 0) {
-                    Buffer::write_l(left_text, &row,
-                                    static_cast<int>(strlen(left_text)));
+                char *text = (Dialog::item_list_.head_ != 0 ? Dialog::item_list_.current_->string_payload()->text : 0);
+                if (text != 0) {
+                    Buffer::write_l(text, &row, static_cast<int>(strlen(text)));
                 }
             }
-        }
-        *separator = '|';
-        ++separator;
-        if (separator != 0) {
-            Buffer::write_right_l(separator, &row,
-                                  static_cast<int>(strlen(separator)));
+        } else {
+            *separator = 0;
+            if ((Dialog::item_list_.head_ != 0 ? static_cast<int32_t>(Dialog::item_list_.current_->string_payload()->field_C_) : 0) > 1) {
+                Buffer::wrap((Dialog::item_list_.head_ != 0 ? Dialog::item_list_.current_->string_payload()->text : 0), &row);
+            } else {
+                char *text = (Dialog::item_list_.head_ != 0 ? Dialog::item_list_.current_->string_payload()->text : 0);
+                if (text != 0) {
+                    Buffer::write_l(text, &row, static_cast<int>(strlen(text)));
+                }
+            }
+            *separator = '|';
+            ++separator;
+            if (separator != 0) {
+                Buffer::write_right_l(separator, &row,
+                                      static_cast<int>(strlen(separator)));
+            }
         }
 
-    selected_text_tail:
         // Both original text arms restore the inset before the final clip.
         row.left -= static_cast<int>(field_2C_) + 1;
         row.right += static_cast<int>(field_2C_) + 1;
@@ -1025,7 +985,7 @@ Purpose: Recompute the list's layout metrics from the Dialog entry list: the
          widest entry text sets the width, the entry height and column count
          follow, and the two overflow bits in field_C_ report a column or row
          shortfall the caller reacts to.
-// ORIGINAL: 0x0060A1E0 ?calculate_dimensions@ListBox@@QAEHXZ 0x0060A1E0-0x0060A66B FILE
+// ORIGINAL: 0x0060A1E0 ?calculate_dimensions@ListBox@@QAEHXZ 0x0060A1E0-0x0060A66B FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/listbox.h", "source:src/dialog.h", "source:src/stringstruct.h", "source:src/scroll.cpp:ScrollDefaultThickness", "Pinned 0x0060A2A6..0x0060A2AD loads Dialog fonts at +0x78/+0x74/+0x70; 0x0060A650..0x0060A659 divides the signed shared thickness by Dialog +0x54."], "reason": "Recover layout through real ListBox virtual bases, Buffer, Dialog metrics and circular StringList storage. Correct the old font-offset transcription and use the source-owned shared thickness; preserve dword wraparound, signed comparisons/division, count reloads and the malformed absolute address-4 read."}
 // TRIED: direct named-member access on dialog_/virtual_base_ instead of the
 //        original's dynamic vbtable-index lookup (vtable[8]=dialog_
@@ -1181,13 +1141,13 @@ int ListBox::calculate_dimensions() {
             if ((iFlags_ & 0x40) == 0)
                 Dialog::field_60_ += ScrollDefaultThickness;
             field_C_ |= 1;
-            return 0;
+        } else {
+            if ((iFlags_ & 0x40) == 0)
+                Dialog::field_5C_ += ScrollDefaultThickness;
+            if ((Dialog::field_20_ & 2) != 0)
+                Dialog::field_64_ -= ScrollDefaultThickness / Dialog::column_count_;
+            field_C_ |= 2;
         }
-        if ((iFlags_ & 0x40) == 0)
-            Dialog::field_5C_ += ScrollDefaultThickness;
-        if ((Dialog::field_20_ & 2) != 0)
-            Dialog::field_64_ -= ScrollDefaultThickness / Dialog::column_count_;
-        field_C_ |= 2;
     }
     return 0;
 }
@@ -1273,7 +1233,7 @@ int ListBox::attach(GraphicWin *a1, int a2, int a3, int a4) {
         field_18_ = 0;
     } else {
         while (static_cast<int32_t>(Dialog::selected_position_)
-               >= static_cast<int32_t>(field_18_ + field_1C_)) {
+               >= static_cast<int32_t>(field_1C_ + field_18_)) {
             field_18_ += static_cast<uint32_t>(
                 Dialog::column_count_ > 1 ? Dialog::row_count_ : 1);
         }
@@ -1491,39 +1451,6 @@ static int listbox_key_dispatch_arm(int key) {
     return table_index < 4 ? table_index : 4;
 }
 
-// The current payload, or null when the list head is null.
-static inline StringStructPayload *listbox_current_payload(StringStruct *list) {
-    return list->head_ != 0 ? list->current_->string_payload() : 0;
-}
-
-// StringStruct::seek_pos in the single-tail form the image's ListBox walks use (one
-// current_position_ store after both arms), as dialog.cpp's dialog_seek_pos.
-static inline int listbox_seek_pos(StringStruct *list, int a1) {
-    AbsFnT abs_fn = reinterpret_cast<AbsFnT>(&abs);
-    if (a1 > list->entry_count_ - 1) {
-        return 0;
-    }
-    list->current_ = list->head_;
-    if (a1 < 0) {
-        if (abs_fn(a1) > list->entry_count_) {
-            return 0;
-        }
-        int i = abs_fn(a1);
-        while (i > 0) {
-            --i;
-            list->current_ = list->current_->previous;
-        }
-        a1 += list->entry_count_;
-    } else {
-        int i = a1;
-        while (i > 0) {
-            --i;
-            list->current_ = list->current_->next;
-        }
-    }
-    list->current_position_ = a1;
-    return 1;
-}
 
 // Instruction/caller provenance retained in Git history of the deleted seed
 // src/recovered/units/0060aa60.cpp (span 0x0060AA60..0x0060AF84): publish the
@@ -1534,7 +1461,7 @@ static inline int listbox_seek_pos(StringStruct *list, int a1) {
 // the tail before row zero; without Shift, only the clicked row changes,
 // and Control toggles that row off if it was already selected.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0060AA60 ?on_left_down@ListBox@@QAEXHH@Z 0x0060AA60-0x0060AF84
+// ORIGINAL: 0x0060AA60 ?on_left_down@ListBox@@QAEXHH@Z 0x0060AA60-0x0060AF84 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060aa60.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
 // symbol    ?on_left_down@ListBox@@UAEXHH@Z
 void ListBox::on_left_down(int x, int y) {
@@ -1590,13 +1517,28 @@ void ListBox::on_left_down(int x, int y) {
             } else {
                 listbox_seek_pos(&this->Dialog::item_list_, clicked - 1);
                 for (int index = clicked; index <= Dialog::selected_position_; ++index) {
-                    Dialog::item_list_.next_entry()->field_8_ = 1;
+                    // The image's backward walk has no count temporary (it
+                    // compares entry_count_ from memory and keeps 0 in a
+                    // register), so next_entry() is open-coded here.
+                    StringList *const list = &this->Dialog::item_list_;
+                    StringStructPayload *p;
+                    if (list->head_ == 0) {
+                        p = 0;
+                    } else {
+                        list->current_ = list->current_->next;
+                        if (++list->current_position_ == list->entry_count_)
+                            list->current_position_ = 0;
+                        p = list->current_->string_payload();
+                    }
+                    p->field_8_ = 1;
                 }
             }
         } else {
             listbox_seek_pos(&this->Dialog::item_list_, clicked);
             StringList *const list = &this->Dialog::item_list_;
-            if (listbox_current_payload(list)->field_8_ != 0) {
+            // The test reads through the member (not `list`), so the image
+            // reloads head_ for the stores instead of keeping it live.
+            if (listbox_current_payload(&this->Dialog::item_list_)->field_8_ != 0) {
                 listbox_current_payload(list)->field_8_ = 0;
             } else {
                 listbox_current_payload(list)->field_8_ = 1;
@@ -1652,15 +1594,15 @@ void ListBox::on_mouse_move(int x, int y) {
         --position;
     }
 
-    position += static_cast<int>(field_18_);
-    if (position >= Dialog::item_list_.entry_count_) return;
-    if (position == Dialog::selected_position_) {
+    const int hovered = static_cast<int>(field_18_) + position;
+    if (hovered >= Dialog::item_list_.entry_count_) return;
+    if (hovered == Dialog::selected_position_) {
         if (static_cast<int>(Dialog::field_F0_) == -1) return;
         Dialog::field_F0_ = static_cast<uint32_t>(-1);
         ListBoxDrawOffset = previous_hover - static_cast<int>(field_18_);
         draw_item(previous_hover);
     } else {
-        Dialog::field_F0_ = static_cast<uint32_t>(position);
+        Dialog::field_F0_ = static_cast<uint32_t>(hovered);
         if (static_cast<int>(Dialog::field_F0_) == previous_hover) return;
         if (previous_hover != -1) {
             ListBoxDrawOffset = previous_hover - static_cast<int>(field_18_);

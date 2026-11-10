@@ -40,6 +40,7 @@ Status: Complete
 // symbol    ??_GMainInterface@@UAEPAXI@Z
 // kind      game
 #include "stdafx.h"
+#include "rectangle_operations.h"
 #include "interface_fonts.h"
 #include "interface_palette.h"
 #include "maininterface.h"
@@ -2842,8 +2843,9 @@ void __cdecl slide_show(GraphicWin *window, int mode) {
         }
 
         Win::screen_buffer_.set_clip(&area);
-        RECT animation_strip = { area.left, 0, area.right, 0x39 };
-        window->client_to_screen(&animation_strip);
+        RECT animation_strip;
+        set_rectangle_dimensions(&animation_strip, area.left, 0, area.right - area.left, 0x39);
+        MainInterfaceGlobal.client_to_screen(&animation_strip);
 
         Sprite &left_outer = MainInterfaceGlobal.slide_frame_sprite(0);
         Sprite &left_inner = MainInterfaceGlobal.slide_frame_sprite(1);
@@ -2862,7 +2864,7 @@ void __cdecl slide_show(GraphicWin *window, int mode) {
             WinFlipClipped = 1;
             for (int frame = 0; frame < frame_divisor; ++frame) {
                 const DWORD started = timeGetTime();
-                background.draw(&Win::screen_buffer_, 9, area.left, animation_y, 1, 1);
+                frame_buffer.draw(&Win::screen_buffer_, 9, area.left, animation_y, 1, 1);
 
                 int left_y = animation_y;
                 if (left_y <= frame_edge) left_y = frame_edge;
@@ -2974,10 +2976,12 @@ void __cdecl slide_hide(GraphicWin *window, int mode) {
         window->update_window_to_buffer(&window_frame);
         window->update_back_to_window(&screen_restore);
 
-        RECT animation_strip = { area.left, 0, area.right, 0x39 };
+        RECT animation_strip;
+        set_rectangle_dimensions(&animation_strip, area.left, 0, area.right - area.left, 0x39);
         MainInterfaceGlobal.client_to_screen(&animation_strip);
         const int frame_count = (area.bottom - area.top) / frame_divisor;
 
+        Win::screen_buffer_.set_clip(&area);
         Sprite &left_outer = MainInterfaceGlobal.slide_frame_sprite(0);
         Sprite &left_inner = MainInterfaceGlobal.slide_frame_sprite(1);
         Sprite &right_inner = MainInterfaceGlobal.slide_frame_sprite(2);
@@ -2990,8 +2994,7 @@ void __cdecl slide_hide(GraphicWin *window, int mode) {
         const int right_outer_x = area.left + window_frame.pixel_width()
             - right_outer.width() - 0x20;
         int frame_y = area.top + frame_count;
-
-        Win::screen_buffer_.set_clip(&area);
+        RECT flip_rect = area;
         WinFlipClipped = 1;
         // Native stores frame_divisor into its reused [ebp+8] scratch slot at
         // 0x45DA52; incoming mode at [ebp+0xC] is only tested for bit 2.
@@ -3019,14 +3022,16 @@ void __cdecl slide_hide(GraphicWin *window, int mode) {
             interface_background.draw(&Win::screen_buffer_, 9,
                 MainInterfaceGlobal.outer_rect().left,
                 MainInterfaceGlobal.outer_rect().top, 1, 1);
-            Win::flip(&area);
+            Win::flip(&flip_rect);
             frame_y += frame_count;
             Win::screen_buffer_.set_clip(&area);
             do {
                 do_sound();
-                int delay = WindowAnimationFrameDelay;
-                if (MapMouseFeedbackBusy != 0 || ConsoleControlTurnActive != 0)
-                    delay = delay / 2;
+                int delay;
+                if (MapMouseFeedbackBusy == 0 && ConsoleControlTurnActive == 0)
+                    delay = WindowAnimationFrameDelay;
+                else
+                    delay = WindowAnimationFrameDelay / 2;
                 if (static_cast<DWORD>(timeGetTime() - started)
                     >= static_cast<DWORD>(delay))
                     break;
