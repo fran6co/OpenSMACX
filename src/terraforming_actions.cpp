@@ -902,6 +902,14 @@ void __cdecl action_staple(int base_id) {
              Bases[base_id].faction_id_former != Bases[base_id].faction_id_current, 1);
 }
 
+// The two "BOMBFAILED" reports are separate .data strings in the image
+// (0x00687D44 and 0x00687D7C): the TU did not pool literals, and one shared
+// literal lets the compiler cross-jump the two identical NetMsg::pop tails.
+// RECOVERY_OBJECT: v2 0x00687D44 0x00687D4F ?VehLabelBOMBFAILED@@3PADA 0x004CAD7C
+char VehLabelBOMBFAILED[] = "BOMBFAILED";
+// RECOVERY_OBJECT: v2 0x00687D7C 0x00687D87 ?VehLabelBOMBFAILED2@@3PADA 0x004CAFD9
+char VehLabelBOMBFAILED2[] = "BOMBFAILED";
+
 // Inlined: action_destroy's halved neighbour reach.
 static inline int destroy_dist(int x_a, int y_a, int x_b, int y_b) {
     return (x_dist(x_a, x_b) + abs(y_a - y_b)) >> 1;
@@ -911,9 +919,9 @@ static inline int destroy_dist(int x_a, int y_a, int x_b, int y_b) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004caa50.cpp", "recovery/tasks/mapwin-owner-coverage-wave.json", "Map byte+2 is val2; diplomatic treaty direction and callback rereads independently decoded from the pinned original."], "reason": "Recover the artillery and bombing destruction paths in their real vehicle owner, replacing the explicitly unfinished dependency while preserving its complete original span and all seed evidence."}
 // TRIED: Ghidra-structure translation with NetMsg::pop/Strings::get/ Console::focus receiver fixes (Ghidra flattened those three thiscalls away), boom()/whose_territory()/battle_fight()/ stack_check()/add_goal()/base_find() argument order verified against raw disasm one by one; compiles, MISMATCH #6 (early - likely the isAssault/flag18 bool-store or veh_skip's arg push order relative to the OR-mask store).
 void __cdecl action_destroy(int veh_id, int bits, int x, int y) {
-    const int faction_id = Vehs[veh_id].faction_id;
     BOOL is_assault = false;
     BOOL is_forest = false;
+    const int faction_id = Vehs[veh_id].faction_id;
     veh_skip(veh_id);
     Vehs[veh_id].state |= 0x40;
     if (on_map(x, y)) {
@@ -941,14 +949,7 @@ void __cdecl action_destroy(int veh_id, int bits, int x, int y) {
         int owner = whose_territory(faction_id, x, y, 0, 0);
         if (owner != faction_id) {
             for (int i = 1; i < 25; i++) {
-                int x_radius = Vehs[veh_id].x + RadiusOffsetX[i];
-                if (!(MapIsFlat & 1)) {
-                    if (x_radius < 0) {
-                        x_radius += MapLongitudeBounds;
-                    } else if (x_radius >= MapLongitudeBounds) {
-                        x_radius -= MapLongitudeBounds;
-                    }
-                }
+                int x_radius = wrap_map_x(Vehs[veh_id].x + RadiusOffsetX[i]);
                 int y_radius = Vehs[veh_id].y + RadiusOffsetY[i];
                 if (on_map(x_radius, y_radius) && destroy_dist(x_radius, y_radius, x, y) <= 2) {
                     int veh_id_stack = stack_fix(veh_at(x_radius, y_radius));
@@ -967,7 +968,7 @@ void __cdecl action_destroy(int veh_id, int bits, int x, int y) {
         && !Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].missile
         && !(rand() % 4)) {
         if (faction_id == ConsoleGlobal.faction_id_) {
-            NetMsgPrimary.pop("BOMBFAILED", 5000, 0, 0);
+            NetMsgPrimary.pop(VehLabelBOMBFAILED, 5000, 0, 0);
         }
     } else {
         uint32_t target_bits;
@@ -996,9 +997,11 @@ void __cdecl action_destroy(int veh_id, int bits, int x, int y) {
             if (faction_id == ConsoleGlobal.faction_id_) {
                 NetMsgPrimary.pop("ARTYBOMBFAILED", 5000, 0, 0);
             }
-        } else if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_AIR
+            goto finish_destroy;
+        }
+        if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_AIR
             && faction_id == ConsoleGlobal.faction_id_) {
-            NetMsgPrimary.pop("BOMBFAILED", 5000, 0, 0);
+            NetMsgPrimary.pop(VehLabelBOMBFAILED2, 5000, 0, 0);
         }
         goto finish_destroy;
 found_terra:
@@ -1279,7 +1282,7 @@ void __cdecl action_road_to(int veh_id) {
                 return;
             }
         }
-        if (x == x_goal && y == y_goal) {
+        if (x_goal == x && y == y_goal) {
             int order = Vehs[veh_id].order;
             Vehs[veh_id].order = ORDER_NONE;
             if (IsMultiplayerNet && !ConsoleControlTurnActive) {
@@ -1312,6 +1315,12 @@ void __cdecl action_road_to(int veh_id) {
             return;
         }
         Vehs[veh_id].order = ORDER_NONE;
+        if (IsMultiplayerNet && !ConsoleControlTurnActive) {
+            synch_veh(veh_id);
+            NetDaemonNet.await_synch();
+            NetDaemonNet.unlock_veh();
+        }
+        return;
     }
     if (IsMultiplayerNet && !ConsoleControlTurnActive) {
         synch_veh(veh_id);
@@ -1320,8 +1329,17 @@ void __cdecl action_road_to(int veh_id) {
     }
 }
 
-// action_home's distance: arguments evaluate before the body, as the image's
-// early second-coordinate load shows.
+// The halved map distance action_home, action_airdrop and action_arty expand
+// in place: arguments evaluate before the body, as the image's early
+// second-coordinate load shows. The same body serves all three; the two-line
+// spelling (not a chain of named locals) is what puts action_airdrop's and
+// action_arty's register rotation on the image's.
+// WORKAROUND(decl): same body as destroy_dist above, kept as a second
+// TU-local definition. Merging the two (one helper for all four callers)
+// leaves these four unchanged but flips the register tie in action_give at
+// 0x004CF103 (the file-state lever described at the top of this file).
+// Both stand in for an unidentified header inline; map.h's cursor_dist
+// divides with `/ 2` and compiles differently.
 static inline int home_dist(int x_a, int y_a, int x_b, int y_b) {
     return (x_dist(x_a, x_b) + abs(y_a - y_b)) >> 1;
 }
@@ -1338,7 +1356,7 @@ Purpose: Send a unit home. Search the friendly and pacted bases, then - for an a
          friendly carriers and air supply convoys, then the airbases inside the search radius, for
          the closest place this unit could return to. Clear its orders if it is already standing
          there, otherwise point a move-to waypoint at it.
-// ORIGINAL: 0x004CBAA0 ?action_home@@YAHHH@Z 0x004CBAA0-0x004CC35F
+// ORIGINAL: 0x004CBAA0 ?action_home@@YAHHH@Z 0x004CBAA0-0x004CC35F BYTE_EXACT
 // LEVER: MORE (18 calls vs image's 17) - `proto_power()` was the extra one,
 //        called once at the `chassis_range == 1` site with no equivalent in
 //        the image's `calls` list. Same fix as best_defender (0x5044D0):
@@ -1346,6 +1364,13 @@ Purpose: Send a unit home. Search the friendly and pacted bases, then - for an a
 //        plain non-`inline` function in this tree. Call count now agrees
 //        (0 disagree); best flag set's similarity 0.349 -> 0.503 (/O2 /Oi-
 //        /GR- /Oy- /GX).
+// LEVER: three spellings closed the last register/slot differences.
+//        `Vehs[veh_id]` is read directly (a `Veh &` alias moved its spill
+//        slot below veh_x/veh_y); the sortie range is read twice from
+//        Chassis[] rather than through a byte local (the image loads it once
+//        and reuses al for the `== 1` test); and the carrier loop selects its
+//        candidates with one positive guard instead of `continue`s, which
+//        keeps other_id in eax across the back edge (0x004CBE03).
 // size      2239 bytes
 // prototype int (__cdecl ?action_home@@YAHHH@Z)(int vehID, int)
 // callers   8   call targets   6
@@ -1356,28 +1381,26 @@ Return Value: Was a destination resolved? true/false
 Status: Complete
 */
 int __cdecl action_home(int veh_id, int flags) {
-    Veh &veh = Vehs[veh_id];
-    const int faction_id = veh.faction_id;
+    const int faction_id = Vehs[veh_id].faction_id;
     int best_dist = 9999;
-    const int veh_x = veh.x;
-    const int veh_y = veh.y;
+    const int veh_x = Vehs[veh_id].x;
+    const int veh_y = Vehs[veh_id].y;
     const int veh_region = (int)region_at(veh_x, veh_y);
     int best_x = -1;
     int best_y = -1;
     // How far the unit could still travel: what is left of this turn, plus - for a chassis with
     // endurance - the sorties it has not spent yet. A range 1 chassis additionally trades its
     // remaining hitpoints for distance.
-    int moves_left = range((int)speed(veh_id, false) - veh.moves_expended, 0, 999);
-    const int proto_id = veh.proto_id;
-    const uint8_t chassis_range = Chassis[VehPrototypes[proto_id].chassis_id].range;
+    int moves_left = veh_moves(veh_id);
+    const int proto_id = Vehs[veh_id].proto_id;
     int reach = (int)speed(veh_id, false)
-        * (chassis_range - veh.terraforming_turns - 1) + moves_left;
-    if (chassis_range == 1) {
+        * (Chassis[VehPrototypes[proto_id].chassis_id].range - Vehs[veh_id].terraforming_turns - 1) + moves_left;
+    if (Chassis[VehPrototypes[proto_id].chassis_id].range == 1) {
         const int power = (VehPrototypes[proto_id].plan == PLAN_ALIEN_ARTIFACT)
             ? 1 : range(VehPrototypes[proto_id].reactor_id, 1, 100) * 10;
-        int hp_left = range(power - veh.dmg_incurred, 0, 9999);
+        int hp_left = range(power - Vehs[veh_id].dmg_incurred, 0, 9999);
         reach += (int)speed(veh_id, false)
-            * ((hp_left - 1) / VehPrototypes[veh.proto_id].reactor_id);
+            * ((hp_left - 1) / VehPrototypes[Vehs[veh_id].proto_id].reactor_id);
     }
     const int max_dist = reach / Rules.move_rate_roads;
 
@@ -1404,10 +1427,10 @@ int __cdecl action_home(int veh_id, int flags) {
             continue;
         }
         const int dist = home_dist(veh_x, veh_y, Bases[base_id].x, Bases[base_id].y);
-        if ((veh.state & VSTATE_UNK_200)
-            && veh.order_auto_type == ORDERA_ON_ALERT
-            && Bases[base_id].x == veh.waypoint_x[1]
-            && Bases[base_id].y == veh.waypoint_y[1] && dist <= max_dist) {
+        if ((Vehs[veh_id].state & VSTATE_UNK_200)
+            && Vehs[veh_id].order_auto_type == ORDERA_ON_ALERT
+            && Bases[base_id].x == Vehs[veh_id].waypoint_x[1]
+            && Bases[base_id].y == Vehs[veh_id].waypoint_y[1] && dist <= max_dist) {
             // Already on alert for this exact base: take it and skip the remaining searches.
             best_dist = dist;
             best_x = Bases[base_id].x;
@@ -1424,40 +1447,26 @@ int __cdecl action_home(int veh_id, int flags) {
     if (get_triad(veh_id) == TRIAD_AIR) {
         // An air unit can also come down on a friendly carrier or air supply convoy.
         for (int other_id = 0; other_id < GameDataStateStorage.fields_.vehicle_current_count_; other_id++) {
-            if (Vehs[other_id].faction_id != faction_id) {
-                continue;
-            }
-            if (other_id == veh_id) {
-                continue;
-            }
-            if (!has_abil(Vehs[other_id].proto_id, ABL_CARRIER)) {
-                if (VehPrototypes[Vehs[other_id].proto_id].plan != PLAN_SUPPLY_CONVOY) {
-                    continue;
-                }
-                if (get_triad(other_id) != TRIAD_AIR) {
-                    continue;
-                }
-            }
-            int dist = home_dist(veh_x, veh_y, Vehs[other_id].x, Vehs[other_id].y);
-            if ((flags & 1) || flags == 4) {
-                if (!is_human(faction_id)) {
-                    dist += (int)speed(other_id, false) / Rules.move_rate_roads;
-                }
-                if (VehPrototypes[Vehs[other_id].proto_id].plan == PLAN_SUPPLY_CONVOY) {
-                    // Recomputed raw, without the bias just added above.
-                    const int other_y = Vehs[other_id].y;
-                    const int x_part = x_dist(veh_x, Vehs[other_id].x);
-                    const int moves = range((int)speed(veh_id, false)
-                                            - veh.moves_expended, 0, 999);
-                    if ((x_part + abs(veh_y - other_y)) >> 1 > moves / Rules.move_rate_roads) {
+            if (Vehs[other_id].faction_id == faction_id && other_id != veh_id
+                && (has_abil(Vehs[other_id].proto_id, ABL_CARRIER)
+                    || (VehPrototypes[Vehs[other_id].proto_id].plan == PLAN_SUPPLY_CONVOY
+                        && get_triad(other_id) == TRIAD_AIR))) {
+                int dist = home_dist(veh_x, veh_y, Vehs[other_id].x, Vehs[other_id].y);
+                if ((flags & 1) || flags == 4) {
+                    if (!is_human(faction_id)) {
+                        dist += (int)speed(other_id, false) / Rules.move_rate_roads;
+                    }
+                    if (VehPrototypes[Vehs[other_id].proto_id].plan == PLAN_SUPPLY_CONVOY
+                        && home_dist(veh_x, veh_y, Vehs[other_id].x, Vehs[other_id].y)
+                            > veh_moves(veh_id) / Rules.move_rate_roads) {
                         continue; // the convoy is not reachable this turn
                     }
                 }
-            }
-            if (dist < best_dist) {
-                best_dist = dist;
-                best_x = Vehs[other_id].x;
-                best_y = Vehs[other_id].y;
+                if (dist < best_dist) {
+                    best_dist = dist;
+                    best_x = Vehs[other_id].x;
+                    best_y = Vehs[other_id].y;
+                }
             }
         }
 
@@ -1493,9 +1502,9 @@ int __cdecl action_home(int veh_id, int flags) {
                 }
             }
             const int dist = home_dist(veh_x, veh_y, x_radius, y_radius);
-            if ((veh.state & VSTATE_UNK_200) && veh.order_auto_type == ORDERA_ON_ALERT
-                && !veh.dmg_incurred && x_radius == veh.waypoint_x[1]
-                && y_radius == veh.waypoint_y[1] && dist <= max_dist) {
+            if ((Vehs[veh_id].state & VSTATE_UNK_200) && Vehs[veh_id].order_auto_type == ORDERA_ON_ALERT
+                && !Vehs[veh_id].dmg_incurred && x_radius == Vehs[veh_id].waypoint_x[1]
+                && y_radius == Vehs[veh_id].waypoint_y[1] && dist <= max_dist) {
                 // best_dist is deliberately left alone here, unlike the base loop's shortcut.
                 best_x = x_radius;
                 best_y = y_radius;
@@ -1509,7 +1518,7 @@ int __cdecl action_home(int veh_id, int flags) {
         }
     }
     if (((flags & 1) || flags == 4)
-        && !Chassis[VehPrototypes[veh.proto_id].chassis_id].range) {
+        && !Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range) {
         return false; // only an endurance chassis answers these queries
     }
 
@@ -1528,62 +1537,118 @@ found:
         return true; // query only, no state change
     }
     if (best_x == veh_x && best_y == veh_y) {
-        veh.order = ORDER_NONE;
+        Vehs[veh_id].order = ORDER_NONE;
         if (!is_human(faction_id)) {
             veh_skip(veh_id);
         }
         return true;
     }
-    veh.order = ORDER_MOVE_TO;
-    veh.waypoint_x[0] = (int16_t)best_x;
-    veh.waypoint_y[0] = (int16_t)best_y;
-    if (Chassis[VehPrototypes[veh.proto_id].chassis_id].range && is_human(faction_id)
+    Vehs[veh_id].order = ORDER_MOVE_TO;
+    Vehs[veh_id].waypoint_x[0] = (int16_t)best_x;
+    Vehs[veh_id].waypoint_y[0] = (int16_t)best_y;
+    if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range && is_human(faction_id)
         && best_dist > max_dist) {
         // Out of reach for a human-controlled endurance unit: drop the order rather than fly it
         // into the ground.
-        veh.order = ORDER_NONE;
+        Vehs[veh_id].order = ORDER_NONE;
         // 0xFCFFBDFF clears VSTATE_UNK_200, VSTATE_EXPLORE, VSTATE_UNK_1000000 and
         // VSTATE_UNK_2000000, and nothing else.
-        veh.state &= 0xFCFFBDFFU;
+        Vehs[veh_id].state &= 0xFCFFBDFFU;
     }
     return true;
 }
 
+// action_airdrop's strings are separate .data objects in the image, one per
+// use in source order (0x00687E38..0x00687FDB): the TU did not pool literals,
+// and shared literals let the compiler cross-jump identical NetMsg::pop tails.
+// RECOVERY_OBJECT: v2 0x00687E38 0x00687E47 ?VehIconAL_DROP_SM_PCX@@3PADA 0x004CC421
+char VehIconAL_DROP_SM_PCX[] = "al_drop_sm.pcx";
+// RECOVERY_OBJECT: v2 0x00687E48 0x00687E52 ?VehLabelDROPRANGE@@3PADA 0x004CC42D
+char VehLabelDROPRANGE[] = "DROPRANGE";
+// RECOVERY_OBJECT: v2 0x00687E54 0x00687E61 ?VehIconAIRDP_SM_PCX@@3PADA 0x004CC445
+char VehIconAIRDP_SM_PCX[] = "airdp_sm.pcx";
+// RECOVERY_OBJECT: v2 0x00687E64 0x00687E6E ?VehLabelDROPRANGE2@@3PADA 0x004CC451
+char VehLabelDROPRANGE2[] = "DROPRANGE";
+// RECOVERY_OBJECT: v2 0x00687E70 0x00687E7F ?VehIconAL_DROP_SM_PCX2@@3PADA 0x004CC4BB
+char VehIconAL_DROP_SM_PCX2[] = "al_drop_sm.pcx";
+// RECOVERY_OBJECT: v2 0x00687E80 0x00687E88 ?VehLabelDROPSEA@@3PADA 0x004CC4C7
+char VehLabelDROPSEA[] = "DROPSEA";
+// RECOVERY_OBJECT: v2 0x00687E88 0x00687E95 ?VehIconAIRDP_SM_PCX2@@3PADA 0x004CC4DF
+char VehIconAIRDP_SM_PCX2[] = "airdp_sm.pcx";
+// RECOVERY_OBJECT: v2 0x00687E98 0x00687EA0 ?VehLabelDROPSEA2@@3PADA 0x004CC4EB
+char VehLabelDROPSEA2[] = "DROPSEA";
+// RECOVERY_OBJECT: v2 0x00687EA0 0x00687EAF ?VehIconAL_DROP_SM_PCX3@@3PADA 0x004CC56E
+char VehIconAL_DROP_SM_PCX3[] = "al_drop_sm.pcx";
+// RECOVERY_OBJECT: v2 0x00687EB0 0x00687EB9 ?VehLabelDROPUNIT@@3PADA 0x004CC57A
+char VehLabelDROPUNIT[] = "DROPUNIT";
+// RECOVERY_OBJECT: v2 0x00687EBC 0x00687EC9 ?VehIconAIRDP_SM_PCX3@@3PADA 0x004CC592
+char VehIconAIRDP_SM_PCX3[] = "airdp_sm.pcx";
+// RECOVERY_OBJECT: v2 0x00687ECC 0x00687ED5 ?VehLabelDROPUNIT2@@3PADA 0x004CC59E
+char VehLabelDROPUNIT2[] = "DROPUNIT";
+// RECOVERY_OBJECT: v2 0x00687ED8 0x00687EE7 ?VehIconAL_DROP_SM_PCX4@@3PADA 0x004CC615
+char VehIconAL_DROP_SM_PCX4[] = "al_drop_sm.pcx";
+// RECOVERY_OBJECT: v2 0x00687EE8 0x00687EF3 ?VehLabelNONCOMDROP@@3PADA 0x004CC621
+char VehLabelNONCOMDROP[] = "NONCOMDROP";
+// RECOVERY_OBJECT: v2 0x00687EF4 0x00687F01 ?VehIconAIRDP_SM_PCX4@@3PADA 0x004CC639
+char VehIconAIRDP_SM_PCX4[] = "airdp_sm.pcx";
+// RECOVERY_OBJECT: v2 0x00687F04 0x00687F0F ?VehLabelNONCOMDROP2@@3PADA 0x004CC645
+char VehLabelNONCOMDROP2[] = "NONCOMDROP";
+// RECOVERY_OBJECT: v2 0x00687F10 0x00687F1F ?VehIconAL_DROP_SM_PCX5@@3PADA 0x004CC709
+char VehIconAL_DROP_SM_PCX5[] = "al_drop_sm.pcx";
+// RECOVERY_OBJECT: v2 0x00687F20 0x00687F2B ?VehLabelNONCOMDROP3@@3PADA 0x004CC715
+char VehLabelNONCOMDROP3[] = "NONCOMDROP";
+// RECOVERY_OBJECT: v2 0x00687F2C 0x00687F39 ?VehIconAIRDP_SM_PCX5@@3PADA 0x004CC72D
+char VehIconAIRDP_SM_PCX5[] = "airdp_sm.pcx";
+// RECOVERY_OBJECT: v2 0x00687F3C 0x00687F47 ?VehLabelNONCOMDROP4@@3PADA 0x004CC739
+char VehLabelNONCOMDROP4[] = "NONCOMDROP";
+// RECOVERY_OBJECT: v2 0x00687F48 0x00687F55 ?VehIconALAIR_SM_PCX@@3PADA 0x004CC9CD
+char VehIconALAIR_SM_PCX[] = "alair_sm.pcx";
+// RECOVERY_OBJECT: v2 0x00687F58 0x00687F64 ?VehLabelAIRDEFENSES@@3PADA 0x004CC9D9
+char VehLabelAIRDEFENSES[] = "AIRDEFENSES";
+// RECOVERY_OBJECT: v2 0x00687F64 0x00687F6F ?VehIconAIR_SM_PCX@@3PADA 0x004CC9F1
+char VehIconAIR_SM_PCX[] = "air_sm.pcx";
+// RECOVERY_OBJECT: v2 0x00687F70 0x00687F7C ?VehLabelAIRDEFENSES2@@3PADA 0x004CC9FD
+char VehLabelAIRDEFENSES2[] = "AIRDEFENSES";
+// RECOVERY_OBJECT: v2 0x00687F8C 0x00687F9B ?VehIconAL_DROP_SM_PCX6@@3PADA 0x004CCCE3
+char VehIconAL_DROP_SM_PCX6[] = "al_drop_sm.pcx";
+// RECOVERY_OBJECT: v2 0x00687F9C 0x00687FA8 ?VehLabelMADEORBITAL@@3PADA 0x004CCCCF
+char VehLabelMADEORBITAL[] = "MADEORBITAL";
+// RECOVERY_OBJECT: v2 0x00687FA8 0x00687FB4 ?VehLabelMADEAIRDROP@@3PADA 0x004CCCD6
+char VehLabelMADEAIRDROP[] = "MADEAIRDROP";
+// RECOVERY_OBJECT: v2 0x00687FB4 0x00687FC1 ?VehIconAIRDP_SM_PCX6@@3PADA 0x004CCD0C
+char VehIconAIRDP_SM_PCX6[] = "airdp_sm.pcx";
+// RECOVERY_OBJECT: v2 0x00687FC4 0x00687FD0 ?VehLabelMADEORBITAL2@@3PADA 0x004CCCFE
+char VehLabelMADEORBITAL2[] = "MADEORBITAL";
+// RECOVERY_OBJECT: v2 0x00687FD0 0x00687FDC ?VehLabelMADEAIRDROP2@@3PADA 0x004CCD05
+char VehLabelMADEAIRDROP2[] = "MADEAIRDROP";
+
 // Airdrop a vehicle, including range, interception, landing-site, diplomatic
 // and post-landing processing.  The four modes are the caller's network/local
 // context flags; mode 1 is the network execution path, mode 3 the local path.
-// Inlined: the halved airdrop reach, computed before drop_range is called.
-static inline int airdrop_dist(int x_a, int y_a, int x_b, int y_b) {
-    int x_distance = x_dist(x_a, x_b);
-    int y_distance = abs(y_a - y_b);
-    int distance = (x_distance + y_distance) >> 1;
-    return distance;
-}
-
 // ORIGINAL: 0x004CC360 ?action_airdrop@@YAHHHHH@Z 0x004CC360-0x004CD051 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004cc360.cpp retained signature/extents and complete seed; no historical claim copied", "Coordinator full pinned original instruction decode 004CC360..004CD051, typed source owner fields and corrected original call/branch evidence", "recovery/tests/test_airdrop_network.py actual-body directional treaty and network reentrancy controls; not linked/runtime/game acceptance"], "reason": "Recover complete typed airdrop admission/interception, landing selection, stack movement, capture and post-drop updates. Preserve unsigned damage storage with integer thresholds and directional treaty evidence; referenced unfinished dependencies remain explicit, not game acceptance."}
 // TRIED: direct field-for-field transcription (validation chain of terrain/ZOC/treaty/AA checks, each guarding a NetMsg::pop error-return; airdrop-site scoring loop; base-capture tail) diverges at instr #7 (push vs xor), early register-allocation choice; not chased further given the 3313-byte scope.
 int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
     NetDaemonNet.channels_[0].leading_words_[3] = mode;
     const int faction_id = Vehs[veh_id].faction_id;
-    if (airdrop_dist(Vehs[veh_id].x, Vehs[veh_id].y, x, y) > drop_range(faction_id)) {
+    if (home_dist(Vehs[veh_id].x, Vehs[veh_id].y, x, y) > drop_range(faction_id)) {
         if (NetDaemonNet.channels_[0].leading_words_[3] & 1 && faction_id == ConsoleGlobal.faction_id_) {
             parse_num(0, Rules.max_airdrop_sans_orb_insert);
             if (Players[faction_id].rule_flags & 0x80) {
-                NetMsgPrimary.pop("DROPRANGE", -5000, 0, "al_drop_sm.pcx");
+                NetMsgPrimary.pop(VehLabelDROPRANGE, -5000, 0, VehIconAL_DROP_SM_PCX);
                 return 0;
             }
-            NetMsgPrimary.pop("DROPRANGE", -5000, 0, "airdp_sm.pcx");
+            NetMsgPrimary.pop(VehLabelDROPRANGE2, -5000, 0, VehIconAIRDP_SM_PCX);
         }
         return 0;
     }
     if ((map_loc(x, y)->climate & ~0x1F) < ALT_BIT_SHORE_LINE) {
         if (NetDaemonNet.channels_[0].leading_words_[3] & 1 && faction_id == ConsoleGlobal.faction_id_) {
             if (Players[faction_id].rule_flags & 0x80) {
-                NetMsgPrimary.pop("DROPSEA", -5000, 0, "al_drop_sm.pcx");
+                NetMsgPrimary.pop(VehLabelDROPSEA, -5000, 0, VehIconAL_DROP_SM_PCX2);
                 return 0;
             }
-            NetMsgPrimary.pop("DROPSEA", -5000, 0, "airdp_sm.pcx");
+            NetMsgPrimary.pop(VehLabelDROPSEA2, -5000, 0, VehIconAIRDP_SM_PCX2);
         }
         return 0;
     }
@@ -1592,20 +1657,20 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
         && !(PlayersData[faction_id].diplo_treaties[owner] & DTREATY_PACT)) {
         if (NetDaemonNet.channels_[0].leading_words_[3] & 1 && faction_id == ConsoleGlobal.faction_id_) {
             if (Players[faction_id].rule_flags & 0x80) {
-                NetMsgPrimary.pop("DROPUNIT", -5000, 0, "al_drop_sm.pcx");
+                NetMsgPrimary.pop(VehLabelDROPUNIT, -5000, 0, VehIconAL_DROP_SM_PCX3);
                 return 0;
             }
-            NetMsgPrimary.pop("DROPUNIT", -5000, 0, "airdp_sm.pcx");
+            NetMsgPrimary.pop(VehLabelDROPUNIT2, -5000, 0, VehIconAIRDP_SM_PCX3);
         }
         return 0;
     }
     if (!get_proto_offense_rating(Vehs[veh_id].proto_id) && zoc_move(x, y, faction_id)) {
         if (NetDaemonNet.channels_[0].leading_words_[3] & 1 && faction_id == ConsoleGlobal.faction_id_) {
             if (Players[faction_id].rule_flags & 0x80) {
-                NetMsgPrimary.pop("NONCOMDROP", -5000, 0, "al_drop_sm.pcx");
+                NetMsgPrimary.pop(VehLabelNONCOMDROP, -5000, 0, VehIconAL_DROP_SM_PCX4);
                 return 0;
             }
-            NetMsgPrimary.pop("NONCOMDROP", -5000, 0, "airdp_sm.pcx");
+            NetMsgPrimary.pop(VehLabelNONCOMDROP2, -5000, 0, VehIconAIRDP_SM_PCX4);
         }
         return 0;
     }
@@ -1615,10 +1680,10 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
         if (!get_proto_offense_rating(Vehs[veh_id].proto_id)) {
             if (NetDaemonNet.channels_[0].leading_words_[3] & 1 && faction_id == ConsoleGlobal.faction_id_) {
                 if (Players[faction_id].rule_flags & 0x80) {
-                    NetMsgPrimary.pop("NONCOMDROP", -5000, 0, "al_drop_sm.pcx");
+                    NetMsgPrimary.pop(VehLabelNONCOMDROP3, -5000, 0, VehIconAL_DROP_SM_PCX5);
                     return 0;
                 }
-                NetMsgPrimary.pop("NONCOMDROP", -5000, 0, "airdp_sm.pcx");
+                NetMsgPrimary.pop(VehLabelNONCOMDROP4, -5000, 0, VehIconAIRDP_SM_PCX5);
             }
             return 0;
         }
@@ -1642,10 +1707,10 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
                     if (NetDaemonNet.channels_[0].leading_words_[3] & 1 && faction_id == ConsoleGlobal.faction_id_) {
                         parse_says(0, Bases[base_id].name_string, -1, -1);
                         if (Players[faction_id].rule_flags & 0x80) {
-                            NetMsgPrimary.pop("AIRDEFENSES", -5000, 0, "alair_sm.pcx");
+                            NetMsgPrimary.pop(VehLabelAIRDEFENSES, -5000, 0, VehIconALAIR_SM_PCX);
                             return 0;
                         }
-                        NetMsgPrimary.pop("AIRDEFENSES", -5000, 0, "air_sm.pcx");
+                        NetMsgPrimary.pop(VehLabelAIRDEFENSES2, -5000, 0, VehIconAIR_SM_PCX);
                     }
                     return 0;
                 }
@@ -1654,9 +1719,12 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
     }
     if (NetDaemonNet.channels_[0].leading_words_[3] & 2) {
         int goody = goody_at(x, y);
-        int is_seen = faction_id == ConsoleGlobal.faction_id_
+        int is_seen = 0;
+        if (faction_id == ConsoleGlobal.faction_id_
             || anything_at(x, y) == ConsoleGlobal.faction_id_
-            || GameDataStateStorage.fields_.game_state_ & 0x80;
+            || GameDataStateStorage.fields_.game_state_ & 0x80) {
+            is_seen = 1;
+        }
         if (!is_seen) {
             for (int i = 0; i < 8; i++) {
                 int x_radius = wrap_map_x(x + VehMoveDeltaX[i]);
@@ -1709,15 +1777,16 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
             return 0;
         }
         if (is_seen && faction_id != ConsoleGlobal.faction_id_) {
-            parse_says(0, Bases[base_find(x, y, -1, -1, -1, 1)].name_string, -1, -1);
+            int base_id = base_find(x, y, -1, -1, -1, 1);
+            parse_says(0, Bases[base_id].name_string, -1, -1);
             parse_set(Players[faction_id].noun_gender, Players[faction_id].is_noun_plural);
             parse_says(1, Players[faction_id].noun_faction, -1, -1);
             if (Players[faction_id].rule_flags & 0x80) {
                 popp(ScriptPopupFile, drop_range(faction_id) > Rules.max_airdrop_sans_orb_insert
-                    ? "MADEORBITAL" : "MADEAIRDROP", 0, "al_drop_sm.pcx", 0);
+                    ? VehLabelMADEORBITAL : VehLabelMADEAIRDROP, 0, VehIconAL_DROP_SM_PCX6, 0);
             } else {
                 popp(ScriptPopupFile, drop_range(faction_id) > Rules.max_airdrop_sans_orb_insert
-                    ? "MADEORBITAL" : "MADEAIRDROP", 0, "airdp_sm.pcx", 0);
+                    ? VehLabelMADEORBITAL2 : VehLabelMADEAIRDROP2, 0, VehIconAIRDP_SM_PCX6, 0);
             }
         }
         Vehs[veh_id].state |= VSTATE_MADE_AIRDROP;
@@ -1808,7 +1877,7 @@ void __cdecl action_feature() {
 // network lock protocol. The empty-target destruction dependency below
 // remains explicitly unfinished; build continuity does not prove that path.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004CD090 ?action_arty@@YAXHHH@Z 0x004CD090-0x004CD2ED
+// ORIGINAL: 0x004CD090 ?action_arty@@YAXHHH@Z 0x004CD090-0x004CD2ED BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original4CD090..4CD2ED: readiness and wrapped-distance gates; stack/treaty protection; Rules.artillery_max_rng indexes existing RadiusRange; mode3 offline versus mode1 network locking and message dispatch.", "Retained src/recovered/units/004cd090.cpp is evidence, not the source owner. Fresh original disassembly confirms imports and call order; no new byte or game-acceptance claim."], "reason": "Recover the artillery command through genuine vehicle, faction, rules and network owners; destruction of an empty target remains an unfinished dependency."}
 void __cdecl action_arty(int veh_id, int x, int y) {
     if (Vehs[veh_id].faction_id == ConsoleGlobal.faction_id_ &&
@@ -1816,15 +1885,7 @@ void __cdecl action_arty(int veh_id, int x, int y) {
         NetMsgPrimary.pop("UNITMOVED", 5000, 0, nullptr);
         return;
     }
-    const int vehicle_y = Vehs[veh_id].y;
-    const int absolute_dx = abs(Vehs[veh_id].x - x);
-    int dx;
-    if ((MapIsFlat & 1) == 0 && absolute_dx > static_cast<int>(MapLongitude)) {
-        dx = static_cast<int>(MapLongitudeBounds) - absolute_dx;
-    } else {
-        dx = absolute_dx;
-    }
-    if (((abs(vehicle_y - y) + dx) & ~1) > 4) {
+    if (home_dist(Vehs[veh_id].x, Vehs[veh_id].y, x, y) > 2) {
         NetMsgPrimary.pop("OUTOFRANGE", 5000, 0, nullptr);
         return;
     }
@@ -2639,7 +2700,7 @@ void __cdecl action_give(int vehicle_id, int faction_id) {
 
 /*
 Purpose: Gate a vehicle into a base, repainting both tiles.
-// ORIGINAL: 0x004CF380 ?action_gate@@YAXHH@Z 0x004CF380-0x004CF477
+// ORIGINAL: 0x004CF380 ?action_gate@@YAXHH@Z 0x004CF380-0x004CF477 BYTE_EXACT
 // size      247 bytes
 // prototype void (__cdecl ?action_gate@@YAXHH@Z)(int vehID, int baseID)
 // callers   3   call targets   5
@@ -2649,11 +2710,11 @@ Purpose: Gate a vehicle into a base, repainting both tiles.
 // HOMED from src/unrecovered/004cf380.cpp, 2026-09-04. Its `Bases[n] + off`
 // casts are Base members: +0x00 x, +0x02 y, +0x30 state (bit 0x20000000 is
 // the "gate/open" event the UI reads).
-// TRIED: reproducing veh_lift's post-call EAX reuse - the call site pushes
-//        EAX straight into veh_drop's first argument with no reload, so EAX
-//        must be veh_lift's return value; a local function-pointer type got
-//        86.6% mnemonic similarity and redeclaring veh_lift itself is C2556.
-//        veh_lift already returns int here, so the plain spelling is used.
+// LEVER: the move is veh.h's veh_put inline, not an open-coded
+//        veh_drop(veh_lift(...)). The inline's argument temps (base y in eax,
+//        x in ecx before the veh_lift call) shift the register rotation every
+//        later draw_tile/focus block depends on; the open-coded call matched
+//        the call sequence but not the registers after it.
 // TRIED: frameless /O2 body where the image has `frame` - a spill-count
 //        difference, not a control-flow one.
 Return Value: n/a
@@ -2666,7 +2727,7 @@ void __cdecl action_gate(int veh_id, int base_id) {
     }
     Bases[base_id].state |= 0x20000000;
 
-    veh_drop(veh_lift(veh_id), Bases[base_id].x, Bases[base_id].y);
+    veh_put(veh_id, Bases[base_id].x, Bases[base_id].y);
 
     if (gate_base >= 0) {
         draw_tile(Bases[gate_base].x, Bases[gate_base].y, 2);
