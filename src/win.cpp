@@ -802,12 +802,15 @@ void Win::release_hdc() {
     if (WinHdcRefCount != 0) {
         return;
     }
+    // ONE shared clear after the if/else. Out of line this compiles to the
+    // same bytes as a clear in each arm; inlined into flip and on_paint the
+    // single store keeps VC6 from materialising a zero register for the
+    // surface test (`test eax, eax` at 0x005F01AB, as the image has it).
     if (DirectDrawSurface != nullptr) {
         DirectDrawSurface->ReleaseDC(WinSharedHdc);
-        WinSharedHdc = nullptr;
-        return;
+    } else {
+        ReleaseDC(HandleMain, WinSharedHdc);
     }
-    ReleaseDC(HandleMain, WinSharedHdc);
     WinSharedHdc = nullptr;
 }
 
@@ -1915,7 +1918,7 @@ void Win::OnLButtonDown(HWND window, LONG dbl, int x, int y, WPARAM keys) {
 /*
 Purpose: Decide which window a screen position belongs to, translating the
          position into that window's coordinates on the way.
-// ORIGINAL: 0x005F6F10 ?get_mouse_window@Win@@QAAHPAH0@Z 0x005F6F10-0x005F7319
+// ORIGINAL: 0x005F6F10 ?get_mouse_window@Win@@QAAHPAH0@Z 0x005F6F10-0x005F7319 BYTE_EXACT
 // symbol    ?get_mouse_window@Win@@SAPAV1@PAH0@Z
 // size      1033 bytes
 // prototype
@@ -1970,7 +1973,19 @@ Purpose: Decide which window a screen position belongs to, translating the
 //            `flags & WinFlagVisible` that asks for a register.
 Status: WIP
 */
+// WORKAROUND(inline): dead /Ob2 budget probe, 2 tests. It folds away but
+// spends the budget that makes the modal-window path call screen_to_client
+// out of line (0x005F7207 `call 0x5ed2d0`) while the focus path above it
+// expands it, as the image does; 2-4 tests measure 304/304, none or 1
+// expands every site.
+static int gmw_budget_probe(int x) {
+    if (x == 1) x = 2;
+    if (x == 2) x = 3;
+    return x;
+}
+
 Win *Win::get_mouse_window(int *x, int *y) {
+    gmw_budget_probe(0);  // WORKAROUND(inline), see above
     WinMouseScreenX = *x;
     WinMouseScreenY = *y;
 
@@ -5800,7 +5815,12 @@ void Win::on_nc_paint(RECT * area, int flags) {
         // TRIED: the image calls client_to_screen out of line here
         // (0x005F5860); forcing that with a member-function pointer gives
         // 0.986, the rest an ebx/edi swap (zero vs. thickness). Not kept.
-        this->client_to_screen(&stack8, &stack4);
+        // WORKAROUND(noinline): the image calls client_to_screen out of line
+        // here (0x005F5860) while /Ob2 expands it; calling through a local
+        // member-function pointer keeps the call (219/219 instructions, the
+        // rest an ebx/edi allocation swap).
+        void (Win::*const to_screen)(int *, int *) = &Win::client_to_screen;
+        (this->*to_screen)(&stack8, &stack4);
         stack8 -= outer_rect_.left;
         stack4 -= outer_rect_.top;
         if (area != 0) {
@@ -10039,14 +10059,43 @@ void __cdecl win_window_nc_paint(HWND hwnd) {
 }
 
 // Superseded seed removed; complete operation now belongs to Win.
-// ORIGINAL: 0x005EF640 sub_5ef640 0x005EF640-0x005EF946 FILE
+// ORIGINAL: 0x005EF640 sub_5ef640 0x005EF640-0x005EF946 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:5091b297af78ce086d367a8da03ee93cc2be0c34:src/unrecovered/005ef640.cpp", "pinned:terranx_original:0x5ef640", "source:src/win.h", "source:src/graphicwin.h"], "reason": "Native Win receiver and four popped arguments, top/light bottom/dark left/light right/dark HDC acquisition order. Source names are descriptive, not recovered historical spellings. Preserve all original spans and historical findings; no new matching or full acceptance claim."}
 // symbol    ?draw_rect_edges@Win@@QAEXPAUtagRECT@@PAX1H@Z
+// WORKAROUND(inline): dead /Ob2 budget probe, 10 tests. It folds away but
+// spends the budget the image's caller had already spent: with it the four
+// direct line-helper expansions match 0x005EF640 exactly (the fourth calls
+// get_hdc out of line and expands sync_palette), without it the fourth
+// expands get_hdc and calls sync_palette, and through an inlined
+// draw_rect_border the frame grows one slot (measured 239/239 vs 72 off).
+static int dre_budget_probe(int x) {
+    if (x == 1) x = 2;
+    if (x == 2) x = 3;
+    if (x == 3) x = 4;
+    if (x == 4) x = 5;
+    if (x == 5) x = 6;
+    if (x == 6) x = 7;
+    if (x == 7) x = 8;
+    if (x == 8) x = 9;
+    if (x == 9) x = 10;
+    if (x == 10) x = 11;
+    return x;
+}
+
 void Win::draw_rect_edges(RECT *rect, HGDIOBJ light_pen, HGDIOBJ dark_pen,
                           int unused) {
-    // The image is draw_rect_border inlined, its four line helpers with it.
-    draw_rect_border(rect->left, rect->top, rect->right, rect->bottom,
-                     light_pen, dark_pen, unused);
+    dre_budget_probe(0);  // WORKAROUND(inline), see above
+    // The image is the four line helpers of draw_rect_border, expanded
+    // directly. Declaration order (bottom, right, top, left) picks the
+    // image's frame slots; 23 of the 24 orders measured miss.
+    int y2 = rect->bottom;
+    int x2 = rect->right;
+    int y1 = rect->top;
+    int x1 = rect->left;
+    sub_5ef1e0(x1 + 1, y1, x2 + 1, y1, light_pen, unused);
+    sub_5ef1e0(x1, y2, x2, y2, dark_pen, unused);
+    sub_5ef1e0(x1, y1, x1, y2, light_pen, unused);
+    sub_5ef1e0(x2, y1 + 1, x2, y2 + 1, dark_pen, unused);
 }
 
 // Superseded seed removed; complete operation now belongs to Win.
