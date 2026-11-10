@@ -5678,8 +5678,6 @@ void ReportIf::close_labs() {
 // TRIED: raw self+offset transcription with manual ListBox/Dialog virtual-base adjustor arithmetic (vtable[+8]/[+4] thunks) for both energy-facility and support-facility ListBox blocks diverges at instr #8 (mov vs lea); not chased further given the 2935-byte, dual-listbox scope.
 void ReportIf::draw_energy() {
     char text_a[80];
-    char text_b[80];
-    char text_c[80];
     energy_compute(report_faction_id_, 0);
     MainInterfaceGlobal.Buffer::set_clip(&field_20_);
     field_C_ = field_20_.left + 6;
@@ -5712,6 +5710,8 @@ void ReportIf::draw_energy() {
     listBox1_.set_report_text_color(0xF2);
     for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
         if (Bases[base].faction_id_current == report_faction_id_) {
+            char text_b[80];
+            char text_c[80];
             StringTemp[0] = 0;
             say_base(StringTemp, base);
             strcat(StringTemp, "|");
@@ -5747,8 +5747,8 @@ void ReportIf::draw_energy() {
 
     MainInterfaceGlobal.Buffer::set_clip(&field_50_);
     int inset = field_1E230_ ? 0x4C : 0;
-    field_10_ = field_50_.top;
     field_C_ = field_50_.left + inset;
+    field_10_ = field_50_.top;
     field_14_ = report_rect_width(&field_50_) - inset;
     field_18_ = report_rect_height(&field_50_);
     StringTemp[0] = 0;
@@ -5807,6 +5807,8 @@ void ReportIf::draw_energy() {
     for (int facility = 0; facility < 70; ++facility) {
         // Zero counts skip this row, not the remainder of the table.
         if (EnergyFacilityCounts[facility]) {
+            char text_b[80];
+            char text_c[80];
             StringTemp[0] = 0;
             _itoa(EnergyFacilityCounts[facility], text_a, 10);
             strcat(StringTemp, text_a);
@@ -5817,8 +5819,8 @@ void ReportIf::draw_energy() {
             strcat(StringTemp, "-");
             if (has_project(SP_PLANETARY_ENERGY_GRID, report_faction_id_)) {
                 int odd = fac_maint(facility, report_faction_id_) * EnergyFacilityCounts[facility] & 1;
-                int cost = fac_maint(facility, report_faction_id_) * EnergyFacilityCounts[facility];
-                _itoa(cost / 2, text_b, 10);
+                int cost = fac_maint(facility, report_faction_id_) * EnergyFacilityCounts[facility] / 2;
+                _itoa(cost, text_b, 10);
                 strcat(StringTemp, text_b);
                 if (odd) strcat(StringTemp, ".5");
             } else {
@@ -5891,17 +5893,14 @@ void ReportIf::draw_ops() {
                              report_rect_width(&field_20_) - 12, 26);
     RECT *const workspace = &draw_workspace_rect_;
     MainInterfaceGlobal.Buffer::box_sprite(workspace, &InterfaceBoxStyles[3]);
-    draw_workspace_rect_.top = draw_workspace_rect_.bottom;
-    draw_workspace_rect_.bottom = field_20_.bottom - 6;
+    workspace->top = workspace->bottom;
+    workspace->bottom = field_20_.bottom - 6;
     MainInterfaceGlobal.Buffer::box_sprite(workspace, &InterfaceBoxStyles[3]);
     flatButton3_.show(0);
     flatButton4_.show(0);
     if (buttonGroup2_.field_84_ == 0xD0B) {
         scroll_small();
-        workspace->left = field_C_;
-        workspace->top = field_10_;
-        workspace->right = field_C_ + field_14_;
-        workspace->bottom = field_10_ + field_18_;
+        set_rectangle_dimensions(workspace, field_C_, field_10_, field_14_, field_18_);
         ListBox *list = &listBox1_;
         list->close();
         list->Dialog::init(workspace, 0);
@@ -5926,7 +5925,7 @@ void ReportIf::draw_ops() {
                 if (Bases[base].faction_id_current == report_faction_id_) {
                     set_base(base);
                     base_compute(0);
-                    if (BaseCurrent->mineral_surplus > best || winner == -1) {
+                    if (BaseCurrent->mineral_surplus > best || winner + 1 == 0) {
                         best = BaseCurrent->mineral_surplus;
                         winner = base;
                     }
@@ -5947,7 +5946,7 @@ void ReportIf::draw_ops() {
                 if (Bases[base].faction_id_current == report_faction_id_) {
                     set_base(base);
                     base_compute(0);
-                    if (BaseCurrent->nutrient_surplus > best || winner == -1) {
+                    if (BaseCurrent->nutrient_surplus > best || winner + 1 == 0) {
                         best = BaseCurrent->nutrient_surplus;
                         winner = base;
                     }
@@ -5967,7 +5966,7 @@ void ReportIf::draw_ops() {
                 if (Bases[base].faction_id_current == report_faction_id_) {
                     set_base(base);
                     base_compute(0);
-                    if (BaseCurrent->economy_total > best || winner == -1) {
+                    if (BaseCurrent->economy_total > best || winner + 1 == 0) {
                         best = BaseCurrent->economy_total;
                         winner = base;
                     }
@@ -5987,7 +5986,7 @@ void ReportIf::draw_ops() {
                 if (Bases[base].faction_id_current == report_faction_id_) {
                     set_base(base);
                     base_compute(0);
-                    if (BaseCurrent->labs_total > best || winner == -1) {
+                    if (BaseCurrent->labs_total > best || winner + 1 == 0) {
                         best = BaseCurrent->labs_total;
                         winner = base;
                     }
@@ -6007,7 +6006,7 @@ void ReportIf::draw_ops() {
                 if (Bases[base].faction_id_current == report_faction_id_) {
                     set_base(base);
                     base_compute(0);
-                    if (BaseCurrent->psych_total > best || winner == -1) {
+                    if (BaseCurrent->psych_total > best || winner + 1 == 0) {
                         best = BaseCurrent->psych_total;
                         winner = base;
                     }
@@ -6027,7 +6026,7 @@ void ReportIf::draw_ops() {
                 if (Bases[base].faction_id_current == report_faction_id_) {
                     set_base(base);
                     base_compute(0);
-                    if (BaseCurrent->population_size > best || winner == -1) {
+                    if (BaseCurrent->population_size > best || winner + 1 == 0) {
                         best = BaseCurrent->population_size;
                         winner = base;
                     }
@@ -6058,7 +6057,7 @@ void ReportIf::draw_ops() {
                             vehicle = Vehs[vehicle].next_veh_id_stack;
                         }
                     }
-                    if (count > best || winner == -1) {
+                    if (count > best || winner + 1 == 0) {
                         best = count;
                         winner = base;
                     }
@@ -6088,7 +6087,7 @@ void ReportIf::draw_ops() {
                             count += 5;
                         }
                     }
-                    if (count > best || winner == -1) {
+                    if (count > best || winner + 1 == 0) {
                         best = count;
                         winner = base;
                     }
@@ -6103,7 +6102,7 @@ void ReportIf::draw_ops() {
         listBox1_.Dialog::field_B4_ = 0;
         list->ListBox::attach(&MainInterfaceGlobal, list->Dialog::window_x_, list->Dialog::window_y_, 0x80020);
         listBox1_.set_selected_id(ReportWinGlobal.shared_report_selection());
-        static_cast<GraphicWin &>(listBox1_).show(0);
+        listBox1_.show(0);
         scroll_normal();
         MainInterfaceGlobal.Buffer::set_clip(MainInterfaceGlobal.buffer_working_rect());
     } else {
@@ -6117,11 +6116,11 @@ void ReportIf::draw_ops() {
         flatButton11_.show(0);
     }
     MainInterfaceGlobal.Buffer::set_clip(&field_50_);
-    field_10_ = field_50_.top;
-    const int inset = field_1E230_ != 0 ? 76 : 0;
+    int inset = field_1E230_ ? 0x4C : 0;
     field_C_ = field_50_.left + inset;
-    field_14_ = field_50_.right - inset - field_50_.left;
-    field_18_ = field_50_.bottom - field_50_.top;
+    field_10_ = field_50_.top;
+    field_14_ = report_rect_width(&field_50_) - inset;
+    field_18_ = report_rect_height(&field_50_);
     StringTemp[0] = 0;
     MainInterfaceGlobal.Buffer::set_font(field_1E190_, field_1E194_, field_1E198_, 0);
     MainInterfaceGlobal.Buffer::set_text_color(0xE1, -1, 1, 1);
@@ -6151,14 +6150,11 @@ void ReportIf::draw_ops() {
     MainInterfaceGlobal.Buffer::set_clip(&field_30_);
     field_C_ = field_30_.left + 6;
     field_10_ = field_30_.top + 6;
-    field_14_ = field_30_.right - field_30_.left - 12;
-    field_18_ = field_30_.bottom - field_30_.top - 12;
+    field_14_ = report_rect_width(&field_30_) - 12;
+    field_18_ = report_rect_height(&field_30_) - 12;
     MainInterfaceGlobal.Buffer::box_sprite(&field_30_, &InterfaceBoxStyles[33]);
-    workspace->left = field_C_;
-    workspace->top = field_10_;
-    workspace->right = field_C_ + field_14_;
-    workspace->bottom = field_10_ + field_1C_ + 6;
-    inflate_frame(workspace, 3, 3);
+    set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, field_1C_ + 6);
+    inflate_frame(&draw_workspace_rect_, 3, 3);
     MainInterfaceGlobal.Buffer::box_sprite(workspace, &InterfaceBoxStyles[3]);
     inflate_frame(workspace, -3, -3);
     MainInterfaceGlobal.Buffer::box_sprite(workspace, &InterfaceBoxStyles[0]);
@@ -6216,11 +6212,11 @@ void ReportIf::draw_projects() {
     StringList description;
     if (report_page_history_[1] != 4 && report_page_history_[1] != 5) {
         WorldClimateWorldWin.show_all();
-        MainInterfaceGlobal.flat_button_[6].show(0);
-        MainInterfaceGlobal.flat_button_[7].show(0);
+        for (int button = 6; button <= 7; ++button) {
+            MainInterfaceGlobal.flat_button_[button].show(0);
+        }
     }
-    Buffer *const buffer = static_cast<Buffer *>(&MainInterfaceGlobal);
-    buffer->set_clip(&field_20_);
+    MainInterfaceGlobal.Buffer::set_clip(&field_20_);
     field_C_ = field_20_.left + 6;
     field_10_ = field_20_.top + 6;
     field_14_ = field_20_.right - field_20_.left - 12;
@@ -6232,16 +6228,16 @@ void ReportIf::draw_projects() {
     draw_workspace_rect_.top = field_10_;
     draw_workspace_rect_.right = field_C_ + field_14_;
     draw_workspace_rect_.bottom = field_10_ + field_1C_ + 6;
-    buffer->box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
+    MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
     draw_workspace_rect_.top = draw_workspace_rect_.bottom + 2;
     draw_workspace_rect_.bottom = field_20_.bottom - 6;
-    buffer->box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
+    MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
 
     draw_workspace_rect_.left += 3;
     draw_workspace_rect_.right -= 3;
     draw_workspace_rect_.top += 3;
     draw_workspace_rect_.bottom -= 3;
-    buffer->set_font(field_1E184_, field_1E194_, field_1E198_, nullptr);
+    MainInterfaceGlobal.Buffer::set_font(field_1E184_, field_1E194_, field_1E198_, nullptr);
     StringTemp[0] = 0;
     strcat(StringTemp, "[");
     strcat(StringTemp, label_get(0x32A));
@@ -6256,8 +6252,8 @@ void ReportIf::draw_projects() {
         if (ReportWinGlobal.shared_report_selection() == -1) {
             StringTemp[0] = 0;
             strcat(StringTemp, label_get(0x32B));
-            buffer->set_text_color(0xE1, -1, 1, 1);
-            buffer->wrap(StringTemp, draw_workspace_rect_.left,
+            MainInterfaceGlobal.Buffer::set_text_color(0xE1, -1, 1, 1);
+            MainInterfaceGlobal.Buffer::wrap(StringTemp, draw_workspace_rect_.left,
                 draw_workspace_rect_.top,
                 draw_workspace_rect_.right - draw_workspace_rect_.left);
         }
@@ -6276,27 +6272,27 @@ void ReportIf::draw_projects() {
         if (description.load(DatalinkHelpFile, StringTemp, 1, 0) == 0) {
             const int width = draw_workspace_rect_.right - draw_workspace_rect_.left;
             if (draw_workspace_rect_.bottom - draw_workspace_rect_.top
-                < buffer->write_strings_height(&description, width, 0)) {
+                < MainInterfaceGlobal.Buffer::write_strings_height(&description, width, 0)) {
                 Font *italic = find_font(10, 1);
                 Font *bold = find_font(10, 2);
                 Font *normal = find_font(10, 0);
-                buffer->set_font(normal, bold, italic, 0);
+                MainInterfaceGlobal.Buffer::set_font(normal, bold, italic, 0);
             }
-            buffer->set_text_color(0xE1, -1, 1, 1);
-            buffer->write_strings(&description, draw_workspace_rect_.left,
+            MainInterfaceGlobal.Buffer::set_text_color(0xE1, -1, 1, 1);
+            MainInterfaceGlobal.Buffer::write_strings(&description, draw_workspace_rect_.left,
                 draw_workspace_rect_.top, width, 0);
         }
     }
 
-    buffer->set_clip(MainInterfaceGlobal.buffer_working_rect());
-    buffer->set_clip(&field_50_);
+    MainInterfaceGlobal.Buffer::set_clip(MainInterfaceGlobal.buffer_working_rect());
+    MainInterfaceGlobal.Buffer::set_clip(&field_50_);
     field_10_ = field_50_.top;
     const int inset = field_1E230_ ? 0x4C : 0;
     field_C_ = field_50_.left + inset;
     field_14_ = field_50_.right - field_50_.left - inset;
     field_18_ = field_50_.bottom - field_50_.top;
-    buffer->set_font(field_1E190_, field_1E194_, field_1E198_, nullptr);
-    buffer->set_text_color(0xE1, -1, 1, 1);
+    MainInterfaceGlobal.Buffer::set_font(field_1E190_, field_1E194_, field_1E198_, nullptr);
+    MainInterfaceGlobal.Buffer::set_text_color(0xE1, -1, 1, 1);
     StringTemp[0] = 0;
     strcat(StringTemp, Players[report_faction_id_].adj_name_faction);
     CharUpperA(StringTemp);
@@ -6310,34 +6306,34 @@ void ReportIf::draw_projects() {
         say_year(StringTemp);
     }
     MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 10, field_14_);
-    buffer->set_font(field_1E180_, field_1E180_, field_1E180_, 0);
-    buffer->set_text_color(0x99, -1, 1, 1);
+    MainInterfaceGlobal.Buffer::set_font(field_1E180_, field_1E180_, field_1E180_, 0);
+    MainInterfaceGlobal.Buffer::set_text_color(0x99, -1, 1, 1);
     field_10_ += field_1C_ * 2;
-    buffer->set_clip(MainInterfaceGlobal.buffer_working_rect());
+    MainInterfaceGlobal.Buffer::set_clip(MainInterfaceGlobal.buffer_working_rect());
 
-    buffer->set_clip(&field_30_);
+    MainInterfaceGlobal.Buffer::set_clip(&field_30_);
     field_C_ = field_30_.left + 6;
     field_10_ = field_30_.top + 6;
     field_14_ = field_30_.right - field_30_.left - 12;
     field_18_ = field_30_.bottom - field_30_.top - 12;
-    buffer->box_sprite(&field_30_, &InterfaceBoxStyles[33]);
+    MainInterfaceGlobal.Buffer::box_sprite(&field_30_, &InterfaceBoxStyles[33]);
     draw_workspace_rect_.left = field_C_ - 3;
     draw_workspace_rect_.top = field_10_ - 3;
     draw_workspace_rect_.right = field_C_ + field_14_ + 3;
     draw_workspace_rect_.bottom = field_10_ + field_1C_ + 9;
-    buffer->box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[3]);
+    MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[3]);
     draw_workspace_rect_.left += 3;
     draw_workspace_rect_.top += 3;
     draw_workspace_rect_.right -= 3;
     draw_workspace_rect_.bottom -= 3;
-    buffer->box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
-    buffer->set_font(field_1E190_, field_1E194_, field_1E198_, nullptr);
+    MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
+    MainInterfaceGlobal.Buffer::set_font(field_1E190_, field_1E194_, field_1E198_, nullptr);
     StringTemp[0] = 0;
     strcat(StringTemp, "[");
     strcat(StringTemp, label_get(0x3C3));
     strcat(StringTemp, "]");
     MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 4, field_14_);
-    buffer->set_clip(MainInterfaceGlobal.buffer_working_rect());
+    MainInterfaceGlobal.Buffer::set_clip(MainInterfaceGlobal.buffer_working_rect());
     StringTemp[0] = 0;
     MainInterfaceGlobal.set_date(StringTemp);
 }
@@ -6385,10 +6381,16 @@ void ReportIf::draw_sat() {
             MainInterfaceGlobal.Buffer::wrap_flying(paragraph, field_C_, field_10_, field_14_);
             MainInterfaceGlobal.Buffer::set_text_color(0xE1, -1, 1, 1);
             char *text;
-            while ((text = text_get()) != 0) {
-                if (!*text) {
+            while (1) {
+                text = text_get();
+                if (text == 0) {
+                    text_close();
+                    break;
+                }
+                if (*text == 0) {
                     if (strlen(paragraph) > 0) MainInterfaceGlobal.Buffer::wrap_flying(paragraph);
                     MainInterfaceGlobal.Buffer::wrap_flying_flush();
+                    text_close();
                     break;
                 }
                 line[0] = 0;
@@ -6396,7 +6398,6 @@ void ReportIf::draw_sat() {
                 strcat(paragraph, line);
                 strcat(paragraph, " ");
             }
-            text_close();
         }
     } else {
         field_C_ = field_20_.left + 6;
@@ -6481,10 +6482,16 @@ void ReportIf::draw_sat() {
             MainInterfaceGlobal.Buffer::wrap_flying(paragraph, field_C_, field_10_, field_14_);
             MainInterfaceGlobal.Buffer::set_text_color(0xE1, -1, 1, 1);
             char *text;
-            while ((text = text_get()) != 0) {
-                if (!*text) {
+            while (1) {
+                text = text_get();
+                if (text == 0) {
+                    text_close();
+                    break;
+                }
+                if (*text == 0) {
                     if (strlen(paragraph) > 0) MainInterfaceGlobal.Buffer::wrap_flying(paragraph);
                     MainInterfaceGlobal.Buffer::wrap_flying_flush();
+                    text_close();
                     break;
                 }
                 line[0] = 0;
@@ -6492,7 +6499,6 @@ void ReportIf::draw_sat() {
                 strcat(paragraph, line);
                 strcat(paragraph, " ");
             }
-            text_close();
         }
     } else {
         field_C_ = field_30_.left + 6;
@@ -6517,7 +6523,7 @@ void ReportIf::draw_sat() {
         field_14_ = report_rect_width(&field_30_) - 18;
         int target = buttonGroup3_.field_84_;
         if (target < 1 || target >= 8) target = -1;
-        if (target != -1) {
+        if (target + 1 != 0) {
             field_1E234_ = 1;
             int selected = buttonGroup4_.field_84_;
             if (selected < 65 || selected >= 70) selected = -1;
@@ -6540,7 +6546,7 @@ void ReportIf::draw_sat() {
                 FlatButton *button = &flatButtonsD_[kind];
                 report_button_init(button, StringTemp, kind + 65, &draw_workspace_rect_,
                                    &MainInterfaceGlobal, 0);
-                static_cast<Buffer *>(button)->set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+                button->Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
                 button->redraw();
                 button->hide();
                 elevators = 0;
