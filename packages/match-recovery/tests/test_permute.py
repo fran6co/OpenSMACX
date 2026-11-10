@@ -153,6 +153,41 @@ def test_temporaries_hoist_and_inline():
     assert all("tmp_p0" not in item for item in compacted("x = a && f(b);", "temporary"))
 
 
+def test_continue_guard_both_directions():
+    assert compacted("for (i = 0; i < n; ++i) { f(i); if (a[i]) { g(i); h(); } }", "continue_guard") == [
+        "for ( i = 0 ; i < n ; ++ i ) { f ( i ) ; if ( ! ( a [ i ] ) ) continue ; g ( i ) ; h ( ) ; }"]
+    assert compacted("while (p) { if (!ok(p)) continue; use(p); p = p->next; }", "continue_guard") == [
+        "while ( p ) { if ( ok ( p ) ) { use ( p ) ; p = p -> next ; } }"]
+    # Unwrapping would redeclare `t` in the loop body's scope.
+    assert compacted("while (p) { int t = 1; if (c) { int t = 2; g(t); } }", "continue_guard") == []
+    assert compacted("while (p) { if (c) { g(); } h(); }", "continue_guard") == []
+
+
+def test_shared_return_both_directions_and_refuses_skipped_declarations():
+    out = compacted("if (a) return 0; f(); if (b) { return 0; } g(); return 0;", "shared_return")
+    assert out == [
+        "if ( a ) goto shared_return ; f ( ) ; if ( b ) { return 0 ; } g ( ) ; shared_return : return 0 ;",
+        "if ( a ) return 0 ; f ( ) ; if ( b ) { goto shared_return ; } g ( ) ; shared_return : return 0 ;",
+        "if ( a ) goto shared_return ; f ( ) ; if ( b ) { goto shared_return ; } g ( ) ; shared_return : return 0 ;"]
+    assert compacted("if (a) return; f();", "shared_return") == [
+        "if ( a ) goto shared_return ; f ( ) ; shared_return : ;"]
+    assert compacted("if (a) goto done; f(); done: return 0;", "shared_return") == [
+        "if ( a ) return 0 ; f ( ) ; return 0 ;"]
+    assert compacted("int r = 0; if (a) return r; int q = 2; return r;", "shared_return") == []
+    assert compacted("if (a) return 1; return 0;", "shared_return") == []
+
+
+def test_break_goto_both_directions_and_binds_breaks_to_their_owner():
+    out = compacted("for (;;) { if (x) break; switch (y) { case 1: break; } }", "break_goto")
+    assert out == [
+        "for ( ; ; ) { if ( x ) goto loop_exit ; switch ( y ) { case 1 : break ; } } loop_exit : ;",
+        "for ( ; ; ) { if ( x ) break ; switch ( y ) { case 1 : goto loop_exit ; } loop_exit : ; }"]
+    assert compacted("while (x) { if (y) goto done; f(); } done: g();", "break_goto") == [
+        "while ( x ) { if ( y ) break ; f ( ) ; } g ( ) ;"]
+    assert compacted("while (x) { if (y) goto done; f(); } done: g(); goto done;", "break_goto") == [
+        "while ( x ) { if ( y ) break ; f ( ) ; } done : g ( ) ; goto done ;"]
+
+
 def test_mutations_stay_inside_their_body_text():
     text = "int v = a + b;\n    if (v < 3) { g(v); } else { h(); }\n"
     for site in mutation_sites(text):

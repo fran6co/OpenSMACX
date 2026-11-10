@@ -1198,6 +1198,208 @@ def probe_variants(text: str, parameters: str = "", *, sizes=PROBE_SIZES,
     return variants
 
 
+# ------------------------------------------------------- control-flow forms
+
+_BREAKABLE = ("for", "while", "do", "switch")
+
+
+def _children(node: Node) -> list:
+    return list(node.children) + [c for c in (node.then, node.other, node.body) if c is not None]
+
+
+def _direct_jumps(body: Body, node: Node, word: str) -> list[Node]:
+    """`word` jumps that bind to `node`: nested loops and switches own theirs."""
+    found = []
+
+    def visit(item):
+        if item.kind == "jump":
+            if body.sig[item.start].text == word:
+                found.append(item)
+            return
+        if item is not node and item.kind in _BREAKABLE:
+            return
+        for child in _children(item):
+            visit(child)
+    visit(node)
+    return found
+
+
+def _fresh_label(body: Body, stem: str) -> str:
+    used = {token.text for token in body.sig if token.kind == "ident"}
+    name, number = stem, 1
+    while name in used:
+        name, number = f"{stem}_{number}", number + 1
+    return name
+
+
+def _goto_count(body: Body, label: str) -> int:
+    return sum(1 for at in range(len(body.sig) - 1)
+               if body.sig[at].text == "goto" and body.sig[at + 1].text == label)
+
+
+def _inner_text(body: Body, node: Node) -> str:
+    """A statement's text without its braces, comments kept."""
+    if node.kind != "block":
+        return body.source(node.start, node.end)
+    return body.text[body.sig[node.start].end:body.sig[node.end - 1].start].strip()
+
+
+def _rewrite(body: Body, start: int, end: int, edits) -> str:
+    """Text of significant tokens [start, end) after (low, high, text) character edits."""
+    low, high = body.span(start, end)
+    out, cursor = [], low
+    for edit_low, edit_high, text in sorted(edits):
+        out.append(body.text[cursor:edit_low])
+        out.append(text)
+        cursor = edit_high
+    out.append(body.text[cursor:high])
+    return "".join(out)
+
+
+def _declared_in(body: Body, nodes) -> set:
+    return {name for node in nodes if node.kind == "decl" for name in body.declared(node)}
+
+
+def continue_guards(body: Body) -> list[Mutation]:
+    """`if (c) { A }` ending a loop body <-> `if (!c) continue; A`."""
+    sites = []
+    for loop in body.walk():
+        if loop.kind not in ("for", "while", "do") or loop.body is None or loop.body.kind != "block":
+            continue
+        items = loop.body.children
+        if not items:
+            continue
+        last = items[-1]
+        if last.kind == "if" and last.other is None:
+            inner = last.then.children if last.then.kind == "block" else [last.then]
+            if (inner and not any(item.kind == "label" for item in inner)
+                    and not _declared_in(body, items[:-1]) & _declared_in(body, inner)):
+                text = f"if ({_negate(body, *last.cond)}) continue; {_inner_text(body, last.then)}"
+                sites.append(_edit(body, "continue_guard", last.start, last.end, text,
+                                   f"guard `if ({body.source(*last.cond)[:50]})` with continue"))
+        for index, item in enumerate(items[:-1]):
+            if item.kind != "if" or item.other is not None:
+                continue
+            then = item.then
+            if then.kind == "block":
+                if len(then.children) != 1:
+                    continue
+                then = then.children[0]
+            if then.kind != "jump" or body.sig[then.start].text != "continue":
+                continue
+            rest = items[index + 1:]
+            if any(node.kind == "label" for node in rest):
+                continue
+            first, final = rest[0], rest[-1]
+            inner = body.text[body.span(first.start, first.end)[0]:body.span(final.start, final.end)[1]]
+            text = f"if ({_negate(body, *item.cond)}) {{ {inner} }}"
+            low, _ = body.span(item.start, item.end)
+            _, high = body.span(final.start, final.end)
+            sites.append(Mutation("continue_guard", low, high, text,
+                                  f"nest the rest under `if ({body.source(*item.cond)[:50]})`"))
+    return sites
+
+
+def _outer_index(body: Body, node: Node) -> int:
+    for index, item in enumerate(body.statements):
+        if item.start <= node.start < item.end:
+            return index
+    raise ValueError("node outside the body")
+
+
+def _skips_declaration(body: Body, node: Node, until: int) -> bool:
+    """A goto from `node` to a label at outer index `until` jumps past a declaration."""
+    return any(item.kind == "decl" for item in body.statements[_outer_index(body, node) + 1:until])
+
+
+def shared_returns(body: Body) -> list[Mutation]:
+    """Early `return X;` <-> `goto` a label on the identical final return."""
+    sites, outer = [], body.statements
+    if not outer:
+        return sites
+    returns = [node for node in body.walk() if node.kind == "jump" and body.sig[node.start].text == "return"]
+    final = outer[-1]
+    label = _fresh_label(body, "shared_return")
+    if final.kind == "jump" and body.sig[final.start].text == "return":
+        key = [token.text for token in body.sig[final.start:final.end]]
+        early = [node for node in returns if node is not final
+                 and [token.text for token in body.sig[node.start:node.end]] == key
+                 and not _skips_declaration(body, node, len(outer) - 1)]
+        final_low, final_high = body.span(final.start, final.end)
+        labelled = (final_low, final_high, f"{label}: {body.source(final.start, final.end)}")
+        for group in ([[node] for node in early] + ([early] if len(early) > 1 else [])):
+            edits = [(*body.span(node.start, node.end), f"goto {label};") for node in group]
+            text = _rewrite(body, group[0].start, final.end, [*edits, labelled])
+            sites.append(Mutation("shared_return", body.span(group[0].start, group[0].end)[0], final_high,
+                                  text, f"{len(group)} return(s) -> goto shared final return"))
+    elif returns and all(node.end - node.start == 2 for node in returns):
+        early = [node for node in returns if not _skips_declaration(body, node, len(outer))]
+        _, end_high = body.span(final.start, final.end)
+        tail = (end_high, end_high, f" {label}: ;")
+        for group in ([[node] for node in early] + ([early] if len(early) > 1 else [])):
+            edits = [(*body.span(node.start, node.end), f"goto {label};") for node in group]
+            text = _rewrite(body, group[0].start, final.end, [*edits, tail])
+            sites.append(Mutation("shared_return", body.span(group[0].start, group[0].end)[0], end_high,
+                                  text, f"{len(group)} void return(s) -> goto end"))
+    # Reverse: `goto L;` to `L: return X;` (or `L: ;` ending the body) becomes the return itself.
+    for index, item in enumerate(outer):
+        if item.kind != "label" or item.end - item.start != 2:
+            continue
+        name = body.sig[item.start].text
+        following = outer[index + 1] if index + 1 < len(outer) else None
+        if following is not None and following.kind == "jump" and body.sig[following.start].text == "return":
+            value = body.source(following.start, following.end)
+        elif following is not None and following.kind == "empty" and index + 2 == len(outer):
+            value = "return;"
+        else:
+            continue
+        gotos = [node for node in body.walk() if node.kind == "jump" and body.sig[node.start].text == "goto"
+                 and body.sig[node.start + 1].text == name and node.end <= item.start]
+        for node in gotos:
+            edits = [(*body.span(node.start, node.end), value)]
+            end = node.end
+            if _goto_count(body, name) == 1:
+                edits.append((*body.span(item.start, item.end), ""))
+                end = item.end
+            sites.append(Mutation("shared_return", *body.span(node.start, end),
+                                  _rewrite(body, node.start, end, edits),
+                                  f"`goto {name};` -> `{value[:40]}`"))
+    return sites
+
+
+def break_gotos(body: Body) -> list[Mutation]:
+    """`break;` <-> `goto` a label just after its loop or switch."""
+    sites = []
+    for statements in body.blocks():
+        for index, loop in enumerate(statements):
+            if loop.kind not in _BREAKABLE:
+                continue
+            following = statements[index + 1] if index + 1 < len(statements) else None
+            breaks = _direct_jumps(body, loop, "break")
+            if breaks:
+                label = _fresh_label(body, "loop_exit")
+                _, loop_high = body.span(loop.start, loop.end)
+                tail = (loop_high, loop_high, f" {label}: ;")
+                for group in ([[node] for node in breaks] + ([breaks] if len(breaks) > 1 else [])):
+                    edits = [(*body.span(node.start, node.end), f"goto {label};") for node in group]
+                    sites.append(Mutation("break_goto", body.span(group[0].start, group[0].end)[0], loop_high,
+                                          _rewrite(body, group[0].start, loop.end, [*edits, tail]),
+                                          f"{len(group)} break(s) -> goto after the {loop.kind}"))
+            if following is None or following.kind != "label" or following.end - following.start != 2:
+                continue
+            name = body.sig[following.start].text
+            gotos = [node for node in _direct_jumps(body, loop, "goto") if body.sig[node.start + 1].text == name]
+            for node in gotos:
+                edits = [(*body.span(node.start, node.end), "break;")]
+                end = node.end
+                if _goto_count(body, name) == 1:
+                    edits.append((*body.span(following.start, following.end), ""))
+                    end = following.end
+                sites.append(Mutation("break_goto", *body.span(node.start, end),
+                                      _rewrite(body, node.start, end, edits), f"`goto {name};` -> `break;`"))
+    return sites
+
+
 OPERATORS = {
     "split_declaration": split_declarations,
     "swap_statements": swap_adjacent,
@@ -1211,6 +1413,9 @@ OPERATORS = {
     "ternary": ternary_forms,
     "shift_multiply": shift_multiply,
     "temporary": temporaries,
+    "continue_guard": continue_guards,
+    "shared_return": shared_returns,
+    "break_goto": break_gotos,
 }
 # Stand-in operators insert marked non-recovered code; they run only when named.
 OPT_IN_OPERATORS = {
