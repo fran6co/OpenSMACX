@@ -507,11 +507,23 @@ runs to the next label (or the section end); it must hold no relocation or alias
 the declared span must end at the terminator, and only zero alignment padding may
 follow it. `$SG` numbers are positional within the TU: adding or removing an earlier
 literal renumbers them, and a stale binding then names a missing or different label
-and refuses or fails rather than passing. Other ordinary/static or ambiguous
+and refuses or fails rather than passing. `uv run recover rebind-literals --image
+<image> [--unit <tu> ...] [--since <rev>] [--write]` re-identifies such stale symbols:
+it compiles each selected TU through the configured compiler, finds the `$SG` labels
+whose storage (by the rule above) holds exactly the original `[start, end)` bytes,
+and resolves identical unpooled duplicates only by a label shift every proven
+binding in the TU admits, else by a unique assignment that keeps the bindings'
+existing label order. It reports `previous -> symbol` per line and is a dry run
+(exit 1 when rebinds are pending) unless `--write`, which rewrites only the symbol
+token through the guarded publisher. Valid bindings stay untouched; ambiguous,
+missing or trial-disagreeing ones are reported unproven (exit 3), never guessed.
+Extents, evidence addresses and claims never change, so this is not the content
+search forbidden below. Other ordinary/static or ambiguous
 storage remains unknown. Embedded-NUL and wide data use the full section,
 not a first-terminator guess. Bindings do not prove linker selection or lifetime.
 Use the pure `literal_writer.write_literal_bytes` for reviewed additions against
-the complete parsed source snapshot. It preserves existing source bytes and
+the complete parsed source snapshot (`rewrite_literal_symbols` is its
+symbol-token-only counterpart, used by `rebind-literals`). It preserves existing source bytes and
 bindings and refuses unsafe insertion anchors; the coordinator still owns
 freshness, independent correspondence review and guarded on-disk publication.
 Removing, moving or rebinding a declaration retains its historical obligations;

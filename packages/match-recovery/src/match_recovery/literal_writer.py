@@ -1,14 +1,15 @@
 """Pure, guarded insertion of source-owned literal annotations.
 
 The writer adds reviewed bindings to a complete current source snapshot. It
-does not infer symbols, alter literal contents or publish files.
+does not infer symbols, alter literal contents or publish files. A separate
+symbol-only rewrite updates the emitted-symbol fact of existing bindings.
 """
 
 from __future__ import annotations
 
-from dataclasses import asdict
+from dataclasses import asdict, replace
 import re
-from typing import Sequence
+from typing import Mapping, Sequence
 
 from match_recovery.components import relative_path
 from match_recovery.model import Origin, Span, require_digest, require_text
@@ -111,4 +112,56 @@ def write_literal_bytes(raw: bytes, *, expected: Sequence[LiteralBinding],
         raise ValueError("literal annotation round-trip changed its identity")
     if len(reread) != len(all_rows):
         raise ValueError("literal annotation round-trip changed its population")
+    return result
+
+
+_MARKER_LINE = re.compile(
+    rb"(// RECOVERY_LITERAL: (?:v1|v2 merged) 0x[0-9A-Fa-f]+ 0x[0-9A-Fa-f]+ )(\S+)( 0x[0-9A-Fa-f]+)")
+
+
+def rewrite_literal_symbols(raw: bytes, *, expected: Sequence[LiteralBinding],
+                            changes: Mapping[int, tuple[str, str]], path: str,
+                            pin: str, address_space: str) -> bytes:
+    """Replace only the emitted-symbol token of selected literal lines.
+
+    ``expected`` must be the complete ``parse_literals`` snapshot for ``path``;
+    ``changes`` maps a one-based annotation line to ``(previous, new)``. Every
+    other byte, the original extent, evidence and v1/v2 form are preserved and
+    re-verified by a parse round trip. Returns bytes; freshness and guarded
+    disk publication remain the caller's responsibility.
+    """
+    if type(raw) is not bytes:
+        raise ValueError("literal source rewriting requires original bytes")
+    if not changes:
+        raise ValueError("literal symbol rewrite requires at least one change")
+    relative_path(path)
+    require_digest(pin)
+    require_text(address_space, "address space")
+    text = raw.decode("utf-8", errors="surrogateescape")
+    if re.search(r"[\v\f\x1c-\x1e\x85  ]", text):
+        raise ValueError("unsupported source line separator")
+    parsed = parse_literals(text, path, pin, address_space=address_space)
+    if tuple(asdict(row) for row in parsed) != tuple(asdict(row) for row in expected):
+        raise ValueError("literal update requires a current complete source snapshot")
+    by_line = {row.line: row for row in parsed}
+    lines = raw.splitlines(keepends=True)
+    for line, (previous, symbol) in changes.items():
+        _symbol_token(symbol)
+        row = by_line.get(line)
+        if row is None or row.symbol != previous or previous == symbol:
+            raise ValueError(f"no literal annotation at {path}:{line} names {previous}")
+        found = list(_MARKER_LINE.finditer(lines[line - 1]))
+        if len(found) != 1 or found[0].group(2) != previous.encode("ascii"):
+            raise ValueError(f"literal annotation at {path}:{line} is not one rewritable marker")
+        match = found[0]
+        lines[line - 1] = (lines[line - 1][:match.start(2)] + symbol.encode("ascii")
+                           + lines[line - 1][match.end(2):])
+    result = b"".join(lines)
+    reread = parse_literals(result.decode("utf-8", errors="surrogateescape"),
+                            path, pin, address_space=address_space)
+    wanted = [replace(row, symbol=changes[row.line][1]) if row.line in changes else row
+              for row in parsed]
+    if [_identity(row) for row in reread] != [_identity(row) for row in wanted]:
+        raise ValueError("literal symbol rewrite changed more than the selected symbols")
+    validate_literals(reread)
     return result

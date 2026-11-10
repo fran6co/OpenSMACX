@@ -65,6 +65,14 @@ def register(commands):
     correction.add_argument("--reason", required=True, help="Image evidence for the signature correction; reported for the commit message")
     correction.add_argument("--allow-identity-change", action="store_true",
                             help="Also accept a name, access, virtual, this-qualifier or argument change after explicit review")
+    rebind = commands.add_parser("rebind-literals", help="Re-identify stale positional $SG literal symbols from fresh "
+                                 "compiler emission; dry run unless --write, never changes original extents or claims")
+    rebind.add_argument("--root", type=Path, default=Path.cwd())
+    rebind.add_argument("--image", type=Path, required=True)
+    rebind.add_argument("--unit", dest="units", action="append", help="Rebind this TU (repeatable)")
+    rebind.add_argument("--since", help="Rebind TUs a change since this revision can affect")
+    rebind.add_argument("--write", action="store_true", help="Publish proven rebinds; otherwise report only")
+    rebind.add_argument("--summary", action="store_true", help="Show only bindings that are not valid")
     survey = commands.add_parser("survey", help="Derive executable starting hints and source correlations; never infer function or TU extents")
     survey.add_argument("--root", type=Path, default=Path.cwd())
     survey.add_argument("--image", type=Path, required=True)
@@ -389,6 +397,14 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
         from .symbol_correction import correct_symbol
         return 0, correct_symbol(root, allow_identity_change=arguments.get("allow_identity_change", False),
                                  **{key: arguments[key] for key in ("address", "source", "symbol", "source_sha256", "reason")})
+    if arguments.get("command") == "rebind-literals":
+        from .literal_rebind import rebind_literals
+        output = rebind_literals(root, arguments["image"], units=arguments.get("units"),
+                                 since=arguments.get("since"), write=arguments.get("write", False))
+        if arguments.get("summary"):
+            for unit in output["units"]:
+                unit["bindings"] = [row for row in unit["bindings"] if row["status"] != "valid"]
+        return {"pass": 0, "fail": 1, "unknown": 3}[output["result"]], output
     if arguments.get("command") == "throughput":
         from .throughput import throughput_report
         path = Path(arguments["observations"])

@@ -2137,6 +2137,9 @@ def strict_row_reason(row: dict, *, limit: int = 4) -> str | None:
                 f"+{item.get('offset', 0):#x} {item.get('symbol', item.get('target'))}"
                 + (f" ({item['reason']})" if item.get("reason") else "")
                 for item in wrong[:limit]) + (f" and {len(wrong) - limit} more" if len(wrong) > limit else ""))
+            if any(re.fullmatch(r"\$SG[0-9]+", str(item.get("symbol", ""))) for item in wrong):
+                # Positional VC6 string labels renumber when a header changes.
+                parts.append("if a $SG literal binding went stale, run `recover rebind-literals --unit <this TU>`")
         if not parts and variant.get("references") == Result.FAIL:
             parts.append("references differ")
         if parts:

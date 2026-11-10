@@ -1,0 +1,311 @@
+"""Rebind stale positional ``$SGn`` literal symbols from fresh compiler emission.
+
+Unpooled VC6 string literals are static ``$SGn`` labels numbered by emission
+order across the whole TU, headers included. A declaration added to a shared
+header renumbers every includer's labels, so a source-owned
+``RECOVERY_LITERAL`` binding then names a missing or different label. The
+original correspondence (start, end, evidence) is the source author's reviewed
+interpretation and is never changed here; only the emitted-symbol fact is
+re-identified.
+
+Evidence: a fresh configured compilation of the owning TU, and the pinned
+original's bytes for the declared extent. A candidate label must pass the same
+storage check as measurement (``literal_storage``: ordinary ``.data``/``.bss``,
+no relocation or alias, terminator inside the declared bound and only zero
+alignment padding to the next label) and hold exactly the original bytes.
+Identical unpooled duplicates are disambiguated only by the TU's existing
+bindings: a uniform label shift that every proven binding admits, otherwise a
+unique assignment that keeps their relative label order. Anything still
+ambiguous, or disagreeing across configured trials, is reported, not guessed.
+"""
+
+import hashlib
+import re
+from dataclasses import replace
+from pathlib import Path
+
+from .compiler import Compiler
+from .literal_data import check_literals, literal_storage
+from .literal_source import read_literals, validate_literals
+from .literal_writer import rewrite_literal_symbols
+from .mapping_check import build_units
+from .match_scope import affected_units, changed_files
+from .measurement import Measurement
+from .model import Result
+from .pe_coff import Coff, PeImage
+from .records import read_json
+from .source.publication import publish
+from .source_inventory import image_pin
+from .source_replica import artifact_parent
+
+
+STATIC_STRING = re.compile(r"\$SG([0-9]+)", re.ASCII)
+
+
+def _number(symbol: str) -> int:
+    return int(STATIC_STRING.fullmatch(symbol).group(1))
+
+
+def _labels(obj) -> dict[str, object]:
+    """Defined static ``$SGn`` labels, by name; duplicates are left to storage checks."""
+    return {symbol.name: symbol for symbol in obj.symbols.values()
+            if STATIC_STRING.fullmatch(symbol.name) and symbol.section > 0 and symbol.storage == 3}
+
+
+def _candidates(binding, obj, labels, image) -> tuple[list[int], str | None]:
+    """Label numbers whose measured storage holds exactly the original extent."""
+    try:
+        if image.absolute_sites(binding.span):
+            return [], "original extent contains relocations; not a string literal"
+        original = image.read_initial(binding.span)
+    except ValueError as error:
+        return [], str(error)
+    size = binding.span.end - binding.span.start
+    found = []
+    for name, symbol in labels.items():
+        section = obj.sections[symbol.section - 1]
+        # Cheap byte prefilter before the complete storage proof.
+        if section.data and section.data[symbol.value:symbol.value + size] != original:
+            continue
+        try:
+            contents, _ = literal_storage(obj, name, size)
+        except ValueError:
+            continue
+        if contents == original:
+            found.append(_number(name))
+    if not found:
+        return [], "no fresh $SG label holds exactly the original bytes with only zero padding"
+    return sorted(found), None
+
+
+def _ordered(sets: list[set[int]]) -> list[set[int]]:
+    """Prune candidates to those in some strictly increasing assignment."""
+    sets = [set(item) for item in sets]
+    floor = -1
+    for item in sets:
+        item.difference_update({value for value in item if value <= floor})
+        floor = min(item) if item else floor
+    ceiling = None
+    for item in reversed(sets):
+        if ceiling is not None:
+            item.difference_update({value for value in item if value >= ceiling})
+        ceiling = max(item) if item else ceiling
+    return sets
+
+
+def plan_unit(bindings, obj, image) -> tuple[list[dict], int | None]:
+    """Return one row per ``$SG`` binding and the uniform shift applied, if any.
+
+    Row status: ``valid`` (keeps its symbol), ``rebind`` (new symbol proven)
+    or ``unproven`` (reason given; source is left alone).
+    """
+    bindings = sorted(bindings, key=lambda item: _number(item.symbol))
+    labels = _labels(obj)
+    rows, proven = [], []
+    for binding in bindings:
+        candidates, reason = _candidates(binding, obj, labels, image)
+        row = {"line": binding.line, "start": f"0x{binding.span.start:08X}",
+               "end": f"0x{binding.span.end:08X}", "previous": binding.symbol,
+               "symbol": binding.symbol, "candidates": [f"$SG{value}" for value in candidates]}
+        if reason is not None:
+            row.update(status="unproven", reason=reason)
+        else:
+            proven.append((binding, candidates, row))
+        rows.append(row)
+    if not proven:
+        return rows, None
+    shifts = set.intersection(*({value - _number(binding.symbol) for value in candidates}
+                                for binding, candidates, _ in proven))
+    if 0 in shifts:
+        # The current population is consistent; never move a valid binding.
+        for _, _, row in proven:
+            row["status"] = "valid"
+        return rows, 0
+    if len(shifts) == 1:
+        shift, = shifts
+        for binding, _, row in proven:
+            row.update(status="rebind", symbol=f"$SG{_number(binding.symbol) + shift}",
+                       basis="uniform_shift")
+        return rows, shift
+    if shifts:
+        for _, _, row in proven:
+            row.update(status="unproven", reason="several uniform label shifts fit identical duplicates: "
+                       + ", ".join(f"{value:+d}" for value in sorted(shifts)))
+        return rows, None
+    # No single shift: keep valid bindings, then require a unique
+    # order-preserving assignment for the rest.
+    feasible = _ordered([set(candidates) for _, candidates, _ in proven])
+    for (binding, _, _), item in zip(proven, feasible):
+        if _number(binding.symbol) in item:
+            item.intersection_update({_number(binding.symbol)})
+    feasible = _ordered(feasible)
+    if any(not item for item in feasible):
+        for _, _, row in proven:
+            row.update(status="unproven", reason="no assignment keeps the TU's existing binding order")
+        return rows, None
+    for (binding, _, row), item in zip(proven, feasible):
+        if len(item) != 1:
+            row.update(status="unproven", reason="identical duplicate labels remain ambiguous after order constraints: "
+                       + ", ".join(f"$SG{value}" for value in sorted(item)))
+            continue
+        value, = item
+        if value == _number(binding.symbol):
+            row["status"] = "valid"
+        else:
+            row.update(status="rebind", symbol=f"$SG{value}", basis="order_preserving")
+    return rows, None
+
+
+def _verify(unit_bindings, rows, obj, image) -> None:
+    """Recheck the proposed unit population exactly as measurement would."""
+    changed = {row["line"]: row["symbol"] for row in rows if row["status"] == "rebind"}
+    proposed = [replace(item, symbol=changed.get(item.line, item.symbol)) for item in unit_bindings]
+    try:
+        validate_literals(proposed)
+    except ValueError as error:
+        for row in rows:
+            if row["status"] == "rebind":
+                row.update(status="unproven", symbol=row["previous"],
+                           reason=f"proposed population is invalid: {error}")
+        return
+    checked = [item for item in proposed if item.line in changed]
+    _, results = check_literals(checked, {item.unit: obj for item in checked}, image)
+    failed = {item.line: result.get("reason", "content check failed")
+              for item, result in zip(checked, results) if result["content"] != Result.PASS}
+    for row in rows:
+        if row["line"] in failed:
+            row.update(status="unproven", symbol=row["previous"],
+                       reason=f"proposed label fails the literal check: {failed[row['line']]}")
+
+
+def rebind_literals(root: Path, image_path: Path, *, units=None, since=None, write=False,
+                    compiler=None) -> dict:
+    root = root.resolve()
+    settings = Measurement.read(root)
+    config = settings.source
+    pin = image_pin(root, config)
+    image_bytes = Path(image_path).read_bytes()
+    if hashlib.sha256(image_bytes).hexdigest() != pin:
+        raise ValueError("image does not match the source pin")
+    image = PeImage(image_bytes, pin)
+    literals = read_literals(root, pin)
+    by_unit = {}
+    for item in literals:
+        by_unit.setdefault(item.unit, []).append(item)
+    owners = {unit for unit, items in by_unit.items()
+              if any(STATIC_STRING.fullmatch(item.symbol) for item in items)}
+
+    project = read_json(root / "recovery/project.json")
+    mappings = project.get("mappings")
+    if not isinstance(mappings, dict) or "compile_commands" not in mappings:
+        raise ValueError("literal rebinding requires a configured compilation database")
+    database = config.path(root, mappings["compile_commands"]).read_bytes()
+    build, _ = build_units(root, database)
+    scope = {"requested_units": list(units or ()), "since": since}
+    selected = None  # every TU that owns a $SG binding
+    requested = {Path(name).as_posix() for name in units or ()}
+    unknown = sorted(name for name in requested
+                     if name not in build or Path(name).suffix not in settings.unit_extensions)
+    if unknown:
+        raise ValueError("not configured build translation units: " + ", ".join(unknown))
+    if since is not None:
+        affected = affected_units(root, settings, database, changed_files(root, since), since=since)
+        scope["widened"] = affected.get("widened")
+        if affected["units"] is not None:
+            selected = set(affected["units"]) | requested
+    elif requested:
+        selected = requested
+    selected = sorted(owners if selected is None else owners & selected)
+    if requested:
+        scope["without_static_literals"] = sorted(requested - owners)
+
+    metadata = {"operation": "rebind-literals", "units": selected}
+    before = settings.snapshot(root, metadata)
+    raws = {unit: (root / unit).read_bytes() for unit in selected}
+
+    def fresh():
+        if (settings.snapshot(root, metadata) != before or Path(image_path).read_bytes() != image_bytes
+                or any((root / unit).read_bytes() != raw for unit, raw in raws.items())):
+            raise ValueError("source, compiler inputs or image changed during literal rebinding")
+
+    if compiler is None:
+        compiler = Compiler(root, profile=settings.compiler_profile)
+    reports = []
+    for unit in selected:
+        static = [item for item in by_unit[unit] if STATIC_STRING.fullmatch(item.symbol)]
+        trials, plans, error = [], [], None
+        for flags in settings.flags_for(unit):
+            try:
+                data = compiler(root / unit, (), flags)
+                if not isinstance(data, bytes) or not data:
+                    raise ValueError("compiler returned no object bytes")
+                obj = Coff(data)
+            except (OSError, ValueError) as failure:
+                error = str(failure)
+                trials.append({"flags": list(flags), "result": Result.UNKNOWN, "reason": error})
+                break
+            rows, shift = plan_unit(static, obj, image)
+            _verify(by_unit[unit], rows, obj, image)
+            plans.append((rows, shift))
+            trials.append({"flags": list(flags), "result": Result.PASS, "shift": shift})
+        report = {"unit": unit, "trials": trials}
+        if error is not None or not plans:
+            report.update(result=Result.UNKNOWN, reason=error or "no configured compiler trial",
+                          bindings=[{"line": item.line, "previous": item.symbol, "symbol": item.symbol,
+                                     "status": "unproven", "reason": "TU did not compile"}
+                                    for item in sorted(static, key=lambda item: item.line)])
+            reports.append(report)
+            continue
+        rows, shift = plans[0]
+        for other, _ in plans[1:]:
+            for row, peer in zip(rows, other):
+                if (row["status"], row["symbol"]) != (peer["status"], peer["symbol"]):
+                    row.update(status="unproven", symbol=row["previous"],
+                               reason="configured compiler trials disagree on this label")
+        rows.sort(key=lambda row: row["line"])
+        statuses = {row["status"] for row in rows}
+        report.update(bindings=rows, shift=shift if all(other == shift for _, other in plans) else None,
+                      result=Result.UNKNOWN if "unproven" in statuses
+                      else Result.FAIL if "rebind" in statuses else Result.PASS)
+        reports.append(report)
+
+    changes = {unit: {row["line"]: (row["previous"], row["symbol"]) for row in report["bindings"]
+                      if row["status"] == "rebind"} for unit, report in zip(selected, reports)}
+    changes = {unit: lines for unit, lines in changes.items() if lines}
+    published = []
+    if write and changes:
+        fresh()
+        replacements = {}
+        for unit, lines in changes.items():
+            replacements[root / unit] = rewrite_literal_symbols(
+                raws[unit], expected=tuple(by_unit[unit]), changes=lines, path=unit, pin=pin,
+                address_space=config.address_space)
+        staging = artifact_parent(root, "build/recovery/publications", excluded_roots=config.roots)
+        publish({root / unit: raws[unit] for unit in changes}, replacements, validate=fresh,
+                staging_directory=staging)
+        published = sorted(changes)
+        for report in reports:
+            if report["unit"] in changes and report["result"] == Result.FAIL:
+                report["result"] = Result.PASS
+            for row in report["bindings"]:
+                if row["status"] == "rebind" and report["unit"] in changes:
+                    row["status"] = "rebound"
+    else:
+        fresh()
+    counts = {}
+    for report in reports:
+        for row in report["bindings"]:
+            counts[row["status"]] = counts.get(row["status"], 0) + 1
+    results = {report["result"] for report in reports}
+    result = (Result.UNKNOWN if Result.UNKNOWN in results else Result.FAIL if Result.FAIL in results
+              else Result.PASS)
+    return {"schema_version": 1, "operation": "rebind-literals", "result": result,
+            "write": bool(write), "persisted": bool(published), "published": published,
+            "scope": scope, "units": reports, "counts": counts,
+            "ready_for_collection": False,
+            "next_action": ("rerun with --write to publish proven rebinds" if changes and not write
+                            else "measure affected functions; bank exact results only with `recover record`"),
+            "limitations": ["only `$SGn` static string labels; COMDAT literal names are stable and skipped",
+                            "original extents, evidence addresses and claims are never changed",
+                            "identical duplicates are resolved only by a uniform shift or the bindings' order",
+                            "emission and storage evidence only; not function, linker or runtime proof"]}
