@@ -2863,12 +2863,13 @@ void Demo::on_left_down(int x, int y) {
     release_modal();
 }
 
-// Sprite::extract's RECT form, expanded at both Demo::init call sites.
-static inline int demo_extract(Sprite *sprite, Buffer *buffer, int transparent,
-                               RECT *region) {
-    return sprite->extract(buffer, transparent, region->left, region->top,
-                           region->right - region->left,
-                           region->bottom - region->top, 0);
+// Sprite::extract's RECT form, expanded at both Demo::init call sites. The
+// image reads bottom/top before right/left: height is computed first.
+static inline int demo_extract(Sprite *sprite, Buffer *buffer, RECT *region) {
+    int height = region->bottom - region->top;
+    int width = region->right - region->left;
+    return sprite->extract(buffer, WinFillColour, region->left, region->top,
+                           width, height, 0);
 }
 
 // ORIGINAL: 0x00524460 Demo__init 0x00524460-0x005247A6;0x0065D6C8-0x0065D6DD
@@ -2901,9 +2902,8 @@ int Demo::init() {
 
     // Both sprites are cut from the first RECT, reloaded after each call.
     demo_extract(&splash_sprites_[0], static_cast<Buffer *>(this),
-                 WinFillColour, &splash_rects_[0]);
-    demo_extract(&splash_sprites_[1], &local_buffer, WinFillColour,
                  &splash_rects_[0]);
+    demo_extract(&splash_sprites_[1], &local_buffer, &splash_rects_[0]);
     local_buffer.close();
     timer_.start(&Demo::timer_callback, reinterpret_cast<int>(this), 600, 5);
 
@@ -3391,21 +3391,16 @@ static inline int turn_proto_power(int veh_id) {
     return range_fn(reactor, 1, 100) * 10;
 }
 
-static inline Map *turn_map_loc(int x, int y) {
-    return &map_tiles()[(x >> 1) + MapLongitude * y];
-}
-static inline int turn_base_who(int x, int y) {
-    Map *tile = turn_map_loc(x, y);
-    if (tile->bit & BIT_BASE_IN_TILE) {
-        int owner = tile->val2 & 0xF;
-        if (owner < MaxPlayerNum) {
-            return owner;
-        }
-    }
-    return -1;
+// WORKAROUND(decl): unidentified inline helper taking the tile coordinates
+// as parameters. The image copies x and y into fresh registers before the
+// base_who/airbase tile test (0x00525941..0x00525984); only an inline call
+// with (x, y) parameters reproduces that, the open-coded test computes the
+// tile address in place. Original name and home are unknown.
+static inline BOOL turn_air_unit_unsheltered(int x, int y) {
+    return base_who(x, y) < 0 && !(map_loc(x, y)->bit & BIT_AIRBASE);
 }
 
-// ORIGINAL: 0x005258C0 ?turn_upkeep@@YAXXZ 0x005258C0-0x0052602D
+// ORIGINAL: 0x005258C0 ?turn_upkeep@@YAXXZ 0x005258C0-0x0052602D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:6e78872480ef8b4a486516e322f23e9f8652665d:src/unrecovered/005258c0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json; preserve original extents and historical seed lessons. Ordinary owned literals have pinned content provenance, not exact original data-allocation claims."], "reason": "Recover end-turn aircraft attrition, climate, native-life/alien arrival, caretaker diplomacy and ordered alien-pair stores through genuine owners. Random-events remains an explicitly unfinished separate dependency; build continuity is not game behavior acceptance."}
 // TRIED: transcribed directly from Ghidra's decompile (already correct, self-consistent short*/uint* pointer arithmetic throughout), fixing only DAT_/FUN_ names against the catalogue (all ~25 callees were already declared with matching signatures) and CharUpperA (undeclared IAT slot at 0x66931C, called through a typed function-pointer global). MapWin::main_caption()'s receiver is `*g_007d3c3c`, confirmed against src/console.cpp's own use of the same slot. Framed build compiles and matches through instr #3 (mov vs push), sim 0.75 - not chased further, very large orchestration function, landed for coverage.
 void __cdecl turn_upkeep() {
@@ -3414,8 +3409,7 @@ void __cdecl turn_upkeep() {
         if (get_triad(vehicle_id) == TRIAD_AIR
             && Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].range
             && veh_moves(vehicle_id)
-            && turn_base_who(Vehs[vehicle_id].x, Vehs[vehicle_id].y) < 0
-            && !(turn_map_loc(Vehs[vehicle_id].x, Vehs[vehicle_id].y)->bit & BIT_AIRBASE)
+            && turn_air_unit_unsheltered(Vehs[vehicle_id].x, Vehs[vehicle_id].y)
             && !stack_check(vehicle_id, 6, 0x80, -1, -1)) {
             if (Vehs[vehicle_id].terraforming_turns
                 < Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].range - 1) {
@@ -3429,7 +3423,7 @@ void __cdecl turn_upkeep() {
             } else {
                 Vehs[vehicle_id].dmg_incurred += range(turn_proto_power(vehicle_id) - Vehs[vehicle_id].dmg_incurred, 0, 9999);
             }
-            if (!range(turn_proto_power(vehicle_id) - Vehs[vehicle_id].dmg_incurred, 0, 9999)) {
+            if (range(turn_proto_power(vehicle_id) - Vehs[vehicle_id].dmg_incurred, 0, 9999) <= 0) {
                 kill(vehicle_id);
             }
         }
@@ -3447,8 +3441,8 @@ void __cdecl turn_upkeep() {
             GameDataStateStorage.fields_.climate_rise_accum_ -= GameDataStateStorage.fields_.climate_rise_limit_;
             int step = GameDataStateStorage.fields_.climate_sea_level_delta_ > 0 ? 1
                 : (GameDataStateStorage.fields_.climate_sea_level_delta_ < 0 ? -1 : 0);
-            GameDataStateStorage.fields_.climate_sea_level_delta_ -= step;
             MapSeaLevel += step;
+            GameDataStateStorage.fields_.climate_sea_level_delta_ -= step;
             world_climate();
             draw_map(1);
             if (step > 0) {
@@ -3794,21 +3788,21 @@ void __cdecl repair_phase(int faction_id) {
         if (faction_id && !has_repair_bay && base_id < 0
             && !has_project(SP_NANO_FACTORY, faction_id)) {
             min_damage = reactor_id * 2;
-            if (min_damage) {
-                Map *tile = map_loc(x, y);
-                if ((tile->bit & BIT_FUNGUS) && (tile->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF) {
-                    if (get_proto_offense_rating(Vehs[veh_id].proto_id) < 0
-                        && Vehs[veh_id].proto_id < MaxVehProtoFactionNum) {
-                        min_damage = 0;
-                    }
-                    if (has_project(SP_XENOEMPATYH_DOME, faction_id)) {
-                        min_damage = 0;
-                        repair_total += reactor_id;
-                    }
-                }
-            }
         } else {
             min_damage = 0;
+        }
+        if (min_damage) {
+            Map *tile = map_loc(x, y);
+            if ((tile->bit & BIT_FUNGUS) && (tile->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF) {
+                if (get_proto_offense_rating(Vehs[veh_id].proto_id) < 0
+                    && Vehs[veh_id].proto_id < MaxVehProtoFactionNum) {
+                    min_damage = 0;
+                }
+                if (has_project(SP_XENOEMPATYH_DOME, faction_id)) {
+                    min_damage = 0;
+                    repair_total += reactor_id;
+                }
+            }
         }
         int damage = Vehs[veh_id].dmg_incurred;
         int repaired = range(damage - repair_total, min_damage, 999);
@@ -3828,24 +3822,17 @@ void __cdecl repair_phase(int faction_id) {
         }
     }
     for (veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
-        int veh_faction_id = Vehs[veh_id].faction_id;
-        if (veh_faction_id != faction_id) {
+        if (Vehs[veh_id].faction_id != faction_id) {
             continue;
         }
-        int x = Vehs[veh_id].x;
-        int y = Vehs[veh_id].y;
-        Map *tile = map_loc(x, y);
-        if (tile->bit & BIT_BASE_IN_TILE) {
-            int owner = (int)owner_at(x, y);
-            if (owner < MaxPlayerNum && owner >= 0) {
-                continue;  // the base's own draw covers it
-            }
+        if (base_who(Vehs[veh_id].x, Vehs[veh_id].y) >= 0) {
+            continue;  // the base's own draw covers it
         }
-        if (veh_faction_id != ConsoleGlobal.faction_id_
+        if (Vehs[veh_id].faction_id != ConsoleGlobal.faction_id_
             && !(Vehs[veh_id].visibility & (1 << ConsoleGlobal.faction_id_))) {
             continue;
         }
-        draw_tile(x, y, -1);
+        draw_tile(Vehs[veh_id].x, Vehs[veh_id].y, -1);
     }
     do_all_draws();
 }
@@ -5770,6 +5757,15 @@ static inline int control_game_intro_complete() {
     return is_complete;
 }
 
+// WORKAROUND(decl): stand-in for an unidentified header inline that ors bits
+// into MapWin::field_1DD70_. The image materializes 0x8C0 in a callee-saved
+// register before the turn-wheel loop (`mov ebx, 0x8c0` at 0x0052AB8D) and ors
+// through it (0x0052ACDD); only an inline call's parameter copy reproduces that
+// hoist - every literal spelling folds to `or reg, 0x8c0`.
+static inline void control_game_set_map_flags(MapWin *window, uint32_t flags) {
+    window->field_1DD70_ |= flags;
+}
+
 /*
 Purpose: Run the game. Brings the system and game up, decides the intro
          movie, then turns the wheel: menu or multiplayer handshake, desktop,
@@ -5885,20 +5881,9 @@ void __cdecl control_game() {
                     goto close_opening;
                 }
                 {
-                    // The image loads the primary map-window slot before it stores
-                    // the skip flag, then ors the live-flag dword through a register.
-                    // Keep the original live volatile dword accesses on the mapped
-                    // MapWin field, with the table load before the climate-flag store.
                     MapWin *const primary_window = MapWinTable[0];
-                    volatile MapWin *const live_window = primary_window;
                     WorldClimateSkipTerrainClear = 0;
-                    uint32_t flags = live_window->field_1DD70_;
-                    // The image materializes 0x8C0 into a dead callee-saved
-                    // register before the loop and ors through it; every spelling of
-                    // that constant this tree has tried folds to the immediate
-                    // instead (TRIED: note under the marker).
-                    flags |= 0x8C0;
-                    live_window->field_1DD70_ = flags;
+                    control_game_set_map_flags(primary_window, 0x8C0);
                 }
                 ConsoleGlobal.focus_vehicle_ = -1;
                 if (IsMultiplayerNet != 0) {
