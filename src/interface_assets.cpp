@@ -4282,8 +4282,10 @@ void __cdecl load_box_sprites() {
     extract_interface_box_sprite(g_IFACE_LOCK_SPRITES[0], 247, 71, 15, 19);
     extract_interface_box_sprite(g_IFACE_LOCK_SPRITES[1], 263, 71, 15, 19);
     extract_interface_box_sprite(g_IFACE_GREEN_RIGHT_ARROW_SPRITE[0], 615, 530, 16, 15);
-    for (int arrow = 0; arrow < 3; ++arrow) {
-        extract_interface_box_sprite(g_IFACE_MP_COMBO_ARROW_SPRITES[arrow], 534 + arrow * 8, 537, 7, 13);
+    int arrow;
+    int arrow_x;
+    for (arrow = 0, arrow_x = 534; arrow < 3; ++arrow, arrow_x += 8) {
+        extract_interface_box_sprite(g_IFACE_MP_COMBO_ARROW_SPRITES[arrow], arrow_x, 537, 7, 13);
     }
 
     // Seventeen rows of three columns; the style index runs across both.
@@ -4333,14 +4335,20 @@ void __cdecl load_box_sprites() {
     g_IFACE_STD_POPUPS_MIDDLE_BUFFER.init(61, 44, 0, nullptr);
     canvas.copy(&g_IFACE_STD_POPUPS_MIDDLE_BUFFER, 358, 756, 0, 0, 61, 44);
 
-    for (int tech_arrow = 0; tech_arrow < 3; ++tech_arrow) {
-        extract_interface_box_sprite(g_IFACE_TECH_TREE_ARROW_SPRITES[tech_arrow], 140 + tech_arrow * 8, 37, 7, 13);
+    for (arrow = 0, arrow_x = 140; arrow < 3; ++arrow, arrow_x += 8) {
+        extract_interface_box_sprite(g_IFACE_TECH_TREE_ARROW_SPRITES[arrow], arrow_x, 37, 7, 13);
     }
-    for (int technology = 0; technology < 6; ++technology) {
-        // Unlike the style pool, these six slots are column-major.
-        extract_interface_box_sprite(NewTechWin::technology_sprites_[technology],
-                                     391 + (technology / 3) * 29,
-                                     566 + (technology % 3) * 35, 28, 34);
+    // Unlike the style pool, these six slots are column-major.
+    int tech_column;
+    int tech_row;
+    int tech_x;
+    int tech_y;
+    for (tech_column = 0, tech_x = 391; tech_column < 2; ++tech_column, tech_x += 29) {
+        for (tech_row = 0, tech_y = 566; tech_row < 3; ++tech_row, tech_y += 35) {
+            extract_interface_box_sprite(
+                NewTechWin::technology_sprites_[tech_column * 3 + tech_row],
+                tech_x, tech_y, 28, 34);
+        }
     }
     canvas.close();
 }
@@ -4368,7 +4376,7 @@ BoxSpriteParams InterfaceBoxStyles[51];
 
 
 
-// ORIGINAL: 0x00453F70 ?load_flags@@YAXXZ 0x00453F70-0x00454261;0x0065513A-0x0065515A FILE
+// ORIGINAL: 0x00453F70 ?load_flags@@YAXXZ 0x00453F70-0x00454261;0x0065513A-0x0065515A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Recover the complete faction flag sprite loader with real local lifetimes and shared palette/asset owners.","evidence":["Original453F70..454261 and unwind65513A..65515A construct fourteen local Sprites and destroy successful constructions in reverse. UNITS extracts seven pairs at y700/731; FLAGS extracts the same locals at y1/32, with repeated recolors before each extraction.","Every faction receives fourteen copies from UNITS, each followed by foreground then shadow recoloring. FLAGS replaces only factions whose live Players.rule_flags contains RFLAG_ALIEN; no expansion-aware extra guard. Color entries are reloaded after the preceding service call.","The shared PCX buffer closes once on ordinary completion, not during local Sprite exception cleanup. All service return values are ignored. Existing empty placeholder and obsolete image-string aliases are replaced; separate original-only callers and asset startup remain unfinished."]}
 
 // The original owns two distinct UNITS.PCX strings, passed by the flag
@@ -4381,45 +4389,52 @@ static const char VehicleUnitSheet[] = "UNITS.PCX";
 
 void __cdecl load_flags() {
     // RECOVERY_LITERAL: v1 0x00685030 0x0068503A ??_C@_09KHIG@FLAGS?4PCX?$AA@ 0x00453F70
-    Sprite source[14];
+    Sprite source[7][2];
     Buffer &sheet = g_PCX_PARSE_TEMP_BUFFER1;
     sheet.load_pcx(FlagUnitSheet, 0, 10, 236);
     int kind;
     int frame;
     int faction;
-    for (kind = 0; kind < 7; ++kind) {
-        for (frame = 0; frame < 2; ++frame) {
-            sheet.change_color(0x107, 0x109);
-            sheet.change_color(0x106, 0x109);
-            source[kind * 2 + frame].extract(
-                &sheet, 0x109, 1 + kind * 24, 700 + frame * 31, 23, 30, 0);
-        }
+    int x;
+    for (x = 1, kind = 0; kind < 7; x += 24, ++kind) {
+        sheet.change_color(0x107, 0x109);
+        sheet.change_color(0x106, 0x109);
+        source[kind][0].extract(&sheet, 0x109, x, 700, 23, 30, 0);
+        sheet.change_color(0x107, 0x109);
+        sheet.change_color(0x106, 0x109);
+        source[kind][1].extract(&sheet, 0x109, x, 731, 23, 30, 0);
     }
     for (faction = 0; faction < 8; ++faction) {
-        for (kind = 0; kind < 14; ++kind) {
-            Sprite &destination = g_FLAGS_VEH_SPRITES[faction * 14 + kind];
-            source[kind].copy(&destination);
-            destination.change_color(0x104, InfoFactionTextColors[faction]);
-            destination.change_color(0x103, InfoFactionShadowColors[faction]);
+        for (kind = 0; kind < 7; ++kind) {
+            for (frame = 0; frame < 2; ++frame) {
+                source[kind][frame].copy(&g_FLAGS_VEH_SPRITES[faction * 14 + kind * 2 + frame]);
+                int text_color = InfoFactionTextColors[faction];
+                g_FLAGS_VEH_SPRITES[faction * 14 + kind * 2 + frame].change_color(0x104, text_color);
+                int shadow_color = InfoFactionShadowColors[faction];
+                g_FLAGS_VEH_SPRITES[faction * 14 + kind * 2 + frame].change_color(0x103, shadow_color);
+            }
         }
     }
     sheet.load_pcx("FLAGS.PCX", 0, 10, 236);
-    for (kind = 0; kind < 7; ++kind) {
-        for (frame = 0; frame < 2; ++frame) {
-            sheet.change_color(0x107, 0x109);
-            sheet.change_color(0x106, 0x109);
-            source[kind * 2 + frame].extract(
-                &sheet, 0x109, 1 + kind * 24, 1 + frame * 31, 23, 30, 0);
-        }
+    for (x = 1, kind = 0; kind < 7; x += 24, ++kind) {
+        sheet.change_color(0x107, 0x109);
+        sheet.change_color(0x106, 0x109);
+        source[kind][0].extract(&sheet, 0x109, x, 1, 23, 30, 0);
+        sheet.change_color(0x107, 0x109);
+        sheet.change_color(0x106, 0x109);
+        source[kind][1].extract(&sheet, 0x109, x, 32, 23, 30, 0);
     }
     for (faction = 0; faction < 8; ++faction) {
         // Original tests the rule bit directly, not the expansion-aware helper.
         if (Players[faction].rule_flags & RFLAG_ALIEN) {
-            for (kind = 0; kind < 14; ++kind) {
-                Sprite &destination = g_FLAGS_VEH_SPRITES[faction * 14 + kind];
-                source[kind].copy(&destination);
-                destination.change_color(0x104, InfoFactionTextColors[faction]);
-                destination.change_color(0x103, InfoFactionShadowColors[faction]);
+            for (kind = 0; kind < 7; ++kind) {
+                for (frame = 0; frame < 2; ++frame) {
+                    source[kind][frame].copy(&g_FLAGS_VEH_SPRITES[faction * 14 + kind * 2 + frame]);
+                    int text_color = InfoFactionTextColors[faction];
+                    g_FLAGS_VEH_SPRITES[faction * 14 + kind * 2 + frame].change_color(0x104, text_color);
+                    int shadow_color = InfoFactionShadowColors[faction];
+                    g_FLAGS_VEH_SPRITES[faction * 14 + kind * 2 + frame].change_color(0x103, shadow_color);
+                }
             }
         }
     }
@@ -4445,83 +4460,106 @@ void __cdecl load_vehicles() {
     int column;
     int chassis;
     int variant;
+    int count;
     int x;
     int y;
     int marker_x;
     int marker_y;
     int y_offset;
-    for (row = 0; row < 9; ++row) {
-        for (column = 0; column < 16; ++column) {
+    int source_x;
+    int source_y;
+    int border_y;
+    int faction;
+    // The image keeps each sheet coordinate as its own induction variable
+    // (x += 45, x += 102, ...) beside a separate down-counted loop index.
+    for (row = 0, y = 2; row < 9; ++row, y += 49) {
+        for (column = 0, x = 2; column < 16; ++column, x += 45) {
             g_XI_BOOM_VEH_SPRITES[row * 16 + column].extract(
-                &sheet, 255, 2 + column * 45, 2 + row * 49, 43, 47, 0);
+                &sheet, 255, x, y, 43, 47, 0);
         }
     }
     sheet.load_pcx("XF.PCX", 0, 0, 18);
     sheet.change_color(253, 255);
-    for (row = 0; row < 4; ++row) {
-        for (column = 0; column < 8; ++column) {
+    for (row = 0, y = 2; row < 4; ++row, y += 304) {
+        for (column = 0, x = 2; column < 8; ++column, x += 102) {
             g_XF_BOOM_VEH_SPRITES[row * 16 + column].extract(
-                &sheet, 255, 2 + column * 102, 2 + row * 304, 100, 150, 0);
+                &sheet, 255, x, y, 100, 150, 0);
             g_XF_BOOM_VEH_SPRITES[row * 16 + column + 8].extract(
-                &sheet, 255, 2 + column * 102, 154 + row * 304, 100, 150, 0);
+                &sheet, 255, x, y + 152, 100, 150, 0);
         }
     }
     sheet.load_pcx("PALETTE.PCX", 0, 10, 236);
     // The original's eight-iteration loop performs work only for faction 0.
-    InfoFactionTextColors[0] = sheet.get_pixel(580, 23);
-    InfoFactionShadowColors[0] = sheet.get_pixel(580, 31);
-    ChatItemIdTable[0] = sheet.get_pixel(580, 39);
-    ChatShadowColors[0] = sheet.get_pixel(580, 47);
+    for (faction = 0, x = 580; faction < 8; ++faction, x += 8) {
+        if (faction == 0) {
+            InfoFactionTextColors[faction] = sheet.get_pixel(x, 23);
+            InfoFactionShadowColors[faction] = sheet.get_pixel(x, 31);
+            ChatItemIdTable[faction] = sheet.get_pixel(x, 39);
+            ChatShadowColors[faction] = sheet.get_pixel(x, 47);
+        }
+    }
     sheet.load_pcx(VehicleUnitSheet, 0, 10, 236);
 
-    for (chassis = 9; chassis < 19; ++chassis) {
-        int source_y = 2 + (chassis - 9) * 77;
-        int count = 1;
-        if (source_y == 233 || source_y == 79 || source_y == 310 || source_y == 387)
+    // Chassis 0..8 are walked and skipped; the UNITS rows start at 9.
+    for (chassis = 0; chassis < 19; ++chassis) {
+        source_y = 2 + (chassis - 9) * 77;
+        if (chassis < 9) {
+            continue;
+        }
+        count = 1;
+        if (source_y == 233) {
             count = 7;
-        else if (source_y == 464)
+        } else if (source_y == 79) {
+            count = 7;
+        } else if (source_y == 310) {
+            count = 7;
+        } else if (source_y == 387) {
+            count = 7;
+        } else if (source_y == 464) {
             count = 3;
-        for (variant = 0; variant < count; ++variant) {
-            int source_x = 2 + variant * 102;
+        }
+        for (variant = 0, source_x = 2; variant < count;
+             ++variant, source_x += 102) {
+            int sheet_x = source_x;
+            int sheet_y = source_y;
             if (chassis == 18) {
-                source_x = 716;
-                source_y = 233;
+                sheet_x = 716;
+                sheet_y = 233;
             }
             sheet.change_color(0x107, 0x109);
             sheet.change_color(0x106, 0x109);
             g_VEH_SPRITES[chassis * 8 + variant].extract(
-                &sheet, 0x109, source_x, source_y, 100, 75, 0);
-            RulesChassis &record = Chassis[chassis];
-            record.sprite_flag_y_off[variant] = 0;
-            record.sprite_flag_x_off[variant] = 0;
-            record.sprite_unk1_y_off[variant] = 0;
-            record.sprite_unk1_x_off[variant] = 0;
-            record.sprite_unk2_y_off[variant] = 157;
-            record.sprite_unk2_x_off[variant] = 157;
-            record.sprite_unk3_y_off[variant] = 157;
-            record.sprite_unk3_x_off[variant] = 157;
+                &sheet, 0x109, sheet_x, sheet_y, 100, 75, 0);
+            Chassis[chassis].sprite_flag_y_off[variant] = 0;
+            Chassis[chassis].sprite_flag_x_off[variant] = 0;
+            Chassis[chassis].sprite_unk1_y_off[variant] = 0;
+            Chassis[chassis].sprite_unk1_x_off[variant] = 0;
+            Chassis[chassis].sprite_unk2_y_off[variant] = 157;
+            Chassis[chassis].sprite_unk2_x_off[variant] = 157;
+            Chassis[chassis].sprite_unk3_y_off[variant] = 157;
+            Chassis[chassis].sprite_unk3_x_off[variant] = 157;
             for (x = 0; x < 100; ++x) {
-                for (marker_y = source_y - 2; marker_y <= source_y - 1; ++marker_y) {
+                for (marker_y = sheet_y - 2; marker_y <= sheet_y - 1; ++marker_y) {
                     // The first probe's result is ignored, but its call is real.
-                    sheet.get_pixel(source_x + x, marker_y - 1);
-                    if (sheet.get_pixel(source_x + x, marker_y) == 5)
-                        record.sprite_flag_x_off[variant] = static_cast<unsigned char>(x);
-                    if (sheet.get_pixel(source_x + x, marker_y) == 2)
-                        record.sprite_unk1_x_off[variant] = static_cast<unsigned char>(x);
+                    sheet.get_pixel(sheet_x + x, marker_y - 1);
+                    if (sheet.get_pixel(sheet_x + x, marker_y) == 5)
+                        Chassis[chassis].sprite_flag_x_off[variant] = static_cast<unsigned char>(x);
+                    if (sheet.get_pixel(sheet_x + x, marker_y) == 2)
+                        Chassis[chassis].sprite_unk1_x_off[variant] = static_cast<unsigned char>(x);
                 }
             }
             for (y = 0; y < 75; ++y) {
-                for (marker_x = source_x - 2; marker_x <= source_x - 1; ++marker_x) {
-                    if (sheet.get_pixel(marker_x, source_y + y) == 5)
-                        record.sprite_flag_y_off[variant] = static_cast<unsigned char>(y);
-                    if (sheet.get_pixel(marker_x, source_y + y) == 2)
-                        record.sprite_unk1_y_off[variant] = static_cast<unsigned char>(y);
+                for (marker_x = sheet_x - 2; marker_x <= sheet_x - 1; ++marker_x) {
+                    if (sheet.get_pixel(marker_x, sheet_y + y) == 5)
+                        Chassis[chassis].sprite_flag_y_off[variant] = static_cast<unsigned char>(y);
+                    if (sheet.get_pixel(marker_x, sheet_y + y) == 2)
+                        Chassis[chassis].sprite_unk1_y_off[variant] = static_cast<unsigned char>(y);
                 }
             }
         }
     }
     for (row = 0; row < 9; ++row) {
-        int border_y = 2 + row * 77;
+        border_y = 2 + row * 77;
         for (x = 0; x < 100; ++x) {
             for (y = border_y - 1; y <= border_y; ++y) {
                 sheet.get_pixel(918 + x, y - 1);
@@ -4532,9 +4570,10 @@ void __cdecl load_vehicles() {
         for (y_offset = 0; y_offset < 75; ++y_offset) {
             for (marker_x = 916; marker_x <= 917; ++marker_x) {
                 if (sheet.get_pixel(marker_x, border_y + 1 + y_offset) == 5) {
-                    // 4546CC adds the preceding final count (1) to 94A386.
+                    // 4546CC indexes with the variant left over from the
+                    // chassis loop (1 after chassis 18's single variant).
                     // Preserve this original asymmetry; do not normalize to 0.
-                    Chassis[row].sprite_flag_y_off[1] = static_cast<unsigned char>(y_offset);
+                    Chassis[row].sprite_flag_y_off[variant] = static_cast<unsigned char>(y_offset);
                 }
             }
         }

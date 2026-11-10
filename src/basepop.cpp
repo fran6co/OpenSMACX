@@ -3281,33 +3281,34 @@ int BasePop::UNK2() {
 // LEVER: the xs/ys wide-screen grow tests `external_window_ == 0` TWICE -
 //        once to skip the converter and once to skip the *3/2 - the same
 //        condition init() and set_width() carry.
-// TRIED: the local declaration order that the image's frame layout spells -
-//        flag, two pointers, the 0xF0 buffer, then four more - which is
-//        exactly the order this body declares. The image's frame is
-//        `sub esp, 0x10c` (0xC of slots, the buffer, then 0x10 of slots
-//        above it); this tree's is `sub esp, 0xfc`, because VC6 coalesces
-//        marks/token/width/height into the three slots below the buffer
-//        rather than giving them the four above it. 47 of 742 either way.
-// RESIDUAL: 47 of 742, and the whole gap is that one `sub`. No esp-relative
-//        displacement after instruction 0 can agree while the frames differ,
-//        and this body is dominated by them - the parse buffer is addressed
-//        off esp in every arm. The call census agrees with the image (78
-//        direct calls, call_diff reports 0 bodies disagreeing about count),
-//        so the structure, the directive order and the twenty keyword
-//        compares are right; what is left is frame layout, and the frame is
-//        the compiler's, not the source's.
+// LEVER: the parse buffer is 0x100 bytes, not 0xF0: the image's
+//        `sub esp, 0x10c` is add_as_escaped/width/height below the buffer at
+//        0x1c plus the full 256-byte buffer, whose last 16 bytes no listing
+//        reference touches.
+// BEHAVIOUR (corrected against the image): the a/b selector of the five
+//        sound directives is the character right after the keyword
+//        (tok[N]), pitch writes +0x110 and fade +0x10C, editbox sets
+//        kind_ = 4 and ORs 4, button tests the token pointer (not its first
+//        character), xs/ys skip the whole directive for an external window,
+//        and an edit line passes (override_text | ParseStrBuffer[n] | 0,
+//        value) to EditGroup::edit.
+// RESIDUAL: register allocation of the 0/1/'2' constants (the image keeps
+//        1 in ebp through the prologue and '2' in bl ahead of the read loop)
+//        and the plain-line block's placement after the directive chain.
 int BasePop::start(char *text_file, const char *text_label, int value,
                    char *override_text, int flags, GraphicWin *owner_window) {
-    // The parse buffer is 0xF0 bytes at frame 0x1c; `add_as_escaped` is the
+    // The parse buffer is 0x100 bytes at frame 0x1c; `add_as_escaped` is the
     // dword at frame 0x10, seeded 1 by the `mov ebp, 1` in the prologue.
     int add_as_escaped = 1;
     char *line;
     char *text;
-    char tok[0xf0];
+    char tok[0x100];
     int marks;
     char *token;
+    int which;
     int width;
     int height;
+    int result;
 
     if ((flags & 0x80) == 0) {
         close();
@@ -3322,48 +3323,268 @@ int BasePop::start(char *text_file, const char *text_label, int value,
         dialogs_.kind_ = 0x10;
     }
 
-    int result = 0;
-    if ((flags & 0x80) != 0 || (result = init(flags, 0)) == 0) {
-        if ((flags & 0x100000) == 0) {
-            external_window_ = 0;
+    if ((flags & 0x80) == 0) {
+        result = init(flags, flags & 0x80);
+        if (result != 0) {
+            return result;
         }
-        if (owner_window != 0) {
-            owner_window->is_visible();
-            owner_window_ = owner_window;
-        }
-        value_ = value;
-        if (text_label == 0) {
-            return 3;
-        }
-        if (override_text != 0) {
-            dialogs_.EditGroup::set_default(override_text, 0);
-        }
-        if (text_open(text_file != 0 ? text_file : (char *)PopupStartCaption,
-                      text_label) != 0) {
+    }
+    if ((flags & 0x100000) == 0) {
+        external_window_ = 0;
+    }
+    if (owner_window != 0) {
+        owner_window->is_visible();
+        owner_window_ = owner_window;
+    }
+    value_ = value;
+    if (text_label == 0) {
+        return 3;
+    }
+    if (override_text != 0) {
+        dialogs_.EditGroup::set_default(override_text, 0);
+    }
+    if (text_open(text_file != 0 ? text_file : (char *)PopupStartCaption,
+                  text_label) != 0) {
+        return 1;
+    }
+
+    for (;;) {
+        line = text_get();
+        if (line == 0) {
             return 1;
         }
-
-      read_line:
-        for (;;) {
-            line = text_get();
-            if (line == 0) {
-                return 1;
-            }
-            if (*line != '\0') {
-                break;
-            }
+        if (*line == '\0') {
             add_as_escaped = 0;
+            continue;
         }
         tok[0] = '\0';
         parse_string(line, tok);
 
-        if (tok[0] != '#') {
-            // A plain line: an item, an item with the '^' prefix marks, or a
-            // value for the edit box. Which one depends on whether the caller
-            // asked for escaped text at all.
-            if (add_as_escaped) {
-                marks = 0;
-                text = tok;
+        if (tok[0] == '#') {
+            // THE DIRECTIVE TABLE. (keyword, compare length, token offset N).
+            // Converter is atoi unless the comment says otherwise.
+            if (_strnicmp(tok + 1, BasePopKeywordXs, 2) == 0) {
+                purge_spaces(tok + 3);
+                purge_leading(tok + 3);
+                // The whole directive is ignored for an external window.
+                if (external_window_ == 0) {
+                    int v = atoi(tok + 3);
+                    if (external_window_ == 0 && (field_30A8_ & 0x400) == 0 &&
+                        WinScreenWidth >= 0x400) {
+                        v = (v * 3) / 2;
+                    }
+                    dialogs_.Dialog::field_2C_ = v;
+                }
+                continue;
+            }
+            if (_strnicmp(tok + 1, BasePopKeywordYs, 2) == 0) {
+                purge_spaces(tok + 3);
+                purge_leading(tok + 3);
+                if (external_window_ == 0) {
+                    int v = atoi(tok + 3);
+                    if (external_window_ == 0 && (field_30A8_ & 0x400) == 0 &&
+                        WinScreenWidth >= 0x400) {
+                        v = (v * 3) / 2;
+                    }
+                    dialogs_.Dialog::field_30_ = v;
+                }
+                continue;
+            }
+            if (_strnicmp(tok + 1, BasePopKeywordX, 2) == 0) {
+                purge_spaces(tok + 2);
+                purge_leading(tok + 2);
+                int v = atoi(tok + 2);
+                if (v != 0x2000) {
+                    loc_a_ = v;
+                }
+                continue;
+            }
+            if (_strnicmp(tok + 1, BasePopKeywordY, 2) == 0) {
+                purge_spaces(tok + 2);
+                purge_leading(tok + 2);
+                int v = atoi(tok + 2);
+                if (v != 0x2000) {
+                    loc_b_ = v;
+                }
+                continue;
+            }
+            if (_strnicmp(tok + 1, BasePopKeywordCol, 4) == 0) {
+                purge_spaces(tok + 4);
+                purge_leading(tok + 4);
+                dialogs_.Dialog::field_4C_ = atoi(tok + 4);
+                continue;
+            }
+            if (_strnicmp(tok + 1, BasePopKeywordCaption, 7) == 0) {
+                purge_spaces(tok + 8);
+                purge_leading(tok + 8);
+                // The image keeps a null test of the caption pointer.
+                token = tok + 8;
+                if (token != 0) {
+                    if (owned_text_ != 0) {
+                        free(owned_text_);
+                        owned_text_ = 0;
+                    }
+                    owned_text_ = static_cast<char *>(mem_get(strlen(token) + 1));
+                    if (owned_text_ != 0) {
+                        *owned_text_ = '\0';
+                        strcat(owned_text_, token);
+                    }
+                }
+                continue;
+            }
+            if (_strnicmp(tok + 1, BasePopKeywordCheckbox, 8) == 0) {
+                field_30A8_ |= 1;
+                dialogs_.kind_ = 1;
+                purge_spaces(tok + 9);
+                purge_leading(tok + 9);
+                if (atoi(tok + 9) != 0) {
+                    dialogs_.Dialog::field_50_ = atoi(tok + 9);
+                }
+                continue;
+            }
+            if (_strnicmp(tok + 1, BasePopKeywordEditbox, 7) == 0) {
+                field_30A8_ |= 4;
+                dialogs_.kind_ = 4;
+                continue;
+            }
+            if (_strnicmp(tok + 1, BasePopKeywordListbox, 7) == 0) {
+                field_30A8_ |= 2;
+                dialogs_.kind_ = 2;
+                purge_spaces(tok + 8);
+                purge_leading(tok + 8);
+                if (atoi(tok + 8) != 0) {
+                    dialogs_.Dialog::field_50_ = atoi(tok + 8);
+                }
+                continue;
+            }
+            if (_strnicmp(tok + 1, BasePopKeywordActive, 6) == 0) {
+                purge_spaces(tok + 7);
+                purge_leading(tok + 7);
+                value_ = atoi(tok + 7);
+                continue;
+            }
+            if (_strnicmp(tok + 1, BasePopKeywordText, 4) == 0) {
+                add_as_escaped = 1;
+                continue;
+            }
+            if (_strnicmp(tok + 1, BasePopKeywordItemlist, 5) == 0) {
+                add_as_escaped = 0;
+                continue;
+            }
+            if (_strnicmp(tok + 1, BasePopKeywordButton, 6) == 0) {
+                purge_spaces(tok + 7);
+                purge_leading(tok + 7);
+                // A pointer test, not an empty-string test: empty buttons add.
+                text = tok + 7;
+                if (text != 0) {
+                    item_ids_.pending_text_ = text;
+                    item_ids_.field_20_ = 0;
+                    item_ids_.field_24_ = 0;
+                    if (item_ids_.add(0) == 0) {
+                        field_20F4_ = field_20F4_ + 1;
+                    }
+                }
+                continue;
+            }
+            if (_strnicmp(tok + 1, BasePopKeywordExtra, 5) == 0) {
+                purge_spaces(tok + 6);
+                purge_leading(tok + 6);
+                field_30AC_ = atoi(tok + 6);
+                continue;
+            }
+            // The five sound directives come in a/b pairs: a '2' right after
+            // the keyword selects the second 0x118 block (the image indexes
+            // the pair by 0x118 from text_block_a_).
+            // WORKAROUND(type): text_block_a_/text_block_b_ are two members;
+            // the image indexes them as one two-element array (imul 0x118).
+            if (_strnicmp(tok + 1, BasePopKeywordWave, 4) == 0) {
+                token = tok + 5;
+                if (tok[5] == '2') {
+                    which = 1;
+                    token = tok + 6;
+                } else {
+                    which = 0;
+                }
+                purge_spaces(token);
+                purge_leading(token);
+                if (isdigit(*token)) {
+                    (&text_block_a_)[which].field_104_ = atoi(token);
+                }
+                (&text_block_a_)[which].text[0] = '\0';
+                strcat((&text_block_a_)[which].text, token);
+                continue;
+            }
+            if (_strnicmp(tok + 1, BasePopKeywordVol, 3) == 0) {
+                token = tok + 4;
+                if (tok[4] == '2') {
+                    which = 1;
+                    token = tok + 5;
+                } else {
+                    which = 0;
+                }
+                purge_spaces(token);
+                purge_leading(token);
+                (&text_block_a_)[which].field_108_ = atol(token);
+                continue;
+            }
+            if (_strnicmp(tok + 1, BasePopKeywordPitch, 5) == 0) {
+                token = tok + 6;
+                if (tok[6] == '2') {
+                    which = 1;
+                    token = tok + 7;
+                } else {
+                    which = 0;
+                }
+                purge_spaces(token);
+                purge_leading(token);
+                (&text_block_a_)[which].field_110_ = atoi(token);
+                continue;
+            }
+            if (_strnicmp(tok + 1, BasePopKeywordFade, 4) == 0) {
+                token = tok + 5;
+                if (tok[5] == '2') {
+                    which = 1;
+                    token = tok + 6;
+                } else {
+                    which = 0;
+                }
+                purge_spaces(token);
+                purge_leading(token);
+                (&text_block_a_)[which].field_10C_ = atol(token);
+                continue;
+            }
+            if (_strnicmp(tok + 1, BasePopKeywordPan, 3) == 0) {
+                token = tok + 4;
+                if (tok[4] == '2') {
+                    which = 1;
+                    token = tok + 5;
+                } else {
+                    which = 0;
+                }
+                purge_spaces(token);
+                purge_leading(token);
+                (&text_block_a_)[which].field_114_ = atoi(token);
+                continue;
+            }
+            if (_strnicmp(tok + 1, BasePopKeywordSprite, 6) == 0) {
+                purge_spaces(tok + 7);
+                purge_leading(tok + 7);
+                if (Buffer::get_pcx_dimensions(tok + 7, &width, &height) == 0) {
+                    if (sprite_.init(tok + 7, width, height) == 0) {
+                        caller_sprite_ = &sprite_;
+                    }
+                }
+                continue;
+            }
+            if (tok[1] != '#') {
+                text_close();
+                return 0;
+            }
+        } else if (add_as_escaped != 0) {
+            // A plain line: an item, with the '^' prefix marks.
+            marks = 0;
+            text = tok;
+            if (text != 0) {
                 if (tok[0] == '^') {
                     if (tok[1] == '\0') {
                         marks = 3;
@@ -3380,216 +3601,22 @@ int BasePop::start(char *text_file, const char *text_label, int value,
                 unit_ids_.field_20_ = marks;
                 unit_ids_.field_24_ = 0;
                 unit_ids_.add(0);
-            } else if ((field_30A8_ & 4) == 0) {
-                dialogs_.item(tok, dialogs_.Dialog::item_list_.entry_count_);
+            }
+        } else if ((field_30A8_ & 4) == 0) {
+            dialogs_.item(tok, dialogs_.Dialog::item_list_.entry_count_);
+        } else if (dialogs_.get_num_items() < 10) {
+            // The first edit takes the caller's override text; the rest take
+            // the parser's per-index string buffers.
+            if (override_text != 0 && dialogs_.get_num_items() == 0) {
+                dialogs_.EditGroup::edit(tok, override_text, value);
             } else {
-                if (dialogs_.get_num_items() < 10) {
-                    if (flags == 0 || dialogs_.get_num_items() != 0) {
-                        dialogs_.EditGroup::edit(tok, 0, 0);
-                    } else {
-                        dialogs_.EditGroup::edit(tok, 0, 0);
-                    }
-                } else {
-                    dialogs_.EditGroup::edit(tok, 0, flags);
-                }
+                dialogs_.EditGroup::edit(
+                    tok, ParseStrBuffer[dialogs_.get_num_items()].str, value);
             }
-            goto read_line;
+        } else {
+            dialogs_.EditGroup::edit(tok, 0, value);
         }
-
-        // THE DIRECTIVE TABLE. (keyword, compare length, token offset N).
-        // Converter is atoi unless the comment says otherwise.
-        if (_strnicmp(tok + 1, BasePopKeywordXs, 2) == 0) {
-            purge_spaces(tok + 3);
-            purge_leading(tok + 3);
-            int v = atoi(tok + 3);
-            if (external_window_ == 0) {
-                if ((field_30A8_ & 0x400) == 0 && WinScreenWidth > 0x3ff) {
-                    v = (v * 3) / 2;
-                }
-            }
-            dialogs_.Dialog::field_2C_ = v;
-            goto read_line;
-        }
-        if (_strnicmp(tok + 1, BasePopKeywordYs, 2) == 0) {
-            purge_spaces(tok + 3);
-            purge_leading(tok + 3);
-            int v = atoi(tok + 3);
-            if (external_window_ == 0) {
-                if ((field_30A8_ & 0x400) == 0 && WinScreenWidth > 0x3ff) {
-                    v = (v * 3) / 2;
-                }
-            }
-            dialogs_.Dialog::field_30_ = v;
-            goto read_line;
-        }
-        if (_strnicmp(tok + 1, BasePopKeywordX, 2) == 0) {
-            purge_spaces(tok + 2);
-            purge_leading(tok + 2);
-            int v = atoi(tok + 2);
-            if (v != 0x2000) {
-                loc_a_ = v;
-            }
-            goto read_line;
-        }
-        if (_strnicmp(tok + 1, BasePopKeywordY, 2) == 0) {
-            purge_spaces(tok + 2);
-            purge_leading(tok + 2);
-            int v = atoi(tok + 2);
-            if (v != 0x2000) {
-                loc_b_ = v;
-            }
-            goto read_line;
-        }
-        if (_strnicmp(tok + 1, BasePopKeywordCol, 4) == 0) {
-            purge_spaces(tok + 4);
-            purge_leading(tok + 4);
-            dialogs_.Dialog::field_4C_ = atoi(tok + 4);
-            goto read_line;
-        }
-        if (_strnicmp(tok + 1, BasePopKeywordCaption, 7) == 0) {
-            purge_spaces(tok + 8);
-            purge_leading(tok + 8);
-            if (owned_text_ != 0) {
-                free(owned_text_);
-                owned_text_ = 0;
-            }
-            unsigned int len = strlen(tok + 8);
-            owned_text_ = static_cast<char *>(mem_get(len + 1));
-            if (owned_text_ != 0) {
-                *owned_text_ = '\0';
-                strcat(owned_text_, tok + 8);
-            }
-            goto read_line;
-        }
-        if (_strnicmp(tok + 1, BasePopKeywordCheckbox, 8) == 0) {
-            field_30A8_ |= 1;
-            dialogs_.kind_ = 1;
-            purge_spaces(tok + 9);
-            purge_leading(tok + 9);
-            if (atoi(tok + 9) != 0) {
-                dialogs_.Dialog::field_50_ = atoi(tok + 9);
-            }
-            goto read_line;
-        }
-        if (_strnicmp(tok + 1, BasePopKeywordEditbox, 7) == 0) {
-            field_30A8_ |= static_cast<uint32_t>(dialogs_.kind_);
-            goto read_line;
-        }
-        if (_strnicmp(tok + 1, BasePopKeywordListbox, 7) == 0) {
-            field_30A8_ |= 2;
-            dialogs_.kind_ = 2;
-            purge_spaces(tok + 8);
-            purge_leading(tok + 8);
-            if (atoi(tok + 8) != 0) {
-                dialogs_.Dialog::field_50_ = atoi(tok + 8);
-            }
-            goto read_line;
-        }
-        if (_strnicmp(tok + 1, BasePopKeywordActive, 6) == 0) {
-            purge_spaces(tok + 7);
-            purge_leading(tok + 7);
-            value_ = atoi(tok + 7);
-            goto read_line;
-        }
-        if (_strnicmp(tok + 1, BasePopKeywordText, 4) == 0) {
-            add_as_escaped = 1;
-            goto read_line;
-        }
-        if (_strnicmp(tok + 1, BasePopKeywordItemlist, 5) == 0) {
-            add_as_escaped = 0;
-            goto read_line;
-        }
-        if (_strnicmp(tok + 1, BasePopKeywordButton, 6) == 0) {
-            purge_spaces(tok + 7);
-            purge_leading(tok + 7);
-            text = tok + 7;
-            if (*text != '\0') {
-                item_ids_.pending_text_ = text;
-                item_ids_.field_20_ = 0;
-                item_ids_.field_24_ = 0;
-                if (item_ids_.add(0) == 0) {
-                    field_20F4_ = field_20F4_ + 1;
-                }
-            }
-            goto read_line;
-        }
-        if (_strnicmp(tok + 1, BasePopKeywordExtra, 5) == 0) {
-            purge_spaces(tok + 6);
-            purge_leading(tok + 6);
-            field_30AC_ = atoi(tok + 6);
-            goto read_line;
-        }
-        // The five text-block directives come in a/b pairs: a trailing '2'
-        // on the keyword selects the second 0x118 block, everything else the
-        // first. Both blocks are the same five fields, so the pair is one
-        // reference chosen up front.
-        if (_strnicmp(tok + 1, BasePopKeywordWave, 4) == 0) {
-            BasePopTextBlock &block =
-                (tok[1] == '2') ? text_block_b_ : text_block_a_;
-            token = tok + 5 + ((tok[1] == '2') ? 1 : 0);
-            purge_spaces(token);
-            purge_leading(token);
-            if (isdigit(*token)) { // Preserve the original signed-byte argument.
-                block.field_104_ = atoi(token);
-            }
-            block.text[0] = '\0';
-            strcat(block.text, token);
-            goto read_line;
-        }
-        if (_strnicmp(tok + 1, BasePopKeywordVol, 3) == 0) {
-            BasePopTextBlock &block =
-                (tok[1] == '2') ? text_block_b_ : text_block_a_;
-            token = tok + 4 + ((tok[1] == '2') ? 1 : 0);
-            purge_spaces(token);
-            purge_leading(token);
-            block.field_108_ = atol(token);
-            goto read_line;
-        }
-        if (_strnicmp(tok + 1, BasePopKeywordPitch, 5) == 0) {
-            BasePopTextBlock &block =
-                (tok[1] == '2') ? text_block_b_ : text_block_a_;
-            token = tok + 6 + ((tok[1] == '2') ? 1 : 0);
-            purge_spaces(token);
-            purge_leading(token);
-            block.field_10C_ = atoi(token);
-            goto read_line;
-        }
-        if (_strnicmp(tok + 1, BasePopKeywordFade, 4) == 0) {
-            BasePopTextBlock &block =
-                (tok[1] == '2') ? text_block_b_ : text_block_a_;
-            token = tok + 5 + ((tok[1] == '2') ? 1 : 0);
-            purge_spaces(token);
-            purge_leading(token);
-            block.field_110_ = atol(token);
-            goto read_line;
-        }
-        if (_strnicmp(tok + 1, BasePopKeywordPan, 3) == 0) {
-            BasePopTextBlock &block =
-                (tok[1] == '2') ? text_block_b_ : text_block_a_;
-            token = tok + 4 + ((tok[1] == '2') ? 1 : 0);
-            purge_spaces(token);
-            purge_leading(token);
-            block.field_114_ = atoi(token);
-            goto read_line;
-        }
-        if (_strnicmp(tok + 1, BasePopKeywordSprite, 6) == 0) {
-            purge_spaces(tok + 7);
-            purge_leading(tok + 7);
-            if (Buffer::get_pcx_dimensions(tok + 7, &width, &height)
-                == 0) {
-                if (sprite_.init(tok + 7, width, height) == 0) {
-                    caller_sprite_ = &sprite_;
-                }
-            }
-            goto read_line;
-        }
-        if (tok[1] == '#') {
-            goto read_line;
-        }
-        text_close();
-        result = 0;
     }
-    return result;
 }
 
 
@@ -3980,12 +4007,13 @@ int BasePop::calculate_dimensions() {
 //        will not CSE the reload across the calls.
 // TRIED: `const int own_bottom = bottom` (copy after the fact) instead of
 //        `= field_30E8_ + border` - identical 273, no flip.
-// RESIDUAL: the image reserves ONE stack slot for own_bottom (`push ecx`)
-//        and keeps the external-window-adjusted copy of it in ebp; this tree
-//        spills both names (`sub esp, 8`) and works the pair in ebx/ebp.
-//        Every other instruction shape agrees. This is the receiver-spill
-//        wall the brief documents, hit on the stack-slot count rather than on
-//        a callee-saved push.
+// LEVER: declaring `bottom` first and copying it into own_bottom gives the
+//        image's single `push ecx` slot (the earlier two-slot frame came from
+//        the reverse order); several unsigned uint32_t fields are compared
+//        and divided signed in the image (see the WORKAROUND(type) lines).
+// RESIDUAL: the load order of right's three terms at the top and the
+//        `neg; shl` form of text_left, which VC6 here reassociates into
+//        `field_30BC_ - field_30F4_ - 2*field_30E0_` for every spelling tried.
 void BasePop::on_redraw() {
     // THE INHERITED-MEMBER SPELLING, and it is load-bearing. GraphicWin's
     // Buffer base sits 0x444 in, behind its Win base; calling the inherited
@@ -4003,8 +4031,8 @@ void BasePop::on_redraw() {
     // pair the clamps at the end measure the text height against. Two names
     // for it, because the clamps read the base while the draws read the one
     // the external-window position has been added to.
-    const int own_bottom = field_30E8_ + border;
-    int bottom = own_bottom;
+    int bottom = field_30E8_ + border;
+    const int own_bottom = bottom;
 
     if (owner_window_ == this) {
         move(field_30B4_, field_30B8_);
@@ -4026,9 +4054,11 @@ void BasePop::on_redraw() {
             // top-down (negative) biHeight.
             field_214C_->draw(
                 static_cast<Buffer *>(this), field_214C_->cTransparentIndex_,
-                (dib_.bmiHeader.biWidth - field_214C_->iWidth_ - field_21C8_) /
-                        2 +
-                    field_21C8_,
+                // WORKAROUND(type): field_21C8_ is declared uint32_t; the image
+                // divides this centring term signed (cdq/sub/sar at 0x00604BD9).
+                (dib_.bmiHeader.biWidth - field_214C_->iWidth_ -
+                 static_cast<int>(field_21C8_)) / 2 +
+                    static_cast<int>(field_21C8_),
                 -((field_214C_->iHeight_ + dib_.bmiHeader.biHeight) / 2), 1, 1);
         }
     } else {
@@ -4045,9 +4075,8 @@ void BasePop::on_redraw() {
             // base is what makes VC6 emit the virtual-base subobject walk
             // natively, the same spelling every other base-subobject call
             // in this body uses.
-            const int item_id = dialogs_.SpriteBox::pos_to_id(0);
-            redraw_callback_(
-                caller_sprite_, owner_window_, item_id, right, bottom);
+            redraw_callback_(caller_sprite_, owner_window_,
+                             dialogs_.SpriteBox::pos_to_id(0), right, bottom);
         } else {
             caller_sprite_->draw(
                 owner_window_ != 0 ? static_cast<Buffer *>(owner_window_)
@@ -4062,7 +4091,9 @@ void BasePop::on_redraw() {
     if (field_30D4_ == 0) {
         // No text to lay out: publish the picture's extent and stop.
         BasePopDrawnRight = right - field_30D8_ - field_21C8_;
-        if (bottom > field_30DC_ + own_bottom) {
+        // WORKAROUND(type): field_30DC_ is declared uint32_t; both clamps
+        // compare signed in the image (jle at 0x00604CBD, jg at 0x00604E29).
+        if (bottom > static_cast<int>(field_30DC_) + own_bottom) {
             BasePopDrawnBottom = bottom;
             return;
         }
@@ -4083,14 +4114,14 @@ void BasePop::on_redraw() {
     owner_window_->set_font(string_font1_, string_font2_, string_font3_,
                             string_font4_);
 
-    const int text_left = -(field_30E0_ * 2) - field_30F4_ + field_30BC_ -
+    const int text_left = -field_30E0_ * 2 - field_30F4_ + field_30BC_ -
                           field_30D8_ - field_30F0_ - field_21C8_;
     const int height = owner_window_->write_strings(&unit_ids_, right, bottom,
                                                     text_left, 0);
 
     BasePopDrawnRight = right - field_30D8_ - field_21C8_;
     BasePopDrawnBottom = height;
-    if (height <= field_30DC_ + own_bottom) {
+    if (height <= static_cast<int>(field_30DC_) + own_bottom) {  // WORKAROUND(type): see above
         BasePopDrawnBottom = field_30DC_ + own_bottom;
     }
 }
