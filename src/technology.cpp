@@ -375,7 +375,10 @@ int __cdecl tech_category(int tech_id) {
         category = 2;
         compare = Technology[tech_id].wealth_value;
     }
-    return (Technology[tech_id].power_value > compare) ? 3 : category;
+    if (Technology[tech_id].power_value > compare) {
+        category = 3;
+    }
+    return category;
 }
 
 /*
@@ -458,6 +461,68 @@ BOOL __cdecl redundant(int facility_id, int faction_id) {
     return false;
 }
 
+// WORKAROUND(inline): forced twin of redundant() for facility_avail's expanded
+// copy; __forceinline so it does not spend facility_avail's /Ob2 budget.
+__forceinline BOOL __cdecl redundant_inline(int facility_id, int faction_id) {
+    if (facility_id == FAC_NAVAL_YARD) {
+        if (has_project(SP_MARITIME_CONTROL_CENTER, faction_id)) {
+            return TRUE;
+        }
+    }
+    if (facility_id == FAC_PERIMETER_DEFENSE) {
+        if (has_project(SP_CITIZENS_DEFENSE_FORCE, faction_id)) {
+            return TRUE;
+        }
+    }
+    if (facility_id == FAC_COMMAND_CENTER) {
+        if (has_project(SP_COMMAND_NEXUS, faction_id)) {
+            return TRUE;
+        }
+    }
+    if (facility_id == FAC_BIOENHANCEMENT_CENTER) {
+        if (has_project(SP_CYBORG_FACTORY, faction_id)) {
+            return TRUE;
+        }
+    }
+    if (facility_id == FAC_QUANTUM_CONVERTER) {
+        if (has_project(SP_SINGULARITY_INDUCTOR, faction_id)) {
+            return TRUE;
+        }
+    }
+    if (facility_id == FAC_AEROSPACE_COMPLEX) {
+        if (has_project(SP_CLOUDBASE_ACADEMY, faction_id)) {
+            return TRUE;
+        }
+    }
+    if (facility_id == FAC_ENERGY_BANK) {
+        if (has_project(SP_PLANETARY_ENERGY_GRID, faction_id)) {
+            return TRUE;
+        }
+    }
+    return false;
+}
+
+// WORKAROUND(inline): has_fac with the bitmask lookup written out instead of
+// base.h's nested has_fac_built - a cheaper /Ob2 spelling for facility_avail.
+inline BOOL __cdecl has_fac_twin(int facility_id, int base_id, int queue_count) {
+    if (facility_id >= FacilityRepStart) {
+        return false;
+    }
+    int offset;
+    int mask;
+    bitmask(facility_id, &offset, &mask);
+    BOOL is_built = (Bases[base_id].facilities_built[offset] & mask) != 0;
+    if (is_built || !queue_count) {
+        return is_built;
+    }
+    for (int i = 0; i < queue_count; i++) {
+        if (Bases[base_id].queue_production_id[i] == -facility_id) {
+            return true;
+        }
+    }
+    return false;
+}
+
 /*
 Purpose: Determine if the provided faction can build a specific facility or Secret Project in the
          specified base. Checks are included to prevent SMACX specific facilities from being built
@@ -489,9 +554,14 @@ Status: Complete
 BOOL __cdecl facility_avail(int facility_id, int faction_id, int base_id,
                             int queue_count) {
     // initial checks
-    if (!facility_id || (facility_id == FAC_SKUNKWORKS && GameDataStateStorage.fields_.diff_level_current_ <= DLVL_SPECIALIST)
-        || (facility_id >= FAC_HUMAN_GENOME_PROJ && GameDataStateStorage.fields_.game_rules_ & RULES_SCN_NO_BUILDING_SP)) {
+    if (!facility_id) {
+        return false;
+    }
+    if (facility_id == FAC_SKUNKWORKS && GameDataStateStorage.fields_.diff_level_current_ <= DLVL_SPECIALIST) {
         return false; // Skunkworks removed if there are no prototype costs
+    }
+    if (facility_id >= FAC_HUMAN_GENOME_PROJ && GameDataStateStorage.fields_.game_rules_ & RULES_SCN_NO_BUILDING_SP) {
+        return false;
     }
     if (facility_id == FAC_ASCENT_TO_TRANSCENDENCE) { // at top since anyone can build it
         // This owner tests the Voice slot directly in the original early branch.
@@ -521,68 +591,95 @@ BOOL __cdecl facility_avail(int facility_id, int faction_id, int base_id,
         return base_project(facility_id - FAC_HUMAN_GENOME_PROJ) == SP_Unbuilt;
     }
     // Facility availability
-    if (base_id < 0) {
-        return true;
-    }
-    if (has_fac(facility_id, base_id, queue_count)) {
-        return false; // already built or in queue
-    }
-    if (redundant(facility_id, faction_id)) {
-        return false; // has SP that counts as facility
-    }
-    switch (facility_id) { // consolidated into switch to improve readability and performance
-      case FAC_RECYCLING_TANKS:
-        return !has_fac(FAC_PRESSURE_DOME, base_id, queue_count); // count as Recycling Tank, skip
-      case FAC_TACHYON_FIELD:
-        return has_fac(FAC_PERIMETER_DEFENSE, base_id, queue_count)
-            || has_project(SP_CITIZENS_DEFENSE_FORCE, faction_id); // Cumulative
-      case FAC_SKUNKWORKS:
-        return !(Players[faction_id].rule_flags & RFLAG_FREEPROTO); // no prototype costs? skip
-      case FAC_HOLOGRAM_THEATRE:
-        return has_fac(FAC_RECREATION_COMMONS, base_id, queue_count) // not documented in manual
-            && !has_project(SP_VIRTUAL_WORLD, faction_id); // Network Nodes replaces Theater
-      case FAC_HYBRID_FOREST:
-        return has_fac(FAC_TREE_FARM, base_id, queue_count); // Cumulative
-      case FAC_QUANTUM_LAB:
-        return has_fac(FAC_FUSION_LAB, base_id, queue_count); // Cumulative
-      case FAC_NANOHOSPITAL:
-        return has_fac(FAC_RESEARCH_HOSPITAL, base_id, queue_count); // Cumulative
-      case FAC_PUNISHMENT_SPHERE:
-        return !has_fac(FAC_PARADISE_GARDEN, base_id, queue_count); // antithetical
-      case FAC_NANOREPLICATOR:
-        return has_fac(FAC_ROBOTIC_ASSEMBLY_PLANT, base_id, queue_count) // Cumulative
-            || has_fac(FAC_GENEJACK_FACTORY, base_id, queue_count);
-      case FAC_HABITATION_DOME:
-        return has_fac(FAC_HAB_COMPLEX, base_id, queue_count); // must have Complex
-      case FAC_TEMPLE_OF_PLANET:
-        return has_fac(FAC_CENTAURI_PRESERVE, base_id, queue_count); // must have Preserve
-      case FAC_QUANTUM_CONVERTER:
-        return has_fac(FAC_ROBOTIC_ASSEMBLY_PLANT, base_id, queue_count); // Cumulative
-      case FAC_NAVAL_YARD:
-        return is_coast(Bases[base_id].x, Bases[base_id].y, false); // needs ocean
-      case FAC_AQUAFARM:
-      case FAC_SUBSEA_TRUNKLINE:
-      case FAC_THERMOCLINE_TRANSDUCER:
-        return ExpansionEnabled && is_coast(Bases[base_id].x, Bases[base_id].y, false);
-      case FAC_COVERT_OPS_CENTER:
-      case FAC_BROOD_PIT:
-      case FAC_FLECHETTE_DEFENSE_SYS:
-        return ExpansionEnabled;
-      case FAC_GEOSYNC_SURVEY_POD: // SMACX only & must have Aerospace Complex
-        return ExpansionEnabled && (has_fac(FAC_AEROSPACE_COMPLEX, base_id, queue_count)
-            || has_project(SP_CLOUDBASE_ACADEMY, faction_id)
-            || has_project(SP_SPACE_ELEVATOR, faction_id));
-      case FAC_SKY_HYDRO_LAB:
-      case FAC_NESSUS_MINING_STATION:
-      case FAC_ORBITAL_POWER_TRANS:
-      case FAC_ORBITAL_DEFENSE_POD:  // must have Aerospace Complex
-        return has_fac(FAC_AEROSPACE_COMPLEX, base_id, queue_count)
-            || has_project(SP_CLOUDBASE_ACADEMY, faction_id)
-            || has_project(SP_SPACE_ELEVATOR, faction_id);
-      case FAC_SUBSPACE_GENERATOR: // Progenitor factions only
-        return is_alien_faction(faction_id);
-      default:
-        break;
+    if (base_id >= 0) {
+        if (has_fac(facility_id, base_id, queue_count)) {
+            return false; // already built or in queue
+        }
+        // WORKAROUND(inline): the image expands redundant() here (0x5BA2CD-0x5BA36E,
+        // first has_project written out, the rest called) while keeping its body at
+        // 0x5BA030 for BaseWin::draw_facilities; base.h declares it non-inline.
+        if (redundant_inline(facility_id, faction_id)) {
+            return false; // has SP that counts as facility
+        }
+        if (facility_id == FAC_NAVAL_YARD && !is_coast(Bases[base_id].x, Bases[base_id].y, false)) {
+            return false; // needs ocean
+        }
+        if (facility_id == FAC_AQUAFARM || facility_id == FAC_SUBSEA_TRUNKLINE
+            || facility_id == FAC_THERMOCLINE_TRANSDUCER) {
+            if (!ExpansionEnabled || !is_coast(Bases[base_id].x, Bases[base_id].y, false)) {
+                return false;
+            }
+        }
+        if (!ExpansionEnabled && (facility_id == FAC_GEOSYNC_SURVEY_POD
+            || facility_id == FAC_COVERT_OPS_CENTER || facility_id == FAC_BROOD_PIT
+            || facility_id == FAC_FLECHETTE_DEFENSE_SYS || facility_id == FAC_SUBSPACE_GENERATOR)) {
+            return false; // SMACX only
+        }
+        if (!(Players[faction_id].rule_flags & RFLAG_ALIEN) && facility_id == FAC_SUBSPACE_GENERATOR) {
+            return false; // Progenitor factions only
+        }
+        if (facility_id == FAC_RECYCLING_TANKS
+            && has_fac(FAC_PRESSURE_DOME, base_id, queue_count)) {
+            return false; // count as Recycling Tank, skip
+        }
+        if (facility_id == FAC_TACHYON_FIELD
+            && !has_fac(FAC_PERIMETER_DEFENSE, base_id, queue_count)
+            && !has_project(SP_CITIZENS_DEFENSE_FORCE, faction_id)) {
+            return false; // Cumulative
+        }
+        if (facility_id == FAC_HOLOGRAM_THEATRE
+            && (!has_fac(FAC_RECREATION_COMMONS, base_id, queue_count) // not documented in manual
+                || has_project(SP_VIRTUAL_WORLD, faction_id))) {
+            return false; // Network Nodes replaces Theater
+        }
+        if (facility_id == FAC_HYBRID_FOREST
+            && !has_fac(FAC_TREE_FARM, base_id, queue_count)) {
+            return false; // Cumulative
+        }
+        // WORKAROUND(inline): has_fac_twin from here on - base.h's has_fac (nested
+        // has_fac_built) spends more /Ob2 budget than the image did: with it every
+        // later site goes out of line, where the image still expands QUANTUM_LAB
+        // through Aerospace and calls 0x421670 only for the last three.
+        if (facility_id == FAC_QUANTUM_LAB
+            && !has_fac_twin(FAC_FUSION_LAB, base_id, queue_count)) {
+            return false; // Cumulative
+        }
+        if (facility_id == FAC_NANOHOSPITAL
+            && !has_fac_twin(FAC_RESEARCH_HOSPITAL, base_id, queue_count)) {
+            return false; // Cumulative
+        }
+        if (facility_id == FAC_SKUNKWORKS
+            && Players[faction_id].rule_flags & RFLAG_FREEPROTO) {
+            return false; // no prototype costs? skip
+        }
+        if (facility_id == FAC_PUNISHMENT_SPHERE
+            && has_fac_twin(FAC_PARADISE_GARDEN, base_id, queue_count)) {
+            return false; // antithetical
+        }
+        if (facility_id == FAC_HABITATION_DOME
+            && !has_fac_twin(FAC_HAB_COMPLEX, base_id, queue_count)) {
+            return false; // must have Complex
+        }
+        if (((facility_id >= FAC_SKY_HYDRO_LAB && facility_id < FAC_STOCKPILE_ENERGY)
+            || facility_id == FAC_GEOSYNC_SURVEY_POD) // must have Aerospace Complex
+            && !has_fac_twin(FAC_AEROSPACE_COMPLEX, base_id, queue_count)
+            && !has_project(SP_CLOUDBASE_ACADEMY, faction_id)
+            && !has_project(SP_SPACE_ELEVATOR, faction_id)) {
+            return false;
+        }
+        if (facility_id == FAC_NANOREPLICATOR
+            && !has_fac(FAC_ROBOTIC_ASSEMBLY_PLANT, base_id, queue_count) // Cumulative
+            && !has_fac(FAC_GENEJACK_FACTORY, base_id, queue_count)) {
+            return false;
+        }
+        if (facility_id == FAC_QUANTUM_CONVERTER
+            && !has_fac(FAC_ROBOTIC_ASSEMBLY_PLANT, base_id, queue_count)) {
+            return false; // Cumulative
+        }
+        if (facility_id == FAC_TEMPLE_OF_PLANET
+            && !has_fac(FAC_CENTAURI_PRESERVE, base_id, queue_count)) {
+            return false; // must have Preserve
+        }
     }
     return true;
 }
@@ -816,7 +913,7 @@ void __cdecl tech_secret(int tech_id, int faction_id) {
 
 /*
 Purpose: Calculate faction's tech related bonuses for commerce and resource production in fungus.
-// ORIGINAL: 0x005BAE60 ?tech_effects@@YAXH@Z 0x005BAE60-0x005BAFFB
+// ORIGINAL: 0x005BAE60 ?tech_effects@@YAXH@Z 0x005BAE60-0x005BAFFB BYTE_EXACT
 // LEVER: `memset(&PlayersData[faction_id].tech_fungus_nutrient, 0, 4 * sizeof(int))` for the
 //   four contiguous `tech_fungus_*` zero-inits reproduces the image's single-base-pointer
 //   4x `mov [reg+N], 0` (0/4/8/0xc); four separate `= 0;` statements each re-derive the field
@@ -890,16 +987,15 @@ void __cdecl tech_effects(int faction_id) {
     // if values are below zero, cap at zero
     int *tech_fungus = PlayersData[faction_id].tech_fungus_;
     for (int n = 0; n < 4; n++) {
-        const int value = tech_fungus[n];
-        tech_fungus[n] = value > 0 ? value : 0;
+        tech_fungus[n] = tech_fungus[n] > 0 ? tech_fungus[n] : 0;
     }
     if (PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::ECONOMY] > 2) {
         PlayersData[faction_id].tech_commerce_bonus++;
         if (PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::ECONOMY] > 3) {
             PlayersData[faction_id].tech_commerce_bonus++;
-            if (PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::ECONOMY] > 4) {
-                PlayersData[faction_id].tech_commerce_bonus++;
-            }
+        }
+        if (PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::ECONOMY] > 4) {
+            PlayersData[faction_id].tech_commerce_bonus++;
         }
     }
 }
@@ -1746,7 +1842,7 @@ int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc) {
 
 /*
 Purpose: Determine a tech the specified faction should research.
-// ORIGINAL: 0x005BDC10 ?tech_ai@@YAHH@Z 0x005BDC10-0x005BDD64
+// ORIGINAL: 0x005BDC10 ?tech_ai@@YAHH@Z 0x005BDC10-0x005BDD64 BYTE_EXACT
 // LEVER: tech_recurse moved to `MEASURED inline` in technology.h (see its own marker) - the
 //   image expands `tech_recurse(i, 0)` one level inside this function's main loop, which is
 //   what turns the loop's integer index into the image's pointer stepping by 0x2C. Moved
@@ -1787,8 +1883,13 @@ int __cdecl tech_ai(int faction_id) {
                 int preq = tech_recurse(i, 0);
                 tech_value = (tech_value << 8) / preq;
             }
-            compare = is_human(faction_id) ? random(0, tech_value + 1) // unsure why humans get random()
-                : bounded_crt_random(tech_value + 1); // vs AI rnd() ?
+            // An if/else, not a ?: - the conditional expression swaps the two
+            // stack slots VC6 gives `i` and its strength-reduced Technology pointer.
+            if (is_human(faction_id)) {
+                compare = random(0, tech_value + 1); // unsure why humans get random()
+            } else {
+                compare = bounded_crt_random(tech_value + 1); // vs AI rnd() ?
+            }
             if (compare > search) {
                 search = compare;
                 tech_id = i;
@@ -1941,14 +2042,9 @@ extern "C" void __cdecl tech_wizard_unk1(Popup *first_popup,
     say_tech(StringTemp, second_tech, 0);
     parse_says(1, StringTemp, -1, -1);
 
-    int lookup_a = 1;
-    int lookup_mid = 1;
-    int lookup_b = 1;
-    if (second_tech < MaxTechnologyNum) {
-        lookup_a = Technology[second_tech].tech_value;
-        lookup_mid = Technology[second_tech].wealth_value;
-        lookup_b = Technology[second_tech].growth_value;
-    }
+    int lookup_a = second_tech < MaxTechnologyNum ? Technology[second_tech].tech_value : 1;
+    int lookup_mid = second_tech < MaxTechnologyNum ? Technology[second_tech].wealth_value : 1;
+    int lookup_b = second_tech < MaxTechnologyNum ? Technology[second_tech].growth_value : 1;
 
     first_popup->start(TechWizardPopupFile, "TECHMIL", -1, 0, 0x100, 0);
 
@@ -1983,24 +2079,22 @@ extern "C" void __cdecl tech_wizard_unk1(Popup *first_popup,
     StringTemp[0] = '\0';
     strcat(StringTemp, "INF");
 
-    int result;
-    if (lookup_a / 2 + lookup_b + lookup_mid < 1 ||
-        second_tech == first_tech) {
-        result = 9;
-    } else if (force_roll == 0) {
-        if (lookup_b < lookup_mid && lookup_a < lookup_mid) {
-            result = 1;
-        } else if (lookup_mid < lookup_b && lookup_a < lookup_b) {
-            result = 0;
-        } else {
-            result = 2;
-        }
+    if (lookup_a / 2 + lookup_b + lookup_mid < 1 || second_tech == first_tech) {
+        _itoa(9, number, 10);
+        strcat(StringTemp, number);
+    } else if (force_roll) {
+        _itoa(3, number, 10);
+        strcat(StringTemp, number);
+    } else if (lookup_b < lookup_mid && lookup_mid > lookup_a) {
+        _itoa(1, number, 10);
+        strcat(StringTemp, number);
+    } else if (lookup_b > lookup_mid && lookup_b > lookup_a) {
+        _itoa(0, number, 10);
+        strcat(StringTemp, number);
     } else {
-        result = 3;
+        _itoa(2, number, 10);
+        strcat(StringTemp, number);
     }
-
-    _itoa(result, number, 10);
-    strcat(StringTemp, number);
     second_popup->start(TechWizardPopupFile, StringTemp, -1, 0, 0x80, 0);
     second_popup->exec(0, 0);
 }
@@ -2083,7 +2177,7 @@ BOOL __cdecl wants_prototype(int proto_id, int faction_id) {
 /*
 Purpose: Draw one tech-wizard facility sprite at the isometric position its
          record's footprint implies.
-// ORIGINAL: 0x005BE2A0 tech_wizard_unk2 0x005BE2A0-0x005BE378 FILE
+// ORIGINAL: 0x005BE2A0 tech_wizard_unk2 0x005BE2A0-0x005BE378 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original5BE2A0..5BE378; retired seed git:ee30a69d:src/unrecovered/005be2a0.cpp records the same identity and spans with its register-save TRIED note kept below.", "The scale pair is sprite.h's own SpriteScaleNumerator/Denominator (0x00696D18/0x00696D1C), the size/divisor pair is mapwin.h's MapWinCaptionScale/MapWinCaptionDivisor (0x00691E6C/0x00691E70), and the facility tables are sprite.cpp's g_TECH_ICON_SPRITES (0x00759E28, whose 0x2C stride is the seed's 0x11-int entry) with the transparency bytes at 0x00759E30 - all read exactly as the seed measures them.", "The sprite draw is sprite.h's own Sprite::draw(Buffer *, int, int, int)."], "reason": "Coverage transcription of the facility sprite painter with the record-table arithmetic kept at the seed's measured strides."}
 // symbol    _tech_wizard_unk2
 // TRIED (seed): 6-param __cdecl void, if/else matching Ghidra's arithmetic
@@ -2115,7 +2209,9 @@ extern "C" void __cdecl tech_wizard_unk2(GraphicWin *canvas, int index, int odd,
         } else {
             x_offset = 0;
         }
-        const int x = base_x + x_offset;
+        // The offsets are added into the parameters themselves: a separate
+        // x/y local moves `index` out of edi and x out of ebx.
+        base_x += x_offset;
 
         int y_offset;
         if (size > 0) {
@@ -2123,8 +2219,7 @@ extern "C" void __cdecl tech_wizard_unk2(GraphicWin *canvas, int index, int odd,
         } else {
             y_offset = 0x6B;
         }
-        const int dy = base_bottom - y_offset;
-        const int y = base_y + (dy / 2);
+        base_y += (base_bottom - y_offset) / 2;
 
         if (size > 0) {
             SpriteScaleNumerator = size;
@@ -2134,14 +2229,9 @@ extern "C" void __cdecl tech_wizard_unk2(GraphicWin *canvas, int index, int odd,
             SpriteScaleDenominator = 0x10;
         }
 
-        Buffer *const target = (canvas != 0)
-            ? static_cast<Buffer *>(canvas)
-            : 0;
-
-        // Pinned 5BE34F reads array base759E28 + element stride2C + member8.
-        const unsigned char transparency =
-            g_TECH_ICON_SPRITES[index].transparent_index();
-        g_TECH_ICON_SPRITES[index].draw(target, transparency, x, y);
+        Buffer *target = canvas;
+        Sprite *sprite = &g_TECH_ICON_SPRITES[index];
+        sprite->draw(target, sprite->transparent_index(), base_x, base_y);
 
         SpriteScaleNumerator = 1;
         SpriteScaleDenominator = 1;
@@ -2379,8 +2469,8 @@ int __cdecl tech_rate(int faction_id) {
     } else {
         diff_lvl = GameDataStateStorage.fields_.diff_level_current_;
     }
-    diff_factor = is_human(faction_id) ? diff_factor * 4 + 8 : 29 - diff_factor * 3;
-    diff_factor = range(diff_factor, 12 - player_factor, player_factor + 12);
+    diff_factor = range(is_human(faction_id) ? diff_factor * 4 + 8 : 29 - diff_factor * 3,
+        12 - player_factor, player_factor + 12);
     int tech_stagnation = GameDataStateStorage.fields_.game_rules_ & RULES_TECH_STAGNATION;
     uint32_t rule_factor = tech_stagnation | 0x40; // 64 or 96
     diff_factor += range(
