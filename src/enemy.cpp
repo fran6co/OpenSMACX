@@ -1558,12 +1558,10 @@ game stores there and disagree on everything else.
 */
 static inline int course_xrange(int x) {
     if (!(MapIsFlat & 1)) {
-        if (x >= 0) {
-            if (x >= MapLongitudeBounds) {
-                x -= MapLongitudeBounds;
-            }
-        } else {
+        if (x < 0) {
             x += MapLongitudeBounds;
+        } else if (x >= MapLongitudeBounds) {
+            x -= MapLongitudeBounds;
         }
     }
     return x;
@@ -2734,9 +2732,11 @@ int __cdecl compute_odds(int odds, int faction_id, int veh_id_atk, int veh_id_de
     if (triad_atk == TRIAD_AIR && plan_atk == PLAN_OFFENSIVE
         && !is_proto_missile(Vehs[veh_id_atk].proto_id)) {
         if (region_plan != 2) {
-            return odds / 3;
+            odds /= 3;
+        } else {
+            odds = odds * 2 / 3;
         }
-        return odds * 2 / 3;
+        return odds;
     }
     return odds;
 }
@@ -8914,7 +8914,7 @@ after_move:
     return 0;
 }
 
-// ORIGINAL: 0x00579510 ?enemy_turn@@YAHH@Z 0x00579510-0x00579769
+// ORIGINAL: 0x00579510 ?enemy_turn@@YAHH@Z 0x00579510-0x00579769 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x00579643-0x00579687 routes priorities7..9 around the DROP_POD, plan4 and unk_1==0x15 filters used by priorities0..6; priority8 alone then requires plan7 and nonzero faction at0x0057968A-0x005796A5.", "Original rejected priority8 paths jump0x005795A7 to decrement the vehicle index and pointer; the for-loop increment clause preserves this tail for continue as well as ordinary completion."], "reason": "Preserve original enemy-turn early-band filters, late-band bypass and common descending-vehicle tail."}
 // symbol    ?enemy_turn@@YAXH@Z
 // LEVER: void, not the catalogue's int - the body's only `ret` leaves eax
@@ -8934,10 +8934,10 @@ after_move:
 //        `matched`), Vehs[veh_id] instead of a pointer, `!veh_moves(veh_id)`
 //        for the moves test, and turns_spent declared before the
 //        `veh_id >= 0` test, which gives the image's registers (veh_id ebx,
-//        priority and turns_spent in the frame). Left: the image places the
-//        next-vehicle tail and the epilogue right after band 1 and the rest of
-//        the body after them; a switch on priority and goto-per-band do not
-//        give that layout.
+//        priority and turns_spent in the frame).
+// LEVER (2026-11-10): the move loop is `while (1)` with the sentry test as
+//        its first break; `while (order != SENTRY)` rotates the test to the
+//        bottom and `for (;;)` does not lay the tail out after band 1.
 void __cdecl enemy_turn(int faction_id) {
     for (int priority = 0; priority < 10; priority++) {
         for (int veh_id = GameDataStateStorage.fields_.vehicle_current_count_ - 1;
@@ -8985,7 +8985,10 @@ void __cdecl enemy_turn(int faction_id) {
             }
             int turns_spent = 0;
             if (veh_id >= 0) {
-                while (Vehs[veh_id].order != ORDER_SENTRY_BOARD) {
+                while (1) {
+                    if (Vehs[veh_id].order == ORDER_SENTRY_BOARD) {
+                        break;
+                    }
                     if ((priority != 8 || turns_spent != 0) && !veh_moves(veh_id)) {
                         break;
                     }
