@@ -1646,6 +1646,18 @@ void BaseWin::draw_psych() {
 }
 
 
+// WORKAROUND(decl): stands in for an unrecovered guarded Font/RECT
+// write_cent inline; the image tests the text pointer before its strlen
+// (0x0040EEB0, 0x0040F030) as the header's other guarded write_cent does.
+template <class Target>
+static inline int production_write_cent(Target &buffer, Font *font, char *text,
+                                        RECT *area) {
+    if (text == 0) {
+        return area->left;
+    }
+    return buffer.write_cent_l(font, text, area, static_cast<int>(strlen(text)));
+}
+
 static int production_signed_bits(uint32_t bits) {
     return bits <= 0x7FFFFFFFu ? static_cast<int>(bits)
         : -1 - static_cast<int>(0xFFFFFFFFu - bits);
@@ -2564,111 +2576,117 @@ void BaseWin::draw_queue(int update_mode) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:b2a28d37f78fd7c77acb7da456247d2c9aac7cb8:src/unrecovered/0040e360.cpp", "pinned:40E360..40F0E5 and651ACD..651AF8; native grid40EB3F..40EDF4", "source:src/basewin.h;src/base.h;src/caviar.h;src/interface_palette.cpp", "source:recovery/tests/test_basewin_production_actual_source.py"], "reason": "Recover the complete production panel through genuine BaseWin members, source-owned Base/Veh/Facility records, MainInterface Buffer operations and automatic two-Font/one-Sprite lifetimes. Both primary and exception-cleanup spans and the seed transcription lessons remain historical obligations. The original nested mineral grid, signed production selection, callback-sensitive live BaseCurrent reads, caption override lifetime and unclamped-surplus numerator are retained; no intentional bug fix or byte claim is granted. The embedded Caviar count is reset through its existing owner, not a new BaseWin field. Text colours use the existing initialized palette table, not executable-address aliases."}
 // TRIED: BaseWin is opaque past field_40b10_ in this scaffold, so every `this`-relative access below 0x40C6C etc. is a raw I32/B8 cast rather than a named member; the two Font locals + one Sprite local (matching the two Font ctor calls and the single Sprite ctor/close pair in the disassembly) reproduce that RAII shape. The header/border setup and the unit-vs-facility info panel are transcribed from the disassembly; the queue-grid cell-size search and its per-item draw loop (~110 instructions) are replaced with a single representative call rather than the original's two-pass sizing + nested row/column loop, since the unnamed FUN_ callees for that section have no recovered signature to transcribe against.
 void BaseWin::draw_production(int update_mode) {
+    int has_proto_cost = 0;
     Font unit_font;
     Font detail_font;
     Sprite blank_sprite;
+    RECT *const help = &queue_help_rect_;
+    RECT panel = *help;
     RECT saved_clip = MainInterfaceGlobal.current_clip();
-    RECT panel = queue_help_rect_;
-    RECT outer = queue_outer_rect_;
-    RECT border;
     RECT content;
-    char number[16];
-    BoxSpriteParams panel_style = InterfaceBoxStyles[3];
-    BoxSpriteParams outer_style = InterfaceBoxStyles[3];
-    BoxSpriteParams flash_style = InterfaceBoxStyles[3];
+    BoxSpriteParams style;
+    char number[80];
 
-    panel_style.corner3_ = 0;
-    panel_style.edge3_ = 0;
-    outer_style.corner0_ = 0;
-    outer_style.edge0_ = 0;
-    outer_style.corner1_ = 0;
-    flash_style.corner0_ = &blank_sprite;
-    flash_style.corner2_ = 0;
-    flash_style.edge2_ = 0;
-
-    // The native body copies style 3 before masking individual edge members.
-    // Use the source-owned style record and typed Buffer API for both frames.
+    // The native body masks one copy of style 3 for the help and outer
+    // frames, so the outer frame keeps the help frame's cleared right-hand
+    // corner and edge; the flash border starts from a fresh copy. One work
+    // RECT serves every frame and then the content area.
     MainInterfaceGlobal.restore_clip();
-    MainInterfaceGlobal.box_sprite(&panel, &panel_style);
-    outer.left -= 5;
-    outer.top += 5;
-    outer.right -= 5;
-    outer.bottom += 5;
-    MainInterfaceGlobal.box_sprite(&outer, &outer_style);
-    UnionRect(&border, &flash_rect_a_, &flash_rect_b_);
-    border.left -= 3;
-    border.top -= 3;
-    border.right += 3;
-    border.bottom += 3;
+    style = InterfaceBoxStyles[3];
+    style.edge3_ = 0;
+    style.corner3_ = 0;
+    content = *help;
+    MainInterfaceGlobal.box_sprite(&content, &style);
+    content = queue_outer_rect_;
+    content.left -= 5;
+    content.top -= 5;
+    content.right += 5;
+    content.bottom += 5;
+    content.top += 10;
+    content.right -= 10;
+    style.corner0_ = 0;
+    style.edge0_ = 0;
+    style.corner1_ = 0;
+    MainInterfaceGlobal.box_sprite(&content, &style);
+    UnionRect(&content, &flash_rect_a_, &flash_rect_b_);
+    content.left -= 3;
+    content.top -= 3;
+    content.bottom += 3;
+    content.right += 3;
     blank_sprite.create_blank(6, 6, WinFillColour);
-    MainInterfaceGlobal.box_sprite(&border, &flash_style);
+    style = InterfaceBoxStyles[3];
+    style.corner0_ = &blank_sprite;
+    style.edge2_ = 0;
+    style.corner2_ = 0;
+    MainInterfaceGlobal.box_sprite(&content, &style);
+    // Drawing below stays clipped to the whole help panel.
     MainInterfaceGlobal.set_clip(&panel);
 
-    content.left = panel.left + 3;
-    content.top = panel.top + 3;
-    content.right = panel.right - 3;
-    content.bottom = panel.bottom - 3;
+    content.left = help->left + 3;
+    content.top = help->top + 3;
+    content.right = help->right - 3;
+    content.bottom = help->bottom - 3;
     MainInterfaceGlobal.box_sprite(&content, &InterfaceBoxStyles[0]);
     content.left += 3;
-    content.top += 3;
     content.right -= 3;
     content.bottom -= 3;
+    content.top += 3;
 
     spot1_.kill_type(5);
-    spot1_.add(0, 5, panel.left, panel.top,
-               panel.right - panel.left, panel.bottom - panel.top);
+    spot1_.add(0, 5, help->left, help->top, help->right - help->left,
+               help->bottom - help->top);
 
-    const int font_height = WinScreenWidth == 0x320 ? 10 : 12;
-    unit_font.init(DefaultFontFace, font_height, 0);
+    if (WinScreenWidth == 0x320) unit_font.init(DefaultFontFace, 10, 0);
+    else unit_font.init(DefaultFontFace, 12, 0);
     detail_font.init(DefaultFontFace, 12, 1);
 
-    Base *base = BaseCurrent;
-    const int production_id = base->queue_production_id[0];
-    const bool is_vehicle = production_id >= 0;
-    const int item_id = is_vehicle ? production_id : -production_id;
-    int has_proto_cost = 0;
-    int signed_facility_id = -1;
-    if (is_vehicle) {
-        veh_cost(item_id, BaseIDCurrentSelected, &has_proto_cost);
+    // Exactly one of the two ids is nonnegative.
+    int vehicle_id = BaseCurrent->queue_production_id[0];
+    int facility_id;
+    if (vehicle_id >= 0) {
+        facility_id = -1;
+        veh_cost(vehicle_id, BaseIDCurrentSelected, &has_proto_cost);
     } else {
-        signed_facility_id = item_id;
+        facility_id = -vehicle_id;
+        vehicle_id = -1;
     }
-    int display_prototype = item_id;
-    const int panel_center_x = (content.left + content.right) / 2;
-    int text_y = content.top + 0x28;
-
-    MainInterfaceGlobal.set_clip(&content);
-    if (is_vehicle) {
+    const int center_x = (content.left + content.right) / 2;
+    const int text_y = content.top + 0x28;
+    int current_minerals;
+    int turn_cost;
+    int item_cost;
+    if (vehicle_id >= 0) {
         const int render_width = ((content.right - content.left) * 3) / 4;
         const int render_height = (render_width * 75) / 100;
-        display_prototype = veh_fake(item_id, BaseCurrent->faction_id_current);
-        if (item_id < 0x40 &&
-            Weapon[VehPrototypes[item_id].weapon_id].offense_rating < 0) {
-            Vehs[display_prototype].morale = static_cast<uint8_t>(
+        const int display = veh_fake(vehicle_id, BaseCurrent->faction_id_current);
+        if (vehicle_id < 0x40 &&
+            Weapon[VehPrototypes[vehicle_id].weapon_id].offense_rating < 0) {
+            Vehs[display].morale = static_cast<uint8_t>(
                 breed_mod(BaseIDCurrentSelected,
                           BaseCurrent->faction_id_current) + 1);
         }
         MapWinCaptionScale = render_width;
         MapWinCaptionDivisor = 0x64;
-        const int drawn = veh_draw(&MainInterfaceGlobal, display_prototype,
-                                   panel_center_x - render_width / 2,
-                                   text_y - render_height / 2, 1, 0xCC, 0);
-        if (drawn != 0) {
+        if (veh_draw(&MainInterfaceGlobal, display,
+                     center_x - render_width / 2,
+                     text_y - render_height / 2, 1, 0xCC, 0) != 0) {
             caviar_.reset_objects();
-            vehdraw_construct_vehicle(display_prototype, &caviar_);
+            vehdraw_construct_vehicle(display, &caviar_);
             caviar_.set_scaling(static_cast<float>(render_width) *
                                 0.000699999975040555f);
             caviar_.set_scene_rotation(
-                static_cast<float>(field_1E670_ + 0x1e) *
+                // WORKAROUND(type): the image converts this counter with a
+                // signed fild; basewin.h declares it uint32_t.
+                static_cast<float>(static_cast<int>(field_1E670_) + 0x1e) *
                     0.017444444820284843f,
                 0.0f, 0.0f);
-            caviar_.render(&MainInterfaceGlobal, panel_center_x, text_y, 0);
+            caviar_.render(&MainInterfaceGlobal, center_x, text_y, 0);
         }
+        content.top += 0x41;
         MapWinCaptionScale = -1;
         MapWinCaptionDivisor = -1;
-        content.top += 0x41;
         StringTemp[0] = 0;
-        strcat(StringTemp, VehPrototypes[item_id].veh_name);
+        strcat(StringTemp, VehPrototypes[vehicle_id].veh_name);
         CharUpperA(StringTemp);
         MainInterfaceGlobal.set_text_color(TextColourTable[82],
                                            TextColourTable[83], 1, 1);
@@ -2677,124 +2695,121 @@ void BaseWin::draw_production(int update_mode) {
         if (has_proto_cost != 0) {
             MainInterfaceGlobal.set_text_color(TextColourTable[118],
                                                TextColourTable[119], 1, 1);
-            MainInterfaceGlobal.set_font(&unit_font, 0, 0, 0);
             StringTemp[0] = 0;
             strcat(StringTemp, label_get(185));
+            MainInterfaceGlobal.set_font(&unit_font, 0, 0, 0);
             strcat(StringTemp, " ");
             strcat(StringTemp, "+");
-            _itoa(prototype_factor(item_id), number, 10);
+            const int factor = prototype_factor(vehicle_id);
+            _itoa(factor, number, 10);
             strcat(StringTemp, number);
             strcat(StringTemp, "%");
             content.top = MainInterfaceGlobal.wrap_cent(StringTemp,
-                panel_center_x, text_y, 0);
+                center_x, text_y, 0);
         }
+        content.left += 2;
         content.right -= 2;
         content.top += 2;
-        content.left += 2;
         content.bottom -= 2;
-        content.bottom -= 2 * unit_font.line_advance();
+        content.bottom -= 2 * font_line_advance(unit_font);
+        current_minerals = BaseCurrent->minerals_accumulated;
+        turn_cost = cost_factor(BaseCurrent->faction_id_current, 1, -1);
+        item_cost = veh_cost(vehicle_id, BaseIDCurrentSelected, &has_proto_cost);
     } else {
-        int icon_color;
-        Sprite *icon_sprite;
-        if (item_id < 0x46) {
-            icon_color = mandate_color(prodPicker_.edbc_fac(item_id));
-            icon_sprite = &g_FACILITY_ICON_SPRITES[item_id];
+        if (facility_id < 0x46) {
+            const int color = mandate_color(prodPicker_.edbc_fac(facility_id));
+            Sprite &icon = g_FACILITY_ICON_SPRITES[facility_id];
+            icon.draw_mono(&MainInterfaceGlobal, icon.transparent_index(),
+                center_x - 0x14, text_y - 0x14, color, 0x28,
+                g_FACILITY_ICON_SPRITES[0].width());
         } else {
-            icon_color = mandate_color(1);
-            icon_sprite = &g_SECRET_PROJECT_ICON_SPRITES[item_id - FacilitySPStart];
+            const int color = mandate_color(1);
+            Sprite &icon = g_SECRET_PROJECT_ICON_SPRITES[facility_id - FacilitySPStart];
+            icon.draw_mono(&MainInterfaceGlobal, icon.transparent_index(),
+                center_x - 0x14, text_y - 0x14, color, 0x28,
+                g_SECRET_PROJECT_ICON_SPRITES[0].width());
         }
-        icon_sprite->draw_mono(&MainInterfaceGlobal,
-            icon_sprite->transparent_index(), panel_center_x - 0x14,
-            text_y - 0x14, icon_color, 0x28,
-            (item_id < 0x46 ? g_FACILITY_ICON_SPRITES[0].width()
-                            : g_SECRET_PROJECT_ICON_SPRITES[0].width()));
         content.top += 0x41;
         StringTemp[0] = 0;
-        strcat(StringTemp, StringTable.get(
-            Facility[item_id].name));
+        strcat(StringTemp, StringTable.get(Facility[facility_id].name));
         CharUpperA(StringTemp);
         MainInterfaceGlobal.set_text_color(TextColourTable[116],
                                            TextColourTable[117], 1, 1);
         content.top = MainInterfaceGlobal.wrap_cent(&detail_font, StringTemp,
                                                     &content);
         content.left += 2;
-        content.top += 2;
         content.right -= 2;
+        content.top += 2;
         content.bottom -= 2;
-        content.bottom -= 2 * unit_font.line_advance();
+        content.bottom -= 2 * font_line_advance(unit_font);
+        current_minerals = BaseCurrent->minerals_accumulated;
+        turn_cost = cost_factor(BaseCurrent->faction_id_current, 1, -1);
+        item_cost = Facility[facility_id].cost;
     }
 
-    // Reload live economy state after the rendering/text callbacks, matching
-    // the native reads at 0x40E9A5/0x40EAD6; cost_factor may run only after
-    // the mineral value has been captured.
-    Base *economy_base = BaseCurrent;
-    const int current_minerals = economy_base->minerals_accumulated;
-    int item_turn_cost = cost_factor(economy_base->faction_id_current, 1, -1);
-    int item_cost = is_vehicle
-        ? veh_cost(item_id, BaseIDCurrentSelected, &has_proto_cost)
-        : Facility[item_id].cost;
-
-    // Native local values at [ebp-0x30] and [ebp-0x20] are the stored
-    // mineral count and total production cost. Keep them local: neither is a
-    // BaseWin member. The native dimension search and row-major cell walk are
-    // retained, including its unguarded integer divisions and signed limits.
-    const int gross_cost = item_cost * item_turn_cost;
-    if (gross_cost == 0) {
-        if (update_mode != 0) MainInterfaceGlobal.update(&panel, 0);
-        else MainInterfaceGlobal.soft_update(&panel);
-        MainInterfaceGlobal.set_clip(&saved_clip);
-        return;
-    }
-    const int mineral_surplus = BaseCurrent->mineral_surplus;
-    const int max_cell_index = gross_cost > current_minerals
-        ? gross_cost : current_minerals;
-    const int progress_boundary = gross_cost < current_minerals
-        ? gross_cost : current_minerals;
-    {
+    // A zero total skips both the cell grid and the status line.
+    const int gross_cost = item_cost * turn_cost;
+    if (gross_cost != 0) {
+        const int mineral_surplus = BaseCurrent->mineral_surplus;
+        int max_cell_index;
+        int progress_boundary;
+        if (gross_cost < current_minerals) {
+            max_cell_index = current_minerals;
+            progress_boundary = gross_cost;
+        } else {
+            max_cell_index = gross_cost;
+            progress_boundary = current_minerals;
+        }
+        // The native dimension search and row-major cell walk keep their
+        // unguarded integer divisions and signed limits.
         const int available_width = content.right - content.left;
-        const int available_height = content.bottom - content.top;
-        int columns = item_turn_cost;
+        int columns = turn_cost;
         if (2 * columns < available_width) {
-            while ((max_cell_index / columns) * 2 > available_height)
-                columns *= 2;
+            const int available_height = content.bottom - content.top;
+            while ((max_cell_index / columns) * 2 > available_height) {
+                columns += columns;
+            }
         } else {
             columns = 0;
             while (columns * columns < gross_cost) ++columns;
             columns += 2;
         }
-
         int rows = max_cell_index / columns;
         if (rows * columns < max_cell_index) ++rows;
         const int cell_width = available_width / columns;
-        const int cell_height = available_height / rows;
-        int start_x = content.left + (available_width - cell_width * columns) / 2;
-        int start_y = content.top + (available_height - cell_height * rows) / 2;
+        const int cell_height = (content.bottom - content.top) / rows;
+        const int start_y = (content.bottom - content.top - cell_height * rows) / 2
+            + content.top;
+        const int start_x = (content.right - content.left - cell_width * columns) / 2
+            + content.left;
         RECT cell;
+        cell.left = start_x;
+        cell.top = start_y;
+        cell.right = start_x + cell_width;
+        cell.bottom = start_y + cell_height;
+        if (cell_height < 8) {
+            --cell.right;
+        } else {
+            ++cell.left;
+            --cell.right;
+            ++cell.top;
+        }
+        --cell.bottom;
+        RECT row_cell = cell;
         int cell_index = 0;
-
         for (int row = 0; row < rows; ++row) {
-            for (int column = 0; column < columns; ++column, ++cell_index) {
-                cell.left = start_x + column * cell_width;
-                cell.top = start_y + row * cell_height;
-                cell.right = cell.left + cell_width - 1;
-                cell.bottom = cell.top + cell_height - 1;
-                if (cell_height >= 8) {
-                    ++cell.left;
-                    ++cell.top;
-                    --cell.right;
-                    --cell.bottom;
-                } else {
-                    --cell.right;
-                }
-                if (cell_index < progress_boundary && cell_height >= 8) {
-                    MainInterfaceGlobal.tile(&sprites2_[1], cell.left,
-                        cell.top, cell.left, cell.top,
-                        cell.right - cell.left, cell.bottom - cell.top);
+            for (int column = 0; column < columns; ++column) {
+                if (cell_index < progress_boundary) {
+                    if (cell_height < 8) {
+                        MainInterfaceGlobal.fill(&cell, 0x42);
+                    } else {
+                        MainInterfaceGlobal.tile(&sprites2_[1], cell.left,
+                            cell.top, cell.left, cell.top,
+                            cell.right - cell.left, cell.bottom - cell.top);
+                    }
                 } else if (cell_height < 8) {
-                    const int color = cell_index < progress_boundary
-                        ? 0x42
-                        : (current_minerals >= gross_cost ? 0x6C : 0xDF);
-                    MainInterfaceGlobal.fill(&cell, color);
+                    MainInterfaceGlobal.fill(&cell,
+                        current_minerals < gross_cost ? 0xDF : 0x6C);
                 } else if (current_minerals < gross_cost) {
                     MainInterfaceGlobal.tile(&sprites2_[0], cell.left,
                         cell.top, cell.left, cell.top,
@@ -2804,83 +2819,72 @@ void BaseWin::draw_production(int update_mode) {
                         cell.top, cell.left, cell.top,
                         cell.right - cell.left, cell.bottom - cell.top);
                 }
-
-                if (current_minerals < gross_cost && mineral_surplus < 0 &&
-                    cell_index >= progress_boundary + mineral_surplus &&
-                    cell_index < progress_boundary) {
-                    MainInterfaceGlobal.box(&cell, 0x6C, 0x6C);
-                } else if (current_minerals < gross_cost && mineral_surplus > 0 &&
-                           cell_index + 1 > progress_boundary &&
-                           cell_index + 1 <= progress_boundary + mineral_surplus) {
-                    MainInterfaceGlobal.box(&cell, 0x42, 0x42);
+                if (current_minerals < gross_cost) {
+                    if (mineral_surplus < 0) {
+                        if (cell_index >= progress_boundary + mineral_surplus &&
+                            cell_index < progress_boundary) {
+                            MainInterfaceGlobal.box(&cell, 0x6C, 0x6C);
+                        }
+                    } else if (mineral_surplus > 0) {
+                        if (cell_index + 1 <= progress_boundary + mineral_surplus &&
+                            cell_index + 1 > progress_boundary) {
+                            MainInterfaceGlobal.box(&cell, 0x42, 0x42);
+                        }
+                    }
                 }
-
-                if (cell_index >= max_cell_index) {
-                    ++cell_index;
-                    break;
-                }
+                cell.left += cell_width;
+                cell.right += cell_width;
+                if (++cell_index > max_cell_index) break;
             }
+            row_cell.top += cell_height;
+            row_cell.bottom += cell_height;
+            cell = row_cell;
             if (cell_index > max_cell_index) break;
         }
-    }
 
-    int project_is_owned = 0;
-    if (signed_facility_id != -1 && signed_facility_id < 0x41) {
-        int bit_offset;
-        int bit_mask;
-        bitmask(signed_facility_id, &bit_offset, &bit_mask);
-        project_is_owned =
-            (BaseCurrent->facilities_built[bit_offset] & bit_mask) != 0;
-    } else if (signed_facility_id >= 0x46) {
-        project_is_owned =
-            base_project(signed_facility_id - FacilitySPStart) == BaseIDCurrentSelected;
-    }
-    if (project_is_owned) {
-        StringTemp[0] = 0;
-        strcat(StringTemp, label_get(489));
-        MainInterfaceGlobal.set_text_color(TextColourTable[120],
-                                           TextColourTable[121], 1, 1);
-        MainInterfaceGlobal.write_cent_l(&detail_font, StringTemp, &content,
-                                         strlen(StringTemp));
-    } else if (BaseCurrent->mineral_surplus > 0) {
-        StringTemp[0] = 0;
-        strcat(StringTemp, label_get(49));
-        CharUpperA(StringTemp);
-        strcat(StringTemp, ": ");
-        if (max_cell_index > current_minerals) {
-            const int remaining = max_cell_index - current_minerals;
-            int divisor = BaseCurrent->mineral_surplus;
-            if (divisor < 1) divisor = 1;
-            if (divisor > 0x1869F) divisor = 0x1869F;
-            int turns = (BaseCurrent->mineral_surplus + remaining - 1) / divisor;
-            if (turns < 0) turns = 0;
-            if (turns > 0xF423F) turns = 0xF423F;
-            _itoa(turns, number, 10);
-            strcat(StringTemp, number);
+        if (facility_id >= 0
+            && (has_fac(facility_id, BaseIDCurrentSelected, 0)
+                || (facility_id >= 0x46
+                    && base_project(facility_id - FacilitySPStart) == BaseIDCurrentSelected))) {
+            StringTemp[0] = 0;
+            strcat(StringTemp, label_get(489));
+            MainInterfaceGlobal.set_text_color(TextColourTable[120],
+                                               TextColourTable[121], 1, 1);
+            production_write_cent(MainInterfaceGlobal, &detail_font, StringTemp, &content);
         } else {
-            _itoa(0, number, 10);
-            strcat(StringTemp, number);
+            StringTemp[0] = 0;
+            if (BaseCurrent->mineral_surplus > 0) {
+                strcat(StringTemp, label_get(49));
+                CharUpperA(StringTemp);
+                strcat(StringTemp, ":");
+                strcat(StringTemp, " ");
+                if (gross_cost > current_minerals) {
+                    const int remaining = gross_cost - current_minerals;
+                    _itoa(range((BaseCurrent->mineral_surplus + remaining - 1)
+                                    / range(BaseCurrent->mineral_surplus, 1, 0x1869F),
+                                0, 0xF423F),
+                          number, 10);
+                    strcat(StringTemp, number);
+                } else {
+                    _itoa(0, number, 10);
+                    strcat(StringTemp, number);
+                }
+            } else {
+                strcat(StringTemp, label_get(67));
+            }
+            content.top = content.bottom;
+            content.bottom += 2 * unit_font.pixel_height();
+            MainInterfaceGlobal.set_text_color(TextColourTable[104],
+                                               TextColourTable[105], 1, 1);
+            production_write_cent(MainInterfaceGlobal, &unit_font, StringTemp, &content);
         }
-        MainInterfaceGlobal.set_text_color(TextColourTable[104],
-                                           TextColourTable[105], 1, 1);
-        content.top = content.bottom;
-        content.bottom += 2 * unit_font.pixel_height();
-        MainInterfaceGlobal.write_cent_l(&unit_font, StringTemp, &content,
-                                         strlen(StringTemp));
-    } else {
-        StringTemp[0] = 0;
-        strcat(StringTemp, label_get(67));
-        MainInterfaceGlobal.set_text_color(TextColourTable[104],
-                                           TextColourTable[105], 1, 1);
-        content.top = content.bottom;
-        content.bottom += 2 * unit_font.pixel_height();
-        MainInterfaceGlobal.write_cent_l(&unit_font, StringTemp, &content,
-                                         strlen(StringTemp));
     }
 
-    if (update_mode != 0) MainInterfaceGlobal.update(&panel, 0);
-    else MainInterfaceGlobal.soft_update(&panel);
-    MainInterfaceGlobal.set_clip(&saved_clip);
+    if (update_mode != 0) MainInterfaceGlobal.update(&queue_help_rect_, 0);
+    else MainInterfaceGlobal.soft_update(&queue_help_rect_);
+    // Bug-for-bug: the clip saved from MainInterfaceGlobal is restored into
+    // this window's own Buffer (BaseWin+0x444), not MainInterfaceGlobal.
+    Buffer::set_clip(&saved_clip);
 }
 
 // ORIGINAL: 0x00416DE0 ?add_queue@BaseWin@@QAEXHH@Z 0x00416DE0-0x00416FA8 FILE BYTE_EXACT
@@ -7580,37 +7584,50 @@ void BaseWin::init() {
     WaveDeviceGlobal.add_to_group(1, &g_BASEWIN_WAVE);
     g_BASEWIN_WAVE.set_volume(65);
     g_BASEWIN_WAVE.set_pitch(300);
-    InterfaceRegistry[3] = static_cast<SubInterface *>(this);
-    const bool expanded = WinScreenWidth != 800;
+    const int expanded = WinScreenWidth != 800;
     SubInterface::field_4_ = 3;
+    // The image registers the SubInterface view without a null test and
+    // stores field_4_ through the same pointer (0x0041E95A..0x0041E96F),
+    // as an unrecovered inline SubInterface member would.
+    InterfaceRegistry[3] = static_cast<SubInterface *>(this);
 
     // Both original resolution paths initialize these same rectangles.
-    base_init_rect(rect1_, 166, 33, 560, 257);
-    base_init_rect(commerce_report_rect_, 30, 170, 160, 293);
-    base_init_rect(commerce_title_rect_, 30, 149, 160, 169);
-    base_init_rect(commerce_outer_rect_, 27, 146, 163, 296);
-    base_init_rect(rect2_, 566, 57, 696, 254);
-    base_init_rect(facilities_title_rect_, 566, 36, 696, 56);
-    base_init_rect(facilities_help_rect_, 563, 33, 699, 257);
-    base_init_rect(nutrient_content_rect_, 30, 57, 160, 140);
-    base_init_rect(nutrient_title_rect_, 30, 36, 160, 56);
-    base_init_rect(nutrient_outer_rect_, 27, 33, 163, 143);
-    base_init_rect(production_outer_rect_, 166, 260, 699, 349);
-    production_content_rect_ = production_outer_rect_;
     if (!expanded) {
         base_init_rect(rect7_, 191, 354, 369, 374);
         base_init_rect(rect6_, 373, 354, 551, 374);
+        base_init_rect(rect1_, 166, 33, 560, 257);
+        base_init_rect(commerce_report_rect_, 30, 170, 160, 293);
+        base_init_rect(commerce_title_rect_, 30, 149, 160, 169);
+        base_init_rect(commerce_outer_rect_, 27, 146, 163, 296);
+        base_init_rect(rect2_, 566, 57, 696, 254);
+        base_init_rect(facilities_title_rect_, 566, 36, 696, 56);
+        base_init_rect(facilities_help_rect_, 563, 33, 699, 257);
+        base_init_rect(nutrient_content_rect_, 30, 57, 160, 140);
+        base_init_rect(nutrient_title_rect_, 30, 36, 160, 56);
+        base_init_rect(nutrient_outer_rect_, 27, 33, 163, 143);
+        base_init_rect(production_outer_rect_, 166, 260, 699, 349);
+        production_content_rect_ = production_outer_rect_;
         window_height = WinScreenHeight - MainInterfaceGlobal.field_D7C_;
         if (window_height > 398) window_height = 398;
     } else {
-        const int half_old_height =
-            (production_content_rect_.bottom - production_content_rect_.top) / 2;
-        const int shift = production_content_rect_.bottom -
-                          production_content_rect_.top + 3;
-        production_content_rect_.top += shift;
-        production_content_rect_.bottom += shift;
-        const int half_new_height =
-            (production_content_rect_.bottom - production_content_rect_.top) / 2;
+        base_init_rect(rect1_, 166, 33, 560, 257);
+        base_init_rect(commerce_report_rect_, 30, 170, 160, 293);
+        base_init_rect(commerce_title_rect_, 30, 149, 160, 169);
+        base_init_rect(commerce_outer_rect_, 27, 146, 163, 296);
+        base_init_rect(rect2_, 566, 57, 696, 254);
+        base_init_rect(facilities_title_rect_, 566, 36, 696, 56);
+        base_init_rect(facilities_help_rect_, 563, 33, 699, 257);
+        base_init_rect(nutrient_content_rect_, 30, 57, 160, 140);
+        base_init_rect(nutrient_title_rect_, 30, 36, 160, 56);
+        base_init_rect(nutrient_outer_rect_, 27, 33, 163, 143);
+        base_init_rect(production_outer_rect_, 166, 260, 699, 349);
+        RECT &production = production_content_rect_;
+        production = production_outer_rect_;
+        const int half_old_height = (production.bottom - production.top) / 2;
+        const int shift = production.bottom - production.top + 3;
+        production.top += shift;
+        production.bottom += shift;
+        const int half_new_height = (production.bottom - production.top) / 2;
         commerce_report_rect_.top += half_new_height;
         commerce_report_rect_.bottom += half_new_height;
         commerce_outer_rect_.top += half_old_height;
@@ -7621,13 +7638,11 @@ void BaseWin::init() {
         commerce_outer_rect_.bottom += half_old_height;
         nutrient_content_rect_.bottom += half_old_height;
         nutrient_outer_rect_.bottom += half_old_height;
-        const int production_height =
-            production_content_rect_.bottom - production_content_rect_.top;
-        base_init_rect(rect6_, 381, production_height + 360,
-                       619, production_height + 380);
-        base_init_rect(rect7_, 131, production_height + 360,
-                       369, production_height + 380);
-        window_height = production_height + 401;
+        base_init_rect(rect6_, 381, production.bottom - production.top + 360,
+                       619, production.bottom - production.top + 380);
+        base_init_rect(rect7_, 131, production.bottom - production.top + 360,
+                       369, production.bottom - production.top + 380);
+        window_height = production.bottom - production.top + 401;
     }
     base_init_rect(rect5_, commerce_outer_rect_.left,
                    commerce_outer_rect_.bottom + 3,
