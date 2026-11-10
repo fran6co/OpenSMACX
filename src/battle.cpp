@@ -262,11 +262,13 @@ int __cdecl shoot(int atk_factionID, int def_factionID, int xDest, int yDest) {
         if (!PlayersData[def_factionID].satellites_[3]) {
             goto failed;
         }
-        if (!IsMultiplayerNet
-            && (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << def_factionID))) {
+        // The image tests only the low human-mask byte (`test byte ptr`).
+        if (!IsMultiplayerNet && is_human(def_factionID)) {
             if (def_factionID == ConsoleGlobal.faction_id_) {
                 parse_num(0, PlayersData[def_factionID].satellites_[3]);
-                parse_says(0, Bases[base_find(xDest, yDest)].name_string, -1, -1);
+                // base_find runs before parse_says pushes its arguments.
+                const int near_base = base_find(xDest, yDest);
+                parse_says(0, Bases[near_base].name_string, -1, -1);
                 parse_says(1, Players[atk_factionID].adj_name_faction, -1, -1);
                 if (popp(ScriptPopupFile, "BUSTERSAC", 0, "space_sm.pcx", 0)) {
                     goto failed;
@@ -1383,7 +1385,7 @@ static inline int best_defender_power(int proto_id) {
 
 /*
 Purpose: Determine the best defender in a stack.
-// ORIGINAL: 0x005044D0 ?best_defender@@YAHHHH@Z 0x005044D0-0x00504A9B
+// ORIGINAL: 0x005044D0 ?best_defender@@YAHHHH@Z 0x005044D0-0x00504A9B BYTE_EXACT
 // LEVER: MORE (14 calls vs image's 12) - per-callee counts matched the
 //        image exactly (base_at 1, get_basic_offense 1, battle_compute 1,
 //        stack_check 3, has_abil 3, can_arty 3 = 12) with two calls this
@@ -1440,7 +1442,7 @@ int __cdecl best_defender(int veh_id_def, int veh_id_atk, BOOL check_artillery) 
         int defense_output;
         battle_compute(veh_id_atk, veh_id_def, &offense_output, &defense_output, combat_type);
         if (!offense_output) {
-            break;
+            return best_def_veh_id;
         }
         int proto_id_def = Vehs[veh_id_def].proto_id;
         defense_output = range(best_defender_power(proto_id_def) - Vehs[veh_id_def].dmg_incurred, 0, 9999)
@@ -2349,6 +2351,16 @@ void __cdecl invasions(int base_id) {
     }
 }
 
+// WORKAROUND(inline): 0x5067AB-0x5067BF calls range(reactor, 1, 100) out of line
+// and passes the zero-extended reactor through an inline parameter copy
+// (`mov eax, edx; push eax`); the original inline helper and the /Ob2 budget
+// that left its range() unexpanded are unknown. The function pointer keeps the
+// call out of line (it resolves to a direct call), the helper supplies the copy.
+static inline int interceptor_reactor_power(int reactor) {
+    int (__cdecl *const range_fn)(int, int, int) = range;
+    return range_fn(reactor, 1, 100) * 10;
+}
+
 // ORIGINAL: 0x00506650 ?interceptor@@YAHHHHH@Z 0x00506650-0x00506A53
 // RECOVERY_BINDING: v1 {"evidence": ["git:6e78872480ef8b4a486516e322f23e9f8652665d:src/unrecovered/00506650.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json; preserve original extents and historical seed lessons. Ordinary owned literals have pinned content provenance, not exact original data-allocation claims."], "reason": "Recover full interception selection, tie-breaking, callback-bearing presentation and motion through genuine vehicles, rules, base lookup, Console and NetMsg owners."}
 // TRIED: local var/register order (early prologue push/xor order diverges at insn #5); structure and calls match Ghidra decompile faithfully
@@ -2370,10 +2382,8 @@ int __cdecl interceptor(int faction_id, int opposing_faction,
             if (offense >= 1) {
                 weight = offense;
             }
-            // stand-in: a function pointer keeps this range() out of line, as the image calls it.
-            int (__cdecl *const range_fn)(int, int, int) = range;
             const int power = VehPrototypes[proto_id].plan == PLAN_ALIEN_ARTIFACT
-                ? 1 : range_fn(VehPrototypes[proto_id].reactor_id, 1, 100) * 10;
+                ? 1 : interceptor_reactor_power(VehPrototypes[proto_id].reactor_id);
             weight *= range(power - Vehs[vehicle_id].dmg_incurred, 0, 9999);
             if (weight >= best_score) {
                 best_score = weight;
