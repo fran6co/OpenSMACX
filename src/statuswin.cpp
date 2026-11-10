@@ -1407,7 +1407,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
 }
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004B8E40 0x004B8FD4 0x004B9004 0x004B8EB9
-// ORIGINAL: 0x004B8E40 ?on_left_click@StatusWin@@QAEXHH@Z 0x004B8E40-0x004B8FD3 FILE
+// ORIGINAL: 0x004B8E40 ?on_left_click@StatusWin@@QAEXHH@Z 0x004B8E40-0x004B8FD3 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004b8e40.cpp", "StatusWin spot, click and toggle members in src/statuswin.h", "Console, NetDaemon, Bases and PlayersData owners in src/"], "reason": "Recover the click branches through owned C++ objects and preserve the historical original span."}
 void StatusWin::on_left_click(int x, int y) {
     if (fInOnClick_ == 0) {
@@ -1440,12 +1440,14 @@ void StatusWin::on_left_click(int x, int y) {
             break;
         case 1:
         case 11: {
-            const int owner = Bases[veh_id].faction_id_current;
+            // The image copies the base id into edi and re-reads the owner
+            // byte at each use (0x004B8F3E, 0x004B8F64): no owner local.
+            int base_id = veh_id;
             if ((GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0
-                || owner == ConsoleGlobal.faction_id_
-                || spying(owner)
-                || (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[owner] & 1) != 0) {
-                TutWinBaseWindow.zoom(veh_id, 0);
+                || Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_
+                || spying(Bases[base_id].faction_id_current)
+                || (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[Bases[base_id].faction_id_current] & 1) != 0) {
+                TutWinBaseWindow.zoom(base_id, 0);
                 return;
             }
             break;
@@ -1453,7 +1455,17 @@ void StatusWin::on_left_click(int x, int y) {
         case 3:
             field_15A8_ = ~field_15A8_;
             draw_status(-1, -1, -1, -1, 0);
-            break;
+            return;
+        // Explicit empty cases: the image's 12-entry jump table at 0x004B8FD4
+        // is direct; without them VC6 emits a byte index table instead.
+        case 2:
+        case 4:
+        case 5:
+        case 6:
+        case 7:
+        case 8:
+        case 9:
+            return;
         }
     }
 }

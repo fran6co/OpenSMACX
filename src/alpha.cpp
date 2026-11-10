@@ -1848,7 +1848,7 @@ for (i = 0; i < MaxCompassNum; i++) {
 
 /*
 Purpose: Attempt to read the setting's value from the ini file.
-// ORIGINAL: 0x0059D980 ?prefs_get@@YAPADPADPADH@Z 0x0059D980-0x0059DA19
+// ORIGINAL: 0x0059D980 ?prefs_get@@YAPADPADPADH@Z 0x0059D980-0x0059DA19 BYTE_EXACT
 // symbol    ?prefs_get@@YAPADPBD0H@Z
 // LEVER: WRONG CALLEE - `strcpy_s(TextBufferGetPtr, 256, default_value)`
 //        pushed a 3rd argument the image never does; `add esp, 8` after
@@ -1867,14 +1867,18 @@ Purpose: Attempt to read the setting's value from the ini file.
 Return Value: Key's string value from the ini or default if not set
 Status: Complete
 */
-inline LPSTR __cdecl prefs_get(LPCSTR key_name, LPCSTR default_value, BOOL use_default) {
-    if (use_default ||
-        (GetPrivateProfileStringA(PrefsSection, alpha_profile_format_key, alpha_profile_default_zero, TextBufferGetPtr, 256,
-            PrefsFile), atoi(TextBufferGetPtr) != 12)) {
+LPSTR __cdecl prefs_get(LPCSTR key_name, LPCSTR default_value, BOOL use_default) {
+    if (use_default) {
         strcpy(TextBufferGetPtr, default_value);
     } else {
-        GetPrivateProfileStringA(PrefsSection, key_name, default_value, TextBufferGetPtr, 256,
-            PrefsFile);
+        GetPrivateProfileStringA(PrefsSection, alpha_profile_format_key, alpha_profile_default_zero,
+            TextBufferGetPtr, 256, PrefsFile);
+        if (atoi(TextBufferGetPtr) != 12) {
+            strcpy(TextBufferGetPtr, default_value);
+        } else {
+            GetPrivateProfileStringA(PrefsSection, key_name, default_value,
+                TextBufferGetPtr, 256, PrefsFile);
+        }
     }
     return Txt.update();
 }
@@ -1889,6 +1893,20 @@ Purpose: Append a decimal number to the StringTemp buffer.
 Return Value: n/a
 Status: Complete
 */
+
+// WORKAROUND(noinline): expanded twin of prefs_get(LPCSTR, int, BOOL); see
+// the out-of-line definition below.
+inline int __cdecl prefs_get_inline(LPCSTR key_name, int default_value, BOOL use_default) {
+    StringTemp[0] = 0;
+    say_num(default_value);
+    if (use_default) {
+        strcpy(TextBufferGetPtr, StringTemp);
+    } else {
+        GetPrivateProfileStringA(PrefsSection, key_name, StringTemp,
+            TextBufferGetPtr, 256, PrefsFile);
+    }
+    return atoi(Txt.update());
+}
 
 /*
 Purpose: Get the default value for the 1st set of preferences.
@@ -1913,7 +1931,7 @@ uint32_t __cdecl default_prefs() {
         | PREF_AV_SOUND_EFFECTS | PREF_MAP_SHOW_GRID | PREF_UNK_10
         | PREF_BSC_DONT_QUICK_MOVE_ENEMY_VEH | PREF_BSC_AUTOSAVE_EACH_TURN
         | PREF_AUTO_WAKE_VEH_TRANS_REACH_LAND;
-    return prefs_get(alpha_primary_laptop_key, 0, false) ? base_prefs : base_prefs  // 0xA3E1DD16 : 0xBBE1DD96
+    return prefs_get_inline(alpha_primary_laptop_key, 0, false) ? base_prefs : base_prefs  // 0xA3E1DD16 : 0xBBE1DD96
         | PREF_AV_SECRET_PROJECT_MOVIES | PREF_AV_SLIDING_WINDOWS | PREF_AV_MAP_ANIMATIONS;
 }
 
@@ -1937,7 +1955,7 @@ uint32_t __cdecl default_prefs2() {
         | MPREF_MAP_SHOW_BASE_NAMES | MPREF_MAP_SHOW_PROD_WITH_BASE_NAMES
         | MPREF_ADV_RIGHT_CLICK_POPS_UP_MENU | MPREF_ADV_QUICK_MOVE_VEH_ORDERS
         | MPREF_AUTO_FORMER_BUILD_SENSORS | MPREF_AUTO_FORMER_REMOVE_FUNGUS; // 0x327168 : 0x3A7168
-    return prefs_get(alpha_secondary_laptop_key, 0, false) ? base_prefs2 : base_prefs2 | MPREF_AV_SLIDING_SCROLLBARS;
+    return prefs_get_inline(alpha_secondary_laptop_key, 0, false) ? base_prefs2 : base_prefs2 | MPREF_AV_SLIDING_SCROLLBARS;
 }
 
 /*
@@ -1992,7 +2010,13 @@ Purpose: Attempt to read the setting's value from the ini file.
 Return Value: Key's integer value from the ini or default if not set
 Status: Complete
 */
-inline int __cdecl prefs_get(LPCSTR key_name, int default_value, BOOL use_default) {
+// WORKAROUND(noinline): pinned prefs_load 0x0059DCF0 calls this overload
+// (0x0059DB40) for both "Laptop" queries and "Time Controls" while expanding
+// it at Language..Faction and Customize; default_prefs 0x0059DA20 and
+// default_prefs2 0x0059DAA0 expand it too. VC6 has no noinline, so the real
+// definition stays out of line here and prefs_get_inline is the expanded twin.
+#pragma auto_inline(off)
+int __cdecl prefs_get(LPCSTR key_name, int default_value, BOOL use_default) {
     StringTemp[0] = 0;
     say_num(default_value);
     if (use_default) {
@@ -2003,6 +2027,7 @@ inline int __cdecl prefs_get(LPCSTR key_name, int default_value, BOOL use_defaul
     }
     return atoi(Txt.update());
 }
+#pragma auto_inline(on)
 
 /*
 Purpose: Read the faction filenames and search for keys from the ini file (SMACX only). This has 
@@ -2084,45 +2109,55 @@ void __cdecl prefs_fac_load() {
     }
 }
 
-/*
-Purpose: Convert the specified value to a binary string for use by various preferences.
-Original Offset: n/a
-Return Value: Binary string
-Status: Complete
-*/
-// MOVED BEFORE prefs_load, and `inline`: VC6 only folds a same-TU call when
-// it has already seen the full definition, and prefs_load's four call sites
-// (0x0059DEFB-area, 0x0059E228, 0x0059E314, 0x0059E400 - all inlined in the
-// image, no `call` to a separate function at all) need the body available
-// beforehand.
-// Appends the bits of `value` to StringTemp without clearing it first.
-inline LPSTR __cdecl prefs_append_binary(int value) {
-    for (int shift = 31, non_pad = 0; shift >= 0; shift--) {
-        if ((1 << shift) & value) {
-            non_pad = 1;
-            strcat_s(StringTemp, sizeof(StringTemp), "1");
-        } else if (non_pad || shift < 8) {
-            strcat_s(StringTemp, sizeof(StringTemp), "0");
-        }
+// Each binary preference default in pinned prefs_load 0x0059DCF0 has its own
+// "1"/"0" literal pair (0x00690160/64, 0x00690174/78, 0x006901B4/B8,
+// 0x006901C4/C8), so the bit loop is written out at every site rather than
+// being one inline function; a macro keeps the per-site spelling. It clears
+// StringTemp after `non_pad` is zeroed, which is why the image stores the
+// clear from the register holding that zero (`mov [StringTemp], bl`).
+#define PREFS_GET_BINARY(value) \
+    { \
+        int non_pad = 0; \
+        StringTemp[0] = 0; \
+        for (int shift = 31; shift >= 0; shift--) { \
+            if ((1 << shift) & (value)) { \
+                non_pad = 1; \
+                strcat(StringTemp, "1"); \
+            } else if (non_pad || shift < 8) { \
+                strcat(StringTemp, "0"); \
+            } \
+        } \
     }
-    return StringTemp;
+
+// WORKAROUND(noinline): prefs_load expands default_prefs/default_prefs2 but
+// still calls prefs_get 0x0059DB40 for their "Laptop" queries (0x0059DF17,
+// 0x0059E016), while the standalone bodies expand it. These twins call the
+// out-of-line overload.
+static inline uint32_t default_prefs_load() {
+    uint32_t base_prefs = PREF_ADV_RADIO_BTN_NOT_SEL_SING_CLK | PREF_AUTO_FORMER_BUILD_ADV
+        | PREF_AUTO_FORMER_PLANT_FORESTS | PREF_AUTO_END_MOVE_SPOT_VEH_WAR
+        | PREF_AUTO_END_MOVE_SPOT_VEH_TRUCE | PREF_AUTO_END_MOVE_SPOT_VEH_TREATY
+        | PREF_AUTO_AIR_VEH_RET_HOME_FUEL_RNG | PREF_BSC_DONT_QUICK_MOVE_ALLY_VEH
+        | PREF_BSC_AUTO_DESIGN_VEH | PREF_BSC_MOUSE_EDGE_SCROLL_VIEW | PREF_AV_BACKGROUND_MUSIC
+        | PREF_AV_SOUND_EFFECTS | PREF_MAP_SHOW_GRID | PREF_UNK_10
+        | PREF_BSC_DONT_QUICK_MOVE_ENEMY_VEH | PREF_BSC_AUTOSAVE_EACH_TURN
+        | PREF_AUTO_WAKE_VEH_TRANS_REACH_LAND;
+    return prefs_get(alpha_primary_laptop_key, 0, false) ? base_prefs : base_prefs
+        | PREF_AV_SECRET_PROJECT_MOVIES | PREF_AV_SLIDING_WINDOWS | PREF_AV_MAP_ANIMATIONS;
 }
 
-inline LPSTR __cdecl prefs_get_binary(int value) {
-    // NOT a local buffer/std::string: the image builds this directly into
-    // the global `StringTemp` (0x009B86A0) - `mov byte ptr [0x9b86a0], 0`
-    // then a `strcat` per bit at, e.g., 0x0059DEF8-0x0059DF58 - and the
-    // caller uses THAT buffer as the `default_value` argument to the
-    // (likewise inlined) string `prefs_get` immediately after. A
-    // std::string return here forces an SEH frame onto every caller that
-    // the image's plain `push ebp` prologue does not have.
-    StringTemp[0] = 0;
-    return prefs_append_binary(value);
+static inline uint32_t default_prefs2_load() {
+    uint32_t base_prefs2 = MPREF_ADV_DETAIL_MAIN_MENUS | MPREF_BSC_AUTO_PRUNE_OBS_VEH
+        | MPREF_AV_VOICEOVER_STOP_CLOSE_POPUP | MPREF_AV_VOICEOVER_TECH_FAC
+        | MPREF_MAP_SHOW_BASE_NAMES | MPREF_MAP_SHOW_PROD_WITH_BASE_NAMES
+        | MPREF_ADV_RIGHT_CLICK_POPS_UP_MENU | MPREF_ADV_QUICK_MOVE_VEH_ORDERS
+        | MPREF_AUTO_FORMER_BUILD_SENSORS | MPREF_AUTO_FORMER_REMOVE_FUNGUS;
+    return prefs_get(alpha_secondary_laptop_key, 0, false) ? base_prefs2 : base_prefs2 | MPREF_AV_SLIDING_SCROLLBARS;
 }
 
 /*
 Purpose: Load the most common preferences from the game's ini to globals.
-// ORIGINAL: 0x0059DCF0 ?prefs_load@@YAXH@Z 0x0059DCF0-0x0059E502
+// ORIGINAL: 0x0059DCF0 ?prefs_load@@YAXH@Z 0x0059DCF0-0x0059E502 BYTE_EXACT
 // TRIED: `__forceinline` on the two helpers, zero measured effect under every flag set tried, reverted to plain `inline`.
 // TRIED: dominant defect was std::string/std::stringstream (the "Custom World" default and `prefs_get_binary`'s return), which forces an SEH frame this function's actual `push ebp; sub esp, 0x54; push ebx/esi/edi` prologue does not have - first divergence was INSTRUCTION 0 before this. `prefs_get_binary` now writes directly into the global `StringTemp` (0x009B86A0), matching the image's `mov byte ptr [0x9b86a0], 0` + per-bit `strcat`, and the "Custom World" default is the same StringTemp+strcat loop with a SIGNED `int i` (image: `cmp esi, 7; jl`, not `jb`). Fixing this alone cannot get further: `prefs_get_binary` and both `prefs_get` overloads are `inline` (moved before first use where needed) since the image inlines them at MOST call sites, but the image's exact per-site mix (e.g. int-overload: 4 inlined + 3 real calls) is a VC6 codegen heuristic no source spelling reproduced here -
 // size      2066 bytes
@@ -2136,43 +2171,63 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl prefs_load(BOOL use_default) {
-    set_language(prefs_get("Language", 0, false));
-    prefs_get("Difficulty", 0, false);
+    set_language(prefs_get_inline("Language", 0, false));
+    prefs_get_inline("Difficulty", 0, false);
     DefaultPrefs.difficulty = text_item_number();
-    prefs_get("Map Type", 0, false);
+    prefs_get_inline("Map Type", 0, false);
     DefaultPrefs.map_type = text_item_number();
-    prefs_get("Top Menu", 0, false);
+    prefs_get_inline("Top Menu", 0, false);
     DefaultPrefs.top_menu = text_item_number();
-    prefs_get("Faction", 1, false);
+    prefs_get_inline("Faction", 1, false);
     DefaultPrefs.faction_id = text_item_number();
     // Original (0x59DEF8): StringTemp is cleared before default_prefs()'s
     // Laptop query, whose int prefs_get leaves "0" there; the bits append.
+    // `non_pad` is zeroed first: the image keeps it in ebx and pushes that
+    // zero for the Laptop query's two zero arguments.
     StringTemp[0] = 0;
-    uint32_t prefs = default_prefs();
-    if (DefaultPrefs.difficulty < DLVL_TALENT) {
+    int non_pad = 0;
+    uint32_t prefs = default_prefs_load();
+    // WORKAROUND(type): pinned 0x0059DF21 compares the difficulty signed
+    // (`cmp eax, 2; jge`); DefaultPref::difficulty is declared uint32_t.
+    if ((int)DefaultPrefs.difficulty < DLVL_TALENT) {
         prefs |= PREF_BSC_TUTORIAL_MSGS;
     }
-    prefs_get("Preferences", prefs_append_binary(prefs), use_default);
+    for (int shift = 31; shift >= 0; shift--) {
+        if ((1 << shift) & prefs) {
+            non_pad = 1;
+            strcat(StringTemp, "1");
+        } else if (non_pad || shift < 8) {
+            strcat(StringTemp, "0");
+        }
+    }
+    prefs_get("Preferences", StringTemp, use_default);
     AlphaIniPrefs.preferences = text_item_binary();
-    prefs_get("More Preferences", prefs_get_binary(default_prefs2()), use_default);
+    prefs = default_prefs2_load();
+    PREFS_GET_BINARY(prefs);
+    prefs_get("More Preferences", StringTemp, use_default);
     AlphaIniPrefs.more_preferences = text_item_binary();
     prefs_get("Semaphore", "00000000", use_default);
     AlphaIniPrefs.semaphore = text_item_binary();
-    prefs_get("Customize", 0, false);
+    prefs_get_inline("Customize", 0, false);
     AlphaIniPrefs.customize = text_item_number();
-    prefs_get("Rules", prefs_get_binary(default_rules()), use_default);
+    prefs = default_rules();
+    PREFS_GET_BINARY(prefs);
+    prefs_get("Rules", StringTemp, use_default);
     AlphaIniPrefs.rules = text_item_binary();
-    prefs_get("Announce", prefs_get_binary(default_warn()), use_default);
+    prefs = default_warn();
+    PREFS_GET_BINARY(prefs);
+    prefs_get("Announce", StringTemp, use_default);
     AlphaIniPrefs.announce = text_item_binary();
-    // NOT std::stringstream: the image builds this directly into the global
-    // `StringTemp`, exactly like `prefs_get_binary` above - `mov byte ptr
-    // [0x9b86a0], 0` at 0x0059E405, then a `strcat` per entry at
-    // 0x0059E423, `cmp esi, 7; jl` (SIGNED) at 0x0059E42C. Any std::string
-    // or std::stringstream local here forces the SEH frame the image's
-    // plain `push ebp` prologue does not have.
+    // The image builds this directly into the global StringTemp: `mov byte
+    // ptr [0x9b86a0], 0` at 0x0059E405, a `strcat` per entry, `cmp esi, 7;
+    // jl` (SIGNED) at 0x0059E42C. The "2, " arm falls through first.
     StringTemp[0] = 0;
     for (int i = 0; i < 7; i++) {
-        strcat_s(StringTemp, sizeof(StringTemp), i ? "1, " : "2, ");
+        if (!i) {
+            strcat(StringTemp, "2, ");
+        } else {
+            strcat(StringTemp, "1, ");
+        }
     }
     prefs_get("Custom World", StringTemp, use_default);
     for (i = 0; i < 7; i++) {
@@ -2257,10 +2312,33 @@ void __cdecl prefs_put(LPCSTR key_name, int value, BOOL tgl_binary) {
     WritePrivateProfileStringA(PrefsSection, key_name, StringTemp, PrefsFile);
 }
 
+// WORKAROUND(inline): pinned prefs_save 0x0059E5D0 expands prefs_put(LPCSTR,int,BOOL)
+// inline at its first seven sites (through "More Preferences", 0x0059E7xx) and calls
+// 0x0059E530 from "Semaphore" on; the /Ob2 budget here stops one site earlier. This
+// forced twin of prefs_put's body covers the seventh site without spending budget.
+static __forceinline void prefs_put_inline(LPCSTR key_name, int value, BOOL tgl_binary) {
+    StringTemp[0] = 0;
+    if (tgl_binary) {
+        for (int non_pad = 0, shift = 31; shift >= 0; shift--) {
+            if ((1 << shift) & value) {
+                non_pad = 1;
+                strcat(StringTemp, alpha_binary_output_one);
+            } else if (non_pad || shift < 8) {
+                strcat(StringTemp, alpha_binary_output_zero);
+            }
+        }
+    } else {
+        char num_buf[80];
+        _itoa(value, num_buf, 10);
+        strcat(StringTemp, num_buf);
+    }
+    WritePrivateProfileStringA(PrefsSection, key_name, StringTemp, PrefsFile);
+}
+
 // RECOVERY_LITERAL: v1 0x00690208 0x00690215 ??_C@_0N@LGF@Prefs?5Format?$AA@ 0x0059E5D0
 /*
 Purpose: Save the most common preferences from memory to the game's ini. 
-// ORIGINAL: 0x0059E5D0 ?prefs_save@@YAXH@Z 0x0059E5D0-0x0059E946
+// ORIGINAL: 0x0059E5D0 ?prefs_save@@YAXH@Z 0x0059E5D0-0x0059E946 BYTE_EXACT
 // LEVER: THE IMAGE HAS NO C++ LIBRARY - `std::stringstream` was pulling
 //        in a genuine SEH unwind frame (its own destructor is
 //        non-trivial), which the image does not carry at all; replaced
@@ -2293,7 +2371,7 @@ void __cdecl prefs_save(BOOL save_factions) {
     prefs_put("Top Menu", DefaultPrefs.top_menu, false);
     prefs_put("Faction", DefaultPrefs.faction_id, false);
     prefs_put("Preferences", AlphaIniPrefs.preferences, true);
-    prefs_put("More Preferences", AlphaIniPrefs.more_preferences, true);
+    prefs_put_inline("More Preferences", AlphaIniPrefs.more_preferences, true);
     prefs_put("Semaphore", AlphaIniPrefs.semaphore, true);
     prefs_put("Announce", AlphaIniPrefs.announce, true);
     prefs_put("Rules", AlphaIniPrefs.rules, true);
