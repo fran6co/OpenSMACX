@@ -1340,16 +1340,16 @@ int NetIncomeGlobal;
 // SecretProject.self_aware_colony field (+0x64), written with the other
 // project locations. A separate initialized scalar severed that lifetime.
 
-// ORIGINAL: 0x00445130 ?energy_compute@@YAXHH@Z 0x00445130-0x00445433
+// ORIGINAL: 0x00445130 ?energy_compute@@YAXHH@Z 0x00445130-0x00445433 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00445130.cpp", "src/base.h", "src/faction.h", "git:3ea0467addad98356ec7ab97d41d8b02fab9debd:src/hypothesis_layouts.h"], "reason": "Recover the shared energy accounting pass through Base and PlayerData fields, owning its report totals and per-base/facility tables instead of calling a fixed executable address."}
 // TRIED: translated per-instruction against the disasm (cross-checked against the Ghidra hypothesis for the per-base accumulation, tech-level clamp, and pairwise unit-bonus loop) rather than reusing ghidra's `(int*)param_1` pointer-cast style; the neg/sbb/neg boolean idiom collapsed to a plain `(a&b)!=0` comparison, the cdq/sar halving collapsed to `/2`. MISMATCH #10 mov/xor in the zero-fill prologue; compiles and follows the disasm's three sections (per-base loop, tech-rate energy cost, cross-faction facility bonus loop) in order.
 void __cdecl energy_compute(int faction_id, int recompute_bases) {
-    memset(EnergyFacilityCounts, 0, sizeof(EnergyFacilityCounts));
     EnergyLabsTotal = 0;
     NetIncomeGlobal = 0;
     EnergyMaintenanceTotal = 0;
     EnergyEconomyTotal = 0;
     EnergyCommerceDelta = 0;
+    memset(EnergyFacilityCounts, 0, sizeof(EnergyFacilityCounts));
 
     int discount_carry = 0;
     for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
