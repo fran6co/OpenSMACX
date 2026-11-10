@@ -109,9 +109,9 @@ def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1, li
         bind=lambda row: typed_by_key[(row.path.resolve(), row.address, row.line)])
     pair_by_record = {}
     for pair in fragment_pairs:
-        child, parent = pair
-        pair_by_record[(child.path.resolve(), child.address, child.line)] = pair
-        pair_by_record[(parent.path.resolve(), parent.address, parent.line)] = pair
+        # A terminal pair or a whole EH cleanup group: every member needs it.
+        for member in pair.members:
+            pair_by_record[(member.path.resolve(), member.address, member.line)] = pair
     groups, unavailable, component_selected, pairs_by_path = defaultdict(list), [], {}, defaultdict(list)
     for record in selected:
         relative = record.path.relative_to(root).as_posix()

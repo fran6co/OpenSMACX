@@ -94,6 +94,13 @@ class SourceRole(StrEnum):
     SCAFFOLD = "scaffold"
 
 
+# `RECOVERY_FRAGMENT: v1` relations are terminal tails adjacent to a one-span
+# parent; `v2` relations with kind `eh_cleanup` are generated EH unwind
+# actions that tile the front of a two-span parent's cold region.
+FRAGMENT_TERMINAL = "terminal"
+FRAGMENT_EH_CLEANUP = "eh_cleanup"
+
+
 @dataclass(frozen=True)
 class FunctionFragmentRelation:
     """A non-callable mapped span owned by a source-mapped parent body.
@@ -105,8 +112,11 @@ class FunctionFragmentRelation:
     parent_symbol: str
     reason: str
     evidence: tuple[str, ...]
+    kind: str = FRAGMENT_TERMINAL
 
     def __post_init__(self):
+        if self.kind not in (FRAGMENT_TERMINAL, FRAGMENT_EH_CLEANUP):
+            raise ValueError("fragment kind must be terminal or eh_cleanup")
         if type(self.parent_address) is not int or not 0 <= self.parent_address <= 0xFFFFFFFF:
             raise ValueError("fragment parent address must be a PE VA")
         for value, label in ((self.parent_symbol, "parent symbol"), (self.reason, "reason")):
@@ -116,6 +126,32 @@ class FunctionFragmentRelation:
                 or any(not isinstance(item, str) or not item.strip()
                        or any(ord(c) < 32 for c in item) for item in self.evidence)):
             raise ValueError("fragment evidence must be nonempty single-line text")
+
+
+def fragment_fact(relation: FunctionFragmentRelation | None) -> dict | None:
+    """The inventory/selection JSON fact for a relation.
+
+    A terminal (v1) relation keeps its original four keys; only an EH cleanup
+    relation adds `kind`, so existing v1 facts stay byte-identical.
+    """
+    if relation is None:
+        return None
+    fact = {"parent_address": relation.parent_address,
+            "parent_symbol": relation.parent_symbol,
+            "reason": relation.reason, "evidence": list(relation.evidence)}
+    if relation.kind != FRAGMENT_TERMINAL:
+        fact["kind"] = relation.kind
+    return fact
+
+
+def fragment_fact_kind(fact) -> str | None:
+    """The kind of a relation object or inventory fact; None when malformed."""
+    if fact is None:
+        return None
+    if isinstance(fact, dict):
+        kind = fact.get("kind", FRAGMENT_TERMINAL)
+        return kind if kind in (FRAGMENT_TERMINAL, FRAGMENT_EH_CLEANUP) else None
+    return getattr(fact, "kind", None)
 
 
 def validate_source_role(role: SourceRole, reason: str) -> None:

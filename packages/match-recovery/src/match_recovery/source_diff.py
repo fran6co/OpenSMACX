@@ -18,8 +18,8 @@ from .source.asm import AsmComparison, compare_unit, shared_spans
 from .source.model import Tier
 from .source.eh_regions import bind_eh_regions
 from .source_inventory import image_pin, source_snapshot
-from .source_selection import (compilation_context, measurement_reference_targets, select_records,
-                               selected_source_records, snapshot_mappings)
+from .source_selection import (compilation_context, eh_fragment_group, measurement_reference_targets,
+                               select_records, selected_source_records, snapshot_mappings)
 from .source_listing import listing_lines
 
 def _instructions(code, base, relocations=(), coff=None, lines=None):
@@ -79,6 +79,9 @@ def _generate(root, target, *, image, in_file, output, flag_set):
     record, = selected_source_records(root, snapshot, selected)
     if record.mode is Mode.UNBOUND or record.state is State.PLACEHOLDER or record.function_fragment:
         raise ValueError("diff requires a complete implemented source-owned function")
+    # A parent with EH cleanup fragments is shown and measured over its
+    # combined cold extent, exactly as `measure` does.
+    eh_group = eh_fragment_group(root, settings, snapshot, mappings, selected[0])
     unit = compilation_context(root, record, settings)
     flags = settings.flags_for(unit.relative_to(root).as_posix())
     if type(flag_set) is not int or not 0 <= flag_set < len(flags):
@@ -116,7 +119,7 @@ def _generate(root, target, *, image, in_file, output, flag_set):
         source_path = root / relative
         if any(n < 1 or n > len(source_text.splitlines()) for n in lines.values() if n is not None):
             raise ValueError("compiler source anchors lie outside the selected source file")
-        spans = tuple(record.image_spans)
+        spans = tuple((eh_group.measured_parent() if eh_group else record).image_spans)
         regions = []
         region_notes = []
         if len(spans) == 2:
@@ -164,6 +167,7 @@ def _generate(root, target, *, image, in_file, output, flag_set):
             return compiler(path, arguments, trial)
         measured = compare_unit([record], image, unit, (), (flags,), shared_spans(mappings),
                                 compiler=observed, root=root, strict_command_for=lambda _: (),
+                                fragment_pairs=(eh_group,) if eh_group else (),
                                 targets=measurement_reference_targets(root, settings),
                                 diagnostics=True)
         comparison = measured.results[0][1]

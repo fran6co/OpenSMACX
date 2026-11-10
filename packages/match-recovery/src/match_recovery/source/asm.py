@@ -32,7 +32,8 @@ from ..pe_coff import Coff, CoffRecords, PeImage
 from ..source_inventory import image_pin
 from .eh_regions import bind_eh_regions, eh_action_semantic_difference, original_eh_action_count
 from .grammar import is_assembler_source
-from .model import DecompilationState, Mode, Tier
+from .model import (DecompilationState, FRAGMENT_EH_CLEANUP, FRAGMENT_TERMINAL, Mode, Tier,
+                    fragment_fact_kind)
 
 @dataclass(frozen=True)
 class Listing:
@@ -1716,6 +1717,37 @@ class ResolvedFragmentPair:
         yield self.child
         yield self.parent
 
+    @property
+    def members(self):
+        return (self.child, self.parent)
+
+
+@dataclass(frozen=True)
+class ResolvedEHFragmentGroup:
+    """Opaque EH cleanup group resolved from one captured source inventory.
+
+    `children` are the parent's generated cleanup actions in address order;
+    they tile the front of its cold region, which ends with the handler stub
+    the parent's own cold span declares. Deliberately not iterable as a pair.
+    """
+    parent: object
+    children: tuple
+    _admission: object = field(repr=False, compare=False)
+
+    @property
+    def members(self):
+        return (self.parent, *self.children)
+
+    def measured_parent(self):
+        """The parent over (primary, combined cold); measurement only.
+
+        The source span is not rewritten: the combined cold extent starts
+        at the first cleanup child and ends with the parent's handler stub.
+        """
+        primary, cold = self.parent.image_spans
+        return replace(self.parent, image_spans=(
+            tuple(primary), (self.children[0].image_spans[0][0], cold[1])))
+
 
 def resolve_fragment_pairs(records, selected, *, component_keys=frozenset(),
                            is_seed=lambda _record: False, bind=lambda row: row):
@@ -1735,19 +1767,24 @@ def resolve_fragment_pairs(records, selected, *, component_keys=frozenset(),
     def emitted(record):
         return record.symbol or record.name
 
-    def relation(record):
+    def relation(record, kind=FRAGMENT_TERMINAL):
         value = record.function_fragment
+        if fragment_fact_kind(value) != kind:
+            return None
         if isinstance(value, dict):
             try:
                 return value["parent_address"], value["parent_symbol"]
             except KeyError:
                 return None
-        if value is None:
-            return None
         return value.parent_address, value.parent_symbol
 
     selected_keys = {key(row) for row in selected}
     pairs, refused, owners = [], set(), {}
+    # An unknown relation kind is never support for anything.
+    for row in records:
+        if row.function_fragment is not None and fragment_fact_kind(row.function_fragment) is None:
+            if key(row) in selected_keys:
+                refused.add(key(row))
     children = [row for row in records if relation(row) is not None]
     for child in children:
         parent_address, parent_symbol = relation(child)
@@ -1787,9 +1824,78 @@ def resolve_fragment_pairs(records, selected, *, component_keys=frozenset(),
         if key(child) in selected_keys or key(parent) in selected_keys:
             pairs.append(ResolvedFragmentPair(bind(child), bind(parent),
                                               _FRAGMENT_ADMISSION))
+    groups = _resolve_eh_fragment_groups(
+        records, selected_keys, refused, key=key, emitted=emitted,
+        relation=lambda row: relation(row, FRAGMENT_EH_CLEANUP),
+        component_keys=component_keys, is_seed=is_seed, bind=bind)
+    # One mapping cannot be both a terminal-pair endpoint and an EH group
+    # member: refuse both interpretations rather than pick one.
+    pair_keys = {key(member) for pair in pairs for member in pair.members}
+    for group in groups:
+        overlap = {key(member) for member in group.members} & pair_keys
+        if overlap:
+            refused.update(selected_keys & ({key(member) for member in group.members} | overlap))
     pairs = [pair for pair in pairs
              if key(pair.child) not in refused and key(pair.parent) not in refused]
-    return tuple(pairs), frozenset(refused)
+    groups = [group for group in groups
+              if not any(key(member) in refused for member in group.members)]
+    return tuple(pairs) + tuple(groups), frozenset(refused)
+
+
+def _resolve_eh_fragment_groups(records, selected_keys, refused, *, key, emitted, relation,
+                                component_keys, is_seed, bind):
+    """Resolve v2 EH cleanup children into whole parent groups, fail closed.
+
+    Every eh_cleanup child naming one parent address is one group. The group
+    is admitted only when the parent is the sole mapping at that address, is
+    the named emitted symbol in the same marker host and context, has a
+    primary and a later cold span, is not a seed/component/fragment, and the
+    ordered children tile contiguously up to its cold span. Otherwise every
+    selected member and address candidate is refused.
+    """
+    by_parent = {}
+    for row in records:
+        found = relation(row)
+        if found is not None:
+            by_parent.setdefault(found[0], []).append(row)
+    groups = []
+    for parent_address, children in by_parent.items():
+        address_candidates = [row for row in records if row.address == parent_address]
+        symbols = {relation(child)[1] for child in children}
+        parents = [row for row in address_candidates if emitted(row) in symbols]
+        valid = len(symbols) == 1 and len(address_candidates) == 1 and len(parents) == 1
+        if valid:
+            parent = parents[0]
+            spans = tuple(tuple(span) for span in parent.image_spans)
+            valid = (not is_seed(parent)
+                     and parent.function_fragment is None
+                     and str(parent.mode) != Mode.UNBOUND.value
+                     and str(getattr(parent, "state", "")) != "excluded"
+                     and key(parent) not in component_keys
+                     and len(spans) == 2 and spans[0][0] == parent_address
+                     and spans[0][0] < spans[0][1] <= spans[1][0] < spans[1][1]
+                     and all(child.path.resolve() == parent.path.resolve()
+                             and child.context == parent.context
+                             and key(child) not in component_keys
+                             and len(child.image_spans) == 1
+                             and child.image_spans[0][0] == child.address
+                             and child.image_spans[0][1] > child.image_spans[0][0]
+                             for child in children))
+        if valid:
+            ordered = sorted(children, key=lambda child: child.image_spans[0][0])
+            cursor = ordered[0].image_spans[0][0]
+            valid = cursor >= spans[0][1]
+            for child in ordered:
+                valid = valid and child.image_spans[0][0] == cursor
+                cursor = child.image_spans[0][1]
+            valid = valid and cursor == spans[1][0]
+        if not valid:
+            refused.update(selected_keys & {key(row) for row in (*children, *address_candidates)})
+            continue
+        if any(key(row) in selected_keys for row in (parent, *ordered)):
+            groups.append(ResolvedEHFragmentGroup(
+                bind(parent), tuple(bind(child) for child in ordered), _FRAGMENT_ADMISSION))
+    return groups
 
 
 def _better(candidate: AsmComparison, incumbent: AsmComparison) -> bool:
@@ -2052,9 +2158,13 @@ def compare_unit(records, exe: Path | str, source: Path | str,
         raise ValueError("no flag sets to try")
     source = Path(source)
     fragment_pairs = tuple(fragment_pairs)
+    eh_groups = tuple(item for item in fragment_pairs if isinstance(item, ResolvedEHFragmentGroup))
+    fragment_pairs = tuple(item for item in fragment_pairs
+                           if not isinstance(item, ResolvedEHFragmentGroup))
     inputs = {path: path.read_bytes() for path in {
         source, *(item.path for item in records),
-        *(item.path for pair in fragment_pairs for item in pair)}}
+        *(item.path for pair in fragment_pairs for item in pair),
+        *(item.path for group in eh_groups for item in group.members)}}
     objects, failures = {}, {}
     count, reused = 0, 0
 
@@ -2387,6 +2497,83 @@ def compare_unit(records, exe: Path | str, source: Path | str,
         else:
             pair_results[pk], pair_results[ck] = best_parent, best_child
 
+    # EH cleanup groups: the parent is measured once over its primary span
+    # and the combined cold extent; each child's verdict derives from it.
+    eh_parents, measured_parents = set(), {}
+    member_counts = {}
+    for group in eh_groups:
+        for member in getattr(group, "members", ()):
+            try:
+                member_key = key(member)
+            except AttributeError:
+                continue
+            member_counts[member_key] = member_counts.get(member_key, 0) + 1
+    for group in eh_groups:
+        try:
+            members = group.members
+            member_keys = [key(member) for member in members]
+        except (AttributeError, TypeError):
+            continue
+        try:
+            if group._admission is not _FRAGMENT_ADMISSION:
+                raise ValueError("fragment support was not resolved by the package source-view binder")
+            if any(member_counts[item] > 1 or item in parent_to_pair or item in child_to_parent
+                   for item in member_keys):
+                raise ValueError("duplicate fragment relation is ambiguous")
+            parent, children = group.parent, tuple(group.children)
+            spans = tuple(tuple(span) for span in parent.image_spans)
+            emitted_parent = parent.symbol or parent.name
+            if (not children or parent.function_fragment is not None
+                    or len(spans) != 2 or spans[0][0] != parent.address
+                    or any(member.path.resolve() != parent.path.resolve() for member in members)):
+                raise ValueError("EH cleanup fragment parent identity or extent is unsupported")
+            cursor = children[0].image_spans[0][0]
+            if cursor < spans[0][1]:
+                raise ValueError("EH cleanup fragments overlap the parent's primary span")
+            for child in children:
+                relation = child.function_fragment
+                if (fragment_fact_kind(relation) != FRAGMENT_EH_CLEANUP
+                        or relation.parent_address != parent.address
+                        or relation.parent_symbol != emitted_parent
+                        or child.context != parent.context
+                        or len(child.image_spans) != 1
+                        or child.image_spans[0][0] != child.address
+                        or child.image_spans[0][0] != cursor
+                        or child.image_spans[0][1] <= cursor):
+                    raise ValueError("EH cleanup fragments do not tile the parent's cold region")
+                cursor = child.image_spans[0][1]
+            if cursor != spans[1][0]:
+                raise ValueError("EH cleanup fragments do not end at the parent's cold span")
+            if any(item in selected and member != selected_by_key[item]
+                   for item, member in zip(member_keys, members)):
+                raise ValueError("fragment support differs from the selected source mapping")
+        except (AttributeError, IndexError, TypeError, ValueError) as error:
+            for item in member_keys:
+                if item in selected:
+                    pair_errors[item] = str(error)
+            continue
+        if not any(item in selected for item in member_keys):
+            continue
+        measured = group.measured_parent()
+        pk = key(parent)
+        eh_parents.add(pk)
+        measured_parents[pk] = measured
+        refused = next((member for member in members
+                        if span_refusal(member, exe, shared) is not None), None)
+        if refused is not None:
+            outcome = AsmComparison(verdict=span_refusal(refused, exe, shared),
+                                    diagnostic=_span_refusal_detail(refused, exe, shared))
+        else:
+            try:
+                outcome = compare_source(measured, exe, source, command, attempts, shared,
+                                         compiler=shared_compile, retry_compile=retry_compile,
+                                         targets=targets)
+            except (OSError, ValueError) as error:
+                outcome = str(error)
+        pair_results[pk] = outcome
+        for child in children:
+            pair_results[key(child)] = _eh_fragment_result(child, parent, outcome)
+
     results = []
     for record in records:
         record_key = key(record)
@@ -2394,7 +2581,7 @@ def compare_unit(records, exe: Path | str, source: Path | str,
             result = pair_errors[record_key]
         elif record.function_fragment is not None:
             result = pair_results.get(record_key, "fragment has no resolved same-TU parent support")
-        elif record_key in parent_to_pair:
+        elif record_key in parent_to_pair or record_key in eh_parents:
             result = pair_results[record_key]
         elif record_key in associated_results:
             result = associated_results[record_key]
@@ -2412,10 +2599,37 @@ def compare_unit(records, exe: Path | str, source: Path | str,
                      or (record_key in associated_results
                          and result.verdict is not Tier.BYTE_EXACT))):
             result = replace(result, diagnostic_comparison=diagnostic_comparison(
-                record, exe, source, command, attempts, compiler=shared_compile))
+                measured_parents.get(record_key, record), exe, source, command, attempts,
+                compiler=shared_compile))
         results.append((record, result))
     current()
     return UnitComparison(tuple(results), count, reused)
+
+
+def _eh_fragment_result(child, parent, outcome):
+    """A cleanup child's verdict, derived only from its parent's whole measurement.
+
+    The combined comparison covers every byte of every child slice, so a
+    BYTE_EXACT parent implies each slice. Anything else is never a
+    standalone match: a measured difference is a MISMATCH, and an unknown
+    parent outcome stays unknown.
+    """
+    symbol = parent.symbol or parent.name
+    prefix = (f"EH cleanup fragment of {symbol} (0x{parent.address:08X}); measured only "
+              "within the parent's combined EH extent: ")
+    if isinstance(outcome, str):
+        return prefix + "parent measurement unresolved: " + outcome
+    low, high = child.image_spans[0]
+    if outcome.verdict is Tier.BYTE_EXACT:
+        return AsmComparison(verdict=Tier.BYTE_EXACT, compared_bytes=high - low,
+                             mnemonic_similarity=1.0, flags=outcome.flags,
+                             diagnostic=prefix + "parent is BYTE_EXACT")
+    if outcome.verdict in (Tier.NO_COMPILE, Tier.REFUSED, Tier.SHARED_TAIL):
+        return AsmComparison(verdict=outcome.verdict, flags=outcome.flags,
+                             diagnostic=prefix + f"parent is {outcome.verdict}"
+                             + (f" ({outcome.diagnostic})" if outcome.diagnostic else ""))
+    return AsmComparison(verdict=Tier.MISMATCH, flags=outcome.flags,
+                         diagnostic=prefix + f"parent is {outcome.verdict}")
 
 
 def compare_source(record: DecompilationState, exe: Path | str,

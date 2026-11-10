@@ -48,7 +48,10 @@ class Candidate:
             require_text(self.component, "component binding")
         if self.function_fragment is not None:
             required = {"parent_address", "parent_symbol", "reason", "evidence"}
-            if type(self.function_fragment) is not dict or set(self.function_fragment) != required:
+            # A v2 EH cleanup relation carries its kind; v1 never does.
+            if (type(self.function_fragment) is not dict
+                    or set(self.function_fragment) not in (required, required | {"kind"})
+                    or self.function_fragment.get("kind", "eh_cleanup") != "eh_cleanup"):
                 raise ValueError("invalid function-fragment relation")
         if self.unbound and (self.seed or self.symbol or self.component or self.context_path
                              or self.function_fragment is not None

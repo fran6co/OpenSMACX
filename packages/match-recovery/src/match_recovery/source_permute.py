@@ -32,8 +32,8 @@ from .source.mangled import qualified_name
 from .source.model import Tier
 from .source.reader import read_text
 from .source_inventory import image_pin, source_snapshot
-from .source_selection import (compilation_context, measurement_reference_targets, select_records,
-                               selected_source_records, snapshot_mappings)
+from .source_selection import (compilation_context, eh_fragment_group, measurement_reference_targets,
+                               select_records, selected_source_records, snapshot_mappings)
 
 _SCALE = 1000          # one differing instruction outweighs any byte tie-break
 _TOPOLOGY = 1000       # one differing EH unwind state outweighs any instruction distance
@@ -414,6 +414,10 @@ def permute_source(root: Path, target: str, *, image: Path, in_file=None, iterat
     record, = selected_source_records(root, snapshot, selected)
     if record.mode is Mode.UNBOUND or record.state is State.PLACEHOLDER or record.function_fragment:
         raise ValueError("permute requires a complete implemented source-owned function")
+    # A parent with EH cleanup fragments is scored over its combined cold
+    # extent, exactly as `measure` does; the source span is not rewritten.
+    eh_group = eh_fragment_group(root, settings, snapshot, mappings, selected[0])
+    measured_record = eh_group.measured_parent() if eh_group else record
     unit = compilation_context(root, record, settings)
     unit_relative = unit.relative_to(root).as_posix()
     if unit.suffix not in settings.unit_extensions:
@@ -531,7 +535,8 @@ def permute_source(root: Path, target: str, *, image: Path, in_file=None, iterat
         raws = {flags: data for flags, (_kind, data) in zip(grid, results)}
         measured = compare_unit([record], image, unit, (), grid, shared,
                                 compiler=lambda path, arguments, trial: trial_object(raws, path, arguments, trial),
-                                root=root, targets=references)
+                                root=root, targets=references,
+                                fragment_pairs=(eh_group,) if eh_group else ())
         comparison = measured.results[0][1]
         if isinstance(comparison, str):
             failures.append(comparison[:300])
@@ -541,11 +546,11 @@ def permute_source(root: Path, target: str, *, image: Path, in_file=None, iterat
         eh = None
         for flags in grid:
             try:
-                listing = subject_asm(raws[flags], record, " ".join(flags))
+                listing = subject_asm(raws[flags], measured_record, " ".join(flags))
             except ValueError:
                 continue
             if isinstance(listing, RegionCandidate):
-                found = eh_distance(listing, record, image)
+                found = eh_distance(listing, measured_record, image)
                 if found is not None:
                     value = (found["eh_topology_distance"], found["instruction_distance"], found["byte_distance"])
                     if best is None or value < best:

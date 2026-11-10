@@ -178,9 +178,9 @@ def check_matches(root: Path, image: Path, *, jobs: int = 1, units=None, scope=N
         is_seed=lambda row: settings.source.is_seed(row.path.relative_to(root).as_posix()))
     pair_by_record = {}
     for pair in fragment_pairs:
-        child, parent = pair
-        pair_by_record[(child.path.resolve(), child.address, child.line)] = pair
-        pair_by_record[(parent.path.resolve(), parent.address, parent.line)] = pair
+        # A terminal pair or a whole EH cleanup group: every member needs it.
+        for member in pair.members:
+            pair_by_record[(member.path.resolve(), member.address, member.line)] = pair
     groups, unsupported, component_selected, pairs_by_path = defaultdict(list), [], {}, defaultdict(list)
     for record in eligible:
         name = record.path.relative_to(root).as_posix()

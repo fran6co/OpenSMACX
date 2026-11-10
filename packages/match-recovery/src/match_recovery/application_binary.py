@@ -394,6 +394,9 @@ def select_fragment_bindings(view: dict, selected: frozenset[str], bindings: lis
     component_relation_children = set()
     context_relation_children = set()
     context_parent_ids = set()
+    eh_relation_children = set()
+    eh_parent_reason = ("EH cleanup fragment relations are measured only by historical masked "
+                        "matching; strict application measurement does not support them")
     for child_id, entity in entities.items():
         current = [row for row in entity["candidates"] if not row["seed"]]
         relations = [row for row in entity["candidates"]
@@ -411,6 +414,11 @@ def select_fragment_bindings(view: dict, selected: frozenset[str], bindings: lis
                 untrusted_relation_children.add(child_id)
                 component_relation_children.add(child_id)
             relation = candidate["function_fragment"]
+            if relation.get("kind", "terminal") != "terminal":
+                # No strict combined EH-extent route exists yet; never let a
+                # v2 relation reach the terminal-tail binding below.
+                untrusted_relation_children.add(child_id)
+                eh_relation_children.add(child_id)
             relation_rows.append((child_id, entity, candidate, relation))
     expanded = dict(existing)
     relation_counts = Counter(relation.get("parent_address")
@@ -450,16 +458,21 @@ def select_fragment_bindings(view: dict, selected: frozenset[str], bindings: lis
         ambiguous_parent_ids.update(parent_ids)
         if child_id in selected:
             refused.append({"entity_id": child_id, "result": Result.UNKNOWN,
-                            "reason": ("compile_context fragment mappings are unsupported by strict application measurement"
+                            "reason": (eh_parent_reason
+                                       if child_id in eh_relation_children else
+                                       "compile_context fragment mappings are unsupported by strict application measurement"
                                        if child_id in context_relation_children else
                                        "component-owned mapping cannot be a non-callable fragment"
                                        if child_id in component_relation_children else
                                        "multiple fragment relations claim one parent extent"),
                             "fragment": True})
         for parent_id in parent_ids:
-            if parent_id in selected:
+            if parent_id in selected and not (
+                    child_id in eh_relation_children
+                    and any(row["entity_id"] == parent_id for row in refused)):
                 refused.append({"entity_id": parent_id, "result": Result.UNKNOWN,
-                                "reason": "parent extent has multiple competing fragment relations",
+                                "reason": (eh_parent_reason if child_id in eh_relation_children
+                                           else "parent extent has multiple competing fragment relations"),
                                 "fragment_parent": True})
     refused_ids = {row["entity_id"] for row in refused}
     for child_id in ambiguous_relations:

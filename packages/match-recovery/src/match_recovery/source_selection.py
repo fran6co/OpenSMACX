@@ -8,7 +8,7 @@ import re
 from .components import relative_path
 from .model import require_text
 from .source import read_text
-from .source.model import Mode
+from .source.model import Mode, fragment_fact
 from .source.mangled import identifier, qualified_name
 
 
@@ -121,15 +121,50 @@ def selected_source_records(root, snapshot, selected_mappings):
         if SnapshotMapping(record.address, record.path, record.line, record.name,
                                              emitted_hint, record.image_spans,
                                              record.context,
-                                             ({"parent_address": record.function_fragment.parent_address,
-                                               "parent_symbol": record.function_fragment.parent_symbol,
-                                               "reason": record.function_fragment.reason,
-                                               "evidence": list(record.function_fragment.evidence)}
-                                              if record.function_fragment is not None else None),
+                                             fragment_fact(record.function_fragment),
                                              record.mode.value, record.state.value) != mapping:
             raise ValueError("selected source mapping differs from freshly parsed captured source")
         selected.append(record)
     return selected
+
+
+def eh_fragment_group(root, settings, snapshot, mappings, selected):
+    """The admitted EH cleanup group whose parent is `selected`, or None.
+
+    `selected` is one snapshot mapping. Support resolves from the complete
+    captured inventory exactly as `measure` does: seeds and component
+    identities compete. A parent named by cleanup children whose relation is
+    refused raises rather than measuring the bare handler-stub span.
+    """
+    from .component_original_routing import component_record_identity_candidates
+    from .model import Origin
+    from .source.asm import ResolvedEHFragmentGroup, resolve_fragment_pairs
+    from .source.model import FRAGMENT_EH_CLEANUP, fragment_fact_kind
+    from .source_inventory import image_pin
+
+    def key(row):
+        return row.path.resolve(), row.address, row.line
+
+    if not any(fragment_fact_kind(row.function_fragment) == FRAGMENT_EH_CLEANUP
+               and row.function_fragment.get("parent_address") == selected.address
+               for row in mappings):
+        return None
+    pin = image_pin(root, settings.source)
+    candidates = component_record_identity_candidates(snapshot)
+    component_keys = frozenset(
+        key(row) for row in mappings
+        if (row.path.relative_to(root).as_posix(),
+            Origin(pin, settings.source.address_space, row.address).entity_id) in candidates)
+    typed = {key(row): row for row in selected_source_records(
+        root, snapshot, [row for row in mappings if row.path == selected.path])}
+    groups, refused = resolve_fragment_pairs(
+        mappings, [selected], component_keys=component_keys,
+        is_seed=lambda row: settings.source.is_seed(row.path.relative_to(root).as_posix()),
+        bind=lambda row: typed[key(row)])
+    if key(selected) in refused:
+        raise ValueError("EH cleanup fragment parent/child ownership is ambiguous or conflicts with a component")
+    return next((group for group in groups if isinstance(group, ResolvedEHFragmentGroup)
+                 and key(group.parent) == key(selected)), None)
 
 
 def select_records(records, targets, host, symbol_format):

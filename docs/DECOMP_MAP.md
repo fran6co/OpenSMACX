@@ -198,6 +198,34 @@ parent currently refuses before measurement/publication: combined-extent claim
 publication is not implemented. Read-only measurement does not grant claims or
 prove original class layout, lifetime, linked selection or executable acceptance.
 
+### EH cleanup fragments (v2)
+
+A catalogue may map each generated C++ EH unwind action of a function as its own
+`FILE` identity, leaving the parent's cold span as only the 10-byte handler stub.
+Keep those identities and their `RECOVERY_BINDING` rationale; after the child's
+marker (or after its binding line, which must still follow the marker), record:
+
+```cpp
+// RECOVERY_FRAGMENT: v2 {"evidence":["pinned:FuncInfo unwind row"],"kind":"eh_cleanup","parent_address":"0x004DFAD0","parent_symbol":"?editor_tech@Console@@QAEXXZ","reason":"generated EH unwind action"}
+```
+
+The parent is the one non-fragment mapping in the same file at that address
+whose emitted symbol (`symbol` fact, else name) is `parent_symbol`, with an
+emitted body (any mode but `UNBOUND`/`EXCLUDED`), the same `compile_context`
+and exactly two spans: a primary at its address and a later cold span. It may
+follow its children in the file. The children, ordered by address, must tile
+contiguously from the first action to the cold span's start. Anything else
+refuses the whole file. Seed, component, duplicate or mixed v1/v2 support
+refuses measurement of every selected member.
+
+`measure`, `check-matches`, `diff` and `permute` measure the parent once over
+its primary span and the combined cold extent (first child to the stub's end)
+through the complete EH-region comparison; the source span is not rewritten.
+Selecting only a child compiles the parent as support. A child is BYTE_EXACT
+only when that whole parent comparison is; a measured difference is MISMATCH
+and an unknown parent stays unknown. Strict application/task verification
+refuses v2 relations, and `record` refuses children and their parent as for v1.
+
 ## Compact object bindings
 
 `RECOVERY_OBJECT: v1 <start> <emitted-symbol>` binds an original object start

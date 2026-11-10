@@ -72,7 +72,7 @@ from .grammar import (FACT_LINE, LESSON_CONTINUED, LESSON_DEFERRED,
                       MARKER, NEXT_MARKER, SOURCE_ROLE_DIRECTIVE,
                       FUNCTION_FRAGMENT_DIRECTIVE, assembler_annotation_line,
                       assembler_comment_line, is_assembler_source)
-from .model import (DecompilationState, Mode, SourceRole, State,
+from .model import (DecompilationState, FRAGMENT_EH_CLEANUP, Mode, SourceRole, State,
                     validate_source_role, validate_unbound_mapping)
 from .reader import _fact_lines, _lesson_run, read_text
 
@@ -424,8 +424,28 @@ def _fragment_line(record: DecompilationState) -> str | None:
     payload = {"parent_address": f"0x{relation.parent_address:08X}",
                "parent_symbol": relation.parent_symbol,
                "reason": relation.reason, "evidence": list(relation.evidence)}
-    return "// RECOVERY_FRAGMENT: v1 " + json.dumps(
+    version = "v1"
+    if relation.kind == FRAGMENT_EH_CLEANUP:
+        payload["kind"], version = relation.kind, "v2"
+    return f"// RECOVERY_FRAGMENT: {version} " + json.dumps(
         payload, sort_keys=True, separators=(",", ":"))
+
+
+def _fragment_lines(lines: list[str], index: int) -> tuple[int | None, int | None]:
+    """(binding line, fragment directive line) owned by the marker at `index`.
+
+    A v2 directive may sit after the marker's RECOVERY_BINDING line; a v1
+    directive always immediately follows its marker.
+    """
+    binding = (index + 1 if index + 1 < len(lines)
+               and lines[index + 1].strip().startswith("// RECOVERY_BINDING:") else None)
+    if index + 1 < len(lines) and FUNCTION_FRAGMENT_DIRECTIVE.fullmatch(lines[index + 1]):
+        return binding, index + 1
+    if binding is not None and binding + 1 < len(lines):
+        match = FUNCTION_FRAGMENT_DIRECTIVE.fullmatch(lines[binding + 1])
+        if match is not None and match.group("version") == "2":
+            return binding, binding + 1
+    return binding, None
 
 
 def write(text: str, records: list[DecompilationState]) -> str:
@@ -491,12 +511,17 @@ def write(text: str, records: list[DecompilationState]) -> str:
             if index > 0 and SOURCE_ROLE_DIRECTIVE.fullmatch(lines[index - 1]):
                 drop.add(index - 1)
             fragment_line = _fragment_line(record)
-            if index + 1 < len(lines) and FUNCTION_FRAGMENT_DIRECTIVE.fullmatch(lines[index + 1]):
+            binding_at, directive_at = _fragment_lines(lines, index)
+            if directive_at is not None:
                 if fragment_line is None:
                     raise ValueError("cannot drop a fragment relation while its child mapping remains")
-                drop.add(index + 1)
+                drop.add(directive_at)
             if fragment_line is not None:
-                add_after.setdefault(index, []).insert(0, fragment_line)
+                # An EH cleanup relation stays below the child's binding
+                # rationale, which must itself follow the marker.
+                anchor = (binding_at if binding_at is not None
+                          and record.function_fragment.kind == FRAGMENT_EH_CLEANUP else index)
+                add_after.setdefault(anchor, []).insert(0, fragment_line)
             respell.update(spelled)
             if additions:
                 add_after.setdefault(after, []).extend(additions)
@@ -778,11 +803,11 @@ def remove(text: str, records: list[DecompilationState]) -> str:
         drop.add(index)
         if index > 0 and SOURCE_ROLE_DIRECTIVE.fullmatch(lines[index - 1]):
             drop.add(index - 1)
-        if index + 1 < len(lines) and lines[index + 1].strip().startswith(
-                "// RECOVERY_BINDING:"):
-            drop.add(index + 1)
-        if index + 1 < len(lines) and FUNCTION_FRAGMENT_DIRECTIVE.fullmatch(lines[index + 1]):
-            drop.add(index + 1)
+        binding_at, directive_at = _fragment_lines(lines, index)
+        if binding_at is not None:
+            drop.add(binding_at)
+        if directive_at is not None:
+            drop.add(directive_at)
         drop.update(_lesson_drop(lines, index))
 
     out = [line for index, line in enumerate(lines) if index not in drop]

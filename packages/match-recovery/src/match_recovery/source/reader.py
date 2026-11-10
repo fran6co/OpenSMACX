@@ -29,7 +29,8 @@ from .grammar import (DEFINITION_HEAD, DEFINITION_KEYWORDS,
                       SOURCE_ROLE_DIRECTIVE, FUNCTION_FRAGMENT_DIRECTIVE,
                       _MANGLED_BASE, assembler_annotation_text,
                       is_assembler_source)
-from .model import (DecompilationState, FunctionFragmentRelation, Lesson, Mode, Recipe, SourceRole,
+from .model import (DecompilationState, FRAGMENT_EH_CLEANUP, FRAGMENT_TERMINAL,
+                    FunctionFragmentRelation, Lesson, Mode, Recipe, SourceRole,
                     State, validate_source_role)
 from ..records import parse_json_value
 
@@ -815,7 +816,13 @@ def _read_text(text: str, path: Path | str,
                 and fragment is None):
             raise ValueError("malformed RECOVERY_FRAGMENT directive")
         if fragment is not None:
-            if pending_role is not None or not found or last_record_marker_line != index - 1:
+            version = fragment.group("version")
+            # A v2 directive may follow the child's RECOVERY_BINDING line,
+            # which itself must immediately follow the marker.
+            after_binding = (version == "2" and last_record_marker_line == index - 2
+                             and lines[index - 1].strip().startswith("// RECOVERY_BINDING:"))
+            if (pending_role is not None or not found
+                    or (last_record_marker_line != index - 1 and not after_binding)):
                 raise ValueError("RECOVERY_FRAGMENT must immediately follow its child ORIGINAL marker")
             record = found[-1]
             if record.mode is not Mode.FILE or record.function_fragment is not None:
@@ -824,9 +831,13 @@ def _read_text(text: str, path: Path | str,
                 payload = parse_json_value(fragment.group("json"))
             except (TypeError, ValueError) as error:
                 raise ValueError("malformed RECOVERY_FRAGMENT JSON") from error
-            if type(payload) is not dict or set(payload) != {
-                    "parent_address", "parent_symbol", "reason", "evidence"}:
-                raise ValueError("RECOVERY_FRAGMENT v1 has unexpected fields")
+            fields = {"parent_address", "parent_symbol", "reason", "evidence"}
+            if version == "2":
+                fields.add("kind")
+            if type(payload) is not dict or set(payload) != fields:
+                raise ValueError(f"RECOVERY_FRAGMENT v{version} has unexpected fields")
+            if version == "2" and payload["kind"] != FRAGMENT_EH_CLEANUP:
+                raise ValueError("RECOVERY_FRAGMENT v2 supports only kind eh_cleanup")
             parent_address = payload["parent_address"]
             if (not isinstance(parent_address, str)
                     or not re.fullmatch(r"0x[0-9A-Fa-f]{8}", parent_address)):
@@ -836,7 +847,17 @@ def _read_text(text: str, path: Path | str,
                 raise ValueError("RECOVERY_FRAGMENT evidence must be a string array")
             relation = FunctionFragmentRelation(
                 int(parent_address, 16), payload["parent_symbol"],
-                payload["reason"], tuple(payload["evidence"]))
+                payload["reason"], tuple(payload["evidence"]),
+                FRAGMENT_EH_CLEANUP if version == "2" else FRAGMENT_TERMINAL)
+            if version == "2":
+                # The parent may follow its cleanup actions in the file; the
+                # whole group is validated once the file has been read.
+                if (len(record.image_spans) != 1 or record.image_spans[0][0] != record.address
+                        or record.image_spans[0][1] <= record.image_spans[0][0]):
+                    raise ValueError("RECOVERY_FRAGMENT v2 child must declare one nonempty span at its address")
+                record.function_fragment = relation
+                last_record_marker_line = None
+                continue
             parents = [item for item in found[:-1] if item.address == relation.parent_address]
             if (len(parents) != 1 or parents[0].mode is not Mode.FILE
                     or parents[0].function_fragment is not None):
@@ -969,8 +990,51 @@ def _read_text(text: str, path: Path | str,
         raise ValueError(
             f"orphan RECOVERY_ROLE directive at line {pending_role[0] + 1}; "
             "it must immediately precede an ORIGINAL marker")
-
+    _check_eh_cleanup_fragments(found)
     return found
+
+
+def _check_eh_cleanup_fragments(found: list[DecompilationState]) -> None:
+    """Fail closed unless every v2 EH cleanup group is one proven tiling.
+
+    The parent is exactly one non-fragment mapping in this file with the
+    named address and emitted symbol and an emitted body, declaring a primary
+    span at its address and one cold span after it. Its cleanup children,
+    ordered by address, tile contiguously up to the cold span's start, which
+    the handler stub occupies. Both ends share one compile_context fact.
+    """
+    groups: dict[int, list[DecompilationState]] = {}
+    for record in found:
+        relation = record.function_fragment
+        if relation is not None and relation.kind == FRAGMENT_EH_CLEANUP:
+            groups.setdefault(relation.parent_address, []).append(record)
+    for parent_address, children in groups.items():
+        parents = [item for item in found if item.address == parent_address]
+        if (len(parents) != 1 or parents[0].function_fragment is not None
+                or parents[0].mode is Mode.UNBOUND or parents[0].state is State.EXCLUDED):
+            raise ValueError("RECOVERY_FRAGMENT v2 parent must be one non-fragment mapping "
+                             "with an emitted body in the same file")
+        parent = parents[0]
+        if {child.function_fragment.parent_symbol for child in children} != {
+                parent.symbol or parent.name}:
+            raise ValueError("RECOVERY_FRAGMENT v2 parent symbol differs from the parent's emitted symbol")
+        if any(child.context != parent.context for child in children):
+            raise ValueError("RECOVERY_FRAGMENT v2 endpoints must declare the same compile_context")
+        spans = parent.image_spans
+        if (len(spans) != 2 or spans[0][0] != parent.address
+                or not spans[0][0] < spans[0][1] <= spans[1][0] < spans[1][1]):
+            raise ValueError("RECOVERY_FRAGMENT v2 parent must declare one primary and one later cold span")
+        ordered = sorted(children, key=lambda child: child.image_spans[0][0])
+        cursor = ordered[0].image_spans[0][0]
+        if cursor < spans[0][1]:
+            raise ValueError("RECOVERY_FRAGMENT v2 cleanup actions overlap the parent's primary span")
+        for child in ordered:
+            low, high = child.image_spans[0]
+            if low != cursor:
+                raise ValueError("RECOVERY_FRAGMENT v2 cleanup actions do not tile contiguously")
+            cursor = high
+        if cursor != spans[1][0]:
+            raise ValueError("RECOVERY_FRAGMENT v2 cleanup actions do not end at the parent's cold span")
 
 
 def region_identifiers(record: DecompilationState) -> tuple[str, ...]:

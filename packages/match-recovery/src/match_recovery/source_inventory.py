@@ -172,6 +172,7 @@ def _lifetime_binding_hint(record) -> dict | None:
 
 
 def _parse_file(raw: bytes, path: Path, root: Path, pin: str, configuration: SourceConfiguration) -> dict:
+    from match_recovery.source.model import fragment_fact
     from match_recovery.source.reader import read_text
 
     records, obligations = [], []
@@ -208,12 +209,7 @@ def _parse_file(raw: bytes, path: Path, root: Path, pin: str, configuration: Sou
             "source_body_region_present": bool(record.region.strip()),
             "source_role": record.source_role.value,
             "source_role_reason": record.source_role_reason,
-            "function_fragment": ({
-                "parent_address": record.function_fragment.parent_address,
-                "parent_symbol": record.function_fragment.parent_symbol,
-                "reason": record.function_fragment.reason,
-                "evidence": list(record.function_fragment.evidence),
-            } if record.function_fragment is not None else None),
+            "function_fragment": fragment_fact(record.function_fragment),
             "legacy_exclusion": record.exclusion,
             "legacy_byte_exact": record.byte_exact,
             "legacy_semantic": record.semantic,

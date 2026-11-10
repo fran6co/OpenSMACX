@@ -1250,6 +1250,19 @@ Claim recording currently refuses both fragments and parents with attached
 fragments. Combined-extent publication is unfinished. No relation waives layout,
 preservation, linked-selection or runtime proof requirements.
 
+`RECOVERY_FRAGMENT: v2` adds `"kind":"eh_cleanup"` for generated EH unwind
+actions catalogued as separate `FILE` identities. It may follow the child's
+`RECOVERY_BINDING` line. The parent (same file, may come later, any emitted-body
+mode, same `compile_context`) declares a primary span and a cold span holding
+only its handler stub; its children must tile contiguously up to that stub.
+The reader validates the whole group after the file; the same resolver admits
+it as a `ResolvedEHFragmentGroup`. `measure`, historical matching, `diff` and
+`permute` compare the parent over (primary, first child..stub end) through the
+complete EH-region path. Each child derives its verdict from that result:
+BYTE_EXACT only with an exact parent, MISMATCH for a measured difference, and
+the parent's unknown otherwise. Strict application verification refuses v2
+relations; recording refuses them as for v1.
+
 ## Pending original mappings without artificial C++
 
 The native source reader/writer supports an explicit `UNBOUND` mode:
