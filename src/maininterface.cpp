@@ -593,13 +593,12 @@ int MainInterface::init(int) {
     return 0;
 }
 
-// ORIGINAL: 0x0045EB80 ??1MainInterface@@QAE@XZ 0x0045EB80-0x0045EF0A;0x006552C0-0x0065552F FILE
+// ORIGINAL: 0x0045EB80 ??1MainInterface@@QAE@XZ 0x0045EB80-0x0045EF0A;0x006552C0-0x0065552F FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/maininterface.h", "git:11bfcdd0:recovery/tasks/maininterface-owner-coverage.json", "git:291c01ea:src/unrecovered/0045eb80.cpp"], "reason": "Original owner calls, secondary interface receiver and ordinary embedded-member lifecycle identify this MainInterface operation; compatible historical seed spans are retained, without a matching claim."}
 // symbol    ??1MainInterface@@UAE@XZ
 // TRIED: plain reinterpret_cast pointer-offset calls into close()/dtors in disasm order (same shape as 0x00408170's AlphaSave dtor); compiles and matches through instruction #17, then diverges because the real destructor's ~35-state SEH unwind table (one `mov byte ptr [ebp-4], N` per sub-object cleanup, with matching funclets) only emerges from genuine implicit member/base destruction, not explicit calls in a hand-written body.
-MainInterface::~MainInterface() {
-    // Reverse member/base order supplies ordinary and exceptional teardown.
-}
+// The implicitly defined destructor (no user declaration in maininterface.h)
+// supplies the reverse member/base teardown; VC6 emits it here as a COMDAT.
 
 // ORIGINAL: 0x0045BC50 ?on_redraw@MainInterface@@QAEXXZ 0x0045BC50-0x0045BE7D FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/maininterface.h", "git:11bfcdd0:recovery/tasks/maininterface-owner-coverage.json", "git:291c01ea:src/recovered/units/0045bc50.cpp"], "reason": "Original owner calls, secondary interface receiver and ordinary embedded-member lifecycle identify this MainInterface operation; compatible historical seed spans are retained, without a matching claim."}

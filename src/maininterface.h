@@ -251,7 +251,8 @@ class MainInterface : public GraphicWin, public SubInterface {
   void set_date(char *text);
   MainInterface();
   // Ordinary C++ teardown releases owned members in reverse declaration order.
-  ~MainInterface();
+  // No user-declared destructor: the image's ??1MainInterface (0x0045EB80)
+  // never re-stores the vtable pointers, which is VC6's implicit destructor.
 
   int set_bubble_text(uint32_t button_id, LPCSTR text);
   void clear_message();
