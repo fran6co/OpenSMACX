@@ -7,13 +7,15 @@ references. Do not preserve those defects to protect a local similarity score.
 
 ## Current mode: lean match loop (user decision, 2026-11-06)
 
-Function coverage is effectively complete (5,606 implemented, 53 pending
-`UNBOUND`). The remaining milestone work is byte matching: on 2026-11-06,
-`recover check-matches` measured 3,938 claims passing, 42 regressed and 56
-unmeasurable, with about 1,570 functions never claimed. Over the preceding two
-weeks most churn went into tests, task/history JSON and framework code rather
-than C++. The user therefore chose this loop, which supersedes conflicting
-guidance below and in `recovery/WORKFLOW.md`:
+Function coverage is complete (5,659 implemented, no pending `UNBOUND`). The
+remaining milestone work is byte matching. When this loop was chosen
+(2026-11-06), `recover check-matches` measured 3,938 claims passing, 42
+regressed and 56 unmeasurable; over the preceding two weeks most churn went
+into tests, task/history JSON and framework code rather than C++. On
+2026-11-10 it measured 4,912 claims passing, none regressed and 3 vendor/system
+rows unknown, with 690 functions not yet byte-exact (623 MISMATCH, 41
+MNEMONIC_ONLY, 9 SHAPE_EXACT, 15 REFUSED, 2 UNRESOLVED). The user chose this
+loop, which supersedes conflicting guidance below and in `recovery/WORKFLOW.md`:
 
 1. Work one translation unit at a time. Iterate on its unmatched functions with
    `uv run recover measure <addrs> --image <image>` (seconds) and
@@ -53,12 +55,15 @@ real source fix whenever a break can be explained; a header change goes in
 during this phase only when `recover check-matches --since <base> --baseline
 <report>` shows gains and no losses.
 
-Loop tools: `recover measure` takes about 5 s. `recover check-matches --unit
+Loop tools: `recover measure` takes about 4.7 s. `recover check-matches --unit
 <tu>` or `--since <rev>` measures only the affected TUs (never a full pass;
 `--baseline <report>` lists what moved, `--output <ignored path>` keeps the
 report). `recover permute <addr> --jobs N` searches body spellings without a
-task; `--candidates <deck.json>` ranks your own spellings of the body instead. Framework changes that speed up this loop are allowed alongside measured
-matching blockers.
+task (`--operator` restricts it, e.g. to `continue_guard`, `shared_return` or
+`break_goto`); `--candidates <deck.json>` ranks your own spellings of the body
+instead. Editing the permuted file mid-run stops the search with
+`stop_reason: inputs_changed` and keeps the best variant. Framework changes
+that speed up this loop are allowed alongside measured matching blockers.
 
 Unchanged: faithful bug-for-bug recovery; no `_emit`, copied machine code, or
 fixed-address calls; never hand-edit `ORIGINAL:`/`BYTE_EXACT` markers;
