@@ -104,3 +104,14 @@ def test_diff_page_carries_verdict_notice():
     page = render_diff({"title": "f", "source_path": "src/f.cpp", "source_lines": [],
                         "regions": [], "notice": "Strict verdict: REFUSED • DIAGNOSTIC ONLY"})
     assert "Strict verdict: REFUSED" in page and 'id="verdict"' in page
+
+
+def test_span_refusals_say_why(tmp_path):
+    from match_recovery.source.asm import span_refusal_reason
+    from match_recovery.source.model import Tier
+    source, image = fixture(tmp_path)
+    first, second = shared_records(source)
+    shared = shared_spans([first, second])
+    tier, reason = span_refusal_reason(first, image, shared)
+    assert tier is Tier.SHARED_TAIL and "0x00401000-0x00401002" in reason
+    assert span_refusal_reason(first, image, frozenset()) is None

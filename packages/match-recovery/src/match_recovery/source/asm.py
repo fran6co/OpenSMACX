@@ -1572,9 +1572,9 @@ def compare_subject(record: DecompilationState, exe: Path | str,
     return result
 
 
-def span_refusal(record: DecompilationState, exe: Path | str,
-                 shared: frozenset = frozenset()) -> Tier | None:
-    """The tier for a record no verdict is defined on, or None.
+def span_refusal_reason(record: DecompilationState, exe: Path | str,
+                        shared: frozenset = frozenset()) -> tuple[Tier, str] | None:
+    """The tier for a record no verdict is defined on, and why; or None.
 
     NOT A FAILURE, A REFUSAL, and the difference is what lets a reader tell
     a wall from a body nobody has written. A self-modifying span cannot be
@@ -1588,11 +1588,11 @@ def span_refusal(record: DecompilationState, exe: Path | str,
     Everything else is read out of the image - see `rewrites_itself`.
     """
     if not record.image_spans:
-        return Tier.REFUSED
+        return Tier.REFUSED, "mapping declares no original image span"
     spans = sorted(record.image_spans)
     if (any(high <= low for low, high in spans)
             or any(left[1] > right[0] for left, right in zip(spans, spans[1:]))):
-        return Tier.REFUSED
+        return Tier.REFUSED, "original image spans are empty, reversed or overlapping"
     # A cold cleanup span is no less part of the function than its entry.
     # Inspect every byte range, including a range that enters a writable
     # executable section after starting in an ordinary section. A refusal
@@ -1606,14 +1606,34 @@ def span_refusal(record: DecompilationState, exe: Path | str,
     # any other body; the image's file bytes are the pre-patch state.
     assembled = is_assembler_source(record.path) and (
         not record.context or is_assembler_source(record.context))
-    if not assembled and any(low < section_high and section_low < high
-           and characteristics & writable_code == writable_code
-           for low, high in spans
-           for _name, section_low, section_high, characteristics in sections):
-        return Tier.REFUSED
-    if any(span in shared for span in spans):
-        return Tier.SHARED_TAIL
+    selfmod = [(low, high, name) for low, high in spans
+               for name, section_low, section_high, characteristics in sections
+               if low < section_high and section_low < high
+               and characteristics & writable_code == writable_code]
+    if not assembled and selfmod:
+        low, high, name = selfmod[0]
+        return Tier.REFUSED, (f"span {low:#010x}-{high:#010x} lies in writable executable section {name}: "
+                              "only an assembler-hosted mapping can reproduce self-modifying code")
+    shared_here = [span for span in spans if span in shared]
+    if shared_here:
+        low, high = shared_here[0]
+        return Tier.SHARED_TAIL, f"span {low:#010x}-{high:#010x} is also claimed by another mapping"
     return None
+
+
+def span_refusal(record: DecompilationState, exe: Path | str,
+                 shared: frozenset = frozenset()) -> Tier | None:
+    found = span_refusal_reason(record, exe, shared)
+    return None if found is None else found[0]
+
+
+def _span_refusal_detail(record, exe, shared) -> str:
+    # Diagnostic text only: span_refusal already decided the tier.
+    try:
+        found = span_refusal_reason(record, exe, shared)
+    except (OSError, ValueError, struct.error):
+        return ""
+    return "" if found is None else found[1]
 
 
 def shared_spans(records) -> frozenset:
@@ -2211,10 +2231,11 @@ def compare_unit(records, exe: Path | str, source: Path | str,
     pair_results = {}
     for child, parent in parent_to_pair.values():
         ck, pk = key(child), key(parent)
-        refusal = (span_refusal(parent, exe, shared)
-                   or span_refusal(child, exe, shared))
+        refused = parent if span_refusal(parent, exe, shared) is not None else child
+        refusal = span_refusal(refused, exe, shared)
         if refusal is not None:
-            pair_results[pk] = pair_results[ck] = AsmComparison(verdict=refusal)
+            pair_results[pk] = pair_results[ck] = AsmComparison(
+                verdict=refusal, diagnostic=_span_refusal_detail(refused, exe, shared))
             continue
         best_parent, best_child, diagnostic, missing = None, None, "", None
         for attempt in attempts:
@@ -2418,7 +2439,7 @@ def compare_source(record: DecompilationState, exe: Path | str,
         raise ValueError("no flag sets to try")
     refusal = span_refusal(record, exe, shared)
     if refusal is not None:
-        return AsmComparison(verdict=refusal, flags="")
+        return AsmComparison(verdict=refusal, flags="", diagnostic=_span_refusal_detail(record, exe, shared))
     original_asm(record, exe)            # raises early if nothing locates it
     best, diagnostic = None, ""
     missing = None
