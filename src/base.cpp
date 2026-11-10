@@ -912,7 +912,7 @@ void __cdecl base_energy() {
     base_psych();
 }
 
-// ORIGINAL: 0x004E4B80 ?base_init@@YAHHHH@Z 0x004E4B80-0x004E5250
+// ORIGINAL: 0x004E4B80 ?base_init@@YAHHHH@Z 0x004E4B80-0x004E5250 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004e4b80.cpp: canonical identity, original spans and retained seed history", "source:src/base.h: real Base storage and lifecycle contracts", "source:recovery/tasks/base-lifecycle-owner-closure.json: bounded coordinator authorization"], "reason": "The original base creation operation owns initialization of Bases records and faction base counts; source expresses real Base/PlayerData fields, facility bitmaps, technology and named UI/replay dependencies."}
 // TRIED: `>= 0x200` guard (matches original cmp/jl) over `> 0x1ff` moved divergence #4->#12; raw byte-offset arithmetic on the fixed 0x97dXXX/0x96XXXX globals (record stride 0x134, per-faction stride 0x20cc) rather than the Base struct - field order in src/base.h is only size-checked, not per-field, and several 0x97d0cc-family writes index past their nominal field width (a genuine original OOB-write reproduced faithfully). Not chased to byte-exact given size (1744 bytes / ~330 asm lines).
 int __cdecl base_init(int faction_id, int x, int y) {
@@ -970,11 +970,13 @@ int __cdecl base_init(int faction_id, int x, int y) {
     // The original clears only nine facility bytes, not the entire recycled
     // Base record. Fields it does not initialize deliberately retain their state.
     memset(Bases[base_id].facilities_built, 0, 9);
-    Bases[base_id].random_event_turns = 0;
     // BUG(original): nerve_staple_count is cleared a second time here.
-    Bases[base_id].nerve_staple_count = 0;
-    Bases[base_id].unk_11 = 0;
-    Bases[base_id].location = 0;
+    // WORKAROUND(type): the image clears 0x124..0x133 with one fresh zero
+    // register in ascending order (0x004E4E20..0x004E4E3A), the unrolled form
+    // of a four-int array clear; base.h models these as four scalar fields.
+    for (int k = 0; k < 4; k++) {
+        (&Bases[base_id].random_event_turns)[k] = 0;
+    }
     if (PlayersData[faction_id].current_num_bases == 1) {
         set_fac(FAC_HEADQUARTERS, base_id, TRUE);
         if (IsMultiplayerNet) {
@@ -1011,9 +1013,10 @@ int __cdecl base_init(int faction_id, int x, int y) {
         set_fac(FAC_PRESSURE_DOME, base_id, TRUE);
     }
     for (int i = 0; i < 8; i++) {
-        Bases[base_id].faction_pop_size_intel[i] = (i == faction_id
-            || (Bases[base_id].visibility & (1 << i)))
-            ? Bases[base_id].population_size : 0;
+        // Nested ?: - the image loads population_size once per true arm.
+        Bases[base_id].faction_pop_size_intel[i] = i == faction_id
+            ? Bases[base_id].population_size
+            : ((Bases[base_id].visibility & (1 << i)) ? Bases[base_id].population_size : 0);
     }
     int j;
     for (j = 0; j < Players[faction_id].faction_bonus_count; j++) {
@@ -5135,11 +5138,10 @@ Status: Complete
 
 /*
 Purpose: Set the current base globals.
-// ORIGINAL: 0x004E39D0 ?set_base@@YAXH@Z 0x004E39D0-0x004E39F3 SEMANTIC
-// TRIED: reordering the two stores (pointer before id) drops to 5/11;
-//            a named local `Base *base = &Bases[base_id];` still 8/11, same
-//            eax/ecx vs edx/ecx register choice on the last two lea/mov -
-//            plateau, best flags /c /O2 /Gy /GR- /Oy- /GX.
+// ORIGINAL: 0x004E39D0 ?set_base@@YAXH@Z 0x004E39D0-0x004E39F3 BYTE_EXACT
+// LEVER: under the TU's /Og /Oi /Ot /Gs recipe the pointer store written
+//   first keeps base_id live in eax, so VC6 still emits the id store first
+//   and computes the pointer in ecx/edx; id-first source reuses eax (8/11).
 // size      35 bytes
 // prototype void (__cdecl ?set_base@@YAXH@Z)(int baseID)
 // callers   40   call targets   0
@@ -5151,8 +5153,8 @@ Status: Complete
 */
 #pragma auto_inline(off)
 void __cdecl set_base(int base_id) {
-    BaseIDCurrentSelected = base_id;
     BaseCurrent = &Bases[base_id];
+    BaseIDCurrentSelected = base_id;
 }
 #pragma auto_inline(on)
 
@@ -6705,7 +6707,7 @@ void __cdecl base_first(int base_id) {
 
 /*
 Purpose: Calculate the new unit morale bonus modifier provided by the base and faction for a triad.
-// ORIGINAL: 0x004E6400 ?morale_mod@@YAHHHH@Z 0x004E6400-0x004E65B1
+// ORIGINAL: 0x004E6400 ?morale_mod@@YAHHHH@Z 0x004E6400-0x004E65B1 BYTE_EXACT
 // LEVER: image makes 4 real `call 0x50ba00` (bitmask), one per
 // has_fac_built() site; the `inline bool has_fac_built(int, int)` in
 // base.h was not being inlined here and compiled to a real call to
@@ -6714,15 +6716,10 @@ Purpose: Calculate the new unit morale bonus modifier provided by the base and f
 // lever recorded on cost_factor/breed_mod) fixes the call count (4 real
 // bitmask calls, matching) and moves best similarity from a much lower
 // score to 0.715, 7/153 agreeing.
-// TRIED (still short of the image): the remaining gap starts with a
-// register swap in the prologue (image keeps `ebx`=base_id, `esi`=faction_id;
-// this tree's O2 default swaps them) and continues into how the bool result
-// of `has_fac_built_call(...) || has_project(...)` is materialised - the
-// image runs `and al,cl; neg al; sbb eax,eax; neg eax` and SPINS the boolean
-// through the `triad` parameter's own stack slot ([ebp+0x10]) as scratch
-// before the `||`, which this tree's direct `test ...; jne` never
-// reproduces. Not a call-count or lever-shape issue at this point - register
-// allocation and slot reuse the flag sweep does not reach.
+// LEVER: the Bioenhancement test spelled `if (has_fac) ... else if
+// (has_project) ...` gives the image's ebx=base_id/edi=modifier allocation;
+// with one switch case spelled the same way the AIR/SEA has_project tails
+// merge into AIR's copy as in the image (either case form alone works).
 // size      433 bytes
 // prototype int (__cdecl ?morale_mod@@YAHHHH@Z)(int baseID, int factionID, int triad)
 // callers   2   call targets   1
@@ -6736,8 +6733,9 @@ int __cdecl morale_mod(int base_id, int faction_id, int triad) {
     int morale_modifier = 0;
     switch (triad) {
     case TRIAD_LAND:
-        if (has_fac(FAC_COMMAND_CENTER, base_id, 0)
-            || has_project(SP_COMMAND_NEXUS, faction_id)) {
+        if (has_fac(FAC_COMMAND_CENTER, base_id, 0)) {
+            morale_modifier += 2;
+        } else if (has_project(SP_COMMAND_NEXUS, faction_id)) {
             morale_modifier += 2;
         }
         break;
@@ -6754,8 +6752,9 @@ int __cdecl morale_mod(int base_id, int faction_id, int triad) {
         }
         break;
     }
-    if (has_fac(FAC_BIOENHANCEMENT_CENTER, base_id, 0)
-        || has_project(SP_CYBORG_FACTORY, faction_id)) {
+    if (has_fac(FAC_BIOENHANCEMENT_CENTER, base_id, 0)) {
+        morale_modifier += 2;
+    } else if (has_project(SP_CYBORG_FACTORY, faction_id)) {
         morale_modifier += 2;
     }
     if (PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::MORALE] < -1) {
