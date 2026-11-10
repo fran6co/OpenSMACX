@@ -45,6 +45,7 @@ static char BufferPcxLoadSuffix[] = ".pcx";
 #include "font_metrics.h"
 #include "general.h"   // mem_get, for the link labels this owns
 #include "palette.h"
+#include "rectangle_operations.h"  // inline rectangle builder
 #include "spot.h"
 #include "stringstruct.h"  // StringList is used directly by text wrapping
 
@@ -415,8 +416,8 @@ int Buffer::draw_pie(RECT *area, int first_color, int second_color,
     if (area == 0) return 16;
     int width = area->right - area->left;
     int height = area->bottom - area->top;
-    int center_y = height / 2 + area->top;
     int center_x = width / 2 + area->left;
+    int center_y = height / 2 + area->top;
     if (amount == 0) first_color = second_color;
     else if (amount == total) second_color = first_color;
 
@@ -424,12 +425,14 @@ int Buffer::draw_pie(RECT *area, int first_color, int second_color,
     float half_width = width_float * 0.5f;
     float half_height = static_cast<float>(height) * 0.5f;
     // Native66D8BC is6.28f, NOT an exact two-pi value.
-    double angle = static_cast<double>(amount) * 6.28f / total;
+    double angle = amount * 6.28f / total;
     float sine_width = static_cast<float>(sin(angle) * width_float);
-    double cosine_width = cos(angle) * width_float;
+    // cosine_width and height_squared below are float products the image
+    // keeps unrounded on the x87 stack (no store), with memory operands.
+    float cosine_width = cos(angle) * width_float;
     int wedge_x = static_cast<int>(center_x + sine_width);
     int wedge_y = static_cast<int>(center_y - cosine_width);
-    float ratio = static_cast<float>(cosine_width / sine_width);
+    float ratio = cosine_width / sine_width;
 
     RECT remap;
     remap.left = 0;
@@ -438,16 +441,17 @@ int Buffer::draw_pie(RECT *area, int first_color, int second_color,
     // Keep that original error path visible pending coordinator decision;
     // do not mistake the old seed's four zero stores for native behavior.
     if (amount * 4 >= total && amount * 4 <= total * 3) {
-        remap = *area;
         if (amount * 2 == total) {
+            remap = *area;
             remap.right = center_x;
         } else {
-            double height_squared = static_cast<double>(half_height) * half_height;
+            float height_squared = half_height * half_height;
             double numerator = height_squared * half_width * half_width;
-            double denominator = static_cast<double>(ratio) * ratio
-                * half_width * half_width + height_squared;
+            double denominator = ratio * ratio * half_width * half_width
+                + height_squared;
             double radius = sqrt(numerator / denominator) + 0.5;
             if (amount * 2 > total) radius = -radius;
+            remap = *area;
             remap.right = static_cast<int>(radius) + center_x;
         }
     }
@@ -475,33 +479,9 @@ int Buffer::draw_pie(RECT *area, int first_color, int second_color,
     SetRect(&strip, area->left, center_y, width + area->left, center_y + thickness);
     fill(&strip, amount * 4 < total ? second_color : first_color);
 
-    if (dib_bits_ != 0 || surface_ != 0) {
-        // The original intersects against Buffer's clip RECT20, NOT the
-        // caller's ellipse bounds as the retained seed guessed.
-        if (IntersectRect(&remap, &rect1_, &remap)
-            && remap.left < dib_.bmiHeader.biWidth
-            && remap.top < -dib_.bmiHeader.biHeight) {
-            if (get_data() != 0) {
-                unsigned char *pixel = static_cast<unsigned char *>(locked_bits_)
-                    + static_cast<int>(stride_) * remap.top + remap.left;
-                if (pixel != 0) {
-                    int columns = remap.right - remap.left;
-                    int rows = remap.bottom - remap.top;
-                    int remainder = static_cast<int>(stride_) - columns;
-                    do {
-                        int count = columns;
-                        do {
-                            if (*pixel == static_cast<unsigned char>(first_color))
-                                *pixel = static_cast<unsigned char>(second_color);
-                            ++pixel;
-                        } while (--count != 0);
-                        pixel += remainder;
-                    } while (--rows != 0);
-                    free_data(1);
-                }
-            }
-        }
-    }
+    // The original expands change_color(RECT *) here (0x005DF313 tests the
+    // local rectangle's address, then the hand-written search/replace loop).
+    change_color(&remap, first_color, second_color);
     SelectObject(dc, GetStockObject(BLACK_PEN));
     if (amount == total || amount == 0) {
         Ellipse(dc, area->left, area->top, area->right, area->bottom);
@@ -4428,46 +4408,51 @@ int Buffer::tile(Buffer *source, int src_x, int src_y, int x, int y, int w,
     int rectBottom = h + y;
     clipRect.bottom = rectBottom;
 
-    if (IntersectRect(&clipRect, &clipRect, &selfRect)) {
-        set_clip(&clipRect);
-
-        // The DIB's own dimensions, read out of the header the buffer was
-        // built with - not fields of `Buffer`, fields of its DIB.
-        int tileWidth = source->dib_.bmiHeader.biWidth;
-        int tileHeight = -source->dib_.bmiHeader.biHeight;
-
-        if (tileWidth != 0 && tileHeight != 0) {
-            int tilesX = w / tileWidth;
-            if (tilesX * tileWidth < w) {
-                tilesX++;
-            }
-            int tilesY = h / tileHeight;
-            if (tilesY * tileHeight < h) {
-                tilesY++;
-            }
-
-            int startX = x - src_x % tileWidth;
-            y -= src_y % tileHeight;
-
-            if (tilesX * tileWidth + startX < rectRight) {
-                tilesX++;
-            }
-            if (tilesY * tileHeight + y < rectBottom) {
-                tilesY++;
-            }
-
-            for (int row = 0; row < tilesY; ++row) {
-                x = startX;
-                for (int column = 0; column < tilesX; ++column) {
-                    source->copy(this, 0, 0, x, y, tileWidth, tileHeight);
-                    x += tileWidth;
-                }
-                y += tileHeight;
-            }
-
-            set_clip(&selfRect);
-        }
+    if (!IntersectRect(&clipRect, &clipRect, &selfRect)) {
+        return 0;
     }
+    set_clip(&clipRect);
+
+    // The DIB's own dimensions, read out of the header the buffer was
+    // built with - not fields of `Buffer`, fields of its DIB.
+    int tileWidth = source->dib_.bmiHeader.biWidth;
+    int tileHeight = -source->dib_.bmiHeader.biHeight;
+
+    // Early returns, as in the image: its prologue saves every register
+    // before the pixel-storage guard. A zero tile dimension returns with the
+    // clip rectangle still installed.
+    if (tileWidth == 0 || tileHeight == 0) {
+        return 0;
+    }
+    int tilesX = w / tileWidth;
+    if (tilesX * tileWidth < w) {
+        tilesX++;
+    }
+    int tilesY = h / tileHeight;
+    if (tilesY * tileHeight < h) {
+        tilesY++;
+    }
+
+    int startX = x - src_x % tileWidth;
+    y -= src_y % tileHeight;
+
+    if (tilesX * tileWidth + startX < rectRight) {
+        tilesX++;
+    }
+    if (tilesY * tileHeight + y < rectBottom) {
+        tilesY++;
+    }
+
+    for (int row = 0; row < tilesY; ++row) {
+        x = startX;
+        for (int column = 0; column < tilesX; ++column) {
+            source->copy(this, 0, 0, x, y, tileWidth, tileHeight);
+            x += tileWidth;
+        }
+        y += tileHeight;
+    }
+
+    set_clip(&selfRect);
 
     return 0;
 }
@@ -4740,44 +4725,49 @@ int Buffer::tile_mask(Buffer *mask, int src_x, int src_y, int x, int y, int w,
     const int rectBottom = h + y;
     clipRect.bottom = rectBottom;
 
-    if (IntersectRect(&clipRect, &clipRect, &selfRect)) {
-        set_clip(&clipRect);
-
-        const int tileWidth = mask->dib_.bmiHeader.biWidth;
-        const int tileHeight = -mask->dib_.bmiHeader.biHeight;
-
-        if (tileWidth != 0 && tileHeight != 0) {
-            int tilesX = w / tileWidth;
-            if (tilesX * tileWidth < w) {
-                tilesX++;
-            }
-            int tilesY = h / tileHeight;
-            if (tilesY * tileHeight < h) {
-                tilesY++;
-            }
-
-            const int startX = x - src_x % tileWidth;
-            y -= src_y % tileHeight;
-
-            if (tilesX * tileWidth + startX < rectRight) {
-                tilesX++;
-            }
-            if (tilesY * tileHeight + y < rectBottom) {
-                tilesY++;
-            }
-
-            for (int row = 0; row < tilesY; ++row) {
-                x = startX;
-                for (int column = 0; column < tilesX; ++column) {
-                    mask->copy_mask(this, 0, 0, x, y, tileWidth, tileHeight, color);
-                    x += tileWidth;
-                }
-                y += tileHeight;
-            }
-
-            set_clip(&selfRect);
-        }
+    if (!IntersectRect(&clipRect, &clipRect, &selfRect)) {
+        return 0;
     }
+    set_clip(&clipRect);
+
+    const int tileWidth = mask->dib_.bmiHeader.biWidth;
+    const int tileHeight = -mask->dib_.bmiHeader.biHeight;
+
+    // Early returns, as in the image: its prologue saves every register
+    // before the pixel-storage guard. A zero tile dimension returns with the
+    // clip rectangle still installed.
+    if (tileWidth == 0 || tileHeight == 0) {
+        return 0;
+    }
+    int tilesX = w / tileWidth;
+    if (tilesX * tileWidth < w) {
+        tilesX++;
+    }
+    int tilesY = h / tileHeight;
+    if (tilesY * tileHeight < h) {
+        tilesY++;
+    }
+
+    const int startX = x - src_x % tileWidth;
+    y -= src_y % tileHeight;
+
+    if (tilesX * tileWidth + startX < rectRight) {
+        tilesX++;
+    }
+    if (tilesY * tileHeight + y < rectBottom) {
+        tilesY++;
+    }
+
+    for (int row = 0; row < tilesY; ++row) {
+        x = startX;
+        for (int column = 0; column < tilesX; ++column) {
+            mask->copy_mask(this, 0, 0, x, y, tileWidth, tileHeight, color);
+            x += tileWidth;
+        }
+        y += tileHeight;
+    }
+
+    set_clip(&selfRect);
 
     return 0;
 }
@@ -4817,44 +4807,49 @@ int Buffer::tile(Sprite *sprite, int src_x, int src_y, int x, int y, int w,
     const int rectBottom = y + h;
     clipRect.bottom = rectBottom;
 
-    if (IntersectRect(&clipRect, &clipRect, &selfRect)) {
-        set_clip(&clipRect);
-
-        const int tileWidth = sprite->iWidth_;
-        const int tileHeight = sprite->iHeight_;
-
-        if (tileWidth != 0 && tileHeight != 0) {
-            int tilesX = w / tileWidth;
-            if (tilesX * tileWidth < w) {
-                tilesX++;
-            }
-            int tilesY = h / tileHeight;
-            if (tilesY * tileHeight < h) {
-                tilesY++;
-            }
-
-            const int startX = x - src_x % tileWidth;
-            y -= src_y % tileHeight;
-
-            if (tilesX * tileWidth + startX < rectRight) {
-                tilesX++;
-            }
-            if (tilesY * tileHeight + y < rectBottom) {
-                tilesY++;
-            }
-
-            for (int row = 0; row < tilesY; ++row) {
-                x = startX;
-                for (int column = 0; column < tilesX; ++column) {
-                    sprite->draw(this, sprite->cTransparentIndex_, x, y, 1, 1);
-                    x += tileWidth;
-                }
-                y += tileHeight;
-            }
-
-            set_clip(&selfRect);
-        }
+    if (!IntersectRect(&clipRect, &clipRect, &selfRect)) {
+        return 0;
     }
+    set_clip(&clipRect);
+
+    const int tileWidth = sprite->iWidth_;
+    const int tileHeight = sprite->iHeight_;
+
+    // Early returns, as in the image: its prologue saves every register
+    // before the pixel-storage guard. A zero tile dimension returns with the
+    // clip rectangle still installed.
+    if (tileWidth == 0 || tileHeight == 0) {
+        return 0;
+    }
+    int tilesX = w / tileWidth;
+    if (tilesX * tileWidth < w) {
+        tilesX++;
+    }
+    int tilesY = h / tileHeight;
+    if (tilesY * tileHeight < h) {
+        tilesY++;
+    }
+
+    const int startX = x - src_x % tileWidth;
+    y -= src_y % tileHeight;
+
+    if (tilesX * tileWidth + startX < rectRight) {
+        tilesX++;
+    }
+    if (tilesY * tileHeight + y < rectBottom) {
+        tilesY++;
+    }
+
+    for (int row = 0; row < tilesY; ++row) {
+        x = startX;
+        for (int column = 0; column < tilesX; ++column) {
+            sprite->draw(this, sprite->cTransparentIndex_, x, y, 1, 1);
+            x += tileWidth;
+        }
+        y += tileHeight;
+    }
+
+    set_clip(&selfRect);
 
     return 0;
 }
@@ -7121,7 +7116,7 @@ tail_exit:
     }
 }
 
-// ORIGINAL: 0x005DE580 ?change_color@Buffer@@QAEHHH@Z 0x005DE580-0x005DE721
+// ORIGINAL: 0x005DE580 ?change_color@Buffer@@QAEHHH@Z 0x005DE580-0x005DE721 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"The whole-surface colour replacement uses Buffer's existing pixel storage, pitch and holder state, with the real DirectDraw Lock/Unlock contract. IntersectRect is an imported function, not an IAT-slot object to dereference again; preserve original clipping, failed-acquisition and last-holder behavior.","evidence":["pinned:0x005DE5D3 calls directly through import slot 0x00669338; the old source's extra dereference compiled to a call through the imported function's first word","pinned:0x005DE642 invokes surface slot +0x64 with null rectangle, descriptor, flag 1 and null event;0x005DE70A invokes +0x80 with current locked bits","source:Buffer members locked_bits_+0x50,dib_bits_+0x54,surface_+0x58,surface_lock_count_+0x6C,stride_+0x4A8","SDK:DDSURFACEDESC size 0x6C,lPitch+0x10,lpSurface+0x24; original initializes only dwSize before Lock"]}
 // TRIED: MISMATCH #7 xor/mov - get_data()/free_data() logic inlined by hand (raw uint32_t offsets, matching Buffer::get_data's own style) rather than calling the real methods, since neither is a catalogued callee of this address; register allocation differs from the original past that point.
 // size      417 bytes
@@ -7138,7 +7133,7 @@ int Buffer::change_color(int a1, int a2) {
     return change_color(0, 0, dib_.bmiHeader.biWidth, -dib_.bmiHeader.biHeight, a1, a2);
 }
 
-// ORIGINAL: 0x005E2070 ?change_color@Buffer@@QAEHHHHHHH@Z 0x005E2070-0x005E220D
+// ORIGINAL: 0x005E2070 ?change_color@Buffer@@QAEHHHHHHH@Z 0x005E2070-0x005E220D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"The bounded colour replacement owns the existing Buffer lock protocol and typed SDK descriptor. Keep its distinct counter publication, null-pixel failure and DIB cleanup paths rather than replacing them with a generic acquisition helper.","evidence":["pinned:0x005E212E invokes surface Lock slot +0x64 with null rectangle, descriptor, flag 1 and null event;0x005E21F6 invokes Unlock+0x80 after last-holder guards","source:Buffer surface_,locked_bits_,surface_lock_count_ and stride_ own the accessed storage","SDK:DDSURFACEDESC size 0x6C,lPitch+0x10,lpSurface+0x24; original initializes only dwSize before Lock"]}
 // TRIED: clip against rect1_, then a DirectDraw Lock/search-replace/ Unlock byte fill on the locked surface (Lock/Unlock are genuinely __stdcall COM methods - `this` is pushed as an explicit arg, not passed via ecx, confirmed by the disassembly never setting ecx before either indirect call). Landed at 0.67 similarity; diverges at #8 on the width_/ height_ range-check scheduling.
 // size      413 bytes
@@ -7156,55 +7151,49 @@ inline int Buffer::change_color(int a1, int a2, int a3, int a4, int a5, int a6) 
         return 7;
     }
 
+    // The rectangle is built through the inline pointer helper: written as
+    // four direct field stores, VC6 reloads top before left after Lock.
     RECT rect;
-    rect.left = a1;
-    rect.top = a2;
-    rect.right = a1 + a3;
-    rect.bottom = a2 + a4;
+    set_rectangle_dimensions(&rect, a1, a2, a3, a4);
     if (IntersectRect(&rect, &rect1_, &rect)) {
-        const int top = rect.top;
-        const int left = rect.left;
-        if (left < dib_.bmiHeader.biWidth && top < -dib_.bmiHeader.biHeight) {
-            char *pixel = acquire_pixels() != 0
-                ? stride_ * top + static_cast<char *>(locked_bits_) + left : 0;
-            if (pixel == 0) {
-                return 7;
-            }
-            {
-                const int width = rect.right - rect.left;
-                const int height = rect.bottom - rect.top;
-                const int remainder = static_cast<int>(stride_) - width;
-                // Hand-written assembly: explicit edi/esi saves, mov ah/al color pair, nested dec/jne loops.
-                __asm {
-                    push edi
-                    push esi
-                    mov ah, byte ptr a5
-                    mov al, byte ptr a6
-                    mov edi, pixel
-                    mov ebx, width
-                    mov ecx, height
-                    mov edx, remainder
-                next_row:
-                    mov esi, ebx
-                next_pixel:
-                    cmp [edi], ah
-                    jne keep_pixel
-                    mov [edi], al
-                keep_pixel:
-                    inc edi
-                    dec esi
-                    jne next_pixel
-                    add edi, edx
-                    dec ecx
-                    jne next_row
-                    pop esi
-                    pop edi
-                }
-                free_data(1);
-                return 0;
-            }
+        // get_data(x, y) applies the upper-bound checks and acquisition.
+        char *pixel = reinterpret_cast<char *>(get_data(rect.left, rect.top));
+        if (pixel == 0) {
+            return 7;
         }
-        return 7;
+        // The width and height reuse the a3/a4 parameter slots, as in the
+        // image's frame.
+        a3 = rect.right - rect.left;
+        a4 = rect.bottom - rect.top;
+        const int remainder = static_cast<int>(stride_) - a3;
+        // Hand-written assembly: explicit edi/esi saves, mov ah/al color pair, nested dec/jne loops.
+        __asm {
+            push edi
+            push esi
+            mov ah, byte ptr a5
+            mov al, byte ptr a6
+            mov edi, pixel
+            mov ebx, a3
+            mov ecx, a4
+            mov edx, remainder
+        next_row:
+            mov esi, ebx
+        next_pixel:
+            cmp [edi], ah
+            jne keep_pixel
+            mov [edi], al
+        keep_pixel:
+            inc edi
+            dec esi
+            jne next_pixel
+            add edi, edx
+            dec ecx
+            jne next_row
+            pop esi
+            pop edi
+        }
+        free_data(1);
+        return 0;
     }
     return 0;
 }
@@ -7912,7 +7901,7 @@ int Buffer::write_right_l(Font *font, char *text, RECT *area, int len) {
     return result;
 }
 
-// ORIGINAL: 0x005DE730 ?change_color@Buffer@@QAEHPAURECT@@HH@Z 0x005DE730-0x005DE8EB
+// ORIGINAL: 0x005DE730 ?change_color@Buffer@@QAEHPAURECT@@HH@Z 0x005DE730-0x005DE8EB BYTE_EXACT
 // symbol    ?change_color@Buffer@@QAEHPAUtagRECT@@HH@Z
 //           The image spells the rectangle `PAURECT@@`; windows.h declares
 //           `struct tagRECT` behind the RECT define, so the object holds
@@ -8765,29 +8754,31 @@ int Buffer::copy_scaled(Buffer *source, RECT *source_rect, RECT *destination_rec
     const int source_width = source_rect->right - source_rect->left;
     const int source_top = source_rect->top;
     const int source_left = source_rect->left;
-    if (source == 0) return 8;
-    HDC source_dc = source->get_hdc();
     // These native failure arms deliberately retain the failed acquisition's
     // count; adding a balancing release would change original behavior.
-    if (source_dc == 0) return 8;
-    HDC destination_dc = get_hdc();
-    if (destination_dc == 0) {
-        source->release_hdc(1);
-        return 8;
+    if (source != 0) {
+        HDC source_dc = source->get_hdc();
+        if (source_dc != 0) {
+            HDC destination_dc = get_hdc();
+            if (destination_dc == 0) {
+                source->release_hdc(1);
+            } else {
+                sync_to_palette(PaletteActive);
+                source->sync_to_palette(PaletteActive);
+                // Native005D9B91 pushes the receiver DC as source;005D9BA2 pushes
+                // the source object's DC as destination. Preserve this native reversal.
+                StretchBlt(source_dc, destination_left, destination_top,
+                           destination_width, destination_height, destination_dc,
+                           source_left, source_top, source_width, source_height, SRCCOPY);
+                source->release_hdc(1);
+                release_hdc(1);
+            }
+        }
     }
-    sync_to_palette(PaletteActive);
-    source->sync_to_palette(PaletteActive);
-    // Native005D9B91 pushes the receiver DC as source;005D9BA2 pushes
-    // the source object's DC as destination. Preserve this native reversal.
-    StretchBlt(source_dc, destination_left, destination_top,
-               destination_width, destination_height, destination_dc,
-               source_left, source_top, source_width, source_height, SRCCOPY);
-    source->release_hdc(1);
-    release_hdc(1);
     return 8;
 }
 
-// ORIGINAL: 0x005D9BE0 ?copy_to_window@Buffer@@QAEHPAVWin@@HHHHHH@Z 0x005D9BE0-0x005D9FAF FILE
+// ORIGINAL: 0x005D9BE0 ?copy_to_window@Buffer@@QAEHPAVWin@@HHHHHH@Z 0x005D9BE0-0x005D9FAF FILE BYTE_EXACT
 // TRIED: Ghidra-faithful translation (Win::get_hdc/release_hdc made static to match win.h; IntersectRect/BitBlt/ValidateRect/ SetDIBColorTable called through __stdcall function-pointer typedefs read from the IAT-slot globals; slot017/slot026 retyped for the observer dispatch). Compiles and matches through instr #57 (of ~230); diverges at #58 (inc vs mov, likely a refcount decrement's codegen). Landed at MISMATCH.
 int Buffer::copy_to_window(Win *target, int source_x, int source_y,
                            int destination_x, int destination_y,
@@ -8806,8 +8797,11 @@ int Buffer::copy_to_window(Win *target, int source_x, int source_y,
         width = dib_.bmiHeader.biWidth - source_x;
     if (source_y + height > -dib_.bmiHeader.biHeight)
         height = -(dib_.bmiHeader.biHeight + source_y);
-    RECT destination = {destination_x, destination_y,
-                        destination_x + width, destination_y + height};
+    // Built through the inline rectangle helper; an aggregate initializer
+    // leaves VC6 enough /Ob2 budget to expand the get_hdc nested in
+    // sync_to_palette, which the image calls.
+    RECT destination;
+    set_rectangle_dimensions(&destination, destination_x, destination_y, width, height);
     if (!IntersectRect(&destination, &destination, &target->cached_outer_rect())) {
         Win::release_hdc();
         release_hdc(1);
