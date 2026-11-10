@@ -130,6 +130,7 @@ int NetPlayerDropped;  // 0x0093F65C
 
 // Set as a pair by commlink_attempt (0x00558C60): the flag and the faction
 // that asked. process_message tests both when a commlink reply arrives.
+// RECOVERY_OBJECT: v2 0x007492CC 0x007492D0 ?CommlinkPending@@3HA 0x00442740
 int CommlinkPending;   // 0x007492CC
 int CommlinkFaction;   // 0x0073B790
 

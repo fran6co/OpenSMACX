@@ -43,6 +43,8 @@
 #include "technology.h"
 #include "alpha.h"
 #include "maininterface.h"
+#include "rectangle_operations.h"
+#include "jackal/font_metrics.h"
 #include "general.h"  // swap for the hot-seat pair callbacks
 
 // Shared original chat separators, also used by the general string formatter.
@@ -120,9 +122,7 @@ void __cdecl DiploWin::string_callback(int faction_id, int unused) {
 void DiploWin::exec(int faction_id, int faction_id_with) {
   spot_.init(100);
 
-  SubInterface *const interface_entry = static_cast<SubInterface *>(this);
-  field_4_ = 0x0B;
-  InterfaceRegistry[0x0B] = interface_entry;
+  register_iface(0x0B);
 
   faction_id_ = faction_id;
   faction_id_with_ = faction_id_with;
@@ -450,8 +450,8 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
     message_data(0x1505, faction_id_with_, 0, 0, 0, 0);
   }
 
-  interface_entry->release_iface_mode();
-  interface_entry->delete_iface_mode();
+  release_iface_mode();
+  delete_iface_mode();
   close();
 }
 
@@ -665,79 +665,110 @@ char DiploKnownTechOpen[2] = "(";
 // RECOVERY_OBJECT: v2 0x006839F8 0x006839FA ?DiploKnownTechClose@@3PADA 0x00443170
 char DiploKnownTechClose[2] = ")";
 
+// WORKAROUND(inline): draw_offers (0x00443170) expands Spot::add's RECT form
+// in place (six-argument call 0x005FA960 with right-left/bottom-top), while
+// the out-of-line copy 0x0047A6F0 stays in multiwin.cpp; same twin as
+// reportif.cpp's report_spot_add.
+static inline int diplo_spot_add(Spot *spot, int position, int type, RECT *rect) {
+    return spot->add(position, type, rect->left, rect->top,
+                     rect->right - rect->left, rect->bottom - rect->top);
+}
+
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00443170 0x004436A0 0x004436B8 0x00443480
-// ORIGINAL: 0x00443170 ?draw_offers@DiploWin@@QAEXXZ 0x00443170-0x0044369F
+// ORIGINAL: 0x00443170 ?draw_offers@DiploWin@@QAEXXZ 0x00443170-0x0044369F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:def4db5d8cde1ddd00c5735adc0e3cd230ec02b8:src/recovered/units/00443170.cpp"], "reason": "Typed offer-panel rendering, technology/energy/treaty/faction labels and Spot ownership, replacing seed raw offsets."}
 void DiploWin::draw_offers() {
-    Buffer *surface = this;
-    int line_height = find_font(14, 0)->line_advance();
+    int line_height = font_line_advance(*find_font(14, 0));
     int side = 0;
     do {
         spot_.kill_type(side);
-        surface->set_font(find_font(14, 0), find_font(14, 1), find_font(14, 2), 0);
-        RECT panel = portrait_rect_[side];
-        int faction = side == 0 ? faction_id_ : faction_id_with_;
-        int left = side == 0 ? panel.left + 1 + FactionsArt[faction].datalink.width() : panel.left;
-        int right = side == 0 ? panel.right : panel.right - 1 - FactionsArt[faction].datalink.width();
-        left += 3;
-        int width = right - 3 - left;
-        surface->set_text_color(ChatItemIdTable[faction], ChatShadowColors[faction], 1, 1);
+        set_font(find_font(14, 0), find_font(14, 1), find_font(14, 2), 0);
+        RECT panel;
+        if (side) {
+            panel = portrait_rect_[1];
+            panel.right += -1 - FactionsArt[faction_id_with_].datalink.width();
+        } else {
+            panel = portrait_rect_[0];
+            panel.left += FactionsArt[faction_id_].datalink.width() + 1;
+        }
+        panel.left += 3;
+        panel.top += 3;
+        panel.right -= 3;
+        int width = panel.right - panel.left;
+        set_text_color(ChatItemIdTable[side ? faction_id_with_ : faction_id_],
+                       ChatShadowColors[side ? faction_id_with_ : faction_id_], 1, 1);
         StringTemp[0] = 0;
-        PluralityDefault = 0;
-        GenderDefault = Players[faction].is_leader_female;
-        strcat(StringTemp, Players[faction].title_leader);
-        strcat(StringTemp, " ");
-        PluralityDefault = 0;
-        GenderDefault = Players[faction].is_leader_female;
-        strcat(StringTemp, Players[faction].name_leader);
-        strcat(StringTemp, " ");
+        {
+            int f = side ? faction_id_with_ : faction_id_;
+            PluralityDefault = 0;
+            GenderDefault = Players[f].is_leader_female;
+            strcat(StringTemp, Players[f].title_leader);
+        }
+        strcat(StringTemp, BufferJoinSpace);
+        {
+            int f = side ? faction_id_with_ : faction_id_;
+            PluralityDefault = 0;
+            GenderDefault = Players[f].is_leader_female;
+            strcat(StringTemp, Players[f].name_leader);
+        }
+        strcat(StringTemp, BufferJoinSpace);
+        int count = offer_count_[side];
         StringTemp[0] = 0;
-        strcat(StringTemp, label_get(offer_count_[side] == 0 ? 0x734 / 4 : 0x738 / 4));
-        surface->write_cent_l(StringTemp, left, panel.top + 3, width, strlen(StringTemp));
-        int top = panel.top + 3 + line_height;
-        int i = 0;
-        while (i < offer_count_[side]) {
+        if (count == 0) {
+            strcat(StringTemp, label_get(0x734 / 4));
+            write_cent_text(StringTemp, panel.left, panel.top, width);
+        } else {
+            strcat(StringTemp, label_get(0x738 / 4));
+            write_cent_text(StringTemp, panel.left, panel.top, width);
+        }
+        int top = panel.top + line_height;
+        for (int i = 0; i < offer_count_[side]; ++i) {
             StringTemp[0] = 0;
-            faction = side == 0 ? faction_id_ : faction_id_with_;
-            surface->set_text_color(ChatItemIdTable[faction], ChatShadowColors[faction], 1, 1);
-            int value = offer_value_[side][i];
-            int label = -1;
-            char text[80];
+            set_text_color(ChatItemIdTable[side ? faction_id_with_ : faction_id_],
+                           ChatShadowColors[side ? faction_id_with_ : faction_id_], 1, 1);
             switch (offer_type_[side][i]) {
             case 0:
-                if (side == 1 && offer_value_[1][i] < 89 && has_tech(offer_value_[1][i], faction_id_)) {
-                    surface->set_text_color(DiploKnownTechColor, 0, side, side);
+                if (side == 1 && offer_value_[1][i] < 89
+                    && has_tech(offer_value_[1][i], faction_id_)) {
+                    set_text_color(DiploKnownTechColor, 0, side, side);
                     strcat(StringTemp, DiploKnownTechOpen);
-                    say_tech(text, offer_value_[1][i], side);
-                    strcat(StringTemp, text);
+                    say_tech(StringTemp, offer_value_[1][i], side);
                     strcat(StringTemp, DiploKnownTechClose);
                 } else {
-                    say_tech(text, value, side);
-                    strcat(StringTemp, text);
+                    say_tech(StringTemp, offer_value_[side][i], 1);
                 }
                 break;
-            case 1:
-                _itoa(value, text, 10);
+            case 1: {
+                char text[80];
+                _itoa(offer_value_[side][i], text, 10);
                 strcat(StringTemp, text);
-                strcat(StringTemp, " ");
-                label = 0x90 / 4;
-                break;
-            case 2: label = 0x34C / 4; break;
-            case 3: label = 0x350 / 4; break;
-            case 4: label = 0x354 / 4; break;
-            case 5:
-                strcat(StringTemp, label_get(0x980 / 4));
-                strcat(StringTemp, " ");
-                GenderDefault = Players[value].noun_gender;
-                PluralityDefault = Players[value].is_noun_plural;
-                strcat(StringTemp, Players[value].noun_faction);
+                strcat(StringTemp, BufferJoinSpace);
+                strcat(StringTemp, label_get(0x90 / 4));
                 break;
             }
-            if (label >= 0) strcat(StringTemp, label_get(label));
-            surface->write_cent_l(StringTemp, left, top, width, strlen(StringTemp));
-            spot_.add(i, side, left, top, width, line_height);
+            case 2:
+                strcat(StringTemp, label_get(0x34C / 4));
+                break;
+            case 3:
+                strcat(StringTemp, label_get(0x350 / 4));
+                break;
+            case 4:
+                strcat(StringTemp, label_get(0x354 / 4));
+                break;
+            case 5: {
+                strcat(StringTemp, label_get(0x980 / 4));
+                strcat(StringTemp, BufferJoinSpace);
+                int f = offer_value_[side][i];
+                GenderDefault = Players[f].noun_gender;
+                PluralityDefault = Players[f].is_noun_plural;
+                strcat(StringTemp, Players[f].noun_faction);
+                break;
+            }
+            }
+            write_cent_text(StringTemp, panel.left, top, width);
+            RECT item;
+            diplo_spot_add(&spot_, i, side, set_rectangle_dimensions(&item, panel.left, top, width, line_height));
             top += line_height;
-            ++i;
         }
         ++side;
     } while (side < 2);
@@ -759,50 +790,50 @@ void DiploWin::check_done() {
 }
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00442740 0x004429A0 0x004429B8 0x004427F0
-// ORIGINAL: 0x00442740 ?do_it@DiploWin@@QAEXXZ 0x00442740-0x0044299D
+// ORIGINAL: 0x00442740 ?do_it@DiploWin@@QAEXXZ 0x00442740-0x0044299D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:def4db5d8cde1ddd00c5735adc0e3cd230ec02b8:src/recovered/units/00442740.cpp"], "reason": "Rehome exchange execution into source-owned DiploWin arrays and faction/network globals."}
 void DiploWin::do_it() {
     if ((faction_id_ <= faction_id_with_ || IsMultiplayerPBEM != 0)
-        && CommlinkPending < 2) {
+        && CommlinkPending <= 1) {
         CommlinkPending = 2;
         if (diplo_lock(200) == 0) {
             int side = 0;
             do {
-                int i = 0;
-                while (i < offer_count_[side]) {
-                    int giver = side == 0 ? faction_id_ : faction_id_with_;
-                    int recipient = side == 0 ? faction_id_with_ : faction_id_;
-                    int value = offer_value_[side][i];
+                for (int i = 0; i < offer_count_[side]; ++i) {
+                    int giver = side ? faction_id_with_ : faction_id_;
+                    int recipient = side ? faction_id_ : faction_id_with_;
                     switch (offer_type_[side][i]) {
-                    case 0:
-                        if (value > 88 || !has_tech(value, recipient)) {
-                            net_tech(recipient, value, giver, 1);
-                        }
+                    case 2: net_treaty_on(giver, recipient, 1, 1); break;
+                    case 3: net_treaty_on(giver, recipient, 2, 1); break;
+                    case 4: net_treaty_on(giver, recipient, 4, 1); break;
+                    case 0: {
+                        int tech = offer_value_[side][i];
+                        if (tech < 89 && has_tech(tech, recipient)) break;
+                        net_tech(recipient, tech, giver, 1);
                         break;
+                    }
                     case 1: {
                         int reserves = PlayersData[giver].energy_reserves;
-                        int amount = value;
-                        if (value < 0 || reserves < 0) {
+                        int amount = offer_value_[side][i];
+                        if (amount < 0 || reserves < 0) {
                             amount = 0;
-                        } else if (reserves < value) {
+                        } else if (amount > reserves) {
                             amount = reserves;
                         }
                         net_energy(giver, -amount, recipient, amount, 1);
                         break;
                     }
-                    case 2: net_treaty_on(giver, recipient, 1, 1); break;
-                    case 3: net_treaty_on(giver, recipient, 2, 1); break;
-                    case 4: net_treaty_on(giver, recipient, 4, 1); break;
-                    case 5:
-                        if (((1 << (value & 31)) & static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) != 0
-                            && !(PlayersData[giver].diplo_treaties[value] & 0x10)) {
-                            message_data(0x150F, value, giver, recipient, 0, 0);
+                    case 5: {
+                        int target = offer_value_[side][i];
+                        if (((unsigned char)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << target)) != 0
+                            && !(PlayersData[giver].diplo_treaties[target] & 0x10)) {
+                            message_data(0x150F, target, giver, recipient, 0, 0);
                         }
-                        net_treaty_on(giver, value, 8, 0);
-                        net_double_cross(giver, value, recipient, 1);
+                        net_treaty_on(giver, target, 8, 0);
+                        net_double_cross(giver, target, recipient, 1);
                         break;
                     }
-                    ++i;
+                    }
                 }
                 ++side;
             } while (side < 2);
@@ -820,113 +851,159 @@ void DiploWin::do_it() {
 
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00442A10 0x00442D98 0x00442DB4 0x00442C50
-// ORIGINAL: 0x00442A10 ?draw_who@DiploWin@@QAEXXZ 0x00442A10-0x00442D98
+// ORIGINAL: 0x00442A10 ?draw_who@DiploWin@@QAEXXZ 0x00442A10-0x00442D98 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:def4db5d8cde1ddd00c5735adc0e3cd230ec02b8:src/recovered/units/00442a10.cpp"], "reason": "Typed DiploWin party rendering using source-owned FactionArt datalink portraits, rectangles and label storage."}
 void DiploWin::draw_who() {
-    if (faction_id_ <= 0) return;
-    int faction = faction_id_;
-    Buffer *surface = this;
-    surface->set_font(find_font(14, 1), 0, 0, 0);
-    StringTemp[0] = 0;
-    PluralityDefault = 0;
-    GenderDefault = Players[faction].is_leader_female;
-    strcat(StringTemp, Players[faction].title_leader);
-    strcat(StringTemp, " ");
-    PluralityDefault = 0;
-    GenderDefault = Players[faction].is_leader_female;
-    strcat(StringTemp, Players[faction].name_leader);
-    surface->set_text_color(ChatItemIdTable[faction], ChatShadowColors[faction], 1, 1);
-    RECT area = leader_rect_[0];
-    surface->box_sprite(&area, &InterfaceBoxStyles[6]);
-    area.left += 3; area.top += 3; area.right -= 3; area.bottom -= 3;
-    CharUpperA(StringTemp);
-    surface->write_cent_l(StringTemp, &area, strlen(StringTemp));
-    area = portrait_rect_[0];
-    surface->box_sprite(&area, &InterfaceBoxStyles[0]);
-    Sprite *portrait = &FactionsArt[faction].datalink;
-    area.top += 1;
-    area.left = area.left + 1;
-    area.right = area.left + portrait->width();
-    area.bottom = area.top + portrait->height();
-    portrait->draw(surface, portrait->transparent_index(), area.left, area.top, 1, 1);
-    area.left += 4; area.bottom -= 4; area.right -= 4;
-    area.top = area.bottom - 20;
-    surface->set_font(find_font(14, 1), 0, 0, 0);
-    StringTemp[0] = 0;
-    int label = -1;
-    switch (offer_state_[0]) {
-    case 0: label = 0x73C / 4; break;
-    case 1: label = 0x740 / 4; break;
-    case 2: label = 0x744 / 4; break;
-    case 3: label = 0x780 / 4; break;
-    case 4: label = 0x968 / 4; break;
-    case 5: label = 0x95C / 4; break;
-    case 6: label = 0x960 / 4; break;
+    if (faction_id_ > 0) {
+        set_font(find_font(14, 1), 0, 0, 0);
+        StringTemp[0] = 0;
+        {
+            int f = faction_id_;
+            PluralityDefault = 0;
+            GenderDefault = Players[f].is_leader_female;
+            strcat(StringTemp, Players[f].title_leader);
+        }
+        strcat(StringTemp, BufferJoinSpace);
+        {
+            int f = faction_id_;
+            PluralityDefault = 0;
+            GenderDefault = Players[f].is_leader_female;
+            strcat(StringTemp, Players[f].name_leader);
+        }
+        set_text_color(ChatItemIdTable[faction_id_], ChatShadowColors[faction_id_], 1, 1);
+        RECT area = leader_rect_[0];
+        box_sprite(&area, &InterfaceBoxStyles[6]);
+        area.left += 3;
+        area.right -= 3;
+        area.top += 3;
+        area.bottom -= 3;
+        CharUpperA(StringTemp);
+        write_cent_l(StringTemp, &area);
+        area = portrait_rect_[0];
+        box_sprite(&area, &InterfaceBoxStyles[0]);
+        Sprite *portrait = &FactionsArt[faction_id_].datalink;
+        set_rectangle_dimensions(&area, area.left + 1, area.top + 1,
+                                 portrait->width(), portrait->height());
+        portrait->draw(this, portrait->transparent_index(), area.left, area.top, 1, 1);
+        area.left += 4;
+        area.right -= 4;
+        area.bottom -= 4;
+        area.top = area.bottom - 20;
+        set_font(find_font(14, 1), 0, 0, 0);
+        StringTemp[0] = 0;
+        switch (offer_state_[0]) {
+        case 0:
+            strcat(StringTemp, label_get(0x73C / 4));
+            break;
+        case 1:
+            strcat(StringTemp, label_get(0x740 / 4));
+            break;
+        case 2:
+            set_text_color(ChatItemIdTable[0], ChatShadowColors[0], 1, 1);
+            strcat(StringTemp, label_get(0x744 / 4));
+            break;
+        case 3:
+            strcat(StringTemp, label_get(0x780 / 4));
+            break;
+        case 4:
+            set_text_color(ChatItemIdTable[0], ChatShadowColors[0], 1, 1);
+            strcat(StringTemp, label_get(0x968 / 4));
+            break;
+        case 5:
+            set_text_color(ChatItemIdTable[0], ChatShadowColors[0], 1, 1);
+            strcat(StringTemp, label_get(0x95C / 4));
+            break;
+        case 6:
+            set_text_color(251, 0, 1, 1);
+            strcat(StringTemp, label_get(0x960 / 4));
+            break;
+        }
+        CharUpperA(StringTemp);
+        map_colors(&area, ShadowColorTable);
+        area.left += 3;
+        area.right -= 3;
+        area.top += 3;
+        area.bottom -= 3;
+        write_cent_l(StringTemp, &area);
     }
-    int state = offer_state_[0];
-    if (state == 2 || state == 4 || state == 5)
-        surface->set_text_color(ChatItemIdTable[0], ChatShadowColors[0], 1, 1);
-    if (state == 6) surface->set_text_color(251, 0, 1, 1);
-    if (label >= 0) strcat(StringTemp, label_get(label));
-    CharUpperA(StringTemp);
-    surface->map_colors(&area, ShadowColorTable);
-    area.top += 3; area.left += 3; area.right -= 3; area.bottom -= 3;
-    surface->write_cent_l(StringTemp, &area, strlen(StringTemp));
 }
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00442DC0 0x0044314C 0x00443168 0x00443000
-// ORIGINAL: 0x00442DC0 ?draw_whom@DiploWin@@QAEXXZ 0x00442DC0-0x00443149
+// ORIGINAL: 0x00442DC0 ?draw_whom@DiploWin@@QAEXXZ 0x00442DC0-0x00443149 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:def4db5d8cde1ddd00c5735adc0e3cd230ec02b8:src/recovered/units/00442dc0.cpp"], "reason": "Typed DiploWin party rendering using source-owned FactionArt datalink portraits, rectangles and label storage."}
 void DiploWin::draw_whom() {
-    if (faction_id_ <= 0) return;
-    int faction = faction_id_with_;
-    Buffer *surface = this;
-    surface->set_font(find_font(14, 1), 0, 0, 0);
-    StringTemp[0] = 0;
-    PluralityDefault = 0;
-    GenderDefault = Players[faction].is_leader_female;
-    strcat(StringTemp, Players[faction].title_leader);
-    strcat(StringTemp, " ");
-    PluralityDefault = 0;
-    GenderDefault = Players[faction].is_leader_female;
-    strcat(StringTemp, Players[faction].name_leader);
-    surface->set_text_color(ChatItemIdTable[faction], ChatShadowColors[faction], 1, 1);
-    RECT area = leader_rect_[1];
-    surface->box_sprite(&area, &InterfaceBoxStyles[6]);
-    area.left += 3; area.top += 3; area.right -= 3; area.bottom -= 3;
-    CharUpperA(StringTemp);
-    surface->write_cent_l(StringTemp, &area, strlen(StringTemp));
-    area = portrait_rect_[1];
-    surface->box_sprite(&area, &InterfaceBoxStyles[0]);
-    Sprite *portrait = &FactionsArt[faction].datalink;
-    area.top += 1;
-    area.left = area.right - portrait->width() - 1;
-    area.right = area.left + portrait->width();
-    area.bottom = area.top + portrait->height();
-    portrait->draw(surface, portrait->transparent_index(), area.left, area.top, 1, 1);
-    area.left += 4; area.bottom -= 4; area.right -= 4;
-    area.top = area.bottom - 20;
-    surface->set_font(find_font(14, 1), 0, 0, 0);
-    StringTemp[0] = 0;
-    int label = -1;
-    switch (offer_state_[1]) {
-    case 0: label = 0x73C / 4; break;
-    case 1: label = 0x740 / 4; break;
-    case 2: label = 0x744 / 4; break;
-    case 3: label = 0x780 / 4; break;
-    case 4: label = 0x968 / 4; break;
-    case 5: label = 0x95C / 4; break;
-    case 6: label = 0x960 / 4; break;
+    if (faction_id_ > 0) {
+        set_font(find_font(14, 1), 0, 0, 0);
+        StringTemp[0] = 0;
+        {
+            int f = faction_id_with_;
+            PluralityDefault = 0;
+            GenderDefault = Players[f].is_leader_female;
+            strcat(StringTemp, Players[f].title_leader);
+        }
+        strcat(StringTemp, BufferJoinSpace);
+        {
+            int f = faction_id_with_;
+            PluralityDefault = 0;
+            GenderDefault = Players[f].is_leader_female;
+            strcat(StringTemp, Players[f].name_leader);
+        }
+        set_text_color(ChatItemIdTable[faction_id_with_], ChatShadowColors[faction_id_with_], 1, 1);
+        RECT area = leader_rect_[1];
+        box_sprite(&area, &InterfaceBoxStyles[6]);
+        area.left += 3;
+        area.right -= 3;
+        area.top += 3;
+        area.bottom -= 3;
+        CharUpperA(StringTemp);
+        write_cent_l(StringTemp, &area);
+        area = portrait_rect_[1];
+        box_sprite(&area, &InterfaceBoxStyles[0]);
+        Sprite *portrait = &FactionsArt[faction_id_with_].datalink;
+        set_rectangle_dimensions(&area, area.right - portrait->width() - 1, area.top + 1,
+                                 portrait->width(), portrait->height());
+        portrait->draw(this, portrait->transparent_index(), area.left, area.top, 1, 1);
+        area.left += 4;
+        area.right -= 4;
+        area.bottom -= 4;
+        area.top = area.bottom - 20;
+        set_font(find_font(14, 1), 0, 0, 0);
+        StringTemp[0] = 0;
+        switch (offer_state_[1]) {
+        case 0:
+            strcat(StringTemp, label_get(0x73C / 4));
+            break;
+        case 1:
+            strcat(StringTemp, label_get(0x740 / 4));
+            break;
+        case 2:
+            set_text_color(ChatItemIdTable[0], ChatShadowColors[0], 1, 1);
+            strcat(StringTemp, label_get(0x744 / 4));
+            break;
+        case 3:
+            strcat(StringTemp, label_get(0x780 / 4));
+            break;
+        case 4:
+            set_text_color(ChatItemIdTable[0], ChatShadowColors[0], 1, 1);
+            strcat(StringTemp, label_get(0x968 / 4));
+            break;
+        case 5:
+            set_text_color(ChatItemIdTable[0], ChatShadowColors[0], 1, 1);
+            strcat(StringTemp, label_get(0x95C / 4));
+            break;
+        case 6:
+            set_text_color(251, 0, 1, 1);
+            strcat(StringTemp, label_get(0x960 / 4));
+            break;
+        }
+        CharUpperA(StringTemp);
+        map_colors(&area, ShadowColorTable);
+        area.left += 3;
+        area.right -= 3;
+        area.top += 3;
+        area.bottom -= 3;
+        write_cent_l(StringTemp, &area);
     }
-    int state = offer_state_[1];
-    if (state == 2 || state == 4 || state == 5)
-        surface->set_text_color(ChatItemIdTable[0], ChatShadowColors[0], 1, 1);
-    if (state == 6) surface->set_text_color(251, 0, 1, 1);
-    if (label >= 0) strcat(StringTemp, label_get(label));
-    CharUpperA(StringTemp);
-    surface->map_colors(&area, ShadowColorTable);
-    area.top += 3; area.left += 3; area.right -= 3; area.bottom -= 3;
-    surface->write_cent_l(StringTemp, &area, strlen(StringTemp));
 }
 
 // ORIGINAL: 0x004412D0 ?UNK1@DiploWin@@QAEXXZ 0x004412D0-0x004412ED BYTE_EXACT
