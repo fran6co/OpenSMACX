@@ -99,12 +99,11 @@ int SelectPartWin::exec(int x, int y, int faction, int kind, int selected,
     BoxSpriteParams box = InterfaceBoxStyles[0];
     box.mask_ = &backdrop;
     const int saved_selection = selected;
-
+    part_kind_ = kind;
     faction_id_ = faction;
     chassis_id_ = chassis;
     weapon_id_ = weapon;
     armor_id_ = armor;
-    part_kind_ = kind;
     ability_flags_ = abilities;
     reactor_id_ = reactor;
     palette_ = SpotlightColorTable;
@@ -126,21 +125,24 @@ int SelectPartWin::exec(int x, int y, int faction, int kind, int selected,
     rotation.values[2][1] = -rotation.values[2][1];
     rotation.values[2][2] = -rotation.values[2][2];
     VOX_Vect vector;
-    vector.values[0] = rotation.values[2][0] * CaviarCameraDistance;
-    vector.values[1] = rotation.values[2][1] * CaviarCameraDistance;
-    vector.values[2] = rotation.values[2][2] * CaviarCameraDistance;
+    // A float literal, not CaviarCameraDistance: the image multiplies the
+    // rotation row by the pooled constant (fld row; fmul [66AA40]), which a
+    // const global reverses to fld [66AA40]; fmul row.
+    vector.values[0] = rotation.values[2][0] * -10000.0f;
+    vector.values[1] = rotation.values[2][1] * -10000.0f;
+    vector.values[2] = rotation.values[2][2] * -10000.0f;
     caviar_.set_camera_direct(&vector, &rotation);
-    union { uint32_t bits; float value; } scene_angle;
-    scene_angle.bits = 0x3f05f92d;
-    caviar_.set_scene_rotation(scene_angle.value, 0.0f, 0.0f);
+    caviar_.set_scene_rotation(3.14f / 6, 0.0f, 0.0f);
     vector = VehLightDirMap;
     caviar_.shadow_vector() = vector;
     caviar_.light_vector() = vector;
-
     field_2B74_ = 0;
+
     switch (kind) {
         case 0: {
-            for (int i = 0; i <= CHSI_MISSILE; ++i) {
+            // The image stops before CHSI_MISSILE (jl against the row-8
+            // address), so the missile chassis is never counted.
+            for (int i = 0; i < CHSI_MISSILE; ++i) {
                 if (Chassis[i].preq_tech >= -1) ++field_2B74_;
             }
             break;
@@ -3584,7 +3586,7 @@ void DesignWin::on_left_click(int xCoord, int yCoord) {
     }
 }
 
-// ORIGINAL: 0x00439A20 ?on_key_click@DesignWin@@QAEHHH@Z 0x00439A20-0x00439B3B FILE
+// ORIGINAL: 0x00439A20 ?on_key_click@DesignWin@@QAEHHH@Z 0x00439A20-0x00439B3B FILE BYTE_EXACT
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00439A20 0x00439B3C 0x00439B60 0x00439A47
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x00439A20 0x00439B60 0x00439BBD 0x00439A41
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00439A20 0x00439BC0 0x00439BCC 0x00439B08
@@ -3614,17 +3616,21 @@ int DesignWin::on_key_click(int a1, int a2) {
         break;
     case 0x21:
     case 0x69: {
-        int moved;
-        moved = (prototype_stack_start_ + ProtoSortCount - 9) % ProtoSortCount;
-        prototype_stack_start_ = (moved < 0) ? 0 : moved;
+        // Spelled twice rather than through a local: the image keeps the
+        // page-up start in edx, which a named temporary moves to eax.
+        prototype_stack_start_ =
+            ((prototype_stack_start_ + ProtoSortCount - 9) % ProtoSortCount < 0)
+                ? 0
+                : (prototype_stack_start_ + ProtoSortCount - 9) % ProtoSortCount;
         draw_stack();
         break;
     }
     case 0x22:
     case 0x63: {
-        int moved;
-        moved = (prototype_stack_start_ + ProtoSortCount + 9) % ProtoSortCount;
-        prototype_stack_start_ = (moved < 0) ? 0 : moved;
+        prototype_stack_start_ =
+            ((prototype_stack_start_ + ProtoSortCount + 9) % ProtoSortCount < 0)
+                ? 0
+                : (prototype_stack_start_ + ProtoSortCount + 9) % ProtoSortCount;
         draw_stack();
         break;
     }
@@ -4727,7 +4733,7 @@ void DesignWin::draw_vehicle(int redraw) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004346A0 ?draw_info@DesignWin@@QAEXXZ 0x004346A0-0x00434BB4;0x00653FFE-0x00654010
+// ORIGINAL: 0x004346A0 ?draw_info@DesignWin@@QAEXXZ 0x004346A0-0x00434BB4;0x00653FFE-0x00654010 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:design-info-owner", "pinned:4346A0..434BB4 primary body and653FFE..654010 Font cleanup/EH span; real stack Font owns normal and exceptional cleanup.", "pinned:MainInterfaceGlobal Buffer receiver7AEC64; actual inheritance selects +444; InterfaceBoxStyles[3]/[0] at78D5A0/78D528.", "pinned:replacement loop348C1..34A2C retains later-wins selected-ID stores and current-category rereads; typed PlayerData active/queue arrays.", "pinned:fallback literals682820/682E9C/68354C/682E98 and USER32 CharUpperA; historical seed git:59cb5d02^:src/recovered/units/004346a0.cpp."], "reason": "Recover the information-panel renderer and selection scan through genuine DesignWin members, MainInterface Buffer inheritance, typed prototype/faction arrays and automatic Font lifetime; preserve original primary and compiler cleanup spans."}
 void DesignWin::draw_info() {
     Font font;
@@ -4783,9 +4789,11 @@ void DesignWin::draw_info() {
                 }
                 if (VehPrototypes[proto_id].unk_1 == VehPrototypes[protoID_].unk_1
                     || !PlayersData[factionID_].proto_id_active[proto_id]) {
+                    // queue == 0 (not queue == active): same test under the
+                    // !active guard, and the spelling the image's bl/al
+                    // allocation follows.
                     if (!PlayersData[factionID_].proto_id_active[proto_id]
-                        && PlayersData[factionID_].proto_id_active[proto_id]
-                               == PlayersData[factionID_].proto_id_queue[proto_id]) {
+                        && PlayersData[factionID_].proto_id_queue[proto_id] == 0) {
                         protoID_ = proto_id;
                         found = 1;
                     } else if (!PlayersData[factionID_].proto_id_active[proto_id]
@@ -5512,10 +5520,9 @@ void DesignWin::draw_flash() {
                  centre_y - 0x25, 0, 0x48, 0);
 
         const int step = box.right - box.left + 3;
-        rc.left = box.left + step;
-        rc.top = box.top;
-        rc.right = box.right + step;
-        rc.bottom = box.bottom;
+        box.left += step;
+        box.right += step;
+        rc = box;
         StringTemp[0] = '\0';
         rc.top += 3;
         if (shown == 0x3F) {
