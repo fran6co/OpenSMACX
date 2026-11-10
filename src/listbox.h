@@ -137,6 +137,10 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
     field_2C_ = 0;
     field_14_ = static_cast<uint32_t>(-1);
   }
+  // ReportIf::draw_intel 0x004AC140 stores the selection index through the
+  // ListBox object right after a direct field_2C_ store, before the
+  // vbtable load (mov [esi+0xa2fc],eax; mov [esi+0xa2e4],-1).
+  void clear_selection_index() { field_14_ = static_cast<uint32_t>(-1); }
   // ReportIf's lab color callback does not replace drawing/filling hooks.
   void set_write_callback(WriteCallback callback) { write_callback_ = callback; }
   void set_selection_callback(WinNotificationCallback callback) {

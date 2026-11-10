@@ -6846,7 +6846,7 @@ Status: Complete
 void ReportIf::close_score() {
 }
 
-// ORIGINAL: 0x004AC140 ?draw_intel@ReportIf@@QAEXXZ 0x004AC140-0x004AC977
+// ORIGINAL: 0x004AC140 ?draw_intel@ReportIf@@QAEXXZ 0x004AC140-0x004AC977 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004ac140.cpp", "source:src/reportif.h", "source:src/faction.h", "source:src/tech.h"], "reason": "Retained identity identifies ReportIf's intelligence panel. Original faction-indexed treaty accesses and technology iteration map to source-owned player data and technology records; the informed-view conditions select the same information rather than treating the panel as a link-only placeholder."}
 // TRIED: full field-offset transcription off `self`, with the two embedded ListBox virtual-base dispatches done as explicit two-step vbtable-pointer/displacement reads (not flattened pointer arithmetic) and the vtable slot1 call retyped to take an int; compiles, MISMATCH #3 (early - likely the spy-flag bool-to-int store or the `test ecx,ecx` on a provably-nonzero fixed global getting folded away).
 void ReportIf::draw_intel() {
@@ -6891,7 +6891,8 @@ void ReportIf::draw_intel() {
             }
         }
     }
-    listBox1_.reset_report_selection();
+    listBox1_.field_2C_ = 0;
+    listBox1_.clear_selection_index();
     listBox1_.Dialog::field_B4_ = 0;
     techs->ListBox::attach(&MainInterfaceGlobal, techs->Dialog::window_x_, techs->Dialog::window_y_, 0x80020);
     listBox1_.show(0);
@@ -6962,7 +6963,8 @@ void ReportIf::draw_intel() {
             listBox2_.item(StringTemp, base);
         }
     }
-    listBox2_.reset_report_selection();
+    listBox2_.field_2C_ = 0;
+    listBox2_.clear_selection_index();
     listBox2_.Dialog::field_B4_ = 0;
     bases->ListBox::attach(&MainInterfaceGlobal, bases->Dialog::window_x_, bases->Dialog::window_y_, 0x80020);
     listBox2_.show(0);
