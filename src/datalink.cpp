@@ -626,69 +626,110 @@ void Datalink::draw_ability() {
 // TRIED: no SEH/frame modelling (plain body, not try/finally); the giant local widget teardown (Popup/Scroll/2xFlatButton/Spot/Dialogs region/Sprite/2xFlatButton/Heap) modelled as one raw ebp-relative byte buffer with explicit close()/dtor calls in original order, rather than real RAII locals - the vtable-poke-then-call shape the original uses for each teardown step is not reproduced, only the call itself (identity of the call target is masked by the scorer regardless). MISMATCH at instruction #0 (prologue: no SEH frame).
 void Datalink::draw_terraform() {
     Popup popup;
-    const int topic = history_[0];
-    const bool land = topic < 20;
-    const int action = topic % 20;
-    const bool illustration = action < 16 || action > 18;
-    const int x = description_rect_.left + 5;
-    const int y = description_rect_.top + 5;
-    Vert quad[4] = {{x, y + 50}, {x + 50, y + 25},
-                    {x + 100, y + 50}, {x + 50, y + 75}};
     Vert uv[4] = {{0, 0}, {55, 0}, {55, 55}, {0, 55}};
+    const int topic = history_[0];
+    const int land = topic < 20;
     int z[4] = {0, 0, 0, 0};
-    Buffer *canvas = static_cast<Buffer *>(this);
-    if (illustration) {
-        Texture &ground = land ? g_MOIST_LAND_TEXTURES[0] : g_OCEAN_TEXTURES[1];
-        ground.draw(canvas, quad, z, 4, uv);
+    const int action = topic % 20;
+    RECT rect = description_rect_;
+    rect.left += 5;
+    rect.top += 5;
+    rect.right -= 5;
+    Vert quad[4] = {{rect.left, rect.top + 50}, {rect.left + 50, rect.top + 25},
+                    {rect.left + 100, rect.top + 50}, {rect.left + 50, rect.top + 75}};
+    if (action < 16 || action > 18) {
+        if (land) {
+            g_MOIST_LAND_TEXTURES[0].draw(this, quad, z, 4, uv);
+        } else {
+            g_OCEAN_TEXTURES[1].draw(this, quad, z, 4, uv);
+        }
     }
-    Sprite *sprite = 0;
     switch (action) {
     case 0:
-        if (land) g_FARM_TEXTURES[0].draw(canvas, quad, z, 4, uv);
-        else sprite = &g_TER1_KELP_FARM_SPRITE;
+        if (land) {
+            g_FARM_TEXTURES[0].draw(this, quad, z, 4, uv);
+        } else {
+            g_TER1_KELP_FARM_SPRITE.draw(this, g_TER1_KELP_FARM_SPRITE.transparent_index(), rect.left, rect.top + 25, 1, 1);
+        }
         break;
-    case 1: sprite = &g_TER1_SOIL_ENRICHER_SPRITES[0]; break;
+    case 1:
+        g_TER1_SOIL_ENRICHER_SPRITES[0].draw(this, g_TER1_SOIL_ENRICHER_SPRITES[0].transparent_index(), rect.left, rect.top + 25, 1, 1);
+        break;
     case 2:
-        sprite = land ? &g_TER1_MINE_SPRITE : &g_TER1_MINING_PLATFORM_SPRITE;
+        if (land) {
+            g_TER1_MINE_SPRITE.draw(this, g_TER1_MINE_SPRITE.transparent_index(), rect.left, rect.top + 25, 1, 1);
+        } else {
+            g_TER1_MINING_PLATFORM_SPRITE.draw(this, g_TER1_MINING_PLATFORM_SPRITE.transparent_index(), rect.left, rect.top + 25, 1, 1);
+        }
         break;
     case 3:
-        sprite = land ? &g_TER1_SOLAR_COLLECTOR_SPRITE : &g_TER1_TIDAL_HARNESS_SPRITE;
+        if (land) {
+            g_TER1_SOLAR_COLLECTOR_SPRITE.draw(this, g_TER1_SOLAR_COLLECTOR_SPRITE.transparent_index(), rect.left, rect.top + 25, 1, 1);
+        } else {
+            g_TER1_TIDAL_HARNESS_SPRITE.draw(this, g_TER1_TIDAL_HARNESS_SPRITE.transparent_index(), rect.left, rect.top + 25, 1, 1);
+        }
         break;
-    case 4: g_FOREST_TEXTURES[0].draw_trans(canvas, quad, z, 4, uv); break;
-    case 5: g_ROAD_TEXTURES[0].draw_trans(canvas, quad, z, 4, uv); break;
-    case 6: g_MAGTUBE_TEXTURES[0].draw_trans(canvas, quad, z, 4, uv); break;
-    case 7: sprite = &g_TER1_BUNKER_SPRITE; break;
-    case 8: sprite = &g_TER1_AIRBASE_SPRITE; break;
-    case 9: sprite = &g_TER1_SENSOR_ARRAY_SPRITE; break;
+    case 4:
+        g_FOREST_TEXTURES[0].draw_trans(this, quad, z, 4, uv);
+        break;
+    case 5:
+        g_ROAD_TEXTURES[0].draw_trans(this, quad, z, 4, uv);
+        break;
+    case 6:
+        g_MAGTUBE_TEXTURES[0].draw_trans(this, quad, z, 4, uv);
+        break;
+    case 7:
+        g_TER1_BUNKER_SPRITE.draw(this, g_TER1_BUNKER_SPRITE.transparent_index(), rect.left, rect.top + 25, 1, 1);
+        break;
+    case 8:
+        g_TER1_AIRBASE_SPRITE.draw(this, g_TER1_AIRBASE_SPRITE.transparent_index(), rect.left, rect.top + 25, 1, 1);
+        break;
+    case 9:
+        g_TER1_SENSOR_ARRAY_SPRITE.draw(this, g_TER1_SENSOR_ARRAY_SPRITE.transparent_index(), rect.left, rect.top + 25, 1, 1);
+        break;
     case 11:
-        g_FUNGUS_TEXTURES[land ? 0 : 15].draw_trans(canvas, quad, z, 4, uv);
+        if (land) {
+            g_FUNGUS_TEXTURES[0].draw_trans(this, quad, z, 4, uv);
+        } else {
+            g_FUNGUS_TEXTURES[15].draw_trans(this, quad, z, 4, uv);
+        }
         break;
-    case 12: sprite = &g_TER1_CONDENSER_SPRITE; break;
-    case 13: sprite = &g_TER1_ECHELON_MIRROR_SPRITE; break;
-    case 14: sprite = &g_TER1_BOREHOLE_SPRITE; break;
-    case 15: g_RIVER_TEXTURES[0].draw_trans(canvas, quad, z, 4, uv); break;
-    case 19: sprite = &g_TER1_MONOLITH_SPRITE; break;
+    case 12:
+        g_TER1_CONDENSER_SPRITE.draw(this, g_TER1_CONDENSER_SPRITE.transparent_index(), rect.left, rect.top + 25, 1, 1);
+        break;
+    case 13:
+        g_TER1_ECHELON_MIRROR_SPRITE.draw(this, g_TER1_ECHELON_MIRROR_SPRITE.transparent_index(), rect.left, rect.top + 25, 1, 1);
+        break;
+    case 14:
+        g_TER1_BOREHOLE_SPRITE.draw(this, g_TER1_BOREHOLE_SPRITE.transparent_index(), rect.left, rect.top + 25, 1, 1);
+        break;
+    case 15:
+        g_RIVER_TEXTURES[0].draw_trans(this, quad, z, 4, uv);
+        break;
+    case 19:
+        g_TER1_MONOLITH_SPRITE.draw(this, g_TER1_MONOLITH_SPRITE.transparent_index(), rect.left, rect.top + 25, 1, 1);
+        break;
     }
-    if (sprite != 0) {
-        sprite->draw(canvas, sprite->transparent_index(), x, y + 25, 1, 1);
+    if (action < 16 || action > 18) {
+        rect.left += 103;
     }
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
+    const int sea = land == 0;
     StringTemp[0] = 0;
-    const RulesOrder &order = Order[action + 4];
-    strcat(StringTemp, StringTable.get(land ? order.order : order.order_sea));
+    // WORKAROUND(type): 0x004316F8 indexes the order/order_sea pair as a
+    // two-entry array by (land == 0); RulesOrder declares two members.
+    strcat(StringTemp, StringTable.get((&Order[action + 4].order)[sea]));
     CharUpperA(StringTemp);
     write_cent_l(StringTemp, &title_rect_);
-    const RulesTerraforming &terraform = Terraforming[action];
-    const int technology = land ? terraform.prerequisite_tech[0] : terraform.prerequisite_tech[1];
+    const int technology = Terraforming[action].prerequisite_tech[sea];
     parse_says(1, tech_name(technology, 0), -1, -1);
     parse_num(0, technology + 140000);
-    parse_num(1, terraform.rate);
-    char *extra = DatalinkTerraformExtraText;
-    if (action == 3 || action == 5 || action == 6) {
-        extra = StringTable.get(Labels.strings_ptr[0x1110 / 4]);
-    }
-    parse_says(2, extra, -1, -1);
+    parse_num(1, Terraforming[action].rate);
+    parse_says(2, action == 5 || action == 6 || action == 3
+                      ? StringTable.get(Labels.strings_ptr[0x1110 / 4])
+                      : DatalinkTerraformExtraText,
+               -1, -1);
     StringTemp[0] = 0;
     strcat(StringTemp, "HELPTERRAFORM");
     popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
@@ -696,13 +737,11 @@ void Datalink::draw_terraform() {
     set_text_color(0x98, -1, 1, 1);
     set_text_color2(0x96, -1, 1, 1);
     set_text_color_hyper(0x96, -1, 1, 1);
-    const int text_left = x + (illustration ? 103 : 0);
-    write_strings(&popup.unit_ids_, text_left, y,
-                  description_rect_.right - 5 - text_left, 0);
+    write_strings(&popup.unit_ids_, rect.left, rect.top, rect.right - rect.left, 0);
     StringTemp[0] = 0;
     strcat(StringTemp, "HELPTERRA");
     strcat(StringTemp, land ? "LAND" : "SEA");
-    char number[16];
+    char number[80];
     _itoa(action, number, 10);
     strcat(StringTemp, number);
     popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
@@ -710,11 +749,40 @@ void Datalink::draw_terraform() {
     set_text_color(0x98, -1, 1, 1);
     set_text_color2(0x96, -1, 1, 1);
     set_text_color_hyper(0x96, -1, 1, 1);
-    const int second_left = static_cast<int>(lower_description_rect_.left) + 5 +
-                            (illustration ? 103 : 0);
-    write_strings(&popup.unit_ids_, second_left,
-                  static_cast<int>(lower_description_rect_.top) + 5,
-                  static_cast<int>(lower_description_rect_.right) - 5 - second_left, 0);
+    rect = lower_description_rect_;
+    rect.left += 5;
+    rect.top += 5;
+    rect.right -= 5;
+    if (action < 16 || action > 18) {
+        rect.left += 103;
+    }
+    write_strings(&popup.unit_ids_, rect.left, rect.top, rect.right - rect.left, 0);
+}
+// WORKAROUND(inline): the faction, facility and project drawers spend more
+// /Ob2 budget before their Popup teardown than written-out calls do: the
+// image calls ~StringList (0x004066C0) out of line for both BasePop lists
+// while still expanding ~Sprite/~FlatButton (draw_faction's EH table
+// 0x00674378 has 19 states, ours 21 without these helpers; draw_project's
+// cold region 0x00653927 likewise). The original inline providers are
+// unknown; these helpers spend that budget. The sprite helpers also give the
+// argument order the image uses (0x00430D70, 0x0042F583, 0x0042FBC3): `this`
+// converted to Buffer* first, the sprite address after.
+static inline void dl_draw_sprite(Buffer *buffer, Sprite *sprite, int x, int y) {
+    sprite->draw(buffer, sprite->transparent_index(), x, y, 1, 1);
+}
+static inline void dl_body_colors(Datalink *self, int link_color) {
+    self->set_text_color(0x98, -1, 1, 1);
+    self->set_text_color2(0x96, -1, 1, 1);
+    self->set_text_color_hyper(link_color, -1, 1, 1);
+}
+static inline void dl_draw_scaled(Buffer *buffer, Sprite *sprite, int x, int y,
+                                  int numerator, int denominator) {
+    sprite->draw(buffer, sprite->transparent_index(), x, y, numerator, denominator);
+}
+static inline void dl_upper_name(LPSTR name) {
+    StringTemp[0] = 0;
+    strcat(StringTemp, StringTable.get(name));
+    CharUpperA(StringTemp);
 }
 // ORIGINAL: 0x0042F490 ?draw_facility@Datalink@@QAEXXZ 0x0042F490-0x0042FAC5;0x0065384A-0x00653927
 // RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/0042f490.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
@@ -729,14 +797,11 @@ void Datalink::draw_facility() {
     rect.right -= 3;
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
-    StringTemp[0] = 0;
-    strcat(StringTemp, StringTable.get(Facility[id].name));
-    CharUpperA(StringTemp);
+    dl_upper_name(Facility[id].name);
     write_cent_l(StringTemp, &title_rect_);
-    Sprite &icon = g_FACILITY_ICON_SPRITES[id];
-    icon.draw(this, icon.transparent_index(), illustration_rect_.left,
-              illustration_rect_.top,
-              illustration_rect_.right - illustration_rect_.left, icon.width());
+    int span = illustration_rect_.right - illustration_rect_.left;
+    dl_draw_scaled(this, &g_FACILITY_ICON_SPRITES[id], illustration_rect_.left,
+                   illustration_rect_.top, span, g_FACILITY_ICON_SPRITES[id].width());
     rect.left += illustration_rect_.right - illustration_rect_.left + 6;
     parse_num(0, cost_factor(ConsoleGlobal.faction_id_, 1, -1) * Facility[id].cost);
     parse_num(1, fac_maint(id, ConsoleGlobal.faction_id_));
@@ -747,9 +812,7 @@ void Datalink::draw_facility() {
     strcat(StringTemp, "HELPFAC");
     popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
     set_font(&body_font_, 0, 0, Facility[id].preq_tech >= 0 ? &link_font_ : 0);
-    set_text_color(0x98, -1, 1, 1);
-    set_text_color2(0x96, -1, 1, 1);
-    set_text_color_hyper(0x96, -1, 1, 1);
+    dl_body_colors(this, 0x96);
     write_strings(&popup.unit_ids_, rect.left, rect.top, rect.right - rect.left, 0);
     StringTemp[0] = 0;
     strcat(StringTemp, "HELPFAC");
@@ -758,9 +821,7 @@ void Datalink::draw_facility() {
     strcat(StringTemp, number);
     popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
     set_font(&body_font_, 0, 0, Facility[id].preq_tech >= 0 ? &link_font_ : 0);
-    set_text_color(0x98, -1, 1, 1);
-    set_text_color2(0x96, -1, 1, 1);
-    set_text_color_hyper(0x96, -1, 1, 1);
+    dl_body_colors(this, 0x96);
     rect = lower_description_rect_;
     rect.left += 3;
     rect.top += 3;
@@ -770,12 +831,7 @@ void Datalink::draw_facility() {
     strcat(StringTemp, "HELPFAC");
     _itoa(id, number, 10);
     strcat(StringTemp, number);
-    if (MainInterfaceTileFlag) {
-        blurb_box_.clear();
-        blurb_box_.strings().load(DatalinkBlurbFile, StringTemp, 1, 0);
-        blurb_box_.add_fixup();
-        blurb_box_.show(0);
-    }
+    UNK7(DatalinkBlurbFile, StringTemp);
 }
 // ORIGINAL: 0x0042FAD0 ?draw_project@Datalink@@QAEXXZ 0x0042FAD0-0x00430087;0x00653927-0x006539F9
 // RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/0042fad0.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
@@ -783,57 +839,51 @@ void Datalink::draw_facility() {
 // TRIED: exact local-object footprint for Popup's embedded destructor cascade (same shape as 0x00430C80's draw_faction) - modelled as a single `Popup popup;` with popup.close() and implicit dtor; business logic (project/tech title, cost_factor/parse_num/ tech_name/parse_says formatting, sprite draw, two write_strings panels, StringBox blurb branch) transcribed field-by-field.
 void Datalink::draw_project() {
     Popup popup;
-    int id = history_[0];
-    int left = description_rect_.left + 3;
-    int top = description_rect_.top + 3;
-    int right = description_rect_.right - 3;
+    const int id = history_[0];
+    RECT rect = description_rect_;
+    rect.left += 3;
+    rect.top += 3;
+    rect.right -= 3;
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
-    StringTemp[0] = 0;
-    strcat(StringTemp, StringTable.get(Facility[id].name));
-    CharUpperA(StringTemp);
+    dl_upper_name(Facility[id].name);
     write_cent_l(StringTemp, &title_rect_);
-    Sprite &icon = g_SECRET_PROJECT_ICON_SPRITES[id - 70];
-    int image_width = illustration_rect_.right - illustration_rect_.left;
+    const int project = id - 70;
     // 42FBEC loads the first project sprite's +0x18, without indexing it.
-    icon.draw(this, icon.transparent_index(), illustration_rect_.left,
-              illustration_rect_.top, image_width, g_SECRET_PROJECT_ICON_SPRITES[0].width());
-    left += image_width + 6;
+    dl_draw_scaled(this, &g_SECRET_PROJECT_ICON_SPRITES[project],
+                   illustration_rect_.left, illustration_rect_.top,
+                   illustration_rect_.right - illustration_rect_.left,
+                   g_SECRET_PROJECT_ICON_SPRITES[0].width());
+    rect.left += illustration_rect_.right - illustration_rect_.left + 6;
     parse_num(0, cost_factor(ConsoleGlobal.faction_id_, 1, -1) * Facility[id].cost);
     parse_num(1, Facility[id].maint);
-    int technology = Facility[id].preq_tech;
+    const int technology = Facility[id].preq_tech;
     parse_says(1, tech_name(technology, 0), -1, -1);
     parse_num(2, technology + 140000);
     popup.start(DatalinkHelpFile, "HELPPROJ", -1, 0, 0, 0);
     set_font(&body_font_, 0, 0, &link_font_);
-    set_text_color(0x98, -1, 1, 1);
-    set_text_color2(0x96, -1, 1, 1);
-    set_text_color_hyper(0x96, -1, 1, 1);
-    write_strings(&popup.unit_ids_, left, top, right - left, 0);
+    dl_body_colors(this, 0x96);
+    write_strings(&popup.unit_ids_, rect.left, rect.top, rect.right - rect.left, 0);
+    // 0x0042FD3C and 0x0042FE16 number both topics by the project slot
+    // (id - 70), not by the facility id.
     StringTemp[0] = 0;
     strcat(StringTemp, "HELPPROJ");
     char number[80];
-    _itoa(id, number, 10);
+    _itoa(project, number, 10);
     strcat(StringTemp, number);
     popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
     set_font(&body_font_, 0, 0, &link_font_);
-    set_text_color(0x98, -1, 1, 1);
-    set_text_color2(0x96, -1, 1, 1);
-    set_text_color_hyper(0x96, -1, 1, 1);
-    left = lower_description_rect_.left + 3;
-    top = lower_description_rect_.top + 3;
-    right = lower_description_rect_.right - 3;
-    write_strings(&popup.unit_ids_, left, top, right - left, 0);
+    dl_body_colors(this, 0x96);
+    rect = lower_description_rect_;
+    rect.left += 3;
+    rect.top += 3;
+    rect.right -= 3;
+    write_strings(&popup.unit_ids_, rect.left, rect.top, rect.right - rect.left, 0);
     StringTemp[0] = 0;
     strcat(StringTemp, "PROJECT");
-    _itoa(id, number, 10);
+    _itoa(project, number, 10);
     strcat(StringTemp, number);
-    if (MainInterfaceTileFlag) {
-        blurb_box_.clear();
-        blurb_box_.strings().load(DatalinkBlurbFile, StringTemp, 1, 0);
-        blurb_box_.add_fixup();
-        blurb_box_.show(0);
-    }
+    UNK7(DatalinkBlurbFile, StringTemp);
 }
 // ORIGINAL: 0x00430090 ?draw_social@Datalink@@QAEXXZ 0x00430090-0x00430765;0x006539F9-0x00653AD6
 // RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/00430090.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
@@ -841,20 +891,22 @@ void Datalink::draw_project() {
 // TRIED: Popup popup; (RAII) for the outer object, mechanical RD()-based field reads for the tech-tier/quotient-remainder lookups, itoa/strcat scratch buffer building, and the per-faction tally loop; deliberately did NOT model the second local object built by sub_4066c0 (Dialog/Dialogs/ StringStruct/Sprite/extra FlatButtons torn down around 0x430642) - its class is unrecoverable from this brief, so popup.close() + RAII stands in for that whole cascade. NO_COMPILE C2660 (set_font arg count) fixed first; MISMATCH #0 (prologue) not chased further.
 void Datalink::draw_social() {
     Popup popup;
-    int category = history_[0] / 5;
-    int model = history_[0] % 5 - 1;
-    int left = description_rect_.left + 3;
-    int top = description_rect_.top + 3;
-    int right = description_rect_.right - 3;
+    const int category = history_[0] / 5;
+    const int model = history_[0] % 5 - 1;
+    RECT rect = description_rect_;
+    rect.left += 3;
+    rect.right -= 3;
+    rect.bottom -= 3;
+    rect.top += 3;
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
     StringTemp[0] = 0;
-    char *name = model < 0 ? SocialCategories[category].type : SocialCategories[category].name[model];
-    strcat(StringTemp, StringTable.get(name));
+    strcat(StringTemp, StringTable.get(model < 0 ? SocialCategories[category].type
+                                                 : SocialCategories[category].name[model]));
     CharUpperA(StringTemp);
     write_cent_l(StringTemp, &title_rect_);
     if (model >= 0) {
-        int technology = SocialCategories[category].preq_tech[model];
+        const int technology = SocialCategories[category].preq_tech[model];
         parse_says(0, tech_name(technology, 0), -1, -1);
         parse_num(0, technology + 140000);
     }
@@ -872,52 +924,58 @@ void Datalink::draw_social() {
     set_text_color(0x98, -1, 1, 1);
     set_text_color2(0x96, -1, 1, 1);
     set_text_color_hyper(0x96, -1, 1, 1);
-    write_strings(&popup.unit_ids_, left, top, right - left, 0);
-    left = lower_description_rect_.left + 3;
-    top = lower_description_rect_.top + 3;
-    right = lower_description_rect_.right - 3;
-    int bottom = lower_description_rect_.bottom - 3;
+    write_strings(&popup.unit_ids_, rect.left, rect.top, rect.right - rect.left, 0);
+    rect = lower_description_rect_;
+    rect.left += 3;
+    rect.top += 3;
+    rect.right -= 3;
+    rect.bottom -= 3;
     if (model >= 0) {
         const SocialEffect &effect = SocialCategories[category].model_effect[model];
-        int values[11] = {effect.values_[SocialEffect::ECONOMY], effect.values_[SocialEffect::EFFICIENCY], effect.values_[SocialEffect::SUPPORT],
-            effect.values_[SocialEffect::TALENT], effect.values_[SocialEffect::MORALE], effect.values_[SocialEffect::POLICE], effect.values_[SocialEffect::GROWTH],
-            effect.values_[SocialEffect::PLANET], effect.values_[SocialEffect::PROBE], effect.values_[SocialEffect::INDUSTRY], effect.values_[SocialEffect::RESEARCH]};
         int count = 0;
         int i;
-        for (i = 0; i < 11; ++i) if (values[i] != 0) ++count;
-        left += 20;
+        for (i = 0; i < 11; ++i) {
+            if (effect.values_[i] != 0) {
+                ++count;
+            }
+        }
         if (count == 0) {
+            rect.left += 20;
             char *text = label_get(0xFD4 / 4);
-            if (text) {
-                RECT rect = {left, top, right, bottom};
+            if (text != 0) {
                 write_l(text, &rect, strlen(text));
             }
         } else {
-            int line_height = body_font_.line_advance();
-            int y = top + (bottom - line_height * count - top) / 2;
+            const int x = rect.left + 20;
+            int y = rect.top
+                + (rect.bottom - font_line_advance(body_font_) * count - rect.top) / 2;
             for (i = 0; i < 11; ++i) {
-                if (values[i] != 0) {
+                if (effect.values_[i] != 0) {
                     StringTemp[0] = 0;
-                    _itoa(values[i], number, 10);
+                    _itoa(effect.values_[i], number, 10);
                     strcat(StringTemp, number);
-                    write_right_l(StringTemp, left, y, strlen(StringTemp));
+                    // 0x0043041E tests the buffer address before strlen, the
+                    // guarded full-length writer form.
+                    if (StringTemp != 0) {
+                        write_right_l(StringTemp, x, y, strlen(StringTemp));
+                    }
                     StringTemp[0] = 0;
                     strcat(StringTemp, " ");
-                    char link[80];
+                    char link[20];
                     _itoa(i + 130000, link, 10);
                     strcat(StringTemp, "$LINK<");
                     strcat(StringTemp, SocialEffects[i].set2);
                     strcat(StringTemp, "=");
                     strcat(StringTemp, link);
                     strcat(StringTemp, ">");
-                    write_l(StringTemp, left, y, strlen(StringTemp));
-                    y += body_font_.line_advance();
+                    write_l(StringTemp, x, y);
+                    y += font_line_advance(body_font_);
                 }
             }
         }
     }
 }
-// ORIGINAL: 0x00430C80 ?draw_faction@Datalink@@QAEXXZ 0x00430C80-0x0043117E;0x00653BA8-0x00653C7A
+// ORIGINAL: 0x00430C80 ?draw_faction@Datalink@@QAEXXZ 0x00430C80-0x0043117E;0x00653BA8-0x00653C7A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/00430c80.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
 // Historical scaffold experiment, retained from the replaced seed:
 // TRIED: exact local-object footprint for Popup's embedded Scroll/FlatButton/ Heap/Sprite/Spot/Dialogs cascade (huge MI vtable-poke cleanup chain, 0x53a0-byte frame) - modelled as a single `Popup popup;` with popup.close() and implicit dtor instead of the full inlined destructor cascade; business logic (font/text-color/string/sprite/ popup.start branches) transcribed field-by-field from the disasm.
@@ -934,16 +992,13 @@ void Datalink::draw_faction() {
     strcat(StringTemp, Players[faction].formal_name_faction);
     CharUpperA(StringTemp);
     write_cent_l(StringTemp, &title_rect_);
-    Sprite *portrait = &FactionsArt[faction].datalink;
-    portrait->draw(this, portrait->transparent_index(), rect.left, rect.top, 1, 1);
+    dl_draw_sprite(this, &FactionsArt[faction].datalink, rect.left, rect.top);
     rect.left += FactionsArt[faction].datalink.width() + 5;
     char *file = Players[faction].filename;
     popup.start(file, "DATALINKS1", -1, 0, 0, 0);
     set_font(&body_font_, 0, 0, 0);
     set_wrap_width(20);
-    set_text_color(0x98, -1, 1, 1);
-    set_text_color2(0x96, -1, 1, 1);
-    set_text_color_hyper(0xFE, -1, 1, 1);
+    dl_body_colors(this, 0xFE);
     int width = rect.right - rect.left;
     rect.top = write_strings(&popup.unit_ids_, rect.left, rect.top, width, 0);
     rect.top += font_line_advance(body_font_);
@@ -1125,6 +1180,9 @@ void Datalink::draw_tech() {
     ReportIfGlobal.field_8_ = 2;
     ReportWinGlobal.draw_labs();
     StringTemp[0] = 0;
+    // One "TECH" object serves both this body (0x00430BF5) and the copy
+    // draw_entry expands (0x0042C1F7): both push 0x006834D8.
+    // RECOVERY_LITERAL: v1 0x006834D8 0x006834DD ??_C@_04GLCI@TECH?$AA@ 0x00430B30
     strcat(StringTemp, "TECH");
     char number[80];
     _itoa(history_[0], number, 10);
@@ -1133,7 +1191,7 @@ void Datalink::draw_tech() {
 }
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0042BF10 0x0042C29C 0x0042C2DC 0x0042C0A0
-// ORIGINAL: 0x0042BF10 ?draw_entry@Datalink@@QAEXXZ 0x0042BF10-0x0042C29A
+// ORIGINAL: 0x0042BF10 ?draw_entry@Datalink@@QAEXXZ 0x0042BF10-0x0042C29A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x42BF10", "git:b7076e2d4a242bc54aa68d9b48b52eacc10f2ec0:src/recovered/units/0042bf10.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
 void Datalink::draw_entry() {
     restore_clip();
@@ -1145,7 +1203,22 @@ void Datalink::draw_entry() {
     int category = selected / 10000;
     history_[0] = selected - category * 10000;
     if (!field_2A38_) {
-        push_history(category, history_[0]);
+        // WORKAROUND(inline): the image expands push_history (0x0042BD80,
+        // emitted with no callers) here at 0x0042BF92..0x0042BFE2; VC6 does
+        // not auto-inline the out-of-line member in this build, and an
+        // `inline` definition would drop the emitted copy. Same body.
+        const int topic = category * 10000 + history_[0];
+        const int count = field_2A34_;
+        if (count == 0 || history_[count] != topic) {
+            if (count == 0x14) {
+                for (int i = 0; i < 0x13; ++i) {
+                    history_[1 + i] = history_[2 + i];
+                }
+                --field_2A34_;
+            }
+            history_[field_2A34_ + 1] = topic;
+            ++field_2A34_;
+        }
     }
     set_clip(&entry_clip_rect_);
     RECT frame = entry_frame_rect_;
@@ -1159,10 +1232,9 @@ void Datalink::draw_entry() {
     concept_box_.hide();
     detail_box_.hide();
     stringBox_.hide();
+    // The image lays the arms out unit..terraform, then concept/advanced
+    // concept, then facility onward (jump table 0x0042C29C).
     switch (category) {
-    case 0: draw_concept(); break;
-    case 1: draw_adv_concept(); break;
-    case 2: break;
     case 3: draw_unit(); break;
     case 4: draw_chassis(); break;
     case 5: draw_reactor(); break;
@@ -1170,35 +1242,32 @@ void Datalink::draw_entry() {
     case 7: draw_defense(); break;
     case 8: draw_ability(); break;
     case 9: draw_terraform(); break;
+    case 0: draw_concept(); break;
+    case 1: draw_adv_concept(); break;
     case 10: draw_facility(); break;
     case 11: draw_project(); break;
     case 12: draw_social(); break;
     case 13: draw_effect(); break;
     case 14:
-        // The pinned draw_entry has its own expanded technology arm. Keep
-        // its report-store order and inline blurb setup here; draw_tech and
-        // UNK7 remain separate mapped bodies with their own standalone spans.
+        // WORKAROUND(inline): the image expands draw_tech (0x00430B30) and its
+        // UNK7 call here (0x0042C143..0x0042C26B, same "TECH" object
+        // 0x006834D8); a draw_tech() call is not expanded in this build.
+        // draw_tech and UNK7 keep their own emitted, mapped bodies.
         set_font(&font1_, 0, 0, 0);
         set_text_color(0xE0, -1, 1, 1);
         StringTemp[0] = 0;
-        strcat(StringTemp, StringTable.get(Technology[history_[0]].name));
-        CharUpperA(StringTemp);
+        append_upper_name(Technology[history_[0]].name);
         write_cent_l(StringTemp, &title_rect_);
         ReportWinGlobal.reset();
-        ReportIfGlobal.field_8_ = 2;
         ReportWinGlobal.shared_research_focus() = history_[0];
+        ReportIfGlobal.field_8_ = 2;
         ReportWinGlobal.draw_labs();
         StringTemp[0] = 0;
         strcat(StringTemp, "TECH");
         char number[80];
         _itoa(history_[0], number, 10);
         strcat(StringTemp, number);
-        if (MainInterfaceTileFlag) {
-            blurb_box_.clear();
-            blurb_box_.strings().load(DatalinkBlurbFile, StringTemp, 1, 0);
-            blurb_box_.add_fixup();
-            blurb_box_.show(0);
-        }
+        UNK7(DatalinkBlurbFile, StringTemp);
         break;
     case 15: draw_faction(); break;
     }
@@ -2501,6 +2570,21 @@ static inline void category_entry(ListBox *list, LPSTR name, LPSTR separator, in
     }
     list->item(StringTemp, id);
 }
+// WORKAROUND(inline): set_cat_tech's original allocates every scratch
+// register one step round from the category_entry expansion (digits address
+// in ecx, not eax; 0x0042B1EF); this helper, taking the looked-up name with
+// StringTemp already cleared by the caller, reproduces it. Original inline
+// provider unknown.
+static inline void category_entry_text(ListBox *list, LPSTR text, LPSTR separator, int id) {
+    strcat(StringTemp, text);
+    if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
+        strcat(StringTemp, separator);
+        char digits[80];
+        _itoa(id, digits, 10);
+        strcat(StringTemp, digits);
+    }
+    list->item(StringTemp, id);
+}
 
 /*
 Purpose: List the technologies, ids 140000 upward.
@@ -2508,7 +2592,7 @@ Purpose: List the technologies, ids 140000 upward.
          The technology record the tree materialises is eleven dwords wide and
          the walk reads its two preq words at -1 and 0 from the pointer it
          holds, which is why both are tested before the name at -9 is fetched.
-// ORIGINAL: 0x0042B190 ?set_cat_tech@Datalink@@QAEXXZ 0x0042B190-0x0042B2F3 FILE
+// ORIGINAL: 0x0042B190 ?set_cat_tech@Datalink@@QAEXXZ 0x0042B190-0x0042B2F3 FILE BYTE_EXACT
 // MISMATCH 31/116, first divergence at 6. LEVER: `char digits[0x54]` not [80] - the image's frame is 0x64 and the 80-byte buffer gives 0x60. TRIED: the record walk as `record[-1] >= -1 && record[0] >= -1` against a hoisted `TechRowBase`, which is the image's own shape (base in esi, stepped 11 dwords); the residual divergence is the image taking `this` into edi and ours into ebx.
 // size      355 bytes
 // prototype void (__thiscall ?set_cat_tech@Datalink@@QAEXXZ)(Datalink* this)
@@ -2523,7 +2607,9 @@ void Datalink::set_cat_tech() {
     int id = 140000;
     for (int i = 0; i < 0x59; ++i, ++id) {
         if (Technology[i].preq_tech_1 >= -1 && Technology[i].preq_tech_2 >= -1) {
-            category_entry(&listBox_, Technology[i].name, DatalinkTechIdSeparator, id);
+            StringTemp[0] = '\0';
+            category_entry_text(&listBox_, StringTable.get(Technology[i].name),
+                                DatalinkTechIdSeparator, id);
         }
     }
 
