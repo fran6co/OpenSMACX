@@ -580,7 +580,7 @@ int PlanLineCounter;    // 0x00939FD4
 // RECOVERY_OBJECT: v2 0x00703DE0 0x00703DE4 ?TurnRedrawPending@@3HA 0x00404C3B
 int TurnRedrawPending;  // 0x00703DE0
 
-// ORIGINAL: 0x0050EA40 ?blink_timer@@YAXH@Z 0x0050EA40-0x0050EE25 FILE
+// ORIGINAL: 0x0050EA40 ?blink_timer@@YAXH@Z 0x0050EA40-0x0050EE25 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:51d915dc56ddbddd55c51396941ca9b57d9f31da:src/recovered/units/0050ea40.cpp: full original identity/spans and historical source-form findings", "Independent full seed/native semantic review; original three USER32 IAT targets resolve GetAsyncKeyState/GetFocus/GetWindowLongA with GWL_HINSTANCE.", "Win primary virtual slot12 is on_redraw; PlanWin::blink now uses genuine virtual dispatch, not manual vbase/table indexing.", "recovery/tasks/blink-timer-owner-oct5.json", "recovery/tests/test_blink_timer_actual_source.py"], "reason": "Complete timer callback through existing genuine tutorial/Plan/MainInterface/Console/MapWin owners and USER32 APIs. Preserve original guards, parity/wrap geometry, half-open bounds and cursor update ordering. Source family home is not asserted original TU ownership."}
 void __cdecl blink_timer(int a1) {
     (void)a1;
@@ -633,38 +633,39 @@ void __cdecl blink_timer(int a1) {
         return;
     }
 
-    // The walk keeps the slot pointer (0x007D3C3C..0x007D3C5C) and re-reads
-    // the window through it after every call.
-    for (MapWin **slot = &MapWinTable[0]; slot < &MapWinTable[MapWinTableSlots]; ++slot) {
-        if (*slot == 0) continue;
+    // A signed index walk: VC6 strength-reduces it to the slot pointer
+    // (0x007D3C3C..0x007D3C5C, `cmp edi, 0x7d3c5c; jl`) and re-reads the
+    // window through it after every call.
+    for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
+        if (MapWinTable[slot] == 0) continue;
         int col = blink_col;
 
-        if (slot != &MapWinTable[0] && (*slot)->view_active_ == 0) continue;
-        if (col != 0 && (*slot)->field_1DD80_ == 0) continue;
-        if ((*slot)->field_1DDD4_ + (*slot)->field_1DDCC_ >= MapLongitudeBounds) {
+        if (slot != 0 && MapWinTable[slot]->view_active_ == 0) continue;
+        if (col != 0 && MapWinTable[slot]->field_1DD80_ == 0) continue;
+        if (MapWinTable[slot]->field_1DDD4_ + MapWinTable[slot]->field_1DDCC_ >= MapLongitudeBounds) {
             continue;
         }
 
-        int row = (*slot)->center_y_;
-        col = (*slot)->center_x_;
+        int row = MapWinTable[slot]->center_y_;
+        col = MapWinTable[slot]->center_x_;
 
         int mouse_x;
         int mouse_y;
-        (*slot)->get_mouse_pos(&mouse_x, &mouse_y);
-        (*slot)->client_to_screen(&mouse_x, &mouse_y);
+        MapWinTable[slot]->get_mouse_pos(&mouse_x, &mouse_y);
+        MapWinTable[slot]->client_to_screen(&mouse_x, &mouse_y);
 
         if (mouse_x == 0) {
-            col = wrap_map_x(col - ((*slot)->field_1DDCC_ + 2) / 3);
+            col = wrap_map_x(col - (MapWinTable[slot]->field_1DDCC_ + 2) / 3);
         }
 
         if (mouse_x >= WinScreenWidth - 0xA
             && mouse_x < WinScreenWidth + 0xA) {
-            col = wrap_map_x(((*slot)->field_1DDCC_ + 2) / 3 + col);
+            col = wrap_map_x((MapWinTable[slot]->field_1DDCC_ + 2) / 3 + col);
         }
 
-        if (mouse_y == 0 && (*slot)->field_1DDA8_ > -2) {
-            const int max_shift = (*slot)->field_1DDA8_ + 2;
-            const int requested = ((*slot)->field_1DDD0_ + 2) / 3;
+        if (mouse_y == 0 && MapWinTable[slot]->field_1DDA8_ > -2) {
+            const int max_shift = MapWinTable[slot]->field_1DDA8_ + 2;
+            const int requested = (MapWinTable[slot]->field_1DDD0_ + 2) / 3;
             int delta;
             if (requested < 0 || max_shift < 0) {
                 delta = 0;
@@ -678,15 +679,19 @@ void __cdecl blink_timer(int a1) {
 
         if (mouse_y >= WinScreenHeight - 0xA
             && mouse_y < WinScreenHeight + 0xA) {
-            const int count = (*slot)->field_1DDD8_;
-            const int start = (*slot)->field_1DDA8_;
+            const int count = MapWinTable[slot]->field_1DDD8_;
+            const int start = MapWinTable[slot]->field_1DDA8_;
             if (start + count * 2 - 2 < MapLatitudeBounds + 2) {
                 const int max_shift = (2 - count) * 2 - start
                                     + MapLatitudeBounds;
-                const int requested = ((*slot)->field_1DDD0_ + 2) / 3;
-                int delta = 0;
-                if (requested >= 0 && max_shift >= 0) {
-                    delta = requested > max_shift ? max_shift : requested;
+                const int requested = (MapWinTable[slot]->field_1DDD0_ + 2) / 3;
+                int delta;
+                if (requested < 0 || max_shift < 0) {
+                    delta = 0;
+                } else if (requested > max_shift) {
+                    delta = max_shift;
+                } else {
+                    delta = requested;
                 }
                 row += delta;
             }
@@ -695,8 +700,8 @@ void __cdecl blink_timer(int a1) {
         if ((col & 1) != 0) col -= 1;
         if ((row & 1) != 0) col += 1;
 
-        if (col == (*slot)->center_x_
-            && row == (*slot)->center_y_) {
+        if (col == MapWinTable[slot]->center_x_
+            && row == MapWinTable[slot]->center_y_) {
             continue;
         }
         if (row < 0) continue;
@@ -704,11 +709,11 @@ void __cdecl blink_timer(int a1) {
         if (col < 0) continue;
         if (col >= MapLongitudeBounds) continue;
 
-        if (*slot == static_cast<MapWin *>(&ConsoleGlobal)) {
-            (*slot)->field_21A44_ = 1;
+        if (MapWinTable[slot] == static_cast<MapWin *>(&ConsoleGlobal)) {
+            MapWinTable[slot]->field_21A44_ = 1;
         }
-        (*slot)->set_center(col, row, 1);
-        (*slot)->field_21A44_ = 0;
+        MapWinTable[slot]->set_center(col, row, 1);
+        MapWinTable[slot]->field_21A44_ = 0;
     }
 }
 
@@ -1650,98 +1655,76 @@ int Console::focus(int x_coord, int y_coord, int faction_id) {
 
 // Original 0x005150D0 selects the world-map or an eligible secondary map
 // beneath the pointer when passed a negative window index, then adjusts the
-// selected windows' signed zoom offsets and redraws the world view.
+// selected windows' signed zoom offsets and redraws the world view. When no
+// map is under the pointer the index stays negative (0x005151E0..0x005152EB
+// falls through without the 0x0051530F store), so every live window zooms.
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x005150D0 0x005153E0 0x005153F8 0x00515352
 // ORIGINAL: 0x005150D0 ?zoom@Console@@QAEXHH@Z 0x005150D0-0x005153DF FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005150d0.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
 void Console::zoom(int zoom_command, int window_index) {
-    int selected_window = window_index;
+    // One mouse/tile local pair serves the world map and every map window;
+    // an unmatched pointer leaves the negative index, so every map zooms.
+    int mouse_x;
+    int mouse_y;
+    int tile_x;
+    int tile_y;
+    int slot = 0;
+
     if (window_index < 0) {
-        selected_window = 0;
-        bool primary_map_hit = false;
-        int mouse_x;
-        int mouse_y;
         WorldClimateWorldWin.get_mouse_pos(&mouse_x, &mouse_y);
-        int tile_x = 0;
-        int tile_y = 0;
         if (in_box(mouse_x, mouse_y, 0, 0,
                    WorldClimateWorldWin.dib_.bmiHeader.biWidth,
                    -WorldClimateWorldWin.dib_.bmiHeader.biHeight) != 0 &&
             WorldClimateWorldWin.pixel_to_tile(mouse_x, mouse_y,
                                                &tile_x, &tile_y) == 0 &&
-            tile_x >= 0 && tile_x < MapLongitudeBounds &&
-            tile_y >= 0 && tile_y < MapLatitudeBounds) {
-            bool visible = (PlayersData[ConsoleGlobal.faction_id_].flags &
-                            0x200U) != 0;
-            if (!visible) {
-                const uint8_t faction_bit = static_cast<uint8_t>(
-                    1U << (ConsoleGlobal.faction_id_ & 0x1f));
-                visible = (map_loc(tile_x, tile_y)->visibility & faction_bit) != 0;
-                if (!visible) {
-                    visible = (GameDataStateStorage.fields_.game_state_ & 0x80U) != 0;
+            on_map(tile_x, tile_y) &&
+            ((PlayersData[ConsoleGlobal.faction_id_].flags & 0x200U) != 0 ||
+             (map_loc(tile_x, tile_y)->visibility &
+              (1 << ConsoleGlobal.faction_id_)) != 0 ||
+             (GameDataStateStorage.fields_.game_state_ & 0x80U) != 0)) {
+            MapWinTable[0]->center_x_ = tile_x;
+            MapWinTable[0]->center_y_ = tile_y;
+        } else {
+            for (; slot < static_cast<int>(MapWinTableSlots); ++slot) {
+                if (MapWinTable[slot] == nullptr ||
+                    (slot != 0 && MapWinTable[slot]->view_active_ == 0) ||
+                    MapWinTable[slot]->zoom_offset_ >= 0) {
+                    continue;
+                }
+                MapWinTable[slot]->get_mouse_pos(&mouse_x, &mouse_y);
+                if (in_box(mouse_x, mouse_y, 0, 0,
+                           MapWinTable[slot]->dib_.bmiHeader.biWidth,
+                           -MapWinTable[slot]->dib_.bmiHeader.biHeight) == 0 ||
+                    MapWinTable[slot]->pixel_to_tile(mouse_x, mouse_y,
+                                                     &tile_x, &tile_y) != 0 ||
+                    !on_map(tile_x, tile_y)) {
+                    continue;
+                }
+                if ((PlayersData[ConsoleGlobal.faction_id_].flags & 0x200U) != 0 ||
+                    (map_loc(tile_x, tile_y)->visibility &
+                     (1 << ConsoleGlobal.faction_id_)) != 0 ||
+                    (GameDataStateStorage.fields_.game_state_ & 0x80U) != 0) {
+                    MapWinTable[slot]->center_x_ = tile_x;
+                    MapWinTable[slot]->center_y_ = tile_y;
+                    goto found;
                 }
             }
-            if (visible) {
-                MapWin *const primary = MapWinTable[0];
-                primary->center_x_ = tile_x;
-                primary->center_y_ = tile_y;
-                primary_map_hit = true;
-            }
+            goto zoom_windows;
         }
-
-        if (!primary_map_hit) {
-            for (int slot = 0; slot < static_cast<int>(MapWinTableSlots);
-                 ++slot) {
-                MapWin *const window = MapWinTable[slot];
-                if (window == nullptr ||
-                    (slot != 0 && window->view_active_ == 0) ||
-                    window->zoom_offset_ >= 0) {
-                    continue;
-                }
-                int window_mouse_x;
-                int window_mouse_y;
-                window->get_mouse_pos(&window_mouse_x, &window_mouse_y);
-                int candidate_x = 0;
-                int candidate_y = 0;
-                if (in_box(window_mouse_x, window_mouse_y, 0, 0,
-                           window->dib_.bmiHeader.biWidth,
-                           -window->dib_.bmiHeader.biHeight) == 0 ||
-                    window->pixel_to_tile(window_mouse_x, window_mouse_y,
-                                          &candidate_x, &candidate_y) != 0 ||
-                    candidate_x < 0 || candidate_x >= MapLongitudeBounds ||
-                    candidate_y < 0 || candidate_y >= MapLatitudeBounds) {
-                    continue;
-                }
-                bool visible = (PlayersData[ConsoleGlobal.faction_id_].flags &
-                                0x200U) != 0;
-                if (!visible) {
-                    const uint8_t faction_bit = static_cast<uint8_t>(
-                        1U << (ConsoleGlobal.faction_id_ & 0x1f));
-                    visible = (map_loc(candidate_x, candidate_y)->visibility &
-                               faction_bit) != 0;
-                    if (!visible) {
-                        visible = (GameDataStateStorage.fields_.game_state_ & 0x80U) != 0;
-                    }
-                }
-                if (!visible) {
-                    continue;
-                }
-                window->center_x_ = candidate_x;
-                window->center_y_ = candidate_y;
-                selected_window = slot;
-                break;
-            }
-        }
+    found:
+        // The world-map hit reaches here with slot still 0.
+        window_index = slot;
     }
+zoom_windows:
 
-    for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
-        MapWin *const window = MapWinTable[slot];
-        if (window == nullptr ||
-            (slot != 0 && window->view_active_ == 0) ||
-            (selected_window >= 0 && slot != selected_window)) {
+    for (slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
+        if (MapWinTable[slot] == nullptr ||
+            (slot != 0 && MapWinTable[slot]->view_active_ == 0) ||
+            (window_index >= 0 && slot != window_index)) {
             continue;
         }
+        MapWin *const window = MapWinTable[slot];
         switch (zoom_command) {
         case 0x203:
             if (window->zoom_offset_ < 0x10) {
@@ -1768,7 +1751,7 @@ void Console::zoom(int zoom_command, int window_index) {
         default:
             break;
         }
-        window->draw_map(1);
+        MapWinTable[slot]->draw_map(1);
     }
     WorldClimateWorldWin.GraphicWin::redraw();
 }
@@ -3550,13 +3533,19 @@ static inline int splitter_armed(int a, int b, int c, int d) {
     return a == -1 || b == -1 || c == -1 || d == -1;
 }
 
-// ORIGINAL: 0x0050F680 ?on_nc_hittest@Console@@QAEXHH@Z 0x0050F680-0x0050F951
+// ORIGINAL: 0x0050F680 ?on_nc_hittest@Console@@QAEXHH@Z 0x0050F680-0x0050F951 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["The original 0x0050F680..0x0050F951 disassembly exits return EAX values 1 or 0; its retired transcription is preserved in Git history."], "reason": "Translate the Console non-client hit-test into its existing virtual method; the disassembly exits return EAX values 1 or 0, correcting the seed-only void prototype."}
 // symbol    ?on_nc_hittest@Console@@UAEHHH@Z
 int Console::on_nc_hittest(int x_coord, int y_coord) {
     // EAX=1 while a split line is armed, else 1 only over a caption box or a
     // splitter handle.
-    if (splitter_armed(field_23D80_, field_23D84_, field_23D88_, field_23D8C_)) {
+    // WORKAROUND(type): the four slots are read through a pointer, not by
+    // name. Naming field_23D88_ here makes VC6 reorder the later
+    // `... + field_23D88_ + caption_height_` sums (0x0050F7E9, 0x0050F827:
+    // caption before the slot). An int[4] member does not reproduce the
+    // image either; the original form of the arming test is unknown.
+    const int *const slots = &field_23D80_;
+    if (splitter_armed(slots[0], slots[1], slots[2], slots[3])) {
         return 1;
     }
 
@@ -3569,24 +3558,26 @@ int Console::on_nc_hittest(int x_coord, int y_coord) {
     if (x_coord > client_width() - border_thickness_) {
         if (y_coord >= track_height() - bottom_border() + caption_height_ &&
             y_coord <= client_height() - bottom_border()) {
-            if ((y_coord >= track_height() - bottom_border() - sprite_b_.height() +
+            const int handle_height = sprite_b_.height();
+            if ((y_coord >= track_height() - bottom_border() - handle_height +
                      field_23D88_ + caption_height_ &&
                  y_coord <= track_height() - bottom_border() + field_23D88_ +
-                     caption_height_ + sprite_b_.height()) ||
-                (y_coord >= track_height() - bottom_border() - sprite_b_.height() +
+                     caption_height_ + handle_height) ||
+                (y_coord >= track_height() - bottom_border() - handle_height +
                      field_23D8C_ + caption_height_ &&
                  y_coord <= track_height() - bottom_border() + field_23D8C_ +
-                     caption_height_ + sprite_b_.height())) {
+                     caption_height_ + handle_height)) {
                 return 1;
             }
         }
     } else if (y_coord > client_height() - bottom_border() &&
                x_coord >= border_thickness_ &&
                x_coord <= client_width() - border_thickness_) {
-        if ((x_coord >= field_23D80_ - sprite_a_.width() + border_thickness_ &&
-             x_coord <= field_23D80_ + border_thickness_ + sprite_a_.width()) ||
-            (x_coord >= field_23D84_ - sprite_a_.width() + border_thickness_ &&
-             x_coord <= field_23D84_ + border_thickness_ + sprite_a_.width())) {
+        const int handle_width = sprite_a_.width();
+        if ((x_coord >= field_23D80_ - handle_width + border_thickness_ &&
+             x_coord <= field_23D80_ + border_thickness_ + handle_width) ||
+            (x_coord >= field_23D84_ - handle_width + border_thickness_ &&
+             x_coord <= field_23D84_ + border_thickness_ + handle_width)) {
             return 1;
         }
     }
