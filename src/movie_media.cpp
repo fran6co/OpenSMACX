@@ -118,7 +118,7 @@ static const DWORD media_block_transform_weights[64] = {
 };
 
 // ECX, EDX plus eight stack arguments; 5CC150 supplies exactly this layout.
-// ORIGINAL: 0x005CBC00 sub_5cbc00 0x005CBC00-0x005CBE2A
+// ORIGINAL: 0x005CBC00 sub_5cbc00 0x005CBC00-0x005CBE2A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Recover packed components using full-word widths, the original negative-C saturation and the sum of all three component widths; preserve the unused stack argument and selected VC6/x86 shift behavior.","evidence":["The complete 205-instruction leaf at 5CBC00..5CBE2A reads incoming stack slots +4,+12,+16,+20,+24,+28,+32, never +8, and retains RET 0x20 for all eight stack arguments.","Pinned 5CBE00/5CBE08/5CBE0F load incoming +16/+20/+12 after accounting for the 0x14 frame and saved registers: the final test sums the B/C/A widths, not the unused +8 argument.","Pinned 5CBD45 compares rounded C against its lower bound; 5CBD47 accepts values at or above it, otherwise 5CBD49 reaches 5CBD6F MOV EBX,ECX before the signed borrow test at 5CBD71.","Pinned full-word width loads feed direct CL shifts, and per-component maxima remain live through final packing; the existing caller derives nonnegative channel popcounts with a total of 15 or 16."]}
 // symbol    @sub_5cbc00@40
 // kind      game
@@ -127,77 +127,53 @@ extern "C" int __fastcall sub_5cbc00(
     int sample, int component_a, int component_b, int unused,
     int component_a_bits, int component_b_bits, int component_c_bits,
     int component_a_shift, int component_b_shift, int component_c_shift) {
-  int bits = component_a_bits;
-  int divisor = 1 << (8 - bits);
-  int packed_a = sample / divisor;
-  int rounded_a;
-  int max_a;
+  int bits;
+  int packed_a, rounded_a;
+  int packed_b, rounded_b;
+  unsigned int packed_c, rounded_c;
+  bits = component_a_bits;
+  packed_a = sample / (1 << (8 - bits));
   if (sample < 0) {
-    rounded_a = (sample - (1 << (7 - bits))) / divisor;
-    max_a = 1 << bits;
-    if (rounded_a < 1 - max_a) rounded_a = 1 - max_a;
+    rounded_a = (sample - (1 << (7 - bits))) / (1 << (8 - bits));
+    if (rounded_a < 1 - (1 << bits)) rounded_a = 1 - (1 << bits);
   } else {
-    rounded_a = ((1 << (7 - bits)) + sample) / divisor;
-    max_a = 1 << bits;
-    if (rounded_a > max_a - 1) rounded_a = max_a - 1;
+    rounded_a = ((1 << (7 - bits)) + sample) / (1 << (8 - bits));
+    if (rounded_a > (1 << bits) - 1) rounded_a = (1 << bits) - 1;
   }
-
   bits = component_b_bits;
-  divisor = 1 << (8 - bits);
-  int packed_b = component_a / divisor;
-  int rounded_b;
-  int max_b;
+  packed_b = component_a / (1 << (8 - bits));
   if (component_a < 0) {
-    rounded_b = (component_a - (1 << (7 - bits))) / divisor;
-    max_b = 1 << bits;
-    if (rounded_b < 1 - max_b) rounded_b = 1 - max_b;
+    rounded_b = (component_a - (1 << (7 - bits))) / (1 << (8 - bits));
+    if (rounded_b < 1 - (1 << bits)) rounded_b = 1 - (1 << bits);
   } else {
-    rounded_b = ((1 << (7 - bits)) + component_a) / divisor;
-    max_b = 1 << bits;
-    if (rounded_b > max_b - 1) rounded_b = max_b - 1;
+    rounded_b = ((1 << (7 - bits)) + component_a) / (1 << (8 - bits));
+    if (rounded_b > (1 << bits) - 1) rounded_b = (1 << bits) - 1;
   }
-
   bits = component_c_bits;
-  divisor = 1 << (8 - bits);
-  unsigned int packed_c = (unsigned int)(component_b / divisor);
-  unsigned int rounded_c;
-  unsigned int max_c;
+  packed_c = (unsigned int)(component_b / (1 << (8 - bits)));
   if (component_b < 0) {
-    rounded_c = (unsigned int)((component_b -
-        (1 << (7 - bits))) / divisor);
-    max_c = 1U << bits;
-    unsigned int lower = 1U - max_c;
+    rounded_c = (unsigned int)((component_b - (1 << (7 - bits))) / (1 << (8 - bits)));
+    unsigned int lower = 1 - (1 << bits);
     if ((int)rounded_c < (int)lower) rounded_c = lower;
   } else {
-    rounded_c = (unsigned int)(((1 << (7 - bits)) + component_b) /
-                               divisor);
-    max_c = 1U << bits;
-    unsigned int upper = max_c - 1;
-    if ((int)rounded_c <= (int)upper) goto combine_components;
-    rounded_c = upper;
+    rounded_c = (unsigned int)(((1 << (7 - bits)) + component_b) / (1 << (8 - bits)));
+    unsigned int upper = (1 << bits) - 1;
+    if ((int)rounded_c > (int)upper) rounded_c = upper;
   }
-combine_components:
+
   if ((int)rounded_c < 0) --rounded_b;
   if (rounded_b < 0) --rounded_a;
   if (rounded_a < 0) --packed_c;
   if ((int)packed_c < 0) --packed_b;
   if (packed_b < 0) --packed_a;
-
-  // Keep each maximum alive through packing, as the pinned routine reuses
-  // these values to form the component masks instead of shifting again.
+  // The image ORs the packed-B and packed-C fields together before packed A.
   unsigned int result =
-      ((max_c - 1U) & packed_c)
-          << ((component_c_shift + 0x10)) |
-      ((static_cast<unsigned int>(max_b) - 1U) & (unsigned int)packed_b)
-          << ((component_b_shift + 0x10)) |
-      ((static_cast<unsigned int>(max_a) - 1U) & (unsigned int)packed_a)
-          << ((component_a_shift + 0x10)) |
-      ((max_c - 1U) & rounded_c)
-          << (component_c_shift) |
-      ((static_cast<unsigned int>(max_b) - 1U) & (unsigned int)rounded_b)
-          << (component_b_shift) |
-      ((static_cast<unsigned int>(max_a) - 1U) & (unsigned int)rounded_a)
-          << (component_a_shift);
+      (((1 << component_a_bits) - 1U) & (unsigned int)packed_a) << (component_a_shift + 0x10) |
+      ((((1 << component_b_bits) - 1U) & (unsigned int)packed_b) << (component_b_shift + 0x10) |
+       (((1 << component_c_bits) - 1U) & packed_c) << (component_c_shift + 0x10)) |
+      (((1 << component_c_bits) - 1U) & rounded_c) << component_c_shift |
+      (((1 << component_b_bits) - 1U) & (unsigned int)rounded_b) << component_b_shift |
+      (((1 << component_a_bits) - 1U) & (unsigned int)rounded_a) << component_a_shift;
   if (component_a_bits + component_b_bits + component_c_bits != 0x10)
     result |= 0x80008000;
   return (int)result;
@@ -289,7 +265,7 @@ extern "C" void __fastcall sub_5cc2b0(int selected_component) {
 
 // The receiver is the embedded MediaPixelFormat subobject at descriptor +2C.
 // 5CBE30 explicitly computes ECX as descriptor+0x2c before this call.
-// ORIGINAL: 0x005CC450 sub_5cc450 0x005CC450-0x005CC70D
+// ORIGINAL: 0x005CC450 sub_5cc450 0x005CC450-0x005CC70D BYTE_EXACT
 // symbol    ?sub_5cc450@MediaPixelFormat@@QAIXPAUMediaRuntime@@@Z
 // kind      game
 // TRIED: __thiscall member over a PixelFormat-like struct (bit counts at self+0/4/8, shifts at self+0xc/0x10/0x14, a flag at self+0x1c). Loop 1 builds three 512-entry float-derived tables (0x9c6f2c/772c/7f2c) from clamped index -0x100..0xff using six FPU constants at fixed .rdata addresses (dereferenced as plain float/double loads, not transcribed as literals since their bit patterns are unknown); loops 2-4 build three 256-entry integer shift/clamp tables (0x9c872c/8bf4/ 900c) per RGB channel from the struct fields. Ghidra's `__ftol()` no-arg calls were replaced with ordinary `(int)` casts on the FPU expressions, which is what the compiler lowers to `call __ftol` itself. Compiles and matches the first 26 instructions (all of the integer clamp/index setup); diverges at #26 (`fld` vs `lea`) once the FPU stack scheduling for the three-way `fld st(0)` duplication starts - x87 stack scheduling, not source form, and not chased further given the size of the function.
@@ -298,18 +274,21 @@ void __fastcall MediaPixelFormat::sub_5cc450(MediaRuntime *) {
     int clamped = value;
     if (clamped < -0x40) clamped = -0x40;
     else if (clamped > 0x3f) clamped = 0x3f;
-    int index = (value - 0xc0) & 0x1ff;
-    double shifted = clamped + 0.5f;
+    // The image scales the table index to a byte offset once (shl 2) and
+    // keeps a float centre plus a double copy on the x87 stack.
+    int offset = ((value - 0xc0) & 0x1ff) * 4;
+    float centered = clamped + 0.5f;
+    double centered_wide = centered;
 
-    movie_media_conversion_tables.contribution_byte3[index] =
+    *(DWORD *)((BYTE *)movie_media_conversion_tables.contribution_byte3 + offset) =
         clamped * 0x800801 + 0x4883d8a9;
-    int component_1_a = (int)(0.5 - shifted * 0.3441);
-    int component_1_b = (int)(shifted * 1.772 + 0.5);
-    movie_media_conversion_tables.contribution_byte1[index] =
+    int component_1_a = (int)(0.5 - centered_wide * 0.3441);
+    int component_1_b = (int)(centered_wide * 1.772 + 0.5);
+    *(DWORD *)((BYTE *)movie_media_conversion_tables.contribution_byte1 + offset) =
         ((component_1_a & 0x1ff) << 11) + (component_1_b & 0x1ff);
-    int component_0_a = (int)(0.5 - shifted * 0.7141);
-    int component_0_b = (int)(shifted * 1.402 + 0.5);
-    movie_media_conversion_tables.contribution_byte0[index] =
+    int component_0_a = (int)(0.5 - centered * 0.7141);
+    int component_0_b = (int)(centered * 1.402 + 0.5);
+    *(DWORD *)((BYTE *)movie_media_conversion_tables.contribution_byte0 + offset) =
         ((component_0_a & 0x1ff) + ((component_0_b & 0x1ff) << 12)) << 11;
   }
 
@@ -320,8 +299,7 @@ void __fastcall MediaPixelFormat::sub_5cc450(MediaRuntime *) {
     int sign_extension = clamped >> (-(int)red_bits + 8);
     int value = ((1 << (-(int)red_bits + 7)) + clamped) >>
                 (-(int)red_bits + 8);
-    int maximum = (1 << red_bits) - 1;
-    if (value > maximum) value = maximum;
+    if (value > (1 << red_bits) - 1) value = (1 << red_bits) - 1;
     int shifted_value = value << red_shift;
     movie_media_conversion_tables.blend_high[output_index] = shifted_value;
     if (total_component_bits <= 0x10)
@@ -337,8 +315,7 @@ void __fastcall MediaPixelFormat::sub_5cc450(MediaRuntime *) {
     int sign_extension = clamped >> (-(int)green_bits + 8);
     int value = ((1 << (-(int)green_bits + 7)) + clamped) >>
                 (-(int)green_bits + 8);
-    int maximum = (1 << green_bits) - 1;
-    if (value > maximum) value = maximum;
+    if (value > (1 << green_bits) - 1) value = (1 << green_bits) - 1;
     int shifted_value = value << green_shift;
     movie_media_conversion_tables.blend_mid[output_index] = shifted_value;
     if (total_component_bits <= 0x10)
@@ -354,8 +331,7 @@ void __fastcall MediaPixelFormat::sub_5cc450(MediaRuntime *) {
     int sign_extension = clamped >> (-(int)blue_bits + 8);
     int value = ((1 << (-(int)blue_bits + 7)) + clamped) >>
                 (-(int)blue_bits + 8);
-    int maximum = (1 << blue_bits) - 1;
-    if (value > maximum) value = maximum;
+    if (value > (1 << blue_bits) - 1) value = (1 << blue_bits) - 1;
     int shifted_value = value << blue_shift;
     movie_media_conversion_tables.blend_low[output_index] = shifted_value;
     if (total_component_bits <= 0x10)
