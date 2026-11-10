@@ -285,15 +285,19 @@ int DeletionList::find_free_slot() {
 /*
 Purpose: Find the occupied deletion record for an owner, or return -1.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0052DD10 ?UNK2@DeletionList@@QAEHH@Z 0x0052DD10-0x0052DD4B FILE
+// ORIGINAL: 0x0052DD10 ?UNK2@DeletionList@@QAEHH@Z 0x0052DD10-0x0052DD4B FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"The seed's unnamed member scans occupied 0x3C-byte records and compares the owner word at +4 with its argument.","evidence":["Original 0x0052DD10-0x0052DD4B scans 24 entries, tests the 0x009A64E8 acknowledgement mask, compares +4 with its argument and returns -1 on exhaustion.","src/recovered/units/0052dd10.cpp retains the earlier candidate and its failed standalone compilation evidence."]}
 // symbol    ?find_owner_slot@DeletionList@@QAEHH@Z
 */
 int DeletionList::find_owner_slot(int owner) {
-    const unsigned char mask = static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
     for (int slot = 0; slot < 24; ++slot) {
         const DeletionRecord &record = records_[slot];
-        if ((record.acknowledgements_ & mask) != mask && record.owner_ == owner) {
+        // Indexed acknowledgement read with a re-read mask: the out-of-line body
+        // loads the byte into its own register, while convert()'s inlined copy
+        // keeps `mov dl, [rec]; and dl, mask` (both measured byte-exact).
+        if ((records_[slot].acknowledgements_ & (unsigned char)GameDataStateStorage.fields_.lock_masks_.enable_mask_)
+                != (unsigned char)GameDataStateStorage.fields_.lock_masks_.enable_mask_
+            && record.owner_ == owner) {
             return slot;
         }
     }
@@ -328,7 +332,7 @@ void DeletionList::ack(int owner, int faction) {
 // the value; both paths report through log_say.
 /*
 Purpose: Convert a vehicle id across the deletion list's queued deletions.
-// ORIGINAL: 0x0052DDC0 ?convert@DeletionList@@QAEHHH@Z 0x0052DDC0-0x0052DE65 FILE
+// ORIGINAL: 0x0052DDC0 ?convert@DeletionList@@QAEHHH@Z 0x0052DDC0-0x0052DE65 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original52DDC0..52DE65; retired seed git:ee30a69d:src/unrecovered/0052ddc0.cpp records the same identity and spans.", "The records are deletionlist.h's own 0x3C-stride entries with the occupancy mask lock.h's LockEnableMask (0x009A64E8), the owner count at +0x5A0 and the per-record id run at +0xA; the log_say format is the image's DelConverted string bound beside this body."], "reason": "Coverage transcription of the id conversion on the typed DeletionList receiver with the subtract-below walk exactly as the seed orders it."}
 Status: Coverage transcription - unclaimed body
 */
@@ -338,8 +342,7 @@ int DeletionList::convert(int veh_id, int new_owner) {
         const int slot = find_owner_slot(search);
         if (slot >= 0) {
             const DeletionRecord &record = records_[slot];
-            int count = record.count_;
-            for (int index = 0; index < count; ++index) {
+            for (int index = 0; index < record.count_; ++index) {
                 const int deleted_id = record.vehicle_ids_[index];
                 if (deleted_id == veh_id) {
                     veh_id = -1;
