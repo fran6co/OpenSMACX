@@ -55,10 +55,11 @@ def test_local_original_extent_bounds_body_not_alignment_padding():
     assert asm._coff_function_masked(
         local_coff(), "historical", "_$E19", spans=((0x401000, 0x401001),)
     ) == (b"\xc3", frozenset())
-    with pytest.raises(ValueError, match="exceeds its explicit original image span"):
+    with pytest.raises(asm.LocalExtentExceeded, match="exceeds its explicit original image span") as longer:
         asm._coff_function_masked(
             local_coff(b"\xc3\x33\xc0\xc3"), "historical", "_$E19",
             spans=((0x401000, 0x401001),))
+    assert longer.value.code == b"\xc3\x33\xc0\xc3"
 
 
 def test_local_relocations_mask_only_complete_fields():

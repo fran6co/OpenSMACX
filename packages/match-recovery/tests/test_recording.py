@@ -228,10 +228,12 @@ def test_local_generated_multiple_original_spans_cannot_bank_only_the_primary(pr
     before = path.read_bytes(), path.stat().st_ino, path.stat().st_mtime_ns
     measured = measure_source(project, ("_f",), image=Path("original/input.exe"))
     assert measured["result"] == "unknown" and measured["counts"] == {"unknown": 1}
-    assert "one original image span" in json.dumps(measured)
+    # The two spans are not a proved EH primary/cold pair, so the primary
+    # alone is never compared, whether or not the candidate has a cold region.
+    assert "complete EH-region measurement refused" in measured["measurements"][0]["diagnostic"]
     code, report = run(project, "_f")
     assert code == 3 and len(report["unresolved"]) == 1 and report["updated"] == []
-    assert "one original image span" in json.dumps(report)
+    assert "complete EH-region measurement refused" in json.dumps(report)
     assert before == (path.read_bytes(), path.stat().st_ino, path.stat().st_mtime_ns)
     assert not any(row.byte_exact for row in read_file(path))
 
@@ -283,11 +285,11 @@ def test_local_generated_body_cannot_borrow_adjacent_original_function(project):
         (LOCAL_GENERATED, b"\xc3\x33\xc0\xc3")]))
     before = path.read_bytes(), path.stat().st_ino, path.stat().st_mtime_ns
     measured = measure_source(project, ("_f",), image=Path("original/input.exe"))
-    assert measured["counts"] == {"unknown": 1}
-    assert "exceeds its explicit original image span" in json.dumps(measured)
+    # Measured against f's own byte only: a mismatch, never a borrowed match.
+    assert measured["counts"] == {"fail": 1}
+    assert measured["measurements"][0]["verdict"] != "BYTE_EXACT"
     code, report = run(project, "_f")
-    assert code == 3 and len(report["unresolved"]) == 1 and report["updated"] == []
-    assert "exceeds its explicit original image span" in json.dumps(report)
+    assert code == 1 and report["updated"] == []
     assert before == (path.read_bytes(), path.stat().st_ino, path.stat().st_mtime_ns)
     assert not any(row.byte_exact for row in read_file(path))
 

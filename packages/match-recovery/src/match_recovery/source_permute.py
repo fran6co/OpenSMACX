@@ -552,7 +552,7 @@ def permute_source(root: Path, target: str, *, image: Path, in_file=None, iterat
                         best, eh = value, found
                 continue
             original = originals.setdefault(None, original_asm(record, image))
-            if len(listing.code) > len(original.code):
+            if len(listing.code) > len(original.code) and not listing.bounded:
                 try:
                     if len(listing.code) not in originals:
                         originals[len(listing.code)] = original_asm(record, image, extent=len(listing.code))

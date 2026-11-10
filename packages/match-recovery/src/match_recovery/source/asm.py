@@ -74,6 +74,10 @@ class Listing:
                                      # `CodeReference` per DIR32/REL32 field,
                                      # so a masked field can still be asked
                                      # where it points - see `reference_mismatches`
+    bounded: bool = False            # compiled side only: longer than its
+                                     # original span, which must not be read
+                                     # past - a local function's neighbor is
+                                     # another body, never its switch table
 
     @property
     def instruction_bytes(self) -> int:
@@ -666,10 +670,6 @@ def _local_function_masked(raw: bytes, name: str, *,
     code = code[:end]
     if not code:
         raise ValueError("local function has no code after alignment padding")
-    # The legacy external comparer can extend the original read for switch
-    # tails. A local mapping must not borrow a neighboring original body.
-    if original_extent is not None and len(code) > original_extent:
-        raise ValueError("local function exceeds its explicit original image span")
     masked = set()
     for relocation in relocations:
         if not 0 <= relocation.offset <= len(code) - 4:
@@ -678,7 +678,20 @@ def _local_function_masked(raw: bytes, name: str, *,
         if field & masked:
             raise ValueError("local function has overlapping relocations")
         masked.update(field)
+    # The legacy external comparer can extend the original read for switch
+    # tails. A local mapping must not borrow a neighboring original body, so
+    # a longer candidate is measured against its own span only: a mismatch.
+    if original_extent is not None and len(code) > original_extent:
+        raise LocalExtentExceeded(code, frozenset(masked))
     return code, frozenset(masked)
+
+
+class LocalExtentExceeded(ValueError):
+    """A local candidate longer than its original span; compare unextended."""
+
+    def __init__(self, code: bytes, mask: frozenset[int]):
+        super().__init__("local function exceeds its explicit original image span")
+        self.code, self.mask = code, mask
 
 
 def _coff_function_masked(obj: bytes, symbol: str, emitted: str = "",
@@ -1059,8 +1072,12 @@ def subject_asm(obj: bytes, record: DecompilationState,
                 "complete function measurement requires one original image span "
                 "or a supported independently rooted EH region pair: " + str(error)) from error
         return RegionCandidate(obj, wanted, flags, _mapping_identity(record))
-    code, mask = _coff_function_masked(obj, record.name, record.symbol, spans=record.image_spans)
-    return Listing(code=code, base=record.address, mask=mask, flags=flags,
+    bounded = False
+    try:
+        code, mask = _coff_function_masked(obj, record.name, record.symbol, spans=record.image_spans)
+    except LocalExtentExceeded as longer:
+        code, mask, bounded = longer.code, longer.mask, True
+    return Listing(code=code, base=record.address, mask=mask, flags=flags, bounded=bounded,
                    references=_subject_references(obj, record, len(code)))
 
 
@@ -1557,7 +1574,7 @@ def compare_subject(record: DecompilationState, exe: Path | str,
         raise SpanComparisonRefused(
             "complete function comparison requires one original image span")
     original = original_asm(record, exe)
-    if len(compiled.code) > len(original.code):
+    if len(compiled.code) > len(original.code) and not compiled.bounded:
         try:
             original = original_asm(record, exe, extent=len(compiled.code))
         except ValueError:
@@ -1867,7 +1884,7 @@ def _diagnostic_listings(obj: bytes, record: DecompilationState, exe: Path,
     if len(spans) == 1:
         compiled = subject_asm(obj, record, label)
         original = original_asm(record, exe)
-        if len(compiled.code) > len(original.code):
+        if len(compiled.code) > len(original.code) and not compiled.bounded:
             try:
                 original = original_asm(record, exe, extent=len(compiled.code))
             except ValueError:
