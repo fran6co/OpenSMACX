@@ -235,8 +235,10 @@ def select_bindings(view: dict, selected: frozenset[str], component_targets: dic
     # Quarantine the parent before constructing external targets: the later
     # fragment pass may refuse a parent body but cannot withdraw a published
     # target from callers or data initializers.
+    # An unrecognized relation shape names no parent; the candidate itself
+    # still carries the relation and is refused below, never resolved.
     fragment_parents = {
-        (relation["parent_address"], relation["parent_symbol"])
+        (relation.get("parent_address"), relation.get("parent_symbol"))
         for group in view["groups"] for entity in group["entities"]
         for item in entity["candidates"] if not item["seed"]
         if (relation := item.get("function_fragment")) is not None

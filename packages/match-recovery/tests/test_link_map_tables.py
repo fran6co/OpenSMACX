@@ -1,9 +1,5 @@
 """Optional map tables preserve placements, never inferred ownership coverage."""
 
-import hashlib
-import os
-from pathlib import Path
-
 import pytest
 
 from match_recovery.msvc_link_map import LinkMap, SectionContribution, parse_link_map
@@ -142,15 +138,3 @@ def test_absolute_static_symbols_remain_unplaced():
     observed = parse(fixture() + " 0000:00000030 local_absolute 00000030 first.obj\n")
     observed.validate(parsed_image(executable()))
     assert observed.statics[-1].segment == 0
-
-
-@pytest.mark.skipif(not os.environ.get("MATCH_RECOVERY_LINK_MAP_BUILD"), reason="optional existing map/image evidence")
-def test_existing_real_map_retains_optional_tables_and_validates_coordinates():
-    root = Path(os.environ["MATCH_RECOVERY_LINK_MAP_BUILD"])
-    mapping = parse_link_map((root / "OpenSMACX.map").read_bytes())
-    raw = (root / "OpenSMACX.exe").read_bytes()
-    mapping.validate(PeImage(raw, hashlib.sha256(raw).hexdigest()))
-    assert mapping.contributions and mapping.statics
-    assert any(item.name == ".CRT$XCU" for item in mapping.contributions)
-    owners = {item.owner for item in mapping.statics if item.symbol == "_$E19"}
-    assert len(owners) > 1

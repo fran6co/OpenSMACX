@@ -12,6 +12,8 @@ from .model import Span
 from .pdb_fixups import BoundFixups
 from .pe_coff import Coff, Symbol, weak_external
 
+_CODE = 0x00000020  # IMAGE_SCN_CNT_CODE
+
 
 def _root_reference(obj, target, root):
     """A direct definition or ordinary external declaration of this root.
@@ -43,7 +45,9 @@ def validate_fpo_object(obj, number, root, *, source_codeview=False):
     witness for callers to retain and compare.
     ``source_codeview`` permits siblings only after the complete native
     source-procedure validator proves their CodeView ownership. The default
-    linked path retains its existing single-child restriction.
+    linked path admits only associated code beside the FPO child (an EH cold
+    region, owned and verified by the linked region graph itself); any other
+    sibling metadata still needs the source CodeView proof.
     """
     if (type(source_codeview) is not bool or type(obj) is not Coff or type(number) is not int
             or not 1 <= number <= len(obj.sections)
@@ -58,7 +62,9 @@ def validate_fpo_object(obj, number, root, *, source_codeview=False):
             or len(section.relocations) != 1
             or obj.associations.get(number) != root.section
             or number in obj.associations.values()
-            or (not source_codeview and direct_children != [number])):
+            or (not source_codeview
+                and any(child != number and not obj.sections[child - 1].flags & _CODE
+                        for child in direct_children))):
         raise ValueError("unsupported associated FPO child")
     if source_codeview:
         from .linked_codeview import source_procedure

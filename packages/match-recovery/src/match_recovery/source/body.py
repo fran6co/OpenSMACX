@@ -12,6 +12,7 @@ from pathlib import PurePosixPath
 import re
 from typing import Mapping
 
+from ..generated_member_source import _unsupported_member_macro
 from . import reader
 from .mangled import identifier, qualified_name
 
@@ -209,7 +210,6 @@ def _in_class_definition(text: str, name: str):
         return f"{owner}: {len(classes)} class definitions found"
     members = classes[0]["members"]
     if destructor and not members:
-        from ..generated_member_source import _unsupported_member_macro
         if classes[0]["preprocessor"]:
             return f"{name}: class body has preprocessor-controlled members"
         if _unsupported_member_macro(classes[0]["code"], owner):
