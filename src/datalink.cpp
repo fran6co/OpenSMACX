@@ -1,3 +1,7 @@
+// WORKAROUND(noinline): the original Datalink TU calls StringStruct::StringStruct
+// (0x00401000) out of line from every StringList local, giving the drawers
+// their three-state EH layout (cold regions 0x00653712..0x0065384A).
+#define STRINGSTRUCT_CTOR_OUT_OF_LINE
 /*
  * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
  * Copyright (C) 2013-2021 Brendan Casey

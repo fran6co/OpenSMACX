@@ -1,3 +1,6 @@
+// WORKAROUND(noinline): this TU owns the out-of-line StringStruct constructor
+// body that Datalink calls (0x00401000); see datalink.cpp.
+#define STRINGSTRUCT_CTOR_OUT_OF_LINE
 /*
  * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
  * Copyright (C) 2013-2021 Brendan Casey
@@ -66,9 +69,14 @@
 
 // ORIGINAL: 0x00401000 ??0StringStruct@@QAE@H@Z 0x00401000-0x00401058 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:stringstruct-lifecycle-coverage", "Pinned original0x401000", "historical seed:src/recovered/00401000.cpp", "Real virtual-base construction and physical compiler-generated lifecycle symbols."], "reason": "Original constructor initializes five list fields after genuine virtual-base owner capture and table staging. The seed explicit integer is the compiler-supplied most-derived flag, not a source parameter. Real out-of-line constructor owns this entry; retain historical matching obligation."}
-// compile_context src/datalink.cpp
-// body src/stringstruct.h
 // symbol    ??0StringStruct@@QAE@XZ
+StringStruct::StringStruct() {
+    head_ = 0;
+    current_ = 0;
+    entry_count_ = 0;
+    current_position_ = 0;
+    allocator_ = 0;
+}
 
 // The original primary table uses these shared defaults. Hook names describe
 // their list role; the catalogue's unrelated class names are retained as seeds.

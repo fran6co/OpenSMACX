@@ -289,7 +289,10 @@ static_assert(sizeof(StringStruct) == 0x24,
               "StringStruct layout must match the original executable");
 
 // Shared by the standalone mapped entry and callers whose original
-// construction sequence contains these five stores inline.
+// construction sequence contains these five stores inline. A TU that defines
+// STRINGSTRUCT_CTOR_OUT_OF_LINE sees only the declaration and calls the
+// out-of-line 0x00401000 (Datalink owns that copy).
+#ifndef STRINGSTRUCT_CTOR_OUT_OF_LINE
 inline StringStruct::StringStruct() {
     head_ = 0;
     current_ = 0;
@@ -297,6 +300,7 @@ inline StringStruct::StringStruct() {
     current_position_ = 0;
     allocator_ = 0;
 }
+#endif
 
 class StringList : public StringStruct {
  public:
