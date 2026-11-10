@@ -735,9 +735,11 @@ inline uint32_t __cdecl code_at(uint32_t x, uint32_t y) {
     return map_loc(x, y)->bit2 >> 24;
 }
 
-// INLINE: the image has no cursor_dist - it open-codes what this names.
+// INLINE: the image has no cursor_dist out of line; its callers expand it
+// (action_destroy, action_home, action_airdrop, action_give: sar 1, not a
+// signed /2).
 inline int __cdecl cursor_dist(int x_point_a, int y_point_a, int x_point_b, int y_point_b) {
-    return (x_dist(x_point_a, x_point_b) + abs(y_point_a - y_point_b)) / 2;
+    return (x_dist(x_point_a, x_point_b) + abs(y_point_a - y_point_b)) >> 1;
 }
 
 MEASURED inline BOOL __cdecl is_ocean(int x, int y) {

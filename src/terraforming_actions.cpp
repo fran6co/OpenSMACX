@@ -1,6 +1,3 @@
-// stand-in: file-state lever. seek_id's visible header body flips a register
-// tie in action_give (0x004CEDE0); this TU never calls seek_id.
-#define STRINGSTRUCT_SEEK_ID_OUT_OF_LINE
 /*
  * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
  * Copyright (C) 2013-2021 Brendan Casey
@@ -910,11 +907,6 @@ char VehLabelBOMBFAILED[] = "BOMBFAILED";
 // RECOVERY_OBJECT: v2 0x00687D7C 0x00687D87 ?VehLabelBOMBFAILED2@@3PADA 0x004CAFD9
 char VehLabelBOMBFAILED2[] = "BOMBFAILED";
 
-// Inlined: action_destroy's halved neighbour reach.
-static inline int destroy_dist(int x_a, int y_a, int x_b, int y_b) {
-    return (x_dist(x_a, x_b) + abs(y_a - y_b)) >> 1;
-}
-
 // ORIGINAL: 0x004CAA50 ?action_destroy@@YAXHHHH@Z 0x004CAA50-0x004CB302
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004caa50.cpp", "recovery/tasks/mapwin-owner-coverage-wave.json", "Map byte+2 is val2; diplomatic treaty direction and callback rereads independently decoded from the pinned original."], "reason": "Recover the artillery and bombing destruction paths in their real vehicle owner, replacing the explicitly unfinished dependency while preserving its complete original span and all seed evidence."}
 // TRIED: Ghidra-structure translation with NetMsg::pop/Strings::get/ Console::focus receiver fixes (Ghidra flattened those three thiscalls away), boom()/whose_territory()/battle_fight()/ stack_check()/add_goal()/base_find() argument order verified against raw disasm one by one; compiles, MISMATCH #6 (early - likely the isAssault/flag18 bool-store or veh_skip's arg push order relative to the OR-mask store).
@@ -951,7 +943,7 @@ void __cdecl action_destroy(int veh_id, int bits, int x, int y) {
             for (int i = 1; i < 25; i++) {
                 int x_radius = wrap_map_x(Vehs[veh_id].x + RadiusOffsetX[i]);
                 int y_radius = Vehs[veh_id].y + RadiusOffsetY[i];
-                if (on_map(x_radius, y_radius) && destroy_dist(x_radius, y_radius, x, y) <= 2) {
+                if (on_map(x_radius, y_radius) && cursor_dist(x_radius, y_radius, x, y) <= 2) {
                     int veh_id_stack = stack_fix(veh_at(x_radius, y_radius));
                     if (veh_id_stack >= 0 && stack_check(veh_id_stack, 15, owner, -1, -1)) {
                         battle_fight(veh_id, i, 1, 1, 0);
@@ -1329,20 +1321,9 @@ void __cdecl action_road_to(int veh_id) {
     }
 }
 
-// The halved map distance action_home, action_airdrop and action_arty expand
-// in place: arguments evaluate before the body, as the image's early
-// second-coordinate load shows. The same body serves all three; the two-line
-// spelling (not a chain of named locals) is what puts action_airdrop's and
-// action_arty's register rotation on the image's.
-// WORKAROUND(decl): same body as destroy_dist above, kept as a second
-// TU-local definition. Merging the two (one helper for all four callers)
-// leaves these four unchanged but flips the register tie in action_give at
-// 0x004CF103 (the file-state lever described at the top of this file).
-// Both stand in for an unidentified header inline; map.h's cursor_dist
-// divides with `/ 2` and compiles differently.
-static inline int home_dist(int x_a, int y_a, int x_b, int y_b) {
-    return (x_dist(x_a, x_b) + abs(y_a - y_b)) >> 1;
-}
+// action_destroy, action_home, action_airdrop and action_arty expand map.h's
+// cursor_dist in place: arguments evaluate before the body, as the image's
+// early second-coordinate load shows.
 
 // action_home's airbase-ring wrap: the image tests the flat bit first.
 static inline int home_wrap_x(int x) {
@@ -1426,7 +1407,7 @@ int __cdecl action_home(int veh_id, int flags) {
         if (flags == 2 && (Bases[base_id].state & BSTATE_UNK_200000)) {
             continue;
         }
-        const int dist = home_dist(veh_x, veh_y, Bases[base_id].x, Bases[base_id].y);
+        const int dist = cursor_dist(veh_x, veh_y, Bases[base_id].x, Bases[base_id].y);
         if ((Vehs[veh_id].state & VSTATE_UNK_200)
             && Vehs[veh_id].order_auto_type == ORDERA_ON_ALERT
             && Bases[base_id].x == Vehs[veh_id].waypoint_x[1]
@@ -1451,13 +1432,13 @@ int __cdecl action_home(int veh_id, int flags) {
                 && (has_abil(Vehs[other_id].proto_id, ABL_CARRIER)
                     || (VehPrototypes[Vehs[other_id].proto_id].plan == PLAN_SUPPLY_CONVOY
                         && get_triad(other_id) == TRIAD_AIR))) {
-                int dist = home_dist(veh_x, veh_y, Vehs[other_id].x, Vehs[other_id].y);
+                int dist = cursor_dist(veh_x, veh_y, Vehs[other_id].x, Vehs[other_id].y);
                 if ((flags & 1) || flags == 4) {
                     if (!is_human(faction_id)) {
                         dist += (int)speed(other_id, false) / Rules.move_rate_roads;
                     }
                     if (VehPrototypes[Vehs[other_id].proto_id].plan == PLAN_SUPPLY_CONVOY
-                        && home_dist(veh_x, veh_y, Vehs[other_id].x, Vehs[other_id].y)
+                        && cursor_dist(veh_x, veh_y, Vehs[other_id].x, Vehs[other_id].y)
                             > veh_moves(veh_id) / Rules.move_rate_roads) {
                         continue; // the convoy is not reachable this turn
                     }
@@ -1501,7 +1482,7 @@ int __cdecl action_home(int veh_id, int flags) {
                     continue;
                 }
             }
-            const int dist = home_dist(veh_x, veh_y, x_radius, y_radius);
+            const int dist = cursor_dist(veh_x, veh_y, x_radius, y_radius);
             if ((Vehs[veh_id].state & VSTATE_UNK_200) && Vehs[veh_id].order_auto_type == ORDERA_ON_ALERT
                 && !Vehs[veh_id].dmg_incurred && x_radius == Vehs[veh_id].waypoint_x[1]
                 && y_radius == Vehs[veh_id].waypoint_y[1] && dist <= max_dist) {
@@ -1631,7 +1612,7 @@ char VehLabelMADEAIRDROP2[] = "MADEAIRDROP";
 int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
     NetDaemonNet.channels_[0].leading_words_[3] = mode;
     const int faction_id = Vehs[veh_id].faction_id;
-    if (home_dist(Vehs[veh_id].x, Vehs[veh_id].y, x, y) > drop_range(faction_id)) {
+    if (cursor_dist(Vehs[veh_id].x, Vehs[veh_id].y, x, y) > drop_range(faction_id)) {
         if (NetDaemonNet.channels_[0].leading_words_[3] & 1 && faction_id == ConsoleGlobal.faction_id_) {
             parse_num(0, Rules.max_airdrop_sans_orb_insert);
             if (Players[faction_id].rule_flags & 0x80) {
@@ -1885,7 +1866,7 @@ void __cdecl action_arty(int veh_id, int x, int y) {
         NetMsgPrimary.pop("UNITMOVED", 5000, 0, nullptr);
         return;
     }
-    if (home_dist(Vehs[veh_id].x, Vehs[veh_id].y, x, y) > 2) {
+    if (cursor_dist(Vehs[veh_id].x, Vehs[veh_id].y, x, y) > 2) {
         NetMsgPrimary.pop("OUTOFRANGE", 5000, 0, nullptr);
         return;
     }
