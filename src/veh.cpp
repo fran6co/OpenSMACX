@@ -1116,24 +1116,39 @@ void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer) {
         strcat(stat, StringTable.get(PlansFullName[3])); // 'Explore/Defense'
         strcat(stat, ", ");
     } else if (Weapon[VehPrototypes[proto_id].weapon_id].mode < 3) { // Projectile, energy, missile
-        strcat(stat, StringTable.get((VehPrototypes[proto_id].plan != PLAN_DEFENSIVE || (get_proto_offense_rating(proto_id) >= 0 && get_proto_offense_rating(proto_id) <= get_proto_defense_rating(proto_id)))
-            ? PlansShortName[VehPrototypes[proto_id].plan] : Labels.strings_ptr[312])); // 'Combat'
+        if (VehPrototypes[proto_id].plan != PLAN_DEFENSIVE || (get_proto_offense_rating(proto_id) >= 0 && get_proto_offense_rating(proto_id) <= get_proto_defense_rating(proto_id))) {
+            strcat(stat, StringTable.get(PlansShortName[VehPrototypes[proto_id].plan]));
+        } else {
+            strcat(stat, label_get(312)); // 'Combat'
+        }
         strcat(stat, ", ");
     }
-    if (get_proto_offense_rating(proto_id) < 0 || Weapon[VehPrototypes[proto_id].weapon_id].mode < 3) {
-        if (get_proto_offense_rating(proto_id) < 0) {
-            strcat(stat, StringTable.get(Labels.strings_ptr[196])); // 'Psi'
-        } else {
-            say_offense(stat, proto_id);
-        }
+    if (get_proto_offense_rating(proto_id) < 0) {
+        strcat(stat, label_get(196)); // 'Psi'
+        goto append_spacer;
+    } else if (Weapon[VehPrototypes[proto_id].weapon_id].mode < 3) {
+        say_offense(stat, proto_id);
+append_spacer:
         if (custom_spacer) {
             strcat(stat, custom_spacer);
         } else {
             strcat(stat, "/");
         }
-        goto append_defense_tail;
-    } else if (get_proto_defense_rating(proto_id) != 1 || VehPrototypes[proto_id].ability_flags || (Chassis[VehPrototypes[proto_id].chassis_id].speed != 1
-        && (Weapon[VehPrototypes[proto_id].weapon_id].mode != WPN_MODE_TRANSPORT || VehPrototypes[proto_id].chassis_id != CHSI_FOIL))) {
+    } else {
+        if (get_proto_defense_rating(proto_id) == 1 && !VehPrototypes[proto_id].ability_flags && (Chassis[VehPrototypes[proto_id].chassis_id].speed == 1
+            || (Weapon[VehPrototypes[proto_id].weapon_id].mode == WPN_MODE_TRANSPORT && VehPrototypes[proto_id].chassis_id == CHSI_FOIL))) {
+            strcat(stat, StringTable.get(PlansFullName[Weapon[VehPrototypes[proto_id].weapon_id].mode]));
+            if (VehPrototypes[proto_id].plan == PLAN_NAVAL_TRANSPORT) {
+                strcat(stat, "(");
+                _itoa(VehPrototypes[proto_id].carry_capacity, num_buf, 10);
+                strcat(stat, num_buf);
+                strcat(stat, ")");
+            }
+            if (get_proto_triad(proto_id)) { // sea, air
+                strcat(stat, ", "); // Original separator; the later triad space remains.
+            }
+            goto append_triad;
+        }
         strcat(stat, StringTable.get(PlansShortName[Weapon[VehPrototypes[proto_id].weapon_id].mode]));
         if (VehPrototypes[proto_id].plan == PLAN_NAVAL_TRANSPORT) {
             strcat(stat, "(");
@@ -1142,28 +1157,23 @@ void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer) {
             strcat(stat, ")");
         }
         strcat(stat, ", ");
-append_defense_tail:
-        if (get_proto_defense_rating(proto_id) < 0) {
-            strcat(stat, StringTable.get(Labels.strings_ptr[196])); // 'Psi'
-        } else {
-            say_defense(stat, proto_id);
-        }
-        strcat(stat, custom_spacer ? custom_spacer : "/");
+    }
+    if (get_proto_defense_rating(proto_id) < 0) {
+        strcat(stat, label_get(196)); // 'Psi'
+    } else {
+        say_defense(stat, proto_id);
+    }
+    if (custom_spacer) {
+        strcat(stat, custom_spacer);
+    } else {
+        strcat(stat, "/");
+    }
+    {
         int speed = speed_proto(proto_id) / Rules.move_rate_roads;
         _itoa(speed, num_buf, 10);
         strcat(stat, num_buf);
-    } else {
-        strcat(stat, StringTable.get(PlansFullName[Weapon[VehPrototypes[proto_id].weapon_id].mode]));
-        if (VehPrototypes[proto_id].plan == PLAN_NAVAL_TRANSPORT) {
-            strcat(stat, "(");
-            _itoa(VehPrototypes[proto_id].carry_capacity, num_buf, 10);
-            strcat(stat, num_buf);
-            strcat(stat, ")");
-        }
-        if (get_proto_triad(proto_id)) { // sea, air
-            strcat(stat, ", "); // Original separator; the later triad space remains.
-        }
     }
+append_triad:
     if (get_proto_triad(proto_id) == TRIAD_SEA) {
         strcat(stat, " ");
         strcat(stat, StringTable.get(Labels.strings_ptr[163])); // 'Sea'
@@ -2080,6 +2090,17 @@ void __cdecl base_kill(int base_id);
 
 
 
+// WORKAROUND(inline): image 0x57C30D/0x57C728 lay the flat-map arm first at these two sites.
+static inline int wrap_map_x_flat_first(int x) {
+    if (MapIsFlat & 1) {
+        return x;
+    }
+    const int longitude_bounds = MapLongitudeBounds;
+    if (x < 0) return x + longitude_bounds;
+    if (x >= longitude_bounds) return x - longitude_bounds;
+    return x;
+}
+
 // ORIGINAL: 0x0057A660 ?goody_box@@YAHHH@Z 0x0057A660-0x0057CDE6
 // RECOVERY_BINDING: v1 {"evidence": ["task:goody-box-owner", "pinned:57A660..57CDE6 whole dispatcher; original two-int ABI, unused second parameter and seed findings preserved.", "pinned:A8D2 live vehicle x/y retry reload; spawned vehicle prototype/chassis triad read after veh_init; separate event9 and cases12..17 radius paths.", "pinned:B4D8..B874 relocation stack_veh/stack_put/render/focus/spot_all order;CC16..CDE6 retry/resource/overflow gates;A9A1 GameRules reload.", "source:existing Veh/PlayerData/Base/Map/technology declarations and bounded shared radius arrays; map-window public draw_tile_fixup APIs own original render calls.", "historical seed:src/unrecovered/0057a660.cpp mapping and parsed dispatch findings retained."], "reason": "Recover the complete original pod outcome dispatcher through source-owned vehicle, faction, base, technology and map state; retain original identity/spans and historical seed findings, without executable calls or raw storage aliases."}
 // Rewritten from the image 2026-11-08 (0.86 full-text): the redirect cases continue a real
@@ -2156,8 +2177,8 @@ reroll:
     switch (kind) {
     case 0: {
         const int roll = bounded_crt_random(is_sea + 3);
-        const int amount = (GameDataStateStorage.fields_.turn_current_num_ >= (is_sea ? 100 : 50)
-            ? 50 : 25) * (roll + 1);
+        const int amount = (GameDataStateStorage.fields_.turn_current_num_ < (is_sea ? 100 : 50)
+            ? 25 : 50) * (roll + 1);
         PlayersData[faction_id].energy_reserves += amount;
         if (is_local) {
             parse_num(0, amount);
@@ -2432,7 +2453,7 @@ reroll:
                 bit_set(tx, ty, 0x20, 1);
                 bit_set(tx, ty, 0x28805C, 0);
                 synch_bit(tx, ty, faction_id);
-                if (!spawned && spawn_ok == 1 && rand() % 2 && anything_at(tx, ty) == -1
+                if (!spawned && spawn_ok == 1 && rand() % 2 && anything_at(tx, ty) + 1 == 0
                     && ExpansionEnabled && !is_ocean(tx, ty)) {
                     veh_init(BSC_FUNGAL_TOWER, 0, tx, ty);
                     spawn_ok = 0;
@@ -2655,7 +2676,7 @@ reroll:
         int changed = 0;
         for (int i = 0; i < 9; i++) {
             if (i && !bounded_crt_random(3 - (which > 1))) continue;
-            const int tx = wrap_map_x(x + RadiusOffsetX[i]);
+            const int tx = wrap_map_x_flat_first(x + RadiusOffsetX[i]);
             const int ty = y + RadiusOffsetY[i];
             if (!on_map(tx, ty)) continue;
             if (i && map_loc(tx, ty)->bit & 0x100000) continue;
@@ -2757,7 +2778,7 @@ reroll:
         int spawned = 0;
         for (int i = 0; i < 8;) {
             const int dir = (GameDataStateStorage.fields_.turn_current_num_ + i) % 8;
-            const int tx = wrap_map_x(x + VehMoveDeltaX[dir]);
+            const int tx = wrap_map_x_flat_first(x + VehMoveDeltaX[dir]);
             const int ty = y + VehMoveDeltaY[dir];
             if (on_map(tx, ty) && is_ocean(tx, ty) == is_sea && anything_at(tx, ty) < 0) {
                 if (is_sea) {
