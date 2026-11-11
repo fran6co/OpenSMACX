@@ -100,7 +100,7 @@ int AiResearchBatchActive = 0;
 /*
 Purpose: Craft an output string related to a specific technology. For techIDs outside the standard
          range, craft a string related to world map, comm links or prototypes.
-// ORIGINAL: 0x005B9C40 ?say_tech@@YAXPADHH@Z 0x005B9C40-0x005B9EF0
+// ORIGINAL: 0x005B9C40 ?say_tech@@YAXPADHH@Z 0x005B9C40-0x005B9EF0 BYTE_EXACT
 // TRIED: call_diff shows this tree FEWER by 1 call (28 vs the image's 29) at every
 //   flag set; the image's own `calls` list has no target for tech_category, so it
 //   inlines `tech_category(tech_id)` at this one call site even though tech_category
@@ -1577,7 +1577,7 @@ BOOL __cdecl tech_is_preq(int preq_tech_id, int parent_tech_id, int range) {
 Purpose: Determine how valuable the specified techID is to a faction. This id either corresponds to
          a technology (0-88), another faction (89-96) or a prototype (97-608). The 3rd parameter
          determines whether a simplistic or extended calculation is required for a technology id.
-// ORIGINAL: 0x005BCBE0 ?tech_val@@YAHHHH@Z 0x005BCBE0-0x005BDC05
+// ORIGINAL: 0x005BCBE0 ?tech_val@@YAHHHH@Z 0x005BCBE0-0x005BDC05 BYTE_EXACT
 // LEVER: has_tech `__forceinline` (see tech_avail) applies here too - the image's own "calls"
 //   list has no 0x005B9F20, so it inlines has_tech at every one of this function's several
 //   call sites. Moved 21/1361 -> 26/1361 agreeing; still deep MISMATCH, unexplored past that -
@@ -2019,7 +2019,7 @@ static inline void tech_wizard_append_number(int value) {
 // registers and the normal edge leaves Popup::exec immediately before
 // RET. Keep that interpretation as seed history,
 // but do not promise a return value without a caller/result consumer.
-// ORIGINAL: 0x005BDE20 tech_wizard_unk1 0x005BDE20-0x005BE0F8 FILE
+// ORIGINAL: 0x005BDE20 tech_wizard_unk1 0x005BDE20-0x005BE0F8 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["task:tech-wizard-owner-oct5","Original 0x005BDE20-0x005BE0F8, 728-byte FILE body; complete original seed header/TRIED/call inventory retained beside this definition.","Pinned raw flow 0x5BDE20..0x5BE0F7: two negative guards; original popup stack arguments; technology lookup and icon calls; normal tail calls second Popup::exec before register/frame restore and RET.","Technology table 0x94F358 stride 0x2C; lookup fields growth +0x14, tech +0x18, wealth +0x1C. Native strict ranking: result1 when growth<wealth && wealth>tech; result0 when growth>wealth && growth>tech; else result2, after sum/equal-ID result9 path.","Popup receiver member evidence: caller_sprite_ +0x2144; Dialogs +0x21D0; SpriteBox +0x2240; SpriteList entry_count +0x2274.","Native pointer cell 0x691B18 selects WIZARD text at 0x691B94; neighboring TUTOR caption uses a distinct cell/text owner.","Seed catalog lists zero direct callers; mapped caller search does not establish absence of indirect callers. Five-argument cdecl stack shape and typed Popup* source parameters are provisional; no return-value contract is asserted."],"reason":"Recover the complete helper through existing typed source owners, preserving the pinned branches, calls, side-effect order and original historical evidence. The source home is a technology-helper grouping, not a claimed historical translation-unit boundary. No new match, direct-caller, or game-acceptance claim."}
 // symbol    _tech_wizard_unk1
 // TRIED: `void` return instead of `int 0`; splitting the two negative-parameter guards into separate `if`s instead of `||` - neither moved the divergence, which sits at #4 (`mov ebx,[ebp+0x10]` vs a hoisted `xor ebx,ebx`), already before the first call; likely register allocation pressure from the many later 0-argument pushes, not the guard shape. Control flow, field offsets (field_2144_, dialogs_+0x2274/+0x2240) and the lookupA/2+lookupB+lookupMid tie-break were hand-traced from the raw disasm, not Ghidra's decompile.
