@@ -129,7 +129,7 @@ int __cdecl popt(char *caption, const char *label, int value, char *text, int fl
     return result;
 }
 
-// ORIGINAL: 0x0048C360 ?popv@@YAHPADPBDHH@Z 0x0048C360-0x0048C648;0x00658337-0x00658411
+// ORIGINAL: 0x0048C360 ?popv@@YAHPADPBDHH@Z 0x0048C360-0x0048C648;0x00658337-0x00658411 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0048c360.cpp: canonical original identity, complete spans and retained historical obligations", "source:src/basepop.h: real owned Dialogs, Sprite and draw callback contract", "source:src/popup.h: Popup lifetime and start interface"], "reason": "The original vehicle popup owns real Popup and Sprite locals; original48C3D0..48C400 selects caller picture when the SpriteBox list is empty but always passes the local Sprite to its embedded SpriteBox."}
 // TRIED: Popup popup; Sprite sprite; as real locals (LEVER 1) reproduce the SEH frame/alloca/destructor cascade shape; MISMATCH #14 remains because the ~20 close()/dtor calls after popup.start() are done via raw ebp-relative reinterpret_cast rather than named embedded members (BasePop's dialogs_ region isn't typed granularly enough here to let the calls fall out of automatic C++ destruction).
 int __cdecl popv(char *caption, const char *label, int vehicle, int flags) {

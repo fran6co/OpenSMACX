@@ -558,7 +558,7 @@ Purpose: Say whether a faction may call the planetary council this turn:
          otherwise some other live non-alien faction must share a
          treaty-or-vendetta status bit with the caller.
 
-// ORIGINAL: 0x0052C670 ?can_call_council@@YAHHH@Z 0x0052C670-0x0052C87D
+// ORIGINAL: 0x0052C670 ?can_call_council@@YAHHH@Z 0x0052C670-0x0052C87D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned 0x52C670..0x52C87D council caller and message paths", "source:src/council.h already declares can_call_council and src/council.cpp owns CouncilPbemGate", "0x009A64E9 is byte 1 of GameDataStateStorage.fields_.lock_masks_.enable_mask_; use its named alive_mask_ view", "0x00939284 is ConsoleGlobal.faction_id_ at member offset 0x23BD4", "pinned PE .data bounded literals including NUL: 0x68C020 solar_sm.pcx through 0x68C02D; 0x68C030 SUNSPOTSNO2 through 0x68C03B; 0x68C03C COUNCILHOT through 0x68C046; 0x68C048 council_sm.pcx through 0x68C056; 0x68C058 COUNCILNEEDALL through 0x68C066. No emitted C++ data symbol is asserted before root's fresh physical-symbol observation."], "reason": "council admission query in the existing council owner"}
 // TRIED: MISMATCH #41 'mov' vs 'and', not chased further. The loop's triple early-exit (0x93f660==0 / two bit-mask misses) is a `goto blocked;` out of the for-loop rather than a `continue`, matching that all three targets jump clean out of the scan (not to its per-iteration increment).
 // size      525 bytes
