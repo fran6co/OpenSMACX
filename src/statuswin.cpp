@@ -1544,7 +1544,7 @@ static const char *vehicle_order_rule_text(LPSTR encoded_id) {
 
 /*
 Purpose: Generate an output string for the specified unit's morale.
-// ORIGINAL: 0x004B3FD0 ?say_morale@@YAXPADHH@Z 0x004B3FD0-0x004B43BF
+// ORIGINAL: 0x004B3FD0 ?say_morale@@YAXPADHH@Z 0x004B3FD0-0x004B43BF BYTE_EXACT
 // LEVER: std::string -> strcat, matching the say_stats family (calls went
 //        from 16, mostly basic_string internals, to 10; strcat count now
 //        exactly 7, matching the image). TRIED: crèche/brood-pit was
