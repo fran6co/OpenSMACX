@@ -813,6 +813,10 @@ target_compile_options(OpenSMACX PRIVATE $<$<COMPILE_LANGUAGE:CXX>:/W4>)
 # measured functions (faction's encounter, console_commands'
 # corner_the_market) match only unpooled. VC6 has no /Gf-, so /O2 cannot be
 # global. Their recovery recipes already keep /Oy-, so /Oy is not listed.
+# OPENSMACX_UNPOOLED_OY_SOURCES are unpooled units that, unlike those, keep
+# frame-pointer omission: net_class's send_packet_type stores its identical
+# "Oh no!! Send failed!" literal twice (0x697700, 0x697738) and its measured
+# functions address arguments through ESP, so /O2's /Oy is listed explicitly.
 # The profile is prepended so each unit's own options (/Oy-, /Oi-, /Ob1, /Z7)
 # still follow it; /Ob2 follows the profile because /O2 alone means /Ob1.
 set(OPENSMACX_UNPOOLED_SOURCES
@@ -830,6 +834,8 @@ set(OPENSMACX_UNPOOLED_SOURCES
     src/veh.cpp
     src/game.cpp
     src/datalink.cpp)
+set(OPENSMACX_UNPOOLED_OY_SOURCES
+    src/net_class.cpp)
 function(opensmacx_apply_optimization target)
     get_target_property(target_sources ${target} SOURCES)
     get_target_property(target_dir ${target} SOURCE_DIR)
@@ -842,6 +848,8 @@ function(opensmacx_apply_optimization target)
         cmake_path(RELATIVE_PATH absolute BASE_DIRECTORY "${PROJECT_SOURCE_DIR}" OUTPUT_VARIABLE relative)
         if(relative IN_LIST OPENSMACX_UNPOOLED_SOURCES)
             set(profile /Og /Oi /Ot /Gs /Gy /Ob2)
+        elseif(relative IN_LIST OPENSMACX_UNPOOLED_OY_SOURCES)
+            set(profile /Og /Oi /Ot /Oy /Gs /Gy /Ob2)
         else()
             set(profile /O2 /Ob2)
         endif()
