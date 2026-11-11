@@ -8800,7 +8800,7 @@ int __stdcall Buffer::probe_pcx(const char *filename, Palette *palette,
 // RECOVERY_OBJECT: v1 0x00696BF4 ?BufferPreferActivePalette@@3HA
 int BufferPreferActivePalette = 1;
 
-// ORIGINAL: 0x005D98F0 sub_5d98f0 0x005D98F0-0x005D9BD7 FILE
+// ORIGINAL: 0x005D98F0 sub_5d98f0 0x005D98F0-0x005D9BD7 FILE BYTE_EXACT
 // symbol    ?copy_scaled@Buffer@@QAEHPAV1@PAUtagRECT@@1@Z
 // TRIED: plain extern "C" __stdcall(a1,a2,a3) per IDA's guess - landed as Buffer::sub_5d98f0(Buffer *srcBuf, RECT *srcRect, RECT *destRect) __thiscall instead: `this`(edi) drives the same HDC-acquire/refcount pattern as srcBuf, and only srcRect/ destRect are null-checked (srcBuf is checked separately, non-fatally). slot001 is plain VCall (no push, this in ecx); slot017/026 are COM-style (this explicitly pushed as arg 0) despite reusing the same ecx register - frame differs from #3 on, not pursued further given the size of this function.
 // WORKAROUND(inline): copy_scaled 0x005D98F0 calls source->release_hdc(1) at
@@ -8902,7 +8902,7 @@ int Buffer::copy_to_window(Win *target, int source_x, int source_y,
     return 0;
 }
 
-// ORIGINAL: 0x005D9FB0 sub_5d9fb0 0x005D9FB0-0x005DA328 FILE
+// ORIGINAL: 0x005D9FB0 sub_5d9fb0 0x005D9FB0-0x005DA328 FILE BYTE_EXACT
 // symbol    ?copy_scaled_to_window@Buffer@@QAEHPAVWin@@PAUtagRECT@@1@Z
 // TRIED: MISMATCH #4 (mov vs push, prologue register scheduling) - `this` confirmed as Buffer* (field offsets 0x50/0x54/0x58/ 0x60/0x64/0x68/0x4a4/0x30 all match src/buffer.h exactly). The device-context acquire/release here is byte-identical to the already-recovered Buffer::get_hdc()/release_hdc(1), and the palette-refresh block matches Buffer::sync_to_palette() (src/buffer.cpp) field-for-field, so the body calls those methods directly instead of re-inlining their logic.
 // The original computes but does not consume the source clip intersection.
