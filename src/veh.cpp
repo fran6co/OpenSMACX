@@ -371,14 +371,52 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
             if (!same) {
                 gendered = 1;
             }
-            name_proto_suffix(output, exhausted);
+            {
+                char *found = 0;
+                do {
+                    found = strstr(found ? found + 1 : output, StringTable.get(Labels.strings_ptr[0xE5C / 4]));
+                } while (found && strstr(found + 1, StringTable.get(Labels.strings_ptr[0xE5C / 4])));
+                if (found && strlen(found) <= strlen(StringTable.get(Labels.strings_ptr[0xE5C / 4])) + 1) {
+                    char *last = &output[strlen(output) - 1];
+                    if (*last >= '2' && *last < '9') {
+                        (*last)++;
+                    } else {
+                        exhausted = 1;
+                    }
+                } else {
+                    char number[80];
+                    strcat(output, " ");
+                    strcat(output, StringTable.get(Labels.strings_ptr[0xE5C / 4]));
+                    _itoa(2, number, 10);
+                    strcat(output, number);
+                }
+            }
             proto_id = -1;
         }
         // BUG(original): after a restart proto_id is -1 here, so this reads
         // the name slot just before VehPrototypes[0].
         if (!same && !strcmp(alternate, VehPrototypes[proto_id].veh_name)) {
             gendered = 0;
-            name_proto_suffix(alternate, exhausted);
+            {
+                char *found = 0;
+                do {
+                    found = strstr(found ? found + 1 : alternate, StringTable.get(Labels.strings_ptr[0xE5C / 4]));
+                } while (found && strstr(found + 1, StringTable.get(Labels.strings_ptr[0xE5C / 4])));
+                if (found && strlen(found) <= strlen(StringTable.get(Labels.strings_ptr[0xE5C / 4])) + 1) {
+                    char *last = &alternate[strlen(alternate) - 1];
+                    if (*last >= '2' && *last < '9') {
+                        (*last)++;
+                    } else {
+                        exhausted = 1;
+                    }
+                } else {
+                    char number[80];
+                    strcat(alternate, " ");
+                    strcat(alternate, StringTable.get(Labels.strings_ptr[0xE5C / 4]));
+                    _itoa(2, number, 10);
+                    strcat(alternate, number);
+                }
+            }
             proto_id = -1;
         }
     }
@@ -1113,13 +1151,16 @@ void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer) {
     char num_buf[80];
     if (VehPrototypes[proto_id].plan == PLAN_RECONNAISANCE && get_proto_triad(proto_id) == TRIAD_LAND && get_proto_offense_rating(proto_id) == 1 && get_proto_defense_rating(proto_id) == 1
         && !VehPrototypes[proto_id].ability_flags) {
-        strcat(stat, StringTable.get(PlansFullName[3])); // 'Explore/Defense'
+        char *name = PlansFullName[3]; // 'Explore/Defense'
+        strcat(stat, StringTable.get(name));
         strcat(stat, ", ");
     } else if (Weapon[VehPrototypes[proto_id].weapon_id].mode < 3) { // Projectile, energy, missile
         if (VehPrototypes[proto_id].plan != PLAN_DEFENSIVE || (get_proto_offense_rating(proto_id) >= 0 && get_proto_offense_rating(proto_id) <= get_proto_defense_rating(proto_id))) {
-            strcat(stat, StringTable.get(PlansShortName[VehPrototypes[proto_id].plan]));
+            char *name = PlansShortName[VehPrototypes[proto_id].plan];
+            strcat(stat, StringTable.get(name));
         } else {
-            strcat(stat, label_get(312)); // 'Combat'
+            char *name = Labels.strings_ptr[312]; // 'Combat'
+            strcat(stat, StringTable.get(name));
         }
         strcat(stat, ", ");
     }
@@ -1137,7 +1178,8 @@ append_spacer:
     } else {
         if (get_proto_defense_rating(proto_id) == 1 && !VehPrototypes[proto_id].ability_flags && (Chassis[VehPrototypes[proto_id].chassis_id].speed == 1
             || (Weapon[VehPrototypes[proto_id].weapon_id].mode == WPN_MODE_TRANSPORT && VehPrototypes[proto_id].chassis_id == CHSI_FOIL))) {
-            strcat(stat, StringTable.get(PlansFullName[Weapon[VehPrototypes[proto_id].weapon_id].mode]));
+            char *full_name = PlansFullName[Weapon[VehPrototypes[proto_id].weapon_id].mode];
+            strcat(stat, StringTable.get(full_name));
             if (VehPrototypes[proto_id].plan == PLAN_NAVAL_TRANSPORT) {
                 strcat(stat, "(");
                 _itoa(VehPrototypes[proto_id].carry_capacity, num_buf, 10);
@@ -1149,7 +1191,10 @@ append_spacer:
             }
             goto append_triad;
         }
-        strcat(stat, StringTable.get(PlansShortName[Weapon[VehPrototypes[proto_id].weapon_id].mode]));
+        {
+            char *name = PlansShortName[Weapon[VehPrototypes[proto_id].weapon_id].mode];
+            strcat(stat, StringTable.get(name));
+        }
         if (VehPrototypes[proto_id].plan == PLAN_NAVAL_TRANSPORT) {
             strcat(stat, "(");
             _itoa(VehPrototypes[proto_id].carry_capacity, num_buf, 10);
@@ -1176,11 +1221,11 @@ append_spacer:
 append_triad:
     if (get_proto_triad(proto_id) == TRIAD_SEA) {
         strcat(stat, " ");
-        strcat(stat, StringTable.get(Labels.strings_ptr[163])); // 'Sea'
+        strcat(stat, label_get(163)); // 'Sea'
     }
     if (get_proto_triad(proto_id) == TRIAD_AIR) {
         strcat(stat, " ");
-        strcat(stat, StringTable.get(Labels.strings_ptr[162])); // 'Air'
+        strcat(stat, label_get(162)); // 'Air'
     }
     if (VehPrototypes[proto_id].reactor_id > 1) {
         strcat(stat, " ");

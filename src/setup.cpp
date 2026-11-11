@@ -348,363 +348,298 @@ int __cdecl get_plan(int faction_id, int plan) {
     return -1;
 }
 
-static int time_warp_find_prototype(int faction_id, int plan) {
-    const uint8_t faction_bit = static_cast<uint8_t>(1u << faction_id);
-    for (int scan_index = 0; scan_index < 128; ++scan_index) {
-        const int prototype_id = scan_index < 64
-            ? scan_index : faction_id * 64 + scan_index - 64;
-        const VehPrototype &prototype = VehPrototypes[prototype_id];
-        if ((prototype.flags & 1) == 0 ||
-            (prototype.obsolete_factions & faction_bit) != 0) continue;
-        if (prototype_id < 64 && !has_tech(prototype.preq_tech, faction_id)) continue;
-        if (prototype.plan == plan) return prototype_id;
-    }
-    return -1;
-}
 // ORIGINAL: 0x005AEDE0 ?time_warp@@YAXXZ 0x005AEDE0-0x005B0412
 // RECOVERY_BINDING: v1 {"evidence": ["Independent pinned full-span review by report_draw_labs_review; retained game-setup-owner-wave full body and actual-source controls for three profiles, land/aquatic sites, path modes and native relocation."], "reason": "Recover complete accelerated-start setup with typed faction, base, prototype, map and Path owners; preserve callback-sensitive region rereads and native facility/path order. External unfinished callees remain explicit."}
 // TRIED: MISMATCH #0 push/sub at prologue; full-body transcription from Ghidra hypothesis, corrected against raw disasm for: has_tech arg counts (Ghidra folded a dangling outer-call push into two call sites), Path::find(8 ints) called through g_00945b00, veh_lift/veh_drop split (veh_lift returns a value the mangled YAX hid; PROPOSAL: veh_lift should be `int veh_lift(int)`), and per-field pointer widths (short/byte) recovered from `movsx word/byte ptr` on every g_0097d0xx/g_009ab8xx/g_0096xxxx access since the scaffold's g_ globals are declared int* uniformly.
+// Rewritten from the image 2026-11-11 (0.70 -> 0.966): the nine prototype scans
+// are get_plan() expanded by /Ob2; research count, facility order, energy bonus
+// and ai_* field choices restored from the image.
 void __cdecl time_warp() {
-    // One vehicle id local ([ebp-8]) holds most veh_init results and the
-    // closing vehicle loop index; the smallest-base morale store reuses it.
-    int veh_id;
-    const int variation = rand() % 3;
     int scenario_turn;
     int initial_research;
     int research_adjustment;
     int expansion_count;
     int initial_population;
-    if (variation == 0) {
+    int base_id;
+    int veh_id;
+    int x;
+    int y;
+    // No default: the image leaves all five uninitialized outside 0..2.
+    switch (rand() % 3) {
+    case 0:
         scenario_turn = 30;
         initial_research = 6;
         research_adjustment = 2;
         expansion_count = 3;
         initial_population = 5;
-    } else if (variation == 1) {
+        break;
+    case 1:
         scenario_turn = 60;
         initial_research = 12;
         research_adjustment = 3;
         expansion_count = 4;
         initial_population = 6;
-    } else {
+        break;
+    case 2:
         scenario_turn = 80;
         initial_research = 16;
         research_adjustment = 4;
         expansion_count = 5;
         initial_population = 6;
+        break;
     }
 
     for (int faction_id = 1; faction_id < MaxPlayerNum; ++faction_id) {
-        const uint32_t alive_faction = 1u << (faction_id + 8);
-        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & alive_faction) == 0) continue;
-        const int starting_base_id = base_find(0, 0, faction_id);
-        if (starting_base_id < 0) continue;
+        if (!is_alive(faction_id)) continue;
+        base_id = base_find(0, 0, faction_id);
+        if (base_id < 0) continue;
+        Bases[base_id].population_size = static_cast<int8_t>(initial_population);
+        if (Players[faction_id].rule_talent) ++Bases[base_id].population_size;
+        if (Players[faction_id].rule_drone || Players[faction_id].rule_population)
+            --Bases[base_id].population_size;
+        int coast_placed = 0;
+        Bases[base_id].nutrients_accumulated = Bases[base_id].population_size * 10 / 2;
+        int start_region = region_at(Bases[base_id].x, Bases[base_id].y);
 
-        Base &starting_base = Bases[starting_base_id];
-        Player &player = Players[faction_id];
-        PlayerData &player_data = PlayersData[faction_id];
-        starting_base.population_size = static_cast<int8_t>(initial_population);
-        if (player.rule_talent != 0) ++starting_base.population_size;
-        if (player.rule_drone != 0 || player.rule_population != 0)
-            --starting_base.population_size;
-        starting_base.nutrients_accumulated =
-            static_cast<int>(starting_base.population_size) * 10 / 2;
-
-        const int starting_region = map_loc(starting_base.x, starting_base.y)->region;
-        const int wealth_sign = player_data.ai_wealth < 1
-            ? (player_data.ai_wealth >= 0 ? 0 : -1) : 1;
-        const int power_sign = player_data.ai_power < 1
-            ? (player_data.ai_power >= 0 ? 0 : -1) : 1;
-        const int research_advances =
-            (wealth_sign - power_sign) * research_adjustment + initial_research;
-
+        const int research_effect =
+            PlayersData[faction_id].soc_effect_base.values_[SocialEffect::RESEARCH];
+        const int morale_effect =
+            PlayersData[faction_id].soc_effect_base.values_[SocialEffect::MORALE];
+        int research_count =
+            ((research_effect > 0 ? 1 : (research_effect >= 0 ? 0 : -1))
+             - (morale_effect > 0 ? 1 : (morale_effect >= 0 ? 0 : -1)))
+            * research_adjustment + initial_research;
         AiResearchBatchActive = 1;
-        for (int advance = 0; advance < research_advances; ++advance) {
-            player_data.tech_id_researching = tech_ai(faction_id);
+        for (int advance = 0; advance < research_count; ++advance) {
+            PlayersData[faction_id].tech_id_researching = tech_ai(faction_id);
             tech_advance(faction_id);
         }
-        player_data.tech_accumulated = static_cast<int>(player_data.tech_achieved << 1);
+        PlayersData[faction_id].tech_ranking = PlayersData[faction_id].tech_achieved << 1;
         AiResearchBatchActive = 0;
-        player_data.tech_id_researching = -1;
+        PlayersData[faction_id].tech_id_researching = -1;
         consider_designs(faction_id);
 
-        set_fac(FAC_RECYCLING_TANKS, starting_base_id, 1);
-        set_fac(FAC_RECREATION_COMMONS, starting_base_id, 1);
-        if (player_data.ai_wealth != 0)
-            set_fac(FAC_ENERGY_BANK, starting_base_id, 1);
-        if (player_data.ai_power != 0)
-            set_fac(FAC_COMMAND_CENTER, starting_base_id, 1);
-        if (player_data.ai_growth != 0)
-            set_fac(FAC_NETWORK_NODE, starting_base_id, 1);
-
-        if (player_data.ai_fight != 0) {
-            int initial_foil;
-            if (ExpansionEnabled == 0 || (player.rule_flags & RFLAG_AQUATIC) == 0) {
-                initial_foil = BSC_UNITY_ROVER;
-            } else {
-                initial_foil = has_tech(VehPrototypes[BSC_UNITY_FOIL].preq_tech,
-                                        faction_id)
-                    ? BSC_TRANSPORT_FOIL : BSC_UNITY_FOIL;
-            }
-            veh_init(initial_foil, faction_id, starting_base.x, starting_base.y);
-            // Native pushes (facility, 1, starting-base-id) in this branch,
-            // unlike the ordinary facility stores immediately above.
-            set_fac(FAC_PERIMETER_DEFENSE, 1, starting_base_id);
+        set_fac(FAC_RECREATION_COMMONS, base_id, 1);
+        set_fac(FAC_RECYCLING_TANKS, base_id, 1);
+        if (PlayersData[faction_id].ai_wealth) set_fac(FAC_ENERGY_BANK, base_id, 1);
+        if (PlayersData[faction_id].ai_power) set_fac(FAC_COMMAND_CENTER, base_id, 1);
+        if (PlayersData[faction_id].ai_tech) set_fac(FAC_NETWORK_NODE, base_id, 1);
+        if (PlayersData[faction_id].ai_growth) {
+            if (ExpansionEnabled && (Players[faction_id].rule_flags & RFLAG_AQUATIC))
+                veh_init(has_tech(VehPrototypes[BSC_TRANSPORT_FOIL].preq_tech, faction_id)
+                             ? BSC_TRANSPORT_FOIL : BSC_UNITY_FOIL,
+                         faction_id, Bases[base_id].x, Bases[base_id].y);
+            else
+                veh_init(BSC_UNITY_ROVER, faction_id, Bases[base_id].x, Bases[base_id].y);
+            // Original bug (0x5AF0B2): facility and base id arguments swapped.
+            set_fac(FAC_PERIMETER_DEFENSE, 1, base_id);
         }
+        PlayersData[faction_id].energy_reserves +=
+            (PlayersData[faction_id].ai_wealth * 9 + PlayersData[faction_id].ai_growth * 5
+             + PlayersData[faction_id].ai_tech + 1) * 25;
 
-        // Starting unit selection first searches predefined designs, then
-        // the faction's 64-design bank. The scan is ordered, and technology
-        // is checked only for the predefined range.
-        const int plan_six_prototype = time_warp_find_prototype(faction_id, 6);
-        const BOOL has_foil_technology =
-            has_tech(VehPrototypes[BSC_UNITY_FOIL].preq_tech, faction_id);
-        int opening_prototype = time_warp_find_prototype(faction_id, 2);
-        if (opening_prototype < 0)
-            opening_prototype = time_warp_find_prototype(faction_id, 1);
-        if (opening_prototype < 0) opening_prototype = 2;
-        VehPrototypes[opening_prototype].flags |= 4;
-        int opening_vehicle = veh_init(opening_prototype, faction_id,
-                                       starting_base.x, starting_base.y);
-        Vehs[opening_vehicle].order = ORDER_HOLD;
-        ++Vehs[opening_vehicle].morale;
-        opening_vehicle = veh_init(opening_prototype, faction_id,
-                                   starting_base.x, starting_base.y);
-        Vehs[opening_vehicle].order = ORDER_HOLD;
-        const int third_prototype =
-            ExpansionEnabled == 0 || (player.rule_flags & RFLAG_AQUATIC) == 0 ? 1 : 4;
-        veh_id = veh_init(third_prototype, faction_id, starting_base.x, starting_base.y);
+        int naval_proto = get_plan(faction_id, PLAN_NAVAL_SUPERIORITY);
+        int foil_proto = has_tech(VehPrototypes[BSC_TRANSPORT_FOIL].preq_tech, faction_id)
+            ? BSC_TRANSPORT_FOIL : BSC_UNITY_FOIL;
+        int opening_proto = get_plan(faction_id, PLAN_DEFENSIVE);
+        if (opening_proto < 0) opening_proto = get_plan(faction_id, PLAN_COMBAT);
+        if (opening_proto < 0) opening_proto = BSC_SCOUT_PATROL;
+        VehPrototypes[opening_proto].flags |= 4;
+        int opening_veh = veh_init(opening_proto, faction_id,
+                                   Bases[base_id].x, Bases[base_id].y);
+        Vehs[opening_veh].order = ORDER_HOLD;
+        ++Vehs[opening_veh].morale;
+        opening_veh = veh_init(opening_proto, faction_id, Bases[base_id].x, Bases[base_id].y);
+        Vehs[opening_veh].order = ORDER_HOLD;
+        if (ExpansionEnabled && (Players[faction_id].rule_flags & RFLAG_AQUATIC))
+            veh_id = veh_init(BSC_SEA_FORMERS, faction_id, Bases[base_id].x, Bases[base_id].y);
+        else
+            veh_id = veh_init(BSC_FORMERS, faction_id, Bases[base_id].x, Bases[base_id].y);
 
-        const int plan_one_prototype = time_warp_find_prototype(faction_id, 1);
-        if (plan_one_prototype >= 0) {
-            VehPrototypes[plan_one_prototype].flags |= 4;
-            veh_id = veh_init(plan_one_prototype, faction_id,
-                              starting_base.x, starting_base.y);
+        int combat_proto = get_plan(faction_id, PLAN_COMBAT);
+        if (combat_proto >= 0) {
+            VehPrototypes[combat_proto].flags |= 4;
+            veh_id = veh_init(combat_proto, faction_id, Bases[base_id].x, Bases[base_id].y);
             ++Vehs[veh_id].morale;
-            if (plan_one_prototype == BSC_MIND_WORMS) Vehs[veh_id].morale = 2;
+            if (combat_proto == BSC_MIND_WORMS) Vehs[veh_id].morale = 2;
         }
 
-        const int plan_zero_prototype = time_warp_find_prototype(faction_id, 0);
-        if (plan_zero_prototype >= 0) {
-            VehPrototypes[plan_zero_prototype].flags |= 4;
-            if (player_data.net_random_event < 1 && player_data.ai_power == 0) {
-                // The native branch deliberately skips this plan-0 vehicle,
-                // then repeats its plan-1 scan and may add that design instead.
-                const int fallback = time_warp_find_prototype(faction_id, 1);
-                if (fallback >= 0) {
-                    VehPrototypes[fallback].flags |= 4;
-                    veh_id = veh_init(fallback, faction_id,
-                                      starting_base.x, starting_base.y);
-                    if (fallback == BSC_MIND_WORMS) Vehs[veh_id].morale = 2;
+        int offensive_proto = get_plan(faction_id, PLAN_OFFENSIVE);
+        if (offensive_proto >= 0) {
+            VehPrototypes[offensive_proto].flags |= 4;
+            if (PlayersData[faction_id].ai_fight <= 0 && !PlayersData[faction_id].ai_power) {
+                // Native skips the plan-0 unit and adds a plan-1 one, unflagged.
+                int fallback_proto = get_plan(faction_id, PLAN_COMBAT);
+                if (fallback_proto >= 0) {
+                    veh_id = veh_init(fallback_proto, faction_id,
+                                      Bases[base_id].x, Bases[base_id].y);
+                    if (fallback_proto == BSC_MIND_WORMS) Vehs[veh_id].morale = 2;
                 }
             } else {
-                veh_id = veh_init(plan_zero_prototype, faction_id,
-                                  starting_base.x, starting_base.y);
+                veh_id = veh_init(offensive_proto, faction_id,
+                                  Bases[base_id].x, Bases[base_id].y);
                 ++Vehs[veh_id].morale;
-                if (player_data.net_random_event > 0)
-                    veh_id = veh_init(plan_zero_prototype, faction_id,
-                                      starting_base.x, starting_base.y);
+                if (PlayersData[faction_id].ai_fight > 0)
+                    veh_id = veh_init(offensive_proto, faction_id,
+                                      Bases[base_id].x, Bases[base_id].y);
             }
         }
 
-        int starting_project;
-        int current_project_base;
+        int project;
         do {
-            starting_project = rand() % 8;
-            switch (starting_project) {
-            case 0: current_project_base = GameDataStateStorage.fields_.secret_project_.human_genome_project(); break;
-            case 1: current_project_base = GameDataStateStorage.fields_.secret_project_.command_nexus(); break;
-            case 2: current_project_base = GameDataStateStorage.fields_.secret_project_.weather_paradigm(); break;
-            case 3: current_project_base = GameDataStateStorage.fields_.secret_project_.merchant_exchange(); break;
-            case 5: current_project_base = GameDataStateStorage.fields_.secret_project_.citizens_defense_force(); break;
-            case 6: current_project_base = GameDataStateStorage.fields_.secret_project_.virtual_world(); break;
-            default: current_project_base = GameDataStateStorage.fields_.secret_project_.planetary_transit_system(); break;
-            }
-        } while (current_project_base != SP_Unbuilt || starting_project == 4 ||
-                 (starting_project == 5 && strcmp(player.filename, "HIVE") == 0));
-        switch (starting_project) {
-        case 0: GameDataStateStorage.fields_.secret_project_.human_genome_project() = starting_base_id; break;
-        case 1: GameDataStateStorage.fields_.secret_project_.command_nexus() = starting_base_id; break;
-        case 2: GameDataStateStorage.fields_.secret_project_.weather_paradigm() = starting_base_id; break;
-        case 3: GameDataStateStorage.fields_.secret_project_.merchant_exchange() = starting_base_id; break;
-        case 5: GameDataStateStorage.fields_.secret_project_.citizens_defense_force() = starting_base_id; break;
-        case 6: GameDataStateStorage.fields_.secret_project_.virtual_world() = starting_base_id; break;
-        default: GameDataStateStorage.fields_.secret_project_.planetary_transit_system() = starting_base_id; break;
-        }
+            project = rand() % 8;
+        } while (GameDataStateStorage.fields_.secret_project_.project_base[project] != SP_Unbuilt
+                 || project == 4
+                 || (project == 5 && !strcmp(Players[faction_id].filename, "HIVE")));
+        GameDataStateStorage.fields_.secret_project_.project_base[project] = base_id;
 
-        // The native expansion pass considers expansion_count - 1 rounds.
-        // A round chooses the best free site around any faction base, then
-        // establishes one new settlement and its opening garrison.
-        bool placed_coastal_group = false;
-        for (int expansion_round = 0; expansion_round < expansion_count - 1;
-             ++expansion_round) {
+        for (int round = 0; round < expansion_count - 1; ++round) {
             int best_score = 0;
-            int best_x = 0;
-            int best_y = 0;
-            int best_base_id = -1;
-            int scan_base_id = 0;
-            int last_base_x = 0;
-            int last_base_y = 0;
-            if (GameDataStateStorage.fields_.base_current_count_ > 0) {
-                for (; scan_base_id < GameDataStateStorage.fields_.base_current_count_; ++scan_base_id) {
-                    Base &search_base = Bases[scan_base_id];
-                    if (search_base.faction_id_current != faction_id) continue;
-                    const int center_x = search_base.x;
-                    const int center_y = search_base.y;
-                    last_base_x = center_x;
-                    last_base_y = center_y;
-                    const int center_region = map_loc(center_x, center_y)->region;
-                    for (int offset_index = 25; offset_index < 289; ++offset_index) {
-                        const int offset_distance = (offset_index - 25) * 4;
-                        const int offset_x = RadiusOffsetX[offset_index];
-                        const int offset_y = RadiusOffsetY[offset_index];
-                        int candidate_x = center_x + offset_x;
-                        if (!(MapIsFlat & 1)) {
-                            if (candidate_x < 0) candidate_x += MapLongitudeBounds;
-                            else if (candidate_x >= MapLongitudeBounds)
-                                candidate_x -= MapLongitudeBounds;
-                        }
-                        const int candidate_y = center_y + offset_y;
-                        if (candidate_x < 0 || candidate_x >= MapLongitudeBounds ||
-                            candidate_y < 0 || candidate_y >= MapLatitudeBounds) continue;
-
-                        Map *candidate = map_loc(candidate_x, candidate_y);
-                        const int altitude = candidate->climate & 0xE0;
-                        const uint8_t candidate_region = candidate->region;
-                        const bool aquatic = (player.rule_flags & RFLAG_AQUATIC) != 0;
-                        if (((candidate->bit & 0x20u) != 0 && altitude >= 0x40) ||
-                            (aquatic ? altitude >= 0x60 : altitude < 0x60)) continue;
-
-                        const uint8_t owner_state = candidate->val3;
-                        if ((owner_state & 0xC0) >= 0x41 && !aquatic) continue;
-                        int site_bonus = 0;
-                        if ((owner_state & 7) == 0 && (candidate->bit & 0x1000u) == 0) {
-                            site_bonus = candidate->climate >> 4;
-                            if (site_bonus == 0) {
-                                site_bonus = world_site(candidate_x, candidate_y,
-                                                        aquatic ? TRUE : FALSE);
-                                site_set(candidate_x, candidate_y, site_bonus);
+            int best_x;
+            int best_y;
+            for (base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_;
+                 ++base_id) {
+                if (Bases[base_id].faction_id_current != faction_id) continue;
+                x = Bases[base_id].x;
+                y = Bases[base_id].y;
+                int center_region = region_at(x, y);
+                // Rings 3..8: RadiusOffset entries 25..288.
+                for (int offset = 0; offset < 264; ++offset) {
+                    int cx = wrap_map_x(RadiusOffsetX[offset + 25] + x);
+                    int cy = RadiusOffsetY[offset + 25] + y;
+                    if (!on_map(cx, cy)) continue;
+                    Map *tile = map_loc(cx, cy);
+                    if ((tile->bit & BIT_FUNGUS)
+                        && (tile->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF) continue;
+                    if (((tile->climate & ~0x1F) < ALT_BIT_SHORE_LINE
+                         && !(Players[faction_id].rule_flags & RFLAG_AQUATIC))
+                        || ((tile->climate & ~0x1F) >= ALT_BIT_SHORE_LINE
+                            && (Players[faction_id].rule_flags & RFLAG_AQUATIC))) continue;
+                    if ((tile->val3 & ~0x3F) > 0x40
+                        && !(Players[faction_id].rule_flags & RFLAG_AQUATIC)) continue;
+                    int region = tile->region;
+                    int site;
+                    if (Players[faction_id].rule_flags & RFLAG_AQUATIC) {
+                        if (tile->val3 & 7) site = 0;
+                        else if (tile->bit & BIT_BASE_RADIUS) site = 0;
+                        else {
+                            site = tile->val2 >> 4;
+                            if (!site) {
+                                site = world_site(cx, cy, TRUE);
+                                site_set(cx, cy, site);
                             }
                         }
-
-                        int score = (static_cast<int>(search_base.population_size) + site_bonus) * 32;
-                        if (center_region != candidate_region)
-                            score /= 2;
-                        if (offset_distance > 0xDF && offset_distance < 0x240)
-                            score = (score * 3) / 2;
-                        if (offset_distance > 799)
-                            score -= (score + (score >> 31 & 3)) >> 2;
-                        if (offset_distance < 0x60) score /= 2;
-
-                        const int nearest_base_id = base_find(candidate_x, candidate_y);
-                        if (nearest_base_id != scan_base_id) {
-                            const Base &nearest_base = Bases[nearest_base_id];
-                            int dx = abs(candidate_x - nearest_base.x);
-                            if (!(MapIsFlat & 1) && dx > static_cast<int>(MapLongitude))
-                                dx = MapLongitudeBounds - dx;
-                            const int dy = abs(candidate_y - nearest_base.y);
-                            if (((dx + dy) & ~1) < 8) continue;
+                    } else {
+                        if (tile->val3 & 7) site = 0;
+                        else if (tile->bit & BIT_BASE_RADIUS) site = 0;
+                        else {
+                            site = tile->val2 >> 4;
+                            if (!site) {
+                                site = world_site(cx, cy, FALSE);
+                                site_set(cx, cy, site);
+                            }
                         }
-                        const Base &nearest_base = Bases[nearest_base_id];
-                        if (nearest_base.faction_id_current != faction_id) {
-                            if (map_loc(candidate_x, candidate_y)->region == candidate_region) continue;
-                            score /= 2;
-                        }
-                        if (score > best_score) {
-                            best_score = score;
-                            best_x = candidate_x;
-                            best_y = candidate_y;
-                            best_base_id = scan_base_id;
-                        }
+                    }
+                    int score = (Bases[base_id].population_size + site) * 32;
+                    if (center_region != region) score /= 2;
+                    if (offset >= 56 && offset < 144) score = score * 3 / 2;
+                    if (offset >= 200) score -= score / 4;
+                    if (offset < 24) score /= 2;
+                    int nearest = base_find(cx, cy);
+                    if (base_id != nearest
+                        && ((x_dist(cx, Bases[nearest].x) + abs(cy - Bases[nearest].y)) & ~1) < 8)
+                        continue;
+                    if (Bases[nearest].faction_id_current != faction_id) {
+                        // Original quirk: the same tile as `region`, so always equal.
+                        if (region_at(cx, cy) == region) continue;
+                        score /= 2;
+                    }
+                    if (score > best_score) {
+                        best_score = score;
+                        best_x = cx;
+                        best_y = cy;
                     }
                 }
             }
 
-            if (best_score <= 0) {
-                if (GameDataStateStorage.fields_.base_current_count_ > 0) {
-                    int smallest_base_id = -1;
-                    int smallest_population = 999;
-                    for (int candidate_base_id = 0;
-                         candidate_base_id < GameDataStateStorage.fields_.base_current_count_; ++candidate_base_id) {
-                        const Base &candidate_base = Bases[candidate_base_id];
-                        if (candidate_base.faction_id_current == faction_id &&
-                            candidate_base.population_size < smallest_population) {
-                            smallest_population = candidate_base.population_size;
-                            smallest_base_id = candidate_base_id;
-                        }
-                    }
-                    if (smallest_base_id >= 0) {
-                        Base &smallest_base = Bases[smallest_base_id];
-                        if (smallest_base.population_size < 6)
-                            smallest_base.population_size += 2;
-                        set_fac(FAC_RECREATION_COMMONS, smallest_base_id, 1);
-                        set_fac(FAC_RECYCLING_TANKS, smallest_base_id, 1);
-                        set_fac(FAC_COMMAND_CENTER, smallest_base_id, 1);
-                        int garrison = time_warp_find_prototype(faction_id, 1);
-                        if (garrison >= 0) {
-                            // Original bug (0x5AFDB2..0x5AFDC5): the result
-                            // is discarded and the earlier veh_id gets morale.
-                            veh_init(garrison, faction_id,
-                                     smallest_base.x, smallest_base.y);
-                            if (garrison == BSC_MIND_WORMS) Vehs[veh_id].morale = 2;
-                        }
-                        // Native 0x5AFD7F tests only the aquatic rule here.
-                        if ((player.rule_flags & RFLAG_AQUATIC) == 0)
-                            veh_init(0, faction_id, smallest_base.x, smallest_base.y);
-                        else
-                            veh_id = veh_init(21, faction_id, last_base_x, last_base_y);
-                        veh_init(7, faction_id, smallest_base.x, smallest_base.y);
-                    }
-                }
-                continue;
-            }
-
-            const int new_base_id = base_init(faction_id, best_x, best_y);
-            Base &new_base = Bases[new_base_id];
-            new_base.population_size = static_cast<int8_t>(expansion_count - expansion_round);
-            if (new_base.population_size > 2) set_fac(FAC_RECREATION_COMMONS, new_base_id, 1);
-            if (new_base.population_size > 3) set_fac(FAC_RECYCLING_TANKS, new_base_id, 1);
-            new_base.nutrients_accumulated = static_cast<int>(new_base.population_size) * 10 / 2;
-
-            veh_id = veh_init(opening_prototype, faction_id, best_x, best_y);
-            if (opening_prototype == BSC_MIND_WORMS) Vehs[veh_id].morale = 2;
-            Vehs[veh_id].order = ORDER_HOLD;
-            if (new_base.population_size > 2) {
-                veh_id = veh_init(opening_prototype, faction_id, best_x, best_y);
-                if (opening_prototype == BSC_MIND_WORMS) Vehs[veh_id].morale = 2;
+            if (best_score) {
+                int new_base_id = base_init(faction_id, best_x, best_y);
+                Bases[new_base_id].population_size =
+                    static_cast<int8_t>(expansion_count - round);
+                if (Bases[new_base_id].population_size > 2)
+                    set_fac(FAC_RECREATION_COMMONS, new_base_id, 1);
+                if (Bases[new_base_id].population_size > 3)
+                    set_fac(FAC_RECYCLING_TANKS, new_base_id, 1);
+                Bases[new_base_id].nutrients_accumulated =
+                    Bases[new_base_id].population_size * 10 / 2;
+                int garrison_proto = get_plan(faction_id, PLAN_DEFENSIVE);
+                if (garrison_proto < 0) garrison_proto = get_plan(faction_id, PLAN_COMBAT);
+                if (garrison_proto < 0) garrison_proto = BSC_SCOUT_PATROL;
+                veh_id = veh_init(garrison_proto, faction_id, best_x, best_y);
+                if (garrison_proto == BSC_MIND_WORMS) Vehs[veh_id].morale = 2;
                 Vehs[veh_id].order = ORDER_HOLD;
-            }
-            if (player_data.ai_fight != 0 || new_base.population_size > 3) {
-                const int defender_prototype =
-                    (player.rule_flags & RFLAG_AQUATIC) != 0 ? 4 : 1;
-                veh_id = veh_init(defender_prototype, faction_id, best_x, best_y);
-            }
-
-            const Map *new_base_tile = map_loc(best_x, best_y);
-            if (new_base_tile->region != starting_region && !placed_coastal_group &&
-                is_coast(Bases[best_base_id].x, Bases[best_base_id].y, FALSE)) {
-                for (int coast_index = 0; coast_index < 8; ++coast_index) {
-                    int coast_x = best_x + VehMoveDeltaX[coast_index];
-                    if (!(MapIsFlat & 1)) {
-                        if (coast_x < 0) coast_x += MapLongitudeBounds;
-                        else if (coast_x >= MapLongitudeBounds) coast_x -= MapLongitudeBounds;
+                if (Bases[new_base_id].population_size > 2) {
+                    veh_id = veh_init(garrison_proto, faction_id, best_x, best_y);
+                    if (garrison_proto == BSC_MIND_WORMS) Vehs[veh_id].morale = 2;
+                    Vehs[veh_id].order = ORDER_HOLD;
+                }
+                if (PlayersData[faction_id].ai_growth || Bases[new_base_id].population_size > 3) {
+                    if (Players[faction_id].rule_flags & RFLAG_AQUATIC)
+                        veh_id = veh_init(BSC_SEA_FORMERS, faction_id, best_x, best_y);
+                    else
+                        veh_id = veh_init(BSC_FORMERS, faction_id, best_x, best_y);
+                }
+                if (region_at(best_x, best_y) != start_region
+                    && is_coast(Bases[new_base_id].x, Bases[new_base_id].y, FALSE)
+                    && !coast_placed) {
+                    for (int dir = 0; dir < 8; ++dir) {
+                        int sx = wrap_map_x(VehMoveDeltaX[dir] + best_x);
+                        int sy = VehMoveDeltaY[dir] + best_y;
+                        if (on_map(sx, sy) && is_ocean(sx, sy)) {
+                            if (naval_proto >= 0) {
+                                VehPrototypes[naval_proto].flags |= 4;
+                                ++Vehs[veh_init(naval_proto, faction_id, sx, sy)].morale;
+                            }
+                            veh_init(foil_proto, faction_id, sx, sy);
+                            veh_id = veh_init(BSC_UNITY_ROVER, faction_id, sx, sy);
+                            sleep(veh_id);
+                            coast_placed = 1;
+                            break;
+                        }
                     }
-                    const int coast_y = best_y + VehMoveDeltaY[coast_index];
-                    if (coast_x < 0 || coast_x >= MapLongitudeBounds || coast_y < 0 ||
-                        coast_y >= MapLatitudeBounds) continue;
-                    if ((map_loc(coast_x, coast_y)->climate & 0xE0) >= 0x60) continue;
-                    if (plan_six_prototype >= 0) {
-                        VehPrototypes[plan_six_prototype].flags |= 4;
-                        const int native_vehicle = veh_init(plan_six_prototype, faction_id,
-                                                             coast_x, coast_y);
-                        ++Vehs[native_vehicle].morale;
+                }
+            } else {
+                int smallest_id = -1;
+                int smallest_pop = 999;
+                for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; ++i) {
+                    if (Bases[i].faction_id_current == faction_id
+                        && Bases[i].population_size < smallest_pop) {
+                        smallest_pop = Bases[i].population_size;
+                        smallest_id = i;
                     }
-                    veh_init(has_foil_technology ? BSC_TRANSPORT_FOIL : BSC_UNITY_FOIL,
-                             faction_id, coast_x, coast_y);
-                    veh_id = veh_init(BSC_UNITY_ROVER, faction_id,
-                                      coast_x, coast_y);
-                    sleep(veh_id);
-                    placed_coastal_group = true;
-                    break;
+                }
+                if (smallest_id >= 0) {
+                    if (Bases[smallest_id].population_size < 6)
+                        Bases[smallest_id].population_size += 2;
+                    set_fac(FAC_RECREATION_COMMONS, smallest_id, 1);
+                    set_fac(FAC_RECYCLING_TANKS, smallest_id, 1);
+                    set_fac(FAC_COMMAND_CENTER, smallest_id, 1);
+                    int extra_proto = get_plan(faction_id, PLAN_COMBAT);
+                    if (extra_proto >= 0) {
+                        // Original bug (0x5AFDB2..0x5AFDC5): result discarded,
+                        // the previous veh_id gets the morale.
+                        veh_init(extra_proto, faction_id,
+                                 Bases[smallest_id].x, Bases[smallest_id].y);
+                        if (extra_proto == BSC_MIND_WORMS) Vehs[veh_id].morale = 2;
+                    }
+                    // Original bug (0x5AFD81): the sea pod uses the last scanned
+                    // base centre x/y (possibly stale/uninitialized), not the base.
+                    if (Players[faction_id].rule_flags & RFLAG_AQUATIC)
+                        veh_id = veh_init(BSC_SEA_ESCAPE_POD, faction_id, x, y);
+                    else
+                        veh_init(BSC_COLONY_POD, faction_id,
+                                 Bases[smallest_id].x, Bases[smallest_id].y);
+                    veh_init(7, faction_id, Bases[smallest_id].x, Bases[smallest_id].y);
                 }
             }
         }
@@ -712,82 +647,52 @@ void __cdecl time_warp() {
         AiResearchBatchActive = 1;
         reset_territory();
         enemy_strategy(faction_id);
-        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
-            Base &base = Bases[base_id];
-            if (base.faction_id_current != faction_id) continue;
-            for (int synch_radius_index = 0; synch_radius_index < 81; ++synch_radius_index) {
-                int radius_x = base.x + RadiusOffsetX[synch_radius_index];
-                if (!(MapIsFlat & 1)) {
-                    if (radius_x < 0) radius_x += MapLongitudeBounds;
-                    else if (radius_x >= MapLongitudeBounds)
-                        radius_x -= MapLongitudeBounds;
-                }
-                const int radius_y = base.y + RadiusOffsetY[synch_radius_index];
-                if (radius_x < 0 || radius_x >= MapLongitudeBounds || radius_y < 0 ||
-                    radius_y >= MapLatitudeBounds) continue;
-                Map *tile = map_loc(radius_x, radius_y);
-                tile->visibility |= static_cast<uint8_t>(1u << faction_id);
-                if (synch_radius_index < 21 && goody_at(radius_x, radius_y) != 0)
-                    tile->bit |= 0x00100400u;
+        for (base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
+            if (Bases[base_id].faction_id_current != faction_id) continue;
+            for (int i = 0; i < 81; ++i) {
+                int rx = wrap_map_x(RadiusOffsetX[i] + Bases[base_id].x);
+                int ry = RadiusOffsetY[i] + Bases[base_id].y;
+                if (!on_map(rx, ry)) continue;
+                map_loc(rx, ry)->visibility |= 1 << faction_id;
+                if (goody_at(rx, ry) && i < 21)
+                    map_loc(rx, ry)->bit |= BIT_SUPPLY_REMOVE | BIT_RSC_BONUS;
             }
             set_base(base_id);
             base_compute(1);
-            const int terraform_passes =
-                (static_cast<int>(base.population_size) * 2) / 3 + player_data.ai_fight;
-            for (int pass = 0; pass < terraform_passes; ++pass) {
+            for (int pass = 0;
+                 pass < Bases[base_id].population_size * 2 / 3 + PlayersData[faction_id].ai_growth;
+                 ++pass) {
                 base_terraform(1);
                 base_compute(1);
             }
-            base.resource_sqr_radius = 0;
-
-            for (int radius_index = 0; radius_index < 81; ++radius_index) {
-                int radius_x = base.x + RadiusOffsetX[radius_index];
-                if (!(MapIsFlat & 1)) {
-                    if (radius_x < 0) radius_x += MapLongitudeBounds;
-                    else if (radius_x >= MapLongitudeBounds)
-                        radius_x -= MapLongitudeBounds;
-                }
-                const int radius_y = base.y + RadiusOffsetY[radius_index];
-                if (radius_x >= 0 && radius_x < MapLongitudeBounds && radius_y >= 0 &&
-                    radius_y < MapLatitudeBounds)
-                    synch_bit(radius_x, radius_y, faction_id);
+            Bases[base_id].resource_sqr_radius = 0;
+            for (i = 0; i < 81; ++i) {
+                x = wrap_map_x(RadiusOffsetX[i] + Bases[base_id].x);
+                y = RadiusOffsetY[i] + Bases[base_id].y;
+                if (on_map(x, y)) synch_bit(x, y, faction_id);
             }
-            const int base_region = map_loc(base.x, base.y)->region;
-            for (int other_base_id = 0; other_base_id < GameDataStateStorage.fields_.base_current_count_; ++other_base_id) {
-                if (other_base_id == base_id ||
-                    Bases[other_base_id].faction_id_current != faction_id) continue;
-                Base &other_base = Bases[other_base_id];
-                if (map_loc(other_base.x, other_base.y)->region != base_region) continue;
-                const int has_tech_for_path =
-                    has_tech(Rules.tech_build_roads_fungus, faction_id);
-                const int path_mode = has_tech_for_path ? 0 : 4;
-                int path_step = Paths.find(other_base.x, other_base.y, base.x, base.y,
-                                           0, -1, path_mode, -1);
-                int path_x = other_base.x;
-                int path_y = other_base.y;
+            for (int other = 0; other < GameDataStateStorage.fields_.base_current_count_; ++other) {
+                if (base_id == other) continue;
+                if (Bases[other].faction_id_current != faction_id) continue;
+                int px = Bases[other].x;
+                int py = Bases[other].y;
+                if (region_at(px, py) != region_at(Bases[base_id].x, Bases[base_id].y)) continue;
+                y = Bases[base_id].y;
+                x = Bases[base_id].x;
                 int path_length = 0;
-                while (path_step >= 0) {
-                    path_x += VehMoveDeltaX[path_step];
-                    if (!(MapIsFlat & 1)) {
-                        if (path_x < 0) path_x += MapLongitudeBounds;
-                        else if (path_x >= MapLongitudeBounds)
-                            path_x -= MapLongitudeBounds;
+                int step = Paths.find(px, py, x, y, 0, -1,
+                    has_tech(Rules.tech_build_roads_fungus, faction_id) ? 0 : 4, -1);
+                while (step >= 0) {
+                    px = wrap_map_x(VehMoveDeltaX[step] + px);
+                    py += VehMoveDeltaY[step];
+                    if (px == x && py == y) break;
+                    if (base_who(px, py) < 0 && !(map_loc(px, py)->bit & BIT_ROAD)) {
+                        map_loc(px, py)->bit |= BIT_ROAD;
+                        synch_bit(px, py, faction_id);
                     }
-                    path_y += VehMoveDeltaY[path_step];
-                    if (path_x == base.x && path_y == base.y) break;
-                    Map *path_tile = map_loc(path_x, path_y);
-                    if ((path_tile->bit & 1u) == 0 || (path_tile->val2 & 0x0F) > 7) {
-                        if ((path_tile->bit & 4u) == 0) {
-                            path_tile->bit |= 4u;
-                            synch_bit(path_x, path_y, faction_id);
-                        }
-                    }
-                    ++path_length;
-                    if (path_length > 50) break;
-                    const int can_road_fungus =
-                        has_tech(Rules.tech_build_roads_fungus, faction_id);
-                    path_step = Paths.find(path_x, path_y, base.x, base.y,
-                                           0, -1, can_road_fungus ? 0 : 4, -1);
+                    if (++path_length > 50) break;
+                    step = Paths.find(px, py, x, y, 0, -1,
+                        has_tech(Rules.tech_build_roads_fungus, faction_id) ? 0 : 4, -1);
                 }
             }
             base_reset(base_id, 0);
@@ -795,37 +700,31 @@ void __cdecl time_warp() {
         AiResearchBatchActive = 0;
 
         for (veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; ++veh_id) {
-            Veh &vehicle = Vehs[veh_id];
-            if (vehicle.faction_id != faction_id ||
-                VehPrototypes[vehicle.proto_id].plan != 9) continue;
-            const int native_triad = Chassis[VehPrototypes[vehicle.proto_id].chassis_id].triad;
-            const bool aquatic = (player.rule_flags & RFLAG_AQUATIC) != 0;
-            if ((!aquatic && native_triad != TRIAD_LAND) ||
-                (aquatic && native_triad != TRIAD_SEA)) continue;
+            if (Vehs[veh_id].faction_id != faction_id) continue;
+            if (VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_TERRAFORMING) continue;
+            if (Players[faction_id].rule_flags & RFLAG_AQUATIC) {
+                if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad != TRIAD_SEA)
+                    continue;
+            } else if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad != TRIAD_LAND)
+                continue;
             int best_quality = 0;
-            for (int move_index = 0; move_index < 8; ++move_index) {
-                int destination_x = vehicle.x + VehMoveDeltaX[move_index];
-                if (!(MapIsFlat & 1)) {
-                    if (destination_x < 0) destination_x += MapLongitudeBounds;
-                    else if (destination_x >= MapLongitudeBounds)
-                        destination_x -= MapLongitudeBounds;
-                }
-                const int destination_y = vehicle.y + VehMoveDeltaY[move_index];
-                if (destination_x < 0 || destination_x >= MapLongitudeBounds ||
-                    destination_y < 0 || destination_y >= MapLatitudeBounds) continue;
-                const Map *destination = map_loc(destination_x, destination_y);
-                const int altitude = destination->climate & 0xE0;
-                if ((!aquatic && altitude < 0x60) || (aquatic && altitude >= 0x60)) continue;
+            for (int dir = 0; dir < 8; ++dir) {
+                int tx = wrap_map_x(VehMoveDeltaX[dir] + Vehs[veh_id].x);
+                int ty = VehMoveDeltaY[dir] + Vehs[veh_id].y;
+                if (!on_map(tx, ty)) continue;
+                if (Players[faction_id].rule_flags & RFLAG_AQUATIC) {
+                    if (!is_ocean(tx, ty)) continue;
+                } else if (is_ocean(tx, ty)) continue;
                 int quality = 1;
-                const uint8_t owner_state = destination->val3 & 0xC0;
-                if (owner_state < 0x80) quality = 2;
-                if ((destination->bit & 4u) != 0) quality += 2;
-                if (owner_state == 0x40 && (destination->climate & 0x18) != 0 &&
-                    (destination->climate >> 5) > 2)
+                int rocky = map_loc(tx, ty)->val3 & ~0x3F;
+                if (rocky < 0x80) quality = 2;
+                if (map_loc(tx, ty)->bit & BIT_ROAD) quality += 2;
+                if (rocky == 0x40 && (map_loc(tx, ty)->climate & 0x18)
+                    && alt_at(tx, ty) - 2 > 0)
                     quality += 2;
                 if (quality > best_quality) {
                     best_quality = quality;
-                    veh_drop(veh_lift(veh_id), destination_x, destination_y);
+                    veh_drop(veh_lift(veh_id), tx, ty);
                 }
             }
         }
@@ -2341,16 +2240,17 @@ Purpose: Calculate an AI faction's social engineering.
 Return Value: n/a
 Status: Complete - testing (likely has multiple issues due to length + complexity)
 */
+// Rewritten from the image 2026-11-11 (0.866 -> 0.972); remaining: one extra
+// frame slot (0x80 vs 0x7c) and the efficiency/planet tail-merge layout.
 void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_val,
                        int power_val, SocialCategory *output) {
-    // setup
     int fight_val;
-    int unk_val1 = -1;
+    int effect_focus = -1; // growth_val > 100 selects one effect to weigh by 1000
     if (output) {
         if (growth_val < 0) {
             return;
         } else if (growth_val > 100) {
-            unk_val1 = growth_val - 100;
+            effect_focus = growth_val - 100;
             growth_val = PlayersData[faction_id].ai_growth;
             tech_val = PlayersData[faction_id].ai_tech;
             wealth_val = PlayersData[faction_id].ai_wealth;
@@ -2370,496 +2270,473 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
         power_val = PlayersData[faction_id].ai_power;
         fight_val = PlayersData[faction_id].ai_fight;
     }
-    // Four choices for each of four categories: original 5B4831..5B483F.
-    uint32_t unk_val2 = 4;
-    for (int i = 3; i > 0; i--) {
-        unk_val2 *= 4;
+    // Four models for each of the four categories: 4^4 combinations.
+    int combo_count = MaxSocialModelNum;
+    for (int i = 1; i < MaxSocialCatNum; i++) {
+        combo_count *= MaxSocialModelNum;
     }
-    // future pop growth
-    int pop_goal_growth = 0;
+    // Population still to grow toward each base's goal.
+    int pop_growth = 0;
     for (i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
         if (Bases[i].faction_id_current == faction_id) {
-            pop_goal_growth += pop_goal(i) - Bases[i].population_size;
+            pop_growth += pop_goal(i) - Bases[i].population_size;
         }
     }
-    // plan and enemy region metrics
-    int unk_sum1 = 0;
-    uint32_t unk_count1 = 0;
-    uint32_t unk_count2 = 0;
-    uint32_t unk_sum2 = 0;
-    for (uint32_t region = 1; region < MaxRegionLandNum; region++) {
+    // Region plan metrics.
+    int threat = 0;
+    int colony_regions = 0;
+    int offense_regions = 0;
+    int psi_threat_bases = 0; // accumulated but never read (original)
+    for (int region = 1; region < MaxRegionLandNum; region++) {
         if (!bad_reg(region)) {
-            uint8_t base_count = PlayersData[faction_id].region_total_bases[region];
-            if (base_count) {
+            if (PlayersData[faction_id].region_total_bases[region]) {
                 uint8_t plan = PlayersData[faction_id].region_base_plan[region];
                 if (plan == PLAN_DEFENSIVE || PlayersData[faction_id].unk_77[region] & 0x400) {
-                    unk_sum1 += PlayersData[faction_id].region_total_combat_vehs[region] * 2;
+                    threat += PlayersData[faction_id].region_total_combat_vehs[region] * 2;
                 } else if (plan == PLAN_OFFENSIVE) {
-                    unk_sum1 += PlayersData[faction_id].region_total_combat_vehs[region];
-                    unk_count2++;
-                } else if (plan != PLAN_COLONIZATION) {
-                    unk_count1++;
+                    threat += PlayersData[faction_id].region_total_combat_vehs[region];
+                    offense_regions++;
+                } else if (plan == PLAN_COLONIZATION) {
+                    colony_regions++;
                 }
                 if (plan <= PLAN_DEFENSIVE) {
-                    for (uint32_t f = 1; f < MaxPlayerNum; f++) {
-                        if (f != faction_id) {
-                            if (has_treaty(faction_id, f, DTREATY_VENDETTA | DTREATY_WANT_REVENGE)
-                                && PlayersData[f].enemy_best_psi_offense
-                                >= PlayersData[f].enemy_best_weapon_value
-                                && PlayersData[f].proto_id_active[BSC_MIND_WORMS] > 1) {
-                                unk_sum2 += base_count; // not used
-                            }
+                    for (int f = 1; f < MaxPlayerNum; f++) {
+                        if (f != faction_id
+                            && has_treaty(faction_id, f, DTREATY_VENDETTA | DTREATY_WANT_REVENGE)
+                            && PlayersData[f].best_psi_offense >= PlayersData[f].best_weapon_value
+                            && PlayersData[f].proto_id_active[BSC_MIND_WORMS] >= 1) {
+                            psi_threat_bases += PlayersData[faction_id].region_total_bases[region];
                         }
                     }
                 }
             }
         }
     }
-    if (output && power_val && unk_sum1 < 1) {
-        unk_sum1 = 1;
+    if (output && power_val && threat < 1) {
+        threat = 1;
     }
-    // tech ranking
-    int unk_val3 = 1;
-    if (GameDataStateStorage.fields_.game_state_ & 0x200 // set in rankings(), related to intense riv + end game
+    // Falling behind the tech leader late in the game.
+    int rank_factor = 1;
+    if (GameDataStateStorage.fields_.game_state_ & 0x200
         && PlayersData[faction_id].ranking < 6) {
-        int tech_rank_diff = PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk1_].tech_ranking / 2
+        int tech_rank_diff
+            = PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk1_].tech_ranking / 2
             - PlayersData[faction_id].tech_ranking / 2;
         if (tech_rank_diff > 5) {
-            unk_val3 = 2;
+            rank_factor = 2;
         }
         if (tech_rank_diff > 10) {
-            unk_val3++;
+            rank_factor++;
         }
     }
-    // search / calculate
-    int unk_val4 = -9999; // search val?
-    int soc_cat_bits = -1;
-    // unk_sum2 = 0 > used as iterator, optimization re-use, var unused
-    for (uint32_t player = 0; player < unk_val2; player++) {
+    int best_score = -9999;
+    int best_combo = -1;
+    for (int combo = 0; combo < combo_count; combo++) {
         SocialCategory soc_cat;
         SocialEffect soc_eff;
-        int k = player;
-        bool invalid_combination = false;
+        int bits = combo;
+        BOOL unavailable = false;
         for (int j = 0; j < MaxSocialCatNum; j++) {
-            int model = k & 3;
+            int model = bits & 3;
             soc_cat.models_[j] = model;
             if (model) {
                 if ((Players[faction_id].soc_anti_ideology_category == j
                     && Players[faction_id].soc_anti_ideology_model == model)
-                    // has_tech_call: the image CALLS 0x005B9F20 once here
-                    // (0x005B4AA1, see the calls line) instead of open-coding
-                    // the preq walk inside this loop.
                     || !has_tech(SocialCategories[j].preq_tech[model], faction_id)) {
-                    invalid_combination = true;
+                    unavailable = true;
                     break;
                 }
             }
-            k >>= 2;
+            bits >>= 2;
         }
         // Original 5B4A90/5B4AAB skip directly to the outer increment.
-        if (invalid_combination) continue;
+        if (unavailable) {
+            continue;
+        }
         do_all_non_input();
         social_calc(&soc_cat, &soc_eff, faction_id, false, false);
-        int unk_val6 = 0;
-        if (unk_val1 >= 0) {
-            unk_val6 = *(&soc_eff.values_[SocialEffect::ECONOMY] + unk_val1) * 1000;
+        int score = 0;
+        if (effect_focus >= 0) {
+            score = soc_eff.values_[effect_focus] * 1000;
         }
-        BOOL has_ideology = false;
+        BOOL conflict = false;
         int ideology_cat = Players[faction_id].soc_ideology_category;
         if (ideology_cat >= 0) {
-            int ideology_mod = Players[faction_id].soc_ideology_model;
-            if (ideology_mod) {
-                int unk_val7 = soc_cat.models_[ideology_cat];
-                if (!unk_val7 && unk_val7 == ideology_mod) {
-                    unk_val6 += PlayersData[faction_id].current_num_bases;
-                } else {
-                    has_ideology = true;
+            int ideology_model = Players[faction_id].soc_ideology_model;
+            if (ideology_model) {
+                uint32_t model = soc_cat.models_[ideology_cat];
+                if (model && model != ideology_model) {
+                    conflict = true;
+                }
+                if (model == ideology_model) {
+                    score += PlayersData[faction_id].current_num_bases;
                 }
             }
         }
-        int ideology_eff = Players[faction_id].soc_anti_ideology_effect;
+        int ideology_eff = Players[faction_id].soc_ideology_effect;
         if (ideology_eff >= 0) {
-            int unk_val8 = *(&soc_eff.values_[SocialEffect::ECONOMY] + ideology_eff);
-            if (unk_val8 > 0) {
-                unk_val6 += PlayersData[faction_id].current_num_bases;
+            int value = soc_eff.values_[ideology_eff];
+            if (value > 0) {
+                score += PlayersData[faction_id].current_num_bases;
             }
-            if (unk_val8 < 0) {
-                has_ideology = true;
+            if (value < 0) {
+                conflict = true;
             }
         }
-        if (!has_ideology) {
-            // economy
-            int effic_val = PlayersData[faction_id].unk_46[range(4 - soc_eff.values_[SocialEffect::EFFICIENCY], 0, 8)];
+        if (conflict) {
+            continue;
+        }
+        // economy
+        int effic_val = PlayersData[faction_id].unk_46[
+            range(4 - soc_eff.values_[SocialEffect::EFFICIENCY], 0, 8)];
+        int econ_weight = 0;
+        if (soc_eff.values_[SocialEffect::ECONOMY] >= 2) {
             int econ_val = soc_eff.values_[SocialEffect::ECONOMY];
-            int econ_weight = 0;
-            if (econ_val < 2) {
-                if (econ_val <= 0) {
-                    if (econ_val < -1) {
-                        for (int region = 0; region < MaxContinentNum; region++) {
-                            econ_weight -= (soc_eff.values_[SocialEffect::ECONOMY] + 1)
-                                * PlayersData[faction_id].region_total_bases[region]
-                                * ((PlayersData[faction_id].region_base_plan[region]
-                                    != PLAN_DEFENSIVE) + 1);
-                        }
-                        econ_weight /= (unk_sum1 + 1);
-                    } else {
-                        econ_weight = -1;
-                    }
-                } else {
-                    for (int region = 0; region < MaxContinentNum; region++) {
-                        econ_weight += PlayersData[faction_id].region_total_bases[region]
-                            * ((PlayersData[faction_id].region_base_plan[region] != PLAN_DEFENSIVE)
-                                + 1);
-                    }
-                    econ_weight /= (unk_sum1 + 1);
-                }
-            } else {
-                if (econ_val > 4) {
-                    econ_val = 4;
-                }
-                econ_weight = (PlayersData[faction_id].unk_47 + econ_val * 2 - 4) / (unk_sum1 + 1);
+            if (econ_val > 4) {
+                econ_val = 4;
             }
-            for (; econ_weight > 0; econ_weight--, effic_val--) {
-                if (effic_val <= 0) {
-                    break;
-                }
+            econ_weight = (PlayersData[faction_id].unk_47 + econ_val * 2 - 4) / (threat + 1);
+        } else if (soc_eff.values_[SocialEffect::ECONOMY] > 0) {
+            for (int r = 0; r < MaxContinentNum; r++) {
+                econ_weight += PlayersData[faction_id].region_total_bases[r]
+                    * ((PlayersData[faction_id].region_base_plan[r] != PLAN_DEFENSIVE) + 1);
             }
-            if (!unk_sum1) {
+            econ_weight /= (threat + 1);
+        } else if (soc_eff.values_[SocialEffect::ECONOMY] < -1) {
+            for (int r = 0; r < MaxContinentNum; r++) {
+                econ_weight -= PlayersData[faction_id].region_total_bases[r]
+                    * ((PlayersData[faction_id].region_base_plan[r] != PLAN_DEFENSIVE) + 1)
+                    * (soc_eff.values_[SocialEffect::ECONOMY] + 1);
+            }
+            econ_weight /= (threat + 1);
+        } else {
+            econ_weight = -1;
+        }
+        for (; econ_weight > 0; econ_weight--, effic_val--) {
+            if (effic_val <= 0) {
+                break;
+            }
+        }
+        if (!threat) {
+            econ_weight *= 2;
+        }
+        econ_weight *= ((PlayersData[faction_id].ai_fight < 0 && threat < 2)
+            + tech_val * 2 + wealth_val + 1);
+        if (output) {
+            if (wealth_val || tech_val) {
                 econ_weight *= 2;
             }
-            econ_weight *= ((PlayersData[faction_id].ai_fight < 0 && unk_sum1 < 2)
-                + tech_val * 2 + wealth_val + 1);
-            if (output) {
-                if (wealth_val || tech_val) {
-                    econ_weight *= 2;
-                }
-                if (growth_val || power_val) {
-                    econ_weight /= 2;
-                }
-            } else if (wealth_val && !power_val && !growth_val) {
-                econ_weight *= 2;
+            if (growth_val || power_val) {
+                econ_weight /= 2;
             }
-            unk_val6 += econ_weight / unk_val3;
-            // support
-            int support_val = range(soc_eff.values_[SocialEffect::SUPPORT] + 4, 0, 7);
-            int support_weight = PlayersData[faction_id].unk_38[support_val];
-            if (soc_eff.values_[SocialEffect::SUPPORT] <= -4) {
+        } else if (wealth_val && !power_val && !growth_val) {
+            econ_weight *= 2;
+        }
+        score += econ_weight / rank_factor;
+        // support
+        int support_weight = PlayersData[faction_id].unk_38[
+            range(soc_eff.values_[SocialEffect::SUPPORT] + 4, 0, 7)];
+        if (soc_eff.values_[SocialEffect::SUPPORT] <= -4) {
+            support_weight *= 3;
+        }
+        if (threat) {
+            support_weight *= 2;
+            if (soc_eff.values_[SocialEffect::SUPPORT] <= -3) {
+                support_weight *= 2;
+            }
+            if ((soc_eff.values_[SocialEffect::SUPPORT] == -1
+                || soc_eff.values_[SocialEffect::SUPPORT] == -2)
+                && soc_eff.values_[SocialEffect::ECONOMY] < 2) {
+                support_weight += support_weight / 2;
+            }
+        }
+        if (output) {
+            if (power_val) {
                 support_weight *= 3;
             }
-            if (unk_sum1) {
+            if (growth_val) {
                 support_weight *= 2;
-                if (soc_eff.values_[SocialEffect::SUPPORT] <= -3) {
-                    support_weight *= 2;
-                }
-                if ((soc_eff.values_[SocialEffect::SUPPORT] == -1 || soc_eff.values_[SocialEffect::SUPPORT] == -2) && soc_eff.values_[SocialEffect::ECONOMY] < 2) {
-                    support_weight += support_weight / 2;
-                }
             }
-            if (output) {
-                if (power_val) {
-                    support_weight *= 3;
-                }
-                if (growth_val) {
-                    support_weight *= 2;
-                }
-                if (tech_val) {
-                    support_weight /= 2;
-                }
-            } else {
-                if (fight_val > 0) {
-                    support_weight *= 2;
-                }
-                if (growth_val > 0) {
-                    support_weight += support_weight / 2;
-                }
-                if (wealth_val > 0) {
-                    support_weight /= 2;
-                }
-                if (tech_val > 0) {
-                    support_weight += support_weight / -4;
-                }
-                if (power_val > 0) {
-                    support_weight += support_weight / 2;
-                }
-            }
-            unk_val6 -= support_weight;
-            // morale
-            int morale_val = range(soc_eff.values_[SocialEffect::MORALE], -4, 4) * 2;
-            if (morale_val < -6) {
-                morale_val++;
-            }
-            if (morale_val < -2) {
-                morale_val++;
-            }
-            if (morale_val > 6) {
-                morale_val--;
-            }
-            if (morale_val > 2) {
-                morale_val--;
-            }
-            int morale_weight = (unk_val3 * morale_val * (fight_val + 2) * (unk_sum1 + 1)
-                * (PlayersData[faction_id].current_num_bases + PlayersData[faction_id].unk_48)) / 8;
-            if (output) {
-                if (power_val) {
-                    morale_weight *= 3;
-                }
-                if (growth_val || wealth_val) {
-                    morale_weight /= 2;
-                }
-            } else {
-                if (fight_val > 1) {
-                    morale_weight *= 2;
-                }
-                if (power_val && !growth_val && !wealth_val) {
-                    morale_weight *= 2;
-                }
-                if (fight_val < 0 && !power_val && (wealth_val || tech_val) && !unk_sum1) {
-                    morale_weight /= 2;
-                }
-            }
-            unk_val6 += morale_weight;
-            // efficiency
-            int effic_weight = effic_val;
-            if (soc_eff.values_[SocialEffect::EFFICIENCY] == -3) {
-                effic_weight = 2 * effic_val;
-            } else if (soc_eff.values_[SocialEffect::EFFICIENCY] <= -4) {
-                effic_weight = 4 * effic_val;
-            }
-            if (!unk_sum1) {
-                effic_weight *= 2;
-            }
-            if (output) {
-                if (tech_val) {
-                    effic_weight *= 3;
-                }
-                if (growth_val || power_val) {
-                    effic_weight /= 2;
-                }
-            } else {
-                if (!wealth_val && !tech_val) {
-                    if (power_val) {
-                        effic_weight /= 2;
-                    }
-                } else if (power_val) {
-                    if (!wealth_val) {
-                        effic_weight /= 2;
-                    }
-                } else if (!growth_val) {
-                    effic_weight *= 2;
-                }
-            }
-            unk_val6 -= effic_weight;
-            // growth
-            int growth_weight = (soc_eff.values_[SocialEffect::GROWTH] * (unk_count1 + 1)
-                * ((growth_val + 1) * 2 - wealth_val)
-                * (pop_goal_growth + PlayersData[faction_id].nutrient_surplus_total)) / 5;
-            if (aah_ooga(faction_id, faction_id)) {
-                growth_weight *= 2;
-            }
-            if (Players[faction_id].rule_population > 0) {
-                growth_weight /= 2;
-            }
-            if (output) {
-                if (growth_val || wealth_val) {
-                    growth_weight *= 2;
-                }
-                if (tech_val) {
-                    growth_weight /= 2;
-                }
-            } else {
-                if (growth_val && power_val) {
-                    growth_weight *= 2;
-                }
-            }
-            unk_val6 += growth_weight;
-            // police
-            int police_weight
-                = range(soc_eff.values_[SocialEffect::POLICE], -2, 2) * PlayersData[faction_id].current_num_bases
-                * (unk_count2 * 2 + 1);
-            if (PlayersData[faction_id].tech_ranking
-                < PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk2_].tech_ranking
-                && PlayersData[faction_id].ranking < PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk2_].ranking) {
-                police_weight *= 2;
-            }
-            if (PlayersData[faction_id].tech_ranking
-                < PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk1_].tech_ranking
-                && PlayersData[faction_id].ranking < PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk1_].ranking) {
-                police_weight /= 2;
-            }
-            if (output && (power_val || growth_val)) {
-                police_weight *= 2;
-            }
-            unk_val6 += police_weight / (2 - fight_val);
-            // talent
-            int talent_weight = PlayersData[faction_id].unk_39[range(soc_eff.values_[SocialEffect::TALENT] + 4, 0, 7)]
-                [range(soc_eff.values_[SocialEffect::POLICE] + 5, 0, 8)];
-            if (unk_sum1) {
-                talent_weight += soc_eff.values_[SocialEffect::POLICE] * PlayersData[faction_id].current_num_bases;
-            }
-            if (output) {
-                if (power_val || growth_val) {
-                    talent_weight *= 2;
-                }
-                if (wealth_val) {
-                    talent_weight /= 2;
-                }
-            } else {
-                if (growth_val && tech_val) {
-                    talent_weight *= 2;
-                }
-                if (power_val && (tech_val || wealth_val)) {
-                    talent_weight /= 2;
-                }
-            }
-            unk_val6 += talent_weight;
-            // planet
-            int planet_weight = (4 - soc_eff.values_[SocialEffect::PLANET]) * PlayersData[faction_id].unk_49 * 4 / 4; // ?
-            if (PlayersData[faction_id].soc_effect_base.values_[SocialEffect::PLANET] > 0
-                || PlayersData[faction_id].best_psi_offense
-                > PlayersData[faction_id].best_weapon_value) {
-                planet_weight += PlayersData[faction_id].total_mil_veh;
-            } else if (unk_val3 > 1) {
-                planet_weight /= 2;
-            }
-            if (output) {
-                if (growth_val) {
-                    planet_weight *= 2;
-                }
-                if (wealth_val) {
-                    planet_weight /= 2;
-                }
-            } else {
-                if (power_val) {
-                    if (growth_val) {
-                        planet_weight /= 2;
-                    }
-                    if ((tech_val || wealth_val) && !growth_val) {
-                        planet_weight /= 2;
-                    }
-                } else {
-                    if (growth_val) {
-                        if (tech_val) {
-                            planet_weight *= 2;
-                            if (!wealth_val && growth_val) {
-                                planet_weight /= 2;
-                            }
-                        } else {
-                            if (growth_val) {
-                                planet_weight /= 2;
-                            }
-                        }
-                    } else {
-                        if ((tech_val || wealth_val) && growth_val) {
-                            planet_weight /= 2;
-                        }
-                    }
-                }
-                unk_val6 -= planet_weight;
-                // research
-                int research_weight = range(soc_eff.values_[SocialEffect::RESEARCH], -5, 5)
-                    * PlayersData[faction_id].labs_total / 10;
-                if (!unk_sum1) {
-                    research_weight *= 2;
-                }
-                if (output) {
-                    if (tech_val) {
-                        research_weight *= 2;
-                    }
-                    if (power_val) {
-                        research_weight /= 2;
-                    }
-                }
-                unk_val6 += research_weight;
-                // industry
-                int unk_val3_temp = range(unk_val3, 1, 2);
-                int industry_weight = soc_eff.values_[SocialEffect::INDUSTRY] * unk_val3_temp
-                    * PlayersData[faction_id].pop_total
-                    * (2 * (wealth_val + unk_sum1) + 1) / 10;
-                if (power_val) {
-                    industry_weight *= 2;
-                }
-                if (wealth_val) {
-                    industry_weight += industry_weight / 2;
-                }
-                if (tech_val) {
-                    industry_weight /= 2;
-                }
-                if (fight_val < 0 && !wealth_val) {
-                    industry_weight /= 2;
-                }
-                unk_val6 += industry_weight;
-                // why is this before probe? significance?
-                unk_val6 += social_upheaval(faction_id, &soc_cat) / -3;
-                // probe
-                if (soc_eff.values_[SocialEffect::PROBE]) {
-                    int probe_weight;
-                    for (uint32_t f = 0; f < MaxPlayerNum; f++) {
-                        if (f != faction_id) {
-                            probe_weight = PlayersData[player].mind_control_total / 4 + 1;
-                            if (has_treaty(faction_id, player, DTREATY_PACT)) {
-                                probe_weight /= 2;
-                            }
-                            if (!has_treaty(faction_id, player, DTREATY_WANT_REVENGE)) {
-                                if (has_treaty(faction_id, player, DTREATY_TREATY)) {
-                                    probe_weight /= 2;
-                                }
-                                if (!has_treaty(faction_id, player, DTREATY_COMMLINK)) {
-                                    probe_weight /= 2;
-                                }
-                                if (!has_treaty(faction_id, player, DTREATY_VENDETTA)) {
-                                    probe_weight /= 2;
-                                }
-                            }
-                            probe_weight = ((PlayersData[player].current_num_bases
-                                + PlayersData[faction_id].current_num_bases)
-                                * range(soc_eff.values_[SocialEffect::PROBE], -2, 3) * probe_weight) / 2;
-                            if (tech_val || wealth_val) {
-                                probe_weight *= 2;
-                            }
-                            unk_val6 += probe_weight;
-                        }
-                    }
-                }
-                if (unk_val6 >= unk_val4) {
-                    unk_val4 = unk_val6;
-                    soc_cat_bits = unk_sum2;
-                }
-            }
-        }
-    }
-    if (soc_cat_bits < 0) {
-        if (output) {
-            for (int i = 0; i < MaxSocialCatNum; i++) {
-                output->models_[i]
-                    = PlayersData[faction_id].soc_category_pending.models_[i];
-            }
-        }
-    } else {
-        if (!output) {
-            BOOL no_cat_change = true;
-            for (int i = 0; i < MaxSocialCatNum; i++) {
-                uint32_t cat_bit = soc_cat_bits & 3;
-                if (cat_bit != PlayersData[faction_id].soc_category_pending.models_[i]) {
-                    PlayersData[faction_id].soc_category_pending.models_[i] = cat_bit;
-                    no_cat_change = false;
-                }
-                soc_cat_bits >>= 2;
-            }
-            if (!no_cat_change) {
-                social_set(faction_id);
-                uint32_t cost
-                    = social_upheaval(faction_id, &PlayersData[faction_id].soc_category_pending);
-                PlayersData[faction_id].energy_reserves
-                    = range(PlayersData[faction_id].energy_reserves - cost, 0, 999999999);
-                PlayersData[faction_id].soc_upheaval_cost_paid += cost;
-                if (!is_human(faction_id)) {
-                    consider_designs(faction_id);
-                }
+            if (tech_val) {
+                support_weight /= 2;
             }
         } else {
-            for (int i = 0; i < MaxSocialCatNum; i++) {
-                output->models_[i] = soc_cat_bits & 3;
-                soc_cat_bits >>= 2;
+            if (fight_val > 0) {
+                support_weight *= 2;
+            }
+            if (growth_val > 0) {
+                support_weight += support_weight / 2;
+            }
+            if (wealth_val > 0) {
+                support_weight /= 2;
+            }
+            if (tech_val > 0) {
+                support_weight += support_weight / -4;
+            }
+            if (power_val > 0) {
+                support_weight += support_weight / 2;
+            }
+        }
+        score -= support_weight;
+        // morale
+        int morale_val = range(soc_eff.values_[SocialEffect::MORALE], -4, 4) * 2;
+        if (morale_val < -6) {
+            morale_val++;
+        }
+        if (morale_val < -2) {
+            morale_val++;
+        }
+        if (morale_val > 6) {
+            morale_val--;
+        }
+        if (morale_val > 2) {
+            morale_val--;
+        }
+        int morale_weight = (rank_factor * morale_val * (fight_val + 2) * (threat + 1)
+            * (PlayersData[faction_id].current_num_bases + PlayersData[faction_id].unk_48)) / 8;
+        if (output) {
+            if (power_val) {
+                morale_weight *= 3;
+            }
+            if (growth_val || wealth_val) {
+                morale_weight /= 2;
+            }
+        } else {
+            if (fight_val > 1) {
+                morale_weight *= 2;
+            }
+            if (power_val && !growth_val && !wealth_val) {
+                morale_weight *= 2;
+            }
+            if (fight_val < 0 && !power_val && (wealth_val || tech_val) && !threat) {
+                morale_weight /= 2;
+            }
+        }
+        score += morale_weight;
+        // efficiency
+        int effic_weight = effic_val;
+        if (soc_eff.values_[SocialEffect::EFFICIENCY] == -3) {
+            effic_weight = 2 * effic_val;
+        } else if (soc_eff.values_[SocialEffect::EFFICIENCY] <= -4) {
+            effic_weight = 4 * effic_val;
+        }
+        if (!threat) {
+            effic_weight *= 2;
+        }
+        if (output) {
+            if (tech_val) {
+                effic_weight *= 3;
+            }
+            if (growth_val || power_val) {
+                effic_weight /= 2;
+            }
+        } else {
+            if (!wealth_val && !tech_val) {
+                if (power_val) {
+                    effic_weight /= 2;
+                }
+            } else if (power_val) {
+                if (!wealth_val) {
+                    effic_weight /= 2;
+                }
+            } else if (!growth_val) {
+                effic_weight *= 2;
+            }
+        }
+        score -= effic_weight;
+        // growth
+        // WORKAROUND(type): 5B4F8B divides signed (0x66666667); the declared
+        // uint32_t nutrient_surplus_total would make this product unsigned.
+        int growth_weight = (soc_eff.values_[SocialEffect::GROWTH] * (colony_regions + 1)
+            * ((growth_val + 1) * 2 - wealth_val)
+            * (pop_growth + (int)PlayersData[faction_id].nutrient_surplus_total)) / 5;
+        if (aah_ooga(faction_id, faction_id)) {
+            growth_weight *= 2;
+        }
+        if (Players[faction_id].rule_population > 0) {
+            growth_weight /= 2;
+        }
+        if (output) {
+            if (growth_val || wealth_val) {
+                growth_weight *= 2;
+            }
+            if (tech_val) {
+                growth_weight /= 2;
+            }
+        } else if (growth_val && power_val) {
+            growth_weight *= 2;
+        }
+        score += growth_weight;
+        // police: the original clamps POLICE + 2, not POLICE (5B5010).
+        int police_weight = range(soc_eff.values_[SocialEffect::POLICE] + 2, -2, 2)
+            * PlayersData[faction_id].current_num_bases * (offense_regions * 2 + 1);
+        if (PlayersData[faction_id].tech_ranking
+            < PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk2_].tech_ranking
+            && PlayersData[faction_id].ranking
+            < PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk2_].ranking) {
+            police_weight *= 2;
+        }
+        if (PlayersData[faction_id].tech_ranking
+            >= PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk1_].tech_ranking
+            && PlayersData[faction_id].ranking
+            > PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk1_].ranking) {
+            police_weight /= 2;
+        }
+        if (output && (power_val || growth_val)) {
+            police_weight *= 2;
+        }
+        score += police_weight / (2 - fight_val);
+        // talent
+        int talent_weight = PlayersData[faction_id].unk_39
+            [range(soc_eff.values_[SocialEffect::TALENT] + 4, 0, 7)]
+            [range(soc_eff.values_[SocialEffect::POLICE] + 5, 0, 8)];
+        if (threat) {
+            talent_weight += soc_eff.values_[SocialEffect::POLICE]
+                * PlayersData[faction_id].current_num_bases;
+        }
+        if (output) {
+            if (power_val || growth_val) {
+                talent_weight *= 2;
+            }
+            if (wealth_val) {
+                talent_weight /= 2;
+            }
+        } else {
+            if (growth_val && tech_val) {
+                talent_weight *= 2;
+            }
+            if (power_val && (tech_val || wealth_val)) {
+                talent_weight /= 2;
+            }
+        }
+        score += talent_weight;
+        // planet
+        int planet_weight = (4 - soc_eff.values_[SocialEffect::PLANET])
+            * PlayersData[faction_id].unk_49 * 4 / 4;
+        if (PlayersData[faction_id].soc_effect_base.values_[SocialEffect::PLANET] > 0
+            || PlayersData[faction_id].best_psi_offense
+            > PlayersData[faction_id].best_weapon_value) {
+            planet_weight += PlayersData[faction_id].total_mil_veh;
+        } else if (rank_factor > 1) {
+            planet_weight /= 2;
+        }
+        if (output) {
+            if (growth_val) {
+                planet_weight *= 2;
+            }
+            if (wealth_val) {
+                planet_weight /= 2;
+            }
+        } else {
+            if (power_val) {
+                if (!growth_val) {
+                    planet_weight /= 2;
+                }
+            } else if (growth_val && !tech_val) {
+                planet_weight *= 4;
+            }
+            if ((tech_val || wealth_val) && !growth_val) {
+                planet_weight /= 2;
+            }
+        }
+        score -= planet_weight;
+        // research
+        int research_weight = range(soc_eff.values_[SocialEffect::RESEARCH], -5, 5)
+            * PlayersData[faction_id].labs_total / 10;
+        if (!threat) {
+            research_weight *= 2;
+        }
+        if (output) {
+            if (tech_val) {
+                research_weight *= 2;
+            }
+            if (power_val) {
+                research_weight /= 2;
+            }
+        }
+        score += research_weight;
+        // industry
+        int industry_weight = soc_eff.values_[SocialEffect::INDUSTRY] * range(rank_factor, 1, 2)
+            * PlayersData[faction_id].pop_total * (2 * (wealth_val + threat) + 1) / 10;
+        if (power_val) {
+            industry_weight *= 2;
+        }
+        if (wealth_val) {
+            industry_weight += industry_weight / 2;
+        }
+        if (tech_val) {
+            industry_weight /= 2;
+        }
+        if (fight_val < 0 && !wealth_val) {
+            industry_weight /= 2;
+        }
+        score += industry_weight;
+        score += social_upheaval(faction_id, &soc_cat) / -3;
+        // probe
+        if (soc_eff.values_[SocialEffect::PROBE]) {
+            for (int f = 1; f < MaxPlayerNum; f++) {
+                if (f != faction_id) {
+                    // WORKAROUND(type): 5B53C1 divides signed (cdq/and 3/sar 2);
+                    // mind_control_total is declared uint32_t.
+                    int probe_weight = (int)PlayersData[f].mind_control_total / 4 + 1;
+                    if (has_treaty(faction_id, f, DTREATY_PACT)) {
+                        probe_weight /= 2;
+                    }
+                    if (!has_treaty(faction_id, f, DTREATY_WANT_REVENGE)) {
+                        if (has_treaty(faction_id, f, DTREATY_TREATY)) {
+                            probe_weight /= 2;
+                        }
+                        if (!has_treaty(faction_id, f, DTREATY_COMMLINK)) {
+                            probe_weight /= 2;
+                        }
+                        if (!has_treaty(faction_id, f, DTREATY_VENDETTA)) {
+                            probe_weight /= 2;
+                        }
+                    }
+                    probe_weight = ((PlayersData[f].current_num_bases
+                        + PlayersData[faction_id].current_num_bases)
+                        * range(soc_eff.values_[SocialEffect::PROBE], -2, 3) * probe_weight) / 2;
+                    if (tech_val || wealth_val) {
+                        probe_weight *= 2;
+                    }
+                    score += probe_weight;
+                }
+            }
+        }
+        if (score >= best_score) {
+            best_score = score;
+            best_combo = combo;
+        }
+    }
+    if (best_combo < 0) {
+        if (output) {
+            for (int c = 0; c < MaxSocialCatNum; c++) {
+                output->models_[c] = PlayersData[faction_id].soc_category_pending.models_[c];
+            }
+        }
+    } else if (output) {
+        for (int c = 0; c < MaxSocialCatNum; c++) {
+            output->models_[c] = best_combo & 3;
+            best_combo >>= 2;
+        }
+    } else {
+        BOOL unchanged = true;
+        for (int c = 0; c < MaxSocialCatNum; c++) {
+            uint32_t model = best_combo & 3;
+            if (model != PlayersData[faction_id].soc_category_pending.models_[c]) {
+                unchanged = false;
+                PlayersData[faction_id].soc_category_pending.models_[c] = model;
+            }
+            best_combo >>= 2;
+        }
+        if (!unchanged) {
+            social_set(faction_id);
+            int cost = social_upheaval(faction_id, &PlayersData[faction_id].soc_category_pending);
+            PlayersData[faction_id].energy_reserves
+                = range(PlayersData[faction_id].energy_reserves - cost, 0, 999999999);
+            PlayersData[faction_id].soc_upheaval_cost_paid += cost;
+            if (!is_human(faction_id)) {
+                consider_designs(faction_id);
             }
         }
     }
