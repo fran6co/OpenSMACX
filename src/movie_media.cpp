@@ -1431,7 +1431,7 @@ extern "C" int __fastcall sub_5c9ec0(MediaRuntime *runtime) {
 #define media_decoder_lookup_a (MediaAdpcmTables.lookup_and_delta_words)
 #define media_decoder_lookup_b (MediaAdpcmTables.lookup_and_delta_words + 4)
 
-// ORIGINAL: 0x005CDB90 sub_5cdb90 0x005CDB90-0x005CDD0C
+// ORIGINAL: 0x005CDB90 sub_5cdb90 0x005CDB90-0x005CDD0C BYTE_EXACT
 // symbol    _sub_5cdb90
 // kind      game
 // TRIED: homed into general.cpp (its real TU) 2026-09-03 and reverted for one reason:
