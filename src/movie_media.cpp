@@ -1436,36 +1436,40 @@ extern "C" int __fastcall sub_5c9ec0(MediaRuntime *runtime) {
 // kind      game
 // TRIED: homed into general.cpp (its real TU) 2026-09-03 and reverted for one reason:
 // TRIED: `extern "C" ... sub_5cdb90()` fallback head; the disasm's no-`push ebp` esp-relative frame with 6 stack reads matches IDA's 6-arg guess, so the signature was changed to (int, int*, int*, int*, int, unsigned int*). #0 mismatch is the `sub esp,0x10` prologue vs the compiler's own frame shape.
+// The image reuses the input argument as the walking byte pointer; each
+// sample is computed in a temporary and only then stored to the channel.
 extern "C" void __cdecl sub_5cdb90(int count, int *cursor, int *predictor,
-                                   int *accumulator, int input_base,
+                                   int *accumulator, BYTE *input,
                                    unsigned int *output_cursor) {
-  BYTE *input = (BYTE *)(input_base + (*cursor * 15) / 28);
+  input += (*cursor * 15) / 28;
+  short *output = (short *)*output_cursor;
   int previous = *predictor;
   int value = *accumulator;
-  short *output = (short *)*output_cursor;
   if (count > 0) {
     unsigned int blocks = ((unsigned int)count + 0x1b) / 0x1c;
     do {
       *cursor += 0x1c;
-      int shift = (*input & 0xf) + 8;
       unsigned int code = *input >> 4;
-      int coefficient_a = media_decoder_lookup_b[code];
       int coefficient_b = media_decoder_lookup_a[code];
+      int coefficient_a = media_decoder_lookup_b[code];
+      int shift = (*input & 0xf) + 8;
       short *end = output + 0x38;
       ++input;
       while (output < end) {
-        value = (((int)((unsigned int)(*input >> 4) << 0x1c) >> shift) +
-                 coefficient_a * value + 0x80 + coefficient_b * previous) >> 8;
-        if (value < -0x8000) value = -0x8000;
-        else if (value > 0x7fff) value = 0x7fff;
-        output[0] = (short)value;
-        output[1] = (short)value;
-        previous = (((int)((unsigned int)*input << 0x1c) >> shift) +
-                    value * coefficient_b + 0x80 + coefficient_a * previous) >> 8;
-        if (previous < -0x8000) previous = -0x8000;
-        else if (previous > 0x7fff) previous = 0x7fff;
-        output[2] = (short)previous;
-        output[3] = (short)previous;
+        int first = (((int)((unsigned int)(*input >> 4) << 0x1c) >> shift) +
+                      coefficient_a * value + 0x80 + coefficient_b * previous) >> 8;
+        if (first < -0x8000) first = -0x8000;
+        else if (first > 0x7fff) first = 0x7fff;
+        output[0] = (short)first;
+        output[1] = (short)first;
+        value = first;
+        int second = (((int)((unsigned int)*input << 0x1c) >> shift) +
+                  first * coefficient_b + 0x80 + coefficient_a * previous) >> 8;
+        if (second < -0x8000) second = -0x8000;
+        else if (second > 0x7fff) second = 0x7fff;
+        output[2] = (short)second;
+        output[3] = (short)second;
+        previous = second;
         output += 4;
         ++input;
       }
@@ -1486,11 +1490,13 @@ extern "C" void __cdecl sub_5cdb90(int count, int *cursor, int *predictor,
 // pairs; a pair's first byte holds the first left/right samples (high/low
 // nibble), its second byte the next two. Arguments 3/4 are the left
 // channel's (predictor, accumulator), 5/6 the right's, as for sub_5cdb90.
+// Left: register choice for the block header's filter/shift nibbles
+// (24 instructions); the input argument is the walking pointer as in 5CDB90.
 extern "C" void __cdecl sub_5cdd10(int count, int *cursor,
                                    int *left_predictor, int *left_accumulator,
                                    int *right_predictor, int *right_accumulator,
-                                   int input_base, unsigned int *output_cursor) {
-  BYTE *input = (BYTE *)(input_base + (*cursor * 30) / 28);
+                                   BYTE *input, unsigned int *output_cursor) {
+  input += (*cursor * 30) / 28;
   short *output = (short *)*output_cursor;
   int left_prev = *left_predictor;
   int left_last = *left_accumulator;
@@ -1500,11 +1506,15 @@ extern "C" void __cdecl sub_5cdd10(int count, int *cursor,
     unsigned int blocks = ((unsigned int)count + 0x1b) / 0x1c;
     do {
       *cursor += 0x1c;
-      input += 2;
-      unsigned int hi = input[-2] >> 4, lo = input[-2] & 0xf;
-      int hi_a = media_decoder_lookup_a[hi], hi_b = media_decoder_lookup_b[hi];
-      int lo_a = media_decoder_lookup_a[lo], lo_b = media_decoder_lookup_b[lo];
-      int shift_lo = (input[-1] & 0xf) + 8, shift_hi = (input[-1] >> 4) + 8;
+      input = input + 2;
+      unsigned int lo = input[-2] & 0xf;
+      unsigned int hi = input[-2] >> 4;
+      int hi_b = media_decoder_lookup_b[hi];
+      int hi_a = media_decoder_lookup_a[hi];
+      int shift_hi = (input[-1] >> 4) + 8;
+      int lo_b = media_decoder_lookup_b[lo];
+      int lo_a = media_decoder_lookup_a[lo];
+      int shift_lo = (input[-1] & 0xf) + 8;
       short *end = output + 0x38;
       while (output < end) {
         int sample_left = ((((int)((*input & 0xf0) << 0x18)) >> shift_hi) +
@@ -1549,88 +1559,97 @@ extern "C" void __cdecl sub_5cdd10(int count, int *cursor,
 // symbol    @sub_5ca310@8
 // kind      game
 // TRIED: __fastcall(ecx,edx) two-arg signature + large local buffer for __alloca_probe reaches MISMATCH #3 (prologue); several output scratch locals (sub_5cdd10/5cdb90/5ce6e3 args) use fresh locals rather than the exact original stack slot, since those callees are opaque and their slot placement doesn't affect this body.
+// Rewritten from the image: the frame is a 0xC000-byte packet buffer read
+// at its start (the old body read every header field 4 bytes late), the
+// switch cases sit in the image's block order (0x0A, 7, 0), the ADPCM
+// decoders receive the sample count output_bytes / 4 (not the block count),
+// and an unknown format leaves output_bytes uninitialized, as the image's
+// stack reload shows. Left: VC6 load placement of decoded_ring_current
+// (a volatile stand-in moves 55 -> 241 matching instructions but is not
+// exact, so it is not kept).
 extern "C" int __fastcall sub_5ca310(MediaRuntime *r, int byte_count) {
-  BYTE input[0xc008];
+  BYTE buffer[0xc000];
   int output_bytes;
-  if (r->output_counter == 0) {
-    MediaDescriptor *seek_descriptor = r->descriptor;
-    if ((seek_descriptor->flags & 0x00008000) != 0)
-      r->channel_seek_position =
-          mmioSeek(seek_descriptor->stream, 0, SEEK_CUR) - 8;
-  }
-  MediaDescriptor *read_descriptor = r->descriptor;
-  LONG read = mmioRead(read_descriptor->stream,
-                       (HPSTR)(input + 0x14), byte_count);
+  if (r->output_counter == 0 &&
+      (r->descriptor->flags & 0x00008000) != 0)
+    r->channel_seek_position =
+        mmioSeek(r->descriptor->stream, 0, SEEK_CUR) - 8;
+  LONG read = mmioRead(r->descriptor->stream, (HPSTR)buffer, byte_count);
   if (read == 0) { r->stream_eof = 1; return -1; }
   if (read == -1) return -2;
 
-  if (r->format_dispatch_60 == 0) {
-    output_bytes = (int)(*(DWORD *)(input + 0x18) * 4);
-    if (r->decoded_ring_current + output_bytes >= r->decoded_ring_base + 0x493e0)
-      r->decoded_ring_current = r->decoded_ring_base;
-    int words = (output_bytes + ((output_bytes >> 31) & 3)) >> 2;
-    if (r->format_parameter_54 == 2) {
-      for (int i = 0; i < words; ++i)
-        ((DWORD *)r->decoded_ring_current)[i] = ((DWORD *)(input + 0x1c))[i];
-    } else {
-      for (int i = 0; i < words; ++i) {
-        short sample = ((short *)(input + 0x1c))[i];
-        *(short *)(r->decoded_ring_current + i * 4) = sample;
-        *(short *)(r->decoded_ring_current + i * 4 + 2) = sample;
-      }
-    }
-    byte_count = output_bytes;
-  } else if (r->format_dispatch_60 == 7) {
-    r->decoder_state_3d8 = *(short *)(input + 0x1c);
-    r->decoder_state_3e0 = *(short *)(input + 0x1e);
-    r->decoder_state_3dc = *(short *)(input + 0x20);
-    r->decoder_state_3e4 = *(short *)(input + 0x22);
-    int encoded = byte_count - 0xc;
-    int cursor = 0;
-    unsigned int output = (unsigned int)r->decoded_ring_current;
-    if (r->format_parameter_54 == 2) {
-      int count = encoded / 30;
-      output_bytes = count * 0x70;
-      if (r->decoded_ring_current + output_bytes >= r->decoded_ring_base + 0x493e0)
-        r->decoded_ring_current = r->decoded_ring_base;
-      output = (unsigned int)r->decoded_ring_current;
-      sub_5cdd10(count, &cursor, &r->decoder_state_3d8,
-                 &r->decoder_state_3e0, &r->decoder_state_3dc,
-                 &r->decoder_state_3e4, (int)(input + 0x24), &output);
-      byte_count = output_bytes;
-    } else {
-      int count = encoded / 15;
-      output_bytes = count * 0x70;
-      if (r->decoded_ring_current + output_bytes >= r->decoded_ring_base + 0x493e0)
-        r->decoded_ring_current = r->decoded_ring_base;
-      output = (unsigned int)r->decoded_ring_current;
-      sub_5cdb90(count, &cursor, &r->decoder_state_3d8,
-                 &r->decoder_state_3e0, (int)(input + 0x24), &output);
-      byte_count = output_bytes;
-    }
-  } else if (r->format_dispatch_60 == 0x0a) {
+  switch (r->format_dispatch_60) {
+  case 0x0a:
     output_bytes = byte_count * 4;
     if (r->decoded_ring_current + output_bytes >= r->decoded_ring_base + 0x493e0)
       r->decoded_ring_current = r->decoded_ring_base;
-    sub_5ce6e3(input + 0x14, (short *)r->decoded_ring_current, byte_count,
+    sub_5ce6e3(buffer, (short *)r->decoded_ring_current, byte_count,
                &r->decoder_state_3e8, &r->decoder_state_3f0);
-    byte_count = output_bytes;
-  } else {
-    byte_count = *(int *)(input + 0x14);
+    break;
+  case 7:
+    if (r->format_parameter_54 == 2) {
+      int cursor = 0;
+      r->decoder_state_3d8 = *(short *)(buffer + 4);
+      r->decoder_state_3e0 = *(short *)(buffer + 6);
+      r->decoder_state_3dc = *(short *)(buffer + 8);
+      r->decoder_state_3e4 = *(short *)(buffer + 0xa);
+      output_bytes = (unsigned int)(byte_count - 0xc) / 30 * 0x70;
+      if (r->decoded_ring_current + output_bytes >= r->decoded_ring_base + 0x493e0)
+        r->decoded_ring_current = r->decoded_ring_base;
+      unsigned int output = (unsigned int)r->decoded_ring_current;
+      sub_5cdd10(output_bytes / 4, &cursor, &r->decoder_state_3d8,
+                 &r->decoder_state_3e0, &r->decoder_state_3dc,
+                 &r->decoder_state_3e4, buffer + 0xc, &output);
+    } else {
+      int cursor = 0;
+      r->decoder_state_3d8 = *(short *)(buffer + 4);
+      r->decoder_state_3e0 = *(short *)(buffer + 6);
+      r->decoder_state_3dc = *(short *)(buffer + 8);
+      r->decoder_state_3e4 = *(short *)(buffer + 0xa);
+      output_bytes = (unsigned int)(byte_count - 0xc) / 15 * 0x70;
+      if (r->decoded_ring_current + output_bytes >= r->decoded_ring_base + 0x493e0)
+        r->decoded_ring_current = r->decoded_ring_base;
+      unsigned int output = (unsigned int)r->decoded_ring_current;
+      sub_5cdb90(output_bytes / 4, &cursor, &r->decoder_state_3d8,
+                 &r->decoder_state_3e0, buffer + 0xc, &output);
+    }
+    break;
+  case 0:
+    if (r->format_parameter_54 == 2) {
+      output_bytes = (int)(((((((DWORD)buffer[3] << 8) | buffer[2]) << 8) | buffer[1]) << 8 | buffer[0]) * 4);
+      if (r->decoded_ring_current + output_bytes >= r->decoded_ring_base + 0x493e0)
+        r->decoded_ring_current = r->decoded_ring_base;
+      DWORD *destination = (DWORD *)r->decoded_ring_current;
+      for (int i = 0; i < output_bytes / 4; ++i)
+        destination[i] = ((DWORD *)(buffer + 4))[i];
+    } else {
+      output_bytes = (int)(((((((DWORD)buffer[3] << 8) | buffer[2]) << 8) | buffer[1]) << 8 | buffer[0]) * 4);
+      if (r->decoded_ring_current + output_bytes >= r->decoded_ring_base + 0x493e0)
+        r->decoded_ring_current = r->decoded_ring_base;
+      short *destination = (short *)r->decoded_ring_current;
+      for (int i = 0; i < output_bytes / 4; ++i) {
+        short sample = ((short *)(buffer + 4))[i];
+        destination[i * 2 + 1] = sample;
+        destination[i * 2] = sample;
+      }
+    }
+    break;
   }
 
   if (r->channel_state == 2) r->descriptor->stream_gate_80 = 1;
   if (r->descriptor->stream_gate_80 != 0)
     InterlockedIncrement(&r->read_counter);
-  int slot = r->output_producer_cursor % 24;
+  LONG *cursor = &r->output_producer_cursor;
+  int slot = *cursor % 24;
   r->output_records[slot].payload = r->decoded_ring_current;
-  r->output_records[slot].field_04 = (DWORD)byte_count;
+  r->output_records[slot].field_04 = (DWORD)output_bytes;
   r->output_records[slot].field_08 = (DWORD)r->read_counter;
-  r->output_records[slot].field_0c = (DWORD)r->output_counter;
-  r->decoded_ring_current += byte_count;
-  InterlockedIncrement(&r->output_producer_cursor);
+  LONG *counter = &r->output_counter;
+  r->output_records[slot].field_0c = (DWORD)*counter;
+  r->decoded_ring_current += output_bytes;
+  InterlockedIncrement(cursor);
   InterlockedIncrement((LONG *)&r->pending_output_records);
-  InterlockedIncrement(&r->output_counter);
+  InterlockedIncrement(counter);
   return 2;
 }
 
