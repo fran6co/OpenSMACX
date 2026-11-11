@@ -20,14 +20,11 @@ static inline int territory_dist(int x_point_a, int y_point_a, int x_point_b, in
 static void faction_parse_leader_fields(int faction_id, int title_slot,
                                         int name_slot, int noun_slot,
                                         int adj_slot) {
-    GenderDefault = Players[faction_id].is_leader_female;
-    PluralityDefault = FALSE;
+    parse_set(Players[faction_id].is_leader_female, FALSE);
     parse_says(title_slot, Players[faction_id].title_leader, -1, -1);
-    GenderDefault = Players[faction_id].is_leader_female;
-    PluralityDefault = FALSE;
+    parse_set(Players[faction_id].is_leader_female, FALSE);
     parse_says(name_slot, Players[faction_id].name_leader, -1, -1);
-    GenderDefault = Players[faction_id].noun_gender;
-    PluralityDefault = Players[faction_id].is_noun_plural;
+    parse_set(Players[faction_id].noun_gender, Players[faction_id].is_noun_plural);
     parse_says(noun_slot, Players[faction_id].noun_faction, -1, -1);
     if (adj_slot >= 0) {
         parse_says(adj_slot, get_he_she(faction_id, 0), -1, -1);

@@ -3319,6 +3319,32 @@ static int DiploScratchFA30;
 // RECOVERY_OBJECT: v4 0x0093FA7C ?DiploScratchFA7C@@3HA target _DiploScratchFA7C
 static int DiploScratchFA7C;
 
+// stand-in: the noun-form setup plus parse_says pair recurs across many TUs
+// and was likely a shared inline; as a TU helper its /Ob2 cost spends the
+// budget the image spends before pact_ends' and call_off_vendetta's Popup
+// teardowns. Defined ahead of call_off_vendetta, its first user.
+static void say_faction_noun(int slot, int faction) {
+    parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
+    parse_says(slot, Players[faction].noun_faction, -1, -1);
+}
+
+// WORKAROUND(inline): dead /Ob2 budget probe (pattern 164). Called with 0 it
+// folds away, emitting nothing, but spends the budget the image spends before
+// call_off_vendetta's end-of-function teardown, whose ~Scroll it calls out of
+// line (0x54C48A) while the three refusal teardowns before it expand ~Scroll.
+// The original's spending there is unidentified; a net_* style helper for the
+// TREATYON/enemies_treaty tail overshoots.
+static void call_off_vendetta_budget_probe(int x) {
+    if (x == 1) x = 11;
+    if (x == 2) x = 12;
+    if (x == 3) x = 13;
+    if (x == 4) x = 14;
+    if (x == 5) x = 15;
+    if (x == 6) x = 16;
+    if (x == 7) x = 17;
+    if (x == 8) x = 18;
+}
+
 namespace {
 // Every source line is consumed even when its menu item is suppressed.
 void read_diplomacy_menu_line() {
@@ -3342,21 +3368,13 @@ void __cdecl call_off_vendetta(int faction_id, int faction_id_with) {
     for (int candidate = 1; candidate < MaxPlayerNum; ++candidate) {
         if (!is_alive(candidate) || candidate == faction_id ||
             candidate == faction_id_with ||
-            (PlayersData[faction_id_with].diplo_treaties[candidate] & 0x10) == 0 ||
-            (PlayersData[faction_id].diplo_treaties[candidate] & 8) == 0 ||
-            (PlayersData[faction_id].diplo_treaties[candidate] & 7) == 0) continue;
+            has_treaty(faction_id_with, candidate, 0x10) == 0 ||
+            has_treaty(faction_id, candidate, 8) == 0 ||
+            has_treaty(faction_id, candidate, 7) == 0) continue;
 
         if (X_text_open(ScriptPopupFile, "ATTACKSTRING") != 0) break;
         text_get();
-        GenderDefault = Players[candidate].is_leader_female;
-        PluralityDefault = 0;
-        parse_says(0, Players[candidate].title_leader, -1, -1);
-        GenderDefault = Players[candidate].is_leader_female;
-        PluralityDefault = 0;
-        parse_says(1, Players[candidate].name_leader, -1, -1);
-        GenderDefault = Players[candidate].noun_gender;
-        PluralityDefault = Players[candidate].is_noun_plural;
-        parse_says(2, Players[candidate].noun_faction, -1, -1);
+        faction_parse_leader_fields(candidate, 0, 1, 2, -1);
         StringTemp[0] = 0;
         parse_string(TextBufferGetPtr, StringTemp);
         ++available;
@@ -3366,48 +3384,35 @@ void __cdecl call_off_vendetta(int faction_id, int faction_id_with) {
     const int chosen = popup.exec(0, pop_wait);
     if (chosen < 0) return;
 
-    GenderDefault = Players[chosen].is_leader_female;
-    PluralityDefault = 0;
+    parse_set(Players[chosen].is_leader_female, 0);
     parse_says(0, Players[chosen].title_leader, -1, -1);
-    GenderDefault = Players[chosen].is_leader_female;
-    PluralityDefault = 0;
+    parse_set(Players[chosen].is_leader_female, 0);
     parse_says(1, Players[chosen].name_leader, -1, -1);
     parse_says(2, Players[chosen].adj_insult_faction, -1, -1);
-    GenderDefault = Players[chosen].noun_gender;
-    PluralityDefault = Players[chosen].is_noun_plural;
-    parse_says(3, Players[chosen].noun_faction, -1, -1);
+    say_faction_noun(3, chosen);
 
-    if ((PlayersData[faction_id_with].diplo_treaties[chosen] & 0x20) != 0 ||
+    if (has_treaty(faction_id_with, chosen, 0x20) != 0 ||
         (PlayersData[chosen].major_atrocities != 0 &&
          PlayersData[faction_id_with].major_atrocities == 0)) {
         X_pops("TOTHEDEATH", 0x100000,
                      FactionDiplomacyPortraits[faction_id_with], nullptr);
         return;
     }
-    if ((PlayersData[faction_id_with].diplo_treaties[chosen] & 0x40) != 0 &&
-        (PlayersData[faction_id_with].diplo_treaties[faction_id] & 0x80) == 0) {
+    if (has_treaty(faction_id_with, chosen, 0x40) != 0 &&
+        has_treaty(faction_id_with, faction_id, 0x80) == 0) {
         X_pops("NOPEHIRED", 0x100000,
                      FactionDiplomacyPortraits[faction_id_with], nullptr);
         return;
     }
 
-    if (IsMultiplayerNet != 0) {
-        log_say(DiploLabelSendingSETTREATY, faction_id_with, chosen, 0x4000000);
-        message_data(0x2443, 0, faction_id_with, chosen, 0x4000000, 1);
-    } else {
-        set_treaty(faction_id_with, chosen, 0x4000000, 1);
-    }
-    if (IsMultiplayerNet != 0) {
-        log_say(DiploLabelSendingSETTREATY, faction_id_with, chosen, 0x40);
-        message_data(0x2443, 0, faction_id_with, chosen, 0x40, 0);
-    } else {
-        set_treaty(faction_id_with, chosen, 0x40, 0);
-    }
+    net_set_treaty(faction_id_with, chosen, 0x4000000, 1, 0);
+    net_set_treaty(faction_id_with, chosen, 0x40, 0, 0);
     if (wants_to_attack(chosen, faction_id_with, 0) != 0) {
         X_pops("THEIRFAULT", 0x100000,
                      FactionDiplomacyPortraits[faction_id_with], nullptr);
         return;
     }
+    call_off_vendetta_budget_probe(0);  // WORKAROUND(inline): see the probe
     X_pops("CALLEDOFF", 0x100000,
                  FactionDiplomacyPortraits[faction_id_with], nullptr);
     if (IsMultiplayerNet != 0) {
@@ -3455,21 +3460,13 @@ int __cdecl diplomacy_menu(int faction_id, int faction_id_with) {
         (Players[faction_id_with].rule_flags & 0x80) == 0)
         popup.dialogs().item(StringTemp, 7);
     read_diplomacy_menu_line();
-    if ((PlayersData[faction_id_with].diplo_treaties[faction_id] & 1) != 0)
+    if (has_treaty(faction_id_with, faction_id, 1) != 0)
         popup.dialogs().item(StringTemp, 3);
     read_diplomacy_menu_line();
-    if ((PlayersData[faction_id].diplo_treaties[faction_id_with] & 7) != 0)
+    if (has_treaty(faction_id, faction_id_with, 7) != 0)
         popup.dialogs().item(StringTemp, 4);
     text_close();
     return popup.exec(0, pop_wait);
-}
-
-// stand-in: the noun-form setup plus parse_says pair recurs across many TUs
-// and was likely a shared inline; as a TU helper its /Ob2 cost spends the
-// budget the image spends before pact_ends' Popup teardown.
-static void say_faction_noun(int slot, int faction) {
-    parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
-    parse_says(slot, Players[faction].noun_faction, -1, -1);
 }
 
 /*
@@ -5189,8 +5186,8 @@ void __cdecl battle_plans(int faction_a, int faction_b) {
     const int attack_a = attack_from(plan_a, faction_a);
     const int attack_b = attack_from(plan_b, faction_b);
 
-    if ((PlayersData[faction_a].diplo_treaties[faction_b] & 1u) == 0) {
-        if ((PlayersData[faction_b].diplo_treaties[faction_a] & 0x8020u) != 0
+    if (has_treaty(faction_a, faction_b, 1u) == 0) {
+        if (has_treaty(faction_b, faction_a, 0x8020u) != 0
             || DiploScratchFA2C != 0 || DiploFriction > 0x11
             || DiploScratchFA60 != 0) {
             X_pops(BattlePlansNoActionLabel, 0x100000,
@@ -5257,8 +5254,8 @@ void __cdecl battle_plans(int faction_a, int faction_b) {
             Base &candidate = Bases[base_id];
             const int owner = candidate.faction_id_current;
             if (owner != faction_a && owner != faction_b
-                && (PlayersData[faction_a].diplo_treaties[owner] & 0x10u) != 0
-                && (PlayersData[owner].diplo_treaties[faction_b] & 0x10u) != 0
+                && has_treaty(faction_a, owner, 0x10u) != 0
+                && has_treaty(owner, faction_b, 0x10u) != 0
                 && ((candidate.visibility & (1u << faction_a)) != 0
                     || (candidate.visibility & (1u << faction_b)) != 0)) {
                 popup.dialogs().item(candidate.name_string, base_id);
@@ -6768,14 +6765,14 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
     text_get();
     StringTemp[0] = 0;
     parse_string(TextBufferGetPtr, StringTemp);
-    if ((PlayersData[faction_id].diplo_treaties[faction_id_with] & 2u) != 0 &&
-        (PlayersData[faction_id].diplo_treaties[faction_id_with] & 1u) == 0)
+    if (has_treaty(faction_id, faction_id_with, 2u) != 0 &&
+        has_treaty(faction_id, faction_id_with, 1u) == 0)
         popup.dialogs().item(StringTemp, 2);
 
     text_get();
     StringTemp[0] = 0;
     parse_string(TextBufferGetPtr, StringTemp);
-    if ((PlayersData[faction_id].diplo_treaties[faction_id_with] & 2u) == 0)
+    if (has_treaty(faction_id, faction_id_with, 2u) == 0)
         popup.dialogs().item(StringTemp, 3);
 
     text_get();
@@ -6846,14 +6843,11 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
                 if (candidate_is_alive && candidate != faction_id &&
                     candidate != faction_id_with &&
                     ((target_flags & 8u) != 0 || target_is_human)) {
-                    GenderDefault = Players[candidate].is_leader_female;
-                    PluralityDefault = 0;
+                    parse_set(Players[candidate].is_leader_female, 0);
                     parse_says(0, Players[candidate].title_leader, -1, -1);
-                    GenderDefault = Players[candidate].is_leader_female;
-                    PluralityDefault = 0;
+                    parse_set(Players[candidate].is_leader_female, 0);
                     parse_says(1, Players[candidate].name_leader, -1, -1);
-                    GenderDefault = Players[candidate].noun_gender;
-                    PluralityDefault = Players[candidate].is_noun_plural;
+                    parse_set(Players[candidate].noun_gender, Players[candidate].is_noun_plural);
                     parse_says(2, Players[candidate].noun_faction, -1, -1);
                     StringTemp[0] = 0;
                     parse_string(TextBufferGetPtr, StringTemp);
@@ -6865,13 +6859,11 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
             if (DiploScratchFA5C >= 0) {
                 // The original reuses the completed loop index8 here, reading
                 // other.treaties[8], which is this declared agenda word.
-                if ((PlayersData[faction_id_with].diplo_agenda[0] & 0x10u) != 0) {
+                if (has_agenda(faction_id_with, 0, 0x10u) != 0) {
                     const int target = DiploScratchFA5C;
-                    GenderDefault = Players[target].is_leader_female;
-                    PluralityDefault = 0;
+                    parse_set(Players[target].is_leader_female, 0);
                     parse_says(0, Players[target].title_leader, -1, -1);
-                    GenderDefault = Players[target].is_leader_female;
-                    PluralityDefault = 0;
+                    parse_set(Players[target].is_leader_female, 0);
                     parse_says(1, Players[target].name_leader, -1, -1);
                     X_pops("REJWARALREADY", 0x100000,
                                  FactionDiplomacyPortraits[faction_id_with],
@@ -6910,14 +6902,11 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
                 (GameDataStateStorage.fields_.secret_project_.empath_guild() < 0 ||
                  Bases[GameDataStateStorage.fields_.secret_project_.empath_guild()].faction_id_current !=
                      faction_id_with)) {
-                GenderDefault = Players[candidate].is_leader_female;
-                PluralityDefault = 0;
+                parse_set(Players[candidate].is_leader_female, 0);
                 parse_says(0, Players[candidate].title_leader, -1, -1);
-                GenderDefault = Players[candidate].is_leader_female;
-                PluralityDefault = 0;
+                parse_set(Players[candidate].is_leader_female, 0);
                 parse_says(1, Players[candidate].name_leader, -1, -1);
-                GenderDefault = Players[candidate].noun_gender;
-                PluralityDefault = Players[candidate].is_noun_plural;
+                parse_set(Players[candidate].noun_gender, Players[candidate].is_noun_plural);
                 parse_says(2, Players[candidate].noun_faction, -1, -1);
                 StringTemp[0] = 0;
                 parse_string(TextBufferGetPtr, StringTemp);
@@ -6939,14 +6928,11 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
              Bases[GameDataStateStorage.fields_.secret_project_.empath_guild()].faction_id_current !=
                  faction_id_with)) {
             const int target = DiploScratchFA5C;
-            GenderDefault = Players[target].is_leader_female;
-            PluralityDefault = 0;
+            parse_set(Players[target].is_leader_female, 0);
             parse_says(0, Players[target].title_leader, -1, -1);
-            GenderDefault = Players[target].is_leader_female;
-            PluralityDefault = 0;
+            parse_set(Players[target].is_leader_female, 0);
             parse_says(1, Players[target].name_leader, -1, -1);
-            GenderDefault = Players[target].noun_gender;
-            PluralityDefault = Players[target].is_noun_plural;
+            parse_set(Players[target].noun_gender, Players[target].is_noun_plural);
             parse_says(2, Players[target].noun_faction, -1, -1);
             DiploScratchFA34 = 0;
             x_pops_minimal("NOCOMMLINK",
@@ -7001,11 +6987,9 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
     if (DiploScratchFA34 != 0 && DiploScratchFA34 != 7 &&
         DiploScratchFA34 != 10 && DiploScratchFA34 != 11 &&
         DiploScratchFA34 != 5 && DiploScratchFA34 != 12) {
-        GenderDefault = Players[faction_id_with].is_leader_female;
-        PluralityDefault = 0;
+        parse_set(Players[faction_id_with].is_leader_female, 0);
         parse_says(0, Players[faction_id_with].title_leader, -1, -1);
-        GenderDefault = Players[faction_id_with].is_leader_female;
-        PluralityDefault = 0;
+        parse_set(Players[faction_id_with].is_leader_female, 0);
         parse_says(1, Players[faction_id_with].name_leader, -1, -1);
         parse_says(2, get_pact_hood(faction_id, faction_id_with), -1, -1);
         diplomacy_caption(faction_id, faction_id_with);
@@ -7047,7 +7031,7 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
         StringTemp[0] = 0;
         parse_string(TextBufferGetPtr, StringTemp);
         if (DiploScratchFA34 != 1 &&
-            (PlayersData[faction_id].diplo_treaties[faction_id_with] & 1u) ==
+            has_treaty(faction_id, faction_id_with, 1u) ==
                 0)
             popup.dialogs().item(StringTemp, 3);
 
@@ -7055,7 +7039,7 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
         StringTemp[0] = 0;
         parse_string(TextBufferGetPtr, StringTemp);
         if (DiploScratchFA34 != 1 &&
-            (PlayersData[faction_id].diplo_treaties[faction_id_with] & 1u) !=
+            has_treaty(faction_id, faction_id_with, 1u) !=
                 0)
             popup.dialogs().item(StringTemp, 3);
 
