@@ -672,7 +672,7 @@ void InfoWin::configure_panel_bounds() {
     StatusFlags |= 4;
 }
 
-// ORIGINAL: 0x004592A0 ?init@InfoWin@@QAEXXZ 0x004592A0-0x00459414
+// ORIGINAL: 0x004592A0 ?init@InfoWin@@QAEXXZ 0x004592A0-0x00459414 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x004592A0-0x00459414", "git:9e39965b:src/recovered/units/004592a0.cpp", "source:src/infowin.h:owned members", "source:src/maininterface.h:info_panel_frame_"], "reason": "Initialize the typed InfoWin pane states, font, paired pane rectangles, bounds and timer callback in the owner; the original reads MainInterfaceGlobal+0xDA0 as one panel RECT and conditionally initializes the shared panel extent."}
 void InfoWin::init() {
     pane_states_[0] = -1;
@@ -731,7 +731,7 @@ void __cdecl InfoWin::timer_daemon(int tick) {
 // That control is flat_button_[11]: MainInterfaceGlobal is at 0x007AE820,
 // the array begins at +0xE00, and each FlatButton occupies 0xB4C bytes
 // (flatbutton.h:66), placing element 11 at 0x007B7264.
-// ORIGINAL: 0x00459150 ?timer_proc@InfoWin@@QAEXH@Z 0x00459150-0x00459260
+// ORIGINAL: 0x00459150 ?timer_proc@InfoWin@@QAEXH@Z 0x00459150-0x00459260 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00459150.cpp"], "reason": "Home InfoWin timer behavior with typed pane members and MainInterface flat-button slot"}
 void InfoWin::timer_proc(int a1) {
     if (field_AC_ != 0) return;
@@ -813,7 +813,7 @@ int InfoFactionTextColors[8] = {249, 111, 252, 255, 251, 65, 102, 187};
 // RECOVERY_OBJECT: v2 0x0068FA10 0x0068FA30 ?InfoFactionShadowColors@@3PAHA 0x00458420
 int InfoFactionShadowColors[8] = {1, 175, 4, 248, 3, 57, 109, 192};
 
-// ORIGINAL: 0x00458420 ?draw_text@InfoWin@@QAEXH@Z 0x00458420-0x004588A9
+// ORIGINAL: 0x00458420 ?draw_text@InfoWin@@QAEXH@Z 0x00458420-0x004588A9 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00458420-0x004588A9"], "reason": "Recovered original behavior through real source classes and owned members; source remains subject to byte and structural verification."}
 // The ranked rows right-align through the guarded four-argument form of
 // Buffer::write_right_l; the image tests the text for null before strlen
@@ -1164,7 +1164,7 @@ void InfoWin::on_right_click(int a, int b) {
 // the chosen state to the active pane. The menu's stored item ID is not the
 // same as its selected slot; PullDown owns that translation.
 #pragma auto_inline(off)
-// ORIGINAL: 0x004589C0 ?right_menu@InfoWin@@QAEXHH@Z 0x004589C0-0x00458D3A;0x00655280-0x00655295
+// ORIGINAL: 0x004589C0 ?right_menu@InfoWin@@QAEXHH@Z 0x004589C0-0x00458D3A;0x00655280-0x00655295 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x004589C0-0x00458D3A", "image:0x00655280-0x00655295", "git:bfa66ccf:src/recovered/units/004589c0.cpp", "source:src/pulldown.h:get_selected_id"], "reason": "Home the information-pane context menu with the real PullDown item-ID API, source-owned label table, pane state and MainInterface renderer; retain the original secondary EH span as a restoration obligation."}
 void InfoWin::right_menu(int x, int y) {
     PullDown menu;
@@ -1263,7 +1263,7 @@ Status: Complete
 InfoWin::~InfoWin() {
 }
 
-// ORIGINAL: 0x00459420 ?UNK5@InfoWin@@QAEXHHHHH@Z 0x00459420-0x0045949B;0x00655295-0x006552BA FILE
+// ORIGINAL: 0x00459420 ?UNK5@InfoWin@@QAEXHHHHH@Z 0x00459420-0x0045949B;0x00655295-0x006552BA FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
 // size      160 bytes
 // prototype void (__thiscall ?UNK5@InfoWin@@QAEXHHHHH@Z)(InfoWin* this, int, int, int, int, int)
