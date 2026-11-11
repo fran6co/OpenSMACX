@@ -2538,9 +2538,7 @@ reroll:
         }
         if (PlayersData[faction_id].proto_id_active[BSC_UNITY_FOIL] < 2
             && !bounded_crt_random(odds)) {
-            if (is_sea) {
-                unit_id = BSC_UNITY_FOIL;
-            } else {
+            if (!is_sea) {
                 for (int i = 0; i < 8; i++) {
                     const int tx = wrap_map_x(x + VehMoveDeltaX[i]);
                     const int ty = y + VehMoveDeltaY[i];
@@ -2552,6 +2550,8 @@ reroll:
                         break;
                     }
                 }
+            } else {
+                unit_id = BSC_UNITY_FOIL;
             }
         }
         if (PlayersData[faction_id].proto_id_active[unit_id]
@@ -3023,7 +3023,7 @@ int __cdecl propose_proto(int faction_id, int chassis_id, int weapon_id,
         if (VehPrototypes[slot].chassis_id == chassis_id
             && VehPrototypes[slot].weapon_id == weapon_id
             && VehPrototypes[slot].armor_id == armor_id
-            && (uint32_t)ability_flags == VehPrototypes[slot].ability_flags
+            && !(VehPrototypes[slot].ability_flags ^ ability_flags)
             && VehPrototypes[slot].reactor_id == reactor_id
             && !DesignConsiderOverride
             && GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id)) {
@@ -3034,8 +3034,8 @@ int __cdecl propose_proto(int faction_id, int chassis_id, int weapon_id,
             && VehPrototypes[slot].armor_id == armor_id
             && !((VehPrototypes[slot].ability_flags ^ ability_flags)
                 & PrototypeAbilityCompatibilityMask)
-            && ((VehPrototypes[slot].ability_flags & ability_flags)
-                    == VehPrototypes[slot].ability_flags
+            && (VehPrototypes[slot].ability_flags
+                    == (VehPrototypes[slot].ability_flags & ability_flags)
                 || !is_human(faction_id))
             && VehPrototypes[slot].reactor_id == reactor_id) {
             if (design_category == -2) {
@@ -3590,7 +3590,7 @@ void __cdecl prune_protos(int faction_id, int prototype_id, int options) {
                 }
             }
             if (VehPrototypes[tid].cost < VehPrototypes[rid].cost
-                && VehPrototypes[tid].reactor_id >= VehPrototypes[rid].reactor_id) {
+                && VehPrototypes[rid].reactor_id <= VehPrototypes[tid].reactor_id) {
                 if (tid < MaxVehProtoFactionNum) continue;
                 if (VehPrototypes[tid].flags & 8) continue;
             }
@@ -3609,8 +3609,8 @@ void __cdecl prune_protos(int faction_id, int prototype_id, int options) {
             const uint8_t bit = static_cast<uint8_t>(1 << faction_id);
             VehPrototypes[tid].obsolete_factions |= bit;
             if (options) synch_obs(tid);
-            int processed = 0;
             int latch = 0;
+            int processed = 0;
             if (tid < MaxVehProtoFactionNum
                 && !has_tech(VehPrototypes[tid].preq_tech, faction_id)) {
                 continue;
@@ -3634,7 +3634,7 @@ void __cdecl prune_protos(int faction_id, int prototype_id, int options) {
                      && found && !processed)
                     || (found && (!options
                                   || !NetDaemonNet.lock_base(base_id, 0, -1, -1)))) {
-                    if (!IsMultiplayerNet && faction_id == ConsoleGlobal.faction_id_
+                    if (!IsMultiplayerNet && ConsoleGlobal.faction_id_ == faction_id
                         && !processed) {
                         parse_prototype_report(0, tid);
                         parse_prototype_report(1, rid);

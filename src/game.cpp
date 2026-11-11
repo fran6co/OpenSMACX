@@ -2259,9 +2259,17 @@ typedef char GameDataHeaderWireVersionOffset[
     offsetof(GameDataHeaderWire, legacy_terminal_words_) + 4 * sizeof(int)
         == 0x304 ? 1 : -1];
 
+// game_data expands this four-way transfer at every block (the image makes
+// 50 encrypt_read/encrypt_write and 60 fread/fwrite calls); forwarding to the
+// nested map_data_block/map_data_plain_block pair left most sites as calls.
 static int game_data_candidate_transfer(FILE *file, void *buffer,
                                         unsigned int byte_count) {
-    return map_data_block(file, buffer, byte_count);
+    if (GameDataEncryptedMode) {
+        if (GameDataWriteMode) return encrypt_write(buffer, byte_count, 1, file);
+        return encrypt_read(buffer, byte_count, 1, file);
+    }
+    if (GameDataWriteMode) return fwrite(buffer, byte_count, 1, file);
+    return fread(buffer, byte_count, 1, file);
 }
 
 // BungList remains private to veh.cpp behind its owner-local transfer API.
