@@ -10390,12 +10390,20 @@ Purpose: Return the current StringList text, or null when the list is empty.
 Return Value: mutable text, or null when head_ is null
 Status: Complete
 */
+// WORKAROUND(inline): file-local twin of StringStruct::current_entry
+// (0x00402530). current_text expands it under its head test (the
+// 0x005E3637 `mov eax,[eax+8]; mov eax,[eax+4]` chase), while
+// Buffer::write_strings 0x005DAD70 calls 0x00402530 out of line six times in
+// this same TU, so the TU keeps only the declaration (VC6 has no noinline).
+static inline StringStructPayload *buffer_current_entry(StringStruct *list) {
+    if (list->head_) {
+        return list->current_->string_payload();
+    }
+    return 0;
+}
+
 char *StringList::current_text() {
-    // stand-in: volatile read of current_ forces the image's eax-only chase
-    // at 0x005E3637; no plain spelling found (8+ shapes keep ecx in the middle).
-    return head_ != 0
-               ? (*(StringStructEntry *volatile *)&current_)->string_payload()->text
-               : 0;
+    return head_ != 0 ? buffer_current_entry(this)->text : 0;
 }
 
 // current_text is a provisional descriptive name, not a recovered original

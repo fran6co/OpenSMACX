@@ -31,14 +31,10 @@ class FameWin : public GraphicWin {
   uint32_t field_A18_;
   uint32_t field_A1C_;
   uint32_t field_A20_;
-  uint32_t field_A24_;
-  uint32_t field_A28_;
-  uint32_t field_A2C_;
-  uint32_t field_A30_;
-  uint32_t field_A34_;
-  uint32_t field_A38_;
-  uint32_t field_A3C_;
-  uint32_t field_A40_;
+  // +0xA24: where the 800x600 hof.pcx frame sits, built from +0xA14..A20.
+  RECT frame_rect_;
+  // +0xA34: scratch cell rectangle for button and rank-row placement.
+  RECT cell_rect_;
   uint32_t field_A44_;
   uint32_t field_A48_;
   uint32_t factionID_;
@@ -57,30 +53,14 @@ class FameWin : public GraphicWin {
   Buffer buffer1_;
   // RECOVERY_MEMBER: v2 FameWin buffer2_ Buffer 0xAEA4 0x0044B200
   Buffer buffer2_;
-  uint32_t field_B42C_;
-  uint32_t field_B430_;
-  uint32_t field_B434_;
-  uint32_t field_B438_;
-  uint32_t field_B43C_;
-  uint32_t field_B440_;
-  uint32_t field_B444_;
-  uint32_t field_B448_;
-  uint32_t field_B44C_;
-  uint32_t field_B450_;
-  uint32_t field_B454_;
-  uint32_t field_B458_;
-  uint32_t field_B45C_;
-  uint32_t field_B460_;
-  uint32_t field_B464_;
-  uint32_t field_B468_;
-  uint32_t field_B46C_;
-  uint32_t field_B470_;
-  uint32_t field_B474_;
-  uint32_t field_B478_;
-  uint32_t field_B47C_;
-  uint32_t field_B480_;
-  uint32_t field_B484_;
-  uint32_t field_B488_;
+  // +0xB42C..+0xB488: six panel rectangles laid out by init (0x0044858A..)
+  // relative to frame_rect_.
+  RECT ranks_rect_;       // 0xB42C: the five-record rank list
+  RECT portrait_rect_;    // 0xB43C: leader portrait
+  RECT details_rect_;     // 0xB44C: award and statistics text (clip)
+  RECT factions_rect_;    // 0xB45C: seven faction buttons
+  RECT awards_rect_;      // 0xB46C: six award buttons
+  RECT landscape_rect_;   // 0xB47C: diplomacy landscape art
   // RECOVERY_MEMBER: v4 FameWin sprites_ Sprite[12] 0xB48C 0x210 0x0044B200
   Sprite sprites_[12];
 };

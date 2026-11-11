@@ -70,11 +70,21 @@ inline Vector::~Vector() {
   close();
 }
 
+// The constructor is out of line at 0x006343C0 (vector.cpp): veh_scoot calls
+// it directly for its singleton `destination` (0x0055A1BB).
+// WORKAROUND(decl): the inline body stays visible in every other includer.
+// Removing it re-ties register allocation in 10 includers that never
+// construct a Vector (battle, game, turn, veh, setup, colortables,
+// terraforming_actions, caviar_geometry/loader/raster; pattern 260), so only
+// the TUs that define VECTOR_CTOR_OUT_OF_LINE (vector.cpp, font_queue.cpp)
+// see the declaration alone.
+#ifndef VECTOR_CTOR_OUT_OF_LINE
 inline Vector::Vector() {
   x_ = 0.0f;
   y_ = 0.0f;
   z_ = 0.0f;
 }
+#endif
 
 static_assert(sizeof(Vector) == 0xC, "Vector layout must match the legacy ABI");
 

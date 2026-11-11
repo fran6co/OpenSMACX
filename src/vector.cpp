@@ -7,6 +7,8 @@
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  */
+// WORKAROUND(decl): see vector.h; this unit owns the out-of-line 0x006343C0.
+#define VECTOR_CTOR_OUT_OF_LINE
 #include "stdafx.h"
 #include "vector.h"
 #include <math.h>
@@ -16,6 +18,28 @@
 // the compiler's fsqrt intrinsic: it omits that argument-rounding boundary
 // and the runtime's floating-point handling.
 #pragma function(sqrt)
+
+/*
+Purpose: Initialize a zero vector.
+// ORIGINAL: 0x006343C0 ??0Vector@@QAE@XZ 0x006343C0-0x006343CD BYTE_EXACT
+// size      13 bytes
+// prototype void (__thiscall ??0Vector@@QAE@XZ)(Vector* this)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
+Status: Complete
+*/
+// Out of line, not a header inline: veh_scoot calls 0x006343C0 directly for
+// its singleton `destination` (0x0055A1BB) as well as handing it to the
+// array constructor, and the constructor's address lies in this unit's run
+// (0x006343C0, just before close at 0x006343D0).
+Vector::Vector() {
+    x_ = 0.0f;
+    y_ = 0.0f;
+    z_ = 0.0f;
+}
 
 /*
 Purpose: Clear all vector components.

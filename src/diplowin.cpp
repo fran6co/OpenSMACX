@@ -27,6 +27,9 @@
 // ORIGINAL: 0x00440F20 _$E19 0x00440F20-0x00440F2A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682084 selects initializer0x440f00..0x440f16, registering exit0x440f20..0x440f2a. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x73acd8 bound to?DiploWindow@@3VDiploWin@@A.", "Original startup instruction evidence: [[\"0x440f00\", \"mov\", \"ecx, 0x73acd8\"], [\"0x440f05\", \"call\", \"0x444fc0\"], [\"0x440f0a\", \"push\", \"0x440f20\"], [\"0x440f0f\", \"call\", \"0x645398\"], [\"0x440f14\", \"pop\", \"ecx\"], [\"0x440f15\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x440f20\", \"mov\", \"ecx, 0x73acd8\"], [\"0x440f25\", \"jmp\", \"0x444db0\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/diplowin.cpp COFF selects _$E21 via .CRT$XCU, registering _$E19. Startup relocation targets: [\"?DiploWindow@@3VDiploWin@@A\", \"??0DiploWin@@QAE@XZ\", \"_$E19\", \"_atexit\"]; exit targets: [\"?DiploWindow@@3VDiploWin@@A\", \"??1DiploWin@@UAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f2ec; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned ?DiploWindow@@3VDiploWin@@A; preserve complete original identity and remaining restoration/structure obligations."}
 // symbol    _$E14
+// WORKAROUND(decl): opt in to the header's inline StringStruct::current_entry
+// (sub_441040 expands it at 0x004410AF; see stringstruct.h).
+#define STRINGSTRUCT_CURRENT_ENTRY_INLINE
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "diplowin.h"
@@ -2009,17 +2012,8 @@ Status: Coverage transcription - unclaimed body; the walk now goes through
 static inline int transcript_current_id(StringList *list) {
   return list->head_ ? list->current_->id : 0;
 }
-// WORKAROUND(inline): file-local twin of StringStruct::current_entry
-// (0x00402530, out of line in stringstruct.cpp). The image's 0x004410AF..B5
-// chase (mov eax,[eax+8]; mov edx,[eax+4]) needs the text read to go through
-// an inlined current_entry() under the head test, which is how the original
-// header evidently spelled it.
-static inline StringStructPayload *transcript_current_entry(StringList *list) {
-  if (list->head_) return list->current_->string_payload();
-  return 0;
-}
 static inline char *transcript_current_text(StringList *list) {
-  return list->head_ ? transcript_current_entry(list)->text : 0;
+  return list->head_ ? list->current_entry()->text : 0;
 }
 
 static inline void transcript_add(StringList *list, char *text, int id) {

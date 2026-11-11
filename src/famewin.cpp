@@ -14,6 +14,7 @@
 // symbol    _$E14
 #include "stdafx.h"
 #include "famewin.h"
+#include "rectangle_operations.h"
 #include "font_metrics.h"
 #include "console.h"
 #include "halloffame.h"
@@ -249,35 +250,6 @@ int FameWin::on_key_click(int, int code) {
   return 1;
 }
 
-// WORKAROUND(type): +0xA14..+0xA20 (origin and size), +0xA24..+0xA30,
-// +0xA34..+0xA40 and the six +0xB42C..+0xB488 runs are RECT-like groups in
-// the original (on_redraw builds RECTs from them; 0x00448468..0x004484AA and
-// 0x0044866E.. read every word of a group before storing any, which only a
-// single base pointer allows). The members are still split uint32_t fields,
-// so these helpers walk a group from its first word.
-static inline void fame_set_rect(uint32_t *rect, int x, int y, int width,
-                                 int height) {
-  rect[0] = x;
-  rect[1] = y;
-  rect[2] = x + width;
-  rect[3] = y + height;
-}
-
-// +0xA14 origin, +0xA1C size, +0xA24 rectangle: 0x00448468..0x004484AA
-// reads the size before storing the origin.
-static inline void fame_set_origin(uint32_t *group, int x, int y) {
-  group[0] = x;
-  group[1] = y;
-  fame_set_rect(group + 4, x, y, group[2], group[3]);
-}
-
-static inline void fame_offset_rect(uint32_t *rect, int dx, int dy) {
-  rect[0] += dx;
-  rect[2] += dx;
-  rect[1] += dy;
-  rect[3] += dy;
-}
-
 // ORIGINAL: 0x00448400 ?init@FameWin@@QAEHXZ 0x00448400-0x00448D60;0x00654E90-0x00654EA5 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00448400.cpp", "Pinned original owner review: original clip resets and absent-record branches, CharUpperA import, difficulty-label capitalization and exact demote tail copying."], "reason": "Recover FameWin owner behavior through existing GraphicWin/Buffer bases, owned buttons and sprites, and typed HallOfFame/Player records; retain historical seed identity and extents without a measurement claim."}
 // TRIED: full transcription landed (MISMATCH #1, no SEH frame reproduced). Used a plain local `Buffer localBuf;` since ~Buffer() is declared here (unlike the sibling StringStruct cases) - RAII reproduces the real destructor call on every return path, matching the disassembly exactly. Did not use the now-retired hypothesis umbrella's FameWin field names per the brief's warning; every FameWin/BaseButton field access is a raw self+offset cast, cross-checked against the raw bytes (not Ghidra) for both BaseButton::init 8-arg calls.
@@ -290,10 +262,14 @@ int FameWin::init() {
 
   field_A48_ = ReportIfGlobal.field_1E230_;
   if (field_A48_ == 0) {
-    fame_set_origin(&field_A14_, 0, 0);
+    field_A14_ = 0;
+    field_A18_ = 0;
+    set_rectangle_dimensions(&frame_rect_, 0, 0, field_A1C_, field_A20_);
     GraphicWin::init(0, 0, 800, 600, FameWinStandardCaption, 0x1000000, 0, 0, 0);
   } else {
-    fame_set_origin(&field_A14_, 0x77, 0x50);
+    field_A14_ = 0x77;
+    field_A18_ = 0x50;
+    set_rectangle_dimensions(&frame_rect_, 0x77, 0x50, field_A1C_, field_A20_);
     GraphicWin::init((WinScreenWidth - 0x400) / 2, WinScreenHeight - 0x300,
                      0x400, 0x300, FameWinWideCaption, 0x1000000, 0, 0, 0);
   }
@@ -302,19 +278,19 @@ int FameWin::init() {
   if (buffer1_.load_pcx("frame.pcx", 0, 0xA, 0xEC) != 0) goto failed;
   if (buffer2_.load_pcx("hof.pcx", 0, 0xA, 0xEC) != 0) goto failed;
 
-  fame_set_rect(&field_B42C_, 0x1E, 0x10E, 0x105, 0x39);
-  fame_set_rect(&field_B43C_, 0x12F, 0x10D, 0xEE, 0x76);
-  fame_set_rect(&field_B44C_, 0x228, 0x10D, 0xD2, 0x112);
-  fame_set_rect(&field_B45C_, 0x15, 0x7B, 0x2EE, 0x72);
-  fame_set_rect(&field_B46C_, 0x4C, 0x27, 0x288, 0x50);
-  fame_set_rect(&field_B47C_, 0x128, 0x187, 0xFC, 0xC1);
+  set_rectangle_dimensions(&ranks_rect_, 0x1E, 0x10E, 0x105, 0x39);
+  set_rectangle_dimensions(&portrait_rect_, 0x12F, 0x10D, 0xEE, 0x76);
+  set_rectangle_dimensions(&details_rect_, 0x228, 0x10D, 0xD2, 0x112);
+  set_rectangle_dimensions(&factions_rect_, 0x15, 0x7B, 0x2EE, 0x72);
+  set_rectangle_dimensions(&awards_rect_, 0x4C, 0x27, 0x288, 0x50);
+  set_rectangle_dimensions(&landscape_rect_, 0x128, 0x187, 0xFC, 0xC1);
 
-  fame_offset_rect(&field_B42C_, field_A24_, field_A28_);
-  fame_offset_rect(&field_B43C_, field_A24_, field_A28_);
-  fame_offset_rect(&field_B44C_, field_A24_, field_A28_);
-  fame_offset_rect(&field_B45C_, field_A24_, field_A28_);
-  fame_offset_rect(&field_B46C_, field_A24_, field_A28_);
-  fame_offset_rect(&field_B47C_, field_A24_, field_A28_);
+  offset_rect(&ranks_rect_, frame_rect_.left, frame_rect_.top);
+  offset_rect(&portrait_rect_, frame_rect_.left, frame_rect_.top);
+  offset_rect(&details_rect_, frame_rect_.left, frame_rect_.top);
+  offset_rect(&factions_rect_, frame_rect_.left, frame_rect_.top);
+  offset_rect(&awards_rect_, frame_rect_.left, frame_rect_.top);
+  offset_rect(&landscape_rect_, frame_rect_.left, frame_rect_.top);
 
   if (icon_sheet.load_pcx("hoficons.pcx", 0, 0xA, 0xEC) != 0) {
 failed:
@@ -334,11 +310,11 @@ failed:
   }
 
   const int cell_width =
-      (static_cast<int>(field_B474_) - static_cast<int>(field_B46C_)) / 6;
+      (awards_rect_.right - awards_rect_.left) / 6;
   field_A1C_ = cell_width;
-  field_A14_ = (cell_width - 0x4F) / 2 + field_B46C_;
-  field_A18_ = (static_cast<int>(field_B478_) - static_cast<int>(field_B470_) - 0x4F) / 2 +
-               field_B470_;
+  field_A14_ = (cell_width - 0x4F) / 2 + awards_rect_.left;
+  field_A18_ = (awards_rect_.bottom - awards_rect_.top - 0x4F) / 2 +
+               awards_rect_.top;
 
   for (int award = 0; award < 6; ++award) {
     FlatButton &button = flatButtons2_[award];
@@ -356,11 +332,11 @@ failed:
   }
 
   const int cell_height =
-      (static_cast<int>(field_B464_) - static_cast<int>(field_B45C_)) / 7;
+      (factions_rect_.right - factions_rect_.left) / 7;
   field_A1C_ = cell_height;
-  field_A14_ = (cell_height - 0x46) / 2 + field_B45C_;
-  field_A18_ = (static_cast<int>(field_B468_) - static_cast<int>(field_B460_) - 0x46) / 2 +
-               field_B460_;
+  field_A14_ = (cell_height - 0x46) / 2 + factions_rect_.left;
+  field_A18_ = (factions_rect_.bottom - factions_rect_.top - 0x46) / 2 +
+               factions_rect_.top;
   buttonGroup_.init(0x15, 0);
   selectedRecord_ = static_cast<uint32_t>(-1);
 
@@ -378,11 +354,11 @@ failed:
     strcat(StringTemp, Players[faction].noun_faction);
 
     FlatButton &button = flatButtons1_[faction - 1];
-    fame_set_rect(&field_A34_,
+    set_rectangle_dimensions(&cell_rect_,
                   (faction - 1) * static_cast<int>(field_A1C_) + field_A14_,
                   field_A18_, 0x46, 0x46);
-    button.init(0, faction, field_A34_, field_A38_, field_A3C_ - field_A34_,
-                field_A40_ - field_A38_, this, 0);
+    button.init(0, faction, cell_rect_.left, cell_rect_.top, cell_rect_.right - cell_rect_.left,
+                cell_rect_.bottom - cell_rect_.top, this, 0);
     button.set_report_icons(&FactionsArt[faction].report_logo[1],
                             &FactionsArt[faction].report_logo[0],
                             &FactionsArt[faction].report_logo[0]);
@@ -396,10 +372,10 @@ failed:
 
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(665));
-  fame_set_rect(&field_A34_,
-                field_A24_ + 0x22A, field_A28_ + 0x22C, 0xCE, 0x16);
-  flatButton3_.init(StringTemp, 0x7B8, field_A34_, field_A38_,
-                    field_A3C_ - field_A34_, field_A40_ - field_A38_, this, 0);
+  set_rectangle_dimensions(&cell_rect_,
+                frame_rect_.left + 0x22A, frame_rect_.top + 0x22C, 0xCE, 0x16);
+  flatButton3_.init(StringTemp, 0x7B8, cell_rect_.left, cell_rect_.top,
+                    cell_rect_.right - cell_rect_.left, cell_rect_.bottom - cell_rect_.top, this, 0);
   flatButton3_.set_border_styles(&InterfaceBoxStyles[47], &InterfaceBoxStyles[46],
                                  &InterfaceBoxStyles[45]);
   flatButton3_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
@@ -446,14 +422,6 @@ void FameWin::on_button_clicked(int button_id) {
   redraw();
 }
 
-// WORKAROUND(type): the +0xA24, +0xA34, +0xB42C and +0xB44C groups are
-// RECT-like runs of split uint32_t members; set_clip (0x00448E37,
-// 0x00449083) and the row-rectangle struct copy (0x0044A19C..0x0044A1C7)
-// take each group through one base address.
-static inline RECT *fame_rect(uint32_t *first) {
-  return reinterpret_cast<RECT *>(first);
-}
-
 // WORKAROUND(decl): the guarded full-length form of the four-argument
 // right-edge writer 0x005DD3B0 (null test before strlen, 0x00449C53..
 // 0x00449C6D) has no Buffer header inline yet; a reference parameter keeps
@@ -479,8 +447,8 @@ void FameWin::on_redraw() {
   if (field_A48_ != 0) {
     buffer1_.copy(this, 0, 0, 0, 0, 0x400, 0x300);
   }
-  buffer2_.copy(this, 0, 0, field_A24_, field_A28_, 0x320, 0x258);
-  set_clip(fame_rect(&field_A24_));
+  buffer2_.copy(this, 0, 0, frame_rect_.left, frame_rect_.top, 0x320, 0x258);
+  set_clip(&frame_rect_);
   set_font(ReportIfGlobal.field_1E190_, 0, 0, 0);
   set_text_color(0xE6, -1, 1, 1);
 
@@ -504,8 +472,8 @@ void FameWin::on_redraw() {
 
   if ((record->present & 1) != 0) {
     if (portrait.load_pcx(StringTemp, 0, 0, 0xEC) == 0) {
-      portrait.copy(this, 0, 0, field_B43C_, field_B440_,
-                    field_B444_ - field_B43C_, field_B448_ - field_B440_);
+      portrait.copy(this, 0, 0, portrait_rect_.left, portrait_rect_.top,
+                    portrait_rect_.right - portrait_rect_.left, portrait_rect_.bottom - portrait_rect_.top);
     }
     for (int award = 0; award < 6; ++award) {
       if ((record->award_flags & (1 << award)) != 0) {
@@ -518,12 +486,12 @@ void FameWin::on_redraw() {
 
     FactionsArt[faction].diplomacy_landscape.draw(
         this, FactionsArt[faction].diplomacy_landscape.transparent_index(),
-        field_B47C_ + 9, field_B480_ + 10);
-    set_clip(fame_rect(&field_B44C_));
-    field_A14_ = field_B44C_ + 3;
-    field_A18_ = field_B450_ + 3;
-    field_A1C_ = field_B454_ - field_B44C_ - 6;
-    field_A20_ = field_B458_ - field_B450_ - 6;
+        landscape_rect_.left + 9, landscape_rect_.top + 10);
+    set_clip(&details_rect_);
+    field_A14_ = details_rect_.left + 3;
+    field_A18_ = details_rect_.top + 3;
+    field_A1C_ = details_rect_.right - details_rect_.left - 6;
+    field_A20_ = details_rect_.bottom - details_rect_.top - 6;
 
     if ((record->award_flags & 1) != 0) {
       StringTemp[0] = '\0';
@@ -700,9 +668,9 @@ void FameWin::on_redraw() {
       if (banner_drawn == 0 && (record->award_flags & (1 << banner)) != 0) {
         StringTemp[0] = '\0';
         strcat(StringTemp, label_get(974 + banner));
-        fill(field_A24_ - text_width(StringTemp) / 2 + 0x186, field_A28_ + 0xF,
+        fill(frame_rect_.left - text_width(StringTemp) / 2 + 0x186, frame_rect_.top + 0xF,
              text_width(StringTemp) + 0x14, 0x15, 0x41);
-        write_cent_text(StringTemp, field_A24_, field_A28_ + 0x10, 0x320);
+        write_cent_text(StringTemp, frame_rect_.left, frame_rect_.top + 0x10, 0x320);
         banner_drawn = 1;
       }
     }
@@ -719,24 +687,24 @@ void FameWin::on_redraw() {
   set_text_color(0xF4, -1, 1, 1);
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(1063));
-  write_cent_text(StringTemp, field_A24_ + 0x1C, field_A28_ + 0xF7, 0x109);
+  write_cent_text(StringTemp, frame_rect_.left + 0x1C, frame_rect_.top + 0xF7, 0x109);
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(306));
   CharUpperA(StringTemp);
-  write_cent_text(StringTemp, field_A24_ + 0x12E, field_A28_ + 0xF7, 0xF0);
+  write_cent_text(StringTemp, frame_rect_.left + 0x12E, frame_rect_.top + 0xF7, 0xF0);
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(964));
-  write_cent_text(StringTemp, field_A24_ + 0x227, field_A28_ + 0xF7, 0xD4);
+  write_cent_text(StringTemp, frame_rect_.left + 0x227, frame_rect_.top + 0xF7, 0xD4);
 
   set_font(ReportIfGlobal.field_1E190_, 0, 0, 0);
   set_text_color(0xE6, -1, 1, 1);
   spot_.kill_type(0);
-  *fame_rect(&field_A34_) = *fame_rect(&field_B42C_);
+  *&cell_rect_ = *&ranks_rect_;
   for (int rank = 0; rank < 5; ++rank) {
     HallOfFameRecord *entry = &HallOfFameRecords[faction * 5 - 5 + rank];
-    field_A14_ = field_A34_;
-    field_A18_ = field_A38_ + 3;
-    field_A1C_ = field_A3C_ - field_A34_;
+    field_A14_ = cell_rect_.left;
+    field_A18_ = cell_rect_.top + 3;
+    field_A1C_ = cell_rect_.right - cell_rect_.left;
     if ((entry->present & 1) != 0) {
       set_text_color(rank == static_cast<int>(selectedRecord_) ? 0x9B : 0xE6,
                      -1, 1, 1);
@@ -758,11 +726,11 @@ void FameWin::on_redraw() {
       strcat(StringTemp, label_get(730));
       say_num(entry->year);
       write_cent_text(StringTemp, field_A14_, field_A18_, field_A1C_);
-      spot_.add(rank, 0, field_A34_, field_A38_, field_A3C_ - field_A34_,
-                field_A40_ - field_A38_);
+      spot_.add(rank, 0, cell_rect_.left, cell_rect_.top, cell_rect_.right - cell_rect_.left,
+                cell_rect_.bottom - cell_rect_.top);
     }
-    field_A38_ += field_B438_ - field_B430_ + 6;
-    field_A40_ += field_B438_ - field_B430_ + 6;
+    cell_rect_.top += ranks_rect_.bottom - ranks_rect_.top + 6;
+    cell_rect_.bottom += ranks_rect_.bottom - ranks_rect_.top + 6;
   }
 }
 #pragma optimize("", on)

@@ -525,6 +525,25 @@ MEASURED inline StringStructPayload *StringStruct::next_entry() {
     return current_->string_payload();
 }
 
+// 0x00402530 is called out of line (Buffer::write_strings, ListBox,
+// CheckBox/RadioButton draw_item, ...) and expanded inline under a head test
+// elsewhere: sub_441040's `mov eax,[eax+8]; mov edx,[eax+4]` chase at
+// 0x004410AF and StringList::current_text 0x005E3630. stringstruct.cpp keeps
+// the out-of-line copy.
+// WORKAROUND(decl): the body is visible only in TUs that define
+// STRINGSTRUCT_CURRENT_ENTRY_INLINE. Plain visibility in every includer
+// re-ties register choices in 46 of 138 includers that never call it
+// (aggression, base, battle, game, ...; pattern 260), so the original
+// header's spelling is not yet reproduced.
+#ifdef STRINGSTRUCT_CURRENT_ENTRY_INLINE
+inline StringStructPayload *StringStruct::current_entry() {
+    if (head_) {
+        return current_->string_payload();
+    }
+    return 0;
+}
+#endif
+
 // 0x00401560 is called by CheckBox::on_left_down and expanded inline by
 // Datalink::draw_concept/draw_adv_concept; MEASURED keeps the copy emitted.
 // A TU that defines STRINGSTRUCT_SEEK_ID_OUT_OF_LINE sees only the
