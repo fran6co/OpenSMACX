@@ -638,7 +638,7 @@ top_menu_cleanup:
 
 
 
-// ORIGINAL: 0x0058DB30 ?multiplayer_init@@YAHH@Z 0x0058DB30-0x0058E35E
+// ORIGINAL: 0x0058DB30 ?multiplayer_init@@YAHH@Z 0x0058DB30-0x0058E35E BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:newgame-menu-owner", "historical seed:src/unrecovered/0058db30.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete mapped native control flow", "source:existing SetupWin/Popup/Buffer/NetDaemon owner declarations; provisional bounded945820 and9B2074 objects, not raw image aliases"], "reason": "Source-owned new-game/menu family preserving complete original identity, auxiliary spans and historical seed findings; existing genuine object lifetimes and typed member owners. Unfinished bodies remain explicit, not implementation coverage."}
 // TRIED: prologue diverges at #7 - original threads the literal 1 through esi across the whole prologue (mov esi,1; ...; mov [addr],esi; ...; push esi for the later top_menu(1) call); rebuilt just stores/pushes the literal 1 directly at each site. Tried binding a local `int one=1` reused at both sites - similarity unchanged (0.74). Body is otherwise a full structural transcription (322/~420 mnemonics in common), including the two literal duplicated cleanup blocks the original also duplicates.
 int __cdecl multiplayer_init(int startup_mode) {
