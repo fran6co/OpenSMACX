@@ -1438,19 +1438,19 @@ void NetWin::draw_custom_rules() {
     Buffer::set_text_color(0xE1, -1, 1, 1);
     Buffer::write_cent_l(StringTemp, &setup_rects_[46]);
 
-    RECT *const rules_rect = &setup_rects_[48];
-    Buffer::box_sprite(rules_rect, &InterfaceBoxStyles[0]);
+    Buffer::box_sprite(&setup_rects_[48], &InterfaceBoxStyles[0]);
     Buffer::box_sprite(&setup_rects_[49], &InterfaceBoxStyles[0]);
 
     // One row rectangle walks both columns; the checkbox sits at its left
-    // edge and the label 0x19 to the right of it.
+    // edge and the label 0x19 to the right of it. Native 47FA56 loads the
+    // left edge before the top.
+    const int left = setup_rects_[48].left - 0x14;
     const int top = setup_rects_[48].top;
-    const int left = rules_rect->left - 0x14;
     Buffer::set_font(find_font(0xC, 1), 0, 0, 0);
     RECT rect;
     rect.left = left;
     rect.top = top;
-    rect.right = (rules_rect->right - rules_rect->left) + left - 6;
+    rect.right = (setup_rects_[48].right - setup_rects_[48].left) + left - 6;
     rect.bottom = top + 0x12;
 
     // The standing free-technology checkbox, spot id 100, and its label
@@ -2034,12 +2034,13 @@ void NetWin::pick_faction(int slot) {
     const int previous = NetWinLobbyRows.rows_[slot].faction_or_color_;
     NetWinLobbyRows.rows_[slot].faction_or_color_ =
         static_cast<int8_t>(chosen_faction);
-    const int accepted = pick_pass(1);
-    NetWinLobbyRows.rows_[slot].faction_or_color_ =
-        static_cast<int8_t>(previous);
-    if (accepted == 0) {
+    if (pick_pass(1) == 0) {
+        NetWinLobbyRows.rows_[slot].faction_or_color_ =
+            static_cast<int8_t>(previous);
         return;
     }
+    NetWinLobbyRows.rows_[slot].faction_or_color_ =
+        static_cast<int8_t>(previous);
 
     // Native 47C811 copies the restored row, then runs sub_47b1d0 inline.
     memcpy(&updated, &NetWinLobbyRows.rows_[slot], 0x17C);

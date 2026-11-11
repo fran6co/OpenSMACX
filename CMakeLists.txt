@@ -811,7 +811,10 @@ target_compile_options(OpenSMACX PRIVATE $<$<COMPILE_LANGUAGE:CXX>:/W4>)
 # by /O2) in some units and not in others: the explicit /O2-minus-/Gf list
 # reproduces /O2 on every function /Gf does not touch, while these units'
 # measured functions (faction's encounter, console_commands'
-# corner_the_market) match only unpooled. VC6 has no /Gf-, so /O2 cannot be
+# corner_the_market) match only unpooled; netwin stores identical literals
+# at separate addresses ("{"/"}" five times at 0x6868E0-0x686904 for
+# draw_session_info, "CUSTOMFACTIONS" at 0x686908 and 0x686930 for
+# setup_faction_data). VC6 has no /Gf-, so /O2 cannot be
 # global. Their recovery recipes already keep /Oy-, so /Oy is not listed.
 # OPENSMACX_UNPOOLED_OY_SOURCES are unpooled units that, unlike those, keep
 # frame-pointer omission: net_class's send_packet_type stores its identical
@@ -833,7 +836,8 @@ set(OPENSMACX_UNPOOLED_SOURCES
     src/base.cpp
     src/veh.cpp
     src/game.cpp
-    src/datalink.cpp)
+    src/datalink.cpp
+    src/netwin.cpp)
 set(OPENSMACX_UNPOOLED_OY_SOURCES
     src/net_class.cpp)
 function(opensmacx_apply_optimization target)
