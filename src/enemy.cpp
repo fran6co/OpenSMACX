@@ -750,9 +750,7 @@ void __cdecl enemy_strategy(int faction_id) {
             uint32_t treaty = PlayersData[faction_id].diplo_treaties[i];
             if ((treaty & DTREATY_COMMLINK) && !(treaty & DTREATY_PACT)) {
                 int value = PlayersData[i].unk_70 / 0x400000;
-                if (rival_transports <= value) {
-                    rival_transports = value;
-                }
+                rival_transports = max(rival_transports, value);
             }
         }
     }
@@ -760,11 +758,10 @@ void __cdecl enemy_strategy(int faction_id) {
     if (transports > 1) {
         for (veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
             if (Vehs[veh_id].faction_id == faction_id) {
-                int proto_id = Vehs[veh_id].proto_id;
-                if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_SEA
-                    && VehPrototypes[proto_id].plan == 7
-                    && (proto_id == BSC_UNITY_FOIL
-                        || PlayersData[faction_id].proto_id_active[proto_id] >= 2)) {
+                if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_SEA
+                    && VehPrototypes[Vehs[veh_id].proto_id].plan == 7
+                    && (Vehs[veh_id].proto_id == BSC_UNITY_FOIL
+                        || PlayersData[faction_id].proto_id_active[Vehs[veh_id].proto_id] >= 2)) {
                     Vehs[veh_id].state |= 0x20000000;
                     break;
                 }
@@ -2889,7 +2886,10 @@ int __cdecl alien_move(int veh_id) {
             return 1;
         }
         for (i = 0; i < 8; i++) {
-            int x2 = wrap_map_x(x + VehMoveDeltaX[i]);
+            int x_raw = x + VehMoveDeltaX[i];
+            int x2 = (MapIsFlat & 1) ? x_raw
+                : (x_raw < 0 ? x_raw + MapLongitudeBounds
+                   : (x_raw >= (int)MapLongitudeBounds ? x_raw - MapLongitudeBounds : x_raw));
             int y2 = y + VehMoveDeltaY[i];
             if (!on_map(x2, y2)) {
                 continue;

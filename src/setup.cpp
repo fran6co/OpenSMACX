@@ -794,7 +794,10 @@ void __cdecl balance() {
 
         int land_count = 0;
         for (int i = 0; i < 21; ++i) {
-            const int tile_x = wrap_map_x(RadiusOffsetX[i] + x);
+            const int x_raw = RadiusOffsetX[i] + x;
+            const int tile_x = (MapIsFlat & 1) ? x_raw
+                : (x_raw < 0 ? x_raw + MapLongitudeBounds
+                   : (x_raw >= (int)MapLongitudeBounds ? x_raw - MapLongitudeBounds : x_raw));
             const int tile_y = RadiusOffsetY[i] + y;
             if (!on_map(tile_x, tile_y)) {
                 continue;
@@ -806,7 +809,7 @@ void __cdecl balance() {
             if (rainfall < 1) {
                 continue;
             }
-            if (((altitude >= 0 && altitude > 0) || (tile->bit & BIT_RIVER)) && rockiness < 2 &&
+            if (((altitude >= 0 && altitude != 0) || (tile->bit & BIT_RIVER)) && rockiness < 2 &&
                 (rockiness == 1 || (altitude >= 0 && altitude > 1) || rainfall > 1)) {
                 ++land_count;
             }
@@ -817,12 +820,11 @@ void __cdecl balance() {
 
         // Image 0x005B0748..0x005B0790: half the land count clamped to 0..8,
         // plus tile_count / 64 (no rounding) clamped to 0..3.
-        const int total = range(land_count / 2, 0, 8) +
-                          range(Continents[region].tile_count / 64, 0, 3) + nearest;
-        if (total > best_score) {
-            best_score = total;
+        nearest += range(land_count / 2, 0, 8) + range(Continents[region].tile_count / 64, 0, 3);
+        if (nearest > best_score) {
+            best_score = nearest;
         }
-        faction_scores[faction_id] = total;
+        faction_scores[faction_id] = nearest;
     }
 
     for (faction_id = 1; faction_id < MaxPlayerNum; ++faction_id) {
@@ -1827,8 +1829,7 @@ void __cdecl setup_game(int reload) {
             do {
                 category = rand() % 3;
                 model = rand() % 3 + 1;
-                if (!seen_social_models[category * 3 + model]) break;
-            } while (++rejected < social_faction + 1);
+            } while (seen_social_models[category * 3 + model] && ++rejected < social_faction + 1);
             if (rejected <= social_faction + 1) {
                 Players[social_faction].soc_ideology_category = category;
                 Players[social_faction].soc_ideology_model = model;
