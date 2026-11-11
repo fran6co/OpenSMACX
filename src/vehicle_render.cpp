@@ -883,6 +883,22 @@ void __cdecl vehdraw_construct_vehicle(int faction_id, int chassis, int weapon,
 }
 
 
+static void vehdraw_add_reactor(int faction_id, int reactor,
+                                unsigned char *armor_colors, Caviar *renderer) {
+    if (reactor) {
+        if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+            if (armor_colors) {
+                renderer->add_object(&g_ACP_CAVIARDATA[reactor - 1], armor_colors, 0);
+            } else {
+                renderer->add_object(&g_ACP_CAVIARDATA[reactor - 1], 0);
+            }
+        } else {
+            renderer->add_object(&g_VRC_CAVIARDATA[reactor - 1], 0);
+        }
+    }
+}
+
+
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004C2470 0x004C2C88 0x004C2CC0 0x004C24A7
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004C2470 0x004C2CC0 0x004C2CE4 0x004C25AD
 // ORIGINAL: 0x004C2470 ?vehdraw_construct_chassis@@YAHHHHHHPAUCaviar@@@Z 0x004C2470-0x004C2C87
@@ -890,111 +906,147 @@ void __cdecl vehdraw_construct_vehicle(int faction_id, int chassis, int weapon,
 // symbol    ?vehdraw_construct_chassis@@YAXHHHHHPAVCaviar@@@Z
 void __cdecl vehdraw_construct_chassis(int faction_id, int chassis, int weapon,
                                       int armor, int reactor, Caviar *renderer) {
+    unsigned char *armor_colors = 0;
     if (faction_id < 0 || faction_id > 7) faction_id = 0;
     unsigned char *body_colors = &BodyTintColorTables[faction_id][0][0];
-    unsigned char *armor_colors = 0;
-    int armor_grade = 0;
+    int armor_grade;
     switch (armor) {
-    case 1: case 5: armor_grade = 1; break;
-    case 2: case 10: case 11: armor_grade = 1; armor_colors = &ArmorTintColorTables[0][0][0]; break;
+    case 0: case 9: armor_grade = 0; armor_colors = 0; break;
+    case 1: armor_grade = 1; armor_colors = 0; break;
+    case 2: armor_grade = 1; armor_colors = &ArmorTintColorTables[0][0][0]; break;
     case 3: armor_grade = 1; armor_colors = &ArmorTintColorTables[1][0][0]; break;
-    case 6: case 12: case 13: armor_grade = 1; armor_colors = &ArmorTintColorTables[2][0][0]; break;
+    case 5: armor_grade = 1; break;
+    case 6: armor_grade = 1; armor_colors = &ArmorTintColorTables[2][0][0]; break;
     case 7: armor_grade = 1; armor_colors = &ArmorTintColorTables[3][0][0]; break;
-    case 4: case 8: armor_grade = 2; break;
+    case 4: case 8: armor_grade = 2; armor_colors = 0; break;
+    case 10: armor_grade = 1; armor_colors = &ArmorTintColorTables[0][0][0]; break;
+    case 11: armor_grade = 1; armor_colors = &ArmorTintColorTables[0][0][0]; break;
+    case 12: armor_grade = 1; armor_colors = &ArmorTintColorTables[2][0][0]; break;
+    case 13: armor_grade = 1; armor_colors = &ArmorTintColorTables[2][0][0]; break;
+    default: armor_grade = 0; armor_colors = 0; break;
     }
     if (armor == 10 || armor == 12) renderer->add_object(&g_SCJ_CAVIARDATA, 0);
     if (armor == 11 || armor == 13) renderer->add_object(&g_SHT_CAVIARDATA, 0);
     if (weapon == 21 && chassis == 1 && Armor[armor].defense_rating <= 1) chassis = 0;
-    if (chassis < 0 || chassis > 8) return;
 
-    if ((chassis == 1 || chassis == 3 || chassis == 5 || chassis == 6 || chassis == 7)
-        && reactor != 0) {
-        if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
-            if (armor_colors)
-                renderer->add_object(&g_ACP_CAVIARDATA[reactor - 1], armor_colors, 0);
-            else renderer->add_object(&g_ACP_CAVIARDATA[reactor - 1], 0);
-        } else renderer->add_object(&g_VRC_CAVIARDATA[reactor - 1], 0);
-    }
     switch (chassis) {
     case 0:
         if (Weapon[weapon].mode < 3) {
             if (weapon == 17) return;
-            CaviarData *model = (Players[faction_id].rule_flags & RFLAG_ALIEN)
-                ? &g_AX_CAVIARDATA : &g_VI_CAVIARDATA;
-            renderer->add_object(model, &VehInfantryOffset, VehDrawAnimationStep % 15);
+            if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+                renderer->add_object(&g_AX_CAVIARDATA, &VehInfantryOffset,
+                                     VehDrawAnimationStep % 15);
+            } else {
+                renderer->add_object(&g_VI_CAVIARDATA, &VehInfantryOffset,
+                                     VehDrawAnimationStep % 15);
+            }
         } else if (weapon == 21) {
-            if (Players[faction_id].rule_flags & RFLAG_ALIEN)
+            if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
                 renderer->add_object(&g_AX_CAVIARDATA, &ArmorTintColorTables[3][0][0],
                                      &VehInfantryOffset, VehDrawAnimationStep % 15);
-            else renderer->add_object(&g_VPT_CAVIARDATA, &VehInfantryOffset,
-                                      VehDrawAnimationStep % 15);
-        } else if (weapon != 22 &&
-                   (!(Players[faction_id].rule_flags & RFLAG_ALIEN) || weapon != 17)) {
+            } else {
+                renderer->add_object(&g_VPT_CAVIARDATA, &VehInfantryOffset,
+                                     VehDrawAnimationStep % 15);
+            }
+        } else {
+            if (weapon == 22) return;
+            if ((Players[faction_id].rule_flags & RFLAG_ALIEN) && weapon == 17) return;
             renderer->add_object(&g_VB_CAVIARDATA, 0);
             renderer->add_object(&g_VBP_CAVIARDATA, body_colors, 0);
             renderer->add_object(&g_VCL_CAVIARDATA, 0);
             renderer->add_object(&g_VCLT00_CAVIARDATA, 0);
             renderer->add_object(&g_VLIGHTS_CAVIARDATA, 0);
         }
-        return;
-    case 1: case 3:
+        break;
+    case 1:
+        vehdraw_add_reactor(faction_id, reactor, armor_colors, renderer);
         renderer->add_object(&g_VGMC_CAVIARDATA, 0);
         renderer->add_object(&g_VGMCP_CAVIARDATA, body_colors, 0);
         renderer->add_object(&g_VB_CAVIARDATA, 0);
         renderer->add_object(&g_VBP_CAVIARDATA, body_colors, 0);
-        if (chassis == 3) { renderer->add_object(&g_VFL_CAVIARDATA, 0); return; }
         renderer->add_object(&g_VSP_CAVIARDATA, 0);
         renderer->add_object(&g_VSPTB_CAVIARDATA, VehDrawAnimationStep);
         renderer->add_object(&g_VSPTF_CAVIARDATA, VehDrawAnimationStep);
         renderer->add_object(&g_VLIGHTS_CAVIARDATA, 0);
-        return;
+        break;
     case 2:
         renderer->add_object(&g_VB_CAVIARDATA, 0);
         renderer->add_object(&g_VHT_VBP_CAVIARDATA, body_colors, 0);
         renderer->add_object(&g_VHTP_CAVIARDATA, body_colors, 0);
         renderer->add_object(&g_VHTTP_CAVIARDATA, body_colors, 0);
         if (armor_grade == 0) {
-            renderer->add_object(&g_VHTA0_CAVIARDATA[0], 0);
-            renderer->add_object(&g_VHTTPA0_CAVIARDATA[0], 0);
+            renderer->add_object(&g_VHTA0_CAVIARDATA[0], armor_grade);
+            renderer->add_object(&g_VHTTPA0_CAVIARDATA[0], armor_grade);
         }
         renderer->add_object(&g_VLIGHTS_CAVIARDATA, &VehHoverLightsOffset, 0);
-        return;
-    case 4: case 5: case 6: case 7:
+        break;
+    case 3:
+        vehdraw_add_reactor(faction_id, reactor, armor_colors, renderer);
+        renderer->add_object(&g_VGMC_CAVIARDATA, 0);
+        renderer->add_object(&g_VGMCP_CAVIARDATA, body_colors, 0);
+        renderer->add_object(&g_VB_CAVIARDATA, 0);
+        renderer->add_object(&g_VBP_CAVIARDATA, body_colors, 0);
+        renderer->add_object(&g_VFL_CAVIARDATA, 0);
+        break;
+    case 5:
+        vehdraw_add_reactor(faction_id, reactor, armor_colors, renderer);
         renderer->add_object(&g_VB_CAVIARDATA, 0);
         renderer->add_object(&g_VBP_CAVIARDATA, body_colors, 0);
         renderer->add_object(&g_VGMC_CAVIARDATA, 0);
         renderer->add_object(&g_VGMCP_CAVIARDATA, body_colors, 0);
-        if (chassis == 4) {
-            renderer->add_object(&g_VCU_CAVIARDATA, 0);
-            renderer->add_object(&g_VCUP_CAVIARDATA, body_colors, 0);
-            renderer->add_object(&g_VCUW_CAVIARDATA, 0);
-            if (armor_grade == 0) renderer->add_object(&g_VCUA0_CAVIARDATA[0], 0);
-        } else if (chassis == 5) {
-            renderer->add_object(&g_VJTP_CAVIARDATA, body_colors, 0);
-            if (armor_grade == 0)
-                renderer->add_object((Players[faction_id].rule_flags & RFLAG_ALIEN)
-                    ? &g_AA_WING_CAVIARDATA[0] : &g_VJT0_CAVIARDATA[0], 0);
-        } else if (chassis == 6) {
-            renderer->add_object(&g_VCT_CAVIARDATA, 0);
-            renderer->add_object(&g_VCTP_CAVIARDATA, body_colors, 0);
-            renderer->add_object(&g_VCTB_CAVIARDATA, VehDrawAnimationStep % 15);
-            if (TutWinDesWindow.is_visible())
-                VehDrawAnimationStep = static_cast<int>(static_cast<uint32_t>(VehDrawAnimationStep) + 1u);
-            if (armor_grade == 0) renderer->add_object(&g_VCT0_CAVIARDATA[0], body_colors, 0);
-        } else {
-            renderer->add_object(&g_VGS_CAVIARDATA, 0);
-            renderer->add_object(&g_VGSP_CAVIARDATA, body_colors, 0);
+        renderer->add_object(&g_VJTP_CAVIARDATA, body_colors, 0);
+        if (armor_grade == 0) {
+            if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+                renderer->add_object(&g_AA_WING_CAVIARDATA[0], armor_grade);
+            } else {
+                renderer->add_object(&g_VJT0_CAVIARDATA[0], armor_grade);
+            }
         }
-        return;
-    case 8:
-        if (weapon == 16) renderer->add_object(&g_VM13_CAVIARDATA, 0);
-        else {
-            renderer->add_object(&g_VM_CAVIARDATA, 0);
-            if (weapon == 24) renderer->add_object(&g_TECLOAD_CAVIARDATA, 0);
-            else if (weapon == 25) renderer->add_object(&g_FUNLOAD_CAVIARDATA, 0);
-        }
+        break;
+    case 7:
+        vehdraw_add_reactor(faction_id, reactor, armor_colors, renderer);
         renderer->add_object(&g_VB_CAVIARDATA, 0);
         renderer->add_object(&g_VBP_CAVIARDATA, body_colors, 0);
+        renderer->add_object(&g_VGMC_CAVIARDATA, 0);
+        renderer->add_object(&g_VGMCP_CAVIARDATA, body_colors, 0);
+        renderer->add_object(&g_VGS_CAVIARDATA, 0);
+        renderer->add_object(&g_VGSP_CAVIARDATA, body_colors, 0);
+        break;
+    case 4:
+        renderer->add_object(&g_VB_CAVIARDATA, 0);
+        renderer->add_object(&g_VBP_CAVIARDATA, body_colors, 0);
+        renderer->add_object(&g_VGMC_CAVIARDATA, 0);
+        renderer->add_object(&g_VGMCP_CAVIARDATA, body_colors, 0);
+        renderer->add_object(&g_VCU_CAVIARDATA, 0);
+        renderer->add_object(&g_VCUP_CAVIARDATA, body_colors, 0);
+        renderer->add_object(&g_VCUW_CAVIARDATA, 0);
+        if (armor_grade == 0) renderer->add_object(&g_VCUA0_CAVIARDATA[0], armor_grade);
+        break;
+    case 6:
+        vehdraw_add_reactor(faction_id, reactor, armor_colors, renderer);
+        renderer->add_object(&g_VB_CAVIARDATA, 0);
+        renderer->add_object(&g_VBP_CAVIARDATA, body_colors, 0);
+        renderer->add_object(&g_VGMC_CAVIARDATA, 0);
+        renderer->add_object(&g_VGMCP_CAVIARDATA, body_colors, 0);
+        renderer->add_object(&g_VCT_CAVIARDATA, 0);
+        renderer->add_object(&g_VCTP_CAVIARDATA, body_colors, 0);
+        renderer->add_object(&g_VCTB_CAVIARDATA, VehDrawAnimationStep % 15);
+        if (TutWinDesWindow.is_visible())
+            VehDrawAnimationStep = static_cast<int>(static_cast<uint32_t>(VehDrawAnimationStep) + 1u);
+        if (armor_grade == 0) renderer->add_object(&g_VCT0_CAVIARDATA[0], body_colors, armor_grade);
+        break;
+    case 8:
+        if (weapon == 16) renderer->add_object(&g_VM13_CAVIARDATA, 0);
+        else if (weapon == 24) {
+            renderer->add_object(&g_VM_CAVIARDATA, 0);
+            renderer->add_object(&g_TECLOAD_CAVIARDATA, 0);
+        } else if (weapon == 25) {
+            renderer->add_object(&g_VM_CAVIARDATA, 0);
+            renderer->add_object(&g_FUNLOAD_CAVIARDATA, 0);
+        } else renderer->add_object(&g_VM_CAVIARDATA, 0);
+        renderer->add_object(&g_VB_CAVIARDATA, 0);
+        renderer->add_object(&g_VBP_CAVIARDATA, body_colors, 0);
+        break;
     }
 }
 
