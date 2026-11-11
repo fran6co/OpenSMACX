@@ -1514,7 +1514,7 @@ static inline int psych_specialist_type(int i) {
 // are snapshots, but the number of content citizens and specialists is read
 // again after each Sprite draw. Packed specialist types must be valid 0..6;
 // the original neither clamps malformed nibbles nor bounds the returned type.
-// ORIGINAL: 0x00408720 ?psych_row@BaseWin@@QAEXHHHHHHH@Z 0x00408720-0x00408B1B;0x00651567-0x00651579
+// ORIGINAL: 0x00408720 ?psych_row@BaseWin@@QAEXHHHHHHH@Z 0x00408720-0x00408B1B;0x00651567-0x00651579 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00408720-0x00408B1B complete body and 0x00651567-0x00651579 Random cleanup funclet.", "image:0x00408786 imports timeGetTime. Human variants use four-mood strides; alien four-mood arrays do not consume random selections.", "image:0x00408720-0x00408B1B reads packed specialist nibbles for the first16 entries and calls best_specialist for each later entry; sprite calls are followed by fresh population/specialist reads."], "reason": "Draw the published population mood row through genuine citizen and specialist sprites, preserving Random lifetime, sprite variation, packed specialist types and live base reads."}
 void BaseWin::psych_row(int x, int y, int width, int sprite_width,
                        int talents, int drones, int super_drones) {
@@ -2432,7 +2432,7 @@ void BaseWin::next() {
 
 // Queue mutation and its rendered panel use the same typed Base queue and
 // BaseWin selection state recovered from the original record strides.
-// ORIGINAL: 0x00415080 ?draw_queue@BaseWin@@QAEXH@Z 0x00415080-0x00415724;0x00651B93-0x00651BB0 FILE
+// ORIGINAL: 0x00415080 ?draw_queue@BaseWin@@QAEXH@Z 0x00415080-0x00415724;0x00651B93-0x00651BB0 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00415080.cpp", "src/basewin.h:queue rectangles and font1_", "src/base.h:Base queue and Facility", "src/veh.h:VehPrototypes", "src/alpha.h:Labels and Language", "src/buffer.h:InterfaceBoxStyles", "image:0x00682BAC-0x00682BC0 queue strings"], "reason": "Render the eight queued production rows through owned BaseWin rectangles, game queue and prototype/facility records, shared interface styles and palette. Retain the original seed for byte restoration; the old raw self-offset transcription is not product source."}
 // TRIED: the retained instruction-level seed with local Font lifetimes and
 // TRIED: instruction-level transcription with real Font locals (to get the SEH frame/dtor thunks) and byte-offset casts for BaseWin fields; compiles, control flow/offsets/call order match the disasm, sim 0.70 framed build. Extra RECT-copy temporaries (rectA/rectQ/rectR/rectP vs the original's reused stack slots) keep it off byte-exact. Not retried with slot reuse given size (1729 bytes, SEH).
