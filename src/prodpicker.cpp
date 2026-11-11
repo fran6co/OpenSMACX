@@ -1037,9 +1037,7 @@ void ProdPicker::on_right_click(int x, int y) {
         VehPrototypes[productionId].obsolete_factions |=
             static_cast<uint8_t>(1U << faction);
         synch_proto(productionId);
-        calculate();
-        redraw();
-        break;
+        goto refresh;
     }
     case 1:
         on_button_clicked(0);
@@ -1051,10 +1049,11 @@ void ProdPicker::on_right_click(int x, int y) {
                 VehPrototypes[proto].obsolete_factions &= static_cast<uint8_t>(
                     ~(1U << BaseCurrent->faction_id_current));
         }
+    }
+    refresh:
         calculate();
         redraw();
         break;
-    }
     case 3:
         on_button_clicked(5);
         break;

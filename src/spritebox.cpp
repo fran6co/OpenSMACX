@@ -428,91 +428,102 @@ int SpriteBox::attach(GraphicWin *parent, int x, int y, int flags) {
     return 0;
 }
 
+// The current entry's payload, or null without a list head.
+static inline SpriteStruct *current_sprite_payload(SpriteList &list) {
+    return list.head_ ? list.current_->sprite_payload() : 0;
+}
+
+// WORKAROUND(decl): the image expands StringStruct::next_entry (0x00402500)
+// on SpriteBox's list_; SpriteListBase is modelled as a sibling ring owner
+// without that member, so this copies its body for the sprite list.
+static inline SpriteStruct *sprite_list_next_entry(SpriteList &list) {
+    if (!list.head_) {
+        return 0;
+    }
+
+    StringStructEntry *next = list.current_->next;
+    int position = list.current_position_;
+    list.current_ = next;
+    int count = list.entry_count_;
+    ++position;
+    list.current_position_ = position;
+    if (position == count) {
+        list.current_position_ = 0;
+    }
+    return list.current_->sprite_payload();
+}
+
+static inline StringStructPayload *current_string_payload(StringList &list) {
+    return list.head_ ? list.current_->string_payload() : 0;
+}
+
+static inline Sprite *next_sprite(SpriteList &list) {
+    sprite_list_next_entry(list);
+    return list.current_ ? current_sprite_payload(list)->sprite_ : 0;
+}
+
+static inline char *next_text(StringList &list) {
+    list.next_entry();
+    return list.current_ ? current_string_payload(list)->text : 0;
+}
+
 // ORIGINAL: 0x00610970 ?calculate_dimensions@SpriteBox@@QAEHXZ 0x00610970-0x00610C4A FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00610970.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x610970 complete control/data-access review and src/spritebox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // TRIED: real `__thiscall` per the mangled name; `this` reads two distinct adjustor offsets off its own vtable (vt[4]+0x444 for the embedded Buffer receiver on every set_text_color*/set_font/text_width/ text_line_height call, vt[8] for a second sub-object whose fields at +0x2c..+0xa8 hold the margins/colors/fonts and the running w/h/line totals) - transcribed as raw offsets, not a modelled base class, since spritebox.h itself documents the layout past field_38_ as unestablished. One branch reads literal absolute address 4 (`*(int*)4`, matching the original's `xor eax,eax; mov ebx,[eax+4]`) when field_2c_==0 and field_30_!=0 - transcribed literally, not chased for meaning. Confirmed field_2C_/0x30_/0x34_(signed count)/ 0x38_ against spritebox.h's own comment before using them. Compiles; diverges at instruction #5, just past the thiscall prologue - not chased further given the function's size.
 int SpriteBox::calculate_dimensions() {
-    Dialog &dialog = *this;
-    Buffer *const buffer = static_cast<Buffer *>(static_cast<GraphicWin *>(this));
     if (list_.entry_count_ == 0) return 7;
-    buffer->set_text_color(text_color_a_, text_color_b_, text_color_c_, text_color_d_);
-    buffer->set_text_color2(text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_);
-    buffer->set_text_color3(text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_);
-    buffer->set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
+    set_text_color(text_color_a_, text_color_b_, text_color_c_, text_color_d_);
+    set_text_color2(text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_);
+    set_text_color3(text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_);
+    set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
 
     field_5C_ = 0;
     field_54_ = 0;
     field_58_ = 0;
-    list_.current_ = list_.head_;
-    dialog.item_list_.current_ = dialog.item_list_.head_;
-    for (int i = 0; i < list_.entry_count_; ++i) {
-        if (i != 0) {
-            list_.current_ = list_.current_->next;
-            ++list_.current_position_;
-            if (list_.current_position_ == list_.entry_count_) list_.current_position_ = 0;
-            if (dialog.item_list_.head_ != 0) {
-                dialog.item_list_.current_ = dialog.item_list_.current_->next;
-                ++dialog.item_list_.current_position_;
-                if (dialog.item_list_.current_position_ == dialog.item_list_.entry_count_) {
-                    dialog.item_list_.current_position_ = 0;
-                }
-            }
-        }
-        SpriteStruct *const sprite_payload = list_.current_ == 0
-            ? 0 : list_.current_->sprite_payload();
-        Sprite *const prototype = sprite_payload == 0 ? 0 : sprite_payload->sprite_;
-        if (prototype != 0) {
-            int width = prototype->width() * static_cast<int>(field_1C_)
-                        / static_cast<int>(field_20_);
-            if (width < static_cast<int>(field_54_)) width = field_54_;
-            field_54_ = width;
-            int height = prototype->height() * static_cast<int>(field_1C_)
-                         / static_cast<int>(field_20_);
-            if (height < static_cast<int>(field_58_)) height = field_58_;
-            field_58_ = height;
-        }
-        StringStructPayload *const text_payload = dialog.item_list_.current_ == 0
-            ? 0 : dialog.item_list_.current_->string_payload();
-        char *const label = text_payload == 0 ? 0 : text_payload->text;
-        const int text_width = buffer->text_width(label);
-        if (field_5C_ < static_cast<uint32_t>(text_width)) field_5C_ = text_width;
+    // Both lists advance before each read, from wherever their cursors
+    // stand; the first item measured is the one after the current entry.
+    const int count = list_.entry_count_;
+    for (int i = 0; i < count; ++i) {
+        // The image reads payload+4 even without a list head.
+        Sprite *const sprite = next_sprite(list_);
+        char *const label = next_text(Dialog::item_list_);
+        int width = sprite->width() * static_cast<int>(field_1C_)
+                    / static_cast<int>(field_20_);
+        if (static_cast<int>(field_54_) > width) width = field_54_;
+        field_54_ = width;
+        int height = sprite->height() * static_cast<int>(field_1C_)
+                     / static_cast<int>(field_20_);
+        if (static_cast<int>(field_58_) > height) height = field_58_;
+        field_58_ = height;
+        int label_width = text_width(label);
+        if (static_cast<int>(field_5C_) > label_width) label_width = field_5C_;
+        field_5C_ = label_width;
     }
 
-    dialog.field_60_ = buffer->text_line_height();
-    int row_height = static_cast<int>(field_58_);
-    if (row_height < static_cast<int>(dialog.field_60_)) row_height = dialog.field_60_;
-    const uint32_t cell_height_bits = static_cast<uint32_t>(dialog.field_44_)
-                                    + static_cast<uint32_t>(row_height);
-    dialog.field_68_ = static_cast<int32_t>(cell_height_bits);
-    const uint32_t cell_width_bits = field_5C_
-                                   + static_cast<uint32_t>(dialog.field_40_) * 2u
-                                   + field_54_;
-    dialog.field_64_ = static_cast<int32_t>(cell_width_bits);
-    dialog.row_count_ = dialog.field_50_;
-    if (dialog.row_count_ > list_.entry_count_) dialog.row_count_ = list_.entry_count_;
-    if ((dialog.field_20_ & 1) != 0 && dialog.field_30_ != 0) {
-        dialog.field_60_ = dialog.field_30_;
-        dialog.row_count_ = dialog.field_30_ / dialog.field_68_;
+    field_60_ = text_line_height();
+    int row_height = field_58_;
+    if (static_cast<int>(field_60_) > row_height) row_height = field_60_;
+    Dialog::field_68_ = Dialog::field_44_ + row_height;
+    Dialog::field_64_ = field_5C_ + Dialog::field_40_ * 2 + field_54_;
+    int rows = Dialog::field_50_;
+    if (list_.entry_count_ < rows) rows = list_.entry_count_;
+    Dialog::row_count_ = rows;
+    if ((Dialog::field_20_ & 1) != 0 && Dialog::field_30_ != 0) {
+        Dialog::row_count_ = Dialog::field_30_ / Dialog::field_68_;
+        Dialog::field_60_ = Dialog::field_30_;
     } else {
-        dialog.field_60_ = static_cast<uint32_t>(dialog.field_68_)
-                         * static_cast<uint32_t>(dialog.row_count_)
-                         + dialog.field_44_;
+        Dialog::field_60_ = Dialog::field_68_ * Dialog::row_count_ + Dialog::field_44_;
     }
-    if ((dialog.field_20_ & 2) != 0 && dialog.field_2C_ != 0) {
-        dialog.column_count_ = dialog.field_2C_ / dialog.field_64_;
-        dialog.field_5C_ = dialog.field_2C_;
+    if ((Dialog::field_20_ & 2) != 0 && Dialog::field_2C_ != 0) {
+        Dialog::column_count_ = Dialog::field_2C_ / Dialog::field_64_;
+        Dialog::field_5C_ = Dialog::field_2C_;
     } else {
-        uint32_t rows_numerator = static_cast<uint32_t>(dialog.row_count_) - 1u
-                                + static_cast<uint32_t>(list_.entry_count_);
-        int rows = static_cast<int32_t>(rows_numerator) / dialog.row_count_;
-        dialog.column_count_ = rows;
-        const uint32_t height_bits = (static_cast<uint32_t>(dialog.field_68_)
-                                    + dialog.field_44_)
-                                   * static_cast<uint32_t>(rows)
-                                   - dialog.field_44_;
-        int height = static_cast<int32_t>(height_bits);
-        if (height < dialog.field_2C_) height = dialog.field_2C_;
-        dialog.field_5C_ = height;
+        Dialog::column_count_ =
+            (Dialog::row_count_ + list_.entry_count_ - 1) / Dialog::row_count_;
+        int height = (Dialog::field_64_ + static_cast<int>(Dialog::field_44_))
+                     * Dialog::column_count_ - Dialog::field_44_;
+        if (Dialog::field_2C_ > height) height = Dialog::field_2C_;
+        Dialog::field_5C_ = height;
     }
     return 0;
 }
@@ -525,15 +536,21 @@ static inline Sprite *current_list_sprite(SpriteList &list) {
     return list.head_ ? list.current_->sprite_payload()->sprite_ : 0;
 }
 
+static inline int current_list_id(SpriteList &list) {
+    return list.head_ ? list.current_->id : 0;
+}
+
+static inline void draw_transparent(Sprite *sprite, Buffer *buffer, int x, int y,
+                                    int numerator, int denominator) {
+    sprite->draw(buffer, sprite->transparent_index(), x, y, numerator, denominator);
+}
+
 void SpriteBox::draw_item(int position) {
     Win *const parent = win_parent_;
     if (parent == 0) return;
-    const int columns = Dialog::row_count_;
-    const int column = position / columns;
-    int x = (static_cast<int>(Dialog::field_64_) +
-             static_cast<int>(Dialog::field_44_)) * column;
-    int y = (position - columns * column) * static_cast<int>(Dialog::field_68_) +
-            (static_cast<int>(Dialog::field_44_) >> 1);
+    const int column = position / Dialog::row_count_;
+    int x = (static_cast<int>(Dialog::field_64_) + static_cast<int>(Dialog::field_44_)) * column;
+    int y = (position - Dialog::row_count_ * column) * static_cast<int>(Dialog::field_68_) + (static_cast<int>(Dialog::field_44_) >> 1);
 
     if (!list_.seek_pos(position)) return;
     if (!Dialog::item_list_.seek_pos(position)) return;
@@ -545,26 +562,25 @@ void SpriteBox::draw_item(int position) {
     area.bottom = static_cast<int>(Dialog::field_68_) + y;
 
     static_cast<Buffer *>(static_cast<GraphicWin *>(parent))->copy(
-        static_cast<Buffer *>(static_cast<GraphicWin *>(this)),
+        static_cast<Buffer *>(this),
         static_cast<int32_t>(Dialog::window_x_) + x,
         static_cast<int32_t>(Dialog::window_y_) + y,
         x, y, Dialog::field_64_, Dialog::field_68_);
 
+    y += (static_cast<int>(Dialog::field_68_) -
+          current_list_sprite(list_)->height() * static_cast<int>(field_1C_) / static_cast<int>(field_20_)) / 2;
+    x += (static_cast<int>(field_54_) -
+          current_list_sprite(list_)->width() * static_cast<int>(field_1C_) / static_cast<int>(field_20_)) / 2;
     const int scale_numerator = static_cast<int>(field_1C_);
     const int scale_denominator = static_cast<int>(field_20_);
-    y += (static_cast<int>(Dialog::field_68_) -
-          current_list_sprite(list_)->height() * scale_numerator / scale_denominator) / 2;
-    x += (static_cast<int>(field_54_) -
-          current_list_sprite(list_)->width() * scale_numerator / scale_denominator) / 2;
     if (redraw_callback_ == 0) {
-        current_list_sprite(list_)->draw(static_cast<Buffer *>(static_cast<GraphicWin *>(this)),
-                               current_list_sprite(list_)->transparent_index(), x, y,
-                               scale_numerator, scale_denominator);
+        draw_transparent(current_list_sprite(list_), static_cast<Buffer *>(this), x, y,
+                         scale_numerator, scale_denominator);
     } else {
         SpriteScaleNumerator = scale_numerator;
         SpriteScaleDenominator = scale_denominator;
         redraw_callback_(current_list_sprite(list_), static_cast<GraphicWin *>(this),
-                         list_.head_ ? list_.current_->id : 0, x, y);
+                         current_list_id(list_), x, y);
         set_text_color(text_color_a_, text_color_b_, text_color_c_, text_color_d_);
         set_text_color2(text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_);
         set_text_color3(text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_);
@@ -572,16 +588,14 @@ void SpriteBox::draw_item(int position) {
     }
 
     if (Dialog::selected_position_ == position && field_4_ != 0) {
-        ++y;
-        box(x, y, x + current_list_sprite(list_)->width() * static_cast<int>(field_1C_) /
+        box(x, ++y, x + current_list_sprite(list_)->width() * static_cast<int>(field_1C_) /
                           static_cast<int>(field_20_) - 1,
             static_cast<int>(Dialog::field_68_) + y - 3,
             static_cast<int>(field_8_), static_cast<int>(field_8_));
     }
 
-    write_l(Dialog::item_list_.head_ != 0
-                ? Dialog::item_list_.current_->string_payload()->text : 0,
-            &area);
+    char *text = Dialog::item_list_.head_ != 0 ? Dialog::item_list_.current_->string_payload()->text : 0;
+    if (text) static_cast<Buffer *>(this)->write_l(text, &area, strlen(text));
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -614,46 +628,47 @@ void SpriteBox::on_left_click(int x, int y) {
 // symbol    ?on_key_down@SpriteBox@@UAEHH@Z
 // TRIED: none confirmed byte-exact; MISMATCH #0 - the switch/jump-table data at 0x00611580/0x00611594 (byte remap + pointer table) is not in the given disassembly, so the a1==0x26/0x25/0x28/0x27/ 0x24/0x22 case values are a guess. The four handler BODIES (offsets -0x8c/-0x58/-0x38/-0x34/+0x60/+4/+8/+0xfc) are transcribed directly from the bytes.
 int SpriteBox::on_key_down(int key) {
-    const int count = list_.entry_count_;
-    const int old_position = Dialog::selected_position_;
-    int next_position = old_position;
     switch (key) {
-    case VK_LEFT:
-    case VK_NUMPAD4:
-        if (Dialog::column_count_ == 1
-            || next_position < Dialog::row_count_) return 1;
-        next_position -= Dialog::row_count_;
-        break;
     case VK_UP:
     case VK_NUMPAD8:
-        if (next_position == 0) return 1;
-        --next_position;
-        break;
-    case VK_RIGHT:
-    case VK_NUMPAD6:
-        if (Dialog::column_count_ == 1) return 1;
-        {
-            const uint32_t last_row_start_bits =
-                (Dialog::column_count_ - 1u) * Dialog::row_count_;
-            const int last_row_start = static_cast<int32_t>(last_row_start_bits);
-            if (next_position >= last_row_start) return 1;
-        }
-        next_position += Dialog::row_count_;
-        Dialog::selected_position_ = next_position;
-        if (Dialog::selected_position_ > count - 1) {
-            Dialog::selected_position_ = old_position;
-            return 1;
-        }
+        if (Dialog::selected_position_ == 0) return 1;
+        Dialog::selected_position_--;
+        draw_item(Dialog::selected_position_ + 1);
         break;
     case VK_DOWN:
     case VK_NUMPAD2:
-        if (next_position == count - 1) return 1;
-        ++next_position;
+        if (Dialog::selected_position_ == list_.entry_count_ - 1) return 1;
+        Dialog::selected_position_++;
+        draw_item(Dialog::selected_position_ - 1);
         break;
-    default: return 0;
+    case VK_LEFT:
+    case VK_NUMPAD4:
+    {
+        if (Dialog::column_count_ == 1) return 1;
+        if (Dialog::selected_position_ < Dialog::row_count_) return 1;
+        const int previous = Dialog::selected_position_;
+        Dialog::selected_position_ = previous - Dialog::row_count_;
+        draw_item(previous);
+        break;
     }
-    Dialog::selected_position_ = next_position;
-    draw_item(old_position);
+    case VK_RIGHT:
+    case VK_NUMPAD6:
+    {
+        if (Dialog::column_count_ == 1) return 1;
+        if (Dialog::selected_position_ >=
+            (Dialog::column_count_ - 1) * Dialog::row_count_) return 1;
+        const int previous = Dialog::selected_position_;
+        Dialog::selected_position_ = previous + Dialog::row_count_;
+        if (Dialog::selected_position_ > list_.entry_count_ - 1) {
+            Dialog::selected_position_ = previous;
+            return 1;
+        }
+        draw_item(previous);
+        break;
+    }
+    default:
+        return 0;
+    }
     draw_item(Dialog::selected_position_);
     on_update();
     return 1;

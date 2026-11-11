@@ -837,6 +837,19 @@ int Popup::set_picture(Sprite *picture, int mode, char *text) {
 // symbol    ?POP2@@YAHPBD0H@Z
 // historical Status: Coverage transcription - unclaimed body; the BasePop member walks
 // TRIED: a real `Popup pop;` local forces the compiler to synthesise and EMIT its own ~Popup() (Scroll has a declared, non-trivial dtor), which fails the one-external-symbol check; split into `BasePop pop; Scroll scroll;` locals instead (both already declare their own ctor/dtor) and call Popup::start() through a `(Popup*)&pop` cast. Reaches MISMATCH #19 in the construction/frame-setup area; did not chase the exact stack-slot layout (BasePop's true size vs. the scaffold's estimate) further.
+// Queues StringTemp with an id on a deferred message list.
+static inline void queue_message(StringList &pending, int id) {
+    pending.pending_text_ = StringTemp;
+    pending.field_20_ = 0;
+    pending.field_24_ = 0;
+    pending.add(id);
+}
+
+// The current entry's payload, or null without a list head.
+static inline StringStructPayload *current_payload(StringList &list) {
+    return list.head_ ? list.current_->string_payload() : 0;
+}
+
 int __cdecl POP2(const char *a1, const char *a2, int a3) {
     // Popup's real base/member lifetime is the native local object.
     Popup pop;
@@ -847,24 +860,7 @@ int __cdecl POP2(const char *a1, const char *a2, int a3) {
 
     int total = pop.unit_ids_.entry_count_;
     *StringTemp = 0;
-
-    if (!(total - 1 < -1)) {
-        StringStructEntry *entry = pop.unit_ids_.head_;
-        pop.unit_ids_.current_ = entry;
-        int n = abs(-1);
-        if (n <= pop.unit_ids_.entry_count_) {
-            n = abs(-1);
-            if (n > 0) {
-                do {
-                    entry = entry->previous;
-                    n--;
-                } while (n != 0);
-                pop.unit_ids_.current_ = entry;
-            }
-            pop.unit_ids_.current_position_ =
-                pop.unit_ids_.entry_count_ - 1;
-        }
-    }
+    pop.unit_ids_.seek_pos(-1);
 
     int i;
     for (i = 0; i < total; i++) {
@@ -873,20 +869,10 @@ int __cdecl POP2(const char *a1, const char *a2, int a3) {
                    BufferJoinSpace);
         }
         pop.unit_ids_.next_entry();
-        const char *text;
-        StringStructEntry *entry = pop.unit_ids_.current_;
-        if (entry == 0) {
-            text = 0;
-        } else if (pop.unit_ids_.head_ == 0) {
-            // The image reads payload+4 even when the current entry exists
-            // without a list head; preserve that unchecked address-4 load.
-            StringStructPayload *payload = 0;
-            text = payload->text;
-        } else {
-            text = entry->string_payload()->text;
-        }
+        // The image reads payload+4 even when the current entry exists
+        // without a list head; preserve that unchecked address-4 load.
         strcat(StringTemp,
-               text);
+               pop.unit_ids_.current_ ? current_payload(pop.unit_ids_)->text : 0);
     }
 
     if (IsMultiplayerPBEM != 0) {
@@ -897,11 +883,7 @@ int __cdecl POP2(const char *a1, const char *a2, int a3) {
                     1u << (idx & 0x1F));
                 if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & bit) != 0 &&
                     (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & bit) != 0) {
-                    StringList &pending = MessageWinDeferredBaseMessages[idx];
-                    pending.pending_text_ = StringTemp;
-                    pending.field_20_ = 0;
-                    pending.field_24_ = 0;
-                    pending.add(0x10000000);
+                    queue_message(MessageWinDeferredBaseMessages[idx], 0x10000000);
                 }
                 ++idx;
             } while (idx < 8);
@@ -909,22 +891,14 @@ int __cdecl POP2(const char *a1, const char *a2, int a3) {
             const uint8_t idx2 = Bases[a3].faction_id_current;
             if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
                  static_cast<unsigned char>(1u << (idx2 & 0x1Fu))) != 0) {
-                StringList &pending = MessageWinDeferredBaseMessages[idx2];
-                pending.pending_text_ = StringTemp;
-                pending.field_20_ = 0;
-                pending.field_24_ = 0;
-                pending.add(a3 | 0x40000000);
+                queue_message(MessageWinDeferredBaseMessages[idx2], a3 | 0x40000000);
             }
         } else if (a3 != -1) {
             int neg = -1 - a3;
             unsigned char bit = static_cast<unsigned char>(1 << (neg & 0x1F));
             if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & bit) != 0 &&
                 (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & bit) != 0) {
-                StringList &pending = MessageWinDeferredBaseMessages[neg];
-                pending.pending_text_ = StringTemp;
-                pending.field_20_ = 0;
-                pending.field_24_ = 0;
-                pending.add(0x10000000);
+                queue_message(MessageWinDeferredBaseMessages[neg], 0x10000000);
             }
         }
         return 0;
@@ -971,29 +945,16 @@ void __cdecl POP3(const char *section, const char *unused, int recipient,
             strcat(StringTemp, " ");
         }
         history.next_entry();
-        const char *history_text;
-        StringStructEntry *const entry = history.current_;
-        if (entry == 0) {
-            history_text = 0;
-        } else if (history.head_ == 0) {
-            // The image reads payload+4 even without a list head.
-            StringStructPayload *payload = 0;
-            history_text = payload->text;
-        } else {
-            history_text = entry->string_payload()->text;
-        }
-        strcat(StringTemp, history_text);
+        // The image reads payload+4 even without a list head.
+        strcat(StringTemp,
+               history.current_ ? current_payload(history)->text : 0);
     }
 
     if (IsMultiplayerPBEM != 0) {
         if (recipient > 0) {
             if (y >= 0 && y < MapLatitudeBounds && x >= 0 &&
                 x < MapLongitudeBounds) {
-                StringList &pending = MessageWinDeferredBaseMessages[recipient];
-                pending.pending_text_ = StringTemp;
-                pending.field_20_ = 0;
-                pending.field_24_ = 0;
-                pending.add((MapLongitudeBounds * y + x) | 0x80000000);
+                queue_message(MessageWinDeferredBaseMessages[recipient], (MapLongitudeBounds * y + x) | 0x80000000);
             }
         } else {
             for (int faction = 1; faction < 8; ++faction) {
@@ -1002,11 +963,7 @@ void __cdecl POP3(const char *section, const char *unused, int recipient,
                     (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & bit) != 0 &&
                     y >= 0 && y < MapLatitudeBounds &&
                     x >= 0 && x < MapLongitudeBounds) {
-                    StringList &pending = MessageWinDeferredBaseMessages[faction];
-                    pending.pending_text_ = StringTemp;
-                    pending.field_20_ = 0;
-                    pending.field_24_ = 0;
-                    pending.add((MapLongitudeBounds * y + x) | 0x80000000);
+                    queue_message(MessageWinDeferredBaseMessages[faction], (MapLongitudeBounds * y + x) | 0x80000000);
                 }
             }
         }
@@ -1282,8 +1239,8 @@ int Popup::on_draw_background() {
 
     int x = field_30F0_ + field_30D8_ + field_21C8_ + field_30E0_;
     int y = field_30E8_ + field_30E0_;
-    anchor.right = outer.right - 10;
     anchor.left = x;
+    anchor.right = outer.right - 10;
     anchor.bottom = field_30D4_ + y;
     anchor.top = y;
     anchor.left -= 3;
@@ -1346,14 +1303,16 @@ int Popup::on_draw_background() {
 
   int x = field_30F0_ + field_30D8_ + field_21C8_ + field_30E0_;
   int y = field_30E8_ + field_30E0_;
+  anchor.left = x;
   anchor.right = outer.right - 10;
   anchor.bottom = field_30D4_ + y;
+  anchor.top = y;
   if (type == 6 || type == 2) {
     anchor.right -= 9;
   }
-  anchor.left = x - 3;
+  anchor.left -= 3;
+  anchor.top -= 3;
   anchor.right += 3;
-  anchor.top = y - 3;
   if (field_30D4_ != 0) {
     box_sprite(&anchor, &InterfaceBoxStyles[0]);
     y += field_30E4_ + field_30D4_;
