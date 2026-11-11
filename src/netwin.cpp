@@ -1289,9 +1289,9 @@ void NetWin::draw_player_names() {
             && row >= faction_records_[0].record_type_) {
             break;
         }
-        RECT *row_rect = &setup_rects_[row + 36];
         RECT *name_rect = &setup_rects_[row + 6];
         RECT *colour_rect = &setup_rects_[row + 27];
+        RECT *row_rect = &setup_rects_[row + 36];
         Buffer::box_sprite(name_rect, &InterfaceBoxStyles[0]);
         Buffer::box_sprite(colour_rect, &InterfaceBoxStyles[0]);
 
@@ -1341,10 +1341,9 @@ void NetWin::draw_player_names() {
         Buffer::set_font(find_font(0xE, 1), 0, 0, 0);
         Buffer::set_text_color(get_player_color(row + 1), 0, 1, 1);
         // The name field: the rectangle again, inset by four.
-        field.left = name_rect->left + 4;
-        field.top = name_rect->top;
-        field.right = name_rect->right - 4;
-        field.bottom = name_rect->bottom;
+        field = *name_rect;
+        field.left += 4;
+        field.right -= 4;
         Buffer::set_clip(&field);
 
         StringTemp[0] = 0;
@@ -2499,6 +2498,40 @@ static void netwin_set_rect(RECT *rect, int left, int top, int right, int bottom
     rect->bottom = bottom;
 }
 
+// WORKAROUND(decl): 482A38..482A5E null-tests &setup_rects_[44] before
+// EditBox::init, the shape of an inline RECT-taking EditBox::init overload.
+static inline int netwin_init_edit(EditBox *box, RECT *rect, Win *parent,
+                                   int focus_wrap) {
+    if (rect == 0) {
+        return 0;
+    }
+    return box->init(rect->left, rect->top, rect->right - rect->left,
+                     rect->bottom - rect->top, parent, focus_wrap);
+}
+
+// WORKAROUND(decl): 482B2B..482B44 evaluates find_font before pushing the
+// three zero arguments, the shape of an inline one-argument button set_font.
+static inline void netwin_button_font(FlatButton *button, Font *font) {
+    button->Buffer::set_font(font, 0, 0, 0);
+}
+
+// One seven-row column of lobby cells, 0x16 apart.
+static inline void netwin_set_column(RECT *rows, int left, int top, int right,
+                                     int bottom) {
+    for (int i = 0; i < 7; ++i) {
+        netwin_set_rect(rows++, left, top, right, bottom);
+        top += 0x16;
+        bottom += 0x16;
+    }
+}
+
+static inline void netwin_inflate_rect(RECT *rect, int dx, int dy) {
+    rect->left -= dx;
+    rect->top -= dy;
+    rect->right += dx;
+    rect->bottom += dy;
+}
+
 // ORIGINAL: 0x00482490 ?exec@NetWin@@QAEHXZ 0x00482490-0x00482D84
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00482490.cpp; original identity and primary482490..482D84 span retained", "Pinned original 0x004824C2 pushes callback 0x00483820, count 7, stride 0x17C and the stack array at EBP-0xAB0 before calling 0x00402EE0; originally the helper calls the callback with each element as ECX. Current source uses a seven-element array of constructed payload wrappers; VC6 supplies its non-EH ??_H iterator and the wrapper constructor returns the receiver, matching the original 0x483820 ABI. 0x00483820 writes offsets 0, 1, 2, 3, 4 and 0x178, matching the constructed row payload. Global wire rows remain passive; this composition does not assert an original class hierarchy.", "recovery/tasks/netwin-owner-coverage.json; revisions1-3 authorize coupled ownership and consumer changes; no matching or runtime acceptance implied."], "reason": "Recover the complete lobby window lifecycle with typed setup rectangles, existing controls, stack-local lobby rows and real receiver-free callbacks."}
 // TRIED: full transcription treating `self` as `int *` (matches the original's word-indexed field layout exactly); vtable slot057 retyped to (int,int,int) in this file's VCall, verified against raw disasm; UnionRect/CharUpperA reached via the IAT slot pattern. Reaches MISMATCH #6 'xor' vs 'mov' (register allocation), not chased further given size (2292 bytes).
@@ -2570,89 +2603,84 @@ int NetWin::exec() {
     // Native setup rectangle span [this+0xA14,this+0xD34): 50 RECTs.
     // Header proposal replaces its existing 200 dwords with setup_rects_[50]
     // and migrates existing field_A14_ painter access to setup_rects_[0].
-    RECT *const r = setup_rects_;
-    const RECT &work = Buffer::rect2_;
-    r[0].left = work.left + 3;
-    r[0].top = work.top + 3;
-    r[0].right = work.right - 3;
-    r[0].bottom = work.top + 0x1D;
+    RECT rect = Buffer::rect2_;
+    rect.left += 3;
+    rect.top += 3;
+    rect.right -= 3;
+    rect.bottom = rect.top + 0x1A;
+    setup_rects_[0] = rect;
 
-    netwin_set_rect(&r[1], 7, 0x3A, 0x134, 0x180);
-    netwin_set_rect(&r[2], 7, 0x24, 0x134, 0x38);
-    ::UnionRect(&r[3], &r[1], &r[2]);
-    r[3].left -= 3;
-    r[3].top -= 3;
-    r[3].right += 3;
-    r[3].bottom += 3;
+    netwin_set_rect(&setup_rects_[1], 7, 0x3A, 0x134, 0x180);
+    netwin_set_rect(&setup_rects_[2], 7, 0x24, 0x134, 0x38);
+    ::UnionRect(&setup_rects_[3], &setup_rects_[1], &setup_rects_[2]);
+    netwin_inflate_rect(&setup_rects_[3], 3, 3);
+    netwin_set_rect(&setup_rects_[4], 0x13D, 0x24, 0x319, 0x38);
+    netwin_set_rect(&setup_rects_[5], 0x13A, 0x21, 0x31C, 0xEB);
 
-    netwin_set_rect(&r[4], 0x13D, 0x24, 0x319, 0x38);
-    netwin_set_rect(&r[5], 0x13A, 0x21, 0x31C, 0xEB);
-
-    for (int i = 0; i < 7; ++i) {
-        const int top = 0x3A + 0x16 * i;
-        const int bottom = 0x4E + 0x16 * i;
-        netwin_set_rect(&r[6 + i], 0x161, top, 0x213, bottom);
-        netwin_set_rect(&r[13 + i], 0x215, top, 0x2A1, bottom);
-        netwin_set_rect(&r[20 + i], 0x2A3, top, 0x319, bottom);
-        netwin_set_rect(&r[27 + i], 0x14F, top, 0x15F, bottom);
-        netwin_set_rect(&r[36 + i], 0x13D, top, 0x14D, bottom);
+    int i;
+    int top = 0x3A;
+    int bottom = 0x4E;
+    RECT box;
+    netwin_set_rect(&box, 0x13D, top, 0x14D + 0x12, bottom);
+    RECT *rows = &setup_rects_[27];
+    for (i = 0; i < 7; ++i) {
+        netwin_set_rect(rows + 9, 0x13D, top, 0x14D, bottom);
+        netwin_set_rect(rows++, 0x14F, box.top, box.right, box.bottom);
+        top += 0x16;
+        bottom += 0x16;
+        box.top += 0x16;
+        box.bottom += 0x16;
     }
+    netwin_set_column(&setup_rects_[6], 0x161, 0x3A, 0x213, 0x4E);
+    netwin_set_column(&setup_rects_[13], 0x215, 0x3A, 0x2A1, 0x4E);
+    netwin_set_column(&setup_rects_[20], 0x2A3, 0x3A, 0x319, 0x4E);
 
-    netwin_set_rect(&r[34], 0x13D, 0xD4, 0x229, 0xE8);
-    netwin_set_rect(&r[35], 0x22C, 0xD4, 0x318, 0xE8);
+    netwin_set_rect(&setup_rects_[34], 0x13D, 0xD4, 0x229, 0xE8);
+    netwin_set_rect(&rect, 0x22C, 0xD4, 0x318, 0xE8);
+    setup_rects_[35] = rect;
 
-    netwin_set_rect(&r[43], 0x13D, 0xF1, 0x319, 0x162);
-    netwin_set_rect(&r[44], 0x13D, 0x164, 0x319, 0x180);
-    ::UnionRect(&r[45], &r[43], &r[44]);
-    r[45].left -= 3;
-    r[45].top -= 3;
-    r[45].right += 3;
-    r[45].bottom += 3;
+    netwin_set_rect(&setup_rects_[43], 0x13D, 0xF1, 0x319, 0x162);
+    netwin_set_rect(&setup_rects_[44], 0x13D, 0x164, 0x319, 0x180);
+    ::UnionRect(&setup_rects_[45], &setup_rects_[43], &setup_rects_[44]);
+    netwin_inflate_rect(&setup_rects_[45], 3, 3);
 
-    netwin_set_rect(&r[46], 7, 0x189, 0x319, 0x19D);
-    netwin_set_rect(&r[48], 0x1B, 0x19F, 0x18F, 0x251);
-    netwin_set_rect(&r[49], 0x1A5, 0x19F, 0x251, 0x319);
-    RECT union_scratch;
-    ::UnionRect(&union_scratch, &r[46], &r[48]);
-    ::UnionRect(&r[47], &union_scratch, &r[49]);
-    r[47].left -= 3;
-    r[47].top -= 3;
-    r[47].right += 3;
-    r[47].bottom += 3;
-
-    stringBox_.init(r[43].left + 3, r[43].top + 3,
-                    r[43].right - r[43].left - 6,
-                    r[43].bottom - r[43].top - 6, this, nullptr, -1);
+    netwin_set_rect(&setup_rects_[46], 7, 0x189, 0x319, 0x19D);
+    netwin_set_rect(&setup_rects_[48], 0x1B, 0x19F, 0x18F, 0x251);
+    // Restored original values (482965..482985): right 0x319, bottom 0x251.
+    netwin_set_rect(&setup_rects_[49], 0x1A5, 0x19F, 0x319, 0x251);
+    ::UnionRect(&rect, &setup_rects_[46], &setup_rects_[48]);
+    ::UnionRect(&setup_rects_[47], &rect, &setup_rects_[49]);
+    netwin_inflate_rect(&setup_rects_[47], 3, 3);
+    stringBox_.init(setup_rects_[43].left + 3, setup_rects_[43].top + 3,
+                    setup_rects_[43].right - setup_rects_[43].left - 6,
+                    setup_rects_[43].bottom - setup_rects_[43].top - 6, this, nullptr, -1);
     // init closes the prior list and clears its callback; install afterward.
     stringBox_.set_write_strings_callback(&NetWin::string_callback);
-    Buffer *string_canvas = static_cast<Buffer *>(&stringBox_);
-    string_canvas->set_text_color(0xFF, -1, 1, 1);
+    stringBox_.Buffer::set_text_color(0xFF, -1, 1, 1);
     stringBox_.set_visible_rows(100);
     stringBox_.show(0);
 
-    editBox_.init(r[44].left, r[44].top,
-                  r[44].right - r[44].left,
-                  r[44].bottom - r[44].top, this, 0);
+    netwin_init_edit(&editBox_, &setup_rects_[44], this, 0);
 
     // Existing EditBox members preserve the native field stores; window
     // flags belong to its actual Win base, not the separate CheckBox.
     editBox_.add_window_flags(0x01000100);
     editBox_.field_B1C_ = 9;
     editBox_.field_B30_ = 0;
-    Buffer *edit_canvas = static_cast<Buffer *>(&editBox_);
-    edit_canvas->set_text_color(0xE1, -1, 1, 1);
+    editBox_.Buffer::set_text_color(0xE1, -1, 1, 1);
     editBox_.field_B20_ = 0x41;
     editBox_.field_B24_ = 0xE1;
     editBox_.field_B14_ = 0x80;
     editBox_.show(0);
 
-    char *button_text = label_get(
-        (NetDaemonNet.primary_state_.leading_words_[0] != 0 ? 0x1058 : 0x1050) / 4);
-    flatButton1_.init(button_text, 10, r[34].left, r[34].top,
-                      r[34].right - r[34].left, r[34].bottom - r[34].top,
+    char *button_text = StringTable.get(
+        NetDaemonNet.primary_state_.leading_words_[0] != 0
+            ? Labels.strings_ptr[0x1058 / 4]
+            : Labels.strings_ptr[0x1050 / 4]);
+    flatButton1_.init(button_text, 10, setup_rects_[34].left, setup_rects_[34].top,
+                      setup_rects_[34].right - setup_rects_[34].left, setup_rects_[34].bottom - setup_rects_[34].top,
                       this, 0);
-    Buffer *button_canvas = static_cast<Buffer *>(&flatButton1_);
-    button_canvas->set_font(find_font(0xE, 1), 0, 0, 0);
+    netwin_button_font(&flatButton1_, find_font(0xE, 1));
     flatButton1_.redraw();
     flatButton1_.set_text_color(0x41, -1, 1, 1);
 
@@ -2661,11 +2689,10 @@ int NetWin::exec() {
     if (Language != 2) {
         CharUpperA(StringTemp);
     }
-    flatButton2_.init(StringTemp, -2, r[35].left, r[35].top,
-                      r[35].right - r[35].left, r[35].bottom - r[35].top,
+    flatButton2_.init(StringTemp, -2, setup_rects_[35].left, setup_rects_[35].top,
+                      setup_rects_[35].right - setup_rects_[35].left, setup_rects_[35].bottom - setup_rects_[35].top,
                       this, 0);
-    Buffer *second_button_canvas = static_cast<Buffer *>(&flatButton2_);
-    second_button_canvas->set_font(find_font(0xE, 1), 0, 0, 0);
+    netwin_button_font(&flatButton2_, find_font(0xE, 1));
     flatButton2_.redraw();
     flatButton2_.set_text_color(0x41, -1, 1, 1);
 
@@ -2679,8 +2706,8 @@ int NetWin::exec() {
         NetWinSessionOptionsPacket packet;
         // Original 0x482C64..0x482C88 writes only the opcode and six options
         // words; reserved header bytes +2..+0xF retain prior stack contents.
-        packet.opcode_ = 0x2F02;
         packet.options_ = NetWinSessionOptions.fields_;
+        packet.opcode_ = 0x2F02;
         NetDaemonNet.send(&packet, 0x28, NetDaemonNet.host_player_id_, 1);
     }
 
@@ -2689,7 +2716,9 @@ int NetWin::exec() {
     hide();
     NetDaemonNet.close_game();
 
-    if (field_7614_ > 0) {
+    // WORKAROUND(type): 482CBD..482CC3 tests it signed (jle); the header
+    // declares field_7614_ uint32_t.
+    if (static_cast<int>(field_7614_) > 0) {
         on_redraw();
         on_update();
         prepare_game();
@@ -3252,6 +3281,10 @@ Purpose: Construct a lobby row, not the GraphicWin base. Native4824C2
 Return Value: n/a
 Status: Complete
 */
+// WORKAROUND(noinline): exec reaches this constructor out of line through
+// the ??_H iterator (4824C2 pushes 483820); /Ob2 otherwise expands it there.
+// The ??_H call itself (4824D5) is still expanded inline in our build.
+#pragma auto_inline(off)
 NetWinConstructedLobbyRow::NetWinConstructedLobbyRow() {
     payload_.owner_ = 0;
     payload_.prefix_ = -1;
@@ -3260,6 +3293,7 @@ NetWinConstructedLobbyRow::NetWinConstructedLobbyRow() {
     payload_.faction_or_color_ = -1;
     payload_.field_4_ = 2;
 }
+#pragma auto_inline(on)
 
 
 
