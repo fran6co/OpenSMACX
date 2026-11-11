@@ -6417,10 +6417,11 @@ void __cdecl base_check_support() {
                 ? 0 : (support <= -4 ? 2 : 1);
         }
         int support = PlayersData[faction].soc_effect_pending.values_[SocialEffect::SUPPORT];
-        if (has_abil(Vehs[best_veh].proto_id, ABL_CLEAN_REACTOR)) {
+        int cost = has_abil(Vehs[best_veh].proto_id, ABL_CLEAN_REACTOR) ? 0 : (support <= -4 ? 2 : 1);
+        if (!cost) {
             break;
         }
-        BaseCurrentForcesMaintCost -= support <= -4 ? 2 : 1;
+        BaseCurrentForcesMaintCost -= cost;
         kill(best_veh);
     }
     int faction_bit = 1 << faction;
