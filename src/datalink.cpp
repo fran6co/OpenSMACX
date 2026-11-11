@@ -515,8 +515,11 @@ void Datalink::draw_chassis() {
 void Datalink::draw_reactor() {
     StringList description;
     const int id = history_[0];
+    RECT rect = description_rect_;
+    rect.left += 6;
+    rect.right -= 6;
+    rect.top += 6;
     // Original indexes 0x9527EC; the source-owned array begins at0x9527F8.
-    const RulesReactor &reactor = Reactor[id - 1];
     caviar_.reset_objects();
     vehdraw_construct_reactor(ConsoleGlobal.faction_id_, -1, -1, id, 0, &caviar_);
     caviar_.set_scaling(0.2f);
@@ -526,22 +529,25 @@ void Datalink::draw_reactor() {
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
     StringTemp[0] = 0;
-    strcat(StringTemp, StringTable.get(reactor.name));
+    char *name = Reactor[id - 1].name;
+    strcat(StringTemp, StringTable.get(name));
     CharUpperA(StringTemp);
     write_cent_l(StringTemp, &title_rect_);
-    const int left = description_rect_.left + 9
-                   + illustration_rect_.right - illustration_rect_.left;
+    rect.left += illustration_rect_.right - illustration_rect_.left + 3;
     parse_num(0, id);
-    parse_says(1, tech_name(reactor.preq_tech, 0), -1, -1);
-    parse_num(1, reactor.preq_tech + 140000);
-    description.remove_all();
+    const int tech = Reactor[id - 1].preq_tech;
+    parse_says(1, tech_name(tech, 0), -1, -1);
+    const int link = tech + 140000;
+    parse_num(1, link);
+    description.StringStruct::remove_all();
+    description.current_position_ = 0;
+    description.allocator_ = 0;
     description.load(DatalinkHelpFile, "HELPREACTOR", 1, 0);
-    set_font(&body_font_, 0, 0, reactor.preq_tech < 0 ? 0 : &link_font_);
+    set_font(&body_font_, 0, 0, tech >= 0 ? &link_font_ : 0);
     set_text_color(0x98, -1, 1, 1);
     set_text_color2(0x96, -1, 1, 1);
     set_text_color_hyper(0x96, -1, 1, 1);
-    write_strings(&description, left, description_rect_.top + 6,
-                  description_rect_.right - 6 - left, 0);
+    write_strings(&description, rect.left, rect.top, rect.right - rect.left, 0);
     StringTemp[0] = 0;
     strcat(StringTemp, "REACTORDESC");
     detail_box_.clear();
@@ -550,7 +556,6 @@ void Datalink::draw_reactor() {
         detail_box_.show(0);
     }
     soft_update(&description_rect_);
-    description.remove_all();
 }
 // ORIGINAL: 0x0042E2E0 ?draw_weapon@Datalink@@QAEXXZ 0x0042E2E0-0x0042E8D3;0x006537AE-0x006537E2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/0042e2e0.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
@@ -1316,7 +1321,7 @@ static inline void append_upper_name(LPSTR name) {
 // The unpooled TU still has one "TECH" object for draw_tech and the copy
 // draw_entry expands: both sites go through this helper's literal.
 static inline void append_tech_topic() {
-    // RECOVERY_LITERAL: v1 0x006834D8 0x006834DD $SG55042 0x00430B30
+    // RECOVERY_LITERAL: v1 0x006834D8 0x006834DD $SG55044 0x00430B30
     strcat(StringTemp, "TECH");
 }
 
