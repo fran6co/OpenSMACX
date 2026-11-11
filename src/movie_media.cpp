@@ -15,6 +15,7 @@
 // RECOVERY_IMPORT: v1 __imp__SetThreadPriority@8 KERNEL32.dll name:SetThreadPriority
 // RECOVERY_IMPORT: v1 __imp__Sleep@4 KERNEL32.dll name:Sleep
 // RECOVERY_IMPORT: v1 __imp__mmioClose@8 WINMM.dll name:mmioClose
+// RECOVERY_IMPORT: v1 __imp__mmioRead@12 WINMM.dll name:mmioRead
 
 // ORIGINAL: 0x005CBAE0 sub_5cbae0 0x005CBAE0-0x005CBBB6 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Recover the runtime-owned DirectDraw overlay operation and its actual source/destination interfaces, rectangles and failure-path receiver; update_overlay is a descriptive recovered name, not an original debug-symbol claim.","evidence":["Pinned5CBAE0..5CBBB6 passes runtime in ECX and mode in EDX;5CBB6C calls Surface2 slot33(+84), the installed DDRAW.H UpdateOverlay contract, with DDOVERLAYFX size38 and DDFX at30.","MediaRuntime descriptor+0 and rectangle fields+0C/+10/+14/+18; MediaDescriptor Surface2 pointers+14/+1C and dimensions+60/+64 have existing typed producers in movie_media.cpp and UV2Player::exec.","Pinned5CBB5E..6B passes distinct source and destination RECTs; destination is0,0,width-1,height-1. Flags200/84000 mean hide/show|DDFX, not DDBLT_WAIT or rotation.","Pinned5CBB7F writes runtime queue_record_kind+4C on E_INVALIDARG;5CBB98..A0 reloads runtime->descriptor->surface_1c after UpdateOverlay before Restore, ignoring its return.","Original identity/span and seed provenance retained from git:611ee1d26:src/stringstruct.cpp and retired seed git:ee30a69d:src/unrecovered/005cbae0.cpp; prior Blt and descriptor-Restore interpretation is superseded, not original behavior."]}
@@ -1258,18 +1259,22 @@ int __fastcall MediaRuntime::initialize_stream(LPSTR filename,
 
 // One TLV field: p is at the tag; steps over it and the length byte, then
 // accumulates that many big-endian value bytes. count keeps the length.
-static inline int media_read_field(BYTE *&p, unsigned int &count) {
-  ++p;
-  unsigned int remaining = *p++;
+// The value is an out-parameter (a returned value makes VC6 emit the sign
+// adjustments below as add -imm where the image has sub imm), and the walk
+// uses a local cursor (stepping p in place swaps the skip loops' ECX/EDX).
+static inline void media_read_field(BYTE *&p, unsigned int &count,
+                                    int &value) {
+  BYTE *q = p + 1;
+  unsigned int remaining = *q++;
   count = remaining;
-  int value = 0;
-  while (remaining--) value = (value << 8) + *p++;
-  return value;
+  value = 0;
+  while (remaining--) value = (value << 8) + *q++;
+  p = q;
 }
 
-static inline int media_read_signed_field(BYTE *&p) {
-  unsigned int count;
-  int value = media_read_field(p, count);
+static inline void media_read_signed_field(BYTE *&p, unsigned int &count,
+                                           int &value) {
+  media_read_field(p, count, value);
   if (count == 1) {
     if (value > 0x7f) value -= 0x100;
   } else if (count == 2) {
@@ -1277,7 +1282,6 @@ static inline int media_read_signed_field(BYTE *&p) {
   } else if (count == 3) {
     if (value > 0x7fffff) value -= 0x1000000;
   }
-  return value;
 }
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x005CA6C0 0x005CA95C 0x005CA96C 0x005CA770
@@ -1285,10 +1289,9 @@ static inline int media_read_signed_field(BYTE *&p) {
 // symbol    ?parse_initial_format@MediaRuntime@@QAIHH@Z
 // kind      game
 // TRIED: NOT a real parameter - Ghidra's `char param_1` is actually buf[4], a byte read from the just-mmioRead'd local buffer, because Ghidra doesn't track the alloca'd 0xc000 frame. Modeled instead as a __thiscall member (ecx->edi is `this`, no stack arg) with a large local `char buf[0xc000]` (reproduces the `mov eax,0xc000; call __alloca_probe` prologue for free) parsing a TLV byte stream: skip name fields until 0xfd, then dispatch tags 0x81/0x82/0x83/0x84 (big- endian length-prefixed sign-extended ints stored to this+0x5c/0x54/ 0x60/0x58) until tag 0x8a. Reordering local decls to match the original's `lea eax,[esp]`-before-prologue-pushes scheduling did not change the codegen; first divergence stays at instruction #2 (original computes the buffer pointer before saving edi, rebuilt pushes edi first) - register scheduling, not source form.
-// The jump table at 0x5CA95C stores tag 0x83 to +0x58 (playback rate) and
-// 0x84 to +0x60; the TRIED note above has those two swapped.
-// Left: the image adjusts with sub reg,imm (ours add -imm) and swaps
-// ecx/edx in the skip loops.
+// The jump table at 0x5CA95C sends tag 0x83 to the +0x60 store and 0x84 to
+// the +0x58 (playback rate) store, as the TRIED note above says; the 0x84
+// case block precedes the 0x83 one in the image.
 int __fastcall MediaRuntime::parse_initial_format(int byte_count) {
   BYTE bytes[0xc000];
   LONG read = mmioRead(descriptor->stream, (HPSTR)bytes, byte_count);
@@ -1301,17 +1304,30 @@ int __fastcall MediaRuntime::parse_initial_format(int byte_count) {
   format_dispatch_60 = 0;
 
   unsigned int count;
+  int value;
   BYTE *p = bytes + 4;
-  while (*p != 0xfd) media_read_field(p, count);
+  while (*p != 0xfd) media_read_field(p, count, value);
 
   ++p;
   for (int tag = *p; tag != 0x8a; tag = *p) {
     switch (tag) {
-    case 0x81: format_parameter_5c = (DWORD)media_read_signed_field(p); break;
-    case 0x82: format_parameter_54 = (DWORD)media_read_signed_field(p); break;
-    case 0x83: playback_frequency = (DWORD)media_read_signed_field(p); break;
-    case 0x84: format_dispatch_60 = (DWORD)media_read_signed_field(p); break;
-    default: media_read_field(p, count); break;
+    case 0x81:
+      media_read_signed_field(p, count, value);
+      format_parameter_5c = (DWORD)value;
+      break;
+    case 0x82:
+      media_read_signed_field(p, count, value);
+      format_parameter_54 = (DWORD)value;
+      break;
+    case 0x84:
+      media_read_signed_field(p, count, value);
+      playback_frequency = (DWORD)value;
+      break;
+    case 0x83:
+      media_read_signed_field(p, count, value);
+      format_dispatch_60 = (DWORD)value;
+      break;
+    default: media_read_field(p, count, value); break;
     }
   }
   return 0;

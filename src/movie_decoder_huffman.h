@@ -26,28 +26,9 @@ struct State {
   const Tables *tables;
 };
 
-// `word_cursor` is kept as bytes to avoid alignment and aliasing assumptions.
-// This operation matches the word-refill path in 0x005CE85C.
-void refill_word(BitState &state);
-
 // Typed body for original 0x005CE85C. Decodes the coefficient
 // sequence until the terminal table class is met. Keep the semantic C++ name;
 // the native writer owns the original mapping and emitted linker identity.
 int decode_coefficients(State &state);
-
-// Normalized C++ interface for 0x005CEA09. Its caller pushes these four
-// arguments. The wrapper advances source A by 0x40 bytes per tile, source B
-// by 0x20 bytes every second tile, and destination by row_stride each tile.
-void transform_sixteen(const uint8_t *source_a,
-                       const uint8_t *source_b,
-                       uint32_t *destination, int row_stride,
-                       const uint8_t byte_remap[256]);
-
-// Explicit C++ form of the work done by the sixteen hidden-register calls to
-// 0x005CEB12. This is also the per-tile operation used by transform_sixteen.
-void pack_eight_pixels(const uint8_t *source_a,
-                       const uint8_t *source_b,
-                       uint32_t destination[8],
-                       const uint8_t byte_remap[256]);
 
 }  // namespace movie_decoder_huffman

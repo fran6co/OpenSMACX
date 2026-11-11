@@ -5877,54 +5877,6 @@ void __fastcall sub_5d2e00(char *src, int byte_offset, int stride,
                            char *dst, char adjust);
 
 namespace movie_decoder_huffman {
-namespace {
-
-uint32_t pull_word(BitState &state) {
-  const uint32_t value = static_cast<uint32_t>(state.cursor[0]) |
-                              (static_cast<uint32_t>(state.cursor[1]) << 8);
-  state.cursor += 2;
-  return value;
-}
-
-uint32_t read_word(const uint8_t *cursor) {
-  return static_cast<uint32_t>(cursor[0]) |
-         (static_cast<uint32_t>(cursor[1]) << 8);
-}
-
-void refill_if_short(BitState &state) {
-  if (static_cast<uint32_t>(state.available_bits) < 0x10u) {
-    const int8_t old_count = static_cast<int8_t>(state.available_bits);
-    const uint8_t *const cursor = state.cursor;
-    const uint32_t word = read_word(cursor);
-    const int32_t new_count = state.available_bits + 0x10;
-    const uint32_t new_accumulator = state.accumulator |
-        (word << ((0x10 - old_count) & 0x1f));
-    state.available_bits = new_count;
-    state.accumulator = new_accumulator;
-    state.cursor = cursor + 2;
-  }
-}
-
-void pack_rows_eight(const uint8_t *source_a,
-                     const uint8_t *source_b,
-                     uint32_t *destination,
-                     const uint8_t *byte_remap) {
-  for (int column = 0; column != 8; ++column) {
-    const int a_index = 2 + column * 8;
-    const int b_index = 2 + column * 4;
-    const uint32_t high =
-        (static_cast<uint32_t>(byte_remap[source_a[a_index]]) << 8) |
-        byte_remap[source_a[a_index + 4]];
-    const uint32_t low =
-        (static_cast<uint32_t>(byte_remap[source_b[b_index]]) << 8) |
-        byte_remap[source_b[b_index + 0x100]];
-    destination[column] = (high << 16) | low;
-  }
-}
-
-}  // namespace
-
-void refill_word(BitState &state) { refill_if_short(state); }
 
 // ORIGINAL: 0x005CE85C sub_5ce85c 0x005CE85C-0x005CEA09 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["recovery/tasks/movie-decoder-owner-oct5.json", "pinned caller/body and shared-storage review; fresh VC6 public symbol", "Keep the semantic C++ name; body state is explicitly passed and uses the shared typed tables/bit-state owners. Do not copy executable bytes, use original-address calls, or treat a provisional owner name as native mangling."], "reason": "Faithful semantic media decoder owner recovery with normalized custom-register helper interfaces. Original identities, spans and historical findings retained; no matching, runtime or game acceptance granted."}
@@ -6099,26 +6051,6 @@ __declspec(naked) int decode_coefficients(State &) {
     pop ebx
     ret
   }
-}
-
-void transform_sixteen(const uint8_t *source_a,
-                       const uint8_t *source_b,
-                       uint32_t *destination, int row_stride,
-                       const uint8_t byte_remap[256]) {
-  for (int tile = 0; tile != 16; ++tile) {
-    pack_rows_eight(source_a, source_b, destination, byte_remap);
-    source_a += 0x40;
-    if ((tile & 1) != 0) source_b += 0x20;
-    destination = reinterpret_cast<uint32_t *>(
-        reinterpret_cast<uint8_t *>(destination) + row_stride);
-  }
-}
-
-void pack_eight_pixels(const uint8_t *source_a,
-                       const uint8_t *source_b,
-                       uint32_t destination[8],
-                       const uint8_t byte_remap[256]) {
-  pack_rows_eight(source_a, source_b, destination, byte_remap);
 }
 
 }  // namespace movie_decoder_huffman
