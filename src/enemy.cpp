@@ -2274,10 +2274,8 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
     int order = ORDER_NONE;
     int crop = crop_yield(faction_id, -1, x, y, 0);
     // 565872/565880: elevation retains the same pre-crop climate snapshot.
-    int elev = static_cast<int>(terrain_climate >> 5) - 2;
-    if (elev < 0) {
-        elev = 0;
-    }
+    int alt = terrain_climate >> 5;
+    int elev = (alt - 2 < 0) ? 0 : alt - 2;
     // The bonus runs none, nutrient, mineral, energy.
     int bonus = bonus_at(x, y, 0);
     int value = elev + rainfall + rockiness + 1;
@@ -2319,38 +2317,33 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
         }
         if (mine_tech) {
             if (bonus == 2 /* mineral */ || rockiness == ROCKINESS_ROCKY) {
-                // BUG(original): a precedence slip, `?:` binds last, so this always holds.
-                if ((!crop || crop >= has_farm) ? 3 : 2) {
+                // BUG(original): the ternary yields 3 or 2, both true, so this always holds.
+                if (!crop || (crop >= (int)has_farm ? 3 : 2)) {
                     order = ORDER_MINE;
                 }
             }
-            BOOL rolling_rule = false;
-            BOOL farm_rule = false;
-            if (bonus == 2 && rockiness == ROCKINESS_ROCKY) {
-                farm_rule = true;
-            } else if (rockiness == ROCKINESS_ROCKY
-                       || Rules.tgl_nutrient_effect_with_mine >= 0) {
-                rolling_rule = true;
-            } else {
-                int worked = crop + (has_farm ? 0 : 1);
-                if (worked <= 1) {
-                    rolling_rule = true;
-                } else if (rockiness == ROCKINESS_FLAT && worked > 2) {
-                    farm_rule = true;
+            if (bonus != 2 || rockiness != ROCKINESS_ROCKY) {
+                if (rockiness != ROCKINESS_ROCKY && Rules.tgl_nutrient_effect_with_mine < 0) {
+                    int worked = crop + (has_farm ? 0 : 1);
+                    if (worked > 1) {
+                        if (rockiness != ROCKINESS_FLAT || worked <= 2) {
+                            goto mine_done;
+                        }
+                        goto farm_rule;
+                    }
                 }
-            }
-            if (rolling_rule) {
                 if (rockiness == ROCKINESS_ROLLING && !elev) {
                     order = ORDER_MINE;
                 }
                 if (bonus == 3 /* energy */) {
                     order = ORDER_MINE;
                 }
-                farm_rule = true;
             }
-            if (farm_rule && force_improve && has_farm && !order) {
+        farm_rule:
+            if (force_improve && has_farm && !order) {
                 order = ORDER_MINE;
             }
+        mine_done:;
         }
         if (force_improve && has_farm && !order && elev && solar_tech) {
             order = ORDER_SOLAR_COLLECTOR;
@@ -2668,11 +2661,8 @@ int __cdecl compute_odds(int odds, int faction_id, int veh_id_atk, int veh_id_de
                     break;
                 }
             }
-            const int noncombat = stack_check(veh_id_def, 19, -1, -1, -1);
-            const int total = stack_check(veh_id_def, 1, -1, -1, -1);
-            const int proto_atk = Vehs[veh_id_atk].proto_id;
-            if (total - noncombat
-                <= PlayersData[faction_id].proto_id_active[proto_atk] / 10 + 1) {
+            if (stack_check(veh_id_def, 1, -1, -1, -1) - stack_check(veh_id_def, 19, -1, -1, -1)
+                <= PlayersData[faction_id].proto_id_active[Vehs[veh_id_atk].proto_id] / 10 + 1) {
                 for (int i = 0; i < MaxVehProtoFactionNum; i++) {
                     const int proto_id = faction_id * MaxVehProtoFactionNum + i;
                     if (!(VehPrototypes[proto_id].flags & PROTO_ACTIVE)) {
@@ -2712,7 +2702,10 @@ int __cdecl compute_odds(int odds, int faction_id, int veh_id_atk, int veh_id_de
         }
         const int defenders = stack_check(veh_id_def, 16, -1, -1, -1);
         if (defenders) {   // without this the subtraction below never terminates
-            while (attackers > defenders && odds < 1000000) {
+            while (1) {
+                if (attackers <= defenders || odds >= 1000000) {
+                    break;
+                }
                 odds *= 2;
                 attackers -= defenders;
             }
@@ -2861,6 +2854,7 @@ static inline int alien_dist(int x_point_a, int y_point_a, int x_point_b, int y_
 // TRIED: near-direct Ghidra transcription (clean decompile, no extraout/jumptable warnings). Per-vehicle/per-target table fields were unified onto two byte offsets (vehOff = a1*0x34, iVar18v = target*0x134) since every DAT_xxx family the disassembly touches shares that stride; a few element widths (e.g. DAT_0096da3c as byte vs int) were guessed rather than confirmed against the raw bytes.
 int __cdecl alien_move(int veh_id) {
     int dir_selected = -1;
+    int i;
     if (!veh_moves(veh_id)) {
         return 0;
     }
@@ -2894,7 +2888,7 @@ int __cdecl alien_move(int veh_id) {
             kill(veh_id);
             return 1;
         }
-        for (int i = 0; i < 8; i++) {
+        for (i = 0; i < 8; i++) {
             int x2 = wrap_map_x(x + VehMoveDeltaX[i]);
             int y2 = y + VehMoveDeltaY[i];
             if (!on_map(x2, y2)) {
@@ -2916,7 +2910,7 @@ int __cdecl alien_move(int veh_id) {
             {
                 int visibility = map_loc(x2, y2)->visibility;
                 for (int veh_id_stack = veh_top(veh_id); veh_id_stack >= 0;
-                     veh_id_stack = Vehs[veh_id_stack].next_veh_id_stack) {
+                     veh_id_stack = veh_next_stack_id(veh_id_stack)) {
                     Vehs[veh_id_stack].order = ORDER_NONE;
                     Vehs[veh_id_stack].visibility |= visibility;
                 }
@@ -2979,7 +2973,7 @@ int __cdecl alien_move(int veh_id) {
     if (can_arty(Vehs[veh_id].proto_id, true)) {
         int best_score = 0;
         int best_offset = -1;
-        for (int i = 0; i < 25; i++) {
+        for (i = 0; i < 25; i++) {
             int x2 = wrap_map_x(x + RadiusOffsetX[i]);
             int y2 = y + RadiusOffsetY[i];
             if (!on_map(x2, y2)) {
@@ -3055,7 +3049,7 @@ int __cdecl alien_move(int veh_id) {
     const int morale = morale_alien(-1, 0);
     // Not reset per tile: only the 12345 sea-base sentinel survives the test below.
     int score;
-    for (int i = 0; i < 8; i++) {
+    for (i = 0; i < 8; i++) {
         int x_raw = x + VehMoveDeltaX[i];
         int x2 = (MapIsFlat & 1) ? x_raw
             : (x_raw < 0 ? x_raw + MapLongitudeBounds
@@ -4068,12 +4062,10 @@ int __cdecl enemy_planet_buster(int vehicle_id) {
                     if (PlayersData[faction_id].major_atrocities >= PlayersData[target_faction].major_atrocities
                         && PlayersData[faction_id].mil_strength_1 * 2 >= PlayersData[target_faction].mil_strength_1
                         && !at_climax(faction_id)) {
-                        if (score < 4
-                            && GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_UN_CHARTER]
-                                <= GameDataStateStorage.fields_.council_resolution_count_[PROP_REINSTATE_UN_CHARTER]) {
-                            continue;
-                        }
-                        if (PlayersData[faction_id].ranking > PlayersData[target_faction].ranking) {
+                        if ((score < 4
+                                && GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_UN_CHARTER]
+                                    <= GameDataStateStorage.fields_.council_resolution_count_[PROP_REINSTATE_UN_CHARTER])
+                            || PlayersData[faction_id].ranking > PlayersData[target_faction].ranking) {
                             continue;
                         }
                     }
@@ -4098,14 +4090,7 @@ int __cdecl enemy_planet_buster(int vehicle_id) {
             }
             score = 0;
             for (int i = 0; i < blast_radius; i++) {
-                int x = Bases[base_id].x + RadiusOffsetX[i];
-                if (!(MapIsFlat & 1)) {
-                    if (x < 0) {
-                        x += MapLongitudeBounds;
-                    } else if (x >= MapLongitudeBounds) {
-                        x -= MapLongitudeBounds;
-                    }
-                }
+                int x = wrap_map_x(Bases[base_id].x + RadiusOffsetX[i]);
                 int y = Bases[base_id].y + RadiusOffsetY[i];
                 if (!on_map(x, y)) {
                     continue;
@@ -4135,7 +4120,9 @@ int __cdecl enemy_planet_buster(int vehicle_id) {
                         score += 500;
                     }
                     for (int project_id = 0; project_id < MaxSecretProjectNum; project_id++) {
-                        if (base_project(project_id) == base_id_hit) {
+                        // WORKAROUND(type): base_project() reads through BaseSecretProject::operator[],
+                        // which strength-reduces to an offset walk; the image walks project_base absolutely.
+                        if (GameDataStateStorage.fields_.secret_project_.project_base[project_id] == base_id_hit) {
                             score += PlayersData[Bases[base_id_hit].faction_id_current].ranking * 60;
                         }
                     }
@@ -4189,14 +4176,7 @@ int __cdecl enemy_planet_buster(int vehicle_id) {
                 int x_target = Bases[best_target_base].x;
                 int y_target = Bases[best_target_base].y;
                 for (int i = 0; i < 8; i++) {
-                    int x = x_target + VehMoveDeltaX[i];
-                    if (!(MapIsFlat & 1)) {
-                        if (x < 0) {
-                            x += MapLongitudeBounds;
-                        } else if (x >= MapLongitudeBounds) {
-                            x -= MapLongitudeBounds;
-                        }
-                    }
+                    int x = wrap_map_x(x_target + VehMoveDeltaX[i]);
                     int y = y_target + VehMoveDeltaY[i];
                     if (on_map(x, y) && anything_at(x, y) < 0) {
                         veh_drop(veh_lift(vehicle_id), x, y);
