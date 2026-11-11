@@ -528,7 +528,7 @@ void Dialogs::on_mousewheel(int a) {
  * [ARCHIVE] * /
  */
 // HISTORICAL NOTE: the archived TRIED text predates the real Dialogs base/member ownership. SpriteBox::close and its Spot/SpriteList members now own this teardown; the old manual member calls are retired.
-// ORIGINAL: 0x00406910 ??1Dialogs@@QAE@XZ 0x00406910-0x00406A74;0x006509C0-0x00650AAA FILE
+// ORIGINAL: 0x00406910 ??1Dialogs@@QAE@XZ 0x00406910-0x00406A74;0x006509C0-0x00650AAA FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original complete-object destructor identity 0x00406910 has full spans (4221200, 4221556) and (6621632, 6621866).", "Current genuine owner has the five real direct Dialogs bases and shared virtual Dialog/GraphicWin bases; normal destruction runs reverse direct-base order and one virtual-base chain.", "Fresh baseline `dialogs.cpp.obj` emits the natural non-deleting destructor as ??1Dialogs@@UAE@XZ; adding the explicit close() body requires a fresh post-edit emitted-symbol and body check."], "reason": "Transfer the complete original Dialogs destructor identity to the actual class destructor. Preserve the original close() call; let real C++ bases and virtual bases own their destruction."}
 // symbol    ??1Dialogs@@UAE@XZ
 // kind      game
