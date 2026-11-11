@@ -6334,16 +6334,16 @@ void Console::editor_natural(int place) {
         case 3: world_diamond(x, y); break;
         case 4: world_sargasso(x, y); break;
         case 5: world_ruin(x, y); break;
+        case 12: world_borehole(x, y); break;
+        case 14: world_unity(x, y); break;
+        case 15: world_fossil(x, y); break;
+        case 13: world_temple(x, y); break;
         case 6: world_dune(x, y); break;
         case 7: world_fresh(x, y); break;
         case 8: world_mesa(x, y); break;
         case 9: world_canyon(x, y); break;
-        case 10: world_geothermal(x, y); break;
         case 11: world_ridge(x, y); break;
-        case 12: world_borehole(x, y); break;
-        case 13: world_temple(x, y); break;
-        case 14: world_unity(x, y); break;
-        case 15: world_fossil(x, y); break;
+        case 10: world_geothermal(x, y); break;
         }
         world_climate();
         ::draw_map(1);
@@ -6404,7 +6404,7 @@ found:
         for (int clear_offset = 0; clear_offset < limit; ++clear_offset) {
             const int tile_x = wrap_map_x(x + RadiusOffsetX[clear_offset]);
             const int tile_y = y + RadiusOffsetY[clear_offset];
-            if (on_map(tile_x, tile_y) && (map_loc(tile_x, tile_y)->bit2 & (1u << selected))) {
+            if (on_map(tile_x, tile_y) && (bit2_at(tile_x, tile_y) & (1u << selected))) {
                 bit2_set(tile_x, tile_y, 1u << selected, 0);
                 code_set(tile_x, tile_y, 0);
                 if (selected == 4) {
