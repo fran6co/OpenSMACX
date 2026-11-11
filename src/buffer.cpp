@@ -7401,7 +7401,7 @@ int Buffer::map_colors(RECT *area, unsigned char *table) {
     return 0;
 }
 
-// ORIGINAL: 0x005DD730 ?wrap@Buffer@@QAEHPADHHH@Z 0x005DD730-0x005DD91C FILE
+// ORIGINAL: 0x005DD730 ?wrap@Buffer@@QAEHPADHHH@Z 0x005DD730-0x005DD91C FILE BYTE_EXACT
 // size      492 bytes
 // prototype int (__thiscall ?wrap@Buffer@@QAEHPADHHH@Z)(Buffer* this, int8*, int, int, int)
 // callers   8   call targets   3
