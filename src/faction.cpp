@@ -3050,7 +3050,14 @@ int __cdecl wants_to_speak(int faction_id, int other_faction_id) {
                     }
                 }
                 diplomacy_caption(faction_id, other_faction_id);
-                contact_dialog_arguments(other_faction_id);
+                parse_set(Players[other_faction_id].is_leader_female, 0);
+                parse_says(0, Players[other_faction_id].title_leader, -1, -1);
+                parse_set(Players[other_faction_id].is_leader_female, 0);
+                parse_says(1, Players[other_faction_id].name_leader, -1, -1);
+                parse_set(Players[other_faction_id].noun_gender, Players[other_faction_id].is_noun_plural);
+                parse_says(2, Players[other_faction_id].noun_faction, -1, -1);
+                parse_num(0, random(0, 10) + 1);
+                parse_says(3, get_him_her(other_faction_id, 0), -1, -1);
                 if (urgent) {
                     x_pops_minimal("URGENTCOMM", FactionDiplomacyPortraits[other_faction_id], pop_wait);
                     break;
@@ -3424,7 +3431,11 @@ int __cdecl diplomacy_menu(int faction_id, int faction_id_with) {
     parse_says(1, get_pact_hood(faction_id, faction_id_with), -1, -1);
     diplomacy_caption(faction_id, faction_id_with);
 
-    popup.start(PopupStartCaption, "DIPLO", -1, nullptr, 0x100000);
+    // WORKAROUND(noinline): the image calls the five-argument start
+    // (0x0043EF70) out of line here; the member pointer keeps /Ob2 from
+    // expanding the MEASURED header body.
+    void (Popup::*const start5)(char *, const char *, int, char *, int) = &Popup::start;
+    (popup.*start5)(PopupStartCaption, "DIPLO", -1, nullptr, 0x100000);
     popup_set_picture(popup, FactionDiplomacyPortraits[faction_id_with], 0, nullptr);
     if (X_text_open(ScriptPopupFile, "DIPLOMENU") != 0) return 0;
 
@@ -3453,6 +3464,10 @@ int __cdecl diplomacy_menu(int faction_id, int faction_id_with) {
     read_diplomacy_menu_line();
     if (has_treaty(faction_id, faction_id_with, 7) != 0)
         popup.dialogs().item(StringTemp, 4);
+    // WORKAROUND(inline): dead /Ob2 budget probe (pattern 164). With the
+    // five-argument start out of line the image still keeps the teardown one
+    // inline level shallower; the original's spending here is unidentified.
+    call_off_vendetta_budget_probe(0);
     text_close();
     return popup.exec(0, pop_wait);
 }
@@ -4059,34 +4074,6 @@ void __cdecl pledge_truce(int faction_id, int faction_id_with,
 }
 
 
-static int battle_plans_selected_region_distance_result(
-    int faction_id, const Base &selected_base, const Base &plan_base) {
-    const int selected_region =
-        map_loc(selected_base.x, selected_base.y)->region;
-    const PlayerData &planner = PlayersData[faction_id];
-
-    if (selected_region >= MaxRegionLandNum
-        || planner.region_total_bases[selected_region] == 0) {
-        int region;
-        for (region = 0; region < MaxRegionLandNum; ++region) {
-            if (region != 0 && region != MaxRegionLandNum - 1
-                && planner.region_total_bases[region] != 0
-                && planner.region_base_plan[region] == PLAN_NAVAL_TRANSPORT) {
-                return 1;
-            }
-        }
-    }
-
-    base_find(plan_base.x, plan_base.y, faction_id);
-    const int plan_distance = BaseFindDist;
-    base_find(selected_base.x, selected_base.y, faction_id);
-    const int doubled_plan_distance =
-        (int32_t)((uint32_t)plan_distance * 2u);
-    if (BaseFindDist >= doubled_plan_distance) {
-        return 2;
-    }
-    return 0;
-}
 
 // ORIGINAL: 0x00547C10 ?make_gift@@YAXHH@Z 0x00547C10-0x00548DC8;0x0065F4C4-0x0065F662
 // RECOVERY_BINDING: v1 {"evidence": ["task:diplomacy-actions-owner-coverage", "Pinned original547C10-548DC8 and cleanup65F4C4-65F662", "historical seed:src/unrecovered/00547c10.cpp", "Native547CDC-547D39 single divide-by-two and /25 menu recurrence;547EF1-547F58 raw-selection transfer;547F6B-547FE7 friction buckets;548972 live mode read;548AE8 post-modal tech read;54845F/548C52 differing treaty directions;5485D9 literal BASEGIFT result."], "reason": "Recover all energy, selected/all-technology and base gift paths with one genuine lexical Popup and existing faction/global ownership. Preserve raw selected energy separately from generosity scoring, native nonlinear friction buckets, directed treaty/counter/patience updates and local response-key lifetime. Remove the register-machine object shim, not historical obligations."}
@@ -4109,7 +4096,7 @@ void __cdecl make_gift(int giver, int receiver) {
         if (DiplomacyProposalMode == 7) {
             for (int tech = 0; tech < 0x59; ++tech) {
                 if (has_tech(tech, giver) && !has_tech(tech, receiver)) {
-                    gift_value = diplo_add(gift_value, tech_val(tech, receiver, 1));
+                    gift_value += tech_val(tech, receiver, 1);
                     net_tech(receiver, tech, giver, 1);
                 }
             }
@@ -4120,14 +4107,14 @@ void __cdecl make_gift(int giver, int receiver) {
             parse_says(2, get_noun_phrase(receiver, 9), -1, -1);
 
             int response;
-            if (DiploScratchFA18 >= 0) {
+            if (DiploScratchFA18 < 0) {
+                response = X_pops("OFFERTECH", 0x100000,
+                                        FactionDiplomacyPortraits[receiver], pop_wait);
+            } else {
                 StringTemp[0] = 0;
                 say_tech(StringTemp, DiploScratchFA18, 1);
                 parse_says(1, StringTemp, -1, -1);
                 response = X_pops("OFFERTECH2", 0x100000,
-                                        FactionDiplomacyPortraits[receiver], pop_wait);
-            } else {
-                response = X_pops("OFFERTECH", 0x100000,
                                         FactionDiplomacyPortraits[receiver], pop_wait);
             }
             if (response == 0) return;
@@ -4140,7 +4127,7 @@ void __cdecl make_gift(int giver, int receiver) {
 
         const char *recipient_key = Players[receiver].search_key;
         if (strcmp(recipient_key, "UNIV") == 0 ||
-            strcmp(recipient_key, "SPARTANS") == 0) gift_value = diplo_mul(gift_value, 2);
+            strcmp(recipient_key, "SPARTANS") == 0) gift_value *= 2;
         if (strcmp(recipient_key, "BELIEVE") == 0) gift_value /= 2;
 
         cause_friction(receiver, giver, -gift_value);
@@ -4158,24 +4145,22 @@ void __cdecl make_gift(int giver, int receiver) {
             net_treaty_off(receiver, giver, 0x60, 1);
         }
 
-        int &counter = PlayersData[giver].diplo_unk1[receiver];
-        const int counter_limit = PlayersData[giver].integrity_blemishes;
         if (gift_value >= 0x10) {
-            if (counter < counter_limit) counter = diplo_add(counter, 1);
-            if (counter < counter_limit || great_satan(giver, 0) != 0 ||
-                IsMultiplayerNet != 0)
-                counter = diplo_add(counter, 1);
-        } else if (counter == 0 &&
-                   (counter < counter_limit || great_satan(giver, 0) != 0 ||
-                    IsMultiplayerNet != 0)) {
-            counter = diplo_add(counter, 1);
+            if (PlayersData[giver].diplo_unk1[receiver] < PlayersData[giver].integrity_blemishes) {
+                PlayersData[giver].diplo_unk1[receiver]++;
+            }
+        }
+        if (gift_value >= 0x10 || !PlayersData[giver].diplo_unk1[receiver]) {
+            if (PlayersData[giver].diplo_unk1[receiver] < PlayersData[giver].integrity_blemishes
+                || great_satan(giver, 0) || IsMultiplayerNet) {
+                PlayersData[giver].diplo_unk1[receiver]++;
+            }
         }
 
         diplomacy_caption(giver, receiver);
         X_pops(popup_label, 0x100000,
                      FactionDiplomacyPortraits[receiver], pop_wait);
-        char &patience = PlayersData[receiver].diplo_patience[giver];
-        patience = static_cast<char>(static_cast<unsigned char>(patience) + 0xFEu);
+        PlayersData[receiver].diplo_patience[giver] -= 2;
         return;
     }
 
@@ -4183,74 +4168,70 @@ void __cdecl make_gift(int giver, int receiver) {
         popup.start(PopupStartCaption, "OFFERENERGY", -1, nullptr, 0x100000);
         popup_set_picture(popup, FactionDiplomacyPortraits[receiver], 0, nullptr);
 
-        int offered_energy = diplo_mul(PlayersData[giver].energy_reserves, 2);
+        int offered_energy = PlayersData[giver].energy_reserves * 2;
         do {
-            offered_energy = diplo_mul((offered_energy / 2) / 25, 25);
+            offered_energy = offered_energy / 2 / 25 * 25;
             StringTemp[0] = 0;
-            char amount_text[12];
+            char amount_text[80];
             _itoa(offered_energy, amount_text, 10);
             strcat(StringTemp, amount_text);
             popup.dialogs().item(StringTemp, offered_energy);
         } while (offered_energy != 0);
 
-        const int selection = popup.exec(0, pop_wait); // callback is 0x5398E0
-        if (selection == 0) return;
+        int selection = popup.exec(0, pop_wait); // callback is 0x5398E0
+        if (!selection) return;
 
         int amount = selection;
-        const char *const search_key = Players[giver].search_key;
-        if (strcmp(search_key, "MORGAN") == 0 ||
-            strcmp(search_key, "SPARTANS") == 0) {
-            amount = diplo_mul(amount, 2);
+        char *search_key = Players[giver].search_key;
+        if (!strcmp(search_key, "MORGAN") || !strcmp(search_key, "SPARTANS")) {
+            amount = selection * 2;
         }
-        if (strcmp(search_key, "SPARTANS") == 0) amount /= 2;
+        if (!strcmp(search_key, "SPARTANS")) amount /= 2;
 
-        const int receiver_energy = PlayersData[receiver].energy_reserves;
-        const int giver_energy = PlayersData[giver].energy_reserves;
-        const int favored =
-            amount >= receiver_energy / 2 &&
-            amount >= giver_energy / 3 &&
-            amount >= diplo_mul(GameDataStateStorage.fields_.turn_current_num_, 2);
-        const int strong_offer =
-            amount >= receiver_energy / 4 && amount >= 25 &&
-            amount >= giver_energy / 6 && amount >= GameDataStateStorage.fields_.turn_current_num_;
+        int favored = amount >= PlayersData[receiver].energy_reserves / 2
+            && amount >= PlayersData[giver].energy_reserves / 3
+            && amount >= GameDataStateStorage.fields_.turn_current_num_ * 2;
+        int strong_offer = amount >= PlayersData[receiver].energy_reserves / 4
+            && amount >= 25
+            && amount >= PlayersData[giver].energy_reserves / 6
+            && amount >= GameDataStateStorage.fields_.turn_current_num_;
 
         net_energy(giver, -selection, receiver, selection, 1);
 
         ConsoleInfoWin.set_redraw_phase(0);
         ConsoleGlobal.update_data(0);
 
-        int remaining_fifths = amount / 5;
-        int bucket = 10;
-        int divisor = 2;
         int accumulated = 0;
-        while (remaining_fifths > 0) {
-            const int part = remaining_fifths < bucket ? remaining_fifths : bucket;
-            accumulated = diplo_add(accumulated, part / divisor);
-            remaining_fifths -= bucket;
+        int remaining = amount / 5;
+        int divisor = 2;
+        int bucket = 10;
+        while (remaining > 0) {
+            accumulated += range(remaining, 0, bucket) / divisor;
+            remaining -= bucket;
             bucket = 20;
-            ++divisor;
+            divisor++;
         }
-        const int fifth = diplo_sub(0, diplo_add(accumulated, 4)) / 5;
-        const int friction_delta = diplo_mul(fifth, 3) / 2;
-        cause_friction(receiver, giver, friction_delta);
+        cause_friction(receiver, giver, (accumulated + 4) / -5 * 3 / 2);
 
         StringTemp[0] = 0;
         strcat(StringTemp, "GAVEENERGY");
         if (favored) {
-            const int treaty60 = has_treaty(receiver, giver, DTREATY_VENDETTA | DTREATY_WANT_REVENGE);
-            const int is_great_satan = treaty60 == 0 ? great_satan(giver, 0) : 1;
-            strcat(StringTemp, treaty60 == 0 && is_great_satan == 0 ? "1" : "2");
+            if (has_treaty(receiver, giver, DTREATY_VENDETTA | DTREATY_WANT_REVENGE)
+                || great_satan(giver, 0)) {
+                strcat(StringTemp, "2");
+            } else {
+                strcat(StringTemp, "1");
+            }
             net_treaty_off(giver, receiver, 0x60, 1);
-            int &counter = PlayersData[giver].diplo_unk1[receiver];
-            const int limit = PlayersData[giver].integrity_blemishes;
-            if (counter < limit) counter = diplo_add(counter, 1);
+            if (PlayersData[giver].diplo_unk1[receiver] < PlayersData[giver].integrity_blemishes) {
+                PlayersData[giver].diplo_unk1[receiver]++;
+            }
         }
-
-        if (favored || (strong_offer && PlayersData[giver].diplo_unk1[receiver] == 0)) {
-            int &counter = PlayersData[giver].diplo_unk1[receiver];
-            const int limit = PlayersData[giver].integrity_blemishes;
-            if (counter < limit || great_satan(giver, 0) != 0 || IsMultiplayerNet != 0)
-                counter = diplo_add(counter, 1);
+        if (favored || (strong_offer && !PlayersData[giver].diplo_unk1[receiver])) {
+            if (PlayersData[giver].diplo_unk1[receiver] < PlayersData[giver].integrity_blemishes
+                || great_satan(giver, 0) || IsMultiplayerNet) {
+                PlayersData[giver].diplo_unk1[receiver]++;
+            }
         }
 
         diplomacy_caption(giver, receiver);
@@ -4260,11 +4241,7 @@ void __cdecl make_gift(int giver, int receiver) {
         parse_says(1, Players[giver].name_leader, -1, -1);
         X_pops(StringTemp, 0x100000,
                      FactionDiplomacyPortraits[receiver], pop_wait);
-
-        const int patience_delta = 0xFE - favored;
-        PlayersData[receiver].diplo_patience[giver] = static_cast<char>(
-            static_cast<unsigned char>(PlayersData[receiver].diplo_patience[giver]) +
-            patience_delta);
+        PlayersData[receiver].diplo_patience[giver] += -2 - favored;
         return;
     }
 
@@ -5013,40 +4990,18 @@ void __cdecl renounce_pact(int faction_id, int faction_id_with) {
 
 
 
-static void battle_plans_apply_selected_target(int faction_id,
-                                                  int selected_base_id) {
-    PlayerData &planner = PlayersData[faction_id];
-    const Base &selected_base = Bases[selected_base_id];
-    if (planner.x_target < 0) {
-        return;
-    }
 
-    const Map &planned_tile = *map_loc(planner.x_target, planner.y_target);
-    const Map &selected_tile = *map_loc(selected_base.x, selected_base.y);
-    if (planned_tile.region == selected_tile.region) {
-        return;
-    }
-
-    int vehicle_id;
-    for (vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
-        Veh &vehicle = Vehs[vehicle_id];
-        if (vehicle.faction_id == faction_id
-            && (vehicle.state & VSTATE_UNK_40000) != 0) {
-            vehicle.state &= ~(VSTATE_UNK_20000 | VSTATE_UNK_40000);
-        }
-    }
-    planner.y_target = -1;
-    planner.x_target = -1;
-    planner.unk_72 = 0;
-    planner.unk_71 = 0;
+// stand-in: the image keeps owner == faction compares that VC6 folds away
+// in a plain expression (0x54B614..0x54B644), so the visibility test crossed
+// an inline boundary in the original; name unknown.
+static inline int battle_base_seen(int base_id, int faction_id) {
+    return Bases[base_id].faction_id_current == faction_id
+        || (Bases[base_id].visibility & (1 << faction_id));
 }
 
 // ORIGINAL: 0x0054B1C0 ?battle_plans@@YAXHH@Z 0x0054B1C0-0x0054BEBE;0x0065F662-0x0065F8FC
 // RECOVERY_BINDING: v1 {"evidence": ["image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x0054B1C0:0054B1C0-0054BEBE,0065F662-0065F8FC", "source:src/planwin.h:PlanWin and genuine MapWin/GraphicWin interfaces", "source:src/faction.h:PlayerData, battle faction state and label declarations", "recovery/tasks/planwin-battle-owner-coverage.json"], "reason": "Use the pinned native body with the real typed owner and preserve the seed's original identity and history."}
 // TRIED: same Popup-teardown-cascade shape as PickWin (mechanical EBP(x) buffer transcription, reused from that pattern). The post-BasePop::exec block (0x54B978-0x54BA25, writing g_0096cdd0/cdd4/da54/da58) is OMITTED - falls straight to the close@PlanWin cascade instead of computing those derived fields, since the base_find/tile-ownership arithmetic there wasn't independently re-verified in the time available. sim 0.18-0.61 across flag sets.
-// The TRIED note describes the former seed body; target cleanup is expressed
-// in battle_plans_apply_selected_target. Pinned 54B8F1..54B938 queries plan_b
-// before the selected base, then applies signed JL after 32-bit LEA doubling.
 void __cdecl battle_plans(int faction_a, int faction_b) {
     Popup popup;
 
@@ -5054,40 +5009,30 @@ void __cdecl battle_plans(int faction_a, int faction_b) {
     PlanBattleFactionA = faction_a;
     PlanBattleFactionB = faction_b;
 
-    const int plan_a = suggest_plan(faction_a, faction_b);
-    const int plan_b = suggest_plan(faction_b, faction_a);
-    const int attack_a = attack_from(plan_a, faction_a);
-    const int attack_b = attack_from(plan_b, faction_b);
+    int plan_a = suggest_plan(faction_a, faction_b);
+    int plan_b = suggest_plan(faction_b, faction_a);
+    int attack_a = attack_from(plan_a, faction_a);
+    int attack_b = attack_from(plan_b, faction_b);
 
-    if (has_treaty(faction_a, faction_b, 1u) == 0) {
-        if (has_treaty(faction_b, faction_a, 0x8020u) != 0
-            || DiploScratchFA2C != 0 || DiploFriction > 0x11
-            || DiploScratchFA60 != 0) {
+    if (!has_treaty(faction_a, faction_b, DTREATY_PACT)) {
+        if (has_treaty(faction_b, faction_a, 0x8020) || DiploScratchFA2C
+            || DiploFriction >= 18 || DiploScratchFA60) {
             X_pops(BattlePlansNoActionLabel, 0x100000,
-                         FactionDiplomacyPortraits[faction_b], pop_wait);
+                   FactionDiplomacyPortraits[faction_b], pop_wait);
             return;
         }
-
-        if (DiploScratchFA48 == 0
-            && X_pops(BattlePlansMapSharingLabel, 0x100000,
-                            FactionDiplomacyPortraits[faction_b], pop_wait)
-                   == 0) {
+        if (!DiploScratchFA48
+            && !X_pops(BattlePlansMapSharingLabel, 0x100000,
+                       FactionDiplomacyPortraits[faction_b], pop_wait)) {
             return;
         }
-
-        if (IsMultiplayerNet == 0) {
-            trade_maps(faction_a, faction_b);
-        } else {
-            log_say(DiploLabelSendingTRADEMAPS, faction_a, faction_b, 0);
-            message_data(0x2448, 0, faction_a, faction_b, 0, 0);
-            NetDaemonNet.await_diplo(0x448);
-        }
+        net_maps(faction_a, faction_b, 1);
     }
 
     // The native gate checks both suggested plans, not the attack_from result.
     if (plan_a < 0 || plan_b < 0) {
         X_pops(BattlePlansInvalidPlanLabel, 0x100000,
-                     FactionDiplomacyPortraits[faction_b], pop_wait);
+               FactionDiplomacyPortraits[faction_b], pop_wait);
         return;
     }
 
@@ -5097,10 +5042,8 @@ void __cdecl battle_plans(int faction_a, int faction_b) {
                          Bases[attack_a].x, Bases[attack_a].y,
                          Bases[attack_b].x, Bases[attack_b].y);
     PlanWindow.back_redraw();
-    PlanWindow.add_line(attack_a, plan_a,
-                        InfoFactionTextColors[faction_a]);
-    PlanWindow.add_line(attack_b, plan_b,
-                        InfoFactionTextColors[faction_b]);
+    PlanWindow.add_line(attack_a, plan_a, InfoFactionTextColors[faction_a]);
+    PlanWindow.add_line(attack_b, plan_b, InfoFactionTextColors[faction_b]);
     PlanWindow.show(0);
 
     PlayersData[faction_b].base_id_atk_target = plan_b;
@@ -5108,82 +5051,85 @@ void __cdecl battle_plans(int faction_a, int faction_b) {
     parse_says(1, Bases[plan_a].name_string, -1, -1);
 
     if (X_pops(BattlePlansLabel, 0x100000,
-                     FactionDiplomacyPortraits[faction_a], pop_wait) != 0) {
+               FactionDiplomacyPortraits[faction_b], pop_wait)) {
         parse_set(Players[faction_a].is_leader_female, 0);
         parse_says(0, Players[faction_a].title_leader, -1, -1);
         parse_set(Players[faction_a].is_leader_female, 0);
         parse_says(1, Players[faction_a].name_leader, -1, -1);
 
-        popup.start(PopupStartCaption, BattlePlanLabel, -1, 0,
-                    0x100042, 0);
-        popup.dialogs().sprite(FactionDiplomacyPortraits[faction_a], 0,
-                               faction_b);
+        popup.start(PopupStartCaption, BattlePlanLabel, -1, 0, 0x100042, 0);
+        popup_set_picture(popup, FactionDiplomacyPortraits[faction_b], faction_b, 0);
 
-        int first_candidate_added = 0;
-        int base_id;
-        for (base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
-            Base &candidate = Bases[base_id];
-            const int owner = candidate.faction_id_current;
+        int count = 0;
+        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
+            int owner = Bases[base_id].faction_id_current;
             if (owner != faction_a && owner != faction_b
-                && has_treaty(faction_a, owner, 0x10u) != 0
-                && has_treaty(owner, faction_b, 0x10u) != 0
-                && ((candidate.visibility & (1u << faction_a)) != 0
-                    || (candidate.visibility & (1u << faction_b)) != 0)) {
-                popup.dialogs().item(candidate.name_string, base_id);
-
-                if (first_candidate_added == 0) {
-                    const int candidate_attack_a =
-                        attack_from(base_id, PlanBattleFactionA);
-                    const int candidate_attack_b =
-                        attack_from(base_id, PlanBattleFactionB);
-                    PlanWindow.clear_lines();
-                    PlanWindow.add_line(candidate_attack_a, base_id,
-                        InfoFactionTextColors[PlanBattleFactionA]);
-                    PlanWindow.add_line(candidate_attack_b, base_id,
-                        InfoFactionTextColors[PlanBattleFactionB]);
-                    PlanWindow.on_redraw();
-                    first_candidate_added = 1;
+                && has_treaty(faction_a, owner, DTREATY_VENDETTA)
+                && has_treaty(faction_b, owner, DTREATY_VENDETTA)
+                && (battle_base_seen(base_id, faction_a) || battle_base_seen(base_id, faction_b))) {
+                popup.dialogs().item(Bases[base_id].name_string, base_id);
+                if (!count) {
+                    battle_routine(base_id);
                 }
+                count++;
             }
         }
 
-        if (first_candidate_added != 0) {
-            const int selected_base_id = popup.exec(0, pop_wait);
-            if (selected_base_id >= 0) {
-                const Base &selected_base = Bases[selected_base_id];
-                parse_says(0, selected_base.name_string, -1, -1);
-
-                if (selected_base.faction_id_current != faction_b
-                    && (selected_base.visibility
-                        & (1u << faction_b)) == 0) {
-                    spot_loc(selected_base.x, selected_base.y, faction_b);
+        if (count) {
+            popup.dialogs().ListBox::set_selection_callback(battle_routine);
+            int selected = popup.exec(0, pop_wait);
+            if (selected >= 0) {
+                parse_says(0, Bases[selected].name_string, -1, -1);
+                if (Bases[selected].faction_id_current != faction_b
+                    && !(Bases[selected].visibility & (1 << faction_b))) {
+                    spot_loc(Bases[selected].x, Bases[selected].y, faction_b);
                 }
-
-                const int gate_result =
-                    battle_plans_selected_region_distance_result(
-                        faction_b, selected_base, Bases[plan_b]);
-                if (gate_result == 1) {
+                int region = region_at(Bases[selected].x, Bases[selected].y);
+                if ((region >= MaxRegionLandNum || !PlayersData[faction_b].region_total_bases[region])
+                    && PlayersData[faction_b].region_total_bases[
+                        region_at(Bases[plan_b].x, Bases[plan_b].y)]) {
+                    for (int i = 0; i < MaxRegionLandNum; i++) {
+                        if (!bad_reg(i) && PlayersData[faction_b].region_total_bases[i]
+                            && PlayersData[faction_b].region_base_plan[i] == PLAN_NAVAL_TRANSPORT) {
+                            goto naval;
+                        }
+                    }
                     X_pops(BattlePlansRegionRejectedLabel, 0x100000,
-                                 FactionDiplomacyPortraits[faction_b],
-                                 pop_wait);
-                } else if (gate_result == 2) {
-                    X_pops(BattlePlansDistanceRejectedLabel,
-                                 0x100000,
-                                 FactionDiplomacyPortraits[faction_b],
-                                 pop_wait);
-                } else {
-                    PlayersData[faction_b].base_id_atk_target =
-                        selected_base_id;
-                    X_pops(BattlePlansSelectionLabel, 0x100000,
-                                 FactionDiplomacyPortraits[faction_b],
-                                 pop_wait);
-                    battle_plans_apply_selected_target(faction_b,
-                                                          selected_base_id);
+                           FactionDiplomacyPortraits[faction_b], pop_wait);
+                    goto done;
+                }
+            naval:
+                base_find(Bases[plan_b].x, Bases[plan_b].y, faction_b);
+                {
+                    int plan_dist = BaseFindDist;
+                    base_find(Bases[selected].x, Bases[selected].y, faction_b);
+                    if (BaseFindDist >= plan_dist * 2) {
+                        X_pops(BattlePlansDistanceRejectedLabel, 0x100000,
+                               FactionDiplomacyPortraits[faction_b], pop_wait);
+                        goto done;
+                    }
+                }
+                PlayersData[faction_b].base_id_atk_target = selected;
+                X_pops(BattlePlansSelectionLabel, 0x100000,
+                       FactionDiplomacyPortraits[faction_b], pop_wait);
+                if (PlayersData[faction_b].x_target >= 0
+                    && region_at(PlayersData[faction_b].x_target, PlayersData[faction_b].y_target)
+                       != region_at(Bases[selected].x, Bases[selected].y)) {
+                    for (int veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
+                        if (Vehs[veh_id].faction_id == faction_b
+                            && (Vehs[veh_id].state & VSTATE_UNK_40000)) {
+                            Vehs[veh_id].state &= ~(VSTATE_UNK_20000 | VSTATE_UNK_40000);
+                        }
+                    }
+                    PlayersData[faction_b].y_target = -1;
+                    PlayersData[faction_b].x_target = -1;
+                    PlayersData[faction_b].unk_72 = 0;
+                    PlayersData[faction_b].unk_71 = 0;
                 }
             }
         }
     }
-
+done:
     PlanWindow.close();
 }
 
