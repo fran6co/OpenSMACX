@@ -711,7 +711,7 @@ Scroll *Popup::on_listbox_scroll_create() {
     return &scroll_;
 }
 
-// ORIGINAL: 0x00405910 ?on_exec@Popup@@QAEHXZ 0x00405910-0x00405B01 FILE
+// ORIGINAL: 0x00405910 ?on_exec@Popup@@QAEHXZ 0x00405910-0x00405B01 FILE BYTE_EXACT
 // symbol    ?on_exec@Popup@@UAEHXZ
 // TRIED: extra named locals (list_head/msg/next_idx) force `sub esp,N` frame vs original's single [ebp-4] slot + ebx/esi/edi pushes.
 // working copy - scaffold materialised by --work

@@ -623,7 +623,7 @@ void SpriteBox::on_left_click(int x, int y) {
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00611400 0x00611580 0x00611594 0x0061141D
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x00611400 0x00611594 0x006115D8 0x00611417
-// ORIGINAL: 0x00611400 ?on_key_down@SpriteBox@@QAEHH@Z 0x00611400-0x00611580 FILE
+// ORIGINAL: 0x00611400 ?on_key_down@SpriteBox@@QAEHH@Z 0x00611400-0x00611580 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00611400.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x611400 complete control/data-access review and src/spritebox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?on_key_down@SpriteBox@@UAEHH@Z
 // TRIED: none confirmed byte-exact; MISMATCH #0 - the switch/jump-table data at 0x00611580/0x00611594 (byte remap + pointer table) is not in the given disassembly, so the a1==0x26/0x25/0x28/0x27/ 0x24/0x22 case values are a guess. The four handler BODIES (offsets -0x8c/-0x58/-0x38/-0x34/+0x60/+4/+8/+0xfc) are transcribed directly from the bytes.
