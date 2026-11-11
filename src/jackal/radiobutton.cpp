@@ -298,7 +298,7 @@ void RadioButton::draw_item(int position, int state) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // Historical seed observations (not fresh measurements or acceptance):
 // TRIED: full Ghidra-derived arithmetic transliteration (vtbl[1]/vtbl[2] base offsets, Buffer receiver fixed up) compiles and matches logic; MISMATCH #1 is prologue register-save order, not chased.
-// ORIGINAL: 0x0060D380 ?calculate_dimensions@RadioButton@@QAEHXZ 0x0060D380-0x0060D745 FILE
+// ORIGINAL: 0x0060D380 ?calculate_dimensions@RadioButton@@QAEHXZ 0x0060D380-0x0060D745 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060d380.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60d380 complete control/data-access review and src/jackal/radiobutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 int RadioButton::calculate_dimensions() {
     if (Dialog::item_list_.entry_count_ == 0) {
@@ -452,7 +452,7 @@ void RadioButton::on_redraw() {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0060DE10 ?on_left_down@RadioButton@@QAEXHH@Z 0x0060DE10-0x0060E01B FILE
+// ORIGINAL: 0x0060DE10 ?on_left_down@RadioButton@@QAEXHH@Z 0x0060DE10-0x0060E01B FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060de10.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60de10 complete control/data-access review and src/jackal/radiobutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?on_left_down@RadioButton@@UAEXHH@Z
 void RadioButton::on_left_down(int x, int y) {
@@ -510,7 +510,7 @@ void RadioButton::on_left_down(int x, int y) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0060E320 ?on_mouse_move@RadioButton@@QAEXHH@Z 0x0060E320-0x0060E494 FILE
+// ORIGINAL: 0x0060E320 ?on_mouse_move@RadioButton@@QAEXHH@Z 0x0060E320-0x0060E494 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060e320.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60e320 complete control/data-access review and src/jackal/radiobutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?on_mouse_move@RadioButton@@UAEXHH@Z
 void RadioButton::on_mouse_move(int x, int y) {
@@ -746,7 +746,7 @@ Purpose: A radio button key press: publish the parent window as the callback
          item list, drop the hover index, and repaint the previous and the
          new selection.
 
-// ORIGINAL: 0x0060E020 ?on_key_down@RadioButton@@QAEHH@Z 0x0060E020-0x0060E183
+// ORIGINAL: 0x0060E020 ?on_key_down@RadioButton@@QAEHH@Z 0x0060E020-0x0060E183 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; original identity 0x0060E020 retains name and all original spans/claims", "src/jackal/radiobutton.h declares the actual RadioButton::on_key_down class member; body uses that existing owner API", "historical source was FILE-mode in git:2874481e371cbbaa04e3375e6797f1f182abb7cb:src/leaf_recoveries.cpp; this transfer places the unchanged C++ member definition in its actual owner TU and changes measurement mode to BODY explicitly; it does not assert historical recipe equality", "the complete source body and existing TRIED/LEVER/DEFERRED history are carried forward unchanged; only annotation mode/location and transitional SCAFFOLD classification change"], "reason": "Transfer the complete RadioButton::on_key_down definition to its existing source owner without changing its C++ body. Keep the original FILE spans and historical claim state; BODY is the new per-member measurement scope, not a claim that the old whole-TU recipe is equivalent."}
 // symbol    ?on_key_down@RadioButton@@UAEHH@Z
 // size      355 bytes

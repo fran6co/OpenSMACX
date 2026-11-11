@@ -101,7 +101,7 @@ int FileWin::add_def_ext(char *extension) {
     return 0;
 }
 
-// ORIGINAL: 0x006141C0 ?set_def_name@FileWin@@QAEHPAD@Z 0x006141C0-0x006142C9
+// ORIGINAL: 0x006141C0 ?set_def_name@FileWin@@QAEHPAD@Z 0x006141C0-0x006142C9 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:d25c813727ff7494bc54517047f8b504bb476af2:src/leaf_recoveries.cpp", "recovery/tasks/game-save-load-owner-coverage.json", "pinned image sha256:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_filewin_default_name_behavior.py"], "reason": "Home the default-name split to the actual FileWin buffers and preserve null, overlength, root, drive, and original boundary behavior."}
 // TRIED: plain strlen/strcat declarations get inlined by /O2, which the original does not do at this call site; the function-pointer cast idiom forces a real call and got the prologue and the backslash-search loop byte-exact. Still MISMATCH on the drive-letter append block's fall-through layout.
 int FileWin::set_def_name(char *name) {
@@ -688,7 +688,7 @@ void __cdecl FileWin::filebox_draw(GraphicWin *window, int item_kind, int,
 Purpose: Compose a FileWin from four member subobjects (two FlatButtons, an
          EditBox, a most-derived ListBox), then clear the window's own
          name-buffer/selection fields and append one text-table entry.
-// ORIGINAL: 0x00613850 ??0FileWin@@QAE@XZ 0x00613850-0x006138F9;0x006630E0-0x00663114
+// ORIGINAL: 0x00613850 ??0FileWin@@QAE@XZ 0x00613850-0x006138F9;0x006630E0-0x00663114 BYTE_EXACT
 // size      221 bytes
 // prototype void (__thiscall ??0FileWin@@QAE@XZ)(FileWin* this)
 // callers   1   call targets   4
@@ -765,7 +765,7 @@ void FileWin::close() {
     }
 }
 
-// ORIGINAL: 0x00613BA0 ?prepare_sprites@FileWin@@QAEHXZ 0x00613BA0-0x00613D47;0x00663114-0x00663129
+// ORIGINAL: 0x00613BA0 ?prepare_sprites@FileWin@@QAEHXZ 0x00613BA0-0x00613D47;0x00663114-0x00663129 BYTE_EXACT
 // FileWin::prepare_sprites builds the three independent dialog sprites from
 // the PCX sheet, or creates blank substitutes when the sheet cannot load.
 // The original has a separate cold unwind span; the source-owned Buffer
