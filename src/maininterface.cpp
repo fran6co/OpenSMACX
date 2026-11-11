@@ -144,78 +144,98 @@ void register_iface_mode(int slot, SubInterface *interface_entry) {
 // TRIED: the 30-way switch is transcribed from the actual jump table (0x0045BBF8) and case table (0x0045BC24) read out of the image with pefile, not hand-decoded, so the VALUES it produces should be right even though the emitted `cmp`/`jmp` shape won't match a real jump table; find_font's three call sites each push one more dword than the declared 2-int signature consumes (`add esp,8` after three pushes) - the extra value is dropped rather than guessed at.
 void MainInterface::draw_edit_pane() {
     if (WinScreenWidth < 1024 || MainInterfaceGlobal.button_group_[0].field_84_ != 1002) return;
-    Buffer &canvas = MainInterfaceGlobal;
     RECT rect = editor_text_rect_;
-    canvas.set_text_color(TextColourTable[22], TextColourTable[23], 1, 1);
-    Font *style_one = find_font(10, 1);
-    Font *style_two = find_font(10, 2);
-    Font *normal = find_font(10, 0);
-    canvas.set_font(normal, style_two, style_one, 0);
-    canvas.box_sprite(&rect, &InterfaceBoxStyles[0]);
-    const int x = rect.left + 4;
-    int y = rect.top + 4;
-    char line[300], number[80];
+    MainInterfaceGlobal.Buffer::set_text_color(TextColourTable[22], TextColourTable[23], 1, 1);
+    MainInterfaceGlobal.Buffer::set_font(find_font(10, 0), find_font(10, 2), find_font(10, 1), 0);
+    MainInterfaceGlobal.Buffer::box_sprite(&rect, &InterfaceBoxStyles[0]);
+    rect.left += 4;
+    rect.right -= 4;
+    rect.bottom -= 4;
+    rect.top += 4;
+    const int x = rect.left;
+    int y = rect.top;
+    char line[256];
+    char number[80];
+
     line[0] = 0;
     strcat(line, label_get(0x6A8 / 4));
-    strcat(line, ": "); strcat(line, "{");
-    strcat(line, MapFilePath); strcat(line, "}");
-    canvas.write_l(line, x, y, strlen(line));
-    y += canvas.text_line_height();
+    strcat(line, ": ");
+    strcat(line, "{");
+    strcat(line, MapFilePath);
+    strcat(line, "}");
+    MainInterfaceGlobal.Buffer::write_l(line, x, y);
+    y += MainInterfaceGlobal.Buffer::text_line_height();
+
     line[0] = 0;
-    strcat(line, label_get(0x6A4 / 4)); strcat(line, ": ");
-    const char *tool;
+    strcat(line, label_get(0x6A4 / 4));
+    strcat(line, ": ");
     switch (MapEditorPaintId) {
-    case 0: tool = label_get(0xEBC / 4); break;
-    case 1: tool = label_get(0xEC0 / 4); break;
-    case 2: tool = label_get(0xEC4 / 4); break;
-    case 3: tool = label_get(0xEC8 / 4); break;
-    case 4: tool = label_get(0xECC / 4); break;
-    case 5: tool = label_get(0xED0 / 4); break;
-    case 26: tool = StringTable.get(Natural[2].name_short); break;
-    case 27: tool = StringTable.get(Natural[6].name_short); break;
-    case 28: tool = StringTable.get(Natural[3].name_short); break;
-    case 29: tool = StringTable.get(Natural[10].name_short); break;
-    default: tool = StringTable.get(Terraforming[MapEditorPaintId - 6].name); break;
+    case 0: { LPSTR name = Labels.strings_ptr[0xEBC / 4]; strcat(line, StringTable.get(name)); } break;
+    case 1: { LPSTR name = Labels.strings_ptr[0xEC0 / 4]; strcat(line, StringTable.get(name)); } break;
+    case 2: { LPSTR name = Labels.strings_ptr[0xEC4 / 4]; strcat(line, StringTable.get(name)); } break;
+    case 3: { LPSTR name = Labels.strings_ptr[0xEC8 / 4]; strcat(line, StringTable.get(name)); } break;
+    case 4: { LPSTR name = Labels.strings_ptr[0xECC / 4]; strcat(line, StringTable.get(name)); } break;
+    case 5: { LPSTR name = Labels.strings_ptr[0xED0 / 4]; strcat(line, StringTable.get(name)); } break;
+    case 26: { LPSTR name = Natural[2].name_short; strcat(line, StringTable.get(name)); } break;
+    case 27: { LPSTR name = Natural[6].name_short; strcat(line, StringTable.get(name)); } break;
+    case 28: { LPSTR name = Natural[3].name_short; strcat(line, StringTable.get(name)); } break;
+    case 29: { LPSTR name = Natural[10].name_short; strcat(line, StringTable.get(name)); } break;
+    default: { LPSTR name = Terraforming[MapEditorPaintId - 6].name; strcat(line, StringTable.get(name)); } break;
     }
-    strcat(line, tool);
-    canvas.write_l(line, x, y, strlen(line));
-    y += canvas.text_line_height();
+    MainInterfaceGlobal.Buffer::write_l(line, x, y);
+    y += MainInterfaceGlobal.Buffer::text_line_height();
+
     line[0] = 0;
-    strcat(line, label_get(0x684 / 4)); strcat(line, ": ");
-    if (MapEditorBrushId == 1) strcat(line, label_get(0x688 / 4));
-    else {
-        _itoa(MapEditorBrushId == 0 ? 0 : MapEditorBrushId - 1, number, 10);
+    strcat(line, StringTable.get(Labels.strings_ptr[0x684 / 4]));
+    strcat(line, ": ");
+    if (MapEditorBrushId == 1) {
+        { LPSTR name = Labels.strings_ptr[0x688 / 4]; strcat(line, StringTable.get(name)); }
+    } else {
+        _itoa(MapEditorBrushId != 0 ? MapEditorBrushId - 1 : 0, number, 10);
         strcat(line, number);
     }
-    canvas.write_l(line, x, y, strlen(line));
-    y += canvas.text_line_height();
+    MainInterfaceGlobal.Buffer::write_l(line, x, y);
+    y += MainInterfaceGlobal.Buffer::text_line_height();
+
     line[0] = 0;
-    strcat(line, label_get(0xD7C / 4)); strcat(line, ": ");
-    _itoa(MapLongitudeBounds / 2, number, 10); strcat(line, number);
+    strcat(line, label_get(0xD7C / 4));
+    strcat(line, ": ");
+    _itoa(MapLongitudeBounds / 2, number, 10);
+    strcat(line, number);
     strcat(line, "x");
-    _itoa(MapLatitudeBounds, number, 10); strcat(line, number);
+    _itoa(MapLatitudeBounds, number, 10);
+    strcat(line, number);
     strcat(line, " ");
-    strcat(line, label_get((MapIsFlat & 1 ? 0xD80 : 0xD84) / 4));
-    canvas.write_l(line, x, y, strlen(line));
-    y += canvas.text_line_height();
+    if (MapIsFlat & 1) {
+        strcat(line, label_get(0xD80 / 4));
+    } else {
+        strcat(line, label_get(0xD84 / 4));
+    }
+    MainInterfaceGlobal.Buffer::write_l(line, x, y);
+    y += MainInterfaceGlobal.Buffer::text_line_height();
+
     line[0] = 0;
-    strcat(line, label_get(0x84 / 4)); strcat(line, ": "); strcat(line, "{");
-    // Original45BA7E loads the cloud setting, not the planet-size setting;
-    // its indexed label offset is a low-dword addition, without a bounds check.
-    uint32_t cloud_label_bits = 0x50u / 4u + static_cast<uint32_t>(MapCloudCover);
-    int cloud_label;
-    memcpy(&cloud_label, &cloud_label_bits, sizeof(cloud_label));
-    strcat(line, label_get(cloud_label)); strcat(line, "}");
-    canvas.write_l(line, x, y, strlen(line));
-    y += canvas.text_line_height();
-    // The original deliberately appends to the preceding cloud-setting line.
+    strcat(line, label_get(0x84 / 4));
+    strcat(line, ": ");
     strcat(line, "{");
-    int label;
-    if (GetKeyState(VK_SCROLL) & 1) label = 0xF50;
-    else label = ConsoleGlobal.edit_lock() ? 0x1020 : 0xF54;
-    strcat(line, label_get(label / 4)); strcat(line, "}");
-    canvas.write_l(line, x, y, strlen(line));
-    canvas.text_line_height();
+    // Original 0x45BA7E loads the cloud setting, not the planet-size setting.
+    strcat(line, label_get(0x50 / 4 + MapCloudCover));
+    strcat(line, "}");
+    MainInterfaceGlobal.Buffer::write_l(line, x, y);
+    y += MainInterfaceGlobal.Buffer::text_line_height();
+
+    line[0] = 0;
+    strcat(line, "{");
+    if (GetKeyState(VK_SCROLL) & 1) {
+        strcat(line, label_get(0xF50 / 4));
+    } else if (ConsoleGlobal.edit_lock()) {
+        strcat(line, label_get(0x1020 / 4));
+    } else {
+        strcat(line, label_get(0xF54 / 4));
+    }
+    strcat(line, "}");
+    MainInterfaceGlobal.Buffer::write_l(line, x, y);
+    y += MainInterfaceGlobal.Buffer::text_line_height();
     soft_update(&editor_text_rect_);
 }
 
@@ -2822,7 +2842,8 @@ void __cdecl slide_show(GraphicWin *window, int mode) {
             g_MAININTERFACE_WAVE.play();
         }
 
-        const int frame_edge = WinScreenWidth == 800 ? 0x5E : 0xEE;
+        const int wide = WinScreenWidth != 800;
+        const int frame_edge = wide ? 0xEE : 0x5E;
         const int frame_divisor = IsMultiplayerNet != 0 ? 3 : 5;
         RECT area = window->Buffer::clip_rect();
         window->client_to_screen(&area);
@@ -2836,8 +2857,9 @@ void __cdecl slide_show(GraphicWin *window, int mode) {
         frame_buffer.fill(WinFillColour);
         window->update_window_to_buffer(&frame_buffer);
 
+        int animation_y = area.bottom;
         int frame_count = (area.bottom - area.top) / frame_divisor;
-        if (area.top < area.bottom - frame_count * frame_divisor) {
+        if (area.bottom - frame_count * frame_divisor > area.top) {
             ++frame_count;
         }
 
@@ -2852,37 +2874,37 @@ void __cdecl slide_show(GraphicWin *window, int mode) {
         Sprite &right_outer = MainInterfaceGlobal.slide_frame_sprite(3);
         const int left_x = area.left;
         const int left_inner_x = left_x + left_outer.width();
-        const int right_inner_x = area.left + area.right
-            - right_inner.width() - right_outer.width() - 0x20;
-        const int right_x = area.left + area.right
+        const int right_inner_x = area.left + frame_buffer.pixel_width()
+            - right_outer.width()
+            - right_inner.width() - 0x20;
+        RECT flip_rect = area;
+        const int right_x = area.left + frame_buffer.pixel_width()
             - right_outer.width() - 0x20;
 
-        int animation_y = area.bottom - frame_count;
         if ((GameDataStateStorage.fields_.game_preferences_ & PREF_AV_SLIDING_WINDOWS) != 0
             && IsMultiplayerNet == 0) {
             WinFlipClipped = 1;
+            animation_y -= frame_count;
             for (int frame = 0; frame < frame_divisor; ++frame) {
                 const DWORD started = timeGetTime();
                 frame_buffer.draw(&Win::screen_buffer_, 9, area.left, animation_y, 1, 1);
 
-                int left_y = animation_y;
-                if (left_y <= frame_edge) left_y = frame_edge;
                 left_outer.draw(&Win::screen_buffer_, left_outer.transparent_index(),
-                                left_x, left_y, 1, 1);
+                                left_x, animation_y > frame_edge ? animation_y : frame_edge,
+                                1, 1);
                 left_inner.draw(&Win::screen_buffer_, left_inner.transparent_index(),
                                 left_inner_x, animation_y, 1, 1);
                 right_inner.draw(&Win::screen_buffer_, right_inner.transparent_index(),
                                  right_inner_x, animation_y, 1, 1);
-                int right_y = animation_y;
-                if (right_y <= frame_edge) right_y = frame_edge;
                 right_outer.draw(&Win::screen_buffer_, right_outer.transparent_index(),
-                                 right_x, right_y, 1, 1);
+                                 right_x, animation_y > frame_edge ? animation_y : frame_edge,
+                                 1, 1);
 
                 Win::screen_buffer_.set_clip(&animation_strip);
                 background.draw(&Win::screen_buffer_, 9,
                     MainInterfaceGlobal.outer_rect().left,
                     MainInterfaceGlobal.outer_rect().top, 1, 1);
-                Win::flip(&area);
+                Win::flip(&flip_rect);
                 animation_y -= frame_count;
                 if (animation_y <= area.top) animation_y = area.top;
                 Win::screen_buffer_.set_clip(&area);
@@ -2893,27 +2915,23 @@ void __cdecl slide_show(GraphicWin *window, int mode) {
                 }
             }
             Win::screen_buffer_.restore_clip();
-            WinFlipClipped = 0;
         }
 
         if ((GameDataStateStorage.fields_.game_preferences_ & PREF_AV_SOUND_EFFECTS) != 0) {
             g_MAININTERFACE_WAVE.fade(0x32);
         }
 
-        RECT window_clip = window->Buffer::clip_rect();
-        window->Buffer::set_clip(&window_clip);
-        int left_y = animation_y;
-        if (left_y <= frame_edge) left_y = frame_edge;
+        window->Buffer::restore_clip();
         left_outer.draw(static_cast<Buffer *>(window), left_outer.transparent_index(),
-                        0, left_y - area.top, 1, 1);
+                        left_x - area.left,
+                        (animation_y > frame_edge ? animation_y : frame_edge) - area.top, 1, 1);
         left_inner.draw(static_cast<Buffer *>(window), left_inner.transparent_index(),
                         left_inner_x - area.left, 0, 1, 1);
         right_inner.draw(static_cast<Buffer *>(window), right_inner.transparent_index(),
                          right_inner_x - area.left, 0, 1, 1);
-        int right_y = animation_y;
-        if (right_y <= frame_edge) right_y = frame_edge;
+        if (animation_y <= frame_edge) animation_y = frame_edge;
         right_outer.draw(static_cast<Buffer *>(window), right_outer.transparent_index(),
-                         right_x - area.left, right_y - area.top, 1, 1);
+                         right_x - area.left, animation_y - area.top, 1, 1);
     }
 
     if ((mode & 2) != 0) {
@@ -2923,11 +2941,12 @@ void __cdecl slide_show(GraphicWin *window, int mode) {
             MainInterfaceGlobal.bottom_bounds().left,
             MainInterfaceGlobal.bottom_bounds().top, 1, 1);
         MainInterfaceTileFlag = 1;
-        RECT interface_clip = MainInterfaceGlobal.main_layout_rect();
-        MainInterfaceGlobal.Buffer::set_clip(&interface_clip);
+        // WORKAROUND(decl): the image passes &rect1_ itself (0x45D8EE push 0x7AF5E0);
+        // the header exposes it only through a const accessor.
+        MainInterfaceGlobal.Buffer::set_clip(
+            const_cast<RECT *>(&MainInterfaceGlobal.main_layout_rect()));
         MainInterfaceGlobal.restore_back(0);
-        RECT main_buffer_clip = MainInterfaceGlobal.Buffer::clip_rect();
-        MainInterfaceGlobal.Buffer::set_clip(&main_buffer_clip);
+        MainInterfaceGlobal.Buffer::restore_clip();
         MainInterfaceGlobal.soft_update();
     }
     WinFlipClipped = 0;
@@ -2946,7 +2965,8 @@ void __cdecl slide_hide(GraphicWin *window, int mode) {
         if ((GameDataStateStorage.fields_.game_preferences_ & PREF_AV_SOUND_EFFECTS) != 0)
             g_MAININTERFACE_WAVE.play();
 
-        const int frame_edge = WinScreenWidth == 0x320 ? 0x5e : 0xee;
+        const int wide = WinScreenWidth != 0x320;
+        const int frame_edge = wide ? 0xee : 0x5e;
         const int frame_divisor = (IsMultiplayerNet != 0
                                    || MapMouseFeedbackBusy != 0
                                    || ConsoleControlTurnActive != 0) ? 3 : 5;
@@ -2988,13 +3008,13 @@ void __cdecl slide_hide(GraphicWin *window, int mode) {
         const int left_x = area.left;
         const int left_inner_x = left_x + left_outer.width();
         const int right_inner_x = area.left + window_frame.pixel_width()
-            - right_outer.width()
-            - right_inner.width() - 0x20;
+            - right_inner.width()
+            - right_outer.width() - 0x20;
+        WinFlipClipped = 1;
+        RECT flip_rect = area;
         const int right_outer_x = area.left + window_frame.pixel_width()
             - right_outer.width() - 0x20;
         int frame_y = area.top + frame_count;
-        RECT flip_rect = area;
-        WinFlipClipped = 1;
         // Native stores frame_divisor into its reused [ebp+8] scratch slot at
         // 0x45DA52; incoming mode at [ebp+0xC] is only tested for bit 2.
         for (int frame = 0; frame < frame_divisor; ++frame) {
@@ -3004,18 +3024,14 @@ void __cdecl slide_hide(GraphicWin *window, int mode) {
                                 window->Buffer::pixel_height());
             window_frame.draw(&Win::screen_buffer_, 9, area.left, frame_y, 1, 1);
 
-            int left_y = frame_y;
-            if (left_y <= frame_edge) left_y = frame_edge;
             left_outer.draw(&Win::screen_buffer_, left_outer.transparent_index(),
-                            left_x, left_y, 1, 1);
+                            left_x, frame_y > frame_edge ? frame_y : frame_edge, 1, 1);
             left_inner.draw(&Win::screen_buffer_, left_inner.transparent_index(),
                             left_inner_x, frame_y, 1, 1);
             right_inner.draw(&Win::screen_buffer_, right_inner.transparent_index(),
                              right_inner_x, frame_y, 1, 1);
-            int right_y = frame_y;
-            if (right_y <= frame_edge) right_y = frame_edge;
             right_outer.draw(&Win::screen_buffer_, right_outer.transparent_index(),
-                             right_outer_x, right_y, 1, 1);
+                             right_outer_x, frame_y > frame_edge ? frame_y : frame_edge, 1, 1);
 
             Win::screen_buffer_.set_clip(&animation_strip);
             interface_background.draw(&Win::screen_buffer_, 9,
@@ -3050,10 +3066,9 @@ void __cdecl slide_hide(GraphicWin *window, int mode) {
         MainInterfaceTileFlag = 0;
         RECT interface_clip = MainInterfaceGlobal.info_frame_rect();
         interface_clip.bottom += 0x64;
-        RECT original_interface_clip = MainInterfaceGlobal.Buffer::clip_rect();
         MainInterfaceGlobal.Buffer::set_clip(&interface_clip);
         MainInterfaceGlobal.restore_back(0);
-        MainInterfaceGlobal.Buffer::set_clip(&original_interface_clip);
+        MainInterfaceGlobal.Buffer::restore_clip();
         MainInterfaceGlobal.soft_update();
     }
     WinFlipClipped = 0;
@@ -3065,17 +3080,17 @@ void __cdecl slide_hide(GraphicWin *window, int mode) {
 // The retained TRIED note describes the superseded initial transcription,
 // not this owner body with real members, virtual calls and automatic lifetime.
 void __cdecl scroll_show(GraphicWin *window, Scroll *scroll) {
-    Buffer scroll_frame;
-    Buffer interface_background;
-    Buffer screen_save;
+    Buffer scroll_frame;          // native -0x5DC, constructed first
+    Buffer interface_background;  // native -0x10EC, constructed second
+    Buffer screen_save;           // native -0xB64, constructed third
 
     if (scroll->Win::is_visible()) {
         return;
     }
 
-    const int frame_edge = WinScreenWidth == 800 ? 0x5E : 0xEE;
+    const int wide = WinScreenWidth != 800;
+    const int frame_edge = wide ? 0xEE : 0x5E;
     const int vertical_step = IsMultiplayerNet != 0 ? 3 : 6;
-
     RECT area = window->Buffer::clip_rect();
     window->client_to_screen(&area);
     const RECT original_area = area;
@@ -3086,41 +3101,34 @@ void __cdecl scroll_show(GraphicWin *window, Scroll *scroll) {
     MainInterfaceGlobal.update_window_to_buffer(&interface_background);
 
     Sprite &right_edge = MainInterfaceGlobal.slide_frame_sprite(3);
-    const int right_edge_x = area.right - right_edge.width() - 0x20;
-    RECT vertical_strip = { right_edge_x, 0, area.right, 0x39 };
+    // Native 0x45E00A narrows the working area itself to the scroll strip.
+    area.left = area.right - right_edge.width() - 0x20;
+    RECT vertical_strip;
+    set_rectangle_dimensions(&vertical_strip, area.left, 0, area.right - area.left, 0x39);
     MainInterfaceGlobal.client_to_screen(&vertical_strip);
 
-    const int area_width = area.right - area.left;
-    const int area_height = area.bottom - area.top;
-    screen_save.init(area_width, area_height, 0, 0);
+    screen_save.init(area.right - area.left, area.bottom - area.top, 0, 0);
     RECT screen_save_area = area;
     ConsoleGlobal.screen_to_client(&screen_save_area);
     // `Buffer::copy` reads from its receiver and writes to its first argument.
-    // Native 0x45E071..0x45E0A0 uses ConsoleGlobal's GraphicWin Buffer as
-    // source and local F49C as destination.
-    static_cast<Buffer *>(static_cast<GraphicWin *>(&ConsoleGlobal))->copy(
-        &screen_save, screen_save_area.left, screen_save_area.top,
-        0, 0, area_width, area_height);
+    ConsoleGlobal.Buffer::copy(
+        &screen_save, screen_save_area.left, screen_save_area.top, 0, 0,
+        screen_save.pixel_width(), screen_save.pixel_height());
 
-    int edge_y = frame_edge;
-    if (edge_y <= area.top) edge_y = area.top;
-    int first_y = area.top + 0xD;
-    if (first_y >= edge_y) first_y = edge_y;
-    PopupScrollVerticalFrameCount = (edge_y - first_y) / vertical_step;
-    // The native stores first_y over the transformed area.top at 0x45E0C1.
-    area.top = first_y;
+    int edge_y = frame_edge > area.top ? frame_edge : area.top;
+    area.top = area.top + 0xD < edge_y ? area.top + 0xD : edge_y;
+    PopupScrollVerticalFrameCount = (edge_y - area.top) / vertical_step;
     if (PopupScrollVerticalFrameCount > 1) {
         Win::screen_buffer_.set_clip(&area);
         edge_y -= PopupScrollVerticalFrameCount;
+        const int edge_x = area.right - right_edge.width() - 0x20;
         if ((GameDataStateStorage.fields_.game_more_preferences_ & MPREF_AV_SLIDING_SCROLLBARS) != 0
             && IsMultiplayerNet == 0) {
             WinFlipClipped = 1;
-            for (int frame = vertical_step; frame > 0; --frame) {
+            for (int frame = 0; frame < vertical_step; ++frame) {
                 const DWORD started = timeGetTime();
-                int sprite_y = edge_y;
-                if (sprite_y <= first_y) sprite_y = first_y;
                 right_edge.draw(&Win::screen_buffer_, right_edge.transparent_index(),
-                                right_edge_x, sprite_y, 1, 1);
+                                edge_x, edge_y > area.top ? edge_y : area.top, 1, 1);
                 Win::screen_buffer_.set_clip(&vertical_strip);
                 interface_background.draw(&Win::screen_buffer_, 9,
                     MainInterfaceGlobal.outer_rect().left,
@@ -3137,32 +3145,29 @@ void __cdecl scroll_show(GraphicWin *window, Scroll *scroll) {
             Win::screen_buffer_.restore_clip();
             WinFlipClipped = 0;
         }
-        RECT window_clip = window->Buffer::clip_rect();
-        window->Buffer::set_clip(&window_clip);
+        window->Buffer::restore_clip();
     }
 
-    // The captured image keeps its original height. The panel is created
-    // after area.top changes, so its negative DIB height is different.
-    const int frame_height = area.bottom - area.top;
-    scroll_frame.init(area_width, frame_height, 0, 0);
+    scroll_frame.init(area.right - area.left, area.bottom - area.top, 0, 0);
     scroll_frame.fill(9);
     Sprite &upper_left = MainInterfaceGlobal.scroll_frame_sprite(0);
     Sprite &top_edge = MainInterfaceGlobal.scroll_frame_sprite(1);
     Sprite &lower_left = MainInterfaceGlobal.scroll_frame_sprite(2);
     Sprite &side_edge = MainInterfaceGlobal.scroll_frame_sprite(3);
 
-    const int panel_bottom = upper_left.height()
-        - ((-frame_height + lower_left.height() + 0x2C + upper_left.height())
+    // Native 0x45E244 reads scroll_frame's own (negative) DIB height field.
+    const int panel_bottom = lower_left.height()
+        - ((-scroll_frame.pixel_height() + upper_left.height() + 0x2C + lower_left.height())
            / top_edge.height()) * top_edge.height()
-        + lower_left.height();
+        + upper_left.height();
     scroll_frame.tile(&top_edge, 0, 0, 0, 3, top_edge.width(), panel_bottom);
     scroll_frame.tile(&side_edge, 0, panel_bottom + 3, 0, panel_bottom,
-                      side_edge.width(), frame_height - panel_bottom);
+                      side_edge.width(), scroll_frame.pixel_height() - panel_bottom);
     upper_left.draw(&scroll_frame, upper_left.transparent_index(), 0, 3, 1, 1);
     lower_left.draw(&scroll_frame, lower_left.transparent_index(), 0,
                     panel_bottom - lower_left.height() + 3, 1, 1);
     right_edge.draw(&scroll_frame, right_edge.transparent_index(),
-                    area_width - right_edge.width(), 0, 1, 1);
+                    scroll_frame.pixel_width() - right_edge.width(), 0, 1, 1);
 
     Win::screen_buffer_.set_clip(&area);
     const int horizontal_frame_count = IsMultiplayerNet != 0 ? 4 : 8;
@@ -3171,11 +3176,10 @@ void __cdecl scroll_show(GraphicWin *window, Scroll *scroll) {
     if ((GameDataStateStorage.fields_.game_preferences_ & PREF_AV_SLIDING_WINDOWS) != 0
         && IsMultiplayerNet == 0) {
         WinFlipClipped = 1;
-        for (int frame = horizontal_frame_count; frame > 0; --frame) {
+        for (int frame = 0; frame < horizontal_frame_count; ++frame) {
             const DWORD started = timeGetTime();
-            // Restore the saved screen image at its original screen position.
             screen_save.copy(&Win::screen_buffer_, 0, 0, area.left, area.top,
-                             area_width, area_height);
+                             screen_save.pixel_width(), screen_save.pixel_height());
             scroll_frame.draw(&Win::screen_buffer_, 9, frame_x, area.top, 1, 1);
             Win::screen_buffer_.set_clip(&vertical_strip);
             interface_background.draw(&Win::screen_buffer_, 9,
@@ -3194,11 +3198,9 @@ void __cdecl scroll_show(GraphicWin *window, Scroll *scroll) {
         WinFlipClipped = 0;
     }
 
-    const int destination_y = area.top - original_area.top;
-    const int destination_x = window->Buffer::pixel_width()
-        - scroll_frame.pixel_width();
     scroll_frame.draw(static_cast<Buffer *>(window), 9,
-                      destination_x, destination_y, 1, 1);
+                      window->Buffer::pixel_width() - scroll_frame.pixel_width(),
+                      area.top - original_area.top, 1, 1);
 
     scroll->resize(0x18, panel_bottom - 0xA, 0);
     scroll->move(window->Buffer::pixel_width() - 0x2B, 0x15);
@@ -3208,62 +3210,66 @@ void __cdecl scroll_show(GraphicWin *window, Scroll *scroll) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:c0b358f0:src/unrecovered/0045e540.cpp original hot/cold spans and retained seed findings.", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x45e540 full native register, rectangle mutation, receiver, call and lifetime audit.", "source:src/console.h virtual GraphicWin base; src/maininterface.h existing Sprite arrays and interface-up member; src/buffer.h source-receiver copy, full bounds and DIB geometry.", "source:src/maininterface.cpp: the helper uses MainInterfaceGlobal-owned slide/scroll sprites, interface geometry and shared transition state; its Wave configuration belongs to MainInterface::init.", "pinned:Pinned cold unwind regions remain consecutive with MainInterface dtor/ctor/init/set_message: 0x6552C0-0x65552F, 0x655530-0x655723, 0x655730-0x655745, 0x655745-0x655757, followed by these four helper spans 0x655757-0x655777, 0x655777-0x6557A2, 0x6557A2-0x6557CD, and 0x6557CD-0x6557F8; no other mapped span intersects this detached range."], "reason": "Keep this free ?scroll_hide UI transition helper with the MainInterface resource and lifetime provider while preserving its existing __cdecl signature and external window callers. This is an inferred source correspondence, not proof of an original filename or historical TU boundary."}
 // symbol    ?scroll_hide@@YAXPAVGraphicWin@@PAVScroll@@@Z
 // TRIED: Ghidra's decompilation was unusable here (stack-frame analysis fell apart on the SEH-heavy huge frame); rebuilt from raw disassembly only. Three real `Buffer` locals (RAII) matching construction/destruction order, register-variable/goto transcription for the two scroll-animation throttle loops (timeGetTime via IAT-slot fn ptr + do_sound), the fixed global screen Buffer at 0x9B7490, and a pointer-to-member vtable-slot call (slot 2) on `a2` at the very end. Compiles and matches through instruction #35 (diverges #36, mov vs push) - the deepest match of this batch's giant functions. The two `0x9156b0`/`0x915af4`-relative receiver computations (`*(int*)(*(int*)g_009156b0+4) + <base>`) are transcribed literally; their semantic meaning (which sub-object they reach) was not resolved.
+// WORKAROUND(inline): the image inlines win.cpp's offset_rect here (0x45EA97);
+// a same-TU inline copy of its body reproduces that expansion.
+static inline void scroll_offset_rect(RECT *rect, int dx, int dy) {
+    rect->left += dx;
+    rect->right += dx;
+    rect->top += dy;
+    rect->bottom += dy;
+}
+
 void __cdecl scroll_hide(GraphicWin *window, Scroll *scroll) {
-    // The seed's 0x9156B0/0x915AF4 vbtable arithmetic reaches Console's real
-    // GraphicWin virtual base and its Buffer base. Buffer::copy names its
-    // source receiver; the final hide is the inherited virtual operation.
-    Buffer window_frame;          // native F490, constructed first
-    Buffer interface_background;  // native EF08, constructed second
-    Buffer screen_restore;        // native FA18, constructed third
+    // Buffer::copy names its source receiver; the final hide is the inherited
+    // virtual operation.
+    Buffer window_frame;          // native -0xB70, constructed first
+    Buffer interface_background;  // native -0x10F8, constructed second
+    Buffer screen_restore;        // native -0x5E8, constructed third
 
     if (scroll->Win::is_visible() == 0)
         return;
 
-    const int frame_edge = WinScreenWidth == 0x320 ? 0x5e : 0xee;
+    const int wide = WinScreenWidth != 0x320;
+    const int frame_edge = wide ? 0xEE : 0x5E;
     RECT area = window->Buffer::clip_rect();
     window->client_to_screen(&area);
-    const int screen_left = area.left;
-    const int screen_top = area.top;
-    const int area_height = area.bottom - area.top;
+    const RECT original_area = area;
 
     interface_background.init(MainInterfaceGlobal.Buffer::pixel_width(),
                               MainInterfaceGlobal.Buffer::pixel_height(), 0, 0);
     interface_background.fill(WinFillColour);
     MainInterfaceGlobal.update_window_to_buffer(&interface_background);
 
-    Sprite &right_edge = MainInterfaceGlobal.slide_frame_sprite(3);
-    const int right_edge_x = area.right - right_edge.width() - 0x20;
-    area.left = right_edge_x;
-    const int area_width = area.right - area.left;
-
-    RECT vertical_strip = { right_edge_x, 0, area.right, 0x39 };
+    area.left = area.right - MainInterfaceGlobal.slide_frame_sprite(3).width() - 0x20;
+    RECT vertical_strip;
+    set_rectangle_dimensions(&vertical_strip, area.left, 0, area.right - area.left, 0x39);
     MainInterfaceGlobal.client_to_screen(&vertical_strip);
 
-    screen_restore.init(area_width, area_height, 0, 0);
+    screen_restore.init(area.right - area.left, area.bottom - area.top, 0, 0);
     RECT console_area = area;
     ConsoleGlobal.screen_to_client(&console_area);
-    static_cast<Buffer *>(static_cast<GraphicWin *>(&ConsoleGlobal))->copy(
+    ConsoleGlobal.Buffer::copy(
         &screen_restore, console_area.left, console_area.top, 0, 0,
-        area_width, area_height);
+        screen_restore.pixel_width(), screen_restore.pixel_height());
 
-    window_frame.init(area_width, area_height, 0, 0);
-    static_cast<Buffer *>(window)->copy(
-        &window_frame, area.left - screen_left, area.top - screen_top,
-        0, 0, area_width, area_height);
+    window_frame.init(area.right - area.left, area.bottom - area.top, 0, 0);
+    // Native 0x45E78E adjusts to the Buffer base without a null test.
+    window->Buffer::copy(&window_frame, area.left - original_area.left,
+                         area.top - original_area.top, 0, 0,
+                         window_frame.pixel_width(), window_frame.pixel_height());
 
-    const int horizontal_step = IsMultiplayerNet != 0 ? 8 : 4;
-    PopupScrollHorizontalStep = horizontal_step;
-    int frame_x = area.left - horizontal_step;
-    const int horizontal_frames = IsMultiplayerNet != 0 ? 4 : 8;
     Win::screen_buffer_.set_clip(&area);
+    const int horizontal_frame_count = IsMultiplayerNet != 0 ? 4 : 8;
+    PopupScrollHorizontalStep = IsMultiplayerNet != 0 ? 8 : 4;
+    int frame_x = area.left - PopupScrollHorizontalStep;
     if ((GameDataStateStorage.fields_.game_more_preferences_ & MPREF_AV_SLIDING_SCROLLBARS) != 0
         && IsMultiplayerNet == 0) {
         WinFlipClipped = 1;
-        for (int frame = 0; frame < horizontal_frames; ++frame) {
+        for (int frame = 0; frame < horizontal_frame_count; ++frame) {
             const DWORD started = timeGetTime();
-            screen_restore.copy(&Win::screen_buffer_, 0, 0, area.left, screen_top,
-                                area_width, area_height);
-            window_frame.draw(&Win::screen_buffer_, 9, frame_x, screen_top, 1, 1);
+            screen_restore.copy(&Win::screen_buffer_, 0, 0, area.left, area.top,
+                                screen_restore.pixel_width(), screen_restore.pixel_height());
+            window_frame.draw(&Win::screen_buffer_, 9, frame_x, area.top, 1, 1);
             Win::screen_buffer_.set_clip(&vertical_strip);
             interface_background.draw(&Win::screen_buffer_, 9,
                 MainInterfaceGlobal.outer_rect().left,
@@ -3273,33 +3279,33 @@ void __cdecl scroll_hide(GraphicWin *window, Scroll *scroll) {
             Win::screen_buffer_.set_clip(&area);
             do_sound();
             while (static_cast<DWORD>(timeGetTime() - started)
-                   < static_cast<DWORD>(WindowAnimationFrameDelay) / 2)
+                   < static_cast<DWORD>(WindowAnimationFrameDelay) / 2) {
                 do_sound();
+            }
         }
         Win::screen_buffer_.restore_clip();
         WinFlipClipped = 0;
-        frame_x += PopupScrollHorizontalStep;
-    } else {
-        frame_x += horizontal_step;
     }
+    frame_x += PopupScrollHorizontalStep;
 
-    const int vertical_frame_step = IsMultiplayerNet != 0 ? 3 : 6;
-    const int vertical_iterations = vertical_frame_step + 1;
-    int closing_y = screen_top + PopupScrollVerticalFrameCount;
-    const bool enter_vertical_close = PopupScrollVerticalFrameCount > 1;
-    if (enter_vertical_close) {
+    // Native 0x45E910/0x45E917 keep separate copies of the restore position.
+    const int restore_x = area.left;
+    const int restore_y = area.top;
+    const int vertical_step = IsMultiplayerNet != 0 ? 3 : 6;
+    int closing_y = area.top + PopupScrollVerticalFrameCount;
+    if (PopupScrollVerticalFrameCount > 1) {
         Win::screen_buffer_.set_clip(&area);
-        int edge_y = frame_edge - 0xD;
         if ((GameDataStateStorage.fields_.game_preferences_ & PREF_AV_SLIDING_WINDOWS) != 0
             && IsMultiplayerNet == 0) {
             WinFlipClipped = 1;
-            for (int frame = 0; frame < vertical_iterations; ++frame) {
+            for (int frame = 0; frame < vertical_step + 1; ++frame) {
                 const DWORD started = timeGetTime();
-                screen_restore.copy(&Win::screen_buffer_, 0, 0, area.left, screen_top,
-                                    area_width, area_height);
-                int draw_y = closing_y;
-                if (draw_y >= edge_y) draw_y = edge_y;
-                window_frame.draw(&Win::screen_buffer_, 9, frame_x, draw_y, 1, 1);
+                screen_restore.copy(&Win::screen_buffer_, 0, 0, restore_x, restore_y,
+                                    screen_restore.pixel_width(),
+                                    screen_restore.pixel_height());
+                window_frame.draw(&Win::screen_buffer_, 9, frame_x,
+                                  closing_y < frame_edge - 0xD ? closing_y : frame_edge - 0xD,
+                                  1, 1);
                 Win::screen_buffer_.set_clip(&vertical_strip);
                 interface_background.draw(&Win::screen_buffer_, 9,
                     MainInterfaceGlobal.outer_rect().left,
@@ -3309,30 +3315,24 @@ void __cdecl scroll_hide(GraphicWin *window, Scroll *scroll) {
                 Win::screen_buffer_.set_clip(&area);
                 do_sound();
                 while (static_cast<DWORD>(timeGetTime() - started)
-                       < static_cast<DWORD>(WindowAnimationFrameDelay) / 2)
+                       < static_cast<DWORD>(WindowAnimationFrameDelay) / 2) {
                     do_sound();
+                }
             }
             Win::screen_buffer_.restore_clip();
             WinFlipClipped = 0;
         }
+        window->Buffer::restore_clip();
     }
 
-    RECT original_buffer_clip = window->Buffer::clip_rect();
-    if (enter_vertical_close)
-        window->Buffer::set_clip(&original_buffer_clip);
-
-    RECT local_area = area;
-    local_area.left -= screen_left;
-    local_area.right -= screen_left;
-    local_area.top -= screen_top;
-    local_area.bottom -= screen_top;
-    window->Buffer::set_clip(&local_area);
+    // Native 0x45EA97 negates each origin once and adds it to both edges.
+    scroll_offset_rect(&area, -original_area.left, -original_area.top);
+    window->Buffer::set_clip(&area);
     window->fill(9);
-    int final_y_screen = closing_y;
-    if (final_y_screen < local_area.top) final_y_screen = local_area.top;
-    const int final_y = final_y_screen - screen_top;
     window_frame.draw(static_cast<Buffer *>(window), 9,
-                      frame_x - screen_left, final_y, 1, 1);
-    window->Buffer::set_clip(&original_buffer_clip);
+                      frame_x - original_area.left,
+                      (closing_y > area.top ? closing_y : area.top) - original_area.top,
+                      1, 1);
+    window->Buffer::restore_clip();
     scroll->hide();
 }

@@ -5024,40 +5024,60 @@ void __cdecl load_interface(int mode) {
     Buffer &canvas = g_PCX_PARSE_TEMP_BUFFER1;
     GraphicWinFieldA0CDefault = &def_caption_draw;
     canvas.load_pcx("iface.pcx", 0, 10, 0xEC);
-    int *palette_cells[10] = {&PopupThemeWindowColor, &MessageWinTextColor,
-        &PopupThemeButtonColor, &PopupThemeTextShadow, &MessageWinTextBackground,
-        &PopupThemeColorB4, &PopupThemeSurfaceColor, &PopupThemeBevelUpper,
-        &PopupThemeBevelLower, &DiploKnownTechColor};
-    for (int color = 0; color < 10; ++color)
-        *palette_cells[color] = canvas.get_pixel(0x3A3, 2 + color * 11);
+    // WORKAROUND(type): the image walks one ten-int colour table at 0x68A5A0
+    // (0x455641..0x455664); the tree still declares its cells as separate
+    // globals in game.cpp, messagewin.cpp, diplowin.cpp and this file.
+    int y = 2;
+    for (int *cell = &PopupThemeWindowColor; cell < &PopupThemeWindowColor + 10; ++cell, y += 11)
+        *cell = canvas.get_pixel(0x3A3, y);
 
     canvas.change_color(0x108, 0x109);
-    Sprite *frames[11] = {&g_IFACE_GENERAL_WINDOWS_TOP_LEFT_SPRITE,
-        &g_IFACE_GENERAL_WINDOWS_TOP_RIGHT_SPRITE,
-        &g_IFACE_GENERAL_WINDOWS_BOT_LEFT_SPRITE,
-        &g_IFACE_GENERAL_WINDOWS_BOT_RIGHT_SPRITE,
-        &g_IFACE_GENERAL_WINDOWS_TOP_MID_SPRITE,
-        &g_IFACE_GENERAL_WINDOWS_BOT_MID_SPRITE,
-        &g_IFACE_GENERAL_WINDOWS_MID_LEFT_SPRITE,
-        &g_IFACE_GENERAL_WINDOWS_MID_RIGHT_SPRITE,
-        &g_IFACE_GENERAL_WINDOWS_NONCAP_LEFT_SPRITE,
-        &g_IFACE_GENERAL_WINDOWS_NONCAP_MID_SPRITE,
-        &g_IFACE_GENERAL_WINDOWS_NONCAP_RIGHT_SPRITE};
-    const int rectangles[11][4] = {
-        {0x223,0x26,0x4D,0x42},{0x296,0x26,0x3D,0x42},
-        {0x223,0x90,0x4D,0x29},{0x296,0x90,0x3D,0x29},
-        {0x271,0x26,0x24,0x42},{0x271,0x90,0x24,0x29},
-        {0x223,0x69,0x4D,0x26},{0x296,0x69,0x3D,0x26},
-        {0x223,0xC3,0x23,0x1F},{0x247,0xC3,0x30,0x1F},
-        {0x278,0xC3,0x24,0x1F}};
-    for (int frame = 0; frame < 11; ++frame) {
-        canvas.change_color(0x107, 0x109);
-        canvas.change_color(0x106, 0x109);
-        frames[frame]->extract(&canvas, 0x109, rectangles[frame][0],
-            rectangles[frame][1], rectangles[frame][2], rectangles[frame][3], 0);
-    }
-    NCSprites defaults = {frames[0],frames[1],frames[2],frames[3],frames[4],
-        frames[6],frames[7],frames[5],frames[9],frames[8],frames[10]};
+    canvas.change_color(0x107, 0x109);
+    canvas.change_color(0x106, 0x109);
+    g_IFACE_GENERAL_WINDOWS_TOP_LEFT_SPRITE.extract(&canvas, 0x109, 0x223, 0x26, 0x4D, 0x42, 0);
+    canvas.change_color(0x107, 0x109);
+    canvas.change_color(0x106, 0x109);
+    g_IFACE_GENERAL_WINDOWS_TOP_RIGHT_SPRITE.extract(&canvas, 0x109, 0x296, 0x26, 0x3D, 0x42, 0);
+    canvas.change_color(0x107, 0x109);
+    canvas.change_color(0x106, 0x109);
+    g_IFACE_GENERAL_WINDOWS_BOT_LEFT_SPRITE.extract(&canvas, 0x109, 0x223, 0x90, 0x4D, 0x29, 0);
+    canvas.change_color(0x107, 0x109);
+    canvas.change_color(0x106, 0x109);
+    g_IFACE_GENERAL_WINDOWS_BOT_RIGHT_SPRITE.extract(&canvas, 0x109, 0x296, 0x90, 0x3D, 0x29, 0);
+    canvas.change_color(0x107, 0x109);
+    canvas.change_color(0x106, 0x109);
+    g_IFACE_GENERAL_WINDOWS_TOP_MID_SPRITE.extract(&canvas, 0x109, 0x271, 0x26, 0x24, 0x42, 0);
+    canvas.change_color(0x107, 0x109);
+    canvas.change_color(0x106, 0x109);
+    g_IFACE_GENERAL_WINDOWS_BOT_MID_SPRITE.extract(&canvas, 0x109, 0x271, 0x90, 0x24, 0x29, 0);
+    canvas.change_color(0x107, 0x109);
+    canvas.change_color(0x106, 0x109);
+    g_IFACE_GENERAL_WINDOWS_MID_LEFT_SPRITE.extract(&canvas, 0x109, 0x223, 0x69, 0x4D, 0x26, 0);
+    canvas.change_color(0x107, 0x109);
+    canvas.change_color(0x106, 0x109);
+    g_IFACE_GENERAL_WINDOWS_MID_RIGHT_SPRITE.extract(&canvas, 0x109, 0x296, 0x69, 0x3D, 0x26, 0);
+    canvas.change_color(0x107, 0x109);
+    canvas.change_color(0x106, 0x109);
+    g_IFACE_GENERAL_WINDOWS_NONCAP_LEFT_SPRITE.extract(&canvas, 0x109, 0x223, 0xC3, 0x23, 0x1F, 0);
+    canvas.change_color(0x107, 0x109);
+    canvas.change_color(0x106, 0x109);
+    g_IFACE_GENERAL_WINDOWS_NONCAP_MID_SPRITE.extract(&canvas, 0x109, 0x247, 0xC3, 0x30, 0x1F, 0);
+    canvas.change_color(0x107, 0x109);
+    canvas.change_color(0x106, 0x109);
+    g_IFACE_GENERAL_WINDOWS_NONCAP_RIGHT_SPRITE.extract(&canvas, 0x109, 0x278, 0xC3, 0x24, 0x1F, 0);
+
+    NCSprites defaults;
+    defaults.top_left = &g_IFACE_GENERAL_WINDOWS_TOP_LEFT_SPRITE;
+    defaults.top_right = &g_IFACE_GENERAL_WINDOWS_TOP_RIGHT_SPRITE;
+    defaults.bottom_left = &g_IFACE_GENERAL_WINDOWS_BOT_LEFT_SPRITE;
+    defaults.bottom_right = &g_IFACE_GENERAL_WINDOWS_BOT_RIGHT_SPRITE;
+    defaults.top = &g_IFACE_GENERAL_WINDOWS_TOP_MID_SPRITE;
+    defaults.left = &g_IFACE_GENERAL_WINDOWS_MID_LEFT_SPRITE;
+    defaults.bottom = &g_IFACE_GENERAL_WINDOWS_BOT_MID_SPRITE;
+    defaults.right = &g_IFACE_GENERAL_WINDOWS_MID_RIGHT_SPRITE;
+    defaults.noncaption_middle = &g_IFACE_GENERAL_WINDOWS_NONCAP_MID_SPRITE;
+    defaults.noncaption_left = &g_IFACE_GENERAL_WINDOWS_NONCAP_LEFT_SPRITE;
+    defaults.noncaption_right = &g_IFACE_GENERAL_WINDOWS_NONCAP_RIGHT_SPRITE;
     GraphicWin::set_def_nc_sprites(&defaults);
     GraphicWin::load_all_nc_sprites_from_defs();
 
@@ -5077,8 +5097,18 @@ void __cdecl load_interface(int mode) {
     PushButtonDefaults[11] = &g_BASEWIN_SPRITES[25];
     PushButtonDefaults[5] = &g_BASEWIN_SPRITES[20];
     PushButtonDefaults[14] = &g_BASEWIN_SPRITES[26];
-    const int push_zero_slots[12] = {6,15,7,16,3,12,0,9,1,10,8,17};
-    for (int slot = 0; slot < 12; ++slot) PushButtonDefaults[push_zero_slots[slot]] = 0;
+    PushButtonDefaults[6] = 0;
+    PushButtonDefaults[15] = 0;
+    PushButtonDefaults[7] = 0;
+    PushButtonDefaults[16] = 0;
+    PushButtonDefaults[3] = 0;
+    PushButtonDefaults[12] = 0;
+    PushButtonDefaults[0] = 0;
+    PushButtonDefaults[9] = 0;
+    PushButtonDefaults[1] = 0;
+    PushButtonDefaults[10] = 0;
+    PushButtonDefaults[8] = 0;
+    PushButtonDefaults[17] = 0;
     FlatButtonDefaultTopLeft[0] = &g_BASEWIN_SPRITES[18];
     FlatButtonDefaultTopLeft[1] = &g_BASEWIN_SPRITES[21];
     FlatButtonDefaultTopLeft[2] = &g_BASEWIN_SPRITES[24];
@@ -5098,31 +5128,31 @@ void __cdecl load_interface(int mode) {
         - g_IFACE_GENERAL_WINDOWS_BOT_MID_SPRITE.top_offset();
     InterfaceThirdCaptionHeight = g_UNUSED_SPRITE_VAR08.source_height() + g_UNUSED_SPRITE_VAR08.top_offset();
     InterfaceThirdBottomBorderThickness = g_UNUSED_SPRITE_VAR04.height() - g_UNUSED_SPRITE_VAR04.top_offset();
-    InterfaceFourthBorderThickness = g_UNUSED_SPRITE_VAR16.source_width() + g_UNUSED_SPRITE_VAR16.left_offset();
-    InterfaceFourthBottomBorderThickness = g_UNUSED_SPRITE_VAR13.height() - g_UNUSED_SPRITE_VAR13.top_offset();
     FlatButtonDefaultTopTiles[1] = &g_BASEWIN_SPRITES[22];
     FlatButtonDefaultTopRight[1] = &g_BASEWIN_SPRITES[23];
-    {
-        for (int state = 0; state < 3; ++state) FlatButtonDefaultBottomLeft[state] = 0;
-    }
-    {
-        for (int state = 0; state < 3; ++state) FlatButtonDefaultBottomRight[state] = 0;
-    }
-    {
-        for (int state = 0; state < 3; ++state) FlatButtonDefaultBottomTiles[state] = 0;
-    }
-    {
-        for (int state = 0; state < 3; ++state) FlatButtonDefaultLeftTiles[state] = 0;
-    }
-    {
-        for (int state = 0; state < 3; ++state) FlatButtonDefaultRightTiles[state] = 0;
-    }
-    {
-        for (int state = 0; state < 3; ++state) FlatButtonDefaultCenterTiles[state] = 0;
-    }
+    FlatButtonDefaultBottomLeft[0] = 0;
+    FlatButtonDefaultBottomLeft[1] = 0;
+    FlatButtonDefaultBottomLeft[2] = 0;
+    FlatButtonDefaultBottomRight[0] = 0;
+    FlatButtonDefaultBottomRight[1] = 0;
+    FlatButtonDefaultBottomRight[2] = 0;
+    FlatButtonDefaultBottomTiles[0] = 0;
+    FlatButtonDefaultBottomTiles[1] = 0;
+    FlatButtonDefaultBottomTiles[2] = 0;
+    FlatButtonDefaultLeftTiles[0] = 0;
+    FlatButtonDefaultLeftTiles[1] = 0;
+    FlatButtonDefaultLeftTiles[2] = 0;
+    FlatButtonDefaultRightTiles[0] = 0;
+    FlatButtonDefaultRightTiles[1] = 0;
+    FlatButtonDefaultRightTiles[2] = 0;
+    FlatButtonDefaultCenterTiles[0] = 0;
+    FlatButtonDefaultCenterTiles[1] = 0;
+    FlatButtonDefaultCenterTiles[2] = 0;
     InterfaceDefaultMetric = 45;
     InterfaceTopLeftMetric = 10;
     InterfaceMidRightMetric = 10;
+    InterfaceFourthBorderThickness = g_UNUSED_SPRITE_VAR16.source_width() + g_UNUSED_SPRITE_VAR16.left_offset();
+    InterfaceFourthBottomBorderThickness = g_UNUSED_SPRITE_VAR13.height() - g_UNUSED_SPRITE_VAR13.top_offset();
     for (int window_id = 1; window_id < 8; ++window_id) {
         MapWin *window = MapWinTable[window_id];
         if (window != 0 && window->view_active_ != 0) {
@@ -5130,26 +5160,32 @@ void __cdecl load_interface(int mode) {
             display->set_frame_top_right(&g_UNUSED_SPRITE_VAR31);
             display->compute_min_size();
             // Reload the published slot after the call, as the original does.
-            static_cast<GraphicWin *>(MapWinTable[window_id])->on_redraw_nc(0, -1);
+            MapWinTable[window_id]->on_redraw_nc(0, -1);
         }
     }
     WinStaticDefaults[5] = InterfaceBorderThickness;
     WinStaticDefaults[1] = InterfaceCaptionHeight;
     canvas.load_pcx("interface.pcx", 0, 10, 0xEC);
-    for (int row = 0; row < 9; ++row) {
-        for (int part = 0; part < 3; ++part) {
+    for (int group = 0; group < 3; ++group) {
+        for (int member = 0; member < 3; ++member) {
+            const int row = group * 3 + member;
             canvas.change_color(0x107, 0x109);
             canvas.change_color(0x106, 0x109);
-            const int x = part == 0 ? 0x40 : part == 1 ? 0x44 : 0x88;
-            g_BASEWIN_SPRITES[row * 3 + part].extract(&canvas, 0x109, x,
-                1 + row * 21, part == 1 ? 0x43 : 3, 20, 0);
+            g_BASEWIN_SPRITES[row * 3].extract(&canvas, 0x109, 0x40, 1 + row * 21, 3, 20, 0);
+            canvas.change_color(0x107, 0x109);
+            canvas.change_color(0x106, 0x109);
+            g_BASEWIN_SPRITES[row * 3 + 1].extract(&canvas, 0x109, 0x44, 1 + row * 21, 0x43, 20, 0);
+            canvas.change_color(0x107, 0x109);
+            canvas.change_color(0x106, 0x109);
+            g_BASEWIN_SPRITES[row * 3 + 2].extract(&canvas, 0x109, 0x88, 1 + row * 21, 3, 20, 0);
         }
     }
-    for (int icon = 0; icon < 3; ++icon) {
+    int icon_y = 1;
+    for (int icon = 0; icon < 3; ++icon, icon_y += 19) {
         canvas.change_color(0x107, 0x109);
         canvas.change_color(0x106, 0x109);
         g_IFACE_CLOSE_X_SPRITES[icon].extract(&canvas, 0x109, 0xE3,
-            1 + icon * 19, 18, 18, 0);
+            icon_y, 18, 18, 0);
     }
     canvas.close();
     load_box_sprites();
