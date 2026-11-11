@@ -46,6 +46,7 @@ extern const char BufferJoinSpace[];
 #include "interface_fonts.h"
 #include "netdaemon.h"
 #include "popup.h"
+#include "rectangle_operations.h"
 
 extern int BreakthroughTurnsGlobal;
 extern int NetIncomeGlobal;
@@ -2371,6 +2372,14 @@ int __cdecl tut_check2(int veh_id);  // 0x004BA650, defined in tutwin.cpp
 */
 void SocialWin::init(int faction_id) {
     Buffer sheet;
+    // One RECT scratch local ([ebp-0x1C]) serves the panel split, every
+    // corner box and the window frame below.
+    RECT rect;
+    // 0x4B3BE4: soc_rect's two outputs own [ebp-0x40]/[ebp-0x3C]; they are
+    // never overlaid on the dead faction_id/positive slots, so they live at
+    // function scope. Both stay uninitialised, as in the image.
+    int out_a;
+    int out_b;
 
     for (int i = 0; i < 0x23; ++i) {
         flatButtons_[i].close();
@@ -2393,14 +2402,11 @@ void SocialWin::init(int faction_id) {
         a1 = -a1;
     }
     factionID_ = a1;
-    int wide_screen = (WinScreenWidth != 800) ? 1 : 0;
-    (void)wide_screen;
+    int wide_screen = WinScreenWidth != 800;
 
+    // 0x4B2848: two constants (4 and -4) = the expand helper with -4, -4.
     tutRect14_ = MainInterfaceGlobal.info_panel_frame();
-    tutRect14_.left += 4;
-    tutRect14_.right -= 4;
-    tutRect14_.top += 4;
-    tutRect14_.bottom -= 4;
+    social_expand_rect(&tutRect14_, -4, -4);
 
     tutRect1_.left = 0x271;
     tutRect1_.top = 4;
@@ -2418,9 +2424,10 @@ void SocialWin::init(int faction_id) {
         }
     }
 
-    tutRect13_.left = 0x9a; tutRect13_.top = 0x13a; tutRect13_.right = 0x13c; tutRect13_.bottom = 0x14e;
-    tutRect12_.left = 0x13f; tutRect12_.top = 0x13a; tutRect12_.right = 0x1e1; tutRect12_.bottom = 0x14e;
-    tutRect11_.left = 0x1e4; tutRect11_.top = 0x13a; tutRect11_.right = 0x286; tutRect11_.bottom = 0x14e;
+    // 0x4B28C0: pointer-register stores = an inline RECT* helper.
+    set_rectangle_dimensions(&tutRect13_, 0x9a, 0x13a, 0xa2, 0x14);
+    set_rectangle_dimensions(&tutRect12_, 0x13f, 0x13a, 0xa2, 0x14);
+    set_rectangle_dimensions(&tutRect11_, 0x1e4, 0x13a, 0xa2, 0x14);
     categoryHeaders_[0].left = 0x1a;
     categoryHeaders_[0].top = 4;
     categoryHeaders_[0].right = 0x26e;
@@ -2449,79 +2456,97 @@ void SocialWin::init(int faction_id) {
     tooltipFactionPower_.right = 0x306;
     tooltipFactionPower_.bottom = 0x12d;
 
-    {
-        int left = MainInterfaceGlobal.main_frame_rect().left + 7;
-        int bottom = MainInterfaceGlobal.lower_frame_rect().bottom - 7;
-        int top = MainInterfaceGlobal.lower_frame_rect().top + 7;
-        int split = ((MainInterfaceGlobal.lower_frame_rect().right - left) - 4) / 3 - 3 + left;
-        tooltipEconomy_.left = left;
-        tooltipEconomy_.top = top;
-        tooltipEconomy_.right = split;
-        tooltipEconomy_.bottom = bottom;
-        int width = (split - left) + 3;
-        split += width;
-        tooltipPsych_.left = left + width;
-        tooltipPsych_.top = top;
-        tooltipPsych_.right = split;
-        tooltipPsych_.bottom = bottom;
-        int right = MainInterfaceGlobal.lower_frame_rect().right - 7;
-        tooltipLabs_.left = split + 3;
-        tooltipLabs_.top = top;
-        tooltipLabs_.right = right;
-        tooltipLabs_.bottom = bottom;
-        tutRect9_.left = MainInterfaceGlobal.main_frame_rect().left + 4;
-        tutRect9_.top = MainInterfaceGlobal.main_frame_rect().top + 4;
-        tutRect9_.right = MainInterfaceGlobal.main_frame_rect().right - 4;
-        tutRect9_.bottom = tooltipLabs_.top - 6;
-        tooltipEffects_ = MainInterfaceGlobal.right_frame_rect();
-        tooltipEffects_.left += 4;
-        tooltipEffects_.right -= 4;
-        tooltipEffects_.top += 4;
-        tooltipEffects_.bottom -= 4;
-    }
+    // The three lower panels: the lower frame, widened to the main frame's
+    // left edge, inset by 4 then by 3 (0x4B2BDF: two unfolded adds), split
+    // into thirds; each next panel is the previous one shifted by its width
+    // plus the 3-pixel gap. 0x4B2BD7 keeps the copy's dead left store.
+    rect = MainInterfaceGlobal.lower_frame_rect();
+    rect.left = MainInterfaceGlobal.main_frame_rect().left;
+    social_expand_rect(&rect, -4, -4);
+    social_expand_rect(&rect, -3, -3);
+    rect.right = rect.left + (rect.right - rect.left + 3) / 3 - 3;
+    tooltipEconomy_ = rect;
+    offset_rect(&rect, rect.right - rect.left + 3, 0);
+    tooltipPsych_ = rect;
+    offset_rect(&rect, rect.right - rect.left + 3, 0);
+    // 0x4B2C5F re-reads the lower frame's right edge (add eax,-7).
+    rect.right = MainInterfaceGlobal.lower_frame_rect().right - 7;
+    tooltipLabs_ = rect;
 
-    // The three category frames and their header strips, inside
-    // tutRects1_[3..8].
-    RECT *frame = &tutRects1_[3];
-    frame[0].left = tooltipEconomy_.left + 3;
-    frame[0].top = tooltipEconomy_.top + 3;
-    frame[0].right = tooltipEconomy_.left + 0x17;
-    frame[0].bottom = tooltipEconomy_.top + 0x17;
-    frame[1].left = tooltipEconomy_.right - 0x17;
-    frame[1].top = tooltipEconomy_.top + 3;
-    frame[1].right = tooltipEconomy_.right - 3;
-    frame[1].bottom = tooltipEconomy_.top + 0x17;
-    frame[2].left = tooltipPsych_.left + 3;
-    frame[2].top = tooltipPsych_.top + 3;
-    frame[2].right = tooltipPsych_.left + 0x17;
-    frame[2].bottom = tooltipPsych_.top + 0x17;
-    frame[3].left = tooltipPsych_.right - 0x17;
-    frame[3].top = tooltipPsych_.top + 3;
-    frame[3].right = tooltipPsych_.right - 3;
-    frame[3].bottom = tooltipPsych_.top + 0x17;
-    frame[4].left = tooltipLabs_.left + 3;
-    frame[4].top = tooltipLabs_.top + 3;
-    frame[4].right = tooltipLabs_.left + 0x17;
-    frame[4].bottom = tooltipLabs_.top + 0x17;
-    frame[5].left = tooltipLabs_.right - 0x17;
-    frame[5].top = tooltipLabs_.top + 3;
-    frame[5].right = tooltipLabs_.right - 3;
-    frame[5].bottom = tooltipLabs_.top + 0x17;
+    rect = MainInterfaceGlobal.main_frame_rect();
+    social_expand_rect(&rect, -4, -4);
+    rect.bottom = tooltipLabs_.top - 6;
+    tutRect9_ = rect;
 
-    tutRects1_[0].left = tooltipEconomy_.left + 3;
-    tutRects1_[0].top = tooltipEconomy_.bottom - 0x11;
-    tutRects1_[0].right = tooltipEconomy_.left + 0x1b;
-    tutRects1_[0].bottom = tooltipEconomy_.bottom - 3;
-    tutRects1_[1].left = tooltipPsych_.left + 3;
-    tutRects1_[1].top = tooltipPsych_.bottom - 0x11;
-    tutRects1_[1].right = tooltipPsych_.left + 0x1b;
-    tutRects1_[1].bottom = tooltipPsych_.bottom - 3;
-    tutRects1_[2].left = tooltipLabs_.left + 3;
-    tutRects1_[2].top = tooltipLabs_.bottom - 0x11;
-    tutRects1_[2].right = tooltipLabs_.left + 0x1b;
-    tutRects1_[2].bottom = tooltipLabs_.bottom - 3;
+    tooltipEffects_ = MainInterfaceGlobal.right_frame_rect();
+    social_expand_rect(&tooltipEffects_, -4, -4);
 
-    font1_.init(DefaultFontFace, 0xe, 1);
+    // Header toggle boxes, two per panel: economy -> [3],[4], psych ->
+    // [7],[8], labs -> [5],[6] (image order 0x4B2D1F..0x4B2EE9).
+    rect = tooltipEconomy_;
+    rect.left += 3;
+    rect.right = rect.left + 0x14;
+    rect.top += 3;
+    rect.bottom = rect.top + 0x14;
+    tutRects1_[3] = rect;
+    rect = tooltipEconomy_;
+    rect.top += 3;
+    rect.right -= 3;
+    rect.bottom = rect.top + 0x14;
+    rect.left = rect.right - 0x14;
+    tutRects1_[4] = rect;
+    rect = tooltipPsych_;
+    rect.left += 3;
+    rect.right = rect.left + 0x14;
+    rect.top += 3;
+    rect.bottom = rect.top + 0x14;
+    tutRects1_[7] = rect;
+    rect = tooltipPsych_;
+    rect.top += 3;
+    rect.right -= 3;
+    rect.bottom = rect.top + 0x14;
+    rect.left = rect.right - 0x14;
+    tutRects1_[8] = rect;
+    rect = tooltipLabs_;
+    rect.left += 3;
+    rect.right = rect.left + 0x14;
+    rect.top += 3;
+    rect.bottom = rect.top + 0x14;
+    tutRects1_[5] = rect;
+    rect = tooltipLabs_;
+    rect.top += 3;
+    rect.right -= 3;
+    rect.bottom = rect.top + 0x14;
+    rect.left = rect.right - 0x14;
+    tutRects1_[6] = rect;
+
+    // Lock boxes in each panel's lower-left corner.
+    rect = tooltipEconomy_;
+    rect.left += 3;
+    rect.bottom -= 3;
+    rect.right = rect.left + 0x18;
+    rect.top = rect.bottom - 0xe;
+    tutRects1_[0] = rect;
+    rect = tooltipPsych_;
+    rect.left += 3;
+    rect.bottom -= 3;
+    rect.right = rect.left + 0x18;
+    rect.top = rect.bottom - 0xe;
+    tutRects1_[1] = rect;
+    rect = tooltipLabs_;
+    rect.left += 3;
+    rect.bottom -= 3;
+    rect.right = rect.left + 0x18;
+    rect.top = rect.bottom - 0xe;
+    tutRects1_[2] = rect;
+
+    // 0x4B2FB0: the screen-width test survives as a dead `test` before the
+    // first Font::init; both arms are the same size.
+    // WORKAROUND(decl): a literal `wide_screen ? 0xe : 0xe` folds in the
+    // front end and drops the 0x4B2806 setne; a non-literal arm survives to
+    // the optimiser, whose merged arms leave the dead test.
+    int font_size = 0xe;
+    font1_.init(DefaultFontFace, wide_screen ? font_size : 0xe, 1);
     font2_.init(DefaultFontFace, 0xe, 1);
     font3_.init(DefaultLargeFontFace, 0xe, 1);
     font4_.init(DefaultLargeFontFace, 0xe, 1);
@@ -2535,22 +2560,31 @@ void SocialWin::init(int faction_id) {
 
     if (!effectIcons_[0].has_pixel_pointer()) {
         sheet.load_pcx(SocialWinPcxName, 0, 10, 0xec);
-        Sprite *icon = effectIcons_;
-        int row = 1;
-        for (int r = 0; r < 10; ++r) {
-            int col = 1;
-            for (int c = 0; c < 9; ++c) {
-                icon->extract(&sheet, WinFillColour, col, row, 0x1a, 0x1a, 0);
-                ++icon;
-                col += 0x1b;
+        {
+            // Ten rows of three triplets; x restarts only per row.
+            Sprite *icon = effectIcons_;
+            int y = 1;
+            for (int r = 0; r < 10; ++r) {
+                int x = 1;
+                for (int g = 0; g < 3; ++g) {
+                    for (int k = 0; k < 3; ++k) {
+                        icon->extract(&sheet, WinFillColour, x, y, 0x1a, 0x1a, 0);
+                        x += 0x1b;
+                        ++icon;
+                    }
+                }
+                y += 0x1b;
             }
-            row += 0x1b;
         }
-        effectIcons_[0].extract(&sheet, WinFillColour, 0xf5, 1, 0x18, 0xe, 0);
-        effectIcons_[0].extract(&sheet, WinFillColour, 0xf5, 0x10, 0x18, 0xe, 0);
-        for (int x = 1; x < 0x40; x += 0x15) {
-            energyAllocLock_[0].extract(&sheet, WinFillColour, 0x13b, x, 0x14, 0x14, 0);
-            energyAllocArrow_[0].extract(&sheet, WinFillColour, 0x150, x, 0x14, 0x14, 0);
+        energyAllocLock_[0].extract(&sheet, WinFillColour, 0xf5, 1, 0x18, 0xe, 0);
+        energyAllocLock_[1].extract(&sheet, WinFillColour, 0xf5, 0x10, 0x18, 0xe, 0);
+        {
+            int i = 0;
+            for (int y = 1; y < 0x40; y += 0x15) {
+                energyAllocArrow_[i].extract(&sheet, WinFillColour, 0x13b, y, 0x14, 0x14, 0);
+                energyAllocArrow_[i + 3].extract(&sheet, WinFillColour, 0x150, y, 0x14, 0x14, 0);
+                ++i;
+            }
         }
         {
             int y = 0x10e;
@@ -2570,11 +2604,11 @@ void SocialWin::init(int faction_id) {
         }
     }
     {
-        int y = 0x115;
+        int x = 0x115;
         for (int i = 0; i < 5; ++i) {
-            socEngModifierNums_[i].extract(&sheet, WinFillColour, y, 0x6f, 0xd, 0xd, 0);
-            socEngModifierNums_[1 + i].extract(&sheet, WinFillColour, y, 0x7d, 0xd, 0xd, 0);
-            y += 0xe;
+            socEngModifierNums_[2 * i].extract(&sheet, WinFillColour, x, 0x6f, 0xd, 0xd, 0);
+            socEngModifierNums_[2 * i + 1].extract(&sheet, WinFillColour, x, 0x7d, 0xd, 0xd, 0);
+            x += 0xe;
         }
     }
 
@@ -2586,108 +2620,86 @@ void SocialWin::init(int faction_id) {
             static_cast<Win *>(&ConsoleGlobal), 0, 0);
     }
     GraphicWin::fill(9);
+    rect.left = 0x17;
+    rect.top = 0;
+    rect.right = 0x30a;
+    rect.bottom = 0x162;
+    // 0x4B32F1: lea ecx,[esi+0x444] with no null test = a member call.
+    Buffer::box_sprite(&rect, &InterfaceBoxStyles[9]);
     {
-        RECT box_rect;
-        box_rect.left = 0x17;
-        box_rect.top = 0;
-        box_rect.right = 0x30a;
-        box_rect.bottom = 0x162;
-        static_cast<Buffer *>(static_cast<GraphicWin *>(this))->box_sprite(&box_rect,
-            &InterfaceBoxStyles[9]);
-    }
-    {
-        int net_min = 10 - PlayersData[factionID_].se_alloc_labs
-            - PlayersData[factionID_].se_alloc_psych;
+        // 0x4B331A..0x4B3384: factionID_ is read once; the two fields are
+        // re-read through the same scaled index after the member stores.
+        PlayerData *player = &PlayersData[factionID_];
+        int net_min = 10 - player->se_alloc_labs - player->se_alloc_psych;
         savedAlloc_[0] = net_min;
         pendingAlloc_[0] = net_min;
         currentAlloc_[0] = net_min;
-        int lo = PlayersData[factionID_].se_alloc_psych;
+        int lo = player->se_alloc_psych;
         savedAlloc_[1] = lo;
         pendingAlloc_[1] = lo;
         currentAlloc_[1] = lo;
-        int hi = PlayersData[factionID_].se_alloc_labs;
+        int hi = player->se_alloc_labs;
         savedAlloc_[2] = hi;
         pendingAlloc_[2] = hi;
         currentAlloc_[2] = hi;
     }
     reset();
 
-    {
-        ButtonGroup *group = buttonGroups_;
-        int row = 0;
-        int row_accum = 0;
-        do {
-            group->init(row, 0);
-            for (int col = 0; col < 4; ++col) {
-                if (society_avail(row, col, factionID_) == 0) {
-                    continue;
-                }
-                StringTemp[0] = 0;
-                // Preserve the LPSTR-to-string-table validation path for the
-                // category name pointers stored by Strings::put.
-                strcat(StringTemp, StringTable.get(
-                    SocialCategories[row].name[col]));
-                CharUpperA(StringTemp);
-                int idx = col + row * 4;
-                RECT *cell = &modelRects_[idx];
-                FlatButton *button = &flatButtons_[idx];
-                static_cast<BaseButton *>(button)->init(StringTemp, idx,
-                    cell->left, cell->top, cell->right - cell->left,
-                    cell->bottom - cell->top, this, 0);
-                button->hide();
-                static_cast<Buffer *>(button)->set_font(&font2_, 0, 0, 0);
-                button->redraw();
-                static_cast<BaseButton *>(button)->set_bubble_text(
-                    StringTable.get(Labels.strings_ptr[0xCF0 / 4]));
-                group->add(static_cast<BaseButton *>(button));
+    for (int row = 0; row < 4; ++row) {
+        buttonGroups_[row].init(row, 0);
+        for (int col = 0; col < 4; ++col) {
+            if (society_avail(row, col, factionID_) == 0) {
+                continue;
             }
-            group->set(social_category_value(socCategory_, row), 1);
-            ++row;
-            row_accum += 0x35;
-            ++group;
-        } while (row_accum < 0xd4);
+            StringTemp[0] = 0;
+            LPSTR name = SocialCategories[row].name[col];
+            strcat(StringTemp, StringTable.get(name));
+            CharUpperA(StringTemp);
+            int idx = col + row * 4;
+            RECT *cell = &modelRects_[idx];
+            FlatButton *button = &flatButtons_[idx];
+            static_cast<BaseButton *>(button)->init(StringTemp, idx,
+                cell->left, cell->top, cell->right - cell->left,
+                cell->bottom - cell->top, this, 0);
+            button->hide();
+            button->set_font(&font2_, 0, 0, 0);
+            button->redraw();
+            static_cast<BaseButton *>(button)->set_bubble_text(
+                StringTable.get(Labels.strings_ptr[0xCF0 / 4]));
+            buttonGroups_[row].add(static_cast<BaseButton *>(button));
+        }
+        // 0x4B34AF: the selected button id is the model plus row * 4.
+        buttonGroups_[row].set(
+            static_cast<int>(socCategory_.models_[row]) + row * 4, 1);
     }
 
+    // Effect column: eleven SocialEffects rows, row 3 skipped, so rows past
+    // it use the previous slot (0x4B3513..0x4B353F).
     buttonGroup_.init(2, 0);
-    {
-        int row = 0;
-        int button_offset = 0;
-        int entry = 0;
-        while (row < 11) {
-            if (row != 3) {
-                const char *name = SocialEffects[row].set2;
-                int col;
-                int offset;
-                if (row < 3) {
-                    col = row * 4;
-                    offset = button_offset;
-                } else {
-                    col = row * 4 - 4;
-                    entry -= 1;
-                    offset = button_offset - 0xB4C;
-                }
-                StringTemp[0] = 0;
-                strcat(StringTemp, name);
-                CharUpperA(StringTemp);
-                RECT *cell = &tutRects2_[entry];
-                int y = cell->top;
-                int x = cell->left;
-                FlatButton *flat_button = &flatButtons_[
-                    17 + offset / static_cast<int>(sizeof(FlatButton))];
-                BaseButton *button = static_cast<BaseButton *>(flat_button);
-                button->init(StringTemp, col + 0x11, x, y,
-                    cell->right - x, cell->bottom - y, this, 0);
-                button->hide();
-                static_cast<Buffer *>(flat_button)
-                    ->set_font(reinterpret_cast<Font *>(0), 0, 0, 0);
-                button->redraw();
-                button->set_bubble_text(
-                    StringTable.get(Labels.strings_ptr[0xCF4 / 4 + col]));
-            }
-            ++row;
-            entry += 1;
-            button_offset += 0xB4C;
+    for (row = 0; row < 11; ++row) {
+        if (row == 3) {
+            continue;
         }
+        int index;
+        if (row < 3) {
+            index = row;
+        } else {
+            index = row - 1;
+        }
+        StringTemp[0] = 0;
+        strcat(StringTemp, SocialEffects[row].set2);
+        CharUpperA(StringTemp);
+        RECT *cell = &tutRects2_[index];
+        FlatButton *button = &flatButtons_[17 + index];
+        static_cast<BaseButton *>(button)->init(StringTemp, index + 0x11,
+            cell->left, cell->top, cell->right - cell->left,
+            cell->bottom - cell->top, this, 0);
+        button->hide();
+        button->set_font(&font2_, 0, 0, 0);
+        button->redraw();
+        static_cast<BaseButton *>(button)->set_bubble_text(
+            StringTable.get(Labels.strings_ptr[0xCF4 / 4 + index]));
+        buttonGroup_.add(static_cast<BaseButton *>(button));
     }
 
     {
@@ -2701,7 +2713,7 @@ void SocialWin::init(int faction_id) {
             tutRect11_.left, tutRect11_.top, tutRect11_.right - tutRect11_.left,
             tutRect11_.bottom - tutRect11_.top, this, 0);
         button->hide();
-        static_cast<Buffer *>(button)->set_font(reinterpret_cast<Font *>(0), 0, 0, 0);
+        button->set_font(&font2_, 0, 0, 0);
         button->redraw();
     }
 
@@ -2717,7 +2729,7 @@ void SocialWin::init(int faction_id) {
             tutRect12_.right - tutRect12_.left,
             tutRect12_.bottom - tutRect12_.top, this, 0);
         base_button->hide();
-        static_cast<Buffer *>(button)->set_font(&font2_, 0, 0, 0);
+        button->set_font(&font2_, 0, 0, 0);
         base_button->redraw();
         base_button->set_bubble_text(
             StringTable.get(Labels.strings_ptr[0xD34 / 4]));
@@ -2734,62 +2746,123 @@ void SocialWin::init(int faction_id) {
             tutRect13_.right - tutRect13_.left,
             tutRect13_.bottom - tutRect13_.top, this, 0);
         base_button->hide();
-        static_cast<Buffer *>(button)->set_font(&font2_, 0, 0, 0);
+        button->set_font(&font2_, 0, 0, 0);
         base_button->redraw();
     }
 
+    // Each lock links its own sprite pointers to the two lock sprites.
+    // 0x4B380F/0x4B3849/0x4B387B: each lock's address is formed first and
+    // the sprite stores go through it ([reg+0xA24], [reg+0xA28]).
     {
-        CheckButton *lock0 = &energyLockButtons_[0];
-        CheckButton *lock1 = &energyLockButtons_[1];
-        CheckButton *lock2 = &energyLockButtons_[2];
-        // Each lock links its own sprite pointers to the energy lock and
-        // arrow runs.
-        lock0->unchecked_sprite_ = &energyAllocLock_[0];
-        lock0->checked_sprite_ = &energyAllocLock_[1];
-        lock0->init(tutRects1_[0].left,
-            tutRects1_[0].top, &MainInterfaceGlobal, 0);
-        lock1->unchecked_sprite_ = &energyAllocLock_[0];
-        lock1->checked_sprite_ = &energyAllocLock_[1];
-        lock1->init(tutRects1_[1].left,
-            tutRects1_[1].top, &MainInterfaceGlobal, 0);
-        lock2->unchecked_sprite_ = &energyAllocLock_[0];
-        lock2->checked_sprite_ = &energyAllocLock_[1];
-        lock2->init(tutRects1_[2].left,
-            tutRects1_[2].top, &MainInterfaceGlobal, 0);
-
-        lock0->hide();
-        lock1->hide();
-        lock2->hide();
+        CheckButton *lock = &energyLockButtons_[0];
+        lock->unchecked_sprite_ = &energyAllocLock_[0];
+        lock->checked_sprite_ = &energyAllocLock_[1];
+        lock->init(tutRects1_[0].left, tutRects1_[0].top,
+            &MainInterfaceGlobal, 0);
+    }
+    {
+        CheckButton *lock = &energyLockButtons_[1];
+        lock->unchecked_sprite_ = &energyAllocLock_[0];
+        lock->checked_sprite_ = &energyAllocLock_[1];
+        lock->init(tutRects1_[1].left, tutRects1_[1].top,
+            &MainInterfaceGlobal, 0);
+    }
+    {
+        CheckButton *lock = &energyLockButtons_[2];
+        lock->unchecked_sprite_ = &energyAllocLock_[0];
+        lock->checked_sprite_ = &energyAllocLock_[1];
+        lock->init(tutRects1_[2].left, tutRects1_[2].top,
+            &MainInterfaceGlobal, 0);
+    }
+    // 0x4B38AD: a counted loop over the three locks.
+    for (int lock = 0; lock < 3; ++lock) {
+        energyLockButtons_[lock].hide();
     }
 
-    // These six receivers are FlatButton elements 29..34; their original
-    // 0xB4C stride is sizeof(FlatButton). Each borrows its arrow triplet.
-    static const int toggle_bubbles[6] = { 0xD24, 0xD24, 0xD28, 0xD28, 0xD2C, 0xD2C };
-    for (int toggle_index = 0; toggle_index < 6; ++toggle_index) {
-        FlatButton *flat_toggle = &flatButtons_[29 + toggle_index];
-        BaseButton *toggle = static_cast<BaseButton *>(flat_toggle);
-        const RECT &rect = tutRects1_[3 + toggle_index];
-        toggle->init(0, 0x1d + toggle_index, rect.left, rect.top,
-            rect.right - rect.left, rect.bottom - rect.top,
-            &MainInterfaceGlobal, 0);
+    // Header toggles, flat buttons 29..34, written out one by one in the
+    // image (no loop). Even toggles borrow arrows 0..2, odd ones 3..5.
+    {
+        FlatButton *toggle = &flatButtons_[29];
+        static_cast<BaseButton *>(toggle)->init(0, 0x1d,
+            tutRects1_[3].left, tutRects1_[3].top,
+            tutRects1_[3].right - tutRects1_[3].left,
+            tutRects1_[3].bottom - tutRects1_[3].top, &MainInterfaceGlobal, 0);
         toggle->hide();
-        int first = (toggle_index % 2 == 0) ? 0 : 3;
-        flat_toggle->set_report_icons(&energyAllocArrow_[first + 0],
-            &energyAllocArrow_[first + 1], &energyAllocArrow_[first + 2]);
-        toggle->set_bubble_text(StringTable.get(
-            Labels.strings_ptr[toggle_bubbles[toggle_index] / 4]));
+        toggle->set_report_icons(&energyAllocArrow_[0], &energyAllocArrow_[1],
+            &energyAllocArrow_[2]);
+        static_cast<BaseButton *>(toggle)->set_bubble_text(
+            StringTable.get(Labels.strings_ptr[0xD24 / 4]));
+    }
+    {
+        FlatButton *toggle = &flatButtons_[30];
+        static_cast<BaseButton *>(toggle)->init(0, 0x1e,
+            tutRects1_[4].left, tutRects1_[4].top,
+            tutRects1_[4].right - tutRects1_[4].left,
+            tutRects1_[4].bottom - tutRects1_[4].top, &MainInterfaceGlobal, 0);
+        toggle->hide();
+        toggle->set_report_icons(&energyAllocArrow_[3], &energyAllocArrow_[4],
+            &energyAllocArrow_[5]);
+        static_cast<BaseButton *>(toggle)->set_bubble_text(
+            StringTable.get(Labels.strings_ptr[0xD24 / 4]));
+    }
+    {
+        FlatButton *toggle = &flatButtons_[31];
+        static_cast<BaseButton *>(toggle)->init(0, 0x1f,
+            tutRects1_[5].left, tutRects1_[5].top,
+            tutRects1_[5].right - tutRects1_[5].left,
+            tutRects1_[5].bottom - tutRects1_[5].top, &MainInterfaceGlobal, 0);
+        toggle->hide();
+        toggle->set_report_icons(&energyAllocArrow_[0], &energyAllocArrow_[1],
+            &energyAllocArrow_[2]);
+        static_cast<BaseButton *>(toggle)->set_bubble_text(
+            StringTable.get(Labels.strings_ptr[0xD28 / 4]));
+    }
+    {
+        FlatButton *toggle = &flatButtons_[32];
+        static_cast<BaseButton *>(toggle)->init(0, 0x20,
+            tutRects1_[6].left, tutRects1_[6].top,
+            tutRects1_[6].right - tutRects1_[6].left,
+            tutRects1_[6].bottom - tutRects1_[6].top, &MainInterfaceGlobal, 0);
+        toggle->hide();
+        toggle->set_report_icons(&energyAllocArrow_[3], &energyAllocArrow_[4],
+            &energyAllocArrow_[5]);
+        static_cast<BaseButton *>(toggle)->set_bubble_text(
+            StringTable.get(Labels.strings_ptr[0xD28 / 4]));
+    }
+    {
+        FlatButton *toggle = &flatButtons_[33];
+        static_cast<BaseButton *>(toggle)->init(0, 0x21,
+            tutRects1_[7].left, tutRects1_[7].top,
+            tutRects1_[7].right - tutRects1_[7].left,
+            tutRects1_[7].bottom - tutRects1_[7].top, &MainInterfaceGlobal, 0);
+        toggle->hide();
+        toggle->set_report_icons(&energyAllocArrow_[0], &energyAllocArrow_[1],
+            &energyAllocArrow_[2]);
+        static_cast<BaseButton *>(toggle)->set_bubble_text(
+            StringTable.get(Labels.strings_ptr[0xD2C / 4]));
+    }
+    {
+        FlatButton *toggle = &flatButtons_[34];
+        static_cast<BaseButton *>(toggle)->init(0, 0x22,
+            tutRects1_[8].left, tutRects1_[8].top,
+            tutRects1_[8].right - tutRects1_[8].left,
+            tutRects1_[8].bottom - tutRects1_[8].top, &MainInterfaceGlobal, 0);
+        toggle->hide();
+        toggle->set_report_icons(&energyAllocArrow_[3], &energyAllocArrow_[4],
+            &energyAllocArrow_[5]);
+        static_cast<BaseButton *>(toggle)->set_bubble_text(
+            StringTable.get(Labels.strings_ptr[0xD2C / 4]));
     }
 
     if (positive == 0) {
         if (tut_check2(8) != 0) {
             show(0);
             TutorialWindow.set_tour_stage(5);
-            int out_a = 0;
-            int out_b = 0;
             TutorialWindow.soc_rect(&TutWinSocWindow.categoryHeaders_[0], &out_a, &out_b);
             MapWin *window = MapWinTable[0];
-            GraphicWin *graphics = window != 0
-                ? static_cast<GraphicWin *>(window) : 0;
+            // 0x4B3C0B: test; jne to the vbase adjustment, null arm first.
+            GraphicWin *graphics = window == 0
+                ? 0 : static_cast<GraphicWin *>(window);
             TutorialWindow.tut_win(graphics, SocialWinTutorialName, out_a, out_b,
                 0, 1, -1, -1);
         }
