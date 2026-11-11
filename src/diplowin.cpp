@@ -1991,7 +1991,7 @@ Purpose: Publish the (a1,a2) id pair into the 0x30-byte dialog entry slot
          its predecessor's, then stage both into the 0x00737CD8 table slot
          and add it under the payload id through StringStruct::add.
 
-// ORIGINAL: 0x00441040 sub_441040 0x00441040-0x004410F1 FILE
+// ORIGINAL: 0x00441040 sub_441040 0x00441040-0x004410F1 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["DiploWin owns stringBox_ at +0xA388; StringBox::stringList_ is at +0x2B70, giving the exact original StringList receiver at DiploWindow+0xCEF8 = 0x00747BD0.", "The pinned words 0x747BD8/BC/E0/E4 therefore map to StringList head_/current_/entry_count_/current_position_; 0x737CD8 is the typed 8x8 destination list table."], "reason": "Move the global callback into the owner of both the observed source StringList member and destination transcript array; preserve cursor caching, pair-index arithmetic, target-field writes and add order."}
 // symbol    _sub_441040
 // TRIED: void __cdecl(int a1, int a2), direct linked-list walk transcription; diverges at #29 mov vs cmp, not chased further
