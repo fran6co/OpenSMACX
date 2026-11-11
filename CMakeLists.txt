@@ -230,7 +230,6 @@ set(OPENSMACX_SOURCES
     src/movie_media_decoder.cpp
     src/movie_media_decoder_g6.cpp
     src/movie_media_decoder_uv.asm
-    src/movie_decoder_frame.cpp
     src/movie_decoder_idct.cpp
     src/cursor.cpp
     src/imagebutton.cpp

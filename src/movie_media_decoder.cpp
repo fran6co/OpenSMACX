@@ -26,7 +26,6 @@
 #include "movie_media.h"
 #include "general.h"
 #include "movie_decoder_owner.h"
-#include "movie_decoder_frame.h"
 #include "movie_decoder_huffman.h"
 #include "movie_decoder_idct.h"
 
@@ -53,6 +52,8 @@ MediaDecoderProcessStorage movie_media_decoder_process_storage;
 MediaDecoderTableStorage movie_media_decoder_tables = {
 #include "movie_decoder_tables.inc"
 };
+// RECOVERY_OBJECT: v1 0x009C464C ?movie_media_frame_bit_state@@3UMovieDecoderBitState@@A
+MediaDecoderFrameBitState movie_media_frame_bit_state;
 // RECOVERY_OBJECT: v1 0x009C3000 ?movie_media_idct_storage@@3UMediaDecoderIdctStorage@@A
 MediaDecoderIdctStorage movie_media_idct_storage = {
 #include "movie_decoder_idct_storage.inc"
@@ -5904,43 +5905,6 @@ void refill_if_short(BitState &state) {
   }
 }
 
-void fill_block(uint8_t *base, int row_bytes, int fill) {
-  const int32_t value = fill;
-  for (int row = 0; row != 8; ++row) {
-    for (int x = 0; x != 8; ++x) {
-      std::memcpy(base + row * row_bytes + x * 4, &value, sizeof(value));
-    }
-  }
-}
-
-int32_t arithmetic_shift_right(uint32_t value, unsigned shift) {
-  // VC6's signed right shift is the pinned SAR. Existing uses supply the
-  // fixed counts 22 and 24; variable bit-reader shifts keep their own masks.
-  return static_cast<int32_t>(value) >> shift;
-}
-
-// IMUL retains the low dword, including overflow, in the original decoder.
-int32_t low32_product(int32_t left, int32_t right) {
-  const uint32_t product = static_cast<uint32_t>(left) *
-                           static_cast<uint32_t>(right);
-  int32_t result;
-  std::memcpy(&result, &product, sizeof(result));
-  return result;
-}
-
-uint32_t consume_block_code(BitState &bits,
-                                 const uint32_t table[64]) {
-  const uint32_t entry = table[bits.accumulator >> 26];
-  const unsigned count = entry & 0xff;
-  const uint32_t accumulator = bits.accumulator << (count & 0x1f);
-  const int32_t available_bits =
-      bits.available_bits - static_cast<int32_t>(count);
-  bits.available_bits = available_bits;
-  bits.accumulator = accumulator;
-  refill_if_short(bits);
-  return entry;
-}
-
 void pack_rows_eight(const uint8_t *source_a,
                      const uint8_t *source_b,
                      uint32_t *destination,
@@ -5962,99 +5926,6 @@ void pack_rows_eight(const uint8_t *source_a,
 
 void refill_word(BitState &state) { refill_if_short(state); }
 
-BlockHeader decode_block_header(BitState &state, bool header_enabled,
-                                const uint32_t block_huffman[64],
-                                uint8_t *coefficient_plane,
-                                int half_width) {
-  BlockHeader result;
-  result.flags = 0;
-  result.delta_mode = 0;
-  result.coefficient_cursor = coefficient_plane;
-  if (!header_enabled) return result;
-  uint32_t flags = 0;
-  uint32_t accumulator = state.accumulator;
-  int count = state.available_bits;
-  if ((accumulator & 0xc0000000u) == 0) {
-    accumulator <<= 2;
-    count -= 2;
-    state.accumulator = accumulator;
-    state.available_bits = count;
-    if (static_cast<uint32_t>(count) < 0x10u) {
-      const int8_t old_count = static_cast<int8_t>(count);
-      const uint8_t *const cursor = state.cursor;
-      const uint32_t word = read_word(cursor);
-      count += 0x10;
-      accumulator |= word << ((0x10 - old_count) & 0x1f);
-      state.available_bits = count;
-      state.accumulator = accumulator;
-      state.cursor = cursor + 2;
-    }
-  } else {
-    if ((accumulator & 0x80000000u) != 0) {
-      flags = 0x3ff;
-      accumulator <<= 1;
-      --count;
-    } else {
-      flags = accumulator >> 24;
-      accumulator <<= 8;
-      count -= 8;
-    }
-    state.accumulator = accumulator;
-    state.available_bits = count;
-    if (static_cast<uint32_t>(count) < 0x10u) {
-      const int8_t old_count = static_cast<int8_t>(count);
-      const uint8_t *const cursor = state.cursor;
-      const uint32_t word = read_word(cursor);
-      count += 0x10;
-      accumulator |= word << ((0x10 - old_count) & 0x1f);
-      // The native flag prelude publishes only ESI here. EAX/EDX remain
-      // register-local until the first prefix entry has been consumed.
-      state.cursor = cursor + 2;
-    }
-
-    uint32_t first = block_huffman[accumulator >> 26];
-    unsigned consumed = first & 0xff;
-    accumulator <<= (consumed & 0x1f);
-    count -= static_cast<int>(consumed);
-    state.available_bits = count;
-    state.accumulator = accumulator;
-    if (static_cast<uint32_t>(count) < 0x10u) {
-      const int8_t old_count = static_cast<int8_t>(count);
-      const uint8_t *const cursor = state.cursor;
-      const uint32_t word = read_word(cursor);
-      count += 0x10;
-      accumulator |= word << ((0x10 - old_count) & 0x1f);
-      // Likewise, this refill commits only the advanced input pointer.
-      state.cursor = cursor + 2;
-    }
-
-    const int32_t first_symbol = arithmetic_shift_right(first, 22);
-    uint32_t second = block_huffman[accumulator >> 26];
-    consumed = second & 0xff;
-    accumulator <<= (consumed & 0x1f);
-    count -= static_cast<int>(consumed);
-    state.available_bits = count;
-    state.accumulator = accumulator;
-    if (static_cast<uint32_t>(count) < 0x10u) {
-      const int8_t old_count = static_cast<int8_t>(count);
-      const uint8_t *const cursor = state.cursor;
-      const uint32_t word = read_word(cursor);
-      count += 0x10;
-      accumulator |= word << ((0x10 - old_count) & 0x1f);
-      state.available_bits = count;
-      state.accumulator = accumulator;
-      state.cursor = cursor + 2;
-    }
-    const int32_t second_symbol = arithmetic_shift_right(second, 22);
-    const int32_t position =
-        second_symbol * half_width + (first_symbol >> 1);
-    result.coefficient_cursor += position * 4;
-    result.delta_mode = static_cast<uint32_t>(first_symbol) & 1u;
-  }
-  result.flags = flags;
-  return result;
-}
-
 // ORIGINAL: 0x005CE85C sub_5ce85c 0x005CE85C-0x005CEA09 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["recovery/tasks/movie-decoder-owner-oct5.json", "pinned caller/body and shared-storage review; fresh VC6 public symbol", "Keep the semantic C++ name; body state is explicitly passed and uses the shared typed tables/bit-state owners. Do not copy executable bytes, use original-address calls, or treat a provisional owner name as native mangling."], "reason": "Faithful semantic media decoder owner recovery with normalized custom-register helper interfaces. Original identities, spans and historical findings retained; no matching, runtime or game acceptance granted."}
 // symbol    ?decode_coefficients@movie_decoder_huffman@@YAHAAUState@1@@Z
@@ -6066,7 +5937,7 @@ BlockHeader decode_block_header(BitState &state, bool header_enabled,
 // its State argument; decode_six_blocks passes only that shared state.
 // Offsets: +0x0 decoded words (DC at +0, AC from +4), +0x200 coefficient
 // byte offsets, +0x300 primary, +0xB00/+0xF00 secondary tables, +0x1400
-// scale words, +0x1500 cursor/accumulator/bit count.
+// scale words; movie_media_frame_bit_state holds cursor/accumulator/bit count.
 __declspec(naked) int decode_coefficients(State &) {
   __asm {
     push ebx
@@ -6075,9 +5946,9 @@ __declspec(naked) int decode_coefficients(State &) {
     push esi
     push edi
     push ebp
-    mov esi, dword ptr [movie_media_decoder_tables + 0x1500]
-    mov edi, dword ptr [movie_media_decoder_tables + 0x1504]
-    mov ebp, dword ptr [movie_media_decoder_tables + 0x1508]
+    mov esi, dword ptr [movie_media_frame_bit_state]
+    mov edi, dword ptr [movie_media_frame_bit_state + 4]
+    mov ebp, dword ptr [movie_media_frame_bit_state + 8]
     mov eax, edi
     sar eax, 0x18
     mov ebx, offset movie_media_decoder_tables + 4
@@ -6216,9 +6087,9 @@ __declspec(naked) int decode_coefficients(State &) {
     mov dword ptr [movie_media_decoder_tables + ecx], eax
     jmp dc_next_symbol
   dc_done:
-    mov dword ptr [movie_media_decoder_tables + 0x1500], esi
-    mov dword ptr [movie_media_decoder_tables + 0x1504], edi
-    mov dword ptr [movie_media_decoder_tables + 0x1508], ebp
+    mov dword ptr [movie_media_frame_bit_state], esi
+    mov dword ptr [movie_media_frame_bit_state + 4], edi
+    mov dword ptr [movie_media_frame_bit_state + 8], ebp
     mov eax, ebx
     pop ebp
     pop edi
@@ -6228,56 +6099,6 @@ __declspec(naked) int decode_coefficients(State &) {
     pop ebx
     ret
   }
-}
-
-void decode_six_blocks(SixBlockArgs &args) {
-  const int half_width = args.row_width >> 1;
-  BlockHeader header = decode_block_header(*args.bits, args.header_enabled,
-                                           args.block_huffman,
-                                           args.coefficient_plane, half_width);
-  const int luma_offsets[4] = {0, 0x20, 0x200, 0x220};
-  const int chroma_offsets[2] = {0, 0x100};
-  const uint32_t flags[6] = {1, 2, 4, 8, 0x10, 0x20};
-
-  for (int block = 0; block != 6; ++block) {
-    const bool chroma = block >= 4;
-    uint8_t *const target = chroma
-        ? args.scratch.chroma_16x8 + chroma_offsets[block - 4]
-        : args.scratch.luma_16x16 + luma_offsets[block];
-    if ((header.flags & flags[block]) == 0) {
-      // 0x005CE85C reads and advances *args.bits (the shared reader) in
-      // place and leaves the scaled DC value in coefficients[0].
-      const int decoded = decode_coefficients(*args.coefficient_state);
-      if (decoded == 1) {
-        fill_block(target, chroma ? 0x20 : 0x40,
-                   args.coefficient_state->coefficients[0]);
-      } else {
-        args.idct_rows(target, chroma ? 8 : 0x10);
-      }
-      continue;
-    }
-
-    const uint32_t code = consume_block_code(*args.bits,
-                                                   args.block_huffman);
-    const int extra = arithmetic_shift_right(code, 22) - 0x40;
-    if (!chroma) {
-      const int plane_offset = (block & 2) != 0 ? half_width * 0x20 : 0;
-      const int x_offset = (block & 1) != 0 ? 0x10 : 0;
-      ::sub_5d2d20(
-          reinterpret_cast<char *>(header.coefficient_cursor + plane_offset +
-                                   x_offset),
-          static_cast<int>(header.delta_mode), half_width,
-          reinterpret_cast<char *>(target), static_cast<char>(extra));
-    } else {
-      ::sub_5d2e00(reinterpret_cast<char *>(header.coefficient_cursor),
-                   block == 4 ? 1 : 0, half_width,
-                   reinterpret_cast<char *>(target),
-                   static_cast<char>(extra));
-    }
-  }
-
-  args.pack_rows(args.scratch.luma_16x16, args.scratch.chroma_16x8,
-                 args.destination, half_width * 4);
 }
 
 void transform_sixteen(const uint8_t *source_a,

@@ -155,10 +155,9 @@ typedef void(__fastcall *MovieChromaDelta)(char *src, int byte_offset,
 // (record mode) gives six block flags and a motion offset; each flagged block
 // is a delta copy from the coefficient plane, each other block is decoded by
 // 0x005CE85C and either filled with its DC value or inverse-transformed. The
-// residual is the reader's stores: this TU reaches the reader fields through
-// movie_media_decoder_tables, which aliases the block-prefix table, so VC6
-// keeps four refill stores the image drops (separate reader globals measured
-// 517/517 instructions in a stand-alone experiment).
+// reader is its own object (movie_media_frame_bit_state): while it was a
+// member of movie_media_decoder_tables, the variable-index block-prefix read
+// aliased it and VC6 kept four refill stores the image drops (521 vs 517).
 // ORIGINAL: 0x005D2E70 sub_5d2e70 0x005D2E70-0x005D35A4
 // RECOVERY_BINDING: v1 {"evidence": ["recovery/tasks/movie-decoder-owner-oct5.json", "pinned caller/body and shared-storage review; fresh VC6 public symbol", "Seed extent is 0x734 bytes. Preserve the 12-byte interval [0x005D35A4,0x005D35B0) as unresolved; do not extend this binding to the next mapped function. Normalize the original ECX/EDX/stack flow to typed pointers and one stack width."], "reason": "Faithful semantic media decoder owner recovery with normalized custom-register helper interfaces. Original identities, spans and historical findings retained; no matching, runtime or game acceptance granted."}
 // symbol    ?sub_5d2e70@@YIXPAE0H@Z
@@ -166,7 +165,7 @@ typedef void(__fastcall *MovieChromaDelta)(char *src, int byte_offset,
 void __fastcall sub_5d2e70(BYTE *coefficient_block,
                            BYTE *temporary_block, int row_width) {
   MediaDecoderFrameBitState *const bits =
-      &movie_media_decoder_tables.frame_bit_state;
+      &movie_media_frame_bit_state;
   BYTE *const luma = movie_media_decoder_process_storage.wide_block_output_bytes;
   BYTE *const chroma =
       movie_media_decoder_process_storage.narrow_block_output_bytes;
@@ -305,7 +304,7 @@ int __fastcall sub_5d35b0(MediaRuntime *runtime,
   }
 
   MediaDecoderFrameBitState *const bits =
-      &movie_media_decoder_tables.frame_bit_state;
+      &movie_media_frame_bit_state;
   const DWORD accumulator =
       (*reinterpret_cast<const unsigned short *>(compressed + 0x10) << 16) |
       *reinterpret_cast<const unsigned short *>(compressed + 0x12);

@@ -30,50 +30,10 @@ struct State {
 // This operation matches the word-refill path in 0x005CE85C.
 void refill_word(BitState &state);
 
-struct BlockHeader {
-  uint32_t flags;
-  uint32_t delta_mode;
-  uint8_t *coefficient_cursor;
-};
-
-// Header/flag prelude at entry to 0x005D2E70. Besides flags, the two codebook
-// entries advance the coefficient cursor and choose the first four block
-// sampling phase.
-BlockHeader decode_block_header(BitState &state, bool header_enabled,
-                                const uint32_t block_huffman[64],
-                                uint8_t *coefficient_plane,
-                                int half_width);
-
 // Typed body for original 0x005CE85C. Decodes the coefficient
 // sequence until the terminal table class is met. Keep the semantic C++ name;
 // the native writer owns the original mapping and emitted linker identity.
 int decode_coefficients(State &state);
-
-struct ScratchPlanes {
-  uint8_t *luma_16x16;
-  uint8_t *chroma_16x8;
-};
-
-struct SixBlockArgs {
-  uint8_t *coefficient_plane;
-  uint8_t *destination;
-  int row_width;
-  bool header_enabled;
-  ScratchPlanes scratch;
-  BitState *bits;
-  const uint32_t *block_huffman;
-  State *coefficient_state;
-  void (*idct_rows)(uint8_t *row_base, int stride_arg);
-  const uint8_t *byte_remap;
-  void (*pack_rows)(const uint8_t *component_rows,
-                    const uint8_t *chroma_rows,
-                    uint8_t *destination, int row_pitch_bytes);
-};
-
-// A typed host representation of the observed six-block path in 0x005D2E70.
-// Its actual caller supplies the current coefficient plane, output pointer,
-// and width. The remaining decoder tables/state are explicit borrowed views.
-void decode_six_blocks(SixBlockArgs &args);
 
 // Normalized C++ interface for 0x005CEA09. Its caller pushes these four
 // arguments. The wrapper advances source A by 0x40 bytes per tile, source B

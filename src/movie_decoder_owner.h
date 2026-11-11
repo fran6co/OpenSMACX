@@ -76,9 +76,15 @@ struct MediaDecoderTableStorage {
   uint32_t secondary_symbol_words_b[256];           // [009C404C,009C444C)
   uint32_t block_prefix_words[64];                  // [009C444C,009C454C)
   int32_t decoded_coefficient_scale_words[64];      // [009C454C,009C464C)
-  MediaDecoderFrameBitState frame_bit_state;        // [009C464C,009C4658)
 };
 extern MediaDecoderTableStorage movie_media_decoder_tables;
+
+// The frame bit reader at [009C464C,009C4658) is its own object, not a member
+// of the table window above: 0x005D2E70 reads block_prefix_words with a
+// variable index, and when the reader shares that aggregate VC6 must keep
+// refill stores the image drops (521 vs 517 instructions); a separate
+// reader object reproduces the image's 517.
+extern MediaDecoderFrameBitState movie_media_frame_bit_state;
 
 typedef char media_transform_workspace_window_size_check[
     sizeof(MediaTransformWorkspace) == 0x81c ? 1 : -1];
@@ -93,7 +99,7 @@ typedef char media_predictor_views_size_check[
 typedef char media_decoder_process_access_window_size_check[
     sizeof(MediaDecoderProcessStorage) == 0x60c ? 1 : -1];
 typedef char media_decoder_table_access_window_size_check[
-    sizeof(MediaDecoderTableStorage) == 0x150c ? 1 : -1];
+    sizeof(MediaDecoderTableStorage) == 0x1500 ? 1 : -1];
 typedef char media_decoder_frame_bit_state_size_check[
     sizeof(MediaDecoderFrameBitState) == 0x0c ? 1 : -1];
 

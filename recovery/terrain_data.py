@@ -23,7 +23,7 @@ _MOVIE_DECODER_DATA = (
     # does not establish the original object's allocation upper bound.
     ('movie_decoder_constants.inc', 0x009C9594, 0x009C9AA8, 'words',
      'accessed_window'),
-    ('movie_decoder_tables.inc', 0x009C314C, 0x009C4658, 'words',
+    ('movie_decoder_tables.inc', 0x009C314C, 0x009C464C, 'words',
      'accessed_window'),
     ('movie_decoder_process.inc', 0x009B2D64, 0x009B3370, 'zero',
      'accessed_window'),
