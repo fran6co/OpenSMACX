@@ -1685,19 +1685,16 @@ void CouncWin::show(int visible) {
 // The image's centred writes test the text for null before strlen, the
 // guarded-writer shape buffer.h uses for write_l; the receiver is this
 // window's own Buffer base, reached without a null-checked conversion.
-// WORKAROUND(decl): stand-ins for guarded Buffer::write_cent_l overloads that
-// buffer.h does not provide inline.
+// The rectangle form is buffer.h's guarded write_cent_l(text, rect).
+// WORKAROUND(decl): stand-in for a guarded three-argument Buffer::write_cent_l
+// that buffer.h does not declare. Adding any Buffer member declaration shifts
+// VC6 codegen in unrelated includers (5 claims lost in console_commands,
+// datalink, faction_treaty, game and turn), so it stays local.
 static inline void council_leader_write_cent(CouncWin *win, char *text,
                                              int x_coord, int y_coord) {
     if (text != 0) {
         win->Buffer::write_cent_l(text, x_coord, y_coord,
                                   static_cast<int>(strlen(text)));
-    }
-}
-static inline void council_leader_write_cent(CouncWin *win, char *text,
-                                             RECT *rect) {
-    if (text != 0) {
-        win->Buffer::write_cent_l(text, rect, static_cast<int>(strlen(text)));
     }
 }
 
@@ -1820,7 +1817,7 @@ void CouncWin::draw_leader(int factionID) {
             }
             CharUpperA(StringTemp);
             Buffer::set_font(&font4_, 0, 0, 0);
-            council_leader_write_cent(this, StringTemp, &badgeRect);
+            Buffer::write_cent_l(StringTemp, &badgeRect);
         }
     }
 
@@ -1838,7 +1835,7 @@ void CouncWin::draw_leader(int factionID) {
                                                                   : Labels.strings_ptr[0x808 / 4]));
         CharUpperA(StringTemp);
         Buffer::set_text_color(0xA0, -1, 1, 1);
-        council_leader_write_cent(this, StringTemp, &badgeRect);
+        Buffer::write_cent_l(StringTemp, &badgeRect);
     }
 
     soft_update(&rect);
