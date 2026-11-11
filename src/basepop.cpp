@@ -3305,7 +3305,7 @@ static inline int basepop_string_inline(BasePop *self, char *text) {
 //        pulled start's body out of the object and scored it against these
 //        703 bytes. 4 of 703 was start, not this function.
 
-// ORIGINAL: 0x00601BF0 ?start@BasePop@@QAEHPADPBDH0HPAUGraphicWin@@@Z 0x00601BF0-0x006025F9 FILE
+// ORIGINAL: 0x00601BF0 ?start@BasePop@@QAEHPADPBDH0HPAUGraphicWin@@@Z 0x00601BF0-0x006025F9 FILE BYTE_EXACT
 // symbol    ?start@BasePop@@QAEHPADPBDH0HPAVGraphicWin@@@Z
 //           The catalogue spells the sixth parameter `PAUGraphicWin@@` - a
 //           STRUCT - and this tree declares `class GraphicWin`, which mangles
@@ -3945,7 +3945,7 @@ int BasePop::calculate_dimensions() {
     return 0;
 }
 
-// ORIGINAL: 0x00604AB0 ?on_redraw@BasePop@@QAEXXZ 0x00604AB0-0x00604E31 FILE
+// ORIGINAL: 0x00604AB0 ?on_redraw@BasePop@@QAEXXZ 0x00604AB0-0x00604E31 FILE BYTE_EXACT
 // symbol    ?on_redraw@BasePop@@UAEXXZ
 // size      897 bytes
 // prototype void (__thiscall ?on_redraw@BasePop@@QAEXXZ)(BasePop* this)
