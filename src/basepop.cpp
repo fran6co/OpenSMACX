@@ -1633,7 +1633,7 @@ Purpose: The BasePop constructor. The base GraphicWin and declared members,
          sequence: two popup-list link insertions (the nodes are static
          objects of the image's .data), the default fonts/colours copied
          from the class defaults, and the state resets.
-// ORIGINAL: 0x00600860 ??0BasePop@@QAE@XZ 0x00600860-0x00600EF5;0x00662D80-0x00662E02
+// ORIGINAL: 0x00600860 ??0BasePop@@QAE@XZ 0x00600860-0x00600EF5;0x00662D80-0x00662E02 BYTE_EXACT
 // size      1685 bytes
 // prototype void (__thiscall ??0BasePop@@QAE@XZ)(BasePop* this)
 // callers   3   call targets   8
@@ -2138,7 +2138,7 @@ BasePop::BasePop() {
 
 // Fixed-slot bindings carried from 00600f00.cpp
 
-// ORIGINAL: 0x00600F00 ?close@BasePop@@QAEXXZ 0x00600F00-0x006015A9 FILE
+// ORIGINAL: 0x00600F00 ?close@BasePop@@QAEXXZ 0x00600F00-0x006015A9 FILE BYTE_EXACT
 // TRIED: calling StringStruct::remove_all() for the two entry walks (the
 //        function the image inlines here - same guard, same do/while, same
 //        three tail stores) instead of the artifact's hand-spelled walks.
@@ -3087,7 +3087,7 @@ int BasePop::on_modal() {
 
 /*
 Purpose: Measure the widest string the popup will draw.
-// ORIGINAL: 0x00604EA0 ?UNK2@BasePop@@QAEHXZ 0x00604EA0-0x0060500A FILE
+// ORIGINAL: 0x00604EA0 ?UNK2@BasePop@@QAEHXZ 0x00604EA0-0x0060500A FILE BYTE_EXACT
 // size      362 bytes
 // prototype int (__thiscall ?UNK2@BasePop@@QAEHXZ)(BasePop* this)
 // callers   0   call targets   2
