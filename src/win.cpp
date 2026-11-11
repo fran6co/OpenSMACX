@@ -7914,9 +7914,13 @@ void __cdecl Win::update_screen(RECT *area, Win *window) {
         }
         if (WinFlipSprite != 0) {
             // original 9B7A30 is RECT.left, 9B7A34 is RECT.top
+            // Writing top first gives the image's register plan (X in ebx,
+            // Y in edi; 128 of 130). The image still stores left before top;
+            // decks over all 24 store orders, x/y locals and make_rect /
+            // offset_rect spellings found no form with both.
             RECT rectangle;
-            rectangle.left = WinFlipSpriteX;
             rectangle.top = WinFlipSpriteY;
+            rectangle.left = WinFlipSpriteX;
             rectangle.right = WinClipWidth + WinFlipSpriteX;
             rectangle.bottom = WinClipHeight + WinFlipSpriteY;
             // IAT 669338 is USER32!IntersectRect.
