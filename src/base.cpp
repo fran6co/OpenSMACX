@@ -7788,7 +7788,7 @@ void __cdecl base_nutrient() {
 
 /*
 Purpose: Calculate minerals and ecological damage for the current base.
-// ORIGINAL: 0x004E9CB0 ?base_minerals@@YAXXZ 0x004E9CB0-0x004EA1EF
+// ORIGINAL: 0x004E9CB0 ?base_minerals@@YAXXZ 0x004E9CB0-0x004EA1EF BYTE_EXACT
 // LEVER: the five out-of-line has_fac() calls sit one inline level deep
 //   (selected_base_has_fac) and exceed VC6's inline budget, which expands
 //   shallower levels first, then in source order; the two later direct
