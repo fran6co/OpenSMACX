@@ -20,6 +20,7 @@
 // thunks and holds the turn loop, its upkeep phases, the network turn
 // rendezvous and control_game, in image order. The boundary is inferred from
 // the CRT init table and subject change; council.cpp follows without a marker.
+#define NETDAEMON_RESET_INLINE  // stand-in: see NetDaemon::reset in netdaemon.h
 #include "stdafx.h"
 
 // Original read_tamper/set_tamper at 0x0051E000/0x0051E090 use these registry exports through the SDK.
@@ -2950,48 +2951,6 @@ int __cdecl generators(int faction_id, int *count_out) {
 void __cdecl show_replay();
 void __cdecl quayle(int faction_id);
 
-namespace {
-inline void clear_multiplayer_endgame_state() {
-    NetDaemonNet.hang_up();
-    NetDaemonNet.primary_state_.leading_words_[0] = 0;
-    NetDaemonNet.primary_state_.leading_words_[1] = 0;
-    NetDaemonNet.primary_state_.leading_words_[2] = 0;
-    NetDaemonNet.primary_state_.flags_ = 0;
-    NetDaemonNet.primary_state_.trailing_words_[7] = 0;
-    NetDaemonNet.primary_state_.trailing_words_[6] = 0;
-    NetDaemonNet.channels_[0].leading_words_[1] = 0;
-    NetDaemonNet.channels_[0].leading_words_[0] = 0;
-    NetDaemonNet.channels_[0].trailing_words_[0] = 0;
-    NetDaemonNet.channels_[1].leading_words_[1] = 0;
-    NetDaemonNet.channels_[0].trailing_words_[9] = 0;
-    NetDaemonNet.channels_[1].leading_words_[0] = 0;
-    NetDaemonNet.channels_[1].trailing_words_[5] = 0;
-    NetDaemonNet.channels_[1].trailing_words_[4] = 0;
-    NetDaemonNet.primary_state_.trailing_words_[3] = 0;
-    NetDaemonNet.primary_state_.trailing_words_[4] = 0;
-    NetDaemonNet.primary_state_.trailing_words_[5] = 0;
-    NetDaemonNet.channels_[1].trailing_words_[3] = 0;
-    NetDaemonNet.channels_[1].trailing_words_[2] = 0;
-    NetDaemonNet.channels_[1].leading_words_[3] = 0;
-    NetDaemonNet.channels_[1].leading_words_[2] = 0;
-    NetDaemonNet.channels_[1].payload_.flags = 0;
-    NetDaemonNet.primary_state_.session_phase_ = 0;
-    NetDaemonNet.primary_state_.trailing_words_[0] = 0;
-    NetDaemonNet.network_message_count() = 0;
-    NetDaemonNet.channels_[1].trailing_words_[8] = 0;
-    NetDaemonNet.channels_[1].trailing_words_[7] = 0;
-    NetDaemonNet.primary_state_.trailing_words_[1] = 0;
-    NetDaemonNet.primary_state_.trailing_words_[2] = 0;
-    NetDaemonNet.channels_[1].trailing_words_[6] = 0xFF;
-    NetDaemonNet.channels_[0].payload_.flags = 0;
-    for (int index = 0; index < 8; ++index) {
-        NetDaemonNet.channels_[0].trailing_words_[index + 1] = 0;
-    }
-    NetDaemonNet.locks_.clear();
-    NetDaemonNet.AlphaNet::close();
-    IsMultiplayerNet = 0;
-}
-}  // namespace
 
 
 namespace {
@@ -3361,7 +3320,9 @@ int __cdecl end_of_game(int check_victory) {
         popp(ScriptPopupFile, "GAMEOVERMAN", 0, "stars_sm.pcx", 0) == 0) {
         GameRestartQueued = (IsMultiplayerNet == 0);
         if (IsMultiplayerNet != 0) {
-            clear_multiplayer_endgame_state();
+            NetDaemonNet.hang_up();
+            NetDaemonNet.reset();
+            IsMultiplayerNet = 0;
         }
         ExitTurnLoop = 1;
         return 1;
@@ -5463,7 +5424,9 @@ void __cdecl net_control_turn() {
             net_upkeep();
             GameDataStateStorage.fields_.net_turn_faction_ = 0;
             if (end_of_game(1) != 0) {
-                clear_multiplayer_endgame_state();
+                NetDaemonNet.hang_up();
+                NetDaemonNet.reset();
+                IsMultiplayerNet = 0;
                 return;
             }
         }

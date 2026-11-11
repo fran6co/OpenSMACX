@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+#define NETDAEMON_RESET_INLINE  // stand-in: see NetDaemon::reset in netdaemon.h
 #include "stdafx.h"
 #include "game.h"
 #include "interface_palette.h"
@@ -64,47 +65,6 @@ void __cdecl world_build();
 // Provisional descriptive name; complete lifecycle is not established.
 // RECOVERY_OBJECT: v2 0x00945820 0x00945824 ?MapSetupStatus@@3HA 0x0058D6B0
 int MapSetupStatus;
-
-static void multiplayer_reset_network_state() {
-    NetDaemon &network = NetDaemonNet;
-
-    network.primary_state_.leading_words_[0] = 0;      // 0x93E8C0
-    network.primary_state_.leading_words_[1] = 0;      // 0x93E8C4
-    network.primary_state_.leading_words_[2] = 0;      // 0x93E8C8
-    network.primary_state_.flags_ = 0;         // 0x93E8CC
-    network.primary_state_.trailing_words_[7] = 0;    // 0x93E8F0
-    network.primary_state_.trailing_words_[6] = 0;    // 0x93E8EC
-    network.channels_[0].leading_words_[1] = 0;      // 0x93E8FC
-    network.channels_[0].leading_words_[0] = 0;      // 0x93E8F8
-    network.channels_[0].trailing_words_[0] = 0;    // 0x93E90C
-    network.channels_[1].leading_words_[1] = 0;      // 0x93E938
-    network.channels_[0].trailing_words_[9] = 0;    // 0x93E930
-    network.channels_[1].leading_words_[0] = 0;      // 0x93E934
-    network.channels_[1].trailing_words_[5] = 0;    // 0x93E95C
-    network.channels_[1].trailing_words_[4] = 0;    // 0x93E958
-    network.primary_state_.trailing_words_[3] = 0;    // 0x93E8E0
-    network.primary_state_.trailing_words_[4] = 0;    // 0x93E8E4
-    network.primary_state_.trailing_words_[5] = 0;    // 0x93E8E8
-    network.channels_[1].trailing_words_[3] = 0;    // 0x93E954
-    network.channels_[1].trailing_words_[2] = 0;    // 0x93E950
-    network.channels_[1].leading_words_[3] = 0;      // 0x93E940
-    network.channels_[1].leading_words_[2] = 0;      // 0x93E93C
-    network.channels_[1].payload_.flags = 0;         // 0x93E944
-    network.primary_state_.session_phase_ = 0;    // 0x93E8D0
-    network.primary_state_.trailing_words_[0] = 0;    // 0x93E8D4
-    network.channels_[1].trailing_words_[8] = 0;    // 0x93E968
-    network.channels_[1].trailing_words_[7] = 0;    // 0x93E964
-    network.primary_state_.trailing_words_[1] = 0;    // 0x93E8D8
-    network.primary_state_.trailing_words_[2] = 0;    // 0x93E8DC
-    network.channels_[1].trailing_words_[6] = 0xFF; // 0x93E960
-    network.channels_[0].payload_.flags = 0;         // 0x93E908
-    for (int i = 1; i != 9; ++i) {
-        network.channels_[0].trailing_words_[i] = 0; // 0x93E910..0x93E92C
-    }
-
-    NetDaemonNet.locks_.clear();
-    NetDaemonNet.close();
-}
 
 static const char WorldSizePopupLabel[] = "WORLDSIZE";
 static const char CustomMapPopupLabel[] = "CUSTOMMAP";
@@ -647,7 +607,7 @@ top_menu_load_continue:
         parse_num(1, static_cast<int>(ScenarioSave.objectives_sudden_death_victory));
         parse_num(2, num_objectives(ConsoleGlobal.faction_id_, GameDataStateStorage.fields_.game_rules_ & 0x1000));
         parse_num(3, static_cast<int>(ScenarioSave.ending_mission_year));
-        X_pop(const_cast<char *>("INTRO"), "SCENARIO", 0, 0, 0, 0);
+        X_pop(const_cast<char *>("SCENARIO"), "INTRO", 0);
         ConsoleGlobal.set_move(1);
     }
     goto top_menu_normal_return;
@@ -702,10 +662,9 @@ int __cdecl multiplayer_init(int startup_mode) {
 
     if (IsMultiplayerPBEM != 0) {
         IsMultiplayerNet = 0;
-        result = top_menu(1);
-        if (result == 0) goto finish;
-        IsMultiplayerPBEM = 0;
-        return result;
+        int menu = top_menu(1);
+        if (menu != 0) IsMultiplayerPBEM = 0;
+        return menu;
     }
 
     NetDaemonNet.primary_state_.trailing_words_[1] = 0;
@@ -849,7 +808,7 @@ int __cdecl multiplayer_init(int startup_mode) {
                       Players[ConsoleGlobal.faction_id_].is_noun_plural);
             parse_says(3, Players[ConsoleGlobal.faction_id_].noun_faction, -1, -1);
             StringTemp[0] = '\0';
-            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0]));
+            strcat(StringTemp, label_get(0));
             strcat(StringTemp, " ");
             say_year(StringTemp);
             parse_says(4, StringTemp, -1, -1);
@@ -857,22 +816,21 @@ int __cdecl multiplayer_init(int startup_mode) {
             parse_num(1, static_cast<int>(ScenarioSave.objectives_sudden_death_victory));
             parse_num(2, num_objectives(ConsoleGlobal.faction_id_, GameDataStateStorage.fields_.game_rules_ & 0x1000u));
             parse_num(3, static_cast<int>(ScenarioSave.ending_mission_year));
-            X_pop(const_cast<char *>("INTRO"), "SCENARIO", 0);
+            X_pop(const_cast<char *>("SCENARIO"), "INTRO", 0);
         }
 
         result = ExitTurnLoop;
     } else {
         result = 1;
-        multiplayer_reset_network_state();
+        NetDaemonNet.reset();
     }
 
     if (result != 0) {
 do_cleanup:
         log_set_state(0);
-        multiplayer_reset_network_state();
+        NetDaemonNet.reset();
         IsMultiplayerNet = 0;
     }
-finish:
     return result;
 }
 

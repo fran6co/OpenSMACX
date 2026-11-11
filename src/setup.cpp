@@ -19,6 +19,7 @@
 // 2026-11-07 TU map). It opens with the g_CRASH_LANDING_WAVE init thunks and
 // holds new-game and scenario setup, faction setup/elimination and the social
 // engineering functions through social_select, in image order.
+#define NETDAEMON_RESET_INLINE  // stand-in: see NetDaemon::reset in netdaemon.h
 #include "stdafx.h"
 #include <shellapi.h>
 #include <ctype.h> // yearmotize preserves the original signed-byte CRT arguments.
@@ -1334,42 +1335,7 @@ search:
             parse_says(0, Players[successor].noun_faction, -1, -1);
             if (IsMultiplayerNet) {
                 NetDaemonNet.hang_up();
-                // These are the original individual lock-state words, not
-                // a clear of the whole surrounding network allocation.
-                NetDaemonNet.primary_state_.leading_words_[0] = 0;
-                NetDaemonNet.primary_state_.leading_words_[1] = 0;
-                NetDaemonNet.primary_state_.leading_words_[2] = 0;
-                NetDaemonNet.primary_state_.flags_ = 0;
-                NetDaemonNet.primary_state_.trailing_words_[7] = 0;
-                NetDaemonNet.primary_state_.trailing_words_[6] = 0;
-                NetDaemonNet.channels_[0].leading_words_[1] = 0;
-                NetDaemonNet.channels_[0].leading_words_[0] = 0;
-                NetDaemonNet.channels_[0].trailing_words_[0] = 0;
-                NetDaemonNet.channels_[1].leading_words_[1] = 0;
-                NetDaemonNet.channels_[0].trailing_words_[9] = 0;
-                NetDaemonNet.channels_[1].leading_words_[0] = 0;
-                NetDaemonNet.channels_[1].trailing_words_[5] = 0;
-                NetDaemonNet.channels_[1].trailing_words_[4] = 0;
-                NetDaemonNet.primary_state_.trailing_words_[3] = 0;
-                NetDaemonNet.primary_state_.trailing_words_[4] = 0;
-                NetDaemonNet.primary_state_.trailing_words_[5] = 0;
-                NetDaemonNet.channels_[1].trailing_words_[3] = 0;
-                NetDaemonNet.channels_[1].trailing_words_[2] = 0;
-                NetDaemonNet.channels_[1].leading_words_[3] = 0;
-                NetDaemonNet.channels_[1].leading_words_[2] = 0;
-                NetDaemonNet.channels_[1].payload_.flags = 0;
-                NetDaemonNet.primary_state_.session_phase_ = 0;
-                NetDaemonNet.primary_state_.trailing_words_[0] = 0;
-                NetDaemonNet.channels_[1].trailing_words_[8] = 0;
-                NetDaemonNet.channels_[1].trailing_words_[7] = 0;
-                NetDaemonNet.primary_state_.trailing_words_[1] = 0;
-                NetDaemonNet.primary_state_.trailing_words_[2] = 0;
-                NetDaemonNet.channels_[1].trailing_words_[6] = 255;
-                NetDaemonNet.channels_[0].payload_.vehicle_selection_follow = 0;
-                for (int lockword = 6; lockword < 14; ++lockword)
-                    NetDaemonNet.channels_[0].trailing_words_[lockword - 5] = 0;
-                NetDaemonNet.locks_.clear();
-                NetDaemonNet.close();
+                NetDaemonNet.reset();
                 IsMultiplayerNet = 0;
                 ExitTurnLoop = 1;
             }

@@ -22,6 +22,7 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682634 selects init 0x0052DB10-0x0052DB26, registering fini 0x0052DB30-0x0052DB3A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x0093CD90; scalar NetDaemon constructor/destructor 0x005389F0/0x00538D10.", "Current owner physical COFF selects _$E21 via .CRT$XCU and registers _$E19, with relocations naming ?NetDaemonNet@@3VNetDaemon@@A; the genuine global definition owns this lifetime, including possible inline scalar construction.", "Current helper names are compiler-output interpretations, not original debug symbols. These individual bindings do not establish full initialization order, allocation extents, linked retained selection or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned NetDaemonNet; no callback body is authored."}
 // symbol    _$E14
 #define JACKALVOICERX_CLEAR_OUT_OF_LINE  // stand-in: see net_class.h
+#define NETDAEMON_RESET_INLINE  // stand-in: see NetDaemon::reset in netdaemon.h
 #include "stdafx.h"
 #include <mmsystem.h>
 #include "netdaemon.h"
@@ -643,44 +644,7 @@ NetDaemon::NetDaemon() : AlphaNet() {
     // locks_ (eight PlayerLock::clear calls, then Lock::clear) and
     // deletion_list_ (DeletionList's constructor, inlined from this TU).
 
-    primary_state_.leading_words_[0] = 0;
-    primary_state_.leading_words_[1] = 0;
-    primary_state_.leading_words_[2] = 0;
-    primary_state_.flags_ = 0;
-    primary_state_.trailing_words_[7] = 0;
-    primary_state_.trailing_words_[6] = 0;
-    channels_[0].leading_words_[1] = 0;
-    channels_[0].leading_words_[0] = 0;
-    channels_[0].trailing_words_[0] = 0;
-    channels_[1].leading_words_[1] = 0;
-    channels_[0].trailing_words_[9] = 0;
-    channels_[1].leading_words_[0] = 0;
-    channels_[1].trailing_words_[5] = 0;
-    channels_[1].trailing_words_[4] = 0;
-    primary_state_.trailing_words_[3] = 0;
-    primary_state_.trailing_words_[4] = 0;
-    primary_state_.trailing_words_[5] = 0;
-    channels_[1].trailing_words_[3] = 0;
-    channels_[1].trailing_words_[2] = 0;
-    channels_[1].leading_words_[3] = 0;
-    channels_[1].leading_words_[2] = 0;
-    channels_[1].payload_.flags = 0;
-    primary_state_.session_phase_ = 0;
-    primary_state_.trailing_words_[0] = 0;
-    channels_[1].trailing_words_[8] = 0;
-    channels_[1].trailing_words_[7] = 0;
-    primary_state_.trailing_words_[1] = 0;
-    primary_state_.trailing_words_[2] = 0;
-    channels_[0].payload_.vehicle_selection_follow = 0;
-
-    // 0x1BD0 is lock_state_[2]'s eleventh dword - the ctor sets it to 0xFF.
-    channels_[1].trailing_words_[6] = 0xFF;
-    for (int32_t i = 0; i < 8; i++) {
-        channels_[0].trailing_words_[i + 1] = 0;
-    }
-
-    locks_.clear();
-    AlphaNet::close();
+    reset();
 }
 
 // The original closes transport before destroying Heap, ledger, then Net.
@@ -2350,45 +2314,7 @@ int NetDaemon::automated_lock(int *veh_id, int target) {
 
 int NetDaemon::init(int option) {
 
-    primary_state_.leading_words_[0] = 0;
-    primary_state_.leading_words_[1] = 0;
-    primary_state_.leading_words_[2] = 0;
-    primary_state_.flags_ = 0;
-    primary_state_.trailing_words_[7] = 0;
-    primary_state_.trailing_words_[6] = 0;
-    channels_[0].leading_words_[1] = 0;
-    channels_[0].leading_words_[0] = 0;
-    channels_[0].trailing_words_[0] = 0;
-    channels_[1].leading_words_[1] = 0;
-    channels_[0].trailing_words_[9] = 0;
-    channels_[1].leading_words_[0] = 0;
-    channels_[1].trailing_words_[5] = 0;
-    channels_[1].trailing_words_[4] = 0;
-    primary_state_.trailing_words_[3] = 0;
-    primary_state_.trailing_words_[4] = 0;
-    primary_state_.trailing_words_[5] = 0;
-    channels_[1].trailing_words_[3] = 0;
-    channels_[1].trailing_words_[2] = 0;
-    channels_[1].leading_words_[3] = 0;
-    channels_[1].leading_words_[2] = 0;
-    channels_[1].payload_.flags = 0;
-    primary_state_.session_phase_ = 0;
-    primary_state_.trailing_words_[0] = 0;
-    channels_[1].trailing_words_[8] = 0;
-    channels_[1].trailing_words_[7] = 0;
-    primary_state_.trailing_words_[1] = 0;
-    primary_state_.trailing_words_[2] = 0;
-    channels_[1].trailing_words_[6] = 0xff;
-    channels_[0].payload_.vehicle_selection_follow = 0;
-
-    uint32_t *p = &channels_[0].trailing_words_[1];
-    for (int i = 8; i != 0; i--) {
-        *p = 0;
-        p++;
-    }
-
-    locks_.clear();
-    AlphaNet::close();
+    reset();
 
     primary_state_.flags_ = 0;
     primary_state_.leading_words_[2] = 0;
@@ -7183,48 +7109,9 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0051DD00 sub_51dd00 0x0051DD00-0x0051DDE0 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0051dd00.cpp"], "reason": "Recover typed lock-entry reset, borrowed selection pointer clearing and ordered lock cleanup before qualified AlphaNet close."}
+// body src/netdaemon.h
 // symbol    ?reset@NetDaemon@@QAEXXZ
-void NetDaemon::reset() {
-    primary_state_.leading_words_[0] = 0;
-    primary_state_.leading_words_[1] = 0;
-    primary_state_.leading_words_[2] = 0;
-    primary_state_.flags_ = 0;
-    primary_state_.trailing_words_[7] = 0;
-    primary_state_.trailing_words_[6] = 0;
-
-    channels_[0].leading_words_[1] = 0;
-    channels_[0].leading_words_[0] = 0;
-    channels_[0].trailing_words_[0] = 0;
-    channels_[1].leading_words_[1] = 0;
-    channels_[0].trailing_words_[9] = 0;
-    channels_[1].leading_words_[0] = 0;
-    channels_[1].trailing_words_[5] = 0;
-    channels_[1].trailing_words_[4] = 0;
-
-    primary_state_.trailing_words_[3] = 0;
-    primary_state_.trailing_words_[4] = 0;
-    primary_state_.trailing_words_[5] = 0;
-    channels_[1].trailing_words_[3] = 0;
-    channels_[1].trailing_words_[2] = 0;
-    channels_[1].leading_words_[3] = 0;
-    channels_[1].leading_words_[2] = 0;
-    channels_[1].payload_.flags = 0;
-    primary_state_.session_phase_ = 0;
-    primary_state_.trailing_words_[0] = 0;
-    channels_[1].trailing_words_[8] = 0;
-    channels_[1].trailing_words_[7] = 0;
-    primary_state_.trailing_words_[1] = 0;
-    primary_state_.trailing_words_[2] = 0;
-    channels_[1].trailing_words_[6] = 0xFF;
-    channels_[0].payload_.vehicle_selection_follow = nullptr;
-
-    for (int i = 1; i <= 8; ++i) {
-        channels_[0].trailing_words_[i] = 0;
-    }
-
-    locks_.clear();
-    AlphaNet::close();
-}
+// BODY IN netdaemon.h, as an in-class `MEASURED` inline member.
 
 // Vehicle wait paths update the shared counter defined above.
 

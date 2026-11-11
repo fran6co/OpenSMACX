@@ -168,10 +168,6 @@ NetMsg NetMsgPrimary(4096, 8, 0);
 // RECOVERY_OBJECT: v1 0x007FFF80 ?NetMsgSecondary@@3VNetMsg@@A
 NetMsg NetMsgSecondary(-5, 40, 1);
 
-bool NetMsg::is_active() const {
-    return field_5384_ != 0;
-}
-
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0047ADA0 ??1NetMsg@@QAE@XZ 0x0047ADA0-0x0047AFD2;0x00656460-0x0065654F
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0047ada0.cpp"], "reason": "Complete genuine NetMsg owner implementation replaces executable aliases/forwarders; original seed establishes catalogue identity and spans, native emitted symbols are separately recorded. Full private application compile/link and both native flag sets checked; preserve seed and historical claims, no exactness granted by binding."}

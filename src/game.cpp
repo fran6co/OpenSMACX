@@ -21,6 +21,7 @@
 // ORIGINAL: 0x00477E30 _$E24 0x00477E30-0x00477E3A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682550 selects original initializer0x477e10..0x477e26, registering fini0x477e30..0x477e3a; complete independent decode establishes exclusive boundaries.", "Source-owned object?MultiWindow@@3VMultiWin@@A identifies original storage0x7fd648. Startup arguments/calls: call 0x47a590; push 0x477e30. Cleanup receiver/calls: mov ecx, 0x7fd648; jmp 0x47a430. Constructor/destructor targets retain their existing class-owned source mappings.", "Fresh physical src/game.cpp COFF selects _$E26 through .CRT$XCU and registers _$E24, both referencing the genuine source global. Original NetMsg argument triples and implicit PlanWin/Console most-derived flags are preserved by the existing declarations; complete virtual-base teardown is compiler-owned, not authored offsets.", "Current local helper symbols interpret present emission, not original debug names or historical TU boundaries. Object starts do not prove allocation extents. This binding establishes neither cross-TU global order, masked-reference correctness, strict linked preservation, dependency-provider equivalence nor runtime/game acceptance; excluded guarded sprite cleanup remains separate."], "reason": "Bind original exit identity to the genuine compiler-generated lifetime of ?MultiWindow@@3VMultiWin@@A in its actual source owner; no manual lifecycle callback is authored."}
 // symbol    _$E18
+#define NETDAEMON_RESET_INLINE  // stand-in: see NetDaemon::reset in netdaemon.h
 #include "stdafx.h"
 
 #include <shellapi.h>
@@ -3164,15 +3165,15 @@ int GameDataPlayerCountSnapshot;
 // NOTE: code bytes match the image with relocations masked; recover measure
 //       refuses it while ConsoleInfoWin/WorldClimateWorldWin lack bounded
 //       object spans. The image keeps two "unitfound_sm.pcx" literals (unpooled).
-// RECOVERY_LITERAL: v1 0x00691BF8 0x00691C09 $SG66397 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C0C 0x00691C19 $SG66398 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C1C 0x00691C2D $SG66401 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C30 0x00691C3B $SG66402 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C3C 0x00691C4C $SG66405 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C4C 0x00691C58 $SG66406 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C58 0x00691C60 $SG66413 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C60 0x00691C72 $SG66415 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C74 0x00691C7F $SG66416 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691BF8 0x00691C09 $SG66403 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C0C 0x00691C19 $SG66404 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C1C 0x00691C2D $SG66407 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C30 0x00691C3B $SG66408 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C3C 0x00691C4C $SG66411 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C4C 0x00691C58 $SG66412 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C58 0x00691C60 $SG66419 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C60 0x00691C72 $SG66421 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C74 0x00691C7F $SG66422 0x005BED20
 int __cdecl do_unity_crash(int x, int y, int faction_id) {
     const uint32_t event = MapTiles[static_cast<int>(MapLongitude) * y + (x >> 1)].bit2;
     if ((event & 0x80004000u) != 0x4000u) {
@@ -3421,43 +3422,7 @@ int __cdecl save_game(int mode) {
         if (IsMultiplayerNet != 0) {
             NetDaemonNet.hang_up();
 
-            NetDaemon &network = NetDaemonNet;
-            network.primary_state_.leading_words_[0] = 0;
-            network.primary_state_.leading_words_[1] = 0;
-            network.primary_state_.leading_words_[2] = 0;
-            network.primary_state_.flags_ = 0;
-            network.primary_state_.session_phase_ = 0;
-            network.primary_state_.trailing_words_[0] = 0;
-            network.primary_state_.trailing_words_[1] = 0;
-            network.primary_state_.trailing_words_[2] = 0;
-            network.primary_state_.trailing_words_[3] = 0;
-            network.primary_state_.trailing_words_[4] = 0;
-            network.primary_state_.trailing_words_[5] = 0;
-            network.primary_state_.trailing_words_[6] = 0;
-            network.primary_state_.trailing_words_[7] = 0;
-            network.channels_[0].leading_words_[0] = 0;
-            network.channels_[0].leading_words_[1] = 0;
-            network.channels_[0].payload_.flags = 0;
-            network.channels_[0].trailing_words_[0] = 0;
-            network.channels_[0].trailing_words_[9] = 0;
-            for (int word = 1; word <= 8; ++word) {
-                network.channels_[0].trailing_words_[word] = 0;
-            }
-            network.channels_[1].leading_words_[0] = 0;
-            network.channels_[1].leading_words_[1] = 0;
-            network.channels_[1].leading_words_[2] = 0;
-            network.channels_[1].leading_words_[3] = 0;
-            network.channels_[1].payload_.flags = 0;
-            network.channels_[1].trailing_words_[2] = 0;
-            network.channels_[1].trailing_words_[3] = 0;
-            network.channels_[1].trailing_words_[4] = 0;
-            network.channels_[1].trailing_words_[5] = 0;
-            network.channels_[1].trailing_words_[6] = 0xFF;
-            network.channels_[1].trailing_words_[7] = 0;
-            network.channels_[1].trailing_words_[8] = 0;
-
-            NetDaemonNet.locks_.clear();
-            NetDaemonNet.AlphaNet::close();
+            NetDaemonNet.reset();
             IsMultiplayerNet = 0;
         }
 

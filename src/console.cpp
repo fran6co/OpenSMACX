@@ -39,6 +39,8 @@
 // ORIGINAL: 0x0050E9A0 sub_50e9a0 0x0050E9A0-0x0050E9AA FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x682624 selects startup 0x50e980..0x50e996 and registers cleanup 0x50e9a0..0x50e9aa. Complete root decode proves the exclusive RET/JMP endpoints.", "The source-owned object ?ConsoleTimer@@3VTime@@A is selected by physical COFF constructor/destructor relocations; current emitted finalizer is identified by the adjacent symbol fact. Original receiver 0x939e88 belongs to this real global; preserve its class lifetime and registration.", "Buffer relative declaration order is PCX, interface array, middle, vehicle, special-text owner, Sprite, shared Buffer. Generated helpers are compiler output, not hand-authored address callbacks. Selected same-owner order does not establish full CRT order, dependency provider, linked preservation or runtime/game acceptance. Guarded cleanup is a separate unfinished obligation."], "reason": "Bind original fini operation to the genuine C++ lifetime of ?ConsoleTimer@@3VTime@@A; retain original behavior and remaining matching obligations."}
 // symbol    _$E19
+#define NETDAEMON_RESET_INLINE  // stand-in: see NetDaemon::reset in netdaemon.h
+#define NETMSG_IS_ACTIVE_INLINE  // stand-in: see NetMsg::is_active in netmsg.h
 #include "stdafx.h"
 
 // Distinct writable string cells observed at the original call sites.
@@ -3900,47 +3902,6 @@ void Console::use_time_bonus() {
     message_data(0x2306, 0, 0, 0, 0, 0);
 }
 
-namespace {
-inline void console_close_network(unsigned int final_channel_mask) {
-    NetDaemonNet.hang_up();
-    NetDaemon &network = NetDaemonNet;
-    network.primary_state_.leading_words_[0] = 0;
-    network.primary_state_.leading_words_[1] = 0;
-    network.primary_state_.leading_words_[2] = 0;
-    network.primary_state_.flags_ = 0;
-    network.primary_state_.trailing_words_[7] = 0;
-    network.primary_state_.trailing_words_[6] = 0;
-    network.channels_[0].leading_words_[1] = 0;
-    network.channels_[0].leading_words_[0] = 0;
-    network.channels_[0].trailing_words_[0] = 0;
-    network.channels_[1].leading_words_[1] = 0;
-    network.channels_[0].trailing_words_[9] = 0;
-    network.channels_[1].leading_words_[0] = 0;
-    network.channels_[1].trailing_words_[5] = 0;
-    network.channels_[1].trailing_words_[4] = 0;
-    network.primary_state_.trailing_words_[3] = 0;
-    network.primary_state_.trailing_words_[4] = 0;
-    network.primary_state_.trailing_words_[5] = 0;
-    network.channels_[1].trailing_words_[3] = 0;
-    network.channels_[1].trailing_words_[2] = 0;
-    network.channels_[1].leading_words_[3] = 0;
-    network.channels_[1].leading_words_[2] = 0;
-    network.channels_[1].payload_.flags = 0;
-    network.primary_state_.session_phase_ = 0;
-    network.primary_state_.trailing_words_[0] = 0;
-    network.channels_[1].trailing_words_[8] = 0;
-    network.channels_[1].trailing_words_[7] = 0;
-    network.primary_state_.trailing_words_[1] = 0;
-    network.primary_state_.trailing_words_[2] = 0;
-    network.channels_[1].trailing_words_[6] = final_channel_mask;
-    network.channels_[0].payload_.vehicle_selection_follow = 0;
-    for (int i = 6; i < 14; ++i) network.channels_[0].trailing_words_[i - 5] = 0;
-    NetDaemonNet.locks_.clear();
-    NetDaemonNet.AlphaNet::close();
-    IsMultiplayerNet = 0;
-}
-}
-
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00514990 ?quit_game@Console@@QAEXXZ 0x00514990-0x00514B2C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00514990.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
@@ -3959,7 +3920,11 @@ void Console::quit_game() {
         save_game(0);
     }
     if ((GameDataStateStorage.fields_.game_rules_ & 0x400) && !IsMultiplayerPBEM) auto_save();
-    if (IsMultiplayerNet) console_close_network(255);
+    if (IsMultiplayerNet) {
+        NetDaemonNet.hang_up();
+        NetDaemonNet.reset();
+        IsMultiplayerNet = 0;
+    }
     ExitTurnLoop = 1;
 // RECOVERY_LITERAL: v1 0x0068A7F0 0x0068A818 ??_C@_0CI@GLBI@Quit?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK@ 0x00514990
     log_say("Quit***********************************", 0, 0, 0);
@@ -3985,7 +3950,9 @@ void Console::new_game() {
         // Re-read after callbacks; the initial network refusal does not
         // establish that the network flag stayed clear during the popup.
         if (IsMultiplayerNet) {
-            console_close_network(255);
+            NetDaemonNet.hang_up();
+            NetDaemonNet.reset();
+            IsMultiplayerNet = 0;
         }
         ExitTurnLoop = 1;
         log_say("Quit***********************************", 0, 0, 0);
@@ -4195,7 +4162,9 @@ void Console::retire_game() { // 0x00514B30
     }
 
     if (IsMultiplayerNet) {
-        console_close_network(0xFF);
+        NetDaemonNet.hang_up();
+        NetDaemonNet.reset();
+        IsMultiplayerNet = 0;
         closed_network = 1;
     }
 
@@ -7781,7 +7750,9 @@ case 0x1B: // Escape
                 auto_save();
             }
             if (IsMultiplayerNet != 0) {
-                console_close_network(0xFF);
+                NetDaemonNet.hang_up();
+                NetDaemonNet.reset();
+                IsMultiplayerNet = 0;
             }
             ExitTurnLoop = 1;
             log_say("Quit***********************************", 0, 0, 0);
@@ -7931,7 +7902,9 @@ native_retirement_confirmation:
             auto_save();
         }
         if (IsMultiplayerNet != 0) {
-            console_close_network(0xFF);
+            NetDaemonNet.hang_up();
+            NetDaemonNet.reset();
+            IsMultiplayerNet = 0;
         }
         ExitTurnLoop = 1;
         log_say("Quit***********************************", 0, 0, 0);
@@ -8078,7 +8051,9 @@ case 0x30051:
                     auto_save();
                 }
                 if (IsMultiplayerNet != 0) {
-                    console_close_network(0xFF);
+                    NetDaemonNet.hang_up();
+                    NetDaemonNet.reset();
+                    IsMultiplayerNet = 0;
                 }
                 ExitTurnLoop = 1;
                 log_say("Quit***********************************", 0, 0, 0);
