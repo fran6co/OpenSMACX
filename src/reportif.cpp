@@ -1646,30 +1646,6 @@ void ReportWin::on_scrolling(int, int pos) {
     }
 }
 
-// F2..F8 and the category arrows select a report page the same way.
-static inline void report_key_page(int page) {
-    ReportIfGlobal.field_8_ = page;
-    if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 5) {
-        ReportIfGlobal.report(page, ReportIfGlobal.report_faction_id(), 0);
-    } else {
-        Win &modal_window = ReportWinGlobal;
-        modal_window.set_modal(0, pop_wait, &MainInterfaceGlobal);
-    }
-}
-
-static inline void report_key_rotate(int moved) {
-    ReportIfGlobal.field_8_ = moved % 7 + 2;
-    switch (ReportIfGlobal.field_8_) {
-    case 2: report_key_page(2); break;
-    case 3: report_key_page(3); break;
-    case 4: report_key_page(4); break;
-    case 5: report_key_page(5); break;
-    case 6: report_key_page(6); break;
-    case 7: report_key_page(7); break;
-    case 8: report_key_page(8); break;
-    }
-}
-
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00498280 0x00498694 0x004986B4 0x00498470
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00498280 0x004986B4 0x004986D0 0x004984A8
 /*
@@ -1712,6 +1688,7 @@ Purpose: The report window's keyboard handler. Always answers 1.
 // set_modal slot as the poll callback, not as a call target.
 */
 int ReportWin::on_key_click(int, int code) {
+    int moved;
     if (code == 0x0D) {
         ReportWinGlobal.Win::release_modal();
         ReportIfGlobal.SubInterface::release_iface_mode();
@@ -1727,13 +1704,13 @@ int ReportWin::on_key_click(int, int code) {
             ReportIfGlobal.SubInterface::release_iface_mode();
             return 1;
         }
-        if (code == 0x71) report_key_page(2);
-        else if (code == 0x72) report_key_page(3);
-        else if (code == 0x73) report_key_page(4);
-        else if (code == 0x74) report_key_page(5);
-        else if (code == 0x75) report_key_page(6);
-        else if (code == 0x76) report_key_page(7);
-        else if (code == 0x77) report_key_page(8);
+        if (code == 0x71) report_labs();
+        else if (code == 0x72) report_energy();
+        else if (code == 0x73) report_ops();
+        else if (code == 0x74) report_projects();
+        else if (code == 0x75) report_sat();
+        else if (code == 0x76) report_security();
+        else if (code == 0x77) report_score(0);
         return 1;
     }
     if (code < 0x21 || code > 0x28) {
@@ -1745,10 +1722,21 @@ int ReportWin::on_key_click(int, int code) {
     }
     switch (code) {
     case 0x25:
-        report_key_rotate(ReportIfGlobal.field_8_ + 4);
-        return 1;
+        moved = ReportIfGlobal.field_8_ + 4;
+        goto rotate;
     case 0x27:
-        report_key_rotate(ReportIfGlobal.field_8_ + 6);
+        moved = ReportIfGlobal.field_8_ + 6;
+    rotate:
+        ReportIfGlobal.field_8_ = moved % 7 + 2;
+        switch (ReportIfGlobal.field_8_) {
+        case 2: report_labs(); break;
+        case 3: report_energy(); break;
+        case 4: report_ops(); break;
+        case 5: report_projects(); break;
+        case 6: report_sat(); break;
+        case 7: report_security(); break;
+        case 8: report_score(0); break;
+        }
         return 1;
     case 0x26:
         if (field_C0F8_ == 0) return 1;
@@ -4476,40 +4464,14 @@ Status: Report dispatch and state transition recovered; the referenced page
 */
 void ReportIf::report(int report_id, int faction_id, int selection) {
     switch (report_page_history_[0]) {
-    case 2:
-        listBox1_.close();
-        flatButton1_.hide();
-        flatButton2_.hide();
-        break;
-    case 3:
-        ReportWinGlobal.listBox_.close();
-        // Fall through: energy and intel share both embedded lists.
-    case 0:
-        listBox1_.close();
-        listBox2_.close();
-        break;
-    case 1:
-    case 8:
-        break;
-    case 4:
-        close_ops();
-        break;
-    case 5:
-        if (field_8_ != 4 && field_8_ != 5) {
-            WorldClimateWorldWin.hide_all();
-            for (int i = 6; i <= 7; ++i) {
-                MainInterfaceGlobal.flat_button_[i].hide();
-            }
-        }
-        break;
-    case 6:
-        close_sat();
-        break;
-    case 7:
-        flatButton12_.hide();
-        flatButton14_.hide();
-        flatButton13_.hide();
-        break;
+    case 2: close_labs(); break;
+    case 3: close_energy(); break;
+    case 4: close_ops(); break;
+    case 5: close_projects(); break;
+    case 6: close_sat(); break;
+    case 7: close_security(); break;
+    case 8: close_score(); break;
+    case 0: close_intel(); break;
     }
 
     // The original tests only for a positive page: page 1 indexes the
@@ -5196,12 +5158,8 @@ void ReportIf::on_iface_selected(int item, int) {
                 case 6: value = BaseCurrent->population_size; break;
                 case 7: {
                     int vehicle = veh_at(BaseCurrent->x, BaseCurrent->y);
-                    if (vehicle >= 0) {
-                        while (Vehs[vehicle].prev_veh_id_stack >= 0)
-                            vehicle = Vehs[vehicle].prev_veh_id_stack;
-                        for (; vehicle >= 0; vehicle = Vehs[vehicle].next_veh_id_stack)
-                            ++value;
-                    }
+                    for (vehicle = veh_top(vehicle); vehicle >= 0; vehicle = Vehs[vehicle].next_veh_id_stack)
+                        ++value;
                     break;
                 }
                 case 8:
@@ -5268,43 +5226,65 @@ int ReportIf::on_iface_dialog_item_back_draw(::GraphicWin *, int, int, RECT *) {
 // ORIGINAL: 0x004A6330 ?on_iface_button_clicked@ReportIf@@QAEXH@Z 0x004A6330-0x004A6D10 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004a6330.cpp retained original identity, full spans and seed history", "recovery/tasks/interface-contract-report-closure.json authorized coupled owner recovery", "original:0x4a6330 complete control/data-access audit; ReportIf declarations and genuine ReportWin control storage"], "reason": "Recover ReportIf's button callback from the retained seed through its genuine SubInterface owner and ReportWin controls. Its current emitted virtual symbol is recorded separately from the historical catalogue spelling."}
 // TRIED: full transcription landed (MISMATCH #3). Used the brief's resolved jump tables directly (three switches, cases 0xcef-0xcf5, 0xcf0-0xcf3, and 2-8) rather than the raw `ja`+`jmp [eax*4+addr]` ranges alone. Caught a real Ghidra error via the raw bytes: every `*(uint*)(DAT_0090ea30+0x1c)` Ghidra prints is actually `[eax+0x38]` in the disassembly (`mov eax,[0x90ea30]; mov ecx,[eax+0x38]`), confirmed at both call sites that touch it. ReportIf/BaseWin/NetDaemon fields are all raw self+offset casts, not src/reportif.h's hypothesised layout, per the brief's warning.
+// The three log_say texts are this handler's own copies in the pinned image
+// (0x687280, 0x687298, 0x6872B8; on_left_click keeps a separate EDBC copy at
+// 0x686F04). The image's advanced-governor text ends in "set".
+// RECOVERY_LITERAL: v1 0x00687280 0x00687295 ??_C@_0BF@OIOC@Global?5EDBC?5base?5set?$AA@ 0x004A6330
+// RECOVERY_LITERAL: v1 0x00687298 0x006872B5 ??_C@_0BN@DPME@Global?5governor?5advanced?5set?$AA@ 0x004A6330
+// RECOVERY_LITERAL: v1 0x006872B8 0x006872CC ??_C@_0BE@HMND@Global?5governor?5off?$AA@ 0x004A6330
 // symbol    ?on_iface_button_clicked@ReportIf@@UAEXH@Z
 void ReportIf::on_iface_button_clicked(int button) {
-    int faction = ConsoleGlobal.faction_id_;
+    int row;
     if (button > 9999) {
         report_topic_changed_ = 1;
+        button -= 9999;
         flatButtonsA_[ReportIfGlobal.report_faction_id_ - 1].set_report_page_state(-1);
         flatButtonsA_[ReportIfGlobal.report_faction_id_ - 1].redraw();
-        flatButtonsA_[button - 10000].set_report_page_state(2);
-        flatButtonsA_[button - 10000].redraw();
-        report(ReportIfGlobal.field_8_, button - 9999, report_selection_);
-        return;
+        flatButtonsA_[button - 1].set_report_page_state(2);
+        flatButtonsA_[button - 1].redraw();
+        report(ReportIfGlobal.field_8_, button, report_selection_);
+        // A jump to the shared exit, not a return: either an early return or
+        // an else branch reloads the security block's this/button registers
+        // in the opposite order from the image.
+        goto done;
     }
-    if (field_8_ == 4 && report_faction_id_ == faction) {
+    if (field_8_ == 4 && report_faction_id_ == ConsoleGlobal.faction_id_) {
         switch (button) {
         case 0xCEF: {
             // Selection covers the entire original 512-record base allocation,
             // not merely the currently populated prefix.
-            for (int base = 0; base < 512; ++base)
-                if (Bases[base].faction_id_current == faction
-                    && Bases[base].faction_id_current == ReportIfGlobal.report_faction_id_)
-                    ReportWinGlobal.selected_bases_[base >> 5] |= 1u << (base & 31);
+            for (int base = 0; base < 512; ++base) {
+                if (Bases[base].faction_id_current == ConsoleGlobal.faction_id_
+                    && Bases[base].faction_id_current == ReportIfGlobal.report_faction_id_) {
+                    ReportWinGlobal.selected_bases_[base / 32] |= 1 << (base % 32);
+                }
+            }
+            int selected = 0;
             int count = 0;
-            for (int selected = 0; selected < 512; ++selected)
-                if (ReportWinGlobal.selected_bases_[selected >> 5] & (1u << (selected & 31))) ++count;
+            for (; selected < 512; ++selected) {
+                if (ReportWinGlobal.selected_bases_[selected / 32] & (1 << (selected % 32))) ++count;
+            }
             ReportWinGlobal.field_5A04_ = count == 1;
             break;
         }
-        case 0xCF0: case 0xCF1: case 0xCF2: case 0xCF3: {
+        case 0xCF0:
+        case 0xCF1:
+        case 0xCF2:
+        case 0xCF3: {
             log_say("Global EDBC base set", 0, 0, 0);
             for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
-                if (Bases[base].faction_id_current == faction
-                    && (ReportWinGlobal.selected_bases_[base >> 5] & (1u << (base & 31)))
+                if (Bases[base].faction_id_current == ConsoleGlobal.faction_id_
+                    && (ReportWinGlobal.selected_bases_[base >> 5] & (1 << (base & 31)))
                     && NetDaemonNet.lock_base(base, 0, -1, -1) == 0) {
                     TutWinBaseWindow.soft_zoom(base);
                     BaseCurrent->governor |= 0x80000000;
                     BaseCurrent->governor &= 0xF0FFFFFF;
-                    BaseCurrent->governor |= 0x01000000u << (button - 0xCF0);
+                    switch (button) {
+                    case 0xCF0: BaseCurrent->governor |= 0x1000000; break;
+                    case 0xCF1: BaseCurrent->governor |= 0x2000000; break;
+                    case 0xCF2: BaseCurrent->governor |= 0x4000000; break;
+                    case 0xCF3: BaseCurrent->governor |= 0x8000000; break;
+                    }
                     TutWinBaseWindow.gov_activate();
                     NetDaemonNet.unlock_base(base);
                 }
@@ -5312,22 +5292,23 @@ void ReportIf::on_iface_button_clicked(int button) {
             break;
         }
         case 0xCF4: {
-            log_say("Global governor advanced", 0, 0, 0);
-            bool configured = false;
+            log_say("Global governor advanced set", 0, 0, 0);
+            int configured = 0;
             for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
-                if (Bases[base].faction_id_current != faction
-                    || !(ReportWinGlobal.selected_bases_[base >> 5] & (1u << (base & 31)))) continue;
-                if (!configured) {
-                    TutWinBaseWindow.soft_zoom(base);
-                    if (TutWinBaseWindow.governor(1) != 0) break;
-                    configured = true;
-                }
-                if (NetDaemonNet.lock_base(base, 0, -1, -1) == 0) {
-                    TutWinBaseWindow.soft_zoom(base);
-                    BaseCurrent->governor = PlayersData[report_faction_id_].base_governor_adv;
-                    TutWinBaseWindow.gov_activate();
-                    draw_radius(BaseCurrent->x, BaseCurrent->y, 2, 2);
-                    NetDaemonNet.unlock_base(base);
+                if (Bases[base].faction_id_current == ConsoleGlobal.faction_id_
+                    && (ReportWinGlobal.selected_bases_[base >> 5] & (1 << (base & 31)))) {
+                    if (!configured) {
+                        TutWinBaseWindow.soft_zoom(base);
+                        if (TutWinBaseWindow.governor(1) != 0) break;
+                        configured = 1;
+                    }
+                    if (NetDaemonNet.lock_base(base, 0, -1, -1) == 0) {
+                        TutWinBaseWindow.soft_zoom(base);
+                        BaseCurrent->governor = PlayersData[report_faction_id_].base_governor_adv;
+                        TutWinBaseWindow.gov_activate();
+                        draw_radius(BaseCurrent->x, BaseCurrent->y, 2, 2);
+                        NetDaemonNet.unlock_base(base);
+                    }
                 }
             }
             break;
@@ -5335,8 +5316,8 @@ void ReportIf::on_iface_button_clicked(int button) {
         case 0xCF5: {
             log_say("Global governor off", 0, 0, 0);
             for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
-                if (Bases[base].faction_id_current == faction
-                    && (ReportWinGlobal.selected_bases_[base >> 5] & (1u << (base & 31)))
+                if (Bases[base].faction_id_current == ConsoleGlobal.faction_id_
+                    && (ReportWinGlobal.selected_bases_[base >> 5] & (1 << (base & 31)))
                     && NetDaemonNet.lock_base(base, 0, -1, -1) == 0) {
                     Bases[base].governor &= 0x7FFFFFFF;
                     draw_radius(Bases[base].x, Bases[base].y, 2, 2);
@@ -5347,58 +5328,89 @@ void ReportIf::on_iface_button_clicked(int button) {
         }
         }
         ReportWinGlobal.redraw();
-        faction = ConsoleGlobal.faction_id_;
     }
-    if (field_8_ == 7 && report_faction_id_ == faction) {
-        if (button == 0xCF6 || button == 0xCF7 || button == 0xCF8) {
-            for (int row = 0; row < 128; ++row) {
-                const int prototype_id = row < 64 ? row : report_faction_id_ * 64 - 64 + row;
-                const VehPrototype &prototype = VehPrototypes[prototype_id];
-                const int offense = Weapon[prototype.weapon_id].offense_rating;
-                const int filter = field_1E244_;
-                if (!(filter == 4 || (filter == 3 && offense == 0)
-                    || (filter < 3 && Chassis[prototype.chassis_id].triad == filter && offense != 0))) continue;
-                if (button == 0xCF6) {
-                    ReportWinGlobal.selected_prototypes_[row >> 5] |= 1u << (row & 31);
-                    continue;
-                }
-                if (!(ReportWinGlobal.selected_prototypes_[row >> 5] & (1u << (row & 31)))) continue;
-                if (diplo_lock(100) != 0) break;
-                for (int vehicle = 0; vehicle < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle) {
-                    Veh &record = Vehs[vehicle];
-                    const bool selected = button == 0xCF7
-                        ? static_cast<uint8_t>(record.unk_1) == report_faction_id_
-                            && record.proto_id == prototype_id
-                        : record.faction_id == report_faction_id_
-                            && record.proto_id == prototype_id;
-                    if (!selected || veh_jail(vehicle) != 0) continue;
-                    if (button == 0xCF7) {
-                        record.order = 0;
-                        record.state &= 0xFCFFBDFF;
-                        record.waypoint_count = 0;
-                    } else {
-                        record.order_auto_type = 0;
-                        record.state &= 0xFCFFBFFF;
-                        record.order = 0;
-                        record.state |= 0x200;
-                        record.waypoint_count = 0;
+    if (field_8_ == 7 && report_faction_id_ == ConsoleGlobal.faction_id_) {
+        int proto_id;
+        switch (button) {
+        case 0xCF8: {
+            for (row = 0; row < 128; ++row) {
+                proto_id = row < 64 ? row : report_faction_id_ * 64 + row - 64;
+                if ((field_1E244_ < 3
+                     && Chassis[VehPrototypes[proto_id].chassis_id].triad == field_1E244_
+                     && Weapon[VehPrototypes[proto_id].weapon_id].offense_rating)
+                    || (field_1E244_ == 3 && !Weapon[VehPrototypes[proto_id].weapon_id].offense_rating)
+                    || field_1E244_ == 4) {
+                    if (ReportWinGlobal.selected_prototypes_[row / 32] & (1 << (row % 32))) {
+                        if (diplo_lock(100)) break;
+                        for (int veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; ++veh_id) {
+                            if (Vehs[veh_id].faction_id == report_faction_id_
+                                && Vehs[veh_id].proto_id == proto_id && !veh_jail(veh_id)) {
+                                Vehs[veh_id].order = 0;
+                                Vehs[veh_id].state &= 0xFCFFBFFF;
+                                Vehs[veh_id].order_auto_type = 0;
+                                Vehs[veh_id].state |= 0x200;
+                                Vehs[veh_id].waypoint_count = 0;
+                                synch_veh(veh_id);
+                            }
+                        }
+                        diplo_unlock();
                     }
-                    synch_veh(vehicle);
                 }
-                diplo_unlock();
             }
+            break;
+        }
+        case 0xCF7: {
+            for (row = 0; row < 128; ++row) {
+                proto_id = row < 64 ? row : report_faction_id_ * 64 + row - 64;
+                if ((field_1E244_ < 3
+                     && Chassis[VehPrototypes[proto_id].chassis_id].triad == field_1E244_
+                     && Weapon[VehPrototypes[proto_id].weapon_id].offense_rating)
+                    || (field_1E244_ == 3 && !Weapon[VehPrototypes[proto_id].weapon_id].offense_rating)
+                    || field_1E244_ == 4) {
+                    if (ReportWinGlobal.selected_prototypes_[row / 32] & (1 << (row % 32))) {
+                        if (diplo_lock(100)) break;
+                        for (int veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; ++veh_id) {
+                            if (Vehs[veh_id].faction_id == report_faction_id_
+                                && Vehs[veh_id].proto_id == proto_id && !veh_jail(veh_id)) {
+                                Vehs[veh_id].order = 0;
+                                Vehs[veh_id].state &= 0xFCFFBDFF;
+                                Vehs[veh_id].waypoint_count = 0;
+                                synch_veh(veh_id);
+                            }
+                        }
+                        diplo_unlock();
+                    }
+                }
+            }
+            break;
+        }
+        case 0xCF6: {
+            for (row = 0; row < 128; ++row) {
+                proto_id = row < 64 ? row : report_faction_id_ * 64 + row - 64;
+                if ((field_1E244_ < 3
+                     && Chassis[VehPrototypes[proto_id].chassis_id].triad == field_1E244_
+                     && Weapon[VehPrototypes[proto_id].weapon_id].offense_rating)
+                    || (field_1E244_ == 3 && !Weapon[VehPrototypes[proto_id].weapon_id].offense_rating)
+                    || field_1E244_ == 4) {
+                    ReportWinGlobal.selected_prototypes_[row / 32] |= 1 << (row % 32);
+                }
+            }
+            break;
+        }
         }
         ReportWinGlobal.redraw();
     }
-    if (button >= 2 && button <= 8) {
-        ReportIfGlobal.field_8_ = button;
-        if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 5)
-            ReportIfGlobal.report(button, ReportIfGlobal.report_faction_id_, 0);
-        else {
-            Win &modal_window = ReportWinGlobal;
-            modal_window.set_modal(0, pop_wait, &MainInterfaceGlobal);
-        }
+    switch (button) {
+    case 2: report_labs(); break;
+    case 3: report_energy(); break;
+    case 4: report_ops(); break;
+    case 5: report_projects(); break;
+    case 6: report_sat(); break;
+    case 7: report_security(); break;
+    case 8: report_score(0); break;
     }
+done:
+    ;
 }
 
 /*
@@ -5730,7 +5742,8 @@ void ReportIf::draw_energy() {
             bases->item(StringTemp, base + 0x400);
         }
     }
-    listBox1_.reset_report_selection();
+    listBox1_.field_2C_ = 0;
+    listBox1_.clear_selection_index();
     listBox1_.Dialog::field_B4_ = 0;
     bases->ListBox::attach(&MainInterfaceGlobal, bases->Dialog::window_x_, bases->Dialog::window_y_, 0x80020);
     if (ReportWinGlobal.field_59B0_) {
@@ -5746,10 +5759,9 @@ void ReportIf::draw_energy() {
     MainInterfaceGlobal.Buffer::set_clip(MainInterfaceGlobal.buffer_working_rect());
 
     MainInterfaceGlobal.Buffer::set_clip(&field_50_);
-    int inset = field_1E230_ ? 0x4C : 0;
-    field_C_ = field_50_.left + inset;
+    field_C_ = field_50_.left + (field_1E230_ ? 0x4C : 0);
     field_10_ = field_50_.top;
-    field_14_ = report_rect_width(&field_50_) - inset;
+    field_14_ = report_rect_width(&field_50_) - (field_1E230_ ? 0x4C : 0);
     field_18_ = report_rect_height(&field_50_);
     StringTemp[0] = 0;
     MainInterfaceGlobal.Buffer::set_font(field_1E190_, field_1E194_, field_1E198_, 0);
@@ -5817,7 +5829,7 @@ void ReportIf::draw_energy() {
             strcat(StringTemp, StringTable.get(name));
             strcat(StringTemp, "|");
             strcat(StringTemp, "-");
-            if (has_project(SP_PLANETARY_ENERGY_GRID, report_faction_id_)) {
+            if (has_project(SP_SELF_AWARE_COLONY, report_faction_id_)) {
                 int odd = fac_maint(facility, report_faction_id_) * EnergyFacilityCounts[facility] & 1;
                 int cost = fac_maint(facility, report_faction_id_) * EnergyFacilityCounts[facility] / 2;
                 _itoa(cost, text_b, 10);
@@ -5832,7 +5844,8 @@ void ReportIf::draw_energy() {
             facilities->item(StringTemp, facility);
         }
     }
-    listBox2_.reset_report_selection();
+    listBox2_.field_2C_ = 0;
+    listBox2_.clear_selection_index();
     listBox2_.Dialog::field_B4_ = 0;
     facilities->ListBox::attach(&MainInterfaceGlobal, facilities->Dialog::window_x_, facilities->Dialog::window_y_, 0x80020);
     if (ReportWinGlobal.field_59B0_)
@@ -6048,14 +6061,8 @@ void ReportIf::draw_ops() {
                     base_compute(0);
                     int vehicle = veh_at(BaseCurrent->x, BaseCurrent->y);
                     int count = 0;
-                    if (vehicle >= 0) {
-                        while (Vehs[vehicle].prev_veh_id_stack >= 0) {
-                            vehicle = Vehs[vehicle].prev_veh_id_stack;
-                        }
-                        while (vehicle >= 0) {
-                            ++count;
-                            vehicle = Vehs[vehicle].next_veh_id_stack;
-                        }
+                    for (vehicle = veh_top(vehicle); vehicle >= 0; vehicle = Vehs[vehicle].next_veh_id_stack) {
+                        ++count;
                     }
                     if (count > best || winner + 1 == 0) {
                         best = count;
@@ -6098,7 +6105,8 @@ void ReportIf::draw_ops() {
             say_base(StringTemp, winner);
             list->item(StringTemp, 8);
         }
-        listBox1_.reset_report_selection();
+        listBox1_.field_2C_ = 0;
+        listBox1_.clear_selection_index();
         listBox1_.Dialog::field_B4_ = 0;
         list->ListBox::attach(&MainInterfaceGlobal, list->Dialog::window_x_, list->Dialog::window_y_, 0x80020);
         listBox1_.set_selected_id(ReportWinGlobal.shared_report_selection());
@@ -6116,10 +6124,9 @@ void ReportIf::draw_ops() {
         flatButton11_.show(0);
     }
     MainInterfaceGlobal.Buffer::set_clip(&field_50_);
-    int inset = field_1E230_ ? 0x4C : 0;
-    field_C_ = field_50_.left + inset;
+    field_C_ = field_50_.left + (field_1E230_ ? 0x4C : 0);
     field_10_ = field_50_.top;
-    field_14_ = report_rect_width(&field_50_) - inset;
+    field_14_ = report_rect_width(&field_50_) - (field_1E230_ ? 0x4C : 0);
     field_18_ = report_rect_height(&field_50_);
     StringTemp[0] = 0;
     MainInterfaceGlobal.Buffer::set_font(field_1E190_, field_1E194_, field_1E198_, 0);
