@@ -36,6 +36,7 @@
 #include "statuswin.h"
 #include "spritebox.h"
 #include "font.h"
+#include "font_metrics.h"
 #include "infowin.h"
 #include "win.h"
 #include "graphicwin.h"
@@ -414,597 +415,608 @@ StatusWin ConsoleStatusWin;  // 0x008C5568
 // Typed StatusWin::draw_status recovery from the pinned native body.
 // Retained KUNA pseudocode was used only as a control-flow aid; all data and
 // calls below are expressed through current source owners.
+// WORKAROUND(decl): the image expands a guarded 3-argument
+// Buffer::write_right_l(text, x, y) inline at 0x4B7FEC (arguments first,
+// then the null test, strlen and 0x5DD3B0), the shape of buffer.h's
+// write_l(text, x, y). buffer.h does not declare it; this file-local twin
+// stands in until the header is reconstructed.
+static inline int status_write_right_l(MainInterface &buffer, char *text, int x_coord,
+                                       int y_coord) {
+    if (!text) {
+        return x_coord;
+    }
+    return buffer.write_right_l(text, x_coord, y_coord,
+                                static_cast<int>(strlen(text)));
+}
+
 void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
     field_15DC_ = 0;
     if (a1 >= 0 && a2 >= 0) {
         g_BattleWin.battle_report(a1, a2, a3, a4, a5);
         return;
     }
-    if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] != 0) return;
-
-    for (int type = 0; type < 4; ++type) spot_.kill_type(type);
+    if (IfaceIdToSlotStorage[ActiveIfaceIdStorage]) {
+        return;
+    }
+    spot_.kill_type(0);
+    spot_.kill_type(1);
+    spot_.kill_type(2);
+    spot_.kill_type(3);
     spot_.kill_type(10);
     spot_.kill_type(11);
+    font1_.width(const_cast<char *>("-"));
+    int line_y = 1;
+    int row_pitch = font_line_advance(font1_);
+    MainInterfaceGlobal.set_font(&font1_, &font3_, &font2_, 0);
 
-    font1_.width(const_cast<char *>("#"));
-    a2 = 1;
-    a3 = font1_.unk_1_ >= 0
-        ? font1_.pixel_height() + font1_.unk_1_ : font1_.line_height();
-    Buffer *const canvas = static_cast<Buffer *>(&MainInterfaceGlobal);
-    canvas->set_font(&font1_, &font3_, &font2_, 0);
-
-    int selected_vehicle = ConsoleGlobal.selected_vehicle_;
-    int selected_base = -1;
-    int base_under_cursor = -1;
-    int tile_x = iTileX_;
-    int tile_y = iTileY_;
-    if (ConsoleGlobal.cursor_active_ != 0 && selected_vehicle >= 0 &&
-        GameDataStateStorage.fields_.turn_current_num_ != 0) {
-        tile_x = Vehs[selected_vehicle].x;
-        tile_y = Vehs[selected_vehicle].y;
-        if (tile_x != iTileX_ || tile_y != iTileY_) goto resolve_panel_selection;
+    char digits[80];
+    int max_width = 0;
+    int veh = ConsoleGlobal.selected_vehicle_;
+    int x;
+    int y;
+    if (ConsoleGlobal.cursor_active_ && veh >= 0
+        && GameDataStateStorage.fields_.turn_current_num_
+        && Vehs[veh].x == iTileX_ && Vehs[veh].y == iTileY_) {
+        x = Vehs[veh].x;
+        y = Vehs[veh].y;
     } else {
-resolve_panel_selection:
-        tile_x = iTileX_;
-        tile_y = iTileY_;
-        selected_vehicle = GameDataStateStorage.fields_.turn_current_num_ != 0 ? veh_at(tile_x, tile_y) : -1;
-        base_under_cursor = base_at(tile_x, tile_y);
-        if (selected_vehicle >= 0) {
-            const int original_vehicle = selected_vehicle;
-            int top_vehicle = selected_vehicle;
-            while (Vehs[top_vehicle].prev_veh_id_stack >= 0)
-                top_vehicle = Vehs[top_vehicle].prev_veh_id_stack;
-            const int original_owner = Vehs[original_vehicle].faction_id;
-            const int viewer = ConsoleGlobal.faction_id_;
-            if (original_owner != viewer &&
-                (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) == 0) {
-                const Map &tile = MapTiles[tile_y * MapLongitude + (tile_x >> 1)];
-                if ((PlayersData[viewer].flags & 0x200) == 0 &&
-                    (tile.visibility & (1U << (viewer & 31))) == 0) {
-                    selected_vehicle = -1;
-                } else if (base_under_cursor >= 0) {
-                    const Base &base = Bases[base_under_cursor];
-                    bool can_see_base =
-                        (PlayersData[base.faction_id_current]
-                             .diplo_treaties[viewer] & 1) != 0 ||
-                        spying(base.faction_id_current) != 0;
-                    for (int neighbor = 0; !can_see_base && neighbor < 8; ++neighbor) {
-                        const int x = base.x + VehMoveDeltaX[neighbor];
-                        const int y = base.y + VehMoveDeltaY[neighbor];
-                        if (y < 0 || y >= MapLatitudeBounds) continue;
-                        int wrapped_x = x;
-                        if ((MapIsFlat & 1) == 0) {
-                            if (wrapped_x < 0) wrapped_x += MapLongitudeBounds;
-                            else if (wrapped_x >= MapLongitudeBounds)
-                                wrapped_x -= MapLongitudeBounds;
+        x = iTileX_;
+        y = iTileY_;
+        veh = GameDataStateStorage.fields_.turn_current_num_ ? veh_at(x, y) : -1;
+        int base_id = base_at(x, y);
+        if (veh >= 0) {
+            int top = veh_top(veh);
+            if (top >= 0 && Vehs[veh].faction_id != ConsoleGlobal.faction_id_
+                && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) {
+                if (!(PlayersData[ConsoleGlobal.faction_id_].flags & 0x200)
+                    && !(map_loc(x, y)->visibility & (1 << ConsoleGlobal.faction_id_))) {
+                    veh = -1;
+                } else if (base_id >= 0) {
+                    int seen;
+                    if ((PlayersData[Bases[base_id].faction_id_current]
+                             .diplo_treaties[ConsoleGlobal.faction_id_] & 1)
+                        || spying(Bases[base_id].faction_id_current)) {
+                        seen = 1;
+                    } else {
+                        seen = 0;
+                        int base_x = Bases[base_id].x;
+                        int base_y = Bases[base_id].y;
+                        for (int i = 0; i < 8; i++) {
+                            int x2 = wrap_map_x(VehMoveDeltaX[i] + base_x);
+                            int y2 = VehMoveDeltaY[i] + base_y;
+                            if (on_map(x2, y2)
+                                && veh_who(x2, y2) == ConsoleGlobal.faction_id_) {
+                                seen = 1;
+                                break;
+                            }
                         }
-                        if (wrapped_x < 0 || wrapped_x >= MapLongitudeBounds) continue;
-                        const Map &nearby = MapTiles[y * MapLongitude +
-                                                    (wrapped_x >> 1)];
-                        if ((nearby.bit & BIT_VEH_IN_TILE) != 0 &&
-                            ((nearby.val2 & 0x0f) == viewer)) can_see_base = true;
                     }
-                    if ((base.faction_id_current == viewer ||
-                         (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0 ||
-                         (base.visibility & (1U << (viewer & 31))) != 0) &&
-                        can_see_base) {
-                        // Visibility of the base keeps the selected vehicle;
-                        // the city panel selection is resolved from iCityIndex_.
-                    } else {
-                        selected_vehicle = -1;
+                    if (!((Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_
+                           || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
+                           || (Bases[base_id].visibility & (1 << ConsoleGlobal.faction_id_)))
+                          && seen)) {
+                        veh = -1;
                     }
-                } else {
-                    const Veh &stack_top = Vehs[top_vehicle];
-                    if ((stack_top.faction_id == viewer &&
-                         (stack_top.flags & 0x440) != 0x440) ||
-                        (stack_top.visibility & (1U << (viewer & 31))) != 0) {
-                        // The selected stack remains available when its top
-                        // vehicle is visible to the current faction.
-                    } else {
-                        selected_vehicle = -1;
-                    }
+                } else if (!((Vehs[top].faction_id == ConsoleGlobal.faction_id_
+                              && (Vehs[top].flags & 0x440) != 0x440)
+                             || (Vehs[top].visibility & (1 << ConsoleGlobal.faction_id_)))) {
+                    veh = -1;
                 }
             }
         }
     }
 
-    selected_base = -1;
+    int sel_base = -1;
     if (iUnitIndex_ >= 0) {
-        const Veh &selected = Vehs[iUnitIndex_];
-        if (selected.x == tile_x && selected.y == tile_y) selected_vehicle = iUnitIndex_;
+        if (Vehs[iUnitIndex_].x == x && Vehs[iUnitIndex_].y == y) {
+            veh = iUnitIndex_;
+        }
     } else if (iCityIndex_ >= 0) {
-        const Base &selected = Bases[iCityIndex_];
-        if (selected.x == tile_x && selected.y == tile_y)
-            selected_base = iCityIndex_;
-    }
-    field_15DC_ = selected_vehicle >= 0;
-    if (selected_base >= 0 && (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) == 0) {
-        const Base &base = Bases[selected_base];
-        if (base.faction_id_current != ConsoleGlobal.faction_id_ &&
-            (base.visibility & (1U << (ConsoleGlobal.faction_id_ & 31))) == 0) {
-            selected_base = -1;
-            iCityIndex_ = -1;
+        if (Bases[iCityIndex_].x == x && Bases[iCityIndex_].y == y) {
+            sel_base = iCityIndex_;
         }
     }
+    field_15DC_ = veh >= 0;
+    if (sel_base >= 0 && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
+        && Bases[sel_base].faction_id_current != ConsoleGlobal.faction_id_
+        && !(Bases[sel_base].visibility & (1 << ConsoleGlobal.faction_id_))) {
+        sel_base = -1;
+        iCityIndex_ = -1;
+    }
 
-    RECT work = MainInterfaceGlobal.status_right_rect();
-    canvas->box_sprite(&work, &InterfaceBoxStyles[21]);
-    work.top += 3; work.right -= 3; work.left += 3; work.bottom -= 3;
-    canvas->box_sprite(&work, &InterfaceBoxStyles[18]);
-    work.left += 3; work.right -= 3; work.top += 3; work.bottom -= 3;
-    canvas->set_clip(&work);
-    canvas->set_text_color(TextColourTable[18], TextColourTable[19], 1, 1);
+    RECT area = MainInterfaceGlobal.status_right_rect();
+    MainInterfaceGlobal.box_sprite(&area, &InterfaceBoxStyles[21]);
+    area.left += 3;
+    area.right -= 3;
+    area.top += 3;
+    area.bottom -= 3;
+    MainInterfaceGlobal.box_sprite(&area, &InterfaceBoxStyles[18]);
+    area.left += 3;
+    area.right -= 3;
+    area.top += 3;
+    area.bottom -= 3;
+    MainInterfaceGlobal.set_clip(&area);
+    MainInterfaceGlobal.set_text_color(TextColourTable[18], TextColourTable[19], 1, 1);
 
-    int text_x = work.left;
-    int text_y = (work.right - work.left) / 2 + 3 + work.top;
-    int map_index = tile_y * MapLongitude + (tile_x >> 1);
-    const int viewer = ConsoleGlobal.faction_id_;
-    const Map &tile = MapTiles[map_index];
-    char number[84];
-    const bool visible = (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0 ||
-        (PlayersData[viewer].flags & 0x200) != 0 ||
-        (tile.visibility & (1U << (viewer & 31))) != 0;
-
-    if (visible) {
-        MapWinCaptionScale = (work.right - work.left) - 4;
+    if (!(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
+        && !(PlayersData[ConsoleGlobal.faction_id_].flags & 0x200)
+        && !(map_loc(x, y)->visibility & (1 << ConsoleGlobal.faction_id_))) {
+        StringTemp[0] = '\0';
+        strcat(StringTemp, label_get(0x300 / 4));
+        MainInterfaceGlobal.write_cent_l(StringTemp, &area);
+    } else {
+        MapWinCaptionScale = area.right - area.left - 4;
         MapWinCaptionDivisor = 100;
-        const int map_faction = (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
-            ? -1 : viewer;
-        gen_terrain_poly(canvas, 0, 0, map_faction, 0, 0x621,
-                         tile_x, tile_y, text_x + 2, work.top + 1);
+        gen_terrain_poly(&MainInterfaceGlobal, 0, 0,
+                         (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
+                             ? -1 : ConsoleGlobal.faction_id_,
+                         0, 0x621, x, y, area.left + 2, area.top + 1);
         MapWinCaptionScale = -1;
         MapWinCaptionDivisor = -1;
-
-        int resource_text_y = text_y - 4;
-        if (field_15A8_ != 0) {
-            canvas->set_text_color(TextColourTable[18], TextColourTable[19], 1, 1);
-            const int crop = crop_yield(viewer, -1, tile_x, tile_y, 0);
+        int text_x = area.left;
+        line_y = (area.right - area.left) / 2 + area.top + 3;
+        if (field_15A8_) {
+            line_y -= 4;
+            MainInterfaceGlobal.set_text_color(TextColourTable[18], TextColourTable[19], 1, 1);
             StringTemp[0] = '\0';
-            strcat(StringTemp, StringTable.get(
-                Resource[0].name_plural));
+            strcat(StringTemp, StringTable.get(Resource[0].name_plural));
             strcat(StringTemp, ": ");
             strcat(StringTemp, " ");
-            itoa(crop, number, 10);
-            strcat(StringTemp, number);
-            canvas->write_l(StringTemp, text_x, resource_text_y,
-                            strlen(StringTemp));
-            const Map &resource_tile = MapTiles[map_index];
-            const uint32_t resource_flags = resource_tile.bit;
-            const bool crop_bonus_visible =
-                (resource_tile.val3 & 0xc0) <= 0x7f &&
-                (!(resource_flags & BIT_FUNGUS) ||
-                 (resource_tile.climate & 0xe0) <= 0x3f) &&
-                (resource_flags & 0xa000) == 0 &&
-                (crop <= 1 || has_tech(Rules.tech_three_nutrients_sqr, viewer) ||
-                 bonus_at(tile_x, tile_y, 0) == 1 ||
-                 (resource_flags & BIT_CONDENSER) != 0);
-            resource_text_y += a3;
-            if (crop_bonus_visible) {
+            int crop = crop_yield(ConsoleGlobal.faction_id_, -1, x, y, 0);
+            _itoa(crop, digits, 10);
+            strcat(StringTemp, digits);
+            MainInterfaceGlobal.write_l(StringTemp, text_x, line_y);
+            line_y += row_pitch;
+            if ((map_loc(x, y)->val3 & 0xC0) < 0x80
+                && (!(map_loc(x, y)->bit & BIT_FUNGUS)
+                    || (map_loc(x, y)->climate & 0xE0) < 0x40)
+                && !(map_loc(x, y)->bit & (BIT_FARM | BIT_MONOLITH))
+                && (crop < 2
+                    || has_tech(Rules.tech_three_nutrients_sqr, ConsoleGlobal.faction_id_)
+                    || bonus_at(x, y, 0) == 1
+                    || (map_loc(x, y)->bit & BIT_CONDENSER))) {
                 StringTemp[0] = '\0';
-                strcat(StringTemp, "  ");
+                strcat(StringTemp, " ");
+                strcat(StringTemp, " ");
                 strcat(StringTemp, label_get(0xfc4 / 4));
                 strcat(StringTemp, ": ");
                 strcat(StringTemp, " ");
-                itoa(crop + 1, number, 10);
-                strcat(StringTemp, number);
-                canvas->write_l(StringTemp, text_x, resource_text_y,
-                                strlen(StringTemp));
+                _itoa(crop + 1, digits, 10);
+                strcat(StringTemp, digits);
+                MainInterfaceGlobal.write_l(StringTemp, text_x, line_y);
             }
-            resource_text_y += a3;
-            const int minerals = mine_yield(viewer, -1, tile_x, tile_y, 0);
+            line_y += row_pitch;
             StringTemp[0] = '\0';
-            strcat(StringTemp, StringTable.get(
-                Resource[1].name_plural));
+            strcat(StringTemp, StringTable.get(Resource[1].name_plural));
             strcat(StringTemp, ": ");
             strcat(StringTemp, " ");
-            itoa(minerals, number, 10);
-            strcat(StringTemp, number);
-            canvas->write_l(StringTemp, text_x, resource_text_y,
-                            strlen(StringTemp));
-            const bool mineral_bonus_visible =
-                (resource_flags & 0x1002000) == 0 &&
-                (resource_flags & 0x10) == 0 &&
-                (!(resource_flags & BIT_FUNGUS) ||
-                 (resource_tile.climate & 0xe0) <= 0x3f) &&
-                minerals < mine_yield(viewer, -1, tile_x, tile_y, 1);
-            resource_text_y += a3;
-            if (mineral_bonus_visible) {
+            int minerals = mine_yield(ConsoleGlobal.faction_id_, -1, x, y, 0);
+            _itoa(minerals, digits, 10);
+            strcat(StringTemp, digits);
+            MainInterfaceGlobal.write_l(StringTemp, text_x, line_y);
+            line_y += row_pitch;
+            if (!(map_loc(x, y)->bit & (BIT_THERMAL_BORE | BIT_MONOLITH))
+                && !(map_loc(x, y)->bit & BIT_MINE)
+                && (!(map_loc(x, y)->bit & BIT_FUNGUS)
+                    || (map_loc(x, y)->climate & 0xE0) < 0x40)
+                && mine_yield(ConsoleGlobal.faction_id_, -1, x, y, 1) > minerals) {
                 StringTemp[0] = '\0';
-                strcat(StringTemp, "  ");
+                strcat(StringTemp, " ");
+                strcat(StringTemp, " ");
                 strcat(StringTemp, label_get(0xfc8 / 4));
                 strcat(StringTemp, ": ");
                 strcat(StringTemp, " ");
-                itoa(mine_yield(viewer, -1, tile_x, tile_y, 1), number, 10);
-                strcat(StringTemp, number);
-                canvas->write_l(StringTemp, text_x, resource_text_y,
-                                strlen(StringTemp));
+                int mine_bonus = mine_yield(ConsoleGlobal.faction_id_, -1, x, y, 1);
+                _itoa(mine_bonus, digits, 10);
+                strcat(StringTemp, digits);
+                MainInterfaceGlobal.write_l(StringTemp, text_x, line_y);
             }
-            resource_text_y += a3;
-            const int energy = energy_yield(viewer, -1, tile_x, tile_y, 0);
+            line_y += row_pitch;
             StringTemp[0] = '\0';
-            strcat(StringTemp, StringTable.get(
-                Resource[2].name_plural));
+            strcat(StringTemp, StringTable.get(Resource[2].name_plural));
             strcat(StringTemp, ": ");
             strcat(StringTemp, " ");
-            itoa(energy, number, 10);
-            strcat(StringTemp, number);
-            canvas->write_l(StringTemp, text_x, resource_text_y,
-                            strlen(StringTemp));
-            const bool energy_bonus_visible =
-                (resource_flags & 0x1002000) == 0 &&
-                (resource_flags & 0x40) == 0 &&
-                (!(resource_flags & BIT_FUNGUS) ||
-                 (resource_tile.climate & 0xe0) <= 0x3f);
-            resource_text_y += a3;
-            if (energy_bonus_visible) {
+            int energy = energy_yield(ConsoleGlobal.faction_id_, -1, x, y, 0);
+            _itoa(energy, digits, 10);
+            strcat(StringTemp, digits);
+            MainInterfaceGlobal.write_l(StringTemp, text_x, line_y);
+            line_y += row_pitch;
+            if (!(map_loc(x, y)->bit & (BIT_THERMAL_BORE | BIT_MONOLITH))
+                && !(map_loc(x, y)->bit & BIT_SOLAR_TIDAL)
+                && (!(map_loc(x, y)->bit & BIT_FUNGUS)
+                    || (map_loc(x, y)->climate & 0xE0) < 0x40)) {
                 StringTemp[0] = '\0';
-                strcat(StringTemp, "  ");
+                strcat(StringTemp, " ");
+                strcat(StringTemp, " ");
                 strcat(StringTemp, label_get(0xfcc / 4));
                 strcat(StringTemp, ": ");
                 strcat(StringTemp, " ");
-                itoa(energy_yield(viewer, -1, tile_x, tile_y, 1), number, 10);
-                strcat(StringTemp, number);
-                canvas->write_l(StringTemp, text_x, resource_text_y,
-                                strlen(StringTemp));
+                int energy_bonus = energy_yield(ConsoleGlobal.faction_id_, -1, x, y, 1);
+                _itoa(energy_bonus, digits, 10);
+                strcat(StringTemp, digits);
+                MainInterfaceGlobal.write_l(StringTemp, text_x, line_y);
             }
-            text_y = resource_text_y + a3;
-        }
-    } else {
-        StringTemp[0] = '\0';
-        strcat(StringTemp, label_get(0x300 / 4));
-        canvas->write_cent_l(StringTemp, &work, strlen(StringTemp));
-    }
-
-    if (visible && field_15A8_ == 0) {
-        const int terrain_kind = static_cast<int>(tile.climate >> 5) - 3;
-        if (terrain_kind < 0) {
+            line_y += row_pitch;
+        } else {
+            int alt = alt_at(x, y) - 3;
+            MainInterfaceGlobal.set_text_color(TextColourTable[18], TextColourTable[19], 1, 1);
+            if (alt < 0) {
+                StringTemp[0] = '\0';
+                switch (alt) {
+                case -1:
+                    strcat(StringTemp, label_get(0x564 / 4));
+                    break;
+                case -2:
+                    strcat(StringTemp, label_get(0x304 / 4));
+                    break;
+                case -3:
+                    strcat(StringTemp, label_get(0x568 / 4));
+                    break;
+                }
+                int ocean_width = MainInterfaceGlobal.write_l(StringTemp, text_x, line_y);
+                max_width = max_width > ocean_width ? max_width : ocean_width;
+                line_y += row_pitch;
+            }
             StringTemp[0] = '\0';
-            int water_label = -1;
-            if (terrain_kind == -3) water_label = 0x568;
-            else if (terrain_kind == -2) water_label = 0x304;
-            else if (terrain_kind == -1) water_label = 0x564;
-            if (water_label >= 0) {
-                strcat(StringTemp, label_get(water_label / 4));
-                const int written = canvas->write_l(StringTemp, text_x,
-                                                     text_y - 4,
-                                                     strlen(StringTemp));
-                if (written >= 0) a1 = written;
-                text_y += a3;
+            strcat(StringTemp, label_get(alt >= 0 ? 0x2c / 4 : 0x30 / 4));
+            strcat(StringTemp, ": ");
+            int elevation = elev_at(x, y);
+            if (elevation < 0) {
+                elevation = -elevation;
             }
-        }
-
-        StringTemp[0] = '\0';
-        const int elevation = abs(elev_at(tile_x, tile_y));
-        strcat(StringTemp, label_get((terrain_kind < 0 ? 0x30 : 0x2c) / 4));
-        strcat(StringTemp, ": ");
-        itoa(elevation, number, 10);
-        strcat(StringTemp, number);
-        strcat(StringTemp, label_get(0x34 / 4));
-        const int terrain_label_y = text_y;
-        const int terrain_text_width = canvas->write_l(
-            StringTemp, text_x, terrain_label_y, strlen(StringTemp));
-        text_y += a3;
-
-        const int altitude = tile.climate & 0xe0;
-        if (terrain_kind >= 0) {
-            if (GameDataStateStorage.fields_.climate_sea_level_delta_ >= 1 &&
-                static_cast<int>(tile.contour) - MapSeaLevel <
-                    static_cast<int>(AltNatural[3]) + GameDataStateStorage.fields_.climate_sea_level_delta_) {
+            _itoa(elevation, digits, 10);
+            strcat(StringTemp, digits);
+            strcat(StringTemp, label_get(0x34 / 4));
+            int text_width = MainInterfaceGlobal.write_l(StringTemp, text_x, line_y);
+            line_y += row_pitch;
+            if (alt < 0) {
+                if (GameDataStateStorage.fields_.climate_sea_level_delta_ < 0
+                    && alt_detail_at(x, y) - MapSeaLevel
+                        >= (int)AltNatural[3]
+                            + GameDataStateStorage.fields_.climate_sea_level_delta_) {
+                    StringTemp[0] = '\0';
+                    strcat(StringTemp, label_get(0x7fc / 4));
+                    MainInterfaceGlobal.set_text_color(0xf9, -1, 1, 1);
+                    MainInterfaceGlobal.write_l(StringTemp, text_x, line_y);
+                    line_y += row_pitch;
+                }
+            } else if (GameDataStateStorage.fields_.climate_sea_level_delta_ > 0
+                       && alt_detail_at(x, y) - MapSeaLevel
+                           < (int)AltNatural[3]
+                               + GameDataStateStorage.fields_.climate_sea_level_delta_) {
                 StringTemp[0] = '\0';
                 strcat(StringTemp, label_get(0x7fc / 4));
-                canvas->set_text_color(0xf9, -1, 1, 1);
-                canvas->write_l(StringTemp, text_x, text_y, strlen(StringTemp));
-                text_y += a3;
+                MainInterfaceGlobal.set_text_color(0xf9, -1, 1, 1);
+                MainInterfaceGlobal.write_l(StringTemp, text_x, line_y);
+                line_y += row_pitch;
             }
-        } else if (GameDataStateStorage.fields_.climate_sea_level_delta_ <= -1 &&
-                   static_cast<int>(AltNatural[3]) + GameDataStateStorage.fields_.climate_sea_level_delta_ <=
-                       static_cast<int>(tile.contour) - MapSeaLevel) {
+            MainInterfaceGlobal.set_text_color(TextColourTable[18], TextColourTable[19], 1, 1);
+            int rocky = map_loc(x, y)->val3 >> 6;
+            if (alt >= 0) {
+                StringTemp[0] = '\0';
+                strcat(StringTemp, label_get(0x164 / 4 + rocky));
+                strcat(StringTemp, " ");
+                strcat(StringTemp, "&");
+                strcat(StringTemp, " ");
+            }
+            max_width = max_width > text_width ? max_width : text_width;
+            if (alt >= 0) {
+                strcat(StringTemp,
+                       label_get(0x50 / 4 + ((map_loc(x, y)->climate >> 3) & 3)));
+                int rain_width = MainInterfaceGlobal.write_l(StringTemp, text_x, line_y);
+                max_width = max_width > rain_width ? max_width : rain_width;
+                line_y += row_pitch;
+                StringTemp[0] = '\0';
+                if ((map_loc(x, y)->bit2 & 0x80000002) == BIT2_VOLCANO) {
+                    strcat(StringTemp, StringTable.get(Natural[1].name_short));
+                }
+                if ((map_loc(x, y)->bit2 & 0x80000001) == BIT2_CRATER) {
+                    strcat(StringTemp, StringTable.get(Natural[0].name_short));
+                }
+                if ((map_loc(x, y)->bit2 & 0x80000004) == BIT2_JUNGLE
+                    && (map_loc(x, y)->climate & 0xE0) >= 0x60) {
+                    strcat(StringTemp, StringTable.get(Natural[2].name_short));
+                }
+                if ((map_loc(x, y)->bit2 & 0x80000008) == BIT2_URANIUM) {
+                    strcat(StringTemp, StringTable.get(Natural[3].name_short));
+                }
+                if ((map_loc(x, y)->bit2 & 0x80000040) == BIT2_DUNES) {
+                    strcat(StringTemp, StringTable.get(Natural[6].name_short));
+                }
+                if ((map_loc(x, y)->bit2 & 0x80000100) == BIT2_MESA) {
+                    strcat(StringTemp, StringTable.get(Natural[8].name_short));
+                }
+                if ((map_loc(x, y)->bit2 & 0x80000200) == BIT2_CANYON) {
+                    strcat(StringTemp, StringTable.get(Natural[9].name_short));
+                }
+                if ((map_loc(x, y)->bit2 & 0x80000800) == BIT2_RIDGE) {
+                    strcat(StringTemp, StringTable.get(Natural[11].name_short));
+                }
+                if ((map_loc(x, y)->bit2 & 0x80002000) == BIT2_NEXUS) {
+                    strcat(StringTemp, StringTable.get(Natural[13].name_short));
+                }
+                if (ExpansionEnabled
+                    && (map_loc(x, y)->bit2 & 0x80004000) == BIT2_UNITY) {
+                    strcat(StringTemp, StringTable.get(Natural[14].name_short));
+                }
+                if (strlen(StringTemp)) {
+                    MainInterfaceGlobal.write_l(StringTemp, text_x, line_y);
+                    line_y += row_pitch;
+                }
+                StringTemp[0] = '\0';
+                if (map_loc(x, y)->bit & BIT_RIVER) {
+                    strcat(StringTemp, label_get(0x3a8 / 4));
+                }
+                if ((map_loc(x, y)->bit & BIT_FUNGUS)
+                    && (map_loc(x, y)->climate & 0xE0) >= 0x40) {
+                    if (strlen(StringTemp)) {
+                        strcat(StringTemp, ", ");
+                    }
+                    strcat(StringTemp, label_get(0x21c / 4));
+                } else if (map_loc(x, y)->bit & BIT_FOREST) {
+                    if (strlen(StringTemp)) {
+                        strcat(StringTemp, ", ");
+                    }
+                    strcat(StringTemp, label_get(0x48c / 4));
+                }
+                if (strlen(StringTemp)) {
+                    text_width = MainInterfaceGlobal.write_l(StringTemp, text_x, line_y);
+                    line_y += row_pitch;
+                }
+            } else {
+                StringTemp[0] = '\0';
+                if (ExpansionEnabled
+                    && (map_loc(x, y)->bit2 & 0x80008000) == BIT2_FOSSIL) {
+                    strcat(StringTemp, StringTable.get(Natural[15].name_short));
+                }
+                if ((map_loc(x, y)->bit2 & BIT2_FRESH)
+                    && (map_loc(x, y)->climate & 0xE0) < 0x60) {
+                    strcat(StringTemp, StringTable.get(Natural[7].name_short));
+                }
+                if ((map_loc(x, y)->bit2 & 0x80000400) == BIT2_GEOTHERMAL) {
+                    strcat(StringTemp, StringTable.get(Natural[10].name_short));
+                }
+                if ((map_loc(x, y)->bit & BIT_FUNGUS)
+                    && (map_loc(x, y)->climate & 0xE0) >= 0x40) {
+                    if (strlen(StringTemp)) {
+                        strcat(StringTemp, ", ");
+                    }
+                    strcat(StringTemp, label_get(0x398 / 4));
+                }
+                if (strlen(StringTemp)) {
+                    text_width = MainInterfaceGlobal.write_l(StringTemp, text_x, line_y);
+                    line_y += row_pitch;
+                }
+            }
+            int bonus = bonus_at(x, y, 0);
+            if (bonus > 0) {
+                StringTemp[0] = '\0';
+                strcat(StringTemp, label_get(0x16c / 4 + bonus));
+                strcat(StringTemp, " ");
+                strcat(StringTemp, label_get(0x17c / 4));
+                MainInterfaceGlobal.write_l(StringTemp, text_x, line_y);
+                line_y += row_pitch;
+            }
             StringTemp[0] = '\0';
-            strcat(StringTemp, label_get(0x7fc / 4));
-            canvas->set_text_color(0xf9, -1, 1, 1);
-            canvas->write_l(StringTemp, text_x, text_y, strlen(StringTemp));
-            text_y += a3;
-        }
-        canvas->set_text_color(TextColourTable[18], TextColourTable[19], 1, 1);
-
-        if (terrain_kind >= 0) {
-            StringTemp[0] = '\0';
-            strcat(StringTemp, label_get((0x164 + (tile.val3 >> 6) * 4) / 4));
-            strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, "&");
-            strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, label_get((0x50 + ((tile.climate & 0x18) >> 3) * 4) / 4));
-            const int altitude_rainfall_width = canvas->write_l(
-                StringTemp, text_x, text_y, strlen(StringTemp));
-            if (terrain_text_width > altitude_rainfall_width)
-                a1 = terrain_text_width;
-            else a1 = altitude_rainfall_width;
-            text_y += a3;
-
-            StringTemp[0] = '\0';
-            if ((tile.bit2 & 0x80000002U) == BIT2_VOLCANO) {
-                strcat(StringTemp, StringTable.get(
-                    Natural[1].name_short));
+            uint32_t bits = map_loc(x, y)->bit;
+            for (int i = 0; i < 19; i++) {
+                if (Terraforming[i].bit && (bits & Terraforming[i].bit)
+                    && i != TERRA_FOREST && i != TERRA_REMOVE_FUNGUS
+                    && i != TERRA_PLANT_FUNGUS
+                    && !(i == TERRA_ROAD && (bits & BIT_MAGTUBE))
+                    && !(i == TERRA_FARM && (bits & BIT_SOIL_ENRICHER))) {
+                    if (strlen(StringTemp)) {
+                        strcat(StringTemp, ", ");
+                    }
+                    // WORKAROUND(type): the image indexes the name/name_sea
+                    // pair by the is_ocean result (lea [ocean + 8*i]); the
+                    // original row probably declared the pair as an array.
+                    strcat(StringTemp,
+                           StringTable.get((&Terraforming[i].name)[is_ocean(x, y)]));
+                }
             }
-            if ((tile.bit2 & 0x80000001U) == BIT2_CRATER) {
-                strcat(StringTemp, StringTable.get(
-                    Natural[0].name_short));
+            if (map_loc(x, y)->bit & BIT_MONOLITH) {
+                if (strlen(StringTemp)) {
+                    strcat(StringTemp, ", ");
+                }
+                strcat(StringTemp, label_get(0x238 / 4));
             }
-            if ((tile.bit2 & 0x80000004U) == BIT2_JUNGLE &&
-                altitude >= 0x60) {
-                strcat(StringTemp, StringTable.get(
-                    Natural[2].name_short));
+            if (strlen(StringTemp)) {
+                area.top = line_y;
+                line_y = MainInterfaceGlobal.wrap(StringTemp, &area);
             }
-            if ((tile.bit2 & 0x80000008U) == BIT2_URANIUM) {
-                strcat(StringTemp, StringTable.get(
-                    Natural[3].name_short));
-            }
-            if ((tile.bit2 & 0x80000040U) == BIT2_DUNES) {
-                strcat(StringTemp, StringTable.get(
-                    Natural[6].name_short));
-            }
-            if ((tile.bit2 & 0x80000100U) == BIT2_MESA) {
-                strcat(StringTemp, StringTable.get(
-                    Natural[8].name_short));
-            }
-            if ((tile.bit2 & 0x80000200U) == BIT2_CANYON) {
-                strcat(StringTemp, StringTable.get(
-                    Natural[9].name_short));
-            }
-            if ((tile.bit2 & 0x80000800U) == BIT2_RIDGE) {
-                strcat(StringTemp, StringTable.get(
-                    Natural[11].name_short));
-            }
-            if ((tile.bit2 & 0x80002000U) == BIT2_NEXUS) {
-                strcat(StringTemp, StringTable.get(
-                    Natural[13].name_short));
-            }
-            if (ExpansionEnabled != 0 &&
-                (tile.bit2 & 0x80004000U) == BIT2_UNITY) {
-                strcat(StringTemp, StringTable.get(
-                    Natural[14].name_short));
-            }
-            if (StringTemp[0] != '\0') {
-                canvas->write_l(StringTemp, text_x, text_y, strlen(StringTemp));
-                text_y += a3;
-            }
-
-            StringTemp[0] = '\0';
-            const bool has_river = (tile.bit & BIT_RIVER) != 0;
-            if (has_river) strcat(StringTemp, label_get(0x3a8 / 4));
-            if ((tile.bit & BIT_FUNGUS) != 0 && altitude >= 0x40) {
-                if (StringTemp[0] != '\0') strcat(StringTemp, ", ");
-                strcat(StringTemp, label_get(0x21c / 4));
-            } else if ((tile.bit & 0x200000) != 0) {
-                if (StringTemp[0] != '\0') strcat(StringTemp, ", ");
-                strcat(StringTemp, label_get(0x48c / 4));
-            }
-            if (StringTemp[0] != '\0') {
-                canvas->write_l(StringTemp, text_x, text_y, strlen(StringTemp));
-                text_y += a3;
-            }
-        } else {
-            StringTemp[0] = '\0';
-            if (ExpansionEnabled != 0 &&
-                (tile.bit2 & 0x80008000U) == BIT2_FOSSIL)
-                strcat(StringTemp, StringTable.get(
-                    Natural[15].name_short));
-            if ((tile.bit2 & BIT2_FRESH) != 0 && altitude <= 0x5f) {
-                strcat(StringTemp, StringTable.get(
-                    Natural[7].name_short));
-            }
-            if ((tile.bit2 & 0x80000400U) == BIT2_GEOTHERMAL) {
-                strcat(StringTemp, StringTable.get(
-                    Natural[10].name_short));
-            }
-            if ((tile.bit & BIT_FUNGUS) != 0 && altitude >= 0x40) {
-                if (StringTemp[0] != '\0') strcat(StringTemp, ", ");
-                strcat(StringTemp, label_get(0x398 / 4));
-            }
-            if (StringTemp[0] != '\0') {
-                canvas->write_l(StringTemp, text_x, text_y, strlen(StringTemp));
-                text_y += a3;
-            }
-        }
-
-        const int bonus = bonus_at(tile_x, tile_y, 0);
-        if (bonus >= 1) {
-            StringTemp[0] = '\0';
-            strcat(StringTemp, label_get((0x16c + bonus * 4) / 4));
-            strcat(StringTemp, " ");
-            strcat(StringTemp, label_get(0x17c / 4));
-            canvas->write_l(StringTemp, text_x, text_y, strlen(StringTemp));
-            text_y += a3;
-        }
-
-        StringTemp[0] = '\0';
-        for (int terrain = 0; terrain < 0x13; ++terrain) {
-            const uint32_t terrain_bit = Terraforming[terrain].bit;
-            if (terrain_bit == 0 || (tile.bit & terrain_bit) == 0 ||
-                terrain == TERRA_FOREST || terrain == TERRA_REMOVE_FUNGUS ||
-                terrain == TERRA_PLANT_FUNGUS) continue;
-            if (terrain == 0 && (tile.bit & 0x80000)) continue;
-            if (terrain == 5 && (tile.bit & 0x8)) continue;
-            if (strlen(StringTemp) != 0) strcat(StringTemp, ", ");
-            const LPSTR label = (tile.climate & 0xe0) < 0x60
-                ? Terraforming[terrain].name_sea : Terraforming[terrain].name;
-            strcat(StringTemp,
-                   StringTable.get(label));
-        }
-        if ((tile.bit & BIT_MONOLITH) != 0) {
-            if (strlen(StringTemp) != 0) strcat(StringTemp, ", ");
-            strcat(StringTemp, label_get(0x238 / 4));
-        }
-        if (StringTemp[0] != '\0') {
-            RECT wrap_rect = work;
-            wrap_rect.top = text_y;
-            text_y = canvas->wrap(StringTemp, &wrap_rect);
         }
     }
 
-    if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) != 0 &&
-        (GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0) {
+    if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR)
+        && (GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE)) {
         StringTemp[0] = '\0';
         strcat(StringTemp, "(");
-        itoa(static_cast<int>(static_cast<int8_t>(tile.region)), number, 10);
-        strcat(StringTemp, number);
+        _itoa(region_at(x, y), digits, 10);
+        strcat(StringTemp, digits);
         strcat(StringTemp, ")");
-        canvas->set_text_color(TextColourTable[18], TextColourTable[19], 1, 1);
-        canvas->write_l(StringTemp, text_x + 2, work.bottom - a3,
-                        strlen(StringTemp));
+        MainInterfaceGlobal.set_text_color(TextColourTable[18], TextColourTable[19], 1, 1);
+        MainInterfaceGlobal.write_l(StringTemp, area.left + 2, area.bottom - row_pitch);
     }
-    if (((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) != 0 &&
-         (GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0) ||
-        text_y < work.bottom - a3) {
+    if (((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR)
+         && (GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE))
+        || line_y < area.bottom - row_pitch) {
         StringTemp[0] = '\0';
         strcat(StringTemp, "(");
-        itoa(tile_x, number, 10);
-        strcat(StringTemp, number);
+        _itoa(x, digits, 10);
+        strcat(StringTemp, digits);
         strcat(StringTemp, " ");
         strcat(StringTemp, ", ");
-        itoa(tile_y, number, 10);
-        strcat(StringTemp, number);
+        _itoa(y, digits, 10);
+        strcat(StringTemp, digits);
         strcat(StringTemp, ")");
-        canvas->set_text_color(TextColourTable[18], TextColourTable[19], 1, 1);
-        canvas->write_right_l(StringTemp, work.right - 2,
-                              work.bottom - a3, strlen(StringTemp));
+        MainInterfaceGlobal.set_text_color(TextColourTable[18], TextColourTable[19], 1, 1);
+        status_write_right_l(MainInterfaceGlobal, StringTemp, area.right - 2,
+                             area.bottom - row_pitch);
     }
-
-    canvas->restore_clip();
-    RECT status_right = MainInterfaceGlobal.status_right_rect();
-    spot_.add(0, 3, status_right.left, status_right.top,
-              status_right.right - status_right.left,
-              status_right.bottom - status_right.top);
-    MainInterfaceGlobal.soft_update(&status_right);
-
+    MainInterfaceGlobal.restore_clip();
+    spot_.add(0, 3, MainInterfaceGlobal.status_right_rect().left,
+              MainInterfaceGlobal.status_right_rect().top,
+              MainInterfaceGlobal.status_right_rect().right
+                  - MainInterfaceGlobal.status_right_rect().left,
+              MainInterfaceGlobal.status_right_rect().bottom
+                  - MainInterfaceGlobal.status_right_rect().top);
+    MainInterfaceGlobal.soft_update(
+        const_cast<RECT *>(&MainInterfaceGlobal.status_right_rect()));
     hover_base_id_ = -1;
     hover_vehicle_id_ = -1;
-    field_15CC_ = selected_vehicle;
-    field_15D0_ = selected_base;
-    draw_active(selected_vehicle, selected_base, 1);
+    field_15CC_ = veh;
+    field_15D0_ = sel_base;
+    draw_active(veh, sel_base, 1);
 
-    RECT unit_panel = MainInterfaceGlobal.status_hit_rect();
-    canvas->box_sprite(&unit_panel, &InterfaceBoxStyles[21]);
-    unit_panel.top += 3; unit_panel.right -= 3;
-    unit_panel.bottom -= 3; unit_panel.left += 3;
-    canvas->box_sprite(&unit_panel, &InterfaceBoxStyles[18]);
-    unit_panel.top += 3; unit_panel.right -= 3;
-    unit_panel.bottom -= 3; unit_panel.left += 3;
-    if (GameDataStateStorage.fields_.turn_current_num_ == 0) return;
-
-    int base_id = base_at(tile_x, tile_y);
-    if (base_id >= 0 && (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) == 0 &&
-        Bases[base_id].faction_id_current != viewer &&
-        (Bases[base_id].visibility & (1U << (viewer & 31))) == 0) base_id = -1;
-    int item_count = base_id >= 0 ? 1 : 0;
-    if (selected_vehicle >= 0) {
-        int top = selected_vehicle;
-        while (Vehs[top].prev_veh_id_stack >= 0)
-            top = Vehs[top].prev_veh_id_stack;
-        for (int unit = top; unit >= 0; unit = Vehs[unit].next_veh_id_stack)
-            ++item_count;
+    area = MainInterfaceGlobal.status_hit_rect();
+    MainInterfaceGlobal.box_sprite(&area, &InterfaceBoxStyles[21]);
+    area.left += 3;
+    area.right -= 3;
+    area.top += 3;
+    area.bottom -= 3;
+    MainInterfaceGlobal.box_sprite(&area, &InterfaceBoxStyles[18]);
+    area.left += 3;
+    area.right -= 3;
+    area.top += 3;
+    area.bottom -= 3;
+    if (!GameDataStateStorage.fields_.turn_current_num_) {
+        return;
     }
-    int item_width = (MapWinCaptionScale >= 1
-        ? MapWinCaptionScale * 100 / MapWinCaptionDivisor : 0x32) + 0xb;
-    const int visible_items = (unit_panel.right - unit_panel.left) /
-        (item_width + 5);
-    if (item_count <= visible_items) {
+    int item_width = (MapWinCaptionScale > 0
+        ? MapWinCaptionScale * 100 / MapWinCaptionDivisor : 50) + 11;
+    int row_height = MainInterfaceGlobal.status_hit_rect().bottom
+        - MainInterfaceGlobal.status_hit_rect().top - 12;
+    int count = 0;
+    int base_id = base_at(x, y);
+    if (base_id >= 0) {
+        if ((GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
+            || Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_
+            || (Bases[base_id].visibility & (1 << ConsoleGlobal.faction_id_))) {
+            count = 1;
+        } else {
+            base_id = -1;
+        }
+    }
+    for (int stacked = veh_top(veh); stacked >= 0;
+         stacked = veh_next_stack_id(stacked)) {
+        count++;
+    }
+    int visible = (area.right - area.left) / (item_width + 5);
+    if (count <= visible) {
         MainInterfaceGlobal.flat_button(8).hide();
         MainInterfaceGlobal.flat_button(9).hide();
         MainInterfaceGlobal.flat_button(10).hide();
     } else {
-        const RECT &stack_buttons = MainInterfaceGlobal.stack_button_rect();
-        const RECT &adjacent_right = MainInterfaceGlobal.adjacent_panel_right_rect();
-        item_width = (adjacent_right.left - stack_buttons.right - 2) /
-            visible_items - 5;
+        area.left = MainInterfaceGlobal.stack_button_rect().right + 1;
+        area.right = MainInterfaceGlobal.adjacent_panel_right_rect().left - 1;
+        item_width = (area.right - area.left) / visible - 5;
         MainInterfaceGlobal.flat_button(8).show(0);
         MainInterfaceGlobal.flat_button(10).show(0);
     }
-
-    const RECT &stack_buttons = MainInterfaceGlobal.stack_button_rect();
-    int row_x = unit_panel.left;
-    if (item_count > visible_items) row_x = stack_buttons.right + 1;
-    const int row_top = unit_panel.top;
-    const int row_bottom = unit_panel.bottom;
-    const int row_step = item_width + 5;
+    int item_x = area.left;
+    int item_y = area.top;
+    area.right = item_x + item_width;
+    area.left -= 2;
+    area.right += 2;
+    area.top -= 2;
+    area.bottom = item_y + row_height + 2;
+    MainInterfaceGlobal.set_clip(&area);
     int drawn = 0;
+    area.left += 2;
+    area.right -= 2;
+    area.top += 2;
+    area.bottom -= 2;
     if (base_id >= 0) {
-        RECT row_clip;
-        row_clip.left = row_x - 2; row_clip.right = row_x + item_width + 2;
-        row_clip.top = row_top - 2; row_clip.bottom = row_bottom + 2;
-        canvas->set_clip(&row_clip);
-        base_draw(canvas, base_id, row_x + 11, row_top - 1, -8, 0x40);
-        base_draw(canvas, base_id, row_x, row_top - 1, 0, 0x1800);
-        spot_.add(base_id, 11, row_x, row_top,
-                  item_width + 5, row_bottom - row_top);
-        if (base_id == selected_base) {
-            RECT outline;
-            outline.left = row_x - 2; outline.right = row_x + item_width + 2;
-            outline.top = row_top - 2; outline.bottom = row_bottom + 2;
-            canvas->box(&outline, 0xae, 0xae);
-        }
-        row_x += row_step;
         drawn = 1;
-    }
-
-    if (MainInterfaceStatusRedrawFlag == 0 && selected_vehicle > -1) {
-        stack_sort_2(selected_vehicle);
-    }
-    if (selected_vehicle >= 0) {
-        int top = selected_vehicle;
-        while (Vehs[top].prev_veh_id_stack >= 0)
-            top = Vehs[top].prev_veh_id_stack;
-        for (int unit = top; unit >= 0 && drawn < visible_items;
-             unit = Vehs[unit].next_veh_id_stack, ++drawn) {
-            RECT row;
-            row.left = row_x - 2; row.right = row_x + item_width + 2;
-            row.top = row_top - 2; row.bottom = row_bottom + 2;
-            canvas->set_clip(&row);
-            veh_draw(canvas, unit, row_x + 11, row_top - 1, -8, 0x400, 0);
-            veh_draw(canvas, unit, row_x, row_top - 1, 0, 0x1800, 0);
-            canvas->set_font(&font1_, 0, 0, 0);
-            StringTemp[0] = '\0';
-            const Veh &vehicle = Vehs[unit];
-            if (vehicle.order >= 4 && vehicle.order <= 0x17 &&
-                (vehicle.faction_id == viewer ||
-                 (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0 ||
-                 (PlayersData[viewer].diplo_treaties[vehicle.faction_id] & 1))) {
-                const int turns = action_terraform(unit, vehicle.order - 4, 0);
-                itoa(turns + 1, number, 10);
-                strcat(StringTemp, number);
-                strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, label_get((turns == 1 ? 0xc0 : 0xc4) / 4));
-                canvas->set_text_color(0xfb, 3, 1, 1);
-            } else {
-                say_stats_3(StringTemp, vehicle.proto_id);
-                if ((vehicle.flags & 0x80) != 0) strcat(StringTemp, "#");
-                if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) != 0 &&
-                    (GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0) {
-                    strcat(StringTemp, " ");
-                    strcat(StringTemp, "(");
-                    itoa(unit, number, 10);
-                    strcat(StringTemp, number);
-                    strcat(StringTemp, ")");
-                }
-                canvas->set_text_color(TextColourTable[20], TextColourTable[21], 1, 1);
-            }
-            canvas->write_cent_l(StringTemp, row_x,
-                                 font1_.descent() - a3 + row_bottom + 3,
-                                 item_width, strlen(StringTemp));
-            if (unit == selected_vehicle && selected_base < 0) {
-                RECT outline = row;
-                canvas->box(&outline, 0xae, 0xae);
-            }
-            spot_.add(unit, 0, row_x, row_top,
-                      item_width + 5, row_bottom - row_top);
-            row_x += row_step;
+        base_draw(&MainInterfaceGlobal, base_id, item_x + 11, item_y - 1, -8, 0x40);
+        base_draw(&MainInterfaceGlobal, base_id, item_x, item_y - 1, 0, 0x1800);
+        spot_.add(base_id, 11, area.left, area.top, area.right + 5 - area.left,
+                  area.bottom - area.top);
+        if (base_id == sel_base) {
+            area.left -= 2;
+            area.right += 2;
+            area.top -= 2;
+            area.bottom += 2;
+            MainInterfaceGlobal.box(&area, 0xae, 0xae);
+            area.left += 2;
+            area.right -= 2;
+            area.top += 2;
+            area.bottom -= 2;
         }
+        area.left += item_width + 5;
+        area.right += item_width + 5;
+        item_x = item_x + item_width + 5;
     }
-
+    if (!MainInterfaceStatusRedrawFlag && veh >= 0) {
+        stack_sort_2(veh);
+    }
+    for (int v = veh_top(veh); v >= 0 && drawn < visible;
+         v = veh_next_stack_id(v), drawn++) {
+        area.left -= 2;
+        area.top -= 2;
+        area.right += 2;
+        area.bottom += 2;
+        MainInterfaceGlobal.set_clip(&area);
+        area.left += 2;
+        area.top += 2;
+        area.right -= 2;
+        area.bottom -= 2;
+        veh_draw(&MainInterfaceGlobal, v, item_x + 11, item_y - 1, -8, 0x400, 0);
+        veh_draw(&MainInterfaceGlobal, v, item_x, item_y - 1, 0, 0x1800, 0);
+        MainInterfaceGlobal.set_font(&font1_, 0, 0, 0);
+        StringTemp[0] = '\0';
+        if (Vehs[v].order >= 4 && Vehs[v].order < 0x18
+            && (Vehs[v].faction_id == ConsoleGlobal.faction_id_
+                || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
+                || (PlayersData[ConsoleGlobal.faction_id_]
+                        .diplo_treaties[Vehs[v].faction_id] & 1))) {
+            int turns = action_terraform(v, Vehs[v].order - 4, 0);
+            _itoa(turns + 1, digits, 10);
+            strcat(StringTemp, digits);
+            strcat(StringTemp, " ");
+            strcat(StringTemp, label_get(turns != 1 ? 0xc4 / 4 : 0xc0 / 4));
+            MainInterfaceGlobal.set_text_color(0xfb, 3, 1, 1);
+        } else {
+            say_stats_3(StringTemp, Vehs[v].proto_id);
+            if (Vehs[v].state & VSTATE_DESIGNATE_DEFENDER) {
+                strcat(StringTemp, "#");
+            }
+            if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR)
+                && (GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE)) {
+                char id_digits[80];
+                strcat(StringTemp, " ");
+                strcat(StringTemp, "(");
+                _itoa(v, id_digits, 10);
+                strcat(StringTemp, id_digits);
+                strcat(StringTemp, ")");
+            }
+            MainInterfaceGlobal.set_text_color(TextColourTable[20], TextColourTable[21], 1, 1);
+        }
+        MainInterfaceGlobal.write_cent_text(StringTemp, item_x,
+                                            font1_.descent() - row_pitch + area.bottom + 1,
+                                            item_width);
+        if (v == veh && iCityIndex_ < 0) {
+            area.left -= 2;
+            area.right += 2;
+            area.top -= 2;
+            area.bottom += 2;
+            MainInterfaceGlobal.box(&area, 0xae, 0xae);
+            area.left += 2;
+            area.right -= 2;
+            area.top += 2;
+            area.bottom -= 2;
+        }
+        spot_.add(v, 0, area.left, area.top, area.right + 5 - area.left,
+                  area.bottom - area.top);
+        item_x += item_width + 5;
+        area.left += item_width + 5;
+        area.right += item_width + 5;
+    }
     find_font(0x14, 0);
-    RECT status_hit = MainInterfaceGlobal.status_hit_rect();
-    MainInterfaceGlobal.soft_update(&status_hit);
-    canvas->restore_clip();
+    MainInterfaceGlobal.soft_update(
+        const_cast<RECT *>(&MainInterfaceGlobal.status_hit_rect()));
+    MainInterfaceGlobal.restore_clip();
 }
 
 // ORIGINAL: 0x004B8830 ?draw@StatusWin@@QAEXHHHHH@Z 0x004B8830-0x004B888A BYTE_EXACT
@@ -1037,118 +1049,127 @@ void StatusWin::draw(int tile_x, int tile_y, int city_index, int unit_index,
 // punctuation and disputed row layout. Compiling this body does not establish
 // exact display behavior or byte restoration.
 void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
-    const int row_pitch = font1_.line_advance();
-    Buffer *screen = static_cast<Buffer *>(&MainInterfaceGlobal);
-    screen->set_font(&font1_, &font3_, &font2_, 0);
+    char digits[80];
+    const int row_pitch = font_line_advance(font1_);
+    MainInterfaceGlobal.set_font(&font1_, &font3_, &font2_, 0);
 
     // The image copies the left panel rectangle, draws two inset frames,
     // then reserves another three pixels on every side for active content.
     RECT area = MainInterfaceGlobal.status_left_rect();
-    screen->box_sprite(&area, &InterfaceBoxStyles[21]);
-    area.bottom -= 3;
+    MainInterfaceGlobal.box_sprite(&area, &InterfaceBoxStyles[21]);
     area.left += 3;
     area.right -= 3;
     area.top += 3;
-    screen->box_sprite(&area, &InterfaceBoxStyles[18]);
+    area.bottom -= 3;
+    MainInterfaceGlobal.box_sprite(&area, &InterfaceBoxStyles[18]);
     area.left += 3;
     area.right -= 3;
     area.top += 3;
     area.bottom -= 3;
     const int content_x = area.left;
     const int content_y = area.top;
-    const int content_width = area.right - area.left;
-    const int sprite_width = MapWinCaptionScale < 1 ? 75
-        : MapWinCaptionScale * 100 / MapWinCaptionDivisor;
-    const int sprite_x = ((area.right - sprite_width) - area.left) / 2 + content_x;
-    const int title_offset = MapWinCaptionScale < 1 ? 56
-        : MapWinCaptionScale * 75 / MapWinCaptionDivisor;
+    int line_y;
+    int next_x;
 
     if (base_id < 0 && vehicle_id >= 0) {
-        Veh &vehicle = Vehs[vehicle_id];
-        screen->set_clip(&area);
-        veh_draw(screen, vehicle_id, sprite_x, content_y, -4, 0x48, 0);
-        veh_draw(screen, vehicle_id, content_x, content_y, 0, 0x1800, 0);
-        screen->set_font(&font1_, 0, 0, 0);
+        MainInterfaceGlobal.set_clip(&area);
+        veh_draw(&MainInterfaceGlobal, vehicle_id,
+                 (area.right - (MapWinCaptionScale > 0
+                     ? MapWinCaptionScale * 100 / MapWinCaptionDivisor : 75)
+                  - area.left) / 2 + content_x,
+                 content_y, -4, 0x48, 0);
+        veh_draw(&MainInterfaceGlobal, vehicle_id, content_x, content_y, 0,
+                 0x1800, 0);
+        MainInterfaceGlobal.set_font(&font1_, 0, 0, 0);
+        line_y = (MapWinCaptionScale > 0
+            ? MapWinCaptionScale * 75 / MapWinCaptionDivisor : 56) + content_y + 8;
         StringTemp[0] = '\0';
-        strcat(StringTemp, VehPrototypes[vehicle.proto_id].veh_name);
+        strcat(StringTemp, VehPrototypes[Vehs[vehicle_id].proto_id].veh_name);
         if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) &&
             (GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE)) {
-            char digits[80];
             strcat(StringTemp, "(");
             _itoa(vehicle_id, digits, 10);
             strcat(StringTemp, digits);
             strcat(StringTemp, ")");
         }
-        screen->set_text_color(TextColourTable[12], TextColourTable[13], 1, 1);
-        int line_y = screen->wrap_cent(&font3_, StringTemp, content_x,
-                                       content_y + title_offset + 8, content_width);
-        screen->set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
-        if (vehicle.faction_id != 0 &&
-            vehicle.faction_id != ConsoleGlobal.faction_id_) {
+        MainInterfaceGlobal.set_text_color(TextColourTable[12], TextColourTable[13], 1, 1);
+        line_y = MainInterfaceGlobal.wrap_cent(&font3_, StringTemp, content_x, line_y,
+                                   area.right - area.left);
+        MainInterfaceGlobal.set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
+        if (Vehs[vehicle_id].faction_id != 0 &&
+            Vehs[vehicle_id].faction_id != ConsoleGlobal.faction_id_) {
             StringTemp[0] = '\0';
-            strcat(StringTemp, Players[vehicle.faction_id].adj_name_faction);
-            line_y = screen->wrap_cent(StringTemp, content_x, line_y,
-                                       content_width);
+            if (Language == 0) {
+                strcat(StringTemp,
+                       Players[Vehs[vehicle_id].faction_id].adj_name_faction);
+            } else {
+                strcat(StringTemp, "(");
+                parse_set(Players[Vehs[vehicle_id].faction_id].noun_gender,
+                          Players[Vehs[vehicle_id].faction_id].is_noun_plural);
+                strcat(StringTemp,
+                       Players[Vehs[vehicle_id].faction_id].noun_faction);
+                strcat(StringTemp, ")");
+            }
+            line_y = MainInterfaceGlobal.wrap_cent(StringTemp, content_x, line_y,
+                                       area.right - area.left);
         }
 
         StringTemp[0] = '\0';
         strcat(StringTemp, "(");
-        say_stats_3(StringTemp, vehicle.proto_id);
-        if (vehicle.state & VSTATE_DESIGNATE_DEFENDER) {
+        say_stats_3(StringTemp, Vehs[vehicle_id].proto_id);
+        if (Vehs[vehicle_id].state & VSTATE_DESIGNATE_DEFENDER) {
             strcat(StringTemp, "#");
         }
         for (int ability = 0; ability < MaxAbilityNum; ++ability) {
-            if (has_abil(vehicle.proto_id, 1 << ability)) {
-                char *name = StringTable.get(
-                    Ability[ability].abbreviation);
-                if (*name != '\0') {
-                    strcat(StringTemp, ", ");
-                    strcat(StringTemp, name);
-                }
+            if (has_abil(Vehs[vehicle_id].proto_id, 1 << ability)
+                && strlen(StringTable.get(Ability[ability].abbreviation))) {
+                strcat(StringTemp, ", ");
+                strcat(StringTemp, StringTable.get(Ability[ability].abbreviation));
             }
         }
         strcat(StringTemp, ")");
-        line_y = screen->wrap_cent(StringTemp, content_x, line_y, content_width);
-        const VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
-        const bool own_or_omniscient =
-            vehicle.faction_id == ConsoleGlobal.faction_id_ ||
-            (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0;
-        const bool known_orders = own_or_omniscient ||
-            (PlayersData[ConsoleGlobal.faction_id_]
-                 .diplo_treaties[vehicle.faction_id] & 1) != 0;
-        if ((vehicle.faction_id != 0 && prototype.plan < 8) ||
-            (prototype.plan == PLAN_INFO_WARFARE &&
-             morale_veh(vehicle_id, 1, 0) > 1)) {
+        line_y = MainInterfaceGlobal.wrap_cent(StringTemp, content_x, line_y,
+                                   area.right - area.left);
+        if ((Vehs[vehicle_id].faction_id != 0
+             && VehPrototypes[Vehs[vehicle_id].proto_id].plan < 8)
+            || (VehPrototypes[Vehs[vehicle_id].proto_id].plan == PLAN_INFO_WARFARE
+                && morale_veh(vehicle_id, 1, 0) > 1)) {
             StringTemp[0] = '\0';
             say_morale(StringTemp, vehicle_id, 0);
-            line_y = own_or_omniscient
-                ? screen->wrap(StringTemp, content_x, line_y, content_width)
-                : screen->wrap_cent(StringTemp, content_x, line_y, content_width);
-        }
-        if (own_or_omniscient) {
-            StringTemp[0] = '\0';
-            if (vehicle.home_base_id >= 0) {
-                strcat(StringTemp, Bases[vehicle.home_base_id].name_string);
+            if (Vehs[vehicle_id].faction_id != ConsoleGlobal.faction_id_
+                && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) {
+                line_y = MainInterfaceGlobal.wrap_cent(StringTemp, content_x, line_y,
+                                           area.right - area.left);
             } else {
-                strcat(StringTemp, label_get(0x308 / 4));
+                line_y = MainInterfaceGlobal.wrap(StringTemp, content_x, line_y,
+                                      area.right - area.left);
             }
-            line_y = screen->wrap(StringTemp, content_x, line_y, content_width);
-            if (vehicle.faction_id == ConsoleGlobal.faction_id_) {
-                const int maximum = speed(vehicle_id, 0);
-                const int remaining = maximum - vehicle.moves_expended;
-                StringTemp[0] = '\0';
-                if (remaining < 0 || remaining == 0) {
+        }
+        if (Vehs[vehicle_id].faction_id == ConsoleGlobal.faction_id_
+            || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) {
+            int home_base_id = Vehs[vehicle_id].home_base_id;
+            StringTemp[0] = '\0';
+            strcat(StringTemp, home_base_id < 0
+                ? label_get(0x308 / 4)
+                : Bases[home_base_id].name_string);
+            line_y = MainInterfaceGlobal.wrap(StringTemp, content_x, line_y,
+                                  area.right - area.left);
+            if (Vehs[vehicle_id].faction_id == ConsoleGlobal.faction_id_) {
+                if (!veh_moves(vehicle_id)) {
+                    StringTemp[0] = '\0';
                     strcat(StringTemp, label_get(0x9e4 / 4));
-                    screen->set_text_color(0xf9, -1, 1, 1);
+                    MainInterfaceGlobal.set_text_color(0xf9, -1, 1, 1);
+                    line_y = MainInterfaceGlobal.wrap(StringTemp, content_x, line_y,
+                                          area.right - area.left);
                 } else {
-                    char digits[80];
-                    const int clamped = range(remaining, 0, 999);
+                    StringTemp[0] = '\0';
                     strcat(StringTemp, label_get(0x1c / 4));
                     strcat(StringTemp, ": ");
-                    _itoa(clamped / Rules.move_rate_roads, digits, 10);
+                    int moves = veh_moves(vehicle_id);
+                    int fraction = moves % Rules.move_rate_roads;
+                    _itoa(moves / Rules.move_rate_roads, digits, 10);
                     strcat(StringTemp, digits);
-                    const int fraction = clamped % Rules.move_rate_roads;
-                    if (fraction != 0) {
+                    if (fraction) {
                         strcat(StringTemp, " ");
                         _itoa(fraction, digits, 10);
                         strcat(StringTemp, digits);
@@ -1156,113 +1177,106 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
                         _itoa(Rules.move_rate_roads, digits, 10);
                         strcat(StringTemp, digits);
                     }
+                    line_y = MainInterfaceGlobal.wrap(StringTemp, content_x, line_y,
+                                          area.right - area.left);
                 }
-                line_y = screen->wrap(StringTemp, content_x, line_y,
-                                      content_width);
             }
-            const RulesChassis &chassis = Chassis[prototype.chassis_id];
-            if (chassis.range != 0) {
-                char digits[80];
-                const int movement = speed(vehicle_id, 0);
-                const int remaining = range(movement - vehicle.moves_expended,
-                                            0, 999);
-                const int current =
-                    (movement * (chassis.range + (remaining == 0 ? 1 : 0)) -
-                     vehicle.terraforming_turns - vehicle.moves_expended) /
-                    Rules.move_rate_roads;
-                const int maximum = movement * chassis.range /
-                                    Rules.move_rate_roads;
+            if (Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].range) {
                 StringTemp[0] = '\0';
                 strcat(StringTemp, label_get(0x30c / 4));
                 strcat(StringTemp, ": ");
-                const int next_x = screen->write_l(StringTemp, content_x,
-                                                   line_y, strlen(StringTemp));
-                _itoa(current, digits, 10);
+                next_x = MainInterfaceGlobal.write_l(StringTemp, content_x, line_y);
                 StringTemp[0] = '\0';
+                int moves = veh_moves(vehicle_id);
+                int fuel = (speed(vehicle_id, 0)
+                    * (Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].range
+                       + (moves == 0) - Vehs[vehicle_id].terraforming_turns)
+                    - Vehs[vehicle_id].moves_expended) / Rules.move_rate_roads;
+                _itoa(fuel, digits, 10);
                 strcat(StringTemp, digits);
                 strcat(StringTemp, "/");
-                _itoa(maximum, digits, 10);
+                fuel = speed(vehicle_id, 0)
+                    * Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].range
+                    / Rules.move_rate_roads;
+                _itoa(fuel, digits, 10);
                 strcat(StringTemp, digits);
-                screen->set_text_color(0xfa, -1, 1, 1);
-                if (vehicle.terraforming_turns != 0 &&
-                    chassis.range / 2 <= vehicle.terraforming_turns) {
-                    screen->set_text_color(0xfb, -1, 1, 1);
+                MainInterfaceGlobal.set_text_color(0xfa, -1, 1, 1);
+                if (Vehs[vehicle_id].terraforming_turns
+                    && Vehs[vehicle_id].terraforming_turns
+                        >= Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].range / 2) {
+                    MainInterfaceGlobal.set_text_color(0xfb, -1, 1, 1);
                 }
-                if (chassis.range == 1 && remaining <= movement / 2) {
-                    screen->set_text_color(0xfb, -1, 1, 1);
+                if (Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].range == 1
+                    && veh_moves(vehicle_id) <= speed(vehicle_id, 0) / 2) {
+                    MainInterfaceGlobal.set_text_color(0xfb, -1, 1, 1);
                 }
-                if (action_home(vehicle_id, -1) != 0) {
-                    screen->set_text_color(0xf9, -1, 1, 1);
+                if (action_home(vehicle_id, -1)) {
+                    MainInterfaceGlobal.set_text_color(0xf9, -1, 1, 1);
                 }
-                screen->write_l(StringTemp, next_x, line_y, strlen(StringTemp));
-                line_y = static_cast<int32_t>(static_cast<uint32_t>(line_y)
-                    + static_cast<uint32_t>(row_pitch));
+                MainInterfaceGlobal.write_l(StringTemp, next_x, line_y);
+                line_y += row_pitch;
             }
-            screen->set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
-            const int capacity = veh_cargo(vehicle_id);
-            if (capacity != 0) {
-                char count_text[32];
+            MainInterfaceGlobal.set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
+            if (veh_cargo(vehicle_id)) {
                 StringTemp[0] = '\0';
                 strcat(StringTemp, label_get(0x360 / 4));
                 strcat(StringTemp, ": ");
-                _itoa(capacity - stack_veh(vehicle_id, 0), count_text, 10);
-                strcat(StringTemp, count_text);
+                int cargo = veh_cargo(vehicle_id) - stack_veh(vehicle_id, 0);
+                _itoa(cargo, digits, 10);
+                strcat(StringTemp, digits);
                 strcat(StringTemp, "/");
-                _itoa(capacity, count_text, 10);
-                strcat(StringTemp, count_text);
-                if (StringTemp != 0) {
-                    screen->write_l(StringTemp, content_x, line_y, strlen(StringTemp));
-                }
-                line_y = static_cast<int32_t>(static_cast<uint32_t>(line_y)
-                    + static_cast<uint32_t>(row_pitch));
+                cargo = veh_cargo(vehicle_id);
+                _itoa(cargo, digits, 10);
+                strcat(StringTemp, digits);
+                MainInterfaceGlobal.write_l(StringTemp, content_x, line_y);
+                line_y += row_pitch;
             }
         }
-        if (vehicle.dmg_incurred != 0) {
-            const int hit_points = prototype.plan == PLAN_ALIEN_ARTIFACT ? 1
-                : range(prototype.reactor_id, 1, 100) * 10;
-            const int remaining = range(hit_points - vehicle.dmg_incurred,
-                                        0, 9999);
-            char percent_text[32];
-            _itoa((hit_points - remaining) * 100 / hit_points,
-                  percent_text, 10);
+        if (Vehs[vehicle_id].dmg_incurred) {
             StringTemp[0] = '\0';
             strcat(StringTemp, label_get(0x628 / 4));
             strcat(StringTemp, ": ");
-            const int next_x = screen->write_l(StringTemp, content_x,
-                                               line_y, strlen(StringTemp));
-            screen->set_text_color(0xfa, -1, 1, 1);
-            if (hit_points / 3 <= vehicle.dmg_incurred) {
-                screen->set_text_color(0xfb, -1, 1, 1);
+            next_x = MainInterfaceGlobal.write_l(StringTemp, content_x, line_y);
+            MainInterfaceGlobal.set_text_color(0xfa, -1, 1, 1);
+            if (Vehs[vehicle_id].dmg_incurred >= proto_power(vehicle_id) / 3) {
+                MainInterfaceGlobal.set_text_color(0xfb, -1, 1, 1);
             }
-            if (hit_points * 2 / 3 <= vehicle.dmg_incurred) {
-                screen->set_text_color(0xf9, -1, 1, 1);
+            if (Vehs[vehicle_id].dmg_incurred >= proto_power(vehicle_id) * 2 / 3) {
+                MainInterfaceGlobal.set_text_color(0xf9, -1, 1, 1);
             }
             StringTemp[0] = '\0';
-            strcat(StringTemp, percent_text);
+            _itoa((proto_power(vehicle_id)
+                   - range(proto_power(vehicle_id) - Vehs[vehicle_id].dmg_incurred,
+                           0, 9999)) * 100 / proto_power(vehicle_id),
+                  digits, 10);
+            strcat(StringTemp, digits);
             strcat(StringTemp, "%");
-            screen->write_l(StringTemp, next_x, line_y, strlen(StringTemp));
-            line_y = static_cast<int32_t>(static_cast<uint32_t>(line_y)
-                    + static_cast<uint32_t>(row_pitch));
+            MainInterfaceGlobal.write_l(StringTemp, next_x, line_y);
+            MainInterfaceGlobal.set_text_color(MessageWinTextColor, MessageWinTextBackground, 1, 1);
+            line_y += row_pitch;
         }
-        screen->set_text_color(MessageWinTextColor, MessageWinTextBackground, 1, 1);
-        if ((vehicle.state & VSTATE_DESIGNATE_DEFENDER) && known_orders) {
+        if ((Vehs[vehicle_id].faction_id == ConsoleGlobal.faction_id_
+             || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
+             || (PlayersData[ConsoleGlobal.faction_id_]
+                     .diplo_treaties[Vehs[vehicle_id].faction_id] & 1))
+            && (Vehs[vehicle_id].state & VSTATE_DESIGNATE_DEFENDER)) {
             StringTemp[0] = '\0';
             strcat(StringTemp, label_get(0x1048 / 4));
-            screen->set_text_color(0xfb, -1, 1, 1);
-            screen->write_l(StringTemp, content_x, line_y, strlen(StringTemp));
-            line_y = static_cast<int32_t>(static_cast<uint32_t>(line_y)
-                    + static_cast<uint32_t>(row_pitch));
+            MainInterfaceGlobal.set_text_color(0xfb, -1, 1, 1);
+            MainInterfaceGlobal.write_l(StringTemp, content_x, line_y);
+            line_y += row_pitch;
         }
-        screen->set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
-        if (known_orders) {
+        MainInterfaceGlobal.set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
+        if (Vehs[vehicle_id].faction_id == ConsoleGlobal.faction_id_
+            || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
+            || (PlayersData[ConsoleGlobal.faction_id_]
+                    .diplo_treaties[Vehs[vehicle_id].faction_id] & 1)) {
             StringTemp[0] = '\0';
             say_orders(StringTemp, vehicle_id);
-            line_y = screen->wrap(StringTemp, content_x, line_y,
-                                  content_width);
-            if (vehicle.order > 3 && vehicle.order < 0x18) {
-                char digits[80];
-                const int turns = action_terraform(vehicle_id,
-                                                    vehicle.order - 4, 0);
+            line_y = MainInterfaceGlobal.wrap(StringTemp, content_x, line_y,
+                                  area.right - area.left);
+            if (Vehs[vehicle_id].order >= 4 && Vehs[vehicle_id].order < 0x18) {
+                int turns = action_terraform(vehicle_id, Vehs[vehicle_id].order - 4, 0);
                 StringTemp[0] = '\0';
                 strcat(StringTemp, "[");
                 strcat(StringTemp, label_get(0x71c / 4));
@@ -1270,138 +1284,154 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
                 _itoa(turns + 1, digits, 10);
                 strcat(StringTemp, digits);
                 strcat(StringTemp, "]");
-                screen->set_text_color(0xfb, -1, 1, 1);
-                screen->write_l(StringTemp, content_x, line_y,
-                                strlen(StringTemp));
+                MainInterfaceGlobal.set_text_color(0xfb, -1, 1, 1);
+                MainInterfaceGlobal.write_l(StringTemp, content_x, line_y);
             }
         }
-        if (add_spot != 0) {
+        if (add_spot) {
             spot_.add(vehicle_id, 10, area.left, area.top,
-                      content_width, area.bottom - area.top);
+                      area.right - area.left, area.bottom - area.top);
         }
-        const bool show_destination =
-            (vehicle.faction_id == ConsoleGlobal.faction_id_ ||
-             (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) &&
-            vehicle.order == 0x18 &&
-            (GameDataStateStorage.fields_.game_more_preferences_ & MPREF_MAP_HIDE_ACTIVE_VEH_GOTO_PATH) == 0;
-        if (show_destination) {
+        base_id = -1;
+        if ((Vehs[vehicle_id].faction_id == ConsoleGlobal.faction_id_
+             || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW))
+            && Vehs[vehicle_id].order == 0x18
+            && !(GameDataStateStorage.fields_.game_more_preferences_
+                 & MPREF_MAP_HIDE_ACTIVE_VEH_GOTO_PATH)) {
             draw_my_dest(vehicle_id);
             ConsoleGlobal.cover_window_.Win::show(0);
         } else {
             UNK2();
         }
-        base_id = -1;
     } else {
         UNK2();
     }
 
-    screen->set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
-    screen->restore_clip();
+    MainInterfaceGlobal.set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
+    MainInterfaceGlobal.restore_clip();
     if (base_id >= 0) {
-        Base &base = Bases[base_id];
-        base_draw(screen, base_id, sprite_x, content_y, -4, 0x40);
-        base_draw(screen, base_id, sprite_x, content_y, 0, 0x1800);
-        screen->set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
-        screen->set_font(&font1_, 0, 0, 0);
+        base_draw(&MainInterfaceGlobal, base_id,
+                  (area.right - (MapWinCaptionScale > 0
+                      ? MapWinCaptionScale * 100 / MapWinCaptionDivisor : 75)
+                   - area.left) / 2 + content_x,
+                  content_y, -4, 0x40);
+        base_draw(&MainInterfaceGlobal, base_id,
+                  (area.right - (MapWinCaptionScale > 0
+                      ? MapWinCaptionScale * 100 / MapWinCaptionDivisor : 75)
+                   - area.left) / 2 + content_x,
+                  content_y, 0, 0x1800);
+        MainInterfaceGlobal.set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
+        MainInterfaceGlobal.set_font(&font1_, 0, 0, 0);
+        line_y = (MapWinCaptionScale > 0
+            ? MapWinCaptionScale * 75 / MapWinCaptionDivisor : 56) + content_y + 8;
         StringTemp[0] = '\0';
-        strcat(StringTemp, base.name_string);
-        int line_y = screen->wrap_cent(&font3_, StringTemp, content_x,
-                                       content_y + title_offset + 8, content_width);
-        if (base.faction_id_current != ConsoleGlobal.faction_id_) {
+        strcat(StringTemp, Bases[base_id].name_string);
+        if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) &&
+            (GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE)) {
+            strcat(StringTemp, " ");
+            strcat(StringTemp, "(");
+            _itoa(base_id, digits, 10);
+            strcat(StringTemp, digits);
+            strcat(StringTemp, ")");
+        }
+        line_y = MainInterfaceGlobal.wrap_cent(&font3_, StringTemp, content_x, line_y,
+                                   area.right - area.left);
+        if (Bases[base_id].faction_id_current != ConsoleGlobal.faction_id_) {
             StringTemp[0] = '\0';
-            const Player &owner = Players[base.faction_id_current];
             if (Language == 0) {
-                strcat(StringTemp, owner.adj_name_faction);
+                strcat(StringTemp,
+                       Players[Bases[base_id].faction_id_current].adj_name_faction);
             } else {
-                GenderDefault = owner.noun_gender;
-                PluralityDefault = owner.is_noun_plural;
                 strcat(StringTemp, "(");
-                strcat(StringTemp, owner.noun_faction);
+                parse_set(Players[Bases[base_id].faction_id_current].noun_gender,
+                          Players[Bases[base_id].faction_id_current].is_noun_plural);
+                strcat(StringTemp,
+                       Players[Bases[base_id].faction_id_current].noun_faction);
                 strcat(StringTemp, ")");
             }
-            line_y = screen->wrap_cent(StringTemp, content_x, line_y,
-                                       content_width);
-            StringTemp[0] = '\0';
-            const int condition_label = has_fac_built(FAC_HEADQUARTERS,
-                                                       base_id) ? 0x5c4 :
-                base.population_size < 2 ? 0x2f0 :
-                base.population_size > Rules.pop_limit_sans_hab_complex
-                    ? 0x570 : 0x2f4;
-            strcat(StringTemp, label_get(condition_label / 4));
-            line_y = screen->wrap_cent(StringTemp, content_x, line_y,
-                                       content_width);
-            StringTemp[0] = '\0';
-            const int facility_id = has_fac_built(FAC_RECREATION_COMMONS,
-                                                  base_id)
-                ? FAC_RECREATION_COMMONS
-                : has_fac_built(FAC_TACHYON_FIELD, base_id)
-                    ? FAC_TACHYON_FIELD : 0;
-            if (facility_id != 0) {
-                strcat(StringTemp, StringTable.get(
-                    Facility[facility_id].name));
-                line_y = screen->wrap_cent(StringTemp, content_x, line_y,
-                                           content_width);
+            line_y = MainInterfaceGlobal.wrap_cent(StringTemp, content_x, line_y,
+                                       area.right - area.left);
+            if (Bases[base_id].faction_id_current != ConsoleGlobal.faction_id_) {
+                StringTemp[0] = '\0';
+            } else {
+                strcat(StringTemp, " ");
             }
-            if (base.state & BSTATE_DRONE_RIOTS_ACTIVE) {
+            strcat(StringTemp, has_fac(FAC_HEADQUARTERS, base_id, 0)
+                ? label_get(0x5c4 / 4)
+                : Bases[base_id].population_size <= 1 ? label_get(0x2f0 / 4)
+                : Bases[base_id].population_size > Rules.pop_limit_sans_hab_complex
+                    ? label_get(0x570 / 4) : label_get(0x2f4 / 4));
+            line_y = MainInterfaceGlobal.wrap_cent(StringTemp, content_x, line_y,
+                                       area.right - area.left);
+            StringTemp[0] = '\0';
+            if (has_fac(FAC_TACHYON_FIELD, base_id, 0)) {
+                strcat(StringTemp, StringTable.get(Facility[FAC_TACHYON_FIELD].name));
+            } else if (has_fac(FAC_PERIMETER_DEFENSE, base_id, 0)) {
+                strcat(StringTemp, StringTable.get(Facility[FAC_PERIMETER_DEFENSE].name));
+            }
+            if (strlen(StringTemp)) {
+                line_y = MainInterfaceGlobal.wrap_cent(StringTemp, content_x, line_y,
+                                           area.right - area.left);
+            }
+            if (Bases[base_id].state & BSTATE_DRONE_RIOTS_ACTIVE) {
                 StringTemp[0] = '\0';
                 strcat(StringTemp, label_get(0xb04 / 4));
-                screen->set_text_color(0xf9, -1, 1, 1);
-                line_y = screen->wrap_cent(StringTemp, content_x, line_y,
-                                           content_width);
+                MainInterfaceGlobal.set_text_color(0xf9, -1, 1, 1);
+                line_y = MainInterfaceGlobal.wrap_cent(StringTemp, content_x, line_y,
+                                           area.right - area.left);
             }
-            if (base.nerve_staple_turns_left != 0) {
-                char digits[80];
+            if (Bases[base_id].nerve_staple_turns_left) {
                 StringTemp[0] = '\0';
                 strcat(StringTemp, label_get(0xb08 / 4));
                 strcat(StringTemp, ": ");
-                _itoa(base.nerve_staple_turns_left, digits, 10);
+                _itoa(Bases[base_id].nerve_staple_turns_left, digits, 10);
                 strcat(StringTemp, digits);
-                screen->set_text_color(0xfb, -1, 1, 1);
-                line_y = screen->wrap_cent(StringTemp, content_x, line_y,
-                                           content_width);
+                MainInterfaceGlobal.set_text_color(0xfb, -1, 1, 1);
+                line_y = MainInterfaceGlobal.wrap_cent(StringTemp, content_x, line_y,
+                                           area.right - area.left);
             }
         }
-        const int owner_id = base.faction_id_current;
-        screen->set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
-        if (owner_id == ConsoleGlobal.faction_id_ ||
-            (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) ||
-            (PlayersData[ConsoleGlobal.faction_id_]
-                 .diplo_treaties[owner_id] & 1) != 0 || spying(owner_id)) {
-            const int production = base.queue_production_id[0];
-            char digits[80];
+        MainInterfaceGlobal.set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
+        if (Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_
+            || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
+            || (PlayersData[ConsoleGlobal.faction_id_]
+                    .diplo_treaties[Bases[base_id].faction_id_current] & 1)
+            || spying(Bases[base_id].faction_id_current)) {
             StringTemp[0] = '\0';
             strcat(StringTemp, label_get(0x798 / 4));
             strcat(StringTemp, ": ");
-            int production_cost;
-            if (production < 0) {
-                strcat(StringTemp, StringTable.get(
-                    Facility[-production].name));
-                production_cost = Facility[-production].cost;
+            int cost;
+            if (Bases[base_id].queue_production_id[0] >= 0) {
+                strcat(StringTemp,
+                       VehPrototypes[Bases[base_id].queue_production_id[0]].veh_name);
+                cost = VehPrototypes[Bases[base_id].queue_production_id[0]].cost;
             } else {
-                strcat(StringTemp, VehPrototypes[production].veh_name);
-                production_cost = VehPrototypes[production].cost;
+                strcat(StringTemp, StringTable.get(
+                    Facility[-Bases[base_id].queue_production_id[0]].name));
+                cost = Facility[-Bases[base_id].queue_production_id[0]].cost;
             }
-            if (production != -69) {
-                strcat(StringTemp, " (");
-                _itoa(base.minerals_accumulated, digits, 10);
+            if (Bases[base_id].queue_production_id[0] != -69) {
+                strcat(StringTemp, " ");
+                strcat(StringTemp, "(");
+                _itoa(Bases[base_id].minerals_accumulated, digits, 10);
                 strcat(StringTemp, digits);
                 strcat(StringTemp, "/");
-                _itoa(cost_factor(owner_id, 1, -1) * production_cost,
-                      digits, 10);
+                cost *= cost_factor(Bases[base_id].faction_id_current, 1, -1);
+                _itoa(cost, digits, 10);
                 strcat(StringTemp, digits);
                 strcat(StringTemp, ")");
             }
-            if (StringTemp[0] != '\0') {
-                screen->wrap_cent(StringTemp, content_x, line_y,
-                                  content_width);
+            if (strlen(StringTemp)) {
+                line_y = MainInterfaceGlobal.wrap_cent(StringTemp, content_x, line_y,
+                                           area.right - area.left);
             }
         }
-        if (add_spot != 0) {
+        if (add_spot) {
             spot_.add(base_id, 1, area.left, area.top,
-                      content_width, area.bottom - area.top);
+                      area.right - area.left, area.bottom - area.top);
         }
     }
-    if (add_spot == 0) {
+    if (!add_spot) {
         MainInterfaceGlobal.update(&area, static_cast<GraphicWin *>(0));
     }
 }

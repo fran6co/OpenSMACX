@@ -750,7 +750,7 @@ int __cdecl world_site(int x, int y, BOOL is_ocean_site) {
                 deep_count++;
             }
             // Only the nine innermost tiles decide whether this is a big land.
-            if (i < 9 && Continents[radius_tile->region].tile_count >= 50) {
+            if (9 > i && Continents[radius_tile->region].tile_count >= 50) {
                 big_continent = true;
             }
             if (!i || !bonus_at(x_radius, y_radius, 1)) {
@@ -2818,8 +2818,9 @@ Purpose: Carve rivers. Every land tile is tried as a source in turn: the
 void __cdecl world_rivers() {
     int river_count = 0;  // incremented per source and never read
     int i;
-    for (i = 0; i < MapArea; i++) {
-        map_tiles()[i].bit &= ~(BIT_RIVER | BIT_RIVER_LAKE);
+    Map *tile = map_tiles();
+    for (i = 0; i < MapArea; i++, tile++) {
+        tile->bit &= ~(BIT_RIVER | BIT_RIVER_LAKE);
     }
     for (int y = 0; y < MapLatitudeBounds; y++) {
         for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
