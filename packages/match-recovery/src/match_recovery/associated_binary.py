@@ -297,21 +297,283 @@ def _guard_for_dispatch(instructions, dispatch, span: Span, *,
     return choice
 
 
+# Instructions whose only memory effect is an explicit operand. Every other
+# instruction (PUSH, CALL, string forms, ...) is assumed to write memory.
+_EXPLICIT_MEMORY_IDS = frozenset((
+    x86.X86_INS_MOV, x86.X86_INS_MOVZX, x86.X86_INS_MOVSX, x86.X86_INS_LEA,
+    x86.X86_INS_CMP, x86.X86_INS_TEST, x86.X86_INS_ADD, x86.X86_INS_SUB,
+    x86.X86_INS_AND, x86.X86_INS_OR, x86.X86_INS_XOR, x86.X86_INS_SHL,
+    x86.X86_INS_SHR, x86.X86_INS_SAR, x86.X86_INS_IMUL, x86.X86_INS_INC,
+    x86.X86_INS_DEC, x86.X86_INS_NEG, x86.X86_INS_NOT, x86.X86_INS_CDQ,
+    x86.X86_INS_NOP,
+))
+# Unsigned/equality conditions: (taken relation, fallthrough relation) of
+# `cmp left, right`. Signed conditions give no unsigned bound and are ignored.
+_UNSIGNED_EDGE_RELATIONS = {
+    x86.X86_INS_JA: (">", "<="), x86.X86_INS_JAE: (">=", "<"),
+    x86.X86_INS_JB: ("<", ">="), x86.X86_INS_JBE: ("<=", ">"),
+    x86.X86_INS_JE: ("==", "!="), x86.X86_INS_JNE: ("!=", "=="),
+}
+_PATH_PROOF_STATE_LIMIT = 50000
+
+
+def _value_location(instruction, operand):
+    """A tracked 32-bit value location: a GPR family or an EBP-relative slot."""
+    if operand.type == x86.X86_OP_REG and operand.size == 4:
+        try:
+            return ("reg", _family(instruction, operand.reg))
+        except ValueError:
+            return None
+    if operand.type == x86.X86_OP_MEM and operand.size == 4:
+        memory = operand.mem
+        if (memory.base == x86.X86_REG_EBP and not memory.index
+                and memory.segment == x86.X86_REG_INVALID):
+            return ("slot", memory.disp)
+    return None
+
+
+def _may_write_memory(instruction) -> bool:
+    if instruction.id in (x86.X86_INS_CMP, x86.X86_INS_TEST):
+        return False
+    if instruction.group(x86.X86_GRP_JUMP) and not instruction.group(CS_GRP_CALL):
+        return False
+    if instruction.id not in _EXPLICIT_MEMORY_IDS:
+        return True
+    return bool(instruction.operands) and instruction.operands[0].type == x86.X86_OP_MEM
+
+
+def _kills(instruction, location) -> bool:
+    """Whether executing `instruction` can change the value held at `location`."""
+    if any(instruction.group(group) for group in (CS_GRP_CALL, CS_GRP_INT, CS_GRP_IRET, CS_GRP_RET)):
+        return True
+    try:
+        written = _access_families(instruction)
+    except ValueError:
+        return True
+    if location[0] == "reg":
+        return location[1] in written
+    return _may_write_memory(instruction) or "ebp" in written
+
+
+def _backward_step(instruction, locations: frozenset):
+    """Locations holding a value before `instruction`, given those after it.
+
+    Returns ``("constant", value)`` when the instruction itself defines one
+    of the locations with a 32-bit constant; otherwise the predecessor set.
+    """
+    operands = instruction.operands
+    destination = (_value_location(instruction, operands[0])
+                   if len(operands) == 2 and operands[0].type == x86.X86_OP_REG else None)
+    if destination is not None and destination in locations:
+        if instruction.id == x86.X86_INS_MOV and operands[1].type == x86.X86_OP_IMM:
+            return ("constant", operands[1].imm & 0xFFFFFFFF)
+        if (instruction.id == x86.X86_INS_XOR and operands[1].type == x86.X86_OP_REG
+                and operands[1].reg == operands[0].reg):
+            return ("constant", 0)
+    before = frozenset(location for location in locations if not _kills(instruction, location))
+    if (destination is not None and destination in locations
+            and instruction.id == x86.X86_INS_MOV):
+        source = _value_location(instruction, operands[1])
+        if source is not None:
+            before |= {source}
+    return before
+
+
+def _incoming_edges(instructions, span: Span, indirect_targets: frozenset[int]):
+    """Every modeled predecessor edge, by instruction position."""
+    positions = {item.address: position for position, item in enumerate(instructions)}
+    edges = {position: [] for position in range(len(instructions))}
+    for position, item in enumerate(instructions):
+        following = position + 1 if position + 1 < len(instructions) else None
+        target = _incoming_direct_target(item)
+        if target is not None and span.start <= target < span.end and target not in positions:
+            raise ValueError("direct control target is not a decoded parent instruction boundary")
+        if item.group(CS_GRP_CALL):
+            if target is not None and span.start <= target < span.end:
+                edges[positions[target]].append((position, "call"))
+            if following is not None:
+                edges[following].append((position, "fallthrough"))
+        elif item.group(CS_GRP_RET) or item.group(CS_GRP_IRET):
+            continue
+        elif item.id == x86.X86_INS_JMP:
+            if target is None:
+                if any(address not in positions for address in indirect_targets):
+                    raise ValueError("switch target is not a decoded parent instruction boundary")
+                for address in indirect_targets:
+                    edges[positions[address]].append((position, "indirect"))
+            elif span.start <= target < span.end:
+                edges[positions[target]].append((position, "taken"))
+        elif item.group(x86.X86_GRP_JUMP) or item.group(CS_GRP_BRANCH_RELATIVE):
+            if target is None:
+                raise ValueError("path-bounded index proof refuses an indirect conditional transfer")
+            if span.start <= target < span.end:
+                edges[positions[target]].append((position, "taken"))
+            if following is not None:
+                edges[following].append((position, "fallthrough"))
+        elif following is not None:
+            edges[following].append((position, "fallthrough"))
+    return edges
+
+
+def _edge_bounds(instructions, edges, position: int, kind: str):
+    """Unsigned facts a conditional edge establishes about `cmp` locations.
+
+    Returns (location, bound) pairs meaning location <= bound after the
+    branch, where bound is ("imm", value) or ("location", location).
+    """
+    branch = instructions[position]
+    relations = _UNSIGNED_EDGE_RELATIONS.get(branch.id)
+    if relations is None or kind not in ("taken", "fallthrough"):
+        return []
+    if _branch_target(branch) == branch.address + branch.size:
+        return []
+    relation = relations[0 if kind == "taken" else 1]
+    cursor = position - 1
+    while cursor >= 0 and not _writes_integer_flags(instructions[cursor]):
+        if _corridor_control_transfer(instructions[cursor]):
+            return []
+        cursor -= 1
+    if cursor < 0:
+        return []
+    compare = instructions[cursor]
+    # The flags reaching the branch must come from this compare on every path.
+    if any(edges[inner] != [(inner - 1, "fallthrough")] for inner in range(cursor + 1, position + 1)):
+        return []
+    if compare.id != x86.X86_INS_CMP or len(compare.operands) != 2:
+        return []
+    left = _value_location(compare, compare.operands[0])
+    if left is None:
+        return []
+    if compare.operands[1].type == x86.X86_OP_IMM:
+        right = ("imm", compare.operands[1].imm & 0xFFFFFFFF)
+    else:
+        location = _value_location(compare, compare.operands[1])
+        if location is None:
+            return []
+        right = ("location", location)
+    corridor = instructions[cursor + 1:position]
+    for location in (left, right[1] if right[0] == "location" else None):
+        if location is not None and any(_kills(item, location) for item in corridor):
+            return []
+    if relation in ("<=", "=="):
+        return [(left, right)]
+    if relation == "<":
+        if right[0] == "imm":
+            return [(left, ("imm", right[1] - 1))] if right[1] else []
+        return [(left, right)]
+    if relation in (">=", ">") and right[0] == "location":
+        return [(right[1], ("location", left))]
+    return []
+
+
+def _path_bounded_dispatch(instructions, dispatch, index_family: str, span: Span,
+                           indirect_targets: frozenset[int]) -> dict:
+    """Bound a dispatch index on every modeled backward path.
+
+    Each path from the indexed JMP back towards the entry tracks the set of
+    registers/EBP slots that hold the index (or, after a register-register
+    unsigned compare, an upper bound of it). A path is proved by a 32-bit
+    constant definition of that set or by an unsigned/equality branch edge
+    whose `cmp` constrains a location equal to it. Reaching the function
+    entry, a call edge into the body, or losing every tracked location
+    refuses. Calls and non-explicit memory writes kill every location they
+    can affect; callee-saved registers are not assumed preserved.
+    """
+    if any(operand.type == x86.X86_OP_MEM and operand.mem.segment != x86.X86_REG_INVALID
+           for item in instructions for operand in item.operands):
+        raise ValueError("path-bounded index proof refuses segment-relative (EH/SEH) frames")
+    edges = _incoming_edges(instructions, span, indirect_targets)
+    start = instructions.index(dispatch)
+    stack = [(start, frozenset({("reg", index_family)}), frozenset())]
+    seen = set()
+    bounds = set()
+
+    def proved(tracked, facts):
+        matches = [bound for locations, bound in facts if locations & tracked]
+        return min(matches) if matches else None
+
+    while stack:
+        state = stack.pop()
+        if state in seen:
+            continue
+        seen.add(state)
+        if len(seen) > _PATH_PROOF_STATE_LIMIT:
+            raise ValueError("path-bounded index proof exceeds its search bound")
+        position, tracked, facts = state
+        if instructions[position].address == span.start:
+            raise ValueError("dispatch index reaches the function entry without a bound")
+        for predecessor, kind in edges[position]:
+            if kind == "call":
+                raise ValueError("direct call enters a dispatch index path")
+            item = instructions[predecessor]
+            edge_tracked, edge_facts = tracked, set(facts)
+            for location, bound in _edge_bounds(instructions, edges, predecessor, kind):
+                if bound[0] == "imm":
+                    edge_facts.add((frozenset({location}), bound[1]))
+                elif location in edge_tracked:
+                    # index <= location <= bound: bound the compared value instead.
+                    edge_tracked = frozenset({bound[1]})
+            value = proved(edge_tracked, edge_facts)
+            if value is not None:
+                bounds.add((item.address, kind, value))
+                continue
+            step = _backward_step(item, edge_tracked)
+            if type(step) is tuple:
+                bounds.add((item.address, "constant", step[1]))
+                continue
+            if not step:
+                raise ValueError(f"dispatch index is not bounded on the path through {item.address:#x}")
+            next_facts = set()
+            for locations, bound in edge_facts:
+                carried = _backward_step(item, locations)
+                if type(carried) is not tuple and carried:
+                    next_facts.add((carried, bound))
+            value = proved(step, next_facts)
+            if value is not None:
+                bounds.add((item.address, "fact", value))
+                continue
+            stack.append((predecessor, step, frozenset(next_facts)))
+    if not bounds:
+        raise ValueError("dispatch index has no modeled incoming path")
+    return {"kind": "path-bounded", "maximum_index": max(value for _, _, value in bounds),
+            "bounds": [{"address": address, "edge": kind, "maximum": value}
+                       for address, kind, value in sorted(bounds)]}
+
+
 def _prove_dispatch_extent(instructions, body: Span, image: PeImage,
                            table_binding: AssociatedDataBinding,
                            table_instruction, table_operand,
                            selector_binding: AssociatedDataBinding | None,
                            selector_instruction, selector_operand, *,
-                           indirect_targets: frozenset[int] | None = None) -> dict:
-    """Derive one table/map extent from its guard and preserved index flow."""
+                           indirect_targets: frozenset[int] | None = None,
+                           path_proof: bool = False) -> dict:
+    """Derive one table/map extent from its guard and preserved index flow.
+
+    With `path_proof`, a direct-index table without one dominating guard may
+    instead be bounded on every incoming path (see `_path_bounded_dispatch`).
+    """
     index_register = table_operand.mem.index
     if not index_register:
         raise ValueError("switch target dispatch lacks an index register")
     index_family = _family(table_instruction, index_register)
-    compare, branch, guard_family, count, default_target = _guard_for_dispatch(
-        instructions, table_instruction, body,
-        indirect_targets=indirect_targets)
     table_count = (table_binding.span.end - table_binding.span.start) // 4
+    try:
+        compare, branch, guard_family, count, default_target = _guard_for_dispatch(
+            instructions, table_instruction, body,
+            indirect_targets=indirect_targets)
+    except ValueError as error:
+        if not path_proof or selector_binding is not None or indirect_targets is None:
+            raise
+        try:
+            guard = _path_bounded_dispatch(instructions, table_instruction, index_family,
+                                           body, indirect_targets)
+        except ValueError as path_error:
+            raise ValueError(f"{error}; {path_error}") from path_error
+        if guard["maximum_index"] + 1 != table_count:
+            raise ValueError("direct switch table disagrees with its path-bounded index domain")
+        return {"guard": guard, "target_count": table_count, "selector_count": 0,
+                "selector_offset": None, "index_register": index_family,
+                "mode": "direct-index"}
     branch_pos = instructions.index(branch)
     dispatch_pos = instructions.index(table_instruction)
     if selector_binding is None:
@@ -786,13 +1048,23 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
         resolved_targets[key] = address
 
     section_relocations = obj.sections[section_number - 1].relocations
+    # The path proof models every in-body edge except address-taken labels.
+    # An EH tail or an absolute body address inside the body (catch/SEH
+    # continuations, label tables) would add unmodeled predecessors.
+    try:
+        address_taken = any(
+            span.start <= struct.unpack("<I", image.read(Span(span.start + site, span.start + site + 4)))[0] < span.end
+            for site in image.absolute_sites(span))
+    except ValueError:
+        address_taken = True
     dispatch_witnesses = []
     for table_row, selector_row in dispatch_rows:
         witness = _prove_dispatch_extent(
             body_instructions, span, image,
             table_row[0], table_row[1], table_row[2],
             *(selector_row if selector_row is not None else (None, None, None)),
-            indirect_targets=frozenset(indirect_targets))
+            indirect_targets=frozenset(indirect_targets),
+            path_proof=eh_tail is None and not address_taken)
         dispatch_witnesses.append(witness)
 
     def report(proof, *, candidate_layout_unproven=False):

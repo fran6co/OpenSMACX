@@ -9,7 +9,7 @@ from match_recovery.associated_binary import compare_associated_code
 from match_recovery.associated_binary import (
     _ENGINE, _guard_for_dispatch, _is_canonical_lea_identity_padding,
     _is_intergroup_hotpatch_gap, _is_intergroup_lea_identity_gap,
-    _memory_operand, _prove_dispatch_extent,
+    _memory_operand, _path_bounded_dispatch, _prove_dispatch_extent,
 )
 from match_recovery.associated_source import AssociatedDataBinding
 from match_recovery.model import Origin, Result, Span
@@ -1279,3 +1279,120 @@ def test_ordinary_indirect_callback_outside_guard_corridors_is_not_blanket_refus
     obj, subject, span, image, bindings, targets = direct_multi_fixture(
         original_change=(30, bytes.fromhex("ff d0 90 90 90")))
     assert compare_associated_code(obj, subject, span, image, bindings, targets)["result"] == Result.PASS
+
+
+# Path-bounded dispatches: VC6 shapes without one `cmp reg,imm` corridor.
+
+def _register_bound_code(prefix=b"", bound_def=bytes.fromhex("ba 05 00 00 00"), between=b""):
+    # [prefix] mov edx,5; test ecx,ecx; je L; xor ecx,ecx; [between]
+    # L: cmp eax,edx; ja DEF; jmp [eax*4+T]; DEF: ret
+    body = bound_def + bytes.fromhex("85 c9 74 02 31 c9") + between
+    return prefix + body + bytes.fromhex("39 d0 77 07 ff 24 85 00 00 00 00 c3")
+
+
+def _chassis_code(constant=0, ebp14_load=bytes.fromhex("8b 55 14"), guard_jump=0x77):
+    # mov edx,[ebp+c]; cmp eax,15h; jne G; cmp edx,1; jne G; mov edx,[ebp+14h];
+    # cmp byte [edx],1; jg A; mov edx,constant; jmp D;
+    # G: cmp edx,8; ja DEF; jmp D; A: mov edx,[ebp+c]; D: jmp [edx*4+T]; DEF: ret
+    return (bytes.fromhex("8b 55 0c 83 f8 15 75 14 83 fa 01 75 0f") + ebp14_load
+            + bytes.fromhex("80 3a 01 7f 0e ba") + struct.pack("<I", constant)
+            + bytes.fromhex("eb 0a 83 fa 08") + bytes((guard_jump, 0x0c))
+            + bytes.fromhex("eb 03 8b 55 0c ff 24 95 00 00 00 00 c3"))
+
+
+def _path_bound(code):
+    instructions = list(_ENGINE.disasm(code, BASE))
+    assert sum(item.size for item in instructions) == len(code)
+    dispatch = next(item for item in instructions if item.mnemonic == "jmp" and item.operands[0].type == 3)
+    family = "edx" if dispatch.op_str.startswith("dword ptr [edx") else "eax"
+    return instructions, dispatch, _path_bounded_dispatch(
+        instructions, dispatch, family, Span(BASE, BASE + len(code)),
+        frozenset({instructions[-1].address}))
+
+
+def _direct_table(image, dispatch, count, code):
+    owner = Origin(hashlib.sha256(image.data).hexdigest(), "pe:va", BASE)
+    start = BASE + len(code) + (-len(code) % 4)
+    return AssociatedDataBinding(owner, Span(start, start + 4 * count), "switch_targets",
+                                 Origin(owner.image_sha256, "pe:va", dispatch.address),
+                                 "fixture.cpp", 3)
+
+
+def test_register_bound_guard_resolves_one_constant_on_every_path():
+    _, _, witness = _path_bound(_register_bound_code())
+    assert witness["kind"] == "path-bounded" and witness["maximum_index"] == 5
+    assert [row["edge"] for row in witness["bounds"]] == ["constant"]
+
+
+def test_register_bound_guard_extent_proof_requires_opt_in_and_matching_table():
+    _, _, _, image, _, _ = fixture()
+    code = _register_bound_code()
+    instructions, dispatch, _ = _path_bound(code)
+    operand = _memory_operand(dispatch, "switch_targets")
+    body = Span(BASE, BASE + len(code))
+    targets = frozenset({instructions[-1].address})
+    table = _direct_table(image, dispatch, 6, code)
+    with pytest.raises(ValueError, match="dominating guard"):
+        _prove_dispatch_extent(instructions, body, image, table, dispatch, operand,
+                               None, None, None, indirect_targets=targets)
+    witness = _prove_dispatch_extent(instructions, body, image, table, dispatch, operand,
+                                     None, None, None, indirect_targets=targets, path_proof=True)
+    assert witness["mode"] == "direct-index" and witness["target_count"] == 6
+    assert witness["guard"]["maximum_index"] == 5
+    for count in (5, 7):
+        with pytest.raises(ValueError, match="path-bounded index domain"):
+            _prove_dispatch_extent(instructions, body, image, _direct_table(image, dispatch, count, code),
+                                   dispatch, operand, None, None, None,
+                                   indirect_targets=targets, path_proof=True)
+
+
+@pytest.mark.parametrize("code,reason", [
+    # The bound register comes from memory: its value is unknown at entry.
+    (_register_bound_code(bound_def=bytes.fromhex("8b 55 08 90 90")), "function entry"),
+    # One path (the JE over the definition) carries no definition at all.
+    (bytes.fromhex("85 c9 74 05") + _register_bound_code()[0:5] + bytes.fromhex("39 d0 77 07 ff 24 85 00 00 00 00 c3"),
+     "function entry"),
+    # A partial write and a call each destroy the proved constant.
+    (_register_bound_code(between=bytes.fromhex("b2 07")), "not bounded"),
+    (_register_bound_code(between=b"\xe8" + struct.pack("<i", 0x1000)), "not bounded"),
+    # A segment-relative EH/SEH frame may add unmodeled continuation edges.
+    (_register_bound_code(prefix=bytes.fromhex("64 a1 00 00 00 00")), "segment-relative"),
+])
+def test_register_bound_guard_refuses_unknown_or_clobbered_bounds(code, reason):
+    with pytest.raises(ValueError, match=reason):
+        _path_bound(code)
+
+
+def test_threaded_constant_and_equality_paths_bound_the_dispatch():
+    _, _, witness = _path_bound(_chassis_code())
+    assert witness["maximum_index"] == 8
+    assert sorted((row["edge"], row["maximum"]) for row in witness["bounds"]) == [
+        ("constant", 0), ("fact", 1), ("fallthrough", 8)]
+
+
+def test_threaded_out_of_range_constant_disagrees_with_the_table():
+    _, _, _, image, _, _ = fixture()
+    code = _chassis_code(constant=9)
+    instructions, dispatch, witness = _path_bound(code)
+    assert witness["maximum_index"] == 9
+    with pytest.raises(ValueError, match="path-bounded index domain"):
+        _prove_dispatch_extent(instructions, Span(BASE, BASE + len(code)), image,
+                               _direct_table(image, dispatch, 9, code), dispatch,
+                               _memory_operand(dispatch, "switch_targets"), None, None, None,
+                               indirect_targets=frozenset({instructions[-1].address}),
+                               path_proof=True)
+
+
+@pytest.mark.parametrize("variant,reason", [
+    ("slot-store", "not bounded on the path"), ("signed-guard", "function entry"),
+    ("call-into-path", "call enters"),
+])
+def test_threaded_paths_refuse_memory_clobber_signed_guard_or_call_edge(variant, reason):
+    if variant == "slot-store":
+        code = _chassis_code(ebp14_load=bytes.fromhex("89 55 0c"))  # mov [ebp+c],edx
+    elif variant == "signed-guard":
+        code = _chassis_code(guard_jump=0x7F)  # jg is not an unsigned bound
+    else:
+        code = _chassis_code() + b"\xe8" + struct.pack("<i", -(len(_chassis_code()) + 5 - 0x23))
+    with pytest.raises(ValueError, match=reason):
+        _path_bound(code)
