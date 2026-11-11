@@ -5383,7 +5383,7 @@ void MapWin::gen_tile(int x, int y, int a3, int a4) {
 // hash, full call chains, data interpretation, and remaining identity limits.
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004688E0 0x00468BC8 0x00468BE8 0x00468A49
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x004688E0 0x00468BE8 0x00468C12 0x00468A43
-// ORIGINAL: 0x004688E0 sub_4688e0 0x004688E0-0x00468BC5
+// ORIGINAL: 0x004688E0 sub_4688e0 0x004688E0-0x00468BC5 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "build/recovery/mapwin-gen-overlays-oct6/REPORT.md:catalogue-chunk-caller-storage", "build/recovery/mapwin-gen-overlays-oct6/INDEPENDENT-REVIEW-OCT6.md:original-0x4689EF-per-goal-reset", "native:COFF:218f67bf0421f47c7bbcbabcfa583b5d325520e1eff7580df081c758b94aa1cc:752bytes-39references"], "reason": "Complete MapWin goal overlays through genuine PlayerData Goal arrays, mapped game state and inherited Buffer APIs. Local name is inferred from two receiver-backed callers, not an original decorated symbol. Catalogue/chunk, receiver accesses and ret8 support extent; adjacent selector tables stay outside. Preserve unchecked strings, signed-short priorities, duplicate mutation and per-renderable-goal reset/global updates."}
 // symbol    ?gen_overlays@MapWin@@QAEXHH@Z
 void MapWin::gen_overlays(int x, int y) {
