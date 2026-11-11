@@ -3068,11 +3068,12 @@ void Buffer::line(int x1, int y1, int x2, int y2, int color) {
             while (x1 < clip.left || y1 < clip.top) {
                 if (error <= 0) {
                     error += along;
+                    ++x1;
                 } else {
                     error += diagonal;
                     ++y1;
+                    ++x1;
                 }
-                ++x1;
             }
             if (x1 >= clip.right || y1 >= clip.bottom) {
                 goto done;
@@ -7431,16 +7432,13 @@ int Buffer::wrap(char *text, int x, int y, int width) {
             BufferLastWrapWriteResult = write_l(str, x, y);
         }
         y += text_line_height();
-
-        int carry = field_14_;
-        field_18_++;
-        if (carry != 0) {
-            field_14_ = 0;
-            width -= carry;
-            x += carry;
-        }
-
         str = nextStr;
+        field_18_++;
+        if (field_14_ != 0) {
+            width -= field_14_;
+            x += field_14_;
+            field_14_ = 0;
+        }
     } while (str != 0);
     return y;
 }
@@ -9614,13 +9612,22 @@ BufferSpecialText::~BufferSpecialText() {
     field_20_ = 0;
 }
 
-// This new source helper is ordinary code, not a new original identity. It
-// expresses the exact GDI color conversion duplicated by original5DBD00.
-COLORREF Buffer::text_color_to_gdi(uint32_t color) const {
-    if ((init_flags_ & 4) == 0) return (color & 0xffff) | 0x10ff0000;
-    const RGBQUAD &entry = dib_.bmiColors[color];
-    return RGB(entry.rgbRed, entry.rgbGreen, entry.rgbBlue);
-}
+// The GDI text colour: an RGB from the DIB colour table when the buffer is
+// palette-backed (init flag 4), otherwise a palette-relative index. A textual
+// macro, as the image shows: 0x005DBE98/0x005DBEBD re-read the colour word
+// from memory in the index arm instead of reusing the loaded table index.
+#define BUFFER_SET_TEXT_COLOR(color)                                          \
+    if ((init_flags_ & 4) != 0)                                               \
+        SetTextColor(hdc2_, RGB(dib_.bmiColors[color].rgbRed,                 \
+                                dib_.bmiColors[color].rgbGreen,               \
+                                dib_.bmiColors[color].rgbBlue));              \
+    else                                                                      \
+        SetTextColor(hdc2_, (WORD)(color) | 0x10ff0000)
+#define BUFFER_TEXT_COLOR(color)                                              \
+    ((init_flags_ & 4) != 0                                                   \
+         ? RGB(dib_.bmiColors[color].rgbRed, dib_.bmiColors[color].rgbGreen,   \
+               dib_.bmiColors[color].rgbBlue)                                 \
+         : (COLORREF)((WORD)(color) | 0x10ff0000))
 
 // ORIGINAL: 0x005DBD00 ?write_raw_l@Buffer@@QAEHPADHHH@Z 0x005DBD00-0x005DC2C3 FILE
 // TRIED: near-verbatim transcription of the (clean, no-SEH) Ghidra decompilation via `int *p = (int*)this;` field indexing (cross-checked against raw asm offsets: 0x50/0x58/0x60/0x520 /0x52c/0x53c/0x54c/0x55c/0x56c all confirmed). The five `call dword ptr [0x6690xx]` sites are real Win32 GDI calls (SetBkMode/SelectObject/SetTextColor/TextOutA/GetStockObject, identified via Ghidra's WinAPI signatures) dispatched through the catalogued IAT-slot globals via a typedef'd function pointer, matching the original's indirect-call-through-memory shape. The two `(**(code**)(*piVar1+N))(piVar1,arg)` heap callbacks are cast as `__stdcall(int,int)` rather than routed through the VCall thiscall shim, since the disassembly pushes the receiver as an explicit stack arg instead of leaving it in ecx. The Font::width() receiver index (uStack_10 vs uStack_8 vs a third stack slot) is not fully disambiguated across all five call sites - used uStack_10 uniformly as the closest guess. Reaches MISMATCH #0 ('sub' vs 'push'): the original has no EBP frame (esp-relative addressing throughout), which a plain C++ local-variable body does not reproduce.
@@ -9637,43 +9644,41 @@ int Buffer::write_raw_l(char *text, int x, int y, int length) {
 
     // The array keeps the selected slot live across service callbacks. Producer
     // domains0..3 remain required; no new invalid-slot guard/clamp is invented.
-    Font **fonts = fonts_;
-    uint32_t *colors = text_parameters_[0];
-    uint32_t *shadow_colors = text_parameters_[1];
-    uint32_t *shadow_x = text_parameters_[2];
-    uint32_t *shadow_y = text_parameters_[3];
-    unsigned int font_slot = 0;
-    unsigned int color_slot = 0;
-    int bounds_height = 0;
+    unsigned int font_slot;
+    unsigned int color_slot;
+    int bounds_height;
     if (markup_enabled_ == 0) {
+        font_slot = 0;
+        color_slot = 0;
         y += fonts_[0]->height_;
     } else {
         unsigned int requested = write_font_slot_;
-        if (fonts[requested] != 0) font_slot = requested;
-        if (colors[requested] != static_cast<uint32_t>(-1)) color_slot = requested;
+        bounds_height = 0;
+        font_slot = fonts_[requested] != 0 ? requested : 0;
+        color_slot = text_parameters_[0][requested] != static_cast<uint32_t>(-1) ? requested : 0;
         if (fonts_[0] != 0 && fonts_[0]->height_ > 0) bounds_height = fonts_[0]->height_;
         if (fonts_[1] != 0 && fonts_[1]->height_ > bounds_height) bounds_height = fonts_[1]->height_;
         if (fonts_[2] != 0 && fonts_[2]->height_ > bounds_height) bounds_height = fonts_[2]->height_;
         y += bounds_height;
     }
-    SelectObject(hdc2_, fonts[font_slot]->font_obj_);
+    SelectObject(hdc2_, fonts_[font_slot]->font_obj_);
     // Native005DBE61 reloads EDI from the selected color slot. Both shadow
     // banks and the non-special foreground use that slot, not always bank0.
-    if (shadow_colors[color_slot] != static_cast<uint32_t>(-1)) {
-        SetTextColor(hdc2_, text_color_to_gdi(shadow_colors[color_slot]));
-        TextOutA(hdc2_, static_cast<int>(shadow_x[color_slot]) + x,
-                   static_cast<int>(shadow_y[color_slot]) + y, text, length);
+    if (text_parameters_[1][color_slot] != static_cast<uint32_t>(-1)) {
+        BUFFER_SET_TEXT_COLOR(text_parameters_[1][color_slot]);
+        TextOutA(hdc2_, static_cast<int>(text_parameters_[2][color_slot]) + x,
+                   static_cast<int>(text_parameters_[3][color_slot]) + y, text, length);
     }
+    int remaining = length;
+    int second_bounds = 0;
     if (field_524_ == 0) {
-        SetTextColor(hdc2_, text_color_to_gdi(colors[color_slot]));
+        BUFFER_SET_TEXT_COLOR(text_parameters_[0][color_slot]);
         TextOutA(hdc2_, x, y, text, length);
         SelectObject(hdc2_, GetStockObject(SYSTEM_FONT));
         release_hdc(1);
-        return fonts[font_slot]->width(text, length) + x;
+        return fonts_[font_slot]->width(text, length) + x;
     }
 
-    int remaining = length;
-    int second_bounds = 0;
     char *cursor = text;
     for (;;) {
         int special = static_cast<int>(field_528_);
@@ -9684,15 +9689,15 @@ int Buffer::write_raw_l(char *text, int x, int y, int length) {
             char *delimiter = strchr(cursor, '~');
             int segment_length = delimiter != 0
                 ? static_cast<int>(delimiter - cursor) : remaining;
-            SetTextColor(hdc2_, text_color_to_gdi(colors[color_slot]));
+            SetTextColor(hdc2_, BUFFER_TEXT_COLOR(text_parameters_[0][color_slot]));
             TextOutA(hdc2_, x, y, cursor, segment_length);
             if (delimiter == 0) {
                 SelectObject(hdc2_, GetStockObject(SYSTEM_FONT));
                 release_hdc(1);
-                return fonts[font_slot]->width(text, length) + x;
+                return fonts_[font_slot]->width(text, length) + x;
             }
             special = atoi(delimiter + 1);
-            x += fonts[font_slot]->width(cursor, segment_length);
+            x += fonts_[font_slot]->width(cursor, segment_length);
             cursor += segment_length + 2;
             remaining -= segment_length + 2;
         }
@@ -9704,21 +9709,21 @@ int Buffer::write_raw_l(char *text, int x, int y, int length) {
             segment_length = remaining;
             field_528_ = special;
         }
-        SetTextColor(hdc2_, (special_texts_[special].color_ & 0xffff) | 0x10ff0000);
+        SetTextColor(hdc2_, (WORD)special_texts_[special].color_ | 0x10ff0000);
         TextOutA(hdc2_, x, y, cursor, segment_length);
-        int advanced = fonts[font_slot]->width(cursor, segment_length) + x;
-        cursor += segment_length + 1;
+        int advanced = fonts_[font_slot]->width(cursor, segment_length) + x;
         RECT &bounds = special_texts_[special].bounds[second_bounds];
         bounds.left = x;
         bounds.top = y;
         bounds.right = advanced;
         bounds.bottom = bounds_height + y;
+        cursor += segment_length + 1;
         remaining -= segment_length + 1;
         x = advanced;
         if (static_cast<int>(field_528_) >= 0) {
             SelectObject(hdc2_, GetStockObject(SYSTEM_FONT));
             release_hdc(1);
-            return fonts[font_slot]->width(text, length) + advanced;
+            return fonts_[font_slot]->width(text, length) + advanced;
         }
     }
 }
