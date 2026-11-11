@@ -111,7 +111,7 @@ void PickTech::on_mouse_move(int x, int y) {
     }
 }
 
-// ORIGINAL: 0x004863F0 ?draw_item@PickTech@@QAEHHH@Z 0x004863F0-0x0048650C
+// ORIGINAL: 0x004863F0 ?draw_item@PickTech@@QAEHHH@Z 0x004863F0-0x0048650C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x004863F0; retired seed git:288b790f:src/unrecovered/004863f0.cpp; constructor484AC0/destructor488690 establish native C5C ownership.", "image:66CFCC callbackslots17/19/22/25; native rule-bank and UI call sites retain owner and evaluation order.", "source:src/stringstruct.cpp historical484B80 transcription; the canonical caption owns Font line-advance and Buffer wrap semantics."], "reason": "Genuine GraphicWin-derived PickTech owner with four automatic Font members, source-owned rule/global references, real callback dispatch and lexical popup/list lifetimes."}
 // symbol    ?draw_item@PickTech@@QAEHHH@Z
 // TRIED: a `Rect4{left,top,right,bottom}` local (matches the RECT the original builds on the stack field-by-field) and the `-(int)(a2!=0)&2` neg/sbb/and idiom for the sprite-params table offset, per the lever for a `guard ? obj : 0` shape. Landed at 0.71 similarity: the original keeps a stack frame (`push ebp; mov ebp,esp`) that this body's simpler local set let VC6 omit, the same shape seen on 0x00458DC0/0x004863F0-sized leaf-ish functions this batch.
@@ -193,7 +193,7 @@ void PickTech::on_right_click(int x, int y) {
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00486170 0x004863B0 0x004863C4 0x004861B7
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x00486170 0x004863C4 0x004863E4 0x004861B1
-// ORIGINAL: 0x00486170 ?on_key_click@PickTech@@QAEHHH@Z 0x00486170-0x004863AD
+// ORIGINAL: 0x00486170 ?on_key_click@PickTech@@QAEHHH@Z 0x00486170-0x004863AD BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00486170; retired seed git:288b790f:src/unrecovered/00486170.cpp; constructor484AC0/destructor488690 establish native C5C ownership.", "image:66CFCC callbackslots17/19/22/25; native rule-bank and UI call sites retain owner and evaluation order.", "source:src/stringstruct.cpp historical484B80 transcription; the canonical caption owns Font line-advance and Buffer wrap semantics."], "reason": "Genuine GraphicWin-derived PickTech owner with four automatic Font members, source-owned rule/global references, real callback dispatch and lexical popup/list lifetimes."}
 // symbol    ?on_key_click@PickTech@@UAEHHH@Z
 int PickTech::on_key_click(int character, int key) {
