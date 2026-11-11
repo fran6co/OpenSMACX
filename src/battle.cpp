@@ -33,6 +33,7 @@
 #include "alpha.h"
 #include "base.h"
 #include "faction.h"
+#include "faction_inline.h"  // has_treaty
 #include "game.h"
 #include "interface_palette.h"
 #include "general.h" // range
@@ -248,11 +249,10 @@ int __cdecl shoot(int atk_factionID, int def_factionID, int xDest, int yDest) {
                 && rand() % 100 < 50) {
                 parse_says(0, Bases[base_id].name_string, -1, -1);
                 if (def_factionID == ConsoleGlobal.faction_id_) {
-                    parse_says(1, Players[atk_factionID].adj_name_faction, -1, -1);
+                    parse_says(1, get_adjective(atk_factionID), -1, -1);
                     popp(ScriptPopupFile, "WESHOTIT2", 0, "space_sm.pcx", 0);
                 } else if (atk_factionID == ConsoleGlobal.faction_id_) {
-                    parse_says(1, Players[Bases[base_id].faction_id_current].adj_name_faction,
-                               -1, -1);
+                    parse_says(1, get_adjective(Bases[base_id].faction_id_current), -1, -1);
                     popp(ScriptPopupFile, "THEYSHOTIT2", 0, "space_sm.pcx", 0);
                 }
                 return 1;
@@ -269,22 +269,18 @@ int __cdecl shoot(int atk_factionID, int def_factionID, int xDest, int yDest) {
                 // base_find runs before parse_says pushes its arguments.
                 const int near_base = base_find(xDest, yDest);
                 parse_says(0, Bases[near_base].name_string, -1, -1);
-                parse_says(1, Players[atk_factionID].adj_name_faction, -1, -1);
+                parse_says(1, get_adjective(atk_factionID), -1, -1);
                 if (popp(ScriptPopupFile, "BUSTERSAC", 0, "space_sm.pcx", 0)) {
                     goto failed;
                 }
             } else if (atk_factionID == ConsoleGlobal.faction_id_) {
-                GenderDefault = Players[def_factionID].noun_gender;
-                PluralityDefault = Players[def_factionID].is_noun_plural;
-                parse_says(0, Players[def_factionID].noun_faction, -1, -1);
+                parse_says(0, get_noun(def_factionID), -1, -1);
                 popp(ScriptPopupFile, "THEYMUSTSAC", 0, "space_sm.pcx", 0);
             }
         } else if (def_factionID == ConsoleGlobal.faction_id_) {
             popp(ScriptPopupFile, "WEMUSTSAC", 0, "space_sm.pcx", 0);
         } else if (atk_factionID == ConsoleGlobal.faction_id_) {
-            GenderDefault = Players[def_factionID].noun_gender;
-            PluralityDefault = Players[def_factionID].is_noun_plural;
-            parse_says(0, Players[def_factionID].noun_faction, -1, -1);
+            parse_says(0, get_noun(def_factionID), -1, -1);
             popp(ScriptPopupFile, "THEYMUSTSAC", 0, "space_sm.pcx", 0);
         }
         --PlayersData[def_factionID].satellites_[3];
@@ -302,10 +298,10 @@ int __cdecl shoot(int atk_factionID, int def_factionID, int xDest, int yDest) {
         parse_num(0, PlayersData[def_factionID].satellites_[3]);
         parse_num(1, shots_left);
         if (def_factionID == ConsoleGlobal.faction_id_) {
-            parse_says(1, Players[atk_factionID].adj_name_faction, -1, -1);
+            parse_says(1, get_adjective(atk_factionID), -1, -1);
             popp(ScriptPopupFile, "WESHOTIT", 0, "space_sm.pcx", 0);
         } else if (atk_factionID == ConsoleGlobal.faction_id_) {
-            parse_says(1, Players[def_factionID].adj_name_faction, -1, -1);
+            parse_says(1, get_adjective(def_factionID), -1, -1);
             popp(ScriptPopupFile, "THEYSHOTIT", 0, "space_sm.pcx", 0);
         }
     }
@@ -314,10 +310,10 @@ int __cdecl shoot(int atk_factionID, int def_factionID, int xDest, int yDest) {
 failed:
     if (adjacent_flechette) {
         if (def_factionID == ConsoleGlobal.faction_id_) {
-            parse_says(1, Players[atk_factionID].adj_name_faction, -1, -1);
+            parse_says(1, get_adjective(atk_factionID), -1, -1);
             popp(ScriptPopupFile, "WEFAILEDFLECHETTE", 0, "space_sm.pcx", 0);
         } else if (atk_factionID == ConsoleGlobal.faction_id_) {
-            parse_says(1, Players[def_factionID].adj_name_faction, -1, -1);
+            parse_says(1, get_adjective(def_factionID), -1, -1);
             popp(ScriptPopupFile, "THEYFAILEDFLECHETTE", 0, "space_sm.pcx", 0);
         }
     }
@@ -347,15 +343,11 @@ int __cdecl planet_busting(int veh_id, int x, int y) {
 
     const int nearest_base = base_find(x, y);
     if (faction != ConsoleGlobal.faction_id_ && nearest_base >= 0) {
-        GenderDefault = Players[faction].is_leader_female;
-        PluralityDefault = 0;
+        parse_set(Players[faction].is_leader_female, 0);
         parse_says(0, Players[faction].title_leader, -1, -1);
-        GenderDefault = Players[faction].is_leader_female;
-        PluralityDefault = 0;
+        parse_set(Players[faction].is_leader_female, 0);
         parse_says(1, Players[faction].name_leader, -1, -1);
-        GenderDefault = Players[faction].noun_gender;
-        PluralityDefault = Players[faction].is_noun_plural;
-        parse_says(2, Players[faction].noun_faction, -1, -1);
+        parse_says(2, get_noun(faction), -1, -1);
         parse_says(3, Bases[nearest_base].name_string, -1, -1);
 
         const char *const sound =
@@ -386,7 +378,7 @@ int __cdecl planet_busting(int veh_id, int x, int y) {
         if (stack_id < 0) continue;
         const int defender = Vehs[stack_id].faction_id;
         if (faction != defender &&
-            (PlayersData[faction].diplo_treaties[defender] & 1) == 0 &&
+            !has_treaty(faction, defender, DTREATY_PACT) &&
             !notified[defender]) {
             intercepted = shoot(faction, defender, x, y);
             if (intercepted != 0) break;
@@ -2483,10 +2475,11 @@ int __cdecl battle_fight(int veh_id, int dir, int mode, int allow_interceptor,
 #include "battlewin.h"
 #include "council.h"
 
-// One-level HP helper (chunk 2). Use it only where the image keeps proto_power's
-// inner range(reactor, 1, 100) as `call 0x422F00` and inlines the outer
-// 0..9999 clamp (0x506EDD/0x506F3F, 0x508069/0x5080C6, 0x5087B5, 0x508A81,
-// 0x508DFE, 0x508F21). Everywhere else the expression is written out.
+// Current hit points. battle_fight goes through it at every site: written
+// out by hand, the expression inflated the function's own /Ob2 budget and
+// everything after 0x50ACE0 inlined. Which nested range() the image keeps
+// out of line follows the budget (the inner one at 0x506EDD..0x508F21, the
+// outer one at 0x50AB85).
 static inline int veh_cur_hp(int veh_id) {
     return range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999);
 }
@@ -2587,7 +2580,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
     // 0x506B03: initial mode
     if (mode != 0 ||
         (can_arty(Vehs[veh_id].proto_id, TRUE) &&
-         Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_LAND)) {
+         get_triad(veh_id) == TRIAD_LAND)) {
         mode = 1;
     } else {
         mode = 0;
@@ -2599,7 +2592,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
     att_faction = Vehs[veh_id].faction_id;
     target_veh = veh_at(target_x, target_y);
     if (can_arty(Vehs[veh_id].proto_id, TRUE) &&
-        Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_SEA &&
+        get_triad(veh_id) == TRIAD_SEA &&
         !is_ocean(target_x, target_y)) {
         // 0x506C12
         if (stack_check(target_veh, 3, TRIAD_AIR, -1, -1) <
@@ -2611,7 +2604,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
 
     // 0x506C74: the triad and missile tests read the ATTACKER's chassis
     target_veh = stack_fix(target_veh);
-    if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_AIR &&
+    if (get_triad(veh_id) == TRIAD_AIR &&
         !Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].missile &&
         !stack_check(target_veh, 6, ABL_AIR_SUPERIORITY, -1, -1) &&
         allow_interceptor &&
@@ -2627,7 +2620,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
 
     // 0x506D33
     if (can_arty(Vehs[veh_id].proto_id, TRUE) && can_arty(Vehs[def_id].proto_id, TRUE)) {
-        if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_LAND ||
+        if (get_triad(veh_id) == TRIAD_LAND ||
             mode || !is_ocean(target_x, target_y)) {
             mode |= 2;
         }
@@ -2635,10 +2628,10 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
 
     // 0x506DCE
     if (has_abil(Vehs[def_id].proto_id, ABL_AIR_SUPERIORITY) &&
-        Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_AIR &&
+        get_triad(veh_id) == TRIAD_AIR &&
         !Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].missile &&
         !Chassis[VehPrototypes[Vehs[def_id].proto_id].chassis_id].missile &&
-        Chassis[VehPrototypes[Vehs[def_id].proto_id].chassis_id].triad == TRIAD_AIR) {
+        get_triad(def_id) == TRIAD_AIR) {
         mode |= 0x1A;
     }
 
@@ -2717,14 +2710,14 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
                 // 0x507295: AI attacker policy
                 int def_human = (1 << def_faction) &
                                 GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
-                if ((PlayersData[att_faction].diplo_treaties[def_faction] & DTREATY_ATROCITY_VICTIM) ||
+                if (has_treaty(att_faction, def_faction, DTREATY_ATROCITY_VICTIM) ||
                     (PlayersData[att_faction].flags & PFLAG_COMMIT_ATROCIT_WANTONLY) ||
                     (def_human &&
                      GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_UN_CHARTER] >
                          GameDataStateStorage.fields_.council_resolution_count_[PROP_REINSTATE_UN_CHARTER])) {
                     Vehs[veh_id].state = nerve_state | VSTATE_USED_NERVE_GAS;
                 } else if (def_human &&
-                           (PlayersData[att_faction].diplo_treaties[def_faction] & DTREATY_WANT_REVENGE)) {
+                           has_treaty(att_faction, def_faction, DTREATY_WANT_REVENGE)) {
                     int rivalry;
                     if ((GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY) &&
                         (PlayersData[def_faction].ranking > PlayersData[att_faction].ranking ||
@@ -2792,7 +2785,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
             if (d2a & (DTREATY_TREATY | DTREATY_TRUCE)) {
                 notify = true;
             } else if (((d2a & DTREATY_COMMLINK) ||
-                        (PlayersData[att_faction].diplo_treaties[def_faction] & DTREATY_UNK_800)) &&
+                        has_treaty(att_faction, def_faction, DTREATY_UNK_800)) &&
                        !(d2a & DTREATY_VENDETTA)) {
                 notify = true;
             }
@@ -2800,21 +2793,17 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
         if (notify) {
             // 0x5075D4
             if (def_faction == ConsoleGlobal.faction_id_) {
-                PluralityDefault = 0;
-                GenderDefault = Players[att_faction].is_leader_female;
+                parse_set(Players[att_faction].is_leader_female, 0);
                 parse_says(0, Players[att_faction].title_leader, -1, -1);
-                GenderDefault = Players[att_faction].is_leader_female;
-                PluralityDefault = 0;
+                parse_set(Players[att_faction].is_leader_female, 0);
                 parse_says(1, Players[att_faction].name_leader, -1, -1);
                 parse_says(2, get_noun(att_faction), -1, -1);
                 NetMsgPrimary.pop("SURPRISE", -5000, 0, 0);
             } else if (IsMultiplayerPBEM) {
                 // 0x507696
-                PluralityDefault = 0;
-                GenderDefault = Players[att_faction].is_leader_female;
+                parse_set(Players[att_faction].is_leader_female, 0);
                 parse_says(0, Players[att_faction].title_leader, -1, -1);
-                GenderDefault = Players[att_faction].is_leader_female;
-                PluralityDefault = 0;
+                parse_set(Players[att_faction].is_leader_female, 0);
                 parse_says(1, Players[att_faction].name_leader, -1, -1);
                 parse_says(2, get_noun(att_faction), -1, -1);
                 POP2("SURPRISE", 0, -1 - def_faction);
@@ -2824,13 +2813,13 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
                 GameDataStateStorage.fields_.turn_current_num_;
         } else {
             // 0x507744: AI defender, or a human defender that is not notified
-            if ((PlayersData[att_faction].diplo_treaties[def_faction] & DTREATY_TREATY) ||
-                (PlayersData[def_faction].diplo_treaties[att_faction] & DTREATY_TREATY)) {
+            if (has_treaty(att_faction, def_faction, DTREATY_TREATY) ||
+                has_treaty(def_faction, att_faction, DTREATY_TREATY)) {
                 if (att_faction != ConsoleGlobal.faction_id_ &&
                     def_faction != ConsoleGlobal.faction_id_) {
-                    if (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[def_faction] & DTREATY_PACT) {
+                    if (has_treaty(ConsoleGlobal.faction_id_, def_faction, DTREATY_PACT)) {
                         pact_report = 2;
-                    } else if (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[att_faction] & DTREATY_PACT) {
+                    } else if (has_treaty(ConsoleGlobal.faction_id_, att_faction, DTREATY_PACT)) {
                         pact_report = 3;
                     } else if (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) {
                         pact_report = 1;
@@ -2850,7 +2839,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
             if (src_tile->territory != i) {
                 continue;
             }
-            if (!(PlayersData[att_faction].diplo_treaties[i] & DTREATY_PACT)) {
+            if (!has_treaty(att_faction, i, DTREATY_PACT)) {
                 continue;
             }
             uint32_t d2i = PlayersData[def_faction].diplo_treaties[i];
@@ -2861,7 +2850,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
                 continue;
             }
             treaty_on(i, def_faction, DTREATY_WANT_TO_TALK);
-            if (PlayersData[i].diplo_treaties[def_faction] & DTREATY_UNK_800000) {
+            if (has_treaty(i, def_faction, DTREATY_UNK_800000)) {
                 cause_friction(def_faction, i, 3);
             }
         }
@@ -2955,7 +2944,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
 
     // 0x507C5C
     if (base_id >= 0 &&
-        Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_AIR) {
+        get_triad(veh_id) == TRIAD_AIR) {
         Bases[base_id].state |= BSTATE_UNK_100000;
     }
 
@@ -2971,11 +2960,9 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
             g_BattleWin.clear();
             ConsoleStatusWin.draw(veh_id, def_id, att_strength, def_strength, 0);
             ConsoleStatusWin.set_field_15D4(1);
-            PluralityDefault = 0;
-            GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
+            parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, 0);
             parse_says(0, Players[ConsoleGlobal.faction_id_].title_leader, -1, -1);
-            PluralityDefault = 0;
-            GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
+            parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, 0);
             parse_says(1, Players[ConsoleGlobal.faction_id_].name_leader, -1, -1);
             g_BattleWin.stop_timer();
             if (popp(ScriptPopupFile, "BADIDEA", 0, "hasty_sm.pcx", 0)) {
@@ -3001,11 +2988,9 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
         g_BattleWin.clear();
         ConsoleStatusWin.draw(veh_id, def_id, att_strength, def_strength, 0);
         ConsoleStatusWin.set_field_15D4(1);
-        PluralityDefault = 0;
-        GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
+        parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, 0);
         parse_says(0, Players[ConsoleGlobal.faction_id_].title_leader, -1, -1);
-        PluralityDefault = 0;
-        GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
+        parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, 0);
         parse_says(1, Players[ConsoleGlobal.faction_id_].name_leader, -1, -1);
         // 0x507F36: inlined say_num(). "." is a direct strcat call, not says()
         clear();
@@ -3118,7 +3103,7 @@ L_50835D:
     }
 
     // 0x50846E
-    if ((PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[att_faction] & DTREATY_PACT)
+    if (has_treaty(ConsoleGlobal.faction_id_, att_faction, DTREATY_PACT)
             ? (GameDataStateStorage.fields_.game_preferences_ & PREF_BSC_DONT_QUICK_MOVE_ALLY_VEH)
             : (GameDataStateStorage.fields_.game_preferences_ & PREF_BSC_DONT_QUICK_MOVE_ENEMY_VEH)) {
         display |= any_visible;
@@ -3139,7 +3124,7 @@ L_50835D:
         // 0x508A0D: the step is inlined veh_next_stack_id ([ebp-0x18] is the walker)
         for (def_id = veh_top(def_id); def_id >= 0; def_id = veh_next_stack_id(def_id)) {
             // 0x508550 ([ebp-0x08] rebased onto def_id)
-            if (Chassis[VehPrototypes[Vehs[def_id].proto_id].chassis_id].triad == TRIAD_AIR &&
+            if (get_triad(def_id) == TRIAD_AIR &&
                 !has_abil(Vehs[veh_id].proto_id, ABL_AIR_SUPERIORITY) &&
                 base_id < 0 &&
                 !(map_loc(target_x, target_y)->bit & BIT_AIRBASE)) {
@@ -3154,7 +3139,7 @@ L_50835D:
             // 0x50864B .. 0x50876A: never take the unit below `keep`
             int keep;   // esi
             if (base_id < 0 && !(map_loc(target_x, target_y)->bit & BIT_BUNKER)) {
-                keep = (100 - (Chassis[VehPrototypes[Vehs[def_id].proto_id].chassis_id].triad == TRIAD_LAND
+                keep = (100 - (get_triad(def_id) == TRIAD_LAND
                                    ? Rules.max_pct_dmg_art_vs_units_open
                                    : Rules.max_pct_dmg_art_vs_units_sea))
                        * proto_power(def_id) + 99;
@@ -3317,7 +3302,7 @@ L_50835D:
     last_hit = 0;
     if (is_missile(veh_id) || IsMultiplayerNet) {
         boom(target_x, target_y,
-             2 - (range(proto_power(def_id) - Vehs[def_id].dmg_incurred, 0, 9999) != 0));
+             (veh_cur_hp(def_id) ? 1 : 2));
     }
     // 0x50906C
     single = ((mode & 2)
@@ -3327,8 +3312,8 @@ L_50835D:
     // ---- 0x5090D7: combat rounds ---------------------------------------------
     // The two loop-top tests jump to 0x509983, i.e. L_509980 without its reload.
     for (;;) {
-        if (range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999) == 0) break;
-        if (range(proto_power(def_id) - Vehs[def_id].dmg_incurred, 0, 9999) == 0) break;
+        if (veh_cur_hp(veh_id) == 0) break;
+        if (veh_cur_hp(def_id) == 0) break;
 
         // 0x5091A5: the attacker draws first; the compare is signed
         int roll_atk = bounded_crt_random(att_strength);   // edi
@@ -3344,7 +3329,7 @@ L_50835D:
                 last_hit = 2;
                 ConsoleStatusWin.draw(veh_id, def_id, att_strength, def_strength, mode);
                 boom(target_x, target_y, 1);
-                if (range(proto_power(def_id) - Vehs[def_id].dmg_incurred, 0, 9999) != 0) {
+                if (veh_cur_hp(def_id) != 0) {
                     draw_tile(src_x, src_y, 2);
                     draw_tile(target_x, target_y, 2);
                 }
@@ -3352,13 +3337,13 @@ L_50835D:
             }
             // 0x5092EA: marines
             if (marine &&
-                range(proto_power(def_id) - Vehs[def_id].dmg_incurred, 0, 9999) != 0) {
+                veh_cur_hp(def_id) != 0) {
                 marine -= def_step;
                 if (marine <= 0 && rand() % 100 < 50) goto L_50973a;
             }
             // 0x50936C: withdrawal (the defender's HP, [ebp-0x08])
             if (retreat == 0) continue;
-            if (range(proto_power(def_id) - Vehs[def_id].dmg_incurred, 0, 9999) == 0) continue;
+            if (veh_cur_hp(def_id) == 0) continue;
             retreat -= def_step;
             if (retreat > 0) continue;
 
@@ -3385,7 +3370,7 @@ L_50835D:
                 // 0x509594
                 int who = anything_at(rx, ry);
                 if (who >= 0 && who != def_faction &&
-                    !(PlayersData[who].diplo_treaties[def_faction] & DTREATY_PACT)) continue;
+                    !has_treaty(who, def_faction, DTREATY_PACT)) continue;
                 // 0x5095CC: angular distance from the reversed attack direction
                 int angle = scan_dir - (dir ^ 4);
                 if (angle < 0) angle = (dir ^ 4) - scan_dir;
@@ -3409,7 +3394,7 @@ L_50835D:
             last_hit = 1;
             ConsoleStatusWin.draw(veh_id, def_id, att_strength, def_strength, mode);
             boom(src_x, src_y, 9);
-            if (range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999) != 0) {
+            if (veh_cur_hp(veh_id) != 0) {
                 draw_tile(src_x, src_y, 2);
                 draw_tile(target_x, target_y, 2);
             }
@@ -3466,7 +3451,7 @@ L_509923:
 
     // ---- 0x509980: outcome display -------------------------------------------
 L_509980:
-    atk_left = range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999);
+    atk_left = veh_cur_hp(veh_id);
     if (display || any_visible) {
         draw_tile_fixup(src_x, src_y, target_x, target_y, 2, 2);   // 0x46B040
         if (disengaged && (src_x != rx || src_y != ry) && (target_x != rx || target_y != ry)) {
@@ -3480,48 +3465,48 @@ L_509980:
                         // 0x509A9E
                         if (last_hit != 1 && !IsMultiplayerNet) {
                             boom(src_x, src_y,
-                                 (2 - (range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999) != 0)) | 8);
+                                 (veh_cur_hp(veh_id) ? 1 : 2) | 8);
                         }
                         // 0x509B44
                         boom(target_x, target_y,
-                             (2 - (range(proto_power(def_id) - Vehs[def_id].dmg_incurred, 0, 9999) != 0)) | 8);
+                             (veh_cur_hp(def_id) ? 1 : 2) | 8);
                     } else if (last_hit == 2) {
                         // 0x509BBF
                         if (IsMultiplayerNet ||
-                            range(proto_power(def_id) - Vehs[def_id].dmg_incurred, 0, 9999) == 0) {
+                            veh_cur_hp(def_id) == 0) {
                             // 0x509C2F
                             boom(target_x, target_y,
-                                 (range(proto_power(def_id) - Vehs[def_id].dmg_incurred, 0, 9999) != 0 ? 0 : 2) | 8);
+                                 (veh_cur_hp(def_id) != 0 ? 0 : 2) | 8);
                         }
                     } else if (IsMultiplayerNet) {
                         // 0x509C2C
                         boom(target_x, target_y,
-                             (range(proto_power(def_id) - Vehs[def_id].dmg_incurred, 0, 9999) != 0 ? 0 : 2) | 8);
+                             (veh_cur_hp(def_id) != 0 ? 0 : 2) | 8);
                     } else {
                         // 0x509B44
                         boom(target_x, target_y,
-                             (2 - (range(proto_power(def_id) - Vehs[def_id].dmg_incurred, 0, 9999) != 0)) | 8);
+                             (veh_cur_hp(def_id) ? 1 : 2) | 8);
                     }
                 } else if (single) {
                     // 0x509CB4: attacker destroyed in a one-exchange duel
                     if (last_hit != 2 && !IsMultiplayerNet) {
                         boom(target_x, target_y,
-                             range(proto_power(def_id) - Vehs[def_id].dmg_incurred, 0, 9999) != 0);
+                             veh_cur_hp(def_id) != 0);
                     }
                     // 0x509D42 (clamp/push at 0x509E1A)
                     boom(src_x, src_y,
-                         2 - (range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999) != 0));
+                         (veh_cur_hp(veh_id) ? 1 : 2));
                 } else {
                     // 0x509DB2: attacker destroyed
                     if (last_hit != 1 && !IsMultiplayerNet) {
                         // 0x509DC8
                         boom(src_x, src_y,
-                             2 - (range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999) != 0));
-                    } else if (range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999) == 0 ||
+                             (veh_cur_hp(veh_id) ? 1 : 2));
+                    } else if (veh_cur_hp(veh_id) == 0 ||
                                IsMultiplayerNet) {
                         // 0x509E48 / 0x509EB3: the HP expression is evaluated again
                         boom(src_x, src_y,
-                             range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999) != 0 ? 0 : 2);
+                             veh_cur_hp(veh_id) != 0 ? 0 : 2);
                     }
                 }
             }
@@ -3533,8 +3518,8 @@ L_509980:
 
     // 0x509F1D: a one-exchange duel in which both units survive
     if (single &&
-        range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999) != 0 &&
-        range(proto_power(def_id) - Vehs[def_id].dmg_incurred, 0, 9999) != 0) {
+        veh_cur_hp(veh_id) != 0 &&
+        veh_cur_hp(def_id) != 0) {
         // 0x509FF8
         if (IsMultiplayerNet && def_faction == ConsoleGlobal.faction_id_) {
             parse_says(0, VehPrototypes[Vehs[def_id].proto_id].veh_name, -1, -1);
@@ -3559,13 +3544,11 @@ L_509980:
 
     // 0x50A119: someone died (or the defender withdrew / was captured)
     {
-        Map *tile = map_loc(target_x, target_y);
-        if ((tile->climate & 0xE0) >= 0x60) {   // land (alt >= 3)
-            int owner = tile->territory;        // movsx: may be -1 (unguarded)
+        if (!is_ocean(target_x, target_y)) {
+            int owner = map_loc(target_x, target_y)->territory;   // movsx: may be -1 (unguarded)
             if (owner != att_faction && owner != def_faction
-                && (PlayersData[owner].diplo_treaties[def_faction] & DTREATY_VENDETTA)
-                && (PlayersData[owner].diplo_treaties[att_faction]
-                    & (DTREATY_PACT | DTREATY_TREATY | DTREATY_TRUCE))) {
+                && has_treaty(owner, def_faction, DTREATY_VENDETTA)
+                && has_treaty(owner, att_faction, DTREATY_PACT | DTREATY_TREATY | DTREATY_TRUCE)) {
                 if (!PlayersData[att_faction].diplo_unk1[owner]) {
                     PlayersData[att_faction].diplo_unk1[owner] = 1;
                 }
@@ -3578,7 +3561,7 @@ L_509980:
     if (atk_left != 0) {
         // the attacker survived
         att_strength = VehPrototypes[Vehs[veh_id].proto_id].reactor_id
-                       * range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999)
+                       * veh_cur_hp(veh_id)
                        * att_strength / att_hp;
         // 0x50A237
         def_strength = VehPrototypes[Vehs[def_id].proto_id].reactor_id * def_hp
@@ -3600,7 +3583,7 @@ L_509980:
                        * att_strength / proto_power(veh_id);
         // 0x50A357
         def_strength = VehPrototypes[Vehs[def_id].proto_id].reactor_id
-                       * range(proto_power(def_id) - Vehs[def_id].dmg_incurred, 0, 9999)
+                       * veh_cur_hp(def_id)
                        * def_strength / def_hp;
         if (VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_ALIEN_ARTIFACT) {
             // 0x50A3DA
@@ -3673,13 +3656,13 @@ L_509980:
              || VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_INFO_WARFARE
              || VehPrototypes[Vehs[def_id].proto_id].plan == PLAN_NAVAL_SUPERIORITY
              || (stack_check(def_id, 2, PLAN_COLONIZATION, -1, -1) != 0
-                 && (map_loc(target_x, target_y)->climate & 0xE0) >= 0x60))
+                 && !is_ocean(target_x, target_y)))
             && VehPrototypes[Vehs[def_id].proto_id].plan != PLAN_ALIEN_ARTIFACT
             && (att_faction == 0
                 || ((veh_cargo(def_id) == 0 || base_id >= 0
                      || VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_INFO_WARFARE)
                     && (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_INFO_WARFARE
-                        || stack_combat_units(def_id) > 1)))) {
+                        || (stack_check(def_id, 1, -1, -1, -1) - stack_check(def_id, 2, PLAN_ALIEN_ARTIFACT, -1, -1) - stack_check(def_id, 2, PLAN_COLONIZATION, -1, -1) - stack_check(def_id, 2, PLAN_INFO_WARFARE, -1, -1) - stack_check(def_id, 2, PLAN_SUPPLY_CONVOY, -1, -1)) > 1)))) {
             // 0x50A8DC: kill just the defender
             battle_kill(def_id, &kill_count, &booty_count, &husk_energy, veh_id, att_faction);
         } else {
@@ -3690,13 +3673,13 @@ L_509980:
                 int v_proto = Vehs[v].proto_id;
                 // 0x50A94B
                 if (Chassis[VehPrototypes[v_proto].chassis_id].triad == TRIAD_LAND
-                    && (map_loc(target_x, target_y)->climate & 0xE0) < 0x60   // sea tile
+                    && is_ocean(target_x, target_y)   // sea tile
                     && base_who(target_x, target_y) < 0                        // inlined
                     && !(Vehs[v].order == ORDER_SENTRY_BOARD
                          && Vehs[v].waypoint_x[0] != def_id
                          && Vehs[v].waypoint_x[0] >= 0)) {
                     // 0x50A9E0: a land unit carried at sea takes all its HP (byte add)
-                    Vehs[v].dmg_incurred += range(proto_power(v) - Vehs[v].dmg_incurred, 0, 9999);
+                    Vehs[v].dmg_incurred += veh_cur_hp(v);
                 } else if (v != def_id) {
                     // 0x50AA4C
                     int plan = VehPrototypes[v_proto].plan;
@@ -3723,7 +3706,7 @@ L_509980:
                     // 0x50AB1E
                     int next = Vehs[v].next_veh_id_stack;
                     // the outer range() is CALLED here (0x422F00); proto_power stays inlined
-                    if (range(proto_power(v) - Vehs[v].dmg_incurred, 0, 9999) <= 0
+                    if (veh_cur_hp(v) <= 0
                         || Vehs[v].faction_id == 0) {
                         // 0x50AB9B
                         if (battle_kill(v, &kill_count, &booty_count, &husk_energy,
@@ -3746,7 +3729,7 @@ L_509980:
             }
             stack_id = stack_fix(veh_at(target_x, target_y));
             if (stack_id >= 0) {
-                if (stack_combat_units(stack_id) == 0) {
+                if ((stack_check(stack_id, 1, -1, -1, -1) - stack_check(stack_id, 2, PLAN_ALIEN_ARTIFACT, -1, -1) - stack_check(stack_id, 2, PLAN_COLONIZATION, -1, -1) - stack_check(stack_id, 2, PLAN_INFO_WARFARE, -1, -1) - stack_check(stack_id, 2, PLAN_SUPPLY_CONVOY, -1, -1)) == 0) {
                     // only non-combat units are left
                     battle_kill_stack(stack_id, &kill_count, &booty_count, &husk_energy,
                                       veh_id, att_faction);
