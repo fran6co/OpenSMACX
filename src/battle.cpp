@@ -649,7 +649,7 @@ static inline int psi_factor_expanded(int combat_ratio, int faction_id, BOOL is_
 
 /*
 Purpose: Get the basic offense value for an attacking unit with an optional defender unit parameter.
-// ORIGINAL: 0x005015B0 ?get_basic_offense@@YAHHHHHH@Z 0x005015B0-0x00501940
+// ORIGINAL: 0x005015B0 ?get_basic_offense@@YAHHHHHH@Z 0x005015B0-0x00501940 BYTE_EXACT
 // LEVER: crèche/brood-pit was `if/else if` with the SAME body on both arms;
 //        the disassembly's 3rd bitmask() call proves the crèche-true arm
 //        also runs a nested, BARE `morale++` brood-pit check (no range()/cap
