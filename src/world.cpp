@@ -691,7 +691,7 @@ matches.
 The original accumulates a rainfall total across the inner ring into a stack
 local at ebp-0x30 - zeroed at 0x005C50C5, read at 0x005C5327, stored back at
 0x005C5339 - and never reads it again. It is a dead local, not observable from
-outside the frame, and it is not transcribed.
+outside the frame; it is transcribed because VC6 keeps it in the frame.
 */
 int __cdecl world_site(int x, int y, BOOL is_ocean_site) {
     int crowding = 0;
@@ -711,20 +711,22 @@ int __cdecl world_site(int x, int y, BOOL is_ocean_site) {
             continue; // the first four count double, and can count quadruple
         }
         crowding++;
-        if ((site_tile(x, y)->climate & 0xE0) < ALT_BIT_SHORE_LINE
-            && (tile->climate & 0xE0) < ALT_BIT_SHORE_LINE) {
+        if ((site_tile(x, y)->climate & ~0x1F) < ALT_BIT_SHORE_LINE
+            && (tile->climate & ~0x1F) < ALT_BIT_SHORE_LINE) {
             crowding += 2;
         }
     }
-    int special = 0;       // bonus resources, landmarks and pods
-    int rich_terrain = 0;  // monolith, forest, or rainy rolling land above sea
     int fair_terrain = 0;  // rainy rolling land that is none of those
-    int ocean_count = 0;
-    int deep_count = 0;    // ocean below the shelf
-    int river_tiles = 0;
+    int rich_terrain = 0;  // monolith, forest, or rainy rolling land above sea
     int fungus_tiles = 0;
+    int special = 0;       // bonus resources, landmarks and pods
     int rocky_tiles = 0;
     BOOL big_continent = false;
+    int river_tiles = 0;
+    // Summed and never read again; the original keeps the dead total.
+    int rainfall_total = 0;
+    int deep_count = 0;    // ocean below the shelf
+    int ocean_count = 0;
     /*
     * The original's frame aliases this pointer onto the slot that held the
     * MapIsFlat copy, and the epilogue reads it whether or not the loop ever
@@ -732,8 +734,7 @@ int __cdecl world_site(int x, int y, BOOL is_ocean_site) {
     * dereference of 0 or 1. Reproduced rather than guarded: the two are the
     * same program, and the caller that could reach it is off the map already.
     */
-    Map *radius_tile = reinterpret_cast<Map *>(
-        static_cast<uintptr_t>(MapIsFlat & 1));
+    Map *radius_tile;
     for (i = 0; i < 21; i++) {
         int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
@@ -742,7 +743,7 @@ int __cdecl world_site(int x, int y, BOOL is_ocean_site) {
             continue;
         }
         radius_tile = site_tile(x_radius, y_radius);
-        int altitude = radius_tile->climate & 0xE0;
+        int altitude = radius_tile->climate & ~0x1F;
         if (altitude < ALT_BIT_SHORE_LINE) {
             ocean_count++;
             if (altitude < ALT_BIT_OCEAN_SHELF) {
@@ -757,7 +758,7 @@ int __cdecl world_site(int x, int y, BOOL is_ocean_site) {
             }
             Map *bonus_tile = site_tile(x_radius, y_radius);
             if ((bonus_tile->bit & BIT_FUNGUS)
-                && (int)(bonus_tile->climate & 0xE0) >= ALT_BIT_OCEAN_SHELF) {
+                && (bonus_tile->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF) {
                 continue;
             }
             special++;
@@ -771,7 +772,8 @@ int __cdecl world_site(int x, int y, BOOL is_ocean_site) {
             if (bonus_at(x_radius, y_radius, 1)) {
                 special += i ? 2 : -1;
             }
-            uint32_t bit2 = site_tile(x_radius, y_radius)->bit2;
+            Map *landmark_tile = site_tile(x_radius, y_radius);
+            uint32_t bit2 = landmark_tile->bit2;
             // The top byte is the landmark's tile sequence code; past nine the
             // tile is too far along the landmark to be worth anything.
             if ((bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO)) == BIT2_VOLCANO
@@ -786,46 +788,42 @@ int __cdecl world_site(int x, int y, BOOL is_ocean_site) {
                 special += i ? 1 : -3;
             }
             if ((bit2 & (BIT2_UNK_80000000 | BIT2_JUNGLE)) == BIT2_JUNGLE
-                && (int)(radius_tile->climate & 0xE0) >= ALT_BIT_SHORE_LINE) {
+                && (landmark_tile->climate & ~0x1F) >= ALT_BIT_SHORE_LINE) {
                 special += 2;
             }
             if (i && goody_at(x_radius, y_radius)) {
                 special++;
             }
         }
-        int elevation = (radius_tile->climate >> 5) - 2;
-        if (elevation < 0) {
-            elevation = 0;
-        }
         int rainfall = (radius_tile->climate >> 3) & 3;
+        rainfall_total += (rainfall < 0) ? 0 : rainfall;
+        Map *terrain_tile = site_tile(x_radius, y_radius);
+        int elevation = terrain_tile->climate >> 5;
+        elevation = (elevation - 2 < 0) ? 0 : elevation - 2;
         if (rockiness == ROCKINESS_ROCKY
-            || (radius_tile->bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO))
+            || (terrain_tile->bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO))
                 == BIT2_VOLCANO) {
             rainfall = 0;
         }
         uint32_t bit = radius_tile->bit;
-        if (bit & BIT_FUNGUS) {
+        uint32_t fungus = bit & BIT_FUNGUS;
+        if (fungus) {
             fungus_tiles++;
         }
         if (bit & BIT_BASE_RADIUS) {
             continue; // already worked by somebody
         }
-        BOOL is_rich = (bit & (BIT_MONOLITH | BIT_FOREST)) != 0;
-        if (!is_rich && rainfall && rockiness == ROCKINESS_ROLLING) {
-            if (elevation && !(bit & BIT_FUNGUS)) {
-                is_rich = true;
-            } else {
-                fair_terrain += i ? 1 : -1;
-                if (rainfall > rockiness && !(bit & BIT_FUNGUS)) {
-                    fair_terrain += i ? 1 : -1;
-                }
-            }
-        }
-        if (is_rich) {
+        if ((bit & (BIT_MONOLITH | BIT_FOREST))
+            || (rainfall && rockiness == ROCKINESS_ROLLING && elevation && !fungus)) {
             rich_terrain += i ? 1 : -1;
             if ((bit & BIT_MONOLITH) && !(bit & BIT_FOREST)
                 && (rainfall > 1 || elevation > 1)) {
                 rich_terrain += i ? 1 : -2;
+            }
+        } else if (rainfall && rockiness == ROCKINESS_ROLLING) {
+            fair_terrain += i ? 1 : -1;
+            if (rainfall > rockiness && !fungus) {
+                fair_terrain += i ? 1 : -1;
             }
         }
         if (bit & BIT_RIVER) {
@@ -834,20 +832,27 @@ int __cdecl world_site(int x, int y, BOOL is_ocean_site) {
     }
     int score = river_tiles / 4 + special;
     if (big_continent) {
-        score += is_ocean_site ? -2 : 4;
+        if (is_ocean_site) {
+            score -= 2;
+        } else {
+            score += 4;
+        }
     }
     if (radius_tile->bit & (BIT_UNK_4000 | BIT_UNK_40000000)) {
         score += 4;
     }
-    int water = (ocean_count - big_continent) / 2 + deep_count / 2;
-    score += is_ocean_site ? water : -water;
+    if (is_ocean_site) {
+        score += (ocean_count - big_continent) / 2 + deep_count / 2;
+    } else {
+        score -= (ocean_count - big_continent) / 2 + deep_count / 2;
+    }
     score += (rich_terrain * 3 + 6) / 4;
     score += (fair_terrain + 1) / 3;
     if (GameDataStateStorage.fields_.turn_current_num_ > 150) {
         score += fungus_tiles / -3;
     }
     Map *tile = site_tile(x, y);
-    int altitude = tile->climate & 0xE0;
+    int altitude = tile->climate & ~0x1F;
     int is_ocean = (altitude < ALT_BIT_SHORE_LINE) ? 1 : 0;
     score -= rocky_tiles / 4;
     score -= crowding * ((is_ocean != is_ocean_site) ? 2 : 1);
@@ -855,16 +860,19 @@ int __cdecl world_site(int x, int y, BOOL is_ocean_site) {
         || (tile->bit & BIT_MONOLITH)) {
         return 0;
     }
-    if ((tile->val3 & 0xC0) > 0x40 && altitude >= ALT_BIT_SHORE_LINE) {
+    if ((tile->val3 & ~0x3F) > 0x40 && altitude >= ALT_BIT_SHORE_LINE) {
         return 0; // rocky land cannot hold a base
     }
     if (is_ocean != is_ocean_site && crowding >= 4) {
         return 0; // the wrong element, and no room for it either
     }
-    if (score < 1) {
-        return 1;
+    if (score >= 1) {
+        if (score > 15) {
+            return 15;
+        }
+        return score;
     }
-    return (score > 15) ? 15 : score;
+    return 1;
 }
 
 /*
@@ -2089,7 +2097,7 @@ void __cdecl world_borehole(int x, int y) {
                 return;
             }
         } while (is_ocean(x, y) || near_landmark(x, y));
-        if (loc_attempts >= 1000) { // redundant check? would have already returned, remove?
+        if (1000 <= loc_attempts) { // redundant check? would have already returned, remove?
             return;
         }
     }
@@ -2800,185 +2808,126 @@ Purpose: Carve rivers. Every land tile is tried as a source in turn: the
 //   water (bit 0x80) or a three-river junction ABANDONS the whole walk with
 //   to_sea cleared and the head not advanced, while a candidate whose own
 //   eight neighbours disqualify it only drops out of the four-direction loop.
+// LEVER: rewritten from the image block by block. Restored image behaviour:
+//   the walk's exit on bit 0x1000000 also clears to_sea (5C3A16/5C3E6D); a
+//   higher neighbour carrying a river, or a joined/ocean neighbour on the
+//   current path, rejects the candidate (5C3CB4/5C3CC4/5C3CC9 -> 5C3D13)
+//   instead of keeping it; hill_run resets when the altitude band changes
+//   (5C3DD5); the mouth test is inlined anything_at() < 0.
 */
 void __cdecl world_rivers() {
-    // Every tile: forget that a river ran through it.
-    for (int i = 0; i < MapArea; ++i) {
-        map_tiles()[i].bit &= 0xfffffd7f;
+    int river_count = 0;  // incremented per source and never read
+    int i;
+    for (i = 0; i < MapArea; i++) {
+        map_tiles()[i].bit &= ~(BIT_RIVER | BIT_RIVER_LAKE);
     }
-
-    if (MapLatitudeBounds > 0) {
-        int y_coord = 0;
-        do {
-            for (int x_coord = y_coord & 1; x_coord < MapLongitudeBounds;
-                 x_coord += 2) {
-                Map *source = map_tiles() + MapLongitude * y_coord
-                              + (x_coord >> 1);
-                if (((source->bit & 0x100) == 0)
-                    || ((source->climate & 0xE0) <= 0x5F)) {
-                    continue;
-                }
-
-                // A fresh source: forget every earlier river's path first.
-                for (int i = 0; i < MapArea; ++i) {
-                    map_tiles()[i].bit2 &= 0xff7fffff;
-                }
-
-                random_reseed(y_coord * 0x2f + x_coord * 0x1f);
-                int river_dir = random(0, 4);
-
-                int band = source->climate >> 5;
-                int contour = source->contour;
-                source->bit2 |= 0x800000;
-
-                int cur_x = x_coord;
-                int cur_y = y_coord;
-                int joined = 0;      // stepped into an existing river
-                int to_sea = 1;      // the walk has not hit water yet
-                int hill_run = 1;    // tiles climbed at this altitude
-                int step_parity = 1;
-                int steps = 0;
-                uint32_t bits = source->bit;
-
-                while ((bits & 0x1000000) == 0) {
-                    int last_dir = random(0, 2);
-                    int turn = last_dir + (river_dir - (step_parity & 1)) & 3;
-                    int straight = river_dir ^ 2;
-                    int nb_contour = 0;
-                    int nb_climate = 0;
-                    int cand_split[3];
-                    int cand_dir[3];
-                    int cand_weight[3];
-                    int cand_count = 0;
-                    int total_weight = 0;
-                    int weight_base = 8;
-                    int best_contour = 9999;
-                    bool abandon = false;
-
-                    for (int dir = 0; dir < 4; dir++) {
-                        if (dir == straight) {
-                            continue;
+    for (int y = 0; y < MapLatitudeBounds; y++) {
+        for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
+            if (!(map_loc(x, y)->bit & BIT_RIVERBED)
+                || (map_loc(x, y)->climate & ~0x1F) < ALT_BIT_SHORE_LINE) {
+                continue;
+            }
+            // A fresh source: forget every earlier river's path first.
+            for (i = 0; i < MapArea; i++) {
+                map_tiles()[i].bit2 &= 0xff7fffff;
+            }
+            random_reseed(y * 0x2f + x * 0x1f);
+            int river_dir = random(0, 4);
+            int cur_x = x;
+            int cur_y = y;
+            int band = map_loc(x, y)->climate >> 5;
+            int contour = map_loc(x, y)->contour;
+            map_loc(x, y)->bit2 |= 0x800000;
+            int steps = 0;
+            int joined = 0;      // stepped into an existing river
+            int to_sea = 1;      // the walk has not been abandoned
+            int step_parity = 1;
+            int hill_run = 1;    // tiles walked at this altitude
+            while (!(map_loc(cur_x, cur_y)->bit & BIT_THERMAL_BORE)) {
+                int cand_weight[3];
+                int cand_dir[3];
+                int cand_split[3];
+                int cand_count = 0;
+                int total_weight = 0;
+                int turn = (random(0, 2) + (river_dir - (step_parity & 1))) & 3;
+                int straight = river_dir ^ 2;
+                int best_contour = 9999;
+                int weight_base = 8;
+                for (int dir = 0; dir < 4; dir++) {
+                    if (dir == straight) {
+                        continue;
+                    }
+                    int next_x = wrap_map_x(RiverStepX[dir] + cur_x);
+                    int next_y = RiverStepY[dir] + cur_y;
+                    if (!on_map(next_x, next_y)) {
+                        continue;
+                    }
+                    {
+                        Map *next = map_loc(next_x, next_y);
+                        if (next->bit & BIT_RIVER) {
+                            goto abandon;
                         }
-                        int next_x = RiverStepX[dir] + cur_x;
-                        int flat = MapIsFlat & 1;
-                        if (flat == 0) {
-                            if (next_x < 0) {
-                                next_x += MapLongitudeBounds;
-                            } else if (MapLongitudeBounds <= next_x) {
-                                next_x -= MapLongitudeBounds;
-                            }
-                        }
-                        int next_y = RiverStepY[dir] + cur_y;
-                        if (next_y < 0 || next_y >= MapLatitudeBounds
-                            || next_x < 0 || next_x >= MapLongitudeBounds) {
-                            continue;
-                        }
-
-                        Map *neighbour = map_tiles()
-                                         + MapLongitude * next_y
-                                         + (next_x >> 1);
-                        if ((neighbour->bit & 0x80) != 0) {
-                            abandon = true;
-                            break;
-                        }
-                        if ((neighbour->bit & 0x100) != 0) {
-                            // A junction, never a source: count this
-                            // neighbour's own river neighbours.
+                        if (next->bit & BIT_RIVERBED) {
                             int rivers = 0;
-                            for (int k = 0; k < 4; k++) {
-                                int nx = RiverStepX[k] + next_x;
-                                if (flat == 0) {
-                                    if (nx < 0) {
-                                        nx += MapLongitudeBounds;
-                                    } else if (MapLongitudeBounds <= nx) {
-                                        nx -= MapLongitudeBounds;
-                                    }
-                                }
-                                int ny = RiverStepY[k] + next_y;
-                                if (ny < 0 || ny >= MapLatitudeBounds
-                                    || nx < 0 || nx >= MapLongitudeBounds) {
-                                    continue;
-                                }
-                                if ((map_tiles()[MapLongitude * ny + (nx >> 1)]
-                                         .bit
-                                     & 0x100)
-                                    != 0) {
+                            for (int j = 0; j < 4; j++) {
+                                int jx = wrap_map_x(RiverStepX[j] + next_x);
+                                int jy = RiverStepY[j] + next_y;
+                                if (on_map(jx, jy) && (map_loc(jx, jy)->bit & BIT_RIVERBED)) {
                                     rivers++;
                                 }
                             }
                             if (rivers > 1) {
-                                abandon = true;
-                                break;
+                                goto abandon;
                             }
                         }
-
-                        nb_climate = neighbour->climate;
-                        nb_contour = neighbour->contour;
-                        if ((nb_climate >> 5) > band) {
-                            // Downhill or level only.
+                        int nb_climate = next->climate;
+                        if ((next->climate >> 5) > band) {
                             continue;
                         }
-
-                        int drop = (contour - nb_contour) + 2;
-                        if (drop < 1) {
-                            drop = 1;
-                        } else if (drop > 9999) {
-                            drop = 9999;
-                        }
-                        int weight = drop * 0x20;
+                        int nb_contour = next->contour;
+                        int weight = range(contour - nb_contour + 2, 1, 9999) * 0x20;
                         if (dir == turn) {
                             weight += 0x1f;
                         }
-                        if (contour < nb_contour) {
-                            if (best_contour < nb_contour) {
+                        if (nb_contour > contour) {
+                            if (nb_contour > best_contour) {
                                 continue;
                             }
-                            weight = weight_base;
-                            weight_base++;
                             best_contour = nb_contour;
+                            weight = weight_base++;
                         }
-
                         int next_split = 0;
                         int climb = 0;
                         for (int k = 0; k < 4; k++) {
                             if (k == (dir ^ 2)) {
                                 continue;
                             }
-                            int kx = RiverStepX[k] + next_x;
-                            if (flat == 0) {
-                                if (kx < 0) {
-                                    kx += MapLongitudeBounds;
-                                } else if (MapLongitudeBounds <= kx) {
-                                    kx -= MapLongitudeBounds;
-                                }
-                            }
+                            int kx = wrap_map_x(RiverStepX[k] + next_x);
                             int ky = RiverStepY[k] + next_y;
-                            if (ky < 0 || ky >= MapLatitudeBounds || kx < 0
-                                || kx >= MapLongitudeBounds) {
+                            if (!on_map(kx, ky)) {
                                 continue;
                             }
-                            Map *around = map_tiles() + MapLongitude * ky
-                                          + (kx >> 1);
-                            if ((around->climate & 0xE0) < 0x60
-                                && (nb_climate & 0xE0) > 0x5F && hill_run < 5) {
+                            Map *around = map_loc(kx, ky);
+                            if ((around->climate & ~0x1F) < ALT_BIT_SHORE_LINE
+                                && (nb_climate & ~0x1F) >= ALT_BIT_SHORE_LINE
+                                && hill_run < 5) {
                                 weight /= 2;
                             }
-                            if (nb_contour < around->contour) {
+                            if (around->contour > nb_contour) {
                                 climb++;
-                                if ((around->bit & 0x80) != 0) {
-                                    break;
+                                if (around->bit & BIT_RIVER) {
+                                    goto next_dir;
                                 }
                             }
-                            if ((around->bit2 & 0x800000) != 0) {
-                                if (joined != 0
-                                    || (around->climate & 0xE0) < 0x60) {
-                                    break;
+                            if (around->bit2 & 0x800000) {
+                                if (joined || (around->climate & ~0x1F) < ALT_BIT_SHORE_LINE) {
+                                    goto next_dir;
                                 }
                                 next_split = 1;
-                                weight = weight / 8;
+                                weight /= 8;
                             }
                         }
-                        if (weight == 0) {
+                        if (!weight) {
                             continue;
                         }
                         if (climb == 3) {
@@ -2990,18 +2939,15 @@ void __cdecl world_rivers() {
                         cand_dir[cand_count] = dir;
                         cand_count++;
                     }
-
-                    if (abandon) {
-                        to_sea = 0;
-                        break;
-                    }
-                    if (cand_count == 0) {
-                        break;
-                    }
-
+                next_dir:;
+                }
+                if (!cand_count) {
+                    goto river_done;
+                }
+                {
                     int pick = random(0, total_weight);
                     river_dir = 0;
-                    for (int i = 0; i < cand_count; i++) {
+                    for (i = 0; i < cand_count; i++) {
                         if (pick < cand_weight[i]) {
                             joined = cand_split[i];
                             river_dir = cand_dir[i];
@@ -3009,69 +2955,50 @@ void __cdecl world_rivers() {
                         }
                         pick -= cand_weight[i];
                     }
-
-                    cur_x += RiverStepX[river_dir];
-                    if ((MapIsFlat & 1) == 0) {
-                        if (cur_x < 0) {
-                            cur_x += MapLongitudeBounds;
-                        } else if (MapLongitudeBounds <= cur_x) {
-                            cur_x -= MapLongitudeBounds;
+                    cur_x = wrap_map_x(RiverStepX[river_dir] + cur_x);
+                    cur_y = cur_y + RiverStepY[river_dir];
+                    int alt = map_loc(cur_x, cur_y)->climate >> 5;
+                    if (alt != band) {
+                        hill_run = 0;
+                    }
+                    band = alt;
+                    int new_contour = map_loc(cur_x, cur_y)->contour;
+                    if (new_contour > contour) {
+                        new_contour = (int)AltContour[band];
+                        if (contour - 1 > new_contour) {
+                            new_contour = contour - 1;
                         }
+                        alt_put_detail(cur_x, cur_y, new_contour);
                     }
-                    cur_y += RiverStepY[river_dir];
-
-                    Map *head = map_tiles() + MapLongitude * cur_y
-                                + (cur_x >> 1);
-                    band = head->climate >> 5;
-                    int next_contour = head->contour;
-
-                    if (contour < next_contour) {
-                        // Drop the tile to its band's nominal contour, but
-                        // never below one step under the tile we came from.
-                        int target = AltContour[band];
-                        if (AltContour[band] < contour - 1) {
-                            target = contour - 1;
-                        }
-                        alt_put_detail(cur_x, cur_y, target);
-                        next_contour = target;
+                    contour = new_contour;
+                    if (++steps >= 1000) {
+                        goto river_done;
                     }
-
-                    steps++;
-                    contour = next_contour;
-                    if (steps > 999) {
-                        break;
-                    }
-                    head->bit2 |= 0x800000;
+                    map_loc(cur_x, cur_y)->bit2 |= 0x800000;
                     step_parity++;
                     hill_run++;
-                    bits = head->bit;
-                }
-
-                if (band > 2) {
-                    Map *mouth = map_tiles() + MapLongitude * cur_y
-                                 + (cur_x >> 1);
-                    if (((mouth->bit & 0x80) == 0) && (to_sea != 0)
-                        && (((mouth->bit & 3) == 0)
-                            || (7 < (mouth->val2 & 0xf)))) {
-                        mouth->bit |= 0x200;
-                    }
-                }
-
-                // Every tile this river crossed is now a river tile.
-                for (int crossed = 0; crossed < MapArea;
-                     ++crossed) {
-                    if ((map_tiles()[crossed].bit2 & 0x800000) != 0) {
-                        map_tiles()[crossed].bit |= 0x80;
-                    }
                 }
             }
-            do_all_non_input();
-            y_coord++;
-        } while (y_coord < MapLatitudeBounds);
+        abandon:
+            to_sea = 0;
+        river_done:
+            if (band >= 3
+                && !(map_loc(cur_x, cur_y)->bit & BIT_RIVER)
+                && to_sea
+                && anything_at(cur_x, cur_y) < 0) {
+                map_loc(cur_x, cur_y)->bit |= BIT_RIVER_LAKE;
+            }
+            river_count++;
+            for (i = 0; i < MapArea; i++) {
+                if (map_tiles()[i].bit2 & 0x800000) {
+                    map_tiles()[i].bit |= BIT_RIVER;
+                }
+            }
+        }
+        do_all_non_input();
     }
-
-    for (int swept = 0; swept < MapArea; ++swept) {
-        map_tiles()[swept].bit2 &= 0xff7fffff;
+    for (i = 0; i < MapArea; i++) {
+        map_tiles()[i].bit2 &= 0xff7fffff;
     }
 }
 
@@ -3101,206 +3028,138 @@ void __cdecl world_erosion() {
     Fractal fractal;
     fractal.init();
 
-    int map_scale = 1;
-    int world_scale = 1;
+    int world_scale;
+    int map_scale;
     if (MapLandCoverage == 1) {
         map_scale = quick_root(0xC80);
         world_scale = quick_root(MapArea);
+    } else {
+        world_scale = 1;
+        map_scale = 1;
     }
 
-    int pass;
-    for (pass = 0; pass < 2; ++pass) {
-        if (pass != 0)
+    for (int pass = 0; pass < 2; ++pass) {
+        if (pass) {
             world_shorelines();
+        }
         Paths.continents();
+        for (int y = 0; y < MapLatitudeBounds; ++y) {
+            for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
+                Map *tile = map_loc(x, y);
+                int alt = tile->climate >> 5;
+                int contour = tile->contour;
+                int coarse_x = x << 4;
+                int coarse_y = y << 4;
+                int level = fractal.sample(coarse_x, coarse_y) * 5;
+                level += fractal.sample(coarse_x << 3, coarse_y << 3) * 2;
+                int intensity = range(level * 7 >> 8, 0, 100);
+                int result = intensity;
 
-        int y;
-        for (y = 0; y < MapLatitudeBounds; ++y) {
-            int x = y & 1;
-            for (; x < MapLongitudeBounds; x += 2) {
-                Map *const tile = &map_tiles()[
-                    MapLongitude * y + (x >> 1)];
-                const unsigned contour = tile->contour;
-                const unsigned altitude = tile->climate >> 5;
-                int intensity = fractal.sample(x << 4, y << 4) * 5;
-                const int fine = fractal.sample(x << 7, y << 7);
-                intensity = (intensity + fine * 2) * 7 >> 8;
-                if (intensity < 0)
-                    intensity = 0;
-                else if (intensity > 100)
-                    intensity = 100;
-
-                const bool process = (pass == 0) ? altitude <= 2 : altitude > 2;
-                if (!process)
-                    continue;
-
-                int result = 0;
-                int local_1c;
-                int local_8;
-                int region = -1;
-                int neighbor_index;
-
-                if (altitude == 2 || altitude == 3) {
-                    // Count low-altitude tiles in the four-neighbor ring.
-                    local_8 = 0;
-                    for (neighbor_index = 0; neighbor_index < 8;
-                         ++neighbor_index) {
-                        int nx = x + VehMoveDeltaX[neighbor_index];
-                        if (!(MapIsFlat & 1)) {
-                            if (nx < 0)
-                                nx += MapLongitudeBounds;
-                            else if (nx >= MapLongitudeBounds)
-                                nx -= MapLongitudeBounds;
-                        }
-                        const int ny = y + VehMoveDeltaY[neighbor_index];
-                        if (ny >= 0 && ny < MapLatitudeBounds
-                            && nx >= 0 && nx < MapLongitudeBounds) {
-                            const Map *const neighbor = &map_tiles()[
-                                MapLongitude * ny + (nx >> 1)];
-                            if ((neighbor->climate & 0xE0) < 0x41)
-                                ++local_8;
-                        }
-                    }
-
-                    if (altitude != 3) {
-                        local_1c = 0;
-                        region = -1;
-                        for (neighbor_index = 0; neighbor_index < 8;
-                             ++neighbor_index) {
-                            int nx = x + VehMoveDeltaX[neighbor_index];
-                            if (!(MapIsFlat & 1)) {
-                                if (nx < 0)
-                                    nx += MapLongitudeBounds;
-                                else if (nx >= MapLongitudeBounds)
-                                    nx -= MapLongitudeBounds;
-                            }
-                            const int ny = y + VehMoveDeltaY[neighbor_index];
-                            if (ny < 0 || ny >= MapLatitudeBounds
-                                || nx < 0 || nx >= MapLongitudeBounds)
-                                continue;
-                            const Map *const neighbor = &map_tiles()[
-                                MapLongitude * ny + (nx >> 1)];
-                            if ((neighbor->climate & 0xE0) <= 0x40)
-                                continue;
-                            const int next_region = neighbor->region;
-                            if (region < 0) {
-                                region = next_region;
-                            } else if (region != next_region) {
-                                uint32_t scaled_area_bits =
-                                    static_cast<uint32_t>(MapArea) * 0x32u;
-                                int scaled_area;
-                                memcpy(&scaled_area, &scaled_area_bits, sizeof(scaled_area));
-                                uint32_t neighboring_tiles_bits =
-                                    static_cast<uint32_t>(Continents[region].tile_count)
-                                  + static_cast<uint32_t>(Continents[next_region].tile_count);
-                                int neighboring_tiles;
-                                memcpy(&neighboring_tiles, &neighboring_tiles_bits,
-                                       sizeof(neighboring_tiles));
-                                if (scaled_area / 0xC80 <= neighboring_tiles)
-                                    local_1c = 1;
-                                if (Continents[region].tile_count
-                                    < Continents[next_region].tile_count)
-                                    region = next_region;
-                            }
-                        }
-                    } else {
-                        local_1c = 0;
-                        for (neighbor_index = 0; neighbor_index < 16;
-                             ++neighbor_index) {
-                            int nx = x + RadiusOffsetX[9 + neighbor_index];
-                            if (!(MapIsFlat & 1)) {
-                                if (nx < 0)
-                                    nx += MapLongitudeBounds;
-                                else if (nx >= MapLongitudeBounds)
-                                    nx -= MapLongitudeBounds;
-                            }
-                            const int ny = y + RadiusOffsetY[9 + neighbor_index];
-                            if (ny < 0 || ny >= MapLatitudeBounds
-                                || nx < 0 || nx >= MapLongitudeBounds)
-                                continue;
-                            const Map *const neighbor = &map_tiles()[
-                                MapLongitude * ny + (nx >> 1)];
-                            if ((neighbor->climate & 0xE0) <= 0x40)
-                                continue;
-                            const unsigned next_region = neighbor->region;
-                            if (next_region < 0x40
-                                && next_region != tile->region)
-                                ++local_1c;
-                        }
-                    }
-
-                    if (altitude == 2) {
-                        if (local_1c != 0) {
-                            local_8 += 4;
-                            if (local_8 < 0)
-                                local_8 = 0;
-                            else if (local_8 > 8)
-                                local_8 = 8;
-                        }
-                        int adjusted = intensity;
-                        if (intensity < static_cast<int>(contour))
-                            adjusted = static_cast<int>(WorldBuilder.shelf)
-                                     + intensity;
-                        if (adjusted < static_cast<int>(AltNatural[altitude + 1])) {
-                            result = adjusted;
-                            goto settle_tile;
-                        }
-
-                        const int value = (local_8 - 3)
-                            * static_cast<int>(WorldBuilder.shelf);
-                        intensity = -((value + ((value >> 31) & 3)) >> 2);
-                        result = adjusted + intensity;
-                        goto settle_tile;
-                    } else if (local_1c != 0) {
-                        // Native 0x5C30DE applies this carry to altitude 3
-                        // independently of altitude 2's earlier clamp.
-                        local_8 += 4;
-                        if (local_8 < 0)
-                            local_8 = 0;
-                        else if (local_8 > 8)
-                            local_8 = 8;
-                    }
-
-                    result = ((8 - local_8)
-                              * WorldBuilder.plains
-                              * world_scale / (map_scale * 8)) + intensity;
-                    if (result < static_cast<int>(contour)) {
-                        int ocean_coverage = MapOceanCoverage < 1 ? 1
-                            : (MapOceanCoverage > 2 ? 2
-                                : static_cast<int>(MapOceanCoverage));
-                        intensity = (((((static_cast<int>(WorldBuilder.hills)
-                            * static_cast<int>(MapErosiveForces)) / 2)
-                            * (8 - local_8) / (ocean_coverage * 8))
-                            + WorldBuilder.beach) * world_scale) / map_scale;
-                        result += intensity;
-                    } else {
-                        int roughness = local_8 < 0 ? 0
-                            : (local_8 > 8 ? 8 : local_8);
-                        int ocean_coverage = MapOceanCoverage < 1 ? 1
-                            : (MapOceanCoverage > 2 ? 2
-                                : static_cast<int>(MapOceanCoverage));
-                        result = ((result - static_cast<int>(contour))
-                            * (8 - roughness) * static_cast<int>(MapErosiveForces))
-                            / (ocean_coverage * 8) + static_cast<int>(contour);
-                    }
-                } else if (altitude < 2) {
-                    result = intensity - WorldBuilder.deep_water;
-                } else if (altitude == 4) {
-                    if (static_cast<int>(contour) < intensity)
-                        intensity = intensity * 2 - static_cast<int>(contour);
-                    result = intensity
-                        + static_cast<int>(WorldBuilder.hills)
-                          * static_cast<int>(MapErosiveForces)
-                        + WorldBuilder.peaks;
-                } else if (altitude > 4) {
-                    result = static_cast<int>(WorldBuilder.hills)
-                        * static_cast<int>(MapErosiveForces) + intensity;
+                if (alt <= 2) {
+                    if (pass) continue;
+                } else {
+                    if (!pass) continue;
                 }
 
-settle_tile:
-                result = (result + 1 + static_cast<int>(contour)) / 2;
-                if (MapErosiveForces == 0 && result > 0x4A)
+                int count;
+                int i;
+                int region;
+                int flag;
+                if (alt >= 2 && alt <= 3) {
+                    count = 0;
+                    for (i = 0; i < 8; ++i) {
+                        int nx = wrap_map_x(x + VehMoveDeltaX[i]);
+                        int ny = y + VehMoveDeltaY[i];
+                        if (on_map(nx, ny)
+                            && (map_loc(nx, ny)->climate & ~0x1F) <= ALT_BIT_OCEAN_SHELF) {
+                            ++count;
+                        }
+                    }
+                    if (alt == 3) {
+                        flag = 0;
+                        region = map_loc(x, y)->region;
+                        for (i = 0; i < 16; ++i) {
+                            int nx = wrap_map_x(x + RadiusOffsetX[i + 9]);
+                            int ny = y + RadiusOffsetY[i + 9];
+                            if (on_map(nx, ny)) {
+                                Map *sq = map_loc(nx, ny);
+                                if ((sq->climate & ~0x1F) > ALT_BIT_OCEAN_SHELF) {
+                                    int r = sq->region;
+                                    if (r < 64 && r != region) {
+                                        ++flag;
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        flag = 0;
+                        region = -1;
+                        for (i = 0; i < 8; ++i) {
+                            int nx = wrap_map_x(x + VehMoveDeltaX[i]);
+                            int ny = y + VehMoveDeltaY[i];
+                            if (!on_map(nx, ny)) {
+                                continue;
+                            }
+                            Map *sq = map_loc(nx, ny);
+                            if ((sq->climate & ~0x1F) <= ALT_BIT_OCEAN_SHELF) {
+                                continue;
+                            }
+                            if (region < 0) {
+                                region = sq->region;
+                            } else {
+                                int r = sq->region;
+                                if (region != r) {
+                                    if (Continents[region].tile_count + Continents[r].tile_count
+                                        >= MapArea * 50 / 3200) {
+                                        flag = 1;
+                                    }
+                                    if (Continents[r].tile_count > Continents[region].tile_count) {
+                                        region = r;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (alt <= 1) {
+                    result = intensity - WorldBuilder.deep_water;
+                } else if (alt <= 2) {
+                    if (flag) {
+                        count = range(count + 4, 0, 8);
+                    }
+                    if (intensity < contour) {
+                        result = WorldBuilder.shelf + intensity;
+                    }
+                    if (result >= (int)AltNatural[alt + 1]) {
+                        result -= (count - 3) * (int)WorldBuilder.shelf / 4;
+                    }
+                } else if (alt <= 3) {
+                    if (flag) {
+                        count = range(count + 4, 0, 8);
+                    }
+                    result = (8 - count) * WorldBuilder.plains * world_scale / (map_scale * 8) + intensity;
+                    if (result < contour) {
+                        result += (MapErosiveForces * (int)WorldBuilder.hills / 2 * (8 - count)
+                                   / (range(MapOceanCoverage, 1, 2) * 8)
+                                   + WorldBuilder.beach) * world_scale / map_scale;
+                    } else {
+                        result = (result - contour) * (8 - range(count, 0, 8)) * MapErosiveForces
+                                 / (range(MapOceanCoverage, 1, 2) * 8) + contour;
+                    }
+                } else if (alt <= 4) {
+                    if (intensity > contour) {
+                        result = intensity * 2 - contour;
+                    }
+                    result += MapErosiveForces * WorldBuilder.hills + WorldBuilder.peaks;
+                } else {
+                    result = MapErosiveForces * WorldBuilder.hills + intensity;
+                }
+
+                result = (result + contour + 1) / 2;
+                if (!MapErosiveForces && result > 0x4A) {
                     result = 0x4A;
+                }
                 alt_put_detail(x, y, result);
             }
             do_all_non_input();
@@ -3457,199 +3316,7 @@ void __cdecl world_build() {
 extern int TerraformTileFaction;
 extern int TerraformDrownedBaseId;
 
-static void world_rainfall_pass2(int saved_faction) {
-    int pass2_count = 0;
-    int rain_carry = 0;
-    int cloud_count = 0;
-    int y = 0;
-    Map *tile_cursor = MapTiles;
 
-    for (y = 0; y < MapLatitudeBounds; ++y) {
-        int x = y & 1;
-        for (; x < MapLongitudeBounds; x += 2) {
-            int rainfall_class = 0;
-            int adjustment = 0;
-            int tile_baseline = 0;
-            if (y > 0 && y < MapLatitudeBounds - 1) {
-                Map *tile = &MapTiles[MapLongitude * y + (x >> 1)];
-                const uint8_t climate = tile->climate;
-                const uint32_t flags = tile->bit2;
-                const int rainfall_level = climate & 7;
-                const int altitude = climate >> 5;
-                const uint8_t scratch = tile_cursor->unk_1;
-                const uint32_t coastal = flags & 0x80000040u;
-                if (coastal == 0x40u || (flags & 0x80000100u) == 0x100u)
-                    rain_carry = 1;
-
-                if (scratch & 0x20) {
-                    rainfall_class = tile_baseline = rain_carry = 1;
-                    cloud_count = 0;
-                }
-
-                const int cloud_cover = static_cast<int>(MapCloudCover);
-                if (scratch & 0x80) {
-                    rain_carry = rainfall_level > 1 ? 1 : 0;
-                    pass2_count = 0;
-                    cloud_count = 0;
-                    if (cloud_cover >= 1)
-                        adjustment = 1;
-                }
-
-                if (scratch & 0x10) {
-                    if (rain_carry != 0)
-                        --rain_carry;
-                    --adjustment;
-                }
-
-                if ((scratch & 0x40) && altitude <= 4) {
-                    pass2_count = 0;
-                    cloud_count = 0;
-                    if (adjustment < 0)
-                        adjustment = 0;
-                    rainfall_class = tile_baseline;
-                }
-
-                if (altitude > 3) {
-                    ++pass2_count;
-                    const int pass_limit =
-                        static_cast<int>(WorldBuilder.rainfall_coeff)
-                        * cloud_cover * 4 + 1;
-                    if (pass2_count > pass_limit && rain_carry != 0)
-                        --rain_carry;
-                } else if (altitude < 3) {
-                    cloud_count = 0;
-                    rain_carry = 1;
-                    if (pass2_count != 0) {
-                        pass2_count += -1 - cloud_cover;
-                        if (pass2_count < 1) {
-                            pass2_count = 0;
-                            cloud_count = 0;
-                        }
-                    }
-                } else if (rain_carry == 0) {
-                    if (pass2_count != 0) {
-                        pass2_count += -1 - cloud_cover;
-                        if (pass2_count < 1) {
-                            pass2_count = 0;
-                            cloud_count = 0;
-                            if (!(cloud_cover == 0 && altitude >= 3))
-                                rain_carry = 1;
-                        }
-                    }
-                } else if (pass2_count != 0) {
-                    pass2_count += -1 - cloud_cover;
-                    if (pass2_count < 1) {
-                        pass2_count = 0;
-                        cloud_count = 0;
-                        if (!(cloud_cover == 0 && altitude >= 3))
-                            rain_carry = 1;
-                    }
-                } else {
-                    ++cloud_count;
-                    const int cloud_limit = cloud_cover * 4 + 2;
-                    if (cloud_count > cloud_limit) {
-                        rain_carry = 0;
-                        cloud_count = 0;
-                    }
-                }
-
-                if (tile->bit & BIT_RIVER) {
-                    if (((x >> 1) % 3) != 0 && adjustment < 0)
-                        adjustment = 0;
-                    rain_carry = 1;
-                    cloud_count = 0;
-                }
-
-                if (scratch & 0x02) {
-                    --rainfall_class;
-                    rain_carry = 0;
-                } else if (rain_carry != 0) {
-                    adjustment += rain_carry;
-                }
-
-                if (altitude <= 4 + (rainfall_level != 0)) {
-                    rainfall_class += adjustment;
-                } else if (cloud_cover - altitude + rainfall_level + 5 >= 2
-                           && adjustment > 0) {
-                    ++rainfall_class;
-                }
-
-                if ((flags & 0x80000004u) == 0x4u
-                    && (climate & 0xE0) >= 0x60 && altitude < 6) {
-                    int marker = static_cast<int8_t>(flags >> 24);
-                    if (marker < 0) marker = -marker;
-                    if (marker < 0x31) {
-                        rainfall_class += 2;
-                    } else if (marker < 0x51 && altitude < 5) {
-                        rainfall_class += 2;
-                    } else {
-                        ++rainfall_class;
-                    }
-                }
-
-                if (coastal == 0x40u)
-                    rainfall_class = 0;
-
-                if ((flags & 0x80004000u) == 0x4000u || rainfall_class < 0) {
-                    rainfall_class = 0;
-                } else if (rainfall_class > 2) {
-                    rainfall_class = 2;
-                }
-
-                if (scratch & 0x01) {
-                    rain_carry = 1;
-                    if (rainfall_class < 2)
-                        ++rainfall_class;
-                }
-                if (scratch & 0x04) {
-                    rain_carry = 1;
-                    if (rainfall_class < 2)
-                        ++rainfall_class;
-                }
-
-                if (GameDataStateStorage.fields_.turn_current_num_ != 0) {
-                    const int old_class = (tile_cursor->climate >> 3) & 3;
-                    if (old_class != rainfall_class && TerraformDrownedBaseId < 0) {
-                        if (old_class > rainfall_class) {
-                            bool search = true;
-                            if (TerraformTileFaction >= 0
-                                && (static_cast<uint8_t>(
-                                        GameDataStateStorage.fields_.lock_masks_.enable_mask_)
-                                    & (1u << (TerraformTileFaction & 0x1F))))
-                                search = false;
-                            if (search) {
-                                const int found = base_find(x, y);
-                                if (found >= 0)
-                                    TerraformTileFaction =
-                                        Bases[found].faction_id_current;
-                            }
-                        }
-                        const int found = base_find(x, y, saved_faction);
-                        if (found >= 0 && BaseFindDist <= 2)
-                            TerraformDrownedBaseId = found;
-                    }
-                }
-
-                tile_cursor->climate = static_cast<uint8_t>(
-                    (tile_cursor->climate & 0xE7) | (rainfall_class << 3));
-            } else {
-                tile_cursor->climate = static_cast<uint8_t>(tile_cursor->climate & 0xE7);
-            }
-            ++tile_cursor;
-        }
-        do_all_non_input();
-    }
-}
-
-static int world_rainfall_xrange(int x, int width, int flat) {
-    if ((flat & 1) == 0) {
-        if (x < 0)
-            x += width;
-        else if (x >= width)
-            x -= width;
-    }
-    return x;
-}
 
 // Historical seed deferral, superseded by the reconstruction below:
 // NOTE (map pass, 2026-09-05): NOT homed - it stays behind its
@@ -3664,156 +3331,102 @@ static int world_rainfall_xrange(int x, int width, int flat) {
 // RECOVERY_BINDING: v1 {"reason":"Recover the complete three-pass rainfall algorithm through existing Map storage, WorldBuilder terrain parameters and real base/climate APIs. The common land-terrain join and west-to-east scan continuation come from the original control flow, not the old condensed seed. Restore these original state, callback-read and column-arithmetic effects without normalizing the zero-carry, lock-byte or persistent-cursor quirks. The retained TRIED condensation describes seed history; these branch corrections do not establish full-game or linked-preservation acceptance.","evidence":["original:0x005C4470-0x005C4FC1; image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","git:1f61a95d:src/unrecovered/005c4470.cpp","Original0x5C45AD joins at0x5C47DB before all-tile altitude processing; original0x5C499D/0x5C49A7 join at0x5C49E5 before the east scan.","src/map.h Map and radius tables; src/alpha.h RulesWorldbuilder; src/base.h base_find; src/console.h ConsoleGlobal; existing src/veh.cpp terraform results.","Pinned5C4665/46F3/4774 and4919/49BB/49EB/4A86 reload cloud cover at the consumer and cloudmass scan tails; row callbacks service networking. Entry5C4487/448C resets drowned-base then tile-faction.","Pinned5C4C2A/57/5D/6B separates altitude0..2 carry/reset/counter decay from exactly3;5C4CE2 reaches4C6B without forcing carry.5C4B33 preserves x>>1 through river IDIV3 at4CA3.","Pinned5C4ACF/4B84/4DD7/4E61/4E89 retains a separate Map cursor for scratch, live old/final climate and each processed record, while4B27..49 indexes live terrain storage. Base callbacks may alter climate;5C4DFE tests only the lock-mask low byte."]}
 // TRIED: no Ghidra hypothesis was available for this address, so this is a from-scratch disassembly transcription (three map passes: windward-hint marking, 2-bit rainfall-class finalization with base_find caching, moderate-rain propagation). Pass 2's middle heuristic (unk_1 bit cascade feeding the 0-3 class value) is a best-effort condensation of ~80 instructions, not a literal register replay - the surrounding loop bounds, byte-merge write and base_find call sites are transcribed directly.
 void __cdecl world_rainfall() {
-    const int saved_faction = ConsoleGlobal.faction_id_;
+    int saved_faction = ConsoleGlobal.faction_id_;
     TerraformDrownedBaseId = -1;
     TerraformTileFaction = -1;
-    int i;
-    for (i = 0; i < MapArea; ++i)
+    for (int i = 0; i < MapArea; i++) {
         MapTiles[i].unk_1 = 0;
+    }
 
     int y;
-    for (y = 0; y < MapLatitudeBounds; ++y) {
-        int x = y & 1;
-        for (; x < MapLongitudeBounds; x += 2) {
-            Map *tile = &MapTiles[MapLongitude * y + (x >> 1)];
-            if (tile->bit & BIT_CONDENSER) {
-                for (int dir_cond = 0; dir_cond < 9; ++dir_cond) {
-                    int nx = world_rainfall_xrange(
-                        x + RadiusOffsetX[dir_cond], MapLongitudeBounds, MapIsFlat);
-                    int ny = y + RadiusOffsetY[dir_cond];
-                    if (ny >= 0 && ny < MapLatitudeBounds
-                        && nx >= 0 && nx < MapLongitudeBounds) {
-                        Map *neighbor = &MapTiles[
-                            MapLongitude * ny + (nx >> 1)];
-                        if (neighbor->unk_1 & 1)
-                            neighbor->unk_1 |= 4;
-                        else
-                            neighbor->unk_1 |= 1;
+    for (y = 0; y < MapLatitudeBounds; y++) {
+        for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
+            if (map_loc(x, y)->bit & BIT_CONDENSER) {
+                for (i = 0; i < 9; i++) {
+                    int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
+                    int y_radius = y + RadiusOffsetY[i];
+                    if (on_map(x_radius, y_radius)) {
+                        if (map_loc(x_radius, y_radius)->unk_1 & 1) {
+                            map_loc(x_radius, y_radius)->unk_1 |= 4;
+                        } else {
+                            map_loc(x_radius, y_radius)->unk_1 |= 1;
+                        }
                     }
                 }
             }
-
-            if ((tile->climate & 0xE0) < 0x60) {
-                int west = x;
-                for (int step_west = 0; step_west < 3; ++step_west) {
-                    const int left_x = world_rainfall_xrange(
-                        west - 2, MapLongitudeBounds, MapIsFlat);
-                    const int center_x = world_rainfall_xrange(
-                        west, MapLongitudeBounds, MapIsFlat);
-                    if (left_x >= 0 && left_x < MapLongitudeBounds
-                        && center_x >= 0 && center_x < MapLongitudeBounds) {
-                        Map *left = &MapTiles[
-                            MapLongitude * y + (left_x >> 1)];
-                        Map *center = &MapTiles[
-                            MapLongitude * y + (center_x >> 1)];
-                        if ((left->climate >> 5) >= (center->climate >> 5)
-                            && step_west <= static_cast<int>(MapCloudCover))
-                            left->unk_1 &= 0xEF;
+            if (is_ocean(x, y)) {
+                for (int k = 0; k < 3; k++) {
+                    int x_west = wrap_map_x(x - k * 2 - 2);
+                    int x_here = wrap_map_x(x - k * 2);
+                    if (on_map(x_west, y) && on_map(x_here, y)) {
+                        int alt_west = alt_at(x_west, y);
+                        int alt_here = alt_at(x_here, y);
+                        if (alt_west == alt_here) {
+                            if (k <= MapCloudCover) {
+                                map_loc(x_west, y)->unk_1 &= ~0x10;
+                            }
+                        } else if (alt_west > alt_here) {
+                            if (k <= MapCloudCover) {
+                                map_loc(x_west, y)->unk_1 &= ~0x10;
+                            }
+                        }
                     }
-                    west -= 2;
                 }
-
-                const int east_x = world_rainfall_xrange(
-                    x + 2, MapLongitudeBounds, MapIsFlat);
-                if (east_x >= 0 && east_x < MapLongitudeBounds)
-                    MapTiles[MapLongitude * y + (east_x >> 1)].unk_1 |= 0x80;
-
-                const int x4_cloud_cover = static_cast<int>(MapCloudCover);
-                if (x4_cloud_cover > 0) {
-                    const int x4 = world_rainfall_xrange(
-                        x + 4, MapLongitudeBounds, MapIsFlat);
-                    if (x4 >= 0 && x4 < MapLongitudeBounds) {
-                        Map *tile4 = &MapTiles[
-                            MapLongitude * y + (x4 >> 1)];
-                        if ((tile4->climate & 7) > 1 || x4_cloud_cover > 1) {
-                            tile4->unk_1 |= 0x80;
-                            if (static_cast<int>(MapCloudCover) > 1) {
-                                const int x6 = world_rainfall_xrange(
-                                    x + 6, MapLongitudeBounds, MapIsFlat);
-                                if (x6 >= 0 && x6 < MapLongitudeBounds
-                                    && (MapTiles[MapLongitude * y + (x6 >> 1)]
-                                        .climate & 7) != 0)
-                                    MapTiles[MapLongitude * y + (x6 >> 1)]
-                                        .unk_1 |= 0x80;
+                int x_east = wrap_map_x(x + 2);
+                if (on_map(x_east, y)) {
+                    map_loc(x_east, y)->unk_1 |= 0x80;
+                }
+                if (MapCloudCover > 0) {
+                    int x_east2 = wrap_map_x(x + 4);
+                    if (on_map(x_east2, y)
+                        && (temp_at(x_east2, y) > 1 || MapCloudCover > 1)) {
+                        map_loc(x_east2, y)->unk_1 |= 0x80;
+                        if (MapCloudCover > 1) {
+                            int x_east3 = wrap_map_x(x + 6);
+                            if (on_map(x_east3, y) && temp_at(x_east3, y)) {
+                                map_loc(x_east3, y)->unk_1 |= 0x80;
                             }
                         }
                     }
                 }
             }
-
-            // Native 0x5C45AD's jge reaches this shared terrain-class block,
-            // not the end of the low-altitude ocean/cloud-hint block above.
-            const int altitude = tile->climate >> 5;
+            int altitude = alt_at(x, y);
             if (altitude <= 4) {
-                if (altitude >= 3 && (tile->bit & BIT_FOREST)) {
-                    for (int row_forest = y - 1; row_forest <= y + 1;
-                         ++row_forest) {
-                        const int nx = world_rainfall_xrange(
-                            x + 1, MapLongitudeBounds, MapIsFlat);
-                        if (row_forest >= 0 && row_forest < MapLatitudeBounds
-                            && nx >= 0 && nx < MapLongitudeBounds)
-                            MapTiles[MapLongitude * row_forest + (nx >> 1)]
-                                .unk_1 |= 0x40;
+                if (altitude >= 3 && (bit_at(x, y) & BIT_FOREST)) {
+                    for (int y_forest = y - 1; y_forest <= y + 1; y_forest++) {
+                        int x_forest = wrap_map_x(x + 1);
+                        if (on_map(x_forest, y_forest)) {
+                            map_loc(x_forest, y_forest)->unk_1 |= 0x40;
+                        }
                     }
-                    const int nx2 = world_rainfall_xrange(
-                        x + 2, MapLongitudeBounds, MapIsFlat);
-                    if (nx2 >= 0 && nx2 < MapLongitudeBounds)
-                        MapTiles[MapLongitude * y + (nx2 >> 1)]
-                            .unk_1 |= 0x40;
+                    int x_forest2 = wrap_map_x(x + 2);
+                    if (on_map(x_forest2, y)) {
+                        map_loc(x_forest2, y)->unk_1 |= 0x40;
+                    }
                 }
             } else {
-                const int cloudmass = static_cast<int>(
-                    altitude <= 5 ? WorldBuilder.cloudmass_hills
-                                  : WorldBuilder.cloudmass_peaks);
-                int west_limit = (static_cast<int>(MapCloudCover) - 1)
-                    * static_cast<int>(WorldBuilder.rainfall_coeff)
-                    + cloudmass;
-                if (west_limit >= 1) {
-                    int col = x - 2;
-                    for (int distance_west = -1;
-                         distance_west >= -west_limit; --distance_west) {
-                        const int nx = world_rainfall_xrange(
-                            col, MapLongitudeBounds, MapIsFlat);
-                        if (nx >= 0 && nx < MapLongitudeBounds) {
-                            Map *neighbor = &MapTiles[
-                                MapLongitude * y + (nx >> 1)];
-                            if ((neighbor->climate & 0xE0) < 0x60) {
-                                break;
-                            }
-                            if ((neighbor->climate >> 5) >= altitude) {
-                                break;
-                            }
-                            neighbor->unk_1 |= 0x20;
+                int cloudmass = (int)(altitude <= 5 ? WorldBuilder.cloudmass_hills
+                                                    : WorldBuilder.cloudmass_peaks);
+                for (i = -1;
+                     i >= -((MapCloudCover - 1) * (int)WorldBuilder.rainfall_coeff + cloudmass);
+                     i--) {
+                    int x_cloud = wrap_map_x(x + i * 2);
+                    if (on_map(x_cloud, y)) {
+                        if (is_ocean(x_cloud, y) || alt_at(x_cloud, y) >= altitude) {
+                            break;
                         }
-                        col -= 2;
-                        west_limit = (static_cast<int>(MapCloudCover) - 1)
-                            * static_cast<int>(WorldBuilder.rainfall_coeff)
-                            + cloudmass;
+                        map_loc(x_cloud, y)->unk_1 |= 0x20;
                     }
                 }
-
-                int east_limit = cloudmass
-                    - (static_cast<int>(MapCloudCover) - 1)
-                      * static_cast<int>(WorldBuilder.rainfall_coeff);
-                if (east_limit >= 1) {
-                    int col = x + 2;
-                    for (int distance_east = 1;
-                         distance_east <= east_limit; ++distance_east) {
-                        const int nx = world_rainfall_xrange(
-                            col, MapLongitudeBounds, MapIsFlat);
-                        if (nx >= 0 && nx < MapLongitudeBounds) {
-                            Map *neighbor = &MapTiles[
-                                MapLongitude * y + (nx >> 1)];
-                            if ((neighbor->climate & 0xE0) < 0x60)
-                                break;
-                            if ((neighbor->climate >> 5) >= altitude)
-                                break;
-                            neighbor->unk_1 |= 0x10;
+                for (i = 1;
+                     i <= cloudmass - (MapCloudCover - 1) * (int)WorldBuilder.rainfall_coeff;
+                     i++) {
+                    int x_cloud = wrap_map_x(x + i * 2);
+                    if (on_map(x_cloud, y)) {
+                        if (is_ocean(x_cloud, y) || alt_at(x_cloud, y) >= altitude) {
+                            break;
                         }
-                        col += 2;
-                        east_limit = cloudmass
-                            - (static_cast<int>(MapCloudCover) - 1)
-                              * static_cast<int>(WorldBuilder.rainfall_coeff);
+                        map_loc(x_cloud, y)->unk_1 |= 0x10;
                     }
                 }
             }
@@ -3821,31 +3434,177 @@ void __cdecl world_rainfall() {
         do_all_non_input();
     }
 
-    world_rainfall_pass2(saved_faction);
-
-    for (y = 0; y < MapLatitudeBounds; ++y) {
-        int x = y & 1;
-        if (x < MapLongitudeBounds) {
-            for (; x < MapLongitudeBounds; x += 2) {
-                Map *tile = &MapTiles[MapLongitude * y + (x >> 1)];
-                if ((tile->climate & 0x18) == 0) {
-                    for (int dir_neighbor = 0; dir_neighbor < 8;
-                         ++dir_neighbor) {
-                        const int nx = world_rainfall_xrange(
-                            x + VehMoveDeltaX[dir_neighbor], MapLongitudeBounds,
-                            MapIsFlat);
-                        const int ny = y + VehMoveDeltaY[dir_neighbor];
-                        if (ny < 0 || ny >= MapLatitudeBounds
-                            || nx < 0 || nx >= MapLongitudeBounds)
-                            continue;
-                        const Map *neighbor = &MapTiles[
-                            MapLongitude * ny + (nx >> 1)];
-                        if ((neighbor->climate & 0xE0) < 0x60)
-                            continue;
-                        if ((neighbor->climate & 0x18) == 0x10) {
-                            climate_set(x, y, 1);
-                            break;
+    Map *cursor = MapTiles;
+    int pass2_count = 0;
+    int rain_carry = 0;
+    int cloud_count = 0;
+    for (y = 0; y < MapLatitudeBounds; y++) {
+        for (int x = y & 1; x < MapLongitudeBounds; x += 2, cursor++) {
+            if (y > 0 && y < MapLatitudeBounds - 1) {
+                int adjustment = 0;
+                int rainfall_class = 0;
+                Map *tile = map_loc(x, y);
+                uint32_t flags = tile->bit2;
+                int climate = tile->climate;
+                uint32_t coastal = flags & 0x80000040;
+                int temperature = climate & 7;
+                if (coastal == 0x40 || (flags & 0x80000100) == 0x100) {
+                    rain_carry = 1;
+                }
+                uint8_t scratch = cursor->unk_1;
+                if (scratch & 0x20) {
+                    rainfall_class = 1;
+                    cloud_count = 0;
+                    rain_carry = 1;
+                }
+                int altitude = climate >> 5;
+                int cloud_cover = MapCloudCover;
+                if (scratch & 0x80) {
+                    rain_carry = temperature > 1;
+                    pass2_count = 0;
+                    cloud_count = 0;
+                    if (cloud_cover >= 1) {
+                        adjustment = 1;
+                    }
+                }
+                if (scratch & 0x10) {
+                    if (rain_carry) {
+                        rain_carry--;
+                    }
+                    adjustment--;
+                }
+                if ((scratch & 0x40) && altitude <= 5 && altitude <= 4) {
+                    pass2_count = 0;
+                    cloud_count = 0;
+                    adjustment = (adjustment < 0) ? 0 : adjustment;
+                }
+                if (altitude > 3) {
+                    if (++pass2_count > (int)WorldBuilder.rainfall_coeff * cloud_cover * 4 + 1
+                        && rain_carry) {
+                        rain_carry--;
+                    }
+                } else if (altitude < 3) {
+                    cloud_count = 0;
+                    rain_carry = 1;
+                    if (pass2_count) {
+                        pass2_count += -1 - cloud_cover;
+                        if (pass2_count < 1) {
+                            pass2_count = 0;
+                            cloud_count = 0;
+                            if (cloud_cover || altitude < 3) {
+                                rain_carry = 1;
+                            }
                         }
+                    }
+                } else if (!rain_carry) {
+                    if (pass2_count) {
+                        pass2_count += -1 - cloud_cover;
+                        if (pass2_count < 1) {
+                            pass2_count = 0;
+                            cloud_count = 0;
+                            if (cloud_cover || altitude < 3) {
+                                rain_carry = 1;
+                            }
+                        }
+                    }
+                } else if (pass2_count) {
+                    pass2_count += -1 - cloud_cover;
+                    if (pass2_count < 1) {
+                        pass2_count = 0;
+                        cloud_count = 0;
+                        if (cloud_cover || altitude < 3) {
+                            rain_carry = 1;
+                        }
+                    }
+                } else if (++cloud_count > cloud_cover * 4 + 2) {
+                    rain_carry = 0;
+                    cloud_count = 0;
+                }
+                if (tile->bit & BIT_RIVER) {
+                    if ((x >> 1) % 3 && adjustment < 0) {
+                        adjustment = 0;
+                    }
+                    rain_carry = 1;
+                    cloud_count = 0;
+                }
+                if (scratch & 0x02) {
+                    rainfall_class--;
+                    rain_carry = 0;
+                } else if (rain_carry) {
+                    adjustment += rain_carry;
+                }
+                if (altitude <= (temperature != 0) + 4) {
+                    rainfall_class += adjustment;
+                } else if (cloud_cover - altitude + temperature + 5 >= 2 && adjustment > 0) {
+                    rainfall_class++;
+                }
+                if ((flags & 0x80000004) == 0x4 && (climate & ~0x1F) >= 0x60 && altitude < 6) {
+                    int distance = (int)flags >> 24;
+                    if (distance < 0) {
+                        distance = -distance;
+                    }
+                    if (distance < 0x31) {
+                        rainfall_class += 2;
+                    } else if (distance < 0x51 && altitude < 5) {
+                        rainfall_class += 2;
+                    } else {
+                        rainfall_class++;
+                    }
+                }
+                if (coastal == 0x40) {
+                    rainfall_class = 0;
+                }
+                if ((flags & 0x80004000) == 0x4000) {
+                    rainfall_class = 0;
+                } else {
+                    rainfall_class = range(rainfall_class, 0, 2);
+                }
+                if (scratch & 0x01) {
+                    rain_carry = 1;
+                    if (rainfall_class < 2) {
+                        rainfall_class++;
+                    }
+                }
+                if (scratch & 0x04) {
+                    rain_carry = 1;
+                    if (rainfall_class < 2) {
+                        rainfall_class++;
+                    }
+                }
+                if (GameDataStateStorage.fields_.turn_current_num_) {
+                    int old_class = (cursor->climate >> 3) & 3;
+                    if (old_class != rainfall_class && TerraformDrownedBaseId < 0) {
+                        if (old_class > rainfall_class
+                            && (TerraformTileFaction < 0 || !is_human(TerraformTileFaction))) {
+                            int base_id = base_find(x, y);
+                            if (base_id >= 0) {
+                                TerraformTileFaction = Bases[base_id].faction_id_current;
+                            }
+                        }
+                        int base_id = base_find(x, y, saved_faction);
+                        if (base_id >= 0 && BaseFindDist <= 2) {
+                            TerraformDrownedBaseId = base_id;
+                        }
+                    }
+                }
+                cursor->climate = (uint8_t)((cursor->climate & 0xE7) | (rainfall_class << 3));
+            } else {
+                cursor->climate &= 0xE7;
+            }
+        }
+        do_all_non_input();
+    }
+
+    for (y = 0; y < MapLatitudeBounds; y++) {
+        for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
+            if (!climate_at(x, y)) {
+                for (i = 0; i < 8; i++) {
+                    int x_radius = wrap_map_x(x + VehMoveDeltaX[i]);
+                    int y_radius = y + VehMoveDeltaY[i];
+                    if (on_map(x_radius, y_radius) && !is_ocean(x_radius, y_radius)
+                        && climate_at(x_radius, y_radius) == RAINFALL_RAINY) {
+                        climate_set(x, y, 1);
+                        break;
                     }
                 }
             }

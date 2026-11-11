@@ -1004,68 +1004,108 @@ void __cdecl vehdraw_construct_chassis(int faction_id, int chassis, int weapon,
 // RECOVERY_BINDING: v1 {"evidence": ["Original allocates and initializes a26-entry automatic model lookup, not static storage. Offense minus1 and99 have distinct models; bounded other values include a no-model sentinel. Special weapons/chassis return before ordinary faction/rule work.", "Original terraform handling rereads faction flags after the first model addition. Gun, hover-gun and drop offsets are the actual vectors populated by load_voxels, not old executable addresses."], "reason": "Recover weapon model selection and attachments through real model arrays, tint tables and vector offsets."}
 // symbol    ?vehdraw_construct_weapon@@YAXHHHPAVCaviar@@@Z
 void __cdecl vehdraw_construct_weapon(int faction_id, int chassis, int weapon, Caviar *renderer) {
-    const int model_indices[26] = {-1,-1,0,0,1,3,2,2,4,4,5,5,6,7,7,7,8,8,8,8,9,9,9,9,10,13};
+    int model_indices[26] = {-1,-1,0,0,1,3,2,2,4,4,5,5,6,7,7,7,8,8,8,8,9,9,9,9,10,13};
     if (chassis == 8) return;
-    if (weapon == 16) { renderer->add_object(&g_VM13_CAVIARDATA, 0); return; }
-    if (weapon == 23 || weapon == 24 || weapon == 25) {
+    if (weapon == 16) {
+        renderer->add_object(&g_VM13_CAVIARDATA, 0);
+        return;
+    }
+    if (weapon == 23) {
         renderer->add_object(&g_VM_CAVIARDATA, 0);
-        if (weapon == 24) renderer->add_object(&g_TECLOAD_CAVIARDATA, 0);
-        else if (weapon == 25) renderer->add_object(&g_FUNLOAD_CAVIARDATA, 0);
+        return;
+    }
+    if (weapon == 24) {
+        renderer->add_object(&g_VM_CAVIARDATA, 0);
+        renderer->add_object(&g_TECLOAD_CAVIARDATA, 0);
+        return;
+    }
+    if (weapon == 25) {
+        renderer->add_object(&g_VM_CAVIARDATA, 0);
+        renderer->add_object(&g_FUNLOAD_CAVIARDATA, 0);
         return;
     }
     int offense = Weapon[weapon].offense_rating;
     if (faction_id < 0 || faction_id > 7) faction_id = 0;
     unsigned char *body_colors = &BodyTintColorTables[faction_id][0][0];
-    const int mode = Weapon[weapon].mode;
-    if (mode < 3) {
+    if (Weapon[weapon].mode < 3) {
         int model;
         if (offense == -1) model = 11;
         else if (offense == 99) model = 12;
-        else {
-            if (offense < 0) offense = 0;
-            else if (offense > 25) offense = 25;
-            model = model_indices[offense];
-        }
+        else model = model_indices[offense >= 0 ? (offense > 25 ? 25 : offense) : 0];
         if (model != -1) {
             CaviarData *definition = weapon == 12 ? &g_RESLASER_CAVIARDATA : &g_VW_CAVIARDATA[model];
-            if (chassis == 0) {
+            switch (chassis) {
+            case 0:
                 renderer->add_object(definition, &VehGunMountOffset, 0);
+                break;
+            case 2:
+                renderer->add_object(definition, &VehHoverGunOffset, 0);
+                break;
+            default:
+                renderer->add_object(definition, 0);
+                break;
+            }
+            if (chassis == 0) {
                 renderer->add_object(&g_VGMT_CAVIARDATA, 0);
                 renderer->add_object(&g_VGMTP_CAVIARDATA, body_colors, 0);
-            } else if (chassis == 2) renderer->add_object(definition, &VehHoverGunOffset, 0);
-            else renderer->add_object(definition, 0);
+            }
         }
     } else {
-        switch (mode) {
-        case 7: renderer->add_object(&g_VWNTT_CAVIARDATA, 0); break;
+        switch (Weapon[weapon].mode) {
         case 8:
-            if (chassis != 0) renderer->add_object(&g_DROPLET_CAVIARDATA, &VehDropOffset, 0);
-            else if (Players[faction_id].rule_flags & RFLAG_ALIEN)
-                renderer->add_object(&g_ACOLPOD_CAVIARDATA, VehDrawAnimationStep % 15);
-            else {
-                renderer->add_object(&g_DROP_CAVIARDATA, 0);
-                renderer->add_object(&g_DROPLET_CAVIARDATA, 0);
+            if (chassis == 0) {
+                if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+                    renderer->add_object(&g_ACOLPOD_CAVIARDATA, VehDrawAnimationStep % 15);
+                } else {
+                    renderer->add_object(&g_DROP_CAVIARDATA, 0);
+                    renderer->add_object(&g_DROPLET_CAVIARDATA, 0);
+                }
+            } else {
+                renderer->add_object(&g_DROPLET_CAVIARDATA, &VehDropOffset, 0);
             }
             break;
         case 9:
-            if (chassis == 0)
-                renderer->add_object((Players[faction_id].rule_flags & RFLAG_ALIEN)
-                    ? &g_VTA_CAVIARDATA : &g_VT_CAVIARDATA, 0);
+            if (chassis == 0) {
+                if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+                    renderer->add_object(&g_VTA_CAVIARDATA, 0);
+                } else {
+                    renderer->add_object(&g_VT_CAVIARDATA, 0);
+                }
+            }
             // The first add can change faction state; this is a fresh test.
             if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
                 renderer->add_object(&g_AT_CAVIARDATA, 0);
                 renderer->add_object(&g_ATP_CAVIARDATA, 0);
-            } else renderer->add_object(&g_VWNTU_CAVIARDATA, 0);
+            } else {
+                renderer->add_object(&g_VWNTU_CAVIARDATA, 0);
+            }
             break;
-        case 10: renderer->add_object(&g_VWNST_CAVIARDATA, 0); break;
-        case 11: if (chassis != 0) renderer->add_object(&g_PTMOD_CAVIARDATA, 0); break;
-        case 12: renderer->add_object(&g_VWNAA_CAVIARDATA, 0); break;
+        case 7:
+            renderer->add_object(&g_VWNTT_CAVIARDATA, 0);
+            break;
+        case 11:
+            if (chassis != 0) renderer->add_object(&g_PTMOD_CAVIARDATA, 0);
+            break;
+        case 10:
+            renderer->add_object(&g_VWNST_CAVIARDATA, 0);
+            break;
+        case 12:
+            renderer->add_object(&g_VWNAA_CAVIARDATA, 0);
+            break;
         }
     }
     if (weapon == 13) {
-        if (chassis == 0) renderer->add_object(&g_RESBOLT_CAVIARDATA, &VehGunMountOffset, 0);
-        else if (chassis == 2) renderer->add_object(&g_RESBOLT_CAVIARDATA, &VehHoverGunOffset, 0);
-        else renderer->add_object(&g_RESBOLT_CAVIARDATA, 0);
+        switch (chassis) {
+        case 0:
+            renderer->add_object(&g_RESBOLT_CAVIARDATA, &VehGunMountOffset, 0);
+            break;
+        case 2:
+            renderer->add_object(&g_RESBOLT_CAVIARDATA, &VehHoverGunOffset, 0);
+            break;
+        default:
+            renderer->add_object(&g_RESBOLT_CAVIARDATA, 0);
+            break;
+        }
     }
 }
 
@@ -1077,101 +1117,248 @@ void __cdecl vehdraw_construct_weapon(int faction_id, int chassis, int weapon, C
 // symbol    ?vehdraw_construct_armor@@YAXHHHHHPAVCaviar@@@Z
 void __cdecl vehdraw_construct_armor(int faction_id, int chassis, int weapon,
                                     int armor, int transparent, Caviar *renderer) {
-    bool special = false;
-    bool ordinary = false;
+    int special = 0;
+    int ordinary = 0;
     unsigned char *colors = 0;
     switch (armor) {
-    case 1: ordinary = true; break;
-    case 2: case 10: case 11: ordinary = true; colors = &ArmorTintColorTables[0][0][0]; break;
-    case 3: ordinary = true; colors = &ArmorTintColorTables[1][0][0]; break;
-    case 6: case 12: case 13: ordinary = true; colors = &ArmorTintColorTables[2][0][0]; break;
-    case 7: ordinary = true; colors = &ArmorTintColorTables[3][0][0]; break;
-    case 5:
-        if (transparent) { ordinary = true; colors = &ConstantColorTables[0][0]; }
-        else special = true;
-        break;
-    case 4: case 8: case 9:
-        if (chassis == 0 && (Weapon[weapon].mode < 3 || Weapon[weapon].mode == 11)) {
-            CaviarData *model = armor == 4 ? &g_VIPTAWL_CAVIARDATA :
-                (armor == 8 ? &g_VIPTASGN_CAVIARDATA : &g_VIPTAPSI_CAVIARDATA);
-            renderer->add_object(model, &VehInfantryOffset, VehDrawAnimationStep);
-        } else {
-            renderer->add_object(&g_A_CAVIARDATA, 0);
-            renderer->add_object(armor == 4 ? &g_APWALL_CAVIARDATA :
-                (armor == 8 ? &g_ASGEN_CAVIARDATA : &g_APSID_CAVIARDATA), 0);
-        }
-        special = true;
-        break;
-    }
-    CaviarData *first = 0;
-    CaviarData *second = 0;
-    switch (chassis) {
-    case 0:
-        if (special || !ordinary) return;
-        if (weapon != -1 && (Weapon[weapon].mode < 3 || Weapon[weapon].mode == 11)) {
-            first = (Players[faction_id].rule_flags & RFLAG_ALIEN)
-                ? &g_AA_CAVIARDATA : &g_VIPTA_CAVIARDATA[0];
-            if (colors) renderer->add_object(first, colors, &VehInfantryOffset, VehDrawAnimationStep % 15);
-            else renderer->add_object(first, &VehInfantryOffset, VehDrawAnimationStep % 15);
-            return;
-        }
-        first = (Players[faction_id].rule_flags & RFLAG_ALIEN) ? &g_AA01_CAVIARDATA : &g_VA01_CAVIARDATA;
-        break;
     case 1:
-        if (special || !ordinary) return;
-        if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
-            first = &g_AA01_CAVIARDATA; second = &g_AA_ROVER_CAVIARDATA;
-        } else { first = &g_VA01_CAVIARDATA; second = &g_VSPA0_CAVIARDATA[0]; }
-        break;
-    case 2:
-        if (special) { first = &g_VHTA0_CAVIARDATA[0]; second = &g_VHTTPA0_CAVIARDATA[0]; }
-        else if (ordinary) { first = &g_VHTA0_CAVIARDATA[1]; second = &g_VHTTPA0_CAVIARDATA[1]; }
+        ordinary = 1;
+        colors = 0;
         break;
     case 3:
-        if (special || !ordinary) return;
-        first = (Players[faction_id].rule_flags & RFLAG_ALIEN) ? &g_AA01_CAVIARDATA : &g_VA01_CAVIARDATA;
+        ordinary = 1;
+        colors = &ArmorTintColorTables[1][0][0];
         break;
     case 4:
-        if (special) {
-            if (armor != 5) first = &g_VCUA0_CAVIARDATA[0];
-        } else if (ordinary) first = &g_VCUA0_CAVIARDATA[1];
-        break;
-    case 5:
-        if (special) {
-            if (armor != 5) first = (Players[faction_id].rule_flags & RFLAG_ALIEN)
-                ? &g_AA_WING_CAVIARDATA[0] : &g_VJT0_CAVIARDATA[0];
-        } else if (ordinary) {
-            if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
-                first = &g_AA01_CAVIARDATA; second = &g_AA_WING_CAVIARDATA[1];
-            } else { first = &g_VA01_CAVIARDATA; second = &g_VJT0_CAVIARDATA[1]; }
+        special = 1;
+        if (chassis == 0 && (Weapon[weapon].mode < 3 || Weapon[weapon].mode == 11)) {
+            renderer->add_object(&g_VIPTAWL_CAVIARDATA, &VehInfantryOffset, VehDrawAnimationStep);
+        } else {
+            renderer->add_object(&g_A_CAVIARDATA, 0);
+            renderer->add_object(&g_APWALL_CAVIARDATA, 0);
         }
         break;
+    case 5:
+        if (!transparent) {
+            special = 1;
+        } else {
+            ordinary = 1;
+            colors = &ConstantColorTables[0][0];
+        }
+        break;
+    case 7:
+        ordinary = 1;
+        colors = &ArmorTintColorTables[3][0][0];
+        break;
+    case 8:
+        special = 1;
+        if (chassis == 0 && (Weapon[weapon].mode < 3 || Weapon[weapon].mode == 11)) {
+            renderer->add_object(&g_VIPTASGN_CAVIARDATA, &VehInfantryOffset, VehDrawAnimationStep);
+        } else {
+            renderer->add_object(&g_A_CAVIARDATA, 0);
+            renderer->add_object(&g_ASGEN_CAVIARDATA, 0);
+        }
+        break;
+    case 9:
+        special = 1;
+        if (chassis == 0 && (Weapon[weapon].mode < 3 || Weapon[weapon].mode == 11)) {
+            renderer->add_object(&g_VIPTAPSI_CAVIARDATA, &VehInfantryOffset, VehDrawAnimationStep);
+        } else {
+            renderer->add_object(&g_A_CAVIARDATA, 0);
+            renderer->add_object(&g_APSID_CAVIARDATA, 0);
+        }
+        break;
+    case 2:
+    case 10:
+    case 11:
+        ordinary = 1;
+        colors = &ArmorTintColorTables[0][0][0];
+        break;
+    case 6:
+    case 12:
+    case 13:
+        ordinary = 1;
+        colors = &ArmorTintColorTables[2][0][0];
+        break;
+    case 0:
+        ordinary = 0;
+        colors = 0;
+        break;
+    default:
+        ordinary = 0;
+        colors = 0;
+        break;
+    }
+    switch (chassis) {
+    case 0:
+        if (special) return;
+        if (!ordinary) return;
+        if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+            if (weapon != -1 && (Weapon[weapon].mode < 3 || Weapon[weapon].mode == 11)) {
+                if (colors) {
+                    renderer->add_object(&g_AA_CAVIARDATA, colors, &VehInfantryOffset,
+                                         VehDrawAnimationStep % 15);
+                } else {
+                    renderer->add_object(&g_AA_CAVIARDATA, &VehInfantryOffset,
+                                         VehDrawAnimationStep % 15);
+                }
+                return;
+            }
+            if (colors) renderer->add_object(&g_AA01_CAVIARDATA, colors, 0);
+            else renderer->add_object(&g_AA01_CAVIARDATA, 0);
+        } else {
+            if (weapon != -1 && (Weapon[weapon].mode < 3 || Weapon[weapon].mode == 11)) {
+                if (colors) {
+                    renderer->add_object(&g_VIPTA_CAVIARDATA[ordinary - 1], colors,
+                                         &VehInfantryOffset, VehDrawAnimationStep % 15);
+                } else {
+                    renderer->add_object(&g_VIPTA_CAVIARDATA[ordinary - 1],
+                                         &VehInfantryOffset, VehDrawAnimationStep % 15);
+                }
+                return;
+            }
+            if (colors) renderer->add_object(&g_VA01_CAVIARDATA, colors, 0);
+            else renderer->add_object(&g_VA01_CAVIARDATA, 0);
+        }
+        return;
+    case 1:
+        if (special) return;
+        if (!ordinary) return;
+        if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+            if (colors) {
+                renderer->add_object(&g_AA01_CAVIARDATA, colors, 0);
+                renderer->add_object(&g_AA_ROVER_CAVIARDATA, colors, 0);
+            } else {
+                renderer->add_object(&g_AA01_CAVIARDATA, 0);
+                renderer->add_object(&g_AA_ROVER_CAVIARDATA, 0);
+            }
+        } else {
+            if (colors) {
+                renderer->add_object(&g_VA01_CAVIARDATA, colors, 0);
+                renderer->add_object(&g_VSPA0_CAVIARDATA[ordinary - 1], colors, 0);
+            } else {
+                renderer->add_object(&g_VA01_CAVIARDATA, 0);
+                renderer->add_object(&g_VSPA0_CAVIARDATA[ordinary - 1], 0);
+            }
+        }
+        return;
+    case 2:
+        if (special) {
+            renderer->add_object(&g_VHTA0_CAVIARDATA[0], 0);
+            renderer->add_object(&g_VHTTPA0_CAVIARDATA[0], 0);
+            return;
+        }
+        if (!ordinary) return;
+        if (colors) {
+            renderer->add_object(&g_VHTA0_CAVIARDATA[1], colors, 0);
+            renderer->add_object(&g_VHTTPA0_CAVIARDATA[1], colors, 0);
+        } else {
+            renderer->add_object(&g_VHTA0_CAVIARDATA[1], 0);
+            renderer->add_object(&g_VHTTPA0_CAVIARDATA[1], 0);
+        }
+        return;
+    case 3:
+        if (special) return;
+        if (!ordinary) return;
+        if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+            if (colors) renderer->add_object(&g_AA01_CAVIARDATA, colors, 0);
+            else renderer->add_object(&g_AA01_CAVIARDATA, 0);
+        } else {
+            if (colors) renderer->add_object(&g_VA01_CAVIARDATA, colors, 0);
+            else renderer->add_object(&g_VA01_CAVIARDATA, 0);
+        }
+        return;
+    case 5:
+        if (special) {
+            if (armor == 5) return;
+            if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+                renderer->add_object(&g_AA_WING_CAVIARDATA[0], 0);
+            } else {
+                renderer->add_object(&g_VJT0_CAVIARDATA[0], 0);
+            }
+            return;
+        }
+        if (!ordinary) return;
+        if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+            if (colors) {
+                renderer->add_object(&g_AA01_CAVIARDATA, colors, 0);
+                renderer->add_object(&g_AA_WING_CAVIARDATA[1], colors, 0);
+            } else {
+                renderer->add_object(&g_AA01_CAVIARDATA, 0);
+                renderer->add_object(&g_AA_WING_CAVIARDATA[1], 0);
+            }
+        } else {
+            if (colors) {
+                renderer->add_object(&g_VA01_CAVIARDATA, colors, 0);
+                renderer->add_object(&g_VJT0_CAVIARDATA[1], colors, 0);
+            } else {
+                renderer->add_object(&g_VA01_CAVIARDATA, 0);
+                renderer->add_object(&g_VJT0_CAVIARDATA[1], 0);
+            }
+        }
+        return;
+    case 4:
+        if (special) {
+            if (armor == 5) return;
+            renderer->add_object(&g_VCUA0_CAVIARDATA[0], 0);
+            return;
+        }
+        if (!ordinary) return;
+        if (colors) renderer->add_object(&g_VCUA0_CAVIARDATA[1], colors, 0);
+        else renderer->add_object(&g_VCUA0_CAVIARDATA[1], 0);
+        return;
     case 6:
         if (special) {
             if (armor == 5) return;
-            first = &g_VCT0_CAVIARDATA[0];
-        } else {
-            if (!ordinary) return;
-            first = &g_VCT0_CAVIARDATA[1];
+            if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+                renderer->add_object(&g_VCT0_CAVIARDATA[0], 0);
+                renderer->add_object(&g_AA01_CAVIARDATA, 0);
+            } else {
+                renderer->add_object(&g_VCT0_CAVIARDATA[0], 0);
+                renderer->add_object(&g_VA01_CAVIARDATA, 0);
+            }
+            return;
         }
-        second = (Players[faction_id].rule_flags & RFLAG_ALIEN) ? &g_AA01_CAVIARDATA : &g_VA01_CAVIARDATA;
-        break;
+        if (!ordinary) return;
+        if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+            if (colors) {
+                renderer->add_object(&g_VCT0_CAVIARDATA[1], colors, 0);
+                renderer->add_object(&g_AA01_CAVIARDATA, colors, 0);
+            } else {
+                renderer->add_object(&g_VCT0_CAVIARDATA[1], 0);
+                renderer->add_object(&g_AA01_CAVIARDATA, 0);
+            }
+        } else {
+            if (colors) {
+                renderer->add_object(&g_VCT0_CAVIARDATA[1], colors, 0);
+                renderer->add_object(&g_VA01_CAVIARDATA, colors, 0);
+            } else {
+                renderer->add_object(&g_VCT0_CAVIARDATA[1], 0);
+                renderer->add_object(&g_VA01_CAVIARDATA, 0);
+            }
+        }
+        return;
     case 7:
         if (!ordinary) return;
-        first = (Players[faction_id].rule_flags & RFLAG_ALIEN) ? &g_AA01_CAVIARDATA : &g_VA01_CAVIARDATA;
-        break;
+        if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+            if (colors) renderer->add_object(&g_AA01_CAVIARDATA, colors, 0);
+            else renderer->add_object(&g_AA01_CAVIARDATA, 0);
+        } else {
+            if (colors) renderer->add_object(&g_VA01_CAVIARDATA, colors, 0);
+            else renderer->add_object(&g_VA01_CAVIARDATA, 0);
+        }
+        return;
     case -1:
-        if (!ordinary || special) return;
-        first = (Players[faction_id].rule_flags & RFLAG_ALIEN) ? &g_AA01_CAVIARDATA : &g_VA01_CAVIARDATA;
-        break;
-    }
-    if (first) {
-        if (colors) renderer->add_object(first, colors, 0);
-        else renderer->add_object(first, 0);
-    }
-    if (second) {
-        if (colors) renderer->add_object(second, colors, 0);
-        else renderer->add_object(second, 0);
+        if (!ordinary) return;
+        if (special) return;
+        if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+            if (colors) renderer->add_object(&g_AA01_CAVIARDATA, colors, 0);
+            else renderer->add_object(&g_AA01_CAVIARDATA, 0);
+        } else {
+            if (colors) renderer->add_object(&g_VA01_CAVIARDATA, colors, 0);
+            else renderer->add_object(&g_VA01_CAVIARDATA, 0);
+        }
+        return;
     }
 }
 
