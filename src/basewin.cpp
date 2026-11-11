@@ -1498,10 +1498,11 @@ static inline void psych_sprite(Buffer *destination, Sprite *sprite, int x, int 
     sprite->draw(destination, sprite->transparent_index(), x, y);
 }
 
-// Indexed form: the drone row passes the table and index separately, which
-// keeps the image's register choice (0x00408A27..0x00408A87).
-static inline void psych_sprite_at(Buffer *destination, Sprite *table, int index, int x, int y) {
-    psych_sprite(destination, &table[index], x, y);
+// Indexed form: the drone row passes the table, the random variant row and
+// the mood column separately; the helper forms row * 4 + type, which keeps the
+// image's register choice (0x00408A27..0x00408A87).
+static inline void psych_sprite_at(Buffer *destination, Sprite *table, int row, int type, int x, int y) {
+    psych_sprite(destination, &table[row * 4 + type], x, y);
 }
 
 static inline int psych_specialist_type(int i) {
@@ -1563,8 +1564,8 @@ void BaseWin::psych_row(int x, int y, int width, int sprite_width,
             x += spacing;
         }
         for (i = 0; i < drones; i++) {
-            psych_sprite_at(this, g_CITIZEN_SM_CURSOR_SPRITES, random.get(0, 2) * 4
-                + (i >= drones - super_drones ? 3 : 2), x, y);
+            psych_sprite_at(this, g_CITIZEN_SM_CURSOR_SPRITES, random.get(0, 2),
+                            i >= drones - super_drones ? 3 : 2, x, y);
             x += spacing;
         }
         for (i = 0; i < BaseCurrent->specialist_total; i++) {
@@ -2454,12 +2455,13 @@ void BaseWin::draw_queue(int update_mode) {
             row_font.init(DefaultFontFace, 10, 0);
             row_font.unk_1_ = 4;
             compact_font.init(DefaultFontFace, 8, 0);
+            compact_font.unk_1_ = 4;
         } else {
             row_font.init(DefaultFontFace, 12, 0);
             row_font.unk_1_ = 4;
             compact_font.init(DefaultFontFace, 10, 0);
+            compact_font.unk_1_ = 4;
         }
-        compact_font.unk_1_ = 4;
         spot1_.kill_type(8);
 
         // One RECT local serves the title and then the content panel (EBP-1C).
@@ -2493,12 +2495,13 @@ void BaseWin::draw_queue(int update_mode) {
             content.bottom -= 2;
         }
 
-        int row_top = content.top;
+        const int row_left = content.left;
         row = content;
         MainInterfaceGlobal.set_font(&row_font, nullptr, nullptr, nullptr);
-        for (int queue_index = 1; queue_index <= 8; ++queue_index) {
+        int row_top = content.top;
+        for (int queue_index = 1; queue_index < 9; ++queue_index) {
             MainInterfaceGlobal.set_font(&row_font, nullptr, nullptr, nullptr);
-            set_rectangle_dimensions(&row, content.left, row_top, content.right - content.left,
+            set_rectangle_dimensions(&row, row_left, row_top, content.right - content.left,
                                      font_line_advance(row_font));
             spot1_.add(queue_index + 2, 8, row.left, row.top,
                        row.right - row.left, row.bottom - row.top);
@@ -2522,7 +2525,7 @@ void BaseWin::draw_queue(int update_mode) {
             item_name[0] = 0;
             if (queue_index > static_cast<int>(BaseCurrent->queue_size)) {
                 MainInterfaceGlobal.set_text_color(TextColourTable[138], TextColourTable[139], 1, 1);
-                strcat(item_name, StringTable.get(Labels.strings_ptr[460]));
+                strcat(item_name, label_get(460));
             } else {
                 MainInterfaceGlobal.set_text_color(TextColourTable[136], TextColourTable[137], 1, 1);
                 const int production = BaseCurrent->queue_production_id[queue_index];
@@ -2532,7 +2535,8 @@ void BaseWin::draw_queue(int update_mode) {
                     // Facility.name is already an LPSTR; resolve it through the
                     // shared Strings API as the other facility-name callers do.
                     const int facility = -production;
-                    strcat(item_name, StringTable.get(Facility[facility].name));
+                    char *name = Facility[facility].name;
+                    strcat(item_name, StringTable.get(name));
                 }
             }
             if (selected_queue_slot_ == queue_index
@@ -2545,16 +2549,18 @@ void BaseWin::draw_queue(int update_mode) {
             }
             strcat(StringTemp, display_name);
 
-            if (row_font.width(StringTemp) <= text_rect.right - text_rect.left) {
+            const int text_width = text_rect.right - text_rect.left;
+            if (row_font.width(StringTemp) <= text_width) {
                 MainInterfaceGlobal.set_clip(&text_rect);
                 MainInterfaceGlobal.write_l(StringTemp, &text_rect);
                 MainInterfaceGlobal.restore_clip();
             } else {
                 MainInterfaceGlobal.set_font(&compact_font, nullptr, nullptr, nullptr);
                 int truncated;
-                if (compact_font.width(StringTemp) > text_rect.right - text_rect.left) {
-                    text_rect.right -= compact_font.width("+");
+                const int compact_width = text_rect.right - text_rect.left;
+                if (compact_font.width(StringTemp) > compact_width) {
                     truncated = 1;
+                    text_rect.right -= compact_font.width("+");
                 } else {
                     truncated = 0;
                 }
@@ -6484,6 +6490,13 @@ void BaseWin::draw_farm(int update_mode) {
     Buffer::set_clip(&saved_clip);
 }
 // Superseded seed deleted; seed paths below are historical Git provenance.
+// Large-sprite twin of psych_sprite_at: the image converts the destination
+// and computes y before the random variant row (0x00414EE9..0x00414F3E).
+static inline void pop_sprite_at(Buffer *destination, Sprite *table, int row, int type, int x, int y) {
+    Sprite *sprite = &table[row * 4 + type];
+    sprite->draw(destination, sprite->transparent_index(), x, y, 1, 1);
+}
+
 // ORIGINAL: 0x00414B40 ?draw_pop@BaseWin@@QAEXH@Z 0x00414B40-0x00415078;0x00651B76-0x00651B93
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00414b40.cpp", "image:0x00414C58-0x00414CA3 population spacing uses panel width minus height", "image:0x00414CB4-0x00414CDD expansion and alien rule select alien sprites", "src/sprite.cpp", "src/base.h", "src/faction.h", "src/basewin.h"], "reason": "Draw the current base's citizen and specialist row through owned BaseWin panel and Spot members, typed Base mood/specialist fields, and the four real large-sprite arrays. The retained seed reverses the alien branch and mistranscribes the spacing; the pinned instructions resolve both."}
 void BaseWin::draw_pop(int update_mode) {
@@ -6563,9 +6576,8 @@ void BaseWin::draw_pop(int update_mode) {
                         - BaseCurrent->specialist_total) mood = 2;
                 if (i >= BaseCurrent->population_size - BaseCurrent->super_drone_total
                         - BaseCurrent->specialist_total) mood = 3;
-                Sprite &sprite = g_CITIZEN_LG_CURSOR_SPRITES[random.get(0, 2) * 4 + mood];
-                sprite.draw(&MainInterfaceGlobal, sprite.transparent_index(),
-                    left, top + (bottom - top - 48) / 2, 1, 1);
+                pop_sprite_at(&MainInterfaceGlobal, g_CITIZEN_LG_CURSOR_SPRITES, random.get(0, 2), mood,
+                    left, top + (bottom - top - 48) / 2);
                 spot1_.add(-1, 1, left, top, right - left, bottom - top);
             } else {
                 const int specialist = i - (BaseCurrent->population_size - BaseCurrent->specialist_total);
@@ -6861,31 +6873,40 @@ void BaseWin::draw_nutrients(int update_mode) {
 // ORIGINAL: 0x0041B790 ?base_editor_fac@BaseWin@@QAEXXZ 0x0041B790-0x0041BBBC;0x0065249C-0x0065255E
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/recovered/units/0041b790.cpp", "source:src/basewin.h", "image:0x41b790"], "reason": "Recover the full base-editor callee in its actual BaseWin owner with one genuine Popup lifetime and original cancellation, menu IDs, typed data mutations and virtual redraw; preserve original seed evidence and outstanding structural/matching obligations."}
 void BaseWin::base_editor_fac() {
-    Popup popup;
     int previous = -1;
+    Popup popup;
     for (;;) {
         // Original41B7DD publishes the modal kind before parsing the name.
         PopupModalState = 6;
         parse_says(0, BaseCurrent->name_string, -1, -1);
         popup.start(PopupStartCaption, "EDITORFAC", -1, 0, 0x42, 0);
-        popup.set_cancel_text(label_get(0x438 / 4));
-        popup.set_ok_text(label_get(0xFC0 / 4));
-        for (int facility = 1; facility <= 64; ++facility) {
+        popup.set_cancel_text(StringTable.get(Labels.strings_ptr[0x438 / 4]));
+        popup.set_ok_text(StringTable.get(Labels.strings_ptr[0xFC0 / 4]));
+        for (int facility = 1; facility < 65; ++facility) {
             StringTemp[0] = 0;
             strcat(StringTemp, StringTable.get(Facility[facility].name));
             strcat(StringTemp, "|");
-            if (has_fac(facility, BaseIDCurrentSelected, 0)) {
+            // The image calls the out-of-line has_fac here (0x0041B88F) and
+            // inlines the one after the menu.
+            // WORKAROUND(noinline): a local function pointer keeps this one
+            // site out of line; VC6 /Ob2 otherwise expands the header inline.
+            BOOL (__cdecl *const has_fac_call)(int, int, int) = has_fac;
+            if (has_fac_call(facility, BaseIDCurrentSelected, 0)) {
                 // Unlike the old seed, retain the facility-name prefix on
                 // the already-built branch (original41B859..41B8A6).
-                strcat(StringTemp, label_get(0xD50 / 4));
-            } else {
-                const int available = facility_avail(facility,
-                    BaseCurrent->faction_id_current, BaseIDCurrentSelected, 0);
+                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xD50 / 4]));
+            } else if (facility_avail(facility, BaseCurrent->faction_id_current,
+                                      BaseIDCurrentSelected, 0)) {
                 // This clear and rebuild are in both original branches.
                 StringTemp[0] = 0;
                 strcat(StringTemp, StringTable.get(Facility[facility].name));
                 strcat(StringTemp, "|");
-                strcat(StringTemp, label_get((available ? 0x3DC : 0x4D8) / 4));
+                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x3DC / 4]));
+            } else {
+                StringTemp[0] = 0;
+                strcat(StringTemp, StringTable.get(Facility[facility].name));
+                strcat(StringTemp, "|");
+                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x4D8 / 4]));
             }
             popup.dialogs().item(StringTemp, facility);
         }
@@ -6893,16 +6914,18 @@ void BaseWin::base_editor_fac() {
         const int selected = popup.exec(0, 0);
         PopupModalState = 0;
         if (selected < 0) return;
-        bool built = false;
-        if (selected < 65) {
-            int offset, mask;
-            bitmask(selected, &offset, &mask);
-            built = (Bases[BaseIDCurrentSelected].facilities_built[offset]
-                     & static_cast<unsigned char>(mask)) != 0;
-        }
         // Query uses the live selected base; mutation uses this window's
         // focused ID, as the original41B99B/41B9DE separately loads them.
-        set_fac(selected, focusedBaseID_, built ? 0 : 1);
+        const int base_id = BaseIDCurrentSelected;
+        int built = 0;
+        if (selected < 65) {
+            built = has_fac_built(selected, base_id);
+        }
+        if (built) {
+            set_fac(selected, focusedBaseID_, 0);
+        } else {
+            set_fac(selected, focusedBaseID_, 1);
+        }
         previous = selected;
         redraw(); // primary virtual slot62, not the on_redraw callback
     }
@@ -6917,23 +6940,27 @@ void BaseWin::base_editor_proj() {
     // Original41BC22..41BD0E walks Facility[70..133] at48-byte stride and
     // the64 SecretProject words at4-byte stride, independently of expansion.
     for (int project_index = 0; project_index < MaxSecretProjectNum; ++project_index) {
-        const int project = project_index;
-        const RulesFacility &facility = Facility[FacilitySPStart + project];
         StringTemp[0] = 0;
-        strcat(StringTemp, StringTable.get(facility.name));
+        strcat(StringTemp, StringTable.get(Facility[FacilitySPStart + project_index].name));
         strcat(StringTemp, "|");
-        const int owner_base = base_project(project);
+        const int owner_base = base_project(project_index);
         if (owner_base == -2) {
-            strcat(StringTemp, label_get(0xD54 / 4));
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xD54 / 4]));
         } else if (owner_base == -1) {
-            strcat(StringTemp, label_get(has_tech(facility.preq_tech,
-                           BaseCurrent->faction_id_current) ? 0x3DC / 4 : 0x4D8 / 4));
+            if (has_tech(Facility[FacilitySPStart + project_index].preq_tech,
+                         BaseCurrent->faction_id_current)) {
+                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x3DC / 4]));
+            } else {
+                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x4D8 / 4]));
+            }
         } else {
             // Original41BCCD..41BCDD computes Base's0x134 stride, not
             // the seed's incorrect Player0x59C stride. No new index guard.
             strcat(StringTemp, Bases[owner_base].name_string);
         }
-        popup.dialogs().item(StringTemp, 0);
+        // The item id is the project index (original 0x0041BCF5 pushes the
+        // loop counter), which the selection below indexes by.
+        popup.dialogs().item(StringTemp, project_index);
     }
     const int project = popup.exec(0, 0);
     PopupModalState = 0;
@@ -6941,22 +6968,30 @@ void BaseWin::base_editor_proj() {
     parse_say(0, Facility[FacilitySPStart + project].name, -1, -1);
     PopupModalState = 6;
     popup.start(PopupStartCaption, "PICKAPLACE", -1, 0, 0x42, 0);
-    popup.dialogs().item(label_get(0xD64 / 4), 9999);
-    popup.dialogs().item(label_get(0xD68 / 4), 9998);
+    {
+        char *text = StringTable.get(Labels.strings_ptr[0xD64 / 4]);
+        popup.dialogs().item(text, 9999);
+    }
+    {
+        char *text = StringTable.get(Labels.strings_ptr[0xD68 / 4]);
+        popup.dialogs().item(text, 9998);
+    }
     // Current-faction bases precede other bases, preserving original index IDs.
     // Re-read BaseCurrent and the live base count after each item call, as
-    // original41BEBA..41BEC2 does; neither is captured as immutable UI state.
+    // original41BEBA..41EC2 does; neither is captured as immutable UI state.
     for (int pass = 0; pass < 2; ++pass) {
         for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
-            const int owner = Bases[base].faction_id_current;
-            const bool same_owner = owner == BaseCurrent->faction_id_current;
-            if ((pass == 0 && !same_owner) || (pass != 0 && same_owner)) continue;
+            if (pass == 0) {
+                if (Bases[base].faction_id_current != BaseCurrent->faction_id_current) continue;
+            } else if (Bases[base].faction_id_current == BaseCurrent->faction_id_current) {
+                continue;
+            }
             StringTemp[0] = 0;
             strcat(StringTemp, Bases[base].name_string);
             strcat(StringTemp, "|");
-            PluralityDefault = Players[owner].is_noun_plural;
-            GenderDefault = Players[owner].noun_gender;
-            strcat(StringTemp, Players[owner].noun_faction);
+            const int faction = Bases[base].faction_id_current;
+            parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
+            strcat(StringTemp, Players[faction].noun_faction);
             popup.dialogs().item(StringTemp, base);
         }
     }
@@ -7085,10 +7120,6 @@ int base_native_clamp(int value, int lower, int upper) {
     // Both limits and their order are explicit in the original branches.
     if (value < lower || upper < lower) return lower;
     return value > upper ? upper : value;
-}
-bool base_convoy_tile(const Veh &vehicle) {
-    const Map &tile = map_tiles()[vehicle.y * MapLongitude + (vehicle.x >> 1)];
-    return (tile.bit & 1u) != 0 && (tile.val2 & 15) < 8;
 }
 void base_panel_sprite(Sprite &sprite, Buffer *canvas, int x, int y) {
     sprite.draw(canvas, sprite.transparent_index(), x, y);
@@ -7340,19 +7371,23 @@ void BaseWin::draw_supported(int update_mode) {
             SpriteScaleDenominator = 16;
         }
         const int icon_y = y - icon_offset + vehicle_height;
-        int support = 0, total = 0, convoy_yield; // native yield only read in convoy arm
+        int support, total = 0, convoy_yield; // native yield only read in convoy arm
         if (Vehs[vehicle_id].state & 0x10u) {
             const int pending_support = PlayersData[faction].soc_effect_pending.values_[SocialEffect::SUPPORT];
             support = has_abil(Vehs[vehicle_id].proto_id, 0x10000)
                 ? 0 : 1 + (pending_support <= -4);
             total = support;
+        } else {
+            support = 0;
         }
         if (Vehs[vehicle_id].state & 0x600000u) {
             const int facility = has_fac_built(35, BaseIDCurrentSelected);
             total += 1 + (PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE] + 2 * facility <= -5);
         }
         if (VehPrototypes[Vehs[vehicle_id].proto_id].plan == 10 && Vehs[vehicle_id].order == 3) {
-            if (base_convoy_tile(Vehs[vehicle_id])) { convoy_yield = 1; ++total; }
+            // A supply convoy on a base square: the image inlines base_who and
+            // keeps its signed owner < 8 and >= 0 tests (0x0040CEDA..0x0040CEEE).
+            if (base_who(Vehs[vehicle_id].x, Vehs[vehicle_id].y) >= 0) { convoy_yield = 1; ++total; }
             else {
                 convoy_yield = resource_yield(Vehs[vehicle_id].order_auto_type, faction,
                     BaseIDCurrentSelected, Vehs[vehicle_id].x, Vehs[vehicle_id].y);
@@ -7367,21 +7402,26 @@ void BaseWin::draw_supported(int update_mode) {
             } else if (Vehs[vehicle_id].state & 0x200000u) {
                 // The original recomputes this live helper and police value
                 // on every iteration, including the terminating test.
-                for (int i = 0; i < 1 + (PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE]
-                         + 2 * has_fac_built(35, BaseIDCurrentSelected) <= -5); ++i) {
+                int i = 0;
+                while (1) {
+                    if (i >= 1 + (PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE]
+                         + 2 * has_fac_built(35, BaseIDCurrentSelected) <= -5)) break;
                     base_panel_sprite(g_PEACE_SIGN_SPRITES[1], &MainInterfaceGlobal, icon_x, icon_y);
                     icon_x += icon_pitch;
+                    ++i;
                 }
             }
-            icon_pitch = total > 1
-                ? base_native_clamp((vehicle_width - icon_width) / (total - 1), 1, icon_width)
-                : icon_width;
+            if (total <= 1) {
+                icon_pitch = icon_width;
+            } else {
+                icon_pitch = base_native_clamp((vehicle_width - icon_width) / (total - 1), 1, icon_width);
+            }
             for (int i = support; i > 0; --i) {
                 base_panel_sprite(g_ICONS_GENERAL_SPRITES[5], &MainInterfaceGlobal, icon_x, icon_y);
                 icon_x += icon_pitch;
             }
             if (VehPrototypes[Vehs[vehicle_id].proto_id].plan == 10 && Vehs[vehicle_id].order == 3) {
-                if (base_convoy_tile(Vehs[vehicle_id])) {
+                if (base_who(Vehs[vehicle_id].x, Vehs[vehicle_id].y) >= 0) {
                     base_panel_sprite(g_ICONS_GENERAL_SPRITES[1 + 4 * Vehs[vehicle_id].order_auto_type],
                                       &MainInterfaceGlobal, icon_x, icon_y);
                 } else for (int i = convoy_yield; i > 0; --i) {
