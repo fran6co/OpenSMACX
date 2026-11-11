@@ -77,7 +77,7 @@
 void __cdecl scroll_show(GraphicWin *window, Scroll *scroll);
 void __cdecl scroll_hide(GraphicWin *window, Scroll *scroll);
 
-// ORIGINAL: 0x00433F70 ?exec@SelectPartWin@@QAEHHHHHHHHHHHPAE@Z 0x00433F70-0x0043446F;0x00653F5A-0x00653F6F FILE
+// ORIGINAL: 0x00433F70 ?exec@SelectPartWin@@QAEHHHHHHHHHHHPAE@Z 0x00433F70-0x0043446F;0x00653F5A-0x00653F6F FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:c4c11a8a:src/unrecovered/00433f70.cpp", "SelectPartWin member layout in src/selectpartwin.h", "Caviar renderer API in src/caviar.h", "RulesChassis/RulesWeapon/RulesArmor/RulesReactor in src/veh.h"], "reason": "Implement the shared part-picker modal with typed window, buffer, renderer, scroll and rules-table members while retaining the unresolved image-owned renderer/modal seams."}
 int SelectPartWin::exec(int x, int y, int faction, int kind, int selected,
                         int chassis, int weapon, int armor, int abilities,
