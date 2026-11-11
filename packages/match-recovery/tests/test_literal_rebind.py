@@ -170,6 +170,47 @@ def test_overlong_or_padded_label_extent_is_not_a_candidate(project):
     assert rows(report) == [("$SG100", "$SG100", "unproven")]
 
 
+def test_stale_pooled_names_are_rebound_by_content_and_layout(project):
+    # The TU stopped pooling: the fresh object defines no ??_C@ symbol at all.
+    # A pooled name binds one address, here the second of two identical copies.
+    path = source(project, literal(ABC2, ABC2 + 4, "??_C@_03abc"), literal(HELLO, HELLO + 6, "??_C@_05hello"))
+    before = path.read_bytes()
+    labels = ((10, b"abc\0"), (11, b"abc\0"), (12, b"hello\0"))
+    report = run(project, *labels)
+    assert rows(report) == [("??_C@_03abc", "$SG11", "rebind"), ("??_C@_05hello", "$SG12", "rebind")]
+    assert [row["basis"] for row in report["units"][0]["bindings"]] == ["unpooled_layout", "unpooled_content"]
+    assert path.read_bytes() == before
+
+    report = run(project, *labels, write=True)
+    assert report["persisted"] and report["result"] == "pass"
+    assert path.read_bytes() == before.replace(b"??_C@_03abc", b"$SG11").replace(b"??_C@_05hello", b"$SG12")
+    assert rows(run(project, *labels)) == [("$SG11", "$SG11", "valid"), ("$SG12", "$SG12", "valid")]
+
+
+def test_stale_pooled_duplicates_use_an_existing_static_binding_as_anchor(project):
+    source(project, literal(ABC2, ABC2 + 4, "??_C@_03abc"), literal(HELLO, HELLO + 6, "$SG12"))
+    report = run(project, (10, b"abc\0"), (11, b"abc\0"), (12, b"hello\0"))
+    assert rows(report) == [("??_C@_03abc", "$SG11", "rebind"), ("$SG12", "$SG12", "valid")]
+
+
+def test_stale_pooled_duplicates_without_a_layout_anchor_stay_unproven(project):
+    path = source(project, literal(ABC1, ABC1 + 4, "??_C@_03abc"), literal(MISS, MISS + 5, "??_C@_04miss"))
+    before = path.read_bytes()
+    report = run(project, (10, b"abc\0"), (11, b"abc\0"), (12, b"x\0"), write=True)
+    first, second = report["units"][0]["bindings"]
+    assert first["status"] == "unproven" and "not separated by the layout" in first["reason"]
+    assert first["candidates"] == ["$SG10", "$SG11"]
+    assert second["status"] == "unproven" and "no fresh $SG label" in second["reason"]
+    assert report["result"] == "unknown" and not report["persisted"] and path.read_bytes() == before
+
+
+def test_stale_pooled_layout_refuses_a_displaced_duplicate(project):
+    # An extra label between the copies breaks the displacement both anchors give.
+    source(project, literal(ABC1, ABC1 + 4, "??_C@_03abc"), literal(HELLO, HELLO + 6, "??_C@_05hello"))
+    report = run(project, (10, b"abc\0"), (11, b"pad\0"), (12, b"abc\0"), (13, b"wide\0\0\0\0"), (14, b"hello\0"))
+    assert rows(report)[0][2] == "unproven" and rows(report)[1] == ("??_C@_05hello", "$SG14", "rebind")
+
+
 def test_unit_selection_skips_other_tus_and_refuses_unknown_units(project):
     source(project, literal(ABC1, ABC1 + 4, "$SG100"))
     source(project, literal(HELLO, HELLO + 6, "$SG7"), name="g.cc")

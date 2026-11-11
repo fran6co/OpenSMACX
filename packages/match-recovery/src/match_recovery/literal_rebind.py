@@ -17,6 +17,14 @@ Identical unpooled duplicates are disambiguated only by the TU's existing
 bindings: a uniform label shift that every proven binding admits, otherwise a
 unique assignment that keeps their relative label order. Anything still
 ambiguous, or disagreeing across configured trials, is reported, not guessed.
+
+A pooled ``??_C@`` name is stable while its TU pools strings. When the TU's
+recipe stops pooling, the fresh object no longer defines that name: the literal
+is then a static label too. Such a stale pooled binding is re-identified by
+content, and identical duplicates by layout only: a TU's unpooled literals keep
+their relative offsets from object to image, so a candidate is accepted when
+its (original address - object offset) equals that of the nearest binding that
+is already resolved. A pooled name the fresh object still defines is skipped.
 """
 
 import hashlib
@@ -40,6 +48,7 @@ from .source_replica import artifact_parent
 
 
 STATIC_STRING = re.compile(r"\$SG([0-9]+)", re.ASCII)
+POOLED_PREFIX = "??_C@"
 
 
 def _number(symbol: str) -> int:
@@ -156,6 +165,72 @@ def plan_unit(bindings, obj, image) -> tuple[list[dict], int | None]:
     return rows, None
 
 
+def _stale_pooled(bindings, obj) -> list:
+    """Pooled-name bindings whose COMDAT the fresh object no longer defines."""
+    defined = {symbol.name for symbol in obj.symbols.values() if symbol.section > 0}
+    return [item for item in bindings
+            if item.symbol.startswith(POOLED_PREFIX) and item.symbol not in defined]
+
+
+def plan_pooled(bindings, static_rows, static_bindings, obj, image) -> list[dict]:
+    """Rows for stale pooled bindings; ``static_rows`` supply layout anchors.
+
+    A unique content match is proven by content. Identical duplicates are
+    resolved only when exactly one candidate shares the displacement
+    (original start - object offset, same section) of the nearest resolved
+    binding by original address; anything else stays unproven.
+    """
+    labels = _labels(obj)
+
+    def place(number):
+        symbol = labels[f"$SG{number}"]
+        return symbol.section, symbol.value
+
+    resolved = []  # (original start, section, displacement)
+    by_line = {item.line: item for item in static_bindings}
+    for row in static_rows:
+        if row["status"] in ("valid", "rebind") and row["symbol"] in labels:
+            section, value = place(_number(row["symbol"]))
+            resolved.append((by_line[row["line"]].span.start, section, by_line[row["line"]].span.start - value))
+    rows, pending = [], []
+    for binding in sorted(bindings, key=lambda item: item.span.start):
+        candidates, reason = _candidates(binding, obj, labels, image)
+        row = {"line": binding.line, "start": f"0x{binding.span.start:08X}",
+               "end": f"0x{binding.span.end:08X}", "previous": binding.symbol,
+               "symbol": binding.symbol, "candidates": [f"$SG{value}" for value in candidates]}
+        rows.append(row)
+        if reason is not None:
+            row.update(status="unproven", reason=reason)
+        elif len(candidates) == 1:
+            section, value = place(candidates[0])
+            row.update(status="rebind", symbol=f"$SG{candidates[0]}", basis="unpooled_content")
+            resolved.append((binding.span.start, section, binding.span.start - value))
+        else:
+            pending.append((binding, candidates, row))
+    progress = True
+    while pending and progress:
+        progress = False
+        for entry in list(pending):
+            binding, candidates, row = entry
+            start = binding.span.start
+            below = max((item for item in resolved if item[0] < start), default=None)
+            above = min((item for item in resolved if item[0] > start), default=None)
+            anchors = {item[1:] for item in (below, above) if item is not None}
+            fits = [value for value in candidates
+                    if (place(value)[0], start - place(value)[1]) in anchors]
+            if len(fits) == 1:
+                section, value = place(fits[0])
+                row.update(status="rebind", symbol=f"$SG{fits[0]}", basis="unpooled_layout")
+                resolved.append((start, section, start - value))
+                pending.remove(entry)
+                progress = True
+    for _, _, row in pending:
+        row.update(status="unproven",
+                   reason="identical duplicate labels are not separated by the layout of a resolved neighbour: "
+                   + ", ".join(row["candidates"]))
+    return rows
+
+
 def _verify(unit_bindings, rows, obj, image) -> None:
     """Recheck the proposed unit population exactly as measurement would."""
     changed = {row["line"]: row["symbol"] for row in rows if row["status"] == "rebind"}
@@ -193,7 +268,8 @@ def rebind_literals(root: Path, image_path: Path, *, units=None, since=None, wri
     for item in literals:
         by_unit.setdefault(item.unit, []).append(item)
     owners = {unit for unit, items in by_unit.items()
-              if any(STATIC_STRING.fullmatch(item.symbol) for item in items)}
+              if any(STATIC_STRING.fullmatch(item.symbol)
+                     or (item.symbol.startswith(POOLED_PREFIX) and not item.merged) for item in items)}
 
     project = read_json(root / "recovery/project.json")
     mappings = project.get("mappings")
@@ -217,7 +293,7 @@ def rebind_literals(root: Path, image_path: Path, *, units=None, since=None, wri
         selected = requested
     selected = sorted(owners if selected is None else owners & selected)
     if requested:
-        scope["without_static_literals"] = sorted(requested - owners)
+        scope["without_static_literals"] = sorted(requested - owners)  # no $SG or pooled binding
 
     metadata = {"operation": "rebind-literals", "units": selected}
     before = settings.snapshot(root, metadata)
@@ -233,6 +309,9 @@ def rebind_literals(root: Path, image_path: Path, *, units=None, since=None, wri
     reports = []
     for unit in selected:
         static = [item for item in by_unit[unit] if STATIC_STRING.fullmatch(item.symbol)]
+        # A v2 merged declaration states linker merging; it is not a TU-private label.
+        pooled = [item for item in by_unit[unit]
+                  if item.symbol.startswith(POOLED_PREFIX) and not item.merged]
         trials, plans, error = [], [], None
         for flags in settings.flags_for(unit):
             try:
@@ -244,7 +323,9 @@ def rebind_literals(root: Path, image_path: Path, *, units=None, since=None, wri
                 error = str(failure)
                 trials.append({"flags": list(flags), "result": Result.UNKNOWN, "reason": error})
                 break
-            rows, shift = plan_unit(static, obj, image)
+            rows, shift = plan_unit(static, obj, image) if static else ([], None)
+            rows = rows + plan_pooled(_stale_pooled(pooled, obj), rows, static, obj, image)
+            rows.sort(key=lambda row: row["line"])
             _verify(by_unit[unit], rows, obj, image)
             plans.append((rows, shift))
             trials.append({"flags": list(flags), "result": Result.PASS, "shift": shift})
@@ -253,13 +334,15 @@ def rebind_literals(root: Path, image_path: Path, *, units=None, since=None, wri
             report.update(result=Result.UNKNOWN, reason=error or "no configured compiler trial",
                           bindings=[{"line": item.line, "previous": item.symbol, "symbol": item.symbol,
                                      "status": "unproven", "reason": "TU did not compile"}
-                                    for item in sorted(static, key=lambda item: item.line)])
+                                    for item in sorted(static + pooled, key=lambda item: item.line)])
             reports.append(report)
             continue
         rows, shift = plans[0]
         for other, _ in plans[1:]:
-            for row, peer in zip(rows, other):
-                if (row["status"], row["symbol"]) != (peer["status"], peer["symbol"]):
+            peers = {peer["line"]: peer for peer in other}
+            for row in rows:
+                peer = peers.get(row["line"])
+                if peer is None or (row["status"], row["symbol"]) != (peer["status"], peer["symbol"]):
                     row.update(status="unproven", symbol=row["previous"],
                                reason="configured compiler trials disagree on this label")
         rows.sort(key=lambda row: row["line"])
@@ -305,7 +388,8 @@ def rebind_literals(root: Path, image_path: Path, *, units=None, since=None, wri
             "ready_for_collection": False,
             "next_action": ("rerun with --write to publish proven rebinds" if changes and not write
                             else "measure affected functions; bank exact results only with `recover record`"),
-            "limitations": ["only `$SGn` static string labels; COMDAT literal names are stable and skipped",
+            "limitations": ["`$SGn` static string labels, and pooled `??_C@` names the fresh object no longer defines; "
+                            "a pooled name the object still defines is stable and skipped",
                             "original extents, evidence addresses and claims are never changed",
                             "identical duplicates are resolved only by a uniform shift or the bindings' order",
                             "emission and storage evidence only; not function, linker or runtime proof"]}
