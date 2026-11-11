@@ -96,7 +96,7 @@ static inline void rect_shift_y(RECT *rect, int dy) {
     rect->bottom += dy;
 }
 
-// ORIGINAL: 0x0045F2E0 ?exec@Interlude@@QAEXPAD@Z 0x0045F2E0-0x0045F5C0
+// ORIGINAL: 0x0045F2E0 ?exec@Interlude@@QAEXPAD@Z 0x0045F2E0-0x0045F5C0 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0045f2e0.cpp: original identity, complete spans and retained seed history", "source:src/interlude.h: genuine GraphicWin base and embedded member lifetime", "source:recovery/tasks/interlude-lifetime-owner-closure.json: bounded coordinator authorization"], "reason": "Original45F2E0 configures Interlude art, captions, clip rectangle and modal lifecycle on actual embedded Buffer/StringList members; source-owned borrowed fonts preserve shared producer relationships."}
 // TRIED: many named C locals (rect, w, qv, qh, str_height, half, i, ...) push the compiler to `sub esp,N` for the frame; original reserves one dword via `push ecx` for the single Buffer* local that survives calls. Structure/order matches Ghidra.
 void Interlude::exec(char *section) {
