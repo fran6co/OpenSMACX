@@ -1000,7 +1000,7 @@ void __cdecl vehdraw_construct_chassis(int faction_id, int chassis, int weapon,
 
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004C2CF0 0x004C306C 0x004C3084 0x004C2F0F
-// ORIGINAL: 0x004C2CF0 ?vehdraw_construct_weapon@@YAHHHHPAUCaviar@@@Z 0x004C2CF0-0x004C306A
+// ORIGINAL: 0x004C2CF0 ?vehdraw_construct_weapon@@YAHHHHPAUCaviar@@@Z 0x004C2CF0-0x004C306A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original allocates and initializes a26-entry automatic model lookup, not static storage. Offense minus1 and99 have distinct models; bounded other values include a no-model sentinel. Special weapons/chassis return before ordinary faction/rule work.", "Original terraform handling rereads faction flags after the first model addition. Gun, hover-gun and drop offsets are the actual vectors populated by load_voxels, not old executable addresses."], "reason": "Recover weapon model selection and attachments through real model arrays, tint tables and vector offsets."}
 // symbol    ?vehdraw_construct_weapon@@YAXHHHPAVCaviar@@@Z
 void __cdecl vehdraw_construct_weapon(int faction_id, int chassis, int weapon, Caviar *renderer) {
