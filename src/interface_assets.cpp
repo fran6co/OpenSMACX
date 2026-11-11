@@ -5012,6 +5012,11 @@ int __cdecl def_caption_draw(GraphicWin *window, char *text, Buffer *canvas) {
     }
 }
 
+// WORKAROUND(decl): rows load_interface fills; kept out of basepop.h (see there).
+extern Sprite *BasePopDefaultBlock31D0[3];
+extern Sprite *BasePopDefaultBlock31E8[3];
+extern Sprite *BasePopDefaultBlock31F4[3];
+
 // ORIGINAL: 0x00455610 ?load_interface@@YAXH@Z 0x00455610-0x00455E41
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00455610.cpp: retained original spans and seed history", "source:recovery/tasks/popup-font-configuration-owner-closure.json: coordinator-authorized ownership scope", "manual: independent frozen C++ review of original callback, font style order, palette, geometry and sprite assignments", "compiler:build/recovery/popup-font-physical-emission.json;build/recovery/interface-producer-physical.json: actual emitted symbols in both historical flag sets"], "reason": "Original-backed real font/default producer and consumer closure through source-owned storage and C++ classes; preserves seed extents and historical matching obligations without granting a new claim."}
 // symbol    ?load_interface@@YAXH@Z
@@ -5056,16 +5061,16 @@ void __cdecl load_interface(int mode) {
     GraphicWin::set_def_nc_sprites(&defaults);
     GraphicWin::load_all_nc_sprites_from_defs();
 
-    // These are borrowed entries into the existing 27-Sprite button sheet.
-    BasePopDefaultBlock31B8[12] = &g_BASEWIN_SPRITES[18];
-    BasePopDefaultBlock31B8[13] = &g_BASEWIN_SPRITES[21];
-    BasePopDefaultBlock31B8[14] = &g_BASEWIN_SPRITES[24];
-    BasePopDefaultBlock31B8[15] = &g_BASEWIN_SPRITES[20];
-    BasePopDefaultBlock31B8[16] = &g_BASEWIN_SPRITES[23];
-    BasePopDefaultBlock31B8[17] = &g_BASEWIN_SPRITES[26];
-    BasePopDefaultBlock31B8[6] = &g_BASEWIN_SPRITES[19];
-    BasePopDefaultBlock31B8[7] = &g_BASEWIN_SPRITES[22];
-    BasePopDefaultBlock31B8[8] = &g_BASEWIN_SPRITES[25];
+    // These are borrowed entries into BasePop's default button rows.
+    BasePopDefaultBlock31E8[0] = &g_BASEWIN_SPRITES[18];
+    BasePopDefaultBlock31E8[1] = &g_BASEWIN_SPRITES[21];
+    BasePopDefaultBlock31E8[2] = &g_BASEWIN_SPRITES[24];
+    BasePopDefaultBlock31F4[0] = &g_BASEWIN_SPRITES[20];
+    BasePopDefaultBlock31F4[1] = &g_BASEWIN_SPRITES[23];
+    BasePopDefaultBlock31F4[2] = &g_BASEWIN_SPRITES[26];
+    BasePopDefaultBlock31D0[0] = &g_BASEWIN_SPRITES[19];
+    BasePopDefaultBlock31D0[1] = &g_BASEWIN_SPRITES[22];
+    BasePopDefaultBlock31D0[2] = &g_BASEWIN_SPRITES[25];
     PushButtonDefaults[4] = &g_BASEWIN_SPRITES[18];
     PushButtonDefaults[13] = &g_BASEWIN_SPRITES[24];
     PushButtonDefaults[2] = &g_BASEWIN_SPRITES[19];

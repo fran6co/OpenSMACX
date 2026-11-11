@@ -535,38 +535,8 @@ Purpose: Restore an explicit list position and return its item ID.
 Return Value: Item ID at the requested position, or zero when the list head is null
 Status: Complete
 */
-// StringStruct::seek_pos in the single-tail form the image uses (one
-// current_position_ store after both arms). Replace with
-// item_list_.seek_pos() once stringstruct.h adopts that form.
-static inline int dialog_seek_pos(StringStruct *list, int a1) {
-    AbsFnT abs_fn = reinterpret_cast<AbsFnT>(&abs);
-    if (a1 > list->entry_count_ - 1) {
-        return 0;
-    }
-    list->current_ = list->head_;
-    if (a1 < 0) {
-        if (abs_fn(a1) > list->entry_count_) {
-            return 0;
-        }
-        int i = abs_fn(a1);
-        while (i > 0) {
-            --i;
-            list->current_ = list->current_->previous;
-        }
-        a1 += list->entry_count_;
-    } else {
-        int i = a1;
-        while (i > 0) {
-            --i;
-            list->current_ = list->current_->next;
-        }
-    }
-    list->current_position_ = a1;
-    return 1;
-}
-
 int Dialog::pos_to_id(int position) {
-    dialog_seek_pos(&item_list_, position);
+    item_list_.seek_pos(position);
     return item_list_.head_ ? item_list_.current_->id : 0;
 }
 

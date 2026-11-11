@@ -329,39 +329,10 @@ static inline char *deferred_message_text(StringList &items) {
                : 0;
 }
 
-// StringStruct::seek_pos in the image's single-tail form (one
-// current_position_ store after both arms), as dialog.cpp's local copy.
-static inline int deferred_seek_pos(StringStruct *list, int a1) {
-    AbsFnT abs_fn = reinterpret_cast<AbsFnT>(&abs);
-    if (a1 > list->entry_count_ - 1) {
-        return 0;
-    }
-    list->current_ = list->head_;
-    if (a1 < 0) {
-        if (abs_fn(a1) > list->entry_count_) {
-            return 0;
-        }
-        int i = abs_fn(a1);
-        while (i > 0) {
-            --i;
-            list->current_ = list->current_->previous;
-        }
-        a1 += list->entry_count_;
-    } else {
-        int i = a1;
-        while (i > 0) {
-            --i;
-            list->current_ = list->current_->next;
-        }
-    }
-    list->current_position_ = a1;
-    return 1;
-}
-
 int __cdecl display_player_messages(int faction) {
     InterfaceMessageWin.clear();
     for (int index = 0; index < MessageWinDeferredBaseMessages[faction].entry_count_; ++index) {
-        deferred_seek_pos(&MessageWinDeferredBaseMessages[faction], index);
+        MessageWinDeferredBaseMessages[faction].seek_pos(index);
         ++ConsoleGlobal.message_count_;
         const int id = deferred_message_id(MessageWinDeferredBaseMessages[faction]);
         char *text = deferred_message_text(MessageWinDeferredBaseMessages[faction]);

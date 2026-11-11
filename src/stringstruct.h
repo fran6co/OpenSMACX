@@ -441,6 +441,11 @@ static_assert(sizeof(StringList) == 0x30,
 // spells its own two: `abs` of a variable is a real call here and the image
 // makes two, while `abs` of a compile-time constant folds away and the calls
 // vanish.
+//
+// One shared current_position_ store after both walks (`a1 += entry_count_`
+// on the negative arm): the out-of-line 0x004015B0 still duplicates the tail
+// per arm, and the expanded copies (BasePop::UNK2 0x00604F75, Popup::on_exec,
+// Dialog/ListBox walks) keep the single store.
 
 typedef int (__cdecl *AbsFnT)(int);
 
@@ -455,25 +460,20 @@ MEASURED inline int StringStruct::seek_pos(int a1) {
             return 0;
         }
         int i = abs_fn(a1);
-        if (i > 0) {
-            do {
-                i--;
-                current_ = current_->previous;
-            } while (i != 0);
+        while (i > 0) {
+            --i;
+            current_ = current_->previous;
         }
-        current_position_ = a1 + entry_count_;
-        return 1;
+        a1 += entry_count_;
     } else {
-        if (a1 > 0) {
-            int i = a1;
-            do {
-                i--;
-                current_ = current_->next;
-            } while (i != 0);
+        int i = a1;
+        while (i > 0) {
+            --i;
+            current_ = current_->next;
         }
-        current_position_ = a1;
-        return 1;
     }
+    current_position_ = a1;
+    return 1;
 }
 
 // 0x00402970 is both called and expanded inline (StringList's destructor

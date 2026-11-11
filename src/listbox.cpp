@@ -631,35 +631,6 @@ static inline StringStructPayload *listbox_current_payload(StringStruct *list) {
     return list->head_ != 0 ? list->current_->string_payload() : 0;
 }
 
-// StringStruct::seek_pos in the single-tail form the image's ListBox walks use (one
-// current_position_ store after both arms), as dialog.cpp's dialog_seek_pos.
-static inline int listbox_seek_pos(StringStruct *list, int a1) {
-    AbsFnT abs_fn = reinterpret_cast<AbsFnT>(&abs);
-    if (a1 > list->entry_count_ - 1) {
-        return 0;
-    }
-    list->current_ = list->head_;
-    if (a1 < 0) {
-        if (abs_fn(a1) > list->entry_count_) {
-            return 0;
-        }
-        int i = abs_fn(a1);
-        while (i > 0) {
-            --i;
-            list->current_ = list->current_->previous;
-        }
-        a1 += list->entry_count_;
-    } else {
-        int i = a1;
-        while (i > 0) {
-            --i;
-            list->current_ = list->current_->next;
-        }
-    }
-    list->current_position_ = a1;
-    return 1;
-}
-
 // The current entry's text, or null when the list head is null.
 static inline char *listbox_current_text(StringStruct *list) {
     return list->head_ != 0 ? list->current_->string_payload()->text : 0;
@@ -703,7 +674,7 @@ void ListBox::draw_item(int index) {
     row.right -= Dialog::field_40_ * 2;
 
     if (Dialog::field_4C_ == 1) {
-        listbox_seek_pos(&this->Dialog::item_list_, static_cast<int>(field_18_) - 1);
+        this->Dialog::item_list_.seek_pos(static_cast<int>(field_18_) - 1);
         int occupied = 0;
         for (int count = index - static_cast<int>(field_18_); count > 0; --count) {
             StringList *const list = &this->Dialog::item_list_;
@@ -759,7 +730,7 @@ void ListBox::draw_item(int index) {
     if (field_4_ == 0) {
         selected = Dialog::selected_position_ == index;
     } else {
-        listbox_seek_pos(&this->Dialog::item_list_, index);
+        this->Dialog::item_list_.seek_pos(index);
         selected = static_cast<int>(listbox_current_payload(&this->Dialog::item_list_)->field_8_);
     }
 
@@ -850,7 +821,7 @@ void ListBox::draw_item(int index) {
 
     // The original rechecks the live count after frame callbacks. If a
     // callback removed this row, it leaves the current cursor untouched.
-    listbox_seek_pos(&this->Dialog::item_list_, index);
+    this->Dialog::item_list_.seek_pos(index);
 
     if (draw_callback_ != 0) {
         CurrentListBoxDraw = this;
@@ -1477,7 +1448,7 @@ void ListBox::on_left_down(int x, int y) {
                        * Dialog::row_count_
                    + y / (Dialog::field_68_ + static_cast<int>(Dialog::field_44_));
     } else {
-        listbox_seek_pos(&this->Dialog::item_list_, static_cast<int>(field_18_) - 1);
+        this->Dialog::item_list_.seek_pos(static_cast<int>(field_18_) - 1);
         position = 0;
         for (int rows = Dialog::item_list_.entry_count_; rows > 0 && y >= 0; --rows) {
             ++position;
@@ -1501,7 +1472,7 @@ void ListBox::on_left_down(int x, int y) {
     if (field_4_ != 0 && clicked != Dialog::selected_position_) {
         if (!(GetAsyncKeyState(VK_CONTROL) & 0x8000)) {
             // Without Ctrl the old selection is cleared first.
-            listbox_seek_pos(&this->Dialog::item_list_, -1);
+            this->Dialog::item_list_.seek_pos(-1);
             const int count = Dialog::item_list_.entry_count_;
             for (int index = 0; index < count; ++index) {
                 StringList *const list = &this->Dialog::item_list_;
@@ -1510,12 +1481,12 @@ void ListBox::on_left_down(int x, int y) {
         }
         if (GetAsyncKeyState(VK_SHIFT) & 0x8000) {
             if (clicked > Dialog::selected_position_) {
-                listbox_seek_pos(&this->Dialog::item_list_, Dialog::selected_position_ - 1);
+                this->Dialog::item_list_.seek_pos(Dialog::selected_position_ - 1);
                 for (int index = Dialog::selected_position_; index <= clicked; ++index) {
                     Dialog::item_list_.next_entry()->field_8_ = 1;
                 }
             } else {
-                listbox_seek_pos(&this->Dialog::item_list_, clicked - 1);
+                this->Dialog::item_list_.seek_pos(clicked - 1);
                 for (int index = clicked; index <= Dialog::selected_position_; ++index) {
                     // The image's backward walk has no count temporary (it
                     // compares entry_count_ from memory and keeps 0 in a
@@ -1534,7 +1505,7 @@ void ListBox::on_left_down(int x, int y) {
                 }
             }
         } else {
-            listbox_seek_pos(&this->Dialog::item_list_, clicked);
+            this->Dialog::item_list_.seek_pos(clicked);
             StringList *const list = &this->Dialog::item_list_;
             // The test reads through the member (not `list`), so the image
             // reloads head_ for the stores instead of keeping it live.
@@ -1572,7 +1543,7 @@ void ListBox::on_mouse_move(int x, int y) {
                        * Dialog::row_count_
                    + y / (Dialog::field_68_ + static_cast<int>(Dialog::field_44_));
     } else {
-        listbox_seek_pos(&this->Dialog::item_list_, static_cast<int>(field_18_) - 1);
+        this->Dialog::item_list_.seek_pos(static_cast<int>(field_18_) - 1);
         position = 0;
         for (int rows = Dialog::item_list_.entry_count_; rows > 0 && y >= 0; --rows) {
             ++position;
@@ -1766,7 +1737,7 @@ void ListBox::on_redraw() {
     }
 
     if (Dialog::item_list_.entry_count_ == 0) return;
-    listbox_seek_pos(&this->Dialog::item_list_, static_cast<int>(field_18_) - 1);
+    this->Dialog::item_list_.seek_pos(static_cast<int>(field_18_) - 1);
 
     ListBoxDrawOffset = 0;
     for (int column = 0; column < Dialog::column_count_; ++column) {

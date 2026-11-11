@@ -1825,7 +1825,7 @@ Status: Complete
 // 0x009B8DD0 (BasePopDefaultField322C) by Console::init (0x0051D9B5). The
 // remaining defaults have their own producers: popups_normal writes
 // BasePopDefaultField30A4; set_def_external_window writes BasePopDefaultLayout;
-// load_interface writes the sprite entries of BasePopDefaultBlock31B8.
+// load_interface writes the BasePopDefaultBlock31D0/31E8/31F4 rows.
 
 // {100, 100}: the defaults the ctor's tail sends through dialog_width_/A24_
 // into the embedded Dialog's width/height slots. NOT const, because
@@ -1933,10 +1933,32 @@ void BasePop::set_def_external_window(GraphicWin *external_window, int loc_x,
     BasePopDefaultDialogSize[1] = height;
 }
 
-// The 27 dwords the ctor transposes into +0x31b8..+0x3223.
+// The 27 default Sprite pointers the ctor and close() copy into
+// +0x31b8..+0x3223, one three-entry global per default_block_ row. NINE
+// SEPARATE OBJECTS, not one 27-entry array: the image's copy loop (ctor
+// 0x00600A3A, close 0x00600F83) keeps a byte index in eax and addresses each
+// row as its own absolute displacement (`mov edx,[eax+0x9b8d10]`, `[eax+
+// 0x9b8d1c]`, ...), while one array lets VC6 fold all nine into a single
+// pointer induction variable (`mov eax, offset+0xc; mov edx,[eax-0xc]`).
 // Historical integer-array symbol: ?BasePopDefaultBlock31B8@@3PAIA; redraw proves borrowed Sprite pointers.
 // RECOVERY_OBJECT: v1 0x009B8D10 ?BasePopDefaultBlock31B8@@3PAPAVSprite@@A
-Sprite *BasePopDefaultBlock31B8[27];  // 0x009B8D10
+Sprite *BasePopDefaultBlock31B8[3];  // 0x009B8D10
+// RECOVERY_OBJECT: v1 0x009B8D1C ?BasePopDefaultBlock31C4@@3PAPAVSprite@@A
+Sprite *BasePopDefaultBlock31C4[3];  // 0x009B8D1C
+// RECOVERY_OBJECT: v1 0x009B8D28 ?BasePopDefaultBlock31D0@@3PAPAVSprite@@A
+Sprite *BasePopDefaultBlock31D0[3];  // 0x009B8D28
+// RECOVERY_OBJECT: v1 0x009B8D34 ?BasePopDefaultBlock31DC@@3PAPAVSprite@@A
+Sprite *BasePopDefaultBlock31DC[3];  // 0x009B8D34
+// RECOVERY_OBJECT: v1 0x009B8D40 ?BasePopDefaultBlock31E8@@3PAPAVSprite@@A
+Sprite *BasePopDefaultBlock31E8[3];  // 0x009B8D40
+// RECOVERY_OBJECT: v1 0x009B8D4C ?BasePopDefaultBlock31F4@@3PAPAVSprite@@A
+Sprite *BasePopDefaultBlock31F4[3];  // 0x009B8D4C
+// RECOVERY_OBJECT: v1 0x009B8D58 ?BasePopDefaultBlock3200@@3PAPAVSprite@@A
+Sprite *BasePopDefaultBlock3200[3];  // 0x009B8D58
+// RECOVERY_OBJECT: v1 0x009B8D64 ?BasePopDefaultBlock320C@@3PAPAVSprite@@A
+Sprite *BasePopDefaultBlock320C[3];  // 0x009B8D64
+// RECOVERY_OBJECT: v1 0x009B8D70 ?BasePopDefaultBlock3218@@3PAPAVSprite@@A
+Sprite *BasePopDefaultBlock3218[3];  // 0x009B8D70
 
 // Copied to +0x21b0/+0x21b4/+0x21bc/+0x21b8, in this table's order.
 // popups_normal seeds 0x1a/0x3a/0x32/3 here at run time.
@@ -1986,15 +2008,15 @@ BasePop::BasePop() {
         // against column*8+row over eight rows: twenty-four of the twenty-
         // seven slots, scrambled, and the last one never written.
         for (int column = 0; column < 3; ++column) {
-            default_block_[column + 0] = BasePopDefaultBlock31B8[column + 0];
-            default_block_[column + 3] = BasePopDefaultBlock31B8[column + 3];
-            default_block_[column + 6] = BasePopDefaultBlock31B8[column + 6];
-            default_block_[column + 9] = BasePopDefaultBlock31B8[column + 9];
-            default_block_[column + 12] = BasePopDefaultBlock31B8[column + 12];
-            default_block_[column + 15] = BasePopDefaultBlock31B8[column + 15];
-            default_block_[column + 18] = BasePopDefaultBlock31B8[column + 18];
-            default_block_[column + 21] = BasePopDefaultBlock31B8[column + 21];
-            default_block_[column + 24] = BasePopDefaultBlock31B8[column + 24];
+            default_block_[column + 0] = BasePopDefaultBlock31B8[column];
+            default_block_[column + 3] = BasePopDefaultBlock31C4[column];
+            default_block_[column + 6] = BasePopDefaultBlock31D0[column];
+            default_block_[column + 9] = BasePopDefaultBlock31DC[column];
+            default_block_[column + 12] = BasePopDefaultBlock31E8[column];
+            default_block_[column + 15] = BasePopDefaultBlock31F4[column];
+            default_block_[column + 18] = BasePopDefaultBlock3200[column];
+            default_block_[column + 21] = BasePopDefaultBlock320C[column];
+            default_block_[column + 24] = BasePopDefaultBlock3218[column];
         }
     }
 
@@ -2160,15 +2182,15 @@ void BasePop::close() {
     // All nine rows therefore copy the same source/destination column;
     // interpreting those later loads before the increment shifted rows by one.
     for (int column = 0; column < 3; ++column) {
-        default_block_[column + 0] = BasePopDefaultBlock31B8[column + 0];
-        default_block_[column + 3] = BasePopDefaultBlock31B8[column + 3];
-        default_block_[column + 6] = BasePopDefaultBlock31B8[column + 6];
-        default_block_[column + 9] = BasePopDefaultBlock31B8[column + 9];
-        default_block_[column + 12] = BasePopDefaultBlock31B8[column + 12];
-        default_block_[column + 15] = BasePopDefaultBlock31B8[column + 15];
-        default_block_[column + 18] = BasePopDefaultBlock31B8[column + 18];
-        default_block_[column + 21] = BasePopDefaultBlock31B8[column + 21];
-        default_block_[column + 24] = BasePopDefaultBlock31B8[column + 24];
+        default_block_[column + 0] = BasePopDefaultBlock31B8[column];
+        default_block_[column + 3] = BasePopDefaultBlock31C4[column];
+        default_block_[column + 6] = BasePopDefaultBlock31D0[column];
+        default_block_[column + 9] = BasePopDefaultBlock31DC[column];
+        default_block_[column + 12] = BasePopDefaultBlock31E8[column];
+        default_block_[column + 15] = BasePopDefaultBlock31F4[column];
+        default_block_[column + 18] = BasePopDefaultBlock3200[column];
+        default_block_[column + 21] = BasePopDefaultBlock320C[column];
+        default_block_[column + 24] = BasePopDefaultBlock3218[column];
     }
 
     dialogs_.ListBox::close();
