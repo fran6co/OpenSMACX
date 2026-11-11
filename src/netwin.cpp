@@ -25,6 +25,10 @@
 // ORIGINAL: 0x0047B010 _$E19 0x0047B010-0x0047B01A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682560 selects initializer0x47aff0..0x47b006, registering exit0x47b010..0x47b01a. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x80a6f8 bound to?NetWinDialog@@3VNetWin@@A.", "Original startup instruction evidence: [[\"0x47aff0\", \"mov\", \"ecx, 0x80a6f8\"], [\"0x47aff5\", \"call\", \"0x481c50\"], [\"0x47affa\", \"push\", \"0x47b010\"], [\"0x47afff\", \"call\", \"0x645398\"], [\"0x47b004\", \"pop\", \"ecx\"], [\"0x47b005\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x47b010\", \"mov\", \"ecx, 0x80a6f8\"], [\"0x47b015\", \"jmp\", \"0x4834e0\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/netwin.cpp COFF selects _$E21 via .CRT$XCU, registering _$E19. Startup relocation targets: [\"?NetWinDialog@@3VNetWin@@A\", \"??0NetWin@@QAE@XZ\", \"_$E19\", \"_atexit\"]; exit targets: [\"?NetWinDialog@@3VNetWin@@A\", \"??1NetWin@@UAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f2cc; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned ?NetWinDialog@@3VNetWin@@A; preserve complete original identity and remaining restoration/structure obligations."}
 // symbol    _$E14
+// WORKAROUND(noinline): draw_session_info's StringList local calls
+// StringStruct::StringStruct (0x00401000) out of line (0x00480956), giving
+// its three-state EH layout; see stringstruct.h.
+#define STRINGSTRUCT_CTOR_OUT_OF_LINE
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "netwin.h"
@@ -909,164 +913,128 @@ void NetWin::draw_session_info() {
     // before the pinned spot cleanup.
     StringList list;
     spot_.kill_type(0);
-    Buffer *buffer = static_cast<Buffer *>(this);
-
-    buffer->box_sprite(&setup_rects_[3],
-                       &InterfaceBoxStyles[3]);
-    RECT *title_rect = &setup_rects_[2];
-    buffer->box_sprite(title_rect, &InterfaceBoxStyles[6]);
+    Buffer::box_sprite(&setup_rects_[3], &InterfaceBoxStyles[3]);
+    Buffer::box_sprite(&setup_rects_[2], &InterfaceBoxStyles[6]);
 
     StringTemp[0] = 0;
     if (NetDaemonNet.allocation_node().session_name_ != 0) {
         strcat(StringTemp, NetDaemonNet.allocation_node().session_name_);
     }
     CharUpperA(StringTemp);
-    buffer->set_font(find_font(0xE, 1), 0, 0, 0);
-    buffer->set_text_color(0xE1, -1, 1, 1);
-    buffer->set_clip(title_rect);
-    if (*StringTemp != 0) {
-        buffer->write_cent_l(StringTemp, title_rect,
-                             strlen(StringTemp));
-    }
-    buffer->set_clip(buffer_working_rect());
+    Buffer::set_font(find_font(0xE, 1), 0, 0, 0);
+    Buffer::set_text_color(0xE1, -1, 1, 1);
+    Buffer::set_clip(&setup_rects_[2]);
+    Buffer::write_cent_l(StringTemp, &setup_rects_[2]);
+    Buffer::restore_clip();
 
     RECT *panel = &setup_rects_[1];
-    buffer->box_sprite(panel, &InterfaceBoxStyles[0]);
+    Buffer::box_sprite(panel, &InterfaceBoxStyles[0]);
     RECT field;
     field.left = panel->left + 4;
     field.top = panel->top + 4;
     field.right = panel->right - 4;
     field.bottom = panel->bottom - 4;
-    buffer->set_clip(&field);
+    Buffer::set_clip(&field);
+    Buffer::set_text_color(0xDF, -1, 1, 1);
+    Buffer::set_text_color2(0xE2, -1, 1, 1);
 
-    buffer->set_text_color(0xDF, -1, 1, 1);
-    buffer->set_text_color2(0xE2, -1, 1, 1);
-
-    const int col = field.left;
+    int col = field.left;
     int row = field.top;
-    // The wrapped-text width every write_l measures against; 0x14 is the
-    // body's own starting value. The existing setter directly assigns the
-    // same Buffer +0x10 member without additional side effects.
-    buffer->set_wrap_width(0x14);
+    int written;
+    int bottom;
+    int avail;
+    LPSTR text;
+    char tally[0x50];
+    // The wrapped-text width every write measures against.
+    Buffer::set_wrap_width(0x14);
 
-    // ---- session name: {Name: } <global difficulty> ----
+    // Difficulty: {label: } <difficulty name>.
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
-    strcat(StringTemp,
-           label_get(0xFA4 / 4));
+    strcat(StringTemp, label_get(0xFA4 / 4));
     strcat(StringTemp, ": ");
     strcat(StringTemp, "}");
     strcat(StringTemp, " ");
-    {
-        int difficulty = static_cast<int8_t>(NetWinSessionOptions.fields_.difficulty_);
-        if (difficulty < 0) {
-            difficulty = 0;
-        } else if (6 < difficulty) {
-            difficulty = 6;
-        }
-        strcat(StringTemp,
-               StringTable.get(Difficulty[difficulty]));
+    strcat(StringTemp, StringTable.get(Difficulty[range(
+        static_cast<int8_t>(NetWinSessionOptions.fields_.difficulty_), 0, 6)]));
+    written = Buffer::write_l(StringTemp, col, row);
+    if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
+        g_IFACE_MP_COMBO_ARROW_SPRITES[0].draw(
+            this, g_IFACE_MP_COMBO_ARROW_SPRITES[0].transparent_index(),
+            written + 3, row);
     }
-    {
-        int written = buffer->write_l(StringTemp, col, row,
-                                      strlen(StringTemp));
-        if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
-            Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
-            arrow.draw(buffer, arrow.transparent_index(), written + 3, row);
-        }
-        spot_.add(2, 0, col, row, 0x1E, buffer->text_line_height());
-        row += buffer->text_line_height();
-    }
+    spot_.add(2, 0, col, row, written - col + 0x1E, Buffer::text_line_height());
+    row += Buffer::text_line_height();
 
-    // ---- map size: {Size: } <time-control name> ----
+    // Time controls.
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
-    strcat(StringTemp,
-           label_get(0x100C / 4));
+    strcat(StringTemp, label_get(0x100C / 4));
     strcat(StringTemp, ": ");
     strcat(StringTemp, "}");
     strcat(StringTemp, " ");
-    strcat(StringTemp,
-           StringTable.get(
-               TimeControl[static_cast<unsigned char>(NetWinSessionOptions.fields_.time_control_)].name));
-    {
-        int written = buffer->write_l(StringTemp, col, row,
-                                      strlen(StringTemp));
-        if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
-            Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
-            arrow.draw(buffer, arrow.transparent_index(), written + 3, row);
-        }
-        spot_.add(3, 0, col, row, 0x1E, buffer->text_line_height());
-        row += buffer->text_line_height() * 2;
+    strcat(StringTemp, StringTable.get(
+        TimeControl[NetWinSessionOptions.fields_.time_control_].name));
+    written = Buffer::write_l(StringTemp, col, row);
+    if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
+        g_IFACE_MP_COMBO_ARROW_SPRITES[0].draw(
+            this, g_IFACE_MP_COMBO_ARROW_SPRITES[0].transparent_index(),
+            written + 3, row);
     }
+    spot_.add(3, 0, col, row, written - col + 0x1E, Buffer::text_line_height());
+    row += Buffer::text_line_height() * 2;
 
-    // ---- rules / scenario: {Rules: } <name or scenario text> ----
+    // Rules or scenario, with the game mode in parentheses.
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
-    strcat(StringTemp,
-           label_get(0x1078 / 4));
+    strcat(StringTemp, label_get(0x1078 / 4));
     strcat(StringTemp, ": ");
     strcat(StringTemp, "}");
     strcat(StringTemp, " ");
-    if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
-        strcat(StringTemp,
-               label_get(0x107C / 4));
+    if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
+        strcat(StringTemp, NetWinSessionData.fields_.scenario_text_wire_tail_);
     } else {
-        strcat(StringTemp,
-               NetWinSessionData.fields_.scenario_text_wire_tail_);
+        strcat(StringTemp, label_get(0x107C / 4));
     }
-    if (NetWinSessionData.fields_.mode_ == 1) {
+    switch (NetWinSessionData.fields_.mode_) {
+    case 3:
         strcat(StringTemp, " ");
         strcat(StringTemp, "(");
-        strcat(StringTemp,
-               label_get(0x10 / 4));
-    } else if (NetWinSessionData.fields_.mode_ == 2) {
+        strcat(StringTemp, label_get(0x1014 / 4));
+        strcat(StringTemp, ")");
+        break;
+    case 2:
         strcat(StringTemp, " ");
         strcat(StringTemp, "(");
-        strcat(StringTemp,
-               label_get(0x1018 / 4));
-    } else if (NetWinSessionData.fields_.mode_ == 3) {
+        strcat(StringTemp, label_get(0x1018 / 4));
+        strcat(StringTemp, ")");
+        break;
+    case 1:
         strcat(StringTemp, " ");
         strcat(StringTemp, "(");
-        strcat(StringTemp,
-               label_get(0x1014 / 4));
+        strcat(StringTemp, label_get(0x10 / 4));
+        strcat(StringTemp, ")");
+        break;
     }
-    {
-        int bottom = buffer->wrap(StringTemp, col, row,
-                                  panel->right - panel->left - 0x1E);
-        if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
-            Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
-            arrow.draw(buffer, arrow.transparent_index(), BufferLastWrapWriteResult + 3,
-                       bottom - buffer->text_line_height());
-        }
-        spot_.add(0, 0, col, row, panel->right - panel->left, bottom - row);
-        row = bottom;
+    bottom = Buffer::wrap(StringTemp, col, row,
+                          setup_rects_[1].right - setup_rects_[1].left - 0x1E);
+    if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
+        g_IFACE_MP_COMBO_ARROW_SPRITES[0].draw(
+            this, g_IFACE_MP_COMBO_ARROW_SPRITES[0].transparent_index(),
+            BufferLastWrapWriteResult + 3, bottom - Buffer::text_line_height());
     }
+    spot_.add(0, 0, col, row, setup_rects_[1].right - setup_rects_[1].left,
+              bottom - row);
+    row = bottom;
 
-    // ---- opponent difficulty ----
+    // Planet size, or the scenario map's dimensions.
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
-    strcat(StringTemp,
-           label_get(0xFAC / 4));
+    strcat(StringTemp, label_get(0xFAC / 4));
     strcat(StringTemp, ": ");
     strcat(StringTemp, "}");
     strcat(StringTemp, " ");
-    if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
-        int opponent = NetWinSessionOptions.fields_.option_4_;
-        if (opponent == -1) {
-            strcat(StringTemp,
-                   label_get(0xFE4 / 4));
-        } else {
-            if (opponent < 0) {
-                opponent = 0;
-            } else if (0x1F < opponent) {
-                opponent = 0x1F;
-            }
-            strcat(StringTemp,
-                   Labels.strings_ptr[(opponent * 0x80 + 0x6614) / 4]);
-        }
-    } else {
-        char tally[80];
+    if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
         _itoa(NetWinSessionOptions.fields_.option_4_, tally, 10);
         strcat(StringTemp, tally);
         strcat(StringTemp, " ");
@@ -1074,125 +1042,207 @@ void NetWin::draw_session_info() {
         strcat(StringTemp, " ");
         _itoa(NetWinSessionOptions.fields_.option_5_, tally, 10);
         strcat(StringTemp, tally);
+    } else if (static_cast<int8_t>(NetWinSessionOptions.fields_.planet_size_) == -1) {
+        strcat(StringTemp, label_get(0xFE4 / 4));
+    } else {
+        strcat(StringTemp, world_size_labels_[range(
+            static_cast<int8_t>(NetWinSessionOptions.fields_.planet_size_), 0, 0x1F)]);
     }
-    {
-        int avail = panel->right - col - 10;
-        int bottom;
-        if (avail < buffer->text_width(StringTemp)) {
-            bottom = buffer->wrap(StringTemp, col, row, avail);
-        } else {
-            buffer->write_l(StringTemp, col, row, strlen(StringTemp));
-            bottom = buffer->text_line_height() + row;
-        }
-        if (NetDaemonNet.primary_state_.leading_words_[0] != 0 && NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
-            Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
-            arrow.draw(buffer, arrow.transparent_index(), col + 3, row);
-            spot_.add(4, 0, col, row, 0x1E, bottom - row);
-        }
-        row = bottom;
+    avail = field.right - col - 10;
+    if (avail < Buffer::text_width(StringTemp)) {
+        written = field.right - 10;
+        bottom = Buffer::wrap(StringTemp, col, row, avail);
+    } else {
+        written = Buffer::write_l(StringTemp, col, row);
+        bottom = row + Buffer::text_line_height();
     }
-
-    // ---- the four rule toggles ----
-    for (int rule = 0; rule < 4; ++rule) {
-        static const char *const kLabels[4] = {"{", "{", "{", "{"};
-        static const char *const kLabelEnds[4] = {"}", "}", "}", "}"};
-        static const int kTextSlots[4] = {
-            0xFB0 / 4, 0xFB4 / 4, 0xFB8 / 4, 0xFBC / 4};
-        static const int kSpotIds[4] = {5, 6, 7, 8};
-        static const int kTableBases[4] = {0x3D8, 0x3DB, 0x3E1, 0x3E4};
-        signed char flag;
-        switch (rule) {
-        case 0: flag = static_cast<signed char>(NetWinSessionOptions.fields_.option_5_); break;
-        case 1: flag = static_cast<signed char>(NetWinSessionOptions.fields_.planet_size_); break;
-        case 2: flag = static_cast<signed char>(NetWinSessionOptions.fields_.ocean_coverage_); break;
-        default: flag = static_cast<signed char>(NetWinSessionOptions.fields_.erosion_); break;
-        }
-
-        StringTemp[0] = 0;
-        strcat(StringTemp, kLabels[rule]);
-        strcat(StringTemp,
-               label_get(kTextSlots[rule]));
-        strcat(StringTemp, ": ");
-        strcat(StringTemp, kLabelEnds[rule]);
-        strcat(StringTemp, " ");
-
-        LPSTR text_address;
-        if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
-            if (flag == -1) {
-                text_address = Labels.strings_ptr[0xFE4 / 4];
-            } else {
-                text_address = Labels.strings_ptr[flag + kTableBases[rule]];
-            }
-        } else {
-            text_address = Labels.strings_ptr[0x1000 / 4];
-        }
-        strcat(StringTemp, StringTable.get(text_address));
-
-        int avail = panel->right - col - 10;
-        int bottom;
-        if (avail < buffer->text_width(StringTemp)) {
-            bottom = buffer->wrap(StringTemp, col, row, avail);
-        } else {
-            buffer->write_l(StringTemp, col, row, strlen(StringTemp));
-            bottom = buffer->text_line_height() + row;
-        }
-        if (NetDaemonNet.primary_state_.leading_words_[0] != 0 && NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
-            Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
-            arrow.draw(buffer, arrow.transparent_index(), col + 3, row);
-            spot_.add(kSpotIds[rule], 0, col, row, 0x1E, bottom - row);
-        }
-        row = bottom;
+    if (NetDaemonNet.primary_state_.leading_words_[0] != 0
+        && NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
+        g_IFACE_MP_COMBO_ARROW_SPRITES[0].draw(
+            this, g_IFACE_MP_COMBO_ARROW_SPRITES[0].transparent_index(),
+            written + 3, row);
     }
+    if (NetDaemonNet.primary_state_.leading_words_[0] != 0
+        && NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
+        spot_.add(4, 0, col, row, written - col + 0x1E, bottom - row);
+    }
+    row = bottom;
 
-    row = buffer->text_line_height() + row;
+    StringTemp[0] = 0;
+    strcat(StringTemp, "{");
+    strcat(StringTemp, label_get(0xFB0 / 4));
+    strcat(StringTemp, ": ");
+    strcat(StringTemp, "}");
+    strcat(StringTemp, " ");
+    if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
+        text = Labels.strings_ptr[0x1000 / 4];
+    } else if (static_cast<int8_t>(NetWinSessionOptions.fields_.ocean_coverage_) == -1) {
+        text = Labels.strings_ptr[0xFE4 / 4];
+    } else {
+        text = Labels.strings_ptr[static_cast<int8_t>(NetWinSessionOptions.fields_.ocean_coverage_) + 0x3D8];
+    }
+    strcat(StringTemp, StringTable.get(text));
+    avail = field.right - col - 10;
+    if (avail < Buffer::text_width(StringTemp)) {
+        written = field.right - 10;
+        bottom = Buffer::wrap(StringTemp, col, row, avail);
+    } else {
+        written = Buffer::write_l(StringTemp, col, row);
+        bottom = row + Buffer::text_line_height();
+    }
+    if (NetDaemonNet.primary_state_.leading_words_[0] != 0
+        && NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
+        g_IFACE_MP_COMBO_ARROW_SPRITES[0].draw(
+            this, g_IFACE_MP_COMBO_ARROW_SPRITES[0].transparent_index(),
+            written + 3, row);
+    }
+    if (NetDaemonNet.primary_state_.leading_words_[0] != 0
+        && NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
+        spot_.add(5, 0, col, row, written - col + 0x1E, bottom - row);
+    }
+    row = bottom;
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, "{");
+    strcat(StringTemp, label_get(0xFB4 / 4));
+    strcat(StringTemp, ": ");
+    strcat(StringTemp, "}");
+    strcat(StringTemp, " ");
+    if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
+        text = Labels.strings_ptr[0x1000 / 4];
+    } else if (static_cast<int8_t>(NetWinSessionOptions.fields_.erosion_) == -1) {
+        text = Labels.strings_ptr[0xFE4 / 4];
+    } else {
+        text = Labels.strings_ptr[static_cast<int8_t>(NetWinSessionOptions.fields_.erosion_) + 0x3DB];
+    }
+    strcat(StringTemp, StringTable.get(text));
+    avail = field.right - col - 10;
+    if (avail < Buffer::text_width(StringTemp)) {
+        written = field.right - 10;
+        bottom = Buffer::wrap(StringTemp, col, row, avail);
+    } else {
+        written = Buffer::write_l(StringTemp, col, row);
+        bottom = row + Buffer::text_line_height();
+    }
+    if (NetDaemonNet.primary_state_.leading_words_[0] != 0
+        && NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
+        g_IFACE_MP_COMBO_ARROW_SPRITES[0].draw(
+            this, g_IFACE_MP_COMBO_ARROW_SPRITES[0].transparent_index(),
+            written + 3, row);
+    }
+    if (NetDaemonNet.primary_state_.leading_words_[0] != 0
+        && NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
+        spot_.add(6, 0, col, row, written - col + 0x1E, bottom - row);
+    }
+    row = bottom;
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, "{");
+    strcat(StringTemp, label_get(0xFB8 / 4));
+    strcat(StringTemp, ": ");
+    strcat(StringTemp, "}");
+    strcat(StringTemp, " ");
+    if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
+        text = Labels.strings_ptr[0x1000 / 4];
+    } else if (static_cast<int8_t>(NetWinSessionOptions.fields_.native_life_) == -1) {
+        text = Labels.strings_ptr[0xFE4 / 4];
+    } else {
+        text = Labels.strings_ptr[static_cast<int8_t>(NetWinSessionOptions.fields_.native_life_) + 0x3E4];
+    }
+    strcat(StringTemp, StringTable.get(text));
+    avail = field.right - col - 10;
+    if (avail < Buffer::text_width(StringTemp)) {
+        written = field.right - 10;
+        bottom = Buffer::wrap(StringTemp, col, row, avail);
+    } else {
+        written = Buffer::write_l(StringTemp, col, row);
+        bottom = row + Buffer::text_line_height();
+    }
+    if (NetDaemonNet.primary_state_.leading_words_[0] != 0
+        && NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
+        g_IFACE_MP_COMBO_ARROW_SPRITES[0].draw(
+            this, g_IFACE_MP_COMBO_ARROW_SPRITES[0].transparent_index(),
+            written + 3, row);
+    }
+    if (NetDaemonNet.primary_state_.leading_words_[0] != 0
+        && NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
+        spot_.add(7, 0, col, row, written - col + 0x1E, bottom - row);
+    }
+    row = bottom;
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, "{");
+    strcat(StringTemp, label_get(0xFBC / 4));
+    strcat(StringTemp, ": ");
+    strcat(StringTemp, "}");
+    strcat(StringTemp, " ");
+    if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
+        text = Labels.strings_ptr[0x1000 / 4];
+    } else if (static_cast<int8_t>(NetWinSessionOptions.fields_.cloud_cover_) == -1) {
+        text = Labels.strings_ptr[0xFE4 / 4];
+    } else {
+        text = Labels.strings_ptr[static_cast<int8_t>(NetWinSessionOptions.fields_.cloud_cover_) + 0x3E1];
+    }
+    strcat(StringTemp, StringTable.get(text));
+    avail = field.right - col - 10;
+    if (avail < Buffer::text_width(StringTemp)) {
+        written = field.right - 10;
+        bottom = Buffer::wrap(StringTemp, col, row, avail);
+    } else {
+        written = Buffer::write_l(StringTemp, col, row);
+        bottom = row + Buffer::text_line_height();
+    }
+    if (NetDaemonNet.primary_state_.leading_words_[0] != 0
+        && NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
+        g_IFACE_MP_COMBO_ARROW_SPRITES[0].draw(
+            this, g_IFACE_MP_COMBO_ARROW_SPRITES[0].transparent_index(),
+            written + 3, row);
+    }
+    if (NetDaemonNet.primary_state_.leading_words_[0] != 0
+        && NetWinSessionData.fields_.scenario_text_wire_tail_[0] == 0) {
+        spot_.add(8, 0, col, row, written - col + 0x1E, bottom - row);
+    }
+    row = bottom;
+
+    row += Buffer::text_line_height();
 
     if (NetWinSessionData.fields_.mode_ == 3 || NetWinSessionData.fields_.mode_ == 2) {
-        // The unclaimed-faction tally: every record whose claimed id matches
-        // nobody in the lobby.
-        int connected = 0;
-        for (int slot = 8; slot != 0; --slot) {
-            unsigned long owned =
-                faction_records_[8 - slot].owner_;
+        // Factions with a password that no connected player holds.
+        int unclaimed = 0;
+        for (int faction = 0; faction < 8; ++faction) {
+            const uint32_t owned = faction_records_[faction].owner_;
             if (owned != 0) {
-                int seen = 0;
-                if (NetDaemonNet.player_count_ > 0) {
-                    const NetWinLobbyRow *scan = &NetWinLobbyRows.rows_[1];
-                    while (seen < NetDaemonNet.player_count_) {
-                        if (scan->owner_ == owned) {
-                            break;
-                        }
-                        ++seen;
-                        ++scan;
+                int player;
+                for (player = 0; player < NetDaemonNet.player_count_; ++player) {
+                    if (NetWinLobbyRows.rows_[player + 1].owner_ == owned) {
+                        break;
                     }
                 }
-                if (seen == NetDaemonNet.player_count_) {
-                    ++connected;
+                if (player == NetDaemonNet.player_count_) {
+                    ++unclaimed;
                 }
             }
         }
-
-        buffer->set_text_color((connected != 0 ? 8 : 0) - 0xF, -1, 1, 1);
+        Buffer::set_text_color(unclaimed != 0 ? 0xF9 : 0xF1, -1, 1, 1);
         StringTemp[0] = 0;
         strcat(StringTemp, "{");
-        strcat(StringTemp,
-               label_get(0x113C / 4));
+        strcat(StringTemp, label_get(0x113C / 4));
         strcat(StringTemp, ": ");
         strcat(StringTemp, "}");
         strcat(StringTemp, " ");
-        char tally[80];
-        _itoa(connected, tally, 10);
+        _itoa(unclaimed, tally, 10);
         strcat(StringTemp, tally);
-
-        int avail = panel->right - col - 10;
-        if (avail < buffer->text_width(StringTemp)) {
-            buffer->wrap(StringTemp, col, row, avail);
+        avail = field.right - col - 10;
+        if (avail < Buffer::text_width(StringTemp)) {
+            written = field.right - 10;
+            bottom = Buffer::wrap(StringTemp, col, row, avail);
         } else {
-            buffer->write_l(StringTemp, col, row,
-                            strlen(StringTemp));
+            written = Buffer::write_l(StringTemp, col, row);
+            bottom = row + Buffer::text_line_height();
         }
     }
 
-    buffer->set_clip(buffer_working_rect());
+    Buffer::restore_clip();
     soft_update(&setup_rects_[3]);
 }
 
@@ -1232,14 +1282,9 @@ void NetWin::draw_player_names() {
     CharUpperA(StringTemp);
     Buffer::set_font(find_font(0xE, 1), 0, 0, 0);
     Buffer::set_text_color(0xE1, -1, 1, 1);
-    if (StringTemp != 0) {
-        Buffer::write_cent_l(StringTemp, title_rect,
-                             strlen(StringTemp));
-    }
+    Buffer::write_cent_l(StringTemp, title_rect);
 
-    NetWinLobbyRow *lobby_row = &NetWinLobbyRows.rows_[1];
-    AlphaNetProcessSlot *slot_record = &NetDaemonNet.process_slots_[1];
-    for (int row = 0; row < 7; ++row, ++lobby_row, ++slot_record) {
+    for (int row = 0; row < 7; ++row) {
         if (NetWinSessionData.fields_.mode_ == 3
             && row >= faction_records_[0].record_type_) {
             break;
@@ -1252,25 +1297,25 @@ void NetWin::draw_player_names() {
 
         // The ready glyph: element 2 when the record block's leading byte
         // says the slot holds a player.
-        int ready = lobby_row->ready_or_occupied_ != 0 ? 2 : 0;
+        int ready = NetWinLobbyRows.rows_[row + 1].ready_or_occupied_ != 0 ? 2 : 0;
         Buffer::box_sprite(row_rect, &InterfaceBoxStyles[48 + ready]);
 
-        if (NetWinSessionData.fields_.mode_ == 3 && lobby_row->prefix_ == -1) {
+        if (NetWinSessionData.fields_.mode_ == 3 && NetWinLobbyRows.rows_[row + 1].prefix_ == -1) {
             continue;
         }
 
         // The lock chip: the chosen faction's own id field against the
         // record's claim dword, only while the eighth word is 2 or 3.
-        const signed char mode = lobby_row->faction_or_color_;
+        const signed char mode = NetWinLobbyRows.rows_[row + 1].faction_or_color_;
         int locked = 0;
         if (NetWinSessionData.fields_.mode_ == 2 || NetWinSessionData.fields_.mode_ == 3) {
             if (mode != -1) {
                 const unsigned long owned = faction_records_[mode].owner_;
-                if (owned != 0 && owned != lobby_row->owner_) {
+                if (owned != 0 && owned != NetWinLobbyRows.rows_[row + 1].owner_) {
                     locked = 1;
                 }
             }
-        } else if (lobby_row->owner_ != 0) {
+        } else if (NetWinLobbyRows.rows_[row + 1].owner_ != 0) {
             locked = 1;
         }
         if (locked) {
@@ -1303,37 +1348,32 @@ void NetWin::draw_player_names() {
         Buffer::set_clip(&field);
 
         StringTemp[0] = 0;
-        if (lobby_row->prefix_ == -1) {
+        if (NetWinLobbyRows.rows_[row + 1].prefix_ == -1) {
             strcat(StringTemp, "Computer");
         } else {
             strcat(StringTemp,
-                   NetDaemonNet.get_player_name(slot_record->pid_));
+                   NetDaemonNet.get_player_name(NetDaemonNet.process_slots_[row + 1].pid_));
         }
-        if (lobby_row->faction_or_color_ != -1) {
+        if (NetWinLobbyRows.rows_[row + 1].faction_or_color_ != -1) {
             strcat(StringTemp, ": ");
             strcat(StringTemp, " ");
-            strcat(StringTemp, lobby_row->leader_name_);
+            strcat(StringTemp, NetWinLobbyRows.rows_[row + 1].leader_name_);
             // Count the earlier rows whose name text matches, and append
             // the tally when there is one.
             int matches = 0;
-            if (slot_record > &NetDaemonNet.process_slots_[1]) {
-                const NetWinLobbyRow *scan = &NetWinLobbyRows.rows_[1];
-                for (int seen = row; seen != 0; --seen) {
-                    if (strcmp(scan->leader_name_, lobby_row->leader_name_) == 0) {
-                        ++matches;
-                    }
-                    ++scan;
-                }
-                if (matches != 0) {
-                    char tally[0x50];
-                    _itoa(matches, tally, 10);
-                    strcat(StringTemp, tally);
+            for (int seen = 0; seen < row; ++seen) {
+                if (strcmp(NetWinLobbyRows.rows_[seen + 1].leader_name_,
+                           NetWinLobbyRows.rows_[row + 1].leader_name_) == 0) {
+                    ++matches;
                 }
             }
+            if (matches != 0) {
+                char tally[0x50];
+                _itoa(matches, tally, 10);
+                strcat(StringTemp, tally);
+            }
         }
-        if (StringTemp != 0) {
-            Buffer::write_l(StringTemp, &field, strlen(StringTemp));
-        }
+        Buffer::write_l(StringTemp, &field);
         Buffer::restore_clip();
 
         // 4807B7: the union lands in the text rectangle.
@@ -1397,10 +1437,7 @@ void NetWin::draw_custom_rules() {
     CharUpperA(StringTemp);
     Buffer::set_font(find_font(0xE, 1), 0, 0, 0);
     Buffer::set_text_color(0xE1, -1, 1, 1);
-    if (StringTemp != 0) {
-        Buffer::write_cent_l(StringTemp, &setup_rects_[46],
-                             strlen(StringTemp));
-    }
+    Buffer::write_cent_l(StringTemp, &setup_rects_[46]);
 
     RECT *const rules_rect = &setup_rects_[48];
     Buffer::box_sprite(rules_rect, &InterfaceBoxStyles[0]);
@@ -1408,8 +1445,8 @@ void NetWin::draw_custom_rules() {
 
     // One row rectangle walks both columns; the checkbox sits at its left
     // edge and the label 0x19 to the right of it.
-    const int left = rules_rect->left - 0x14;
     const int top = setup_rects_[48].top;
+    const int left = rules_rect->left - 0x14;
     Buffer::set_font(find_font(0xC, 1), 0, 0, 0);
     RECT rect;
     rect.left = left;
@@ -1420,33 +1457,36 @@ void NetWin::draw_custom_rules() {
     // The standing free-technology checkbox, spot id 100, and its label
     // (native 47FB32..47FB98).
     const int free_tech = (NetWinSessionOptions.fields_.rule_bits_c_ & 0x10) == 0;
+    Buffer *buffer = this;
     Sprite &standing = g_IFACE_CLOSE_X_SPRITES[free_tech ? 2 : 0];
-    standing.draw(this, standing.transparent_index(), left, top);
+    standing.draw(buffer, standing.transparent_index(), left, top);
     if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
         spot_.add(0x64, 1, rect.left, rect.top, rect.right - rect.left,
                   rect.bottom - rect.top);
     }
     rect.left += 0x19;
-    Buffer::set_text_color(free_tech ? 0xDE : 0xE4, -1, 1, 1);
+    if (free_tech) {
+        Buffer::set_text_color(0xDE, -1, 1, 1);
+    } else {
+        Buffer::set_text_color(0xE4, -1, 1, 1);
+    }
     char text[0x100];
     text[0] = 0;
     strcat(text, StringTable.get(Labels.strings_ptr[0x10A4 / 4]));
     strcat(text, ".");
-    if (text != 0) {
-        Buffer::write_l(text, &rect, strlen(text));
-    }
+    Buffer::write_l(text, &rect);
+    rect.left -= 0x19;
     rect.top += 0x14;
     rect.bottom += 0x14;
-    rect.left -= 0x19;
 
     if (X_text_open(ScriptPopupFile, "RULES") != 0) {
         return;
     }
     // '#' lines are comments and do not name a row.
-    char *line;
-    do {
+    char *line = text_get();
+    while (line[0] == '#') {
         line = text_get();
-    } while (line[0] == '#');
+    }
 
     for (int row = 0; row < 0x12; ++row) {
         unsigned int state;
@@ -1508,15 +1548,20 @@ void NetWin::draw_custom_rules() {
             continue;
         }
 
+        Buffer *buffer = this;
         Sprite &check = g_IFACE_CLOSE_X_SPRITES[state != 0 ? 2 : 0];
-        check.draw(this, check.transparent_index(), rect.left, rect.top);
+        check.draw(buffer, check.transparent_index(), rect.left, rect.top);
         if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
             spot_.add(row, 1, rect.left, rect.top, rect.right - rect.left,
                       rect.bottom - rect.top);
         }
         rect.left += 0x19;
         if (line != 0) {
-            Buffer::set_text_color(state != 0 ? 0xDE : 0xE4, -1, 1, 1);
+            if (state != 0) {
+                Buffer::set_text_color(0xDE, -1, 1, 1);
+            } else {
+                Buffer::set_text_color(0xE4, -1, 1, 1);
+            }
             Buffer::write_l(line, &rect, strlen(line));
         }
         rect.left -= 0x19;
@@ -1634,8 +1679,8 @@ void NetWin::draw_factions() {
 
         int mode = NetWinLobbyRows.rows_[index + 1].faction_or_color_;
         RECT field = setup_rects_[13 + index];
-        if (index + 1 == NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id())
-            || (NetDaemonNet.local_player_id() == NetDaemonNet.host_player_id_
+        if (index + 1 == NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id_)
+            || (NetDaemonNet.local_player_id_ == NetDaemonNet.host_player_id_
                 && NetWinLobbyRows.rows_[index + 1].prefix_ == -1)) {
             Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
             arrow.draw(this, arrow.transparent_index(),
@@ -1646,8 +1691,8 @@ void NetWin::draw_factions() {
 
         Buffer::set_font(find_font(0xE, 1), 0, 0, 0);
         Buffer::set_text_color(get_player_color(index + 1), 0, 1, 1);
-        field.left += 4;
         field.right -= 0xB;
+        field.left += 4;
         Buffer::set_clip(&field);
 
         StringTemp[0] = 0;
@@ -1670,9 +1715,7 @@ void NetWin::draw_factions() {
         strcat(StringTemp, " ");
         strcat(StringTemp, NetWinLobbyRows.rows_[index + 1].noun_faction_);
     named:
-        if (StringTemp != nullptr) {
-            Buffer::write_l(StringTemp, &field, strlen(StringTemp));
-        }
+        Buffer::write_l(StringTemp, &field);
         Buffer::restore_clip();
         spot_.add(index, 3, setup_rects_[13 + index].left,
                   setup_rects_[13 + index].top,
@@ -1681,11 +1724,6 @@ void NetWin::draw_factions() {
     }
 }
 
-// The exec callback every pick_* hands PopMenu::exec: the image passes its
-// own modal_callback_daemon address, reached here through the fixed dialog.
-static int __cdecl pick_daemon_callback() {
-    return NetWinDialog.modal_callback_daemon();
-}
 
 // The shared tail of the eight scalar pickers runs even on cancellation:
 // only the option-byte write is conditional. Native 47E137/47E426 and their
@@ -1720,7 +1758,7 @@ static void pick_send_state_with_captured_target() {
 static int pick_answer_at(NetWin &self, PopMenu &pop_menu, int *x, int *y) {
     self.get_mouse_pos(x, y);
     self.client_to_screen(x, y);
-    return pop_menu.exec(*x, *y, pick_daemon_callback);
+    return pop_menu.exec(*x, *y, NetWin::modal_callback_daemon);
 }
 
 static int pick_answer(NetWin &self, PopMenu &pop_menu) {
@@ -1728,7 +1766,7 @@ static int pick_answer(NetWin &self, PopMenu &pop_menu) {
     int y;
     self.get_mouse_pos(&x, &y);
     self.client_to_screen(&x, &y);
-    return pop_menu.exec(x, y, pick_daemon_callback);
+    return pop_menu.exec(x, y, NetWin::modal_callback_daemon);
 }
 
 /*
@@ -1897,23 +1935,14 @@ void NetWin::pick_player() {
         popup.dialogs().edit(label, gender_text, 0x17);
     }
     popup.set_loc(0x1000, 0x1000);
-    if (popup.exec(0, pick_daemon_callback) < 0) {
+    if (popup.exec(0, NetWin::modal_callback_daemon) < 0) {
         return;
     }
 
     memcpy(&updated, &NetWinLobbyRows.rows_[slot], 0x17C);
     if (popup.input_poll_state() == 1) {
         const int faction = updated.faction_or_color_;
-        if (faction == -1) {
-            // Native 47C073..47C13E interleaves six fresh lookups/copies.
-            strcpy(updated.leader_name_, StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
-            strcpy(updated.formal_faction_name_, StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
-            strcpy(updated.noun_faction_, StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
-            strcpy(updated.adjective_faction_, StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
-            strcpy(updated.leader_title_, StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
-            strcpy(updated.adjective_leader_, StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
-            updated.tail_[0] = 10; // Native 47C146, not a boolean default.
-        } else {
+        if (faction != -1) {
             const Player &player = Players[faction];
             strcpy(updated.leader_name_, player.name_leader);
             strcpy(updated.formal_faction_name_, player.formal_name_faction);
@@ -1923,6 +1952,15 @@ void NetWin::pick_player() {
             strcpy(updated.adjective_leader_, player.adj_leader);
             updated.tail_[0] =
                 static_cast<uint8_t>(player.is_leader_female);
+        } else {
+            // Native 47C073..47C13E interleaves six fresh lookups/copies.
+            strcpy(updated.leader_name_, StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
+            strcpy(updated.formal_faction_name_, StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
+            strcpy(updated.noun_faction_, StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
+            strcpy(updated.adjective_faction_, StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
+            strcpy(updated.leader_title_, StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
+            strcpy(updated.adjective_leader_, StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
+            updated.tail_[0] = 10; // Native 47C146, not a boolean default.
         }
     } else {
         strcpy(updated.leader_name_, ParseStrBuffer[0].str);
@@ -2038,7 +2076,7 @@ void NetWin::pick_diff(int slot) {
     int y;
     get_mouse_pos(&x, &y);
     client_to_screen(&x, &y);
-    const int answer = pop_menu.exec(x, y, pick_daemon_callback);
+    const int answer = pop_menu.exec(x, y, NetWin::modal_callback_daemon);
     memcpy(&row, &NetWinLobbyRows.rows_[slot], sizeof(row));
     if (answer >= 0) {
         row.field_2_ = static_cast<uint8_t>(answer);
@@ -3060,25 +3098,28 @@ int NetWin::pick_pass(int payload) {
                       nullptr, 0x800040) == -1) {
             return 0;
         }
-        if (ParseStrBuffer[0].str[0] == 0) {
-            if (!faction_mode) {
-                break;
-            }
-        } else {
+        if (ParseStrBuffer[0].str[0] != 0) {
             entered_hash = checksum_password(ParseStrBuffer[0].str);
-            if (!faction_mode) {
-                X_pop_ask("VERIFYPASSWORD", 0x50,
-                          &NetWinPasswordVerifyInitialText, nullptr, 0x800000);
-                if (ParseStrBuffer[0].str[0] != 0) {
-                    verify_hash = checksum_password(ParseStrBuffer[0].str);
-                }
-                if (entered_hash == verify_hash) {
-                    break;
-                }
+            if (faction_mode) {
+                goto check;
+            }
+            X_pop_ask("VERIFYPASSWORD", 0x50,
+                      &NetWinPasswordVerifyInitialText, nullptr, 0x800000);
+            if (ParseStrBuffer[0].str[0] != 0) {
+                verify_hash = checksum_password(ParseStrBuffer[0].str);
+            }
+            if (entered_hash != verify_hash) {
                 X_pop("DIFFERENTPASSWORDS", nullptr);
                 continue;
             }
+        } else if (faction_mode) {
+            goto check;
         }
+        NetWinLobbyRows.rows_[slot].owner_ = entered_hash;
+        memcpy(&updated, &NetWinLobbyRows.rows_[slot], 0x17C);
+        sub_47b1d0(slot, &updated);
+        return 1;
+    check:
         // Native 47CD43..47CD4C checks the live post-modal allocation.
         if (faction_records_[faction].owner_ != entered_hash) {
             X_pop("BADPASSWORD", nullptr);
@@ -3087,12 +3128,6 @@ int NetWin::pick_pass(int payload) {
         NetWinLobbyRows.rows_[slot].owner_ = entered_hash;
         return 1;
     }
-
-    NetWinLobbyRows.rows_[slot].owner_ = entered_hash;
-    // Native 47CE7B copies, then runs sub_47b1d0 inline (47CE89..47CF03).
-    memcpy(&updated, &NetWinLobbyRows.rows_[slot], 0x17C);
-    sub_47b1d0(slot, &updated);
-    return 1;
 }
 #if defined(_MSC_VER) && _MSC_VER == 1200
 #pragma intrinsic(memcpy)
