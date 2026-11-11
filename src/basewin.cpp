@@ -1498,6 +1498,12 @@ static inline void psych_sprite(Buffer *destination, Sprite *sprite, int x, int 
     sprite->draw(destination, sprite->transparent_index(), x, y);
 }
 
+// Indexed form: the drone row passes the table and index separately, which
+// keeps the image's register choice (0x00408A27..0x00408A87).
+static inline void psych_sprite_at(Buffer *destination, Sprite *table, int index, int x, int y) {
+    psych_sprite(destination, &table[index], x, y);
+}
+
 static inline int psych_specialist_type(int i) {
     return i >= 16 ? best_specialist()
         : (BaseCurrent->spec[i >> 3] >> ((i & 7) * 4)) & 15;
@@ -1557,8 +1563,8 @@ void BaseWin::psych_row(int x, int y, int width, int sprite_width,
             x += spacing;
         }
         for (i = 0; i < drones; i++) {
-            psych_sprite(this, &g_CITIZEN_SM_CURSOR_SPRITES[random.get(0, 2) * 4
-                + (i >= drones - super_drones ? 3 : 2)], x, y);
+            psych_sprite_at(this, g_CITIZEN_SM_CURSOR_SPRITES, random.get(0, 2) * 4
+                + (i >= drones - super_drones ? 3 : 2), x, y);
             x += spacing;
         }
         for (i = 0; i < BaseCurrent->specialist_total; i++) {
@@ -1591,8 +1597,7 @@ void BaseWin::draw_psych() {
     Buffer::set_font(&font, 0, 0, 0);
     const int text_offset = row_pitch / 2 - font.pixel_height() / 2;
     int stage = 0;
-    int y = panel.top + 2;
-    for (int row = 0; row < 5; ++row) {
+    for (int row = 0; row < 5; ++row, ++stage) {
         if (stage != 0) {
             while (stage < 5
                 && BasePsychTalents[stage] == BasePsychTalents[stage - 1]
@@ -1632,13 +1637,11 @@ void BaseWin::draw_psych() {
                 break;
             }
             Buffer::set_text_color(TextColourTable[114], TextColourTable[115], 1, 1);
-            Buffer::write_cent_text(StringTemp, caption_x, y + text_offset - 2, half_width);
+            Buffer::write_cent_text(StringTemp, caption_x, panel.top + 2 + row * row_pitch + text_offset - 2, half_width);
             const int row_x = panel.left + 2;
-            psych_row(row_x, y, half_width, g_CITIZEN_SM_CURSOR_SPRITES[0].width() + 1,
+            psych_row(row_x, panel.top + 2 + row * row_pitch, half_width, g_CITIZEN_SM_CURSOR_SPRITES[0].width() + 1,
                 BasePsychTalents[stage], BasePsychDrones[stage], BasePsychSuperDrones[stage]);
         }
-        y += row_pitch;
-        ++stage;
     }
     MapWinCaptionScale = -1;
     MapWinCaptionDivisor = -1;
