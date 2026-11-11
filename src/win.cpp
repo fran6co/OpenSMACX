@@ -487,15 +487,8 @@ Verification note: the original writes left, right, top, bottom in that
          the order is pinned through `volatile` only so the emitted stores
          keep matching the original, exactly as make_rect does.
 */
-void __cdecl offset_rect(RECT *rect, int dx, int dy) {
-    // PLAIN `+=`, in the image's order. The `volatile` was there to pin that
-    // order and the bit-casts to pin the wrapping; neither is needed, and
-    // together they made a 16-instruction body compile to 37.
-    rect->left += dx;
-    rect->right += dx;
-    rect->top += dy;
-    rect->bottom += dy;
-}
+// BODY IN win.h as `inline`; the marker stays here because that is
+// where the catalogue reads it.
 
 // make_rect (0x005F86C0) is this unit's: the image places it between
 // offset_rect (0x005F8670) and WinNodeList's destructor (0x005F86F0), and

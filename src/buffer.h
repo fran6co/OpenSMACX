@@ -160,9 +160,15 @@ static int __stdcall probe_pcx(const char *, Palette *, int, int);
 int copy_scaled(Buffer *, RECT *, RECT *);
 int copy_scaled_to_window(Win *, RECT *, RECT *);
 void set_dc_text_color(unsigned int);
-// Private helper; no added original mapping. Color index must be in0..255
-// when init_flags_&4 selects DIB RGB conversion, as in native unguarded path.
-COLORREF text_color_to_gdi(uint32_t) const;
+// Guarded full-length right-aligned text: the image tests the text for null
+// before strlen, like the guarded write_l.
+int write_right(char *text, int x_coord, int y_coord, int width) {
+    if (text == 0) {
+        return x_coord;
+    }
+    return write_right_l(text, x_coord, y_coord, width,
+                         static_cast<int>(strlen(text)));
+}
 void select_text_slot(int);
 int draw_pie(RECT *, int, int, int, int, int, int);
 int gouraud(Vert *, int *, int, int, unsigned char);

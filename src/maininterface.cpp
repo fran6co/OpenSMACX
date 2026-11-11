@@ -3210,15 +3210,6 @@ void __cdecl scroll_show(GraphicWin *window, Scroll *scroll) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:c0b358f0:src/unrecovered/0045e540.cpp original hot/cold spans and retained seed findings.", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x45e540 full native register, rectangle mutation, receiver, call and lifetime audit.", "source:src/console.h virtual GraphicWin base; src/maininterface.h existing Sprite arrays and interface-up member; src/buffer.h source-receiver copy, full bounds and DIB geometry.", "source:src/maininterface.cpp: the helper uses MainInterfaceGlobal-owned slide/scroll sprites, interface geometry and shared transition state; its Wave configuration belongs to MainInterface::init.", "pinned:Pinned cold unwind regions remain consecutive with MainInterface dtor/ctor/init/set_message: 0x6552C0-0x65552F, 0x655530-0x655723, 0x655730-0x655745, 0x655745-0x655757, followed by these four helper spans 0x655757-0x655777, 0x655777-0x6557A2, 0x6557A2-0x6557CD, and 0x6557CD-0x6557F8; no other mapped span intersects this detached range."], "reason": "Keep this free ?scroll_hide UI transition helper with the MainInterface resource and lifetime provider while preserving its existing __cdecl signature and external window callers. This is an inferred source correspondence, not proof of an original filename or historical TU boundary."}
 // symbol    ?scroll_hide@@YAXPAVGraphicWin@@PAVScroll@@@Z
 // TRIED: Ghidra's decompilation was unusable here (stack-frame analysis fell apart on the SEH-heavy huge frame); rebuilt from raw disassembly only. Three real `Buffer` locals (RAII) matching construction/destruction order, register-variable/goto transcription for the two scroll-animation throttle loops (timeGetTime via IAT-slot fn ptr + do_sound), the fixed global screen Buffer at 0x9B7490, and a pointer-to-member vtable-slot call (slot 2) on `a2` at the very end. Compiles and matches through instruction #35 (diverges #36, mov vs push) - the deepest match of this batch's giant functions. The two `0x9156b0`/`0x915af4`-relative receiver computations (`*(int*)(*(int*)g_009156b0+4) + <base>`) are transcribed literally; their semantic meaning (which sub-object they reach) was not resolved.
-// WORKAROUND(inline): the image inlines win.cpp's offset_rect here (0x45EA97);
-// a same-TU inline copy of its body reproduces that expansion.
-static inline void scroll_offset_rect(RECT *rect, int dx, int dy) {
-    rect->left += dx;
-    rect->right += dx;
-    rect->top += dy;
-    rect->bottom += dy;
-}
-
 void __cdecl scroll_hide(GraphicWin *window, Scroll *scroll) {
     // Buffer::copy names its source receiver; the final hide is the inherited
     // virtual operation.
@@ -3326,7 +3317,7 @@ void __cdecl scroll_hide(GraphicWin *window, Scroll *scroll) {
     }
 
     // Native 0x45EA97 negates each origin once and adds it to both edges.
-    scroll_offset_rect(&area, -original_area.left, -original_area.top);
+    offset_rect(&area, -original_area.left, -original_area.top);
     window->Buffer::set_clip(&area);
     window->fill(9);
     window_frame.draw(static_cast<Buffer *>(window), 9,

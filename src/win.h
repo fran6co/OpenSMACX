@@ -942,7 +942,17 @@ static_assert(sizeof(Win) == 0x444, "Win layout must match the legacy ABI");
 BOOL __cdecl in_box(int x, int y, const RECT *rect);
 int __cdecl in_box(
     int x, int y, int left, int top, int width, int height);
-void __cdecl offset_rect(RECT *rect, int dx, int dy);
+// BODY HERE as `inline`: the image keeps one out-of-line copy in
+// win.obj's COMDAT tail (0x005F8670) among the compiler-generated deleting
+// destructors, calls it once (0x005EDC8D) and expands it elsewhere, in win.cpp
+// and in other units (scroll_hide at 0x0045EA97). The `// ORIGINAL:` marker
+// stays in win.cpp.
+inline void __cdecl offset_rect(RECT *rect, int dx, int dy) {
+    rect->left += dx;
+    rect->right += dx;
+    rect->top += dy;
+    rect->bottom += dy;
+}
 RECT *__cdecl make_rect(RECT *rect, int x, int y, int width, int height);
 
 

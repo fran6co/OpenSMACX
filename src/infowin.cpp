@@ -815,20 +815,9 @@ int InfoFactionShadowColors[8] = {1, 175, 4, 248, 3, 57, 109, 192};
 
 // ORIGINAL: 0x00458420 ?draw_text@InfoWin@@QAEXH@Z 0x00458420-0x004588A9 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00458420-0x004588A9"], "reason": "Recovered original behavior through real source classes and owned members; source remains subject to byte and structural verification."}
-// The ranked rows right-align through the guarded four-argument form of
-// Buffer::write_right_l; the image tests the text for null before strlen
-// exactly as the header's guarded write_l does.
-// WORKAROUND(decl): buffer.h declares write_right_l(char *, int, int, int)
-// without a body; this local guarded copy stands in for its inline body.
-static inline int info_write_right(char *text, int x_coord, int y_coord,
-                                   int width) {
-    if (text == 0) {
-        return x_coord;
-    }
-    return MainInterfaceGlobal.write_right_l(text, x_coord, y_coord, width,
-                                             static_cast<int>(strlen(text)));
-}
-
+// The ranked rows right-align through Buffer's guarded write_right; the image
+// tests the text for null before strlen exactly as the header's guarded
+// write_l does.
 void InfoWin::draw_text(int pane) {
     MainInterfaceGlobal.set_font(&font_, 0, 0, 0);
     int row = 0;
@@ -879,8 +868,8 @@ void InfoWin::draw_text(int pane) {
                 }
                 if (remaining > length) {
                     if (ranked) {
-                        info_write_right(text, 2, row_y_[column][row],
-                                         area.right - area.left - 4);
+                        MainInterfaceGlobal.write_right(text, 2, row_y_[column][row],
+                                                        area.right - area.left - 4);
                     } else {
                         MainInterfaceGlobal.write_l(text, row_x_[column][row],
                                                     row_y_[column][row]);
