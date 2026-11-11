@@ -1704,8 +1704,10 @@ int ReportWin::on_key_click(int, int code) {
             ReportIfGlobal.SubInterface::release_iface_mode();
             return 1;
         }
-        if (code == 0x71) report_labs();
-        else if (code == 0x72) report_energy();
+        // The image enters the rotation switch's case-2 block for F2 (one
+        // report_labs expansion, not two).
+        if (code == 0x71) goto labs;
+        if (code == 0x72) report_energy();
         else if (code == 0x73) report_ops();
         else if (code == 0x74) report_projects();
         else if (code == 0x75) report_sat();
@@ -1714,7 +1716,7 @@ int ReportWin::on_key_click(int, int code) {
         return 1;
     }
     if (code < 0x21 || code > 0x28) {
-        if ((code >= 0x30 && code <= 0x5A) || code == 0x1B) {
+        if ((code > 0x2F && code < 0x5B) || code == 0x1B) {
             ReportWinGlobal.Win::release_modal();
             ReportIfGlobal.SubInterface::release_iface_mode();
         }
@@ -1729,7 +1731,7 @@ int ReportWin::on_key_click(int, int code) {
     rotate:
         ReportIfGlobal.field_8_ = moved % 7 + 2;
         switch (ReportIfGlobal.field_8_) {
-        case 2: report_labs(); break;
+        case 2: labs: report_labs(); return 1;
         case 3: report_energy(); break;
         case 4: report_ops(); break;
         case 5: report_projects(); break;
