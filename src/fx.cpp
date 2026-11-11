@@ -640,7 +640,7 @@ static inline void fx_set_def_popup_sound(BasePopConfigCallback callback,
 
 // Initialize the effect and CPU-voice banks in original call order. Qualified
 // Wave calls were direct in the executable; Effect[4].set_pitch is virtual.
-// ORIGINAL: 0x00445CD0 ?init@FX@@QAEXXZ 0x00445CD0-0x004468E1
+// ORIGINAL: 0x00445CD0 ?init@FX@@QAEXXZ 0x00445CD0-0x004468E1 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Existing seed git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00445cd0.cpp preserves original span445CD0..4468E1 and is retained as a hint.", "Original instructions store this+28EC=-1, publish callback4456B0, copy70words from683AD8, initialize/group the Effect array and global Wave objects, and reset37words at9BC080. The sole indirect call446034 targets Effect[4] virtual set_pitch at slot38."], "reason": "Initialize the real effect and CPU-voice banks and publish source-owned popup/audio defaults; replaces the executable-address forwarder."}
 // TRIED: register-faithful transcription (self=ecx, no ebx-copy) diverges at instr #2 (mov ebx,ecx vs push) - /O2 register allocation differs for this 3089-byte, ~150-call function; not chased further.
 void FX::init() {
@@ -1013,7 +1013,7 @@ void FX::engine_pitch(int pitch) {
 // Historical TRIED: an authored bare-jump/linker-thunk scaffold was rejected. The tail is instead emitted by the implicit Ambience destructor over Midi; no handwritten wrapper or machine-code body is needed. The target 0x004C7670 is the separately mapped Midi destructor.
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00446B40 0x00446CD8 0x00446D10 0x00446B9A
-// ORIGINAL: 0x00446B40 ?ambience@@YAHH@Z 0x00446B40-0x00446CD6
+// ORIGINAL: 0x00446B40 ?ambience@@YAHH@Z 0x00446B40-0x00446CD6 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical retired seed src/unrecovered/00446b40.cpp", "recovery/tasks/ambience-faction-art-owner-oct5.json", "pinned complete original spans; fresh native owner compilation and actual-source behavior controls"], "reason": "Complete semantic recovery through genuine source-owned members, globals and lifetime operations; retain original defects and historical obligations. Current byte restoration remains unfinished."}
 // symbol    ?ambience@@YAHH@Z
 // TRIED: guard bit 0x800, no-op-if-unchanged, in-range switch dispatch on *DAT_0074daa0's vtable (14 cases mapping to slots verified against the raw jump table at 0x446CD8, not Ghidra's summary, which collapsed two distinct case targets), else stop the old FX entry (slot 0x28), start the new one (slot 0x5c), revert on failure (slot 0x20), and FX::play() the result. Landed at 0.89 similarity; diverges at #108 where case 0xc8 and case 0xd0 - same vtable slot, genuinely two separate blocks in the original (`mov eax`/`call [eax+..]` vs `mov edx`/`call [edx+..]`) - compile to one shared jump target here. Tried plain int* stride (`g_00749cf8 + id*27`) against explicit byte-offset char* arithmetic for the FX table addressing; neither changed the divergence.
@@ -1070,7 +1070,7 @@ int __cdecl ambience(int ambience_id) {
 // Every branch retains its original probe effect even when it differs from
 // the effect played. These are real bank elements, not independent globals.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00446D10 ?ambience_veh@@YAXH@Z 0x00446D10-0x004471EE FILE
+// ORIGINAL: 0x00446D10 ?ambience_veh@@YAXH@Z 0x00446D10-0x004471EE FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:291c01ea:src/recovered/units/00446d10.cpp", "src/ambience.h", "src/midi.h", "src/fx.h"], "reason": "Original constructor staging, actual event tables and compiler-call contracts identify the genuine audio owner operation; compatible historical seed spans and claims remain available for restoration, not an acceptance verdict."}
 void __cdecl ambience_veh(int vehicle) {
     if (vehicle < 0) return;
