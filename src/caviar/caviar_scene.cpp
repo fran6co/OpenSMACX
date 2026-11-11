@@ -767,7 +767,7 @@ Purpose: The voxel-facet bounding box: start the min/max pair at the
          The first step is the tree's own vector_add (0x00628150); the
          rest are component adds the original inlines.
 
-// ORIGINAL: 0x0063A9D0 sub_63a9d0 0x0063A9D0-0x0063AD54
+// ORIGINAL: 0x0063A9D0 sub_63a9d0 0x0063A9D0-0x0063AD54 BYTE_EXACT
 // symbol    _sub_63a9d0
 // size      900 bytes
 // Deleted seed provenance: git:123267b4afb63f4fd3396772db0fcf89d35259c9:src/unrecovered/0063a9d0.cpp
