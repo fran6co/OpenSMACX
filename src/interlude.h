@@ -5,6 +5,7 @@
 class Interlude : public GraphicWin {
  public:
   Interlude();
+  // 0x0045F740; interlude() expands it at every return.
   virtual ~Interlude();
   void exec(char *section);
   void close();
@@ -20,5 +21,9 @@ class Interlude : public GraphicWin {
   // RECOVERY_MEMBER: v2 Interlude art_ Buffer 0xA54 0x0045F200
   Buffer art_;
 };
+
+// Defined after the class: the in-class spelling perturbs register choice in
+// console_commands.cpp (corner_the_market 0x004E2000 loses its exact match).
+inline Interlude::~Interlude() { close(); }
 
 void __cdecl interlude(int id, char *text, int mode, int ending);

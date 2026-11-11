@@ -2151,51 +2151,50 @@ void __cdecl do_fungal_towers() {
 // TRIED: heavily SEH-framed function (local Interlude+Buffer+StringStruct objects, __CxxFrameHandler unwind funclets); Ghidra's own pseudocode has unaff_EBX/ESI/DI and garbled puStackY_* return- address literals from the frame, so this is a raw-disasm transcription instead, using RAII (Interlude popup; Buffer buf; StringStruct strObj;) for the destructor cascade rather than hand-written SEH. A `sub_4066c0` thiscall on an untyped 8-byte local is modeled as a throwaway `InterludeRunResult` class. The two faction-scan loops (best commlink / best base) and the StringStruct remove_all/close cleanup are best-effort approximations, not verified bit-for-bit - the two indirect calls through g_0066931c/g_00669344 (CharUpperA/CharLowerA IAT slots) are called directly instead of through the pointer.
 void __cdecl interlude(int id, char *text, int mode, int ending) {
     Interlude popup;
-    if (IsMultiplayerNet || DiplomacyActive) return;
-    const unsigned int shift = static_cast<unsigned int>(id) & 31u;
-    if (GameDataStateStorage.fields_.game_interlude_flags_ & (1u << shift)) return;
-    int faction = ConsoleGlobal.faction_id_;
-    const bool alien = (Players[faction].rule_flags & RFLAG_ALIEN) != 0;
-    if (id < 32 ? alien : !alien) return;
-    if ((GameDataStateStorage.fields_.game_state_ & 0x10) || (GameDataStateStorage.fields_.game_rules_ & 0x200000)) return;
+    if (IsMultiplayerNet) return;
+    if (DiplomacyActive) return;
+    if (id < 32) {
+        if ((1 << id) & GameDataStateStorage.fields_.game_interlude_flags_) return;
+        if (Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) return;
+    } else {
+        if ((1 << (id - 32)) & GameDataStateStorage.fields_.game_interlude_flags_) return;
+        if (!(Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN)) return;
+    }
+    if (GameDataStateStorage.fields_.game_state_ & 0x10) return;
+    if (GameDataStateStorage.fields_.game_rules_ & 0x200000) return;
     StringTemp[0] = 0;
-    strcat(StringTemp, Players[faction].filename);
+    strcat(StringTemp, Players[ConsoleGlobal.faction_id_].filename);
     CharUpperA(StringTemp);
-    if (strcmp(StringTemp, "FUNGBOY") == 0) return;
-    if (id < 32) GameDataStateStorage.fields_.game_interlude_flags_ |= 1u << shift;
+    if (!strcmp(StringTemp, "FUNGBOY")) return;
+    if (id < 32) GameDataStateStorage.fields_.game_interlude_flags_ = GameDataStateStorage.fields_.game_interlude_flags_ | (1 << id);
     if (id == 6) GameDataStateStorage.fields_.game_interlude_flags_ |= 0x12;
     if (GameDataStateStorage.fields_.game_preferences_ & 0x40000) return;
 
-    const int saved_turn = GameDataStateStorage.fields_.turn_current_num_;
-    parse_num(0, game_year(saved_turn));
-    parse_num(1, game_year(saved_turn));
-    parse_num(2, game_year(saved_turn));
+    const int turn = GameDataStateStorage.fields_.turn_current_num_;
+    parse_num(0, game_year(turn));
+    parse_num(1, game_year(turn));
+    parse_num(2, game_year(turn));
     StringTemp[0] = 0;
-    if (mode != 0) {
-        strcat(StringTemp, mode == 2 ? "EPILOGUE" : mode == 3 ? "EPILOGUE2"
-                           : mode == 4 ? "EPILOGUE3" : "INTERLUDE");
+    if (mode) {
+        if (mode == 2) strcat(StringTemp, "EPILOGUE");
+        else if (mode == 3) strcat(StringTemp, "EPILOGUE2");
+        else if (mode == 4) strcat(StringTemp, "EPILOGUE3");
+        else strcat(StringTemp, "INTERLUDE");
         X_pop(InterludeTextFile, StringTemp, nullptr);
     }
-    parse_num(1, static_cast<int>(game_year(saved_turn) - game_year(0)));
+    parse_num(1, game_year(turn) - game_year(0));
     if (id == 20) {
-        parse_num(1, static_cast<int>(game_year(saved_turn) - game_year(0)) / 100);
+        parse_num(1, static_cast<int>(game_year(turn) - game_year(0)) / 100);
     }
-
-    faction = ConsoleGlobal.faction_id_;
-    PluralityDefault = 0;
-    GenderDefault = Players[faction].is_leader_female;
-    parse_says(0, Players[faction].title_leader, -1, -1);
-    faction = ConsoleGlobal.faction_id_;
-    PluralityDefault = 0;
-    GenderDefault = Players[faction].is_leader_female;
-    parse_says(1, Players[faction].name_leader, -1, -1);
+    parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, 0);
+    parse_says(0, Players[ConsoleGlobal.faction_id_].title_leader, -1, -1);
+    parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, 0);
+    parse_says(1, Players[ConsoleGlobal.faction_id_].name_leader, -1, -1);
     parse_says(8, Players[ConsoleGlobal.faction_id_].assistant_name, -1, -1);
     parse_says(9, Players[ConsoleGlobal.faction_id_].scientist_name, -1, -1);
-    faction = ConsoleGlobal.faction_id_;
     StringTemp[0] = 0;
-    PluralityDefault = 0;
-    GenderDefault = Players[faction].is_leader_female;
-    strcat(StringTemp, Players[faction].name_leader);
+    parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, 0);
+    strcat(StringTemp, Players[ConsoleGlobal.faction_id_].name_leader);
     CharLowerA(StringTemp);
     parse_says(3, StringTemp, -1, -1);
 
@@ -2206,17 +2205,15 @@ void __cdecl interlude(int id, char *text, int mode, int ending) {
     for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; ++i) {
         if (Bases[i].faction_id_current == ConsoleGlobal.faction_id_) {
             int value = Bases[i].population_size;
-            int offset, mask;
-            bitmask(1, &offset, &mask);
-            if (Bases[i].facilities_built[offset] & mask) value += 999;
+            if (has_fac_built(FAC_HEADQUARTERS, i)) value += 999;
             if (value > best_value) {
-                parse_says(2, Bases[i].name_string, -1, -1);
                 best_value = value;
                 best_base = i;
+                parse_says(2, Bases[i].name_string, -1, -1);
             }
         }
     }
-    if (ending == 0) {
+    if (!ending) {
         int best = 0;
         for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; ++i) {
             if (Bases[i].faction_id_current == ConsoleGlobal.faction_id_) {
@@ -2233,23 +2230,27 @@ void __cdecl interlude(int id, char *text, int mode, int ending) {
     StringTemp[0] = 0;
     strcat(StringTemp, Players[ConsoleGlobal.faction_id_].search_key);
     CharUpperA(StringTemp);
-    if (strcmp(StringTemp, "CARETAKE") == 0) {
-        parse_says(6, label_get(1128), -1, -1);
-        parse_says(7, label_get(1129), -1, -1);
-    } else {
+    if (strcmp(StringTemp, "CARETAKE")) {
         parse_says(6, label_get(1127), -1, -1);
         parse_says(7, label_get(1130), -1, -1);
-    }
-    if (id < 32) {
-        if (Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) return;
     } else {
-        id -= 32;
-        if (id == 3) GameDataStateStorage.fields_.game_interlude_flags_ |= 0x10;
+        parse_says(6, label_get(1128), -1, -1);
+        parse_says(7, label_get(1129), -1, -1);
     }
-    GameDataStateStorage.fields_.game_interlude_flags_ |= 1u << (static_cast<unsigned int>(id) & 31u);
+    if (id >= 32) {
+        // Restored original behaviour: the image re-tests the faction here
+        // and returns for a non-alien player (0x0052391A).
+        if (Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) {
+            id -= 32;
+            if (id == 3) GameDataStateStorage.fields_.game_interlude_flags_ |= 0x10;
+        } else return;
+    } else {
+        if (Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) return;
+    }
+    GameDataStateStorage.fields_.game_interlude_flags_ |= 1 << id;
     StringTemp[0] = 0;
     strcat(StringTemp, "INTERLUDE");
-    char number[20];
+    char number[80];  // 0x50 bytes at [ebp-0x1044], below the Interlude local
     _itoa(id, number, 10);
     strcat(StringTemp, number);
     popup.exec(StringTemp);

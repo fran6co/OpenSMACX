@@ -36,8 +36,8 @@ Interlude::Interlude() {}
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0045F740 ??1Interlude@@QAE@XZ 0x0045F740-0x0045F905;0x00655820-0x00655859 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0045f740.cpp: original identity, complete spans and retained seed history", "source:src/interlude.h: genuine GraphicWin base and embedded member lifetime", "source:recovery/tasks/interlude-lifetime-owner-closure.json: bounded coordinator authorization"], "reason": "Original destructor45F740 and cold cleanup establish real member/base teardown; declare genuine virtual lifecycle so compiler owns deleting destructors and receiver adjustments."}
+// body src/interlude.h
 // symbol    ??1Interlude@@UAE@XZ
-Interlude::~Interlude() { close(); }
 
 // ORIGINAL: 0x0045F640 ?close@Interlude@@QAEXXZ 0x0045F640-0x0045F6E5 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original instruction/call evidence retained from src/stringstruct.cpp", "source:src/interlude.h: real GraphicWin base, embedded StringList and Buffer, compiler-generated deleting/adjustor lifecycle", "Original45F640..45F6E5; retired seed git:ee30a69d:src/unrecovered/0045f640.cpp records the same identity and spans with its shim TRIED note kept below.", "The GraphicWin close chain is graphicwin.h's own close on the unadjusted receiver (the single-inheritance hypothesis layout), the caption list is the +0xA24 StringList block with head/next/count at +0xA2C/+0xA30/+0xA34, and the dialogue Buffer at +0xA54 closes through buffer.h's own close.", "The list's slot-1 release and each payload's deleting destructor run through member-fn-pointer unions because their classes are unnamed; the adjusted-receiver dispatch is the seed's vtbl+4 walk.", "Prior interpretation: Coverage transcription of the intermission teardown with the list drain kept at the seed's shape."], "reason": "Original member/callback/lifetime identity is owned by genuine Interlude C++ hierarchy; actual emitted symbol replaces the retired raw receiver shim, preserving historical spans and claims."}
@@ -80,43 +80,53 @@ void Interlude::on_redraw() {
                            interlude_rect_width(&text_rect_), 0);
 }
 
+
+// Rectangle helpers exec() expands inline. The image keeps both the +50
+// shift and the centring offset in a register added to top and bottom (an
+// inlined parameter), and their inline cost is what leaves the first close()
+// in exec() calling remove_all out of line while the last one expands it.
+static inline void rect_inset(RECT *rect, int dx, int dy) {
+    rect->left -= dx;
+    rect->right += dx;
+    rect->top -= dy;
+    rect->bottom += dy;
+}
+static inline void rect_shift_y(RECT *rect, int dy) {
+    rect->top += dy;
+    rect->bottom += dy;
+}
+
 // ORIGINAL: 0x0045F2E0 ?exec@Interlude@@QAEXPAD@Z 0x0045F2E0-0x0045F5C0
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0045f2e0.cpp: original identity, complete spans and retained seed history", "source:src/interlude.h: genuine GraphicWin base and embedded member lifetime", "source:recovery/tasks/interlude-lifetime-owner-closure.json: bounded coordinator authorization"], "reason": "Original45F2E0 configures Interlude art, captions, clip rectangle and modal lifecycle on actual embedded Buffer/StringList members; source-owned borrowed fonts preserve shared producer relationships."}
 // TRIED: many named C locals (rect, w, qv, qh, str_height, half, i, ...) push the compiler to `sub esp,N` for the frame; original reserves one dword via `push ecx` for the single Buffer* local that survives calls. Structure/order matches Ghidra.
 void Interlude::exec(char *section) {
     close();
     GraphicWin::init(0, 0, WinScreenWidth, WinScreenHeight, 0, 0, 0, 0, 0);
-    Buffer *canvas = static_cast<Buffer *>(this);
-    canvas->set_text_color(MessageWinTextColor, -1, 1, 1);
-    canvas->set_text_color2(MessageWinTextColor, -1, 1, 1);
-    canvas->set_text_color3(MessageWinTextColor, -1, 1, 1);
-    canvas->set_text_color_hyper(2, -1, 1, 1);
-    canvas->set_font(InterludeNormalFont, InterludeSecondFont,
-                     InterludeThirdFont, 0);
+    set_text_color(MessageWinTextColor, -1, 1, 1);
+    set_text_color2(MessageWinTextColor, -1, 1, 1);
+    set_text_color3(MessageWinTextColor, -1, 1, 1);
+    set_text_color_hyper(2, -1, 1, 1);
+    set_font(InterludeNormalFont, InterludeSecondFont, InterludeThirdFont, 0);
     art_.load_pcx(WinScreenWidth == 800 ? "credits.pcx" : "credits2.pcx",
                   nullptr, 10, 0xec);
-    captions_.load((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN)
-                      ? const_cast<char *>("INTERLUDEA") : InterludeTextFile,
-                    section, 1, nullptr);
-    text_rect_ = canvas->clip_rect();
-    const int inset_height = (text_rect_.bottom - text_rect_.top) / -6;
-    const int inset_width = (text_rect_.right - text_rect_.left) / -6;
-    text_rect_.left -= inset_width;
-    text_rect_.right += inset_width;
-    text_rect_.top -= inset_height;
-    text_rect_.bottom += inset_height;
-    text_rect_.right -= (text_rect_.right - text_rect_.left) / 3;
-    if (text_rect_.left > 24) text_rect_.left = 25;
-    if (strcmp(section, "INTERLUDE21") == 0
-        || strcmp(section, "INTERLUDE22") == 0) {
-        text_rect_.top += 50;
-        text_rect_.bottom += 50;
+    if (Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) {
+        captions_.load("INTERLUDEA", section, 1, nullptr);
+    } else {
+        captions_.load(InterludeTextFile, section, 1, nullptr);
     }
-    const int height = canvas->write_strings_height(
-        &captions_, text_rect_.right - text_rect_.left, 0);
-    const int offset = ((text_rect_.bottom - text_rect_.top) - height) / 2;
-    text_rect_.top += offset;
-    text_rect_.bottom += offset;
+    RECT *const rect = &text_rect_;
+    *rect = clip_rect();
+    const int inset_height = (rect->bottom - rect->top) / -6;
+    const int inset_width = (rect->right - rect->left) / -6;
+    rect_inset(&text_rect_, inset_width, inset_height);
+    text_rect_.right += (rect->right - rect->left) / -3;
+    rect->left = min(rect->left, 25);
+    if (!strcmp(section, "INTERLUDE21") || !strcmp(section, "INTERLUDE22")) {
+        rect_shift_y(rect, 50);
+    }
+    const int height = write_strings_height(&captions_, rect->right - rect->left, 0);
+    const int offset = (rect->bottom - rect->top - height) / 2;
+    rect_shift_y(&text_rect_, offset);
     set_modal(0, nullptr, nullptr);
     close();
     do_all_draws();
