@@ -101,7 +101,7 @@ HWND HandleMain;  // 0x009B7B28
 // vfptr store itself once the virtuals are declared. A named constant for a
 // vtable address is the hand-work this project exists to delete.
 
-// ORIGINAL: 0x005F8770 sub_5f8770 0x005F8770-0x005F87F6 FILE
+// ORIGINAL: 0x005F8770 sub_5f8770 0x005F8770-0x005F87F6 FILE BYTE_EXACT
 // symbol    ??_GWinNodeList@@UAEPAXI@Z
 // homed from 005f8770.cpp: the scalar deleting destructor
 // the 0xC8 member's vtable (0x0066FF30) points at. `WinNodeList` is this
@@ -5818,7 +5818,7 @@ int Win::on_redraw(int, int) {
 // ===== homed from src/recovered/units/005f5810.cpp =====
 typedef unsigned int uint32_t;
 
-// ORIGINAL: 0x005F5810 ?on_nc_paint@Win@@QAEXPAURECT@@H@Z 0x005F5810-0x005F5ACA FILE
+// ORIGINAL: 0x005F5810 ?on_nc_paint@Win@@QAEXPAURECT@@H@Z 0x005F5810-0x005F5ACA FILE BYTE_EXACT
 // symbol    ?on_nc_paint@Win@@UAEXPAUtagRECT@@H@Z
 // kind game
 void Win::on_nc_paint(RECT * area, int flags) {
