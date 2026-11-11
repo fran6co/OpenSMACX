@@ -760,11 +760,14 @@ int __cdecl suggest_plan(int faction_id, int faction_id_2);
 void __cdecl set_base(int base_id);
 
 MEASURED inline int __cdecl base_project(int project_id) {
-    return GameDataStateStorage.fields_.secret_project_[project_id];
+    return GameDataStateStorage.fields_.secret_project_.project_base[project_id];
 }
 
 MEASURED inline BOOL __cdecl has_project(int project_id, int faction_id) {
-    int base_id = base_project(project_id);
+    // WORKAROUND(inline): calling base_project() here makes base_minerals
+    // (0x004E9CB0) exact but flips allocate_energy's (0x005267B0) PlayersData
+    // load-order ties; the operator[] read keeps both TUs' claims.
+    int base_id = GameDataStateStorage.fields_.secret_project_[project_id];
     if (base_id < 0) {
         return false;
     }

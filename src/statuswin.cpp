@@ -1583,9 +1583,11 @@ void __cdecl say_morale(LPSTR morale_output, int veh_id, int faction_id_vs_nativ
     // "+" loop body, ")", and the designate-defender "(d)".
     if (Vehs[veh_id].proto_id < MaxVehProtoFactionNum &&
         (get_proto_offense_rating(Vehs[veh_id].proto_id) < 0 || Vehs[veh_id].proto_id == BSC_SPORE_LAUNCHER)) {
-        strcat(morale_output, StringTable.get(Morale[morale].name_lifecycle));
+        char *name = Morale[morale].name_lifecycle;
+        strcat(morale_output, StringTable.get(name));
     } else {
-        strcat(morale_output, StringTable.get(Morale[morale].name));
+        char *name = Morale[morale].name;
+        strcat(morale_output, StringTable.get(name));
     }
     if (VehPrototypes[Vehs[veh_id].proto_id].plan < PLAN_COLONIZATION) {
         int morale_penalty = 0;
@@ -1597,46 +1599,48 @@ void __cdecl say_morale(LPSTR morale_output, int veh_id, int faction_id_vs_nativ
         }
         VehMoraleModifierCount = 0;
         int base_id = base_at(Vehs[veh_id].x, Vehs[veh_id].y);
-        if (base_id >= 0 && morale < 6) {
-            if (has_fac(FAC_CHILDREN_CRECHE, base_id, 0)) {
-                VehMoraleModifierCount++;
-                int morale_active = range(PlayersData[faction_id].soc_effect_active.values_[SocialEffect::MORALE], -4, 4);
-                if (morale_active <= -2) {
-                    morale_active++;
-                }
-                if (morale_active < 0) {
-                    int morale_cap = morale + VehMoraleModifierCount;
-                    do {
-                        if (morale_cap >= 6) {
-                            break;
-                        }
-                        VehMoraleModifierCount++;
-                        morale_cap++;
-                        morale_active++;
-                    } while (morale_active < 0);
-                }
-                if(has_fac(FAC_BROOD_PIT, base_id, 0) && Vehs[veh_id].proto_id < MaxVehProtoFactionNum
-                    && (get_proto_offense_rating(Vehs[veh_id].proto_id) < 0 || Vehs[veh_id].proto_id == BSC_SPORE_LAUNCHER)) {
+        if (base_id >= 0 && morale < 6 && has_fac(FAC_CHILDREN_CRECHE, base_id, 0)) {
+            VehMoraleModifierCount++;
+            int morale_active = range(PlayersData[faction_id].soc_effect_active.values_[SocialEffect::MORALE], -4, 4);
+            if (morale_active <= -2) {
+                morale_active++;
+            }
+            if (morale_active < 0) {
+                int morale_cap = morale + VehMoraleModifierCount;
+                while (1) {
+                    if (morale_cap >= 6) {
+                        break;
+                    }
                     VehMoraleModifierCount++;
+                    morale_cap++;
+                    if (++morale_active >= 0) {
+                        break;
+                    }
                 }
-            } else if (morale < 6 && has_fac(FAC_BROOD_PIT, base_id, 0)
-                && Vehs[veh_id].proto_id < MaxVehProtoFactionNum
+            }
+            if(has_fac(FAC_BROOD_PIT, base_id, 0) && Vehs[veh_id].proto_id < MaxVehProtoFactionNum
                 && (get_proto_offense_rating(Vehs[veh_id].proto_id) < 0 || Vehs[veh_id].proto_id == BSC_SPORE_LAUNCHER)) {
                 VehMoraleModifierCount++;
-                int morale_active = range(PlayersData[faction_id].soc_effect_active.values_[SocialEffect::MORALE], -4, 4);
-                if (morale_active <= -2) {
-                    morale_active++;
-                }
-                if (morale_active < 0) {
-                    int morale_cap = morale + VehMoraleModifierCount;
-                    do {
-                        if (morale_cap >= 6) {
-                            break;
-                        }
-                        VehMoraleModifierCount++;
-                        morale_cap++;
-                        morale_active++;
-                    } while (morale_active < 0);
+            }
+        } else if (base_id >= 0 && morale < 6 && has_fac(FAC_BROOD_PIT, base_id, 0)
+            && Vehs[veh_id].proto_id < MaxVehProtoFactionNum
+            && (get_proto_offense_rating(Vehs[veh_id].proto_id) < 0 || Vehs[veh_id].proto_id == BSC_SPORE_LAUNCHER)) {
+            VehMoraleModifierCount++;
+            int morale_active = range(PlayersData[faction_id].soc_effect_active.values_[SocialEffect::MORALE], -4, 4);
+            if (morale_active <= -2) {
+                morale_active++;
+            }
+            if (morale_active < 0) {
+                int morale_cap = morale + VehMoraleModifierCount;
+                while (1) {
+                    if (morale_cap >= 6) {
+                        break;
+                    }
+                    VehMoraleModifierCount++;
+                    morale_cap++;
+                    if (++morale_active >= 0) {
+                        break;
+                    }
                 }
             }
         }

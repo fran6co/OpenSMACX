@@ -4120,9 +4120,7 @@ int __cdecl enemy_planet_buster(int vehicle_id) {
                         score += 500;
                     }
                     for (int project_id = 0; project_id < MaxSecretProjectNum; project_id++) {
-                        // WORKAROUND(type): base_project() reads through BaseSecretProject::operator[],
-                        // which strength-reduces to an offset walk; the image walks project_base absolutely.
-                        if (GameDataStateStorage.fields_.secret_project_.project_base[project_id] == base_id_hit) {
+                        if (base_project(project_id) == base_id_hit) {
                             score += PlayersData[Bases[base_id_hit].faction_id_current].ranking * 60;
                         }
                     }
