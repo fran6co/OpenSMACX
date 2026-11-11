@@ -375,6 +375,15 @@ void SpriteBox::on_dialog_focus(int a1) {
     redraw();
 }
 
+// WORKAROUND(inline): attach (0x00610540) expands Spot::add's RECT form in
+// place (six-argument call 0x005FA960 with right-left/bottom-top) while the
+// out-of-line copy stays in multiwin.cpp; same twin as diplowin.cpp's
+// diplo_spot_add and reportif.cpp's report_spot_add.
+static inline int sprite_spot_add(Spot *spot, int position, int type, RECT *rect) {
+    return spot->add(position, type, rect->left, rect->top,
+                     rect->right - rect->left, rect->bottom - rect->top);
+}
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // Historical seed observations (not fresh measurements or acceptance):
 // TRIED: no Ghidra hypothesis was provided for this address; body is a direct register-to-variable transcription of the disassembly (no vtable shim - all callees are direct calls; `T[1]`/`T[2]` model a per-class layout-offset table read through ebx= this-0xaa4). Compiles and matches through instr #1; diverges at #2 (push vs mov, prologue-adjacent). Landed at MISMATCH.
@@ -393,38 +402,49 @@ int SpriteBox::attach(GraphicWin *parent, int x, int y, int flags) {
     if (init_result != 0) return init_result;
 
     spots_.init(static_cast<int>(list_.entry_count_));
-    const int maximum_height = static_cast<int>(field_58_);
-    const int cell_height = static_cast<int>(Dialog::field_68_);
-    int vertical_offset = abs(cell_height - maximum_height);
-    int row_bottom = cell_height + vertical_offset;
-    int left = 0;
-    int horizontal_extent = static_cast<int>(field_54_);
-    int position = 0;
+    // The image's four-slot frame is this RECT: left at [esp+0x10] and right
+    // at [esp+0x18] stay in memory, top/bottom live in edi/ebp.
+    RECT rect;
+    rect.right = field_54_;
+    const int cell_height = Dialog::field_68_;
+    rect.top = abs(cell_height - field_58_) >> 1;
+    rect.bottom = cell_height + rect.top;
+    rect.left = 0;
+    // Park the cursor on the last entry; each item below advances first.
+    list_.seek_pos(-1);
     for (int column = 0; column < Dialog::column_count_; ++column) {
-        for (int row = 0; row < static_cast<int>(Dialog::field_4C_); ++row) {
-            if (position >= static_cast<int>(list_.entry_count_)) break;
-            if (list_.seek_pos(position)) {
-                const int item_id = list_.current_->id;
-                spots_.add(item_id, 0, left, vertical_offset,
-                           horizontal_extent - left, row_bottom - vertical_offset);
+        for (int row = 0; row < Dialog::row_count_; ++row) {
+            int id;
+            if (!list_.head_) {
+                id = 0;
+            } else {
+                StringStructEntry *const next = list_.current_->next;
+                const int count = list_.entry_count_;
+                list_.current_ = next;
+                if (++list_.current_position_ == count) {
+                    list_.current_position_ = 0;
+                }
+                id = list_.current_->id;
             }
-            ++position;
-            vertical_offset += cell_height;
-            row_bottom += cell_height;
+            sprite_spot_add(&spots_, id, 0, &rect);
+            rect.top += Dialog::field_68_;
+            rect.bottom += Dialog::field_68_;
+            if (list_.current_position_ == list_.entry_count_ - 1) break;
         }
-        if (position >= static_cast<int>(list_.entry_count_)) break;
-        const int gap = static_cast<int>(Dialog::field_60_ + Dialog::field_40_);
-        left += gap;
-        horizontal_extent += gap;
-        vertical_offset = abs(cell_height - maximum_height) >> 1;
-        row_bottom = maximum_height;
+        if (list_.current_position_ == list_.entry_count_ - 1) break;
+        rect.top = abs(Dialog::field_68_ - field_58_) >> 1;
+        rect.bottom = field_58_;
+        const int gap = Dialog::field_44_ + Dialog::field_64_;
+        rect.left += gap;
+        rect.right += gap;
     }
 
-    Buffer *const buffer = static_cast<Buffer *>(static_cast<GraphicWin *>(this));
-    buffer->set_text_color(text_color_a_, text_color_b_, text_color_c_, text_color_d_);
-    buffer->set_text_color2(text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_);
-    buffer->set_text_color3(text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_);
-    buffer->set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
+    // Plain member calls: the image re-derives the GraphicWin Buffer receiver
+    // through the vbtable for each call, with no null-checked cast.
+    set_text_color(text_color_a_, text_color_b_, text_color_c_, text_color_d_);
+    set_text_color2(text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_);
+    set_text_color3(text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_);
+    set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
     return 0;
 }
 
@@ -441,13 +461,8 @@ static inline SpriteStruct *sprite_list_next_entry(SpriteList &list) {
         return 0;
     }
 
-    StringStructEntry *next = list.current_->next;
-    int position = list.current_position_;
-    list.current_ = next;
-    int count = list.entry_count_;
-    ++position;
-    list.current_position_ = position;
-    if (position == count) {
+    list.current_ = list.current_->next;
+    if (++list.current_position_ == list.entry_count_) {
         list.current_position_ = 0;
     }
     return list.current_->sprite_payload();
@@ -1075,6 +1090,59 @@ void SpriteList::on_remove(void *raw_payload) {
     }
 }
 
+// Three-tier list-node allocator, expanded in line four times in 0x00402550
+// (entry 0x1C at 0x40256C/0x40274F, payload 0x20 at 0x40263F/0x402849):
+//   tier 1 the list's explicit allocator_  (0x40256C..0x402599)
+//   tier 2 its inherited allocation_owner_ (0x40259E..0x4025D5)
+//   tier 3 mem_get                         (0x4025DA..0x4025E6)
+// exit(3) at 0x402599 falls straight into the tier-2 test at 0x40259E, so the
+// tiers are sequential ifs, not an `allocator_ ? allocator_ : owner` select
+// (that select would make a returning exit reach the publication store and
+// the null test instead). Each successful tier publishes its own owner
+// (0x40257D edi, 0x4025B9 edi, 0x4025E6 the known-zero ebx).
+// Same shape as ServiceStruct/ServiceListEntry::operator new(size_t,
+// ServiceProviderList *) in net_class.cpp for the 0x00401760 sibling.
+// The matching placement delete gives the new-expression its cleanup state;
+// with an inline constructor that cannot throw, VC6 drops the fs:0 frame but
+// keeps the ebp frame and the state store `mov [ebp-4], ebx` (0x40255B), the
+// same residue the exact StringList constructor 0x004450B0 shows.
+inline void *operator new(size_t size, SpriteListBase *list) throw() {
+    void *memory;
+    Heap *allocator = list->allocator_;
+    if (allocator != 0) {
+        memory = allocator->get(size);
+        if (memory != 0) {
+            StringAllocationHeap = allocator;
+            return memory;
+        }
+        MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
+        exit(3);
+    }
+    Heap *owner = list->allocation_owner_;
+    if (owner != 0) {
+        memory = owner->get(size);
+        if (memory != 0) {
+            StringAllocationHeap = owner;
+            return memory;
+        }
+        MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
+        exit(3);
+    }
+    memory = mem_get(size);
+    if (memory == 0) return 0;
+    StringAllocationHeap = owner;
+    return memory;
+}
+// Constructor-failure partner of the overload above (never reached: both
+// node constructors are inline stores only). Body mirrors the nodes'
+// owner-aware deallocation policy.
+inline void operator delete(void *memory, SpriteListBase *) {
+    if (memory != 0) {
+        if (StringAllocationHeap == 0) free(memory);
+        StringAllocationHeap = 0;
+    }
+}
+
 // ORIGINAL: 0x00402550 SpriteStruct::add 0x00402550-0x00402963 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:1240d9eead700ef28006f35018fca68d1123defd:src/leaf_recoveries.cpp", "pinned:SpriteList tables6708A0/6708A4;6116E0 calls611730 with virtual-baseview+28", "pinned:SpriteListBase tables66943C/669438 and list fields +8..+18; StringStruct independently uses 6693A4/6693A0", "source:src/spritebox.h;source:src/stringstruct.h", "source:recovery/tests/test_sprite_list_producer_actual_source.py"], "reason": "Recover SpriteList insertion through its sibling ring owner and distinct polymorphic string/sprite payload siblings, with compiler-owned virtual allocation-base lifetime. Combined constructor/destructor evidence supports the separate SpriteListBase owner model; the ring fields remain layout-compatible and separately owned. Historical identities, spans, claims and seed discoveries remain obligations. Producer partial-state behavior and null/error returns remain unchanged."}
 // symbol    ?add@SpriteList@@QAEHH@Z
@@ -1084,97 +1152,34 @@ void SpriteList::on_remove(void *raw_payload) {
 // Historical seed finding: old fixed-image seam/class attribution was provisional; retain as history, not current hierarchy proof
 // TRIED: fallback __stdcall(int) signature - disasm has `mov esi,ecx` in the prologue (this-in-ecx), matched as __thiscall SpriteStruct::add per the ServiceStruct::add sibling shape; diverges at insn #7, same prologue-order divergence as 0x00401760
 int SpriteList::add(int id) {
-    Heap *const entry_allocator = allocator_;
     if (entry_count_ == 0) {
-        Heap *entry_owner = entry_allocator;
-        if (entry_owner == 0) entry_owner = allocation_owner_;
-        void *entry_memory;
-        StringStructEntry *new_entry = 0;
-        if (entry_owner != 0) {
-            entry_memory = entry_owner->get(sizeof(StringStructEntry));
-            if (entry_memory == 0) {
-                MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
-                exit(3);
-            }
-        } else {
-            entry_memory = mem_get(sizeof(StringStructEntry));
-        }
-        if (entry_memory != 0) {
-            StringAllocationHeap = entry_owner;
-            new_entry = ::new(entry_memory) StringStructEntry;
-        }
-        head_ = new_entry;
+        // 0x402618: head_ stored before its null test.
+        head_ = ::new(this) StringStructEntry;
         if (head_ == 0) return 4;
         head_->id = id;
         head_->next = head_;
         head_->previous = head_;
-        Heap *payload_owner = allocator_;
-        if (payload_owner == 0) payload_owner = allocation_owner_;
-        void *payload_memory;
-        SpriteStruct *new_payload = 0;
-        if (payload_owner != 0) {
-            payload_memory = payload_owner->get(sizeof(SpriteStruct));
-            if (payload_memory == 0) {
-                MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
-                exit(3);
-            }
-        } else {
-            payload_memory = mem_get(sizeof(SpriteStruct));
-        }
-        if (payload_memory != 0) {
-            StringAllocationHeap = payload_owner;
-            new_payload = ::new(payload_memory) SpriteStruct;
-        }
-        head_->payload = new_payload;
+        // 0x40263F: allocator_ is re-read for the payload.
+        head_->payload = ::new(this) SpriteStruct;
+        // 0x402725: reloads head_->payload for the test and the hook argument.
         if (head_->payload == 0) return 4;
         on_insert(head_->sprite_payload());
         current_ = head_;
     } else {
-        Heap *entry_owner = entry_allocator;
-        if (entry_owner == 0) entry_owner = allocation_owner_;
-        void *entry_memory;
-        StringStructEntry *new_entry = 0;
-        if (entry_owner != 0) {
-            entry_memory = entry_owner->get(sizeof(StringStructEntry));
-            if (entry_memory == 0) {
-                MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
-                exit(3);
-            }
-        } else {
-            entry_memory = mem_get(sizeof(StringStructEntry));
-        }
-        if (entry_memory != 0) {
-            StringAllocationHeap = entry_owner;
-            new_entry = ::new(entry_memory) StringStructEntry;
-        }
-        head_->previous->next = new_entry;
+        // 0x4027FB: the new entry is published into the old tail's next link
+        // before the null test (partial update kept on failure).
+        head_->previous->next = ::new(this) StringStructEntry;
         if (head_->previous->next == 0) return 4;
         head_->previous->next->previous = head_->previous;
         head_->previous->next->next = head_;
         head_->previous = head_->previous->next;
         current_ = head_->previous;
         current_->id = id;
-        Heap *payload_owner = allocator_;
-        if (payload_owner == 0) payload_owner = allocation_owner_;
-        void *payload_memory;
-        SpriteStruct *new_payload = 0;
-        if (payload_owner != 0) {
-            payload_memory = payload_owner->get(sizeof(SpriteStruct));
-            if (payload_memory == 0) {
-                MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
-                exit(3);
-            }
-        } else {
-            payload_memory = mem_get(sizeof(SpriteStruct));
-        }
-        if (payload_memory != 0) {
-            StringAllocationHeap = payload_owner;
-            new_payload = ::new(payload_memory) SpriteStruct;
-        }
-        current_->payload = new_payload;
+        current_->payload = ::new(this) SpriteStruct;
         if (current_->payload == 0) return 4;
         on_insert(current_->sprite_payload());
     }
+    // 0x40294E: position takes the old count, then the count increments.
     current_position_ = entry_count_;
     ++entry_count_;
     return 0;

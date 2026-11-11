@@ -45,6 +45,15 @@ static const char vox_msg_no_address_tables[] = "No room for address tables";
 // remain explicit restoration obligations.
 
 
+// Scaled projection coordinate rounded half away from the threshold, written
+// out in line at every site in the image (the library is /Ob1). Same shape as
+// ROUND_VIEW_SCALED further down the file, applied to a scaled value.
+#define VOX_ROUND_PROJECTED(v) \
+    ((int)((v) * CaviarProjectionDirectionScale + \
+           ((v) * CaviarProjectionDirectionScale < CaviarProjectionRoundThreshold \
+                ? CaviarProjectionRoundBelow \
+                : CaviarProjectionRoundAbove)))
+
 // 0x0063E950. Eight arguments: the record, the walked node, the part's
 // position and its scaled matrix, camera rotation, state direction, shape scale
 // and the visibility flag the draw computed. The matrix/direction inputs are
@@ -61,91 +70,170 @@ void __cdecl vox_draw_part(
     VOX_Matrix *camera_rotation, const VOX_Vect *state_direction,
     float shape_scale, int visible) {
     CaviarSceneProjectionScratchCandidate &scratch = CaviarSceneProjectionScratch;
-    int clip[4];
-    int item_box[6];
-    int flags = visible != 0;
+    int16_t delta[3];
+    float point[3];
+    float transformed[3];
+    int box[6];
+    int clip[6];
+    int flags;
+    int px, py, pz;
+    int ox, oy;
 
     sub_63fa80(part_matrix);
     caviar_direction_to_projection_index(part_matrix, state_direction,
                                          shape_scale, camera_rotation);
-    caviar_clip_record_box(record, &scratch.part_clip_, clip);
+
+    // 63E994: the record's draw rectangle and extents, six dwords from +0x38.
+    memcpy(clip, &record->draw_left_, sizeof(clip));
+    if (scratch.part_clip_.width_ != 0 && scratch.part_clip_.height_ != 0) {
+        if (clip[0] < scratch.part_clip_.left_) clip[0] = scratch.part_clip_.left_;
+        if (clip[1] < scratch.part_clip_.top_) clip[1] = scratch.part_clip_.top_;
+        if (clip[2] > scratch.part_clip_.right_) clip[2] = scratch.part_clip_.right_;
+        if (clip[3] > scratch.part_clip_.bottom_) clip[3] = scratch.part_clip_.bottom_;
+    }
+    if (clip[2] >= 0 && clip[3] >= 0) {
+        clip[4] = clip[2] - clip[0] + 1;
+        clip[5] = clip[3] - clip[1] + 1;
+    } else {
+        clip[4] = 0;
+        clip[5] = 0;
+    }
+
     caviar_build_projection_tables();
+    flags = visible != 0;
     vox_projection_prepared_ = 0;
 
-    if ((shape->field_0_ & 2) == 0) {
-        int projected[3];
-        caviar_flat_raster_box(shape, position, part_matrix, item_box);
-        if ((shape->field_0_ & 4) != 0) {
-            projected[0] = caviar_round_projection_coordinate(position->values[0]);
-            projected[1] = caviar_round_projection_coordinate(position->values[1]);
-            projected[2] = caviar_round_projection_coordinate(position->values[2]);
+    if (shape->field_0_ & 2) {
+        const CvrRasterItemHeaderCandidate *item;
+        uint32_t visited_items;
+
+        box[0] = 0x7fff;
+        box[1] = 0x7fff;
+        box[2] = -0x7fff;
+        box[3] = -0x7fff;
+        box[4] = 0;
+        box[5] = 0;
+        item = reinterpret_cast<const CvrRasterItemHeaderCandidate *>(
+            shape->item_stream_);
+        for (visited_items = 0; visited_items < shape->item_count_;) {
+            point[0] = static_cast<float>(item->endpoint_[0] + item->base_[0]);
+            point[1] = static_cast<float>(item->endpoint_[1] + item->base_[1]);
+            point[2] = static_cast<float>(item->endpoint_[2] + item->base_[2]);
+            vox_matrix_vector_mul(part_matrix->values, point, transformed);
+            vector_add(position->values, transformed, point);
+            delta[0] = item->endpoint_[3] - item->base_[0];
+            delta[1] = item->endpoint_[4] - item->base_[1];
+            delta[2] = item->endpoint_[5] - item->base_[2];
+            sub_6401b0(delta, item->extent_, box);
+            px = VOX_ROUND_PROJECTED(point[0]);
+            py = VOX_ROUND_PROJECTED(point[1]);
+            pz = VOX_ROUND_PROJECTED(point[2]);
+            ox = static_cast<int>(point[0]);
+            oy = static_cast<int>(point[1]);
+            if (box[4] != 0 && box[5] != 0) {
+                box[0] += ox;
+                box[1] += oy;
+                box[2] += ox;
+                box[3] += oy;
+            }
+            if (item->flags_ & 1) {
+                if (vox_projection_prepared_ == 0) vox_direction_to_octant(record);
+                flags |= 0x10;
+            } else {
+                flags &= ~0x10;
+            }
+            if (box[2] >= clip[0] && box[3] >= clip[1] &&
+                box[0] <= clip[2] && box[1] <= clip[3]) {
+                if (shape->field_0_ & 8)
+                    flags |= 0x20;
+                else
+                    flags &= ~0x20;
+                if (box[0] >= clip[0] && box[1] >= clip[1] &&
+                    box[2] <= clip[2] && box[3] <= clip[3]) {
+                    record->part_contained_(px, py, pz, item->item_count_,
+                                            item->inline_payload_, flags);
+                } else {
+                    record->part_clipped_(px, py, pz, clip, item->item_count_,
+                                          item->inline_payload_, flags);
+                }
+            }
+            visited_items += item->item_count_;
+            if (item->flags_ & 1)
+                item = reinterpret_cast<const CvrRasterItemHeaderCandidate *>(
+                    item->inline_payload_ + *(const uint32_t *)item->inline_payload_);
+            else
+                item = reinterpret_cast<const CvrRasterItemHeaderCandidate *>(
+                    item->inline_payload_ + item->item_count_ * 3);
+        }
+    } else {
+        if (shape->field_0_ & 4) {
+            px = VOX_ROUND_PROJECTED(position->values[0]);
+            py = VOX_ROUND_PROJECTED(position->values[1]);
+            pz = VOX_ROUND_PROJECTED(position->values[2]);
+        } else {
+            point[0] = static_cast<float>(shape->raster_origin_[0]);
+            point[1] = static_cast<float>(shape->raster_origin_[1]);
+            point[2] = static_cast<float>(shape->raster_origin_[2]);
+            vox_matrix_vector_mul(part_matrix->values, point, transformed);
+            vector_add(position->values, transformed, point);
+            px = VOX_ROUND_PROJECTED(point[0]);
+            py = VOX_ROUND_PROJECTED(point[1]);
+            pz = VOX_ROUND_PROJECTED(point[2]);
+        }
+        // 63EEB5: the flat box offset is the untransformed position.
+        ox = static_cast<int>(position->values[0]);
+        oy = static_cast<int>(position->values[1]);
+        sub_6401b0(&shape->offset_x_, &shape->axis_x_, box);
+        if (box[4] != 0 && box[5] != 0) {
+            box[0] += ox;
+            box[1] += oy;
+            box[2] += ox;
+            box[3] += oy;
+        }
+        if (shape->field_0_ & 4) {
             vox_direction_to_octant(record);
             flags |= 0x10;
         } else {
-            const float anchor[3] = {
-                static_cast<float>(shape->raster_origin_[0]),
-                static_cast<float>(shape->raster_origin_[1]),
-                static_cast<float>(shape->raster_origin_[2])
-            };
-            int ignored_offset[2];
-            caviar_project_raster_point(position, part_matrix, anchor, projected,
-                                        ignored_offset);
-        }
-        if (!caviar_intersect_raster_box(item_box, clip)) return;
-        const int contained = caviar_box_is_inside(item_box, clip);
-        if ((shape->field_0_ & 8) != 0) flags |= 0x20;
-        VoxRenderRecord *dispatch =
-            record;
-        if (contained) {
-            dispatch->part_contained_(projected[0], projected[1], projected[2],
-                static_cast<int>(shape->item_count_), shape->item_stream_, flags);
-        } else {
-            dispatch->part_clipped_(projected[0], projected[1], projected[2],
-                clip, static_cast<int>(shape->item_count_), shape->item_stream_, flags);
-        }
-        return;
-    }
-
-    uint32_t visited_items = 0;
-    const CvrRasterItemHeaderCandidate *item =
-        reinterpret_cast<const CvrRasterItemHeaderCandidate *>(shape->item_stream_);
-    if (shape->item_count_ == 0) return;
-    do {
-        int projected[3];
-        int box_offset[2];
-        caviar_raster_item_box(item, position, part_matrix, item_box,
-                               projected, box_offset);
-        if (item_box[4] != 0 && item_box[5] != 0)
-            caviar_apply_projected_offset(item_box, box_offset);
-        if ((item->flags_ & 1) == 0) {
             flags &= ~0x10;
-        } else {
-            if (vox_projection_prepared_ == 0) vox_direction_to_octant(record);
-            flags |= 0x10;
         }
-        if (caviar_intersect_raster_box(item_box, clip)) {
-            const int contained = caviar_box_is_inside(item_box, clip);
-            if ((shape->field_0_ & 8) != 0)
+        if (box[2] >= clip[0] && box[3] >= clip[1] &&
+            box[0] <= clip[2] && box[1] <= clip[3]) {
+            if (shape->field_0_ & 8)
                 flags |= 0x20;
             else
                 flags &= ~0x20;
-            VoxRenderRecord *dispatch =
-                record;
-            if (contained) {
-                dispatch->part_contained_(projected[0], projected[1], projected[2],
-                    static_cast<int>(item->item_count_), item->inline_payload_, flags);
+            if (box[0] >= clip[0] && box[1] >= clip[1] &&
+                box[2] <= clip[2] && box[3] <= clip[3]) {
+                record->part_contained_(px, py, pz, shape->item_count_,
+                                        shape->item_stream_, flags);
             } else {
-                dispatch->part_clipped_(projected[0], projected[1], projected[2],
-                    clip, static_cast<int>(item->item_count_), item->inline_payload_, flags);
+                record->part_clipped_(px, py, pz, clip, shape->item_count_,
+                                      shape->item_stream_, flags);
             }
         }
-        visited_items += item->item_count_;
-        const uint32_t extent = VOX_PAYLOAD_EXTENT(item);
-        item = reinterpret_cast<const CvrRasterItemHeaderCandidate *>(
-            item->inline_payload_ + extent);
-    } while (visited_items < shape->item_count_);
+    }
 }
 
+
+
+// 0x009BE6C0: the record's shadow table, copied where the shadow kernels read
+// it (image 0x63F0B4 `mov eax,[ebx+0x54]; mov [0x9be6c0],eax`). Its only
+// in-image reference outside _SELFMOD is this store. Defined beside its only
+// C writer until its owner is settled (vox_active_colour_table_ 0x9BE6BC
+// lives in caviar.cpp).
+// RECOVERY_OBJECT: v1 0x009BE6C0 ?vox_active_shadow_table_@@3PAXA
+void *vox_active_shadow_table_ = 0;  // 0x009BE6C0
+
+// Scale a projected coordinate by 256 and round half away from zero
+// (image 0x63F1CF..0x63F200 and each sibling: fmul 671038, fcom 67103C,
+// fld 671040/671044, fadd, _ftol). Written out at every site in the image.
+#define VOX_PROJECT_ROUND(dst, value) \
+    { \
+        float scaled_ = (value) * CaviarProjectionDirectionScale; \
+        (dst) = (int)(scaled_ + (scaled_ < CaviarProjectionRoundThreshold \
+                                     ? CaviarProjectionRoundBelow \
+                                     : CaviarProjectionRoundAbove)); \
+    }
 
 // 0x0063F000. Five arguments: the shadow branch's counterpart of the above.
 OPENSMACX_NOINLINE
@@ -159,92 +247,159 @@ void __cdecl vox_draw_shadow(
     VoxRenderRecord *record, const CvrShape *shape,
     const VOX_Vect *position, VOX_Matrix *part_matrix,
     int visible) {
-    CaviarSceneProjectionScratchCandidate &scratch = CaviarSceneProjectionScratch;
-    int clip[4];
-    int flags = visible != 0;
-    int item_box[6];
+    uint32_t visited_items;               // esp+0x10
+    int px;                               // esp+0x14 (tiled) / ebp (flat)
+    int py;
+    int ox;
+    int oy;
+    int16_t delta[3];                     // esp+0x18
+    float point[3];                       // esp+0x20, also the translated point
+    float rotated[3];                     // esp+0x2C
+    int box[6];                           // esp+0x38
+    // WORKAROUND(type): record+0x38..+0x4F is copied whole as one six-dword
+    // window (rep movsd, ecx=6 at 0x63F029); VoxRenderRecord still spells it
+    // as six loose ints (draw_left_ .. draw_height_).
+    CaviarRenderClipWindowCandidate clip; // esp+0x50
+    int flags;                            // the dead `visible` slot
+    const CvrRasterItemHeaderCandidate *item;
 
     sub_63fa80(part_matrix);
-    caviar_clip_record_box(record, &scratch.shadow_clip_, clip);
+    clip = *reinterpret_cast<const CaviarRenderClipWindowCandidate *>(
+        &record->draw_left_);
+    if (CaviarSceneProjectionScratch.shadow_clip_.width_ != 0 &&
+        CaviarSceneProjectionScratch.shadow_clip_.height_ != 0) {
+        if (clip.left_ < CaviarSceneProjectionScratch.shadow_clip_.left_)
+            clip.left_ = CaviarSceneProjectionScratch.shadow_clip_.left_;
+        if (clip.top_ < CaviarSceneProjectionScratch.shadow_clip_.top_)
+            clip.top_ = CaviarSceneProjectionScratch.shadow_clip_.top_;
+        if (clip.right_ > CaviarSceneProjectionScratch.shadow_clip_.right_)
+            clip.right_ = CaviarSceneProjectionScratch.shadow_clip_.right_;
+        if (clip.bottom_ > CaviarSceneProjectionScratch.shadow_clip_.bottom_)
+            clip.bottom_ = CaviarSceneProjectionScratch.shadow_clip_.bottom_;
+    }
+    if (clip.right_ >= 0 && clip.bottom_ >= 0) {
+        clip.width_ = clip.right_ - clip.left_ + 1;
+        clip.height_ = clip.bottom_ - clip.top_ + 1;
+    } else {
+        clip.width_ = 0;
+        clip.height_ = 0;
+    }
+    vox_active_shadow_table_ = record->shadow_table_;
     caviar_build_projection_tables();
+    flags = visible != 0;
     vox_projection_prepared_ = 0;
 
-    if ((shape->field_0_ & 2) == 0) {
-        int projected[3] = {0, 0, 0};
-        if ((shape->field_0_ & 4) != 0) {
-            projected[0] = caviar_round_projection_coordinate(position->values[0]);
-            projected[1] = caviar_round_projection_coordinate(position->values[1]);
+    if (shape->field_0_ & 2) {
+        box[0] = 0x7fff;
+        box[1] = 0x7fff;
+        box[2] = -0x7fff;
+        box[3] = -0x7fff;
+        box[4] = 0;
+        box[5] = 0;
+        item = reinterpret_cast<const CvrRasterItemHeaderCandidate *>(
+            shape->item_stream_);
+        for (visited_items = 0; visited_items < shape->item_count_;) {
+            point[0] = (float)(item->endpoint_[0] + item->base_[0]);
+            point[1] = (float)(item->endpoint_[1] + item->base_[1]);
+            point[2] = (float)(item->endpoint_[2] + item->base_[2]);
+            vox_matrix_vector_mul(part_matrix->values, point, rotated);
+            vector_add(position->values, rotated, point);
+            delta[0] = item->endpoint_[3] - item->base_[0];
+            delta[1] = item->endpoint_[4] - item->base_[1];
+            delta[2] = item->endpoint_[5] - item->base_[2];
+            sub_6401b0(delta, item->extent_, box);
+            VOX_PROJECT_ROUND(px, point[0]);
+            VOX_PROJECT_ROUND(py, point[1]);
+            ox = (int)point[0];
+            oy = (int)point[1];
+            if (box[4] != 0 && box[5] != 0) {
+                box[0] += ox;
+                box[1] += oy;
+                box[2] += ox;
+                box[3] += oy;
+            }
+            if (item->flags_ & 1) {
+                if (vox_projection_prepared_ == 0)
+                    vox_inverse_direction_to_octant(part_matrix);
+                flags |= 0x10;
+            } else {
+                flags &= ~0x10;
+            }
+            if (box[2] >= clip.left_ && box[3] >= clip.top_ &&
+                box[0] <= clip.right_ && box[1] <= clip.bottom_) {
+                if (shape->field_0_ & 8)
+                    flags |= 0x20;
+                else
+                    flags &= ~0x20;
+                if (box[0] >= clip.left_ && box[1] >= clip.top_ &&
+                    box[2] <= clip.right_ && box[3] <= clip.bottom_) {
+                    record->shadow_contained_(px, py, item->item_count_,
+                                              item->inline_payload_, flags);
+                } else {
+                    record->shadow_clipped_(px, py, &clip.left_,
+                                            item->item_count_,
+                                            item->inline_payload_, flags);
+                }
+            }
+            visited_items += item->item_count_;
+            if (item->flags_ & 1)
+                item = reinterpret_cast<const CvrRasterItemHeaderCandidate *>(
+                    item->inline_payload_ + *(const uint32_t *)item->inline_payload_);
+            else
+                item = reinterpret_cast<const CvrRasterItemHeaderCandidate *>(
+                    item->inline_payload_ + item->item_count_ * 3);
+        }
+    } else {
+        if (shape->field_0_ & 4) {
+            VOX_PROJECT_ROUND(px, position->values[0]);
+            VOX_PROJECT_ROUND(py, position->values[1]);
+        } else {
+            point[0] = (float)shape->raster_origin_[0];
+            point[1] = (float)shape->raster_origin_[1];
+            point[2] = (float)shape->raster_origin_[2];
+            vox_matrix_vector_mul(part_matrix->values, point, rotated);
+            vector_add(position->values, rotated, point);
+            VOX_PROJECT_ROUND(px, point[0]);
+            VOX_PROJECT_ROUND(py, point[1]);
+        }
+        // The flat box is offset by the untransformed position in both cases
+        // (0x63F49E/0x63F4A7 read [edi], [edi+4] with edi = position).
+        ox = (int)position->values[0];
+        oy = (int)position->values[1];
+        sub_6401b0(&shape->offset_x_, &shape->axis_x_, box);
+        if (box[4] != 0 && box[5] != 0) {
+            box[0] += ox;
+            box[1] += oy;
+            box[2] += ox;
+            box[3] += oy;
+        }
+        if (shape->field_0_ & 4) {
             vox_inverse_direction_to_octant(part_matrix);
             flags |= 0x10;
         } else {
-            const float anchor[3] = {
-                static_cast<float>(shape->raster_origin_[0]),
-                static_cast<float>(shape->raster_origin_[1]),
-                static_cast<float>(shape->raster_origin_[2])
-            };
-            int ignored_offset[2];
-            caviar_project_raster_point(position, part_matrix, anchor, projected,
-                                        ignored_offset);
-        }
-        caviar_flat_raster_box(shape, position, part_matrix, item_box);
-        if (!caviar_intersect_raster_box(item_box, clip)) return;
-        const int contained = caviar_box_is_inside(item_box, clip);
-        if ((shape->field_0_ & 8) != 0)
-            flags |= 0x20;
-        else
-            flags &= ~0x20;
-        VoxRenderRecord *dispatch =
-            record;
-        if (contained) {
-            dispatch->shadow_contained_(projected[0], projected[1],
-                static_cast<int>(shape->item_count_), shape->item_stream_, flags);
-        } else {
-            dispatch->shadow_clipped_(projected[0], projected[1], clip,
-                static_cast<int>(shape->item_count_), shape->item_stream_, flags);
-        }
-        return;
-    }
-
-    uint32_t visited_items = 0;
-    const CvrRasterItemHeaderCandidate *item =
-        reinterpret_cast<const CvrRasterItemHeaderCandidate *>(shape->item_stream_);
-    if (shape->item_count_ == 0) return;
-    do {
-        int projected[3];
-        int box_offset[2];
-        caviar_raster_item_box(item, position, part_matrix, item_box,
-                               projected, box_offset);
-        if (item_box[4] != 0 && item_box[5] != 0)
-            caviar_apply_projected_offset(item_box, box_offset);
-        if ((item->flags_ & 1) == 0) {
             flags &= ~0x10;
-        } else {
-            if (vox_projection_prepared_ == 0)
-                vox_inverse_direction_to_octant(part_matrix);
-            flags |= 0x10;
         }
-        if (caviar_intersect_raster_box(item_box, clip)) {
-            const int contained = caviar_box_is_inside(item_box, clip);
-            if ((shape->field_0_ & 8) != 0)
+        if (box[2] >= clip.left_ && box[3] >= clip.top_ &&
+            box[0] <= clip.right_ && box[1] <= clip.bottom_) {
+            if (shape->field_0_ & 8)
                 flags |= 0x20;
             else
                 flags &= ~0x20;
-            VoxRenderRecord *dispatch =
-                record;
-            if (contained) {
-                dispatch->shadow_contained_(projected[0], projected[1],
-                    static_cast<int>(item->item_count_), item->inline_payload_, flags);
+            if (box[0] >= clip.left_ && box[1] >= clip.top_ &&
+                box[2] <= clip.right_ && box[3] <= clip.bottom_) {
+                record->shadow_contained_(px, py, shape->item_count_,
+                                          shape->item_stream_, flags);
             } else {
-                dispatch->shadow_clipped_(projected[0], projected[1], clip,
-                    static_cast<int>(item->item_count_), item->inline_payload_, flags);
+                record->shadow_clipped_(px, py, &clip.left_,
+                                        shape->item_count_,
+                                        shape->item_stream_, flags);
             }
         }
-        visited_items += item->item_count_;
-        const uint32_t extent = VOX_PAYLOAD_EXTENT(item);
-        item = reinterpret_cast<const CvrRasterItemHeaderCandidate *>(
-            item->inline_payload_ + extent);
-    } while (visited_items < shape->item_count_);
+    }
 }
+
+#undef VOX_PROJECT_ROUND
+#undef VOX_ROUND_PROJECTED
 
 // ORIGINAL: 0x0063F5E0 sub_63f5e0 0x0063F5E0-0x0063F9A8
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original identity/name/span and complete historical lesson run are transported from the matching seed record by match_recovery.source.", "The staged typed definition is uniquely found by match_recovery.source.reader.function_line and compiles in the coordinator's three-TU VC6 overlay.", "The emitted symbol is read from the coordinator's fresh native COFF observation log; it is not inferred from the C++ spelling.", "Caviar data access windows and initialization remain separate coordinator-owned object-mapping obligations; this transfer creates no allocation-bound or initializer claim."], "reason": "Rehome this complete pinned original identity from its generated seed file to the typed Caviar renderer owner; preserve the original span and seed lesson history without asserting BYTE_EXACT. The old FILE interpretation is converted to a function BODY because the new owner contains multiple original identities."}
@@ -256,6 +411,16 @@ void __cdecl caviar_clip_shape(VoxRenderRecord *record,
                                const VOX_Matrix *orientation,
                                const CaviarRenderClipWindowCandidate *clip,
                                int output[6]) {
+    uint32_t visited_items;  // the dead `clip` slot (esp+0x78)
+    int ox;
+    int oy;
+    int16_t delta[3];        // esp+0x10
+    float point[3];          // esp+0x18
+    float transformed[3];    // esp+0x24
+    int box[6];              // esp+0x30
+    int local_box[6];        // esp+0x48
+    const CvrRasterItemHeaderCandidate *item;
+
     output[4] = 0;
     output[5] = 0;
     output[0] = 0x7fff;
@@ -263,38 +428,86 @@ void __cdecl caviar_clip_shape(VoxRenderRecord *record,
     output[2] = -0x7fff;
     output[3] = -0x7fff;
 
-    // The helper reads the source matrix and writes separate projection state.
     sub_63fa80(orientation);
-
-    int local_box[6];
-    local_box[0] = record->draw_left_;
-    local_box[1] = record->draw_top_;
-    local_box[2] = record->draw_right_;
-    local_box[3] = record->draw_bottom_;
-    local_box[4] = record->draw_width_;
-    local_box[5] = record->draw_height_;
-
+    // 63F61E: the record's draw rectangle and extents, six dwords from +0x38
+    // (rep movsd, ecx=6). Unlike the draw siblings, width/height are not
+    // recomputed after the clamp.
+    memcpy(local_box, &record->draw_left_, sizeof(local_box));
     if (clip->width_ != 0 && clip->height_ != 0) {
         if (local_box[0] < clip->left_) local_box[0] = clip->left_;
         if (local_box[1] < clip->top_) local_box[1] = clip->top_;
-        if (clip->right_ < local_box[2]) local_box[2] = clip->right_;
-        if (clip->bottom_ < local_box[3]) local_box[3] = clip->bottom_;
+        if (local_box[2] > clip->right_) local_box[2] = clip->right_;
+        if (local_box[3] > clip->bottom_) local_box[3] = clip->bottom_;
     }
 
-    if ((shape->field_0_ & 2) == 0) {
-        const int offset_x = static_cast<int>(position->values[0]);
-        const int offset_y = static_cast<int>(position->values[1]);
-        sub_6401b0(&shape->offset_x_,
-                   &shape->axis_x_, output);
-
+    if (shape->field_0_ & 2) {
+        box[0] = 0x7fff;
+        box[1] = 0x7fff;
+        box[2] = -0x7fff;
+        box[3] = -0x7fff;
+        box[4] = 0;
+        box[5] = 0;
+        item = reinterpret_cast<const CvrRasterItemHeaderCandidate *>(
+            shape->item_stream_);
+        for (visited_items = 0; visited_items < shape->item_count_;) {
+            point[0] = (float)(item->endpoint_[0] + item->base_[0]);
+            point[1] = (float)(item->endpoint_[1] + item->base_[1]);
+            point[2] = (float)(item->endpoint_[2] + item->base_[2]);
+            vox_matrix_vector_mul(orientation->values, point, transformed);
+            vector_add(position->values, transformed, point);
+            delta[0] = item->endpoint_[3] - item->base_[0];
+            delta[1] = item->endpoint_[4] - item->base_[1];
+            delta[2] = item->endpoint_[5] - item->base_[2];
+            sub_6401b0(delta, item->extent_, box);
+            // 63F75D: the offset is the translated point, not `transformed`.
+            ox = (int)point[0];
+            oy = (int)point[1];
+            if (box[4] != 0 && box[5] != 0) {
+                box[0] += ox;
+                box[1] += oy;
+                box[2] += ox;
+                box[3] += oy;
+            }
+            if (box[2] >= local_box[0] && box[3] >= local_box[1] &&
+                box[0] <= local_box[2] && box[1] <= local_box[3]) {
+                if (box[0] < local_box[0]) box[0] = local_box[0];
+                if (box[1] < local_box[1]) box[1] = local_box[1];
+                if (box[2] > local_box[2]) box[2] = local_box[2];
+                if (box[3] > local_box[3]) box[3] = local_box[3];
+                if (box[2] >= 0 && box[3] >= 0) {
+                    box[4] = box[2] - box[0] + 1;
+                    box[5] = box[3] - box[1] + 1;
+                } else {
+                    box[4] = 0;
+                    box[5] = 0;
+                }
+                if (box[4] != 0 && box[5] != 0) {
+                    if (output[0] > box[0]) output[0] = box[0];
+                    if (output[1] > box[1]) output[1] = box[1];
+                    if (output[2] < box[2]) output[2] = box[2];
+                    if (output[3] < box[3]) output[3] = box[3];
+                }
+            }
+            visited_items += item->item_count_;
+            if (item->flags_ & 1)
+                item = reinterpret_cast<const CvrRasterItemHeaderCandidate *>(
+                    item->inline_payload_ + *(const uint32_t *)item->inline_payload_);
+            else
+                item = reinterpret_cast<const CvrRasterItemHeaderCandidate *>(
+                    item->inline_payload_ + item->item_count_ * 3);
+        }
+    } else {
+        ox = (int)position->values[0];
+        oy = (int)position->values[1];
+        sub_6401b0(&shape->offset_x_, &shape->axis_x_, output);
         if (output[4] != 0 && output[5] != 0) {
-            output[0] += offset_x;
-            output[1] += offset_y;
-            output[2] += offset_x;
-            output[3] += offset_y;
+            output[0] += ox;
+            output[1] += oy;
+            output[2] += ox;
+            output[3] += oy;
         }
         if (output[2] < local_box[0] || output[3] < local_box[1] ||
-            local_box[2] < output[0] || local_box[3] < output[1]) {
+            output[0] > local_box[2] || output[1] > local_box[3]) {
             output[2] = -0x7fff;
             output[3] = -0x7fff;
             output[0] = 0x7fff;
@@ -305,86 +518,14 @@ void __cdecl caviar_clip_shape(VoxRenderRecord *record,
         }
         if (output[0] < local_box[0]) output[0] = local_box[0];
         if (output[1] < local_box[1]) output[1] = local_box[1];
-        if (local_box[2] < output[2]) output[2] = local_box[2];
-        if (local_box[3] < output[3]) output[3] = local_box[3];
-        return;
+        if (output[2] > local_box[2]) output[2] = local_box[2];
+        if (output[3] > local_box[3]) output[3] = local_box[3];
     }
 
-    int box[4];
-    box[0] = 0x7fff;
-    box[1] = 0x7fff;
-    box[2] = -0x7fff;
-    box[3] = -0x7fff;
-    int accumulated_width = 0;
-    int accumulated_height = 0;
-    uint32_t visited_items = 0;
-    const CvrRasterItemHeaderCandidate *item =
-        reinterpret_cast<const CvrRasterItemHeaderCandidate *>(
-            shape->item_stream_);
-
-    if (shape->item_count_ != 0) {
-        do {
-            float point[3];
-            point[0] = static_cast<float>(static_cast<int>(item->endpoint_[0]) +
-                                          static_cast<int>(item->base_[0]));
-            point[1] = static_cast<float>(static_cast<int>(item->endpoint_[1]) +
-                                          static_cast<int>(item->base_[1]));
-            point[2] = static_cast<float>(static_cast<int>(item->endpoint_[2]) +
-                                          static_cast<int>(item->base_[2]));
-
-            float transformed[3];
-            vox_matrix_vector_mul(orientation->values, point, transformed);
-            vector_add(position->values, transformed, point);
-
-            int16_t delta[3];
-            delta[0] = static_cast<int16_t>(
-                static_cast<int>(item->endpoint_[3]) - item->base_[0]);
-            delta[1] = static_cast<int16_t>(
-                static_cast<int>(item->endpoint_[4]) - item->base_[1]);
-            delta[2] = static_cast<int16_t>(
-                static_cast<int>(item->endpoint_[5]) - item->base_[2]);
-            sub_6401b0(delta, item->extent_, box);
-
-            const int x = static_cast<int>(transformed[0]);
-            const int y = static_cast<int>(point[1]);
-            if (accumulated_width != 0 && accumulated_height != 0) {
-                box[1] += y;
-                box[0] += x;
-                box[2] += x;
-                box[3] += y;
-            }
-
-            if (local_box[0] <= box[2] && local_box[1] <= box[3] &&
-                box[0] <= local_box[2] && box[1] <= local_box[3]) {
-                if (box[0] < local_box[0]) box[0] = local_box[0];
-                if (box[1] < local_box[1]) box[1] = local_box[1];
-                if (local_box[2] < box[2]) box[2] = local_box[2];
-                if (local_box[3] < box[3]) box[3] = local_box[3];
-                if (box[2] < 0 || box[3] < 0) {
-                    accumulated_height = 0;
-                    accumulated_width = 0;
-                } else {
-                    accumulated_width = (box[2] - box[0]) + 1;
-                    accumulated_height = (box[3] - box[1]) + 1;
-                }
-                if (accumulated_width != 0 && accumulated_height != 0) {
-                    if (box[0] < output[0]) output[0] = box[0];
-                    if (box[1] < output[1]) output[1] = box[1];
-                    if (output[2] < box[2]) output[2] = box[2];
-                    if (output[3] < box[3]) output[3] = box[3];
-                }
-            }
-
-            visited_items += item->item_count_;
-            const uint32_t payload_size = VOX_PAYLOAD_EXTENT(item);
-            item = reinterpret_cast<const CvrRasterItemHeaderCandidate *>(
-                item->inline_payload_ + payload_size);
-        } while (visited_items < shape->item_count_);
-    }
-
-    if (output[2] > -1 && output[3] > -1) {
-        output[4] = (output[2] - output[0]) + 1;
-        output[5] = (output[3] - output[1]) + 1;
+    // 63F947: both paths finish here (the flat path too, after its clamp).
+    if (output[2] >= 0 && output[3] >= 0) {
+        output[4] = output[2] - output[0] + 1;
+        output[5] = output[3] - output[1] + 1;
         return;
     }
     output[4] = 0;
@@ -554,13 +695,13 @@ extern "C" void __cdecl sub_63fa80(const VOX_Matrix *sources) {
 void __cdecl caviar_direction_to_projection_index(
     const VOX_Matrix *part_matrix, const VOX_Vect *direction,
     float shape_scale, const VOX_Matrix *camera_rotation) {
+    VOX_Vect camera_direction;
     const float xy_scale = shape_scale * CaviarSceneProjectionScratch.projected_scale_;
     const float z_scale = shape_scale * CaviarSceneProjectionScratch.viewport_aspect_;
 
     vox_matrix_inverse(part_matrix->values, vox_projection_matrix_.values);
     vox_projection_render_stage_ = 1;
 
-    VOX_Vect camera_direction;
     vox_matrix_vector_mul(camera_rotation->values, direction->values,
                           camera_direction.values);
     camera_direction.values[0] *= xy_scale;
@@ -583,11 +724,11 @@ void __cdecl caviar_direction_to_projection_index(
         ? CaviarProjectionRoundThreshold
         : acos(CaviarProjectionDirectionCandidate.values[2]);
 
-    float azimuth_angle = atan2(CaviarProjectionDirectionCandidate.values[1],
-                                 CaviarProjectionDirectionCandidate.values[0]);
-    if (azimuth_angle < CaviarProjectionRoundThreshold) {
-        azimuth_angle -= CaviarProjectionAngleWrap;
-    }
+    const float raw_azimuth = atan2(CaviarProjectionDirectionCandidate.values[1],
+                                    CaviarProjectionDirectionCandidate.values[0]);
+    const float azimuth_angle = raw_azimuth < CaviarProjectionRoundThreshold
+        ? raw_azimuth - CaviarProjectionAngleWrap
+        : raw_azimuth;
 
     const int polar_index = static_cast<int>(
         CaviarProjectionRoundAbove - polar_angle *
@@ -756,139 +897,145 @@ void __cdecl vox_inverse_direction_to_octant(const VOX_Matrix *source) {
 #endif
 
 
+// Shorthands for the fixed-point basis (0x9C0A40..0x9C0A57) and the 26
+// neighbour cells (0x9C0840, stride 16). The image rereads the basis globals
+// (movsx/mov from 0x9C0A40/46/4C) instead of spilling them, so they are read
+// directly, not copied into locals.
+#define PROJ_X0 ((int)CaviarFixedPointProjection.word_00_)
+#define PROJ_X1 ((int)CaviarFixedPointProjection.word_02_)
+#define PROJ_X2 ((int)CaviarFixedPointProjection.word_04_)
+#define PROJ_Y0 ((int)CaviarFixedPointProjection.word_06_)
+#define PROJ_Y1 ((int)CaviarFixedPointProjection.word_08_)
+#define PROJ_Y2 ((int)CaviarFixedPointProjection.word_0A_)
+#define PROJ_Z0 (CaviarFixedPointProjection.dword_0C_)
+#define PROJ_Z1 (CaviarFixedPointProjection.dword_10_)
+#define PROJ_Z2 (CaviarFixedPointProjection.dword_14_)
+#define PROJ_CELL(i) (CaviarKernelProjectionWindow.current_views_.cells_[i])
+
 // ORIGINAL: 0x006404F0 sub_6404f0 0x006404F0-0x00640A42
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry and seed span transported by the native source writer; current symbol observed from the VC6 source overlay.", "The four-helper closure uses real shared Caviar projection storage and existing vector/matrix owners, not executable-address aliases.", "The projection builder at 0x640A27 advances its cursor before storing: packed rows begin at 0x9C0BA0, with fields at offsets0/4/8 and stride16, disjoint from callbacks at 0x9C0B80..0x9C0B94. This supersedes the earlier overlapping-output interpretation.", "Source arrays describe accessed windows, not proven original allocation bounds or original class names; remaining draw/setup callers are still unfinished."], "reason": "Complete typed Caviar helper in the existing renderer owner; preserve native branch/store order and historical restoration obligations."}
 // symbol    ?caviar_build_projection_tables@@YAXXZ
 // TRIED: this is SMACX's own isometric-tile offset-table builder, not zlib/CRT - checked, no recognisable library algorithm. Read a 6-short/3-int source record at 0x9C0A40, fanned it out formula- for-formula (per the Ghidra decomp, cross-checked against the disassembly's add/sub/shl/neg chains) into ~80 fixed-address cells declared by the scaffold, then transcribed the closing 26-iteration (0x1A) table walk with raw int*/uint* pointer arithmetic over 0x9C0840/0x9C0BA8. Compiles and is formula- faithful but MISMATCHES at instruction #0 (`sub esp,0x34` vs a `push`-first prologue) - at this size (~200 instructions, 79 scratch cells) the compiler's register/stack-slot allocation diverges from the first instruction, and chasing it further is a search this pass's budget does not cover.
 void __cdecl caviar_build_projection_tables() {
-    // Build the 26 fixed-point isometric offsets, then pack their three
-    // observed output words. The fourth dword in either typed row remains
-    // uninterpreted because this function does not access it.
-    int w40 = (int)CaviarFixedPointProjection.word_00_;
-    int w42 = (int)CaviarFixedPointProjection.word_02_;
-    int w44 = (int)CaviarFixedPointProjection.word_04_;
-    int w46 = (int)CaviarFixedPointProjection.word_06_;
-    int w48 = (int)CaviarFixedPointProjection.word_08_;
-    int w4a = (int)CaviarFixedPointProjection.word_0A_;
-    int d4c = CaviarFixedPointProjection.dword_0C_;
-    int d50 = CaviarFixedPointProjection.dword_10_;
-    int d54 = CaviarFixedPointProjection.dword_14_;
-    int iVar3;
-    int iVar4;
+    int i;
 
-    CaviarKernelProjectionWindow.current_views_.cells_[15].x_ = (int)w42;
-    CaviarKernelProjectionWindow.current_views_.cells_[13].x_ = (int)w44;
-    CaviarKernelProjectionWindow.current_views_.cells_[24].x_ = CaviarKernelProjectionWindow.current_views_.cells_[15].x_ + w40;
-    CaviarKernelProjectionWindow.current_views_.cells_[15].y_ = (int)w48;
-    CaviarKernelProjectionWindow.current_views_.cells_[25].x_ = CaviarKernelProjectionWindow.current_views_.cells_[24].x_ + CaviarKernelProjectionWindow.current_views_.cells_[13].x_;
-    CaviarKernelProjectionWindow.current_views_.cells_[0].x_ = -CaviarKernelProjectionWindow.current_views_.cells_[25].x_;
-    CaviarKernelProjectionWindow.current_views_.cells_[24].y_ = CaviarKernelProjectionWindow.current_views_.cells_[15].y_ + w46;
-    CaviarKernelProjectionWindow.current_views_.cells_[13].y_ = (int)w4a;
-    CaviarKernelProjectionWindow.current_views_.cells_[25].y_ = CaviarKernelProjectionWindow.current_views_.cells_[24].y_ + CaviarKernelProjectionWindow.current_views_.cells_[13].y_;
-    CaviarKernelProjectionWindow.current_views_.cells_[0].y_ = -CaviarKernelProjectionWindow.current_views_.cells_[25].y_;
-    iVar4 = d4c + d54;
-    CaviarKernelProjectionWindow.current_views_.cells_[0].z_ = (iVar4 + d50) * -0x100;
-    CaviarKernelProjectionWindow.current_views_.cells_[1].x_ = -CaviarKernelProjectionWindow.current_views_.cells_[24].x_;
-    CaviarKernelProjectionWindow.current_views_.cells_[1].y_ = -CaviarKernelProjectionWindow.current_views_.cells_[24].y_;
-    CaviarKernelProjectionWindow.current_views_.cells_[1].z_ = (d4c + d50) * -0x100;
-    CaviarKernelProjectionWindow.current_views_.cells_[5].x_ = CaviarKernelProjectionWindow.current_views_.cells_[13].x_ - w40;
-    CaviarKernelProjectionWindow.current_views_.cells_[2].x_ = CaviarKernelProjectionWindow.current_views_.cells_[5].x_ - CaviarKernelProjectionWindow.current_views_.cells_[15].x_;
-    CaviarKernelProjectionWindow.current_views_.cells_[5].y_ = CaviarKernelProjectionWindow.current_views_.cells_[13].y_ - w46;
-    CaviarKernelProjectionWindow.current_views_.cells_[2].y_ = CaviarKernelProjectionWindow.current_views_.cells_[5].y_ - CaviarKernelProjectionWindow.current_views_.cells_[15].y_;
-    iVar3 = d54 - d4c;
-    CaviarKernelProjectionWindow.current_views_.cells_[2].z_ = (iVar3 - d50) * 0x100;
-    CaviarKernelProjectionWindow.current_views_.cells_[7].x_ = (int)w40;
-    CaviarKernelProjectionWindow.current_views_.cells_[22].x_ = CaviarKernelProjectionWindow.current_views_.cells_[13].x_ + CaviarKernelProjectionWindow.current_views_.cells_[7].x_;
-    CaviarKernelProjectionWindow.current_views_.cells_[3].x_ = -CaviarKernelProjectionWindow.current_views_.cells_[22].x_;
-    CaviarKernelProjectionWindow.current_views_.cells_[22].y_ = w46 + CaviarKernelProjectionWindow.current_views_.cells_[13].y_;
-    CaviarKernelProjectionWindow.current_views_.cells_[3].y_ = -CaviarKernelProjectionWindow.current_views_.cells_[22].y_;
-    CaviarKernelProjectionWindow.current_views_.cells_[3].z_ = iVar4 * -0x100;
-    CaviarKernelProjectionWindow.current_views_.cells_[4].x_ = -CaviarKernelProjectionWindow.current_views_.cells_[7].x_;
-    CaviarKernelProjectionWindow.current_views_.cells_[4].y_ = -(int)w46;
-    CaviarKernelProjectionWindow.current_views_.cells_[4].z_ = d4c * -0x100;
-    CaviarKernelProjectionWindow.current_views_.cells_[5].z_ = iVar3 * 0x100;
-    CaviarKernelProjectionWindow.current_views_.cells_[7].x_ = CaviarKernelProjectionWindow.current_views_.cells_[15].x_ - CaviarKernelProjectionWindow.current_views_.cells_[7].x_;
-    CaviarKernelProjectionWindow.current_views_.cells_[6].x_ = CaviarKernelProjectionWindow.current_views_.cells_[7].x_ - CaviarKernelProjectionWindow.current_views_.cells_[13].x_;
-    CaviarKernelProjectionWindow.current_views_.cells_[7].y_ = CaviarKernelProjectionWindow.current_views_.cells_[15].y_ - w46;
-    CaviarKernelProjectionWindow.current_views_.cells_[6].y_ = CaviarKernelProjectionWindow.current_views_.cells_[7].y_ - CaviarKernelProjectionWindow.current_views_.cells_[13].y_;
-    CaviarKernelProjectionWindow.current_views_.cells_[6].z_ = ((d50 - d4c) - d54) * 0x100;
-    CaviarKernelProjectionWindow.current_views_.cells_[7].z_ = (d50 - d4c) * 0x100;
-    CaviarKernelProjectionWindow.current_views_.cells_[8].x_ = (CaviarKernelProjectionWindow.current_views_.cells_[13].x_ + CaviarKernelProjectionWindow.current_views_.cells_[15].x_) - (int)w40;
-    CaviarKernelProjectionWindow.current_views_.cells_[8].y_ = (CaviarKernelProjectionWindow.current_views_.cells_[13].y_ + CaviarKernelProjectionWindow.current_views_.cells_[15].y_) - (int)w46;
-    CaviarKernelProjectionWindow.current_views_.cells_[8].z_ = (iVar3 + d50) * 0x100;
-    CaviarKernelProjectionWindow.current_views_.cells_[9].x_ = -(CaviarKernelProjectionWindow.current_views_.cells_[13].x_ + CaviarKernelProjectionWindow.current_views_.cells_[15].x_);
-    CaviarKernelProjectionWindow.current_views_.cells_[9].y_ = -(CaviarKernelProjectionWindow.current_views_.cells_[13].y_ + CaviarKernelProjectionWindow.current_views_.cells_[15].y_);
-    CaviarKernelProjectionWindow.current_views_.cells_[9].z_ = (d50 + d54) * -0x100;
-    CaviarKernelProjectionWindow.current_views_.cells_[10].x_ = -CaviarKernelProjectionWindow.current_views_.cells_[15].x_;
-    CaviarKernelProjectionWindow.current_views_.cells_[10].y_ = -CaviarKernelProjectionWindow.current_views_.cells_[15].y_;
-    CaviarKernelProjectionWindow.current_views_.cells_[10].z_ = d50 * -0x100;
-    CaviarKernelProjectionWindow.current_views_.cells_[11].x_ = CaviarKernelProjectionWindow.current_views_.cells_[13].x_ - CaviarKernelProjectionWindow.current_views_.cells_[15].x_;
-    CaviarKernelProjectionWindow.current_views_.cells_[11].y_ = CaviarKernelProjectionWindow.current_views_.cells_[13].y_ - CaviarKernelProjectionWindow.current_views_.cells_[15].y_;
-    CaviarKernelProjectionWindow.current_views_.cells_[11].z_ = (d54 - d50) * 0x100;
-    CaviarKernelProjectionWindow.current_views_.cells_[12].x_ = -CaviarKernelProjectionWindow.current_views_.cells_[13].x_;
-    CaviarKernelProjectionWindow.current_views_.cells_[12].y_ = -CaviarKernelProjectionWindow.current_views_.cells_[13].y_;
-    CaviarKernelProjectionWindow.current_views_.cells_[12].z_ = d54 * -0x100;
-    CaviarKernelProjectionWindow.current_views_.cells_[13].z_ = d54 << 8;
-    CaviarKernelProjectionWindow.current_views_.cells_[14].x_ = CaviarKernelProjectionWindow.current_views_.cells_[15].x_ - CaviarKernelProjectionWindow.current_views_.cells_[13].x_;
-    CaviarKernelProjectionWindow.current_views_.cells_[14].y_ = CaviarKernelProjectionWindow.current_views_.cells_[15].y_ - CaviarKernelProjectionWindow.current_views_.cells_[13].y_;
-    CaviarKernelProjectionWindow.current_views_.cells_[14].z_ = (d50 - d54) * 0x100;
-    CaviarKernelProjectionWindow.current_views_.cells_[15].z_ = d50 << 8;
-    CaviarKernelProjectionWindow.current_views_.cells_[16].x_ = CaviarKernelProjectionWindow.current_views_.cells_[13].x_ + CaviarKernelProjectionWindow.current_views_.cells_[15].x_;
-    CaviarKernelProjectionWindow.current_views_.cells_[16].y_ = CaviarKernelProjectionWindow.current_views_.cells_[13].y_ + CaviarKernelProjectionWindow.current_views_.cells_[15].y_;
-    CaviarKernelProjectionWindow.current_views_.cells_[16].z_ = (d50 + d54) * 0x100;
-    CaviarKernelProjectionWindow.current_views_.tail_.scratch_ec_ = (float)CaviarKernelProjectionWindow.current_views_.cells_[13].x_;
-    CaviarKernelProjectionWindow.current_views_.cells_[18].x_ = w40 - CaviarKernelProjectionWindow.current_views_.cells_[15].x_;
-    CaviarKernelProjectionWindow.current_views_.tail_.scratch_e0_ = (float)CaviarKernelProjectionWindow.current_views_.cells_[13].y_;
-    CaviarKernelProjectionWindow.current_views_.cells_[17].x_ = CaviarKernelProjectionWindow.current_views_.cells_[18].x_ - CaviarKernelProjectionWindow.current_views_.cells_[13].x_;
-    CaviarKernelProjectionWindow.current_views_.tail_.scratch_fc_ = (float)CaviarKernelProjectionWindow.current_views_.cells_[13].z_;
-    CaviarKernelProjectionWindow.current_views_.cells_[18].y_ = w46 - CaviarKernelProjectionWindow.current_views_.cells_[15].y_;
-    CaviarKernelProjectionWindow.current_views_.cells_[17].y_ = CaviarKernelProjectionWindow.current_views_.cells_[18].y_ - CaviarKernelProjectionWindow.current_views_.cells_[13].y_;
-    CaviarKernelProjectionWindow.current_views_.tail_.scratch_f0_ = (float)CaviarKernelProjectionWindow.current_views_.cells_[15].x_;
-    CaviarKernelProjectionWindow.current_views_.tail_.scratch_e4_ = (float)CaviarKernelProjectionWindow.current_views_.cells_[15].y_;
-    CaviarKernelProjectionWindow.current_views_.cells_[17].z_ = ((d4c - d50) - d54) * 0x100;
-    CaviarKernelProjectionWindow.current_views_.tail_.scratch_a00_ = (float)CaviarKernelProjectionWindow.current_views_.cells_[15].z_;
-    CaviarKernelProjectionWindow.current_views_.cells_[19].x_ = CaviarKernelProjectionWindow.current_views_.cells_[22].x_ - CaviarKernelProjectionWindow.current_views_.cells_[15].x_;
-    CaviarKernelProjectionWindow.current_views_.cells_[18].z_ = (d4c - d50) * 0x100;
-    CaviarKernelProjectionWindow.current_views_.cells_[19].y_ = CaviarKernelProjectionWindow.current_views_.cells_[22].y_ - CaviarKernelProjectionWindow.current_views_.cells_[15].y_;
-    CaviarKernelProjectionWindow.current_views_.cells_[19].z_ = ((d54 - d50) + d4c) * 0x100;
-    CaviarKernelProjectionWindow.current_views_.cells_[21].x_ = (int)w40;
-    CaviarKernelProjectionWindow.current_views_.cells_[20].x_ = CaviarKernelProjectionWindow.current_views_.cells_[21].x_ - CaviarKernelProjectionWindow.current_views_.cells_[13].x_;
-    CaviarKernelProjectionWindow.current_views_.cells_[21].z_ = d4c << 8;
-    CaviarKernelProjectionWindow.current_views_.cells_[21].y_ = (int)w46;
-    CaviarKernelProjectionWindow.current_views_.tail_.scratch_f4_ = (float)CaviarKernelProjectionWindow.current_views_.cells_[21].x_;
-    CaviarKernelProjectionWindow.current_views_.cells_[22].z_ = iVar4 * 0x100;
-    CaviarKernelProjectionWindow.current_views_.cells_[20].y_ = CaviarKernelProjectionWindow.current_views_.cells_[21].y_ - CaviarKernelProjectionWindow.current_views_.cells_[13].y_;
-    CaviarKernelProjectionWindow.current_views_.tail_.scratch_e8_ = (float)CaviarKernelProjectionWindow.current_views_.cells_[21].y_;
-    CaviarKernelProjectionWindow.current_views_.cells_[23].x_ = CaviarKernelProjectionWindow.current_views_.cells_[24].x_ - CaviarKernelProjectionWindow.current_views_.cells_[13].x_;
-    CaviarKernelProjectionWindow.current_views_.tail_.scratch_a04_ = (float)CaviarKernelProjectionWindow.current_views_.cells_[21].z_;
-    CaviarKernelProjectionWindow.current_views_.cells_[23].y_ = CaviarKernelProjectionWindow.current_views_.cells_[24].y_ - CaviarKernelProjectionWindow.current_views_.cells_[13].y_;
-    CaviarKernelProjectionWindow.current_views_.cells_[24].z_ = (d4c + d50) * 0x100;
-    CaviarKernelProjectionWindow.current_views_.cells_[23].z_ = ((d50 - d54) + d4c) * 0x100;
-    CaviarKernelProjectionWindow.current_views_.cells_[20].z_ = (d4c - d54) * 0x100;
-    CaviarKernelProjectionWindow.current_views_.cells_[25].z_ = (iVar4 + d50) * 0x100;
+    // Cell (a,b,c) = a*basis0 + b*basis1 + c*basis2, a,b,c in {-1,0,1},
+    // c fastest, (0,0,0) omitted. z is kept in 24.8 fixed point.
+    // The z sums follow the image's association (6404F0..64056E: z0+z2
+    // then +z1; 6406F5: (z2-z0)+z1; 6408D6: (z2-z1)+z0; 640979:
+    // (z1-z2)+z0), which differs from the x/y "positives first" form.
+    PROJ_CELL(0).x_ = -(PROJ_X0 + PROJ_X1 + PROJ_X2);
+    PROJ_CELL(0).y_ = -(PROJ_Y0 + PROJ_Y1 + PROJ_Y2);
+    PROJ_CELL(0).z_ = -(PROJ_Z0 + PROJ_Z2 + PROJ_Z1) << 8;
+    PROJ_CELL(1).x_ = -(PROJ_X0 + PROJ_X1);
+    PROJ_CELL(1).y_ = -(PROJ_Y0 + PROJ_Y1);
+    PROJ_CELL(1).z_ = -(PROJ_Z0 + PROJ_Z1) << 8;
+    PROJ_CELL(2).x_ = PROJ_X2 - PROJ_X0 - PROJ_X1;
+    PROJ_CELL(2).y_ = PROJ_Y2 - PROJ_Y0 - PROJ_Y1;
+    PROJ_CELL(2).z_ = (PROJ_Z2 - PROJ_Z0 - PROJ_Z1) << 8;
+    PROJ_CELL(3).x_ = -(PROJ_X0 + PROJ_X2);
+    PROJ_CELL(3).y_ = -(PROJ_Y0 + PROJ_Y2);
+    PROJ_CELL(3).z_ = -(PROJ_Z0 + PROJ_Z2) << 8;
+    PROJ_CELL(4).x_ = -PROJ_X0;
+    PROJ_CELL(4).y_ = -PROJ_Y0;
+    PROJ_CELL(4).z_ = -PROJ_Z0 << 8;
+    PROJ_CELL(5).x_ = PROJ_X2 - PROJ_X0;
+    PROJ_CELL(5).y_ = PROJ_Y2 - PROJ_Y0;
+    PROJ_CELL(5).z_ = (PROJ_Z2 - PROJ_Z0) << 8;
+    PROJ_CELL(6).x_ = PROJ_X1 - PROJ_X0 - PROJ_X2;
+    PROJ_CELL(6).y_ = PROJ_Y1 - PROJ_Y0 - PROJ_Y2;
+    PROJ_CELL(6).z_ = (PROJ_Z1 - PROJ_Z0 - PROJ_Z2) << 8;
+    PROJ_CELL(7).x_ = PROJ_X1 - PROJ_X0;
+    PROJ_CELL(7).y_ = PROJ_Y1 - PROJ_Y0;
+    PROJ_CELL(7).z_ = (PROJ_Z1 - PROJ_Z0) << 8;
+    PROJ_CELL(8).x_ = PROJ_X1 + PROJ_X2 - PROJ_X0;
+    PROJ_CELL(8).y_ = PROJ_Y1 + PROJ_Y2 - PROJ_Y0;
+    PROJ_CELL(8).z_ = (PROJ_Z2 - PROJ_Z0 + PROJ_Z1) << 8;
+    PROJ_CELL(9).x_ = -(PROJ_X1 + PROJ_X2);
+    PROJ_CELL(9).y_ = -(PROJ_Y1 + PROJ_Y2);
+    PROJ_CELL(9).z_ = -(PROJ_Z1 + PROJ_Z2) << 8;
+    PROJ_CELL(10).x_ = -PROJ_X1;
+    PROJ_CELL(10).y_ = -PROJ_Y1;
+    PROJ_CELL(10).z_ = -PROJ_Z1 << 8;
+    PROJ_CELL(11).x_ = PROJ_X2 - PROJ_X1;
+    PROJ_CELL(11).y_ = PROJ_Y2 - PROJ_Y1;
+    PROJ_CELL(11).z_ = (PROJ_Z2 - PROJ_Z1) << 8;
+    PROJ_CELL(12).x_ = -PROJ_X2;
+    PROJ_CELL(12).y_ = -PROJ_Y2;
+    PROJ_CELL(12).z_ = -PROJ_Z2 << 8;
+    PROJ_CELL(13).x_ = PROJ_X2;
+    PROJ_CELL(13).y_ = PROJ_Y2;
+    PROJ_CELL(13).z_ = PROJ_Z2 << 8;
+    PROJ_CELL(14).x_ = PROJ_X1 - PROJ_X2;
+    PROJ_CELL(14).y_ = PROJ_Y1 - PROJ_Y2;
+    PROJ_CELL(14).z_ = (PROJ_Z1 - PROJ_Z2) << 8;
+    PROJ_CELL(15).x_ = PROJ_X1;
+    PROJ_CELL(15).y_ = PROJ_Y1;
+    PROJ_CELL(15).z_ = PROJ_Z1 << 8;
+    PROJ_CELL(16).x_ = PROJ_X1 + PROJ_X2;
+    PROJ_CELL(16).y_ = PROJ_Y1 + PROJ_Y2;
+    PROJ_CELL(16).z_ = (PROJ_Z1 + PROJ_Z2) << 8;
+    PROJ_CELL(17).x_ = PROJ_X0 - PROJ_X1 - PROJ_X2;
+    PROJ_CELL(17).y_ = PROJ_Y0 - PROJ_Y1 - PROJ_Y2;
+    PROJ_CELL(17).z_ = (PROJ_Z0 - PROJ_Z1 - PROJ_Z2) << 8;
+    PROJ_CELL(18).x_ = PROJ_X0 - PROJ_X1;
+    PROJ_CELL(18).y_ = PROJ_Y0 - PROJ_Y1;
+    PROJ_CELL(18).z_ = (PROJ_Z0 - PROJ_Z1) << 8;
+    PROJ_CELL(19).x_ = PROJ_X0 + PROJ_X2 - PROJ_X1;
+    PROJ_CELL(19).y_ = PROJ_Y0 + PROJ_Y2 - PROJ_Y1;
+    PROJ_CELL(19).z_ = (PROJ_Z2 - PROJ_Z1 + PROJ_Z0) << 8;
+    PROJ_CELL(20).x_ = PROJ_X0 - PROJ_X2;
+    PROJ_CELL(20).y_ = PROJ_Y0 - PROJ_Y2;
+    PROJ_CELL(20).z_ = (PROJ_Z0 - PROJ_Z2) << 8;
+    PROJ_CELL(21).x_ = PROJ_X0;
+    PROJ_CELL(21).y_ = PROJ_Y0;
+    PROJ_CELL(21).z_ = PROJ_Z0 << 8;
+    PROJ_CELL(22).x_ = PROJ_X0 + PROJ_X2;
+    PROJ_CELL(22).y_ = PROJ_Y0 + PROJ_Y2;
+    PROJ_CELL(22).z_ = (PROJ_Z0 + PROJ_Z2) << 8;
+    PROJ_CELL(23).x_ = PROJ_X0 + PROJ_X1 - PROJ_X2;
+    PROJ_CELL(23).y_ = PROJ_Y0 + PROJ_Y1 - PROJ_Y2;
+    PROJ_CELL(23).z_ = (PROJ_Z1 - PROJ_Z2 + PROJ_Z0) << 8;
+    PROJ_CELL(24).x_ = PROJ_X0 + PROJ_X1;
+    PROJ_CELL(24).y_ = PROJ_Y0 + PROJ_Y1;
+    PROJ_CELL(24).z_ = (PROJ_Z0 + PROJ_Z1) << 8;
+    PROJ_CELL(25).x_ = PROJ_X0 + PROJ_X1 + PROJ_X2;
+    PROJ_CELL(25).y_ = PROJ_Y0 + PROJ_Y1 + PROJ_Y2;
+    PROJ_CELL(25).z_ = (PROJ_Z0 + PROJ_Z2 + PROJ_Z1) << 8;
 
-    CaviarProjectionOutputRowCandidate *output =
-        CaviarOutputMessageWindow.projection_rows_;
-    int localCount = 0x1a;
-    CaviarProjectionCell *piVar2 = CaviarKernelProjectionWindow.current_views_.cells_;
-    do {
-        unsigned int uVar1 = (unsigned int)piVar2->y_;
-        int recA = piVar2->x_;
-        output->depth_offset_ = (((int)uVar1 >> 8) *
-            (int32_t)vox_setup_copy_.depth_row_step_ + (recA >> 8));
-        // 640A0D advances the input cursor before 640A27's packed-X store:
-        // its first destination is 9C0BA0, leaving all six callbacks intact.
-        output->packed_x_ =
-            (uint32_t)recA * 0x01000000u + (uVar1 & 0xffu);
-        output->packed_z_ =
-            (((unsigned int)piVar2->z_ >> 0x10) +
-            (unsigned int)piVar2->z_ * 0x10000) & 0xff00ffff;
-        ++output;
-        localCount = localCount - 1;
-        ++piVar2;
-    } while (localCount != 0);
+    // The three unit cells as floats; fild reads the cells just stored.
+    CaviarKernelProjectionWindow.current_views_.tail_.scratch_ec_ = (float)PROJ_CELL(13).x_;
+    CaviarKernelProjectionWindow.current_views_.tail_.scratch_e0_ = (float)PROJ_CELL(13).y_;
+    CaviarKernelProjectionWindow.current_views_.tail_.scratch_fc_ = (float)PROJ_CELL(13).z_;
+    CaviarKernelProjectionWindow.current_views_.tail_.scratch_f0_ = (float)PROJ_CELL(15).x_;
+    CaviarKernelProjectionWindow.current_views_.tail_.scratch_e4_ = (float)PROJ_CELL(15).y_;
+    CaviarKernelProjectionWindow.current_views_.tail_.scratch_a00_ = (float)PROJ_CELL(15).z_;
+    CaviarKernelProjectionWindow.current_views_.tail_.scratch_f4_ = (float)PROJ_CELL(21).x_;
+    CaviarKernelProjectionWindow.current_views_.tail_.scratch_e8_ = (float)PROJ_CELL(21).y_;
+    CaviarKernelProjectionWindow.current_views_.tail_.scratch_a04_ = (float)PROJ_CELL(21).z_;
 
+    // 6409E3..640A38: indexed walk (strength-reduced to ecx/esi cursors plus
+    // edi = -&cells[0] for the [edi+ecx+K] accesses), counted down from 26.
+    for (i = 0; i < 0x1A; i++) {
+        CaviarOutputMessageWindow.projection_rows_[i].depth_offset_ =
+            (PROJ_CELL(i).y_ >> 8) * (int32_t)vox_setup_copy_.depth_row_step_ +
+            (PROJ_CELL(i).x_ >> 8);
+        CaviarOutputMessageWindow.projection_rows_[i].packed_x_ =
+            (PROJ_CELL(i).x_ << 24) + (PROJ_CELL(i).y_ & 0xff);
+        CaviarOutputMessageWindow.projection_rows_[i].packed_z_ =
+            (((uint32_t)PROJ_CELL(i).z_ >> 16) + (PROJ_CELL(i).z_ << 16)) & 0xff00ffff;
+    }
 }
+#undef PROJ_CELL
+#undef PROJ_Z2
+#undef PROJ_Z1
+#undef PROJ_Z0
+#undef PROJ_Y2
+#undef PROJ_Y1
+#undef PROJ_Y0
+#undef PROJ_X2
+#undef PROJ_X1
+#undef PROJ_X0
 
 /*
 Purpose: The isometric box-projector: project the caller's centre and

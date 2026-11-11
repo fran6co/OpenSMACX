@@ -245,13 +245,12 @@ Purpose: Normalise a vector in place: divide each component by the vector's
 */
 void __cdecl vox_normalise_vector(const float *source, float *out) {
     // The image inlines vec3_length; the library is /Ob1, so the original
-    // wrote it out. Written out as `float x/y/z` locals with
-    // `1.0f / (float)sqrt((double)(y * y + z * z + x * x))`, this body is
-    // exact, but the removed call shifts VC5's symbol state and flips
-    // vox_cross_product's operand order (recovery/COMPILER_EVIDENCE.md,
-    // "Symbol state"). The call stays until the file's state is resolved.
-    // The components are re-read from source, so out may alias source.
-    float scale = 1.0f / vec3_length(source);
+    // wrote it out. The components are re-read from source, so out may
+    // alias source.
+    float x = source[0];
+    float y = source[1];
+    float z = source[2];
+    float scale = 1.0f / (float)sqrt((double)(y * y + z * z + x * x));
     out[0] = source[0] * scale;
     out[1] = source[1] * scale;
     out[2] = source[2] * scale;
@@ -259,6 +258,16 @@ void __cdecl vox_normalise_vector(const float *source, float *out) {
 
 // Each component is stored before the next one's input reads; retain that
 // order when an output vector overlaps an input vector.
+// WORKAROUND(decl): VC5 orders commutative x87 operands by translation-unit
+// symbol state (recovery/COMPILER_EVIDENCE.md, "Symbol state"). Writing out
+// vox_normalise_vector's length (0x628220, as the image does) removed a call
+// and flipped vox_cross_product 0x628290; these four unused declarations
+// restore the state (3..5 work, measured 2026-11-11). Stand-ins for the
+// library's unknown original declaration set; remove with the header cleanup.
+extern int caviar_symbol_pad_0(int);
+extern int caviar_symbol_pad_1(int);
+extern int caviar_symbol_pad_2(int);
+extern int caviar_symbol_pad_3(int);
 // ORIGINAL: 0x00628290 ?vox_cross_product@@YAXPBM0PAM@Z 0x00628290-0x006282D1 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original body, complete seed extent, and fresh VC6 symbol observation; recovery/tests/test_caviar_geometry.py checks original expression trees and bounded host behavior.", "Inverse snapshots cofactor inputs before stores and has no singular guard; cross preserves sequential overlapping writes; rotation uses scoped x87 intrinsics and reads all angles before stores. Numerical spill precision is not established by these structural bindings."], "reason": "Source-owned voxel geometry with typed matrix rows and original arithmetic/store ordering."}
 void __cdecl vox_cross_product(const float *left, const float *right, float *out) {

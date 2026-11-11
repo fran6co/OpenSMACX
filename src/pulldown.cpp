@@ -191,19 +191,31 @@ void PullDown::mouse_move(int, int y) {
   pulldown_update(old_selected, selected_);
 }
 
+// WORKAROUND(inline): expand_rect (scroll.cpp 0x00606F00, scroll.h) is out of
+// line in this tree, but PullDown expands it in place: pulldown_update widens
+// and narrows each row by PullDownTextPadding (neg eax; sub left; add right at
+// 0x005FA19F, 0x005FA21B, 0x005FA542) and on_redraw insets the border
+// (0x005F9995), the row (neg at 0x005F99F5) and the selected-row backfill
+// (neg at 0x005F9B7C). The original header's inline status is unknown.
+static inline RECT *pulldown_expand_rect(RECT *rect, int horizontal, int vertical) {
+  rect->left -= horizontal;
+  rect->right += horizontal;
+  rect->top -= vertical;
+  rect->bottom += vertical;
+  return rect;
+}
+
 // ORIGINAL: 0x005F9F60 ?pulldown_update@PullDown@@QAEXHH@Z 0x005F9F60-0x005FA6AB
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005f9f60.cpp", "image:terranx_original.exe:0x005F9F60", "Native row flags and old/new redraw asymmetry, callback modes and padding reloads; mnemonic metrics use Font internal_leading at+14. UNK1 resets members after clearing items and closing; outside hover forwards screen coordinates to Menu.", "recovery/tasks/interface-contract-report-closure.json four-method owner closure"], "reason": "Recover the bounded original in its genuine PullDown owner using actual members, owned callbacks and Buffer/GraphicWin behavior. Retain seed and historical obligations; this binding grants no current match or runtime claim."}
 // TRIED: mechanical Ghidra-shape transcription, with the four scalar "rect-ish" locals (left/top/right/bottom passed as &local_20) promoted to a real RECT so fill/write_l/write_right_l/ soft_update get valid contiguous storage instead of relying on adjacent-local layout; fill() moved from Buffer to GraphicWin (real receiver is `this`, not the Buffer at self+0x444). Original prologue is frameless (`sub esp,0x38; push ebx...`); not chased to byte-exact given size (1867 bytes).
 void PullDown::pulldown_update(int old_selected, int new_selected) {
-  Buffer *const buffer = static_cast<Buffer *>(this);
-  const int pixel_width = buffer->pixel_width();
-  const int row_height = buffer->text_line_height();
-  const int border = PullDownBorderPadding;
-  const int padding = PullDownTextPadding;
-  const int text_left = padding + border;
-  const int text_right = pixel_width - text_left;
-  const int first_top = border;
-  const int first_bottom = border + row_height;
+  // Row template: the full client width at the first row, inset once by
+  // border + text padding (neg eax at 0x005F9F8B), then copied per row.
+  const int width = pixel_width();
+  const int height = text_line_height();
+  RECT base = {0, PullDownBorderPadding, width, PullDownBorderPadding + height};
+  pulldown_expand_rect(&base, -(PullDownTextPadding + PullDownBorderPadding), 0);
+  RECT row;
 
   if (old_selected != -1) {
     int visible_before = 0;
@@ -213,97 +225,87 @@ void PullDown::pulldown_update(int old_selected, int new_selected) {
       }
     }
 
-    const int observed_row_height = buffer->text_line_height();
-    RECT row = {text_left,
-                first_top + observed_row_height * visible_before,
-                text_right,
-                first_bottom + observed_row_height * visible_before};
-    PullDownItem &item = items_[old_selected];
-    const uint32_t flags = item.flags;
-    char *const text = item.text;
-    char *const right_text = item.right_text;
-    char *const mnemonic = item.mnemonic;
+    row = base;
+    const int row_offset = text_line_height() * visible_before;
+    row.top += row_offset;
+    row.bottom += row_offset;
+
+    char *const text = items_[old_selected].text;
+    char *const right_text = items_[old_selected].right_text;
+    const uint32_t flags = items_[old_selected].flags;
+    char *const mnemonic = items_[old_selected].mnemonic;
     if ((flags & 1u) != 0) {
       if ((flags & 8u) != 0) {
-        Sprite *const icon = CheckBoxDefault2;
-        const int icon_y = ((row.bottom - icon->height()) - row.top) / 2 + row.top;
-        icon->draw(buffer, icon->transparent_index(), row.left, icon_y, 1, 1);
+        CheckBoxDefault2->draw(
+            this, CheckBoxDefault2->transparent_index(), row.left,
+            ((row.bottom - CheckBoxDefault2->height()) - row.top) / 2 + row.top,
+            1, 1);
         row.left += CheckBoxDefault2->width();
       }
 
       if ((flags & 4u) != 0) {
         const int first_border = PullDownBorderPadding;
-        const int first_width = buffer->pixel_width() - 2 * first_border;
+        const int first_width = pixel_width() - 2 * first_border;
         const int first_color = PullDownDefaultDisabledTextColor;
-        const int first_y = buffer->text_line_height() / 2 + row.top;
+        const int first_y = text_line_height() / 2 + row.top;
         const int first_left = PullDownBorderPadding;
-        buffer->hline(first_left, first_left + first_width, first_y, first_color);
+        hline(first_left, first_left + first_width, first_y, first_color);
         const int second_border = PullDownBorderPadding;
-        const int second_width = buffer->pixel_width() - 2 * second_border;
+        const int second_width = pixel_width() - 2 * second_border;
         const int second_color = PullDownDefaultSelectedTextShadow;
-        const int second_y = buffer->text_line_height() / 2 + row.top + 1;
+        const int second_y = text_line_height() / 2 + row.top + 1;
         const int second_left = PullDownBorderPadding;
-        buffer->hline(second_left, second_left + second_width, second_y, second_color);
+        hline(second_left, second_left + second_width, second_y, second_color);
       } else {
-        int text_color;
-        int text_shadow;
         if (old_selected == selected_) {
-          if (field_F38_ == 0) {
-            row.left -= PullDownTextPadding;
-            row.right += PullDownTextPadding;
-            fill(&row, PullDownDefaultBackground);
-            row.left += PullDownTextPadding;
-            row.right -= PullDownTextPadding;
-          } else {
+          if (field_F38_ != 0) {
             field_F38_(this, 1, &row);
-          }
-          text_color = PullDownDefaultTextColor;
-          text_shadow = PullDownDefaultTextShadow;
-        } else {
-          if (field_F38_ == 0) {
-            row.left -= PullDownTextPadding;
-            row.right += PullDownTextPadding;
-            fill(&row, PullDownDefaultTextColor);
-            row.left += PullDownTextPadding;
-            row.right -= PullDownTextPadding;
           } else {
-            field_F38_(this, 0, &row);
+            pulldown_expand_rect(&row, PullDownTextPadding, 0);
+            fill(&row, PullDownDefaultBackground);
+            pulldown_expand_rect(&row, -PullDownTextPadding, 0);
           }
-          text_color = PullDownDefaultSelectedTextColor;
-          text_shadow = PullDownDefaultDisabledTextShadow;
+          if ((flags & 2u) != 0) {
+            set_text_color(PullDownDefaultTextColor, -1, 1, 1);
+          } else {
+            set_text_color(PullDownDefaultTextShadow, -1, 1, 1);
+          }
+        } else {
+          if (field_F38_ != 0) {
+            field_F38_(this, 0, &row);
+          } else {
+            pulldown_expand_rect(&row, PullDownTextPadding, 0);
+            fill(&row, PullDownDefaultTextColor);
+            pulldown_expand_rect(&row, -PullDownTextPadding, 0);
+          }
+          if ((flags & 2u) != 0) {
+            set_text_color(PullDownDefaultSelectedTextColor, -1, 1, 1);
+          } else {
+            set_text_color(PullDownDefaultDisabledTextShadow, -1, 1, 1);
+          }
         }
-        if ((flags & 2u) == 0) {
-          text_color = text_shadow;
-        }
-        buffer->set_text_color(text_color, -1, 1, 1);
 
-        char *const rendered_text = item.text;
-        if (rendered_text != 0) {
-          buffer->write_l(rendered_text, &row, static_cast<int>(strlen(rendered_text)));
+        char *const label = items_[old_selected].text;
+        if (label != 0) {
+          write_l(label, &row, static_cast<int>(strlen(label)));
         }
         if (mnemonic != 0) {
-          const int underline_bottom = row.bottom;
           const int underline_height = row.bottom - row.top;
-          const int underline_color = buffer->foreground_color();
+          const int underline_color = foreground_color();
           const int leading = PullDownDefaultFont->internal_leading();
-          const int letter_width = buffer->text_width(mnemonic, 1);
-          const int center_height = buffer->text_line_height();
+          const int letter_width = text_width(mnemonic, 1);
           const int underline_y =
-              underline_bottom - ((underline_height - center_height) / 2)
-              - leading;
-          const int prefix_width = buffer->text_width(
-              text, static_cast<int>(mnemonic - text));
-          buffer->hline(row.left + prefix_width,
-                        row.left + prefix_width + letter_width,
-                        underline_y, underline_color);
+              row.bottom - ((underline_height - text_line_height()) / 2) - leading;
+          const int underline_left =
+              text_width(text, static_cast<int>(mnemonic - text)) + row.left;
+          hline(underline_left, underline_left + letter_width, underline_y,
+                underline_color);
         }
         if (right_text != 0) {
-          buffer->write_right_l(right_text, &row,
-                                static_cast<int>(strlen(right_text)));
+          write_right_l(right_text, &row, static_cast<int>(strlen(right_text)));
         }
       }
-      row.left -= PullDownTextPadding;
-      row.right += PullDownTextPadding;
+      pulldown_expand_rect(&row, PullDownTextPadding, 0);
       soft_update(&row);
     }
   }
@@ -316,94 +318,89 @@ void PullDown::pulldown_update(int old_selected, int new_selected) {
       }
     }
 
-    const int observed_row_height = buffer->text_line_height();
-    RECT row = {text_left,
-                first_top + observed_row_height * visible_before,
-                text_right,
-                first_bottom + observed_row_height * visible_before};
-    PullDownItem &item = items_[new_selected];
-    const uint32_t flags = item.flags;
-    char *const text = item.text;
-    char *const right_text = item.right_text;
-    char *const mnemonic = item.mnemonic;
+    row = base;
+    const int row_offset = text_line_height() * visible_before;
+    row.top += row_offset;
+    row.bottom += row_offset;
+
+    char *const text = items_[new_selected].text;
+    char *const right_text = items_[new_selected].right_text;
+    const uint32_t flags = items_[new_selected].flags;
+    char *const mnemonic = items_[new_selected].mnemonic;
     if ((flags & 1u) != 0) {
       if ((flags & 8u) != 0) {
-        Sprite *const icon = CheckBoxDefault2;
-        const int icon_y = ((row.bottom - icon->height()) - row.top) / 2 + row.top;
-        icon->draw(buffer, icon->transparent_index(), row.left, icon_y, 1, 1);
+        CheckBoxDefault2->draw(
+            this, CheckBoxDefault2->transparent_index(), row.left,
+            ((row.bottom - CheckBoxDefault2->height()) - row.top) / 2 + row.top,
+            1, 1);
         row.left += CheckBoxDefault2->width();
       }
 
       if ((flags & 4u) != 0) {
         const int first_border = PullDownBorderPadding;
-        const int first_width = buffer->pixel_width() - 2 * first_border;
+        const int first_width = pixel_width() - 2 * first_border;
         const int first_color = PullDownDefaultDisabledTextColor;
-        const int first_y = buffer->text_line_height() / 2 + row.top;
+        const int first_y = text_line_height() / 2 + row.top;
         const int first_left = PullDownBorderPadding;
-        buffer->hline(first_left, first_left + first_width, first_y, first_color);
+        hline(first_left, first_left + first_width, first_y, first_color);
         const int second_border = PullDownBorderPadding;
-        const int second_width = buffer->pixel_width() - 2 * second_border;
+        const int second_width = pixel_width() - 2 * second_border;
         const int second_color = PullDownDefaultSelectedTextShadow;
-        const int second_y = buffer->text_line_height() / 2 + row.top + 1;
+        const int second_y = text_line_height() / 2 + row.top + 1;
         const int second_left = PullDownBorderPadding;
-        buffer->hline(second_left, second_left + second_width, second_y, second_color);
+        hline(second_left, second_left + second_width, second_y, second_color);
       } else {
-        int text_color;
-        int text_shadow;
         if (new_selected == selected_) {
-          if (field_F38_ == 0) {
-            row.left -= PullDownTextPadding;
-            row.right += PullDownTextPadding;
-            fill(&row, PullDownDefaultBackground);
-            row.left += PullDownTextPadding;
-            row.right -= PullDownTextPadding;
-          } else {
+          if (field_F38_ != 0) {
             field_F38_(this, 1, &row);
-          }
-          text_color = PullDownDefaultTextColor;
-          text_shadow = PullDownDefaultTextShadow;
-        } else {
-          if (field_F38_ == 0) {
-            fill(&row, PullDownDefaultTextColor);
           } else {
-            field_F38_(this, 0, &row);
+            pulldown_expand_rect(&row, PullDownTextPadding, 0);
+            fill(&row, PullDownDefaultBackground);
+            pulldown_expand_rect(&row, -PullDownTextPadding, 0);
           }
-          text_color = PullDownDefaultSelectedTextColor;
-          text_shadow = PullDownDefaultDisabledTextShadow;
+          if ((flags & 2u) != 0) {
+            set_text_color(PullDownDefaultTextColor, -1, 1, 1);
+          } else {
+            set_text_color(PullDownDefaultTextShadow, -1, 1, 1);
+          }
+        } else {
+          // The image does not widen the row around this fill (0x005FA581),
+          // unlike the old-row path.
+          if (field_F38_ != 0) {
+            field_F38_(this, 0, &row);
+          } else {
+            fill(&row, PullDownDefaultTextColor);
+          }
+          if ((flags & 2u) != 0) {
+            set_text_color(PullDownDefaultSelectedTextColor, -1, 1, 1);
+          } else {
+            set_text_color(PullDownDefaultDisabledTextShadow, -1, 1, 1);
+          }
         }
-        if ((flags & 2u) == 0) {
-          text_color = text_shadow;
-        }
-        buffer->set_text_color(text_color, -1, 1, 1);
 
-        char *const rendered_text = item.text;
-        if (rendered_text != 0) {
-          buffer->write_l(rendered_text, &row, static_cast<int>(strlen(rendered_text)));
+        char *const label = items_[new_selected].text;
+        if (label != 0) {
+          write_l(label, &row, static_cast<int>(strlen(label)));
         }
         if (mnemonic != 0) {
-          const int underline_bottom = row.bottom;
           const int underline_height = row.bottom - row.top;
-          const int underline_color = buffer->foreground_color();
+          const int underline_color = foreground_color();
           const int leading = PullDownDefaultFont->internal_leading();
-          const int letter_width = buffer->text_width(mnemonic, 1);
-          const int center_height = buffer->text_height();
+          const int letter_width = text_width(mnemonic, 1);
+          // The new-row path measures with text_height (0x005FA613), the
+          // old-row path with text_line_height.
           const int underline_y =
-              underline_bottom - ((underline_height - center_height) / 2)
-              - leading;
-          const int prefix_width = buffer->text_width(
-              text, static_cast<int>(mnemonic - text));
-          buffer->hline(row.left + prefix_width,
-                        row.left + prefix_width + letter_width,
-                        underline_y, underline_color);
+              row.bottom - ((underline_height - text_height()) / 2) - leading;
+          const int underline_left =
+              text_width(text, static_cast<int>(mnemonic - text)) + row.left;
+          hline(underline_left, underline_left + letter_width, underline_y,
+                underline_color);
         }
         if (right_text != 0) {
-          buffer->write_right_l(right_text, &row,
-                                static_cast<int>(strlen(right_text)));
+          write_right_l(right_text, &row, static_cast<int>(strlen(right_text)));
         }
       }
-
-      row.left -= PullDownTextPadding;
-      row.right += PullDownTextPadding;
+      pulldown_expand_rect(&row, PullDownTextPadding, 0);
       soft_update(&row);
     }
   }
@@ -1411,168 +1408,124 @@ void PullDown::UNK4() {
 // RECOVERY_BINDING: v1 {"evidence": ["task:pulldown-flatbutton-renderer-and-sprite-ownership", "historical seed:src/recovered/units/005f98b0.cpp", "Pinned original005F98B0; full native instructions, current class and producer/consumer closure."], "reason": "Recover the complete redraw in its genuine virtual C++ owner using real source-owned members, callbacks, sprites and Buffer operations; pointer configuration is borrowed, not owned."}
 // symbol    ?on_redraw@PullDown@@UAEXXZ
 void PullDown::on_redraw() {
-  Buffer *const buffer = static_cast<Buffer *>(this);
-
   if (PullDownDefaultFont == 0) {
     PullDownDefaultFont = FontDefault;
   }
-
-  if (buffer->set_font(PullDownDefaultFont, 0, 0, 0) != 0) {
+  if (set_font(PullDownDefaultFont, 0, 0, 0) != 0) {
     return;
   }
 
-  // The image snapshots its working rectangle before calling either custom
-  // backfill path. The callback can paint through this PullDown, but the item
-  // geometry below continues from this original rectangle snapshot.
-  const RECT working = buffer->clip_rect();
-  int top = working.top;
-  int bottom = working.bottom;
-  int left = working.left;
-  int right = working.right;
-
+  RECT rect = clip_rect();
   field_F38_ = PullDownFieldF38Default;
   field_F3C_ = PullDownFieldF3CDefault;
 
-  if (field_F3C_ == 0) {
-    fill(PullDownDefaultBackground);
-
-    int border_index = 0;
-    if (PullDownBorderPadding > 0) {
-      RECT border = {left, top, right, bottom};
-      do {
-        buffer->box(&border, PullDownDefaultSelectedTextShadow,
-                    PullDownDefaultDisabledTextColor);
-        ++border.left;
-        --border.right;
-        ++border.top;
-        --border.bottom;
-        ++border_index;
-      } while (border_index < PullDownBorderPadding);
-      left = border.left;
-      top = border.top;
-      right = border.right;
-      bottom = border.bottom;
-    }
-    left -= PullDownBorderPadding;
-    right += PullDownBorderPadding;
-    top -= PullDownBorderPadding;
-    bottom += PullDownBorderPadding;
-  } else {
+  if (field_F3C_ != 0) {
     field_F3C_(this);
+  } else {
+    fill(PullDownDefaultTextColor);
+    for (int border = 0; border < PullDownBorderPadding; ++border) {
+      box(&rect, PullDownDefaultSelectedTextShadow,
+          PullDownDefaultDisabledTextColor);
+      // 0x005F9967..0x005F998F: all four edges loaded, then inc/dec/inc/dec
+      // in left/right/top/bottom order, then stored - the inlined
+      // expand_rect(-1, -1), not four separate read-modify-writes.
+      pulldown_expand_rect(&rect, -1, -1);
+    }
+    pulldown_expand_rect(&rect, PullDownBorderPadding, PullDownBorderPadding);
   }
 
-  const int available_width = right - left;
-  int row_bottom = PullDownBorderPadding + buffer->text_line_height();
-  int row_top = PullDownBorderPadding;
-  int row_left = PullDownTextPadding + PullDownBorderPadding;
-  row_bottom = PullDownBorderPadding + buffer->text_line_height();
-  int row_right = available_width - row_left;
+  // The width is taken before the line-height call (0x005F99BD..0x005F99C7);
+  // every store into the row rectangle comes after it (0x005F99DA on), and
+  // the inset's top store at 0x005F99B5 survives because of that call.
+  int width = rect.right - rect.left;
+  int line_height = text_line_height();
+  rect.left = 0;
+  rect.top = PullDownBorderPadding;
+  rect.right = width;
+  rect.bottom = PullDownBorderPadding + line_height;
+  pulldown_expand_rect(&rect, -(PullDownTextPadding + PullDownBorderPadding), 0);
 
-  if (item_count_ > 0) {
-    for (int index = 0; index < item_count_; ++index) {
-      PullDownItem &item = items_[index];
-      const uint32_t flags = item.flags;
-      char *const text = item.text;
-      char *const right_text = item.right_text;
-      char *const mnemonic = item.mnemonic;
+  for (int index = 0; index < item_count_; ++index) {
+    char *text = items_[index].text;
+    uint32_t flags = items_[index].flags;
+    char *right_text = items_[index].right_text;
+    char *mnemonic = items_[index].mnemonic;
 
-      if ((flags & 1u) != 0) {
-        if ((flags & 8u) != 0) {
-          Sprite *const checked_icon = CheckBoxDefault2;
-          const int icon_y =
-              ((row_bottom - checked_icon->height()) - row_top) / 2 + row_top;
-          checked_icon->draw(buffer, checked_icon->transparent_index(),
-                             row_left, icon_y, 1, 1);
-          row_left += checked_icon->width();
-        }
-
-        int text_color = PullDownDefaultDisabledTextColor;
-        if ((flags & 4u) == 0) {
-          int text_shadow;
-          if (index == selected_) {
-            if (field_F38_ == 0) {
-              RECT selected_row = {
-                  row_left - PullDownTextPadding, row_top,
-                  row_right + PullDownTextPadding, row_bottom};
-              fill(&selected_row, PullDownDefaultBackground);
-              row_left = selected_row.left + PullDownTextPadding;
-              row_right = selected_row.right - PullDownTextPadding;
-            } else {
-              RECT selected_row = {row_left, row_top, row_right, row_bottom};
-              field_F38_(this, 1, &selected_row);
-              row_left = selected_row.left;
-              row_top = selected_row.top;
-              row_right = selected_row.right;
-              row_bottom = selected_row.bottom;
-            }
-            text_color = PullDownDefaultTextColor;
-            text_shadow = PullDownDefaultTextShadow;
-          } else {
-            text_color = PullDownDefaultSelectedTextColor;
-            text_shadow = PullDownDefaultDisabledTextShadow;
-            if (field_F38_ != 0) {
-              RECT row = {row_left, row_top, row_right, row_bottom};
-              field_F38_(this, 0, &row);
-              row_left = row.left;
-              row_top = row.top;
-              row_right = row.right;
-              row_bottom = row.bottom;
-              text_color = PullDownDefaultSelectedTextColor;
-              text_shadow = PullDownDefaultDisabledTextShadow;
-            }
-          }
-
-          if ((flags & 2u) == 0) {
-            text_color = text_shadow;
-          }
-          buffer->set_text_color(text_color, -1, 1, 1);
-
-          if (text != 0) {
-            RECT text_area = {row_left, row_top, row_right, row_bottom};
-            buffer->write_l(text, &text_area, static_cast<int>(strlen(text)));
-          }
-
-          if (mnemonic != 0) {
-            const int underline_color = buffer->foreground_color();
-            const int font_leading = PullDownDefaultFont->internal_leading();
-            const int letter_width = buffer->text_width(mnemonic, 1);
-            const int line_height = buffer->text_line_height();
-            const int underline_y =
-                row_bottom - ((row_bottom - row_top - line_height) / 2)
-                - font_leading;
-            const int prefix_width = buffer->text_width(
-                text, static_cast<int>(mnemonic - text));
-            buffer->hline(row_left + prefix_width,
-                          row_left + prefix_width + letter_width,
-                          underline_y, underline_color);
-          }
-
-          if (right_text != 0) {
-            RECT text_area = {row_left, row_top, row_right, row_bottom};
-            buffer->write_right_l(right_text, &text_area,
-                                  static_cast<int>(strlen(right_text)));
-          }
-        } else {
-          const int first_y = buffer->text_line_height() / 2 + row_top;
-          const int separator_width =
-              buffer->pixel_width() - 2 * PullDownBorderPadding;
-          buffer->hline(PullDownBorderPadding,
-                        PullDownBorderPadding + separator_width, first_y,
-                        PullDownDefaultDisabledTextColor);
-          const int second_y = buffer->text_line_height() / 2 + 1 + row_top;
-          buffer->hline(PullDownBorderPadding,
-                        PullDownBorderPadding + separator_width, second_y,
-                        PullDownDefaultSelectedTextShadow);
-        }
-
-        if ((flags & 8u) != 0) {
-          row_left -= CheckBoxDefault2->width();
-        }
-        const int line_height = buffer->text_line_height();
-        row_top += line_height;
-        row_bottom += line_height;
+    if ((flags & 1) != 0) {
+      int checked = flags & 8;
+      if (checked != 0) {
+        Sprite *check = CheckBoxDefault2;
+        check->draw(this, check->transparent_index(), rect.left,
+                    ((rect.bottom - check->height()) - rect.top) / 2 + rect.top,
+                    1, 1);
+        rect.left += CheckBoxDefault2->width();
       }
 
+      if ((flags & 4) != 0) {
+        // Color is read before the line-height call and pushed after it
+        // (0x005F9AAF/0x005F9AC5): the whole y is computed ahead of the
+        // argument pushes.
+        int line_width = pixel_width() - 2 * PullDownBorderPadding;
+        int line_color = PullDownDefaultDisabledTextColor;
+        int line_y = text_line_height() / 2 + rect.top;
+        hline(PullDownBorderPadding, PullDownBorderPadding + line_width,
+              line_y, line_color);
+        line_width = pixel_width() - 2 * PullDownBorderPadding;
+        line_color = PullDownDefaultSelectedTextShadow;
+        line_y = text_line_height() / 2 + rect.top + 1;
+        hline(PullDownBorderPadding, PullDownBorderPadding + line_width,
+              line_y, line_color);
+      } else {
+        // Four separate set_text_color calls: the image pushes 1, 1, -1
+        // ahead of each flag test, pushes the colour in each arm and
+        // cross-jumps the shared call (0x005F9B8A..0x005F9BE0).
+        if (index == selected_) {
+          if (field_F38_ != 0) {
+            field_F38_(this, 1, &rect);
+          } else {
+            pulldown_expand_rect(&rect, PullDownTextPadding, 0);
+            fill(&rect, PullDownDefaultBackground);
+            pulldown_expand_rect(&rect, -PullDownTextPadding, 0);
+          }
+          if ((flags & 2) != 0) {
+            set_text_color(PullDownDefaultTextColor, -1, 1, 1);
+          } else {
+            set_text_color(PullDownDefaultTextShadow, -1, 1, 1);
+          }
+        } else {
+          if (field_F38_ != 0) {
+            field_F38_(this, 0, &rect);
+          }
+          if ((flags & 2) != 0) {
+            set_text_color(PullDownDefaultSelectedTextColor, -1, 1, 1);
+          } else {
+            set_text_color(PullDownDefaultDisabledTextShadow, -1, 1, 1);
+          }
+        }
+
+        // The image re-reads the item's text here ([edi-4] at 0x005F9BE5),
+        // not the copy taken at the top of the row.
+        write_l(items_[index].text, &rect);
+
+        if (mnemonic != 0) {
+          int color = foreground_color();
+          int leading = PullDownDefaultFont->internal_leading();
+          int height = rect.bottom - rect.top;
+          int letter_width = text_width(mnemonic, 1);
+          int y = rect.bottom - (height - text_line_height()) / 2 - leading;
+          int x = text_width(text, mnemonic - text) + rect.left;
+          hline(x, x + letter_width, y, color);
+        }
+
+        write_right_l(right_text, &rect);
+      }
+
+      if (checked != 0) {
+        rect.left -= CheckBoxDefault2->width();
+      }
+      int advance = text_line_height();
+      rect.top += advance;
+      rect.bottom += advance;
     }
   }
 }
