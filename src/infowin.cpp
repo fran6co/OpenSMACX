@@ -687,23 +687,28 @@ void InfoWin::init() {
 
     if ((StatusFlags & 4) == 0) configure_panel_bounds();
 
-    font_.init(const_cast<char *>(DefaultFontFace),
-               WinScreenWidth == 800 ? 10 : 12, 0);
+    if (WinScreenWidth == 800) {
+        font_.init(const_cast<char *>(DefaultFontFace), 10, 0);
+    } else {
+        font_.init(const_cast<char *>(DefaultFontFace), 12, 0);
+    }
     font_.unk_1_ = 4;
 
     RECT pane = MainInterfaceGlobal.info_panel_frame();
+    // The image narrows by 0x20 first, then insets every edge by 7.
+    pane.right -= 0x20;
     pane.left += 7;
+    pane.right -= 7;
     pane.top += 7;
-    pane.right -= 0x27;
     pane.bottom -= 7;
     if (WinScreenWidth != 800) {
         pane.right = (pane.right - pane.left - 3) / 2 + pane.left;
-    }
-    pane_rects_[0] = pane;
-    if (WinScreenWidth != 800) {
+        pane_rects_[0] = pane;
         const int stride = pane.right - pane.left + 3;
         pane.left += stride;
         pane.right += stride;
+    } else {
+        pane_rects_[0] = pane;
     }
     pane_rects_[1] = pane;
     UnionRect(&bounds_, &pane_rects_[0], &pane_rects_[1]);
@@ -741,8 +746,11 @@ void InfoWin::timer_proc(int a1) {
         int mouse_x;
         int mouse_y;
         MainInterfaceGlobal.get_mouse_pos(&mouse_x, &mouse_y);
-        if (in_box(mouse_x, mouse_y, &bounds_) != 0 ||
-            field_A8_ != 0 || field_94_ != 0) {
+        // A named flag: the image tests all three conditions before laying
+        // out the hold arm as the fall-through.
+        int hold = in_box(mouse_x, mouse_y, &bounds_) != 0 ||
+                   field_A8_ != 0 || field_94_ != 0;
+        if (hold) {
             const int current_pane = active_pane_;
             visible_characters_[current_pane] =
                 text_lengths_[current_pane] + 0x28;
@@ -807,47 +815,76 @@ int InfoFactionShadowColors[8] = {1, 175, 4, 248, 3, 57, 109, 192};
 
 // ORIGINAL: 0x00458420 ?draw_text@InfoWin@@QAEXH@Z 0x00458420-0x004588A9
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00458420-0x004588A9"], "reason": "Recovered original behavior through real source classes and owned members; source remains subject to byte and structural verification."}
+// The ranked rows right-align through the guarded four-argument form of
+// Buffer::write_right_l; the image tests the text for null before strlen
+// exactly as the header's guarded write_l does.
+// WORKAROUND(decl): buffer.h declares write_right_l(char *, int, int, int)
+// without a body; this local guarded copy stands in for its inline body.
+static inline int info_write_right(char *text, int x_coord, int y_coord,
+                                   int width) {
+    if (text == 0) {
+        return x_coord;
+    }
+    return MainInterfaceGlobal.write_right_l(text, x_coord, y_coord, width,
+                                             static_cast<int>(strlen(text)));
+}
+
 void InfoWin::draw_text(int pane) {
-    Buffer &buffer = MainInterfaceGlobal;
-    buffer.set_font(&font_, 0, 0, 0);
+    MainInterfaceGlobal.set_font(&font_, 0, 0, 0);
     int row = 0;
     // The pin's [EBP-0xC] slot is function-scoped: 0x4586E4/0x458729 assign it,
     // while the zero-budget path skips those stores and reloads it at 0x4587FE.
     // Exact exhaustion lets the next row reuse the prior partial row's x; an
     // entry-zero path with no prior assignment remains uninitialized.
     int x;
-    int first = pane == -1 ? 0 : pane;
-    int end = pane == -1 ? 2 : pane + 1;
-    for (int column = first; column < end; ++column) {
-        RECT &clip = pane_rects_[column];
-        buffer.set_clip(&clip);
-        int left = clip.left + 3;
-        int right = clip.right - 3;
+    int column;
+    int end;
+    if (pane == -1) {
+        column = 0;
+        end = 2;
+    } else {
+        column = pane;
+        end = pane + 1;
+    }
+    for (; column < end; ++column) {
+        MainInterfaceGlobal.set_clip(&pane_rects_[column]);
+        RECT area = pane_rects_[column];
+        area.left += 3;
+        area.right -= 3;
         int remaining = visible_characters_[column];
         for (; row < row_count_[column] && remaining >= 0; ++row) {
             char *text = row_text_[column][row];
             int length = strlen(text);
-            bool ranked = pane_states_[column] == 4 && row >= 1;
-            if (length) {
-                int color = row_color_[column][row];
+            int ranked = pane_states_[column] == 4 && row > 0;
+            if (length != 0) {
                 if (ranked) {
                     int faction = GameDataStateStorage.fields_.faction_rankings_[8 - row];
-                    buffer.set_text_color(InfoFactionTextColors[faction],
-                                          InfoFactionShadowColors[faction], 1, 1);
-                } else if (!color) {
-                    int primary = field_94_ ? 1 : 0;
-                    buffer.set_text_color(TextColourTable[22 + primary * 2],
-                                          TextColourTable[23 + primary * 2], 1, 1);
-                    buffer.set_text_color2(TextColourTable[26 + primary * 2],
-                                           TextColourTable[27 + primary * 2], 1, 1);
+                    MainInterfaceGlobal.set_text_color(InfoFactionTextColors[faction],
+                                                       InfoFactionShadowColors[faction], 1, 1);
                 } else {
-                    buffer.set_text_color(field_94_ ? row_reveal_color_[column][row]
-                                                    : color, -1, 1, 1);
+                    int color = row_color_[column][row];
+                    if (color != 0) {
+                        if (field_94_ != 0) {
+                            MainInterfaceGlobal.set_text_color(row_reveal_color_[column][row], -1, 1, 1);
+                        } else {
+                            MainInterfaceGlobal.set_text_color(color, -1, 1, 1);
+                        }
+                    } else if (field_94_ != 0) {
+                        MainInterfaceGlobal.set_text_color(TextColourTable[24], TextColourTable[25], 1, 1);
+                        MainInterfaceGlobal.set_text_color2(TextColourTable[28], TextColourTable[29], 1, 1);
+                    } else {
+                        MainInterfaceGlobal.set_text_color(TextColourTable[22], TextColourTable[23], 1, 1);
+                        MainInterfaceGlobal.set_text_color2(TextColourTable[26], TextColourTable[27], 1, 1);
+                    }
                 }
-                int y = row_y_[column][row];
-                if (length < remaining) {
-                    if (ranked) buffer.write_right_l(text, 2, y, right - left - 4, strlen(text));
-                    else buffer.write_l(text, row_x_[column][row], y, strlen(text));
+                if (remaining > length) {
+                    if (ranked) {
+                        info_write_right(text, 2, row_y_[column][row],
+                                         area.right - area.left - 4);
+                    } else {
+                        MainInterfaceGlobal.write_l(text, row_x_[column][row],
+                                                    row_y_[column][row]);
+                    }
                 } else {
                     // The original only skips the first, `remaining - 1`
                     // prefix write at zero. It still copies/terminates the
@@ -857,33 +894,42 @@ void InfoWin::draw_text(int pane) {
                     // uninitialized only when a zero budget is the first use.
                     // Preserve that path rather than normalizing it.
                     char prefix[80];
-                    if (remaining > 0) {
+                    if (remaining != 0) {
                         strcpy(prefix, text);
                         prefix[remaining - 1] = 0;
-                        x = ranked ? right - left - buffer.text_width(text) - 2
-                                   : row_x_[column][row];
-                        x = buffer.write_l(prefix, x, y, strlen(prefix));
+                        if (ranked) {
+                            x = area.right - area.left -
+                                MainInterfaceGlobal.text_width(text) - 2;
+                            x = MainInterfaceGlobal.write_l(prefix, x, row_y_[column][row]);
+                        } else {
+                            x = MainInterfaceGlobal.write_l(prefix, row_x_[column][row],
+                                                            row_y_[column][row]);
+                        }
                     }
                     strcpy(prefix, text);
                     prefix[remaining] = 0;
                     if (!ranked) {
-                        if (!color) {
-                            buffer.set_text_color(TextColourTable[24], TextColourTable[23], 1, 1);
-                            buffer.set_text_color2(TextColourTable[28], TextColourTable[29], 1, 1);
+                        if (row_color_[column][row] != 0) {
+                            MainInterfaceGlobal.set_text_color(row_reveal_color_[column][row], -1, 1, 1);
                         } else {
-                            buffer.set_text_color(row_reveal_color_[column][row], -1, 1, 1);
+                            MainInterfaceGlobal.set_text_color(TextColourTable[24], TextColourTable[23], 1, 1);
+                            MainInterfaceGlobal.set_text_color2(TextColourTable[28], TextColourTable[29], 1, 1);
                         }
                     }
-                    char *last = prefix + remaining - 1;
-                    buffer.write_l(last, x, y, strlen(last));
-                    buffer.reset_text_state();
+                    MainInterfaceGlobal.write_l(&prefix[remaining - 1], x,
+                                                row_y_[column][row]);
+                    MainInterfaceGlobal.reset_text_state();
                 }
             }
             remaining -= length;
         }
     }
-    buffer.restore_clip();
-    MainInterfaceGlobal.update(pane == -1 ? &bounds_ : &pane_rects_[pane], 0);
+    MainInterfaceGlobal.restore_clip();
+    if (pane == -1) {
+        MainInterfaceGlobal.update(&bounds_, 0);
+    } else {
+        MainInterfaceGlobal.update(&pane_rects_[pane], 0);
+    }
     TutorialWindow.draw_arrow();
 }
 
@@ -1124,44 +1170,46 @@ void InfoWin::right_menu(int x, int y) {
     PullDown menu;
     MainInterfaceGlobal.client_to_screen(&x, &y);
     menu.init(0);
-    if (state_valid(0)) menu.add_item(0, label_get(0x92C / 4));
-    if (state_valid(1)) menu.add_item(1, label_get(0x930 / 4));
-    if (state_valid(2)) menu.add_item(2, label_get(0x934 / 4));
-    if (state_valid(3)) menu.add_item(3, label_get(0x938 / 4));
-    if (state_valid(4)) menu.add_item(4, label_get(0x948 / 4));
-    if (state_valid(5)) menu.add_item(5, label_get(0x94C / 4));
-    if (state_valid(6)) menu.add_item(6, label_get(0x950 / 4));
-    if (state_valid(7)) menu.add_item(7, label_get(0x954 / 4));
+    if (state_valid(0)) menu.add_item(0, StringTable.get(Labels.strings_ptr[0x92C / 4]));
+    if (state_valid(1)) menu.add_item(1, StringTable.get(Labels.strings_ptr[0x930 / 4]));
+    if (state_valid(2)) menu.add_item(2, StringTable.get(Labels.strings_ptr[0x934 / 4]));
+    if (state_valid(3)) menu.add_item(3, StringTable.get(Labels.strings_ptr[0x938 / 4]));
+    if (state_valid(4)) menu.add_item(4, StringTable.get(Labels.strings_ptr[0x948 / 4]));
+    if (state_valid(5)) menu.add_item(5, StringTable.get(Labels.strings_ptr[0x94C / 4]));
+    if (state_valid(6)) menu.add_item(6, StringTable.get(Labels.strings_ptr[0x950 / 4]));
+    if (state_valid(7)) menu.add_item(7, StringTable.get(Labels.strings_ptr[0x954 / 4]));
     menu.add_separator(99);
-    menu.add_item(20, label_get(0x8FC / 4));
+    menu.add_item(20, StringTable.get(Labels.strings_ptr[0x8FC / 4]));
     menu.show(x, y, pop_expire);
 
-    if ((GameDataStateStorage.fields_.game_state_ & STATE_UNK_800) != 0) return;
-    const int selected_index = menu.get_selected();
-    // The pinned caller checks only the signed upper bound before indexing.
-    if (selected_index < 64) {
-        const int selection = menu.item_id(selected_index);
-        if (selection >= 0 && selection <= 16 && state_valid(selection)) {
-            const int pane = active_pane_;
-            pane_states_[pane] = selection;
-            while (!state_valid(pane_states_[pane])) {
-                pane_states_[pane] = (pane_states_[pane] + 1) % 8;
+    if ((GameDataStateStorage.fields_.game_state_ & STATE_UNK_800) == 0) {
+        const int selected_index = menu.get_selected();
+        // The pinned caller checks only the signed upper bound before indexing.
+        if (selected_index < 64) {
+            const int selection = menu.item_id(selected_index);
+            if (selection >= 0 && selection <= 16 && state_valid(selection)) {
+                const int pane = active_pane_;
+                pane_states_[pane] = selection;
+                while (!state_valid(pane_states_[pane])) {
+                    pane_states_[pane] = (pane_states_[pane] + 1) % 8;
+                }
+                field_94_ = 0;
+                visible_characters_[0] = text_lengths_[0] + 1;
+                visible_characters_[1] = text_lengths_[1] + 1;
+                field_A8_ = 0;
+                MainInterfaceGlobal.box_sprite(&pane_rects_[active_pane_],
+                                               &InterfaceBoxStyles[18]);
+                // The original tests the pane-state array address, not contents.
+                if (pane_states_ != 0) {
+                    visible_characters_[0] = 0;
+                    visible_characters_[1] = 0;
+                }
+                setup_text();
+                draw_text(active_pane_);
+                return;
+            } else if (selection == 20) {
+                help_any();
             }
-            field_94_ = 0;
-            visible_characters_[0] = text_lengths_[0] + 1;
-            visible_characters_[1] = text_lengths_[1] + 1;
-            field_A8_ = 0;
-            MainInterfaceGlobal.box_sprite(&pane_rects_[active_pane_],
-                                           &InterfaceBoxStyles[18]);
-            // The original tests the pane-state array address, not contents.
-            if (pane_states_ != 0) {
-                visible_characters_[0] = 0;
-                visible_characters_[1] = 0;
-            }
-            setup_text();
-            draw_text(active_pane_);
-        } else if (selection == 20) {
-            help_any();
         }
     }
 }
@@ -1235,14 +1283,21 @@ InfoWin::~InfoWin() {
 // there is no evidence for any of them, and an unnamed parameter is exactly
 // what the tree already writes for the same situation (BaseWin::UNK5(int),
 // BaseWin::on_button_toggled(int, int)).
-// MISMATCH 17 of 30: the image emits one more EH state store
-// (`mov byte ptr [ebp - 4], 1` twice, not once) around the third Font than
-// VC6 will produce for three flat locals in one scope. Not closed; the shape
-// - three constructed then destroyed in reverse order - is the image's.
+// The image gives the third Font its own unwind state (three cleanup
+// funclets, and the state is reset to 1 before ~font_c) although nothing
+// visible runs while it lives: VC6 only does that when some potentially
+// throwing call sat there and was folded away after state numbering. A
+// constant-false call on font_c reproduces it byte for byte; nesting scopes
+// or reordering the locals does not.
 void InfoWin::UNK5(int, int, int, int, int) {
     Font font_a;
     Font font_b;
     Font font_c;
+    // WORKAROUND(inline): stand-in for folded-away code between font_c's
+    // construction and destruction (image keeps EH state 2 for it).
+    if (0) {
+        font_c.init(0, 0, 0);
+    }
 }
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00456300 0x00458390 0x004583A8 0x0045633B
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00456300 0x004583A8 0x004583C8 0x004564EF

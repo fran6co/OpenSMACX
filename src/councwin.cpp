@@ -115,7 +115,9 @@ void CouncWin::on_left_click(int x, int y) {
         return;
     }
 
-    if (clicked_faction != 0) {
+    // Native 0x42523E tests the proposal (field_A1C_), not the clicked
+    // faction: only the governor election (proposal 0) offers candidates.
+    if (field_A1C_ != 0) {
         selection = -1 - X_pop("WHICHVOTE", pop_wait);
         if (selection == 0) {
             draw_leader(clicked_faction);
@@ -126,7 +128,6 @@ void CouncWin::on_left_click(int x, int y) {
         popup.start(PopupStartCaption, "COUNCILVOTEGOV", -1, nullptr,
                     0x200000, nullptr);
         Dialogs &options = popup.dialogs();
-        int current_selection = 0;
         for (int faction = 1; faction < MaxPlayerNum; ++faction) {
             if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &
                  (1u << faction)) == 0 || !eligible(faction)) {
@@ -141,11 +142,11 @@ void CouncWin::on_left_click(int x, int y) {
             PluralityDefault = 0;
             strcat(StringTemp, Players[faction].name_leader);
             options.item(StringTemp, faction);
+            // Native 0x425324 preselects the local faction's own entry.
             if (faction == ConsoleGlobal.faction_id_) {
-                current_selection = faction;
+                popup.set_value(faction);
             }
         }
-        (void)current_selection;
         selection = popup.exec(0, pop_wait);
         // Only the government popup has native signed-negative cancellation.
         if (selection < 0) {
@@ -1681,6 +1682,25 @@ void CouncWin::show(int visible) {
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00425DB0 0x0042645C 0x00426470 0x00426198
 // ORIGINAL: 0x00425DB0 ?draw_leader@CouncWin@@QAEXH@Z 0x00425DB0-0x00426459
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00425db0.cpp"], "reason": "Home leader rendering in CouncWin with typed faction, portrait and label members"}
+// The image's centred writes test the text for null before strlen, the
+// guarded-writer shape buffer.h uses for write_l; the receiver is this
+// window's own Buffer base, reached without a null-checked conversion.
+// WORKAROUND(decl): stand-ins for guarded Buffer::write_cent_l overloads that
+// buffer.h does not provide inline.
+static inline void council_leader_write_cent(CouncWin *win, char *text,
+                                             int x_coord, int y_coord) {
+    if (text != 0) {
+        win->Buffer::write_cent_l(text, x_coord, y_coord,
+                                  static_cast<int>(strlen(text)));
+    }
+}
+static inline void council_leader_write_cent(CouncWin *win, char *text,
+                                             RECT *rect) {
+    if (text != 0) {
+        win->Buffer::write_cent_l(text, rect, static_cast<int>(strlen(text)));
+    }
+}
+
 void CouncWin::draw_leader(int factionID) {
     if (factionID == 0 || (Players[factionID].rule_flags & RFLAG_ALIEN) != 0) {
         return;
@@ -1701,7 +1721,7 @@ void CouncWin::draw_leader(int factionID) {
         }
     }
 
-    int rank = rankBase + precedingFactions + 1;
+    int rank = precedingFactions + rankBase + 1;
     if (GameDataStateStorage.fields_.governor_faction_ == factionID) {
         rank = 4;
     } else if (GameDataStateStorage.fields_.governor_faction_ >= 0 && rank == 4) {
@@ -1711,125 +1731,114 @@ void CouncWin::draw_leader(int factionID) {
                 ++governorPreceding;
             }
         }
-        rank = rankBase + governorPreceding + 1;
+        rank = governorPreceding + rankBase + 1;
     }
 
-    const int layout = GameDataStateStorage.fields_.governor_faction_ < 0 ? 1 : 0;
-    RECT rect = leader_rects_[layout + rank * 2];
+    RECT rect = leader_rects_[(GameDataStateStorage.fields_.governor_faction_ < 0 ? 1 : 0) + rank * 2];
     spot_.kill_type(rank);
     spot_.add(factionID, rank, rect.left, rect.top,
               rect.right - rect.left, rect.bottom - rect.top);
 
-    // GraphicWin contains Buffer as its second base, so this cast expresses
-    // the actual subobject rather than the seed's `this + 0x444` arithmetic.
-    Buffer *buffer = &static_cast<Buffer &>(*this);
-    buffer->box_sprite(&rect, &InterfaceBoxStyles[0]);
+    Buffer::box_sprite(&rect, &InterfaceBoxStyles[0]);
     ++rect.left;
     --rect.right;
     ++rect.top;
     --rect.bottom;
 
-    const int selectedVariant = GameDataStateStorage.fields_.governor_faction_ == factionID ? 1 : 0;
-    Sprite *backing = leader_backing_[factionID][selectedVariant];
+    Buffer *buffer = this;
+    Sprite *backing = leader_portraits_[factionID][GameDataStateStorage.fields_.governor_faction_ == factionID ? 1 : 0];
     backing->draw(buffer, backing->transparent_index(), rect.left, rect.top, 1, 1);
 
-    const int centerX = (rect.left + rect.right) / 2;
-    int textY = backing->height() + rect.top + 4;
-    buffer->set_text_color(0xA0, -1, 1, 1);
-    buffer->set_font(&font3_, 0, 0, 0);
+    const int centerX = (rect.right + rect.left) / 2;
+    int textY = leader_portraits_[factionID][GameDataStateStorage.fields_.governor_faction_ == factionID ? 1 : 0]->height() + rect.top + 4;
+    Buffer::set_text_color(0xA0, -1, 1, 1);
+    Buffer::set_font(&font3_, 0, 0, 0);
 
-    GenderDefault = Players[factionID].is_leader_female;
-    PluralityDefault = 0;
     StringTemp[0] = '\0';
+    parse_set(Players[factionID].is_leader_female, 0);
     strcat(StringTemp, Players[factionID].title_leader);
-    buffer->write_cent_l(StringTemp, centerX, textY, static_cast<int>(strlen(StringTemp)));
+    council_leader_write_cent(this, StringTemp, centerX, textY);
 
-    textY += font3_.line_advance();
+    textY += font_line_advance(font3_);
     StringTemp[0] = '\0';
-    GenderDefault = Players[factionID].is_leader_female;
-    PluralityDefault = 0;
+    parse_set(Players[factionID].is_leader_female, 0);
     strcat(StringTemp, Players[factionID].name_leader);
-    buffer->write_cent_l(StringTemp, centerX, textY, static_cast<int>(strlen(StringTemp)));
+    council_leader_write_cent(this, StringTemp, centerX, textY);
 
     RECT badgeRect = rect;
-    const int portraitY = textY + font3_.line_advance() + 10;
-    badgeRect.top = portraitY;
-    const int portraitVariant = field_A34_ != factionID ? 1 : 0;
-    Sprite *portrait = leader_portraits_[factionID][portraitVariant];
-    Sprite *portraitSize = leader_portraits_[factionID][0];
-    const int portraitX = rect.left + (rect.right - portraitSize->width() - rect.left) / 2;
-    portrait->draw(buffer, portrait->transparent_index(), portraitX, portraitY, 1, 1);
+    badgeRect.top = textY + font_line_advance(font3_) + 10;
+    Buffer *portraitBuffer = this;
+    Sprite *portrait = leader_backing_[factionID][field_A34_ != factionID ? 1 : 0];
+    portrait->draw(portraitBuffer, portrait->transparent_index(),
+                   (badgeRect.right - leader_backing_[factionID][0]->width() - badgeRect.left) / 2 + badgeRect.left,
+                   badgeRect.top, 1, 1);
 
-    const int labelKind = static_cast<int>(leader_label_kind_[factionID]);
-    if (labelKind != 0) {
-        bool showLabel = true;
-        if (IsMultiplayerNet != 0) {
-            const uint8_t humans = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF);
-            const uint8_t alive = static_cast<uint8_t>((GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & 0xFF);
-            showLabel = (field_A44_ & alive & humans) == humans;
-        }
-        if (showLabel) {
-            buffer->set_text_color(0x41, -1, 1, 1);
+    // The badge then takes the bottom strip of the inset portrait frame.
+    badgeRect = rect;
+    badgeRect.left += 3;
+    badgeRect.right -= 3;
+    badgeRect.bottom -= 3;
+    badgeRect.top = badgeRect.bottom - 0x14;
+    if (leader_label_kind_[factionID] != 0) {
+        if (IsMultiplayerNet == 0 ||
+            (field_A44_ & GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &
+             GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) ==
+                GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) {
+            Buffer::set_text_color(0x41, -1, 1, 1);
             StringTemp[0] = '\0';
-            switch (labelKind) {
+            switch (static_cast<int>(leader_label_kind_[factionID])) {
             case -5:
-                buffer->box_sprite(&badgeRect, &InterfaceBoxStyles[31]);
+                Buffer::box_sprite(&badgeRect, &InterfaceBoxStyles[31]);
                 strcat(StringTemp, label_get(0x7BC / 4));
                 break;
             case -4:
-                buffer->box_sprite(&badgeRect, &InterfaceBoxStyles[30]);
+                Buffer::box_sprite(&badgeRect, &InterfaceBoxStyles[30]);
                 strcat(StringTemp, label_get(0x7C0 / 4));
                 break;
             case -3:
-                buffer->box_sprite(&badgeRect, &InterfaceBoxStyles[32]);
+                Buffer::box_sprite(&badgeRect, &InterfaceBoxStyles[32]);
                 strcat(StringTemp, label_get(0x7C4 / 4));
                 break;
             case -2:
-                buffer->box_sprite(&badgeRect, &InterfaceBoxStyles[32]);
+                Buffer::box_sprite(&badgeRect, &InterfaceBoxStyles[32]);
                 strcat(StringTemp, label_get(0x7D4 / 4));
                 break;
             case -1:
-                buffer->box_sprite(&badgeRect, &InterfaceBoxStyles[32]);
+                Buffer::box_sprite(&badgeRect, &InterfaceBoxStyles[32]);
                 strcat(StringTemp, label_get(0x7D8 / 4));
                 break;
-            default: {
-                buffer->box_sprite(&badgeRect, &InterfaceBoxStyles[0]);
-                const int textColor = labelKind < 0
-                    ? InfoFactionShadowColors[labelKind + 8]
-                    : ChatItemIdTable[labelKind];
-                buffer->set_text_color(textColor, -1, 1, 1);
-                GenderDefault = Players[factionID].is_leader_female;
-                PluralityDefault = 0;
-                strcat(StringTemp, Players[factionID].name_leader);
+            default:
+                // A vote for a faction: its colour and its leader's name.
+                Buffer::box_sprite(&badgeRect, &InterfaceBoxStyles[0]);
+                Buffer::set_text_color(ChatItemIdTable[leader_label_kind_[factionID]], -1, 1, 1);
+                {
+                    const int voted = static_cast<int>(leader_label_kind_[factionID]);
+                    parse_set(Players[voted].is_leader_female, 0);
+                    strcat(StringTemp, Players[voted].name_leader);
+                }
                 break;
             }
-            }
             CharUpperA(StringTemp);
-            buffer->set_font(&font4_, 0, 0, 0);
-            buffer->write_cent_l(StringTemp, &badgeRect,
-                                 static_cast<int>(strlen(StringTemp)));
+            Buffer::set_font(&font4_, 0, 0, 0);
+            council_leader_write_cent(this, StringTemp, &badgeRect);
         }
     }
 
-    if (field_A1C_ <= 1) {
-        const int techId = leader_tech_[factionID];
-        const uint8_t alive = GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
-        if (techId != 0 && (alive & (1 << (factionID & 0x1F))) != 0 &&
-            PlayersData[factionID].major_atrocities == 0) {
-            RECT techRect = badgeRect;
-            techRect.left -= 0x14;
-            techRect.top -= 0x14;
-            char number[32];
-            StringTemp[0] = '\0';
-            _itoa(techId, number, 10);
-            strcat(StringTemp, number);
-            strcat(StringTemp, " ");
-            strcat(StringTemp, label_get((techId == 1 ? 0x808 : 0x80C) / 4));
-            CharUpperA(StringTemp);
-            buffer->set_text_color(0xA0, -1, 1, 1);
-            buffer->write_cent_l(StringTemp, &techRect,
-                                 static_cast<int>(strlen(StringTemp)));
-        }
+    if (static_cast<int>(field_A1C_) <= 1 && leader_tech_[factionID] != 0 &&
+        (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << factionID)) != 0 &&
+        PlayersData[factionID].major_atrocities == 0) {
+        char number[80];
+        StringTemp[0] = '\0';
+        badgeRect.top -= 0x14;
+        badgeRect.bottom -= 0x14;
+        _itoa(leader_tech_[factionID], number, 10);
+        strcat(StringTemp, number);
+        strcat(StringTemp, " ");
+        strcat(StringTemp, StringTable.get(leader_tech_[factionID] != 1 ? Labels.strings_ptr[0x80C / 4]
+                                                                  : Labels.strings_ptr[0x808 / 4]));
+        CharUpperA(StringTemp);
+        Buffer::set_text_color(0xA0, -1, 1, 1);
+        council_leader_write_cent(this, StringTemp, &badgeRect);
     }
 
     soft_update(&rect);
