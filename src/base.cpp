@@ -57,6 +57,18 @@ static inline BOOL selected_base_has_fac(int facility_id) {
 }
 
 
+// WORKAROUND(inline): has_project() spelled through base_project(), as the
+// header's comment says makes base_minerals (0x004E9CB0) exact; the header
+// keeps the operator[] read for allocate_energy (0x005267B0). Only
+// base_minerals uses this twin.
+static inline BOOL has_project_via_base_project(int project_id, int faction_id) {
+    int base_id = base_project(project_id);
+    if (base_id < 0) {
+        return false;
+    }
+    return Bases[base_id].faction_id_current == faction_id;
+}
+
 // RECOVERY_OBJECT: v2 0x00689370 0x00689374 ?BaseIDCurrentSelected@@3HA 0x004E68B0
 int BaseIDCurrentSelected = -1;  // 0x00689370
 // set_base publishes the pointer itself; resource computations and the popup
@@ -7781,7 +7793,9 @@ Purpose: Calculate minerals and ecological damage for the current base.
 //   (selected_base_has_fac) and exceed VC6's inline budget, which expands
 //   shallower levels first, then in source order; the two later direct
 //   has_fac() sites still inline. Plain int arithmetic, no wrappers.
-//   Remaining gap: the image multiplies eco_damage before diff_factor.
+//   The has_project() reads go through base_project() (one more inline
+//   level); that budget shift is what moves the eco_damage IMUL ahead of
+//   diff_factor's, as in the image.
 // size      1343 bytes
 // prototype
 // callers   7   call targets   2
@@ -7795,7 +7809,7 @@ void __cdecl base_minerals() {
     uint32_t faction_id = BaseCurrent->faction_id_current;
     BaseCurrent->intake_2[RSC_MINERALS] = (BaseCurrent->intake_2[RSC_MINERALS] + (int)BaseCurrentConvoyTo[RSC_MINERALS]);
     int mineral_bonus = 0;
-    if (selected_base_has_fac(FAC_QUANTUM_CONVERTER) || has_project(SP_SINGULARITY_INDUCTOR, faction_id)) {
+    if (selected_base_has_fac(FAC_QUANTUM_CONVERTER) || has_project_via_base_project(SP_SINGULARITY_INDUCTOR, faction_id)) {
         mineral_bonus = 1;
     }
     if (selected_base_has_fac(FAC_ROBOTIC_ASSEMBLY_PLANT)) {
@@ -7807,7 +7821,7 @@ void __cdecl base_minerals() {
     if (selected_base_has_fac(FAC_NANOREPLICATOR)) {
         mineral_bonus++;
     }
-    if (has_project(SP_BULK_MATTER_TRANSMITTER, faction_id)) {
+    if (has_project_via_base_project(SP_BULK_MATTER_TRANSMITTER, faction_id)) {
         mineral_bonus++;
     }
     BaseCurrent->intake_2[RSC_MINERALS] = (BaseCurrent->intake_2[RSC_MINERALS] * (mineral_bonus + 2)) / 2;
@@ -7828,7 +7842,7 @@ void __cdecl base_minerals() {
         BaseCurrent->eco_damage = (BaseCurrent->eco_damage - planet_modifier);
     }
     int eco_dmg_reduction = 1;
-    if (selected_base_has_fac(FAC_NANOREPLICATOR) || has_project(SP_SINGULARITY_INDUCTOR, faction_id)) {
+    if (selected_base_has_fac(FAC_NANOREPLICATOR) || has_project_via_base_project(SP_SINGULARITY_INDUCTOR, faction_id)) {
         eco_dmg_reduction = 2;
     }
     if (has_fac(FAC_CENTAURI_PRESERVE, BaseIDCurrentSelected, 0)) {
@@ -7837,7 +7851,7 @@ void __cdecl base_minerals() {
     if (has_fac(FAC_TEMPLE_OF_PLANET, BaseIDCurrentSelected, 0)) {
         eco_dmg_reduction++;
     }
-    if (has_project(SP_PHOLUS_MUTAGEN, faction_id)) {
+    if (has_project_via_base_project(SP_PHOLUS_MUTAGEN, faction_id)) {
         eco_dmg_reduction++;
     }
     BaseCurrent->eco_damage = (BaseCurrent->eco_damage + ((((BaseCurrent->intake_2[RSC_MINERALS] - planet_eco_factor)) - (range((int)PlayersData[faction_id].satellites_[1],
@@ -7881,7 +7895,7 @@ void __cdecl base_minerals() {
         * (MapNativeLifeForms + 1) * BaseCurrent->eco_damage * diff_factor / 6;
     BaseCurrent->eco_damage = (BaseCurrent->eco_damage + 50) / 100;
     int queue_id;
-    if (has_project(SP_SPACE_ELEVATOR, faction_id) // orbital facilities double mineral prod rate
+    if (has_project_via_base_project(SP_SPACE_ELEVATOR, faction_id) // orbital facilities double mineral prod rate
         && (queue_id = BaseCurrent->queue_production_id[0], queue_id == -FAC_SKY_HYDRO_LAB
             || queue_id == -FAC_NESSUS_MINING_STATION || queue_id == -FAC_ORBITAL_POWER_TRANS
             || queue_id == -FAC_ORBITAL_DEFENSE_POD)) {
@@ -10640,10 +10654,7 @@ int __cdecl upgrade_prototype(int faction_id, int proto_id_new,
     if ((faction_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)
         && IsMultiplayerNet) {
         message_data(0x2411, 0, faction_id, proto_id_new, proto_id_old, 0);
-        if (NetDaemonNet.receive()) {
-            while (NetDaemonNet.receive()) {
-            }
-            return 1;
+        while (NetDaemonNet.receive()) {
         }
         return 1;
     }
