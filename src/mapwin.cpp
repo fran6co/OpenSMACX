@@ -514,10 +514,7 @@ void MapWin::init(int mode, int update) {
                 zoom_offset_ = -8;
             }
         } else {
-            bounds.left = index * 0x28;
-            bounds.top = bounds.left;
-            bounds.right = bounds.left + 0x190;
-            bounds.bottom = bounds.top + 0x190;
+            set_rectangle_dimensions(&bounds, index * 0x28, index * 0x28, 0x190, 0x190);
         }
     }
 
@@ -5398,114 +5395,120 @@ void MapWin::gen_overlays(int x, int y) {
     int pixel_y;
     tile_to_pixel(x, y, &pixel_x, &pixel_y);
 
-    RECT text_area;
-    text_area.left = pixel_x;
-    text_area.top = pixel_y;
-    text_area.right = pixel_x + tile_pixel_width_;
-    text_area.bottom = pixel_y + tile_pixel_height_;
-
-    const bool omniscient =
-        (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0;
-    Buffer *const canvas = static_cast<Buffer *>(this);
-
     // The original visits factions 1 through 7. In ordinary view it keeps
     // only the local faction; with omniscience it walks all seven rows.
+    // Each faction draws at most one goal: the first renderable record at
+    // this tile.
     for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+        const int omniscient =
+            GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW;
         if (!omniscient && faction != ConsoleGlobal.faction_id_) {
             continue;
         }
 
-        Goal *const goals = PlayersData[faction].goals;
-        for (int goal_index = 0; goal_index < MaxGoalsNum; ++goal_index) {
-            Goal &goal = goals[goal_index];
-            if (goal.x != x || goal.y != y || goal.type < 0 ||
-                goal.priority == 0) {
+        int goal_index = 0;
+        Goal *walk = PlayersData[faction].goals;
+        for (; goal_index < MaxGoalsNum; ++goal_index, ++walk) {
+            Goal &goal = *walk;
+            if (x != goal.x || y != goal.y) {
                 continue;
             }
-
-            // Negative priorities trigger the image's duplicate check. It
-            // suppresses a later same-type, same-coordinate record by
-            // mutating that current Goal's type to -1 in place. Preserve the
-            // mutation and the negative-priority-only condition.
-            if (goal.priority < 0) {
-                for (int previous = 0; previous < goal_index; ++previous) {
-                    const Goal &earlier = goals[previous];
-                    if (earlier.x == x && earlier.y == y &&
-                        earlier.type == goal.type) {
-                        goal.type = -1;
-                    }
+            const int16_t type = goal.type;
+            if (type < 0 || goal.priority == 0) {
+                continue;
+            }
+            if (goal.priority >= 0) {
+                goto found;
+            }
+            // A negative priority suppresses this record when any OTHER
+            // record (earlier or later) has the same type at this tile: the
+            // image mutates the current Goal's type to -1 in place and stops
+            // at the first such duplicate.
+            for (int other = 0; other < MaxGoalsNum; ++other) {
+                if (other != goal_index &&
+                    x == PlayersData[faction].goals[other].x &&
+                    y == PlayersData[faction].goals[other].y &&
+                    type == PlayersData[faction].goals[other].type) {
+                    goal.type = -1;
+                    break;
                 }
-                if (goal.type < 0) {
-                    continue;
-                }
             }
-
-            // The image resets the shared text buffer for each renderable
-            // record, then prepends the faction noun only in omniscient view.
-            StringTemp[0] = '\0';
-            if (omniscient) {
-                GenderDefault = Players[faction].noun_gender;
-                PluralityDefault = Players[faction].is_noun_plural;
-                strcat(StringTemp, Players[faction].noun_faction);
+            if (goal.type >= 0) {
+                goto found;
             }
-
-            // The original adjacent selector tables map only these Goal type
-            // values to a one-character label and color. Other nonnegative
-            // types, including values above 0x29, keep the default color and
-            // have no label. Keep numeric identities rather than inventing
-            // names for the enum values.
-            const char *label = 0;
-            int color = 0xFF;
-            switch (goal.type) {
-            case 0:
-                label = "a";
-                color = 0xF9;
-                break;
-            case 2:
-                label = "d";
-                color = 0xFB;
-                break;
-            case 3:
-                label = "f";
-                color = 0xFA;
-                break;
-            case 6:
-                label = "c";
-                color = 0xFE;
-                break;
-            case 8:
-                label = "n";
-                color = 0xFC;
-                break;
-            case 9:
-                label = "^";
-                color = 0xFF;
-                break;
-            case 41:
-                label = "s";
-                color = 0xFD;
-                break;
-            default:
-                break;
-            }
-
-            if (label != 0) {
-                strcat(StringTemp, label);
-            }
-
-            int priority = goal.priority;
-            if (priority < 0) {
-                priority = -priority;
-            }
-            char number[10];
-            _itoa(priority, number, 10);
-            strcat(StringTemp, number);
-
-            canvas->set_text_color(color, 0, 1, 1);
-            canvas->set_font(&font_b_, 0, 0, 0);
-            canvas->write_cent_l(StringTemp, &text_area,
-                                 static_cast<int>(strlen(StringTemp)));
         }
+        continue;
+
+    found:
+        RECT text_area;
+        set_rectangle_dimensions(&text_area, pixel_x, pixel_y, tile_pixel_width_,
+                                 tile_pixel_height_);
+
+        // The image resets the shared text buffer, then in omniscient view
+        // prepends only the faction noun's FIRST character: it truncates
+        // StringTemp at index 1 right after the strcat.
+        StringTemp[0] = '\0';
+        if (omniscient) {
+            parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
+            strcat(StringTemp, Players[faction].noun_faction);
+            StringTemp[1] = '\0';
+        }
+
+        // Each label is the one-character .rdata string the image's case
+        // block pushes (0x00686360.."s" at 0x00686378, in case-block order).
+        // The original adjacent selector tables (0x00468BC8/0x00468BE8) map
+        // only these Goal type values to a one-character label and color;
+        // the cases stay in the image's block order. Other nonnegative
+        // types, including values above 0x29, keep the default color and
+        // have no label. Keep numeric identities rather than inventing
+        // names for the enum values.
+        int color = 0xFF;
+        switch (PlayersData[faction].goals[goal_index].type) {
+        case 0:
+// RECOVERY_LITERAL: v1 0x00686360 0x00686362 ??_C@_01FNLH@a?$AA@ 0x004688E0
+            strcat(StringTemp, "a");
+            color = 0xF9;
+            break;
+        case 2:
+// RECOVERY_LITERAL: v1 0x00686364 0x00686366 ??_C@_01FNHM@d?$AA@ 0x004688E0
+            strcat(StringTemp, "d");
+            color = 0xFB;
+            break;
+        case 9:
+// RECOVERY_LITERAL: v1 0x00686368 0x0068636A ??_C@_01IFC@f?$AA@ 0x004688E0
+            strcat(StringTemp, "f");
+            color = 0xFA;
+            break;
+        case 8:
+// RECOVERY_LITERAL: v1 0x0068636C 0x0068636E ??_C@_01IJJ@c?$AA@ 0x004688E0
+            strcat(StringTemp, "c");
+            color = 0xFE;
+            break;
+        case 6:
+// RECOVERY_LITERAL: v1 0x00686370 0x00686372 ??_C@_01FMOK@n?$AA@ 0x004688E0
+            strcat(StringTemp, "n");
+            color = 0xFC;
+            break;
+        case 41:
+// RECOVERY_LITERAL: v1 0x00686374 0x00686376 ??_C@_01KHHK@?$FO?$AA@ 0x004688E0
+            strcat(StringTemp, "^");
+            color = 0xFF;
+            break;
+        case 3:
+// RECOVERY_LITERAL: v1 0x00686378 0x0068637A ??_C@_01KBOJ@s?$AA@ 0x004688E0
+            strcat(StringTemp, "s");
+            color = 0xFD;
+            break;
+        }
+
+        const int16_t priority = PlayersData[faction].goals[goal_index].priority;
+        char number[80];
+        _itoa(priority < 0 ? -priority : priority, number, 10);
+        strcat(StringTemp, number);
+
+        Buffer::set_text_color(color, 0, 1, 1);
+        Buffer::set_font(&font_b_, 0, 0, 0);
+        Buffer::write_cent_l(StringTemp, &text_area);
     }
 }
 
@@ -6547,6 +6550,7 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
 // ORIGINAL: 0x00467970 ?draw_base_dest@MapWin@@QAEXH@Z 0x00467970-0x00467DD9 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00467970.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
 void MapWin::draw_base_dest(int draw_type) {
+    int line_type;
     int drew = 0;
     if (field_1DD70_ & 0x40000U) {
         for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_;
@@ -6566,7 +6570,6 @@ void MapWin::draw_base_dest(int draw_type) {
                 const int dest_y = Bases[destination].y;
                 if (mapwin_tile_visible(this, x, y) ||
                     mapwin_tile_visible(this, dest_x, dest_y)) {
-                    int line_type;
                     switch (direction) {
                     case 0:
                         line_type = 10;
@@ -6610,7 +6613,7 @@ void MapWin::draw_base_dest(int draw_type) {
                 }
             } else {
                 dest_line(Vehs[veh_id].x, Vehs[veh_id].y, Vehs[veh_id].waypoint_x[0], Vehs[veh_id].waypoint_y[0],
-                          proto_id, faction, triad, state == 0x01000200U, 2, 2, 0);
+                          proto_id, faction, triad, (Vehs[veh_id].state & 0x01000200U) == 0x01000200U, 2, 2, 0);
                 if (Vehs[veh_id].state & VSTATE_UNK_2000000) {
                     for (int point = 0; point < Vehs[veh_id].waypoint_count; ++point) {
                         dest_line(Vehs[veh_id].waypoint_x[point], Vehs[veh_id].waypoint_y[point],
