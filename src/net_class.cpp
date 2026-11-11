@@ -928,7 +928,11 @@ int Net::send_group_flagged(void *data, int size, long target,
             wait_timeout = retry_delay[index];
         }
 
-        while (NetDirectPlay != 0) {
+        for (;;) {
+            if (NetDirectPlay == 0) {
+                free(packet);
+                return 0;
+            }
             sent_at[0] = timeGetTime();
             for (index = 1; index < 16; ++index) sent_at[index] = sent_at[0];
             if (NetDirectPlay->Send(local_player_id_, static_cast<DPID>(target),
@@ -1013,8 +1017,6 @@ int Net::send_group_flagged(void *data, int size, long target,
             free(packet);
             return 0;
         }
-        free(packet);
-        return 0;
     } else {
         header->type_flags_ = type;
         if (NetDirectPlay == 0) {
@@ -1506,14 +1508,15 @@ int Net::send_group(void *data, int size, long group_id, int flags) {
 
     NetPacketEnvelope *const header =
         reinterpret_cast<NetPacketEnvelope *>(packet);
-    if ((flags & 1) != 0) {
+    const int reliable = flags & 1;
+    if (reliable != 0) {
         header->sequence_4_ = ++field_E4_;
     } else {
         header->sequence_4_ = 0;
     }
     if (data != 0) memcpy(packet + 8, data, static_cast<size_t>(size));
 
-    if ((flags & 1) != 0 && (voice_flags_D8_ & 0x10000000U) == 0) {
+    if (reliable != 0 && (voice_flags_D8_ & 0x10000000U) == 0) {
         // Unconfirmed reliable send. The callback marks only group members
         // whose NetPlayer flags include bit 1. NetPlayerTable is shared
         // callback context, published exactly as native.
@@ -1546,7 +1549,11 @@ int Net::send_group(void *data, int size, long group_id, int flags) {
             wait_timeout = retry_delay[index];
         }
 
-        while (NetDirectPlay != 0) {
+        for (;;) {
+            if (NetDirectPlay == 0) {
+                free(packet);
+                return 0;
+            }
             sent_at[0] = timeGetTime();
             for (index = 1; index < 16; ++index) sent_at[index] = sent_at[0];
             if (NetDirectPlay->Send(local_player_id_, static_cast<DPID>(group_id),
@@ -1631,8 +1638,6 @@ int Net::send_group(void *data, int size, long group_id, int flags) {
             free(packet);
             return 0;
         }
-        free(packet);
-        return 0;
     } else {
         header->type_flags_ = 1;
         if (NetDirectPlay == 0) {
@@ -3108,11 +3113,11 @@ int Net::check_message(unsigned long player, unsigned long stamp) {
         return 0;
     }
     uint32_t *last = &players_[slot].field_4_;
-    if (stamp > *last) {
-        *last = stamp;
-        return 0;
+    if (*last >= stamp) {
+        return 1;
     }
-    return 1;
+    *last = stamp;
+    return 0;
 }
 
 // ORIGINAL: 0x00632300 ?set_polling@Net@@QAEXH@Z 0x00632300-0x0063234F BYTE_EXACT
@@ -3318,7 +3323,7 @@ int __cdecl internal_receive(NetThreadInfo *thread_info) {
             reinterpret_cast<NetPacketEnvelope *>(bytes);
         JackalVoiceRx &receivers = net->jackal_voice_rx_;
         int index;
-        switch (packet->type_flags_ & 0xFFFB) {
+        switch (packet->type_flags_ & ~4) {
         case 0x10:
             net->queue_130_.add(bytes, size + 0x0C, from, 0,
                                 static_cast<unsigned long>(-1));
