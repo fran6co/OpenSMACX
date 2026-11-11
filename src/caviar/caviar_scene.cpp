@@ -363,7 +363,6 @@ Purpose: Draw the scene. Refuses to re-enter, stages the record and the
 */
 void __cdecl vox_draw_scene(VoxRenderRecord *record, CaviarSceneContext *context,
                             VoxCameraBlock *view, int step) {
-    VoxSceneState *state = &context->state_;
     // The staging helper's two shadow-radius outputs. The image computes one
     // address and pushes it for both trailing arguments, so the second
     // store overwrites the first.
@@ -401,12 +400,12 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, CaviarSceneContext *context
     // The record's own setup hook, called once before the walk.
     record->setup_callback_();
 
-    for (int index = 0; index < state->instance_count_; ++index) {
-        VoxInstance &instance = state->instances_[index];
+    for (int index = 0; index < context->state_.instance_count_; ++index) {
+        VoxInstance &instance = context->state_.instances_[index];
         if ((instance.instance_colour_[step] & 0x80) != 0) {
             continue;
         }
-        CvrShape *node = state->instance_steps_[index].shape_;
+        CvrShape *node = context->state_.instance_steps_[index].shape_;
 
         // The part's world position: its own vector through the view's
         // rotation, plus the view's offset.
@@ -425,7 +424,9 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, CaviarSceneContext *context
         // node's extent, scaled by the cut, is past the visibility cut.
         const float extent = node->scale_;
         int visible = 1;
-        if (extent * CaviarSceneProjectionScratch.projected_scale_ > 0.5f) {
+        // 0x639F9E loads the scale before the extent is spilled.
+        const float cut = CaviarSceneProjectionScratch.projected_scale_;
+        if (cut * extent > 0.5f) {
             visible = 0;
         }
 
@@ -529,8 +530,8 @@ void __cdecl vox_load_scene_view(
     CaviarRenderClipWindowCandidate primary;
     CaviarRenderClipWindowCandidate secondary;
     CaviarRenderClipWindowCandidate box;
-    secondary.left_ = secondary.top_ = primary.left_ = primary.top_ = 0x7fff;
-    secondary.right_ = secondary.bottom_ = primary.right_ = primary.bottom_ = -0x7fff;
+    primary.top_ = primary.left_ = secondary.top_ = secondary.left_ = 0x7fff;
+    primary.bottom_ = primary.right_ = secondary.bottom_ = secondary.right_ = -0x7fff;
 
     for (int index = 0; index < context->state_.instance_count_; ++index) {
         VoxInstance &instance = context->state_.instances_[index];

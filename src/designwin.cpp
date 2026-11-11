@@ -5334,11 +5334,13 @@ void DesignWin::draw_flash() {
     {
         RECT box = rc;
         box.right = (box.right - box.left + 3) / 2 + box.left - 3;
-        const int centre_x = (box.right + box.left) / 2;
-        const int centre_y = (box.top + box.bottom) / 2;
+        // One y serves the unit's centre and, below, the text cursor: the
+        // image keeps both in [ebp-0x20].
+        int x = (box.right + box.left) / 2;
+        int y = (box.top + box.bottom) / 2;
         int unit_id = veh_fake(shown, factionID_);
-        veh_draw(&MainInterfaceGlobal, unit_id, centre_x - 0x32,
-                 centre_y - 0x25, 0, 0x48, 0);
+        veh_draw(&MainInterfaceGlobal, unit_id, x - 0x32,
+                 y - 0x25, 0, 0x48, 0);
 
         const int step = box.right - box.left + 3;
         box.left += step;
@@ -5377,7 +5379,7 @@ void DesignWin::draw_flash() {
         MainInterfaceGlobal.Buffer::set_text_color(TextColourTable[14],
                                                    TextColourTable[15], 1, 1);
 
-        int line_top = rc.top;
+        y = rc.top;
         const int line_left = rc.left;
         StringTemp[0] = '\0';
         strcat(StringTemp, "(");
@@ -5391,8 +5393,8 @@ void DesignWin::draw_flash() {
             }
         }
         strcat(StringTemp, ")");
-        line_top = MainInterfaceGlobal.Buffer::wrap_cent(
-            StringTemp, line_left, line_top, rc.right - rc.left) + 3;
+        y = MainInterfaceGlobal.Buffer::wrap_cent(
+            StringTemp, line_left, y, rc.right - rc.left) + 3;
 
         if (shown != 0x3F) {
             char digits[80];
@@ -5400,24 +5402,24 @@ void DesignWin::draw_flash() {
             _itoa(PlayersData[factionID_].proto_id_active[shown], digits, 10);
             strcat(StringTemp, digits);
             strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, label_get(0xE80 / 4));
-            line_top = MainInterfaceGlobal.Buffer::wrap_cent(
-                StringTemp, line_left, line_top, rc.right - rc.left);
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xE80 / 4]));
+            y = MainInterfaceGlobal.Buffer::wrap_cent(
+                StringTemp, line_left, y, rc.right - rc.left);
 
             StringTemp[0] = '\0';
             _itoa(PlayersData[factionID_].proto_id_queue[shown], digits, 10);
             strcat(StringTemp, digits);
             strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, label_get(0xE84 / 4));
-            line_top = MainInterfaceGlobal.Buffer::wrap_cent(
-                StringTemp, line_left, line_top, rc.right - rc.left);
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xE84 / 4]));
+            y = MainInterfaceGlobal.Buffer::wrap_cent(
+                StringTemp, line_left, y, rc.right - rc.left);
 
             if (VehPrototypes[shown].obsolete_factions & (1 << factionID_)) {
                 StringTemp[0] = '\0';
-                strcat(StringTemp, label_get(0xE40 / 4));
+                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xE40 / 4]));
                 CharUpperA(StringTemp);
                 MainInterfaceGlobal.Buffer::wrap_cent(
-                    StringTemp, line_left, line_top, rc.right - rc.left);
+                    StringTemp, line_left, y, rc.right - rc.left);
             }
         }
     }
