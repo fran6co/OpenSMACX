@@ -60,7 +60,7 @@ static const char vox_msg_no_address_tables[] = "No room for address tables";
 // not a pair of clip rectangles.
 OPENSMACX_NOINLINE
 // SEED HISTORY: archived draw seed mapping used FILE mode; current source ownership is a BODY mapping.
-// ORIGINAL: 0x0063E950 sub_63e950 0x0063E950-0x0063EFFF
+// ORIGINAL: 0x0063E950 sub_63e950 0x0063E950-0x0063EFFF BYTE_EXACT
 // symbol    ?vox_draw_part@@YAXPAUVoxRenderRecord@@PBUCvrShape@@PBUVOX_Vect@@PAUVOX_Matrix@@32MH@Z
 // kind      game
 // TRIED: 8-int __cdecl signature transcribed faithfully from both branches (bit2==0 single-shot with nested bit4 split vs bit2-set do/while loop over pbVar7), following the sibling 0x0063F000's shape; prologue diverges at instr #11 (sub esp/push framing) - not chased further, large FP-heavy function, landed for coverage.
@@ -238,7 +238,7 @@ void *vox_active_shadow_table_ = 0;  // 0x009BE6C0
 // 0x0063F000. Five arguments: the shadow branch's counterpart of the above.
 OPENSMACX_NOINLINE
 // SEED HISTORY: archived draw seed mapping used FILE mode; current source ownership is a BODY mapping.
-// ORIGINAL: 0x0063F000 sub_63f000 0x0063F000-0x0063F5D7
+// ORIGINAL: 0x0063F000 sub_63f000 0x0063F000-0x0063F5D7 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x0063F000 reserves 0x58 bytes and saves four registers; after helper-argument cleanup at 0x0063F026, load 0x0063F0C1 from ESP+0x7C is entry ESP+0x14, the fifth cdecl argument. XOR EDI,EDI at 0x0063F02B and CMP ESI,EDI / SETNE BL at 0x0063F0CB / 0x0063F0D5 establish 0/1 normalization.", "The original caller supplies its scalar LOD local, not camera bounds. Flat/tiled and contained/clipped paths preserve this low bit while independently setting 0x10/0x20 flags. This corrects a source type/value interpretation without changing original identities, layout or quirks."], "reason": "Interpret the fifth shadow argument as scalar visibility and normalize its nonzero value into the dispatch low bit."}
 // symbol    ?vox_draw_shadow@@YAXPAUVoxRenderRecord@@PBUCvrShape@@PBUVOX_Vect@@PAUVOX_Matrix@@H@Z
 // kind      game
@@ -401,7 +401,7 @@ void __cdecl vox_draw_shadow(
 #undef VOX_PROJECT_ROUND
 #undef VOX_ROUND_PROJECTED
 
-// ORIGINAL: 0x0063F5E0 sub_63f5e0 0x0063F5E0-0x0063F9A8
+// ORIGINAL: 0x0063F5E0 sub_63f5e0 0x0063F5E0-0x0063F9A8 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original identity/name/span and complete historical lesson run are transported from the matching seed record by match_recovery.source.", "The staged typed definition is uniquely found by match_recovery.source.reader.function_line and compiles in the coordinator's three-TU VC6 overlay.", "The emitted symbol is read from the coordinator's fresh native COFF observation log; it is not inferred from the C++ spelling.", "Caviar data access windows and initialization remain separate coordinator-owned object-mapping obligations; this transfer creates no allocation-bound or initializer claim."], "reason": "Rehome this complete pinned original identity from its generated seed file to the typed Caviar renderer owner; preserve the original span and seed lesson history without asserting BYTE_EXACT. The old FILE interpretation is converted to a function BODY because the new owner contains multiple original identities."}
 // symbol    ?caviar_clip_shape@@YAXPAUVoxRenderRecord@@PBUCvrShape@@PBUVOX_Vect@@PBUVOX_Matrix@@PBUCaviarRenderClipWindowCandidate@@QAH@Z
 // TRIED: 6-arg __cdecl signature derived from esp+N reads at the anchor (post-prologue esp) rather than IDA's untyped guess; the per-vertex bbox loop, sub_6280e0/sub_628150/sub_6401b0 arg order, and the final outBox/localBox clamp (which Ghidra's pseudocode also shows) are transcribed from the raw asm since Ghidra's __ftol() calls hide their FPU source operands.

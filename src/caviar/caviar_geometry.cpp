@@ -200,7 +200,7 @@ Purpose: Normalise a vector in place: divide each component by the vector's
          neighbours are vector_add (0x00628150) and the scale helper at
          0x006281B0 - and six game bodies call it besides Caviar::init, which
          normalises the scene's down vector with it.
-// ORIGINAL: 0x00628220 sub_628220 0x00628220-0x0062828B FILE
+// ORIGINAL: 0x00628220 sub_628220 0x00628220-0x0062828B FILE BYTE_EXACT
 // symbol    ?vox_normalise_vector@@YAXPBMPAM@Z
 //           (the image carries no name for this address; the fact records
 //           what this tree emits. VC6 spells `const float *` and `float *`
