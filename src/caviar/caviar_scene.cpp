@@ -59,13 +59,8 @@ uint8_t vox_scene_busy = 0;
 } // namespace
 
 
-// 0x00671010: original float bits 0x3F000000. The visibility cut the part's
-// scaled extent is compared against to select the per-part rendering flag.
-const float vox_visibility_cut_ = 0.5f;  // 0x00671010
-
-// 0x00671014: original float bits 0x43000000. Scales the walked node's extent
-// for the shadow clip tests in both the bounds and drawing passes.
-const float vox_radius_scale_ = 128.0f;  // 0x00671014
+// 0x00671010 (0.5f, the visibility cut) and 0x00671014 (128.0f, the shadow
+// radius scale) are this unit's float literals, written at their uses.
 
 // 0x006396A0. Six arguments, two of them the same output buffer - the draw
 // computes one address twice and pushes both. Leaves a float on the FPU stack
@@ -76,15 +71,6 @@ const float vox_radius_scale_ = 128.0f;  // 0x00671014
 // Callee return is the final x87 value; the caller discards it.  Its two
 // output pointers are intentionally independent formals because native code
 // writes both even though the mapped caller passes the same address.
-extern const float CaviarProjectionZero;
-extern const float CaviarProjectionMinusOne;
-extern const float CaviarProjectionOne;
-extern const float CaviarProjectionHalfPixel;
-extern const float CaviarProjectionNearNegativeEpsilon;
-extern const float CaviarProjectionNearPositiveEpsilon;
-extern const float CaviarProjectionShadowRadiusScale;
-extern const float CaviarProjectionShadowAxisScaleX;
-extern const float CaviarProjectionShadowAxisScaleY;
 extern VOX_Matrix CaviarProjectionShadowBasis;
 extern CaviarSceneProjectionScratchCandidate CaviarSceneProjectionScratch;
 
@@ -97,144 +83,176 @@ extern CaviarSceneProjectionScratchCandidate CaviarSceneProjectionScratch;
 float __cdecl vox_stage_scene(
     VoxRenderRecord *record, CaviarSceneContext *context,
     VoxCameraBlock *camera, int step, float *output_a, float *output_b) {
-    CaviarSceneProjectionScratchCandidate &scratch =
-        CaviarSceneProjectionScratch;
-    CaviarSceneSetupDescriptorCandidate *const setup = record->setup_block_;
-
+    // The constants below are this unit's float literals (0x670FF8..0x67100C);
+    // the image stores 1.0f and the epsilons as immediates (0x639AE6,
+    // 0x639B08, 0x639B31), which named const objects would not give.
     vox_matrix_matrix_mul(camera->camera_.rotation.values,
                           context->state_.scene_rotation_.values,
-                          scratch.view_scene_matrix_.values);
-    for (int row = 0; row != 3; ++row) {
-        for (int column = 0; column != 3; ++column) {
-            scratch.view_scene_matrix_.values[row][column] *=
-                context->state_.scale_;
-        }
-    }
+                          CaviarSceneProjectionScratch.view_scene_matrix_.values);
+    // 0x6396C1: the nine cells, unrolled, each re-reading the scene scale.
+    CaviarSceneProjectionScratch.view_scene_matrix_.values[0][0] =
+        context->state_.scale_ * CaviarSceneProjectionScratch.view_scene_matrix_.values[0][0];
+    CaviarSceneProjectionScratch.view_scene_matrix_.values[0][1] =
+        context->state_.scale_ * CaviarSceneProjectionScratch.view_scene_matrix_.values[0][1];
+    CaviarSceneProjectionScratch.view_scene_matrix_.values[0][2] =
+        context->state_.scale_ * CaviarSceneProjectionScratch.view_scene_matrix_.values[0][2];
+    CaviarSceneProjectionScratch.view_scene_matrix_.values[1][0] =
+        context->state_.scale_ * CaviarSceneProjectionScratch.view_scene_matrix_.values[1][0];
+    CaviarSceneProjectionScratch.view_scene_matrix_.values[1][1] =
+        context->state_.scale_ * CaviarSceneProjectionScratch.view_scene_matrix_.values[1][1];
+    CaviarSceneProjectionScratch.view_scene_matrix_.values[1][2] =
+        context->state_.scale_ * CaviarSceneProjectionScratch.view_scene_matrix_.values[1][2];
+    CaviarSceneProjectionScratch.view_scene_matrix_.values[2][0] =
+        context->state_.scale_ * CaviarSceneProjectionScratch.view_scene_matrix_.values[2][0];
+    CaviarSceneProjectionScratch.view_scene_matrix_.values[2][1] =
+        context->state_.scale_ * CaviarSceneProjectionScratch.view_scene_matrix_.values[2][1];
+    CaviarSceneProjectionScratch.view_scene_matrix_.values[2][2] =
+        context->state_.scale_ * CaviarSceneProjectionScratch.view_scene_matrix_.values[2][2];
 
-    float camera_relative_scene[3];
+    VOX_Vect relative;
     vec3_subtract(context->state_.scene_offset_.values,
-                           camera->camera_.position.values,
-                           camera_relative_scene);
-    vox_matrix_vector_mul(camera->camera_.rotation.values,
-                          camera_relative_scene,
-                          scratch.camera_offset_.values);
+                  camera->camera_.position.values, relative.values);
+    vox_matrix_vector_mul(camera->camera_.rotation.values, relative.values,
+                          CaviarSceneProjectionScratch.camera_offset_.values);
 
     // Native accesses the first instance's vector stream without an empty
     // table guard. Preserve that precondition and the selected step.
-    const VOX_Vect &first_instance_step =
-        context->state_.instances_[0].instance_vector_[step];
-    float projected_instance[3];
-    vox_matrix_vector_mul(scratch.view_scene_matrix_.values,
-                          first_instance_step.values, projected_instance);
-    vector_add(projected_instance, scratch.camera_offset_.values,
-               projected_instance);
+    VOX_Vect projected;
+    vox_matrix_vector_mul(CaviarSceneProjectionScratch.view_scene_matrix_.values,
+                          context->state_.instances_[0].instance_vector_[step].values,
+                          projected.values);
+    vector_add(projected.values, CaviarSceneProjectionScratch.camera_offset_.values,
+               projected.values);
 
-    if (projected_instance[2] <= CaviarProjectionZero ||
-        camera->camera_.scaling <= CaviarProjectionZero) {
-        scratch.perspective_factor_ = CaviarProjectionOne;
+    // 0x6397BB: the perspective term is the camera block's first lead float
+    // (+0x34), not its scaling (+0x30), which only enters the scale below.
+    if (projected.values[2] > 0.0f && camera->bounds_.lead_[0] > 0.0f) {
+        CaviarSceneProjectionScratch.perspective_factor_ =
+            1.0f / (projected.values[2] * camera->bounds_.lead_[0] - -1.0f);
     } else {
-        scratch.perspective_factor_ = CaviarProjectionOne /
-            (projected_instance[2] * camera->camera_.scaling -
-             CaviarProjectionMinusOne);
+        CaviarSceneProjectionScratch.perspective_factor_ = 1.0f;
     }
-    scratch.projected_scale_ = camera->camera_.scaling *
-        context->projection_scale_ * scratch.perspective_factor_;
-    scratch.viewport_aspect_ =
+    CaviarSceneProjectionScratch.projected_scale_ =
+        camera->camera_.scaling * context->projection_scale_ *
+        CaviarSceneProjectionScratch.perspective_factor_;
+    CaviarSceneProjectionScratch.viewport_aspect_ =
         (camera->bounds_.lead_[4] - camera->bounds_.lead_[3]) /
         (camera->bounds_.lead_[2] - camera->bounds_.lead_[1]);
 
-    // The original scales the first six matrix cells here, not the last row.
-    float *matrix_cells = &scratch.view_scene_matrix_.values[0][0];
-    for (int index = 0; index != 6; ++index) {
-        matrix_cells[index] *= scratch.projected_scale_;
-    }
+    // The first two rows and the first two offset components take the
+    // projected scale; the third row is handled with the aspect below.
+    CaviarSceneProjectionScratch.view_scene_matrix_.values[0][0] =
+        CaviarSceneProjectionScratch.view_scene_matrix_.values[0][0] * CaviarSceneProjectionScratch.projected_scale_;
+    CaviarSceneProjectionScratch.view_scene_matrix_.values[0][1] =
+        CaviarSceneProjectionScratch.view_scene_matrix_.values[0][1] * CaviarSceneProjectionScratch.projected_scale_;
+    CaviarSceneProjectionScratch.view_scene_matrix_.values[0][2] =
+        CaviarSceneProjectionScratch.view_scene_matrix_.values[0][2] * CaviarSceneProjectionScratch.projected_scale_;
+    CaviarSceneProjectionScratch.view_scene_matrix_.values[1][0] =
+        CaviarSceneProjectionScratch.view_scene_matrix_.values[1][0] * CaviarSceneProjectionScratch.projected_scale_;
+    CaviarSceneProjectionScratch.view_scene_matrix_.values[1][1] =
+        CaviarSceneProjectionScratch.view_scene_matrix_.values[1][1] * CaviarSceneProjectionScratch.projected_scale_;
+    CaviarSceneProjectionScratch.view_scene_matrix_.values[1][2] =
+        CaviarSceneProjectionScratch.view_scene_matrix_.values[1][2] * CaviarSceneProjectionScratch.projected_scale_;
+    CaviarSceneProjectionScratch.camera_offset_.values[0] =
+        CaviarSceneProjectionScratch.camera_offset_.values[0] * CaviarSceneProjectionScratch.projected_scale_;
+    CaviarSceneProjectionScratch.camera_offset_.values[1] =
+        CaviarSceneProjectionScratch.camera_offset_.values[1] * CaviarSceneProjectionScratch.projected_scale_;
 
-    const float half_width = static_cast<float>(setup->colour_width_ >> 1) -
-                             CaviarProjectionHalfPixel;
-    const float half_height = static_cast<float>(setup->height_ >> 1) -
-                              CaviarProjectionHalfPixel;
-    scratch.camera_offset_.values[0] =
+    const float half_width =
+        static_cast<float>(record->setup_block_->colour_width_ >> 1) - -0.5f;
+    const float half_height =
+        static_cast<float>(record->setup_block_->height_ >> 1) - -0.5f;
+    CaviarSceneProjectionScratch.camera_offset_.values[0] =
         context->projection_offset_x_ * context->projection_scale_ +
-        context->screen_offset_x_ +
-        half_width + scratch.camera_offset_.values[0] * scratch.projected_scale_;
-    scratch.camera_offset_.values[1] =
+        context->screen_offset_x_ + half_width +
+        CaviarSceneProjectionScratch.camera_offset_.values[0];
+    CaviarSceneProjectionScratch.camera_offset_.values[1] =
         context->projection_offset_y_ * context->projection_scale_ +
-        context->screen_offset_y_ +
-        half_height + scratch.camera_offset_.values[1] * scratch.projected_scale_;
-    scratch.camera_offset_.values[2] -= camera->bounds_.lead_[1];
+        context->screen_offset_y_ + half_height +
+        CaviarSceneProjectionScratch.camera_offset_.values[1];
+    CaviarSceneProjectionScratch.camera_offset_.values[2] =
+        CaviarSceneProjectionScratch.camera_offset_.values[2] - camera->bounds_.lead_[1];
 
-    // Original 0x639972 tests record+0: ECX is arg1 loaded at 0x6397F6.
-    // This is setup_id_'s orientation bit, not an instance-colour pointer tag.
-    if ((record->setup_id_ & 1) == 0) {
-        scratch.view_scene_matrix_.values[2][0] *= scratch.viewport_aspect_;
-        scratch.view_scene_matrix_.values[2][1] *= scratch.viewport_aspect_;
-        scratch.view_scene_matrix_.values[2][2] *= scratch.viewport_aspect_;
-        scratch.camera_offset_.values[2] *= scratch.viewport_aspect_;
+    // 0x639972 tests the record's orientation bit. Both arms scale the third
+    // row and the depth offset by the aspect; the odd arm also negates all
+    // four, then each arm adds its own depth bound.
+    if ((record->setup_id_ & 1) != 0) {
+        CaviarSceneProjectionScratch.view_scene_matrix_.values[2][0] =
+            -(CaviarSceneProjectionScratch.view_scene_matrix_.values[2][0] * CaviarSceneProjectionScratch.viewport_aspect_);
+        CaviarSceneProjectionScratch.view_scene_matrix_.values[2][1] =
+            -(CaviarSceneProjectionScratch.view_scene_matrix_.values[2][1] * CaviarSceneProjectionScratch.viewport_aspect_);
+        CaviarSceneProjectionScratch.view_scene_matrix_.values[2][2] =
+            -(CaviarSceneProjectionScratch.view_scene_matrix_.values[2][2] * CaviarSceneProjectionScratch.viewport_aspect_);
+        CaviarSceneProjectionScratch.camera_offset_.values[2] =
+            -(CaviarSceneProjectionScratch.camera_offset_.values[2] * CaviarSceneProjectionScratch.viewport_aspect_);
+        CaviarSceneProjectionScratch.camera_offset_.values[2] =
+            context->projection_offset_z_ + camera->bounds_.lead_[4] +
+            CaviarSceneProjectionScratch.camera_offset_.values[2];
     } else {
-        scratch.view_scene_matrix_.values[2][0] =
-            -scratch.view_scene_matrix_.values[2][0];
-        scratch.view_scene_matrix_.values[2][1] =
-            -scratch.view_scene_matrix_.values[2][1];
-        scratch.view_scene_matrix_.values[2][2] =
-            -(scratch.view_scene_matrix_.values[2][2] * scratch.viewport_aspect_);
-        scratch.camera_offset_.values[2] =
-            -(scratch.camera_offset_.values[2] * scratch.viewport_aspect_);
+        CaviarSceneProjectionScratch.view_scene_matrix_.values[2][0] =
+            CaviarSceneProjectionScratch.view_scene_matrix_.values[2][0] * CaviarSceneProjectionScratch.viewport_aspect_;
+        CaviarSceneProjectionScratch.view_scene_matrix_.values[2][1] =
+            CaviarSceneProjectionScratch.view_scene_matrix_.values[2][1] * CaviarSceneProjectionScratch.viewport_aspect_;
+        CaviarSceneProjectionScratch.view_scene_matrix_.values[2][2] =
+            CaviarSceneProjectionScratch.view_scene_matrix_.values[2][2] * CaviarSceneProjectionScratch.viewport_aspect_;
+        CaviarSceneProjectionScratch.camera_offset_.values[2] =
+            CaviarSceneProjectionScratch.camera_offset_.values[2] * CaviarSceneProjectionScratch.viewport_aspect_;
+        CaviarSceneProjectionScratch.camera_offset_.values[2] =
+            context->projection_offset_z_ + camera->bounds_.lead_[3] +
+            CaviarSceneProjectionScratch.camera_offset_.values[2];
     }
-    scratch.camera_offset_.values[2] += context->projection_offset_z_ +
-        (((record->setup_id_ & 1) == 0)
-            ? camera->bounds_.lead_[3]
-            : camera->bounds_.lead_[4]);
 
-    scratch.projected_scale_ =
-        context->state_.scale_ * scratch.projected_scale_;
-    scratch.viewport_aspect_ =
-        context->state_.scale_ * scratch.viewport_aspect_;
-    scratch.part_clip_.left_ = (int)floor(
-        static_cast<float>(camera->bounds_.values_[0]) * context->projection_scale_);
-    scratch.part_clip_.top_ = (int)floor(
-        static_cast<float>(camera->bounds_.values_[1]) * context->projection_scale_);
-    scratch.part_clip_.right_ = (int)floor(
-        static_cast<float>(camera->bounds_.values_[4] + 1) * context->projection_scale_) + 1;
-    scratch.part_clip_.bottom_ = (int)floor(
-        static_cast<float>(camera->bounds_.values_[5] + 1) * context->projection_scale_) + 1;
-    scratch.part_clip_.width_ = scratch.part_clip_.left_ - 1 +
-                                scratch.part_clip_.right_;
-    scratch.part_clip_.height_ = scratch.part_clip_.top_ - 1 +
-                                 scratch.part_clip_.bottom_;
+    CaviarSceneProjectionScratch.projected_scale_ =
+        context->state_.scale_ * CaviarSceneProjectionScratch.projected_scale_;
+    CaviarSceneProjectionScratch.viewport_aspect_ =
+        context->state_.scale_ * CaviarSceneProjectionScratch.viewport_aspect_;
+    CaviarSceneProjectionScratch.part_clip_.left_ =
+        (int)floor(camera->bounds_.values_[0] * context->projection_scale_);
+    CaviarSceneProjectionScratch.part_clip_.top_ =
+        (int)floor(camera->bounds_.values_[1] * context->projection_scale_);
+    CaviarSceneProjectionScratch.part_clip_.right_ =
+        (int)floor((camera->bounds_.values_[4] + 1) * context->projection_scale_) + 1;
+    CaviarSceneProjectionScratch.part_clip_.bottom_ =
+        (int)floor((camera->bounds_.values_[5] + 1) * context->projection_scale_) + 1;
+    CaviarSceneProjectionScratch.part_clip_.width_ =
+        CaviarSceneProjectionScratch.part_clip_.left_ +
+        CaviarSceneProjectionScratch.part_clip_.right_ - 1;
+    CaviarSceneProjectionScratch.part_clip_.height_ =
+        CaviarSceneProjectionScratch.part_clip_.top_ +
+        CaviarSceneProjectionScratch.part_clip_.bottom_ - 1;
 
-    if (context->shadow_enabled_ != 0 && setup->shadow_buffer_ != 0) {
-        float &shadow_z = context->shadow_vector_.values[2];
-        if (shadow_z <= CaviarProjectionNearNegativeEpsilon ||
-            CaviarProjectionZero <= shadow_z) {
-            if (CaviarProjectionZero <= shadow_z &&
-                shadow_z < CaviarProjectionNearPositiveEpsilon) {
-                shadow_z = CaviarProjectionNearPositiveEpsilon;
-            }
-        } else {
-            shadow_z = CaviarProjectionNearNegativeEpsilon;
+    if (context->shadow_enabled_ != 0 && record->setup_block_->shadow_buffer_ != 0) {
+        if (-0.000001f < context->shadow_vector_.values[2] &&
+            context->shadow_vector_.values[2] < 0.0f) {
+            context->shadow_vector_.values[2] = -0.000001f;
+        } else if (0.0f <= context->shadow_vector_.values[2] &&
+                   context->shadow_vector_.values[2] < 0.000001f) {
+            context->shadow_vector_.values[2] = 0.000001f;
         }
 
-        const float inverse_shadow_z = CaviarProjectionOne / shadow_z;
-        const float shadow_x = context->shadow_vector_.values[0] * inverse_shadow_z;
-        const float shadow_y = context->shadow_vector_.values[1] * inverse_shadow_z;
+        const float inverse_z = 1.0f / context->shadow_vector_.values[2];
+        const float shadow_x = context->shadow_vector_.values[0] * inverse_z;
+        const float shadow_y = context->shadow_vector_.values[1] * inverse_z;
         CaviarProjectionShadowBasis.values[0][2] = -shadow_x;
         // Native 0x639B77 stores to +0x14 ([1][2]).
         CaviarProjectionShadowBasis.values[1][2] = -shadow_y;
         vox_matrix_vector_mul(CaviarProjectionShadowBasis.values,
                               context->state_.scene_offset_.values,
-                              scratch.shadow_centre_.values);
-        scratch.shadow_centre_.values[0] +=
-            shadow_x * context->shadow_origin_adjustment_;
-        scratch.shadow_centre_.values[1] +=
-            shadow_y * context->shadow_origin_adjustment_;
-        scratch.shadow_centre_.values[2] += context->shadow_origin_adjustment_;
+                              CaviarSceneProjectionScratch.shadow_centre_.values);
+        CaviarSceneProjectionScratch.shadow_centre_.values[0] =
+            shadow_x * context->shadow_origin_adjustment_ +
+            CaviarSceneProjectionScratch.shadow_centre_.values[0];
+        CaviarSceneProjectionScratch.shadow_centre_.values[1] =
+            shadow_y * context->shadow_origin_adjustment_ +
+            CaviarSceneProjectionScratch.shadow_centre_.values[1];
+        CaviarSceneProjectionScratch.shadow_centre_.values[2] =
+            context->shadow_origin_adjustment_ +
+            CaviarSceneProjectionScratch.shadow_centre_.values[2];
 
-        float shadow_relative[3];
-        vec3_subtract(scratch.shadow_centre_.values,
-                               camera->camera_.position.values,
-                               shadow_relative);
-        vox_matrix_vector_mul(camera->camera_.rotation.values, shadow_relative,
-                              scratch.shadow_centre_.values);
+        vec3_subtract(CaviarSceneProjectionScratch.shadow_centre_.values,
+                      camera->camera_.position.values, relative.values);
+        vox_matrix_vector_mul(camera->camera_.rotation.values, relative.values,
+                              CaviarSceneProjectionScratch.shadow_centre_.values);
 
         VOX_Matrix shadow_axes;
         vox_matrix_matrix_mul(camera->camera_.rotation.values,
@@ -242,54 +260,66 @@ float __cdecl vox_stage_scene(
                               shadow_axes.values);
         vox_matrix_matrix_mul(shadow_axes.values,
                               context->state_.scene_rotation_.values,
-                              shadow_axes.values);
-        const float shadow_projected_scale = context->state_.scale_ *
-            camera->camera_.scaling * scratch.perspective_factor_;
-        const float shadow_x_scale = shadow_projected_scale * context->shadow_scale_x_;
-        const float shadow_y_scale = shadow_projected_scale * context->shadow_scale_y_;
-        for (int axis = 0; axis != 3; ++axis) {
-            scratch.shadow_matrix_.values[0][axis] =
-                shadow_axes.values[axis][0] * shadow_x_scale;
-            scratch.shadow_matrix_.values[1][axis] =
-                shadow_axes.values[axis][1] * shadow_y_scale;
-        }
-        scratch.shadow_centre_.values[0] =
+                              CaviarSceneProjectionScratch.shadow_matrix_.values);
+        const float shadow_scale = context->state_.scale_ * camera->camera_.scaling *
+                                   CaviarSceneProjectionScratch.perspective_factor_;
+        const float scale_x = shadow_scale * context->shadow_scale_x_;
+        CaviarSceneProjectionScratch.shadow_centre_.values[0] =
+            scale_x * CaviarSceneProjectionScratch.shadow_centre_.values[0];
+        CaviarSceneProjectionScratch.shadow_matrix_.values[0][0] =
+            scale_x * CaviarSceneProjectionScratch.shadow_matrix_.values[0][0];
+        CaviarSceneProjectionScratch.shadow_matrix_.values[0][1] =
+            scale_x * CaviarSceneProjectionScratch.shadow_matrix_.values[0][1];
+        CaviarSceneProjectionScratch.shadow_matrix_.values[0][2] =
+            scale_x * CaviarSceneProjectionScratch.shadow_matrix_.values[0][2];
+        const float scale_y = shadow_scale * context->shadow_scale_y_;
+        CaviarSceneProjectionScratch.shadow_centre_.values[1] =
+            scale_y * CaviarSceneProjectionScratch.shadow_centre_.values[1];
+        CaviarSceneProjectionScratch.shadow_matrix_.values[1][0] =
+            scale_y * CaviarSceneProjectionScratch.shadow_matrix_.values[1][0];
+        CaviarSceneProjectionScratch.shadow_matrix_.values[1][1] =
+            scale_y * CaviarSceneProjectionScratch.shadow_matrix_.values[1][1];
+        CaviarSceneProjectionScratch.shadow_matrix_.values[1][2] =
+            scale_y * CaviarSceneProjectionScratch.shadow_matrix_.values[1][2];
+        CaviarSceneProjectionScratch.shadow_centre_.values[0] =
             context->projection_offset_x_ * context->shadow_scale_x_ +
-            context->shadow_screen_offset_x_ +
-            half_width + scratch.shadow_centre_.values[0] * shadow_x_scale;
-        scratch.shadow_centre_.values[1] =
+            context->shadow_screen_offset_x_ + half_width +
+            CaviarSceneProjectionScratch.shadow_centre_.values[0];
+        CaviarSceneProjectionScratch.shadow_centre_.values[1] =
             context->projection_offset_y_ * context->shadow_scale_y_ +
-            context->shadow_screen_offset_y_ +
-            half_height + scratch.shadow_centre_.values[1] * shadow_y_scale;
+            context->shadow_screen_offset_y_ + half_height +
+            CaviarSceneProjectionScratch.shadow_centre_.values[1];
 
-        scratch.shadow_radius_x_ = static_cast<float>(_hypot(
-            static_cast<double>(scratch.shadow_matrix_.values[0][0]),
-            static_cast<double>(scratch.shadow_matrix_.values[0][2])));
+        CaviarSceneProjectionScratch.shadow_radius_x_ = static_cast<float>(_hypot(
+            CaviarSceneProjectionScratch.shadow_matrix_.values[0][0],
+            CaviarSceneProjectionScratch.shadow_matrix_.values[0][2]));
         // Native 0x639D0B: the second radius reads [1][1] and [1][2].
-        scratch.shadow_radius_y_ = static_cast<float>(_hypot(
-            static_cast<double>(scratch.shadow_matrix_.values[1][1]),
-            static_cast<double>(scratch.shadow_matrix_.values[1][2])));
-        if (scratch.shadow_radius_x_ < CaviarProjectionNearPositiveEpsilon)
-            scratch.shadow_radius_x_ = CaviarProjectionNearPositiveEpsilon;
-        if (scratch.shadow_radius_y_ < CaviarProjectionNearPositiveEpsilon)
-            scratch.shadow_radius_y_ = CaviarProjectionNearPositiveEpsilon;
-        *output_a = scratch.shadow_radius_x_;
-        *output_b = scratch.shadow_radius_y_;
+        CaviarSceneProjectionScratch.shadow_radius_y_ = static_cast<float>(_hypot(
+            CaviarSceneProjectionScratch.shadow_matrix_.values[1][1],
+            CaviarSceneProjectionScratch.shadow_matrix_.values[1][2]));
+        if (CaviarSceneProjectionScratch.shadow_radius_x_ < 0.000001f)
+            CaviarSceneProjectionScratch.shadow_radius_x_ = 0.000001f;
+        if (CaviarSceneProjectionScratch.shadow_radius_y_ < 0.000001f)
+            CaviarSceneProjectionScratch.shadow_radius_y_ = 0.000001f;
+        *output_a = CaviarSceneProjectionScratch.shadow_radius_x_;
+        *output_b = CaviarSceneProjectionScratch.shadow_radius_y_;
 
-        scratch.shadow_clip_.left_ = (int)floor(
-            static_cast<float>(camera->bounds_.values_[0]) * context->shadow_scale_x_);
-        scratch.shadow_clip_.top_ = (int)floor(
-            static_cast<float>(camera->bounds_.values_[1]) * context->shadow_scale_y_);
-        scratch.shadow_clip_.right_ = (int)floor(
-            static_cast<float>(camera->bounds_.values_[4] + 1) * context->shadow_scale_x_) + 1;
-        scratch.shadow_clip_.bottom_ = (int)floor(
-            static_cast<float>(camera->bounds_.values_[5] + 1) * context->shadow_scale_y_) + 1;
-        scratch.shadow_clip_.width_ = scratch.shadow_clip_.left_ - 1 +
-                                      scratch.shadow_clip_.right_;
-        scratch.shadow_clip_.height_ = scratch.shadow_clip_.top_ - 1 +
-                                       scratch.shadow_clip_.bottom_;
+        CaviarSceneProjectionScratch.shadow_clip_.left_ =
+            (int)floor(camera->bounds_.values_[0] * context->shadow_scale_x_);
+        CaviarSceneProjectionScratch.shadow_clip_.top_ =
+            (int)floor(camera->bounds_.values_[1] * context->shadow_scale_y_);
+        CaviarSceneProjectionScratch.shadow_clip_.right_ =
+            (int)floor((camera->bounds_.values_[4] + 1) * context->shadow_scale_x_) + 1;
+        CaviarSceneProjectionScratch.shadow_clip_.bottom_ =
+            (int)floor((camera->bounds_.values_[5] + 1) * context->shadow_scale_y_) + 1;
+        CaviarSceneProjectionScratch.shadow_clip_.width_ =
+            CaviarSceneProjectionScratch.shadow_clip_.left_ +
+            CaviarSceneProjectionScratch.shadow_clip_.right_ - 1;
+        CaviarSceneProjectionScratch.shadow_clip_.height_ =
+            CaviarSceneProjectionScratch.shadow_clip_.top_ +
+            CaviarSceneProjectionScratch.shadow_clip_.bottom_ - 1;
     }
-    return scratch.projected_scale_;
+    return CaviarSceneProjectionScratch.projected_scale_;
 }
 
 /*
@@ -324,19 +354,20 @@ Purpose: Draw the scene. Refuses to re-enter, stages the record and the
 //        than returning. Reproduced as written: the guard is live whenever
 //        the draw is entered re-entrantly, and returning early would be a
 //        different program.
-// LEVER: 0 to a compiled body, 282 instructions against the image's 332 and
-//        call_diff clean - the same nine callees in the same order, three of
-//        them indirect off the record's own callback slots. The residual is
-//        the FPU scheduler: the image keeps the part's position and its nine
-//        scaled matrix elements in registers across the clip test, and the
-//        spellings here stage them to memory instead.
+// LEVER: the image's 0x44-byte frame reuses the position/part buffers for
+//        the shadow, walks the LOD chain after the position, re-reads the
+//        node's extent for each unrolled matrix product, forms the Y span
+//        only after the X tests, and multiplies by literal constants
+//        (0.78 -> 0.976). Residual: local slot order and the guard's
+//        `test` against our `cmp`.
 */
 void __cdecl vox_draw_scene(VoxRenderRecord *record, CaviarSceneContext *context,
                             VoxCameraBlock *view, int step) {
     VoxSceneState *state = &context->state_;
-    // Scratch the two setup helpers fill. The image computes one address and
-    // pushes it for both of the first helper's trailing arguments.
-    float staged[8];
+    // The staging helper's two shadow-radius outputs. The image computes one
+    // address and pushes it for both trailing arguments, so the second
+    // store overwrites the first.
+    float staged;
 
     if (vox_scene_busy != 0) {
         for (;;) {
@@ -345,7 +376,7 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, CaviarSceneContext *context
     }
     vox_scene_busy = 1;
 
-    vox_stage_scene(record, context, view, step, staged, staged);
+    vox_stage_scene(record, context, view, step, &staged, &staged);
     vox_load_scene_view(record, context, view, step);
 
     vox_active_colour_table_ = record->colour_table_;
@@ -375,9 +406,7 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, CaviarSceneContext *context
         if ((instance.instance_colour_[step] & 0x80) != 0) {
             continue;
         }
-        const CvrShape *node = vox_walk_scaled_chain(
-            state->instance_steps_[index].shape_,
-            CaviarSceneProjectionScratch.projected_scale_);
+        CvrShape *node = state->instance_steps_[index].shape_;
 
         // The part's world position: its own vector through the view's
         // rotation, plus the view's offset.
@@ -387,29 +416,39 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, CaviarSceneContext *context
                               position.values);
         vector_add(position.values, CaviarSceneProjectionScratch.camera_offset_.values, position.values);
 
+        // 0x639F99 walks the level-of-detail chain after the position.
+        node = vox_walk_scaled_chain(
+            node, CaviarSceneProjectionScratch.projected_scale_);
+
         // The level-of-detail cut decides whether the part is drawn at all:
         // the image seeds the flag with 1 and clears it when the walked
         // node's extent, scaled by the cut, is past the visibility cut.
         const float extent = node->scale_;
         int visible = 1;
-        if (CaviarSceneProjectionScratch.projected_scale_ * extent > vox_visibility_cut_) {
+        if (extent * CaviarSceneProjectionScratch.projected_scale_ > 0.5f) {
             visible = 0;
         }
 
         // A clipped body can still cast a shadow. The original branch at
         // 0x639FEA skips only the main pass, reaching the live shadow gate.
+        VOX_Matrix part;
         if (vox_part_behind(&position, extent, view) == 0) {
             // The part's rotation is the view's rotation times its own, scaled
             // by the walked node's extent.
-            VOX_Matrix part;
             vox_matrix_matrix_mul(CaviarSceneProjectionScratch.view_scene_matrix_.values,
                                   instance.instance_matrix_[step].values,
                                   part.values);
-            for (int row = 0; row < 3; ++row) {
-                for (int column = 0; column < 3; ++column) {
-                    part.values[row][column] *= extent;
-                }
-            }
+            // 0x63A00E re-reads the node's extent for each of the nine
+            // products, unrolled.
+            part.values[0][0] = part.values[0][0] * node->scale_;
+            part.values[0][1] = part.values[0][1] * node->scale_;
+            part.values[0][2] = part.values[0][2] * node->scale_;
+            part.values[1][0] = part.values[1][0] * node->scale_;
+            part.values[1][1] = part.values[1][1] * node->scale_;
+            part.values[1][2] = part.values[1][2] * node->scale_;
+            part.values[2][0] = part.values[2][0] * node->scale_;
+            part.values[2][1] = part.values[2][1] * node->scale_;
+            part.values[2][2] = part.values[2][2] * node->scale_;
 
             // The slot's second argument is this instance-table index, not the
             // animation step used above to select the instance's vectors/matrix.
@@ -421,7 +460,7 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, CaviarSceneContext *context
                          view->bounds_.values_, &context->light_vector_);
             }
             vox_draw_part(record, node, &position, &part, &view->camera_.rotation,
-                          &context->light_vector_, extent, visible);
+                          &context->light_vector_, node->scale_, visible);
 
             // Read +0x5C after drawing: vox_draw_part may change this slot, and
             // the original edge tests the post-draw value before calling it.
@@ -433,36 +472,40 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, CaviarSceneContext *context
 
         // The shadow pass, when the state asks for it and the record's
         // descriptor block names a shadow.
+        // The image reuses the position and part buffers for the shadow.
         if (context->shadow_enabled_ != 0 &&
             record->setup_block_->shadow_buffer_ != 0) {
-            VOX_Vect shadow;
+            VOX_Vect &shadow = position;
             vox_matrix_vector_mul(caviar_scene_shadow_matrix_view(CaviarSceneProjectionScratch).values,
                                   instance.instance_vector_[step].values,
                                   shadow.values);
             vector_add(shadow.values, CaviarSceneProjectionScratch.shadow_centre_.values, shadow.values);
 
-            const float radius = extent * vox_radius_scale_;
+            const float radius = node->scale_ * 128.0f;
             const float span_x = radius * CaviarSceneProjectionScratch.shadow_radius_x_;
-            const float span_y = radius * CaviarSceneProjectionScratch.shadow_radius_y_;
             // Preserve the original unordered-X acceptance and ordered lower-Y
-            // test rather than normalizing all four comparisons to <=.
+            // test rather than normalizing all four comparisons to <=. The
+            // image forms the Y span only once X has passed (0x63A188).
             if (!(-span_x > shadow.values[0]) &&
                 !(shadow.values[0] >
-                    static_cast<float>(view->bounds_.values_[4]) + span_x) &&
-                -span_y <= shadow.values[1] &&
+                    static_cast<float>(view->bounds_.values_[4]) + span_x)) {
+            const float span_y = radius * CaviarSceneProjectionScratch.shadow_radius_y_;
+            if (shadow.values[1] >= -span_y &&
                 !(shadow.values[1] >
                     static_cast<float>(view->bounds_.values_[5]) + span_y)) {
-                VOX_Matrix shadow_part;
+                VOX_Matrix &shadow_part = part;
                 vox_matrix_matrix_mul(caviar_scene_shadow_matrix_view(CaviarSceneProjectionScratch).values,
                                       instance.instance_matrix_[step].values,
                                       shadow_part.values);
                 // The shadow renderer scales only the first two rows.
-                for (int shadow_row = 0; shadow_row < 2; ++shadow_row) {
-                    for (int shadow_column = 0; shadow_column < 3; ++shadow_column) {
-                        shadow_part.values[shadow_row][shadow_column] *= extent;
-                    }
-                }
+                shadow_part.values[0][0] = shadow_part.values[0][0] * node->scale_;
+                shadow_part.values[0][1] = shadow_part.values[0][1] * node->scale_;
+                shadow_part.values[0][2] = shadow_part.values[0][2] * node->scale_;
+                shadow_part.values[1][0] = shadow_part.values[1][0] * node->scale_;
+                shadow_part.values[1][1] = shadow_part.values[1][1] * node->scale_;
+                shadow_part.values[1][2] = shadow_part.values[1][2] * node->scale_;
                 vox_draw_shadow(record, node, &shadow, &shadow_part, visible);
+            }
             }
         }
     }
@@ -479,129 +522,121 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, CaviarSceneContext *context
 void __cdecl vox_load_scene_view(
     VoxRenderRecord *record, CaviarSceneContext *context,
     VoxCameraBlock *camera, int step) {
-    VoxSceneState &state = context->state_;
-    int bounds[12];
-    bounds[0] = bounds[1] = bounds[6] = bounds[7] = 0x7fff;
-    bounds[2] = bounds[3] = bounds[8] = bounds[9] = -0x7fff;
+    // The image builds both windows in local six-int blocks (left, top,
+    // right, bottom, width, height) and block-copies them into the record
+    // (rep movsd at 0x63A6AB and 0x63A6E3). One clip block at +0x7C receives
+    // every part's window.
+    CaviarRenderClipWindowCandidate primary;
+    CaviarRenderClipWindowCandidate secondary;
+    CaviarRenderClipWindowCandidate box;
+    secondary.left_ = secondary.top_ = primary.left_ = primary.top_ = 0x7fff;
+    secondary.right_ = secondary.bottom_ = primary.right_ = primary.bottom_ = -0x7fff;
 
-    int previous_right = -0x7fff;
-    int previous_bottom = -0x7fff;
-    int shadow_right = -0x7fff;
-    int shadow_bottom = -0x7fff;
-    int index = 0;
-
-    for (; index < state.instance_count_; ++index) {
-        VoxInstance &instance = state.instances_[index];
+    for (int index = 0; index < context->state_.instance_count_; ++index) {
+        VoxInstance &instance = context->state_.instances_[index];
         if ((instance.instance_colour_[step] & 0x80) != 0) continue;
 
-        const CvrShape *shape = vox_walk_scaled_chain(
-            state.instance_steps_[index].shape_,
-            CaviarSceneProjectionScratch.projected_scale_);
-        const float extent = shape->scale_;
+        CvrShape *shape = context->state_.instance_steps_[index].shape_;
 
-        VOX_Vect projection_position;
+        // The image reuses the position and part buffers for the shadow.
+        VOX_Vect position;
         vox_matrix_vector_mul(CaviarSceneProjectionScratch.view_scene_matrix_.values,
                               instance.instance_vector_[step].values,
-                              projection_position.values);
-        vector_add(projection_position.values, CaviarSceneProjectionScratch.camera_offset_.values,
-                   projection_position.values);
+                              position.values);
+        vector_add(position.values, CaviarSceneProjectionScratch.camera_offset_.values,
+                   position.values);
 
-        if (vox_part_behind(
-                &projection_position, extent, camera)) {
-            goto shadow_pass;
-        }
+        // 0x63A335 walks the level-of-detail chain after the position.
+        shape = vox_walk_scaled_chain(shape, CaviarSceneProjectionScratch.projected_scale_);
 
-        {
-            VOX_Matrix part;
+        VOX_Matrix part;
+        if (!vox_part_behind(&position, shape->scale_, camera)) {
             vox_matrix_matrix_mul(CaviarSceneProjectionScratch.view_scene_matrix_.values,
                                   instance.instance_matrix_[step].values,
                                   part.values);
-            for (int row = 0; row < 3; ++row) {
-                for (int column = 0; column < 3; ++column) {
-                    part.values[row][column] *= extent;
-                }
-            }
+            part.values[0][0] = part.values[0][0] * shape->scale_;
+            part.values[0][1] = part.values[0][1] * shape->scale_;
+            part.values[0][2] = part.values[0][2] * shape->scale_;
+            part.values[1][0] = part.values[1][0] * shape->scale_;
+            part.values[1][1] = part.values[1][1] * shape->scale_;
+            part.values[1][2] = part.values[1][2] * shape->scale_;
+            part.values[2][0] = part.values[2][0] * shape->scale_;
+            part.values[2][1] = part.values[2][1] * shape->scale_;
+            part.values[2][2] = part.values[2][2] * shape->scale_;
 
-            CaviarRenderClipWindowCandidate object_box;
-            caviar_clip_shape(
-                record,
-                shape,
-                &projection_position, &part, &CaviarSceneProjectionScratch.part_clip_,
-                &object_box.left_);
-            if (object_box.width_ != 0 && object_box.height_ != 0) {
-                if (object_box.left_ < bounds[0]) bounds[0] = object_box.left_;
-                if (object_box.top_ < bounds[1]) bounds[1] = object_box.top_;
-                if (bounds[2] < object_box.right_) bounds[2] = object_box.right_;
-                if (bounds[3] < object_box.bottom_) bounds[3] = object_box.bottom_;
+            caviar_clip_shape(record, shape, &position, &part,
+                              &CaviarSceneProjectionScratch.part_clip_, &box.left_);
+            if (box.width_ != 0 && box.height_ != 0) {
+                if (primary.left_ > box.left_) primary.left_ = box.left_;
+                if (primary.top_ > box.top_) primary.top_ = box.top_;
+                if (primary.right_ < box.right_) primary.right_ = box.right_;
+                if (primary.bottom_ < box.bottom_) primary.bottom_ = box.bottom_;
             }
         }
 
-shadow_pass:
         if (context->shadow_enabled_ != 0 &&
             record->setup_block_->shadow_buffer_ != 0) {
-            VOX_Vect shadow;
+            VOX_Vect &shadow = position;
             vox_matrix_vector_mul(caviar_scene_shadow_matrix_view(CaviarSceneProjectionScratch).values,
                                   instance.instance_vector_[step].values,
                                   shadow.values);
             vector_add(shadow.values, CaviarSceneProjectionScratch.shadow_centre_.values,
                        shadow.values);
-            const float shadow_scale = extent * vox_radius_scale_;
+            const float radius = shape->scale_ * 128.0f;
+            const float span_x = radius * CaviarSceneProjectionScratch.shadow_radius_x_;
             // The x87 branches reject ordered X overflow, but admit unordered
             // X comparisons. The lower Y test alone rejects unordered values.
-            if (!(-shadow_scale * CaviarSceneProjectionScratch.shadow_radius_x_ > shadow.values[0]) &&
-                !(shadow.values[0] > camera->bounds_.values_[4] +
-                                      shadow_scale * CaviarSceneProjectionScratch.shadow_radius_x_) &&
-                -shadow_scale * CaviarSceneProjectionScratch.shadow_radius_y_ <= shadow.values[1] &&
-                !(shadow.values[1] > camera->bounds_.values_[5] +
-                                      shadow_scale * CaviarSceneProjectionScratch.shadow_radius_y_)) {
-                VOX_Matrix shadow_part;
-                vox_matrix_matrix_mul(caviar_scene_shadow_matrix_view(CaviarSceneProjectionScratch).values,
-                                      instance.instance_matrix_[step].values,
-                                      shadow_part.values);
-                for (int row = 0; row < 2; ++row) {
-                    for (int column = 0; column < 3; ++column) {
-                        shadow_part.values[row][column] *= extent;
-                    }
-                }
+            if (!(-span_x > shadow.values[0]) &&
+                !(shadow.values[0] >
+                    static_cast<float>(camera->bounds_.values_[4]) + span_x)) {
+                const float span_y = radius * CaviarSceneProjectionScratch.shadow_radius_y_;
+                if (shadow.values[1] >= -span_y &&
+                    !(shadow.values[1] >
+                        static_cast<float>(camera->bounds_.values_[5]) + span_y)) {
+                    VOX_Matrix &shadow_part = part;
+                    vox_matrix_matrix_mul(caviar_scene_shadow_matrix_view(CaviarSceneProjectionScratch).values,
+                                          instance.instance_matrix_[step].values,
+                                          shadow_part.values);
+                    // The shadow renderer scales only the first two rows.
+                    shadow_part.values[0][0] = shadow_part.values[0][0] * shape->scale_;
+                    shadow_part.values[0][1] = shadow_part.values[0][1] * shape->scale_;
+                    shadow_part.values[0][2] = shadow_part.values[0][2] * shape->scale_;
+                    shadow_part.values[1][0] = shadow_part.values[1][0] * shape->scale_;
+                    shadow_part.values[1][1] = shadow_part.values[1][1] * shape->scale_;
+                    shadow_part.values[1][2] = shadow_part.values[1][2] * shape->scale_;
 
-                CaviarRenderClipWindowCandidate shadow_box;
-                caviar_clip_shape(
-                    record,
-                    shape,
-                    &shadow, &shadow_part, &CaviarSceneProjectionScratch.shadow_clip_,
-                    &shadow_box.left_);
-                if (shadow_box.width_ != 0 && shadow_box.height_ != 0) {
-                    if (shadow_box.left_ < bounds[6]) bounds[6] = shadow_box.left_;
-                    if (shadow_box.top_ < bounds[7]) bounds[7] = shadow_box.top_;
-                    if (bounds[8] < shadow_box.right_) bounds[8] = shadow_box.right_;
-                    if (bounds[9] < shadow_box.bottom_) bounds[9] = shadow_box.bottom_;
+                    caviar_clip_shape(record, shape, &shadow, &shadow_part,
+                                      &CaviarSceneProjectionScratch.shadow_clip_, &box.left_);
+                    if (box.width_ != 0 && box.height_ != 0) {
+                        if (secondary.left_ > box.left_) secondary.left_ = box.left_;
+                        if (secondary.top_ > box.top_) secondary.top_ = box.top_;
+                        if (secondary.right_ < box.right_) secondary.right_ = box.right_;
+                        if (secondary.bottom_ < box.bottom_) secondary.bottom_ = box.bottom_;
+                    }
                 }
             }
         }
-
-        previous_right = bounds[2];
-        previous_bottom = bounds[3];
-        shadow_right = bounds[8];
-        shadow_bottom = bounds[9];
     }
 
-    bounds[4] = previous_right < 0 || previous_bottom < 0
-        ? 0 : previous_right - bounds[0] + 1;
-    bounds[5] = previous_right < 0 || previous_bottom < 0
-        ? 0 : previous_bottom - bounds[1] + 1;
-    bounds[10] = shadow_right < 0 || shadow_bottom < 0
-        ? 0 : shadow_right - bounds[6] + 1;
-    bounds[11] = shadow_right < 0 || shadow_bottom < 0
-        ? 0 : shadow_bottom - bounds[7] + 1;
-
-    VoxRenderClipBounds *primary = &record->primary_clip_;
-    VoxRenderClipBounds *secondary = &record->secondary_clip_;
-    primary->left_ = bounds[0]; primary->top_ = bounds[1];
-    primary->right_ = bounds[2]; primary->bottom_ = bounds[3];
-    primary->width_ = bounds[4]; primary->height_ = bounds[5];
-    secondary->left_ = bounds[6]; secondary->top_ = bounds[7];
-    secondary->right_ = bounds[8]; secondary->bottom_ = bounds[9];
-    secondary->width_ = bounds[10]; secondary->height_ = bounds[11];
+    if (primary.right_ >= 0 && primary.bottom_ >= 0) {
+        primary.width_ = primary.right_ - primary.left_ + 1;
+        primary.height_ = primary.bottom_ - primary.top_ + 1;
+    } else {
+        primary.width_ = 0;
+        primary.height_ = 0;
+    }
+    // WORKAROUND(type): the record's windows are declared as unsigned
+    // VoxRenderClipBounds in caviar.h, but the image compares them signed and
+    // copies whole six-int blocks; the copies go through the signed view.
+    *reinterpret_cast<CaviarRenderClipWindowCandidate *>(&record->primary_clip_) = primary;
+    if (secondary.right_ >= 0 && secondary.bottom_ >= 0) {
+        secondary.width_ = secondary.right_ - secondary.left_ + 1;
+        secondary.height_ = secondary.bottom_ - secondary.top_ + 1;
+    } else {
+        secondary.width_ = 0;
+        secondary.height_ = 0;
+    }
+    *reinterpret_cast<CaviarRenderClipWindowCandidate *>(&record->secondary_clip_) = secondary;
 }
 
 /*
@@ -647,29 +682,22 @@ Purpose: The engine's camera transform. Walks the renderer's instance table
 */
 void __cdecl vox_transform_camera(VoxSceneState *state, int step,
                                   VOX_Vect *position, VOX_Vect *extent) {
-    if (state->instance_count_ <= 0) {
-        return;
-    }
-
-    int index = 0;
-    do {
+    for (int index = 0; index < state->instance_count_; ++index) {
         VoxInstance &instance = state->instances_[index];
         CvrShape &shape = *state->instance_steps_[index].shape_;
         float scale = shape.scale_ * state->scale_;
 
-        // The part's world position: its own vector through the scene
-        // rotation, scaled by the scene's scale, then shifted by the scene
-        // offset. The image reuses the rotated vector's buffer for the answer
-        // (0x63A773 re-derives the same local it passed as the multiply's
-        // output), and three separate locals below is the same program.
-        VOX_Vect rotated;
-        VOX_Vect scaled;
+        // The image keeps four three-float buffers and reuses them: the
+        // rotated vector becomes the centre and then the first box axis, the
+        // scaled vector becomes the corner, and the offset and pivot buffers
+        // receive the box's low and high corners.
         VOX_Vect centre;
+        VOX_Vect corner;
         vox_matrix_vector_mul(state->scene_rotation_.values,
                               instance.instance_vector_[step].values,
-                              rotated.values);
-        vec3_scale(rotated.values, state->scale_, scaled.values);
-        vector_add(scaled.values, state->scene_offset_.values, centre.values);
+                              centre.values);
+        vec3_scale(centre.values, state->scale_, corner.values);
+        vector_add(corner.values, state->scene_offset_.values, centre.values);
 
         // The part's rotation is the scene rotation times the instance's own.
         VOX_Matrix part;
@@ -682,58 +710,53 @@ void __cdecl vox_transform_camera(VoxSceneState *state, int step,
         offset.values[1] = static_cast<float>(shape.offset_y_) * scale;
         offset.values[2] = static_cast<float>(shape.offset_z_) * scale;
         VOX_Vect pivot;
-        VOX_Vect corner;
         vox_matrix_vector_mul(part.values, offset.values, pivot.values);
         vector_add(pivot.values, centre.values, corner.values);
 
         // The three axes the box is built from are the part rotation's
-        // COLUMNS - image 0x63A81E takes [esp+0x68], 0x63A835 [esp+0x6c] and
-        // 0x63A88F [esp+0x9c] of the 9-float local, which are elements 0, 1
-        // and 2 of a row-major 3x3, each scaled by its own shape axis.
-        float axis_x = static_cast<float>(shape.axis_x_) * scale;
-        float axis_y = static_cast<float>(shape.axis_y_) * scale;
-        float axis_z = static_cast<float>(shape.axis_z_) * scale;
-        VOX_Vect axes[3];
-        axes[0].values[0] = part.values[0][0] * axis_x;
-        axes[0].values[1] = part.values[1][0] * axis_x;
-        axes[0].values[2] = part.values[2][0] * axis_x;
-        axes[1].values[0] = part.values[0][1] * axis_y;
-        axes[1].values[1] = part.values[1][1] * axis_y;
-        axes[1].values[2] = part.values[2][1] * axis_y;
-        axes[2].values[0] = part.values[0][2] * axis_z;
-        axes[2].values[1] = part.values[1][2] * axis_z;
-        axes[2].values[2] = part.values[2][2] * axis_z;
+        // columns, each scaled by its own shape axis.
+        float axis = static_cast<float>(shape.axis_x_) * scale;
+        centre.values[0] = part.values[0][0] * axis;
+        centre.values[1] = part.values[1][0] * axis;
+        centre.values[2] = part.values[2][0] * axis;
+        VOX_Vect axis_y;
+        axis = static_cast<float>(shape.axis_y_) * scale;
+        axis_y.values[0] = part.values[0][1] * axis;
+        axis_y.values[1] = part.values[1][1] * axis;
+        axis_y.values[2] = part.values[2][1] * axis;
+        VOX_Vect axis_z;
+        axis = static_cast<float>(shape.axis_z_) * scale;
+        axis_z.values[0] = part.values[0][2] * axis;
+        axis_z.values[1] = part.values[1][2] * axis;
+        axis_z.values[2] = part.values[2][2] * axis;
 
-        VOX_Vect low;
-        VOX_Vect high;
-        sub_63a9d0(&corner, &axes[0], &axes[1], &axes[2], &low, &high);
+        sub_63a9d0(&corner, &centre, &axis_y, &axis_z, &offset, &pivot);
 
-        if (index == 0) {
-            *position = low;
-            *extent = high;
+        if (index != 0) {
+            if (offset.values[0] < position->values[0]) {
+                position->values[0] = offset.values[0];
+            }
+            if (offset.values[1] < position->values[1]) {
+                position->values[1] = offset.values[1];
+            }
+            if (offset.values[2] < position->values[2]) {
+                position->values[2] = offset.values[2];
+            }
+            if (pivot.values[0] > extent->values[0]) {
+                extent->values[0] = pivot.values[0];
+            }
+            if (pivot.values[1] > extent->values[1]) {
+                extent->values[1] = pivot.values[1];
+            }
+            if (pivot.values[2] > extent->values[2]) {
+                extent->values[2] = pivot.values[2];
+            }
         } else {
-            if (low.values[0] < position->values[0]) {
-                position->values[0] = low.values[0];
-            }
-            if (low.values[1] < position->values[1]) {
-                position->values[1] = low.values[1];
-            }
-            if (low.values[2] < position->values[2]) {
-                position->values[2] = low.values[2];
-            }
-            if (extent->values[0] < high.values[0]) {
-                extent->values[0] = high.values[0];
-            }
-            if (extent->values[1] < high.values[1]) {
-                extent->values[1] = high.values[1];
-            }
-            if (extent->values[2] < high.values[2]) {
-                extent->values[2] = high.values[2];
-            }
+            *position = offset;
+            *extent = pivot;
         }
 
-        ++index;
-    } while (index < state->instance_count_);
+    }
 }
 
 /*

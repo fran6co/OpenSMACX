@@ -995,12 +995,12 @@ void Datalink::draw_project() {
     set_text_color(0xE0, -1, 1, 1);
     dl_upper_name(Facility[id].name);
     write_cent_l(StringTemp, &title_rect_);
-    const int project = id - 70;
     // 42FBEC loads the first project sprite's +0x18, without indexing it.
-    dl_draw_scaled(this, &g_SECRET_PROJECT_ICON_SPRITES[project],
+    dl_draw_scaled(this, &g_SECRET_PROJECT_ICON_SPRITES[id - 70],
                    illustration_rect_.left, illustration_rect_.top,
                    illustration_rect_.right - illustration_rect_.left,
                    g_SECRET_PROJECT_ICON_SPRITES[0].width());
+    const int project = id - 70;
     rect.left += illustration_rect_.right - illustration_rect_.left + 6;
     parse_num(0, cost_factor(ConsoleGlobal.faction_id_, 1, -1) * Facility[id].cost);
     parse_num(1, Facility[id].maint);
