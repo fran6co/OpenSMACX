@@ -261,16 +261,11 @@ int Video::advance_frame() {
           VideoAdvanceEntryLogContext,
           static_cast<int>(timeGetTime()), 0, 0);
   if (child_chunk_.ckid != 0 && mmioAscend(media_file_, &child_chunk_, 0) != 0)
-    return 1;
+    goto fail;
   child_chunk_.ckid = 0;
-  while (mmioDescend(media_file_, &child_chunk_, &parent_chunk_, 0) == 0) {
-    if (child_chunk_.ckid == video_chunk_id_) {
-      ++buffered_frame_;
-      log_say("Exiting advance_frame",
-              VideoAdvanceVideoLogContext,
-              static_cast<int>(timeGetTime()), 0, 0);
-      return 0;
-    }
+  while (1) {
+    if (mmioDescend(media_file_, &child_chunk_, &parent_chunk_, 0) != 0) goto fail;
+    if (child_chunk_.ckid == video_chunk_id_) break;
     if (child_chunk_.ckid == audio_chunk_id_) {
       const int now = static_cast<int>(timeGetTime());
       log_say("advance_frame()", "Advancing audio.", now,
@@ -281,7 +276,7 @@ int Video::advance_frame() {
         const int byte_count = static_cast<int>(child_chunk_.cksize);
         if (byte_count != mmioRead(media_file_,
                                    reinterpret_cast<HPSTR>(record->data),
-                                   byte_count)) return 1;
+                                   byte_count)) goto fail;
         record->end = record->data + byte_count;
         sound_state_.submit_audio_buffer(record);
       } else {
@@ -290,8 +285,14 @@ int Video::advance_frame() {
       }
     }
     if (child_chunk_.ckid != FOURCC_LIST &&
-        mmioAscend(media_file_, &child_chunk_, 0) != 0) return 1;
+        mmioAscend(media_file_, &child_chunk_, 0) != 0) goto fail;
   }
+  ++buffered_frame_;
+  log_say("Exiting advance_frame",
+          VideoAdvanceVideoLogContext,
+          static_cast<int>(timeGetTime()), 0, 0);
+  return 0;
+fail:
   return 1;
 }
 
@@ -334,6 +335,16 @@ int Video::read_frame() {
   }
   advance_frame();
   return 1;
+}
+
+// WORKAROUND(inline): twin of Buffer::copy(Buffer *, RECT *) (buffer.cpp,
+// out of line there); decode_frame's image (0x637A37..0x637A64) expands it,
+// loading top before left and copying the parameters through ebp.
+static inline int video_copy_rect(Buffer *source, Buffer *buffer, RECT *rect) {
+  const int top = rect->top;
+  const int left = rect->left;
+  return source->copy(buffer, left, top, left, top,
+                      rect->right - left, rect->bottom - top);
 }
 
 // ORIGINAL: 0x00637910 ?decode_frame@Video@@QAEHH@Z 0x00637910-0x00637C26 FILE
@@ -379,11 +390,7 @@ int Video::decode_frame(int destination_index) {
         return 0;
       }
       if ((flags_ & 2) != 0 && decode_source_ != 0) {
-        const int left = source_rect_.left;
-        const int top = source_rect_.top;
-        decode_source_->copy(&output_buffer_, left, top, left, top,
-                            source_rect_.right - left,
-                            source_rect_.bottom - top);
+        video_copy_rect(decode_source_, &output_buffer_, &source_rect_);
       }
 
       const DWORD decompress_flags = destination_index ? ICDECOMPRESS_HURRYUP : 0;
@@ -770,6 +777,9 @@ void Video::reset() {
 // ORIGINAL: 0x00636960 Video_unk5 0x00636960-0x00636F99 FILE
 // symbol    ?load@Video@@QAEHPADH@Z
 // TRIED: __stdcall(int,int) free function - ecx is read as `this` and passed straight into Video::advance_frame(), so recast as a __thiscall Video member; the 6-entry `jmp [eax*4+0x636f9c]` table is data (not disassembled), so its case targets are unknown and every in-range reason falls through to the shared setup path instead of the (unrecoverable-without-the-bytes) per-case returns; field offsets and DirectDraw/AVI enumeration call order transcribed directly from the disasm.
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memset, memcpy)
+#endif
 int Video::load(char *filename, int unused) {
   (void)unused; // Native ret8; second argument is not read by this body.
   if (filename == 0) return 16;
@@ -781,10 +791,14 @@ int Video::load(char *filename, int unused) {
   if (media_file_ == 0) {
     // Actual image table636F9C, not the seed's missing-case fallback.
     switch (info.wErrorRet) {
-    case 0x10B: return 6;
+    case 0x10C:
+    case 0x10D:
+    case 0x10E:
+    case 0x10F: return 1;
     case 0x110: return 3;
-    default: return 1; // 10C..10F and all out-of-table error values.
+    case 0x10B: return 6;
     }
+    return 1;
   }
   MMCKINFO chunk;
   AVIStreamHeader stream;
@@ -800,8 +814,7 @@ int Video::load(char *filename, int unused) {
   memset(&main_header_, 0, sizeof main_header_);
   // Native uses the input chunk length, even if greater than the header.
   // No unapproved file-validation repair has been introduced here.
-  if (mmioRead(media_file_, reinterpret_cast<HPSTR>(&main_header_),
-      chunk.cksize) != static_cast<LONG>(chunk.cksize)) goto fail;
+  if (static_cast<LONG>(chunk.cksize) != mmioRead(media_file_, reinterpret_cast<HPSTR>(&main_header_), chunk.cksize)) goto fail;
   if (mmioAscend(media_file_, &chunk, 0) != 0) goto fail;
   if (main_header_.dwStreams > 2) goto fail;
   for (stream_index = 0;
@@ -812,40 +825,42 @@ int Video::load(char *filename, int unused) {
     if (mmioDescend(media_file_, &chunk, 0, MMIO_FINDCHUNK) != 0) goto fail;
     if (chunk.cksize > sizeof stream) goto fail;
     memset(&stream, 0, sizeof stream);
-    if (mmioRead(media_file_, reinterpret_cast<HPSTR>(&stream), chunk.cksize)
-        != static_cast<LONG>(chunk.cksize)) goto fail;
+    if (static_cast<LONG>(chunk.cksize) != mmioRead(media_file_, reinterpret_cast<HPSTR>(&stream), chunk.cksize)) goto fail;
     if (mmioAscend(media_file_, &chunk, 0) != 0) goto fail;
-    const int lo = stream_index & 15;
-    const int hi = (stream_index >> 4) & 15;
-    const DWORD digits = (static_cast<DWORD>(lo > 9 ? lo + 0x37 : lo + 0x30) << 8)
-        | static_cast<DWORD>(hi > 9 ? hi + 0x37 : hi + 0x30);
-    if (stream.fccType == mmioFOURCC('v','i','d','s')) {
-      memcpy(&video_stream_header_, &stream, sizeof stream);
-      video_chunk_id_ = 0x63640000UL | digits;
-    } else if (stream.fccType == mmioFOURCC('a','u','d','s')) {
+    // vfw.h's MAKEAVICKID builds the stream's chunk id per branch.
+    switch (stream.fccType) {
+    case streamtypeAUDIO:
       memcpy(&audio_stream_header_, &stream, sizeof stream);
-      audio_chunk_id_ = 0x62770000UL | digits;
+      audio_chunk_id_ = MAKEAVICKID(cktypeWAVEbytes, stream_index);
+      break;
+    case streamtypeVIDEO:
+      memcpy(&video_stream_header_, &stream, sizeof stream);
+      video_chunk_id_ = MAKEAVICKID(cktypeDIBcompressed, stream_index);
+      break;
     }
     chunk.ckid = mmioFOURCC('s','t','r','f');
     if (mmioDescend(media_file_, &chunk, 0, MMIO_FINDCHUNK) != 0) goto fail;
-    if (stream.fccType == mmioFOURCC('a','u','d','s')) {
+    switch (stream.fccType) {
+    case streamtypeAUDIO:
       if (chunk.cksize > sizeof audio_format_) goto fail;
       memset(&audio_format_, 0, sizeof audio_format_);
-      if (mmioRead(media_file_, reinterpret_cast<HPSTR>(&audio_format_), chunk.cksize)
-          != static_cast<LONG>(chunk.cksize)) goto fail;
-    } else if (stream.fccType == mmioFOURCC('v','i','d','s')) {
+      if (static_cast<LONG>(chunk.cksize) != mmioRead(media_file_, reinterpret_cast<HPSTR>(&audio_format_), chunk.cksize)) goto fail;
+      break;
+    case streamtypeVIDEO:
       if (chunk.cksize > sizeof source_dib_) goto fail;
       memset(&source_dib_, 0, sizeof source_dib_);
-      if (mmioRead(media_file_, reinterpret_cast<HPSTR>(&source_dib_), chunk.cksize)
-          != static_cast<LONG>(chunk.cksize)) goto fail;
+      if (static_cast<LONG>(chunk.cksize) != mmioRead(media_file_, reinterpret_cast<HPSTR>(&source_dib_), chunk.cksize)) goto fail;
+      break;
     }
     if (mmioAscend(media_file_, &chunk, 0) != 0) goto fail;
   }
   if ((flags_ & 1) == 0) {
-    if (audio_chunk_id_ != 0 && sound_state_.configure_streams(
+    if (audio_chunk_id_ != 0) {
+      if (sound_state_.configure_streams(
         &audio_stream_header_, &video_stream_header_, &audio_format_, 0) == 0)
-      flags_ &= ~1U;
-    else flags_ |= 1;
+        flags_ &= ~1U;
+      else flags_ |= 1;
+    } else flags_ |= 1;
   }
   if (mmioSetBuffer(media_file_, 0, 0x7D000, 0) != 0) goto fail;
   parent_chunk_.fccType = mmioFOURCC('m','o','v','i');
@@ -853,20 +868,22 @@ int Video::load(char *filename, int unused) {
   chunk.ckid = mmioFOURCC('i','d','x','1');
   if (mmioDescend(media_file_, &chunk, 0, MMIO_FINDCHUNK) != 0) goto fail;
   frame_index_table_ = static_cast<AVIINDEXENTRY *>(mem_get(chunk.cksize));
-  if (frame_index_table_ == 0) { status = 4; goto fail; }
-  if (mmioRead(media_file_, reinterpret_cast<HPSTR>(frame_index_table_), chunk.cksize)
-      != static_cast<LONG>(chunk.cksize)) goto fail;
+  if (frame_index_table_ == 0) {
+    status = 4;
+    close();
+    return status;
+  }
+  if (static_cast<LONG>(chunk.cksize) != mmioRead(media_file_, reinterpret_cast<HPSTR>(frame_index_table_), chunk.cksize)) goto fail;
   current_index_record_ = frame_index_table_;
   // Native636E3B shifts the BYTE length by4, then scans16-byte records.
   // This is an observed invalid-input bound, not inferred AVI entry count.
   {
-    const size_t native_scan_bytes = static_cast<DWORD>(chunk.cksize << 4);
-    size_t index_offset = 0;
-    while (index_offset < native_scan_bytes &&
+    // The end pointer scales the BYTE length by the record size.
+    const AVIINDEXENTRY *const end = frame_index_table_ + chunk.cksize;
+    while (current_index_record_ < end &&
            static_cast<WORD>(current_index_record_->ckid) !=
            static_cast<WORD>(video_chunk_id_)) {
       ++current_index_record_;
-      index_offset += sizeof(AVIINDEXENTRY);
     }
   }
   video_chunk_id_ = current_index_record_->ckid;
@@ -874,7 +891,7 @@ int Video::load(char *filename, int unused) {
   frame_queue_.set_limit(40);
   status = advance_frame();
   if (status != 0) goto fail;
-  buffered_frame_ = target_frame_ = 0;
+  target_frame_ = buffered_frame_ = 0;
   width = main_header_.dwWidth;
   height = main_header_.dwHeight;
   if (decode_output_ != 0) {
@@ -883,7 +900,10 @@ int Video::load(char *filename, int unused) {
     height = rect.bottom - rect.top;
   }
   status = output_buffer_.init(width, height, 0, 0);
-  if (status != 0) goto fail;
+  if (status != 0) {
+    close();
+    return status;
+  }
   if (decode_output_ != 0) output_buffer_.sync_to_palette(PaletteActive);
   if (decode_source_ != 0) decode_source_->copy(&output_buffer_, 0, 0, width, height);
   status = configure_codec();
@@ -894,6 +914,9 @@ fail:
   close();
   return status;
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memset, memcpy)
+#endif
 
 // ORIGINAL: 0x00637530 Video_unk13 0x00637530-0x00637865 FILE BYTE_EXACT
 // symbol    ?configure_codec@Video@@QAEHXZ

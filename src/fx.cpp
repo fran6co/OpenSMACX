@@ -628,6 +628,16 @@ void Effect::init(char *fname, long flags) {
     }
 }
 
+// WORKAROUND(decl): stand-in for an inline BasePop default-sound setter
+// (likely a basepop.h static): image 0x445CD3..0x445D00 stores the callback,
+// then null-tests the block pointer (mov eax,0x683AD8; test eax,eax; je)
+// before the 70-dword copy, a test VC6 keeps only across an inline boundary.
+static inline void fx_set_def_popup_sound(BasePopConfigCallback callback,
+                                          const BasePopTextBlock *block) {
+    BasePopDefaultField3094 = callback;
+    if (block) memcpy(BasePopDefaultBlock2E64, block, sizeof(*block));
+}
+
 // Initialize the effect and CPU-voice banks in original call order. Qualified
 // Wave calls were direct in the executable; Effect[4].set_pitch is virtual.
 // ORIGINAL: 0x00445CD0 ?init@FX@@QAEXXZ 0x00445CD0-0x004468E1
@@ -635,8 +645,7 @@ void Effect::init(char *fname, long flags) {
 // TRIED: register-faithful transcription (self=ecx, no ebx-copy) diverges at instr #2 (mov ebx,ecx vs push) - /O2 register allocation differs for this 3089-byte, ~150-call function; not chased further.
 void FX::init() {
     engine_effect_index_ = -1;
-    BasePopDefaultField3094 = popup_wave_callback;
-    memcpy(BasePopDefaultBlock2E64, &FxPopupSoundDefaults, sizeof(FxPopupSoundDefaults));
+    fx_set_def_popup_sound(popup_wave_callback, &FxPopupSoundDefaults);
 
     g_OK_WAVE.Wave::load("fx\\ok.wav", 0);
     g_OK_WAVE.Wave::set_volume(0x3C);
@@ -732,7 +741,44 @@ void FX::init() {
     WaveDeviceGlobal.add_to_group(1, &effects_[95]);
     effects_[96].init("isle of the deep.wav", 0xC0);
     WaveDeviceGlobal.add_to_group(1, &effects_[96]);
-    memset(&AutoSoundDefaults, 0, sizeof(AutoSoundDefaults));
+    // Field by field in val_ order (image 0x446392..0x44646A), not a block fill.
+    AutoSoundDefaults.val_1_ = 0;
+    AutoSoundDefaults.val_2_ = 0;
+    AutoSoundDefaults.val_3_ = 0;
+    AutoSoundDefaults.val_4_ = 0;
+    AutoSoundDefaults.val_5_ = 0;
+    AutoSoundDefaults.val_6_ = 0;
+    AutoSoundDefaults.val_7_ = 0;
+    AutoSoundDefaults.val_8_ = 0;
+    AutoSoundDefaults.val_9_ = 0;
+    AutoSoundDefaults.val_10_ = 0;
+    AutoSoundDefaults.val_11_ = 0;
+    AutoSoundDefaults.val_12_ = 0;
+    AutoSoundDefaults.val_13_ = 0;
+    AutoSoundDefaults.val_14_ = 0;
+    AutoSoundDefaults.val_15_ = 0;
+    AutoSoundDefaults.val_16_ = 0;
+    AutoSoundDefaults.val_17_ = 0;
+    AutoSoundDefaults.val_18_ = 0;
+    AutoSoundDefaults.val_19_ = 0;
+    AutoSoundDefaults.val_20_ = 0;
+    AutoSoundDefaults.val_21_ = 0;
+    AutoSoundDefaults.val_22_ = 0;
+    AutoSoundDefaults.val_23_ = 0;
+    AutoSoundDefaults.val_24_ = 0;
+    AutoSoundDefaults.val_25_ = 0;
+    AutoSoundDefaults.val_26_ = 0;
+    AutoSoundDefaults.val_27_ = 0;
+    AutoSoundDefaults.val_28_ = 0;
+    AutoSoundDefaults.val_29_ = 0;
+    AutoSoundDefaults.val_30_ = 0;
+    AutoSoundDefaults.val_31_ = 0;
+    AutoSoundDefaults.val_32_ = 0;
+    AutoSoundDefaults.val_33_ = 0;
+    AutoSoundDefaults.event_window_ = 0;
+    AutoSoundDefaults.val_35_ = 0;
+    AutoSoundDefaults.val_36_ = 0;
+    AutoSoundDefaults.val_37_ = 0;
 
     g_CPU_WAVES[0].Wave::init("fx\\CPU pod recovered.wav", 0x80);
     g_CPU_WAVES[1].Wave::init("fx\\CPU data pod recovered.wav", 0x80);
@@ -986,15 +1032,15 @@ int __cdecl ambience(int ambience_id) {
         }
 
         switch (ambience_id) {
-        case 0xC8: FactionMusic->general(); break;
         case 0xC9: FactionMusic->tech(); break;
+        case 0xCF: FactionMusic->terraform(); break;
+        case 0xC8: FactionMusic->general(); break;
+        case 0xD0: FactionMusic->general(); break;
         case 0xCA: FactionMusic->popup1(); break;
         case 0xCB: FactionMusic->eot(); break;
         case 0xCC: FactionMusic->hostility(); break;
         case 0xCD: FactionMusic->basewin_show(); break;
         case 0xCE: FactionMusic->basewin_hide(); break;
-        case 0xCF: FactionMusic->terraform(); break;
-        case 0xD0: FactionMusic->general(); break;
         case 0xD1: FactionMusic->new_base(); break;
         case 0xD2: FactionMusic->energy_resources(); break;
         case 0xD3: FactionMusic->design_window_show(); break;
@@ -1035,109 +1081,69 @@ void __cdecl ambience_veh(int vehicle) {
     LastAmbienceVehicle = vehicle;
     if (!(prefs & 0x800)) return;
     if (Vehs[vehicle].order != 0) return;
-    const int prototype = Vehs[vehicle].proto_id;
-    const VehPrototype &unit = VehPrototypes[prototype];
-    if (unit.plan == 8) {
+    const int16_t prototype = Vehs[vehicle].proto_id;
+    if (VehPrototypes[prototype].plan == 8) {
         if (!(Players[Vehs[vehicle].faction_id].rule_flags & 0x80)) {
-            g_FX.play(0x42); return;
+            goto play_42;
+        } else if (!g_FX.effect(0x5C).is_playing()) {
+            g_FX.play(0x5C);
         }
-        if (g_FX.effect(0x5C).is_playing()) return;
-        g_FX.play(0x5C); return;
-    }
-    const unsigned int chassis = unit.chassis_id;
-    if (chassis == 0) {
-        const unsigned int weapon = unit.weapon_id;
-        if (Weapon[weapon].offense_rating == 0) {
-            if (g_FX.effect(0x42).is_playing()) return;
-            g_FX.play(0x42); return;
-        }
-        if (!(Players[Vehs[vehicle].faction_id].rule_flags & 0x80)) {
-            if (g_FX.effect(0x40).is_playing()) return;
-            g_FX.play(0x40); return;
-        }
-        if (prototype == 0x10 || prototype == 0x11 || prototype == 0x12) {
-            if (g_FX.effect(0x5D).is_playing()) return;
-            g_FX.play(0x5D); return;
-        }
-        if (prototype == 8) {
-            if (!g_FX.effect(0x38).is_playing()) g_FX.play(0x38);
-            return;
-        }
-        if (prototype != 0xF) {
-            if (g_FX.effect(0x5B).is_playing()) return;
-            g_FX.play(0x5B); return;
-        }
-        if (g_FX.effect(0x5E).is_playing()) return;
-        g_FX.play(0x5E); return;
-    }
-    if (chassis == 1) {
-        if (g_FX.effect(0x48).is_playing()) return;
-        g_FX.play(0x48); return;
-    }
-    if (chassis == 2) {
-        if (g_FX.effect(0x31).is_playing()) return;
-        g_FX.play(0x31); return;
-    }
-    if (prototype == 0xE) {
-        if (g_FX.effect(0x5F).is_playing()) return;
-        g_FX.play(0x5F); return;
-    }
-    if (prototype == 9) {
-        if (g_FX.effect(0x60).is_playing()) return;
-        g_FX.play(0x60); return;
-    }
-    if (chassis == 3) {
-        if (g_FX.effect(0x45).is_playing()) return;
-        g_FX.play(0x45); return;
-    }
-    if (chassis == 4) {
-        if (g_FX.effect(0x46).is_playing()) return;
-        g_FX.play(0x46); return;
-    }
-    if (chassis == 5) {
-        if (g_FX.effect(0x47).is_playing()) return;
-        g_FX.play(0x47); return;
-    }
-    if (chassis == 6) {
-        if (g_FX.effect(0x44).is_playing()) return;
-        g_FX.play(0x44); return;
-    }
-    if (chassis == 7) {
-        if (g_FX.effect(0x43).is_playing()) return;
-        g_FX.play(0x43); return;
-    }
-    if (chassis == 8) {
-        if (g_FX.effect(0x4B).is_playing()) return;
-        g_FX.play(0x4B); return;
-    }
-    if (prototype != 8) {
-        if (static_cast<int8_t>(Chassis[chassis].triad) == 1) {
-            if (g_FX.effect(0xC).is_playing()) return;
-            g_FX.play(0xC); return;
-        }
-        if (static_cast<int8_t>(Chassis[chassis].triad) == 2) {
-            if (g_FX.effect(0x12).is_playing()) return;
-            g_FX.play(0x12); return;
-        }
-        if (unit.plan == 0xC) {
-            if (g_FX.effect(0x14).is_playing()) return;
-            g_FX.play(0x14); return;
-        }
-        const int offense = Weapon[unit.weapon_id].offense_rating;
-        if (offense != 0) {
-            if (offense <= Chassis[chassis].speed) {
-                if (g_FX.effect(0x1A).is_playing()) return;
-                g_FX.play(0x1A); return;
+    } else if (VehPrototypes[prototype].chassis_id == 0 && Weapon[VehPrototypes[prototype].weapon_id].offense_rating != 0) {
+        if (Players[Vehs[vehicle].faction_id].rule_flags & 0x80) {
+            if (prototype == 0x10 || prototype == 0x11 || prototype == 0x12) {
+                if (!g_FX.effect(0x5D).is_playing()) g_FX.play(0x5D);
+            } else if (prototype == 8) {
+                if (!g_FX.effect(0x38).is_playing()) g_FX.play(0x38);
+            } else if (prototype == 0xF) {
+                if (!g_FX.effect(0x5E).is_playing()) g_FX.play(0x5E);
+            } else {
+                if (!g_FX.effect(0x5B).is_playing()) g_FX.play(0x5B);
             }
-            if (offense != 0) {
-                if (g_FX.effect(7).is_playing()) return;
-                g_FX.play(7); return;
-            }
+        } else {
+            if (!g_FX.effect(0x40).is_playing()) g_FX.play(0x40);
         }
-        if (g_FX.effect(0x2E).is_playing()) return;
-        g_FX.play(0x2E); return;
+    } else if (VehPrototypes[prototype].chassis_id == 0) {
+        if (!g_FX.effect(0x42).is_playing()) {
+        play_42:
+            g_FX.play(0x42);
+        }
+    } else if (VehPrototypes[prototype].chassis_id == 1) {
+        if (!g_FX.effect(0x48).is_playing()) g_FX.play(0x48);
+    } else if (VehPrototypes[prototype].chassis_id == 2) {
+        if (!g_FX.effect(0x31).is_playing()) g_FX.play(0x31);
+    } else if (prototype == 0xE) {
+        if (!g_FX.effect(0x5F).is_playing()) g_FX.play(0x5F);
+    } else if (prototype == 9) {
+        if (!g_FX.effect(0x60).is_playing()) g_FX.play(0x60);
+    } else if (VehPrototypes[prototype].chassis_id == 3) {
+        if (!g_FX.effect(0x45).is_playing()) g_FX.play(0x45);
+    } else if (VehPrototypes[prototype].chassis_id == 4) {
+        if (!g_FX.effect(0x46).is_playing()) g_FX.play(0x46);
+    } else if (VehPrototypes[prototype].chassis_id == 5) {
+        if (!g_FX.effect(0x47).is_playing()) g_FX.play(0x47);
+    } else if (VehPrototypes[prototype].chassis_id == 6) {
+        if (!g_FX.effect(0x44).is_playing()) g_FX.play(0x44);
+    } else if (VehPrototypes[prototype].chassis_id == 7) {
+        if (!g_FX.effect(0x43).is_playing()) g_FX.play(0x43);
+    } else if (VehPrototypes[prototype].chassis_id == 8) {
+        if (!g_FX.effect(0x4B).is_playing()) g_FX.play(0x4B);
+    } else if (prototype == 8) {
+        if (!g_FX.effect(0x38).is_playing()) g_FX.play(0x38);
+    } else if (static_cast<int8_t>(Chassis[VehPrototypes[prototype].chassis_id].triad) == 1) {
+        if (!g_FX.effect(0xC).is_playing()) g_FX.play(0xC);
+    } else if (static_cast<int8_t>(Chassis[VehPrototypes[prototype].chassis_id].triad) == 2) {
+        if (!g_FX.effect(0x12).is_playing()) g_FX.play(0x12);
+    } else if (VehPrototypes[prototype].plan == 0xC) {
+        if (!g_FX.effect(0x14).is_playing()) g_FX.play(0x14);
+    } else {
+        if (Weapon[VehPrototypes[prototype].weapon_id].offense_rating != 0 && Chassis[VehPrototypes[prototype].chassis_id].speed >= Weapon[VehPrototypes[prototype].weapon_id].offense_rating) {
+            if (!g_FX.effect(0x1A).is_playing()) g_FX.play(0x1A);
+        } else if (Weapon[VehPrototypes[prototype].weapon_id].offense_rating != 0) {
+            if (!g_FX.effect(7).is_playing()) g_FX.play(7);
+        } else {
+            if (!g_FX.effect(0x2E).is_playing()) g_FX.play(0x2E);
+        }
     }
-    if (!g_FX.effect(0x38).is_playing()) g_FX.play(0x38);
 }
 
 
