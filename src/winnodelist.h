@@ -69,25 +69,19 @@ class WinNodeList {
       // scalar deleting destructor opens with, matching `Win::~Win()`
       // performing the same walk inline. A nonzero allocator_ skips the
       // individual frees, as it does in the inline Win teardown.
-      WinDialogNode *node = head_;
-      if (node != 0) {
-          if (allocator_ == 0 && count_ > 0) {
-              int i = 0;
-              do {
-                  WinDialogNode *next = node->next_;
-                  current_ = next;
-                  void *payload = node->allocation_;
-                  if (payload != 0) {
-                      std::free(payload);
+      if (head_ != 0) {
+          if (allocator_ == 0) {
+              for (int i = 0; i < count_; ++i) {
+                  current_ = head_->next_;
+                  if (head_->allocation_ != 0) {
+                      std::free(head_->allocation_);
                   }
                   head_->allocation_ = 0;
                   if (head_ != 0) {
                       std::free(head_);
                   }
-                  node = current_;
-                  head_ = node;
-                  ++i;
-              } while (i < count_);
+                  head_ = current_;
+              }
           }
           head_ = 0;
           tail_ = 0;

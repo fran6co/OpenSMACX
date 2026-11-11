@@ -1249,8 +1249,8 @@ extern int WinBubbleFillColour;        // 0x009B7A64
 extern int WinBubbleTextColour;        // 0x00696D2C
 extern int WinBubbleEdgeColour;        // 0x00696D30
 extern Sprite *WinFlipSprite;          // 0x009B7A2C
-extern int WinFlipSpriteY;             // 0x009B7A30
-extern int WinFlipSpriteX;             // 0x009B7A34
+extern int WinFlipSpriteX;             // 0x009B7A30
+extern int WinFlipSpriteY;             // 0x009B7A34
 extern int WinFlipClipped;             // 0x009B7AD8
 extern IDirectDrawSurface2 *DirectDrawBackBuffer;  // 0x009BC49C
 extern RECT DirectDrawClipRect;        // 0x009BC2D0

@@ -1010,11 +1010,14 @@ int WinBubbleFillColour;
 int WinBubbleTextColour = 255;         // 0x00696D2C
 int WinBubbleEdgeColour = 255;         // 0x00696D30
 // 0x009B7A2C and the pair below it: a sprite drawn over the screen after the
-// bubble, at 0x009B7A34 across and 0x009B7A30 down. Its frame comes from its
-// own `cTransparentIndex_` at +8.
+// bubble, at 0x009B7A30 across and 0x009B7A34 down. Its frame comes from its
+// own `cTransparentIndex_` at +8. update_cursor stores the cursor's x to
+// 0x009B7A30 and its y to 0x009B7A34, and update_screen and flip use them as
+// a rectangle's left and top, so the first is X and the second Y (the names
+// were swapped before 2026-11-11; the code never depended on them).
 Sprite *WinFlipSprite;
-int WinFlipSpriteY;                    // 0x009B7A30
-int WinFlipSpriteX;                    // 0x009B7A34
+int WinFlipSpriteX;                    // 0x009B7A30
+int WinFlipSpriteY;                    // 0x009B7A34
 // 0x009B7AD8. Chooses how a partial flip reaches the screen: zero blits the
 // whole surface, non-zero intersects the caller's rectangle first.
 // Pinned40375C/4037E1/4037FF write the full DWORD at9B7AD8;
@@ -1202,7 +1205,7 @@ void __cdecl Win::flip(RECT *area) {
     if (WinFlipSprite != nullptr) {
         // The frame index is the sprite's own byte at +8.
         WinFlipSprite->draw(&Win::screen_buffer_, WinFlipSprite->cTransparentIndex_,
-                            WinFlipSpriteY, WinFlipSpriteX, 1, 1);
+                            WinFlipSpriteX, WinFlipSpriteY, 1, 1);
     }
 
     // EVERY DirectDraw path ends the frame and returns. 0x005EFF1A jumps the
@@ -3075,73 +3078,62 @@ Win *__cdecl get_mouse_window_recurse(Win * window, int * x, int * y) {
             }
         }
 
-        if (in_box(*x, *y, &window->outer_rect_)) {
-            *x -= window->outer_rect_.left;
-            *y -= window->outer_rect_.top;
-            goto outer_hit;
+        if (!in_box(*x, *y, &window->outer_rect_)) {
+            if (window->get_graphic_win() != 0 && (window->iFlags_ & 0x10000000) != 0) {
+                // pixel-precise hit test against one of the window's four border buffers
+                int threshold1 = ((window->iFlags_ & 0x10) == 0 || (window->iFlags_ & 0x400000) != 0)
+                                     ? window->border_thickness_
+                                     : window->caption_height_;
+                int threshold2;
+                if (window->bottom_border_thickness_ != -1) {
+                    threshold2 = window->bottom_border_thickness_;
+                } else {
+                    threshold2 = window->border_thickness_;
+                }
+                if (*y < threshold1) {
+                    unsigned char key = WinFillColour;
+                    if (window->buffer1_->get_pixel(*x, *y) == key) {
+                        *x += window->client_rect_.left;
+                        *y += window->client_rect_.top;
+                        goto tail;
+                    }
+                } else if (*y > window->client_rect_.bottom - window->client_rect_.top - threshold2) {
+                    unsigned char key = WinFillColour;
+                    if (window->buffer4_->get_pixel(*x, (window->client_rect_.top - window->client_rect_.bottom) + *y + threshold2) == key) {
+                        *x += window->client_rect_.left;
+                        *y += window->client_rect_.top;
+                        goto tail;
+                    }
+                } else if (*x < window->border_thickness_) {
+                    unsigned char key = WinFillColour;
+                    if (window->buffer3_->get_pixel(*x, *y - threshold1) == key) {
+                        *x += window->client_rect_.left;
+                        *y += window->client_rect_.top;
+                        goto tail;
+                    }
+                } else {
+                    unsigned char key = WinFillColour;
+                    // The image passes left - right + border + x, as written here.
+                    if (window->buffer2_->get_pixel((window->client_rect_.left - window->client_rect_.right) + window->border_thickness_ + *x, *y - threshold1) == key) {
+                        *x += window->client_rect_.left;
+                        *y += window->client_rect_.top;
+                        goto tail;
+                    }
+                }
+            }
+        direct_hit:
+            WinMouseDirect = 1;
+            return window;
         }
-        if (window->get_graphic_win() == 0 || (window->iFlags_ & 0x10000000) == 0) {
-            goto direct_hit;
+        *x -= window->outer_rect_.left;
+        *y -= window->outer_rect_.top;
+    } else {
+        if (!in_box(*x, *y, &window->outer_rect_)) {
+            goto tail;
         }
-        {
-            // pixel-precise hit test against one of the window's four border buffers
-            int threshold1 = ((window->iFlags_ & 0x10) == 0 || (window->iFlags_ & 0x400000) != 0)
-                                 ? window->border_thickness_
-                                 : window->caption_height_;
-            int threshold2;
-            if (window->bottom_border_thickness_ != -1) {
-                threshold2 = window->bottom_border_thickness_;
-            } else {
-                threshold2 = window->border_thickness_;
-            }
-            if (*y < threshold1) {
-                unsigned char key = WinFillColour;
-                if (window->buffer1_->get_pixel(*x, *y) != key) {
-                    goto direct_hit;
-                }
-                *x += window->client_rect_.left;
-                *y += window->client_rect_.top;
-                goto tail;
-            }
-            if (*y > window->client_rect_.bottom - window->client_rect_.top - threshold2) {
-                unsigned char key = WinFillColour;
-                if (window->buffer4_->get_pixel(*x, (window->client_rect_.top - window->client_rect_.bottom) + *y + threshold2) != key) {
-                    goto direct_hit;
-                }
-                *x += window->client_rect_.left;
-                *y += window->client_rect_.top;
-                goto tail;
-            }
-            if (*x < window->border_thickness_) {
-                unsigned char key = WinFillColour;
-                if (window->buffer3_->get_pixel(*x, *y - threshold1) != key) {
-                    goto direct_hit;
-                }
-                *x += window->client_rect_.left;
-                *y += window->client_rect_.top;
-                goto tail;
-            }
-            {
-                unsigned char key = WinFillColour;
-                // The image passes left - right + border + x, as written here.
-                if (window->buffer2_->get_pixel((window->client_rect_.left - window->client_rect_.right) + window->border_thickness_ + *x, *y - threshold1) != key) {
-                    goto direct_hit;
-                }
-                *x += window->client_rect_.left;
-                *y += window->client_rect_.top;
-                goto tail;
-            }
-        }
-    direct_hit:
-        WinMouseDirect = 1;
-        return window;
+        *x -= window->outer_rect_.left;
+        *y -= window->outer_rect_.top;
     }
-    if (!in_box(*x, *y, &window->outer_rect_)) {
-        goto tail;
-    }
-    *x -= window->outer_rect_.left;
-    *y -= window->outer_rect_.top;
-outer_hit:
     // The client path joins here when the point is inside the outer
     // rectangle (0x005F6DDC), rather than returning.
     WinMouseDirect = 0;
@@ -3201,10 +3193,10 @@ void __cdecl restore_flip_sprite(int do_flip) {
     if (WinFlipSprite != 0) {
         Win::drawing_buffer_.copy(
             (&Win::screen_buffer_), 0, 0,
-            WinFlipSpriteY, WinFlipSpriteX, WinClipWidth, WinClipHeight);
+            WinFlipSpriteX, WinFlipSpriteY, WinClipWidth, WinClipHeight);
         RECT local;
         UnionRect(&WinDirtyRect, &WinDirtyRect,
-                  make_rect(&local, WinFlipSpriteY, WinFlipSpriteX,
+                  make_rect(&local, WinFlipSpriteX, WinFlipSpriteY,
                             WinClipWidth, WinClipHeight));
         if (do_flip != 0) {
             Sprite *saved = WinFlipSprite;
@@ -3882,7 +3874,10 @@ void Win::on_paint(RECT *area) {
             PaletteActive->entries_[index].peGreen,
             PaletteActive->entries_[index].peBlue));
     // A failed brush skips the rest, the context unreleased.
-    if (brush != nullptr) {
+    if (brush == nullptr) {
+        return;
+    }
+    {
         if (source == nullptr) {
             FillRect(hdc, area, brush);
         } else {
@@ -4452,10 +4447,10 @@ typedef int (__stdcall *NetCreateGroupFn)(Net *, int *, void *, int, int, int);
 static void RestoreAndFlip() {
     if (WinFlipSprite != 0) {
         Win::drawing_buffer_
-            .copy((&Win::screen_buffer_), 0, 0, WinFlipSpriteY, WinFlipSpriteX,
+            .copy((&Win::screen_buffer_), 0, 0, WinFlipSpriteX, WinFlipSpriteY,
                    WinClipWidth, WinClipHeight);
         RECT rect;
-        make_rect(&rect, WinFlipSpriteY, WinFlipSpriteX, WinClipWidth, WinClipHeight);
+        make_rect(&rect, WinFlipSpriteX, WinFlipSpriteY, WinClipWidth, WinClipHeight);
         UnionRect(&WinDirtyRect, &WinDirtyRect, &rect);
         WinFlipSprite = 0;
         Win::flip(&WinDirtyRect);
@@ -4471,10 +4466,10 @@ static void RestoreAndFlipCall() {
     RECT *(__cdecl *const make_rect_call)(RECT *, int, int, int, int) = make_rect;
     if (WinFlipSprite != 0) {
         Win::drawing_buffer_
-            .copy((&Win::screen_buffer_), 0, 0, WinFlipSpriteY, WinFlipSpriteX,
+            .copy((&Win::screen_buffer_), 0, 0, WinFlipSpriteX, WinFlipSpriteY,
                    WinClipWidth, WinClipHeight);
         RECT rect;
-        make_rect_call(&rect, WinFlipSpriteY, WinFlipSpriteX, WinClipWidth, WinClipHeight);
+        make_rect_call(&rect, WinFlipSpriteX, WinFlipSpriteY, WinClipWidth, WinClipHeight);
         UnionRect(&WinDirtyRect, &WinDirtyRect, &rect);
         WinFlipSprite = 0;
         Win::flip(&WinDirtyRect);
@@ -5860,8 +5855,12 @@ void Win::on_nc_paint(RECT * area, int flags) {
             }
         }
         if (buffer4_ != 0 && (flags == -1 || flags == 2)) {
-            int v = bottom_border_thickness_;
-            if (v == -1) v = border_thickness_;
+            int v;
+            if (bottom_border_thickness_ != -1) {
+                v = bottom_border_thickness_;
+            } else {
+                v = border_thickness_;
+            }
             if (WinBackBuffer != 0) {
                 buffer4_->draw(WinBackBuffer, WinFillColour, stack8 - WinViewOriginX,
                                (((client_rect_.bottom - client_rect_.top) - WinViewOriginY) - v) + stack4, 1, 1);
@@ -6870,13 +6869,13 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
             }
             x -= WinDragOffsetX;
             y -= WinDragOffsetY;
-            WinFlipSpriteY = x;
-            WinFlipSpriteX = y;
+            WinFlipSpriteX = x;
+            WinFlipSpriteY = y;
             WinFlipSprite = window->cursor_sprite_;
             Win::screen_buffer_.copy(&Win::drawing_buffer_, x, y, 0, 0,
                                      WinClipWidth, WinClipHeight);
             make_rect(&rect, 0, 0, WinClipWidth, WinClipHeight);
-            offset_rect(&rect, WinFlipSpriteY, WinFlipSpriteX);
+            offset_rect(&rect, WinFlipSpriteX, WinFlipSpriteY);
             int result = UnionRect(&WinDirtyRect, &rect, &WinDirtyRect);
             if (tgl == 0) {
                 return result;
@@ -6976,10 +6975,10 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
 
     if (WinMouseDirect == 0 && window->cursor_sprite_ == 0) {
         if (WinFlipSprite != 0) {
-            Win::drawing_buffer_.copy((&Win::screen_buffer_), 0, 0, WinFlipSpriteY,
-                                      WinFlipSpriteX, WinClipWidth, WinClipHeight);
+            Win::drawing_buffer_.copy((&Win::screen_buffer_), 0, 0, WinFlipSpriteX,
+                                      WinFlipSpriteY, WinClipWidth, WinClipHeight);
             RECT local;
-            make_rect_call(&local, WinFlipSpriteY, WinFlipSpriteX, WinClipWidth,
+            make_rect_call(&local, WinFlipSpriteX, WinFlipSpriteY, WinClipWidth,
                            WinClipHeight);
             UnionRect(&WinDirtyRect, &WinDirtyRect, &local);
             Sprite *saved = WinFlipSprite;
@@ -7185,13 +7184,18 @@ void Win::on_redraw_nc(RECT * area, int flags) {
     unsigned int win_flags = this->iFlags_;
     if ((win_flags & 0x11) == 0) return;
 
+    // One rectangle serves first as the saved client origin and then as
+    // every box and title rectangle (the image keeps all of them in the
+    // same frame slot).
+    RECT r;
+    RECT clip;
+    RECT outer;
     int savedLeft, savedTop;
-    int side = flags;
     if (area != 0) {
-        side = -1;
-        const RECT saved_client = client_rect();
-        savedLeft = saved_client.left;
-        savedTop = saved_client.top;
+        flags = -1;
+        r = this->client_rect_;
+        savedLeft = r.left;
+        savedTop = r.top;
     }
 
     int capHeight;
@@ -7201,247 +7205,168 @@ void Win::on_redraw_nc(RECT * area, int flags) {
         capHeight = this->caption_height_;
     }
 
-    int bottomThick = this->bottom_border_thickness_;
-    if (bottomThick == -1) bottomThick = this->border_thickness_;
+    int bottomThick;
+    if (this->bottom_border_thickness_ == -1) {
+        bottomThick = this->border_thickness_;
+    } else {
+        bottomThick = this->bottom_border_thickness_;
+    }
 
     int clientH = this->client_rect_.bottom - this->client_rect_.top;
     int clientW = this->client_rect_.right - this->client_rect_.left;
-    int borderM1 = this->border_thickness_ - 1;
-    int outerW = (this->outer_rect_.right - this->outer_rect_.left) + 2 + borderM1;
-    int capM1 = capHeight - 1;
-    int outerH = ((clientH - bottomThick) - capHeight) + 2 + capM1;
-
+    int outerW = this->outer_rect_.right - this->outer_rect_.left;
+    int frameLeft = this->border_thickness_ - 1;
+    int frameRight = outerW + 2 + frameLeft;
+    int frameTop = capHeight - 1;
+    int bottomY = clientH - bottomThick;
+    int frameBottom = (bottomY - capHeight) + 2 + frameTop;
+    int i;
 
     // ---- edge 0: top caption bar (buffer1_) ----
-    {
-        Buffer *buf = this->buffer1_;
-        if (buf != 0 && (side == -1 || side == 0)) {
-            RECT outer = buf->rect2_;
-            RECT clip;
-            if (area != 0) {
-                clip.left = area->left - savedLeft;
-                clip.top = area->top - savedTop;
-                clip.right = area->right - savedLeft;
-                clip.bottom = area->bottom - savedTop;
-            } else {
-                clip = outer;
-            }
-            if (IntersectRect(&clip, &clip, &outer)) {
-                buf = this->buffer1_;
-                buf->set_clip(&clip);
-                buf = this->buffer1_;
-                if (this->field_FC_ == 0) {
-                    buf->fill(this->field_100_);
-                } else {
-                    buf->tile((Buffer *)this->field_FC_, 0, 0, 0, 0, clientW, clientH);
-                }
-                {
-                    RECT r; r.left = 0; r.top = 0; r.right = clientW; r.bottom = clientH;
-                    for (int i = 0; i < (int)this->field_128_; i++) {
-                        buf = this->buffer1_;
-                        buf->box(&r, this->field_120_, this->field_124_);
-                        r.left++; r.top++; r.right--; r.bottom--;
-                    }
-                }
-                {
-                    RECT r; r.left = borderM1; r.top = capM1; r.right = outerW; r.bottom = outerH;
-                    for (int i = 0; i < (int)this->field_128_; i++) {
-                        buf = this->buffer1_;
-                        buf->box(&r, this->field_124_, this->field_120_);
-                        r.left--; r.top--; r.right++; r.bottom++;
-                    }
-                }
-                if (this->field_E0_ != 0) {
-                    int inset = this->field_128_;
-                    RECT r; r.left = inset; r.top = inset;
-                    r.right = clientW - inset; r.bottom = capHeight - inset;
-                    buf = this->buffer1_;
-                    buf->set_text_color(this->field_104_, this->field_108_, this->field_10C_, this->field_110_);
-                    buf = this->buffer1_;
-                    buf->set_font(this->field_F8_, 0, 0, 0);
-                    buf = this->buffer1_;
-                    buf->set_clip(&r);
-                    win_flags = this->iFlags_;
-                    char *title = this->field_E0_;
-                    buf = this->buffer1_;
-                    if ((win_flags & 0x10000) != 0) {
-                        if (title != 0) {
-                            unsigned int len = strlen(title);
-                            buf->write_l(title, &r, len);
-                        }
-                    } else if ((win_flags & 0x40000) != 0) {
-                        if (title != 0) {
-                            unsigned int len = strlen(title);
-                            buf->write_right_l(title, &r, len);
-                        }
-                    } else if (title != 0) {
-                        unsigned int len = strlen(title);
-                        buf->write_cent_l(title, &r, len);
-                    }
-                }
-                buf = this->buffer1_;
-                buf->set_clip(&buf->rect2_);
-            }
-            buf = this->buffer1_;
-            this->on_post_redraw_nc_buffer(buf, 0);
+    if (this->buffer1_ != 0 && (flags == -1 || flags == 0)) {
+        outer = this->buffer1_->rect2_;
+        if (area != 0) {
+            clip = *area;
+            offset_rect(&clip, -savedLeft, -savedTop);
+        } else {
+            clip = outer;
         }
+        if (IntersectRect(&clip, &clip, &outer)) {
+            this->buffer1_->set_clip(&clip);
+            if (this->field_FC_ != 0) {
+                this->buffer1_->tile((Buffer *)this->field_FC_, 0, 0, 0, 0, clientW, clientH);
+            } else {
+                this->buffer1_->fill(this->field_100_);
+            }
+            make_rect(&r, 0, 0, clientW, clientH);
+            for (i = 0; i < (int)this->field_128_; i++) {
+                this->buffer1_->box(&r, this->field_120_, this->field_124_);
+                r.left++; r.right--; r.top++; r.bottom--;
+            }
+            r.left = frameLeft; r.top = frameTop; r.right = frameRight; r.bottom = frameBottom;
+            for (i = 0; i < (int)this->field_128_; i++) {
+                this->buffer1_->box(&r, this->field_124_, this->field_120_);
+                r.left--; r.right++; r.top--; r.bottom++;
+            }
+            if (this->field_E0_ != 0) {
+                int inset = this->field_128_;
+                make_rect(&r, inset, inset, clientW - inset * 2, capHeight - inset * 2);
+                this->buffer1_->set_text_color(this->field_104_, this->field_108_, this->field_10C_, this->field_110_);
+                this->buffer1_->set_font(this->field_F8_, 0, 0, 0);
+                this->buffer1_->set_clip(&r);
+                if ((this->iFlags_ & 0x10000) != 0) {
+                    this->buffer1_->write_l(this->field_E0_, &r);
+                } else if ((this->iFlags_ & 0x40000) != 0) {
+                    this->buffer1_->write_right_l(this->field_E0_, &r);
+                } else {
+                    this->buffer1_->write_cent_l(this->field_E0_, &r);
+                }
+            }
+            this->buffer1_->set_clip(&this->buffer1_->rect2_);
+        }
+        this->on_post_redraw_nc_buffer(this->buffer1_, 0);
     }
 
     // ---- edge 2: bottom border (buffer4_) ----
-    {
-        Buffer *buf = this->buffer4_;
-        if (buf != 0 && (side == -1 || side == 2)) {
-            RECT outer = buf->rect2_;
-            RECT clip;
-            if (area != 0) {
-                int shiftY = (this->client_rect_.bottom - this->client_rect_.top)
-                             - bottomThick - savedTop;
-                clip.left = area->left - savedLeft;
-                clip.top = area->top + shiftY;
-                clip.right = area->right - savedLeft;
-                clip.bottom = area->bottom + shiftY;
-            } else {
-                clip = outer;
-            }
-            if (IntersectRect(&clip, &clip, &outer)) {
-                buf = this->buffer4_;
-                buf->set_clip(&clip);
-                buf = this->buffer4_;
-                if (this->field_FC_ == 0) {
-                    buf->fill(this->field_100_);
-                } else {
-                    buf->tile((Buffer *)this->field_FC_, 0, clientH - bottomThick, 0, 0, clientW, clientH);
-                }
-                {
-                    int shiftY = (this->client_rect_.top - this->client_rect_.bottom) + bottomThick;
-                    RECT r; r.left = 0; r.top = shiftY; r.right = clientW; r.bottom = clientH + shiftY;
-                    for (int i = 0; i < (int)this->field_128_; i++) {
-                        buf = this->buffer4_;
-                        buf->box(&r, this->field_120_, this->field_124_);
-                        r.left++; r.top++; r.right--; r.bottom--;
-                    }
-                }
-                {
-                    int shiftY = (this->client_rect_.top - this->client_rect_.bottom) + bottomThick;
-                    RECT r; r.left = borderM1; r.top = capM1 + shiftY;
-                    r.right = outerW; r.bottom = outerH + shiftY;
-                    for (int i = 0; i < (int)this->field_128_; i++) {
-                        buf = this->buffer4_;
-                        buf->box(&r, this->field_124_, this->field_120_);
-                        r.left--; r.top--; r.right++; r.bottom++;
-                    }
-                }
-                buf = this->buffer4_;
-                buf->set_clip(&buf->rect2_);
-            }
-            buf = this->buffer4_;
-            this->on_post_redraw_nc_buffer(buf, 2);
+    if (this->buffer4_ != 0 && (flags == -1 || flags == 2)) {
+        outer = this->buffer4_->rect2_;
+        if (area != 0) {
+            clip = *area;
+            offset_rect(&clip, -savedLeft,
+                        (this->client_rect_.bottom - this->client_rect_.top) - bottomThick - savedTop);
+        } else {
+            clip = outer;
         }
+        if (IntersectRect(&clip, &clip, &outer)) {
+            this->buffer4_->set_clip(&clip);
+            if (this->field_FC_ != 0) {
+                this->buffer4_->tile((Buffer *)this->field_FC_, 0, bottomY, 0, 0, clientW, clientH);
+            } else {
+                this->buffer4_->fill(this->field_100_);
+            }
+            make_rect(&r, 0, 0, clientW, clientH);
+            offset_rect(&r, 0, (this->client_rect_.top - this->client_rect_.bottom) + bottomThick);
+            for (i = 0; i < (int)this->field_128_; i++) {
+                this->buffer4_->box(&r, this->field_120_, this->field_124_);
+                r.left++; r.right--; r.top++; r.bottom--;
+            }
+            r.left = frameLeft; r.top = frameTop; r.right = frameRight; r.bottom = frameBottom;
+            offset_rect(&r, 0, (this->client_rect_.top - this->client_rect_.bottom) + bottomThick);
+            for (i = 0; i < (int)this->field_128_; i++) {
+                this->buffer4_->box(&r, this->field_124_, this->field_120_);
+                r.left--; r.right++; r.top--; r.bottom++;
+            }
+            this->buffer4_->set_clip(&this->buffer4_->rect2_);
+        }
+        this->on_post_redraw_nc_buffer(this->buffer4_, 2);
     }
 
     // ---- edge 3: right border (buffer3_) ----
-    {
-        Buffer *buf = this->buffer3_;
-        if (buf != 0 && (side == -1 || side == 3)) {
-            RECT outer = buf->rect2_;
-            RECT clip;
-            if (area != 0) {
-                int shiftY = capHeight - savedTop;
-                clip.left = area->left - savedLeft;
-                clip.top = area->top + shiftY;
-                clip.right = area->right - savedLeft;
-                clip.bottom = area->bottom + shiftY;
-            } else {
-                clip = outer;
-            }
-            if (IntersectRect(&clip, &clip, &outer)) {
-                buf = this->buffer3_;
-                buf->set_clip(&clip);
-                buf = this->buffer3_;
-                if (this->field_FC_ == 0) {
-                    buf->fill(this->field_100_);
-                } else {
-                    buf->tile((Buffer *)this->field_FC_, 0, capHeight, 0, 0, clientW, clientH);
-                }
-                {
-                    RECT r; r.left = 0; r.top = -capHeight; r.right = clientW; r.bottom = clientH - capHeight;
-                    for (int i = 0; i < (int)this->field_128_; i++) {
-                        buf = this->buffer3_;
-                        buf->box(&r, this->field_120_, this->field_124_);
-                        r.left++; r.top++; r.right--; r.bottom--;
-                    }
-                }
-                {
-                    RECT r; r.left = borderM1; r.top = capM1 - capHeight;
-                    r.right = outerW; r.bottom = outerH - capHeight;
-                    for (int i = 0; i < (int)this->field_128_; i++) {
-                        buf = this->buffer3_;
-                        buf->box(&r, this->field_124_, this->field_120_);
-                        r.left--; r.top--; r.right++; r.bottom++;
-                    }
-                }
-                buf = this->buffer3_;
-                buf->set_clip(&buf->rect2_);
-            }
-            buf = this->buffer3_;
-            this->on_post_redraw_nc_buffer(buf, 3);
+    if (this->buffer3_ != 0 && (flags == -1 || flags == 3)) {
+        outer = this->buffer3_->rect2_;
+        if (area != 0) {
+            clip = *area;
+            offset_rect(&clip, -savedLeft, capHeight - savedTop);
+        } else {
+            clip = outer;
         }
+        if (IntersectRect(&clip, &clip, &outer)) {
+            this->buffer3_->set_clip(&clip);
+            if (this->field_FC_ != 0) {
+                this->buffer3_->tile((Buffer *)this->field_FC_, 0, capHeight, 0, 0, clientW, clientH);
+            } else {
+                this->buffer3_->fill(this->field_100_);
+            }
+            make_rect(&r, 0, 0, clientW, clientH);
+            offset_rect(&r, 0, -capHeight);
+            for (i = 0; i < (int)this->field_128_; i++) {
+                this->buffer3_->box(&r, this->field_120_, this->field_124_);
+                r.left++; r.right--; r.top++; r.bottom--;
+            }
+            r.left = frameLeft; r.top = frameTop; r.right = frameRight; r.bottom = frameBottom;
+            offset_rect(&r, 0, -capHeight);
+            for (i = 0; i < (int)this->field_128_; i++) {
+                this->buffer3_->box(&r, this->field_124_, this->field_120_);
+                r.left--; r.right++; r.top--; r.bottom++;
+            }
+            this->buffer3_->set_clip(&this->buffer3_->rect2_);
+        }
+        this->on_post_redraw_nc_buffer(this->buffer3_, 3);
     }
 
     // ---- edge 1: left border (buffer2_) ----
-    {
-        Buffer *buf = this->buffer2_;
-        if (buf != 0 && (side == -1 || side == 1)) {
-            RECT outer = buf->rect2_;
-            RECT clip;
-            if (area != 0) {
-                int shiftX = ((this->client_rect_.right - this->client_rect_.left) - this->border_thickness_) - savedLeft;
-                clip.left = area->left + shiftX;
-                clip.top = area->top + (capHeight - savedTop);
-                clip.right = area->right + shiftX;
-                clip.bottom = area->bottom + (capHeight - savedTop);
-            } else {
-                clip = outer;
-            }
-            if (IntersectRect(&clip, &clip, &outer)) {
-                buf = this->buffer2_;
-                buf->set_clip(&clip);
-                buf = this->buffer2_;
-                if (this->field_FC_ == 0) {
-                    buf->fill(this->field_100_);
-                } else {
-                    buf->tile((Buffer *)this->field_FC_, clientW - this->border_thickness_, capHeight, 0, 0, clientW, clientH);
-                }
-                int negCap = -capHeight;
-                int loop1Left = (this->client_rect_.left - this->client_rect_.right) + this->border_thickness_;
-                {
-                    RECT r;
-                    r.left = loop1Left; r.top = negCap; r.right = clientW + loop1Left; r.bottom = clientH - capHeight;
-                    for (int i = 0; i < (int)this->field_128_; i++) {
-                        buf = this->buffer2_;
-                        buf->box(&r, this->field_120_, this->field_124_);
-                        r.left++; r.top++; r.right--; r.bottom--;
-                    }
-                }
-                {
-                    int loop2Left = (this->client_rect_.left - this->client_rect_.right) + this->border_thickness_;
-                    RECT r;
-                    r.left = loop2Left + borderM1;
-                    r.top = capM1 - capHeight;
-                    r.right = outerW + loop2Left;
-                    r.bottom = outerH - capHeight;
-                    for (int i = 0; i < (int)this->field_128_; i++) {
-                        buf = this->buffer2_;
-                        buf->box(&r, this->field_124_, this->field_120_);
-                        r.left--; r.top--; r.right++; r.bottom++;
-                    }
-                }
-                buf = this->buffer2_;
-                buf->set_clip(&buf->rect2_);
-            }
-            buf = this->buffer2_;
-            this->on_post_redraw_nc_buffer(buf, 1);
+    if (this->buffer2_ != 0 && (flags == -1 || flags == 1)) {
+        outer = this->buffer2_->rect2_;
+        if (area != 0) {
+            clip = *area;
+            offset_rect(&clip,
+                        (this->client_rect_.right - this->client_rect_.left) - this->border_thickness_ - savedLeft,
+                        capHeight - savedTop);
+        } else {
+            clip = outer;
         }
+        if (IntersectRect(&clip, &clip, &outer)) {
+            this->buffer2_->set_clip(&clip);
+            if (this->field_FC_ != 0) {
+                this->buffer2_->tile((Buffer *)this->field_FC_, clientW - this->border_thickness_, capHeight, 0, 0, clientW, clientH);
+            } else {
+                this->buffer2_->fill(this->field_100_);
+            }
+            make_rect(&r, 0, 0, clientW, clientH);
+            offset_rect(&r, (this->client_rect_.left - this->client_rect_.right) + this->border_thickness_, -capHeight);
+            for (i = 0; i < (int)this->field_128_; i++) {
+                this->buffer2_->box(&r, this->field_120_, this->field_124_);
+                r.left++; r.right--; r.top++; r.bottom--;
+            }
+            r.left = frameLeft; r.top = frameTop; r.right = frameRight; r.bottom = frameBottom;
+            offset_rect(&r, (this->client_rect_.left - this->client_rect_.right) + this->border_thickness_, -capHeight);
+            for (i = 0; i < (int)this->field_128_; i++) {
+                this->buffer2_->box(&r, this->field_124_, this->field_120_);
+                r.left--; r.right++; r.top--; r.bottom++;
+            }
+            this->buffer2_->set_clip(&this->buffer2_->rect2_);
+        }
+        this->on_post_redraw_nc_buffer(this->buffer2_, 1);
     }
 }
 
@@ -7990,16 +7915,16 @@ void __cdecl Win::update_screen(RECT *area, Win *window) {
         if (WinFlipSprite != 0) {
             // original 9B7A30 is RECT.left, 9B7A34 is RECT.top
             RECT rectangle;
-            rectangle.left = WinFlipSpriteY;
-            rectangle.top = WinFlipSpriteX;
-            rectangle.right = WinClipWidth + WinFlipSpriteY;
-            rectangle.bottom = WinClipHeight + WinFlipSpriteX;
+            rectangle.left = WinFlipSpriteX;
+            rectangle.top = WinFlipSpriteY;
+            rectangle.right = WinClipWidth + WinFlipSpriteX;
+            rectangle.bottom = WinClipHeight + WinFlipSpriteY;
             // IAT 669338 is USER32!IntersectRect.
             if (area == 0 || IntersectRect(&rectangle, &rectangle, area) != 0) {
                 Win::screen_buffer_.copy(
                     &Win::drawing_buffer_, rectangle.left, rectangle.top,
-                    rectangle.left - WinFlipSpriteY,
-                    rectangle.top - WinFlipSpriteX,
+                    rectangle.left - WinFlipSpriteX,
+                    rectangle.top - WinFlipSpriteY,
                     rectangle.right - rectangle.left,
                     rectangle.bottom - rectangle.top);
             }
