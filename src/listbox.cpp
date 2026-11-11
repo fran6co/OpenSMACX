@@ -63,83 +63,9 @@
 #include "net_class.h"
 #include "mapwin.h"
 #include "rectangle_operations.h"
-// Private pure branches shared with host controls; every helper has internal
-// linkage in each translation unit that includes this implementation fragment.
-// Returns 1 for a navigation move, 0 for a handled arrow at its boundary or
-// in a one-column layout, and -1 for the type-ahead arm.
-static int listbox_navigation_target(int arm, int layout_mode, int rows,
-                                     int count, int position, int *target) {
-    if (arm == 0) {
-        if (layout_mode == 1) return 0;
-        position -= rows;
-        if (position < 0) return 0;
-    } else if (arm == 1) {
-        if (position == 0) return 0;
-        --position;
-    } else if (arm == 2) {
-        if (layout_mode == 1) return 0;
-        position += rows;
-        if (position >= count) return 0;
-    } else if (arm == 3) {
-        if (position + 1 >= count) return 0;
-        ++position;
-    } else {
-        return -1;
-    }
-    *target = position;
-    return 1;
-}
-
-static int listbox_typeahead_lower_input(unsigned char input) {
-    const signed char signed_input = static_cast<signed char>(input);
-    return tolower(static_cast<int>(signed_input));
-}
-
-static bool listbox_typeahead_matches(char item, unsigned char input) {
-    if (static_cast<unsigned char>(item) == input) return true;
-    const signed char signed_item = static_cast<signed char>(item);
-    return static_cast<int>(signed_item) == listbox_typeahead_lower_input(input);
-}
-
 static int listbox_frame_edge_count(uint32_t stored_count) {
     return static_cast<int>(stored_count);
 }
-
-struct ListBoxScrollCopy {
-    int source_x;
-    int source_y;
-    int destination_x;
-    int destination_y;
-    int width;
-    int height;
-};
-
-static ListBoxScrollCopy listbox_scroll_copy(int direction, int width_metric,
-        int inset, int columns, int rows, int row_height) {
-    ListBoxScrollCopy copy;
-    const bool vertical = direction == 0 || direction == 2;
-    const int row_count = rows - (vertical ? 1 : 0);
-    const int height_adjustment = columns - (vertical ? 1 : 2);
-    const int total = (width_metric - inset) +
-                      height_adjustment * width_metric;
-    copy.width = total - inset;
-    copy.height = row_count * row_height;
-    copy.source_x = inset;
-    copy.source_y = 0;
-    copy.destination_x = inset;
-    copy.destination_y = 0;
-    if (direction == 0) {
-        copy.source_y = row_height;
-    } else if (direction == 1) {
-        copy.source_x = width_metric + inset;
-    } else if (direction == 2) {
-        copy.destination_y = row_height;
-    } else {
-        copy.destination_x = width_metric + inset;
-    }
-    return copy;
-}
-
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
@@ -1413,16 +1339,6 @@ int ListBox::update_changes() {
 }
 
 
-// The pinned byte map at 0x0060B4EC is indexed by VK - 0x25: bytes 0..3 map
-// to arrows and every remaining byte in the 0x25..0x68 range maps to 4.
-// Out-of-range values branch directly to the same type-ahead arm.
-static int listbox_key_dispatch_arm(int key) {
-    if (key < 0x25 || key > 0x68) return 4;
-    const int table_index = key - 0x25;
-    return table_index < 4 ? table_index : 4;
-}
-
-
 // Instruction/caller provenance retained in Git history of the deleted seed
 // src/recovered/units/0060aa60.cpp (span 0x0060AA60..0x0060AF84): publish the
 // parent as the callback receiver, hit-test the clicked row, update selected
@@ -1599,79 +1515,161 @@ void ListBox::on_mouse_move(int x, int y) {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060af90.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
 // symbol    ?on_key_down@ListBox@@UAEHH@Z
 int ListBox::on_key_down(int key) {
-    WinCallbackWindow = static_cast<GraphicWin *>(this)->parent_window();
-    StringList &items = Dialog::item_list_;
-    const int count = items.entry_count_;
-    int position = Dialog::selected_position_;
-    if (position == -1) {
-        position = 0;
+    WinCallbackWindow = parent_window();
+    const int count = Dialog::item_list_.entry_count_;
+    // Columns needed for every entry: the row count rounded up.
+    int columns_needed = count / Dialog::row_count_;
+    if (Dialog::row_count_ * columns_needed < count) {
+        ++columns_needed;
+    }
+    const int last_visible =
+        static_cast<int>(field_1C_) + static_cast<int>(field_18_) - 1;
+    if (Dialog::selected_position_ == -1) {
         Dialog::selected_position_ = 0;
     }
-    int next_position = position;
-    const int arm = listbox_key_dispatch_arm(key);
-    const int navigation = listbox_navigation_target(
-        arm, Dialog::column_count_,
-        Dialog::row_count_, count, position,
-        &next_position);
-    if (navigation > 0) {
-        set_selected_pos(next_position, 1);
-        return 1;
-    }
-    if (navigation == 0) return 1;
-    const UINT character = MapVirtualKeyA(
-        static_cast<UINT>(key) & 0xFFF8FFFFu, 2);
-    const unsigned char first = static_cast<unsigned char>(character);
-    if (first == 0) {
-        return 0;
-    }
-    position = Dialog::selected_position_;
-    const int search_count = items.entry_count_;
+    const int old_top = static_cast<int>(field_18_);
+    const int old_selected = Dialog::selected_position_;
 
-    if (position <= search_count - 1) {
-        items.current_ = items.head_;
-        if (position < 0) {
-            if (abs(position) <= items.entry_count_) {
-                int steps = abs(position);
-                if (steps > 0) {
-                    do {
-                        --steps;
-                        items.current_ = items.current_->previous;
-                    } while (steps != 0);
-                }
-                items.current_position_ = position + items.entry_count_;
-            }
-        } else {
-            if (position > 0) {
-                int steps = position;
-                do {
-                    --steps;
-                    items.current_ = items.current_->next;
-                } while (steps != 0);
-            }
-            items.current_position_ = position;
+    switch (key) {
+    case VK_UP:
+    case VK_NUMPAD8:
+        if (old_selected == 0) {
+            return 1;
         }
-    }
+        Dialog::selected_position_ = old_selected - 1;
+        if (static_cast<int>(field_1C_) < count
+            && Dialog::selected_position_ < static_cast<int>(field_18_)) {
+            if (Dialog::column_count_ == 1) {
+                field_18_ = static_cast<uint32_t>(Dialog::selected_position_);
+            } else {
+                field_18_ -= static_cast<uint32_t>(Dialog::row_count_);
+            }
+        }
+        break;
 
-    int offset = 0;
-    if (items.entry_count_ > 0) {
-        do {
-            if (items.head_ != 0) {
-                items.current_ = items.current_->next;
-                const int next_position = items.current_position_ + 1;
-                items.current_position_ = next_position;
-                if (next_position == items.entry_count_) {
-                    items.current_position_ = 0;
+    case VK_DOWN:
+    case VK_NUMPAD2:
+        if (static_cast<int>(field_1C_) < count) {
+            if (Dialog::column_count_ == 1) {
+                if (old_selected + 1 > static_cast<int>(field_18_) + Dialog::row_count_ - 1
+                    || old_selected == count - 1) {
+                    if (static_cast<int>(field_18_) < count - 1) {
+                        ++field_18_;
+                    }
+                }
+            } else {
+                if (old_selected + 1 > last_visible
+                    && static_cast<int>(field_18_) + Dialog::row_count_ <= count - 1) {
+                    field_18_ += static_cast<uint32_t>(Dialog::row_count_);
+                }
+                if (Dialog::selected_position_ == count - 1
+                    && static_cast<int>(field_18_) < (columns_needed - 1) * Dialog::row_count_) {
+                    field_18_ += static_cast<uint32_t>(Dialog::row_count_);
                 }
             }
-            StringStructPayload *payload = items.current_->string_payload();
-            if (listbox_typeahead_matches(payload->text[0], first)) {
-                set_selected_pos(items.current_position_, 1);
+        }
+        if (Dialog::selected_position_ < count - 1) {
+            ++Dialog::selected_position_;
+        }
+        break;
+
+    case VK_LEFT:
+    case VK_NUMPAD4:
+        if (Dialog::column_count_ == 1) {
+            return 0;
+        }
+        if (old_selected >= Dialog::row_count_) {
+            Dialog::selected_position_ = old_selected - Dialog::row_count_;
+        }
+        if (static_cast<int>(field_1C_) < count
+            && Dialog::selected_position_ < static_cast<int>(field_18_)) {
+            field_18_ -= static_cast<uint32_t>(Dialog::row_count_);
+        }
+        break;
+
+    case VK_RIGHT:
+    case VK_NUMPAD6:
+        if (Dialog::column_count_ == 1) {
+            return 0;
+        }
+        if (static_cast<int>(field_1C_) < count) {
+            if (old_selected >= (Dialog::column_count_ - 1) * Dialog::row_count_
+                                    + static_cast<int>(field_18_)) {
+                if (static_cast<int>(field_18_) + Dialog::row_count_ <= count - 1) {
+                    field_18_ += static_cast<uint32_t>(Dialog::row_count_);
+                }
+            } else if (old_selected >= (columns_needed - 1) * Dialog::row_count_
+                                           + static_cast<int>(field_18_)
+                       && static_cast<int>(field_18_) < (columns_needed - 1) * Dialog::row_count_) {
+                field_18_ += static_cast<uint32_t>(Dialog::row_count_);
+            }
+        }
+        if (Dialog::selected_position_ < (columns_needed - 1) * Dialog::row_count_) {
+            Dialog::selected_position_ += Dialog::row_count_;
+        }
+        if (Dialog::selected_position_ > count - 1) {
+            Dialog::selected_position_ = count - 1;
+        }
+        break;
+
+    default: {
+        // Type-ahead: walk forward from the selection for an entry whose
+        // first character is the typed one or its lower case.
+        const char typed = static_cast<char>(
+            MapVirtualKeyA(static_cast<UINT>(key) & 0xFFF8FFFFu, 2));
+        if (typed == 0) {
+            return 0;
+        }
+        Dialog::item_list_.seek_pos(Dialog::selected_position_);
+        for (int index = 0; index < Dialog::item_list_.entry_count_; ++index) {
+            StringList *const list = &this->Dialog::item_list_;
+            list->next_entry();
+            // The original reads through a null payload when a cursor
+            // survives after the list head has been cleared.
+            const char *text = list->current_ != 0
+                ? listbox_current_payload(list)->text : 0;
+            const char first = *text;
+            if (first == typed || first == tolower(typed)) {
+                set_selected_pos(Dialog::item_list_.current_position_, 1);
                 return 1;
             }
-            ++offset;
-        } while (offset < items.entry_count_);
+        }
+        return 0;
     }
-    return 0;
+    }
+
+    if (Dialog::selected_position_ < static_cast<int>(field_18_)
+        || Dialog::selected_position_ >= static_cast<int>(field_1C_ + field_18_)) {
+        field_18_ = static_cast<uint32_t>(Dialog::selected_position_);
+    }
+    set_vert_pos(static_cast<int>(field_18_));
+    set_horz_pos(static_cast<int>(field_18_) / Dialog::column_count_);
+    if (selection_callback_ != 0) {
+        selection_callback_(Dialog::get_selected_id());
+    }
+    Win *parent = parent_window();
+    if (parent != 0) {
+        parent->on_selected(Dialog::get_selected_id());
+    }
+    parent = parent_window();
+    if (parent != 0) {
+        Sound *child = parent->legacy_sound_36();
+        if (child != 0 && child->is_playing() == 0) {
+            child->play();
+        }
+    }
+    if (static_cast<int>(field_18_) != old_top) {
+        redraw();
+        return 1;
+    }
+    if (old_selected != Dialog::selected_position_) {
+        ListBoxDrawOffset = old_selected - static_cast<int>(field_18_);
+        draw_item(old_selected);
+        ListBoxDrawOffset = Dialog::selected_position_ - static_cast<int>(field_18_);
+        draw_item(Dialog::selected_position_);
+    }
+    GraphicWin::soft_update();
+    return 1;
 }
 
 // Seed identity 0x0060C1E0, retained span 0x0060C1E0..0x0060C33F, has no
@@ -1683,21 +1681,39 @@ int ListBox::on_key_down(int key) {
 // ORIGINAL: 0x0060C1E0 ?UNK1@ListBox@@QAEXH@Z 0x0060C1E0-0x0060C33F
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060c1e0.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
 void ListBox::UNK1(int direction) {
-    if (direction < 0 || direction > 3) {
-        return;
+    // The image restores the clip before dispatching, so an out-of-range
+    // direction still restores it and then copies nothing.
+    Buffer::restore_clip();
+    const int inset = static_cast<int>(Dialog::field_40_);
+    const int item_width = static_cast<int>(Dialog::field_64_);
+    int span = item_width + (inset - 2 * inset);
+    int height;
+    int row_height;
+    int columns;
+    if (direction == 0 || direction == 2) {
+        row_height = static_cast<int>(Dialog::field_68_);
+        height = (Dialog::row_count_ - 1) * row_height;
+        columns = Dialog::column_count_ - 1;
+    } else {
+        row_height = static_cast<int>(Dialog::field_68_);
+        height = Dialog::row_count_ * row_height;
+        columns = Dialog::column_count_ - 2;
     }
-    GraphicWin *window = this;
-    Buffer *buffer = window;
-    buffer->restore_clip();
-    const ListBoxScrollCopy copy = listbox_scroll_copy(
-        direction, static_cast<int>(Dialog::field_64_),
-        static_cast<int>(Dialog::field_40_),
-        Dialog::column_count_,
-        Dialog::row_count_,
-        static_cast<int>(Dialog::field_68_));
-    buffer->copy(buffer, copy.source_x, copy.source_y,
-                 copy.destination_x, copy.destination_y,
-                 copy.width, copy.height);
+    span += columns * item_width;
+    switch (direction) {
+    case 0:
+        Buffer::copy(this, inset, row_height, inset, 0, span - inset, height);
+        break;
+    case 1:
+        Buffer::copy(this, item_width + inset, 0, inset, 0, span - inset, height);
+        break;
+    case 2:
+        Buffer::copy(this, inset, 0, inset, row_height, span - inset, height);
+        break;
+    case 3:
+        Buffer::copy(this, inset, 0, item_width + inset, 0, span - inset, height);
+        break;
+    }
 }
 
 // The original virtual entry first rejects a null Win parent

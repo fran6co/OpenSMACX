@@ -157,12 +157,14 @@ int Sprite::change_color(int old_color, int new_color) {
     if (pcBits_ == 0) {
         return 7;
     }
-    unsigned char *pixels = pcBits_;
-    const int pixel_count = iSpriteHeight_ * iSpriteWidth2_;
-    const int group_count = pixel_count >> 2;
+    unsigned char *pixels;
+    int group_count;
+    int tail_count;
     old_color = static_cast<unsigned char>(old_color);
-    const int tail_count = pixel_count - (group_count << 2);
+    pixels = pcBits_;
+    group_count = (iSpriteHeight_ * iSpriteWidth2_) >> 2;
     new_color = static_cast<unsigned char>(new_color);
+    tail_count = (iSpriteHeight_ * iSpriteWidth2_) - (group_count << 2);
     // Hand-written assembly: unrolled compare chains with `loop`, `and ecx,ecx` tests, mov ah writes.
     // A zero group count skips the tail too; a negative product wraps the LOOP count.
     __asm {
@@ -436,14 +438,13 @@ int *Sprite::get_clipped_x_table_expand(RECT *full, RECT *clipped, int *source_s
     if (adjusted_skip < 0) {
         const int remaining = -adjusted_skip;
         extent -= remaining;
-        --index;
         SpriteClippedXSteps[0] = remaining;
-        *source_skip = index;
         output = SpriteClippedXSteps + 1;
+        *source_skip = index - 1;
         count = 1;
     } else {
-        *source_skip = index;
         output = SpriteClippedXSteps;
+        *source_skip = index;
         count = 0;
     }
     while (extent > 0) {
@@ -481,14 +482,13 @@ int *Sprite::get_clipped_y_table_expand(RECT *full, RECT *clipped, int *source_s
     if (adjusted_skip < 0) {
         const int remaining = -adjusted_skip;
         extent -= remaining;
-        --index;
         SpriteClippedYSteps[0] = remaining;
-        *source_skip = index;
         output = SpriteClippedYSteps + 1;
+        *source_skip = index - 1;
         count = 1;
     } else {
-        *source_skip = index;
         output = SpriteClippedYSteps;
+        *source_skip = index;
         count = 0;
     }
     while (extent > 0) {

@@ -932,8 +932,9 @@ void MultiWin::on_right_click(int x, int y) {
         break;
     case 10: {
         const unsigned int bit = 1u << faction;
-        if (MultiWindowContactStatusMask & bit) {
-            MultiWindowContactStatusMask &= ~bit;
+        const unsigned int mask = MultiWindowContactStatusMask;
+        if (mask & bit) {
+            MultiWindowContactStatusMask = mask & ~bit;
             NetDaemonNet.channels_[1].trailing_words_[6] |= bit;
             draw(0);
         } else if (NetDaemonNet.channels_[1].trailing_words_[6] & bit) {

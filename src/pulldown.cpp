@@ -77,32 +77,26 @@ int PullDown::on_key_click(int key_input, int key) {
   switch (key) {
   case 0x1B:
     selected_ = -1;
-    // Native Escape falls through to the same modal-release path as Enter.
-    // fall through
-  case 0x0D:
     release_modal();
     return 1;
 
   case 0x26:
   case 0x68: {
-    const int next = old_selected > 0 ? old_selected - 1 : item_count_ - 1;
-    selected_ = next;
-    int index = next;
+    if (old_selected <= 0) {
+      selected_ = item_count_ - 1;
+    } else {
+      selected_ = old_selected - 1;
+    }
+    int index = selected_;
+    while (index >= 0) {
+      const uint32_t flags = items_[index].flags;
+      if ((flags & 1u) != 0 && (flags & 4u) == 0) break;
+      --index;
+    }
     if (index < 0) {
       selected_ = -1;
     } else {
-      for (;;) {
-        const uint32_t flags = items_[index].flags;
-        if ((flags & 1u) != 0 && (flags & 4u) == 0) {
-          selected_ = index;
-          break;
-        }
-        --index;
-        if (index < 0) {
-          selected_ = -1;
-          break;
-        }
-      }
+      selected_ = index;
     }
     MenuPullDownInputOrigin = 1;
     pulldown_update(old_selected, selected_);
@@ -112,41 +106,51 @@ int PullDown::on_key_click(int key_input, int key) {
   case 0x28:
   case 0x62: {
     const int count = item_count_;
-    const int next = old_selected == count - 1 ? 0 : old_selected + 1;
-    selected_ = next;
-    int index = next;
-    if (index < count) {
-      for (;;) {
-        const uint32_t flags = items_[index].flags;
-        if ((flags & 1u) != 0 && (flags & 4u) == 0) break;
-        ++index;
-        if (index >= count) break;
-      }
+    if (old_selected == count - 1) {
+      selected_ = 0;
+    } else {
+      selected_ = old_selected + 1;
     }
-    selected_ = index >= count ? -1 : index;
+    int index = selected_;
+    while (index < count) {
+      const uint32_t flags = items_[index].flags;
+      if ((flags & 1u) != 0 && (flags & 4u) == 0) break;
+      ++index;
+    }
+    if (index == count) {
+      selected_ = -1;
+    } else {
+      selected_ = index;
+    }
     MenuPullDownInputOrigin = 1;
     pulldown_update(old_selected, selected_);
     return 1;
   }
 
+
   default:
+  {
     for (int index = 0; index < item_count_; ++index) {
       const uint32_t flags = items_[index].flags;
-      char *mnemonic = items_[index].mnemonic;
-      if ((flags & 1u) == 0 || (flags & 2u) != 0 || mnemonic == 0) continue;
-      const int mnemonic_character = static_cast<signed char>(mnemonic[0]);
-      if (mnemonic_character == tolower(key_input) ||
-          mnemonic_character == toupper(key_input)) {
-        selected_ = index;
-        redraw();
-        release_modal();
-        return 1;
+      if ((flags & 1u) != 0 && (flags & 2u) == 0 && items_[index].mnemonic != 0) {
+        if (*items_[index].mnemonic == tolower(key_input) ||
+            *items_[index].mnemonic == toupper(key_input)) {
+          selected_ = index;
+          redraw();
+          goto release;
+        }
       }
     }
     if (win_parent_ != 0) {
       win_parent_->on_key_click(key_input, key);
     }
     return 0;
+  }
+
+  case 0x0D:
+  release:
+    release_modal();
+    return 1;
   }
 }
 

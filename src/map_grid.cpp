@@ -1108,12 +1108,11 @@ int __cdecl minerals_at(int x, int y) {
     if (!y || y == (MapLatitudeBounds - 1)) {
         return 2; // poles
     }
-    int origX = x;
     int avg = (x + y) / 2;
-    x -= avg;
-    int val1 = (x / 2) + MapRandSeed + 2 * (x / 2) + 2 * (avg / 2);
-    int val2 = (val1 - 2 * (x & 1) - (avg & 1)) & 3;
-    int alt = alt_at(origX, y);
+    int x_diff = x - avg;
+    int val1 = (x_diff / 2) + MapRandSeed + 2 * (x_diff / 2) + 2 * (avg / 2);
+    int val2 = (val1 - 2 * (x_diff & 1) - (avg & 1)) & 3;
+    int alt = alt_at(x, y);
     int type = alt - ALT_SHORE_LINE;
     if (type < 0) {
         type = ALT_SHORE_LINE - alt;
@@ -1121,20 +1120,19 @@ int __cdecl minerals_at(int x, int y) {
     if (alt < ALT_SHORE_LINE) {
         type--;
     }
+    // The image lays the cases out last to first.
     switch (type) {
-      case 0: {
-        switch (val2) {
-          case 0:
-            return 1;
-          case 1:
-          case 3:
-            return 0;
-          case 2:
-            return ((val1 & 4) != 0) + 1; // 1 or 2
-          default:
-            return ~val2 & 1;
+      case 3:
+        if (val2 < 0 || val2 > 1) {
+            return 2;
         }
-      }
+        return 1;
+      case 2:
+        switch (val2) {
+          case 0: return 0;
+          case 1: return 1;
+          default: return 2;
+        }
       case 1:
         switch (val2) {
           case 0: return 0;
@@ -1142,14 +1140,18 @@ int __cdecl minerals_at(int x, int y) {
           case 2: return 1;
           default: return 2;
         }
-      case 2:
+      case 0:
         switch (val2) {
-          case 0: return 0;
-          case 1: return 1;
-          default: return 2;
+          case 0:
+            return 1;
+          case 1:
+          case 3:
+            return 0;
+          case 2:
+            return (val1 & 4) ? 2 : 1;
+          default:
+            return ~val2 & 1;
         }
-      case 3:
-        return (val2 < 0 || val2 > 1) ? 2 : 1;
       default:
         return ~val2 & 1;
     }
@@ -1197,8 +1199,7 @@ Status: Complete
 int __cdecl bonus_at(int x, int y, int UNUSED(unk_val)) {
     uint32_t bit = bit_at(x, y);
     int alt = alt_at(x, y);
-    BOOL has_rsc_bonus = bit & BIT_RSC_BONUS;
-    if (!has_rsc_bonus) {
+    if (!(bit & BIT_RSC_BONUS)) {
         if (!MapRandSeed) {
             return 0;
         }
@@ -1209,7 +1210,7 @@ int __cdecl bonus_at(int x, int y, int UNUSED(unk_val)) {
     int avg = (x + y) >> 1;
     int x_diff = x - avg;
     int chk = (avg & 3) + 4 * (x_diff & 3);
-    if (!has_rsc_bonus && chk != ((-5 * (avg >> 2) - 3 * (x_diff >> 2) + MapRandSeed) & 0xF)) {
+    if (!(bit & BIT_RSC_BONUS) && chk != ((-5 * (avg >> 2) - 3 * (x_diff >> 2) + MapRandSeed) & 0xF)) {
         return 0;
     }
     if (alt < ALT_OCEAN_SHELF) {
