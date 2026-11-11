@@ -4451,7 +4451,7 @@ void ReportIf::done() {
 /*
 Purpose: Switch report pages using the existing interface and window owners,
          preserving the original research-selection transition and redraw.
-// ORIGINAL: 0x004A3950 ?report@ReportIf@@QAEXHHH@Z 0x004A3950-0x004A3CD3 FILE
+// ORIGINAL: 0x004A3950 ?report@ReportIf@@QAEXHHH@Z 0x004A3950-0x004A3CD3 FILE BYTE_EXACT
 // size      899 bytes
 // prototype void (__thiscall ?report@ReportIf@@QAEXHHH@Z)(ReportIf* this, int, int, int)
 // callers   12   call targets   18
@@ -5130,7 +5130,7 @@ void ReportIf::on_iface_mouse_leave(int, int) {
 }
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004A6050 0x004A62F4 0x004A6314 0x004A60DB
-// ORIGINAL: 0x004A6050 ?on_iface_selected@ReportIf@@QAEXHH@Z 0x004A6050-0x004A62F3 FILE
+// ORIGINAL: 0x004A6050 ?on_iface_selected@ReportIf@@QAEXHH@Z 0x004A6050-0x004A62F3 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retired recovered seed provenance: src/recovered/units/004a6050.cpp retained original identity, full spans and seed history", "recovery/tasks/interface-contract-report-closure.json authorized coupled owner recovery", "original:0x4a6050 complete control/data-access audit; ReportIf declarations and genuine ReportWin control storage"], "reason": "Recover ReportIf's selection callback from the retained seed through its genuine SubInterface owner and ReportWin controls. Its current emitted virtual symbol is recorded separately from the historical catalogue spelling."}
 // symbol    ?on_iface_selected@ReportIf@@UAEXHH@Z
 void ReportIf::on_iface_selected(int item, int) {
@@ -5223,7 +5223,7 @@ int ReportIf::on_iface_dialog_item_back_draw(::GraphicWin *, int, int, RECT *) {
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004A6330 0x004A6D10 0x004A6D2C 0x004A6412
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004A6330 0x004A6D2C 0x004A6D3C 0x004A6563
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004A6330 0x004A6D3C 0x004A6D58 0x004A6B41
-// ORIGINAL: 0x004A6330 ?on_iface_button_clicked@ReportIf@@QAEXH@Z 0x004A6330-0x004A6D10 FILE
+// ORIGINAL: 0x004A6330 ?on_iface_button_clicked@ReportIf@@QAEXH@Z 0x004A6330-0x004A6D10 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004a6330.cpp retained original identity, full spans and seed history", "recovery/tasks/interface-contract-report-closure.json authorized coupled owner recovery", "original:0x4a6330 complete control/data-access audit; ReportIf declarations and genuine ReportWin control storage"], "reason": "Recover ReportIf's button callback from the retained seed through its genuine SubInterface owner and ReportWin controls. Its current emitted virtual symbol is recorded separately from the historical catalogue spelling."}
 // TRIED: full transcription landed (MISMATCH #3). Used the brief's resolved jump tables directly (three switches, cases 0xcef-0xcf5, 0xcf0-0xcf3, and 2-8) rather than the raw `ja`+`jmp [eax*4+addr]` ranges alone. Caught a real Ghidra error via the raw bytes: every `*(uint*)(DAT_0090ea30+0x1c)` Ghidra prints is actually `[eax+0x38]` in the disassembly (`mov eax,[0x90ea30]; mov ecx,[eax+0x38]`), confirmed at both call sites that touch it. ReportIf/BaseWin/NetDaemon fields are all raw self+offset casts, not src/reportif.h's hypothesised layout, per the brief's warning.
 // The three log_say texts are this handler's own copies in the pinned image
@@ -5685,7 +5685,7 @@ void ReportIf::close_labs() {
     flatButton2_.hide();
 }
 
-// ORIGINAL: 0x004A84A0 ?draw_energy@ReportIf@@QAEXXZ 0x004A84A0-0x004A9017
+// ORIGINAL: 0x004A84A0 ?draw_energy@ReportIf@@QAEXXZ 0x004A84A0-0x004A9017 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004a84a0.cpp", "source:src/reportif.h", "image:0x004A84AE-0x004A84BC pushes mode zero then report faction for the cdecl energy_compute call"], "reason": "Original energy-panel identity maps to ReportIf's list, selection, frame and facility rows. The original cdecl push order establishes energy_compute(report_faction_id_, 0), correcting the seed's reversed displayed arguments without changing the calculation owner."}
 // TRIED: raw self+offset transcription with manual ListBox/Dialog virtual-base adjustor arithmetic (vtable[+8]/[+4] thunks) for both energy-facility and support-facility ListBox blocks diverges at instr #8 (mov vs lea); not chased further given the 2935-byte, dual-listbox scope.
 void ReportIf::draw_energy() {
