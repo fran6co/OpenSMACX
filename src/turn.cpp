@@ -1853,10 +1853,9 @@ void __cdecl alien_fauna() {
         if (!on_map(x, y)) continue;
 
         const BOOL ocean = is_ocean(x, y);
-        const uint32_t bit = map_loc(x, y)->bit;
         if (ocean) {
-            if (!(bit & BIT_FARM)) continue;
-        } else if (!(bit & BIT_FOREST)) {
+            if (!(map_loc(x, y)->bit & BIT_FARM)) continue;
+        } else if (!(map_loc(x, y)->bit & BIT_FOREST)) {
             continue;
         }
 
@@ -3061,10 +3060,10 @@ int __cdecl end_of_game(int check_victory) {
     int score;
     int selected_faction = -1;
 
-    if ((GameDataStateStorage.fields_.game_state_ & EndgameRecorded) != 0 &&
-        (GameDataStateStorage.fields_.game_state_ & EndgamePresented) != 0) {
-        goto no_end;
-    }
+    if ((GameDataStateStorage.fields_.game_state_ & EndgameRecorded) == 0 ||
+        (GameDataStateStorage.fields_.game_state_ & EndgamePresented) == 0) {
+    // (body left at function indentation; the two guards close before the
+    // single `return 0` below)
 
     if ((GameDataStateStorage.fields_.game_state_ & EndgameRecorded) == 0 &&
         check_victory != 0) {
@@ -3162,14 +3161,8 @@ int __cdecl end_of_game(int check_victory) {
         }
     }
 
-    if ((GameDataStateStorage.fields_.game_state_ & EndgameRecorded) == 0) {
-        goto no_end;
-    }
-    if ((GameDataStateStorage.fields_.game_state_ & EndgamePresented) != 0) {
-        goto no_end;
-    }
-
-    {  // scope only so the gotos above do not skip initialisations (C2362)
+    if ((GameDataStateStorage.fields_.game_state_ & EndgameRecorded) != 0 &&
+        (GameDataStateStorage.fields_.game_state_ & EndgamePresented) == 0) {
     int winner = 0;
     for (int faction_id = 1; faction_id < 8; ++faction_id) {
         const uint32_t flags = PlayersData[faction_id].flags;
@@ -3288,7 +3281,7 @@ int __cdecl end_of_game(int check_victory) {
         popp(ScriptPopupFile, "ENDBEACON", 0, "beacon_sm.pcx", 0);
         if ((GameDataStateStorage.fields_.game_preferences_ & PREF_AV_SECRET_PROJECT_MOVIES) != 0) {
             StringTemp[0] = 0;
-            strcat(StringTemp, Players[ConsoleGlobal.faction_id_].filename);
+            strcat(StringTemp, Players[ConsoleGlobal.faction_id_].search_key);
             CharUpperA(StringTemp);
             if (strcmp(StringTemp, "CARETAKE") != 0) {
                 amovie_project("close_us");
@@ -3364,23 +3357,20 @@ int __cdecl end_of_game(int check_victory) {
     }
     show_replay();
     GameDataStateStorage.fields_.game_state_ |= EndgamePresented;
-    if (IsMultiplayerNet == 0 && EndgameExitReason != EndgameReason7) {
-        if (popp(ScriptPopupFile, "GAMEOVERMAN", 0, "stars_sm.pcx", 0) != 0) {
-            goto no_end;
+    if (IsMultiplayerNet != 0 || EndgameExitReason == EndgameReason7 ||
+        popp(ScriptPopupFile, "GAMEOVERMAN", 0, "stars_sm.pcx", 0) == 0) {
+        GameRestartQueued = (IsMultiplayerNet == 0);
+        if (IsMultiplayerNet != 0) {
+            clear_multiplayer_endgame_state();
         }
+        ExitTurnLoop = 1;
+        return 1;
     }
-    GameRestartQueued = (IsMultiplayerNet == 0);
-    if (IsMultiplayerNet != 0) {
-        clear_multiplayer_endgame_state();
-    }
-    ExitTurnLoop = 1;
-    return 1;
-    }
-    // Every `return 0` in the image jumps to one shared epilogue
-    // (0x00525816); separate returns each get their own copy. The image
-    // still lays this block out after the return-1 tail, which no spelling
-    // tried here reproduces (if/else tail, do/while(0)+break, nested gotos).
-no_end:
+    }  // recorded and not yet presented
+    }  // not both recorded and presented
+    // Every `return 0` in the image jumps to one shared epilogue laid out
+    // after the return-1 tail (0x00525816): the guards are nested ifs around
+    // the body with a single final return, not early `goto`/`return 0` exits.
     return 0;
 }
 
@@ -4819,6 +4809,7 @@ int __cdecl net_upkeep_phase(int phase) {
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/unrecovered/005290a0.cpp", "task:net-turn-coordinator-owner", "ConsoleGlobal9156B0+23BE4/+23BE8 owns939294/939298; UpgradePromptAnswered90EA3C, TurnRedrawPending703DE0 and CouncilPendingMessageArgs68BF38 already own their storage. Do not create competing aliases.", "Native prototypes64..511 use34-byte records and flags+30/obsolete_factions+2C, not seed1A stride; peer checksums use8x21-word existing storage. Preserve wait/abort ordering and masked PlayerLock active-bit test; extent/lifetime/runtime and retained-link evidence remain bounded."], "reason": "Recover the complete multiplayer turn operation through actual source-owned objects, arrays, members and SDK calls; preserve historical identity, spans and seed discoveries without implying game acceptance."}
 // TRIED: direct global-arithmetic translation of the Ghidra listing (fixed globals, DeletionList/NetDaemon/NetMsg/Console members, NET_DRAIN() macro for the receive-loop idiom) matches the first 10 instructions then diverges (xor vs mov) - register allocation for the 5-way local flags, not a structural difference.
 void __cdecl net_upkeep() {
+    unsigned int flags;
     int i;
 
     CommlinkPending = 0;
@@ -4844,10 +4835,9 @@ void __cdecl net_upkeep() {
     ++NetUpkeepPhase;
 
     for (i = 0; i < 8; ++i) {
-        int faction = (GameDataStateStorage.fields_.turn_current_num_ + i) & 0x80000007;
-        if (faction < 0) faction = ((faction - 1) | 0xFFFFFFF8) + 1;
-        if (((1u << (faction & 0x1F)) &
-             static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8)) != 0) {
+        const int faction = (GameDataStateStorage.fields_.turn_current_num_ + i) % 8;
+        if (((1 << faction) &
+             GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_) != 0) {
             faction_upkeep(faction);
         }
     }
@@ -4868,9 +4858,9 @@ void __cdecl net_upkeep() {
                 do_all_tasks();
             }
         }
-        for (unsigned int faction = 0; faction < 8; ++faction) {
-            if (static_cast<int>(faction) == ConsoleGlobal.faction_id_) {
-                synch_leader(static_cast<int>(faction));
+        for (int faction = 0; faction < 8; ++faction) {
+            if (faction == ConsoleGlobal.faction_id_) {
+                synch_leader(faction);
             }
         }
         if (NetDaemonNet.primary_state_.trailing_words_[8] != 0) {
@@ -4888,48 +4878,48 @@ skip_upkeep_synch:
     TurnUpkeepPhase = 2;
     ++NetUpkeepPhase;
     {
-        unsigned int flags = 0;
+        flags = 0;
         for (unsigned int faction = 1; faction < MaxPlayerNum; ++faction) {
-            const unsigned char bit =
-                static_cast<unsigned char>(1u << (faction & 0x1F));
-            PlayerData &data = PlayersData[faction];
-            if ((bit & static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8)) != 0) {
-                while (data.earned_techs_saved != 0) {
+            const int bit = 1 << faction;
+            if ((bit & GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_) != 0) {
+                while (PlayersData[faction].earned_techs_saved != 0) {
                     log_say(NetUpkeepUpkeepAdvance, Players[faction].name_leader,
-                            faction, data.earned_techs_saved, 0);
-                    --data.earned_techs_saved;
+                            faction, PlayersData[faction].earned_techs_saved, 0);
+                    --PlayersData[faction].earned_techs_saved;
                     tech_advance(static_cast<int>(faction));
-                    if ((bit & static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) != 0) {
+                    if ((bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) != 0) {
                         flags |= (faction ==
                                   static_cast<unsigned int>(ConsoleGlobal.faction_id_))
                             + 1u;
                     }
                 }
-                if (data.tech_accumulated != 0 &&
-                    data.tech_id_researching < 0) {
+                if (PlayersData[faction].tech_accumulated != 0 &&
+                    PlayersData[faction].tech_id_researching < 0) {
                     log_say(NetUpkeepSetResearch, faction, 0, 0);
-                    data.tech_id_researching =
+                    PlayersData[faction].tech_id_researching =
                         tech_selection(static_cast<int>(faction));
-                    if ((bit & static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) != 0) {
+                    if ((bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) != 0) {
                         flags |= (faction ==
                                   static_cast<unsigned int>(ConsoleGlobal.faction_id_))
                             + 1u;
                     }
                 }
-                if ((data.flags & 2u) != 0) {
+                if ((PlayersData[faction].flags & 2u) != 0) {
                     consider_designs(static_cast<int>(faction));
                 }
-                data.flags &= ~2u;
+                PlayersData[faction].flags &= ~2u;
             }
         }
 
-        if (flags == 0) {
+        if (flags != 0) {
+            if (net_upkeep_phase(NetUpkeepPhase) != 0) {
+                return;
+            }
+        } else {
             log_say(NetUpkeepSkippingResearchSynch, NetUpkeepPhase, 0, 0);
-        } else if (net_upkeep_phase(NetUpkeepPhase) != 0) {
-            return;
         }
-        ++NetUpkeepPhase;
         TurnUpkeepPhase = 0;
+        ++NetUpkeepPhase;
         if ((flags & 2u) != 0 && (GameDataStateStorage.fields_.game_rules_ & 0x200u) != 0) {
             ConsoleGlobal.set_ai(ConsoleGlobal.faction_id_);
         }
@@ -4937,59 +4927,58 @@ skip_upkeep_synch:
 
     NetMsgPrimary.pop(NetUpkeepUpkeep4, 0, 1, 0);
     {
-        unsigned int found_prototype = 0;
+        flags = 0;
         UpgradePromptAnswered = 0;
-        for (int prototype_id = 0x40; prototype_id < MaxVehProtoNum;
-             ++prototype_id) {
-            VehPrototype &prototype = VehPrototypes[prototype_id];
-            const uint16_t flags = prototype.flags;
-            if ((flags & 1u) != 0) {
-                const int faction = prototype_id >> 6;
-                const unsigned char faction_bit =
-                    static_cast<unsigned char>(1u << (faction & 0x1F));
+        for (i = 0x40; i < MaxVehProtoNum; ++i) {
+            VehPrototype &prototype = VehPrototypes[i];
+            const uint16_t proto_flags = prototype.flags;
+            if ((proto_flags & 1u) != 0) {
+                const int faction = i / 64;
+                const int faction_bit = 1 << faction;
+                const uint16_t upgrade = static_cast<uint16_t>(proto_flags & 0x100u);
                 if ((prototype.obsolete_factions & faction_bit) == 0 &&
-                    (flags & 0x100u) != 0) {
-                    found_prototype = 1;
-                    prototype.flags = static_cast<uint16_t>(flags & 0xFEFFu);
+                    upgrade != 0) {
+                    flags = 1;
+                    prototype.flags = static_cast<uint16_t>(proto_flags & 0xFEFFu);
                     if (faction == ConsoleGlobal.faction_id_ &&
                         (GameDataStateStorage.fields_.game_more_preferences_ & 0x100000u) != 0) {
                         upgrade_prototypes(ConsoleGlobal.faction_id_,
-                                           prototype_id);
+                                           i);
                     }
                 }
             }
         }
 
-        if (CouncilPendingMessageArgs[0] < 1) {
-            if (found_prototype == 0) {
-                log_say(NetUpkeepSkippingPrototypeSynch, NetUpkeepPhase, 0, 0);
-                goto upkeep5;
-            }
-        } else {
+        if (CouncilPendingMessageArgs[0] > 0) {
             if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
                 message_data(0x2600, 0, CouncilPendingMessageArgs[0],
                              CouncilPendingMessageArgs[1],
                              CouncilPendingMessageArgs[2], 0);
                 TurnRedrawPending = 1;
-                do {
+                while (TurnRedrawPending != 0) {
                     if (ExitTurnLoop != 0) break;
                     wait_task();
-                } while (TurnRedrawPending != 0);
+                }
             }
             CouncilPendingMessageArgs[0] = -1;
             CouncilPendingMessageArgs[1] = -1;
             CouncilPendingMessageArgs[2] = -1;
+            goto prototype_synch;
         }
-        if (net_upkeep_phase(NetUpkeepPhase) != 0) return;
+        if (flags != 0) {
+prototype_synch:
+            if (net_upkeep_phase(NetUpkeepPhase) != 0) return;
+        } else {
+            log_say(NetUpkeepSkippingPrototypeSynch, NetUpkeepPhase, 0, 0);
+        }
     }
 
-upkeep5:
     ++NetUpkeepPhase;
     NetMsgPrimary.pop(NetUpkeepUpkeep5, 0, 1, 0);
     for (i = 0; i < 8; ++i) {
-        const unsigned char bit = static_cast<unsigned char>(1u << i);
-        if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & bit) != 0 &&
-            (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & bit) == 0) {
+        const int bit = 1 << i;
+        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & bit) != 0 &&
+            (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & bit) == 0) {
             log_say(NetUpkeepEnemyTurn, i, 0, 0);
             enemy_turn(i);
         }
@@ -5004,21 +4993,20 @@ upkeep5:
     do_checksums(4);
 
     if ((GameDataStateStorage.fields_.game_preferences_ & 2u) != 0) {
-        if (BaseAtDebugPopupFlag == 0) {
-            auto_save();
-        } else {
+        if (BaseAtDebugPopupFlag != 0) {
             StringTemp[0] = 0;
             strcat(StringTemp, NetUpkeepSaveDirectory);
             strcat(StringTemp, NetUpkeepSavePrefix);
-            char faction_text[16];
-            _itoa(ConsoleGlobal.faction_id_, faction_text, 10);
-            strcat(StringTemp, faction_text);
+            char number_text[80];
+            _itoa(ConsoleGlobal.faction_id_, number_text, 10);
+            strcat(StringTemp, number_text);
             strcat(StringTemp, NetUpkeepSaveSuffix);
-            char turn_text[16];
-            _itoa(GameDataStateStorage.fields_.turn_current_num_, turn_text, 10);
-            strcat(StringTemp, turn_text);
+            _itoa(GameDataStateStorage.fields_.turn_current_num_, number_text, 10);
+            strcat(StringTemp, number_text);
             log_say(NetUpkeepSaveLog, StringTemp, 0, 0, 0);
             save_daemon(StringTemp);
+        } else {
+            auto_save();
         }
     }
 
@@ -5028,38 +5016,35 @@ upkeep5:
     ++NetUpkeepPhase;
 
     {
-        unsigned int any_mismatch = 0;
+        flags = 0;
         // Original 0x0052972D clears 21 DWORDs; 0x005297C0/0x005297D0
         // read and set four-byte flags, not packed byte flags.
         int mismatch_seen[NetTurnChecksumWords];
         memset(mismatch_seen, 0, sizeof mismatch_seen);
 
-        for (unsigned int faction = 1; faction < MaxPlayerNum; ++faction) {
-            const unsigned char bit =
-                static_cast<unsigned char>(1u << (faction & 0x1F));
-            if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & bit) == 0 ||
-                (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & bit) == 0 ||
-                static_cast<int>(faction) == ConsoleGlobal.faction_id_) {
+        for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << faction)) == 0 ||
+                (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction)) == 0 ||
+                faction == ConsoleGlobal.faction_id_) {
                 continue;
             }
 
-            const int *peer = NetPeerTurnChecksums[faction];
-            for (int word = 0; word < NetTurnChecksumWords; ++word) {
-                if (NetTurnChecksums[word] == peer[word]) continue;
-                if (any_mismatch == 0) {
+            for (i = 0; i < NetTurnChecksumWords; ++i) {
+                if (NetTurnChecksums[i] == NetPeerTurnChecksums[faction][i]) continue;
+                if (flags == 0) {
                     NetMsgPrimary.pop(NetUpkeepUpkeep7, 0, 1, 0);
                 }
-                any_mismatch = 1;
-                if (mismatch_seen[word] != 0) continue;
-                mismatch_seen[word] = 1;
+                flags = 1;
+                if (mismatch_seen[i] != 0) continue;
+                mismatch_seen[i] = 1;
                 if (NetDaemonNet.primary_state_.leading_words_[0] == 0) {
                     continue;
                 }
 
-                switch (word) {
+                switch (i) {
                 case 0:
                     log_say(NetUpkeepGameChecksum, faction, NetTurnChecksums[0],
-                            peer[0]);
+                            NetPeerTurnChecksums[faction][0]);
                     NetDaemonNet.synch(0, 0, 0, 0, 0, 1, 0x2101);
                     while (NetDaemonNet.receive() != 0) { }
                     NetDaemonNet.synch(0x24, 0, 0, 0, 0, 1, 0x2101);
@@ -5067,7 +5052,7 @@ upkeep5:
                     break;
                 case 1: {
                     log_say(NetUpkeepLeadersChecksum, faction, NetTurnChecksums[1],
-                            peer[1]);
+                            NetPeerTurnChecksums[faction][1]);
                     int a = 0;
                     int b = 0;
                     do {
@@ -5085,7 +5070,7 @@ upkeep5:
                 }
                 case 2:
                     log_say(NetUpkeepMapChecksum, faction, NetTurnChecksums[2],
-                            peer[2]);
+                            NetPeerTurnChecksums[faction][2]);
                     NetDaemonNet.synch(0x1002, 0, 0, 0, 0, 1, 0x2101);
                     while (NetDaemonNet.receive() != 0) { }
                     NetDaemonNet.synch(5, 0, 0, 0, 0, 1, 0x2101);
@@ -5093,7 +5078,7 @@ upkeep5:
                     break;
                 case 3:
                     log_say(NetUpkeepVehiclesChecksum, faction, NetTurnChecksums[3],
-                            peer[3]);
+                            NetPeerTurnChecksums[faction][3]);
                     NetDaemonNet.synch(0x25, 0, 0, 0, 0, 1, 0x2101);
                     while (NetDaemonNet.receive() != 0) { }
                     NetDaemonNet.synch(0x12, 0, 0, 0, 0, 1, 0x2101);
@@ -5101,7 +5086,7 @@ upkeep5:
                     break;
                 case 4:
                     log_say(NetUpkeepBasesChecksum, faction, NetTurnChecksums[4],
-                            peer[4]);
+                            NetPeerTurnChecksums[faction][4]);
                     NetDaemonNet.synch(0x26, 0, 0, 0, 0, 1, 0x2101);
                     while (NetDaemonNet.receive() != 0) { }
                     NetDaemonNet.synch(0x14, 0, 0, 0, 0, 1, 0x2101);
@@ -5111,8 +5096,8 @@ upkeep5:
                     // Original 0x00529B16 reloads the local checksum through
                     // the 0x0093A008 cursor, independently of peer row zero.
                     log_say(NetUpkeepMapSectionChecksum, faction,
-                            NetTurnChecksums[word], peer[word]);
-                    NetDaemonNet.synch(0x30, word - 5, 0, 0, 0, 1,
+                            NetTurnChecksums[i], NetPeerTurnChecksums[faction][i]);
+                    NetDaemonNet.synch(0x30, i - 5, 0, 0, 0, 1,
                                        0x2101);
                     while (NetDaemonNet.receive() != 0) { }
                     break;
@@ -5123,7 +5108,7 @@ upkeep5:
         NetMsgPrimary.close();
         SpockHelpActive = 0;
         SpockNotifyPending = 0;
-        if (any_mismatch != 0) {
+        if (flags != 0) {
             net_upkeep_phase(NetUpkeepPhase);
             return;
         }
@@ -5808,7 +5793,10 @@ void __cdecl control_game() {
     int lobby_status;
     int movie_disabled;
 
-    if (system_init() == 0 && game_init(0, 1) == 0) {
+    if (system_init() != 0 || game_init(0, 1) != 0) {
+        return;
+    }
+    {
 
             GameRestartQueued = 0;
             WorldClimateSkipTerrainClear = 1;
