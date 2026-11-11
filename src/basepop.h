@@ -104,8 +104,10 @@ class BasePop : public GraphicWin {
   uint32_t input_poll_state() const { return field_3100_; }
 
  public:
-  // homed from 00601980.cpp
-  int string(char *text);
+  // homed from 00601980.cpp. MEASURED (dllexport) for the reason
+  // set_def_ok_text gives below: basepop.cpp defines it `inline`, the image
+  // expands it into start's plain-line arm and keeps the standalone copy.
+  MEASURED int string(char *text);
   // 0x006019F0, homed from 006019f0.cpp: the item-text twin of string().
   int button(char *text);
   // EVIDENCE-FREE as a name, for the same reason the marker on

@@ -228,6 +228,7 @@ set(OPENSMACX_SOURCES
     src/mci_video.cpp
     src/movie_media.cpp
     src/movie_media_decoder.cpp
+    src/movie_media_decoder_g6.cpp
     src/movie_media_decoder_uv.asm
     src/movie_decoder_frame.cpp
     src/movie_decoder_idct.cpp
@@ -576,6 +577,10 @@ set_source_files_properties(src/alphamovie.cpp PROPERTIES COMPILE_OPTIONS "/Oy-"
 # Gamma's modal window keeps its measured frame context; the independent
 # PushButton implementation retains its default frameless context.
 set_source_files_properties(src/gamma.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
+# The movie decoder's C owners 0x005D2E70..0x005D4231 carry Pentium Pro
+# instruction scheduling; their neighbour 0x005D2E00 matches only without it.
+# The split unit is an inferred boundary, not a historical filename.
+set_source_files_properties(src/movie_media_decoder_g6.cpp PROPERTIES COMPILE_OPTIONS "/G6")
 
 # Preserve the measured frame-based context of the scenario-editor undo owner.
 # General's unrelated helpers retain their independently measured default recipe.

@@ -1959,6 +1959,20 @@
           "-c"
         ]
       },
+      "src/movie_media_decoder_g6.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/G6",
+          "-c"
+        ]
+      },
       "src/vehicle_render.cpp": {
         "flags": [
           "/nologo",

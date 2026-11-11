@@ -2353,7 +2353,7 @@ void BasePop::close() {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00401100
 
-int BasePop::string(char *text) {
+inline int BasePop::string(char *text) {
     // THE POPUP'S COLOUR-PREFIXED STRING SLOT. `^` opens a colour escape and
     // the byte run that follows says which: one `^` and a code is colour
     // `count` 1, `^^x` is 2, `^^` alone is 3. The parsed pair lands in
@@ -3208,40 +3208,6 @@ int BasePop::UNK2() {
     return max_width;
 }
 
-// WORKAROUND(inline): the image expands BasePop::string (0x00601980) into
-// start's plain-line arm (0x006024A8..0x00602509) and keeps the standalone
-// copy too. With string() declared `MEASURED` in basepop.h and defined
-// `inline` here, start measures BYTE_EXACT on the member call itself; until
-// that header change lands, this marked twin carries the same body.
-static inline int basepop_string_inline(BasePop *self, char *text) {
-    int count = 0;
-    if (text == 0) {
-        return 3;
-    }
-    if (*text == '^') {
-        if (text[1] != 0) {
-            if (text[1] != '^') {
-                count = 1;
-                ++text;
-            } else if (text[2] == '^') {
-                count = 2;
-                text += 3;
-            } else {
-                count = 2;
-                text += 2;
-            }
-        } else {
-            count = 3;
-            ++text;
-        }
-    }
-    StringList *list = &self->unit_ids_;
-    list->pending_text_ = text;
-    list->field_20_ = count;
-    list->field_24_ = 0;
-    return list->add(0) != 0;
-}
-
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00603800 0x006042D4 0x006042FC 0x00603C85
 // ORIGINAL: 0x00603800 ?calculate_dimensions@BasePop@@QAEHXZ 0x00603800-0x006042D2 FILE
 // symbol    ?calculate_dimensions@BasePop@@UAEHXZ
@@ -3608,7 +3574,7 @@ int BasePop::start(char *text_file, const char *text_label, int value,
                 return 0;
             }
         } else if (add_as_escaped != 0) {
-            basepop_string_inline(this, tok);
+            string(tok);
         } else if ((field_30A8_ & 4) != 0) {
             if (dialogs_.get_num_items() < 10) {
                 // The first edit takes the caller's override text; the rest take
