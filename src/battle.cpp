@@ -618,6 +618,35 @@ int __cdecl psi_factor(int combat_ratio, int faction_id, BOOL is_attack, BOOL is
     return factor;
 }
 
+// WORKAROUND(inline): get_basic_offense (0x501877..) and get_basic_defense
+// (0x501CA7..) expand psi_factor with the factor already holding
+// combat_ratio and a conditional overwrite (`mov edi, eax` before the
+// rule_psi test), while the out-of-line body at 0x501500 keeps the
+// ternary's two-arm `mov ecx, edx; jmp` shape. No single spelling gives
+// both; the cleanup pass should find the original header context.
+static inline int psi_factor_expanded(int combat_ratio, int faction_id, BOOL is_attack,
+                                      BOOL is_fungal_twr) {
+    int rule_psi = Players[faction_id].rule_psi;
+    int factor = combat_ratio;
+    if (rule_psi) {
+        factor = ((rule_psi + 100) * factor) / 100;
+    }
+    BOOL add_half;
+    if (is_attack) {
+        add_half = has_project(SP_DREAM_TWISTER, faction_id); // Psi Attack +50%
+    } else {
+        add_half = has_project(SP_NEURAL_AMPLIFIER, faction_id);
+        if (add_half) {
+            factor += factor / 2; // Psi Defense +50%s
+        }
+        add_half = is_fungal_twr; // SMACX only: likely +50% Fungal Tower defense bonus
+    }
+    if (add_half) {
+        factor += factor / 2;
+    }
+    return factor;
+}
+
 /*
 Purpose: Get the basic offense value for an attacking unit with an optional defender unit parameter.
 // ORIGINAL: 0x005015B0 ?get_basic_offense@@YAHHHHHH@Z 0x005015B0-0x00501940
@@ -644,11 +673,10 @@ Status: Complete
 */
 int __cdecl get_basic_offense(int veh_id_atk, int veh_id_def, int psi_combat_type,
                               BOOL is_bombard, BOOL unk_tgl) { // art/duel related? Is off of def?
-    Veh *veh_atk = &Vehs[veh_id_atk];
-    int faction_id_atk = veh_atk->faction_id;
+    int faction_id_atk = Vehs[veh_id_atk].faction_id;
     int morale = faction_id_atk ? morale_veh(veh_id_atk, true, 0)
         : morale_alien(veh_id_atk, veh_id_def >= 0 ? Vehs[veh_id_def].faction_id : -1);
-    int base_id_atk = base_at(veh_atk->x, veh_atk->y);
+    int base_id_atk = base_at(Vehs[veh_id_atk].x, Vehs[veh_id_atk].y);
     if (base_id_atk >= 0) {
         // The brood pit test after a creche only adds one; the morale
         // adjustment below it belongs to the creche-false arm.
@@ -659,14 +687,14 @@ int __cdecl get_basic_offense(int veh_id_atk, int veh_id_def, int psi_combat_typ
                 morale_active++;
             }
             morale -= morale_active;
-            if (has_fac(FAC_BROOD_PIT, base_id_atk, 0) && veh_atk->proto_id < MaxVehProtoFactionNum
-                && (get_proto_offense_rating(veh_atk->proto_id) < 0
-                    || veh_atk->proto_id == BSC_SPORE_LAUNCHER)) {
+            if (has_fac(FAC_BROOD_PIT, base_id_atk, 0) && Vehs[veh_id_atk].proto_id < MaxVehProtoFactionNum
+                && (get_proto_offense_rating(Vehs[veh_id_atk].proto_id) < 0
+                    || Vehs[veh_id_atk].proto_id == BSC_SPORE_LAUNCHER)) {
                 morale++;
             }
-        } else if (has_fac(FAC_BROOD_PIT, base_id_atk, 0) && veh_atk->proto_id < MaxVehProtoFactionNum
-            && (get_proto_offense_rating(veh_atk->proto_id) < 0
-                || veh_atk->proto_id == BSC_SPORE_LAUNCHER)) {
+        } else if (has_fac(FAC_BROOD_PIT, base_id_atk, 0) && Vehs[veh_id_atk].proto_id < MaxVehProtoFactionNum
+            && (get_proto_offense_rating(Vehs[veh_id_atk].proto_id) < 0
+                || Vehs[veh_id_atk].proto_id == BSC_SPORE_LAUNCHER)) {
             morale++;
             int morale_active = range(PlayersData[faction_id_atk].soc_effect_active.values_[SocialEffect::MORALE], -4, 4);
             if (morale_active <= -2) {
@@ -682,10 +710,10 @@ int __cdecl get_basic_offense(int veh_id_atk, int veh_id_def, int psi_combat_typ
             if (veh_id_def >= 0) {
                 if (!Vehs[veh_id_def].faction_id) {
                     morale++;
-                } else if ((veh_atk->proto_id >= MaxVehProtoFactionNum
-                        || (get_proto_offense_rating(veh_atk->proto_id) >= 0
-                            && veh_atk->proto_id != BSC_SPORE_LAUNCHER))
-                    && !has_abil(veh_atk->proto_id, ABL_DISSOCIATIVE_WAVE)
+                } else if ((Vehs[veh_id_atk].proto_id >= MaxVehProtoFactionNum
+                        || (get_proto_offense_rating(Vehs[veh_id_atk].proto_id) >= 0
+                            && Vehs[veh_id_atk].proto_id != BSC_SPORE_LAUNCHER))
+                    && !has_abil(Vehs[veh_id_atk].proto_id, ABL_DISSOCIATIVE_WAVE)
                     && has_abil(Vehs[veh_id_def].proto_id, ABL_SOPORIFIC_GAS)) {
                     morale -= 2;
                 }
@@ -696,9 +724,9 @@ int __cdecl get_basic_offense(int veh_id_atk, int veh_id_def, int psi_combat_typ
         morale = range(morale, 1, 6);
     }
     int morale_factor = morale + 6;
-    int offense = offense_proto(veh_atk->proto_id, veh_id_def, is_bombard);
+    int offense = offense_proto(Vehs[veh_id_atk].proto_id, veh_id_def, is_bombard);
     if (psi_combat_type) {
-        offense = psi_factor(offense, faction_id_atk, true, false);
+        offense = psi_factor_expanded(offense, faction_id_atk, true, false);
     }
     VehBasicBattleMorale[unk_tgl != 0] = morale;
     return offense * morale_factor * 4;
@@ -785,7 +813,7 @@ int __cdecl get_basic_defense(int veh_id_def, int veh_id_atk, int psi_combat_typ
     }
     int defense = armor_proto(proto_id_def, veh_id_atk, is_bombard);
     if (psi_combat_type) {
-        defense = psi_factor(defense, faction_id_def, false, Vehs[veh_id_def].proto_id == BSC_FUNGAL_TOWER);
+        defense = psi_factor_expanded(defense, faction_id_def, false, Vehs[veh_id_def].proto_id == BSC_FUNGAL_TOWER);
     }
     return defense * morale;
 }
@@ -2059,10 +2087,12 @@ int __cdecl battle_kill(int vehicle_id, int *attacker_count_out,
             Vehs[vehicle_id].dmg_incurred = 0;
             Vehs[vehicle_id].faction_id = static_cast<uint8_t>(captured_faction);
             Vehs[vehicle_id].order = 0;
-            --PlayersData[faction_id].proto_id_active[prototype_id];
+            // A pointer local: the image keeps its dead `lea` after the decrement (0x505F02).
+            uint8_t *active = &PlayersData[faction_id].proto_id_active[prototype_id];
+            --*active;
+            active = &PlayersData[captured_faction].proto_id_active[prototype_id];
             Vehs[vehicle_id].state &= 0xFCFFBDFFU;
-            PlayersData[captured_faction].proto_id_active[prototype_id] =
-                static_cast<uint8_t>(PlayersData[captured_faction].proto_id_active[prototype_id] + 1);
+            ++*active;
             veh_drop(vehicle_id, Vehs[killer_id].x, Vehs[killer_id].y);
             veh_skip(vehicle_id);
             if (defender_count_out) {
