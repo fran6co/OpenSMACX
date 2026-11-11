@@ -1979,7 +1979,7 @@ void NetWin::pick_player() {
 #pragma intrinsic(memcpy)
 #endif
 
-// ORIGINAL: 0x0047C530 ?pick_faction@NetWin@@QAEXH@Z 0x0047C530-0x0047C965;0x006568F9-0x006569C4
+// ORIGINAL: 0x0047C530 ?pick_faction@NetWin@@QAEXH@Z 0x0047C530-0x0047C965;0x006568F9-0x006569C4 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/recovered/units/0047c530.cpp:NetWin::pick_faction", "src/netwin.h:NetWinFactionRecord and NetWinLobbyRow", "src/netwin.cpp:NetWin::pick_pass and NetWinLobbySinglePacket", "Pinned47C819 clears EAX;47C854 stores it to [EBP-1A4], packet+8 relative to sent [EBP-1AC] at47C88A/47C89D. Opcode word/slot/row+10 are written; +2..3/+C..F remain untouched."], "reason": "Recover faction selection through the typed faction records, lobby rows, popup dialog and single-row packet."}
 #if defined(_MSC_VER) && _MSC_VER == 1200
 #pragma function(memcpy)
