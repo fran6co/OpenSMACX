@@ -3208,6 +3208,40 @@ int BasePop::UNK2() {
     return max_width;
 }
 
+// WORKAROUND(inline): the image expands BasePop::string (0x00601980) into
+// start's plain-line arm (0x006024A8..0x00602509) and keeps the standalone
+// copy too. With string() declared `MEASURED` in basepop.h and defined
+// `inline` here, start measures BYTE_EXACT on the member call itself; until
+// that header change lands, this marked twin carries the same body.
+static inline int basepop_string_inline(BasePop *self, char *text) {
+    int count = 0;
+    if (text == 0) {
+        return 3;
+    }
+    if (*text == '^') {
+        if (text[1] != 0) {
+            if (text[1] != '^') {
+                count = 1;
+                ++text;
+            } else if (text[2] == '^') {
+                count = 2;
+                text += 3;
+            } else {
+                count = 2;
+                text += 2;
+            }
+        } else {
+            count = 3;
+            ++text;
+        }
+    }
+    StringList *list = &self->unit_ids_;
+    list->pending_text_ = text;
+    list->field_20_ = count;
+    list->field_24_ = 0;
+    return list->add(0) != 0;
+}
+
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00603800 0x006042D4 0x006042FC 0x00603C85
 // ORIGINAL: 0x00603800 ?calculate_dimensions@BasePop@@QAEHXZ 0x00603800-0x006042D2 FILE
 // symbol    ?calculate_dimensions@BasePop@@UAEHXZ
@@ -3236,10 +3270,16 @@ int BasePop::UNK2() {
 // invoke the stored value as a cdecl callback, and the installed entry at
 // 0x006044D0 loads its popup through WinModalFocus instead of an incoming
 // receiver. Use the qualified callback members and the static function.
-// Four remaining dialog_cfg stores address SpriteBox configuration at
-// 0x225c/0x2260/0x22a4/0x22a8; that ownership/lifetime recovery is
-// unfinished. Earlier anchor-versus-member spelling trials remain in Git
-// history, not an instruction to preserve raw access against better evidence.
+// The kind-9 stores at 0x225c/0x2260 are SpriteBox::field_1C_/field_20_
+// written as members (the image loads both sources before either store;
+// the old dialog_cfg pointer serialised them). The text walk expands
+// seek_pos(0) and next_entry() from stringstruct.h (restored original
+// behaviour: the walk now starts from the first entry, and the non-text
+// arms re-read the current entry's text as the image does). The list
+// edge is the windef max macro over the Dialog's drawn width, evaluated
+// twice. RESIDUAL: register colouring (zero/0x400 constants in ebp/edi,
+// caller_sprite_ held in ebx, border_x spilled); an inline Dialog accessor
+// for the 5C/2C and 60/30 pairs (header proposal) moves it 0.917 -> 0.920.
 // TRIED: folding the anchor away, each store written
 //        `*(&dialogs_.ListBox::field_2C_ + N) = v` - VC6 does NOT fold it
 //        back into the one store; the body grew past what the FPO path would
@@ -3314,18 +3354,20 @@ int BasePop::UNK2() {
 //        character), xs/ys skip the whole directive for an external window,
 //        and an edit line passes (override_text | ParseStrBuffer[n] | 0,
 //        value) to EditGroup::edit.
-// RESIDUAL: register allocation of the 0/1/'2' constants (the image keeps
-//        1 in ebp through the prologue and '2' in bl ahead of the read loop)
-//        and the plain-line block's placement after the directive chain.
+// LEVER: the directives and the plain line are the same-TU setters VC6
+//        expands here - set_width/set_height (xs/ys), set_loc (x/y), UNK1
+//        (caption), button and string - not hand-copied bodies; the copies
+//        cost the inline budget that string() needs. The read loop is
+//        `while (1)` (the image does not rotate it), the edit-group arm comes
+//        first with Dialogs::item in its else, and the per-index edit reads
+//        get_num_items() into a local before the call.
 int BasePop::start(char *text_file, const char *text_label, int value,
                    char *override_text, int flags, GraphicWin *owner_window) {
     // The parse buffer is 0x100 bytes at frame 0x1c; `add_as_escaped` is the
     // dword at frame 0x10, seeded 1 by the `mov ebp, 1` in the prologue.
     int add_as_escaped = 1;
     char *line;
-    char *text;
     char tok[0x100];
-    int marks;
     char *token;
     int which;
     int width;
@@ -3370,7 +3412,7 @@ int BasePop::start(char *text_file, const char *text_label, int value,
         return 1;
     }
 
-    for (;;) {
+    while (1) {
         line = text_get();
         if (line == 0) {
             return 1;
@@ -3390,12 +3432,7 @@ int BasePop::start(char *text_file, const char *text_label, int value,
                 purge_leading(tok + 3);
                 // The whole directive is ignored for an external window.
                 if (external_window_ == 0) {
-                    int v = atoi(tok + 3);
-                    if (external_window_ == 0 && (field_30A8_ & 0x400) == 0 &&
-                        WinScreenWidth >= 0x400) {
-                        v = (v * 3) / 2;
-                    }
-                    dialogs_.Dialog::field_2C_ = v;
+                    set_width(atoi(tok + 3));
                 }
                 continue;
             }
@@ -3403,31 +3440,20 @@ int BasePop::start(char *text_file, const char *text_label, int value,
                 purge_spaces(tok + 3);
                 purge_leading(tok + 3);
                 if (external_window_ == 0) {
-                    int v = atoi(tok + 3);
-                    if (external_window_ == 0 && (field_30A8_ & 0x400) == 0 &&
-                        WinScreenWidth >= 0x400) {
-                        v = (v * 3) / 2;
-                    }
-                    dialogs_.Dialog::field_30_ = v;
+                    set_height(atoi(tok + 3));
                 }
                 continue;
             }
             if (_strnicmp(tok + 1, BasePopKeywordX, 2) == 0) {
                 purge_spaces(tok + 2);
                 purge_leading(tok + 2);
-                int v = atoi(tok + 2);
-                if (v != 0x2000) {
-                    loc_a_ = v;
-                }
+                set_loc(atoi(tok + 2), 0x2000);
                 continue;
             }
             if (_strnicmp(tok + 1, BasePopKeywordY, 2) == 0) {
                 purge_spaces(tok + 2);
                 purge_leading(tok + 2);
-                int v = atoi(tok + 2);
-                if (v != 0x2000) {
-                    loc_b_ = v;
-                }
+                set_loc(0x2000, atoi(tok + 2));
                 continue;
             }
             if (_strnicmp(tok + 1, BasePopKeywordCol, 4) == 0) {
@@ -3439,19 +3465,7 @@ int BasePop::start(char *text_file, const char *text_label, int value,
             if (_strnicmp(tok + 1, BasePopKeywordCaption, 7) == 0) {
                 purge_spaces(tok + 8);
                 purge_leading(tok + 8);
-                // The image keeps a null test of the caption pointer.
-                token = tok + 8;
-                if (token != 0) {
-                    if (owned_text_ != 0) {
-                        free(owned_text_);
-                        owned_text_ = 0;
-                    }
-                    owned_text_ = static_cast<char *>(mem_get(strlen(token) + 1));
-                    if (owned_text_ != 0) {
-                        *owned_text_ = '\0';
-                        strcat(owned_text_, token);
-                    }
-                }
+                UNK1(tok + 8);
                 continue;
             }
             if (_strnicmp(tok + 1, BasePopKeywordCheckbox, 8) == 0) {
@@ -3496,16 +3510,7 @@ int BasePop::start(char *text_file, const char *text_label, int value,
             if (_strnicmp(tok + 1, BasePopKeywordButton, 6) == 0) {
                 purge_spaces(tok + 7);
                 purge_leading(tok + 7);
-                // A pointer test, not an empty-string test: empty buttons add.
-                text = tok + 7;
-                if (text != 0) {
-                    item_ids_.pending_text_ = text;
-                    item_ids_.field_20_ = 0;
-                    item_ids_.field_24_ = 0;
-                    if (item_ids_.add(0) == 0) {
-                        field_20F4_ = field_20F4_ + 1;
-                    }
-                }
+                button(tok + 7);
                 continue;
             }
             if (_strnicmp(tok + 1, BasePopKeywordExtra, 5) == 0) {
@@ -3603,40 +3608,22 @@ int BasePop::start(char *text_file, const char *text_label, int value,
                 return 0;
             }
         } else if (add_as_escaped != 0) {
-            // A plain line: an item, with the '^' prefix marks.
-            marks = 0;
-            text = tok;
-            if (text != 0) {
-                if (tok[0] == '^') {
-                    if (tok[1] == '\0') {
-                        marks = 3;
-                        text = tok + 1;
-                    } else if (tok[1] == '^') {
-                        marks = 2;
-                        text = (tok[2] == '^') ? (tok + 3) : (tok + 2);
-                    } else {
-                        marks = 1;
-                        text = tok + 1;
-                    }
+            basepop_string_inline(this, tok);
+        } else if ((field_30A8_ & 4) != 0) {
+            if (dialogs_.get_num_items() < 10) {
+                // The first edit takes the caller's override text; the rest take
+                // the parser's per-index string buffers.
+                if (override_text != 0 && dialogs_.get_num_items() == 0) {
+                    dialogs_.EditGroup::edit(tok, override_text, value);
+                } else {
+                    const int index = dialogs_.get_num_items();
+                    dialogs_.EditGroup::edit(tok, ParseStrBuffer[index].str, value);
                 }
-                unit_ids_.pending_text_ = text;
-                unit_ids_.field_20_ = marks;
-                unit_ids_.field_24_ = 0;
-                unit_ids_.add(0);
-            }
-        } else if ((field_30A8_ & 4) == 0) {
-            dialogs_.item(tok, dialogs_.Dialog::item_list_.entry_count_);
-        } else if (dialogs_.get_num_items() < 10) {
-            // The first edit takes the caller's override text; the rest take
-            // the parser's per-index string buffers.
-            if (override_text != 0 && dialogs_.get_num_items() == 0) {
-                dialogs_.EditGroup::edit(tok, override_text, value);
             } else {
-                dialogs_.EditGroup::edit(
-                    tok, ParseStrBuffer[dialogs_.get_num_items()].str, value);
+                dialogs_.EditGroup::edit(tok, 0, value);
             }
         } else {
-            dialogs_.EditGroup::edit(tok, 0, value);
+            dialogs_.item(tok, dialogs_.Dialog::item_list_.entry_count_);
         }
     }
 }
@@ -3747,45 +3734,20 @@ int BasePop::calculate_dimensions() {
         return result;
     }
 
-    // THE EIGHT CONFIG SLOTS - see the HANDOFF under the marker above.
-    uint32_t *const dialog_cfg = &dialogs_.ListBox::field_2C_;
-
     if (external_window_ != 0) {
         // With a window attached the popup's own edges win outright.
-        int left = dialogs_.Dialog::field_5C_;
-        if (left == 0) {
-            left = dialogs_.Dialog::field_2C_;
-        }
-        field_30BC_ = left;
-        int top = dialogs_.Dialog::field_60_;
-        if (top == 0) {
-            top = dialogs_.Dialog::field_30_;
-        }
-        field_30C0_ = top;
+        field_30BC_ = (dialogs_.Dialog::field_5C_ != 0 ? dialogs_.Dialog::field_5C_ : dialogs_.Dialog::field_2C_);
+        field_30C0_ = (dialogs_.Dialog::field_60_ != 0 ? dialogs_.Dialog::field_60_ : dialogs_.Dialog::field_30_);
     } else {
-        // Without one the list's own edge competes with the drawn popup's,
+        // Without one the list's own edge competes with the drawn popup's
+        // (the windef max macro: the edge expression is evaluated twice),
         // and field_21CC_ offsets it when it is set at all.
-        int edge = dialogs_.Dialog::field_5C_ != 0 ? dialogs_.Dialog::field_5C_
-                                                   : dialogs_.Dialog::field_2C_;
         if (field_21CC_ == -1) {
-            if (edge > static_cast<int>(field_30D8_)) {
-                edge = dialogs_.Dialog::field_5C_ != 0
-                           ? dialogs_.Dialog::field_5C_
-                           : dialogs_.Dialog::field_2C_;
-            }
-            field_30BC_ = edge + field_30E0_ * 2;
+            field_30BC_ = max(static_cast<int>(dialogs_.Dialog::field_5C_ != 0 ? dialogs_.Dialog::field_5C_ : dialogs_.Dialog::field_2C_), static_cast<int>(field_30D8_)) + field_30E0_ * 2;
         } else {
-            if (edge > static_cast<int>(field_30D8_)) {
-                edge = dialogs_.Dialog::field_5C_ != 0
-                           ? dialogs_.Dialog::field_5C_
-                           : dialogs_.Dialog::field_2C_;
-            } else {
-                edge = field_30D8_;
-            }
-            field_30BC_ = field_21CC_ + field_30E0_ + edge;
+            field_30BC_ = field_21CC_ + field_30E0_ + max(static_cast<int>(dialogs_.Dialog::field_5C_ != 0 ? dialogs_.Dialog::field_5C_ : dialogs_.Dialog::field_2C_), static_cast<int>(field_30D8_));
         }
     }
-
     field_30C4_ = dialogs_.Dialog::field_60_;
     // The kind decides which sub-dialog this popup configures. `double_click`
     // is the notification each of the three slots receives.
@@ -3814,8 +3776,8 @@ int BasePop::calculate_dimensions() {
         dialogs_.SpriteBox::field_68_ = sprite_click_callback_;   // 0x22a8
         dialogs_.SpriteBox::double_click_callback_ = sprite_double_click_callback_;
         dialogs_.SpriteBox::set_redraw_callback(redraw_callback_);
-        dialog_cfg[0x19] = field_3108_;                            // 0x2260
-        dialog_cfg[0x18] = field_3104_;                            // 0x225c
+        dialogs_.SpriteBox::field_20_ = field_3108_;               // 0x2260
+        dialogs_.SpriteBox::field_1C_ = field_3104_;               // 0x225c
         break;
       default:
         if (value_ != -1) {
@@ -3828,9 +3790,11 @@ int BasePop::calculate_dimensions() {
         break;
     }
 
-    // THE TEXT WALK. text_left is the popup's usable width with both insets
-    // and the list offset taken out; the image computes it once, into EBX,
-    // and hands it to every wrap call that follows.
+    // THE TEXT WALK, from the list's first entry (seek_pos(0) expands
+    // here). text_left is the popup's usable width with both insets and the
+    // list offset taken out; the image computes it once, into EBX, and hands
+    // it to every wrap call that follows.
+    unit_ids_.seek_pos(0);
     const int text_left =
         field_30BC_ - field_30D8_ - field_21C8_ - field_30E0_ * 2;
 
@@ -3853,17 +3817,9 @@ int BasePop::calculate_dimensions() {
         owner_window_->wrap_height_flying(text, text_left);
     }
 
-    // The remaining items, each advanced by next_entry() open-coded. The
-    // image re-tests head_ after the calls - it does not trust the register
-    // across them - so the source tests it again too.
+    // The remaining items, each reached through the inline next_entry().
     for (int index = 0; index < unit_ids_.entry_count_ - 1; ++index) {
-        if (unit_ids_.head_ != 0) {
-            ++unit_ids_.current_position_;
-            unit_ids_.current_ = unit_ids_.current_->next;
-            if (unit_ids_.current_position_ == unit_ids_.entry_count_) {
-                unit_ids_.current_position_ = 0;
-            }
-        }
+        unit_ids_.next_entry();
 
         // StringStruct::current_entry()->text, open-coded. BUG IN THE
         // Original behavior: the middle arm dereferences a null payload and reads
@@ -3875,11 +3831,12 @@ int BasePop::calculate_dimensions() {
                          ->text
                    : static_cast<char *>(0);
 
-        int kind = wrap_kind;
-        if (unit_ids_.head_ != 0) {
-            kind = unit_ids_.current_->string_payload()->field_8_;
-        }
-        if (unit_ids_.head_ != 0 && kind != 0) {
+        // Only the wrap-kind-2 arm uses `text`; every other arm reads the
+        // current entry's text afresh (`head_ ? payload->text : 0`).
+        int kind = unit_ids_.head_ != 0
+                       ? unit_ids_.current_->string_payload()->field_8_
+                       : 0;
+        if (kind != 0) {
             field_30D4_ += owner_window_->wrap_height_flying_flush();
             if (kind == 2) {
                 field_30D4_ += wrap_height(text, text_left);
@@ -3890,10 +3847,15 @@ int BasePop::calculate_dimensions() {
                 owner_window_->wrap_height_flying(static_cast<char *>(0),
                                                   text_left);
             } else {
-                owner_window_->wrap_height_flying(text, text_left);
+                owner_window_->wrap_height_flying(
+                    unit_ids_.head_ != 0 ? unit_ids_.current_->string_payload()->text
+                                         : static_cast<char *>(0),
+                    text_left);
             }
         } else {
-            owner_window_->wrap_height_flying(text);
+            owner_window_->wrap_height_flying(
+                unit_ids_.head_ != 0 ? unit_ids_.current_->string_payload()->text
+                                     : static_cast<char *>(0));
         }
     }
 
@@ -4033,9 +3995,9 @@ int BasePop::calculate_dimensions() {
 //        image's single `push ecx` slot (the earlier two-slot frame came from
 //        the reverse order); several unsigned uint32_t fields are compared
 //        and divided signed in the image (see the WORKAROUND(type) lines).
-// RESIDUAL: the load order of right's three terms at the top and the
-//        `neg; shl` form of text_left, which VC6 here reassociates into
-//        `field_30BC_ - field_30F4_ - 2*field_30E0_` for every spelling tried.
+// LEVER: `right` reads field_30E0_ itself rather than the `border` local;
+//        that alone fixed the top load order and the `neg; shl` text_left.
+//        The final floor is a max-style ternary over BasePopDrawnBottom.
 void BasePop::on_redraw() {
     // THE INHERITED-MEMBER SPELLING, and it is load-bearing. GraphicWin's
     // Buffer base sits 0x444 in, behind its Win base; calling the inherited
@@ -4048,7 +4010,7 @@ void BasePop::on_redraw() {
     clear_links();
 
     const int border = field_30E0_;
-    int right = border + field_30F0_ + field_21C8_;
+    int right = field_30E0_ + field_30F0_ + field_21C8_;
     // The same edge before the external-window position is folded in - the
     // pair the clamps at the end measure the text height against. Two names
     // for it, because the clamps read the base while the draws read the one
@@ -4142,10 +4104,12 @@ void BasePop::on_redraw() {
                                                     text_left, 0);
 
     BasePopDrawnRight = right - field_30D8_ - field_21C8_;
-    BasePopDrawnBottom = height;
-    if (height <= static_cast<int>(field_30DC_) + own_bottom) {  // WORKAROUND(type): see above
-        BasePopDrawnBottom = field_30DC_ + own_bottom;
-    }
+    // The floor is a max-style ternary: the image stores height first and
+    // then the floor over it, reading field_30DC_ before the first store.
+    // WORKAROUND(type): see above (signed compare of the uint32_t field)
+    BasePopDrawnBottom = height > static_cast<int>(field_30DC_) + own_bottom
+                             ? height
+                             : field_30DC_ + own_bottom;
 }
 
 // ORIGINAL: 0x00406B20 nullsub_27 0x00406B20-0x00406B23 FILE BYTE_EXACT
