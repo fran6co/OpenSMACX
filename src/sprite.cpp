@@ -151,7 +151,7 @@ void Sprite::close() {
 }
 
 
-// ORIGINAL: 0x005EAD9F ?change_color@Sprite@@QAEHHH@Z 0x005EAD9F-0x005EAE4E
+// ORIGINAL: 0x005EAD9F ?change_color@Sprite@@QAEHHH@Z 0x005EAD9F-0x005EAE4E BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original5EADA5 tests the pixel pointer; null returns7.5EADBC multiplies height by stride, not source or display width.5EADFA skips all work when the four-byte group count is zero, including non-null one-to-three-byte buffers; preserve that asymmetry rather than the seed full-scan loop.", "For valid nonnegative allocated sprite sizes, original unrolled byte comparisons and tail replace only matches after masking both colors to8bits. No transparency/metadata change or service call occurs; borrowed pixels are modified too. Malformed dimensions/overflowed allocation domains are not established as safe. Genuine C++ loop remains unclaimed; no assembly or copied machine code."], "reason": "Recover the sprite pixel recoloring service using the genuine owned/borrowed pixel pointer and stride."}
 int Sprite::change_color(int old_color, int new_color) {
     if (pcBits_ == 0) {
@@ -417,7 +417,7 @@ void Sprite::fill_scaling_table() {
     }
 }
 
-// ORIGINAL: 0x005EAB0F ?get_clipped_x_table_expand@Sprite@@QAEHPAURECT@@PAURECT@@PAHPAHPAHPAH@Z 0x005EAB0F-0x005EABB7
+// ORIGINAL: 0x005EAB0F ?get_clipped_x_table_expand@Sprite@@QAEHPAURECT@@PAURECT@@PAHPAHPAHPAH@Z 0x005EAB0F-0x005EABB7 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original returns9B53EC and caller5E5244 consumes EAX as an int-table pointer. It clips partial first/last runs and reports source and destination extents, retaining ordered alias-visible output stores.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover expansion clipping as a typed pointer to the actual X run table."}
 // symbol    ?get_clipped_x_table_expand@Sprite@@QAEPAHPAUtagRECT@@0PAH111@Z
 // Capture rectangle-derived values before writes; the caller can alias
@@ -461,7 +461,7 @@ int *Sprite::get_clipped_x_table_expand(RECT *full, RECT *clipped, int *source_s
     return SpriteClippedXSteps;
 }
 
-// ORIGINAL: 0x005EABBF ?get_clipped_y_table_expand@Sprite@@QAEHPAURECT@@PAURECT@@PAHPAHPAHPAH@Z 0x005EABBF-0x005EAC69
+// ORIGINAL: 0x005EABBF ?get_clipped_y_table_expand@Sprite@@QAEHPAURECT@@PAURECT@@PAHPAHPAHPAH@Z 0x005EABBF-0x005EAC69 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original returns9B4760 and caller5E5285 consumes EAX as an int-table pointer. Top/bottom coordinate counterpart of5EAB0F with its own scratch table.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover expansion clipping as a typed pointer to the independent Y run table."}
 // symbol    ?get_clipped_y_table_expand@Sprite@@QAEPAHPAUtagRECT@@0PAH111@Z
 // Preserve the X routine's ordered stores and partial head/tail handling for

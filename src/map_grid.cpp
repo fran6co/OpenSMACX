@@ -1159,7 +1159,7 @@ int __cdecl minerals_at(int x, int y) {
 /*
 Purpose: Determine if the tile has a resource bonus. While the last parameter is unused, it's set to
          1 by two calls inside world_site(). Otherwise, all other calls have it set to 0.
-// ORIGINAL: 0x00592030 ?bonus_at@@YAHHHH@Z 0x00592030-0x00592135
+// ORIGINAL: 0x00592030 ?bonus_at@@YAHHHH@Z 0x00592030-0x00592135 BYTE_EXACT
 // TRIED (body is in map.h): the image reads the climate byte (alt_at) before the bit
 //            dword (bit_at) at the shared `site_tile`-style address, while map.h's body
 //            declares `bit` before `alt`. Swapping the declaration order to match the
