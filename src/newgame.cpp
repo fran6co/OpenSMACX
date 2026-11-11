@@ -360,12 +360,29 @@ int __cdecl custom_planet(int show_preview, int use_saved_choices) {
             setup.overlay_buffers_[image] = 0;
         }
     }
-    uint32_t land_bits = 2u - static_cast<uint32_t>(MapOceanCoverage);
-    memcpy(&MapLandCoverage, &land_bits, sizeof(MapLandCoverage));
+    MapLandCoverage = 2 - MapOceanCoverage;
     prefs_save(0);
     return 0;
 }
 
+
+// Random planet settings shared by map_menu and multiplayer_init; both
+// images expand it inline (multiplayer_init keeps only the ocean, land and
+// orbit stores plus the erosion roll's rand() call, as it overrides the rest).
+static inline void random_planet_rules() {
+    if (IsMultiplayerNet) {
+        MapOceanCoverage = 0;
+    } else {
+        const int ocean_roll = rand() % 7;
+        MapOceanCoverage = 2 - range((ocean_roll + 1) / 2, 0, 2);
+    }
+    MapLandCoverage = 2 - MapOceanCoverage;
+    const int erosion_roll = rand() % 6;
+    MapPlanetaryOrbit = 1;
+    MapCloudCover = 1;
+    MapNativeLifeForms = 1;
+    MapErosiveForces = (erosion_roll + 5) / 5;
+}
 
 static const char MapMenuTitle[] = "MAPMENU";
 static const char MapXPlanetPath[] = "maps\\xplanet.mp";
@@ -400,27 +417,11 @@ map_menu_dispatch:
             if (choice == 1) {
                 // A cancelled custom planet re-runs the size choice, not the menu.
                 if (custom_planet(1, quick_start) != 0) {
-                    choice = 1;
                     goto map_menu_dispatch;
                 }
                 break;
             }
-            if (IsMultiplayerNet == 0) {
-                const int roll = rand();
-                int category = (roll % 7 + 1) / 2;
-                if (category < 0) category = 0;
-                else if (category > 2) category = 2;
-                MapOceanCoverage = static_cast<uint32_t>(2 - category);
-            } else {
-                MapOceanCoverage = 0;
-            }
-            uint32_t land_bits = 2u - static_cast<uint32_t>(MapOceanCoverage);
-            memcpy(&MapLandCoverage, &land_bits, sizeof(MapLandCoverage));
-            const int life_roll = rand();
-            MapErosiveForces = 1;
-            MapPlanetaryOrbit = 1;
-            MapCloudCover = 1;
-            MapNativeLifeForms = static_cast<uint32_t>((life_roll % 6 + 5) / 5);
+            random_planet_rules();
         }
         break;
     case 2:
@@ -486,7 +487,7 @@ int __cdecl top_menu(int mode) {
         g_TOP_MENU_WAVE.load(const_cast<char *>("fx\\opening menu.wav"), 2);
         g_TOP_MENU_WAVE.play();
     }
-    if ((AlphaIniPrefs.preferences & 0x20000000u) == 0)
+    if (~AlphaIniPrefs.preferences & 0x20000000u)
         dialog_default_style() |= 4u;
     else
         dialog_default_style() &= ~4u;
@@ -681,7 +682,7 @@ top_menu_cleanup:
 // RECOVERY_BINDING: v1 {"evidence": ["task:newgame-menu-owner", "historical seed:src/unrecovered/0058db30.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete mapped native control flow", "source:existing SetupWin/Popup/Buffer/NetDaemon owner declarations; provisional bounded945820 and9B2074 objects, not raw image aliases"], "reason": "Source-owned new-game/menu family preserving complete original identity, auxiliary spans and historical seed findings; existing genuine object lifetimes and typed member owners. Unfinished bodies remain explicit, not implementation coverage."}
 // TRIED: prologue diverges at #7 - original threads the literal 1 through esi across the whole prologue (mov esi,1; ...; mov [addr],esi; ...; push esi for the later top_menu(1) call); rebuilt just stores/pushes the literal 1 directly at each site. Tried binding a local `int one=1` reused at both sites - similarity unchanged (0.74). Body is otherwise a full structural transcription (322/~420 mnemonics in common), including the two literal duplicated cleanup blocks the original also duplicates.
 int __cdecl multiplayer_init(int startup_mode) {
-    int result = 1;
+    int result;
 
     IsMultiplayerNet = 1;
     log_set_state(0);
@@ -693,49 +694,39 @@ int __cdecl multiplayer_init(int startup_mode) {
         NetDaemonNet.voice_hotkey_4c_ = 0x100DC;
         NetDaemonNet.voice_flags_D8_ = initial_voice_flags | 1;
     } else {
-        if (NetDaemonNet.init(0) != 0) goto do_cleanup;
+        if (NetDaemonNet.init(0) != 0) {
+            result = 1;
+            goto do_cleanup;
+        }
     }
 
     if (IsMultiplayerPBEM != 0) {
         IsMultiplayerNet = 0;
         result = top_menu(1);
-        if (result == 0) return 1;
+        if (result == 0) goto finish;
         IsMultiplayerPBEM = 0;
         return result;
     }
 
     NetDaemonNet.primary_state_.trailing_words_[1] = 0;
-    if (ExitTurnLoop == 0 && NetWinDialog.exec() > 0) {
-        const int difficulty = static_cast<int8_t>(NetWinSessionOptions.fields_.difficulty_);
-        const uint32_t rules_a = NetWinSessionOptions.fields_.rule_bits_a_;
-        const uint32_t rules_b = NetWinSessionOptions.fields_.rule_bits_b_;
-        GameDataStateStorage.fields_.game_rules_ = rules_a;
-        const uint32_t old_game_state = GameDataStateStorage.fields_.game_state_;
-        GameDataStateStorage.fields_.diff_level_current_ = difficulty;
-        const uint8_t rules_c = NetWinSessionOptions.fields_.rule_bits_c_;
-        const uint32_t merged_game_state = old_game_state | (rules_b & 0x01800000u);
-        const bool enable_turn_flag = (rules_c & 0x10u) != 0;
-        const uint32_t old_turn_flags = GameDataStateStorage.fields_.net_turn_flags_;
-        GameDataStateStorage.fields_.game_state_ = merged_game_state;
-        GameDataStateStorage.fields_.net_turn_flags_ = enable_turn_flag ? (old_turn_flags | 0x10u)
-                                        : (old_turn_flags & ~0x10u);
+    if (ExitTurnLoop == 0 && NetWinDialog.exec() >= 1) {
+        GameDataStateStorage.fields_.diff_level_current_ =
+            static_cast<int8_t>(NetWinSessionOptions.fields_.difficulty_);
+        GameDataStateStorage.fields_.game_rules_ = NetWinSessionOptions.fields_.rule_bits_a_;
+        GameDataStateStorage.fields_.game_state_ |= NetWinSessionOptions.fields_.rule_bits_b_ & 0x01800000u;
+        if ((NetWinSessionOptions.fields_.rule_bits_c_ & 0x10u) != 0)
+            GameDataStateStorage.fields_.net_turn_flags_ |= 0x10u;
+        else
+            GameDataStateStorage.fields_.net_turn_flags_ &= ~0x10u;
 
         if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
-            uint8_t mask = 0;
-            if (NetDaemonNet.player_count_ > 0) {
-                const int count = NetDaemonNet.player_count_;
-                for (int i = 0; i != count; ++i) {
-                    const unsigned char shift = static_cast<unsigned char>(
-                        NetDaemonNet.process_slots_[i + 1].identity_);
-                    // x86 masks the variable shift count to five bits.
-                    mask = static_cast<uint8_t>(mask | (1u << (shift & 31)));
-                }
-            }
-            GameDataStateStorage.fields_.lock_masks_.enable_mask_ = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFFFFF00u) | mask;
+            GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ = 0;
+            for (int i = 1; i <= NetDaemonNet.player_count_; ++i)
+                GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ |=
+                    1 << NetDaemonNet.process_slots_[i].identity_;
 
             if (NetWinSessionData.fields_.mode_ == 0) {
-                result = text_open(AlphaxFileID, "WORLDSIZE");
-                if (result != 0) {
+                if (text_open(AlphaxFileID, "WORLDSIZE") != 0) {
                     MapSizePlanet = 2;
                     MapLongitudeBounds = 0x28;
                     MapLatitudeBounds = 0x50;
@@ -764,20 +755,9 @@ int __cdecl multiplayer_init(int startup_mode) {
                 Paths.init();
                 WorldClimateWorldWin.field_239BC_ |= 8;
 
-                if (IsMultiplayerNet == 0) {
-                    int v = (rand() % 7 + 1) / 2;
-                    if (v < 0) v = 0;
-                    else if (v > 2) v = 2;
-                    MapOceanCoverage = static_cast<uint32_t>(2 - v);
-                } else {
-                    MapOceanCoverage = 0;
-                }
-                uint32_t land_bits = 2u - static_cast<uint32_t>(MapOceanCoverage);
-                memcpy(&MapLandCoverage, &land_bits, sizeof(MapLandCoverage));
-                rand();
+                random_planet_rules();
                 MapOceanCoverage = static_cast<int8_t>(
                     NetWinSessionOptions.fields_.ocean_coverage_);
-                MapPlanetaryOrbit = 1;
                 MapErosiveForces = static_cast<int8_t>(
                     NetWinSessionOptions.fields_.erosion_);
                 MapCloudCover = static_cast<int8_t>(
@@ -793,15 +773,10 @@ int __cdecl multiplayer_init(int startup_mode) {
             }
         }
 
-        if (NetDaemonNet.player_count_ > 0) {
-            const int count = NetDaemonNet.player_count_;
-            for (int i = 0; i != count; ++i) {
-                const int8_t faction = NetDaemonNet.process_slots_[i + 1].identity_;
-                // Native 0x58DE3D stores PlayerData +0x2088 (unk_102).
-                PlayersData[static_cast<int>(faction)].unk_102 =
-                    NetWinLobbyRows.rows_[i + 1].owner_;
-            }
-        }
+        // Native 0x58DE3D stores PlayerData +0x2088 (unk_102).
+        for (int i = 1; i <= NetDaemonNet.player_count_; ++i)
+            PlayersData[NetDaemonNet.process_slots_[i].identity_].unk_102 =
+                NetWinLobbyRows.rows_[i].owner_;
 
         GameDataStateStorage.fields_.game_state_ |= NetWinSessionOptions.fields_.rule_bits_b_ & 0x01800000u;
         if ((NetWinSessionOptions.fields_.rule_bits_c_ & 0x10u) != 0)
@@ -827,7 +802,14 @@ int __cdecl multiplayer_init(int startup_mode) {
         }
 
         log_reset();
-        if (NetDaemonNet.primary_state_.leading_words_[0] == 0) {
+        if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
+            GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ = 0;
+            for (int i = 1; i <= NetDaemonNet.player_count_; ++i)
+                GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ |=
+                    1 << NetDaemonNet.process_slots_[i].identity_;
+            NetDaemonNet.send_rules();
+            NetDaemonNet.send_game();
+        } else {
             for (int i = 0; i != 11; ++i)
                 AltNatural[i] = AltContour[i];
             while (static_cast<int32_t>(
@@ -836,18 +818,6 @@ int __cdecl multiplayer_init(int startup_mode) {
                 NetDaemonNet.receive();
                 do_all_tasks();
             }
-        } else {
-            uint8_t mask = 0;
-            if (NetDaemonNet.player_count_ > 0) {
-                for (int i = 0; i != NetDaemonNet.player_count_; ++i) {
-                    const unsigned char shift = static_cast<unsigned char>(
-                        NetDaemonNet.process_slots_[i + 1].identity_);
-                    mask = static_cast<uint8_t>(mask | (1u << (shift & 31)));
-                }
-            }
-            GameDataStateStorage.fields_.lock_masks_.enable_mask_ = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFFFFF00u) | mask;
-            NetDaemonNet.send_rules();
-            NetDaemonNet.send_game();
         }
 
         if (NetWinSessionData.fields_.mode_ == 3) {
@@ -871,20 +841,15 @@ int __cdecl multiplayer_init(int startup_mode) {
         if (ControlTurnPhase == 0) planetfall(ConsoleGlobal.faction_id_);
 
         if (NetWinSessionData.fields_.mode_ == 3) {
-            int faction = ConsoleGlobal.faction_id_;
-            GenderDefault = Players[faction].is_leader_female;
-            PluralityDefault = 0;
-            parse_says(1, Players[faction].title_leader, -1, -1);
-            faction = ConsoleGlobal.faction_id_;
-            GenderDefault = Players[faction].is_leader_female;
-            PluralityDefault = 0;
-            parse_says(2, Players[faction].name_leader, -1, -1);
-            faction = ConsoleGlobal.faction_id_;
-            GenderDefault = Players[faction].noun_gender;
-            PluralityDefault = Players[faction].is_noun_plural;
-            parse_says(3, Players[faction].noun_faction, -1, -1);
+            parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, 0);
+            parse_says(1, Players[ConsoleGlobal.faction_id_].title_leader, -1, -1);
+            parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, 0);
+            parse_says(2, Players[ConsoleGlobal.faction_id_].name_leader, -1, -1);
+            parse_set(Players[ConsoleGlobal.faction_id_].noun_gender,
+                      Players[ConsoleGlobal.faction_id_].is_noun_plural);
+            parse_says(3, Players[ConsoleGlobal.faction_id_].noun_faction, -1, -1);
             StringTemp[0] = '\0';
-            strcat(StringTemp, label_get(0));
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0]));
             strcat(StringTemp, " ");
             say_year(StringTemp);
             parse_says(4, StringTemp, -1, -1);
@@ -895,17 +860,19 @@ int __cdecl multiplayer_init(int startup_mode) {
             X_pop(const_cast<char *>("INTRO"), "SCENARIO", 0);
         }
 
-        if (ExitTurnLoop == 0) return 0;
         result = ExitTurnLoop;
     } else {
         result = 1;
         multiplayer_reset_network_state();
     }
 
+    if (result != 0) {
 do_cleanup:
-    log_set_state(0);
-    multiplayer_reset_network_state();
-    IsMultiplayerNet = 0;
+        log_set_state(0);
+        multiplayer_reset_network_state();
+        IsMultiplayerNet = 0;
+    }
+finish:
     return result;
 }
 

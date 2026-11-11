@@ -479,198 +479,129 @@ void NetDaemon::on_player_added(char *name, unsigned long id) {
     }
 }
 
+// The local faction holds the turn in a turn-based network game. Its two
+// expansions in on_player_deleted keep the inlined return value (sete) the
+// image tests at 52E559 and 52E78C.
+static inline int net_turn_is_local() {
+    if (!(GameDataStateStorage.fields_.net_turn_flags_ & 0x10) || ConsoleControlTurnActive) {
+        return 0;
+    }
+    return GameDataStateStorage.fields_.net_turn_faction_ == ConsoleGlobal.faction_id_;
+}
+
 // ORIGINAL: 0x0052E370 ?on_player_deleted@NetDaemon@@UAEXPADK@Z 0x0052E370-0x0052E8FD
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned52E160..52E364 and52E370..52E8FD; retained recovered seeds are hints, not mandatory C++.", "The not-found delete tail still runs and decrements count. Slot8 identity/status bytes belong to the real ledger; lobby prefix/name writes are byte views wholly inside the existing168-byte session object. Keep both session object lifetimes and their original bindings.", "PlayerLock::active return controls notification; process identity offsets are not doubled. Two label_get calls remain independent, and prefix writes depend on live phase below2.", "Source-owned NextTurnReady, NetUpkeepPhase and NetHostChangeSlot replace private address aliases. Upkeep producer remains unfinished; ledger-derived lock index domain remains unproven.", "recovery/tasks/netdaemon-player-lifecycle-recovery.json; actual-source host damage controls and native compilation required", "git:0e184947304cbb843b26264d5145e9b9b452cf16:src/recovered/units/0052e370.cpp", "Historical seed spelling ?on_player_deleted@NetDaemon@@QAEXPADK@Z; current source mapping ?on_player_deleted@NetDaemon@@UAEXPADK@Z; emitted symbol ?on_player_deleted@NetDaemon@@UAEXPADK@Z."], "reason": "Recover the complete derived network player lifecycle callback through actual AlphaNet records, PlayerLock behavior, NetWin storage and shared turn state. Preserve its original identity and useful seed findings; no exact, runtime or full acceptance claim is implied. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
 void NetDaemon::on_player_deleted(char *, unsigned long id) {
-    parse_says(0, const_cast<char *>("ED"), -1, -1);
-
-    const bool server_left = (NetHostChangeSlot == static_cast<uint32_t>(id));
-    if (server_left) {
+    int server_left = 0;
+    parse_says(0, const_cast<char *>("?"), -1, -1);
+    if (NetHostChangeSlot == id) {
+        server_left = 1;
         NetDaemonNet.channels_[1].trailing_words_[9] = 1;
     }
 
-    int slot = 1;
-    while (slot <= player_count_ && process_slots_[slot].pid_ != id) {
-        ++slot;
-    }
-    const bool found = slot <= player_count_;
-
-    if (found) {
-        uint32_t &ready_players = primary_state_.trailing_words_[3];
-        if (ready_players != 0) {
-            ready_players &= ~(1u << (slot & 31));
-            if (ready_players == 0) {
-                g_FX.play(0x15);
+    // A miss leaves slot == player_count_ + 1; the original indexes the
+    // ledger and lobby rows with it unchecked (row 8 overlays the ledger's
+    // session_flags_ and the NetWin session data).
+    int slot;
+    for (slot = 1; slot <= player_count_; ++slot) {
+        if (process_slots_[slot].pid_ == id) {
+            if (primary_state_.trailing_words_[3] != 0) {
+                primary_state_.trailing_words_[3] &= ~(1 << slot);
+                if (primary_state_.trailing_words_[3] == 0) g_FX.play(0x15);
             }
-        }
-
-        AlphaNetProcessSlot &player = process_slots_[slot];
-        parse_says(0, player.name_, -1, -1);
-        const int player_id = player.identity_;
-
-        if (NetDaemonNet.primary_state_.session_phase_ == 2) {
-            GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ =
-                static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
-                ~static_cast<uint8_t>(1u << (player_id & 31)));
-        }
-        channels_[1].trailing_words_[1] &= ~(1u << (player_id & 31));
-
-        const bool turn_handoff = (GameDataStateStorage.fields_.net_turn_flags_ & 0x10) != 0;
-        if (turn_handoff && NetDaemonNet.primary_state_.leading_words_[0] != 0 &&
-            GameDataStateStorage.fields_.net_turn_faction_ == player_id) {
-            const uint8_t alive =
-                GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
-            bool informed = false;
-            for (int next = player_id + 1; next < 8; ++next) {
-                const uint8_t bit = static_cast<uint8_t>(1u << (next & 31));
-                if ((alive & bit) != 0 &&
-                    (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & bit) != 0) {
-                    message_data(0x4309, 0, next, 0, 0, 0);
-                    informed = true;
-                    break;
+            parse_says(0, process_slots_[slot].name_, -1, -1);
+            if (NetDaemonNet.primary_state_.session_phase_ == 2) {
+                GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &=
+                    ~(1 << process_slots_[slot].identity_);
+            }
+            channels_[1].trailing_words_[1] &= ~(1 << process_slots_[slot].identity_);
+            if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) != 0
+                && NetDaemonNet.primary_state_.leading_words_[0] != 0
+                && GameDataStateStorage.fields_.net_turn_faction_
+                    == process_slots_[slot].identity_) {
+                for (int next = GameDataStateStorage.fields_.net_turn_faction_ + 1;
+                     next < 8; ++next) {
+                    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << next))
+                        && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << next))) {
+                        message_data(0x4309, 0, next, 0, 0, 0);
+                        goto player_found;
+                    }
                 }
-            }
-            if (!informed) {
                 NextTurnReady = 1;
             }
+            break;
         }
     }
+player_found:
 
-    // The original deliberately shares this tail with the not-found path.
-    // With seven players a miss yields slot 8: the next identity byte is the
-    // low byte of AlphaNetLedger::session_flags_ at +0x1470, not an array
-    // member. This typed branch preserves that exact byte without OOB access.
-    int player_id = slot < 8
-        ? static_cast<int>(process_slots_[slot].identity_)
-        : static_cast<int>(static_cast<int8_t>(
-              static_cast<uint8_t>(ledger_.session_flags_ & 0xFF)));
-
-    // Native uses this signed identity as an index without checking its
-    // range. The missing-player ledger byte has no proven valid domain.
-    locks_.records_[player_id].clear();
-    player_id = slot < 8
-        ? static_cast<int>(process_slots_[slot].identity_)
-        : static_cast<int>(static_cast<int8_t>(
-              static_cast<uint8_t>(ledger_.session_flags_ & 0xFF)));
-    uint32_t &faction_lock_mask = channels_[0].trailing_words_[0];
-    const uint32_t player_lock_mask =
-        channels_[0].trailing_words_[1 + player_id];
-    faction_lock_mask &= ~player_lock_mask;
-    if (static_cast<int>(locks_.field_E0_) == player_id) {
+    locks_.records_[process_slots_[slot].identity_].clear();
+    channels_[0].trailing_words_[0] &= ~channels_[0].trailing_words_[1 + process_slots_[slot].identity_];
+    if (locks_.field_E0_ == process_slots_[slot].identity_) {
         locks_.field_E0_ = 0;
         locks_.field_E4_ = 0;
     }
 
-    const uint8_t turn_bit = static_cast<uint8_t>(GameDataStateStorage.fields_.net_turn_flags_ & 0x10);
-    const bool notify_locks =
-        (turn_bit != 0 && ConsoleControlTurnActive == 0 &&
-         GameDataStateStorage.fields_.net_turn_faction_ == ConsoleGlobal.faction_id_) ||
-        ((turn_bit == 0 || ConsoleControlTurnActive != 0) &&
-         NetDaemonNet.primary_state_.leading_words_[0] != 0);
-
-    if (notify_locks && NetDaemonNet.primary_state_.session_phase_ == 2) {
+    if ((net_turn_is_local()
+         || (!((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) && !ConsoleControlTurnActive)
+             && NetDaemonNet.primary_state_.leading_words_[0]))
+        && NetDaemonNet.primary_state_.session_phase_ == 2) {
         for (int faction = 1; faction < 8; ++faction) {
-            player_id = slot < 8
-                ? static_cast<int>(process_slots_[slot].identity_)
-                : static_cast<int>(static_cast<int8_t>(
-                      static_cast<uint8_t>(ledger_.session_flags_ & 0xFF)));
-            const uint8_t bit = static_cast<uint8_t>(1u << (faction & 31));
-            PlayerLock &candidate = locks_.records_[faction];
-            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & bit) == 0 ||
-                (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & bit) == 0 ||
-                faction == player_id || candidate.active() == 0 ||
-                (candidate.active_ & 1) != 0) {
-                continue;
-            }
-
-            candidate.active_ = static_cast<uint8_t>(
-                candidate.active_ | static_cast<uint8_t>(1u << (slot & 31)));
-            const uint8_t humans =
-                GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
-            if ((candidate.active_ & humans) == humans) {
-                log_say("SPECIAL Sending EXEC DONE to", faction, 0, 0);
-                message_data(0x1206, faction, 0, 0, 0, 0);
-                candidate.active_ = static_cast<uint8_t>(candidate.active_ | 1);
+            PlayerLock *lock = &locks_.records_[faction];
+            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << faction))
+                && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction))
+                && faction != process_slots_[slot].identity_ && lock->active()
+                && !(lock->active_ & 1)) {
+                lock->active_ |= 1 << slot;
+                if ((lock->active_ & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)
+                    == GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) {
+                    log_say("SPECIAL Sending EXEC DONE to", faction, 0, 0);
+                    message_data(0x1206, faction, 0, 0, 0, 0);
+                    lock->active_ |= 1;
+                }
             }
         }
     }
 
     log_say(ParseStrBuffer[0].str, "Dropped *************************",
             static_cast<int>(id), slot, 0);
-
-    if (slot < 8) {
-        AlphaNetProcessSlot &removed_player = process_slots_[slot];
-        removed_player.identity_ = -1;
-        removed_player.field_25_ = 0;
-        removed_player.field_26_ = 0;
-        removed_player.field_27_ = -1;
-        removed_player.status_bytes_[0] = 2;
-    } else {
-        // Native row 8 begins at the ledger's session_flags_ byte (+0x1470)
-        // and its following byte at max_players_ (+0x1474).
-        ledger_.session_flags_ = 0xFF0000FFu;
-        ledger_.max_players_ = (ledger_.max_players_ & 0xFFFFFF00u) | 2u;
+    process_slots_[slot].identity_ = -1;
+    process_slots_[slot].field_25_ = 0;
+    process_slots_[slot].field_26_ = 0;
+    process_slots_[slot].field_27_ = -1;
+    process_slots_[slot].status_bytes_[0] = 2;
+    if (NetDaemonNet.primary_state_.session_phase_ < 2) {
+        NetWinLobbyRows.rows_[slot].prefix_ = -1;
     }
+    strcpy(NetWinLobbyRows.rows_[slot].leader_name_, StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
+    strcpy(NetWinLobbyRows.rows_[slot].noun_faction_, StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
 
-    if (slot == 8) {
-        if (NetDaemonNet.primary_state_.session_phase_ < 2) {
-            NetWinSessionData.fields_.write_row8_prefix(0xFF);
-        }
-        strcpy(NetWinSessionData.fields_.row8_leader_name(), label_get(0xFE4 / 4));
-        // Separate native Strings::get calls reload the owner and index.
-        strcpy(NetWinSessionData.fields_.row8_noun_faction(), label_get(0xFE4 / 4));
-    } else {
-        NetWinLobbyRow &removed_row = NetWinLobbyRows.rows_[slot];
-        if (NetDaemonNet.primary_state_.session_phase_ < 2) {
-            removed_row.prefix_ = 0xFF;
-        }
-        strcpy(removed_row.leader_name_, label_get(0xFE4 / 4));
-        strcpy(removed_row.noun_faction_, label_get(0xFE4 / 4));
+    for (; slot <= player_count_ - 1; ++slot) {
+        process_slots_[slot] = process_slots_[slot + 1];
+        NetWinLobbyRows.rows_[slot] = NetWinLobbyRows.rows_[slot + 1];
+        NetWinLobbyRows.rows_[slot].prefix_ = static_cast<int8_t>(slot);
     }
-
-    const int last_slot = player_count_ - 1;
-    for (int moving = slot; moving <= last_slot; ++moving) {
-        process_slots_[moving] = process_slots_[moving + 1];
-        NetWinLobbyRows.rows_[moving] = NetWinLobbyRows.rows_[moving + 1];
-        NetWinLobbyRows.rows_[moving].prefix_ = static_cast<uint8_t>(moving);
-    }
-
     --player_count_;
-    primary_state_.leading_words_[0] = (local_player_id() == host_player_id()) ? 1 : 0;
+    primary_state_.leading_words_[0] = local_player_id_ == host_player_id_;
 
-    const uint8_t post_turn_bit = static_cast<uint8_t>(GameDataStateStorage.fields_.net_turn_flags_ & 0x10);
-    const bool skip_after_delete =
-        (post_turn_bit == 0 || ConsoleControlTurnActive != 0 ||
-         GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) &&
-        ((post_turn_bit != 0 && ConsoleControlTurnActive == 0) ||
-         NetDaemonNet.primary_state_.leading_words_[0] == 0);
-
-    if (skip_after_delete && NetDaemonNet.primary_state_.session_phase_ == 2) {
-        if (post_turn_bit == 0 &&
-            (NetDaemonNet.primary_state_.trailing_words_[6] &
-             (1u << (ConsoleGlobal.faction_id_ & 31))) != 0) {
+    if (!net_turn_is_local()
+        && (((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) && !ConsoleControlTurnActive)
+            || !NetDaemonNet.primary_state_.leading_words_[0])
+        && NetDaemonNet.primary_state_.session_phase_ == 2) {
+        if (!(GameDataStateStorage.fields_.net_turn_flags_ & 0x10)
+            && (NetDaemonNet.primary_state_.trailing_words_[6] & (1 << ConsoleGlobal.faction_id_))) {
             message_data(0x8301, 0, 0, 0, 0, 0);
         }
-        // The original reloads this global after the 0x8301 callback.
-        if (ConsoleControlTurnActive != 0) {
+        if (ConsoleControlTurnActive) {
             message_data(0x2303, 0, NetUpkeepPhase,
                          GameDataStateStorage.fields_.turn_current_num_, 0, 0);
         }
     }
 
-    const char *popup_text;
+    NetMsgPrimary.pop(server_left
+        ? (NetWinDialog.is_visible() ? "SERVERLOSTINSETUP" : "SERVERLOST")
+        : "DROPPED", 3000, 2, nullptr);
     if (server_left) {
-        popup_text = NetWinDialog.is_visible() != 0
-            ? "SERVERLOSTINSETUP" : "SERVERLOST";
-    } else {
-        popup_text = "DROPPED";
-    }
-    NetMsgPrimary.pop(popup_text, 3000, 2, nullptr);
-
-    if (server_left) {
-        if (NetWinDialog.is_visible() != 0) {
-            NetWinDialog.on_button_clicked(-2);
-        }
+        if (NetWinDialog.is_visible()) NetWinDialog.on_button_clicked(-2);
         channels_[1].leading_words_[3] = 0;
         channels_[1].trailing_words_[0] = 0;
         channels_[1].leading_words_[1] = 0;
@@ -678,18 +609,12 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
         NetPlayerDropped = 1;
         locks_.field_E8_ = 1;
     }
-
     NetWinDialog.on_redraw();
-
-    int server_slot = 0;
-    while (server_slot < 8 &&
-           process_slots_[server_slot].pid_ != host_player_id()) {
-        ++server_slot;
+    int server_slot;
+    for (server_slot = 0; server_slot < 8; ++server_slot) {
+        if (process_slots_[server_slot].pid_ == host_player_id_) break;
     }
-    const char *server_name =
-        process_slots_[server_slot].name_;
-
-    log_say(server_name, "is now the Server.", 0, 0, 0);
+    log_say(process_slots_[server_slot].name_, "is now the Server.", 0, 0, 0);
     primary_state_.leading_words_[2] = 0;
 }
 
@@ -3950,12 +3875,13 @@ int NetDaemon::send_files() {
     WIN32_FIND_DATAA found_file;
     char path_copy[0x104];
     NetDaemonFilePathPacket path_message;
-    uint32_t send_mask = 0;
     int group_handle = 0;
     Filemap filemap;
+    uint32_t send_mask = 0;
     NetDaemonNet.channels_[1].trailing_words_[9] = 0;
-    const int local_index = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());
-    netdaemon_set_file_index_records(netdaemon_allocate_file_index_records());
+    const int local_index = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id_);
+    NetDaemonNet.file_index_records_ =
+        static_cast<NetDaemonFileIndexRecord *>(mem_get(0x11C00));
 
     char executable_path[0x104];
     GetModuleFileNameA(0, executable_path, sizeof executable_path);
@@ -4004,7 +3930,7 @@ int NetDaemon::send_files() {
         control.opcode = 0xF0F;
         control.source_player = local_index;
         Net::send(&control, 0x20,
-            static_cast<unsigned long>(host_player_id()), 1);
+            static_cast<unsigned long>(host_player_id_), 1);
         SaveNameBuffer[0] = '\0';
         strcat(SaveNameBuffer, executable_path);
         strcat(SaveNameBuffer, NetDaemonFileTransferPath);
@@ -4024,22 +3950,22 @@ int NetDaemon::send_files() {
         if (find_handle != 0) {
             do {
                 if ((found_file.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0) {
-                    netdaemon_file_index_records()[file_count].opcode = 0xF06;
-                    netdaemon_file_index_records()[file_count].source_player = local_index;
-                    netdaemon_file_index_records()[file_count].ready_flags = 0;
-                    netdaemon_file_index_records()[file_count].chunk_count =
+                    NetDaemonNet.file_index_records_[file_count].opcode = 0xF06;
+                    NetDaemonNet.file_index_records_[file_count].source_player = local_index;
+                    NetDaemonNet.file_index_records_[file_count].ready_flags = 0;
+                    NetDaemonNet.file_index_records_[file_count].chunk_count =
                         (found_file.nFileSizeLow + 0x800) >> 11;
-                    netdaemon_file_index_records()[file_count].file_index =
+                    NetDaemonNet.file_index_records_[file_count].file_index =
                         static_cast<uint8_t>(file_count);
-                    netdaemon_file_index_records()[file_count].file_size =
+                    NetDaemonNet.file_index_records_[file_count].file_size =
                         found_file.nFileSizeLow;
-                    netdaemon_file_index_records()[file_count].checksum =
+                    NetDaemonNet.file_index_records_[file_count].checksum =
                         checksum_file(found_file.cFileName);
-                    netdaemon_file_index_records()[file_count].filename[0] = '\0';
-                    strcat(netdaemon_file_index_records()[file_count].filename,
+                    NetDaemonNet.file_index_records_[file_count].filename[0] = '\0';
+                    strcat(NetDaemonNet.file_index_records_[file_count].filename,
                            found_file.cFileName);
                     send_message(reinterpret_cast<char *>(
-                        &netdaemon_file_index_records()[file_count]), 0x11C, 0);
+                        &NetDaemonNet.file_index_records_[file_count]), 0x11C, 0);
                     ++file_count;
                 }
             } while (FindNextFileA(find_handle, &found_file) != 0);
@@ -4061,7 +3987,7 @@ int NetDaemon::send_files() {
 
         int ready_count = 0;
         for (int i = 0; i < file_count; ++i)
-            if (netdaemon_file_index_records()[i].ready_flags != 0) ++ready_count;
+            if (NetDaemonNet.file_index_records_[i].ready_flags != 0) ++ready_count;
 
         NetDaemonFileChunkPacket *send_buffer =
             static_cast<NetDaemonFileChunkPacket *>(mem_get(0x820));
@@ -4072,10 +3998,10 @@ int NetDaemon::send_files() {
                 goto cleanup;
             }
             const uint32_t ready_flags =
-                netdaemon_file_index_records()[file_index].ready_flags;
+                NetDaemonNet.file_index_records_[file_index].ready_flags;
             if (ready_flags == 0) continue;
 
-            parse_says(0, netdaemon_file_index_records()[file_index].filename, -1, -1);
+            parse_says(0, NetDaemonNet.file_index_records_[file_index].filename, -1, -1);
             parse_num(0, ready_count--);
             PopupModalState = 6;
             pop_close();
@@ -4091,7 +4017,7 @@ int NetDaemon::send_files() {
             }
 
             if (filemap.open_read(
-                    netdaemon_file_index_records()[file_index].filename, TRUE) != 0) {
+                    NetDaemonNet.file_index_records_[file_index].filename, TRUE) != 0) {
                 unsigned long compressed_capacity = static_cast<unsigned long>(
                     GetFileSize(filemap.get_handle(), 0) * 1.01f);
                 unsigned char *compressed =
@@ -4104,11 +4030,9 @@ int NetDaemon::send_files() {
                 unsigned char *const end = compressed + compressed_capacity;
                 unsigned char *source = compressed;
                 int chunk_index = 0;
-                int remaining = end - source;
-                while (remaining >= 0x800) {
+                while (end - source >= 0x800) {
                     do_draw();
                     memcpy(send_buffer->payload, source, 0x800);
-                    remaining -= 0x800;
                     send_buffer->chunk_index = chunk_index;
                     source += 0x800;
                     send_group(send_buffer, 0x820, group_handle, 1);
@@ -4160,7 +4084,7 @@ cleanup:
     pop_close();
     do_all_draws();
     SetCurrentDirectoryA(previous_directory);
-    if (netdaemon_file_index_records() != 0) free(netdaemon_file_index_records());
+    if (NetDaemonNet.file_index_records_ != 0) free(NetDaemonNet.file_index_records_);
     netdaemon_set_file_index_records(0);
     NetDaemonFileTransferMode = 0;
     return static_cast<int>(NetDaemonNet.channels_[1].trailing_words_[9]);
@@ -7527,13 +7451,9 @@ int NetDaemon::order_veh(int veh_id, int direction, int mode) {
         if (lock_veh(&veh_id, 4, -1, -1, 0) != 0) return 0;
     }
 
-    int x = Vehs[veh_id].x + VehMoveDeltaX[direction];
-    if ((MapIsFlat & 1) == 0) {
-        if (x < 0) x += MapLongitudeBounds;
-        else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
-    }
-    const int faction = Vehs[veh_id].faction_id;
+    const int x = wrap_map_x(Vehs[veh_id].x + VehMoveDeltaX[direction]);
     const int y = Vehs[veh_id].y + VehMoveDeltaY[direction];
+    const int faction = Vehs[veh_id].faction_id;
     const int base_id = base_at(x, y);
     int good_base = 0;
     Vehs[veh_id].probe_action = 0;
@@ -7583,130 +7503,119 @@ int NetDaemon::order_veh(int veh_id, int direction, int mode) {
         return 0;
     }
 
-    if (::order_veh(veh_id, direction, 1) == 0) goto release_lock_only;
+    if (::order_veh(veh_id, direction, 1) != 0
+        && veh_moves(veh_id) != 0) {
 
-    if (range(speed(veh_id, 0) - Vehs[veh_id].moves_expended, 0, 999) == 0) {
-        goto release_lock_only;
-    }
-
-    if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_INFO_WARFARE &&
-        base_id >= 0 && faction != Bases[base_id].faction_id_current) {
-        if (stack_check(veh_at(x, y), 2, PLAN_INFO_WARFARE, -1, -1) == 0 &&
-            !good_base) {
-            if (add_global() == 0) goto send_move;
-            goto global_failed;
-        }
-    }
-
-    if (base_id < 0 || Bases[base_id].population_size > 1 ||
-        (Vehs[veh_id].state & 0x80000U) == 0 || good_base || add_global() == 0) {
-send_move:
-        log_say("Sending MOVE VEH message", veh_id, direction, 0);
-        message_veh(0x2401, veh_id, direction, 0);
-        if (mode == 0 && IsMultiplayerNet != 0) {
-            log_say("Client waiting for acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
-            uint32_t *flag = &channels_[1].leading_words_[3];
-            const int waited = wait("AWAITEXEC", flag, 1, 2000);
-            NetDaemonWaitTicks += waited;
-            log_say("Client received acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
-            unlock_veh();
-            *flag = 0;
-        }
-
-        int have_other_vehicle = 0;
-        int other_faction_found = 0;
-        for (int byte_offset = 0; byte_offset <= 0x53; byte_offset += 4) {
-            int adjacent_x = RadiusOffsetX[byte_offset / 4] + x;
-            if ((MapIsFlat & 1) == 0) {
-                if (adjacent_x < 0) adjacent_x += MapLongitudeBounds;
-                else if (adjacent_x >= MapLongitudeBounds) adjacent_x -= MapLongitudeBounds;
+        if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_INFO_WARFARE &&
+            base_id >= 0 && faction != Bases[base_id].faction_id_current) {
+            if (stack_check(veh_at(x, y), 2, PLAN_INFO_WARFARE, -1, -1) == 0 &&
+                !good_base) {
+                if (add_global() == 0) goto send_move;
+                if (channels_[1].trailing_words_[3] != 0) {
+                    Vehs[veh_id].order = 0;
+                    Vehs[veh_id].state &= 0xFCFFBDFFU;
+                    synch_veh(veh_id);
+                    if (IsMultiplayerNet != 0) {
+                        uint32_t *flag = &channels_[1].trailing_words_[0];
+                        *flag = 1;
+                        log_say("Awaiting acknowledgement of SYNCH", ConsoleGlobal.faction_id_, 0, 0);
+                        const int waited = wait("AWAITEXEC", flag, 1, 2000);
+                        NetDaemonWaitTicks += waited;
+                        if (*flag == 0)
+                            log_say("Received SYNCH acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
+                        *flag = 0;
+                    }
+                }
+                unlock_veh();
+                NetMsgPrimary.pop("GLOBALFAILED", 5000, 0, nullptr);
+                return 0;
             }
-            const int adjacent_y = RadiusOffsetY[byte_offset / 4] + y;
-            if (adjacent_y >= 0 && adjacent_y < MapLatitudeBounds &&
-                adjacent_x >= 0 && adjacent_x < MapLongitudeBounds) {
-                const Map &tile = MapTiles[MapLongitude * adjacent_y + (adjacent_x >> 1)];
-                if ((tile.bit & 3U) != 0) {
-                    const int other_faction = tile.val2 & 0x0F;
-                    if (other_faction < 8 && other_faction != ConsoleGlobal.faction_id_ &&
-                        (PlayersData[other_faction]
-                             .diplo_treaties[ConsoleGlobal.faction_id_] & 0x10U) != 0 &&
-                        (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1U << other_faction)) != 0) {
-                        int other_vehicle = veh_at(adjacent_x, adjacent_y);
-                        while (other_vehicle >= 0) {
-                            if (Vehs[other_vehicle].faction_id == other_faction) {
-                                const int remaining = speed(other_vehicle, 0) -
-                                    Vehs[other_vehicle].moves_expended;
-                                if (remaining >= 0 &&
-                                    (remaining > 999 || remaining != 0)) {
-                                    have_other_vehicle = 1;
-                                    other_faction_found = other_faction;
+        }
+
+        if (base_id >= 0 && Bases[base_id].population_size <= 1
+            && (Vehs[veh_id].state & 0x80000U) != 0 && !good_base && add_global() != 0) {
+            if (channels_[1].trailing_words_[3] != 0) {
+                Vehs[veh_id].order = 0;
+                Vehs[veh_id].state &= 0xFCFFBDFFU;
+                synch_veh(veh_id);
+                if (IsMultiplayerNet != 0) {
+                    uint32_t *flag = &channels_[1].trailing_words_[0];
+                    *flag = 1;
+                    log_say("Awaiting acknowledgement of SYNCH", ConsoleGlobal.faction_id_, 0, 0);
+                    const int waited = wait("AWAITEXEC", flag, 1, 2000);
+                    NetDaemonWaitTicks += waited;
+                    if (*flag == 0)
+                        log_say("Received SYNCH acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
+                    *flag = 0;
+                }
+            }
+            unlock_veh();
+            return 0;
+        }
+
+send_move:
+        {
+            log_say("Sending MOVE VEH message", veh_id, direction, 0);
+            message_veh(0x2401, veh_id, direction, 0);
+            if (mode == 0 && IsMultiplayerNet != 0) {
+                log_say("Client waiting for acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
+                uint32_t *flag = &channels_[1].leading_words_[3];
+                const int waited = wait("AWAITEXEC", flag, 1, 2000);
+                NetDaemonWaitTicks += waited;
+                log_say("Client received acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
+                unlock_veh();
+                *flag = 0;
+            }
+
+            int have_other_vehicle = 0;
+            int other_faction_found = 0;
+            for (int offset = 0; offset < 21; ++offset) {
+                const int adjacent_x = wrap_map_x(RadiusOffsetX[offset] + x);
+                const int adjacent_y = RadiusOffsetY[offset] + y;
+                if (on_map(adjacent_x, adjacent_y)) {
+                    const Map &tile = MapTiles[MapLongitude * adjacent_y + (adjacent_x >> 1)];
+                    if ((tile.bit & 3U) != 0) {
+                        const int other_faction = tile.val2 & 0x0F;
+                        if (other_faction < 8 && other_faction >= 0 && other_faction != ConsoleGlobal.faction_id_ &&
+                            (PlayersData[other_faction]
+                                 .diplo_treaties[ConsoleGlobal.faction_id_] & 0x10U) != 0 &&
+                            is_human(other_faction)) {
+                            int other_vehicle = veh_at(adjacent_x, adjacent_y);
+                            while (other_vehicle >= 0) {
+                                if (Vehs[other_vehicle].faction_id == other_faction) {
+                                    if (veh_moves(other_vehicle) != 0) {
+                                        have_other_vehicle = 1;
+                                        other_faction_found = other_faction;
+                                    }
                                 }
+                                other_vehicle = Vehs[other_vehicle].next_veh_id_stack;
                             }
-                            other_vehicle = Vehs[other_vehicle].prev_veh_id_stack;
                         }
                     }
                 }
             }
-        }
-        (void)other_faction_found;
+            (void)other_faction_found;
 
-        if (have_other_vehicle) {
-            DWORD (WINAPI *const get_time)() = timeGetTime;
-            const DWORD start = get_time();
-            do {
-                do_all_non_input();
-                unsigned long first, second;
-                void *message = NetDaemonNet.Net::get(&first, &second);
-                if (message != 0)
-                    process_message(static_cast<char *>(message), second,
-                                    static_cast<int>(first));
-                locks_.check_global();
-                if (ExitTurnLoop != 0) break;
-            } while (get_time() - start < 500);
+            if (have_other_vehicle) {
+                DWORD (WINAPI *const get_time)() = timeGetTime;
+                const DWORD start = get_time();
+                do {
+                    do_all_non_input();
+                    unsigned long first, second;
+                    void *message = NetDaemonNet.Net::get(&first, &second);
+                    if (message != 0)
+                        process_message(static_cast<char *>(message), second,
+                                        static_cast<int>(first));
+                    locks_.check_global();
+                    if (ExitTurnLoop != 0) break;
+                } while (get_time() - start < 500);
+            }
+            return 1;
         }
-        return 1;
     }
 
-    if (channels_[1].trailing_words_[3] != 0) {
-        Vehs[veh_id].order = 0;
-        Vehs[veh_id].state &= 0xFCFFBDFFU;
-        synch_veh(veh_id);
-        if (IsMultiplayerNet != 0) {
-            uint32_t *flag = &channels_[1].trailing_words_[0];
-            *flag = 1;
-            log_say("Awaiting acknowledgement of SYNCH", ConsoleGlobal.faction_id_, 0, 0);
-            const int waited = wait("AWAITEXEC", flag, 1, 2000);
-            NetDaemonWaitTicks += waited;
-            if (*flag == 0)
-                log_say("Received SYNCH acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
-            *flag = 0;
-        }
-    }
-release_lock_only:
     // Native 0x005320CF is the short failure tail used by a rejected order
     // or exhausted movement. It does not clear/synchronize the vehicle.
     unlock_veh();
-    return 0;
-
-global_failed:
-    // Kept separate because the seed's add_global failure path pops before
-    // returning; it does not perform the generic release helper above.
-    if (channels_[1].trailing_words_[3] != 0) {
-        Vehs[veh_id].order = 0;
-        Vehs[veh_id].state &= 0xFCFFBDFFU;
-        synch_veh(veh_id);
-        if (IsMultiplayerNet != 0) {
-            uint32_t *flag = &channels_[1].trailing_words_[0];
-            *flag = 1;
-            log_say("Awaiting acknowledgement of SYNCH", ConsoleGlobal.faction_id_, 0, 0);
-            const int waited = wait("AWAITEXEC", flag, 1, 2000);
-            NetDaemonWaitTicks += waited;
-            if (*flag == 0)
-                log_say("Received SYNCH acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
-            *flag = 0;
-        }
-    }
-    unlock_veh();
-    NetMsgPrimary.pop("GLOBALFAILED", 5000, 0, nullptr);
     return 0;
 }

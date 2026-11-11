@@ -2545,11 +2545,9 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
         }
         score -= effic_weight;
         // growth
-        // WORKAROUND(type): 5B4F8B divides signed (0x66666667); the declared
-        // uint32_t nutrient_surplus_total would make this product unsigned.
         int growth_weight = (soc_eff.values_[SocialEffect::GROWTH] * (colony_regions + 1)
             * ((growth_val + 1) * 2 - wealth_val)
-            * (pop_growth + (int)PlayersData[faction_id].nutrient_surplus_total)) / 5;
+            * (pop_growth + PlayersData[faction_id].nutrient_surplus_total)) / 5;
         if (aah_ooga(faction_id, faction_id)) {
             growth_weight *= 2;
         }
@@ -2676,9 +2674,7 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
         if (soc_eff.values_[SocialEffect::PROBE]) {
             for (int f = 1; f < MaxPlayerNum; f++) {
                 if (f != faction_id) {
-                    // WORKAROUND(type): 5B53C1 divides signed (cdq/and 3/sar 2);
-                    // mind_control_total is declared uint32_t.
-                    int probe_weight = (int)PlayersData[f].mind_control_total / 4 + 1;
+                    int probe_weight = PlayersData[f].mind_control_total / 4 + 1;
                     if (has_treaty(faction_id, f, DTREATY_PACT)) {
                         probe_weight /= 2;
                     }

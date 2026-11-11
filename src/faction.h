@@ -392,7 +392,7 @@ struct PlayerData {
     int major_atrocities; // count committed by faction
     // mind control action value: mind/thought control base (+4) or successfully subvert unit (+1)
     // TODO: possible issue with thought control still increasing variables on failure
-    uint32_t mind_control_total; // running sum of mind control actions above against other factions
+    int mind_control_total; // running sum of mind control actions above against other factions
     uint32_t diplo_mind_control[8]; // total action value against this player by each faction
     uint32_t stolen_data_count[8]; // probe procured research data (tech/map) per faction
     int energy_reserves; // current energy credits
@@ -460,7 +460,7 @@ struct PlayerData {
     int unk_47;
     int unk_48;
     int unk_49;
-    uint32_t nutrient_surplus_total;
+    int nutrient_surplus_total;
     int labs_total;
     // Original 4CF64C and 49FBB0 index four consecutive word counters.
     // Nutrient, mineral, energy and orbital defense pod counts, respectively.
