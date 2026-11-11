@@ -35,6 +35,7 @@
 // ORIGINAL: 0x00408400 _$E24 0x00408400-0x0040840A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682064 selects initializer0x4083e0..0x4083f6, registering exit0x408400..0x40840a. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x6eee68 bound to?g_BASEWIN_WAVE@@3VWave@@A.", "Original startup instruction evidence: [[\"0x4083e0\", \"mov\", \"ecx, 0x6eee68\"], [\"0x4083e5\", \"call\", \"0x4c66e0\"], [\"0x4083ea\", \"push\", \"0x408400\"], [\"0x4083ef\", \"call\", \"0x645398\"], [\"0x4083f4\", \"pop\", \"ecx\"], [\"0x4083f5\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x408400\", \"mov\", \"ecx, 0x6eee68\"], [\"0x408405\", \"jmp\", \"0x4c67c0\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/basewin.cpp COFF selects _$E26 via .CRT$XCU, registering _$E24. Startup relocation targets: [\"?g_BASEWIN_WAVE@@3VWave@@A\", \"??0Wave@@QAE@XZ\", \"_$E24\", \"_atexit\"]; exit targets: [\"?g_BASEWIN_WAVE@@3VWave@@A\", \"??1Wave@@UAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f2b4; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned ?g_BASEWIN_WAVE@@3VWave@@A; preserve complete original identity and remaining restoration/structure obligations."}
 // symbol    _$E19
+#define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
 #include "stdafx.h"
 #include "font_metrics.h"
 #include "interface_fonts.h"
@@ -126,11 +127,19 @@ namespace {
 int specialist_at(const Base &base, int position) {
     return (base.spec[position >> 3] >> ((position & 7) * 4)) & 15;
 }
-void set_specialist_at(Base &base, int position, int type) {
-    const int shift = (position & 7) * 4;
-    base.spec[position >> 3] = (base.spec[position >> 3] & ~(15u << shift))
-        | (static_cast<unsigned>(type) << shift);
 }
+
+// ORIGINAL: 0x00416D90 ?recompute@BaseWin@@QAEXH@Z 0x00416D90-0x00416DCA FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00416D90-0x00416DCA tests Win visibility, selects focusedBaseID_, recomputes, dispatches Win redraw slot 62 and directly redraws MainInterfaceGlobal", "source:src/basewin.h", "source:src/base.h", "source:src/maininterface.h"], "reason": "Refresh the selected base through typed focus state and real virtual/direct redraw calls; the integer argument is unused by the original."}
+// farm_click, pop_click, base_editor and garrison_click expand this body
+// although they precede the out-of-line copy (Console::on_key_click calls it).
+inline void BaseWin::recompute(int) {
+    if (Win::is_visible()) {
+        set_base(static_cast<int>(focusedBaseID_));
+        base_compute(1);
+        redraw();
+        MainInterfaceGlobal.GraphicWin::redraw();
+    }
 }
 
 // ORIGINAL: 0x0040A1D0 ?farm_click@BaseWin@@QAEXHHH@Z 0x0040A1D0-0x0040A87F
@@ -233,22 +242,12 @@ void BaseWin::farm_click(int x, int y, int) {
             BaseCurrent->resource_sqr_radius |= bit;
         }
     }
-    if (is_visible()) {
-        set_base(focusedBaseID_);
-        base_compute(1);
-        redraw();
-        MainInterfaceGlobal.redraw();
-    }
+    recompute(0);
     log_say("BASE: changed farming locations", BaseIDCurrentSelected, 0, 0);
     NetDaemonNet.unlock_base(BaseIDCurrentSelected);
     return;
 unchanged:
-    if (is_visible()) {
-        set_base(focusedBaseID_);
-        base_compute(1);
-        redraw();
-        MainInterfaceGlobal.redraw();
-    }
+    recompute(0);
     NetDaemonNet.unlock_base(BaseIDCurrentSelected);
 }
 
@@ -256,186 +255,236 @@ unchanged:
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/0040a880.cpp", "source:src/basewin.h", "image:0x40a880"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
 void BaseWin::pop_click(int position, int, int, int) {
     Popup popup;
+    int selected = 999;
+    bool too_small = false;
     compute_selected_base();
     if (BaseCurrent->faction_id_current != ConsoleGlobal.faction_id_
         && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) return;
-    int current = position < 0 ? 999 : position < 16
-        ? specialist_at(*BaseCurrent, position) : best_specialist();
+    int current = position >= 0
+        ? (position >= 16 ? best_specialist() : specialist_at(*BaseCurrent, position))
+        : 999;
     if (current < 0) current = 1;
-    popup.start(PopupStartCaption, "CITIZEN", -1, 0, 0x40, 0);
-    strcpy(StringTemp, label_get(0x2C8 / 4));
-    popup.dialogs().item(StringTemp, 999);
-    bool too_small = false;
-    int selected = 999;
+    popup.start("CITIZEN", 0x40);
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x2C8 / 4));
+    popup.item(StringTemp, 999);
     for (int i = 0; i < 7; ++i) {
-        const RulesCitizen &citizen = Citizen[i];
-        const int faction = BaseCurrent->faction_id_current;
-        if (!has_tech(citizen.preq_tech, faction)
-            || (has_tech(citizen.obsol_tech, faction) && i != current)) continue;
+        if (!has_tech(Citizen[i].preq_tech, BaseCurrent->faction_id_current)) continue;
+        if (has_tech(Citizen[i].obsol_tech, BaseCurrent->faction_id_current)
+            && i != current) continue;
         if (BaseCurrent->population_size < Rules.min_base_size_specialists
-            && citizen.psych_bonus < 2) { too_small = true; continue; }
-        strcpy(StringTemp, StringTable.get(citizen.singular_name));
+            && Citizen[i].psych_bonus < 2) {
+            too_small = true;
+            continue;
+        }
+        StringTemp[0] = 0;
+        strcat(StringTemp, StringTable.get(Citizen[i].singular_name));
         strcat(StringTemp, "|");
-        char text[224] = "";
-        const int bonuses[3] = { citizen.ops_bonus, citizen.psych_bonus, citizen.research_bonus };
-        for (int k = 0; k < 3; ++k) if (bonuses[k]) {
-            if (*text) strcat(text, ", ");
-            strcat(text, "+");
-            char number[80];
-            _itoa(bonuses[k], number, 10);
-            strcat(text, number);
-            strcat(text, " ");
-            strcat(text, StringTable.get(Energy[k].abbrev));
+        char text[256];
+        text[0] = 0;
+        for (int k = 0; k < 3; ++k) {
+            // ops_bonus, psych_bonus and research_bonus are consecutive and
+            // walked in step with Energy's three abbreviations.
+            const int bonus = (&Citizen[i].ops_bonus)[k];
+            if (bonus) {
+                if (strlen(text)) strcat(text, ", ");
+                strcat(text, "+");
+                char number[80];
+                _itoa(bonus, number, 10);
+                strcat(text, number);
+                strcat(text, " ");
+                strcat(text, StringTable.get(Energy[k].abbrev));
+            }
         }
         strcat(StringTemp, text);
-        popup.dialogs().item(StringTemp, i);
+        popup.item(StringTemp, i);
         if (i == current) selected = i;
     }
     if (too_small) {
         parse_num(0, Rules.min_base_size_specialists);
-        popup.start(PopupStartCaption, "CITIZEN2", -1, 0, 0x80, 0);
+        popup.start("CITIZEN2", 0x80);
     }
     popup.set_value(selected);
-    const int result = popup.exec(0, 0);
-    if (result < 0 || result == current
-        || NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) return;
-    BaseCurrent->governor &= ~0x40u;
+    const int result = popup.exec();
+    if (result < 0) return;
+    if (result == current) return;
+    if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) return;
+    if (BaseCurrent->governor & 0x40) BaseCurrent->governor &= ~0x40u;
     if (result == 999) {
         if (BaseCurrent->specialist_total) --BaseCurrent->specialist_total;
     } else {
-        int packed_position = position;
         if (current == 999) {
-            int freed = -1;
+            int freed;
             if (field_40B4C_) {
-                for (int i = 20; i > 0; --i)
-                    if (BaseCurrent->resource_sqr_radius & (1u << i)) { freed = i; break; }
-            } else freed = farm_get(field_40B44_, field_40B48_);
-            if (freed > 0) BaseCurrent->resource_sqr_radius &= ~(1u << freed);
-            packed_position = BaseCurrent->specialist_total++;
+                for (freed = 20; freed > 0; --freed)
+                    if (BaseCurrent->resource_sqr_radius & (1 << freed)) break;
+            } else {
+                freed = farm_get(field_40B44_, field_40B48_);
+            }
+            if (freed > 0) BaseCurrent->resource_sqr_radius &= ~(1 << freed);
+            position = BaseCurrent->specialist_total++;
         }
-        if (packed_position < 16) set_specialist_at(*BaseCurrent, packed_position, result);
+        if (position < 16) {
+            const int shift = (position & 7) * 4;
+            BaseCurrent->spec[position >> 3] &= ~(15 << shift);
+            BaseCurrent->spec[position >> 3] |= result << shift;
+        }
     }
     log_say("BASE: changed citizen professions", BaseIDCurrentSelected, 0, 0);
-    if (is_visible()) {
-        set_base(focusedBaseID_);
-        base_compute(1);
-        redraw();
-        MainInterfaceGlobal.redraw();
-    }
+    recompute(0);
     NetDaemonNet.unlock_base(BaseIDCurrentSelected);
 }
 
+// ORIGINAL: 0x00416FB0 ?delete_queue@BaseWin@@QAEXH@Z 0x00416FB0-0x0041703C FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00416FB0-0x0041703C removes one queue entry, shifts later ids, clamps the selected index to at least one, and redraws the queue", "source:src/base.h:Base::queue_size", "source:src/base.h:Base::queue_production_id"], "reason": "Delete a selected production queue entry through the typed Base queue representation; the drawing dependency remains explicitly unfinished."}
+// queue_click (0x4097F5..) and production (0x417875..) expand this body
+// although both precede the out-of-line copy: the original body was visible
+// to them as an inline.
+inline void BaseWin::delete_queue(int index) {
+    if (index > static_cast<int>(BaseCurrent->queue_size)) {
+        int selected = --selected_queue_slot_;
+        if (selected <= 1) {
+            selected = 1;
+        }
+        selected_queue_slot_ = selected;
+        return;
+    }
+    if (index < 9) {
+        for (int slot = index; slot < 9; ++slot) {
+            BaseCurrent->queue_production_id[slot] =
+                BaseCurrent->queue_production_id[slot + 1];
+        }
+    }
+    --BaseCurrent->queue_size;
+    const int count = static_cast<int>(BaseCurrent->queue_size);
+    if (selected_queue_slot_ > count) {
+        int selected = count;
+        if (selected <= 1) {
+            selected = 1;
+        }
+        selected_queue_slot_ = selected;
+    }
+    draw_queue(1);
+}
 // ORIGINAL: 0x00409200 ?queue_click@BaseWin@@QAEXHHHH@Z 0x00409200-0x0040A1B9;0x0065158B-0x006518EA
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/00409200.cpp", "source:src/basewin.h", "image:0x409200"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
 void BaseWin::queue_click(int row, int x, int y, int right) {
     PopMenu menu;
     const int faction = BaseCurrent->faction_id_current;
-    if (row <= 1) return;
-    const int position = row - 2;
-    if (position == selected_queue_slot_) return;
-    if (!right) {
-        selected_queue_slot_ = min(static_cast<int>(BaseCurrent->queue_size) + 1, position);
-        field_40B30_ = 0;
-        draw_queue(1);
-        if (prodPicker_.is_visible() && prodPicker_.queue_change_blocked()) return;
-        if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1) == 0) {
-            production(position, 1);
-            NetDaemonNet.unlock_base(BaseIDCurrentSelected);
-        }
-        return;
-    }
-    if (prodPicker_.is_visible()) return;
-    const bool empty = position > static_cast<int>(BaseCurrent->queue_size);
-    if (!empty) {
-        const int entry = BaseCurrent->queue_production_id[position];
-        if (entry >= 0) parse_says(0, VehPrototypes[entry].veh_name, -1, -1);
-        else parse_say(0, Facility[-entry].name, -1, -1);
-    }
-    MainInterfaceGlobal.client_to_screen(&x, &y);
-    strcpy(StringTemp, empty ? "QUEUE2" : "QUEUE1");
-    int action = popm(StringTemp, x + 2, y, 0) + 1;
-    if (empty && action > 1) ++action;
-    --action;
-    if (static_cast<unsigned>(action) > 4) return;
-    if (action == 0) {
-        selected_queue_slot_ = min(static_cast<int>(BaseCurrent->queue_size) + 1, position);
-        field_40B30_ = 0;
-        draw_queue(1);
-        if (prodPicker_.is_visible()) return;
-        if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1) == 0) {
-            production(position, 1);
-            NetDaemonNet.unlock_base(BaseIDCurrentSelected);
-        }
-    } else if (action == 1) {
-        if (!prodPicker_.is_visible()
-            && NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) return;
-        if (static_cast<int>(BaseCurrent->queue_size) < position) {
-            selected_queue_slot_ = max(selected_queue_slot_ - 1, 1);
-        } else {
-            for (int i = position; i < 9; ++i)
-                BaseCurrent->queue_production_id[i] = BaseCurrent->queue_production_id[i + 1];
-            --BaseCurrent->queue_size;
-            if (static_cast<int>(BaseCurrent->queue_size) < selected_queue_slot_)
-                selected_queue_slot_ = max(static_cast<int>(BaseCurrent->queue_size), 1);
+    if (row > 1) {
+        const int position = row - 2;
+        if (position == selected_queue_slot_) return;
+        if (!right) {
+            selected_queue_slot_ = min(BaseCurrent->queue_size + 1, position);
+            field_40B30_ = 0;
             draw_queue(1);
-        }
-        if (!prodPicker_.is_visible()) NetDaemonNet.unlock_base(BaseIDCurrentSelected);
-    } else if (action == 2) {
-        if (!prodPicker_.is_visible()
-            && NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) return;
-        if (X_pop("DELETEQUEUE", 0)) { BaseCurrent->queue_size = 0; draw_queue(1); }
-        if (!prodPicker_.is_visible()) NetDaemonNet.unlock_base(BaseIDCurrentSelected);
-    } else {
-        if (action == 4 && NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) return;
-        menu.init();
-        for (int i = 0; i < 8; ++i) menu.dialogs().item(PlayersData[faction].saved_queue_name[i], i);
-        const int picked = menu.exec(x, y, pop_expire);
-        compute_selected_base();
-        // Original cancellation exits directly, even after the load case's
-        // lock. Do not manufacture an unlock absent from that error path.
-        if (picked < 0 || (GameDataStateStorage.fields_.game_state_ & 0x800)) return;
-        if (action == 3) {
-            char *name = PlayersData[faction].saved_queue_name[picked];
-            if (X_pop_ask("TEMPNAME", 23, name, 0, 0) != 0) return;
-            if (!X_pop("OVERWRITETEMPLATE", 0)) return;
-            strcpy(name, ParseStrBuffer[0].str);
-            PlayersData[faction].saved_queue_size[picked] = BaseCurrent->queue_size;
-            for (int i = 0; i < 10; ++i) {
-                int entry = BaseCurrent->queue_production_id[i];
-                if (entry >= 0)
-                    entry += VehPrototypes[entry].unk_1 << 16;
-                PlayersData[faction].saved_queue_items[picked][i] = entry;
+            if (!prodPicker_.is_visible() || !prodPicker_.queue_change_blocked()) {
+                if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) return;
+                production(position, 1);
+                NetDaemonNet.unlock_base(BaseIDCurrentSelected);
             }
-            synch_template(faction);
-            NetDaemonNet.unlock_base(BaseIDCurrentSelected);
-            draw_queue(1);
-        } else {
-            for (int old_index = 0; old_index <= static_cast<int>(BaseCurrent->queue_size); ++old_index) {
-                const int entry = BaseCurrent->queue_production_id[old_index];
-                if (entry >= 0) --PlayersData[faction].proto_id_queue[entry];
+        } else if (!prodPicker_.is_visible()) {
+            const bool empty = position > BaseCurrent->queue_size;
+            if (!empty) {
+                const int entry = BaseCurrent->queue_production_id[position];
+                if (entry >= 0) parse_says(0, VehPrototypes[entry].veh_name, -1, -1);
+                else parse_say(0, Facility[-entry].name, -1, -1);
             }
-            BaseCurrent->queue_size = PlayersData[faction].saved_queue_size[picked];
-            for (int i = 0; i <= static_cast<int>(BaseCurrent->queue_size); ++i) {
-                const int stored = PlayersData[faction].saved_queue_items[picked][i];
-                int entry = stored;
-                if (stored >= 0) {
-                    entry = stored & 0xFFFF;
-                    const unsigned category = static_cast<unsigned>(stored) >> 16;
-                    if (VehPrototypes[entry].unk_1 != category
-                        || (VehPrototypes[entry].obsolete_factions & (1u << faction))) {
-                        for (int k = 0; k < 64; ++k) {
-                            const int candidate = faction * 64 + k;
-                            const VehPrototype &prototype = VehPrototypes[candidate];
-                            if ((prototype.flags & 1) && !(prototype.obsolete_factions & (1u << faction))
-                                && prototype.unk_1 == category) entry = candidate;
+            MainInterfaceGlobal.client_to_screen(&x, &y);
+            StringTemp[0] = 0;
+            strcat(StringTemp, "QUEUE");
+            char number[80];
+            _itoa(empty ? 2 : 1, number, 10);
+            strcat(StringTemp, number);
+            int choice = popm(StringTemp, x + 2, y, 0) + 1;
+            // QUEUE2 (empty slot) has no "remove item" entry.
+            if (empty && choice > 1) ++choice;
+            switch (choice) {
+            case 1:
+                selected_queue_slot_ = min(BaseCurrent->queue_size + 1, position);
+                field_40B30_ = 0;
+                draw_queue(1);
+                if (!prodPicker_.is_visible()) {
+                    if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) return;
+                    production(position, 1);
+                    NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+                }
+                break;
+            case 2:
+                if (!prodPicker_.is_visible()
+                    && NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) return;
+                delete_queue(position);
+                if (!prodPicker_.is_visible()) NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+                break;
+            case 3:
+                if (!prodPicker_.is_visible()
+                    && NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) return;
+                if (X_pop("DELETEQUEUE", 0)) {
+                    BaseCurrent->queue_size = 0;
+                    draw_queue(1);
+                }
+                if (!prodPicker_.is_visible()) NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+                break;
+            case 4: {
+                // Saving a template takes no base lock, yet still unlocks.
+                menu.init();
+                for (int i = 0; i < 8; ++i)
+                    menu.dialogs().item(PlayersData[faction].saved_queue_name[i], i);
+                const int picked = menu.exec(x, y, pop_expire);
+                compute_selected_base();
+                if (picked < 0 || (GameDataStateStorage.fields_.game_state_ & 0x800)) break;
+                char *name = PlayersData[faction].saved_queue_name[picked];
+                if (X_pop_ask("TEMPNAME", 23, name, 0, 0)) break;
+                if (!X_pop("OVERWRITETEMPLATE", 0)) break;
+                strcpy(name, ParseStrBuffer[0].str);
+                PlayersData[faction].saved_queue_size[picked] = BaseCurrent->queue_size;
+                for (i = 0; i < 10; ++i) {
+                    int entry = BaseCurrent->queue_production_id[i];
+                    if (entry >= 0) entry += VehPrototypes[entry].unk_1 << 16;
+                    PlayersData[faction].saved_queue_items[picked][i] = entry;
+                }
+                synch_template(faction);
+                NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+                draw_queue(1);
+                return;
+            }
+            case 5: {
+                // Original cancellation exits without unlocking the base.
+                if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) return;
+                menu.init();
+                for (int i = 0; i < 8; ++i)
+                    menu.dialogs().item(PlayersData[faction].saved_queue_name[i], i);
+                const int picked = menu.exec(x, y, pop_expire);
+                compute_selected_base();
+                if (picked < 0 || (GameDataStateStorage.fields_.game_state_ & 0x800)) break;
+                for (int old_index = 0; old_index <= BaseCurrent->queue_size; ++old_index) {
+                    const int entry = BaseCurrent->queue_production_id[old_index];
+                    if (entry >= 0) --PlayersData[faction].proto_id_queue[entry];
+                }
+                BaseCurrent->queue_size = PlayersData[faction].saved_queue_size[picked];
+                for (i = 0; i <= BaseCurrent->queue_size; ++i) {
+                    int entry = PlayersData[faction].saved_queue_items[picked][i];
+                    if (entry >= 0) {
+                        const int category = entry >> 16;
+                        entry &= 0xFFFF;
+                        if (VehPrototypes[entry].unk_1 != category
+                            || (VehPrototypes[entry].obsolete_factions & (1 << faction))) {
+                            for (int k = 0; k < 64; ++k) {
+                                if ((VehPrototypes[faction * 64 + k].flags & 1)
+                                    && !(VehPrototypes[faction * 64 + k].obsolete_factions & (1 << faction))
+                                    && VehPrototypes[faction * 64 + k].unk_1 == category)
+                                    entry = faction * 64 + k;
+                            }
                         }
                     }
+                    BaseCurrent->queue_production_id[i] = entry;
+                    if (entry >= 0) ++PlayersData[faction].proto_id_queue[entry];
                 }
-                BaseCurrent->queue_production_id[i] = entry;
-                if (entry >= 0) ++PlayersData[faction].proto_id_queue[entry];
+                NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+                draw_queue(1);
+                return;
             }
-            NetDaemonNet.unlock_base(BaseIDCurrentSelected);
-            draw_queue(1);
+            }
         }
     }
 }
@@ -513,19 +562,28 @@ void BaseWin::facilities_click(int facility, int, int, int) {
                 popp(ScriptPopupFile, "PRESSURERECYCLE", 0, "facblt_sm.pcx", 0);
                 return;
             }
+            // 0x40C3E0 leaves the loop straight for the FREERECYCLE block, which
+            // the image places after the bulk counting loop (0x40C4F7): the
+            // then-block is not inside the loop body, so the free test is a
+            // flag the compiler threads away.
+            int free_facility = 0;
             for (int bonus = 0; bonus < Players[faction].faction_bonus_count; ++bonus) {
                 if ((Players[faction].faction_bonus_id[bonus] == 2
                         || (Players[faction].faction_bonus_id[bonus] == 12
                             && has_tech(Facility[Players[faction].faction_bonus_val1[bonus]].preq_tech, faction)))
                     && facility == Players[faction].faction_bonus_val1[bonus]) {
-                    parse_say(1, Facility[facility].name, -1, -1);
-                    if (Players[faction].rule_flags & 0x80) {
-                        popp(ScriptPopupFile, "FREERECYCLE", 0, "alfacblt_sm.pcx", 0);
-                        return;
-                    }
-                    popp(ScriptPopupFile, "FREERECYCLE", 0, "facblt_sm.pcx", 0);
+                    free_facility = 1;
+                    break;
+                }
+            }
+            if (free_facility) {
+                parse_say(1, Facility[facility].name, -1, -1);
+                if (Players[faction].rule_flags & 0x80) {
+                    popp(ScriptPopupFile, "FREERECYCLE", 0, "alfacblt_sm.pcx", 0);
                     return;
                 }
+                popp(ScriptPopupFile, "FREERECYCLE", 0, "facblt_sm.pcx", 0);
+                return;
             }
             if (!NetDaemonNet.lock_base(BaseIDCurrentSelected, selection == 3 ? 2 : 0, -1, -1)) {
                 int proceeds;
@@ -597,6 +655,13 @@ void BaseWin::facilities_click(int facility, int, int, int) {
     }
 }
 
+// ALTERNATIVE (if the flag spelling does not move the block): replace the
+// flag with `goto free_recycle;` inside the loop and put the FREERECYCLE block
+// after the final `}` of the `if (selection)` body as
+//     return;
+// free_recycle:
+//     parse_say(1, Facility[facility].name, -1, -1); ... popp ...; return;
+
 
 // Original 40D250..40E35B, automatic cleanup of Sprite and two Fonts.
 // Integration dependencies: genuine RECTs flash_rect_a_/flash_rect_b_ at
@@ -612,175 +677,218 @@ void BaseWin::draw_flash(int redraw_mode) {
     Font title;
     const int vehicle_id = field_40B00_;
     if (vehicle_id < 0) return;
-    Buffer &canvas = static_cast<Buffer &>(MainInterfaceGlobal);
     RECT panel = queue_help_rect_;
-    RECT saved_clip = canvas.current_clip();
-    canvas.restore_clip();
-    BoxSpriteParams style = InterfaceBoxStyles[3];
+    RECT saved_clip = MainInterfaceGlobal.current_clip();
+    RECT area;
+    BoxSpriteParams style;
+    char number[80];
+    MainInterfaceGlobal.restore_clip();
+    style = InterfaceBoxStyles[3];
     style.edge3_ = 0;
     style.corner3_ = 0;
-    canvas.box_sprite(&panel, &style);
+    area = queue_help_rect_;
+    MainInterfaceGlobal.box_sprite(&area, &style);
     style.corner0_ = 0;
     style.edge0_ = 0;
     style.corner1_ = 0;
-    RECT area;
-    area.left = queue_outer_rect_.left - 5;
-    area.top = queue_outer_rect_.top + 5;
-    area.right = queue_outer_rect_.right - 5;
-    area.bottom = queue_outer_rect_.bottom + 5;
-    canvas.box_sprite(&area, &style);
+    area = queue_outer_rect_;
+    area.left -= 5;
+    area.top -= 5;
+    area.right += 5;
+    area.bottom += 5;
+    area.top += 10;
+    area.right -= 10;
+    MainInterfaceGlobal.box_sprite(&area, &style);
     UnionRect(&area, &flash_rect_a_, &flash_rect_b_);
-    area.left -= 3; area.top -= 3; area.right += 3; area.bottom += 3;
+    area.left -= 3;
+    area.top -= 3;
+    area.right += 3;
+    area.bottom += 3;
     scratch.create_blank(6, 6, WinFillColour);
     style = InterfaceBoxStyles[3];
     style.corner0_ = &scratch;
     style.edge2_ = 0;
     style.corner2_ = 0;
-    canvas.box_sprite(&area, &style);
-    canvas.set_clip(&panel);
-    area.left = panel.left + 3; area.top = panel.top + 3;
-    area.right = panel.right - 3; area.bottom = panel.bottom - 3;
-    canvas.box_sprite(&area, &InterfaceBoxStyles[0]);
-    area.left += 3; area.top += 3; area.right -= 3; area.bottom -= 3;
-    normal.init(DefaultFontFace, WinScreenWidth == 800 ? 10 : 12, 0);
+    MainInterfaceGlobal.box_sprite(&area, &style);
+    MainInterfaceGlobal.set_clip(&panel);
+    area.left = queue_help_rect_.left + 3;
+    area.top = queue_help_rect_.top + 3;
+    area.right = queue_help_rect_.right - 3;
+    area.bottom = queue_help_rect_.bottom - 3;
+    MainInterfaceGlobal.box_sprite(&area, &InterfaceBoxStyles[0]);
+    area.left += 3;
+    area.right -= 3;
+    area.top += 3;
+    area.bottom -= 3;
+    if (WinScreenWidth == 800) normal.init(DefaultFontFace, 10, 0);
+    else normal.init(DefaultFontFace, 12, 0);
     title.init(DefaultFontFace, 12, 1);
     MapWinCaptionDivisor = 100;
     MapWinCaptionScale = (area.right - area.left) * 3 / 4;
-    const int width = MapWinCaptionScale;
-    const int height = MapWinCaptionScale * 75 / 100;
-    veh_draw(&canvas, vehicle_id, (area.left + area.right) / 2 - width / 2,
-             area.top + 40 - height / 2, 1, 8, 0);
+    veh_draw(&MainInterfaceGlobal, vehicle_id,
+             (area.left + area.right) / 2 - MapWinCaptionScale / 2,
+             area.top + 40 - MapWinCaptionScale * 75 / 100 / 2, 1, 8, 0);
     MapWinCaptionScale = -1;
     MapWinCaptionDivisor = -1;
     area.top += 65;
-    const Veh &vehicle = Vehs[vehicle_id];
-    const int prototype_id = vehicle.proto_id;
-    const VehPrototype &prototype = VehPrototypes[prototype_id];
-    strcpy(StringTemp, prototype.veh_name);
+    StringTemp[0] = 0;
+    strcat(StringTemp, VehPrototypes[Vehs[vehicle_id].proto_id].veh_name);
     CharUpperA(StringTemp);
-    canvas.set_text_color(TextColourTable[82], TextColourTable[83], 1, 1);
-    canvas.set_font(&title, 0, 0, 0);
-    area.top = canvas.wrap_cent(StringTemp, &area) + 2;
-    area.left += 2; area.right -= 2; area.bottom -= 2;
-    area.bottom -= normal.line_advance();
-    canvas.set_font(&normal, 0, 0, 0);
-    canvas.set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
+    MainInterfaceGlobal.set_text_color(TextColourTable[82], TextColourTable[83], 1, 1);
+    MainInterfaceGlobal.set_font(&title, 0, 0, 0);
+    area.top = MainInterfaceGlobal.wrap_cent(StringTemp, &area);
+    area.left += 2;
+    area.top += 2;
+    area.right -= 2;
+    area.bottom -= 2;
+    area.bottom -= font_line_advance(normal);
+    MainInterfaceGlobal.set_font(&normal, 0, 0, 0);
+    MainInterfaceGlobal.set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
     const int x = area.left;
-    const int text_width = area.right - area.left;
-    const int line = normal.line_advance();
     int y = area.top;
-    char number[16];
-    strcpy(StringTemp, "(");
-    say_stats_3(StringTemp, prototype_id);
+    const int line = font_line_advance(normal);
+    StringTemp[0] = 0;
+    strcat(StringTemp, "(");
+    say_stats_3(StringTemp, Vehs[vehicle_id].proto_id);
     for (int ability = 0; ability < 29; ++ability) {
-        if (has_abil(prototype_id, 1 << ability)
-            && strlen(StringTable.get(Ability[ability].abbreviation)) != 0) {
+        if (has_abil(Vehs[vehicle_id].proto_id, 1 << ability)
+            && strlen(StringTable.get(Ability[ability].abbreviation))) {
             strcat(StringTemp, ", ");
             strcat(StringTemp, StringTable.get(Ability[ability].abbreviation));
         }
     }
     strcat(StringTemp, ")");
-    y = canvas.wrap(StringTemp, x, y, text_width);
-    if ((vehicle.faction_id != 0 && prototype.plan < 8)
-        || (prototype.plan == 11 && morale_veh(vehicle_id, 1, 0) > 1)) {
+    y = MainInterfaceGlobal.wrap_cent(StringTemp, x, y, area.right - area.left);
+    if ((Vehs[vehicle_id].faction_id && VehPrototypes[Vehs[vehicle_id].proto_id].plan < 8)
+        || (VehPrototypes[Vehs[vehicle_id].proto_id].plan == 11
+            && morale_veh(vehicle_id, 1, 0) > 1)) {
         StringTemp[0] = 0;
         say_morale(vehicle_id, 0);
-        if (vehicle.faction_id != ConsoleGlobal.faction_id_ && !(GameDataStateStorage.fields_.game_state_ & 0x80))
-            y = canvas.wrap(StringTemp, x, y, text_width);
-        else
-            y = canvas.wrap_cent(StringTemp, x, y, text_width);
-    }
-    if (vehicle.faction_id == ConsoleGlobal.faction_id_ || (GameDataStateStorage.fields_.game_state_ & 0x80)) {
-        strcpy(StringTemp, vehicle.home_base_id < 0 ? label_get(0x308 / 4)
-               : Bases[vehicle.home_base_id].name_string);
-        y = canvas.wrap_cent(StringTemp, x, y, text_width);
-        if (vehicle.faction_id == ConsoleGlobal.faction_id_) {
-            const int remaining = range(speed(vehicle_id, 0) - vehicle.moves_expended, 0, 999);
-            if (remaining == 0) {
-                strcpy(StringTemp, label_get(0x9E4 / 4));
-                canvas.set_text_color(0xF9, -1, 1, 1);
-            } else {
-                strcpy(StringTemp, label_get(0x1C / 4));
-                strcat(StringTemp, ": ");
-                // The original calls speed again in the positive branch.
-                const int moves = range(speed(vehicle_id, 0) - vehicle.moves_expended, 0, 999);
-                const int divisor = Rules.move_rate_roads;
-                strcat(StringTemp, _itoa(moves / divisor, number, 10));
-                if (moves % divisor) {
-                    strcat(StringTemp, " ");
-                    strcat(StringTemp, _itoa(moves % divisor, number, 10));
-                    strcat(StringTemp, "/");
-                    strcat(StringTemp, _itoa(Rules.move_rate_roads, number, 10));
-                }
-            }
-            y = canvas.wrap_cent(StringTemp, x, y, text_width);
-        }
-        const int missile = Chassis[prototype.chassis_id].missile;
-        if (missile) {
-            strcpy(StringTemp, label_get(0x30C / 4));
-            strcat(StringTemp, ": ");
-            const int next_x = canvas.write_l(StringTemp, x, y, strlen(StringTemp));
-            StringTemp[0] = 0;
-            const int remaining = range(speed(vehicle_id, 0) - vehicle.moves_expended, 0, 999);
-            const int moves = speed(vehicle_id, 0) * (missile + (remaining == 0)
-                                                     - vehicle.terraforming_turns)
-                              - vehicle.moves_expended;
-            strcat(StringTemp, _itoa(moves / Rules.move_rate_roads, number, 10));
-            strcat(StringTemp, "/");
-            strcat(StringTemp, _itoa(speed(vehicle_id, 0) * missile / Rules.move_rate_roads,
-                                    number, 10));
-            canvas.set_text_color(0xFA, -1, 1, 1);
-            if (vehicle.terraforming_turns != 0 && vehicle.terraforming_turns >= missile / 2)
-                canvas.set_text_color(0xFB, -1, 1, 1);
-            if (missile == 1
-                && range(speed(vehicle_id, 0) - vehicle.moves_expended, 0, 999) <= speed(vehicle_id, 0) / 2)
-                canvas.set_text_color(0xFB, -1, 1, 1);
-            if (action_home(vehicle_id, -1)) canvas.set_text_color(0xF9, -1, 1, 1);
-            canvas.write_l(StringTemp, next_x, y, strlen(StringTemp));
-            y += line;
-        }
-        canvas.set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
-        if (veh_cargo(vehicle_id)) {
-            strcpy(StringTemp, label_get(0x360 / 4));
-            strcat(StringTemp, ": ");
-            strcat(StringTemp, _itoa(veh_cargo(vehicle_id) - stack_veh(vehicle_id, 0), number, 10));
-            strcat(StringTemp, "/");
-            strcat(StringTemp, _itoa(veh_cargo(vehicle_id), number, 10));
-            canvas.write_l(StringTemp, x, y, strlen(StringTemp));
-            y += line;
+        if (Vehs[vehicle_id].faction_id != ConsoleGlobal.faction_id_
+            && !(GameDataStateStorage.fields_.game_state_ & 0x80)) {
+            y = MainInterfaceGlobal.wrap_cent(StringTemp, x, y, area.right - area.left);
+        } else {
+            y = MainInterfaceGlobal.wrap(StringTemp, x, y, area.right - area.left);
         }
     }
-    if (vehicle.dmg_incurred) {
-        strcpy(StringTemp, label_get(0x628 / 4));
-        strcat(StringTemp, ": ");
-        const int next_x = canvas.write_l(StringTemp, x, y, strlen(StringTemp));
-        canvas.set_text_color(0xFA, -1, 1, 1);
-        const int maximum = prototype.plan == 12 ? 1 : range(prototype.reactor_id, 1, 100) * 10;
-        if (vehicle.dmg_incurred >= maximum / 3) canvas.set_text_color(0xFB, -1, 1, 1);
-        if (vehicle.dmg_incurred >= maximum * 2 / 3) canvas.set_text_color(0xF9, -1, 1, 1);
+    if (Vehs[vehicle_id].faction_id == ConsoleGlobal.faction_id_
+        || (GameDataStateStorage.fields_.game_state_ & 0x80)) {
         StringTemp[0] = 0;
-        const int remaining = range(maximum - vehicle.dmg_incurred, 0, 9999);
-        strcat(StringTemp, _itoa((maximum - remaining) * 100 / maximum, number, 10));
+        strcat(StringTemp, Vehs[vehicle_id].home_base_id < 0 ? label_get(0x308 / 4)
+               : Bases[Vehs[vehicle_id].home_base_id].name_string);
+        y = MainInterfaceGlobal.wrap(StringTemp, x, y, area.right - area.left);
+        if (Vehs[vehicle_id].faction_id == ConsoleGlobal.faction_id_) {
+            if (veh_moves(vehicle_id) == 0) {
+                StringTemp[0] = 0;
+                strcat(StringTemp, label_get(0x9E4 / 4));
+                MainInterfaceGlobal.set_text_color(0xF9, -1, 1, 1);
+                y = MainInterfaceGlobal.wrap(StringTemp, x, y, area.right - area.left);
+            } else {
+                StringTemp[0] = 0;
+                strcat(StringTemp, label_get(0x1C / 4));
+                strcat(StringTemp, ": ");
+                const int moves = veh_moves(vehicle_id);
+                const int whole = moves / Rules.move_rate_roads;
+                const int fraction = moves % Rules.move_rate_roads;
+                _itoa(whole, number, 10);
+                strcat(StringTemp, number);
+                if (fraction) {
+                    strcat(StringTemp, " ");
+                    _itoa(fraction, number, 10);
+                    strcat(StringTemp, number);
+                    strcat(StringTemp, "/");
+                    _itoa(Rules.move_rate_roads, number, 10);
+                    strcat(StringTemp, number);
+                }
+                y = MainInterfaceGlobal.wrap(StringTemp, x, y, area.right - area.left);
+            }
+        }
+        if (Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].missile) {
+            StringTemp[0] = 0;
+            strcat(StringTemp, label_get(0x30C / 4));
+            strcat(StringTemp, ": ");
+            const int next_x = MainInterfaceGlobal.write_l(StringTemp, x, y);
+            StringTemp[0] = 0;
+            const int remaining = veh_moves(vehicle_id);
+            _itoa((speed(vehicle_id, 0)
+                       * (Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].missile
+                          + (remaining == 0) - Vehs[vehicle_id].terraforming_turns)
+                   - Vehs[vehicle_id].moves_expended) / Rules.move_rate_roads,
+                  number, 10);
+            strcat(StringTemp, number);
+            strcat(StringTemp, "/");
+            _itoa(speed(vehicle_id, 0)
+                      * Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].missile
+                      / Rules.move_rate_roads,
+                  number, 10);
+            strcat(StringTemp, number);
+            MainInterfaceGlobal.set_text_color(0xFA, -1, 1, 1);
+            if (Vehs[vehicle_id].terraforming_turns
+                && Vehs[vehicle_id].terraforming_turns
+                       >= Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].missile / 2)
+                MainInterfaceGlobal.set_text_color(0xFB, -1, 1, 1);
+            if (Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].missile == 1
+                && veh_moves(vehicle_id) <= speed(vehicle_id, 0) / 2)
+                MainInterfaceGlobal.set_text_color(0xFB, -1, 1, 1);
+            if (action_home(vehicle_id, -1))
+                MainInterfaceGlobal.set_text_color(0xF9, -1, 1, 1);
+            MainInterfaceGlobal.write_l(StringTemp, next_x, y);
+            y += line;
+        }
+        MainInterfaceGlobal.set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
+        if (veh_cargo(vehicle_id)) {
+            StringTemp[0] = 0;
+            strcat(StringTemp, label_get(0x360 / 4));
+            strcat(StringTemp, ": ");
+            const int stacked = stack_veh(vehicle_id, 0);
+            _itoa(veh_cargo(vehicle_id) - stacked, number, 10);
+            strcat(StringTemp, number);
+            strcat(StringTemp, "/");
+            _itoa(veh_cargo(vehicle_id), number, 10);
+            strcat(StringTemp, number);
+            MainInterfaceGlobal.write_l(StringTemp, x, y);
+            y += line;
+        }
+    }
+    if (Vehs[vehicle_id].dmg_incurred) {
+        StringTemp[0] = 0;
+        strcat(StringTemp, label_get(0x628 / 4));
+        strcat(StringTemp, ": ");
+        const int next_x = MainInterfaceGlobal.write_l(StringTemp, x, y);
+        MainInterfaceGlobal.set_text_color(0xFA, -1, 1, 1);
+        if (Vehs[vehicle_id].dmg_incurred >= proto_power(vehicle_id) / 3)
+            MainInterfaceGlobal.set_text_color(0xFB, -1, 1, 1);
+        if (Vehs[vehicle_id].dmg_incurred >= proto_power(vehicle_id) * 2 / 3)
+            MainInterfaceGlobal.set_text_color(0xF9, -1, 1, 1);
+        StringTemp[0] = 0;
+        _itoa((proto_power(vehicle_id)
+               - range(proto_power(vehicle_id) - Vehs[vehicle_id].dmg_incurred, 0, 9999))
+                  * 100 / proto_power(vehicle_id),
+              number, 10);
+        strcat(StringTemp, number);
         strcat(StringTemp, "%");
-        canvas.write_l(StringTemp, next_x, y, strlen(StringTemp));
-        canvas.set_text_color(MessageWinTextColor, MessageWinTextBackground, 1, 1);
+        MainInterfaceGlobal.write_l(StringTemp, next_x, y);
+        MainInterfaceGlobal.set_text_color(MessageWinTextColor, MessageWinTextBackground, 1, 1);
         y += line;
     }
-    canvas.set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
-    if (vehicle.faction_id == ConsoleGlobal.faction_id_ || (GameDataStateStorage.fields_.game_state_ & 0x80)
-        || (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[vehicle.faction_id] & 1)) {
+    MainInterfaceGlobal.set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
+    if (Vehs[vehicle_id].faction_id == ConsoleGlobal.faction_id_
+        || (GameDataStateStorage.fields_.game_state_ & 0x80)
+        || (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[Vehs[vehicle_id].faction_id] & 1)) {
         StringTemp[0] = 0;
         say_orders(vehicle_id);
-        y = canvas.wrap_cent(StringTemp, x, y, text_width);
-        if (vehicle.order >= 4 && vehicle.order < 24) {
-            const int turns = action_terraform(vehicle_id, vehicle.order - 4, 0);
-            strcpy(StringTemp, "[");
+        y = MainInterfaceGlobal.wrap(StringTemp, x, y, area.right - area.left);
+        if (Vehs[vehicle_id].order >= 4 && Vehs[vehicle_id].order < 24) {
+            const int turns = action_terraform(vehicle_id, Vehs[vehicle_id].order - 4, 0);
+            StringTemp[0] = 0;
+            strcat(StringTemp, "[");
             strcat(StringTemp, label_get(0x71C / 4));
             strcat(StringTemp, ": ");
-            strcat(StringTemp, _itoa(turns + 1, number, 10));
+            _itoa(turns + 1, number, 10);
+            strcat(StringTemp, number);
             strcat(StringTemp, "]");
-            canvas.set_text_color(0xFB, -1, 1, 1);
-            canvas.write_l(StringTemp, x, y, strlen(StringTemp));
+            MainInterfaceGlobal.set_text_color(0xFB, -1, 1, 1);
+            MainInterfaceGlobal.write_l(StringTemp, x, y);
         }
     }
     if (redraw_mode) MainInterfaceGlobal.update(&queue_help_rect_, 0);
@@ -811,7 +919,10 @@ void BaseWin::base_editor() {
     menu.add_item(6, label_get(0xD5C / 4));
     menu.add_item(7, label_get(0xD60 / 4));
     menu.add_separator(99);
-    menu.add_item(8, label_get((BaseCurrent->event & 0x8000 ? 0xE04 : 0xE00) / 4));
+    // 0x41C906..0x41C937: each arm loads its own Labels slot; one get call.
+    menu.add_item(8, StringTable.get(BaseCurrent->event & 0x8000
+                                         ? Labels.strings_ptr[0xE04 / 4]
+                                         : Labels.strings_ptr[0xE00 / 4]));
     menu.add_separator(99);
     menu.add_item(3, label_get(0xD48 / 4));
     menu.add_item(4, label_get(0xD4C / 4));
@@ -824,22 +935,20 @@ void BaseWin::base_editor() {
     menu.add_item(9, label_get(0xE18 / 4));
     menu.show(x, y, pop_expire);
     const int slot = menu.get_selected();
-    const int action = slot < 64 ? menu.item_id(slot) : -1;
-    if (action < 0) return;
+    int action;
+    // 0x41CA94..0x41CAA5: slot >= 64 and a negative id both branch straight
+    // to the first teardown; no -1 is materialized.
+    if (slot >= 64 || (action = menu.item_id(slot)) < 0) return;
     switch (action) {
     case 1:
+        // Table entries 0/1 are separate blocks (0x41CB2E, 0x41CB3F); the
+        // image never re-tests action. The store at 0x41CB4E is tail-merged.
+        if (BaseCurrent->population_size < 99) ++BaseCurrent->population_size;
+        goto refresh_population;
     case 2:
-        if (action == 1) {
-            if (BaseCurrent->population_size < 99) ++BaseCurrent->population_size;
-        } else if (BaseCurrent->population_size > 1) {
-            --BaseCurrent->population_size;
-        }
-        if (is_visible()) {
-            set_base(focusedBaseID_);
-            base_compute(1);
-            redraw();
-            MainInterfaceGlobal.redraw();
-        }
+        if (BaseCurrent->population_size > 1) --BaseCurrent->population_size;
+    refresh_population:
+        recompute(0);
         break;
     case 3: base_editor_fac(); break;
     case 4: base_editor_proj(); break;
@@ -899,14 +1008,14 @@ void BaseWin::base_editor() {
         redraw();
         break;
     case 13: {
-        popup.start(PopupStartCaption, "CHANGEOWNER", -1, 0, 0x40, 0);
+        popup.start("CHANGEOWNER", 0x40);
         for (int item = 1; item < 8; ++item) {
             GenderDefault = Players[item].noun_gender;
             PluralityDefault = Players[item].is_noun_plural;
-            popup.dialogs().item(Players[item].noun_faction, item);
+            popup.item(Players[item].noun_faction, item);
         }
         popup.set_value(BaseCurrent->faction_id_current);
-        const int faction = popup.exec(0, 0);
+        const int faction = popup.exec();
         if (faction > 0) {
             owner_set(BaseCurrent->x, BaseCurrent->y, faction);
             BaseCurrent->faction_id_former = static_cast<uint8_t>(faction);
@@ -923,23 +1032,25 @@ void BaseWin::base_editor() {
         break;
     }
     case 14: {
-        popup.start(PopupStartCaption, "CHANGEFORMER", -1, 0, 0x40, 0);
+        popup.start("CHANGEFORMER", 0x40);
         for (int item = 1; item < 8; ++item) {
             GenderDefault = Players[item].noun_gender;
             PluralityDefault = Players[item].is_noun_plural;
             StringTemp[0] = 0;
             parse_says(0, Players[item].noun_faction, -1, -1);
-            popup.dialogs().item(StringTemp, item);
+            popup.item(StringTemp, item);
         }
         popup.set_value(BaseCurrent->faction_id_former);
-        const int faction = popup.exec(0, 0);
+        const int faction = popup.exec();
         if (faction > 0) {
             if (BaseCurrent->faction_id_former != faction) {
                 // This write precedes the cancellable prompt and survives cancellation.
                 if (BaseCurrent->assimilation_turns_left == 0)
                     BaseCurrent->assimilation_turns_left = 20;
+                // 0x41D097: cancellation jumps to the common end (0x41D0E3),
+                // not to a separate return teardown.
                 if (X_pop_ask_number("CHANGECONQUEST", BaseCurrent->assimilation_turns_left, 0))
-                    return;
+                    break;
                 BaseCurrent->assimilation_turns_left = static_cast<uint8_t>(ParseNumTable[0]);
             } else {
                 BaseCurrent->assimilation_turns_left = 0;
@@ -1028,6 +1139,7 @@ inline void BaseWin::exit() {
         || vertical >= ConsoleGlobal.field_1DDD4_ + ConsoleGlobal.field_1DDCC_ + ConsoleGlobal.field_1DDA4_ - 2)
         ConsoleGlobal.center();
 }
+
 
 // ORIGINAL: 0x0041A620 ?base_killed@BaseWin@@QAEXH@Z 0x0041A620-0x0041A79D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/recovered/units/0041a620.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
@@ -1662,289 +1774,6 @@ static inline int production_write_cent(Target &buffer, Font *font, char *text,
     return buffer.write_cent_l(font, text, area, static_cast<int>(strlen(text)));
 }
 
-static int production_signed_bits(uint32_t bits) {
-    return bits <= 0x7FFFFFFFu ? static_cast<int>(bits)
-        : -1 - static_cast<int>(0xFFFFFFFFu - bits);
-}
-static int production_add(int left, int right) {
-    return production_signed_bits(static_cast<uint32_t>(left)
-                                  + static_cast<uint32_t>(right));
-}
-static int production_sub(int left, int right) {
-    return production_signed_bits(static_cast<uint32_t>(left)
-                                  - static_cast<uint32_t>(right));
-}
-static int production_mul(int left, int right) {
-    return production_signed_bits(static_cast<uint32_t>(left)
-                                  * static_cast<uint32_t>(right));
-}
-
-static void set_production_parse_name(int slot, int production_id) {
-    if (production_id >= 0) {
-        parse_says(slot, VehPrototypes[production_id].veh_name, -1, -1);
-    } else {
-        parse_say(slot,
-                  Facility[-production_id].name,
-                  -1, -1);
-    }
-}
-
-// Selected production IDs are signed picker results. This is the image's
-// exact 0x417944 mapping; keep 9999 out of this transform because it branches
-// to 0x417EDD first.
-static int normalize_production_selection(int selected_id) {
-    return selected_id >= 0x200 ? 0x200 - selected_id : selected_id;
-}
-
-// Called at native 0x417930 for the ordinary action (field_A778_ == 0,
-// whose decremented switch index is 0xFFFFFFFF and fails the unsigned table
-// range check). `normalized_id` is the already-normalized 0x417944 result;
-// callers retain the separate 0x417EDD action-9999 path.
-static bool apply_retool_cost_prompt(BaseWin &window, Popup &popup,
-                                     int normalized_id, int faction_snapshot,
-                                     int &queue_slot, int a1) {
-    if (a1 != 0 || normalized_id != BaseCurrent->queue_production_id[0]) {
-        BaseCurrent->state |= 0x80000000u;  // Base+0x30, native 0x417961
-        if (BaseCurrent->governor & 0x40000000u)
-            BaseCurrent->governor &= 0x3FFFFFFFu; // native AND at 0x41797D
-    }
-    if (a1 != 0) return false;  // native 0x417985 -> 0x417C95
-
-    // 0x417992..0x4179C6: reserve must be nonzero and selected/current
-    // retool categories must differ. Equality copies the saved reserve to
-    // minerals_accumulated at native 0x417C8C instead of opening a popup.
-    if (BaseCurrent->minerals_accumulated_2 == 0) return false;
-    const int first_base_id = BaseIDCurrentSelected;
-    const int selected_category = base_making(normalized_id, first_base_id);
-    const int current_displayed_id = window.displayed_production_id();
-    const int second_base_id = BaseIDCurrentSelected;
-    const int displayed_category = base_making(current_displayed_id, second_base_id);
-    if (selected_category == displayed_category) {
-        BaseCurrent->minerals_accumulated =
-            BaseCurrent->minerals_accumulated_2;
-        return false;
-    }
-
-    if (PlayersData[faction_snapshot].diff_level <= 1
-        || Rules.retool_pct_pen_prod_chg == 0
-        || BaseCurrent->minerals_accumulated_2
-               <= Rules.retool_exemption
-        || window.displayed_production_id() == -0x45) {
-        BaseCurrent->minerals_accumulated =
-            BaseCurrent->minerals_accumulated_2;
-        return false;
-    }
-
-    // Native 0x417A23..0x417A4C requires the live current-production and
-    // displayed-production retool categories to agree; unlike the earlier
-    // equality case, failure skips the prompt without copying reserve.
-    // Native 0x417A14 saves this displayed ID before the first callback.
-    const int second_displayed_id = window.displayed_production_id();
-    const int current_queue_id = BaseCurrent->queue_production_id[0];
-    const int queue_base_id = BaseIDCurrentSelected;
-    const int current_category = base_making(current_queue_id, queue_base_id);
-    const int displayed_base_id = BaseIDCurrentSelected;
-    const int second_displayed_category =
-        base_making(second_displayed_id, displayed_base_id);
-    if (current_category != second_displayed_category) {
-        return false;
-    }
-
-    set_production_parse_name(0, BaseCurrent->queue_production_id[0]);
-    set_production_parse_name(1, normalized_id);
-
-    const int exemption = Rules.retool_exemption;
-    const int percent = Rules.retool_pct_pen_prod_chg;
-    const int reserve = BaseCurrent->minerals_accumulated_2;
-    const int proposed_reserve = production_add(
-        exemption, production_mul(production_sub(reserve, exemption),
-                                  production_sub(100, percent)) / 100);
-
-    parse_num(0, percent);
-    parse_num(1, Rules.retool_exemption);
-    parse_num(2, production_sub(BaseCurrent->minerals_accumulated, proposed_reserve));
-
-    // Image literals at 0x682BC0 and 0x682BD0 were read from the pinned PE:
-    // "RETOOLPENALTY" and "A". The byte strings are source literals here,
-    // not fixed-address executable calls.
-    StringTemp[0] = 0;
-    strcat(StringTemp, "RETOOLPENALTY");
-    char strictness_text[0x50];
-    _itoa(Rules.retool_strictness, strictness_text, 10);
-    strcat(StringTemp, strictness_text);
-    if (Rules.retool_exemption != 0) strcat(StringTemp, "A");
-
-    popup.start(PopupStartCaption, StringTemp, -1, 0, 0, 0);
-    if (BaseCurrent->queue_size == 0)
-        popup.dialogs().item(label_get(0xB0C / 4), 2);
-    popup.dialogs().item(label_get(0xB10 / 4), 3);
-    const int result = popup.exec();
-
-    // Native table 0x418DDC has only result 0..3; unsigned-above falls to
-    // 0x417C95 without applying a mutation.
-    // Native table index 0 goes to 0x4181FD: unlock/visibility restoration
-    // and method teardown, without logging or applying the ordinary tail.
-    if (result == 0) {
-        return true;
-    } else if (result == 1) {
-        BaseCurrent->minerals_accumulated = proposed_reserve;
-    } else if (result == 2) {
-        int slot;
-        for (slot = 8; slot >= 1; --slot)
-            BaseCurrent->queue_production_id[slot + 1] =
-                BaseCurrent->queue_production_id[slot];
-        uint32_t count = BaseCurrent->queue_size + 1;
-        if (static_cast<int32_t>(count) < 0) count = 0;
-        else if (count > 9) count = 9;
-        BaseCurrent->queue_size = count;
-        queue_slot = 1;
-        BaseCurrent->queue_production_id[1] = normalized_id;
-    } else if (result == 3) {
-        uint32_t count = BaseCurrent->queue_size;
-        if (static_cast<int32_t>(count) < 9) {
-            ++count;
-            BaseCurrent->queue_size = count;
-        }
-        queue_slot = static_cast<int32_t>(count);
-        BaseCurrent->queue_production_id[queue_slot] = normalized_id;
-    }
-    return false;
-}
-
-// Caller edge before this fragment: selected value 9999 branches to 0x417EDD;
-// otherwise normalize_production_selection() supplies the ID used below.
-// Native edge following all result arms: 0x417C95 logs the currently chosen
-// slot and current queue item. If the chosen slot is zero, 0x417CC0 writes the
-// selected ID to queue_production_id[0] (the production-ID-last value is not
-// this native field). This source-level continuation completes those edges:
-static bool finish_ordinary_selection(BaseWin &window, Popup &popup,
-                                      int selected_id,
-                                      int faction_snapshot,
-                                      int &queue_slot, int a1) {
-    const int normalized_id = normalize_production_selection(selected_id);
-    if (apply_retool_cost_prompt(window, popup, normalized_id,
-                                 faction_snapshot, queue_slot, a1))
-        return true;
-
-    log_say("BASE: changed production", BaseIDCurrentSelected, queue_slot,
-            BaseCurrent->queue_production_id[queue_slot]);
-    if (queue_slot != 0) return false; // native 0x417CB8 -> 0x417D9B
-    BaseCurrent->queue_production_id[0] = normalized_id;
-
-    // The native UI reaction is based on the newly written live queue[0].
-    // The callback can change BaseCurrent, so both drawing and subsequent
-    // selection are intentionally sequenced around the live reloads.
-    int live_queue_id = BaseCurrent->queue_production_id[0];
-    if (live_queue_id <= -0x46) wave_it(0x24); // native 0x417CD1/4455F0
-    draw_radius(BaseCurrent->x, BaseCurrent->y, 2, 2); // native 0x417CF3
-    live_queue_id = BaseCurrent->queue_production_id[0];
-
-    // Native 0x417D01 gate reads queue[0] again after draw_radius. The
-    // secondary plan byte is VehPrototype+0x2A, not Base+0x0A.
-    const bool update_stack = live_queue_id <= -0x46
-        || (live_queue_id > 0x40
-            && (VehPrototypes[live_queue_id].flags & 4u) == 0);
-    if (update_stack) {
-        int vehicle_id = veh_at(BaseCurrent->x, BaseCurrent->y);
-        while (vehicle_id >= 0) {
-            Veh &vehicle = Vehs[vehicle_id];
-            if (vehicle.faction_id == BaseCurrent->faction_id_current) {
-                const int proto_id = vehicle.proto_id; // native Veh+0x0A
-                const uint8_t plan = VehPrototypes[proto_id].plan;
-                if (plan == 12 || plan == 10) {
-                    vehicle.year_end_lurking = 0;
-                    vehicle.state &= ~VSTATE_UNK_200;
-                    if (IsMultiplayerNet) synch_veh(vehicle_id);
-                }
-            }
-            vehicle_id = vehicle.next_veh_id_stack;
-        }
-    }
-
-    // Native caller tests ProdPicker::is_visible() only after this complete
-    // tail: nonzero loops directly to 0x417751, zero takes 0x41850C success.
-    // Keep that callback-sensitive test in the owning method.
-    return false;
-}
-
-// Native success label 0x41850C..0x41870B. `old_queue_id` is the queue item
-// copied at entry for the selected row, and faction_snapshot is the entry
-// Base faction used by both native visibility walks. All Base/faction/count
-// reads below are reloaded after the picker and any Popup callbacks.
-static void finish_production_success(BaseWin &window, int a1, int a2,
-                                      int old_queue_id,
-                                      int faction_snapshot) {
-    if (a2 == 0)
-        NetDaemonNet.unlock_base(BaseIDCurrentSelected);
-
-    Base *live_base = BaseCurrent;
-    const int last_queue_slot = static_cast<int>(live_base->queue_size);
-    for (int slot = 0; slot <= last_queue_slot; ++slot) {
-        const int id = live_base->queue_production_id[slot];
-        if (id >= 0) {
-            uint8_t &queued = PlayersData[faction_snapshot].proto_id_queue[id];
-            queued = static_cast<uint8_t>(queued + 1);
-        }
-    }
-
-    live_base = BaseCurrent;
-    const int new_queue_id = live_base->queue_production_id[0];
-    if (IsMultiplayerNet && a1 == 0 && new_queue_id != old_queue_id) {
-        const int live_faction = live_base->faction_id_current;
-    int new_id_count = 0;
-    int old_id_count = 0;
-    const int focused_faction = Bases[window.focused_base_id()].faction_id_current;
-    if (focused_faction == live_faction) {
-        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
-            if (base_id == BaseIDCurrentSelected) continue;
-            const int queued_id = Bases[base_id].queue_production_id[0];
-            if (queued_id == new_queue_id) ++new_id_count;
-            if (queued_id == old_queue_id) ++old_id_count;
-        }
-    }
-
-        // 0x4185A4..F9 compares the focused Base faction against the live
-        // BaseCurrent faction once; only if equal does it count queue leaders
-        // across all Bases except BaseIDCurrentSelected. The native loop does
-        // not read each candidate's faction byte. The exact signed predicates
-        // and payload shapes below follow 0x418604..0x418662.
-        const bool old_is_facility = old_queue_id <= -0x46;
-        const bool new_is_facility = new_queue_id <= -0x46;
-        if (old_is_facility && new_is_facility) {
-            if (old_id_count != 0 && new_id_count == 0) {
-                message_data(0x4D00, 0, -0x46 - new_queue_id, 0, 0, 0);
-            } else if (old_id_count == 0 && new_id_count != 0) {
-                message_data(0x4D00, 0, -0x46 - old_queue_id, 1, 0, 0);
-            } else if (old_id_count == 0 && new_id_count == 0) {
-                message_data(0x4D00, 0, -0x46 - new_queue_id, 2,
-                             -0x46 - old_queue_id, new_id_count);
-            }
-        } else if (old_is_facility && old_id_count == 0) {
-            message_data(0x4D00, 0, -0x46 - old_queue_id, 1, 0, 0);
-        } else if (new_is_facility && new_id_count == 0) {
-            message_data(0x4D00, 0, -0x46 - new_queue_id, 0, 0, 0);
-        }
-    }
-
-    base_compute(1);
-    window.redraw(); // native virtual slot +0xF8 on this BaseWin
-    MainInterfaceGlobal.GraphicWin::redraw();
-
-    draw_radius(BaseCurrent->x, BaseCurrent->y, 1, 2);
-    live_base = BaseCurrent; // native reload after draw_radius callback
-    const int x = live_base->x;
-    const int y = live_base->y;
-    const int cursor_history_index = ConsoleGlobal.cursor_history_index_;
-    if (ConsoleGlobal.cursor_history_x_[cursor_history_index] == x
-        && ConsoleGlobal.cursor_history_y_[cursor_history_index] == y)
-        ConsoleGlobal.update_data(0);
-
-    if (a1 == 0 && BaseCurrent->queue_production_id[0] == -0x65) {
-        interlude(10, 0, 1, 0);
-        GameDataStateStorage.fields_.game_state_ |= 0x800u;
-    }
-}
-
 // Production selection uses the real picker, queue, retool dialog and UI owners.
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00417040 ?production@BaseWin@@QAEXHH@Z 0x00417040-0x00418DBD;0x00651BB0-0x0065221C
@@ -1955,205 +1784,283 @@ void BaseWin::production(int a1, int a2) {
     Popup popup_secondary;
     Popup popup_tertiary;
     GraphicWin picker_preview;
+    int saved_queue[10];
+    char strictness_text[0x50];
+    int sel;
+    int displayed_id;
+    int i;
+    int slot;
     (void)popup_design;
     (void)popup_secondary;
     (void)popup_tertiary;
 
     compute_selected_base();
-    const int entry_base_id = focused_base_id();
-    if (Bases[entry_base_id].faction_id_current != ConsoleGlobal.faction_id_
+    if (Bases[focusedBaseID_].faction_id_current != ConsoleGlobal.faction_id_
         && (GameDataStateStorage.fields_.game_state_ & 0x80u) == 0)
         return;
 
-    Base *entry_base = BaseCurrent;
-    const int faction_snapshot = entry_base->faction_id_current;
-    const int old_queue_id = entry_base->queue_production_id[a1];
-    const uint32_t entry_queue_size = entry_base->queue_size;
-    int entry_queue[10];
-    std::memcpy(entry_queue, entry_base->queue_production_id,
-                sizeof(entry_queue));
-    displayed_production_id_ = entry_base->production_id_last;
-    if (a1 == 0) entry_base->state &= ~0x00800000u;
+    const int saved_queue_size = BaseCurrent->queue_size;
+    std::memcpy(saved_queue, BaseCurrent->queue_production_id, sizeof(saved_queue));
+    const int old_queue_id = BaseCurrent->queue_production_id[a1];
+    displayed_production_id_ = BaseCurrent->production_id_last;
+    const int faction = BaseCurrent->faction_id_current;
+    if (a1 == 0) BaseCurrent->state &= ~0x00800000u;
 
-    if (a2 == 0
-        && NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1) != 0)
+    if (a2 == 0 && NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1))
         return;
 
-    // Native 0x4175F4 subtracts queued-prototype visibility exactly once
-    // before the picker loop; loop backs at 0x41763D do not repeat it.
-    int last_queue_slot = static_cast<int32_t>(BaseCurrent->queue_size);
-    for (int slot = 0; slot <= last_queue_slot; ++slot) {
-        const int id = BaseCurrent->queue_production_id[slot];
+    for (i = 0; i <= BaseCurrent->queue_size; ++i) {
+        const int id = BaseCurrent->queue_production_id[i];
         if (id >= 0) {
-            uint8_t &queued = PlayersData[faction_snapshot].proto_id_queue[id];
+            uint8_t &queued = PlayersData[faction].proto_id_queue[id];
             queued = static_cast<uint8_t>(queued - 1);
         }
     }
 
-    bool run_picker_setup = true;
-    for (;;) {
-        if (run_picker_setup) { // native label 0x41763D
-            compute_selected_base();
-            const int preview_width = pixel_width() - 0x2E;
-            const int preview_height = pixel_height();
-            picker_preview.init(0x17, 0, preview_width, preview_height, 0,
-                                0x01000020, this, 0, 0);
-            buffer1_.copy(&picker_preview, 0x17, 0, 0, 0,
-                          preview_width, preview_height);
-            picker_preview.tile(&sprite6_, 0, 0, 3, 3,
-                                preview_width - 6, preview_height - 6);
+setup:
+    compute_selected_base();
+    picker_preview.init(0x17, 0, pixel_width() - 0x2E, pixel_height(), 0,
+                        0x01000020, this, 0, 0);
+    buffer1_.copy(&picker_preview, 0x17, 0, 0, 0,
+                  pixel_width() - 0x2E, pixel_height());
+    picker_preview.tile(&sprite6_, 0, 0, 3, 3,
+                        pixel_width() - 6, pixel_height() - 6);
+
+    do {
+        sel = prodPicker_.exec(BaseCurrent, BaseCurrent->faction_id_current,
+                               &picker_preview, selected_queue_slot_);
+        if (a1 != 0 && sel == -9999) {
+            for (i = 0; i < 10; ++i)
+                BaseCurrent->queue_production_id[i] = saved_queue[i];
+            BaseCurrent->queue_size = saved_queue_size;
+            draw_production(0);
         }
-        run_picker_setup = false;
-
-        int selected_id = prodPicker_.exec(BaseCurrent,
-            BaseCurrent->faction_id_current, &picker_preview, selected_queue_slot_);
-
-        // Native special cancel with a nonzero a1 restores the entry queue,
-        // then resets the Base before entering the ordinary post-picker path.
-        if (a1 != 0 && selected_id == -9999) {
-            Base *live_base = BaseCurrent;
-            std::memcpy(live_base->queue_production_id, entry_queue,
-                        sizeof(entry_queue));
-            live_base->queue_size = entry_queue_size;
-            draw_production(0); // native 0x4177B7 after queue snapshot restore
-        }
-
-        // 0x4177BC refreshes the selected Base after picker callbacks, then
-        // plays the selection sound. All subsequent decisions use the live
-        // selected Base except the specifically snapshotted queue/faction IDs.
         compute_selected_base();
         g_FX.play(0x0F);
 
-        if (selected_id <= -9999 || (GameDataStateStorage.fields_.game_state_ & 0x800u) != 0) {
+        if (sel <= -9999
+            || (GameDataStateStorage.fields_.game_state_ & 0x800u) != 0) {
             selected_queue_slot_ = 0;
             draw_queue(1);
             if (a2 == 0)
                 NetDaemonNet.unlock_base(BaseIDCurrentSelected);
-            Base *live_base = BaseCurrent;
-            last_queue_slot = static_cast<int32_t>(live_base->queue_size);
-            for (int slot = 0; slot <= last_queue_slot; ++slot) {
-                const int id = live_base->queue_production_id[slot];
+            for (i = 0; i <= BaseCurrent->queue_size; ++i) {
+                const int id = BaseCurrent->queue_production_id[i];
                 if (id >= 0) {
-                    uint8_t &queued = PlayersData[faction_snapshot].proto_id_queue[id];
+                    uint8_t &queued = PlayersData[faction].proto_id_queue[id];
                     queued = static_cast<uint8_t>(queued + 1);
                 }
             }
-            return; // native 0x418B20 then lexical owner teardown
+            return;
         }
 
-        const int action = prodPicker_.selected_action() - 1;
-        if (action == 0) { // native 0x417DB3: help/design selected row
-            if (selected_id < 0) {
-                const int facility_id = -selected_id;
-                help_topic(facility_id < 0x46 ? 10u : 11u, facility_id);
-            } else if (selected_id == 9999) {
-                run_picker_setup = true;
-                continue; // native 0x417DE6 -> full setup 0x41763D
-            } else if (selected_id < 0x200) {
-                TutWinDesWindow.exec(BaseCurrent->faction_id_current,
-                                     selected_id);
-            } else {
-                const int facility_id = selected_id - 0x200;
-                help_topic(facility_id < 0x46 ? 10u : 11u, facility_id);
-            }
-            run_picker_setup = true;
-            continue; // native 0x41763D
-        }
-
-        if (action == 1 || action == 2) {
-            TutWinDesWindow.exec(BaseCurrent->faction_id_current,
-                                 action == 1
-                                     ? (selected_id < 0 ? -1 : selected_id)
-                                     : -1);
-            compute_selected_base();
-            prodPicker_.calculate();
-            run_picker_setup = true;
-            continue; // native 0x417F6A -> 0x41763D
-        }
-
-        if (action == 3 || action == 5) {
+        switch (prodPicker_.selected_action()) {
+        case 4:
+        case 6:
             if (a1 == 0) {
                 base_reset(BaseIDCurrentSelected, 0);
                 if (a2 == 0)
                     NetDaemonNet.unlock_base(BaseIDCurrentSelected);
                 redraw();
                 MainInterfaceGlobal.GraphicWin::redraw();
-                Base *live_base = BaseCurrent;
-                last_queue_slot = static_cast<int32_t>(live_base->queue_size);
-                for (int slot = 0; slot <= last_queue_slot; ++slot) {
-                    const int id = live_base->queue_production_id[slot];
+                for (i = 0; i <= BaseCurrent->queue_size; ++i) {
+                    const int id = BaseCurrent->queue_production_id[i];
                     if (id >= 0) {
-                        uint8_t &queued = PlayersData[faction_snapshot].proto_id_queue[id];
+                        uint8_t &queued = PlayersData[faction].proto_id_queue[id];
                         queued = static_cast<uint8_t>(queued + 1);
                     }
                 }
-                // 0x417FF5 begins the preview/UI teardown and 0x4181F8
-                // transfers to the function's common epilogue. This branch
-                // returns; it does not re-enter the picker/design path.
                 return;
             }
-
-            const int selected_slot = selected_queue_slot_;
-            if (selected_slot > static_cast<int>(BaseCurrent->queue_size)) {
-                --selected_queue_slot_;
-                if (selected_queue_slot_ <= 1)
-                    selected_queue_slot_ = 1;
-                draw_queue(1);
-            } else {
-                for (int slot = selected_slot; slot < 9; ++slot)
-                    BaseCurrent->queue_production_id[slot] =
-                        BaseCurrent->queue_production_id[slot + 1];
-                --BaseCurrent->queue_size;
-                if (selected_queue_slot_
-                    > static_cast<int32_t>(BaseCurrent->queue_size)) {
-                    selected_queue_slot_ = static_cast<int>(BaseCurrent->queue_size);
-                    if (selected_queue_slot_ <= 1)
-                        selected_queue_slot_ = 1;
+            delete_queue(selected_queue_slot_);
+            draw_queue(1);
+            break;
+        case 5:
+            if (a1 != 0) add_queue(sel, 1);
+            break;
+        case 7:
+            if (a1 != 0) add_queue(sel, 0);
+            break;
+        case 1:
+            if (sel < 0) {
+                sel = -sel;
+                if (sel < 0x46) help_topic(10, sel);
+                else help_topic(11, sel);
+            } else if (sel != 9999) {
+                if (sel < 0x200) {
+                    TutWinDesWindow.exec(BaseCurrent->faction_id_current, sel);
+                } else {
+                    const int facility_id = sel - 0x200;
+                    if (facility_id < 0x46) help_topic(10, facility_id);
+                    else help_topic(11, facility_id);
                 }
-                draw_queue(1);
-                draw_queue(1);
             }
-        } else if (action == 4 && a1 != 0) {
-            add_queue(selected_id, 1);
-        } else if (action == 6 && a1 != 0) {
-            add_queue(selected_id, 0);
+            goto setup;
+        case 2:
+            TutWinDesWindow.exec(BaseCurrent->faction_id_current,
+                                 sel < 0 ? -1 : sel);
+            compute_selected_base();
+            prodPicker_.calculate();
+            goto setup;
+        case 3:
+            TutWinDesWindow.exec(BaseCurrent->faction_id_current, -1);
+            compute_selected_base();
+            prodPicker_.calculate();
+            goto setup;
         }
 
-        if (selected_id == 9999) {
+        if (sel == 9999) {
             design_workshop(BaseCurrent->faction_id_current, 1);
             compute_selected_base();
             prodPicker_.calculate();
-            run_picker_setup = true;
-            continue; // native 0x417EDD..0x417F75
+            goto setup;
+        }
+        if (sel >= 0x200) sel = 0x200 - sel;
+
+        if (a1 != 0 || sel != BaseCurrent->queue_production_id[0]) {
+            BaseCurrent->state |= 0x80000000u;
+            if (BaseCurrent->governor & 0x40000000u)
+                BaseCurrent->governor &= 0x3FFFFFFFu;
+        }
+        if (a1 == 0 && BaseCurrent->minerals_accumulated_2 != 0) {
+            if (base_making(sel, BaseIDCurrentSelected)
+                    != base_making(displayed_production_id_, BaseIDCurrentSelected)
+                && PlayersData[faction].diff_level > 1
+                && Rules.retool_pct_pen_prod_chg != 0
+                && BaseCurrent->minerals_accumulated_2 > Rules.retool_exemption
+                && (displayed_id = displayed_production_id_) != -0x45) {
+                if (base_making(BaseCurrent->queue_production_id[0], BaseIDCurrentSelected)
+                    == base_making(displayed_id, BaseIDCurrentSelected)) {
+                    if (BaseCurrent->queue_production_id[0] >= 0)
+                        parse_says(0, VehPrototypes[BaseCurrent->queue_production_id[0]].veh_name, -1, -1);
+                    else
+                        parse_say(0, Facility[-BaseCurrent->queue_production_id[0]].name, -1, -1);
+                    if (sel >= 0)
+                        parse_says(1, VehPrototypes[sel].veh_name, -1, -1);
+                    else
+                        parse_say(1, Facility[-sel].name, -1, -1);
+
+                    const int proposed =
+                        (BaseCurrent->minerals_accumulated_2 - Rules.retool_exemption)
+                            * (100 - Rules.retool_pct_pen_prod_chg) / 100
+                        + Rules.retool_exemption;
+                    parse_num(0, Rules.retool_pct_pen_prod_chg);
+                    parse_num(1, Rules.retool_exemption);
+                    parse_num(2, BaseCurrent->minerals_accumulated - proposed);
+
+                    StringTemp[0] = 0;
+                    strcat(StringTemp, "RETOOLPENALTY");
+                    _itoa(Rules.retool_strictness, strictness_text, 10);
+                    strcat(StringTemp, strictness_text);
+                    if (Rules.retool_exemption != 0) strcat(StringTemp, "A");
+
+                    popup.start(PopupStartCaption, StringTemp, -1, 0, 0, 0);
+                    if (BaseCurrent->queue_size == 0)
+                        popup.item(label_get(0xB0C / 4), 2);
+                    popup.item(label_get(0xB10 / 4), 3);
+                    switch (popup.exec()) {
+                    case 0:
+                        if (a2 == 0)
+                            NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+                        for (i = 0; i <= BaseCurrent->queue_size; ++i) {
+                            const int id = BaseCurrent->queue_production_id[i];
+                            if (id >= 0) {
+                                uint8_t &queued = PlayersData[faction].proto_id_queue[id];
+                                queued = static_cast<uint8_t>(queued + 1);
+                            }
+                        }
+                        return;
+                    case 1:
+                        BaseCurrent->minerals_accumulated = proposed;
+                        break;
+                    case 2:
+                        for (slot = 9; slot > 1; --slot)
+                            BaseCurrent->queue_production_id[slot] =
+                                BaseCurrent->queue_production_id[slot - 1];
+                        BaseCurrent->queue_size = range(BaseCurrent->queue_size + 1, 0, 9);
+                        a1 = 1;
+                        BaseCurrent->queue_production_id[1] = sel;
+                        break;
+                    case 3:
+                        if (BaseCurrent->queue_size < 9) BaseCurrent->queue_size++;
+                        a1 = BaseCurrent->queue_size;
+                        BaseCurrent->queue_production_id[a1] = sel;
+                        break;
+                    }
+                }
+            } else {
+                BaseCurrent->minerals_accumulated = BaseCurrent->minerals_accumulated_2;
+            }
         }
 
-        int queue_slot = a1;
-        const bool cancelled_retool = finish_ordinary_selection(
-            *this, popup, selected_id, faction_snapshot, queue_slot, a1);
-        if (cancelled_retool) {
-            if (a2 == 0)
-                NetDaemonNet.unlock_base(BaseIDCurrentSelected);
-            Base *live_base = BaseCurrent;
-            last_queue_slot = static_cast<int32_t>(live_base->queue_size);
-            for (int slot = 0; slot <= last_queue_slot; ++slot) {
-                const int id = live_base->queue_production_id[slot];
-                if (id >= 0) {
-                    uint8_t &queued =
-                        PlayersData[faction_snapshot].proto_id_queue[id];
-                    queued = static_cast<uint8_t>(queued + 1);
+        log_say("BASE: changed production", BaseIDCurrentSelected, a1,
+                BaseCurrent->queue_production_id[a1]);
+        if (a1 == 0) {
+            BaseCurrent->queue_production_id[0] = sel;
+            if (BaseCurrent->queue_production_id[0] <= -0x46) wave_it(0x24);
+            draw_radius(BaseCurrent->x, BaseCurrent->y, 2, 2);
+            if (BaseCurrent->queue_production_id[0] <= -0x46
+                || (BaseCurrent->queue_production_id[0] > 0x40
+                    && !(VehPrototypes[BaseCurrent->queue_production_id[0]].flags & 4))) {
+                for (int veh_id = veh_at(BaseCurrent->x, BaseCurrent->y); veh_id >= 0;
+                     veh_id = veh_next_stack_id(veh_id)) {
+                    if (Vehs[veh_id].faction_id == BaseCurrent->faction_id_current) {
+                        const uint8_t plan = VehPrototypes[Vehs[veh_id].proto_id].plan;
+                        if (plan == 12 || plan == 10) {
+                            Vehs[veh_id].year_end_lurking = 0;
+                            Vehs[veh_id].state &= ~VSTATE_UNK_200;
+                            if (IsMultiplayerNet) synch_veh(veh_id);
+                        }
+                    }
                 }
             }
-            return; // native 0x4181FD result-table entry 0
         }
-        if (prodPicker_.is_visible()) {
-            run_picker_setup = false;
-            continue; // native 0x417DAE -> picker body 0x417751
-        }
+    } while (prodPicker_.is_visible());
 
-        selected_queue_slot_ = 0; // native 0x41866C, immediately before base_compute
-        finish_production_success(*this, a1, a2, old_queue_id,
-                                  faction_snapshot);
-        return;
+    if (a2 == 0)
+        NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+    for (i = 0; i <= BaseCurrent->queue_size; ++i) {
+        const int id = BaseCurrent->queue_production_id[i];
+        if (id >= 0) {
+            uint8_t &queued = PlayersData[faction].proto_id_queue[id];
+            queued = static_cast<uint8_t>(queued + 1);
+        }
+    }
+
+    if (IsMultiplayerNet && a1 == 0
+        && BaseCurrent->queue_production_id[0] != old_queue_id) {
+        const int new_id = BaseCurrent->queue_production_id[0];
+        int new_count = 0;
+        int old_count = 0;
+        for (int base_id = 0;
+             base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
+            if (Bases[focusedBaseID_].faction_id_current == BaseCurrent->faction_id_current
+                && base_id != BaseIDCurrentSelected) {
+                if (Bases[base_id].queue_production_id[0] == new_id) ++new_count;
+                if (Bases[base_id].queue_production_id[0] == old_queue_id) ++old_count;
+            }
+        }
+        if (old_queue_id <= -0x46 && new_id <= -0x46 && old_count && !new_count)
+            message_data(0x4D00, 0, -0x46 - new_id, 0, 0, 0);
+        else if (old_queue_id <= -0x46 && new_id <= -0x46 && !old_count && !new_count)
+            message_data(0x4D00, 0, -0x46 - new_id, 2, -0x46 - old_queue_id, new_count);
+        else if (old_queue_id <= -0x46 && !old_count)
+            message_data(0x4D00, 0, -0x46 - old_queue_id, 1, 0, 0);
+        else if (new_id <= -0x46 && !new_count)
+            message_data(0x4D00, 0, -0x46 - new_id, 0, 0, 0);
+    }
+
+    selected_queue_slot_ = 0;
+    base_compute(1);
+    redraw();
+    MainInterfaceGlobal.GraphicWin::redraw();
+    draw_radius(BaseCurrent->x, BaseCurrent->y, 1, 2);
+    if (ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_] == BaseCurrent->x
+        && ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_] == BaseCurrent->y)
+        ConsoleGlobal.update_data(0);
+    if (a1 == 0 && BaseCurrent->queue_production_id[0] == -0x65) {
+        interlude(10, 0, 1, 0);
+        GameDataStateStorage.fields_.game_interlude_flags_ |= 0x800u;
     }
 }
 
@@ -2211,22 +2118,22 @@ void BaseWin::hurry() {
         : StringTable.get(Facility[facility_id].name), -1, -1);
     parse_num(0, cost);
     parse_num(1, hurry_energy(faction_id));
-    popup.start(PopupStartCaption, "HURRY", -1, 0, 0, 0);
+    popup.start("HURRY");
     if ((BaseCurrent->state & 2u) != 0
         && (BaseCurrent->queue_production_id[0] >= 0 || BaseCurrent->queue_production_id[0] <= -0x41)) {
-        popup.start(PopupStartCaption, "HURRYDRONE", -1, 0, 0x80, 0);
+        popup.start("HURRYDRONE", 0x80);
         popup.set_wave(0x1C);
     } else if (hurry_energy(faction_id) >= 0) {
         if (X_text_open(ScriptPopupFile, "HURRYOPTIONS")) return;
-        popup.dialogs().item(hurry_next_item(), 0);
+        popup.item(hurry_next_item(), 0);
         hurry_next_item();
         if (PlayersData[faction_id].energy_reserves - PlayersData[faction_id].hurry_cost_total >= cost) {
-            popup.dialogs().item(StringTemp, 1);
+            popup.item(StringTemp, 1);
             popup.set_wave(0x20);
         } else {
             popup.set_wave(9);
         }
-        popup.dialogs().item(hurry_next_item(), 2);
+        popup.item(hurry_next_item(), 2);
         if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) return;
         lock_held = 1;
     }
@@ -2350,16 +2257,6 @@ void BaseWin::gov_activate() {
     }
 }
 
-// ORIGINAL: 0x00416D90 ?recompute@BaseWin@@QAEXH@Z 0x00416D90-0x00416DCA FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x00416D90-0x00416DCA tests Win visibility, selects focusedBaseID_, recomputes, dispatches Win redraw slot 62 and directly redraws MainInterfaceGlobal", "source:src/basewin.h", "source:src/base.h", "source:src/maininterface.h"], "reason": "Refresh the selected base through typed focus state and real virtual/direct redraw calls; the integer argument is unused by the original."}
-void BaseWin::recompute(int) {
-    if (Win::is_visible()) {
-        set_base(static_cast<int>(focusedBaseID_));
-        base_compute(1);
-        redraw();
-        MainInterfaceGlobal.GraphicWin::redraw();
-    }
-}
 
 // The image walks Bases by the 0x134-byte Base record and compares names
 // case-insensitively.  The first qualifying name in the requested direction
@@ -2969,34 +2866,6 @@ void BaseWin::add_queue(int production_id, int insert) {
     draw_queue(1);
 }
 
-// ORIGINAL: 0x00416FB0 ?delete_queue@BaseWin@@QAEXH@Z 0x00416FB0-0x0041703C FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x00416FB0-0x0041703C removes one queue entry, shifts later ids, clamps the selected index to at least one, and redraws the queue", "source:src/base.h:Base::queue_size", "source:src/base.h:Base::queue_production_id"], "reason": "Delete a selected production queue entry through the typed Base queue representation; the drawing dependency remains explicitly unfinished."}
-void BaseWin::delete_queue(int index) {
-    if (index > static_cast<int>(BaseCurrent->queue_size)) {
-        int selected = --selected_queue_slot_;
-        if (selected <= 1) {
-            selected = 1;
-        }
-        selected_queue_slot_ = selected;
-        return;
-    }
-    if (index < 9) {
-        for (int slot = index; slot < 9; ++slot) {
-            BaseCurrent->queue_production_id[slot] =
-                BaseCurrent->queue_production_id[slot + 1];
-        }
-    }
-    --BaseCurrent->queue_size;
-    const int count = static_cast<int>(BaseCurrent->queue_size);
-    if (selected_queue_slot_ > count) {
-        int selected = count;
-        if (selected <= 1) {
-            selected = 1;
-        }
-        selected_queue_slot_ = selected;
-    }
-    draw_queue(1);
-}
 
 // Refresh only a visible base screen displaying the affected base. The
 // recomputation uses the already-selected current base: neither original
@@ -3786,326 +3655,281 @@ Wave g_BASEWIN_WAVE;  // 0x006EEE68
 // calls     0x005D5630 0x005D5930 0x005D8000 0x005DAC70 0x005DACB0 0x005DCF40 0x005DD130 0x005DD450 0x005E2DD3 0x006169A0 0x00618EA0 0x00618EE0 0x00618F40 0x006453E0 0x00645470 0x0064FC88
 // indirect  0x00411D58 0x00411E7B 0x00411FE5 0x0041213C 0x004122C9 0x00412433 0x00412561 0x004126EF 0x00412855 0x0041297F
 
-void BaseWin::draw_energy_alloc(int a1) {
-    Buffer *canvas = static_cast<Buffer *>(this);
+void BaseWin::draw_energy_alloc(int update_mode) {
     Font font;
+    char number[80];
+    int faction = BaseCurrent->faction_id_current;
+    int wide = WinScreenWidth != 800;
+    RECT clip = production_content_rect_;
+    RECT saved_clip = Buffer::rect1_;
+    Buffer::set_clip(&clip);
+    font.init(DefaultFontFace, 12, 1);
+    Buffer::set_font(&font, nullptr, nullptr, nullptr);
 
-    const int faction_id = BaseCurrent->faction_id_current;
-    const int wide_mode = WinScreenWidth != 0x320;
-    RECT clip_target = production_content_rect_;
-    RECT saved_clip = canvas->current_clip();
-    canvas->set_clip(&clip_target);
-    font.init(DefaultFontFace, 0xC, 1);
-    canvas->set_font(&font, 0, 0, 0);
-
-    RECT outer_frame = *static_cast<GraphicWin *>(this)->buffer_working_rect();
-    outer_frame.left = psych_display_add(outer_frame.left, 0x17);
-    outer_frame.right = psych_display_sub(outer_frame.right, 0x37);
-    canvas->box_sprite(&outer_frame, &InterfaceBoxStyles[9]);
-    canvas->box_sprite(&production_content_rect_, &InterfaceBoxStyles[3]);
-
-    int frame_delta = 0;
-    if (wide_mode) {
-        RECT working_frame = *static_cast<GraphicWin *>(this)->buffer_working_rect();
-        frame_delta = psych_display_add(
-            psych_display_sub(working_frame.bottom, working_frame.top), 3);
+    // EBP-4C: the working-area frame first, then the allocation chart frame.
+    RECT rect;
+    rect.left = Buffer::rect2_.left + 23;
+    rect.top = Buffer::rect2_.top;
+    rect.right = Buffer::rect2_.right - 55;
+    rect.bottom = Buffer::rect2_.bottom;
+    Buffer::box_sprite(&rect, &InterfaceBoxStyles[9]);
+    Buffer::box_sprite(&production_content_rect_, &InterfaceBoxStyles[3]);
+    rect.left = 346;
+    rect.top = 284;
+    rect.right = 696;
+    rect.bottom = 346;
+    if (wide) {
+        int shift = production_content_rect_.bottom - production_content_rect_.top + 3;
+        rect.top = shift + 284;
+        rect.bottom = shift + 346;
     }
-    RECT chart_frame = {0x15A, psych_display_add(0x11C, frame_delta),
-                        0x2B8, psych_display_add(0x15A, frame_delta)};
-    canvas->box_sprite(&chart_frame, &InterfaceBoxStyles[0]);
+    Buffer::box_sprite(&rect, &InterfaceBoxStyles[0]);
 
-    int row_delta = 0;
-    if (wide_mode) {
-        RECT working_rows = *static_cast<GraphicWin *>(this)->buffer_working_rect();
-        row_delta = psych_display_add(
-            psych_display_sub(working_rows.bottom, working_rows.top), 3);
+    // EBP-2C is the row/label rectangle; base_row keeps the row origin and
+    // steps 21 pixels per allocation row.
+    RECT row;
+    row.left = 169;
+    row.top = 263;
+    row.right = 696;
+    row.bottom = 283;
+    if (wide) {
+        int shift = production_content_rect_.bottom - production_content_rect_.top + 3;
+        row.top = shift + 263;
+        row.bottom = shift + 283;
     }
-    RECT row_bounds = {0xA9, psych_display_add(0x107, row_delta),
-                       0x2B8, psych_display_add(0x11B, row_delta)};
-    canvas->set_font(&font, 0, 0, 0);
+    RECT base_row = row;
+    Buffer::set_font(&font, nullptr, nullptr, nullptr);
 
-    const int psych_percent = PlayersData[faction_id].se_alloc_psych;
-    const int labs_percent = PlayersData[faction_id].se_alloc_labs;
-    const int economy_percent = psych_display_sub(
-        psych_display_sub(10, psych_percent), labs_percent);
+    int psych_pct = PlayersData[faction].se_alloc_psych;
+    int labs_pct = PlayersData[faction].se_alloc_labs;
+    int econ_pct = 10 - psych_pct - labs_pct;
+    int energy = range(BaseCurrent->energy_surplus, 0, 9999);
+    int psych = range((psych_pct * energy + 4) / 10, 0, energy);
+    int econ = range((econ_pct * energy + 4) / 10, 0, energy - psych);
+    int labs = energy - econ - psych;
+    int econ_total = BaseCurrent->economy_total;
+    int econ_extra = econ_total - econ;
+    int labs_total = BaseCurrent->labs_total;
+    int labs_extra = labs_total - labs;
+    int psych_total = BaseCurrent->psych_total;
+    int psych_extra = psych_total - psych;
 
-    int energy = BaseCurrent->energy_surplus;
-    if (energy < 0) energy = 0;
-    else if (energy > 0x270F) energy = 0x270F;
-
-    const int psych_product = psych_display_signed(
-        static_cast<uint32_t>(psych_percent) * static_cast<uint32_t>(energy) + 4u);
-    int psych_share = psych_product / 10;
-    if (psych_share < 0 || energy < 0) psych_share = 0;
-    else if (psych_share > energy) psych_share = energy;
-
-    const int after_psych = psych_display_sub(energy, psych_share);
-    const int economy_product = psych_display_signed(
-        static_cast<uint32_t>(economy_percent) * static_cast<uint32_t>(energy) + 4u);
-    int economy_share = economy_product / 10;
-    if (economy_share < 0 || after_psych < 0) economy_share = 0;
-    else if (economy_share > after_psych) economy_share = after_psych;
-
-    const int labs_share = psych_display_sub(after_psych, economy_share);
-
-    Base *totals_base = BaseCurrent;
-    const int economy_total = totals_base->economy_total;
-    const int economy_residual = psych_display_sub(economy_total, economy_share);
-    const int labs_total = totals_base->labs_total;
-    const int labs_residual = psych_display_sub(labs_total, labs_share);
-    const int psych_total = totals_base->psych_total;
-    const int psych_residual = psych_display_sub(psych_total, psych_share);
-
-    RECT title_rect = {wide_mode ? psych_display_add(production_content_rect_.left, 3) : 0xBF,
-                       row_bounds.top, row_bounds.right, row_bounds.bottom};
-    canvas->box_sprite(&title_rect, &InterfaceBoxStyles[6]);
-    title_rect.left = psych_display_add(title_rect.left, 3);
-    title_rect.top = psych_display_add(title_rect.top, 3);
-    title_rect.right = psych_display_sub(title_rect.right, 3);
-    title_rect.bottom = psych_display_sub(title_rect.bottom, 3);
-    canvas->set_text_color(TextColourTable[86], TextColourTable[87], 1, 1);
-    StringTemp[0] = '\0';
-    strcat(StringTemp, label_get(0x90 / 4));
+    // EBP-1C: title box, then each row's caption/value cell.
+    RECT text = row;
+    if (!wide) {
+        text.left = 191;
+    } else {
+        text.left = production_content_rect_.left + 3;
+    }
+    Buffer::box_sprite(&text, &InterfaceBoxStyles[6]);
+    text.left += 3;
+    text.top += 3;
+    text.right -= 3;
+    text.bottom -= 3;
+    Buffer::set_text_color(TextColourTable[86], TextColourTable[87], 1, 1);
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(36));
     strcat(StringTemp, " ");
-    strcat(StringTemp, label_get(0xA38 / 4));
+    strcat(StringTemp, label_get(654));
     CharUpperA(StringTemp);
-    if (wide_mode == 0)
-        canvas->write_l(StringTemp, &title_rect, strlen(StringTemp));
-    else
-        canvas->write_cent_l(StringTemp, &title_rect, strlen(StringTemp));
+    if (!wide) {
+        Buffer::write_l(StringTemp, &text);
+    } else {
+        Buffer::write_cent_l(StringTemp, &text);
+    }
 
-    RECT hit_rect = {row_bounds.left, psych_display_add(row_bounds.top, 0x15),
-                     row_bounds.right, psych_display_add(row_bounds.bottom, 0x15)};
-    expenses_help_rects_[5].left = hit_rect.left;
-    expenses_help_rects_[5].top = hit_rect.top;
-    expenses_help_rects_[5].right = hit_rect.right;
-    expenses_help_rects_[5].bottom = hit_rect.bottom;
-    canvas->set_text_color(TextColourTable[128], TextColourTable[129], 1, 1);
-    RECT graph_rect = {hit_rect.left, hit_rect.top, 0x129, hit_rect.bottom};
-    canvas->box_sprite(&graph_rect, &InterfaceBoxStyles[6]);
-    graph_rect.left = psych_display_add(graph_rect.left, 3);
-    graph_rect.top = psych_display_add(graph_rect.top, 3);
-    graph_rect.right = psych_display_sub(graph_rect.right, 3);
-    graph_rect.bottom = psych_display_sub(graph_rect.bottom, 3);
-    StringTemp[0] = '\0';
-    strcat(StringTemp, label_get(0x5B8 / 4));
+    // Economy row (help rectangle 5).
+    base_row.top += 21;
+    base_row.bottom += 21;
+    row = base_row;
+    Buffer::set_text_color(TextColourTable[128], TextColourTable[129], 1, 1);
+    expenses_help_rects_[5] = row;
+    text = row;
+    text.right = 297;
+    Buffer::box_sprite(&text, &InterfaceBoxStyles[6]);
+    text.left += 3;
+    text.top += 3;
+    text.right -= 3;
+    text.bottom -= 3;
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(366));
     CharUpperA(StringTemp);
-    canvas->write_cent_l(StringTemp, &graph_rect, strlen(StringTemp));
-
-    RECT value_cell = {0x12B, hit_rect.top, 0x158, hit_rect.bottom};
-    canvas->box_sprite(&value_cell, &InterfaceBoxStyles[6]);
-    value_cell.right = 0x150;
-    char number[16];
-    StringTemp[0] = '\0';
-    _itoa(psych_display_signed(static_cast<uint32_t>(economy_percent) * 10u),
-          number, 10);
+    Buffer::write_cent_l(StringTemp, &text);
+    text = row;
+    text.left = 299;
+    text.right = 344;
+    Buffer::box_sprite(&text, &InterfaceBoxStyles[6]);
+    text.right = 336;
+    StringTemp[0] = 0;
+    _itoa(econ_pct * 10, number, 10);
     strcat(StringTemp, number);
     strcat(StringTemp, "%");
-    canvas->write_right_l(StringTemp, &value_cell, strlen(StringTemp));
-    value_cell.right = 0x178;
-    StringTemp[0] = '\0';
-    _itoa(economy_share, number, 10);
+    Buffer::write_right_l(StringTemp, &text);
+    text.right = 376;
+    StringTemp[0] = 0;
+    _itoa(econ, number, 10);
     strcat(StringTemp, number);
-    canvas->write_right_l(StringTemp, &value_cell, strlen(StringTemp));
-
-    RECT label_value = {0x178, hit_rect.top, hit_rect.right, hit_rect.bottom};
-    StringTemp[0] = '\0';
+    Buffer::write_right_l(StringTemp, &text);
+    row.left = text.right;
+    StringTemp[0] = 0;
     strcat(StringTemp, " ");
-    strcat(StringTemp, label_get(0x90 / 4));
+    strcat(StringTemp, label_get(36));
     CharUpperA(StringTemp);
     strcat(StringTemp, "  +");
-    canvas->set_text_color(TextColourTable[84], TextColourTable[85], 1, 1);
-    const int economy_label_end = canvas->write_l(
-        StringTemp, &label_value, strlen(StringTemp));
-    label_value.left = economy_label_end;
-    value_cell.right = psych_display_add(economy_label_end, 0x1A);
-
-    canvas->set_text_color(TextColourTable[128], TextColourTable[129], 1, 1);
-    StringTemp[0] = '\0';
-    _itoa(economy_residual, number, 10);
+    Buffer::set_text_color(TextColourTable[84], TextColourTable[85], 1, 1);
+    row.left = Buffer::write_l(StringTemp, &row);
+    text.right = row.left + 26;
+    Buffer::set_text_color(TextColourTable[128], TextColourTable[129], 1, 1);
+    StringTemp[0] = 0;
+    _itoa(econ_extra, number, 10);
     strcat(StringTemp, number);
-    Base *marker_base = BaseCurrent;
-    if (marker_base->queue_production_id[0] == -69
-        && marker_base->mineral_surplus > 0)
+    if (BaseCurrent->queue_production_id[0] == -69 && BaseCurrent->mineral_surplus > 0) {
         strcat(StringTemp, "*");
-    canvas->write_right_l(StringTemp, &value_cell, strlen(StringTemp));
-
-    canvas->set_text_color(TextColourTable[84], TextColourTable[85], 1, 1);
-    StringTemp[0] = '\0';
+    }
+    Buffer::write_right_l(StringTemp, &text);
+    row.left = text.right;
+    Buffer::set_text_color(TextColourTable[84], TextColourTable[85], 1, 1);
+    StringTemp[0] = 0;
     strcat(StringTemp, " ");
-    strcat(StringTemp, label_get(0x17C / 4));
+    strcat(StringTemp, label_get(95));
     CharUpperA(StringTemp);
     strcat(StringTemp, " ");
     strcat(StringTemp, "=");
-    const int economy_total_label_end = canvas->write_l(
-        StringTemp, &label_value, strlen(StringTemp));
-    label_value.left = economy_total_label_end;
-    value_cell.right = psych_display_add(economy_total_label_end, 0x1D);
-    canvas->set_text_color(TextColourTable[128], TextColourTable[129], 1, 1);
-    StringTemp[0] = '\0';
-    _itoa(economy_total, number, 10);
+    row.left = Buffer::write_l(StringTemp, &row);
+    text.right = row.left + 29;
+    Buffer::set_text_color(TextColourTable[128], TextColourTable[129], 1, 1);
+    StringTemp[0] = 0;
+    _itoa(econ_total, number, 10);
     strcat(StringTemp, number);
-    canvas->write_right_l(StringTemp, &value_cell, strlen(StringTemp));
+    Buffer::write_right_l(StringTemp, &text);
 
-    hit_rect.left = row_bounds.left;
-    hit_rect.top = psych_display_add(row_bounds.top, 0x2A);
-    hit_rect.right = row_bounds.right;
-    hit_rect.bottom = psych_display_add(row_bounds.bottom, 0x2A);
-    expenses_help_rects_[4].left = hit_rect.left;
-    expenses_help_rects_[4].top = hit_rect.top;
-    expenses_help_rects_[4].right = hit_rect.right;
-    expenses_help_rects_[4].bottom = hit_rect.bottom;
-    canvas->set_text_color(TextColourTable[130], TextColourTable[131], 1, 1);
-    graph_rect = hit_rect;
-    graph_rect.right = 0x129;
-    canvas->box_sprite(&graph_rect, &InterfaceBoxStyles[6]);
-    graph_rect.left = psych_display_add(graph_rect.left, 3);
-    graph_rect.top = psych_display_add(graph_rect.top, 3);
-    graph_rect.right = psych_display_sub(graph_rect.right, 3);
-    graph_rect.bottom = psych_display_sub(graph_rect.bottom, 3);
-    StringTemp[0] = '\0';
-    strcat(StringTemp, label_get(0xF0 / 4));
+    // Labs row (help rectangle 4).
+    base_row.top += 21;
+    base_row.bottom += 21;
+    row = base_row;
+    expenses_help_rects_[4] = row;
+    Buffer::set_text_color(TextColourTable[130], TextColourTable[131], 1, 1);
+    text = row;
+    text.right = 297;
+    Buffer::box_sprite(&text, &InterfaceBoxStyles[6]);
+    text.left += 3;
+    text.top += 3;
+    text.right -= 3;
+    text.bottom -= 3;
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(60));
     CharUpperA(StringTemp);
-    canvas->write_cent_l(StringTemp, &graph_rect, strlen(StringTemp));
-
-    value_cell.left = 0x12B;
-    value_cell.top = hit_rect.top;
-    value_cell.right = 0x158;
-    value_cell.bottom = hit_rect.bottom;
-    canvas->box_sprite(&value_cell, &InterfaceBoxStyles[6]);
-    value_cell.right = 0x150;
-    StringTemp[0] = '\0';
-    _itoa(psych_display_signed(static_cast<uint32_t>(labs_percent) * 10u),
-          number, 10);
+    Buffer::write_cent_l(StringTemp, &text);
+    text = row;
+    text.left = 299;
+    text.right = 344;
+    Buffer::box_sprite(&text, &InterfaceBoxStyles[6]);
+    text.right = 336;
+    StringTemp[0] = 0;
+    _itoa(labs_pct * 10, number, 10);
     strcat(StringTemp, number);
     strcat(StringTemp, "%");
-    canvas->write_right_l(StringTemp, &value_cell, strlen(StringTemp));
-    value_cell.right = 0x178;
-    StringTemp[0] = '\0';
-    _itoa(labs_share, number, 10);
+    Buffer::write_right_l(StringTemp, &text);
+    text.right = 376;
+    StringTemp[0] = 0;
+    _itoa(labs, number, 10);
     strcat(StringTemp, number);
-    canvas->write_right_l(StringTemp, &value_cell, strlen(StringTemp));
-
-    label_value.left = 0x178;
-    label_value.top = hit_rect.top;
-    label_value.right = hit_rect.right;
-    label_value.bottom = hit_rect.bottom;
-    StringTemp[0] = '\0';
+    Buffer::write_right_l(StringTemp, &text);
+    row.left = text.right;
+    StringTemp[0] = 0;
     strcat(StringTemp, " ");
-    strcat(StringTemp, label_get(0x90 / 4));
+    strcat(StringTemp, label_get(36));
     CharUpperA(StringTemp);
     strcat(StringTemp, "  +");
-    canvas->set_text_color(TextColourTable[84], TextColourTable[85], 1, 1);
-    const int labs_label_end = canvas->write_l(
-        StringTemp, &label_value, strlen(StringTemp));
-    label_value.left = labs_label_end;
-    value_cell.right = psych_display_add(labs_label_end, 0x1A);
-
-    canvas->set_text_color(TextColourTable[130], TextColourTable[131], 1, 1);
-    StringTemp[0] = '\0';
-    _itoa(labs_residual, number, 10);
+    Buffer::set_text_color(TextColourTable[84], TextColourTable[85], 1, 1);
+    row.left = Buffer::write_l(StringTemp, &row);
+    text.right = row.left + 26;
+    Buffer::set_text_color(TextColourTable[130], TextColourTable[131], 1, 1);
+    StringTemp[0] = 0;
+    _itoa(labs_extra, number, 10);
     strcat(StringTemp, number);
-    canvas->write_right_l(StringTemp, &value_cell, strlen(StringTemp));
-
-    canvas->set_text_color(TextColourTable[84], TextColourTable[85], 1, 1);
-    StringTemp[0] = '\0';
+    Buffer::write_right_l(StringTemp, &text);
+    row.left = text.right;
+    Buffer::set_text_color(TextColourTable[84], TextColourTable[85], 1, 1);
+    StringTemp[0] = 0;
     strcat(StringTemp, " ");
-    strcat(StringTemp, label_get(0x17C / 4));
+    strcat(StringTemp, label_get(95));
     CharUpperA(StringTemp);
     strcat(StringTemp, " ");
     strcat(StringTemp, "=");
-    const int saved_top_label_end = canvas->write_l(
-        StringTemp, &label_value, strlen(StringTemp));
-    label_value.left = saved_top_label_end;
-    value_cell.right = psych_display_add(saved_top_label_end, 0x1D);
-    canvas->set_text_color(TextColourTable[130], TextColourTable[131], 1, 1);
-    StringTemp[0] = '\0';
+    row.left = Buffer::write_l(StringTemp, &row);
+    text.right = row.left + 29;
+    Buffer::set_text_color(TextColourTable[130], TextColourTable[131], 1, 1);
+    StringTemp[0] = 0;
     _itoa(labs_total, number, 10);
     strcat(StringTemp, number);
-    canvas->write_right_l(StringTemp, &value_cell, strlen(StringTemp));
+    Buffer::write_right_l(StringTemp, &text);
 
-    hit_rect.left = row_bounds.left;
-    hit_rect.top = psych_display_add(row_bounds.top, 0x3F);
-    hit_rect.right = row_bounds.right;
-    hit_rect.bottom = psych_display_add(row_bounds.bottom, 0x3F);
-    expenses_help_rects_[3].left = hit_rect.left;
-    expenses_help_rects_[3].top = hit_rect.top;
-    expenses_help_rects_[3].right = hit_rect.right;
-    expenses_help_rects_[3].bottom = hit_rect.bottom;
-    canvas->set_text_color(TextColourTable[132], TextColourTable[133], 1, 1);
-    graph_rect = hit_rect;
-    graph_rect.right = 0x129;
-    canvas->box_sprite(&graph_rect, &InterfaceBoxStyles[6]);
-    graph_rect.left = psych_display_add(graph_rect.left, 3);
-    graph_rect.top = psych_display_add(graph_rect.top, 3);
-    graph_rect.right = psych_display_sub(graph_rect.right, 3);
-    graph_rect.bottom = psych_display_sub(graph_rect.bottom, 3);
-    StringTemp[0] = '\0';
-    strcat(StringTemp, label_get(0x4F8 / 4));
+    // Psych row (help rectangle 3).
+    base_row.top += 21;
+    base_row.bottom += 21;
+    row = base_row;
+    expenses_help_rects_[3] = row;
+    Buffer::set_text_color(TextColourTable[132], TextColourTable[133], 1, 1);
+    text = row;
+    text.right = 297;
+    Buffer::box_sprite(&text, &InterfaceBoxStyles[6]);
+    text.left += 3;
+    text.top += 3;
+    text.right -= 3;
+    text.bottom -= 3;
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(318));
     CharUpperA(StringTemp);
-    canvas->write_cent_l(StringTemp, &graph_rect, strlen(StringTemp));
-
-    value_cell.left = 0x12B;
-    value_cell.top = hit_rect.top;
-    value_cell.right = 0x158;
-    value_cell.bottom = hit_rect.bottom;
-    canvas->box_sprite(&value_cell, &InterfaceBoxStyles[6]);
-    value_cell.right = 0x150;
-    StringTemp[0] = '\0';
-    _itoa(psych_display_signed(static_cast<uint32_t>(psych_percent) * 10u),
-          number, 10);
+    Buffer::write_cent_l(StringTemp, &text);
+    text = row;
+    text.left = 299;
+    text.right = 344;
+    Buffer::box_sprite(&text, &InterfaceBoxStyles[6]);
+    text.right = 336;
+    StringTemp[0] = 0;
+    _itoa(psych_pct * 10, number, 10);
     strcat(StringTemp, number);
     strcat(StringTemp, "%");
-    canvas->write_right_l(StringTemp, &value_cell, strlen(StringTemp));
-    value_cell.right = 0x178;
-    StringTemp[0] = '\0';
-    _itoa(psych_share, number, 10);
+    Buffer::write_right_l(StringTemp, &text);
+    text.right = 376;
+    StringTemp[0] = 0;
+    _itoa(psych, number, 10);
     strcat(StringTemp, number);
-    canvas->write_right_l(StringTemp, &value_cell, strlen(StringTemp));
-
-    label_value.left = 0x178;
-    label_value.top = hit_rect.top;
-    label_value.right = hit_rect.right;
-    label_value.bottom = hit_rect.bottom;
-    StringTemp[0] = '\0';
+    Buffer::write_right_l(StringTemp, &text);
+    row.left = text.right;
+    StringTemp[0] = 0;
     strcat(StringTemp, " ");
-    strcat(StringTemp, label_get(0x90 / 4));
+    strcat(StringTemp, label_get(36));
     CharUpperA(StringTemp);
     strcat(StringTemp, "  +");
-    canvas->set_text_color(TextColourTable[84], TextColourTable[85], 1, 1);
-    const int psych_label_end = canvas->write_l(
-        StringTemp, &label_value, strlen(StringTemp));
-    label_value.left = psych_label_end;
-    value_cell.right = psych_display_add(psych_label_end, 0x1A);
-
-    canvas->set_text_color(TextColourTable[132], TextColourTable[133], 1, 1);
-    StringTemp[0] = '\0';
-    _itoa(psych_residual, number, 10);
+    Buffer::set_text_color(TextColourTable[84], TextColourTable[85], 1, 1);
+    row.left = Buffer::write_l(StringTemp, &row);
+    text.right = row.left + 26;
+    Buffer::set_text_color(TextColourTable[132], TextColourTable[133], 1, 1);
+    StringTemp[0] = 0;
+    _itoa(psych_extra, number, 10);
     strcat(StringTemp, number);
-    canvas->write_right_l(StringTemp, &value_cell, strlen(StringTemp));
-
-    canvas->set_text_color(TextColourTable[84], TextColourTable[85], 1, 1);
-    StringTemp[0] = '\0';
+    Buffer::write_right_l(StringTemp, &text);
+    row.left = text.right;
+    Buffer::set_text_color(TextColourTable[84], TextColourTable[85], 1, 1);
+    StringTemp[0] = 0;
     strcat(StringTemp, " ");
-    strcat(StringTemp, label_get(0x17C / 4));
+    strcat(StringTemp, label_get(95));
     CharUpperA(StringTemp);
     strcat(StringTemp, " ");
     strcat(StringTemp, "=");
-    const int psych_total_label_end = canvas->write_l(
-        StringTemp, &label_value, strlen(StringTemp));
-    label_value.left = psych_total_label_end;
-    value_cell.right = psych_display_add(psych_total_label_end, 0x1D);
-    canvas->set_text_color(TextColourTable[132], TextColourTable[133], 1, 1);
-    StringTemp[0] = '\0';
+    row.left = Buffer::write_l(StringTemp, &row);
+    text.right = row.left + 29;
+    Buffer::set_text_color(TextColourTable[132], TextColourTable[133], 1, 1);
+    StringTemp[0] = 0;
     _itoa(psych_total, number, 10);
     strcat(StringTemp, number);
-    canvas->write_right_l(StringTemp, &value_cell, strlen(StringTemp));
+    Buffer::write_right_l(StringTemp, &text);
 
-    if (a1 != 0)
-        static_cast<GraphicWin *>(this)->update(&production_content_rect_, 0);
-    else
-        static_cast<GraphicWin *>(this)->soft_update(&production_content_rect_);
-    canvas->set_clip(&saved_clip);
+    if (update_mode) GraphicWin::update(&production_content_rect_, 0);
+    else GraphicWin::soft_update(&production_content_rect_);
+    Buffer::set_clip(&saved_clip);
 }
 
 
@@ -6313,19 +6137,29 @@ void BaseWin::draw_farm(int update_mode) {
     spot2_.add(0, 0, rect1_.left, rect1_.top,
                rect1_.right - rect1_.left, rect1_.bottom - rect1_.top);
 
-    // Modes2/3 explicitly select psych/support; modes<=1 select live state.
-    if ((update_mode < 2 && field_40AFC_ == 1) || update_mode == 2) {
+    // 0x40F1B1..0x40F1F0: modes 2/3 explicitly select psych/support (a
+    // sub/dec chain on the mode); modes <= 1 test the live panel selector.
+    // Both branches reach the one map painter below.
+    if (update_mode > 1) {
+        if (update_mode == 2) {
+            draw_psych();
+        } else if (update_mode == 3) {
+            draw_support();
+        } else {
+            goto draw_map;
+        }
+    } else if (field_40AFC_ == 1) {
         draw_psych();
-    } else if ((update_mode < 2 && field_40AFC_ == 2) || update_mode == 3) {
+    } else if (field_40AFC_ == 2) {
         draw_support();
     } else {
-        int quarter = MapWinCaptionScale < 1 ? 50
-            : (MapWinCaptionScale * 50) / MapWinCaptionDivisor;
-        quarter = (quarter + 1) / 4;
+draw_map:
+        // EBP-20 keeps only the doubled quarter-scale tile step.
+        const int half_tile = ((MapWinCaptionScale > 0
+            ? MapWinCaptionScale * 50 / MapWinCaptionDivisor : 50) + 1) / 4 * 2;
         const int origin_x = (rect1_.right - rect1_.left) / 2
-            - quarter * 4 + rect1_.left;
-        const int origin_y = quarter * 6 + 4 + rect1_.top;
-        const int half_tile = quarter * 2;
+            - half_tile * 2 + rect1_.left;
+        const int origin_y = half_tile * 3 + 4 + rect1_.top;
 
         FarmMapWindow.clear_terrain();
         FarmMapWindow.field_1DD6C_ = 0;
@@ -6341,28 +6175,27 @@ void BaseWin::draw_farm(int update_mode) {
             const int y = BaseCurrent->y + dy;
             if (y < 0 || y >= MapLatitudeBounds || x < 0 || x >= MapLongitudeBounds)
                 continue;
-            int radius = 0;
-            for (; radius < 21; ++radius) {
-                if (dx == RadiusOffsetX[radius] && dy == RadiusOffsetY[radius]) break;
-            }
-            if (radius == 21) radius = 0;
+            // 0x40F2E9: the inlined UNK1 radius lookup (miss -> 0).
+            const int radius = UNK1(tile);
             if (FarmStatus[radius] & 2) continue;
-            const int px = dx * quarter * 4 + origin_x;
-            const int py = dy * quarter * 2 + origin_y;
+            const int px = dx * (half_tile * 2) + origin_x;
+            const int py = dy * half_tile + origin_y;
             gen_terrain_poly(this, 0, 0, BaseCurrent->faction_id_current,
                              radius, 0x4010621, x, y, px, py);
             if (FarmStatus[radius] & 0x20)
                 polygon_dest(this, MapCornerScratch, 4, ReddishColorTable);
             const unsigned status = FarmStatus[radius];
-            if ((status & 4) || radius == 0) {
+            if (!(status & 4) && radius != 0) {
+                if (status & 8) {
+                    const int vehicle = veh_at(x, y);
+                    if (vehicle >= 0) veh_draw(this, vehicle, px, py - half_tile, 0, 0, 0);
+                } else if (status & 0x10) {
+                    polygon_dest(this, MapCornerScratch, 4, ReddishColorTable);
+                    g_RADIUS1_TEXTURE.draw_trans(this, MapCornerScratch, 0);
+                }
+            } else {
                 const int base = base_at(x, y);
-                if (base >= 0) base_draw(this, base, px, py - quarter * 2, 0, 0);
-            } else if (status & 8) {
-                const int vehicle = veh_at(x, y);
-                if (vehicle >= 0) veh_draw(this, vehicle, px, py - quarter * 2, 0, 0, 0);
-            } else if (status & 0x10) {
-                polygon_dest(this, MapCornerScratch, 4, ReddishColorTable);
-                g_RADIUS1_TEXTURE.draw_trans(this, MapCornerScratch, 0);
+                if (base >= 0) base_draw(this, base, px, py - half_tile, 0, 0);
             }
         }
 
@@ -6382,14 +6215,10 @@ void BaseWin::draw_farm(int update_mode) {
             }
             const int y = base->y + dy;
             if (y >= 0 && y < MapLatitudeBounds && x >= 0 && x < longitude) {
-                int radius = 0;
-                for (; radius < 21; ++radius) {
-                    if (dx == RadiusOffsetX[radius] && dy == RadiusOffsetY[radius]) break;
-                }
-                if (radius == 21) radius = 0;
+                const int radius = UNK1(tile);
                 if (!(FarmStatus[radius] & 2)
                     && (base->resource_sqr_radius & (1u << radius))) {
-                    const int px = dx * half_tile * 2 + origin_x;
+                    const int px = dx * (half_tile * 2) + origin_x;
                     int tile_alt = FarmMapWindow.get_alt(x, y, 4);
                     tile_alt += FarmMapWindow.get_alt(x, y, 3);
                     tile_alt += FarmMapWindow.get_alt(x, y, 2);
@@ -6411,48 +6240,47 @@ void BaseWin::draw_farm(int update_mode) {
                         total += yield[resource];
                         restricted[resource] = TileYieldRestricted;
                     }
-                    int width = 0;
-                    if (total) {
-                        for (resource = 0; resource < 4; ++resource) {
-                            if (!yield[resource]) continue;
-                            int index = yield[resource] - 1;
-                            if (index < 0) index = 0;
-                            else if (index > 7) index = 7;
-                            const int sw = g_RESOURCE_ICON_SPRITES[resource * 8 + index].source_width();
-                            width += MapWinCaptionScale < 1 ? sw * 17 / 16
-                                : sw * MapWinCaptionScale / MapWinCaptionDivisor;
-                        }
-                    } else {
+                    // 0x40F661: the empty test is kept in its own local (EBP-2C).
+                    const int empty = total == 0;
+                    int width;
+                    if (empty) {
                         const int sw = g_NULL_RESOURCE_ICON_SPRITE.width();
-                        width = MapWinCaptionScale < 1 ? sw * 17 / 16
-                            : sw * MapWinCaptionScale / MapWinCaptionDivisor;
-                    }
-                    int cursor = half_tile * 4 / 2 - width / 2 + px;
-                    const int icon_height = MapWinCaptionScale < 1 ? 42
-                        : MapWinCaptionScale * 40 / MapWinCaptionDivisor;
-                    const int icon_y = py - (icon_height >> 1) + half_tile;
-                    for (resource = 0; resource < 4; ++resource) {
-                        if (!yield[resource]) continue;
-                        int actual = yield[resource] - 1;
-                        if (actual < 0) actual = 0;
-                        else if (actual > 7) actual = 7;
-                        int potential = restricted[resource] + actual;
-                        if (potential < 0) potential = 0;
-                        else if (potential > 7) potential = 7;
-                        Sprite &actual_icon = g_RESOURCE_ICON_SPRITES[resource * 8 + actual];
-                        Sprite &potential_icon = g_RESOURCE_ICON_SPRITES[resource * 8 + potential];
-                        if (potential != actual) {
-                            potential_icon.draw_mono(this, potential_icon.transparent_index(),
-                                                     cursor, icon_y, 0, 1, 1);
-                            actual_icon.draw(this, actual_icon.transparent_index(),
-                                cursor + (potential - actual) / 2, icon_y, 1, 1);
-                        } else {
-                            actual_icon.draw(this, actual_icon.transparent_index(),
-                                             cursor, icon_y, 1, 1);
+                        width = MapWinCaptionScale > 0
+                            ? sw * MapWinCaptionScale / MapWinCaptionDivisor : sw * 17 / 16;
+                    } else {
+                        width = 0;
+                        for (resource = 0; resource < 4; ++resource) {
+                            if (yield[resource]) {
+                                const int index = range(yield[resource] - 1, 0, 7);
+                                const int sw = g_RESOURCE_ICON_SPRITES[resource * 8 + index].source_width();
+                                width += MapWinCaptionScale > 0
+                                    ? sw * MapWinCaptionScale / MapWinCaptionDivisor : sw * 17 / 16;
+                            }
                         }
-                        cursor += potential_icon.source_width();
                     }
-                    if (!total)
+                    int cursor = half_tile * 2 * 2 / 2 - width / 2 + px;
+                    const int icon_y = py - ((MapWinCaptionScale > 0
+                        ? MapWinCaptionScale * 40 / MapWinCaptionDivisor : 42) >> 1) + half_tile;
+                    for (resource = 0; resource < 4; ++resource) {
+                        if (yield[resource]) {
+                            const int actual = range(yield[resource] - 1, 0, 7);
+                            const int potential = range(restricted[resource] + actual, 0, 7);
+                            if (actual != potential) {
+                                Sprite &potential_icon = g_RESOURCE_ICON_SPRITES[resource * 8 + potential];
+                                potential_icon.draw_mono(this, potential_icon.transparent_index(),
+                                                         cursor, icon_y, 0, 1, 1);
+                                Sprite &actual_icon = g_RESOURCE_ICON_SPRITES[resource * 8 + actual];
+                                actual_icon.draw(this, actual_icon.transparent_index(),
+                                    cursor + (potential - actual) / 2, icon_y, 1, 1);
+                            } else {
+                                Sprite &actual_icon = g_RESOURCE_ICON_SPRITES[resource * 8 + actual];
+                                actual_icon.draw(this, actual_icon.transparent_index(),
+                                                 cursor, icon_y, 1, 1);
+                            }
+                            cursor += g_RESOURCE_ICON_SPRITES[resource * 8 + potential].source_width();
+                        }
+                    }
+                    if (empty)
                         g_NULL_RESOURCE_ICON_SPRITE.draw(this,
                             g_NULL_RESOURCE_ICON_SPRITE.transparent_index(), cursor, icon_y);
                     base = BaseCurrent;
@@ -6466,27 +6294,53 @@ void BaseWin::draw_farm(int update_mode) {
         const int text_top = rect1_.top + 2;
         Buffer::set_font(font, 0, 0, 0);
         StringTemp[0] = 0;
-        const unsigned event = BaseCurrent->event;
-        int label = -1, suffix = 0, colour = 0;
-        if (event & 0x200) { label = 0xBE0 / 4; suffix = 0xBD8 / 4; colour = 90; }
-        else if (event & 0x400) { label = 0xBE4 / 4; suffix = 0xBDC / 4; colour = 90; }
-        else if (event & 0x800) { label = 0xBE8 / 4; suffix = 0xBD8 / 4; colour = 94; }
-        else if (event & 0x1000) { label = 0xBEC / 4; suffix = 0xBDC / 4; colour = 94; }
-        else if (event & 0x2000) { label = 0xBF0 / 4; suffix = 0xBD8 / 4; colour = 86; }
-        else if (event & 0x4000) { label = 0xBF4 / 4; suffix = 0xBDC / 4; colour = 86; }
-        else if (GameDataStateStorage.fields_.dust_cloud_duration_ > 0) { label = 0xBF8 / 4; suffix = 0xBDC / 4; colour = 86; }
-        if (label >= 0) {
-            strcat(StringTemp, label_get(label));
+        if (BaseCurrent->event & 0x200) {
+            strcat(StringTemp, label_get(760));
             strcat(StringTemp, ": ");
-            strcat(StringTemp, label_get(suffix));
-            Buffer::set_text_color(TextColourTable[colour], TextColourTable[colour + 1], 1, 1);
+            strcat(StringTemp, label_get(758));
+            Buffer::set_text_color(TextColourTable[90], TextColourTable[91], 1, 1);
+        } else if (BaseCurrent->event & 0x400) {
+            strcat(StringTemp, label_get(761));
+            strcat(StringTemp, ": ");
+            strcat(StringTemp, label_get(759));
+            Buffer::set_text_color(TextColourTable[90], TextColourTable[91], 1, 1);
+        } else if (BaseCurrent->event & 0x800) {
+            strcat(StringTemp, label_get(762));
+            strcat(StringTemp, ": ");
+            strcat(StringTemp, label_get(758));
+            Buffer::set_text_color(TextColourTable[94], TextColourTable[95], 1, 1);
+        } else if (BaseCurrent->event & 0x1000) {
+            strcat(StringTemp, label_get(763));
+            strcat(StringTemp, ": ");
+            strcat(StringTemp, label_get(759));
+            Buffer::set_text_color(TextColourTable[94], TextColourTable[95], 1, 1);
+        } else if (BaseCurrent->event & 0x2000) {
+            strcat(StringTemp, label_get(764));
+            strcat(StringTemp, ": ");
+            strcat(StringTemp, label_get(758));
+            Buffer::set_text_color(TextColourTable[86], TextColourTable[87], 1, 1);
+        } else if (BaseCurrent->event & 0x4000) {
+            strcat(StringTemp, label_get(765));
+            strcat(StringTemp, ": ");
+            strcat(StringTemp, label_get(759));
+            Buffer::set_text_color(TextColourTable[86], TextColourTable[87], 1, 1);
+        } else if (GameDataStateStorage.fields_.dust_cloud_duration_ > 0) {
+            strcat(StringTemp, label_get(766));
+            strcat(StringTemp, ": ");
+            strcat(StringTemp, label_get(759));
+            Buffer::set_text_color(TextColourTable[86], TextColourTable[87], 1, 1);
         }
-        Buffer::write_right_l(StringTemp, text_right, text_top, strlen(StringTemp));
+        // 0x40FC37 tests the text pointer before strlen, as buffer.h's guarded
+        // write_l(text, x, y) does.
+        // WORKAROUND(decl): buffer.h has no guarded write_right_l(text, x, y)
+        // twin yet; this spells its expansion in place.
+        if (StringTemp)
+            Buffer::write_right_l(StringTemp, text_right, text_top, static_cast<int>(strlen(StringTemp)));
     }
     SpriteScaleNumerator = SpriteScaleDenominator = 1;
     MapWinCaptionScale = MapWinCaptionDivisor = -1;
-    if (!update_mode) soft_update(&rect1_);
-    else update(&rect1_, 0);
+    if (update_mode) update(&rect1_, 0);
+    else soft_update(&rect1_);
     Buffer::set_clip(&saved_clip);
 }
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -6610,26 +6464,30 @@ void base_panel_inset(RECT &rect, int amount);
 // TRIED: SEH-framed function with one real local object (`Font font;`, matching the single ??0Font/??1Font pair) reproduced via plain RAII, same as 0x004ADB70. Diverges at #12 (sim 0.53), not chased further given time. The "own faction" index scan, both box_sprite/set_font/ set_text_color RECT setups, and the tail (soft_update vs update on a1, restore clip) are a direct instruction-level transcription off raw disassembly. The per-faction commerce-report loop body (the `slot` loop building relation strings via write_l) and the military-score ELSE branch are adapted from Ghidra with real field offsets and real calls but approximated message-selection logic - not verified call-for-call against raw bytes given the remaining budget.
 void BaseWin::draw_commerce(int update_mode) {
     Font font;
+    char amount[80];
     // The image finds the current base's index first (0x4108A0..0x4108CA).
     int current_base_id;
     for (int candidate = 0; candidate < GameDataStateStorage.fields_.base_current_count_; ++candidate) {
         if (&Bases[candidate] == BaseCurrent) current_base_id = candidate;
     }
-    RECT outer = commerce_outer_rect_;
-    RECT saved_clip = Buffer::current_clip();
-    Buffer::set_clip(&outer);
+    // EBP-50 holds the clip rectangle first and a (dead) report copy later.
+    RECT rect = commerce_outer_rect_;
+    RECT saved_clip = Buffer::rect1_;
+    Buffer::set_clip(&rect);
     Buffer::box_sprite(&commerce_outer_rect_, &InterfaceBoxStyles[3]);
 
     font.init(DefaultFontFace, 10, 1);
     // One RECT local serves the title and then the report panel (EBP-24).
     RECT report = commerce_title_rect_;
     Buffer::box_sprite(&report, &InterfaceBoxStyles[6]);
-    base_panel_inset(report, 3);
+    report.left += 3;
+    report.right -= 3;
+    report.top += 3;
+    report.bottom -= 3;
     Buffer::set_font(&font1_, nullptr, nullptr, nullptr);
     Buffer::set_text_color(TextColourTable[82], TextColourTable[83], 1, 1);
-    const int faction = Bases[focusedBaseID_].faction_id_current;
     StringTemp[0] = 0;
-    if ((Players[faction].rule_flags & RFLAG_ALIEN) != 0) {
+    if ((Players[Bases[focusedBaseID_].faction_id_current].rule_flags & RFLAG_ALIEN) != 0) {
         strcat(StringTemp, label_get(1107));
     } else {
         strcat(StringTemp, label_get(313));
@@ -6641,110 +6499,114 @@ void BaseWin::draw_commerce(int update_mode) {
     Buffer::set_text_color(TextColourTable[104], TextColourTable[105], 1, 1);
     report = commerce_report_rect_;
     Buffer::box_sprite(&report, &InterfaceBoxStyles[0]);
-    base_panel_inset(report, 3);
-    const int row_pitch = (report.bottom - report.top) / 6;
-    int row_y = report.top;
-    bool wrote_row = false;
-    if ((Players[BaseCurrent->faction_id_current].rule_flags & RFLAG_ALIEN) != 0) {
+    report.left += 3;
+    report.right -= 3;
+    report.top += 3;
+    report.bottom -= 3;
+    int faction = BaseCurrent->faction_id_current;
+    // 0x410AF5: the report copy into the first rectangle is never read.
+    rect = report;
+    int x = report.left;
+    int wrote_row = 0;
+    int row_pitch = (report.bottom - report.top) / 6;
+    if ((Players[faction].rule_flags & RFLAG_ALIEN) != 0) {
         Buffer::set_font(&font1_, nullptr, nullptr, nullptr);
         int score = 0;
         for (int facility = 0; facility < 70; ++facility) {
-            if ((BaseCurrent->facilities_built[facility >> 3] &
-                 (1u << (facility & 7))) != 0) ++score;
+            if (BaseCurrent->facilities_built[facility / 8] & (1 << (facility % 8))) {
+                score++;
+            }
         }
-        // The original's 64 dword slots are the whole BaseSecretProject ABI
-        // record. Copy its representation into a homogeneous local view so
-        // this census does not walk across C++ struct members by pointer.
-        typedef char ProjectRecordSizeCheck[
-            sizeof(BaseSecretProject) == MaxSecretProjectNum * sizeof(int) ? 1 : -1];
-        (void)sizeof(ProjectRecordSizeCheck);
-        int project_homes[MaxSecretProjectNum];
-        memcpy(project_homes, &GameDataStateStorage.fields_.secret_project_, sizeof(project_homes));
         for (int project = 0; project < MaxSecretProjectNum; ++project) {
-            if (project_homes[project] == current_base_id) score += 5;
+            if (base_project(project) == current_base_id) score += 5;
         }
         score /= 2;
-        StringTemp[0] = 0;
-        if (PlayersData[BaseCurrent->faction_id_current].sanction_turns != 0) {
-            Buffer::set_text_color(TextColourTable[110], TextColourTable[111], 1, 1);
-            strcat(StringTemp, label_get(1125));
-            wrote_row = true;
-        } else if (score != 0) {
+        if (PlayersData[faction].sanction_turns == 0 && score != 0) {
+            StringTemp[0] = 0;
             Buffer::set_text_color(0xFF, -1, 1, 1);
-            char number[32];
             strcat(StringTemp, "+");
-            _itoa(score, number, 10);
-            strcat(StringTemp, number);
+            _itoa(score, amount, 10);
+            strcat(StringTemp, amount);
             strcat(StringTemp, " ");
             strcat(StringTemp, label_get(36));
-            wrote_row = true;
-        }
-        if (wrote_row) {
             CharUpperA(StringTemp);
-            Buffer::write_cent_l(StringTemp, &report, strlen(StringTemp));
+            Buffer::write_cent_l(StringTemp, &report);
+            Buffer::set_font(&font, nullptr, nullptr, nullptr);
+            wrote_row = 1;
+        } else if (PlayersData[faction].sanction_turns != 0) {
+            Buffer::set_font(&font1_, nullptr, nullptr, nullptr);
+            StringTemp[0] = 0;
+            strcat(StringTemp, label_get(1125));
+            Buffer::set_text_color(TextColourTable[110], TextColourTable[111], 1, 1);
+            Buffer::write_cent_l(StringTemp, &report);
+            Buffer::set_font(&font, nullptr, nullptr, nullptr);
+            wrote_row = 1;
         }
     } else {
-        const int owner = BaseCurrent->faction_id_current;
+        int row_y = report.top;
         for (int partner = 1; partner < MaxPlayerNum; ++partner) {
             const int slot = partner - 1;
-            if (partner == owner ||
-                (PlayersData[owner].diplo_treaties[partner] &
-                 (DTREATY_PACT | DTREATY_TREATY)) == 0 ||
-                (BaseCommerceReceipts[slot] == 0 &&
-                 BaseCommercePartnerReceipts[slot] == 0) ||
-                (Players[partner].rule_flags & RFLAG_ALIEN) != 0) {
+            if (partner == faction
+                || (PlayersData[faction].diplo_treaties[partner]
+                    & (DTREATY_PACT | DTREATY_TREATY)) == 0
+                || (BaseCommerceReceipts[slot] == 0
+                    && BaseCommercePartnerReceipts[slot] == 0)
+                || (Players[partner].rule_flags & RFLAG_ALIEN) != 0) {
                 continue;
             }
-            wrote_row = true;
-            GenderDefault = Players[partner].noun_gender;
-            PluralityDefault = Players[partner].is_noun_plural;
-            Buffer::set_text_color(ChatItemIdTable[partner], -1, 1, 1);
+            wrote_row = 1;
             StringTemp[0] = 0;
+            parse_set(Players[partner].noun_gender, Players[partner].is_noun_plural);
             strcat(StringTemp, Players[partner].noun_faction);
+            Buffer::set_text_color(ChatItemIdTable[partner], -1, 1, 1);
             CharUpperA(StringTemp);
-            const int own_sanctions = PlayersData[owner].sanction_turns;
-            const int partner_sanctions = PlayersData[partner].sanction_turns;
-            if (own_sanctions == 0 && partner_sanctions == 0) {
-                char amount[32];
-                strcat(StringTemp, ": +");
+            if (PlayersData[faction].sanction_turns == 0
+                && PlayersData[partner].sanction_turns == 0) {
+                strcat(StringTemp, ": ");
+                strcat(StringTemp, "+");
                 _itoa(BaseCommerceReceipts[slot], amount, 10);
                 strcat(StringTemp, amount);
             }
-            Buffer::write_l(StringTemp, report.left, row_y, strlen(StringTemp));
+            Buffer::write_l(StringTemp, x, row_y);
 
             StringTemp[0] = 0;
-            const int detail_y = static_cast<int32_t>(
-                static_cast<uint32_t>(row_y) +
-                static_cast<uint32_t>(font.pixel_height()) + 1U);
-            int text_end;
-            if (own_sanctions != 0 || partner_sanctions != 0) {
+            int detail_y = row_y + font.pixel_height() + 1;
+            int detail_x = x + 5;
+            if (PlayersData[faction].sanction_turns == 0
+                && PlayersData[partner].sanction_turns == 0) {
+                // 0x410EE3: the pact test rereads BaseCurrent's faction.
+                strcat(StringTemp,
+                       (PlayersData[BaseCurrent->faction_id_current].diplo_treaties[partner]
+                        & DTREATY_PACT) != 0 ? label_get(645) : label_get(644));
+                detail_x = Buffer::write_l(StringTemp, detail_x, detail_y);
+                if (BaseCommercePartnerReceipts[slot] != BaseCommerceReceipts[slot]) {
+                    Buffer::set_text_color(ChatItemIdTable[partner], -1, 1, 1);
+                    StringTemp[0] = 0;
+                    strcat(StringTemp, " ");
+                    strcat(StringTemp, "(");
+                    strcat(StringTemp, label_get(648));
+                    strcat(StringTemp, " ");
+                    strcat(StringTemp, "+");
+                    char partner_amount[80];
+                    _itoa(BaseCommercePartnerReceipts[slot], partner_amount, 10);
+                    strcat(StringTemp, partner_amount);
+                    strcat(StringTemp, ")");
+                    Buffer::write_l(StringTemp, detail_x, detail_y);
+                }
+            } else {
                 Buffer::set_text_color(TextColourTable[110], TextColourTable[111], 1, 1);
                 strcat(StringTemp, label_get(450));
-                strcat(StringTemp, " (");
-                char turns[32];
-                _itoa(own_sanctions > partner_sanctions
-                          ? own_sanctions : partner_sanctions, turns, 10);
+                strcat(StringTemp, " ");
+                strcat(StringTemp, "(");
+                char turns[80];
+                _itoa(PlayersData[faction].sanction_turns > PlayersData[partner].sanction_turns
+                          ? PlayersData[faction].sanction_turns
+                          : PlayersData[partner].sanction_turns,
+                      turns, 10);
                 strcat(StringTemp, turns);
                 strcat(StringTemp, ")");
                 CharUpperA(StringTemp);
-                text_end = Buffer::write_l(StringTemp, report.left + 5,
-                                           detail_y, strlen(StringTemp));
-            } else {
-                strcat(StringTemp, label_get((PlayersData[owner].diplo_treaties[partner]
-                                              & DTREATY_PACT) != 0 ? 645 : 644));
-                text_end = Buffer::write_l(StringTemp, report.left + 5,
-                                           detail_y, strlen(StringTemp));
-            }
-            if (BaseCommercePartnerReceipts[slot] != BaseCommerceReceipts[slot]) {
-                StringTemp[0] = 0;
-                strcat(StringTemp, " (");
-                strcat(StringTemp, label_get(648));
-                strcat(StringTemp, " +");
-                char partner_amount[32];
-                _itoa(BaseCommercePartnerReceipts[slot], partner_amount, 10);
-                strcat(StringTemp, partner_amount);
-                strcat(StringTemp, ")");
-                Buffer::write_l(StringTemp, text_end, detail_y, strlen(StringTemp));
+                Buffer::write_l(StringTemp, detail_x, detail_y);
             }
             row_y += row_pitch;
         }
@@ -6754,10 +6616,10 @@ void BaseWin::draw_commerce(int update_mode) {
         Buffer::set_text_color(TextColourTable[104], TextColourTable[105], 1, 1);
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(25));
-        Buffer::write_cent_l(StringTemp, &commerce_report_rect_, strlen(StringTemp));
+        Buffer::write_cent_l(StringTemp, &commerce_report_rect_);
     }
-    if (update_mode == 0) MainInterfaceGlobal.soft_update(&commerce_outer_rect_);
-    else MainInterfaceGlobal.update(&commerce_outer_rect_, nullptr);
+    if (update_mode) GraphicWin::update(&commerce_outer_rect_, 0);
+    else GraphicWin::soft_update(&commerce_outer_rect_);
     Buffer::set_clip(&saved_clip);
 }
 // ORIGINAL: 0x00411240 ?draw_nutrients@BaseWin@@QAEXH@Z 0x00411240-0x00411973;0x00651B37-0x00651B4C
@@ -6765,16 +6627,20 @@ void BaseWin::draw_commerce(int update_mode) {
 // TRIED: literal transcription of Ghidra's (clean, non-SEH-mangled) pseudocode, mapping the three unlabelled thiscall calls (0x618EA0/0x618EE0/0x618F40) onto BaseWin's already-declared UNK4/UNK7/UNK6 slots by call-site position and declaring the other dozen FUN_ helpers as plain cdecl free functions (their true receiver/convention was not established) compiles and matches the arithmetic/branch structure, but the original installs a real SEH frame (fs:[0] chain) that this body does not reproduce since nothing here needs unwind-safety in the C++ source; diverges from the framed build around #2.
 void BaseWin::draw_nutrients(int update_mode) {
     Font font;
-    RECT outer = nutrient_outer_rect_;
-    RECT saved_clip = Buffer::current_clip();
-    Buffer::set_clip(&outer);
+    // EBP-54 holds the clip rectangle first and the grid area afterwards.
+    RECT rect = nutrient_outer_rect_;
+    RECT saved_clip = Buffer::rect1_;
+    Buffer::set_clip(&rect);
     Buffer::box_sprite(&nutrient_outer_rect_, &InterfaceBoxStyles[3]);
 
     font.init(DefaultFontFace, WinScreenWidth == 800 ? 10 : 12, 0);
     // One RECT local serves the title and then the content panel (EBP-1C).
     RECT content = nutrient_title_rect_;
     Buffer::box_sprite(&content, &InterfaceBoxStyles[6]);
-    base_panel_inset(content, 3);
+    content.left += 3;
+    content.top += 3;
+    content.right -= 3;
+    content.bottom -= 3;
     Buffer::set_font(&font1_, nullptr, nullptr, nullptr);
     Buffer::set_text_color(TextColourTable[82], TextColourTable[83], 1, 1);
     StringTemp[0] = 0;
@@ -6784,89 +6650,126 @@ void BaseWin::draw_nutrients(int update_mode) {
 
     content = nutrient_content_rect_;
     Buffer::box_sprite(&content, &InterfaceBoxStyles[0]);
-    base_panel_inset(content, 3);
+    content.left += 3;
+    content.top += 3;
+    content.right -= 3;
+    content.bottom -= 3;
     Buffer::set_font(&font, nullptr, nullptr, nullptr);
     Buffer::set_text_color(TextColourTable[104], TextColourTable[105], 1, 1);
-    const int line_height = font.line_advance();
-    const int grid_bottom = content.bottom - 2 * line_height;
-    const int stored = BaseCurrent->nutrients_accumulated;
-    const int surplus = BaseCurrent->nutrient_surplus;
-    const int growth_cost = cost_factor(BaseCurrent->faction_id_current, 0,
-                                        BaseIDCurrentSelected);
-    const int total = (BaseCurrent->population_size + 1) * growth_cost;
 
-    if (total > 0 && growth_cost > 0) {
-        const int width = content.right - content.left;
-        const int height = grid_bottom - content.top;
-        int columns = growth_cost;
-        if (columns * 2 < width) {
-            while (height <= (total / columns) * 2 && height != (total / columns) * 2)
-                columns *= 2;
-        } else {
-            columns = 0;
-            do { ++columns; } while (columns * columns < total);
-            columns += 2;
+    rect = content;
+    rect.bottom -= 2 * font_line_advance(font);
+    int stored = BaseCurrent->nutrients_accumulated;
+    int growth_cost = cost_factor(BaseCurrent->faction_id_current, 0,
+                                  BaseIDCurrentSelected);
+    int total = (BaseCurrent->population_size + 1) * growth_cost;
+    int surplus = BaseCurrent->nutrient_surplus;
+    int width = rect.right - rect.left;
+    int columns;
+    if (growth_cost * 2 < width) {
+        for (columns = growth_cost; total / columns * 2 > rect.bottom - rect.top;
+             columns *= 2) {
         }
-        const int rows = (total + columns - 1) / columns;
-        if (rows > 0) {
-            const int cell_width = width / columns;
-            const int cell_height = height / rows;
-            int left = content.left + (width - cell_width * columns) / 2;
-            int top = content.top + (height - cell_height * rows) / 2;
-            if (cell_height > 7) { ++left; ++top; }
-            for (int index = 0; index < total; ++index) {
-                const int column = index % columns;
-                const int row = index / columns;
-                RECT cell = {left + column * cell_width, top + row * cell_height,
-                             left + (column + 1) * cell_width - 1,
-                             top + (row + 1) * cell_height - 1};
-                if (index < stored) {
-                    if (cell_height < 8) GraphicWin::fill(&cell, 0x95);
-                    else Buffer::tile(&sprites3_[1], cell.left, cell.top,
-                                      cell.left, cell.top, cell_width - 1, cell_height - 1);
+    } else {
+        for (columns = 0; columns * columns < total; columns++) {
+        }
+        columns += 2;
+    }
+    int rows = total / columns;
+    if (rows * columns < total) rows++;
+    int cell_width = width / columns;
+    int cell_height = (rect.bottom - rect.top) / rows;
+    RECT cell;
+    cell.left = (width - cell_width * columns) / 2 + rect.left;
+    cell.top = (rect.bottom - rect.top - cell_height * rows) / 2 + rect.top;
+    cell.right = cell.left + cell_width - 1;
+    cell.bottom = cell.top + cell_height - 1;
+    if (cell_height >= 8) {
+        cell.left++;
+        cell.top++;
+    }
+    RECT row_rect = cell;
+    int index = 0;
+    for (int row = 0; row < rows; row++) {
+        for (int column = 0; column < columns; column++) {
+            if (index < stored) {
+                if (cell_height < 8) {
+                    GraphicWin::fill(&cell, 0x95);
                 } else {
-                    if (cell_height > 7) Buffer::tile(&sprites3_[0], cell.left, cell.top,
-                                      cell.left, cell.top, cell_width - 1, cell_height - 1);
-                    else GraphicWin::fill(&cell, 0x98);
+                    Buffer::tile(&sprites3_[1], cell.left, cell.top, cell.left, cell.top,
+                                 cell.right - cell.left, cell.bottom - cell.top);
                 }
-                if (surplus < 0 && index >= stored + surplus && index < stored)
-                    Buffer::box(&cell, 0x6c, 0x6c);
-                else if (surplus > 0 && index >= stored && index < stored + surplus)
-                    Buffer::box(&cell, 0x95, 0x95);
+            } else {
+                if (cell_height < 8) {
+                    GraphicWin::fill(&cell, 0x98);
+                } else {
+                    Buffer::tile(&sprites3_[0], cell.left, cell.top, cell.left, cell.top,
+                                 cell.right - cell.left, cell.bottom - cell.top);
+                }
             }
+            if (surplus < 0) {
+                if (index >= surplus + stored && index < stored) {
+                    Buffer::box(&cell, 0x6c, 0x6c);
+                }
+            } else if (surplus > 0) {
+                // 0x411687: the gain band compares index + 1, not index.
+                if (index + 1 <= surplus + stored && index + 1 > stored) {
+                    Buffer::box(&cell, 0x95, 0x95);
+                }
+            }
+            cell.left += cell_width;
+            cell.right += cell_width;
+            index++;
+            // Bug-for-bug: draws total + 1 cells before stopping.
+            if (index > total) break;
         }
+        row_rect.top += cell_height;
+        row_rect.bottom += cell_height;
+        cell = row_rect;
+        if (index > total) break;
     }
 
-    const int remaining = growth_cost * (BaseCurrent->population_size + 1) - stored;
-    int turns = 1;
-    if (remaining > 0) {
-        if (surplus > 0) turns = (surplus - 1 + remaining) / surplus + 1;
-        else if (surplus < 0) turns = (-surplus - 1 + stored) / -surplus + 1;
-        else turns = update_mode;
+    int nutrients = BaseCurrent->nutrients_accumulated;
+    int remaining = cost_factor(BaseCurrent->faction_id_current, 0, BaseIDCurrentSelected)
+                    * (BaseCurrent->population_size + 1) - nutrients;
+    int turns;
+    if (remaining <= 0) {
+        turns = 1;
+    } else if (BaseCurrent->nutrient_surplus > 0) {
+        turns = (BaseCurrent->nutrient_surplus + remaining - 1)
+                / BaseCurrent->nutrient_surplus + 1;
+    } else if (BaseCurrent->nutrient_surplus < 0) {
+        turns = (-BaseCurrent->nutrient_surplus + nutrients - 1)
+                / -BaseCurrent->nutrient_surplus + 1;
+    } else {
+        // Bug-for-bug: a stalled base reports the update-mode argument.
+        turns = update_mode;
     }
     StringTemp[0] = 0;
-    strcat(StringTemp, label_get(surplus < 0 ? 51 : 47));
-    if (surplus == 0 && remaining > 0) {
-        strcat(StringTemp, ": -");
-        strcat(StringTemp, label_get(50));
-        strcat(StringTemp, "-");
-    } else if (surplus < 0 && remaining > 0) {
-        strcat(StringTemp, "!");
+    strcat(StringTemp, label_get(BaseCurrent->nutrient_surplus < 0 ? 51 : 47));
+    if (BaseCurrent->nutrient_surplus <= 0 && remaining > 0) {
+        if (BaseCurrent->nutrient_surplus == 0) {
+            strcat(StringTemp, ": ");
+            strcat(StringTemp, "-");
+            strcat(StringTemp, label_get(50));
+            strcat(StringTemp, "-");
+        } else {
+            strcat(StringTemp, "!");
+        }
     } else {
-        char number[32];
-        if (turns < 0) turns = 0;
-        if (turns > 9999) turns = 9999;
+        char number[80];
+        turns = range(turns, 0, 9999);
         strcat(StringTemp, ": ");
         _itoa(turns, number, 10);
         strcat(StringTemp, number);
         strcat(StringTemp, " ");
-        strcat(StringTemp, label_get(turns == 1 ? 48 : 49));
+        strcat(StringTemp, turns != 1 ? label_get(49) : label_get(48));
     }
-    Buffer::write_cent_l(StringTemp, content.left,
-                         content.bottom - line_height - 2,
-                         content.right - content.left, strlen(StringTemp));
-    if (update_mode == 0) MainInterfaceGlobal.soft_update(&nutrient_outer_rect_);
-    else MainInterfaceGlobal.update(&nutrient_outer_rect_, nullptr);
+    Buffer::write_cent_text(StringTemp, content.left,
+                            content.bottom - font_line_advance(font) - 2,
+                            rect.right - rect.left);
+    if (update_mode) GraphicWin::update(&nutrient_outer_rect_, 0);
+    else GraphicWin::soft_update(&nutrient_outer_rect_);
     Buffer::set_clip(&saved_clip);
 }
 
@@ -6936,7 +6839,7 @@ void BaseWin::base_editor_fac() {
 void BaseWin::base_editor_proj() {
     Popup popup;
     PopupModalState = 6;
-    popup.start(PopupStartCaption, "PICKAPROJ", -1, 0, 0x42, 0);
+    popup.start("PICKAPROJ", 0x42);
     // Original41BC22..41BD0E walks Facility[70..133] at48-byte stride and
     // the64 SecretProject words at4-byte stride, independently of expansion.
     for (int project_index = 0; project_index < MaxSecretProjectNum; ++project_index) {
@@ -6960,21 +6863,21 @@ void BaseWin::base_editor_proj() {
         }
         // The item id is the project index (original 0x0041BCF5 pushes the
         // loop counter), which the selection below indexes by.
-        popup.dialogs().item(StringTemp, project_index);
+        popup.item(StringTemp, project_index);
     }
-    const int project = popup.exec(0, 0);
+    const int project = popup.exec();
     PopupModalState = 0;
     if (project < 0) return;
     parse_say(0, Facility[FacilitySPStart + project].name, -1, -1);
     PopupModalState = 6;
-    popup.start(PopupStartCaption, "PICKAPLACE", -1, 0, 0x42, 0);
+    popup.start("PICKAPLACE", 0x42);
     {
         char *text = StringTable.get(Labels.strings_ptr[0xD64 / 4]);
-        popup.dialogs().item(text, 9999);
+        popup.item(text, 9999);
     }
     {
         char *text = StringTable.get(Labels.strings_ptr[0xD68 / 4]);
-        popup.dialogs().item(text, 9998);
+        popup.item(text, 9998);
     }
     // Current-faction bases precede other bases, preserving original index IDs.
     // Re-read BaseCurrent and the live base count after each item call, as
@@ -6992,10 +6895,10 @@ void BaseWin::base_editor_proj() {
             const int faction = Bases[base].faction_id_current;
             parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
             strcat(StringTemp, Players[faction].noun_faction);
-            popup.dialogs().item(StringTemp, base);
+            popup.item(StringTemp, base);
         }
     }
-    int owner_base = popup.exec(0, 0);
+    int owner_base = popup.exec();
     PopupModalState = 0;
     if (owner_base < 0) return;
     if (owner_base >= 9000) owner_base -= 10000;
@@ -7014,15 +6917,14 @@ void BaseWin::base_editor_copy(int copy_to) {
     Popup popup;
     parse_says(0, BaseCurrent->name_string, -1, -1);
     PopupModalState = 6;
-    popup.start(PopupStartCaption, copy_to ? "EDITORBASECOPYTO" : "EDITORBASECOPY",
-                -1, 0, 0x42, 0);
+    popup.start(copy_to ? "EDITORBASECOPYTO" : "EDITORBASECOPY", 0x42);
     if (copy_to) {
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0xE64 / 4));
-        popup.dialogs().item(StringTemp, 9998);
+        popup.item(StringTemp, 9998);
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0xE68 / 4));
-        popup.dialogs().item(StringTemp, 9999);
+        popup.item(StringTemp, 9999);
     }
     // Own-faction bases first, then other-faction bases. Both include the
     // selected base; the original does not filter it from this menu.
@@ -7039,11 +6941,10 @@ void BaseWin::base_editor_copy(int copy_to) {
             const int faction = Bases[base].faction_id_current;
             parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
             strcat(StringTemp, Players[faction].noun_faction);
-            popup.dialogs().item(StringTemp, base);
-
+            popup.item(StringTemp, base);
         }
     }
-    const int selection = popup.exec(0, 0);
+    const int selection = popup.exec();
     PopupModalState = 0;
     if (selection < 0) return;
     for (int byte = 0; byte < 9; ++byte) {
@@ -7143,7 +7044,9 @@ void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
             ConsoleGlobal.selected_vehicle_ = vehicle_id;
             ConsoleGlobal.set_move(1);
             ConsoleGlobal.mark_garrison_selection();
-            dismiss_garrison_selection();
+            // 0x40B240..0x40B3AD: exit() expanded in place on this.
+            if (TutWinBaseWindow.is_visible()) exit();
+            else if (ReportWinGlobal.is_visible()) ReportIfGlobal.done();
             return;
         }
         if (!veh_selectable(vehicle_id)) return;
@@ -7156,7 +7059,8 @@ void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
         NetDaemonNet.unlock_veh();
         ConsoleGlobal.set_move(1);
         ConsoleGlobal.mark_garrison_selection();
-        dismiss_garrison_selection();
+        if (TutWinBaseWindow.is_visible()) exit();
+        else if (ReportWinGlobal.is_visible()) ReportIfGlobal.done();
         return;
     }
 
@@ -7189,7 +7093,6 @@ void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
             + (Vehs[vehicle_id].x >> 1)];
         const Map &base_tile = map_tiles()[BaseCurrent->y * MapLongitude
             + (BaseCurrent->x >> 1)];
-        // Original 40B85C takes SAME region directly to add-return-home.
         if (vehicle_tile.region == base_tile.region
             || Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].triad != 0) {
             menu.add_separator(99);
@@ -7199,21 +7102,18 @@ void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
     }
     const int previous_vehicle = vehicle_id;
     // This pointer is borrowed only; the modal callback may remap its referent.
-    // The accessor uses daemon-owned +1B78, not a second global.
     NetDaemonNet.set_vehicle_selection_follow(&vehicle_id);
     menu.show(x, y, pop_expire);
     if (GameDataStateStorage.fields_.game_state_ & 0x800u) return;
     const int slot = menu.get_selected();
-    const int action = slot == -1 ? base_panel_signed(menu.field_A0C_value())
-        : slot < 64 ? menu.item_id(slot) : -1;
-    // Native cancellation reads actual GraphicWin+A0C, not an array element:
-    // PullDown.items_ startsA18, id+8=A20, minus one item(14hex)=A0C.
-    // The approved narrow base getter preserves this read without array UB.
-    // Other negative slots remain original unvalidated-input obligations.
+    // 0x40B91C: only the signed upper bound is tested; a negative (cancel)
+    // slot reads items_[slot].id before the array, unvalidated as in the image.
+    const int action = slot < 64 ? menu.item_id(slot) : -1;
     if (vehicle_id != previous_vehicle) return;
     if (NetDaemonNet.lock_veh(&vehicle_id, 0, -1, -1, 0)) return;
     const int faction = Vehs[vehicle_id].faction_id;
     if (faction != ConsoleGlobal.faction_id_) { NetDaemonNet.unlock_veh(); return; }
+    // Cases in the image's block order (jump table 0x40BFE4).
     switch (action) {
     case 1:
         if (veh_jail(vehicle_id)) X_pop("JAIL", 0);
@@ -7228,8 +7128,23 @@ void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
         ConsoleGlobal.selected_vehicle_ = vehicle_id;
         ConsoleGlobal.set_move(1);
         ConsoleGlobal.mark_garrison_selection();
-        dismiss_garrison_selection();
+        if (TutWinBaseWindow.is_visible()) exit();
+        else if (ReportWinGlobal.is_visible()) ReportIfGlobal.done();
         NetDaemonNet.unlock_veh(); // native unlock is AFTER dismissal in this arm
+        return;
+    case 90:
+        ConsoleGlobal.editor_edit_veh(vehicle_id);
+        break;
+    case 20:
+        if (Bases[focusedBaseID_].faction_id_current == faction) {
+            Vehs[vehicle_id].home_base_id = static_cast<int16_t>(focusedBaseID_);
+            synch_veh(vehicle_id);
+            NetDaemonNet.await_synch();
+        }
+        break;
+    case 21:
+        NetDaemonNet.unlock_veh();
+        zoom(Vehs[vehicle_id].home_base_id, 0);
         return;
     case 10:
         if (veh_jail(vehicle_id)) X_pop("JAIL", 0);
@@ -7245,42 +7160,35 @@ void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
         if (TutWinBaseWindow.is_visible()) { redraw(); MainInterfaceGlobal.redraw(); }
         else if (ReportWinGlobal.is_visible()) ReportWinGlobal.redraw();
         return;
-    case 20:
-        if (Bases[focusedBaseID_].faction_id_current == faction) {
-            Vehs[vehicle_id].home_base_id = static_cast<int16_t>(focusedBaseID_);
-            synch_veh(vehicle_id); NetDaemonNet.await_synch();
-        }
-        break;
-    case 21:
-        NetDaemonNet.unlock_veh(); zoom(Vehs[vehicle_id].home_base_id, 0); return;
     case 30:
         if (veh_jail(vehicle_id)) { X_pop("JAIL", 0); break; }
         Vehs[vehicle_id].state &= 0xFCFFBDFFu;
         Vehs[vehicle_id].order = 24;
         Vehs[vehicle_id].waypoint_x[0] = Bases[Vehs[vehicle_id].home_base_id].x;
         Vehs[vehicle_id].waypoint_y[0] = Bases[Vehs[vehicle_id].home_base_id].y;
-        synch_veh(vehicle_id); NetDaemonNet.await_synch();
+        synch_veh(vehicle_id);
+        NetDaemonNet.await_synch();
         break;
     case 31:
-        NetDaemonNet.unlock_veh(); ConsoleGlobal.set_view(0);
+        NetDaemonNet.unlock_veh();
+        ConsoleGlobal.set_view(0);
         // Native 40BE21 LOADS slot zero, not the separate FarmMapWindow object.
         MapWinTable[0]->set_center(Vehs[vehicle_id].x, Vehs[vehicle_id].y, 1);
         ConsoleGlobal.set_cursor(Vehs[vehicle_id].x, Vehs[vehicle_id].y);
-        dismiss_garrison_selection(); return;
-    case 90: ConsoleGlobal.editor_edit_veh(vehicle_id); break;
-    default: break;
+        if (TutWinBaseWindow.is_visible()) exit();
+        else if (ReportWinGlobal.is_visible()) ReportIfGlobal.done();
+        return;
     }
     NetDaemonNet.unlock_veh();
     if (TutWinBaseWindow.is_visible()) {
-        if (TutWinBaseWindow.is_visible()) {
-            set_base(static_cast<int>(TutWinBaseWindow.focusedBaseID_));
-            base_compute(1);
-            Win &tutorial_window = TutWinBaseWindow;
-            tutorial_window.redraw();
-            MainInterfaceGlobal.redraw();
-        }
+        // 0x40B9D5..0x40BA0E: BaseWin::recompute expanded in place (Win
+        // visibility, set_base(focusedBaseID_), base_compute(1), virtual
+        // redraw on the window, direct MainInterfaceGlobal redraw).
+        TutWinBaseWindow.recompute(0);
         TutWinBaseWindow.draw_garrison(1);
-    } else if (ReportWinGlobal.is_visible()) ReportWinGlobal.redraw();
+    } else if (ReportWinGlobal.is_visible()) {
+        ReportWinGlobal.redraw();
+    }
 }
 
 void BaseWin::dismiss_garrison_selection() {
@@ -7512,13 +7420,12 @@ void BaseWin::draw_facilities(int update_mode) {
         }
         const int width = content.right - content.left;
         while (font.width(StringTemp) > width) {
-            const size_t length = strlen(StringTemp);
-            if (!length) break;
+            if (!strlen(StringTemp)) break;
             char *last_space = strrchr(StringTemp, ' ');
             if (last_space) *last_space = 0;
-            else StringTemp[length - 1] = 0;
+            else StringTemp[strlen(StringTemp) - 1] = 0;
         }
-        Buffer::write_l(StringTemp, content.left + 1, y, static_cast<int>(strlen(StringTemp)));
+        Buffer::write_l(StringTemp, content.left + 1, y);
         spot2_.add(facility, 2, content.left, y, width, row_height);
         y += row_height;
     }
@@ -8005,3 +7912,21 @@ int BaseWin::farm_get(int a1, int a2) {
 }
 // RECOVERY_GENERATED: v1 vtable 0x0066A40C ? ??_7BaseWin@@6BWin@@@ 0x00408490
 // RECOVERY_GENERATED: v1 vtable 0x0066A404 ? ??_7BaseWin@@6BBuffer@@@ 0x00408490
+
+// WORKAROUND(decl): BaseWin::exit (0x0041A4C0), BaseWin::delete_queue
+// (0x00416FB0) and BaseWin::recompute (0x00416D90) are expanded by every basewin.cpp caller (garrison_click
+// 0x40B240.., base_killed, queue_click 0x4097F5.., production 0x417875..)
+// although those callers precede the copies, so the original bodies were
+// visible to them as inlines (presumably in basewin.h). console.cpp and
+// turn.cpp still call exit out of line (load_proc, on_key_click, center,
+// control_turn, net_end_of_turn). Until the bodies move to the header, this
+// never-called function, compiled with expansion disabled, keeps both
+// out-of-line COMDAT copies emitted without adding a dynamic initializer.
+#pragma inline_depth(0)
+void basewin_emit_inline_copies(BaseWin *window) {
+    window->exit();
+    window->delete_queue(0);
+    window->recompute(0);
+}
+#pragma inline_depth()
+
