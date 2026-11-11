@@ -540,7 +540,7 @@ int __fastcall sub_5d3980(MediaRuntime *runtime, unsigned char *packet) {
     return flagOK;
 }
 
-// ORIGINAL: 0x005D3DF0 sub_5d3df0 0x005D3DF0-0x005D3F48 FILE
+// ORIGINAL: 0x005D3DF0 sub_5d3df0 0x005D3DF0-0x005D3F48 FILE BYTE_EXACT
 // symbol    ?sub_5d3df0@@YIHPAUMediaRuntime@@PAE@Z
 // size      344 bytes
 // prototype
@@ -601,7 +601,7 @@ int __fastcall sub_5d3df0(MediaRuntime *runtime, unsigned char *frame_base) {
   return result;
 }
 
-// ORIGINAL: 0x005D3F50 sub_5d3f50 0x005D3F50-0x005D4014 FILE
+// ORIGINAL: 0x005D3F50 sub_5d3f50 0x005D3F50-0x005D4014 FILE BYTE_EXACT
 // symbol    @sub_5d3f50@4
 // TRIED: signature cdecl() -> fastcall(int *param_1); evidence: ecx read directly at entry (dereferenced once for an object pointer, re-read every loop iteration), no stack access, plain `ret` (no callee-pop). Dropped Ghidra's explicit `& 0x1f` shift masks per the known lever (extra `and`); still MISMATCH at #4, likely register-allocation/prologue shape for the three precomputed shift amounts.
 // working copy - scaffold materialised by --work
@@ -629,7 +629,7 @@ extern "C" void __fastcall sub_5d3f50(MediaRuntime *runtime) {
     }
 }
 
-// ORIGINAL: 0x005D4020 sub_5d4020 0x005D4020-0x005D4231 FILE
+// ORIGINAL: 0x005D4020 sub_5d4020 0x005D4020-0x005D4231 FILE BYTE_EXACT
 // symbol    ?sub_5d4020@@YIXPAUMediaRuntime@@PAE1H@Z
 // REWRITTEN 2026-11-07 from the image (0.93): for-loops, intrinsic memcpy
 //        rows, flags&0x40 picks the dword path first. Residual: the image
