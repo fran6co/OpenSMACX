@@ -1285,7 +1285,7 @@ static inline void media_read_signed_field(BYTE *&p, unsigned int &count,
 }
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x005CA6C0 0x005CA95C 0x005CA96C 0x005CA770
-// ORIGINAL: 0x005CA6C0 sub_5ca6c0 0x005CA6C0-0x005CA95B
+// ORIGINAL: 0x005CA6C0 sub_5ca6c0 0x005CA6C0-0x005CA95B BYTE_EXACT
 // symbol    ?parse_initial_format@MediaRuntime@@QAIHH@Z
 // kind      game
 // TRIED: NOT a real parameter - Ghidra's `char param_1` is actually buf[4], a byte read from the just-mmioRead'd local buffer, because Ghidra doesn't track the alloca'd 0xc000 frame. Modeled instead as a __thiscall member (ecx->edi is `this`, no stack arg) with a large local `char buf[0xc000]` (reproduces the `mov eax,0xc000; call __alloca_probe` prologue for free) parsing a TLV byte stream: skip name fields until 0xfd, then dispatch tags 0x81/0x82/0x83/0x84 (big- endian length-prefixed sign-extended ints stored to this+0x5c/0x54/ 0x60/0x58) until tag 0x8a. Reordering local decls to match the original's `lea eax,[esp]`-before-prologue-pushes scheduling did not change the codegen; first divergence stays at instruction #2 (original computes the buffer pointer before saving edi, rebuilt pushes edi first) - register scheduling, not source form.
