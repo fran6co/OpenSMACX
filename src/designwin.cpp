@@ -34,11 +34,6 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682078 selects initializer0x432850..0x432866, registering exit0x432870..0x43287a. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x71f2b0 bound to?TutWinDesWindow@@3VDesignWin@@A.", "Original startup instruction evidence: [[\"0x432850\", \"mov\", \"ecx, 0x71f2b0\"], [\"0x432855\", \"call\", \"0x434480\"], [\"0x43285a\", \"push\", \"0x432870\"], [\"0x43285f\", \"call\", \"0x645398\"], [\"0x432864\", \"pop\", \"ecx\"], [\"0x432865\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x432870\", \"mov\", \"ecx, 0x71f2b0\"], [\"0x432875\", \"jmp\", \"0x43ecb0\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/designwin.cpp COFF selects _$E21 via .CRT$XCU, registering _$E19. Startup relocation targets: [\"?TutWinDesWindow@@3VDesignWin@@A\", \"??0DesignWin@@QAE@XZ\", \"_$E19\", \"_atexit\"]; exit targets: [\"?TutWinDesWindow@@3VDesignWin@@A\", \"??1DesignWin@@UAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f2dc; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned ?TutWinDesWindow@@3VDesignWin@@A; preserve complete original identity and remaining restoration/structure obligations."}
 // symbol    _$E14
 #include "stdafx.h"
-// Stand-in for the witnessed DesignWin TU declaration that preserves the
-// compiler's operand tie in draw_armor (0x00435400).
-struct DesignWinFileStateStandIn {
-    void unused();
-};
 #include "font_metrics.h"
 #include "interface_fonts.h"
 #include "map.h"
@@ -193,8 +188,8 @@ int SelectPartWin::exec(int x, int y, int faction, int kind, int selected,
                      static_cast<Win *>(this), 0, 1);
         scroll_.hide();
         scroll_.set_range(0, field_2B74_ / field_2B6C_ - field_2B70_ + 2);
-        scroll_.field_A30_ = 0;
-        scroll_.paging_ = field_2B70_ - 1;
+        scroll_.set_paging(field_2B70_ - 1);
+        scroll_.set_field_A30(0);
         scroll_.redraw();
     }
 
@@ -1165,223 +1160,221 @@ DesignWin::DesignWin() {
     prototype_name_[0] = 0;
 }
 
+// WORKAROUND(decl): file-local stand-ins for the original's inline rectangle
+// helpers. 0x0043C4DA..4FC / 0x0043C48A..4AC load the four edges in
+// left/right/top/bottom order and add a register holding -3/-4 to right and
+// bottom (an InflateRect-style helper called with a negative amount);
+// 0x0043C4FF..54D compute frame/caption from the source edges with +n/-n
+// through a pointer base (lea ebx) without first copying the source.
+static inline void design_inflate_rect(RECT *rect, int dx, int dy) {
+    rect->left -= dx;
+    rect->right += dx;
+    rect->top -= dy;
+    rect->bottom += dy;
+}
+
+static inline void design_inset_rect(RECT *dst, const RECT *src, int inset) {
+    dst->left = src->left + inset;
+    dst->top = src->top + inset;
+    dst->right = src->right - inset;
+    dst->bottom = src->bottom - inset;
+}
+
+static inline void design_offset_rect(RECT *dst, const RECT *src, int dx, int dy) {
+    dst->left = src->left + dx;
+    dst->top = src->top + dy;
+    dst->right = src->right + dx;
+    dst->bottom = src->bottom + dy;
+}
+
 // ORIGINAL: 0x0043C270 ?init@DesignWin@@QAEXXZ 0x0043C270-0x0043D0B7;0x006546C5-0x006546DA FILE
 // RECOVERY_BINDING: v1 {"evidence": ["seed:src/unrecovered/0043c270.cpp", "image:0x0043c270; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
 // TRIED: exact stat-button rect/offset arithmetic for the last four BaseButtons (0xbac/0xbbc/0xb9c region) was approximated with a single receiver address, not derived per-button from the disassembly; the field-init prologue and font/spot/caviar setup above it were transcribed from confirmed call sites.
 void DesignWin::init() {
-    // The initializer is also the reopen path. Close each prior child/resource
-    // before rebuilding it, then keep the original stack Buffer lifetime even
-    // though the loaded member buffer supplies the actual copy below.
     Buffer stack_buffer;
-    (void)stack_buffer;
     close();
-    prototype_stack_start_ = 0;
-    field_4_ = 1;
-    register_iface_mode(1, static_cast<SubInterface *>(this));
+
+    // Inlined SubInterface::register_iface: field_4_ = 1, InterfaceRegistry[1].
+    SubInterface::register_iface(1);
+
     font1_.init(DefaultFontFace, 10, 0);
     font1_.unk_1_ = 3;
     font2_.init(DefaultFontFace, 12, 1);
     font2_.unk_1_ = 5;
     font3_.init(DefaultFontFace, 16, 1);
     font3_.unk_1_ = 4;
-    field_B0C_rect_ = MainInterfaceGlobal.status_hit_rect();
-    field_B0C_rect_.left = MainInterfaceGlobal.main_frame_rect().left + 4;
-    RECT stat_panel = MainInterfaceGlobal.main_frame_rect();
-    preview_panel_rect_.left = stat_panel.left;
-    preview_panel_rect_.top = stat_panel.top;
-    preview_panel_rect_.right = stat_panel.right;
-    preview_panel_rect_.bottom = stat_panel.bottom;
-    preview_panel_rect_.bottom = field_B0C_rect_.top;
-    preview_panel_rect_.left += 3;
-    preview_panel_rect_.top += 3;
-    preview_panel_rect_.right -= 3;
-    preview_panel_rect_.bottom -= 3;
-    info_panel_rect_ = MainInterfaceGlobal.lower_frame_rect();
-    info_panel_rect_.left += 4;
-    info_panel_rect_.top += 4;
-    info_panel_rect_.right -= 4;
-    info_panel_rect_.bottom -= 4;
-    frame_rect_ = MainInterfaceGlobal.right_frame_rect();
-    frame_rect_.left += 4;
-    frame_rect_.top += 4;
-    frame_rect_.right -= 4;
-    frame_rect_.bottom -= 4;
-    caption_rect_ = frame_rect_;
-    caption_rect_.left += 3;
-    caption_rect_.top += 3;
-    caption_rect_.right -= 3;
-    caption_rect_.bottom = caption_rect_.top + 21;
-    field_A7C_ = caption_rect_.left;
-    field_A80_ = caption_rect_.top;
-    field_A84_ = caption_rect_.right;
-    field_A88_ = caption_rect_.bottom;
-    field_A80_ = caption_rect_.bottom + 3;
-    int i;
-    int row;
-    int column;
 
-    SetRect(&vehicle_panel_rect_, 0x8C, 9, 0x1C3, 0x140);
-    SetRect(&component_panel_rects_[component_panel_chassis],
-            0x1E, 7, 0x81, 0x5C);
-    SetRect(&component_panel_rects_[component_panel_weapon],
-            0x1E, 0x65, 0x81, 0xBA);
-    SetRect(&component_panel_rects_[component_panel_armor],
-            0x1E, 0xC3, 0x81, 0x118);
-    SetRect(&component_panel_rects_[component_panel_reactor],
-            0x1CE, 7, 0x231, 0x5C);
-    SetRect(&component_panel_rects_[component_panel_special_one],
-            0x1CE, 0x65, 0x231, 0xBA);
-    SetRect(&component_panel_rects_[component_panel_special_two],
-            0x1CE, 0xC3, 0x231, 0x118);
+    set_rectangle_dimensions(&vehicle_panel_rect_, 0x8C, 9, 0x1C3 - 0x8C, 0x140 - 9);
+    set_rectangle_dimensions(&component_panel_rects_[component_panel_chassis],
+                             0x1E, 7, 0x81 - 0x1E, 0x5C - 7);
+    set_rectangle_dimensions(&component_panel_rects_[component_panel_weapon],
+                             0x1E, 0x65, 0x81 - 0x1E, 0xBA - 0x65);
+    set_rectangle_dimensions(&component_panel_rects_[component_panel_armor],
+                             0x1E, 0xC3, 0x81 - 0x1E, 0x118 - 0xC3);
+    set_rectangle_dimensions(&component_panel_rects_[component_panel_reactor],
+                             0x1CE, 7, 0x231 - 0x1CE, 0x5C - 7);
+    set_rectangle_dimensions(&component_panel_rects_[component_panel_special_one],
+                             0x1CE, 0x65, 0x231 - 0x1CE, 0xBA - 0x65);
+    set_rectangle_dimensions(&component_panel_rects_[component_panel_special_two],
+                             0x1CE, 0xC3, 0x231 - 0x1CE, 0x118 - 0xC3);
 
     spot1_.init(0x40);
+    prototype_stack_start_ = 0;
+
+    field_B0C_rect_ = MainInterfaceGlobal.status_hit_rect();
+    field_B0C_rect_.left = MainInterfaceGlobal.main_frame_rect().left + 4;
+    preview_panel_rect_ = MainInterfaceGlobal.main_frame_rect();
+    preview_panel_rect_.bottom = field_B0C_rect_.top;
+    design_inflate_rect(&preview_panel_rect_, -3, -3);
+    info_panel_rect_ = MainInterfaceGlobal.lower_frame_rect();
+    design_inflate_rect(&info_panel_rect_, -4, -4);
+    design_inset_rect(&frame_rect_, &MainInterfaceGlobal.right_frame_rect(), 4);
+    design_inset_rect(&caption_rect_, &frame_rect_, 3);
+    caption_rect_.bottom = caption_rect_.top + 21;
+    // A7C..A88 get the caption rectangle as it was BEFORE the bottom was
+    // replaced (A88 = frame bottom - 3, 0x0043C57E stores edi); only the top
+    // is then moved below the caption.
+    // WORKAROUND(type): field_A7C_..field_A88_ are a RECT in the original.
+    design_inset_rect(reinterpret_cast<RECT *>(&field_A7C_), &frame_rect_, 3);
+    field_A80_ = caption_rect_.bottom + 3;
+
     spot2_.init(6);
+    int i;
     for (i = 0; i < 6; ++i) {
         spot2_.add(i, i, component_panel_rects_[i].left,
                    component_panel_rects_[i].top,
-                   component_panel_rects_[i].right -
-                       component_panel_rects_[i].left,
-                   component_panel_rects_[i].bottom -
-                       component_panel_rects_[i].top);
+                   component_panel_rects_[i].right - component_panel_rects_[i].left,
+                   component_panel_rects_[i].bottom - component_panel_rects_[i].top);
     }
 
-    // The vehicle preview uses the same light direction as the game renderer.
+    // The vehicle preview uses the same camera set-up as DesignWin's palette
+    // icon renderer earlier in this file.
     caviar_.init();
     caviar_.set_field_A4(0);
-    const float angles[3] = {0.0f, 0.0f, 0.785f};
+    float angles[3] = {0.0f, 0.0f, 0.785f};
     VOX_Matrix rotation;
     caviar_apply_rotation(angles, &rotation);
-    VOX_Vect camera;
-    for (i = 0; i < 3; ++i) {
-        rotation.values[2][i] = -rotation.values[2][i];
-        camera.values[i] = rotation.values[2][i] * -10000.0f;
-    }
-    caviar_.set_camera_direct(&camera, &rotation);
+    rotation.values[2][0] = -rotation.values[2][0];
+    rotation.values[2][1] = -rotation.values[2][1];
+    rotation.values[2][2] = -rotation.values[2][2];
+    VOX_Vect vector;
+    vector.values[0] = rotation.values[2][0] * -10000.0f;
+    vector.values[1] = rotation.values[2][1] * -10000.0f;
+    vector.values[2] = rotation.values[2][2] * -10000.0f;
+    caviar_.set_camera_direct(&vector, &rotation);
     caviar_.set_scaling(0.18f);
-    caviar_.shadow_vector() = VehLightDirMap;
-    caviar_.light_vector() = VehLightDirMap;
+    vector = VehLightDirMap;
+    caviar_.shadow_vector() = vector;
+    caviar_.light_vector() = vector;
 
     const int frame_height = 0x258 - MainInterfaceGlobal.field_D7C_;
     buffer_.load_pcx("deswin.pcx", 0, 0x0A, 0xEC);
-    Win *parent = static_cast<Win *>(static_cast<GraphicWin *>(&ConsoleGlobal));
-    GraphicWin::init(0, 0, buffer_.pixel_width(), frame_height, 0,
-                     0x01000000, parent, 0, 0);
+    GraphicWin::init(0, 0, buffer_.pixel_width(), frame_height, 0, 0x01000000,
+                     static_cast<Win *>(static_cast<GraphicWin *>(&ConsoleGlobal)),
+                     0, 0);
+    move((WinScreenWidth - pixel_width() + 0x20) / 2,
+         -pixel_height() - MainInterfaceGlobal.field_D7C_ + WinScreenHeight);
+    // The source pointer is the null-checked Buffer view of this; the extent
+    // is read through this directly ([esi+0x4C4]/[esi+0x4C8]).
+    buffer_.copy(static_cast<Buffer *>(static_cast<GraphicWin *>(this)), 0, 0,
+                 pixel_width(), pixel_height());
 
-    const int move_x = (WinScreenWidth - pixel_width() + 0x20) / 2;
-    const int move_y = -pixel_height() - MainInterfaceGlobal.field_D7C_
-        + WinScreenHeight;
-    move(move_x, move_y);
-
-    Buffer *const inherited_buffer = static_cast<Buffer *>(
-        static_cast<GraphicWin *>(this));
-    buffer_.copy(inherited_buffer, 0, 0, inherited_buffer->pixel_width(),
-                 inherited_buffer->pixel_height());
-
-    // Lay out the two-row prototype grid. The original counter is shared
-    // storage, but its observable sequence is a simple row-major 0..13.
+    // Two columns of seven automatic-design buttons (ids 9..22).
     X_text_open(ScriptPopupFile, "DESIGNAUTO");
-    field_A7C_ = caption_rect_.left;
-    field_A80_ = caption_rect_.top;
-    field_A84_ = caption_rect_.right;
-    field_A88_ = caption_rect_.bottom;
-    field_A80_ = caption_rect_.bottom + 3;
-    const int grid_width = (static_cast<int>(field_A84_) -
-                            static_cast<int>(field_A7C_) + 3) / 2 - 3;
-    DesignGridButtonIndex = 0;
     int column_x = static_cast<int>(field_A7C_);
+    const int grid_width =
+        static_cast<int>(field_A84_ - column_x + 3) / 2 - 3;
+    DesignGridButtonIndex = 0;
+    int row;
+    int column;
     for (row = 0; row < 2; ++row) {
         int y = static_cast<int>(field_A80_);
         for (column = 0; column < 7; ++column) {
             text_get();
             CharUpperA(TextBufferGetPtr);
-            const int button = 9 + DesignGridButtonIndex;
-            flatButtons_[button].init(TextBufferGetPtr, button, column_x, y,
+            flatButtons_[DesignGridButtonIndex + 9].init(
+                TextBufferGetPtr, DesignGridButtonIndex + 9, column_x, y,
                 grid_width, 0x15, static_cast<Win *>(&MainInterfaceGlobal), 0);
-            flatButtons_[button].set_bubble_text(label_get(0xCEC / 4));
+            flatButtons_[DesignGridButtonIndex + 9].set_bubble_text(
+                label_get(0xCEC / 4));
             ++DesignGridButtonIndex;
             y += 0x17;
         }
-        column_x += 3 + grid_width;
+        column_x += grid_width + 3;
     }
     text_close();
 
-    // These paired-button rectangles are copied after the grid is populated.
-    const RECT &stack_rect = MainInterfaceGlobal.stack_button_rect_;
-    const int frame_shift = MainInterfaceGlobal.main_frame_rect().left
-        - stack_rect.left + 8;
-    field_CBC_rect_.left = stack_rect.left + frame_shift;
-    field_CBC_rect_.top = stack_rect.top;
-    field_CBC_rect_.right = stack_rect.right + frame_shift;
-    field_CBC_rect_.bottom = stack_rect.bottom;
-    const RECT &adjacent_rect = MainInterfaceGlobal.adjacent_panel_right_rect_;
-    field_CCC_ = adjacent_rect.left;
-    field_CD0_ = adjacent_rect.top;
-    field_CD4_ = adjacent_rect.right;
-    field_CD8_ = adjacent_rect.bottom;
+    design_offset_rect(&field_CBC_rect_, &MainInterfaceGlobal.stack_button_rect(),
+                       MainInterfaceGlobal.main_frame_rect().left
+                           - MainInterfaceGlobal.stack_button_rect().left + 8,
+                       0);
+    // WORKAROUND(type): field_CCC_..field_CD8_ are a RECT in the original.
+    *reinterpret_cast<RECT *>(&field_CCC_) =
+        MainInterfaceGlobal.adjacent_panel_right_rect();
 
-    // Five lower-panel rows retain the original unusual coordinate ordering;
-    // drawing and button setup consume the exact same four stored integers.
-    int left = buffer_working_rect()->left + 0x1B;
-    const int right_limit = buffer_working_rect()->right - 0x3B;
-    const int bottom = buffer_working_rect()->bottom - 0x14;
-    const int top = bottom - 0x14;
-    int edge = (right_limit - left + 3) / 5 - 3 + left;
+    // Five lower action rows.
+    RECT *const working = buffer_working_rect();
+    int left = working->left + 0x1B;
+    int top = working->top;  // [ebp-0x30]: the image stores it and never reads it
+    int right = working->right - 0x20;
+    int bottom = working->bottom - 0x14;
+    int edge = (right - 0x1B - left + 3) / 5 - 3 + left;
+    const int row_top = bottom - 0x14;
+    (void)top;
     for (row = 0; row < 5; ++row) {
         lower_panel_rows_[row].left = left;
-        lower_panel_rows_[row].top = top;
+        lower_panel_rows_[row].top = row_top;
         lower_panel_rows_[row].right = edge;
         lower_panel_rows_[row].bottom = bottom;
         const int step = edge - left + 3;
         left += step;
         edge += step;
     }
-    const int last_step = edge - left + 3;
     field_B5C_rect_ = lower_panel_rows_[lower_panel_done];
-    const int vertical_delta = top - bottom - 6;
+    const int vertical_delta = row_top - bottom - 6;
     field_B5C_rect_.top += vertical_delta;
     field_B5C_rect_.bottom += vertical_delta;
     field_B6C_rect_ = field_B5C_rect_;
+    const int last_step = edge - left + 3;
     field_B6C_rect_.left += last_step;
     field_B6C_rect_.right += last_step;
     field_B4C_rect_ = lower_panel_rows_[lower_panel_cancel];
     field_B4C_rect_.top += vertical_delta;
     field_B4C_rect_.bottom += vertical_delta;
     field_B7C_rect_ = field_B4C_rect_;
-    const int horizontal_delta = left - edge - 3;
-    field_B7C_rect_.left += horizontal_delta;
-    field_B7C_rect_.right += horizontal_delta;
+    const int back_step = left - edge - 3;
+    field_B7C_rect_.left += back_step;
+    field_B7C_rect_.right += back_step;
 
-    // Localized labels are loaded in the original order, and each button keeps
-    // its own id, parent, hit rectangle, and bubble label.
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0xE58 / 4));
     CharUpperA(StringTemp);
-    flatButtons_[1].init(StringTemp, 1, field_B5C_rect_.left,
-        field_B5C_rect_.top, field_B5C_rect_.right - field_B5C_rect_.left,
+    flatButtons_[1].init(StringTemp, 1, field_B5C_rect_.left, field_B5C_rect_.top,
+        field_B5C_rect_.right - field_B5C_rect_.left,
         field_B5C_rect_.bottom - field_B5C_rect_.top, static_cast<Win *>(this), 0);
     flatButtons_[1].set_bubble_text(label_get(0xE7C / 4));
 
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x1024 / 4));
     CharUpperA(StringTemp);
-    flatButtons_[2].init(StringTemp, 2, field_B6C_rect_.left,
-        field_B6C_rect_.top, field_B6C_rect_.right - field_B6C_rect_.left,
+    flatButtons_[2].init(StringTemp, 2, field_B6C_rect_.left, field_B6C_rect_.top,
+        field_B6C_rect_.right - field_B6C_rect_.left,
         field_B6C_rect_.bottom - field_B6C_rect_.top, static_cast<Win *>(this), 0);
     flatButtons_[2].set_bubble_text(label_get(0x1028 / 4));
 
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0xE74 / 4));
     CharUpperA(StringTemp);
-    flatButtons_[0].init(StringTemp, 0, field_B4C_rect_.left,
-        field_B4C_rect_.top, field_B4C_rect_.right - field_B4C_rect_.left,
+    flatButtons_[0].init(StringTemp, 0, field_B4C_rect_.left, field_B4C_rect_.top,
+        field_B4C_rect_.right - field_B4C_rect_.left,
         field_B4C_rect_.bottom - field_B4C_rect_.top, static_cast<Win *>(this), 0);
     flatButtons_[0].set_bubble_text(label_get(0xE78 / 4));
 
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x1034 / 4));
     CharUpperA(StringTemp);
-    flatButtons_[3].init(StringTemp, 3, field_B7C_rect_.left,
-        field_B7C_rect_.top, field_B7C_rect_.right - field_B7C_rect_.left,
+    flatButtons_[3].init(StringTemp, 3, field_B7C_rect_.left, field_B7C_rect_.top,
+        field_B7C_rect_.right - field_B7C_rect_.left,
         field_B7C_rect_.bottom - field_B7C_rect_.top, static_cast<Win *>(this), 0);
     flatButtons_[3].set_bubble_text(label_get(0x1038 / 4));
 
@@ -1391,10 +1384,10 @@ void DesignWin::init() {
     flatButtons_[6].init(StringTemp, 6,
         lower_panel_rows_[lower_panel_obsolete].left,
         lower_panel_rows_[lower_panel_obsolete].top,
-        lower_panel_rows_[lower_panel_obsolete].right -
-            lower_panel_rows_[lower_panel_obsolete].left,
-        lower_panel_rows_[lower_panel_obsolete].bottom -
-            lower_panel_rows_[lower_panel_obsolete].top,
+        lower_panel_rows_[lower_panel_obsolete].right
+            - lower_panel_rows_[lower_panel_obsolete].left,
+        lower_panel_rows_[lower_panel_obsolete].bottom
+            - lower_panel_rows_[lower_panel_obsolete].top,
         static_cast<Win *>(this), 0);
     flatButtons_[6].set_bubble_text(label_get(0xC58 / 4));
 
@@ -1404,55 +1397,59 @@ void DesignWin::init() {
     flatButtons_[7].init(StringTemp, 7,
         lower_panel_rows_[lower_panel_upgrade].left,
         lower_panel_rows_[lower_panel_upgrade].top,
-        lower_panel_rows_[lower_panel_upgrade].right -
-            lower_panel_rows_[lower_panel_upgrade].left,
-        lower_panel_rows_[lower_panel_upgrade].bottom -
-            lower_panel_rows_[lower_panel_upgrade].top,
+        lower_panel_rows_[lower_panel_upgrade].right
+            - lower_panel_rows_[lower_panel_upgrade].left,
+        lower_panel_rows_[lower_panel_upgrade].bottom
+            - lower_panel_rows_[lower_panel_upgrade].top,
         static_cast<Win *>(this), 0);
     flatButtons_[7].set_bubble_text(label_get(0xC5C / 4));
 
-    const int prototype_id = static_cast<int>(protoID_);
+    // Index select (and/neg/sbb) for the label, but a branch per bubble arm.
     StringTemp[0] = 0;
-    strcat(StringTemp, label_get((VehPrototypes[prototype_id].flags & 0x80)
+    strcat(StringTemp, label_get((VehPrototypes[protoID_].flags & 0x80)
                                  ? 0x864 / 4 : 0x198 / 4));
-    if (Language != 2) CharUpperA(StringTemp);
+    if (Language != 2) {
+        CharUpperA(StringTemp);
+    }
     flatButtons_[8].init(StringTemp, 8,
         lower_panel_rows_[lower_panel_cancel].left,
         lower_panel_rows_[lower_panel_cancel].top,
-        lower_panel_rows_[lower_panel_cancel].right -
-            lower_panel_rows_[lower_panel_cancel].left,
-        lower_panel_rows_[lower_panel_cancel].bottom -
-            lower_panel_rows_[lower_panel_cancel].top,
+        lower_panel_rows_[lower_panel_cancel].right
+            - lower_panel_rows_[lower_panel_cancel].left,
+        lower_panel_rows_[lower_panel_cancel].bottom
+            - lower_panel_rows_[lower_panel_cancel].top,
         static_cast<Win *>(this), 0);
-    const int current_prototype_id = static_cast<int>(protoID_);
-    const int faction_bubble =
-        (VehPrototypes[current_prototype_id].flags & 0x80) != 0
-            ? 0xC64 : 0xC60;
-    flatButtons_[8].set_bubble_text(label_get(faction_bubble / 4));
+    flatButtons_[8].set_bubble_text((VehPrototypes[protoID_].flags & 0x80)
+                                    ? label_get(0xC64 / 4)
+                                    : label_get(0xC60 / 4));
 
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x438 / 4));
     CharUpperA(StringTemp);
-    flatButtons_[4].init(StringTemp, 4, lower_panel_rows_[lower_panel_done].left,
+    flatButtons_[4].init(StringTemp, 4,
+        lower_panel_rows_[lower_panel_done].left,
         lower_panel_rows_[lower_panel_done].top,
-        lower_panel_rows_[lower_panel_done].right -
-            lower_panel_rows_[lower_panel_done].left,
-        lower_panel_rows_[lower_panel_done].bottom -
-            lower_panel_rows_[lower_panel_done].top,
+        lower_panel_rows_[lower_panel_done].right
+            - lower_panel_rows_[lower_panel_done].left,
+        lower_panel_rows_[lower_panel_done].bottom
+            - lower_panel_rows_[lower_panel_done].top,
         static_cast<Win *>(this), 0);
     flatButtons_[4].set_bubble_text(label_get(0xC50 / 4));
+
+    // Rename has its own label (0x0043CEBF..CF0), not Done's StringTemp.
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x1F4 / 4));
+    CharUpperA(StringTemp);
     flatButtons_[5].init(StringTemp, 5,
         lower_panel_rows_[lower_panel_rename].left,
         lower_panel_rows_[lower_panel_rename].top,
-        lower_panel_rows_[lower_panel_rename].right -
-            lower_panel_rows_[lower_panel_rename].left,
-        lower_panel_rows_[lower_panel_rename].bottom -
-            lower_panel_rows_[lower_panel_rename].top,
+        lower_panel_rows_[lower_panel_rename].right
+            - lower_panel_rows_[lower_panel_rename].left,
+        lower_panel_rows_[lower_panel_rename].bottom
+            - lower_panel_rows_[lower_panel_rename].top,
         static_cast<Win *>(this), 0);
     flatButtons_[5].set_bubble_text(label_get(0xC54 / 4));
 
-    // Two lower navigation controls use the original distinct data groups and
-    // the process-wide MainInterface as their parent.
     flatButtons_[23].init(DesignButtonName23, 0x17, field_CBC_rect_.left,
         field_CBC_rect_.top, field_CBC_rect_.right - field_CBC_rect_.left,
         field_CBC_rect_.bottom - field_CBC_rect_.top,
@@ -1460,6 +1457,7 @@ void DesignWin::init() {
     flatButtons_[24].init(DesignButtonName24, 0x18, field_CCC_, field_CD0_,
         field_CD4_ - field_CCC_, field_CD8_ - field_CD0_,
         static_cast<Win *>(&MainInterfaceGlobal), 0);
+
     for (i = 0; i < 25; ++i) {
         flatButtons_[i].hide();
         flatButtons_[i].set_text_color(0x41, -1, 1, 1);
@@ -1469,14 +1467,15 @@ void DesignWin::init() {
             ->set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
         flatButtons_[i].redraw();
     }
-    for (i = 0; i < 3; ++i)
-        flatButtons_[23].field_AD4_[i] = &MainInterfaceGlobal.sprites12_[i];
+    flatButtons_[23].set_scroll_icons(&MainInterfaceGlobal.sprites12_[0],
+        &MainInterfaceGlobal.sprites12_[1], &MainInterfaceGlobal.sprites12_[2]);
     flatButtons_[23].redraw();
     flatButtons_[23].set_field_A44(100);
-    for (i = 0; i < 3; ++i)
-        flatButtons_[24].field_AD4_[i] = &MainInterfaceGlobal.sprites12_[i + 3];
+    flatButtons_[24].set_scroll_icons(&MainInterfaceGlobal.sprites12_[3],
+        &MainInterfaceGlobal.sprites12_[4], &MainInterfaceGlobal.sprites12_[5]);
     flatButtons_[24].redraw();
     flatButtons_[24].set_field_A44(100);
+    // WORKAROUND(decl): the image returns 1 (mov eax,1); designwin.h declares void.
 }
 
 // ORIGINAL: 0x00439670 ?bubble_me_elmo2@DesignWin@@QAEXPADHH@Z 0x00439670-0x004396B0 BYTE_EXACT
@@ -1996,377 +1995,275 @@ void DesignWin::on_button_clicked(int button_id) {
     Popup popup;
     TutorialWindow.reset();
 
-    if (button_id == -2 || button_id == 8) {
+    switch (button_id) {
+    case 23:
+        if (--prototype_stack_start_ < 0) {
+            prototype_stack_start_ = ProtoSortCount;
+        }
+        draw_stack();
+        break;
+
+    case 24:
+        if (++prototype_stack_start_ == ProtoSortCount) {
+            prototype_stack_start_ = 0;
+        }
+        draw_stack();
+        break;
+
+    case -2:
+    case 8:
         field_CDC_ = 0;
         release_modal();
         g_FX.fade(0x18);
-        return;
-    }
+        break;
 
-    if (button_id == -1 || button_id == 4) {
+    case -1:
+    case 4:
         g_FX.fade(0x18);
         field_CDC_ = design_it();
         if (field_CDC_ != 0) {
             release_modal();
         }
-        return;
-    }
+        break;
 
-    if (button_id == 0x17 || button_id == 0x18) {
-        if (ProtoSortCount > 0) {
-            if (button_id == 0x17) {
-                --prototype_stack_start_;
-                if (prototype_stack_start_ < 0) {
-                    prototype_stack_start_ = ProtoSortCount;
-                }
-            } else {
-                ++prototype_stack_start_;
-                if (prototype_stack_start_ == ProtoSortCount) {
-                    prototype_stack_start_ = 0;
-                }
-            }
-        }
-        redraw();
-        return;
-    }
-
-    if (button_id == 1) {
+    case 1:
         field_CDC_ = design_it();
-        setup_veh(static_cast<int>(protoID_), 0);
-        proto_sort_2(static_cast<int>(factionID_));
-        const int visible_count = ProtoSortCount;
-        if (visible_count > 0) {
-            for (int walk = 0; walk < visible_count; ++walk) {
-                const int slot = (prototype_stack_start_ + walk)
-                    % visible_count;
-                if (ProtoSortIds[slot] == static_cast<int>(protoID_)) {
-                    prototype_stack_start_ = (slot + visible_count - 5) % visible_count;
-                    break;
-                }
-            }
-        }
+        setup_veh(protoID_, 0);
+        center_stack(protoID_, 0);
         redraw();
-        return;
-    }
+        break;
 
-    if (button_id == 0) {
-        const int faction = static_cast<int>(factionID_);
-        const int prototype_id = static_cast<int>(protoID_);
-        const VehPrototype &prototype = VehPrototypes[prototype_id];
-
-        parse_says(0, prototype.veh_name, -1, -1);
-        const int active_count =
-            PlayersData[faction].proto_id_active[prototype_id];
-        const bool alien_rules = (Players[faction].rule_flags & 0x80) != 0;
-        if (active_count != 0) {
-            parse_num(0, active_count);
-        }
-
-        const int answer = alien_rules
-            ? (active_count != 0
-                ? popp(ScriptPopupFile, "RETIRETYPE", 0,
-                       "alunit_sm.pcx", pop_wait)
-                : popp(ScriptPopupFile, "RETIRETYPE2", 0,
-                       "alunit_sm.pcx", pop_wait))
-            : (active_count != 0
-                ? popp(ScriptPopupFile, "RETIRETYPE", 0,
-                       "unit_sm.pcx", pop_wait)
-                : popp(ScriptPopupFile, "RETIRETYPE2", 0,
-                       "unit_sm.pcx", pop_wait));
-        if (answer == 0) {
-            return;
-        }
-
-        if (!IsMultiplayerNet) {
-            retire_proto(prototype_id, faction);
-        } else {
-            if (diplo_lock(0x19) != 0) {
-                return;
-            }
-            message_data(0x2415, 0, prototype_id, faction, 0, 0);
-            NetDaemonNet.await_exec(0);
-            diplo_unlock();
-        }
-
-        setup_veh(prototype_id, 0);
-        proto_sort_2(faction);
-        const int count = ProtoSortCount;
-        if (count > 0) {
-            for (int walk = 0; walk < count; ++walk) {
-                const int slot = (prototype_stack_start_ + walk) % count;
-                if (ProtoSortIds[slot] == prototype_id) {
-                    prototype_stack_start_ = (slot + count - 5) % count;
-                    break;
-                }
-            }
-        }
-        redraw();
-        return;
-    }
-
-    if (button_id == 2) {
+    case 2:
         if ((GameDataStateStorage.fields_.game_state_ & 0x40) == 0) {
-            return;
+            break;
         }
         field_CDC_ = design_it();
-        setup_veh(static_cast<int>(protoID_), 0);
-        proto_sort_2(static_cast<int>(factionID_));
-        if (ProtoSortCount > 0) {
-            for (int walk = 0; walk < ProtoSortCount; ++walk) {
-                const int slot = (prototype_stack_start_ + walk)
-                    % ProtoSortCount;
-                if (ProtoSortIds[slot] == static_cast<int>(protoID_)) {
-                    prototype_stack_start_ = (slot + ProtoSortCount - 5) % ProtoSortCount;
-                    break;
-                }
-            }
-        }
+        setup_veh(protoID_, 0);
+        center_stack(protoID_, 0);
         VehPrototypes[protoID_].flags ^= 4;
         redraw();
-        return;
-    }
+        break;
 
-    if (button_id == 3) {
+    case 3: {
         if ((GameDataStateStorage.fields_.game_state_ & 0x40) == 0) {
-            return;
+            break;
         }
-        const bool alien_rules =
-            (Players[static_cast<int>(factionID_)].rule_flags & 0x80) != 0;
-        const int answer = alien_rules
-            ? popp(ScriptPopupFile, "RETIREALL", 0,
-                   "alunit_sm.pcx", 0)
-            : popp(ScriptPopupFile, "RETIREALL", 0,
-                   "unit_sm.pcx", 0);
-        if (answer == 0) {
-            return;
+        int answer;
+        if (Players[factionID_].rule_flags & 0x80) {
+            answer = popp(ScriptPopupFile, "RETIREALL", 0,
+                          "alunit_sm.pcx", 0);
+        } else {
+            answer = popp(ScriptPopupFile, "RETIREALL", 0,
+                          "unit_sm.pcx", 0);
+        }
+        if (!answer) {
+            break;
         }
         for (int faction = 1; faction < MaxPlayerNum; ++faction) {
-            if (answer < 2 && faction != static_cast<int>(factionID_)) {
-                continue;
+            if (answer >= 2 || faction == factionID_) {
+                // Clears the loop faction's bit, not the editor's.
+                for (int slot = 0; slot < MaxVehProtoFactionNum; ++slot) {
+                    VehPrototypes[slot].obsolete_factions &= ~(1 << faction);
+                    VehPrototypes[faction * MaxVehProtoFactionNum + slot].flags
+                        &= ~1;
+                }
+                clear_bunglist(faction);
             }
-            // Native4386EF shifts by the current loop faction, not the editor.
-            const uint8_t faction_mask = static_cast<uint8_t>(1u << faction);
-            for (int slot = 0; slot < MaxVehProtoFactionNum; ++slot) {
-                VehPrototypes[slot].obsolete_factions &=
-                    static_cast<uint8_t>(~faction_mask);
-                VehPrototypes[faction * MaxVehProtoFactionNum + slot].flags &=
-                    static_cast<uint16_t>(~1u);
-            }
-            clear_bunglist(faction);
         }
-
         setup_veh(0, 0);
-        proto_sort_2(static_cast<int>(factionID_));
-        if (ProtoSortCount > 0) {
-            for (int walk = 0; walk < ProtoSortCount; ++walk) {
-                const int slot = (prototype_stack_start_ + walk)
-                    % ProtoSortCount;
-                if (ProtoSortIds[slot] != 0) {
-                    prototype_stack_start_ = (slot + ProtoSortCount - 5) % ProtoSortCount;
-                    break;
-                }
-            }
-        }
+        center_stack(0, 0);
         redraw();
-        return;
+        break;
     }
 
-    if (button_id == 5) {
-        select_name();
-        return;
-    }
-
-    if (button_id == 6) {
-        const int faction = static_cast<int>(factionID_);
-        const int prototype_id = static_cast<int>(protoID_);
-        const uint8_t faction_mask = static_cast<uint8_t>(1u << faction);
-        VehPrototype &prototype = VehPrototypes[prototype_id];
-        if ((prototype.obsolete_factions & faction_mask) != 0) {
-            if ((prototype.flags & 8) != 0) {
-                prototype.flags |= 0x200;
+    case 0: {
+        parse_says(0, VehPrototypes[protoID_].veh_name, -1, -1);
+        int answer;
+        if (Players[factionID_].rule_flags & 0x80) {
+            if (PlayersData[factionID_].proto_id_active[protoID_]) {
+                parse_num(0, PlayersData[factionID_].proto_id_active[protoID_]);
+                answer = popp(ScriptPopupFile, "RETIRETYPE", 0,
+                              "alunit_sm.pcx", pop_wait);
+            } else {
+                answer = popp(ScriptPopupFile, "RETIRETYPE2", 0,
+                              "alunit_sm.pcx", pop_wait);
             }
-            prototype.flags |= 8;
         } else {
-            prototype.flags &= static_cast<uint16_t>(0xFDF7);
-        }
-        prototype.obsolete_factions ^= faction_mask;
-        synch_obs(prototype_id);
-
-        proto_sort_2(faction);
-        const int count = ProtoSortCount;
-        if (count > 0) {
-            for (int walk = 0; walk < count; ++walk) {
-                const int slot = (prototype_stack_start_ + walk) % count;
-                if (ProtoSortIds[slot] == prototype_id) {
-                    const int next = (slot + 1) % count;
-                    protoID_ = static_cast<uint32_t>(ProtoSortIds[next]);
-                    break;
-                }
+            if (PlayersData[factionID_].proto_id_active[protoID_]) {
+                parse_num(0, PlayersData[factionID_].proto_id_active[protoID_]);
+                answer = popp(ScriptPopupFile, "RETIRETYPE", 0,
+                              "unit_sm.pcx", pop_wait);
+            } else {
+                answer = popp(ScriptPopupFile, "RETIRETYPE2", 0,
+                              "unit_sm.pcx", pop_wait);
             }
         }
-        setup_veh(static_cast<int>(protoID_), 0);
-        proto_sort_2(faction);
-        const int sorted_count = ProtoSortCount;
-        if (sorted_count > 0) {
-            for (int walk = 0; walk < sorted_count; ++walk) {
-                const int slot = (prototype_stack_start_ + walk)
-                    % sorted_count;
-                if (ProtoSortIds[slot] == static_cast<int>(protoID_)) {
-                    const int new_top = (slot + sorted_count - 5) % sorted_count;
-                    if (new_top != prototype_stack_start_) {
-                        prototype_stack_start_ = new_top;
-                        draw_stack();
-                    }
-                    break;
-                }
-            }
+        if (!answer) {
+            break;
         }
+        if (IsMultiplayerNet) {
+            if (diplo_lock(0x19)) {
+                break;
+            }
+            message_data(0x2415, 0, protoID_, factionID_, 0, 0);
+            NetDaemonNet.await_exec(0);
+            diplo_unlock();
+        } else {
+            retire_proto(protoID_, factionID_);
+        }
+        setup_veh(protoID_, 0);
+        center_stack(protoID_, 0);
         redraw();
-        return;
+        break;
     }
 
-    if (button_id == 7) {
-        const int faction = static_cast<int>(factionID_);
-        const int old_prototype_id = static_cast<int>(protoID_);
-        if (NetDaemonNet.lock(2, -1, -1, 0, -1, -1) != 0) {
-            return;
+    case 5:
+        select_name();
+        break;
+
+    case 6: {
+        if (VehPrototypes[protoID_].obsolete_factions & (1 << factionID_)) {
+            if (VehPrototypes[protoID_].flags & 8) {
+                VehPrototypes[protoID_].flags |= 0x200;
+            }
+            VehPrototypes[protoID_].flags |= 8;
+        } else {
+            VehPrototypes[protoID_].flags &= 0xFDF7;
         }
+        VehPrototypes[protoID_].obsolete_factions ^= 1 << factionID_;
+        synch_obs(protoID_);
+        // No proto_sort_2 here: scans the existing ranking and steps to the
+        // entry after the one just (un)obsoleted.
+        int count = ProtoSortCount;
+        for (int scan = prototype_stack_start_;
+             scan < prototype_stack_start_ + count; ++scan) {
+            if (protoID_ == ProtoSortIds[scan % count]) {
+                protoID_ = ProtoSortIds[(scan + 1) % count];
+                break;
+            }
+        }
+        setup_veh(protoID_, 0);
+        center_stack(protoID_, 1);
+        redraw();
+        break;
+    }
 
+    case 7: {
+        if (NetDaemonNet.lock(2, -1, -1, 0, -1, -1)) {
+            break;
+        }
         UpgradePromptAnswered = 0;
-        StringTemp[0] = '\0';
-        ::strcat(StringTemp, VehPrototypes[old_prototype_id].veh_name);
-        parse_says(0, StringTemp, -1, -1);
-        popup.start(PopupStartCaption, "WHICHUPGRADE2", -1, nullptr,
-                    0x40, nullptr);
-
         int match_count = 0;
-        int selected_prototype = -1;
-        const int faction_base = faction * MaxVehProtoFactionNum;
-        const VehPrototype &old_prototype = VehPrototypes[old_prototype_id];
+        parse_says(0, VehPrototypes[protoID_].veh_name, -1, -1);
+        popup.start(PopupStartCaption, "WHICHUPGRADE2", -1, nullptr, 0x40,
+                    nullptr);
+        int selected = 0;
         for (int slot = 0; slot < MaxVehProtoFactionNum; ++slot) {
-            const int candidate_id = faction_base + slot;
-            const VehPrototype &candidate = VehPrototypes[candidate_id];
-            if (candidate_id == old_prototype_id) {
+            int id = factionID_ * MaxVehProtoFactionNum + slot;
+            if (id == protoID_) {
                 continue;
             }
-            if ((candidate.flags & 1) == 0) {
+            if (!(VehPrototypes[id].flags & 1)) {
                 continue;
             }
-            if ((candidate.obsolete_factions & (1u << faction)) != 0) {
+            if (VehPrototypes[id].obsolete_factions & (1 << factionID_)) {
                 continue;
             }
-            if (candidate.chassis_id != old_prototype.chassis_id) {
+            if (VehPrototypes[id].chassis_id
+                != VehPrototypes[protoID_].chassis_id) {
                 continue;
             }
-            if (((candidate.ability_flags ^ old_prototype.ability_flags)
-                 & 0x8000) != 0) {
+            if ((VehPrototypes[id].ability_flags
+                 ^ VehPrototypes[protoID_].ability_flags) & 0x8000) {
                 continue;
             }
-
-            if (candidate.plan != old_prototype.plan) {
-                if (candidate.plan > 3 || old_prototype.plan > 3) {
+            if (VehPrototypes[id].plan != VehPrototypes[protoID_].plan
+                && (VehPrototypes[protoID_].plan > 3
+                    || VehPrototypes[id].plan > 3)) {
+                continue;
+            }
+            int8_t old_offense =
+                Weapon[VehPrototypes[protoID_].weapon_id].offense_rating;
+            if (old_offense) {
+                if (old_offense
+                    > Weapon[VehPrototypes[id].weapon_id].offense_rating) {
+                    continue;
+                }
+            } else if (VehPrototypes[protoID_].weapon_id
+                       != VehPrototypes[id].weapon_id) {
+                continue;
+            }
+            int8_t new_defense =
+                Armor[VehPrototypes[id].armor_id].defense_rating;
+            if (Armor[VehPrototypes[protoID_].armor_id].defense_rating
+                > new_defense) {
+                if (new_defense == 1) {
+                    continue;
+                }
+                if (old_offense
+                    && Weapon[VehPrototypes[id].weapon_id].offense_rating
+                       <= old_offense) {
                     continue;
                 }
             }
-
-            const int old_weapon_rating =
-                Weapon[old_prototype.weapon_id].offense_rating;
-            const int candidate_weapon_rating =
-                Weapon[candidate.weapon_id].offense_rating;
-            if (old_weapon_rating != 0) {
-                if (old_weapon_rating > candidate_weapon_rating) {
-                    continue;
-                }
-            } else if (candidate.weapon_id != 0) {
-                continue;
-            }
-
-            const int old_armor_rating =
-                Armor[old_prototype.armor_id].defense_rating;
-            const int candidate_armor_rating =
-                Armor[candidate.armor_id].defense_rating;
-            // Native438C70 skips rejection when old defense <= candidate.
-            if (old_armor_rating > candidate_armor_rating) {
-                if (candidate_armor_rating == 1) {
-                    continue;
-                }
-                if (old_weapon_rating != 0 &&
-                    candidate_weapon_rating <= old_weapon_rating) {
-                    continue;
-                }
-            }
-
             ++match_count;
             StringTemp[0] = '\0';
-            ::strcat(StringTemp, candidate.veh_name);
-            ::strcat(StringTemp, " |");
-            say_stats_3(StringTemp, candidate_id);
-            if ((candidate.flags & 4) == 0 && (old_prototype.flags & 4) != 0) {
+            ::strcat(StringTemp, VehPrototypes[id].veh_name);
+            ::strcat(StringTemp, "|");
+            say_stats_3(StringTemp, id);
+            if (!(VehPrototypes[id].flags & 4)
+                && (VehPrototypes[protoID_].flags & 4)) {
                 ::strcat(StringTemp, " *");
             }
-            popup.item(StringTemp, candidate_id);
-            selected_prototype = candidate_id;
+            popup.item(StringTemp, id);
+            selected = id;
         }
         NetDaemonNet.unlock();
 
-        if (match_count == 0) {
-            if ((Players[faction].rule_flags & 0x80) != 0) {
+        if (!match_count) {
+            if (Players[factionID_].rule_flags & 0x80) {
                 popp(ScriptPopupFile, "NOUPGRADE", 0, "alunit_sm.pcx",
                      pop_wait);
             } else {
                 popp(ScriptPopupFile, "NOUPGRADE", 0, "unit_sm.pcx",
                      pop_wait);
             }
-            return;
+            break;
         }
-        if (match_count > 1) {
-            selected_prototype = popup.exec(0, pop_wait);
+        int choice;
+        if (match_count == 1) {
+            choice = selected;
+        } else {
+            choice = popup.exec(0, pop_wait);
         }
-        if (selected_prototype < 0) {
-            return;
+        if (choice < 0) {
+            break;
         }
-
-        const bool has_local_units =
-            PlayersData[faction].proto_id_active[selected_prototype] != 0;
-        const int upgraded = upgrade_prototype(
-            faction, selected_prototype, old_prototype_id, 0);
-        if (upgraded != 0) {
-            protoID_ = static_cast<uint32_t>(selected_prototype);
-            setup_veh(selected_prototype, 0);
-            proto_sort_2(faction);
-            const int sorted_count = ProtoSortCount;
-            if (sorted_count > 0) {
-                for (int walk = 0; walk < sorted_count; ++walk) {
-                    const int slot = (prototype_stack_start_ + walk)
-                        % sorted_count;
-                    if (ProtoSortIds[slot] == selected_prototype) {
-                        const int new_top = (slot + sorted_count - 5)
-                            % sorted_count;
-                        if (new_top != prototype_stack_start_) {
-                            prototype_stack_start_ = new_top;
-                            draw_stack();
-                        }
-                        break;
-                    }
-                }
-            }
+        // Tests the OLD prototype's active-unit count, before the upgrade.
+        int no_units = PlayersData[factionID_].proto_id_active[protoID_] == 0;
+        if (upgrade_prototype(factionID_, choice, protoID_, 0)) {
+            protoID_ = choice;
+            setup_veh(choice, 0);
+            center_stack(protoID_, 1);
             redraw();
         }
-
-        if (has_local_units) {
-            if ((Players[faction].rule_flags & 0x80) != 0) {
+        if (Players[factionID_].rule_flags & 0x80) {
+            if (no_units) {
                 popp(ScriptPopupFile, "YESUPGRADE", 0, "alunit_sm.pcx",
                      pop_wait);
-            } else {
+            }
+        } else {
+            if (no_units) {
                 popp(ScriptPopupFile, "YESUPGRADE", 0, "unit_sm.pcx",
                      pop_wait);
             }
         }
-        return;
+        break;
     }
 
-    int selected_component = -1;
-    switch (button_id) {
+    default: {
+        int selected_component = -1;
+        switch (button_id) {
         case 9: selected_component = 2; break;
         case 10: selected_component = 3; break;
         case 11: selected_component = 1; break;
@@ -2381,49 +2278,52 @@ void DesignWin::on_button_clicked(int button_id) {
         case 20: selected_component = 0x0E; break;
         case 21: selected_component = 0x0B; break;
         case 22: selected_component = 0x0C; break;
-        default: break;
-    }
-
-    DesignConsiderOverride = 1;
-    DesignConsiderPrototype = selected_component;
-    DesignConsiderWeapon = static_cast<int>(protoWeaponType_);
-    DesignConsiderArmor = static_cast<int>(protoArmorType_);
-    DesignConsiderChassis = static_cast<int>(protoChassisType_);
-    DesignConsiderAbilities = protoAbilityFlags_;
-    DesignConsiderReactor = static_cast<int>(protoReactorType_);
-    consider_designs(factionID_);
-
-    protoWeaponType_ = static_cast<uint32_t>(DesignConsiderWeapon);
-    protoArmorType_ = static_cast<uint32_t>(DesignConsiderArmor);
-    protoAbilityFlags_ = DesignConsiderAbilities;
-    protoChassisType_ = static_cast<uint32_t>(DesignConsiderChassis);
-    protoReactorType_ = static_cast<uint32_t>(DesignConsiderReactor);
-    protoAbilityIDs_[0] = -1;
-    protoAbilityIDs_[1] = -1;
-    for (int ability = 0; ability < MaxAbilityNum; ++ability) {
-        if ((protoAbilityFlags_ & (1u << ability)) == 0) {
-            continue;
         }
-        if (protoAbilityIDs_[0] < 0) {
-            protoAbilityIDs_[0] = ability;
-        } else if (protoAbilityIDs_[1] < 0) {
-            protoAbilityIDs_[1] = ability;
-        }
-    }
 
-    if (DesignConsiderOverride <= 1) {
-        if ((Players[static_cast<int>(factionID_)].rule_flags & 0x80) != 0) {
-            popp(ScriptPopupFile, "NOPRESET", 0, "alunit_sm.pcx", pop_wait);
+        DesignConsiderOverride = 1;
+        DesignConsiderPrototype = selected_component;
+        DesignConsiderWeapon = protoWeaponType_;
+        DesignConsiderArmor = protoArmorType_;
+        DesignConsiderChassis = protoChassisType_;
+        DesignConsiderAbilities = protoAbilityFlags_;
+        DesignConsiderReactor = protoReactorType_;
+        consider_designs(factionID_);
+        protoWeaponType_ = DesignConsiderWeapon;
+        protoArmorType_ = DesignConsiderArmor;
+        protoAbilityFlags_ = DesignConsiderAbilities;
+        protoChassisType_ = DesignConsiderChassis;
+        protoReactorType_ = DesignConsiderReactor;
+        for (int clear = 0; clear < 2; ++clear) {
+            protoAbilityIDs_[clear] = -1;
+        }
+        for (int bit = 0; bit < 29; ++bit) {
+            if (protoAbilityFlags_ & (1 << bit)) {
+                for (int slot = 0; slot < 2; ++slot) {
+                    if (protoAbilityIDs_[slot] < 0) {
+                        protoAbilityIDs_[slot] = bit;
+                        break;
+                    }
+                }
+            }
+        }
+        if (DesignConsiderOverride > 1) {
+            g_FX.play(0x2B);
         } else {
-            popp(ScriptPopupFile, "NOPRESET", 0, "unit_sm.pcx", pop_wait);
+            if (Players[factionID_].rule_flags & 0x80) {
+                popp(ScriptPopupFile, "NOPRESET", 0, "alunit_sm.pcx",
+                     pop_wait);
+            } else {
+                popp(ScriptPopupFile, "NOPRESET", 0, "unit_sm.pcx",
+                     pop_wait);
+            }
+            g_FX.play(0x27);
         }
-        g_FX.play(0x27);
-    } else {
-        g_FX.play(0x2B);
+        DesignConsiderOverride = 0;
+        on_redraw();
+        on_update();
+        break;
     }
-    DesignConsiderOverride = 0;
-    on_redraw();
-    on_update();
+    }
 }
 
 /*
@@ -4232,504 +4132,469 @@ void DesignWin::draw_special_2(int redraw) {
     Buffer::wrap_cent(StringTemp, &area);
 }
 
+// The image inlines a null test of the text before strlen at each of these
+// Font-taking writers (mov reg, StringTemp; test; je), like Buffer's guarded
+// write_l/write_cent_l forms; buffer.h has no guarded Font overloads.
+// WORKAROUND(decl): file-local stand-ins for those header inlines.
+static inline int design_write_cent_l(DesignWin *window, Font *font, char *text,
+                                      RECT *area) {
+    if (text == 0) {
+        return 0;
+    }
+    return window->Buffer::write_cent_l(font, text, area,
+                                        static_cast<int>(strlen(text)));
+}
+
+static inline int design_write_l(DesignWin *window, Font *font, char *text,
+                                 int x_coord, int y_coord) {
+    if (text == 0) {
+        return x_coord;
+    }
+    return window->Buffer::write_l(font, text, x_coord, y_coord,
+                                   static_cast<int>(strlen(text)));
+}
+
 // ORIGINAL: 0x00436090 ?draw_vehicle@DesignWin@@QAEXH@Z 0x00436090-0x00437999 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/veh.h:VehPrototype is size 0x34; row 63 begins at 0x009AC534 and fields at 0x20,0x24-0x27,0x2E own the observed stores", "source:src/designwin.cpp:UNK3, draw_vehicle and draw_flash share VehPrototypes[0x3f] preview storage", "source:src/designwin.h:draw_special_2(int), draw_special_1(int), draw_vehicle(int), draw_flash(), draw_info() are declared DesignWin methods", "source:src/veh.cpp:abil_cond(int,int,int,int) is the existing __cdecl definition at 0x00584B50", "historical seed (Git tree 15fe30a4; retired from the live source tree): src/unrecovered/00436090.cpp; preserve its original draw_vehicle identity, spans and TRIED lesson"], "reason": "Publish the editor preview scratch through the real 0x34-stride VehPrototype row 63, and close its repaint/ability-validation calls through the declared DesignWin methods and existing cdecl abil_cond owner."}
 // TRIED: full transcription (mnemonic_similarity 0.576, 930/1780 original mnemonics in common); two Font structs are embedded back to back at +0x14568 (detail line font) and +0x14590 (name font), each with the compiler inlining `unk1<0 ? line_height_ : height_+unk1` at every call site rather than through a getter - kept as a helper here. First divergence is in the opening RECT-copy prologue (four field reads compiled as one push/lea shuffle in the original vs plain assignment here).
 void DesignWin::draw_vehicle(int redraw) {
     (void)redraw;
+    char ability_names[256];
+    char numbuf[80];
+    int total_cost;
+    RECT src;
+    RECT dest;
+    int i;
+    int n;
 
-    Buffer *screen = static_cast<Buffer *>(this);
-    Buffer *backing = &buffer_;
-    Font *cur_font = &font3_;
-    const int prototype_id = static_cast<int>(protoID_);
-    const int faction_id = static_cast<int>(factionID_);
-    const int chassis_id = static_cast<int>(protoChassisType_);
-    const int weapon_id = static_cast<int>(protoWeaponType_);
-    const int armor_id = static_cast<int>(protoArmorType_);
-    const uint32_t abilities = protoAbilityFlags_;
-    const int reactor_id = static_cast<int>(protoReactorType_);
+    src = vehicle_panel_rect_;
+    Buffer::set_clip(&src);
+    buffer_.copy(this, &src);           // neg/sbb/and: null-checked Buffer* of this
 
-    RECT src = vehicle_panel_rect_;
-    screen->set_clip(&src);
-    backing->copy(this != 0 ? screen : 0, &src);
+    ++field_CE8_;
 
-    const int chassis_slot = prototype_id;
-    field_CE8_ += 1;
-    const VehPrototype &selected = VehPrototypes[chassis_slot];
-    const bool matches_current = !((selected.icon_offset < 0)
-        || chassis_id != selected.chassis_id
-        || weapon_id != selected.weapon_id
-        || armor_id != selected.armor_id
-        || reactor_id != selected.reactor_id
-        || abilities != selected.ability_flags);
-    const bool needs_construct = !matches_current
-        && ((Weapon[weapon_id].icon < 0) || chassis_id != 0);
-
-    int cx = 0;
-    int cy = 0;
-    if (needs_construct) {
+    if ((VehPrototypes[protoID_].icon_offset >= 0 && UNK2(protoID_))
+        || (Weapon[protoWeaponType_].icon >= 0 && protoChassisType_ == 0)) {
+        // 0x43618e
+        UNK3();
+        VehPrototypes[0x3f].icon_offset = VehPrototypes[protoID_].icon_offset;
+        int veh_id = veh_fake(0x3f, factionID_);          // [ebp-0x28]
+        // Image: test scale; jle -> constant, so the computed arm comes first.
+        const int x_offset = (src.right - (MapWinCaptionScale > 0
+                ? MapWinCaptionScale * 100 / MapWinCaptionDivisor : 0xbb)
+            - src.left) / 2;
+        const int y_offset = (src.bottom - (MapWinCaptionScale > 0
+                ? MapWinCaptionScale * 0x4b / MapWinCaptionDivisor : 0x8c)
+            - src.top) / 2;
+        veh_draw(this, veh_id, src.left + x_offset, src.top + y_offset,
+                 0xe, 0x44, 0);
+    } else {
+        // 0x436289
         caviar_.set_scene_rotation(scene_rotation_, 0.0f, 0.0f);
-        scene_rotation_ += 0.05f;
+        scene_rotation_ += 0.05f;                         // [0x66b420] = 0.05f
         construct_vehicle();
-        caviar_.set_scaling(0.3921568691730499267578125f);
-        cx = (src.right + src.left) / 2;
-        cy = (src.bottom + src.top) / 2;
-        caviar_.render(screen, cx, cy, 0x17);
-        if (armor_id == 5) {
-            caviar_.reset_objects();
-            vehdraw_construct_armor(ConsoleGlobal.faction_id_, chassis_id,
-                                    weapon_id, armor_id, 1, &caviar_);
-            caviar_.render_multi_table_dest(
-                screen, cx, cy, 0x18,
-                ArmorTransparentColorTables,
-                0x22);
+        caviar_.set_scaling(0.14f);                       // 0x3E0F5C29
+        int cx = (src.right + src.left) / 2;              // ebx
+        int cy = (src.top + src.bottom) / 2;              // [ebp-0x28]
+        caviar_.render(this, cx, cy, 0x17);
+        if (protoArmorType_ == 5) {
+            caviar_.reset_objects();                      // [esi+0x13b68] = 0
+            vehdraw_construct_armor(ConsoleGlobal.faction_id_,  // [0x939284]
+                                    protoChassisType_, protoWeaponType_,
+                                    protoArmorType_, 1, &caviar_);
+            caviar_.render_multi_table_dest(this, cx, cy, 0x18,
+                                            ArmorTransparentColorTables, 0x22);
         } else {
             caviar_.clear_buffers(0);
         }
-    } else {
-        VehPrototypes[0x3f].chassis_id = static_cast<uint8_t>(chassis_id);
-        VehPrototypes[0x3f].weapon_id = static_cast<uint8_t>(weapon_id);
-        VehPrototypes[0x3f].armor_id = static_cast<uint8_t>(armor_id);
-        VehPrototypes[0x3f].reactor_id = static_cast<uint8_t>(reactor_id);
-        VehPrototypes[0x3f].ability_flags = static_cast<uint32_t>(abilities);
-        VehPrototypes[0x3f].icon_offset = selected.icon_offset;
-        const int lock = veh_fake(0x3f, faction_id);
-        const int pct_w = MapWinCaptionScale < 1 ? 0xbb
-            : (MapWinCaptionScale * 100) / MapWinCaptionDivisor;
-        const int pct_h = MapWinCaptionScale < 1 ? 0x8c
-            : (MapWinCaptionScale * 0x4b) / MapWinCaptionDivisor;
-        veh_draw(screen, lock,
-                 src.left + ((src.right - pct_w) - src.left) / 2,
-                 src.top + ((src.bottom - pct_h) - src.top) / 2,
-                 0xe, 0x44, 0);
     }
 
-    screen->set_font(cur_font, 0, 0, 0);
-    screen->set_text_color(TextColourTable[140], TextColourTable[141], 1, 1);
-
-    RECT dest;
-    int adv = cur_font->unk_1_ < 0
-        ? cur_font->line_height() : cur_font->pixel_height() + cur_font->unk_1_;
-    dest.top = src.top + adv;
-    dest.bottom = src.top + adv + adv * 2;
-    dest.left = src.left + 0x2d;
-    dest.right = src.right - 0x2d;
-
+    // 0x43636b
+    Buffer::set_font(&font3_, 0, 0, 0);
+    Buffer::set_text_color(TextColourTable[140], TextColourTable[141], 1, 1);
+    dest = src;                                           // all four stores kept
+    dest.bottom = dest.top + font_line_advance(font3_);
+    n = font_line_advance(font3_) * 2;                    // add eax,eax
+    dest.top += n;                                        // dest.top reloaded from memory
+    dest.bottom += n;
     StringTemp[0] = 0;
-    if (chassis_slot < 0x40
-        && chassis_id == VehPrototypes[chassis_slot].chassis_id
-        && weapon_id == VehPrototypes[chassis_slot].weapon_id
-        && armor_id == VehPrototypes[chassis_slot].armor_id
-        && reactor_id == VehPrototypes[chassis_slot].reactor_id
-        && abilities == VehPrototypes[chassis_slot].ability_flags) {
-        strcat(StringTemp, VehPrototypes[chassis_slot].veh_name);
-    } else {
-        const unsigned int name_len = static_cast<unsigned int>(strlen(prototype_name_));
-        if (name_len == 0 || (VehPrototypes[prototype_id].flags & 2) == 0) {
-            char name_buf[256];
-            name_proto(name_buf, prototype_id, faction_id, chassis_id, weapon_id,
-                       armor_id, static_cast<int>(abilities), reactor_id);
-            strcat(StringTemp, name_buf);
-            VehPrototypes[prototype_id].flags &= static_cast<uint16_t>(~2u);
-        } else {
-            strcat(StringTemp, prototype_name_);
-        }
-    }
-    CharUpperA(StringTemp);
-    dest.top = screen->wrap_cent(StringTemp, &dest);
+    dest.left += 0x2d;                                    // image: mov eax,0x2d; add/sub
+    dest.right -= 0x2d;
 
-    VehPrototypes[0x3f].chassis_id = static_cast<uint8_t>(chassis_id);
-    VehPrototypes[0x3f].weapon_id = static_cast<uint8_t>(weapon_id);
-    VehPrototypes[0x3f].armor_id = static_cast<uint8_t>(armor_id);
-    VehPrototypes[0x3f].reactor_id = static_cast<uint8_t>(reactor_id);
-    VehPrototypes[0x3f].ability_flags = static_cast<uint32_t>(abilities);
-    VehPrototypes[0x3f].icon_offset = static_cast<int8_t>(0xff);
-    dest.right = src.right;
+    if (static_cast<int>(protoID_) < 0x40 && UNK2(protoID_)) {
+        strcat(StringTemp, VehPrototypes[protoID_].veh_name);
+    } else if (strlen(prototype_name_) != 0
+               && (VehPrototypes[protoID_].flags & 2) != 0) {
+        strcat(StringTemp, prototype_name_);
+    } else {
+        // 0x4364c3
+        name_proto(ability_names, protoID_, factionID_, protoChassisType_,
+                   protoWeaponType_, protoArmorType_, protoAbilityFlags_,
+                   protoReactorType_);
+        strcat(StringTemp, ability_names);
+        VehPrototypes[protoID_].flags &= ~2;              // and byte ptr [..+0x30], -3
+    }
+    // 0x436528
+    CharUpperA(StringTemp);
+    // Image stores the result to src.top ([ebp-0x20]) first, then dest.top.
+    dest.top = src.top = Buffer::wrap_cent(StringTemp, &dest);
+    UNK3();
     dest.left = src.left;
-    adv = cur_font->unk_1_ < 0
-        ? cur_font->line_height() : cur_font->pixel_height() + cur_font->unk_1_;
-    dest.bottom = (src.bottom - adv) + adv * -3;
-    dest.top = src.bottom + adv * -3;
+    dest.right = src.right;
+    dest.top = src.bottom - font_line_advance(font3_);
+    n = font_line_advance(font3_) * -3;                   // lea [4*x]; sub; neg
+    dest.top += n;
+    dest.bottom = src.bottom + n;
 
     StringTemp[0] = 0;
     say_stats_3(StringTemp, 0x3f);
-    char ability_names[256];
     ability_names[0] = 0;
-    for (int bit = 0; bit < MaxAbilityNum; ++bit) {
-        if (abilities & (1 << (bit & 0x1f))) {
-            char *name = StringTable.get(Ability[bit].name);
-            if (strlen(name) != 0) {
-                if (strlen(ability_names) != 0) strcat(ability_names, ", ");
-                strcat(ability_names, StringTable.get(Ability[bit].name));
+    for (i = 0; i < MaxAbilityNum; ++i) {
+        if (protoAbilityFlags_ & (1 << i)) {
+            if (strlen(StringTable.get(Ability[i].abbreviation)) != 0) {
+                if (strlen(ability_names) != 0) {
+                    strcat(ability_names, ", ");               // 0x682e90
+                }
+                strcat(ability_names, StringTable.get(Ability[i].abbreviation));
             }
         }
     }
-    strcat(StringTemp, " ");
+    strcat(StringTemp, " ");                              // 0x682820
     strcat(StringTemp, ability_names);
-    screen->write_cent_l(StringTemp, &dest, static_cast<int>(strlen(StringTemp)));
-    stats_rect_.left = dest.left;
-    stats_rect_.top = dest.top;
-    stats_rect_.right = dest.right;
-    stats_rect_.bottom = dest.bottom;
+    Buffer::write_cent_l(StringTemp, &dest);              // inline null-check wrapper
+    stats_rect_ = dest;                                   // lea ecx,[esi+0xb3c] struct copy
 
-    if (Weapon[weapon_id].mode == 7) {
-        adv = ((cur_font->unk_1_ < 0 ? cur_font->line_height()
-                : cur_font->pixel_height() + cur_font->unk_1_) * 3) / 2;
-        dest.bottom += adv;
-        dest.top += adv;
-        screen->set_font(&font2_, 0, 0, 0);
+    if (Weapon[protoWeaponType_].mode == 7) {
+        n = font_line_advance(font3_) * 3 / 2;
+        dest.bottom += n;
+        dest.top += n;
+        Buffer::set_font(&font2_, 0, 0, 0);
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x360 / 4));
-        strcat(StringTemp, ": ");
-        char numbuf[80];
-        _itoa(transport_val(chassis_id, abilities, reactor_id), numbuf, 10);
+        strcat(StringTemp, ": ");                         // 0x682e94
+        _itoa(transport_val(protoChassisType_, protoAbilityFlags_, protoReactorType_),
+              numbuf, 10);
         strcat(StringTemp, numbuf);
-        screen->write_cent_l(StringTemp, &dest, static_cast<int>(strlen(StringTemp)));
+        Buffer::write_cent_l(StringTemp, &dest);
     }
-    if (Weapon[weapon_id].offense_rating > 1
-        && Chassis[chassis_id].triad == 0
-        && Chassis[chassis_id].speed == 1
-        && Rules.combat_pct_infantry_vs_base != 0
-        && (abilities & 0x8000) == 0) {
-        adv = ((cur_font->unk_1_ < 0 ? cur_font->line_height()
-                : cur_font->pixel_height() + cur_font->unk_1_) * 3) / 2;
-        dest.top += adv;
-        dest.bottom += adv;
-        screen->set_font(&font2_, 0, 0, 0);
+    // 0x4367e1
+    if (Weapon[protoWeaponType_].offense_rating > 1
+        && Chassis[protoChassisType_].triad == 0
+        && Chassis[protoChassisType_].speed == 1
+        && Rules.combat_pct_infantry_vs_base != 0            // [0x949804]
+        && (protoAbilityFlags_ & 0x8000) == 0) {
+        n = font_line_advance(font3_) * 3 / 2;
+        dest.bottom += n;
+        dest.top += n;
+        Buffer::set_font(&font2_, 0, 0, 0);
         StringTemp[0] = 0;
-        strcat(StringTemp, "+");
-        char numbuf[80];
+        strcat(StringTemp, "+");                          // 0x68356c
         _itoa(Rules.combat_pct_infantry_vs_base, numbuf, 10);
         strcat(StringTemp, numbuf);
-        strcat(StringTemp, "% ");
+        strcat(StringTemp, "% ");                         // 0x683570
         strcat(StringTemp, label_get(0x88c / 4));
-        screen->write_cent_l(StringTemp, &dest, static_cast<int>(strlen(StringTemp)));
+        Buffer::write_cent_l(StringTemp, &dest);
     }
-    if (Weapon[weapon_id].offense_rating > 0
-        && Chassis[chassis_id].triad == 0
-        && Chassis[chassis_id].speed > 1
-        && Rules.combat_pct_mobile_open_ground != 0
-        && (abilities & 0x8000) != 0) {
-        adv = ((cur_font->unk_1_ < 0 ? cur_font->line_height()
-                : cur_font->pixel_height() + cur_font->unk_1_) * 3) / 2;
-        dest.bottom += adv;
-        dest.top += adv;
-        screen->set_font(&font2_, 0, 0, 0);
+    // 0x436912
+    if (Weapon[protoWeaponType_].offense_rating > 0
+        && Chassis[protoChassisType_].triad == 0
+        && Chassis[protoChassisType_].speed > 1
+        && Rules.combat_pct_mobile_open_ground != 0          // [0x9497f4]
+        && (protoAbilityFlags_ & 0x8000) != 0) {
+        n = font_line_advance(font3_) * 3 / 2;
+        dest.bottom += n;
+        dest.top += n;
+        Buffer::set_font(&font2_, 0, 0, 0);
         StringTemp[0] = 0;
-        strcat(StringTemp, "+");
-        char numbuf[80];
+        strcat(StringTemp, "+");                          // 0x683574
         _itoa(Rules.combat_pct_mobile_open_ground, numbuf, 10);
         strcat(StringTemp, numbuf);
-        strcat(StringTemp, "% ");
+        strcat(StringTemp, "% ");                         // 0x683578
         strcat(StringTemp, label_get(0x98c / 4));
-        screen->write_cent_l(StringTemp, &dest, static_cast<int>(strlen(StringTemp)));
+        Buffer::write_cent_l(StringTemp, &dest);
     }
 
-    screen->set_text_color2(TextColourTable[142], TextColourTable[143], 1, 1);
-    screen->set_text_color(TextColourTable[144], TextColourTable[145], 1, 1);
-    screen->set_font(&font2_, 0, 0, 0);
-    dest.left = src.left;
-    dest.right = src.right;
-    dest.top = src.top;
-    adv = cur_font->unk_1_ < 0
-        ? cur_font->line_height() : cur_font->pixel_height() + cur_font->unk_1_;
-    dest.bottom = src.top + adv;
+    // 0x436a43
+    Buffer::set_text_color2(TextColourTable[142], TextColourTable[143], 1, 1);
+    Buffer::set_text_color(TextColourTable[144], TextColourTable[145], 1, 1);
+    Buffer::set_font(&font2_, 0, 0, 0);
+    dest = src;                                           // all four stores kept
+    dest.bottom = dest.top + font_line_advance(font3_);   // still font3_ (edi)
 
-    const int proto_price = static_cast<int>(proto_cost(
-        chassis_id, weapon_id, armor_id, static_cast<int>(abilities), reactor_id));
+    int cost = proto_cost(protoChassisType_, protoWeaponType_, protoArmorType_,
+                          protoAbilityFlags_, protoReactorType_);   // edi
     StringTemp[0] = 0;
-    strcat(StringTemp, "{");
+    strcat(StringTemp, "{");                              // 0x68357c
     strcat(StringTemp, label_get(0x160 / 4));
-    strcat(StringTemp, ": ");
-    strcat(StringTemp, " ");
-    strcat(StringTemp, "}");
-    int total_cost;
-    char numbuf80[80];
-    if (proto_price < reactor_id) {
-        strcat(StringTemp, "(");
+    strcat(StringTemp, ": ");                             // 0x682e94
+    strcat(StringTemp, " ");                              // 0x682820
+    strcat(StringTemp, "}");                              // 0x683580
+    // WORKAROUND(type): image compares signed (jge); protoReactorType_ is
+    // declared uint32_t, so the original member was probably int.
+    if (cost < static_cast<int>(protoReactorType_)) {
+        strcat(StringTemp, "(");                          // 0x682e9c
         strcat(StringTemp, label_get(0x1e8 / 4));
-        strcat(StringTemp, ": ");
-        total_cost = reactor_id * static_cast<int>(mineralCostFactor_);
-        _itoa(total_cost, numbuf80, 10);
-        strcat(StringTemp, numbuf80);
-        strcat(StringTemp, ")");
+        strcat(StringTemp, ": ");                         // 0x682e94
+        total_cost = protoReactorType_ * mineralCostFactor_;   // mov reactor; imul [factor]
+        _itoa(total_cost, numbuf, 10);
+        strcat(StringTemp, numbuf);
+        strcat(StringTemp, ")");                          // 0x682e98
     } else {
-        total_cost = static_cast<int>(mineralCostFactor_) * proto_price;
-        _itoa(total_cost, numbuf80, 10);
-        strcat(StringTemp, numbuf80);
+        total_cost = mineralCostFactor_ * cost;           // mov factor; imul edi
+        _itoa(total_cost, numbuf, 10);
+        strcat(StringTemp, numbuf);
     }
-    if (Chassis[chassis_id].speed > 1
-        && Chassis[chassis_id].triad == 0
-        && Armor[armor_id].defense_rating > 1
-        && Weapon[weapon_id].cost > 1) {
-        strcat(StringTemp, "!");
-        screen->set_text_color(TextColourTable[110], TextColourTable[111], 1, 1);
-        screen->set_text_color2(TextColourTable[110], TextColourTable[111], 1, 1);
+    // 0x436c12
+    if (Chassis[protoChassisType_].speed > 1
+        && Chassis[protoChassisType_].triad == 0
+        && Armor[protoArmorType_].defense_rating > 1
+        && Weapon[protoWeaponType_].cost > 1) {
+        strcat(StringTemp, "!");                          // 0x683584
+        Buffer::set_text_color(TextColourTable[110], TextColourTable[111], 1, 1);
+        Buffer::set_text_color2(TextColourTable[110], TextColourTable[111], 1, 1);
     }
     CharUpperA(StringTemp);
-    screen->write_cent_l(StringTemp, &dest, static_cast<int>(strlen(StringTemp)));
-    field_B2C_rect_ = dest;
+    Buffer::write_cent_l(StringTemp, &dest);
+    // 0x436cc6: field_B2C_rect_ = dest;  (second half)
+    field_B2C_rect_ = dest;                                  // 0x436cc6 struct copy
+    int adv = font_line_advance(font2_);
+    dest.top += adv;                                         // [ebp-0x10]
+    dest.bottom += adv;                                      // [ebp-0x08]
 
-    bool custom = (0x3f < prototype_id);
+    int custom = static_cast<int>(protoID_) >= 0x40;          // setge -> [ebp-0x38]
     if (custom) {
-        bool armor_ok = false;
-        bool reactor_ok = false;
-        bool weapon_ok = false;
-        int j = 0;
-        while (j < 0x80) {
-            int jj = j & 0x8000003f;
-            if (jj < 0) jj = (jj - 1 | 0xffffffc0) + 1;
-            if (jj != j) jj += faction_id * 0x40;
-            if (VehPrototypes[jj].flags & 1) {
-                bool ok = false;
-                if (jj < 0x40) {
-                    ok = has_tech(VehPrototypes[jj].preq_tech, faction_id) != 0;
-                } else if (VehPrototypes[jj].flags & 4) {
-                    ok = true;
-                }
-                if (ok) {
-                    const int j_armor = VehPrototypes[jj].weapon_id;
-                    if (weapon_id == j_armor) armor_ok = true;
-                    const int j_reactor = VehPrototypes[jj].armor_id;
-                    if (armor_id == j_reactor) reactor_ok = true;
-                    if (chassis_id == VehPrototypes[jj].chassis_id) weapon_ok = true;
-                    if (Weapon[weapon_id].offense_rating > 0
-                        && Weapon[weapon_id].offense_rating
-                            <= Weapon[j_armor].offense_rating) {
-                        armor_ok = true;
-                    }
-                    if (Armor[armor_id].defense_rating > 0
-                        && Armor[armor_id].defense_rating
-                            <= Armor[j_reactor].defense_rating) {
-                        reactor_ok = true;
-                    }
-                    const int wj = VehPrototypes[jj].chassis_id;
-                    if (Chassis[chassis_id].triad == Chassis[wj].triad
-                        && Chassis[chassis_id].speed <= Chassis[wj].speed) {
-                        weapon_ok = true;
-                    }
-                }
+        int chassis_ok = 0;                                   // [ebp-0x2c]
+        int armor_ok = 0;                                     // [ebp-0x34]
+        int weapon_ok = 0;                                    // [ebp-0x30]
+        for (int j = 0; j < 0x80; j++) {                      // [ebp-0x3c]
+            int jj = j % 64;                                  // and 0x8000003f / dec / or -0x40 / inc
+            if (jj != j) {
+                jj += factionID_ * 64;                        // shl 6
             }
-            ++j;
+            if (!(VehPrototypes[jj].flags & 1)) {             // cx loaded once, test cl,1
+                continue;
+            }
+            if (jj < 0x40) {
+                if (!has_tech(VehPrototypes[jj].preq_tech, factionID_)) {
+                    continue;
+                }
+            } else if (!(VehPrototypes[jj].flags & 4)) {      // reuses cx: test cl,4
+                continue;
+            }
+            int j_weapon = VehPrototypes[jj].weapon_id;       // [ebp-0x40]
+            if (protoWeaponType_ == j_weapon) {
+                weapon_ok = 1;
+            }
+            int j_armor = VehPrototypes[jj].armor_id;         // ebx / [ebp-0x4]
+            if (protoArmorType_ == j_armor) {
+                armor_ok = 1;
+            }
+            int j_chassis = VehPrototypes[jj].chassis_id;     // edi
+            if (protoChassisType_ == j_chassis) {
+                chassis_ok = 1;
+            }
+            if (Weapon[protoWeaponType_].offense_rating > 0
+                && Weapon[j_weapon].offense_rating >= Weapon[protoWeaponType_].offense_rating) {
+                weapon_ok = 1;                                // cmp [w].off, dl; jl skip
+            }
+            if (Armor[protoArmorType_].defense_rating > 0
+                && Armor[j_armor].defense_rating >= Armor[protoArmorType_].defense_rating) {
+                armor_ok = 1;
+            }
+            if (Chassis[protoChassisType_].triad == Chassis[j_chassis].triad   // cmp dl(proto), bl(j)
+                && Chassis[j_chassis].speed >= Chassis[protoChassisType_].speed) { // cmp al(j), dl; jb
+                chassis_ok = 1;
+            }
         }
-        if (armor_ok && reactor_ok && weapon_ok) custom = false;
+        if (weapon_ok && armor_ok && chassis_ok) {            // tested -0x30, -0x34, -0x2c
+            custom = 0;
+        }
     }
 
-    const bool already_designed = !((
-        (VehPrototypes[chassis_slot].obsolete_factions
-         & (1 << (faction_id & 0x1f))) == 0)
-        || chassis_id != VehPrototypes[chassis_slot].chassis_id
-        || weapon_id != VehPrototypes[chassis_slot].weapon_id
-        || armor_id != VehPrototypes[chassis_slot].armor_id
-        || reactor_id != VehPrototypes[chassis_slot].reactor_id
-        || abilities != VehPrototypes[chassis_slot].ability_flags);
-
-    bool skip_to_name = false;
-    if (!already_designed) {
-        screen->set_text_color(TextColourTable[148], TextColourTable[149], 1, 1);
-        screen->set_text_color2(TextColourTable[146], TextColourTable[147], 1, 1);
-        unsigned int slen;
-        if (!custom) {
-            if (prototype_id < 0x40) {
-                skip_to_name = true;
-            } else {
-                StringTemp[0] = 0;
-                strcat(StringTemp, label_get(0x3a4 / 4));
-                CharUpperA(StringTemp);
-                slen = static_cast<unsigned int>(strlen(StringTemp));
-                screen->write_cent_l(&font2_, StringTemp, &dest,
-                                     static_cast<int>(slen));
-            }
-        } else {
-            const int base_cost = static_cast<int>(proto_cost(
-                chassis_id, weapon_id, armor_id, 0, reactor_id));
-            const int factor = prototype_factor(prototype_id);
-            total_cost = total_cost + ((base_cost * factor + 0x32) / 100)
-                * static_cast<int>(mineralCostFactor_);
-            StringTemp[0] = 0;
-            strcat(StringTemp, "{");
-            strcat(StringTemp, label_get(0x2fc / 4));
-            strcat(StringTemp, ": ");
-            strcat(StringTemp, " ");
-            strcat(StringTemp, "}");
-            char numbuf3[80];
-            _itoa(total_cost, numbuf3, 10);
-            strcat(StringTemp, numbuf3);
-            if (Chassis[chassis_id].speed > 1
-                && Armor[armor_id].defense_rating > 1
-                && Weapon[weapon_id].cost > 1) {
-                strcat(StringTemp, "!");
-                screen->set_text_color(TextColourTable[110], TextColourTable[111], 1, 1);
-                screen->set_text_color2(TextColourTable[110], TextColourTable[111], 1, 1);
-            }
-            CharUpperA(StringTemp);
-            slen = static_cast<unsigned int>(strlen(StringTemp));
-            screen->write_cent_l(&font2_, StringTemp, &dest,
-                                 static_cast<int>(slen));
-        }
-    } else {
-        screen->set_text_color(TextColourTable[110], TextColourTable[111], 1, 1);
-        screen->set_text_color2(TextColourTable[110], TextColourTable[111], 1, 1);
-        if ((static_cast<int>(field_CE8_) / 0xc) % 3 != 0) {
+    // 0x436e99: protoID_ is reloaded from the member for every field.
+    if ((VehPrototypes[protoID_].obsolete_factions & (1 << factionID_))  // byte test cl,dl
+        && protoChassisType_ == VehPrototypes[protoID_].chassis_id
+        && protoWeaponType_ == VehPrototypes[protoID_].weapon_id
+        && protoArmorType_ == VehPrototypes[protoID_].armor_id
+        && protoReactorType_ == VehPrototypes[protoID_].reactor_id
+        && protoAbilityFlags_ == VehPrototypes[protoID_].ability_flags) {
+        Buffer::set_text_color(TextColourTable[110], TextColourTable[111], 1, 1);
+        Buffer::set_text_color2(TextColourTable[110], TextColourTable[111], 1, 1);
+        if ((static_cast<int>(field_CE8_) / 12) % 3) {        // signed: imul 0x2aaaaaab; sar 1
             StringTemp[0] = 0;
             strcat(StringTemp, label_get(0xe40 / 4));
             CharUpperA(StringTemp);
-            const unsigned int slen2 = static_cast<unsigned int>(strlen(StringTemp));
-            screen->write_cent_l(&font2_, StringTemp, &dest,
-                                 static_cast<int>(slen2));
+            design_write_cent_l(this, &font2_, StringTemp, &dest);         // guarded; tail-merged at 0x4371af
         }
-    }
-    if (!skip_to_name) {
-        adv = font2_.unk_1_ < 0 ? font2_.line_height()
-            : font2_.pixel_height() + font2_.unk_1_;
+        // ---- see "src advance" note below
+        adv = font_line_advance(font2_);
         src.top += adv;
         src.bottom += adv;
-    }
-
-    screen->set_text_color2(0xde, -1, 1, 1);
-    screen->set_text_color(TextColourTable[150], TextColourTable[151], 1, 1);
-    const int y = src.left + 0x14;
-    adv = font2_.unk_1_ < 0 ? font2_.line_height()
-        : font2_.pixel_height() + font2_.unk_1_;
-    char *veh_name = preset_names_[6];
-    int cap_x = (vehicle_panel_rect_.bottom + vehicle_panel_rect_.top) / 2
-        + adv * -4;
-    CharUpperA(veh_name);
-    if (veh_name != 0) {
-        const unsigned int slen = static_cast<unsigned int>(strlen(veh_name));
-        screen->write_l(&font2_, veh_name, y, cap_x, static_cast<int>(slen));
-    }
-    adv = font2_.unk_1_ < 0 ? font2_.line_height()
-        : font2_.pixel_height() + font2_.unk_1_;
-    cap_x += adv;
-
-    screen->set_text_color2(TextColourTable[152], TextColourTable[153], 1, 1);
-    screen->set_text_color(TextColourTable[154], TextColourTable[155], 1, 1);
-    StringTemp[0] = 0;
-    if (Weapon[weapon_id].mode < 3) {
-        strcat(StringTemp, "*");
-        strcat(StringTemp, preset_names_[8]);
-        strcat(StringTemp, "{");
-        strcat(StringTemp, " ");
-        const signed char techlevel = Weapon[weapon_id].offense_rating;
-        char numbuf4[80];
-        if (techlevel < 0) {
-            strcat(StringTemp, label_get(0x310 / 4));
-        } else if (techlevel < 0x63) {
-            _itoa(static_cast<int>(techlevel), numbuf4, 10);
-            strcat(StringTemp, numbuf4);
-        } else {
-            strcat(StringTemp, "}");
-        }
     } else {
-        strcat(StringTemp, "{");
-        strcat(StringTemp, preset_names_[14]);
-        strcat(StringTemp, "}");
-        strcat(StringTemp, " ");
-        char numbuf5[80];
-        _itoa(static_cast<int>(Weapon[weapon_id].cost), numbuf5, 10);
-        strcat(StringTemp, numbuf5);
+        Buffer::set_text_color(TextColourTable[148], TextColourTable[149], 1, 1);
+        Buffer::set_text_color2(TextColourTable[146], TextColourTable[147], 1, 1);
+        if (custom) {
+            int retool = proto_cost(protoChassisType_, protoWeaponType_, protoArmorType_,
+                                    0, protoReactorType_);
+            total_cost += (retool * prototype_factor(protoID_) + 50) / 100
+                          * mineralCostFactor_;               // edi; signed /100 (0x51eb851f)
+            StringTemp[0] = 0;
+            strcat(StringTemp, "{");                          // 0x683588
+            strcat(StringTemp, label_get(0x2fc / 4));
+            strcat(StringTemp, ": ");                         // 0x682e94
+            strcat(StringTemp, " ");                          // 0x682820
+            strcat(StringTemp, "}");                          // 0x68358c
+            _itoa(total_cost, numbuf, 10);
+            strcat(StringTemp, numbuf);
+            if (Chassis[protoChassisType_].speed > 1          // unsigned (jbe)
+                && Armor[protoArmorType_].defense_rating > 1  // signed (jle)
+                && Weapon[protoWeaponType_].cost > 1) {       // unsigned (jbe)
+                strcat(StringTemp, "!");                      // 0x683590
+                Buffer::set_text_color(TextColourTable[110], TextColourTable[111], 1, 1);
+                Buffer::set_text_color2(TextColourTable[110], TextColourTable[111], 1, 1);
+            }
+            CharUpperA(StringTemp);
+            design_write_cent_l(this, &font2_, StringTemp, &dest);         // guarded (0x437194..0x4371bd)
+            adv = font_line_advance(font2_);                  // 0x4371c2 (the kept copy)
+            src.top += adv;
+            src.bottom += adv;
+        } else if (static_cast<int>(protoID_) >= 0x40) {      // 0x4371d6: cmp; jl 0x43723a
+            StringTemp[0] = 0;
+            strcat(StringTemp, label_get(0x3a4 / 4));
+            CharUpperA(StringTemp);
+            design_write_cent_l(this, &font2_, StringTemp, &dest);         // guarded; jumps into 0x43719d
+            adv = font_line_advance(font2_);
+            src.top += adv;
+            src.bottom += adv;
+        }
     }
-    unsigned int slen = static_cast<unsigned int>(strlen(StringTemp));
-    screen->write_l(StringTemp, y, cap_x, static_cast<int>(slen));
-        adv = font2_.unk_1_ < 0 ? font2_.line_height()
-            : font2_.pixel_height() + font2_.unk_1_;
-    cap_x += adv;
+    // "src advance" note: the image has ONE copy of
+    //   adv = font_line_advance(font2_); src.top += adv; src.bottom += adv;
+    // at 0x4371c2..0x437237, reached from all three writers (and from their
+    // null-text / `% 3 == 0` exits) but skipped when !custom && protoID_ < 0x40.
+    // The three source copies above rely on VC6 tail merging (the write tails
+    // are visibly merged too: 0x436fe7 jmp 0x4371af, 0x43721f jmp 0x43719d).
+    // If that does not merge, the equivalent alternative is a single copy after
+    // the if/else with `if (protoID_ < 0x40) goto skip_src_advance;` in the
+    // !custom path (cur code's skip_to_name flag expresses the same thing).
 
+    // 0x43723a
+    Buffer::set_text_color2(0xde, -1, 1, 1);
+    Buffer::set_text_color(TextColourTable[150], TextColourTable[151], 1, 1);
+    int x = src.left + 0x14;                                  // [ebp-0x4]
+    adv = font_line_advance(font2_);
+    int y = (vehicle_panel_rect_.bottom + vehicle_panel_rect_.top) / 2 - adv * 4;  // edi; member, not src
+    CharUpperA(preset_names_[6]);                             // +0x1437e
+    design_write_l(this, &font2_, preset_names_[6], x, y);                 // guarded (test ebx), 0x5db580
+    y += font_line_advance(font2_);
+
+    Buffer::set_text_color2(TextColourTable[152], TextColourTable[153], 1, 1);
+    Buffer::set_text_color(TextColourTable[154], TextColourTable[155], 1, 1);
     StringTemp[0] = 0;
-    strcat(StringTemp, "{");
-    strcat(StringTemp, preset_names_[9]);
-    strcat(StringTemp, "}");
+    if (Weapon[protoWeaponType_].mode < 3) {                  // unsigned (jae)
+        strcat(StringTemp, "{");                              // 0x683594
+        strcat(StringTemp, preset_names_[8]);                 // +0x143d8
+        strcat(StringTemp, "}");                              // 0x683598
+        strcat(StringTemp, " ");
+        if (Weapon[protoWeaponType_].offense_rating < 0) {
+            strcat(StringTemp, label_get(0x310 / 4));
+        } else if (Weapon[protoWeaponType_].offense_rating >= 0x63) {
+            strcat(StringTemp, "*");                          // 0x68359c
+        } else {
+            _itoa(Weapon[protoWeaponType_].offense_rating, numbuf, 10);
+            strcat(StringTemp, numbuf);
+        }
+        Buffer::write_l(StringTemp, x, y);                            // guarded; tail -> 0x4374a8
+    } else {
+        strcat(StringTemp, "{");                              // 0x6835a0
+        strcat(StringTemp, preset_names_[14]);                // +0x144e6
+        strcat(StringTemp, "}");                              // 0x6835a4
+        strcat(StringTemp, " ");
+        _itoa(Weapon[protoWeaponType_].cost, numbuf, 10);     // zero-extended byte
+        strcat(StringTemp, numbuf);
+        Buffer::write_l(StringTemp, x, y);                            // guarded, 0x5dcea0
+    }
+
+    y += font_line_advance(font2_);                           // 0x4374b4
+    StringTemp[0] = 0;
+    strcat(StringTemp, "{");                                  // 0x6835a8
+    strcat(StringTemp, preset_names_[9]);                     // +0x14405
+    strcat(StringTemp, "}");                                  // 0x6835ac
     strcat(StringTemp, " ");
-    if (Armor[armor_id].mode < 3) {
-        if (Armor[armor_id].defense_rating < 0) {
+    if (Armor[protoArmorType_].mode < 3) {                    // unsigned (jae)
+        if (Armor[protoArmorType_].defense_rating < 0) {
             strcat(StringTemp, label_get(0x310 / 4));
         } else {
-            char numbuf6[80];
-            _itoa(static_cast<int>(Armor[armor_id].defense_rating), numbuf6, 10);
-            strcat(StringTemp, numbuf6);
+            _itoa(Armor[protoArmorType_].defense_rating, numbuf, 10);
+            strcat(StringTemp, numbuf);
         }
-        slen = static_cast<unsigned int>(strlen(StringTemp));
-        screen->write_l(StringTemp, y, cap_x, static_cast<int>(slen));
+        Buffer::write_l(StringTemp, x, y);
     }
-        adv = font2_.unk_1_ < 0 ? font2_.line_height()
-            : font2_.pixel_height() + font2_.unk_1_;
-    cap_x += adv;
 
+    y += font_line_advance(font2_);                           // 0x4375a4
     StringTemp[0] = 0;
-    strcat(StringTemp, "{");
-    strcat(StringTemp, preset_names_[10]);
-    strcat(StringTemp, "}");
+    strcat(StringTemp, "{");                                  // 0x6835b0
+    strcat(StringTemp, preset_names_[10]);                    // +0x14432
+    strcat(StringTemp, "}");                                  // 0x6835b4
     strcat(StringTemp, " ");
-    strcat(StringTemp, StringTable.get(Triad[Chassis[chassis_id].triad]));
-    StringTemp[4] = 0;
+    strcat(StringTemp, StringTable.get(Triad[Chassis[protoChassisType_].triad]));
+    StringTemp[4] = 0;                                        // bug-for-bug truncation
     strcat(StringTemp, " ");
-    char numbuf7[80];
-    _itoa(speed_proto(0x3f) / static_cast<int>(Rules.move_rate_roads), numbuf7, 10);
-    strcat(StringTemp, numbuf7);
-    slen = static_cast<unsigned int>(strlen(StringTemp));
-    screen->write_l(StringTemp, y, cap_x, static_cast<int>(slen));
-        adv = font2_.unk_1_ < 0 ? font2_.line_height()
-            : font2_.pixel_height() + font2_.unk_1_;
-    cap_x += adv;
+    _itoa(speed_proto(0x3f) / Rules.move_rate_roads, numbuf, 10);  // idiv [0x949738]
+    strcat(StringTemp, numbuf);
+    Buffer::write_l(StringTemp, x, y);
 
+    y += font_line_advance(font2_);                           // 0x4376a4
     StringTemp[0] = 0;
-    strcat(StringTemp, "{");
-    strcat(StringTemp, preset_names_[11]);
-    strcat(StringTemp, "}");
+    strcat(StringTemp, "{");                                  // 0x6835b8
+    strcat(StringTemp, preset_names_[11]);                    // +0x1445f
+    strcat(StringTemp, "}");                                  // 0x6835bc
     strcat(StringTemp, " ");
-    char numbuf8[80];
-    _itoa(reactor_id, numbuf8, 10);
-    strcat(StringTemp, numbuf8);
-    slen = static_cast<unsigned int>(strlen(StringTemp));
-    screen->write_l(StringTemp, y, cap_x, static_cast<int>(slen));
-    adv = font2_.unk_1_ < 0 ? font2_.line_height()
-        : font2_.pixel_height() + font2_.unk_1_;
-    cap_x += adv;
+    _itoa(protoReactorType_, numbuf, 10);
+    strcat(StringTemp, numbuf);
+    Buffer::write_l(StringTemp, x, y);
 
+    y += font_line_advance(font2_);                           // 0x437752
     StringTemp[0] = 0;
-    strcat(StringTemp, "{");
-    strcat(StringTemp, preset_names_[12]);
-    strcat(StringTemp, "}");
+    strcat(StringTemp, "{");                                  // 0x6835c0
+    strcat(StringTemp, preset_names_[12]);                    // +0x1448c
+    strcat(StringTemp, "}");                                  // 0x6835c4
     strcat(StringTemp, " ");
     if (protoAbilityIDs_[0] < 0) {
-        strcat(StringTemp, "-");
+        strcat(StringTemp, "-");                              // 0x6835c8
     } else {
-        ability_names[0] = 0;
+        ability_names[0] = 0;                                 // [ebp-0x190]
         strcat(ability_names, StringTable.get(Ability[protoAbilityIDs_[0]].name));
         strcat(StringTemp, ability_names);
-        StringTemp[6] = 0;
-        char *sp2 = strchr(ability_names, 0x20);
-        if (sp2 != 0 && sp2[1] != 0) {
-            strcat(StringTemp, sp2 + 1);
+        StringTemp[6] = 0;                                    // stored after strchr's pushes
+        char *word = strchr(ability_names, ' ');
+        if (word && *++word) {                                // mov cl,[eax+1]; inc eax; test cl
+            strcat(StringTemp, word);
             StringTemp[7] = 0;
         }
     }
-    slen = static_cast<unsigned int>(strlen(StringTemp));
-    screen->write_l(StringTemp, y, cap_x, static_cast<int>(slen));
-    adv = font2_.unk_1_ < 0 ? font2_.line_height()
-        : font2_.pixel_height() + font2_.unk_1_;
+    Buffer::write_l(StringTemp, x, y);
 
+    y += font_line_advance(font2_);                           // 0x437871
     StringTemp[0] = 0;
-    strcat(StringTemp, "{");
-    strcat(StringTemp, preset_names_[13]);
-    strcat(StringTemp, "}");
+    strcat(StringTemp, "{");                                  // 0x6835cc
+    strcat(StringTemp, preset_names_[13]);                    // +0x144b9
+    strcat(StringTemp, "}");                                  // 0x6835d0
     strcat(StringTemp, " ");
-    if (protoAbilityIDs_[1] < 0) {
-        strcat(StringTemp, "-");
+    if (protoAbilityIDs_[1] < 0) {                            // loaded into esi (this dead)
+        strcat(StringTemp, "-");                              // 0x6835d4
     } else {
         ability_names[0] = 0;
         strcat(ability_names, StringTable.get(Ability[protoAbilityIDs_[1]].name));
         strcat(StringTemp, ability_names);
         StringTemp[6] = 0;
-        char *sp3 = strchr(ability_names, 0x20);
-        if (sp3 != 0 && sp3[1] != 0) {
-            strcat(StringTemp, sp3 + 1);
+        char *word = strchr(ability_names, ' ');
+        if (word && *++word) {
+            strcat(StringTemp, word);
             StringTemp[7] = 0;
         }
     }
-    slen = static_cast<unsigned int>(strlen(StringTemp));
-    screen->write_l(StringTemp, y, cap_x + adv, static_cast<int>(slen));
+    Buffer::write_l(StringTemp, x, y);
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -5228,180 +5093,156 @@ void DesignWin::draw_stack() {
 // un-obsoleted), otherwise the current slot is rebuilt, a free one is taken,
 // or an occupied one is overwritten behind its confirmation popup.
 int DesignWin::design_it() {
-    // The vehicle owner supplies these cdecl APIs for naming, retirement,
-    // and pruning; calls below use their source-owned declarations.
+    // WORKAROUND(type): the image compares protoID_ signed (cmp 0x40; jge);
+    // designwin.h still declares the editor members uint32_t.
     char *name = prototype_name_;
 
     // ---- scan all 128 slots (own 64 + up to 64 borrowed) ------------------
-    int scan = 0;
-    do {
-        int slot = scan;
-        if (slot > 0x3F) {
-            slot = factionID_ * 0x40 + slot % 0x40;
+    int slot;
+    for (int scan = 0; scan < 0x80; ++scan) {
+        if (scan < 0x40) {
+            slot = scan;
+        } else {
+            slot = factionID_ * 0x40 + scan % 0x40;
         }
-        VehPrototype &proto = VehPrototypes[slot];
-        bool fields_match = (proto.flags & PROTO_ACTIVE) != 0
-            && protoChassisType_ == proto.chassis_id
-            && protoWeaponType_ == proto.weapon_id
-            && protoArmorType_ == proto.armor_id
-            && protoReactorType_ == proto.reactor_id
-            && protoAbilityFlags_ == proto.ability_flags
-            && (slot > 0x3F || has_tech(proto.preq_tech, factionID_));
-
-        if (fields_match) {
+        if ((VehPrototypes[slot].flags & PROTO_ACTIVE)
+            && protoChassisType_ == VehPrototypes[slot].chassis_id
+            && protoWeaponType_ == VehPrototypes[slot].weapon_id
+            && protoArmorType_ == VehPrototypes[slot].armor_id
+            && protoReactorType_ == VehPrototypes[slot].reactor_id
+            && protoAbilityFlags_ == VehPrototypes[slot].ability_flags
+            && (slot >= 0x40 || has_tech(VehPrototypes[slot].preq_tech, factionID_))) {
             if (slot != static_cast<int>(protoID_)) {
-                if (proto.obsolete_factions & (1 << (factionID_ & 0x1F))) {
+                if (VehPrototypes[slot].obsolete_factions & (1 << factionID_)) {
                     // Flag bit 0x8 has no name in veh.h's enum yet: it marks
                     // a prototype the faction re-designed over.
-                    proto.flags |= 8;
+                    VehPrototypes[slot].flags |= 8;
                 }
-                proto.obsolete_factions &= ~(1 << (factionID_ & 0x1F));
+                VehPrototypes[slot].obsolete_factions &= ~(1 << factionID_);
             }
             if (slot < 0x40) {
-                if (strlen(name) != 0
-                    && strcmp(name, proto.veh_name) != 0) {
-                    parse_says(0, proto.veh_name, -1, -1);
-                    if ((Players[factionID_].rule_flags & RFLAG_ALIEN) == 0) {
-                        popp(ScriptTxtID, "INTRINSICNAME", 0,
-                             "unit_sm.pcx", pop_wait);
-                    } else {
+                if (strlen(name) && strcmp(name, VehPrototypes[slot].veh_name)) {
+                    parse_says(0, VehPrototypes[slot].veh_name, -1, -1);
+                    if (Players[factionID_].rule_flags & RFLAG_ALIEN) {
                         popp(ScriptTxtID, "INTRINSICNAME", 0,
                              "alunit_sm.pcx", pop_wait);
+                    } else {
+                        popp(ScriptTxtID, "INTRINSICNAME", 0,
+                             "unit_sm.pcx", pop_wait);
                     }
                 }
-            } else if (strlen(name) != 0
+            } else if (strlen(name)
                 && (VehPrototypes[protoID_].flags & PROTO_CUSTOM_NAME_SET)) {
-                proto.flags |= PROTO_CUSTOM_NAME_SET;
-                strcpy(proto.veh_name, name);
+                VehPrototypes[slot].flags |= PROTO_CUSTOM_NAME_SET;
+                strcpy(VehPrototypes[slot].veh_name, name);
             }
             synch_proto(slot);
             protoID_ = slot;
             return 1;
         }
-        ++scan;
-    } while (scan < 0x80);
-
-    // ---- no exact match: fall back to the currently-selected slot ---------
-    if (protoID_ < 0x40) {
-        const VehPrototype &current = VehPrototypes[protoID_];
-        bool current_match = protoChassisType_ == current.chassis_id
-            && protoWeaponType_ == current.weapon_id
-            && protoArmorType_ == current.armor_id
-            && protoAbilityFlags_ == current.ability_flags
-            && protoReactorType_ == current.reactor_id;
-        if (current_match) {
-            if (strlen(name) == 0) {
-                return 0;
-            }
-            if (strcmp(name, current.veh_name) == 0) {
-                return 0;
-            }
-            parse_says(0, current.veh_name, -1, -1);
-            if ((Players[factionID_].rule_flags & RFLAG_ALIEN) == 0) {
-                X_pop("INTRINSICNAME", "unit_sm.pcx", pop_wait);
-            } else {
-                X_pop("INTRINSICNAME", "alunit_sm.pcx",
-                                    pop_wait);
-            }
-            return 0;
-        }
-
-        // The components changed under this slot: take the first own slot
-        // this faction marked obsolete that carries nothing live, else the
-        // last inactive one, and ask before its type is overwritten.
-        int own = factionID_ * 0x40;
-        const uint8_t mask = static_cast<uint8_t>(1u << (factionID_ & 0x1F));
-        int checked = 0;
-        do {
-            const VehPrototype &candidate = VehPrototypes[own];
-            if ((candidate.obsolete_factions & mask) != 0
-                && PlayersData[factionID_].proto_id_active[own] == 0
-                && PlayersData[factionID_].proto_id_queue[own] == 0) {
-                protoID_ = own;
-                break;
-            }
-            if ((candidate.flags & PROTO_ACTIVE) == 0) {
-                protoID_ = own;
-            }
-            ++checked;
-            ++own;
-        } while (checked < 0x40);
-
-        if (protoID_ < 0x40) {
-            parse_says(0, VehPrototypes[protoID_].veh_name, -1, -1);
-            if ((Players[factionID_].rule_flags & RFLAG_ALIEN) == 0) {
-                popp(ScriptTxtID, "INTRINSICTYPE", 0,
-                     "unit_sm.pcx", pop_wait);
-            } else {
-                popp(ScriptTxtID, "INTRINSICTYPE", 0,
-                     "alunit_sm.pcx", pop_wait);
-            }
-            return 0;
-        }
     }
 
-    // ---- the settled slot holds a DIFFERENT design: search for the best
-    //      replacement and, if needed, confirm overwriting it --------------
-    if ((VehPrototypes[protoID_].flags & PROTO_ACTIVE) != 0
+    // ---- no exact match: a changed predefined slot takes the first own
+    //      slot this faction marked obsolete that carries nothing live, else
+    //      the last inactive one ----------------------------------------------
+    if (static_cast<int>(protoID_) < 0x40
         && (protoChassisType_ != VehPrototypes[protoID_].chassis_id
             || protoWeaponType_ != VehPrototypes[protoID_].weapon_id
             || protoArmorType_ != VehPrototypes[protoID_].armor_id
             || protoAbilityFlags_ != VehPrototypes[protoID_].ability_flags
             || protoReactorType_ != VehPrototypes[protoID_].reactor_id)) {
-        int search = factionID_ * 0x40;
-        const int8_t current_category =
-            VehPrototypes[protoID_].unk_1;
-        const uint8_t mask = static_cast<uint8_t>(1u << (factionID_ & 0x1F));
+        int mask = 1 << factionID_;
+        int own = factionID_ * 0x40;
+        for (int i = 0; i < 0x40; ++i, ++own) {
+            if ((VehPrototypes[own].obsolete_factions & mask)
+                && !PlayersData[factionID_].proto_id_active[own]
+                && !PlayersData[factionID_].proto_id_queue[own]) {
+                protoID_ = own;
+                break;
+            }
+            if (!(VehPrototypes[own].flags & PROTO_ACTIVE)) {
+                protoID_ = own;
+            }
+        }
+        if (static_cast<int>(protoID_) < 0x40) {
+            parse_says(0, VehPrototypes[protoID_].veh_name, -1, -1);
+            if (Players[factionID_].rule_flags & RFLAG_ALIEN) {
+                popp(ScriptTxtID, "INTRINSICTYPE", 0,
+                     "alunit_sm.pcx", pop_wait);
+            } else {
+                popp(ScriptTxtID, "INTRINSICTYPE", 0,
+                     "unit_sm.pcx", pop_wait);
+            }
+            return 0;
+        }
+    }
+    if (static_cast<int>(protoID_) < 0x40) {
+        if (!strlen(name) || !strcmp(name, VehPrototypes[protoID_].veh_name)) {
+            return 0;
+        }
+        parse_says(0, VehPrototypes[protoID_].veh_name, -1, -1);
+        if (Players[factionID_].rule_flags & RFLAG_ALIEN) {
+            X_pop("INTRINSICNAME", "alunit_sm.pcx", pop_wait);
+        } else {
+            X_pop("INTRINSICNAME", "unit_sm.pcx", pop_wait);
+        }
+        return 0;
+    }
+
+    // ---- the settled slot holds a DIFFERENT design: search for the best
+    //      replacement and, if needed, confirm overwriting it --------------
+    if ((VehPrototypes[protoID_].flags & PROTO_ACTIVE)
+        && (protoChassisType_ != VehPrototypes[protoID_].chassis_id
+            || protoWeaponType_ != VehPrototypes[protoID_].weapon_id
+            || protoArmorType_ != VehPrototypes[protoID_].armor_id
+            || protoAbilityFlags_ != VehPrototypes[protoID_].ability_flags
+            || protoReactorType_ != VehPrototypes[protoID_].reactor_id)) {
         int replaced = 0;
-        int looked = 0;
-        do {
-            const VehPrototype &candidate = VehPrototypes[search];
-            if ((candidate.flags & PROTO_ACTIVE) == 0) {
-                protoID_ = search;
+        for (int i = 0; i < 0x40; ++i) {
+            int id = factionID_ * 0x40 + i;
+            if (!(VehPrototypes[id].flags & PROTO_ACTIVE)) {
+                protoID_ = id;
                 goto settled;
             }
-            if ((candidate.obsolete_factions & mask) != 0
-                && (candidate.unk_1 == current_category
-                    || PlayersData[factionID_].proto_id_active[search] == 0)
-                && PlayersData[factionID_].proto_id_active[search] == 0) {
-                if (PlayersData[factionID_].proto_id_queue[search] == 0) {
-                    protoID_ = search;
-                    replaced = 1;
-                } else if (replaced == 0 && candidate.unk_1 == current_category) {
-                    protoID_ = search;
+            if (VehPrototypes[id].obsolete_factions & (1 << factionID_)) {
+                if (VehPrototypes[id].unk_1 == VehPrototypes[protoID_].unk_1
+                    || !PlayersData[factionID_].proto_id_active[id]) {
+                    if (!PlayersData[factionID_].proto_id_active[id]
+                        && !PlayersData[factionID_].proto_id_queue[id]) {
+                        protoID_ = id;
+                        replaced = 1;
+                    } else if (!PlayersData[factionID_].proto_id_active[id]
+                        && !replaced
+                        && VehPrototypes[id].unk_1 == VehPrototypes[protoID_].unk_1) {
+                        protoID_ = id;
+                    }
                 }
             }
-            ++looked;
-            ++search;
-        } while (looked < 0x40);
-
-        if (replaced == 0) {
-            if (PlayersData[factionID_].proto_id_active[protoID_] != 0
-                && (VehPrototypes[protoID_].flags & PROTO_ACTIVE) != 0) {
-                parse_says(0, VehPrototypes[protoID_].veh_name, -1, -1);
-                parse_num(0, PlayersData[factionID_].proto_id_active[protoID_]);
-                char *label;
-                char *sprite;
-                if ((Players[factionID_].rule_flags & RFLAG_ALIEN) == 0) {
-                    label = "OVERWRITEPROTO";
-                    sprite = "unit_sm.pcx";
-                } else {
-                    label = "OVERWRITEPROTO";
-                    sprite = "alunit_sm.pcx";
-                }
-                if (popp(ScriptTxtID, label, 0, sprite, pop_wait) == 0) {
+        }
+        if (!replaced && PlayersData[factionID_].proto_id_active[protoID_]
+            && (VehPrototypes[protoID_].flags & PROTO_ACTIVE)) {
+            parse_says(0, VehPrototypes[protoID_].veh_name, -1, -1);
+            parse_num(0, PlayersData[factionID_].proto_id_active[protoID_]);
+            int result;
+            if (Players[factionID_].rule_flags & RFLAG_ALIEN) {
+                result = popp(ScriptTxtID, "OVERWRITEPROTO", 0,
+                              "alunit_sm.pcx", pop_wait);
+            } else {
+                result = popp(ScriptTxtID, "OVERWRITEPROTO", 0,
+                              "unit_sm.pcx", pop_wait);
+            }
+            if (!result) {
+                return 0;
+            }
+            if (IsMultiplayerNet) {
+                if (diplo_lock(0x32)) {
                     return 0;
                 }
-                if (!IsMultiplayerNet) {
-                    retire_proto(static_cast<int>(protoID_), static_cast<int>(factionID_));
-                } else {
-                    if (diplo_lock(0x32) != 0) {
-                        return 0;
-                    }
-                    message_data(0x2415, 0, protoID_, factionID_, 0, 0);
-                    NetDaemonNet.await_exec(0);
-                    diplo_unlock();
-                }
+                message_data(0x2415, 0, protoID_, factionID_, 0, 0);
+                NetDaemonNet.await_exec(0);
+                diplo_unlock();
+            } else {
+                retire_proto(protoID_, factionID_);
             }
         }
     }
@@ -5410,33 +5251,26 @@ settled:
     make_proto(protoID_, protoChassisType_, protoWeaponType_, protoArmorType_,
                protoAbilityFlags_, protoReactorType_);
     reinterpret_cast<unsigned char &>(VehPrototypes[protoID_].flags) &= 0x3F;
-    if (strlen(name) == 0) {
+    if (!strlen(name)) {
         // No name typed: generate one straight into the name buffer and trim
         // it to the field's 31 characters.
-        name_proto(name, static_cast<int>(protoID_), static_cast<int>(factionID_),
-                   static_cast<int>(protoChassisType_),
-                   static_cast<int>(protoWeaponType_),
-                   static_cast<int>(protoArmorType_),
-                   static_cast<int>(protoAbilityFlags_),
-                   static_cast<int>(protoReactorType_));
-        name[0x1F] = '\0';
+        name_proto(name, protoID_, factionID_, protoChassisType_,
+                   protoWeaponType_, protoArmorType_, protoAbilityFlags_,
+                   protoReactorType_);
+        prototype_name_[0x1F] = '\0';
         reinterpret_cast<unsigned char &>(VehPrototypes[protoID_].flags) &= 0xFD;
     } else {
         char generated[256];
-        name_proto(generated, static_cast<int>(protoID_),
-                   static_cast<int>(factionID_),
-                   static_cast<int>(protoChassisType_),
-                   static_cast<int>(protoWeaponType_),
-                   static_cast<int>(protoArmorType_),
-                   static_cast<int>(protoAbilityFlags_),
-                   static_cast<int>(protoReactorType_));
-        if (strcmp(generated, name) != 0) {
+        name_proto(generated, protoID_, factionID_, protoChassisType_,
+                   protoWeaponType_, protoArmorType_, protoAbilityFlags_,
+                   protoReactorType_);
+        if (strcmp(generated, name)) {
             VehPrototypes[protoID_].flags |= PROTO_CUSTOM_NAME_SET;
         }
     }
     strcpy(VehPrototypes[protoID_].veh_name, name);
     synch_proto(protoID_);
-    prune_protos(static_cast<int>(factionID_), static_cast<int>(protoID_), 1);
+    prune_protos(factionID_, protoID_, 1);
     return 1;
 }
 
@@ -5457,21 +5291,11 @@ void DesignWin::draw_flash() {
     Font stat_font;
     Font title_font;
 
-    VehPrototypes[0x3f].chassis_id = static_cast<uint8_t>(protoChassisType_);
-    VehPrototypes[0x3f].weapon_id = static_cast<uint8_t>(protoWeaponType_);
-    VehPrototypes[0x3f].armor_id = static_cast<uint8_t>(protoArmorType_);
-    VehPrototypes[0x3f].reactor_id = static_cast<uint8_t>(protoReactorType_);
-    VehPrototypes[0x3f].ability_flags = static_cast<uint32_t>(protoAbilityFlags_);
-    VehPrototypes[0x3f].icon_offset = static_cast<int8_t>(0xFF);
+    UNK3();
 
     // The scratch row stands for the selected prototype while it is unchanged.
     int shown = static_cast<int>(field_CE0_);
-    if (shown == 0x3F
-        && protoChassisType_ == VehPrototypes[protoID_].chassis_id
-        && protoWeaponType_ == VehPrototypes[protoID_].weapon_id
-        && protoArmorType_ == VehPrototypes[protoID_].armor_id
-        && protoReactorType_ == VehPrototypes[protoID_].reactor_id
-        && protoAbilityFlags_ == VehPrototypes[protoID_].ability_flags) {
+    if (shown == 0x3F && UNK2(protoID_)) {
         shown = static_cast<int>(protoID_);
     }
     const int owner = shown / 64;
@@ -5650,268 +5474,204 @@ Status: Coverage transcription - unclaimed body
 void DesignWin::select_special(int which) {
     Popup popup;
 
-    const int faction = static_cast<int>(factionID_);
-    // Player::rule_flags is at 0x508, the original 0x946F58 byte.
-    if ((Players[faction].rule_flags & RFLAG_ALIEN) != 0) {
-        if (which != 0) {
-            const int tech_id = static_cast<int>(Rules.tech_two_spec_abilities);
-            if (!has_tech(tech_id, faction)) {
-                parse_say(0, Technology[tech_id].name, -1, -1);
-                popp(ScriptTxtID, "TWOSPECIAL", 0,
-                     "alunit_sm.pcx", pop_wait);
-                return;
-            }
+    // Players[f] + 0x508 (0x00946F58): bit 0x80 of the rule-flag byte.
+    if ((Players[factionID_].rule_flags & RFLAG_ALIEN) != 0) {
+        if (which != 0
+            && !has_tech(Rules.tech_two_spec_abilities, factionID_)) {
+            parse_say(0, Technology[Rules.tech_two_spec_abilities].name,
+                      -1, -1);
+            popp(ScriptTxtID, "TWOSPECIAL", 0, "alunit_sm.pcx", pop_wait);
+            return;
         }
-        if (Chassis[protoChassisType_].missile != 0) {
-            popp(ScriptTxtID, "MISSILESPECIAL", 0,
-                 "alunit_sm.pcx", pop_wait);
+        if (Chassis[protoChassisType_].missile) {
+            popp(ScriptTxtID, "MISSILESPECIAL", 0, "alunit_sm.pcx", pop_wait);
             return;
         }
     } else {
-        if (which != 0) {
-            const int tech_id = static_cast<int>(Rules.tech_two_spec_abilities);
-            if (!has_tech(tech_id, faction)) {
-                parse_say(0, Technology[tech_id].name, -1, -1);
-                popp(ScriptTxtID, "TWOSPECIAL", 0,
-                     "unit_sm.pcx", pop_wait);
-                return;
-            }
+        if (which != 0
+            && !has_tech(Rules.tech_two_spec_abilities, factionID_)) {
+            parse_say(0, Technology[Rules.tech_two_spec_abilities].name,
+                      -1, -1);
+            popp(ScriptTxtID, "TWOSPECIAL", 0, "unit_sm.pcx", pop_wait);
+            return;
         }
-        if (Chassis[protoChassisType_].missile != 0) {
-            popp(ScriptTxtID, "MISSILESPECIAL", 0,
-                 "unit_sm.pcx", pop_wait);
+        if (Chassis[protoChassisType_].missile) {
+            popp(ScriptTxtID, "MISSILESPECIAL", 0, "unit_sm.pcx", pop_wait);
             return;
         }
     }
 
-    popup.start(PopupStartCaption, "UNITSPECIAL", -1, nullptr,
-                0x200042);
-
-    // Original item receivers are Popup+0x21D0. The apparent Scroll,
-    // Spot and list cleanup locals in the transcription are this Popup's
-    // members; its destructor owns their original reverse teardown.
+    popup.start(PopupStartCaption, "UNITSPECIAL", -1, nullptr, 0x200042);
     Dialogs &dialogs = popup.dialogs();
 
     StringTemp[0] = 0;
-    strcat(StringTemp,
-           StringTable.get(Labels.strings_ptr[0x88]));
+    strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x88]));
     dialogs.item(StringTemp, 0x1D);
 
-    int items_added = 1;
-    // The original walks 29 Ability records at their 0x1C stride.
-    for (int ability = 0; ability < MaxAbilityNum; ++ability) {
-        const int16_t preq_tech = Ability[ability].preq_tech;
-        if (!has_tech(preq_tech, faction)) {
+    int count = 1;
+    for (int i = 0; i < MaxAbilityNum; i++) {
+        if (!has_tech(Ability[i].preq_tech, factionID_)) {
             continue;
         }
-        if (abil_cond(ability, static_cast<int>(protoChassisType_),
-                      static_cast<int>(protoWeaponType_),
-                      static_cast<int>(protoArmorType_)) == 0) {
+        if (!abil_cond(i, protoChassisType_, protoWeaponType_,
+                       protoArmorType_)) {
             continue;
         }
-
-        // The historical paired scans start at faction_bonus_id/val1 and
-        // inspect 0x29 dwords, beyond the declared eight-entry arrays.
-        int already_built = 0;
-        {
-            const uint8_t *const player_bytes =
-                reinterpret_cast<const uint8_t *>(&Players);
-            const int *const built_kind = reinterpret_cast<const int *>(
-                player_bytes + sizeof(Player) * faction
-                    + offsetof(Player, faction_bonus_id));
-            const int *const built_id = reinterpret_cast<const int *>(
-                player_bytes + sizeof(Player) * faction
-                    + offsetof(Player, faction_bonus_val1));
-            for (int slot = 0; slot < 0x29; ++slot) {
-                if (built_kind[slot] == 0xF && built_id[slot] == ability) {
-                    already_built = 1;
-                    // Pinned 0x0043AF9E exits this scan on its first match.
-                    break;
-                }
+        // The original scans 0x29 entries of the eight-entry bonus arrays
+        // (reading past them) and ends the scan by forcing j to 0x29, not
+        // with a break (0x0043AF9E..0x0043AFA3).
+        int found = 0;
+        for (int j = 0; j < 0x29; j++) {
+            if (Players[factionID_].faction_bonus_id[j] == 0xF
+                && Players[factionID_].faction_bonus_val1[j] == i) {
+                found = 1;
+                j = 0x29;
             }
         }
-        if (already_built != 0) {
+        if (found) {
             continue;
         }
-        int already_selected = 0;
-        for (int slot = 0; slot < 2; ++slot) {
-            const int selected = slot == 0 ? protoAbilityIDs_[0] : protoAbilityIDs_[1];
-            if (slot != which && selected == ability) {
-                already_selected = 1;
+        int taken = 0;
+        for (int k = 0; k < 2; k++) {
+            if (k != which && protoAbilityIDs_[k] == i) {
+                taken = 1;
             }
         }
-        if (already_selected != 0) {
+        if (taken) {
             continue;
         }
 
         StringTemp[0] = 0;
-        strcat(StringTemp, StringTable.get(Ability[ability].name));
+        strcat(StringTemp, StringTable.get(Ability[i].name));
         strcat(StringTemp, ": ");
-        strcat(StringTemp, StringTable.get(Ability[ability].description));
+        strcat(StringTemp, StringTable.get(Ability[i].description));
         strcat(StringTemp, "|");
-        // The image reads Labels.strings_ptr + 0x160 bytes: dword entry 0x58.
-        strcat(StringTemp, StringTable.get(
-            Labels.strings_ptr[0x58]));
+        strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x58]));
         strcat(StringTemp, ": ");
 
-        const int kind = static_cast<int>(Ability[ability].cost_factor);
-        if (kind >= 0) {
-            char digits[0x20];
-            int cost = kind;
-            const bool special_cost =
-                (Ability[ability].flags & 0x400) != 0;
-            if (special_cost && Chassis[protoChassisType_].triad == 0) {
-                ++cost;
-            }
-            _itoa(cost, digits, 10);
-            strcat(StringTemp, digits);
-            if (special_cost) {
-                const unsigned char triad =
-                    Chassis[protoChassisType_].triad;
-                strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, "(");
-                strcat(StringTemp, StringTable.get(Triad[triad]));
-                strcat(StringTemp, ")");
-            }
-        } else if (kind >= -7) {
-            const unsigned char weapon_cost =
-                Weapon[protoWeaponType_].cost;
-            const unsigned char armor_cost = Armor[protoArmorType_].cost;
-            const unsigned char chassis_speed =
-                Chassis[protoChassisType_].speed;
-            char digits[0x20];
-            // The following image displacements are byte offsets into the
-            // Labels pointer table; these are the corresponding dword slots.
-            LPSTR *const labels = Labels.strings_ptr;
-            switch (kind + 7) {
-            case 6: {
-                int ratio = static_cast<int>(weapon_cost) /
-                            static_cast<int>(armor_cost);
+        int cost = Ability[i].cost_factor;
+        if (cost < 0) {
+            switch (cost) {
+            case -1: {
+                int ratio = Weapon[protoWeaponType_].cost
+                            / Armor[protoArmorType_].cost;
                 if (ratio < 0) {
                     ratio = 0;
                 } else if (ratio > 2) {
                     ratio = 2;
                 }
-                _itoa(ratio, digits, 10);
-                strcat(StringTemp, digits);
-                strcat(StringTemp, BufferJoinSpace);
+                say_num(ratio);
+                strcat(StringTemp, " ");
                 strcat(StringTemp, "(");
-                strcat(StringTemp, StringTable.get(labels[0x7C]));
+                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x7C]));
                 strcat(StringTemp, "/");
-                strcat(StringTemp, StringTable.get(labels[0x55]));
+                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x55]));
                 strcat(StringTemp, ")");
                 break;
             }
-            case 5:
-                _itoa(static_cast<int>(weapon_cost) - 1, digits, 10);
-                strcat(StringTemp, digits);
-                strcat(StringTemp, BufferJoinSpace);
+            case -2:
+                say_num(Weapon[protoWeaponType_].cost - 1);
+                strcat(StringTemp, " ");
                 strcat(StringTemp, "(");
-                strcat(StringTemp, StringTable.get(labels[0x7C]));
+                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x7C]));
                 strcat(StringTemp, "-1");
                 strcat(StringTemp, ")");
                 break;
-            case 4:
-                _itoa(static_cast<int>(armor_cost) - 1, digits, 10);
-                strcat(StringTemp, digits);
-                strcat(StringTemp, BufferJoinSpace);
+            case -3:
+                say_num(Armor[protoArmorType_].cost - 1);
+                strcat(StringTemp, " ");
                 strcat(StringTemp, "(");
-                strcat(StringTemp, StringTable.get(labels[0x55]));
+                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x55]));
                 strcat(StringTemp, "-1");
                 strcat(StringTemp, ")");
                 break;
-            case 3:
-                _itoa(static_cast<int>(chassis_speed) - 1, digits, 10);
-                strcat(StringTemp, digits);
-                strcat(StringTemp, BufferJoinSpace);
+            case -4:
+                say_num(Chassis[protoChassisType_].speed - 1);
+                strcat(StringTemp, " ");
                 strcat(StringTemp, "(");
-                strcat(StringTemp, StringTable.get(labels[0x2C5]));
+                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x2C5]));
                 strcat(StringTemp, "-1");
                 strcat(StringTemp, ")");
                 break;
-            case 2:
-                _itoa(static_cast<int>(armor_cost + weapon_cost) - 2, digits,
-                      10);
-                strcat(StringTemp, digits);
-                strcat(StringTemp, BufferJoinSpace);
+            case -5:
+                say_num(Armor[protoArmorType_].cost
+                        + Weapon[protoWeaponType_].cost - 2);
+                strcat(StringTemp, " ");
                 strcat(StringTemp, "(");
-                strcat(StringTemp, StringTable.get(labels[0x7C]));
+                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x7C]));
                 strcat(StringTemp, "+");
-                strcat(StringTemp, StringTable.get(labels[0x55]));
+                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x55]));
                 strcat(StringTemp, "-2");
                 strcat(StringTemp, ")");
                 break;
-            case 1:
-                _itoa(static_cast<int>(chassis_speed + weapon_cost) - 2,
-                      digits, 10);
-                strcat(StringTemp, digits);
-                strcat(StringTemp, BufferJoinSpace);
+            case -6:
+                say_num(Chassis[protoChassisType_].speed
+                        + Weapon[protoWeaponType_].cost - 2);
+                strcat(StringTemp, " ");
                 strcat(StringTemp, "(");
-                strcat(StringTemp, StringTable.get(labels[0x7C]));
+                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x7C]));
                 strcat(StringTemp, "+");
-                strcat(StringTemp, StringTable.get(labels[0x2C5]));
+                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x2C5]));
                 strcat(StringTemp, "-2");
                 strcat(StringTemp, ")");
                 break;
-            case 0:
-                _itoa(static_cast<int>(chassis_speed + armor_cost) - 2, digits,
-                      10);
-                strcat(StringTemp, digits);
-                strcat(StringTemp, BufferJoinSpace);
+            case -7:
+                say_num(Chassis[protoChassisType_].speed
+                        + Armor[protoArmorType_].cost - 2);
+                strcat(StringTemp, " ");
                 strcat(StringTemp, "(");
-                strcat(StringTemp, StringTable.get(labels[0x55]));
+                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x55]));
                 strcat(StringTemp, "+");
-                strcat(StringTemp, StringTable.get(labels[0x2C5]));
+                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x2C5]));
                 strcat(StringTemp, "-2");
                 strcat(StringTemp, ")");
-                break;
-            default:
                 break;
             }
+        } else if (Ability[i].flags & 0x400) {
+            // Cost scales with the triad: one more on land.
+            if (Chassis[protoChassisType_].triad == 0) {
+                say_num(cost + 1);
+            } else {
+                say_num(cost);
+            }
+            strcat(StringTemp, " ");
+            strcat(StringTemp, "(");
+            strcat(StringTemp,
+                   StringTable.get(Triad[Chassis[protoChassisType_].triad]));
+            strcat(StringTemp, ")");
+        } else {
+            say_num(cost);
         }
 
-        dialogs.item(StringTemp, ability);
-        ++items_added;
+        dialogs.item(StringTemp, i);
+        count++;
     }
 
-    if (items_added == 0) {
+    if (!count) {
         return;
     }
 
-    const int exec_result = popup.exec(0, pop_wait);
-    if (exec_result < 0) {
+    int choice = popup.exec(0, pop_wait);
+    if (choice < 0) {
         return;
     }
-
-    int picked = exec_result;
-    if (picked >= 0x1D) {
-        picked = -1;
+    if (choice >= MaxAbilityNum) {
+        choice = -1;
     }
-    if (which == 0) {
-        protoAbilityIDs_[0] = picked;
-    } else {
-        protoAbilityIDs_[1] = picked;
-    }
+    protoAbilityIDs_[which] = choice;
     protoAbilityFlags_ = 0;
-    {
-        uint32_t bits = 0;
-        for (int slot = 0; slot < 2; ++slot) {
-            const int value = slot == 0 ? protoAbilityIDs_[0] : protoAbilityIDs_[1];
-            if (value >= 0) {
-                bits |= 1u << static_cast<unsigned>(value);
-            }
+    for (int k = 0; k < 2; k++) {
+        if (protoAbilityIDs_[k] >= 0) {
+            protoAbilityFlags_ |= 1 << protoAbilityIDs_[k];
         }
-        protoAbilityFlags_ = bits;
     }
 
-    // Refresh the original panels in their original call order.
     draw_special_2(0);
     draw_special_1(0);
     draw_vehicle(0);
     draw_flash();
     draw_info();
     on_update();
-
 }
 
 // Original interface table 0x0066B0F4 slot 1 targets this shared complete body.
