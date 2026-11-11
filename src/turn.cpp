@@ -1815,12 +1815,14 @@ void __cdecl random_events(int mode) {
 
 }
 
-static bool alien_local_vehicle_visible(int vehicle_id, int faction) {
-    const Veh &vehicle = Vehs[vehicle_id];
-    if (vehicle.faction_id == faction && (vehicle.flags & 0x440) != 0x440) {
+static int alien_local_vehicle_visible(int vehicle_id, int faction) {
+    if (Vehs[vehicle_id].faction_id == faction && (Vehs[vehicle_id].flags & 0x440) != 0x440) {
         return true;
     }
-    return (vehicle.visibility & (1u << faction)) != 0;
+    if (Vehs[vehicle_id].visibility & (1 << faction)) {
+        return true;
+    }
+    return false;
 }
 
 static bool alien_tile_vehicle_visible(int vehicle_id, int faction) {
@@ -1866,15 +1868,14 @@ void __cdecl alien_fauna() {
             y2 = y + VehMoveDeltaY[dir];
             if (!on_map(x2, y2)) continue;
             Map *cand = map_loc(x2, y2);
-            const int climate = cand->climate;
-            if (((climate & 0xE0) < ALT_BIT_SHORE_LINE) != ocean) continue;
-            const int alt = climate >> 5;
+            if (((cand->climate & ~0x1F) < ALT_BIT_SHORE_LINE) != ocean) continue;
+            const int alt = cand->climate >> 5;
             if (alt < 2) continue;
-            if (alt > 4 && !(climate & (RAINFALL_RAINY | RAINFALL_MOIST))) continue;
+            if (alt > 4 && !(cand->climate & (RAINFALL_RAINY | RAINFALL_MOIST))) continue;
             if ((cand->bit2 & 0x80000002) == 2) continue;
             if ((cand->bit2 & 0x80000040) == 0x40) continue;
-            const int score = (3 - ((climate >> 3) & 3)) * 4 - (cand->val3 >> 6);
-            if ((cand->val3 & 0xC0) > 0x40) continue;
+            const int score = (3 - ((cand->climate >> 3) & 3)) * 4 - (cand->val3 >> 6);
+            if ((cand->val3 & ~0x3F) > 0x40) continue;
             if (cand->bit & (BIT_FOREST | BIT_FARM | BIT_SOLAR_TIDAL | BIT_MINE |
                              BIT_BASE_IN_TILE)) continue;
             if (score > best_score) {
@@ -1935,7 +1936,7 @@ void __cdecl alien_fauna() {
             region = map_loc(x, y)->region;
             if (++tries >= 1000) break;
         } while (!(((map_loc(x, y)->bit & BIT_FUNGUS) &&
-                    (map_loc(x, y)->climate & 0xE0) >= ALT_BIT_OCEAN_SHELF) ||
+                    (map_loc(x, y)->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF) ||
                    (is_ocean(x, y) && anything_at(x, y) < 0 && !bad_reg(region) &&
                     Continents[region].tile_count >= 50)));
 
@@ -1964,7 +1965,13 @@ void __cdecl alien_fauna() {
                     // min(): veh_cargo is evaluated twice when it is the smaller.
                     cargo = cargo < veh_cargo(veh_id) ? cargo : veh_cargo(veh_id);
                     for (; cargo > 0; --cargo) {
-                        sleep(veh_init((rand() % 5 == 0 && ExpansionEnabled) ? 15 : 8, 0, x, y));
+                        int spawn_id;
+                        if (rand() % 5 == 0 && ExpansionEnabled) {
+                            spawn_id = veh_init(15, 0, x, y);
+                        } else {
+                            spawn_id = veh_init(8, 0, x, y);
+                        }
+                        sleep(spawn_id);
                     }
                     veh_promote(veh_id);
                     if (GameDataStateStorage.fields_.game_tech_achieved_[TECH_CENTPSI] ||
@@ -1983,9 +1990,9 @@ void __cdecl alien_fauna() {
         y = bounded_crt_random(MapLatitudeBounds);
         x = (y & 1) - (x & 1) + x;  // no on_map check in the original
         Map *tile = map_loc(x, y);
-        if ((tile->climate & 0xE0) < ALT_BIT_SHORE_LINE) continue;
+        if ((tile->climate & ~0x1F) < ALT_BIT_SHORE_LINE) continue;
         if (!(tile->bit & BIT_FUNGUS)) continue;
-        if ((tile->climate & 0xE0) < ALT_BIT_OCEAN_SHELF) continue;
+        if ((tile->climate & ~0x1F) < ALT_BIT_OCEAN_SHELF) continue;
         region = tile->region;
         if (bad_reg(region)) continue;
         if (base_who(x, y) >= 0) continue;
@@ -2003,8 +2010,12 @@ void __cdecl alien_fauna() {
                 if (map_loc(x2, y2)->visibility & (1 << owner)) continue;
                 if (anything_at(x2, y2) >= 0) continue;
                 if (zoc_any(x2, y2, 0)) continue;
-                const int veh_id = veh_init(
-                    (rand() % 5 == 0 && ExpansionEnabled) ? 15 : 8, 0, x2, y2);
+                int veh_id;
+                if (rand() % 5 == 0 && ExpansionEnabled) {
+                    veh_id = veh_init(15, 0, x2, y2);
+                } else {
+                    veh_id = veh_init(8, 0, x2, y2);
+                }
                 if (veh_id >= 0 &&
                     alien_tile_vehicle_visible(veh_id, ConsoleGlobal.faction_id_)) {
                     draw_tile(x2, y2, 2);
@@ -2016,10 +2027,14 @@ void __cdecl alien_fauna() {
 
         if (BaseFindDist > 1 && BaseFindDist < 6 &&
             (map_loc(x, y)->bit & BIT_FUNGUS) &&
-            (map_loc(x, y)->climate & 0xE0) >= ALT_BIT_OCEAN_SHELF &&
+            (map_loc(x, y)->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF &&
             !goody_at(x, y)) {
-            const int veh_id = veh_init(
-                (rand() % 5 == 0 && ExpansionEnabled) ? 15 : 8, 0, x, y);
+            int veh_id;
+            if (rand() % 5 == 0 && ExpansionEnabled) {
+                veh_id = veh_init(15, 0, x, y);
+            } else {
+                veh_id = veh_init(8, 0, x, y);
+            }
             // Original bug: redraws the stale (x2, y2), not the spawn tile.
             if (veh_id >= 0 &&
                 alien_tile_vehicle_visible(veh_id, ConsoleGlobal.faction_id_)) {
@@ -2054,7 +2069,7 @@ void __cdecl alien_fauna() {
             y2 = y + RadiusOffsetY[direction];
         } while (!on_map(x2, y2) ||
                  !(map_loc(x2, y2)->bit & BIT_FUNGUS) ||
-                 (map_loc(x2, y2)->climate & 0xE0) < ALT_BIT_OCEAN_SHELF ||
+                 (map_loc(x2, y2)->climate & ~0x1F) < ALT_BIT_OCEAN_SHELF ||
                  map_loc(x2, y2)->region != region ||
                  anything_at(x2, y2) > 0);
 
@@ -2998,18 +3013,42 @@ const uint32_t PlayerConquestWin = 0x00040000u;
 const uint32_t PlayerConquestLoss = 0x00020000u;
 
 void parse_player_identity(int faction_id) {
-    Player &player = Players[faction_id];
     PluralityDefault = 0;
-    GenderDefault = player.is_leader_female;
-    parse_says(0, player.title_leader, -1, -1);
-    GenderDefault = player.is_leader_female;
+    GenderDefault = Players[faction_id].is_leader_female;
+    parse_says(0, Players[faction_id].title_leader, -1, -1);
+    GenderDefault = Players[faction_id].is_leader_female;
     PluralityDefault = 0;
-    parse_says(1, player.name_leader, -1, -1);
-    GenderDefault = player.noun_gender;
-    PluralityDefault = player.is_noun_plural;
-    parse_says(2, player.noun_faction, -1, -1);
+    parse_says(1, Players[faction_id].name_leader, -1, -1);
+    GenderDefault = Players[faction_id].noun_gender;
+    PluralityDefault = Players[faction_id].is_noun_plural;
+    parse_says(2, Players[faction_id].noun_faction, -1, -1);
 }
 
+}
+
+// WORKAROUND(inline): generators(faction_id, NULL) as end_of_game expands it.
+// The image inlines generators here but keeps its has_fac call out of line
+// (0x00421670); calling generators() lets VC6 expand has_fac as well.
+static inline int turn_generators(int faction_id, int *count_out) {
+    BOOL (__cdecl *const has_facility)(int, int, int) = has_fac;
+    if (count_out != 0) {
+        *count_out = 0;
+    }
+    if ((Players[faction_id].rule_flags & RFLAG_ALIEN) == 0) {
+        return 0;
+    }
+    int count = 0;
+    for (int index = 0; index < GameDataStateStorage.fields_.base_current_count_; ++index) {
+        if (Bases[index].faction_id_current == faction_id && has_facility(0x28, index, 0)) {
+            if (Bases[index].population_size
+                >= Rules.size_base_subspace_gen) {
+                ++count;
+            } else if (count_out != 0) {
+                ++*count_out;
+            }
+        }
+    }
+    return count;
 }
 
 // ORIGINAL: 0x00524870 ?end_of_game@@YAHH@Z 0x00524870-0x0052581F
@@ -3020,42 +3059,28 @@ int __cdecl end_of_game(int check_victory) {
     int score_items[9];
     int score;
     int selected_faction = -1;
-    // stand-in: the image calls the out-of-line has_fac COMDAT (0x00421670)
-    // here; the header inline would otherwise be expanded.
-    BOOL (__cdecl *const has_facility)(int, int, int) = has_fac;
 
     if ((GameDataStateStorage.fields_.game_state_ & EndgameRecorded) != 0 &&
         (GameDataStateStorage.fields_.game_state_ & EndgamePresented) != 0) {
-        return 0;
+        goto no_end;
     }
 
     if ((GameDataStateStorage.fields_.game_state_ & EndgameRecorded) == 0 &&
         check_victory != 0) {
         if (static_cast<int>(GameDataStateStorage.fields_.mission_year_current_) >=
             static_cast<int>(ScenarioSave.ending_mission_year)) {
-            GameDataStateStorage.fields_.game_state_ |= EndgameRecorded;
             EndgameExitReason = EndgameReason8;
+            GameDataStateStorage.fields_.game_state_ |= EndgameRecorded;
         }
 
         for (int faction_id = 1; faction_id < 8; ++faction_id) {
             const unsigned int faction_bit = 1u << faction_id;
-            if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) &
+            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &
                  faction_bit) == 0) {
                 continue;
             }
 
-            int generator_count = 0;
-            if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0) {
-                for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
-                    if (static_cast<unsigned char>(Bases[base_id].faction_id_current) == faction_id &&
-                        has_facility(0x28, base_id, 0) &&
-                        static_cast<int>(Bases[base_id].population_size) >=
-                            Rules.size_base_subspace_gen) {
-                        ++generator_count;
-                    }
-                }
-            }
-            if (generator_count >= Rules.subspace_generators_needed) {
+            if (turn_generators(faction_id, 0) >= Rules.subspace_generators_needed) {
                 PlayersData[faction_id].flags |= PlayerGeneratorWin;
                 if (faction_id == ConsoleGlobal.faction_id_) {
                     EndgameExitReason = EndgameReason16;
@@ -3095,7 +3120,7 @@ int __cdecl end_of_game(int check_victory) {
                 if (faction_id == ConsoleGlobal.faction_id_) {
                     break;
                 }
-            } else if (((faction_bit & static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) != 0 ||
+            } else if (((faction_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) != 0 ||
                         (GameDataStateStorage.fields_.game_rules_ & RULES_SCN_VICT_SOLO_MISSION) == 0) &&
                        static_cast<int>(ScenarioSave.objectives_sudden_death_victory) >= 1 &&
                        num_objectives(faction_id,
@@ -3137,12 +3162,13 @@ int __cdecl end_of_game(int check_victory) {
     }
 
     if ((GameDataStateStorage.fields_.game_state_ & EndgameRecorded) == 0) {
-        return 0;
+        goto no_end;
     }
     if ((GameDataStateStorage.fields_.game_state_ & EndgamePresented) != 0) {
-        return 0;
+        goto no_end;
     }
 
+    {  // scope only so the gotos above do not skip initialisations (C2362)
     int winner = 0;
     for (int faction_id = 1; faction_id < 8; ++faction_id) {
         const uint32_t flags = PlayersData[faction_id].flags;
@@ -3192,7 +3218,7 @@ int __cdecl end_of_game(int check_victory) {
                 int best_faction = ConsoleGlobal.faction_id_;
                 int best_score = -9999;
                 for (int faction_id = 1; faction_id < 8; ++faction_id) {
-                    if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) &
+                    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &
                          (1u << faction_id)) != 0) {
                         if ((GameDataStateStorage.fields_.game_state_ & EndgameScoreMode) != 0) {
                             compute_score(faction_id, &score, score_items, 1);
@@ -3339,7 +3365,7 @@ int __cdecl end_of_game(int check_victory) {
     GameDataStateStorage.fields_.game_state_ |= EndgamePresented;
     if (IsMultiplayerNet == 0 && EndgameExitReason != EndgameReason7) {
         if (popp(ScriptPopupFile, "GAMEOVERMAN", 0, "stars_sm.pcx", 0) != 0) {
-            return 0;
+            goto no_end;
         }
     }
     GameRestartQueued = (IsMultiplayerNet == 0);
@@ -3348,6 +3374,13 @@ int __cdecl end_of_game(int check_victory) {
     }
     ExitTurnLoop = 1;
     return 1;
+    }
+    // Every `return 0` in the image jumps to one shared epilogue
+    // (0x00525816); separate returns each get their own copy. The image
+    // still lays this block out after the return-1 tail, which no spelling
+    // tried here reproduces (if/else tail, do/while(0)+break, nested gotos).
+no_end:
+    return 0;
 }
 
 // stand-in: proto_power with its range() called through a pointer, which
