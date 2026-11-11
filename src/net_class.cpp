@@ -1645,7 +1645,7 @@ int Net::send_group(void *data, int size, long group_id, int flags) {
             return 0;
         }
         if (NetDirectPlay->Send(local_player_id_, static_cast<DPID>(group_id),
-                                (flags & 1) != 0, packet,
+                                reliable != 0, packet,
                                 static_cast<DWORD>(allocation_size)) != DP_OK) {
             free(packet);
             return 0;
@@ -1928,8 +1928,10 @@ int Net::check_for_lobby(char *app_name, _GUID *guid, int option_a,
 
     if (app_name != 0) {
         field_44_ = option_b;
-        if (strchr(app_name, '/') != 0) {
-            cursor = strchr(app_name, '/');
+        // The image calls strchr twice and tests only the second result.
+        strchr(app_name, '/');
+        cursor = strchr(app_name, '/');
+        if (cursor != 0) {
             do {
                 switch (*++cursor) {
                 case 'h':
@@ -1995,12 +1997,13 @@ int Net::check_for_lobby(char *app_name, _GUID *guid, int option_a,
             session.dwUser4 = 0;
 
             connection.dwSize = sizeof(DPLCONNECTION);
-            connection.dwFlags = host_mode != 0 ? DPOPEN_CREATE : DPOPEN_JOIN;
+            connection.dwFlags = (host_mode != 0) + 1;
             connection.lpSessionDesc = &session;
             connection.lpPlayerName = &name;
             connection.guidSP = DPSPGUID_TCPIP;
 
             if (host_mode == 0) {
+                address_size = 0;
                 if (lobby->CreateAddress(DPSPGUID_TCPIP, DPAID_INet,
                                          net_address, strlen(net_address) + 1,
                                          0, &address_size)
@@ -2054,10 +2057,8 @@ have_lobby:
     }
 
     if (lobby->GetConnectionSettings(0, buffer, &address_size) == 0) {
-        status = reinterpret_cast<DPLCONNECTION *>(buffer)->dwFlags
-                     != DPOPEN_CREATE
-                     ? DPOPEN_CREATE
-                     : DPOPEN_JOIN;
+        status = (reinterpret_cast<DPLCONNECTION *>(buffer)->dwFlags
+                  != DPOPEN_CREATE) + 1;
         if (reinterpret_cast<DPLCONNECTION *>(buffer)->lpSessionDesc != 0) {
             reinterpret_cast<DPLCONNECTION *>(buffer)->lpSessionDesc->dwFlags =
                 DPSESSION_MIGRATEHOST;
@@ -2066,10 +2067,12 @@ have_lobby:
             if (lobby->SetConnectionSettings(
                     0, 0, reinterpret_cast<DPLCONNECTION *>(buffer)) == 0) {
                 if (lobby->Connect(0, &direct_play, 0) == 0) {
-                    if (direct_play->QueryInterface(IID_IDirectPlay2A,
-                                                    reinterpret_cast<void **>(&NetDirectPlay))
-                        == 0) {
-                        thread_info_.direct_play_ = NetDirectPlay;
+                    // The image publishes the interface pointer to the
+                    // receive record before testing QueryInterface's result.
+                    const HRESULT queried = direct_play->QueryInterface(
+                        IID_IDirectPlay2A, reinterpret_cast<void **>(&NetDirectPlay));
+                    thread_info_.direct_play_ = NetDirectPlay;
+                    if (queried == 0) {
                         direct_play->Release();
                         direct_play = 0;
                         if (status == 1) {
@@ -4273,15 +4276,15 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
             }
             if (found == 0) goto done;
 
-            sent_at[selected] = timeGetTime();
-            if (NetDirectPlay->Send(local_player_id_, static_cast<DPID>(target), 0,
-                                    packet, static_cast<DWORD>(allocation_size)) != DP_OK) {
-                MessageBoxA(0, "Oh no!! Send failed!",
-                            "Message from the Net Underworld", 0);
-                free(packet);
-                return 0;
-            }
             for (;;) {
+                sent_at[selected] = timeGetTime();
+                if (NetDirectPlay->Send(local_player_id_, static_cast<DPID>(target), 0,
+                                        packet, static_cast<DWORD>(allocation_size)) != DP_OK) {
+                    MessageBoxA(0, "Oh no!! Send failed!",
+                                "Message from the Net Underworld", 0);
+                    free(packet);
+                    return 0;
+                }
                 interval_start = timeGetTime();
                 while (timeGetTime() - interval_start < 20000) {
                     ResetEvent(thread_info_.events_[1]);
@@ -4336,14 +4339,6 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
                 default:
                     free(packet);
                     return 0;
-                }
-                sent_at[selected] = timeGetTime();
-                if (NetDirectPlay->Send(local_player_id_, static_cast<DPID>(target), 0,
-                                        packet, static_cast<DWORD>(allocation_size)) != DP_OK) {
-                    MessageBoxA(0, "Oh no!! Send failed!",
-                            "Message from the Net Underworld", 0);
-                free(packet);
-                return 0;
                 }
             }
         }
@@ -4547,15 +4542,15 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
                 goto done;
             }
 
-            sent_at[selected] = timeGetTime();
-            if (NetDirectPlay->Send(local_player_id_, static_cast<DPID>(target), 0,
-                                    packet, static_cast<DWORD>(allocation_size)) != DP_OK) {
-                MessageBoxA(0, "Oh no!! Send failed!",
-                            "Message from the Net Underworld", 0);
-                free(packet);
-                return 0;
-            }
             for (;;) {
+                sent_at[selected] = timeGetTime();
+                if (NetDirectPlay->Send(local_player_id_, static_cast<DPID>(target), 0,
+                                        packet, static_cast<DWORD>(allocation_size)) != DP_OK) {
+                    MessageBoxA(0, "Oh no!! Send failed!",
+                                "Message from the Net Underworld", 0);
+                    free(packet);
+                    return 0;
+                }
                 wait_timeout = players_[selected].field_C_;
                 interval_start = timeGetTime();
                 while (timeGetTime() - interval_start < 20000) {
@@ -4612,14 +4607,6 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
                     free(packet);
                     return 0;
                 default:
-                    free(packet);
-                    return 0;
-                }
-                sent_at[selected] = timeGetTime();
-                if (NetDirectPlay->Send(local_player_id_, static_cast<DPID>(target), 0,
-                                        packet, static_cast<DWORD>(allocation_size)) != DP_OK) {
-                    MessageBoxA(0, "Oh no!! Send failed!",
-                                "Message from the Net Underworld", 0);
                     free(packet);
                     return 0;
                 }
