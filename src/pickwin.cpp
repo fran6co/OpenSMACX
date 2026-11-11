@@ -37,6 +37,7 @@
 #include "palette.h"
 #include "interface_palette.h"
 #include "popmenu.h"
+#include "rectangle_operations.h"
 extern int TextColourTable[195];
 
 // Original caption834D6C is passed synchronously to Win::init, which
@@ -163,95 +164,119 @@ extern char PickWinCaptionBuffer[];  // initial VA 0x00834D6C; capacity unknown
 extern PickWin PickWinGlobal;        // initialized by the native .CRT wrapper
 void __cdecl list_was_dblclicked(int faction_id);
 
-// Preserve the native geometry word before signed division or RECT publication.
-// 488CAC..488CC2 divides a wrapped edge difference by signed three;
-// 4897B4..4897DD likewise halves wrapped sums with signed truncation.
-static LONG pickwin_geometry_value(uint32_t bits) {
-  LONG value;
-  memcpy(&value, &bits, sizeof(value));
-  return value;
+// WORKAROUND(inline): expand_rect (scroll.cpp) is out of line in this tree;
+// init and on_redraw expand it (0x00488C5C header inset by 4, 0x00488D91
+// list inset by 3, 0x0048969E header inset by 3: left/right/top/bottom with
+// the negated amount held in eax; 0x00489759 group right +0x12 then +3).
+static inline RECT *pickwin_expand_rect(RECT *rect, int horizontal, int vertical) {
+  rect->left -= horizontal;
+  rect->right += horizontal;
+  rect->top -= vertical;
+  rect->bottom += vertical;
+  return rect;
 }
 
-static void pickwin_init_text_button(FlatButton &button, int id,
-                                     const RECT &area, Win *parent) {
-  button.init(StringTemp, id, area.left, area.top,
-              pickwin_geometry_value(static_cast<uint32_t>(area.right) - static_cast<uint32_t>(area.left)),
-              pickwin_geometry_value(static_cast<uint32_t>(area.bottom) - static_cast<uint32_t>(area.top)), parent, 0);
-  static_cast<Buffer &>(button).set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
-  button.redraw();
-  button.hide();
+// WORKAROUND(inline): init shifts the list RECT with `add reg,-0x12` on left
+// and right only (0x00488DB6), the shape of an inlined offset helper whose
+// vertical delta folded away.
+static inline RECT *pickwin_offset_rect(RECT *rect, int horizontal, int vertical) {
+  rect->left += horizontal;
+  rect->right += horizontal;
+  rect->top += vertical;
+  rect->bottom += vertical;
+  return rect;
 }
+
+// WORKAROUND(type): PickWin's button/geometry words 0x625C..0x6288 and
+// 0x9210..0x926C are RECTs in the original (init fills each through an
+// inlined set_rectangle_dimensions with its arguments evaluated first,
+// 0x00488CD0 and 0x00488E42); pickwin.h still declares them as uint32 words.
+static inline RECT *pickwin_rect(uint32_t *left) {
+  return reinterpret_cast<RECT *>(left);
+}
+
+// WORKAROUND(decl): the list reset at 0x00489DF4..0x00489E4E (and again at
+// 0x0048A226) stores ListBox +0x2C/+0x14, the four Dialog fields, then Win
+// iFlags_ = 0x40 last. Only ListBox::initialize_picker_state can reach the
+// protected Win word, and it stores all three ListBox words together. This
+// access shim reaches iFlags_ through ListBox's own vbtable; the original
+// header probably had one inline covering the whole reset.
+struct PickWinListAccess : ListBox {
+  static void set_win_flags(PickWin *window, uint32_t flags) {
+    static_cast<PickWinListAccess &>(window->listBox_).iFlags_ = flags;
+  }
+};
 
 // ORIGINAL: 0x004887A0 ?init@PickWin@@QAEXP6AXH@ZHH@Z 0x004887A0-0x0048965F;0x00657F70-0x00657F85
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004887a0.cpp"], "reason": "Recover genuine typed PickWin owner behavior and automatic subobject lifetime from pinned native flow and preserved seed; historical identity and restoration obligations retained, no exactness claim."}
 // TRIED: nothing exotic here (no x87, no computed jumps) - transcribed mechanically from the Ghidra pseudocode (which is accurate for this straight-line function) using raw `self+offset` field access and real member calls resolved against pickwin.h field names where they matched. sim 0.65-0.71 across flag sets.
 void PickWin::init(void (__cdecl *callback)(int), int mode, int faction) {
   Buffer source;
+  int i;
 
   field_5DAC_ = static_cast<uint32_t>(faction);
   field_6238_ = callback;
   field_5DA0_ = static_cast<uint32_t>(mode);
   field_5DA4_ = 0;
 
-  if (text_open(AlphaxFileID, "FACTIONS") != 0) return;
-  for (int faction_file_index = 0; faction_file_index < 7; ++faction_file_index) {
+  if (text_open(AlphaxFileID, "FACTIONS")) return;
+  for (i = 0; i < 7; ++i) {
     text_get();
-    strcpy(faction_files_[faction_file_index], text_item());
+    strcpy(faction_files_[i], text_item());
   }
-  if (text_open(AlphaxFileID, "NEWFACTIONS") != 0) return;
-  for (int new_faction_index = 7; new_faction_index < 14; ++new_faction_index) {
+  if (text_open(AlphaxFileID, "NEWFACTIONS")) return;
+  for (i = 7; i < 14; ++i) {
     text_get();
-    strcpy(faction_files_[new_faction_index], text_item());
+    strcpy(faction_files_[i], text_item());
   }
 
   field_5DB0_ = 0;
-  if (text_open(AlphaxFileID, "CUSTOMFACTIONS") != 0) return;
+  if (text_open(AlphaxFileID, "CUSTOMFACTIONS")) return;
   text_get();
-  for (char *entry = text_item(); *entry != '\0'; entry = text_item()) {
+  while (*text_item() != '\0') {
     ++field_5DB0_;
     text_get();
   }
-
-  if (text_open(AlphaxFileID, "CUSTOMFACTIONS") != 0) return;
-  if (field_5DB0_ < 0) field_5DB0_ = 0;
-  else if (field_5DB0_ > 10) field_5DB0_ = 10;
-  for (int custom_faction_index = 0; custom_faction_index < field_5DB0_; ++custom_faction_index) {
+  if (text_open(AlphaxFileID, "CUSTOMFACTIONS")) return;
+  field_5DB0_ = range(field_5DB0_, 0, 10);
+  for (i = 0; i < field_5DB0_; ++i) {
     text_get();
-    strcpy(faction_files_[14 + custom_faction_index], text_item());
+    strcpy(faction_files_[14 + i], text_item());
   }
-
-  for (uint32_t menu_label_index = 0; menu_label_index < field_5DB0_ + 14; ++menu_label_index) {
-    const char *section = faction_files_[menu_label_index];
-    if (text_open(section, section) != 0) return;
+  for (i = 0; i < field_5DB0_ + 14; ++i) {
+    if (text_open(faction_files_[i], faction_files_[i])) return;
     text_get();
     text_item();
-    strncpy(faction_menu_items_[menu_label_index], text_item(), 0x18);
-    faction_menu_items_[menu_label_index][0x17] = '\0';
+    text_item();
+    strncpy(faction_menu_items_[i], text_item(), 0x18);
+    faction_menu_items_[i][0x17] = '\0';
   }
 
   source.load_pcx("pickfac.pcx", 0, 10, 0xEC);
 
+  RECT area;
   field_A1C_ = 0x102;
   field_A20_ = 0x5A;
   field_A18_ = 1;
-  for (int sprite_row_index = 0; sprite_row_index < 3; ++sprite_row_index) {
+  for (i = 0; i < 3; ++i) {
     field_A14_ = 1;
-    RECT area = {static_cast<LONG>(field_A14_), static_cast<LONG>(field_A18_),
-                 static_cast<LONG>(field_A14_ + field_A1C_),
-                 static_cast<LONG>(field_A18_ + field_A20_)};
-    sprites1_[sprite_row_index].extract(&source, WinFillColour, &area, 0);
+    area.left = field_A14_;
+    area.top = field_A18_;
+    area.right = field_A14_ + field_A1C_;
+    area.bottom = field_A18_ + field_A20_;
+    sprites1_[i].extract(&source, WinFillColour, &area, 0);
     field_A14_ += field_A1C_ + 1;
-    area.left = static_cast<LONG>(field_A14_);
-    area.top = static_cast<LONG>(field_A18_);
-    area.right = static_cast<LONG>(field_A14_ + field_A1C_);
-    area.bottom = static_cast<LONG>(field_A18_ + field_A20_);
-    sprites2_[sprite_row_index].extract(&source, WinFillColour, &area, 0);
+    area.left = field_A14_;
+    area.top = field_A18_;
+    area.right = field_A14_ + field_A1C_;
+    area.bottom = field_A18_ + field_A20_;
+    sprites2_[i].extract(&source, WinFillColour, &area, 0);
     field_A14_ += field_A1C_ + 1;
-    area.left = static_cast<LONG>(field_A14_);
-    area.top = static_cast<LONG>(field_A18_);
-    area.right = static_cast<LONG>(field_A14_ + field_A1C_);
-    area.bottom = static_cast<LONG>(field_A18_ + field_A20_);
-    sprites3_[sprite_row_index].extract(&source, WinFillColour, &area, 0);
+    area.left = field_A14_;
+    area.top = field_A18_;
+    area.right = field_A14_ + field_A1C_;
+    area.bottom = field_A18_ + field_A20_;
+    sprites3_[i].extract(&source, WinFillColour, &area, 0);
     field_A18_ += field_A20_ + 1;
   }
 
@@ -259,11 +284,12 @@ void PickWin::init(void (__cdecl *callback)(int), int mode, int faction) {
   field_A1C_ = 0x10;
   field_A20_ = 0x10;
   field_A18_ = 0x139;
-  for (int icon_row_index = 0; icon_row_index < 3; ++icon_row_index) {
-    RECT icon = {static_cast<LONG>(field_A14_), static_cast<LONG>(field_A18_),
-                 static_cast<LONG>(field_A14_ + field_A1C_),
-                 static_cast<LONG>(field_A18_ + field_A20_)};
-    sprites4_[icon_row_index].extract(&source, WinFillColour, &icon, 0);
+  for (i = 0; i < 3; ++i) {
+    area.left = field_A14_;
+    area.top = field_A18_;
+    area.right = field_A14_ + field_A1C_;
+    area.bottom = field_A18_ + field_A20_;
+    sprites4_[i].extract(&source, WinFillColour, &area, 0);
     field_A18_ += field_A20_ + 1;
   }
   sprite5_.extract(&source, WinFillColour, field_A14_, field_A18_, 7, 0xD, 0);
@@ -274,172 +300,128 @@ void PickWin::init(void (__cdecl *callback)(int), int mode, int faction) {
   field_A18_ = 5;
   GraphicWin::init(5, 5, 0x316, 0x12C, PickWinCaptionBuffer,
                    0x01000000, 0, 0, 0);
-  Buffer &canvas = static_cast<Buffer &>(*this);
-  canvas.set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
-  canvas.set_text_color(TextColourTable[68], TextColourTable[69], 1, 1);
+  Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+  Buffer::set_text_color(TextColourTable[68], TextColourTable[69], 1, 1);
 
-  frame_rect_.right = pickwin_geometry_value(field_A1C_);
-  frame_rect_.bottom = pickwin_geometry_value(field_A20_);
-  frame_rect_.left = frame_rect_.top = 0;
+  set_rectangle_dimensions(&frame_rect_, 0, 0, field_A1C_, field_A20_);
   header_panel_rect_ = frame_rect_;
-  header_panel_rect_.left = pickwin_geometry_value(static_cast<uint32_t>(header_panel_rect_.left) + 4u);
-  header_panel_rect_.right = pickwin_geometry_value(static_cast<uint32_t>(header_panel_rect_.right) - 4u);
-  header_panel_rect_.top = pickwin_geometry_value(static_cast<uint32_t>(header_panel_rect_.top) + 4u);
-  header_panel_rect_.bottom = pickwin_geometry_value(static_cast<uint32_t>(header_panel_rect_.bottom) - 4u);
-  header_panel_rect_.bottom = pickwin_geometry_value(static_cast<uint32_t>(header_panel_rect_.top) + 0x1Eu);
-  field_A14_ = static_cast<uint32_t>(header_panel_rect_.left) + 1u;
-  field_A18_ = static_cast<uint32_t>(header_panel_rect_.top) + 0x22u;
+  pickwin_expand_rect(&header_panel_rect_, -4, -4);
+  header_panel_rect_.bottom = header_panel_rect_.top + 0x1E;
+  field_A14_ = header_panel_rect_.left + 1;
+  field_A18_ = header_panel_rect_.bottom + 4;
   field_A20_ = 0x16;
-  field_A1C_ = pickwin_geometry_value(static_cast<uint32_t>(header_panel_rect_.right)
-      - static_cast<uint32_t>(header_panel_rect_.left) - 6u) / 3;
-  field_625C_ = field_A14_;
-  field_6260_ = field_A18_;
-  field_6264_ = field_A14_ + 0x102;
-  field_6268_ = field_A18_ + 0x5A;
-  field_626C_ = field_6264_ + 2;
-  field_6270_ = field_A18_;
-  field_6274_ = field_6264_ + 0x104;
-  field_6278_ = field_A18_ + 0x5A;
-  field_627C_ = field_6264_ + 0x106;
-  field_6280_ = field_A18_;
-  field_6284_ = field_6264_ + 0x208;
-  field_6288_ = field_A18_ + 0x5A;
+  field_A1C_ = (header_panel_rect_.right - header_panel_rect_.left - 6) / 3;
+  set_rectangle_dimensions(pickwin_rect(&field_625C_), field_A14_, field_A18_, 0x102, 0x5A);
+  set_rectangle_dimensions(pickwin_rect(&field_626C_), field_6264_ + 2, field_A18_, 0x102, 0x5A);
+  set_rectangle_dimensions(pickwin_rect(&field_627C_), field_6274_ + 2, field_A18_, 0x102, 0x5A);
 
-  const int base = static_cast<int>(header_panel_rect_.left);
-  field_A14_ = base + 0x159;
-  list_area_rect_.left = pickwin_geometry_value(static_cast<uint32_t>(base) + 0x15Bu);
-  list_area_rect_.top = pickwin_geometry_value(field_6268_ + 3u);
-  list_area_rect_.right = pickwin_geometry_value((static_cast<uint32_t>(base) + 0x15Bu)
-      + (static_cast<uint32_t>(header_panel_rect_.right) - static_cast<uint32_t>(base)) - 0x15Eu);
-  list_area_rect_.bottom = pickwin_geometry_value(field_6268_ + 0x8Bu);
-  list_area_rect_.left = pickwin_geometry_value(static_cast<uint32_t>(list_area_rect_.left) + 3u);
-  list_area_rect_.right = pickwin_geometry_value(static_cast<uint32_t>(list_area_rect_.right) - 3u);
-  list_area_rect_.top = pickwin_geometry_value(static_cast<uint32_t>(list_area_rect_.top) + 3u);
-  list_area_rect_.bottom = pickwin_geometry_value(static_cast<uint32_t>(list_area_rect_.bottom) - 3u);
-  list_area_rect_.left = pickwin_geometry_value(static_cast<uint32_t>(list_area_rect_.left) - 0x12u);
-  list_area_rect_.right = pickwin_geometry_value(static_cast<uint32_t>(list_area_rect_.right) - 0x12u);
+  field_A14_ = header_panel_rect_.left + 0x159;
+  set_rectangle_dimensions(&list_area_rect_, header_panel_rect_.left + 0x15B, field_6268_ + 3,
+                           header_panel_rect_.right - header_panel_rect_.left - 0x15E, 0x88);
+  pickwin_expand_rect(&list_area_rect_, -3, -3);
+  pickwin_offset_rect(&list_area_rect_, -0x12, 0);
 
-  int pos = 0;
-  int len;
-  int button_rect_index = 0;
-  do {
-    len = pos + 0x13;
-    pos = pickwin_geometry_value(static_cast<uint32_t>(pos)
-        + static_cast<uint32_t>(list_area_rect_.top));
-    RECT &area = picker_button_rects_[button_rect_index++];
-    area.left = pickwin_geometry_value(static_cast<uint32_t>(list_area_rect_.right) + 2u);
-    area.top = pos;
-    area.right = pickwin_geometry_value(static_cast<uint32_t>(list_area_rect_.right) + 0x12u);
-    area.bottom = pos + 0x10;
-    pos = len;
-  } while (len < 0x85);
-
-  field_A14_ = static_cast<uint32_t>(header_panel_rect_.left) + 1u;
-  field_A18_ = static_cast<uint32_t>(list_area_rect_.bottom) + 7u;
-  {
-    int w = field_A1C_ * 3;
-    field_A1C_ = ((w + ((w >> 31) & 3)) >> 2) - 1;
+  int row = 0;
+  for (i = 0; i < 0x85; i += 0x13) {
+    set_rectangle_dimensions(&picker_button_rects_[row++], list_area_rect_.right + 2,
+                             i + list_area_rect_.top, 0x10, 0x10);
   }
-  field_9220_ = field_A14_;
-  field_9224_ = field_A18_;
-  field_9228_ = field_A14_ + field_A1C_;
-  field_922C_ = field_A18_ + field_A20_;
-  field_9210_ = field_9228_ + 2;
-  field_9214_ = field_A18_;
-  field_9218_ = field_9210_ + field_A1C_;
-  field_921C_ = field_A18_ + field_A20_;
-  field_9260_ = field_9218_ + 2;
-  field_9264_ = field_A18_;
-  field_9268_ = field_9260_ + field_A1C_;
-  field_926C_ = field_A18_ + field_A20_;
-  field_9230_ = field_9268_ + 2;
-  field_9234_ = field_A18_;
-  field_9238_ = field_9230_ + field_A1C_;
-  field_923C_ = field_A18_ + field_A20_;
+
+  field_A14_ = header_panel_rect_.left + 1;
+  field_A18_ = list_area_rect_.bottom + 7;
+  field_A1C_ = static_cast<int>(field_A1C_) * 3 / 4 - 1;
+  set_rectangle_dimensions(pickwin_rect(&field_9220_), field_A14_, field_A18_, field_A1C_, field_A20_);
+  set_rectangle_dimensions(pickwin_rect(&field_9210_), field_9228_ + 2, field_A18_, field_A1C_, field_A20_);
+  set_rectangle_dimensions(pickwin_rect(&field_9260_), field_9218_ + 2, field_A18_, field_A1C_, field_A20_);
+  set_rectangle_dimensions(pickwin_rect(&field_9230_), field_9268_ + 2, field_A18_, field_A1C_, field_A20_);
 
   field_A1C_ = 0xD8;
-  field_A14_ = static_cast<uint32_t>(header_panel_rect_.left) + 2u;
-  field_A18_ = static_cast<uint32_t>(list_area_rect_.top) - 2u;
-  field_9240_ = field_A14_;
-  field_9244_ = field_A18_;
-  field_9248_ = static_cast<uint32_t>(header_panel_rect_.left) + 0xDAu;
-  field_924C_ = field_A18_ + field_A20_;
+  field_A14_ = header_panel_rect_.left + 2;
+  field_A18_ = list_area_rect_.top - 2;
+  set_rectangle_dimensions(pickwin_rect(&field_9240_), field_A14_, field_A18_, field_A1C_, field_A20_);
   field_A18_ += 0x19;
-  field_9250_ = field_A14_;
-  field_9254_ = field_A18_;
-  field_925C_ = field_A18_ + field_A20_;
-  field_9258_ = field_A14_ + field_A1C_;
+  set_rectangle_dimensions(pickwin_rect(&field_9250_), field_A14_, field_A18_, field_A1C_, field_A20_);
 
-  for (int button = 0; button < 7; ++button) {
-    RECT &area = picker_button_rects_[button];
-    flatButtons10_[button].init(0, button + 0x3039,
-        area.left, area.top, area.right - area.left, area.bottom - area.top,
-        this, 0);
-    flatButtons10_[button].set_report_icons(&sprites4_[0], &sprites4_[1],
-                                            &sprites4_[2]);
-    flatButtons10_[button].hide();
+  for (i = 0; i < 7; ++i) {
+    RECT &button = picker_button_rects_[i];
+    flatButtons10_[i].init(0, i + 0x3039, button.left, button.top,
+                           button.right - button.left, button.bottom - button.top,
+                           this, 0);
+    flatButtons10_[i].set_report_icons(&sprites4_[0], &sprites4_[1], &sprites4_[2]);
+    flatButtons10_[i].hide();
   }
 
-  // Labels holds x86 four-byte pointers: original +0x116C selects slot 0x45B.
-  StringTemp[0] = '\0'; strcat(StringTemp, label_get(0x45B));
+  StringTemp[0] = '\0';
+  strcat(StringTemp, label_get(0x45B));
   flatButton1_.init(0, 0x100, field_625C_, field_6260_,
                     field_6264_ - field_625C_, field_6268_ - field_6260_, this, 0);
   flatButton1_.set_report_icons(&sprites1_[0], &sprites1_[1], &sprites1_[2]);
-  flatButton1_.set_bubble_text(StringTemp); flatButton1_.hide();
-  StringTemp[0] = '\0'; strcat(StringTemp, label_get(0x45C));
+  flatButton1_.set_bubble_text(StringTemp);
+  flatButton1_.hide();
+  StringTemp[0] = '\0';
+  strcat(StringTemp, label_get(0x45C));
   flatButton2_.init(0, 0x101, field_626C_, field_6270_,
                     field_6274_ - field_626C_, field_6278_ - field_6270_, this, 0);
   flatButton2_.set_report_icons(&sprites2_[0], &sprites2_[1], &sprites2_[2]);
-  flatButton2_.set_bubble_text(StringTemp); flatButton2_.hide();
-  StringTemp[0] = '\0'; strcat(StringTemp, label_get(0x45D));
+  flatButton2_.set_bubble_text(StringTemp);
+  flatButton2_.hide();
+  StringTemp[0] = '\0';
+  strcat(StringTemp, label_get(0x45D));
   flatButton3_.init(0, 0x102, field_627C_, field_6280_,
                     field_6284_ - field_627C_, field_6288_ - field_6280_, this, 0);
   flatButton3_.set_report_icons(&sprites3_[0], &sprites3_[1], &sprites3_[2]);
-  flatButton3_.set_bubble_text(StringTemp); flatButton3_.hide();
+  flatButton3_.set_bubble_text(StringTemp);
+  flatButton3_.hide();
 
-  listBox_.close();
-  static_cast<Dialog &>(listBox_).init(&list_area_rect_, 0);
-  static_cast<Dialog &>(listBox_).field_40_ = 0;
-  static_cast<Dialog &>(listBox_).field_44_ = 3;
-  static_cast<Dialog &>(listBox_).field_48_ = 0x13;
-  static_cast<Dialog &>(listBox_).field_B4_ = 0;
-  listBox_.initialize_picker_state();
-  static_cast<Dialog &>(listBox_).field_20_ &= ~4u;
+  listBox_.init(&list_area_rect_, 0);
+  listBox_.field_2C_ = 0;
+  listBox_.clear_selection_index();
+  listBox_.Dialog::field_B4_ = 0;
+  listBox_.Dialog::field_40_ = 0;
+  listBox_.Dialog::field_48_ = 0x13;
+  listBox_.Dialog::field_44_ = 3;
+  PickWinListAccess::set_win_flags(this, 0x40);
+  listBox_.Dialog::field_20_ &= ~4u;
   listBox_.double_click_callback_ = list_was_dblclicked;
 
-  RECT area;
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(0x45E));
-  area.left = pickwin_geometry_value(field_9210_); area.top = pickwin_geometry_value(field_9214_);
-  area.right = pickwin_geometry_value(field_9218_); area.bottom = pickwin_geometry_value(field_921C_);
-  pickwin_init_text_button(flatButton4_, 0x106, area, this);
+  flatButton4_.init(StringTemp, 0x106, field_9210_, field_9214_, field_9218_ - field_9210_, field_921C_ - field_9214_, this, 0);
+  static_cast<Buffer &>(flatButton4_).set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+  flatButton4_.redraw();
+  flatButton4_.hide();
   StringTemp[0] = '\0';
-  strcat(StringTemp, label_get(field_5DAC_ == 0 ? 0x2AF : 0x45F));
-  area.left = pickwin_geometry_value(field_9220_); area.top = pickwin_geometry_value(field_9224_);
-  area.right = pickwin_geometry_value(field_9228_); area.bottom = pickwin_geometry_value(field_922C_);
-  pickwin_init_text_button(flatButton5_, 0x107, area, this);
+  strcat(StringTemp, label_get(field_5DAC_ ? 0x45F : 0x2AF));
+  flatButton5_.init(StringTemp, 0x107, field_9220_, field_9224_, field_9228_ - field_9220_, field_922C_ - field_9224_, this, 0);
+  static_cast<Buffer &>(flatButton5_).set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+  flatButton5_.redraw();
+  flatButton5_.hide();
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(0x66));
   CharUpperA(StringTemp);
-  area.left = pickwin_geometry_value(field_9230_); area.top = pickwin_geometry_value(field_9234_);
-  area.right = pickwin_geometry_value(field_9238_); area.bottom = pickwin_geometry_value(field_923C_);
-  pickwin_init_text_button(flatButton6_, 0x103, area, this);
+  flatButton6_.init(StringTemp, 0x103, field_9230_, field_9234_, field_9238_ - field_9230_, field_923C_ - field_9234_, this, 0);
+  static_cast<Buffer &>(flatButton6_).set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+  flatButton6_.redraw();
+  flatButton6_.hide();
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(0x65));
   CharUpperA(StringTemp);
-  area.left = pickwin_geometry_value(field_9260_); area.top = pickwin_geometry_value(field_9264_);
-  area.right = pickwin_geometry_value(field_9268_); area.bottom = pickwin_geometry_value(field_926C_);
-  pickwin_init_text_button(flatButton9_, 0x108, area, this);
+  flatButton9_.init(StringTemp, 0x108, field_9260_, field_9264_, field_9268_ - field_9260_, field_926C_ - field_9264_, this, 0);
+  static_cast<Buffer &>(flatButton9_).set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+  flatButton9_.redraw();
+  flatButton9_.hide();
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(0x460));
-  area.left = pickwin_geometry_value(field_9250_); area.top = pickwin_geometry_value(field_9254_);
-  area.right = pickwin_geometry_value(field_9258_); area.bottom = pickwin_geometry_value(field_925C_);
-  pickwin_init_text_button(flatButton8_, 0x105, area, this);
+  flatButton8_.init(StringTemp, 0x105, field_9250_, field_9254_, field_9258_ - field_9250_, field_925C_ - field_9254_, this, 0);
+  static_cast<Buffer &>(flatButton8_).set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+  flatButton8_.redraw();
+  flatButton8_.hide();
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(0x461));
-  area.left = pickwin_geometry_value(field_9240_); area.top = pickwin_geometry_value(field_9244_);
-  area.right = pickwin_geometry_value(field_9248_); area.bottom = pickwin_geometry_value(field_924C_);
-  pickwin_init_text_button(flatButton7_, 0x104, area, this);
+  flatButton7_.init(StringTemp, 0x104, field_9240_, field_9244_, field_9248_ - field_9240_, field_924C_ - field_9244_, this, 0);
+  static_cast<Buffer &>(flatButton7_).set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+  flatButton7_.redraw();
+  flatButton7_.hide();
 
   buttonGroup_.init(0, 0);
   buttonGroup_.add(&flatButton7_);
@@ -447,20 +429,38 @@ void PickWin::init(void (__cdecl *callback)(int), int mode, int faction) {
   buttonGroup_.set(0x104, 1);
 }
 
+// WORKAROUND(inline): BasePop::item (out-of-line copy 0x005A5990) was a
+// header inline; its two expansions here spend the /Ob2 budget that leaves
+// the early-return teardowns calling ~Scroll/~BasePop out of line.
+static inline int pickwin_item(BasePop *pop, char *text, int index) {
+  return pop->dialogs().Dialogs::item(text, index);
+}
+
 // ORIGINAL: 0x00489BA0 ?on_button_clicked@PickWin@@QAEXH@Z 0x00489BA0-0x0048A798;0x00657F85-0x006581C9
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00489ba0.cpp"], "reason": "Recover genuine typed PickWin owner behavior and automatic subobject lifetime from pinned native flow and preserved seed; historical identity and restoration obligations retained, no exactness claim."}
 // TRIED: automatic C++ RAII destruction for Popup/PullDown's ~20 embedded subobjects (Dialogs, EditGroup, SpriteBox, CheckBox, ListBox, Dialog, Sprite, StringStruct x2, FlatButton x2, Heap, nested GraphicWin) - the scaffold's classes represent several of these as raw byte/uint32 padding, so auto-generated dtors would skip real cleanup the original calls explicitly. Used mechanical EBP(x)-buffer-offset transcription (verified against pickwin.h's `Popup popup_` size comment == sizeof(BasePop)+sizeof(Scroll), and cross-checked field offsets against pickwin.h directly) instead, matching each explicit close()/dtor call site.
 // symbol    ?on_button_clicked@PickWin@@UAEXH@Z
 void PickWin::on_button_clicked(int button) {
-  // The image constructs the Popup/PullDown frame locals before dispatching
-  // the button id, so retain that lifetime even for non-menu actions.
-  PopMenu modal;
+  PopMenu menu;
 
-  if (button == 0x100 || button == 0x101 || button == 0x102) {
-    if (button == 0x100 && text_open(AlphaxFileID, "FACTIONS") != 0) return;
-    if (button == 0x101 && text_open(AlphaxFileID, "NEWFACTIONS") != 0) return;
-
-    for (int faction = 1; faction < 8; ++faction) {
+  switch (button) {
+  case 0x100:
+  case 0x101:
+  case 0x102: {
+    if (button == 0x100) {
+      if (text_open(AlphaxFileID, "FACTIONS")) return;
+    } else if (button == 0x101) {
+      if (text_open(AlphaxFileID, "NEWFACTIONS")) return;
+    }
+    int faction;
+    if (button != 0x102) {
+      for (faction = 1; faction < 8; ++faction) {
+        text_get();
+        strcpy(Players[faction].filename, text_item());
+        strcpy(Players[faction].search_key, text_item());
+      }
+    }
+    for (faction = 1; faction < 8; ++faction) {
       if (button == 0x102) {
         strcpy(Players[faction].filename, "JENN282");
         strcpy(Players[faction].search_key, "JENN282");
@@ -468,99 +468,127 @@ void PickWin::on_button_clicked(int button) {
         read_faction(faction);
       }
     }
-    goto build_list;
+    listBox_.init(&list_area_rect_, 0);
+    listBox_.field_2C_ = 0;
+    listBox_.clear_selection_index();
+    listBox_.Dialog::field_B4_ = 0;
+    listBox_.Dialog::field_40_ = 0;
+    listBox_.Dialog::field_48_ = 0x13;
+    listBox_.Dialog::field_44_ = 3;
+    PickWinListAccess::set_win_flags(this, 0x40);
+    for (faction = 1; faction < 8; ++faction) {
+      if (field_5DA0_ != 2 ||
+          is_alive(faction)) {
+        StringTemp[0] = '\0';
+        if (strcmp(Players[faction].filename, "JENN282") != 0) {
+          strcat(StringTemp, Players[faction].formal_name_faction);
+          strcat(StringTemp, "|");
+          strcat(StringTemp, "(");
+          strcat(StringTemp, Players[faction].desc_name_faction);
+          strcat(StringTemp, ")");
+        } else {
+          strcat(StringTemp, label_get(0x462));
+        }
+        listBox_.item(StringTemp, faction);
+      }
+    }
+    listBox_.ListBox::attach(this, listBox_.Dialog::window_x_, listBox_.Dialog::window_y_, 0x80020);
+    listBox_.set_selected_id((field_5DA0_ & 2) ? ConsoleGlobal.faction_id_
+                                               : DefaultPrefs.faction_id);
+    listBox_.set_selection_callback(field_6238_);
+    field_6238_((field_5DA0_ & 2) ? ConsoleGlobal.faction_id_
+                                  : DefaultPrefs.faction_id);
+    redraw();
+    break;
   }
 
-  if (button == 0x103) {
-    release_modal();
-    return;
-  }
-  if (button == 0x108) {
-    const int selected = buttonGroup_.field_84_ == 0x105
+  case 0x108:
+    field_5DA8_ = static_cast<uint32_t>(buttonGroup_.field_84_ == 0x105
         ? static_cast<int>(field_5DB4_)
-        : listBox_.Dialog::get_selected_id();
-    field_5DA8_ = static_cast<uint32_t>(selected);
-    field_5DA4_ = buttonGroup_.field_84_ == 0x105 ? 0 : 0x105;
+        : listBox_.Dialog::get_selected_id());
+    field_5DA4_ = buttonGroup_.field_84_ == 0x105 ? 0x105 : 0;
     release_modal();
-    return;
-  }
-  if (button <= 0) return;
-  if (button < 8) {
-    field_5DA8_ = static_cast<uint32_t>(button);
+    break;
+
+  case 0x103:
+    field_5DA8_ = static_cast<uint32_t>(-1);
     field_5DA4_ = 0;
     release_modal();
-    return;
-  }
-  if (button == 0x104 || button == 0x105) return;
-  if (button < 0x3039) {
-    field_5DA8_ = static_cast<uint32_t>(listBox_.Dialog::get_selected_id());
-    field_5DA4_ = static_cast<uint32_t>(button);
-    release_modal();
-    return;
-  }
+    break;
 
-  {
-    int x = 0, y = 0;
-    get_mouse_pos(&x, &y);
-    client_to_screen(&x, &y);
-    modal.init();
-    const int menu_count = static_cast<int>(field_5DB0_) + 14;
-    for (int menu_item_index = 0; menu_item_index < menu_count; ++menu_item_index) {
-      modal.dialogs().item(faction_menu_items_[menu_item_index], menu_item_index);
+  default:
+    if (button <= 0) break;
+    if (button < 8) {
+      field_5DA8_ = static_cast<uint32_t>(button);
+      field_5DA4_ = 0;
+      release_modal();
+      break;
     }
-    modal.dialogs().item(const_cast<char *>(label_get(0x462)), menu_count);
-    const int chosen = modal.exec(x, y, 0);
-    redraw();
-    if (chosen < 0) return;
-
-    const int faction = button - 0x3038;
-    if (chosen == menu_count) {
-      strcpy(Players[faction].filename, "JENN282");
-      strcpy(Players[faction].search_key, "JENN282");
-    } else {
-      strcpy(Players[faction].filename, faction_files_[chosen]);
-      strcpy(Players[faction].search_key, faction_files_[chosen]);
-      read_faction(faction);
+    if (button == 0x104 || button == 0x105) break;
+    if (button < 0x3039) {
+      field_5DA8_ = static_cast<uint32_t>(listBox_.Dialog::get_selected_id());
+      field_5DA4_ = static_cast<uint32_t>(button);
+      release_modal();
+      break;
     }
-  }
-
-build_list:
-  listBox_.close();
-  static_cast<Dialog &>(listBox_).init(&list_area_rect_, 0);
-  static_cast<Dialog &>(listBox_).field_40_ = 0;
-  static_cast<Dialog &>(listBox_).field_44_ = 3;
-  static_cast<Dialog &>(listBox_).field_48_ = 0x13;
-  static_cast<Dialog &>(listBox_).field_B4_ = 0;
-  listBox_.initialize_picker_state();
-  static_cast<Dialog &>(listBox_).field_20_ &= ~4u;
-
-  for (int faction = 1; faction < 8; ++faction) {
-    if (field_5DA0_ != 2 ||
-        (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1u << faction)) == 0) {
-      StringTemp[0] = '\0';
-      if (strcmp(Players[faction].formal_name_faction, "JENN282") != 0) {
-        strcat(StringTemp, Players[faction].formal_name_faction);
-        strcat(StringTemp, "|");
-        strcat(StringTemp, "(");
-        strcat(StringTemp, Players[faction].desc_name_faction);
-        strcat(StringTemp, ")");
-        strcat(StringTemp, Players[faction].formal_name_faction);
-      } else {
-        strcat(StringTemp, label_get(0x462));
+    {
+      int x, y;
+      get_mouse_pos(&x, &y);
+      client_to_screen(&x, &y);
+      menu.init();
+      int index;
+      for (index = 0; index < static_cast<int>(field_5DB0_) + 14; ++index) {
+        pickwin_item(&menu, faction_menu_items_[index], index);
       }
-      listBox_.item(StringTemp, faction);
-    }
-  }
+      StringTemp[0] = '\0';
+      strcat(StringTemp, label_get(0x462));
+      pickwin_item(&menu, StringTemp, static_cast<int>(field_5DB0_) + 14);
+      const int chosen = menu.exec(x, y, 0);
+      flatButtons10_[button - 0x3039].field_A74_ = 0;
+      flatButtons10_[button - 0x3039].redraw();
+      if (chosen == -1) break;
 
-  const int flags = static_cast<Dialog &>(listBox_).window_x_;
-  const int top = static_cast<Dialog &>(listBox_).window_y_;
-  static_cast<Dialog &>(listBox_).attach(this, flags, top, 0x80020);
-  const int selected = (field_5DA0_ & 2) ? ConsoleGlobal.faction_id_
-                                         : DefaultPrefs.faction_id;
-  listBox_.set_selected_id(selected);
-  listBox_.set_selection_callback(field_6238_);
-  field_6238_(selected);
-  redraw();
+      const int faction = button - 0x3038;
+      if (chosen == static_cast<int>(field_5DB0_) + 14) {
+        strcpy(Players[faction].filename, "JENN282");
+        strcpy(Players[faction].search_key, "JENN282");
+      } else {
+        strcpy(Players[faction].filename, faction_files_[chosen]);
+        strcpy(Players[faction].search_key, faction_files_[chosen]);
+        read_faction(faction);
+      }
+      listBox_.init(&list_area_rect_, 0);
+      listBox_.field_2C_ = 0;
+    listBox_.clear_selection_index();
+      listBox_.Dialog::field_B4_ = 0;
+      listBox_.Dialog::field_40_ = 0;
+      listBox_.Dialog::field_48_ = 0x13;
+      listBox_.Dialog::field_44_ = 3;
+      PickWinListAccess::set_win_flags(this, 0x40);
+      for (int row = 1; row < 8; ++row) {
+        if (field_5DA0_ != 2 ||
+            is_alive(row)) {
+          StringTemp[0] = '\0';
+          if (strcmp(Players[row].filename, "JENN282") != 0) {
+            strcat(StringTemp, Players[row].formal_name_faction);
+            strcat(StringTemp, "|");
+            strcat(StringTemp, "(");
+            strcat(StringTemp, Players[row].desc_name_faction);
+            strcat(StringTemp, ")");
+          } else {
+            strcat(StringTemp, label_get(0x462));
+          }
+          listBox_.item(StringTemp, row);
+        }
+      }
+      listBox_.ListBox::attach(this, listBox_.Dialog::window_x_, listBox_.Dialog::window_y_, 0x80020);
+      listBox_.set_selected_id(faction);
+      listBox_.set_selection_callback(field_6238_);
+      field_6238_(faction);
+      redraw();
+    }
+    break;
+  }
 }
 
 
@@ -601,85 +629,80 @@ int PickWin::on_dialog_item_back_draw(GraphicWin *window, int, int index,
   return 1;
 }
 
+// WORKAROUND(inline): on_redraw takes &sprite5_ into a register before
+// reading its transparent byte through it (0x004898C4, 0x004899AD), the
+// shape of an inline helper that receives the sprite pointer; likely a
+// Sprite header inline drawing with its own transparent index.
+static inline int pickwin_draw_sprite(Sprite *sprite, Buffer *destination, int x, int y) {
+  return sprite->draw(destination, sprite->transparent_index(), x, y);
+}
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00489660 ?on_redraw@PickWin@@QAEXXZ 0x00489660-0x00489AF7
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00489660.cpp"], "reason": "Recover genuine typed PickWin owner behavior and automatic subobject lifetime from pinned native flow and preserved seed; historical identity and restoration obligations retained, no exactness claim."}
 // symbol    ?on_redraw@PickWin@@UAEXXZ
 void PickWin::on_redraw() {
   GraphicWin::fill(9);
-  Buffer &canvas = static_cast<Buffer &>(*this);
-
-  canvas.box_sprite(&frame_rect_, &InterfaceBoxStyles[9]);
-  canvas.box_sprite(&header_panel_rect_, &InterfaceBoxStyles[3]);
-  header_panel_rect_.left = pickwin_geometry_value(
-      static_cast<uint32_t>(header_panel_rect_.left) + 3u);
-  header_panel_rect_.top = pickwin_geometry_value(
-      static_cast<uint32_t>(header_panel_rect_.top) + 3u);
-  header_panel_rect_.right = pickwin_geometry_value(
-      static_cast<uint32_t>(header_panel_rect_.right) - 3u);
-  header_panel_rect_.bottom = pickwin_geometry_value(
-      static_cast<uint32_t>(header_panel_rect_.bottom) - 3u);
-  canvas.box_sprite(&header_panel_rect_, &InterfaceBoxStyles[6]);
-
+  Buffer::box_sprite(&frame_rect_, &InterfaceBoxStyles[9]);
+  Buffer::box_sprite(&header_panel_rect_, &InterfaceBoxStyles[3]);
+  pickwin_expand_rect(&header_panel_rect_, -3, -3);
+  Buffer::box_sprite(&header_panel_rect_, &InterfaceBoxStyles[6]);
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(0x45A));
-  canvas.write_cent_l(StringTemp, &header_panel_rect_, strlen(StringTemp));
-  header_panel_rect_.left = pickwin_geometry_value(
-      static_cast<uint32_t>(header_panel_rect_.left) - 3u);
-  header_panel_rect_.top = pickwin_geometry_value(
-      static_cast<uint32_t>(header_panel_rect_.top) - 3u);
-  header_panel_rect_.right = pickwin_geometry_value(
-      static_cast<uint32_t>(header_panel_rect_.right) + 3u);
-  header_panel_rect_.bottom = pickwin_geometry_value(
-      static_cast<uint32_t>(header_panel_rect_.bottom) + 3u);
+  Buffer::write_cent_l(StringTemp, &header_panel_rect_);
+  pickwin_expand_rect(&header_panel_rect_, 3, 3);
 
-  RECT group = {pickwin_geometry_value(static_cast<uint32_t>(list_area_rect_.left) - 3u),
-                pickwin_geometry_value(static_cast<uint32_t>(list_area_rect_.top) - 3u),
-                pickwin_geometry_value(static_cast<uint32_t>(list_area_rect_.right) + 0x15u),
-                pickwin_geometry_value(static_cast<uint32_t>(list_area_rect_.bottom) + 3u)};
-  canvas.box_sprite(&group, &InterfaceBoxStyles[3]);
+  RECT group;
+  group.left = list_area_rect_.left;
+  group.top = list_area_rect_.top;
+  group.right = list_area_rect_.right + 0x12;
+  group.bottom = list_area_rect_.bottom;
+  pickwin_expand_rect(&group, 3, 3);
+  Buffer::box_sprite(&group, &InterfaceBoxStyles[3]);
 
   int selected = listBox_.Dialog::get_selected_id();
-  int row_left = field_9244_ + 10;
-  int row_bottom = row_left + 0x39;
-  int center_x = pickwin_geometry_value(field_9240_ + field_9248_) / 2;
-  int endpoint_x = pickwin_geometry_value(static_cast<uint32_t>(list_area_rect_.left)
-      - 10u + field_9248_) / 2;
+  int row_y = static_cast<int>(field_9244_) + 10;
+  int line_y = row_y + 0x39;
+  int center_x = (static_cast<int>(field_9240_) + static_cast<int>(field_9248_)) / 2;
+  int list_x = list_area_rect_.left - 10;
+  int join_x = (list_x + static_cast<int>(field_9248_)) / 2;
 
   if (buttonGroup_.field_84_ == 0x105) {
-    canvas.vline(center_x, field_925C_ - 2, row_bottom - 2, 0xE0);
-    canvas.put_pixel(center_x + 1, row_left + 0x38, 0xE0);
-    canvas.hline(center_x + 2, endpoint_x, row_left + 0x39, 0xE0);
-    canvas.vline(endpoint_x, row_left + 2, row_left + 0x70, 0xE0);
+    Buffer::vline(center_x, static_cast<int>(field_925C_) - 2, line_y - 2, 0xE0);
+    Buffer::put_pixel(center_x + 1, line_y - 1, 0xE0);
+    Buffer::hline(center_x + 2, join_x, line_y, 0xE0);
+    Buffer::vline(join_x, row_y + 2, row_y + 0x70, 0xE0);
     for (int row = 0; row < 7; ++row) {
-      int y = row_left + row * 0x13;
-      canvas.put_pixel(endpoint_x + 1, y + (row == 0 ? 1 : row == 6 ? -1 : 0), 0xE0);
-      canvas.hline(endpoint_x + 2, pickwin_geometry_value(static_cast<uint32_t>(list_area_rect_.left) - 10u), y, 0xE0);
-      sprite5_.draw(&canvas, sprite5_.transparent_index(),
-                    pickwin_geometry_value(static_cast<uint32_t>(list_area_rect_.left) - 10u), y - 6);
+      int y = row_y + row * 0x13;
+      Buffer::put_pixel(join_x + 1, y + (row != 0 ? -(row == 6) : 1), 0xE0);
+      Buffer::hline(join_x + 2, list_x, y, 0xE0);
+      pickwin_draw_sprite(&sprite5_, static_cast<Buffer *>(this), list_x, y - 6);
     }
   } else if (selected > 0 && selected < 8) {
-    int row = selected - 1;
-    int y = row * 0x13 + row_left;
-    canvas.hline(field_9248_, endpoint_x - 2, row_left, 0xE0);
-    if (row == 0) {
-      canvas.hline(endpoint_x - 2, endpoint_x + 2, row_left, 0xE0);
+    --selected;
+    int y = row_y + selected * 0x13;
+    Buffer::hline(static_cast<int>(field_9248_), join_x - 2, row_y, 0xE0);
+    if (selected != 0) {
+      Buffer::put_pixel(join_x - 1, row_y + 1, 0xE0);
+      Buffer::put_pixel(join_x + 1, y - 1, 0xE0);
+      Buffer::vline(join_x, row_y + 2, y - 2, 0xE0);
     } else {
-      canvas.put_pixel(endpoint_x - 1, row_left + 1, 0xE0);
-      canvas.put_pixel(endpoint_x + 1, y - 1, 0xE0);
-      canvas.vline(endpoint_x, row_left + 2, y - 2, 0xE0);
+      Buffer::hline(join_x - 2, join_x + 2, row_y, 0xE0);
     }
-    canvas.hline(endpoint_x + 2, pickwin_geometry_value(static_cast<uint32_t>(list_area_rect_.left) - 10u), y, 0xE0);
-    sprite5_.draw(&canvas, sprite5_.transparent_index(),
-                  pickwin_geometry_value(static_cast<uint32_t>(list_area_rect_.left) - 10u), y - 6);
+    Buffer::hline(join_x + 2, list_x, y, 0xE0);
+    pickwin_draw_sprite(&sprite5_, static_cast<Buffer *>(this), list_x, y - 6);
   }
 
   flatButton1_.show(0);
   flatButton2_.show(0);
   flatButton3_.show(0);
-  for (int i = 0; i < 7; ++i) {
-    flatButtons10_[i].show(0);
-  }
+  flatButtons10_[0].show(0);
+  flatButtons10_[1].show(0);
+  flatButtons10_[2].show(0);
+  flatButtons10_[3].show(0);
+  flatButtons10_[4].show(0);
+  flatButtons10_[5].show(0);
+  flatButtons10_[6].show(0);
   listBox_.show(0);
   flatButton4_.show(0);
   flatButton5_.show(0);

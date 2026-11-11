@@ -61,204 +61,161 @@ CouncWin CouncilWindow;
 #include "console.h"     // ConsoleGlobal's local faction id
 #include "netmsg.h"      // NetMsgPrimary
 
+// WORKAROUND(inline): BasePop::item and BasePop::exec(callback) were header
+// inlines (out-of-line copies 0x005A5990 and 0x00558FC0); their expansions
+// spend the /Ob2 budget that leaves on_left_click's first three teardowns
+// calling ~Scroll out of line (0x004250DB, 0x004251DD, 0x00425234).
+static inline int council_pop_item(BasePop *pop, char *text, int index) {
+    return pop->dialogs().Dialogs::item(text, index);
+}
+static inline int council_pop_exec(BasePop *pop, int (__cdecl *callback)()) {
+    return pop->exec(0, callback);
+}
+
 // ORIGINAL: 0x00425050 ?on_left_click@CouncWin@@QAEXHH@Z 0x00425050-0x00425B92;0x00652EC7-0x006530F4 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00425050.cpp", "image:terranx_original.exe:0x00425050", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
 // symbol    ?on_left_click@CouncWin@@UAEXHH@Z
 // TRIED: `Popup popup;` RAII local with the council-vote business logic (Spot::check, treaty/pact gate checks, eligible-faction dialog population loop, popup.exec, network vs single-player branches with parse_says/message_data/NetMsg::pop/ buy_council_vote/diplomacy_ends/vtable slot62) converging on draw_leader+ popup.close(); the `0x4253ca` "reuse a2 as menu selection, skip the dialog" edge case was simplified to a direct jump to draw_leader (goto could not reach the shared merge point without crossing a block's initializations). Diverges at instr #10.
 void CouncWin::on_left_click(int x, int y) {
     Popup popup;
-    int clicked_faction = 0;
-    int selection = 0;
-    if (spot_.check(x, y, &clicked_faction, &selection) < 0) {
-        popup.close();
+    int clicked_faction;
+    int spot_kind;
+    if (spot_.check(x, y, &clicked_faction, &spot_kind) < 0) {
         return;
     }
-
-    const int local_faction = ConsoleGlobal.faction_id_;
-    const int proposal = static_cast<int>(field_A1C_);
-    if (clicked_faction == local_faction || field_A24_ != 0) {
-        draw_leader(clicked_faction);
-        popup.close();
-        return;
+    if (clicked_faction == ConsoleGlobal.faction_id_ || field_A24_ != 0) {
+        goto draw;
     }
-
-    const uint8_t humans = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
-    const uint8_t alive = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8);
-    const uint8_t clicked_bit = static_cast<uint8_t>(1u << clicked_faction);
-    if ((clicked_bit & humans) != 0) {
-        draw_leader(clicked_faction);
-        popup.close();
-        return;
+    {
+    const int clicked_bit = 1 << clicked_faction;
+    int selection;
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & clicked_bit) != 0) {
+        goto draw;
     }
-    if ((clicked_bit & alive) == 0) {
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & clicked_bit) == 0) {
         // Native 0x4253CA reloads the original y argument, not Spot's type
         // output, before the shared selection/sentinel path.
         selection = y;
-        goto vote_selection_ready;
+        goto check_selection;
     }
-
-    if ((PlayersData[clicked_faction].diplo_treaties[local_faction] & 0x30) != 0) {
-        GenderDefault = Players[clicked_faction].is_leader_female;
-        PluralityDefault = 0;
+    if ((PlayersData[clicked_faction].diplo_treaties[ConsoleGlobal.faction_id_] & 0x30) != 0) {
+        parse_set(Players[clicked_faction].is_leader_female, 0);
         parse_says(0, Players[clicked_faction].title_leader, -1, -1);
-        GenderDefault = Players[clicked_faction].is_leader_female;
-        PluralityDefault = 0;
+        parse_set(Players[clicked_faction].is_leader_female, 0);
         parse_says(1, Players[clicked_faction].name_leader, -1, -1);
         X_pop("BUYNOTALK", pop_wait);
-        popup.close();
         return;
     }
-
-    if (PlayersData[clicked_faction].unk_29[proposal] != 0 &&
-        PlayersData[clicked_faction].unk_30[proposal] == local_faction) {
-        popup.close();
+    if (PlayersData[clicked_faction].unk_29[field_A1C_] != 0 &&
+        PlayersData[clicked_faction].unk_30[field_A1C_] == ConsoleGlobal.faction_id_) {
         return;
     }
-
     // Native 0x42523E tests the proposal (field_A1C_), not the clicked
     // faction: only the governor election (proposal 0) offers candidates.
     if (field_A1C_ != 0) {
         selection = -1 - X_pop("WHICHVOTE", pop_wait);
         if (selection == 0) {
-            draw_leader(clicked_faction);
-            popup.close();
-            return;
+            goto draw;
         }
     } else {
         popup.start(PopupStartCaption, "COUNCILVOTEGOV", -1, nullptr,
                     0x200000, nullptr);
-        Dialogs &options = popup.dialogs();
         for (int faction = 1; faction < MaxPlayerNum; ++faction) {
-            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &
-                 (1u << faction)) == 0 || !eligible(faction)) {
-                continue;
-            }
-            StringTemp[0] = '\0';
-            GenderDefault = Players[faction].is_leader_female;
-            PluralityDefault = 0;
-            strcat(StringTemp, Players[faction].title_leader);
-            strcat(StringTemp, " ");
-            GenderDefault = Players[faction].is_leader_female;
-            PluralityDefault = 0;
-            strcat(StringTemp, Players[faction].name_leader);
-            options.item(StringTemp, faction);
-            // Native 0x425324 preselects the local faction's own entry.
-            if (faction == ConsoleGlobal.faction_id_) {
-                popup.set_value(faction);
+            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << faction)) != 0 &&
+                eligible(faction)) {
+                StringTemp[0] = '\0';
+                parse_set(Players[faction].is_leader_female, 0);
+                strcat(StringTemp, Players[faction].title_leader);
+                strcat(StringTemp, " ");
+                parse_set(Players[faction].is_leader_female, 0);
+                strcat(StringTemp, Players[faction].name_leader);
+                council_pop_item(&popup, StringTemp, faction);
+                // Native 0x425324 preselects the local faction's own entry.
+                if (faction == ConsoleGlobal.faction_id_) {
+                    popup.set_value(faction);
+                }
             }
         }
-        selection = popup.exec(0, pop_wait);
-        // Only the government popup has native signed-negative cancellation.
+        selection = council_pop_exec(&popup, pop_wait);
         if (selection < 0) {
-            draw_leader(clicked_faction);
-            popup.close();
-            return;
+            goto draw;
         }
     }
 
-vote_selection_ready:
+check_selection:
     // Native 0x425362 applies this sentinel to all three selection paths.
     if (selection == 0x270f) {
-        draw_leader(clicked_faction);
-        popup.close();
-        return;
+        goto draw;
     }
-    if (!IsMultiplayerNet) {
-        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & clicked_bit) == 0) {
-            GenderDefault = Players[clicked_faction].is_leader_female;
-            PluralityDefault = 0;
+    if (IsMultiplayerNet) {
+        field_A40_ = 0;
+        const int status = GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
+        const int alive = GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
+        if ((field_A44_ & alive & status) != status) {
+            NetMsgPrimary.pop("COUNCILVOTEGOV", 0x1388, 1, nullptr);
+            field_A40_ = 1;
+            goto draw;
+        }
+        if ((clicked_bit & status) != 0) {
+            CommlinkPending = 1;
+            CommlinkFaction = clicked_faction;
+            message_data(0x1501, clicked_faction, ConsoleGlobal.faction_id_,
+                         clicked_faction, 0, 0);
+            parse_set(Players[clicked_faction].is_leader_female, 0);
             parse_says(0, Players[clicked_faction].title_leader, -1, -1);
-            GenderDefault = Players[clicked_faction].is_leader_female;
-            PluralityDefault = 0;
+            parse_set(Players[clicked_faction].is_leader_female, 0);
             parse_says(1, Players[clicked_faction].name_leader, -1, -1);
-            GenderDefault = Players[clicked_faction].noun_gender;
-            PluralityDefault = Players[clicked_faction].is_noun_plural;
+            parse_num(0, clicked_faction);
+            NetMsgPrimary.pop("DIPLOCOMM", 0x1388, 0, nullptr);
+            field_A40_ = 1;
+            goto draw;
+        }
+        if ((clicked_bit & alive) == 0) {
+            parse_set(Players[clicked_faction].is_leader_female, 0);
+            parse_says(0, Players[clicked_faction].title_leader, -1, -1);
+            parse_set(Players[clicked_faction].is_leader_female, 0);
+            parse_says(1, Players[clicked_faction].name_leader, -1, -1);
+            parse_set(Players[clicked_faction].noun_gender,
+                      Players[clicked_faction].is_noun_plural);
             parse_says(2, Players[clicked_faction].noun_faction, -1, -1);
             NetMsgPrimary.pop("ELIMINATED", 0x1388, 0, nullptr);
-            popup.close();
+            field_A40_ = 1;
             return;
         }
-        // Native reloads the current faction after the vote-selection prompt
-        // before entering the purchase path (0x4255AE).
-        buy_council_vote(ConsoleGlobal.faction_id_, clicked_faction, proposal,
-                         selection);
-        redraw();
-        draw_leader(clicked_faction);
-        popup.close();
-        return;
-    }
-
-    field_A40_ = 0;
-    const uint8_t current_status = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
-    const uint8_t current_alive = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8);
-    if ((field_A44_ & current_alive & current_status) != current_status) {
-        NetMsgPrimary.pop("COUNCILVOTEGOV", 0x1388, 1, nullptr);
-        field_A40_ = 1;
-        draw_leader(clicked_faction);
-        popup.close();
-        return;
-    }
-
-    const uint8_t live_clicked = static_cast<uint8_t>(1u << clicked_faction);
-    if ((live_clicked & current_status) != 0) {
-        CommlinkPending = 1;
-        CommlinkFaction = clicked_faction;
-        // The modal/parser path may have changed the local faction. The image
-        // reloads it at 0x4253D7 for this network message.
-        message_data(0x1501, clicked_faction, clicked_faction,
-                     ConsoleGlobal.faction_id_, 0, 0);
-        GenderDefault = Players[clicked_faction].is_leader_female;
-        PluralityDefault = 0;
-        parse_says(0, Players[clicked_faction].title_leader, -1, -1);
-        GenderDefault = Players[clicked_faction].is_leader_female;
-        PluralityDefault = 0;
-        parse_says(1, Players[clicked_faction].name_leader, -1, -1);
-        parse_num(0, clicked_faction);
-        NetMsgPrimary.pop("DIPLOCOMM", 0x1388, 0, nullptr);
-        field_A40_ = 1;
-        draw_leader(clicked_faction);
-        popup.close();
-        return;
-    }
-    if ((live_clicked & current_alive) == 0) {
-        GenderDefault = Players[clicked_faction].is_leader_female;
-        PluralityDefault = 0;
-        parse_says(0, Players[clicked_faction].title_leader, -1, -1);
-        GenderDefault = Players[clicked_faction].is_leader_female;
-        PluralityDefault = 0;
-        parse_says(1, Players[clicked_faction].name_leader, -1, -1);
-        GenderDefault = Players[clicked_faction].noun_gender;
-        PluralityDefault = Players[clicked_faction].is_noun_plural;
-        parse_says(2, Players[clicked_faction].noun_faction, -1, -1);
-        NetMsgPrimary.pop("ELIMINATED", 0x1388, 0, nullptr);
-        field_A40_ = 1;
-        popup.close();
-        return;
-    }
-
-    if (NetDaemonNet.open_channel(ConsoleGlobal.faction_id_, clicked_faction) == 0) {
-        // These are distinct native reloads: open_channel at 0x4255AE,
-        // purchase at 0x4256EC, and diplomacy_ends at 0x4256FA. Each call can
-        // run callbacks, so the value is intentionally not shared.
-        buy_council_vote(ConsoleGlobal.faction_id_, clicked_faction, proposal,
-                         selection);
+        if (NetDaemonNet.open_channel(ConsoleGlobal.faction_id_, clicked_faction)) {
+            parse_set(Players[clicked_faction].is_leader_female, 0);
+            parse_says(0, Players[clicked_faction].title_leader, -1, -1);
+            parse_set(Players[clicked_faction].is_leader_female, 0);
+            parse_says(1, Players[clicked_faction].name_leader, -1, -1);
+            NetMsgPrimary.pop("NOCHANNEL", 0x1388, 0, nullptr);
+            field_A40_ = 1;
+            return;
+        }
+        buy_council_vote(ConsoleGlobal.faction_id_, clicked_faction,
+                         field_A1C_, selection);
         diplomacy_ends(ConsoleGlobal.faction_id_, clicked_faction);
         redraw();
         field_A40_ = 1;
-        draw_leader(clicked_faction);
-        popup.close();
-        return;
+    } else {
+        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & clicked_bit) == 0) {
+            parse_set(Players[clicked_faction].is_leader_female, 0);
+            parse_says(0, Players[clicked_faction].title_leader, -1, -1);
+            parse_set(Players[clicked_faction].is_leader_female, 0);
+            parse_says(1, Players[clicked_faction].name_leader, -1, -1);
+            parse_set(Players[clicked_faction].noun_gender,
+                      Players[clicked_faction].is_noun_plural);
+            parse_says(2, Players[clicked_faction].noun_faction, -1, -1);
+            NetMsgPrimary.pop("ELIMINATED", 0x1388, 0, nullptr);
+            return;
+        }
+        buy_council_vote(ConsoleGlobal.faction_id_, clicked_faction,
+                         field_A1C_, selection);
+        redraw();
+    }
     }
 
-    GenderDefault = Players[clicked_faction].is_leader_female;
-    PluralityDefault = 0;
-    parse_says(0, Players[clicked_faction].title_leader, -1, -1);
-    GenderDefault = Players[clicked_faction].is_leader_female;
-    PluralityDefault = 0;
-    parse_says(1, Players[clicked_faction].name_leader, -1, -1);
-    NetMsgPrimary.pop("NOCHANNEL", 0x1388, 0, nullptr);
-    field_A40_ = 1;
-    popup.close();
+draw:
+    draw_leader(clicked_faction);
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.

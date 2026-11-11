@@ -116,30 +116,26 @@ void PickTech::on_mouse_move(int x, int y) {
 // symbol    ?draw_item@PickTech@@QAEHHH@Z
 // TRIED: a `Rect4{left,top,right,bottom}` local (matches the RECT the original builds on the stack field-by-field) and the `-(int)(a2!=0)&2` neg/sbb/and idiom for the sprite-params table offset, per the lever for a `guard ? obj : 0` shape. Landed at 0.71 similarity: the original keeps a stack frame (`push ebp; mov ebp,esp`) that this body's simpler local set let VC6 omit, the same shape seen on 0x00458DC0/0x004863F0-sized leaf-ish functions this batch.
 int PickTech::draw_item(int item, int selected) {
-    if (item_count_ <= item) return 0;
+    if (item >= item_count_) return 0;
 
     RECT rect;
+    rect.right = cell_width_;
+    rect.bottom = cell_height_;
     rect.left = (item % column_count_) * (cell_width_ + 1) + 1;
-    rect.right = cell_width_ + rect.left;
     rect.top = (item / column_count_) * (cell_height_ + 1) + 0x1E;
-    rect.bottom = cell_height_ + rect.top;
+    rect.right += rect.left;
+    rect.bottom += rect.top;
 
-    Buffer *const canvas = static_cast<Buffer *>(this);
-    canvas->set_clip(&rect);
+    Buffer::set_clip(&rect);
     rect.right -= 3;
     rect.bottom -= 3;
-    if (rect.left < 4) rect.left = 3;
-    const int max_right = canvas->pixel_width() - 3;
-    if (max_right <= rect.right) rect.right = max_right;
-    if (rect.top < 0x1E) rect.top = 0x1D;
-    const int min_bottom = -3 + canvas->pixel_height();
-    if (min_bottom <= rect.bottom) rect.bottom = min_bottom;
-
-    const unsigned int style = selected != 0 ? 2u : 0u;
-    canvas->box_sprite(&rect, &InterfaceBoxStyles[style]);
-    const int tech_id = technology_ids_[item];
-    const int result = draw_tech(tech_id, &rect, selected);
-    canvas->restore_clip();
+    rect.left = max(rect.left, 3);
+    rect.right = min(rect.right, Buffer::pixel_width() - 3);
+    rect.top = max(rect.top, 0x1D);
+    rect.bottom = min(rect.bottom, Buffer::pixel_height() - 3);
+    Buffer::box_sprite(&rect, &InterfaceBoxStyles[selected ? 2 : 0]);
+    const int result = draw_tech(technology_ids_[item], &rect, selected);
+    Buffer::restore_clip();
     return result;
 }
 
@@ -232,8 +228,8 @@ int PickTech::on_key_click(int character, int key) {
     case 0x48:
     case 0x70:
     case 0x1000D: {
-        if (previous < 0 || previous >= item_count_) {
-            if (previous >= 0) draw_item(previous, 0);
+        if (selected_index_ < 0 || selected_index_ >= item_count_) {
+            if (selected_index_ >= 0) draw_item(selected_index_, 0);
             selected_index_ = 0;
             draw_item(0, 1);
             on_update();
@@ -258,14 +254,12 @@ int PickTech::on_key_click(int character, int key) {
 
     int selected = column_count_ * row + column;
     if (previous < 0) selected_index_ = 0;
-    if (character != 0 && item_count_ > 0) {
+    if (character != 0) {
         for (i = 0; i < item_count_; ++i) {
+            const int tech = technology_ids_[i];
             StringTemp[0] = '\0';
-            say_tech(StringTemp, technology_ids_[i], 0);
-            const int upper_character = toupper(character);
-            const signed char first_character =
-                static_cast<signed char>(StringTemp[0]);
-            if (upper_character == first_character) {
+            say_tech(StringTemp, tech, 0);
+            if (toupper(character) == StringTemp[0]) {
                 selected = i;
                 break;
             }
