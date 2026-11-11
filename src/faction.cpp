@@ -15,6 +15,8 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+#define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h
+#define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
 #include "stdafx.h"
 #include "worldwin.h"
 #include "general.h"
@@ -107,19 +109,6 @@ void __cdecl veh_kill(int vehicle);
 int __cdecl veh_find(int x, int y, int faction, int exclude);
 extern int DiploScratchFA98;  // Diplomacy producer storage defined below.
 
-// WORKAROUND(inline): the image expands Popup::set_picture (0x00559000) at
-// these call sites - the branchless caller-picture select (`neg/sbb/not/and`)
-// with the incoming picture register reused as SpriteBox::sprite's argument -
-// while popup.cpp keeps that body out of line. Until popup.h declares it
-// `MEASURED inline`, this twin carries the same body for the expanded sites.
-static inline int popup_set_picture(Popup &popup, Sprite *picture, int mode, char *text) {
-    if (!popup.picture_enabled()) {
-        popup.set_caller_picture(picture);
-    } else {
-        popup.set_caller_picture(0);
-    }
-    return popup.dialogs().sprite(picture, text, mode);
-}
 
 // ORIGINAL: 0x0053EB50 ?buy_council_vote@@YAXHHHH@Z 0x0053EB50-0x00540193;0x0065E75A-0x0065EB33
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned53EB50..540193 and65E75A..65EB33; git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0053eb50.cpp", "Native EDI=OTHER and EBX=FACTION; peer vote query precedes OTHER query; technology valuation rereads turn after every call; promised gift and treaty state reload after modal/parser callbacks. Popup teardown is ordinary lexical destruction, without duplicate close.", "RulesTechnology.name is the heap string address returned by Strings::put, not an ordinal; parse_say takes that address through its native32-bit integer ABI. Dialogue labels verified against bounded original strings and owned as C++ literals.", "recovery/tasks/interface-contract-report-closure.json; recovery/tests/test_council_vote_purchase.py actual-source corruption controls"], "reason": "Recover complete council vote purchasing in its genuine faction owner, including the custom modal negotiation missing from the retained seed. Use lexical Popup and source-owned labels, actual player/council/network storage and calls; preserve original spans, retained seed and all historical obligations. This is not matching or game acceptance."}
@@ -391,7 +380,7 @@ void __cdecl buy_council_vote(int faction, int other, int proposal, int choice) 
             }
             popup.start(PopupStartCaption, StringTemp, -1, nullptr,
                         0x100000, nullptr);
-            popup_set_picture(popup, FactionDiplomacyPortraits[other], 0, nullptr);
+            popup.set_picture(FactionDiplomacyPortraits[other], 0, nullptr);
             if (X_text_open(ScriptPopupFile, "BUYVOTEMENU") != 0) {
                 return;
             }
@@ -3064,7 +3053,7 @@ int __cdecl wants_to_speak(int faction_id, int other_faction_id) {
                 }
                 popup.start(PopupStartCaption, "COMM", -1, nullptr, 0, nullptr);
                 Sprite *portrait = FactionDiplomacyPortraits[other_faction_id];
-                popup_set_picture(popup, portrait, 0, nullptr);
+                popup.set_picture(portrait, 0, nullptr);
                 const int selected = popup.exec(0, pop_wait);
                 if (selected > 1) {
                     report_intel(other_faction_id);
@@ -3085,6 +3074,9 @@ int __cdecl wants_to_speak(int faction_id, int other_faction_id) {
     }
     return DiplomacyContactResult;
 }
+
+// Defined before call_off_vendetta below.
+static void call_off_vendetta_budget_probe(int x);
 
 // ORIGINAL: 0x0053D360 ?introduce@@YAXHH@Z 0x0053D360-0x0053DCB9;0x0065E53A-0x0065E622 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0053d360.cpp", "image:terranx_original.exe:0x0053D360"], "reason": "Recover the genuine faction contact/introduction owner using Popup lifetime, typed Player/PlayerData, real diplomacy state and portrait storage; native guards and callee order correct retained seed contradictions."}
@@ -3222,6 +3214,16 @@ void __cdecl introduce(int faction_id, int other_faction_id) {
             set_treaty(faction_id, other_faction_id, 0x4000, 1);
         }
     }
+    // WORKAROUND(inline): dead /Ob2 budget probes (pattern 164). ~Dialogs is
+    // a header inline (dialogs.h) that larger callers in this unit expand,
+    // but the image calls its copy (0x0053DAEB) here while still expanding
+    // both ~StringList; the original's spending in introduce is unidentified
+    // (has_treaty spellings and faction_parse_leader_fields do not move it).
+    // Seven to nine probes reproduce the image.
+    call_off_vendetta_budget_probe(0); call_off_vendetta_budget_probe(0);
+    call_off_vendetta_budget_probe(0); call_off_vendetta_budget_probe(0);
+    call_off_vendetta_budget_probe(0); call_off_vendetta_budget_probe(0);
+    call_off_vendetta_budget_probe(0); call_off_vendetta_budget_probe(0);
 }
 
 
@@ -3324,11 +3326,9 @@ static void say_faction_noun(int slot, int faction) {
 }
 
 // WORKAROUND(inline): dead /Ob2 budget probe (pattern 164). Called with 0 it
-// folds away, emitting nothing, but spends the budget the image spends before
-// call_off_vendetta's end-of-function teardown, whose ~Scroll it calls out of
-// line (0x54C48A) while the three refusal teardowns before it expand ~Scroll.
-// The original's spending there is unidentified; a net_* style helper for the
-// TREATYON/enemies_treaty tail overshoots.
+// folds away, emitting nothing, but still spends /Ob2 budget. Only introduce
+// uses it now: call_off_vendetta and diplomacy_menu reach the image's
+// teardown depth through the restored Popup/BasePop wrapper calls.
 static void call_off_vendetta_budget_probe(int x) {
     if (x == 1) x = 11;
     if (x == 2) x = 12;
@@ -3356,8 +3356,8 @@ void read_diplomacy_menu_line() {
 void __cdecl call_off_vendetta(int faction_id, int faction_id_with) {
     Popup popup;
     PopupDialogFactionID = faction_id_with;
-    popup.start(PopupStartCaption, "CALLOFF", -1, nullptr, 0x100042, 0);
-    popup_set_picture(popup, FactionDiplomacyPortraits[faction_id_with], faction_id_with, nullptr);
+    popup.start("CALLOFF", 0x100042);
+    popup.set_picture(FactionDiplomacyPortraits[faction_id_with], faction_id_with, nullptr);
 
     int available = 0;
     for (int candidate = 1; candidate < MaxPlayerNum; ++candidate) {
@@ -3373,10 +3373,10 @@ void __cdecl call_off_vendetta(int faction_id, int faction_id_with) {
         StringTemp[0] = 0;
         parse_string(TextBufferGetPtr, StringTemp);
         ++available;
-        popup.dialogs().item(StringTemp, candidate);
+        popup.item(StringTemp, candidate);
     }
     if (available == 0) return;
-    const int chosen = popup.exec(0, pop_wait);
+    const int chosen = popup.exec(pop_wait);
     if (chosen < 0) return;
 
     parse_set(Players[chosen].is_leader_female, 0);
@@ -3407,7 +3407,6 @@ void __cdecl call_off_vendetta(int faction_id, int faction_id_with) {
                      FactionDiplomacyPortraits[faction_id_with], nullptr);
         return;
     }
-    call_off_vendetta_budget_probe(0);  // WORKAROUND(inline): see the probe
     X_pops("CALLEDOFF", 0x100000,
                  FactionDiplomacyPortraits[faction_id_with], nullptr);
     if (IsMultiplayerNet != 0) {
@@ -3436,40 +3435,36 @@ int __cdecl diplomacy_menu(int faction_id, int faction_id_with) {
     // expanding the MEASURED header body.
     void (Popup::*const start5)(char *, const char *, int, char *, int) = &Popup::start;
     (popup.*start5)(PopupStartCaption, "DIPLO", -1, nullptr, 0x100000);
-    popup_set_picture(popup, FactionDiplomacyPortraits[faction_id_with], 0, nullptr);
+    popup.set_picture(FactionDiplomacyPortraits[faction_id_with], 0, nullptr);
     if (X_text_open(ScriptPopupFile, "DIPLOMENU") != 0) return 0;
 
     read_diplomacy_menu_line();
-    popup.dialogs().item(StringTemp, 0);
+    popup.item(StringTemp, 0);
     read_diplomacy_menu_line();
-    if (DiploScratchFAD0 != 0) popup.dialogs().item(StringTemp, 1);
+    if (DiploScratchFAD0 != 0) popup.item(StringTemp, 1);
     read_diplomacy_menu_line();
-    if (DiploScratchFAD4 == 0) popup.dialogs().item(StringTemp, 2);
+    if (DiploScratchFAD4 == 0) popup.item(StringTemp, 2);
     read_diplomacy_menu_line();
-    if (DiploScratchFAD4 != 0) popup.dialogs().item(StringTemp, 2);
+    if (DiploScratchFAD4 != 0) popup.item(StringTemp, 2);
     read_diplomacy_menu_line();
     if (IsMultiplayerNet == 0 && DiploScratchFA94 > 0)
-        popup.dialogs().item(StringTemp, 5);
+        popup.item(StringTemp, 5);
     read_diplomacy_menu_line();
     if (IsMultiplayerNet == 0 && DiploScratchF7DC > 0)
-        popup.dialogs().item(StringTemp, 6);
+        popup.item(StringTemp, 6);
     read_diplomacy_menu_line();
     if (can_call_council(faction_id, 0) != 0 &&
         (Players[faction_id].rule_flags & 0x80) == 0 &&
         (Players[faction_id_with].rule_flags & 0x80) == 0)
-        popup.dialogs().item(StringTemp, 7);
+        popup.item(StringTemp, 7);
     read_diplomacy_menu_line();
     if (has_treaty(faction_id_with, faction_id, 1) != 0)
-        popup.dialogs().item(StringTemp, 3);
+        popup.item(StringTemp, 3);
     read_diplomacy_menu_line();
     if (has_treaty(faction_id, faction_id_with, 7) != 0)
-        popup.dialogs().item(StringTemp, 4);
-    // WORKAROUND(inline): dead /Ob2 budget probe (pattern 164). With the
-    // five-argument start out of line the image still keeps the teardown one
-    // inline level shallower; the original's spending here is unidentified.
-    call_off_vendetta_budget_probe(0);
+        popup.item(StringTemp, 4);
     text_close();
-    return popup.exec(0, pop_wait);
+    return popup.exec(pop_wait);
 }
 
 /*
@@ -4166,7 +4161,7 @@ void __cdecl make_gift(int giver, int receiver) {
 
     if (mode == 5) {
         popup.start(PopupStartCaption, "OFFERENERGY", -1, nullptr, 0x100000);
-        popup_set_picture(popup, FactionDiplomacyPortraits[receiver], 0, nullptr);
+        popup.set_picture(FactionDiplomacyPortraits[receiver], 0, nullptr);
 
         int offered_energy = PlayersData[giver].energy_reserves * 2;
         do {
@@ -5058,7 +5053,7 @@ void __cdecl battle_plans(int faction_a, int faction_b) {
         parse_says(1, Players[faction_a].name_leader, -1, -1);
 
         popup.start(PopupStartCaption, BattlePlanLabel, -1, 0, 0x100042, 0);
-        popup_set_picture(popup, FactionDiplomacyPortraits[faction_b], faction_b, 0);
+        popup.set_picture(FactionDiplomacyPortraits[faction_b], faction_b, 0);
 
         int count = 0;
         for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
@@ -6476,38 +6471,38 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
     parse_num(0, PlayersData[faction_id].loan_balance[faction_id_with]);
     diplomacy_caption(faction_id, faction_id_with);
 
-    popup.start(PopupStartCaption, "PROPOSAL", -1, nullptr, 0x100000, 0);
-    popup_set_picture(popup, FactionDiplomacyPortraits[faction_id_with], 0, nullptr);
+    popup.start("PROPOSAL", 0x100000);
+    popup.set_picture(FactionDiplomacyPortraits[faction_id_with], 0, nullptr);
     if (X_text_open(ScriptPopupFile, "PROPOSALMENU") != 0) return 0;
 
     text_get();
     StringTemp[0] = 0;
     parse_string(TextBufferGetPtr, StringTemp);
-    popup.dialogs().item(StringTemp, 0);
+    popup.item(StringTemp, 0);
 
     text_get();
     StringTemp[0] = 0;
     parse_string(TextBufferGetPtr, StringTemp);
-    popup.dialogs().item(StringTemp, 1);
+    popup.item(StringTemp, 1);
 
     text_get();
     StringTemp[0] = 0;
     parse_string(TextBufferGetPtr, StringTemp);
     if (has_treaty(faction_id, faction_id_with, 2u) != 0 &&
         has_treaty(faction_id, faction_id_with, 1u) == 0)
-        popup.dialogs().item(StringTemp, 2);
+        popup.item(StringTemp, 2);
 
     text_get();
     StringTemp[0] = 0;
     parse_string(TextBufferGetPtr, StringTemp);
     if (has_treaty(faction_id, faction_id_with, 2u) == 0)
-        popup.dialogs().item(StringTemp, 3);
+        popup.item(StringTemp, 3);
 
     text_get();
     StringTemp[0] = 0;
     parse_string(TextBufferGetPtr, StringTemp);
     if ((GameDataStateStorage.fields_.game_rules_ & 0x02000000u) == 0)
-        popup.dialogs().item(StringTemp, 4);
+        popup.item(StringTemp, 4);
 
     text_get();
     StringTemp[0] = 0;
@@ -6517,12 +6512,12 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
     StringTemp[0] = 0;
     parse_string(TextBufferGetPtr, StringTemp);
     if (bases_without_facility != 0)
-        popup.dialogs().item(StringTemp, 13);
+        popup.item(StringTemp, 13);
 
     text_get();
     StringTemp[0] = 0;
     parse_string(TextBufferGetPtr, StringTemp);
-    popup.dialogs().item(StringTemp, 6);
+    popup.item(StringTemp, 6);
 
     text_get();
     StringTemp[0] = 0;
@@ -6531,7 +6526,7 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
         PlayersData[faction_id].loan_balance[faction_id_with];
     if (offered_value != 0 &&
         offered_value <= PlayersData[faction_id].energy_reserves)
-        popup.dialogs().item(StringTemp, 11);
+        popup.item(StringTemp, 11);
 
     text_get();
     StringTemp[0] = 0;
@@ -6541,21 +6536,20 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
     StringTemp[0] = 0;
     parse_string(TextBufferGetPtr, StringTemp);
     if (PlayersData[faction_id_with].current_num_bases != 0)
-        popup.dialogs().item(StringTemp, 8);
+        popup.item(StringTemp, 8);
 
     text_get();
     StringTemp[0] = 0;
     parse_string(TextBufferGetPtr, StringTemp);
     if (PlayersData[faction_id].current_num_bases > 1 &&
         eligible_other_factions != 0 && IsMultiplayerNet == 0)
-        popup.dialogs().item(StringTemp, 9);
+        popup.item(StringTemp, 9);
 
-    DiploScratchFA34 = popup.exec(0, pop_wait);
+    DiploScratchFA34 = popup.exec(pop_wait);
 
     if (DiploScratchFA34 == 8) {
-        popup.start(PopupStartCaption, "PROPOSEATTACK", -1, nullptr,
-                    0x100040, 0);
-        popup_set_picture(popup, FactionDiplomacyPortraits[faction_id_with], 0, nullptr);
+        popup.start("PROPOSEATTACK", 0x100040);
+        popup.set_picture(FactionDiplomacyPortraits[faction_id_with], 0, nullptr);
 
         if (X_text_open(ScriptPopupFile, "ATTACKSTRING") == 0) {
             text_get();
@@ -6579,11 +6573,11 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
                     parse_says(2, Players[candidate].noun_faction, -1, -1);
                     StringTemp[0] = 0;
                     parse_string(TextBufferGetPtr, StringTemp);
-                    popup.dialogs().item(StringTemp, candidate);
+                    popup.item(StringTemp, candidate);
                 }
             }
 
-            DiploScratchFA5C = popup.exec(0, pop_wait);
+            DiploScratchFA5C = popup.exec(pop_wait);
             if (DiploScratchFA5C >= 0) {
                 // The original reuses the completed loop index8 here, reading
                 // other.treaties[8], which is this declared agenda word.
@@ -6608,9 +6602,8 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
             goto return_selection;
         }
     } else if (DiploScratchFA34 == 13) {
-        popup.start(PopupStartCaption, "PROPOSECOMMLINK", -1, nullptr,
-                    0x100040, 0);
-        popup_set_picture(popup, FactionDiplomacyPortraits[faction_id_with], 0, nullptr);
+        popup.start("PROPOSECOMMLINK", 0x100040);
+        popup.set_picture(FactionDiplomacyPortraits[faction_id_with], 0, nullptr);
 
         if (X_text_open(ScriptPopupFile, "ATTACKSTRING") != 0) {
             DiploScratchFA34 = 0;
@@ -6638,11 +6631,11 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
                 parse_says(2, Players[candidate].noun_faction, -1, -1);
                 StringTemp[0] = 0;
                 parse_string(TextBufferGetPtr, StringTemp);
-                popup.dialogs().item(StringTemp, candidate);
+                popup.item(StringTemp, candidate);
             }
         }
 
-        DiploScratchFA5C = popup.exec(0, pop_wait);
+        DiploScratchFA5C = popup.exec(pop_wait);
         if (DiploScratchFA5C < 0) {
             DiploScratchFA34 = 0;
             goto return_selection;
@@ -6669,9 +6662,8 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
     } else if (DiploScratchFA34 == 9) {
         PlanWindow.init(nullptr);
         PlanWindow.back_redraw();
-        popup.start(PopupStartCaption, "PROPOSEBASE", -1, nullptr,
-                    0x100040, 0);
-        popup_set_picture(popup, FactionDiplomacyPortraits[faction_id_with], 0, nullptr);
+        popup.start("PROPOSEBASE", 0x100040);
+        popup.set_picture(FactionDiplomacyPortraits[faction_id_with], 0, nullptr);
 
         bool has_base = false;
         int item_id = 0;
@@ -6686,7 +6678,7 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
                         0) {
                         StringTemp[0] = 0;
                         say_base(StringTemp, item_id);
-                        popup.dialogs().item(StringTemp, item_id);
+                        popup.item(StringTemp, item_id);
                         if (!has_base) {
                             has_base = true;
                             PlanWindow.clear_lines();
@@ -6706,7 +6698,7 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
         } else {
             PlanWindow.show(0);
             popup.dialogs().ListBox::set_selection_callback(battle_routine);
-            DiploScratchFA7C = popup.exec(0, pop_wait);
+            DiploScratchFA7C = popup.exec(pop_wait);
             if (DiploScratchFA7C < 0) DiploScratchFA34 = 0;
         }
         PlanWindow.close();
@@ -6727,33 +6719,32 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
         _itoa(DiploScratchFA34 == 1, counter_text, 10);
         strcat(StringTemp, counter_text);
 
-        popup.start(PopupStartCaption, StringTemp, -1, nullptr,
-                    0x100000, 0);
-        popup_set_picture(popup, FactionDiplomacyPortraits[faction_id_with], 0, nullptr);
+        popup.start(StringTemp, 0x100000);
+        popup.set_picture(FactionDiplomacyPortraits[faction_id_with], 0, nullptr);
         if (X_text_open(ScriptPopupFile, "COUNTERMENU") != 0) return 0;
 
         text_get();
         StringTemp[0] = 0;
         parse_string(TextBufferGetPtr, StringTemp);
-        popup.dialogs().item(StringTemp, 0);
+        popup.item(StringTemp, 0);
 
         text_get();
         StringTemp[0] = 0;
         parse_string(TextBufferGetPtr, StringTemp);
         if (DiploScratchFA34 == 6)
-            popup.dialogs().item(StringTemp, 6);
+            popup.item(StringTemp, 6);
 
         text_get();
         StringTemp[0] = 0;
         parse_string(TextBufferGetPtr, StringTemp);
         if (DiploScratchFA34 != 1)
-            popup.dialogs().item(StringTemp, 1);
+            popup.item(StringTemp, 1);
 
         text_get();
         StringTemp[0] = 0;
         parse_string(TextBufferGetPtr, StringTemp);
         if (DiploScratchFA34 != 1)
-            popup.dialogs().item(StringTemp, 2);
+            popup.item(StringTemp, 2);
 
         text_get();
         StringTemp[0] = 0;
@@ -6761,7 +6752,7 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
         if (DiploScratchFA34 != 1 &&
             has_treaty(faction_id, faction_id_with, 1u) ==
                 0)
-            popup.dialogs().item(StringTemp, 3);
+            popup.item(StringTemp, 3);
 
         text_get();
         StringTemp[0] = 0;
@@ -6769,25 +6760,25 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
         if (DiploScratchFA34 != 1 &&
             has_treaty(faction_id, faction_id_with, 1u) !=
                 0)
-            popup.dialogs().item(StringTemp, 3);
+            popup.item(StringTemp, 3);
 
         text_get();
         StringTemp[0] = 0;
         parse_string(TextBufferGetPtr, StringTemp);
         if ((GameDataStateStorage.fields_.game_rules_ & 0x02000000u) == 0)
-            popup.dialogs().item(StringTemp, 4);
+            popup.item(StringTemp, 4);
 
         text_get();
         StringTemp[0] = 0;
         parse_string(TextBufferGetPtr, StringTemp);
         if (DiploScratchFA34 == 1)
-            popup.dialogs().item(StringTemp, 7);
+            popup.item(StringTemp, 7);
 
         text_get();
         StringTemp[0] = 0;
         parse_string(TextBufferGetPtr, StringTemp);
         if (DiploScratchFA34 != 6)
-            popup.dialogs().item(StringTemp, 5);
+            popup.item(StringTemp, 5);
 
         text_get();
         StringTemp[0] = 0;
@@ -6795,15 +6786,14 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
         if (PlayersData[faction_id].current_num_bases > 1 &&
             IsMultiplayerNet == 0 &&
             (DiploScratchFA34 == 9 || DiploScratchFA34 == 1))
-            popup.dialogs().item(StringTemp, 8);
+            popup.item(StringTemp, 8);
 
-        DiplomacyProposalMode = popup.exec(0, pop_wait);
+        DiplomacyProposalMode = popup.exec(pop_wait);
         if (DiplomacyProposalMode == 8) {
             PlanWindow.init(nullptr);
             PlanWindow.back_redraw();
-            popup.start(PopupStartCaption, "COUNTERBASE", -1, nullptr,
-                        0x100040, 0);
-            popup_set_picture(popup, FactionDiplomacyPortraits[faction_id_with], 0, nullptr);
+            popup.start("COUNTERBASE", 0x100040);
+            popup.set_picture(FactionDiplomacyPortraits[faction_id_with], 0, nullptr);
 
             bool has_counter_base = false;
             int counter_item_id = 0;
@@ -6818,7 +6808,7 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
                              facility_bit) == 0) {
                             StringTemp[0] = 0;
                             say_base(StringTemp, counter_item_id);
-                            popup.dialogs().item(StringTemp, counter_item_id);
+                            popup.item(StringTemp, counter_item_id);
                             if (!has_counter_base) {
                                 has_counter_base = true;
                                 PlanWindow.clear_lines();
@@ -6834,7 +6824,7 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
 
             PlanWindow.show(0);
             popup.dialogs().ListBox::set_selection_callback(battle_routine);
-            DiploScratchFA30 = popup.exec(0, pop_wait);
+            DiploScratchFA30 = popup.exec(pop_wait);
             if (DiploScratchFA30 < 0) DiploScratchFA34 = 0;
             PlanWindow.close();
         }
@@ -7297,7 +7287,7 @@ attack_trade_offer:
         if (PlayersData[actor].energy_reserves >= price)
             popup.start(PopupStartCaption, "MAYBEWARPRICE", -1, nullptr,
                         0x100080, 0);
-        popup_set_picture(popup, FactionDiplomacyPortraits[other], 0, nullptr);
+        popup.set_picture(FactionDiplomacyPortraits[other], 0, nullptr);
         offer_shown = 1;
         if (popup.exec(0, pop_wait) > 0) {
             net_energy(actor, -price, other, price, 1);
@@ -8088,7 +8078,7 @@ static int tech_trade_offer_dialog(Popup &popup, int faction_id,
     }
 
     popup.start(PopupStartCaption, StringTemp, -1, 0, 0x100000, 0);
-    popup_set_picture(popup, FactionDiplomacyPortraits[other_faction_id], 0, nullptr);
+    popup.set_picture(FactionDiplomacyPortraits[other_faction_id], 0, nullptr);
     if (X_text_open(ScriptPopupFile, "TRADETECHOPT") == 0) {
         text_get();
         if (DiploScratchF80C >= 0 &&
@@ -8566,9 +8556,8 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
     if (DiploScratchFA34 == 12) {
         // Native Council jump-table cases 1..9 map to these source-owned
         // proposal records and resolution counters.
-        popup.start(PopupStartCaption, "COUNCILMATTER", -1, 0,
-                    0x100040, 0);
-        popup_set_picture(popup, FactionDiplomacyPortraits[other_faction_id], 0, nullptr);
+        popup.start("COUNCILMATTER", 0x100040);
+        popup.set_picture(FactionDiplomacyPortraits[other_faction_id], 0, nullptr);
 
         for (int proposal = 0; proposal < MaxProposalNum; ++proposal) {
             if (!has_tech(Proposal[proposal].preq_tech, faction_id)
@@ -8631,10 +8620,10 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
             strcat(StringTemp, StringTable.get(Proposal[proposal].name));
             strcat(StringTemp, "|");
             strcat(StringTemp, StringTable.get(Proposal[proposal].description));
-            popup.dialogs().item(StringTemp, proposal);
+            popup.item(StringTemp, proposal);
         }
 
-        const int first_choice = popup.exec(0, pop_wait);
+        const int first_choice = popup.exec(pop_wait);
         if (first_choice < 0) return;
         if (first_choice != 0) {
             const int reply = X_pops("COUNCILVOTE", 0x100000,
@@ -8646,9 +8635,8 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
                                  vote_count);
             }
         } else {
-            popup.start(PopupStartCaption, "COUNCILVOTEGOV", -1, 0,
-                        0x100000, 0);
-            popup_set_picture(popup, FactionDiplomacyPortraits[other_faction_id], 0, nullptr);
+            popup.start("COUNCILVOTEGOV", 0x100000);
+            popup.set_picture(FactionDiplomacyPortraits[other_faction_id], 0, nullptr);
             for (int candidate = 1; candidate < MaxPlayerNum; ++candidate) {
                 if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << candidate)) &&
                     eligible(candidate)) {
@@ -8658,13 +8646,13 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
                     strcat(StringTemp, "|");
                     parse_set(Players[candidate].is_leader_female, FALSE);
                     strcat(StringTemp, Players[candidate].name_leader);
-                    popup.dialogs().item(StringTemp, candidate);
+                    popup.item(StringTemp, candidate);
                     if (candidate == faction_id) {
                         popup.set_value(candidate);
                     }
                 }
             }
-            const int governor_choice = popup.exec(0, pop_wait);
+            const int governor_choice = popup.exec(pop_wait);
             if (governor_choice >= 0) {
                 buy_council_vote(faction_id, other_faction_id, 0,
                                  governor_choice);

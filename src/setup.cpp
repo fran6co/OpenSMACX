@@ -20,6 +20,7 @@
 // holds new-game and scenario setup, faction setup/elimination and the social
 // engineering functions through social_select, in image order.
 #define NETDAEMON_RESET_INLINE  // stand-in: see NetDaemon::reset in netdaemon.h
+#define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h
 #include "stdafx.h"
 #include <shellapi.h>
 #include <ctype.h> // yearmotize preserves the original signed-byte CRT arguments.

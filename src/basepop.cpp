@@ -1,5 +1,6 @@
 // The original TU calls StringStruct::remove_all out of line (BasePop::init).
 #define STRINGSTRUCT_REMOVE_ALL_OUT_OF_LINE
+#define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
 /*
  * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
  * Copyright (C) 2013-2021 Brendan Casey
@@ -633,9 +634,8 @@ Purpose: Run the popup modally with no completion callback.
 Return Value: the exec result
 Status: Complete
 */
-int BasePop::exec() {
-    return exec(0, nullptr);
-}
+// body src/basepop.h
+// BODY IN basepop.h, as an in-class `MEASURED` inline member.
 
 
 
@@ -4141,11 +4141,8 @@ Purpose: Run the popup modally with a completion callback.
 Return Value: the exec result
 Status: Complete
 */
-#pragma optimize("y", off)
-int BasePop::exec(int (__cdecl *callback)()) {
-    return exec(0, callback);
-}
-#pragma optimize("", on)
+// body src/basepop.h
+// BODY IN basepop.h, as an in-class `MEASURED` inline member.
 /*
 Purpose: Fetch one item's text from the embedded Dialogs at 0x21D0.
 
@@ -4166,10 +4163,7 @@ Purpose: Fetch one item's text from the embedded Dialogs at 0x21D0.
 Return Value: whatever Dialogs::item returns
 Status: Complete
 */
-#pragma optimize("y", off)
-int BasePop::item(char *text, int index) {
-    return dialogs_.Dialogs::item(text, index);
-}
-#pragma optimize("", on)
+// body src/basepop.h
+// BODY IN basepop.h, as an in-class `MEASURED` inline member.
 // RECOVERY_GENERATED: v1 vtable 0x006698D4 ? ??_7BasePop@@6BWin@@@ 0x00600860
 // RECOVERY_GENERATED: v1 vtable 0x006698CC ? ??_7BasePop@@6BBuffer@@@ 0x00600860

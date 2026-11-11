@@ -82,7 +82,22 @@ class Popup : public BasePop {
   ~Popup() { close(); }
   void close();
   // Provisional name for original 0x00559000; no added virtual slot.
-  int set_picture(Sprite *picture, int mode, char *text);
+  // Header inline in the original; communicate keeps a call to the
+  // out-of-line copy at 0x00559000 (marker in popup.cpp).
+  // WORKAROUND(decl): body visible only under POPUP_WRAPPERS_INLINE; see
+  // the BasePop wrappers in basepop.h.
+#ifdef POPUP_WRAPPERS_INLINE
+  MEASURED int set_picture(Sprite *picture, int mode, char *text) {
+    if (!picture_enabled()) {
+      set_caller_picture(picture);
+    } else {
+      set_caller_picture(0);
+    }
+    return dialogs().sprite(picture, text, mode);
+  }
+#else
+  MEASURED int set_picture(Sprite *picture, int mode, char *text);
+#endif
   virtual void on_adjust_button_width();
   // Six-argument start returns the text-load result, retrying the original
   // file if the alien-script redirect fails.
@@ -94,8 +109,20 @@ class Popup : public BasePop {
   MEASURED void start(char *a1, const char *a2, int a3, char *a4, int a5) {
     start(a1, a2, a3, a4, a5, nullptr);
   }
-  void start(const char *label);
-  void start(const char *label, int value);
+  // Header inlines in the original; probe and communicate keep calls to the
+  // out-of-line copies at 0x005A5990 / 0x00559040 (markers in popup.cpp).
+  // WORKAROUND(decl): bodies visible only under POPUP_WRAPPERS_INLINE.
+#ifdef POPUP_WRAPPERS_INLINE
+  MEASURED void start(const char *label) {
+    start(PopupStartCaption, label, -1, nullptr, 0, nullptr);
+  }
+  MEASURED void start(const char *label, int value) {
+    start(PopupStartCaption, label, -1, nullptr, value, nullptr);
+  }
+#else
+  MEASURED void start(const char *label);
+  MEASURED void start(const char *label, int value);
+#endif
   int on_dialog_back_draw(::GraphicWin *window) override;
   // 0x004050A0. The `H` the catalogue carries between the two parameters is
   // this receiver's `int id`, kept even though nothing in the body reads it.

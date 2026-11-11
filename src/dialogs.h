@@ -105,7 +105,18 @@ class Dialogs : public ListBox,
   // run with a cleared flag - which is what the image's body spends its
   // 0x2B0 bytes on. kind_ is not initialized here; sizeof stays 0xC94.
   Dialogs();
-  virtual ~Dialogs();
+  // Header inline in the original: its out-of-line copy 0x00406910 sits in
+  // the header-inline COMDAT cluster 0x004064D0-0x00406F1A, and battle_plans,
+  // tech_achieved, draw_terraform, control_turn, base_production, go_to,
+  // config_game, crash_landing, order_veh, process_message, ... expand it
+  // (close, ~EditGroup, ~SpriteBox, ~CheckBox, ~RadioButton, ~ListBox) while
+  // smaller callers run out of /Ob2 budget and call the copy. MEASURED emits
+  // the copy the dialogs.cpp marker measures.
+  // WORKAROUND(decl): only TUs defining DIALOGS_DTOR_INLINE see the body;
+  // making it visible everywhere flips ties in pattern-260 canaries
+  // (ReportIf::on_iface_button_clicked) and expands it where the image calls.
+  // Body below the class.
+  MEASURED virtual ~Dialogs();
   void close();  // hides ListBox::close; the image's body is one `ret`
   // Four recovered initialization overloads. Each initializes the same
   // shared virtual Dialog after closing the widget-specific state.
@@ -150,6 +161,15 @@ class Dialogs : public ListBox,
   int32_t kind_;
 
 };
+
+#ifdef DIALOGS_DTOR_INLINE
+// The image's copy keeps an ebp frame (its emitting unit was /Oy-).
+// WORKAROUND(inline): dialogs.cpp hosts the measured copy under /Oy, so the
+// pragma restores that frame; expansions follow each caller's options.
+#pragma optimize("y", off)
+inline Dialogs::~Dialogs() { close(); }
+#pragma optimize("", on)
+#endif
 
 static_assert(sizeof(Dialogs) == 0xC94,
               "Dialogs ends where its vbtable puts Dialog: 0xBA0 + 0xF4");

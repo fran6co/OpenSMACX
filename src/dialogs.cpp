@@ -3,6 +3,7 @@
  *
  * OpenSMACX is free software: you can redistribute it and / or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
  */
+#define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h
 #include "stdafx.h"
 #include "sprite.h"
 #include "dialog.h"
@@ -532,16 +533,18 @@ void Dialogs::on_mousewheel(int a) {
 // symbol    ??1Dialogs@@UAE@XZ
 // kind      game
 // HISTORICAL TRIED (superseded by recovered Dialogs/SpriteBox ownership): same SEH-frame symptom as `Dialog::~Dialog()` (this file's sibling class in dialog.cpp) and FlatButton's own constructor/destructor pair. Not attempted: the comment above claims the frame is "unreachable, omitted per policy", which is UNVERIFIED here (flagged, not trusted - see the note on Dialog::~Dialog for why). This body is the most complex of the three (six member teardowns across five classes chained together); reproducing the frame plus whatever member-destruction reordering it would take is out of scope for this pass's budget.
-#pragma optimize("y", off)
-Dialogs::~Dialogs() {
-    close();
-}
-#pragma optimize("", on)
+// body src/dialogs.h
+// BODY IN dialogs.h, as an in-class `MEASURED` inline member.
 
 Dialogs::Dialogs() { }
 
+// WORKAROUND(noinline): the original ~Dialogs copy (0x00406910) was emitted
+// by a unit that could not see this body and calls it; keep this unit's
+// measured header-inline copy from folding the empty body away.
+#pragma auto_inline(off)
 void Dialogs::close() {
 }
+#pragma auto_inline(on)
 
 /*
 Purpose: Route mouse move by the owned kind_ through qualified widget bases.

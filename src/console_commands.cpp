@@ -24,6 +24,7 @@
 // on_button_clicked literal (0x00688F78) between editor_who and
 // editor_reset_faction. The filename is ours.
 #define JACKALVOICERX_CLEAR_OUT_OF_LINE  // stand-in: register ties in corner_the_market (0x004E2000)
+#define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h
 #include "stdafx.h"
 // Original Console::edit_lock at 0x004E1F40 queries this USER32 export through its import pointer.
 // RECOVERY_IMPORT: v1 __imp__GetKeyState@4 USER32.dll name:GetKeyState

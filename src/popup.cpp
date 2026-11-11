@@ -19,6 +19,7 @@
 // RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x00406BD0-0x00406BF1", "Pinned class constructor ??0Popup@@QAE@XZ at 0x004048A0 stores original class/view table VA 0x6695c8 at 0x004048D9 (mov dword ptr [esi], 0x6695c8); the current genuine owner vftable ??_7Popup@@6BWin@@@ selects generated ??_GPopup@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_EPopup@@UAEPAXI@Z (mode 2).", "Pinned ??_GPopup@@UAEPAXI@Z at 0x00406BD0 calls the source-mapped ??1Popup@@QAE@XZ at 0x00406C00, then tests byte ptr [ebp + 8], 1; je 0x406bea bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/popup.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original Popup scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
 // symbol    ??_GPopup@@UAEPAXI@Z
 // kind      game
+#define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include <shellapi.h>
@@ -226,9 +227,8 @@ Purpose: Start a popup from just a label, defaulting the rest.
 Return Value: n/a
 Status: Complete
 */
-void Popup::start(const char *label) {
-    start(PopupStartCaption, label, -1, nullptr, 0, nullptr);
-}
+// body src/popup.h
+// BODY IN popup.h, as an in-class `MEASURED` inline member.
 
 /*
 Purpose: Start a popup from a label and a value, defaulting the rest.
@@ -242,9 +242,8 @@ Purpose: Start a popup from a label and a value, defaulting the rest.
 Return Value: n/a
 Status: Complete
 */
-void Popup::start(const char *label, int value) {
-    start(PopupStartCaption, label, -1, nullptr, value, nullptr);
-}
+// body src/popup.h
+// BODY IN popup.h, as an in-class `MEASURED` inline member.
 
 
 
@@ -811,14 +810,8 @@ int Popup::on_exec() {
 // Provisional behavior-derived name; original method name is unknown.
 // Historical seed evidence: direct ECX-relative field accesses identify a
 // thiscall receiver, despite the old scaffold's initial free-stdcall guess.
-int Popup::set_picture(Sprite *picture, int mode, char *text) {
-    if (!picture_enabled()) {
-        set_caller_picture(picture);
-    } else {
-        set_caller_picture(0);
-    }
-    return dialogs().sprite(picture, text, mode);
-}
+// body src/popup.h
+// BODY IN popup.h, as an in-class `MEASURED` inline member.
 
 // ORIGINAL: 0x0050B8D0 ?POP3@@YAXPBDHHH@Z 0x0050B8D0-0x0050B8EF BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["original:terranx_original.exe:0x0050B8D0-0x0050B8EF", "source:src/popup.cpp:typed owner", "source:src/popup.h:POP3 overload declarations", "original:0x004055A0 full POP3 target", "seed:retained original source identity 0x0050B8D0"], "reason": "The short POP3 entry is a typed overload that delegates its original arguments to the full POP3 owner."}

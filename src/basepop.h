@@ -313,7 +313,10 @@ class BasePop : public GraphicWin {
   static int set_def_string_font(Font *font1, Font *font2, Font *font3,
                                  Font *font4);
   uint32_t read_check();
-  int item(char *text, int index);
+  // Header inline in the original (defined below the class): callers expand
+  // it while the budget lasts; faction.cpp's communicate and probe.cpp's
+  // probe keep calls to the out-of-line copy at 0x00558FE0.
+  MEASURED int item(char *text, int index);
   int add_asterisk_item();
   int set_button_font(Font *font1, Font *font2, Font *font3);
   static int set_def_button_font(Font *font1, Font *font2, Font *font3);
@@ -378,8 +381,12 @@ class BasePop : public GraphicWin {
   // Native487DFD reads Popup+0xA48: its script-owned caption text.
   const char *caption_text() const { return owned_text_; }
   void write_check(long value);
-  int exec();
-  int exec(int (__cdecl *callback)());
+  // Header inlines in the original: probe.cpp keeps calls to the
+  // out-of-line exec() at 0x005A5900 and faction.cpp's communicate to
+  // exec(callback) at 0x00558FC0 (markers in basepop.cpp; bodies below the
+  // class, behind POPUP_WRAPPERS_INLINE).
+  MEASURED int exec();
+  MEASURED int exec(int (__cdecl *callback)());
   int set_string_font(Font *font1, Font *font2, Font *font3, Font *font4);
 
  private:
@@ -768,6 +775,30 @@ class BasePop : public GraphicWin {
     button->field_A98_ = field_31B4_;
   }
 };
+
+// BasePop's caller wrappers (and Popup's in popup.h) are header inlines in
+// the original: out-of-line copies exist only for the two callers that ran
+// out of /Ob2 budget (communicate, probe).
+// WORKAROUND(decl): only TUs defining POPUP_WRAPPERS_INLINE see the bodies.
+// Making them visible to every includer flips register/scheduling ties in
+// the pattern-260 canaries (capture_base, base_build, battle_compute,
+// enemy_move, game_data, load_interface, ReportIf::on_iface_button_clicked,
+// SocialWin::init, setup_player, ...), none of which calls them.
+#ifdef POPUP_WRAPPERS_INLINE
+inline int BasePop::exec() { return exec(0, nullptr); }
+// The image's out-of-line copies 0x00558FC0/0x00558FE0 were emitted by
+// faction.cpp, a /Oy- unit, and keep its frame.
+// WORKAROUND(inline): basepop.cpp hosts their measured copies under /Oy, so
+// the pragma restores the emitting unit's frame; expansions follow each
+// caller's own options.
+#pragma optimize("y", off)
+inline int BasePop::exec(int (__cdecl *callback)()) { return exec(0, callback); }
+inline int BasePop::item(char *text, int index) {
+  return dialogs_.Dialogs::item(text, index);
+}
+#pragma optimize("", on)
+#endif
+
 
 
 
