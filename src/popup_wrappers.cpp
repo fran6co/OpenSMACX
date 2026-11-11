@@ -44,6 +44,21 @@
 #include "netdaemon.h"  // NetDaemonNet - the sprite callbacks lock and synch
 
 
+// WORKAROUND(inline): file-local twin of Popup::set_picture, whose
+// out-of-line copy is 0x00559000. The image's popv and veh_pick expand it
+// (neg/sbb caller-picture select, then SpriteBox::sprite); the /Ob2 budget it
+// spends is what leaves their teardowns calling ~Scroll/~BasePop out of line.
+// popv measures BYTE_EXACT with it. Replace with a header inline body.
+static inline int pop_set_picture(Popup &pop, Sprite *picture, int mode,
+                                  char *text) {
+    if (!pop.picture_enabled()) {
+        pop.set_caller_picture(picture);
+    } else {
+        pop.set_caller_picture(0);
+    }
+    return pop.dialogs().sprite(picture, text, mode);
+}
+
 // Read a script section into the shared substitution buffer. The text
 // reader owns TextBufferGetPtr; parse_string supplies the substitutions.
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -122,9 +137,8 @@ int __cdecl popv(char *caption, const char *label, int vehicle, int flags) {
     Sprite sprite;
     sprite.create_blank(100, 75, WinFillColour);
     popup.start(caption, label, -1, nullptr, flags, nullptr);
-    popup.set_caller_picture(popup.picture_enabled() ? nullptr : &sprite);
     popup.set_redraw_callback(veh_sprite_draw);
-    popup.dialogs().SpriteBox::sprite(&sprite, nullptr, vehicle);
+    pop_set_picture(popup, &sprite, vehicle, nullptr);
     const int result = popup.exec(0, nullptr);
     ConsoleGroupAction = popup.input_poll_state();
     return result;
@@ -147,11 +161,11 @@ int __cdecl popb(LPCSTR text_label, int warning_mask, int sound_id,
         && (GameDataStateStorage.fields_.game_state_ & STATE_UNK_8) == 0) {
         return 0;
     }
-    if (faction != ConsoleGlobal.faction_id_ && IsMultiplayerPBEM) {
+    if (faction != ConsoleGlobal.faction_id_ && !IsMultiplayerPBEM) {
         return 0;
     }
 
-    char popup_text[0x114];
+    char popup_text[256];  // image frame: [ebp-0x114, ebp-0x14)
     strcpy(popup_text, text_label);
     parse_says(0, BaseCurrent->name_string, -1, -1);
 
@@ -357,26 +371,6 @@ int __cdecl veh_sprite_double_click(int veh_id) {
     return 1;
 }
 
-// stand-in: a dead, constant-folded helper that only spends /Ob2 inline
-// budget. The image's early-return teardown in veh_pick calls ~FlatButton and
-// GraphicWin pieces out of line (it spent more budget than the recovered body);
-// this reproduces the image's EH states and emits no code.
-static int veh_pick_budget_stand_in(int x) {
-    if (x == 0) x = 1;
-    if (x == 1) x = 4;
-    if (x == 2) x = 7;
-    if (x == 3) x = 10;
-    if (x == 4) x = 13;
-    if (x == 5) x = 16;
-    if (x == 6) x = 19;
-    if (x == 7) x = 22;
-    if (x == 8) x = 25;
-    if (x == 9) x = 28;
-    if (x == 10) x = 31;
-    if (x == 11) x = 34;
-    return x;
-}
-
 // ORIGINAL: 0x0048D0D0 ?veh_pick@@YAHHPBDH@Z 0x0048D0D0-0x0048D4EA;0x006585CB-0x006586B3
 // RECOVERY_BINDING: v1 {"evidence": ["image:terranx_original.exe:0x48d0d0 hot and cold spans; private full-body native-order review and actual-source callback/lifetime controls.", "git:7f3107aa61899b2f1b5449bdac31cdb1d3d6952a:src/unrecovered/0048d0d0.cpp", "source:src/basepop.h:typed SpriteBox click callback at BasePop+3160; native CodeView and producer/consumer evidence."], "reason": "Recover the complete picker/supply operation through genuine Popup, Sprite, Veh, Base and network owners; preserve full original spans and seed findings without a new matching claim."}
 // TRIED: declaring BOTH `Popup();` (matched: this disassembly calls Popup's own ctor at 0x4048a0, not BasePop+Scroll separately) AND `~Popup();` (declaration only, no body) on the Popup class lets `Popup pop;` be a real local without the compiler synthesising-and-EMITTING its own ~Popup() - the destructor declaration alone suppresses synthesis, so scope-exit just calls the external symbol once. This compiles clean (unlike 0x00405140, which hit the one-external-symbol error from an implicit ~Popup()). The extensive widget teardown after the `if (a3 != 0)` branch (FlatButton/BaseButton/Dialogs/Dialog/ Spot/Heap) is called through small raw-byte-buffer casts rather than real locals, since those types have no declared constructors in this scaffold and a real local would risk the same implicit-synthesis problem. Reaches MISMATCH #11 ('push' vs 'lea'); did not chase the exact field-store sequence (callback pointers, vtable resets) further.
@@ -385,34 +379,28 @@ int __cdecl veh_pick(int veh_id, const char *label, int flags) {
     Popup popup;
     Sprite sprite;
     sprite.create_blank(0x64, 0x4B, WinFillColour);
-    popup.start(PopupStartCaption, label, -1, 0, (flags != 0 ? 0x40 : 0) | 0x800, 0);
+    popup.start(PopupStartCaption, label, -1, 0, (flags != 0 ? 0x40 : 0) | 0x800);
 
     popup.set_sprite_layout(1, 2);
     popup.dialogs().SpriteBox::field_1C_ = 1;
     popup.dialogs().SpriteBox::field_20_ = 2;
 
     int listed_count = 0;
-    int listed_vehicle = veh_id;
+    // The stack walk is veh_top's inline expansion (0x48D175..0x48D1A6).
+    int listed_vehicle = veh_top(veh_id);
     if (listed_vehicle >= 0) {
-        while (Vehs[listed_vehicle].prev_veh_id_stack >= 0) {
-            listed_vehicle = Vehs[listed_vehicle].prev_veh_id_stack;
-        }
-        if (listed_vehicle >= 0) {
-            do {
-                StringTemp[0] = '\0';
-                say_morale(listed_vehicle, 0);
-                ::strcat(StringTemp, " ");
-                ::strcat(StringTemp, VehPrototypes[Vehs[listed_vehicle].proto_id].veh_name);
-                popup.set_caller_picture(popup.picture_enabled() ? nullptr : &sprite);
-                popup.dialogs().SpriteBox::sprite(&sprite, StringTemp, listed_vehicle);
-                listed_vehicle = Vehs[listed_vehicle].next_veh_id_stack;
-                ++listed_count;
-            } while (listed_vehicle >= 0);
-        }
+        do {
+            StringTemp[0] = '\0';
+            say_morale(listed_vehicle, 0);
+            ::strcat(StringTemp, " ");
+            ::strcat(StringTemp, VehPrototypes[Vehs[listed_vehicle].proto_id].veh_name);
+            pop_set_picture(popup, &sprite, listed_vehicle, StringTemp);
+            listed_vehicle = Vehs[listed_vehicle].next_veh_id_stack;
+            ++listed_count;
+        } while (listed_vehicle >= 0);
     }
 
     if (listed_count == 0) {
-        if (veh_pick_budget_stand_in(2) == 0) PopupModalState = 9;  // stand-in, folds away
         return -1;
     }
 

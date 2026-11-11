@@ -199,46 +199,24 @@ void __cdecl quick_zoc(int x_src, int y_src, int faction_id, int x_dst, int y_ds
 }
 
 
-static int supply_wrap_add(int left, int right) {
-    return static_cast<int>(static_cast<uint32_t>(left) +
-                            static_cast<uint32_t>(right));
-}
-static int supply_wrap_sub(int left, int right) {
-    return static_cast<int>(static_cast<uint32_t>(left) -
-                            static_cast<uint32_t>(right));
-}
-static int supply_wrap_mul(int left, int right) {
-    return static_cast<int>(static_cast<uint32_t>(left) *
-                            static_cast<uint32_t>(right));
-}
-
-
 // ORIGINAL: 0x00593A00 ?supply_options@@YAHHH@Z 0x00593A00-0x005947BF;0x00660BF0-0x00660F47
 // RECOVERY_BINDING: v1 {"evidence": ["image:terranx_original.exe:0x593a00 hot and cold spans; private full-body native-order review and actual-source callback/lifetime controls.", "git:7f3107aa61899b2f1b5449bdac31cdb1d3d6952a:src/unrecovered/00593a00.cpp", "source:src/basepop.h:typed SpriteBox click callback at BasePop+3160; native CodeView and producer/consumer evidence."], "reason": "Recover the complete picker/supply operation through genuine Popup, Sprite, Veh, Base and network owners; preserve full original spans and seed findings without a new matching claim."}
 // TRIED: same Popup-teardown-cascade shape as PickWin/battle_plans, but this one calls Dialogs' REAL destructor (`??1Dialogs@@QAE@XZ`) rather than the vtable-patch-then-close() dance those two used - simpler here, used directly. The final "apply the action" branch (0x5942C1 onward: which of two near-identical full teardowns fires) is approximated as always taking the first (`chosen2==1`) branch - the exact value tracked through BasePop::exec's result wasn't re-derived in the time available. sim 0.34-0.59 across flag sets.
 int __cdecl supply_options(int veh_id, int base_id) {
     Popup popup;
-    Veh &vehicle = Vehs[veh_id];
-    const int owner = vehicle.faction_id;
+    const int owner = Vehs[veh_id].faction_id;
 
-    if ((static_cast<uint32_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & (1u << owner)) == 0) {
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << owner)) == 0) {
         return 0;
     }
-    const int order = vehicle.order;
-    if (order == ORDER_ROAD_TO || order == ORDER_MAGTUBE_TO ||
-        order == ORDER_MOVE || (vehicle.state & 0x4000u) != 0) {
+    if (Vehs[veh_id].order == ORDER_ROAD_TO || Vehs[veh_id].order == ORDER_MAGTUBE_TO ||
+        Vehs[veh_id].order == ORDER_MOVE || (Vehs[veh_id].state & 0x4000u) != 0) {
         return 0;
     }
-    if (order == ORDER_MOVE_TO) {
-        int dx = abs(static_cast<int>(vehicle.x) -
-                     static_cast<int>(vehicle.waypoint_x[0]));
-        if ((MapIsFlat & 1) == 0 && dx > static_cast<int>(MapLongitude))
-            dx = static_cast<int>(MapLongitudeBounds) - dx;
-        const int dy = abs(static_cast<int>(vehicle.y) -
-                           static_cast<int>(vehicle.waypoint_y[0]));
-        if (((dx + dy) & ~1) > 2) {
-            return 0;
-        }
+    if (Vehs[veh_id].order == ORDER_MOVE_TO
+        && cursor_dist(Vehs[veh_id].x, Vehs[veh_id].y, Vehs[veh_id].waypoint_x[0],
+                       Vehs[veh_id].waypoint_y[0]) > 1) {
+        return 0;
     }
 
     const int base_owner = Bases[base_id].faction_id_current;
@@ -247,31 +225,40 @@ int __cdecl supply_options(int veh_id, int base_id) {
         return 0;
     }
 
-    parse_says(1, VehPrototypes[vehicle.proto_id].veh_name, -1, -1);
+    parse_says(1, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
     parse_says(2, Bases[base_id].name_string, -1, -1);
-    const int queued_item = Bases[base_id].queue_production_id[0];
+    if (Vehs[veh_id].home_base_id >= 0) {
+        parse_says(3, Bases[Vehs[veh_id].home_base_id].name_string, -1, -1);
+    }
     int queued_cost;
-    if (queued_item < 0) {
-        const int facility_id = -queued_item;
-        const int factor = cost_factor(owner, 1, -1);
-        queued_cost = supply_wrap_mul(factor, Facility[facility_id].cost);
+    int production = Bases[base_id].queue_production_id[0];
+    if (production < 0) {
+        const int facility_id = -production;
+        queued_cost = cost_factor(owner, 1, -1) * Facility[facility_id].cost;
     } else {
-        const int production_cost = veh_cost(queued_item, base_id, 0);
-        const int factor = cost_factor(owner, 1, -1);
-        queued_cost = supply_wrap_mul(production_cost, factor);
+        queued_cost = veh_cost(production, base_id, 0) * cost_factor(owner, 1, -1);
     }
     parse_num(0, Bases[base_id].minerals_accumulated);
     parse_num(1, queued_cost);
     popup.start(PopupStartCaption, "SUPPLYUNIT", -1, 0, 0, 0);
 
-    const bool alien = (Players[owner].rule_flags & 0x80u) != 0;
-    const char *picture_name = alien ? "al_col_sm.pcx" : "colfoun_sm.pcx";
-    int picture_width = 0, picture_height = 0;
-    if (Buffer::get_pcx_dimensions(picture_name, &picture_width,
-                                   &picture_height) == 0) {
-        if (popup.owned_picture().init(const_cast<char *>(picture_name),
-                                      picture_width, picture_height) == 0) {
-            popup.set_caller_picture(&popup.owned_picture());
+    // Each branch names its picture twice: the image keeps four separate
+    // literals (0x68FC34/0x68FC44 al_col_sm.pcx, 0x68FC54/0x68FC64
+    // colfoun_sm.pcx) and two get_pcx_dimensions/init call pairs.
+    int picture_width, picture_height;
+    if (Players[owner].rule_flags & 0x80u) {
+        if (Buffer::get_pcx_dimensions("al_col_sm.pcx", &picture_width,
+                                       &picture_height) == 0
+            && popup.owned_picture().init("al_col_sm.pcx", picture_width,
+                                          picture_height) == 0) {
+            popup.select_owned_picture();
+        }
+    } else {
+        if (Buffer::get_pcx_dimensions("colfoun_sm.pcx", &picture_width,
+                                       &picture_height) == 0
+            && popup.owned_picture().init("colfoun_sm.pcx", picture_width,
+                                          picture_height) == 0) {
+            popup.select_owned_picture();
         }
     }
     if (X_text_open(ScriptPopupFile, "SUPPLYMENU") != 0) {
@@ -285,32 +272,25 @@ int __cdecl supply_options(int veh_id, int base_id) {
     int item_count = 1;
 
     text_get();
-    const int live_queue_item = Bases[base_id].queue_production_id[0];
-    if (live_queue_item <= -70) {
-        const int facility_id = -live_queue_item;
-        const int facility_factor = cost_factor(owner, 1, -1);
-        const int facility_scaled_cost = supply_wrap_mul(
-            facility_factor, Facility[facility_id].cost);
-        queued_cost = facility_scaled_cost;
+    if (Bases[base_id].queue_production_id[0] <= -70) {
+        const int facility_id = -Bases[base_id].queue_production_id[0];
+        queued_cost = cost_factor(owner, 1, -1) * Facility[facility_id].cost;
         parse_say(0, Facility[facility_id].name, -1, -1);
         parse_string(TextBufferGetPtr, StringTemp);
-        popup.dialogs().item(StringTemp, item_count);
-        ++item_count;
+        popup.dialogs().item(StringTemp, 1);
+        item_count = 2;
     }
 
     text_get();
-    const int live_production = Bases[base_id].queue_production_id[0];
-    if (live_production >= 0) {
-        const int production_cost = veh_cost(live_production, base_id, 0);
-        const int production_factor = cost_factor(owner, 1, -1);
-        queued_cost = supply_wrap_mul(production_cost, production_factor);
-    }
-    if (live_production >= 64 &&
-        (VehPrototypes[live_production].flags & 4u) == 0) {
-        parse_says(0, VehPrototypes[live_production].veh_name, -1, -1);
-        parse_string(TextBufferGetPtr, StringTemp);
-        popup.dialogs().item(StringTemp, 1);
-        ++item_count;
+    production = Bases[base_id].queue_production_id[0];
+    if (production >= 0) {
+        queued_cost = veh_cost(production, base_id, 0) * cost_factor(owner, 1, -1);
+        if (production >= 64 && (VehPrototypes[production].flags & 4u) == 0) {
+            parse_says(0, VehPrototypes[production].veh_name, -1, -1);
+            parse_string(TextBufferGetPtr, StringTemp);
+            popup.dialogs().item(StringTemp, 1);
+            ++item_count;
+        }
     }
     if (convoy(veh_id, base_id) != 0) {
         item_count += 3;
@@ -324,40 +304,33 @@ int __cdecl supply_options(int veh_id, int base_id) {
         return 0;
     }
 
-    uint32_t &supply_action_flags = NetDaemonNet.channels_[0].leading_words_[3];
     int action;
-    if (owner == ConsoleGlobal.faction_id_ && (supply_action_flags & 1u) != 0) {
-        const int selected_action = popup.exec(0, 0);
-        if (selected_action == 0) {
+    if (owner == ConsoleGlobal.faction_id_
+        && (NetDaemonNet.channels_[0].leading_words_[3] & 1u) != 0) {
+        action = popup.exec(0, 0);
+        if (action == 0) {
             return 0;
         }
-        vehicle.probe_action = static_cast<uint8_t>(selected_action);
-        action = selected_action;
+        Vehs[veh_id].probe_action = static_cast<uint8_t>(action);
     } else {
-        action = vehicle.probe_action;
+        action = Vehs[veh_id].probe_action;
     }
 
-    const uint32_t action_flags = supply_action_flags;
     // Native 0x5941DC / 0x5941E5 takes the simple return only for bit0 set,
     // bit1 clear. All other combinations continue at 0x5942C1 action dispatch.
-    if ((action_flags & 1u) != 0 && (action_flags & 2u) == 0) {
+    if ((NetDaemonNet.channels_[0].leading_words_[3] & 1u) != 0
+        && (NetDaemonNet.channels_[0].leading_words_[3] & 2u) == 0) {
         return 1;
     }
 
     if (action == 1) {
-        const int factor = cost_factor(owner, 1, -1);
-        const int action_cost = supply_wrap_mul(
-            factor, VehPrototypes[vehicle.proto_id].cost);
-        const int new_minerals = supply_wrap_add(
-            Bases[base_id].minerals_accumulated, action_cost);
-        Bases[base_id].minerals_accumulated = new_minerals;
-        Bases[base_id].mineral_surplus_final = new_minerals;
-        Bases[base_id].production_id_last =
-            Bases[base_id].queue_production_id[0];
+        Bases[base_id].minerals_accumulated +=
+            cost_factor(owner, 1, -1) * VehPrototypes[Vehs[veh_id].proto_id].cost;
+        Bases[base_id].mineral_surplus_final = Bases[base_id].minerals_accumulated;
+        Bases[base_id].production_id_last = Bases[base_id].queue_production_id[0];
         synch_base(base_id);
 
-        int amount_needed = supply_wrap_sub(
-            queued_cost, Bases[base_id].minerals_accumulated);
+        int amount_needed = queued_cost - Bases[base_id].minerals_accumulated;
         if (amount_needed < 0) amount_needed = 0;
         else if (amount_needed > 9999) amount_needed = 9999;
         if (owner == ConsoleGlobal.faction_id_) {
@@ -370,17 +343,11 @@ int __cdecl supply_options(int veh_id, int base_id) {
         } else {
             kill(veh_id);
         }
-        // Native 0x5943C0 closes Popup; 0x594508 closes its picture later.
-        popup.close();
-        popup.owned_picture().close();
         return 1;
     }
 
-    vehicle.order = ORDER_CONVOY;
-    vehicle.probe_sabotage_id = static_cast<uint8_t>(action - 2);
-    // Native 0x594592 closes Popup before 0x5946C4 closes its picture.
-    popup.close();
-    popup.owned_picture().close();
+    Vehs[veh_id].order = ORDER_CONVOY;
+    Vehs[veh_id].probe_sabotage_id = static_cast<uint8_t>(action - 2);
     return 0;
 }
 
