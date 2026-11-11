@@ -43,6 +43,7 @@
 #include "wave.h"
 #include "worldwin.h"
 #include "alpha.h"
+#include "rectangle_operations.h"
 
 // The per-element teardown the queue passes: the Font destructor, bound here
 // under its own name so this file needs nothing from the retired thunk
@@ -166,355 +167,305 @@ int __cdecl pick_top_veh(int veh_id) {
     return best;
 }
 
+// Every size/offset on the map overlay scales the same way: by the caption
+// override when one is active, otherwise by the zoom step out of 16. The image
+// evaluates the value once before the scale test (0x55983A, 0x559874), which a
+// macro repeating it in both arms would not do.
+// WORKAROUND(decl): file-local stand-in for the original's zoom-scale helper/macro (name unknown).
+static inline int veh_draw_scale(int value, int zoom) {
+    return MapWinCaptionScale > 0
+        ? value * MapWinCaptionScale / MapWinCaptionDivisor
+        : (zoom + 16) * value / 16;
+}
+
 // ORIGINAL: 0x005594F0 ?veh_draw@@YAHPAUBuffer@@HHHHHH@Z 0x005594F0-0x0055A14E
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned5594F0..55A14E retains raw screen coordinates for vehicle bodies, applies metric offsets only to overlays, and re-reads shared caption scale after callbacks. Health foreground reuses the rectangle passed to black fill. Independent original review corrects seed receiver offsets and preserves cached faction versus fresh Console reads.", "Original559F40 forms the four-byte label scratch at[ebp-4] and calls strcpy645460 with the complete StringTable label. Original559FEC/559FF0 subsequently clear bytes2/1;55A075 reads byte0 and55A082 may duplicate a bracket into byte1. Preserve the unchecked full copy, including malformed-label overflow; the native effects on adjacent stack storage remain unverified. Prior deliberate first-character-only safety interpretation is retained in git:e8d406295528953809aa8bf5d2cb929e7fb6659f, not the faithful milestone implementation.", "Preserve existing seed identity and complete original spans. Source binding is not a measured matching or runtime claim."], "reason": "Recover vehicle bodies and overlays using actual sprites, chassis metrics, faction palettes and font storage."}
 // symbol    ?veh_draw@@YAHPAVBuffer@@HHHHHH@Z
 int __cdecl veh_draw(Buffer * buffer, int veh_id, int screen_x, int screen_y, int zoom, int flags, int frame) {
-    int x = screen_x, y = screen_y;
+    RECT rect;
+    char label[4];
 
-    if ((flags & 1) != 0) {
+    if (flags & 1) {
         veh_id = pick_top_veh(veh_id);
         if (VehDrawSuppressedVehicle != -1 && VehDrawSuppressedVehicle == veh_id) {
             return 0;
         }
     }
 
-    unsigned int faction = Vehs[veh_id].faction_id;
-    unsigned int factionSaved = faction;
+    const int faction = Vehs[veh_id].faction_id;
 
-    if ((zoom < -8 || (flags & 0x100) != 0) && (flags & 8) == 0 && (flags & 0x800) == 0) {
-        int prototype = Vehs[veh_id].proto_id;
-        if (faction != (unsigned int)ConsoleGlobal.faction_id_ &&
-            VehPrototypes[prototype].plan == '\v' && (GameDataStateStorage.fields_.game_state_ & 0x80) == 0) {
+    if ((zoom < -8 || (flags & 0x100)) && !(flags & 8) && !(flags & 0x800)) {
+        if (faction != ConsoleGlobal.faction_id_
+            && VehPrototypes[Vehs[veh_id].proto_id].plan == 11
+            && !(GameDataStateStorage.fields_.game_state_ & 0x80)) {
             return 0;
         }
-        if ((flags & 0x400) != 0) {
+        if (flags & 0x400) {
             return 0;
         }
-        int rw, rh;
-        if (MapWinCaptionScale < 1) {
-            rh = (zoom * 5 + 0x50) * 10 / 16;
-            rw = (zoom * 5 + 0x50) * 0x14 / 16;
+        int bottom = screen_y + veh_draw_scale(50, zoom);
+        int right = screen_x + veh_draw_scale(100, zoom);
+        int left = screen_x;
+        int top = screen_y;
+        if (!(flags & 0x200)) {
+            const int inset_y = veh_draw_scale(8, zoom);
+            const int inset_x = veh_draw_scale(8, zoom);
+            left += inset_x;
+            right -= inset_x;
+            top += inset_y;
+            bottom -= inset_y;
         } else {
-            rh = (MapWinCaptionScale * 0x32) / MapWinCaptionDivisor;
-            rw = (MapWinCaptionScale * 100) / MapWinCaptionDivisor;
+            left -= 2;
+            right += 2;
+            top -= 2;
+            bottom += 2;
         }
-        rw += x;
-        rh += y;
-        if ((flags & 0x200) == 0) {
-            int dxy;
-            if (MapWinCaptionScale < 1) {
-                dxy = (zoom * 8 + 0x80) / 16;
-            } else {
-                dxy = (MapWinCaptionScale * 8) / MapWinCaptionDivisor;
-            }
-            x += dxy;
-            rw -= dxy;
-            y += dxy;
-            rh -= dxy;
-        } else {
-            x -= 2;
-            rw += 2;
-            y -= 2;
-            rh += 2;
-        }
-        int qy = (rh - y) / 4;
-        int botY = y + qy;
-        int botYr = rh + qy;
-        int mid = ((rw - x) - botYr + botY) / 2;
-        int leftX = x + mid;
-        int rightX = rw - mid;
-        RECT r1;
-        r1.left = leftX; r1.top = botY; r1.right = rightX; r1.bottom = botYr;
-        int col = (strcmp(Players[faction].search_key, "SPARTANS") == 0) ? 44 : 0;
-        buffer->box(&r1, col, col);
-        r1.left++; r1.bottom--; r1.top++; r1.right--;
-        buffer->fill(&r1, InfoFactionTextColors[faction]);
+        const int quarter = (bottom - top) / 4;
+        rect.top = top + quarter;
+        rect.bottom = bottom + quarter;
+        const int half = (right - left - rect.bottom + rect.top) / 2;
+        rect.left = left + half;
+        rect.right = right - half;
+        const int frame_color = strcmp(Players[faction].search_key, "SPARTANS") == 0 ? 44 : 0;
+        buffer->box(&rect, frame_color, frame_color);
+        rect.left++;
+        rect.right--;
+        rect.top++;
+        rect.bottom--;
+        buffer->fill(&rect, InfoFactionTextColors[faction]);
         return 0;
     }
 
-    if (MapWinCaptionScale < 1) {
-        SpriteScaleNumerator = zoom + 0x10;
-        SpriteScaleDenominator = 0x10;
-    } else {
+    if (MapWinCaptionScale > 0) {
         SpriteScaleNumerator = MapWinCaptionScale;
         SpriteScaleDenominator = MapWinCaptionDivisor;
-    }
-
-    int prototype = Vehs[veh_id].proto_id;
-    unsigned int category = VehPrototypes[prototype].chassis_id;
-    if ((char)Weapon[VehPrototypes[prototype].weapon_id].icon > -1 &&
-        category == 0) {
-        category = (char)Weapon[VehPrototypes[prototype].weapon_id].icon + 9;
-    }
-    if ((char)VehPrototypes[prototype].icon_offset > -1) {
-        category = (char)VehPrototypes[prototype].icon_offset + 9;
-    }
-    unsigned int sprite_category = category;
-
-    unsigned int morale;
-    if (faction == 0) {
-        morale = morale_alien(veh_id, ConsoleGlobal.faction_id_);
     } else {
+        SpriteScaleNumerator = zoom + 16;
+        SpriteScaleDenominator = 16;
+    }
+
+    const int prototype = Vehs[veh_id].proto_id;
+    int category = VehPrototypes[prototype].chassis_id;
+    if (Weapon[VehPrototypes[prototype].weapon_id].icon >= 0 && category == 0) {
+        category = Weapon[VehPrototypes[prototype].weapon_id].icon + 9;
+    }
+    if (VehPrototypes[prototype].icon_offset >= 0) {
+        category = VehPrototypes[prototype].icon_offset + 9;
+    }
+
+    int morale;
+    if (faction) {
         morale = morale_veh(veh_id, 0, 0);
+    } else {
+        morale = morale_alien(veh_id, ConsoleGlobal.faction_id_);
     }
 
-    unsigned int variation = 0;
-    if (sprite_category == 12 || sprite_category == 10 || sprite_category == 13 || sprite_category == 14)
+    // Separate stores per arm (0x5597D4..0x5597F2): not one `||` test.
+    int variation = 0;
+    if (category == 12) {
         variation = morale;
-    else if (sprite_category == 15) {
-        const int prototype = Vehs[veh_id].proto_id;
-        if (prototype == 17) variation = 1;
-        if (prototype == 18) variation = 2;
+    } else if (category == 10) {
+        variation = morale;
+    } else if (category == 13) {
+        variation = morale;
+    } else if (category == 14) {
+        variation = morale;
+    } else if (category == 15) {
+        if (Vehs[veh_id].proto_id == 17) variation = 1;
+        if (Vehs[veh_id].proto_id == 18) variation = 2;
     }
 
-    if ((flags & 0x1000) == 0) {
-        int dx, dy;
-        if (MapWinCaptionScale < 1) {
-            dx = (zoom + 0x10) * Chassis[sprite_category].sprite_flag_x_off[variation] / 16;
-        } else {
-            dx = (int)(Chassis[sprite_category].sprite_flag_x_off[variation] * MapWinCaptionScale) / MapWinCaptionDivisor;
-        }
-        x += dx;
-        if (MapWinCaptionScale < 1) {
-            dy = (zoom + 0x10) * Chassis[sprite_category].sprite_flag_y_off[variation] / 16;
-        } else {
-            dy = (int)(Chassis[sprite_category].sprite_flag_y_off[variation] * MapWinCaptionScale) / MapWinCaptionDivisor;
-        }
-        y += dy;
+    // The body sprites keep the raw screen origin; only the flag, health
+    // bar and order label use the chassis-adjusted position.
+    int x = screen_x;
+    int y = screen_y;
+    if (!(flags & 0x1000)) {
+        x += veh_draw_scale(Chassis[category].sprite_flag_x_off[variation], zoom);
+        y += veh_draw_scale(Chassis[category].sprite_flag_y_off[variation], zoom);
     }
 
-    unsigned int flagBit800 = flags & 0x800;
-    if (flagBit800 == 0) {
-        if ((int)sprite_category > 8) {
-            Sprite *sp = &g_VEH_SPRITES[variation + sprite_category * 8];
-            // EBX/ESI retain the unshifted origin; the adjusted stack
-            // coordinates are only for the flag/health/order overlays.
-            sp->draw_dest(buffer, sp->cTransparentIndex_, screen_x, screen_y, ShadowColorTable);
+    const int no_sprite = flags & 0x800;
+    if (!no_sprite) {
+        if (category >= 9) {
+            Sprite *sprite = &g_VEH_SPRITES[category * 8 + variation];
+            sprite->draw_dest(buffer, sprite->cTransparentIndex_, screen_x, screen_y, ShadowColorTable);
         }
         SpriteScaleNumerator = 1;
         SpriteScaleDenominator = 1;
-        if ((flags & 0x80) == 0 && (int)sprite_category < 9) {
-            if ((flags & 0x10) == 0) {
-                if ((flags & 0x20) == 0) {
-                    vehdraw_draw(buffer, veh_id, screen_x, screen_y, flags, zoom, frame);
-                } else {
-                    vehdraw_scoot(buffer, screen_x, screen_y, frame, zoom);
-                }
-            } else {
+        if (!(flags & 0x80) && category < 9) {
+            if (flags & 0x10) {
                 vehdraw_turn(buffer, screen_x, screen_y, frame, zoom);
+            } else if (flags & 0x20) {
+                vehdraw_scoot(buffer, screen_x, screen_y, frame, zoom);
+            } else {
+                vehdraw_draw(buffer, veh_id, screen_x, screen_y, flags, zoom, frame);
             }
         }
     }
 
-    if (MapWinCaptionScale < 1) {
-        SpriteScaleDenominator = 0x10;
-        SpriteScaleNumerator = zoom + 0x10;
-    } else {
+    if (MapWinCaptionScale > 0) {
         SpriteScaleNumerator = MapWinCaptionScale;
         SpriteScaleDenominator = MapWinCaptionDivisor;
+    } else {
+        SpriteScaleNumerator = zoom + 16;
+        SpriteScaleDenominator = 16;
     }
 
-    if ((((flags & 0x40) != 0 || (flags & 0x400) != 0) && flagBit800 == 0) ||
-        (factionSaved != (unsigned int)ConsoleGlobal.faction_id_ &&
-         VehPrototypes[Vehs[veh_id].proto_id].plan == '\v' &&
-         (GameDataStateStorage.fields_.game_state_ & 0x80) == 0)) {
+    if (((flags & 0x40) || (flags & 0x400)) && !no_sprite) {
+        goto tail;
+    }
+    if (faction != ConsoleGlobal.faction_id_
+        && VehPrototypes[Vehs[veh_id].proto_id].plan == 11
+        && !(GameDataStateStorage.fields_.game_state_ & 0x80)) {
         goto tail;
     }
 
     {
+        // One shared `exhausted = 1` (0x559A44) reached from both arms.
         int exhausted = 0;
-        if (IsMultiplayerNet == 0) {
-            if (faction == (unsigned int)ConsoleGlobal.faction_id_) {
-                unsigned int spd = speed(veh_id, 0);
-                int diff = (int)spd - Vehs[veh_id].moves_expended;
-                if (diff < 0 || (diff < 1000 && spd == Vehs[veh_id].moves_expended)) {
-                    exhausted = 1;
-                }
-            }
-        } else {
-            unsigned int spd = speed(veh_id, 0);
-            int diff = (int)spd - Vehs[veh_id].moves_expended;
-            if (diff < 0 || (diff < 1000 && spd == Vehs[veh_id].moves_expended)) {
-                exhausted = 1;
-            }
+        if (IsMultiplayerNet
+                ? !veh_moves(veh_id)
+                : faction == ConsoleGlobal.faction_id_ && !veh_moves(veh_id)) {
+            exhausted = 1;
         }
 
-        unsigned int stackFaction = faction;
-        if ((flags & 2) != 0) {
-            int stackN = stack_check(veh_id, 1, -1, -1, -1);
-            stackFaction = faction;
-            if (stackN > 1) {
-                if (Chassis[sprite_category].sprite_flag_x_off[variation] > 0x32) {
-                    int dxs;
-                    if (MapWinCaptionScale < 1) {
-                        dxs = (zoom * 3 + 0x30) * 2 / 16;
-                    } else {
-                        dxs = (MapWinCaptionScale * 6) / MapWinCaptionDivisor;
-                    }
-                    x -= dxs;
-                }
-                Sprite *sp = &g_FLAGS_VEH_SPRITES[exhausted + (faction * 7 + morale) * 2];
-                sp->draw_mono(buffer, sp->cTransparentIndex_, x, y, InfoFactionShadowColors[faction]);
-                if (MapWinCaptionScale < 1) {
-                    x += (zoom * 3 + 0x30) * 2 / 16;
-                } else {
-                    x += (MapWinCaptionScale * 6) / MapWinCaptionDivisor;
-                }
+        if ((flags & 2) && stack_check(veh_id, 1, -1, -1, -1) > 1) {
+            if (Chassis[category].sprite_flag_x_off[variation] > 50) {
+                x -= veh_draw_scale(6, zoom);
             }
+            Sprite *stack_flag = &g_FLAGS_VEH_SPRITES[(faction * 7 + morale) * 2 + exhausted];
+            stack_flag->draw_mono(buffer, stack_flag->cTransparentIndex_, x, y,
+                                  InfoFactionShadowColors[faction]);
+            x += veh_draw_scale(6, zoom);
         }
+        Sprite *flag = &g_FLAGS_VEH_SPRITES[(faction * 7 + morale) * 2 + exhausted];
+        flag->draw(buffer, flag->cTransparentIndex_, x, y);
 
-        Sprite *sp2 = &g_FLAGS_VEH_SPRITES[exhausted + (stackFaction * 7 + morale) * 2];
-        sp2->draw(buffer, sp2->cTransparentIndex_, x, y);
+        set_rectangle_dimensions(&rect, x + veh_draw_scale(6, zoom), y + veh_draw_scale(6, zoom),
+                                 veh_draw_scale(2, zoom), veh_draw_scale(21, zoom));
+        buffer->fill(&rect, 0);
 
-        RECT r2;
-        int rr24, rr28, rr2c, rr30;
-        if (MapWinCaptionScale < 1) {
-            rr24 = (zoom + 0x10) * 0x15 / 16;
-            rr28 = (zoom * 2 + 0x20) / 16;
-            rr2c = (zoom * 3 + 0x30) * 2 / 16;
-            rr30 = (zoom * 3 + 0x30) * 2 / 16;
-        } else {
-            rr24 = (MapWinCaptionScale * 0x15) / MapWinCaptionDivisor;
-            rr28 = (MapWinCaptionScale * 2) / MapWinCaptionDivisor;
-            rr2c = (MapWinCaptionScale * 6) / MapWinCaptionDivisor;
-            rr30 = (MapWinCaptionScale * 6) / MapWinCaptionDivisor;
-        }
-        rr2c += y;
-        rr30 += x;
-        rr28 = rr30 + rr28;
-        rr24 = rr2c + rr24;
-        r2.left = rr30; r2.top = rr2c; r2.right = rr28; r2.bottom = rr24;
-        buffer->fill(&r2, 0);
-
-        // No callback intervenes between these state reads and the foreground
-        // fill. Reactor and damage are bytes; health is bounded to 1..1000.
-        const int health_prototype = Vehs[veh_id].proto_id;
-        int reactor = VehPrototypes[health_prototype].reactor_id;
-        if (reactor < 1) reactor = 1;
-        else if (reactor > 100) reactor = 100;
-        const int maximum_health = VehPrototypes[health_prototype].plan == 12
-            ? 1 : reactor * 10;
-        const int damage = Vehs[veh_id].dmg_incurred;
-        const int remaining_health = maximum_health - damage;
-        if (remaining_health > 0) {
-            // Reuse the rectangle passed to black fill, including any changes
-            // made by that call, rather than rebuilding it from stale locals.
-            r2.bottom = (r2.bottom - r2.top) * remaining_health / maximum_health + r2.top;
+        // Health is re-expanded at every use (five proto_power copies,
+        // 0x559C40..0x559DA9); the foreground reuses the rectangle the black
+        // fill received.
+        if (range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999)) {
+            rect.bottom = (rect.bottom - rect.top)
+                * range(proto_power(veh_id) - Vehs[veh_id].dmg_incurred, 0, 9999)
+                / proto_power(veh_id) + rect.top;
             int health_color = 249;
-            if (damage < maximum_health * 2 / 3) health_color = 251;
-            if (damage < maximum_health / 3 || damage == 0) health_color = 250;
-            buffer->fill(&r2, health_color);
+            if (Vehs[veh_id].dmg_incurred < proto_power(veh_id) * 2 / 3) {
+                health_color = 251;
+            }
+            if (Vehs[veh_id].dmg_incurred < proto_power(veh_id) / 3 || !Vehs[veh_id].dmg_incurred) {
+                health_color = 250;
+            }
+            buffer->fill(&rect, health_color);
         }
 
         VehDrawFont = g_FONTQUEUE_VAL2.get_zoom(zoom, 1, 4, 1);
         buffer->set_font(VehDrawFont, 0, 0, 0);
-        int col2 = (strcmp(Players[faction].search_key, "SPARTANS") == 0) ? 44 : 0;
-        buffer->set_text_color(col2, -1, 1, 1);
+        buffer->set_text_color(strcmp(Players[faction].search_key, "SPARTANS") == 0 ? 44 : 0, -1, 1, 1);
 
-        int triadIdx = (signed char)Vehs[veh_id].order;
-        if (triadIdx < 0) triadIdx = 0;
-        else if (triadIdx > 0x1d) triadIdx = 0x1d;
+        const int order = range(Vehs[veh_id].order, 0, 29);
+        set_rectangle_dimensions(&rect, x + veh_draw_scale(10, zoom), y + veh_draw_scale(5, zoom),
+                                 veh_draw_scale(11, zoom), veh_draw_scale(14, zoom));
 
-        if (MapWinCaptionScale < 1) {
-            rr24 = (zoom + 0x10) * 0xe / 16;
-            rr28 = (zoom + 0x10) * 0xb / 16;
-            rr2c = (zoom * 5 + 0x50) / 16;
-            rr30 = (zoom * 5 + 0x50) * 2 / 16;
-        } else {
-            rr24 = (MapWinCaptionScale * 0xe) / MapWinCaptionDivisor;
-            rr28 = (MapWinCaptionScale * 0xb) / MapWinCaptionDivisor;
-            rr2c = (MapWinCaptionScale * 5) / MapWinCaptionDivisor;
-            rr30 = (MapWinCaptionScale * 10) / MapWinCaptionDivisor;
-        }
-        rr2c += y;
-        rr30 += x;
-        rr28 = rr30 + rr28;
-        rr24 = rr2c + rr24;
-        r2.left = rr30; r2.top = rr2c; r2.right = rr28; r2.bottom = rr24;
-
-        char *word = StringTable.get(Order[triadIdx].letter);
         // Original 559F40 copies the complete label before the later byte
         // clears. Preserve its unchecked four-byte scratch, not a safe prefix
         // copy; malformed-label effects on adjacent native storage are unproved.
-        char lineBuf[4];
-        strcpy(lineBuf, word);
-
-        if ((Vehs[veh_id].state & 0x4000) != 0) {
-            strcpy(lineBuf, "/");
+        strcpy(label, StringTable.get(Order[order].letter));
+        if (Vehs[veh_id].state & 0x4000) {
+            strcpy(label, "/");
         }
         if ((Vehs[veh_id].state & 0x1000200) == 0x1000200) {
-            strcpy(lineBuf, "P");
+            strcpy(label, "P");
         }
-        if ((Vehs[veh_id].state & 0x200) != 0) {
-            if (Vehs[veh_id].order_auto_type == '\v') {
-                strcpy(lineBuf, "*");
+        if (Vehs[veh_id].state & 0x200) {
+            if (Vehs[veh_id].order_auto_type == 11) {
+                strcpy(label, "*");
             }
-            if ((Vehs[veh_id].state & 0x200) != 0 &&
-                Vehs[veh_id].order_auto_type == '\n') {
-                strcpy(lineBuf, "B");
+            if ((Vehs[veh_id].state & 0x200) && Vehs[veh_id].order_auto_type == 10) {
+                strcpy(label, "B");
             }
         }
 
         // 559FEC/559FF0 terminate the one-character label. 55A082
         // duplicates brackets into byte1 ("[[" / "]]"), not a dead local.
-        lineBuf[2] = 0;
-        lineBuf[1] = 0;
-        if (faction == (unsigned int)ConsoleGlobal.faction_id_ &&
-            (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & (unsigned char)(1 << (faction & 0x1f))) != 0) {
-            if (lineBuf[0] == '[' || lineBuf[0] == ']') {
-                lineBuf[1] = lineBuf[0];
-            }
-        } else {
-            if ((GameDataStateStorage.fields_.game_state_ & 0x80) != 0 ||
-                (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & (unsigned char)(1 << (ConsoleGlobal.faction_id_ & 0x1f))) == 0) {
-                if ((GameDataStateStorage.fields_.game_state_ & 0x40) != 0 && (GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
-                    lineBuf[0] = Vehs[veh_id].move_to_ai_type;
-                }
-                if (lineBuf[0] != '-' && (Vehs[veh_id].state & 0x40000) != 0) {
-                    int col3 = ((Vehs[veh_id].state & 0x20000) == 0) ? 0xfb : 0xf8;
-                    buffer->set_text_color(col3, -1, 1, 1);
-                }
-                if (lineBuf[0] == '[' || lineBuf[0] == ']') {
-                    lineBuf[1] = lineBuf[0];
-                }
+        label[2] = 0;
+        label[1] = 0;
+        if (faction != ConsoleGlobal.faction_id_
+            || !((unsigned char)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << faction))) {
+            if (!(GameDataStateStorage.fields_.game_state_ & 0x80)
+                && ((unsigned char)GameDataStateStorage.fields_.lock_masks_.enable_mask_
+                    & (1 << ConsoleGlobal.faction_id_))) {
+                label[0] = '-';
             } else {
-                lineBuf[0] = '-';
+                if ((GameDataStateStorage.fields_.game_state_ & 0x40)
+                    && (GameDataStateStorage.fields_.game_state_ & 0x1000)) {
+                    label[0] = Vehs[veh_id].move_to_ai_type;
+                }
+                if (label[0] != '-' && (Vehs[veh_id].state & 0x40000)) {
+                    buffer->set_text_color((Vehs[veh_id].state & 0x20000) ? 0xF8 : 0xFB, -1, 1, 1);
+                }
             }
+        }
+        if (label[0] == '[' || label[0] == ']') {
+            label[1] = label[0];
         }
 
-        if (faction == (unsigned int)ConsoleGlobal.faction_id_) {
-            if ((Vehs[veh_id].state & 0x200) != 0) {
+        if (faction == ConsoleGlobal.faction_id_) {
+            if (Vehs[veh_id].state & 0x200) {
                 buffer->set_text_color(InfoFactionShadowColors[faction], -1, 1, 1);
-                if (lineBuf[0] == '-') lineBuf[0] = 'a';
-                if ((GameDataStateStorage.fields_.game_state_ & 0x40) != 0 && (GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
-                    lineBuf[0] = Vehs[veh_id].move_to_ai_type;
+                if (label[0] == '-') {
+                    label[0] = 'a';
+                }
+                if ((GameDataStateStorage.fields_.game_state_ & 0x40)
+                    && (GameDataStateStorage.fields_.game_state_ & 0x1000)) {
+                    label[0] = Vehs[veh_id].move_to_ai_type;
                 }
             }
-            if (faction == (unsigned int)ConsoleGlobal.faction_id_ &&
-                (Vehs[veh_id].state & 0x8000000) != 0) {
-                int col4 = ConsoleGlobal.faction_id_ == 3 ? 250 : 255;
-                buffer->set_text_color(col4, -1, 1, 1);
+            if (faction == ConsoleGlobal.faction_id_ && (Vehs[veh_id].state & 0x8000000)) {
+                buffer->set_text_color(ConsoleGlobal.faction_id_ == 3 ? 250 : 255, -1, 1, 1);
             }
         }
-        buffer->write_cent_l(lineBuf, &r2, (int)strlen(lineBuf));
+        // Header inline Buffer::write_cent_l(LPSTR, RECT *): its null test
+        // survives at 0x55A0FE.
+        buffer->write_cent_l(label, &rect);
     }
 
 tail:
     SpriteScaleNumerator = 1;
     SpriteScaleDenominator = 1;
-    if (flagBit800 != 0) {
-        SpriteScaleDenominator = 1;
-        SpriteScaleNumerator = 1;
+    if (no_sprite) {
         return 0;
     }
-    return (int)sprite_category < 9;
+    return category < 9;
+}
+
+// Visible-interval test for one map tile in one map window, across the seam.
+// Original 55A2C0..55A333 and 55A339..55A3B5 (and 55A67F../55A6F9.. in the
+// animated scan) repeat this whole sequence once per endpoint.
+// WORKAROUND(decl): file-local stand-in for the original's tile-visibility helper (name unknown).
+static inline int scoot_tile_visible(MapWin *window, int x, int y) {
+    if (y >= window->field_1DDA8_ &&
+        y < window->field_1DDD8_ + window->field_1DDD0_ + window->field_1DDA8_) {
+        if (!(MapIsFlat & 1)) {
+            if (x < window->field_1DDA4_) x += MapLongitudeBounds;
+            if (x >= window->field_1DDD4_ + window->field_1DDCC_ + window->field_1DDA4_)
+                x -= MapLongitudeBounds;
+        }
+        if (x >= window->field_1DDA4_ &&
+            x < window->field_1DDD4_ + window->field_1DDCC_ + window->field_1DDA4_)
+            return 1;
+    }
+    return 0;
 }
 
 // ORIGINAL: 0x0055A150 ?veh_scoot@@YAXHHHHH@Z 0x0055A150-0x0055AF11;0x0065FF70-0x0065FFC7
 // RECOVERY_BINDING: v1 {"evidence": ["Original55A175..55A1D9 constructs Buffer[8],Vector[8],singleton Vector,Vector[8], with reverse normal teardown55AEA7..55AEFB and EH65FF70..65FFC7. Use genuine value subtraction, mutating scale and compound operations. Preserve flags1 turn-only cleanup, flags4000 immediate redraw, fresh MapWinTable receivers and preference reads, source/destination copy direction, wrap and timing. Original55A29D/55A65C skips active-slot zeroing for null MapWinTable entries; later reads55AA60/55AC10/55AE26 retain the indeterminate-stack quirk. Buffer array [EBP-2EF8,EBP-2B8) is disjoint from active flags [EBP-B0,EBP-90). Null-slot runtime effects remain unverified, not normalized to inactive.", "Preserve existing seed identity and complete original spans. Source binding is not a measured matching or runtime claim."], "reason": "Recover real movement animation with automatic Buffer and Vector lifetime rather than raw stack/return-slot scaffolding."}
 void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int flags) {
     Buffer saved[8];
+    int retain_origin = 0;
     Vector position[8];
     Vector destination;
     Vector increment[8];
@@ -525,188 +476,191 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
     int start_x[8], start_y[8], end_x[8], end_y[8];
     int margin_x[8], margin_y[8];
     RECT area[8];
+    int i;
 
     VehDrawPositionY = tile_y;
     VehDrawPositionX = tile_x;
     VehDrawPositionVehicle = veh_id;
-    bool retain_origin = false;
     if (direction >= 8) {
         direction %= 8;
-        retain_origin = true;
+        retain_origin = 1;
     }
     g_SCOOT_WAVE.play();
-    int next_x = tile_x + VehMoveDeltaX[direction];
-    if (!(MapIsFlat & 1)) {
-        if (next_x < 0) next_x += MapLongitudeBounds;
-        else if (next_x >= MapLongitudeBounds) next_x -= MapLongitudeBounds;
-    }
-    const int next_y = tile_y + VehMoveDeltaY[direction];
-    const bool immediate = (flags & 0x4000) != 0;
-    int delay = 0, move_frames = 0;
-    if (!immediate && IsMultiplayerNet &&
-        Vehs[veh_id].faction_id != ConsoleGlobal.faction_id_) {
-        WorldClimateWorldWin.set_detail_map();
-        WorldClimateWorldWin.viewport_outline_enabled_ = 1;
-    }
-    draw_tile(tile_x, tile_y, 0);
-    draw_tile(next_x, next_y, 0);
-    if (!immediate) {
-        delay = IsMultiplayerNet ? 10 : 16;
-        const int triad = Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad;
-        if (triad == 1) delay = delay * 2 / 3;
-        if (triad == 2) delay /= 3;
-        move_frames = FastUnitAnim < 0 ? 9 : (FastUnitAnim == 0 ? 6 : 3);
+    const int next_x = wrap_map_x(VehMoveDeltaX[direction] + tile_x);
+    const int next_y = VehMoveDeltaY[direction] + tile_y;
+    if (flags & 0x4000) {
+        draw_tile(tile_x, tile_y, 0);
+        draw_tile(next_x, next_y, 0);
+        for (i = 0; i < 8; ++i) {
+            if (!MapWinTable[i]) continue;
+            active[i] = 0;
+            if (i && !MapWinTable[i]->view_active_) continue;
+            if (scoot_tile_visible(MapWinTable[i], tile_x, tile_y) ||
+                scoot_tile_visible(MapWinTable[i], next_x, next_y)) {
+                RECT origin;
+                RECT end_clip;
+                RECT start_clip;
+                active[i] = 1;
+                MapWinTable[i]->tile_to_pixel(tile_x, tile_y, &start_x[i], &start_y[i]);
+                MapWinTable[i]->tile_to_pixel(next_x, next_y, &end_x[i], &end_y[i]);
+                start_y[i] -= MapWinTable[i]->field_1DDC0_;
+                end_y[i] -= MapWinTable[i]->field_1DDC0_;
+                set_rectangle_dimensions(&origin, start_x[i], start_y[i],
+                    MapWinTable[i]->tile_pixel_width_,
+                    MapWinTable[i]->tile_pixel_height_ + MapWinTable[i]->field_1DDC0_);
+                area[i].left = start_x[i] < end_x[i] ? start_x[i] : end_x[i];
+                area[i].top = start_y[i] < end_y[i] ? start_y[i] : end_y[i];
+                area[i].right = (start_x[i] > end_x[i] ? start_x[i] : end_x[i]) +
+                                MapWinTable[i]->tile_pixel_width_;
+                area[i].bottom = (start_y[i] > end_y[i] ? start_y[i] : end_y[i]) +
+                                 MapWinTable[i]->tile_pixel_height_ +
+                                 MapWinTable[i]->field_1DDC0_;
+                UnionRect(&area[i], &origin, &area[i]);
+                MapWinTable[i]->compute_clip(next_x, next_y, 0, &end_clip);
+                MapWinTable[i]->compute_clip(tile_x, tile_y, 0, &start_clip);
+                UnionRect(&area[i], &end_clip, &start_clip);
+            }
+        }
+        Vehs[veh_id].facing = static_cast<int8_t>(direction);
+    } else {
+        if (IsMultiplayerNet && Vehs[veh_id].faction_id != ConsoleGlobal.faction_id_) {
+            WorldClimateWorldWin.set_detail_map();
+            WorldClimateWorldWin.viewport_outline_enabled_ = 1;
+        }
+        draw_tile(tile_x, tile_y, 0);
+        draw_tile(next_x, next_y, 0);
+        int delay = IsMultiplayerNet ? 10 : 16;
+        if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == 1)
+            delay = delay * 2 / 3;
+        if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == 2)
+            delay /= 3;
+        int move_frames = FastUnitAnim < 0 ? 9 : (FastUnitAnim == 0 ? 6 : 3);
         if (IsMultiplayerNet) {
             if (Vehs[veh_id].faction_id == ConsoleGlobal.faction_id_) delay = 0;
             move_frames = 4;
             Vehs[veh_id].facing = static_cast<int8_t>(direction);
         }
-    }
-    for (int i = 0; i < 8; ++i) {
-        MapWin *window = MapWinTable[i];
-        if (!window) continue;
-        active[i] = 0;
-        if (i != 0 && !window->view_active_) continue;
-        bool visible = false;
-        for (int endpoint = 0; endpoint < 2; ++endpoint) {
-            int x = endpoint ? next_x : tile_x;
-            const int y = endpoint ? next_y : tile_y;
-            if (y < static_cast<int>(window->field_1DDA8_) ||
-                y >= static_cast<int>(window->field_1DDD8_ + window->field_1DDD0_ + window->field_1DDA8_))
-                continue;
-            if (!(MapIsFlat & 1)) {
-                if (x < static_cast<int>(window->field_1DDA4_)) x += MapLongitudeBounds;
-                if (x >= static_cast<int>(window->field_1DDD4_ + window->field_1DDCC_ + window->field_1DDA4_))
-                    x -= MapLongitudeBounds;
-            }
-            if (x >= static_cast<int>(window->field_1DDA4_) &&
-                x < static_cast<int>(window->field_1DDD4_ + window->field_1DDCC_ + window->field_1DDA4_)) {
-                visible = true;
-                break;
-            }
-        }
-        if (!visible) continue;
-        active[i] = 1;
-        window->tile_to_pixel(tile_x, tile_y, &start_x[i], &start_y[i]);
-        MapWinTable[i]->tile_to_pixel(next_x, next_y, &end_x[i], &end_y[i]);
-        window = MapWinTable[i];
-        start_y[i] -= window->field_1DDC0_;
-        end_y[i] -= window->field_1DDC0_;
-        if (!immediate) {
-            position[i].x_ = static_cast<float>(start_x[i]);
-            position[i].y_ = static_cast<float>(start_y[i]);
-            destination.x_ = static_cast<float>(end_x[i]);
-            destination.y_ = static_cast<float>(end_y[i]);
-            increment[i] = destination - position[i];
-            increment[i].scale(1.0f / static_cast<float>(move_frames));
-            position[i] += increment[i];
-        }
-        window = MapWinTable[i];
-        area[i].left = start_x[i] < end_x[i] ? start_x[i] : end_x[i];
-        area[i].top = start_y[i] < end_y[i] ? start_y[i] : end_y[i];
-        area[i].right = (start_x[i] > end_x[i] ? start_x[i] : end_x[i]) + window->tile_pixel_width_;
-        area[i].bottom = (start_y[i] > end_y[i] ? start_y[i] : end_y[i]) +
-                         window->tile_pixel_height_ + window->field_1DDC0_;
-        if (immediate) {
-            RECT origin;
-            origin.left = start_x[i]; origin.top = start_y[i];
-            origin.right = start_x[i] + window->tile_pixel_width_;
-            origin.bottom = start_y[i] + window->tile_pixel_height_ + window->field_1DDC0_;
-            UnionRect(&area[i], &origin, &area[i]);
-        }
-        RECT end_clip, start_clip;
-        MapWinTable[i]->compute_clip(next_x, next_y, 0, &end_clip);
-        MapWinTable[i]->compute_clip(tile_x, tile_y, 0, &start_clip);
-        UnionRect(&area[i], &end_clip, &start_clip);
-        if (!immediate) {
-            margin_x[i] = (area[i].right - area[i].left) / 4;
-            margin_y[i] = (area[i].bottom - area[i].top) / 4;
-            area[i].left -= margin_x[i]; area[i].right += margin_x[i];
-            area[i].top -= margin_y[i]; area[i].bottom += margin_y[i];
-            saved[i].init(area[i].right - area[i].left, area[i].bottom - area[i].top, 0, 0);
-            static_cast<Buffer *>(MapWinTable[i])->copy(&saved[i], area[i].left, area[i].top,
-                0, 0, area[i].right - area[i].left, area[i].bottom - area[i].top);
-        }
-    }
-    if (immediate) {
-        Vehs[veh_id].facing = static_cast<int8_t>(direction);
-    } else {
-        // Preference is re-read after all preparation callbacks.
-        const int turn_speed = FastUnitAnim < 0 ? 25 : (FastUnitAnim == 0 ? 16 : 8);
-        const int turn_frames = vehdraw_turn_start(veh_id, direction, turn_speed, 2);
-        DWORD previous_time = timeGetTime();
-        for (int turn_frame = 0; turn_frame < turn_frames; ++turn_frame) {
-            for (int i = 0; i < 8; ++i) if (active[i]) {
-                const int width = area[i].right - area[i].left;
-                const int height = area[i].bottom - area[i].top;
-                RECT moving = {start_x[i], start_y[i], start_x[i] + width, start_y[i] + height};
-                RECT intersection;
-                if (IntersectRect(&intersection, &moving, &area[i])) {
-                    veh_draw(static_cast<Buffer *>(MapWinTable[i]), veh_id, start_x[i], start_y[i],
-                        MapWinTable[i]->zoom_offset_, 0x12, turn_frame);
-                    MapWinTable[i]->update(&area[i], 0);
-                    saved[i].copy(static_cast<Buffer *>(MapWinTable[i]),
-                        start_x[i] - margin_x[i] - area[i].left,
-                        start_y[i] - margin_y[i] - area[i].top,
-                        start_x[i] - margin_x[i], start_y[i] - margin_y[i], width, height);
-                }
-            }
-            DWORD now;
-            do { do_non_input(); now = timeGetTime(); }
-            while (static_cast<int>(now - previous_time) < delay / 2);
-            previous_time = now;
-        }
-        // Original jumps straight to global-coordinate cleanup for this flag.
-        if (flags & 1) {
-            VehDrawPositionX = -1;
-            VehDrawPositionY = -1;
-            flush_input();
-            return;
-        }
-        vehdraw_scoot_start(veh_id, direction, move_frames, 2);
-        for (int move_frame = 0; move_frame < move_frames; ++move_frame) {
-            for (int i = 0; i < 8; ++i) if (active[i]) {
-                const int width = area[i].right - area[i].left;
-                const int height = area[i].bottom - area[i].top;
-                RECT moving;
-                moving.top = static_cast<int>(position[i].y_);
-                moving.left = static_cast<int>(position[i].x_);
-                moving.right = moving.left + width; moving.bottom = moving.top + height;
-                RECT intersection;
-                if (IntersectRect(&intersection, &moving, &area[i])) {
-                    // Convert again after IntersectRect, as the original does.
-                    const int y = static_cast<int>(position[i].y_);
-                    const int x = static_cast<int>(position[i].x_);
-                    veh_draw(static_cast<Buffer *>(MapWinTable[i]), veh_id, x, y,
-                        MapWinTable[i]->zoom_offset_, 0x22, move_frame);
-                    MapWinTable[i]->update(&area[i], 0);
-                    const int restore_y = static_cast<int>(position[i].y_);
-                    const int restore_x = static_cast<int>(position[i].x_);
-                    saved[i].copy(static_cast<Buffer *>(MapWinTable[i]),
-                        restore_x - margin_x[i] - area[i].left,
-                        restore_y - margin_y[i] - area[i].top,
-                        restore_x - margin_x[i], restore_y - margin_y[i], width, height);
-                }
+        for (i = 0; i < 8; ++i) {
+            if (!MapWinTable[i]) continue;
+            active[i] = 0;
+            if (i && !MapWinTable[i]->view_active_) continue;
+            if (scoot_tile_visible(MapWinTable[i], tile_x, tile_y) ||
+                scoot_tile_visible(MapWinTable[i], next_x, next_y)) {
+                RECT end_clip;
+                RECT start_clip;
+                active[i] = 1;
+                MapWinTable[i]->tile_to_pixel(tile_x, tile_y, &start_x[i], &start_y[i]);
+                MapWinTable[i]->tile_to_pixel(next_x, next_y, &end_x[i], &end_y[i]);
+                start_y[i] -= MapWinTable[i]->field_1DDC0_;
+                end_y[i] -= MapWinTable[i]->field_1DDC0_;
+                position[i].x_ = static_cast<float>(start_x[i]);
+                position[i].y_ = static_cast<float>(start_y[i]);
+                destination.x_ = static_cast<float>(end_x[i]);
+                destination.y_ = static_cast<float>(end_y[i]);
+                increment[i] = destination - position[i];
+                increment[i].scale(1.0f / static_cast<float>(move_frames));
                 position[i] += increment[i];
+                area[i].left = start_x[i] < end_x[i] ? start_x[i] : end_x[i];
+                area[i].top = start_y[i] < end_y[i] ? start_y[i] : end_y[i];
+                area[i].right = (start_x[i] > end_x[i] ? start_x[i] : end_x[i]) +
+                                MapWinTable[i]->tile_pixel_width_;
+                area[i].bottom = (start_y[i] > end_y[i] ? start_y[i] : end_y[i]) +
+                                 MapWinTable[i]->tile_pixel_height_ +
+                                 MapWinTable[i]->field_1DDC0_;
+                MapWinTable[i]->compute_clip(next_x, next_y, 0, &end_clip);
+                MapWinTable[i]->compute_clip(tile_x, tile_y, 0, &start_clip);
+                UnionRect(&area[i], &end_clip, &start_clip);
+                margin_x[i] = (area[i].right - area[i].left) / 4;
+                margin_y[i] = (area[i].bottom - area[i].top) / 4;
+                area[i].left -= margin_x[i];
+                area[i].right += margin_x[i];
+                area[i].top -= margin_y[i];
+                area[i].bottom += margin_y[i];
+                saved[i].init(area[i].right - area[i].left, area[i].bottom - area[i].top, 0, 0);
+                // Implicit receiver conversion: the image applies the virtual
+                // base offset here without the null test an argument gets.
+                MapWinTable[i]->copy(&saved[i], area[i].left, area[i].top, 0, 0,
+                    area[i].right - area[i].left, area[i].bottom - area[i].top);
             }
-            DWORD now;
-            do { do_non_input(); now = timeGetTime(); }
-            while (static_cast<int>(now - previous_time) < delay);
+        }
+        // Preference is re-read after all preparation callbacks.
+        const int turn_frames = vehdraw_turn_start(veh_id, direction,
+            FastUnitAnim < 0 ? 25 : (FastUnitAnim == 0 ? 16 : 8), 2);
+        int previous_time = timeGetTime();
+        int now;
+        int frame;
+        for (frame = 0; frame < turn_frames; ++frame) {
+            for (i = 0; i < 8; ++i) {
+                if (active[i]) {
+                    RECT moving;
+                    RECT intersection;
+                    set_rectangle_dimensions(&moving, start_x[i], start_y[i],
+                        area[i].right - area[i].left, area[i].bottom - area[i].top);
+                    if (IntersectRect(&intersection, &moving, &area[i])) {
+                        veh_draw(MapWinTable[i], veh_id, start_x[i], start_y[i],
+                            MapWinTable[i]->zoom_offset_, 0x12, frame);
+                        MapWinTable[i]->update(&area[i], 0);
+                        saved[i].copy(MapWinTable[i],
+                            start_x[i] - margin_x[i] - area[i].left,
+                            start_y[i] - margin_y[i] - area[i].top,
+                            start_x[i] - margin_x[i], start_y[i] - margin_y[i],
+                            area[i].right - area[i].left, area[i].bottom - area[i].top);
+                    }
+                }
+            }
+            do {
+                do_non_input();
+                now = timeGetTime();
+            } while (now - previous_time < delay / 2);
             previous_time = now;
         }
-        for (int i = 0; i < 8; ++i) position[i] -= increment[i];
+        // Original55ABCD jumps straight to the global-coordinate cleanup.
+        if (flags & 1) goto finish;
+        vehdraw_scoot_start(veh_id, direction, move_frames, 2);
+        for (frame = 0; frame < move_frames; ++frame) {
+            for (i = 0; i < 8; ++i) {
+                if (active[i]) {
+                    RECT moving;
+                    RECT intersection;
+                    set_rectangle_dimensions(&moving,
+                        static_cast<int>(position[i].x_), static_cast<int>(position[i].y_),
+                        area[i].right - area[i].left, area[i].bottom - area[i].top);
+                    if (IntersectRect(&intersection, &moving, &area[i])) {
+                        veh_draw(MapWinTable[i], veh_id,
+                            static_cast<int>(position[i].x_), static_cast<int>(position[i].y_),
+                            MapWinTable[i]->zoom_offset_, 0x22, frame);
+                        MapWinTable[i]->update(&area[i], 0);
+                        saved[i].copy(MapWinTable[i],
+                            static_cast<int>(position[i].x_) - margin_x[i] - area[i].left,
+                            static_cast<int>(position[i].y_) - margin_y[i] - area[i].top,
+                            static_cast<int>(position[i].x_) - margin_x[i],
+                            static_cast<int>(position[i].y_) - margin_y[i],
+                            area[i].right - area[i].left, area[i].bottom - area[i].top);
+                    }
+                    position[i] += increment[i];
+                }
+            }
+            do {
+                do_non_input();
+                now = timeGetTime();
+            } while (now - previous_time < delay);
+            previous_time = now;
+        }
+        for (i = 0; i < 8; ++i) position[i] -= increment[i];
     }
     if (!retain_origin) {
         VehDrawPositionX = next_x;
         VehDrawPositionY = next_y;
     }
-    for (int final_slot = 0; final_slot < 8; ++final_slot) if (active[final_slot]) {
-        veh_draw(static_cast<Buffer *>(MapWinTable[final_slot]), veh_id,
-            end_x[final_slot], end_y[final_slot],
-            MapWinTable[final_slot]->zoom_offset_, 2, 1);
-        MapWinTable[final_slot]->soft_update(&area[final_slot]);
-        do_all_draws();
+    for (i = 0; i < 8; ++i) {
+        if (active[i]) {
+            veh_draw(MapWinTable[i], veh_id, end_x[i], end_y[i],
+                MapWinTable[i]->zoom_offset_, 2, 1);
+            MapWinTable[i]->soft_update(&area[i]);
+            do_all_draws();
+        }
     }
+finish:
     VehDrawPositionX = -1;
     VehDrawPositionY = -1;
     flush_input();
@@ -726,51 +680,47 @@ Font *BaseDrawFont;
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // Historical seed observations (not fresh measurements or acceptance):
 // TRIED: full line-by-line translation compiles and matches control flow, call args verified against raw disasm (bitmask/box/fill/draw_dest/ get_zoom/set_font/set_text_color/write_l/width/itoa/strcat all cross-checked); prologue register allocation differs (#0 push/sub).
+// Tile-zoom scaling repeated at every use in the image: the scale branch
+// first (`test esi,esi; jle`), else (style + 16) * n / 16.
+#define BASE_DRAW_SCALE(n) (MapWinCaptionScale > 0 ? MapWinCaptionScale * (n) / MapWinCaptionDivisor : (style + 16) * (n) / 16)
+
+// WORKAROUND(decl): 0x0055AFEF-0x0055B05B computes the y inset before the x
+// inset, i.e. the right-to-left arguments of an inlined rect shrink; the
+// original helper's name/spelling is unknown.
+static inline void base_draw_shrink_rect(RECT *rect, int dx, int dy) {
+    rect->left += dx;
+    rect->right -= dx;
+    rect->top += dy;
+    rect->bottom -= dy;
+}
+
 // ORIGINAL: 0x0055AF20 ?base_draw@@YAXPAUBuffer@@HHHHH@Z 0x0055AF20-0x0055B739
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0055af20.cpp retains the 2073-byte transcription and original span; the seed's Base, Map, Sprite, FontQueue and Buffer dependencies have typed product owners."], "reason": "Recover the base renderer's distant zoom badge, faction sprite, population caption, visibility check and riot marker through typed objects; compiler and runtime verification remain separate."}
 // symbol    ?base_draw@@YAXPAVBuffer@@HHHHH@Z
 void __cdecl base_draw(Buffer *target, int base_id, int pixel_x, int pixel_y,
                        int style, int flags) {
-    Base &base = Bases[base_id];
-    const int faction = base.faction_id_current;
+    int faction = Bases[base_id].faction_id_current;
+    int y = Bases[base_id].y;
+    int x = Bases[base_id].x;
     RECT rect;
 
-    // At distant zoom, show the base as a colored lozenge rather than a
-    // building sprite and population caption.
-    if ((style < -8 || (flags & 0x100)) && !(flags & (8 | 0x800))) {
-        int height;
-        int width;
-        int inset;
-        if (MapWinCaptionScale < 1) {
-            height = ((style * 5 + 80) * 10) / 16;
-            width = ((style * 5 + 80) * 20) / 16;
-            inset = (style * 4 + 64) / 16;
+    // At distant zoom, show the base as a colored lozenge.
+    if ((style < -8 || (flags & 0x100)) && !(flags & 8) && !(flags & 0x800)) {
+        set_rectangle_dimensions(&rect, pixel_x, pixel_y,
+                                 BASE_DRAW_SCALE(100), BASE_DRAW_SCALE(50));
+        const int outline = flags & 0x200;
+        if (!outline) {
+            base_draw_shrink_rect(&rect, BASE_DRAW_SCALE(4), BASE_DRAW_SCALE(4));
         } else {
-            height = MapWinCaptionScale * 50 / MapWinCaptionDivisor;
-            width = MapWinCaptionScale * 100 / MapWinCaptionDivisor;
-            inset = MapWinCaptionScale * 4 / MapWinCaptionDivisor;
+            base_draw_shrink_rect(&rect, -2, -2);
         }
-        if (flags & 0x200) {
-            rect.left = pixel_x - 2;
-            rect.right = pixel_x + width + 2;
-            rect.top = pixel_y - 2;
-            rect.bottom = pixel_y + height + 2;
-            inset = 2;
-        } else {
-            rect.left = pixel_x + inset;
-            rect.right = pixel_x + width - inset;
-            rect.top = pixel_y + inset;
-            rect.bottom = pixel_y + height - inset;
-        }
-        const int horizontal_trim = (rect.right - rect.bottom - rect.left + rect.top) / 2;
-        rect.left += horizontal_trim;
-        rect.right -= horizontal_trim;
-        const int vertical_shift = MapWinCaptionScale < 1
-            ? (style * 3 + 48) * 2 / 16
-            : MapWinCaptionScale * 6 / MapWinCaptionDivisor;
-        rect.top += vertical_shift - inset;
-        rect.bottom += vertical_shift - inset;
-        const int border = strcmp(Players[faction].search_key, "SPARTANS") == 0 ? 44 : 0;
+        int trim = (rect.right - rect.bottom - rect.left + rect.top) / 2;
+        rect.left += trim;
+        rect.right -= trim;
+        int shift = BASE_DRAW_SCALE(6) - (outline ? 2 : BASE_DRAW_SCALE(4));
+        rect.top += shift;
+        rect.bottom += shift;
+        int border = strcmp(Players[faction].search_key, "SPARTANS") == 0 ? 44 : 0;
         target->box(&rect, border, border);
         ++rect.left;
         --rect.right;
@@ -780,42 +730,39 @@ void __cdecl base_draw(Buffer *target, int base_id, int pixel_x, int pixel_y,
         return;
     }
 
-    if (MapWinCaptionScale < 1) {
-        SpriteScaleNumerator = style + 16;
-        SpriteScaleDenominator = 16;
-    } else {
+    if (MapWinCaptionScale > 0) {
         SpriteScaleNumerator = MapWinCaptionScale;
         SpriteScaleDenominator = MapWinCaptionDivisor;
+    } else {
+        SpriteScaleNumerator = style + 16;
+        SpriteScaleDenominator = 16;
     }
 
-    const int population = base.population_size;
     int mode = 3;
-    if (population < 4) {
+    if (Bases[base_id].population_size < 4) {
         mode = 0;
-    } else if (population < static_cast<int>(Rules.pop_limit_sans_hab_complex + 1 < 8
-                                      ? 7 : Rules.pop_limit_sans_hab_complex + 1)) {
+    } else if (Bases[base_id].population_size
+               < max(Rules.pop_limit_sans_hab_complex + 1, 7)) {
         mode = 1;
-    } else if (population < static_cast<int>(Rules.pop_limit_sans_hab_dome + 1 < 11
-                                      ? 10 : Rules.pop_limit_sans_hab_dome + 1)) {
+    } else if (Bases[base_id].population_size
+               < max(Rules.pop_limit_sans_hab_dome + 1, 10)) {
         mode = 2;
     }
-    int byte_index, bit;
-    bitmask(1, &byte_index, &bit);
-    if (base.facilities_built[byte_index] & bit && mode < 3) ++mode;
+    if (has_fac_built(FAC_HEADQUARTERS, base_id)) {
+        mode = range(mode + 1, 0, 3);
+    }
     int danger = 0;
-    bitmask(4, &byte_index, &bit);
-    if ((base.facilities_built[byte_index] & bit)
-        || (GameDataStateStorage.fields_.secret_project_.citizens_defense_force() >= 0
-            && Bases[GameDataStateStorage.fields_.secret_project_.citizens_defense_force()].faction_id_current == faction)) {
+    if (has_fac_built(FAC_PERIMETER_DEFENSE, base_id)
+        || has_project(SP_CITIZENS_DEFENSE_FORCE, faction)) {
         danger = 1;
     }
-    bitmask(5, &byte_index, &bit);
-    if (base.facilities_built[byte_index] & bit) danger = 2;
+    if (has_fac_built(FAC_TACHYON_FIELD, base_id)) {
+        danger = 2;
+    }
 
     if (!(flags & 0x800)) {
-        Map *tile = map_loc(base.x, base.y);
-        const int terrain = (static_cast<unsigned char>(tile->bit) & 0xE0) < 0x60 ? 1 : 0;
-        Sprite *sprite = FactionBaseSprites[base.faction_id_former][terrain][mode][danger];
+        Sprite *sprite = FactionBaseSprites[Bases[base_id].faction_id_former]
+                                           [is_ocean(x, y)][mode][danger];
         sprite->draw_dest(target, sprite->transparent_index(), pixel_x, pixel_y,
                           ShadowColorTable);
     }
@@ -828,65 +775,40 @@ void __cdecl base_draw(Buffer *target, int base_id, int pixel_x, int pixel_y,
     }
 
     char number[80];
-    char measure_text[80] = "";
-    char caption[80] = "";
-    _itoa(population, number, 10);
+    char measure[80];
+    char caption[80];
+    caption[0] = '\0';
+    measure[0] = '\0';
+    _itoa(Bases[base_id].population_size, number, 10);
     strcat(caption, number);
-    strcat(measure_text, "8");
-    if (population >= 10) strcat(measure_text, "8");
-    rect.left = pixel_x;
-    rect.right = pixel_x + BaseDrawFont->width(measure_text) + 5;
-    rect.top = pixel_y;
-    rect.bottom = pixel_y + BaseDrawFont->pixel_height() + 4;
-
-    Map *tile = map_loc(base.x, base.y);
-    int visible_occupier = -1;
-    if (tile->bit & 2) {
-        visible_occupier = tile->val2 & 15;
-        if (visible_occupier > 7) visible_occupier = -1;
+    strcat(measure, "8");
+    if (Bases[base_id].population_size >= 10) {
+        strcat(measure, "8");
     }
-    bool reveal = false;
-    const int viewer = ConsoleGlobal.faction_id_;
-    if (visible_occupier < 0) {
-        reveal = (PlayersData[faction].diplo_treaties[viewer] & 1)
-            || spying(faction)
+    set_rectangle_dimensions(&rect, pixel_x, pixel_y,
+                             BaseDrawFont->width(measure) + 5,
+                             BaseDrawFont->pixel_height() + 4);
+
+    int occupied = veh_who(x, y) >= 0;
+    if (!occupied) {
+        if ((PlayersData[Bases[base_id].faction_id_current]
+                 .diplo_treaties[ConsoleGlobal.faction_id_] & 1)
+            || spying(Bases[base_id].faction_id_current)
             || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
-            || (PlayersData[viewer].flags & PFLAG_MAP_REVEALED)
-            || faction == viewer;
-        if (!reveal) {
-            for (int direction = 0; direction < 8; ++direction) {
-                int nx = base.x + VehMoveDeltaX[direction];
-                if (!(MapIsFlat & 1)) {
-                    if (nx < 0) nx += MapLongitudeBounds;
-                    else if (nx >= MapLongitudeBounds) nx -= MapLongitudeBounds;
-                }
-                const int ny = base.y + VehMoveDeltaY[direction];
-                if (ny >= 0 && ny < MapLatitudeBounds
-                    && nx >= 0 && nx < MapLongitudeBounds) {
-                    Map *neighbor = map_loc(nx, ny);
-                    int occupant = -1;
-                    if (neighbor->bit & 2) {
-                        occupant = neighbor->val2 & 15;
-                        if (occupant > 7) occupant = -1;
-                    }
-                    if (occupant == viewer) { reveal = true; break; }
-                }
+            || (PlayersData[ConsoleGlobal.faction_id_].flags & PFLAG_MAP_REVEALED)
+            || faction == ConsoleGlobal.faction_id_) {
+            goto revealed;
+        }
+        for (int i = 0; i < 8; i++) {
+            int nx = wrap_map_x(Bases[base_id].x + VehMoveDeltaX[i]);
+            int ny = Bases[base_id].y + VehMoveDeltaY[i];
+            if (on_map(nx, ny) && veh_who(nx, ny) == ConsoleGlobal.faction_id_) {
+                goto revealed;
             }
         }
     }
-
-    if (reveal) {
-        rect.left = 0;
-        rect.top = 0;
-        target->box(&rect, 0, 0);
-        ++rect.left;
-        --rect.right;
-        ++rect.top;
-        --rect.bottom;
-        target->set_font(BaseDrawFont, 0, 0, 0);
-        target->set_text_color(ChatItemIdTable[faction], -1, 1, 1);
-    } else {
-        const int border = strcmp(Players[faction].search_key, "SPARTANS") == 0
+    {
+        int border = strcmp(Players[faction].search_key, "SPARTANS") == 0
             ? InfoFactionShadowColors[faction] : 0;
         target->box(&rect, border, border);
         ++rect.left;
@@ -897,26 +819,39 @@ void __cdecl base_draw(Buffer *target, int base_id, int pixel_x, int pixel_y,
         target->set_font(BaseDrawFont, 0, 0, 0);
         target->set_text_color(strcmp(Players[faction].search_key, "SPARTANS") == 0
                                    ? 44 : 0, -1, 1, 1);
+        target->write_l(caption, rect.left + 2, rect.top + 1);
     }
-    target->write_l(caption, rect.bottom + 2, rect.top + 1, strlen(caption));
+    goto outline;
+revealed:
+    target->box(&rect, 0, 0);
+    ++rect.left;
+    --rect.right;
+    ++rect.top;
+    --rect.bottom;
+    target->set_font(BaseDrawFont, 0, 0, 0);
+    target->set_text_color(ChatItemIdTable[faction], -1, 1, 1);
+    target->write_l(caption, rect.left + 2, rect.top + 1);
+outline:
     --rect.left;
     ++rect.right;
     --rect.top;
     ++rect.bottom;
-    if (base.state & BSTATE_DRONE_RIOTS_ACTIVE) {
-        int icon_x = pixel_x + 2 + rect.right - rect.left;
-        int icon_y = pixel_y;
-        Sprite *icon = &g_RED_MALE_HEAD_ICON_SPRITE;
-        if (Players[faction].rule_flags & RFLAG_ALIEN) {
-            icon = &g_RED_ALIEN_HEAD_ICON_SPRITE;
-            icon_x += 2;
-            icon_y -= 6;
+    if (Bases[base_id].state & BSTATE_DRONE_RIOTS_ACTIVE) {
+        int icon_x = pixel_x + (rect.right - rect.left) + 2;
+        if (Players[Bases[base_id].faction_id_current].rule_flags & RFLAG_ALIEN) {
+            g_RED_ALIEN_HEAD_ICON_SPRITE.draw(
+                target, g_RED_ALIEN_HEAD_ICON_SPRITE.transparent_index(),
+                icon_x + 2, pixel_y - 6);
+        } else {
+            g_RED_MALE_HEAD_ICON_SPRITE.draw(
+                target, g_RED_MALE_HEAD_ICON_SPRITE.transparent_index(),
+                icon_x, pixel_y);
         }
-        icon->draw(target, icon->transparent_index(), icon_x, icon_y);
     }
     SpriteScaleNumerator = 1;
     SpriteScaleDenominator = 1;
 }
+#undef BASE_DRAW_SCALE
 #pragma optimize("", on)
 
 /*

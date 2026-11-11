@@ -94,15 +94,6 @@ StringList DiplomacyTranscriptLists[8][8];
 // RECOVERY_OBJECT: v2 0x0093A968 0x0093A96C ?DiploDefaultFlag93A968@@3HA 0x004449AF
 int DiploDefaultFlag93A968;
 
-static RECT inset_rect(RECT value, int left, int top, int right, int bottom) {
-  value.left += left;
-  value.top += top;
-  value.right -= right;
-  value.bottom -= bottom;
-  return value;
-}
-
-
 // 0x004412A0 reads its first stack argument as the faction palette index and
 // writes to the shared DiploWindow StringBox at 0x745060 (DiploWindow+0xA388).
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -116,10 +107,65 @@ void __cdecl DiploWin::string_callback(int faction_id, int unused) {
                         ChatShadowColors[faction_id], 1, 1);
 }
 
+// ---------------------------------------------------------------------------
+// File-local helpers (place above DiploWin::exec; they replace the old
+// by-value `inset_rect` at the top of diplowin.cpp, which exec no longer uses).
+//
+// WORKAROUND(decl): stand-ins for the original's inline RECT helpers
+// (scroll.cpp's expand_rect is out of line in this tree). 0x443F99..443FA6
+// adds +0x17 to left and -0x17 to right; 0x443FED..444012 adds +3 / a
+// register holding -3 (left,right then top,bottom); 0x4440C1/4440C3 subtract
+// and add the same width/-7 quotient: expand_rect with a negative amount.
+static inline void diplo_expand_rect(RECT *rect, int horizontal, int vertical) {
+  rect->left -= horizontal;
+  rect->right += horizontal;
+  rect->top -= vertical;
+  rect->bottom += vertical;
+}
+
+// 0x443FBA..443FD1 / 0x444140..44415E / 0x4444F9..444515 load all four
+// source edges through a copy of the source pointer, then +n/-n (dead
+// top/bottom copies included when the vertical amount is zero).
+// WORKAROUND(decl): file-local RECT helper stand-in (original name unknown).
+static inline void diplo_inset_rect(RECT *dst, const RECT *src, int horizontal,
+                                    int vertical) {
+  dst->left = src->left + horizontal;
+  dst->top = src->top + vertical;
+  dst->right = src->right - horizontal;
+  dst->bottom = src->bottom - vertical;
+}
+
+// 0x444024..44403D: the F4C copy shifted down by 0x17 (left/right untouched).
+// WORKAROUND(decl): file-local RECT helper stand-in (original name unknown).
+static inline void diplo_offset_rect(RECT *dst, const RECT *src, int dx, int dy) {
+  dst->left = src->left + dx;
+  dst->top = src->top + dy;
+  dst->right = src->right + dx;
+  dst->bottom = src->bottom + dy;
+}
+
+// WORKAROUND(decl): 0x44469B..4446CF null-tests &rect_F2C_ before
+// EditBox::init, the shape of an inline RECT-taking EditBox::init overload
+// (same shape as netwin.cpp's netwin_init_edit).
+static inline int diplo_init_edit(EditBox *box, RECT *rect, Win *parent,
+                                  int focus_wrap) {
+  if (rect == 0) {
+    return 0;
+  }
+  return box->init(rect->left, rect->top, rect->right - rect->left,
+                   rect->bottom - rect->top, parent, focus_wrap);
+}
+
+// ---------------------------------------------------------------------------
 // ORIGINAL: 0x00443F10 ?exec@DiploWin@@QAEXHH@Z 0x00443F10-0x00444D8B
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00443f10.cpp", "image:terranx_original.exe:443F10-444D8B; callback4412A0 and transcript lifecycle440F30/440F60"], "reason": "Recover the full diplomacy window lifecycle using real base/member controls, singleton transcripts and bilateral offer storage; original catalogue extent retained."}
 // TRIED: the ~500-instruction layout-RECT tree (this+0xedc onward, built by repeatedly splitting/insetting a screen rect) is approximated at the right field offsets with plausible rather than register-derived values; likewise the AI offer-table indexing (0x7388d8/0x7388e0/0x7388e8/0x738928, 9-wide rows keyed by ab4/ab8) is a simplified approximation, not the exact addressing. The widget init/call sequence (Spot::init, GraphicWin::init/fill, box_sprite, StringBox::init, EditBox::init, the 13-button BaseButton loop, add_offer/rand dispatch, message_data/iface teardown) is transcribed in order with matching argument counts. MISMATCH #20 (layout block, lea vs sub).
 void DiploWin::exec(int faction_id, int faction_id_with) {
+  // Frame: three ints (x/y/height) and two RECT locals (rc at ebp-0x20,
+  // row at ebp-0x30) = 0x2C, plus one compiler temp = the image's 0x30.
+  RECT rc;
+  RECT row;
+
   spot_.init(100);
 
   register_iface(0x0B);
@@ -127,193 +173,150 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
   faction_id_ = faction_id;
   faction_id_with_ = faction_id_with;
 
-  // All geometry is stored in same-offset RECT members of this object.
-  const int panel_height = MainInterfaceGlobal.panel_height();
-  const int window_width = 0x340;
-  const int window_height = 0x254 - panel_height;
-  const int window_left = (WinScreenWidth - 0x320) / 2;
-  const int window_top = WinScreenHeight - 0x254;
+  int window_height = 0x254 - MainInterfaceGlobal.panel_height();
+  int window_x = (WinScreenWidth - 0x320) / 2;
+  int window_y = WinScreenHeight - MainInterfaceGlobal.panel_height() - window_height;
 
-  // 0x443F82..0x443FF2: outer clip/window geometry, then the 4+3 inset.
-  rect_EDC_.left = 0;
-  rect_EDC_.top = 0;
-  rect_EDC_.right = window_width;
-  rect_EDC_.bottom = window_height;
-  rect_EDC_.left += 0x17;
-  rect_EDC_.right -= 0x17;
+  // 0x443F82: the outer window, shrunk 0x17 each side, then 0x20 more on the right.
+  set_rectangle_dimensions(&rect_EDC_, 0, 0, 0x340, window_height);
+  diplo_expand_rect(&rect_EDC_, -0x17, 0);
   rect_EDC_.right -= 0x20;
 
-  rect_F4C_ = inset_rect(rect_EDC_, 4, 4, 4, 4);
-  rect_F4C_.left += 3;
-  rect_F4C_.top += 3;
-  rect_F4C_.right -= 3;
-  rect_F4C_.bottom -= 3;
-  // Native overwrites the bottom edge after creating the inset.
+  // 0x443FB2: title strip = outer inset 4, then 3, then 0x14 tall.
+  diplo_inset_rect(&rc, &rect_EDC_, 4, 4);
+  rect_F4C_ = rc;
+  diplo_expand_rect(&rect_F4C_, -3, -3);
   rect_F4C_.bottom = rect_F4C_.top + 0x14;
 
-  // 0x444024..0x44407F: two equal-width leader panes, including the native
-  // +2-before-SAR and -2/+2 gaps.
-  const int leader_half =
-      (rect_F4C_.right - rect_F4C_.left + 2) / 2;
-  leader_rect_[0].left = rect_F4C_.left;
-  leader_rect_[0].top = rect_F4C_.top + 0x17;
-  leader_rect_[0].right = rect_F4C_.left + leader_half - 2;
-  leader_rect_[0].bottom = rect_F4C_.bottom + 0x17;
-  leader_rect_[1].left = leader_rect_[0].right + 2;
-  leader_rect_[1].top = leader_rect_[0].top;
-  leader_rect_[1].right = rect_F4C_.right;
-  leader_rect_[1].bottom = leader_rect_[0].bottom;
+  // 0x444024: two leader panes under the title strip, gap 2.
+  diplo_offset_rect(&rc, &rect_F4C_, 0, 0x17);
+  rc.right = rc.left + (rc.right - rc.left + 2) / 2 - 2;
+  leader_rect_[0] = rc;
+  offset_rect(&rc, rc.right - rc.left + 2, 0);
+  leader_rect_[1] = rc;
 
-  // 0x4440D2..0x444139: lower row of three controls.  Since the outer width is
-  // the fixed 0x340, the instruction-derived local x edges are invariant.
-  button_rects_[2].left = 0x82;
-  button_rects_[2].top = window_height - 0x2E;
-  button_rects_[2].right = 0x134;
-  button_rects_[2].bottom = window_height - 0x1A;
-  button_rects_[3].left = 0x136;
-  button_rects_[3].top = window_height - 0x2E;
-  button_rects_[3].right = 0x1E8;
-  button_rects_[3].bottom = window_height - 0x1A;
-  button_rects_[4].left = 0x1EA;
-  button_rects_[4].top = window_height - 0x2E;
-  button_rects_[4].right = 0x29C;
-  button_rects_[4].bottom = window_height - 0x1A;
+  // 0x444087: bottom row of three buttons (outer width shrunk by 1/7 a side).
+  rc = rect_EDC_;
+  rc.bottom -= 0x1A;
+  rc.top = rc.bottom - 0x14;
+  diplo_expand_rect(&rc, (rc.right - rc.left) / -7, 0);
+  rc.right = rc.left + (rc.right - rc.left + 2) / 3 - 2;
+  button_rects_[2] = rc;
+  offset_rect(&rc, rc.right - rc.left + 2, 0);
+  button_rects_[3] = rc;
+  offset_rect(&rc, rc.right - rc.left + 2, 0);
+  button_rects_[4] = rc;
 
-  // 0x444140..0x4442C5: two side-by-side 2x2 groups.  These are individual
-  // RECT slots at 102C..109C, not rectangles inferred from another control.
-  button_rects_[5].left = 0x1E;
-  button_rects_[5].top = window_height - 0x62;
-  button_rects_[5].right = 0xD4;
-  button_rects_[5].bottom = window_height - 0x4E;
-  button_rects_[6].left = 0xD6;
-  button_rects_[6].top = window_height - 0x62;
-  button_rects_[6].right = 0x18C;
-  button_rects_[6].bottom = window_height - 0x4E;
-  button_rects_[7].left = 0x1E;
-  button_rects_[7].top = window_height - 0x4C;
-  button_rects_[7].right = 0xD4;
-  button_rects_[7].bottom = window_height - 0x38;
-  button_rects_[8].left = 0xD6;
-  button_rects_[8].top = window_height - 0x4C;
-  button_rects_[8].right = 0x18C;
-  button_rects_[8].bottom = window_height - 0x38;
-  button_rects_[9].left = 0x194;
-  button_rects_[9].top = window_height - 0x62;
-  button_rects_[9].right = 0x24A;
-  button_rects_[9].bottom = window_height - 0x4E;
-  button_rects_[10].left = 0x24C;
-  button_rects_[10].top = window_height - 0x62;
-  button_rects_[10].right = 0x302;
-  button_rects_[10].bottom = window_height - 0x4E;
-  button_rects_[11].left = 0x194;
-  button_rects_[11].top = window_height - 0x4C;
-  button_rects_[11].right = 0x24A;
-  button_rects_[11].bottom = window_height - 0x38;
-  button_rects_[12].left = 0x24C;
-  button_rects_[12].top = window_height - 0x4C;
-  button_rects_[12].right = 0x302;
-  button_rects_[12].bottom = window_height - 0x38;
+  // 0x444140: four offer columns (gaps 2, 8, 2) ending 10 above that row.
+  diplo_inset_rect(&row, &rect_EDC_, 7, 0);
+  row.bottom = rc.top - 10;
+  row.right = row.left + (row.right - row.left - 4) / 4 - 2;
 
-  // F9C/FBC title rectangles.  The +8 central separation and the half-width
-  // are direct consequences of the 4440B6..4440E9 / 4442A3..44431B arithmetic.
-  rect_F9C_.left = 0x1E;
-  rect_F9C_.top = window_height - 0x78;
-  rect_F9C_.right = 0x18C;
-  rect_F9C_.bottom = window_height - 0x64;
-  rect_FBC_.left = 0x194;
-  rect_FBC_.top = window_height - 0x78;
-  rect_FBC_.right = 0x302;
-  rect_FBC_.bottom = window_height - 0x64;
+  rc = row;
+  rc.top = rc.bottom - 0x14;
+  button_rects_[7] = rc;
+  offset_rect(&rc, rc.right - rc.left + 2, 0);
+  button_rects_[8] = rc;
+  offset_rect(&rc, rc.right - rc.left + 8, 0);
+  button_rects_[11] = rc;
+  offset_rect(&rc, rc.right - rc.left + 2, 0);
+  button_rects_[12] = rc;
 
-  // 0x44432C..0x444421: the accumulator is explicitly zeroed by native code.
-  // Keep the order and margins; UnionRect ignores empty accumulators, so each
-  // group begins at its first valid button rectangle.
-  RECT left_group = {0, 0, 0, 0};
-  UnionRect(&left_group, &left_group, &button_rects_[5]);
-  UnionRect(&left_group, &left_group, &button_rects_[6]);
-  UnionRect(&left_group, &left_group, &button_rects_[7]);
-  UnionRect(&left_group, &left_group, &button_rects_[8]);
-  UnionRect(&rect_FAC_, &left_group, &rect_F9C_);
-  rect_FAC_.left -= 3;
-  rect_FAC_.top -= 3;
-  rect_FAC_.right += 3;
-  rect_FAC_.bottom += 3;
+  // 0x44421F: the row above (0x16 higher).
+  rc = row;
+  rc.top = rc.bottom - 0x14;
+  offset_rect(&rc, 0, -0x16);
+  button_rects_[5] = rc;
+  offset_rect(&rc, rc.right - rc.left + 2, 0);
+  button_rects_[6] = rc;
+  offset_rect(&rc, rc.right - rc.left + 8, 0);
+  button_rects_[9] = rc;
+  offset_rect(&rc, rc.right - rc.left + 2, 0);
+  button_rects_[10] = rc;
 
-  RECT right_group = {0, 0, 0, 0};
-  UnionRect(&right_group, &right_group, &button_rects_[9]);
-  UnionRect(&right_group, &right_group, &button_rects_[10]);
-  UnionRect(&right_group, &right_group, &button_rects_[11]);
-  UnionRect(&right_group, &right_group, &button_rects_[12]);
-  UnionRect(&rect_FCC_, &right_group, &rect_FBC_);
-  rect_FCC_.left -= 3;
-  rect_FCC_.top -= 3;
-  rect_FCC_.right += 3;
-  rect_FCC_.bottom += 3;
+  // 0x4442AD: two-column-wide title cells another 0x16 higher.
+  rc = row;
+  rc.top = rc.bottom - 0x14;
+  offset_rect(&rc, 0, -0x2C);
+  rc.right += rc.right - rc.left + 2;
+  rect_F9C_ = rc;
+  offset_rect(&rc, rc.right - rc.left + 8, 0);
+  rect_FBC_ = rc;
 
-  // 0x4444FB..0x44456F: portrait panes use the just-unioned FAC top, including
-  // its -3 border. Keep the native bottom edge FAC.top-7 rather than
-  // substituting the outer-window bottom.
-  portrait_rect_[0].left = rect_EDC_.left + 7;
-  portrait_rect_[0].top = leader_rect_[0].bottom + 3;
-  portrait_rect_[0].right = leader_rect_[0].right;
-  portrait_rect_[0].bottom = rect_FAC_.top - 7;
-  portrait_rect_[1].left = leader_rect_[0].right + 2;
-  portrait_rect_[1].top = portrait_rect_[0].top;
-  portrait_rect_[1].right = rect_EDC_.right - 7;
-  portrait_rect_[1].bottom = rect_FAC_.top - 7;
+  // 0x444327: union each 2x2 group with its title cell, then grow by 3.
+  rc.left = 0;
+  rc.right = 0;
+  rc.top = 0;
+  rc.bottom = 0;
+  int index;
+  for (index = 5; index < 9; ++index) {
+    UnionRect(&rc, &rc, &button_rects_[index]);
+  }
+  UnionRect(&rect_FAC_, &rc, &rect_F9C_);
+  diplo_expand_rect(&rect_FAC_, 3, 3);
 
-  // MainInterface-owned rectangles at 0x444421..0x4444F3.
-  const RECT &main_frame = MainInterfaceGlobal.main_frame_rect();
-  const RECT &right_frame = MainInterfaceGlobal.right_frame_rect();
-  rect_EEC_.left = main_frame.left + 7;
-  rect_EEC_.top = main_frame.top + 7;
-  rect_EEC_.right = main_frame.right - 7;
+  rc.left = 0;
+  rc.right = 0;
+  rc.top = 0;
+  rc.bottom = 0;
+  for (index = 9; index < 13; ++index) {
+    UnionRect(&rc, &rc, &button_rects_[index]);
+  }
+  UnionRect(&rect_FCC_, &rc, &rect_FBC_);
+  diplo_expand_rect(&rect_FCC_, 3, 3);
+
+  // 0x444421: MainInterface frames inset 7, each split into a 0x14 header
+  // and the body 3 below it.
+  diplo_inset_rect(&rc, &MainInterfaceGlobal.main_frame_rect(), 7, 7);
+  rect_EEC_ = rc;
   rect_EEC_.bottom = rect_EEC_.top + 0x14;
-  rect_EFC_.left = main_frame.left + 7;
+  rect_EFC_ = rc;
   rect_EFC_.top = rect_EEC_.bottom + 3;
-  rect_EFC_.right = main_frame.right - 7;
-  rect_EFC_.bottom = main_frame.bottom - 7;
-  rect_F0C_.left = right_frame.left + 7;
-  rect_F0C_.top = right_frame.top + 7;
-  rect_F0C_.right = right_frame.right - 7;
+
+  diplo_inset_rect(&rc, &MainInterfaceGlobal.right_frame_rect(), 7, 7);
+  rect_F0C_ = rc;
   rect_F0C_.bottom = rect_F0C_.top + 0x14;
-  rect_F1C_.left = right_frame.left + 7;
+  rect_F1C_ = rc;
   rect_F1C_.top = rect_F0C_.bottom + 3;
-  rect_F1C_.right = right_frame.right - 7;
-  rect_F1C_.bottom = right_frame.bottom - 7;
 
-  // MainInterface's rect1_ supplies these two bottom-aligned regions.
-  const RECT &main_rect = MainInterfaceGlobal.main_layout_rect();
-  rect_F3C_.left = main_rect.left + 4;
-  rect_F3C_.top = main_rect.top + 4;
-  rect_F3C_.right = main_rect.right - 4;
-  rect_F3C_.bottom = main_rect.bottom - 0x1B;
-  rect_F2C_.left = main_rect.left + 4;
-  rect_F2C_.top = main_rect.bottom - 0x18;
-  rect_F2C_.right = main_rect.right - 4;
-  rect_F2C_.bottom = main_rect.bottom - 4;
+  // 0x4444F9: the two portrait panes between the leader panes and the
+  // left offer group's (already grown) top.
+  diplo_inset_rect(&rc, &rect_EDC_, 7, 0);
+  rc.top = leader_rect_[0].bottom + 3;
+  rc.bottom = rect_FAC_.top - 7;
+  rc.right = rc.left + (rc.right - rc.left + 2) / 2 - 2;
+  portrait_rect_[0] = rc;
+  offset_rect(&rc, rc.right - rc.left + 2, 0);
+  portrait_rect_[1] = rc;
 
-  GraphicWin::init(window_left, window_top, window_width, window_height,
+  // 0x444572: chat transcript and the 0x14-tall edit line 3 below it.
+  diplo_inset_rect(&rc, &MainInterfaceGlobal.main_layout_rect(), 4, 4);
+  rc.bottom -= 0x17;
+  rect_F3C_ = rc;
+  rc.top = rc.bottom + 3;
+  rc.bottom = rc.top + 0x14;
+  rect_F2C_ = rc;
+
+  GraphicWin::init(window_x, window_y, 0x340, window_height,
                    0, 0x05000000,
                    static_cast<GraphicWin *>(&ConsoleGlobal),
                    0, 0);
   field_16C_ = 0x1A;
   fill(9);
-  static_cast<Buffer &>(*this).box_sprite(&rect_F9C_, &InterfaceBoxStyles[9]);
+  static_cast<Buffer &>(*this).box_sprite(&rect_EDC_, &InterfaceBoxStyles[9]);
 
-  stringBox_.init(rect_F9C_.left + 3, rect_F3C_.top + 3,
-                  rect_F9C_.right - rect_F9C_.left - 6,
-                  rect_F9C_.bottom - rect_F9C_.top - 6,
+  stringBox_.init(rect_F3C_.left + 3, rect_F3C_.top + 3,
+                  rect_F3C_.right - rect_F3C_.left - 6,
+                  rect_F3C_.bottom - rect_F3C_.top - 6,
                   static_cast<Win *>(&MainInterfaceGlobal), 0, -1);
   Buffer &string_canvas = static_cast<Buffer &>(stringBox_);
   string_canvas.set_write_strings_callback(&DiploWin::string_callback);
   string_canvas.set_text_color(0xFF, -1, 1, 1);
+  stringBox_.set_visible_rows(100);
 
-  editBox_.init(rect_F2C_.left, rect_F2C_.top,
-                rect_F2C_.right - rect_F2C_.left,
-                rect_F2C_.bottom - rect_F2C_.top,
-                static_cast<Win *>(&MainInterfaceGlobal), 0);
-  editBox_.field_B14_ |= 0x01000000;
+  diplo_init_edit(&editBox_, &rect_F2C_,
+                  static_cast<Win *>(&MainInterfaceGlobal), 0);
+  editBox_.add_window_flags(0x01000000);
   editBox_.field_B1C_ = 9;
   editBox_.field_B30_ = 0;
   Buffer &edit_canvas = static_cast<Buffer &>(editBox_);
@@ -323,28 +326,30 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
   editBox_.field_B24_ = ChatItemIdTable[faction_id_];
   editBox_.field_B14_ = 0x80;
 
-  for (int button_index = 0; button_index != 13; ++button_index) {
-    FlatButton &button = flatButtons_[button_index];
-    const RECT &button_bounds = button_rects_[button_index];
-    const int left = button_bounds.left;
-    const int top = button_bounds.top;
-    const int right = button_bounds.right;
-    const int bottom = button_bounds.bottom;
-    char *name = 0;
+  // 0x444754: computed and never read (dead stores into rc in the image).
+  diplo_inset_rect(&rc, &rect_EFC_, 3, 3);
+
+  // Buttons 0 and 1 are not initialized here: the image skips the whole
+  // body until the label offset reaches 0xDCC.
+  for (int button_index = 0; button_index < 13; ++button_index) {
     if (button_index >= 2) {
-      name = label_get(0xDCC / 4 + button_index - 2);
+      FlatButton &button = flatButtons_[button_index];
+      button.init(label_get(0x371 + button_index), button_index,
+                  button_rects_[button_index].left,
+                  button_rects_[button_index].top,
+                  button_rects_[button_index].right - button_rects_[button_index].left,
+                  button_rects_[button_index].bottom - button_rects_[button_index].top,
+                  this, 0);
+      button.set_font(find_font(0x0E, 1), 0, 0, 0);
+      button.redraw();
+      button.set_text_color(0x41, -1, 1, 1);
+      button.hide();
+      // InterfaceBoxStyles begins at 0x0078D528 with 0x28-byte elements;
+      // these are the native 0x78D960/0x78D988/0x78D9B0 slots 27..29.
+      button.set_border_styles(&InterfaceBoxStyles[27],
+                               &InterfaceBoxStyles[28],
+                               &InterfaceBoxStyles[29]);
     }
-    button.init(name, button_index, left, top, right - left, bottom - top,
-                this, 0);
-    button.set_font(find_font(0x0E, 1), 0, 0, 0);
-    button.redraw();
-    button.set_text_color(0x41, -1, 1, 1);
-    button.hide();
-    // InterfaceBoxStyles begins at 0x0078D528 with 0x28-byte elements;
-    // these are the native 0x78D960/0x78D988/0x78D9B0 slots 27..29.
-    button.set_border_styles(&InterfaceBoxStyles[27],
-                             &InterfaceBoxStyles[28],
-                             &InterfaceBoxStyles[29]);
   }
 
   stringBox_.clear();
@@ -352,20 +357,19 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
 
   if (IsMultiplayerPBEM != 0) {
     sub_441100(faction_id_, faction_id_with_);
-    for (int side = 0; side != 2; ++side) {
-      OfferResetCell &cell = OfferResetCells[faction_id_][faction_id_with_];
-      offer_count_[side] = cell.count_[side];
-      offer_state_[side] = cell.state_[side];
-      for (int item = 0; item != 8; ++item) {
-        offer_type_[side][item] = cell.type_[side][item];
-        offer_value_[side][item] = cell.value_[side][item];
+    for (int side = 0; side < 2; ++side) {
+      offer_count_[side] = OfferResetCells[faction_id_][faction_id_with_].count_[side];
+      offer_state_[side] = OfferResetCells[faction_id_][faction_id_with_].state_[side];
+      for (int item = 0; item < 8; ++item) {
+        offer_type_[side][item] =
+            OfferResetCells[faction_id_][faction_id_with_].type_[side][item];
+        offer_value_[side][item] =
+            OfferResetCells[faction_id_][faction_id_with_].value_[side][item];
       }
     }
   } else {
-    offer_count_[0] = 0;
-    offer_count_[1] = 0;
-    offer_state_[0] = 0;
-    offer_state_[1] = 0;
+    UNK3(0);
+    UNK3(1);
   }
 
   const int player_flags = static_cast<int>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF);
@@ -377,33 +381,28 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
     DiploDefaultFlag93A968 = 1;
 
   if (IsMultiplayerNet == 0 && IsMultiplayerPBEM == 0) {
-    int random_value = rand();
-    if ((random_value & static_cast<int>(0x80000001u)) == 0) {
-      random_value = rand() % 0x59;
-      add_offer(1, 0, random_value);
+    if (rand() % 2 == 0) {
+      add_offer(1, 0, rand() % 0x59);
       if (rand() % 3 != 0) {
-        random_value = rand() % 0x59;
-        add_offer(1, 0, random_value);
+        add_offer(1, 0, rand() % 0x59);
       }
     } else {
-      random_value = rand() % 0x32;
-      add_offer(1, 1, (random_value * 5 + 5) * 5);
+      add_offer(1, 1, (rand() % 0x32 * 5 + 5) * 5);
     }
 
-    switch (rand() & 0x80000003) {
+    switch (rand() % 4) {
       case 0: add_offer(1, 4, 0);
         // Native switch intentionally falls through to the next offers.
       case 1: add_offer(1, 3, 0);
         // Native switch intentionally falls through to the next offer.
-      case 2: add_offer(1, 2, 0); break;
-      default: break;
+      case 2: add_offer(1, 2, 0);
     }
 
-    random_value = rand() % 3;
-    if (random_value == 0)
-      offer_state_[1] = 1;
-    else if (random_value == 1)
-      offer_type_[0][0] = 2;
+    // The image lays the case-1 body out before the case-0 body.
+    switch (rand() % 3) {
+      case 1: offer_type_[0][0] = 2; break;
+      case 0: offer_state_[1] = 1; break;
+    }
   }
 
   set_modal(0, pop_expire, &MainInterfaceGlobal);
@@ -430,20 +429,29 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
       destination.add(source.current_id());
     }
 
-    for (int side = 0; side != 2; ++side) {
-      OfferResetCell &cell = OfferResetCells[faction_id_][faction_id_with_];
-      cell.count_[side] = offer_count_[side];
-      cell.state_[side] = offer_state_[side];
-      for (int item = 0; item != 8; ++item) {
-        cell.type_[side][item] = offer_type_[side][item];
-        cell.value_[side][item] = offer_value_[side][item];
+    // Each side is stored twice: in the local cell as seen from here, and
+    // mirrored into the counterpart's cell with the parties swapped.
+    for (int side = 0; side < 2; ++side) {
+      OfferResetCells[faction_id_][faction_id_with_].count_[side] = offer_count_[side];
+      OfferResetCells[faction_id_][faction_id_with_].state_[side] = offer_state_[side];
+      OfferResetCells[faction_id_with_][faction_id_].count_[side] = offer_count_[1 - side];
+      OfferResetCells[faction_id_with_][faction_id_].state_[side] = offer_state_[1 - side];
+      for (int item = 0; item < 8; ++item) {
+        OfferResetCells[faction_id_][faction_id_with_].type_[side][item] =
+            offer_type_[side][item];
+        OfferResetCells[faction_id_][faction_id_with_].value_[side][item] =
+            offer_value_[side][item];
+        OfferResetCells[faction_id_with_][faction_id_].type_[side][item] =
+            offer_type_[1 - side][item];
+        OfferResetCells[faction_id_with_][faction_id_].value_[side][item] =
+            offer_value_[1 - side][item];
       }
     }
-  }
 
-  if (DiploOffersDirty != 0
-      && (offer_state_[0] != 0 || offer_count_[0] > 0))
-    PendingDiplomacyFlags[faction_id_with_][faction_id_] |= 1;
+    if (DiploOffersDirty != 0
+        && (offer_state_[0] != 0 || offer_count_[0] > 0))
+      PendingDiplomacyFlags[faction_id_with_][faction_id_] |= 1;
+  }
 
   if (CommlinkPending != 0) {
     CommlinkPending = 0;
@@ -2001,8 +2009,17 @@ Status: Coverage transcription - unclaimed body; the walk now goes through
 static inline int transcript_current_id(StringList *list) {
   return list->head_ ? list->current_->id : 0;
 }
+// WORKAROUND(inline): file-local twin of StringStruct::current_entry
+// (0x00402530, out of line in stringstruct.cpp). The image's 0x004410AF..B5
+// chase (mov eax,[eax+8]; mov edx,[eax+4]) needs the text read to go through
+// an inlined current_entry() under the head test, which is how the original
+// header evidently spelled it.
+static inline StringStructPayload *transcript_current_entry(StringList *list) {
+  if (list->head_) return list->current_->string_payload();
+  return 0;
+}
 static inline char *transcript_current_text(StringList *list) {
-  return list->head_ ? list->current_->string_payload()->text : 0;
+  return list->head_ ? transcript_current_entry(list)->text : 0;
 }
 
 static inline void transcript_add(StringList *list, char *text, int id) {

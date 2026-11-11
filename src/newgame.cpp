@@ -17,6 +17,7 @@
  */
 #define NETDAEMON_RESET_INLINE  // stand-in: see NetDaemon::reset in netdaemon.h
 #define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h
+#define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
 #include "stdafx.h"
 #include "game.h"
 #include "interface_palette.h"
@@ -72,107 +73,155 @@ static const char CustomMapPopupLabel[] = "CUSTOMMAP";
 static const char CustomMapXKey[] = "Custom Map X";
 static const char CustomMapYKey[] = "Custom Map Y";
 static const char VeryLargeMapLabel[] = "VERYLARGEMAP";
+// WORKAROUND(inline): dead /Ob2 budget probe, not recovered code. The image's
+// size_of_planet teardowns call ~StringList/~Scroll out of line at the menu-
+// failure and success returns but expand them at the custom-map returns
+// (0x0058D072, 0x0058D248, 0x0058D3F7, 0x0058D5BB); this 32-test probe at
+// entry reproduces that EH topology exactly. The original spent the same
+// budget on inline calls not yet identified.
+static int size_of_planet_budget_probe(int x)
+{
+    if (x == 0) x = 1;
+    if (x == 1) x = 4;
+    if (x == 2) x = 7;
+    if (x == 3) x = 10;
+    if (x == 4) x = 13;
+    if (x == 5) x = 16;
+    if (x == 6) x = 19;
+    if (x == 7) x = 22;
+    if (x == 8) x = 25;
+    if (x == 9) x = 28;
+    if (x == 10) x = 31;
+    if (x == 11) x = 34;
+    if (x == 12) x = 37;
+    if (x == 13) x = 40;
+    if (x == 14) x = 43;
+    if (x == 15) x = 46;
+    if (x == 16) x = 49;
+    if (x == 17) x = 52;
+    if (x == 18) x = 55;
+    if (x == 19) x = 58;
+    if (x == 20) x = 61;
+    if (x == 21) x = 64;
+    if (x == 22) x = 67;
+    if (x == 23) x = 70;
+    if (x == 24) x = 73;
+    if (x == 25) x = 76;
+    if (x == 26) x = 79;
+    if (x == 27) x = 82;
+    if (x == 28) x = 85;
+    if (x == 29) x = 88;
+    if (x == 30) x = 91;
+    if (x == 31) x = 94;
+    return x;
+}
+
 
 
 // ORIGINAL: 0x0058CED0 ?size_of_planet@@YAHH@Z 0x0058CED0-0x0058D6A4;0x006607D7-0x00660989
 // RECOVERY_BINDING: v1 {"evidence": ["task:newgame-menu-owner", "historical seed:src/unrecovered/0058ced0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete mapped native control flow", "source:existing SetupWin/Popup/Buffer/NetDaemon owner declarations; provisional bounded945820 and9B2074 objects, not raw image aliases"], "reason": "Source-owned new-game/menu family preserving complete original identity, auxiliary spans and historical seed findings; existing genuine object lifetimes and typed member owners. Unfinished bodies remain explicit, not implementation coverage."}
 // TRIED: real Popup/SetupWin RAII locals with Popup::start()'s six args re-derived from push order (p1 is the fixed 0x9b8aa8 char* buffer, not the GraphicWin* - this is backwards from what an earlier sibling function assumed), plus text_open/text_get/text_item/EditGroup::edit/ prefs_get/X_pop/Path::init argument order verified against raw disasm; compiles, MISMATCH #24 (past the prologue and into the item-list loop - likely the itemNum2/itemCount stack array layout or the loop bound).
 int __cdecl size_of_planet(int mode) {
+    size_of_planet_budget_probe(2);  // WORKAROUND(inline): see above
     Popup popup;
     SetupWin setup;
-    const int start_flags = mode != 2 ? 0x40 : 0;
-    popup.start(PopupStartCaption, WorldSizePopupLabel, -1, 0,
-                start_flags, 0);
+    popup.start(WorldSizePopupLabel, mode != 2 ? 0x40 : 0);
 
-    int width_for_choice[32];
-    int height_for_choice[32];
-    int width = 0;
-
+    int width;
     MapSetupStatus = 1;
-    const int text_open_result = text_open(AlphaxFileID, "WORLDSIZE");
-    if (text_open_result != 0) {
+    if (text_open(AlphaxFileID, "WORLDSIZE")) {
         MapSizePlanet = 2;
         width = 0x28;
         MapLatitudeBounds = 0x50;
     } else {
-        text_get();
-        int item_count = text_item_number();
-        if (item_count > 0x20) item_count = 0x20;
-        for (int item = 0; item < item_count; ++item) {
+        {
+            int width_for_choice[32];
+            int height_for_choice[32];
             text_get();
+            int item_count = text_item_number();
+            if (item_count > 0x20) item_count = 0x20;
+            for (int item = 0; item < item_count; ++item) {
+                text_get();
+                StringTemp[0] = 0;
+                strcat(StringTemp, text_item());
+                popup.item(StringTemp, item);
+                width_for_choice[item] = text_item_number();
+                height_for_choice[item] = text_item_number();
+            }
             StringTemp[0] = 0;
-            strcat(StringTemp, text_item());
-            popup.dialogs().item(StringTemp, item);
-            width_for_choice[item] = text_item_number();
-            height_for_choice[item] = text_item_number();
-        }
-        StringTemp[0] = 0;
-        strcat(StringTemp, label_get(0x1104 / 4));
-        popup.dialogs().item(StringTemp, 0x63);
+            strcat(StringTemp, label_get(0x1104 / 4));
+            popup.item(StringTemp, 0x63);
 
-        const int saved_choice = static_cast<int>(AlphaIniPrefs.custom_world[0]);
-        popup.set_value(saved_choice);
-        int chosen;
-        if (mode == 1) {
-            MapSizePlanet = static_cast<uint32_t>(saved_choice);
-            chosen = saved_choice;
-            goto size_after_choice;
-        }
-        if (mode == 2) MapSizePlanet = static_cast<uint32_t>(popup.exec(0, 0));
-        else MapSizePlanet = static_cast<uint32_t>(setup.do_menu(&popup, 1, 0));
-        if (static_cast<int32_t>(MapSizePlanet) < 0) {
-            return 1;
-        }
-
-        if (saved_choice == 0) {
-            chosen = static_cast<int>(MapSizePlanet);
-            if (MapSizePlanet != 0x63) goto size_after_choice;
-        } else {
-            chosen = rand() % 5;
-            MapSizePlanet = static_cast<uint32_t>(chosen);
-            chosen = saved_choice;
-size_after_choice:
-            AlphaIniPrefs.custom_world[0] = static_cast<uint32_t>(chosen);
-            if (MapSizePlanet != 0x63) {
-                MapLatitudeBounds = height_for_choice[MapSizePlanet];
-                width = width_for_choice[MapSizePlanet];
+            int choice = static_cast<int>(AlphaIniPrefs.custom_world[0]);
+            popup.set_value(choice);
+            if (mode == 1) {
+                MapSizePlanet = static_cast<uint32_t>(choice);
+            } else {
+                if (mode == 2) choice = popup.exec();
+                else choice = setup.do_menu(&popup, 1, 0);
+                MapSizePlanet = static_cast<uint32_t>(choice);
+                if (choice < 0) {
+                    return 1;
+                }
+                // 0x0058D12F: the popup's at-key poll flag (+0x3100) asks
+                // for a random size; a menu choice other than "custom" is
+                // remembered.
+                if (popup.input_poll_state() != 0) {
+                    choice = rand() % 5;
+                    MapSizePlanet = static_cast<uint32_t>(choice);
+                } else if (choice != 0x63) {
+                    AlphaIniPrefs.custom_world[0] = static_cast<uint32_t>(choice);
+                }
+            }
+            if (choice == 0x63) {
+            } else {
+                width = width_for_choice[choice];
+                MapLatitudeBounds = height_for_choice[choice];
                 goto size_complete;
             }
         }
 
-        popup.start(PopupStartCaption, CustomMapPopupLabel, -1, 0, 0x44, 0);
-        const int pref_x = prefs_get(CustomMapXKey, 0, 0x28);
-        const int pref_y = prefs_get(CustomMapYKey, 0, 0x50);
-        StringTemp[0] = 0;
-        char number[20];
-        _itoa(pref_x, number, 10);
-        strcat(StringTemp, number);
-        static_cast<EditGroup &>(popup.dialogs()).edit(
-            label_get(0x1108 / 4), StringTemp, 8);
-        StringTemp[0] = 0;
-        _itoa(pref_y, number, 10);
-        strcat(StringTemp, number);
-        static_cast<EditGroup &>(popup.dialogs()).edit(
-            label_get(0x110C / 4), StringTemp, 8);
+        {
+            popup.start(CustomMapPopupLabel, 0x44);
+            const int pref_x = prefs_get(CustomMapXKey, 0x28, 0);
+            const int pref_y = prefs_get(CustomMapYKey, 0x50, 0);
+            char number[80];
+            StringTemp[0] = 0;
+            _itoa(pref_x, number, 10);
+            strcat(StringTemp, number);
+            {
+                LPSTR label = label_get(0x1108 / 4);
+                popup.dialogs().edit(label, StringTemp, 8);
+            }
+            StringTemp[0] = 0;
+            _itoa(pref_y, number, 10);
+            strcat(StringTemp, number);
+            {
+                LPSTR label = label_get(0x110C / 4);
+                popup.dialogs().edit(label, StringTemp, 8);
+            }
 
-        if (popup.exec(0, 0) < 0) {
-            return 1;
-        }
-        int custom_width = atoi(ParseStrBuffer[0].str);
-        int custom_height = atoi(ParseStrBuffer[1].str);
-        if (custom_width < 0x10) custom_width = 0x10;
-        else if (custom_width > 0x100) custom_width = 0x100;
-        if (custom_height < 0x10) custom_height = 0x10;
-        else if (custom_height > 0x100) custom_height = 0x100;
-        if (custom_width > 0x80 || custom_height > 0x80) {
-            if (X_pop(VeryLargeMapLabel, 0) != 0) {
+            if (popup.exec() < 0) {
                 return 1;
             }
+            int custom_width = atoi(ParseStrBuffer[0].str);
+            int custom_height = atoi(ParseStrBuffer[1].str);
+            if (custom_width >= 0x10) {
+                if (custom_width > 0x100) custom_width = 0x100;
+            } else custom_width = 0x10;
+            if (custom_height >= 0x10) {
+                if (custom_height > 0x100) custom_height = 0x100;
+            } else custom_height = 0x10;
+            if (custom_width > 0x80 || custom_height > 0x80) {
+                if (X_pop(VeryLargeMapLabel, 0) != 0) {
+                    return 1;
+                }
+            }
+            prefs_put(CustomMapXKey, custom_width, 0);
+            prefs_put(CustomMapYKey, custom_height, 0);
+            MapLatitudeBounds = custom_height;
+            width = custom_width;
         }
-        prefs_put(CustomMapXKey, custom_width, 0);
-        prefs_put(CustomMapYKey, custom_height, 0);
-        MapLatitudeBounds = custom_height;
-        width = custom_width;
     }
 
 size_complete:
@@ -187,38 +236,6 @@ size_complete:
 }
 
 
-static const int CustomPlanetSlots[6] = {1, 3, 6, 5, 0, 0};
-static const char CustomPlanetPrefix[] = "WORLD";
-static const char CustomPlanetMoon800[3][20] = {
-    "moon1_800.pcx", "moon2_800.pcx", "moon3_800.pcx"};
-static const char CustomPlanetMoonOther[3][20] = {
-    "MOON1.PCX", "MOON2.PCX", "MOON3.PCX"};
-static const char *const CustomPlanetKindLabels[6] = {
-    "LAND", "", "TIDES", "ORBIT", "CLOUDS", "LIFE"};
-
-static int &custom_planet_map_slot(int slot) {
-    switch (slot) {
-    case 0: return MapSizePlanet;
-    case 1: return MapOceanCoverage;
-    case 2: return MapLandCoverage;
-    case 3: return MapErosiveForces;
-    case 4: return MapPlanetaryOrbit;
-    case 5: return MapCloudCover;
-    case 6: return MapNativeLifeForms;
-    default: return MapNativeLifeForms;
-    }
-}
-
-static int custom_planet_clamp_level(uint32_t raw_value) {
-    const uint32_t sum = raw_value + 1u;
-    int32_t value;
-    memcpy(&value, &sum, sizeof(value));
-    if (value < 1) return 1;
-    if (value > 3) return 3;
-    return value;
-}
-
-
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0058C2A0 0x0058CE9C 0x0058CEB4 0x0058C3C9
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0058C2A0 0x0058CEB4 0x0058CECC 0x0058C715
 // ORIGINAL: 0x0058C2A0 ?custom_planet@@YAHHH@Z 0x0058C2A0-0x0058CE9C;0x006605A5-0x006607D7
@@ -228,98 +245,136 @@ int __cdecl custom_planet(int show_preview, int use_saved_choices) {
     Popup popup;
     Buffer previews[3];
     SetupWin setup;
+    int slots[6] = {1, 3, 6, 5, 0, 0};
+    char filename[64];
 
-    if (show_preview != 0) {
-        for (int image = 0; image < 3; ++image) {
-            setup.overlay_buffers_[image] = &previews[image];
-        }
+    if (show_preview) {
+        setup.overlay_buffers_[0] = &previews[0];
+        setup.overlay_buffers_[1] = &previews[1];
+        setup.overlay_buffers_[2] = &previews[2];
     }
+    memset(&MapOceanCoverage, 0, 6 * sizeof(int));
 
-    MapOceanCoverage = 0;
-    MapLandCoverage = 0;
-    MapErosiveForces = 0;
-    MapPlanetaryOrbit = 0;
-    MapCloudCover = 0;
-    MapNativeLifeForms = 0;
-
-    for (int iteration = 1; iteration < 7; ++iteration) {
-        const int slot = CustomPlanetSlots[iteration - 1];
-        if (slot == 0) continue;
-        const int saved_value = static_cast<int>(AlphaIniPrefs.custom_world[slot]);
-        int &destination = custom_planet_map_slot(slot);
-        destination = saved_value;
-
-        if (use_saved_choices != 0) continue;
-
+    for (int i = 1; i < 7; i++) {
+        int slot = slots[i - 1];
+        if (!slot) {
+            continue;
+        }
+        MapStorage.metadata_.planet_rules_[slot] = AlphaIniPrefs.custom_world[slot];
+        if (use_saved_choices) {
+            continue;
+        }
         StringTemp[0] = 0;
-        strcat(StringTemp, CustomPlanetPrefix);
-        // Both native jump tables dispatch on the descriptor slot, not its
-        // saved setting. The four active descriptors are 1, 3, 6 and 5.
-        if (show_preview != 0) {
-            if (slot == 3) {
-                for (int image = 0; image < 3; ++image) {
-                    const char *filename = WinScreenWidth == 800
-                        ? CustomPlanetMoon800[image] : CustomPlanetMoonOther[image];
-                    previews[image].load_pcx(filename, 0, 0x0A, 0xEC);
-                }
-                for (int overlay = 0; overlay < 3; ++overlay) {
-                    setup.overlay_x_[overlay] = 0;
-                    setup.overlay_y_[overlay] = 0;
-                }
-            } else if (slot == 1) {
-                char filename[32];
-                for (int image = 0; image < 3; ++image) {
-                    const int life = custom_planet_clamp_level(MapNativeLifeForms);
-                    const int clouds = custom_planet_clamp_level(MapCloudCover);
-                    sprintf(filename, "S%dL%dC%d.PCX", image + 1, life, clouds);
-                    previews[image].load_pcx(filename, 0, 0x0A, 0xEC);
-                    const int screen_width = WinScreenWidth;
-                    setup.overlay_x_[image] = screen_width == 800
-                        ? 449 : screen_width - previews[0].pixel_width();
-                    setup.overlay_y_[image] = screen_width == 800 ? -168 : 0;
-                }
-            } else if (slot == 5 || slot == 6) {
-                char filename[32];
-                for (int image = 0; image < 3; ++image) {
-                    const int ocean = custom_planet_clamp_level(MapOceanCoverage);
-                    const int life = slot == 5
-                        ? custom_planet_clamp_level(MapNativeLifeForms) : image + 1;
-                    const int clouds = slot == 5
-                        ? image + 1 : custom_planet_clamp_level(MapCloudCover);
-                    sprintf(filename, "S%dL%dC%d.PCX", ocean, life, clouds);
-                    previews[image].load_pcx(filename, 0, 0x0A, 0xEC);
-                    const int screen_width = WinScreenWidth;
-                    setup.overlay_x_[image] = screen_width == 800
-                        ? 449 : screen_width - previews[0].pixel_width();
-                    setup.overlay_y_[image] = screen_width == 800 ? -168 : 0;
-                }
+        strcat(StringTemp, "WORLD");
+        if (show_preview) {
+            switch (slot) {
+            case 1:
+                filename[0] = 0;
+                strcat(filename, "S1L1C1.PCX");
+                { for (int image = 0; image < 3; image++) {
+                    filename[1] = '1' + image;
+                    filename[3] = range(MapNativeLifeForms + 1, 1, 3) + '0';
+                    filename[5] = range(MapCloudCover + 1, 1, 3) + '0';
+                    previews[image].load_pcx(filename, 0, 10, 0xEC);
+                    if (WinScreenWidth == 800) {
+                        setup.overlay_x_[image] = 449;
+                        setup.overlay_y_[image] = -168;
+                    } else {
+                        setup.overlay_x_[image] = WinScreenWidth - previews[0].pixel_width();
+                        setup.overlay_y_[image] = 0;
+                    }
+                } }
+                strcat(StringTemp, "LAND");
+                break;
+            case 3:
+                previews[0].load_pcx(WinScreenWidth == 800 ? "moon1_800.pcx" : "MOON1.PCX", 0, 10, 0xEC);
+                previews[1].load_pcx(WinScreenWidth == 800 ? "moon2_800.pcx" : "MOON2.PCX", 0, 10, 0xEC);
+                previews[2].load_pcx(WinScreenWidth == 800 ? "moon3_800.pcx" : "MOON3.PCX", 0, 10, 0xEC);
+                setup.overlay_x_[0] = 0;
+                setup.overlay_y_[0] = 0;
+                setup.overlay_x_[1] = 0;
+                setup.overlay_y_[1] = 0;
+                setup.overlay_x_[2] = 0;
+                setup.overlay_y_[2] = 0;
+                strcat(StringTemp, "TIDES");
+                break;
+            case 4:
+                strcat(StringTemp, "ORBIT");
+                break;
+            case 5:
+                filename[0] = 0;
+                strcat(filename, "S1L1C1.PCX");
+                { for (int image = 0; image < 3; image++) {
+                    filename[1] = range(MapOceanCoverage + 1, 1, 3) + '0';
+                    filename[3] = range(MapNativeLifeForms + 1, 1, 3) + '0';
+                    filename[5] = '1' + image;
+                    previews[image].load_pcx(filename, 0, 10, 0xEC);
+                    if (WinScreenWidth == 800) {
+                        setup.overlay_x_[image] = 449;
+                        setup.overlay_y_[image] = -168;
+                    } else {
+                        setup.overlay_x_[image] = WinScreenWidth - previews[0].pixel_width();
+                        setup.overlay_y_[image] = 0;
+                    }
+                } }
+                strcat(StringTemp, "CLOUDS");
+                break;
+            case 6:
+                filename[0] = 0;
+                strcat(filename, "S1L1C1.PCX");
+                { for (int image = 0; image < 3; image++) {
+                    filename[1] = range(MapOceanCoverage + 1, 1, 3) + '0';
+                    filename[3] = '1' + image;
+                    filename[5] = range(MapCloudCover + 1, 1, 3) + '0';
+                    previews[image].load_pcx(filename, 0, 10, 0xEC);
+                    if (WinScreenWidth == 800) {
+                        setup.overlay_x_[image] = 449;
+                        setup.overlay_y_[image] = -168;
+                    } else {
+                        setup.overlay_x_[image] = WinScreenWidth - previews[0].pixel_width();
+                        setup.overlay_y_[image] = 0;
+                    }
+                } }
+                strcat(StringTemp, "LIFE");
+                break;
+            }
+        } else {
+            switch (slot) {
+            case 1:
+                strcat(StringTemp, "LAND");
+                break;
+            case 3:
+                strcat(StringTemp, "TIDES");
+                break;
+            case 4:
+                strcat(StringTemp, "ORBIT");
+                break;
+            case 5:
+                strcat(StringTemp, "CLOUDS");
+                break;
+            case 6:
+                strcat(StringTemp, "LIFE");
+                break;
             }
         }
-
-        // Native label append occurs after the preview callbacks. The image
-        // filename template is local scratch, not part of the popup label.
-        strcat(StringTemp, CustomPlanetKindLabels[slot - 1]);
-        popup.start(PopupStartCaption, StringTemp, -1, 0, 0x40, 0);
-        // start/load callbacks can change preferences; preserve the live read.
-        popup.set_value(static_cast<int>(AlphaIniPrefs.custom_world[slot]));
-        const int selection = show_preview != 0
-            ? setup.do_menu(&popup, 1, 0) : popup.exec(0, 0);
-        destination = selection;
-        if (selection < 0) {
-            prefs_save(0);
+        popup.start(StringTemp, 0x40);
+        popup.set_value(AlphaIniPrefs.custom_world[slot]);
+        int choice = show_preview ? setup.do_menu(&popup, 1, 0) : popup.exec();
+        MapStorage.metadata_.planet_rules_[slot] = choice;
+        if (choice < 0) {
             return 1;
         }
-        if (popup.input_poll_state() != 0) {
-            destination = 0xFFFFFFFFu;
+        if (popup.input_poll_state()) {
+            MapStorage.metadata_.planet_rules_[slot] = -1;
         } else {
-            AlphaIniPrefs.custom_world[slot] = static_cast<uint32_t>(selection);
+            AlphaIniPrefs.custom_world[slot] = choice;
         }
     }
 
-    if (show_preview != 0) {
-        for (int image = 0; image < 3; ++image) {
-            setup.overlay_buffers_[image] = 0;
-        }
+    if (show_preview) {
+        setup.overlay_buffers_[0] = 0;
+        setup.overlay_buffers_[1] = 0;
+        setup.overlay_buffers_[2] = 0;
     }
     MapLandCoverage = 2 - MapOceanCoverage;
     prefs_save(0);
@@ -902,50 +957,6 @@ void __cdecl thumb_routine(int faction) {
     PopupModalActive = 0;
 }
 
-// These masks are derived from the original low-byte and CH tests, retaining
-// the asymmetric default/reset path and inverse 0x100 checkbox.
-static void config_game_seed_checks() {
-    static const unsigned int rules[16] = {
-        0x800, 2, 8, 4, 0x1000, 1, 0x10, 0x20,
-        0x4000, 0x200, 0x40, 0x100, 0x2000, 0x8000, 0x80, 0x400
-    };
-    unsigned int checks = 0;
-    for (int i = 0; i < 16; ++i) {
-        bool checked = (GameDataStateStorage.fields_.game_rules_ & rules[i]) != 0;
-        if (i == 11) checked = !checked;
-        if (checked) checks |= 1u << i;
-    }
-    if (GameDataStateStorage.fields_.game_state_ & 0x00800000u) checks |= 0x10000u;
-    if (GameDataStateStorage.fields_.game_state_ & 0x01000000u) checks |= 0x20000u;
-    PopupWriteCheckState = checks;
-}
-
-static void config_game_apply_checks() {
-    static const unsigned int rules[16] = {
-        0x800, 2, 8, 4, 0x1000, 1, 0x10, 0x20,
-        0x4000, 0x200, 0x40, 0x100, 0x2000, 0x8000, 0x80, 0x400
-    };
-    unsigned int checks = PopupWriteCheckState;
-    for (int i = 0; i < 16; ++i) {
-        bool checked = (checks & (1u << i)) != 0;
-        if (i == 11) checked = !checked;
-        if (checked) GameDataStateStorage.fields_.game_rules_ |= rules[i];
-    }
-    if (checks & 0x10000u) GameDataStateStorage.fields_.game_state_ |= 0x00800000u;
-    if (checks & 0x20000u) GameDataStateStorage.fields_.game_state_ |= 0x01000000u;
-}
-
-static void config_game_play_voice(int faction, bool flagged) {
-    StringTemp[0] = 0;
-    strcat(StringTemp, "voices\\");
-    strcat(StringTemp, Players[faction].filename);
-    strcat(StringTemp, ".mp3");
-    g_WAVE_GENERAL.unload();
-    if (flagged) g_WAVE_GENERAL.load(StringTemp, 0x100UL);
-    else g_WAVE_GENERAL.load(StringTemp);
-    g_WAVE_GENERAL.play();
-}
-
 static unsigned char config_game_original_rule_byte(int selected) {
     // The pinned expression uses unchecked native Player stride. Its one
     // observed adjacent-storage case is represented through its real owner.
@@ -1085,15 +1096,11 @@ int __cdecl init_opening(const char *filename) {
 int __cdecl config_game(int mode) {
     Popup popup;
     SetupWin setup;
-    int selected;                 // native EBP-14, not the parser cursor
-    int human_mask;               // intentionally not initialized on shortcut
-    int picked;
-    int use_expansion_picker;
-    int special_a, special_b;
-    int custom_count;
-    int special_count;
-    char first_special[0x18];
-    char gender_text[0x50];
+    int human_mask;     // [ebp-0x10]
+    int selected;       // [ebp-0x14]
+    int time_choice;    // register only (0x0058A5B2 -> 0x0058B98A)
+    char gender_text[0x50];     // [ebp-0xA8]
+    char first_special[0x18];   // [ebp-0x58]
 
     if (mode & 1) {
         GameDataStateStorage.fields_.diff_level_current_ = DefaultPrefs.difficulty;
@@ -1105,24 +1112,33 @@ int __cdecl config_game(int mode) {
 difficulty_menu:
     setup.Win::hide();
     setup.Win::show(0);
-    if ((GameDataStateStorage.fields_.game_rules_ & 0x01000000u) == 0) {
-        popup.start(PopupStartCaption, "DIFFICULTY", -1, 0, 0x40, 0);
-        for (int i = 0; i < 6; ++i) {
-            StringTemp[0] = 0;
-            strcat(StringTemp, StringTable.get(Difficulty[i]));
-            if (i == 0 || i == 5) {
-                strcat(StringTemp, " ");
-                strcat(StringTemp, "(");
-                strcat(StringTemp, label_get((i == 0 ? 0x1C4 : 0x1C8) / 4));
-                strcat(StringTemp, ")");
+    if (!(GameDataStateStorage.fields_.game_rules_ & 0x01000000)) {
+        popup.start("DIFFICULTY", 0x40);
+        {
+            for (int i = 0; i < 6; ++i) {
+                StringTemp[0] = 0;
+                strcat(StringTemp, StringTable.get(Difficulty[i]));
+                if (i == 0) {
+                    strcat(StringTemp, " ");
+                    strcat(StringTemp, "(");
+                    strcat(StringTemp, label_get(113));
+                    strcat(StringTemp, ")");
+                } else if (i == 5) {
+                    strcat(StringTemp, " ");
+                    strcat(StringTemp, "(");
+                    strcat(StringTemp, label_get(114));
+                    strcat(StringTemp, ")");
+                }
+                popup.item(StringTemp, i);
             }
-            popup.dialogs().item(StringTemp, i);
         }
         popup.set_value(DefaultPrefs.difficulty);
-        picked = setup.do_menu(&popup, 1, 0);
-        if (picked < 0) return 1;
-        DefaultPrefs.difficulty = picked;
-        GameDataStateStorage.fields_.diff_level_current_ = picked;
+        int choice = setup.do_menu(&popup, 1, 0);
+        if (choice < 0) {
+            return 1;
+        }
+        DefaultPrefs.difficulty = choice;
+        GameDataStateStorage.fields_.diff_level_current_ = choice;
     }
 
 rules_menu:
@@ -1130,90 +1146,152 @@ rules_menu:
     if (mode == 2) goto select_faction;
     setup.Win::hide();
     setup.Win::show(0);
-    popup.start(PopupStartCaption, "USERULES", -1, 0, 0x40, 0);
+    popup.start("USERULES", 0x40);
     popup.set_value(AlphaIniPrefs.customize);
-    picked = setup.do_menu(&popup, 1, 0);
-    if (picked < 0) {
-        if ((GameDataStateStorage.fields_.game_rules_ & 0x01000000u) == 0) goto difficulty_menu;
-        return 1;
-    }
-    AlphaIniPrefs.customize = picked;
-    if (picked == 0) {
-        GameDataStateStorage.fields_.game_rules_ &= 0xFFFF0000u;
-        GameDataStateStorage.fields_.game_rules_ |= default_rules();
-        goto select_faction;
-    }
-    if (picked == 1) {
-        GameDataStateStorage.fields_.game_rules_ &= 0xFFFF0000u;
-        GameDataStateStorage.fields_.game_rules_ |= GameDataStateStorage.fields_.diff_level_current_ != 0 ? AlphaIniPrefs.rules & 0xFFFFu
-            : (AlphaIniPrefs.rules & 0xFDFFu) | 0x200u;
-        GameDataStateStorage.fields_.game_state_ = (GameDataStateStorage.fields_.game_state_ & 0xFE7FFFFFu) | AlphaIniPrefs.semaphore;
-        goto select_faction;
+    {
+        int choice = setup.do_menu(&popup, 1, 0);
+        if (choice < 0) {
+            if (!(GameDataStateStorage.fields_.game_rules_ & 0x01000000)) goto difficulty_menu;
+            return 1;
+        }
+        AlphaIniPrefs.customize = choice;
+        if (choice == 0) {
+            GameDataStateStorage.fields_.game_rules_ &= 0xFFFF0000;
+            GameDataStateStorage.fields_.game_rules_ |= default_rules();
+            goto select_faction;
+        }
+        if (choice == 1) {
+            GameDataStateStorage.fields_.game_rules_ &= 0xFFFF0000;
+            GameDataStateStorage.fields_.game_rules_ |=
+                GameDataStateStorage.fields_.diff_level_current_ ? AlphaIniPrefs.rules & 0xFFFF
+                    : (AlphaIniPrefs.rules & 0xFDFF) | 0x200;
+            GameDataStateStorage.fields_.game_state_ =
+                (GameDataStateStorage.fields_.game_state_ & 0xFE7FFFFF) | AlphaIniPrefs.semaphore;
+            goto select_faction;
+        }
     }
     human_mask = 0;
+
 custom_rules:
     setup.Win::hide();
     setup.Win::show(0);
-    GameDataStateStorage.fields_.game_rules_ = (GameDataStateStorage.fields_.game_rules_ & 0xFFFF0000u) |
-        (GameDataStateStorage.fields_.diff_level_current_ != 0 ? AlphaIniPrefs.rules & 0xFFFFu
-            : (AlphaIniPrefs.rules & 0xFDFFu) | 0x200u);
-    GameDataStateStorage.fields_.game_state_ = (GameDataStateStorage.fields_.game_state_ & 0xFE7FFFFFu) | AlphaIniPrefs.semaphore;
-    if (IsMultiplayerNet) GameDataStateStorage.fields_.game_rules_ |= 0x200u;
-    config_game_seed_checks();
+    GameDataStateStorage.fields_.game_rules_ =
+        (GameDataStateStorage.fields_.game_rules_ & 0xFFFF0000) |
+        (GameDataStateStorage.fields_.diff_level_current_ ? AlphaIniPrefs.rules & 0xFFFF
+            : (AlphaIniPrefs.rules & 0xFDFF) | 0x200);
+    GameDataStateStorage.fields_.game_state_ =
+        (GameDataStateStorage.fields_.game_state_ & 0xFE7FFFFF) | AlphaIniPrefs.semaphore;
+    if (IsMultiplayerNet) GameDataStateStorage.fields_.game_rules_ |= 0x200;
+    {
+        // Rules checklist seed (0x0058A29C-0x0058A393): one checkbox bit per
+        // rule, built in a register and published before the RULES popup.
+        int checks = (GameDataStateStorage.fields_.game_rules_ & 0x800) != 0;
+        if (GameDataStateStorage.fields_.game_rules_ & 0x2) checks |= 0x2; else checks &= ~0x2;
+        if (GameDataStateStorage.fields_.game_rules_ & 0x8) checks |= 0x4; else checks &= ~0x4;
+        if (GameDataStateStorage.fields_.game_rules_ & 0x4) checks |= 0x8; else checks &= ~0x8;
+        if (GameDataStateStorage.fields_.game_rules_ & 0x1000) checks |= 0x10; else checks &= ~0x10;
+        if (GameDataStateStorage.fields_.game_rules_ & 0x1) checks |= 0x20; else checks &= ~0x20;
+        if (GameDataStateStorage.fields_.game_rules_ & 0x10) checks |= 0x40; else checks &= ~0x40;
+        if (GameDataStateStorage.fields_.game_rules_ & 0x20) checks |= 0x80; else checks &= ~0x80;
+        if (GameDataStateStorage.fields_.game_rules_ & 0x4000) checks |= 0x100; else checks &= ~0x100;
+        if (GameDataStateStorage.fields_.game_rules_ & 0x200) checks |= 0x200; else checks &= ~0x200;
+        if (GameDataStateStorage.fields_.game_rules_ & 0x40) checks |= 0x400; else checks &= ~0x400;
+        if (~GameDataStateStorage.fields_.game_rules_ & 0x100) checks |= 0x800; else checks &= ~0x800;
+        if (GameDataStateStorage.fields_.game_rules_ & 0x2000) checks |= 0x1000; else checks &= ~0x1000;
+        if (GameDataStateStorage.fields_.game_rules_ & 0x8000) checks |= 0x2000; else checks &= ~0x2000;
+        if (GameDataStateStorage.fields_.game_rules_ & 0x80) checks |= 0x4000; else checks &= ~0x4000;
+        if (GameDataStateStorage.fields_.game_rules_ & 0x400) checks |= 0x8000; else checks &= ~0x8000;
+        if (GameDataStateStorage.fields_.game_state_ & 0x00800000) checks |= 0x10000; else checks &= ~0x10000;
+        if (GameDataStateStorage.fields_.game_state_ & 0x01000000) checks |= 0x20000; else checks &= ~0x20000;
+        PopupWriteCheckState = checks;
+    }
     if (x_pop_short("RULES", 0x41, 0) < 0) goto rules_menu;
-    GameDataStateStorage.fields_.game_rules_ &= 0xFFFF0000u;
-    GameDataStateStorage.fields_.game_state_ &= 0xFE7FFFFFu;
+    GameDataStateStorage.fields_.game_rules_ &= 0xFFFF0000;
+    GameDataStateStorage.fields_.game_state_ &= 0xFE7FFFFF;
     if (ConsoleGroupAction) {
         GameDataStateStorage.fields_.game_rules_ |= default_rules();
         AlphaIniPrefs.rules = GameDataStateStorage.fields_.game_rules_;
-        AlphaIniPrefs.semaphore = GameDataStateStorage.fields_.game_state_ & 0x01800000u;
+        AlphaIniPrefs.semaphore = GameDataStateStorage.fields_.game_state_ & 0x01800000;
         goto custom_rules;
     }
-    config_game_apply_checks();
+    if (PopupWriteCheckState & 0x1) GameDataStateStorage.fields_.game_rules_ |= 0x800;
+    if (PopupWriteCheckState & 0x2) GameDataStateStorage.fields_.game_rules_ |= 0x2;
+    if (PopupWriteCheckState & 0x4) GameDataStateStorage.fields_.game_rules_ |= 0x8;
+    if (PopupWriteCheckState & 0x8) GameDataStateStorage.fields_.game_rules_ |= 0x4;
+    if (PopupWriteCheckState & 0x10) GameDataStateStorage.fields_.game_rules_ |= 0x1000;
+    if (PopupWriteCheckState & 0x20) GameDataStateStorage.fields_.game_rules_ |= 0x1;
+    if (PopupWriteCheckState & 0x40) GameDataStateStorage.fields_.game_rules_ |= 0x10;
+    if (PopupWriteCheckState & 0x80) GameDataStateStorage.fields_.game_rules_ |= 0x20;
+    if (PopupWriteCheckState & 0x100) GameDataStateStorage.fields_.game_rules_ |= 0x4000;
+    if (PopupWriteCheckState & 0x200) GameDataStateStorage.fields_.game_rules_ |= 0x200;
+    if (PopupWriteCheckState & 0x400) GameDataStateStorage.fields_.game_rules_ |= 0x40;
+    if (!(PopupWriteCheckState & 0x800)) GameDataStateStorage.fields_.game_rules_ |= 0x100;
+    if (PopupWriteCheckState & 0x1000) GameDataStateStorage.fields_.game_rules_ |= 0x2000;
+    if (PopupWriteCheckState & 0x2000) GameDataStateStorage.fields_.game_rules_ |= 0x8000;
+    if (PopupWriteCheckState & 0x4000) GameDataStateStorage.fields_.game_rules_ |= 0x80;
+    if (PopupWriteCheckState & 0x8000) GameDataStateStorage.fields_.game_rules_ |= 0x400;
+    if (PopupWriteCheckState & 0x10000) GameDataStateStorage.fields_.game_state_ |= 0x00800000;
+    if (PopupWriteCheckState & 0x20000) GameDataStateStorage.fields_.game_state_ |= 0x01000000;
     AlphaIniPrefs.rules = GameDataStateStorage.fields_.game_rules_;
-    AlphaIniPrefs.semaphore = GameDataStateStorage.fields_.game_state_ & 0x01800000u;
+    AlphaIniPrefs.semaphore = GameDataStateStorage.fields_.game_state_ & 0x01800000;
     ConfigFactionDetailMode = 0;
 
 select_faction:
-    if ((GameDataStateStorage.fields_.game_rules_ & 0x00100000u) && !IsMultiplayerPBEM) {
+    if ((GameDataStateStorage.fields_.game_rules_ & 0x00100000) && !IsMultiplayerPBEM) {
         selected = ConsoleGlobal.faction_id_;
-        goto store_single_faction;
+store_single_faction:
+        ConsoleGlobal.faction_id_ = selected;
+        GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ =
+            static_cast<unsigned char>(1 << selected);
+time_controls:
+        if (IsMultiplayerNet) {
+            time_controls_dialog(&popup);
+            popup.set_value(AlphaIniPrefs.time_controls);
+            time_choice = popup.exec();
+            if (time_choice >= 0) goto store_time_controls;
+            if (!(GameDataStateStorage.fields_.game_rules_ & 0x00100000)) goto select_faction;
+            if (mode != 2) goto rules_menu;
+            goto difficulty_menu;
+        }
+        goto finish;
     }
-    use_expansion_picker = ExpansionEnabled && !(mode & 2);
-    if (use_expansion_picker) {
+
+    if (ExpansionEnabled && !(mode & 2)) {
+        int picked;     // [ebp-0x2C]
         PickWinGlobal.init(thumb_routine, mode, ConfigFactionDetailMode);
-        for (int i = 1; i < 8; ++i) {
-            if (mode == 2 && !(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1u << i))) continue;
-            StringTemp[0] = 0;
-            if (strcmp(Players[i].filename, "JENN282") != 0) {
-                strcat(StringTemp, Players[i].formal_name_faction);
-                strcat(StringTemp, "|");
-                strcat(StringTemp, "(");
-                strcat(StringTemp, Players[i].desc_name_faction);
-                strcat(StringTemp, ")");
-            } else strcat(StringTemp, "RANDOM");
-            PickWinGlobal.listBox_.item(StringTemp, i);
+        {
+            for (int i = 1; i < 8; ++i) {
+                if (mode == 2 &&
+                    !(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << i))) continue;
+                StringTemp[0] = 0;
+                if (strcmp(Players[i].filename, "JENN282")) {
+                    strcat(StringTemp, Players[i].formal_name_faction);
+                    strcat(StringTemp, "|");
+                    strcat(StringTemp, "(");
+                    strcat(StringTemp, Players[i].desc_name_faction);
+                    strcat(StringTemp, ")");
+                } else {
+                    strcat(StringTemp, "RANDOM");
+                }
+                PickWinGlobal.listBox_.item(StringTemp, i);
+            }
         }
         PickWinGlobal.listBox_.attach(&PickWinGlobal,
             PickWinGlobal.listBox_.Dialog::window_x_,
             PickWinGlobal.listBox_.Dialog::window_y_, 0x80020);
-        picked = DefaultPrefs.faction_id;
-        if (picked < 1) picked = 1;
-        else if (picked > 7) picked = 7;
-        DefaultPrefs.faction_id = picked;
-        PickWinGlobal.listBox_.set_selected_id(picked);
+        DefaultPrefs.faction_id = range(DefaultPrefs.faction_id, 1, 7);
+        PickWinGlobal.listBox_.set_selected_id(DefaultPrefs.faction_id);
         PickWinGlobal.field_5DB4_ = PickWinGlobal.listBox_.Dialog::get_selected_id();
         PickWinGlobal.listBox_.set_selection_callback(thumb_routine);
         thumb_routine(DefaultPrefs.faction_id);
         picked = PickWinGlobal.go_girl();
         if (picked < 0) {
-            if (bit_count(human_mask) > 1 && selected > 0 &&
-                (human_mask & (1u << (selected & 31)))) {
-                human_mask &= ~(1u << (selected & 31));
-                if (human_mask > 1) {
-                    int first = 1;
-                    for (; first < human_mask; ++first) {
-                        if (human_mask & (1u << (first & 31))) { selected = first; break; }
+            if (bit_count(human_mask) > 1 && selected > 0 && (human_mask & (1 << selected))) {
+                human_mask &= ~(1 << selected);
+                for (int f = 1; f < human_mask; ++f) {
+                    if (human_mask & (1 << f)) {
+                        selected = f;
+                        break;
                     }
                 }
                 PickWinGlobal.GraphicWin::close();
@@ -1225,7 +1303,7 @@ select_faction:
             goto difficulty_menu;
         }
         DefaultPrefs.faction_id = picked;
-        if (IsMultiplayerPBEM && (human_mask & (1u << (picked & 31)))) {
+        if (IsMultiplayerPBEM && (human_mask & (1 << picked))) {
             X_pop("FACTIONTAKEN", 0);
             goto select_faction;
         }
@@ -1235,275 +1313,352 @@ select_faction:
             selected = picked;
             ConfigFactionPreview.close();
             PickWinGlobal.GraphicWin::close();
-            goto expansion_name;
+            goto random_name;
         }
         if (PickWinGlobal.field_5DA4_ == 0x107) {
-            ConfigFactionDetailMode = ConfigFactionDetailMode == 0;
+            ConfigFactionDetailMode = !ConfigFactionDetailMode;
             goto select_faction;
         }
-        if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000u) config_game_play_voice(selected, false);
-        if (PickWinGlobal.field_5DA4_ != 0) {
-            if (strcmp(Players[picked].filename, "JENN282") == 0) goto select_faction;
-            if (PickWinGlobal.field_5DA4_ != 0) goto edit_names;
-        }
-
-expansion_name:
-        if (strcmp(Players[picked].filename, "JENN282") == 0) {
-            ConfigFactionPreview.close();
-            PickWinGlobal.GraphicWin::close();
-            goto parse_factions;
-        }
-expansion_prompt:
-        StringTemp[0] = 0;
-        strcat(StringTemp, "NAME");
-        if (Players[picked].is_leader_female && PickWinGlobal.field_5DA4_ != 0x105)
-            strcat(StringTemp, "2");
-        if (PickWinGlobal.field_5DA4_ == 0x105) strcat(StringTemp, "3");
-        {
-            char *initial = PickWinGlobal.field_5DA4_ == 0x105
-                ? ConfigRandomLeaderInitial : Players[picked].name_leader;
-            int answer = X_pop_ask(StringTemp, 0x17, initial, 0, 0);
-            ConfigFactionPreview.close();
-            if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000u) g_WAVE_GENERAL.Sound::fade(0x7D0);
-            if (answer != 0) goto select_faction;
-        }
-        PickWinGlobal.GraphicWin::close();
-        strcpy(Players[picked].name_leader, ParseStrBuffer[0].str);
-        if (!ConsoleGroupAction) goto parse_factions;
-        if (PickWinGlobal.field_5DA4_ == 0x105) {
-            Players[picked].is_leader_female = !Players[picked].is_leader_female;
-            if (strcmp(Players[picked].filename, "JENN282") != 0) goto expansion_prompt;
-            ConfigFactionPreview.close();
-            PickWinGlobal.GraphicWin::close();
-            goto parse_factions;
-        }
-        goto edit_names;
-    }
-
-    popup.start(PopupStartCaption, "FACTIONX", -1, 0, 0x40, 0);
-    {
-        for (int i = 1; i < 8; ++i) {
-            if (mode == 2 && !(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1u << i))) continue;
+        if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000) {
             StringTemp[0] = 0;
-            strcat(StringTemp, Players[i].formal_name_faction);
-            strcat(StringTemp, "|");
-            strcat(StringTemp, "(");
-            strcat(StringTemp, Players[i].desc_name_faction);
-            strcat(StringTemp, ")");
-            popup.dialogs().item(StringTemp, i);
+            strcat(StringTemp, "voices\\");
+            strcat(StringTemp, Players[picked].filename);
+            strcat(StringTemp, ".mp3");
+            g_WAVE_GENERAL.unload();
+            g_WAVE_GENERAL.load(StringTemp);
+            g_WAVE_GENERAL.play();
         }
-    }
-    popup.set_value(mode & 2 ? ConsoleGlobal.faction_id_ : DefaultPrefs.faction_id);
-    popup.dialogs().ListBox::set_selection_callback(thumb_routine);
-    thumb_routine(mode & 2 ? ConsoleGlobal.faction_id_ : DefaultPrefs.faction_id);
-    picked = popup.BasePop::exec(0, 0);
-    if (picked < 0) {
-        if (bit_count(human_mask) > 1 && selected > 0 &&
-            (human_mask & (1u << (selected & 31)))) {
-            human_mask &= ~(1u << (selected & 31));
-            if (human_mask > 1) {
-                int first = 1;
-                for (; first < human_mask; ++first) {
-                    if (human_mask & (1u << (first & 31))) { selected = first; break; }
-                }
-            }
-            goto pbem_selection;
+        if (PickWinGlobal.field_5DA4_) {
+            if (!strcmp(Players[picked].filename, "JENN282")) goto select_faction;
+            if (PickWinGlobal.field_5DA4_) goto edit_names_expansion;
         }
-        ConfigFactionPreview.close();
-        if (mode == 2) goto difficulty_menu;
-        goto rules_menu;
-    }
-    if (!(mode & 2)) DefaultPrefs.faction_id = picked;
-    if (IsMultiplayerPBEM && (human_mask & (1u << (picked & 31)))) {
-        X_pop("FACTIONTAKEN", 0);
-        goto select_faction;
-    }
-    selected = picked;
-    if (popup.input_poll_state() == 2) {
-        ConfigFactionDetailMode = ConfigFactionDetailMode == 0;
-        goto select_faction;
-    }
-    if (popup.input_poll_state() == 3) {
-        ConfigFactionPreview.close();
-        if (X_pop_ask("RELOADFAC", 0x50, Players[picked].filename, 0, 0)) goto select_faction;
-        strcpy(Players[picked].filename, ParseStrBuffer[0].str);
-        strcpy(Players[picked].search_key, ParseStrBuffer[0].str);
-        if (picked) { read_faction(&Players[picked], 0); load_faction_art(picked); }
-        compute_faction_modifiers(picked);
-        goto select_faction;
-    }
-    if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000u) config_game_play_voice(picked, true);
-    if (!popup.input_poll_state()) {
-        StringTemp[0] = 0;
-        strcat(StringTemp, "NAME");
-        if (Players[picked].is_leader_female) strcat(StringTemp, "2");
-        int answer = X_pop_ask(StringTemp, 0x17, Players[picked].name_leader, 0, 0);
-        ConfigFactionPreview.close();
-        if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000u) g_WAVE_GENERAL.Sound::fade(0x7D0);
-        if (answer) goto select_faction;
-        strcpy(Players[picked].name_leader, ParseStrBuffer[0].str);
-        if (!ConsoleGroupAction) goto parse_factions;
-    }
-
-edit_names:
-    for (;;) {
-        strcpy(gender_text, label_get((Players[picked].is_leader_female ? 0xB8C : 0xB88) / 4));
-        popup.start(PopupStartCaption, "CUSTOMNAMES", -1, 0, 0x44, 0);
-        popup.dialogs().EditGroup::edit(label_get(0x2B8 / 4), Players[picked].name_leader, 0x17);
-        popup.dialogs().EditGroup::edit(label_get(0x2BC / 4), Players[picked].formal_name_faction, 0x27);
-        popup.dialogs().EditGroup::edit(label_get(0x2C0 / 4), Players[picked].noun_faction, 0x17);
-        popup.dialogs().EditGroup::edit(label_get(0x2C4 / 4), Players[picked].adj_name_faction, 0x17);
-        popup.dialogs().EditGroup::edit(label_get(0x78C / 4), Players[picked].title_leader, 0x17);
-        popup.dialogs().EditGroup::edit(label_get(0x790 / 4), Players[picked].adj_leader, 0x17);
-        popup.dialogs().EditGroup::edit(label_get(0x794 / 4), gender_text, 0x17);
-        int answer = popup.BasePop::exec(0, 0);
-        if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000u) g_WAVE_GENERAL.Sound::fade(0x7D0);
-        if (!use_expansion_picker) ConfigFactionPreview.close();
-        if (answer < 0) {
-            if (use_expansion_picker) popup.close();
-            goto select_faction;
-        }
-        if (popup.input_poll_state()) {
-            if (picked) { read_faction(&Players[picked], 0); load_faction_art(picked); }
-            continue;
-        }
-        if (use_expansion_picker) {
+random_name:
+        while (strcmp(Players[picked].filename, "JENN282")) {
+            StringTemp[0] = 0;
+            strcat(StringTemp, "NAME");
+            if (Players[picked].is_leader_female && PickWinGlobal.field_5DA4_ != 0x105)
+                strcat(StringTemp, "2");
+            if (PickWinGlobal.field_5DA4_ == 0x105) strcat(StringTemp, "3");
+            int answer = X_pop_ask(StringTemp, 0x17,
+                PickWinGlobal.field_5DA4_ == 0x105 ? ConfigRandomLeaderInitial
+                                                   : Players[picked].name_leader,
+                0, 0);
             ConfigFactionPreview.close();
+            if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000)
+                g_WAVE_GENERAL.Sound::fade(0x7D0);
+            if (answer) goto select_faction;
             PickWinGlobal.GraphicWin::close();
+            strcpy(Players[picked].name_leader, ParseStrBuffer[0].str);
+            if (!ConsoleGroupAction) goto parse_factions;
+            if (PickWinGlobal.field_5DA4_ != 0x105) goto edit_names_expansion;
+            Players[picked].is_leader_female = !Players[picked].is_leader_female;
         }
+        ConfigFactionPreview.close();
+        PickWinGlobal.GraphicWin::close();
+        goto parse_factions;
+
+edit_names_expansion:
+        for (;;) {
+            strcpy(gender_text, label_get(Players[picked].is_leader_female ? 739 : 738));
+            popup.start("CUSTOMNAMES", 0x44);
+            popup.dialogs().EditGroup::edit(label_get(174), Players[picked].name_leader, 0x17);
+            popup.dialogs().EditGroup::edit(label_get(175), Players[picked].formal_name_faction, 0x27);
+            popup.dialogs().EditGroup::edit(label_get(176), Players[picked].noun_faction, 0x17);
+            popup.dialogs().EditGroup::edit(label_get(177), Players[picked].adj_name_faction, 0x17);
+            popup.dialogs().EditGroup::edit(label_get(483), Players[picked].title_leader, 0x17);
+            popup.dialogs().EditGroup::edit(label_get(484), Players[picked].adj_leader, 0x17);
+            popup.dialogs().EditGroup::edit(label_get(485), gender_text, 0x17);
+            int answer = popup.exec();
+            if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000)
+                g_WAVE_GENERAL.Sound::fade(0x7D0);
+            if (answer < 0) {
+                popup.close();
+                goto select_faction;
+            }
+            if (!popup.input_poll_state()) break;
+            if (picked) {
+                read_faction(&Players[picked], 0);
+                load_faction_art(picked);
+            }
+        }
+        ConfigFactionPreview.close();
+        PickWinGlobal.GraphicWin::close();
         strcpy(Players[picked].name_leader, ParseStrBuffer[0].str);
         strcpy(Players[picked].formal_name_faction, ParseStrBuffer[1].str);
         strcpy(Players[picked].noun_faction, ParseStrBuffer[2].str);
         strcpy(Players[picked].adj_name_faction, ParseStrBuffer[3].str);
         strcpy(Players[picked].title_leader, ParseStrBuffer[4].str);
         strcpy(Players[picked].adj_leader, ParseStrBuffer[5].str);
-        Players[picked].is_leader_female = _strnicmp(gender_text, label_get(0xB8C / 4), 1) == 0;
-        if (use_expansion_picker) goto select_faction;
-        break;
+        Players[picked].is_leader_female = !_strnicmp(gender_text, label_get(739), 1);
+        goto select_faction;
+    }
+
+    popup.start("FACTIONX", 0x40);
+    {
+        for (int i = 1; i < 8; ++i) {
+            if (mode == 2 &&
+                !(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << i))) continue;
+            StringTemp[0] = 0;
+            strcat(StringTemp, Players[i].formal_name_faction);
+            strcat(StringTemp, "|");
+            strcat(StringTemp, "(");
+            strcat(StringTemp, Players[i].desc_name_faction);
+            strcat(StringTemp, ")");
+            popup.item(StringTemp, i);
+        }
+    }
+    {
+        int faction;    // esi
+        popup.set_value(mode & 2 ? ConsoleGlobal.faction_id_ : DefaultPrefs.faction_id);
+        popup.dialogs().ListBox::set_selection_callback(thumb_routine);
+        thumb_routine(mode & 2 ? ConsoleGlobal.faction_id_ : DefaultPrefs.faction_id);
+        faction = popup.exec();
+        if (faction < 0) {
+            if (bit_count(human_mask) > 1 && selected > 0 && (human_mask & (1 << selected))) {
+                human_mask &= ~(1 << selected);
+                for (int f = 1; f < human_mask; ++f) {
+                    if (human_mask & (1 << f)) {
+                        selected = f;
+                        break;
+                    }
+                }
+                goto pbem_selection;
+            }
+            ConfigFactionPreview.close();
+            if (mode == 2) goto difficulty_menu;
+            goto rules_menu;
+        }
+        if (!(mode & 2)) DefaultPrefs.faction_id = faction;
+        if (IsMultiplayerPBEM && (human_mask & (1 << faction))) {
+            X_pop("FACTIONTAKEN", 0);
+            goto select_faction;
+        }
+        selected = faction;
+        if (popup.input_poll_state() == 2) {
+            ConfigFactionDetailMode = !ConfigFactionDetailMode;
+            goto select_faction;
+        }
+        if (popup.input_poll_state() == 3) {
+            ConfigFactionPreview.close();
+            if (X_pop_ask("RELOADFAC", 0x50, Players[faction].filename, 0, 0)) goto select_faction;
+            strcpy(Players[faction].filename, ParseStrBuffer[0].str);
+            strcpy(Players[faction].search_key, ParseStrBuffer[0].str);
+            if (faction) {
+                read_faction(&Players[faction], 0);
+                load_faction_art(faction);
+            }
+            compute_faction_modifiers(faction);
+            goto select_faction;
+        }
+        if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000) {
+            StringTemp[0] = 0;
+            strcat(StringTemp, "voices\\");
+            strcat(StringTemp, Players[faction].filename);
+            strcat(StringTemp, ".mp3");
+            g_WAVE_GENERAL.unload();
+            g_WAVE_GENERAL.load(StringTemp, 0x100);
+            g_WAVE_GENERAL.play();
+        }
+        if (!popup.input_poll_state()) {
+            StringTemp[0] = 0;
+            strcat(StringTemp, "NAME");
+            if (Players[faction].is_leader_female) strcat(StringTemp, "2");
+            int answer = X_pop_ask(StringTemp, 0x17, Players[faction].name_leader, 0, 0);
+            ConfigFactionPreview.close();
+            if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000)
+                g_WAVE_GENERAL.Sound::fade(0x7D0);
+            if (answer) goto select_faction;
+            strcpy(Players[faction].name_leader, ParseStrBuffer[0].str);
+            if (!ConsoleGroupAction) goto parse_factions;
+        }
+        for (;;) {
+            strcpy(gender_text, label_get(Players[faction].is_leader_female ? 739 : 738));
+            popup.start("CUSTOMNAMES", 0x44);
+            popup.dialogs().EditGroup::edit(label_get(174), Players[faction].name_leader, 0x17);
+            popup.dialogs().EditGroup::edit(label_get(175), Players[faction].formal_name_faction, 0x27);
+            popup.dialogs().EditGroup::edit(label_get(176), Players[faction].noun_faction, 0x17);
+            popup.dialogs().EditGroup::edit(label_get(177), Players[faction].adj_name_faction, 0x17);
+            popup.dialogs().EditGroup::edit(label_get(483), Players[faction].title_leader, 0x17);
+            popup.dialogs().EditGroup::edit(label_get(484), Players[faction].adj_leader, 0x17);
+            popup.dialogs().EditGroup::edit(label_get(485), gender_text, 0x17);
+            int answer = popup.exec();
+            if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000)
+                g_WAVE_GENERAL.Sound::fade(0x7D0);
+            ConfigFactionPreview.close();
+            if (answer < 0) goto select_faction;
+            if (!popup.input_poll_state()) break;
+            if (faction) {
+                read_faction(&Players[faction], 0);
+                load_faction_art(faction);
+            }
+        }
+        strcpy(Players[faction].name_leader, ParseStrBuffer[0].str);
+        strcpy(Players[faction].formal_name_faction, ParseStrBuffer[1].str);
+        strcpy(Players[faction].noun_faction, ParseStrBuffer[2].str);
+        strcpy(Players[faction].adj_name_faction, ParseStrBuffer[3].str);
+        strcpy(Players[faction].title_leader, ParseStrBuffer[4].str);
+        strcpy(Players[faction].adj_leader, ParseStrBuffer[5].str);
+        Players[faction].is_leader_female = !_strnicmp(gender_text, label_get(739), 1);
     }
 
 parse_factions:
     if (mode == 0) prefs_save(1);
-    custom_count = 14;
-    special_a = 0;
-    special_b = 0;
-    first_special[0] = 0;
-    if (text_open(AlphaxFileID, "CUSTOMFACTIONS") == 0) {
-        text_get();
-        while (*text_item()) { ++custom_count; text_get(); }
-    }
-    special_count = 0;
     {
-        for (int i = 1; i < 8; ++i) {
-            if (strcmp(Players[i].filename, "JENN282") != 0 && (Players[i].rule_flags & 0x80)) {
-                ++special_count;
-                if (special_count == 1) strcat(first_special, Players[i].filename);
-            }
-        }
-    }
-    if (special_count == 1) {
-        int last_random = 0;
-        for (int i = 1; i < 8; ++i)
-            if (strcmp(Players[i].filename, "JENN282") == 0) last_random = i;
-        if (last_random) {
-            if (text_open(AlphaxFileID, "NEWFACTIONS")) goto select_faction;
+        int custom_count;   // [ebp-0x24]
+        int special_count;  // edi
+        int special_a;      // [ebp-0x18]
+        int special_b;      // [ebp-0x20]
+        custom_count = 14;
+        special_count = 0;
+        special_a = 0;
+        special_b = 0;
+        first_special[0] = 0;
+        if (!text_open(AlphaxFileID, "CUSTOMFACTIONS")) {
             text_get();
-            for (int skip = 0; skip < 5; ++skip) text_get();
-            strcpy(Players[last_random].filename, text_item());
-            if (strcmp(Players[last_random].filename, first_special) == 0) {
+            while (*text_item()) {
+                ++custom_count;
                 text_get();
-                strcpy(Players[last_random].filename, text_item());
-            }
-            strcpy(Players[last_random].search_key, Players[last_random].filename);
-            read_faction(&Players[last_random], 0);
-            load_faction_art(last_random);
-        }
-    } else if (!special_count && rand() % 2 != 0) {
-        int start = rand() % 7;
-        // Native scan computes modulo seven afresh on each iteration.
-        for (int attempt = start; 1 - start + attempt < 8; ++attempt) {
-            int i = attempt % 7;
-            if (strcmp(Players[i + 1].filename, "JENN282") == 0) {
-                if (!special_a) special_a = i + 1;
-                else if (!special_b) special_b = i + 1;
             }
         }
-        if (!special_a || !special_b) { special_a = 0; special_b = 0; }
-    }
-    {
-        for (int i = 1; i < 8; ++i) {
-            if (strcmp(Players[i].filename, "JENN282") != 0) continue;
-            if (special_a == i || special_b == i) {
+        {
+            for (int i = 1; i < 8; ++i) {
+                if (strcmp(Players[i].filename, "JENN282") && (Players[i].rule_flags & 0x80)) {
+                    ++special_count;
+                    if (special_count == 1) strcat(first_special, Players[i].filename);
+                }
+            }
+        }
+        if (special_count == 1) {
+            int last_random = 0;
+            {
+                for (int i = 1; i < 8; ++i) {
+                    if (!strcmp(Players[i].filename, "JENN282")) last_random = i;
+                }
+            }
+            if (last_random) {
                 if (text_open(AlphaxFileID, "NEWFACTIONS")) goto select_faction;
                 text_get();
-                int skip_count = special_a == i ? 5 : 6;
-                for (int skip = 0; skip < skip_count; ++skip) text_get();
-                strcpy(Players[i].filename, text_item());
-                strcpy(Players[i].search_key, Players[i].filename);
-                read_faction(&Players[i], 0);
-                load_faction_art(i);
-                continue;
+                for (int skip = 0; skip < 5; ++skip) text_get();
+                strcpy(Players[last_random].filename, text_item());
+                if (!strcmp(Players[last_random].filename, first_special)) {
+                    text_get();
+                    strcpy(Players[last_random].filename, text_item());
+                }
+                strcpy(Players[last_random].search_key, Players[last_random].filename);
+                read_faction(&Players[last_random], 0);
+                load_faction_art(last_random);
             }
-            for (;;) {
-                int residue;
-                do { residue = rand() % custom_count; } while (residue == 12 || residue == 13);
-                switch (residue / 7) {
-                case 0: if (text_open(AlphaxFileID, "FACTIONS")) goto select_faction; break;
-                case 1: if (text_open(AlphaxFileID, "NEWFACTIONS")) goto select_faction; break;
-                case 2: if (text_open(AlphaxFileID, "CUSTOMFACTIONS")) goto select_faction; break;
+        } else if (!special_count && rand() % 2) {
+            int start = rand() % 7;
+            for (int attempt = start; 1 - start + attempt < 8; ++attempt) {
+                int i = attempt % 7;
+                if (!strcmp(Players[i + 1].filename, "JENN282")) {
+                    if (!special_a) special_a = i + 1;
+                    else if (!special_b) special_b = i + 1;
                 }
-                int row = residue % 7;
-                text_get();
-                for (int skip = 0; skip < row; ++skip) text_get();
-                strcpy(Players[i].filename, text_item());
-                strcpy(Players[i].search_key, Players[i].filename);
-                bool duplicate = false;
-                for (int other = 1; other < 8; ++other) {
-                    if (i != other && strcmp(Players[i].filename, Players[other].filename) == 0) {
-                        duplicate = true; break;
+            }
+        }
+        if (!special_a || !special_b) {
+            special_a = 0;
+            special_b = 0;
+        }
+        {
+            for (int i = 1; i < 8; ++i) {   // [ebp-0x1C]
+                if (strcmp(Players[i].filename, "JENN282")) continue;
+                if (special_a == i) {
+                    if (text_open(AlphaxFileID, "NEWFACTIONS")) goto select_faction;
+                    text_get();
+                    for (int skip = 0; skip < 5; ++skip) text_get();
+                    strcpy(Players[i].filename, text_item());
+                    strcpy(Players[i].search_key, Players[i].filename);
+                    if (i) {
+                        read_faction(&Players[i], 0);
+                        load_faction_art(i);
                     }
+                } else if (special_b == i) {
+                    if (text_open(AlphaxFileID, "NEWFACTIONS")) goto select_faction;
+                    text_get();
+                    for (int skip = 0; skip < 6; ++skip) text_get();
+                    strcpy(Players[i].filename, text_item());
+                    strcpy(Players[i].search_key, Players[i].filename);
+                    if (i) {
+                        read_faction(&Players[i], 0);
+                        load_faction_art(i);
+                    }
+                } else {
+                    int row;    // ebx
+                    do {
+                        int residue;
+                        do {
+                            residue = rand() % custom_count;
+                        } while (residue == 12 || residue == 13);
+                        switch (residue / 7) {
+                        case 0:
+                            if (text_open(AlphaxFileID, "FACTIONS")) goto select_faction;
+                            break;
+                        case 1:
+                            if (text_open(AlphaxFileID, "NEWFACTIONS")) goto select_faction;
+                            break;
+                        case 2:
+                            if (text_open(AlphaxFileID, "CUSTOMFACTIONS")) goto select_faction;
+                            break;
+                        }
+                        row = residue % 7;
+                        text_get();
+                        for (int skip = 0; skip < row; ++skip) text_get();
+                        strcpy(Players[i].filename, text_item());
+                        strcpy(Players[i].search_key, Players[i].filename);
+                        for (int other = 1; other < 8; ++other) {
+                            if (i != other && !strcmp(Players[i].filename, Players[other].filename)) {
+                                row = -1;
+                                other = 8;
+                            }
+                        }
+                        if (row + 1 && i) {
+                            read_faction(&Players[i], 0);
+                            load_faction_art(i);
+                        }
+                    } while (row == -1);
                 }
-                if (duplicate) continue;
-                read_faction(&Players[i], 0);
-                load_faction_art(i);
-                break;
             }
         }
     }
     load_flags();
     if (ExpansionEnabled && !IsMultiplayerNet && !IsMultiplayerPBEM &&
-        (config_game_original_rule_byte(selected) & 0x80))
-        GameDataStateStorage.fields_.game_rules_ = (GameDataStateStorage.fields_.game_rules_ & ~0x200u) | 0x140u;
+        (config_game_original_rule_byte(selected) & 0x80)) {
+        GameDataStateStorage.fields_.game_rules_ =
+            (GameDataStateStorage.fields_.game_rules_ & ~0x200) | 0x140;
+    }
     if (mode & 1) goto pbem_commit;
     do_all_draws();
 
 pbem_selection:
     if (!IsMultiplayerPBEM) goto store_single_faction;
     {
-        unsigned int selected_bit = 1u << (selected & 31);
-        human_mask |= selected_bit;
-        popup.start(PopupStartCaption, "HOTSEATADD0", -1, 0, 0x40, 0);
-        for (int i = 1; i < 8; ++i) {
-            if (!(human_mask & (1u << i))) continue;
-            if (X_text_open(const_cast<char *>(ScriptTxtID), "MULTISTRING")) break;
-            text_get();
-            GenderDefault = Players[i].is_leader_female;
-            PluralityDefault = 0;
-            parse_says(0, Players[i].title_leader, -1, -1);
-            GenderDefault = Players[i].is_leader_female;
-            PluralityDefault = 0;
-            parse_says(1, Players[i].name_leader, -1, -1);
-            GenderDefault = Players[i].noun_gender;
-            PluralityDefault = Players[i].is_noun_plural;
-            parse_says(2, Players[i].noun_faction, -1, -1);
-            StringTemp[0] = 0;
-            parse_string(TextBufferGetPtr, StringTemp);
-            popup.string(StringTemp);
+        int bit = 1 << selected;    // edi
+        human_mask |= bit;
+        popup.start("HOTSEATADD0", 0x40);
+        {
+            for (int i = 1; i < 8; ++i) {
+                if (human_mask & (1 << i)) {
+                    if (X_text_open(ScriptPopupFile, "MULTISTRING")) break;
+                    text_get();
+                    parse_set(Players[i].is_leader_female, 0);
+                    parse_says(0, Players[i].title_leader, -1, -1);
+                    parse_set(Players[i].is_leader_female, 0);
+                    parse_says(1, Players[i].name_leader, -1, -1);
+                    parse_set(Players[i].noun_gender, Players[i].is_noun_plural);
+                    parse_says(2, Players[i].noun_faction, -1, -1);
+                    StringTemp[0] = 0;
+                    parse_string(TextBufferGetPtr, StringTemp);
+                    popup.string(StringTemp);
+                }
+            }
         }
-        popup.start(PopupStartCaption, "HOTSEATADD1", -1, 0, 0x80, 0);
-        int answer = popup.BasePop::exec(0, 0);
-        if (answer) {
-            if (answer < 0) human_mask &= ~selected_bit;
+        popup.start("HOTSEATADD1", 0x80);
+        int added = popup.exec();
+        if (added) {
+            if (added < 0) human_mask &= ~bit;
             goto select_faction;
         }
     }
@@ -1511,50 +1666,32 @@ pbem_commit:
     if (!IsMultiplayerPBEM) goto store_single_faction;
     GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ =
         static_cast<unsigned char>(human_mask);
-    selected = 1;
-    for (; selected < 8; ++selected) if ((human_mask & 0xFF) & (1u << selected)) break;
+    for (selected = 1; selected < 8; ++selected) {
+        if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << selected)) break;
+    }
     if (selected >= 8) selected = 1;
     ConsoleGlobal.faction_id_ = selected;
     goto time_controls;
 
-store_single_faction:
-    ConsoleGlobal.faction_id_ = selected;
-    GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ =
-        static_cast<unsigned char>(1u << (selected & 31));
-time_controls:
-    if (IsMultiplayerNet) {
-        time_controls_dialog(&popup);
-        popup.set_value(AlphaIniPrefs.time_controls);
-        int answer = popup.BasePop::exec(0, 0);
-        if (answer < 0) {
-            if (!(GameDataStateStorage.fields_.game_rules_ & 0x00100000u)) goto select_faction;
-            if (mode != 2) goto rules_menu;
-            goto difficulty_menu;
-        }
-        AlphaIniPrefs.time_controls = answer;
-        GameDataStateStorage.fields_.time_controls_selection_ = answer;
-    }
+store_time_controls:
+    AlphaIniPrefs.time_controls = time_choice;
+    GameDataStateStorage.fields_.time_controls_selection_ = time_choice;
+finish:
     prefs_save(0);
     log_set_state(0);
-    if (!(mode & 2)) {
-        GameDataStateStorage.fields_.vehicle_current_count_ = 0;
-        if (MapSetupStatus) world_build();
-        if (!(mode & 2)) setup_game(0);
-    }
+    if (!(mode & 2)) GameDataStateStorage.fields_.vehicle_current_count_ = 0;
+    if (!(mode & 2) && MapSetupStatus) world_build();
+    if (!(mode & 2)) setup_game(0);
     if (mode == 2) scenario_setup();
     if (IsMultiplayerNet) log_set_state(1);
     if (ExpansionEnabled) alien_start();
-    if (!IsMultiplayerNet) {
-        if (!IsMultiplayerPBEM) {
-            if (mode & 2) return 0;
-            planetfall(ConsoleGlobal.faction_id_);
-        }
+    if (!IsMultiplayerNet && !IsMultiplayerPBEM && !(mode & 2)) {
+        planetfall(ConsoleGlobal.faction_id_);
     }
     if (IsMultiplayerPBEM) {
         clear_tamper();
-        unsigned int ticks = timeGetTime();
-        TamperState93A9AC = ticks + MapRandSeed;
-        SYSTEMTIME date;
+        TamperState93A9AC = timeGetTime() + MapRandSeed;
+        SYSTEMTIME date;    // [ebp-0x40]
         GetSystemTime(&date);
         TamperState93A9B4 = 0;
         TamperState93A9B0 = ((date.wYear << 4) + date.wMonth) * 32 + date.wDay;
