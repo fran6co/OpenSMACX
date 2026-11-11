@@ -678,6 +678,11 @@ def write_symbols(raw: bytes,
         raise ValueError("symbol rewriting does not support raw-string source")
     macro_lines = _define_directive_lines(text)
     records = read_text(text, prepared[0][0].path)
+    # An assembler source states the same facts behind `;`: read its fact and
+    # binding lines in the `//` spelling and write the inserted fact back as `;`.
+    assembler = is_assembler_source(prepared[0][0].path)
+    if assembler:
+        text = "\n".join(assembler_annotation_line(line) for line in text.split("\n"))
     lines, source_lines = text.splitlines(), raw.splitlines(keepends=True)
     if len(lines) != len(source_lines):
         raise ValueError("unsupported source line separator")
@@ -716,7 +721,8 @@ def write_symbols(raw: bytes,
                 raise ValueError("existing symbol is not an annotation-safe token")
             line = source_lines[offset]
             leading = len(line) - len(line.lstrip(b" \t"))
-            start = leading + match.start(2)
+            # `;` is one byte shorter than the `//` the fact was matched in.
+            start = leading + match.start(2) - (1 if assembler else 0)
             old = value.encode("utf-8")
             if line[start:start + len(old)] != old:
                 raise ValueError("symbol fact cannot be rewritten byte-for-byte")
@@ -737,7 +743,7 @@ def write_symbols(raw: bytes,
                         if marker_line.endswith(ending)), b"\n")
         insertion_newlines[index + 1] = newline
         insertions.setdefault(index + 1, []).append(
-            b"// symbol    " + symbol.encode("utf-8") + newline)
+            (b"; symbol    " if assembler else b"// symbol    ") + symbol.encode("utf-8") + newline)
 
     output = []
     for offset, line in enumerate(source_lines):
@@ -752,7 +758,10 @@ def write_symbols(raw: bytes,
     reread = read_text(result.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n"), prepared[0][0].path)
     if len(reread) != len(records):
         raise ValueError("symbol rewrite changed annotation coverage")
-    rebound = binding_source.parse(result.decode("utf-8", errors="replace"), reread)
+    rebound_text = result.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n")
+    if assembler:
+        rebound_text = "\n".join(assembler_annotation_line(line) for line in rebound_text.split("\n"))
+    rebound = binding_source.parse(rebound_text, reread)
     if ([bindings.get(row.line) for row in records]
             != [rebound.get(row.line) for row in reread]):
         raise ValueError("symbol rewrite changed original binding rationale")

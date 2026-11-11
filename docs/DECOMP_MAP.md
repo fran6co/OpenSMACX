@@ -633,6 +633,13 @@ compiler emission of the new symbol without the old one and writes only this
 fact, leaving the `ORIGINAL` marker and its claims intact. See the package
 README.
 
+To correct a mapping's span list (a seed chunk shared by several entries, or a
+routine that needs its own mapping), use `recover correct-spans --in <file>
+--set <address>=<spans> ...`. It rewrites only the span field of the selected
+markers, keeps address, name and claims, and requires every removed byte to
+stay owned by another mapping, optionally one bound in the same operation with
+`--assign-*`. See the package README.
+
 For a compiler-observed symbol change, `match_recovery.source.write_symbol`
 prepares an explicit fact update from original bytes and a fresh reader record.
 `write_symbols(raw, updates)` applies a one-file batch of `(record, symbol)`

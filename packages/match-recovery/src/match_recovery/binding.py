@@ -17,6 +17,7 @@ from .pe_coff import PeImage
 from .source import read_text
 from .source.model import DecompilationState, Mode, State
 from .source.publication import publish
+from .source.grammar import assembler_comment_line, is_assembler_source
 from .source.writer import write
 from .source_config import SourceConfiguration
 from .source_inventory import assert_snapshot_current
@@ -25,6 +26,36 @@ from .source_replica import artifact_parent
 
 def bind(root: Path, *, image: Path, address: int, name: str, spans, source: str, line: int,
          source_sha256: str, reason: str, evidence, mode: Mode | str = Mode.BODY) -> dict:
+    prepared = prepare_binding(root, image=image, address=address, name=name, spans=spans, source=source,
+                               line=line, source_sha256=source_sha256, reason=reason, evidence=evidence, mode=mode)
+    prepared["fresh"]()
+    staging = artifact_parent(prepared["root"], "build/recovery/publications", excluded_roots=prepared["config"].roots)
+    publish({prepared["path"]: prepared["raw"]}, {prepared["path"]: prepared["changed"]},
+            validate=prepared["fresh"], staging_directory=staging)
+    return binding_report(prepared)
+
+
+def binding_report(prepared: dict) -> dict:
+    return {"entity_id": prepared["origin"].entity_id, "path": prepared["source"], "line": prepared["line"],
+            "binding_added": True,
+            "verification": "not_measured", "boundary_verification": "not_measured", "ready_for_collection": False,
+            "next_action": "review binding evidence, checkpoint source, and create/expand an ownership task; recheck affected TU",
+            "limitations": ["original spans and name are caller-supplied interpretations; only image identity/backing was checked",
+                            "source code is unchanged; insertion does not prove definition ownership, compilation, exactness or runtime behavior",
+                            "coordinator-owned publication; scope expansion, rehoming and overlapping/shared spans require separate review"]}
+
+
+def prepare_binding(root: Path, *, image: Path, address: int, name: str, spans, source: str, line: int,
+                    source_sha256: str, reason: str, evidence, mode: Mode | str = Mode.BODY,
+                    released: frozenset = frozenset(), base: bytes | None = None) -> dict:
+    """Validate one new binding and render its host bytes without publishing.
+
+    `released` names `(entity_id, start, end)` spans that the caller removes
+    from their current owners in the same guarded publication; only those
+    exact spans may overlap the new binding. `base` replaces the on-disk host
+    bytes (whose digest is still checked) when the same publication already
+    rewrote marker lines in that host without changing its line count.
+    """
     try:
         mode = Mode(mode)
     except (TypeError, ValueError) as error:
@@ -54,16 +85,21 @@ def bind(root: Path, *, image: Path, address: int, name: str, spans, source: str
     path = config.path(root, source)
     if source not in snapshot["files"] or config.is_seed(source) or path.suffix in config.interface_extensions:
         raise ValueError("new binding host must be an existing non-seed source translation unit")
-    raw = path.read_bytes()
-    if hashlib.sha256(raw).hexdigest() != source_sha256:
+    disk = path.read_bytes()
+    if hashlib.sha256(disk).hexdigest() != source_sha256:
         raise ValueError("binding source digest is stale")
+    raw = disk if base is None else base
+    if base is not None and len(base.splitlines()) != len(disk.splitlines()):
+        raise ValueError("binding base must keep the host's line structure")
     text = raw.decode("utf-8")
     lines = text.splitlines(keepends=True)
     if type(line) is not int or not 1 <= line <= len(lines):
         raise ValueError("binding insertion must name an existing source line")
     anchor = lines[line - 1].lstrip()
     include_anchor = mode is Mode.FILE and re.match(r"#[ \t]*include\b", anchor)
-    if not anchor.strip() or anchor.startswith(("//", "/*", "*")) or (anchor.startswith("#") and not include_anchor):
+    assembler = is_assembler_source(path)
+    if (not anchor.strip() or anchor.startswith(("//", "/*", "*")) or (assembler and anchor.startswith(";"))
+            or (anchor.startswith("#") and not include_anchor)):
         raise ValueError("binding insertion must precede source code, not another annotation or directive")
     origin = Origin(snapshot["image_sha256"], config.address_space, address)
     for group in view["groups"]:
@@ -74,7 +110,9 @@ def bind(root: Path, *, image: Path, address: int, name: str, spans, source: str
                 if entity["entity_id"] == origin.entity_id:
                     if not candidate["seed"] or tuple(Span(**span) for span in candidate["spans"]) != tuple(spans):
                         raise ValueError("original already has a product/component binding or contradictory seed spans; review/rehome it instead")
-                elif any(a.start < b["end"] and b["start"] < a.end for a in spans for b in candidate["spans"]):
+                elif any(a.start < b["end"] and b["start"] < a.end
+                         and (entity["entity_id"], b["start"], b["end"]) not in released
+                         for a in spans for b in candidate["spans"]):
                     raise ValueError("new original spans overlap another binding; shared ownership needs separate review")
     original = PeImage(image.read_bytes(), snapshot["image_sha256"])
     for span in spans:
@@ -86,7 +124,10 @@ def bind(root: Path, *, image: Path, address: int, name: str, spans, source: str
                                 tuple((span.start, span.end) for span in spans))
     marker = write("", [record])
     newline = "\r\n" if lines[line - 1].endswith("\r\n") else "\n"
-    block = (marker + newline + rationale + newline).encode("utf-8")
+    if assembler:
+        # One grammar, assembler comment spelling: `//` openers become `;`.
+        marker, rationale = (assembler_comment_line(item) for item in (marker.rstrip("\n"), rationale))
+    block = (marker.rstrip("\n") + newline + rationale + newline).encode("utf-8")
     offset = len("".join(lines[:line - 1]).encode("utf-8"))
     changed = raw[:offset] + block + raw[offset:]
     before_records, after_records = read_text(text, path), read_text(changed.decode("utf-8"), path)
@@ -105,12 +146,6 @@ def bind(root: Path, *, image: Path, address: int, name: str, spans, source: str
         with image.open("rb") as stream:
             if hashlib.file_digest(stream, "sha256").hexdigest() != snapshot["image_sha256"]:
                 raise ValueError("original image changed before binding publication")
-    fresh()
-    staging = artifact_parent(root, "build/recovery/publications", excluded_roots=config.roots)
-    publish({path: raw}, {path: changed}, validate=fresh, staging_directory=staging)
-    return {"entity_id": origin.entity_id, "path": source, "line": line, "binding_added": True,
-            "verification": "not_measured", "boundary_verification": "not_measured", "ready_for_collection": False,
-            "next_action": "review binding evidence, checkpoint source, and create/expand an ownership task; recheck affected TU",
-            "limitations": ["original spans and name are caller-supplied interpretations; only image identity/backing was checked",
-                            "source code is unchanged; insertion does not prove definition ownership, compilation, exactness or runtime behavior",
-                            "coordinator-owned publication; scope expansion, rehoming and overlapping/shared spans require separate review"]}
+    return {"root": root, "config": config, "path": path, "source": source, "line": line, "disk": disk,
+            "raw": raw, "changed": changed, "origin": origin, "record": record, "fresh": fresh,
+            "snapshot": snapshot, "view": view}

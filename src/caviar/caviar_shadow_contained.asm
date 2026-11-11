@@ -243,9 +243,12 @@ L66730B:: mov byte ptr [ecx + 1020304h], dl
           jmp L667143
 ?caviar_original_666fd0@@YAXHHIPBEH@Z ENDP
 
-; 0x0066731C-0x00667375: the contained-shadow patcher. Its bytes are the
-; second span of the four setup stubs (sub_63aee0/63af00/63af20/63af40),
-; which tail-jump here after their own three patcher calls.
+; 0x0066731C-0x00667375: the contained-shadow patcher. The four setup stubs
+; (sub_63aee0/63af00/63af20/63af40) tail-jump here after their own three
+; patcher calls; the IDA-era seed listed these bytes as a chunk of each stub.
+; ORIGINAL: 0x0066731C sub_66731c 0x0066731C-0x00667375
+; RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "pinned:jmp 0x0066731C at 0x0063AEEF, 0x0063AF0F, 0x0063AF2F and 0x0063AF4F ends each stub's own 0x14-byte span", "ida94-chunks.csv:0x0066731C-0x00667375 is catalogued as a chunk of each of 0x0063AEE0, 0x0063AF00, 0x0063AF20 and 0x0063AF40", "source:src/caviar/caviar_shadow_clipped.asm:sub_666f68 is the sibling patcher mapped on its own"], "reason": "The IDA-era seed attached the contained-shadow patcher 0x0066731C-0x00667375 as a function chunk of all four setup stubs; each stub ends in its own jmp to 0x0066731C, a separate routine closing the 0x00666FD0-0x00667375 _SELFMOD contribution, like its sibling patcher sub_666f68 in the clipped module."}
+; symbol    ?caviar_shadow_contained_patch@@YAXXZ
 ?caviar_shadow_contained_patch@@YAXXZ PROC PUBLIC
           mov eax, dword ptr [vox_active_ramp_b]
           mov dword ptr [L667248 + 3], eax

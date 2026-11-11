@@ -65,6 +65,27 @@ def register(commands):
     correction.add_argument("--reason", required=True, help="Image evidence for the signature correction; reported for the commit message")
     correction.add_argument("--allow-identity-change", action="store_true",
                             help="Also accept a name, access, virtual, this-qualifier or argument change after explicit review")
+    spans = commands.add_parser("correct-spans", help="Correct mappings' original span sets in one host; keeps entry "
+                                "address, name and claims and requires every removed byte to stay owned")
+    spans.add_argument("--root", type=Path, default=Path.cwd())
+    spans.add_argument("--image", type=Path, required=True)
+    spans.add_argument("--in", dest="source", required=True, help="Exact project-relative mapping host")
+    spans.add_argument("--set", dest="corrections", action="append", required=True, metavar="ADDR=SPANS",
+                       help="Corrected span set for one mapping, e.g. 0x401000=0x401000-0x401020 "
+                            "(several spans separated by ';'); repeatable")
+    spans.add_argument("--source-sha256", required=True, help="Expected current host digest, not a stored verdict")
+    spans.add_argument("--reason", required=True, help="Image evidence for the extent correction; reported for the commit")
+    spans.add_argument("--evidence", action="append", required=True, help="Evidence reference (also the assignment's rationale)")
+    spans.add_argument("--allow-claimed", action="store_true",
+                       help="Let a BYTE_EXACT/SEMANTIC mapping drop whole secondary spans owned elsewhere")
+    spans.add_argument("--assign-address", type=lambda value: int(value, 0),
+                       help="Bind removed bytes to a new unclaimed mapping at this entry in the same publication")
+    spans.add_argument("--assign-in", help="Host of the new mapping")
+    spans.add_argument("--assign-line", type=int, help="Existing code line the new marker goes above")
+    spans.add_argument("--assign-name", help="Catalogue name of the new mapping")
+    spans.add_argument("--assign-span", action="append", help="New mapping's span start-end (repeatable)")
+    spans.add_argument("--assign-symbol", help="Emitted symbol fact; verified by fresh compilation of the host")
+    spans.add_argument("--assign-sha256", help="Expected current digest of the new mapping's host")
     rebind = commands.add_parser("rebind-literals", help="Re-identify stale positional $SG literal symbols from fresh "
                                  "compiler emission; dry run unless --write, never changes original extents or claims")
     rebind.add_argument("--root", type=Path, default=Path.cwd())
@@ -397,6 +418,32 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
         from .symbol_correction import correct_symbol
         return 0, correct_symbol(root, allow_identity_change=arguments.get("allow_identity_change", False),
                                  **{key: arguments[key] for key in ("address", "source", "symbol", "source_sha256", "reason")})
+    if arguments.get("command") == "correct-spans":
+        from .span_correction import correct_spans, parse_spans
+        corrections = {}
+        for item in arguments["corrections"]:
+            address, separator, value = item.partition("=")
+            if not separator:
+                raise ValueError("--set requires ADDR=SPANS")
+            if int(address, 0) in corrections:
+                raise ValueError(f"duplicate correction for {address}")
+            corrections[int(address, 0)] = parse_spans(value)
+        assign = None
+        fields = ("assign_address", "assign_in", "assign_line", "assign_name", "assign_span", "assign_sha256")
+        if any(arguments.get(key) is not None for key in fields + ("assign_symbol",)):
+            if any(arguments.get(key) is None for key in fields):
+                raise ValueError("an assignment requires --assign-address, --assign-in, --assign-line, "
+                                 "--assign-name, --assign-span and --assign-sha256")
+            assign = {"address": arguments["assign_address"], "source": arguments["assign_in"],
+                      "line": arguments["assign_line"], "name": arguments["assign_name"],
+                      "spans": [span for value in arguments["assign_span"] for span in parse_spans(value)],
+                      "source_sha256": arguments["assign_sha256"]}
+            if arguments.get("assign_symbol"):
+                assign["symbol"] = arguments["assign_symbol"]
+        return 0, correct_spans(root, image=arguments["image"], source=arguments["source"],
+                                source_sha256=arguments["source_sha256"], corrections=corrections,
+                                reason=arguments["reason"], evidence=arguments["evidence"], assign=assign,
+                                allow_claimed=arguments.get("allow_claimed", False))
     if arguments.get("command") == "rebind-literals":
         from .literal_rebind import rebind_literals
         output = rebind_literals(root, arguments["image"], units=arguments.get("units"),

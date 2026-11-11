@@ -1226,6 +1226,37 @@ verified unchanged, so `check-claims` continuity holds. The reason is reported
 for the commit message, not stored. This is emission evidence only: measure the
 mapping afterwards and bank an exact result with `record`.
 
+## Correcting original spans
+
+A seed catalogue can attach one shared chunk to several entries: a routine that
+several stubs tail-jump into, listed as a second span of each. Such a mapping
+compares bytes it does not own (and is refused outright when the chunk lies in
+a writable executable section). The entry address, name and claims stay the
+identity; only the marker's span list is corrected:
+
+```sh
+recover correct-spans --image <image> --in src/stubs.cpp \
+  --set 0x401000=0x401000-0x401014 --set 0x401020=0x401020-0x401034 \
+  --source-sha256 <host-sha256> --reason 'Image evidence' --evidence <reference> \
+  --assign-address 0x402000 --assign-in src/shared.asm --assign-line 12 \
+  --assign-name sub_402000 --assign-span 0x402000-0x402059 \
+  --assign-symbol '?shared@@YAXXZ' --assign-sha256 <host-sha256>
+```
+
+Each `--set` gives one mapping's complete new span list (`;` between spans).
+The primary span must still begin at the entry address, every span must be
+executable file-backed image storage, and an added span may not overlap another
+owner. Every removed byte must remain owned after the same publication, either
+by a mapping that already lists it or by the optional `--assign-*` binding,
+which is a new unclaimed identity with the usual `RECOVERY_BINDING` rationale
+(written with `;` comments in an assembler host). `--assign-symbol` adds its
+`symbol` fact after a fresh configured compilation of that host defines it. A
+mapping with BYTE_EXACT/SEMANTIC history is refused unless `--allow-claimed`
+is passed, and may then only drop whole secondary spans. Only the selected
+marker lines change in the corrected host; facts, lessons, bindings and claims
+are verified unchanged, and existing rationale prose is not rewritten. Nothing
+is measured: measure afterwards and bank exact results with `record`.
+
 ## Non-callable terminal fragments
 
 Source may preserve a separately catalogued terminal instruction span without
