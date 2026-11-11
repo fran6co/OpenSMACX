@@ -2717,95 +2717,158 @@ DEAD `text` parameter slot. That is an inlined helper taking pointers, not a
 loop over locals, and a straight transcription cannot make VC6 spill the same
 way. 122 of 201 mnemonics shared at the last attempt.
 */
+// The markup scanners: hand-written assembly in the original, expanded
+// into text_width (0x005DC817/0x005DC85C), write_multi_font_raw_l
+// (0x005DCB23/0x005DCB68) and find_line_break_l (0x005DC46E/0x005DC4B3).
+// Evidence: the `and edx,edx` zero test, EBX as a private pointer register
+// and the `jmp` to the block's own end at 0x005DC855, none of which VC6
+// emits from C++. The `=` variant runs while a link (font slot 3) is open.
+// Descriptive names; the originals are unknown.
+static __forceinline char *markup_scan_link(char *text, int *count) {
+    __asm {
+        mov eax, text
+        mov ebx, count
+        mov edx, [ebx]
+        and edx, edx
+        jz done
+    next:
+        mov cl, [eax]
+        cmp cl, '{'
+        je found
+        cmp cl, '}'
+        je found
+        cmp cl, '['
+        je found
+        cmp cl, ']'
+        je found
+        cmp cl, '$'
+        je found
+        cmp cl, '='
+        je found
+        inc eax
+        dec edx
+        jnz next
+    found:
+        mov [ebx], edx
+        mov text, eax
+        jmp done
+    done:
+    }
+    return text;
+}
+
+static __forceinline char *markup_scan(char *text, int *count) {
+    __asm {
+        mov eax, text
+        mov ebx, count
+        mov edx, [ebx]
+        and edx, edx
+        jz done
+    next:
+        mov cl, [eax]
+        cmp cl, '{'
+        je found
+        cmp cl, '}'
+        je found
+        cmp cl, '['
+        je found
+        cmp cl, ']'
+        je found
+        cmp cl, '$'
+        je found
+        inc eax
+        dec edx
+        jnz next
+    found:
+        mov [ebx], edx
+        mov text, eax
+        jmp done
+    done:
+    }
+    return text;
+}
+
+// LEVER (2026-11-11): the image's scan loops are the hand-written
+//        markup_scan/markup_scan_link assembly helpers expanded inline (see
+//        their definition); that is what forces the EBP frame and the
+//        [ebp-8]/[ebp-0xc] parameter copies. The switch reaches the image's
+//        block order only with `}` taking its escape in the then-branch and
+//        jumping to `]`'s shared `next_slot = 0` arm.
 int Buffer::text_width(LPSTR text, int len) {
     if (!fonts_[0]) {
         fonts_[0] = FontDefault;
     }
-    if (!markup_enabled_) {
-        return fonts_[0]->width(text, len);
-    }
-
     LPSTR segment = text;
     int width = 0;
+    if (!markup_enabled_) {
+        return fonts_[0]->width(segment, len);
+    }
+
+    LPSTR cursor;
     for (;;) {
         // Inside a link - font slot 3 - `=` closes the run as well.
-        LPSTR cursor = segment;
-        while (len != 0) {
-            const char letter = *cursor;
-            bool token = letter == '{' || letter == '}' || letter == '[' ||
-                         letter == ']' || letter == '$';
-            if (font_slot_ == 3 && letter == '=') {
-                token = true;
+        if (font_slot_ == 3) {
+            cursor = markup_scan_link(segment, &len);
+        } else {
+            cursor = markup_scan(segment, &len);
+        }
+        if (len == 0) {
+            break;
+        }
+
+        int next_slot;
+        switch (*cursor) {
+        case '=':
+            markup_pending_ = 2;
+            break;
+        case '$':
+            if (strncmp(cursor, "$LINK<", 6) == 0) {
+                markup_pending_ = 1;
+                next_slot = 3;
+                goto chosen;
             }
-            if (token) {
-                break;
+            break;
+        case '{':
+            if (cursor[1] != '{') {
+                next_slot = 1;
+                goto chosen;
             }
             ++cursor;
             --len;
-        }
-
-        int next_slot = font_slot_;
-        if (len != 0) {
-            switch (static_cast<unsigned char>(*cursor)) {
-            case '$':
-                if (strncmp(cursor, "$LINK<", 6) == 0) {
-                    markup_pending_ = 1;
-                    next_slot = 3;
-                }
-                break;
-            case '=':
-                markup_pending_ = 2;
-                break;
-            case '{':
-                if (cursor[1] == '{') {
-                    ++cursor;
-                    --len;
-                } else {
-                    next_slot = 1;
-                }
-                break;
-            case '}':
-                if (cursor[1] == '}') {
-                    ++cursor;
-                    --len;
-                } else {
-                    next_slot = 0;
-                }
-                break;
-            case '[':
-                if (cursor[1] == '[') {
-                    ++cursor;
-                    --len;
-                } else {
-                    next_slot = 2;
-                }
-                break;
-            case ']':
-                if (cursor[1] == ']') {
-                    ++cursor;
-                    --len;
-                } else {
-                    next_slot = 0;
-                }
-                break;
-            default:
+            break;
+        case '}':
+            if (cursor[1] == '}') {
+                ++cursor;
+                --len;
                 break;
             }
+            goto zero;
+        case '[':
+            if (cursor[1] != '[') {
+                next_slot = 2;
+                goto chosen;
+            }
+            ++cursor;
+            --len;
+            break;
+        case ']':
+            if (cursor[1] != ']') {
+            zero:
+                next_slot = 0;
+                goto chosen;
+            }
+            ++cursor;
+            --len;
+            break;
         }
-
+        next_slot = font_slot_;
+    chosen:
         // The four fonts are consecutive, and the image indexes them:
         // `mov ecx, [edi + eax*4 + 0x52c]`. A slot with no font measures in
         // font1_ rather than not at all.
-        Font *const *const fonts = fonts_;
-        Font *const chosen = fonts[font_slot_];
-        const int span = static_cast<int>(cursor - segment);
-        width += chosen ? chosen->width(segment, span)
-                        : fonts_[0]->width(segment, span);
-
-        if (len == 0) {
-            markup_pending_ = 0;
-            return width;
-        }
+        width += fonts_[font_slot_]
+                     ? fonts_[font_slot_]->width(segment, cursor - segment)
+                     : fonts_[0]->width(segment, cursor - segment);
 
         const int pending = markup_pending_;
         if (pending == 1) {
@@ -2826,6 +2889,11 @@ int Buffer::text_width(LPSTR text, int len) {
         font_slot_ = next_slot;
         --len;
     }
+    width += fonts_[font_slot_]
+                 ? fonts_[font_slot_]->width(segment, cursor - segment)
+                 : fonts_[0]->width(segment, cursor - segment);
+    markup_pending_ = 0;
+    return width;
 }
 
 /*
@@ -3440,82 +3508,86 @@ Twenty links is the ceiling, and the image says so out loud: a twenty-first
 raises `MessageBoxA(0, "Maximum hypertext links exceeded", "WARNING!", 0)`
 and then carries on drawing.
 */
+// LEVER (2026-11-11): the image's scan loops are the hand-written
+//        markup_scan/markup_scan_link assembly helpers expanded inline (see
+//        their definition); that is what forces the EBP frame and the
+//        [ebp-8]/[ebp-0xc] parameter copies. The switch reaches the image's
+//        block order only with `}` taking its escape in the then-branch and
+//        jumping to `]`'s shared `next_slot = 0` arm.
 int Buffer::write_multi_font_raw_l(LPSTR text, int x_coord, int y_coord,
                                    int len) {
+    int x = x_coord;
+    LPSTR str = text;
     if (!markup_enabled_) {
-        return write_raw_l(text, x_coord, y_coord, len);
+        return write_raw_l(str, x, y_coord, len);
     }
 
+    LPSTR stop;
     for (;;) {
-        LPSTR stop = text;
-        while (len != 0) {
-            const char letter = *stop;
-            bool token = letter == '{' || letter == '}' || letter == '[' ||
-                         letter == ']' || letter == '$';
-            if (write_font_slot_ == 3 && letter == '=') {
-                token = true;
-            }
-            if (token) {
-                break;
-            }
-            ++stop;
-            --len;
+        // Inside a link - font slot 3 - `=` closes the run as well.
+        if (write_font_slot_ == 3) {
+            stop = markup_scan_link(str, &len);
+        } else {
+            stop = markup_scan(str, &len);
         }
-
-        if (len == 0) {
-            const int opened_at = x_coord;
-            const int reached = write_raw_l(text, x_coord, y_coord,
-                                            static_cast<int>(stop - text));
-            // THE LINK'S HIT REGION, recorded only while a `$LINK<` run is open.
-            // The height is the link font's, and `font4_` falling back to
-            // `font1_` is the image's own guard - `unk_1_` when negative,
-            // `height_ + unk_1_` when not.
-            if (write_font_slot_ == 3 && static_cast<int>(link_count_) < 20) {
-                Font *const link_font = fonts_[3] ? fonts_[3] : fonts_[0];
-                if (link_font) {
-                        const int height = link_font->unk_1_ < 0
-                            ? link_font->line_height_
-                            : link_font->height_ + link_font->unk_1_;
-                        spot_.add(link_count_ - 1, 0, opened_at, y_coord,
-                                      reached - opened_at, height);
-                }
-            }
-            return reached;
+        if (stop == 0 || len == 0) {
+            break;
         }
 
         int next_slot;
-        const char letter = *stop;
-        if (letter == '$' && strncmp(stop, "$LINK<", 6) == 0) {
-            markup_pending_ = 1;
-            next_slot = 3;
-            if (static_cast<int>(++link_count_) > 20) {
-                MessageBoxA(nullptr, "Maximum hypertext links exceeded",
-                            "WARNING!", 0);
-            }
-        } else if (letter == '=') {
+        switch (*stop) {
+        case '=':
             markup_pending_ = 2;
-            next_slot = write_font_slot_;
-        } else if (letter == '{' && stop[1] != '{') {
-            next_slot = 1;
-        } else if (letter == '}' && stop[1] != '}') {
-            next_slot = 0;
-        } else if (letter == '[' && stop[1] != '[') {
-            next_slot = 2;
-        } else if (letter == ']' && stop[1] != ']') {
-            next_slot = 0;
-        } else {
-            // A doubled token is an escape: one of the pair is drawn.
-            if (letter == '{' || letter == '}' || letter == '[' ||
-                letter == ']') {
+            break;
+        case '$':
+            if (strncmp(stop, "$LINK<", 6) == 0) {
+                markup_pending_ = 1;
+                next_slot = 3;
+                if (static_cast<int>(++link_count_) > 20) {
+                    MessageBoxA(nullptr, "Maximum hypertext links exceeded",
+                                "WARNING!", 0);
+                }
+                goto chosen;
+            }
+            break;
+        case '{':
+            if (stop[1] != '{') {
+                next_slot = 1;
+                goto chosen;
+            }
+            ++stop;
+            --len;
+            break;
+        case '}':
+            if (stop[1] == '}') {
                 ++stop;
                 --len;
+                break;
             }
-            next_slot = write_font_slot_;
+            goto zero;
+        case '[':
+            if (stop[1] != '[') {
+                next_slot = 2;
+                goto chosen;
+            }
+            ++stop;
+            --len;
+            break;
+        case ']':
+            if (stop[1] != ']') {
+            zero:
+                next_slot = 0;
+                goto chosen;
+            }
+            ++stop;
+            --len;
+            break;
         }
-
-        const int opened_at = x_coord;
-        x_coord = write_raw_l(text, x_coord, y_coord,
-                              static_cast<int>(stop - text));
+        next_slot = write_font_slot_;
+    chosen:
+        int opened_at = x;
+        x = write_raw_l(str, x, y_coord,
+                              static_cast<int>(stop - str));
 
         const int pending = markup_pending_;
         if (pending == 1) {
@@ -3523,26 +3595,26 @@ int Buffer::write_multi_font_raw_l(LPSTR text, int x_coord, int y_coord,
             len -= 5;
         }
         ++stop;
-        text = stop;
+        str = stop;
 
         if (pending == 2) {
             LPSTR const close = strchr(stop, '>');
             if (close) {
                 // The label between `=` and `>` is copied out and owned.
                 if (static_cast<int>(link_count_) < 20) {
-                    const int label = static_cast<int>(close - text);
-                    char *const kept = static_cast<char *>(mem_get(label + 1));
-                    link_labels_[link_count_ - 1] = kept;
+                    const int label = static_cast<int>(close - str);
+                    link_labels_[link_count_ - 1] =
+                        static_cast<char *>(mem_get(label + 1));
                     if (link_labels_[link_count_ - 1]) {
-                        memcpy(link_labels_[link_count_ - 1], text, label);
+                        memcpy(link_labels_[link_count_ - 1], str, label);
                         link_labels_[link_count_ - 1][label] = '\0';
                     }
                 }
-                len += static_cast<int>(text - close) - 1;
-                text = close + 1;
+                len += static_cast<int>(str - close) - 1;
+                str = close + 1;
             }
             next_slot = 0;
-            markup_pending_ = 0;
+            markup_pending_ = next_slot;
         }
 
         // THE LINK'S HIT REGION, recorded only while a `$LINK<` run is open.
@@ -3552,16 +3624,31 @@ int Buffer::write_multi_font_raw_l(LPSTR text, int x_coord, int y_coord,
         if (write_font_slot_ == 3 && static_cast<int>(link_count_) < 20) {
             Font *const link_font = fonts_[3] ? fonts_[3] : fonts_[0];
             if (link_font) {
-                const int height = link_font->unk_1_ < 0
-                    ? link_font->line_height_
-                    : link_font->height_ + link_font->unk_1_;
+                const int height = link_font->unk_1_ >= 0
+                    ? link_font->height_ + link_font->unk_1_
+                    : link_font->line_height_;
                 spot_.add(link_count_ - 1, 0, opened_at, y_coord,
-                          x_coord - opened_at, height);
+                          x - opened_at, height);
             }
         }
         write_font_slot_ = next_slot;
         --len;
     }
+
+    const int opened_at = x;
+    const int reached = write_raw_l(str, x, y_coord,
+                                    static_cast<int>(stop - str));
+    if (write_font_slot_ == 3 && static_cast<int>(link_count_) < 20) {
+        Font *const link_font = fonts_[3] ? fonts_[3] : fonts_[0];
+        if (link_font) {
+            const int height = link_font->unk_1_ >= 0
+                ? link_font->height_ + link_font->unk_1_
+                : link_font->line_height_;
+            spot_.add(link_count_ - 1, 0, opened_at, y_coord,
+                      reached - opened_at, height);
+        }
+    }
+    return reached;
 }
 
 /*
@@ -6960,159 +7047,131 @@ int Buffer::wrap(char * a1, RECT * a2) {
 // calls     0x00619370 0x00628AF0 0x006458F0 0x00645DD0
 
 
+// LEVER (2026-11-11): the image's scan loops are the hand-written
+//        markup_scan/markup_scan_link assembly helpers expanded inline (see
+//        their definition); that is what forces the EBP frame and the
+//        [ebp-8]/[ebp-0xc] parameter copies. The switch reaches the image's
+//        block order only with `}` taking its escape in the then-branch and
+//        jumping to `]`'s shared `next_slot = 0` arm.
 char *Buffer::find_line_break_l(char * a1, int * a2, int a3) {
-    if (!a2) {
+    if (a2 == 0) {
         return 0;
     }
-    if (!fonts_[0]) {
-        fonts_[0] = FontDefault;
-    }
-    if (!markup_enabled_) {
-        return fonts_[0]->find_line_break_l(a1, a2, a3);
-    }
-
-    char *segStart = a1;
-    char *esi;
-    int ebxMode;
-
-scan_loop:
     {
-        char *p = segStart;
-        int n = a3;
-        while (n != 0) {
-            char c = *p;
-            bool isBreak;
+        if (!fonts_[0]) {
+            fonts_[0] = FontDefault;
+        }
+        char *segment = a1;
+        if (!markup_enabled_) {
+            return fonts_[0]->find_line_break_l(segment, a2, a3);
+        }
+
+        char *cursor;
+        char *found;
+        for (;;) {
+            // Inside a link - font slot 3 - `=` closes the run as well.
             if (field_514_ == 3) {
-                isBreak = (c == '{' || c == '}' || c == '[' || c == ']' || c == '$' || c == '=');
+                cursor = markup_scan_link(segment, &a3);
             } else {
-                isBreak = (c == '{' || c == '}' || c == '[' || c == ']' || c == '$');
+                cursor = markup_scan(segment, &a3);
             }
-            if (isBreak) {
+            if (a3 == 0) {
                 break;
             }
-            ++p;
-            --n;
+
+            int next_slot;
+            switch (*cursor) {
+            case '=':
+                markup_pending_ = 2;
+                break;
+            case '$':
+                if (strncmp(cursor, BufferMarkupLinkToken, 6) == 0) {
+                    markup_pending_ = 1;
+                    next_slot = 3;
+                    goto chosen;
+                }
+                break;
+            case '{':
+                if (cursor[1] != '{') {
+                    next_slot = 1;
+                    goto chosen;
+                }
+                ++cursor;
+                --a3;
+                break;
+            case '}':
+                if (cursor[1] == '}') {
+                    ++cursor;
+                    --a3;
+                    break;
+                }
+                goto zero;
+            case '[':
+                if (cursor[1] != '[') {
+                    next_slot = 2;
+                    goto chosen;
+                }
+                ++cursor;
+                --a3;
+                break;
+            case ']':
+                if (cursor[1] != ']') {
+                zero:
+                    next_slot = 0;
+                    goto chosen;
+                }
+                ++cursor;
+                --a3;
+                break;
+            }
+            next_slot = field_514_;
+        chosen:
+            found = fonts_[field_514_]
+                        ? fonts_[field_514_]->find_line_break_l(
+                              segment, a2, static_cast<int>(cursor - segment))
+                        : fonts_[0]->find_line_break_l(
+                              segment, a2, static_cast<int>(cursor - segment));
+            if (found != 0) {
+                markup_pending_ = 0;
+                if (found[-1] == ' ' || found == segment) {
+                    return found;
+                }
+                return const_cast<char *>(memrchr(a1, found, ' '));
+            }
+
+            const int pending = markup_pending_;
+            if (pending == 1) {
+                cursor += 5;          // the rest of `$LINK<`
+                a3 -= 5;
+            }
+            ++cursor;
+            segment = cursor;
+            if (pending == 2) {
+                char *const close = strchr(cursor, '>');
+                next_slot = 0;
+                if (close) {
+                    a3 -= static_cast<int>(close - cursor) + 1;
+                    segment = close + 1;
+                }
+                markup_pending_ = next_slot;
+            }
+            field_514_ = next_slot;
+            --a3;
         }
-        a3 = n;
-        esi = p;
-    }
-
-    if (a3 == 0) {
-        goto tail_exit;
-    }
-
-    {
-        unsigned char ch = (unsigned char)*esi;
-        switch (ch) {
-        case '$':
-            if (strncmp(esi, BufferMarkupLinkToken, 6) == 0) {
-                markup_pending_ = 1;
-                ebxMode = 3;
-                goto join_compute;
-            }
-            break;
-        case '=':
-            markup_pending_ = 2;
-            break;
-        case '{':
-            if (esi[1] == '{') {
-                goto consume_extra;
-            }
-            ebxMode = 1;
-            goto join_compute;
-        case '}':
-            if (esi[1] == '}') {
-                goto consume_extra;
-            }
-            ebxMode = 0;
-            goto join_compute;
-        case '[':
-            if (esi[1] == '[') {
-                goto consume_extra;
-            }
-            ebxMode = 2;
-            goto join_compute;
-        case ']':
-            if (esi[1] == ']') {
-                goto consume_extra;
-            }
-            ebxMode = 0;
-            goto join_compute;
-        default:
-            break;
-        }
-    }
-    ebxMode = field_514_;
-    goto join_compute;
-
-consume_extra:
-    --a3;
-    ++esi;
-    ebxMode = field_514_;
-    goto join_compute;
-
-join_compute:
-    {
-        int mode = field_514_;
-        Font *const *fontArray = fonts_;
-        Font *segFont = fontArray[mode];
-        int segLen = (int)(esi - segStart);
-        char *found;
-        if (segFont) {
-            found = segFont->find_line_break_l(segStart, a2, segLen);
-        } else {
-            found = fonts_[0]->find_line_break_l(segStart, a2, segLen);
-        }
+        found = fonts_[field_514_]
+                    ? fonts_[field_514_]->find_line_break_l(
+                          segment, a2, static_cast<int>(cursor - segment))
+                    : fonts_[0]->find_line_break_l(
+                          segment, a2, static_cast<int>(cursor - segment));
         if (found != 0) {
             markup_pending_ = 0;
-            if (found[-1] == ' ' || found == segStart) {
+            if (found[-1] == ' ' || found == segment) {
                 return found;
             }
             return const_cast<char *>(memrchr(a1, found, ' '));
         }
-    }
-
-    {
-        int markupKind = markup_pending_;
-        if (markupKind == 1) {
-            a3 -= 5;
-            esi += 5;
-        }
-        ++esi;
-        segStart = esi;
-        if (markupKind == 2) {
-            char *found2 = strchr(esi, '>');
-            ebxMode = 0;
-            if (found2) {
-                a3 = a3 - (int)(found2 - esi) - 1;
-                segStart = found2 + 1;
-            }
-            markup_pending_ = ebxMode;
-        }
-    }
-    field_514_ = ebxMode;
-    --a3;
-    goto scan_loop;
-
-tail_exit:
-    {
-        Font *const *fontArray = fonts_;
-        Font *segFont = fontArray[field_514_];
-        int segLen = (int)(esi - segStart);
-        char *found;
-        if (segFont) {
-            found = segFont->find_line_break_l(segStart, a2, segLen);
-        } else {
-            found = fonts_[0]->find_line_break_l(segStart, a2, segLen);
-        }
         markup_pending_ = 0;
-        if (found == 0) {
-            return 0;
-        }
-        if (found[-1] == ' ' || found == segStart) {
-            return found;
-        }
-        return const_cast<char *>(memrchr(a1, found, ' '));
+        return 0;
     }
 }
 
@@ -8744,16 +8803,28 @@ int BufferPreferActivePalette = 1;
 // ORIGINAL: 0x005D98F0 sub_5d98f0 0x005D98F0-0x005D9BD7 FILE
 // symbol    ?copy_scaled@Buffer@@QAEHPAV1@PAUtagRECT@@1@Z
 // TRIED: plain extern "C" __stdcall(a1,a2,a3) per IDA's guess - landed as Buffer::sub_5d98f0(Buffer *srcBuf, RECT *srcRect, RECT *destRect) __thiscall instead: `this`(edi) drives the same HDC-acquire/refcount pattern as srcBuf, and only srcRect/ destRect are null-checked (srcBuf is checked separately, non-fatally). slot001 is plain VCall (no push, this in ecx); slot017/026 are COM-style (this explicitly pushed as arg 0) despite reusing the same ecx register - frame differs from #3 on, not pursued further given the size of this function.
+// WORKAROUND(inline): copy_scaled 0x005D98F0 calls source->release_hdc(1) at
+// 0x005D9BAD out of line although the identical failure-path call at
+// 0x005D9A17 expands; spelling the eight rectangle extents through this
+// inline helper spends the /Ob2 budget the image spent before that call
+// (MISMATCH 237/262 -> BYTE_EXACT). The original header helper, if any, is
+// unknown; descriptive name.
+static inline void buffer_rect_extent(const RECT *rect, int *left, int *top,
+                                      int *width, int *height) {
+    *height = rect->bottom - rect->top;
+    *width = rect->right - rect->left;
+    *top = rect->top;
+    *left = rect->left;
+}
+
 int Buffer::copy_scaled(Buffer *source, RECT *source_rect, RECT *destination_rect) {
     if (source_rect == 0 || destination_rect == 0) return 3;
-    const int destination_height = destination_rect->bottom - destination_rect->top;
-    const int destination_width = destination_rect->right - destination_rect->left;
-    const int destination_top = destination_rect->top;
-    const int destination_left = destination_rect->left;
-    const int source_height = source_rect->bottom - source_rect->top;
-    const int source_width = source_rect->right - source_rect->left;
-    const int source_top = source_rect->top;
-    const int source_left = source_rect->left;
+    int destination_height, destination_width, destination_top, destination_left;
+    int source_height, source_width, source_top, source_left;
+    buffer_rect_extent(destination_rect, &destination_left, &destination_top,
+                       &destination_width, &destination_height);
+    buffer_rect_extent(source_rect, &source_left, &source_top,
+                       &source_width, &source_height);
     // These native failure arms deliberately retain the failed acquisition's
     // count; adding a balancing release would change original behavior.
     if (source != 0) {
@@ -8865,12 +8936,17 @@ int Buffer::copy_scaled_to_window(Win *target, RECT *destination_rect,
     destination.right += screen_x;
     destination.top += screen_y;
     destination.bottom += screen_y;
+    int source_left, source_top, source_width, source_height;
+    // WORKAROUND(inline): the same rectangle-extent helper as copy_scaled;
+    // its expansion spends the /Ob2 budget that keeps sync_to_palette's
+    // nested get_hdc out of line at 0x005DA1C3 (MISMATCH 119/346 ->
+    // BYTE_EXACT, frame and register choice included).
+    buffer_rect_extent(source_rect, &source_left, &source_top, &source_width,
+                       &source_height);
     StretchBlt(screen_dc, destination.left, destination.top,
                destination.right - destination.left,
                destination.bottom - destination.top, source_dc,
-               source_rect->left, source_rect->top,
-               source_rect->right - source_rect->left,
-               source_rect->bottom - source_rect->top, SRCCOPY);
+               source_left, source_top, source_width, source_height, SRCCOPY);
     ValidateRect(HandleMain, &destination);
     // Normal arm differs from the empty-intersection arm: screen release first.
     Win::release_hdc();
