@@ -163,6 +163,19 @@ void RadioButton::close() {
     GraphicWin::close();
 }
 
+// WORKAROUND(decl): draw_item (0x60D750) spills this count to a temporary
+// before each text_line_height call inside max(), the shape of an inline
+// StringStruct accessor expanded twice per max(). The accessor's original
+// name and header are unknown.
+static inline int current_lines(StringStruct &items) {
+    return items.head_ != 0
+        ? static_cast<int>(items.current_->string_payload()->field_8_) : 0;
+}
+
+static inline char *current_text(StringStruct &items) {
+    return items.head_ != 0 ? items.current_->string_payload()->text : 0;
+}
+
 // Seed identity: ?draw_item@RadioButton@@QAEXHH@Z at 0x0060D750.
 // The state argument selects the checked/unchecked sprite and also controls
 // the focus rectangle, as shown by the original post-draw branch.
@@ -180,152 +193,101 @@ void RadioButton::draw_item(int position, int state) {
     int extra_height = 0;
     Dialog::item_list_.seek_pos(-1);
     for (int i = 0; i < position; ++i) {
-        Dialog::item_list_.next_entry();
-        if (Dialog::item_list_.current_ != 0 &&
-            static_cast<int>(Dialog::item_list_.current_entry()->field_8_) > 1) {
-            int lines = Dialog::item_list_.head_ != 0
-                ? static_cast<int>(Dialog::item_list_.current_->string_payload()->field_8_)
-                : 0;
-            int height = static_cast<int>(Dialog::field_68_);
-            if (height <= Buffer::text_line_height() * lines) {
-                lines = Dialog::item_list_.head_ != 0
-                    ? static_cast<int>(Dialog::item_list_.current_->string_payload()->field_8_)
-                    : 0;
-                height = Buffer::text_line_height() * lines;
-            }
-            extra_height += height - static_cast<int>(Dialog::field_68_);
+        StringStruct &items = Dialog::item_list_;
+        if (items.head_ != 0) {
+            items.current_ = items.current_->next;
+            if (++items.current_position_ == items.entry_count_) items.current_position_ = 0;
+        }
+        if (items.current_ != 0 &&
+            static_cast<int>(items.current_entry()->field_8_) > 1) {
+            extra_height += max(Dialog::field_68_,
+                                Buffer::text_line_height() *
+                                    current_lines(Dialog::item_list_))
+                          - Dialog::field_68_;
         }
     }
 
-    const int columns = Dialog::row_count_;
-    const int column = position / columns;
-    const int column_width = Dialog::field_64_;
-    const int cell_height = Dialog::field_44_;
-    const uint32_t x_bits = (static_cast<uint32_t>(column_width)
-                           + static_cast<uint32_t>(cell_height))
-                          * static_cast<uint32_t>(column)
-                          + static_cast<uint32_t>(Dialog::field_40_);
-    const int x = static_cast<int32_t>(x_bits);
-    const uint32_t row_step = static_cast<uint32_t>(Dialog::field_68_)
-                            + static_cast<uint32_t>(cell_height);
-    const uint32_t row_position = static_cast<uint32_t>(position)
-                                - static_cast<uint32_t>(column)
-                                  * static_cast<uint32_t>(columns);
-    const uint32_t y_bits = (static_cast<uint32_t>(cell_height >> 1)
-                           + static_cast<uint32_t>(extra_height))
-                          + row_position * row_step;
-    const int y = static_cast<int32_t>(y_bits);
+    const int x = (Dialog::field_64_ + static_cast<int>(Dialog::field_44_)) *
+                      (position / Dialog::row_count_) +
+                  Dialog::field_40_;
+    const int y = (static_cast<int>(Dialog::field_44_) >> 1) +
+                  (extra_height +
+                   (position - position / Dialog::row_count_ * Dialog::row_count_) *
+                       (Dialog::field_68_ + static_cast<int>(Dialog::field_44_)));
     if (!Dialog::item_list_.seek_pos(position)) {
         return;
     }
 
-    int text_lines = Dialog::item_list_.head_ != 0
-        ? static_cast<int>(Dialog::item_list_.current_->string_payload()->field_8_)
-        : 0;
-    int item_height = static_cast<int>(Dialog::field_68_);
-    if (item_height <= Buffer::text_line_height() * text_lines) {
-        text_lines = Dialog::item_list_.head_ != 0
-            ? static_cast<int>(Dialog::item_list_.current_->string_payload()->field_8_)
-            : 0;
-        item_height = Buffer::text_line_height() * text_lines;
-    }
-
-    const int original_x = x;
-    const int original_y = y;
-    const int original_bottom = static_cast<int32_t>(
-        static_cast<uint32_t>(y) + static_cast<uint32_t>(item_height));
+    const int item_height = max(Dialog::field_68_,
+                                Buffer::text_line_height() *
+                                    current_lines(Dialog::item_list_));
 
     RECT area;
     area.left = x;
     area.top = y;
-    area.right = static_cast<int32_t>(static_cast<uint32_t>(x)
-                                    + static_cast<uint32_t>(Dialog::field_64_));
-    area.bottom = original_bottom;
+    area.right = Dialog::field_64_ + x;
+    const int bottom = item_height + y;
+    area.bottom = bottom;
 
-    const int callback_state = state != 0
-        ? 2
-        : (Dialog::field_F0_ == static_cast<uint32_t>(position) ? 1 : 0);
-    const int callback_result = parent->on_dialog_item_back_draw(
-        static_cast<GraphicWin *>(this), Dialog::pos_to_id(position),
-        callback_state, &area);
-    if (callback_result == 0) {
+    if (parent->on_dialog_item_back_draw(
+            static_cast<GraphicWin *>(this), Dialog::pos_to_id(position),
+            state != 0 ? 2 : Dialog::field_F0_ == static_cast<uint32_t>(position),
+            &area) == 0) {
         static_cast<GraphicWin *>(parent)->copy(
-            this,
-            static_cast<int32_t>(static_cast<uint32_t>(Dialog::window_x_) +
-                                 static_cast<uint32_t>(original_x)),
-            static_cast<int32_t>(static_cast<uint32_t>(Dialog::window_y_) +
-                                 static_cast<uint32_t>(original_y)),
-            original_x, original_y,
+            this, Dialog::window_x_ + x, Dialog::window_y_ + y, x, y,
             Dialog::field_64_, item_height);
 
         if (checked_sprite_ != 0 && unchecked_sprite_ != 0) {
             if (state != 0) {
                 checked_sprite_->draw(
-                    this, checked_sprite_->cTransparentIndex_, original_x,
-                    original_y + ((area.bottom - checked_sprite_->iHeight_ -
-                                   area.top) >> 1), 1, 1);
+                    this, checked_sprite_->cTransparentIndex_, x,
+                    y + ((area.bottom - checked_sprite_->iHeight_ - area.top) >> 1),
+                    1, 1);
             } else {
                 unchecked_sprite_->draw(
-                    this, unchecked_sprite_->cTransparentIndex_, original_x,
-                    original_y + ((area.bottom - unchecked_sprite_->iHeight_ -
-                                   area.top) >> 1), 1, 1);
+                    this, unchecked_sprite_->cTransparentIndex_, x,
+                    y + ((area.bottom - unchecked_sprite_->iHeight_ - area.top) >> 1),
+                    1, 1);
             }
         }
     }
 
     area.left += Dialog::field_34_;
-    if (Dialog::item_list_.head_ != 0 &&
-        Dialog::item_list_.current_->string_payload()->field_8_ == 1) {
-        char *text = Dialog::item_list_.head_ != 0
-            ? Dialog::item_list_.current_->string_payload()->text : 0;
-        char *separator = strchr(text, '|');
+    if (current_lines(Dialog::item_list_) == 1) {
+        char *separator = strchr(current_text(Dialog::item_list_), '|');
         if (separator == 0) {
-            text = Dialog::item_list_.head_ != 0
-                ? Dialog::item_list_.current_->string_payload()->text : 0;
-            if (text != 0) {
-                Buffer::write_l(text, &area, strlen(text));
-            }
+            Buffer::write_l(current_text(Dialog::item_list_), &area);
         } else {
             *separator = 0;
-            text = Dialog::item_list_.head_ != 0
-                ? Dialog::item_list_.current_->string_payload()->text : 0;
-            if (text != 0) {
-                Buffer::write_l(text, &area, strlen(text));
-            }
+            Buffer::write_l(current_text(Dialog::item_list_), &area);
             *separator = '|';
             ++separator;
-            if (separator != 0) {
-                Buffer::write_right_l(separator, &area, strlen(separator));
-            }
+            Buffer::write_right_l(separator, &area);
         }
     } else {
-        char *text = Dialog::item_list_.head_ != 0
-            ? Dialog::item_list_.current_->string_payload()->text : 0;
-        char *separator = strchr(text, '|');
+        char *separator = strchr(current_text(Dialog::item_list_), '|');
         if (separator == 0) {
-            text = Dialog::item_list_.head_ != 0
-                ? Dialog::item_list_.current_->string_payload()->text : 0;
-            Buffer::wrap(text, &area);
+            Buffer::wrap(current_text(Dialog::item_list_), &area);
         } else {
             *separator = 0;
-            text = Dialog::item_list_.head_ != 0
-                ? Dialog::item_list_.current_->string_payload()->text : 0;
-            Buffer::wrap(text, &area);
+            Buffer::wrap(current_text(Dialog::item_list_), &area);
             *separator = '|';
             ++separator;
-            if (separator != 0) {
-                Buffer::write_right_l(separator, &area, strlen(separator));
-            }
+            Buffer::write_right_l(separator, &area);
         }
     }
 
     if (Dialog::field_B8_ != static_cast<uint32_t>(-1) &&
         state != 0 && Win::is_dialog_focus() != 0) {
-        const int text_width = area.right - area.left;
+        const int width = area.right - area.left;
+        area.left = 0;
+        area.top = 0;
+        area.right = width;
+        area.bottom = item_height;
         area.left = Dialog::field_34_;
-        area.top = original_y;
-        area.right = area.left + text_width;
-        area.bottom = original_bottom;
+        area.top = y;
+        area.right = Dialog::field_34_ + width;
+        area.bottom = bottom;
         Buffer::dotted_box(&area, Dialog::field_B8_);
     }
 }
@@ -349,100 +311,75 @@ int RadioButton::calculate_dimensions() {
     Buffer::set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
 
     if (Dialog::field_34_ == 0 && unchecked_sprite_ != 0 && checked_sprite_ != 0) {
-        Dialog::field_34_ = unchecked_sprite_->width();
-        if (Dialog::field_34_ < checked_sprite_->width()) {
-            Dialog::field_34_ = checked_sprite_->width();
-        }
+        Dialog::field_34_ = max(unchecked_sprite_->width(), checked_sprite_->width());
     }
     if (Dialog::field_48_ == -1) {
-        Dialog::field_68_ = 0;
         if (unchecked_sprite_ != 0 && checked_sprite_ != 0) {
-            Dialog::field_68_ = unchecked_sprite_->height();
-            if (Dialog::field_68_ < checked_sprite_->height()) {
-                Dialog::field_68_ = checked_sprite_->height();
-            }
+            Dialog::field_68_ = max(unchecked_sprite_->height(), checked_sprite_->height());
+        } else {
+            Dialog::field_68_ = 0;
         }
     } else {
         Dialog::field_68_ = Dialog::field_48_;
     }
 
-    Dialog::row_count_ = Dialog::field_50_;
-    if (Dialog::row_count_ > Dialog::item_list_.entry_count_) {
-        Dialog::row_count_ = Dialog::item_list_.entry_count_;
-    }
+    Dialog::row_count_ = min(Dialog::item_list_.entry_count_,
+                             static_cast<int>(Dialog::field_50_));
     if (Dialog::row_count_ < Dialog::item_list_.entry_count_) {
-        const int columns = Dialog::item_list_.entry_count_ / Dialog::row_count_ + 1;
-        Dialog::field_4C_ = columns;
-        Dialog::row_count_ = Dialog::item_list_.entry_count_ / columns;
-        uint32_t product = static_cast<uint32_t>(columns)
-                         * static_cast<uint32_t>(Dialog::row_count_);
-        if (static_cast<int32_t>(product) < Dialog::item_list_.entry_count_) {
+        Dialog::field_4C_ = Dialog::item_list_.entry_count_ / Dialog::row_count_ + 1;
+        Dialog::row_count_ = Dialog::item_list_.entry_count_ / Dialog::field_4C_;
+        if (Dialog::field_4C_ * Dialog::row_count_ < Dialog::item_list_.entry_count_) {
             ++Dialog::row_count_;
         }
     }
 
-    int max_text_width = 0;
-    int max_wrap_width = 100000;
+    int max_wrap_width;
     if ((Dialog::field_20_ & 2) != 0 && Dialog::field_2C_ != 0) {
-        const uint32_t wrap_width_bits = static_cast<uint32_t>(
-            Dialog::field_2C_ / Dialog::field_4C_)
-            - static_cast<uint32_t>(Dialog::field_40_) * 2u
-            - Dialog::field_34_;
-        max_wrap_width = static_cast<int32_t>(wrap_width_bits);
+        max_wrap_width = Dialog::field_2C_ / Dialog::field_4C_
+                       - Dialog::field_40_ * 2 - Dialog::field_34_;
+    } else {
+        max_wrap_width = 100000;
     }
+    int max_text_width = 0;
     for (int i = 0; i < Dialog::item_list_.entry_count_; ++i) {
-        if (Dialog::item_list_.head_ != 0) {
-            Dialog::item_list_.current_ = Dialog::item_list_.current_->next;
-            ++Dialog::item_list_.current_position_;
-            if (Dialog::item_list_.current_position_ == Dialog::item_list_.entry_count_) {
-                Dialog::item_list_.current_position_ = 0;
+        StringStruct &items = Dialog::item_list_;
+        if (items.head_ != 0) {
+            items.current_ = items.current_->next;
+            ++items.current_position_;
+            if (items.current_position_ == items.entry_count_) {
+                items.current_position_ = 0;
             }
         }
-        char *text = 0;
-        if (Dialog::item_list_.current_ != 0) {
-            StringStructPayload *const payload = Dialog::item_list_.head_ == 0
-                ? 0 : Dialog::item_list_.current_->string_payload();
+        char *text;
+        if (items.current_ != 0) {
+            StringStructPayload *const payload = items.head_ != 0
+                ? items.current_->string_payload() : 0;
             text = payload->text;
+        } else {
+            text = 0;
         }
         const int width = Buffer::text_width(text);
-        if (max_text_width < width) {
+        if (width > max_text_width) {
             max_text_width = width;
         }
-        StringStructPayload *const payload = Dialog::item_list_.head_ != 0
-            ? Dialog::item_list_.current_->string_payload() : 0;
+        StringStruct &list = Dialog::item_list_;
+        StringStructPayload *const payload = list.head_ != 0
+            ? list.current_->string_payload() : 0;
         payload->field_8_ = width / max_wrap_width + 1;
     }
     Dialog::field_64_ = Dialog::field_44_ + Dialog::field_34_ + max_text_width;
-    const int text_height = Buffer::text_height();
-    if (Dialog::field_68_ <= text_height) {
-        Dialog::field_68_ = Buffer::text_height();
-    }
+    Dialog::field_68_ = max(Dialog::field_68_, Buffer::text_height());
 
-    if ((Dialog::field_20_ & 2) == 0 || Dialog::field_2C_ == 0) {
-        const uint32_t width_bits = static_cast<uint32_t>(Dialog::field_64_)
-                                  * static_cast<uint32_t>(Dialog::field_4C_)
-                                  + static_cast<uint32_t>(Dialog::field_40_) * 2u;
-        int width = static_cast<int32_t>(width_bits);
-        const uint32_t minimum_bits = static_cast<uint32_t>(Dialog::field_2C_)
-                                    + static_cast<uint32_t>(Dialog::field_40_) * 2u;
-        const int minimum = static_cast<int32_t>(minimum_bits);
-        if (width < minimum) width = minimum;
-        Dialog::field_5C_ = width;
-        const uint32_t width_numerator_bits = static_cast<uint32_t>(width)
-                                            - static_cast<uint32_t>(Dialog::field_40_) * 2u;
-        const int32_t width_numerator = static_cast<int32_t>(width_numerator_bits);
-        const uint32_t cell_width_bits = static_cast<uint32_t>(
-            width_numerator / Dialog::field_4C_) - Dialog::field_44_;
-        Dialog::field_64_ = static_cast<int32_t>(cell_width_bits);
-        Dialog::field_5C_ -= Dialog::field_44_;
-    } else {
+    if ((Dialog::field_20_ & 2) != 0 && Dialog::field_2C_ != 0) {
         Dialog::field_5C_ = Dialog::field_2C_;
-        const uint32_t width_numerator_bits = static_cast<uint32_t>(Dialog::field_2C_)
-                                            - static_cast<uint32_t>(Dialog::field_40_) * 2u;
-        const int32_t width_numerator = static_cast<int32_t>(width_numerator_bits);
-        const uint32_t cell_width_bits = static_cast<uint32_t>(
-            width_numerator / Dialog::field_4C_) - Dialog::field_44_;
-        Dialog::field_64_ = static_cast<int32_t>(cell_width_bits);
+        Dialog::field_64_ = (Dialog::field_2C_ - Dialog::field_40_ * 2) / Dialog::field_4C_
+                          - Dialog::field_44_;
+    } else {
+        Dialog::field_5C_ = max(Dialog::field_2C_ + Dialog::field_40_ * 2,
+                                Dialog::field_64_ * Dialog::field_4C_ + Dialog::field_40_ * 2);
+        Dialog::field_64_ = (static_cast<int>(Dialog::field_5C_) - Dialog::field_40_ * 2)
+                          / Dialog::field_4C_ - Dialog::field_44_;
+        Dialog::field_5C_ -= Dialog::field_44_;
     }
     Dialog::column_count_ = Dialog::field_4C_;
     if ((Dialog::field_20_ & 1) != 0 && Dialog::field_30_ != 0) {
@@ -519,61 +456,12 @@ void RadioButton::on_redraw() {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060de10.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60de10 complete control/data-access review and src/jackal/radiobutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?on_left_down@RadioButton@@UAEXHH@Z
 void RadioButton::on_left_down(int x, int y) {
+    int first = 1;
     WinCallbackWindow = win_parent_;
     Dialog::item_list_.seek_pos(-1);
-    int remaining_y = y;
-    int first = 1;
-    while (remaining_y > 0) {
+    while (y > 0) {
         if (!first && Dialog::item_list_.current_position_ ==
                           Dialog::item_list_.entry_count_ - 1) {
-            return;
-        }
-        first = 0;
-        Dialog::item_list_.next_entry();
-        int lines = 0;
-        if (Dialog::item_list_.current_ != 0) {
-            StringStructPayload *const payload = Dialog::item_list_.head_ == 0
-                ? 0 : Dialog::item_list_.current_->string_payload();
-            lines = static_cast<int>(payload->field_8_);
-        }
-        int item_height = Buffer::text_line_height() * lines;
-        const int minimum = static_cast<int>(Dialog::field_68_ + Dialog::field_44_);
-        if (minimum > item_height) item_height = minimum;
-        remaining_y -= item_height;
-    }
-    const int position = (x / static_cast<int>(Dialog::field_64_ + Dialog::field_44_)) *
-                         Dialog::row_count_ +
-                         Dialog::item_list_.current_position_;
-
-    const int previous = Dialog::selected_position_;
-    if (position == previous) {
-        if ((Dialog::field_20_ & 4) != 0 && win_parent_ != 0) {
-            win_parent_->on_button_clicked(-1);
-        }
-        return;
-    }
-
-    draw_item(previous, 0);
-    Dialog::selected_position_ = position;
-    if (selection_callback_ != 0) selection_callback_(position);
-    draw_item(position, 1);
-    Dialog::field_F0_ = static_cast<uint32_t>(-1);
-    soft_update();
-    if ((Dialog::field_20_ & 4) != 0 && win_parent_ != 0) {
-        win_parent_->on_button_clicked(-1);
-    }
-}
-
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0060E320 ?on_mouse_move@RadioButton@@QAEXHH@Z 0x0060E320-0x0060E494 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060e320.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60e320 complete control/data-access review and src/jackal/radiobutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
-// symbol    ?on_mouse_move@RadioButton@@UAEXHH@Z
-void RadioButton::on_mouse_move(int x, int y) {
-    int first = 1;
-    Dialog::item_list_.seek_pos(-1);
-    while (y > 0) {
-        if (!first && Dialog::item_list_.entry_count_ - 1 ==
-                          Dialog::item_list_.current_position_) {
             return;
         }
         first = 0;
@@ -594,8 +482,66 @@ void RadioButton::on_mouse_move(int x, int y) {
             lines = 0;
         }
         int item_height = Buffer::text_line_height() * lines;
-        const int minimum = static_cast<int>(Dialog::field_44_ + Dialog::field_68_);
-        if (minimum > item_height) item_height = minimum;
+        if (static_cast<int>(Dialog::field_44_ + Dialog::field_68_) > item_height) {
+            item_height = Dialog::field_44_ + Dialog::field_68_;
+        }
+        y -= item_height;
+    }
+    const int position = (x / static_cast<int>(Dialog::field_64_ + Dialog::field_44_)) *
+                         Dialog::row_count_ +
+                         Dialog::item_list_.current_position_;
+
+    if (Dialog::selected_position_ == position) {
+        if ((Dialog::field_20_ & 4) != 0 && win_parent_ != 0) {
+            win_parent_->on_button_clicked(-1);
+        }
+        return;
+    }
+
+    draw_item(Dialog::selected_position_, 0);
+    Dialog::selected_position_ = position;
+    if (selection_callback_ != 0) selection_callback_(Dialog::selected_position_);
+    draw_item(position, 1);
+    Dialog::field_F0_ = static_cast<uint32_t>(-1);
+    soft_update();
+    if ((Dialog::field_20_ & 4) != 0 && win_parent_ != 0) {
+        win_parent_->on_button_clicked(-1);
+    }
+}
+
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x0060E320 ?on_mouse_move@RadioButton@@QAEXHH@Z 0x0060E320-0x0060E494 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060e320.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60e320 complete control/data-access review and src/jackal/radiobutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// symbol    ?on_mouse_move@RadioButton@@UAEXHH@Z
+void RadioButton::on_mouse_move(int x, int y) {
+    int first = 1;
+    Dialog::item_list_.seek_pos(-1);
+    while (y > 0) {
+        if (!first && Dialog::item_list_.current_position_ ==
+                          Dialog::item_list_.entry_count_ - 1) {
+            return;
+        }
+        first = 0;
+        StringStruct &items = Dialog::item_list_;
+        if (items.head_ != 0) {
+            StringStructEntry *const next = items.current_->next;
+            const int count = items.entry_count_;
+            items.current_ = next;
+            ++items.current_position_;
+            if (items.current_position_ == count) items.current_position_ = 0;
+        }
+        int lines;
+        if (items.current_ != 0) {
+            StringStructPayload *const payload = items.head_ != 0
+                ? items.current_->string_payload() : 0;
+            lines = static_cast<int>(payload->field_8_);
+        } else {
+            lines = 0;
+        }
+        int item_height = Buffer::text_line_height() * lines;
+        if (static_cast<int>(Dialog::field_44_ + Dialog::field_68_) > item_height) {
+            item_height = Dialog::field_44_ + Dialog::field_68_;
+        }
         y -= item_height;
     }
     int position = (x / static_cast<int>(Dialog::field_64_ + Dialog::field_44_)) *
@@ -820,48 +766,34 @@ Status: Source-owned member body; behavior retained, exactness not measured
 */
 int RadioButton::on_key_down(int key) {
     WinCallbackWindow = win_parent_;
-    const int previous = static_cast<int>(selected_position_);
+    const int previous = selected_position_;
 
     switch (key) {
-    case 0x25:
-    case 0x64: {
-        int position = previous + Dialog::row_count_;
-        selected_position_ = static_cast<uint32_t>(position);
-        if (position >= Dialog::item_list_.entry_count_) {
-            position -= Dialog::row_count_;
-            selected_position_ = static_cast<uint32_t>(position);
-        }
-        break;
-    }
     case 0x26:
-    case 0x68: {
-        int position = previous - 1;
-        selected_position_ = static_cast<uint32_t>(position);
-        if (position <= 0) {
-            selected_position_ = 0;
-        }
+    case 0x68:
+        --selected_position_;
+        selected_position_ = selected_position_ <= 0 ? 0 : selected_position_;
         break;
-    }
-    case 0x27:
-    case 0x66: {
-        int position = previous - Dialog::row_count_;
-        selected_position_ = static_cast<uint32_t>(position);
-        if (position < 0) {
-            position += Dialog::row_count_;
-            selected_position_ = static_cast<uint32_t>(position);
-        }
-        break;
-    }
     case 0x28:
-    case 0x62: {
-        int position = previous + 1;
-        selected_position_ = static_cast<uint32_t>(position);
-        const int last = Dialog::item_list_.entry_count_ - 1;
-        if (position >= last) {
-            selected_position_ = static_cast<uint32_t>(last);
+    case 0x62:
+        ++selected_position_;
+        selected_position_ = selected_position_ < Dialog::item_list_.entry_count_ - 1
+            ? selected_position_ : Dialog::item_list_.entry_count_ - 1;
+        break;
+    case 0x25:
+    case 0x64:
+        selected_position_ += Dialog::row_count_;
+        if (selected_position_ >= Dialog::item_list_.entry_count_) {
+            selected_position_ -= Dialog::row_count_;
         }
         break;
-    }
+    case 0x27:
+    case 0x66:
+        selected_position_ -= Dialog::row_count_;
+        if (selected_position_ < 0) {
+            selected_position_ += Dialog::row_count_;
+        }
+        break;
     default:
         return 0;
     }
@@ -869,9 +801,9 @@ int RadioButton::on_key_down(int key) {
     Dialog::field_F0_ = 0xFFFFFFFFu;
     draw_item(previous, 0);
     if (selection_callback_ != 0) {
-        selection_callback_(static_cast<int>(selected_position_));
+        selection_callback_(selected_position_);
     }
-    draw_item(static_cast<int>(selected_position_), 1);
+    draw_item(selected_position_, 1);
     soft_update();
     return 1;
 }

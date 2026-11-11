@@ -33,6 +33,8 @@
 // ORIGINAL: 0x00613830 sub_613830 0x00613830-0x0061384F FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Complete pinned exclusive span 0x613830..0x61384f; CRT slot 0x6826ac selects startup and its registered cleanup. The corresponding original receiver is separately bound to one offset-zero placed Sprite, with no inferred enclosing allocation.", "Pinned startup0x00613810 calls Sprite constructor0x005E37E0 on original object0x009B9078, then registers cleanup0x00613830. Cleanup tests and publishes mask0x4 of shared guard0x009B9014 before direct Sprite::close0x005E3820, retaining upper bits and repeated-cleanup skip.", "Current class-static FileWin::shared_sprite2_ emits object ?shared_sprite2_@FileWin@@0VSprite@@A, startup _$E26, cleanup _$E24, and compiler-owned guard _$S14 in src/jackal/filewin.cpp. These name current compiler emission, not recovered original debug names.", "Class-static construction and reverse registered cleanup preserve the pinned owner order; explicit runtime close remains separate. No raw storage, placement constructor, handwritten guard or authored atexit substitute remains."], "reason": "Bind the original lifetime operation to genuine class-static Sprite storage and compiler-generated initialization/destruction. Preserve original identity, spans and historical claims. The original member spellings and complete historical TU remain unproved; linked retained selection, full data placement and game acceptance remain separate obligations."}
 // symbol    _$E28
+// The original TU calls StringStruct::remove_all out of line (populate_directory).
+#define STRINGSTRUCT_REMOVE_ALL_OUT_OF_LINE
 #include "stdafx.h"
 // Generic Jackal file-selection owner; application presentation stays in AlphaSave.
 #include "filewin.h"
@@ -45,6 +47,13 @@
 #include "general.h"
 #include "popup.h"
 #include "win.h"
+
+// WORKAROUND(decl): ??0FileWin (0x613850) has unwind entries for its two
+// FlatButtons and EditBox only and never sets a state after the ListBox member,
+// although strcat runs after it; VC6 omits that state only when it treats the
+// strcat call as non-throwing. The original header context that made it so
+// (intrinsic-aware declaration or Jackal's own CRT header) is unknown.
+extern "C" __declspec(nothrow) char *__cdecl strcat(char *, const char *);
 
 // RECOVERY_OBJECT: v2 0x009B90AC 0x009B90B0 ?ActiveFileWin@@3PAVFileWin@@A 0x00613D50
 FileWin *ActiveFileWin = 0;
@@ -124,15 +133,15 @@ int FileWin::set_def_name(char *name) {
 have_name:
     file_name_[0] = '\0';
     strcat(file_name_, tail);
-    if (head != 0) {
-        if (head[1] == ':') strcat(head, "\\");
-        if (strlen(head) <= 0x104) {
-            directory_[0] = '\0';
-            strcat(directory_, head);
-        }
+    if (head != 0 && head[1] == ':') strcat(head, "\\");
+    if (head == 0) {
+        directory_[0] = '\0';
         return 0;
     }
-    directory_[0] = '\0';
+    if (strlen(head) <= 0x104) {
+        directory_[0] = '\0';
+        strcat(directory_, head);
+    }
     return 0;
 }
 
@@ -178,32 +187,29 @@ void FileWin::on_button_clicked(int button_id) {
 // ORIGINAL: 0x006146A0 ?UNK4@FileWin@@QAEXXZ 0x006146A0-0x00614B59
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/006146a0.cpp", "recovery/tasks/game-save-load-owner-coverage.json", "pinned image sha256:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_filewin_unk4_full_branches.py", "recovery/tests/test_filewin_load_contract_behavior.py"], "reason": "Recover the complete FileWin confirmation path through its real selected-path buffers, EditBox/ListBox, modal owner, and focus-list lifecycle."}
 void FileWin::UNK4() {
-    Win *entry_focus = 0;
-    if (modal_window_->list_.count_ != 0) {
-        WinDialogNode *const node = modal_window_->list_.current_;
-        entry_focus = node->focus_owner_;
-    }
+    WinNodeList &focus_list = modal_window_->list_;
+    Win *entry_focus = focus_list.head_ != 0
+        ? focus_list.current_->focus_owner_ : 0;
+    const int edit_focused = entry_focus == static_cast<Win *>(&edit_box_);
+    char *const typed_name = edit_box_.text_;
 
     edit_box_.select_all_text();
     edit_box_.redraw();
-    purge_spaces(edit_box_.text_);
+    purge_spaces(typed_name);
 
     char name_buffer[260];
-    WIN32_FIND_DATAA selected_file;
-    HANDLE selected_handle = INVALID_HANDLE_VALUE;
-    bool selected_exists = false;
-    name_buffer[0] = 0;
-    strcat(name_buffer, edit_box_.text_);
-
+    WIN32_FIND_DATAA found;
     int status;
-    if (strcmp(edit_box_.text_, "..") == 0) {
+    if (strcmp(typed_name, "..") == 0) {
         status = 2;
     } else {
+        name_buffer[0] = 0;
+        strcat(name_buffer, typed_name);
         // Native 0x614755/0x6147AC call memrchr (0x628AF0), not strrchr.
         char *const suffix = const_cast<char *>(
             memrchr(name_buffer, name_buffer + strlen(name_buffer), '.'));
         status = 0;
-        if (suffix != name_buffer && extension_count_ > 0) {
+        if (suffix != name_buffer) {
             for (int extension_index = 0;
                  extension_index < extension_count_; ++extension_index) {
                 if (suffix == 0) {
@@ -212,8 +218,6 @@ void FileWin::UNK4() {
                     if (appended_suffix != 0) *appended_suffix = 0;
                     strcat(name_buffer, extension_filters_[extension_index]);
                 }
-
-                WIN32_FIND_DATAA found;
                 const HANDLE handle = FindFirstFileA(name_buffer, &found);
                 if (handle != INVALID_HANDLE_VALUE) {
                     status = 1;
@@ -225,89 +229,89 @@ void FileWin::UNK4() {
         }
     }
 
-    if (status == 0) {
-        if (populate_directory(edit_box_.text_) != 0) goto restore_dialog_focus;
-    } else if (status != 1) {
-        if (status == 2) {
-            name_buffer[0] = 0;
-            strcat(name_buffer, "..");
-            populate_directory(name_buffer);
-        }
-        goto restore_dialog_focus;
-    }
-
-    selected_path_[0] = 0;
-    selected_basename_[0] = 0;
-    if (strchr(name_buffer, '\\') == 0) {
-        GetCurrentDirectoryA(0x104, selected_path_);
-        const size_t directory_length = strlen(selected_path_);
-        if (name_buffer[0] != '\\' &&
-            selected_path_[directory_length - 1] != '\\') {
-            strcat(selected_path_, "\\");
-        }
-        strcat(selected_path_, name_buffer);
-        strcat(selected_basename_, name_buffer);
-    } else {
-        if (name_buffer[1] != ':') {
+    switch (status) {
+    case 0:
+        if (populate_directory(typed_name) != 0) break;
+        // Falls into the confirmation path.
+    case 1: {
+        selected_path_[0] = 0;
+        selected_basename_[0] = 0;
+        if (strchr(name_buffer, '\\') != 0) {
+            if (name_buffer[1] != ':') {
+                GetCurrentDirectoryA(0x104, selected_path_);
+                if (name_buffer[0] != '\\') strcat(selected_path_, "\\");
+            }
+            strcat(selected_path_, name_buffer);
+            char *separator = selected_path_ + strlen(selected_path_);
+            while (separator != 0 && *separator != '\\') --separator;
+            strcat(selected_basename_, separator + 1);
+        } else {
             GetCurrentDirectoryA(0x104, selected_path_);
-            if (name_buffer[0] != '\\') strcat(selected_path_, "\\");
+            if (name_buffer[0] != '\\') {
+                char *const last = selected_path_ + strlen(selected_path_) - 1;
+                if (*last != '\\') strcat(selected_path_, "\\");
+            }
+            strcat(selected_path_, name_buffer);
+            selected_basename_[0] = 0;
+            strcat(selected_basename_, name_buffer);
         }
-        strcat(selected_path_, name_buffer);
-        char *const last_separator = strrchr(selected_path_, '\\');
-        strcat(selected_basename_, last_separator + 1);
-    }
 
-    selected_handle = FindFirstFileA(name_buffer, &selected_file);
-    selected_exists = selected_handle != INVALID_HANDLE_VALUE;
-    if (selected_exists) FindClose(selected_handle);
-
-    if (field_638_ == 0xC8) {
-        if (selected_exists) {
-            modal_window_->release_modal();
+        const HANDLE selected_handle = FindFirstFileA(name_buffer, &found);
+        int selected_exists;
+        if (selected_handle != INVALID_HANDLE_VALUE) {
+            selected_exists = 1;
+            FindClose(selected_handle);
         } else {
-            parse_says(0, name_buffer, -1, -1);
-            char message[260];
-            message[0] = 0;
-            strcat(message, current_directory_);
-            strcat(message, "\\");
-            strcat(message, "jackal");
-            char load_label[] = "FILEWIN_LOAD";
-            pop_caption_title(message, load_label, 0x200000, 0);
+            selected_exists = 0;
         }
-    } else if (field_638_ == 0x64) {
-        if (selected_exists) {
-            parse_says(0, name_buffer, -1, -1);
-            char message[260];
-            message[0] = 0;
-            strcat(message, current_directory_);
-            strcat(message, "\\");
-            strcat(message, "jackal");
-            char save_exists_label[] = "FILEWIN_SAVEEXISTS";
-            if (pop_caption_title(message, save_exists_label, 0x200040, 0) != 0)
-                goto restore_dialog_focus;
-        } else {
-            const char invalid_filename_chars[] = "\\\"/[]:;=";
-            const size_t valid_prefix =
-                strcspn(selected_basename_, invalid_filename_chars);
-            if (valid_prefix != strlen(selected_basename_)) {
-                char message[260];
+
+        char message[260];
+        if (field_638_ == 0xC8) {
+            if (!selected_exists) {
+                parse_says(0, name_buffer, -1, -1);
                 message[0] = 0;
                 strcat(message, current_directory_);
                 strcat(message, "\\");
                 strcat(message, "jackal");
-                char illegal_char_label[] = "FILEWIN_ILLEGALCHAR";
-                pop_caption_title(message, illegal_char_label, 0x200040, 0);
-                goto restore_dialog_focus;
+                pop_caption_title(message, "FILEWIN_LOAD", 0x200000, 0);
+            } else {
+                modal_window_->release_modal();
             }
+        } else if (field_638_ == 0x64) {
+            if (selected_exists) {
+                parse_says(0, name_buffer, -1, -1);
+                message[0] = 0;
+                strcat(message, current_directory_);
+                strcat(message, "\\");
+                strcat(message, "jackal");
+                if (pop_caption_title(message, "FILEWIN_SAVEEXISTS", 0x200040, 0) != 0) {
+                    break;
+                }
+            } else if (strcspn(selected_basename_, "\\\"/[]:;=") !=
+                       strlen(selected_basename_)) {
+                message[0] = 0;
+                strcat(message, current_directory_);
+                strcat(message, "\\");
+                strcat(message, "jackal");
+                pop_caption_title(message, "FILEWIN_ILLEGALCHAR", 0x200040, 0);
+                break;
+            }
+            modal_window_->release_modal();
         }
-        modal_window_->release_modal();
+        break;
+    }
+    case 2:
+        name_buffer[0] = 0;
+        strcat(name_buffer, "..");
+        populate_directory(name_buffer);
+        break;
     }
 
-restore_dialog_focus:
-    modal_window_->set_dialog_focus(
-        entry_focus == static_cast<Win *>(&edit_box_)
-            ? static_cast<Win *>(&edit_box_)
-            : static_cast<Win *>(&list_box_));
+    if (edit_focused) {
+        modal_window_->set_dialog_focus(&edit_box_);
+    } else {
+        modal_window_->set_dialog_focus(&list_box_);
+    }
 }
 
 // ORIGINAL: 0x00613D50 ?save@FileWin@@QAEXXZ 0x00613D50-0x00613F5C BYTE_EXACT
@@ -454,11 +458,12 @@ int FileWin::populate_directory(char *directory) {
         }
     }
 
-    list_box_.item_list_.StringStruct::remove_all();
+    ListBox *list = &list_box_;
+    list->item_list_.StringStruct::remove_all();
     // Native6143DC reloads the virtual Dialog view after the clear call.
-    list_box_.selected_position_ = 0;
-    list_box_.field_18_ = 0;
-    list_box_.field_20_ = 0;
+    list->selected_position_ = 0;
+    list->field_18_ = 0;
+    list->field_20_ = 0;
 
     char entry[260];
     // The original consumes this record even if FindFirstFileA fails. Keep
@@ -470,19 +475,17 @@ int FileWin::populate_directory(char *directory) {
         GetLastError();
         return 1;
     }
-    const int directory_count = static_cast<int>(
+    int count = static_cast<int>(
         SendMessageA(directory_list_handle_, LB_GETCOUNT, 0, 0));
-    for (int i = 0; i < directory_count; ++i) {
+    for (int i = 0; i < count; ++i) {
         SendMessageA(directory_list_handle_, LB_GETTEXT, i,
                      reinterpret_cast<LPARAM>(entry));
-        if (strcmp(entry, "[..]") == 0) {
-            list_box_.item("..", 2);
+        if (strcmp(entry, "[..]") != 0) {
+            entry[strlen(entry) - 1] = 0;
+            FindClose(FindFirstFileA(entry + 1, &found));
+            list->item(found.cFileName, 0);
         } else {
-            const size_t length = strlen(entry);
-            entry[length - 1] = 0;
-            const HANDLE handle = FindFirstFileA(entry + 1, &found);
-            FindClose(handle);
-            list_box_.item(found.cFileName, 0);
+            list->item("..", 2);
         }
     }
 
@@ -492,9 +495,9 @@ int FileWin::populate_directory(char *directory) {
         GetLastError();
         return 1;
     }
-    const int file_count = static_cast<int>(
+    count = static_cast<int>(
         SendMessageA(directory_list_handle_, LB_GETCOUNT, 0, 0));
-    for (int file_index = 0; file_index < file_count; ++file_index) {
+    for (int file_index = 0; file_index < count; ++file_index) {
         SendMessageA(directory_list_handle_, LB_GETTEXT, file_index,
                      reinterpret_cast<LPARAM>(entry));
         const char *suffix = memrchr(entry, entry + strlen(entry), '.');
@@ -503,22 +506,21 @@ int FileWin::populate_directory(char *directory) {
         }
         for (int filter = 0; filter < extension_count_; ++filter) {
             if (_strcmpi(suffix, extension_filters_[filter]) == 0) {
-                const HANDLE handle = FindFirstFileA(entry, &found);
-                FindClose(handle);
-                list_box_.item(found.cFileName, 1);
+                FindClose(FindFirstFileA(entry, &found));
+                list->item(found.cFileName, 1);
                 break;
             }
         }
     }
 
-    const int attach_or_refresh_result = list_box_.has_dib_bits()
-        ? list_box_.update_changes()
-        : list_box_.ListBox::attach(
+    const int attach_or_refresh_result = !list_box_.has_dib_bits()
+        ? list->ListBox::attach(
               modal_window_,
-              list_box_.window_x_, list_box_.window_y_,
+              list->window_x_, list->window_y_,
               FileWinInitSharedParameters.field_00_ != 0
                   ? FileWinInitSharedParameters.field_00_
-                  : 0x80060);
+                  : 0x80060)
+        : list->update_changes();
     if (attach_or_refresh_result != 0) {
         return 1;
     }
@@ -566,7 +568,29 @@ Sprite FileWin::shared_sprite0_;
 // RECOVERY_OBJECT: v4 0x009B9078 _FileWinSprite2 target ?shared_sprite2_@FileWin@@0VSprite@@A
 Sprite FileWin::shared_sprite2_;
 
+// WORKAROUND(decl): the image loads each button caption before the bound
+// arithmetic it pushes later (0x6139B0+0xE3/+0x115), the order of an inline
+// RECT-taking BaseButton::init overload whose parameter is copied first.
+static inline int init_button(BaseButton &button, LPCSTR name, int id,
+                              const RECT &rect, Win *parent, int flags) {
+  return button.init(name, id, rect.left, rect.top, rect.right - rect.left,
+                     rect.bottom - rect.top, parent, flags);
+}
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
+// WORKAROUND(decl): the image tests the address of edit_box_bounds_ for null
+// before EditBox::init (0x6139B0+0x8D) and discards the init result, which is
+// an inline RECT-taking EditBox::init overload expanded here. Its header
+// declaration and null-rect result are unknown; this file-local stand-in
+// carries the expansion until the header is reconstructed.
+static inline void init_edit_box(EditBox &box, RECT *rect, Win *parent,
+                                 int focus_wrap) {
+  if (rect != 0) {
+    box.init(rect->left, rect->top, rect->right - rect->left,
+             rect->bottom - rect->top, parent, focus_wrap);
+  }
+}
+
 // ORIGINAL: 0x006139B0 ?init@FileWin@@QAEHPADPAUGraphicWin@@PAUFileWinConstruct@@@Z 0x006139B0-0x00613B97
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/006139b0.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover FileWin control initialization through genuine embedded controls, typed caller geometry, shared 17-DWORD parameter prefix and Windows list lifecycle. Retain the historical seed and obligations; no matching or game acceptance claim."}
 // symbol    ?init@FileWin@@QAEHPADPAVGraphicWin@@PAUFileWinConstruct@@@Z
@@ -590,31 +614,18 @@ int FileWin::init(char *, GraphicWin *parent, FileWinConstruct *parameters) {
   edit_box_bounds_ = parameters->edit_box_bounds_;
   list_box_bounds_ = parameters->list_box_bounds_;
 
-  result = edit_box_.init(
-      edit_box_bounds_.left, edit_box_bounds_.top,
-      edit_box_bounds_.right - edit_box_bounds_.left,
-      edit_box_bounds_.bottom - edit_box_bounds_.top,
-      static_cast<Win *>(parent), 0);
-  if (result != 0) {
-    return result;
-  }
+  init_edit_box(edit_box_, &edit_box_bounds_, static_cast<Win *>(parent), 0);
   edit_box_.field_B14_ = 0x104;
   edit_box_.show(0);
 
-  const RECT &button2 = parameters->button2_bounds_;
-  result = flat_button2_.init(
-      BasePopDefaultOkText, -1, button2.left, button2.top,
-      button2.right - button2.left, button2.bottom - button2.top,
-      static_cast<Win *>(parent), 0);
+  result = init_button(flat_button2_, BasePopDefaultOkText, -1,
+                       parameters->button2_bounds_, static_cast<Win *>(parent), 0);
   if (result != 0) {
     return result;
   }
 
-  const RECT &button1 = parameters->button1_bounds_;
-  result = flat_button1_.init(
-      BasePopDefaultCancelText, -2, button1.left, button1.top,
-      button1.right - button1.left, button1.bottom - button1.top,
-      static_cast<Win *>(parent), 0);
+  result = init_button(flat_button1_, BasePopDefaultCancelText, -2,
+                       parameters->button1_bounds_, static_cast<Win *>(parent), 0);
   if (result != 0) {
     return result;
   }
@@ -626,7 +637,7 @@ int FileWin::init(char *, GraphicWin *parent, FileWinConstruct *parameters) {
   }
 
   list_box_.field_8_ = 1;
-  static_cast<Dialog &>(list_box_).field_34_ =
+  list_box_.field_34_ =
       (shared_sprite0_.width() * 3) / 2;
   list_box_.set_draw_callback(&FileWin::filebox_draw);
 
@@ -762,20 +773,22 @@ void FileWin::close() {
 int FileWin::prepare_sprites() {
     Buffer sheet;
     int result;
-    if (sheet.load_pcx(FileWinSpriteSheet, 0, 10, 0xEC) == 0) {
-        result = shared_sprite1_.extract(&sheet, 9, 1, 1, 0x10, 0x10, 0);
-        if (result != 0) return result;
-        result = shared_sprite0_.extract(&sheet, 9, 0x12, 1, 0x10, 0x10, 0);
-        if (result != 0) return result;
-        result = shared_sprite2_.extract(&sheet, 9, 0x23, 1, 0x10, 0x10, 0);
-    } else {
+    if (sheet.load_pcx(FileWinSpriteSheet, 0, 10, 0xEC) != 0) {
         result = shared_sprite1_.create_blank(0x10, 0x10, 9);
         if (result != 0) return result;
         result = shared_sprite0_.create_blank(0x10, 0x10, 9);
         if (result != 0) return result;
         result = shared_sprite2_.create_blank(0x10, 0x10, 9);
+        if (result != 0) return result;
+    } else {
+        result = shared_sprite1_.extract(&sheet, 9, 1, 1, 0x10, 0x10, 0);
+        if (result != 0) return result;
+        result = shared_sprite0_.extract(&sheet, 9, 0x12, 1, 0x10, 0x10, 0);
+        if (result != 0) return result;
+        result = shared_sprite2_.extract(&sheet, 9, 0x23, 1, 0x10, 0x10, 0);
+        if (result != 0) return result;
     }
-    return result;
+    return 0;
 }
 
 /*
