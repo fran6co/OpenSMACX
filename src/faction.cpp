@@ -8831,24 +8831,22 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
         return;
     }
 
-    const int counteroffer_mode = DiplomacyProposalMode;
-    const int coercion_mode = counteroffer_mode == 3;
+    const int coercion_mode = DiplomacyProposalMode == 3;
     DiploScratchFAD4 = 1;
-    const int proposal_kind = DiploScratchFA34;
 
-    if (proposal_kind == 2) {
+    if (DiploScratchFA34 == 2) {
         if (propose_pact(faction_id, other_faction_id) == 0 && coercion_mode) {
             threaten(faction_id, other_faction_id);
         }
         return;
     }
-    if (proposal_kind == 3) {
+    if (DiploScratchFA34 == 3) {
         if (propose_treaty(faction_id, other_faction_id) == 0 && coercion_mode) {
             threaten(faction_id, other_faction_id);
         }
         return;
     }
-    if (proposal_kind == 7) {
+    if (DiploScratchFA34 == 7) {
         PopupDialogFactionID = other_faction_id;
         const uint32_t actor_treaty =
             PlayersData[faction_id].diplo_treaties[other_faction_id];
@@ -8870,44 +8868,43 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
         }
         return;
     }
-    if (proposal_kind == 10) return;
+    if (DiploScratchFA34 == 10) return;
 
-    if (proposal_kind == 8) {
+    if (DiploScratchFA34 == 8) {
         const uint32_t target_treaty =
             PlayersData[other_faction_id].diplo_treaties[faction_id];
-        if ((target_treaty & (DTREATY_PACT | DTREATY_HAVE_SURRENDERED)) ==
-            (DTREATY_PACT | DTREATY_HAVE_SURRENDERED)) {
+        if ((target_treaty & DTREATY_PACT) && (target_treaty & DTREATY_HAVE_SURRENDERED)) {
             propose_attack(faction_id, other_faction_id);
             return;
         }
     }
 
-    if (coercion_mode) {
+    if (DiplomacyProposalMode == 3) {
         threaten(faction_id, other_faction_id);
         return;
     }
-    if (proposal_kind == 8) {
+    if (DiploScratchFA34 == 8) {
         propose_attack(faction_id, other_faction_id);
         return;
     }
-    if (proposal_kind == 9) {
+    if (DiploScratchFA34 == 9) {
         base_swap(faction_id, other_faction_id);
         return;
     }
-    if (proposal_kind == 4 || proposal_kind == 5 || proposal_kind == 13) {
+    if (DiploScratchFA34 == 4 || DiploScratchFA34 == 5 || DiploScratchFA34 == 13) {
         DiploScratchFAD0 = tech_trade(faction_id, other_faction_id, 0,
-                                      counteroffer_mode, proposal_kind);
+                                      DiplomacyProposalMode, DiploScratchFA34);
         return;
     }
-    if (proposal_kind == 6) {
+    if (DiploScratchFA34 == 6) {
         DiploScratchFAD0 = energy_trade(faction_id, other_faction_id);
         return;
     }
-    if (proposal_kind == 1) {
+    if (DiploScratchFA34 == 1) {
         make_gift(faction_id, other_faction_id);
         return;
     }
-    if (proposal_kind == 11) {
+    if (DiploScratchFA34 == 11) {
         // Return the outstanding loan. Native builds the speaker text from
         // the actor's title/name before touching balances.
         GenderDefault = Players[faction_id].is_leader_female;
@@ -8918,20 +8915,17 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
         parse_says(1, Players[faction_id].name_leader, -1, -1);
 
         const int amount = PlayersData[faction_id].loan_balance[other_faction_id];
+        const int debit = -amount;
         if (IsMultiplayerNet != 0) {
-            log_say(DiploLabelSendingENERGY, faction_id, other_faction_id,
-                    diplo_sub(0, amount));
-            message_data(0x2447, 0, faction_id, diplo_sub(0, amount), other_faction_id,
-                         amount);
+            log_say(DiploLabelSendingENERGY, faction_id, other_faction_id, debit);
+            message_data(0x2447, 0, faction_id, debit, other_faction_id, amount);
             NetDaemonNet.await_diplo(0x447);
         } else {
             if (faction_id != 0) {
-                PlayersData[faction_id].energy_reserves = diplo_sub(
-                    PlayersData[faction_id].energy_reserves, amount);
+                PlayersData[faction_id].energy_reserves += debit;
             }
             if (other_faction_id != 0) {
-                PlayersData[other_faction_id].energy_reserves = diplo_add(
-                    PlayersData[other_faction_id].energy_reserves, amount);
+                PlayersData[other_faction_id].energy_reserves += amount;
             }
             ConsoleGlobal.update_data(1);
         }
@@ -8948,7 +8942,6 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
                      FactionDiplomacyPortraits[other_faction_id], pop_wait);
         // The modal can change this independent selector. Native falls into
         // the Council path only when its live value is now 12.
-        if (DiploScratchFA34 != 12) return;
     }
 
     if (DiploScratchFA34 == 12) {
@@ -8959,34 +8952,69 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
         popup_set_picture(popup, FactionDiplomacyPortraits[other_faction_id], 0, nullptr);
 
         for (int proposal = 0; proposal < MaxProposalNum; ++proposal) {
-            const bool proposal_has_technology =
-                has_tech(Proposal[proposal].preq_tech, faction_id) ||
-                (GameDataStateStorage.fields_.game_state_ & 0x1080) == 0x1080;
-            bool available = proposal_has_technology;
-            if (available && proposal == 1) {
-                available = (GameDataStateStorage.fields_.game_state_ & 1) == 0 &&
-                    GameDataStateStorage.fields_.council_resolution_count_[1] == 0 &&
-                    (GameDataStateStorage.fields_.game_rules_ & 8) != 0 && eligible(faction_id);
-            } else if (available && (proposal == 2 || proposal == 5)) {
-                available = GameDataStateStorage.fields_.council_resolution_count_[proposal] == 0;
-            } else if (available && proposal == 3) {
-                available = GameDataStateStorage.fields_.council_resolution_count_[3] <= GameDataStateStorage.fields_.council_resolution_count_[4];
-            } else if (available && proposal == 4) {
-                available = GameDataStateStorage.fields_.council_resolution_count_[4] != GameDataStateStorage.fields_.council_resolution_count_[3];
-            } else if (available && proposal == 6) {
-                available = GameDataStateStorage.fields_.council_resolution_count_[5] != 0;
-            } else if (available && proposal == 8) {
-                available = GameDataStateStorage.fields_.council_resolution_count_[8] <= GameDataStateStorage.fields_.council_resolution_count_[9];
-            } else if (available && proposal == 9) {
-                available = GameDataStateStorage.fields_.council_resolution_count_[9] < GameDataStateStorage.fields_.council_resolution_count_[8];
+            if (!has_tech(Proposal[proposal].preq_tech, faction_id)
+                && (!(GameDataStateStorage.fields_.game_state_ & 0x80)
+                    || !(GameDataStateStorage.fields_.game_state_ & 0x1000))) {
+                continue;
             }
-            if (available) {
-                StringTemp[0] = '\0';
-                strcat(StringTemp, StringTable.get(Proposal[proposal].name));
-                strcat(StringTemp, "|");
-                strcat(StringTemp, StringTable.get(Proposal[proposal].description));
-                popup.dialogs().item(StringTemp, proposal);
+            if (proposal == 1 && !(GameDataStateStorage.fields_.game_rules_ & 8)) {
+                continue;
             }
+            switch (proposal) {
+            case 2:
+            case 5:
+                if (GameDataStateStorage.fields_.council_resolution_count_[proposal]) {
+                    continue;
+                }
+                break;
+            case 1:
+                if ((GameDataStateStorage.fields_.game_state_ & 1)
+                    || GameDataStateStorage.fields_.council_resolution_count_[proposal]) {
+                    continue;
+                }
+                if (!eligible(faction_id)) {
+                    continue;
+                }
+                break;
+            case 8:
+                if (GameDataStateStorage.fields_.council_resolution_count_[proposal]
+                    > GameDataStateStorage.fields_.council_resolution_count_[9]) {
+                    continue;
+                }
+                break;
+            case 9:
+                if (GameDataStateStorage.fields_.council_resolution_count_[proposal]
+                    >= GameDataStateStorage.fields_.council_resolution_count_[8]) {
+                    continue;
+                }
+                break;
+            case 3:
+                if (GameDataStateStorage.fields_.council_resolution_count_[proposal]
+                    > GameDataStateStorage.fields_.council_resolution_count_[4]) {
+                    continue;
+                }
+                break;
+            case 4:
+                if (GameDataStateStorage.fields_.council_resolution_count_[proposal]
+                    == GameDataStateStorage.fields_.council_resolution_count_[3]) {
+                    continue;
+                }
+                break;
+            case 6:
+                if (!GameDataStateStorage.fields_.council_resolution_count_[5]) {
+                    continue;
+                }
+                break;
+            case 7:
+                break;
+            }
+            StringTemp[0] = '\0';
+            char *name = Proposal[proposal].name;
+            strcat(StringTemp, StringTable.get(name));
+            strcat(StringTemp, "|");
+            char *description = Proposal[proposal].description;
+            strcat(StringTemp, StringTable.get(description));
+            popup.dialogs().item(StringTemp, proposal);
         }
 
         const int first_choice = popup.exec(0, pop_wait);
@@ -8995,40 +9023,38 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
             const int reply = X_pops("COUNCILVOTE", 0x100000,
                          FactionDiplomacyPortraits[other_faction_id],
                          pop_wait);
-            const int vote_count = diplo_sub(-1, reply);
+            const int vote_count = -1 - reply;
             if (vote_count != 0) {
                 buy_council_vote(faction_id, other_faction_id, first_choice,
                                  vote_count);
             }
-            return;
-        }
-
-        popup.start(PopupStartCaption, "COUNCILVOTEGOV", -1, 0,
-                    0x100000, 0);
-        popup_set_picture(popup, FactionDiplomacyPortraits[other_faction_id], 0, nullptr);
-        for (int candidate = 1; candidate < MaxPlayerNum; ++candidate) {
-            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1u << candidate)) != 0 &&
-                eligible(candidate)) {
-                StringTemp[0] = '\0';
-                GenderDefault = Players[candidate].is_leader_female;
-                PluralityDefault = 0;
-                strcat(StringTemp, Players[candidate].title_leader);
-                strcat(StringTemp, "|");
-                GenderDefault = Players[candidate].is_leader_female;
-                PluralityDefault = 0;
-                strcat(StringTemp, Players[candidate].name_leader);
-                popup.dialogs().item(StringTemp, candidate);
-                if (candidate == faction_id) {
-                    popup.set_value(candidate);
+        } else {
+            popup.start(PopupStartCaption, "COUNCILVOTEGOV", -1, 0,
+                        0x100000, 0);
+            popup_set_picture(popup, FactionDiplomacyPortraits[other_faction_id], 0, nullptr);
+            for (int candidate = 1; candidate < MaxPlayerNum; ++candidate) {
+                if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << candidate)) &&
+                    eligible(candidate)) {
+                    StringTemp[0] = '\0';
+                    GenderDefault = Players[candidate].is_leader_female;
+                    PluralityDefault = 0;
+                    strcat(StringTemp, Players[candidate].title_leader);
+                    strcat(StringTemp, "|");
+                    GenderDefault = Players[candidate].is_leader_female;
+                    PluralityDefault = 0;
+                    strcat(StringTemp, Players[candidate].name_leader);
+                    popup.dialogs().item(StringTemp, candidate);
+                    if (candidate == faction_id) {
+                        popup.set_value(candidate);
+                    }
                 }
             }
+            const int governor_choice = popup.exec(0, pop_wait);
+            if (governor_choice >= 0) {
+                buy_council_vote(faction_id, other_faction_id, 0,
+                                 governor_choice);
+            }
         }
-        const int governor_choice = popup.exec(0, pop_wait);
-        if (governor_choice >= 0) {
-            buy_council_vote(faction_id, other_faction_id, 0,
-                             governor_choice);
-        }
-        return;
     }
 }
 
