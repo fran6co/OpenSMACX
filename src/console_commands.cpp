@@ -2602,20 +2602,18 @@ void Console::use_ability(int vehicle_id) {
         return;
     }
 
-    const int entry_proto_id = Vehs[vehicle_id].proto_id;
-    const VehPrototype &entry_prototype = VehPrototypes[entry_proto_id];
-    const uint32_t entry_ability_mask = entry_prototype.ability_flags & 0x10u;
-    const bool has_terraform_ability = entry_ability_mask != 0;
-    const bool missile_former =
-        Chassis[entry_prototype.chassis_id].missile != 0 &&
-        (entry_prototype.plan == PLAN_TECTONIC_MISSILE ||
-         entry_prototype.plan == PLAN_FUNGAL_MISSILE);
+    const int entry_ability_mask =
+        VehPrototypes[Vehs[vehicle_id].proto_id].ability_flags & 0x10;
+    const int missile_former =
+        Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].missile != 0 &&
+        (VehPrototypes[Vehs[vehicle_id].proto_id].plan == PLAN_TECTONIC_MISSILE ||
+         VehPrototypes[Vehs[vehicle_id].proto_id].plan == PLAN_FUNGAL_MISSILE);
 
-    if (!has_terraform_ability && !missile_former) {
+    if (!entry_ability_mask && !missile_former) {
         NetMsgPrimary.pop("NOABILITY", 5000, 0, nullptr);
         return;
     }
-    if (has_terraform_ability && !missile_former &&
+    if (entry_ability_mask && !missile_former &&
         (Vehs[vehicle_id].moves_expended != 0 ||
          veh_ready(vehicle_id) == 0)) {
         NetMsgPrimary.pop("UNITMOVED", 5000, 0, nullptr);
@@ -2627,40 +2625,31 @@ void Console::use_ability(int vehicle_id) {
     // the missile order and network synchronization; do not route it through
     // the ordinary airdrop cursor behavior.
     if (missile_former) {
-        const Map *const tile = map_loc(entry_x, entry_y);
-        const int base_owner = tile->val2 & 0x0F;
-        if ((tile->bit & BIT_BASE_IN_TILE) != 0 && base_owner < 8) {
+        if (base_who(entry_x, entry_y) >= 0) {
             NetMsgPrimary.pop("MISSILEBASE", 5000, 0, nullptr);
             return;
         }
-        if (entry_prototype.plan == PLAN_TECTONIC_MISSILE &&
-            (tile->climate & 0xE0) < 0x60) {
-            NetMsgPrimary.pop("TECTONICOCEAN", 5000, 0, nullptr);
-            return;
-        }
-        // The original radius count uses the game's RadiusRange progression;
-        // native 0x66F8B8/0x66F8C8 operands are interior positions in that
-        // typed source table, not independent arrays.
-        const bool fungal_missile =
-            entry_prototype.plan == PLAN_FUNGAL_MISSILE;
-        const int radius_index = (tile->climate >> 5) + 1;
-        int radius_count = 9;
-        if (!fungal_missile && radius_index >= 0) {
-            radius_count = 1;
-            if (radius_index > 3) {
-                radius_count = radius_index > 6 ? RadiusRange[2]
-                                                : RadiusRange[radius_index - 4];
+        // The tectonic radius count is RadiusRange[altitude + 1 - 3], the
+        // altitude clamped to 6 (0x004D8236..0x004D8268 index 0x66F8B8, which
+        // is RadiusRange - 3 entries); every other missile clears 9 tiles.
+        int radius_count;
+        if (VehPrototypes[Vehs[vehicle_id].proto_id].plan == PLAN_TECTONIC_MISSILE) {
+            if (is_ocean(entry_x, entry_y)) {
+                NetMsgPrimary.pop("TECTONICOCEAN", 5000, 0, nullptr);
+                return;
             }
+            radius_count = 1;
+            const int radius_index = range(alt_at(entry_x, entry_y) + 1, 0, 6);
+            if (radius_index > 3) {
+                radius_count = RadiusRange[radius_index - 3];
+            }
+        } else {
+            radius_count = 9;
         }
         for (int offset = 0; offset < radius_count; ++offset) {
-            int target_x = entry_x + RadiusOffsetX[offset];
-            if ((MapIsFlat & 1) == 0) {
-                if (target_x < 0) target_x += MapLongitudeBounds;
-                else if (target_x >= MapLongitudeBounds) target_x -= MapLongitudeBounds;
-            }
+            const int target_x = wrap_map_x(entry_x + RadiusOffsetX[offset]);
             const int target_y = entry_y + RadiusOffsetY[offset];
-            if (target_y < 0 || target_y >= MapLatitudeBounds ||
-                target_x < 0 || target_x >= MapLongitudeBounds) {
+            if (!on_map(target_x, target_y)) {
                 continue;
             }
             const int target_faction = whose_territory(
@@ -2690,30 +2679,25 @@ void Console::use_ability(int vehicle_id) {
         }
         // The lock may replace/compact the vehicle record. Native reloads the
         // prototype and plan after the lock but retains the entry coordinates.
-        const int locked_proto_id = Vehs[vehicle_id].proto_id;
-        const int locked_plan = VehPrototypes[locked_proto_id].plan;
-        if (locked_plan == PLAN_TECTONIC_MISSILE) {
+        if (VehPrototypes[Vehs[vehicle_id].proto_id].plan == PLAN_TECTONIC_MISSILE) {
             if (IsMultiplayerNet != 0) {
                 message_veh(0x2417, vehicle_id, entry_x, entry_y);
                 NetDaemonNet.await_exec(1);
             } else {
                 action_tectonic(vehicle_id, entry_x, entry_y);
             }
-            return;
-        }
-        if (locked_plan == PLAN_FUNGAL_MISSILE) {
+        } else if (VehPrototypes[Vehs[vehicle_id].proto_id].plan == PLAN_FUNGAL_MISSILE) {
             if (IsMultiplayerNet != 0) {
                 message_veh(0x2418, vehicle_id, entry_x, entry_y);
                 NetDaemonNet.await_exec(1);
             } else {
                 action_fungal(vehicle_id, entry_x, entry_y);
             }
-            return;
         }
         return;
     }
 
-    uint32_t selected_ability = entry_ability_mask;
+    uint32_t selected_ability = static_cast<uint32_t>(entry_ability_mask);
     if (bit_count(static_cast<int>(selected_ability)) > 1) {
         popup.init(0x40, 0);
         for (int ability_id = 0; ability_id < MaxAbilityNum; ++ability_id) {
@@ -2733,10 +2717,8 @@ void Console::use_ability(int vehicle_id) {
     }
 
     if ((selected_ability & 0x10u) != 0) {
-        const Map *const tile = map_loc(entry_x, entry_y);
-        const int base_owner = tile->val2 & 0x0F;
-        if (((tile->bit & BIT_BASE_IN_TILE) == 0 || base_owner >= 8) &&
-            (tile->bit & BIT_AIRBASE) == 0) {
+        if (base_who(entry_x, entry_y) < 0 &&
+            !(bit_at(entry_x, entry_y) & BIT_AIRBASE)) {
             X_pop("DROPBASE", nullptr);
             return;
         }
@@ -2752,6 +2734,7 @@ void Console::use_ability(int vehicle_id) {
 
     if (selected_ability == 0x10u) {
         ConsoleGlobal.cursor_on(4, drop_range(entry_faction));
+        return;
     }
 }
 
@@ -3894,10 +3877,10 @@ void DipEdit::init(int faction_index) {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(866));
     strcat(StringTemp, " ");
-    Player *const own = &Players[faction_index_];
-    GenderDefault = own->noun_gender;
-    PluralityDefault = own->is_noun_plural;
-    strcat(StringTemp, own->noun_faction);
+    const int faction = faction_index_;
+    GenderDefault = Players[faction].noun_gender;
+    PluralityDefault = Players[faction].is_noun_plural;
+    strcat(StringTemp, Players[faction].noun_faction);
     CharUpperA(StringTemp);
 
     rect.left += 4;
@@ -3917,8 +3900,10 @@ void DipEdit::init(int faction_index) {
         write_cent_l(StringTemp, &rect, strlen(StringTemp));
     }
 
-    rect.left = 4;
-    rect.right = width_ / 3 - 4;
+    rect.left = 0;
+    rect.right = width_ / 3;
+    rect.left += 4;
+    rect.right -= 4;
     rect.bottom = 0x172;
     rect.top = 0x1F;
     box_sprite(&rect, &InterfaceBoxStyles[0]);
@@ -3964,8 +3949,12 @@ void DipEdit::init(int faction_index) {
     // back out.
     rect.bottom = 0x172;
     rect.top = 0x1F;
-    rect.left = width_ / 2 + 4;
-    rect.right = width_ - 4;
+    // The image builds the right edge as twice the half width
+    // (0x004DB42F lea ecx,[eax+eax]) before the 4-pixel inset.
+    rect.left = width_ / 2;
+    rect.right = rect.left + width_ / 2;
+    rect.left += 4;
+    rect.right -= 4;
     check_box_.close();
     check_box_.Dialog::init(&rect, 0);
     check_box_.unchecked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[1];
@@ -5079,7 +5068,7 @@ void Console::editor_veh() {
         }
         case 2:
         {
-            const int chosen = editor_who_inline(ScenarioVehicleFaction, 0);
+            const int chosen = editor_who(ScenarioVehicleFaction, 0);
             if (chosen >= 0) ScenarioVehicleFaction = chosen;
             continue;
         }
@@ -5089,9 +5078,9 @@ void Console::editor_veh() {
         }
 
         if (selected_prototype == 0x13) {
+            ScenarioVehicleFaction = 0;
             bit_set(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
                     ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 0x20, 1);
-            ScenarioVehicleFaction = 0;
             bit_set(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
                     ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 0x0028805C, 0);
             synch_bit(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
@@ -5354,7 +5343,9 @@ void Console::editor_tech() {
 
         for (int tech_id = 0; tech_id < MaxTechnologyNum; ++tech_id) {
             const RulesTechnology &entry = Technology[tech_id];
-            if (entry.preq_tech_1 < TechNone || entry.preq_tech_2 < TechNone) {
+            // The image re-tests the table bound inside the body (0x004DFBD8
+            // cmp edi, end; jge) before the two prerequisite reads.
+            if (tech_id >= MaxTechnologyNum || entry.preq_tech_1 < TechNone || entry.preq_tech_2 < TechNone) {
                 continue;
             }
             StringTemp[0] = 0;
@@ -6324,8 +6315,8 @@ void Console::editor_natural(int place) {
     popup.start(PopupStartCaption, place != 0 ? "NATPLACE" : "NATUNPLACE",
                 -1, nullptr, 0x40);
     for (int natural = 0; natural < MaxNaturalNum; ++natural) {
-        popup.dialogs().item(
-            StringTable.get(Natural[natural].name), natural);
+        char *name = StringTable.get(Natural[natural].name);
+        popup.dialogs().item(name, natural);
     }
     const int selected = popup.exec(0, nullptr);
     if (selected < 0) {
