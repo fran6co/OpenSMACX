@@ -5047,75 +5047,86 @@ void Console::editor_veh() {
     if (ScenarioVehicleFaction < 0) ScenarioVehicleFaction = ConsoleGlobal.faction_id_;
 
     for (;;) {
+        PopupModalState = 6;
         popup.start(PopupStartCaption, "EDITORUNIT", -1, nullptr, 0x40);
         for (int proto_idx = 0; proto_idx < MaxVehProtoNum; ++proto_idx) {
-            const VehPrototype &entry = VehPrototypes[proto_idx];
-            if ((entry.flags & 1u) == 0) continue;
-            if (ScenarioVehicleMode == 0 && proto_idx >= 64 &&
-                !veh_avail(proto_idx, ScenarioVehicleFaction, -1)) {
-                continue;
+            if (!(VehPrototypes[proto_idx].flags & 1u)) continue;
+            if (ScenarioVehicleMode || veh_avail(proto_idx, ScenarioVehicleFaction, -1) ||
+                proto_idx < MaxVehProtoFactionNum) {
+                StringTemp[0] = 0;
+                strcat(StringTemp, VehPrototypes[proto_idx].veh_name);
+                popup.dialogs().item(StringTemp, proto_idx);
+                if (proto_idx == ScenarioPreviousPrototype) popup.set_value(proto_idx);
             }
-            StringTemp[0] = 0;
-            strcat(StringTemp, entry.veh_name);
-            popup.dialogs().item(StringTemp, proto_idx);
-            if (proto_idx == ScenarioPreviousPrototype) popup.set_value(proto_idx);
         }
         const int selected_prototype = popup.exec(0, nullptr);
         PopupModalState = 0;
         if (selected_prototype < 0) return;
         ScenarioPreviousPrototype = selected_prototype;
-        const uint32_t action = popup.input_poll_state();
-        if (action == 1) {
-            ScenarioVehicleMode = ScenarioVehicleMode == 0 ? 1 : 0;
+        switch (popup.input_poll_state()) {
+        case 3:
+        {
+            PopupModalState = 6;
+            popup.init(0, 0);
+            for (int morale = 0; morale <= MORALE_ELITE; ++morale) {
+                StringTemp[0] = 0;
+                strcat(StringTemp, StringTable.get(Morale[morale].name));
+                popup.dialogs().item(StringTemp, morale);
+                if (morale == ScenarioVehicleMorale) popup.set_value(morale);
+            }
+            ScenarioVehicleMorale = popup.exec(0, nullptr);
             continue;
         }
-        if (action == 2) {
-            Popup who;
-            who.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40);
-            for (int faction = 0; faction < MaxPlayerNum; ++faction) {
-                GenderDefault = Players[faction].noun_gender;
-                PluralityDefault = Players[faction].is_noun_plural;
-                who.dialogs().item(Players[faction].noun_faction, faction);
-            }
-            who.set_value(ScenarioVehicleFaction);
-            PopupModalState = 6;
-            const int chosen = who.exec(0, nullptr);
-            PopupModalState = 0;
+        case 2:
+        {
+            const int chosen = editor_who_inline(ScenarioVehicleFaction, 0);
             if (chosen >= 0) ScenarioVehicleFaction = chosen;
             continue;
         }
-        if (action == 3) {
-            popup.init(0, 0);
-            for (int morale = 0; morale < MaxMoraleNum; ++morale) {
-                popup.dialogs().item(StringTable.get(Morale[morale].name), morale);
-            }
-            const int chosen = popup.exec(0, nullptr);
-            PopupModalState = 0;
-            ScenarioVehicleMorale = chosen;
+        case 1:
+            ScenarioVehicleMode = ScenarioVehicleMode == 0;
             continue;
         }
 
-        const int cursor = ConsoleGlobal.cursor_history_index_;
-        const int x = ConsoleGlobal.cursor_history_x_[cursor];
-        const int y = ConsoleGlobal.cursor_history_y_[cursor];
         if (selected_prototype == 0x13) {
-            bit_set(x, y, 0x20, 1);
+            bit_set(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                    ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 0x20, 1);
             ScenarioVehicleFaction = 0;
-            bit_set(x, y, 0x0028805C, 0);
-            for (int bit = 1; bit <= 7; ++bit) synch_bit(x, y, bit);
-            ::draw_tile(x, y, 1);
+            bit_set(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                    ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 0x0028805C, 0);
+            synch_bit(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                      ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 1);
+            synch_bit(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                      ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 2);
+            synch_bit(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                      ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 3);
+            synch_bit(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                      ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 4);
+            synch_bit(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                      ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 5);
+            synch_bit(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                      ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 6);
+            synch_bit(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                      ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 7);
+            ::draw_tile(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                        ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 1);
         }
-        const int vehicle = veh_init(selected_prototype, ScenarioVehicleFaction, x, y);
+        const int vehicle = veh_init(selected_prototype, ScenarioVehicleFaction,
+                                     ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                                     ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]);
         if (vehicle >= 0) {
             Vehs[vehicle].morale = static_cast<uint8_t>(ScenarioVehicleMorale);
-            const int prototype_id = Vehs[vehicle].proto_id;
-            draw_tile_fixup(x, y, VehPrototypes[prototype_id].flags & 2u, 2);
+            draw_tile_fixup(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                            ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_],
+                            VehPrototypes[Vehs[vehicle].proto_id].flags & 2u, 2);
             if (Vehs[vehicle].faction_id == ConsoleGlobal.faction_id_) {
                 ConsoleGlobal.selected_vehicle_ = vehicle;
-                if (ConsoleGlobal.cursor_active_) set_move(1);
+                if (ConsoleGlobal.cursor_active_) ConsoleGlobal.set_move(1);
             }
-            GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ |=
-                static_cast<uint8_t>(1u << ScenarioVehicleFaction);
+            if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << ScenarioVehicleFaction))) {
+                GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ |=
+                    static_cast<uint8_t>(1 << ScenarioVehicleFaction);
+            }
         }
         return;
     }
@@ -5329,20 +5340,17 @@ void Console::editor_view() {
 void Console::editor_tech() {
     Popup popup;
     auto_undo();
-    int faction = ScenarioTechFaction;
-    if (faction < 0) {
-        faction = ConsoleGlobal.faction_id_;
-        ScenarioTechFaction = faction;
+    if (ScenarioTechFaction < 0) {
+        ScenarioTechFaction = ConsoleGlobal.faction_id_;
     }
 
     for (;;) {
         PopupModalState = 6;
-        GenderDefault = Players[faction].noun_gender;
-        PluralityDefault = Players[faction].is_noun_plural;
-        parse_says(0, Players[faction].noun_faction, -1, -1);
-        popup.start(PopupStartCaption, "EDITORTECH", -1, nullptr, 0x42);
-        popup.set_cancel_text(label_get(270));
-        popup.set_ok_text(label_get(1008));
+        parse_set(Players[ScenarioTechFaction].noun_gender, Players[ScenarioTechFaction].is_noun_plural);
+        parse_says(0, Players[ScenarioTechFaction].noun_faction, -1, -1);
+        popup.start(PopupStartCaption, "EDITORTECH", -1, nullptr, 0x42, nullptr);
+        popup.set_cancel_text(StringTable.get(Labels.strings_ptr[270]));
+        popup.set_ok_text(StringTable.get(Labels.strings_ptr[1008]));
 
         for (int tech_id = 0; tech_id < MaxTechnologyNum; ++tech_id) {
             const RulesTechnology &entry = Technology[tech_id];
@@ -5352,12 +5360,13 @@ void Console::editor_tech() {
             StringTemp[0] = 0;
             say_tech(StringTemp, tech_id, 0);
             strcat(StringTemp, "|");
-            const int status = has_tech(tech_id, ScenarioTechFaction) ? 246 :
-                tech_avail(tech_id, ScenarioTechFaction) ? 247 : 248;
-            strcat(StringTemp, label_get(status));
+            strcat(StringTemp, StringTable.get(
+                has_tech(tech_id, ScenarioTechFaction) ? Labels.strings_ptr[246] :
+                tech_avail(tech_id, ScenarioTechFaction) ? Labels.strings_ptr[247] :
+                Labels.strings_ptr[248]));
             popup.dialogs().item(StringTemp, tech_id);
         }
-        popup.sort_item_ids(0);
+        popup.dialogs().item_list_.sort(0);
         if (ScenarioTechSelection >= 0) {
             popup.set_value(ScenarioTechSelection);
         }
@@ -5368,54 +5377,50 @@ void Console::editor_tech() {
             see_map_check();
             return;
         }
-        if (popup.input_poll_state() == 1) {
-            const int who_faction = ScenarioTechFaction;
+        switch (popup.input_poll_state()) {
+        case 1:
+        {
+            const int default_faction = ScenarioTechFaction;
             int chosen;
             {
                 Popup who;
-                who.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40);
-                for (int player = 1; player < MaxPlayerNum; ++player) {
-                    GenderDefault = Players[player].noun_gender;
-                    PluralityDefault = Players[player].is_noun_plural;
-                    who.dialogs().item(Players[player].noun_faction, player);
-                }
-                if (who_faction >= 0) who.set_value(who_faction);
                 PopupModalState = 6;
-                chosen = who.exec(0, nullptr);
+                who.start(PopupStartCaption, ConsoleStrEditorWhoListTitle, -1, 0, 0x40);
+                popup_faction_items(who, 1);
+                if (default_faction >= 0) {
+                    who.set_value(default_faction);
+                }
+                chosen = who.exec(0, 0);
                 PopupModalState = 0;
             }
             if (chosen > 0) {
                 ScenarioTechFaction = chosen;
-                faction = chosen;
-            } else {
-                faction = ScenarioTechFaction;
             }
-            continue;
+            break;
         }
-
-        if (has_tech(selected, ScenarioTechFaction)) {
-            int ignored_a;
-            int ignored_b;
-            bitmask(selected, &ignored_a, &ignored_b);
-            faction = ScenarioTechFaction;
-            GameDataStateStorage.fields_.game_tech_achieved_[selected] = static_cast<uint8_t>(
-                GameDataStateStorage.fields_.game_tech_achieved_[selected] & ~(1u << faction));
-            // The pin carries this post-bitmask faction value into ranking setup.
-        } else {
-            tech_achieved(ScenarioTechFaction, selected, 0, 0);
-            faction = ScenarioTechFaction;
+        default:
+            if (has_tech(selected, ScenarioTechFaction)) {
+                int ignored_a;
+                int ignored_b;
+                bitmask(selected, &ignored_a, &ignored_b);
+                GameDataStateStorage.fields_.game_tech_achieved_[selected] &=
+                    static_cast<uint8_t>(~(1 << ScenarioTechFaction));
+            } else {
+                tech_achieved(ScenarioTechFaction, selected, 0, 0);
+            }
+            ScenarioTechSelection = selected;
+            PlayersData[ScenarioTechFaction].tech_ranking = 0;
+            for (int owned_tech = 0; owned_tech < MaxTechnologyNum; ++owned_tech) {
+                if (has_tech(owned_tech, ScenarioTechFaction)) {
+                    PlayersData[ScenarioTechFaction].tech_ranking++;
+                    if (owned_tech < MaxTechnologyNum) {
+                        PlayersData[ScenarioTechFaction].tech_ranking++;
+                    }
+                }
+            }
+            TutWinBaseWindow.redraw();
+            break;
         }
-        ScenarioTechSelection = selected;
-        PlayersData[faction].tech_ranking = 0;
-        int lookup_faction = faction;
-        for (int owned_tech = 0; owned_tech < MaxTechnologyNum; ++owned_tech) {
-            const int is_owned = has_tech(owned_tech, lookup_faction);
-            const int ranking_faction = ScenarioTechFaction;
-            if (is_owned) PlayersData[ranking_faction].tech_ranking += 2;
-            lookup_faction = ranking_faction;
-        }
-        TutWinBaseWindow.redraw();
-        faction = ScenarioTechFaction;
     }
 }
 
@@ -6327,9 +6332,8 @@ void Console::editor_natural(int place) {
         return;
     }
 
-    const int cursor = ConsoleGlobal.cursor_history_index_;
-    const int x = ConsoleGlobal.cursor_history_x_[cursor];
-    const int y = ConsoleGlobal.cursor_history_y_[cursor];
+    int x = ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
+    int y = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
     if (place != 0) {
         switch (selected) {
         case 0: world_crater(x, y); break;
@@ -6355,85 +6359,75 @@ void Console::editor_natural(int place) {
     }
 
     if (selected == LM_FRESH) {
-        const int center_offset = static_cast<int>(MapLongitude) * y + (x >> 1);
-        const Map &center = MapTiles[center_offset];
-        if ((center.bit2 & BIT2_FRESH) != 0 && (center.climate & 0xE0u) < 0x60u) {
-            const uint8_t region = center.region;
-            for (int row = 0; row < static_cast<int>(MapLatitudeBounds); ++row) {
-                for (int column = 0; column < static_cast<int>(MapLongitudeBounds); column += 2) {
-                    Map &tile = MapTiles[static_cast<int>(MapLongitude) * row + (column >> 1)];
-                    if (tile.region != region) {
-                        continue;
-                    }
+        // Only a fresh-water ocean tile names a lake; clear every tile of
+        // its region (each row's own checkerboard parity).
+        Map *center = map_loc(x, y);
+        if (!(center->bit2 & BIT2_FRESH) || (center->climate & ~0x1F) >= 0x60) {
+            return;
+        }
+        const int region = center->region;
+        for (int row = 0; row < static_cast<int>(MapLatitudeBounds); ++row) {
+            for (int column = row & 1; column < static_cast<int>(MapLongitudeBounds); column += 2) {
+                if (map_loc(column, row)->region == region) {
                     bit2_set(column, row, BIT2_FRESH, 0);
                     const int landmark = find_landmark(column, row, 1);
                     if (landmark >= 0 &&
-                        strcmp(MapLandmark[landmark].name,
-                               StringTable.get(Natural[LM_FRESH].name)) == 0) {
+                        !strcmp(MapLandmark[landmark].name, StringTable.get(Natural[LM_FRESH].name))) {
                         kill_landmark(MapLandmark[landmark].x, MapLandmark[landmark].y);
                     }
                 }
             }
         }
-        world_climate();
-        ::draw_map(1);
+    } else {
+        int radius_index;
+        switch (selected) {
+        case 0: radius_index = 3; break;
+        case 1: radius_index = 1; break;
+        case 2: radius_index = 5; break;
+        case 3: radius_index = 2; break;
+        case 4: radius_index = 4; break;
+        case 5: case 6: case 8: case 9: case 10: case 11: radius_index = 2; break;
+        case 12: case 13: case 15: radius_index = 1; break;
+        case 14: radius_index = 2; break;
+        // No default: an unlisted selection reads radius_index uninitialized,
+        // as the image does (its stack slot is the reused `place` home).
+        }
+        const int limit = RadiusRange[radius_index];
+        // Find the feature's centre tile (landmark code 0) near the cursor;
+        // the clearing pass is centred on it.
+        for (int probe_offset = 0; probe_offset < limit; ++probe_offset) {
+            const int tile_x = wrap_map_x(x + RadiusOffsetX[probe_offset]);
+            const int tile_y = y + RadiusOffsetY[probe_offset];
+            if (on_map(tile_x, tile_y)) {
+                const uint32_t bits = map_loc(tile_x, tile_y)->bit2;
+                if ((bits & (1u << selected)) && !(bits & 0xFF000000u)) {
+                    x = tile_x;
+                    y = tile_y;
+                    goto found;
+                }
+            }
+        }
         return;
-    }
-
-    int radius_index;
-    switch (selected) {
-    case 0: radius_index = 3; break;
-    case 1: radius_index = 1; break;
-    case 2: radius_index = 5; break;
-    case 3: radius_index = 2; break;
-    case 4: radius_index = 4; break;
-    case 5: case 6: case 8: case 9: case 10: case 11: radius_index = 2; break;
-    case 12: case 13: case 15: radius_index = 1; break;
-    case 14: radius_index = 2; break;
-    default: radius_index = place; break;
-    }
-    const uint32_t feature_bit = 1u << selected;
-    const int limit = RadiusRange[radius_index];
-    bool has_clearable_feature = false;
-    for (int probe_offset = 0; probe_offset < limit; ++probe_offset) {
-        const int tile_x = wrap_map_x(x + RadiusOffsetX[probe_offset]);
-        const int tile_y = y + RadiusOffsetY[probe_offset];
-        if (tile_y < 0 || tile_y >= static_cast<int>(MapLatitudeBounds) ||
-            tile_x < 0 || tile_x >= static_cast<int>(MapLongitudeBounds)) {
-            continue;
-        }
-        Map &tile = MapTiles[static_cast<int>(MapLongitude) * tile_y + (tile_x >> 1)];
-        if ((tile.bit2 & feature_bit) != 0 && (tile.bit2 & 0xFF000000u) == 0) {
-            has_clearable_feature = true;
-            break;
-        }
-    }
-    if (!has_clearable_feature) return;
-
-    for (int clear_offset = 0; clear_offset < limit; ++clear_offset) {
-        const int tile_x = wrap_map_x(x + RadiusOffsetX[clear_offset]);
-        const int tile_y = y + RadiusOffsetY[clear_offset];
-        if (tile_y < 0 || tile_y >= static_cast<int>(MapLatitudeBounds) ||
-            tile_x < 0 || tile_x >= static_cast<int>(MapLongitudeBounds)) {
-            continue;
-        }
-        Map &tile = MapTiles[static_cast<int>(MapLongitude) * tile_y + (tile_x >> 1)];
-        if ((tile.bit2 & feature_bit) == 0) continue;
-
-        bit2_set(tile_x, tile_y, feature_bit, 0);
-        code_set(tile_x, tile_y, 0);
-        if (selected == 4) {
-            bit_set(tile_x, tile_y, 0x20, 0);
-        } else if (selected == 5) {
-            bit_set(tile_x, tile_y, 0x00102020, 0);
-        } else if (selected == 12) {
-            bit_set(tile_x, tile_y, 0x01100000, 0);
-        }
-        const int landmark = find_landmark(tile_x, tile_y, 1);
-        if (landmark >= 0 &&
-            strcmp(MapLandmark[landmark].name,
-                   StringTable.get(Natural[selected].name)) == 0) {
-            kill_landmark(MapLandmark[landmark].x, MapLandmark[landmark].y);
+found:
+        for (int clear_offset = 0; clear_offset < limit; ++clear_offset) {
+            const int tile_x = wrap_map_x(x + RadiusOffsetX[clear_offset]);
+            const int tile_y = y + RadiusOffsetY[clear_offset];
+            if (on_map(tile_x, tile_y) && (map_loc(tile_x, tile_y)->bit2 & (1u << selected))) {
+                bit2_set(tile_x, tile_y, 1u << selected, 0);
+                code_set(tile_x, tile_y, 0);
+                if (selected == 4) {
+                    bit_set(tile_x, tile_y, 0x20, 0);
+                } else if (selected == 5) {
+                    bit_set(tile_x, tile_y, 0x00102020, 0);
+                } else if (selected == 12) {
+                    bit_set(tile_x, tile_y, 0x01100000, 0);
+                }
+                const int landmark = find_landmark(tile_x, tile_y, 1);
+                if (landmark >= 0 &&
+                    !strcmp(MapLandmark[landmark].name, StringTable.get(Natural[selected].name))) {
+                    kill_landmark(MapLandmark[landmark].x, MapLandmark[landmark].y);
+                }
+            }
         }
     }
     world_climate();
