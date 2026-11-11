@@ -1700,20 +1700,20 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
     }
     if (NetDaemonNet.channels_[0].leading_words_[3] & 2) {
         int goody = goody_at(x, y);
-        int is_seen = 0;
-        if (faction_id == ConsoleGlobal.faction_id_
+        int is_seen = faction_id == ConsoleGlobal.faction_id_
             || anything_at(x, y) == ConsoleGlobal.faction_id_
-            || GameDataStateStorage.fields_.game_state_ & 0x80) {
-            is_seen = 1;
-        }
+            || GameDataStateStorage.fields_.game_state_ & 0x80;
         if (!is_seen) {
-            for (int i = 0; i < 8; i++) {
+            int i = 0;
+            while (1) {
+                if (i >= 8) break;
                 int x_radius = wrap_map_x(x + VehMoveDeltaX[i]);
                 int y_radius = y + VehMoveDeltaY[i];
                 if (on_map(x_radius, y_radius) && anything_at(x_radius, y_radius) == ConsoleGlobal.faction_id_) {
                     is_seen = true;
                     break;
                 }
+                i++;
             }
         }
         int is_shown;

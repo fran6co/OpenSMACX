@@ -378,7 +378,7 @@ void ProdPicker::on_scrolled(int, int position) {
     }
 
     if (newPosition < oldPosition) {
-        set_clip(&rect2_);
+        restore_clip();
         set_rectangle_dimensions(&rect, 0x15, 4,
                                  cell_width_ * column_count_ + 2,
                                  (static_cast<int>(field_A814_) - 1) * row_height_);
@@ -392,7 +392,7 @@ void ProdPicker::on_scrolled(int, int position) {
             draw_item(item, 0);
         }
     } else if (newPosition != oldPosition) {
-        set_clip(&rect2_);
+        restore_clip();
         set_rectangle_dimensions(&rect, 0x15, 4,
                                  cell_width_ * column_count_ + 2,
                                  (static_cast<int>(field_A814_) - 1) * row_height_);
@@ -750,6 +750,27 @@ void ProdPicker::calculate() {
     }
 }
 
+// WORKAROUND(inline): StringStruct::current_id (0x00401640) expanded inline;
+// the image reloads head_ for the id read (0x00493F88, and both arms of
+// exec's signed result at 0x00495100).
+static inline int prodpicker_current_id(StringStruct *list) {
+    if (list->head_) {
+        return list->current_->id;
+    }
+    return 0;
+}
+
+// WORKAROUND(inline): expand_rect (scroll.cpp) is a plain out-of-line
+// function in this tree; exec's footer expands it inline (0x00494F48: the
+// inset 3 held in eax, applied left/right/top/bottom).
+static inline RECT *prodpicker_expand_rect(RECT *rect, int horizontal, int vertical) {
+    rect->left -= horizontal;
+    rect->right += horizontal;
+    rect->top -= vertical;
+    rect->bottom += vertical;
+    return rect;
+}
+
 // ORIGINAL: 0x00494700 ?exec@ProdPicker@@QAEHPAUBase@@HPAUGraphicWin@@H@Z 0x00494700-0x0049515F;0x00658C1E-0x00658C3E FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00494700.cpp", "Pinned original coordinator review: actual label-pointer dereference, camera word3F48F5C3, static cdecl callback ABI, row-end clamps and modal-parent/button suppression order."], "reason": "Recover ProdPicker owner behavior through existing window bases, owned StringLists/controls and typed Base/Caviar camera state; preserve historical seed identity and extents as restoration obligations, not current match claims."}
 // TRIED: faithful field/call transcription (two local Buffer RAII objects, real BaseButton/Scroll/Caviar calls) diverges at instr #14 (lea vs xor), early prologue-area register choice; not chased further given the 2687-byte SEH-frame scope.
@@ -762,12 +783,14 @@ int ProdPicker::exec(Base *base, int factionId, GraphicWin *owner, int modal) {
     (void)owner;
 
     int status = 0;
-    if (is_visible() == 0) {
+    if (is_visible()) {
+        if (modal) {
+            if (field_B68_ == 0) status = 1;
+        } else if (field_B68_ != 0) {
+            status = 1;
+        }
+    } else {
         status = 2;
-    } else if (modal == 0) {
-        if (field_B68_ != 0) status = 1;
-    } else if (field_B68_ == 0) {
-        status = 1;
     }
     field_B68_ = modal;
 
@@ -779,8 +802,9 @@ int ProdPicker::exec(Base *base, int factionId, GraphicWin *owner, int modal) {
                 0, 0, 1, 1);
 
             BoxSpriteParams localTemplate = InterfaceBoxStyles[0];
-            field_A76C_ = static_cast<uint32_t>(factionId);
+            localTemplate.mask_ = &localBuffer2;
             field_B64_ = 0;
+            field_A76C_ = static_cast<uint32_t>(factionId);
             field_A770_ = base;
             caviar_.init();
             field_A740_ = 0.0f;
@@ -799,16 +823,15 @@ int ProdPicker::exec(Base *base, int factionId, GraphicWin *owner, int modal) {
             caviar_.set_camera_direct(&camera, &field_A748_);
             caviar_.set_scaling(0.1f);
 
-            caviar_.light_vector().values[0] = 0.0f;
-            caviar_.light_vector().values[1] = 0.0f;
-            caviar_.light_vector().values[2] = 1.0f;
-            caviar_.shadow_vector().values[0] = 0.0f;
-            caviar_.shadow_vector().values[1] = 0.0f;
-            caviar_.shadow_vector().values[2] = 1.0f;
+            camera.values[0] = 0.0f;
+            camera.values[1] = 0.0f;
+            camera.values[2] = 1.0f;
+            caviar_.shadow_vector() = camera;
+            caviar_.light_vector() = camera;
 
             calculate();
 
-            if (TutWinBaseWindow.is_visible() == 0) {
+            if (TutWinBaseWindow.is_visible()) {
                 init(0, 0, static_cast<int>(field_A824_),
                      static_cast<int>(field_A828_), 0, 0x1004020,
                      &TutWinBaseWindow, 0, 0);
@@ -822,9 +845,10 @@ int ProdPicker::exec(Base *base, int factionId, GraphicWin *owner, int modal) {
             }
 
             fill(9);
-            RECT frame = { 0x17, 0,
-                           static_cast<int>(field_A824_) - 0x37,
-                           static_cast<int>(field_A828_) };
+            RECT frame;
+            set_rectangle_dimensions(&frame, 0x17, 0,
+                                     static_cast<int>(field_A824_) - 0x4E,
+                                     static_cast<int>(field_A828_));
             box_sprite(&frame, &localTemplate);
 
             field_B70_ = 100;
@@ -840,29 +864,25 @@ int ProdPicker::exec(Base *base, int factionId, GraphicWin *owner, int modal) {
             }
 
             field_A77C_ = 0;
-            if (field_A82C_ <= field_A774_) {
-                int first = 0;
+            if (field_A774_ >= field_A82C_) {
                 do {
-                    first += column_count_;
-                    field_A77C_ = first;
-                    scroll_.set_pos(first / column_count_);
-                } while (first + field_A82C_ <= field_A774_);
+                    field_A77C_ += column_count_;
+                    scroll_.set_pos(field_A77C_ / column_count_);
+                } while (field_A774_ >= field_A77C_ + field_A82C_);
             }
         }
 
-        if (field_B68_ == 0) {
+        if (field_B68_ != 0) {
+            field_B6C_ = 6;
+        } else {
             field_B6C_ = 4;
-            const uint8_t aliveMask = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
-            const uint8_t gameFlags = static_cast<uint8_t>(GameDataStateStorage.fields_.game_state_);
-            const uint32_t baseGovernor = BaseCurrent->governor;
-            if (((1U << (factionId & 0x1F)) & aliveMask) == 0
-                || ((gameFlags & 0x40) != 0
-                    && (baseGovernor & 0x80000000U) != 0
-                    && (baseGovernor & 1U) != 0)) {
+            if (!((1 << factionId)
+                    & static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_))
+                || (GameDataStateStorage.fields_.game_state_ & 0x40
+                    && BaseCurrent->governor & 0x80000000U
+                    && BaseCurrent->governor & 1U)) {
                 field_B6C_ = 5;
             }
-        } else {
-            field_B6C_ = 6;
         }
 
         int y = static_cast<int>(field_B70_);
@@ -870,124 +890,123 @@ int ProdPicker::exec(Base *base, int factionId, GraphicWin *owner, int modal) {
         int x = ((pixel_width()
                   - (y + 3) * static_cast<int>(field_B6C_)) - 0x20) / 2
             + (static_cast<int>(field_B6C_) - 1) * (y + 3);
-        int yFixedBottom = static_cast<int>(row_height_ * field_A814_) + 0x1C;
-        y += x;
+        RECT footer;
+        footer.bottom = yFixed + 0x14;
+        footer.right = y + x;
 
         StringTemp[0] = 0;
-        strcat(StringTemp, label_get(0x198 / 4));
+        strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x198 / 4]));
         if (Language != 2) CharUpperA(StringTemp);
         flatButtons_[0].init(StringTemp, -2, x, yFixed,
                              static_cast<int>(field_B70_), 0x14, this, 0);
         x += -3 - static_cast<int>(field_B70_);
 
-        if (field_B68_ == 0) {
-            const uint32_t baseGovernor = BaseCurrent->governor;
-            const uint8_t aliveMask = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
-            const uint8_t gameFlags = static_cast<uint8_t>(GameDataStateStorage.fields_.game_state_);
-            if (((aliveMask & (1U << (BaseCurrent->faction_id_current & 0x1F))) == 0)
-                || ((baseGovernor & 1U) != 0
-                    && (baseGovernor & 0x80000000U) != 0
-                    && (gameFlags & 0x40) != 0)) {
-                StringTemp[0] = 0;
-                strcat(StringTemp, label_get(0x4F4 / 4));
-                CharUpperA(StringTemp);
-                flatButtons_[5].init(StringTemp, 6, x, yFixed,
-                                     static_cast<int>(field_B70_), 0x14,
-                                     this, 0);
-                x += -3 - static_cast<int>(field_B70_);
-            }
-
+        if (field_B68_ != 0) {
             StringTemp[0] = 0;
-            strcat(StringTemp, label_get(0x194 / 4));
-            CharUpperA(StringTemp);
-            flatButtons_[2].init(StringTemp, -1, x, yFixed,
-                                 static_cast<int>(field_B70_), 0x14,
-                                 this, 0);
-            x += -3 - static_cast<int>(field_B70_);
-            StringTemp[0] = 0;
-            strcat(StringTemp, label_get(0x9B4 / 4));
-            CharUpperA(StringTemp);
-            flatButtons_[4].init(StringTemp, 1, x, yFixed,
-                                 static_cast<int>(field_B70_), 0x14,
-                                 this, 0);
-            x += -3 - static_cast<int>(field_B70_);
-        } else {
-            StringTemp[0] = 0;
-            strcat(StringTemp, label_get(0x728 / 4));
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x728 / 4]));
             CharUpperA(StringTemp);
             flatButtons_[3].init(StringTemp, 4, x, yFixed,
                                  static_cast<int>(field_B70_), 0x14,
                                  this, 0);
             x += -3 - static_cast<int>(field_B70_);
             StringTemp[0] = 0;
-            strcat(StringTemp, label_get(0x72C / 4));
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x72C / 4]));
             CharUpperA(StringTemp);
             flatButtons_[2].init(StringTemp, 5, x, yFixed,
                                  static_cast<int>(field_B70_), 0x14,
                                  this, 0);
             x += -3 - static_cast<int>(field_B70_);
             StringTemp[0] = 0;
-            strcat(StringTemp, label_get(0xFE8 / 4));
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xFE8 / 4]));
             CharUpperA(StringTemp);
-            flatButtons_[6].init(StringTemp, 7, x, yFixed,
+            flatButtons_[1].init(StringTemp, 7, x, yFixed,
                                  static_cast<int>(field_B70_), 0x14,
                                  this, 0);
             x += -3 - static_cast<int>(field_B70_);
             StringTemp[0] = 0;
-            strcat(StringTemp, label_get(0x194 / 4));
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x194 / 4]));
             CharUpperA(StringTemp);
-            flatButtons_[1].init(StringTemp, -1, x, yFixed,
+            flatButtons_[4].init(StringTemp, -1, x, yFixed,
+                                 static_cast<int>(field_B70_), 0x14,
+                                 this, 0);
+            x += -3 - static_cast<int>(field_B70_);
+        } else {
+            if (!(static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)
+                    & (1 << BaseCurrent->faction_id_current))
+                || (BaseCurrent->governor & 1U
+                    && BaseCurrent->governor & 0x80000000U
+                    && GameDataStateStorage.fields_.game_state_ & 0x40)) {
+                StringTemp[0] = 0;
+                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x4F4 / 4]));
+                CharUpperA(StringTemp);
+                flatButtons_[6].init(StringTemp, 6, x, yFixed,
+                                     static_cast<int>(field_B70_), 0x14,
+                                     this, 0);
+                x += -3 - static_cast<int>(field_B70_);
+            }
+
+            StringTemp[0] = 0;
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x194 / 4]));
+            CharUpperA(StringTemp);
+            flatButtons_[2].init(StringTemp, -1, x, yFixed,
+                                 static_cast<int>(field_B70_), 0x14,
+                                 this, 0);
+            x += -3 - static_cast<int>(field_B70_);
+            StringTemp[0] = 0;
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x9B4 / 4]));
+            CharUpperA(StringTemp);
+            flatButtons_[4].init(StringTemp, 1, x, yFixed,
                                  static_cast<int>(field_B70_), 0x14,
                                  this, 0);
             x += -3 - static_cast<int>(field_B70_);
         }
 
-        const int xBottom = x;
-        const int yTop = yFixed;
+        footer.left = x;
+        footer.top = yFixed;
         StringTemp[0] = 0;
-        strcat(StringTemp, label_get(0x19C / 4));
+        strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x19C / 4]));
         CharUpperA(StringTemp);
-        flatButtons_[8].init(StringTemp, 0, x, yFixed,
+        flatButtons_[5].init(StringTemp, 0, x, yFixed,
                              static_cast<int>(field_B70_), 0x14, this, 0);
 
         for (int buttonIndex = 0; buttonIndex < 8; ++buttonIndex) {
-            Buffer *const buttonBuffer = static_cast<Buffer *>(
-                static_cast<GraphicWin *>(&flatButtons_[buttonIndex]));
-            buttonBuffer->set_font(&font4_, 0, 0, 0);
+            flatButtons_[buttonIndex].set_font(&font4_, 0, 0, 0);
             flatButtons_[buttonIndex].redraw();
             flatButtons_[buttonIndex].set_text_color(0x41, -1, 1, 1);
             flatButtons_[buttonIndex].redraw();
         }
 
-        RECT footer = { xBottom - 3, yTop - 3,
-                        y + 3, yFixedBottom + 3 };
-        box_sprite(&footer, &InterfaceBoxStyles[3]);
+        box_sprite(prodpicker_expand_rect(&footer, 3, 3), &InterfaceBoxStyles[3]);
     }
 
-    if (field_B68_ == 0) {
-        set_modal(0, pop_expire, 0);
-    } else {
+    if (field_B68_ != 0) {
         for (int buttonToSuppress = 0; buttonToSuppress < 22; ++buttonToSuppress)
             TutWinBaseWindow.flatButtons_[buttonToSuppress].set_input_suppressed(1);
         set_modal(0, pop_expire, &MainInterfaceGlobal);
         for (int buttonToRestore = 0; buttonToRestore < 22; ++buttonToRestore)
             TutWinBaseWindow.flatButtons_[buttonToRestore].set_input_suppressed(0);
+    } else {
+        set_modal(0, pop_expire, 0);
     }
 
     if (modal == 0) hide();
 
     int index = field_A774_;
-    if (index == -1) return field_A778_ != 0 ? 0 : -9999;
-    if (index <= prod_a_.entry_count_ - 1)
-        prod_a_.seek_pos(index);
+    if (index == -1) {
+        if (field_A778_ != 0) return 0;
+        return -9999;
+    }
+    prod_a_.seek_pos(field_A774_);
 
     const uint32_t flags = prod_a_.head_ != 0
         ? prod_a_.current_->string_payload()->field_8_ : 0;
-    const int selectedId = prod_a_.head_ != 0 ? prod_a_.current_->id : 0;
-    uint32_t selectedBits = static_cast<uint32_t>(selectedId);
-    if ((flags & 0x20) == 0) selectedBits = 0U - selectedBits;
-    return selectedBits <= 0x7fffffffU
-        ? static_cast<int>(selectedBits) : -1 - static_cast<int>(~selectedBits);
+    int result;
+    if (flags & 0x20) {
+        result = prodpicker_current_id(&prod_a_);
+    } else {
+        result = -prodpicker_current_id(&prod_a_);
+    }
+    return result;
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -1005,21 +1024,21 @@ void ProdPicker::on_right_click(int x, int y) {
     const uint32_t flags = prod_a_.head_ != 0
         ? prod_a_.current_->string_payload()->field_8_ : 0;
     const int productionId = (flags & 0x20) != 0
-        ? (prod_a_.head_ != 0 ? prod_a_.current_->id : 0) : -1;
+        ? prodpicker_current_id(&prod_a_) : -1;
 
     menu.init();
     if (field_B68_ == 0)
-        menu.add_item(5, label_get(0x1148 / 4));
-    menu.add_item(4, label_get(0x1144 / 4));
+        menu.add_item(5, StringTable.get(Labels.strings_ptr[0x1148 / 4]));
+    menu.add_item(4, StringTable.get(Labels.strings_ptr[0x1144 / 4]));
     // Faction-designed prototypes (id >= 0x40) always offer the obsolete row.
     if (productionId >= 0
         && (productionId >= 0x40
             || (Weapon[VehPrototypes[productionId].weapon_id].offense_rating >= 0
                 && productionId != 0x0F))) {
-        menu.add_item(1, label_get(0xE40 / 4));
+        menu.add_item(1, StringTable.get(Labels.strings_ptr[0xE40 / 4]));
     }
     if (!IsMultiplayerNet)
-        menu.add_item(3, label_get(0x1140 / 4));
+        menu.add_item(3, StringTable.get(Labels.strings_ptr[0x1140 / 4]));
     menu.add_item(2, label_get(0x8FC / 4));
     menu.show(x, y, 0);
 
