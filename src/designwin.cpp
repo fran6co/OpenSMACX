@@ -129,15 +129,15 @@ int SelectPartWin::exec(int x, int y, int faction, int kind, int selected,
     caviar_.set_camera_direct(&vector, &rotation);
     caviar_.set_scene_rotation(3.14f / 6, 0.0f, 0.0f);
     vector = VehLightDirMap;
-    caviar_.shadow_vector() = vector;
-    caviar_.light_vector() = vector;
+    caviar_.scene_context_.shadow_vector_ = vector;
+    caviar_.scene_context_.light_vector_ = vector;
     field_2B74_ = 0;
 
     switch (kind) {
         case 0: {
-            // The image stops before CHSI_MISSILE (jl against the row-8
-            // address), so the missile chassis is never counted.
-            for (int i = 0; i < CHSI_MISSILE; ++i) {
+            // The image's loop end is the row-9 address (cmp eax,0x94A8CE),
+            // so every chassis, the missile included, is counted.
+            for (int i = 0; i < MaxChassisNum; ++i) {
                 if (Chassis[i].preq_tech >= -1) ++field_2B74_;
             }
             break;
@@ -1189,8 +1189,9 @@ static inline void design_offset_rect(RECT *dst, const RECT *src, int dx, int dy
 
 // ORIGINAL: 0x0043C270 ?init@DesignWin@@QAEXXZ 0x0043C270-0x0043D0B7;0x006546C5-0x006546DA FILE
 // RECOVERY_BINDING: v1 {"evidence": ["seed:src/unrecovered/0043c270.cpp", "image:0x0043c270; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
+// symbol    ?init@DesignWin@@QAEHXZ
 // TRIED: exact stat-button rect/offset arithmetic for the last four BaseButtons (0xbac/0xbbc/0xb9c region) was approximated with a single receiver address, not derived per-button from the disassembly; the field-init prologue and font/spot/caviar setup above it were transcribed from confirmed call sites.
-void DesignWin::init() {
+int DesignWin::init() {
     Buffer stack_buffer;
     close();
 
@@ -1475,7 +1476,7 @@ void DesignWin::init() {
         &MainInterfaceGlobal.sprites12_[4], &MainInterfaceGlobal.sprites12_[5]);
     flatButtons_[24].redraw();
     flatButtons_[24].set_field_A44(100);
-    // WORKAROUND(decl): the image returns 1 (mov eax,1); designwin.h declares void.
+    return 1;
 }
 
 // ORIGINAL: 0x00439670 ?bubble_me_elmo2@DesignWin@@QAEXPADHH@Z 0x00439670-0x004396B0 BYTE_EXACT
@@ -1706,7 +1707,7 @@ void DesignWin::setup_veh(int proto_id, int automatic) {
         protoAbilityFlags_ = 0;
         int best = 0;
         int rating = 0;
-        for (protoChassisType_ = 0; static_cast<int>(protoChassisType_) < 9;
+        for (protoChassisType_ = 0; protoChassisType_ < 9;
              ++protoChassisType_) {
             if (has_tech(Chassis[protoChassisType_].preq_tech, factionID_) &&
                 Chassis[protoChassisType_].triad == 0 &&
@@ -1717,7 +1718,7 @@ void DesignWin::setup_veh(int proto_id, int automatic) {
         }
         protoChassisType_ = best;
         best = rating = 0;
-        for (protoWeaponType_ = 0; static_cast<int>(protoWeaponType_) < 26;
+        for (protoWeaponType_ = 0; protoWeaponType_ < 26;
              ++protoWeaponType_) {
             if (has_tech(Weapon[protoWeaponType_].preq_tech, factionID_) &&
                 Weapon[protoWeaponType_].offense_rating < 99 &&
@@ -1728,7 +1729,7 @@ void DesignWin::setup_veh(int proto_id, int automatic) {
         }
         protoWeaponType_ = best;
         best = rating = 0;
-        for (protoArmorType_ = 0; static_cast<int>(protoArmorType_) < 14;
+        for (protoArmorType_ = 0; protoArmorType_ < 14;
              ++protoArmorType_) {
             if (has_tech(Armor[protoArmorType_].preq_tech, factionID_) &&
                 Armor[protoArmorType_].defense_rating >= rating) {
@@ -2892,7 +2893,7 @@ int DesignAutoBuildActive = 0;
 void DesignWin::construct_vehicle() {
     caviar_.reset_objects();
 
-    const int saved_chassis = static_cast<int>(protoChassisType_);
+    const int saved_chassis = protoChassisType_;
     if (protoWeaponType_ == 0x15 && saved_chassis == 1
         && Armor[protoArmorType_].defense_rating <= 1) {
         protoChassisType_ = 0;
@@ -2901,31 +2902,31 @@ void DesignWin::construct_vehicle() {
         protoChassisType_ = 0;
     }
 
-    vehdraw_construct_chassis(static_cast<int>(factionID_),
-                              static_cast<int>(protoChassisType_),
-                              static_cast<int>(protoWeaponType_),
-                              static_cast<int>(protoArmorType_),
-                              static_cast<int>(protoReactorType_), &caviar_);
+    vehdraw_construct_chassis(factionID_,
+                              protoChassisType_,
+                              protoWeaponType_,
+                              protoArmorType_,
+                              protoReactorType_, &caviar_);
 
     DesignAutoBuildActive = 1;
-    vehdraw_construct_weapon(static_cast<int>(factionID_),
-                             static_cast<int>(protoChassisType_),
-                             static_cast<int>(protoWeaponType_), &caviar_);
+    vehdraw_construct_weapon(factionID_,
+                             protoChassisType_,
+                             protoWeaponType_, &caviar_);
     DesignAutoBuildActive = 0;
 
     vehdraw_construct_armor(ConsoleGlobal.faction_id_,
-                            static_cast<int>(protoChassisType_),
-                            static_cast<int>(protoWeaponType_),
-                            static_cast<int>(protoArmorType_), 0, &caviar_);
+                            protoChassisType_,
+                            protoWeaponType_,
+                            protoArmorType_, 0, &caviar_);
     vehdraw_construct_reactor(ConsoleGlobal.faction_id_,
-                              static_cast<int>(protoChassisType_),
-                              static_cast<int>(protoWeaponType_),
-                              static_cast<int>(protoReactorType_),
+                              protoChassisType_,
+                              protoWeaponType_,
+                              protoReactorType_,
                               static_cast<int>(protoAbilityFlags_), &caviar_);
     vehdraw_construct_abil(protoAbilityFlags_, &caviar_,
-                           static_cast<int>(factionID_));
+                           factionID_);
 
-    protoChassisType_ = static_cast<uint32_t>(saved_chassis);
+    protoChassisType_ = saved_chassis;
 }
 
 // ORIGINAL: 0x0043C0A0 ?construct_weapon@DesignWin@@QAEXXZ 0x0043C0A0-0x0043C0EF FILE BYTE_EXACT
@@ -3222,17 +3223,17 @@ int DesignWin::exec(int faction_id, int prototype_id) {
         if (prototype_id < 0) prototype_id = faction_id * MaxVehProtoFactionNum;
     }
 
-    protoID_ = static_cast<uint32_t>(prototype_id);
+    protoID_ = prototype_id;
     if (faction_id < 0) faction_id = -faction_id;
-    factionID_ = static_cast<uint32_t>(faction_id);
+    factionID_ = faction_id;
     enemy_capabilities(faction_id);
     mineralCostFactor_ = static_cast<uint32_t>(
-        cost_factor(static_cast<int>(factionID_), 1, -1));
+        cost_factor(factionID_, 1, -1));
     for (int clear = 0; clear < 2; ++clear) {
         protoAbilityIDs_[clear] = -1;
     }
     setup_veh(prototype_id, 1);
-    proto_sort_2(static_cast<int>(factionID_));
+    proto_sort_2(factionID_);
 
     const int sort_count = ProtoSortCount;
     const int sort_limit = prototype_stack_start_ + sort_count;
@@ -3247,7 +3248,7 @@ int DesignWin::exec(int faction_id, int prototype_id) {
 
     field_14210_ = 0;
     if (!has_tech(Rules.tech_two_spec_abilities,
-                  static_cast<int>(factionID_))) {
+                  factionID_)) {
         int selected_abilities = 0;
         for (int slot = 0; slot < 2; ++slot) {
             if (protoAbilityIDs_[slot] >= 0 && ++selected_abilities >= 2) {
@@ -3655,13 +3656,13 @@ void DesignWin::check_abil() {
         }
 
         if ((bit == 0x80 && (protoAbilityFlags_ & 0x40) != 0)
-            || !abil_cond(ability_id, static_cast<int>(protoChassisType_),
-                          static_cast<int>(protoWeaponType_),
-                          static_cast<int>(protoArmorType_))
+            || !abil_cond(ability_id, protoChassisType_,
+                          protoWeaponType_,
+                          protoArmorType_)
             || (bit_count(static_cast<int>(protoAbilityFlags_)) > 1
                 && (bit_count(static_cast<int>(protoAbilityFlags_)) != 2
                     || !has_tech(Rules.tech_two_spec_abilities,
-                                 static_cast<int>(factionID_))))) {
+                                 factionID_)))) {
             protoAbilityFlags_ &= ~bit;
             for (int slot = 0; slot < 2; ++slot) {
                 protoAbilityIDs_[slot] = -1;
@@ -3688,18 +3689,18 @@ void DesignWin::suggest_abil(int ability) {
     check_abil();
     if ((GameDataStateStorage.fields_.game_preferences_ & 0x4000) == 0) return;
     if (!has_tech(Ability[abil_index(ability)].preq_tech,
-                  static_cast<int>(factionID_))) {
+                  factionID_)) {
         return;
     }
-    if (!abil_cond(abil_index(ability), static_cast<int>(protoChassisType_),
-                   static_cast<int>(protoWeaponType_),
-                   static_cast<int>(protoArmorType_))) {
+    if (!abil_cond(abil_index(ability), protoChassisType_,
+                   protoWeaponType_,
+                   protoArmorType_)) {
         return;
     }
     if (bit_count(static_cast<int>(protoAbilityFlags_)) > 1) return;
     if (bit_count(static_cast<int>(protoAbilityFlags_)) != 0
         && !has_tech(Rules.tech_two_spec_abilities,
-                     static_cast<int>(factionID_))) {
+                     factionID_)) {
         return;
     }
     // The original walks 0x29 dwords from both member-array starts instead
@@ -3752,10 +3753,10 @@ void DesignWin::draw_chassis(int redraw) {
 
     area.bottom = area.bottom - 5 - font1_.pixel_height() * 2;
     caviar_.reset_objects();
-    vehdraw_construct_chassis(static_cast<int>(factionID_),
-                              static_cast<int>(protoChassisType_),
-                              static_cast<int>(protoWeaponType_), 0,
-                              static_cast<int>(protoReactorType_), &caviar_);
+    vehdraw_construct_chassis(factionID_,
+                              protoChassisType_,
+                              protoWeaponType_, 0,
+                              protoReactorType_, &caviar_);
     caviar_.set_scaling(0.05f);
     caviar_.set_scene_rotation(0.5233333706855774f, 0.0f, 0.0f);
     caviar_.render(this, (area.left + area.right) / 2,
@@ -3829,12 +3830,12 @@ void DesignWin::draw_weapon(int redraw) {
         caviar_.set_scaling(0.15f);
     } else {
         if (protoWeaponType_ == 0x15 && DesignAutoBuildActive == 0) {
-            vehdraw_construct_weapon(static_cast<int>(factionID_), -1, 0x15,
+            vehdraw_construct_weapon(factionID_, -1, 0x15,
                                      &caviar_);
         } else {
-            vehdraw_construct_weapon(static_cast<int>(factionID_),
-                                     static_cast<int>(protoChassisType_),
-                                     static_cast<int>(protoWeaponType_),
+            vehdraw_construct_weapon(factionID_,
+                                     protoChassisType_,
+                                     protoWeaponType_,
                                      &caviar_);
         }
         if (Weapon[protoWeaponType_].mode < 3) {
@@ -3926,9 +3927,9 @@ void DesignWin::draw_armor(int redraw) {
     if (protoArmorType_ != 0) {
         caviar_.reset_objects();
         vehdraw_construct_armor(ConsoleGlobal.faction_id_,
-            static_cast<int>(protoChassisType_),
-            static_cast<int>(protoWeaponType_),
-            static_cast<int>(protoArmorType_), 1, &caviar_);
+            protoChassisType_,
+            protoWeaponType_,
+            protoArmorType_, 1, &caviar_);
         caviar_.set_scaling(0.07f);
         caviar_.set_scene_rotation(0.5233333706855774f, 0.0f, 0.0f);
         if (protoArmorType_ == 5) {
@@ -4017,9 +4018,9 @@ void DesignWin::draw_reactor(int redraw) {
 
     caviar_.reset_objects();
     vehdraw_construct_reactor(ConsoleGlobal.faction_id_,
-        static_cast<int>(protoChassisType_),
-        static_cast<int>(protoWeaponType_),
-        static_cast<int>(protoReactorType_), protoAbilityFlags_, &caviar_);
+        protoChassisType_,
+        protoWeaponType_,
+        protoReactorType_, protoAbilityFlags_, &caviar_);
     caviar_.set_scaling(0.2f);
     caviar_.set_scene_rotation(0.5233333706855774f, 0.0f, 0.0f);
     caviar_.render(this, (area.left + area.right) / 2,
@@ -4221,7 +4222,7 @@ void DesignWin::draw_vehicle(int redraw) {
     dest.left += 0x2d;                                    // image: mov eax,0x2d; add/sub
     dest.right -= 0x2d;
 
-    if (static_cast<int>(protoID_) < 0x40 && UNK2(protoID_)) {
+    if (protoID_ < 0x40 && UNK2(protoID_)) {
         strcat(StringTemp, VehPrototypes[protoID_].veh_name);
     } else if (strlen(prototype_name_) != 0
                && (VehPrototypes[protoID_].flags & 2) != 0) {
@@ -4329,9 +4330,7 @@ void DesignWin::draw_vehicle(int redraw) {
     strcat(StringTemp, ": ");                             // 0x682e94
     strcat(StringTemp, " ");                              // 0x682820
     strcat(StringTemp, "}");                              // 0x683580
-    // WORKAROUND(type): image compares signed (jge); protoReactorType_ is
-    // declared uint32_t, so the original member was probably int.
-    if (cost < static_cast<int>(protoReactorType_)) {
+    if (cost < protoReactorType_) {
         strcat(StringTemp, "(");                          // 0x682e9c
         strcat(StringTemp, label_get(0x1e8 / 4));
         strcat(StringTemp, ": ");                         // 0x682e94
@@ -4361,7 +4360,7 @@ void DesignWin::draw_vehicle(int redraw) {
     dest.top += adv;                                         // [ebp-0x10]
     dest.bottom += adv;                                      // [ebp-0x08]
 
-    int custom = static_cast<int>(protoID_) >= 0x40;          // setge -> [ebp-0x38]
+    int custom = protoID_ >= 0x40;          // setge -> [ebp-0x38]
     if (custom) {
         int chassis_ok = 0;                                   // [ebp-0x2c]
         int armor_ok = 0;                                     // [ebp-0x34]
@@ -4458,7 +4457,7 @@ void DesignWin::draw_vehicle(int redraw) {
             adv = font_line_advance(font2_);                  // 0x4371c2 (the kept copy)
             src.top += adv;
             src.bottom += adv;
-        } else if (static_cast<int>(protoID_) >= 0x40) {      // 0x4371d6: cmp; jl 0x43723a
+        } else if (protoID_ >= 0x40) {      // 0x4371d6: cmp; jl 0x43723a
             StringTemp[0] = 0;
             strcat(StringTemp, label_get(0x3a4 / 4));
             CharUpperA(StringTemp);
@@ -4627,7 +4626,7 @@ void DesignWin::draw_info() {
     MainInterfaceGlobal.Buffer::write_cent_l(StringTemp, &text);
 
     StringTemp[0] = 0;
-    if ((int)protoID_ < 0x40) {
+    if (protoID_ < 0x40) {
         if (UNK2(protoID_)) {
             strcat(StringTemp, label_get(0xE44 / 4));
         } else {
@@ -4683,7 +4682,7 @@ void DesignWin::draw_info() {
         strcat(StringTemp, label_get(0xE48 / 4));
         strcat(StringTemp, " #");
         char number[80];
-        int slot = (int)protoID_ % 64 + 1;
+        int slot = protoID_ % 64 + 1;
         _itoa(slot, number, 10);
         strcat(StringTemp, number);
         strcat(StringTemp, ")");
@@ -4958,7 +4957,7 @@ void DesignWin::draw_stack() {
         ++drawn;
         const int inset = 2;
         int selector;
-        if (proto_id == static_cast<int>(protoID_)) {
+        if (proto_id == protoID_) {
             selector = 2;
         } else {
             selector = proto_id == static_cast<int>(field_CE0_);
@@ -5093,8 +5092,6 @@ void DesignWin::draw_stack() {
 // un-obsoleted), otherwise the current slot is rebuilt, a free one is taken,
 // or an occupied one is overwritten behind its confirmation popup.
 int DesignWin::design_it() {
-    // WORKAROUND(type): the image compares protoID_ signed (cmp 0x40; jge);
-    // designwin.h still declares the editor members uint32_t.
     char *name = prototype_name_;
 
     // ---- scan all 128 slots (own 64 + up to 64 borrowed) ------------------
@@ -5112,7 +5109,7 @@ int DesignWin::design_it() {
             && protoReactorType_ == VehPrototypes[slot].reactor_id
             && protoAbilityFlags_ == VehPrototypes[slot].ability_flags
             && (slot >= 0x40 || has_tech(VehPrototypes[slot].preq_tech, factionID_))) {
-            if (slot != static_cast<int>(protoID_)) {
+            if (slot != protoID_) {
                 if (VehPrototypes[slot].obsolete_factions & (1 << factionID_)) {
                     // Flag bit 0x8 has no name in veh.h's enum yet: it marks
                     // a prototype the faction re-designed over.
@@ -5145,15 +5142,15 @@ int DesignWin::design_it() {
     // ---- no exact match: a changed predefined slot takes the first own
     //      slot this faction marked obsolete that carries nothing live, else
     //      the last inactive one ----------------------------------------------
-    if (static_cast<int>(protoID_) < 0x40
+    if (protoID_ < 0x40
         && (protoChassisType_ != VehPrototypes[protoID_].chassis_id
             || protoWeaponType_ != VehPrototypes[protoID_].weapon_id
             || protoArmorType_ != VehPrototypes[protoID_].armor_id
             || protoAbilityFlags_ != VehPrototypes[protoID_].ability_flags
             || protoReactorType_ != VehPrototypes[protoID_].reactor_id)) {
         int mask = 1 << factionID_;
-        int own = factionID_ * 0x40;
-        for (int i = 0; i < 0x40; ++i, ++own) {
+        for (int i = 0; i < 0x40; ++i) {
+            int own = factionID_ * 0x40 + i;
             if ((VehPrototypes[own].obsolete_factions & mask)
                 && !PlayersData[factionID_].proto_id_active[own]
                 && !PlayersData[factionID_].proto_id_queue[own]) {
@@ -5164,7 +5161,7 @@ int DesignWin::design_it() {
                 protoID_ = own;
             }
         }
-        if (static_cast<int>(protoID_) < 0x40) {
+        if (protoID_ < 0x40) {
             parse_says(0, VehPrototypes[protoID_].veh_name, -1, -1);
             if (Players[factionID_].rule_flags & RFLAG_ALIEN) {
                 popp(ScriptTxtID, "INTRINSICTYPE", 0,
@@ -5176,7 +5173,7 @@ int DesignWin::design_it() {
             return 0;
         }
     }
-    if (static_cast<int>(protoID_) < 0x40) {
+    if (protoID_ < 0x40) {
         if (!strlen(name) || !strcmp(name, VehPrototypes[protoID_].veh_name)) {
             return 0;
         }
@@ -5258,7 +5255,7 @@ settled:
                    protoWeaponType_, protoArmorType_, protoAbilityFlags_,
                    protoReactorType_);
         prototype_name_[0x1F] = '\0';
-        reinterpret_cast<unsigned char &>(VehPrototypes[protoID_].flags) &= 0xFD;
+        VehPrototypes[protoID_].flags &= ~PROTO_CUSTOM_NAME_SET;
     } else {
         char generated[256];
         name_proto(generated, protoID_, factionID_, protoChassisType_,
@@ -5296,7 +5293,7 @@ void DesignWin::draw_flash() {
     // The scratch row stands for the selected prototype while it is unchanged.
     int shown = static_cast<int>(field_CE0_);
     if (shown == 0x3F && UNK2(protoID_)) {
-        shown = static_cast<int>(protoID_);
+        shown = protoID_;
     }
     const int owner = shown / 64;
 
@@ -5354,12 +5351,12 @@ void DesignWin::draw_flash() {
                 strcat(StringTemp, prototype_name_);
             } else {
                 char proto_name[256];
-                name_proto(proto_name, 0x3F, static_cast<int>(factionID_),
-                           static_cast<int>(protoChassisType_),
-                           static_cast<int>(protoWeaponType_),
-                           static_cast<int>(protoArmorType_),
+                name_proto(proto_name, 0x3F, factionID_,
+                           protoChassisType_,
+                           protoWeaponType_,
+                           protoArmorType_,
                            static_cast<int>(protoAbilityFlags_),
-                           static_cast<int>(protoReactorType_));
+                           protoReactorType_);
                 strcat(StringTemp, proto_name);
             }
         } else {

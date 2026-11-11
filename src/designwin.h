@@ -131,7 +131,7 @@ class DesignWin : public GraphicWin, public SubInterface {
   void construct_vehicle();
   DesignWin();
   int exec(int faction_id, int prototype_id);
-  void init();
+  int init();
   static void __cdecl timer_function(int tick);
   void setup_veh(int proto_id, int automatic);
   void on_right_click(int x, int y) override;
@@ -454,13 +454,13 @@ class DesignWin : public GraphicWin, public SubInterface {
   uint32_t field_13C64_;  // 0x13C64
   uint32_t field_13C68_;  // 0x13C68
   Buffer buffer_;  // 0x13C6C
-  uint32_t factionID_;  // 0x141F4
-  uint32_t protoID_;  // 0x141F8
-  uint32_t protoChassisType_;  // 0x141FC
-  uint32_t protoWeaponType_;  // 0x14200
-  uint32_t protoArmorType_;  // 0x14204
+  int factionID_;  // 0x141F4
+  int protoID_;  // 0x141F8
+  int protoChassisType_;  // 0x141FC
+  int protoWeaponType_;  // 0x14200
+  int protoArmorType_;  // 0x14204
   uint32_t protoAbilityFlags_;  // 0x14208
-  uint32_t protoReactorType_;  // 0x1420C
+  int protoReactorType_;  // 0x1420C
 
   // Storage the image proves is here: its own methods reach 0x145A4.
   // Extent only - this class carries no size assertion, and the bound is a floor.
