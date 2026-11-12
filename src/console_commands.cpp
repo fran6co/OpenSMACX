@@ -2907,8 +2907,8 @@ void Console::explore(int veh_id) {
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d8fa0.cpp", "source:src/alpha.h", "pinned:0x004D8FF4 dword value 3 store before supply_options at 0x004D8FFE", "source:src/netdaemon.h:channels_ at 0x1B68 and LockStateEntry::leading_words_[3] at 0xC", "source:src/console.cpp:supply_options reads the same source-owned action flags"], "reason": "Seed 004d8fa0 identifies the Console convoy order and lock lifecycle; typed Veh, Base and RulesResource records replace receiver and table offsets. The resource label run at 0x0094615C is Resource[0].name_plural, with the singular member selected for a yield of one. The original pre-panel dword value 3 write at 0x004D8FF4 targets the already-owned NetDaemonNet.channels_[0].leading_words_[3], whose singleton-relative offset 0x1B74 identifies 0x0093E904. Preserve that write before supply_options without adding duplicate storage or claiming full matching/acceptance."}
 // Original convoy pushes at 004D9057/004D911D select distinct writable strings.
 // Current NUL-terminated literals have separate complete COMDATs, not lifetime proof.
-// RECOVERY_LITERAL: v1 0x00688ED4 0x00688EDF $SG64007 0x004D8FA0
-// RECOVERY_LITERAL: v1 0x00688EE0 0x00688EEE $SG64015 0x004D8FA0
+// RECOVERY_LITERAL: v1 0x00688ED4 0x00688EDF $SG64002 0x004D8FA0
+// RECOVERY_LITERAL: v1 0x00688EE0 0x00688EEE $SG64010 0x004D8FA0
 void Console::convoy(int veh_id) {
     if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, 0) != 0) {
         return;
@@ -3162,10 +3162,10 @@ void Console::assemble() { // 0x004D95F0
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004D9970 ?editor_on@Console@@QAEXXZ 0x004D9970-0x004D9AC5 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d9970.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
-// RECOVERY_LITERAL: v1 0x00688F3C 0x00688F46 $SG64144 0x004D999D
-// RECOVERY_LITERAL: v1 0x00688F48 0x00688F53 $SG64146 0x004D99B4
-// RECOVERY_LITERAL: v1 0x00688F54 0x00688F5D $SG64149 0x004D99F9
-// RECOVERY_LITERAL: v1 0x00688F60 0x00688F6A $SG64151 0x004D9A11
+// RECOVERY_LITERAL: v1 0x00688F3C 0x00688F46 $SG64139 0x004D999D
+// RECOVERY_LITERAL: v1 0x00688F48 0x00688F53 $SG64141 0x004D99B4
+// RECOVERY_LITERAL: v1 0x00688F54 0x00688F5D $SG64144 0x004D99F9
+// RECOVERY_LITERAL: v1 0x00688F60 0x00688F6A $SG64146 0x004D9A11
 void Console::editor_on() {
     if ((IsMultiplayerNet || IsMultiplayerPBEM) &&
         !(GameDataStateStorage.fields_.game_state_ & 0x61) &&
