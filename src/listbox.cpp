@@ -1686,7 +1686,9 @@ void ListBox::UNK1(int direction) {
     Buffer::restore_clip();
     const int inset = static_cast<int>(Dialog::field_40_);
     const int item_width = static_cast<int>(Dialog::field_64_);
-    int span = item_width + (inset - 2 * inset);
+    // 60C20A..60C21C keep inset - 2*inset unfolded; a shift survives VC6's
+    // algebraic folding where `2 * inset` does not.
+    int span = item_width + (inset - (inset << 1));
     int height;
     int row_height;
     int columns;

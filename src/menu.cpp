@@ -350,14 +350,14 @@ void Menu::mouse_move(int x, int y) {
 // calls (5FBF58, 5FBFCC, 5FBFE2, 5FBFF9, 5FC179). Mnemonic opening separately
 // reloads field_A24_ after flush/redraw at 5FC1F7. Keep the cell address, not
 // its current pointer value or field_A24_, across those reentrant boundaries.
-int Menu::on_key_click(int, int key) {
+int Menu::on_key_click(int repeat, int key) {
     int selected_menu = field_A24_;
     const int no_menu = -1;
     if (selected_menu != no_menu && (key & 0xFFFBFFFF) == 0x12) {
         PullDown **closing_slot = &entries_[selected_menu].pull_down;
         (*closing_slot)->hide();
-        field_A24_ = -1;
-        MenuSelection = -1;
+        field_A24_ = no_menu;
+        MenuSelection = no_menu;
         redraw();
 
         flush_input();
@@ -366,12 +366,13 @@ int Menu::on_key_click(int, int key) {
         return 1;
     }
 
-    if (selected_menu != no_menu) {
-        if (key == 0x0D) {
+    if (field_A24_ != no_menu) {
+        switch (key) {
+        case 0x0D: {
             PullDown **closing_slot = &entries_[selected_menu].pull_down;
             (*closing_slot)->hide();
-            field_A24_ = -1;
-            MenuSelection = -1;
+            field_A24_ = no_menu;
+            MenuSelection = no_menu;
             redraw();
             flush_input();
             do_all_tasks(*closing_slot);
@@ -379,45 +380,49 @@ int Menu::on_key_click(int, int key) {
             do_all_draws();
 
             const int item_index = (*closing_slot)->get_selected();
-            if (item_index == -1) return 1;
-            const int item_id = item_index < 0x40
-                ? (*closing_slot)->items_[item_index].id : -1;
-            hide_menus();
-            if ((field_A28_ & 4) == 0) hide();
-            MenuProc callback = proc_;
-            if (!callback) return 1;
-            callback(item_id);
-
-            Win *parent = win_parent_;
-            if (!parent) return 1;
-            Sound *target = parent->event_window();
-            if (!target || target->is_playing()) return 1;
-            target->play();
+            if (item_index != no_menu) {
+                const int item_id = item_index < 0x40
+                    ? (*closing_slot)->item_id(item_index) : no_menu;
+                hide_menus();
+                if ((field_A28_ & 4) == 0) hide();
+                MenuProc callback = proc_;
+                if (callback) {
+                    callback(item_id);
+                    Win *parent = win_parent_;
+                    if (parent) {
+                        Sound *target = parent->event_window();
+                        if (target && !target->is_playing()) target->play();
+                    }
+                }
+            }
             return 1;
         }
-        if (key == 0x1B) {
+        case 0x1B: {
             PullDown **closing_slot = &entries_[selected_menu].pull_down;
             (*closing_slot)->hide();
-            field_A24_ = -1;
-            MenuSelection = -1;
+            field_A24_ = no_menu;
+            MenuSelection = no_menu;
             redraw();
             flush_input();
             do_all_tasks(*closing_slot);
             do_all_tasks(this);
             return 1;
         }
-        if (key == 0x25 || key == 0x64) {
+        case 0x25:
+        case 0x64:
             if (selected_menu == 0) selected_menu = count_;
             --selected_menu;
-        } else if (key == 0x27 || key == 0x66) {
+            break;
+        case 0x27:
+        case 0x66:
             if (selected_menu == count_ - 1) selected_menu = 0;
             else ++selected_menu;
-        } else {
+            break;
+        default:
             goto search_menu_mnemonics;
         }
 
-        RECT rect;
-        spot_.get_rect_at(selected_menu, &rect);
+        const RECT &rect = spot_.get_rect_at(selected_menu);
         POINT point;
         point.x = rect.left;
         point.y = rect.top;
@@ -429,26 +434,25 @@ int Menu::on_key_click(int, int key) {
 
 search_menu_mnemonics:
     for (int index = 0; index < count_; ++index) {
-        char *mnemonic = entries_[index].mnemonic;
-        if (!mnemonic) continue;
-        if (*mnemonic != tolower(key) && *mnemonic != toupper(key)) continue;
+        if (!entries_[index].mnemonic) continue;
+        // 5FC0F8/5FC10E: the mnemonic is matched against the first argument.
+        if (*entries_[index].mnemonic != tolower(repeat)
+            && *entries_[index].mnemonic != toupper(repeat)) continue;
 
         if (field_A24_ != no_menu) {
             PullDown **closing_slot = &entries_[field_A24_].pull_down;
             (*closing_slot)->hide();
-            field_A24_ = -1;
-            MenuSelection = -1;
+            field_A24_ = no_menu;
+            MenuSelection = no_menu;
             redraw();
             flush_input();
             do_all_tasks(*closing_slot);
             do_all_tasks(this);
         }
         field_A24_ = index;
-        RECT rect;
-        spot_.get_rect_at(index, &rect);
         POINT point;
-        point.x = rect.left - text_width(MenuMnemonicMargin);
-        point.y = -pixel_height();
+        point.x = spot_.get_rect_at(field_A24_).left - text_width(MenuMnemonicMargin);
+        point.y = pixel_height();  // 5FC1B8: neg of the raw height field
         ClientToScreen(HandleMain, &point);
         flush_input();
         redraw();

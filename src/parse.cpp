@@ -86,98 +86,60 @@ Status: WIP
 #pragma function(memcpy)
 #endif
 int __cdecl parse_string(LPSTR input, LPSTR output) {
-    if (!input || !output) { // EBX || ESI
+    if (!input || !output) {
         return 3;
     }
     LPSTR output_base = output;
-    LPSTR var; // EDI
-    do {
+    LPSTR var;
+    LPSTR num;
+    int number;
+    int len;
+    while (1) {
         var = strstr(input, "$");
         if (!var) {
             break;
         }
-        switch (var[1]) {
-          case '$': { // done -> needs testing
-            int len = (var - input) + 1;
-            memcpy(output, input, len);
-            output += len;
-            input = var + 2;
-            *output = 0;
-            break;
-          }
-          case 'H': { // done -> needs testing
-            if (!strncmp(var, "$HEX", 4)) {
-                int number = var[4] - '0';
-                if (number > 9) {
-                    return 14; // parse error
-                }
-                int len = var - input;
-                memcpy(output, input, len);
-                output += len;
-                *output = 0;
-                input = var + 5;
-                char output_num[80];
-                _itoa(ParseNumTable[number], output_num, 10);
-                strcat(output, output_num);
-                output += strlen(output);
-            } else {
-                LPSTR num = findnum(var);
-                if (!num) {
-                    break;
-                }
-                int number = num[0] - '0';
-                if (number > 9) {
-                    return 14; // parse error
-                }
-                int len = (var - input) + 1;
-                memcpy(output, input, len);
-                output += len;
-                *output = 0;
-                input = num + 1;
-                strcat(output, ParseStrBuffer[number].str);
-                output += strlen(output);
-            }
-            break;
-          }
-          case 'N': { // done -> needs testing
+        LPSTR next = var + 1;
+        switch (*next) {
+          case 'N':
             if (!strncmp(var, "$NUMBER", 7)) {
-                int number = var[7] - '0';
+                number = var[7] - '0';
                 if (number > 9) {
                     return 14; // parse error
                 }
-                int len = var - input;
+                len = var - input;
                 memcpy(output, input, len);
                 output += len;
                 *output = 0;
                 input = var + 8;
-                char output_num[80];
-                _itoa(ParseNumTable[number], output_num, 10);
-                strcat(output, output_num);
+                char number_text[80];
+                _itoa(ParseNumTable[number], number_text, 10);
+                strcat(output, number_text);
                 output += strlen(output);
             } else if (!strncmp(var, "$NUM", 4)) {
-                int number = var[4] - '0';
+                number = var[4] - '0';
                 if (number > 9) {
                     return 14; // parse error
                 }
-                int len = var - input;
+                len = var - input;
                 memcpy(output, input, len);
                 output += len;
                 *output = 0;
                 input = var + 5;
-                char output_num[80];
-                _itoa(ParseNumTable[number], output_num, 10);
-                strcat(output, output_num);
+                char number_text[80];
+                _itoa(ParseNumTable[number], number_text, 10);
+                strcat(output, number_text);
                 output += strlen(output);
             } else {
-                LPSTR num = findnum(var);
+                num = findnum(var);
                 if (!num) {
                     break;
                 }
-                int number = num[0] - '0';
+                number = num[0] - '0';
                 if (number > 9) {
                     return 14; // parse error
                 }
-                int len = var - input;
+                len = var - input;
                 memcpy(output, input, len);
                 output += len;
                 *output = 0;
@@ -186,135 +148,159 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
                 output += strlen(output);
             }
             break;
+
+          case 'H':
+            if (!strncmp(var, "$HEX", 4)) {
+                // The image formats $HEX in decimal, like $NUM.
+                number = var[4] - '0';
+                if (number > 9) {
+                    return 14; // parse error
+                }
+                len = var - input;
+                memcpy(output, input, len);
+                output += len;
+                *output = 0;
+                input = var + 5;
+                char number_text[80];
+                _itoa(ParseNumTable[number], number_text, 10);
+                strcat(output, number_text);
+                output += strlen(output);
+            } else {
+                num = findnum(var);
+                if (!num) {
+                    break;
+                }
+                number = num[0] - '0';
+                if (number > 9) {
+                    return 14; // parse error
+                }
+                len = var - input;
+                memcpy(output, input, len);
+                output += len;
+                *output = 0;
+                input = num + 1;
+                strcat(output, ParseStrBuffer[number].str);
+                output += strlen(output);
+            }
+            break;
+
+          case '$': {
+            len = var - input;
+            memcpy(output, input, len + 1);
+            output += len + 1;
+            input = var + 2;
+            *output = 0;
+            break;
           }
+
           case '<': {
-            int len = var - input;
+            len = var - input;
             memcpy(output, input, len);
             output += len;
             *output = 0;
             LPSTR end_bracket = strstr(var, ">");
             if (!end_bracket) {
-                input = var + 1;
-                continue;
+                input = next;
+                break;
             }
             var += 2;
             input = end_bracket + 1;
-            var = purge_leading(var);
-            int gender; // The native '#' route leaves this local slot untouched.
-            int plurality = 0;
-            int number = -1;
-            switch (var[0]) {
-              case 'M':
-              case 'm':
-                gender = 0;
-                break;
-              case 'F':
-              case 'f':
-                gender = 1;
-                break;
-              case 'N':
-              case 'n':
-                gender = 2;
-                break;
-              case '#':
-                number = var[1] - '0';
-                plurality = ParseNumTable[number] != 1;
+            while (*var == ' ') {
                 ++var;
-                break;
-              default:
-                number = var[0] - '0';
-                if (number >= 10) continue;
+            }
+            number = -1;
+            int plurality = 0;
+            int gender; // The '#' route leaves this local unset.
+            if (*var == 'M' || *var == 'm') {
+                gender = 0;
+            } else if (*var == 'F' || *var == 'f') {
+                gender = 1;
+            } else if (*var == 'N' || *var == 'n') {
+                gender = 2;
+            } else if (*var == '#') {
+                ++var;
+                number = *var - '0';
+                plurality = ParseNumTable[number] != 1;
+            } else {
+                number = *var - '0';
+                if (number >= 10) {
+                    continue;
+                }
                 gender = ParseStrGender[number];
                 plurality = ParseStrPlurality[number];
-                break;
             }
             ++var;
-            if (number < 0 && var[0] >= '0' && var[0] <= '9') {
-                plurality = var[0] - '1';
+            if (number < 0 && *var >= '0' && *var <= '9') {
+                plurality = *var - '1';
                 ++var;
             }
-            var = purge_leading(var);
-            if (var[0] == ':') ++var;
-            var = purge_leading(var);
-
-            LPSTR selected_text = var;
-            int colon_count = 0;
-            for (LPSTR scan = var; scan < end_bracket; ++scan) {
-                if (*scan == ':') ++colon_count;
+            while (*var == ' ') {
+                ++var;
             }
-            if (colon_count == 0) {
-                LPSTR number_text = findnum(var);
-                if (number_text) {
-                    number = number_text[0] - '0';
-                    if (number >= 10) continue;
-                    selected_text = ParseStrBuffer[number].str;
-                    colon_count = 0;
-                    for (LPSTR scan = selected_text; *scan; ++scan) {
-                        if (*scan == ':') ++colon_count;
+            if (*var == ':') {
+                ++var;
+            }
+            // The scan runs up to the text after '>', not to the bracket.
+            int count = 0;
+            for (LPSTR scan = var; scan < input; ++scan) {
+                if (*scan == ':') {
+                    ++count;
+                }
+            }
+            if (!count && findnum(var)) {
+                const int index = *findnum(var) - '0';
+                if (index >= 10) {
+                    continue;
+                }
+                var = ParseStrBuffer[index].str;
+                for (LPSTR text = var; *text; ++text) {
+                    if (*text == ':') {
+                        ++count;
                     }
                 }
             }
-            int alternative = 0;
-            if (colon_count == 1) {
-                alternative = plurality != 0;
-            } else if (colon_count == 2) {
-                alternative = gender;
-            } else if (colon_count == 3) {
-                alternative = (gender != 0) + (plurality != 0 ? 2 : 0);
-            } else if (colon_count == 5) {
-                alternative = gender + (plurality != 0 ? 3 : 0);
+            if (count == 1) {
+                count = plurality != 0;
+            } else if (count == 2) {
+                count = gender;
+            } else if (count == 3) {
+                count = (gender != 0) + (plurality != 0 ? 2 : 0);
+            } else if (count == 5) {
+                count = gender + (plurality != 0 ? 3 : 0);
             }
-            while (alternative > 0) {
-                while (*selected_text && *selected_text != ':') ++selected_text;
-                if (!*selected_text) break;
-                ++selected_text;
-                --alternative;
+            // No terminator test: a short alternative list reads past it.
+            while (count) {
+                if (*var++ == ':') {
+                    --count;
+                }
             }
-            while (*selected_text && *selected_text != ':' && *selected_text != '>') {
-                *output++ = *selected_text++;
+            while (*var && *var != ':' && *var != '>') {
+                *output++ = *var++;
             }
             *output = 0;
             break;
           }
-          case 'L': { // done -> needs testing
-            if (strncmp(var, "$LINK<", 6)) {
-                LPSTR num = findnum(var);
-                if (!num) {
-                    var = 0;
-                    break;
-                }
-                int number = num[0] - '0';
-                if (number > 9) {
-                    return 14; // parse error
-                }
-                int len = var - input;
-                memcpy(output, input, len);
-                output += len;
+
+          case 'L':
+            if (!strncmp(var, "$LINK<", 6)) {
+                len = var - input;
+                memcpy(output, input, len + 1);
+                output += len + 1;
+                input = next;
                 *output = 0;
-                input = num + 1;
-                strcat(output, ParseStrBuffer[number].str);
-                output += strlen(output);
-            } else {
-                int len = (var - input) + 1;
-                memcpy(output, input, len);
-                output += len;
-                *output = 0;
-                input = var + 1;
                 break;
             }
-            break;
-          }
-          default: { // done -> needs testing
-            LPSTR num = findnum(var);
+            // Any other $L... falls into the numbered-string route.
+          default: {
+            num = findnum(var);
             if (!num) {
-                var = 0;
-                break;
+                goto done;
             }
-            int number = num[0] - '0';
+            number = num[0] - '0';
             if (number > 9) {
                 return 14; // parse error
             }
-            int len = var - input;
+            len = var - input;
             memcpy(output, input, len);
             output += len;
             *output = 0;
@@ -324,8 +310,9 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
             break;
           }
         }
-    } while (var);
+    }
 
+done:
     strcat(output, input);
 
     if (Language == 1) { // French : handling for poor translations
@@ -335,35 +322,40 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
         static const char part_speech[6][20] = {
             " de ", " le ", " la ", "De ", "Le ", "La "
         };
-        LPSTR search_from = output_base;
-        for (;;) {
-            LPSTR first = 0;
-            int first_index = 0;
+        LPSTR first = output_base;
+        do {
+            LPSTR search_from = first;
+            first = 0;
+            int offset;
             for (int i = 0; i < 6; ++i) {
                 LPSTR found = strstr(search_from, part_speech[i]);
                 if (found && (!first || found < first)) {
+                    offset = (i < 3) + 1;
                     first = found;
-                    first_index = i;
                 }
             }
-            if (!first) break;
-            int offset = first_index < 3 ? 2 : 1;
-            char next = first[offset + 2];
-            if (next == 'a' || next == 'e' || next == 'i' || next == 'o' ||
-                next == 'u' || next == 'y' || next == 'h' || next == 'A' ||
-                next == 'E' || next == 'I' || next == 'O' || next == 'U' ||
-                next == 'Y' || next == 'H') {
-                first[offset] = '\'';
-                char *from = first + offset + 2;
-                char *to = first + offset + 1;
-                do { *to++ = *from; } while (*from++);
+            if (!first) {
+                break;
             }
-            search_from = first + 1;
-        }
-
+            char next_char = first[offset + 2];
+            if (next_char == 'a' || next_char == 'e' || next_char == 'i'
+                || next_char == 'o' || next_char == 'u' || next_char == 'y'
+                || next_char == 'h' || next_char == 'H' || next_char == 'A'
+                || next_char == 'E' || next_char == 'I' || next_char == 'O'
+                || next_char == 'U' || next_char == 'Y') {
+                LPSTR elide = first + offset;
+                *elide = '\'';
+                char moved;
+                do {
+                    moved = elide[2];
+                    *++elide = moved;
+                } while (moved);
+            }
+            // The next scan starts one past this match.
+        } while (++first);
     }
 
-    return false;
+    return 0;
 }
 #if defined(_MSC_VER) && _MSC_VER == 1200
 #pragma intrinsic(memcpy)

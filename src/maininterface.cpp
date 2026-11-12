@@ -135,6 +135,10 @@ void register_iface_mode(int slot, SubInterface *interface_entry) {
     InterfaceRegistry[slot] = interface_entry;
 }
 
+// The image appends the shared ": " (0x00682E94) and " " (0x00682820) strings
+// at every use in draw_edit_pane; this unit's own literals stay separate
+// per use, so these are the named socialwin.cpp/buffer.cpp objects.
+extern char SocialWinColonSpaceText[];
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0045B550 0x0045BBF8 0x0045BC24 0x0045B720
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x0045B550 0x0045BC24 0x0045BC42 0x0045B71A
 // ORIGINAL: 0x0045B550 ?draw_edit_pane@MainInterface@@QAEXXZ 0x0045B550-0x0045BBF7 FILE
@@ -150,8 +154,8 @@ void MainInterface::draw_edit_pane() {
     MainInterfaceGlobal.Buffer::box_sprite(&rect, &InterfaceBoxStyles[0]);
     rect.left += 4;
     rect.right -= 4;
-    rect.bottom -= 4;
     rect.top += 4;
+    rect.bottom -= 4;
     const int x = rect.left;
     int y = rect.top;
     char line[256];
@@ -159,7 +163,7 @@ void MainInterface::draw_edit_pane() {
 
     line[0] = 0;
     strcat(line, label_get(0x6A8 / 4));
-    strcat(line, ": ");
+    strcat(line, SocialWinColonSpaceText);
     strcat(line, "{");
     strcat(line, MapFilePath);
     strcat(line, "}");
@@ -168,7 +172,7 @@ void MainInterface::draw_edit_pane() {
 
     line[0] = 0;
     strcat(line, label_get(0x6A4 / 4));
-    strcat(line, ": ");
+    strcat(line, SocialWinColonSpaceText);
     switch (MapEditorPaintId) {
     case 0: { LPSTR name = Labels.strings_ptr[0xEBC / 4]; strcat(line, StringTable.get(name)); } break;
     case 1: { LPSTR name = Labels.strings_ptr[0xEC0 / 4]; strcat(line, StringTable.get(name)); } break;
@@ -180,14 +184,14 @@ void MainInterface::draw_edit_pane() {
     case 27: { LPSTR name = Natural[6].name_short; strcat(line, StringTable.get(name)); } break;
     case 28: { LPSTR name = Natural[3].name_short; strcat(line, StringTable.get(name)); } break;
     case 29: { LPSTR name = Natural[10].name_short; strcat(line, StringTable.get(name)); } break;
-    default: { LPSTR name = Terraforming[MapEditorPaintId - 6].name; strcat(line, StringTable.get(name)); } break;
+    default: strcat(line, StringTable.get(Terraforming[MapEditorPaintId - 6].name)); break;
     }
     MainInterfaceGlobal.Buffer::write_l(line, x, y);
     y += MainInterfaceGlobal.Buffer::text_line_height();
 
     line[0] = 0;
-    strcat(line, StringTable.get(Labels.strings_ptr[0x684 / 4]));
-    strcat(line, ": ");
+    strcat(line, label_get(0x684 / 4));
+    strcat(line, SocialWinColonSpaceText);
     if (MapEditorBrushId == 1) {
         { LPSTR name = Labels.strings_ptr[0x688 / 4]; strcat(line, StringTable.get(name)); }
     } else {
@@ -199,13 +203,13 @@ void MainInterface::draw_edit_pane() {
 
     line[0] = 0;
     strcat(line, label_get(0xD7C / 4));
-    strcat(line, ": ");
+    strcat(line, SocialWinColonSpaceText);
     _itoa(MapLongitudeBounds / 2, number, 10);
     strcat(line, number);
     strcat(line, "x");
     _itoa(MapLatitudeBounds, number, 10);
     strcat(line, number);
-    strcat(line, " ");
+    strcat(line, BufferJoinSpace);
     if (MapIsFlat & 1) {
         strcat(line, label_get(0xD80 / 4));
     } else {
@@ -216,7 +220,7 @@ void MainInterface::draw_edit_pane() {
 
     line[0] = 0;
     strcat(line, label_get(0x84 / 4));
-    strcat(line, ": ");
+    strcat(line, SocialWinColonSpaceText);
     strcat(line, "{");
     // Original 0x45BA7E loads the cloud setting, not the planet-size setting.
     strcat(line, label_get(0x50 / 4 + MapCloudCover));

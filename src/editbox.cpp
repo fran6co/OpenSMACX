@@ -242,121 +242,138 @@ int EditBox::on_key_click(int character, int) {
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00615840.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
 // Deleted seed provenance: git:b5a8554e33a26faf238f51538994e24a254783a3:src/unrecovered/00615840.cpp
 // symbol    ?on_key_down@EditBox@@UAEHH@Z
-int EditBox::on_key_down(int key_value) {
-    unsigned int key = static_cast<unsigned int>(key_value);
+int EditBox::on_key_down(int key) {
     if (key == 9) return 0;
     field_B38_ = 0;
     if (key & 0x10000) field_B38_ = 1;
     if (key & 0x20000) field_B38_ |= 2;
-    unsigned int low = key & 0xffff;
-    if (low - 8 > 0x5e) return 0;
-    switch (low) {
-    case 8: {
-        if (field_B38_ != 0) { MessageBeep(0); return 1; }
-        int cursor = static_cast<int>(field_B44_);
-        int mark = static_cast<int>(field_B40_);
-        if (mark == cursor) {
-            if (cursor == 0) { MessageBeep(0); return 1; }
-            if (text_[cursor] == 0) text_[cursor - 1] = 0;
-            else memmove(text_ + cursor - 1, text_ + cursor, strlen(text_ + cursor) + 1);
-        } else if (mark < cursor) {
-            memmove(text_ + mark, text_ + cursor, strlen(text_ + cursor) + 1);
-            field_B44_ = mark + 1;
+    switch (key & 0xffff) {
+    case 0x27:
+    case 0x66: {
+        int delta;
+        if (!(field_B38_ & 2)) {
+            delta = 1;
+        } else if (text_[field_B44_] == ' ') {
+            delta = 1;
         } else {
-            memmove(text_ + cursor, text_ + mark, strlen(text_ + mark) + 1);
-            field_B44_ = cursor + 1;
+            char *found = strchr(&text_[field_B44_], ' ');
+            if (found) {
+                delta = found - &text_[field_B44_] + 1;
+            } else {
+                delta = strlen(&text_[field_B44_]);
+            }
+        }
+        field_B44_ += delta;
+        if (!text_[field_B44_ - 1]) {
+            if (strlen(text_) == field_B14_) {
+                MessageBeep(0);
+                return 1;
+            }
+            text_[field_B44_ - 1] = ' ';
+            text_[field_B44_] = 0;
+        }
+        while (!text_fits()) ++field_B18_;
+        // 615985 rereads this flag after the text_fits calls.
+        if (!(field_B38_ & 1)) field_B40_ = field_B44_;
+        redraw();
+        return 1;
+    }
+    case 0x25:
+    case 0x64: {
+        int delta = static_cast<int>(field_B44_);
+        if (!delta) {
+            if (!(field_B38_ & 1)) {
+                field_B40_ = 0;
+                redraw();
+            }
+            return 1;
+        }
+        unsigned int flags = field_B38_;
+        if (!(flags & 2)) {
+            delta = 1;
+        } else {
+            char *p = &text_[delta - 1];
+            if (*p == ' ') {
+                delta = 1;
+            } else {
+                while (p > text_ && *p != ' ') --p;
+                if (p) delta -= static_cast<int>(p - text_);
+            }
+        }
+        field_B44_ -= delta;
+        if (static_cast<int>(field_B44_) < static_cast<int>(field_B18_)) field_B18_ = field_B44_;
+        if (!(flags & 1)) field_B40_ = field_B44_;
+        redraw();
+        return 1;
+    }
+    case 8:
+        if (field_B38_) {
+            MessageBeep(0);
+            return 1;
+        }
+        if (field_B44_ != field_B40_) {
+            if (static_cast<int>(field_B40_) < static_cast<int>(field_B44_)) {
+                memmove(&text_[field_B40_], &text_[field_B44_], strlen(&text_[field_B44_]) + 1);
+                field_B44_ = field_B40_ + 1;
+            } else {
+                memmove(&text_[field_B44_], &text_[field_B40_], strlen(&text_[field_B40_]) + 1);
+                ++field_B44_;
+            }
+        } else {
+            if (!field_B44_) {
+                MessageBeep(0);
+                return 1;
+            }
+            if (text_[field_B44_]) {
+                memmove(&text_[field_B44_ - 1], &text_[field_B44_], strlen(&text_[field_B44_]) + 1);
+            } else {
+                text_[field_B44_ - 1] = 0;
+            }
         }
         --field_B44_;
         field_B40_ = field_B44_;
         if (static_cast<int>(field_B44_) < static_cast<int>(field_B18_)) field_B18_ = field_B44_;
         redraw();
         return 1;
-    }
-    case 0x23: {
-        field_B44_ = strlen(text_);
-        if ((field_B38_ & 1) == 0) field_B40_ = field_B44_;
-        char *p = text_ + static_cast<int>(field_B44_);
-        if (p > text_) {
-            do {
-                int available = dib_.bmiHeader.biWidth;
-                int width = Buffer::text_width(p);
-                available -= static_cast<int>(field_B34_) * 2;
-                if (width >= available) break;
-                --p;
-            } while (p > text_);
-        }
-        if (p != text_) ++p;
-        field_B18_ = static_cast<int>(p - text_);
-        redraw();
-        return 1;
-    }
-    case 0x24:
-        field_B44_ = 0;
-        if ((field_B38_ & 1) == 0) field_B40_ = 0;
-        field_B18_ = 0;
-        redraw();
-        return 1;
-    case 0x25:
-    case 0x64: {
-        int cursor = static_cast<int>(field_B44_);
-        if (cursor == 0) {
-            if (field_B38_ & 1) return 1;
-            field_B40_ = 0;
-            redraw();
+    case 0x2e:
+        if (field_B38_) {
+            MessageBeep(0);
             return 1;
         }
-        unsigned int flags = field_B38_;
-        int delta = 1;
-        if ((flags & 2) && text_[cursor - 1] != ' ') {
-            char *p = text_ + cursor - 1;
-            while (p > text_ && *p != ' ') --p;
-            delta = static_cast<int>(text_ + cursor - p);
-        }
-        int next = cursor - delta;
-        field_B44_ = next;
-        if (next < static_cast<int>(field_B18_)) field_B18_ = next;
-        if ((flags & 1) == 0) field_B40_ = next;
-        redraw();
-        return 1;
-    }
-    case 0x27:
-    case 0x66: {
-        unsigned int flags = static_cast<unsigned char>(field_B38_);
-        int cursor = static_cast<int>(field_B44_);
-        int delta = 1;
-        if ((flags & 2) && text_[cursor] != ' ') {
-            char *found = strchr(text_ + cursor, ' ');
-            delta = found ? static_cast<int>(found - (text_ + cursor)) + 1
-                          : static_cast<int>(strlen(text_ + cursor));
-        }
-        int next = cursor + delta;
-        field_B44_ = next;
-        if (text_[next - 1] == 0) {
-            if (strlen(text_) == field_B14_) { MessageBeep(0); return 1; }
-            text_[next - 1] = ' ';
-            text_[next] = 0;
-        }
-        while (!text_fits()) ++field_B18_;
-        // 615985 rereads this flag after the text_fits calls.
-        if ((field_B38_ & 1) == 0) field_B40_ = field_B44_;
-        redraw();
-        return 1;
-    }
-    case 0x2e: {
-        if (field_B38_ != 0) { MessageBeep(0); return 1; }
-        int cursor = static_cast<int>(field_B44_);
-        int mark = static_cast<int>(field_B40_);
-        if (mark == cursor) {
-            if (text_[cursor] == 0) { MessageBeep(0); return 1; }
-            memmove(text_ + cursor, text_ + cursor + 1, strlen(text_ + cursor + 1) + 1);
-        } else if (mark > cursor) {
-            memmove(text_ + cursor, text_ + mark, strlen(text_ + mark) + 1);
+        if (field_B44_ != field_B40_) {
+            if (static_cast<int>(field_B40_) < static_cast<int>(field_B44_)) {
+                memmove(&text_[field_B40_], &text_[field_B44_], strlen(&text_[field_B44_]) + 1);
+                field_B44_ = field_B40_;
+            } else {
+                memmove(&text_[field_B44_], &text_[field_B40_], strlen(&text_[field_B40_]) + 1);
+            }
         } else {
-            memmove(text_ + mark, text_ + cursor, strlen(text_ + cursor) + 1);
-            field_B44_ = mark;
+            if (!text_[field_B44_]) {
+                MessageBeep(0);
+                return 1;
+            }
+            memmove(&text_[field_B44_], &text_[field_B44_ + 1], strlen(&text_[field_B44_ + 1]) + 1);
         }
         field_B40_ = field_B44_;
         if (static_cast<int>(field_B44_) < static_cast<int>(field_B18_)) field_B18_ = field_B44_;
+        redraw();
+        return 1;
+    case 0x24:
+        field_B44_ = 0;
+        if (!(field_B38_ & 1)) field_B40_ = 0;
+        field_B18_ = 0;
+        redraw();
+        return 1;
+    case 0x23: {
+        field_B44_ = strlen(text_);
+        if (!(field_B38_ & 1)) field_B40_ = field_B44_;
+        char *p = &text_[field_B44_];
+        while (p > text_
+               && Buffer::text_width(p) < dib_.bmiHeader.biWidth - static_cast<int>(field_B34_) * 2) {
+            --p;
+        }
+        if (p != text_) ++p;
+        field_B18_ = static_cast<int>(p - text_);
         redraw();
         return 1;
     }
