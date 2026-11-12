@@ -26,6 +26,7 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x6825f8 selects original initializer0x4ba5c0..0x4ba5d6, registering fini0x4ba5e0..0x4ba5ea; complete independent decode establishes exclusive boundaries.", "Source-owned object?TutorialWindow@@3VTutWin@@A identifies original storage0x8c6e68. Startup arguments/calls: call 0x4ba6b0; push 0x4ba5e0. Cleanup receiver/calls: mov ecx, 0x8c6e68; jmp 0x4be7d0. Constructor/destructor targets retain their existing class-owned source mappings.", "Fresh physical src/tutwin.cpp COFF selects _$E21 through .CRT$XCU and registers _$E19, both referencing the genuine source global. Original NetMsg argument triples and implicit PlanWin/Console most-derived flags are preserved by the existing declarations; complete virtual-base teardown is compiler-owned, not authored offsets.", "Current local helper symbols interpret present emission, not original debug names or historical TU boundaries. Object starts do not prove allocation extents. This binding establishes neither cross-TU global order, masked-reference correctness, strict linked preservation, dependency-provider equivalence nor runtime/game acceptance; excluded guarded sprite cleanup remains separate."], "reason": "Bind original exit identity to the genuine compiler-generated lifetime of ?TutorialWindow@@3VTutWin@@A in its actual source owner; no manual lifecycle callback is authored."}
 // symbol    _$E14
 #include "stdafx.h"
+#define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h (tut_win's set_picture)
 #include "tutwin.h"
 #include "basewin.h"
 #include "maininterface.h"
@@ -169,6 +170,9 @@ void TutWin::UNK3(Win *a1) {
 // The active path clears the arrow state before virtual hide. Hide may
 // change the owner, so the owner's update dispatch must reload field_53D4_.
 // Drawing completes before either the owner or the shared marker is reset.
+// Both arms end in UNK1, the ten-store clear: tut_win's expansion of reset
+// inlines it in the owner arm and calls 0x004BA720 in the other, which is
+// that copy's single caller.
 // ORIGINAL: 0x004BDDE0 ?reset@TutWin@@QAEHXZ 0x004BDDE0-0x004BDE97 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original4BDDEE..4BDE07 clears53A4, calls this slot2, reloads owner53D4 for slot63 and then calls do_all_draws5FCBB0. The initial owner test selects the return value; callbacks precede all final reset stores.", "Both original tails clear owner53D4 and53A4, store minus one to5380/537C/539C, zero53A8, minus one53AC, zero53B8/53C4 and finally real TutWinShownFlag8CC244. Existing TutorialWindow and typed Win owner are preserved; no fixed-address aliases or VCall shim are required."], "reason": "Recover tutorial dismissal and owner notification through real members and virtual Win methods, retaining its original reset ordering and result."}
 int TutWin::reset() {
@@ -177,28 +181,10 @@ int TutWin::reset() {
         hide();
         field_53D4_->on_update();
         do_all_draws();
-        field_53D4_ = 0;
-        field_53A4_ = 0;
-        field_5380_ = -1;
-        field_537C_ = -1;
-        field_539C_ = -1;
-        field_53A8_ = 0;
-        field_53AC_ = -1;
-        field_53B8_ = 0;
-        field_53C4_ = 0;
-        TutWinShownFlag = 0;
+        UNK1();
         return 1;
     }
-    field_53D4_ = 0;
-    field_53A4_ = 0;
-    field_5380_ = -1;
-    field_537C_ = -1;
-    field_539C_ = -1;
-    field_53A8_ = 0;
-    field_53AC_ = -1;
-    field_53B8_ = 0;
-    field_53C4_ = 0;
-    TutWinShownFlag = 0;
+    UNK1();
     return 0;
 }
 
@@ -325,10 +311,6 @@ static int tut_callout(TutWin &tutorial, Win &coordinates, RECT &rect,
     return tutorial.tut_win(MapWinTable[0], label, x, y, 0, 2, -1, -1);
 }
 
-static LPSTR tutorial_button_label(unsigned int byte_offset) {
-    return Labels.strings_ptr[byte_offset / 4];
-}
-
 // ORIGINAL: 0x004BDFE0 ?tut_win@TutWin@@QAEHPAUGraphicWin@@PBDHHPAUSprite@@HHH@Z 0x004BDFE0-0x004BE643;0x00659CE0-0x00659CF2 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["seed:src/unrecovered/004bdfe0.cpp", "image:0x004bdfe0; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
 // TRIED: real `Sprite localSprite;` (no explicit ctor/dtor calls, relying on the scaffold's Sprite having no declared destructor so none is emitted, matching the disassembly which never calls ~Sprite on the normal path) plus field-offset writes transcribed instruction-by-instruction (including the cdq/and-7 rounding idioms rewritten as `(val<0)?7:0` bias terms) compiles and reaches instruction #2 before diverging (no SEH try/finally frame is generated without a non-trivial local destructor, and the original's frame protects the Sprite constructor call).
@@ -336,24 +318,29 @@ static LPSTR tutorial_button_label(unsigned int byte_offset) {
 int TutWin::tut_win(GraphicWin *owner, const char *text, int x, int y,
                     Sprite *picture, int flags, int arrow_x, int arrow_y) {
     Sprite local_sprite;
-    const int original_x = x;
-    const int original_y = y;
     int mode;
-    int normalized_mode;
+    int popup_flags;
     int screen_width;
     int screen_height;
-    int placement_x;
-    int placement_y;
-    int width_eighth;
-    int height_eighth;
-    int horizontal_anchor;
-    int vertical_anchor;
 
-    field_53D0_ = flags & 0xFFFF0000;
-    normalized_mode = flags & 0xFFFF;
     field_53C4_ = 0;
-    mode = normalized_mode & 0xFF;
-    const int popup_flags = mode == 0 ? 0x4000 : (mode == 1 ? 0 : 0x40);
+    field_53D0_ = 0;
+    if (flags >> 16) {
+        field_53D0_ = flags & 0xFFFF0000;
+        flags &= 0xFFFF;
+    }
+    mode = flags & 0xFF;
+    switch (mode) {
+    case 0:
+        popup_flags = 0x4000;
+        break;
+    case 1:
+        popup_flags = 0;
+        break;
+    default:
+        popup_flags = 0x40;
+        break;
+    }
     field_5384_ = x;
     field_5388_ = y;
     screen_width = WinScreenWidth;
@@ -362,78 +349,65 @@ int TutWin::tut_win(GraphicWin *owner, const char *text, int x, int y,
     popups_tutorial();
     reset();
     field_53D4_ = owner;
-    if ((normalized_mode & 0xFF00) != 0) {
+    if (flags & 0xFF00) {
         TutWinShownFlag = 1;
-        normalized_mode = mode;
+        flags = mode;
     }
 
     start(TutorialPopupCaption, text, -1, 0, popup_flags, 0);
-    if (mode < 2) {
-        set_ok_text(StringTable.get(
-            tutorial_button_label(0x36C)));
+    if (flags < 2) {
+        set_ok_text(label_get(219));
     } else {
-        set_ok_text(StringTable.get(
-            tutorial_button_label(0x3B0)));
-        set_cancel_text(StringTable.get(
-            tutorial_button_label(0x3AC)));
+        set_ok_text(label_get(236));
+        set_cancel_text(label_get(235));
     }
 
     if (picture != 0) {
-        set_caller_picture(picture_enabled() ? 0 : picture);
-        dialogs().SpriteBox::sprite(picture, 0, 0);
+        set_picture(picture, 0, 0);
     } else if (field_53AC_ >= 0) {
-        set_caller_picture(picture_enabled() ? 0 : &g_VEH_SPRITES[0]);
-        dialogs().SpriteBox::sprite(&g_VEH_SPRITES[0], 0, 0);
+        set_picture(&g_VEH_SPRITES[0], 0, 0);
         set_redraw_callback(tut_veh_draw);
     } else if (field_53AC_ < -1) {
-        set_caller_picture(picture_enabled() ? 0 : &g_VEH_SPRITES[0]);
-        dialogs().SpriteBox::sprite(&g_VEH_SPRITES[0], 0, 0);
+        set_picture(&g_VEH_SPRITES[0], 0, 0);
         set_redraw_callback(TutWin::base_draw);
     } else if (field_537C_ >= 0) {
-        set_caller_picture(picture_enabled() ? 0 : &g_TER1_TUT_BLANK_SPRITE);
-        dialogs().SpriteBox::sprite(&g_TER1_TUT_BLANK_SPRITE, 0, 0);
+        set_picture(&g_TER1_TUT_BLANK_SPRITE, 0, 0);
         set_redraw_callback(tut_terrain_draw);
     }
 
     exec(1, 0);
 
-    vertical_anchor = (screen_height * 5 +
-                       (screen_height * 5 < 0 ? 7 : 0)) >> 3;
-    horizontal_anchor = (screen_width -
-                         (screen_width < 0 ? -1 : 0)) >> 1;
-    height_eighth = (screen_height + (screen_height < 0 ? 7 : 0)) >> 3;
-    width_eighth = (screen_width + (screen_width < 0 ? 7 : 0)) >> 3;
-    if (mode < 2 || mode == 2 || mode == 5) {
+    int vertical_anchor = screen_height * 5 / 8;
+    int horizontal_anchor = screen_width / 2;
+    int height_eighth = screen_height / 8;
+    int width_eighth = screen_width / 8;
+    if (flags < 2) {
         horizontal_anchor += width_eighth;
     }
-    if (mode == 3 || mode == 4) {
+    if (flags == 2 || flags == 5) {
+        horizontal_anchor += width_eighth;
+    }
+    if (flags == 3 || flags == 4) {
         horizontal_anchor -= width_eighth;
     }
-    if (mode == 4 || mode == 5) {
+    if (flags == 4 || flags == 5) {
         vertical_anchor -= height_eighth;
     }
 
     if (y <= vertical_anchor) {
-        placement_y = screen_height - static_cast<int>(layout_height()) - 8;
-        y = placement_y;
-        field_5390_ = placement_y;
+        y = screen_height - layout_height() - 8;
+        field_5390_ = y;
     } else {
-        placement_y = (static_cast<int>(field_5388_) +
-                       (static_cast<int>(field_5388_) < 0 ? 7 : 0)) >> 3;
-        y = placement_y;
-        field_5390_ = placement_y + layout_height();
+        y = static_cast<int>(field_5388_) / 8;
+        field_5390_ = y + layout_height();
     }
 
     if (x <= horizontal_anchor) {
-        placement_x = (static_cast<int>(layout_width()) -
-                       (static_cast<int>(layout_width()) < 0 ? -1 : 0)) >> 1;
-        field_538C_ = placement_x + 5;
         x = 5;
+        field_538C_ = static_cast<int>(layout_width()) / 2 + 5;
     } else {
-        const int dimension = static_cast<int>(layout_width());
-        const int half = (dimension - (dimension < 0 ? -1 : 0)) >> 1;
-        field_538C_ = screen_width - half - 5;
-        x = screen_width - dimension - 5;
+        field_538C_ = screen_width - static_cast<int>(layout_width()) / 2 - 5;
+        x = screen_width - layout_width() - 5;
     }
 
     if (arrow_x >= 0) {
@@ -442,7 +416,7 @@ int TutWin::tut_win(GraphicWin *owner, const char *text, int x, int y,
         field_539C_ = field_538C_;
         field_53A0_ = field_5390_;
     }
-    field_53B8_ = normalized_mode;
+    field_53B8_ = flags;
     field_53A4_ = 1;
     field_53D4_->window_line_raw(field_538C_, field_5390_, field_5384_,
                                   field_5388_, PopupThemeWindowColor, 2, 2);
@@ -452,46 +426,38 @@ int TutWin::tut_win(GraphicWin *owner, const char *text, int x, int y,
     }
 
     start(TutorialPopupCaption, text, -1, 0, popup_flags, 0);
-    if (normalized_mode == 0) {
-        set_ok_text(StringTable.get(
-            tutorial_button_label(0x36C)));
+    if (flags == 0) {
+        set_ok_text(label_get(219));
     } else {
-        set_ok_text(StringTable.get(
-            tutorial_button_label(0x3B0)));
-        set_cancel_text(StringTable.get(
-            tutorial_button_label(0x3AC)));
+        set_ok_text(label_get(236));
+        set_cancel_text(label_get(235));
     }
-    if (normalized_mode != 6) {
+    if (flags != 6) {
         set_loc(x, y);
     }
 
     if (picture != 0) {
-        set_caller_picture(picture_enabled() ? 0 : picture);
-        dialogs().SpriteBox::sprite(picture, 0, 0);
+        set_picture(picture, 0, 0);
     } else if (field_53AC_ >= 0) {
-        set_caller_picture(picture_enabled() ? 0 : &local_sprite);
-        dialogs().SpriteBox::sprite(&local_sprite, 0,
-                                   static_cast<int>(field_53AC_));
+        set_picture(&local_sprite, static_cast<int>(field_53AC_), 0);
         set_redraw_callback(tut_veh_draw);
     } else if (field_53AC_ < -1) {
-        set_caller_picture(picture_enabled() ? 0 : &local_sprite);
-        dialogs().SpriteBox::sprite(&local_sprite, 0,
-                                   static_cast<int>(field_53AC_));
+        set_picture(&local_sprite, static_cast<int>(field_53AC_), 0);
         set_redraw_callback(TutWin::base_draw);
     } else if (field_537C_ >= 0) {
-        set_caller_picture(picture_enabled() ? 0 : &local_sprite);
-        dialogs().SpriteBox::sprite(&local_sprite, 0, 0);
+        set_picture(&local_sprite, 0, 0);
         set_redraw_callback(tut_terrain_draw);
     }
 
     exec(0, 0);
     popups_normal();
     field_53A8_ = 1;
-    if (normalized_mode == 1) {
-        const int run_tour = field_53BC_ != 0;
-        const int send_key = field_53C4_ != 0;
-        const int key = static_cast<int>(field_53C8_);
-        const int key_state = static_cast<int>(field_53CC_);
+    if (flags == 1) {
+        // tour() may change the key fields; the image reads them first.
+        int run_tour = field_53BC_;
+        int send_key = field_53C4_;
+        int key = field_53C8_;
+        int key_state = field_53CC_;
         if (run_tour) {
             tour();
         }
@@ -1410,9 +1376,9 @@ static inline void tour_iface_rect(RECT *rect, int *x, int *y) {
 // TRIED: full structural transcription of both scoring loops and the 10x tut_win/client_to_screen chain (from raw disasm, cross-checked against Ghidra); diverges at instr #33 (push vs mov) - register allocation for the phase-1 direction-search loop, not a logic gap.
 // Retranscribed 2026-11-12 in the image's block order and frame slots. The
 // image expands reset() at its three sites (0x004BD8A6, 0x004BDBB2,
-// 0x004BDC43); this tree's two-arm reset is refused by /Ob2, while the same
-// body with its shared stores in an inline TutWin helper both inlines here
-// and stays exact at 0x004BDDE0 (a tutwin.h change, not made here).
+// 0x004BDC43). Both arms of reset end in UNK1 (0x004BA720), which /Ob2
+// expands too; with the ten stores written out in each arm reset was too
+// costly to expand here.
 void TutWin::tour() {
     // Frame slots are shared by role: each variable below keeps the image's
     // slot through both the direction search and the two-ring survey.
@@ -1566,7 +1532,7 @@ void TutWin::tour() {
         StringTemp[0] = 0;
         strcat(StringTemp, "TOUR1");
         if (ConsoleGlobal.cursor_active_ && ConsoleGlobal.selected_vehicle_ >= 0) {
-            int proto_id = Vehs[ConsoleGlobal.selected_vehicle_].proto_id;
+            short proto_id = Vehs[ConsoleGlobal.selected_vehicle_].proto_id;
             if (proto_id != 2) {
                 parse_says(0, VehPrototypes[proto_id].veh_name, -1, -1);
                 strcat(StringTemp, "A");
@@ -1726,11 +1692,7 @@ void TutWin::tour() {
                 fungus_y = y;
                 continue;
             }
-            if (goody_at(x, y) || bonus_at(x, y, 0) || (map_loc(x, y)->bit & 0x2000)) {
-                special = 1;
-            } else {
-                special = 0;
-            }
+            special = (goody_at(x, y) || bonus_at(x, y, 0) || (map_loc(x, y)->bit & 0x2000)) ? 1 : 0;
             yield = crop_yield(ConsoleGlobal.faction_id_, -1, x, y, 0);
             tile = map_loc(x, y);
             bits = tile->bit;
