@@ -106,6 +106,12 @@ without `/Oy-`).
   refused site is skipped while cheaper later sites can still inline. Every
   expansion competes, including code after the return sites, and there is a
   per-callee size cap as well.
+- **Depth before position.** Depth-1 sites expand before depth-2 sites. Every
+  invented forwarding layer in a recovered helper (`write_cent` →
+  `write_cent_text`) pushes the real body one level deeper and moves the
+  cut-off; collapse such layers into the original body. Parameter copies
+  (`total`, `cur`) inside a callee can make it unaffordable at a site even when
+  its own bytes don't change (buffer.cpp `write_strings`, 0.41 → 0.80).
 - **Definition order and keywords.** VC6 does not auto-inline a plain function,
   or an explicit free `inline`, defined *after* its caller (check C4711, because
   there are exceptions). An explicit `inline` *member* defined later still
