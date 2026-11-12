@@ -105,7 +105,7 @@ static inline RECT *pushbutton_expand_rect(RECT *rect, int horizontal, int verti
     return rect;
 }
 
-// ORIGINAL: 0x0062C110 ?on_redraw@PushButton@@QAEXXZ 0x0062C110-0x0062C82D
+// ORIGINAL: 0x0062C110 ?on_redraw@PushButton@@QAEXXZ 0x0062C110-0x0062C82D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned PushButton table 0x670C60 slot 12 selects 0x62C110.", "The original body consumes all eighteen AB8..AFC words as Sprite receivers/tile arguments. pushbutton.cpp copies the table into those words; game.cpp publishes six borrowed sprite pointers and nulls the other twelve.", "The retained seed TRIED note documents the two parallel nine-sprite sets and pressed-state nesting; both branches remain in this source body."], "reason": "Recover the complete inherited-buffer painter in PushButton, using typed Sprite consumers and its actual BaseButton/GraphicWin hierarchy."}
 // kind      game
 // symbol    ?on_redraw@PushButton@@UAEXXZ
