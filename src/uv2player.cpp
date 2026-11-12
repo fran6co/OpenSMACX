@@ -15,6 +15,10 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+// WORKAROUND(noinline): show_post_movie_text's StringList local calls
+// StringStruct::StringStruct (0x00401000) out of line (0x004BEF71), giving
+// its three-state EH layout; see stringstruct.h.
+#define STRINGSTRUCT_CTOR_OUT_OF_LINE
 #include "stdafx.h"
 #include "uv2player.h"
 #include <mmsystem.h>
