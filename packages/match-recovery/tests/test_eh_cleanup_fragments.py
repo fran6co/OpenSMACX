@@ -244,7 +244,7 @@ def test_unresolved_or_forged_support_never_measures_a_child(tmp_path):
     assert "not resolved by the package" in results[ACTIONS[0][0]] and compiles == 0
 
 
-def test_recording_refuses_children_and_their_parent(tmp_path):
+def test_recording_refuses_a_child_alone_and_a_parent_without_its_children(tmp_path):
     path = tmp_path / "owner.cpp"
     path.write_text(source())
     rows = read_text(path.read_text(), path)
@@ -252,10 +252,96 @@ def test_recording_refuses_children_and_their_parent(tmp_path):
     def unexpected():
         raise AssertionError("recording must refuse before measuring")
 
-    for row, match in ((rows[0], "non-callable function fragment"), (rows[2], "attached function fragment")):
+    for selection, match in (([rows[0]], "non-callable function fragment; record its parent 0x00401000"),
+                             ([rows[0], rows[1]], "record its parent"),
+                             ([rows[2]], "every attached function fragment.*missing 0x00401100, 0x00401108"),
+                             ([rows[2], rows[1]], "missing 0x00401100$")):
         with pytest.raises(ValueError, match=match):
-            record_claims([row], measure=unexpected, validate=lambda: None,
+            record_claims(selection, measure=unexpected, validate=lambda: None,
                           staging_directory=tmp_path / "stage")
+    assert path.read_text() == source()
+
+
+def recorded(tmp_path, *, text=None, compiled=None, results=None):
+    """Record the parent and its expanded children through a real unit measurement."""
+    from match_recovery.source.recording import with_attached_fragments
+    path = tmp_path / "owner.cpp"
+    path.write_text(text if text is not None else source())
+    image = tmp_path / "original.exe"
+    image.write_bytes(_pe(cold_size=32))
+    rows = read_text(path.read_text(), path)
+    selected = with_attached_fragments([rows[2]], rows)
+    assert [row.address for row in selected] == [PARENT, *(low for low, _ in ACTIONS)]
+    groups, refused = resolve_fragment_pairs(rows, selected)
+    assert not refused
+    validated = []
+
+    def measure():
+        unit = compare_unit(selected, image, path, [], ("trial",),
+                            compiler=lambda *_: compiled if compiled is not None else _coff(cold_size=32),
+                            fragment_pairs=groups)
+        return results(unit.results) if results is not None else unit.results
+
+    result = record_claims(selected, measure=measure, validate=lambda: validated.append(1),
+                           staging_directory=tmp_path / "stage")
+    return result, path, read_text(path.read_text(), path)
+
+
+def test_recording_a_parent_publishes_it_with_every_child_from_one_measurement(tmp_path):
+    result, path, after = recorded(tmp_path)
+    assert result.exit_code == 0 and result.changed_files == (path,)
+    assert [row.address for row in result.updated] == [PARENT, *(low for low, _ in ACTIONS)]
+    assert all(row.byte_exact for row in after)
+    # Relations, bindings and parent spans survive; only claim tokens changed.
+    assert [row.function_fragment for row in after] == [
+        row.function_fragment for row in read_text(source(), path)]
+    assert after[2].image_spans == (PRIMARY, STUB)
+    assert path.read_text().count("RECOVERY_FRAGMENT:") == 2
+    assert path.read_text().count(" BYTE_EXACT") == 3
+
+
+def test_recording_a_non_exact_parent_records_nothing(tmp_path):
+    damaged = change_code(_coff(cold_size=32), 2, 2, 0xE0)
+    result, path, after = recorded(tmp_path, compiled=damaged)
+    assert result.exit_code == 1 and not result.updated and not result.changed_files
+    assert path.read_text() == source()
+    assert {row.address for row, _ in result.measured} == {PARENT, *(low for low, _ in ACTIONS)}
+
+
+def test_recording_refuses_a_child_missing_from_the_measurement(tmp_path):
+    with pytest.raises(ValueError, match="complete recording selection"):
+        recorded(tmp_path, results=lambda rows: [row for row in rows if row[0].address != ACTIONS[1][0]])
+    assert (tmp_path / "owner.cpp").read_text() == source()
+
+
+@pytest.mark.parametrize("damage", ["child_unmeasured", "child_other_trial", "parent_short_extent"])
+def test_recording_refuses_an_exact_parent_that_does_not_cover_every_child(tmp_path, damage):
+    def results(rows):
+        changed = []
+        for row, value in rows:
+            if damage == "child_unmeasured" and row.address == ACTIONS[0][0]:
+                value = "fragment has no resolved same-TU parent support"
+            elif damage == "child_other_trial" and row.address == ACTIONS[1][0]:
+                value = replace(value, flags="another trial")
+            elif damage == "parent_short_extent" and row.address == PARENT:
+                value = replace(value, compared_bytes=value.compared_bytes - 10)
+            changed.append((row, value))
+        return changed
+
+    result, path, _after = recorded(tmp_path, results=results)
+    assert result.exit_code == 3 and not result.updated and not result.changed_files
+    assert {row.address for row, _ in result.unresolved} == {PARENT, *(low for low, _ in ACTIONS)}
+    assert path.read_text() == source()
+
+
+def test_recording_regressed_claimed_parent_regresses_children_without_demotion(tmp_path):
+    claimed = source().replace(" FILE\n", " FILE BYTE_EXACT\n")
+    assert claimed.count("BYTE_EXACT") == 3
+    damaged = change_code(_coff(cold_size=32), 2, 2, 0xE0)
+    result, path, after = recorded(tmp_path, text=claimed, compiled=damaged)
+    assert result.exit_code == 1 and not result.updated and not result.changed_files
+    assert {row.address for row, _ in result.regressed} == {PARENT, *(low for low, _ in ACTIONS)}
+    assert path.read_text() == claimed and all(row.byte_exact for row in after)
 
 
 def test_match_check_derives_children_from_the_measured_parent(match_base_project):

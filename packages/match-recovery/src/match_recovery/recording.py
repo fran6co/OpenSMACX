@@ -18,19 +18,20 @@ from .model import digest, require_text
 from .records import parse_json_value, read_json
 from .source import read_file
 from .source.model import Mode
-from .source.asm import shared_spans
+from .source.asm import resolve_fragment_pairs, shared_spans
 from .body_attribution import compare_unit_with_attribution
-from .source.recording import record_claims
+from .source.recording import record_claims, with_attached_fragments
 from .source_history import git
 from .source_inventory import image_pin
 from .source_selection import measurement_reference_targets, select_records, compilation_context
 
 
 def _unit(job):
-    root, profile, path, records, image, arguments, flags, shared, targets = job
+    root, profile, path, records, image, arguments, flags, shared, targets, fragment_pairs = job
     compiler = Compiler(root, profile=profile)
     return compare_unit_with_attribution(records, image, path, arguments, flags, shared,
-                                         root=root, compiler=compiler, targets=targets)
+                                         root=root, compiler=compiler, targets=targets,
+                                         fragment_pairs=fragment_pairs)
 
 
 def record(root: Path, targets, *, image: Path, in_file: str | None = None,
@@ -108,6 +109,9 @@ def record(root: Path, targets, *, image: Path, in_file: str | None = None,
         relative_path(in_file)
         host = settings.source.path(root, in_file)
     selected = select_records(records, targets, host, settings.source.symbol_format)
+    # A parent records together with every attached fragment from one combined
+    # measurement; the fragments are never independently callable subjects.
+    selected = with_attached_fragments(selected, records)
     if any(row.mode is Mode.UNBOUND for row in selected):
         raise ValueError("cannot record an UNBOUND mapping; it has no emitted body to measure")
     if any(row.path.suffix not in settings.unit_extensions for row in selected):
@@ -124,6 +128,22 @@ def record(root: Path, targets, *, image: Path, in_file: str | None = None,
         arguments = tuple(values)
     shared = shared_spans(records)
     references = measurement_reference_targets(root, settings)
+    fragment_pairs = ()
+    if any(row.function_fragment is not None for row in selected):
+        from .component_original_routing import component_record_identity_candidates
+        from .model import Origin
+        from .source_inventory import source_snapshot
+        candidates = component_record_identity_candidates(source_snapshot(root, allow_empty=True))
+        pin = image_pin(root, settings.source)
+        component_keys = frozenset(
+            (row.path.resolve(), row.address, row.line) for row in records
+            if (row.path.relative_to(root).as_posix(),
+                Origin(pin, settings.source.address_space, row.address).entity_id) in candidates)
+        fragment_pairs, refused = resolve_fragment_pairs(
+            records, selected, component_keys=component_keys,
+            is_seed=lambda row: settings.source.is_seed(row.path.relative_to(root).as_posix()))
+        if any((row.path.resolve(), row.address, row.line) in refused for row in selected):
+            raise ValueError("fragment parent/child ownership is ambiguous or conflicts with a component")
     groups = {}
     for row in selected:
         unit_path = compilation_context(root, row, settings)
@@ -131,8 +151,10 @@ def record(root: Path, targets, *, image: Path, in_file: str | None = None,
             raise ValueError("selected mapping context is not a configured translation unit")
         groups.setdefault((unit_path, row.path), []).append(row)
     work = [(root, settings.compiler_profile, unit_path, group, image, arguments,
-             settings.flags_for(unit_path.relative_to(root).as_posix()), shared, references)
-            for (unit_path, _marker_path), group in groups.items()]
+             settings.flags_for(unit_path.relative_to(root).as_posix()), shared, references,
+             tuple(pair for pair in fragment_pairs
+                   if any(member.path == marker_path for member in pair.members)))
+            for (unit_path, marker_path), group in groups.items()]
     measurements = []
 
     def validate():

@@ -895,11 +895,39 @@ def test_parent_recording_refuses_attached_fragment_before_injected_exact_result
     def validate():
         called.append("validate")
 
-    with pytest.raises(ValueError, match="parent with an attached function fragment"):
+    with pytest.raises(ValueError, match="every attached function fragment in the selection"):
         record_claims([parent], measure=injected_exact, validate=validate,
                       staging_directory=tmp_path / "staging")
     assert source_path.read_bytes() == before
     assert called == []
+
+
+def test_parent_recording_publishes_terminal_fragment_from_one_combined_measurement(tmp_path):
+    from match_recovery.source.recording import with_attached_fragments
+    source_path = tmp_path / "fixture.cpp"
+    text = (
+        "// ORIGINAL: 0x00401000 parent 0x00401000-0x00401001 FILE\n"
+        "// symbol    _f\n"
+        "// ORIGINAL: 0x00401001 tail 0x00401001-0x00401002 FILE\n"
+        '// RECOVERY_FRAGMENT: v1 {"evidence":["pinned fixture"],'
+        '"parent_address":"0x00401000","parent_symbol":"_f","reason":"adjacent terminal byte"}\n')
+    source_path.write_text(text)
+    rows = read_text(text, source_path)
+    selected = with_attached_fragments([rows[0]], rows)
+    assert selected == rows
+    image = tmp_path / "fixture.exe"
+    image.write_bytes(pe_fixture(b"\x90\xc3"))
+
+    def measure():
+        return compare_unit(selected, image, source_path, [], ((),),
+                            compiler=lambda *_: coff_fixture(b"\x90\xc3"),
+                            fragment_pairs=resolved_legacy_pair(*rows, selected)).results
+
+    result = record_claims(selected, measure=measure, validate=lambda: None,
+                           staging_directory=tmp_path / "staging")
+    assert result.exit_code == 0 and len(result.updated) == 2
+    assert all(row.byte_exact for row in read_text(source_path.read_text(), source_path))
+    assert "RECOVERY_FRAGMENT: v1" in source_path.read_text()
 
 
 def test_public_measure_routes_fragment_through_parent_unit(match_base_project):
