@@ -6394,8 +6394,7 @@ void __cdecl base_check_support() {
             if (plan == PLAN_SUPPLY_CONVOY) {
                 if (Vehs[veh_id].order != ORDER_CONVOY
                     || Vehs[veh_id].order_auto_type != ORDERA_TERRA_AUTO_ROAD
-                    || tile_base_owner(&map_tiles()[Vehs[veh_id].y * (int)MapLongitude
-                                                      + (Vehs[veh_id].x >> 1)]) < 0) {
+                    || base_who(Vehs[veh_id].x, Vehs[veh_id].y) < 0) {
                     continue;
                 }
                 score = 99999;
@@ -9351,8 +9350,8 @@ int __cdecl base_connect(int priority) {
     }
     int best_dist = 9999;
     int region = region_at(BaseCurrent->x, BaseCurrent->y);
-    int best_y = -1;
     int best_x = -1;
+    int best_y = -1;
     int x;
     int y;
     for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
@@ -9362,8 +9361,7 @@ int __cdecl base_connect(int priority) {
         if (region_at(Bases[i].x, Bases[i].y) != region) {
             continue;
         }
-        int dist = (x_dist(BaseCurrent->x, Bases[i].x)
-                    + abs(BaseCurrent->y - Bases[i].y)) >> 1;
+        int dist = cursor_dist(BaseCurrent->x, BaseCurrent->y, Bases[i].x, Bases[i].y);
         if (Bases[i].faction_id_current != BaseCurrent->faction_id_current) {
             if (dist > 5
                 || !(PlayersData[BaseCurrent->faction_id_current]
@@ -9405,7 +9403,7 @@ int __cdecl base_connect(int priority) {
                 }
                 if (x == Bases[i].x && y == Bases[i].y) {
                     found = 1;
-                    break;
+                    goto path_done;
                 }
                 int veh_owner;
                 int territory;
@@ -9419,7 +9417,8 @@ int __cdecl base_connect(int priority) {
                         || veh_owner == BaseCurrent->faction_id_current
                         || (PlayersData[BaseCurrent->faction_id_current].diplo_treaties[veh_owner]
                             & DTREATY_PACT))
-                    && zoc_sea(x, y, BaseCurrent->faction_id_current) <= 0
+                    // The image tests the zone of control with `dec eax; jns`.
+                    && zoc_sea(x, y, BaseCurrent->faction_id_current) - 1 < 0
                     && ((territory = whose_territory(BaseCurrent->faction_id_current, x, y,
                                                      NULL, FALSE)) < 0
                         || territory == BaseCurrent->faction_id_current
@@ -9444,31 +9443,31 @@ int __cdecl base_connect(int priority) {
                     has_tech(Rules.tech_build_roads_fungus, BaseCurrent->faction_id_current) ? 0 : 4,
                     -1);
             }
+        path_done:;
         }
     next_base:;
     }
     x = BaseCurrent->x;
     y = BaseCurrent->y;
     if (on_map(best_x, best_y)) {
-        if (found
-            && (!is_human(BaseCurrent->faction_id_current)
-                || (GameDataStateStorage.fields_.game_more_preferences_
-                    & MPREF_AUTO_FORMER_BUILD_SENSORS))
-            && !Paths.sensors(BaseCurrent->faction_id_current, &x, &y)
-            && vector_dist(BaseCurrent->x, BaseCurrent->y, x, y)
-                < vector_dist(BaseCurrent->x, BaseCurrent->y, best_x, best_y)) {
-            add_goal(BaseCurrent->faction_id_current, AI_GOAL_TERRAFORM_LAND, priority, x, y,
-                     BaseIDCurrentSelected);
+        if (!found
+            || (is_human(BaseCurrent->faction_id_current)
+                && !(GameDataStateStorage.fields_.game_more_preferences_
+                     & MPREF_AUTO_FORMER_BUILD_SENSORS))
+            || Paths.sensors(BaseCurrent->faction_id_current, &x, &y)
+            || vector_dist(BaseCurrent->x, BaseCurrent->y, x, y)
+                >= vector_dist(BaseCurrent->x, BaseCurrent->y, best_x, best_y)) {
+            add_goal(BaseCurrent->faction_id_current, AI_GOAL_TERRAFORM_LAND, priority,
+                     best_x, best_y, BaseIDCurrentSelected);
             return 1;
         }
-        add_goal(BaseCurrent->faction_id_current, AI_GOAL_TERRAFORM_LAND, priority,
-                 best_x, best_y, BaseIDCurrentSelected);
-        return 1;
-    }
-    if ((is_human(BaseCurrent->faction_id_current)
-         && !(GameDataStateStorage.fields_.game_more_preferences_
-              & MPREF_AUTO_FORMER_BUILD_SENSORS))
-        || Paths.sensors(BaseCurrent->faction_id_current, &x, &y)) {
+    } else if ((!is_human(BaseCurrent->faction_id_current)
+                || (GameDataStateStorage.fields_.game_more_preferences_
+                    & MPREF_AUTO_FORMER_BUILD_SENSORS))
+               && !Paths.sensors(BaseCurrent->faction_id_current, &x, &y)) {
+        // Empty arm: the image falls into the shared add_goal and keeps the
+        // failure return last, behind the one it shares with the ocean test.
+    } else {
         return 0;
     }
     add_goal(BaseCurrent->faction_id_current, AI_GOAL_TERRAFORM_LAND, priority, x, y,
@@ -10537,12 +10536,15 @@ int __cdecl base_growth() {
             return 0;
         }
         popb("LOWNUTRIENTSPEC2", 0, -1, "starv_sm.pcx", 0);
+        // WORKAROUND(decl): a read that both paths fold away keeps the dead
+        // bad_farms counter alive. The image keeps its stack slot and both
+        // increments (inc [ebp-8] at 0x004EF7D7) but never reads it; without
+        // a read VC6 drops the counter and the ocean-farm test (181 -> 75
+        // instruction distance). Original spelling unknown; leaves one dead
+        // load before the epilogue.
+        if (bad_farms) return 0;
     }
     return 0;
-}
-
-static int upgrade_arithmetic_shift_three(int value) {
-    return value >> 3;
 }
 
 // ORIGINAL: 0x004EFE80 ?upgrade_prototype@@YAHHHHH@Z 0x004EFE80-0x004F045B
