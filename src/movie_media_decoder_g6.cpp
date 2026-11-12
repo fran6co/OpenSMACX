@@ -20,8 +20,8 @@
 // decoder's C functions 0x005D3980..0x005D4231 carry Pentium Pro (/G6)
 // instruction scheduling (0x005D3DF0, 0x005D3F50 and 0x005D4020 match only
 // with /G6; 0x005D3980 is closer with it). The preceding macroblock decoder
-// 0x005D2E70 and its driver 0x005D35B0 measure closer without /G6 and live
-// in movie_media_macroblock.cpp, so the contribution boundary lies at
+// 0x005D2E70 and its driver 0x005D35B0 measure closer without /G6 and stay
+// in movie_media_decoder.cpp, so the contribution boundary lies at
 // 0x005D3980. These owners were split out of movie_media_decoder.cpp so that
 // they compile with the evidenced /G6 recipe. Source order follows image
 // address order.

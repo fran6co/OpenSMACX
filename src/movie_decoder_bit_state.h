@@ -2,10 +2,10 @@
 
 #include <stdint.h>
 
-// Shared 12-byte reader shape used by the frame and Huffman decoder views.
-// Its one instance is the standalone movie_media_frame_bit_state object at
-// 009C464C; staging decisions belong to each decoder operation, not to a
-// second representation of the fields.
+// 12-byte reader shape of the Huffman decoder's State view. The frame reader
+// it mirrors is not an instance of it: cursor, accumulator and bit count are
+// three globals at 009C464C/50/54 (movie_decoder_owner.h), which the
+// hand-written 0x005CE85C loads and stores directly.
 struct MovieDecoderBitState {
   const uint8_t *cursor;
   uint32_t accumulator;

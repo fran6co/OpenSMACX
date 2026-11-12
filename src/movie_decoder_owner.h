@@ -3,7 +3,6 @@
 
 #include "movie_media.h"
 #include "movie_decoder_records.h"
-#include "movie_decoder_bit_state.h"
 #include <stdint.h>
 #include <stddef.h>
 
@@ -65,8 +64,6 @@ extern MediaDecoderProcessStorage movie_media_decoder_process_storage;
 // view of those accesses, not proof of a single original allocation boundary.
 // The coefficient offset table is pinned initialized data; the other tables
 // are runtime-built/used windows and need one shared definition.
-typedef MovieDecoderBitState MediaDecoderFrameBitState;
-
 struct MediaDecoderTableStorage {
   int32_t decoded_coefficient_words[64];            // [009C314C,009C324C)
   int32_t scale_source_words[64];                   // [009C324C,009C334C)
@@ -79,12 +76,15 @@ struct MediaDecoderTableStorage {
 };
 extern MediaDecoderTableStorage movie_media_decoder_tables;
 
-// The frame bit reader at [009C464C,009C4658) is its own object, not a member
+// The frame bit reader at [009C464C,009C4658) is three globals, not a member
 // of the table window above: 0x005D2E70 reads block_prefix_words with a
 // variable index, and when the reader shares that aggregate VC6 must keep
-// refill stores the image drops (521 vs 517 instructions); a separate
-// reader object reproduces the image's 517.
-extern MediaDecoderFrameBitState movie_media_frame_bit_state;
+// refill stores the image drops (521 vs 517 instructions). As one 12-byte
+// struct it reloads the bit count before the accumulator (515/517); as
+// separate objects it matches the image (owned by movie_media_decoder.cpp).
+extern const uint8_t *movie_media_frame_bit_cursor;    // 009C464C
+extern uint32_t movie_media_frame_bit_accumulator;     // 009C4650
+extern int32_t movie_media_frame_bit_count;            // 009C4654
 
 typedef char media_transform_workspace_window_size_check[
     sizeof(MediaTransformWorkspace) == 0x81c ? 1 : -1];
@@ -100,8 +100,6 @@ typedef char media_decoder_process_access_window_size_check[
     sizeof(MediaDecoderProcessStorage) == 0x60c ? 1 : -1];
 typedef char media_decoder_table_access_window_size_check[
     sizeof(MediaDecoderTableStorage) == 0x1500 ? 1 : -1];
-typedef char media_decoder_frame_bit_state_size_check[
-    sizeof(MediaDecoderFrameBitState) == 0x0c ? 1 : -1];
 
 // Selected statically initialized/accessed table window. Its source aggregate
 // size is required for the local type, but does not independently prove the
