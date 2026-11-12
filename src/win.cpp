@@ -2999,16 +2999,6 @@ Purpose: The tree walk `Win::get_mouse_window` delegates to once it has a
          address while the real body sat in an archive the build never
          compiled.
 */
-// TRIED (2026-08-27, the mandated honest form): walking this object's own
-// members - iSomeFlag_/iFlags_, win_parent_, child_count_, children_[],
-// poWinBase_, outer_rect_/client_rect_ fields, buffer1_..4_ - instead of
-// the char*-plus-offset walk. Attempted after a full listing_diff: the
-// image opens `push ecx` with args read at [esp+N], ours opens a real EBP
-// frame regardless of spelling, so agreement never leaves instruction 0
-// (measured 1 of 332 both ways). RECEIVER-SPILL WALL per
-// docs/recovery/AGENT_BRIEF.md; member rewrite parked until a lever for
-// that prologue exists. The +0x444 Buffer cast at the tail predates this
-// note and is part of that same untested walk.
 // ORIGINAL: 0x005F6AB0 ?get_mouse_window_recurse@@YAHPAUWin@@PAHPAH@Z 0x005F6AB0-0x005F6F06 FILE
 // symbol    ?get_mouse_window_recurse@@YAPAVWin@@PAV1@PAH1@Z
 // notes     Differs from the catalogued name in both directions: PAV for
@@ -3023,22 +3013,10 @@ Purpose: The tree walk `Win::get_mouse_window` delegates to once it has a
 // result as a window. The mangled name differs from the catalogue's for
 // exactly that reason; the body is unclaimed, so no claim rests on it.
 //
-// RECEIVER-SPILL WALL, CONFIRMED ONCE 2026-08-28 at 1/332 (328 compiled
-// against the image's 332). The fingerprint is exactly the one
-// AGENT_BRIEF describes: the image opens `push ecx` - reserving the
-// receiver's own spill slot - then pushes four more callee-saved registers
-// and only then reads its argument at `[esp+0x14]`, five pushes ahead of
-// the first guard. No source spelling computes addresses that eagerly.
-// TRIED (prior passes, confirmed not re-ground): guard reordering, local
-//   collapsing, /Oy- on and off - the flag search still settles on
-//   `/c /O2 /Gy /GR- /Oy- /GX`, whose frame pointer (`push ebp; mov
-//   ebp,esp`) the image, which is FPO here, has no room for.
-// ALSO VISIBLE, for the next pass rather than measured: the image lowers
-//   the first guard as `test byte ptr [esi + 0x9c], 1` straight out of
-//   memory, where this body loads the byte into cl first. Before the
-//   structural migration below, this free function reached Win's protected
-//   fields as offsets; the friend declaration now permits named access.
-//   The historical receiver-spill mismatch remains unaddressed.
+// Matched 2026-11-12: the long-recorded "receiver-spill wall" was not a
+// prologue problem. The image's tail is reached only by goto (the last
+// visible path ends in `return window`), and both outer-rect paths clear
+// WinMouseDirect themselves (VC6 cross-jumps the two stores).
 Win *__cdecl get_mouse_window_recurse(Win * window, int * x, int * y) {
     int savedX, savedY;
     int i;
@@ -3126,16 +3104,17 @@ Win *__cdecl get_mouse_window_recurse(Win * window, int * x, int * y) {
         }
         *x -= window->outer_rect_.left;
         *y -= window->outer_rect_.top;
+        WinMouseDirect = 0;
     } else {
         if (!in_box(*x, *y, &window->outer_rect_)) {
             goto tail;
         }
         *x -= window->outer_rect_.left;
         *y -= window->outer_rect_.top;
+        WinMouseDirect = 0;
     }
-    // The client path joins here when the point is inside the outer
-    // rectangle (0x005F6DDC), rather than returning.
-    WinMouseDirect = 0;
+    // Both paths clear WinMouseDirect; VC6 cross-jumps the two stores into
+    // one block (0x005F6E1E), so the loop's zero stays an immediate.
 
     for (i = 0; i < window->child_count_; i++) {
         if (window == window->poWinBase_ &&
@@ -3146,20 +3125,24 @@ Win *__cdecl get_mouse_window_recurse(Win * window, int * x, int * y) {
         }
     }
 
-    if ((window->iFlags_ & 2) == 0) {
-        if (window->get_graphic_win() == 0 || (window->iFlags_ & 0x1000000) == 0 ||
-            (window->iFlags_ & 0x100) != 0) {
-            return window;
-        }
-        // The window's own pixels: GraphicWin's Buffer base (+0x444).
+    if ((window->iFlags_ & 2) != 0) {
+        goto tail;
+    }
+    if (window->get_graphic_win() == 0 || (window->iFlags_ & 0x1000000) == 0 ||
+        (window->iFlags_ & 0x100) != 0) {
+        return window;
+    }
+    {
         unsigned char pixel = static_cast<unsigned char>(
             static_cast<GraphicWin *>(window)->get_pixel(*x, *y));
-        if (pixel != WinFillColour) {
-            if (window->color_table_ == 0 || pixel != 0) {
-                return window;
-            }
+        if (pixel == WinFillColour) {
+            goto tail;
+        }
+        if (window->color_table_ != 0 && pixel == 0) {
+            goto tail;
         }
     }
+    return window;
 
 tail:
     if ((window->iFlags_ & 0x20) == 0) {
@@ -6749,69 +6732,62 @@ int Win::init(int x, int y, int width, int height, char * caption,
 
     // Keep the unchecked saved-parent access and the partially linked failure
     // paths. Allocation callbacks can change the list's allocator and cursor.
-    if (!skipMenuList && (parent->iFlags_ & 0x1000) == 0) {
-        Win *parent_window = parent;
-        int initCount = parent_window->list_.count_;
-        if (initCount != 0) {
-            WinDialogNode *newNode = parent_window->list_.allocator_
-                ? static_cast<WinDialogNode *>(parent_window->list_.allocator_->get(0x1C))
+    // Image order (0x005EC48D): the empty-list arm comes first, each payload
+    // allocation stores straight into the node, and every link is reread
+    // through head_.
+    if (!skipMenuList && (~parent->iFlags_ & 0x1000) != 0) {
+        if (parent->list_.count_ == 0) {
+            parent->list_.head_ = parent->list_.allocator_
+                ? static_cast<WinDialogNode *>(parent->list_.allocator_->get(0x1C))
                 : static_cast<WinDialogNode *>(mem_get(0x1C));
-            parent_window->list_.head_->previous_->next_ = newNode;
-            WinDialogNode *previous = parent_window->list_.head_->previous_;
-            WinDialogNode *node = previous->next_;
-            if (node == 0) {
+            if (parent->list_.head_ == 0) {
                 goto init_registration_tail;
             }
-            node->previous_ = previous;
-            previous->next_->next_ = parent_window->list_.head_;
-            parent_window->list_.head_->previous_ = previous->next_;
-            parent_window->list_.current_ = parent_window->list_.head_->previous_;
-            parent_window->list_.current_->focus_owner_ = this;
-            void *payload;
-            if (parent_window->list_.allocator_ != 0) {
-                payload = parent_window->list_.allocator_->get(4);
+            parent->list_.head_->focus_owner_ = this;
+            parent->list_.head_->next_ = parent->list_.head_;
+            parent->list_.head_->previous_ = parent->list_.head_;
+            if (parent->list_.allocator_ != 0) {
+                parent->list_.head_->allocation_ = parent->list_.allocator_->get(4);
             } else {
-                payload = mem_get(4);
+                parent->list_.head_->allocation_ = mem_get(4);
             }
-            parent_window->list_.current_->allocation_ = payload;
-            if (parent_window->list_.current_->allocation_ == 0) {
+            if (parent->list_.head_->allocation_ == 0) {
                 goto init_registration_tail;
             }
+            parent->list_.current_ = parent->list_.head_;
         } else {
-            WinDialogNode *newNode = parent_window->list_.allocator_
-                ? static_cast<WinDialogNode *>(parent_window->list_.allocator_->get(0x1C))
+            parent->list_.head_->previous_->next_ = parent->list_.allocator_
+                ? static_cast<WinDialogNode *>(parent->list_.allocator_->get(0x1C))
                 : static_cast<WinDialogNode *>(mem_get(0x1C));
-            parent_window->list_.head_ = newNode;
-            if (newNode == 0) {
+            if (parent->list_.head_->previous_->next_ == 0) {
                 goto init_registration_tail;
             }
-            newNode->focus_owner_ = this;
-            parent_window->list_.head_->next_ = parent_window->list_.head_;
-            parent_window->list_.head_->previous_ = parent_window->list_.head_;
-            void *payload;
-            if (parent_window->list_.allocator_ != 0) {
-                payload = parent_window->list_.allocator_->get(4);
+            parent->list_.head_->previous_->next_->previous_ = parent->list_.head_->previous_;
+            parent->list_.head_->previous_->next_->next_ = parent->list_.head_;
+            parent->list_.head_->previous_ = parent->list_.head_->previous_->next_;
+            parent->list_.current_ = parent->list_.head_->previous_;
+            parent->list_.current_->focus_owner_ = this;
+            if (parent->list_.allocator_ != 0) {
+                parent->list_.current_->allocation_ = parent->list_.allocator_->get(4);
             } else {
-                payload = mem_get(4);
+                parent->list_.current_->allocation_ = mem_get(4);
             }
-            parent_window->list_.head_->allocation_ = payload;
-            if (parent_window->list_.head_->allocation_ == 0) {
+            if (parent->list_.current_->allocation_ == 0) {
                 goto init_registration_tail;
             }
-            parent_window->list_.current_ = parent_window->list_.head_;
         }
 
-        parent_window->list_.tail_ = parent_window->list_.count_;
-        parent_window->list_.count_ = parent_window->list_.count_ + 1;
+        parent->list_.tail_ = parent->list_.count_;
+        parent->list_.count_ = parent->list_.count_ + 1;
 
 init_registration_tail:
-        int cnt = parent_window->list_.count_ - 1;
+        int cnt = parent->list_.count_ - 1;
         if (cnt >= 0) {
-            WinDialogNode *head = parent_window->list_.head_;
-            parent_window->list_.tail_ = 0;
-            parent_window->list_.current_ = head;
+            WinDialogNode *head = parent->list_.head_;
+            parent->list_.tail_ = 0;
+            parent->list_.current_ = head;
         }
-        win_parent_ = parent_window;
+        win_parent_ = parent;
     }
 
     this->iSomeFlag_ |= 4;

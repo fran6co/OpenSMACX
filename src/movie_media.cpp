@@ -947,8 +947,8 @@ void MediaRuntime::sub_5cbe30() {
     DDCAPS caps_a;
     DDCAPS caps_b;
     memset(&caps_a, 0, sizeof(caps_a));
-    memset(&caps_b, 0, sizeof(caps_b));
     caps_a.dwSize = 0x16c;
+    memset(&caps_b, 0, sizeof(caps_b));
     caps_b.dwSize = 0x16c;
     if (descriptor->draw_device_10->GetCaps(&caps_a, &caps_b) == DD_OK) {
       if ((descriptor->capability_options_08 & 2) != 0 &&
