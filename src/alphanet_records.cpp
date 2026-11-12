@@ -44,11 +44,9 @@ namespace {
 template<class List> inline typename List::Payload *next_owned_list(List *list) {
     if (list->head_ == 0) return 0;
     typename List::Entry *next = list->current_->next_;
-    int position = list->current_position_;
     list->current_ = next;
     const int count = list->entry_count_;
-    ++position;
-    list->current_position_ = position;
+    const int position = ++list->current_position_;
     if (position == count) list->current_position_ = 0;
     return list->current_->payload_;
 }

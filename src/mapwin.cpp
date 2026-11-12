@@ -62,6 +62,8 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682540 selects initializer0x462080..0x462098 and registers exit0x4620a0..0x4620b4; complete independent decode establishes both ends.", "Original operations identify storage0x7d4060, source object?FarmMapWindow@@3VMapWin@@A. MainInterface uses constructor45EF10/destructor45EB80; FarmMap uses virtual-base constructor4626E0 with hidden most-derived argument1 and exit receiver7F5ACC calling own-part420F90 then virtual GraphicWin5D4DD0.", "Fresh physical mapwin.cpp COFF selects _$E26 via .CRT$XCU and registers _$E24, both naming the genuine global. The corrected declarations and actual linked table initialize MainInterface before FarmMap, matching original slots682534/682540; C++ owns reverse destruction and virtual-base lifetime.", "Current compiler-local symbols interpret present emission, not original debug names or historical TU identity. The bounded two-object ordering does not establish complete CRT order, strict linked preservation, runtime or game acceptance."], "reason": "Bind original exit to genuine source-owned ?FarmMapWindow@@3VMapWin@@A compiler-generated lifetime after correcting declaration order; no hand-authored callback or explicit virtual-base flag."}
 // symbol    _$E14
 #define MAPWIN_TILE_IN_VIEW_INLINE  // MapWin::tile_in_view body (basewin.h)
+// WORKAROUND(decl): Buffer's guarded three-argument write_cent_l (buffer.h).
+#define BUFFER_WRITE_CENT_XY_INLINE
 #include "stdafx.h"
 #include "font_metrics.h"
 #include "interface_fonts.h"
@@ -2392,8 +2394,8 @@ void MapWin::on_mouse_move(int pixel_x, int pixel_y) {
                 field_1DE0C_ = static_cast<uint32_t>(tile_x);
                 feedback_hover_y_ = tile_y;
 
-                const int vehicle = ConsoleGlobal.selected_vehicle_;
-                if (vehicle >= 0) {
+                if (ConsoleGlobal.selected_vehicle_ >= 0) {
+                    const int vehicle = ConsoleGlobal.selected_vehicle_;
                     feedback_proto_ = Vehs[vehicle].proto_id;
                     feedback_repeat_ = ConsoleGlobal.field_23D10_ == 8;
                     if (feedback_repeat_ != 0) {
@@ -3524,22 +3526,6 @@ static inline unsigned char sprite_transparent(const Sprite &sprite) {
     return sprite.transparent_index();
 }
 
-namespace {
-// WORKAROUND(decl): image 0x004680A1..0x4680D7 and 0x468861..0x468887 evaluate
-// the Buffer virtual base, test the text pointer, take strlen and call the
-// four-argument write_cent_l (0x005DD250): an inlined guarded Buffer member
-// whose header declaration is not recovered yet.
-// The original is a Buffer member (no null check on the conversion); this
-// twin binds the Buffer& first so the conversion still precedes the text
-// test (0x4680AA spill to [ebp-8]), at the cost of a null-checked select.
-inline int mapwin_write_cent(MapWin &window, char *text, int x, int y) {
-    Buffer &buffer = window;
-    if (text == 0) {
-        return 0;
-    }
-    return buffer.write_cent_l(text, x, y, static_cast<int>(strlen(text)));
-}
-}
 
 /*
 Purpose: Render one map tile's terrain polygon stack - the base land or
@@ -5468,7 +5454,7 @@ void MapWin::draw_base_names() {
                     set_text_color(0xFF, 0, 1, 1);
                 }
             }
-            mapwin_write_cent(*this, text, pixel_x + field_1DDBC_,
+            Buffer::write_cent_l(text, pixel_x + field_1DDBC_,
                          pixel_y + static_cast<int>(field_1DDC8_) * 7 / 2);
 
             if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0 &&
@@ -5490,7 +5476,7 @@ void MapWin::draw_base_names() {
                     strcat(text, StringTable.get(Facility[-production_id].name));
                 }
                 strcat(text, ")");
-                mapwin_write_cent(*this, text, pixel_x + field_1DDBC_,
+                Buffer::write_cent_l(text, pixel_x + field_1DDBC_,
                              pixel_y + static_cast<int>(field_1DDC8_) * 7 / 2 +
                                  font_line_advance(font_a_));
             } else if ((GameDataStateStorage.fields_.game_more_preferences_ &
@@ -5501,7 +5487,7 @@ void MapWin::draw_base_names() {
                     text[0] = '\0';
                     strcat(text, label_get(898));
                     CharUpperA(text);
-                    mapwin_write_cent(*this, text, pixel_x + field_1DDBC_,
+                    Buffer::write_cent_l(text, pixel_x + field_1DDBC_,
                                  pixel_y + static_cast<int>(field_1DDC8_) * 7 / 2 +
                                      font_line_advance(font_a_));
                 }
@@ -5512,7 +5498,7 @@ void MapWin::draw_base_names() {
                     text[0] = '\0';
                     strcat(text, label_get(898));
                     CharUpperA(text);
-                    mapwin_write_cent(*this, text, pixel_x + field_1DDBC_,
+                    Buffer::write_cent_l(text, pixel_x + field_1DDBC_,
                                  pixel_y + static_cast<int>(field_1DDC8_) * 7 / 2 +
                                      font_line_advance(font_a_));
                 }
@@ -5549,7 +5535,7 @@ void MapWin::draw_base_names() {
                     strcat(text, StringTable.get(Facility[-production_id].name));
                 }
                 strcat(text, ")");
-                mapwin_write_cent(*this, text, pixel_x + field_1DDBC_,
+                Buffer::write_cent_l(text, pixel_x + field_1DDBC_,
                              pixel_y + static_cast<int>(field_1DDC8_) * 7 / 2 +
                                  font_line_advance(font_a_));
             }
@@ -5588,7 +5574,7 @@ void MapWin::draw_base_names() {
                 }
             }
             tile_to_pixel(tile_x, tile_y, &pixel_x, &pixel_y);
-            mapwin_write_cent(*this, MapLandmark[index].name, pixel_x + field_1DDBC_,
+            Buffer::write_cent_l(MapLandmark[index].name, pixel_x + field_1DDBC_,
                          pixel_y + static_cast<int>(field_1DDC8_) * 7 / 2);
         }
         set_clip(&saved_clip);

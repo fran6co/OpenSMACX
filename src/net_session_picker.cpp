@@ -184,36 +184,79 @@ void NetSessionPickerWin::on_redraw() {
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor/destructor calls and direct accesses establish the GraphicWin base, ordered Time/Heap/ListBox/PushButton/list members, and observed tail through +0x37A4. The descriptive owner name and complete original allocation remain unproved.", "The integer timer adapter checks nonzero context; the distinct nullary focus member does not. Pinned table 0x670DDC establishes slot 12 at 0x670E0C -> 0x63C9D0 and slot 44 at 0x670E8C -> 0x63C3A0. Automatic owner destruction replaces manual table staging and executable-address forwarding.", "The Net caller retains one automatic picker, original unchecked copies and invalid-node error paths, and password-pointer reloads after modal execution. Indirect event linkage, precise unwind correspondence, historical matching and full linked/runtime fidelity remain obligations."], "reason": "Typed session-picker ownership and its Net receiver-backed caller, preserving the original entries and compiler-generated lifetime identities."}
 // symbol    ?draw_selected_rows@NetSessionPickerWin@@QAEXXZ
 // TRIED: `this` is GraphicWin* (esi passed straight to ?fill@GraphicWin@@ with no offset, and buffer_ member at self+0x444 matches every Buffer:: call site's `lea ecx,[esi+0x444]`), reading a RECT from self+0x374c and driving a nested box()-drawing loop, then (if Dialog::get_selected_id() is nonzero) reinterpreting that int return as a pointer into an unrelated list-cursor structure (+0x20/+0x34/+0x38/+0x3c/+0x40) to walk entries and write_l() their text - transcribed as raw offset arithmetic since that structure does not match the catalogued Dialog field layout at those offsets. Compiles and matches the first 6 instructions; diverges at #6 (original hoists `ebx = esi+0x374c` once and reuses it for all three RECT reads for the whole function, rebuilt recomputes the offset at each use) - register allocation, not source form.
+// WORKAROUND(inline): expand_rect (scroll.cpp) is a plain out-of-line
+// function in this tree; draw_selected_rows expands it inline (0x0063CC24:
+// the negated inset held in eax, subtracted from left/top, added to
+// right/bottom).
+static inline RECT *picker_expand_rect(RECT *rect, int horizontal, int vertical) {
+  rect->left -= horizontal;
+  rect->right += horizontal;
+  rect->top -= vertical;
+  rect->bottom += vertical;
+  return rect;
+}
+
+// WORKAROUND(inline): NetTextListBase::seek_pos (net_class.cpp) is out of
+// line in this tree; draw_selected_rows expands it inline (0x0063CC5B..
+// 0x0063CC99, both abs(-1) calls kept as real calls).
+static inline int picker_seek_pos(NetTextListBase &list, int position) {
+  typedef int (__cdecl *AbsFunction)(int);
+  AbsFunction abs_function = &abs;
+  if (position > list.entry_count_ - 1) return 0;
+  list.current_ = list.head_;
+  if (position < 0) {
+    if (abs_function(position) > list.entry_count_) return 0;
+    int steps = abs_function(position);
+    if (steps > 0) {
+      do {
+        --steps;
+        list.current_ = list.current_->previous;
+      } while (steps != 0);
+    }
+    list.current_position_ = position + list.entry_count_;
+  } else {
+    int steps = position;
+    if (steps > 0) {
+      do {
+        --steps;
+        list.current_ = list.current_->next;
+      } while (steps != 0);
+    }
+    list.current_position_ = position;
+  }
+  return 1;
+}
+
+// WORKAROUND(inline): NetTextListBase::next_entry (net_class.cpp) is out of
+// line in this tree; draw_selected_rows expands it inline (0x0063CCD0:
+// the position copy compared against a fresh entry_count_ load).
+static inline NetTextPayload *picker_next_entry(NetTextListBase &list) {
+  if (!list.head_) return 0;
+  list.current_ = list.current_->next;
+  if (++list.current_position_ == list.entry_count_) list.current_position_ = 0;
+  return list.current_->payload;
+}
+
 void NetSessionPickerWin::draw_selected_rows() {
-  RECT rect = tail_.rows_rect_;
+  RECT *rows = &tail_.rows_rect_;
+  RECT rect = *rows;
   GraphicWin::fill(&rect, tail_.selected_row_color_);
   rect.bottom = tail_.row_height_ + rect.top;
 
-  int row = 0;
-  if (0 < tail_.rows_visible_) {
-    do {
-      int column = 0;
-      if (0 < tail_.boxes_per_row_) {
-        do {
-          Buffer::box(&rect, tail_.row_box_color_a_, tail_.row_box_color_b_);
-          ++rect.left;
-          --rect.right;
-          ++rect.top;
-          --rect.bottom;
-          ++column;
-        } while (column < tail_.boxes_per_row_);
-      }
-      const int boxes = tail_.boxes_per_row_;
-      rect.left -= boxes;
-      rect.right += boxes;
-      rect.top = rect.top - boxes + tail_.row_height_;
-      rect.bottom = rect.bottom + boxes + tail_.row_height_;
-      ++row;
-    } while (row < tail_.rows_visible_);
+  for (int row = 0; row < tail_.rows_visible_; row++) {
+    for (int column = 0; column < tail_.boxes_per_row_; column++) {
+      Buffer::box(&rect, tail_.row_box_color_a_, tail_.row_box_color_b_);
+      ++rect.left;
+      --rect.right;
+      ++rect.top;
+      --rect.bottom;
+    }
+    picker_expand_rect(&rect, tail_.boxes_per_row_, tail_.boxes_per_row_);
+    rect.top += tail_.row_height_;
+    rect.bottom += tail_.row_height_;
   }
 
-  Dialog &dialog = static_cast<Dialog &>(sessions_view_);
-  const int selected_id = dialog.get_selected_id();
+  const int selected_id = sessions_view_.Dialog::get_selected_id();
   if (selected_id == 0) return;
 
   // ListBox::item stores the given ID in Dialog::item_list_; the refresh
@@ -222,60 +265,32 @@ void NetSessionPickerWin::draw_selected_rows() {
       static_cast<uintptr_t>(static_cast<unsigned int>(selected_id)));
   NetUnk72C &list = selected->entries_;
 
-  rect.left = tail_.rows_rect_.left;
-  rect.right = tail_.rows_rect_.right;
-  rect.bottom = tail_.rows_rect_.bottom;
-  rect.top = tail_.rows_rect_.top +
-      static_cast<int>(selected->max_players_) * tail_.row_height_;
+  rect = *rows;
+  rect.top += static_cast<int>(selected->max_players_) * tail_.row_height_;
   Buffer::change_color(&rect, tail_.selected_row_color_,
                        tail_.selected_text_color_a_);
 
-  const int inset = tail_.boxes_per_row_;
-  rect.left = tail_.rows_rect_.left + inset;
-  rect.right = tail_.second_label_rect_.right - inset;
-  rect.top = tail_.rows_rect_.top + inset;
-  rect.bottom = tail_.row_height_ + tail_.rows_rect_.top - inset;
+  rect = *rows;
+  rect.bottom = tail_.row_height_ + rect.top;
+  picker_expand_rect(&rect, -tail_.boxes_per_row_, -tail_.boxes_per_row_);
 
-  if (-2 < list.entry_count_ - 1) {
-    list.current_ = list.head_;
-    int steps = abs(-1);
-    if (steps <= list.entry_count_) {
-      steps = abs(-1);
-      if (0 < steps) {
-        do {
-          --steps;
-          list.current_ = list.current_->previous;
-        } while (steps != 0);
-      }
-      list.current_position_ = list.entry_count_ - 1;
-    }
-  }
-
+  picker_seek_pos(list, -1);
   Buffer::set_text_color(tail_.selected_text_color_b_,
                          tail_.selected_text_color_c_,
                          tail_.selected_text_color_d_, tail_.field_3794_);
 
-  int i = 0;
-  if (0 < list.entry_count_) {
-    do {
-      if (list.head_ != 0) {
-        const int next_position = list.current_position_ + 1;
-        list.current_ = list.current_->next;
-        list.current_position_ = next_position;
-        if (next_position == list.entry_count_) list.current_position_ = 0;
+  for (int i = 0; i < list.entry_count_; i++) {
+    picker_next_entry(list);
+    if (list.current_ != 0) {
+      NetTextPayload *payload = list.head_ ? list.current_->payload : 0;
+      char *text = payload->text;
+      if (text != 0) {
+        Buffer::write_l(text, &rect,
+                        static_cast<unsigned int>(std::strlen(text)));
       }
-      if (list.current_ != 0) {
-        NetTextPayload *payload = list.head_ == 0 ? 0 : list.current_->payload;
-        char *text = payload->text;
-        if (text != 0) {
-          Buffer::write_l(text, &rect,
-                          static_cast<unsigned int>(std::strlen(text)));
-        }
-      }
-      rect.top += tail_.row_height_;
-      rect.bottom += tail_.row_height_;
-      ++i;
-    } while (i < list.entry_count_);
+    }
+    rect.top += tail_.row_height_;
+    rect.bottom += tail_.row_height_;
   }
 }
 
@@ -410,11 +425,10 @@ int NetSessionPickerWin::initialize(Net *network, char *caption,
 
   tail_.rows_visible_ = rows;
   net_ = network;
+  const int margin_x = width * 10 / 600;
+  const int margin_y = height * 10 / 440;
   tail_.client_width_ = width;
   tail_.client_height_ = height;
-
-  const int margin_x = (width * 10) / 600;
-  const int margin_y = (height * 10) / 440;
   int result = GraphicWin::init(
       0, 0, width, height, caption, 0x800, BasePopDefaultField322C, 0, 0);
   if (result != 0) return result;
@@ -422,85 +436,82 @@ int NetSessionPickerWin::initialize(Net *network, char *caption,
   center();
   Buffer::set_font(font, 0, 0, 0);
 
-  const int stored_width = tail_.client_width_;
-  int left = (stored_width * 200) / 600 + stored_width;
-  const int scaled_line_height = font->pixel_height() * 7;
-  int top = ((scaled_line_height + ((scaled_line_height >> 31) & 3)) >> 2)
-      + tail_.client_height_;
-  const int inset_width = stored_width - (stored_width * 10) / 600 - left;
-  int right = stored_width + inset_width;
-  const int vertical_step = (tail_.client_height_ - top - margin_y) * 3;
-  top += vertical_step;
-  int bottom = vertical_step + tail_.client_height_;
-  int button_width = (left + inset_width) - right;
-  int button_height = top - bottom;
-
-  result = action_button_.init(BasePopDefaultOkText, -1, right, bottom,
+  // The button column: a third of the client width wide and 7/4 line
+  // heights tall, then shifted to the right margin and down.
+  RECT rect;
+  rect.left = tail_.client_width_;
+  rect.top = tail_.client_height_;
+  rect.right = tail_.client_width_ * 200 / 600 + tail_.client_width_;
+  rect.bottom = font->pixel_height() * 7 / 4 + tail_.client_height_;
+  const int dx = tail_.client_width_ - tail_.client_width_ * 10 / 600 - rect.right;
+  rect.left += dx;
+  rect.right += dx;
+  const int dy = (tail_.client_height_ - rect.bottom - margin_y) * 3;
+  rect.top += dy;
+  rect.bottom += dy;
+  int button_width = rect.right - rect.left;
+  int button_height = rect.bottom - rect.top;
+  result = action_button_.init(BasePopDefaultOkText, -1, rect.left, rect.top,
                                button_width, button_height, this, 0);
   if (result != 0) return result;
-  action_button_.set_font(font, font, font, font);
+  action_button_.set_font(font, 0, 0, 0);
   action_button_.redraw();
 
-  top += margin_y;
-  bottom += top;
-  right += top;
-  button_height = bottom - right;
-
+  rect.top += button_height + margin_y;
+  rect.bottom += button_height + margin_y;
+  int create_height = rect.bottom - rect.top;
   result = create_button_.init(const_cast<char *>("Create Session (Translate)"),
-                               0, right, button_width, bottom, button_height,
-                               this, 0);
+                               0, rect.left, rect.top, button_width,
+                               create_height, this, 0);
   if (result != 0) return result;
-  create_button_.set_font(font, font, font, font);
+  create_button_.set_font(font, 0, 0, 0);
   create_button_.redraw();
 
-  bottom += top;
-  button_width += top;
-  const int third_button_width = button_width - bottom;
-  result = cancel_button_.init(BasePopDefaultCancelText, -2, bottom,
-                               third_button_width, right, button_height,
+  rect.top += button_height + margin_y;
+  rect.bottom += button_height + margin_y;
+  // The image passes the create button's height as the cancel width.
+  result = cancel_button_.init(BasePopDefaultCancelText, -2, rect.left,
+                               rect.top, create_height, rect.bottom - rect.top,
                                this, 0);
   if (result != 0) return result;
-  cancel_button_.set_font(font, font, font, font);
+  cancel_button_.set_font(font, 0, 0, 0);
   cancel_button_.redraw();
 
-  tail_.first_label_rect_.left = margin_x;
   tail_.first_label_rect_.top = margin_y;
+  tail_.first_label_rect_.left = margin_x;
   tail_.first_label_rect_.right = margin_x * -2 - cancel_button_.pixel_width()
       + width;
   tail_.first_label_rect_.bottom = margin_y + cancel_button_.pixel_height();
-
+  tail_.panel_rect_.left = margin_x;
   tail_.second_label_rect_.right = width - margin_x;
   const int second_left = tail_.first_label_rect_.right + margin_x;
   tail_.second_label_rect_.left = second_left;
-  const int second_top = tail_.first_label_rect_.bottom;
+  tail_.panel_rect_.bottom = height - margin_y;
+  tail_.second_label_rect_.top = margin_y;
+  tail_.second_label_rect_.bottom = tail_.first_label_rect_.bottom;
+  tail_.panel_rect_.top = tail_.first_label_rect_.bottom;
+  tail_.panel_rect_.right = tail_.first_label_rect_.right;
   tail_.rows_rect_.left = second_left;
   tail_.rows_rect_.right = width - margin_x;
-  tail_.rows_rect_.top = second_top;
-  tail_.second_label_rect_.top = margin_y;
-  tail_.second_label_rect_.bottom = second_top;
-  tail_.panel_rect_.left = margin_x;
-  tail_.panel_rect_.top = second_top;
-  tail_.panel_rect_.right = tail_.first_label_rect_.right;
-  tail_.panel_rect_.bottom = height - margin_y;
+  tail_.rows_rect_.top = tail_.first_label_rect_.bottom;
 
-  const int row_region_height = action_button_.client_rect().right - margin_y * 2;
-  tail_.rows_rect_.bottom = row_region_height;
-  tail_.row_height_ = (row_region_height - tail_.boxes_per_row_ * 2 - second_top)
-      / rows;
-  tail_.rows_rect_.bottom = tail_.row_height_ * rows + second_top;
+  tail_.rows_rect_.bottom = action_button_.client_rect().top - margin_y * 2;
+  tail_.row_height_ = (tail_.rows_rect_.bottom - tail_.boxes_per_row_ * 2
+                       - tail_.rows_rect_.top) / rows;
+  tail_.rows_rect_.bottom = tail_.row_height_ * rows + tail_.rows_rect_.top;
 
   sessions_view_.close();
-  Dialog &dialog = static_cast<Dialog &>(sessions_view_);
-  result = dialog.init(&tail_.panel_rect_, 0);
+  result = sessions_view_.Dialog::init(&tail_.panel_rect_, 0);
   if (result != 0) return result;
 
-  dialog.field_AC_ = 0;
-  dialog.field_B0_ = 0;
-  dialog.field_B4_ = 2;
-  dialog.field_5C_ = 2;
-  dialog.set_dialog_text_color(tail_.field_3714_, -1, 1, 1);
-  dialog.set_dialog_text_color2(tail_.field_3718_, -1, 1, 1);
-  dialog.set_dialog_font(font, 0, 0);
+  sessions_view_.Dialog::field_AC_ = 0;
+  sessions_view_.Dialog::field_B0_ = 0;
+  sessions_view_.Dialog::field_B4_ = 2;
+  sessions_view_.Dialog::field_5C_ = 2;
+  sessions_view_.Dialog::set_dialog_text_color(tail_.field_3714_, -1, 1, 1);
+  sessions_view_.Dialog::set_dialog_text_color2(tail_.field_3718_, -1, 1, 1);
+  sessions_view_.Dialog::set_dialog_font(fonts_[0], 0, 0);
+  sessions_view_.Dialog::field_34_ = blank_sprite().width();
   return 0;
 }
 

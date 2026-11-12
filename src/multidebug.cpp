@@ -180,14 +180,14 @@ void MultiDebug::on_redraw() {
     strcat(message, "Host ID: ");
     _itoa(static_cast<int>(net_->host_player_id()), number, 10);
     strcat(message, number);
-    Buffer::write_l(message, 3, 3, strlen(message));
+    Buffer::write_l(message, 3, 3);
     int y = 3 + Buffer::text_line_height();
 
     message[0] = 0;
     strcat(message, "Local ID: ");
     _itoa(static_cast<int>(net_->local_player_id()), number, 10);
     strcat(message, number);
-    Buffer::write_l(message, 3, y, strlen(message));
+    Buffer::write_l(message, 3, y);
     y += (Buffer::text_line_height() * 3) / 2;
 
     for (int index = 0; index < 16; ++index) {
@@ -195,16 +195,15 @@ void MultiDebug::on_redraw() {
             continue;
         }
 
+        int value_x = 3;
         message[0] = 0;
         _itoa(index, number, 10);
         strcat(message, number);
         strcat(message, ". ");
         strcat(message, " ");
-        int value_x = Buffer::write_l(message, 3, y, strlen(message));
+        value_x = Buffer::write_l(message, value_x, y);
         char *name = net_->players_[index].name_and_tail_;
-        if (name != 0) {
-            Buffer::write_l(name, value_x, y, strlen(name));
-        }
+        Buffer::write_l(name, value_x, y);
         y += Buffer::text_line_height();
 
         // Keep the original independent conversions and fresh session reads.
@@ -214,7 +213,7 @@ void MultiDebug::on_redraw() {
         strcat(message, "Guaranteed count: ");
         _itoa(static_cast<int>(net_->players_[index].field_4_), guaranteed, 10);
         strcat(message, guaranteed);
-        Buffer::write_l(message, value_x, y, strlen(message));
+        Buffer::write_l(message, value_x, y);
         y += Buffer::text_line_height();
 
         char sending[80];
@@ -222,7 +221,7 @@ void MultiDebug::on_redraw() {
         strcat(message, "Sending: ");
         _itoa(static_cast<int>(net_->players_[index].field_8_), sending, 10);
         strcat(message, sending);
-        Buffer::write_l(message, value_x, y, strlen(message));
+        Buffer::write_l(message, value_x, y);
         y += Buffer::text_line_height();
 
         char average[80];
@@ -230,7 +229,7 @@ void MultiDebug::on_redraw() {
         strcat(message, "Average reply time: ");
         _itoa(static_cast<int>(net_->players_[index].field_C_), average, 10);
         strcat(message, average);
-        Buffer::write_l(message, value_x, y, strlen(message));
+        Buffer::write_l(message, value_x, y);
         y += Buffer::text_line_height();
 
         char last[80];
@@ -238,7 +237,7 @@ void MultiDebug::on_redraw() {
         strcat(message, "Last time: ");
         _itoa(static_cast<int>(net_->players_[index].stamp_10_), last, 10);
         strcat(message, last);
-        Buffer::write_l(message, value_x, y, strlen(message));
+        Buffer::write_l(message, value_x, y);
         y += Buffer::text_line_height();
 
         char flags[80];
@@ -246,7 +245,7 @@ void MultiDebug::on_redraw() {
         strcat(message, "Flags: ");
         _itoa(net_->players_[index].flags_14_, flags, 10);
         strcat(message, flags);
-        Buffer::write_l(message, value_x, y, strlen(message));
+        Buffer::write_l(message, value_x, y);
         y += Buffer::text_line_height();
     }
 }

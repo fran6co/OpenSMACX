@@ -38,8 +38,14 @@ class NewTechWin : public GraphicWin {
 
   NewTechWin();
   void exec(int technology_id, int other_faction_id);
-  // Real member/base destruction is emitted from the out-of-line body.
+  // WORKAROUND(decl): the image's ??1NewTechWin (0x00484810) is
+  // compiler-generated: it stores no NewTechWin tables before member
+  // teardown, which a user-declared destructor (even an empty one) always
+  // does. newtechwin.cpp, the emitting unit, defines NEWTECHWIN_IMPLICIT_DTOR;
+  // other includers keep the declaration until the header is reconciled.
+#ifndef NEWTECHWIN_IMPLICIT_DTOR
   ~NewTechWin();
+#endif
   virtual int on_link_clicked(int id, char *link);
   virtual void on_redraw();  // original vtable slot 12, 0x00483950
   void on_left_click(int a1, int a2) override;

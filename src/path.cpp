@@ -970,7 +970,10 @@ int Path::move(int veh_id, int faction_id) {
     int veh_y = Vehs[veh_id].y;
     int x_waypoint = Vehs[veh_id].waypoint_x[0]; 
     int y_waypoint = Vehs[veh_id].waypoint_y[0];
-    if (!on_map(x_waypoint, y_waypoint) || (veh_x == x_waypoint && veh_y == y_waypoint)) {
+    if (!on_map(x_waypoint, y_waypoint)) {
+        return -1;
+    }
+    if (veh_x == x_waypoint && veh_y == y_waypoint) {
         return -1;
     }
     if (!is_human(veh_faction_id) && ((Vehs[veh_id].state & (VSTATE_UNK_40000 | VSTATE_UNK_20000))
@@ -979,7 +982,7 @@ int Path::move(int veh_id, int faction_id) {
     }
     if ((Vehs[veh_id].state & (VSTATE_UNK_1000000 | VSTATE_UNK_200))
         == (VSTATE_UNK_1000000 | VSTATE_UNK_200)) {
-        flags &= 0xBF;
+        flags &= ~0x40;
     // LEVER: the image calls veh_moves(veh_id) (`speed(veh_id,false)` +
     // clamp, veh.h) TWICE, not once - the disassembly's second `call speed`
     // at 0x005C1540 has its own fresh `sub eax, moves_expended` and clamp,
@@ -1035,20 +1038,20 @@ int Path::move(int veh_id, int faction_id) {
         int owner_tile;
         if ((tile->bit & (BIT_BASE_IN_TILE | BIT_VEH_IN_TILE))
             && (owner_tile = tile->val2 & 0xF) < 8 && owner_tile >= 0
-            && owner_tile != veh_faction_id
+            && veh_faction_id != owner_tile
             && !has_treaty(veh_faction_id, owner_tile, DTREATY_PACT)) {
             continue;
         }
-        int triad = get_proto_triad(Vehs[veh_id].proto_id);
+        uint8_t triad = get_proto_triad(Vehs[veh_id].proto_id);
         int cost;
         if (triad == TRIAD_AIR) {
-            if (tile->bit & BIT_AIRBASE) {
+            if (bit_at(x_scan, y_scan) & BIT_AIRBASE) {
                 continue;
             }
             cost = dist * 32
                 + vector_dist(x_dist(x_scan, x_waypoint), abs(y_scan - y_waypoint));
         } else {
-            if (((tile->climate & 0xE0) < ALT_BIT_SHORE_LINE) != (triad == TRIAD_SEA)) {
+            if (((tile->climate & ~0x1F) < ALT_BIT_SHORE_LINE) != (triad == TRIAD_SEA)) {
                 continue;
             }
             if (zoc && zoc_move(x_scan, y_scan, veh_faction_id)
@@ -1593,17 +1596,15 @@ BOOL Path::sensors(int faction_id, int *x_sensor, int *y_sensor) {
                     || veh_faction_id == (int)faction_id
                     || has_treaty(faction_id, veh_faction_id, DTREATY_PACT))) {
                 int zoc_faction_id = zoc_veh(x, y, faction_id);
-                uint32_t bit = bit_at(x, y);
-                Map *tile = map_loc(x, y);
                 if (zoc_faction_id != 1 && (!zoc_faction_id
                     || !has_treaty(faction_id, zoc_faction_id, DTREATY_VENDETTA))
-                    && !(bit & (BIT_MINE | BIT_SOLAR_TIDAL))
-                    && !(bit & (BIT_MONOLITH | BIT_CONDENSER | BIT_THERMAL_BORE))
-                    && !bonus_at(x, y, 0) && ((tile->val3 & 0xC0u) > TERRAIN_BIT_ROLLING
+                    && !(bit_at(x, y) & (BIT_MINE | BIT_SOLAR_TIDAL))
+                    && !(bit_at(x, y) & (BIT_MONOLITH | BIT_CONDENSER | BIT_THERMAL_BORE))
+                    && !bonus_at(x, y, 0) && ((map_loc(x, y)->val3 & ~0x3F) > TERRAIN_BIT_ROLLING
                         || climate_at(x, y) == RAINFALL_ARID
-                        || ((bit & BIT_FUNGUS)
+                        || ((bit_at(x, y) & BIT_FUNGUS)
                             && altitude_at(x, y) >= ALT_BIT_OCEAN_SHELF))
-                    && (!(bit & BIT_FUNGUS)
+                    && (!(bit_at(x, y) & BIT_FUNGUS)
                         || altitude_at(x, y) < ALT_BIT_OCEAN_SHELF
                         || has_tech(Rules.tech_improve_fungus_sqr, faction_id))) {
                     uint32_t flags = 0;

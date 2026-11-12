@@ -94,6 +94,11 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
     LPSTR num;
     int number;
     int len;
+    // Three separate buffers: the image's $NUMBER, $NUM and $HEX conversions
+    // use distinct frame arrays.
+    char number_text[80];
+    char num_text[80];
+    char hex_text[80];
     while (1) {
         var = strstr(input, "$");
         if (!var) {
@@ -112,10 +117,10 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
                 output += len;
                 *output = 0;
                 input = var + 8;
-                char number_text[80];
                 _itoa(ParseNumTable[number], number_text, 10);
                 strcat(output, number_text);
                 output += strlen(output);
+                continue;
             } else if (!strncmp(var, "$NUM", 4)) {
                 number = var[4] - '0';
                 if (number > 9) {
@@ -126,10 +131,10 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
                 output += len;
                 *output = 0;
                 input = var + 5;
-                char number_text[80];
-                _itoa(ParseNumTable[number], number_text, 10);
-                strcat(output, number_text);
+                _itoa(ParseNumTable[number], num_text, 10);
+                strcat(output, num_text);
                 output += strlen(output);
+                continue;
             } else {
                 num = findnum(var);
                 if (!num) {
@@ -146,6 +151,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
                 input = num + 1;
                 strcat(output, ParseStrBuffer[number].str);
                 output += strlen(output);
+                continue;
             }
             break;
 
@@ -161,10 +167,10 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
                 output += len;
                 *output = 0;
                 input = var + 5;
-                char number_text[80];
-                _itoa(ParseNumTable[number], number_text, 10);
-                strcat(output, number_text);
+                _itoa(ParseNumTable[number], hex_text, 10);
+                strcat(output, hex_text);
                 output += strlen(output);
+                continue;
             } else {
                 num = findnum(var);
                 if (!num) {
@@ -181,6 +187,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
                 input = num + 1;
                 strcat(output, ParseStrBuffer[number].str);
                 output += strlen(output);
+                continue;
             }
             break;
 
@@ -307,7 +314,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
             input = num + 1;
             strcat(output, ParseStrBuffer[number].str);
             output += strlen(output);
-            break;
+            continue;
           }
         }
     }

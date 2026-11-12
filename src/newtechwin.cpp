@@ -30,6 +30,8 @@
 // ORIGINAL: 0x00483880 sub_483880 0x00483880-0x004838A4 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned0x00483880..0x004838A4 constructs six stride0x2C Sprites at0x00822610..0x00822718 using forward construction with prefix unwind, then registers0x004838B0..0x004838D8. Cleanup publishes mask1 of byte0x00822604 before reverse vector destruction; constructors do not reset it.", "NewTechWin::technology_sprites_[6] is ordinary class-static storage, defined after the existing NewTechWin singleton. Physical compiler output supplies the vector constructor/destructor iterators, matching guard, and registration edge. Runtime consumers access the same six elements directly; no value initialization or authored lifetime wrapper is introduced.", "Current compiler names are carried by the function symbol and object-target facts, not treated as historical debug names. Static members add no instance fields. Fresh strict measurement remains required; this binding transports no claim."], "reason": "Bind the pinned lifetime to typed class-static storage and compiler-generated initialization/destruction. Preserve original identity, spans, historical claims and guard/order obligations. Original nominal declarations and complete historical TU boundaries, linked data placement and game behavior remain unproved."}
 // symbol    _$E21
+// WORKAROUND(decl): implicit ~NewTechWin; see newtechwin.h.
+#define NEWTECHWIN_IMPLICIT_DTOR
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "newtechwin.h"
@@ -91,8 +93,7 @@ NewTechWin::NewTechWin() {
 // ORIGINAL: 0x00484810 ??1NewTechWin@@QAE@XZ 0x00484810-0x004849CD;0x00657510-0x006575C9
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00484810.cpp preserved lifecycle and unwind spans; real embedded arrays own destruction"], "reason": "Ordinary C++ reverse member/base destruction replaces the original-address pending forwarder; compiler owns unwind support."}
 // symbol    ??1NewTechWin@@UAE@XZ
-NewTechWin::~NewTechWin() {
-}
+// The destructor is compiler-generated: members in reverse order, then GraphicWin.
 
 // ORIGINAL: 0x004838E0 ?on_link_clicked@NewTechWin@@QAEHHPAD@Z 0x004838E0-0x0048391F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original table66CE5C selects4838E0 in slot88. Full body checks IsMultiplayerNet93F660 and nonnull text; atoi645DA7 result is stored686960 before virtual release_modal58; returns0 only for admitted links, otherwise1.", "PendingTechnologyLink owns initial-1 DWORD686960. Native exec48479F/4847CE consumes/resets it; the full source-owned exec now models that flow while the original seed and historical restoration obligation remain preserved."], "reason": "Recover original GraphicWin link-hook overrides through the genuine slot88 hierarchy, preserving seed identity and historical obligations."}
@@ -145,8 +146,27 @@ int NewTechWin::on_key_click(int, int) {
 extern BoxSpriteParams InterfaceStandardPopupBoxStyle;
 extern Sprite g_TECH_ICON_SPRITES[MaxTechnologyNum];
 // The pinned image's null-terminated data at VA 0x00682820 is one ASCII
-// space; this source-owned literal preserves the CENTEMP separator.
+// space; this source-owned literal preserves the Transcendent Thought separator.
 static const char NewTechCentempSuffix[] = " ";
+
+// WORKAROUND(inline): 0x00483E1A forms the sprite address before reading its
+// transparent index (+8): an inline draw_mono overload that reads the index
+// itself. sprite.h does not declare one yet.
+static inline int newtechwin_draw_mono(Sprite *sprite, Buffer *destination,
+                                       int x, int y, int color,
+                                       int numerator, int denominator) {
+    return sprite->draw_mono(destination, sprite->transparent_index(), x, y,
+                             color, numerator, denominator);
+}
+
+// WORKAROUND(decl): 0x00483FB3..483FF2 loads all four source edges through a
+// copy of the source pointer, then +n/-n into the destination.
+static inline void newtechwin_inset_copy(RECT *dst, const RECT *src, int amount) {
+    dst->left = src->left + amount;
+    dst->top = src->top + amount;
+    dst->right = src->right - amount;
+    dst->bottom = src->bottom - amount;
+}
 
 // ORIGINAL: 0x00483950 ?on_redraw@NewTechWin@@QAEXXZ 0x00483950-0x00483E7F
 // RECOVERY_BINDING: v1 {"reason":"Recover the complete technology popup redraw in its real NewTechWin owner.","evidence":["Pinned NewTechWin table 0x66CE5C slot 12 selects 0x483950.","Current NewTechWin rectangle words are written by exec; existing label, technology, player-data, buffer, style and sprite owners supply every draw.","The previous unit's NO_COMPILE finding was its fake standalone class/undefined Buffer scaffold; this candidate instead uses newtechwin.h's genuine GraphicWin hierarchy and embedded rectangle words."]}
@@ -161,14 +181,11 @@ void NewTechWin::on_redraw() {
 
     this->box_sprite(&main_rect_, &InterfaceBoxStyles[3]);
 
-    scratch.left = static_cast<LONG>(field_AF4_);
-    scratch.top = static_cast<LONG>(field_AF8_);
-    scratch.right = static_cast<LONG>(field_AFC_);
-    scratch.bottom = static_cast<LONG>(field_B00_);
-    scratch.left -= 3;
-    scratch.top -= 3;
-    scratch.right += 3;
-    scratch.bottom += 3;
+    RECT *rect = reinterpret_cast<RECT *>(&field_AF4_);
+    scratch.left = rect->left - 3;
+    scratch.top = rect->top - 3;
+    scratch.right = rect->right + 3;
+    scratch.bottom = rect->bottom + 3;
     this->box_sprite(&scratch, &InterfaceBoxStyles[3]);
 
     this->set_font(find_font(0x10, 1), 0, 0, 0);
@@ -177,7 +194,9 @@ void NewTechWin::on_redraw() {
     this->box_sprite(&title_rect_, &InterfaceBoxStyles[0]);
 
     StringTemp[0] = '\0';
-    strcat(StringTemp, label_get(static_cast<int>(field_B28_) > 0 ? 542 : 541));
+    strcat(StringTemp, StringTable.get(static_cast<int>(field_B28_) <= 0
+                                           ? Labels.strings_ptr[541]
+                                           : Labels.strings_ptr[542]));
     CharUpperA(StringTemp);
     if (StringTemp != 0) {
         this->write_cent_l(StringTemp, &title_rect_,
@@ -225,22 +244,23 @@ void NewTechWin::on_redraw() {
     this->box_sprite(&row_rects_[2], &InterfaceBoxStyles[0]);
     this->box_sprite(&row_rects_[3], &InterfaceBoxStyles[0]);
 
-    this->box_sprite(&category_rect_, &InterfaceBoxStyles[0]);
+    rect = &category_rect_;
+    this->box_sprite(rect, &InterfaceBoxStyles[0]);
 
     this->set_font(find_font(0x28, 0), 0, 0, 0);
-    const int category = tech_category(static_cast<int>(field_B24_));
-    this->set_text_color(mandate_color(category), -1, 1, 1);
+    this->set_text_color(mandate_color(tech_category(static_cast<int>(field_B24_))),
+                         -1, 1, 1);
 
-    scratch = category_rect_;
+    scratch = *rect;
     scratch.left += 3;
-    scratch.top += 3;
     scratch.right -= 3;
+    scratch.top += 3;
     scratch.bottom -= 3;
     scratch.bottom = this->text_line_height() + scratch.top;
 
     StringTemp[0] = '\0';
     say_tech(StringTemp, static_cast<int>(field_B24_), 0);
-    if (static_cast<int>(field_B24_) == TECH_CENTEMP) {
+    if (static_cast<int>(field_B24_) == TECH_TRANT) {
         // PlayersData+0x368 is theory_of_everything; the neutral member name
         // and exact offset are already independently established in
         // faction.h and consumed by picktech/faction/reportif.
@@ -255,19 +275,16 @@ void NewTechWin::on_redraw() {
                              static_cast<unsigned int>(strlen(StringTemp)));
     }
 
-    scratch = category_rect_;
-    const int line_height = this->text_line_height();
-    const int image_top = scratch.top + line_height + 3;
-    const int image_bottom = scratch.bottom - 3;
-    const int image_height = image_bottom - image_top;
+    scratch = *rect;
+    scratch.top += this->text_line_height() + 3;
+    scratch.bottom -= 3;
+    const int image_height = scratch.bottom - scratch.top;
     const int image_width = scratch.right - scratch.left;
-    const int icon_color = mandate_color(
-        tech_category(static_cast<int>(field_B24_)));
-    Sprite *icon = &g_TECH_ICON_SPRITES[static_cast<int>(field_B24_)];
-    const int icon_y = image_top + (image_height - 0xA0) / 2;
-    const int icon_x = scratch.left + (image_width - 0xA0) / 2;
-    icon->draw_mono(static_cast<Buffer *>(this), icon->transparent_index(), icon_x, icon_y,
-                    icon_color, 0xA0, 0xD7);
+    newtechwin_draw_mono(&g_TECH_ICON_SPRITES[static_cast<int>(field_B24_)], this,
+                         scratch.left + (image_width - 0xA0) / 2,
+                         scratch.top + (image_height - 0xA0) / 2,
+                         mandate_color(tech_category(static_cast<int>(field_B24_))),
+                         0xA0, 0xD7);
 
     this->box_sprite(&bottom_rect_, &InterfaceBoxStyles[0]);
 }
@@ -285,14 +302,6 @@ static inline void newtechwin_set_words(uint32_t *rect, int left, int top, int r
     rect[3] = bottom;
 }
 
-// WORKAROUND(decl): 0x00483FB3..483FF2 loads all four source edges through a
-// copy of the source pointer, then +n/-n into the destination.
-static inline void newtechwin_inset_copy(RECT *dst, const RECT *src, int amount) {
-    dst->left = src->left + amount;
-    dst->top = src->top + amount;
-    dst->right = src->right - amount;
-    dst->bottom = src->bottom - amount;
-}
 
 // WORKAROUND(decl): 0x00484140..484163 copies a RECT through separate
 // source/destination pointer copies (label, row and AE4 rectangles).
