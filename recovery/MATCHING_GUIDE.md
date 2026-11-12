@@ -113,6 +113,11 @@ without `/Oy-`).
   cut-off; collapse such layers into the original body. Parameter copies
   (`total`, `cur`) inside a callee can make it unaffordable at a site even when
   its own bytes don't change (buffer.cpp `write_strings`, 0.41 → 0.80).
+- **Out-of-line copies of explicit inlines.** VC6 emits the COMDAT copy right
+  after the first function in the unit that calls it out of line; if every
+  caller expands it, no copy is emitted. The copy's image position therefore
+  names the function that needed it. A 219-byte plain member
+  (StatusWin::redraw) is never auto-inlined.
 - **Definition order and keywords.** VC6 does not auto-inline a plain function,
   or an explicit free `inline`, defined *after* its caller (check C4711, because
   there are exceptions). An explicit `inline` *member* defined later still
@@ -186,6 +191,18 @@ The fix is a top-level `again: { … } goto again;`, or ending with a top-level
   caller or a header-level inline difference (which helper copy a teardown
   calls) instead.
 
+  Cheap flat probes grow the caller's own budget about as much as they spend;
+  a teardown they cannot move may still move under one *branchy* dead inline
+  (a 3- to 31-way `if (x == k)` chain), with a large jump in states (popp,
+  amovie_project, pick_player).
+
+  Probe position matters: dead spend takes depth only from return sites
+  *before* it. To make an early site shallower, place spend after it; spend
+  before the first return adds caller size and deepens sites. When the image
+  expands a per-TU-guarded header inline inside a teardown (e.g. `~Dialogs`
+  under `DIALOGS_DTOR_INLINE`) and the unit lacks the guard, no spend reaches
+  the image's depth: compare the final teardown's call sequence first.
+
   Keep a dead probe (a static helper of chained `if (x == k) x = c;` called with
   a constant, which folds to zero code) only as `WORKAROUND(inline)` when no
   natural spelling is found.
@@ -193,6 +210,11 @@ The fix is a top-level `again: { … } goto again;`, or ending with a top-level
   and ~StringStruct): a budget covering one expansion picks the first stage;
   slightly less (about 4 probe units more spent) moves it to the final stage.
   Fix it with a natural spending helper, not a header change.
+- **Early return sites shallower than ours in Console Popup functions**
+  (editor_edit_veh, custom_my_faction) did not respond to probes: spend at
+  the top only deepened the final teardown. Treat them as structural (which
+  helper owns the Popup, how many return sites exist). Even brace formatting
+  inside an inline helper changes its cost.
 - **Hand-copied helper bodies.** Raw `has_treaty` tests or hand-inlined writers
   inflate each caller's own size, so every teardown expands one level too deep
   (call_off_vendetta had 48 states against 22). Restore the helper calls
@@ -233,6 +255,12 @@ for v in p[1:]:
   variables ending `cmp eax, &Dst[N]; jl`; `Dst[k].f = stage[k].f` with both
   sides indexed from constant addresses gives one byte offset ending
   `cmp eax, N*stride; jl`.
+- **Small aggregate copies.** VC6 always splits an 8-byte struct assignment
+  into scalar moves. A lea-based 2- or 3-element copy (`lea edx,[src+off];
+  lea esi,[dst+off]; mov edi,[edx]; mov [esi],edi; ...`) is a fully unrolled
+  constant-trip loop over an array member: write the loop, not a struct type.
+  Index spellings (`(&s.a)[j]`, casts, a real array member) compile
+  identically, so retyping a field for this alone is not a lever.
 - **Finding candidates.** True linear-subscript cases are rare. A census of
   `cmp reg, <data address>; jl` outer back-edges with nested inner loops mostly
   turns up budget, register or missing-code differences. A global table that
@@ -253,6 +281,12 @@ for v in p[1:]:
 
   Delete helpers a rewrite leaves unreferenced, avoid new helpers in canary
   units, and re-measure every claim in the TU.
+- **Expansion count of a new helper.** In a canary unit, how many times a
+  new file-local helper is *expanded* can flip a later function's tie while
+  its definition alone is neutral (console_commands: 0-5 expansions kept
+  corner_the_market exact, 6-7 flipped it). Before inventing a helper, look
+  for an original function with the same shape and use its exact body
+  (popup_set_write_check_bit fixed it).
 - **Header vetting depends on counts.** The number of member and declaration
   entries matters, and so does visibility. An unused inline body, or a newly
   visible plain struct, in a class with 30–56 includers flips the same ~12 large
@@ -317,6 +351,9 @@ for v in p[1:]:
   conditional `if (x) goto fail;` jumps to the shared copy. For an image's
   private copy with the status store after the receiver set-up, write
   `{ const int r = f(); if (r) { status = r; goto fail; } }` (Video::load).
+- **Unwind-only destructors.** A destructor whose only image caller is an
+  unwind funclet, with its copy inside a TU's range, is a header-inline
+  COMDAT; defining it in its own TU blocks every expansion (~UV2Player).
 - **Throwing CRT calls.** VC6 treats CRT `memset` as throwing and a same-TU
   callee without throwing calls as nothrow, which shows in constructor unwind
   states.
@@ -349,6 +386,9 @@ for v in p[1:]:
 - **A register rotation runs through the whole function.** Look for a lost
   inline-helper boundary around a repeated subsequence, or a hand-duplicated
   shared tail.
+- **A dead store of a test result before each branch** (`(x>>k)&1` or
+  `x & mask` written to one never-reloaded frame temporary) is an inline
+  helper's parameter; raw `?:`/`|=` spellings produce no store.
 - **The image repeats a compare or reload VC6 would fold.** That is an inline
   helper boundary: wrap the subexpression in a small static inline.
 - **The diff reads as "a different program" (N instructions against M)** in a
@@ -399,6 +439,8 @@ for v in p[1:]:
 - **A frame larger than the locals.** Either a block-scoped buffer overlapped a
   later inlined local, or the original read fields directly instead of caching
   them.
+- **Same-type objects' slots** (several Popups and a GraphicWin) did not
+  depend on declaration order or names across 240 variants.
 - **Buffer sizes.** Read them from the frame gap to the next local.
 - **A local the image never stores** was uninitialized in the original.
 
@@ -449,6 +491,10 @@ for v in p[1:]:
   whole tree with the SP3 backend left the library range (≥0x5C9EC0) unchanged
   and lost 27 game functions. Library identity is evidence for TU and library
   boundaries, not a matching lever.
+- **Processor flags per unit.** `/G5`, `/GB`, `/G4` and `/G3` compile
+  identically to the recipe in all 182 game units. `/G6` changes 175 units but
+  made 0 functions exact and lost 2,390 of 5,015 when applied per unit; only
+  movie_media_decoder_g6.cpp is a real `/G6` unit (2026-11-12 sweep).
 - **Flags.** `/Ob1`, `inline_depth` and other `/O` variations either change
   nothing or lose claims.
 - **Inline keywords.** `__forceinline` vs `inline` changes nothing. The per-site
