@@ -773,15 +773,15 @@ int __cdecl world_site(int x, int y, BOOL is_ocean_site) {
                 special += i ? 2 : -1;
             }
             Map *landmark_tile = site_tile(x_radius, y_radius);
-            uint32_t bit2 = landmark_tile->bit2;
+            int bit2 = landmark_tile->bit2;
             // The top byte is the landmark's tile sequence code; past nine the
             // tile is too far along the landmark to be worth anything.
             if ((bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO)) == BIT2_VOLCANO
-                && (bit2 & 0xFF000000) < 0x09000000) {
+                && (bit2 >> 24) < 9) {
                 special += i ? 1 : -1;
             }
             if ((bit2 & (BIT2_UNK_80000000 | BIT2_CRATER)) == BIT2_CRATER
-                && (bit2 & 0xFF000000) < 0x09000000) {
+                && (bit2 >> 24) < 9) {
                 special += i ? 2 : -1;
             }
             if ((bit2 & (BIT2_UNK_80000000 | BIT2_URANIUM)) == BIT2_URANIUM) {

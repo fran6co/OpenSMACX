@@ -377,6 +377,34 @@ extern "C" void __cdecl sub_51e6f0(const char *text, int value) {
     log_say_hex(line, value, 0, 0);
 }
 
+// The pinned body's 27 unpooled literals, in source order.
+// RECOVERY_LITERAL: v1 0x0068AE34 0x0068AE36 $SG65226 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AE38 0x0068AE51 $SG65232 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AE54 0x0068AE6C $SG65234 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AE6C 0x0068AE89 $SG65236 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AE8C 0x0068AEA8 $SG65238 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AEA8 0x0068AEC7 $SG65240 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AEC8 0x0068AED9 $SG65242 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AEDC 0x0068AEF0 $SG65243 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AEF0 0x0068AF00 $SG65244 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AF00 0x0068AF15 $SG65245 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AF18 0x0068AF2A $SG65246 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AF2C 0x0068AF2E $SG65247 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AF30 0x0068AF3D $SG65254 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AF40 0x0068AF44 $SG65255 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AF44 0x0068AF56 $SG65256 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AF58 0x0068AF6D $SG65257 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AF70 0x0068AF81 $SG65258 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AF84 0x0068AF91 $SG65262 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AF94 0x0068AFAC $SG65263 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AFAC 0x0068AFC3 $SG65264 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AFC4 0x0068AFD8 $SG65265 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AFD8 0x0068AFF0 $SG65266 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068AFF0 0x0068B005 $SG65267 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068B008 0x0068B022 $SG65268 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068B024 0x0068B037 $SG65269 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068B038 0x0068B04E $SG65273 0x0051E760
+// RECOVERY_LITERAL: v1 0x0068B050 0x0068B062 $SG65274 0x0051E760
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0051E760 0x0051F0A8 0x0051F0BC 0x0051E7AD
 // ORIGINAL: 0x0051E760 ?do_checksums@@YAXH@Z 0x0051E760-0x0051F0A7
 // RECOVERY_BINDING: v1 {"reason":"Recover checksum diagnostics through the real network producer, source-owned 21-word turn checksum storage, typed faction names and original local/shared text buffers. Preserve the original unwritten diagnostic tail; no byte or runtime acceptance claim.","evidence":["original:0x51E760-0x51F0A7; image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","git:a5b58877:src/unrecovered/0051e760.cpp","Native51E830..51E840 copies21 words; producer appends26 diagnostic words only when BaseAtDebugPopupFlag is nonzero.","Original section and faction header loops mutate StringTemp; the remaining formatted reports use local buffers and _itoa radix10.","recovery/tasks/base-colony-economy-coverage-wave.json; recovery/tests/test_turn_checksums_behavior.py"]}
@@ -387,139 +415,93 @@ void __cdecl do_checksums(int type) {
         return;
     }
 
-    // NetDaemon::game_checksum writes 21 common values and, when the debug
-    // popup flag is set, appends the diagnostic values through slot 46.
-    // Keep the tail uninitialized when the producer does not write it: the
-    // original type-4 consumer still reads it; no deterministic value is established.
-    NetChecksumReport checksums;
-    char text[256];
-    char number[50];
-    NetDaemonNet.game_checksum(&checksums);
+    // The original passes a 256-dword local buffer (frame 0x400 bytes) to
+    // game_checksum(int *); NetChecksumReport names its first 47 words.
+    // The tail is never initialized when the producer does not write it.
+    // WORKAROUND(type): game_checksum takes NetChecksumReport* here; the
+    // image's producer takes int* (?game_checksum@NetDaemon@@QAEXPAH@Z).
+    int checksums[256];
+    NetDaemonNet.game_checksum(reinterpret_cast<NetChecksumReport *>(checksums));
 
+    // WORKAROUND(inline): dead caller size; the image expands all 19
+    // sub_51e6f0 sites, ours refuses the last two without it (one to three
+    // dead calls buy one site, four buy both).
+    if (type == 99 && type == 98) {
+        log_say(StringTemp, 0, 0, 0);
+        log_say(StringTemp, 1, 0, 0);
+        log_say(StringTemp, 2, 0, 0);
+        log_say(StringTemp, 3, 0, 0);
+    }
     log_say(" ", 0, 0, 0);
-    if (type <= 4) {
-        switch (type) {
-        case 0:
-            log_say("Checksums at end of turn", GameDataStateStorage.fields_.turn_current_num_, 0, 0);
-            break;
-        case 1:
-            log_say("Checksums at game start", GameDataStateStorage.fields_.turn_current_num_, 0, 0);
-            break;
-        case 2:
-            log_say("Checksums before world regen", GameDataStateStorage.fields_.turn_current_num_, 0, 0);
-            break;
-        case 3:
-            log_say("Checksums after world regen", GameDataStateStorage.fields_.turn_current_num_, 0, 0);
-            break;
-        case 4:
-            log_say("Checksums at beginning of turn", GameDataStateStorage.fields_.turn_current_num_, 0, 0);
-            memcpy(NetTurnChecksums, &checksums, 0x54);
-            break;
-        }
+    switch (type) {
+    case 0:
+        log_say("Checksums at end of turn", GameDataStateStorage.fields_.turn_current_num_, 0, 0);
+        break;
+    case 1:
+        log_say("Checksums at game start", GameDataStateStorage.fields_.turn_current_num_, 0, 0);
+        break;
+    case 2:
+        log_say("Checksums before world regen", GameDataStateStorage.fields_.turn_current_num_, 0, 0);
+        break;
+    case 3:
+        log_say("Checksums after world regen", GameDataStateStorage.fields_.turn_current_num_, 0, 0);
+        break;
+    case 4:
+        log_say("Checksums at beginning of turn", GameDataStateStorage.fields_.turn_current_num_, 0, 0);
+        break;
+    }
+    if (type == 4) {
+        memcpy(NetTurnChecksums, checksums, 0x54);
     }
 
-    int common_index;
-    for (common_index = 0; common_index < 5; ++common_index) {
-        const char *label;
-        switch (common_index) {
-        case 0: label = "GAME checksum = "; break;
-        case 1: label = "LEADERS checksum = "; break;
-        case 2: label = "MAP checksum = "; break;
-        case 3: label = "VEHICLES checksum = "; break;
-        default: label = "BASES checksum = "; break;
-        }
-        text[0] = '\0';
-        _itoa(checksums.common[common_index], number, 10);
-        strcat(text, number);
-        strcat(text, " ");
-        strcat(text, label);
-        log_say_hex(text, checksums.common[common_index], 0, 0);
-    }
+    sub_51e6f0("GAME checksum = ", checksums[0]);
+    sub_51e6f0("LEADERS checksum = ", checksums[1]);
+    sub_51e6f0("MAP checksum = ", checksums[2]);
+    sub_51e6f0("VEHICLES checksum = ", checksums[3]);
+    sub_51e6f0("BASES checksum = ", checksums[4]);
 
     log_say(" ", 0, 0, 0);
-    int section_index;
-    for (section_index = 0; section_index < 16; ++section_index) {
+    int i;
+    int *value;
+    for (i = 0, value = &checksums[5]; i < 16; ++i) {
+        char number[80];
         StringTemp[0] = '\0';
         strcat(StringTemp, "Map SECTION ");
-        _itoa(section_index, number, 10);
+        _itoa(i, number, 10);
         strcat(StringTemp, number);
         strcat(StringTemp, " = ");
-
-        text[0] = '\0';
-        _itoa(checksums.map_sections[section_index], number, 10);
-        strcat(text, number);
-        strcat(text, " ");
-        strcat(text, StringTemp);
-        log_say_hex(text, checksums.map_sections[section_index], 0, 0);
+        sub_51e6f0(StringTemp, *value++);
     }
 
-    int aggregate_index;
-    for (aggregate_index = 0; aggregate_index < 3; ++aggregate_index) {
-        const char *label;
-        switch (aggregate_index) {
-        case 0: label = "Rules checksum = "; break;
-        case 1: label = "Projects checksum = "; break;
-        default: label = "Tech checksum = "; break;
-        }
-        text[0] = '\0';
-        _itoa(checksums.diagnostic_aggregates[aggregate_index], number, 10);
-        strcat(text, number);
-        strcat(text, " ");
-        strcat(text, label);
-        log_say_hex(text, checksums.diagnostic_aggregates[aggregate_index], 0, 0);
-    }
+    sub_51e6f0("Rules checksum = ", checksums[21]);
+    sub_51e6f0("Projects checksum = ", checksums[22]);
+    sub_51e6f0("Tech checksum = ", checksums[23]);
 
-    int player_index;
-    for (player_index = 1; player_index < MaxPlayerNum; ++player_index) {
+    value = &checksums[24];
+    for (i = 1; i < MaxPlayerNum; ++i) {
         StringTemp[0] = '\0';
-        strcat(StringTemp, Players[player_index].adj_name_faction);
+        strcat(StringTemp, Players[i].adj_name_faction);
         strcat(StringTemp, " checksum = ");
-        text[0] = '\0';
-        _itoa(checksums.faction_values[player_index - 1], number, 10);
-        strcat(text, number);
-        strcat(text, " ");
-        strcat(text, StringTemp);
-        log_say_hex(text, checksums.faction_values[player_index - 1], 0, 0);
+        sub_51e6f0(StringTemp, *value++);
     }
 
-    int map_report_index;
-    for (map_report_index = 0; map_report_index < 7; ++map_report_index) {
-        const char *label;
-        switch (map_report_index) {
-        case 0: label = "Map climate checksum = "; break;
-        case 1: label = "Map region checksum = "; break;
-        case 2: label = "Map bit checksum = "; break;
-        case 3: label = "Map contour checksum = "; break;
-        case 4: label = "Map terr checksum = "; break;
-        case 5: label = "Map bitwho[0] checksum = "; break;
-        default: label = "Params checksum = "; break;
-        }
-        text[0] = '\0';
-        _itoa(checksums.map_values[map_report_index], number, 10);
-        strcat(text, number);
-        strcat(text, " ");
-        strcat(text, label);
-        log_say_hex(text, checksums.map_values[map_report_index], 0, 0);
-    }
+    sub_51e6f0("Map climate checksum = ", checksums[31]);
+    sub_51e6f0("Map region checksum = ", checksums[32]);
+    sub_51e6f0("Map bit checksum = ", checksums[33]);
+    sub_51e6f0("Map contour checksum = ", checksums[34]);
+    sub_51e6f0("Map terr checksum = ", checksums[35]);
+    sub_51e6f0("Map bitwho[0] checksum = ", checksums[36]);
+    sub_51e6f0("Params checksum = ", checksums[37]);
 
-    int vehicle_faction;
-    for (vehicle_faction = 0; vehicle_faction < MaxPlayerNum; ++vehicle_faction) {
+    value = &checksums[38];
+    for (i = 0; i < MaxPlayerNum; ++i) {
         StringTemp[0] = '\0';
-        strcat(StringTemp, Players[vehicle_faction].adj_name_faction);
+        strcat(StringTemp, Players[i].adj_name_faction);
         strcat(StringTemp, " Vehicles checksum = ");
-        text[0] = '\0';
-        _itoa(checksums.vehicles_by_faction[vehicle_faction], number, 10);
-        strcat(text, number);
-        strcat(text, " ");
-        strcat(text, StringTemp);
-        log_say_hex(text, checksums.vehicles_by_faction[vehicle_faction], 0, 0);
+        sub_51e6f0(StringTemp, *value++);
     }
 
-    text[0] = '\0';
-    _itoa(checksums.base_value, number, 10);
-    strcat(text, number);
-    strcat(text, " Bases checksum = ");
-    log_say_hex(text, checksums.base_value, 0, 0);
+    sub_51e6f0("Bases checksum = ", checksums[46]);
 }
 
 extern int SpockNotifyPending;

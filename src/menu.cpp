@@ -105,46 +105,54 @@ int Menu::add_menu(int menu_id, char *text, int left_justified) {
     }
     if (!text || menu_id == -1) return 3;
 
-    int index = 0;
-    while (index < 15 && entries_[index].id != -1) {
-        if (entries_[index].id == menu_id) return 1;
-        ++index;
+    // 5FAF4E..5FB022: a duplicate-id search over the used slots; the new
+    // entry is then the count_-th one (5FAF6E reuses the incremented count),
+    // not the first free slot the search stopped at.
+    int found = -1;
+    for (int index = 0; index < 15; ++index) {
+        if (entries_[index].id == -1) break;
+        if (entries_[index].id == menu_id) {
+            found = index;
+            break;
+        }
     }
-    if (index == 15) return 1;
+    if (found != -1) return 1;
 
-    MenuEntry &entry = entries_[index];
-    entry.id = menu_id;
-    if (entry.text) free(entry.text);
-    entry.text = static_cast<char *>(mem_get(strlen(text) + 3));
-    if (!entry.text) {
+    const int slot = count_ - 1;
+    entries_[slot].id = menu_id;
+    if (entries_[slot].text) free(entries_[slot].text);
+    entries_[slot].text = static_cast<char *>(mem_get(strlen(text) + 3));
+    if (!entries_[slot].text) {
         --count_;
         return 4;
     }
-    entry.text[0] = '\0';
-    entry.mnemonic = 0;
+    entries_[slot].text[0] = '\0';
+    entries_[slot].mnemonic = 0;
 
     char *ampersand = strchr(text, '&');
-    if (!ampersand || ampersand[1] == ' ') {
-        strcat(entry.text, text);
-    } else {
+    if (ampersand && ampersand[1] != ' ') {
         char *after_ampersand = ampersand + 1;
         *ampersand = '\0';
-        strcat(entry.text, text);
+        strcat(entries_[slot].text, text);
+        const char next = after_ampersand[0];
         *ampersand = '&';
-        if (after_ampersand[0] != '&')
-            entry.mnemonic = entry.text + strlen(entry.text);
-        strcat(entry.text, after_ampersand);
+        if (next != '&')
+            entries_[slot].mnemonic = entries_[slot].text + strlen(entries_[slot].text);
+        strcat(entries_[slot].text, after_ampersand);
+    } else {
+        strcat(entries_[slot].text, text);
     }
-    strcat(entry.text, MenuEntryPadding);
+    strcat(entries_[slot].text, MenuEntryPadding);
 
-    if (entry.pull_down) delete entry.pull_down;
-    entry.pull_down = new (std::nothrow) PullDown;
-    if (!entry.pull_down) {
+    if (entries_[slot].pull_down) delete entries_[slot].pull_down;
+    entries_[slot].pull_down = new PullDown;
+    if (!entries_[slot].pull_down) {
         --count_;
         return 4;
     }
-    entry.pull_down->init(this);
-    entry.flags = left_justified ? 5 : 1;
+    entries_[slot].pull_down->init(this);
+    entries_[slot].flags = 1;
+    if (left_justified) entries_[slot].flags = 5;
     compute();
     return 0;
 }
@@ -383,7 +391,10 @@ int Menu::on_key_click(int repeat, int key) {
             if (item_index != no_menu) {
                 const int item_id = item_index < 0x40
                     ? (*closing_slot)->item_id(item_index) : no_menu;
-                hide_menus();
+                // WORKAROUND(noinline): the image calls hide_menus (0x5FC620)
+                // here while ours auto-inlines it; the original spent the /Ob2
+                // budget elsewhere (source unknown).
+                (this->*&Menu::hide_menus)();
                 if ((field_A28_ & 4) == 0) hide();
                 MenuProc callback = proc_;
                 if (callback) {
@@ -395,7 +406,7 @@ int Menu::on_key_click(int repeat, int key) {
                     }
                 }
             }
-            return 1;
+            break;
         }
         case 0x1B: {
             PullDown **closing_slot = &entries_[selected_menu].pull_down;
@@ -412,23 +423,24 @@ int Menu::on_key_click(int repeat, int key) {
         case 0x64:
             if (selected_menu == 0) selected_menu = count_;
             --selected_menu;
-            break;
+            goto move_to_menu;
         case 0x27:
         case 0x66:
             if (selected_menu == count_ - 1) selected_menu = 0;
             else ++selected_menu;
+        move_to_menu: {
+            const RECT &rect = spot_.get_rect_at(selected_menu);
+            POINT point;
+            point.x = rect.left;
+            point.y = rect.top;
+            ClientToScreen(HandleMain, &point);
+            MenuPullDownInputOrigin = 1;
+            mouse_move(point.x, point.y);
             break;
+        }
         default:
             goto search_menu_mnemonics;
         }
-
-        const RECT &rect = spot_.get_rect_at(selected_menu);
-        POINT point;
-        point.x = rect.left;
-        point.y = rect.top;
-        ClientToScreen(HandleMain, &point);
-        MenuPullDownInputOrigin = 1;
-        mouse_move(point.x, point.y);
         return 1;
     }
 
@@ -518,8 +530,8 @@ void Menu::on_redraw() {
         } else {
             write_l(entries_[i].text, &rect);
             if (entries_[i].mnemonic) {
-                int height = rect.bottom - rect.top;
                 int color = foreground_color();
+                int height = rect.bottom - rect.top;
                 int leading = MenuDefaultFont->internal_leading();
                 int letter_width = text_width(mnemonic, 1);
                 int y = rect.bottom - (height + leading - text_height()) / 2;
