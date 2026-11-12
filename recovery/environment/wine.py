@@ -118,6 +118,22 @@ def preprocessing_diagnostics(stdout: bytes, stderr: bytes) -> str:
     return rendered if len(rendered) <= 4000 else rendered[:3960] + "\n[diagnostic output truncated]"
 
 
+def require_initialized_prefix(prefix: Path) -> None:
+    """Refuse a missing or half-initialized Wine prefix instead of letting Wine create one.
+
+    Wine initializes an absent prefix lazily on first use. When that first use
+    is a compile that gets killed or races another compile, Wine has already
+    written .update-timestamp and the registry but not the system DLLs, and it
+    never repairs the prefix afterwards: every later tool run fails with
+    "could not load kernel32.dll". Prefixes are provisioned by copying a
+    working one (cp -a), never by first use.
+    """
+    if not (prefix / "drive_c" / "windows" / "system32" / "kernel32.dll").is_file():
+        raise RuntimeError(
+            f"Wine prefix {prefix} is missing or not fully initialized "
+            "(no system32/kernel32.dll); provision it by copying a working prefix with cp -a")
+
+
 def run_tool(command: list, *, cwd=None, binary=False, explicit_compiler=False,
              explicit_assembler=False) -> subprocess.CompletedProcess:
     """Wait for the tool, not EOF from background Wine services.
@@ -129,6 +145,7 @@ def run_tool(command: list, *, cwd=None, binary=False, explicit_compiler=False,
     """
     options = {"mode": "w+b"} if binary else {"mode": "w+", "errors": "replace"}
     child_environment = environment()
+    require_initialized_prefix(Path(child_environment["WINEPREFIX"]))
     if explicit_compiler:
         child_environment = {key: value for key, value in child_environment.items()
                              if key.upper() not in ("CL", "_CL_")}
