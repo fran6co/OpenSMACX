@@ -96,7 +96,7 @@ void WorldWin::init(int reset_map) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004C3AB0 ?right_menu@WorldWin@@QAEXHH@Z 0x004C3AB0-0x004C3D0C;0x00659E80-0x00659E95
+// ORIGINAL: 0x004C3AB0 ?right_menu@WorldWin@@QAEXHH@Z 0x004C3AB0-0x004C3D0C;0x00659E80-0x00659E95 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004c3ab0.cpp and original 0x004C3AB0 disassembly; PullDown::get_selected_id owns 0xA20 item indexing."], "reason": "Home the retained world context menu over PullDown and owned map windows, preserving the EH cleanup span."}
 #pragma optimize("y", off)
 void WorldWin::right_menu(int x, int y) {
