@@ -9,13 +9,13 @@
 // WORKAROUND(noinline): draw_tech's StringList local calls
 // StringStruct::StringStruct (0x00401000) out of line (0x00485361), giving
 // its three-state EH layout; see stringstruct.h.
+#define FONT_LINE_ADVANCE_INLINE
 #define STRINGSTRUCT_CTOR_OUT_OF_LINE
 // WORKAROUND(noinline): draw_tech's explicit clear calls StringStruct::remove_all
 // (0x00402970) out of line (0x00485403) while its closing destructor walk
 // expands the same body inline (0x00485EB0); see stringstruct.h.
 #define STRINGSTRUCT_REMOVE_ALL_CALLED
 #include "stdafx.h"
-#include "font_metrics.h"
 #include "interface_fonts.h"
 #include "picktech.h"
 #include "palette.h"
@@ -158,12 +158,12 @@ void PickTech::UNK1(char *text) {
     int line_height;
     if (page_state_ == 0) {
         Buffer::set_font(&header_font_, &header_font_, &header_font_, 0);
-        line_height = font_line_advance(header_font_);
+        line_height = header_font_.line_advance();
         page_state_ = 1;
     } else {
         Buffer::set_font(&title_font_, &body_font_primary_,
                          &body_font_secondary_, 0);
-        line_height = font_line_advance(title_font_);
+        line_height = title_font_.line_advance();
     }
     if (page_bottom_ - line_height >= page_pen_y_) {
         page_bottom_ -= Buffer::wrap_height(text, page_width_ - 2);
@@ -310,7 +310,7 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
     Buffer::set_text_color(MessageWinTextColor, 0, 1, 1);
     Buffer::set_text_color2(MessageWinTextColor, 0, 1, 1);
     page_width_ = rect->right - rect->left;
-    title_baseline_ = font_line_advance(title_font_);
+    title_baseline_ = title_font_.line_advance();
     page_x_ = rect->left;
     page_pen_y_ = row_pitch_ + rect->top;
     page_bottom_ = rect->bottom - row_pitch_ / 2;

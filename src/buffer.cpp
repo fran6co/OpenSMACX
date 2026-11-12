@@ -31,6 +31,7 @@
 // ORIGINAL: 0x005D71F0 sub_5d71f0 0x005D71F0-0x005D720F FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned startup 0x005D71D0..0x005D71E6 constructs the Sprite at 0x009B3A50..0x009B3A7C and registers finalizer 0x005D71F0..0x005D720F. Cleanup publishes bit 2 of the same byte 0x009B37CC before Sprite::close at 0x005E3820; constructors do not reset the guard.", "Buffer::shared_sprite_ is ordinary class-static storage defined after the special-text array. Physical compiler output supplies the shared guard and registration edges; consumers access the actual typed Sprite directly.", "Original identities, full spans and historical claims remain unchanged. Static members add no instance fields. Current compiler symbols are binding facts, not historical debug names; complete original TU boundaries, linked storage placement and game fidelity remain unproved. Fresh strict measurement is required; this binding grants no claim."], "reason": "Bind the original lifetime to ordinary typed storage and its compiler-generated initialization/destruction, preserving guard, order and restoration obligations."}
 // symbol    _$E16
+#define FONT_LINE_ADVANCE_INLINE
 #include "stdafx.h"
 
 // Distinct writable string cells observed at the original call sites.
@@ -10526,6 +10527,7 @@ Purpose: Field 0 as an offset into field 0x10, or field 0xc when it is negative.
 
 // ORIGINAL: 0x005E3650 sub_5e3650 0x005E3650-0x005E3660 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:0x005E3650-0x005E3660 reads this+0, this+0x0C, and this+0x10 with signed jl", "source:src/jackal/font.h Font::unk_1_, line_height_, and height_ are the named members at those offsets", "pinned callers in Buffer text layout invoke this metric operation"], "reason": "Bind the original signed Font metric selector to its existing named member operation, retaining native 32-bit addition wrap."}
+// body src/jackal/font.h
 // symbol    ?line_advance@Font@@QBEHXZ
 // size      16 bytes
 // prototype
@@ -10537,12 +10539,4 @@ Return Value: field 0x10 + field 0, or field 0xc
 Status: Complete
 */
 
-int Font::line_advance() const {
-    const int adjustment = unk_1_;
-    if (adjustment >= 0) {
-        return static_cast<int>(static_cast<unsigned int>(height_)
-                                + static_cast<unsigned int>(adjustment));
-    }
-    return line_height_;
-}
 

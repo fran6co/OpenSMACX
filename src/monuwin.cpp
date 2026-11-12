@@ -15,6 +15,7 @@
 // WORKAROUND(noinline): on_redraw's StringList local calls
 // StringStruct::StringStruct (0x00401000) out of line (0x00473733), giving
 // its three-state EH layout; see stringstruct.h.
+#define FONT_LINE_ADVANCE_INLINE
 #define STRINGSTRUCT_CTOR_OUT_OF_LINE
 #include "monuwin.h"
 #include "console.h"
@@ -57,8 +58,8 @@ char MonuWinFullscreenTitle[4];
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00472230; retired seed provenance git:d8200f17:src/unrecovered/00472230.cpp; original spans and historical lessons retained.", "image:477C80/477B10 member order and36DC extent; primary66C880 slots12/17/19/25/44.", "image:476A50 binds singleton7F9F58 and independent count7FD634; Player59C and MonumentFaction4F4 strides.", "image:4737EE..475E58 localized owner/grammar cases; 472230/4736E0 resource, clipping, sprite and Spot accesses."], "reason": "Genuine GraphicWin-derived MonuWin owner with actual FlatButton/Spot/Buffer/Sprite members, real callback slots and automatic lifetimes; localized parser owner and grammar inputs follow the original branches rather than current-faction stand-ins."}
 // symbol    ?init@MonuWin@@QAEHXZ
 // TRIED: loops over static RECT tables (superseded 2026-11-12 by the image's
-// unrolled stores and offset_rect calls). Remaining: Font::line_advance is
-// expanded at 0x47238B but is an out-of-line function in buffer.cpp here.
+// unrolled stores and offset_rect calls). Font::line_advance is the font.h
+// header inline the image expands at 0x47238B.
 int MonuWin::init() {
   Buffer temporary;
   Flic animation;

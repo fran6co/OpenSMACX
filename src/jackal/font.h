@@ -105,7 +105,23 @@ class Font {
   int internal_leading() const { return internal_leading_; }
   // PullDown::show (0x005F91A3) uses the natural line height unless
   // an explicit inter-line adjustment has been supplied.
+  // Header inline: the image expands it in QuayleWin::init, MonuWin::init and
+  // PickTech::draw_tech, and buffer.cpp emits the out-of-line copy (0x005E3650).
+#ifdef FONT_LINE_ADVANCE_INLINE
+  int line_advance() const {
+    const int adjustment = unk_1_;
+    if (adjustment >= 0) {
+      return static_cast<int>(static_cast<unsigned int>(height_)
+                              + static_cast<unsigned int>(adjustment));
+    }
+    return line_height_;
+  }
+#else
+  // WORKAROUND(decl): the body is visible only to units that define
+  // FONT_LINE_ADVANCE_INLINE; showing it to every includer flips about 30
+  // functions in 20 other units (header count rule, MATCHING_GUIDE 2.5).
   int line_advance() const;
+#endif
 
   // eventually make atomic for thread safety
   static HDC FontHDC;

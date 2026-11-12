@@ -15,6 +15,7 @@
 // WORKAROUND(noinline): on_redraw's StringList local calls
 // StringStruct::StringStruct (0x00401000) out of line (0x00495723), giving
 // its three-state EH layout; see stringstruct.h.
+#define FONT_LINE_ADVANCE_INLINE
 #define STRINGSTRUCT_CTOR_OUT_OF_LINE
 #include "stdafx.h"
 #include "quaylewin.h"
@@ -62,16 +63,6 @@ QuayleWin::QuayleWin() {}
 // ORIGINAL: 0x004951A0 ?init@QuayleWin@@QAEHXZ 0x004951A0-0x004956C1 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 004951A0; retained seed git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004951a0.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations."}
 // TRIED: field-by-offset access on `char *self`, per the scaffold's own hint, plus GraphicWin::init/Buffer::load_pcx/BaseButton::init argument order re-derived from the disassembly's push order (Ghidra's own decompilation independently agreed on all three). Reaches MISMATCH #1 (`push esi` vs a `mov`, one instruction into the __thiscall prologue's register-save order) - not chased further, a register-allocation detail this pass's budget does not cover.
-// WORKAROUND(inline): the image expands Font::line_advance (0x005E3650) at
-// 0x00495284; font.h's declaration is out of line, so this unit carries the body.
-static inline int quayle_line_advance(const Font *font) {
-  const int adjustment = font->unk_1_;
-  if (adjustment >= 0) {
-    return font->pixel_height() + adjustment;
-  }
-  return font->line_height();
-}
-
 static inline void quayle_offset_rect(RECT *rect, int dx, int dy) {
   rect->left += dx;
   rect->right += dx;
@@ -111,7 +102,7 @@ int QuayleWin::init() {
     GraphicWin::init(0, 0, 0x400, 0x300, QuayleWideCaption, 0x1000000, 0, 0, 0);
   }
 
-  line_advance_ = quayle_line_advance(ReportIfGlobal.field_1E184_);
+  line_advance_ = ReportIfGlobal.field_1E184_->line_advance();
   if (buffer1_.load_pcx("frame.pcx", 0, 0xA, 0xEC) != 0) return 1;
   if (buffer2_.load_pcx("holobook.pcx", 0, 0xA, 0xEC) != 0) return 1;
 
