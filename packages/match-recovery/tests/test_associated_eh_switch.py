@@ -124,3 +124,56 @@ def test_leading_tail_labels_need_the_explicit_tail():
     assert source_procedure(obj, 4, root, local_addresses=True, eh_tail=2).name == "_f"
     with pytest.raises(ValueError, match="EH-tail labels require"):
         source_procedure(obj, 4, root, local_addresses=True, eh_tail=3)
+
+
+FPO_FLAGS = 0x42101048
+
+
+def eh_fpo_case(*, debug=False):
+    """An EH owner with its FPO child (VC6 /GX without /Z7 emits no .debug$S).
+
+    Section numbers after extend(): 2 .text$x, 3 .xdata$x, then the optional
+    .debug$S, then .debug$F.
+    """
+    obj, subject, span, image, bindings, targets = fixture()
+    children = [(".text$x", TAIL_FLAGS, TAIL, (), [("$L9", 0)]),
+                (".xdata$x", FUNCINFO_FLAGS, bytes(8), (), [])]
+    if debug:
+        prefix = tail_label_record("$L9")
+        data = prefix + procedure(length=len(BODY) + len(GAP) + 5, debug_start=0,
+                                  debug_end=len(BODY), label="_f", locals_=[])
+        start = len(prefix)
+        children.append((".debug$S", DEBUG_FLAGS, data,
+                         [(4, 8, 11), (8, 8, 10), (start + 32, 0, 11), (start + 36, 0, 10)], []))
+    fpo = struct.pack("<IIIHH", 0, len(BODY) + len(GAP) + 5, 0, 0, 0)
+    children.append((".debug$F", FPO_FLAGS, fpo, [(0, 0, 7)], []))
+    candidate = Coff(extend(obj.raw_data, children))
+    return candidate, candidate.function(subject.name), span, image, bindings, targets
+
+
+@pytest.mark.parametrize("debug", [False, True])
+def test_eh_owner_with_fpo_child_does_not_decode_its_eh_children_as_codeview(debug):
+    # BattleWin::battle_report and WorldWin::right_menu: the FPO proof's
+    # sibling check used to run the CodeView decoder over the caller's
+    # already-proved .text$x tail, refusing every /GX function with FPO data.
+    report = compare_associated_code(*eh_fpo_case(debug=debug), eh_tail=2)
+    assert report["result"] == Result.PASS
+
+
+def test_fpo_proved_siblings_are_bounded_to_the_callers_proof():
+    from match_recovery.linked_fpo import validate_fpo_object
+    obj, root, *_ = eh_fpo_case()
+    fpo = len(obj.sections)
+    with pytest.raises(ValueError):
+        validate_fpo_object(obj, fpo, root, source_codeview=True)
+    assert validate_fpo_object(obj, fpo, root, source_codeview=True,
+                               proved_siblings=frozenset({2, 3}))["section"] == fpo
+    for damage in ({"proved_siblings": frozenset({2, 3})},
+                   {"source_codeview": True, "proved_siblings": frozenset({2, 3, fpo})},
+                   {"source_codeview": True, "proved_siblings": frozenset({2, 3, 99})},
+                   {"source_codeview": True, "proved_siblings": {2, 3}}):
+        with pytest.raises(ValueError):
+            validate_fpo_object(obj, fpo, root, **damage)
+    # An unproved sibling (here the FuncInfo) still needs a CodeView proof.
+    with pytest.raises(ValueError):
+        validate_fpo_object(obj, fpo, root, source_codeview=True, proved_siblings=frozenset({2}))

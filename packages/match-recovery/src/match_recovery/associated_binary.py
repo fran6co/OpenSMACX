@@ -839,6 +839,7 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
         eh_children = set()
     debug_witnesses = []
     fpo_children = []
+    proved_children = set(eh_children)
     for child in associated_children:
         name = obj.sections[child - 1].name
         if child in eh_children:
@@ -853,6 +854,7 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
                 record["padding"] = record["padding"].hex()
             debug_witnesses.append({"section": child, "association_parent": section_number,
                                     "format": "codeview5_procedure", "procedure": debug_procedure})
+            proved_children.add(child)
         else:
             raise ValueError("associated proof refuses an unclassified child section")
     fpo_named_sections = {
@@ -875,7 +877,8 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
     if fpo_children:
         if len(fpo_children) != 1:
             raise ValueError("associated proof supports only one exact FPO metadata child")
-        fpo_witness = validate_fpo_object(obj, fpo_children[0], subject, source_codeview=True)
+        fpo_witness = validate_fpo_object(obj, fpo_children[0], subject, source_codeview=True,
+                                          proved_siblings=frozenset(proved_children))
     entries = [symbol for symbol in obj.symbols.values()
                if symbol.section == section_number and symbol.type & 0x20 and symbol.storage in (2, 3)]
     if len(entries) != 1 or entries[0] != subject:

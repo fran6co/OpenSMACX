@@ -36,7 +36,7 @@ def _root_reference(obj, target, root):
             raise ValueError("FPO root declaration has a conflicting definition or alias")
 
 
-def validate_fpo_object(obj, number, root, *, source_codeview=False):
+def validate_fpo_object(obj, number, root, *, source_codeview=False, proved_siblings=frozenset()):
     """Validate one exact object-local FPO child and its root code extent.
 
     This proves only physical COFF metadata and ownership. In particular, the
@@ -48,7 +48,16 @@ def validate_fpo_object(obj, number, root, *, source_codeview=False):
     linked path admits only associated code beside the FPO child (an EH cold
     region, owned and verified by the linked region graph itself); any other
     sibling metadata still needs the source CodeView proof.
+    ``proved_siblings`` (only with ``source_codeview``) names direct children
+    the caller has already proved completely itself: the associated-code
+    path's exact `.text$x`/`.xdata$x` EH children and its `.debug$S` children,
+    the latter proved with their EH-tail labels. Those are not CodeView
+    procedures to re-decode here; every other sibling still is.
     """
+    if (type(proved_siblings) is not frozenset
+            or any(type(child) is not int for child in proved_siblings)
+            or (proved_siblings and source_codeview is not True)):
+        raise ValueError("FPO proved siblings require the caller's source CodeView proof")
     if (type(source_codeview) is not bool or type(obj) is not Coff or type(number) is not int
             or not 1 <= number <= len(obj.sections)
             or not isinstance(root, Symbol) or obj.symbols.get(root.index) != root
@@ -68,8 +77,10 @@ def validate_fpo_object(obj, number, root, *, source_codeview=False):
         raise ValueError("unsupported associated FPO child")
     if source_codeview:
         from .linked_codeview import source_procedure
+        if number in proved_siblings or not proved_siblings <= set(direct_children):
+            raise ValueError("FPO proved siblings are not direct children of the root")
         for child in direct_children:
-            if child != number:
+            if child != number and child not in proved_siblings:
                 source_procedure(obj, child, root, local_addresses=True)
     offset, target, kind = section.relocations[0]
     if offset != 0 or kind != 7 or target not in obj.symbols:

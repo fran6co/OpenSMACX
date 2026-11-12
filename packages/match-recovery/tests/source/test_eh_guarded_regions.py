@@ -73,7 +73,7 @@ def test_guarded_actions_bind_complete_map_and_compare(monkeypatch, tmp_path,
     (4, 0xE8),       # SUB instead of the bounded AND.
     (5, 0),          # A zero mask cannot guard a construction cleanup.
     (5, 3),          # Composite masks are outside the observed grammar.
-    (5, 4),          # Other single-bit masks still lack evidence.
+    (5, 0x80),       # imm8 0x80 sign-extends to a many-bit mask.
     (5, 0xFF),       # Sign-extended masks are not one of the observed tests.
     (7, 0xC9),       # TEST ECX, ECX does not test the masked EAX.
     (9, 0x85),       # JNE must not invert the return condition.
@@ -200,3 +200,24 @@ def test_second_bit_guard_does_not_waive_changed_or_invalid_predecessor(
     with pytest.raises(ValueError, match=reason):
         eh_funcinfo_reference_target(bytes(damaged), fixture.ROOT_NAME, image, spans,
                                     _indexed_targets(obj))
+
+
+@pytest.mark.parametrize("mask", [4, 8, 0x40])
+def test_higher_single_bit_imm8_guards_decode(mask):
+    # 0x006504E0's successive constructed objects test flags 4 and 8.
+    code = bytes.fromhex("8b45e083e0") + bytes([mask]) + bytes.fromhex("85c074088b4df0e900000000c3")
+    action = _cleanup_action(_decoded(code, 0), code_base=0)
+    assert action.guard == EHFrameGuardFact(-32, mask, "eax")
+
+
+@pytest.mark.parametrize(("mask", "valid"), [(0x80, True), (0x100, True), (0x80000000, True),
+                                             (0x40, False), (3, False), (0x180, False), (0, False)])
+def test_accumulator_imm32_guard_only_for_single_bits_imm8_cannot_name(mask, valid):
+    code = (bytes.fromhex("8b45e025") + struct.pack("<I", mask)
+            + bytes.fromhex("85c074088b4df0e900000000c3"))
+    if valid:
+        action = _cleanup_action(_decoded(code, 0), code_base=0)
+        assert action.guard == EHFrameGuardFact(-32, mask, "eax")
+    else:
+        with pytest.raises(ValueError):
+            _cleanup_action(_decoded(code, 0), code_base=0)

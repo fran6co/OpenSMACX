@@ -16,6 +16,10 @@ class EHActionKind(StrEnum):
     # A subobject reached through a possibly-null pointer conversion: VC6
     # materializes ``p ? p - adjust : 0`` in a frame temporary first.
     NULL_CHECKED_FRAME_TRANSFER = "null_checked_frame_transfer"
+    # A cdecl call of several frame-loaded words, popped by ``add esp,4n``:
+    # VC6's constructor-throw cleanup of a placement ``new`` calls the
+    # matching ``operator delete(void *, extra...)`` this way.
+    FRAME_ARGUMENTS_CALL_CLEANUP = "frame_arguments_call_cleanup"
 
 
 class EHTransferRole(StrEnum):
@@ -56,6 +60,19 @@ class EHNullConversionFact:
 
 
 @dataclass(frozen=True)
+class EHFrameArgumentFact:
+    """One pushed word: a frame slot followed by zero or more dereferences.
+
+    ``registers`` names the destination of each load in order; the last one
+    is pushed. Offsets are signed displacements.
+    """
+
+    frame_displacement: int
+    dereferences: tuple[int, ...]
+    registers: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class EHActionFact:
     """Decoded action boundary and the operands needed for physical binding."""
 
@@ -70,6 +87,9 @@ class EHActionFact:
     scratch_register: str | None = None
     guard: EHFrameGuardFact | None = None
     conversion: EHNullConversionFact | None = None
+    # Pushed words in push order (last argument first) for the
+    # frame-arguments call cleanup.
+    arguments: tuple[EHFrameArgumentFact, ...] | None = None
 
 
 def resolve_transfer(action: EHActionFact, *, role: EHTransferRole,

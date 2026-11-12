@@ -37,6 +37,16 @@ def _scalar(displacement=-16):
             + b"\x50\xe8\0\0\0\0\x59\xc3", 8)
 
 
+def _arguments(dereference=0x18):
+    """Placement-delete cleanup: two frame-loaded words, one dereferenced.
+
+    mov eax,[ebp-14h]; mov ecx,[eax+k]; push ecx; mov edx,[ebp+8]; push edx;
+    call rel32; add esp,8; ret.
+    """
+    return (bytes.fromhex("8b45ec8b48") + bytes([dereference])
+            + bytes.fromhex("518b550852e80000000083c408c3")), 12
+
+
 def _frame_transfer():
     return b"\x8d\x4d\xf0\xe9\0\0\0\0", 4
 
@@ -46,17 +56,23 @@ def _rel32(code, operand, next_va, target):
 
 
 def _build(*, action_kinds=("scalar",), displacement=-16,
-           object_displacement=None,
-           original_damage=None, object_damage=None, call_symbol=CALL_SYMBOL):
+           object_displacement=None, object_dereference=None,
+           original_damage=None, object_damage=None, call_symbol=CALL_SYMBOL,
+           call_defined=None):
     """Make independent PE32 and COFF records with synthetic symbols/targets."""
     image_actions = []
     object_actions = []
     for kind in action_kinds:
-        image_code, image_operand = (
-            _scalar(displacement) if kind == "scalar" else _frame_transfer())
         compiled_slot = displacement if object_displacement is None else object_displacement
-        object_code, object_operand = (
-            _scalar(compiled_slot) if kind == "scalar" else _frame_transfer())
+        if kind == "args":
+            image_code, image_operand = _arguments()
+            object_code, object_operand = _arguments(
+                0x18 if object_dereference is None else object_dereference)
+        else:
+            image_code, image_operand = (
+                _scalar(displacement) if kind == "scalar" else _frame_transfer())
+            object_code, object_operand = (
+                _scalar(compiled_slot) if kind == "scalar" else _frame_transfer())
         image_actions.append((kind, bytearray(image_code), image_operand))
         object_actions.append((kind, bytearray(object_code), object_operand))
 
@@ -102,7 +118,7 @@ def _build(*, action_kinds=("scalar",), displacement=-16,
         _kind, object_code, object_operand = object_row
         original_starts.append(len(original_cold))
         object_starts.append(len(object_cold))
-        if kind == "scalar":
+        if kind in ("scalar", "args"):
             _rel32(image_code, image_operand,
                    COLD_VA + len(original_cold) + image_operand + 4,
                    CALL_TARGET)
@@ -194,6 +210,13 @@ def _build(*, action_kinds=("scalar",), displacement=-16,
         {"name": ".xdata$x", "data": bytes(object_info), "flags": 0x40401040,
          "parent": 1, "selection": 5, "relocs": data_relocs},
     ]
+    if call_defined is not None:
+        # The callee is emitted here as its own code COMDAT ("independent"),
+        # or as an associative child of the root ("associative").
+        sections.append({"name": ".text", "data": b"\xc3", "flags": 0x60501020,
+                         "parent": 1 if call_defined == "associative" else 0,
+                         "selection": 5 if call_defined == "associative" else 2,
+                         "relocs": []})
     if object_damage == "wrong_association":
         sections[1]["parent"] = 0
     if object_damage == "extra_child_relocation":
@@ -244,7 +267,7 @@ def _build(*, action_kinds=("scalar",), displacement=-16,
     add("info", "$Tinfo", 0, 3, 0, 3)
     add("unwind", "$Tunwind", 32, 3, 0, 6)
     add("frame_target", FRAME_SYMBOL, 0, 0, 0x20, 2)
-    add("call_target", call_symbol, 0, 0,
+    add("call_target", call_symbol, 0, 4 if call_defined is not None else 0,
         0 if object_damage == "call_not_function" else 0x20, 2)
     add("runtime", RUNTIME_SYMBOL, 0, 0, 0, 2)
     if object_damage == "call_conflicting_alias":
@@ -604,4 +627,71 @@ def test_malformed_original_eh_bounds_refuse(damage):
                      else ("scalar",), original_damage=damage)
     object_bytes, image, spans, _record = fixture
     with pytest.raises(ValueError):
+        bind_eh_regions(object_bytes, ROOT_NAME, image, spans)
+
+
+def test_placement_delete_arguments_action_binds_and_compares(tmp_path):
+    # VC6's constructor-throw cleanup of `new(owner) T`: operator delete(p,
+    # owner) with one dereferenced and one plain frame word (0x006504E0).
+    obj, regions, result = _measure(_build(action_kinds=("frame", "args")), tmp_path)
+    assert result.verdict.value == "BYTE_EXACT", result
+    original, compiled = (regions[0].ownership.original_actions[1],
+                          regions[0].ownership.compiled_actions[1])
+    assert original.kind is compiled.kind is EHActionKind.FRAME_ARGUMENTS_CALL_CLEANUP
+    assert original.arguments == compiled.arguments
+    assert [(item.frame_displacement, item.dereferences, item.registers)
+            for item in compiled.arguments] == [(-20, (0x18,), ("eax", "ecx")),
+                                                (8, (), ("edx",))]
+    assert (original.transfers[0].target, compiled.transfers[0].target) == (
+        CALL_TARGET, CALL_SYMBOL)
+
+
+def test_changed_argument_dereference_is_a_semantic_mismatch(tmp_path):
+    _obj, _regions, result = _measure(
+        _build(action_kinds=("args",), object_dereference=0x1C), tmp_path)
+    assert result.verdict.value == "MISMATCH", result
+    assert "frame-arguments" in result.diagnostic
+
+
+def test_arguments_action_grammar_stays_bounded():
+    from match_recovery.source.eh_regions import _cleanup_action, _decoded
+    code, _operand = _arguments()
+    assert _cleanup_action(_decoded(code, 0)).kind is EHActionKind.FRAME_ARGUMENTS_CALL_CLEANUP
+    damaged = (
+        code[:-4] + b"\x83\xc4\x0c\xc3",              # pops a word it never pushed
+        code[:-4] + b"\x59\x90\x90\xc3",              # not the cdecl adjustment
+        code[:6] + b"\x50" + code[7:],                 # pushes a register it did not load
+        bytes.fromhex("8b45ec8b48188b4818") + code[6:],  # a third load in one argument
+        bytes.fromhex("8b0d00000000") + code[3:],     # absolute, not frame, source
+        code[:-1] + b"\xc2\x08\x00",                  # callee-pop return
+    )
+    for altered in damaged:
+        with pytest.raises(ValueError):
+            _cleanup_action(_decoded(altered, 0))
+    # One pushed word is the existing frame-slot shape (pop ecx), never this kind.
+    with pytest.raises(ValueError):
+        _cleanup_action(_decoded(bytes.fromhex("8b45ec50e80000000083c404c3"), 0))
+
+
+def test_locally_emitted_independent_callee_binds_by_name(tmp_path):
+    # An inline `operator delete` emitted in this object as its own COMDAT is
+    # still a call by external name, bound like an undefined one.
+    _obj, regions, result = _measure(
+        _build(action_kinds=("args",), call_defined="independent"), tmp_path)
+    assert result.verdict.value == "BYTE_EXACT", result
+    assert regions[0].ownership.compiled_actions[0].transfers[0].target == CALL_SYMBOL
+
+
+def test_locally_emitted_associative_callee_refuses():
+    object_bytes, image, spans, _record = _build(action_kinds=("args",),
+                                                 call_defined="associative")
+    with pytest.raises(ValueError):
+        bind_eh_regions(object_bytes, ROOT_NAME, image, spans)
+
+
+@pytest.mark.parametrize("damage", ["call_conflicting_alias", "call_not_function"])
+def test_locally_emitted_callee_still_needs_one_unambiguous_function(damage):
+    object_bytes, image, spans, _record = _build(
+        action_kinds=("args",), call_defined="independent", object_damage=damage)
+    with pytest.raises(ValueError, match="external function relocation"):
         bind_eh_regions(object_bytes, ROOT_NAME, image, spans)

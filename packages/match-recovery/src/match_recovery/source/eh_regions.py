@@ -18,8 +18,9 @@ from capstone import CS_ARCH_X86, CS_GRP_CALL, CS_GRP_JUMP, CS_MODE_32, Cs, x86
 from ..binary import Relocation, RelocationKind
 from ..model import Span
 from ..pe_coff import Coff, PeImage, Symbol
-from .eh_actions import (EHActionFact, EHActionKind, EHFrameGuardFact, EHNullConversionFact,
-                         EHTransferFact, EHTransferRole, resolve_transfer)
+from .eh_actions import (EHActionFact, EHActionKind, EHFrameArgumentFact, EHFrameGuardFact,
+                         EHNullConversionFact, EHTransferFact, EHTransferRole,
+                         resolve_transfer)
 
 
 _CODE = 0x00000020
@@ -43,7 +44,16 @@ _ENGINE.detail = True
 _ARRAY_KINDS = frozenset((EHActionKind.ARRAY_DESTRUCTOR, EHActionKind.FRAME_ARRAY_DESTRUCTOR))
 _CLEANUP_TRANSFER_KINDS = frozenset((EHActionKind.FRAME_TRANSFER,
                                      EHActionKind.FRAME_SLOT_CALL_CLEANUP,
-                                     EHActionKind.NULL_CHECKED_FRAME_TRANSFER))
+                                     EHActionKind.NULL_CHECKED_FRAME_TRANSFER,
+                                     EHActionKind.FRAME_ARGUMENTS_CALL_CLEANUP))
+# Calls of one undefined external function, not destructor transfers.
+_EXTERNAL_CALL_KINDS = frozenset((EHActionKind.FRAME_SLOT_CALL_CLEANUP,
+                                  EHActionKind.FRAME_ARGUMENTS_CALL_CLEANUP))
+_MAX_CALL_ARGUMENTS = 4
+_MAX_ARGUMENT_LOADS = 2
+_GENERAL_REGISTERS = {x86.X86_REG_EAX: "eax", x86.X86_REG_ECX: "ecx",
+                      x86.X86_REG_EDX: "edx", x86.X86_REG_EBX: "ebx",
+                      x86.X86_REG_ESI: "esi", x86.X86_REG_EDI: "edi"}
 
 
 class EHRegionRole(StrEnum):
@@ -119,6 +129,11 @@ def eh_action_semantic_difference(original: EHActionFact,
             return ("ordinary",
                     f"valid EH array-cleanup semantics differ at index {index}: "
                     f"original={original_facts!r}, compiled={compiled_facts!r}")
+    elif original.kind is EHActionKind.FRAME_ARGUMENTS_CALL_CLEANUP:
+        if original.arguments != compiled.arguments:
+            return ("ordinary",
+                    f"valid EH frame-arguments cleanup semantics differ at index {index}: "
+                    f"original={original.arguments!r}, compiled={compiled.arguments!r}")
     elif original.kind in (EHActionKind.FRAME_TRANSFER,
                            EHActionKind.FRAME_SLOT_CALL_CLEANUP):
         original_facts = (original.frame_displacement, original.base_adjustment,
@@ -456,6 +471,104 @@ def _null_checked_conversion(instructions, code_base: int) -> EHActionFact | Non
                         conversion=EHNullConversionFact(k1, k2, temporary))
 
 
+def _single_bit_eax_mask(instruction) -> int | None:
+    """``and eax,mask`` for one set bit, in VC6's shortest encoding only."""
+    raw = instruction.bytes
+    if instruction.mnemonic != "and":
+        return None
+    if len(raw) == 3 and raw[:2] == b"\x83\xe0" and raw[2] in (1, 2, 4, 8, 16, 32, 64):
+        return raw[2]
+    if len(raw) == 5 and raw[:1] == b"\x25":
+        value, = struct.unpack_from("<I", raw, 1)
+        if value >= 0x80 and value & (value - 1) == 0:
+            return value
+    return None
+
+
+def _register_load(instruction, base: int) -> tuple[str, int] | None:
+    """Exact ``mov r32,[base+d]`` (disp0/8/32, no SIB) into a general register."""
+    if (instruction.mnemonic != "mov" or len(instruction.operands) != 2
+            or instruction.bytes[:1] != b"\x8b"
+            or instruction.operands[0].type != x86.X86_OP_REG
+            or instruction.operands[0].size != 4
+            or instruction.operands[0].reg not in _GENERAL_REGISTERS
+            or instruction.operands[1].type != x86.X86_OP_MEM
+            or instruction.operands[1].size != 4):
+        return None
+    memory = instruction.operands[1].mem
+    if (memory.base != base or memory.index != 0 or memory.segment != 0
+            or instruction.size != 2 + instruction.encoding.disp_size
+            or instruction.encoding.disp_size not in ((1, 4) if base == x86.X86_REG_EBP
+                                                      else (0, 1, 4))):
+        return None
+    return _GENERAL_REGISTERS[instruction.operands[0].reg], memory.disp
+
+
+def _frame_arguments_call(instructions, code_base: int) -> EHActionFact | None:
+    """VC6's multi-word cleanup call (placement ``operator delete``).
+
+    Observed shape (0x006504E0, 0x006637B0)::
+
+        mov eax,[ebp+d]; mov ecx,[eax+k]; push ecx
+        mov edx,[ebp+d2]; push edx
+        call rel32; add esp,8; ret
+
+    Each argument is one frame-slot load and at most one further
+    dereference through that same register, pushed as one register. The
+    stack adjustment must pop exactly the pushed words. Anything else is
+    not this action.
+    """
+    if len(instructions) < 7:
+        return None
+    call, pop, ret = instructions[-3:]
+    if not (call.mnemonic == "call" and call.bytes[:1] == b"\xe8" and call.size == 5
+            and call.encoding.imm_offset == 1 and call.encoding.imm_size == 4
+            and len(call.operands) == 1 and call.operands[0].type == x86.X86_OP_IMM
+            and pop.mnemonic == "add" and pop.size == 3 and pop.bytes[:2] == b"\x83\xc4"
+            and ret.mnemonic == "ret" and ret.bytes == b"\xc3"):
+        return None
+    arguments = []
+    index, body = 0, instructions[:-3]
+    while index < len(body):
+        if len(arguments) >= _MAX_CALL_ARGUMENTS:
+            return None
+        loaded = _register_load(body[index], x86.X86_REG_EBP)
+        if loaded is None:
+            return None
+        register, displacement = loaded
+        registers, dereferences = [register], []
+        index += 1
+        while index < len(body) and body[index].mnemonic == "mov":
+            if len(registers) >= _MAX_ARGUMENT_LOADS:
+                return None
+            chained = _register_load(body[index], next(
+                key for key, name in _GENERAL_REGISTERS.items() if name == registers[-1]))
+            if chained is None:
+                return None
+            registers.append(chained[0])
+            dereferences.append(chained[1])
+            index += 1
+        if index >= len(body):
+            return None
+        push = body[index]
+        if (push.mnemonic != "push" or push.size != 1 or len(push.operands) != 1
+                or push.operands[0].type != x86.X86_OP_REG
+                or _GENERAL_REGISTERS.get(push.operands[0].reg) != registers[-1]):
+            return None
+        index += 1
+        arguments.append(EHFrameArgumentFact(displacement, tuple(dereferences),
+                                             tuple(registers)))
+    if len(arguments) < 2 or pop.bytes[2] != 4 * len(arguments):
+        return None
+    start = instructions[0].address - code_base
+    end = ret.address + ret.size - code_base
+    transfer = EHTransferFact(
+        EHTransferRole.CLEANUP, call.address + call.encoding.imm_offset - code_base,
+        4, "REL32", None, call.operands[0].imm & 0xFFFFFFFF, None)
+    return EHActionFact(EHActionKind.FRAME_ARGUMENTS_CALL_CLEANUP, start, end, (transfer,),
+                        arguments=tuple(arguments))
+
+
 def _cleanup_action(instructions, *, code_base: int = 0) -> EHActionFact:
     """Decode one complete bounded action into typed transfer facts."""
     if not instructions:
@@ -464,7 +577,11 @@ def _cleanup_action(instructions, *, code_base: int = 0) -> EHActionFact:
     end = instructions[-1].address + instructions[-1].size - code_base
 
     # VC6 can condition virtual-base cleanup on a saved construction flag.
-    # Admit only the observed single-bit masks 1 and 2, a zero branch to
+    # Each flag is one bit of the saved word (masks 1 and 2 observed first;
+    # 0x006504E0's actions test 4 and 8 for successive constructed objects).
+    # Admit one single-bit mask in either canonical encoding: `and eax,imm8`
+    # for 1..0x40 (the sign-extended imm8 cannot name a higher single bit) and
+    # the accumulator `and eax,imm32` above it, a zero branch to
     # this action's final plain RET, and an otherwise independently decoded
     # frame tail transfer.
     if len(instructions) in (7, 8):
@@ -482,7 +599,7 @@ def _cleanup_action(instructions, *, code_base: int = 0) -> EHActionFact:
             and load.operands[1].mem.segment == 0
             and load.operands[1].mem.disp != 0
             and load.operands[1].mem.disp % 4 == 0
-            and mask.bytes in (b"\x83\xe0\x01", b"\x83\xe0\x02")
+            and _single_bit_eax_mask(mask) is not None
             and test.bytes == b"\x85\xc0"
             and skip.mnemonic == "je" and len(skip.operands) == 1
             and skip.operands[0].type == x86.X86_OP_IMM
@@ -499,7 +616,7 @@ def _cleanup_action(instructions, *, code_base: int = 0) -> EHActionFact:
                 raise ValueError("guarded EH action lacks an ordinary frame tail transfer")
             return replace(transfer, start=start, end=end,
                            guard=EHFrameGuardFact(load.operands[1].mem.disp,
-                                                  mask.bytes[2], "eax"))
+                                                  _single_bit_eax_mask(mask), "eax"))
 
     if len(instructions) in (7, 8):
         callback, count_push, size_push, frame_load = instructions[:4]
@@ -585,6 +702,10 @@ def _cleanup_action(instructions, *, code_base: int = 0) -> EHActionFact:
         conversion = _null_checked_conversion(instructions, code_base)
         if conversion is not None:
             return conversion
+
+    arguments_call = _frame_arguments_call(instructions, code_base)
+    if arguments_call is not None:
+        return arguments_call
 
     target_instruction = None
     first = instructions[0]
@@ -1194,7 +1315,13 @@ def _cold_layout(code: bytes) -> tuple[int, tuple[EHActionFact, ...], int, int, 
                         raise ValueError("COFF EH array action has ambiguous bounded decoding")
                     action, consumed = parsed, length
         else:
-            for length in (2, 3, 5, 7, 8, 12):
+            # Lengths of the fixed-size actions, plus the run through the
+            # first RET for a frame-arguments call (whose argument count
+            # and load depth vary). Every RET-terminated action ends there.
+            through_ret = next((at - index + 1 for at in range(index, len(instructions))
+                                if instructions[at].mnemonic == "ret"), None)
+            lengths = sorted({2, 3, 5, 7, 8, 12} | ({through_ret} if through_ret else set()))
+            for length in lengths:
                 if index + length > len(instructions):
                     continue
                 try:
@@ -1312,16 +1439,30 @@ def _object_child_and_info(obj: Coff, root: Symbol, child: int, *,
                 resolved = resolve_transfer(
                     resolved, role=transfer.role, relocation_kind="REL32",
                     target=symbol.name, addend=raw_addend)
-            elif action.kind is EHActionKind.FRAME_SLOT_CALL_CLEANUP:
+            elif action.kind in _EXTERNAL_CALL_KINDS:
                 symbol = _reloc_at(obj, child, transfer.operand_offset,
                                    RelocationKind.RELATIVE32)
                 named_symbols = [candidate for candidate in obj.symbols.values()
                                  if candidate.name == symbol.name]
+                # The callee is named by its external symbol either way: an
+                # undefined declaration, or one independent code COMDAT this
+                # object also emits (an inline `operator delete` the linker
+                # may select from any object). Its target is bound by name
+                # like any other call; its body is not this owner's.
+                if symbol.section == 0:
+                    callee_ok = symbol.index not in obj.auxiliary
+                else:
+                    try:
+                        callee_ok = (obj.function(symbol.name) == symbol
+                                     and symbol.section not in obj.associations
+                                     and symbol.section not in (root.section, child))
+                    except ValueError:
+                        callee_ok = False
                 if (transfer.role is not EHTransferRole.CLEANUP
-                        or raw_addend != 0 or symbol.section != 0
+                        or raw_addend != 0 or not callee_ok
                         or symbol.value != 0 or symbol.storage != 2
                         or not symbol.name or not symbol.type & 0x20
-                        or symbol.index in obj.auxiliary or len(named_symbols) != 1):
+                        or len(named_symbols) != 1):
                     raise ValueError(
                         "COFF frame-local cleanup lacks one unambiguous external function relocation")
                 resolved = resolve_transfer(
