@@ -297,95 +297,67 @@ Purpose: Find the palette entry nearest the given colour.
 // prototype int (__thiscall)(Palette* this, int, int, int, int, int, int)
 // kind      game
 
-MOVED HERE FROM src/unrecovered/005ff280.cpp, half recovered. It is not
-byte-exact - 3 of the image's 150 instructions - and the divergence is at
-instruction 2, where the image saves ONLY `esi` before the early return and
-pushes `ebx/ebp/edi` after it while we save three up front. Everything
-downstream is shifted by that, so branch-level work does not show; six
-source spellings moved it not at all. What IS settled is the meaning, read
-off the image: the distance is summed green^2 + red^2 + blue^2 in that
-order, the masks are hoisted before the loop, and `skip_animated` selects a
-pass that first marks every entry an active slot reserves.
+The distance is summed green^2 + red^2 + blue^2 in that order, and
+`skip_animated` selects a pass that first marks every entry an active slot
+reserves. The earlier "push placement wall" was source shape: one `end`
+local assigned in each arm and one shared `return` after the if/else let
+VC6 save only esi before the PaletteInitialized guard (5FF28B) and defer
+ebx/ebp/edi past it, as get_nearest_palette_index does.
 
 The name is an inference from behaviour, which is why the catalogue's
 `UNK7` stays on the marker and `symbol` carries what this tree emits.
 Return Value: the nearest entry's index, or 7 if there is no palette
-Status: Half recovered - see above
-
-TRIED: 2026-08-24, confirmed this is the SAME wall as
-get_nearest_palette_index(unsigned char,...)'s (0x005FF470) TRIED note: that
-sibling has the identical shape (one `push esi` before the `PaletteInitialized`
-guard, `push ebx/ebp/edi` deferred to the continue-path in the image, all four
-pushed up front here regardless of guard placement) and moving the guard to
-the absolute top of the body there did not change the push count. Given six
-spellings already failed here and the sibling's guard-placement experiment
-also failed, this reads as one whole-function register-pressure wall shared
-by both `reserved[256]`-scanning bodies, not two separate puzzles.
-// TRIED: 2026-09-03, the frame size is not source-reachable. The image's frame is
-//   0x414 (five int slots: index, best, end, best_index, one masked channel) and this
-//   tree's is 0x41C, which shifts EVERY esp-relative operand by 8 and is why the raw
-//   agreement is 3/150 - this is the same wall the 2026-08-24 note names, seen as frame
-//   size. Two spellings measured against it: dropping the `distance` local and writing
-//   `dg*dg + dr*dr + db*db` twice (once in the compare, once in the store) reached 5/150
-//   at the SAME 0x41C frame; dropping the three named `want_*` mask locals and writing
-//   `red & 0xFF` at each use (VC6 hoists the loop-invariant `and` itself) reached only
-//   4/150 and shrank the frame just one slot, to 0x418 - so the slots are not the named
-//   locals, they are what the allocator chose to spill. Both edits reverted: the named
-//   forms are the better C++ and the higher agreement of the two was 5/150.
+Status: Complete
 */
 int Palette::closest(uint8_t red, uint8_t green, uint8_t blue, int start, int count,
                      int skip_animated) {
     int best = 200000;
+    // Original leaves the result uninitialized when no eligible entry improves best.
+    int best_index;
+    int end;
     if (!PaletteInitialized) {
         return 7;
     }
-    // Original leaves the result uninitialized when no eligible entry improves best.
-    int best_index;
-    const int end = start + count;
-    const int want_red = red & 0xFF;
-    const int want_green = green & 0xFF;
-    const int want_blue = blue & 0xFF;
-
     if (!skip_animated) {
+        end = start + count;
         for (int index = start; index < end; ++index) {
-            const int dr = entries_[index].peRed - want_red;
-            const int dg = entries_[index].peGreen - want_green;
-            const int db = entries_[index].peBlue - want_blue;
-            const int distance = dg * dg + dr * dr + db * db;
+            const int distance =
+                (entries_[index].peGreen - green) * (entries_[index].peGreen - green)
+                + (entries_[index].peRed - red) * (entries_[index].peRed - red)
+                + (entries_[index].peBlue - blue) * (entries_[index].peBlue - blue);
             if (distance < best) {
                 best = distance;
                 best_index = index;
             }
         }
-        return best_index;
-    }
-
-    // EVERY ENTRY AN ACTIVE SLOT OWNS IS OFF LIMITS. A slot is active when
-    // its key is not -1, and it reserves `count` entries from `first`.
-    int reserved[256];
-    for (int index = 0; index < 256; ++index) {
-        reserved[index] = 0;
-    }
-    for (int slot = 0; slot < 5; ++slot) {
-        if (internal_[slot].key != 0xFFFFFFFFu) {
-            const unsigned first = internal_[slot].first;
-            const unsigned stop = first + internal_[slot].count;
-            for (unsigned entry = first; entry < stop; ++entry) {
-                reserved[entry] = 1;
+    } else {
+        // EVERY ENTRY AN ACTIVE SLOT OWNS IS OFF LIMITS. A slot is active
+        // when its key is not -1, and it reserves `count` entries from `first`.
+        int reserved[256];
+        for (int k = 0; k < 256; ++k) {
+            reserved[k] = 0;
+        }
+        for (int slot = 0; slot < 5; ++slot) {
+            if (internal_[slot].key != 0xFFFFFFFFu) {
+                const int stop = internal_[slot].first + internal_[slot].count;
+                for (int entry = internal_[slot].first; entry < stop; ++entry) {
+                    reserved[entry] = 1;
+                }
             }
         }
-    }
-    for (index = start; index < end; ++index) {
-        if (reserved[index]) {
-            continue;
-        }
-        const int dr = entries_[index].peRed - want_red;
-        const int dg = entries_[index].peGreen - want_green;
-        const int db = entries_[index].peBlue - want_blue;
-        const int distance = dg * dg + dr * dr + db * db;
-        if (distance < best) {
-            best = distance;
-            best_index = index;
+        end = start + count;
+        for (int index = start; index < end; ++index) {
+            if (reserved[index]) {
+                continue;
+            }
+            const int distance =
+                (entries_[index].peGreen - green) * (entries_[index].peGreen - green)
+                + (entries_[index].peRed - red) * (entries_[index].peRed - red)
+                + (entries_[index].peBlue - blue) * (entries_[index].peBlue - blue);
+            if (distance < best) {
+                best = distance;
+                best_index = index;
+            }
         }
     }
     return best_index;
@@ -829,18 +801,9 @@ void Palette::close_palette_class() {
 //   order to `dg*dg + dr*dr + db*db` (green, red, blue), matching both the
 //   image's `imul`/`add` chain here and `closest()`'s own documented order -
 //   it was `dr*dr + dg*dg + db*db` (red first).
-// TRIED: 2026-08-24, the guard's placement does not close the remaining gap.
-//   With it positioned exactly where the image's shared prefix has it (after
-//   `best_dist`/`best_index`, matching this body) the divergence stays at
-//   instruction 1 (3/136); moved to the very first statement, before the two
-//   locals, it is slightly WORSE (2/136, +1 instruction). The image pushes
-//   only `esi` before the guard and defers `ebx`/`ebp`/`edi` to the
-//   continue-path (`pop esi` alone on the early return); this tree's compiled
-//   prologue pushes all four up front regardless of source placement, which
-//   reads as the same "stack layout order" wall the earlier TRIED note above
-//   already named - a whole-function register-pressure decision (driven by
-//   the 256-entry `reserved[]` scan later in the body) that guard placement
-//   alone does not move. Left as the semantically-correct MISMATCH.
+// RESOLVED 2026-11-12: the deferred ebx/ebp/edi saves come from one shared
+//   `return best_index` after an if/else; a return inside the first arm put
+//   all four pushes in the prologue.
 // size      439 bytes
 // prototype int (__thiscall ?get_nearest_palette_index@Palette@@QAEHEEEH@Z)(Palette* this, unsigned int8, unsigned int8, unsigned int8, int)
 // callers   5   call targets   0
@@ -854,55 +817,45 @@ int Palette::get_nearest_palette_index(unsigned char red, unsigned char green,
     int best_dist = 200000;
     // Original leaves the result uninitialized when no eligible entry improves best.
     int best_index;
-
     if (PaletteInitialized == nullptr) {
         return 7;
     }
-
+    // One shared return after the if/else: that single exit is what lets
+    // VC6 defer the ebx/ebp/edi saves past the guard (5FF4A0).
     if (skip_animated == 0) {
-        const PALETTEENTRY *p = entries_;
-        for (int i = 0; i < 0x100; ++i, ++p) {
-            int dist = (p->peGreen - green) * (p->peGreen - green)
-                     + (p->peRed - red) * (p->peRed - red)
-                     + (p->peBlue - blue) * (p->peBlue - blue);
+        for (int i = 0; i < 0x100; ++i) {
+            int dist = (entries_[i].peGreen - green) * (entries_[i].peGreen - green)
+                     + (entries_[i].peRed - red) * (entries_[i].peRed - red)
+                     + (entries_[i].peBlue - blue) * (entries_[i].peBlue - blue);
             if (dist < best_dist) {
                 best_dist = dist;
                 best_index = i;
             }
         }
-        return best_index;
-    }
-
-    int reserved[0x100];
-    for (int k = 0; k < 0x100; ++k) {
-        reserved[k] = 0;
-    }
-
-    for (int g = 0; g < 5; ++g) {
-        int id = internal_[g].key;
-        if (id != -1) {
-            unsigned char start = internal_[g].first;
-            unsigned char count = internal_[g].count;
-            int end = (int)start + (int)count;
-            if ((int)start < end) {
-                for (int k = start; k < end; ++k) {
+    } else {
+        int reserved[0x100];
+        for (int k = 0; k < 0x100; ++k) {
+            reserved[k] = 0;
+        }
+        for (int g = 0; g < 5; ++g) {
+            if (internal_[g].key != -1) {
+                int end = internal_[g].first + internal_[g].count;
+                for (int k = internal_[g].first; k < end; ++k) {
                     reserved[k] = 1;
                 }
             }
         }
-    }
-
-    const PALETTEENTRY *p2 = &entries_[10];
-    for (int i = 10; i < 0xf6; ++i, ++p2) {
-        if (reserved[i] != 0) {
-            continue;
-        }
-        int dist = (p2->peGreen - green) * (p2->peGreen - green)
-                 + (p2->peRed - red) * (p2->peRed - red)
-                 + (p2->peBlue - blue) * (p2->peBlue - blue);
-        if (dist < best_dist) {
-            best_dist = dist;
-            best_index = i;
+        for (int i = 10; i < 0xf6; ++i) {
+            if (reserved[i] != 0) {
+                continue;
+            }
+            int dist = (entries_[i].peGreen - green) * (entries_[i].peGreen - green)
+                     + (entries_[i].peRed - red) * (entries_[i].peRed - red)
+                     + (entries_[i].peBlue - blue) * (entries_[i].peBlue - blue);
+            if (dist < best_dist) {
+                best_dist = dist;
+                best_index = i;
+            }
         }
     }
     return best_index;
@@ -1490,12 +1443,13 @@ int Palette::fade_to(Palette *other, int start, int count, int steps,
 #pragma function(memcpy)
 #endif
 int Palette::init_cycle(int key, int first, int count, unsigned long interval) {
-    unsigned int first_index = (unsigned char)first;
-
-    if (first_index < 10) {
+    // The image masks the colour index in place (5FE71A..5FE727) and
+    // compares it signed; the slot is then addressed by index, not pointer.
+    first &= 0xFF;
+    if (first < 10) {
         return 3;
     }
-    if ((int)(0xf6 - first_index) < (int)count) {
+    if (count > 0xF6 - first) {
         return 3;
     }
     if (key == -1) {
@@ -1506,52 +1460,44 @@ int Palette::init_cycle(int key, int first, int count, unsigned long interval) {
     }
 
     int slot = 0;
+    const PaletteInternal *entry = internal_;
     while (slot < 5) {
-        int id = internal_[slot].key;
-        if (key == id || id == -1) {
+        const int held = static_cast<int>(entry->key);
+        if (key == held) {
+            break;
+        }
+        if (held == -1) {
             break;
         }
         ++slot;
+        ++entry;
     }
 
-    PaletteInternal *entry = &internal_[slot];
-
-    if ((int)entry->key == key) {
-        Time *t = entry->time;
-        if (t != 0) {
-            t->~Time();
-            operator delete(t);
-            entry->time = 0;
+    if (static_cast<int>(internal_[slot].key) == key) {
+        if (internal_[slot].time != 0) {
+            delete internal_[slot].time;
+            internal_[slot].time = 0;
         }
-        PALETTEENTRY *p = entry->colours;
-        if (p != 0) {
-            free(p);
-            entry->colours = 0;
+        if (internal_[slot].colours != 0) {
+            free(internal_[slot].colours);
+            internal_[slot].colours = 0;
         }
     }
 
-    entry->key = key;
-    entry->count = (unsigned char)count;
-    entry->first = (unsigned char)first_index;
-
-    // The original LEA wraps the signed count in a 32-bit byte count.
-    const unsigned int colour_bytes = static_cast<unsigned int>(count) * 4u;
-    PALETTEENTRY *mem = static_cast<PALETTEENTRY *>(mem_get(colour_bytes));
-    entry->colours = mem;
-    if (mem == 0) {
+    internal_[slot].key = key;
+    internal_[slot].count = (uint8_t)count;
+    internal_[slot].first = (uint8_t)first;
+    internal_[slot].colours = static_cast<PALETTEENTRY *>(mem_get(count * 4));
+    if (internal_[slot].colours == 0) {
         return 4;
     }
-
-    memcpy(mem, &entries_[first_index], colour_bytes);
-
-    Time *t = new Time();
-    entry->time = t;
-    if (t == 0) {
+    memcpy(internal_[slot].colours, &entries_[first], count * 4);
+    internal_[slot].time = new Time();
+    if (internal_[slot].time == 0) {
         return 4;
     }
-
-    t->init(Palette::timer_callback, key, this,
-            static_cast<uint32_t>(interval), 5);
+    internal_[slot].time->init(Palette::timer_callback, key, this,
+                               static_cast<uint32_t>(interval), 5);
     return 0;
 }
 #if defined(_MSC_VER) && _MSC_VER == 1200

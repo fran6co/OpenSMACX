@@ -61,8 +61,10 @@ int __cdecl veh_at(int x, int y) {
     if (y >= 0 && y < lat_bounds && x >= 0 && x < MapLongitudeBounds && !(bit_at(x, y) & BIT_VEH_IN_TILE)) {
         return -1; // not found
     }
-    for (int veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
-        if (Vehs[veh_id].x == x && Vehs[veh_id].y == y) {
+    // 5BFEE5: one record pointer walks from Vehs (mov ecx, 0x952828).
+    Veh *veh = Vehs;
+    for (int veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++, veh++) {
+        if (veh->x == x && veh->y == y) {
             return veh_top(veh_id);
         }
     }
@@ -335,7 +337,9 @@ int __cdecl veh_init(int prototype, int faction, int x, int y) {
     }
     const int vehicle_id = GameDataStateStorage.fields_.vehicle_current_count_++;
     log_say("Adding Vehicle (v,who,v2)", vehicle_id, faction, prototype);
-    if (VehPrototypes[prototype].plan < PLAN_COLONIZATION) {
+    // 5C0419: `cmp byte, 7; ja` - the military plans are the ones up to
+    // and including naval transport.
+    if (VehPrototypes[prototype].plan <= PLAN_NAVAL_TRANSPORT) {
         PlayersData[faction].total_mil_veh++;
     }
     PlayersData[faction].proto_id_active[prototype]++;

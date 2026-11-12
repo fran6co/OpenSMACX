@@ -8,6 +8,8 @@
  * (at your option) any later version.
  */
 #include "stdafx.h"
+// current_entry() is expanded in StringList::sort (608864..60887C).
+#define STRINGSTRUCT_CURRENT_ENTRY_INLINE
 #include "stringstruct.h"
 #include "heap.h"
 #include "general.h"
@@ -89,6 +91,29 @@ int StringList::add_special(char *text) {
     return add(0) != 0;
 }
 
+// WORKAROUND(inline): the image's expanded cursor step in sort (608847..60885B)
+// copies the incremented position (`inc edx; mov eax, edx`) where the header
+// next_entry does not; a member pre-increment reproduces that copy. The
+// original spelling of this walk is unknown.
+static inline void stringlist_step(StringList *list) {
+    if (list->head_) {
+        list->current_ = list->current_->next;
+        if (++list->current_position_ == list->entry_count_) {
+            list->current_position_ = 0;
+        }
+    }
+}
+
+// WORKAROUND(inline): dead /Ob2 spend; with it sort keeps the image's
+// out-of-line seek_pos(position) call (0x0060892B). The original spelling
+// that spent this budget is unknown (sort_sessions has the same gap).
+static inline int stringlist_sort_budget_probe(int x) {
+    if (x == 1) x = 3;
+    if (x == 2) x = 5;
+    if (x == 4) x = 7;
+    return x;
+}
+
 /*
 Purpose: Sort the circular list by payload text, keeping each ID with its
          payload and retaining the original cursor side effects.
@@ -106,18 +131,22 @@ Status: Product behavior; historical seed remains an unclaimed measurement.
 void StringList::sort(int) {
     for (int position = 0; position < entry_count_ - 1; ++position) {
         seek_pos(position);
+        // WORKAROUND(inline): see stringlist_sort_budget_probe.
+        stringlist_sort_budget_probe(0);
+        stringlist_sort_budget_probe(0);
+        stringlist_sort_budget_probe(0);
+        stringlist_sort_budget_probe(0);
+        stringlist_sort_budget_probe(0);
+        stringlist_sort_budget_probe(0);
         char *smallest_text = head_ ? current_->string_payload()->text : 0;
         int smallest_position = position;
 
         for (int candidate = position + 1; candidate < entry_count_;
              ++candidate) {
-            next_entry();
-            char *candidate_text = 0;
-            if (current_) {
-                StringStructPayload *const candidate_payload =
-                    head_ ? current_->string_payload() : 0;
-                candidate_text = candidate_payload->text;
-            }
+            stringlist_step(this);
+            // A null head with a live cursor reads text through a null
+            // payload (608877), as current_entry() would.
+            char *candidate_text = current_ ? current_entry()->text : 0;
             if (strcmp(candidate_text, smallest_text) < 0) {
                 smallest_text = head_ ? current_->string_payload()->text : 0;
                 smallest_position = current_position_;

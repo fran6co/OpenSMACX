@@ -237,21 +237,27 @@ int Dialog::init(RECT *rect, int heap_size) {
     field_20_ |= 3U;
     field_1C_ = static_cast<uint32_t>(heap_size);
 
+    // One result and one return: the single exit lets VC6 defer the
+    // ebx/ebp/edi saves past the null-rect guard (60947D..609489).
+    int result;
     if (heap_size != 0) {
         if (heap_.init(static_cast<size_t>(heap_size))) {
-            return 4;
+            result = 4;
+        } else {
+            StringList *list = &item_list_;
+            list->remove_all();
+            list->allocator_ = &heap_;
+            list->current_position_ = 0;
+            result = 0;
         }
-        StringList *list = &item_list_;
-        list->remove_all();
-        list->allocator_ = &heap_;
-        list->current_position_ = 0;
     } else {
         StringList *list = &item_list_;
         list->remove_all();
         list->current_position_ = 0;
         list->allocator_ = 0;
+        result = 0;
     }
-    return 0;
+    return result;
 }
 
 /*
