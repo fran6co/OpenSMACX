@@ -86,6 +86,7 @@ typedef signed char int8;  // a scaffold spelling the artifacts use
 #include "popup.h"   // pop_caption_title, for DDInit::report_error
 #include "basepop.h"  // Win::set_bubble_text's popup interfaces
 #include <ddraw.h>  // IDirectDrawSurface::GetDC / ReleaseDC in the hdc pair
+#include <windowsx.h>  // HANDLE_MSG, the crackers window_proc dispatches through
 
 // RECOVERY_OBJECT: v2 0x009B7B6C 0x009B7B70 ?MenuPullDownInputOrigin@@3HA 0x005F9640
 // Shared state written by Menu and PullDown keyboard navigation paths.
@@ -747,9 +748,10 @@ void(__cdecl *WinCancelHook)();
 // original on_mouse_move (608500) invokes it on hover entry, not completion.
 // RECOVERY_OBJECT: v1 0x009B7AA0 ?WinButtonHoverHook@@3P6AXXZA
 void(__cdecl *WinButtonHoverHook)();
-// The original slot receives (HWND, LPARAM) in window_proc and translated
-// coordinates in OnRButtonDown. Only a two-word cdecl call shape is proved;
-// the semantic parameter contract remains unresolved.
+// The original's only caller is OnRButtonDown (also expanded into
+// window_proc's right-button arms), passing the translated coordinates; the
+// (HWND, LPARAM) reading came from a window_proc reconstruction that called
+// it from every mouse arm. Only a two-word cdecl call shape is proved.
 // RECOVERY_OBJECT: v2 0x009B7A94 0x009B7A98 ?WinMouseHook@@3P6AXPAUHWND__@@J@ZA 0x005F0B4E
 void(__cdecl *WinMouseHook)(HWND window, LPARAM position);  // 0x009B7A94
 // RECOVERY_OBJECT: v2 0x009B7A8C 0x009B7A90 ?WinKeyHook@@3P6AXI@ZA 0x005F07D8
@@ -2113,103 +2115,47 @@ Purpose: The window procedure the class registers - route every input
 // CORRECTED from a NON-STATIC member. The catalogued name ends in `QAG` - a
 // public member declared __stdcall, which would take a receiver and clean
 // five slots - and the body ends in `ret 0x10`. Four arguments, no `this`,
-// which is what a WNDPROC is; every one of its `Win::` callees is `QAA` or
-// `QAG` too, and the one that is not - `do_tracking`, `QAE` - is called on
-// `WinTrackingWindow` rather than on a receiver of its own. Same shape as
-// `init_class` and `flip` beside it. See the QAA note on `set_display_mode`.
+// which is what a WNDPROC is. Same shape as `init_class` and `flip` beside
+// it. See the QAA note on `set_display_mode`.
 //
-// Promoted out of src/unrecovered/005f0650.cpp, where it was a scaffold
-// working copy dispatching through `VCall` slot shims and reading its
-// imports out of IAT addresses. It dispatches through the named virtual
-// members now - `focus->on_key(...)`, `over->on_l_button_up(...)`,
-// `owner->on_sys_close()` - which VC6 lowers to the single
-// `mov edx,[reg] / call dword ptr [edx+0xNNN]` the image has, and calls
-// BeginPaint, EndPaint, InvalidateRect, SelectPalette, RealizePalette,
-// GetWindowLongA, GetDC and DefWindowProcA by name, all eight checked
-// against the import directory rather than inferred from argument counts.
-// The `WinSlot*` constants and the member-pointer typedefs the scaffold
-// spelled them with are gone; nothing reads them.
+// A WINDOWSX.H MESSAGE-CRACKER SWITCH. Every arm is one of the static
+// `On*` handlers that follow it in the image (0x005F1070..0x005F2680),
+// expanded in line by /Ob2; their out-of-line copies are never called.
+// The evidence:
+//   - the WM_QUERYNEWPALETTE arm returns through `and eax,0xffff`, which is
+//     HANDLE_WM_QUERYNEWPALETTE's MAKELRESULT((BOOL)fn(hwnd), 0);
+//   - the WM_ACTIVATE and WM_SYSCOMMAND arms rebuild wParam/lParam from
+//     WORDs (`and 0xffff / shl 0x10 / or`), the FORWARD_WM_* spelling inside
+//     OnActivate and OnSysCommand;
+//   - the mouse arms keep `x` in `window`'s incoming slot and `y` in
+//     `lParam`'s: the inlined handlers' own address-taken parameters;
+//   - each arm's hooks are exactly its handler's (OnKey runs WinKeyHook and
+//     WinMessageHook, OnRButtonDown WinMouseHook(x, y) and WinMessageHook,
+//     the other handlers neither).
+// One switch: VC6 splits it into the [6,0x101], [0x104,0x200] and
+// [0x202,0x206] tables plus the sparse 0x30F/0x311/0x401 chain, and lays
+// the arms out in source order. DefWindowProc after the switch is the one
+// shared tail at 0x005F0D11 that the WM_USER+1 arm falls into.
 //
-// LEVER: 13/657 -> 26/657 (2026-08-28) on the DISPATCH LAYOUT, both moves
-//   semantically neutral:
-//   - the outer test is spelled `if (message <= WM_LBUTTONDOWN)` with the
-//     four-message chain as its THEN arm and the >0x201 region as its ELSE,
-//     the reverse of the obvious nesting. The image's `cmp 0x201 / ja` has
-//     the high region OUT of line and the chain falling through, which only
-//     the flipped spelling produces.
-//   - the three inner tests are NEGATED (`!= WM_LBUTTONDOWN`,
-//     `<= WM_CHAR`, `!= WM_CHAR`) with the arms swapped into the else
-//     position, so every arm lands out of line and the [6, 0x101] jump
-//     table is the fallthrough - which is where the image has it.
+// INLINE BUDGET. The image expands every first-level handler except
+// OnLButtonDown and none of their nested helpers: get_hdc, release_hdc,
+// get_key_window and sub_5f86a0 stay calls, while OnQueryNewPalette writes
+// its acquire out by hand (its standalone copy has the same shape) and
+// calls release_hdc. The wheel arm is a file-local handler for the same
+// reason the mouse arms are: its x/y live in the incoming argument slots.
 //
-// LEVER: 26/657 -> 119/657 (2026-09-02), and `call_diff` 22 calls against
-//   the image's 24 -> agreeing, on four findings read off the image:
-//   - THE KEY AND RIGHT-BUTTON PAIRS ARE SEPARATE ARMS. WM_KEYDOWN and
-//     WM_KEYUP had been one arm with a `message == WM_KEYDOWN ? 1 : 0`
-//     selector, and likewise SYSKEYDOWN/SYSKEYUP and
-//     RBUTTONDOWN/RBUTTONDBLCLK. The image gives each its own table entry -
-//     0x005F07B0/0x005F07F0, 0x005F086D/0x005F08A3, 0x005F0AFF/0x005F0B62 -
-//     and pushes a literal 1 or 0, where the shared arm computed
-//     `xor ecx,ecx / cmp edi,0x100 / sete cl / push ecx` and called the
-//     lookup helper once per PAIR instead of once per MESSAGE. Splitting
-//     them is what closed the call-count gap.
-//   - THE GUARDS ARE POSITIVE. `if (focus == nullptr) return 0;` puts an
-//     epilogue on every arm; the image tests and jumps OVER the dispatch to
-//     a `return 0` it falls into, which is `if (focus != nullptr) { ... }`.
-//   - HIWORD, NOT A SIGNED SHIFT. `static_cast<int>(lparam >> 16)` compiles
-//     `sar`, the image has `shr` at all four key arms - the scan code is a
-//     zero-extended WORD. Spelled `static_cast<int>(HIWORD(lparam))`.
-//   - THE >0x20A CASES ARE A SWITCH, NOT THREE IFS. QUERYNEWPALETTE,
-//     PALETTECHANGED and WM_USER+1 lower to `sub eax,0x30f / je / sub
-//     eax,2 / je / sub eax,0xf0 / jne`; three `if`s lower to three
-//     `cmp / jne` pairs the image does not have.
-//
-// LEVER: ARM ORDER IS SOURCE ORDER. VC6 fills each jump table in case-value
-//   order but lays the arms out in the order the source lists them, so the
-//   image's code order IS the original's case order and the table order is
-//   not. Table 1 at 0x005F0E28 reads ACTIVATE, PAINT, KEYDOWN, KEYUP while
-//   the code has PAINT at 0x5f06a4 and ACTIVATE at 0x5f070b; table 3 at
-//   0x005F104C reads LBUTTONUP, LBUTTONDBLCLK, RBUTTONDOWN, RBUTTONUP,
-//   RBUTTONDBLCLK while the code has the double-clicks first. Both switches
-//   here are written in the code order. (The 2026-08-28 TRIED line below
-//   concluded the opposite, from a body whose score was still capped by the
-//   missing arm splits - the reorder was invisible under it. That line was
-//   wrong and is superseded by this one.)
-//
-// FIXED 2026-09-02, a semantic divergence and not a spelling one: the
-//   WM_MOUSEMOVE arm returned 0 when `get_mouse_window` found nothing, so
-//   `WinMessageHook` never ran on that path. The image jumps to the tail at
-//   0x005F0BD4, which is PAST the message hook - it runs on the null path
-//   like every other `break` path, and `Effect::init` installs it. Now
-//   spelled `break`.
-//
-// TRIED: `WPARAM held_wparam = wparam; UINT held_message = message;` at the
-//   top, to reproduce the image's entry sequence `push esi / mov
-//   esi,[esp+0x60] / push edi / mov edi,[esp+0x60]` and its DefWindowProc
-//   tail that pushes both back out of esi and edi. VC6 copy-propagates both
-//   away and reloads the parameters at each tail: 26/657 before the arm
-//   splits, 119/657 after - identical either way. Also tried blocking the
-//   propagation by assigning `held_wparam = (minimised << 16) | active` in
-//   the WM_ACTIVATE arm (the image does rebuild wparam there), and by
-//   routing only the tails through the locals: no measurement moved. The
-//   image's entry load of `wparam` is a hoist this tree cannot produce from
-//   any spelling tried, and it costs the first four instructions - the tail
-//   at 0x005F0D11 pushes wparam out of esi and message out of edi, so the
-//   divergence repeats at every shared tail.
-// TRIED: one switch per half of the message space, with WM_CHAR and
-//   WM_LBUTTONDOWN as cases rather than guard tests - the natural reading of
-//   the dispatch. VC6 then keeps `message` in eax and loads it BEFORE `sub
-//   esp,0x50`: 15/657, because every later address shifts. The nested
-//   guards stay.
-// REMAINING: 119 of 657. The entry `mov esi,[esp+0x60]` above, the
-//   register-allocation split it causes, and the image's single shared
-//   DefWindowProc tail - this tree emits four, one per default, because the
-//   arms are laid out where the image's are not. Also scheduling inside the
-//   WM_ACTIVATE arm (the image computes LOWORD into eax and HIWORD into esi;
-//   this tree the other way round) and the argument-slot reuse in the mouse
-//   arms, where the image keeps `x` in `window`'s incoming slot and `y` in
-//   `lparam`'s and this tree spills them high.
-Status: MISMATCH, 119/657, call counts agreeing
+// RESTORED ORIGINAL BEHAVIOUR (2026-11-12), read off the arms:
+//   - WM_MOUSEMOVE with nothing under the pointer returns without running
+//     WinMessageHook (the image's null path jumps to 0x005F0BD4, the bare
+//     `return 0` after the hook; the 2026-09-02 "FIXED" note had it
+//     backwards);
+//   - WM_LBUTTONUP and WM_RBUTTONUP run neither WinMouseHook nor
+//     WinMessageHook;
+//   - WM_RBUTTONDOWN/WM_RBUTTONDBLCLK pass WinMouseHook the translated
+//     (x, y) get_mouse_window wrote back, not (HWND, lParam).
+Status: one instruction short, pending the 0x005F86A0 receiver (see
+        OnSysCommand): the image calls it as a member on the owner
+        (`mov ecx,esi`), which needs a declaration in win.h.
 */
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x005F0650 0x005F0E28 0x005F0E3C 0x005F069D
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x005F0650 0x005F0E3C 0x005F0F38 0x005F0697
@@ -2224,355 +2170,93 @@ Status: MISMATCH, 119/657, call counts agreeing
 #define WM_MOUSEWHEEL 0x020A
 #endif
 
-LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
-                                   LPARAM lparam) {
-    // The dispatch the image encodes is four tests and three tables:
-    //
-    //     cmp 0x201 / ja        -> everything above WM_LBUTTONDOWN, out of line
-    //     cmp 0x201 / je        -> the WM_LBUTTONDOWN arm, out of line
-    //     cmp 0x102 / ja        -> everything above WM_CHAR, out of line
-    //     cmp 0x102 / je        -> the WM_CHAR arm, out of line
-    //     lea [edi-6] / cmp 0xfb / ja / jmp table at 0x005F0E28
-    //
-    // so it is spelled as nested guards, each with the arm the image keeps out
-    // of line in its ELSE, and a switch as the fallthrough - the reverse of
-    // the nesting a straightforward reading suggests. Written the obvious way
-    // round the high region lands in line and the rebuild diverges at
-    // instruction 6.
-    //
-    // ARM ORDER IS SOURCE ORDER. VC6 fills each jump table in case-value order
-    // but lays the arms out in the order the source lists them, so the case
-    // order below is the image's own code order - WM_PAINT before WM_ACTIVATE
-    // even though 6 < 0xF, and the double-clicks before the plain buttons.
-    // KEYDOWN/KEYUP, SYSKEYDOWN/SYSKEYUP and RBUTTONDOWN/RBUTTONDBLCLK are
-    // separate cases rather than one arm with a `message == X ? 1 : 0`
-    // selector: the image gives each its own table entry and pushes its own
-    // literal 1 or 0, where a shared arm computes
-    // `xor ecx,ecx / cmp / sete cl / push ecx` and calls the lookup helper
-    // once instead of once per message, which `call_diff` reads as FEWER.
-    //
-    // Every `break` falls out of its switch and its guards to the two hooks at
-    // the bottom, which is the shared tail the image has at 0x005F0BD4, and
-    // every `default` is `DefWindowProcA` with its result returned - the one
-    // shared tail at 0x005F0D11. That default is not a nicety: WM_NCCREATE and
-    // WM_CREATE take it, and a window procedure that answers 0 to either makes
-    // CreateWindowEx return NULL.
-    if (message <= WM_LBUTTONDOWN) {
-        if (message != WM_LBUTTONDOWN) {
-            if (message <= WM_CHAR) {
-                if (message != WM_CHAR) {
-                    switch (message) {
-                    case WM_PAINT: {
-                        PAINTSTRUCT paint;
-                        if (BeginPaint(window, &paint) == nullptr) {
-                            return 0;
-                        }
-                        RECT damaged = paint.rcPaint;
-                        update_screen(&damaged, nullptr);
-                        flip(&damaged);
-                        EndPaint(window, &paint);
-                        return 0;
-                    }
-                    case WM_ACTIVATE: {
-                        const unsigned int active = LOWORD(wparam);
-                        const unsigned int minimised = HIWORD(wparam);
-                        InvalidateRect(HandleMain,
-                                       nullptr, FALSE);
-                        if (active == 0) {
-                            WinPointerOwner1 = nullptr;
-                            WinPointerOwner2 = nullptr;
-                        } else if (minimised == 0 && BufferDirectDraw == 0
-                                   && get_hdc() != nullptr) {
-                            SelectPalette(WinSharedHdc, PaletteInitialized,
-                                          FALSE);
-                            RealizePalette(WinSharedHdc);
-                            release_hdc();
-                        }
-                        DefWindowProcA(window, WM_ACTIVATE,
-                                       (minimised << 16) | active, lparam);
-                        return 0;
-                    }
-                    case WM_KEYDOWN: {
-                        Win *const focus = get_key_window();
-                        if (focus != nullptr) {
-                            focus->on_key(wparam, 1,
-                                          static_cast<short>(LOWORD(lparam)),
-                                          static_cast<int>(HIWORD(lparam)));
-                        }
-                        if (WinKeyHook != nullptr) {
-                            WinKeyHook(wparam);
-                        }
-                        break;
-                    }
-                    case WM_KEYUP: {
-                        // No `WinKeyHook` test here: the image's KEYUP arm runs
-                        // straight off the end to the message-hook tail.
-                        Win *const focus = get_key_window();
-                        if (focus != nullptr) {
-                            focus->on_key(wparam, 0,
-                                          static_cast<short>(LOWORD(lparam)),
-                                          static_cast<int>(HIWORD(lparam)));
-                        }
-                        break;
-                    }
-                    default:
-                        return DefWindowProcA(window, message, wparam, lparam);
-                    }
-                } else {
-                    // WM_CHAR. The guard is spelled positively because the
-                    // image tests and jumps over the dispatch to a `return 0`
-                    // it falls into afterwards, rather than testing the null
-                    // and returning out of line.
-                    Win *const focus = get_key_window();
-                    if (focus != nullptr) {
-                        focus->on_char(static_cast<char>(wparam),
-                                       static_cast<short>(LOWORD(lparam)));
-                    }
-                    return 0;
+// The wheel handler. File-local and fully expanded, so the image has no
+// out-of-line copy; WINDOWSX.H in this SDK has no WM_MOUSEWHEEL cracker.
+static void win_mouse_wheel(HWND hwnd, int x, int y, WPARAM keys) {
+    Win *const over = Win::get_mouse_window(&x, &y);
+    if (over != nullptr) {
+        over->send_wheel_delta(keys, HIWORD(keys), x, y, WinMouseDirect);
+    }
+}
+
+// WORKAROUND(inline): dead /Ob2 budget probe. Called with 0 it folds to no
+// code. The image refuses every second-level helper inside the expanded
+// handlers (get_hdc/release_hdc in the WM_ACTIVATE and WM_PALETTECHANGED
+// arms at 0x005F073D/0x005F0D48, sub_5f86a0 at 0x005F0946) while still
+// expanding OnQueryNewPalette; without this spend VC6 expands those three.
+// 11-30 calls after the switch all give the image's decisions; fewer leave
+// sub_5f86a0 inlined. The original spending is not identified.
+static int window_proc_budget_probe(int x) {
+    if (x == 1) x = 2;
+    return x;
+}
+
+LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wParam,
+                                   LPARAM lParam) {
+    switch (message) {
+        HANDLE_MSG(window, WM_PAINT, OnPaint);
+        HANDLE_MSG(window, WM_ACTIVATE, OnActivate);
+        HANDLE_MSG(window, WM_KEYDOWN, OnKey);
+        HANDLE_MSG(window, WM_KEYUP, OnKey);
+        HANDLE_MSG(window, WM_CHAR, OnChar);
+        HANDLE_MSG(window, WM_SYSKEYDOWN, OnSysKey);
+        HANDLE_MSG(window, WM_SYSKEYUP, OnSysKey);
+        HANDLE_MSG(window, WM_SYSCOMMAND, OnSysCommand);
+        HANDLE_MSG(window, WM_MOUSEMOVE, OnMouseMove);
+        HANDLE_MSG(window, WM_LBUTTONDOWN, OnLButtonDown);
+        HANDLE_MSG(window, WM_LBUTTONDBLCLK, OnLButtonDown);
+        HANDLE_MSG(window, WM_LBUTTONUP, OnLButtonUp);
+        HANDLE_MSG(window, WM_RBUTTONDBLCLK, OnRButtonDown);
+        HANDLE_MSG(window, WM_RBUTTONDOWN, OnRButtonDown);
+        HANDLE_MSG(window, WM_RBUTTONUP, OnRButtonUp);
+    case WM_MOUSEWHEEL:
+        win_mouse_wheel(window, static_cast<short>(LOWORD(lParam)),
+                        static_cast<short>(HIWORD(lParam)), wParam);
+        return 0;
+    case WM_USER + 1: {
+        // The tick a `Time` posts to this window, `wParam` being the Time
+        // itself. This is the half of the one-shot emulation that lives
+        // outside `Time` (see time.h): `SetTimer` has no one-shot mode, so
+        // a `pulse()` that went through it arrives here repeating, and the
+        // second tick is what stops it.
+        Time *const timer = reinterpret_cast<Time *>(wParam);
+        timer->tick_posted_ = 0;
+        if (MsgStatus == 0) {
+            if ((timer->oneshot_state_ & TimeOneShot) != 0) {
+                if ((timer->oneshot_state_ & TimeOneShotFired) != 0) {
+                    timer->stop();
+                    break;
                 }
-            } else {
-                switch (message) {
-                case WM_SYSKEYDOWN: {
-                    Win *const focus = get_key_window();
-                    if (focus != nullptr) {
-                        focus->on_sys_key(wparam, 1,
-                                          static_cast<short>(LOWORD(lparam)),
-                                          static_cast<int>(HIWORD(lparam)));
-                    }
-                    return 0;
-                }
-                case WM_SYSKEYUP: {
-                    Win *const focus = get_key_window();
-                    if (focus != nullptr) {
-                        focus->on_sys_key(wparam, 0,
-                                          static_cast<short>(LOWORD(lparam)),
-                                          static_cast<int>(HIWORD(lparam)));
-                    }
-                    return 0;
-                }
-                case WM_SYSCOMMAND: {
-                    Win *const owner = reinterpret_cast<Win *>(
-                        GetWindowLongA(window, GWL_USERDATA));
-                    if (owner == nullptr) {
-                        return 0;
-                    }
-                    if (wparam != SC_CLOSE) {
-                        DefWindowProcA(window, WM_SYSCOMMAND, wparam, lparam);
-                        return 0;
-                    }
-                    WinCallbackWindow = owner;
-                    {
-                        // The class's own close callback at 0x404, called when
-                        // it is set. Read as the function pointer it is called
-                        // as.
-                        typedef void(__cdecl * func_win_closed)();
-                        func_win_closed closed =
-                            owner->field_404_;
-                        if (closed != nullptr) {
-                            closed();
-                        }
-                    }
-                    owner->on_sys_close();
-                    sub_5f86a0(owner->val_6_);
-                    return 0;
-                }
-                case WM_MOUSEMOVE: {
-                    WinCursorMoved = 0;
-                    if (WinTrackingWindow != nullptr) {
-                        WinTrackingWindow->do_tracking(
-                            static_cast<short>(LOWORD(lparam)),
-                            static_cast<short>(HIWORD(lparam)));
-                        return 0;
-                    }
-                    int x = static_cast<short>(LOWORD(lparam));
-                    int y = static_cast<short>(HIWORD(lparam));
-                    Win *const over = get_mouse_window(&x, &y);
-                    update_cursor(over, 1);
-                    if (over == nullptr) {
-                        // `break`, not `return 0`: the image's null path jumps
-                        // to the tail at 0x005F0BD4, which is past the message
-                        // hook, so the hook runs on this path too.
-                        break;
-                    }
-                    if (WinHoverWindow != nullptr
-                        && (WinCursorMoved != 0 || over != WinHoverWindow)
-                        && (WinPointerOwner3 == nullptr
-                            || WinPointerOwner3 == WinHoverWindow)) {
-                        WinHoverWindow->on_mouse_leave(x, y);
-                    }
-                    WinHoverWindow = over;
-                    over->on_mouse_move(x, y, wparam, WinMouseDirect);
-                    return 0;
-                }
-                default:
-                    return DefWindowProcA(window, message, wparam, lparam);
-                }
+                timer->oneshot_state_ |= TimeOneShotFired;
             }
-        } else {
-            OnLButtonDown(window, 0, static_cast<short>(LOWORD(lparam)),
-                          static_cast<short>(HIWORD(lparam)), wparam);
-            return 0;
-        }
-    } else {
-        if (message > WM_MOUSEWHEEL) {
-            // Three sparse cases far above the mouse-button block, which the
-            // image lowers as a compare chain - `sub eax,0x30f / je / sub
-            // eax,2 / je / sub eax,0xf0 / jne` - rather than the three
-            // `cmp / jne` pairs a chain of `if`s costs. So it is a switch.
-            switch (message) {
-            case WM_QUERYNEWPALETTE: {
-                if (BufferDirectDraw != 0) {
-                    return 1;
+            if (Time::TimeModal == nullptr || timer == Time::TimeModal) {
+                if (timer->callback1_ != nullptr) {
+                    timer->callback1_(timer->cb_param1_);
                 }
-                if (WinHdcRefCount == 0) {
-                    if (DirectDrawSurface == nullptr) {
-                        WinSharedHdc = GetDC(HandleMain);
-                    } else {
-                        DirectDrawSurface->GetDC(&WinSharedHdc);
-                    }
-                    if (WinSharedHdc == nullptr) {
-                        return 0;
-                    }
-                    WinHdcRefCount = 1;
-                } else {
-                    ++WinHdcRefCount;
+                if (timer->callback2_ != nullptr) {
+                    timer->callback2_(timer->cb_param1_, timer->cb_param2_);
                 }
-                if (WinSharedHdc != nullptr) {
-                    SelectPalette(WinSharedHdc, PaletteInitialized, FALSE);
-                    RealizePalette(WinSharedHdc);
-                    release_hdc();
-                }
-                return 0;
-            }
-            case WM_PALETTECHANGED: {
-                if (window == reinterpret_cast<HWND>(wparam)) {
-                    return 0;
-                }
-                if (BufferDirectDraw != 0) {
-                    return 0;
-                }
-                if (get_hdc() == nullptr) {
-                    return 0;
-                }
-                SelectPalette(WinSharedHdc, PaletteInitialized, FALSE);
-                RealizePalette(WinSharedHdc);
-                release_hdc();
-                return 0;
-            }
-            case WM_USER + 1: {
-                // The tick a `Time` posts to this window, `wparam` being the
-                // Time itself - which is why this arm reads `wparam` straight
-                // out of the register the procedure loaded it into at entry.
-                // Every offset the original touches is a member `time.h`
-                // already declares, and the layout is pinned by its own
-                // `static_assert(sizeof(Time) == 0x28)`:
-                //
-                //   [esi + 0x1C]  tick_posted_     cleared on every tick
-                //   [esi]         oneshot_state_   `test al,1`, `test al,2`
-                //   [esi + 0x08]  callback1_       void(int)
-                //   [esi + 0x0C]  callback2_       void(int, void*)
-                //   [esi + 0x14]  cb_param1_       pushed last, so it is first
-                //   [esi + 0x10]  cb_param2_
-                //
-                // This is the half of the one-shot emulation that lives
-                // outside `Time`: `SetTimer` has no one-shot mode, so a
-                // `pulse()` that went through it arrives here repeating, and
-                // the second tick is what stops it.
-                Time *const timer = reinterpret_cast<Time *>(wparam);
-                timer->tick_posted_ = 0;
-                if (MsgStatus == 0) {
-                    if ((timer->oneshot_state_ & TimeOneShot) != 0) {
-                        if ((timer->oneshot_state_ & TimeOneShotFired) != 0) {
-                            timer->stop();
-                            return DefWindowProcA(window, message, wparam,
-                                                  lparam);
-                        }
-                        timer->oneshot_state_ |= TimeOneShotFired;
-                    }
-                    if (Time::TimeModal == nullptr
-                        || timer == Time::TimeModal) {
-                        if (timer->callback1_ != nullptr) {
-                            timer->callback1_(timer->cb_param1_);
-                        }
-                        if (timer->callback2_ != nullptr) {
-                            timer->callback2_(timer->cb_param1_,
-                                              timer->cb_param2_);
-                        }
-                    }
-                }
-                return DefWindowProcA(window, message, wparam, lparam);
-            }
-            default:
-                return DefWindowProcA(window, message, wparam, lparam);
-            }
-        } else if (message == WM_MOUSEWHEEL) {
-            int x = static_cast<short>(LOWORD(lparam));
-            int y = static_cast<short>(HIWORD(lparam));
-            Win *const over = get_mouse_window(&x, &y);
-            if (over == nullptr) {
-                return 0;
-            }
-            over->send_wheel_delta(wparam, static_cast<unsigned int>(wparam) >> 16,
-                                   x, y, WinMouseDirect);
-            return 0;
-        } else {
-            switch (message) {
-            // THE IMAGE'S OWN ARM ORDER, read off its table at 0x005F104C and
-            // its code layout: double-clicks first, then the plain buttons.
-            case WM_LBUTTONDBLCLK:
-                OnLButtonDown(window, 1, static_cast<short>(LOWORD(lparam)),
-                              static_cast<short>(HIWORD(lparam)), wparam);
-                return 0;
-            case WM_LBUTTONUP: {
-                WinTrackingWindow = nullptr;
-                int x = static_cast<short>(LOWORD(lparam));
-                int y = static_cast<short>(HIWORD(lparam));
-                Win *const over = get_mouse_window(&x, &y);
-                if (over != nullptr) {
-                    over->on_l_button_up(x, y, wparam, WinMouseDirect);
-                }
-                break;
-            }
-            case WM_RBUTTONDBLCLK: {
-                int x = static_cast<short>(LOWORD(lparam));
-                int y = static_cast<short>(HIWORD(lparam));
-                Win *const over = get_mouse_window(&x, &y);
-                if (over != nullptr) {
-                    over->on_r_button_down(1, x, y, wparam, WinMouseDirect);
-                }
-                break;
-            }
-            case WM_RBUTTONDOWN: {
-                int x = static_cast<short>(LOWORD(lparam));
-                int y = static_cast<short>(HIWORD(lparam));
-                Win *const over = get_mouse_window(&x, &y);
-                if (over != nullptr) {
-                    over->on_r_button_down(0, x, y, wparam, WinMouseDirect);
-                }
-                break;
-            }
-            case WM_RBUTTONUP: {
-                WinTrackingWindow = nullptr;
-                int x = static_cast<short>(LOWORD(lparam));
-                int y = static_cast<short>(HIWORD(lparam));
-                Win *const over = get_mouse_window(&x, &y);
-                if (over != nullptr) {
-                    over->on_r_button_up(x, y, wparam, WinMouseDirect);
-                }
-                break;
-            }
-            default:
-                return DefWindowProcA(window, message, wparam, lparam);
-            }
-            if (WinMouseHook != nullptr) {
-                WinMouseHook(window, lparam);
             }
         }
+        break;
     }
-    if (WinMessageHook != nullptr) {
-        WinMessageHook();
+        HANDLE_MSG(window, WM_PALETTECHANGED, OnPaletteChanged);
+        HANDLE_MSG(window, WM_QUERYNEWPALETTE, OnQueryNewPalette);
     }
-    return 0;
+    // WORKAROUND(inline): see window_proc_budget_probe.
+    window_proc_budget_probe(0);
+    window_proc_budget_probe(0);
+    window_proc_budget_probe(0);
+    window_proc_budget_probe(0);
+    window_proc_budget_probe(0);
+    window_proc_budget_probe(0);
+    window_proc_budget_probe(0);
+    window_proc_budget_probe(0);
+    window_proc_budget_probe(0);
+    window_proc_budget_probe(0);
+    window_proc_budget_probe(0);
+    window_proc_budget_probe(0);
+    return DefWindowProcA(window, message, wParam, lParam);
 }
 
 /*
@@ -3978,6 +3662,8 @@ int Win::on_nc_hittest(int x, int y) {
 // zero independently of the callback. The pinned body likewise has bare
 // returns after both cleanup paths; its incidental EAX is not a callback value.
 // Registration provenance is not independently established by this evidence.
+// get_hdc()/release_hdc() calls (2026-11-12): window_proc's expansion calls
+// both (0x005F0D48, 0x005F0D77); this copy expands them.
 // size      219 bytes
 // historical catalogue prototype: int (__cdecl ?OnPaletteChanged@Win@@QAAHPAXPAX@Z)(HWND hWnd, LPARAM lParam)
 // callers   0   call targets   0
@@ -3987,34 +3673,10 @@ int Win::on_nc_hittest(int x, int y) {
 // indirect  0x005F1194 0x005F11A5 0x005F11CC 0x005F11D9 0x005F11FF 0x005F121A
 
 void __cdecl Win::OnPaletteChanged(void * hwnd, void * lparam) {
-    if (hwnd != lparam && BufferDirectDraw == nullptr) {
-        if (WinHdcRefCount != 0) {
-            ++WinHdcRefCount;
-        } else {
-            if (DirectDrawSurface != nullptr) {
-                DirectDrawSurface->GetDC(&WinSharedHdc);
-            } else {
-                WinSharedHdc = GetDC(HandleMain);
-            }
-            if (WinSharedHdc != nullptr) {
-                WinHdcRefCount = 1;
-            }
-        }
-        if (WinSharedHdc != nullptr) {
-            SelectPalette(WinSharedHdc, PaletteInitialized, FALSE);
-            RealizePalette(WinSharedHdc);
-
-            --WinHdcRefCount;
-            if (WinHdcRefCount == 0) {
-                if (DirectDrawSurface != nullptr) {
-                    DirectDrawSurface->ReleaseDC(WinSharedHdc);
-                    WinSharedHdc = nullptr;
-                    return;
-                }
-                ReleaseDC(HandleMain, WinSharedHdc);
-                WinSharedHdc = nullptr;
-            }
-        }
+    if (hwnd != lparam && BufferDirectDraw == nullptr && get_hdc() != nullptr) {
+        SelectPalette(WinSharedHdc, PaletteInitialized, FALSE);
+        RealizePalette(WinSharedHdc);
+        release_hdc();
     }
 }
 
@@ -6086,10 +5748,14 @@ void Win::set_caption_height(int height) {
 // CORRECTED: the catalogue spells `?get_key_window@Win@@QAGHXZ` - `H`,
 // int - but every caller assigns the result to a `Win *`. The int is
 // the pointer, and win.h has said so since the focus-window work.
+// The modal test is an if/else (2026-11-12): the standalone body compiles the
+// same either way, but expanded into OnKey/OnChar/OnSysKey only this
+// spelling gives their `mov ecx,[focus] / mov eax,[modal] / jne` order.
 Win *Win::get_key_window() {
-    Win *window = WinFocusWindow;
-    if (window != nullptr) {
+    Win *window;
+    if (WinFocusWindow != nullptr) {
         if (WinModalFocus != nullptr) window = WinModalFocus;
+        else window = WinFocusWindow;
     } else {
         window = WinInputFocus;
         if (window == nullptr) window = WinDefaultFocus;
@@ -6107,7 +5773,10 @@ Win *Win::get_key_window() {
 // folds to nothing, but spends the budget the image had already used before
 // its rect block: nonclient_to_screen(RECT *) then calls client_to_screen(int *)
 // and client_to_screen(RECT *) calls offset_rect, as at 0x005EDB78/0x005EDC8D.
-// The window is 27-30 tests; the original spending is not identified.
+// The window is 22-25 tests (27-30 while nonclient_to_screen(RECT *) had
+// nonclient_to_screen(int *, int *) written out by hand; calling it, as the
+// image's do_tracking shows at 0x005F7798, moved it on 2026-11-12); the
+// original spending is not identified.
 static int show_budget_probe(int x) {
     if (x == 1) x = 2;
     if (x == 2) x = 3;
@@ -6132,11 +5801,6 @@ static int show_budget_probe(int x) {
     if (x == 21) x = 22;
     if (x == 22) x = 23;
     if (x == 23) x = 24;
-    if (x == 24) x = 25;
-    if (x == 25) x = 26;
-    if (x == 26) x = 27;
-    if (x == 27) x = 28;
-    if (x == 28) x = 29;
     return x;
 }
 
@@ -7612,25 +7276,29 @@ int Win::minimize() {
 // TRIED: Ghidra's pseudocode was unsafe here in three separate ways, all fixed from raw disasm: (1) the client_to_screen/nonclient_to_screen "vacuous test" branches Ghidra rendered as a no-op `if(&stack!=0x20){FUN();}` actually apply the screen origin to a size-rect afterward - Ghidra dropped that entirely; (2) the slot003 vtable call takes 3 args (width,height,0), Ghidra showed only 1; (3) two of the screen_to_client/client_to_screen calls are on win_parent_, not `this` (ecx is never reloaded to esi before them). The switch-case clamp arithmetic itself did match Ghidra once independently checked against raw disasm. Compiles; original is frameless (sub esp direct), rebuilt took a framed prologue - not chased given size (2247 bytes).
 // ===== homed from src/unrecovered/005f7580.cpp =====
 
+// WORKAROUND(inline): dead /Ob2 budget probe for do_tracking; called with 0
+// it folds to no code. With screen_to_client/screen_to_nonclient and the
+// RECT conversions called the way the image shows, VC6 here still expands
+// one level deeper than the image in the first section and the "before"
+// rect (the image calls 0x005ED2D0 from screen_to_nonclient's body and
+// 0x005ED240/0x005ED3F0 from the rect helpers' bodies). 14-24 calls placed
+// after the "before" rect give the image's decisions there; the original
+// spending is not identified.
+static int do_tracking_budget_probe(int x) {
+    if (x == 1) x = 2;
+    return x;
+}
+
 void Win::do_tracking(int x, int y) {
-    // WORKAROUND(noinline): the image calls screen_to_client (0x005ED2D0)
-    // out of line at both sites while /Ob2 here expands its first level.
-    void (Win::*const to_client)(int *, int *) = &Win::screen_to_client;
-    // ---- 0x005F7589-0x005F7657: normalize (x,y) into a client-space delta ----
+    // ---- 0x005F7589-0x005F7657: the pointer into this window's own space ----
+    // screen_to_client and screen_to_nonclient, each expanded one level: the
+    // image's 0x4000000 arm is screen_to_client's body with its recursive
+    // call on win_parent_ left out of line (0x005F75E6), and the other arm is
+    // screen_to_nonclient's (call 0x005ED2D0, then add the outer origin).
     if ((iFlags_ & 0x4000000) != 0) {
-        x -= client_rect_.left + outer_rect_.left;
-        y -= client_rect_.top + outer_rect_.top;
-        if ((iFlags_ & 0x20) != 0 && win_parent_ != 0) {
-            (win_parent_->*to_client)(&x, &y);
-            if ((iFlags_ & 0x8000) != 0) {
-                x += win_parent_->outer_rect_.left;
-                y += win_parent_->outer_rect_.top;
-            }
-        }
+        screen_to_client(&x, &y);
     } else {
-        (this->*to_client)(&x, &y);
-        x += outer_rect_.left;
-        y += outer_rect_.top;
+        screen_to_nonclient(&x, &y);
     }
     int dx = x - WinTrackingX;
     int dy = y - WinTrackingY;
@@ -7653,20 +7321,35 @@ void Win::do_tracking(int x, int y) {
         nonclient_to_screen(&rectA);
     }
 
+    // WORKAROUND(inline): see do_tracking_budget_probe.
+    do_tracking_budget_probe(0);
+    do_tracking_budget_probe(0);
+    do_tracking_budget_probe(0);
+    do_tracking_budget_probe(0);
+    do_tracking_budget_probe(0);
+    do_tracking_budget_probe(0);
+    do_tracking_budget_probe(0);
+    do_tracking_budget_probe(0);
+    do_tracking_budget_probe(0);
+    do_tracking_budget_probe(0);
+    do_tracking_budget_probe(0);
+    do_tracking_budget_probe(0);
+    do_tracking_budget_probe(0);
+    do_tracking_budget_probe(0);
     // ---- 0x005F77CD-0x005F77DF: dispatch on drag-handle id ----
     switch (WinTrackingMode) {
     case 2:
         if (dx != 0 || dy != 0) {
-            if ((iFlags_ & 0x4000000) == 0) {
-                client_rect_.left += dx;
-                client_rect_.right += dx;
-                client_rect_.top += dy;
-                client_rect_.bottom += dy;
-            } else {
+            if ((iFlags_ & 0x4000000) != 0) {
                 outer_rect_.left += dx;
                 outer_rect_.right += dx;
                 outer_rect_.top += dy;
                 outer_rect_.bottom += dy;
+            } else {
+                client_rect_.left += dx;
+                client_rect_.right += dx;
+                client_rect_.top += dy;
+                client_rect_.bottom += dy;
             }
         }
         break;
@@ -7712,6 +7395,22 @@ void Win::do_tracking(int x, int y) {
         }
         break;
 
+    case 0xf:
+        if (dy != 0) {
+            client_rect_.bottom += dy;
+            WinTrackingY += dy;
+            int height = client_rect_.bottom - client_rect_.top;
+            if (height < minH) {
+                int deficit = minH - height;
+                client_rect_.bottom += deficit;
+                WinTrackingY += deficit;
+            }
+            int w = client_rect_.right - client_rect_.left;
+            int h = client_rect_.bottom - client_rect_.top;
+            poWinBase_->resize(w, h, 0);
+        }
+        break;
+
     case 0xd: {
         int right = client_rect_.right;
         int bottom = client_rect_.bottom;
@@ -7747,22 +7446,6 @@ void Win::do_tracking(int x, int y) {
         poWinBase_->resize(w, h, 0);
         break;
     }
-
-    case 0xf:
-        if (dy != 0) {
-            client_rect_.bottom += dy;
-            WinTrackingY += dy;
-            int height = client_rect_.bottom - client_rect_.top;
-            if (height < minH) {
-                int deficit = minH - height;
-                client_rect_.bottom += deficit;
-                WinTrackingY += deficit;
-            }
-            int w = client_rect_.right - client_rect_.left;
-            int h = client_rect_.bottom - client_rect_.top;
-            poWinBase_->resize(w, h, 0);
-        }
-        break;
 
     case 0x10: {
         client_rect_.left += dx;
@@ -7808,7 +7491,9 @@ void Win::do_tracking(int x, int y) {
     }
 
     default:
-        break;
+        // Any other mode returns without the repaint: the image's table
+        // sends 3..9 straight to the epilogue at 0x005F7E3D.
+        return;
     }
 
     // ---- 0x005F7C2F-0x005F7DE7: build an absolute-screen "after" rect ----
@@ -8027,6 +7712,10 @@ void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
 // discards the callback result, and the pinned close path's void virtual call
 // leaves no deterministic EAX when no Sound child is present. Registration
 // provenance for this standalone identity remains unresolved.
+// The play-if-idle tail is the 0x005F86A0 call, not its body written out
+// (2026-11-12): window_proc's expansion calls it at 0x005F0946, this copy
+// expands it. The image calls it with the owner in ecx (`mov ecx,esi`),
+// so 0x005F86A0 is a member taking the Sound; spelling that needs win.h.
 void __cdecl Win::OnSysCommand(HWND hwnd, unsigned int command, int x,
                                int y) {
     Win *self = reinterpret_cast<Win *>(
@@ -8047,12 +7736,7 @@ void __cdecl Win::OnSysCommand(HWND hwnd, unsigned int command, int x,
         cb();
     }
     self->on_sys_close();
-    Sound *child = self->val_6_;
-    if (child != 0) {
-        if (child->is_playing() == 0) {
-            child->play();
-        }
-    }
+    sub_5f86a0(self->val_6_);
 }
 
 // ORIGINAL: 0x005EF050 ?client_to_nonclient@Win@@QAEXPAURECT@@@Z 0x005EF050-0x005EF10D FILE BYTE_EXACT
@@ -8814,30 +8498,23 @@ void __cdecl Win::OnMouseMove(void * hwnd, int x, int y, unsigned int keys) {
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 // indirect  0x005F10A6 0x005F10B7 0x005F10DE 0x005F10EB 0x005F1111 0x005F112E
+// The DC acquire is written out, the release is `release_hdc()`: window_proc
+// expands this handler with the acquire in line and calls release_hdc at
+// 0x005F0E13, and this standalone copy expands both (2026-11-12).
 int __cdecl Win::OnQueryNewPalette(void * hwnd) {
-    HDC hdc;
-    IDirectDrawSurface2 *surface;
-
     if (BufferDirectDraw != 0) {
         return 1;
     }
-
+    HDC hdc;
     if (WinHdcRefCount != 0) {
         WinHdcRefCount = WinHdcRefCount + 1;
         hdc = WinSharedHdc;
     } else {
-        surface = DirectDrawSurface;
+        IDirectDrawSurface2 *surface = DirectDrawSurface;
         if (surface != 0) {
             surface->GetDC(&WinSharedHdc);
             hdc = WinSharedHdc;
         } else {
-            // TWO STEPS, and the second one is load-bearing. Calling through
-            // `GetDC(...)` directly compiled `mov eax,[0]` + `call [eax]`
-            // - one instruction more than the image's single
-            // `call dword ptr [0x66927c]`. Naming the loaded pointer first is
-            // the spelling the rest of this file already uses (see the
-            // GetDC call in the macro above, BYTE_EXACT), and it restores
-            // the direct indirect-call encoding.
             hdc = GetDC(HandleMain);
             WinSharedHdc = hdc;
         }
@@ -8846,30 +8523,12 @@ int __cdecl Win::OnQueryNewPalette(void * hwnd) {
         }
         WinHdcRefCount = 1;
     }
-
     if (hdc == 0) {
         return 0;
     }
-
     SelectPalette(hdc, PaletteInitialized, 0);
-
     RealizePalette(WinSharedHdc);
-
-    WinHdcRefCount = WinHdcRefCount - 1;
-    if (WinHdcRefCount != 0) {
-        return 0;
-    }
-
-    surface = DirectDrawSurface;
-    if (surface != 0) {
-        // Slot 26 (0x68) is IDirectDrawSurface::ReleaseDC(HDC).
-        surface->ReleaseDC(WinSharedHdc);
-        WinSharedHdc = 0;
-        return 0;
-    }
-
-    ReleaseDC(HandleMain, WinSharedHdc);
-    WinSharedHdc = 0;
+    release_hdc();
     return 0;
 }
 
@@ -8938,47 +8597,20 @@ void Win::set_dialog_focus(Win * window) {
 // DefWindowProcA then returns through a bare epilogue; its EAX is not a
 // callback value. Registration provenance is not independently established.
 // TRIED: testing `a2 == 0` first (zero-set branch as the `if`) compiled to `test;jne`; testing `a2 != 0` first (zero-set branch as the `else`) matches the original's `test;je` polarity. Landed at MISMATCH #42 (up from #10) - same HDC acquire/release idiom as 0x5EF1E0's sub_5ef1e0.
+// get_hdc()/release_hdc() calls, not their bodies written out (2026-11-12):
+// this copy expands both, window_proc's WM_ACTIVATE arm calls both
+// (0x005F073D, 0x005F0767), so the handler source called them.
 // ===== homed from src/unrecovered/005f1480.cpp =====
 
 void __cdecl Win::OnActivate(void *hwnd, unsigned int state, void *other,
                              long minimized) {
     InvalidateRect(HandleMain, 0, 0);
     if (state != 0) {
-      if (minimized == 0 && BufferDirectDraw == 0) {
-        HDC hdc;
-        if (WinHdcRefCount != 0) {
-            WinHdcRefCount = WinHdcRefCount + 1;
-            hdc = WinSharedHdc;
-        } else {
-            IDirectDrawSurface2 *iface = DirectDrawSurface;
-            if (iface != 0) {
-                iface->GetDC(&WinSharedHdc);
-                hdc = WinSharedHdc;
-            } else {
-                WinSharedHdc = GetDC(HandleMain);
-                hdc = WinSharedHdc;
-            }
-            if (hdc != 0) {
-                WinHdcRefCount = 1;
-            }
-        }
-        if (hdc != 0) {
-            SelectPalette(WinSharedHdc, PaletteInitialized, 0);
+        if (minimized == 0 && BufferDirectDraw == 0 && get_hdc() != 0) {
+            SelectPalette(WinSharedHdc, PaletteInitialized, FALSE);
             RealizePalette(WinSharedHdc);
-
-            WinHdcRefCount = WinHdcRefCount - 1;
-            if (WinHdcRefCount == 0) {
-                IDirectDrawSurface2 *iface2 = DirectDrawSurface;
-                if (iface2 != 0) {
-                    iface2->ReleaseDC(WinSharedHdc);
-                } else {
-                    ReleaseDC(
-                        HandleMain, WinSharedHdc);
-                }
-                WinSharedHdc = 0;
-            }
+            release_hdc();
         }
-      }
     } else {
         WinPointerOwner1 = nullptr;
         WinPointerOwner2 = nullptr;
@@ -10855,13 +10487,8 @@ void Win::nonclient_to_screen(RECT * rect) {
     }
     int x = 0;
     int y = 0;
-    client_to_screen(&x, &y);
-    x -= outer_rect_.left;
-    y -= outer_rect_.top;
-    rect->left += x;
-    rect->right += x;
-    rect->top += y;
-    rect->bottom += y;
+    nonclient_to_screen(&x, &y);
+    offset_rect(rect, x, y);
 }
 
 /*
@@ -10981,25 +10608,15 @@ extern "C" int __cdecl DDInitRefreshScreenMetrics() {
 // kind game
 // TRIED: MISMATCH #1 test/push at the ternary-vs-if for the first global select; body verified structurally correct otherwise
 // ===== homed from src/unrecovered/005f15c0.cpp =====
+// OnKey, OnChar and OnSysKey call get_key_window() (2026-11-12): window_proc
+// expands them and calls it five times (0x005F07B0..0x005F08A3); these
+// standalone copies expand it.
 
 void __cdecl Win::OnKey(void * hwnd, unsigned int key, long flags, int repeat, unsigned int scan) {
-    Win *chosen;
-    if (WinFocusWindow != nullptr) {
-        chosen = WinModalFocus;
-        if (chosen == nullptr) chosen = WinFocusWindow;
-    } else {
-        chosen = WinInputFocus;
-        if (chosen == nullptr) chosen = WinDefaultFocus;
+    Win *const focus = get_key_window();
+    if (focus != nullptr) {
+        focus->on_key(key, flags, repeat, scan);
     }
-    WinActiveWindow = chosen;
-
-    if (chosen != nullptr) {
-        Win *const inner = chosen->poWinBase_;
-        if (inner != nullptr && inner->is_visible()) {
-            inner->on_key(key, flags, repeat, scan);
-        }
-    }
-
     if (WinKeyHook != nullptr && flags != 0) WinKeyHook(key);
     if (WinMessageHook != nullptr) WinMessageHook();
 }
@@ -11034,20 +10651,9 @@ void __cdecl Win::OnKey(void * hwnd, unsigned int key, long flags, int repeat, u
 // unchanged; only the names were wrong. Its siblings OnNCHitTest and
 // OnSysKey were homed as free functions for the same reason.
 void __cdecl OnChar(void *hwnd, char ch, int flags) {
-    Win *active;
-    if (WinFocusWindow != nullptr) {
-        active = WinModalFocus;
-        if (active == nullptr) active = WinFocusWindow;
-    } else {
-        active = WinInputFocus;
-        if (active == nullptr) active = WinDefaultFocus;
-    }
-    WinActiveWindow = active;
-    if (active != nullptr) {
-        Win *const base_window = active->poWinBase_;
-        if (base_window != nullptr && base_window->is_visible()) {
-            base_window->on_char(ch, flags);
-        }
+    Win *const focus = Win::get_key_window();
+    if (focus != nullptr) {
+        focus->on_char(ch, flags);
     }
 }
 
@@ -11075,27 +10681,9 @@ Purpose: The window class's WM_SYSKEYDOWN/WM_SYSCHAR router. It resolves
 // calls     0x005F7E90
 void __cdecl OnSysKey(void *hwnd, unsigned int key, long flags, int repeat,
                       unsigned int scan) {
-    Win *active;
-    if (WinFocusWindow != nullptr) {
-        active = WinModalFocus;
-        if (active == 0) {
-            active = WinFocusWindow;
-        }
-    } else {
-        active = WinInputFocus;
-        if (active == 0) {
-            active = WinDefaultFocus;
-        }
-    }
-    WinActiveWindow = active;
-    if (active != 0) {
-        // 0xA8 is poWinBase_, which win.h already documents as the window that
-// owns a position - a third witness after Win::construct storing `this`
-// there and Win::get_mouse_window returning it.
-        Win *owner = active->poWinBase_;
-        if (owner != 0 && owner->is_visible()) {
-            owner->on_sys_key(key, flags, repeat, scan);
-        }
+    Win *const focus = Win::get_key_window();
+    if (focus != nullptr) {
+        focus->on_sys_key(key, flags, repeat, scan);
     }
 }
 
