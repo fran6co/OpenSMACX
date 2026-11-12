@@ -474,16 +474,14 @@ extern uint32_t LockEnableMask;  // 0x009A64E8, defined in lock.cpp
 // ORIGINAL: 0x00559060 ?get_name@@YAPADH@Z 0x00559060-0x00559092 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:5a0359249be19afbfdbfda27fdc219dda76c5a7c:src/recovered/00559060.cpp", "source:src/faction.h"], "reason": "The pinned entry returns Player::name_leader after selecting leader gender and singular grammar; Player fields have the original stride."}
 char *__cdecl get_name(int faction_id) {
-    PluralityDefault = 0;
-    GenderDefault = Players[faction_id].is_leader_female;
+    parse_set(Players[faction_id].is_leader_female, 0);
     return Players[faction_id].name_leader;
 }
 
 // ORIGINAL: 0x005590A0 ?get_title@@YAPADH@Z 0x005590A0-0x005590D2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:5a0359249be19afbfdbfda27fdc219dda76c5a7c:src/recovered/005590a0.cpp", "source:src/faction.h"], "reason": "The pinned entry returns Player::title_leader after selecting leader gender and singular grammar; the Player type establishes this field and the original record stride."}
 char *__cdecl get_title(int faction_id) {
-    PluralityDefault = 0;
-    GenderDefault = Players[faction_id].is_leader_female;
+    parse_set(Players[faction_id].is_leader_female, 0);
     return Players[faction_id].title_leader;
 }
 
@@ -2992,6 +2990,22 @@ void __cdecl prepare_contact_dialog_arguments(int faction_id) {
 }
 
 
+// WORKAROUND(inline): the image tests the faction's alien rule bit without
+// ExpansionEnabled (so not is_alien_faction), but wants_to_speak's EH map
+// (28 states: return-site teardowns 5,2,2 and a final 18) needs this test to
+// spend /Ob2 budget as an inline expansion; written in place the first two
+// returns keep a deeper Scroll teardown.
+static inline BOOL faction_rule_alien(int faction_id) {
+    return Players[faction_id].rule_flags & RFLAG_ALIEN;
+}
+// WORKAROUND(decl): get_noun spelled through parse_set. wants_to_speak's
+// copies load is_noun_plural before noun_gender (parse_set's right-to-left
+// argument order), which faction.h's get_noun does not; that header inline
+// has other expanding units, so this stays local until a header pass.
+static inline LPSTR faction_noun_parsed(int faction_id) {
+    parse_set(Players[faction_id].noun_gender, Players[faction_id].is_noun_plural);
+    return Players[faction_id].noun_faction;
+}
 // ORIGINAL: 0x0053DCE0 ?wants_to_speak@@YAHHH@Z 0x0053DCE0-0x0053E46C;0x0065E622-0x0065E75A FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0053dce0.cpp", "image:terranx_original.exe:0x0053DCE0"], "reason": "Recover the genuine faction contact/introduction owner using Popup lifetime, typed Player/PlayerData, real diplomacy state and portrait storage; native guards and callee order correct retained seed contradictions."}
 // TRIED: this is a 27-stage SEH unwind (vtable pokes for partially- constructed FlatButton/Scroll/Dialog/Sprite/Spot/Heap locals around a `Popup` object) that could not be fully re-derived in budget; landed a single `Popup popup;` local plus the has_tech-gated / consent / diplomacy-request control flow (diplomacy_check, diplomacy_caption, parse_says, random, get_him_her, X_pops, Popup::start/exec, DiploPop::start, introduce), omitting the other ~10 locals' manual close()/dtor bookkeeping. Compiles; diverges at #17 (prologue/frame size).
@@ -3000,7 +3014,7 @@ int __cdecl wants_to_speak(int faction_id, int other_faction_id) {
     PopupDialogFactionID = other_faction_id;
     if ((Players[faction_id].rule_flags ^ Players[other_faction_id].rule_flags)
         & RFLAG_ALIEN) {
-        if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+        if (faction_rule_alien(faction_id)) {
             if (!has_tech(0x4E, other_faction_id) && !has_tech(4, faction_id)) {
                 DiplomacyContactResult = 0;
                 return 0;
@@ -3014,57 +3028,51 @@ int __cdecl wants_to_speak(int faction_id, int other_faction_id) {
         return DiplomacyContactResult;
     }
 
-    bool urgent = false;
+    int urgent = 0;
     if (DiplomacyContactResult) {
         DiplomacyEndState = 1;
         if (DiplomacyContactResult >= 8) {
             diplomacy_check(faction_id, other_faction_id, 0);
             diplomacy_caption(faction_id, other_faction_id);
-            contact_dialog_arguments(other_faction_id);
+            parse_says(0, get_title(other_faction_id), -1, -1);
+            parse_says(1, get_name(other_faction_id), -1, -1);
+            parse_says(2, faction_noun_parsed(other_faction_id), -1, -1);
+            parse_num(0, random(0, 10) + 1);
+            parse_says(3, get_him_her(other_faction_id, 0), -1, -1);
             x_pops_minimal("URGENTCOMM", FactionDiplomacyPortraits[other_faction_id], pop_wait);
         }
     } else {
         ConsoleInfoWin.set_state(2, 1);
-        if (!DiplomacyEndState) {
-            for (;;) {
-                if (PlayersData[other_faction_id].planet_busters &&
-                    !has_treaty(other_faction_id, faction_id, 0x4000)) {
-                    urgent = true;
+        while (!DiplomacyEndState) {
+            if (PlayersData[other_faction_id].planet_busters &&
+                !has_treaty(other_faction_id, faction_id, 0x4000)) {
+                urgent = 1;
+            }
+            diplomacy_check(faction_id, other_faction_id, 0);
+            if (on_map(DiploFocusX, DiploFocusY)) {
+                if (!ConsoleGlobal.focus(DiploFocusX, DiploFocusY, faction_id)) {
+                    draw_tiles(DiploFocusX, DiploFocusY, 2);
                 }
-                diplomacy_check(faction_id, other_faction_id, 0);
-                if (DiploFocusY >= 0 && DiploFocusY < MapLatitudeBounds &&
-                    DiploFocusX >= 0 && DiploFocusX < MapLongitudeBounds) {
-                    if (!ConsoleGlobal.focus(DiploFocusX, DiploFocusY, faction_id)) {
-                        draw_tiles(DiploFocusX, DiploFocusY, 2);
-                    }
-                }
-                diplomacy_caption(faction_id, other_faction_id);
-                parse_set(Players[other_faction_id].is_leader_female, 0);
-                parse_says(0, Players[other_faction_id].title_leader, -1, -1);
-                parse_set(Players[other_faction_id].is_leader_female, 0);
-                parse_says(1, Players[other_faction_id].name_leader, -1, -1);
-                parse_set(Players[other_faction_id].noun_gender, Players[other_faction_id].is_noun_plural);
-                parse_says(2, Players[other_faction_id].noun_faction, -1, -1);
-                parse_num(0, random(0, 10) + 1);
-                parse_says(3, get_him_her(other_faction_id, 0), -1, -1);
-                if (urgent) {
-                    x_pops_minimal("URGENTCOMM", FactionDiplomacyPortraits[other_faction_id], pop_wait);
-                    break;
-                }
-                popup.start(PopupStartCaption, "COMM", -1, nullptr, 0, nullptr);
-                Sprite *portrait = FactionDiplomacyPortraits[other_faction_id];
-                popup.set_picture(portrait, 0, nullptr);
-                const int selected = popup.exec(0, pop_wait);
-                if (selected > 1) {
-                    report_intel(other_faction_id);
-                    if (!DiplomacyEndState) {
-                        continue;
-                    }
-                } else {
-                    DiplomacyEndState = 1;
-                    DiplomacyContactResult = selected == 0;
-                }
+            }
+            diplomacy_caption(faction_id, other_faction_id);
+            parse_says(0, get_title(other_faction_id), -1, -1);
+            parse_says(1, get_name(other_faction_id), -1, -1);
+            parse_says(2, faction_noun_parsed(other_faction_id), -1, -1);
+            parse_num(0, random(0, 10) + 1);
+            parse_says(3, get_him_her(other_faction_id, 0), -1, -1);
+            if (urgent) {
+                x_pops_minimal("URGENTCOMM", FactionDiplomacyPortraits[other_faction_id], pop_wait);
                 break;
+            }
+            popup.start("COMM");
+            Sprite *portrait = FactionDiplomacyPortraits[other_faction_id];
+            popup.set_picture(portrait, 0, nullptr);
+            const int selected = popup.exec(pop_wait);
+            if (selected > 1) {
+                report_intel(other_faction_id);
+            } else {
+                DiplomacyEndState = 1;
+                DiplomacyContactResult = selected == 0;
             }
         }
     }
