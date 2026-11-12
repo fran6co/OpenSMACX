@@ -5620,6 +5620,21 @@ void Console::reset_turn_view() {
     alpha_menu_.check(selected_vehicle_);
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D240 0x0051D274 0x0051BE9E
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D274 0x0051D2B8 0x0051C15A
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D2B8 0x0051D324 0x0051C269
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D324 0x0051D368 0x0051C3DB
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x0051BC70 0x0051D394 0x0051D488 0x0051C604
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D368 0x0051D394 0x0051C60A
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D488 0x0051D4F4 0x0051C8A3
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D4F4 0x0051D504 0x0051CB7C
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x0051BC70 0x0051D530 0x0051D54B 0x0051CBE4
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D504 0x0051D530 0x0051CBEA
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x0051BC70 0x0051D578 0x0051D631 0x0051CCF8
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D54C 0x0051D578 0x0051CCFE
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D634 0x0051D658 0x0051CDE6
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x0051BC70 0x0051D6C8 0x0051D71C 0x0051D091
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0051BC70 0x0051D658 0x0051D6C8 0x0051D097
 // ORIGINAL: 0x0051BC70 ?menu_proc@Console@@QAEXH@Z 0x0051BC70-0x0051D23E
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0051bc70.cpp"], "reason": "Recover complete menu dispatch using genuine Console members, typed owners and original command branches."}
 // TRIED: full transcription of every case in the ~150-target dispatch (mnemonic_similarity 0.45, 834/1610 original mnemonics in common); first divergence is the Win::set_cursor call through the vbtable adjustor near the top loop (mov/add ordering), and downstream case bodies pick up extra instructions from real vtable dispatch (VCall) and MapWin/Console member calls the original inlined more cheaply than /O2 does here.
@@ -6123,6 +6138,32 @@ int ConsoleInterludeSelection = 0;
 // RECOVERY_OBJECT: v1 0x0068A5C8 ?ConsoleKeyCycleState@@3HA
 int ConsoleKeyCycleState = -2;
 
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x005178C0 0x0051B690 0x0051B6CA 0x00517923
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005178C0 0x0051B670 0x0051B690 0x00517929
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x005178C0 0x0051B6DC 0x0051B739 0x00517FD7
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005178C0 0x0051B6CC 0x0051B6DC 0x00517FDD
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x005178C0 0x0051B764 0x0051B7AC 0x0051804C
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005178C0 0x0051B73C 0x0051B764 0x00518052
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x005178C0 0x0051B7E0 0x0051B830 0x005181DD
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005178C0 0x0051B7AC 0x0051B7E0 0x005181E3
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x005178C0 0x0051B854 0x0051B88A 0x00518395
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005178C0 0x0051B830 0x0051B854 0x0051839B
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x005178C0 0x0051B8A4 0x0051B8FD 0x005186A1
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005178C0 0x0051B88C 0x0051B8A4 0x005186A7
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005178C0 0x0051B900 0x0051B930 0x00519FBE
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005178C0 0x0051B930 0x0051B944 0x0051A0A9
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005178C0 0x0051B944 0x0051B970 0x0051A130
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x005178C0 0x0051B9A8 0x0051B9BE 0x0051A2E9
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005178C0 0x0051B970 0x0051B9A8 0x0051A2EF
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x005178C0 0x0051B9F0 0x0051BA5F 0x0051A56D
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005178C0 0x0051B9C0 0x0051B9F0 0x0051A573
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005178C0 0x0051BA60 0x0051BAB0 0x0051AC32
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x005178C0 0x0051BAD4 0x0051BB07 0x0051ADC1
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005178C0 0x0051BAB0 0x0051BAD4 0x0051ADC7
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005178C0 0x0051BB08 0x0051BB28 0x0051B0AB
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005178C0 0x0051BB28 0x0051BB48 0x0051B0FF
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x005178C0 0x0051BB5C 0x0051BB9F 0x0051B140
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005178C0 0x0051BB48 0x0051BB5C 0x0051B146
 // ORIGINAL: 0x005178C0 ?on_key_click@Console@@QAEHHH@Z 0x005178C0-0x0051B66F;0x0065D4D0-0x0065D4E2
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 0x005178C0-0x0051B66F and EH span 0x0065D4D0-0x0065D4E2; receiver is the Console virtual GraphicWin subobject.", "Independent native entry/cursor/modal review: zero-tested mode-8 member, false-visible button handoff, normalized versus raw dispatch and unconditional confirmed single-player quit.", "Current VC6 emits the UAE virtual member and its own vtordisp thunk; retain the legacy QAE interpreted original name, not a hand-coded adjustment.", "MainInterfaceGlobal original7AE820; header button_group_[4] begins1E878 with stride94. Element3 is7CD254, its selection field84 is7CD2D8, and the following MainInterface field1EAC8 is7CD2E8.", "Pinned MainInterface constructor45EF10 constructs four ButtonGroups at+1E878 with ctor62B7C0 and dtor4325B0; destructor45EB80 tears down that same owned array. Noncompact init populates group3 with brush buttons1036..1041.", "Pinned MainInterface init4596CD clears its+1EAC8 member; Console key517A0B/517A93 reads that same original cell. The former ConsoleModalState7CD2E8 symbol retains its unbounded identity as a member binding next to MainInterfaceGlobal."], "reason": "Recover the complete Console key/event dispatcher in its genuine virtual MapWin/GraphicWin owner, with ordinary scoped Log lifetime and typed map, player, vehicle, modal-window and editor operations. Read the input gate from its genuine MainInterface member, not a duplicated standalone Console global; preserve independent reads, short-circuit order and clear_message behavior."}
 // kind      game
