@@ -232,12 +232,26 @@ extern ScenarioSaveState ScenarioSave;
 extern uint32_t TectonicDetonationCount[8];  // 0x00946138, logical faction slots
 extern int IfaceScreenHeight;
 extern int IfaceScreenWidth;
-extern int PopupThemeWindowColor;
+// load_interface samples ten colours from iface.pcx into one int[10] table at
+// 0x0068A5A0 (its walk ends `cmp reg, 0x68a5c8; jl`). Owned by
+// interface_assets.cpp; the names below are its elements.
+extern int IfaceColorTable[10];
+// WORKAROUND(decl): the other former per-cell declarations stay declared but
+// unreferenced (the macros below shadow them), here and in messagewin.h and
+// diplowin.h. VC6 code generation in includers depends on the number of
+// declared extern variables: dropping them flips action_give (0x004CEDE0),
+// and adding the table on top of them flips base_production (0x004F07E0).
 extern int PopupThemeButtonColor;
 extern int PopupThemeTextShadow;
 extern int PopupThemeSurfaceColor;
 extern int PopupThemeBevelUpper;
 extern int PopupThemeBevelLower;
+#define PopupThemeWindowColor  (IfaceColorTable[0])  // 0x0068A5A0
+#define PopupThemeButtonColor  (IfaceColorTable[2])  // 0x0068A5A8
+#define PopupThemeTextShadow   (IfaceColorTable[3])  // 0x0068A5AC
+#define PopupThemeSurfaceColor (IfaceColorTable[6])  // 0x0068A5B8
+#define PopupThemeBevelUpper   (IfaceColorTable[7])  // 0x0068A5BC
+#define PopupThemeBevelLower   (IfaceColorTable[8])  // 0x0068A5C0
 extern int TurnControlWord93A954;  // 0x0093A954, lock admission gate
 extern BOOL IsMultiplayerNet;
 extern BOOL IsMultiplayerPBEM;

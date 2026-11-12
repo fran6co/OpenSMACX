@@ -205,8 +205,24 @@ void extract_interface_box_sprite(Sprite &sprite, int x, int y, int width, int h
 // selected cohort order agrees with the pinned receiver sequence; full
 // linked retention, array effects and runtime acceptance remain separate.
 extern float PrefWinGammaCorrection; // prefwin.cpp owns original6846A8
-// RECOVERY_OBJECT: v1 0x0068A5B4 ?PopupThemeColorB4@@3HA
-int PopupThemeColorB4 = 0x94; // 0x0068A5B4, tenth independent palette cell
+// THE IFACE.PCX COLOUR TABLE. load_interface samples pixel column 0x3A3 of
+// iface.pcx every eleven rows into ten consecutive ints at 0x0068A5A0; its
+// walk is one pointer with a signed `cmp reg, 0x68a5c8; jl` end test, i.e. an
+// int-indexed int[10]. The .data initializers are the defaults before the
+// file loads. Popup theme, MessageWin and diplomacy names are its elements
+// (game.h, messagewin.h, diplowin.h); [5] has no reader in the image.
+// RECOVERY_OBJECT: v2 0x0068A5A0 0x0068A5C8 ?IfaceColorTable@@3PAHA 0x00455610
+// RECOVERY_OBJECT: v3 0x0068A5A0 ?PopupThemeWindowColor@@3HA member ?IfaceColorTable@@3PAHA [0]
+// RECOVERY_OBJECT: v3 0x0068A5A4 0x0068A5A8 ?MessageWinTextColor@@3HA 0x00471FD0 member ?IfaceColorTable@@3PAHA [1]
+// RECOVERY_OBJECT: v3 0x0068A5A8 ?PopupThemeButtonColor@@3HA member ?IfaceColorTable@@3PAHA [2]
+// RECOVERY_OBJECT: v3 0x0068A5AC ?PopupThemeTextShadow@@3HA member ?IfaceColorTable@@3PAHA [3]
+// RECOVERY_OBJECT: v3 0x0068A5B0 0x0068A5B4 ?MessageWinTextBackground@@3HA 0x00471FD0 member ?IfaceColorTable@@3PAHA [4]
+// RECOVERY_OBJECT: v3 0x0068A5B4 ?PopupThemeColorB4@@3HA member ?IfaceColorTable@@3PAHA [5]
+// RECOVERY_OBJECT: v3 0x0068A5B8 ?PopupThemeSurfaceColor@@3HA member ?IfaceColorTable@@3PAHA [6]
+// RECOVERY_OBJECT: v3 0x0068A5BC ?PopupThemeBevelUpper@@3HA member ?IfaceColorTable@@3PAHA [7]
+// RECOVERY_OBJECT: v3 0x0068A5C0 ?PopupThemeBevelLower@@3HA member ?IfaceColorTable@@3PAHA [8]
+// RECOVERY_OBJECT: v3 0x0068A5C4 0x0068A5C8 ?DiploKnownTechColor@@3HA 0x00443170 member ?IfaceColorTable@@3PAHA [9]
+int IfaceColorTable[10] = {0x62, 0xE7, 0xE8, 0xE9, 0x91, 0x94, 0x24, 0x1E, 0x56, 50};
 
 // Typed asset storage follows its pinned CRT receiver order. This is
 // source correspondence, not proof of historical filenames or full-link order.
@@ -5182,12 +5198,9 @@ void __cdecl load_interface(int mode) {
     Buffer &canvas = g_PCX_PARSE_TEMP_BUFFER1;
     GraphicWinFieldA0CDefault = &def_caption_draw;
     canvas.load_pcx("iface.pcx", 0, 10, 0xEC);
-    // WORKAROUND(type): the image walks one ten-int colour table at 0x68A5A0
-    // (0x455641..0x455664); the tree still declares its cells as separate
-    // globals in game.cpp, messagewin.cpp, diplowin.cpp and this file.
     int y = 2;
-    for (int *cell = &PopupThemeWindowColor; cell < &PopupThemeWindowColor + 10; ++cell, y += 11)
-        *cell = canvas.get_pixel(0x3A3, y);
+    for (int i = 0; i < 10; ++i, y += 11)
+        IfaceColorTable[i] = canvas.get_pixel(0x3A3, y);
 
     canvas.change_color(0x108, 0x109);
     canvas.change_color(0x107, 0x109);

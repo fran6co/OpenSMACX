@@ -21,8 +21,14 @@
 #include "listbox.h"
 #include "stringbox.h"
 
+// Elements of load_interface's iface.pcx colour table (interface_assets.cpp;
+// declared in game.h).
+// WORKAROUND(decl): former cell declarations kept (shadowed by the macros) so
+// every includer keeps its declared-variable count; see game.h.
 extern int MessageWinTextColor;
 extern int MessageWinTextBackground;
+#define MessageWinTextColor      (IfaceColorTable[1])  // 0x0068A5A4
+#define MessageWinTextBackground (IfaceColorTable[4])  // 0x0068A5B0
 
  /*
   * MessageWin class

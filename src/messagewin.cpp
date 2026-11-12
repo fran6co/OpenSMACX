@@ -62,14 +62,8 @@ int MessageWinMenuBusy;  // 0x007F9F54; initial storage passed both trials.
 // construction, ownership and retained linker selection remain unverified.
 // RECOVERY_OBJECT: v2 0x0093A7B0 0x0093A930 ?MessageWinDeferredBaseMessages@@3PAVStringList@@A 0x004713B0
 StringList MessageWinDeferredBaseMessages[8];
-// The two color initializers are stored .data dwords in the pinned image:
-// 0xE7 at 0x0068A5A4 and 0x91 at 0x0068A5B0. Both initial storage bindings
-// passed two VC6 trials; runtime state remains unverified. The seed's
-// 0x00689370 is BaseIDCurrentSelected.
-// RECOVERY_OBJECT: v2 0x0068A5A4 0x0068A5A8 ?MessageWinTextColor@@3HA 0x00471FD0
-int MessageWinTextColor = 0xE7;
-// RECOVERY_OBJECT: v2 0x0068A5B0 0x0068A5B4 ?MessageWinTextBackground@@3HA 0x00471FD0
-int MessageWinTextBackground = 0x91;
+// The two text colours (0x0068A5A4, 0x0068A5B0) are elements of
+// interface_assets.cpp's IfaceColorTable; their identities moved there.
 
 // 0x004718C0. PullDown::get_selected returns a slot; the image reads that
 // slot's action ID, whose bits mean navigate (1) and remove (2). The three

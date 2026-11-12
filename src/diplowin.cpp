@@ -669,8 +669,8 @@ int DiploWin::on_iface_dialog_back_draw(GraphicWin *) { return 0; }
 int DiploOffersDirty;
 
 // Original initialized .data and literal evidence, inspected from the pinned image.
-// RECOVERY_OBJECT: v2 0x0068A5C4 0x0068A5C8 ?DiploKnownTechColor@@3HA 0x00443170
-int DiploKnownTechColor = 50;
+// DiploKnownTechColor (0x0068A5C4) is IfaceColorTable[9]; its identity moved
+// to interface_assets.cpp.
 // RECOVERY_OBJECT: v2 0x006839F4 0x006839F6 ?DiploKnownTechOpen@@3PADA 0x00443170
 char DiploKnownTechOpen[2] = "(";
 // RECOVERY_OBJECT: v2 0x006839F8 0x006839FA ?DiploKnownTechClose@@3PADA 0x00443170

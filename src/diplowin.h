@@ -25,8 +25,12 @@
 #include "subinterface.h"
 
 // Shared palette cell published by load_interface and consumed by both
-// diplomacy rendering and popup menu defaults; owned in diplowin.cpp.
+// diplomacy rendering and popup menu defaults: the last element of the
+// iface.pcx colour table owned by interface_assets.cpp (declared in game.h).
+// WORKAROUND(decl): former declaration kept (shadowed by the macro) so every
+// includer keeps its declared-variable count; see game.h.
 extern int DiploKnownTechColor;
+#define DiploKnownTechColor (IfaceColorTable[9])  // 0x0068A5C4
 
  /*
   * DiploWin class

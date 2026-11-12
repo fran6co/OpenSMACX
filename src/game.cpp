@@ -261,20 +261,8 @@ typedef char ScenarioSaveTailOffset[offsetof(ScenarioSaveState, wire_opaque_94b4
 int IfaceScreenHeight; // 0x00939E58
 // RECOVERY_OBJECT: v1 0x00939E5C ?IfaceScreenWidth@@3HA
 int IfaceScreenWidth;  // 0x00939E5C
-// Original file-backed palette defaults; MessageWin owns the interleaved
-// text/background cells at 0x68A5A4/B0 separately.
-// RECOVERY_OBJECT: v1 0x0068A5A0 ?PopupThemeWindowColor@@3HA
-int PopupThemeWindowColor = 0x62; // 0x0068A5A0
-// RECOVERY_OBJECT: v1 0x0068A5A8 ?PopupThemeButtonColor@@3HA
-int PopupThemeButtonColor = 0xE8; // 0x0068A5A8
-// RECOVERY_OBJECT: v1 0x0068A5AC ?PopupThemeTextShadow@@3HA
-int PopupThemeTextShadow = 0xE9; // 0x0068A5AC
-// RECOVERY_OBJECT: v1 0x0068A5B8 ?PopupThemeSurfaceColor@@3HA
-int PopupThemeSurfaceColor = 0x24; // 0x0068A5B8
-// RECOVERY_OBJECT: v1 0x0068A5BC ?PopupThemeBevelUpper@@3HA
-int PopupThemeBevelUpper = 0x1E; // 0x0068A5BC
-// RECOVERY_OBJECT: v1 0x0068A5C0 ?PopupThemeBevelLower@@3HA
-int PopupThemeBevelLower = 0x56; // 0x0068A5C0
+// The file-backed palette defaults (0x0068A5A0..C0) are elements of
+// interface_assets.cpp's IfaceColorTable; their identities moved there.
 
 // Original455610..455E41. The explicit mode argument is unused. All service
 // results are ignored in the original; failed loads still proceed through
@@ -2280,13 +2268,57 @@ extern int __cdecl game_data_plain_transfer(FILE *file, void *buffer,
                                             unsigned int byte_count,
                                             int write_mode);
 
+// The pre-v3 0x30-byte vehicle record. Its byte proto_id and faction_id
+// (+0x0A, +0x0B) widen into the current 0x34-byte Veh; native 5A7DE1..5A7EC5
+// copies every other field across at its own width.
+struct GameDataLegacyVehRow {
+    int16_t x;
+    int16_t y;
+    uint32_t state;
+    int16_t flags;
+    uint8_t proto_id;
+    uint8_t faction_id;
+    uint8_t dmg_incurred;
+    int8_t order;
+    uint8_t waypoint_count;
+    uint8_t patrol_current_point;
+    int16_t waypoint_x[4];
+    int16_t waypoint_y[4];
+    uint8_t morale;
+    uint8_t terraforming_turns;
+    uint8_t order_auto_type;
+    uint8_t visibility;
+    uint8_t moves_expended;
+    int8_t facing;
+    uint8_t unk_6;
+    uint8_t move_to_ai_type;
+    uint8_t probe_action;
+    uint8_t probe_sabotage_id;
+    int16_t home_base_id;
+    int16_t next_veh_id_stack;
+    int16_t prev_veh_id_stack;
+};
+typedef char GameDataLegacyVehRowExtent[sizeof(GameDataLegacyVehRow) == 0x30 ? 1 : -1];
+
+// WORKAROUND(type): game_data calls memcpy out of line for its whole-record
+// copies (0x31C, 0x1CBC, 0x20BC, 0x130 bytes) yet copies these smaller blocks
+// with inline rep movsd, i.e. as aggregate assignments; the original block
+// types are unknown, so a sized byte block stands in for each.
+template <unsigned int N> struct GameDataBlock { unsigned char bytes[N]; };
+typedef GameDataBlock<33 * sizeof(int)> GameDataProjectPrefixBlock;
+typedef GameDataBlock<89> GameDataTechBlock;
+typedef GameDataBlock<256> GameDataSaveNameBlock;
+typedef GameDataBlock<8 * sizeof(int)> GameDataWeightsBlock;
+typedef GameDataBlock<10 * sizeof(int)> GameDataTailBlock;
+
 static void game_data_migrate_legacy_header(
         const GameDataHeaderWire *header, int) {
     // Keep the pin's field-specific order after game_data has copied the full
     // 0x31C input record into the live state window.
-    memcpy(GameDataStateStorage.fields_.secret_project_.project_base,
-           header->legacy_secret_project_prefix_,
-           sizeof(header->legacy_secret_project_prefix_));
+    *reinterpret_cast<GameDataProjectPrefixBlock *>(
+        GameDataStateStorage.fields_.secret_project_.project_base) =
+        *reinterpret_cast<const GameDataProjectPrefixBlock *>(
+            header->legacy_secret_project_prefix_);
     memset(&GameDataStateStorage.fields_.secret_project_.project_base[33],
            0xFF, 31 * sizeof(int));
     GameDataStateStorage.fields_.governor_faction_ = header->governor_faction_;
@@ -2304,12 +2336,13 @@ static void game_data_migrate_legacy_header(
             last_resolution_turn;
     }
 
-    memcpy(GameDataStateStorage.fields_.game_tech_achieved_,
-           header->game_tech_achieved_,
-           sizeof(GameDataStateStorage.fields_.game_tech_achieved_));
-    memcpy(GameDataStateStorage.fields_.legacy_game_save_name_,
-           header->legacy_game_save_name_,
-           sizeof(GameDataStateStorage.fields_.legacy_game_save_name_));
+    *reinterpret_cast<GameDataTechBlock *>(
+        GameDataStateStorage.fields_.game_tech_achieved_) =
+        *reinterpret_cast<const GameDataTechBlock *>(header->game_tech_achieved_);
+    *reinterpret_cast<GameDataSaveNameBlock *>(
+        GameDataStateStorage.fields_.legacy_game_save_name_) =
+        *reinterpret_cast<const GameDataSaveNameBlock *>(
+            header->legacy_game_save_name_);
     GameDataStateStorage.fields_.climate_rise_step_ = header->climate_rise_step_;
     GameDataStateStorage.fields_.climate_rise_limit_ = header->climate_rise_limit_;
     // Preserve the original target write order: +0x34C, +0x344, then +0x348.
@@ -2318,11 +2351,14 @@ static void game_data_migrate_legacy_header(
     GameDataStateStorage.fields_.climate_rise_accum_ = header->climate_rise_accum_;
     GameDataStateStorage.fields_.climate_sea_level_delta_ =
         header->climate_sea_level_delta_;
-    memcpy(GameDataStateStorage.fields_.transcendence_score_weights_,
-           header->transcendence_score_weights_,
-           sizeof(GameDataStateStorage.fields_.transcendence_score_weights_));
-    memcpy(&GameDataStateStorage.fields_.sunspot_duration_,
-           header->legacy_terminal_words_, sizeof(header->legacy_terminal_words_));
+    *reinterpret_cast<GameDataWeightsBlock *>(
+        GameDataStateStorage.fields_.transcendence_score_weights_) =
+        *reinterpret_cast<const GameDataWeightsBlock *>(
+            header->transcendence_score_weights_);
+    *reinterpret_cast<GameDataTailBlock *>(
+        &GameDataStateStorage.fields_.sunspot_duration_) =
+        *reinterpret_cast<const GameDataTailBlock *>(
+            header->legacy_terminal_words_);
 }
 
 // Version 3..10 PlayerData wire rows are 0x20BC bytes, while the live owner
@@ -2601,56 +2637,8 @@ static int game_data_candidate_transfer_players(FILE *file) {
     return 0;
 }
 
-static int game_data_candidate_string_list(FILE *file, StringList &list,
-                                           int write_mode) {
-    int count = list.entry_count_;
-    if (write_mode != 0) {
-        if (game_data_plain_transfer(file, &count, 4, write_mode) == 0)
-            return 1;
-        for (int index = 0; index < count; ++index) {
-            list.seek_pos(index);
-            StringStructPayload *const payload = list.current_entry();
-            int id = list.current_id();
-            strcpy(StringTemp, payload->text);
-            int length = static_cast<int>(strlen(StringTemp));
-            if (game_data_plain_transfer(file, &id, 4, write_mode) == 0)
-                return 1;
-            if (game_data_plain_transfer(file, &length, 4, write_mode) == 0)
-                return 1;
-            if (length != 0
-                && game_data_plain_transfer(
-                       file, StringTemp, static_cast<unsigned int>(length),
-                       write_mode) == 0)
-                return 1;
-        }
-        return 0;
-    }
-
-    list.remove_all();
-    list.current_position_ = 0;
-    list.allocator_ = 0;
-    if (game_data_plain_transfer(file, &count, 4, write_mode) == 0)
-        return 1;
-    for (int index = 0; index < count; ++index) {
-        int id;
-        int length;
-        if (game_data_plain_transfer(file, &id, 4, write_mode) == 0)
-            return 1;
-        if (game_data_plain_transfer(file, &length, 4, write_mode) == 0)
-            return 1;
-        if (game_data_plain_transfer(
-                file, StringTemp, static_cast<unsigned int>(length),
-                write_mode) == 0)
-            return 1;
-        StringTemp[length] = '\0';
-        list.field_20_ = 0;
-        list.field_24_ = 0;
-        list.pending_text_ = StringTemp;
-        list.add(id);
-    }
-    return 0;
-}
-
+// The image calls memcpy out of line for the whole-record copies here.
+#pragma function(memcpy)
 // ORIGINAL: 0x005A6AC0 ?game_data@@YAHPAUFILE@@H@Z 0x005A6AC0-0x005A9279
 // symbol    ?game_data@@YAHPAU_iobuf@@H@Z
 int __cdecl game_data(FILE *file, int write_mode) {
@@ -2659,22 +2647,23 @@ int __cdecl game_data(FILE *file, int write_mode) {
     GameDataEncryptedMode = 0;
     GameDataLoadStatusWord = 0;
 
-    if (game_data_candidate_transfer(file, &header, sizeof(header)) == 0)
+    // The legacy header is always a raw transfer.
+    if ((write_mode != 0 ? fwrite(&header, sizeof(header), 1, file)
+                         : fread(&header, sizeof(header), 1, file)) == 0)
         return 1;
 
     // The legacy header selects only this first state-record layout. Later
     // format gates use the live word carried in that state record instead.
     const int header_version = header.legacy_terminal_words_[4];
-    if (header_version >= 0xB) {
-        if (game_data_candidate_transfer(
-                file, &GameDataStateStorage, 0x398) == 0)
-            return 1;
-    } else {
+    if (header_version < 0xB) {
         // Native copies the complete old header into the live state window
         // before the field-by-field legacy conversion; do not stage this in a
         // success-only temporary or normalize its read/write ordering.
         memcpy(&GameDataStateStorage, &header, 0x31C);
         game_data_migrate_legacy_header(&header, header_version);
+    } else if (game_data_candidate_transfer(
+                   file, &GameDataStateStorage, 0x398) == 0) {
+        return 1;
     }
 
     if (GameDataStateStorage.fields_.save_daemon_state_word_ >= 4) {
@@ -2691,29 +2680,26 @@ int __cdecl game_data(FILE *file, int write_mode) {
             if (game_data_candidate_transfer(
                     file, &GameDataPlayerCountSnapshot, 4) == 0)
                 return 1;
-            if (GameDataWriteMode == 0) {
-                LPSTR saved_time_control[6];
+            // A load keeps the live time-control names across the transfer.
+            LPSTR saved_time_control[6];
+            if (write_mode == 0) {
                 for (int save_name_index = 0; save_name_index < 6; ++save_name_index)
                     saved_time_control[save_name_index] = TimeControl[save_name_index].name;
-                if (game_data_candidate_transfer(file, TimeControl, 0xC0) == 0)
-                    return 1;
+            }
+            if (game_data_candidate_transfer(file, TimeControl, 0xC0) == 0)
+                return 1;
+            if (write_mode == 0) {
                 for (int restore_name_index = 0; restore_name_index < 6; ++restore_name_index)
                     TimeControl[restore_name_index].name = saved_time_control[restore_name_index];
-            } else if (game_data_candidate_transfer(file, TimeControl, 0xC0) == 0) {
-                return 1;
             }
         }
-        if (game_data_candidate_transfer(
-                file, &ConsoleGlobal.faction_id_,
-                sizeof(ConsoleGlobal.faction_id_)) == 0)
-            return 1;
     } else {
         GameDataEncryptedMode = 0;
-        if (game_data_candidate_transfer(
-                file, &ConsoleGlobal.faction_id_,
-                sizeof(ConsoleGlobal.faction_id_)) == 0)
-            return 1;
     }
+    if (game_data_candidate_transfer(
+            file, &ConsoleGlobal.faction_id_,
+            sizeof(ConsoleGlobal.faction_id_)) == 0)
+        return 1;
 
     if (game_data_candidate_transfer_players(file) != 0)
         return 1;
@@ -2805,47 +2791,45 @@ int __cdecl game_data(FILE *file, int write_mode) {
                     static_cast<unsigned int>(GameDataStateStorage.fields_.vehicle_current_count_) * 0x34u) == 0)
                 return 1;
         } else {
-            typedef char GameDataLegacyVehRowExtent[0x30];
-            GameDataLegacyVehRowExtent *const old_rows =
-                static_cast<GameDataLegacyVehRowExtent *>(
+            GameDataLegacyVehRow *const old_rows =
+                static_cast<GameDataLegacyVehRow *>(
                     mem_get(GameDataStateStorage.fields_.vehicle_current_count_ * 0x30));
             if (game_data_candidate_transfer(
                     file, old_rows,
                     static_cast<unsigned int>(GameDataStateStorage.fields_.vehicle_current_count_) * 0x30u) == 0)
                 return 1;
             for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {
-                const unsigned char *const row =
-                    reinterpret_cast<const unsigned char *>(old_rows[vehicle_id]);
+                const GameDataLegacyVehRow &row = old_rows[vehicle_id];
                 Veh &vehicle = Vehs[vehicle_id];
-                memcpy(&vehicle.x, row + 0x00, sizeof(vehicle.x));
-                memcpy(&vehicle.y, row + 0x02, sizeof(vehicle.y));
-                memcpy(&vehicle.state, row + 0x04, sizeof(vehicle.state));
-                memcpy(&vehicle.flags, row + 0x08, sizeof(vehicle.flags));
-                vehicle.proto_id = row[0x0A];
-                vehicle.unk_1 = 0;
-                vehicle.faction_id = row[0x0A];
+                vehicle.x = row.x;
+                vehicle.y = row.y;
+                vehicle.state = row.state;
+                vehicle.flags = row.flags;
+                vehicle.proto_id = row.proto_id;
+                vehicle.faction_id = row.faction_id;
+                vehicle.dmg_incurred = row.dmg_incurred;
+                vehicle.order = row.order;
+                vehicle.waypoint_count = row.waypoint_count;
+                vehicle.patrol_current_point = row.patrol_current_point;
                 vehicle.year_end_lurking = 0;
-                vehicle.dmg_incurred = row[0x0C];
-                vehicle.order = static_cast<int8_t>(row[0x0D]);
-                vehicle.waypoint_count = row[0x0E];
-                vehicle.patrol_current_point = row[0x0F];
+                vehicle.unk_1 = 0;
                 for (int point = 0; point < 4; ++point) {
-                    memcpy(&vehicle.waypoint_x[point], row + 0x10 + point * 2, 2);
-                    memcpy(&vehicle.waypoint_y[point], row + 0x18 + point * 2, 2);
+                    vehicle.waypoint_x[point] = row.waypoint_x[point];
+                    vehicle.waypoint_y[point] = row.waypoint_y[point];
                 }
-                vehicle.morale = row[0x20];
-                vehicle.terraforming_turns = row[0x21];
-                vehicle.order_auto_type = row[0x22];
-                vehicle.visibility = row[0x23];
-                vehicle.moves_expended = row[0x24];
-                vehicle.facing = static_cast<int8_t>(row[0x25]);
-                vehicle.unk_6 = row[0x26];
-                vehicle.move_to_ai_type = row[0x27];
-                vehicle.probe_action = row[0x28];
-                vehicle.probe_sabotage_id = row[0x29];
-                memcpy(&vehicle.home_base_id, row + 0x2A, 2);
-                memcpy(&vehicle.next_veh_id_stack, row + 0x2C, 2);
-                memcpy(&vehicle.prev_veh_id_stack, row + 0x2E, 2);
+                vehicle.morale = row.morale;
+                vehicle.terraforming_turns = row.terraforming_turns;
+                vehicle.order_auto_type = row.order_auto_type;
+                vehicle.visibility = row.visibility;
+                vehicle.moves_expended = row.moves_expended;
+                vehicle.facing = row.facing;
+                vehicle.unk_6 = row.unk_6;
+                vehicle.move_to_ai_type = row.move_to_ai_type;
+                vehicle.probe_action = row.probe_action;
+                vehicle.probe_sabotage_id = row.probe_sabotage_id;
+                vehicle.home_base_id = row.home_base_id;
+                vehicle.next_veh_id_stack = row.next_veh_id_stack;
+                vehicle.prev_veh_id_stack = row.prev_veh_id_stack;
             }
             if (old_rows != 0) free(old_rows);
         }
@@ -2968,24 +2952,100 @@ int __cdecl game_data(FILE *file, int write_mode) {
         return 1;
     if (game_data_candidate_transfer(file, FactionTurnCombatLosses, 0x20) == 0)
         return 1;
+    // The native StringList records use raw fread/fwrite, unlike the
+    // surrounding encrypted-aware blocks; both walks share these slots.
+    int string_count;
+    int string_id;
+    int string_length;
     for (int faction = 1; faction < 8; ++faction) {
-        if (game_data_candidate_string_list(
-                file, MessageWinDeferredBaseMessages[faction],
-                write_mode) != 0)
-            return 1;
+        StringList &list = MessageWinDeferredBaseMessages[faction];
+        if (write_mode != 0) {
+            string_count = list.entry_count_;
+            if (fwrite(&string_count, 4, 1, file) == 0)
+                return 1;
+            for (int index = 0; index < string_count; ++index) {
+                list.seek_pos(index);
+                // WORKAROUND(inline): current_id() and current_text() are
+                // out of line in this tree; the image expands both here.
+                string_id = list.head_ ? list.current_->id : 0;
+                if (fwrite(&string_id, 4, 1, file) == 0)
+                    return 1;
+                strcpy(StringTemp, list.head_
+                    ? list.current_->string_payload()->text : 0);
+                string_length = static_cast<int>(strlen(StringTemp));
+                if (fwrite(&string_length, 4, 1, file) == 0)
+                    return 1;
+                if (string_length != 0
+                    && fwrite(StringTemp, string_length, 1, file) == 0)
+                    return 1;
+            }
+        } else {
+            list.remove_all();
+            list.current_position_ = 0;
+            list.allocator_ = 0;
+            if (fread(&string_count, 4, 1, file) == 0)
+                return 1;
+            for (int index = 0; index < string_count; ++index) {
+                if (fread(&string_id, 4, 1, file) == 0)
+                    return 1;
+                if (fread(&string_length, 4, 1, file) == 0)
+                    return 1;
+                if (fread(StringTemp, string_length, 1, file) == 0)
+                    return 1;
+                StringTemp[string_length] = '\0';
+                list.field_20_ = 0;
+                list.field_24_ = 0;
+                list.pending_text_ = StringTemp;
+                list.add(string_id);
+            }
+        }
     }
 
-    // 5A8A39/4A begins at [1][1] but skips that equal initial pointer;
-    // 5A8CC3 advances one row (0x180 bytes), and 5A8CDA/DE advances one
-    // column (0x30 bytes) up to [2][0] exclusive. The inner counter is
-    // incremented before its strict comparison, so each column visits rows
-    // 1 through column-1: the 21 off-diagonal lists in columns 2 through 7.
-    for (int column = 2; column < 8; ++column) {
+    // 5A8A39 starts the column walk at [1][1]; each column visits rows 1
+    // through column-1, the 21 off-diagonal lists in columns 2 through 7.
+    for (int column = 1; column < 8; ++column) {
         for (int row = 1; row < column; ++row) {
-            if (game_data_candidate_string_list(
-                    file, DiplomacyTranscriptLists[row][column],
-                    write_mode) != 0)
-                return 1;
+            StringList &list = DiplomacyTranscriptLists[row][column];
+            if (write_mode != 0) {
+                string_count = list.entry_count_;
+                if (fwrite(&string_count, 4, 1, file) == 0)
+                    return 1;
+                for (int index = 0; index < string_count; ++index) {
+                    list.seek_pos(index);
+                    // WORKAROUND(inline): current_id() and current_text() are
+                    // out of line in this tree; the image expands both here.
+                    string_id = list.head_ ? list.current_->id : 0;
+                    if (fwrite(&string_id, 4, 1, file) == 0)
+                        return 1;
+                    strcpy(StringTemp, list.head_
+                        ? list.current_->string_payload()->text : 0);
+                    string_length = static_cast<int>(strlen(StringTemp));
+                    if (fwrite(&string_length, 4, 1, file) == 0)
+                        return 1;
+                    if (string_length != 0
+                        && fwrite(StringTemp, string_length, 1, file) == 0)
+                        return 1;
+                }
+            } else {
+                list.remove_all();
+                list.current_position_ = 0;
+                list.allocator_ = 0;
+                if (fread(&string_count, 4, 1, file) == 0)
+                    return 1;
+                for (int index = 0; index < string_count; ++index) {
+                    if (fread(&string_id, 4, 1, file) == 0)
+                        return 1;
+                    if (fread(&string_length, 4, 1, file) == 0)
+                        return 1;
+                    if (fread(StringTemp, string_length, 1, file) == 0)
+                        return 1;
+                    StringTemp[string_length] = '\0';
+                    list.field_20_ = 0;
+                    list.field_24_ = 0;
+                    list.pending_text_ = StringTemp;
+                    list.add(string_id);
+                }
+            }
         }
     }
 
@@ -3024,19 +3084,20 @@ int __cdecl game_data(FILE *file, int write_mode) {
     if (game_data_candidate_transfer(file, TamperDialogValue, 0x20) == 0)
         return 1;
 
+    // The trailing screen size is a raw transfer, unlike the blocks above.
     if (write_mode != 0) {
-        if (game_data_candidate_transfer(file, &IfaceScreenWidth, 4) == 0)
+        if (fwrite(&IfaceScreenWidth, 4, 1, file) == 0)
             return 1;
-        if (game_data_candidate_transfer(file, &IfaceScreenHeight, 4) == 0)
+        if (fwrite(&IfaceScreenHeight, 4, 1, file) == 0)
             return 1;
         return 0;
     }
 
     int saved_width;
     int saved_height;
-    if (game_data_candidate_transfer(file, &saved_width, 4) == 0)
+    if (fread(&saved_width, 4, 1, file) == 0)
         return 1;
-    if (game_data_candidate_transfer(file, &saved_height, 4) == 0)
+    if (fread(&saved_height, 4, 1, file) == 0)
         return 1;
     if (saved_width != IfaceScreenWidth || saved_height != IfaceScreenHeight) {
         for (int map_slot = 1; map_slot < 8; ++map_slot) {
@@ -3047,6 +3108,7 @@ int __cdecl game_data(FILE *file, int write_mode) {
     }
     return 0;
 }
+#pragma intrinsic(memcpy)
 
 // ORIGINAL: 0x005AB600 ?load_map@@YAHXZ 0x005AB600-0x005ABB8D;0x006620A7-0x0066221F
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005ab600.cpp", "recovery/tasks/game-save-load-owner-coverage.json", "pinned image sha256:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_load_map_behavior.py"], "reason": "Recover map loading through AlphaSave's real selected-path return and existing extension, map-daemon, multiplayer, preference, and dialog owners."}

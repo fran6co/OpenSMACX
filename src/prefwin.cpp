@@ -81,7 +81,11 @@ extern int32_t PrefWinGeometryConstant_686B78;
 // Original 0x48D884 writes 50 to this separate DWORD on the 800-pixel path.
 // RECOVERY_OBJECT: v2 0x00872CA8 0x00872CAC ?PrefWinNarrowDisplayVerticalOffset@@3HA 0x0048D840
 int PrefWinNarrowDisplayVerticalOffset;
+// MessageWin's two cells of the iface.pcx colour table (game.h declares it).
+// WORKAROUND(decl): the former local declaration stays, shadowed by the macros.
 extern int MessageWinTextColor, MessageWinTextBackground;
+#define MessageWinTextColor      (IfaceColorTable[1])
+#define MessageWinTextBackground (IfaceColorTable[4])
 // Mutable preference state begins at 1.0; the 100.0 factor converts the
 // stored gamma scalar to the integer value written to the preferences file.
 // RECOVERY_OBJECT: v2 0x006846A8 0x006846AC ?PrefWinGammaCorrection@@3MA 0x00491400
