@@ -838,7 +838,9 @@ set(OPENSMACX_UNPOOLED_SOURCES
     src/veh.cpp
     src/game.cpp
     src/datalink.cpp
-    src/netwin.cpp)
+    src/netwin.cpp
+    src/maininterface.cpp
+    src/council.cpp)
 set(OPENSMACX_UNPOOLED_OY_SOURCES
     src/net_class.cpp)
 function(opensmacx_apply_optimization target)
