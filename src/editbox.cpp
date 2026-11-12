@@ -389,101 +389,86 @@ int EditBox::on_key_down(int key) {
 // ORIGINAL: 0x00615270 ?on_redraw@EditBox@@QAEXXZ 0x00615270-0x00615627
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00615270.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
 // symbol    ?on_redraw@EditBox@@UAEXXZ
+static inline void editbox_inflate(RECT *rect, int dx, int dy) {
+    rect->left -= dx;
+    rect->right += dx;
+    rect->top -= dy;
+    rect->bottom += dy;
+}
+
 void EditBox::on_redraw() {
     char masked[256];
     if (field_B3C_ & 2) {
         masked[0] = 0;
         strcat(masked, text_);
-        for (char *p = masked; *p; ++p) *p = '*';
-    }
-    Buffer::set_clip(&rect2_);
-    GraphicWin::fill(static_cast<int>(field_B1C_));
-    RECT area = rect2_;
-    for (int i = 0; i < static_cast<int>(field_B30_); ++i) {
-        Buffer::box(&area, static_cast<int>(field_B28_), static_cast<int>(field_B2C_));
-        ++area.left;
-        --area.right;
-        ++area.top;
-        --area.bottom;
-    }
-    int border = static_cast<int>(field_B30_);
-    int padding = static_cast<int>(field_B34_);
-    area.left -= border - padding;
-    area.right += border - padding;
-    area.top -= border;
-    area.bottom += border;
-    int line_height = Buffer::text_line_height();
-    int center = -(line_height + dib_.bmiHeader.biHeight) >> 1;
-    if (field_B48_) {
-        char *text;
-        int length;
-        if (field_B3C_ & 2) {
-            length = static_cast<int>(field_B44_ - field_B18_);
-            text = masked;
-        } else {
-            int first = static_cast<int>(field_B18_);
-            length = static_cast<int>(field_B44_) - first;
-            text = text_ + first;
+        for (char *p = masked; *p; ++p) {
+            *p = '*';
         }
-        int x = Buffer::text_width(text, length);
-        x += static_cast<int>(field_B34_);
-        int color = static_cast<int>(text_parameters_[0][0]);
-        int height = Buffer::text_line_height();
-        Buffer::vline(x, center, height + center, color);
+    }
+    Buffer::restore_clip();
+    GraphicWin::fill(field_B1C_);
+    RECT area = rect2_;
+    for (int i = 0; i < static_cast<int>(field_B30_); i++) {
+        Buffer::box(&area, field_B28_, field_B2C_);
+        area.left++;
+        area.right--;
+        area.top++;
+        area.bottom--;
+    }
+    editbox_inflate(&area, field_B30_ - field_B34_, field_B30_);
+    const int y = -(Buffer::text_line_height() + dib_.bmiHeader.biHeight) >> 1;
+    if (field_B48_) {
+        int x;
+        if (field_B3C_ & 2) {
+            x = Buffer::text_width(masked, field_B44_ - field_B18_);
+        } else {
+            x = Buffer::text_width(text_ + field_B18_, field_B44_ - field_B18_);
+        }
+        x += field_B34_;
+        Buffer::vline(x, y, Buffer::text_line_height() + y,
+                      text_parameters_[0][0]);
     }
     Buffer::set_clip(&area);
-    char *visible = (field_B3C_ & 2) ? masked : text_ + static_cast<int>(field_B18_);
-    if (visible) Buffer::write_l(visible, &area, strlen(visible));
+    if (field_B3C_ & 2) {
+        Buffer::write_l(masked, &area);
+    } else {
+        Buffer::write_l(text_ + field_B18_, &area);
+    }
 
-    int mark = static_cast<int>(field_B40_);
-    int cursor = static_cast<int>(field_B44_);
-    if (mark != cursor) {
-        char *selected;
-        int length;
+    if (field_B40_ != field_B44_) {
         int x;
-        if (mark > cursor) {
+        int width;
+        if (static_cast<int>(field_B40_) > static_cast<int>(field_B44_)) {
             if (field_B3C_ & 2) {
-                int first = static_cast<int>(field_B18_);
-                x = Buffer::text_width(masked, cursor - first);
-                x += static_cast<int>(field_B34_);
-                length = static_cast<int>(field_B40_ - field_B44_);
-                selected = masked;
+                x = Buffer::text_width(masked, field_B44_ - field_B18_);
+                x += field_B34_;
+                width = Buffer::text_width(masked, field_B40_ - field_B44_);
             } else {
-                int first = static_cast<int>(field_B18_);
-                x = Buffer::text_width(text_ + first, cursor - first);
-                x += static_cast<int>(field_B34_);
-                selected = text_ + static_cast<int>(field_B44_);
-                length = static_cast<int>(field_B40_ - field_B44_);
+                x = Buffer::text_width(text_ + field_B18_, field_B44_ - field_B18_);
+                x += field_B34_;
+                width = Buffer::text_width(text_ + field_B44_, field_B40_ - field_B44_);
             }
         } else {
-            int first = static_cast<int>(field_B18_);
-            int start = mark > first ? mark : first;
+            const int start = max(static_cast<int>(field_B40_), static_cast<int>(field_B18_));
             if (field_B3C_ & 2) {
-                x = Buffer::text_width(masked, start - first);
-                x += static_cast<int>(field_B34_);
-                length = static_cast<int>(field_B44_ - field_B40_);
-                selected = masked;
+                x = Buffer::text_width(masked, start - field_B18_);
+                x += field_B34_;
+                width = Buffer::text_width(masked, field_B44_ - field_B40_);
             } else {
-                x = Buffer::text_width(text_ + first, start - first);
-                x += static_cast<int>(field_B34_);
-                selected = text_ + start;
-                length = static_cast<int>(field_B44_ - field_B40_);
+                x = Buffer::text_width(text_ + field_B18_, start - field_B18_);
+                x += field_B34_;
+                width = Buffer::text_width(text_ + start, field_B44_ - field_B40_);
             }
         }
-        int width = Buffer::text_width(selected, length);
-        int foreground = static_cast<int>(field_B24_);
-        if (foreground == -1) foreground = static_cast<int>(text_parameters_[0][0]);
-        int background = static_cast<int>(field_B20_);
-        if (background == -1) background = static_cast<int>(field_B1C_);
-        int original_background = static_cast<int>(field_B1C_);
-        int temporary_color = foreground + 1;
-        int height = Buffer::text_line_height();
-        Buffer::change_color(x, center, width, height, original_background, temporary_color);
-        int original_foreground = static_cast<int>(text_parameters_[0][0]);
-        height = Buffer::text_line_height();
-        Buffer::change_color(x, center, width, height, original_foreground, background);
-        height = Buffer::text_line_height();
-        Buffer::change_color(x, center, width, height, temporary_color, foreground);
+        const int foreground = field_B24_ != -1 ? field_B24_ : text_parameters_[0][0];
+        int background = field_B20_;
+        if (background == -1) {
+            background = field_B1C_;
+        }
+        const int temporary = foreground + 1;
+        Buffer::change_color(x, y, width, Buffer::text_line_height(), field_B1C_, temporary);
+        Buffer::change_color(x, y, width, Buffer::text_line_height(), text_parameters_[0][0], background);
+        Buffer::change_color(x, y, width, Buffer::text_line_height(), temporary, foreground);
     }
 }
 

@@ -16,6 +16,7 @@
 // symbol    ??_GAlphaSave@@UAEPAXI@Z
 // kind      game
 #include "stdafx.h"
+#include "rectangle_operations.h"
 #include "interface_fonts.h"
 #include "alphasave.h"
 #include "console.h"
@@ -111,36 +112,29 @@ void __cdecl scroll_normal();
 void __cdecl slide_show(GraphicWin *window, int mode);
 void __cdecl slide_hide(GraphicWin *window, int mode);
 
-static void alpha_save_store_rect(RECT &rect, int left, int top,
-                                  int right, int bottom) {
-    rect.left = left;
-    rect.top = top;
-    rect.right = right;
-    rect.bottom = bottom;
-}
-
 // Modal geometry uses the 18-DWORD FileWinConstruct input; FileWin snapshots
 // its 17-DWORD prefix. The dialog borrows the interface fonts and popup style
 // while owning the controls initialized below.
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00407410 ?init@AlphaSave@@QAEXXZ 0x00407410-0x00407906;0x00650C60-0x00650C75
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00407410.cpp", "recovery/tasks/game-save-load-owner-coverage.json", "pinned image sha256:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_alphasave_init_behavior.py", "recovery/tests/test_standard_popup_style_behavior.py"], "reason": "Recover AlphaSave modal initialization through its embedded FileWin, exact admitted FileWinConstruct geometry, current typed fonts, and existing popup-style owners."}
+static inline void alpha_save_inset(RECT *rect, int amount) {
+    rect->left += amount;
+    rect->right -= amount;
+    rect->top += amount;
+    rect->bottom -= amount;
+}
+
 void AlphaSave::init() {
     Buffer scratch;
     const int visible = ConsoleGlobal.is_visible();
-    const int compact = visible ? 0 : 1;
+    const int top = !visible + 0x1A;
     const int inset = visible ? 0x17 : 0;
-
-    const int center_delta = WinScreenWidth - 0x13C;
-    const int half_delta = center_delta / 2;
-    const int x = half_delta - inset;
-    const int y = WinScreenHeight - MainInterfaceGlobal.panel_height()
-        - (compact + 0x1A) - 0x177;
-    const int width = visible ? 0x18A : 0x14E;
-    const int height = visible ? 0x191 : 0x189;
-    Win *parent = visible ? static_cast<Win *>(&ConsoleGlobal) : 0;
-
-    GraphicWin::init(x, y, width, height, 0, 0x1001000, parent, 0, 0);
+    const int x = (WinScreenWidth - 0x13C) / 2 - inset;
+    const int y = WinScreenHeight - MainInterfaceGlobal.panel_height() - top - 0x177;
+    GraphicWin::init(x, y, visible ? 0x18A : 0x14E,
+                     (visible ? 0 : -9) + top + 0x177, 0, 0x1001000,
+                     visible ? &ConsoleGlobal : 0, 0, 0);
     GraphicWin::fill(9);
 
     RECT frame = *buffer_working_rect();
@@ -151,50 +145,46 @@ void AlphaSave::init() {
         box_sprite(&frame, &InterfaceBoxStyles[9]);
     } else {
         box_sprite(&frame, &InterfaceStandardPopupBoxStyle);
-        frame.left += 9;
-        frame.top += 9;
-        frame.right -= 9;
-        frame.bottom -= 9;
+        alpha_save_inset(&frame, 9);
     }
-    frame.right -= 3;
-    frame.left += 3;
-    frame.bottom -= 3;
-    frame.top += 3;
+    alpha_save_inset(&frame, 3);
     box_sprite(&frame, &InterfaceBoxStyles[0]);
 
     FileWinConstruct layout;
     layout.field_00_ = visible ? 0 : 0x80020;
-    if (visible) {
-        alpha_save_store_rect(layout.list_box_bounds_, inset + 5, compact + 0x20,
-                              inset + 0x136, compact + 0x140);
-        alpha_save_store_rect(layout.edit_box_bounds_, inset + 8, compact + 0x142,
-                              inset + 0x134, compact + 0x156);
-        alpha_save_store_rect(layout.button2_bounds_, inset + 10, compact + 0x15C,
-                              inset + 0x99, compact + 0x172);
-        alpha_save_store_rect(layout.button1_bounds_, inset + 0xA2,
-                              compact + 0x15C, inset + 0x132, compact + 0x172);
-    } else {
-        alpha_save_store_rect(layout.list_box_bounds_, 0x0E, compact + 0x29,
-                              0x13F, compact + 0x149);
-        alpha_save_store_rect(layout.edit_box_bounds_, 0x11, compact + 0x14B,
-                              0x13D, compact + 0x15F);
-        alpha_save_store_rect(layout.button2_bounds_, 0x13, compact + 0x165,
-                              0xA2, compact + 0x17B);
-        alpha_save_store_rect(layout.button1_bounds_, 0xAB, compact + 0x165,
-                              0x13B, compact + 0x17B);
-    }
+    set_rectangle_dimensions(&layout.list_box_bounds_, inset + 5, top + 6, 0x131, 0x120);
+    set_rectangle_dimensions(&layout.edit_box_bounds_, inset + 8, top + 0x128, 0x12C, 0x14);
+    frame = layout.edit_box_bounds_;
+    frame.left += 2;
+    frame.right -= 2;
+    frame.top = frame.bottom + 4;
+    frame.bottom = frame.top + 0x14;
+    frame.top -= 1;
+    frame.bottom += 1;
+    offset_rect(&frame, 0, 3);
+    layout.button2_bounds_ = frame;
+    layout.button2_bounds_.right =
+        frame.left + (layout.button2_bounds_.right - frame.left + 3) / 2 - 3;
+    frame.left += layout.button2_bounds_.right - layout.button2_bounds_.left + 3;
+    layout.button1_bounds_ = frame;
     layout.field_44_ = inset + 8;
+    if (!visible) {
+        offset_rect(&layout.list_box_bounds_, 9, 9);
+        offset_rect(&layout.edit_box_bounds_, 9, 9);
+        offset_rect(&layout.button2_bounds_, 9, 9);
+        offset_rect(&layout.button1_bounds_, 9, 9);
+    }
     file_win_.init(0, this, &layout);
 
     Dialog &list_dialog = file_win_.list_box();
     list_dialog.set_dialog_font(MainInterfaceGlobal.secondary_font(), 0, 0);
     list_dialog.set_dialog_text_color(TextColourTable[0], TextColourTable[1], 1, 1);
     file_win_.list_box().set_report_text_color(TextColourTable[2]);
-    file_win_.list_box().reset_report_selection();
-    file_win_.list_box().set_draw_callback(alpha_save_filebox_draw);
     list_dialog.field_48_ = 0x16;
     list_dialog.field_4C_ = 1;
     list_dialog.field_B4_ = 0;
+    file_win_.list_box().set_draw_callback(alpha_save_filebox_draw);
+    file_win_.list_box().reset_report_selection();
     list_dialog.field_20_ &= ~4u;
     list_dialog.on_redraw();
 
@@ -202,10 +192,10 @@ void AlphaSave::init() {
     edit.set_font(MainInterfaceGlobal.secondary_font(), 0, 0, 0);
     edit.field_B1C_ = TextColourTable[10];
     edit.set_text_color(TextColourTable[4], TextColourTable[5], 1, 1);
-    edit.field_B20_ = TextColourTable[6];
-    edit.field_B24_ = TextColourTable[8];
     edit.field_B28_ = TextColourTable[8];
     edit.field_B2C_ = TextColourTable[8];
+    edit.field_B20_ = TextColourTable[6];
+    edit.field_B24_ = TextColourTable[8];
     edit.on_dialog_focus(1);
     edit.redraw();
 

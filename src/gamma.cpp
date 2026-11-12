@@ -26,6 +26,7 @@
 #include "basepop.h"
 #include "win.h"
 #include <math.h>
+#include "rectangle_operations.h"
 #include <stddef.h>
 
 // These pinned sites call the ordinary CRT pow entry with double arguments.
@@ -40,7 +41,24 @@ const double GammaPositionScale = 0.01;
 // the enclosing original allocation and typed initializer extent are unproved.
 // RECOVERY_OBJECT: v1 0x0066FA78 _GammaComponentScale
 const double GammaComponentScale = 1.0 / 235.0;
-const float GammaSliderScale = 100.0f;
+}
+
+static inline void gamma_inset(RECT *rect, int dx, int dy) {
+    rect->left += dx;
+    rect->right -= dx;
+    rect->top += dy;
+    rect->bottom -= dy;
+}
+static inline void gamma_button_init(PushButton *button, LPCSTR text, int id,
+                                     RECT *rect, Win *parent) {
+    button->init(text, id, rect->left, rect->top, rect->right - rect->left,
+                 rect->bottom - rect->top, parent, 0);
+}
+static inline int gamma_rect_width(RECT *rect) {
+    return rect->right - rect->left;
+}
+static inline int gamma_rect_height(RECT *rect) {
+    return rect->bottom - rect->top;
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -62,39 +80,20 @@ double Gamma::exec(Palette *target, float initial_gamma, int apply_only) {
 
     const int screen_height = WinScreenHeight;
     const int screen_width = WinScreenWidth;
-    rect1_.left = 0;
-    rect1_.top = 0;
-    rect1_.right = 236;
-    rect1_.bottom = 32;
-    const int horizontal_offset =
-        (screen_width - rect1_.right + rect1_.left) / 2;
-    rect1_.left += horizontal_offset;
-    rect1_.right += horizontal_offset;
-    const int vertical_offset =
-        (screen_height - rect1_.bottom + rect1_.top) / 2;
-    rect1_.top += vertical_offset;
-    rect1_.bottom += vertical_offset;
-
+    set_rectangle_dimensions(&rect1_, 0, 0, 236, 32);
+    offset_rect(&rect1_, (screen_width - gamma_rect_width(&rect1_)) / 2,
+                (screen_height - gamma_rect_height(&rect1_)) / 2);
     rect2_ = rect1_;
-    const int row_offset = rect2_.bottom - rect2_.top + 3;
-    rect2_.top += row_offset;
-    rect2_.bottom += row_offset;
-
+    offset_rect(&rect2_, 0, gamma_rect_height(&rect2_) + 3);
     rect3_ = rect1_;
-    const int scroll_offset = rect1_.bottom - rect1_.top + 3;
-    rect3_.top += scroll_offset + 4;
-    rect3_.bottom += scroll_offset - 4;
-
+    offset_rect(&rect3_, 0, gamma_rect_height(&rect1_) + 3);
+    gamma_inset(&rect3_, 0, 4);
     rect4_ = rect3_;
-    const int button_offset = rect4_.bottom - rect4_.top + 3;
-    rect4_.top += button_offset;
+    offset_rect(&rect4_, 0, gamma_rect_height(&rect4_) + 3);
+    rect4_.right = rect4_.left + (gamma_rect_width(&rect4_) + 3) / 2 - 3;
     rect4_.bottom = rect4_.top + 20;
-    rect4_.right = rect4_.left + (rect4_.right - rect4_.left + 3) / 2 - 3;
-
     rect5_ = rect4_;
-    const int second_button_offset = rect5_.right - rect5_.left + 3;
-    rect5_.left += second_button_offset;
-    rect5_.right += second_button_offset;
+    offset_rect(&rect5_, gamma_rect_width(&rect5_) + 3, 0);
 
     font_.init("Arial", 14, 1);
     GraphicWin::init(0, 0, screen_width, screen_height, 0, 0,
@@ -114,46 +113,42 @@ double Gamma::exec(Palette *target, float initial_gamma, int apply_only) {
     scroll_.set_sprite_left(0, 0, 0);
     scroll_.set_sprite_right(0, 0, 0);
     scroll_.set_range(1, 400);
-    scroll_.set_pos(static_cast<int>(initial_gamma * GammaSliderScale));
+    scroll_.set_pos(static_cast<int>(initial_gamma * 100.0f));
     scroll_.show(0);
 
-    pushButton1_.init(BasePopDefaultOkText, -1,
-                      rect4_.left, rect4_.top,
-                      rect4_.right - rect4_.left,
-                      rect4_.bottom - rect4_.top, this, 0);
-    pushButton1_.Buffer::set_font(&font_, 0, 0, 0);
-    pushButton1_.redraw();
-    pushButton1_.set_text_color(0, -1, 1, 1);
+    PushButton *ok = &pushButton1_;
+    gamma_button_init(ok, BasePopDefaultOkText, -1, &rect4_, this);
+    ok->Buffer::set_font(&font_, 0, 0, 0);
+    ok->redraw();
+    ok->set_text_color(0, -1, 1, 1);
     pushButton1_.color_ = 0xF8;
     pushButton1_.bevel_upper_ = 7;
     pushButton1_.bevel_lower_ = 0;
     pushButton1_.bevel_thickness_ = 2;
-    pushButton1_.field_AC8_ = 0;
-    pushButton1_.field_AEC_ = 0;
-    pushButton1_.field_AC0_ = 0;
-    pushButton1_.field_AE4_ = 0;
-    pushButton1_.field_ACC_ = 0;
-    pushButton1_.field_AF0_ = 0;
-    pushButton1_.redraw();
+    ok->field_AC8_ = 0;
+    ok->field_AEC_ = 0;
+    ok->field_AC0_ = 0;
+    ok->field_AE4_ = 0;
+    ok->field_ACC_ = 0;
+    ok->field_AF0_ = 0;
+    ok->redraw();
 
-    pushButton2_.init(BasePopDefaultCancelText, -2,
-                      rect5_.left, rect5_.top,
-                      rect5_.right - rect5_.left,
-                      rect5_.bottom - rect5_.top, this, 0);
-    pushButton2_.Buffer::set_font(&font_, 0, 0, 0);
-    pushButton2_.redraw();
-    pushButton2_.set_text_color(0, -1, 1, 1);
+    PushButton *cancel = &pushButton2_;
+    gamma_button_init(cancel, BasePopDefaultCancelText, -2, &rect5_, this);
+    cancel->Buffer::set_font(&font_, 0, 0, 0);
+    cancel->redraw();
+    cancel->set_text_color(0, -1, 1, 1);
     pushButton2_.color_ = 0xF8;
     pushButton2_.bevel_upper_ = 7;
     pushButton2_.bevel_lower_ = 0;
     pushButton2_.bevel_thickness_ = 2;
-    pushButton2_.field_AC8_ = 0;
-    pushButton2_.field_AEC_ = 0;
-    pushButton2_.field_AC0_ = 0;
-    pushButton2_.field_AE4_ = 0;
-    pushButton2_.field_ACC_ = 0;
-    pushButton2_.field_AF0_ = 0;
-    pushButton2_.redraw();
+    cancel->field_AC8_ = 0;
+    cancel->field_AEC_ = 0;
+    cancel->field_AC0_ = 0;
+    cancel->field_AE4_ = 0;
+    cancel->field_ACC_ = 0;
+    cancel->field_AF0_ = 0;
+    cancel->redraw();
 
     show(1);
     do_all_draws();

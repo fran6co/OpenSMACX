@@ -436,85 +436,60 @@ int EditGroup::set_default(char *default_text, int index) {
 // ORIGINAL: 0x00612150 ?calculate_dimensions@EditGroup@@QAEHXZ 0x00612150-0x0061244A FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00612150.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x612150 complete control/data-access review and src/editgroup.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // TRIED: MISMATCH #1 push/mov - re-deriving the vbtable-offset macros at every access (matching the original's frequent [esi] re-fetch) gave the allocator no reason to keep `this` pinned in esi or the 0 constant pinned in ebp across the body.
+static inline char *editgroup_next_text(StringList *list) {
+    StringStructEntry *const head = list->head_;
+    if (head) {
+        list->current_ = list->current_->next;
+        if (++list->current_position_ == list->entry_count_) {
+            list->current_position_ = 0;
+        }
+    }
+    return list->current_ ? (head ? list->current_->string_payload() : 0)->text : 0;
+}
+
 int EditGroup::calculate_dimensions() {
-    Dialog &dialog = *this;
-    Buffer *const buffer = static_cast<Buffer *>(static_cast<GraphicWin *>(this));
-    if (dialog.item_list_.entry_count_ == 0) {
+    if (item_list_.entry_count_ == 0) {
         return 7;
     }
-    buffer->set_text_color(text_color_a_, text_color_b_, text_color_c_, text_color_d_);
-    buffer->set_text_color2(text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_);
-    buffer->set_text_color3(text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_);
-    buffer->set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
+    set_text_color(text_color_a_, text_color_b_, text_color_c_, text_color_d_);
+    set_text_color2(text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_);
+    set_text_color3(text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_);
+    set_font(font1_, font2_, font3_, 0);
 
-    dialog.row_count_ = dialog.item_list_.entry_count_;
-    if (dialog.row_count_ > dialog.field_50_) {
-        dialog.row_count_ = dialog.field_50_;
-    }
-    dialog.item_list_.seek_pos(-1);
+    row_count_ = min(item_list_.entry_count_, static_cast<int>(field_50_));
+    item_list_.seek_pos(-1);
 
     label_width_ = 0;
     edit_width_ = 0;
-    // The original snapshots the measurement count, while cursor wrapping
-    // still observes the live list count after each text-width callback.
-    int remaining = dialog.item_list_.entry_count_;
-    char **text = text_buffers_;
-    if (remaining > 0) {
-        do {
-            StringStructEntry *const head = dialog.item_list_.head_;
-            if (head != 0) {
-                dialog.item_list_.current_ = dialog.item_list_.current_->next;
-                ++dialog.item_list_.current_position_;
-                if (dialog.item_list_.current_position_ == dialog.item_list_.entry_count_) {
-                    dialog.item_list_.current_position_ = 0;
-                }
-            }
-            StringStructEntry *const entry = dialog.item_list_.current_;
-            char *label = 0;
-            if (entry != 0) {
-                StringStructPayload *const payload = head != 0 ? entry->string_payload() : 0;
-                // A missing head or payload with a live cursor retains the
-                // original unsafe text read; only a null cursor yields null.
-                label = payload->text;
-            }
-            const int measured_label = buffer->text_width(label);
-            if (label_width_ < measured_label) label_width_ = measured_label;
-            const int measured_edit = buffer->text_width(*text);
-            if (edit_width_ < measured_edit) {
-                const uint32_t edit_width_bits = static_cast<uint32_t>(measured_edit)
-                                               + static_cast<uint32_t>(dialog.field_40_) * 2u;
-                edit_width_ = static_cast<int32_t>(edit_width_bits);
-            }
-            ++text;
-            --remaining;
-        } while (remaining != 0);
+    const int count = item_list_.entry_count_;
+    for (int i = 0; i < count; i++) {
+        const int label_width = text_width(editgroup_next_text(&item_list_));
+        if (label_width > label_width_) {
+            label_width_ = label_width;
+        }
+        const int edit_width = text_width(text_buffers_[i]);
+        if (edit_width > edit_width_) {
+            edit_width_ = edit_width + Dialog::field_40_ * 2;
+        }
     }
 
-    if (edit_width_ <= 10) edit_width_ = 10;
-    dialog.field_64_ = dialog.field_34_
-        + (dialog.field_44_ + dialog.field_40_) * 2
-        + edit_width_ + label_width_;
-    dialog.field_68_ = buffer->text_line_height() + dialog.field_44_;
+    edit_width_ = max(edit_width_, 10);
+    field_64_ = field_34_ + (field_44_ + Dialog::field_40_) * 2 + edit_width_ + label_width_;
+    field_68_ = text_line_height() + field_44_;
 
-    if ((dialog.field_20_ & 2) == 0 || dialog.field_2C_ == 0) {
-        uint32_t width_bits = static_cast<uint32_t>(dialog.field_64_)
-                            * static_cast<uint32_t>(dialog.field_4C_);
-        int width = static_cast<int32_t>(width_bits);
-        if (width < dialog.field_2C_) width = dialog.field_2C_;
-        dialog.field_5C_ = width;
-        dialog.field_64_ = width / dialog.field_4C_;
-        dialog.column_count_ = dialog.field_4C_;
+    if ((field_20_ & 2) && field_2C_) {
+        field_5C_ = field_2C_;
+        column_count_ = field_2C_ / field_64_;
     } else {
-        dialog.field_5C_ = dialog.field_2C_;
-        dialog.column_count_ = dialog.field_2C_ / dialog.field_64_;
+        field_5C_ = max(field_2C_, field_64_ * field_4C_);
+        field_64_ = static_cast<int>(field_5C_) / field_4C_;
+        column_count_ = field_4C_;
     }
-    if ((dialog.field_20_ & 1) != 0 && dialog.field_30_ != 0) {
-        dialog.field_60_ = dialog.field_30_;
-        dialog.row_count_ = dialog.field_30_ / dialog.field_68_;
+    if ((field_20_ & 1) && field_30_) {
+        field_60_ = field_30_;
+        row_count_ = field_30_ / field_68_;
     } else {
-        dialog.field_60_ = static_cast<uint32_t>(dialog.field_68_)
-                         * static_cast<uint32_t>(dialog.row_count_)
-                         + dialog.field_44_;
+        field_60_ = field_68_ * row_count_ + field_44_;
     }
     return 0;
 }

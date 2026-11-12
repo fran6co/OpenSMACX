@@ -311,9 +311,7 @@ done:
 // ORIGINAL: 0x00423570 ?colortables_init@@YAXXZ 0x00423570-0x0042439F;0x00652C0A-0x00652C32
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original primary and EH spans establish operations, local destruction order, standing receiver and mapped cache branches.", "Original bounded row loops and cache sizes establish array extents; model record palette pointer is independently owned storage, not a record-relative address.", "Original paths and dependency-doubled behavioral tests cover cache reuse and invalidation, tint results, parser sequencing and exceptional cleanup."], "reason": "Recover the palette cache and table producer with real Filemap, Buffer and Palette lifetimes, standing palette and model owners, and typed independently owned remap arrays. Historical seeds remain evidence and restoration obligations, not borrowed product claims."}
 // TRIED: full instruction-level transcription of the palette-cache load/rebuild state machine (6 Filemap opens, text_open/ text_get resource loads, memcmp cache validation, the create_table_from_color regenerate loops, two RGB_to_HSV tint passes) using goto-labelled control flow matching the original's jump targets and a raw ebp-relative scratch buffer (FRM macro) for the untyped stack locals; no SEH frame reconstruction attempted (MISMATCH #0, prologue only).
-#if defined(_MSC_VER) && _MSC_VER == 1200
-#pragma intrinsic(memcpy)
-#endif
+#pragma function(memcpy)
 void __cdecl colortables_init() {
     // These are genuine local lifetimes even though all remap operations use
     // the standing palette. Normal and EH tails destroy Buffer, Filemap,
@@ -334,185 +332,200 @@ void __cdecl colortables_init() {
     int energy_weights[3];
     int explosion_colors[13][16];
     int explosion_weights[13][16];
+    char number[80];
     Buffer buffer;
-    bool palette_changed = compare_palettes() != 0;
-    void *basic_tables[6] = {ShadowColorTable, SpotlightColorTable,
-        ReddishColorTable, RedTintColorTable, BlueTintColorTable,
-        FadeColorTables};
-    const char *basic_names[6] = {"shadow.tmp", "spotlight.tmp", "reddish.tmp",
-        "redtint.tmp", "bluetint.tmp", "fade.tmp"};
-    const int basic_sizes[6] = {256, 256, 256, 256, 256, 2048};
-    if (!palette_changed) {
-        for (int basic = 0; basic < 6; ++basic) {
-            void *cache = file.open(basic_names[basic], 1);
-            if (!cache) {
-                palette_changed = true;
-                break;
-            }
-            memcpy(basic_tables[basic], cache, basic_sizes[basic]);
-        }
-    }
+    void *cache;
+    unsigned char *out;
+    int i;
+    int j;
+    int regenerate;
+    int matched;
+
+    int palette_changed = compare_palettes();
     if (palette_changed) {
+make_basic:
         g_PALETTE1.create_table(ShadowColorTable, 0, 256, -43);
         g_PALETTE1.create_table(SpotlightColorTable, 0, 256, 50);
         g_PALETTE1.create_table_from_color(131, ReddishColorTable, 0, 256, 75, 50);
         g_PALETTE1.create_table_from_color(34, RedTintColorTable, 0, 256, 20, 80);
         g_PALETTE1.create_table_from_color(179, BlueTintColorTable, 0, 256, 20, 80);
-        for (int fade = 0; fade < 8; ++fade) {
-            g_PALETTE1.create_table_from_color(255, FadeColorTables[fade], 0, 256, 100, 100 - 12 * fade);
+        for (i = 0; i < 8; ++i) {
+            g_PALETTE1.create_table_from_color(255, FadeColorTables[i], 0, 256, 100, 100 - 12 * i);
         }
-        for (int basic = 0; basic < 6; ++basic) {
-            void *cache = file.create(basic_names[basic], basic_sizes[basic], 1);
-            if (cache) memcpy(cache, basic_tables[basic], basic_sizes[basic]);
-        }
+        if ((cache = file.create("shadow.tmp", 256, 1)) != 0) memcpy(cache, ShadowColorTable, 256);
+        if ((cache = file.create("spotlight.tmp", 256, 1)) != 0) memcpy(cache, SpotlightColorTable, 256);
+        if ((cache = file.create("reddish.tmp", 256, 1)) != 0) memcpy(cache, ReddishColorTable, 256);
+        if ((cache = file.create("redtint.tmp", 256, 1)) != 0) memcpy(cache, RedTintColorTable, 256);
+        if ((cache = file.create("bluetint.tmp", 256, 1)) != 0) memcpy(cache, BlueTintColorTable, 256);
+        if ((cache = file.create("fade.tmp", 2048, 1)) != 0) memcpy(cache, FadeColorTables, 2048);
+    } else {
+        if ((cache = file.open("shadow.tmp", 1)) == 0) { palette_changed = 1; goto make_basic; }
+        memcpy(ShadowColorTable, cache, 256);
+        if ((cache = file.open("spotlight.tmp", 1)) == 0) { palette_changed = 1; goto make_basic; }
+        memcpy(SpotlightColorTable, cache, 256);
+        if ((cache = file.open("reddish.tmp", 1)) == 0) { palette_changed = 1; goto make_basic; }
+        memcpy(ReddishColorTable, cache, 256);
+        if ((cache = file.open("redtint.tmp", 1)) == 0) { palette_changed = 1; goto make_basic; }
+        memcpy(RedTintColorTable, cache, 256);
+        if ((cache = file.open("bluetint.tmp", 1)) == 0) { palette_changed = 1; goto make_basic; }
+        memcpy(BlueTintColorTable, cache, 256);
+        if ((cache = file.open("fade.tmp", 1)) == 0) { palette_changed = 1; goto make_basic; }
+        memcpy(FadeColorTables, cache, 2048);
     }
 
     if (text_open("system", "energyglow") == 0) {
-        for (int energy = 0; energy < 3; ++energy) {
+        for (i = 0; i < 3; ++i) {
             text_get();
-            energy_colors[energy] = text_item_number();
-            energy_weights[energy] = text_item_number();
+            energy_colors[i] = text_item_number();
+            energy_weights[i] = text_item_number();
         }
     }
-    for (int explosion = 0; explosion < 13; ++explosion) {
-        char number[16];
+    for (i = 0; i < 13; ++i) {
         StringTemp[0] = '\0';
         strcat(StringTemp, "explosions");
-        _itoa(explosion, number, 10);
+        _itoa(i, number, 10);
         strcat(StringTemp, number);
         if (text_open("system", StringTemp) == 0) {
-            for (int row = 0; row < 16; ++row) {
+            for (j = 0; j < 16; ++j) {
                 text_get();
-                explosion_colors[explosion][row] = text_item_number();
-                explosion_weights[explosion][row] = text_item_number();
+                explosion_colors[i][j] = text_item_number();
+                explosion_weights[i][j] = text_item_number();
             }
         }
     }
     if (text_open("system", "VEHICLECOLORING") == 0) {
-        for (int body = 0; body < 8; ++body) {
+        for (i = 0; i < 8; ++i) {
             text_get();
             // Original adds ten to AL, not a potentially overflowing int.
-            body_colors[body] = (static_cast<unsigned int>(text_item_number()) + 10u) & 255u;
+            body_colors[i] = static_cast<unsigned char>(text_item_number() + 10);
         }
     }
     if (text_open("system", "ARMORCOLORING") == 0) {
-        for (int armor = 0; armor < 4; ++armor) {
+        for (i = 0; i < 4; ++i) {
             text_get();
-            armor_colors[armor] = (static_cast<unsigned int>(text_item_number()) + 10u) & 255u;
+            armor_colors[i] = static_cast<unsigned char>(text_item_number() + 10);
         }
     }
     if (text_open("system", "ARMORCOLORING_TRANS") == 0) {
         text_get();
-        transparent_color = (static_cast<unsigned int>(text_item_number()) + 10u) & 255u;
+        transparent_color = static_cast<unsigned char>(text_item_number() + 10);
         transparent_first = text_item_number();
         transparent_second = text_item_number();
     }
     if (text_open("system", "boundarypercents") == 0) {
-        for (int territory = 0; territory < 8; ++territory) {
+        for (i = 0; i < 8; ++i) {
             text_get();
-            territory_weights[territory] = text_item_number();
+            territory_weights[i] = text_item_number();
         }
     }
     buffer.load_pcx("palette.PCX", 0, 10, 236);
-    for (int territory = 0; territory < 8; ++territory) {
-        territory_colors[territory] = buffer.get_pixel(580 + 8 * territory, 56);
+    for (i = 0, j = 580; i < 8; ++i) {
+        territory_colors[i] = buffer.get_pixel(j, 56);
+        j += 8;
     }
 
-    unsigned char *cached = static_cast<unsigned char *>(file.open("colorvals.tmp", 1));
-    bool header_matches = cached != 0 && !palette_changed;
-    if (header_matches) {
-        header_matches = memcmp(energy_colors, cached, sizeof(energy_colors)) == 0;
-        cached += sizeof(energy_colors);
-        if (header_matches) header_matches = memcmp(energy_weights, cached, sizeof(energy_weights)) == 0;
-        cached += sizeof(energy_weights);
-        for (int explosion = 0; explosion < 13 && header_matches; ++explosion) {
-            header_matches = memcmp(explosion_colors[explosion], cached, sizeof(explosion_colors[explosion])) == 0;
-            cached += sizeof(explosion_colors[explosion]);
-            if (header_matches) header_matches = memcmp(explosion_weights[explosion], cached, sizeof(explosion_weights[explosion])) == 0;
-            cached += sizeof(explosion_weights[explosion]);
-        }
-        if (header_matches) header_matches = memcmp(body_colors, cached, sizeof(body_colors)) == 0;
-        cached += sizeof(body_colors);
-        if (header_matches) header_matches = memcmp(territory_weights, cached, sizeof(territory_weights)) == 0;
-        cached += sizeof(territory_weights);
-        if (header_matches) header_matches = memcmp(territory_colors, cached, sizeof(territory_colors)) == 0;
-        cached += sizeof(territory_colors);
-        if (header_matches) header_matches = memcmp(armor_colors, cached, sizeof(armor_colors)) == 0;
-        cached += sizeof(armor_colors);
-        if (header_matches) header_matches = memcmp(&transparent_color, cached, sizeof(transparent_color)) == 0;
-        cached += sizeof(transparent_color);
-        if (header_matches) header_matches = memcmp(&transparent_first, cached, sizeof(transparent_first)) == 0;
-    }
-    if (!header_matches) {
-        unsigned char *out = static_cast<unsigned char *>(file.create("colorvals.tmp", 2048, 1));
-        if (out) {
-            memcpy(out, energy_colors, sizeof(energy_colors)); out += sizeof(energy_colors);
-            memcpy(out, energy_weights, sizeof(energy_weights)); out += sizeof(energy_weights);
-            for (int explosion = 0; explosion < 13; ++explosion) {
-                memcpy(out, explosion_colors[explosion], sizeof(explosion_colors[explosion])); out += sizeof(explosion_colors[explosion]);
-                memcpy(out, explosion_weights[explosion], sizeof(explosion_weights[explosion])); out += sizeof(explosion_weights[explosion]);
+    regenerate = 0;
+    out = static_cast<unsigned char *>(file.open("colorvals.tmp", 1));
+    matched = 0;
+    if (out != 0 && !palette_changed &&
+        !memcmp(energy_colors, out, sizeof(energy_colors))) {
+        out += sizeof(energy_colors);
+        if (!memcmp(energy_weights, out, sizeof(energy_weights))) {
+            out += sizeof(energy_weights);
+            for (i = 0; i < 13; ++i) {
+                if (memcmp(explosion_colors[i], out, sizeof(explosion_colors[i]))) goto compared;
+                out += sizeof(explosion_colors[i]);
+                if (memcmp(explosion_weights[i], out, sizeof(explosion_weights[i]))) goto compared;
+                out += sizeof(explosion_weights[i]);
             }
-            memcpy(out, body_colors, sizeof(body_colors)); out += sizeof(body_colors);
-            memcpy(out, territory_weights, sizeof(territory_weights)); out += sizeof(territory_weights);
-            memcpy(out, territory_colors, sizeof(territory_colors)); out += sizeof(territory_colors);
-            memcpy(out, armor_colors, sizeof(armor_colors)); out += sizeof(armor_colors);
-            memcpy(out, &transparent_color, sizeof(transparent_color)); out += sizeof(transparent_color);
-            memcpy(out, &transparent_first, sizeof(transparent_first)); out += sizeof(transparent_first);
-            // Only 0x710 bytes are persisted. The second transparent weight
-            // is deliberately absent from the original comparison and cache.
-            file.close(out);
+            if (memcmp(body_colors, out, sizeof(body_colors))) goto compared;
+            out += sizeof(body_colors);
+            if (memcmp(territory_weights, out, sizeof(territory_weights))) goto compared;
+            out += sizeof(territory_weights);
+            if (memcmp(territory_colors, out, sizeof(territory_colors))) goto compared;
+            out += sizeof(territory_colors);
+            if (memcmp(armor_colors, out, sizeof(armor_colors))) goto compared;
+            out += sizeof(armor_colors);
+            if (memcmp(&transparent_color, out, sizeof(transparent_color))) goto compared;
+            out += sizeof(transparent_color);
+            if (!memcmp(&transparent_first, out, sizeof(transparent_first))) matched = 1;
         }
     }
-
-    bool regenerate = !header_matches;
-    if (header_matches) {
-        for (int explosion = 0; explosion < 13; ++explosion) {
-            char number[16];
-            StringTemp[0] = '\0'; strcat(StringTemp, "explosions");
-            _itoa(explosion, number, 10); strcat(StringTemp, number); strcat(StringTemp, ".tmp");
-            void *cache = file.open(StringTemp, 1);
-            if (!cache) { regenerate = true; break; }
-            memcpy(ExplosionColorTables[explosion], cache, sizeof(ExplosionColorTables[explosion]));
-            file.close();
+compared:
+    if (!matched) {
+    out = static_cast<unsigned char *>(file.create("colorvals.tmp", 2048, 1));
+    if (out) {
+        memcpy(out, energy_colors, sizeof(energy_colors)); out += sizeof(energy_colors);
+        memcpy(out, energy_weights, sizeof(energy_weights)); out += sizeof(energy_weights);
+        for (i = 0; i < 13; ++i) {
+            memcpy(out, explosion_colors[i], sizeof(explosion_colors[i])); out += sizeof(explosion_colors[i]);
+            memcpy(out, explosion_weights[i], sizeof(explosion_weights[i])); out += sizeof(explosion_weights[i]);
         }
+        memcpy(out, body_colors, sizeof(body_colors)); out += sizeof(body_colors);
+        memcpy(out, territory_weights, sizeof(territory_weights)); out += sizeof(territory_weights);
+        memcpy(out, territory_colors, sizeof(territory_colors)); out += sizeof(territory_colors);
+        memcpy(out, armor_colors, sizeof(armor_colors)); out += sizeof(armor_colors);
+        memcpy(out, &transparent_color, sizeof(transparent_color)); out += sizeof(transparent_color);
+        memcpy(out, &transparent_first, sizeof(transparent_first)); out += sizeof(transparent_first);
+        // Only 0x710 bytes are persisted. The second transparent weight
+        // is deliberately absent from the original comparison and cache.
+        file.close(out);
     }
-    if (regenerate) {
-        for (int explosion = 0; explosion < 13; ++explosion) {
-            for (int row = 0; row < 16; ++row) {
-                const int weight = explosion_weights[explosion][row];
-                g_PALETTE1.create_table_from_color(explosion_colors[explosion][row] + 10,
-                    ExplosionColorTables[explosion][row], 10, 236, 100 - weight, weight);
-            }
-            char number[16];
-            StringTemp[0] = '\0'; strcat(StringTemp, "explosions");
-            _itoa(explosion, number, 10); strcat(StringTemp, number); strcat(StringTemp, ".tmp");
-            void *cache = file.create(StringTemp, sizeof(ExplosionColorTables[explosion]), 1);
-            memcpy(cache, ExplosionColorTables[explosion], sizeof(ExplosionColorTables[explosion]));
-            file.close();
+make_explosions:
+    regenerate = 1;
+    for (i = 0; i < 13; ++i) {
+        for (j = 0; j < 16; ++j) {
+            g_PALETTE1.create_table_from_color(explosion_colors[i][j] + 10,
+                ExplosionColorTables[i][j], 10, 236, 100 - explosion_weights[i][j],
+                explosion_weights[i][j]);
         }
+        char name[80];
+        StringTemp[0] = '\0';
+        strcat(StringTemp, "explosions");
+        _itoa(i, name, 10);
+        strcat(StringTemp, name);
+        strcat(StringTemp, ".tmp");
+        cache = file.create(StringTemp, sizeof(ExplosionColorTables[i]), 1);
+        memcpy(cache, ExplosionColorTables[i], sizeof(ExplosionColorTables[i]));
+        file.close();
+    }
+    } else {
+    i = 0;
+    while (1) {
+        if (i >= 13) break;
+        StringTemp[0] = '\0';
+        strcat(StringTemp, "explosions");
+        _itoa(i, number, 10);
+        strcat(StringTemp, number);
+        strcat(StringTemp, ".tmp");
+        if ((cache = file.open(StringTemp, 1)) == 0) goto make_explosions;
+        memcpy(ExplosionColorTables[i], cache, sizeof(ExplosionColorTables[i]));
+        file.close();
+        ++i;
+    }
     }
 
     // Rebuilt explosions force a territory rebuild even if that file exists.
     // A missing territory file alone does not invalidate body/armor tints.
-    void *territory_cache = 0;
-    if (!regenerate) territory_cache = file.open("territory.tmp", 1);
-    if (territory_cache) {
-        memcpy(TerritoryColorTables, territory_cache, sizeof(TerritoryColorTables));
+    if (regenerate) {
+make_territory:
+        out = static_cast<unsigned char *>(file.create("territory.tmp", sizeof(TerritoryColorTables), 1));
+        for (i = 0; i < 8; ++i) {
+            g_PALETTE1.create_table_from_color(territory_colors[i], TerritoryColorTables[i],
+                10, 236, 100 - territory_weights[i], territory_weights[i]);
+            memcpy(out, TerritoryColorTables[i], sizeof(TerritoryColorTables[i]));
+            out += sizeof(TerritoryColorTables[i]);
+        }
         file.close();
     } else {
-        unsigned char *out = static_cast<unsigned char *>(file.create("territory.tmp", sizeof(TerritoryColorTables), 1));
-        for (int territory = 0; territory < 8; ++territory) {
-            const int weight = territory_weights[territory];
-            g_PALETTE1.create_table_from_color(territory_colors[territory], TerritoryColorTables[territory], 10, 236, 100 - weight, weight);
-            memcpy(out, TerritoryColorTables[territory], sizeof(TerritoryColorTables[territory]));
-            out += sizeof(TerritoryColorTables[territory]);
-        }
+        if ((cache = file.open("territory.tmp", 1)) == 0) goto make_territory;
+        memcpy(TerritoryColorTables, cache, sizeof(TerritoryColorTables));
         file.close();
     }
 
     if (regenerate) {
-        for (int body = 0; body < 8; ++body) {
-            PALETTEENTRY tint = g_PALETTE1.entries()[body_colors[body]];
+        for (i = 0; i < 8; ++i) {
+            PALETTEENTRY tint = g_PALETTE1.entries()[body_colors[i]];
             HSV hsv;
             RGB_to_HSV(&tint, &hsv);
             for (int row = 0; row < 24; ++row) {
@@ -522,27 +535,23 @@ void __cdecl colortables_init() {
                     entry.peRed = (unsigned char)(int)((float)entry.peRed * tint.peRed * (1.0f / 255.0f));
                     entry.peGreen = (unsigned char)(int)((float)entry.peGreen * tint.peGreen * (1.0f / 255.0f));
                     entry.peBlue = (unsigned char)(int)((float)entry.peBlue * tint.peBlue * (1.0f / 255.0f));
-                    BodyTintColorTables[body][row][color] = (unsigned char)g_PALETTE1.get_nearest_palette_index(entry.peRed, entry.peGreen, entry.peBlue, 0);
+                    BodyTintColorTables[i][row][color] = (unsigned char)g_PALETTE1.get_nearest_palette_index(entry.peRed, entry.peGreen, entry.peBlue, 0);
                 }
             }
         }
-        void *cache = file.create("bodygrads.tmp", sizeof(BodyTintColorTables), 1);
+        cache = file.create("bodygrads.tmp", sizeof(BodyTintColorTables), 1);
         memcpy(cache, BodyTintColorTables, sizeof(BodyTintColorTables));
         file.close();
     } else {
-        void *cache = file.open("bodygrads.tmp", 1);
+        cache = file.open("bodygrads.tmp", 1);
         memcpy(BodyTintColorTables, cache, sizeof(BodyTintColorTables));
         file.close();
     }
-    void *armor_cache = 0;
-    if (!regenerate) armor_cache = file.open("armorgrads.tmp", 1);
-    if (armor_cache) {
-        memcpy(ArmorTintColorTables, armor_cache, sizeof(ArmorTintColorTables));
-        file.close();
-    } else {
-        regenerate = true;
-        for (int armor = 0; armor < 4; ++armor) {
-            PALETTEENTRY tint = g_PALETTE1.entries()[armor_colors[armor]];
+
+    if (regenerate) {
+make_armor:
+        for (i = 0; i < 4; ++i) {
+            PALETTEENTRY tint = g_PALETTE1.entries()[armor_colors[i]];
             HSV hsv;
             RGB_to_HSV(&tint, &hsv);
             for (int row = 0; row < 24; ++row) {
@@ -552,27 +561,33 @@ void __cdecl colortables_init() {
                     entry.peRed = (unsigned char)(int)((float)entry.peRed * tint.peRed * (1.0f / 255.0f));
                     entry.peGreen = (unsigned char)(int)((float)entry.peGreen * tint.peGreen * (1.0f / 255.0f));
                     entry.peBlue = (unsigned char)(int)((float)entry.peBlue * tint.peBlue * (1.0f / 255.0f));
-                    ArmorTintColorTables[armor][row][color] = (unsigned char)g_PALETTE1.get_nearest_palette_index(entry.peRed, entry.peGreen, entry.peBlue, 0);
+                    ArmorTintColorTables[i][row][color] = (unsigned char)g_PALETTE1.get_nearest_palette_index(entry.peRed, entry.peGreen, entry.peBlue, 0);
                 }
             }
         }
-        void *cache = file.create("armorgrads.tmp", sizeof(ArmorTintColorTables), 1);
+        cache = file.create("armorgrads.tmp", sizeof(ArmorTintColorTables), 1);
         memcpy(cache, ArmorTintColorTables, sizeof(ArmorTintColorTables));
-        file.close();
-    }
-    for (int row = 0; row < 24; ++row) memset(ConstantColorTables[row], row, sizeof(ConstantColorTables[row]));
-    void *transparent_cache = 0;
-    if (!regenerate) transparent_cache = file.open("armorgrads_trans.tmp", 1);
-    if (transparent_cache) {
-        memcpy(ArmorTransparentColorTables, transparent_cache, sizeof(ArmorTransparentColorTables));
     } else {
-        for (int row = 0; row < 24; ++row) {
-            const int weight = ((24 - row) * transparent_first + row * transparent_second) / 24;
-            g_PALETTE1.create_table_from_color(transparent_color, ArmorTransparentColorTables[row], 10, 236, 100 - weight, weight);
+        if ((cache = file.open("armorgrads.tmp", 1)) == 0) { regenerate = 1; goto make_armor; }
+        memcpy(ArmorTintColorTables, cache, sizeof(ArmorTintColorTables));
+    }
+    file.close();
+
+    for (i = 0; i < 24; ++i) memset(ConstantColorTables[i], i, sizeof(ConstantColorTables[i]));
+
+    if (regenerate) {
+make_transparent:
+        for (i = 0; i < 24; ++i) {
+            const int weight = ((24 - i) * transparent_first + i * transparent_second) / 24;
+            g_PALETTE1.create_table_from_color(transparent_color, ArmorTransparentColorTables[i], 10, 236, 100 - weight, weight);
         }
-        void *cache = file.create("armorgrads_trans.tmp", sizeof(ArmorTransparentColorTables), 1);
+        cache = file.create("armorgrads_trans.tmp", sizeof(ArmorTransparentColorTables), 1);
         memcpy(cache, ArmorTransparentColorTables, sizeof(ArmorTransparentColorTables));
+    } else {
+        if ((cache = file.open("armorgrads_trans.tmp", 1)) == 0) goto make_transparent;
+        memcpy(ArmorTransparentColorTables, cache, sizeof(ArmorTransparentColorTables));
     }
     file.close();
 }
+#pragma intrinsic(memcpy)
 

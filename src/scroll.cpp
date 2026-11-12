@@ -1444,11 +1444,9 @@ Purpose: Drag the thumb or repeat a track-page movement while the scroll owns
 // symbol    ?on_mouse_move@Scroll@@UAEXHH@Z
 */
 void Scroll::on_mouse_move(int x, int y) {
-    Win *const parent = win_parent_;
-    if (parent == nullptr) {
+    if (win_parent_ == nullptr) {
         return;
     }
-
     Win *active = WinPointerOwner1;
     if (active == nullptr) {
         active = WinPointerOwner2;
@@ -1457,95 +1455,82 @@ void Scroll::on_mouse_move(int x, int y) {
         return;
     }
 
-    RECT local = {0, 0, rect2_.right - rect2_.left,
-                  rect2_.bottom - rect2_.top};
+    RECT local = rect2_;
+    offset_rect(&local, -local.left, -local.top);
     if (!in_box(x, y, &local)) {
         return;
     }
 
     ListBoxGlobalDDC = 0;
     const int saved_position = position_;
-    const bool horizontal = -dib_.bmiHeader.biHeight < dib_.bmiHeader.biWidth;
     if (field_A44_ == 0) {
         const int extent = thumb_rect_.right - thumb_rect_.left;
-        int denominator = extent * -3;
+        int denominator = -(extent * 3);
         if (border_color_ != -1) {
             denominator -= 2;
         }
-
-        int next_position;
-        if (horizontal) {
-            int offset = x - extent;
+        if (dib_.bmiHeader.biWidth > -dib_.bmiHeader.biHeight) {
+            denominator += dib_.bmiHeader.biWidth;
+            x -= extent;
             if (border_color_ != -1) {
-                --offset;
+                --x;
             }
-            next_position = (offset - (extent >> 1))
-                            * (range_maximum_ - range_minimum_)
-                            / (denominator + dib_.bmiHeader.biWidth)
-                            + range_minimum_;
-            field_A3C_ = offset;
+            position_ = (x - (extent >> 1)) * (range_maximum_ - range_minimum_)
+                        / denominator + range_minimum_;
+            field_A3C_ = x;
         } else {
-            int offset = y - extent;
+            denominator -= dib_.bmiHeader.biHeight;
+            y -= extent;
             if (border_color_ != -1) {
-                --offset;
+                --y;
             }
-            field_A3C_ = offset;
-            next_position = (offset - (extent >> 1))
-                            * (range_maximum_ - range_minimum_)
-                            / (denominator - dib_.bmiHeader.biHeight)
-                            + range_minimum_;
+            const int next = (y - (extent >> 1)) * (range_maximum_ - range_minimum_)
+                        / denominator + range_minimum_;
+            field_A3C_ = y;
+            position_ = next;
         }
-
-        if (next_position > range_maximum_) {
-            next_position = range_maximum_;
-        }
-        if (next_position < range_minimum_) {
-            next_position = range_minimum_;
-        }
-        position_ = next_position;
+        position_ = max(range_minimum_, min(range_maximum_, position_));
     } else {
-        const DWORD now = timeGetTime();
-        const DWORD last_time = field_A38_;
-        if (last_time != 0 &&
-            static_cast<int>(now - last_time) <
-                static_cast<int>(field_A30_ * 2U)) {
+        const int elapsed = timeGetTime() - field_A38_;
+        if (field_A38_ != 0 && elapsed < static_cast<int>(field_A30_ * 2)) {
             if (get_lbutton_state() == 0) {
                 return;
             }
             get_mouse_pos(&x, &y);
-            const LPARAM point = static_cast<LPARAM>(
-                (static_cast<uint32_t>(y) << 16) |
-                (static_cast<uint32_t>(x) & 0xFFFFU));
-            PostMessageA(HandleMain, WM_MOUSEMOVE, 0, point);
+            PostMessageA(HandleMain, WM_MOUSEMOVE, 0, MAKELPARAM(x, y));
             return;
         }
-        if (last_time == 0) {
+        if (field_A38_ == 0) {
             field_A38_ = timeGetTime();
         }
 
-        const int direction = static_cast<int>(field_A44_);
-        if (horizontal) {
-            if (x > thumb_rect_.right && direction > 0) {
-                const int next = position_ + paging_;
-                position_ = next > range_maximum_ ? range_maximum_ : next;
-            } else if (x < thumb_rect_.left && direction < 0) {
-                const int next = position_ - paging_;
-                position_ = next < range_minimum_ ? range_minimum_ : next;
+        if (dib_.bmiHeader.biWidth > -dib_.bmiHeader.biHeight) {
+            if (x > thumb_rect_.right && static_cast<int>(field_A44_) > 0) {
+                position_ += paging_;
+                if (position_ > range_maximum_) {
+                    position_ = range_maximum_;
+                }
+            } else if (x < thumb_rect_.left && static_cast<int>(field_A44_) < 0) {
+                position_ -= paging_;
+                if (position_ < range_minimum_) {
+                    position_ = range_minimum_;
+                }
             }
-        } else if (y > thumb_rect_.bottom && direction > 0) {
-            const int next = position_ + paging_;
-            position_ = next > range_maximum_ ? range_maximum_ : next;
-        } else if (y < thumb_rect_.top && direction < 0) {
-            const int next = position_ - paging_;
-            position_ = next < range_minimum_ ? range_minimum_ : next;
+        } else if (y > thumb_rect_.bottom && static_cast<int>(field_A44_) > 0) {
+            position_ += paging_;
+            if (position_ > range_maximum_) {
+                position_ = range_maximum_;
+            }
+        } else if (y < thumb_rect_.top && static_cast<int>(field_A44_) < 0) {
+            position_ -= paging_;
+            if (position_ < range_minimum_) {
+                position_ = range_minimum_;
+            }
         }
 
         get_mouse_pos(&x, &y);
         if (get_lbutton_state() != 0) {
-            const LPARAM point = static_cast<LPARAM>(
-                (static_cast<uint32_t>(y) << 16) |
-                (static_cast<uint32_t>(x) & 0xFFFFU));
-            PostMessageA(HandleMain, WM_MOUSEMOVE, 0, point);
+            PostMessageA(HandleMain, WM_MOUSEMOVE, 0, MAKELPARAM(x, y));
         }
     }
 
@@ -1558,10 +1543,10 @@ void Scroll::on_mouse_move(int x, int y) {
             }
         } else {
             win_parent_->on_scrolling(
-                field_A18_, (range_minimum_ - position_) + range_maximum_);
+                field_A18_, range_minimum_ - position_ + range_maximum_);
             if (field_2148_ != nullptr) {
                 field_2148_(field_A18_,
-                            (range_minimum_ - position_) + range_maximum_);
+                            range_minimum_ - position_ + range_maximum_);
             }
         }
 
