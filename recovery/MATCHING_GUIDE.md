@@ -41,6 +41,13 @@ preservation. Never fix an original bug. Read `AGENTS.md` ("Current mode" and
       than random search in big units.
     - `--probe-sweep --time-limit S` searches dead budget probes.
   - `recover check-matches --unit <tu> --summary` is the scoped regression check.
+- **Priority (user decision, 2026-11-12).** First bring every MISMATCH to
+  "within registers" (verdict MNEMONIC_ONLY or SHAPE_EXACT: the image's
+  instruction sequence with only register/slot choices differing), which a
+  rewrite usually achieves in one session and which captures the structure
+  and behaviour. Register/slot ties are a separate later pass: time-box them
+  (about 20 minutes per function) and move on, reporting what was tried.
+  Track both counts: byte-exact and within-registers.
 - **Targets.** Measure every `// ORIGINAL:` line in your files that lacks
   `BYTE_EXACT`. Work near-misses first, then refused rows by their diagnostic,
   then rewrites of distant functions.
@@ -83,6 +90,8 @@ Tooling traps:
   --strip-symbol=.ef in out`, never in place on a qualified input).
 - In callers of thousands of instructions, flat probes grow the budget as much
   as they spend; use branchy probes to measure missing spend.
+- Wine reads stdin: run batch compiles inside `while read` loops with
+  `</dev/null`, or the loop stops silently after a few units.
 - `/tmp` is a small tmpfs; keep large output under the worktree's `build/`.
 - `permute --candidates` can give identical distances for variants that
   `measure` scores differently (extent-mismatched functions); confirm with
@@ -121,16 +130,31 @@ without `/Oy-`).
   cut-off; collapse such layers into the original body. Parameter copies
   (`total`, `cur`) inside a callee can make it unaffordable at a site even when
   its own bytes don't change (buffer.cpp `write_strings`, 0.41 → 0.80).
+- **Look for the original helper first.** Before inventing an inline helper
+  for a repeated block, search the image for an out-of-line function with
+  that exact body; if it exists with one catalogued caller, the original
+  called it and /Ob2 decided where to expand it (TutWin::UNK1 is reset's ten
+  stores; a header-inline stand-in flipped 14 functions elsewhere).
+- **`if (x >> 16)`** gives `test r,0xFFFF0000` and keeps the body's separate
+  `x & 0xFFFF0000`; `if (x & 0xFFFF0000)` shares the masked value
+  (mov/and/jcc); `HIWORD(x)` gives shr.
+- **Duplicated tails block auto-inlining.** /Ob2 refused a function whose two
+  arms each end in ~10 duplicated stores and a return (TutWin::reset); a
+  single-tail form inlines but its standalone copy loses the duplicated tail.
+  Factor the shared stores into an inline helper called from both arms: the
+  function then inlines and the standalone copy keeps the image's tails.
 - **Out-of-line copies of explicit inlines.** VC6 emits the COMDAT copy right
   after the first function in the unit that calls it out of line; if every
   caller expands it, no copy is emitted. The copy's image position therefore
   names the function that needed it. A 219-byte plain member
   (StatusWin::redraw) is never auto-inlined.
-- **Definition order and keywords.** VC6 does not auto-inline a plain function,
-  or an explicit free `inline`, defined *after* its caller (check C4711, because
-  there are exceptions). An explicit `inline` *member* defined later still
-  inlines. `__forceinline` and `inline`
-  compile identically for `label_get` across all 48 using files.
+- **Definition order and keywords.** Definition order is not a reliable
+  lever: plain functions defined after their caller usually stay calls, but
+  window_proc's static handlers and free functions defined after it were
+  auto-inlined (C4711), and reordering compiled identically; always check
+  C4711. An explicit `inline` *member* defined later still inlines.
+  `__forceinline` and `inline` compile identically for `label_get` across
+  all 48 using files.
 - **Seeing decisions.** Compile with the unit's production command from
   `build/compile_commands.json` plus `/W4`, then grep `C4711`. That lists every
   automatic inline in order; explicit `inline` functions are not listed. Treat
@@ -231,6 +255,10 @@ arms both return; end the function with that if/else, not a trailing return
   expansions after the last early return (about two per site), independent
   of their position.
 
+  Dead probes placed after all expansions still change earlier second-level
+  decisions (window_proc). A probe with more than about four chained ifs is
+  itself refused and emits calls; use many one-if probes.
+
   Keep a dead probe (a static helper of chained `if (x == k) x = c;` called with
   a constant, which folds to zero code) only as `WORKAROUND(inline)` when no
   natural spelling is found.
@@ -247,6 +275,13 @@ arms both return; end the function with that if/else, not a trailing return
   inflate each caller's own size, so every teardown expands one level too deep
   (call_off_vendetta had 48 states against 22). Restore the helper calls
   file-wide first.
+
+State order follows test order: in Popup functions whose rejection blocks the
+image lays out far away, teardown states are numbered in the order of the
+tests; write each block inline at its test (`if (cond) { ...; return; }`)
+(tech_trade: 35 site groups became the image's 33). Same-TU getters
+(get_title, get_name, defined before the caller) give early sites back
+without changing their bytes.
 
 Reading per-site depths: a refused measurement's diagnostic contains
 `original=(…), compiled=(…)` predecessor tuples. Split each tuple at its `-1`
@@ -315,6 +350,11 @@ for v in p[1:]:
   corner_the_market exact, 6-7 flipped it). Before inventing a helper, look
   for an original function with the same shape and use its exact body
   (popup_set_write_check_bit fixed it).
+- **Bistable block layout.** A large goto-target block's placement can flip
+  when any new local identifier is added to a *different* function in the
+  same unit (order_veh flipped from supply_options edits); reusing an
+  existing dead local does not. Diff big near-misses before and after every
+  edit elsewhere in their unit.
 - **Header vetting depends on counts.** The number of member and declaration
   entries matters, and so does visibility. An unused inline body, or a newly
   visible plain struct, in a class with 30–56 includers flips the same ~12 large
@@ -333,6 +373,19 @@ for v in p[1:]:
   `WORKAROUND(decl)` declarations shadowed by element macros, then compare
   every TU's objects function by function (the IfaceColorTable change touched
   only load_interface).
+- **Moving an out-of-line member body into its header:** guard it per unit
+  (`#ifdef X_INLINE` around the body, the plain declaration in `#else`); the
+  unit emitting the copy defines the guard too and the copy stays exact.
+  Unguarded, Font::line_advance in font.h (148 includers) flipped 29
+  functions in 21 units; guarded, only the three target units changed.
+- **Swapping one declaration for one is safe.** Replacing a free declaration
+  with a member declaration in win.h (142 includers) changed no function in
+  any other unit; the flips above come from adding or removing declarations.
+- **Every compiled unit needs a measurement recipe.** `recovery/project.json`
+  sets `require_unit_flag_sets`: a new unit must get its production flags in
+  `measurement.unit_flag_sets` or every recover command refuses. (Before
+  2026-11-12, unpinned units were measured under both global trials and the
+  better score kept, so a /Oy- unit could be reported from a frameless compile.)
 - **Include position.** A header's position in the include order can flip ties
   even when it arrives later anyway. Dropping an unused direct include is a
   faithful lever.
@@ -352,6 +405,11 @@ for v in p[1:]:
   (prune_protos moved 135 instructions).
 - **Nested call results.** A nested cdecl call made before the outer call's
   constant pushes was stored to a local first.
+- **Literal order is code-generation order.** VC6 emits string literals in
+  statement order, call arguments right to left. If the image's literals of a
+  rebuild path precede a load path laid out first, the source had the
+  rebuild block first as a label target: `if (flag) { label: ... } else {
+  ...; goto label; }` (colortables_init).
 - **An unreferenced literal** inside a unit's unpooled literal run, between
   referenced neighbours, is source text in a branch VC6 folded away: evidence
   that the text was written out at that site, not in a helper.
@@ -377,6 +435,10 @@ for v in p[1:]:
   import relocation lacks its `RECOVERY_IMPORT` binding; functions with
   `RECOVERY_ASSOCIATED` always take the strict path. Also check
   `rebind-literals` first (renumbered `$SG`).
+- **WndProc shape.** `and eax,0xffff` on a return (MAKELRESULT), arguments
+  rebuilt from WORDs (FORWARD_WM_*), and x/y kept in incoming argument slots
+  mean a windowsx.h `HANDLE_MSG` switch; the handlers are the unreferenced
+  statics right after the procedure.
 - **Struct fields vs separate globals.** Through a global struct (directly or
   via a pointer) VC6 orders a join's reloads of its fields differently from
   separate objects. If the image reloads them in the other order, the
@@ -385,6 +447,10 @@ for v in p[1:]:
 - **A /G6 sub-range.** Within a /G6 band, measure neighbours with and without
   /G6: functions that match only without it belong to another unit
   (sub_5d2e70/sub_5d35b0 moved out of movie_media_decoder_g6.cpp).
+- **Return-type corrections and identity.** Changing `int` (no value) to
+  `void` leaves the object code identical. When a mangled name changes, keep
+  the historical name on the ORIGINAL line and add or update a `// symbol`
+  line with the new one; measure, record and check-claims follow it.
 - **Missing `void`.** An `int` function with a separate epilogue at each exit and
   no zero register was `void`. The catalogue's mangled return type can be wrong.
 - **StringList locals.** In drawer functions they call
@@ -407,6 +473,15 @@ for v in p[1:]:
   conditional `if (x) goto fail;` jumps to the shared copy. For an image's
   private copy with the status store after the receiver set-up, write
   `{ const int r = f(); if (r) { status = r; goto fail; } }` (Video::load).
+- **Class operator new.** A dead store of 0 to a frame local, with no EH
+  frame, beside `new` of classes with virtual bases is the construction flag
+  of a class `operator new` without a matching placement delete. Global
+  `::new(p)` brings a full EH frame back (VC6 `<new>` declares
+  `operator delete(void*, void*)`); a non-placement global operator new with
+  extra arguments stops inlining the virtual-base constructor.
+- **Sprite draw overload.** When every `Sprite::draw(this, s.transparent_index(),
+  x, y)` site forms `lea ecx, sprite` before reading `[ecx+8]`, the original
+  called an inline draw overload on the sprite that reads its own index.
 - **Unwind-only destructors.** A destructor whose only image caller is an
   unwind funclet, with its copy inside a TU's range, is a header-inline
   COMDAT; defining it in its own TU blocks every expansion (~UV2Player).
@@ -420,9 +495,21 @@ for v in p[1:]:
   - Goto-only blocks move next to their jump target.
   - Unreferenced labels change layout.
   - `while(1){ if(x) break; … }` is the only non-rotated loop.
-  - `default:` is placed last.
+  - `default:` is placed last. VC6 drops an empty `case N: break;` at the top
+    of a jump-table range; it does not raise the table bound.
+  - `cmp; je A; push x; jmp J; A: push C; J: call` around one shared call is
+    `if (x) f(x, ...); else f(C, ...);`; `x ? x : C` gives `jne; mov eax, C`.
+  - Only `if (C) {T} else {E; if (!d) {H; goto past;}} J; past:` defers E
+    past the next unconditional jump (AlphaMenu::check).
+  - A flag tested as `if (avail) A else U` lays out differently from every
+    `||` or negated form (which compile identically); the order of unpooled
+    literals in the image tells which arm came first in the source.
   - A block reached only by gotos was usually written inline at its *first*
     unconditional goto in source order (order_veh's 59512c block).
+  - One label per join: two adjacent labels where the second is reached
+    only by a backward goto skipping a reload push the return sites between
+    them out of line (probe). Write an else arm as `else`, not as a goto to a
+    block elsewhere; keep if-chains whole (`else if (x == 2) {...}`).
   - A goto target is placed after the *last* goto that reaches it, whatever
     the source order. For an image block that an earlier arm falls into and
     later arms jump back to, have the later arms set a flag the join tests
@@ -482,6 +569,30 @@ for v in p[1:]:
 - **Operand order of commutatives.** For `a + b` of globals, VC6 loads `b` first.
   For `f(a) OP f(b)` it calls the right side first. It canonicalises
   `(a + b) / 2`.
+- **expand_rect's constants.** For `expand_rect(&r, -N, -N)` the image's
+  "+N immediate on left/top, register holding -N added to right/bottom" comes
+  from the helper body `left -= h; right += h`; hand-written `+=`/`-=` pairs
+  or an inset helper differ.
+- **Null-check forms.** `static_cast<Base*>(this)->f()`, a `Base *p = this`
+  local and `static_cast<Base&>(obj).f()` all emit a null check; call
+  `Base::f()` / `obj.Base::f()`. Passing `this` as a `Base*` argument
+  legitimately emits neg/sbb/and. Member data through a virtual base needs no
+  check; a reference conversion does.
+- **label_get vs written-out order.** A `label_get(k)` argument is evaluated
+  before the other arguments; `StringTable.get(Labels.strings_ptr[k])` at its
+  own position. Pick per site from the image.
+- **Rect argument order.** A small static inline computing `r->right -
+  r->left` loads right then left and puts the width in the first register;
+  the written-out expression loads left first. A place-rect helper
+  (x, y, w, h) reproduces right-to-left argument loads before ordered stores.
+- **Store-to-load forwarding.** VC6 forwards stored rect values into later
+  argument loads through the same named pointer local (`RECT *r = &m`);
+  writing `&m` at each use gives the image's re-loads and frees a frame temp.
+- **A named local passed to one call** (`int s = ...; f(x, s)`) can shift
+  registers across the function; pass the expression inline (quayle).
+- **`cond ? !a() : !b()`** materialises a bool (neg/sbb/inc); the image's
+  per-arm `test; je` is `if (!L) { if (!a()) goto found; } else if (!b())
+  goto found;`.
 - **Commutative order through a pointer local.** VC6 canonicalises
   `(m.left + m.right) / 2` on directly read members, so swapping operands does
   nothing; reading through `RECT *r = &m;` gives the other load order with
@@ -503,9 +614,26 @@ for v in p[1:]:
   after `test eax,eax`.
 - **`cmp eax,<zero register>` where we emit `test eax,eax`.** Store the call
   result in a named local.
+- **imul destination.** In `z += f() * y` VC6 makes the moved call result the
+  imul destination; `int t = f(); z += t * y` makes y the destination;
+  `t = f() * y; z += t;` keeps `imul eax, edx` and schedules the next call's
+  push before the stores (supply_options).
+- **Nested label_get in an argument list.** When the image calls get after the
+  outer call's other pushes, write `StringTable.get(Labels.strings_ptr[k])`;
+  the forceinline label_get hoists the call ahead of them (PrefWin::init).
 - **Canonicalised forms (not levers).** `f(a) < f(b)` and its mirrored or
   negated forms give the same call order; `a * b` vs `b * a` compile
   identically.
+- **Global register equilibrium in very large members.** If the image keeps
+  only `this` in a callee-saved register and every named local in memory (no
+  zero register), compare the prologue assignments (`mov esi, ecx`,
+  `xor ebx, ebx`) first. Ours can settle in the other equilibrium (zero
+  register, a hot local enregistered, `this` spilled); once spilled,
+  `this + base + i*K` becomes one shared expression and `this` loses its uses.
+  Index spellings fold identically, so they don't move it (setup_text).
+- **Number-normalising diff filters hide wrong field offsets.** Compare
+  relocation symbol plus displacement against the image address (an
+  `assistant_city` vs `insult_leader` read only showed up that way).
 - **Spill reloads in exactly reversed order** at loop boundaries: a known
   blocker, so skip.
 
@@ -515,6 +643,9 @@ for v in p[1:]:
 - **A frame larger than the locals.** Either a block-scoped buffer overlapped a
   later inlined local, or the original read fields directly instead of caching
   them.
+- **Same-size local arrays** ignore declaration order and names too; putting
+  buffers in disjoint block scopes makes them overlap as the image does
+  (ProdPicker::calculate's facility loop reusing the vehicle loop's buffers).
 - **Same-type objects' slots** (several Popups and a GraphicWin) did not
   depend on declaration order or names across 240 variants.
 - **Frame-resident size pairs** (get_pcx_dimensions outputs at
@@ -526,6 +657,9 @@ for v in p[1:]:
 ### 3.4 Arithmetic idioms
 - **`rand() & 0x80000001; jns; dec; or -2; inc`** is `rand() % 2`.
 - **A magic divide then multiply-subtract** is `x - x/C*C`, not `%`.
+- **Ternary setcc forms.** `c ? K : 0` gives `set!c; dec; and K`;
+  `!c ? 0 : K` gives `setc; dec; and -K; add K` (probe's `setle; dec; and 4`
+  is `pop > 3 ? 4 : 0`).
 - **Bool-to-flag forms differ.** `x ? 1 : 2` gives `neg/sbb/add 2`, while
   `2 - (x != 0)` gives `setne/sub`. `(c ? 1 : 0) + K` avoids `and ecx,0xff`.
 - **Altitude tests.**
