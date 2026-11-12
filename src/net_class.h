@@ -41,8 +41,21 @@ void __cdecl check_net();
 // publishes primary table 0x670F48 and virtual-base table 0x670FE0. The latter
 // gives StringAllocationBase at +0x58. This models the observed wrapper as a
 // genuine derived object so construction and destruction own those stages.
+class JackalVoiceRx;
 class VoiceRxAllocation : public VoiceRx,
                           public virtual StringAllocationBase {
+#ifdef NET_CLASS_VOICE_NODE_NEW
+ public:
+  // WORKAROUND(decl): JackalVoiceRx::add_player 0x00633180 news each node
+  // twice over, `entries_heap_ ? new(entries_heap_) T : new(owner) T` (EH
+  // flag pairs 1/2, 4/8, 0x10/0x20, 0x40/0x80; both cleanups call the
+  // placement delete 0x00402320 with a Heap). Visible only in net_class.cpp.
+  static void *operator new(size_t size, Heap *owner) throw();
+  static void operator delete(void *memory, Heap *owner);
+  static void operator delete(void *memory) {
+    StringAllocationBase::operator delete(memory);
+  }
+#endif
 };
 static_assert(sizeof(VoiceRxAllocation) == 0x60,
               "voice receiver allocation extent from 633180");
@@ -76,6 +89,15 @@ struct VoiceReceiverEntry : public virtual StringAllocationBase {
   VoiceRxAllocation *payload_;   // 0x08
   VoiceReceiverEntry *next_;     // 0x0C
   VoiceReceiverEntry *previous_; // 0x10
+
+#ifdef NET_CLASS_VOICE_NODE_NEW
+  // WORKAROUND(decl): JackalVoiceRx::add_player 0x00633180 news each node
+  // twice over, `entries_heap_ ? new(entries_heap_) T : new(owner) T` (EH
+  // flag pairs 1/2, 4/8, 0x10/0x20, 0x40/0x80; both cleanups call the
+  // placement delete 0x00402320 with a Heap). Visible only in net_class.cpp.
+  static void *operator new(size_t size, Heap *owner) throw();
+  static void operator delete(void *memory, Heap *owner);
+#endif
 
   // Original node deletion 0x00402C20 republishes the saved allocation
   // owner, frees the complete node only without an owner, then clears the

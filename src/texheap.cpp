@@ -78,14 +78,13 @@ void TexHeap::shutdown() {
 // TRIED: MISMATCH #3 mov/push - the four-register prologue (ebx/ebp/esi/edi) the original uses for this heavily-inlined free/loop/alloc body is not reproduced by writing the four inlined cleanup sites as a shared macro; register pressure differs from the start.
 int TexHeap::configure(int count) {
     release_allocations();
-    count_ = static_cast<uint32_t>(count);
-    const uint32_t entries = count_ + 1u;
-    capacity_ = entries << 16;
+    count_ = count;
+    capacity_ = (count + 1) << 16;
     base_ = static_cast<unsigned char *>(mem_get(capacity_));
     if (base_ == 0) {
         return 4;
     }
-    blocks_ = static_cast<Heap **>(mem_get(entries * sizeof(*blocks_)));
+    blocks_ = static_cast<Heap **>(mem_get((count + 1) * sizeof(Heap *)));
     if (blocks_ == 0) {
         if (base_ != 0) {
             free(base_);
@@ -93,51 +92,42 @@ int TexHeap::configure(int count) {
         base_ = 0;
         return 4;
     }
-
-    void *storage = mem_get(sizeof(Heap));
-    blocks_[0] = static_cast<Heap *>(storage);
-    if (storage == 0) {
-        release_allocations();
-        count_ = 0;
-        capacity_ = 0;
+    blocks_[0] = static_cast<Heap *>(mem_get(sizeof(Heap)));
+    if (blocks_[0] == 0) {
+        shutdown();
         return 4;
     }
     // Actual address alignment, not an executable address or self offset.
-    const uintptr_t arena = reinterpret_cast<uintptr_t>(base_);
-    uintptr_t cursor = (arena & ~static_cast<uintptr_t>(0xffff)) + 0x10000;
-    new (storage) Heap(base_, static_cast<size_t>(cursor - arena));
-
-    int index = 1;
-    if (count > 1) {
-        do {
-            storage = mem_get(sizeof(Heap));
-            blocks_[index] = static_cast<Heap *>(storage);
-            if (storage == 0) {
-                release_allocations();
-                count_ = 0;
-                capacity_ = 0;
-                return 4;
-            }
-            new (storage) Heap(
-                reinterpret_cast<unsigned char *>(cursor), 0xffff);
-            cursor += 0x10000;
-            ++index;
-        } while (index < count);
-    }
-
-    storage = mem_get(sizeof(Heap));
-    blocks_[count] = static_cast<Heap *>(storage);
-    if (storage == 0) {
-        release_allocations();
-        count_ = 0;
-        capacity_ = 0;
-        return 4;
+    uintptr_t cursor = (reinterpret_cast<uintptr_t>(base_) & 0xffff0000) + 0x10000;
+    blocks_[0]->err_flags_ = 1;
+    blocks_[0]->base_ = base_;
+    blocks_[0]->current_ = base_;
+    blocks_[0]->base_size_ = cursor - reinterpret_cast<uintptr_t>(base_);
+    blocks_[0]->free_size_ = blocks_[0]->base_size_;
+    for (int index = 1; index < count; ++index) {
+        blocks_[index] = static_cast<Heap *>(mem_get(sizeof(Heap)));
+        if (blocks_[index] == 0) {
+            shutdown();
+            return 4;
+        }
+        blocks_[index]->err_flags_ = 1;
+        blocks_[index]->base_ = reinterpret_cast<void *>(cursor);
+        blocks_[index]->current_ = reinterpret_cast<void *>(cursor);
+        blocks_[index]->base_size_ = 0xffff;
+        blocks_[index]->free_size_ = 0xffff;
+        cursor += 0x10000;
     }
     // With count==0 the original overwrites (and leaks) descriptor zero.
-    // Preserve that omission; the normal caller domain is not yet proved.
-    new (storage) Heap(
-        reinterpret_cast<unsigned char *>(cursor),
-        static_cast<size_t>(reinterpret_cast<uintptr_t>(base_) + capacity_ - cursor));
+    blocks_[count] = static_cast<Heap *>(mem_get(sizeof(Heap)));
+    if (blocks_[count] == 0) {
+        shutdown();
+        return 4;
+    }
+    blocks_[count]->err_flags_ = 1;
+    blocks_[count]->base_ = reinterpret_cast<void *>(cursor);
+    blocks_[count]->current_ = reinterpret_cast<void *>(cursor);
+    blocks_[count]->base_size_ = capacity_ - cursor + reinterpret_cast<uintptr_t>(base_);
+    blocks_[count]->free_size_ = capacity_ - cursor + reinterpret_cast<uintptr_t>(base_);
     return 0;
 }
 

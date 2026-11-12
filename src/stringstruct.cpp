@@ -123,6 +123,18 @@ inline void *__cdecl operator new(size_t size, StringListAllocation *, Heap *hea
     return memory;
 }
 
+// Matching placement delete, as for SpriteList::add (spritebox.cpp): it gives
+// each new-expression the cleanup state `mov [ebp-4], ebx` (0x0040110B), and
+// the `::new` spelling is what finds it - the nodes' class-scope
+// operator delete would otherwise hide it (0.854 -> 0.922).
+inline void __cdecl operator delete(void *memory, StringListAllocation *, Heap *,
+                                    StringStruct *) {
+    if (memory != 0) {
+        if (StringAllocationHeap == 0) free(memory);
+        StringAllocationHeap = 0;
+    }
+}
+
 // Append before the circular head. Preserve the original partial mutations on
 // allocation failure and ignore the insertion hook's return value: neither
 // rollback nor propagating that value is part of 0x00401100's behavior.
@@ -134,21 +146,21 @@ inline void *__cdecl operator new(size_t size, StringListAllocation *, Heap *hea
 int StringStruct::add(int id) {
     Heap *const entry_allocator = allocator_;
     if (entry_count_ == 0) {
-        head_ = new(static_cast<StringListAllocation *>(0), entry_allocator, this) StringStructEntry;
+        head_ = ::new(static_cast<StringListAllocation *>(0), entry_allocator, this) StringStructEntry;
         if (head_ == 0) {
             return 4;
         }
         head_->id = id;
         head_->next = head_;
         head_->previous = head_;
-        head_->payload = new(static_cast<StringListAllocation *>(0), allocator_, this) StringStructPayload;
+        head_->payload = ::new(static_cast<StringListAllocation *>(0), allocator_, this) StringStructPayload;
         if (head_->payload == 0) {
             return 4;
         }
         on_insert(head_->payload);
         current_ = head_;
     } else {
-        head_->previous->next = new(static_cast<StringListAllocation *>(0), entry_allocator, this) StringStructEntry;
+        head_->previous->next = ::new(static_cast<StringListAllocation *>(0), entry_allocator, this) StringStructEntry;
         if (head_->previous->next == 0) {
             return 4;
         }
@@ -157,7 +169,7 @@ int StringStruct::add(int id) {
         head_->previous = head_->previous->next;
         current_ = head_->previous;
         current_->id = id;
-        current_->payload = new(static_cast<StringListAllocation *>(0), allocator_, this) StringStructPayload;
+        current_->payload = ::new(static_cast<StringListAllocation *>(0), allocator_, this) StringStructPayload;
         if (current_->payload == 0) {
             return 4;
         }

@@ -92,6 +92,8 @@
 // ORIGINAL: 0x00630C30 sub_630c30 0x00630C30-0x00630C7C FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00630c30.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "SDK session descriptor fields populate ledger borrowed fields and call401D80; synchronous borrow target."}
 // symbol    ?enumerate_session_callback@@YGHPBUDPSESSIONDESC2@@PAKKPAX@Z
+// WORKAROUND(decl): JackalVoiceRx::add_player node allocation (net_class.h).
+#define NET_CLASS_VOICE_NODE_NEW
 #include "stdafx.h"
 #include <process.h>
 #include <mmsystem.h>
@@ -258,22 +260,43 @@ static const GUID KeptServiceProviderGuid = {
 int JackalVoiceRx::on_insert(void *) { return 0; }
 void JackalVoiceRx::on_remove(void *) { }
 
-namespace {
-void *allocate_voice_record(size_t size, Heap *owner) {
+inline void *VoiceReceiverEntry::operator new(size_t size, Heap *owner) throw() {
     void *memory;
     if (owner != 0) {
         memory = owner->get(size);
-        if (memory == 0) {
-            MessageBoxA(NULL, "out of heap space in new function", "Aborting", MB_OK);
-            exit(3);
+        if (memory != 0) {
+            StringAllocationHeap = owner;
+            return memory;
         }
-    } else {
-        memory = mem_get(size);
-        if (memory != 0) StringAllocationHeap = 0;
+        MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
+        exit(3);
     }
-    if (memory != 0) StringAllocationHeap = owner;
+    memory = mem_get(size);
+    if (memory == 0) return 0;
+    StringAllocationHeap = owner;
     return memory;
 }
+void VoiceReceiverEntry::operator delete(void *memory, Heap *) {
+    cleanup_failed_net_construction(memory);
+}
+inline void *VoiceRxAllocation::operator new(size_t size, Heap *owner) throw() {
+    void *memory;
+    if (owner != 0) {
+        memory = owner->get(size);
+        if (memory != 0) {
+            StringAllocationHeap = owner;
+            return memory;
+        }
+        MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
+        exit(3);
+    }
+    memory = mem_get(size);
+    if (memory == 0) return 0;
+    StringAllocationHeap = owner;
+    return memory;
+}
+void VoiceRxAllocation::operator delete(void *memory, Heap *) {
+    cleanup_failed_net_construction(memory);
 }
 
 // Original 633180's two allocations each publish the chosen owner for the
@@ -294,44 +317,39 @@ void *allocate_voice_record(size_t size, Heap *owner) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00633180.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
 // TRIED: __stdcall(int) free function per the literal contract - ecx is read as an object throughout and only one dword is popped (ret 4), so recast as a __thiscall member (VoiceRxOwner::method) taking the real stack int; body transcribes the two heap/mem_get alloc-retry blocks (0x1c node, 0x60 VoiceRx) and list splice, but does not reproduce the original's SEH prologue (no local objects requiring an unwind frame here).
 // symbol    ?add_player@JackalVoiceRx@@QAEHH@Z
+// WORKAROUND(inline): the payload's fallback placement argument is a value,
+// not an lvalue: both cleanups at 0x006637DE/0x00663837 push the owner the
+// body spilled (0x00633344), where `new(allocation_owner_)` re-reads the
+// virtual base in the funclet. The original's spelling is not known.
+static inline Heap *voice_owner(JackalVoiceRx *list) { return list->allocation_owner_; }
 int JackalVoiceRx::add_player(int player_id) {
-    const bool first = count_ == 0;
-    Heap *const inherited_owner = allocation_owner_;
-    Heap *const node_owner = first && entries_heap_ != 0
-                                 ? entries_heap_ : inherited_owner;
-    VoiceReceiverEntry *node = static_cast<VoiceReceiverEntry *>(
-        allocate_voice_record(sizeof(VoiceReceiverEntry), node_owner));
-    if (node == 0) return 4;
-    ::new(node) VoiceReceiverEntry;
-
-    if (first) {
-        head_ = node;
+    Heap *const entry_allocator = entries_heap_;
+    if (count_ == 0) {
+        head_ = entry_allocator ? new(entry_allocator) VoiceReceiverEntry
+                              : new(allocation_owner_) VoiceReceiverEntry;
+        if (head_ == 0) return 4;
+        head_->id_ = player_id;
+        head_->next_ = head_;
+        head_->previous_ = head_;
+        if (entries_heap_) head_->payload_ = new(entries_heap_) VoiceRxAllocation;
+        else head_->payload_ = new(voice_owner(this)) VoiceRxAllocation;
+        if (head_->payload_ == 0) return 4;
+        on_insert(head_->payload_);
+        cursor_ = head_;
     } else {
-        VoiceReceiverEntry *tail = head_->previous_;
-        tail->next_ = node;
-        node->previous_ = tail;
-        node->next_ = head_;
-        head_->previous_ = node;
-        cursor_ = node;
+        head_->previous_->next_ = entry_allocator ? new(entry_allocator) VoiceReceiverEntry
+                                                : new(allocation_owner_) VoiceReceiverEntry;
+        if (head_->previous_->next_ == 0) return 4;
+        head_->previous_->next_->previous_ = head_->previous_;
+        head_->previous_->next_->next_ = head_;
+        head_->previous_ = head_->previous_->next_;
+        cursor_ = head_->previous_;
+        cursor_->id_ = player_id;
+        if (entries_heap_) cursor_->payload_ = new(entries_heap_) VoiceRxAllocation;
+        else cursor_->payload_ = new(voice_owner(this)) VoiceRxAllocation;
+        if (cursor_->payload_ == 0) return 4;
+        on_insert(cursor_->payload_);
     }
-    node->id_ = player_id;
-    if (first) {
-        node->next_ = node;
-        node->previous_ = node;
-    }
-
-    // The payload independently reloads entries_heap_ on both list branches.
-    // In particular, append-node allocation uses inherited_owner above while
-    // this VoiceRx still prefers entries_heap_ when it is present.
-    Heap *const payload_owner = entries_heap_ != 0
-                                    ? entries_heap_ : inherited_owner;
-    VoiceRxAllocation *voice = static_cast<VoiceRxAllocation *>(
-        allocate_voice_record(sizeof(VoiceRxAllocation), payload_owner));
-    if (voice != 0) ::new(voice) VoiceRxAllocation;
-    node->payload_ = voice;
-    if (node->payload_ == 0) return 4;
-    on_insert(voice);
-    if (first) cursor_ = head_;
     cursor_index_ = count_;
     ++count_;
     return 0;
@@ -3923,24 +3941,24 @@ void NetAllocationNode::operator delete(void *memory) {
     cleanup_failed_net_construction(memory);
 }
 
-void *ServiceStruct::operator new(size_t size, Heap *owner) throw() {
-    return allocate_net_node(size, owner);
+// ServiceProviderList::add (0x00401760) allocates each node
+// `allocator_ ? new(allocator_) T : new(this) T` (payloads as if/else, whose
+// explicit-heap arm keeps its own construction copy, 0x00401863): the Heap
+// overload is fatal on failure; the list overload tries the inherited owner
+// (fatal on failure), then mem_get. Each fatal block sits directly before
+// the next arm's code in the image.
+inline void *ServiceStruct::operator new(size_t size, Heap *owner) throw() {
+    void *memory = owner->get(size);
+    if (memory != 0) {
+        StringAllocationHeap = owner;
+        return memory;
+    }
+    MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
+    exit(3);
+    return 0;
 }
 inline void *ServiceStruct::operator new(size_t size, ServiceProviderList *list) throw() {
-    // Three tiers in the image (0x401780..0x4017F6): the list's explicit
-    // allocator, then its inherited allocation owner, then mem_get. exit is
-    // not noreturn here, so a failed tier falls into the next one.
     void *memory;
-    Heap *allocator = list->allocator_;
-    if (allocator != 0) {
-        memory = allocator->get(size);
-        if (memory != 0) {
-            StringAllocationHeap = allocator;
-            return memory;
-        }
-        MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
-        exit(3);
-    }
     Heap *owner = list->allocation_owner_;
     if (owner != 0) {
         memory = owner->get(size);
@@ -3960,24 +3978,18 @@ void ServiceStruct::operator delete(void *memory, Heap *) { cleanup_failed_net_c
 void ServiceStruct::operator delete(void *memory, ServiceProviderList *) { cleanup_failed_net_construction(memory); }
 void ServiceStruct::operator delete(void *memory) { cleanup_failed_net_construction(memory); }
 
-void *ServiceListEntry::operator new(size_t size, Heap *owner) throw() {
-    return allocate_net_node(size, owner);
+inline void *ServiceListEntry::operator new(size_t size, Heap *owner) throw() {
+    void *memory = owner->get(size);
+    if (memory != 0) {
+        StringAllocationHeap = owner;
+        return memory;
+    }
+    MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
+    exit(3);
+    return 0;
 }
 inline void *ServiceListEntry::operator new(size_t size, ServiceProviderList *list) throw() {
-    // Three tiers in the image (0x401780..0x4017F6): the list's explicit
-    // allocator, then its inherited allocation owner, then mem_get. exit is
-    // not noreturn here, so a failed tier falls into the next one.
     void *memory;
-    Heap *allocator = list->allocator_;
-    if (allocator != 0) {
-        memory = allocator->get(size);
-        if (memory != 0) {
-            StringAllocationHeap = allocator;
-            return memory;
-        }
-        MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
-        exit(3);
-    }
     Heap *owner = list->allocation_owner_;
     if (owner != 0) {
         memory = owner->get(size);
@@ -4023,24 +4035,26 @@ void ServiceProviderList::on_remove(ServiceStruct *) { }
 #pragma optimize("y", off)
 int ServiceProviderList::add(int id) {
     if (entry_count_ == 0) {
-        head_ = new(this) ServiceListEntry;
+        head_ = allocator_ ? new(allocator_) ServiceListEntry : new(this) ServiceListEntry;
         if (head_ == 0) return 4;
         head_->id_ = id;
         head_->next_ = head_;
         head_->previous_ = head_;
-        head_->payload_ = new(this) ServiceStruct;
+        if (allocator_) head_->payload_ = new(allocator_) ServiceStruct;
+        else head_->payload_ = new(this) ServiceStruct;
         if (head_->payload_ == 0) return 4;
         on_insert(head_->payload_);
         current_ = head_;
     } else {
-        head_->previous_->next_ = new(this) ServiceListEntry;
+        head_->previous_->next_ = allocator_ ? new(allocator_) ServiceListEntry : new(this) ServiceListEntry;
         if (head_->previous_->next_ == 0) return 4;
         head_->previous_->next_->previous_ = head_->previous_;
         head_->previous_->next_->next_ = head_;
         head_->previous_ = head_->previous_->next_;
         current_ = head_->previous_;
         current_->id_ = id;
-        current_->payload_ = new(this) ServiceStruct;
+        if (allocator_) current_->payload_ = new(allocator_) ServiceStruct;
+        else current_->payload_ = new(this) ServiceStruct;
         if (current_->payload_ == 0) return 4;
         on_insert(current_->payload_);
     }

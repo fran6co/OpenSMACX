@@ -185,6 +185,18 @@ class BasePop : public GraphicWin {
   // accessor call anywhere in the frame. Friendship is access only: it moves
   // no byte of layout and no line of codegen.
   friend class Popup;
+  // WORKAROUND(decl): PopMenu::exec 0x0059D250 reads dialogs_ directly (the
+  // dialogs() accessor costs 119/114). Visible only where BASEPOP_FRIEND_POPMENU
+  // is defined: unguarded, the extra declaration re-ties 14 functions in 13
+  // includers (capture_base, battle_fight, enemy_move, game_data, ...).
+#ifdef BASEPOP_FRIEND_POPMENU
+  friend class PopMenu;
+#endif
+  // Same stand-in, unused yet: SetupWin::do_menu_rightside's pos_to_id
+  // receiver is the popup's dialogs_ member; setupwin.cpp may opt in.
+#ifdef BASEPOP_FRIEND_SETUPWIN
+  friend class SetupWin;
+#endif
   // The image's own free popup drivers do the same - read external_window_,
   // field_3100_ and the dialogs_ member straight off the instance they exec.
   // pop_ask additionally walks dialogs_' Dialog virtual base for the item

@@ -20,6 +20,8 @@
 // compile_context src/maininterface.cpp
 // symbol    ??_GStringBox@@UAEPAXI@Z
 // kind      game
+// WORKAROUND(decl): add_fixup calls StringStruct::next_entry out of line.
+#define STRINGSTRUCT_NEXT_ENTRY_OUT_OF_LINE
 #include "stdafx.h"
 #include "graphicwin.h"
 #include "scroll.h"
@@ -231,6 +233,27 @@ void StringBox::clear() {
     }
 }
 
+// WORKAROUND(inline): file-local twin of StringStruct::next_entry
+// (0x00402500). on_redraw expands it, while add_fixup in this same TU calls
+// 0x00402500 out of line, so the TU sees only the declaration
+// (STRINGSTRUCT_NEXT_ENTRY_OUT_OF_LINE; VC6 has no noinline).
+static inline StringStructPayload *stringbox_next_entry(StringStruct *list) {
+    if (!list->head_) {
+        return 0;
+    }
+
+    StringStructEntry *next = list->current_->next;
+    int position = list->current_position_;
+    list->current_ = next;
+    int count = list->entry_count_;
+    ++position;
+    list->current_position_ = position;
+    if (position == count) {
+        list->current_position_ = 0;
+    }
+    return list->current_->string_payload();
+}
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00629B70 ?on_redraw@StringBox@@QAEXXZ 0x00629B70-0x00629D1C
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x00629B70-0x00629D1C;seed:src/recovered/units/00629b70.cpp;source:src/stringbox.h;source:src/stringstruct.h;source:src/scroll.h"], "reason": "Render the selected StringList through inherited Buffer and GraphicWin drawing methods."}
@@ -266,7 +289,7 @@ void StringBox::on_redraw() {
             wrap(list.head_ != 0 ? list.current_->string_payload()->text : 0,
                  0, remaining, text_width);
         }
-        list.next_entry();
+        stringbox_next_entry(&list);
     }
 }
 

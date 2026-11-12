@@ -22,6 +22,9 @@
   * Heap class: Handles managing or allocating memory.
   */
 class Heap {
+  // WORKAROUND(decl): TexHeap::configure 0x00635050 writes the descriptor
+  // fields directly (0.735 -> 0.992 vs the constructor spelling).
+  friend struct TexHeap;
  public:
   // Source-only lifetime helper for TexHeap's separately allocated descriptors.
   // Pinned TexHeap::configure (0x00635050) initializes these fields inline:

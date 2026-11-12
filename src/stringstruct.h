@@ -508,6 +508,10 @@ MEASURED inline void StringStruct::remove_all() {
 }
 #endif
 
+// WORKAROUND(decl): a TU that defines STRINGSTRUCT_NEXT_ENTRY_OUT_OF_LINE
+// sees only the declaration and calls 0x00402500 (StringBox::add_fixup at
+// 0x006296D3 makes the call).
+#ifndef STRINGSTRUCT_NEXT_ENTRY_OUT_OF_LINE
 MEASURED inline StringStructPayload *StringStruct::next_entry() {
     if (!head_) {
         return 0;
@@ -524,6 +528,7 @@ MEASURED inline StringStructPayload *StringStruct::next_entry() {
     }
     return current_->string_payload();
 }
+#endif
 
 // 0x00402530 is called out of line (Buffer::write_strings, ListBox,
 // CheckBox/RadioButton draw_item, ...) and expanded inline under a head test

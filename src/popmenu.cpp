@@ -15,6 +15,11 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+// WORKAROUND(decl): opt in to the header's inline StringStruct::current_entry
+// (PopMenu::exec expands it inside current_text at 0x0059D310).
+#define STRINGSTRUCT_CURRENT_ENTRY_INLINE
+// WORKAROUND(decl): PopMenu::exec reads BasePop::dialogs_ (basepop.h).
+#define BASEPOP_FRIEND_POPMENU
 #include "stdafx.h"
 #include "popmenu.h"
 #include "dialog.h"
@@ -28,16 +33,30 @@
 // body src/popmenu.h
 // symbol    ??1PopMenu@@UAE@XZ
 
+// WORKAROUND(inline): StringList::current_text (0x005E3630) and
+// StringStruct::current_id (0x00401640) expanded inline; exec tests head_
+// straight off the member, then reloads it through the list pointer for the
+// id (0x0059D2F5..0x0059D32C).
+static inline char *popmenu_current_text(StringList *list) {
+    return list->head_ != 0 ? list->current_entry()->text : 0;
+}
+
+static inline int popmenu_current_id(StringStruct *list) {
+    if (list->head_) {
+        return list->current_->id;
+    }
+    return 0;
+}
+
 // ORIGINAL: 0x0059D250 ?exec@PopMenu@@QAEXHHP6AHXZ@Z 0x0059D250-0x0059D392
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0059D250-0x0059D392"], "reason": "Recovered original behavior through real source classes and owned members; source remains subject to byte and structural verification."}
 // symbol    ?exec@PopMenu@@QAEHHHP6AHXZ@Z
 int PopMenu::exec(int x, int y, int (*poll)()) {
     PullDown::init(0);
-    for (int i = 0; i < dialogs().get_num_items(); ++i) {
-        dialogs().item_list_.seek_pos(i);
-        StringList &items = dialogs().item_list_;
-        char *text = items.head_ ? items.current_->string_payload()->text : 0;
-        int id = items.head_ ? items.current_->id : 0;
+    for (int i = 0; i < dialogs_.get_num_items(); ++i) {
+        dialogs_.item_list_.seek_pos(i);
+        char *text = popmenu_current_text(&dialogs_.item_list_);
+        int id = popmenu_current_id(&dialogs_.item_list_);
         // Dialog menu separator literal at 0x006900C8.
         if (strcmp(text, "*") == 0) PullDown::add_separator(id);
         else PullDown::add_item(id, text);
