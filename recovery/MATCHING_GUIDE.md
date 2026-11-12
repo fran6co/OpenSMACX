@@ -218,6 +218,11 @@ for v in p[1:]:
 - **Column resets.** A grid loop that restarts its column variable in the outer
   increment clause (`…, ++row, x = C`) shows as `mov reg, C` just before the
   outer back-branch, and VC6 reuses that register as the literal C afterwards.
+- **Two pointers vs one offset in copy loops.**
+  `for (k = 0; k < N; k++, s++) Dst[k].f = s->f;` gives two pointer induction
+  variables ending `cmp eax, &Dst[N]; jl`; `Dst[k].f = stage[k].f` with both
+  sides indexed from constant addresses gives one byte offset ending
+  `cmp eax, N*stride; jl`.
 - **Finding candidates.** True linear-subscript cases are rare. A census of
   `cmp reg, <data address>; jl` outer back-edges with nested inner loops mostly
   turns up budget, register or missing-code differences. A global table that
@@ -276,6 +281,13 @@ for v in p[1:]:
   definition when the host unit's `/Oy` differs. A `MEASURED` (dllexport) inline
   is emitted into every includer and perturbs them; prefer plain `inline` when
   the owner emits the copy through a real call.
+- **Tail merging follows source form.** VC6 cross-jumps tails that are
+  identical in its internal form, not in bytes. When the image keeps identical
+  tails separate, spell each differently (`a = b = X;` vs `a = X; b = a;`, or
+  statement order); the bytes stay the same and the copies stop merging.
+- **Frame too large by N×4.** If the image shows unrelated values sharing a
+  slot, move setup-only locals into the mutually exclusive block that uses them
+  so they overlap (sub_5cc940's frame became exact).
 - **Throwing CRT calls.** VC6 treats CRT `memset` as throwing and a same-TU
   callee without throwing calls as nothrow, which shows in constructor unwind
   states.
@@ -326,6 +338,9 @@ for v in p[1:]:
   while an unnamed temporary spills.
 - **Constants.** `x * 2` gives `add`, `x << 1` gives `shl`. A const local bound
   gives `lea`; writing it at each use gives `inc`.
+- **`xor ecx,ecx; cmp; sete cl; test ecx,ecx; jne` inside `(P && X) || (!P && L)`**
+  comes from a local flag: `int t = 0; if (P) t = (a == b); if (t || !P && L)`.
+  Inline, ternary and inline-function spellings fold to a plain branch.
 - **Register-held zero.** VC6 knows `eax == 0` only on the fall-through of `jne`
   after `test eax,eax`.
 - **`cmp eax,<zero register>` where we emit `test eax,eax`.** Store the call
