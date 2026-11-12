@@ -291,7 +291,7 @@ void Palette::remove_animation(int key) {
 
 /*
 Purpose: Find the palette entry nearest the given colour.
-// ORIGINAL: 0x005FF280 ?UNK7@Palette@@QAEHHHHHHH@Z 0x005FF280-0x005FF46B
+// ORIGINAL: 0x005FF280 ?UNK7@Palette@@QAEHHHHHHH@Z 0x005FF280-0x005FF46B BYTE_EXACT
 // symbol    ?closest@Palette@@QAEHEEEHHH@Z
 // size      491 bytes
 // prototype int (__thiscall)(Palette* this, int, int, int, int, int, int)
@@ -788,7 +788,7 @@ void Palette::close_palette_class() {
     }
 }
 
-// ORIGINAL: 0x005FF470 ?get_nearest_palette_index@Palette@@QAEHEEEH@Z 0x005FF470-0x005FF627 FILE
+// ORIGINAL: 0x005FF470 ?get_nearest_palette_index@Palette@@QAEHEEEH@Z 0x005FF470-0x005FF627 FILE BYTE_EXACT
 // TRIED: 2026-09-03, the /G6 flag sets added to the ladder after the 2026-08-24 pass give the best INSTRUCTION count here (4/136, 0.794 similar) but score below the plain /c /O2 /Gy /GR- /GX set (3/136, 0.852 similar); the image is not /G6 in this body.
 // TRIED: separate loops for the a4==0 (linear scan) and a4!=0 (group-reserved scan) paths with a stack reserved[0x100] array; diverges at #1, stack layout order
 // BUG IN THE ORIGINAL SOURCE MODEL, now fixed: this body was missing the
@@ -1417,7 +1417,7 @@ int Palette::fade_to(Palette *other, int start, int count, int steps,
 #pragma intrinsic(memcpy)
 #endif
 
-// ORIGINAL: 0x005FE700 ?init_cycle@Palette@@QAEHHHHK@Z 0x005FE700-0x005FE8AC;0x00662D60-0x00662D75 FILE
+// ORIGINAL: 0x005FE700 ?init_cycle@Palette@@QAEHHHHK@Z 0x005FE700-0x005FE8AC;0x00662D60-0x00662D75 FILE BYTE_EXACT
 // TRIED: plain 'new Time()'/'operator delete'/'free' expressions relying on VC6's own SEH codegen instead of hand-written __try/__finally; diverges at #1, prologue register order
 // size      449 bytes
 // prototype int (__thiscall ?init_cycle@Palette@@QAEHHHHK@Z)(Palette* this, int, int, int, unsigned int)

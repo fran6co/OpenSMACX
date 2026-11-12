@@ -31,7 +31,7 @@
 
 /*
 Purpose: Check the coordinates for units and if at least one is found return the top most id.
-// ORIGINAL: 0x005BFE90 ?veh_at@@YAHHH@Z 0x005BFE90-0x005BFF9E
+// ORIGINAL: 0x005BFE90 ?veh_at@@YAHHH@Z 0x005BFE90-0x005BFF9E BYTE_EXACT
 // TRIED: 0.937 similar under every flag set tried - the control flow and
 //        field reads already match; what's left is register allocation (the
 //        image hoists `MapLatitudeBounds`/`MapLongitudeBounds` into ebx/edi
