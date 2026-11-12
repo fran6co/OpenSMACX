@@ -255,7 +255,7 @@ void Video::read_frame_process() {
   read_frame();
 }
 
-// ORIGINAL: 0x006373A0 ?advance_frame@Video@@QAEHXZ 0x006373A0-0x00637526 FILE
+// ORIGINAL: 0x006373A0 ?advance_frame@Video@@QAEHXZ 0x006373A0-0x00637526 FILE BYTE_EXACT
 // symbol    ?advance_frame@Video@@QAEHXZ
 // TRIED: none confirmed byte-exact; MISMATCH #0 'push' vs 'sub' - the loop is a for(;;) here where the original threads the two 'return 1' failure exits through one shared epilogue that also differs slightly by which callee-saved registers it pops.
 int Video::advance_frame() {
@@ -444,7 +444,7 @@ int Video::decode_frame(int destination_index) {
 }
 
 // RECOVERY_LITERAL: v1 0x00698978 0x00698981 ??_C@_08IBPL@Entering?$AA@ 0x00637D70
-// ORIGINAL: 0x00637D70 ?play_frame@Video@@QAEHXZ 0x00637D70-0x0063808D FILE
+// ORIGINAL: 0x00637D70 ?play_frame@Video@@QAEHXZ 0x00637D70-0x0063808D FILE BYTE_EXACT
 // symbol    ?play_frame@Video@@QAEHXZ
 // TRIED: prologue register order (large 797-byte function, many branches); landed as a structural transcription rather than chasing every register-allocation choice. Div-by-1000 modelled as plain unsigned int/1000 (VC6's own reciprocal-multiply idiom), not the 64-bit division Ghidra's decompile implied.
 // REWRITTEN 2026-11-07 from the image block order. The queued-frame and
@@ -781,7 +781,7 @@ void Video::reset() {
 #endif
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00636960 0x00636F9C 0x00636FB4 0x006369D0
-// ORIGINAL: 0x00636960 Video_unk5 0x00636960-0x00636F99 FILE
+// ORIGINAL: 0x00636960 Video_unk5 0x00636960-0x00636F99 FILE BYTE_EXACT
 // symbol    ?load@Video@@QAEHPADH@Z
 // TRIED: __stdcall(int,int) free function - ecx is read as `this` and passed straight into Video::advance_frame(), so recast as a __thiscall Video member; the 6-entry `jmp [eax*4+0x636f9c]` table is data (not disassembled), so its case targets are unknown and every in-range reason falls through to the shared setup path instead of the (unrecoverable-without-the-bytes) per-case returns; field offsets and DirectDraw/AVI enumeration call order transcribed directly from the disasm.
 #if defined(_MSC_VER) && _MSC_VER == 1200
