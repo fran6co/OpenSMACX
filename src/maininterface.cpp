@@ -148,7 +148,7 @@ extern char SocialWinColonSpaceText[];
 // RECOVERY_LITERAL: v1 0x0068537C 0x0068537E $SG57999 0x0045B550
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0045B550 0x0045BBF8 0x0045BC24 0x0045B720
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x0045B550 0x0045BC24 0x0045BC42 0x0045B71A
-// ORIGINAL: 0x0045B550 ?draw_edit_pane@MainInterface@@QAEXXZ 0x0045B550-0x0045BBF7 FILE
+// ORIGINAL: 0x0045B550 ?draw_edit_pane@MainInterface@@QAEXXZ 0x0045B550-0x0045BBF7 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/maininterface.h", "git:11bfcdd0:recovery/tasks/maininterface-owner-coverage.json", "git:291c01ea:src/unrecovered/0045b550.cpp"], "reason": "Original owner calls, secondary interface receiver and ordinary embedded-member lifecycle identify this MainInterface operation; compatible historical seed spans are retained, without a matching claim."}
 // Historical seed interpretation below mistook retained font arguments
 // for extra find_font arguments; original45B5B7..45B5E5 retains all three.
