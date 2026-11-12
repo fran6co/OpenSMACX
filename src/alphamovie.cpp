@@ -400,7 +400,7 @@ Purpose: Play the opening movie. Builds the player and a stack window dressed
          under the game directory - the last two only when the Firaxis
          preference is set - playing the first file found and tearing the
          objects down on every path out.
-// ORIGINAL: 0x00403BE0 ?amovie_project@@YAXPAD@Z 0x00403BE0-0x0040400D;0x006505E0-0x006506DC FILE
+// ORIGINAL: 0x00403BE0 ?amovie_project@@YAXPAD@Z 0x00403BE0-0x0040400D;0x006505E0-0x006506DC FILE BYTE_EXACT
 // size      1321 bytes
 // prototype
 // callers   5   call targets   16
