@@ -892,10 +892,11 @@ void Datalink::draw_terraform() {
     parse_says(1, tech_name(technology, 0), -1, -1);
     parse_num(0, technology + 140000);
     parse_num(1, Terraforming[action].rate);
-    parse_says(2, action == 5 || action == 6 || action == 3
-                      ? StringTable.get(Labels.strings_ptr[0x1110 / 4])
-                      : DatalinkTerraformExtraText,
-               -1, -1);
+    if (action == 5 || action == 6 || action == 3) {
+        parse_says(2, label_get(0x1110 / 4), -1, -1);
+    } else {
+        parse_says(2, DatalinkTerraformExtraText, -1, -1);
+    }
     StringTemp[0] = 0;
     strcat(StringTemp, "HELPTERRAFORM");
     popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
