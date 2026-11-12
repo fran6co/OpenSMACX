@@ -573,20 +573,20 @@ void CouncWin::init(int proposal, int faction_id) {
         set_council_rect(*reinterpret_cast<RECT *>(&field_BA4_), 0xf5, 0x163, 0x21a, 0x17a);
         RECT *panel = reinterpret_cast<RECT *>(&field_BB4_);
         if (!wide) {
-            first = &leader_rects_[16];
-            bottom_row = &leader_rects_[19];
             set_council_rect(*panel, 0x105, 0x55, 0x235, 0x8c);
+            first = &leader_rects_[16];
             set_council_rect(*first, 0x105, 0x8e, 0x169, 0xa2);
             set_council_rect(leader_rects_[17], 0x16b, 0x8e, 0x1cf, 0xa2);
             set_council_rect(leader_rects_[18], 0x1d1, 0x8e, 0x235, 0xa2);
+            bottom_row = &leader_rects_[19];
             set_council_rect(*bottom_row, 0x105, 0x8e, 0x235, 0xa2);
         } else {
-            first = &leader_rects_[16];
-            bottom_row = &leader_rects_[19];
             set_council_rect(*panel, 0x120, 0x58, 0x30b, 0x91);
+            first = &leader_rects_[16];
             set_council_rect(*first, 0x120, 0x93, 0x1c2, 0xa7);
             set_council_rect(leader_rects_[17], 0x1c5, 0x93, 0x267, 0xa7);
             set_council_rect(leader_rects_[18], 0x269, 0x93, 0x30b, 0xa7);
+            bottom_row = &leader_rects_[19];
             set_council_rect(*bottom_row, 0x120, 0x93, 0x30b, 0xa7);
         }
         *panel = MainInterfaceGlobal.info_frame_rect();
@@ -600,17 +600,17 @@ void CouncWin::init(int proposal, int faction_id) {
         rect.bottom -= 3;
         rect.top = rect.bottom - 0x14;
         field_BC0_ = rect.top - 3;
-        set_council_rect(*bottom_row, rect.left, rect.top, rect.right, rect.bottom);
+        *bottom_row = rect;
         rect.right = (rect.right - rect.left + 3) / 3 + rect.left - 3;
-        set_council_rect(*first, rect.left, rect.top, rect.right, rect.bottom);
+        *first = rect;
         int step = rect.right - rect.left + 3;
         rect.left += step;
         rect.right += step;
-        set_council_rect(leader_rects_[17], rect.left, rect.top, rect.right, rect.bottom);
+        leader_rects_[17] = rect;
         step = rect.right - rect.left + 3;
         rect.left += step;
         rect.right += step;
-        set_council_rect(leader_rects_[18], rect.left, rect.top, rect.right, rect.bottom);
+        leader_rects_[18] = rect;
 
         font6_.init(DefaultLargeFontFace, wide ? 0x14 : 0x14, 1);
         font2_.init(DefaultLargeFontFace, 0xe, 1);
@@ -670,7 +670,8 @@ void CouncWin::init(int proposal, int faction_id) {
     if (height <= window_height) {
         window_height = height;
     }
-    GraphicWin::init((WinScreenWidth - 0x30c) / 2, height - window_height, 0x32c,
+    int left = (WinScreenWidth - 0x30c) / 2;
+    GraphicWin::init(left, height - window_height, 0x32c,
                      window_height, nullptr, 0x1000000, &ConsoleGlobal, nullptr, nullptr);
     fill(9);
 
@@ -691,8 +692,9 @@ void CouncWin::init(int proposal, int faction_id) {
                          &MainInterfaceGlobal, 0);
     } else {
         StringTemp[0] = 0;
-        strcat(StringTemp, label_get(GameDataStateStorage.fields_.governor_faction_
-                                     == ConsoleGlobal.faction_id_ ? 500 : 496));
+        strcat(StringTemp, StringTable.get(
+            GameDataStateStorage.fields_.governor_faction_ == ConsoleGlobal.faction_id_
+                ? Labels.strings_ptr[500] : Labels.strings_ptr[496]));
         CharUpperA(StringTemp);
         buttons_[2].init(StringTemp, 2, leader_rects_[17].left, leader_rects_[17].top,
                          leader_rects_[17].right - leader_rects_[17].left,
@@ -746,17 +748,17 @@ void CouncWin::init(int proposal, int faction_id) {
     if (!IsMultiplayerNet && !field_A1C_ && !eligible(ConsoleGlobal.faction_id_)) {
         const int local = ConsoleGlobal.faction_id_;
         if (PlayersData[local].diff_level) {
-            int support[MaxPlayerNum - 1];
+            int support[MaxPlayerNum];  // indexed by faction; [0] is never touched
             int candidate;
             for (candidate = 1; candidate < MaxPlayerNum; candidate++) {
-                support[candidate - 1] = 0;
+                support[candidate] = 0;
                 if (Players[candidate].rule_flags & RFLAG_ALIEN) continue;
                 if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << candidate))) continue;
                 for (int voter = 1; voter < MaxPlayerNum; voter++) {
                     if (!(Players[voter].rule_flags & RFLAG_ALIEN)
                         && GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << voter)
                         && static_cast<int>(leader_label_kind_[voter]) == candidate) {
-                        support[candidate - 1] += leader_tech_[voter];
+                        support[candidate] += leader_tech_[voter];
                     }
                 }
             }
@@ -768,11 +770,11 @@ void CouncWin::init(int proposal, int faction_id) {
                 int best = 0;
                 for (int other = 1; other < MaxPlayerNum; other++) {
                     if (!(Players[other].rule_flags & RFLAG_ALIEN) && other != candidate
-                        && best <= support[other - 1]) {
-                        best = support[other - 1];
+                        && best <= support[other]) {
+                        best = support[other];
                     }
                 }
-                const int own = support[candidate - 1];
+                const int own = support[candidate];
                 if (leader_tech_[local] + own <= best) continue;
                 if (leader_tech_[local] + best <= own) continue;
                 diplomacy_check(local, candidate, 0);

@@ -21,6 +21,8 @@
 // ORIGINAL: 0x00471340 _$E19 0x00471340-0x0047134A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682544 selects initializer0x471320..0x471336, registering exit0x471340..0x47134a. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x7f67f8 bound to?InterfaceMessageWin@@3VMessageWin@@A.", "Original startup instruction evidence: [[\"0x471320\", \"mov\", \"ecx, 0x7f67f8\"], [\"0x471325\", \"call\", \"0x472190\"], [\"0x47132a\", \"push\", \"0x471340\"], [\"0x47132f\", \"call\", \"0x645398\"], [\"0x471334\", \"pop\", \"ecx\"], [\"0x471335\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x471340\", \"mov\", \"ecx, 0x7f67f8\"], [\"0x471345\", \"jmp\", \"0x472020\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/messagewin.cpp COFF selects _$E21 via .CRT$XCU, registering _$E19. Startup relocation targets: [\"?InterfaceMessageWin@@3VMessageWin@@A\", \"??0MessageWin@@QAE@XZ\", \"_$E19\", \"_atexit\"]; exit targets: [\"?InterfaceMessageWin@@3VMessageWin@@A\", \"??1MessageWin@@QAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f37c; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned ?InterfaceMessageWin@@3VMessageWin@@A; preserve complete original identity and remaining restoration/structure obligations."}
 // symbol    _$E14
+// WORKAROUND(decl): see listbox.h; MessageWin::init writes ListBox state directly.
+#define LISTBOX_FRIEND_MESSAGEWIN
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "messagewin.h"
@@ -420,7 +422,8 @@ int __cdecl MessageWin::listbox_write(GraphicWin *target, int item_id, int,
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00471D50 ?init@MessageWin@@QAEXXZ 0x00471D50-0x00471F66;0x00655F75-0x00655F8A
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00471d50.cpp", "image:0x00471D50"], "reason": "The archived constructor-stage method initializes MessageWin font, pane bounds, embedded ListBox Dialog and callback slots."}
-void MessageWin::init() {
+// symbol    ?init@MessageWin@@QAEHXZ
+int MessageWin::init() {
     Buffer scratch;
     if (WinScreenWidth == 800) {
         font_.init(DefaultFontFace, 12, 0);
@@ -438,19 +441,22 @@ void MessageWin::init() {
     listBox_.Dialog::field_3C_ = 3;
     listBox_.Dialog::field_6C_ = 0;
     listBox_.set_dialog_font(&font_, &font_, &font_);
-    listBox_.set_message_initial_state();
+    listBox_.field_2C_ = 0;
+    listBox_.field_10_ = 0;
+    listBox_.field_14_ = static_cast<uint32_t>(-1);
     listBox_.set_dialog_text_color(0, -1, 1, 1);
     listBox_.set_dialog_text_color2(255, -1, 1, 1);
     listBox_.set_dialog_text_color3(255, -1, 1, 1);
     listBox_.Dialog::field_4C_ = 1;
     listBox_.Dialog::field_48_ = (rect->bottom - rect->top) / 5;
     listBox_.Dialog::field_34_ = (rect->bottom - rect->top) / 4;
-    listBox_.set_callbacks(&MessageWin::listbox_draw,
-                           &MessageWin::listbox_write,
-                           &MessageWin::listbox_fill);
+    listBox_.draw_callback_ = &MessageWin::listbox_draw;
+    listBox_.fill_callback_ = &MessageWin::listbox_fill;
+    listBox_.write_callback_ = &MessageWin::listbox_write;
     listBox_.Dialog::field_B4_ = 0;
     listBox_.attach(&MainInterfaceGlobal, rect->left, bounds_.top, 0x1000000);
     ConsoleGlobal.message_count_ = 0;
+    return 0;
 }
 
 // Real MessageWinDeferredBaseMessages array lifecycle, compiler-generated.

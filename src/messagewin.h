@@ -65,7 +65,8 @@ class MessageWin : public Sprite {
   int UNK2(int unused, char *text, int unused2);
   int UNK3(int x, int y, char *text, int unused);
   void clear();
-  void init();
+  // Returns 0: the image ends `xor eax, eax` before the epilogue.
+  int init();
   static void __cdecl listbox_draw(GraphicWin *target, int item_id,
                                    int list_offset, int left, int top,
                                    int height);

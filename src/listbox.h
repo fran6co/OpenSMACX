@@ -106,6 +106,14 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   friend class QuayleWin;
   friend class FileWin;
   friend class Datalink;
+#ifdef LISTBOX_FRIEND_MESSAGEWIN
+  // WORKAROUND(decl): MessageWin::init (0x00471D50) stores field_2C_,
+  // field_10_, field_14_ and the draw/fill/write callbacks straight through
+  // MessageWin's `this` (esi+0x90/0x74/0x78, esi+0x94/0x9C/0x98) in that
+  // order, which neither set_message_initial_state nor set_callbacks gives.
+  // Guarded per unit: an unguarded friend entry perturbs other includers.
+  friend class MessageWin;
+#endif
  public:
   // AlphaSave's show/hide tests the Win state of this embedded list, reached
   // through ListBox's GraphicWin virtual base in the original image.
