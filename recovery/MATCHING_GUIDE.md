@@ -243,6 +243,9 @@ for v in p[1:]:
 
 - **Shared frame slots.** Counters that share one frame slot in the image were
   one function-scope variable; declaration order cannot reproduce the slots.
+  This holds across mutually exclusive sections of one function too: walk and
+  id variables of different sections sharing a slot were one reused variable
+  (prune_protos moved 135 instructions).
 - **Nested call results.** A nested cdecl call made before the outer call's
   constant pushes was stored to a local first.
 - **Missing `void`.** An `int` function with a separate epilogue at each exit and
