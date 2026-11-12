@@ -79,6 +79,9 @@ Tooling traps:
 - `pgrep -f <pat>` and `pkill -f <pat>` match the waiting shell itself; wait on a
   PID or an output file.
 - `/tmp` is a small tmpfs; keep large output under the worktree's `build/`.
+- `permute --candidates` can give identical distances for variants that
+  `measure` scores differently (extent-mismatched functions); confirm with
+  `measure`.
 - Editing *any* source file in the worktree mid-run stops `permute`
   (`inputs_changed`), not only the permuted one.
 - Body comments must not contain the word `ORIGINAL`.
@@ -146,6 +149,11 @@ editor_tech had 40 states against the image's 25; editor_veh had 46 against 29.
 The fix is a top-level `again: { … } goto again;`, or ending with a top-level
 `return`. Compare the state counts before reaching for budget probes.
 
+Unreferenced EH states: when FuncInfo's maxState exceeds the highest state the
+code stores, the missing block is the phantom teardown of a final if/else whose
+arms both return; end the function with that if/else, not a trailing return
+(upgrade: 13 site groups became the image's 15).
+
 ### 2.3 Teardown depth across return sites
 
 - **Order.** EH states are numbered depth-first in source order. /Ob2 decides
@@ -202,6 +210,15 @@ The fix is a top-level `again: { … } goto again;`, or ending with a top-level
   expands a per-TU-guarded header inline inside a teardown (e.g. `~Dialogs`
   under `DIALOGS_DTOR_INLINE`) and the unit lacks the guard, no spend reaches
   the image's depth: compare the final teardown's call sequence first.
+
+  Flat zero-code expansions placed after an early return can make that site
+  exactly one level shallower once there are at least N of them (more changes
+  nothing); branchy probes may hit the right state *count* with the wrong
+  distribution, so compare relocation sequences, not just state tuples
+  (amovie_project). `popup.item(...)` (BasePop::item) instead of
+  `popup.dialogs().item(...)` spends budget even when it stays a call.
+  For a deep closing-brace teardown with a shallow teardown laid out last,
+  write `if (A) { ... } else { ...; return; }` (NetMsg::pop).
 
   Keep a dead probe (a static helper of chained `if (x == k) x = c;` called with
   a constant, which folds to zero code) only as `WORKAROUND(inline)` when no
@@ -324,11 +341,24 @@ for v in p[1:]:
   (prune_protos moved 135 instructions).
 - **Nested call results.** A nested cdecl call made before the outer call's
   constant pushes was stored to a local first.
+- **One literal address pushed several times** in an unpooled image function
+  is a named global string object (SocialWinColonSpaceText, BufferJoinSpace),
+  not a literal. Conversely, identical literals the image keeps separate but
+  our pooled recipe merges make strict verification refuse a masked-exact
+  function; that unit needs the unpooled recipe.
 - **Strict refusal with a masked BYTE_EXACT.** "strict selected evidence
   result: unknown" while `masked_verdict` is BYTE_EXACT usually means a system
   import relocation lacks its `RECOVERY_IMPORT` binding; functions with
   `RECOVERY_ASSOCIATED` always take the strict path. Also check
   `rebind-literals` first (renumbered `$SG`).
+- **Struct fields vs separate globals.** Through a global struct (directly or
+  via a pointer) VC6 orders a join's reloads of its fields differently from
+  separate objects. If the image reloads them in the other order, the
+  original had separate globals; one local reference per field reproduces it
+  (sub_5d2e70 became exact).
+- **A /G6 sub-range.** Within a /G6 band, measure neighbours with and without
+  /G6: functions that match only without it belong to another unit
+  (sub_5d2e70/sub_5d35b0 moved out of movie_media_decoder_g6.cpp).
 - **Missing `void`.** An `int` function with a separate epilogue at each exit and
   no zero register was `void`. The catalogue's mangled return type can be wrong.
 - **StringList locals.** In drawer functions they call
@@ -395,6 +425,12 @@ for v in p[1:]:
   function with `jmp [4*reg+table]`. The in-body jump table lacks its
   `RECOVERY_ASSOCIATED: v1 switch_targets` annotation. Add it from the image's
   table bounds before reading anything else into the diff.
+- **`dec`/`je` on a byte field** with the default arm laid out first is
+  `switch (x) { case 1: ...; default: ... }`; `if (x == 1)` gives
+  `cmp byte ptr [...],1; jne`.
+- **An int local assigned from a `uint8_t` getter** spills (`mov byte ptr
+  [tmp],cl; mov ecx,[tmp]; and ecx,0xFF`); write the direct field expression
+  where the image shows `xor ecx,ecx; mov cl,...`.
 - **Raw `GenderDefault`/`PluralityDefault` store pairs.** Write `parse_set(...)`
   or the header getter instead; the raw pair rotates registers in later code.
   The register of a following `lea` of a leader field follows the spelling:
@@ -423,6 +459,11 @@ for v in p[1:]:
 - **`xor ecx,ecx; cmp; sete cl; test ecx,ecx; jne` inside `(P && X) || (!P && L)`**
   comes from a local flag: `int t = 0; if (P) t = (a == b); if (t || !P && L)`.
   Inline, ternary and inline-function spellings fold to a plain branch.
+- **`x - 2*x`** (and `x*2`, `x+x`, through temporaries or helpers) folds to
+  `-x`; only `x - (x << 1)` survives as `lea r,[x+x]; sub`.
+- **A `jcc` straight to a shared mid-function epilogue** comes from a nested
+  `if` whose false edge reaches a common `return`; `if (!x) return 1;` gets its
+  own `pop...ret` copy.
 - **Register-held zero.** VC6 knows `eax == 0` only on the fall-through of `jne`
   after `test eax,eax`.
 - **`cmp eax,<zero register>` where we emit `test eax,eax`.** Store the call
@@ -441,6 +482,9 @@ for v in p[1:]:
   them.
 - **Same-type objects' slots** (several Popups and a GraphicWin) did not
   depend on declaration order or names across 240 variants.
+- **Frame-resident size pairs** (get_pcx_dimensions outputs at
+  [ebp-0x14]/[ebp-0x10], width higher) are `int size[2]` read as
+  `(&size[1], &size[0])`; named scalars move into dead parameter slots.
 - **Buffer sizes.** Read them from the frame gap to the next local.
 - **A local the image never stores** was uninitialized in the original.
 
