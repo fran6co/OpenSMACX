@@ -3006,7 +3006,7 @@ static inline LPSTR faction_noun_parsed(int faction_id) {
     parse_set(Players[faction_id].noun_gender, Players[faction_id].is_noun_plural);
     return Players[faction_id].noun_faction;
 }
-// ORIGINAL: 0x0053DCE0 ?wants_to_speak@@YAHHH@Z 0x0053DCE0-0x0053E46C;0x0065E622-0x0065E75A FILE
+// ORIGINAL: 0x0053DCE0 ?wants_to_speak@@YAHHH@Z 0x0053DCE0-0x0053E46C;0x0065E622-0x0065E75A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0053dce0.cpp", "image:terranx_original.exe:0x0053DCE0"], "reason": "Recover the genuine faction contact/introduction owner using Popup lifetime, typed Player/PlayerData, real diplomacy state and portrait storage; native guards and callee order correct retained seed contradictions."}
 // TRIED: this is a 27-stage SEH unwind (vtable pokes for partially- constructed FlatButton/Scroll/Dialog/Sprite/Spot/Heap locals around a `Popup` object) that could not be fully re-derived in budget; landed a single `Popup popup;` local plus the has_tech-gated / consent / diplomacy-request control flow (diplomacy_check, diplomacy_caption, parse_says, random, get_him_her, X_pops, Popup::start/exec, DiploPop::start, introduce), omitting the other ~10 locals' manual close()/dtor bookkeeping. Compiles; diverges at #17 (prologue/frame size).
 int __cdecl wants_to_speak(int faction_id, int other_faction_id) {
