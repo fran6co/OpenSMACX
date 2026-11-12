@@ -778,6 +778,12 @@ void __cdecl read_faction(int player_id) {
     }
 }
 
+// Bounded copy of one faction-file field, always terminated.
+static inline void faction_copy_text(char *destination, const char *source, int size) {
+    strncpy(destination, source, size);
+    destination[size - 1] = 0;
+}
+
 /*
 Purpose: Parse the 1st eight lines of the specified faction's file into a player structure. The 
          toggle parameter will end the function early if set to 2 (original code never uses this).
@@ -812,24 +818,21 @@ void __cdecl read_faction(Player *player, int toggle) {
         return;
     }
     text_get();
-    strcpy_s(player->formal_name_faction, 40, text_item());
-    player->formal_name_faction[39] = 0;
-    strcpy_s(player->desc_name_faction, 24, text_item());
-    player->desc_name_faction[23] = 0;
-    strcpy_s(player->noun_faction, 24, text_item());
-    player->noun_faction[23] = 0;
-    LPSTR gender = text_item();
+    faction_copy_text(player->formal_name_faction, text_item(), 40);
+    faction_copy_text(player->desc_name_faction, text_item(), 24);
+    faction_copy_text(player->noun_faction, text_item(), 24);
+    text_item();
     player->noun_gender = GENDER_MALE;
-    if (gender[0] == 'F' || gender[0] == 'f') {
+    if (*TextBufferItemPtr == 'F' || *TextBufferItemPtr == 'f') {
         player->noun_gender = GENDER_FEMALE;
-    } else if (gender[0] == 'N' || gender[0] == 'n') {
+    }
+    if (*TextBufferItemPtr == 'N' || *TextBufferItemPtr == 'n') {
         player->noun_gender = GENDER_NEUTRAL;
     }
-    player->is_noun_plural = range(text_item_number() - 1, false, true); // original value: 1 or 2
-    strcpy_s(player->name_leader, 24, text_item());
-    player->name_leader[23] = 0;
-    gender = text_item();
-    player->is_leader_female = (gender[0] == 'F' || gender[0] == 'f') ? true : false;
+    player->is_noun_plural = range(text_item_number() - 1, 0, 1);
+    faction_copy_text(player->name_leader, text_item(), 24);
+    text_item();
+    player->is_leader_female = (*TextBufferItemPtr == 'F' || *TextBufferItemPtr == 'f') ? 1 : 0;
     if (toggle == 2) {
         return;
     }
@@ -839,38 +842,33 @@ void __cdecl read_faction(Player *player, int toggle) {
     player->ai_wealth = text_item_number();
     player->ai_growth = text_item_number();
     text_get();
-    LPSTR parse_rule_check = text_item();
-    size_t len = strlen(parse_rule_check);
-    while (len) {
-        // NOT a heap allocation: the image copies into a fixed 256-byte LOCAL
-        // buffer (`sub esp, 0x104`), same idiom as read_rules' `order_buf`.
+    while (strlen(text_item())) {
         char parse_rule[256];
-        strcpy(parse_rule, parse_rule_check);
+        strcpy(parse_rule, TextBufferItemPtr);
         LPSTR parse_param = text_item();
+        int j;
         if (!_stricmp(parse_rule, BonusName[0].key)) { // TECH
-            // will have issues if custom tech abbreviations starting with numbers are used
-            int player_selected = atoi(parse_param);
-            if (!player_selected && player->faction_bonus_count < 8) {
+            if (atoi(parse_param)) {
+                player->rule_tech_selected = atoi(parse_param);
+            } else if (player->faction_bonus_count < 8) {
                 player->faction_bonus_id[player->faction_bonus_count] = RULE_TECH;
                 player->faction_bonus_val1[player->faction_bonus_count] = tech_name(parse_param);
                 player->faction_bonus_count++;
-            } else {
-                player->rule_tech_selected = player_selected;
             }
         } else if (!_stricmp(parse_rule, BonusName[1].key)) { // MORALE
-            if (parse_param[0] == '+') {
+            if (*parse_param == '+') {
                 parse_param++;
             }
             player->rule_morale = atoi(parse_param);
-            // 0 indicates an exemption from negative modifiers from other sources
             if (!player->rule_morale) {
                 player->rule_flags |= RFLAG_MORALE;
             }
-        } else if (!_stricmp(parse_rule, BonusName[3].key) && player->faction_bonus_count < 8) {
-            // FACILITY
-            player->faction_bonus_id[player->faction_bonus_count] = RULE_FACILITY;
-            player->faction_bonus_val1[player->faction_bonus_count] = atoi(parse_param);
-            player->faction_bonus_count++;
+        } else if (!_stricmp(parse_rule, BonusName[3].key)) { // FACILITY
+            if (player->faction_bonus_count < 8) {
+                player->faction_bonus_id[player->faction_bonus_count] = RULE_FACILITY;
+                player->faction_bonus_val1[player->faction_bonus_count] = atoi(parse_param);
+                player->faction_bonus_count++;
+            }
         } else if (!_stricmp(parse_rule, BonusName[4].key)) { // RESEARCH
             player->rule_research = atoi(parse_param);
         } else if (!_stricmp(parse_rule, BonusName[5].key)) { // DRONE
@@ -890,206 +888,212 @@ void __cdecl read_faction(Player *player, int toggle) {
             player->rule_hurry = range(atoi(parse_param), 1, 1000);
         } else if (!_stricmp(parse_rule, BonusName[13].key)) { // TECHCOST
             player->rule_techcost = atoi(parse_param);
-        } else if (!_stricmp(parse_rule, BonusName[12].key) && player->faction_bonus_count < 8) {
-            // UNIT
-            player->faction_bonus_id[player->faction_bonus_count] = RULE_UNIT;
-            player->faction_bonus_val1[player->faction_bonus_count] = atoi(parse_param);
-            player->faction_bonus_count++;
+        } else if (!_stricmp(parse_rule, BonusName[12].key)) { // UNIT
+            if (player->faction_bonus_count < 8) {
+                player->faction_bonus_id[player->faction_bonus_count] = RULE_UNIT;
+                player->faction_bonus_val1[player->faction_bonus_count] = atoi(parse_param);
+                player->faction_bonus_count++;
+            }
         } else if (!_stricmp(parse_rule, BonusName[2].key)) { // PSI
             player->rule_psi = atoi(parse_param);
         } else if (!_stricmp(parse_rule, BonusName[14].key)) { // SHARETECH
             player->rule_sharetech = atoi(parse_param);
         } else if (!_stricmp(parse_rule, BonusName[15].key)) { // TERRAFORM
             player->rule_flags |= RFLAG_TERRAFORM;
-        } else if ((!_stricmp(parse_rule, BonusName[16].key) // SOCIAL, ROBUST, IMMUNITY
+        } else if (!_stricmp(parse_rule, BonusName[16].key) // SOCIAL, ROBUST, IMMUNITY
             || !_stricmp(parse_rule, BonusName[17].key)
-            || !_stricmp(parse_rule, BonusName[18].key)) && player->faction_bonus_count < 8) {
-            // Moved faction_bonus_count check to start rather than inner loop
+            || !_stricmp(parse_rule, BonusName[18].key)) {
             int value = 0;
-            while (parse_param[0] == '+' || parse_param[0] == '-') {
-                (parse_param[0] == '+') ? value++ : value--;
+            while (*parse_param == '+' || *parse_param == '-') {
+                if (*parse_param == '+') {
+                    value++;
+                } else {
+                    value--;
+                }
                 parse_param++;
             }
-            if (!value) { // cannot be zero
+            if (!value) {
                 value = 1;
             }
-            for (int j = 0; j < MaxSocialEffectNum; j++) {
-                if (!_stricmp(SocialEffects[j].set1, parse_param)) {
-                    if (!_stricmp(parse_rule, BonusName[17].key)) {
-                        player->faction_bonus_id[player->faction_bonus_count] = RULE_ROBUST;
-                    } else {
-                        player->faction_bonus_id[player->faction_bonus_count] =
-                            !_stricmp(parse_rule, BonusName[16].key) ? RULE_SOCIAL : RULE_IMMUNITY;
+            for (j = 0; j < MaxSocialEffectNum; j++) {
+                if (!_stricmp(parse_param, SocialEffects[j].set1)) {
+                    if (player->faction_bonus_count < 8) {
+                        if (!_stricmp(parse_rule, BonusName[17].key)) {
+                            player->faction_bonus_id[player->faction_bonus_count] = RULE_ROBUST;
+                        } else {
+                            player->faction_bonus_id[player->faction_bonus_count] =
+                                _stricmp(parse_rule, BonusName[16].key) ? RULE_IMMUNITY : RULE_SOCIAL;
+                        }
+                        player->faction_bonus_val1[player->faction_bonus_count] = j;
+                        player->faction_bonus_val2[player->faction_bonus_count] = value;
+                        player->faction_bonus_count++;
                     }
-                    player->faction_bonus_val1[player->faction_bonus_count] = j; // soc effect id
-                    player->faction_bonus_val2[player->faction_bonus_count] = value; // value mod
-                    player->faction_bonus_count++;
                     break;
                 }
             }
-        } else if ((!_stricmp(parse_rule, BonusName[19].key) // IMPUNITY, PENALTY
-            || !_stricmp(parse_rule, BonusName[20].key)) && player->faction_bonus_count < 8) {
-            // Moved faction_bonus_count check to start rather than inner loop
-            for (int j = 0; j < MaxSocialCatNum; j++) {
+        } else if (!_stricmp(parse_rule, BonusName[19].key) // IMPUNITY, PENALTY
+            || !_stricmp(parse_rule, BonusName[20].key)) {
+            for (j = 0; j < MaxSocialCatNum; j++) {
                 for (int k = 0; k < MaxSocialModelNum; k++) {
-                    if (!_stricmp(parse_param,
-                        StringTable.get(SocialCategories[j].name[k]))) {
+                    if (!_stricmp(parse_param, StringTable.get(SocialCategories[j].name[k]))
+                        && player->faction_bonus_count < 8) {
                         player->faction_bonus_id[player->faction_bonus_count] =
-                            !_stricmp(parse_rule, BonusName[19].key) ? RULE_IMPUNITY : RULE_PENALTY;
-                        player->faction_bonus_val1[player->faction_bonus_count] = j; // category id
-                        player->faction_bonus_val2[player->faction_bonus_count] = k; // model id
+                            _stricmp(parse_rule, BonusName[19].key) ? RULE_PENALTY : RULE_IMPUNITY;
+                        player->faction_bonus_val1[player->faction_bonus_count] = j;
+                        player->faction_bonus_val2[player->faction_bonus_count] = k;
                         player->faction_bonus_count++;
                     }
                 }
             }
-        } else if (!_stricmp(parse_rule, BonusName[21].key) && player->faction_bonus_count < 8) {
-            // FUNGNUTRIENT
-            player->faction_bonus_id[player->faction_bonus_count] = RULE_FUNGNUTRIENT;
-            player->faction_bonus_val1[player->faction_bonus_count] = atoi(parse_param);
-            player->faction_bonus_count++;
-        } else if (!_stricmp(parse_rule, BonusName[22].key) && player->faction_bonus_count < 8) {
-            // FUNGMINERALS
-            player->faction_bonus_id[player->faction_bonus_count] = RULE_FUNGMINERALS;
-            player->faction_bonus_val1[player->faction_bonus_count] = atoi(parse_param);
-            player->faction_bonus_count++;
-        } else if (!_stricmp(parse_rule, BonusName[23].key) && player->faction_bonus_count < 8) {
-            // FUNGENERGY
-            player->faction_bonus_id[player->faction_bonus_count] = RULE_FUNGENERGY;
-            player->faction_bonus_val1[player->faction_bonus_count] = atoi(parse_param);
-            player->faction_bonus_count++;
+        } else if (!_stricmp(parse_rule, BonusName[21].key)) { // FUNGNUTRIENT
+            if (player->faction_bonus_count < 8) {
+                player->faction_bonus_id[player->faction_bonus_count] = RULE_FUNGNUTRIENT;
+                player->faction_bonus_val1[player->faction_bonus_count] = atoi(parse_param);
+                player->faction_bonus_count++;
+            }
+        } else if (!_stricmp(parse_rule, BonusName[22].key)) { // FUNGMINERALS
+            if (player->faction_bonus_count < 8) {
+                player->faction_bonus_id[player->faction_bonus_count] = RULE_FUNGMINERALS;
+                player->faction_bonus_val1[player->faction_bonus_count] = atoi(parse_param);
+                player->faction_bonus_count++;
+            }
+        } else if (!_stricmp(parse_rule, BonusName[23].key)) { // FUNGENERGY
+            if (player->faction_bonus_count < 8) {
+                player->faction_bonus_id[player->faction_bonus_count] = RULE_FUNGENERGY;
+                player->faction_bonus_val1[player->faction_bonus_count] = atoi(parse_param);
+                player->faction_bonus_count++;
+            }
         } else if (!_stricmp(parse_rule, BonusName[24].key)) { // COMMFREQ
             player->rule_flags |= RFLAG_COMMFREQ;
         } else if (!_stricmp(parse_rule, BonusName[25].key)) { // MINDCONTROL
             player->rule_flags |= RFLAG_MINDCONTROL;
         } else if (!_stricmp(parse_rule, BonusName[26].key)) { // FANATIC
             player->rule_flags |= RFLAG_FANATIC;
-        } else if (!_stricmp(parse_rule, BonusName[27].key) && player->faction_bonus_count < 8) {
-            // VOTES
-            player->faction_bonus_id[player->faction_bonus_count] = RULE_VOTES;
-            player->faction_bonus_val1[player->faction_bonus_count] = atoi(parse_param);
-            player->faction_bonus_count++;
+        } else if (!_stricmp(parse_rule, BonusName[27].key)) { // VOTES
+            if (player->faction_bonus_count < 8) {
+                player->faction_bonus_id[player->faction_bonus_count] = RULE_VOTES;
+                player->faction_bonus_val1[player->faction_bonus_count] = atoi(parse_param);
+                player->faction_bonus_count++;
+            }
         } else if (!_stricmp(parse_rule, BonusName[28].key)) { // FREEPROTO
             player->rule_flags |= RFLAG_FREEPROTO;
         } else if (!_stricmp(parse_rule, BonusName[29].key)) { // AQUATIC
             player->rule_flags |= RFLAG_AQUATIC;
         } else if (!_stricmp(parse_rule, BonusName[30].key)) { // ALIEN
             player->rule_flags |= RFLAG_ALIEN;
-        } else if (!_stricmp(parse_rule, BonusName[31].key) && player->faction_bonus_count < 8) {
-            // FREEFAC
-            player->faction_bonus_id[player->faction_bonus_count] = RULE_FREEFAC;
-            player->faction_bonus_val1[player->faction_bonus_count] = atoi(parse_param);
-            player->faction_bonus_count++;
-        } else if (!_stricmp(parse_rule, BonusName[32].key) && player->faction_bonus_count < 8) {
-            // REVOLT
-            player->faction_bonus_id[player->faction_bonus_count] = RULE_REVOLT;
-            player->faction_bonus_val1[player->faction_bonus_count] = atoi(parse_param);
-            player->faction_bonus_count++;
-        } else if (!_stricmp(parse_rule, BonusName[33].key) && player->faction_bonus_count < 8) {
-            // NODRONE
-            player->faction_bonus_id[player->faction_bonus_count] = RULE_NODRONE;
-            player->faction_bonus_val1[player->faction_bonus_count] = atoi(parse_param);
-            player->faction_bonus_count++;
+        } else if (!_stricmp(parse_rule, BonusName[31].key)) { // FREEFAC
+            if (player->faction_bonus_count < 8) {
+                player->faction_bonus_id[player->faction_bonus_count] = RULE_FREEFAC;
+                player->faction_bonus_val1[player->faction_bonus_count] = atoi(parse_param);
+                player->faction_bonus_count++;
+            }
+        } else if (!_stricmp(parse_rule, BonusName[32].key)) { // REVOLT
+            if (player->faction_bonus_count < 8) {
+                player->faction_bonus_id[player->faction_bonus_count] = RULE_REVOLT;
+                player->faction_bonus_val1[player->faction_bonus_count] = atoi(parse_param);
+                player->faction_bonus_count++;
+            }
+        } else if (!_stricmp(parse_rule, BonusName[33].key)) { // NODRONE
+            if (player->faction_bonus_count < 8) {
+                player->faction_bonus_id[player->faction_bonus_count] = RULE_NODRONE;
+                player->faction_bonus_val1[player->faction_bonus_count] = atoi(parse_param);
+                player->faction_bonus_count++;
+            }
         } else if (!_stricmp(parse_rule, BonusName[34].key)) { // WORMPOLICE
             player->rule_flags |= RFLAG_WORMPOLICE;
-        } else if (!_stricmp(parse_rule, BonusName[35].key) && player->faction_bonus_count < 8) {
-            // FREEABIL
-            player->faction_bonus_id[player->faction_bonus_count] = RULE_FREEABIL;
-            player->faction_bonus_val1[player->faction_bonus_count] = atoi(parse_param);
-            player->faction_bonus_count++;
-        } else if (!_stricmp(parse_rule, BonusName[36].key) && player->faction_bonus_count < 8) {
-            // PROBECOST
-            player->faction_bonus_id[player->faction_bonus_count] = RULE_PROBECOST;
-            player->faction_bonus_val1[player->faction_bonus_count] = atoi(parse_param);
-            player->faction_bonus_count++;
-        } else if (!_stricmp(parse_rule, BonusName[37].key) && player->faction_bonus_count < 8) {
-            // DEFENSE
-            player->faction_bonus_id[player->faction_bonus_count] = RULE_DEFENSE;
-            player->faction_bonus_val1[player->faction_bonus_count] = atoi(parse_param);
-            player->faction_bonus_count++;
-        } else if (!_stricmp(parse_rule, BonusName[38].key) && player->faction_bonus_count < 8) {
-            // OFFENSE
-            player->faction_bonus_id[player->faction_bonus_count] = RULE_OFFENSE;
-            player->faction_bonus_val1[player->faction_bonus_count] = atoi(parse_param);
-            player->faction_bonus_count++;
+        } else if (!_stricmp(parse_rule, BonusName[35].key)) { // FREEABIL
+            if (player->faction_bonus_count < 8) {
+                player->faction_bonus_id[player->faction_bonus_count] = RULE_FREEABIL;
+                player->faction_bonus_val1[player->faction_bonus_count] = atoi(parse_param);
+                player->faction_bonus_count++;
+            }
+        } else if (!_stricmp(parse_rule, BonusName[36].key)) { // PROBECOST
+            if (player->faction_bonus_count < 8) {
+                player->faction_bonus_id[player->faction_bonus_count] = RULE_PROBECOST;
+                player->faction_bonus_val1[player->faction_bonus_count] = atoi(parse_param);
+                player->faction_bonus_count++;
+            }
+        } else if (!_stricmp(parse_rule, BonusName[37].key)) { // DEFENSE
+            if (player->faction_bonus_count < 8) {
+                player->faction_bonus_id[player->faction_bonus_count] = RULE_DEFENSE;
+                player->faction_bonus_val1[player->faction_bonus_count] = atoi(parse_param);
+                player->faction_bonus_count++;
+            }
+        } else if (!_stricmp(parse_rule, BonusName[38].key)) { // OFFENSE
+            if (player->faction_bonus_count < 8) {
+                player->faction_bonus_id[player->faction_bonus_count] = RULE_OFFENSE;
+                player->faction_bonus_val1[player->faction_bonus_count] = atoi(parse_param);
+                player->faction_bonus_count++;
+            }
         } else if (!_stricmp(parse_rule, BonusName[39].key)) { // TECHSHARE
             player->rule_flags |= RFLAG_TECHSHARE;
             player->rule_sharetech = atoi(parse_param);
         } else if (!_stricmp(parse_rule, BonusName[40].key)) { // TECHSTEAL
             player->rule_flags |= RFLAG_TECHSTEAL;
         }
-        parse_rule_check = text_item();
-        len = strlen(parse_rule_check);
     }
-    // Societal Ideology + Anti-Ideology
-    // Pinned 0x00586C7B..0x00586E08 selects the ordinary fields, then their
-    // adjacent anti fields. These are named scalar members, not C++ arrays.
+    // Societal Ideology + Anti-Ideology. The image walks one pointer over the
+    // category/model/effect pairs (+0, +8, +0x10), stepping 4 per pass.
     for (int i = 0; i < 2; i++) {
-        int& soc_category_value = i == 0
-            ? player->soc_ideology_category : player->soc_anti_ideology_category;
-        int& soc_model_value = i == 0
-            ? player->soc_ideology_model : player->soc_anti_ideology_model;
-        int& soc_effect_value = i == 0
-            ? player->soc_ideology_effect : player->soc_anti_ideology_effect;
-        soc_category_value = -1;
-        soc_model_value = 0;
-        soc_effect_value = -1;
+        // WORKAROUND(type): the original indexed two-element arrays; faction.h
+        // spells the pairs as adjacent scalars.
+        int *ideology = &player->soc_ideology_category + i;
+        ideology[0] = -1;
+        ideology[2] = 0;
+        ideology[4] = -1;
         text_get();
-        LPSTR soc_category = text_item();
+        StringTemp[0] = 0;
+        strcat(StringTemp, text_item());
         for (int j = 0; j < MaxSocialCatNum; j++) {
-            LPSTR check_cat_type = StringTable.get(SocialCategories[j].type);
-            if (Language ? !_strnicmp(soc_category, check_cat_type, 4)
-                : !_stricmp(soc_category, check_cat_type)) {
-                soc_category_value = j;
-                break;
+            if (!Language) {
+                if (!_stricmp(StringTemp, StringTable.get(SocialCategories[j].type))) {
+                    goto found_category;
+                }
+            } else if (!_strnicmp(StringTemp, StringTable.get(SocialCategories[j].type), 4)) {
+                goto found_category;
             }
+            continue;
+        found_category:
+            ideology[0] = j;
+            break;
         }
-        LPSTR soc_model = text_item();
-        int soc_cat_num = soc_category_value;
-        if (soc_cat_num >= 0) {
-            for (int j = 0; j < MaxSocialModelNum; j++) {
-                LPSTR check_model = StringTable.get(SocialCategories[soc_cat_num].name[j]);
-                if (Language ?
-                    !_strnicmp(soc_model, check_model, 4) : !_stricmp(soc_model, check_model)) {
-                    soc_model_value = j;
-                    break;
+        StringTemp[0] = 0;
+        strcat(StringTemp, text_item());
+        int category = ideology[0];
+        if (category >= 0) {
+            for (int k = 0; k < MaxSocialModelNum; k++) {
+                if (!Language) {
+                    if (!_stricmp(StringTemp, StringTable.get(SocialCategories[category].name[k]))) {
+                        ideology[2] = k;
+                    }
+                } else if (!_strnicmp(StringTemp, StringTable.get(SocialCategories[category].name[k]), 4)) {
+                    ideology[2] = k;
                 }
             }
         }
-        LPSTR soc_effect = text_item();
-        for (j = 0; j < MaxSocialEffectNum; j++) {
-            if (!_stricmp(SocialEffects[j].set1, soc_effect)) {
-                // Pinned 0x00586DF7 writes -1 even after a matching effect.
-                // Activating that effect is a post-recovery improvement.
-                soc_effect_value = -1;
+        StringTemp[0] = 0;
+        strcat(StringTemp, text_item());
+        for (int e = 0; e < MaxSocialEffectNum; e++) {
+            if (!_stricmp(StringTemp, SocialEffects[e].set1)) {
+                ideology[4] = -1;
                 break;
             }
         }
     }
-    // Faction and Leader related strings
-    text_get(); // skips 2nd value in this line, abbreviation unused?
-    strcpy_s(player->adj_name_faction, 128, text_item());
-    player->adj_name_faction[127] = 0;
     text_get();
-    strcpy_s(player->assistant_name, 24, text_item());
-    player->assistant_name[23] = 0;
-    strcpy_s(player->scientist_name, 24, text_item());
-    player->scientist_name[23] = 0;
-    strcpy_s(player->assistant_city, 24, text_item());
-    player->assistant_city[23] = 0;
+    faction_copy_text(player->adj_name_faction, text_item(), 128);
     text_get();
-    strcpy_s(player->title_leader, 24, text_item());
-    player->title_leader[23] = 0;
-    strcpy_s(player->adj_leader, 128, text_item());
-    player->adj_leader[127] = 0;
-    strcpy_s(player->adj_insult_leader, 128, text_item());
-    player->adj_insult_leader[127] = 0;
-    strcpy_s(player->adj_faction, 128, text_item());
-    player->adj_faction[127] = 0;
-    strcpy_s(player->adj_insult_faction, 128, text_item());
-    player->adj_insult_faction[127] = 0;
+    faction_copy_text(player->assistant_name, text_item(), 24);
+    faction_copy_text(player->scientist_name, text_item(), 24);
+    faction_copy_text(player->assistant_city, text_item(), 24);
     text_get();
-    strcpy_s(player->insult_leader, 24, text_item());
-    player->insult_leader[23] = 0;
+    faction_copy_text(player->title_leader, text_item(), 24);
+    faction_copy_text(player->adj_leader, text_item(), 128);
+    faction_copy_text(player->adj_insult_leader, text_item(), 128);
+    faction_copy_text(player->adj_faction, text_item(), 128);
+    faction_copy_text(player->adj_insult_faction, text_item(), 128);
+    text_get();
+    faction_copy_text(player->insult_leader, text_item(), 24);
 }
 
 /*

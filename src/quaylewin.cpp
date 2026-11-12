@@ -62,84 +62,99 @@ QuayleWin::QuayleWin() {}
 // ORIGINAL: 0x004951A0 ?init@QuayleWin@@QAEHXZ 0x004951A0-0x004956C1
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 004951A0; retained seed git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004951a0.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations."}
 // TRIED: field-by-offset access on `char *self`, per the scaffold's own hint, plus GraphicWin::init/Buffer::load_pcx/BaseButton::init argument order re-derived from the disassembly's push order (Ghidra's own decompilation independently agreed on all three). Reaches MISMATCH #1 (`push esi` vs a `mov`, one instruction into the __thiscall prologue's register-save order) - not chased further, a register-allocation detail this pass's budget does not cover.
+// WORKAROUND(inline): the image expands Font::line_advance (0x005E3650) at
+// 0x00495284; font.h's declaration is out of line, so this unit carries the body.
+static inline int quayle_line_advance(const Font *font) {
+  const int adjustment = font->unk_1_;
+  if (adjustment >= 0) {
+    return font->pixel_height() + adjustment;
+  }
+  return font->line_height();
+}
+
+static inline void quayle_offset_rect(RECT *rect, int dx, int dy) {
+  rect->left += dx;
+  rect->right += dx;
+  rect->top += dy;
+  rect->bottom += dy;
+}
+
+static inline void quayle_set_rect(RECT *rect, int left, int top, int right, int bottom) {
+  rect->left = left;
+  rect->top = top;
+  rect->right = right;
+  rect->bottom = bottom;
+}
+
+static inline void quayle_place_rect(RECT *rect, int x, int y, int width, int height) {
+  rect->left = x;
+  rect->top = y;
+  rect->right = x + width;
+  rect->bottom = y + height;
+}
+
 int QuayleWin::init() {
   field_A1C_ = 0x320;
   field_A20_ = 0x258;
   monitor_mode_ = ReportIfGlobal.field_1E230_;
   spot_.init(0x20);
 
-  int width;
-  int height;
-  char *caption;
   if (monitor_mode_ == 0) {
-    caption = QuayleStandardCaption;
-    field_A14_ = field_A18_ = window_rect_.left = window_rect_.top = 0;
-    window_rect_.right = field_A1C_;
-    window_rect_.bottom = field_A20_;
-    width = 0x320;
-    height = 0x258;
+    field_A14_ = 0;
+    field_A18_ = 0;
+    quayle_place_rect(&window_rect_, 0, 0, field_A1C_, field_A20_);
+    GraphicWin::init(0, 0, 0x320, 0x258, QuayleStandardCaption, 0x1000000, 0, 0, 0);
   } else {
-    caption = QuayleWideCaption;
-    field_A14_ = window_rect_.left = 0x77;
-    field_A18_ = window_rect_.top = 0x50;
-    window_rect_.right = field_A1C_ + 0x77;
-    window_rect_.bottom = field_A20_ + 0x50;
-    width = 0x400;
-    height = 0x300;
+    field_A14_ = 0x77;
+    field_A18_ = 0x50;
+    quayle_place_rect(&window_rect_, 0x77, 0x50, field_A1C_, field_A20_);
+    GraphicWin::init(0, 0, 0x400, 0x300, QuayleWideCaption, 0x1000000, 0, 0, 0);
   }
-  GraphicWin::init(0, 0, width, height, caption, 0x1000000, 0, 0, 0);
 
-  line_advance_ = static_cast<uint32_t>(ReportIfGlobal.field_1E184_->line_advance());
+  line_advance_ = quayle_line_advance(ReportIfGlobal.field_1E184_);
   if (buffer1_.load_pcx("frame.pcx", 0, 0xA, 0xEC) != 0) return 1;
   if (buffer2_.load_pcx("holobook.pcx", 0, 0xA, 0xEC) != 0) return 1;
 
-  illustration_rect_.left = 0x14C; illustration_rect_.top = 0x26;
-  illustration_rect_.right = 0x2F0; illustration_rect_.bottom = 0x22E;
-  chapter_list_rect_.left = 0x13A; chapter_list_rect_.top = 0x19;
-  chapter_list_rect_.right = 0x301; chapter_list_rect_.bottom = 0x235;
-  navigation_button_rect_.left = 0x289; navigation_button_rect_.top = 0x239;
-  navigation_button_rect_.right = 0x301; navigation_button_rect_.bottom = 0x24D;
-  rating_rect_.left = 0x16C; rating_rect_.top = 0x239;
-  rating_rect_.right = 0x27A; rating_rect_.bottom = 0x24D;
-  title_rect_.left = 0x2A; title_rect_.top = 0x22;
-  title_rect_.right = 0x116; title_rect_.bottom = 0x81;
-  introduction_rect_.left = 0x1E; introduction_rect_.top = 0x13E;
-  introduction_rect_.right = 0x11E; introduction_rect_.bottom = 0x1B0;
+  quayle_set_rect(&illustration_rect_, 0x14C, 0x26, 0x2F0, 0x22E);
+  quayle_set_rect(&chapter_list_rect_, 0x13A, 0x19, 0x301, 0x235);
+  quayle_set_rect(&navigation_button_rect_, 0x289, 0x239, 0x301, 0x24D);
+  quayle_set_rect(&rating_rect_, 0x16C, 0x239, 0x27A, 0x24D);
+  quayle_set_rect(&title_rect_, 0x2A, 0x22, 0x116, 0x81);
+  quayle_set_rect(&introduction_rect_, 0x1E, 0x13E, 0x11E, 0x1B0);
 
-  RECT *translated[] = {&illustration_rect_, &chapter_list_rect_,
-                        &navigation_button_rect_, &rating_rect_,
-                        &title_rect_, &introduction_rect_};
-  for (unsigned int i = 0; i < sizeof(translated) / sizeof(translated[0]); ++i) {
-    translated[i]->left += window_rect_.left;
-    translated[i]->right += window_rect_.left;
-    translated[i]->top += window_rect_.top;
-    translated[i]->bottom += window_rect_.top;
-  }
+  quayle_offset_rect(&illustration_rect_, window_rect_.left, window_rect_.top);
+  quayle_offset_rect(&chapter_list_rect_, window_rect_.left, window_rect_.top);
+  quayle_offset_rect(&navigation_button_rect_, window_rect_.left, window_rect_.top);
+  quayle_offset_rect(&rating_rect_, window_rect_.left, window_rect_.top);
+  quayle_offset_rect(&title_rect_, window_rect_.left, window_rect_.top);
+  quayle_offset_rect(&introduction_rect_, window_rect_.left, window_rect_.top);
 
   StringTemp[0] = 0;
   strcat(StringTemp, label_get(0xA64 / 4));
-  chapter_button_.init(StringTemp, 999, navigation_button_rect_.left, navigation_button_rect_.top,
+  FlatButton *button = &chapter_button_;
+  button->init(StringTemp, 999, navigation_button_rect_.left, navigation_button_rect_.top,
                        navigation_button_rect_.right - navigation_button_rect_.left,
                        navigation_button_rect_.bottom - navigation_button_rect_.top,
                        this, 0);
-  static_cast<Buffer &>(chapter_button_).set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
-  chapter_button_.set_border_styles(&InterfaceBoxStyles[47],
+  button->set_border_styles(&InterfaceBoxStyles[47],
                                     &InterfaceBoxStyles[46],
                                     &InterfaceBoxStyles[45]);
-  chapter_button_.redraw();
-  chapter_button_.hide();
+  button->Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+  button->redraw();
+  button->hide();
 
   StringTemp[0] = 0;
   strcat(StringTemp, label_get(0xB60 / 4));
-  pages_button_.init(StringTemp, 999, navigation_button_rect_.left, navigation_button_rect_.top,
+  button = &pages_button_;
+  button->init(StringTemp, 999, navigation_button_rect_.left, navigation_button_rect_.top,
                      navigation_button_rect_.right - navigation_button_rect_.left,
                      navigation_button_rect_.bottom - navigation_button_rect_.top, this, 0);
-  static_cast<Buffer &>(pages_button_).set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
-  pages_button_.set_border_styles(&InterfaceBoxStyles[47],
+  button->set_border_styles(&InterfaceBoxStyles[47],
                                  &InterfaceBoxStyles[46],
                                  &InterfaceBoxStyles[45]);
-  pages_button_.redraw();
-  pages_button_.hide();
+  button->Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+  button->redraw();
+  button->hide();
   fill(0);
   return 0;
 }
@@ -204,220 +219,204 @@ int QuayleWin::on_key_click(int, int) {
   return 1;
 }
 
+// WORKAROUND(inline): the image expands get_title (0x005590A0) and get_name
+// (0x00559060) throughout on_redraw; faction.h declares them out of line.
+static inline char *quayle_get_title(int faction) {
+  parse_set(Players[faction].is_leader_female, 0);
+  return Players[faction].title_leader;
+}
+
+static inline char *quayle_get_name(int faction) {
+  parse_set(Players[faction].is_leader_female, 0);
+  return Players[faction].name_leader;
+}
+
 // ORIGINAL: 0x004956D0 ?on_redraw@QuayleWin@@QAEXXZ 0x004956D0-0x0049649D;0x00658D10-0x00658D4F
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 004956D0; retained seed git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004956d0.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations."}
 // TRIED: local StringStruct/Buffer objects reproduce the ctor/dtor calls but MSVC did not regenerate the original's SEH/EH unwind frame (push -1; push handler; fs:[0] chain) from source-level RAII alone here; body is a faithful, compiling transcription (MISMATCH #0, prologue only) - see call order, field offsets and vtable-adjustor reads below for the parts that are semantically verified against raw disassembly.
 // symbol    ?on_redraw@QuayleWin@@UAEXXZ
+static inline int quayle_rect_width(const RECT *rect) { return rect->right - rect->left; }
+
+// WORKAROUND(inline): the image expands the RECT form of Spot::add
+// (0x0047A6F0, emitted out of line by MultiWin) at 0x00495FF3.
+static inline int quayle_spot_add(Spot *spot, int position, int type, RECT *rect) {
+  return spot->add(position, type, rect->left, rect->top, rect->right - rect->left,
+                   rect->bottom - rect->top);
+}
+
 void QuayleWin::on_redraw() {
-  // The pinned 0x4956F3 allocator exchange belongs to StringList's virtual
-  // StringAllocationBase lifetime; keep the explicit remove_all below.
   StringList strings;
-  const int book = ConsoleGlobal.faction_id_;
-  const int chapter = field_2144_;
-  char temporary[0x100];
+  int faction = ConsoleGlobal.faction_id_;
+  int page;
   char number[0x50];
-  {
+  char temporary[0x100];
   Buffer local_buffer;
-  Buffer *canvas = static_cast<Buffer *>(this);
-  canvas->restore_clip();
-  if (monitor_mode_ != 0) buffer1_.copy(canvas, 0, 0, 0, 0, 0x400, 0x300);
-  buffer2_.copy(canvas, 0, 0, window_rect_.left, window_rect_.top, 0x320, 0x258);
-  canvas->set_clip(&window_rect_);
-  canvas->set_clip(&title_rect_);
-  canvas->set_font(ReportIfGlobal.field_1E1AC_, 0, 0, 0);
-  canvas->set_text_color(0x9B, -1, 1, 1);
+
+  set_font(ReportIfGlobal.field_1E1AC_, 0, 0, 0);
+  set_text_color(0x9B, -1, 1, 1);
+  restore_clip();
   spot_.kill_type(0);
-
+  if (monitor_mode_) {
+    buffer1_.copy(this, 0, 0, 0, 0, 0x400, 0x300);
+  }
+  buffer2_.copy(this, 0, 0, window_rect_.left, window_rect_.top, 0x320, 0x258);
+  set_clip(&window_rect_);
+  set_clip(&title_rect_);
   parse_it("Holobook", "BOOKTITLE");
-  canvas->wrap_cent(StringTemp, title_rect_.left, title_rect_.top,
-                    title_rect_.right - title_rect_.left);
-  canvas->set_font(ReportIfGlobal.field_1E1B0_, 0, 0, 0);
-  canvas->set_text_color(0x63, -1, 1, 1);
+  wrap_cent(StringTemp, title_rect_.left, title_rect_.top,
+            quayle_rect_width(&title_rect_));
+  set_font(ReportIfGlobal.field_1E1B0_, 0, 0, 0);
+  set_text_color(0x63, -1, 1, 1);
 
-  chapter_button_.hide();
-  pages_button_.hide();
-  if (chapter == -1) {
-    canvas->set_clip(&introduction_rect_);
-    parse_it("Holobook", "BOOKINTRO");
-    canvas->wrap_cent(StringTemp, introduction_rect_.left, introduction_rect_.top,
-                      introduction_rect_.right - introduction_rect_.left);
-
+  if (field_2144_ + 1 != 0) {
+    list_box_.close();
+    set_clip(&introduction_rect_);
     if (Language == 0) {
-    canvas->restore_clip();
+      parse_it("Holobook", "BOOKINTRO");
+      wrap_cent(StringTemp, introduction_rect_.left, introduction_rect_.top,
+                quayle_rect_width(&introduction_rect_));
+    } else {
+      temporary[0] = 0;
+      strcat(temporary, "BOOKLIST");
+      _itoa(field_2144_, number, 10);
+      strcat(temporary, number);
+      parse_says(0, quayle_get_title(faction), Players[faction].is_leader_female, -1);
+      parse_says(1, quayle_get_name(faction), Players[faction].is_leader_female, -1);
+      parse_it("Holobook", temporary);
+      wrap_cent(StringTemp, introduction_rect_.left, introduction_rect_.top,
+                quayle_rect_width(&introduction_rect_));
+    }
+    restore_clip();
+    StringTemp[0] = 0;
+    strcat(StringTemp, "artbox");
+    _itoa(field_2144_, number, 10);
+    strcat(StringTemp, number);
+    strcat(StringTemp, ".pcx");
+    local_buffer.load_pcx(StringTemp, 0, 10, 0xEC);
+    local_buffer.draw(this, 9, illustration_rect_.left, illustration_rect_.top);
+    if (field_2144_ == 1) {
+      set_clip(&illustration_rect_);
+      quayle_place_rect(&text_scratch_rect_, window_rect_.left + 0x15B,
+                        window_rect_.top + 0x1F6, 0x187, 0x26);
+      StringTemp[0] = 0;
+      GenderDefault = Players[faction].is_leader_female;
+      PluralityDefault = 0;
+      strcat(StringTemp, Players[faction].title_leader);
+      strcat(StringTemp, BufferJoinSpace);
+      strcat(StringTemp, quayle_get_name(faction));
+      set_font(ReportIfGlobal.field_1E1AC_, 0, 0, 0);
+      set_text_color(0x45, -1, 1, 1);
+      write_cent_l(StringTemp, &text_scratch_rect_);
+      restore_clip();
+    } else if (field_2144_ == 2) {
+      set_clip(&illustration_rect_);
+      quayle_place_rect(&text_scratch_rect_, window_rect_.left + 0x136,
+                        window_rect_.top + 0x1A5, 0x1CB, 0x32);
+      StringTemp[0] = 0;
+      strcat(StringTemp, quayle_get_title(faction));
+      strcat(StringTemp, BufferJoinSpace);
+      strcat(StringTemp, quayle_get_name(faction));
+      set_font(ReportIfGlobal.field_1E1B8_, 0, 0, 0);
+      set_text_color(0x45, -1, 1, 1);
+      write_cent_l(StringTemp, &text_scratch_rect_);
+      restore_clip();
+    } else if (field_2144_ == 8) {
+      set_clip(&illustration_rect_);
+      quayle_place_rect(&text_scratch_rect_, window_rect_.left + 0x13C,
+                        window_rect_.top + 0x1DF, 0x1C1, 0x54);
+      StringTemp[0] = 0;
+      strcat(StringTemp, quayle_get_title(faction));
+      strcat(StringTemp, BufferJoinSpace);
+      strcat(StringTemp, quayle_get_name(faction));
+      set_font(ReportIfGlobal.field_1E1B8_, 0, 0, 0);
+      set_text_color(0x5E, -1, 1, 1);
+      wrap_cent(StringTemp, &text_scratch_rect_);
+      restore_clip();
+    }
+    chapter_button_.hide();
+    pages_button_.show(0);
+  } else {
+    set_clip(&introduction_rect_);
+    parse_it("Holobook", "BOOKINTRO");
+    wrap_cent(StringTemp, introduction_rect_.left, introduction_rect_.top,
+              quayle_rect_width(&introduction_rect_));
+    if (Language == 0) {
+      restore_clip();
       Font *font = ReportIfGlobal.field_1E1A8_;
-      canvas->set_font(font, font, font, 0);
-      canvas->set_text_color(0x63, -1, 1, 1);
-      canvas->set_text_color2(0x9B, -1, 1, 1);
-      canvas->set_text_color3(0x9B, -1, 1, 1);
-      text_scratch_rect_.left = chapter_list_rect_.left;
-      text_scratch_rect_.top = chapter_list_rect_.bottom + 6;
-      text_scratch_rect_.right = chapter_list_rect_.right;
-      text_scratch_rect_.bottom = chapter_list_rect_.bottom + 10;
-      RECT &spot_rect = text_scratch_rect_;
-      for (int page = 0; page <= field_2148_; ++page) {
+      set_font(font, font, font, 0);
+      set_text_color(0x63, -1, 1, 1);
+      set_text_color2(0x9B, -1, 1, 1);
+      set_text_color3(0x9B, -1, 1, 1);
+      quayle_set_rect(&text_scratch_rect_, chapter_list_rect_.left, chapter_list_rect_.bottom + 6,
+                      chapter_list_rect_.right, chapter_list_rect_.bottom + 10);
+      for (page = 0; page <= field_2148_; ++page) {
         temporary[0] = 0;
         strcat(temporary, "BOOKLIST");
         _itoa(page, number, 10);
         strcat(temporary, number);
-        GenderDefault = Players[book].is_leader_female;
-        PluralityDefault = 0;
-        parse_says(0, Players[book].title_leader,
-                   Players[book].is_leader_female, -1);
-        GenderDefault = Players[book].is_leader_female;
-        PluralityDefault = 0;
-        parse_says(1, Players[book].name_leader,
-                   Players[book].is_leader_female, -1);
+        parse_says(0, quayle_get_title(faction), Players[faction].is_leader_female, -1);
+        parse_says(1, quayle_get_name(faction), Players[faction].is_leader_female, -1);
         parse_it("Holobook", temporary);
         if (page == field_2148_) {
+          temporary[0] = 0;
           strcpy(temporary, StringTemp);
           StringTemp[0] = 0;
-          strcat(StringTemp, "["); strcat(StringTemp, temporary);
+          strcat(StringTemp, "[");
+          strcat(StringTemp, temporary);
           strcat(StringTemp, "]");
         }
-        const int row_width = static_cast<int>(chapter_list_rect_.right - chapter_list_rect_.left);
         field_A14_ = chapter_list_rect_.left;
-        field_A18_ = spot_rect.top;
-        field_A1C_ = row_width;
-        field_A20_ = canvas->wrap_height(StringTemp, row_width);
-        spot_rect.left = chapter_list_rect_.left;
-        spot_rect.right = chapter_list_rect_.left + row_width;
-        spot_rect.top = field_A18_ - field_A20_ - 6;
-        spot_rect.bottom = spot_rect.top + field_A20_;
-        spot_.add(page, 0, spot_rect.left, spot_rect.top,
-                  spot_rect.right - spot_rect.left,
-                  spot_rect.bottom - spot_rect.top);
-        canvas->wrap(StringTemp, &spot_rect);
+        field_A18_ = text_scratch_rect_.top;
+        field_A1C_ = quayle_rect_width(&chapter_list_rect_);
+        field_A20_ = wrap_height(StringTemp, field_A1C_);
+        quayle_place_rect(&text_scratch_rect_, field_A14_, field_A18_ - field_A20_ - 6, field_A1C_, field_A20_);
+        quayle_spot_add(&spot_, page, 0, &text_scratch_rect_);
+        wrap(StringTemp, &text_scratch_rect_);
       }
     } else {
-      list_box_.close();
-      list_box_.Dialog::init(&chapter_list_rect_, 0);
+      list_box_.init(&chapter_list_rect_, 0);
       list_box_.set_dialog_font(ReportIfGlobal.field_1E1A8_,
                                 ReportIfGlobal.field_1E1A8_,
                                 ReportIfGlobal.field_1E1A8_);
       list_box_.set_dialog_text_color(0x63, -1, 1, 1);
       list_box_.set_report_text_color(0x9B);
-      for (int page = field_2148_; page >= 0; --page) {
+      for (page = field_2148_; page >= 0; --page) {
         temporary[0] = 0;
-        strcat(temporary, "BOOKLIST"); _itoa(page, number, 10);
+        strcat(temporary, "BOOKLIST");
+        _itoa(page, number, 10);
         strcat(temporary, number);
-        GenderDefault = Players[book].is_leader_female;
-        PluralityDefault = 0;
-        parse_says(0, Players[book].title_leader,
-                   Players[book].is_leader_female, -1);
-        GenderDefault = Players[book].is_leader_female;
-        PluralityDefault = 0;
-        parse_says(1, Players[book].name_leader,
-                   Players[book].is_leader_female, -1);
+        parse_says(0, quayle_get_title(faction), Players[faction].is_leader_female, -1);
+        parse_says(1, quayle_get_name(faction), Players[faction].is_leader_female, -1);
         parse_it("Holobook", temporary);
         list_box_.item(StringTemp, page);
       }
-      list_box_.reset_report_selection();
+      ListBox *list = &list_box_;
+      list_box_.field_2C_ = 0;
+      list_box_.field_14_ = static_cast<uint32_t>(-1);
       list_box_.field_8_ = 1;
-      list_box_.Dialog::field_B4_ = 0;
-      list_box_.Dialog::attach_at_stored_position(this, 0x80020);
+      list->Dialog::field_B4_ = 0;
+      list->ListBox::attach(this, list->Dialog::window_x_, list->Dialog::window_y_, 0x80020);
       list_box_.set_selected_pos(0, 1);
       list_box_.show(0);
     }
-
     field_2144_ = -1;
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x424));
-    strcat(StringTemp, ":"); strcat(StringTemp, " ");
-    strcat(StringTemp, " ");
-    _itoa(get_rating(book, PlayersData[book].unk_107), number, 10);
+    strcat(StringTemp, ":");
+    strcat(StringTemp, BufferJoinSpace);
+    strcat(StringTemp, BufferJoinSpace);
+    const int rating = get_rating(ConsoleGlobal.faction_id_,
+                                  PlayersData[ConsoleGlobal.faction_id_].unk_107);
+    _itoa(rating, number, 10);
     strcat(StringTemp, number);
     strcat(StringTemp, "%");
-    canvas->set_font(ReportIfGlobal.field_1E1B0_, 0, 0, 0);
-    canvas->set_text_color(0x9B, -1, 1, 1);
-    canvas->restore_clip();
-    canvas->write_l(StringTemp, &rating_rect_,
-                    static_cast<unsigned int>(strlen(StringTemp)));
+    set_font(ReportIfGlobal.field_1E1B0_, 0, 0, 0);
+    set_text_color(0x9B, -1, 1, 1);
+    restore_clip();
+    write_l(StringTemp, &rating_rect_);
     pages_button_.hide();
-    chapter_button_.show(1);
-  } else {
-    list_box_.close();
-    canvas->set_clip(&introduction_rect_);
-    if (Language == 0) {
-      parse_it("Holobook", "BOOKINTRO");
-    } else {
-      temporary[0] = 0;
-      strcat(temporary, "BOOKLIST"); _itoa(chapter, number, 10);
-      strcat(temporary, number);
-      GenderDefault = Players[book].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(0, Players[book].title_leader,
-                 Players[book].is_leader_female, -1);
-      GenderDefault = Players[book].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(1, Players[book].name_leader,
-                 Players[book].is_leader_female, -1);
-      parse_it("Holobook", temporary);
-    }
-    canvas->wrap_cent(StringTemp, introduction_rect_.left, introduction_rect_.top,
-                      introduction_rect_.right - introduction_rect_.left);
-      canvas->restore_clip();
-    StringTemp[0] = 0;
-    strcat(StringTemp, "artbox"); _itoa(chapter, number, 10);
-    strcat(StringTemp, number); strcat(StringTemp, ".pcx");
-    local_buffer.load_pcx(StringTemp, 0, 10, 0xEC);
-    local_buffer.draw(canvas, 9, illustration_rect_.left, illustration_rect_.top);
-    if (chapter == 1) {
-      RECT &facts = text_scratch_rect_;
-      facts.left = window_rect_.left + 0x15B; facts.top = window_rect_.top + 0x1F6;
-      facts.right = window_rect_.left + 0x2E2; facts.bottom = window_rect_.top + 0x21C;
-      canvas->set_clip(&illustration_rect_);
-      StringTemp[0] = 0;
-      GenderDefault = Players[book].is_leader_female;
-      PluralityDefault = 0;
-      strcat(StringTemp, Players[book].title_leader);
-      strcat(StringTemp, " ");
-      PluralityDefault = 0;
-      GenderDefault = Players[book].is_leader_female;
-      strcat(StringTemp, Players[book].name_leader);
-      canvas->set_font(ReportIfGlobal.field_1E1AC_, 0, 0, 0);
-      canvas->set_text_color(0x45, -1, 1, 1);
-      canvas->write_cent_l(StringTemp, &facts, static_cast<unsigned int>(strlen(StringTemp)));
-      canvas->restore_clip();
-    } else if (chapter == 2) {
-      RECT &facts = text_scratch_rect_;
-      facts.left = window_rect_.left + 0x136; facts.top = window_rect_.top + 0x1A5;
-      facts.right = window_rect_.left + 0x301; facts.bottom = window_rect_.top + 0x1D7;
-      canvas->set_clip(&illustration_rect_);
-      StringTemp[0] = 0;
-      GenderDefault = Players[book].is_leader_female;
-      PluralityDefault = 0;
-      strcat(StringTemp, Players[book].title_leader);
-      strcat(StringTemp, " ");
-      PluralityDefault = 0;
-      GenderDefault = Players[book].is_leader_female;
-      strcat(StringTemp, Players[book].name_leader);
-      canvas->set_font(ReportIfGlobal.field_1E1B8_, 0, 0, 0);
-      canvas->set_text_color(0x45, -1, 1, 1);
-      canvas->write_cent_l(StringTemp, &facts, static_cast<unsigned int>(strlen(StringTemp)));
-      canvas->restore_clip();
-    } else if (chapter == 8) {
-      RECT &facts = text_scratch_rect_;
-      facts.left = window_rect_.left + 0x13C; facts.top = window_rect_.top + 0x1DF;
-      facts.right = window_rect_.left + 0x2FD; facts.bottom = window_rect_.top + 0x233;
-      canvas->set_clip(&illustration_rect_);
-      StringTemp[0] = 0;
-      PluralityDefault = 0;
-      GenderDefault = Players[book].is_leader_female;
-      strcat(StringTemp, Players[book].title_leader);
-      strcat(StringTemp, " ");
-      PluralityDefault = 0;
-      GenderDefault = Players[book].is_leader_female;
-      strcat(StringTemp, Players[book].name_leader);
-      canvas->set_font(ReportIfGlobal.field_1E1B8_, 0, 0, 0);
-      canvas->set_text_color(0x5E, -1, 1, 1);
-      canvas->wrap_cent(StringTemp, &facts);
-      canvas->restore_clip();
-    }
-    chapter_button_.hide();
-    pages_button_.show(1);
+    chapter_button_.show(0);
   }
-  }
-  strings.remove_all();
 }
 
 // Promoted historical seed; its superseded source path is Git provenance only.
@@ -453,8 +452,7 @@ extern "C" void __cdecl sub_496610(int page) {
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 00496670; retained seed src/unrecovered/00496670.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations."}
 #pragma optimize("y", off)
 void __cdecl quayle(int faction_id) {
-  int score = PlayersData[faction_id].unk_107;
-  int rating = get_rating(faction_id, score);
+  int rating = get_rating(faction_id, PlayersData[faction_id].unk_107);
   int rank = 0;
   for (int step = 2; step - 2 < 0x18; ++step) {
     if (rating < (step * step) / 2) break;
