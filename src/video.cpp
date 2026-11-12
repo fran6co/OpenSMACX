@@ -20,8 +20,11 @@ const char video_read_frame_still_name[] = "read_frame()";
 }
 // RECOVERY_IMPORT: v1 __imp__ICClose@4 MSVFW32.dll name:ICClose
 // RECOVERY_IMPORT: v1 __imp__ICOpen@12 MSVFW32.dll name:ICOpen
+// RECOVERY_IMPORT: v1 __imp__mmioAscend@12 WINMM.dll name:mmioAscend
 // RECOVERY_IMPORT: v1 __imp__mmioDescend@16 WINMM.dll name:mmioDescend
+// RECOVERY_IMPORT: v1 __imp__mmioOpenA@12 WINMM.dll name:mmioOpenA
 // RECOVERY_IMPORT: v1 __imp__mmioSeek@12 WINMM.dll name:mmioSeek
+// RECOVERY_IMPORT: v1 __imp__mmioSetBuffer@16 WINMM.dll name:mmioSetBuffer
 
 // Real source-owned storage; original allocation extents beyond the observed
 // API spans are unknown. No executable-address aliases or pointer stand-ins.
@@ -273,11 +276,10 @@ int Video::advance_frame() {
       VideoAudioBufferRecord *const record = static_cast<VideoAudioBufferRecord *>(
           sound_state_.acquire_audio_buffer(static_cast<int>(child_chunk_.cksize)));
       if (record != 0) {
-        const int byte_count = static_cast<int>(child_chunk_.cksize);
-        if (byte_count != mmioRead(media_file_,
-                                   reinterpret_cast<HPSTR>(record->data),
-                                   byte_count)) goto fail;
-        record->end = record->data + byte_count;
+        if (static_cast<LONG>(child_chunk_.cksize) !=
+            mmioRead(media_file_, reinterpret_cast<HPSTR>(record->data),
+                     child_chunk_.cksize)) goto fail;
+        record->end = record->data + child_chunk_.cksize;
         sound_state_.submit_audio_buffer(record);
       } else {
         log_say("No mmio!!!",
@@ -445,8 +447,9 @@ int Video::decode_frame(int destination_index) {
 // ORIGINAL: 0x00637D70 ?play_frame@Video@@QAEHXZ 0x00637D70-0x0063808D FILE
 // symbol    ?play_frame@Video@@QAEHXZ
 // TRIED: prologue register order (large 797-byte function, many branches); landed as a structural transcription rather than chasing every register-allocation choice. Div-by-1000 modelled as plain unsigned int/1000 (VC6's own reciprocal-multiply idiom), not the 64-bit division Ghidra's decompile implied.
-// REWRITTEN 2026-11-07 from the image block order (0.992): the remaining
-//        diff is ecx vs eax for the merged `flags_ &= ~0x1000` temporaries.
+// REWRITTEN 2026-11-07 from the image block order. The queued-frame and
+//        key-frame arms each end in their own `flags_ &= ~0x1000;
+//        decode_frame(0);` which VC6 cross-jumps (ecx temporary at 0x00637FA9).
 int Video::play_frame() {
   int current_frame;
   if ((flags_ & 0x10) != 0) goto finish;
@@ -469,6 +472,8 @@ int Video::play_frame() {
     if (current_frame == target_frame_ + 1) {
       if (frame_queue_.count() != 0) {
         flags_ &= 0xFFFFEFFFU;
+        decode_frame(0);
+        goto finish;
       } else {
         read_frame();
         flags_ &= 0xFFFFEFFFU;
@@ -509,6 +514,8 @@ int Video::play_frame() {
           }
         }
         flags_ &= 0xFFFFEFFFU;
+        decode_frame(0);
+        goto finish;
       }
     }
     decode_frame(0);
@@ -870,8 +877,7 @@ int Video::load(char *filename, int unused) {
   frame_index_table_ = static_cast<AVIINDEXENTRY *>(mem_get(chunk.cksize));
   if (frame_index_table_ == 0) {
     status = 4;
-    close();
-    return status;
+    goto fail;
   }
   if (static_cast<LONG>(chunk.cksize) != mmioRead(media_file_, reinterpret_cast<HPSTR>(frame_index_table_), chunk.cksize)) goto fail;
   current_index_record_ = frame_index_table_;
@@ -899,10 +905,12 @@ int Video::load(char *filename, int unused) {
     width = rect.right - rect.left;
     height = rect.bottom - rect.top;
   }
-  status = output_buffer_.init(width, height, 0, 0);
-  if (status != 0) {
-    close();
-    return status;
+  {
+    const int result = output_buffer_.init(width, height, 0, 0);
+    if (result != 0) {
+      status = result;
+      goto fail;
+    }
   }
   if (decode_output_ != 0) output_buffer_.sync_to_palette(PaletteActive);
   if (decode_source_ != 0) decode_source_->copy(&output_buffer_, 0, 0, width, height);
