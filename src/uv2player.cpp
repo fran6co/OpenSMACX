@@ -235,6 +235,7 @@ Return Value: 0 after surface clearing; 1 for early/attached-surface failure;
 Status: Coverage transcription - unclaimed body, seed
         git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004bf4b0.cpp retained.
 */
+#pragma function(memset)
 int UV2Player::play(int width, int height) {
     // Native ESI points to the member slot (+0x10C), not a cached interface.
     // Reload across mode retries and surface callbacks: COM calls may rebind it.
@@ -307,6 +308,7 @@ int UV2Player::play(int width, int height) {
                           DDBLT_WAIT | DDBLT_COLORFILL, &effects);
     return 0;
 }
+#pragma intrinsic(memset)
 
 // ORIGINAL: 0x004BEF00 ?UNK3@UV2Player@@QAEXXZ 0x004BEF00-0x004BF380;0x00659D00-0x00659D55
 // RECOVERY_BINDING: v1 {"evidence": ["task:uv2player-complete-owner-recovery", "Pinned4BEF00-4BF380 and659D00-659D55; exec4BED47 calls this only when quit8CC250 is clear", "4BEF42-4BEF71 captures allocation owner before StringList construction; native cleanup restores it after derived/base list teardown", "4BF07B-4BF0AE parses left,top,width,height;4BF1C8-4BF20F centers text vertically with signed division", "4BF11D-4BF147 borrows primary surface and clipper via stack ExtDirectDraw;4BF1F0/4BF21A install/clear cdecl writer callback", "Literal687AC0 is movlist; help pointer691B00 is source-owned DatalinkHelpFile", "historical seed:src/recovered/units/004bef00.cpp"], "reason": "Recover the post-play MOVLIST presentation as a real UV2Player member, using Font array lifetime, genuine StringList and outer allocation-base lifetime, source-owned help-file storage and Buffer callback. Preserve original main and cleanup spans; no matching or game acceptance claim is granted."}
@@ -321,10 +323,12 @@ void UV2Player::show_post_movie_text() {
     int color_third[3];
     int color_fourth[3];
 
-    StringAllocationBase allocator_scope;
     StringList help_lines;
 
-    if (text_open("movlist", movie_name_) == 0) {
+    if (text_open("movlist", movie_name_) != 0) {
+        return;
+    }
+    {
         for (int index = 0; index < 3; ++index) {
             font_names[index][0] = '\0';
             text_get();
@@ -359,6 +363,8 @@ void UV2Player::show_post_movie_text() {
         LPSTR help_line = text_get();
 
         help_lines.remove_all();
+        help_lines.current_position_ = 0;
+        help_lines.allocator_ = 0;
         while (help_line != 0 && help_line[0] != '\0') {
             if (help_line[0] == '@') {
                 help_lines.load(DatalinkHelpFile, help_line + 1, 0, 0);

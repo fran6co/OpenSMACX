@@ -353,7 +353,7 @@ int __cdecl release_sound() {
 // game was built with, a real `mov eax,1 / ret` recovered under its own name.
 extern "C" int __cdecl sound_header_version();
 // sound_version_warning is homed below, under its own marker in this file.
-extern "C" void __cdecl sound_version_warning(const char *text, const char *caption);
+void __cdecl sound_version_warning(const char *text, const char *caption);
 
 // The module handle and the version slot are sound.h's SoundDllModule and
 // SoundDllProcs[10]. The three kernel32 entrypoints are direct API calls:
@@ -5209,21 +5209,10 @@ Purpose: The sound-DLL version complaint box. load_sound_dll shows it through
          header files used by jackal do not match..."). One BasePop local
          carries the whole 0x3230-byte frame, built by the real constructor
          and torn down by the real destructor; the two copies of the caller's
-         strings are the 0x100/0xe0 buffers the frame sits beside.
+         strings are the two 0x100 buffers the frame sits beside. It has C++
+         linkage: an extern "C" definition loses the EH frame entirely.
 // ORIGINAL: 0x004C9080 sub_4c9080 0x004C9080-0x004C92CF;0x00659FF2-0x0065A090 FILE
-// symbol    _sound_version_warning
-// TRIED: the teardown tail is ~BasePop's INLINE EXPANSION - the image's
-// compiler ran the destructor body at the destruction site (staged-vtable
-// refreshes, then Spot/Dialogs/Dialog/both StringStructs/both FlatButtons/
-// Heap/GraphicWin in reverse order) under the fs:[0] frame - so this body
-// cannot go BYTE_EXACT until ~BasePop is spellable where VC6 inlines it,
-// which is the BasePop class pass. Landed as the real-locals spelling: the
-// same constructor, strings, start/exec sequence, and one call to the
-// ~BasePop forwarder instead of the expansion. The flat-buffer transcription
-// (the retired src/unrecovered/004c9080.cpp) reproduced the tail op-by-op
-// with reinterpret_casts but wore the scaffold style and lost the SEH
-// prologue; it stays in git history as the byte map of what the expansion
-// must produce.
+// symbol    ?sound_version_warning@@YAXPBD0@Z
 // size      749 bytes
 // prototype
 // callers   1   call targets   16
@@ -5233,15 +5222,16 @@ Purpose: The sound-DLL version complaint box. load_sound_dll shows it through
 Return Value: none
 Status: Complete
 */
-extern "C" void __cdecl sound_version_warning(const char *text, const char *caption) {
+void __cdecl sound_version_warning(const char *text, const char *caption) {
     BasePop popup;
     char message[0x100];
     strcpy(message, text);
-    char caption_buffer[0xe0];
+    char caption_buffer[0x100];
     strcpy(caption_buffer, caption);
-    if (popup.start(const_cast<char *>("jackal"),
-                    "VERSIONCHECK_SOUND_HEADER", -1, nullptr, 0,
-                    nullptr) == 0) {
+    const int started = popup.start(const_cast<char *>("jackal"),
+                                    "VERSIONCHECK_SOUND_HEADER", -1, nullptr, 0,
+                                    nullptr);
+    if (started == 0) {
         popup.exec(0, 0);
     }
 }

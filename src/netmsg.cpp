@@ -31,6 +31,8 @@
 // ORIGINAL: 0x0047A7C0 _$E24 0x0047A7C0-0x0047A7CA FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x68255c selects original initializer0x47a7a0..0x47a7bc, registering fini0x47a7c0..0x47a7ca; complete independent decode establishes exclusive boundaries.", "Source-owned object?NetMsgSecondary@@3VNetMsg@@A identifies original storage0x7fff80. Startup arguments/calls: push 1; push 0x28; push -5; call 0x47acf0; push 0x47a7c0. Cleanup receiver/calls: mov ecx, 0x7fff80; jmp 0x47ada0. Constructor/destructor targets retain their existing class-owned source mappings.", "Fresh physical src/netmsg.cpp COFF selects _$E26 through .CRT$XCU and registers _$E24, both referencing the genuine source global. Original NetMsg argument triples and implicit PlanWin/Console most-derived flags are preserved by the existing declarations; complete virtual-base teardown is compiler-owned, not authored offsets.", "Current local helper symbols interpret present emission, not original debug names or historical TU boundaries. Object starts do not prove allocation extents. This binding establishes neither cross-TU global order, masked-reference correctness, strict linked preservation, dependency-provider equivalence nor runtime/game acceptance; excluded guarded sprite cleanup remains separate."], "reason": "Bind original exit identity to the genuine compiler-generated lifetime of ?NetMsgSecondary@@3VNetMsg@@A in its actual source owner; no manual lifecycle callback is authored."}
 // symbol    _$E19
+// WORKAROUND(decl): implicit ~NetMsg; see netmsg.h.
+#define NETMSG_IMPLICIT_DTOR
 #include "stdafx.h"
 #include "netmsg.h"
 #include "spritebox.h"
@@ -172,10 +174,7 @@ NetMsg NetMsgSecondary(-5, 40, 1);
 // ORIGINAL: 0x0047ADA0 ??1NetMsg@@QAE@XZ 0x0047ADA0-0x0047AFD2;0x00656460-0x0065654F
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0047ada0.cpp"], "reason": "Complete genuine NetMsg owner implementation replaces executable aliases/forwarders; original seed establishes catalogue identity and spans, native emitted symbols are separately recorded. Full private application compile/link and both native flag sets checked; preserve seed and historical claims, no exactness granted by binding."}
 // symbol    ??1NetMsg@@UAE@XZ
-NetMsg::~NetMsg() {
-    // Time is destroyed before the Popup base. Popup::~Popup calls close(),
-    // then normal C++ member/base teardown handles Scroll and BasePop.
-}
+// The destructor is compiler-generated: Time, then Popup and its members.
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0047A890 ?pop@NetMsg@@QAEXPBDHHPBD@Z 0x0047A890-0x0047ACE3;0x00656550-0x0065664C

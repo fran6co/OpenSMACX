@@ -179,38 +179,15 @@ int ImageButton::init(Sprite *sprite, LPCSTR name, int id, int x, int y,
     return BaseButton::init(name, id, x, y, width, height, parent, style_flag);
 }
 
-// Original 6253D0 paints through the inherited Buffer. Centers are defined
-// only when a Sprite exists at the centering step; a later null-to-nonnull
-// replacement during bevel drawing exposes uninitialized coordinates in the
-// original too. No zero-center behavior is invented here.
-namespace {
-int image_button_paint_signed(uint32_t value) {
-    return value <= 0x7fffffffU
-        ? static_cast<int>(value)
-        : -1 - static_cast<int>(~value);
-}
-
-int image_button_paint_add(int left, int right) {
-    return image_button_paint_signed(static_cast<uint32_t>(left) +
-                                     static_cast<uint32_t>(right));
-}
-
-int image_button_paint_sub(int left, int right) {
-    return image_button_paint_signed(static_cast<uint32_t>(left) -
-                                     static_cast<uint32_t>(right));
-}
-
-int image_button_paint_half(int value) {
-    // SAR by one, including negative odd dimensions; not truncation to zero.
-    return value >> 1;
-}
-
-void image_button_paint_inset(RECT *area) {
-    area->left = image_button_paint_add(area->left, 1);
-    area->right = image_button_paint_sub(area->right, 1);
-    area->top = image_button_paint_add(area->top, 1);
-    area->bottom = image_button_paint_sub(area->bottom, 1);
-}
+// WORKAROUND(inline): expand_rect (scroll.cpp) is out of line in this tree;
+// on_redraw expands its (-1, -1) form after each box (`++left; --right;
+// ++top; --bottom`), as PushButton::on_redraw does.
+static inline RECT *imagebutton_expand_rect(RECT *rect, int horizontal, int vertical) {
+    rect->left -= horizontal;
+    rect->right += horizontal;
+    rect->top -= vertical;
+    rect->bottom += vertical;
+    return rect;
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -218,98 +195,75 @@ void image_button_paint_inset(RECT *area) {
 // RECOVERY_BINDING: v1 {"evidence": ["Original ctor6252E8 installs Win table670A94; its slot12 at670AC4 selects6253D0. GraphicWin::redraw5D5A70 dispatches that slot. The slot-12 virtual now carries the original on_redraw name shared with Dialog slot2 (journal events 134/138), so this override dispatches under the image's own spelling; pending MapWin/PlanWin receiver restoration is unchanged.", "Complete6253D0..6256CC uses HandleMain, WinCallbackWindow, PaletteActive, inherited Win parent, Buffer rect2 and BaseButton label/colors/state. Its second focus outline reloads A94 at625487; all box calls share one mutable local rectangle. Centering reads fresh rect2 after outlines; later draws reload sprite_ but retain those centers.", "Sprite displayed dimensions at18/1C determine centers while source pixel width10 determines horizontal scaling. Pressed state is selected once; bevel colors/thickness are live through box calls and text displacement reloads thickness after Sprite::draw. Signed wrapping arithmetic and arithmetic-half semantics are explicit.", "Preserve src/recovered/units/006253d0.cpp as seed evidence. The original null-at-centering then nonnull-at-draw condition exposes uninitialized coordinates; no zero-coordinate behavior is introduced. That pending behavior boundary, caption creation, remaining hierarchy and dependency runtime remain unproved."], "reason": "Recover the complete ImageButton painter as the genuine Win slot12 override, using existing borrowed Sprite and inherited button/Buffer state rather than raw offsets or image addresses."}
 // symbol    ?on_redraw@ImageButton@@UAEXXZ
 void ImageButton::on_redraw() {
-    if (!HandleMain || !win_parent_) {
+    if (HandleMain == 0 || win_parent_ == 0) {
         return;
     }
     WinCallbackWindow = win_parent_;
-    Buffer::sync_to_palette(PaletteActive);
-    RECT area = rect2_;
-    GraphicWin::fill(image_button_paint_signed(color_));
+    sync_to_palette(PaletteActive);
+    RECT *const working = buffer_working_rect();
+    RECT rectangle = *working;
+    fill(static_cast<int>(color_));
 
-    int layers = 0;
-    const int first_outline = image_button_paint_signed(field_A94_);
-    if (first_outline != -1) {
-        Buffer::box(&area, first_outline, first_outline);
-        image_button_paint_inset(&area);
-        if (is_dialog_focus()) {
-            const int focused_outline = image_button_paint_signed(field_A94_);
-            Buffer::box(&area, focused_outline, focused_outline);
-            image_button_paint_inset(&area);
-            layers = 1;
+    int bevel_count = 0;
+    if (field_A94_ != 0xFFFFFFFFU) {
+        box(&rectangle, static_cast<int>(field_A94_), static_cast<int>(field_A94_));
+        imagebutton_expand_rect(&rectangle, -1, -1);
+        if (is_dialog_focus() != 0) {
+            box(&rectangle, static_cast<int>(field_A94_),
+                static_cast<int>(field_A94_));
+            imagebutton_expand_rect(&rectangle, -1, -1);
+            bevel_count = 1;
         }
     }
 
-    int center_x;
-    int center_y;
-    Sprite *const centering_sprite = sprite_;
-    if (centering_sprite) {
-        const int thickness = image_button_paint_signed(bevel_thickness_);
-        center_x = image_button_paint_half(image_button_paint_sub(
-            image_button_paint_sub(image_button_paint_sub(
-                rect2_.right, centering_sprite->width()), thickness),
-            rect2_.left));
-        center_y = image_button_paint_half(image_button_paint_sub(
-            image_button_paint_sub(image_button_paint_sub(
-                rect2_.bottom, centering_sprite->height()), rect2_.top),
-            thickness));
+    // Centers are computed only when a sprite is present here; a sprite
+    // installed later during the bevel loop draws at uninitialized
+    // coordinates in the original too.
+    int x;
+    int y;
+    if (sprite_ != 0) {
+        x = (working->right - sprite_->width() - static_cast<int>(bevel_thickness_)
+             - working->left) >> 1;
+        y = (rect2_.bottom - sprite_->height() - rect2_.top
+             - static_cast<int>(bevel_thickness_)) >> 1;
     }
 
-    // The pressed branch is selected once, but colors and thickness remain
-    // live across every box call. The first optional outline did not count
-    // toward thickness; only the extra focus outline starts layers at one.
-    const uint32_t pressed = field_A9C_;
-    if (!pressed) {
-        while (layers < image_button_paint_signed(bevel_thickness_)) {
-            Buffer::box(&area, image_button_paint_signed(bevel_upper_),
-                        image_button_paint_signed(bevel_lower_));
-            image_button_paint_inset(&area);
-            layers = image_button_paint_add(layers, 1);
+    if (field_A9C_ == 0) {
+        while (bevel_count < static_cast<int>(bevel_thickness_)) {
+            box(&rectangle, static_cast<int>(bevel_upper_),
+                static_cast<int>(bevel_lower_));
+            imagebutton_expand_rect(&rectangle, -1, -1);
+            ++bevel_count;
         }
-        Sprite *const drawn_sprite = sprite_;
-        if (drawn_sprite) {
-            int denominator = drawn_sprite->source_width();
-            int numerator = image_button_paint_sub(area.right, area.left);
-            int x = center_x;
-            int y = center_y;
-            if (numerator < denominator) {
-                drawn_sprite->draw(this, drawn_sprite->transparent_index(),
-                                   x, y, numerator, denominator);
+        if (sprite_ != 0) {
+            const int width = rectangle.right - rectangle.left;
+            if (width < sprite_->source_width()) {
+                sprite_->draw(this, sprite_->transparent_index(), x, y, width,
+                              sprite_->source_width());
             } else {
-                drawn_sprite->draw(this, drawn_sprite->transparent_index(),
-                                   x, y, 1, 1);
+                sprite_->draw(this, sprite_->transparent_index(), x, y, 1, 1);
             }
         }
     } else {
-        while (layers < image_button_paint_signed(bevel_thickness_)) {
-            Buffer::box(&area, image_button_paint_signed(bevel_lower_),
-                        image_button_paint_signed(bevel_upper_));
-            image_button_paint_inset(&area);
-            layers = image_button_paint_add(layers, 1);
+        while (bevel_count < static_cast<int>(bevel_thickness_)) {
+            box(&rectangle, static_cast<int>(bevel_lower_),
+                static_cast<int>(bevel_upper_));
+            imagebutton_expand_rect(&rectangle, -1, -1);
+            ++bevel_count;
         }
-        Sprite *const drawn_sprite = sprite_;
-        if (drawn_sprite) {
-            int denominator = drawn_sprite->source_width();
-            const int thickness = image_button_paint_signed(bevel_thickness_);
-            int numerator = image_button_paint_sub(
-                image_button_paint_sub(area.right, thickness), area.left);
-            int x = image_button_paint_add(center_x, thickness);
-            int y = image_button_paint_add(center_y, thickness);
-            if (numerator >= denominator) {
-                numerator = 1;
-                denominator = 1;
+        if (sprite_ != 0) {
+            const int width = rectangle.right - bevel_thickness_ - rectangle.left;
+            if (width < sprite_->source_width()) {
+                sprite_->draw(this, sprite_->transparent_index(),
+                              x + bevel_thickness_, y + bevel_thickness_, width,
+                              sprite_->source_width());
+            } else {
+                sprite_->draw(this, sprite_->transparent_index(),
+                              x + bevel_thickness_, y + bevel_thickness_, 1, 1);
             }
-            drawn_sprite->draw(this, drawn_sprite->transparent_index(),
-                               x, y, numerator, denominator);
         }
-        // Fresh read after drawing, not the thickness used for the sprite.
-        const int thickness = image_button_paint_signed(bevel_thickness_);
-        area.left = image_button_paint_add(area.left, thickness);
-        area.right = image_button_paint_add(area.right, thickness);
-        area.top = image_button_paint_add(area.top, thickness);
-        area.bottom = image_button_paint_add(area.bottom, thickness);
+        offset_rect(&rectangle, bevel_thickness_, bevel_thickness_);
     }
-    LPSTR const text = name_;
-    if (text) {
-        Buffer::write_cent_l(text, &area, static_cast<int>(strlen(text)));
-    }
+
+    write_cent_l(name_, &rectangle);
 }

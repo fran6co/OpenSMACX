@@ -7664,9 +7664,9 @@ void __cdecl base_support() {
                 int support = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::SUPPORT];
                 if ((int)BaseCurrentForcesSupported > free_support[range(support + 4, 0, 7)]
                     && !has_abil(Vehs[veh_id].proto_id, ABL_CLEAN_REACTOR)) {
-                    BaseCurrentForcesMaintCount++;
-                    Vehs[veh_id].state |= VSTATE_REQUIRES_SUPPORT;
                     BaseCurrentForcesMaintCost += (support <= -4) + 1;
+                    Vehs[veh_id].state |= VSTATE_REQUIRES_SUPPORT;
+                    BaseCurrentForcesMaintCount++;
                 }
             }
             // Cost of this unit at each of the eight SUPPORT ratings, for social_ai.

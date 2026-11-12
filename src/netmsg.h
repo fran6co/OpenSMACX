@@ -40,8 +40,14 @@
 class NetMsg : public Popup {
  public:
   NetMsg(int a1, int a2, int a3);
-  // Actual C++ member/base teardown, implemented in netmsg.cpp.
+  // WORKAROUND(decl): the image's ??1NetMsg (0x0047ADA0) is compiler-generated:
+  // it stages no NetMsg tables before Time and Popup teardown, which a
+  // user-declared destructor (even an empty one) always does. netmsg.cpp, the
+  // emitting unit, defines NETMSG_IMPLICIT_DTOR; other includers keep the
+  // declaration until the header is reconciled.
+#ifndef NETMSG_IMPLICIT_DTOR
   ~NetMsg();
+#endif
   void close();
   // No out-of-line copy exists in the image; its callers expand it.
   // WORKAROUND(decl): only TUs defining NETMSG_IS_ACTIVE_INLINE see the body.

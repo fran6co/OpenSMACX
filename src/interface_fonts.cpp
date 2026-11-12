@@ -69,11 +69,11 @@ Font *__cdecl find_font(int size, int style) {
     int best_delta = 9999;
     for (size_t index = 0; index < FontSizeTableCount; ++index) {
         const int candidate = FontSizeTable[index];
-        // Absolute difference, branching on sign exactly as the legacy body.
+        // Absolute difference, branching on sign. The unbraced arm is the
+        // spelling whose /Ob2 cost lets config_popups expand ten of its
+        // searches (the braced form left the tenth, (16, 0), a call).
         int delta = candidate - size;
-        if (delta < 0) {
-            delta = size - candidate;
-        }
+        if (delta < 0) delta = size - candidate;
         if (delta < best_delta) {
             best_delta = delta;
             best_index = static_cast<int>(index);
