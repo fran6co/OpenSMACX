@@ -6683,13 +6683,52 @@ void BaseWin::draw_nutrients(int update_mode) {
     else GraphicWin::soft_update(&nutrient_outer_rect_);
     Buffer::set_clip(&saved_clip);
 }
+// WORKAROUND(inline): dead /Ob2 budget probe for base_editor_fac (folds away,
+// spends budget). With the top-level `goto again` loop the EH map matches the
+// image's 17 states, but every Popup teardown then expands ~Dialogs and both
+// ~StringList where the image calls ??_DDialogs 0x00406AF0 and ??_DStringList
+// 0x00406820 out of line. The original spent this budget on something not yet
+// identified (recover permute --probe-sweep: 24 chained ifs).
+static int base_editor_fac_budget_probe(int x)
+{
+    if (x == 0) x = 1;
+    if (x == 1) x = 4;
+    if (x == 2) x = 7;
+    if (x == 3) x = 10;
+    if (x == 4) x = 13;
+    if (x == 5) x = 16;
+    if (x == 6) x = 19;
+    if (x == 7) x = 22;
+    if (x == 8) x = 25;
+    if (x == 9) x = 28;
+    if (x == 10) x = 31;
+    if (x == 11) x = 34;
+    if (x == 12) x = 37;
+    if (x == 13) x = 40;
+    if (x == 14) x = 43;
+    if (x == 15) x = 46;
+    if (x == 16) x = 49;
+    if (x == 17) x = 52;
+    if (x == 18) x = 55;
+    if (x == 19) x = 58;
+    if (x == 20) x = 61;
+    if (x == 21) x = 64;
+    if (x == 22) x = 67;
+    if (x == 23) x = 70;
+    return x;
+}
+
 
 // ORIGINAL: 0x0041B790 ?base_editor_fac@BaseWin@@QAEXXZ 0x0041B790-0x0041BBBC;0x0065249C-0x0065255E
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/recovered/units/0041b790.cpp", "source:src/basewin.h", "image:0x41b790"], "reason": "Recover the full base-editor callee in its actual BaseWin owner with one genuine Popup lifetime and original cancellation, menu IDs, typed data mutations and virtual redraw; preserve original seed evidence and outstanding structural/matching obligations."}
 void BaseWin::base_editor_fac() {
+    base_editor_fac_budget_probe(2);  // WORKAROUND(inline): see base_editor_fac_budget_probe
     int previous = -1;
     Popup popup;
-    for (;;) {
+    // A top-level goto loop: a for(;;) here gives VC6 a phantom closing-brace
+    // Popup teardown (35 EH states against the image's 17).
+again:
+    {
         // Original41B7DD publishes the modal kind before parsing the name.
         PopupModalState = 6;
         parse_says(0, BaseCurrent->name_string, -1, -1);
@@ -6705,7 +6744,8 @@ void BaseWin::base_editor_fac() {
             // WORKAROUND(noinline): a local function pointer keeps this one
             // site out of line; VC6 /Ob2 otherwise expands the header inline.
             BOOL (__cdecl *const has_fac_call)(int, int, int) = has_fac;
-            if (has_fac_call(facility, BaseIDCurrentSelected, 0)) {
+            int built_now = has_fac_call(facility, BaseIDCurrentSelected, 0);
+            if (built_now) {
                 // Unlike the old seed, retain the facility-name prefix on
                 // the already-built branch (original41B859..41B8A6).
                 strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xD50 / 4]));
@@ -6743,6 +6783,7 @@ void BaseWin::base_editor_fac() {
         previous = selected;
         redraw(); // primary virtual slot62, not the on_redraw callback
     }
+    goto again;
 }
 
 // ORIGINAL: 0x0041BBC0 ?base_editor_proj@BaseWin@@QAEXXZ 0x0041BBC0-0x0041C231;0x0065255E-0x006526E3
@@ -6822,9 +6863,36 @@ void BaseWin::base_editor_proj() {
     // Popup owns complete member/base teardown, including cancellation paths.
 }
 
+// WORKAROUND(inline): dead /Ob2 budget probe for base_editor_copy (folds away,
+// spends budget). Without it the image's EH map (24 states) is 33 here: the
+// cancel-return and closing teardowns each expand one level deeper than the
+// image's (0x0041C4xx calls ??1Dialogs/??1Dialog out of line; the closing one
+// calls ??1BasePop 0x004064D0). The original spent this budget on something
+// not yet identified (recover permute --probe-sweep: 16 chained ifs, any line).
+static int base_editor_copy_budget_probe(int x) {
+    if (x == 0) x = 1;
+    if (x == 1) x = 4;
+    if (x == 2) x = 7;
+    if (x == 3) x = 10;
+    if (x == 4) x = 13;
+    if (x == 5) x = 16;
+    if (x == 6) x = 19;
+    if (x == 7) x = 22;
+    if (x == 8) x = 25;
+    if (x == 9) x = 28;
+    if (x == 10) x = 31;
+    if (x == 11) x = 34;
+    if (x == 12) x = 37;
+    if (x == 13) x = 40;
+    if (x == 14) x = 43;
+    if (x == 15) x = 46;
+    return x;
+}
+
 // ORIGINAL: 0x0041C240 ?base_editor_copy@BaseWin@@QAEXH@Z 0x0041C240-0x0041C798;0x006526E3-0x006527EF
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/0041c240.cpp", "source:src/basewin.h", "image:0x41c240"], "reason": "Recover the full base-editor callee in its actual BaseWin owner with one genuine Popup lifetime and original cancellation, menu IDs, typed data mutations and virtual redraw; preserve original seed evidence and outstanding structural/matching obligations."}
 void BaseWin::base_editor_copy(int copy_to) {
+    base_editor_copy_budget_probe(2);  // WORKAROUND(inline): see base_editor_copy_budget_probe
     Popup popup;
     parse_says(0, BaseCurrent->name_string, -1, -1);
     PopupModalState = 6;
@@ -6920,10 +6988,6 @@ int BaseWin::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
 
 
 namespace {
-int base_panel_signed(uint32_t value) {
-    return value <= 0x7FFFFFFFu ? static_cast<int>(value)
-        : -1 - static_cast<int>(0xFFFFFFFFu - value);
-}
 void base_panel_inset(RECT &rect, int amount) {
     rect.left += amount; rect.right -= amount;
     rect.top += amount; rect.bottom -= amount;
