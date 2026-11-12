@@ -430,7 +430,8 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
                     from .associated_binary import compare_associated_code
                     proof = compare_associated_code(
                         obj, subject, span, image, associated, targets,
-                        eh_tail=layout[1][0] if len(layout) == 2 else None)
+                        eh_tail=layout[1][0] if len(layout) == 2 else None,
+                        eh_cold=layout[1][1] if len(layout) == 2 else None)
                 else:
                     proof = compare_bound_code(span, image.read(span), code, relocations, targets,
                                                original_absolute_sites=image.absolute_sites(span), alignment=alignment)

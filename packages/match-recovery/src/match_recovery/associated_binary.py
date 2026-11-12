@@ -19,6 +19,7 @@ from capstone import (
 
 from .associated_source import AssociatedDataBinding, validate_associated
 from .binary import AbsoluteConstant, BoundedTarget, CompilerArtifact, Relocation, RelocationKind, compare_bound_code
+from .callee_preservation import callee_preserves
 from .components import relative_path
 from .linked_fpo import validate_fpo_object
 from .model import Origin, Result, Span
@@ -466,8 +467,47 @@ def _edge_bounds(instructions, edges, position: int, kind: str):
     return []
 
 
+def _is_eh_registration_access(instruction) -> bool:
+    """`mov r32, fs:[0]` or `mov fs:[0], r32`: the VC6 EH list head only."""
+    if instruction.id != x86.X86_INS_MOV or len(instruction.operands) != 2:
+        return False
+    memory = [operand for operand in instruction.operands if operand.type == x86.X86_OP_MEM]
+    registers = [operand for operand in instruction.operands if operand.type == x86.X86_OP_REG]
+    if len(memory) != 1 or len(registers) != 1 or registers[0].size != 4:
+        return False
+    address = memory[0].mem
+    return (memory[0].size == 4 and address.segment == x86.X86_REG_FS
+            and not address.base and not address.index and address.disp == 0)
+
+
+def _call_step(instruction, locations: frozenset, image: PeImage | None, preserved: dict):
+    """Locations still holding their value after a direct CALL.
+
+    Only registers that `callee_preserves` proves the callee hands back
+    survive; EBP slots and every register of an unprovable call are killed.
+    """
+    target = _incoming_direct_target(instruction)
+    if image is None or target is None or instruction.bytes[0] != 0xE8:
+        return frozenset()
+    kept = set()
+    for location in locations:
+        if location[0] != "reg" or location[1] == "esp":
+            continue
+        key = (target, location[1])
+        if key not in preserved:
+            try:
+                callee_preserves(image, target, location[1])
+                preserved[key] = None
+            except ValueError as error:
+                preserved[key] = str(error)
+        if preserved[key] is None:
+            kept.add(location)
+    return frozenset(kept)
+
+
 def _path_bounded_dispatch(instructions, dispatch, index_family: str, span: Span,
-                           indirect_targets: frozenset[int]) -> dict:
+                           indirect_targets: frozenset[int], *,
+                           image: PeImage | None = None, eh_frame: bool = False) -> dict:
     """Bound a dispatch index on every modeled backward path.
 
     Each path from the indexed JMP back towards the entry tracks the set of
@@ -476,12 +516,26 @@ def _path_bounded_dispatch(instructions, dispatch, index_family: str, span: Span
     constant definition of that set or by an unsigned/equality branch edge
     whose `cmp` constrains a location equal to it. Reaching the function
     entry, a call edge into the body, or losing every tracked location
-    refuses. Calls and non-explicit memory writes kill every location they
-    can affect; callee-saved registers are not assumed preserved.
+    refuses. Non-explicit memory writes kill every location they can affect.
+    Calls kill every EBP slot; with the pinned `image`, a direct `call rel32`
+    keeps exactly the tracked registers that `callee_preserves` proves the
+    callee hands back unchanged (no callee-saved convention is assumed).
+
+    Segment-relative operands refuse, except that with `eh_frame` (the caller
+    proved a cleanup-only VC6 C++ EH frame: no try blocks, hence no catch
+    continuation into the body) the `fs:[0]` registration moves are admitted.
     """
     if any(operand.type == x86.X86_OP_MEM and operand.mem.segment != x86.X86_REG_INVALID
+           and not (eh_frame and _is_eh_registration_access(item))
            for item in instructions for operand in item.operands):
         raise ValueError("path-bounded index proof refuses segment-relative (EH/SEH) frames")
+    preserved: dict = {}
+
+    def step(item, locations):
+        if item.group(CS_GRP_CALL):
+            return _call_step(item, locations, image, preserved)
+        return _backward_step(item, locations)
+
     edges = _incoming_edges(instructions, span, indirect_targets)
     start = instructions.index(dispatch)
     stack = [(start, frozenset({("reg", index_family)}), frozenset())]
@@ -517,27 +571,36 @@ def _path_bounded_dispatch(instructions, dispatch, index_family: str, span: Span
             if value is not None:
                 bounds.add((item.address, kind, value))
                 continue
-            step = _backward_step(item, edge_tracked)
-            if type(step) is tuple:
-                bounds.add((item.address, "constant", step[1]))
+            tracked_step = step(item, edge_tracked)
+            if type(tracked_step) is tuple:
+                bounds.add((item.address, "constant", tracked_step[1]))
                 continue
-            if not step:
-                raise ValueError(f"dispatch index is not bounded on the path through {item.address:#x}")
+            if not tracked_step:
+                target = _incoming_direct_target(item) if item.group(CS_GRP_CALL) else None
+                unproved = sorted({reason for (callee, _), reason in preserved.items()
+                                   if callee == target and reason})
+                detail = f" ({'; '.join(unproved)})" if unproved else ""
+                raise ValueError(f"dispatch index is not bounded on the path through {item.address:#x}{detail}")
             next_facts = set()
             for locations, bound in edge_facts:
-                carried = _backward_step(item, locations)
+                carried = step(item, locations)
                 if type(carried) is not tuple and carried:
                     next_facts.add((carried, bound))
-            value = proved(step, next_facts)
+            value = proved(tracked_step, next_facts)
             if value is not None:
                 bounds.add((item.address, "fact", value))
                 continue
-            stack.append((predecessor, step, frozenset(next_facts)))
+            stack.append((predecessor, tracked_step, frozenset(next_facts)))
     if not bounds:
         raise ValueError("dispatch index has no modeled incoming path")
-    return {"kind": "path-bounded", "maximum_index": max(value for _, _, value in bounds),
-            "bounds": [{"address": address, "edge": kind, "maximum": value}
-                       for address, kind, value in sorted(bounds)]}
+    witness = {"kind": "path-bounded", "maximum_index": max(value for _, _, value in bounds),
+               "bounds": [{"address": address, "edge": kind, "maximum": value}
+                          for address, kind, value in sorted(bounds)]}
+    carried = sorted(key for key, reason in preserved.items() if reason is None)
+    if carried:
+        witness["preserving_callees"] = [{"callee": callee, "register": register}
+                                         for callee, register in carried]
+    return witness
 
 
 def _prove_dispatch_extent(instructions, body: Span, image: PeImage,
@@ -546,7 +609,7 @@ def _prove_dispatch_extent(instructions, body: Span, image: PeImage,
                            selector_binding: AssociatedDataBinding | None,
                            selector_instruction, selector_operand, *,
                            indirect_targets: frozenset[int] | None = None,
-                           path_proof: bool = False) -> dict:
+                           path_proof: bool = False, eh_frame: bool = False) -> dict:
     """Derive one table/map extent from its guard and preserved index flow.
 
     With `path_proof`, a direct-index table without one dominating guard may
@@ -566,7 +629,8 @@ def _prove_dispatch_extent(instructions, body: Span, image: PeImage,
             raise
         try:
             guard = _path_bounded_dispatch(instructions, table_instruction, index_family,
-                                           body, indirect_targets)
+                                           body, indirect_targets, image=image,
+                                           eh_frame=eh_frame)
         except ValueError as path_error:
             raise ValueError(f"{error}; {path_error}") from path_error
         if guard["maximum_index"] + 1 != table_count:
@@ -789,7 +853,7 @@ def _binding_witness(binding: AssociatedDataBinding) -> dict:
 def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeImage,
                             bindings: Sequence[AssociatedDataBinding],
                             targets: Mapping[str, int | AbsoluteConstant | BoundedTarget | CompilerArtifact],
-                            *, eh_tail: int | None = None) -> dict:
+                            *, eh_tail: int | None = None, eh_cold: Span | None = None) -> dict:
     """Compare one root code COMDAT and explicitly declared adjacent data.
 
     `span` remains the independently mapped function body. The comparison
@@ -801,6 +865,9 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
     this same function. It admits exactly that one associative code child and
     exactly one `.xdata$x` FuncInfo child; the caller compares the tail
     itself. Switch data still belongs only to the primary root body.
+    `eh_cold` is that tail's original span; when the pinned image proves it a
+    cleanup-only VC6 FuncInfo frame (no try blocks), the path-bounded index
+    proof may run over the EH-registering body.
     """
     if type(obj) is not Coff or type(subject) is not Symbol or type(image) is not PeImage:
         raise ValueError("associated proof requires native Coff, Symbol, and PeImage values")
@@ -1114,6 +1181,19 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
             for site in image.absolute_sites(span))
     except ValueError:
         address_taken = True
+    # A cleanup-only C++ EH frame never resumes inside the body: without try
+    # blocks the frame handler only runs the cold unwind actions and keeps
+    # unwinding. The narrow original EH proof establishes exactly that frame
+    # (registration chain, FuncInfo without try/IP/ES tables, no root edge
+    # into the cold region, no cleanup edge into the body).
+    eh_frame = False
+    if eh_tail is not None and eh_cold is not None:
+        from .source.eh_regions import original_eh_action_count
+        try:
+            original_eh_action_count(image, ((span.start, span.end), (eh_cold.start, eh_cold.end)))
+            eh_frame = True
+        except ValueError:
+            eh_frame = False
     dispatch_witnesses = []
     for table_row, selector_row in dispatch_rows:
         witness = _prove_dispatch_extent(
@@ -1121,7 +1201,8 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
             table_row[0], table_row[1], table_row[2],
             *(selector_row if selector_row is not None else (None, None, None)),
             indirect_targets=frozenset(indirect_targets),
-            path_proof=eh_tail is None and not address_taken)
+            path_proof=(eh_tail is None or eh_frame) and not address_taken,
+            eh_frame=eh_frame)
         dispatch_witnesses.append(witness)
 
     def report(proof, *, candidate_layout_unproven=False):
