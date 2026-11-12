@@ -557,18 +557,20 @@ extern "C" void __cdecl sub_5cd560(
 // the CreateSurface path (the old body had them swapped); the fill colour is
 // 1; the FourCC array and CreateSurface descriptor stay uninitialized; the
 // case-3 scale is (first + phase / 14) with no weight term; kinds 5-7 pass
-// the packet and surface base unadjusted. Left: frame layout and register
-// choice (diagnostic 0.91).
+// the packet and surface base unadjusted. The image keeps every Lock tail
+// separate (no cross-jumping), so the three assignment tails are spelled
+// differently; fourcc_count/created are block locals sharing frame slots
+// with case 3's step/row_phase; the scale table uses a linear subscript.
+// Left: surface/alternate frame slots swapped, the 0x08000000 Lock path's
+// duplicated assignment tail, and the case-3 register choice (0.95).
 extern "C" void __fastcall sub_5cc940(MediaRuntime *runtime,
                                      MediaQueueRecord *record) {
   // Native callers 5CABE8/5CAC11/5CB460/5CB489 do not consume EAX.
   BYTE *packet = record->payload;
   const DWORD record_kind = record->field_0c;
-  BYTE *surface = 0;
   BYTE *alternate = 0;
+  BYTE *surface = 0;
   DWORD pitch; // the image leaves it unset for other queue kinds
-  DWORD fourcc_count;
-  IDirectDrawSurface *created;
   RECT fill_rectangle;
   DWORD fourcc_codes[64]; // not cleared by the original
   DDBLTFX fill_effects;
@@ -607,7 +609,8 @@ extern "C" void __fastcall sub_5cc940(MediaRuntime *runtime,
   runtime->output_rect_extent_0c = runtime->descriptor->output_width_64;
   runtime->output_rect_height_10 = runtime->descriptor->output_height_60;
   if ((runtime->descriptor->flags & 0x40) != 0) runtime->output_rect_extent_0c <<= 1;
-  if ((runtime->descriptor->flags & 0x30) != 0) runtime->output_rect_height_10 <<= 1;
+  if ((runtime->descriptor->flags & 0x10) != 0 || (runtime->descriptor->flags & 0x20) != 0)
+    runtime->output_rect_height_10 <<= 1;
   if ((runtime->descriptor->flags & 0x04) != 0)
     runtime->output_rect_left_14 =
         (int)(runtime->surface_width_004 - runtime->output_rect_extent_0c) >> 1;
@@ -624,39 +627,43 @@ extern "C" void __fastcall sub_5cc940(MediaRuntime *runtime,
     runtime->output_rect_height_10 = runtime->descriptor->geometry_height_override_74;
 
   if ((runtime->descriptor->flags & 0x800) == 0) {
+    DWORD fourcc_count;
+    IDirectDrawSurface *created;
     fourcc_count = 0x40;
     if ((runtime->descriptor->flags & 0x400) != 0) {
       if (runtime->queue_record_kind != 1 && runtime->descriptor->surface_1c == 0) {
         if (runtime->descriptor->draw_device_10->GetFourCCCodes(
-                &fourcc_count, fourcc_codes) != DD_OK) {
-          runtime->queue_record_kind = 1;
-        } else if (runtime->queue_record_kind == 4) {
-          if (sub_5cdad0(runtime->descriptor->draw_device_10,
-                         &runtime->descriptor->surface_1c,
-                         (int)runtime->descriptor->output_width_64,
-                         (int)runtime->descriptor->output_height_60,
-                         0x32595559) != 0)
+                &fourcc_count, fourcc_codes) == DD_OK) {
+          if (runtime->queue_record_kind == 4) {
+            if (sub_5cdad0(runtime->descriptor->draw_device_10,
+                           &runtime->descriptor->surface_1c,
+                           (int)runtime->descriptor->output_width_64,
+                           (int)runtime->descriptor->output_height_60,
+                           0x32595559) != 0)
+              runtime->queue_record_kind = 1;
+          } else if (sub_5cc860(runtime->descriptor->draw_device_10,
+                                &runtime->descriptor->surface_1c,
+                                (int)runtime->descriptor->output_width_64,
+                                (int)runtime->descriptor->output_height_60,
+                                0x32595559) != 0) {
             runtime->queue_record_kind = 1;
-        } else if (sub_5cc860(runtime->descriptor->draw_device_10,
-                              &runtime->descriptor->surface_1c,
-                              (int)runtime->descriptor->output_width_64,
-                              (int)runtime->descriptor->output_height_60,
-                              0x32595559) != 0) {
-          runtime->queue_record_kind = 1;
+          } else {
+            runtime->owned_heap_638 = (BYTE *)malloc(
+                runtime->descriptor->output_width_64 *
+                runtime->descriptor->output_height_60 * 2);
+            memset(&fill_effects, 0, sizeof(fill_effects));
+            fill_effects.dwSize = sizeof(fill_effects);
+            fill_effects.dwFillColor = 1;
+            fill_rectangle.left = runtime->output_rect_left_14;
+            fill_rectangle.right = runtime->output_rect_extent_0c + fill_rectangle.left;
+            fill_rectangle.top = runtime->output_rect_top_18;
+            fill_rectangle.bottom = runtime->output_rect_height_10 + fill_rectangle.top;
+            runtime->descriptor->surface_14->Blt(&fill_rectangle, 0, 0, 0x01000400,
+                                                 &fill_effects);
+            runtime->output_handle_candidate = 1;
+          }
         } else {
-          runtime->owned_heap_638 = (BYTE *)malloc(
-              runtime->descriptor->output_width_64 *
-              runtime->descriptor->output_height_60 * 2);
-          memset(&fill_effects, 0, sizeof(fill_effects));
-          fill_rectangle.left = runtime->output_rect_left_14;
-          fill_rectangle.right = runtime->output_rect_extent_0c + fill_rectangle.left;
-          fill_rectangle.top = runtime->output_rect_top_18;
-          fill_rectangle.bottom = runtime->output_rect_height_10 + fill_rectangle.top;
-          fill_effects.dwSize = sizeof(fill_effects);
-          fill_effects.dwFillColor = 1;
-          runtime->descriptor->surface_14->Blt(&fill_rectangle, 0, 0, 0x01000400,
-                                               &fill_effects);
-          runtime->output_handle_candidate = 1;
+          runtime->queue_record_kind = 1;
         }
       }
     } else if (runtime->descriptor->surface_1c == 0) {
@@ -668,7 +675,7 @@ extern "C" void __fastcall sub_5cc940(MediaRuntime *runtime,
       surface_description.dwWidth = runtime->descriptor->output_width_64;
       surface_description.dwHeight = runtime->descriptor->output_height_60;
       if ((runtime->descriptor->flags & 0x40) != 0)
-        surface_description.dwWidth = runtime->descriptor->output_width_64 * 2;
+        surface_description.dwWidth *= 2;
       if (runtime->descriptor->draw_device_10->CreateSurface(
               &surface_description, &created, 0) == DD_OK) {
         created->QueryInterface(IID_IDirectDrawSurface2,
@@ -710,11 +717,14 @@ extern "C" void __fastcall sub_5cc940(MediaRuntime *runtime,
         } else if (runtime->descriptor->surface_14->Lock(0, &locked, DDLOCK_WAIT, 0) != DD_OK) {
           return;
         }
-      } else if (runtime->descriptor->surface_1c->Lock(0, &locked, DDLOCK_WAIT, 0) != DD_OK) {
-        return;
+        surface = alternate = (BYTE *)locked.lpSurface;
+        pitch = (DWORD)locked.lPitch;
+      } else {
+        if (runtime->descriptor->surface_1c->Lock(0, &locked, DDLOCK_WAIT, 0) != DD_OK)
+          return;
+        pitch = (DWORD)locked.lPitch;
+        surface = alternate = (BYTE *)locked.lpSurface;
       }
-      surface = alternate = (BYTE *)locked.lpSurface;
-      pitch = (DWORD)locked.lPitch;
       break;
     case 2:
       surface = alternate = runtime->owned_heap_638;
@@ -723,14 +733,15 @@ extern "C" void __fastcall sub_5cc940(MediaRuntime *runtime,
     case 4:
       if (runtime->descriptor->surface_1c->Lock(0, &locked, DDLOCK_WAIT, 0) != DD_OK)
         return;
-      surface = alternate = (BYTE *)locked.lpSurface;
+      surface = (BYTE *)locked.lpSurface;
+      alternate = surface;
       pitch = (DWORD)locked.lPitch;
       break;
     }
   } else {
     surface = runtime->descriptor->provided_output_base_4c;
-    pitch = runtime->descriptor->output_width_64 << 1;
     alternate = runtime->descriptor->provided_output_alternate_50;
+    pitch = runtime->descriptor->output_width_64 << 1;
     if ((runtime->descriptor->flags & 0x40) != 0) pitch <<= 1;
   }
 
@@ -741,16 +752,13 @@ extern "C" void __fastcall sub_5cc940(MediaRuntime *runtime,
     const int first = complement * 22 / 100 + 8;
     const int step = complement * 50 / 100 + 10 - first;
     int row_phase = 0;
-    for (int index = 0; index < 64;) {
+    for (int block_row = 0; block_row < 8; ++block_row, row_phase += step) {
       int phase = row_phase;
-      for (int column = 8; column != 0; --column) {
-        movie_media_conversion_tables.block_scale_entries[index] =
+      for (int column = 0; column < 8; ++column, phase += step) {
+        movie_media_conversion_tables.block_scale_entries[block_row * 8 + column] =
             (DWORD)media_fixed_mul((phase / 14 + first) << 16,
-                                   (int)media_block_transform_weights[index]);
-        phase += step;
-        ++index;
+                                   (int)media_block_transform_weights[block_row * 8 + column]);
       }
-      row_phase += step;
     }
 
     BYTE *source;
