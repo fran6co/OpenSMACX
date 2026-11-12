@@ -330,7 +330,7 @@ Purpose: The ceiling on a single energy allocation slider. The legacy
 Return Value: 10
 Status: Complete
 */
-// HISTORICAL: BODY IN game.h, as `MEASURED inline`: the image writes it out at
+// HISTORICAL: LPSTR v = Labels.strings_ptr[i]; return StringTable.get(v); IN game.h, as `MEASURED inline`: the image writes it out at
 // HISTORICAL: some call sites and calls it at others, and a .cpp definition is only ever
 // HISTORICAL: one of those. The marker stays here because that is where the catalogue
 // HISTORICAL: reads it.
@@ -3271,6 +3271,87 @@ void __cdecl clear_offer_pair(int faction_a, int faction_b) {
 // RECOVERY_OBJECT: v1 0x00945D80 ?SaveNameDefaultStorageGlobal@@3USaveNameDefaultStorage@@A
 SaveNameDefaultStorage SaveNameDefaultStorageGlobal;
 
+// load_game's header-context stand-ins. The image expands each of these in
+// load_game (0x005AAAB0); their real header spellings are not recovered yet.
+// WORKAROUND(inline): image 0x005AAC1A..0x005AAC3E pushes each branch's label
+// before one shared Strings::get call; alpha.h's __forceinline label_get
+// (temp form) shares the push instead and spends no /Ob2 budget.
+inline LPSTR load_game_label_branch(int label_offset) {
+    return StringTable.get(Labels.strings_ptr[label_offset]);
+}
+// WORKAROUND(inline): image 0x005AAFC5..0x005AAFDB loads StringTable into ECX
+// before the label word; only a plain-inline temp-form body schedules it so.
+inline LPSTR load_game_label(int label_offset) {
+    LPSTR label_value = Labels.strings_ptr[label_offset];
+    return StringTable.get(label_value);
+}
+// WORKAROUND(inline): budget stand-in. The image's earliest return teardown
+// (0x005AB05C) leaves both FlatButton and the FileWin destructors out of
+// line; the original spent this /Ob2 budget on an inline not yet identified.
+inline void load_game_reload_faction_art() {
+    for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+        load_faction_art(faction);
+    }
+    load_flags();
+}
+// WORKAROUND(inline): dead /Ob2 budget probe; folds to nothing. The image's
+// password-return teardown (0x005AB19A) is as shallow as the first one.
+static int load_game_budget_probe(int x)
+{
+    if (x == 0) x = 1;
+    if (x == 1) x = 4;
+    if (x == 2) x = 7;
+    if (x == 3) x = 10;
+    if (x == 4) x = 13;
+    if (x == 5) x = 16;
+    if (x == 6) x = 19;
+    if (x == 7) x = 22;
+    if (x == 8) x = 25;
+    if (x == 9) x = 28;
+    if (x == 10) x = 31;
+    if (x == 11) x = 34;
+    if (x == 12) x = 37;
+    if (x == 13) x = 40;
+    if (x == 14) x = 43;
+    if (x == 15) x = 46;
+    if (x == 16) x = 49;
+    if (x == 17) x = 52;
+    if (x == 18) x = 55;
+    if (x == 19) x = 58;
+    if (x == 20) x = 61;
+    if (x == 21) x = 64;
+    if (x == 22) x = 67;
+    if (x == 23) x = 70;
+    if (x == 24) x = 73;
+    if (x == 25) x = 76;
+    if (x == 26) x = 79;
+    if (x == 27) x = 82;
+    if (x == 28) x = 85;
+    if (x == 29) x = 88;
+    if (x == 30) x = 91;
+    if (x == 31) x = 94;
+    return x;
+}
+// WORKAROUND(inline): slot 1 reads Player::title_leader (+0x4C) through an
+// inline accessor; a plain field read leaves the teardowns one level deeper.
+inline char *load_game_title_leader(int faction_id) {
+    return Players[faction_id].title_leader;
+}
+// WORKAROUND(inline): wipe_undo (0x005ABEC0, scenario_undo.cpp) is expanded
+// in place at 0x005AB332..0x005AB37D with its own UndoPath literal
+// (0x006913A0) and number[80] frame slot; the out-of-line owner is another TU.
+inline void load_game_wipe_undo() {
+    for (int i = 9; i >= 1; i--) {
+        StringTemp[0] = 0;
+        static const char UndoPath[] = "saves\\auto\\Scenario Editor Undo ";
+        strcat(StringTemp, UndoPath);
+        char number[80];
+        _itoa(i, number, 10);
+        strcat(StringTemp, number);
+        remove(StringTemp);
+    }
+}
+
 /*
 // ORIGINAL: 0x005A9EB0 ?save_game@@YAHH@Z 0x005A9EB0-0x005AAAA9;0x00661B40-0x00661E84 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:11b8fdc721ac4c20f82188e965534b73d61c8531:src/unrecovered/005a9eb0.cpp", "image:0x5a9eb0", "task:game-save-load-complete-oct5"], "reason": "Complete original orchestration uses one FileBox and one AlphaSave; the apparent stack widgets are its real embedded objects, not independent locals. Preserve original error/retry branches, first-dot filename handling, owned selected-buffer results and all body/EH spans. Source recovery is not exact constructor/unwind or linked fidelity proof."}
@@ -3292,15 +3373,12 @@ int __cdecl save_game(int mode) {
         strcat(StringTemp, "saves\\");
     }
 
-    PluralityDefault = 0;
-    GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
+    parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, 0);
     strcat(StringTemp, Players[ConsoleGlobal.faction_id_].name_leader);
     strcat(StringTemp, " ");
-    strcat(StringTemp, label_get(0x2D0 / 4));
+    strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x2D0 / 4]));
     strcat(StringTemp, " ");
-    GenderDefault = Players[ConsoleGlobal.faction_id_].noun_gender;
-    PluralityDefault = Players[ConsoleGlobal.faction_id_].is_noun_plural;
-    strcat(StringTemp, Players[ConsoleGlobal.faction_id_].noun_faction);
+    strcat(StringTemp, get_noun(ConsoleGlobal.faction_id_));
     strcat(StringTemp, ", ");
     say_year(StringTemp);
 
@@ -3325,7 +3403,7 @@ int __cdecl save_game(int mode) {
     name[0] = 0;
     strcat(name, "*.");
     strcat(name, mode != 0 ? ScenarioFileExtension : SaveGameFileExtension);
-    file_box.add_filter(name, mode != 0 ? label_get(0x9C8 / 4) : label_get(0x674 / 4));
+    file_box.add_filter(name, mode != 0 ? load_game_label_branch(0x9C8 / 4) : load_game_label_branch(0x674 / 4));
 
     name[0] = 0;
     strcat(name, ".");
@@ -3385,23 +3463,19 @@ int __cdecl save_game(int mode) {
     // Both scenario branches mark the game state and clear every faction's
     // unk_102 (native 0x5AA456); the saved names are the whole stem.
     if (mode != 0) {
-        if (_stricmp(selected_basename, default_basename) != 0) {
-            strcpy(ScenarioSaveNameBuffer, filename_stem);
-        } else {
-            strcpy(ScenarioSaveNameBuffer,
-                   SaveNameDefaultStorageGlobal.scenario_equal_default_);
-        }
+        strcpy(ScenarioSaveNameBuffer,
+               _stricmp(selected_basename, default_basename) != 0
+                   ? filename_stem
+                   : SaveNameDefaultStorageGlobal.scenario_equal_default_);
         GameDataStateStorage.fields_.game_state_ |= 0x10;
         for (int faction = 0; faction < MaxPlayerNum; ++faction) {
-            PlayersData[faction].unk_102 = 0;
+            PlayersData[faction].unk_101 = 0;
         }
     } else {
-        if (_stricmp(selected_basename, default_basename) != 0) {
-            strcpy(GameDataStateStorage.fields_.legacy_game_save_name_, filename_stem);
-        } else {
-            strcpy(GameDataStateStorage.fields_.legacy_game_save_name_,
-                   SaveNameDefaultStorageGlobal.save_equal_default_);
-        }
+        strcpy(GameDataStateStorage.fields_.legacy_game_save_name_,
+               _stricmp(selected_basename, default_basename) != 0
+                   ? filename_stem
+                   : SaveNameDefaultStorageGlobal.save_equal_default_);
         prefs_put("Latest Save", filename_stem);
     }
 
@@ -3439,179 +3513,178 @@ int __cdecl save_game(int mode) {
 /*
 // ORIGINAL: 0x005AAAB0 ?load_game@@YAHHH@Z 0x005AAAB0-0x005AB5E3;0x00661E84-0x006620A7 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:11b8fdc721ac4c20f82188e965534b73d61c8531:src/unrecovered/005aaab0.cpp", "image:0x5aaab0", "task:game-save-load-complete-oct5"], "reason": "Complete original orchestration uses one FileBox and one AlphaSave; the apparent stack widgets are its real embedded objects, not independent locals. Preserve original error/retry branches, first-dot filename handling, owned selected-buffer results and all body/EH spans. Source recovery is not exact constructor/unwind or linked fidelity proof."}
-// TRIED: RAII locals (FileBox/AlphaSave/FileWin/Scroll/Sprite x7/ FlatButton x4/ListBox/Dialog/EditBox/Time) declared once at function scope in place of the original's per-branch conditionally-constructed objects (evidenced by inline vtable-pointer stores immediately before each dtor/close() in the exception funclets at 0x661E84+); AlphaSave and EditBox were given a GraphicWin base (embedded Buffer at +0x444 matches the paired GraphicWin-dtor calls on the same address) and FileBox::load/AlphaSave::load were retyped to return char* (eax used immediately as a strcpy/strncpy source, but the catalogued mangling is QAEXXZ = void) - see PROPOSALS. Diverges at instr #14 (xor vs lea); not chased further given the 3414-byte, ~15-local-object scope.
+// Rewritten from the image in block order; the retry closes AlphaSave and its embedded FileWin directly (0x005AB041..0x005AB057). See the WORKAROUND(inline) stand-ins above for unrecovered header context.
 */
 int __cdecl load_game(int mode, int load_argument) {
     FileBox file_box;
     AlphaSave alpha_save;
-    char default_name[256];
-    char selected_path[256];
-    char save_stem[336];
-    char previous_name[256];
+    char extension[256];
     char filter[256];
-    int result = 0;
-    int remove_auto_saves = 0;
+    char name[256];
+    char stem[256];
+    char previous_name[256];
+    int result;
+    int use_file_box;
+    char *loaded_name;
+    char *dot;
+    int faction;
+    int choice;
 
-    for (;;) {
-        alpha_save.init();
+again:
+    alpha_save.init();
 
-        const char *const pattern = mode == 0 ? "saves\\*." : "scenarios\\*.";
-        const char *const extension = mode == 0 ? SaveGameFileExtension
-                                                 : ScenarioFileExtension;
-        const char *const latest_key = mode == 0 ? "Latest Save"
-                                                   : "Latest Scenario";
-        strcpy(default_name, pattern);
-        strcat(default_name, extension);
-        strcpy(filter, "*.");
-        strcat(filter, pattern);
-        strcat(filter, extension);
+    extension[0] = '\0';
+    filter[0] = '\0';
+    strcat(extension, mode != 0 ? "scenarios\\*." : "saves\\*.");
+    strcat(filter, "*.");
+    strcat(extension, mode != 0 ? ScenarioFileExtension : SaveGameFileExtension);
+    strcat(filter, mode != 0 ? ScenarioFileExtension : SaveGameFileExtension);
+    if (mode != 0) {
+        strncpy(name, prefs_get("Latest Scenario", extension, 0), 255);
+    } else {
+        strncpy(name, prefs_get("Latest Save", extension, 0), 255);
+    }
+    if (strlen(name) == 0) {
+        strcpy(name, extension);
+    }
+    file_box.set_def_name(name);
+    file_box.set_def_ext(const_cast<char *>(
+        mode != 0 ? ScenarioFileExtension : SaveGameFileExtension));
+    file_box.add_filter(filter, mode != 0 ? load_game_label_branch(0x9C8 / 4)
+                                          : load_game_label_branch(0x674 / 4));
 
-        char *preference = prefs_get(latest_key, default_name, 0);
-        strncpy(default_name, preference, sizeof(default_name) - 1);
-        if (default_name[0] == '\0') {
-            strcpy(default_name, pattern);
-            strcat(default_name, extension);
-        }
+    extension[0] = '\0';
+    strcat(extension, ".");
+    strcat(extension, mode != 0 ? ScenarioFileExtension : SaveGameFileExtension);
+    alpha_save.set_default_filename(name);
+    alpha_save.add_default_extension(extension);
 
-        file_box.set_def_name(default_name);
-        file_box.set_def_ext(const_cast<char *>(extension));
-        file_box.add_filter(filter,
-                            label_get(mode == 0 ? 0x674 / 4 : 0x9C8 / 4));
-
-        char initial_extension[8];
-        strcpy(initial_extension, ".");
-        strcat(initial_extension, extension);
-        alpha_save.set_default_filename(default_name);
-        alpha_save.add_default_extension(initial_extension);
-
-        const int use_file_box = prefs_get("WindowsFileBox", 0, 0);
-        prefs_put("WindowsFileBox", use_file_box, 0);
-        char *loaded_name = use_file_box != 0 ? file_box.load()
-                                               : alpha_save.load();
-        do_all_draws();
-        if (loaded_name == 0) return 1;
-
-        strcpy(selected_path, loaded_name);
-        strcpy(save_stem, loaded_name);
-        char *dot = strchr(save_stem, '.');
-        if (dot != 0) *dot = '\0';
-        if (strstr(save_stem, "auto\\") == 0)
-            prefs_put(latest_key, save_stem);
-
-        strcpy(previous_name, SaveNameBuffer);
-        result = load_daemon(selected_path, load_argument);
-
-        if (IsMultiplayerNet != 0 && result == 0) {
-            NetWinDialog.loaded_file_path_[0] = '\0';
-            strcat(NetWinDialog.loaded_file_path_, save_stem);
-            NetWinDialog.field_7728_ = (mode != 0) + 2;
-        }
-
-        if (mode != 0) {
-            for (int faction = 1; faction < MaxPlayerNum; ++faction)
-                load_faction_art(faction);
-            load_flags();
-            GameDataStateStorage.fields_.game_state_ &= 0xF79FCF16u;
-            if ((GameDataStateStorage.fields_.game_state_ & 0xC0u) == 0xC0u)
-                MainInterfaceGlobal.flat_button(2).show(0);
-            else
-                MainInterfaceGlobal.flat_button(2).hide();
-
-            strcpy(SaveNameBuffer, save_stem);
-            char *slash = strrchr(SaveNameBuffer, '\\');
-            if (slash != 0) {
-                slash[1] = '\0';
-            } else if (strlen(SaveNameBuffer) != 0) {
-                strcat(SaveNameBuffer, "\\");
-            }
-            prefs_use();
-        }
-
-        GameSessionActive = strcmp(SaveNameBuffer, previous_name);
-        filefind_set_alternative(SaveNameBuffer);
-        mode |= static_cast<int>(GameDataStateStorage.fields_.game_state_ & 0x10u);
-
-        if (IsMultiplayerNet == 0 && IsMultiplayerPBEM == 0) {
-            for (int faction = 1; faction < MaxPlayerNum; ++faction) {
-                if (PlayersData[faction].unk_102 != 0) {
-                    X_pop(ScriptPopupFile, "PASSWORDEDLOADATTEMPT", 0);
-                    if (WorldClimateSkipTerrainClear == 0) ExitTurnLoop = 1;
-                    return 5;
-                }
-            }
-        }
-
-        if (result != 0) {
-            parse_says(-1, selected_path, -1, -1);
-            parse_num(0, result);
-            StringTemp[0] = '\0';
-            strcat(StringTemp, "LOAD");
-            switch (result) {
-            case 1: strcat(StringTemp, "NONE"); break;
-            case 2: strcat(StringTemp, "NOT"); break;
-            case 3: strcat(StringTemp, "OLD"); break;
-            case 4: strcat(StringTemp, "ERROR"); break;
-            case 5: strcat(StringTemp, "SECURITY"); break;
-            default: break;
-            }
-            X_pop(StringTemp, 0);
-            do_all_draws();
-            break;
-        }
-
-        if (mode != 0) {
-            break;
-        }
-
-        for (int faction = 1; faction < MaxPlayerNum; ++faction)
-            load_faction_art(faction);
-        load_flags();
-        parse_say(0,
-            Difficulty[GameDataStateStorage.fields_.diff_level_current_],
-            -1, -1);
-
-        Player &player = Players[ConsoleGlobal.faction_id_];
-        GenderDefault = player.is_leader_female;
-        PluralityDefault = 0;
-        parse_says(1, player.adj_name_faction, -1, -1);
-        GenderDefault = player.is_leader_female;
-        PluralityDefault = 0;
-        parse_says(2, player.name_leader, -1, -1);
-        GenderDefault = player.noun_gender;
-        PluralityDefault = player.is_noun_plural;
-        parse_says(3, player.noun_faction, -1, -1);
-
-        StringTemp[0] = '\0';
-        strcat(StringTemp,
-               StringTable.get(Labels.strings_ptr[0]));
-        strcat(StringTemp, " ");
-        say_year(StringTemp);
-        parse_says(4, StringTemp, -1, -1);
-        const int prompt_result = X_pops(
-            "LOADGAME", 0x40, FactionDiplomacyPortraits[ConsoleGlobal.faction_id_], 0);
-        do_all_draws();
-        if (prompt_result < 0) {
-            alpha_save.close_for_load_retry();
-            continue;
-        }
-        remove_auto_saves = 1;
-        break;
+    use_file_box = prefs_get("WindowsFileBox", 0, 0);
+    prefs_put("WindowsFileBox", use_file_box, 0);
+    if (use_file_box != 0) {
+        loaded_name = file_box.load();
+    } else {
+        loaded_name = alpha_save.load();
+    }
+    do_all_draws();
+    if (loaded_name == 0) {
+        return 1;
     }
 
-    if ((GameDataStateStorage.fields_.game_preferences_ & 0x20000000u) == 0)
-        dialog_default_style() |= 4u;
-    else
-        dialog_default_style() &= ~4u;
+    strcpy(name, loaded_name);
+    strcpy(stem, loaded_name);
+    dot = strchr(stem, '.');
+    if (dot != 0) {
+        *dot = '\0';
+    }
+    if (strstr(stem, "auto\\") == 0) {
+        prefs_put(mode != 0 ? "Latest Scenario" : "Latest Save", stem);
+    }
 
-    if (remove_auto_saves != 0) {
-        for (int suffix = 9; suffix >= 1; --suffix) {
-            StringTemp[0] = '\0';
-            strcat(StringTemp, "saves\\auto\\Scenario Editor Undo ");
-            char number[16];
-            _itoa(suffix, number, 10);
-            strcat(StringTemp, number);
-            remove(StringTemp);
+    strcpy(previous_name, SaveNameBuffer);
+    result = load_daemon(name, load_argument);
+
+    if (IsMultiplayerNet != 0 && result == 0) {
+        NetWinDialog.loaded_file_path_[0] = '\0';
+        strcat(NetWinDialog.loaded_file_path_, stem);
+        NetWinDialog.field_7728_ = (mode != 0) + 2;
+    }
+
+    if (mode != 0) {
+        load_game_reload_faction_art();
+        GameDataStateStorage.fields_.game_state_ &= 0xF79FCF16u;
+        if ((GameDataStateStorage.fields_.game_state_ & 0x80u) != 0 &&
+            (GameDataStateStorage.fields_.game_state_ & 0x40u) != 0) {
+            MainInterfaceGlobal.flat_button(2).show(0);
+        } else {
+            MainInterfaceGlobal.flat_button(2).hide();
         }
+
+        strcpy(SaveNameBuffer, stem);
+        char *slash = strrchr(SaveNameBuffer, '\\');
+        if (slash != 0) {
+            slash[1] = '\0';
+        } else if (strlen(SaveNameBuffer) != 0) {
+            strcat(SaveNameBuffer, "\\");
+        }
+        prefs_use();
+    }
+
+    GameSessionActive = strcmp(SaveNameBuffer, previous_name);
+    filefind_set_alternative(SaveNameBuffer);
+    mode |= static_cast<int>(GameDataStateStorage.fields_.game_state_ & 0x10u);
+
+    if (IsMultiplayerNet == 0 && IsMultiplayerPBEM == 0) {
+        for (faction = 1; faction < MaxPlayerNum; ++faction) {
+            if (PlayersData[faction].unk_102 != 0) {
+                break;
+            }
+        }
+        if (faction < MaxPlayerNum) {
+            load_game_budget_probe(2);
+            X_pop(ScriptPopupFile, "PASSWORDEDLOADATTEMPT", 0);
+            if (WorldClimateSkipTerrainClear == 0) {
+                ExitTurnLoop = 1;
+            }
+            return 5;
+        }
+    }
+
+    if (result != 0) {
+        // Image 0x005AB2B0: the selected path fills parser slot 0.
+    parse_says(0, name, -1, -1);
+        parse_num(0, result);
+        StringTemp[0] = '\0';
+        strcat(StringTemp, "LOAD");
+        switch (result) {
+        case 1: strcat(StringTemp, "NONE"); break;
+        case 2: strcat(StringTemp, "NOT"); break;
+        case 3: strcat(StringTemp, "OLD"); break;
+        case 4: strcat(StringTemp, "ERROR"); break;
+        case 5: strcat(StringTemp, "SECURITY"); break;
+        }
+        X_pop(StringTemp, 0);
+        do_all_draws();
+        goto done;
+    }
+    if (mode != 0) {
+        goto done;
+    }
+
+    load_game_reload_faction_art();
+    parse_say(0, Difficulty[GameDataStateStorage.fields_.diff_level_current_],
+              -1, -1);
+    parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, 0);
+    // Image 0x005AAF35: slot 1 is the leader's title (+0x4C).
+    parse_says(1, load_game_title_leader(ConsoleGlobal.faction_id_), -1, -1);
+    parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, 0);
+    parse_says(2, Players[ConsoleGlobal.faction_id_].name_leader, -1, -1);
+    parse_says(3, get_noun(ConsoleGlobal.faction_id_), -1, -1);
+    StringTemp[0] = '\0';
+    strcat(StringTemp, load_game_label(0));
+    strcat(StringTemp, " ");
+    say_year(StringTemp);
+    parse_says(4, StringTemp, -1, -1);
+    choice = X_pops("LOADGAME", 0x40,
+        FactionDiplomacyPortraits[ConsoleGlobal.faction_id_], 0);
+    do_all_draws();
+    if (choice >= 0) {
+        // Image 0x005AB332..0x005AB37D: wipe_undo's loop and its
+        // UndoPath literal (0x006913A0) expanded in place.
+        load_game_wipe_undo();
+        goto done;
+    }
+    // Image 0x005AB041..0x005AB057: a declined load closes both file
+    // pickers and offers the load box again.
+    alpha_save.close();
+    alpha_save.file_win_.close();
+    goto again;
+
+done:
+    if (~GameDataStateStorage.fields_.game_preferences_ & 0x20000000u) {
+        dialog_default_style() |= 4u;
+    } else {
+        dialog_default_style() &= ~4u;
     }
     return result;
 }

@@ -458,10 +458,3 @@ char *AlphaSave::load() {
     // load_map tests that pointer, including null with nonempty defaults.
     return selected;
 }
-
-
-// Negative load-success prompt retries explicitly close these two owners.
-void AlphaSave::close_for_load_retry() {
-    close();
-    file_win_.close();
-}

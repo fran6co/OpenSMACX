@@ -24,7 +24,6 @@ class AlphaSave : public GraphicWin {
   virtual ~AlphaSave();
 
   void close();
-  void close_for_load_retry();
   void on_double_clicked(int button_id) override;
   void forward_button_click(int button_id);
   // Constructor-installed primary table 0x669EC8 selects 0x407E80/0x407ED0
@@ -45,7 +44,7 @@ class AlphaSave : public GraphicWin {
   int set_default_filename(char *name);
   int add_default_extension(char *extension);
 
- private:
+  // load_game closes the embedded FileWin directly (0x005AB04C).
   FileWin file_win_;             // 0x0A14
   Scroll scroll_;                // 0x3DD8
   Sprite sprite1_;               // 0x5F24
