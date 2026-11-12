@@ -1,5 +1,8 @@
 // The original TU calls StringStruct::remove_all out of line (BasePop::init).
 #define STRINGSTRUCT_REMOVE_ALL_OUT_OF_LINE
+// WORKAROUND(decl): exec expands current_entry (0x006030B9 `mov ecx,[ecx+8];
+// mov eax,[ecx+4]` under its current_/head_ tests); see stringstruct.h.
+#define STRINGSTRUCT_CURRENT_ENTRY_INLINE
 #define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
 /*
  * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
@@ -767,14 +770,38 @@ Purpose: Run the popup modally: size and position it, lay out its two caption
 // The same table's slot 62 (+0xF8) targets GraphicWin::redraw at 0x005D5A70;
 // the button setup invokes that inherited virtual member after set_font.
 // Preserve virtual dispatch through the real FlatButton/BaseButton/Win chain.
-int BasePop::exec(int flags, int (__cdecl *callback)()) {
-    int pump_result = 0;
+// WORKAROUND(decl): the image copies BasePop's 27 default tile sprites into
+// each FlatButton as nine three-load/three-store groups (0x00602D6B..,
+// 0x006030E1.., 0x00603430..), the expansion of a three-argument tile-group
+// setter; the loop site re-reads its receiver from item_buttons_ per group.
+// FlatButton's header does not declare that setter yet.
+static inline void basepop_set_tiles(FlatButton *button, int group,
+                                     Sprite *normal, Sprite *hover,
+                                     Sprite *pressed) {
+    button->config[group * 3] = normal;
+    button->config[group * 3 + 1] = hover;
+    button->config[group * 3 + 2] = pressed;
+}
 
+// WORKAROUND(decl): each button site loads its receiver once for both the
+// Buffer::set_font call and the virtual redraw (0x00603237 keeps the
+// item_buttons_ entry in ebp across both), the expansion of a button helper
+// FlatButton's header does not declare yet.
+static inline void basepop_button_font(FlatButton *button, Font *font1,
+                                       Font *font2, Font *font3) {
+    button->set_font(font1, font2, font3, 0);
+    button->redraw();
+}
+
+int BasePop::exec(int flags, int (__cdecl *callback)()) {
     // THE MAY-SHOW GATE. BasePop's own slot is `mov eax, 1 / ret`, so a plain
     // popup always passes and only a derived family can refuse.
     if (on_exec() == 0) {
         return -1;
     }
+    int x;
+    int y;
+    int pump_result = 0;
 
     // No items: no tab. More than one sprite and no external window: the
     // sprite-picker kind, the 8 Dialogs::calculate_dimensions switches on.
@@ -786,32 +813,12 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
     }
 
     if (external_window_ != 0 && external_window_->is_visible()) {
-        // THE WIDE-SCREEN 3/2 GROW, the pair set_height spells.
-        int width = static_cast<int>(dialog_width_);
-        if (external_window_ == 0 && (field_30A8_ & 0x400) == 0 &&
-            WinScreenWidth >= 0x400) {
-            width = (width * 3) / 2;
-        }
-        dialogs_.Dialog::field_2C_ = width;
-        int height = static_cast<int>(dialog_height_);
-        if (external_window_ == 0 && (field_30A8_ & 0x400) == 0 &&
-            WinScreenWidth >= 0x400) {
-            height = (height * 3) / 2;
-        }
-        dialogs_.Dialog::field_30_ = height;
-
-        if (default_loc_a_ != 0x2000) {
-            loc_a_ = default_loc_a_;
-        }
-        if (default_loc_b_ != 0x2000) {
-            loc_b_ = default_loc_b_;
-        }
-        // UNK3(1) and UNK4(1) on the Dialog base - the two show bits. The
-        // image calls them (0x0060276C / 0x00602775) with the vbtable-adjusted
-        // `&dialogs_.Dialog` as the receiver, computed ONCE into a register and
-        // reused for both calls; the definitions are in dialog.cpp and the
-        // claims now live with these actual Dialog definitions at
-        // 0x00605180 / 0x006051A0. See the receiver evidence in dialog.h.
+        // set_width, set_height and set_loc expand here (0x006026A0..).
+        set_width(dialog_width_);
+        set_height(dialog_height_);
+        set_loc(default_loc_a_, default_loc_b_);
+        // The two show bits, with the vbtable-adjusted Dialog receiver
+        // computed once for both calls.
         Dialog &dialog = dialogs_;
         dialog.set_style_bit_0(1);
         dialog.set_style_bit_1(1);
@@ -821,388 +828,389 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
     }
 
     // Size it. A nonzero answer is exec's own answer.
-    if (calculate_dimensions() != 0) {
-        return 0;
+    int result = calculate_dimensions();
+    if (result != 0) {
+        return result;
     }
-
-    if (flags != 0) {
-        return 0;
-    }
-    if ((field_30A8_ & 0x8000) != 0) {
-        return 0;
-    }
-
-    // THE PARENT AND THE STYLE WORD init is handed.
-    Win *const parent = external_window_ != 0
-                            ? external_window_
-                            : fallback_parent_window_;
-    int style = static_cast<int>(field_30A4_);
-    if ((field_30A8_ & 0x20) != 0) {
-        style |= 0x20;
-    }
-    if (external_window_ == 0) {
-        style |= 1;
-    } else {
-        style |= 0x400000;
-    }
-    if (GraphicWinInitDefaults.top_left != 0) {
-        style |= 0x10000000;
-    }
-    if ((field_30A8_ & 0x4100) != 0) {
-        style |= 0x1000;
-    }
-    if ((field_30A8_ & 0x20000) == 0 && external_window_ == 0) {
-        style |= 0x80000;
-    }
-
-    // The 0x800 bit is exec's own, added at the call and not before.
-    if (owner_window_ == this) {
-        on_pre_window_init();
-
-        // THE BORDER, in the window's own three thicknesses. Win::init reads
-        // this twelve-byte handoff at offsets 0, 4 and 8.
-        BorderSizing sizing = {caption_height_, border_thickness_,
-                               bottom_border_thickness_};
-        if (GraphicWin::init(0, 0, static_cast<int>(field_30BC_),
-                             static_cast<int>(field_30C0_), owned_text_,
-                             style | 0x800, parent, static_cast<Menu *>(0),
-                             &sizing) != 0) {
-            return 0;
+    if (flags == 0 && (field_30A8_ & 0x8000) == 0) {
+        // THE PARENT AND THE STYLE WORD init is handed.
+        Win *parent = external_window_;
+        if (parent == 0) {
+            parent = fallback_parent_window_;
+        }
+        int style = static_cast<int>(field_30A4_);
+        if ((field_30A8_ & 0x20) != 0) {
+            style |= 0x20;
+        }
+        if (external_window_ == 0) {
+            style |= 1;
+        } else {
+            style |= 0x400000;
+        }
+        if (GraphicWinInitDefaults.top_left != 0) {
+            style |= 0x10000000;
+        }
+        if ((field_30A8_ & 0x4100) != 0) {
+            style |= 0x1000;
+        }
+        if ((field_30A8_ & 0x20000) != 0 || external_window_ != 0) {
+            style |= 0x80000;
         }
 
-        set_text_color(string_color_a_, string_color_b_, string_color_c_,
-                       string_color_d_);
-        set_text_color2(string_color_2a_, string_color_2b_, string_color_2c_,
-                        string_color_2d_);
-        set_text_color3(string_color_3a_, string_color_3b_, string_color_3c_,
-                        string_color_3d_);
-        set_text_color_hyper(string_color_hyper_a_, string_color_hyper_b_,
-                             string_color_hyperc_, string_color_hyper_d_);
-        set_font(string_font1_, string_font2_, string_font3_, string_font4_);
+        if (owner_window_ == this) {
+            on_pre_window_init();
 
-        if (owned_text_ != 0) {
-            set_caption(owned_text_);
+            // THE BORDER, in the window's own three thicknesses. Win::init reads
+            // this twelve-byte handoff at offsets 0, 4 and 8.
+            BorderSizing sizing = {caption_height_, border_thickness_,
+                                   bottom_border_thickness_};
+            result = GraphicWin::init(0, 0, static_cast<int>(field_30BC_),
+                                      static_cast<int>(field_30C0_), owned_text_,
+                                      style | 0x800, parent,
+                                      static_cast<Menu *>(0), &sizing);
+            if (result != 0) {
+                return result;
+            }
+
+            set_text_color(string_color_a_, string_color_b_, string_color_c_,
+                           string_color_d_);
+            set_text_color2(string_color_2a_, string_color_2b_, string_color_2c_,
+                            string_color_2d_);
+            set_text_color3(string_color_3a_, string_color_3b_, string_color_3c_,
+                            string_color_3d_);
+            set_text_color_hyper(string_color_hyper_a_, string_color_hyper_b_,
+                                 string_color_hyperc_, string_color_hyper_d_);
+            set_font(string_font1_, string_font2_, string_font3_, string_font4_);
+
+            if (owned_text_ != 0) {
+                set_caption(owned_text_);
+            }
+
+            on_post_window_init();
         }
 
-        on_post_window_init();
-    }
-
-    // THE POPUP'S POSITION, one arm per owner. owner_window_ == this means
-    // the popup is its own surface; otherwise it centres on the window that
-    // opened it. 0x1000 requests centering; negative coordinates instead
-    // select the far-edge offset branches, without another division by two.
-    // Arithmetic shifts preserve the original rounding of odd negative margins.
-    if (owner_window_ == this) {
-        if ((iSomeFlag_ & 2) != 0) {
+        // THE POPUP'S POSITION, read through the owner window: the popup's own
+        // surface when it owns itself, otherwise the window that opened it.
+        // 0x1000 requests centering; negative coordinates select the far-edge
+        // offsets.
+        if (owner_window_ == this) {
+            // WORKAROUND(type): iSomeFlag_ is protected in Win; the image tests the
+            // owner's flag word ([owner+0x9c]), and the owner is this popup here.
+            if ((static_cast<BasePop *>(owner_window_)->iSomeFlag_ & 2) != 0) {
+                if (loc_a_ == 0x1000) {
+                    field_30B4_ = (owner_window_->client_rect().left -
+                                   owner_window_->client_rect().right +
+                                   WinScreenWidth) >> 1;
+                } else if (static_cast<int>(loc_a_) < 0) {
+                    field_30B4_ = owner_window_->client_rect().left -
+                                  owner_window_->client_rect().right +
+                                  static_cast<int>(loc_a_) + WinScreenWidth;
+                } else {
+                    field_30B4_ = loc_a_;
+                }
+                if (loc_b_ == 0x1000) {
+                    field_30B8_ = (owner_window_->client_rect().top -
+                                   owner_window_->client_rect().bottom +
+                                   WinScreenHeight) >> 1;
+                } else if (static_cast<int>(loc_b_) < 0) {
+                    field_30B8_ = owner_window_->client_rect().top -
+                                  owner_window_->client_rect().bottom +
+                                  static_cast<int>(loc_b_) + WinScreenHeight;
+                } else {
+                    field_30B8_ = loc_b_;
+                }
+            } else {
+                if (loc_a_ == 0x1000) {
+                    field_30B4_ = (WinScreenWidth -
+                                   static_cast<int>(
+                                       owner_window_->dib_.bmiHeader.biWidth)) >> 1;
+                } else if (static_cast<int>(loc_a_) < 0) {
+                    field_30B4_ = static_cast<int>(loc_a_) -
+                                  static_cast<int>(
+                                      owner_window_->dib_.bmiHeader.biWidth) +
+                                  WinScreenWidth;
+                } else {
+                    field_30B4_ = loc_a_;
+                }
+                if (loc_b_ == 0x1000) {
+                    field_30B8_ = (static_cast<int>(
+                                       owner_window_->dib_.bmiHeader.biHeight) +
+                                   WinScreenHeight) >> 1;
+                } else if (static_cast<int>(loc_b_) < 0) {
+                    field_30B8_ = static_cast<int>(
+                                      owner_window_->dib_.bmiHeader.biHeight) +
+                                  static_cast<int>(loc_b_) + WinScreenHeight;
+                } else {
+                    field_30B8_ = loc_b_;
+                }
+            }
+        } else {
             if (loc_a_ == 0x1000) {
-                field_30B4_ = (client_rect_.left - client_rect_.right +
-                               WinScreenWidth) >> 1;
+                field_30B4_ = (static_cast<int>(
+                                   owner_window_->dib_.bmiHeader.biWidth) -
+                               static_cast<int>(field_30BC_)) >> 1;
             } else if (static_cast<int>(loc_a_) < 0) {
-                field_30B4_ = client_rect_.left - client_rect_.right +
-                              static_cast<int>(loc_a_) + WinScreenWidth;
+                field_30B4_ =
+                    static_cast<int>(owner_window_->dib_.bmiHeader.biWidth) -
+                    static_cast<int>(field_30BC_) + static_cast<int>(loc_a_);
             } else {
                 field_30B4_ = loc_a_;
             }
             if (loc_b_ == 0x1000) {
-                field_30B8_ = (client_rect_.top - client_rect_.bottom +
-                               WinScreenHeight) >> 1;
+                field_30B8_ = -(static_cast<int>(field_30C0_) +
+                                static_cast<int>(
+                                    owner_window_->dib_.bmiHeader.biHeight)) >> 1;
             } else if (static_cast<int>(loc_b_) < 0) {
-                field_30B8_ = client_rect_.top - client_rect_.bottom +
-                              static_cast<int>(loc_b_) + WinScreenHeight;
-            } else {
-                field_30B8_ = loc_b_;
-            }
-        } else {
-            if (loc_a_ == 0x1000) {
-                field_30B4_ = (WinScreenWidth -
-                               static_cast<int>(dib_.bmiHeader.biWidth)) >> 1;
-            } else if (static_cast<int>(loc_a_) < 0) {
-                field_30B4_ = static_cast<int>(loc_a_) -
-                               static_cast<int>(dib_.bmiHeader.biWidth) +
-                               WinScreenWidth;
-            } else {
-                field_30B4_ = loc_a_;
-            }
-            if (loc_b_ == 0x1000) {
-                field_30B8_ = (static_cast<int>(dib_.bmiHeader.biHeight) +
-                               WinScreenHeight) >> 1;
-            } else if (static_cast<int>(loc_b_) < 0) {
-                field_30B8_ = static_cast<int>(loc_b_) +
-                              static_cast<int>(dib_.bmiHeader.biHeight) +
-                              WinScreenHeight;
+                field_30B8_ = static_cast<int>(loc_b_) -
+                              static_cast<int>(field_30C0_) -
+                              static_cast<int>(owner_window_->dib_.bmiHeader.biHeight);
             } else {
                 field_30B8_ = loc_b_;
             }
         }
-    } else {
-        if (loc_a_ == 0x1000) {
-            field_30B4_ = (static_cast<int>(
-                               owner_window_->dib_.bmiHeader.biWidth) -
-                           static_cast<int>(field_30BC_)) >> 1;
-        } else if (static_cast<int>(loc_a_) < 0) {
-            field_30B4_ =
-                static_cast<int>(owner_window_->dib_.bmiHeader.biWidth) -
-                static_cast<int>(field_30BC_) + static_cast<int>(loc_a_);
+
+        // DRAW IT. Slot 0x30 - BasePop's own on_redraw (0x00604AB0).
+        on_redraw();
+
+        // Attach the selected control below the freshly drawn text. The original
+        // ignores attachment failure and still publishes the shared window.
+        y = static_cast<int>(BasePopDrawnBottom);
+        if (field_30D4_ != 0) {
+            y += field_30E4_;
+        }
+        if (field_21CC_ < 0) {
+            x = static_cast<int>(BasePopDrawnRight);
         } else {
-            field_30B4_ = loc_a_;
+            x = field_21CC_;
         }
-        if (loc_b_ == 0x1000) {
-            field_30B8_ = -(static_cast<int>(field_30C0_) +
-                            static_cast<int>(
-                                owner_window_->dib_.bmiHeader.biHeight)) >> 1;
-        } else if (static_cast<int>(loc_b_) < 0) {
-            field_30B8_ = static_cast<int>(loc_b_) -
-                          static_cast<int>(field_30C0_) -
-                          static_cast<int>(owner_window_->dib_.bmiHeader.biHeight);
-        } else {
-            field_30B8_ = loc_b_;
-        }
-    }
-
-    // DRAW IT. Slot 0x30 - Win::on_redraw, which BasePop's table points at
-    // its own override (0x00604AB0).
-    on_redraw();
-
-    // Attach the selected control below the freshly drawn text. The original
-    // ignores attachment failure and still publishes the shared window.
-    int dialog_y = static_cast<int>(BasePopDrawnBottom);
-    if (field_30D4_ != 0) {
-        dialog_y += field_30E4_;
-    }
-    int dialog_x = field_21CC_;
-    if (dialog_x < 0) {
-        dialog_x = static_cast<int>(BasePopDrawnRight);
-    }
-    if (dialogs_.kind_ != -1) {
-        if ((field_30A8_ & 0x800000) != 0) {
-            dialogs_.Dialog::field_20_ |= 0x1000;
-        }
-        dialogs_.SpriteBox::field_4_ = field_30A8_ & 0x800;
-        dialogs_.Dialogs::attach(
-            dialogs_.kind_, owner_window_, dialog_x, dialog_y,
-            static_cast<int>((field_30A4_ & 0x40) | 0x80000));
-        dialogs_.show(0);
-    }
-
-    // THE ROW ORIGIN. The provider adjusts X, Y and style. Buttons advance
-    // horizontally from its original X; its Y remains the shared baseline.
-    int button_x = -static_cast<int>(field_30F4_);
-    int button_y = static_cast<int>(field_30C0_) - static_cast<int>(field_30EC_) -
-                   static_cast<int>(field_30E0_) - static_cast<int>(field_30D0_);
-    int row_style = 0;
-    on_adjust_button_placement(&button_x, &button_y, &row_style);
-    const int origin_x = button_x;
-
-    // A plain text box (or a popup drawing into another window) runs neither
-    // the item rows nor the second caption: straight to the pump.
-    if ((field_30A8_ & 0x80100) != 0 || owner_window_ != this) {
-        goto pump;
-    }
-    if ((field_30A8_ & 0x10000) != 0) {
-        // The item list is the only body: no OK row, the item rows start one
-        // pitch back when the origin is negative.
-        if (origin_x < 0) {
-            button_x = origin_x -
-                (static_cast<int>(field_30E4_) + static_cast<int>(field_30CC_)) *
-                (static_cast<int>(field_30B0_) - 1);
-        } else {
-            button_x = origin_x;
-        }
-        goto rows;
-    }
-    if ((field_30A8_ & 0x40) != 0) {
-        const int pitch = static_cast<int>(field_30E4_) +
-                          static_cast<int>(field_30CC_);
-        if (origin_x < 0) {
-            button_x = origin_x - pitch;
-        } else {
-            button_x = origin_x + pitch * static_cast<int>(field_20F4_);
-        }
-    }
-
-    // THE OK CAPTION, or the default. The two arms join on the strcat - see
-    // the LEVER on the marker above.
-    if (ok_text_ == 0) {
-        const char *source;
-        if (BasePopDefaultOkText != 0) {
-            ok_text_ =
-                static_cast<char *>(mem_get(strlen(BasePopDefaultOkText) + 1));
-            ok_text_[0] = 0;
-            source = BasePopDefaultOkText;
-        } else {
-            ok_text_ = static_cast<char *>(mem_get(strlen("OK") + 1));
-            ok_text_[0] = 0;
-            source = "OK";
-        }
-        strcat(ok_text_, source);
-    }
-
-    // THE FIRST ROW, the window's own OK row.
-    flat_button1_.init(ok_text_, -1, button_x, button_y, static_cast<int>(field_30CC_),
-                       static_cast<int>(field_30D0_), this, row_style);
-    apply_button_config(&flat_button1_);
-    flat_button1_.set_font(button_font1_, button_font2_, button_font3_, 0);
-    flat_button1_.redraw();
-    flat_button1_.set_text_color(button_color_a_, button_color_b_,
-                                 button_color_c_, button_color_d_);
-    flat_button1_.set_text_color2(button_color_2a_, button_color_2b_,
-                                  button_color_2c_, button_color_2d_);
-    flat_button1_.set_text_color3(button_color_3a_, button_color_3b_,
-                                  button_color_3c_, button_color_3d_);
-    apply_button_bevel(&flat_button1_);
-    flat_button1_.show(0);
-
-    // THE ITEM ROWS ALWAYS RESTART FROM THE ORIGIN, never from where the OK
-    // row was left. Reload the pitch after the OK button's callbacks.
-    if (origin_x < 0) {
-        button_x = origin_x -
-            (static_cast<int>(field_30E4_) + static_cast<int>(field_30CC_)) *
-            (static_cast<int>(field_30B0_) - 1);
-    } else {
-        button_x = origin_x;
-    }
-
-rows:
-    // ONE ROW PER ITEM. item_buttons_ is the row the ctor clears with its one
-    // rep stosd; the image walks it with the same four-byte step and no bound
-    // of its own.
-    if (item_ids_.entry_count_ > 0) {
-        item_ids_.seek_pos(-1);
-        int index = 0;
-        for (; index < item_ids_.entry_count_; index++) {
-            FlatButton *button = new FlatButton();
-            item_buttons_[index] = button;
-
-            StringStructPayload *payload = item_ids_.next_entry();
-            char *text = payload != 0 ? payload->text : 0;
-            button->init(text, index + 1, button_x, button_y,
-                         static_cast<int>(field_30CC_),
-                         static_cast<int>(field_30D0_), this, row_style);
-            apply_button_config(button);
-            button->set_font(button_font1_, button_font2_, button_font3_, 0);
-            button->redraw();
-            button->set_text_color(button_color_a_, button_color_b_,
-                                   button_color_c_, button_color_d_);
-            button->set_text_color2(button_color_2a_, button_color_2b_,
-                                    button_color_2c_, button_color_2d_);
-            button->set_text_color3(button_color_3a_, button_color_3b_,
-                                    button_color_3c_, button_color_3d_);
-            apply_button_bevel(button);
-            button->show(0);
-
-            button_x += static_cast<int>(field_30E4_) +
-                        static_cast<int>(field_30CC_);
-        }
-    }
-
-    if ((field_30A8_ & 0x40) == 0) {
-        goto pump;
-    }
-    if (origin_x >= 0) {
-        button_x = origin_x +
-            (static_cast<int>(field_30E4_) + static_cast<int>(field_30CC_)) *
-            (static_cast<int>(field_30B0_) - 1);
-    } else {
-        button_x = origin_x;
-    }
-
-    // THE CANCEL CAPTION, or the default. The two fallback strings are the
-    // image's own and they disagree - see BUG IN THE ORIGINAL above.
-    if (cancel_text_ == 0) {
-        // Two DIFFERENT literals, as the image: the allocation sizes for
-        // "Cancel" and the concatenation writes "OK". See BUG IN THE ORIGINAL
-        // under the marker above.
-        if (BasePopDefaultCancelText != 0) {
-            cancel_text_ = static_cast<char *>(
-                mem_get(strlen(BasePopDefaultCancelText) + 1));
-            cancel_text_[0] = 0;
-            strcat(cancel_text_, BasePopDefaultCancelText);
-        } else {
-            cancel_text_ = static_cast<char *>(mem_get(strlen("Cancel") + 1));
-            cancel_text_[0] = 0;
-            strcat(cancel_text_, "OK");
-        }
-    }
-
-    // THE LAST ROW, the window's own Cancel row.
-    flat_button2_.init(cancel_text_, -2, button_x, button_y,
-                       static_cast<int>(field_30CC_),
-                       static_cast<int>(field_30D0_), this, row_style);
-    apply_button_config(&flat_button2_);
-    button_x -= static_cast<int>(field_30E4_) + static_cast<int>(field_30CC_);
-    flat_button2_.set_font(button_font1_, button_font2_, button_font3_, 0);
-    flat_button2_.redraw();
-    flat_button2_.set_text_color(button_color_a_, button_color_b_,
-                                 button_color_c_, button_color_d_);
-    flat_button2_.set_text_color2(button_color_2a_, button_color_2b_,
-                                  button_color_2c_, button_color_2d_);
-    flat_button2_.set_text_color3(button_color_3a_, button_color_3b_,
-                                  button_color_3c_, button_color_3d_);
-    apply_button_bevel(&flat_button2_);
-    flat_button2_.show(0);
-
-pump:
-    // THE CONFIG CALLBACK, once per caption block, only when the popup has
-    // neither the lock bit nor a callback-free config.
-    if ((field_30A8_ & 0x400000) == 0 && field_3094_ != 0) {
-        field_3094_(&text_block_a_, 1);
-    }
-    // Publish even a nonmodal popup: the original calls the virtual show
-    // slot with mode 3 before deciding whether to enter the modal pump.
-    show(3);
-
-    if ((field_30A8_ & 0x4100) == 0 && owner_window_ == this) {
-        // THE MODAL PUMP, with the popup holding modal focus. The fallout
-        // gate nests: a popup inside a popup leaves the outer one's count
-        // standing, and the flag only clears when the last one leaves.
-        ++BasePopFalloutGate;
-        Win *const saved_focus = WinModalFocus;
-        WinModalFocus = this;
-
-        // THE MODAL PUMP, Win::set_modal at slot 0xe4. The receiver is the
-        // external window when one is attached and the popup itself when not.
-        const int show_bit = (static_cast<int>(field_30A8_) >> 0x15) & 1;
-        if (external_window_ != 0) {
-            pump_result =
-                external_window_->set_modal(show_bit, callback,
-                                            static_cast<Win *>(0));
-        } else {
-            pump_result = set_modal(show_bit, callback, static_cast<Win *>(0));
+        if (dialogs_.kind_ != -1) {
+            if ((field_30A8_ & 0x800000) != 0) {
+                dialogs_.Dialog::field_20_ |= 0x1000;
+            }
+            dialogs_.SpriteBox::field_4_ = field_30A8_ & 0x800;
+            dialogs_.Dialogs::attach(
+                dialogs_.kind_, owner_window_, x, y,
+                static_cast<int>((field_30A4_ & 0x40) | 0x80000));
+            dialogs_.show(0);
         }
 
-        WinModalFocus = saved_focus;
-        BasePopModalLeft = client_rect_.left;
-        BasePopModalTop = client_rect_.top;
-    }
+        // THE ROW ORIGIN. The provider adjusts X, Y and style. Buttons advance
+        // horizontally from its X; its Y remains the shared baseline.
+        y = static_cast<int>(field_30C0_) - static_cast<int>(field_30EC_) -
+                       static_cast<int>(field_30E0_) - static_cast<int>(field_30D0_);
+        x = -static_cast<int>(field_30F4_);
+        int row_style = 0;
+        on_adjust_button_placement(&x, &y, &row_style);
+        flags = x;
 
-    // This is a separate post-pump test. The original reloads state and
-    // additionally tests bit 0x200; callbacks may have changed either gate.
-    if ((field_30A8_ & 0x4300) == 0 && owner_window_ == this) {
-        if (--BasePopFalloutGate == 0) {
-            BasePopFalloutFlag = 0;
+        // A plain text box (or a popup drawing into another window) runs neither
+        // the item rows nor the buttons: straight to the pump.
+        if ((field_30A8_ & 0x80100) == 0 && owner_window_ == this) {
+            if ((field_30A8_ & 0x10000) == 0) {
+                if ((field_30A8_ & 0x40) != 0) {
+                    if (flags < 0) {
+                        x = flags - (static_cast<int>(field_30E4_) +
+                                               static_cast<int>(field_30CC_));
+                    } else {
+                        x = flags + (static_cast<int>(field_30E4_) +
+                                               static_cast<int>(field_30CC_)) *
+                                                  static_cast<int>(field_20F4_);
+                    }
+                }
+
+                // THE OK CAPTION, or the default.
+                if (ok_text_ == 0) {
+                    if (BasePopDefaultOkText != 0) {
+                        ok_text_ = static_cast<char *>(
+                            mem_get(strlen(BasePopDefaultOkText) + 1));
+                        ok_text_[0] = 0;
+                        strcat(ok_text_, BasePopDefaultOkText);
+                    } else {
+                        ok_text_ = static_cast<char *>(mem_get(strlen("OK") + 1));
+                        ok_text_[0] = 0;
+                        strcat(ok_text_, "OK");
+                    }
+                }
+
+                // THE FIRST ROW, the window's own OK row.
+                flat_button1_.init(ok_text_, -1, x, y,
+                                   static_cast<int>(field_30CC_),
+                                   static_cast<int>(field_30D0_), this, row_style);
+                            basepop_set_tiles(&flat_button1_, 0, default_block_[0], default_block_[1], default_block_[2]);
+                basepop_set_tiles(&flat_button1_, 1, default_block_[3], default_block_[4], default_block_[5]);
+                basepop_set_tiles(&flat_button1_, 2, default_block_[6], default_block_[7], default_block_[8]);
+                basepop_set_tiles(&flat_button1_, 3, default_block_[9], default_block_[10], default_block_[11]);
+                basepop_set_tiles(&flat_button1_, 4, default_block_[12], default_block_[13], default_block_[14]);
+                basepop_set_tiles(&flat_button1_, 5, default_block_[15], default_block_[16], default_block_[17]);
+                basepop_set_tiles(&flat_button1_, 6, default_block_[18], default_block_[19], default_block_[20]);
+                basepop_set_tiles(&flat_button1_, 7, default_block_[21], default_block_[22], default_block_[23]);
+                basepop_set_tiles(&flat_button1_, 8, default_block_[24], default_block_[25], default_block_[26]);
+                basepop_button_font(&flat_button1_, button_font1_, button_font2_, button_font3_);
+                flat_button1_.set_text_color(button_color_a_, button_color_b_,
+                                             button_color_c_, button_color_d_);
+                flat_button1_.set_text_color2(button_color_2a_, button_color_2b_,
+                                              button_color_2c_, button_color_2d_);
+                flat_button1_.set_text_color3(button_color_3a_, button_color_3b_,
+                                              button_color_3c_, button_color_3d_);
+                apply_button_bevel(&flat_button1_);
+                flat_button1_.show(0);
+            }
+
+            // THE ITEM ROWS ALWAYS RESTART FROM THE ORIGIN.
+            x = flags;
+            if (flags < 0) {
+                x = flags -
+                    (static_cast<int>(field_30E4_) + static_cast<int>(field_30CC_)) *
+                    (static_cast<int>(field_30B0_) - 1);
+            }
+
+            // ONE ROW PER ITEM. item_buttons_ is the row the ctor clears with its
+            // one rep stosd; the image walks it with no bound of its own.
+            item_ids_.seek_pos(-1);
+            for (int index = 0; index < item_ids_.entry_count_; index++) {
+                item_buttons_[index] = new FlatButton();
+                item_ids_.next_entry();
+                item_buttons_[index]->init(
+                    item_ids_.current_ != 0 ? item_ids_.current_entry()->text : 0,
+                    index + 1, x, y, static_cast<int>(field_30CC_),
+                    static_cast<int>(field_30D0_), this, row_style);
+                            basepop_set_tiles(item_buttons_[index], 0, default_block_[0], default_block_[1], default_block_[2]);
+                basepop_set_tiles(item_buttons_[index], 1, default_block_[3], default_block_[4], default_block_[5]);
+                basepop_set_tiles(item_buttons_[index], 2, default_block_[6], default_block_[7], default_block_[8]);
+                basepop_set_tiles(item_buttons_[index], 3, default_block_[9], default_block_[10], default_block_[11]);
+                basepop_set_tiles(item_buttons_[index], 4, default_block_[12], default_block_[13], default_block_[14]);
+                basepop_set_tiles(item_buttons_[index], 5, default_block_[15], default_block_[16], default_block_[17]);
+                basepop_set_tiles(item_buttons_[index], 6, default_block_[18], default_block_[19], default_block_[20]);
+                basepop_set_tiles(item_buttons_[index], 7, default_block_[21], default_block_[22], default_block_[23]);
+                basepop_set_tiles(item_buttons_[index], 8, default_block_[24], default_block_[25], default_block_[26]);
+                basepop_button_font(item_buttons_[index], button_font1_,
+                                    button_font2_, button_font3_);
+                item_buttons_[index]->set_text_color(button_color_a_, button_color_b_,
+                                                     button_color_c_, button_color_d_);
+                item_buttons_[index]->set_text_color2(button_color_2a_, button_color_2b_,
+                                                      button_color_2c_, button_color_2d_);
+                item_buttons_[index]->set_text_color3(button_color_3a_, button_color_3b_,
+                                                      button_color_3c_, button_color_3d_);
+                            item_buttons_[index]->color_ = field_31A0_;
+                item_buttons_[index]->bevel_upper_ = field_31A4_;
+                item_buttons_[index]->bevel_lower_ = field_31A8_;
+                item_buttons_[index]->bevel_thickness_ = field_31AC_;
+                item_buttons_[index]->field_A94_ = field_31B0_;
+                item_buttons_[index]->field_A98_ = field_31B4_;
+                item_buttons_[index]->show(0);
+                x += static_cast<int>(field_30E4_) +
+                            static_cast<int>(field_30CC_);
+            }
+
+            if ((field_30A8_ & 0x40) != 0) {
+                x = flags;
+                if (flags >= 0) {
+                    x = flags +
+                        (static_cast<int>(field_30E4_) + static_cast<int>(field_30CC_)) *
+                        (static_cast<int>(field_30B0_) - 1);
+                }
+
+                // THE CANCEL CAPTION, or the default. The fallback sizes for
+                // "Cancel" and writes "OK" - see BUG IN THE ORIGINAL above.
+                if (cancel_text_ == 0) {
+                    if (BasePopDefaultCancelText != 0) {
+                        cancel_text_ = static_cast<char *>(
+                            mem_get(strlen(BasePopDefaultCancelText) + 1));
+                        cancel_text_[0] = 0;
+                        strcat(cancel_text_, BasePopDefaultCancelText);
+                    } else {
+                        cancel_text_ = static_cast<char *>(mem_get(strlen("Cancel") + 1));
+                        cancel_text_[0] = 0;
+                        strcat(cancel_text_, "OK");
+                    }
+                }
+
+                // THE LAST ROW, the window's own Cancel row.
+                flat_button2_.init(cancel_text_, -2, x, y,
+                                   static_cast<int>(field_30CC_),
+                                   static_cast<int>(field_30D0_), this, row_style);
+                            basepop_set_tiles(&flat_button2_, 0, default_block_[0], default_block_[1], default_block_[2]);
+                basepop_set_tiles(&flat_button2_, 1, default_block_[3], default_block_[4], default_block_[5]);
+                basepop_set_tiles(&flat_button2_, 2, default_block_[6], default_block_[7], default_block_[8]);
+                basepop_set_tiles(&flat_button2_, 3, default_block_[9], default_block_[10], default_block_[11]);
+                basepop_set_tiles(&flat_button2_, 4, default_block_[12], default_block_[13], default_block_[14]);
+                basepop_set_tiles(&flat_button2_, 5, default_block_[15], default_block_[16], default_block_[17]);
+                basepop_set_tiles(&flat_button2_, 6, default_block_[18], default_block_[19], default_block_[20]);
+                basepop_set_tiles(&flat_button2_, 7, default_block_[21], default_block_[22], default_block_[23]);
+                basepop_set_tiles(&flat_button2_, 8, default_block_[24], default_block_[25], default_block_[26]);
+                x -= static_cast<int>(field_30E4_) + static_cast<int>(field_30CC_);
+                basepop_button_font(&flat_button2_, button_font1_, button_font2_, button_font3_);
+                flat_button2_.set_text_color(button_color_a_, button_color_b_,
+                                             button_color_c_, button_color_d_);
+                flat_button2_.set_text_color2(button_color_2a_, button_color_2b_,
+                                              button_color_2c_, button_color_2d_);
+                flat_button2_.set_text_color3(button_color_3a_, button_color_3b_,
+                                              button_color_3c_, button_color_3d_);
+                flat_button2_.color_ = field_31A0_;
+            flat_button2_.bevel_upper_ = field_31A4_;
+            flat_button2_.bevel_lower_ = field_31A8_;
+            flat_button2_.bevel_thickness_ = field_31AC_;
+            flat_button2_.field_A94_ = field_31B0_;
+            flat_button2_.field_A98_ = field_31B4_;
+                flat_button2_.show(0);
+            }
         }
-        hide();
+
+        // THE CONFIG CALLBACK, only when the popup lacks the lock bit.
         if ((field_30A8_ & 0x400000) == 0 && field_3094_ != 0) {
-            field_3094_(&text_block_b_, 0);
+            field_3094_(&text_block_a_, 1);
         }
-    }
+        // Publish even a nonmodal popup: the virtual show slot with mode 3
+        // before deciding whether to enter the modal pump.
+        show(3);
 
-    if (dialogs_.kind_ == 4) {
-        // THE TEXT-FIELD KIND: all eight fields go to the parser.
-        int index = 0;
-        for (; index < 8; index++) {
-            parse_says(index, dialogs_.get_text(index), -1, -1);
+        if ((field_30A8_ & 0x4100) == 0 && owner_window_ == this) {
+            // THE MODAL PUMP, with the popup holding modal focus. The fallout
+            // gate nests; the flag only clears when the last popup leaves.
+            ++BasePopFalloutGate;
+            Win *const saved_focus = WinModalFocus;
+            WinModalFocus = this;
+            if (external_window_ != 0) {
+                pump_result = external_window_->set_modal(
+                    (field_30A8_ >> 0x15) & 1, callback,
+                    static_cast<Win *>(0));
+            } else {
+                pump_result = set_modal((field_30A8_ >> 0x15) & 1,
+                                        callback, static_cast<Win *>(0));
+            }
+            WinModalFocus = saved_focus;
+            BasePopModalLeft = client_rect_.left;
+            BasePopModalTop = client_rect_.top;
         }
-    }
 
-    // THE ANSWER: what the pump said, or the selected item.
-    if (pump_result != 0) {
-        if ((field_30A8_ & 0x40) != 0) {
-            return -1;
+        // A separate post-pump test: callbacks may have changed either gate.
+        if ((field_30A8_ & 0x4300) == 0 && owner_window_ == this) {
+            if (--BasePopFalloutGate == 0) {
+                BasePopFalloutFlag = 0;
+            }
+            hide();
+            if ((field_30A8_ & 0x400000) == 0 && field_3094_ != 0) {
+                field_3094_(&text_block_b_, 0);
+            }
         }
-        return static_cast<int>(BasePopDefaultExecResult);
+
+        if (dialogs_.kind_ == 4) {
+            // THE TEXT-FIELD KIND: all eight fields go to the parser.
+            for (int index = 0; index < 8; index++) {
+                parse_says(index, dialogs_.get_text(index), -1, -1);
+            }
+        }
+
+        // THE ANSWER: what the pump said, or the selected item.
+        if (pump_result != 0) {
+            if ((field_30A8_ & 0x40) != 0) {
+                return -1;
+            }
+            return static_cast<int>(BasePopDefaultExecResult);
+        }
+        return selected_id_;
     }
-    return selected_id_;
+    return 0;
 }
 
 /*

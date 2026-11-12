@@ -25,6 +25,7 @@
 #include "veh.h"
 #include "map.h"
 #include "mapwin.h"
+#include "faction_inline.h"  // has_treaty and territory_dist expand in find
 
 // Original 0x004E12D8/0x005C5A5E pass the shared Path receiver; no parent allocation or lifecycle claim.
 // Extent: compiled sizeof 0x2c; initial storage is eleven zero words; 0x945B2C unreferenced, probe globals from 0x945B30.
@@ -352,8 +353,13 @@ int Path::zoc_path(int x, int y, int faction_id) {
 */
 int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int faction_id, int unk1,
                int unk2) {
-    int proto_saved = proto_id;
+    int best_cost = 2000000000;
+    // One slot ([ebp-0x40]) for two roles: the caller's id saved when 0x200
+    // clears proto_id (territory mode exempts it), and the base owner of the
+    // 21-tile scan, which only runs outside territory mode.
+    int owner;
     if (unk1 & 0x200) {
+        owner = proto_id;
         proto_id = 0;
     }
     BOOL is_sea = get_proto_triad(proto_id) == TRIAD_SEA;
@@ -371,15 +377,21 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
     // slot, written only on the gated paths; otherwise it keeps a stale or
     // uninitialised value.
     int zoc;
-    int mask_treaty = 0;    // treaty partners whose land the planner must not cross
-    int mask_truce = 0;     // truce partners ditto
-    int mask_vendetta = 0;  // vendetta enemies with a base in the destination region
-    int src_territory_bit = 0;
-    int dst_territory_bit = 0;
-    int self_bit = 0;
-    int dst_threat_mode = 0;
+    int mask_treaty;    // treaty partners whose land the planner must not cross
+    int mask_truce;     // truce partners ditto
+    int mask_vendetta;  // vendetta enemies with a base in the destination region
+    int src_territory_bit;
+    int dst_territory_bit;
+    int self_bit;
+    int dst_threat_mode;
+    int cur_threat_mode;
     if (threat && faction_id > 0) {
-        uint8_t region_dst = map_loc(x_dst, y_dst)->region;
+        mask_treaty = 0;
+        mask_truce = 0;
+        mask_vendetta = 0;
+        int region_dst = map_loc(x_dst, y_dst)->region;
+        src_territory_bit = 1 << map_loc(x_src, y_src)->territory;
+        dst_territory_bit = 1 << map_loc(x_dst, y_dst)->territory;
         for (int f = 1; f < 8; f++) {
             if (f == faction_id) {
                 continue;
@@ -399,166 +411,164 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
                 mask_vendetta |= 1 << f;
             }
         }
-        // Unclaimed territory is -1. Original SHL uses the low five count bits;
-        // unsigned shifts preserve that high bit without negative-shift UB.
-        src_territory_bit = 1u << (static_cast<unsigned>(map_loc(x_src, y_src)->territory) & 31u);
-        dst_territory_bit = 1u << (static_cast<unsigned>(map_loc(x_dst, y_dst)->territory) & 31u);
         self_bit = 1 << faction_id;
-        if (VehPrototypes[proto_id].plan == PLAN_COLONIZATION
-            || VehPrototypes[proto_id].plan == PLAN_TERRAFORMING) {
+        dst_threat_mode = 0;
+        if (VehPrototypes[proto_id].plan == PLAN_TERRAFORMING
+            || VehPrototypes[proto_id].plan == PLAN_COLONIZATION) {
             // colonists and terraformers keep clear of vendetta enemies: mode 1
             // is the enemy holding the tile itself, mode 2 a cardinal neighbour
             for (int i = 0; i < 9; i++) {
                 int x_threat = wrap_map_x(x_dst + RadiusOffsetX[i]);
                 int y_threat = y_dst + RadiusOffsetY[i];
-                if ((i == 0 || i & 1) && on_map(x_threat, y_threat)
-                    && (mask_vendetta & (1u << (static_cast<unsigned>(map_loc(x_threat, y_threat)->territory) & 31u)))) {
+                if (on_map(x_threat, y_threat) && (!i || i & 1)
+                    && (mask_vendetta & (1 << map_loc(x_threat, y_threat)->territory))) {
                     dst_threat_mode = (i != 0) + 1;
                     break;
                 }
             }
         }
     }
-    BOOL cache_valid = x_dst == x_dst_ && y_dst == y_dst_
+    int i;
+    int x_cur;
+    int y_cur;
+    int cur_cost;
+    if (x_dst == x_dst_ && y_dst == y_dst_
         && VehPrototypes[proto_id].plan == VehPrototypes[proto_id_].plan
-        && unk1 == unk_ && faction_id == faction_id_2_;
-    if (!(cache_valid && map_table_[((int)MapLongitudeBounds >> 1) * y_src + (x_src >> 1)] != 0)) {
-        if (!cache_valid) {
-            memset(map_table_, 0, MapArea * sizeof(*map_table_));
-            unk_ = unk1;
-            x_dst_ = x_dst;
-            y_dst_ = y_dst;
-            proto_id_ = proto_id;
-            faction_id_2_ = faction_id;
+        && unk1 == unk_ && faction_id == faction_id_2_) {
+        if (map_table_[((int)MapLongitudeBounds >> 1) * y_src + (x_src >> 1)]) {
+            goto reconstruct;
         }
-        index2_ = 0;
-        index1_ = 0;
-        x_table_[index1_] = (int16_t)x_dst;
-        y_table_[index1_] = (int16_t)y_dst;
-        index1_++;
-        map_table_[((int)MapLongitudeBounds >> 1) * y_dst + (x_dst >> 1)] = 1;
-        // the search runs FROM the destination, so the table ends up holding
-        // the cost of reaching each tile from x_dst/y_dst
-        int best_cost = 2000000000;
-        do {
-            int x_cur = x_table_[index2_];
-            int y_cur = y_table_[index2_++];
-            if (index2_ == MapArea) {
-                index2_ = 0;
+    } else {
+        memset(map_table_, 0, MapArea * sizeof(*map_table_));
+        unk_ = unk1;
+        x_dst_ = x_dst;
+        y_dst_ = y_dst;
+        proto_id_ = proto_id;
+        faction_id_2_ = faction_id;
+    }
+    index2_ = 0;
+    index1_ = 0;
+    x_table_[index1_] = (int16_t)x_dst;
+    y_table_[index1_] = (int16_t)y_dst;
+    index1_++;
+    map_table_[((int)MapLongitudeBounds >> 1) * y_dst + (x_dst >> 1)] = 1;
+    // the search runs FROM the destination, so the table ends up holding
+    // the cost of reaching each tile from x_dst/y_dst
+    do {
+        x_cur = x_table_[index2_];
+        y_cur = y_table_[index2_++];
+        if (index2_ == MapArea) {
+            index2_ = 0;
+        }
+        if (IsMultiplayerNet && !(index2_ & 0x3f)) {
+            do_all_non_input();
+        }
+        cur_cost = map_table_[((int)MapLongitudeBounds >> 1) * y_cur + (x_cur >> 1)];
+        if (cur_cost > best_cost) {
+            continue;
+        }
+        if (x_cur == x_src && y_cur == y_src) {
+            best_cost = cur_cost;
+            // 0x0059A8E0 joins the queue tail; cheaper queued routes remain.
+            continue;
+        }
+        if ((unk1 & 0x40) && faction_id > 0 && cur_cost > 1) {
+            if (altitude_at(x_cur, y_cur) < ALT_BIT_SHORE_LINE) {
+                zoc = 0;
+            } else {
+                zoc = zoc_path(x_cur, y_cur, faction_id);
             }
-            if (IsMultiplayerNet && (index2_ & 0x3f) == 0) {
-                do_all_non_input();
-            }
-            int cur_cost = map_table_[((int)MapLongitudeBounds >> 1) * y_cur + (x_cur >> 1)];
-            if (cur_cost > best_cost) {
-                continue;
-            }
-            if (x_cur == x_src && y_cur == y_src) {
-                best_cost = cur_cost;
-                // 0x0059A8E0 joins the queue tail; cheaper queued routes remain.
-                continue;
-            }
-            if ((unk1 & 0x40) && faction_id > 0 && cur_cost > 1) {
-                if ((map_loc(x_cur, y_cur)->climate & 0xE0) < ALT_BIT_SHORE_LINE) {
-                    zoc = 0;
-                } else {
-                    zoc = zoc_path(x_cur, y_cur, faction_id);
+        }
+        if (threat && faction_id > 0 && mask_vendetta
+            && (VehPrototypes[proto_id].plan == PLAN_TERRAFORMING
+                || VehPrototypes[proto_id].plan == PLAN_COLONIZATION)) {
+            cur_threat_mode = 0;
+            for (int j = 0; j < 9; j++) {
+                int x_threat = wrap_map_x(x_cur + RadiusOffsetX[j]);
+                int y_threat = y_cur + RadiusOffsetY[j];
+                if (on_map(x_threat, y_threat) && (!j || j & 1)
+                    && (mask_vendetta & (1 << map_loc(x_threat, y_threat)->territory))) {
+                    cur_threat_mode = (j != 0) + 1;
+                    break;
                 }
             }
-            int cur_threat_mode = 0;
-            if (threat && faction_id > 0 && mask_vendetta
-                && (VehPrototypes[proto_id].plan == PLAN_COLONIZATION
-                    || VehPrototypes[proto_id].plan == PLAN_TERRAFORMING)) {
-                for (int i = 0; i < 9; i++) {
-                    int x_threat = wrap_map_x(x_cur + RadiusOffsetX[i]);
-                    int y_threat = y_cur + RadiusOffsetY[i];
-                    if ((i == 0 || i & 1) && on_map(x_threat, y_threat)
-                        && (mask_vendetta & (1u << (static_cast<unsigned>(map_loc(x_threat, y_threat)->territory) & 31u)))) {
-                        cur_threat_mode = (i != 0) + 1;
-                        break;
-                    }
-                }
+        }
+        for (i = 0; i < 8; i++) {
+            int x_next = wrap_map_x(x_cur + VehMoveDeltaX[i]);
+            int y_next = y_cur + VehMoveDeltaY[i];
+            if (!on_map(x_next, y_next)) {
+                continue;
             }
-            for (int i = 0; i < 8; i++) {
-                int x_next = wrap_map_x(x_cur + VehMoveDeltaX[i]);
-                int y_next = y_cur + VehMoveDeltaY[i];
-                if (!on_map(x_next, y_next)) {
+            if (is_ocean(x_next, y_next) != is_sea && !(x_next == x_src && y_next == y_src)
+                && !(x_next == x_dst && y_next == y_dst)) {
+                if (!is_sea) {
+                    continue; // land units cannot leave the shore
+                }
+                // sea units enter land only at a friendly base
+                int owner_base = base_who(x_next, y_next);
+                if (owner_base < 0) {
                     continue;
                 }
-                Map *tile = map_loc(x_next, y_next);
-                BOOL ocean_next = (tile->climate & 0xE0) < ALT_BIT_SHORE_LINE;
-                if (ocean_next != is_sea && !(x_next == x_src && y_next == y_src)
-                    && !(x_next == x_dst && y_next == y_dst)) {
-                    if (!is_sea) {
-                        continue; // land units cannot leave the shore
-                    }
-                    int owner_base;
-                    if (!(tile->bit & BIT_BASE_IN_TILE)
-                        || (owner_base = tile->val2 & 0xF) >= 8 || owner_base < 0
-                        || (owner_base != faction_id
-                            && !has_treaty(faction_id, owner_base, DTREATY_PACT))) {
-                        continue; // sea units enter land only at a friendly base
-                    }
+                if (owner_base != faction_id
+                    && !has_treaty(faction_id, owner_base, DTREATY_PACT)) {
+                    continue;
                 }
-                if (VehPrototypes[proto_id].plan == PLAN_ALIEN_ARTIFACT) {
-                    if (goody_at(x_next, y_next)) {
-                        continue; // artifact carriers must not pop the pod
-                    }
-                    if (faction_id >= 0) {
-                        BOOL unexplored = FALSE;
-                        for (int j = 0; j < 8; j++) {
-                            int x_adj = wrap_map_x(x_next + VehMoveDeltaX[j]);
-                            int y_adj = y_next + VehMoveDeltaY[j];
-                            if (on_map(x_adj, y_adj)
-                                && !(PlayersData[faction_id].flags & RFLAG_FREEPROTO)
-                                && !(map_loc(x_adj, y_adj)->visibility & (1 << faction_id))) {
-                                unexplored = TRUE;
-                                break;
-                            }
-                        }
-                        if (unexplored) {
-                            continue;
+            }
+            if (VehPrototypes[proto_id].plan == PLAN_ALIEN_ARTIFACT) {
+                if (goody_at(x_next, y_next)) {
+                    continue; // artifact carriers must not pop the pod
+                }
+                if (faction_id >= 0) {
+                    BOOL unexplored = FALSE;
+                    for (int j = 0; j < 8; j++) {
+                        int x_adj = wrap_map_x(x_next + VehMoveDeltaX[j]);
+                        int y_adj = y_next + VehMoveDeltaY[j];
+                        if (on_map(x_adj, y_adj)
+                            && !(PlayersData[faction_id].flags & RFLAG_FREEPROTO)
+                            && !(map_loc(x_adj, y_adj)->visibility & (1 << faction_id))) {
+                            unexplored = TRUE;
+                            break;
                         }
                     }
-                }
-                if (unk1 & 0x2) { // roads and bases only
-                    int owner_base;
-                    if (!(tile->bit & BIT_ROAD)
-                        && (!(tile->bit & BIT_BASE_IN_TILE)
-                            || (owner_base = tile->val2 & 0xF) >= 8 || owner_base < 0)) {
+                    if (unexplored) {
                         continue;
                     }
                 }
-                if ((unk1 & 0x4) && (tile->bit & BIT_FUNGUS)
-                    && (tile->climate & 0xE0) >= ALT_BIT_OCEAN_SHELF) {
-                    continue;
+            }
+            if ((unk1 & 0x2) && !(map_loc(x_next, y_next)->bit & BIT_ROAD)
+                && base_who(x_next, y_next) < 0) {
+                continue; // roads and bases only
+            }
+            if ((unk1 & 0x4) && (map_loc(x_next, y_next)->bit & BIT_FUNGUS)
+                && (map_loc(x_next, y_next)->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF) {
+                continue;
+            }
+            int new_cost;
+            if (unk1 & 0x1) {
+                new_cost = cur_cost + 1;
+            } else {
+                int hex = hex_cost(proto_id, faction_id, x_next, y_next, x_cur, y_cur,
+                    speed_max);
+                if (unk1 & 0x8) {
+                    hex = max(hex, Rules.move_rate_roads - 1);
                 }
-                int new_cost;
-                if (unk1 & 0x1) {
-                    new_cost = cur_cost + 1;
-                } else {
-                    int hex = hex_cost(proto_id, faction_id, x_next, y_next, x_cur, y_cur,
-                        speed_max);
-                    if (unk1 & 0x8 && hex < Rules.move_rate_roads - 1) {
-                        hex = Rules.move_rate_roads - 1;
-                    }
-                    new_cost = hex * 16 + cur_cost + 8;
-                    if ((tile->climate & 0xE0) > (map_loc(x_cur, y_cur)->climate & 0xE0)) {
-                        new_cost--; // uphill
-                    }
-                    if (goody_at(x_next, y_next)) {
-                        new_cost += Rules.move_rate_roads;
-                    }
+                new_cost = hex * 16 + cur_cost + 8;
+                if ((map_loc(x_next, y_next)->climate & ~0x1F)
+                    > (map_loc(x_cur, y_cur)->climate & ~0x1F)) {
+                    new_cost--; // uphill
                 }
-                if ((unk1 & 0x10) && (tile->bit & BIT_FUNGUS)
-                    && (tile->climate & 0xE0) >= ALT_BIT_OCEAN_SHELF) {
-                    new_cost += 6 * Rules.move_rate_roads;
+                if (goody_at(x_next, y_next)) {
+                    new_cost += Rules.move_rate_roads;
                 }
-                if (faction_id < 0) {
-                    // a neutral scan: cost alone decides
-                } else if (unk1 & 0x200) {
-                    int territory_next = tile->territory;
-                    if (faction_id != territory_next && proto_saved != territory_next) {
+            }
+            if ((unk1 & 0x10) && (map_loc(x_next, y_next)->bit & BIT_FUNGUS)
+                && (map_loc(x_next, y_next)->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF) {
+                new_cost += Rules.move_rate_roads * 6;
+            }
+            if (faction_id >= 0) {
+                if (unk1 & 0x200) {
+                    int territory_next = map_loc(x_next, y_next)->territory;
+                    if (faction_id != territory_next && owner != territory_next) {
                         if (territory_next < 0) {
                             if (unk1 & 0x400) {
                                 continue; // no man's land
@@ -582,46 +592,32 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
                     }
                     // territory mode: no zone-of-control or artillery penalties
                 } else {
-                    int owner_next = -1; // vehicle-stack owner of the tile
-                    if (tile->bit & BIT_VEH_IN_TILE) {
-                        int owner = tile->val2 & 0xF;
-                        if (owner < 8) {
-                            owner_next = owner;
-                            if (owner >= 0 && owner != faction_id
-                                && !has_treaty(faction_id, owner, DTREATY_PACT)) {
-                                continue;
-                            }
-                        }
+                    int owner_next = veh_who(x_next, y_next); // vehicle-stack owner
+                    if (owner_next >= 0 && owner_next != faction_id
+                        && !has_treaty(faction_id, owner_next, DTREATY_PACT)) {
+                        continue;
                     }
-                    if ((unk1 & 0x40) && faction_id > 0 && owner_next < 0) {
-                        int dx = abs(x_next - x_dst);
-                        if (!(MapIsFlat & 1) && dx > (int)MapLongitude) {
-                            dx = (int)MapLongitudeBounds - dx;
-                        }
-                        // 0x0059AF07 clears AL bit 0, preserving the rest of EAX.
-                        int dist = (dx + abs(y_next - y_dst)) & ~1;
-                        if (zoc || dist > 2) {
-                            if (zoc_path(x_next, y_next, faction_id)) {
-                                new_cost += 1000;
-                                if (zoc) {
-                                    new_cost += 2000;
-                                }
-                            }
+                    if ((unk1 & 0x40) && faction_id > 0 && owner_next < 0
+                        && (zoc || territory_dist(x_next, y_next, x_dst, y_dst) > 2)
+                        && zoc_path(x_next, y_next, faction_id)) {
+                        new_cost += 1000;
+                        if (zoc) {
+                            new_cost += 2000;
                         }
                     }
                     if (threat && faction_id > 0 && owner_next < 0) {
                         if (mask_vendetta
-                            && (VehPrototypes[proto_id].plan == PLAN_COLONIZATION
-                                || VehPrototypes[proto_id].plan == PLAN_TERRAFORMING)) {
+                            && (VehPrototypes[proto_id].plan == PLAN_TERRAFORMING
+                                || VehPrototypes[proto_id].plan == PLAN_COLONIZATION)) {
                             for (int j = 0; j < 9; j++) {
                                 int x_threat = wrap_map_x(x_next + RadiusOffsetX[j]);
                                 int y_threat = y_next + RadiusOffsetY[j];
                                 if (!on_map(x_threat, y_threat)
                                     || !(mask_vendetta
-                                        & (1u << (static_cast<unsigned>(map_loc(x_threat, y_threat)->territory) & 31u)))) {
+                                        & (1 << map_loc(x_threat, y_threat)->territory))) {
                                     continue;
                                 }
-                                if (j == 0) {
+                                if (!j) {
                                     if (dst_threat_mode == 1) {
                                         continue;
                                     }
@@ -641,14 +637,11 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
                                 break;
                             }
                         }
-                        BOOL treaty_penalty = TRUE;
-                        if (is_human(faction_id)
-                            && !(PlayersData[faction_id].flags & RFLAG_FREEPROTO)
-                            && !(tile->visibility & (1 << faction_id))) {
-                            treaty_penalty = FALSE; // unexplored: no treaty knowledge
-                        }
-                        if (treaty_penalty) {
-                            int territory_bit = 1u << (static_cast<unsigned>(tile->territory) & 31u);
+                        // unexplored ground carries no treaty knowledge
+                        if (!is_human(faction_id)
+                            || (PlayersData[faction_id].flags & RFLAG_FREEPROTO)
+                            || (map_loc(x_next, y_next)->visibility & (1 << faction_id))) {
+                            int territory_bit = 1 << map_loc(x_next, y_next)->territory;
                             if (!(self_bit & territory_bit)) {
                                 int penalty = 0;
                                 if (mask_treaty & territory_bit) {
@@ -663,242 +656,221 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
                                     if (dst_territory_bit & territory_bit) {
                                         penalty = 1;
                                     }
+                                }
+                                if (penalty) {
                                     for (int j = 0; j < 21; j++) {
                                         int x_base = wrap_map_x(x_next + RadiusOffsetX[j]);
                                         int y_base = y_next + RadiusOffsetY[j];
                                         if (on_map(x_base, y_base)) {
-                                            Map *tile_base = map_loc(x_base, y_base);
-                                            int owner_base = tile_base->val2 & 0xF;
-                                            if ((tile_base->bit & BIT_BASE_IN_TILE)
-                                                && owner_base < 8 && owner_base > 0
-                                                // 0x0059B1F1-0x0059B1F4 uses OR, not membership.
-                                                && (mask_treaty | mask_truce
-                                                    | (1 << owner_base))) {
+                                            owner = base_who(x_base, y_base);
+                                            // 0x0059B1F1-0x0059B1F4 uses OR, not membership.
+                                            if (owner > 0
+                                                && ((1 << owner) | mask_truce | mask_treaty)) {
                                                 penalty *= 2; // a base next door doubles it
                                             }
                                         }
                                     }
-                                    new_cost += penalty;
                                 }
+                                new_cost += penalty;
                             }
                         }
-                        if (get_proto_triad(proto_id) == TRIAD_SEA) {
-                            int owner_base;
-                            if ((tile->climate & 0xE0) < ALT_BIT_SHORE_LINE
-                                && (!(tile->bit & BIT_BASE_IN_TILE)
-                                    || (owner_base = tile->val2 & 0xF) >= 8
-                                    || owner_base < 0)) {
-                                // open water without a base: stand off enemy artillery
-                                for (int j = 1; j < 25; j++) {
-                                    int x_arty = wrap_map_x(x_next + RadiusOffsetX[j]);
-                                    int y_arty = y_next + RadiusOffsetY[j];
-                                    if (on_map(x_arty, y_arty)) {
-                                        for (int veh_arty = veh_at(x_arty, y_arty);
-                                            veh_arty >= 0;
-                                            veh_arty = Vehs[veh_arty].next_veh_id_stack) {
-                                            if (Vehs[veh_arty].faction_id != faction_id
-                                                && has_treaty(faction_id,
-                                                    Vehs[veh_arty].faction_id,
-                                                    DTREATY_VENDETTA)
-                                                && can_arty(Vehs[veh_arty].proto_id, TRUE)) {
-                                                new_cost += 100;
-                                            }
+                        if (get_proto_triad(proto_id) == TRIAD_SEA
+                            && altitude_at(x_next, y_next) < ALT_BIT_SHORE_LINE
+                            && base_who(x_next, y_next) < 0) {
+                            // open water without a base: stand off enemy artillery
+                            i = 25; // the image's counter store: the last direction,
+                                    // and the reverse-direction test no longer matches
+                            for (int j = 1; j < 25; j++) {
+                                int x_arty = wrap_map_x(x_next + RadiusOffsetX[j]);
+                                int y_arty = y_next + RadiusOffsetY[j];
+                                if (on_map(x_arty, y_arty)) {
+                                    for (int veh_arty = veh_at(x_arty, y_arty);
+                                        veh_arty >= 0;
+                                        veh_arty = Vehs[veh_arty].next_veh_id_stack) {
+                                        if (Vehs[veh_arty].faction_id != faction_id
+                                            && has_treaty(faction_id,
+                                                Vehs[veh_arty].faction_id,
+                                                DTREATY_VENDETTA)
+                                            && can_arty(Vehs[veh_arty].proto_id, TRUE)) {
+                                            new_cost += 100;
                                         }
                                     }
                                 }
-                                i = 25; // the image's counter store: the last direction,
-                                         // and the reverse-direction test no longer matches
                             }
                         }
                     }
                 }
-                if (new_cost < cur_cost + 1) {
-                    new_cost = cur_cost + 1;
+            }
+            if (new_cost < cur_cost + 1) {
+                new_cost = cur_cost + 1;
+            }
+            int index_next = ((int)MapLongitudeBounds >> 1) * y_next + (x_next >> 1);
+            if (!map_table_[index_next] || map_table_[index_next] > new_cost) {
+                map_table_[index_next] = new_cost;
+                int j = index2_;
+                while (j < index1_
+                    && (x_table_[j] != x_next
+                        || y_table_[j] != y_next)) {
+                    j++;
                 }
-                int index_next = ((int)MapLongitudeBounds >> 1) * y_next + (x_next >> 1);
-                if (!map_table_[index_next] || map_table_[index_next] > new_cost) {
-                    map_table_[index_next] = new_cost;
-                    int j = index2_;
-                    while (j < index1_
-                        && (x_table_[j] != x_next
-                            || y_table_[j] != y_next)) {
-                        j++;
-                    }
-                    if (j == index1_ && index1_ < MapArea) {
-                        x_table_[index1_] = (int16_t)x_next;
-                        y_table_[index1_] = (int16_t)y_next;
-                        index1_++;
-                    }
+                if (j == index1_ && index1_ < MapArea) {
+                    x_table_[index1_] = (int16_t)x_next;
+                    y_table_[index1_] = (int16_t)y_next;
+                    index1_++;
                 }
             }
-        } while (index2_ && index1_ != index2_);
-        if (MapWinTable[0]->field_1DD70_ & 0x4000) {
-            MapWinTable[0]->MapWin::draw_map(1);
         }
-        if (best_cost == 2000000000) {
-            return -1;
-        }
+    } while (index2_ && index1_ != index2_);
+    if (MapWinTable[0]->field_1DD70_ & 0x4000) {
+        MapWinTable[0]->MapWin::draw_map(1);
     }
+    if (best_cost == 2000000000) {
+        return -1;
+    }
+reconstruct:
     // reconstruction: read the first step back out of the table, from the source
-    if ((unk1 & 0x40) && faction_id > 0) {
-        if ((map_loc(x_src, y_src)->climate & 0xE0) < ALT_BIT_SHORE_LINE) {
-            zoc = 0;
-        } else {
-            zoc = zoc_path(x_src, y_src, faction_id);
-        }
-    }
-    int cur_threat_mode = 0;
-    if (threat && faction_id > 0 && mask_vendetta
-        && (VehPrototypes[proto_id].plan == PLAN_COLONIZATION
-            || VehPrototypes[proto_id].plan == PLAN_TERRAFORMING)) {
-        for (int i = 0; i < 9; i++) {
-            int x_threat = wrap_map_x(x_src + RadiusOffsetX[i]);
-            int y_threat = y_src + RadiusOffsetY[i];
-            if ((i == 0 || i & 1) && on_map(x_threat, y_threat)
-                && (mask_vendetta & (1u << (static_cast<unsigned>(map_loc(x_threat, y_threat)->territory) & 31u)))) {
-                cur_threat_mode = (i != 0) + 1;
-                break;
+    {
+        int best_dir = -1;
+        int best_score = 2000000000;
+        if ((unk1 & 0x40) && faction_id > 0) {
+            if ((map_loc(x_src, y_src)->climate & ~0x1F) < ALT_BIT_SHORE_LINE) {
+                zoc = 0;
+            } else {
+                zoc = zoc_path(x_src, y_src, faction_id);
             }
         }
-    }
-    int best_dir = -1;
-    int best_score = 2000000000;
-    for (int i = 0; i < 8; i++) {
-        int x_next = wrap_map_x(x_src + VehMoveDeltaX[i]);
-        int y_next = y_src + VehMoveDeltaY[i];
-        if (!on_map(x_next, y_next)) {
-            continue;
-        }
-        if (x_next == x_dst && y_next == y_dst) {
-            return i; // the destination is one step away
-        }
-        Map *tile = map_loc(x_next, y_next);
-        int cost = map_table_[((int)MapLongitudeBounds >> 1) * y_next + (x_next >> 1)];
-        if (!cost) {
-            continue;
-        }
-        if (!(unk1 & 0x1)) {
-            int hex = hex_cost(proto_id, faction_id, x_src, y_src, x_next, y_next, speed_max);
-            if (unk1 & 0x8 && hex < Rules.move_rate_roads - 1) {
-                hex = Rules.move_rate_roads - 1;
-            }
-            cost += hex * 16;
-            if (!is_sea
-                && (tile->climate & 0xE0) >= (map_loc(x_src, y_src)->climate & 0xE0)) {
-                cost = range(cost - 1, 0, 999999);
-            }
-            if (goody_at(x_next, y_next)) {
-                cost += Rules.move_rate_roads;
+        if (threat && faction_id > 0 && mask_vendetta
+            && (VehPrototypes[proto_id].plan == PLAN_TERRAFORMING
+                || VehPrototypes[proto_id].plan == PLAN_COLONIZATION)) {
+            cur_threat_mode = 0;
+            for (int j = 0; j < 9; j++) {
+                int x_threat = wrap_map_x(x_src + RadiusOffsetX[j]);
+                int y_threat = y_src + RadiusOffsetY[j];
+                if (on_map(x_threat, y_threat) && (!j || j & 1)
+                    && (mask_vendetta & (1 << map_loc(x_threat, y_threat)->territory))) {
+                    cur_threat_mode = (j != 0) + 1;
+                    break;
+                }
             }
         }
-        if (faction_id >= 0 && !(unk1 & 0x200)) {
-            int owner_next = -1; // vehicle-stack owner of the tile
-            if (tile->bit & BIT_VEH_IN_TILE) {
-                int owner = tile->val2 & 0xF;
-                if (owner < 8) {
-                    owner_next = owner;
-                    if (owner >= 0 && owner != faction_id
-                        && !has_treaty(faction_id, owner, DTREATY_PACT)) {
-                        continue;
+        for (i = 0; i < 8; i++) {
+            int x_next = wrap_map_x(x_src + VehMoveDeltaX[i]);
+            int y_next = y_src + VehMoveDeltaY[i];
+            if (!on_map(x_next, y_next)) {
+                continue;
+            }
+            if (x_next == x_dst && y_next == y_dst) {
+                return i; // the destination is one step away
+            }
+            int cost = map_table_[((int)MapLongitudeBounds >> 1) * y_next + (x_next >> 1)];
+            if (!cost) {
+                continue;
+            }
+            if (!(unk1 & 0x1)) {
+                int hex = hex_cost(proto_id, faction_id, x_src, y_src, x_next, y_next, speed_max);
+                if (unk1 & 0x8) {
+                    hex = max(hex, Rules.move_rate_roads - 1);
+                }
+                cost += hex * 16;
+                if (!is_sea
+                    && (map_loc(x_next, y_next)->climate & ~0x1F)
+                        >= (map_loc(x_src, y_src)->climate & ~0x1F)) {
+                    cost = range(cost - 1, 0, 999999);
+                }
+                if (goody_at(x_next, y_next)) {
+                    cost += Rules.move_rate_roads;
+                }
+            }
+            if (faction_id >= 0 && !(unk1 & 0x200)) {
+                int owner_next = veh_who(x_next, y_next); // vehicle-stack owner
+                if (owner_next >= 0 && owner_next != faction_id
+                    && !has_treaty(faction_id, owner_next, DTREATY_PACT)) {
+                    continue;
+                }
+                if ((unk1 & 0x40) && faction_id > 0
+                    && (zoc || territory_dist(x_next, y_next, x_dst, y_dst) > 2)
+                    && owner_next < 0 && zoc_path(x_next, y_next, faction_id)) {
+                    cost += 1000;
+                    if (zoc) {
+                        cost += 2000;
                     }
                 }
-            }
-            if ((unk1 & 0x40) && faction_id > 0 && owner_next < 0) {
-                int dx = abs(x_next - x_dst);
-                if (!(MapIsFlat & 1) && dx > (int)MapLongitude) {
-                    dx = (int)MapLongitudeBounds - dx;
-                }
-                // 0x0059B797 likewise clears only the low bit of the full distance.
-                int dist = (dx + abs(y_next - y_dst)) & ~1;
-                if (zoc || dist > 2) {
-                    if (zoc_path(x_next, y_next, faction_id)) {
-                        cost += 1000;
-                        if (zoc) {
-                            cost += 2000;
-                        }
-                    }
-                }
-            }
-            // Unlike the search pass, 0x0059B7D7 does not exclude occupied tiles.
-            if (threat && faction_id > 0) {
-                if (mask_vendetta
-                    && (VehPrototypes[proto_id].plan == PLAN_COLONIZATION
-                        || VehPrototypes[proto_id].plan == PLAN_TERRAFORMING)) {
-                    for (int j = 0; j < 9; j++) {
-                        int x_threat = wrap_map_x(x_next + RadiusOffsetX[j]);
-                        int y_threat = y_next + RadiusOffsetY[j];
-                        if (!on_map(x_threat, y_threat)
-                            || !(mask_vendetta
-                                & (1u << (static_cast<unsigned>(map_loc(x_threat, y_threat)->territory) & 31u)))) {
-                            continue;
-                        }
-                        if (j == 0) {
-                            if (dst_threat_mode == 1) {
+                // Unlike the search pass, 0x0059B7D7 does not exclude occupied tiles.
+                if (threat && faction_id > 0) {
+                    if (mask_vendetta
+                        && (VehPrototypes[proto_id].plan == PLAN_TERRAFORMING
+                            || VehPrototypes[proto_id].plan == PLAN_COLONIZATION)) {
+                        for (int j = 0; j < 9; j++) {
+                            int x_threat = wrap_map_x(x_next + RadiusOffsetX[j]);
+                            int y_threat = y_next + RadiusOffsetY[j];
+                            if (!on_map(x_threat, y_threat)
+                                || !(mask_vendetta
+                                    & (1 << map_loc(x_threat, y_threat)->territory))) {
                                 continue;
                             }
-                            cost += 2500; // the enemy holds the tile itself
-                            break;
-                        }
-                        if (j & 1) {
-                            if (dst_threat_mode || cur_threat_mode == 1) {
-                                continue;
+                            if (!j) {
+                                if (dst_threat_mode == 1) {
+                                    continue;
+                                }
+                                cost += 2500; // the enemy holds the tile itself
+                                break;
                             }
-                            cost += 500; // one cardinal step from the enemy
+                            if (j & 1) {
+                                if (cur_threat_mode == 1 || dst_threat_mode) {
+                                    continue;
+                                }
+                                cost += 500; // one cardinal step from the enemy
+                                break;
+                            }
+                            if (!cur_threat_mode && !dst_threat_mode) {
+                                cost += 100; // diagonal step
+                            }
                             break;
                         }
-                        if (!cur_threat_mode && !dst_threat_mode) {
-                            cost += 100; // diagonal step
-                        }
-                        break;
                     }
-                }
-                BOOL treaty_penalty = TRUE;
-                if (is_human(faction_id)
-                    && !(PlayersData[faction_id].flags & RFLAG_FREEPROTO)
-                    && !(tile->visibility & (1 << faction_id))) {
-                    treaty_penalty = FALSE; // unexplored: no treaty knowledge
-                }
-                if (treaty_penalty) {
-                    int territory_bit = 1u << (static_cast<unsigned>(tile->territory) & 31u);
-                    if (!(self_bit & territory_bit)) {
-                        int penalty = 0;
-                        if (mask_treaty & territory_bit) {
-                            penalty = GameDataStateStorage.fields_.sunspot_duration_ > 0 ? 2500 : 1000;
-                        } else if (mask_truce & territory_bit) {
-                            penalty = is_human(faction_id) ? 1 : 100;
-                        }
-                        if (penalty) {
-                            if (src_territory_bit & territory_bit) {
-                                penalty = 1;
+                    // unexplored ground carries no treaty knowledge
+                    if (!is_human(faction_id)
+                        || (PlayersData[faction_id].flags & RFLAG_FREEPROTO)
+                        || (map_loc(x_next, y_next)->visibility & (1 << faction_id))) {
+                        int territory_bit = 1 << map_loc(x_next, y_next)->territory;
+                        if (!(self_bit & territory_bit)) {
+                            int penalty = 0;
+                            if (mask_treaty & territory_bit) {
+                                penalty = GameDataStateStorage.fields_.sunspot_duration_ > 0 ? 2500 : 1000;
+                            } else if (mask_truce & territory_bit) {
+                                penalty = is_human(faction_id) ? 1 : 100;
                             }
-                            if (dst_territory_bit & territory_bit) {
-                                penalty = 1;
+                            if (penalty) {
+                                if (src_territory_bit & territory_bit) {
+                                    penalty = 1;
+                                }
+                                if (dst_territory_bit & territory_bit) {
+                                    penalty = 1;
+                                }
                             }
-                            for (int j = 0; j < 21; j++) {
-                                int x_base = wrap_map_x(x_next + RadiusOffsetX[j]);
-                                int y_base = y_next + RadiusOffsetY[j];
-                                if (on_map(x_base, y_base)) {
-                                    Map *tile_base = map_loc(x_base, y_base);
-                                    int owner_base = tile_base->val2 & 0xF;
-                                    if ((tile_base->bit & BIT_BASE_IN_TILE)
-                                        && owner_base < 8 && owner_base > 0
-                                        // 0x0059BA66-0x0059BA69 repeats the original OR quirk.
-                                        && (mask_treaty | mask_truce
-                                            | (1 << owner_base))) {
-                                        penalty *= 2; // a base next door doubles it
+                            if (penalty) {
+                                for (int j = 0; j < 21; j++) {
+                                    int x_base = wrap_map_x(x_next + RadiusOffsetX[j]);
+                                    int y_base = y_next + RadiusOffsetY[j];
+                                    if (on_map(x_base, y_base)) {
+                                        owner = base_who(x_base, y_base);
+                                        // 0x0059BA66-0x0059BA69 repeats the OR quirk.
+                                        if (owner > 0
+                                            && ((1 << owner) | mask_truce | mask_treaty)) {
+                                            penalty *= 2; // a base next door doubles it
+                                        }
                                     }
                                 }
                             }
                             cost += penalty;
                         }
                     }
-                }
-                if (get_proto_triad(proto_id) == TRIAD_SEA) {
-                    int owner_base;
-                    if ((tile->climate & 0xE0) < ALT_BIT_SHORE_LINE
-                        && (!(tile->bit & BIT_BASE_IN_TILE)
-                            || (owner_base = tile->val2 & 0xF) >= 8 || owner_base < 0)) {
+                    if (get_proto_triad(proto_id) == TRIAD_SEA
+                        && altitude_at(x_next, y_next) < ALT_BIT_SHORE_LINE
+                        && base_who(x_next, y_next) < 0) {
                         // open water without a base: stand off enemy artillery
+                        i = 25; // the image's counter store: the last direction,
+                                // and the reverse-direction test no longer matches
                         for (int j = 1; j < 25; j++) {
                             int x_arty = wrap_map_x(x_next + RadiusOffsetX[j]);
                             int y_arty = y_next + RadiusOffsetY[j];
@@ -914,23 +886,21 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
                                 }
                             }
                         }
-                        i = 25; // the image's counter store: the last direction,
-                                // and the reverse-direction test no longer matches
                     }
                 }
             }
+            if (unk2 >= 0 && unk2 < 8 && i == (unk2 ^ 4)) {
+                cost += Rules.move_rate_roads * 20; // do not double back
+            }
+            int score = cost * 2 + (i & 1); // prefer cardinal steps on ties
+            if (score <= best_score) {
+                best_score = score;
+                best_dir = i;
+            }
         }
-        if (unk2 >= 0 && unk2 < 8 && (i ^ 4) == unk2) {
-            cost += 20 * Rules.move_rate_roads; // do not double back
-        }
-        int score = cost * 2 + (i & 1); // prefer cardinal steps on ties
-        if (score <= best_score) {
-            best_score = score;
-            best_dir = i;
-        }
+        do_all_non_input();
+        return best_dir;
     }
-    do_all_non_input();
-    return best_dir;
 }
 
 /*

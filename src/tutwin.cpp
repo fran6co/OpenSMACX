@@ -503,586 +503,6 @@ int TutWin::tut_win(GraphicWin *owner, const char *text, int x, int y,
     return static_cast<int>(field_53B4_);
 }
 
-// ORIGINAL: 0x004BC6E0 ?tour@TutWin@@QAEXXZ 0x004BC6E0-0x004BDCBE FILE
-// RECOVERY_BINDING: v1 {"evidence": ["seed:src/unrecovered/004bc6e0.cpp", "image:0x004bc6e0; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
-// TRIED: full structural transcription of both scoring loops and the 10x tut_win/client_to_screen chain (from raw disasm, cross-checked against Ghidra); diverges at instr #33 (push vs mov) - register allocation for the phase-1 direction-search loop, not a logic gap.
-void TutWin::tour() {
-    int tour_step = static_cast<int>(field_53C0_);
-    int offsets[32];
-    int positions[24];
-    int scores[32];
-    int center_x;
-    int center_y;
-    int cursor_x;
-    int cursor_y;
-    int neighbor_x;
-    int neighbor_y;
-    int ring;
-    int index;
-    int direction;
-    int random_start;
-    int flat_map;
-    int best_direction_score;
-    int best_direction;
-    int best_river_x;
-    int best_river_y;
-    int best_rain_x;
-    int best_rain_y;
-    int best_forest_x;
-    int best_forest_y;
-    int best_rock_x;
-    int best_rock_y;
-    int best_altitude_x;
-    int best_altitude_y;
-    int best_fungus_x;
-    int best_fungus_y;
-    int best_bonus_x;
-    int best_bonus_y;
-    int best_pod_x;
-    int best_pod_y;
-    int best_site_x;
-    int best_site_y;
-    int best_target_x;
-    int best_target_y;
-    int score;
-    int score2;
-    int score3;
-    int saved_score;
-    int elevation_score;
-    int moisture_score;
-    int fungus_score;
-    int fungus_yield;
-    int terrain_kind;
-    int terrain_value;
-    int visibility_override;
-    int local_player;
-    int selected_vehicle;
-    int selected_proto;
-    int technology_type;
-    int current_cursor;
-    int screen_x;
-    int screen_y;
-    MapWin *map_window;
-    Map *tile;
-    RECT rect;
-    int result;
-
-    if (field_53B4_ != 0) {
-        return;
-    }
-    field_53B4_ = 1;
-
-    if (tour_step == 1) {
-        tour1();
-        goto tour_cleanup;
-    }
-    if (tour_step == 5) {
-        tour5();
-        goto tour_cleanup;
-    }
-    if (tour_step == 6) {
-        tour6();
-        goto tour_cleanup;
-    }
-    if (tour_step == 7) {
-        tour7();
-        goto tour_cleanup;
-    }
-
-    WorldClimateWorldWin.hide();
-    current_cursor = ConsoleGlobal.cursor_history_index_;
-    map_window = MapWinTable[0];
-    cursor_x = ConsoleGlobal.cursor_history_x_[current_cursor];
-    cursor_y = ConsoleGlobal.cursor_history_y_[current_cursor];
-    map_window->set_center(cursor_x, cursor_y, 1);
-
-    best_direction_score = 0;
-    best_direction = 0;
-    random_start = random(0, 8);
-    flat_map = MapIsFlat & 1;
-    for (direction = 0; direction < 8; ++direction) {
-        int candidate_direction = (direction + random_start) & 7;
-        neighbor_x = cursor_x + VehMoveDeltaX[candidate_direction];
-        if (!flat_map) {
-            if (neighbor_x < 0) {
-                neighbor_x += MapLongitudeBounds;
-            } else if (neighbor_x >= MapLongitudeBounds) {
-                neighbor_x -= MapLongitudeBounds;
-            }
-        }
-        neighbor_y = cursor_y + VehMoveDeltaY[candidate_direction];
-        if (neighbor_y >= 0 && neighbor_y < MapLatitudeBounds &&
-            neighbor_x >= 0 && neighbor_x < MapLongitudeBounds) {
-            tile = MapTiles + MapLongitude * neighbor_y +
-                   (neighbor_x >> 1);
-            terrain_value = tile->climate & 0xE0;
-            if ((terrain_value < 0x61 ||
-                 static_cast<int>(map_window->field_1DDA8_ + 2) <=
-                     (neighbor_y - (tile->climate >> 5)) + 3) &&
-                static_cast<int>(map_window->field_1DDA8_ + 2) <= neighbor_y &&
-                neighbor_y < static_cast<int>(map_window->field_1DDD8_ +
-                                               map_window->field_1DDD0_ - 2 +
-                                               map_window->field_1DDA8_)) {
-                int wrapped_x = neighbor_x;
-                if (!flat_map) {
-                    if (wrapped_x < map_window->field_1DDA4_ + 2) {
-                        wrapped_x += MapLongitudeBounds;
-                    }
-                    if (wrapped_x >= map_window->field_1DDD4_ +
-                                         map_window->field_1DDCC_ - 2 +
-                                         map_window->field_1DDA4_) {
-                        wrapped_x -= MapLongitudeBounds;
-                    }
-                }
-                if (wrapped_x >= map_window->field_1DDA4_ + 2 &&
-                    wrapped_x < map_window->field_1DDD4_ +
-                                   map_window->field_1DDCC_ - 2 +
-                                   map_window->field_1DDA4_ &&
-                    terrain_value > 0x5F) {
-                    score = 8;
-                    if ((tile->bit & 0x20) != 0 && terrain_value > 0x3F) {
-                        score = 4;
-                    }
-                    if (VehMoveDeltaX[candidate_direction] == 0 ||
-                        VehMoveDeltaY[candidate_direction] == 0) {
-                        ++score;
-                    }
-                    if (best_direction_score <= score) {
-                        best_direction_score = score;
-                        best_direction = candidate_direction;
-                    }
-                }
-            }
-        }
-    }
-
-    if (tour_step == 0) {
-        StringTemp[0] = 0;
-        strcat(StringTemp, "TOUR1");
-        selected_vehicle = ConsoleGlobal.selected_vehicle_;
-        if (ConsoleGlobal.cursor_active_ == 0 || selected_vehicle < 0) {
-            strcat(StringTemp, "B");
-        } else {
-            selected_proto = Vehs[selected_vehicle].proto_id;
-            technology_type = VehPrototypes[selected_proto].preq_tech;
-            if (technology_type == 2) {
-                parse_says(0, VehPrototypes[2].veh_name, -1, -1);
-            } else {
-                parse_says(0, VehPrototypes[selected_proto].veh_name, -1, -1);
-                strcat(StringTemp, "A");
-            }
-        }
-        index = ConsoleGlobal.cursor_history_index_;
-        result = tut_map(StringTemp,
-                         ConsoleGlobal.cursor_history_x_[index],
-                         ConsoleGlobal.cursor_history_y_[index],
-                         ConsoleGlobal.selected_vehicle_, 0, 2, -1, -1);
-        if (result == 0) {
-            goto tour_cleanup;
-        }
-        map_window->field_1DD70_ |= 0x20000;
-        map_window->draw_map(1);
-
-        index = best_direction;
-        parse_num(0, MapDirectionPermutation[index]);
-        if (text_open(TutorialPopupCaption, "DIRECTIONS") == 0) {
-            for (int text_index = 0; text_index <= index; ++text_index) {
-                text_get();
-            }
-            text_close();
-            parse_says(0, TextBufferGetPtr, -1, -1);
-        }
-        index = ConsoleGlobal.cursor_history_index_;
-        result = tut_map("TOUR2", ConsoleGlobal.cursor_history_x_[index],
-                         ConsoleGlobal.cursor_history_y_[index],
-                         ConsoleGlobal.selected_vehicle_, 0, 2, -1, -1);
-        if (result == 0) {
-            map_window->field_1DD70_ &= ~0x20000;
-            map_window->draw_map(1);
-            goto tour_cleanup;
-        }
-    } else if (tour_step == 3 && ConsoleGlobal.selected_vehicle_ >= 0 &&
-               Vehs[ConsoleGlobal.selected_vehicle_].proto_id == 1) {
-        result = tut_map("TERRAFORMER", cursor_x, cursor_y,
-                         ConsoleGlobal.selected_vehicle_, 0, 2, -1, -1);
-        if (result == 0) {
-            goto tour_cleanup;
-        }
-    }
-
-    map_window->field_1DD70_ &= ~0x20000;
-    map_window->draw_map(1);
-
-    for (index = 0; index < 32; ++index) scores[index] = -1;
-    for (index = 0; index < 24; ++index) positions[index] = -1;
-    scores[0x19] = scores[7] = scores[0x1E] = 3;
-    best_direction_score = -1;
-    best_river_x = best_river_y = -1;
-    best_rain_x = best_rain_y = -1;
-    best_forest_x = best_forest_y = -1;
-    best_rock_x = best_rock_y = -1;
-    best_altitude_x = best_altitude_y = -1;
-    best_fungus_x = best_fungus_y = -1;
-    best_bonus_x = best_bonus_y = -1;
-    best_pod_x = best_pod_y = -1;
-    best_site_x = best_site_y = -1;
-    best_target_x = best_target_y = -1;
-    scores[10] = scores[0x0D] = scores[0x11] = -1;
-    scores[0x10] = scores[0x12] = -1;
-    scores[0x0C] = scores[0x14] = scores[0x1B] = -1;
-    scores[0x16] = scores[0x18] = scores[0x0B] = -1;
-    scores[9] = scores[0x1A] = scores[0x1C] = scores[0x1D] = -1;
-    scores[6] = scores[8] = scores[0x0F] = scores[0x17] = -1;
-    scores[0x13] = scores[0x15] = scores[0x0E] = -1;
-    scores[0] = scores[1] = scores[2] = scores[3] = -1;
-    scores[4] = scores[5] = scores[0x1F] = -1;
-
-    local_player = ConsoleGlobal.faction_id_;
-    visibility_override = (GameDataStateStorage.fields_.game_state_ & 0x80) != 0;
-    for (ring = 0; ring < 2; ++ring) {
-        for (index = 1; index < 0x15; ++index) {
-            neighbor_x = cursor_x + RadiusOffsetX[index];
-            flat_map = MapIsFlat & 1;
-            if (!flat_map) {
-                if (neighbor_x < 0) neighbor_x += MapLongitudeBounds;
-                else if (neighbor_x >= MapLongitudeBounds) neighbor_x -= MapLongitudeBounds;
-            }
-            neighbor_y = cursor_y + RadiusOffsetY[index];
-            if (neighbor_y < 0 || neighbor_y >= MapLatitudeBounds || neighbor_x < 0 ||
-                neighbor_x >= MapLongitudeBounds) continue;
-
-            tile = MapTiles + MapLongitude * neighbor_y + (neighbor_x >> 1);
-            terrain_value = tile->climate & 0xE0;
-            if ((terrain_value >= 0x61 && map_window->field_1DDA8_ + 2 <=
-                     (neighbor_y - (tile->climate >> 5)) + 3) ||
-                map_window->field_1DDA8_ + 2 > neighbor_y ||
-                neighbor_y >= map_window->field_1DDD8_ + map_window->field_1DDD0_ - 2 +
-                                  map_window->field_1DDA8_) continue;
-
-            int visible_x = neighbor_x;
-            if (!flat_map) {
-                if (visible_x < map_window->field_1DDA4_ + 2) visible_x += MapLongitudeBounds;
-                if (visible_x >= map_window->field_1DDD4_ + map_window->field_1DDCC_ - 2 +
-                                     map_window->field_1DDA4_) visible_x -= MapLongitudeBounds;
-            }
-            if (visible_x < map_window->field_1DDA4_ + 2 ||
-                visible_x >= map_window->field_1DDD4_ + map_window->field_1DDCC_ - 2 +
-                                 map_window->field_1DDA4_ ||
-                (((PlayersData[local_player].flags & 0x200) == 0) &&
-                 (tile->visibility & (1 << (local_player & 0x1F))) == 0 &&
-                 !visibility_override)) continue;
-
-            if (terrain_value < 0x60) {
-                score = 2;
-                if ((tile->bit & 0x20) != 0 && terrain_value < 0x40) score = 1;
-                if (scores[0x0D] < score) {
-                    scores[10] = neighbor_x;
-                    scores[0x0D] = score;
-                    scores[0x11] = neighbor_y;
-                }
-                continue;
-            }
-            if ((tile->bit & 0x20) != 0 && terrain_value >= 0x40) {
-                if (best_target_y < 0 || best_target_y >= MapLatitudeBounds ||
-                    best_target_x < 0 || best_target_x >= MapLongitudeBounds ||
-                    (tile->val3 & 0xC0) < 0x80) {
-                    best_target_x = neighbor_x;
-                    best_target_y = neighbor_y;
-                }
-                continue;
-            }
-
-            score = goody_at(neighbor_x, neighbor_y);
-            if (score == 0) score = bonus_at(neighbor_x, neighbor_y, 0);
-            saved_score = (score != 0 || (tile->bit & 0x2000) != 0) ? 1 : 0;
-            fungus_yield = crop_yield(local_player, -1, neighbor_x, neighbor_y, 0);
-            tile = MapTiles + MapLongitude * neighbor_y + (neighbor_x >> 1);
-            const unsigned int tile_bits = tile->bit;
-            const int elevation = (tile_bits & 0x80) != 0;
-            const int fungus = ((tile_bits & 0x20) != 0 && (tile->climate & 0xE0) < 0x40);
-            int north_higher = 0;
-            int north_lower = 0;
-            for (direction = 0; direction < 8; ++direction) {
-                int adjacent_x = neighbor_x + VehMoveDeltaX[direction];
-                if (!flat_map) {
-                    if (adjacent_x < 0) adjacent_x += MapLongitudeBounds;
-                    else if (adjacent_x >= MapLongitudeBounds) adjacent_x -= MapLongitudeBounds;
-                }
-                int adjacent_y = neighbor_y + VehMoveDeltaY[direction];
-                if (adjacent_y < 0 || adjacent_y >= MapLatitudeBounds || adjacent_x < 0 ||
-                    adjacent_x >= MapLongitudeBounds) continue;
-                const unsigned int adjacent_climate =
-                    (MapTiles + MapLongitude * adjacent_y +
-                     (adjacent_x >> 1))->climate & 0xE0;
-                if (adjacent_climate > 0x5F) {
-                    if ((tile->climate & 0xE0) < adjacent_climate) {
-                        if (direction == 0) north_higher = 1;
-                        if (index > 1 && index < 5) north_lower = 1;
-                    }
-                    if (adjacent_climate < (tile->climate & 0xE0)) {
-                        if (direction == 0) north_lower = 1;
-                        if (index > 1 && index < 5) north_higher = 1;
-                    }
-                }
-            }
-            const int river = (north_higher != 0 && north_lower == 0);
-            score2 = (8 - north_lower) * 2;
-            score = river - ((fungus + saved_score) * 3) - elevation + score2;
-            if (!saved_score) {
-                terrain_value = tile->val3 & 0xC0;
-                if (terrain_value == 0 && scores[0x10] < score) {
-                    scores[0x10] = score;
-                    best_rain_y = neighbor_y;
-                    scores[0x12] = neighbor_x;
-                } else if (terrain_value == 0x40) {
-                    score = fungus_yield + score * 8;
-                    if (scores[0x0C] < score && (ring == 0 || best_forest_x < 0)) {
-                        scores[0x0C] = score;
-                        best_forest_y = neighbor_y;
-                        best_forest_x = neighbor_x;
-                        scores[0x14] = neighbor_y;
-                    }
-                } else if (terrain_value == 0x80 && scores[0x1B] < score) {
-                    scores[0x1B] = score;
-                    best_rock_y = neighbor_y;
-                    best_rock_x = neighbor_x;
-                    scores[0x16] = neighbor_y;
-                    scores[0x18] = neighbor_x;
-                }
-            }
-
-            elevation_score = tile->climate >> 5;
-            if (elevation_score == 3) {
-                score3 = fungus_yield +
-                    ((((4 - north_lower) * 2 - fungus - saved_score) * 2 -
-                      north_higher) - elevation) * 8;
-                if ((tile->val3 & 0xC0) > 0x40) score3 = 0;
-                if (scores[0x0B] < score3) {
-                    scores[0x0B] = score3;
-                    best_altitude_y = neighbor_y;
-                    best_altitude_x = neighbor_x;
-                    scores[0x1A] = neighbor_y;
-                    scores[9] = neighbor_x;
-                }
-            }
-            if (scores[0x19] < elevation_score) {
-                scores[0x19] = elevation_score;
-                scores[0x1D] = neighbor_x;
-                scores[0x1C] = neighbor_y;
-            }
-            const unsigned int land_type = tile->climate & 7;
-            const unsigned int moisture_type = (tile->climate >> 3) & 3;
-            score2 = (((fungus + saved_score) * -3 - (tile->val3 >> 6)) - elevation_score) +
-                     ((north_higher != 0 && north_lower == 0) ? 1 : 0) + 16;
-            if (scores[land_type + 3] < score2) {
-                positions[land_type + 6] = neighbor_x;
-                positions[land_type + 3] = neighbor_y;
-                positions[land_type] = land_type;
-                scores[land_type + 3] = static_cast<int>(land_type);
-            }
-            if (scores[moisture_type] < score2) {
-                positions[moisture_type + 12] = neighbor_x;
-                positions[moisture_type + 9] = neighbor_y;
-                positions[moisture_type + 15] = moisture_type;
-                scores[moisture_type] = score2;
-            }
-            if (best_direction_score < static_cast<int>(moisture_type) ||
-                (moisture_type == static_cast<unsigned int>(best_direction_score) &&
-                 scores[moisture_type] <= score2)) {
-                best_direction_score = moisture_type;
-                scores[8] = neighbor_x;
-                scores[6] = neighbor_y;
-            }
-            if (static_cast<int>(moisture_type) < scores[7] ||
-                (moisture_type == static_cast<unsigned int>(scores[7]) &&
-                 scores[moisture_type] <= score2)) {
-                scores[7] = moisture_type;
-                scores[0x0F] = neighbor_x;
-            }
-            if (scores[0x17] < static_cast<int>(land_type) ||
-                (land_type == static_cast<unsigned int>(scores[0x17]) &&
-                 scores[land_type + 3] <= score2)) scores[0x17] = land_type;
-            if (static_cast<int>(land_type) < scores[0x1E] ||
-                (land_type == static_cast<unsigned int>(scores[0x1E]) &&
-                 scores[land_type + 3] <= score2)) scores[0x1E] = land_type;
-            if (!saved_score && (tile_bits & 0xA000) == 0) {
-                if (fungus_yield == 1 && scores[0x15] < score2) scores[0x15] = score2;
-                else if (fungus_yield == 2 && scores[0x0E] < score2) scores[0x0E] = score2;
-                result = world_site(neighbor_x, neighbor_y, 0);
-                if (scores[0x13] < result) {
-                    best_site_x = neighbor_x;
-                    best_site_y = neighbor_y;
-                    scores[0x13] = result;
-                }
-            }
-        }
-    }
-
-    if (tour_step == 0) {
-        if (scores[10] < 0 &&
-            tut_map("TOUROCEAN", scores[10], scores[0x11], -1, 0, 2, -1, -1) == 0) {
-            goto tour_cleanup;
-        }
-        if (best_target_x < 0 &&
-            tut_map("TOURFUNGUS", best_target_x, best_target_y, -1, 0, 2, -1, -1) == 0) {
-            goto tour_cleanup;
-        }
-        if (TutWinClimateGate945830 != 0) WorldClimateWorldWin.show_all();
-        do_all_draws();
-        if (!ConsoleGlobal.alpha_menu_.is_visible()) {
-            ConsoleGlobal.alpha_menu_.show();
-        }
-
-        if (!tut_callout(*this, MainInterfaceGlobal,
-                         MainInterfaceGlobal.menu_button_rect_, "TOURMENU")) {
-            goto tour_cleanup;
-        }
-        if (MultiWindow.panel_open() == 0) MultiWindow.show();
-        if (!tut_callout(*this, MainInterfaceGlobal,
-                         MainInterfaceGlobal.multiplayer_button_rect_, "TOURCOMMLINK")) {
-            goto tour_cleanup;
-        }
-        MultiWindow.hide();
-
-        // These panels are MainInterface's own stored RECTs. Their centers
-        // are transformed through the same live interface receiver as in the
-        // original sequence, and each popup is hosted by the active map.
-        RECT *const interface_rects[] = {
-            &MainInterfaceGlobal.status_left_rect_,
-            &MainInterfaceGlobal.status_right_rect_,
-            &MainInterfaceGlobal.status_hit_rect_,
-            &MainInterfaceGlobal.message_bounds_,
-            &MainInterfaceGlobal.scroll_up_rect_,
-            &MainInterfaceGlobal.scroll_down_rect_,
-            &MainInterfaceGlobal.tutorial_bounds_,
-            &MainInterfaceGlobal.date_rect_
-        };
-        const char *const interface_labels[] = {
-            "TOURUNITSINFO", "TOURTERRAININFO", "TOURSTACKINFO",
-            "TOURMESSAGEINFO", "TOURBUTTONMESSAGE", "TOURBUTTONINFO",
-            "TOURWORLDINFO", "TOURDATEINFO"
-        };
-        for (index = 0; index < 8; ++index) {
-            if (!tut_callout(*this, MainInterfaceGlobal, *interface_rects[index],
-                             interface_labels[index])) {
-                goto tour_cleanup;
-            }
-        }
-        if (ConsoleGlobal.cursor_active_ != 0 && GameDataStateStorage.fields_.turn_current_num_ < 2) {
-            if (field_53D4_ != 0) {
-                field_53A4_ = 0;
-                hide();
-                field_53D4_->on_update();
-                do_all_draws();
-            }
-            field_53D4_ = 0;
-            field_53A4_ = 0;
-            field_5380_ = -1;
-            field_537C_ = -1;
-            field_539C_ = -1;
-            field_53A8_ = 0;
-            field_53AC_ = -1;
-            field_53B8_ = 0;
-            field_53C4_ = 0;
-            TutWinShownFlag = 0;
-            field_53B4_ = 0;
-            if (best_site_x < 1) {
-                index = ConsoleGlobal.cursor_history_index_;
-                best_site_x = ConsoleGlobal.cursor_history_x_[index];
-                best_site_y = ConsoleGlobal.cursor_history_y_[index];
-            }
-            tut_map("TOUROVER", best_site_x, best_site_y, ConsoleGlobal.selected_vehicle_,
-                    0, 0, -1, -1);
-            return;
-        }
-        goto tour_cleanup;
-    }
-
-    index = ConsoleGlobal.cursor_history_index_;
-    result = tut_map("TOURMAP", ConsoleGlobal.cursor_history_x_[index],
-                     ConsoleGlobal.cursor_history_y_[index], -1, 0, 2, -1, -1);
-    if (result == 0) goto tour_cleanup;
-    if (scores[8] >= 0 && scores[0x0F] >= 0 &&
-        tut_map("TOURFUNGUS", scores[8], scores[6], -1, 0, 2, -1, -1) == 0) {
-        goto tour_cleanup;
-    }
-    for (index = 2; index >= 0; --index) {
-        if (positions[index + 0x0F] >= 0) {
-            StringTemp[0] = 0;
-            strcat(StringTemp, "TOURRAIN");
-            if (index == 0) {
-                strcat(StringTemp, best_direction_score == 0 ? "DRY2" : "DRY");
-            } else if (index == 1) {
-                strcat(StringTemp, "MOD");
-            } else {
-                strcat(StringTemp, "WET");
-            }
-            if (tut_map(StringTemp, positions[index + 0x0C], positions[index + 9],
-                        -1, 0, 2, -1, -1) == 0) {
-                goto tour_cleanup;
-            }
-        }
-    }
-    if ((scores[9] >= 0 && scores[0x1D] >= 0 &&
-         tut_map("TOURALT", scores[9], scores[0x1A], -1, 0, 2,
-                 scores[0x1D], scores[0x1C]) != 0) ||
-        (scores[0x18] >= 0 &&
-         tut_map("TOURTWOROCK", scores[0x18], scores[0x16], -1, 0, 2, -1, -1) != 0) ||
-        (best_forest_x >= 0 &&
-         tut_map("TOURONEROCK", best_forest_x, scores[0x14], -1, 0, 2, -1, -1) != 0)) {
-        if (scores[0x12] >= 0 &&
-            tut_map("TOURFLAT", scores[0x12], best_rain_y, -1, 0, 2, -1, -1) == 0) {
-            goto tour_cleanup;
-        }
-        if (best_site_x < 1) {
-            index = ConsoleGlobal.cursor_history_index_;
-            best_site_x = ConsoleGlobal.cursor_history_x_[index];
-            best_site_y = ConsoleGlobal.cursor_history_y_[index];
-        }
-        if (tut_map("TOURFOREST", best_site_x, best_site_y, -1, 0, 2, -1, -1) == 0 ||
-            tut_map("TOURREVIEW", best_site_x, best_site_y, -1, 0, 2, -1, -1) == 0 ||
-            tut_map("TOURADVANCED", best_site_x, best_site_y, -1, 0, 2, -1, -1) == 0) {
-            goto tour_cleanup;
-        }
-        if (field_53D4_ != 0) {
-            field_53A4_ = 0;
-            hide();
-            field_53D4_->on_update();
-            do_all_draws();
-        }
-        field_5380_ = -1;
-        field_537C_ = -1;
-        field_539C_ = -1;
-        field_53AC_ = -1;
-        field_53D4_ = 0;
-        field_53A4_ = 0;
-        field_53A8_ = 0;
-        field_53B8_ = 0;
-        field_53C4_ = 0;
-        TutWinShownFlag = 0;
-        field_53B4_ = 0;
-        tut_map("TOURFORMDONE", best_site_x, best_site_y, -1, 0, 2, -1, -1);
-    }
-tour_cleanup:
-    desktop_update();
-    if (field_53D4_ != 0) {
-        field_53A4_ = 0;
-        hide();
-        field_53D4_->on_update();
-        do_all_draws();
-    }
-    field_53D4_ = 0;
-    field_53A4_ = 0;
-    field_5380_ = -1;
-    field_537C_ = -1;
-    field_539C_ = -1;
-    field_53A8_ = 0;
-    field_53AC_ = -1;
-    field_53B8_ = 0;
-    field_53C4_ = 0;
-    TutWinShownFlag = 0;
-    field_53B4_ = 0;
-}
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // RECOVERY_LITERAL: v1 0x00687630 0x0068763B ??_C@_0L@KDPN@DESTOUROBS?$AA@ 0x004BAF20
@@ -1972,6 +1392,633 @@ void TutWin::des_rect(RECT *rect, int *x, int *y) {
  * bodies sit 0x80 apart - not because either target differs. Both targets are
  * the same for all four.
  */
+
+#pragma auto_inline(on)
+// WORKAROUND(inline): tour expands iface_rect at all ten callouts
+// (0x004BD395.. pairs a centring with a direct client_to_screen call) while
+// tour1/5/6/7 and do_iface call 0x004BC5A0 out of line. VC6 has no noinline,
+// so the out-of-line definition stays under auto_inline(off) and tour uses
+// this expanded twin of the same body.
+static inline void tour_iface_rect(RECT *rect, int *x, int *y) {
+    *x = rect->left + (rect->right - rect->left) / 2;
+    *y = rect->top + (rect->bottom - rect->top) / 2;
+    MainInterfaceGlobal.client_to_screen(x, y);
+}
+
+// ORIGINAL: 0x004BC6E0 ?tour@TutWin@@QAEXXZ 0x004BC6E0-0x004BDCBE FILE
+// RECOVERY_BINDING: v1 {"evidence": ["seed:src/unrecovered/004bc6e0.cpp", "image:0x004bc6e0; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
+// TRIED: full structural transcription of both scoring loops and the 10x tut_win/client_to_screen chain (from raw disasm, cross-checked against Ghidra); diverges at instr #33 (push vs mov) - register allocation for the phase-1 direction-search loop, not a logic gap.
+// Retranscribed 2026-11-12 in the image's block order and frame slots. The
+// image expands reset() at its three sites (0x004BD8A6, 0x004BDBB2,
+// 0x004BDC43); this tree's two-arm reset is refused by /Ob2, while the same
+// body with its shared stores in an inline TutWin helper both inlines here
+// and stays exact at 0x004BDDE0 (a tutwin.h change, not made here).
+void TutWin::tour() {
+    // Frame slots are shared by role: each variable below keeps the image's
+    // slot through both the direction search and the two-ring survey.
+    int x;               // [ebp-0x4]; address taken by iface_rect
+    int y;               // [ebp-0x8]
+    Map *tile;           // [ebp-0x10]
+    int flat;            // [ebp-0x14]
+    int special;         // [ebp-0x18]; first the direction counter
+    int index;           // [ebp-0x1c]; first the probed direction
+    int site_x;          // [ebp-0x20]
+    int site_y;          // [ebp-0x24]
+    int fungus;          // [ebp-0x28]
+    int fungus_x;        // [ebp-0x2c]; first the cursor y
+    int fungus_y;        // [ebp-0x30]; first the best direction
+    int ring;            // [ebp-0x34]; first the cursor x
+    int wettest;         // [ebp-0x38]; first the best direction score
+    int lower;           // [ebp-0x3c]
+    int one_rock_x;      // [ebp-0x40]; first the unwrapped x
+    int higher;          // [ebp-0x44]
+    int flat_y;          // [ebp-0x48]; first the random start
+    int yield;           // [ebp-0x4c]
+    int coldest;         // [ebp-0x50]
+    int peak_x;          // [ebp-0x54]
+    int peak_y;          // [ebp-0x58]
+    int two_rock_score;  // [ebp-0x5c]
+    int alt_y;           // [ebp-0x60]
+    int highest;         // [ebp-0x64]
+    int two_rock_x;      // [ebp-0x68]
+    int hottest;         // [ebp-0x6c]
+    int two_rock_y;      // [ebp-0x70]
+    int yield1_score;    // [ebp-0x74]
+    int one_rock_y;      // [ebp-0x78]
+    int site_score;      // [ebp-0x7c]
+    int flat_x;          // [ebp-0x80]
+    int ocean_y;         // [ebp-0x84]
+    int flat_score;      // [ebp-0x88]
+    int dry_x;           // [ebp-0x8c]
+    int yield2_score;    // [ebp-0x90]
+    int ocean_score;     // [ebp-0x94]
+    int one_rock_score;  // [ebp-0x98]
+    int alt_score;       // [ebp-0x9c]
+    int ocean_x;         // [ebp-0xa0]
+    int alt_x;           // [ebp-0xa4]
+    int wet_x;           // [ebp-0xa8]
+    int driest;          // [ebp-0xac]
+    int wet_y;           // [ebp-0xb0]
+    int temp_score[3];   // [ebp-0xbc]
+    int rain_score[3];   // [ebp-0xc8]
+    int elevated;        // [ebp-0xcc]
+    int bits;            // [ebp-0xd0]
+    int rain_kind[3];    // [ebp-0xdc]
+    int rain_x[3];       // [ebp-0xe8]
+    int rain_y[3];       // [ebp-0xf4]
+    int temp_x[3];       // [ebp-0x100]
+    int temp_y[3];       // [ebp-0x10c]
+    int temp_kind[3];    // [ebp-0x118]
+    MapWin *map_window;
+
+    if (field_53B4_ != 0) {
+        return;
+    }
+    field_53B4_ = 1;
+    if (field_53C0_ == 1) {
+        tour1();
+        goto tour_cleanup;
+    }
+    if (field_53C0_ == 5) {
+        tour5();
+        goto tour_cleanup;
+    }
+    if (field_53C0_ == 6) {
+        tour6();
+        goto tour_cleanup;
+    }
+    if (field_53C0_ == 7) {
+        tour7();
+        goto tour_cleanup;
+    }
+
+    WorldClimateWorldWin.hide();
+    MapWinTable[0]->set_center(
+        ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+        ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 1);
+
+    // THE OPENING DIRECTION: the visible land neighbour the cursor faces,
+    // probed from a random start; cardinal steps and open land score best.
+    wettest = 0;
+    fungus_y = 0;
+    flat_y = random(0, 8);
+    map_window = MapWinTable[0];
+    ring = ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
+    fungus_x = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
+    flat = MapIsFlat & 1;
+    for (special = 0; special < 8; special++) {
+        index = (special + flat_y) % 8;
+        x = ring + VehMoveDeltaX[index];
+        if (!flat) {
+            if (x < 0) {
+                x += MapLongitudeBounds;
+            } else if (x >= MapLongitudeBounds) {
+                x -= MapLongitudeBounds;
+            }
+        }
+        y = fungus_x + VehMoveDeltaY[index];
+        if (y >= 0 && y < MapLatitudeBounds && x >= 0 && x < MapLongitudeBounds) {
+            one_rock_x = x;
+            tile = map_loc(x, y);
+            int altitude = tile->climate & 0xE0;
+            if (altitude > 0x60
+                && y - (tile->climate >> 5) + 3 < map_window->field_1DDA8_ + 2) {
+                continue;
+            }
+            if (y < map_window->field_1DDA8_ + 2
+                || y >= map_window->field_1DDD8_ + map_window->field_1DDD0_
+                            + map_window->field_1DDA8_ - 2) {
+                continue;
+            }
+            int screen_x = one_rock_x;
+            if (!flat) {
+                if (screen_x < map_window->field_1DDA4_ + 2) {
+                    screen_x += MapLongitudeBounds;
+                }
+                if (screen_x >= map_window->field_1DDD4_ + map_window->field_1DDCC_
+                                    + map_window->field_1DDA4_ - 2) {
+                    screen_x -= MapLongitudeBounds;
+                }
+            }
+            if (screen_x < map_window->field_1DDA4_ + 2
+                || screen_x >= map_window->field_1DDD4_ + map_window->field_1DDCC_
+                                   + map_window->field_1DDA4_ - 2) {
+                continue;
+            }
+            if (altitude < 0x60) {
+                continue;
+            }
+            int score = 8;
+            if ((tile->bit & BIT_FUNGUS) && altitude >= 0x40) {
+                score = 4;
+            }
+            if (!VehMoveDeltaX[index] || !VehMoveDeltaY[index]) {
+                score++;
+            }
+            if (score >= wettest) {
+                wettest = score;
+                fungus_y = index;
+            }
+        }
+    }
+
+    if (field_53C0_ == 0) {
+        StringTemp[0] = 0;
+        strcat(StringTemp, "TOUR1");
+        if (ConsoleGlobal.cursor_active_ && ConsoleGlobal.selected_vehicle_ >= 0) {
+            int proto_id = Vehs[ConsoleGlobal.selected_vehicle_].proto_id;
+            if (proto_id != 2) {
+                parse_says(0, VehPrototypes[proto_id].veh_name, -1, -1);
+                strcat(StringTemp, "A");
+            } else {
+                parse_says(0, VehPrototypes[2].veh_name, -1, -1);
+            }
+        } else {
+            strcat(StringTemp, "B");
+        }
+        if (!tut_map(StringTemp,
+                     ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                     ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_],
+                     ConsoleGlobal.selected_vehicle_, 0, 2, -1, -1)) {
+            goto tour_cleanup;
+        }
+        MapWinTable[0]->field_1DD70_ |= 0x20000;
+        MapWinTable[0]->draw_map(1);
+        parse_num(0, MapDirectionPermutation[fungus_y]);
+        if (!text_open(TutorialPopupCaption, "DIRECTIONS")) {
+            for (int line = 0; line <= fungus_y; line++) {
+                text_get();
+            }
+            text_close();
+            parse_says(0, TextBufferGetPtr, -1, -1);
+        }
+        if (!tut_map("TOUR2",
+                     ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                     ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_],
+                     ConsoleGlobal.selected_vehicle_, 0, 2, -1, -1)) {
+            MapWinTable[0]->field_1DD70_ &= ~0x20000;
+            MapWinTable[0]->draw_map(1);
+            goto tour_cleanup;
+        }
+    } else if (field_53C0_ == 3 && ConsoleGlobal.selected_vehicle_ >= 0
+               && Vehs[ConsoleGlobal.selected_vehicle_].proto_id == 1) {
+        if (!tut_map("TERRAFORMER", ring, fungus_x, ConsoleGlobal.selected_vehicle_,
+                     0, 2, -1, -1)) {
+            goto tour_cleanup;
+        }
+    }
+    MapWinTable[0]->field_1DD70_ &= ~0x20000;
+    MapWinTable[0]->draw_map(1);
+
+    // THE SURVEY: two passes over the 20 tiles around the cursor, keeping
+    // the best example of each feature the tour can point at.
+    highest = 3;
+    driest = 3;
+    coldest = 3;
+    ocean_y = -1;
+    ocean_x = -1;
+    fungus_y = -1;
+    fungus_x = -1;
+    flat_y = -1;
+    flat_x = -1;
+    one_rock_y = -1;
+    one_rock_x = -1;
+    two_rock_y = -1;
+    two_rock_x = -1;
+    alt_y = -1;
+    alt_x = -1;
+    peak_y = -1;
+    peak_x = -1;
+    wet_y = -1;
+    wet_x = -1;
+    dry_x = -1;
+    site_y = -1;
+    site_x = -1;
+    wettest = -1;
+    hottest = -1;
+    one_rock_score = -1;
+    alt_score = -1;
+    ocean_score = -1;
+    site_score = -1;
+    flat_score = -1;
+    two_rock_score = -1;
+    yield1_score = -1;
+    yield2_score = -1;
+    rain_score[0] = -1;
+    temp_score[0] = -1;
+    rain_kind[0] = -1;
+    rain_score[1] = -1;
+    temp_score[1] = -1;
+    rain_kind[1] = -1;
+    rain_score[2] = -1;
+    temp_score[2] = -1;
+    rain_kind[2] = -1;
+    for (ring = 0; ring < 2; ring++) {
+        for (index = 1; index < 21; index++) {
+            x = ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_]
+                + RadiusOffsetX[index];
+            flat = MapIsFlat & 1;
+            if (!flat) {
+                if (x < 0) {
+                    x += MapLongitudeBounds;
+                } else if (x >= MapLongitudeBounds) {
+                    x -= MapLongitudeBounds;
+                }
+            }
+            y = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]
+                + RadiusOffsetY[index];
+            if (y < 0 || y >= MapLatitudeBounds || x < 0 || x >= MapLongitudeBounds) {
+                continue;
+            }
+            tile = map_loc(x, y);
+            int altitude = tile->climate & ~0x1F;
+            if (altitude > 0x60
+                && y - (tile->climate >> 5) + 3 < MapWinTable[0]->field_1DDA8_ + 2) {
+                continue;
+            }
+            if (y < MapWinTable[0]->field_1DDA8_ + 2
+                || y >= MapWinTable[0]->field_1DDD8_ + MapWinTable[0]->field_1DDD0_
+                            + MapWinTable[0]->field_1DDA8_ - 2) {
+                continue;
+            }
+            int screen_x = x;
+            if (!flat) {
+                if (screen_x < MapWinTable[0]->field_1DDA4_ + 2) {
+                    screen_x = MapLongitudeBounds + x;
+                }
+                if (screen_x >= MapWinTable[0]->field_1DDD4_ + MapWinTable[0]->field_1DDCC_
+                                    + MapWinTable[0]->field_1DDA4_ - 2) {
+                    screen_x -= MapLongitudeBounds;
+                }
+            }
+            if (screen_x < MapWinTable[0]->field_1DDA4_ + 2
+                || screen_x >= MapWinTable[0]->field_1DDD4_ + MapWinTable[0]->field_1DDCC_
+                                   + MapWinTable[0]->field_1DDA4_ - 2) {
+                continue;
+            }
+            if (!(PlayersData[ConsoleGlobal.faction_id_].flags & RFLAG_FREEPROTO)
+                && !(tile->visibility & (1 << ConsoleGlobal.faction_id_))
+                && !(GameDataStateStorage.fields_.game_state_ & 0x80)) {
+                continue;
+            }
+            if (altitude < 0x60) {
+                // the ocean tile closest to land
+                int score;
+                if ((tile->bit & BIT_FUNGUS) && altitude >= 0x40) {
+                    score = 1;
+                } else {
+                    score = 2;
+                }
+                if (score > ocean_score) {
+                    ocean_score = score;
+                    ocean_x = x;
+                    ocean_y = y;
+                }
+                continue;
+            }
+            if ((tile->bit & BIT_FUNGUS) && altitude >= 0x40) {
+                // land fungus, preferring a tile that is not rocky
+                if (fungus_y >= 0 && fungus_y < MapLatitudeBounds && fungus_x >= 0
+                    && fungus_x < MapLongitudeBounds && (tile->val3 & ~0x3F) >= 0x80) {
+                    continue;
+                }
+                fungus_x = x;
+                fungus_y = y;
+                continue;
+            }
+            if (goody_at(x, y) || bonus_at(x, y, 0) || (map_loc(x, y)->bit & 0x2000)) {
+                special = 1;
+            } else {
+                special = 0;
+            }
+            yield = crop_yield(ConsoleGlobal.faction_id_, -1, x, y, 0);
+            tile = map_loc(x, y);
+            bits = tile->bit;
+            elevated = bits & 0x80;
+            if ((bits & BIT_FUNGUS) && (tile->climate & ~0x1F) >= 0x40) {
+                fungus = 1;
+            } else {
+                fungus = 0;
+            }
+            flat = MapIsFlat & 1;
+            higher = 0;
+            lower = 0;
+            for (int dir = 0; dir < 8; dir++) {
+                int x_adj = x + VehMoveDeltaX[dir];
+                if (!flat) {
+                    if (x_adj < 0) {
+                        x_adj += MapLongitudeBounds;
+                    } else if (x_adj >= MapLongitudeBounds) {
+                        x_adj -= MapLongitudeBounds;
+                    }
+                }
+                int y_adj = VehMoveDeltaY[dir] + y;
+                if (y_adj < 0 || y_adj >= MapLatitudeBounds || x_adj < 0
+                    || x_adj >= MapLongitudeBounds) {
+                    continue;
+                }
+                int altitude_adj = map_loc(x_adj, y_adj)->climate & ~0x1F;
+                if (altitude_adj < 0x60) {
+                    continue;
+                }
+                if (altitude_adj > (tile->climate & ~0x1F)) {
+                    if (!dir || dir >= 6) {
+                        higher = 1;
+                    }
+                    if (index >= 2 && index <= 4) {
+                        lower = 1;
+                    }
+                }
+                if (altitude_adj < (tile->climate & ~0x1F)) {
+                    if (!dir || dir >= 6) {
+                        lower = 1;
+                    }
+                    if (index >= 2 && index <= 4) {
+                        higher = 1;
+                    }
+                }
+            }
+            int score = (higher && !lower) - (fungus + special) * 3 - elevated
+                        + (8 - lower) * 2;
+            if (!special) {
+                int rocks = tile->val3 & ~0x3F;
+                if (!rocks) {
+                    if (score > flat_score) {
+                        flat_score = score;
+                        flat_y = y;
+                        flat_x = x;
+                    }
+                } else if (rocks == 0x40) {
+                    score = yield + score * 8;
+                    if (score > one_rock_score && (!ring || one_rock_x < 0)) {
+                        one_rock_score = score;
+                        one_rock_y = y;
+                        one_rock_x = x;
+                    }
+                } else if (rocks == 0x80) {
+                    if (score > two_rock_score) {
+                        two_rock_score = score;
+                        two_rock_y = y;
+                        two_rock_x = x;
+                    }
+                }
+            }
+            int level = tile->climate >> 5;
+            if (level == 3) {
+                score = yield
+                        + ((((4 - lower) * 2 - fungus - special) * 2 - higher) - elevated) * 8;
+                if ((tile->val3 & 0xC0) > 0x40) {
+                    score = 0;
+                }
+                if (score > alt_score) {
+                    alt_score = score;
+                    alt_y = y;
+                    alt_x = x;
+                }
+            }
+            if (level > highest) {
+                highest = level;
+                peak_x = x;
+                peak_y = y;
+            }
+            int temperature = tile->climate & 7;
+            int rainfall = (tile->climate >> 3) & 3;
+            fungus = higher && !lower;
+            score = fungus - (fungus + special) * 3 - (tile->val3 >> 6) - elevated
+                    + (8 - lower) * 2;
+            if (score > temp_score[temperature]) {
+                temp_x[temperature] = x;
+                temp_y[temperature] = y;
+                temp_kind[temperature] = temperature;
+                temp_score[temperature] = temperature;
+            }
+            if (score > rain_score[rainfall]) {
+                rain_x[rainfall] = x;
+                rain_y[rainfall] = y;
+                rain_kind[rainfall] = rainfall;
+                rain_score[rainfall] = score;
+            }
+            if (rainfall > wettest
+                || (rainfall == wettest && score >= rain_score[rainfall])) {
+                wettest = rainfall;
+                wet_x = x;
+                wet_y = y;
+            }
+            if (rainfall < driest
+                || (rainfall == driest && score >= rain_score[rainfall])) {
+                driest = rainfall;
+                dry_x = x;
+            }
+            if (temperature > hottest
+                || (temperature == hottest && score >= temp_score[temperature])) {
+                hottest = temperature;
+            }
+            if (temperature < coldest
+                || (temperature == coldest && score >= temp_score[temperature])) {
+                coldest = temperature;
+            }
+            if (!special && !(bits & 0xA000)) {
+                if (yield == 1) {
+                    if (score > yield1_score) {
+                        yield1_score = score;
+                    }
+                } else if (yield == 2) {
+                    if (score > yield2_score) {
+                        yield2_score = score;
+                    }
+                }
+                int site = world_site(x, y, 0);
+                if (site > site_score) {
+                    site_score = site;
+                    site_x = x;
+                    site_y = y;
+                }
+            }
+        }
+    }
+
+    if (field_53C0_ == 0) {
+        if (ocean_x >= 0 && !tut_map("TOUROCEAN", ocean_x, ocean_y, -1, 0, 2, -1, -1)) {
+            goto tour_cleanup;
+        }
+        if (fungus_x >= 0 && !tut_map("TOURFUNGUS", fungus_x, fungus_y, -1, 0, 2, -1, -1)) {
+            goto tour_cleanup;
+        }
+        if (TutWinClimateGate945830) {
+            WorldClimateWorldWin.show_all();
+        }
+        do_all_draws();
+        if (!ConsoleGlobal.alpha_menu_.is_visible()) {
+            ConsoleGlobal.alpha_menu_.show();
+        }
+        tour_iface_rect(&MainInterfaceGlobal.menu_button_rect_, &x, &y);
+        if (!tut_win(MapWinTable[0], "TOURMENU", x, y, 0, 2, -1, -1)) {
+            goto tour_cleanup;
+        }
+        ConsoleGlobal.alpha_menu_.hide();
+        if (!MultiWindow.panel_open()) {
+            MultiWindow.show();
+        }
+        tour_iface_rect(&MainInterfaceGlobal.multiplayer_button_rect_, &x, &y);
+        if (!tut_win(MapWinTable[0], "TOURCOMMLINK", x, y, 0, 2, -1, -1)) {
+            goto tour_cleanup;
+        }
+        MultiWindow.hide();
+        tour_iface_rect(&MainInterfaceGlobal.status_left_rect_, &x, &y);
+        if (!tut_win(MapWinTable[0], "TOURUNITSINFO", x, y, 0, 2, -1, -1)) {
+            goto tour_cleanup;
+        }
+        tour_iface_rect(&MainInterfaceGlobal.status_right_rect_, &x, &y);
+        if (!tut_win(MapWinTable[0], "TOURTERRAININFO", x, y, 0, 2, -1, -1)) {
+            goto tour_cleanup;
+        }
+        tour_iface_rect(&MainInterfaceGlobal.status_hit_rect_, &x, &y);
+        if (!tut_win(MapWinTable[0], "TOURSTACKINFO", x, y, 0, 2, -1, -1)) {
+            goto tour_cleanup;
+        }
+        tour_iface_rect(&MainInterfaceGlobal.message_bounds_, &x, &y);
+        if (!tut_win(MapWinTable[0], "TOURMESSAGEINFO", x, y, 0, 2, -1, -1)) {
+            goto tour_cleanup;
+        }
+        tour_iface_rect(&MainInterfaceGlobal.scroll_up_rect_, &x, &y);
+        if (!tut_win(MapWinTable[0], "TOURBUTTONMESSAGE", x, y, 0, 2, -1, -1)) {
+            goto tour_cleanup;
+        }
+        tour_iface_rect(&MainInterfaceGlobal.scroll_down_rect_, &x, &y);
+        if (!tut_win(MapWinTable[0], "TOURBUTTONINFO", x, y, 0, 2, -1, -1)) {
+            goto tour_cleanup;
+        }
+        tour_iface_rect(&MainInterfaceGlobal.tutorial_bounds_, &x, &y);
+        if (!tut_win(MapWinTable[0], "TOURWORLDINFO", x, y, 0, 2, -1, -1)) {
+            goto tour_cleanup;
+        }
+        tour_iface_rect(&MainInterfaceGlobal.date_rect_, &x, &y);
+        if (!tut_win(MapWinTable[0], "TOURDATEINFO", x, y, 0, 2, -1, -1)) {
+            goto tour_cleanup;
+        }
+        if (!ConsoleGlobal.cursor_active_
+            || GameDataStateStorage.fields_.turn_current_num_ > 1) {
+            goto tour_cleanup;
+        }
+        reset();
+        field_53B4_ = 0;
+        if (site_x <= 0) {
+            site_x = ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
+            site_y = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
+        }
+        tut_map("TOUROVER", site_x, site_y, ConsoleGlobal.selected_vehicle_, 0, 0, -1, -1);
+        return;
+    }
+
+    if (!tut_map("TOURMAP",
+                 ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                 ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_],
+                 -1, 0, 2, -1, -1)) {
+        goto tour_cleanup;
+    }
+    if (wet_x >= 0 && dry_x >= 0) {
+        if (!tut_map("TOURRAIN", wet_x, wet_y, -1, 0, 2, -1, -1)) {
+            goto tour_cleanup;
+        }
+        for (index = 2; index >= 0; index--) {
+            if (rain_kind[index] >= 0) {
+                StringTemp[0] = 0;
+                strcat(StringTemp, "TOURRAIN");
+                switch (index) {
+                case 0:
+                    strcat(StringTemp, wettest ? "DRY" : "DRY2");
+                    break;
+                case 1:
+                    strcat(StringTemp, "MOD");
+                    break;
+                case 2:
+                    strcat(StringTemp, "WET");
+                    break;
+                }
+                if (!tut_map(StringTemp, rain_x[index], rain_y[index], -1, 0, 2, -1, -1)) {
+                    goto tour_cleanup;
+                }
+            }
+        }
+    }
+    if (alt_x >= 0 && peak_x >= 0
+        && !tut_map("TOURALT", alt_x, alt_y, -1, 0, 2, peak_x, peak_y)) {
+        goto tour_cleanup;
+    }
+    if (two_rock_x >= 0
+        && !tut_map("TOURTWOROCK", two_rock_x, two_rock_y, -1, 0, 2, -1, -1)) {
+        goto tour_cleanup;
+    }
+    if (one_rock_x >= 0
+        && !tut_map("TOURONEROCK", one_rock_x, one_rock_y, -1, 0, 2, -1, -1)) {
+        goto tour_cleanup;
+    }
+    if (flat_x >= 0 && !tut_map("TOURFLAT", flat_x, flat_y, -1, 0, 2, -1, -1)) {
+        goto tour_cleanup;
+    }
+    if (site_x <= 0) {
+        site_x = ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
+        site_y = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
+    }
+    if (!tut_map("TOURFOREST", site_x, site_y, -1, 0, 2, -1, -1)) {
+        goto tour_cleanup;
+    }
+    if (!tut_map("TOURREVIEW", site_x, site_y, -1, 0, 2, -1, -1)) {
+        goto tour_cleanup;
+    }
+    if (!tut_map("TOURADVANCED", site_x, site_y, -1, 0, 2, -1, -1)) {
+        goto tour_cleanup;
+    }
+    reset();
+    field_53B4_ = 0;
+    tut_map("TOURFORMDONE", site_x, site_y, -1, 0, 2, -1, -1);
+tour_cleanup:
+    desktop_update();
+    field_53B4_ = 0;
+    reset();
+}
+#pragma auto_inline(off)
+
 
 /*
 Purpose: Centre the rectangle, convert it through the base window, and
