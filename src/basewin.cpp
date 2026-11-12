@@ -35,6 +35,9 @@
 // ORIGINAL: 0x00408400 _$E24 0x00408400-0x0040840A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682064 selects initializer0x4083e0..0x4083f6, registering exit0x408400..0x40840a. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x6eee68 bound to?g_BASEWIN_WAVE@@3VWave@@A.", "Original startup instruction evidence: [[\"0x4083e0\", \"mov\", \"ecx, 0x6eee68\"], [\"0x4083e5\", \"call\", \"0x4c66e0\"], [\"0x4083ea\", \"push\", \"0x408400\"], [\"0x4083ef\", \"call\", \"0x645398\"], [\"0x4083f4\", \"pop\", \"ecx\"], [\"0x4083f5\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x408400\", \"mov\", \"ecx, 0x6eee68\"], [\"0x408405\", \"jmp\", \"0x4c67c0\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/basewin.cpp COFF selects _$E26 via .CRT$XCU, registering _$E24. Startup relocation targets: [\"?g_BASEWIN_WAVE@@3VWave@@A\", \"??0Wave@@QAE@XZ\", \"_$E24\", \"_atexit\"]; exit targets: [\"?g_BASEWIN_WAVE@@3VWave@@A\", \"??1Wave@@UAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f2b4; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned ?g_BASEWIN_WAVE@@3VWave@@A; preserve complete original identity and remaining restoration/structure obligations."}
 // symbol    _$E19
+// stand-in: see ~Dialogs in dialogs.h. base_editor's closing teardown expands
+// ~Dialogs in place (0x41D0xx: close@Dialogs, ~EditGroup, ~SpriteBox, ...).
+#define DIALOGS_DTOR_INLINE
 #define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
 #define BASEWIN_INLINE_BODIES  // recompute/delete_queue/exit bodies in basewin.h
 #define MAPWIN_TILE_IN_VIEW_INLINE  // MapWin::tile_in_view body in mapwin.h
@@ -882,28 +885,30 @@ void BaseWin::base_editor() {
     get_mouse_pos(&x, &y);
     client_to_screen(&x, &y);
     menu.init(0);
-    menu.add_item(1, label_get(0xD40 / 4));
-    menu.add_item(2, label_get(0xD44 / 4));
+    menu.add_item(1, StringTable.get(Labels.strings_ptr[0xD40 / 4]));
+    menu.add_item(2, StringTable.get(Labels.strings_ptr[0xD44 / 4]));
     menu.add_separator(99);
     menu.add_item(5, label_get(0xD58 / 4));
     menu.add_item(10, label_get(0xE60 / 4));
-    menu.add_item(6, label_get(0xD5C / 4));
+    menu.add_item(6, StringTable.get(Labels.strings_ptr[0xD5C / 4]));
     menu.add_item(7, label_get(0xD60 / 4));
     menu.add_separator(99);
-    // 0x41C906..0x41C937: each arm loads its own Labels slot; one get call.
-    menu.add_item(8, StringTable.get(BaseCurrent->event & 0x8000
-                                         ? Labels.strings_ptr[0xE04 / 4]
-                                         : Labels.strings_ptr[0xE00 / 4]));
+    // 0x41C906..0x41C937: each arm pushes its own Labels slot and jumps into
+    // the other's get/add_item tail (VC6 tail-merges the two calls).
+    if (BaseCurrent->event & 0x8000)
+        menu.add_item(8, StringTable.get(Labels.strings_ptr[0xE04 / 4]));
+    else
+        menu.add_item(8, StringTable.get(Labels.strings_ptr[0xE00 / 4]));
     menu.add_separator(99);
-    menu.add_item(3, label_get(0xD48 / 4));
+    menu.add_item(3, StringTable.get(Labels.strings_ptr[0xD48 / 4]));
     menu.add_item(4, label_get(0xD4C / 4));
     menu.add_separator(99);
     menu.add_item(11, label_get(0xF58 / 4));
-    menu.add_item(12, label_get(0xF5C / 4));
+    menu.add_item(12, StringTable.get(Labels.strings_ptr[0xF5C / 4]));
     menu.add_separator(99);
     menu.add_item(13, label_get(0x103C / 4));
     menu.add_item(14, label_get(0x1040 / 4));
-    menu.add_item(9, label_get(0xE18 / 4));
+    menu.add_item(9, StringTable.get(Labels.strings_ptr[0xE18 / 4]));
     menu.show(x, y, pop_expire);
     const int slot = menu.get_selected();
     int action;
@@ -971,9 +976,7 @@ void BaseWin::base_editor() {
     case 13: {
         popup.start("CHANGEOWNER", 0x40);
         for (int item = 1; item < 8; ++item) {
-            GenderDefault = Players[item].noun_gender;
-            PluralityDefault = Players[item].is_noun_plural;
-            popup.item(Players[item].noun_faction, item);
+            popup.item(get_noun(item), item);
         }
         popup.set_value(BaseCurrent->faction_id_current);
         const int faction = popup.exec();
@@ -995,10 +998,8 @@ void BaseWin::base_editor() {
     case 14: {
         popup.start("CHANGEFORMER", 0x40);
         for (int item = 1; item < 8; ++item) {
-            GenderDefault = Players[item].noun_gender;
-            PluralityDefault = Players[item].is_noun_plural;
             StringTemp[0] = 0;
-            parse_says(0, Players[item].noun_faction, -1, -1);
+            parse_says(0, get_noun(item), -1, -1);
             popup.item(StringTemp, item);
         }
         popup.set_value(BaseCurrent->faction_id_former);
@@ -1998,10 +1999,11 @@ static char *hurry_next_item() {
 }
 
 // Energy left after this turn's pending multiplayer hurry payments.
-// stand-in: hurry spells this through the helper at three of its six sites
-// and inline at the rest. The mix steers VC6's /Ob2 budget so the ~Popup
-// teardowns at the early returns inline as deeply as the image's (only the
-// HURRYPAYMENT return still inlines one FlatButton too many).
+// stand-in: hurry spells this through the helper only at its HURRYPAYMENT
+// parse_num and writes it out at the other sites. With the helper at the
+// HURRY parse_num and the menu test too, the first ~Popup teardown inlined
+// two levels less than the image's (EH 55 against 57); now only the
+// HURRYPAYMENT return still inlines one FlatButton too many (58 against 57).
 static int hurry_energy(int faction_id) {
     return PlayersData[faction_id].energy_reserves - PlayersData[faction_id].hurry_cost_total;
 }
@@ -2042,13 +2044,13 @@ void BaseWin::hurry() {
         ? VehPrototypes[production_id].veh_name
         : StringTable.get(Facility[facility_id].name), -1, -1);
     parse_num(0, cost);
-    parse_num(1, hurry_energy(faction_id));
+    parse_num(1, PlayersData[faction_id].energy_reserves - PlayersData[faction_id].hurry_cost_total);
     popup.start("HURRY");
     if ((BaseCurrent->state & 2u) != 0
         && (BaseCurrent->queue_production_id[0] >= 0 || BaseCurrent->queue_production_id[0] <= -0x41)) {
         popup.start("HURRYDRONE", 0x80);
         popup.set_wave(0x1C);
-    } else if (hurry_energy(faction_id) >= 0) {
+    } else if (PlayersData[faction_id].energy_reserves - PlayersData[faction_id].hurry_cost_total >= 0) {
         if (X_text_open(ScriptPopupFile, "HURRYOPTIONS")) return;
         popup.item(hurry_next_item(), 0);
         hurry_next_item();
