@@ -6426,7 +6426,11 @@ void __cdecl battle_routine(int base_id) {
 // symbol    ?proposal_menu@@YAHHH@Z
 // TRIED: byte-exact prologue global-write order (a64cc load/cmp interleaved between fa30/fa7c/f7cc/fab0/fa34/fa5c in the original, sequential here); the six-panel Popup/Dialogs dispatch, item()/exec() gating and faction-loop strides are transcribed from raw disasm + the (uncorrupted for this function) Ghidra hypothesis cross-checked against it - diverges first at #11, in the prologue.
 int __cdecl proposal_menu(int faction_id, int faction_id_with) {
+    int commlink_count = 0;
+    int contact_count = 0;
     Popup popup;
+    int i;
+    int base_id;
 
     DiploScratchFA30 = -1;
     DiploScratchFA7C = -1;
@@ -6435,406 +6439,338 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
     DiploScratchFA34 = 0;
     DiploScratchFA5C = 0;
 
-    int bases_without_facility = 0;
-    if (GameDataStateStorage.fields_.base_current_count_ > 0) {
-        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
-            Base &base = Bases[base_id];
-            if (base.faction_id_current == faction_id_with &&
-                (base.faction_id_current == faction_id ||
-                 (base.visibility & (1 << (faction_id & 0x1f))) != 0)) {
-                int facility_byte = 0;
-                int facility_bit = 0;
-                bitmask(1, &facility_byte, &facility_bit);
-                if ((base.facilities_built[facility_byte] & facility_bit) == 0)
-                    ++bases_without_facility;
+    int swap_bases = 0;
+    for (base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
+        if (Bases[base_id].faction_id_current == faction_id_with
+            && (Bases[base_id].faction_id_current == faction_id
+                || Bases[base_id].visibility & (1 << faction_id))
+            && !has_fac(FAC_HEADQUARTERS, base_id, 0)) {
+            swap_bases++;
+        }
+    }
+    for (i = 1; i < MaxPlayerNum; i++) {
+        if (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << i)
+            && i != faction_id && i != faction_id_with) {
+            if (has_treaty(faction_id, i, DTREATY_COMMLINK)) {
+                contact_count++;
+            }
+            if (!has_treaty(faction_id, i, DTREATY_COMMLINK)
+                && !has_project(SP_EMPATH_GUILD, faction_id)) {
+                commlink_count++;
             }
         }
     }
 
-    int eligible_other_factions = 0;
-    for (int candidate = 1; candidate < MaxPlayerNum; ++candidate) {
-        const unsigned char alive_mask =
-            static_cast<unsigned char>((GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & 0xff);
-        if ((alive_mask & (1 << (candidate & 0x1f))) != 0 &&
-            candidate != faction_id && candidate != faction_id_with) {
-            const uint32_t candidate_treaty =
-                PlayersData[candidate].diplo_treaties[faction_id];
-            if ((candidate_treaty & 8u) == 0 &&
-                (GameDataStateStorage.fields_.secret_project_.empath_guild() < 0 ||
-                 Bases[GameDataStateStorage.fields_.secret_project_.empath_guild()].faction_id_current ==
-                     faction_id)) {
-                ++eligible_other_factions;
-            }
-        }
-    }
-
+    parse_set(Players[faction_id_with].is_leader_female, 0);
+    parse_says(0, Players[faction_id_with].title_leader, -1, -1);
+    parse_says(1, get_pact_hood(faction_id, faction_id_with), -1, -1);
     parse_num(0, PlayersData[faction_id].loan_balance[faction_id_with]);
     diplomacy_caption(faction_id, faction_id_with);
 
     popup.start("PROPOSAL", 0x100000);
     popup.set_picture(FactionDiplomacyPortraits[faction_id_with], 0, nullptr);
-    if (X_text_open(ScriptPopupFile, "PROPOSALMENU") != 0) return 0;
-
+    if (X_text_open(ScriptPopupFile, "PROPOSALMENU")) {
+        return 0;
+    }
     text_get();
-    StringTemp[0] = 0;
+    clear();
     parse_string(TextBufferGetPtr, StringTemp);
     popup.item(StringTemp, 0);
-
     text_get();
-    StringTemp[0] = 0;
+    clear();
     parse_string(TextBufferGetPtr, StringTemp);
     popup.item(StringTemp, 1);
-
     text_get();
-    StringTemp[0] = 0;
+    clear();
     parse_string(TextBufferGetPtr, StringTemp);
-    if (has_treaty(faction_id, faction_id_with, 2u) != 0 &&
-        has_treaty(faction_id, faction_id_with, 1u) == 0)
+    if (has_treaty(faction_id, faction_id_with, DTREATY_TREATY)
+        && !has_treaty(faction_id, faction_id_with, DTREATY_PACT)) {
         popup.item(StringTemp, 2);
-
+    }
     text_get();
-    StringTemp[0] = 0;
+    clear();
     parse_string(TextBufferGetPtr, StringTemp);
-    if (has_treaty(faction_id, faction_id_with, 2u) == 0)
+    if (!has_treaty(faction_id, faction_id_with, DTREATY_TREATY)) {
         popup.item(StringTemp, 3);
-
+    }
     text_get();
-    StringTemp[0] = 0;
+    clear();
     parse_string(TextBufferGetPtr, StringTemp);
-    if ((GameDataStateStorage.fields_.game_rules_ & 0x02000000u) == 0)
+    if (!(GameDataStateStorage.fields_.game_rules_ & 0x2000000)) {
         popup.item(StringTemp, 4);
-
+    }
     text_get();
-    StringTemp[0] = 0;
+    clear();
     parse_string(TextBufferGetPtr, StringTemp);
-
     text_get();
-    StringTemp[0] = 0;
+    clear();
     parse_string(TextBufferGetPtr, StringTemp);
-    if (bases_without_facility != 0)
+    if (commlink_count) {
         popup.item(StringTemp, 13);
-
+    }
     text_get();
-    StringTemp[0] = 0;
+    clear();
     parse_string(TextBufferGetPtr, StringTemp);
     popup.item(StringTemp, 6);
-
     text_get();
-    StringTemp[0] = 0;
+    clear();
     parse_string(TextBufferGetPtr, StringTemp);
-    const int offered_value =
-        PlayersData[faction_id].loan_balance[faction_id_with];
-    if (offered_value != 0 &&
-        offered_value <= PlayersData[faction_id].energy_reserves)
+    if (PlayersData[faction_id].loan_balance[faction_id_with]
+        && PlayersData[faction_id].energy_reserves
+           >= PlayersData[faction_id].loan_balance[faction_id_with]) {
         popup.item(StringTemp, 11);
-
+    }
     text_get();
-    StringTemp[0] = 0;
+    clear();
     parse_string(TextBufferGetPtr, StringTemp);
-
     text_get();
-    StringTemp[0] = 0;
+    clear();
     parse_string(TextBufferGetPtr, StringTemp);
-    if (PlayersData[faction_id_with].current_num_bases != 0)
+    if (contact_count) {
         popup.item(StringTemp, 8);
-
+    }
     text_get();
-    StringTemp[0] = 0;
+    clear();
     parse_string(TextBufferGetPtr, StringTemp);
-    if (PlayersData[faction_id].current_num_bases > 1 &&
-        eligible_other_factions != 0 && IsMultiplayerNet == 0)
+    if (PlayersData[faction_id_with].current_num_bases > 1 && swap_bases
+        && !IsMultiplayerNet) {
         popup.item(StringTemp, 9);
+    }
+    text_get();
+    clear();
+    parse_string(TextBufferGetPtr, StringTemp);
 
     DiploScratchFA34 = popup.exec(pop_wait);
-
     if (DiploScratchFA34 == 8) {
         popup.start("PROPOSEATTACK", 0x100040);
         popup.set_picture(FactionDiplomacyPortraits[faction_id_with], 0, nullptr);
-
-        if (X_text_open(ScriptPopupFile, "ATTACKSTRING") == 0) {
+        if (!X_text_open(ScriptPopupFile, "ATTACKSTRING")) {
             text_get();
-            for (int candidate = 1; candidate < MaxPlayerNum; ++candidate) {
-                const unsigned char alive_mask =
-                    static_cast<unsigned char>((GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & 0xff);
-                const uint32_t target_flags =
-                    PlayersData[faction_id].diplo_treaties[candidate];
-                const bool candidate_is_alive =
-                    (alive_mask & (1 << (candidate & 0x1f))) != 0;
-                const bool target_is_human =
-                    (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << (candidate & 0x1f))) != 0;
-                if (candidate_is_alive && candidate != faction_id &&
-                    candidate != faction_id_with &&
-                    ((target_flags & 8u) != 0 || target_is_human)) {
-                    parse_set(Players[candidate].is_leader_female, 0);
-                    parse_says(0, Players[candidate].title_leader, -1, -1);
-                    parse_set(Players[candidate].is_leader_female, 0);
-                    parse_says(1, Players[candidate].name_leader, -1, -1);
-                    parse_set(Players[candidate].noun_gender, Players[candidate].is_noun_plural);
-                    parse_says(2, Players[candidate].noun_faction, -1, -1);
-                    StringTemp[0] = 0;
+            for (i = 1; i < MaxPlayerNum; i++) {
+                if (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << i)
+                    && i != faction_id && i != faction_id_with
+                    && (has_treaty(faction_id, i, DTREATY_COMMLINK)
+                        || GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << i))) {
+                    parse_set(Players[i].is_leader_female, 0);
+                    parse_says(0, Players[i].title_leader, -1, -1);
+                    parse_set(Players[i].is_leader_female, 0);
+                    parse_says(1, Players[i].name_leader, -1, -1);
+                    parse_set(Players[i].noun_gender, Players[i].is_noun_plural);
+                    parse_says(2, Players[i].noun_faction, -1, -1);
+                    clear();
                     parse_string(TextBufferGetPtr, StringTemp);
-                    popup.item(StringTemp, candidate);
+                    popup.item(StringTemp, i);
                 }
             }
-
             DiploScratchFA5C = popup.exec(pop_wait);
             if (DiploScratchFA5C >= 0) {
-                // The original reuses the completed loop index8 here, reading
-                // other.treaties[8], which is this declared agenda word.
-                if (has_agenda(faction_id_with, 0, 0x10u) != 0) {
-                    const int target = DiploScratchFA5C;
-                    parse_set(Players[target].is_leader_female, 0);
-                    parse_says(0, Players[target].title_leader, -1, -1);
-                    parse_set(Players[target].is_leader_female, 0);
-                    parse_says(1, Players[target].name_leader, -1, -1);
-                    X_pops("REJWARALREADY", 0x100000,
-                                 FactionDiplomacyPortraits[faction_id_with],
-                                 pop_wait);
-                    DiploScratchFA34 = 0;
-                    goto return_selection;
+                // Image bug, kept: tests the exhausted loop index (8), not the
+                // selected target, reading diplo_agenda[0] through diplo_treaties[8].
+                if (!has_treaty(faction_id_with, i, DTREATY_VENDETTA)) {
+                    goto commlink;
                 }
-            } else {
-                DiploScratchFA34 = 0;
-                goto return_selection;
+                parse_set(Players[DiploScratchFA5C].is_leader_female, 0);
+                parse_says(0, Players[DiploScratchFA5C].title_leader, -1, -1);
+                parse_set(Players[DiploScratchFA5C].is_leader_female, 0);
+                parse_says(1, Players[DiploScratchFA5C].name_leader, -1, -1);
+                X_pops("REJWARALREADY", 0x100000,
+                       FactionDiplomacyPortraits[faction_id_with], pop_wait);
             }
-        } else {
-            DiploScratchFA34 = 0;
-            goto return_selection;
         }
-    } else if (DiploScratchFA34 == 13) {
+    fail:
+        DiploScratchFA34 = 0;
+    done:
+        DiplomacyProposalMode = 1;
+        return DiploScratchFA34;
+    }
+commlink:
+    if (DiploScratchFA34 == 13) {
         popup.start("PROPOSECOMMLINK", 0x100040);
         popup.set_picture(FactionDiplomacyPortraits[faction_id_with], 0, nullptr);
-
-        if (X_text_open(ScriptPopupFile, "ATTACKSTRING") != 0) {
-            DiploScratchFA34 = 0;
-            goto return_selection;
+        if (X_text_open(ScriptPopupFile, "ATTACKSTRING")) {
+            goto fail;
         }
-
         text_get();
-        for (int candidate = 1; candidate < MaxPlayerNum; ++candidate) {
-            const unsigned char alive_mask =
-                static_cast<unsigned char>((GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & 0xff);
-            const uint32_t target_flags =
-                PlayersData[faction_id].diplo_treaties[candidate];
-            const bool candidate_is_alive =
-                (alive_mask & (1 << (candidate & 0x1f))) != 0;
-            if (candidate_is_alive && candidate != faction_id &&
-                candidate != faction_id_with && (target_flags & 8u) == 0 &&
-                (GameDataStateStorage.fields_.secret_project_.empath_guild() < 0 ||
-                 Bases[GameDataStateStorage.fields_.secret_project_.empath_guild()].faction_id_current !=
-                     faction_id_with)) {
-                parse_set(Players[candidate].is_leader_female, 0);
-                parse_says(0, Players[candidate].title_leader, -1, -1);
-                parse_set(Players[candidate].is_leader_female, 0);
-                parse_says(1, Players[candidate].name_leader, -1, -1);
-                parse_set(Players[candidate].noun_gender, Players[candidate].is_noun_plural);
-                parse_says(2, Players[candidate].noun_faction, -1, -1);
-                StringTemp[0] = 0;
+        for (i = 1; i < MaxPlayerNum; i++) {
+            if (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << i)
+                && i != faction_id && i != faction_id_with
+                && !has_treaty(faction_id, i, DTREATY_COMMLINK)) {
+                parse_set(Players[i].is_leader_female, 0);
+                parse_says(0, Players[i].title_leader, -1, -1);
+                parse_set(Players[i].is_leader_female, 0);
+                parse_says(1, Players[i].name_leader, -1, -1);
+                parse_set(Players[i].noun_gender, Players[i].is_noun_plural);
+                parse_says(2, Players[i].noun_faction, -1, -1);
+                clear();
                 parse_string(TextBufferGetPtr, StringTemp);
-                popup.item(StringTemp, candidate);
+                popup.item(StringTemp, i);
             }
         }
-
         DiploScratchFA5C = popup.exec(pop_wait);
         if (DiploScratchFA5C < 0) {
-            DiploScratchFA34 = 0;
-            goto return_selection;
+            goto fail;
         }
-
-        const uint32_t target_flags =
-            PlayersData[faction_id_with]
-                .diplo_treaties[DiploScratchFA5C];
-        if ((target_flags & 8u) == 0 &&
-            (GameDataStateStorage.fields_.secret_project_.empath_guild() < 0 ||
-             Bases[GameDataStateStorage.fields_.secret_project_.empath_guild()].faction_id_current !=
-                 faction_id_with)) {
-            const int target = DiploScratchFA5C;
-            parse_set(Players[target].is_leader_female, 0);
-            parse_says(0, Players[target].title_leader, -1, -1);
-            parse_set(Players[target].is_leader_female, 0);
-            parse_says(1, Players[target].name_leader, -1, -1);
-            parse_set(Players[target].noun_gender, Players[target].is_noun_plural);
-            parse_says(2, Players[target].noun_faction, -1, -1);
+        if (!has_treaty(faction_id_with, DiploScratchFA5C, DTREATY_COMMLINK)
+            && !has_project(SP_EMPATH_GUILD, faction_id_with)) {
+            parse_set(Players[DiploScratchFA5C].is_leader_female, 0);
+            parse_says(0, Players[DiploScratchFA5C].title_leader, -1, -1);
+            parse_set(Players[DiploScratchFA5C].is_leader_female, 0);
+            parse_says(1, Players[DiploScratchFA5C].name_leader, -1, -1);
+            parse_set(Players[DiploScratchFA5C].noun_gender,
+                      Players[DiploScratchFA5C].is_noun_plural);
+            parse_says(2, Players[DiploScratchFA5C].noun_faction, -1, -1);
             DiploScratchFA34 = 0;
-            x_pops_minimal("NOCOMMLINK",
-                           FactionDiplomacyPortraits[faction_id_with], pop_wait);
+            x_pops_minimal("NOCOMMLINK", FactionDiplomacyPortraits[faction_id_with],
+                           pop_wait);
         }
-    } else if (DiploScratchFA34 == 9) {
+    }
+    if (DiploScratchFA34 == 9) {
         PlanWindow.init(nullptr);
         PlanWindow.back_redraw();
+        int has_base = 0;
         popup.start("PROPOSEBASE", 0x100040);
         popup.set_picture(FactionDiplomacyPortraits[faction_id_with], 0, nullptr);
-
-        bool has_base = false;
-        int item_id = 0;
-        if (GameDataStateStorage.fields_.base_current_count_ > 0) {
-            for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
-                Base &base = Bases[base_id];
-                if (base.faction_id_current == faction_id_with) {
-                    int facility_byte = 0;
-                    int facility_bit = 0;
-                    bitmask(1, &facility_byte, &facility_bit);
-                    if ((base.facilities_built[facility_byte] & facility_bit) ==
-                        0) {
-                        StringTemp[0] = 0;
-                        say_base(StringTemp, item_id);
-                        popup.item(StringTemp, item_id);
-                        if (!has_base) {
-                            has_base = true;
-                            PlanWindow.clear_lines();
-                            PlanWindow.monocenter(base.x, base.y, 0);
-                            PlanWindow.add_line(base_id, base_id, 0);
-                            PlanWindow.on_redraw();
-                        }
-                    }
+        for (i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
+            if (Bases[i].faction_id_current == faction_id_with
+                && (Bases[i].faction_id_current == faction_id
+                    || Bases[i].visibility & (1 << faction_id))
+                && !has_fac(FAC_HEADQUARTERS, i, 0)) {
+                clear();
+                say_base(StringTemp, i);
+                popup.item(StringTemp, i);
+                if (!has_base) {
+                    has_base = 1;
+                    PlanWindow.clear_lines();
+                    PlanWindow.monocenter(Bases[i].x, Bases[i].y, 0);
+                    PlanWindow.add_line(i, i, 0);
+                    PlanWindow.on_redraw();
                 }
-                ++item_id;
             }
         }
-
-        if (!has_base) {
-            DiploScratchFA7C = -1;
-            DiploScratchFA34 = 0;
-        } else {
+        if (has_base) {
             PlanWindow.show(0);
             popup.dialogs().ListBox::set_selection_callback(battle_routine);
             DiploScratchFA7C = popup.exec(pop_wait);
-            if (DiploScratchFA7C < 0) DiploScratchFA34 = 0;
+            if (DiploScratchFA7C < 0) {
+                DiploScratchFA34 = 0;
+            }
+        } else {
+            DiploScratchFA7C = -1;
+            DiploScratchFA34 = 0;
         }
         PlanWindow.close();
     }
-
-    if (DiploScratchFA34 != 0 && DiploScratchFA34 != 7 &&
-        DiploScratchFA34 != 10 && DiploScratchFA34 != 11 &&
-        DiploScratchFA34 != 5 && DiploScratchFA34 != 12) {
-        parse_set(Players[faction_id_with].is_leader_female, 0);
-        parse_says(0, Players[faction_id_with].title_leader, -1, -1);
-        parse_set(Players[faction_id_with].is_leader_female, 0);
-        parse_says(1, Players[faction_id_with].name_leader, -1, -1);
-        parse_says(2, get_pact_hood(faction_id, faction_id_with), -1, -1);
-        diplomacy_caption(faction_id, faction_id_with);
-        StringTemp[0] = 0;
-        strcat(StringTemp, "COUNTER");
-        char counter_text[16];
-        _itoa(DiploScratchFA34 == 1, counter_text, 10);
-        strcat(StringTemp, counter_text);
-
-        popup.start(StringTemp, 0x100000);
+    if (!DiploScratchFA34 || DiploScratchFA34 == 7 || DiploScratchFA34 == 10
+        || DiploScratchFA34 == 11 || DiploScratchFA34 == 5
+        || DiploScratchFA34 == 12) {
+        goto done;
+    }
+    parse_set(Players[faction_id_with].is_leader_female, 0);
+    parse_says(0, Players[faction_id_with].title_leader, -1, -1);
+    parse_set(Players[faction_id_with].is_leader_female, 0);
+    parse_says(1, Players[faction_id_with].name_leader, -1, -1);
+    parse_says(2, get_pact_hood(faction_id, faction_id_with), -1, -1);
+    diplomacy_caption(faction_id, faction_id_with);
+    clear();
+    strcat(StringTemp, "COUNTER");
+    say_num(DiploScratchFA34 == 1);
+    popup.start(StringTemp, 0x100000);
+    popup.set_picture(FactionDiplomacyPortraits[faction_id_with], 0, nullptr);
+    if (X_text_open(ScriptPopupFile, "COUNTERMENU")) {
+        return 0;
+    }
+    text_get();
+    clear();
+    parse_string(TextBufferGetPtr, StringTemp);
+    popup.item(StringTemp, 0);
+    text_get();
+    clear();
+    parse_string(TextBufferGetPtr, StringTemp);
+    if (DiploScratchFA34 == 6) {
+        popup.item(StringTemp, 6);
+    }
+    text_get();
+    clear();
+    parse_string(TextBufferGetPtr, StringTemp);
+    if (DiploScratchFA34 != 1) {
+        popup.item(StringTemp, 1);
+    }
+    text_get();
+    clear();
+    parse_string(TextBufferGetPtr, StringTemp);
+    if (DiploScratchFA34 != 1) {
+        popup.item(StringTemp, 2);
+    }
+    text_get();
+    clear();
+    parse_string(TextBufferGetPtr, StringTemp);
+    if (DiploScratchFA34 != 1 && !has_treaty(faction_id, faction_id_with, DTREATY_PACT)) {
+        popup.item(StringTemp, 3);
+    }
+    text_get();
+    clear();
+    parse_string(TextBufferGetPtr, StringTemp);
+    if (DiploScratchFA34 != 1 && has_treaty(faction_id, faction_id_with, DTREATY_PACT)) {
+        popup.item(StringTemp, 3);
+    }
+    text_get();
+    clear();
+    parse_string(TextBufferGetPtr, StringTemp);
+    if (!(GameDataStateStorage.fields_.game_rules_ & 0x2000000)) {
+        popup.item(StringTemp, 4);
+    }
+    text_get();
+    clear();
+    parse_string(TextBufferGetPtr, StringTemp);
+    if (DiploScratchFA34 == 1) {
+        popup.item(StringTemp, 7);
+    }
+    text_get();
+    clear();
+    parse_string(TextBufferGetPtr, StringTemp);
+    if (DiploScratchFA34 != 6) {
+        popup.item(StringTemp, 5);
+    }
+    text_get();
+    clear();
+    parse_string(TextBufferGetPtr, StringTemp);
+    if (PlayersData[faction_id].current_num_bases > 1 && !IsMultiplayerNet
+        && (DiploScratchFA34 == 9 || DiploScratchFA34 == 1)) {
+        popup.item(StringTemp, 8);
+    }
+    DiplomacyProposalMode = popup.exec(pop_wait);
+    if (DiplomacyProposalMode == 8) {
+        PlanWindow.init(nullptr);
+        PlanWindow.back_redraw();
+        int has_base = 0;
+        popup.start("COUNTERBASE", 0x100040);
         popup.set_picture(FactionDiplomacyPortraits[faction_id_with], 0, nullptr);
-        if (X_text_open(ScriptPopupFile, "COUNTERMENU") != 0) return 0;
-
-        text_get();
-        StringTemp[0] = 0;
-        parse_string(TextBufferGetPtr, StringTemp);
-        popup.item(StringTemp, 0);
-
-        text_get();
-        StringTemp[0] = 0;
-        parse_string(TextBufferGetPtr, StringTemp);
-        if (DiploScratchFA34 == 6)
-            popup.item(StringTemp, 6);
-
-        text_get();
-        StringTemp[0] = 0;
-        parse_string(TextBufferGetPtr, StringTemp);
-        if (DiploScratchFA34 != 1)
-            popup.item(StringTemp, 1);
-
-        text_get();
-        StringTemp[0] = 0;
-        parse_string(TextBufferGetPtr, StringTemp);
-        if (DiploScratchFA34 != 1)
-            popup.item(StringTemp, 2);
-
-        text_get();
-        StringTemp[0] = 0;
-        parse_string(TextBufferGetPtr, StringTemp);
-        if (DiploScratchFA34 != 1 &&
-            has_treaty(faction_id, faction_id_with, 1u) ==
-                0)
-            popup.item(StringTemp, 3);
-
-        text_get();
-        StringTemp[0] = 0;
-        parse_string(TextBufferGetPtr, StringTemp);
-        if (DiploScratchFA34 != 1 &&
-            has_treaty(faction_id, faction_id_with, 1u) !=
-                0)
-            popup.item(StringTemp, 3);
-
-        text_get();
-        StringTemp[0] = 0;
-        parse_string(TextBufferGetPtr, StringTemp);
-        if ((GameDataStateStorage.fields_.game_rules_ & 0x02000000u) == 0)
-            popup.item(StringTemp, 4);
-
-        text_get();
-        StringTemp[0] = 0;
-        parse_string(TextBufferGetPtr, StringTemp);
-        if (DiploScratchFA34 == 1)
-            popup.item(StringTemp, 7);
-
-        text_get();
-        StringTemp[0] = 0;
-        parse_string(TextBufferGetPtr, StringTemp);
-        if (DiploScratchFA34 != 6)
-            popup.item(StringTemp, 5);
-
-        text_get();
-        StringTemp[0] = 0;
-        parse_string(TextBufferGetPtr, StringTemp);
-        if (PlayersData[faction_id].current_num_bases > 1 &&
-            IsMultiplayerNet == 0 &&
-            (DiploScratchFA34 == 9 || DiploScratchFA34 == 1))
-            popup.item(StringTemp, 8);
-
-        DiplomacyProposalMode = popup.exec(pop_wait);
-        if (DiplomacyProposalMode == 8) {
-            PlanWindow.init(nullptr);
-            PlanWindow.back_redraw();
-            popup.start("COUNTERBASE", 0x100040);
-            popup.set_picture(FactionDiplomacyPortraits[faction_id_with], 0, nullptr);
-
-            bool has_counter_base = false;
-            int counter_item_id = 0;
-            if (GameDataStateStorage.fields_.base_current_count_ > 0) {
-                for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
-                    Base &base = Bases[base_id];
-                    if (base.faction_id_current == faction_id) {
-                        int facility_byte = 0;
-                        int facility_bit = 0;
-                        bitmask(1, &facility_byte, &facility_bit);
-                        if ((base.facilities_built[facility_byte] &
-                             facility_bit) == 0) {
-                            StringTemp[0] = 0;
-                            say_base(StringTemp, counter_item_id);
-                            popup.item(StringTemp, counter_item_id);
-                            if (!has_counter_base) {
-                                has_counter_base = true;
-                                PlanWindow.clear_lines();
-                                PlanWindow.monocenter(base.x, base.y, 0);
-                                PlanWindow.add_line(base_id, base_id, 0);
-                                PlanWindow.on_redraw();
-                            }
-                        }
-                    }
-                    ++counter_item_id;
+        for (i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
+            if (Bases[i].faction_id_current == faction_id
+                && !has_fac(FAC_HEADQUARTERS, i, 0)) {
+                clear();
+                say_base(StringTemp, i);
+                popup.item(StringTemp, i);
+                if (!has_base) {
+                    has_base = 1;
+                    PlanWindow.clear_lines();
+                    PlanWindow.monocenter(Bases[i].x, Bases[i].y, 0);
+                    PlanWindow.add_line(i, i, 0);
+                    PlanWindow.on_redraw();
                 }
             }
-
-            PlanWindow.show(0);
-            popup.dialogs().ListBox::set_selection_callback(battle_routine);
-            DiploScratchFA30 = popup.exec(pop_wait);
-            if (DiploScratchFA30 < 0) DiploScratchFA34 = 0;
-            PlanWindow.close();
         }
-
-        if (DiplomacyProposalMode == 0) DiploScratchFA34 = 0;
-        return DiploScratchFA34;
+        PlanWindow.show(0);
+        popup.dialogs().ListBox::set_selection_callback(battle_routine);
+        DiploScratchFA30 = popup.exec(pop_wait);
+        if (DiploScratchFA30 < 0) {
+            DiploScratchFA34 = 0;
+        }
+        PlanWindow.close();
     }
-
-return_selection:
-    DiplomacyProposalMode = 1;
+    if (!DiplomacyProposalMode) {
+        DiploScratchFA34 = 0;
+    }
     return DiploScratchFA34;
 }
 
@@ -7411,230 +7347,6 @@ attack_return_zero:
 }
 
 
-enum TechTradeContactResult {
-    TECH_TRADE_CONTACT_ALLOWED,
-    TECH_TRADE_CONTACT_REJECTED
-};
-
-enum TechTradePolicyRoute {
-    TECH_TRADE_POLICY_REJECT_542097,
-    TECH_TRADE_POLICY_REJECT_54222B,
-    TECH_TRADE_POLICY_REJECT_5423D8,
-    TECH_TRADE_POLICY_REJECT_542585,
-    TECH_TRADE_POLICY_REJECT_5425BF,
-    TECH_TRADE_POLICY_REJECT_5427FA,
-    TECH_TRADE_POLICY_READY_FOR_OFFERS
-};
-
-struct TechTradePolicyDecision {
-    TechTradePolicyRoute route;
-    bool partner_has_missing_prerequisite;
-    bool special_action;
-};
-static TechTradeContactResult tech_trade_contact_policy(
-    int actor, int partner) {
-    const uint32_t actor_to_partner =
-        PlayersData[actor].diplo_treaties[partner];
-    if ((actor_to_partner & 1u) != 0) {
-        return TECH_TRADE_CONTACT_ALLOWED;
-    }
-
-    const uint32_t partner_to_actor =
-        PlayersData[partner].diplo_treaties[actor];
-    const bool blocked = (partner_to_actor & 0x8020u) != 0 ||
-        DiploScratchFA2C != 0 || DiploFriction > 0x11;
-    const bool missing_universal_identity = DiploScratchFA60 != 0 &&
-        strcmp(Players[partner].filename, "UNIV") != 0;
-    if (blocked || missing_universal_identity) {
-        return TECH_TRADE_CONTACT_REJECTED;
-    }
-    return TECH_TRADE_CONTACT_ALLOWED;
-}
-static void tech_trade_show_contact_rejection(int actor, int partner,
-                                              int context) {
-    parse_set(Players[actor].is_leader_female, 0);
-    parse_says(0, Players[actor].title_leader, -1, -1);
-    parse_set(Players[actor].is_leader_female, 0);
-    parse_says(1, Players[actor].name_leader, -1, -1);
-    parse_set(Players[actor].is_leader_female, 0);
-    parse_says(2, Players[actor].assistant_city, -1, -1);
-    parse_says(3, Players[actor].adj_insult_faction, -1, -1);
-    parse_says(4, get_phrase(actor, 3), -1, -1);
-
-    StringTemp[0] = '\0';
-    strcat(StringTemp, "REJTECHHATE");
-    const int displayed_number = context == 13 ? 0 : parse_num(3, 0);
-    char number_text[16];
-    _itoa(displayed_number, number_text, 10);
-    strcat(StringTemp, number_text);
-    X_pops(StringTemp, 0x100000,
-                 FactionDiplomacyPortraits[partner], pop_wait);
-}
-static TechTradePolicyDecision tech_trade_pre_offer_policy(
-    int actor, int partner, int request_mode, int action, int context,
-    bool special_action) {
-    TechTradePolicyDecision decision = {
-        TECH_TRADE_POLICY_READY_FOR_OFFERS, false, special_action};
-    const uint32_t partner_to_actor =
-        PlayersData[partner].diplo_treaties[actor];
-    if ((partner_to_actor & 0x02000001u) != 0x02000001u) {
-        for (int reactor = 0; reactor < 2; ++reactor) {
-            const int prerequisite = Reactor[reactor].preq_tech;
-            if (has_tech(prerequisite, partner) &&
-                !has_tech(prerequisite, actor)) {
-                decision.partner_has_missing_prerequisite = true;
-            }
-        }
-
-        const uint32_t actor_to_partner =
-            PlayersData[actor].diplo_treaties[partner];
-        if ((actor_to_partner & 1u) == 0 &&
-            (PlayersData[partner].flags & PFLAG_COOP_WITH_HUMAN) == 0 &&
-            great_satan(actor, 0)) {
-            const int partner_tech_cost_delta =
-                diplo_sub(Players[partner].rule_techcost, 100);
-            const int cost_rank = partner_tech_cost_delta > 0 ? 1
-                : partner_tech_cost_delta == 0 ? 0 : -1;
-            const int threshold = diplo_add(
-                (partner_to_actor & 2u) != 0 ? 3 : 0,
-                diplo_mul(2, diplo_sub(2, cost_rank)));
-            if (DiploFriction >= threshold) {
-                decision.route = TECH_TRADE_POLICY_REJECT_54222B;
-                return decision;
-            }
-        }
-
-        if ((IsMultiplayerNet != 0 || (GameDataStateStorage.fields_.game_rules_ & 0x40) != 0) &&
-            PlayersData[actor].ranking == 7 &&
-            (actor_to_partner & 1u) == 0 &&
-            (PlayersData[partner].flags & PFLAG_COOP_WITH_HUMAN) == 0) {
-            if (great_satan(actor, 0)) {
-                decision.route = TECH_TRADE_POLICY_REJECT_5423D8;
-                return decision;
-            }
-            const int actor_power = FactionRankingsUnk[actor];
-            const int current_power =
-                FactionRankingsUnk[GameDataStateStorage.fields_.ranking_faction_id_unk2_];
-            if (diplo_mul(actor_power, 3) > diplo_mul(current_power, 4) &&
-                diplo_mul(PlayersData[actor].tech_ranking, 3) >
-                    diplo_mul(PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk2_].tech_ranking,
-                              4)) {
-                decision.route = TECH_TRADE_POLICY_REJECT_5423D8;
-                return decision;
-            }
-        }
-
-        const int partner_tech_rank = PlayersData[partner].tech_ranking;
-        const int actor_tech_rank = PlayersData[actor].tech_ranking;
-        if (partner_tech_rank > actor_tech_rank ||
-            decision.partner_has_missing_prerequisite) {
-            if (request_mode != 0) {
-                decision.route = TECH_TRADE_POLICY_REJECT_542585;
-                return decision;
-            }
-
-            const bool is_hive =
-                strcmp(Players[partner].filename, "HIVE") == 0;
-            const int special_threshold = diplo_sub(
-                diplo_add((partner_to_actor & 2u) != 0 ? 3 : 0,
-                    decision.partner_has_missing_prerequisite ? 3 : 9),
-                is_hive ? 3 : 0);
-            if (DiploFriction >= special_threshold &&
-                       (actor_to_partner & 1u) == 0 &&
-                       (PlayersData[partner].flags &
-                        PFLAG_COOP_WITH_HUMAN) == 0) {
-                decision.route = TECH_TRADE_POLICY_REJECT_5425BF;
-                return decision;
-            }
-        }
-    }
-
-    if (DiploScratchFA6C != -1 && context != 13) {
-        decision.route = TECH_TRADE_POLICY_REJECT_5427FA;
-        return decision;
-    }
-    (void)action;
-    return decision;
-}
-static void tech_trade_handle_pre_offer_rejection(
-    Popup &popup, TechTradePolicyDecision decision, int actor, int partner,
-    int request_mode, int action, int context) {
-    (void)popup; // Preserved in the contract; lexical scope owns teardown.
-    if (decision.route == TECH_TRADE_POLICY_REJECT_542585) {
-        return;
-    }
-
-    if (decision.route == TECH_TRADE_POLICY_REJECT_54222B ||
-        decision.route == TECH_TRADE_POLICY_REJECT_5423D8) {
-        if (request_mode == 0 &&
-            buy_tech(actor, partner, action, 1, context) == 0) {
-            parse_set(Players[actor].is_leader_female, 0);
-            parse_says(0, Players[actor].title_leader, -1, -1);
-            parse_says(1, Players[actor].name_leader, -1, -1);
-            parse_says(2, get_phrase(actor, 3), -1, -1);
-            StringTemp[0] = '\0';
-            strcat(StringTemp, decision.route ==
-                TECH_TRADE_POLICY_REJECT_54222B
-                    ? "REJTECHFEAR" : "REJTECHFEAR");
-            const int displayed_number = context == 13 ? 0 : parse_num(2, 0);
-            char number_text[16];
-            _itoa(displayed_number, number_text, 10);
-            strcat(StringTemp, number_text);
-            X_pops(StringTemp, 0x100000,
-                         FactionDiplomacyPortraits[partner], pop_wait);
-        }
-        return;
-    }
-
-    if (decision.route == TECH_TRADE_POLICY_REJECT_5425BF) {
-        if (!decision.partner_has_missing_prerequisite && request_mode == 0 &&
-            buy_tech(actor, partner, action, 1, context) != 0) {
-            return;
-        }
-
-        if (action == 5 && context != 13) {
-            parse_set(Players[actor].is_leader_female, 0);
-            parse_says(0, Players[actor].title_leader, -1, -1);
-            parse_says(1, Players[actor].name_leader, -1, -1);
-            parse_says(2, get_phrase(actor, 3), -1, -1);
-            X_pops("REJTECHFEAR1", 0x100000,
-                         FactionDiplomacyPortraits[partner], pop_wait);
-        } else if (decision.special_action) {
-            parse_says(0, Players[actor].adj_insult_faction, -1, -1);
-            StringTemp[0] = '\0';
-            strcat(StringTemp, "REJTECHADVANCED");
-            const int displayed_number =
-                decision.partner_has_missing_prerequisite ? 2 : parse_num(3, 0);
-            char number_text[16];
-            _itoa(displayed_number, number_text, 10);
-            strcat(StringTemp, number_text);
-            X_pops(StringTemp, 0x100000,
-                         FactionDiplomacyPortraits[partner], pop_wait);
-        }
-        return;
-    }
-
-    if (decision.route == TECH_TRADE_POLICY_REJECT_5427FA) {
-        if (request_mode == 0) {
-            const int project = DiploScratchFA6C;
-            const int facility_id = project < 0 ? diplo_sub(0x44, project)
-                                                 : diplo_add(project, 0x46);
-            parse_says(0, Facility[facility_id].name, -1, -1);
-            parse_set(Players[actor].is_leader_female, 0);
-            parse_says(1, Players[actor].title_leader, -1, -1);
-            parse_says(2, Players[actor].name_leader, -1, -1);
-            StringTemp[0] = '\0';
-            strcat(StringTemp, "REJTECHPROJ");
-            const int displayed_number = project < 0 ? parse_num(3, 0) : 2;
-            char number_text[16];
-            _itoa(displayed_number, number_text, 10);
-            strcat(StringTemp, number_text);
-            X_pops(StringTemp, 0x100000,
-                         FactionDiplomacyPortraits[partner], pop_wait);
-        }
-        return;
-    }
-}
 
 // vector_dist without x_dist's wrap; only its two abs calls survive.
 static inline int flat_vector_dist(int x_point_a, int y_point_a, int x_point_b, int y_point_b) {
@@ -7862,562 +7574,6 @@ int __cdecl contiguous(int faction_id1, int faction_id2, int region,
     return 0;
 }
 
-static TechTradePolicyDecision tech_trade_policy_prefix(
-    Popup &popup, int actor, int partner, int request_mode, int action,
-    int context, bool first_entry) {
-    (void)popup; // Popup destruction is lexical and closes exactly once.
-    const bool special_action = action == 4 || action == 2;
-    if (first_entry) {
-        PopupDialogFactionID = partner;
-        DiploScratchF7C4 = 0;
-    }
-    tech_analysis(actor, partner);
-    if (context == 13) {
-        DiploScratchF800 = diplo_add(DiploScratchFA5C, 0x59);
-    }
-    diplomacy_caption(actor, partner);
-
-    if (tech_trade_contact_policy(actor, partner) ==
-        TECH_TRADE_CONTACT_REJECTED) {
-        if (request_mode == 0) {
-            tech_trade_show_contact_rejection(actor, partner, context);
-        }
-        TechTradePolicyDecision decision = {
-            TECH_TRADE_POLICY_REJECT_542097, false, special_action};
-        return decision;
-    }
-    return tech_trade_pre_offer_policy(actor, partner, request_mode, action,
-                                       context, special_action);
-}
-static int tech_trade_show_later_response(int actor, int partner, int mode) {
-    StringTemp[0] = '\0';
-    if (mode == 0xD) {
-        strcat(StringTemp, "REJCOMMLINK");
-    } else {
-        strcat(StringTemp, "REJTECHLATER");
-        int response = static_cast<int>(random(0, 3));
-        if ((PlayersData[partner].diplo_treaties[actor] & 3u) != 0) {
-            if (DiploScratchFAA8 < 0) {
-                response = 4;
-            } else if (DiploScratchF800 < 0) {
-                response = 3;
-            }
-        }
-        char digits[16];
-        _itoa(response, digits, 10);
-        strcat(StringTemp, digits);
-    }
-    return X_pops(StringTemp, 0x100000,
-                        FactionDiplomacyPortraits[partner], pop_wait);
-}
-enum TechTradeTailEntry {
-    TECH_TRADE_TAIL_CONTINUE = -1,
-    TECH_TRADE_TAIL_COMMLINK_FREE_54295F,
-    TECH_TRADE_TAIL_TECH_SLAVE_542A78,
-    TECH_TRADE_TAIL_TECH_FREEBIE_542BE7,
-    TECH_TRADE_TAIL_NO_SPEAK_542E07,
-    TECH_TRADE_TAIL_COMMLINK_TECH_542E80,
-    TECH_TRADE_TAIL_BUY_RESULT_5437B7,
-    TECH_TRADE_TAIL_ACCEPT_543094,
-    TECH_TRADE_TAIL_REJECT_SECOND_543169,
-    TECH_TRADE_TAIL_SUCCESS_5433A0
-};
-static void tech_trade_dispatch_technology(int recipient, int technology,
-                                           int source) {
-    if (IsMultiplayerNet != 0) {
-        log_say(DiploLabelSendingTECH, recipient, technology, source);
-        message_data(0x244B, 0, recipient, technology, source, 0);
-        NetDaemonNet.await_diplo(0x44B);
-    } else {
-        tech_achieved(recipient, technology, source, 0);
-    }
-}
-static void tech_trade_update_partner_patience(int actor, int partner) {
-    const uint32_t treaty = PlayersData[partner].diplo_treaties[actor];
-    int patience;
-    if ((treaty & 0x10u) != 0) {
-        patience = 1;
-    } else if ((treaty & 1u) != 0) {
-        patience = (treaty & 0x02000000u) != 0 ? 500 : 6;
-    } else {
-        const int rounded_eighths = diplo_add(DiploFriction, 3) / 8;
-        patience = diplo_add(
-            diplo_sub((treaty & 2u) != 0 ? 1 : 0, rounded_eighths), 3);
-    }
-    PlayersData[partner].diplo_patience[actor] =
-        static_cast<char>(patience);
-}
-
-static void tech_trade_send_live_request(int actor, int partner) {
-    const int technology = DiploScratchF800;
-    tech_trade_dispatch_technology(actor, technology, partner);
-    DiploScratchF800 = -1;
-}
-static int tech_trade_run_tail(TechTradeTailEntry entry, int actor,
-                               int partner, int request_mode, int action,
-                               int context) {
-    switch (entry) {
-    case TECH_TRADE_TAIL_COMMLINK_FREE_54295F:
-        if (!wants_to_speak(actor, partner)) return 0;
-        parse_says(0, Players[DiploScratchFA5C].adj_name_faction, -1, -1);
-        x_pops_minimal("COMMLINKFREE",
-                       FactionDiplomacyPortraits[partner], pop_wait);
-        tech_trade_send_live_request(actor, partner);
-        return 0;
-
-    case TECH_TRADE_TAIL_TECH_SLAVE_542A78:
-        if (!wants_to_speak(actor, partner)) return 0;
-        StringTemp[0] = '\0';
-        say_tech(StringTemp, DiploScratchF800, 1);
-        parse_says(0, StringTemp, -1, -1);
-        X_pops("TECHSLAVE", 0x100000,
-                     FactionDiplomacyPortraits[partner], pop_wait);
-        tech_trade_send_live_request(actor, partner);
-        return 0;
-
-    case TECH_TRADE_TAIL_TECH_FREEBIE_542BE7:
-        if (!wants_to_speak(actor, partner)) return 0;
-        StringTemp[0] = '\0';
-        say_tech(StringTemp, DiploScratchF800, 1);
-        parse_says(0, StringTemp, -1, -1);
-        X_pops("TECHFREEBIE", 0x100000,
-                     FactionDiplomacyPortraits[partner], pop_wait);
-        tech_trade_send_live_request(actor, partner);
-        tech_trade_update_partner_patience(actor, partner);
-        return 0;
-
-    case TECH_TRADE_TAIL_NO_SPEAK_542E07:
-        return 0;
-
-    case TECH_TRADE_TAIL_COMMLINK_TECH_542E80:
-        parse_says(2, Players[DiploScratchFA5C].adj_name_faction, -1, -1);
-        if (x_pops_minimal("COMMLINKTECH",
-                           FactionDiplomacyPortraits[partner], pop_wait) == 0) {
-            return 0;
-        }
-        tech_trade_dispatch_technology(partner, DiploScratchFAA8, actor);
-        tech_trade_dispatch_technology(actor, DiploScratchF800, partner);
-        DiploScratchF800 = -1;
-        DiploScratchFAA8 = DiploScratchFA18;
-        DiploScratchFA18 = -1;
-        return 1;
-
-    case TECH_TRADE_TAIL_BUY_RESULT_5437B7:
-        if (request_mode != 0) return 0;
-        if (buy_tech(actor, partner, action, 0, context) != 0) return 0;
-        tech_trade_show_later_response(actor, partner, context);
-        return 0;
-
-    case TECH_TRADE_TAIL_ACCEPT_543094:
-        DiploScratchF7C4 = 1;
-        return 0;
-
-    case TECH_TRADE_TAIL_REJECT_SECOND_543169:
-        X_pops("REJTECHSECOND", 0x100000,
-                     FactionDiplomacyPortraits[partner], pop_wait);
-        PlayersData[partner].diplo_patience[actor] = static_cast<char>(
-            static_cast<unsigned char>(
-                PlayersData[partner].diplo_patience[actor]) + 1u);
-        return 0;
-
-    case TECH_TRADE_TAIL_SUCCESS_5433A0:
-        return 1;
-    }
-    return -1;
-}
-static void tech_trade_parse_initial_offer_lines() {
-    if (DiploScratchFAA8 != 0x270F) {
-        StringTemp[0] = '\0';
-        say_tech(StringTemp, DiploScratchFAA8, TRUE);
-        parse_says(0, StringTemp, -1, -1);
-    }
-    if (DiploScratchF800 >= 0) {
-        StringTemp[0] = '\0';
-        say_tech(StringTemp, DiploScratchF800, TRUE);
-        parse_says(1, StringTemp, -1, -1);
-    }
-}
-
-static int tech_trade_offer_dialog(Popup &popup, int faction_id,
-                                   int other_faction_id, int context) {
-    tech_trade_parse_initial_offer_lines();
-    if (context != 0xD && DiploScratchFA18 >= 0) {
-        StringTemp[0] = '\0';
-        say_tech(StringTemp, DiploScratchFA18, TRUE);
-        parse_says(2, StringTemp, -1, -1);
-    }
-
-    GenderDefault = Players[faction_id].is_leader_female;
-    PluralityDefault = FALSE;
-    parse_says(3, Players[faction_id].title_leader, -1, -1);
-    GenderDefault = Players[faction_id].is_leader_female;
-    parse_says(4, Players[faction_id].name_leader, -1, -1);
-    parse_says(5, get_noun_phrase(faction_id, 9), -1, -1);
-    parse_says(6, get_noun_phrase(other_faction_id, 9), -1, -1);
-    GenderDefault = Players[other_faction_id].is_leader_female;
-    PluralityDefault = FALSE;
-    parse_says(8, Players[other_faction_id].name_leader, -1, -1);
-    parse_says(9, get_noun_phrase(other_faction_id, 7), -1, -1);
-
-    StringTemp[0] = '\0';
-    strcat(StringTemp, "TRADETECH");
-    if (DiploScratchFAA8 == 0x270F) {
-        const int suffix = DiploScratchF800 < 0 ? 5 : 4;
-        char digits[16];
-        _itoa(suffix, digits, 10);
-        strcat(StringTemp, digits);
-    } else if (DiploScratchF800 < 0) {
-        char digits[16];
-        _itoa(3, digits, 10);
-        strcat(StringTemp, digits);
-    } else {
-        const int suffix = parse_num(0, 3);
-        char digits[16];
-        _itoa(suffix, digits, 10);
-        strcat(StringTemp, digits);
-    }
-
-    popup.start(PopupStartCaption, StringTemp, -1, 0, 0x100000, 0);
-    popup.set_picture(FactionDiplomacyPortraits[other_faction_id], 0, nullptr);
-    if (X_text_open(ScriptPopupFile, "TRADETECHOPT") == 0) {
-        text_get();
-        if (DiploScratchF80C >= 0 &&
-            DiploScratchF80C != DiploScratchF800) {
-            StringTemp[0] = '\0';
-            say_tech(StringTemp, DiploScratchF80C, TRUE);
-            parse_says(9, StringTemp, -1, -1);
-            parse_string(TextBufferGetPtr, StringTemp);
-            popup.dialogs().item(StringTemp, 4);
-        }
-        text_get();
-        if (DiploScratchFA18 >= 0 &&
-            DiploScratchFA18 != DiploScratchFAA8) {
-            StringTemp[0] = '\0';
-            parse_string(TextBufferGetPtr, StringTemp);
-            popup.dialogs().item(StringTemp, 2);
-        }
-        text_get();
-        popup.dialogs().item(TextBufferGetPtr, 3);
-    }
-    return popup.exec(0, pop_wait);
-}
-static TechTradeTailEntry tech_trade_commit_dialog_state(
-    int actor, int partner, int request_mode, int friction_eighths) {
-    const int friction_delta = diplo_sub(0, friction_eighths);
-
-    if (request_mode != 0) {
-        if (IsMultiplayerNet != 0) {
-            log_say(DiploLabelSendingTREATYON, partner, actor, 0x1000000);
-            message_data(0x2441, 0, partner, actor, 0x1000000, 0);
-        } else {
-            treaty_on(partner, actor, 0x1000000);
-        }
-    }
-    if (IsMultiplayerNet != 0) {
-        log_say(DiploLabelSendingAGENDAON, partner, actor, 0x180);
-        message_data(0x2444, 0, partner, actor, 0x180, 0);
-    } else {
-        agenda_on(partner, actor, 0x180);
-    }
-
-    if (DiploScratchF800 < 0) DiploScratchF800 = 0x270F;
-    int selected = DiploScratchFAA8;
-    if (IsMultiplayerNet != 0) {
-        log_say(DiploLabelSendingTECH, partner, selected, actor);
-        message_data(0x244B, 0, partner, selected, actor, 0);
-        NetDaemonNet.await_diplo(0x44B);
-    } else {
-        tech_achieved(partner, selected, actor, 0);
-    }
-
-    selected = DiploScratchF800;
-    if (IsMultiplayerNet != 0) {
-        log_say(DiploLabelSendingTECH, actor, selected, partner);
-        message_data(0x244B, 0, actor, selected, partner, 0);
-        NetDaemonNet.await_diplo(0x44B);
-    } else {
-        tech_achieved(actor, selected, partner, 0);
-    }
-
-    if (DiploScratchFAA8 == 0x270F || DiploScratchF800 == 0x270F)
-        DiploScratchFA48 = 1;
-    DiploScratchFAA8 = DiploScratchFA18;
-    DiploScratchFA18 = -1;
-
-    uint32_t &partner_friction = PlayersData[partner].diplo_friction[actor];
-    int next_friction = diplo_add(static_cast<int>(partner_friction),
-                                  friction_delta);
-    if (next_friction < 0) next_friction = 0;
-    else if (next_friction > 20) next_friction = 20;
-    partner_friction = static_cast<uint32_t>(next_friction);
-
-    if (DiploFrictionFactionID == static_cast<uint32_t>(partner) &&
-        DiploFrictionFactionIDWith == static_cast<uint32_t>(actor))
-        DiploFriction = diplo_add(DiploFriction, friction_delta);
-    DiploScratchFA60 = 0;
-    return request_mode == 0 ? TECH_TRADE_TAIL_SUCCESS_5433A0
-        : static_cast<TechTradeTailEntry>(-1);
-}
-
-struct TechTradeDialogStep {
-    bool rebuild_dialog;
-    TechTradeTailEntry tail;
-    int friction_eighths;
-
-    TechTradeDialogStep(bool rebuild, TechTradeTailEntry route,
-                        int friction)
-        : rebuild_dialog(rebuild), tail(route), friction_eighths(friction) {}
-};
-
-static int tech_trade_signed_shift_divide(int value, int correction_mask,
-                                          int shift) {
-    const int correction = (value >> 31) & correction_mask;
-    return diplo_add(value, correction) >> shift;
-}
-
-static TechTradeDialogStep tech_trade_handle_dialog_result(
-    int dialog_result, int actor, int partner, int context) {
-    int friction_eighths = tech_trade_signed_shift_divide(
-        DiploScratchF814, 3, 2);
-    if (dialog_result == 0)
-        return TechTradeDialogStep(false, TECH_TRADE_TAIL_ACCEPT_543094,
-                                  friction_eighths);
-
-    if (dialog_result == 3) {
-        const int help_technology = DiploScratchFAA8 == 0x270F
-            ? DiploScratchF800 : DiploScratchFAA8;
-        help_topic(0xE, help_technology);
-        return TechTradeDialogStep(true,
-            static_cast<TechTradeTailEntry>(-1), friction_eighths);
-    }
-
-    if (dialog_result == 4) {
-        bool reject_for_tech_value = false;
-        if ((PlayersData[partner].diplo_treaties[actor] & 1u) == 0 &&
-            DiploScratchFA18 < 0) {
-            const int alternative = DiploScratchF80C;
-            const int alternative_value =
-                tech_val(alternative, partner, FALSE);
-            const int requested = DiploScratchFAA8;
-            const int requested_value =
-                tech_val(requested, partner, FALSE);
-            reject_for_tech_value = alternative_value > requested_value;
-        }
-        if (reject_for_tech_value) {
-            if (DiploScratchF800 >= 0) {
-                StringTemp[0] = '\0';
-                say_tech(StringTemp, DiploScratchF800, TRUE);
-                parse_says(0, StringTemp, -1, -1);
-            }
-            X_pops("REJTECHINSTEAD", 0x100000,
-                         FactionDiplomacyPortraits[partner], pop_wait);
-            DiploScratchF80C = -1;
-            return TechTradeDialogStep(true,
-                static_cast<TechTradeTailEntry>(-1), friction_eighths);
-        }
-        swap(&DiploScratchF800, &DiploScratchF80C);
-        friction_eighths = tech_trade_signed_shift_divide(
-            DiploScratchF814, 7, 3);
-    } else if (dialog_result == 2) {
-        const uint32_t partner_treaty =
-            PlayersData[partner].diplo_treaties[actor];
-        const bool special_partner_state =
-            (partner_treaty & 1u) != 0 &&
-            (partner_treaty & 0x02000000u) != 0;
-        if (!special_partner_state) {
-            if (strcmp(Players[partner].filename, "HIVE") == 0 ||
-                (IsMultiplayerNet != 0 &&
-                 GameDataStateStorage.fields_.ranking_faction_id_unk1_ == static_cast<uint32_t>(actor))) {
-                return TechTradeDialogStep(false,
-                    TECH_TRADE_TAIL_REJECT_SECOND_543169, friction_eighths);
-            }
-            if (strcmp(Players[partner].filename, "UNIV") != 0 &&
-                (great_satan(actor, 0) != 0 ||
-                 PlayersData[partner].tech_ranking >
-                     PlayersData[actor].tech_ranking))
-                return TechTradeDialogStep(false,
-                    TECH_TRADE_TAIL_REJECT_SECOND_543169, friction_eighths);
-        }
-        swap(&DiploScratchFAA8, &DiploScratchFA18);
-        friction_eighths = tech_trade_signed_shift_divide(
-            DiploScratchFA44, 7, 3);
-    }
-
-    (void)context;
-    return TechTradeDialogStep(false,
-        static_cast<TechTradeTailEntry>(-1), friction_eighths);
-}
-static TechTradeTailEntry tech_trade_ui_gate(int faction_id,
-                                              int other_faction_id,
-                                              int request_mode, int action,
-                                              int context) {
-    const int actor = faction_id;
-    const int partner = other_faction_id;
-
-    if (DiploScratchFAA8 < 0 && context != 5 && context != 0xD &&
-        (PlayersData[partner].traded_maps & (1u << actor)) == 0 &&
-        DiploScratchFA48 == 0 &&
-        (PlayersData[actor].diplo_treaties[partner] & 1u) == 0 &&
-        (PlayersData[partner].flags & 0x200u) == 0) {
-        int seen_partner_bases = 0;
-        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
-            const Base &base = Bases[base_id];
-            if (base.faction_id_current == actor &&
-                (base.faction_id_current == partner ||
-                 (base.visibility & (1u << partner)) != 0)) {
-                ++seen_partner_bases;
-            }
-        }
-
-        bool enough_base_coverage = false;
-        if ((GameDataStateStorage.fields_.game_rules_ & 0x100u) != 0) {
-            enough_base_coverage = seen_partner_bases == 0;
-        } else {
-            const int threshold = diplo_add(
-                PlayersData[actor].current_num_bases, 1) / 2;
-            enough_base_coverage = seen_partner_bases < threshold;
-        }
-        if (enough_base_coverage && DiploFriction <= 7)
-            DiploScratchFAA8 = 0x270F;
-    }
-
-    const uint32_t partner_to_actor =
-        PlayersData[partner].diplo_treaties[actor];
-    if (context == 0xD && (partner_to_actor & 1u) != 0)
-        return TECH_TRADE_TAIL_COMMLINK_FREE_54295F;
-
-    if (DiploScratchF800 >= 0 && context != 0xD &&
-        (partner_to_actor & 1u) != 0 &&
-        (partner_to_actor & 0x02000000u) != 0)
-        return TECH_TRADE_TAIL_TECH_SLAVE_542A78;
-
-    if (DiploScratchFAA8 < 0 && DiploScratchF800 >= 0 &&
-        context != 5 && context != 0xD && (partner_to_actor & 1u) != 0 &&
-        DiploFriction < 10 &&
-        ((IsMultiplayerNet == 0 && (GameDataStateStorage.fields_.game_rules_ & 0x40u) == 0) ||
-         GameDataStateStorage.fields_.ranking_faction_id_unk1_ != static_cast<uint32_t>(actor)) &&
-        DiploScratchFA3C == 0) {
-        const int actor_rank = PlayersData[actor].ranking;
-        const int partner_rank = PlayersData[partner].ranking;
-        if (partner_rank > actor_rank ||
-            (actor_rank >= 6 && partner_rank >= 3)) {
-            int rank_delta = diplo_sub(actor_rank, partner_rank);
-            rank_delta = diplo_sub(rank_delta, rank_delta >> 31);
-            const int rank_half = rank_delta >> 1;
-            int pressure = diplo_add(4, diplo_mul(
-                2, static_cast<int>(PlayersData[partner].ai_power)));
-            pressure = diplo_add(pressure, rank_half);
-            pressure = diplo_sub(pressure,
-                static_cast<int>(PlayersData[partner].ai_tech));
-            pressure = diplo_add(pressure, PlayersData[partner].ai_fight);
-            pressure = diplo_add(pressure, PlayersData[actor].tech_ranking);
-            if (PlayersData[partner].tech_ranking > pressure)
-                return TECH_TRADE_TAIL_TECH_FREEBIE_542BE7;
-        }
-    }
-
-    int partner_seen_bases = 0;
-    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
-        const Base &base = Bases[base_id];
-        if (base.faction_id_current == partner &&
-            (base.faction_id_current == actor ||
-             (base.visibility & (1u << actor)) != 0)) {
-            ++partner_seen_bases;
-        }
-    }
-
-    const bool wants_more_tech = action == 4 || action == 2;
-    if (DiploScratchFAA8 < 0 || !wants_more_tech || DiploScratchFA3C != 0)
-        return TECH_TRADE_TAIL_BUY_RESULT_5437B7;
-
-    if (IsMultiplayerNet != 0) {
-        const int actor_agenda = PlayersData[actor].diplo_agenda[partner];
-        if ((actor_agenda & 0x80) != 0 &&
-            GameDataStateStorage.fields_.ranking_faction_id_unk1_ == static_cast<uint32_t>(actor) &&
-            (PlayersData[actor].diplo_treaties[partner] & 1u) == 0) {
-            const int ranker = static_cast<int>(GameDataStateStorage.fields_.ranking_faction_id_unk2_);
-            const int ranker_power = FactionRankingsUnk[ranker];
-            if (PlayersData[ranker].ranking < 5 ||
-                diplo_mul(FactionRankingsUnk[actor], 2) >
-                    diplo_mul(ranker_power, 3))
-                return TECH_TRADE_TAIL_BUY_RESULT_5437B7;
-        }
-        if ((actor_agenda & 0x100) != 0 &&
-            (GameDataStateStorage.fields_.ranking_faction_id_unk2_ != static_cast<uint32_t>(actor) ||
-             (PlayersData[actor].ranking >= 6 &&
-              DiploScratchF7F0 == 0)))
-            return TECH_TRADE_TAIL_BUY_RESULT_5437B7;
-    }
-
-    const int partner_agenda = PlayersData[partner].diplo_agenda[actor];
-    if ((partner_to_actor & 0x20u) != 0 ||
-        (partner_agenda & 0x200) != 0 ||
-        PlayersData[actor].integrity_blemishes > 3)
-        return TECH_TRADE_TAIL_BUY_RESULT_5437B7;
-
-    if ((GameDataStateStorage.fields_.game_rules_ & 0x40u) != 0) {
-        const int actor_agenda = PlayersData[actor].diplo_agenda[partner];
-        if ((actor_agenda & 0x80) != 0 &&
-            GameDataStateStorage.fields_.ranking_faction_id_unk1_ == static_cast<uint32_t>(actor) &&
-            (PlayersData[actor].diplo_treaties[partner] & 1u) == 0 &&
-            diplo_mul(FactionRankingsUnk[GameDataStateStorage.fields_.faction_rankings_[7]],
-                      3) >
-                diplo_mul(FactionRankingsUnk[GameDataStateStorage.fields_.faction_rankings_[6]],
-                          4))
-            return TECH_TRADE_TAIL_BUY_RESULT_5437B7;
-        if ((actor_agenda & 0x100) != 0 &&
-            (PlayersData[actor].diplo_treaties[partner] & 1u) == 0 &&
-            PlayersData[actor].ranking >= 6 &&
-            DiploScratchF7F0 == 0)
-            return TECH_TRADE_TAIL_BUY_RESULT_5437B7;
-    }
-
-    if (DiploScratchF800 < 0) {
-        if (DiploScratchFA48 != 0 ||
-            (PlayersData[actor].diplo_treaties[partner] & 1u) != 0 ||
-            (PlayersData[actor].flags & 0x200u) != 0)
-            return TECH_TRADE_TAIL_BUY_RESULT_5437B7;
-
-        if ((PlayersData[actor].traded_maps & (1u << partner)) != 0) {
-            const int partner_bases =
-                PlayersData[partner].current_num_bases;
-            const int threshold = (GameDataStateStorage.fields_.game_rules_ & 0x100u) != 0
-                ? diplo_add(partner_bases, 3) / 4
-                : diplo_add(partner_bases, 1) / 2;
-            if (partner_seen_bases >= threshold)
-                return TECH_TRADE_TAIL_BUY_RESULT_5437B7;
-        }
-    }
-
-    if (!wants_to_speak(actor, partner))
-        return TECH_TRADE_TAIL_NO_SPEAK_542E07;
-    if (context == 0xD) {
-        tech_trade_parse_initial_offer_lines();
-        return TECH_TRADE_TAIL_COMMLINK_TECH_542E80;
-    }
-    (void)request_mode;
-    return static_cast<TechTradeTailEntry>(-1);
-}
-static TechTradeTailEntry tech_trade_ui_phase(
-    Popup &popup, int actor, int partner, int request_mode, int action,
-    int context) {
-    TechTradeTailEntry route = tech_trade_ui_gate(
-        actor, partner, request_mode, action, context);
-    if (static_cast<int>(route) != -1) return route;
-
-    for (;;) {
-        const int dialog_result =
-            tech_trade_offer_dialog(popup, actor, partner, context);
-        const TechTradeDialogStep decision = tech_trade_handle_dialog_result(
-            dialog_result, actor, partner, context);
-        if (static_cast<int>(decision.tail) != -1) return decision.tail;
-        if (decision.rebuild_dialog) continue;
-
-        route = tech_trade_commit_dialog_state(actor, partner, request_mode,
-                                                decision.friction_eighths);
-        return route;
-    }
-}
 
 // ORIGINAL: 0x00541100 ?tech_trade@@YAHHHHHH@Z 0x00541100-0x00543A20;0x0065EB33-0x0065F1B4
 // RECOVERY_BINDING: v1 {"evidence": ["task:diplomacy-actions-owner-coverage", "Pinned541100-543A20 and65EB33-65F1B4; native54119D/54122E establish directed pair cells", "Native541D18 quarter;541DE2 incoming eighth;541EA9 alternate eighth;541EFF unconditional partner-to-actor agenda", "Native542066 friction selector pair;542F3A accepted commlink return1;543094 cancellation state", "historical seed:src/unrecovered/00541100.cpp"], "reason": "Recover the full technology/commlink negotiation in its faction owner with a lexical Popup, directed player treaty/agenda/friction members, live offer selectors and original modal retry/transaction/result ordering. Preserve primary and cleanup spans and seed findings; no byte matching or game acceptance is asserted."}
@@ -8426,30 +7582,660 @@ static TechTradeTailEntry tech_trade_ui_phase(
 
 int __cdecl tech_trade(int actor, int partner, int request_mode, int action,
                        int context) {
-    Popup popup;
-    bool first_entry = true;
+    Popup popup;                 // [ebp-0x54D4]
+    int want_tech;               // [ebp-0x18]
+    int missing_reactor_preq;    // [ebp-0x10]
+    int actor_seen_bases;        // [ebp-0x10] (slot reuse)
+    int partner_seen_bases;      // [ebp-0x10] (slot reuse)
+    char number_text[80];
+    int i;
+    int dialog_result;
+    int friction_delta;
 
-    for (;;) {
-        const TechTradePolicyDecision policy = tech_trade_policy_prefix(
-            popup, actor, partner, request_mode, action, context,
-            first_entry);
-        first_entry = false;
-        if (policy.route == TECH_TRADE_POLICY_REJECT_542097)
-            return 0;
-        if (policy.route != TECH_TRADE_POLICY_READY_FOR_OFFERS) {
-            tech_trade_handle_pre_offer_rejection(
-                popup, policy, actor, partner, request_mode, action, context);
-            return 0;
-        }
-
-        const TechTradeTailEntry tail = tech_trade_ui_phase(
-            popup, actor, partner, request_mode, action, context);
-        if (static_cast<int>(tail) == -1)
-            continue;
-        const int native_result = tech_trade_run_tail(
-            tail, actor, partner, request_mode, action, context);
-        return native_result;
+    // 0x541130: ecx=0 shared by EH state, F7C4 and the want_tech=0 store.
+    PopupDialogFactionID = partner;
+    // 0x541138: action==4 -> set 1; else store 0, then action==2 -> set 1.
+    want_tech = (action == 4 || action == 2);
+    DiploScratchF7C4 = 0;
+L_54115e:
+    tech_analysis(actor, partner);
+    if (context == 13) {
+        DiploScratchF800 = DiploScratchFA5C + 0x59;
     }
+    diplomacy_caption(actor, partner);
+
+    // 0x5411A0: jump to L_541218 when actor->partner pact bit set.
+    if (!has_treaty(actor, partner, 1)) {
+        if (has_treaty(partner, actor, 0x8020)) goto L_542097;
+        if (DiploScratchFA2C != 0) goto L_542097;
+        if (DiploFriction >= 0x12) goto L_542097;
+        // 0x5411E7: FA60 == 0 -> L_541218; else strcmp != 0 -> L_542097.
+        if (DiploScratchFA60 != 0 &&
+            strcmp(Players[partner].filename, "UNIV") != 0) goto L_542097;
+    }
+
+L_541218:
+    // 0x541231: (treaty & 1) && (treaty & 0x2000000) -> L_54149d
+    // (the 0x2000000 test is only reached when bit 1 is set).
+    if (has_treaty(partner, actor, 1) &&
+        has_treaty(partner, actor, 0x2000000)) goto L_54149d;
+
+    missing_reactor_preq = 0;
+    // 0x54124D: pointer walk Reactor[0..3].preq_tech (edi 0x952800..0x952824, jle).
+    for (i = 0; i < MaxReactorNum; ++i) {
+        if (has_tech(Reactor[i].preq_tech, partner) &&
+            !has_tech(Reactor[i].preq_tech, actor)) {
+            missing_reactor_preq = 1;
+        }
+    }
+
+    // 0x541286: great_satan is evaluated FIRST, then the treaty and flags tests.
+    if (great_satan(actor, 0) &&
+        !has_treaty(actor, partner, 1) &&
+        !(PlayersData[partner].flags & PFLAG_COOP_WITH_HUMAN)) {
+        // 0x5412C9: sign of (rule_techcost - 100): >0 -> 1; else (x>=0)-1 (setge/dec).
+        int techcost_delta = Players[partner].rule_techcost - 100;
+        int techcost_sign = techcost_delta > 0 ? 1 : (techcost_delta >= 0) - 1; // ?0x5412D0 spelling
+        // 0x5412E8: (treaty&2 ? 3 : 0) + 2*(2 - sign); jge -> L_54222b
+        if (DiploFriction >=
+            (has_treaty(partner, actor, 2) ? 3 : 0) +
+                2 * (2 - techcost_sign)) goto L_54222b;
+    }
+
+    // 0x541313
+    if ((IsMultiplayerNet != 0 || (GameDataStateStorage.fields_.game_rules_ & 0x40)) &&
+        PlayersData[actor].ranking == 7 &&
+        !has_treaty(actor, partner, 1) &&
+        !(PlayersData[partner].flags & PFLAG_COOP_WITH_HUMAN)) {
+        if (great_satan(actor, 0)) goto L_5423d8;   // 0x54137F jne
+        // 0x541385: signed compares; jle -> 0x5413CD skips the inner test.
+        int top = GameDataStateStorage.fields_.ranking_faction_id_unk2_;
+        if (FactionRankingsUnk[actor] * 3 > FactionRankingsUnk[top] * 4) {
+            // 0x5413A2: jg -> L_5423d8
+            if (PlayersData[actor].tech_ranking * 3 >
+                PlayersData[top].tech_ranking * 4) goto L_5423d8;
+        }
+    }
+
+    // 0x5413CD
+    if (PlayersData[partner].tech_ranking > PlayersData[actor].tech_ranking ||
+        missing_reactor_preq != 0) {
+        // 0x541409
+        if (request_mode != 0) goto L_542585;
+        // 0x541414: strcmp called first; then:
+        //   threshold = (treaty(p,a)&2 ? 3:0) + (missing ? 3 : 9) - (strcmp==0 ? 3 : 0)
+        // DiploFriction < threshold -> 0x541488.
+        if (DiploFriction >=
+                (has_treaty(partner, actor, 2) ? 3 : 0) +
+                (missing_reactor_preq ? 3 : 9) -
+                (strcmp(Players[partner].filename, "HIVE") ? 0 : 3) &&
+            !has_treaty(actor, partner, 1) &&
+            !(PlayersData[partner].flags & PFLAG_COOP_WITH_HUMAN)) goto L_5425bf;
+    }
+
+    // 0x541488
+    if (DiploScratchFA6C != -1 && context != 13) goto L_5427fa;
+
+L_54149d:
+    // 0x54149D: edx = base_current_count preloaded here.
+    if (DiploScratchFAA8 < 0 && context != 5) {
+        if (context == 13) goto L_5415ab;   // 0x5414BF, skips the redundant context test
+        // 0x5414C5: edi = 1 << actor
+        if (!(PlayersData[partner].traded_maps & (1 << actor)) &&
+            DiploScratchFA48 == 0 &&
+            !has_treaty(actor, partner, 1) &&
+            !(PlayersData[partner].flags & PFLAG_MAP_REVEALED)) {
+            actor_seen_bases = 0;
+            // 0x541525: pointer walk over Bases (stride 0x134), down-counter in edx.
+            for (i = 0; i < GameDataStateStorage.fields_.base_current_count_; ++i) {
+                if (Bases[i].faction_id_current == actor &&
+                    (Bases[i].faction_id_current == partner ||
+                     (Bases[i].visibility & (1 << partner)))) {
+                    ++actor_seen_bases;
+                }
+            }
+            // 0x541550
+            if (GameDataStateStorage.fields_.game_rules_ & 0x100) {
+                if (actor_seen_bases == 0 && DiploFriction <= 7) goto L_541599;
+            } else {
+                // 0x54156C: (current_num_bases + 1) / 2, signed (cdq/sub/sar)
+                if (actor_seen_bases < (PlayersData[actor].current_num_bases + 1) / 2 &&
+                    DiploFriction <= 7) {
+                L_541599:
+                    DiploScratchFAA8 = 9999;
+                }
+            }
+        }
+    }
+
+    // 0x5415A3
+    if (context == 13) {
+    L_5415ab:
+        if (has_treaty(partner, actor, 1)) goto L_54295f;
+    }
+
+    // 0x5415BB
+    if (DiploScratchF800 >= 0 && context != 13 &&
+        has_treaty(partner, actor, 1) &&
+        has_treaty(partner, actor, 0x2000000)) goto L_542a78;
+
+    // 0x5415E2
+    if (DiploScratchFAA8 < 0 && DiploScratchF800 >= 0 && context != 5 &&
+        context != 13 && has_treaty(partner, actor, 1) &&
+        DiploFriction < 10 &&
+        // 0x54162E: (net || rules&0x40) && actor == unk1 -> skip
+        (!(IsMultiplayerNet != 0 || (GameDataStateStorage.fields_.game_rules_ & 0x40)) ||
+         actor != (int)GameDataStateStorage.fields_.ranking_faction_id_unk1_) &&
+        DiploScratchFA3C == 0) {
+        // 0x541659: eax = actor rank, edi = partner rank
+        // partner > actor -> 0x54169C; else actor < 6 -> skip; partner < 3 -> skip.
+        if (PlayersData[partner].ranking > PlayersData[actor].ranking ||
+            (PlayersData[actor].ranking >= 6 && PlayersData[partner].ranking >= 3)) {
+            // 0x54169C: evaluation order in the image:
+            //   (actor_rank - partner_rank)/2 + 2*ai_power + 4 - ai_tech + ai_fight
+            //   + PlayersData[actor].tech_ranking
+            // ai_power spilled to [ebp-0x10]. jg -> L_542be7.
+            if (PlayersData[partner].tech_ranking >
+                (PlayersData[actor].ranking - PlayersData[partner].ranking) / 2 +
+                    2 * PlayersData[partner].ai_power + 4 -
+                    PlayersData[partner].ai_tech + PlayersData[partner].ai_fight +
+                    PlayersData[actor].tech_ranking) goto L_542be7;
+        }
+    }
+
+    // 0x5416DC
+    partner_seen_bases = 0;
+    for (i = 0; i < GameDataStateStorage.fields_.base_current_count_; ++i) {
+        if (Bases[i].faction_id_current == partner &&
+            (Bases[i].faction_id_current == actor ||
+             (Bases[i].visibility & (1 << actor)))) {
+            ++partner_seen_bases;
+        }
+    }
+
+    // 0x541719
+    if (DiploScratchFAA8 < 0) goto L_5437b7;
+    if (want_tech == 0) goto L_5437b7;
+    if (DiploScratchFA3C != 0) goto L_5437b7;
+
+    // 0x54173E
+    if (IsMultiplayerNet != 0) {
+        // edx = PlayersData[actor].diplo_agenda[partner], kept live through 0x5417B8.
+        if (has_agenda(actor, partner, 0x80) &&
+            actor == (int)GameDataStateStorage.fields_.ranking_faction_id_unk1_ &&
+            !has_treaty(actor, partner, 1)) {
+            // 0x541776: ecx = unk2
+            int top = GameDataStateStorage.fields_.ranking_faction_id_unk2_;
+            if (PlayersData[top].ranking < 5) goto L_5437b7;
+            if (FactionRankingsUnk[actor] * 2 > FactionRankingsUnk[top] * 3) goto L_5437b7;
+        }
+        // else-path is 0x541925 (reload ecx = unk2; jmp 0x5417B8) - out-of-line block.
+    // 0x5417B8 (also reached from the out-of-line 0x541925 reload)
+        if (has_agenda(actor, partner, 0x100)) {
+            if (actor != (int)GameDataStateStorage.fields_.ranking_faction_id_unk2_) goto L_5437b7;
+            if (PlayersData[actor].ranking >= 6 && DiploScratchF7F0 == 0) goto L_5437b7;
+        }
+    }
+
+    // 0x5417EC
+    if (has_treaty(partner, actor, 0x20)) goto L_5437b7;
+    if (has_agenda(partner, actor, 0x200)) goto L_5437b7;
+    if (PlayersData[actor].integrity_blemishes > 3) goto L_5437b7;
+
+    // 0x54182E: ecx = game_rules & 0x40, kept and re-tested at 0x54187E
+    // (two separate `if` statements sharing the masked load).
+    if ((GameDataStateStorage.fields_.game_rules_ & 0x40) &&
+        has_agenda(actor, partner, 0x80) &&
+        actor == (int)GameDataStateStorage.fields_.ranking_faction_id_unk1_ &&
+        !has_treaty(actor, partner, 1)) {
+        // 0x541853: edi = FRU[rankings[6]]*4 loaded first; jg -> L_5437b7
+        if (FactionRankingsUnk[GameDataStateStorage.fields_.faction_rankings_[7]] * 3 >
+            FactionRankingsUnk[GameDataStateStorage.fields_.faction_rankings_[6]] * 4) goto L_5437b7;
+    }
+    // 0x54187E
+    if ((GameDataStateStorage.fields_.game_rules_ & 0x40) &&
+        has_agenda(actor, partner, 0x100) &&
+        !has_treaty(actor, partner, 1) &&
+        PlayersData[actor].ranking >= 6 &&
+        DiploScratchF7F0 == 0) goto L_5437b7;
+
+    // 0x5418AD
+    if (DiploScratchF800 < 0) {
+        if (DiploScratchFA48 != 0) goto L_5437b7;
+        if (has_treaty(actor, partner, 1)) goto L_5437b7;
+        if (PlayersData[actor].flags & PFLAG_MAP_REVEALED) goto L_5437b7;
+        // 0x5418E5: only when actor traded maps with partner
+        if (PlayersData[actor].traded_maps & (1 << partner)) {
+            // 0x5418F6: rules&0x100 -> (n+3)/4 (cdq; and edx,3; add; sar 2),
+            //           else (0x541930, out of line) -> (n+1)/2.
+            // 0x54194D: partner_seen_bases >= threshold -> L_5437b7
+            if (partner_seen_bases >=
+                ((GameDataStateStorage.fields_.game_rules_ & 0x100)
+                     ? (PlayersData[partner].current_num_bases + 3) / 4
+                     : (PlayersData[partner].current_num_bases + 1) / 2)) goto L_5437b7;
+        }
+    }
+
+    // 0x541956
+    if (!wants_to_speak(actor, partner)) goto L_542e07;
+L_541968:
+
+    if (DiploScratchFAA8 != 9999) {
+        clear();
+        say_tech(StringTemp, DiploScratchFAA8, 1);
+        parse_says(0, StringTemp, -1, -1);
+    }
+    // 0x54199B
+    if (DiploScratchF800 >= 0) {
+        clear();
+        say_tech(StringTemp, DiploScratchF800, 1);
+        parse_says(1, StringTemp, -1, -1);
+    }
+    // 0x5419CB
+    if (context == 13) goto L_542e80;
+    if (DiploScratchFA18 >= 0) {
+        clear();
+        say_tech(StringTemp, DiploScratchFA18, 1);
+        parse_says(2, StringTemp, -1, -1);
+    }
+
+    // 0x541A05: parse_set inline expansions (PluralityDefault=0 store, GenderDefault
+    // from Players[x].is_leader_female) interleaved with the parse_says pushes.
+    parse_set(Players[actor].is_leader_female, 0);
+    parse_says(3, Players[actor].title_leader, -1, -1);
+    parse_set(Players[actor].is_leader_female, 0);
+    parse_says(4, Players[actor].name_leader, -1, -1);
+    parse_says(5, get_noun_phrase(actor, 9), -1, -1);
+    parse_says(6, get_noun_phrase(partner, 9), -1, -1);
+    parse_set(Players[partner].is_leader_female, 0);
+    parse_says(8, Players[partner].name_leader, -1, -1);
+    parse_says(9, get_noun_phrase(partner, 7), -1, -1);
+
+    clear();
+    strcat(StringTemp, "TRADETECH");
+    // 0x541AFB: FAA8 != 9999 -> L_541b5d (eax already = F800).
+    if (DiploScratchFAA8 != 9999) goto L_541b5d;
+    // push 0xA (radix) is hoisted before the F800 test and shared with 0x541B39.
+    if (DiploScratchF800 >= 0) goto L_541b39;   // say_num(4) at L_541b39
+    say_num(5);
+    goto L_541bad;
+
+L_541b39:   // entered from 0x541b13 (FAA8 == 9999 && F800 >= 0), radix 10 already pushed
+    say_num(4);                                   // text [ebp-0x158]
+    goto L_541bad;
+
+L_541b5d:   // entered from 0x541b0d (FAA8 != 9999), eax = DiploScratchF800
+    if (DiploScratchF800 < 0) {                   // jge 0x541b81 skips when F800 >= 0
+        say_num(3);                               // text [ebp-0x68]
+        goto L_541bad;
+    }
+    // L_541b81:
+    say_num(random(0, 3));                        // random(push 0, push 3) => random(0, 3); text [ebp-0x108]
+
+L_541bad:
+    popup.start(PopupStartCaption, StringTemp, -1, 0, 0x100000, 0);
+    popup.set_picture(FactionDiplomacyPortraits[partner], 0, nullptr);
+    // (inline: caller_picture = !picture_enabled() ? portrait : 0; SpriteBox::sprite(portrait, 0, 0))
+
+    if (X_text_open(ScriptPopupFile, "TRADETECHOPT") == 0) {   // jne 0x541cd6 skips when nonzero
+        text_get();
+        if (DiploScratchF80C >= 0 && DiploScratchF80C != DiploScratchF800) {
+            clear();
+            say_tech(StringTemp, DiploScratchF80C, 1);
+            parse_says(9, StringTemp, -1, -1);
+            clear();                              // second clear at 0x541c59 (bug-for-bug)
+            parse_string(TextBufferGetPtr, StringTemp);
+            popup.item(StringTemp, 4);
+        }
+        // L_541c7a:
+        text_get();
+        if (DiploScratchFA18 >= 0 && DiploScratchFA18 != DiploScratchFAA8) {
+            clear();
+            parse_string(TextBufferGetPtr, StringTemp);
+            popup.item(StringTemp, 2);
+        }
+        // L_541cbd:
+        text_get();
+        popup.item(TextBufferGetPtr, 3);
+    }
+    // L_541cd6:
+    dialog_result = popup.exec(0, pop_wait);  // ecx
+    if (dialog_result == 0) {
+        goto L_543094;
+    }
+    if (dialog_result == 3) {
+        help_topic(0xE, DiploScratchFAA8 == 9999 ? DiploScratchF800 : DiploScratchFAA8);
+        goto L_541968;                            // loop continue (re-show offer)
+    }
+    // L_541d18:
+    friction_delta = DiploScratchF814 / 4;        // edi; cdq/and 3/sar 2 = signed /4
+    if (dialog_result == 4) {
+        // [ebp+0xC] -> PlayersData[partner].diplo_treaties[actor]
+        if (!has_treaty(partner, actor, 1)      // jne 0x541dd3 when bit set
+            && DiploScratchFA18 < 0                                 // jge 0x541dd3 when >= 0
+            && tech_val(DiploScratchF80C, partner, 0)
+                   > tech_val(DiploScratchFAA8, partner, 0)) {      // jle 0x541dd3 when <=
+            if (DiploScratchF800 >= 0) {          // jl 0x541da5 skips when < 0
+                clear();
+                say_tech(StringTemp, DiploScratchF800, 1);
+                parse_says(0, StringTemp, -1, -1);
+            }
+            // L_541da5:
+            X_pops("REJTECHINSTEAD", 0x100000, FactionDiplomacyPortraits[partner], pop_wait);
+            DiploScratchF80C = -1;
+            goto L_541968;                        // loop continue
+        }
+        // L_541dd3:
+        swap(&DiploScratchF800, &DiploScratchF80C);
+        friction_delta = DiploScratchF814 / 8;    // eax = F814; jmp 0x541eb1 (shared /8 tail)
+    } else if (dialog_result == 2) {              // L_541def; jne 0x541ebc when != 2
+        // eax = PlayersData[partner].diplo_treaties[actor] (via [ebp+0xC])
+        if (!has_treaty(partner, actor, 1)
+            || !has_treaty(partner, actor, 0x2000000)) {
+            // L_541e10: edi temporarily = Players[partner].filename (+0x4)
+            if (!strcmp(Players[partner].filename, "HIVE")) {
+                goto L_543169;                    // je 0x543169
+            }
+            if (IsMultiplayerNet
+                && actor == GameDataStateStorage.fields_.ranking_faction_id_unk1_) {  // +0x7c
+                goto L_543169;
+            }
+            // L_541e4d:
+            if (strcmp(Players[partner].filename, "UNIV")) {   // je 0x541e9a when == 0
+                if (great_satan(actor, 0)) {
+                    goto L_543169;
+                }
+                // partner tech_ranking (from esi) vs [ebp-0x14]+0x35c (actor)
+                if (PlayersData[partner].tech_ranking > PlayersData[actor].tech_ranking) {  // jg
+                    goto L_543169;
+                }
+            }
+        }
+        // L_541e9a:
+        swap(&DiploScratchFAA8, &DiploScratchFA18);
+        friction_delta = DiploScratchFA44 / 8;    // L_541eb1: cdq/and 7/sar 3
+    }
+    // dialog_result not 0/2/3/4: friction_delta stays DiploScratchF814 / 4
+
+    // L_541ebc:
+    if (request_mode) {                           // [ebp+0x10]; je 0x541eff when 0
+        net_treaty_on(partner, actor, 0x1000000, 0);   // inline; no await_diplo => wait folded 0
+    }
+    // L_541eff:
+    net_agenda_on(partner, actor, 0x180, 0);           // inline; no await_diplo
+    if (DiploScratchF800 < 0) {
+        DiploScratchF800 = 9999;
+    }
+    // L_541f4e: [ebp+0x8] = FAA8 (spilled inline arg)
+    net_tech(partner, DiploScratchFAA8, actor, 1);     // inline; await_diplo(0x44b) unconditional => wait 1
+    // L_541fa7: [ebp+0x8] = F800
+    net_tech(actor, DiploScratchF800, partner, 1);
+    // L_542000: (eax = 9999 held in register for both compares)
+    if (DiploScratchFAA8 == 9999) {
+        DiploScratchFA48 = 1;
+    }
+    if (DiploScratchF800 == 9999) {
+        DiploScratchFA48 = 1;
+    }
+    // L_54202b: stores interleaved with the cause_friction expansion below
+    DiploScratchFAA8 = DiploScratchFA18;
+    DiploScratchFA18 = -1;
+    cause_friction(partner, actor, -friction_delta);   // inline expansion:
+    //   edi = -edi (stays negated); diplo_friction[partner][actor] = range(fr + edi, 0, 20)
+    //   via js -> 0 / > 20 -> 20; then if (DiploFrictionFactionID == partner &&
+    //   DiploFrictionFactionIDWith == actor) DiploFriction += edi;
+    DiploScratchFA60 = 0;
+    if (request_mode == 0) {                      // [ebp+0x10]; je 0x5433a0
+        goto L_5433a0;
+    }
+    goto L_54115e;                                // jmp: back to tech_analysis at function top
+
+
+    // ===================== rejection exits entered from chunk 1 =====================
+
+L_542097:   // from 0x5411c7/0x5411d4/0x5411e1/0x541212 (contact refused: hate)
+    if (request_mode) {                           // je 0x5420d8 when 0
+        return 0;                                 // teardown: Popup::close, ~Scroll -> 0x5439fb
+    }
+    // L_5420d8: edi = Players[actor] byte offset
+    parse_set(Players[actor].is_leader_female, 0);   // PluralityDefault=0 then GenderDefault (scheduled)
+    parse_says(0, Players[actor].title_leader, -1, -1);        // +0x4c
+    parse_set(Players[actor].is_leader_female, 0);
+    parse_says(1, Players[actor].name_leader, -1, -1);         // +0x34
+    parse_set(Players[actor].is_leader_female, 0);
+    parse_says(2, Players[actor].assistant_city, -1, -1);      // +0x3ac
+    parse_says(3, Players[actor].adj_insult_faction, -1, -1);  // +0x1e4
+    parse_says(4, get_phrase(actor, 3), -1, -1);
+    clear();
+    strcat(StringTemp, "REJTECHHATE");            // literal 0x68d7e4
+    say_num(context == 13 ? 0 : random(0, 3));    // text [ebp-0x68]
+    X_pops(StringTemp, 0x100000, FactionDiplomacyPortraits[partner], pop_wait);
+    return 0;                                     // teardown -> 0x5439fb
+
+L_54222b:   // from 0x54130d (DiploFriction >= threshold)
+    if (request_mode) {                           // je 0x54226c when 0
+        return 0;                                 // teardown
+    }
+    // L_54226c:
+    if (buy_tech(actor, partner, action, 1, context)) {   // je 0x5422be when 0
+        return 0;                                 // teardown
+    }
+    // L_5422be:
+    parse_set(Players[actor].is_leader_female, 0);
+    parse_says(0, Players[actor].title_leader, -1, -1);
+    parse_set(Players[actor].is_leader_female, 0);
+    parse_says(1, Players[actor].name_leader, -1, -1);
+    parse_says(2, get_phrase(actor, 3), -1, -1);
+    clear();
+    strcat(StringTemp, "REJTECHFEAR");            // literal 0x68d7f0
+    say_num(context == 13 ? 0 : random(0, 2));    // text [ebp-0x68]
+    X_pops(StringTemp, 0x100000, FactionDiplomacyPortraits[partner], pop_wait);
+    return 0;                                     // teardown
+
+L_5423d8:   // from 0x54137f / 0x5413c7 (great_satan / ranking checks)
+    if (request_mode) {                           // je 0x542419 when 0
+        return 0;                                 // teardown
+    }
+    // L_542419:
+    if (buy_tech(actor, partner, action, 1, context)) {   // je 0x54246b when 0
+        return 0;                                 // teardown
+    }
+    // L_54246b:
+    parse_set(Players[actor].is_leader_female, 0);
+    parse_says(0, Players[actor].title_leader, -1, -1);
+    parse_set(Players[actor].is_leader_female, 0);
+    parse_says(1, Players[actor].name_leader, -1, -1);
+    parse_says(2, get_phrase(actor, 3), -1, -1);
+    clear();
+    strcat(StringTemp, "REJTECHFEAR");            // DISTINCT literal 0x68d7fc (no pooling)
+    say_num(context == 13 ? 0 : random(0, 2));    // text [ebp-0x68]
+    X_pops(StringTemp, 0x100000, FactionDiplomacyPortraits[partner], pop_wait);
+    return 0;                                     // teardown
+
+L_542585:   // from 0x54140e (request_mode != 0 on the tech-ranking path)
+    return 0;                                     // teardown -> 0x5439fb
+
+L_5425bf:   // entered from 0x541482 (je); request_mode == 0 is already known on this path
+    // 0x5425BF: test edi,edi ; jne 0x542615   (edi = missing_reactor_preq, [ebp-0x10])
+    if (missing_reactor_preq == 0) {
+        // 0x5425C3
+        if (buy_tech(actor, partner, action, 1, context) != 0) {   // je 0x542615 when == 0
+            return 0;   // 0x5425DB: Popup::close + ~Scroll, jmp 0x5439FB
+        }
+    }
+    // 0x542615
+    if (action == 5 && context != 13) {   // jne 0x5426F8 (action != 5); je 0x5426F8 (context == 13)
+        // 0x542629
+        parse_set(Players[actor].is_leader_female, 0);   // image stores Plurality first, then Gender
+        parse_says(0, Players[actor].title_leader, -1, -1);   // +0x4C
+        parse_set(Players[actor].is_leader_female, 0);
+        parse_says(1, Players[actor].name_leader, -1, -1);    // +0x34
+        parse_says(2, get_phrase(actor, 3), -1, -1);
+        X_pops("REJTECHFEAR1", 0x100000, FactionDiplomacyPortraits[partner], pop_wait);
+        return 0;   // 0x5426BE: Popup::close + ~Scroll, jmp 0x5439FB
+    }
+    // 0x5426F8
+    if (want_tech == 0) {   // jne 0x542739 when != 0
+        return 0;   // 0x5426FF: Popup::close + ~Scroll, jmp 0x5439FB
+    }
+    // 0x542739
+    parse_says(0, Players[actor].adj_insult_faction, -1, -1);   // +0x1E4
+    clear();
+    strcat(StringTemp, "REJTECHADVANCED");
+    // 0x542770: test edi,edi ; je 0x54277B -> fallthrough arm is the constant 2
+    say_num(missing_reactor_preq != 0 ? 2 : random(0, 3));
+    X_pops(StringTemp, 0x100000, FactionDiplomacyPortraits[partner], pop_wait);
+    return 0;   // 0x5427C0: Popup::close + ~Scroll, jmp 0x5439FB
+
+// ---------------------------------------------------------------------------
+L_5427fa:   // entered from 0x541497 (jne): DiploScratchFA6C != -1 && context != 13;
+            // ecx still holds DiploScratchFA6C (loaded at 0x541488)
+    if (request_mode != 0) {   // je 0x54283B when == 0
+        return 0;   // 0x542801: Popup::close + ~Scroll, jmp 0x5439FB
+    }
+    // 0x54283B: test ecx,ecx ; jl 0x542844   (ecx = DiploScratchFA6C, not reloaded)
+    //   fallthrough: FA6C + 0x46 ; jump arm: 0x44 - FA6C
+    parse_say(0, Facility[DiploScratchFA6C >= 0 ? DiploScratchFA6C + 70
+                                                : 68 - DiploScratchFA6C].name, -1, -1);   // ? 0x54283B literal index math; maybe (x >= 0 ? x : -x - 2) + 70
+    // 0x542863 (ebx zeroed here and used as the 0 constant from now on)
+    parse_set(Players[actor].is_leader_female, 0);   // Plurality stored first
+    parse_says(1, Players[actor].title_leader, -1, -1);   // +0x4C
+    parse_set(Players[actor].is_leader_female, 0);
+    parse_says(2, Players[actor].name_leader, -1, -1);    // +0x34
+    clear();
+    strcat(StringTemp, "REJTECHPROJ");
+    // 0x5428CE: DiploScratchFA6C reloaded; cmp eax,0 ; jl 0x5428E7 (-> 2); fallthrough is random
+    say_num(DiploScratchFA6C >= 0 ? random(0, 3) : 2);
+    X_pops(StringTemp, 0x100000, FactionDiplomacyPortraits[partner], pop_wait);
+    return 0;   // 0x542925: Popup::close + ~Scroll, jmp 0x5439FB
+
+// ---------------------------------------------------------------------------
+L_54295f:   // entered from 0x5415B5 (jne): context == 13 && has_treaty(partner, actor, DTREATY_PACT)
+    if (!wants_to_speak(actor, partner)) {   // jne 0x5429A7 when nonzero
+        return 0;   // 0x54296D: Popup::close + ~Scroll, jmp 0x5439FB
+    }
+    // 0x5429A7
+    parse_says(0, Players[DiploScratchFA5C].adj_name_faction, -1, -1);   // +0x304
+    x_pops_minimal("COMMLINKFREE", FactionDiplomacyPortraits[partner], pop_wait);  // 3-arg overload 0x5BF5D0
+    net_tech(actor, DiploScratchF800, partner, 1);   // inline expansion (log_say/message_data/await_diplo | tech_achieved)
+    DiploScratchF800 = -1;   // 0x542A32: or esi,-1 (esi reused as -1 for EH state too)
+    return 0;   // Popup::close + ~Scroll, jmp 0x543A02
+
+// ---------------------------------------------------------------------------
+L_542a78:   // entered from 0x5415DC (jne): F800 >= 0 && context != 13 && pact && HAVE_SURRENDERED
+    if (!wants_to_speak(actor, partner)) {   // jne 0x542AC0 when nonzero
+        return 0;   // 0x542A86: Popup::close + ~Scroll, jmp 0x5439FB
+    }
+    // 0x542AC0
+    clear();
+    say_tech(StringTemp, DiploScratchF800, 1);
+    parse_says(0, StringTemp, -1, -1);
+    X_pops("TECHSLAVE", 0x100000, FactionDiplomacyPortraits[partner], pop_wait);
+    net_tech(actor, DiploScratchF800, partner, 1);   // inline expansion
+    DiploScratchF800 = -1;   // 0x542B57: or esi,-1
+    return 0;   // 0x542B5A: Popup::close + Scroll::close/~FlatButton x2/~GraphicWin (inlined ~Scroll), jmp 0x543A02
+
+// ---------------------------------------------------------------------------
+L_542be7:   // entered from 0x5416D6 (jg)
+    if (!wants_to_speak(actor, partner)) {   // jne 0x542C6E when nonzero
+        return 0;   // 0x542BF5: teardown, jmp 0x5439F0
+    }
+    // 0x542C6E
+    clear();
+    say_tech(StringTemp, DiploScratchF800, 1);
+    parse_says(0, StringTemp, -1, -1);
+    X_pops("TECHFREEBIE", 0x100000, FactionDiplomacyPortraits[partner], pop_wait);
+    net_tech(actor, DiploScratchF800, partner, 1);   // inline expansion
+    // 0x542D05: edi = -1 (also used for EH state)
+    DiploScratchF800 = -1;
+    {
+        // treaty word loaded once into ecx (PlayersData[partner].diplo_treaties[actor]);
+        // could be repeated has_treaty() inlines CSE'd by the compiler  // ? 0x542D21
+        uint32_t treaty = PlayersData[partner].diplo_treaties[actor];
+        int patience;   // ecx
+        if (treaty & DTREATY_VENDETTA) {            // test cl,0x10 ; je 0x542D34
+            patience = 1;
+        } else if (treaty & DTREATY_PACT) {         // test cl,1 ; je 0x542D4E
+            // branchless: and 0x2000000 ; neg ; sbb ; and 0x1EE ; add 6
+            patience = (treaty & DTREATY_HAVE_SURRENDERED) ? 500 : 6;
+        } else {
+            // 0x542D4E: shr ecx ; and ecx,1 ; sub ecx,(DiploFriction+3)/8 (signed) ; add ecx,3
+            patience = ((treaty >> 1) & 1) - (DiploFriction + 3) / 8 + 3;   // ? 0x542D4E: maybe has_treaty(...,DTREATY_TREATY)!=0 spelled as a shift
+        }
+        // 0x542D8D: byte store
+        PlayersData[partner].diplo_patience[actor] = (char)patience;   // +0xB8
+    }
+    return 0;   // 0x542D6B..: Popup::close + inlined ~Scroll, jmp 0x543A02
+
+// ---------------------------------------------------------------------------
+L_542e07:   // entered from 0x541962 (je): wants_to_speak(actor, partner) == 0
+    return 0;   // teardown, jmp 0x5439F0
+
+// ---------------------------------------------------------------------------
+L_542e80:   // entered from 0x5419CF (je): context == 13
+    parse_says(2, Players[DiploScratchFA5C].adj_name_faction, -1, -1);   // +0x304
+    if (x_pops_minimal("COMMLINKTECH", FactionDiplomacyPortraits[partner], pop_wait) == 0) {   // 3-arg overload; jne 0x542F3A when nonzero
+        return 0;   // 0x542EC1: teardown, jmp 0x5439F0
+    }
+    // 0x542F3A
+    net_tech(partner, DiploScratchFAA8, actor, 1);   // inline expansion (edi = FAA8)
+    // 0x542F88
+    net_tech(actor, DiploScratchF800, partner, 1);   // inline expansion (edi = F800)
+    // 0x542FD6 (esi = -1)
+    DiploScratchF800 = -1;
+    DiploScratchFAA8 = DiploScratchFA18;
+    DiploScratchFA18 = -1;
+    return 1;   // 0x542FF1: Popup::close, inlined ~Scroll, ~BasePop call; ret 1 at 0x543093
+
+// ---------------------------------------------------------------------------
+L_543094:   // entered from 0x541CEC (je): popup exec result == 0
+    DiploScratchF7C4 = 1;
+    return 0;   // 0x54309E: Popup::close, Scroll::close, FlatButton::close/~BaseButton x2 (inlined), jmp 0x5439F0
+
+// ---------------------------------------------------------------------------
+L_543169:   // entered from 0x541E32/0x541E47 (je), 0x541E6C (jne), 0x541E94 (jg)
+    X_pops("REJTECHSECOND", 0x100000, FactionDiplomacyPortraits[partner], pop_wait);
+    PlayersData[partner].diplo_patience[actor]++;   // 0x5431AC: byte load, inc al, byte store
+    return 0;   // 0x54318F..0x54339F: fully inlined teardown of the whole Popup; xor eax,eax ; ret
+
+// ---------------------------------------------------------------------------
+L_5433a0:   // entered from 0x54208C (je): request_mode == 0
+    return 1;   // 0x5433A0..0x5437B6: fully inlined teardown of the whole Popup; mov eax,1 ; ret
+
+// ---------------------------------------------------------------------------
+L_5437b7:   // entered from 0x541720 .. 0x541950 (15 jumps)
+    if (request_mode != 0) {   // je 0x543837 when == 0
+        return 0;   // 0x5437BE: teardown, jmp 0x5439F0
+    }
+    // 0x543837 (edi = context cached)
+    if (buy_tech(actor, partner, action, 0, context) != 0) {   // je 0x5438C8 when == 0
+        return 0;   // 0x54384F: teardown, jmp 0x5439F0
+    }
+    // 0x5438C8: StringTemp[0] = 0 is scheduled between cmp and jne
+    clear();
+    if (context == 13) {   // jne 0x5438E8
+        strcat(StringTemp, "REJCOMMLINK");
+        // jmp 0x54395D
+    } else {
+        // 0x5438E8
+        strcat(StringTemp, "REJTECHLATER");
+        int reply = random(0, 3);   // eax
+        // 0x543900: PlayersData[actor].diplo_treaties[partner]  (NOTE: actor-major, ebx*2099 + esi;
+        //   the retired helper had partner/actor swapped)
+        if (has_treaty(actor, partner, DTREATY_PACT | DTREATY_TREATY)) {   // test byte ptr [...],3 ; je 0x543940
+            if (DiploScratchFAA8 < 0) {          // jge 0x543931
+                reply = 4;
+            } else if (DiploScratchF800 < 0) {   // jge 0x543940
+                reply = 3;
+            }
+        }
+        // 0x543940
+        say_num(reply);
+    }
+    // 0x54395D
+    X_pops(StringTemp, 0x100000, FactionDiplomacyPortraits[partner], pop_wait);
+    return 0;   // 0x54397C: Popup::close + inlined ~Scroll, falls into 0x5439F0 -> ret 0 at 0x543A1F
+
 }
 
 // ORIGINAL: 0x0054F420 ?make_a_proposal@@YAXHHH@Z 0x0054F420-0x0054FFAB;0x0065FD5F-0x0065FF4F
@@ -8616,7 +8402,7 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
             case 7:
                 break;
             }
-            StringTemp[0] = '\0';
+            clear();
             strcat(StringTemp, StringTable.get(Proposal[proposal].name));
             strcat(StringTemp, "|");
             strcat(StringTemp, StringTable.get(Proposal[proposal].description));
@@ -8640,7 +8426,7 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
             for (int candidate = 1; candidate < MaxPlayerNum; ++candidate) {
                 if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << candidate)) &&
                     eligible(candidate)) {
-                    StringTemp[0] = '\0';
+                    clear();
                     parse_set(Players[candidate].is_leader_female, FALSE);
                     strcat(StringTemp, Players[candidate].title_leader);
                     strcat(StringTemp, "|");
