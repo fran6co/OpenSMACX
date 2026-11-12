@@ -1741,11 +1741,11 @@ void CouncWin::draw_leader(int factionID) {
             Buffer::set_text_color(0x41, -1, 1, 1);
             StringTemp[0] = '\0';
             switch (static_cast<int>(leader_label_kind_[factionID])) {
-            case -5:
+            case -1:
                 Buffer::box_sprite(&badgeRect, &InterfaceBoxStyles[31]);
                 strcat(StringTemp, label_get(0x7BC / 4));
                 break;
-            case -4:
+            case -2:
                 Buffer::box_sprite(&badgeRect, &InterfaceBoxStyles[30]);
                 strcat(StringTemp, label_get(0x7C0 / 4));
                 break;
@@ -1753,11 +1753,11 @@ void CouncWin::draw_leader(int factionID) {
                 Buffer::box_sprite(&badgeRect, &InterfaceBoxStyles[32]);
                 strcat(StringTemp, label_get(0x7C4 / 4));
                 break;
-            case -2:
+            case -4:
                 Buffer::box_sprite(&badgeRect, &InterfaceBoxStyles[32]);
                 strcat(StringTemp, label_get(0x7D4 / 4));
                 break;
-            case -1:
+            case -5:
                 Buffer::box_sprite(&badgeRect, &InterfaceBoxStyles[32]);
                 strcat(StringTemp, label_get(0x7D8 / 4));
                 break;

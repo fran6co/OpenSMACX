@@ -6432,6 +6432,9 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00467970.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
 void MapWin::draw_base_dest(int draw_type) {
     int line_type;
+    // One variable: the image keeps the base-route direction and the
+    // vehicle's triad in the same frame slot.
+    int direction;
     int drew = 0;
     if (field_1DD70_ & 0x40000U) {
         for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_;
@@ -6440,7 +6443,7 @@ void MapWin::draw_base_dest(int draw_type) {
                 continue;
             }
             const int16_t *slot = Bases[base_id].auto_forward_slots;
-            for (int direction = 0; direction < 3; ++direction, ++slot) {
+            for (direction = 0; direction < 3; ++direction, ++slot) {
                 const int16_t destination = *slot;
                 if (destination < 0) {
                     continue;
@@ -6482,25 +6485,25 @@ void MapWin::draw_base_dest(int draw_type) {
                 continue;
             }
             const int proto_id = Vehs[veh_id].proto_id;
-            const int triad = get_proto_triad(proto_id);
+            direction = get_proto_triad(proto_id);
             if (state == 0x01000200U && (field_1DD70_ & 0x400000U)) {
                 for (int i = 0; i < Vehs[veh_id].waypoint_count + (Vehs[veh_id].waypoint_count > 1); ++i) {
                     dest_line(Vehs[veh_id].waypoint_x[i % (Vehs[veh_id].waypoint_count + 1)],
                               Vehs[veh_id].waypoint_y[i % (Vehs[veh_id].waypoint_count + 1)],
                               Vehs[veh_id].waypoint_x[(i + 1) % (Vehs[veh_id].waypoint_count + 1)],
                               Vehs[veh_id].waypoint_y[(i + 1) % (Vehs[veh_id].waypoint_count + 1)],
-                              Vehs[veh_id].proto_id, Vehs[veh_id].faction_id, triad,
+                              Vehs[veh_id].proto_id, Vehs[veh_id].faction_id, direction,
                               (Vehs[veh_id].state & 0x01000200U) == 0x01000200U, 3, 5, 0);
                 }
             } else {
                 dest_line(Vehs[veh_id].x, Vehs[veh_id].y, Vehs[veh_id].waypoint_x[0], Vehs[veh_id].waypoint_y[0],
-                          proto_id, faction, triad, (Vehs[veh_id].state & 0x01000200U) == 0x01000200U, 2, 2, 0);
+                          proto_id, faction, direction, (Vehs[veh_id].state & 0x01000200U) == 0x01000200U, 2, 2, 0);
                 if (Vehs[veh_id].state & VSTATE_UNK_2000000) {
                     for (int point = 0; point < Vehs[veh_id].waypoint_count; ++point) {
                         dest_line(Vehs[veh_id].waypoint_x[point], Vehs[veh_id].waypoint_y[point],
                                   Vehs[veh_id].waypoint_x[point + 1],
                                   Vehs[veh_id].waypoint_y[point + 1], Vehs[veh_id].proto_id,
-                                  Vehs[veh_id].faction_id, triad,
+                                  Vehs[veh_id].faction_id, direction,
                                   (Vehs[veh_id].state & 0x01000200U) == 0x01000200U,
                                   2, 2, 0);
                     }
