@@ -1968,6 +1968,19 @@
           "-c"
         ]
       },
+      "src/movie_media_macroblock.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "-c"
+        ]
+      },
       "src/movie_media_decoder_g6.cpp": {
         "flags": [
           "/nologo",
