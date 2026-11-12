@@ -358,6 +358,17 @@ void CheckBox::draw_item(int position, int state, int) {
 // Deleted seed provenance: git:5ab1f8ce:src/unrecovered/0060ed10.cpp
 // ORIGINAL: 0x0060ED10 ?calculate_dimensions@CheckBox@@QAEHXZ 0x0060ED10-0x0060F02B FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060ed10.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60ed10 complete control/data-access review and src/jackal/checkbox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// Advance the list and return the new current entry's text through an
+// expanded current_entry(): with a current entry but no head the image reads
+// the text through a null payload (0x0060EEC8), as the accessor would.
+static inline char *checkbox_next_text(StringList *list) {
+    list->next_entry();
+    return list->current_ != 0
+        ? (list->head_ != 0 ? list->current_->string_payload()
+                            : static_cast<StringStructPayload *>(0))->text
+        : 0;
+}
+
 int CheckBox::calculate_dimensions() {
     if (Dialog::item_list_.entry_count_ == 0) {
         return 7;
@@ -367,19 +378,15 @@ int CheckBox::calculate_dimensions() {
     Buffer::set_text_color3(text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_);
     Buffer::set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
 
-    if (Dialog::field_34_ == 0 && unchecked_sprite_ != 0 && checked_sprite_ != 0) {
-        Dialog::field_34_ = unchecked_sprite_->width();
-        if (Dialog::field_34_ < checked_sprite_->width()) {
-            Dialog::field_34_ = checked_sprite_->width();
-        }
+    // windows.h `max`: one store of the larger sprite edge (0x0060EE03).
+    if (Dialog::field_34_ == 0 && checked_sprite_ != 0 && unchecked_sprite_ != 0) {
+        Dialog::field_34_ = max(unchecked_sprite_->width(), checked_sprite_->width());
     }
     if (Dialog::field_48_ == -1) {
-        Dialog::field_68_ = 0;
         if (unchecked_sprite_ != 0 && checked_sprite_ != 0) {
-            Dialog::field_68_ = unchecked_sprite_->height();
-            if (Dialog::field_68_ < checked_sprite_->height()) {
-                Dialog::field_68_ = checked_sprite_->height();
-            }
+            Dialog::field_68_ = max(unchecked_sprite_->height(), checked_sprite_->height());
+        } else {
+            Dialog::field_68_ = 0;
         }
     } else {
         Dialog::field_68_ = Dialog::field_48_;
@@ -388,25 +395,15 @@ int CheckBox::calculate_dimensions() {
     Dialog::row_count_ = Dialog::item_list_.entry_count_;
     int max_text_width = 0;
     for (int i = 0; i < Dialog::item_list_.entry_count_; ++i) {
-        if (Dialog::item_list_.head_ != 0) {
-            Dialog::item_list_.current_ = Dialog::item_list_.current_->next;
-            ++Dialog::item_list_.current_position_;
-            if (Dialog::item_list_.current_position_ == Dialog::item_list_.entry_count_) {
-                Dialog::item_list_.current_position_ = 0;
-            }
-        }
-        StringStructEntry *const entry = Dialog::item_list_.current_;
-        char *text = entry == 0 ? 0 : entry->string_payload()->text;
+        char *text = checkbox_next_text(&(Dialog::item_list_));
         const int width = Buffer::text_width(text);
-        if (max_text_width < width) {
+        if (width > max_text_width) {
             max_text_width = width;
         }
     }
     Dialog::field_64_ = Dialog::field_44_ + Dialog::field_34_ + max_text_width;
-    const int text_height = Buffer::text_height();
-    if (Dialog::field_68_ <= text_height) {
-        Dialog::field_68_ = Buffer::text_height();
-    }
+    // windows.h `max`: text_height() runs again when it is the larger one.
+    Dialog::field_68_ = max(Dialog::field_68_, Buffer::text_height());
 
     if ((Dialog::field_20_ & 2) != 0 && Dialog::field_2C_ != 0) {
         Dialog::field_5C_ = Dialog::field_2C_;
@@ -420,12 +417,11 @@ int CheckBox::calculate_dimensions() {
         const uint32_t width_bits = static_cast<uint32_t>(Dialog::field_64_)
                                   * static_cast<uint32_t>(Dialog::field_4C_)
                                   + static_cast<uint32_t>(Dialog::field_40_) * 2u;
-        int width = static_cast<int32_t>(width_bits);
+        const int width = static_cast<int32_t>(width_bits);
         const uint32_t minimum_bits = static_cast<uint32_t>(Dialog::field_2C_)
                                     + static_cast<uint32_t>(Dialog::field_40_) * 2u;
         const int minimum = static_cast<int32_t>(minimum_bits);
-        if (width < minimum) width = minimum;
-        Dialog::field_5C_ = width;
+        Dialog::field_5C_ = max(minimum, width);
         const uint32_t width_numerator_bits = static_cast<uint32_t>(width)
                                             - static_cast<uint32_t>(Dialog::field_40_) * 2u;
         const int32_t width_numerator = static_cast<int32_t>(width_numerator_bits);

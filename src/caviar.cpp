@@ -2197,13 +2197,15 @@ Purpose: Build the renderer's per-instance table and seed the scene state.
 // every 4-byte memcpy in init into a call, and 254 compiled instructions
 // against the image's 151 was that, not the body. With the fields typed for
 // what they hold the stores fold back to immediates, and the down vector at
-// +0x60 reads back out as the shadow direction with two dword moves, which is
-// what the image does too.
+// +0x60 is copied whole into the shadow vector at +0x6c (a struct copy through
+// the `lea ebp,[esi+0x60]` pointer; the z store lands last, at 0x00616FEF).
+// Copying only x and y left the cos(1.0) seed in the shadow z.
 //
-// TRIED: the residual is store ORDER. The image copies the normalised down
-// vector into +0x6c/+0x70 before it zeroes +0x40..+0x54 and the rotation's
-// off-diagonal elements; this tree schedules that copy last. Same stores,
-// same values, 143 against 151 instructions.
+// TRIED: the remaining residual is the light vector's zeroing before the
+// normalise call: the image writes three zeros through a pointer from
+// registers copied out of the zero register (`mov eax,ebp; mov ecx,edi;
+// mov edx,edi`), then the explicit 0, 0, -1. memset, a store helper, a
+// zeroed local copied in and a copy from scene_offset_ all miss it.
 Return Value: n/a
 Status: Complete
 */
@@ -2289,11 +2291,10 @@ int Caviar::init() {
 
     vox_normalise_vector(scene_context_.light_vector_.values, scene_context_.light_vector_.values);
 
-    // The normalised down vector is the light: its x and y are the shadow
-    // direction's in-plane pair and its z is the elevation term
-    // set_shadow_vector writes over.
-    scene_context_.shadow_vector_.values[0] = scene_context_.light_vector_.values[0];
-    scene_context_.shadow_vector_.values[1] = scene_context_.light_vector_.values[1];
+    // The normalised down vector replaces the whole shadow vector: the image
+    // copies all three components (0x00616F86..0x00616F8C, the z store at
+    // 0x00616FEF), overwriting the sin/cos seed computed above.
+    scene_context_.shadow_vector_ = scene_context_.light_vector_;
 
     scene_context_.state_.scene_rotation_.values[0][0] = 1.0f;
     scene_context_.state_.scene_rotation_.values[0][1] = 0;

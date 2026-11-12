@@ -140,8 +140,13 @@ void Credits::exec() {
   strcat(StringTemp, WinScreenWidth == 800 ? "credits.pcx" : "credits2.pcx");
   GraphicWin::load_pcx(StringTemp, 0, 10, 0xEC);
 
-  graphicWin2_.init(30, WinScreenWidth == 800 ? 100 : 200,
-                    400, 400, 0, 0x1000020, this, 0, 0);
+  // Two calls, merged by VC6 into one with a branch per pushed top edge
+  // (`push 0x64; jmp` / `push 0xc8`), not a ternary argument.
+  if (WinScreenWidth == 800) {
+    graphicWin2_.init(30, 100, 400, 400, 0, 0x1000020, this, 0, 0);
+  } else {
+    graphicWin2_.init(30, 200, 400, 400, 0, 0x1000020, this, 0, 0);
+  }
   graphicWin2_.fill(9);
   graphicWin2_.multi_color_tables_ = FadeColorTables;
   graphicWin2_.show(0);

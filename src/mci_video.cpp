@@ -152,16 +152,16 @@ int MCIVideo::load(char *moviePath, Win *targetWindow, int x, int y) {
     }
 
     target_window_ = targetWindow;
-    blit_y_ = y;
     blit_x_ = x;
+    blit_y_ = y;
     if (WaveDeviceGlobal.disable() != 0) {
         return 1;
     }
 
     char *deviceType = "avivideo";
     MCI_DGV_OPEN_PARMS openParams;
-    openParams.lpstrDeviceType = deviceType;
     openParams.lpstrElementName = moviePath;
+    openParams.lpstrDeviceType = deviceType;
     openParams.dwStyle = WS_CHILD;
     openParams.hWndParent = HandleMain;
     MciVideoCallbackWindow = HandleMain;
@@ -175,7 +175,7 @@ int MCIVideo::load(char *moviePath, Win *targetWindow, int x, int y) {
     mciId_ = static_cast<uint16_t>(openParams.wDeviceID);
 
     // Both STATUS requests reuse this block, including any untouched outputs.
-    MCI_DGV_STATUS_PARMS statusParams;
+    MCI_STATUS_PARMS statusParams;
     statusParams.dwItem = MCI_DGV_STATUS_HWND;
     mciSendCommandA(mciId_, MCI_STATUS,
                     MCI_STATUS_ITEM,
@@ -204,15 +204,19 @@ int MCIVideo::load(char *moviePath, Win *targetWindow, int x, int y) {
     mciSendCommandA(mciId_, MCI_WHERE,
                     MCI_DGV_WHERE_SOURCE,
                     reinterpret_cast<DWORD_PTR>(&sourceParams));
-    const RECT sourceRect = sourceParams.rc;
-    const int width = (sourceRect.right - sourceRect.left) * 2;
-    const int height = (sourceRect.bottom - sourceRect.top) * 2;
+    // The source rectangle is doubled in place (0x0060011E/0x00600127 store
+    // the new right and bottom back into the WHERE block) and the PUT block
+    // takes a whole-rectangle copy of it; the size comes from the edges read
+    // before the doubling.
+    const int left = sourceParams.rc.left;
+    const int top = sourceParams.rc.top;
+    const int right = sourceParams.rc.right;
+    const int bottom = sourceParams.rc.bottom;
+    sourceParams.rc.right = right * 2 - left;
+    sourceParams.rc.bottom = bottom * 2 - top;
 
     MCI_DGV_PUT_PARMS destinationParams;
-    destinationParams.rc.left = sourceRect.left;
-    destinationParams.rc.top = sourceRect.top;
-    destinationParams.rc.right = sourceRect.right * 2 - sourceRect.left;
-    destinationParams.rc.bottom = sourceRect.bottom * 2 - sourceRect.top;
+    destinationParams.rc = sourceParams.rc;
     mciSendCommandA(mciId_, MCI_PUT,
                     MCI_DGV_RECT | MCI_DGV_PUT_DESTINATION,
                     reinterpret_cast<DWORD_PTR>(&destinationParams));
@@ -220,6 +224,8 @@ int MCIVideo::load(char *moviePath, Win *targetWindow, int x, int y) {
     previous_window_proc_ = reinterpret_cast<WNDPROC>(SetWindowLongA(
         window_handle_, GWL_WNDPROC,
         reinterpret_cast<LONG>(&MciVideoWindowProc)));
+    const int width = (right - left) * 2;
+    const int height = (bottom - top) * 2;
     blit_width_ = width;
     blit_height_ = height;
     MoveWindow(window_handle_, x, y, width, height, FALSE);
