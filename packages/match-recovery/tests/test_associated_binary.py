@@ -757,8 +757,10 @@ def test_intergroup_lea_identity_gap_between_selector_and_table_compares_exactly
 def test_intergroup_lea_identity_gap_candidate_mutation_never_passes(candidate_gap):
     obj, subject, span, image, bindings, targets = multi_fixture(
         gap2=bytes.fromhex("8d 49 00"), candidate_gap2=candidate_gap)
-    with pytest.raises(ValueError, match="not a supported alignment form"):
-        compare_associated_code(obj, subject, span, image, bindings, targets)
+    # The original gap is proved from the original alone; the candidate's
+    # different spelling is a strict byte mismatch, not a refused measurement.
+    report = compare_associated_code(obj, subject, span, image, bindings, targets)
+    assert report["result"] == Result.FAIL
 
 
 def test_intergroup_noncanonical_lea_gap_refuses():
@@ -777,7 +779,7 @@ def test_four_group_middle_and_last_group_omission_refuses(omit):
 @pytest.mark.parametrize("selector_row", [1, 3, 5, 7])
 def test_four_group_selector_omission_refuses_for_each_group(selector_row):
     obj, subject, span, image, bindings, targets = multi_fixture(groups=4, omit=(selector_row,))
-    with pytest.raises(ValueError, match="require one adjacent selector"):
+    with pytest.raises(ValueError, match="cover every selector-indexed"):
         compare_associated_code(obj, subject, span, image, bindings, targets)
 
 
@@ -796,7 +798,7 @@ def test_four_group_cell_or_selector_damage_is_checked_per_group(group):
 @pytest.mark.parametrize("omit", [(2, 3), (2,), (3,)])
 def test_missing_group_or_selector_never_proves_the_remaining_dispatches(omit):
     obj, subject, span, image, bindings, targets = multi_fixture(omit=omit)
-    with pytest.raises(ValueError, match="cover every indexed|require one adjacent|orphan"):
+    with pytest.raises(ValueError, match="cover every indexed|cover every selector-indexed|undeclared target table"):
         compare_associated_code(obj, subject, span, image, bindings, targets)
 
 
@@ -1092,7 +1094,7 @@ def test_direct_population_still_refuses_unmodeled_indirect_jumps():
 
 def test_partial_selector_population_does_not_become_a_mixed_direct_population():
     obj, subject, span, image, bindings, targets = multi_fixture(omit=(1,))
-    with pytest.raises(ValueError, match="require one adjacent selector"):
+    with pytest.raises(ValueError, match="cover every selector-indexed"):
         compare_associated_code(obj, subject, span, image, bindings, targets)
 
 
@@ -1396,3 +1398,144 @@ def test_threaded_paths_refuse_memory_clobber_signed_guard_or_call_edge(variant,
         code = _chassis_code() + b"\xe8" + struct.pack("<i", -(len(_chassis_code()) + 5 - 0x23))
     with pytest.raises(ValueError, match=reason):
         _path_bound(code)
+
+
+def mixed_fixture(*, layout=("tbl0", "sel0", "tbl1"), omit=(), candidate_cell=None):
+    """One selector-mapped dispatch and one direct dispatch in one body.
+
+    VC6 emits both shapes in one function: ``movzx edx, byte [map+ecx];
+    jmp [tbl0+edx*4]`` for a sparse switch and ``jmp [tbl1+eax*4]`` for a
+    dense one. ``layout`` orders the data after the body; each item is
+    preceded by NOP fill up to its natural alignment.
+    """
+    body = bytearray()
+    body += bytes.fromhex("83 f9 00 77 1c")          # 0: cmp ecx,0; ja ret
+    body += bytes.fromhex("31 d2")                   # 5: xor edx,edx
+    body += bytes.fromhex("0f b6 91") + bytes(4)     # 7: movzx edx,byte [ecx+map]
+    body += bytes.fromhex("ff 24 95") + bytes(4)     # 14: jmp [tbl0+edx*4]
+    body += bytes.fromhex("83 f8 00 77 07")          # 21: cmp eax,0; ja ret
+    body += bytes.fromhex("ff 24 85") + bytes(4)     # 26: jmp [tbl1+eax*4]
+    body += b"\xc3"                                  # 33: ret
+    fields = {"sel0": 10, "tbl0": 17, "tbl1": 29}
+    evidence = {"sel0": 7, "tbl0": 14, "tbl1": 26}
+    cells = {"tbl0": 21, "tbl1": 33}
+    sizes = {"tbl0": 4, "sel0": 1, "tbl1": 4}
+    offsets, tail, cursor = {}, bytearray(), len(body)
+    for name in layout:
+        aligned = (cursor + 3) & ~3 if name.startswith("tbl") else cursor
+        tail += b"\x90" * (aligned - cursor)
+        offsets[name] = aligned
+        tail += (struct.pack("<I", BASE + cells[name]) if name.startswith("tbl")
+                 else b"\x00")
+        cursor = aligned + sizes[name]
+    original_body = bytearray(body)
+    for name, field in fields.items():
+        struct.pack_into("<I", original_body, field, BASE + offsets[name])
+    envelope = bytes(original_body) + bytes(tail)
+
+    fixups = [*fields.values(), offsets["tbl0"], offsets["tbl1"]]
+    pe = bytearray(1024)
+    pe[:2] = b"MZ"
+    struct.pack_into("<I", pe, 0x3C, 0x80)
+    pe[0x80:0x84] = b"PE\0\0"
+    struct.pack_into("<HHIIIHH", pe, 0x84, 0x14C, 1, 0, 0, 0, 224, 0)
+    struct.pack_into("<H", pe, 0x98, 0x10B)
+    struct.pack_into("<I", pe, 0x98 + 28, 0x400000)
+    struct.pack_into("<I", pe, 0x98 + 92, 16)
+    pe[0x178:0x180] = b".text\0\0\0"
+    struct.pack_into("<IIII", pe, 0x180, 512, 0x1000, 512, 512)
+    struct.pack_into("<I", pe, 0x178 + 36, 0x60000020)
+    pe[512:512 + len(envelope)] = envelope
+    struct.pack_into("<II", pe, 0x98 + 96 + 5 * 8, 0x1100, 8 + 2 * len(fixups))
+    struct.pack_into("<II", pe, 768, 0x1000, 8 + 2 * len(fixups))
+    for index, offset in enumerate(fixups):
+        struct.pack_into("<H", pe, 776 + 2 * index, 0x3000 + offset)
+    pin = hashlib.sha256(bytes(pe)).hexdigest()
+    image = PeImage(bytes(pe), pin)
+
+    data = bytearray(body + tail)
+    for name in ("tbl0", "tbl1"):
+        data[offsets[name]:offsets[name] + 4] = bytes(4)
+    data += b"\x90" * (-len(data) % 16)
+    locals_ = [("tbl0", offsets["tbl0"]), ("sel0", offsets["sel0"]),
+               ("tbl1", offsets["tbl1"]), ("dst21", 21), ("dst33", 33)]
+    indices = {name: index + 3 for index, (name, _) in enumerate(locals_)}
+    relocations = [(field, indices[name], 6) for name, field in fields.items()]
+    for name, target in cells.items():
+        if candidate_cell is not None and name == candidate_cell[0]:
+            target = candidate_cell[1]
+        relocations.append((offsets[name], indices[f"dst{target}"], 6))
+    symbols = bytearray(b"_f\0\0\0\0\0\0" + struct.pack("<IhHBB", 0, 1, 0x20, 2, 0))
+    symbols += b".text\0\0\0" + struct.pack("<IhHBB", 0, 1, 0, 3, 1)
+    symbols += struct.pack("<IHHIHB3x", len(data), len(relocations), 0, 0, 0, 2)
+    for name, offset in locals_:
+        symbols += name.encode().ljust(8, b"\0") + struct.pack("<IhHBB", offset, 1, 0, 6, 0)
+    relocation_blob = b"".join(struct.pack("<IIH", *row) for row in relocations)
+    relocation_at = 60 + len(data)
+    symbol_at = relocation_at + len(relocation_blob)
+    header = struct.pack("<HHIIIHH", 0x14C, 1, 0, symbol_at, 3 + len(locals_), 0, 0)
+    section = b".text\0\0\0" + struct.pack("<IIIIIIHHI", 0, 0, len(data), 60,
+        relocation_at, 0, len(relocations), 0, 0x60501020)
+    obj = Coff(header + section + data + relocation_blob + symbols + struct.pack("<I", 4))
+    owner = Origin(pin, "pe:va", BASE)
+    kinds = {"tbl0": "switch_targets", "sel0": "switch_selector", "tbl1": "switch_targets"}
+    bindings = tuple(
+        AssociatedDataBinding(owner, Span(BASE + offsets[name], BASE + offsets[name] + sizes[name]),
+                              kinds[name], Origin(pin, "pe:va", BASE + evidence[name]),
+                              "fixture.cpp", line)
+        for line, name in enumerate(layout, 1) if name not in omit)
+    return obj, obj.function("_f"), Span(BASE, BASE + len(body)), image, bindings, {}
+
+
+@pytest.mark.parametrize("layout", [("tbl0", "sel0", "tbl1"), ("tbl1", "tbl0", "sel0")])
+def test_mixed_selector_and_direct_tables_pair_by_dataflow(layout):
+    obj, subject, span, image, bindings, targets = mixed_fixture(layout=layout)
+    report = compare_associated_code(obj, subject, span, image, bindings, targets)
+    assert report["result"] == Result.PASS, report
+    assert sorted(row["mode"] for row in report["dispatch_extents"]) == [
+        "direct-index", "mapped-index"]
+    assert all(row["target_count"] == 1 for row in report["dispatch_extents"])
+
+
+@pytest.mark.parametrize("cell", [("tbl0", 33), ("tbl1", 21)])
+def test_mixed_population_keeps_every_cell_relocation_strict(cell):
+    obj, subject, span, image, bindings, targets = mixed_fixture(candidate_cell=cell)
+    report = compare_associated_code(obj, subject, span, image, bindings, targets)
+    assert report["result"] != Result.PASS
+
+
+def test_selector_adjacent_to_another_table_is_not_paired_by_guessing():
+    # The map follows the direct table, but its load feeds tbl0's jump: the
+    # old adjacency-only rule would have paired it with the wrong table.
+    obj, subject, span, image, bindings, targets = mixed_fixture(layout=("tbl0", "tbl1", "sel0"))
+    with pytest.raises(ValueError, match="does not immediately follow the target table it feeds"):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+def test_mixed_population_cannot_omit_the_mapped_tables_selector():
+    obj, subject, span, image, bindings, targets = mixed_fixture(omit=("sel0",))
+    with pytest.raises(ValueError, match="cover every selector-indexed"):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+@pytest.mark.parametrize("code,feeds", [
+    ("0f b6 91 00 10 40 00 ff 24 95 00 10 40 00", True),      # movzx edx; jmp [t+edx*4]
+    ("31 d2 8a 91 00 10 40 00 ff 24 95 00 10 40 00", True),   # xor edx; mov dl; jmp
+    ("0f b6 91 00 10 40 00 c3", False),                       # next transfer is RET
+    ("0f b6 91 00 10 40 00 ff 24 85 00 10 40 00", False),     # jump indexes EAX
+    ("0f b6 91 00 10 40 00 42 ff 24 95 00 10 40 00", False),  # INC EDX in between
+    ("0f b6 91 00 10 40 00 ff e2", False),                    # register-indirect JMP
+])
+def test_selector_dispatch_follows_dataflow_into_the_next_transfer(code, feeds):
+    from match_recovery.associated_binary import _selector_dispatch
+    instructions = list(_ENGINE.disasm(bytes.fromhex(code), BASE))
+    selector = next(item for item in instructions if item.mnemonic in ("movzx", "mov"))
+    dispatch = _selector_dispatch(instructions, selector)
+    assert (dispatch is instructions[-1]) if feeds else dispatch is None
+
+
+def test_all_selector_pairs_still_report_mapped_dispatches():
+    obj, subject, span, image, bindings, targets = multi_fixture(groups=4)
+    report = compare_associated_code(obj, subject, span, image, bindings, targets)
+    assert report["result"] == Result.PASS
+    assert [row["mode"] for row in report["dispatch_extents"]] == ["mapped-index"] * 4

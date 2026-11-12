@@ -707,6 +707,51 @@ def _indexed_jump_tables(instructions):
     return found
 
 
+def _selector_dispatch(instructions, selector):
+    """Return the indexed JMP that one original byte selector load feeds.
+
+    VC6 emits a sparse switch as ``movzx r32, byte [map+guarded]`` (or a
+    zeroed ``mov r8, byte [map+guarded]``) followed in straight line by
+    ``jmp [table+4*r32]``. The load feeds a dispatch only when its absolute
+    single-register byte operand writes the jump's index register, the first
+    later control transfer is that indexed JMP, and nothing in between touches
+    the index register. Anything else returns None; pairing never guesses.
+    """
+    if (selector.id not in (x86.X86_INS_MOV, x86.X86_INS_MOVZX)
+            or len(selector.operands) != 2 or selector.disp_size != 4):
+        return None
+    destination, source = selector.operands
+    if (destination.type != x86.X86_OP_REG or source.type != x86.X86_OP_MEM
+            or source.size != 1 or source.mem.scale != 1 or source.mem.segment
+            or bool(source.mem.base) == bool(source.mem.index)):
+        return None
+    if selector.id == x86.X86_INS_MOVZX and destination.size != 4:
+        return None
+    if (selector.id == x86.X86_INS_MOV
+            and selector.reg_name(destination.reg) not in ("al", "bl", "cl", "dl")):
+        return None
+    family = _family(selector, destination.reg)
+    try:
+        position = instructions.index(selector)
+    except ValueError:
+        return None
+    for item in instructions[position + 1:]:
+        if _corridor_control_transfer(item):
+            if item.address not in _indexed_jump_tables((item,)):
+                return None
+            index = item.operands[0].mem.index
+            return item if _family(item, index) == family else None
+        if family in _access_families(item):
+            return None
+    return None
+
+
+def _selector_loads(instructions):
+    """Return every original byte load that feeds an indexed dispatch JMP."""
+    return {instruction.address for instruction in instructions
+            if _selector_dispatch(instructions, instruction) is not None}
+
+
 def _anchor_field(image: PeImage, instruction, operand, data_start: int) -> int:
     if operand.mem.disp != data_start or instruction.disp_size != 4:
         raise ValueError("original evidence operand does not point to its declared data start")
@@ -890,27 +935,31 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
     if len({row[0].span for row in normalized}) != len(normalized):
         raise ValueError("associated dispatch data span is ambiguous or duplicated")
 
-    # Existing v1 records carry no group identifier. Pair declared selectors
-    # only by unique adjacency, then verify their guard/register dataflow.
-    # A population without selectors instead proves each table independently
-    # from its own indexed jump and direct guard. Mixed or partially paired
-    # multi-table populations remain outside this supported domain.
-    dispatch_rows = []
-    unused_selectors = list(selector_rows)
-    for table_row in sorted(table_rows, key=lambda row: row[0].span.start):
-        table_binding = table_row[0]
-        matches = [row for row in unused_selectors
-                   if row[0].span.start == table_binding.span.end]
-        if len(matches) > 1:
-            raise ValueError("switch target table has ambiguous adjacent selector maps")
-        selector_row = matches[0] if matches else None
-        if selector_row is not None:
-            unused_selectors.remove(selector_row)
-        dispatch_rows.append((table_row, selector_row))
-    if unused_selectors:
-        raise ValueError("orphan switch selector map has no immediately preceding target table")
-    if len(table_rows) > 1 and selector_rows and any(selector is None for _, selector in dispatch_rows):
-        raise ValueError("multiple associated target tables require one adjacent selector map each")
+    # Existing v1 records carry no group identifier. Each declared selector
+    # is paired with the target table its own original load feeds (dataflow
+    # into the next indexed JMP, see `_selector_dispatch`), and the pair must
+    # be corroborated by layout: the map immediately follows that table.
+    # Tables whose JMP no selector load feeds are direct dispatches and are
+    # proved independently from their own guard. A population may mix both
+    # kinds, but every selector-fed JMP in the original body must declare
+    # its map, so omitting a map never turns a mapped index into a direct one.
+    tables_by_jump = {row[1].address: row for row in table_rows}
+    selector_by_table = {}
+    for selector_row in sorted(selector_rows, key=lambda row: row[0].span.start):
+        selector_binding, selector_instruction, _ = selector_row
+        dispatch = _selector_dispatch(body_instructions, selector_instruction)
+        if dispatch is None:
+            raise ValueError("orphan switch selector map does not feed one indexed jump")
+        table_row = tables_by_jump.get(dispatch.address)
+        if table_row is None:
+            raise ValueError("switch selector map feeds an undeclared target table")
+        if table_row[1].address in selector_by_table:
+            raise ValueError("switch target table has ambiguous selector maps")
+        if selector_binding.span.start != table_row[0].span.end:
+            raise ValueError("switch selector map does not immediately follow the target table it feeds")
+        selector_by_table[table_row[1].address] = selector_row
+    dispatch_rows = [(table_row, selector_by_table.get(table_row[1].address))
+                     for table_row in sorted(table_rows, key=lambda row: row[0].span.start)]
     table_evidence = {row[0][0].evidence.address for row in dispatch_rows}
     if _indexed_jump_tables(body_instructions) != table_evidence:
         raise ValueError("associated target tables do not cover every indexed indirect jump")
@@ -919,6 +968,8 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
                        and _branch_target(instruction) is None}
     if indirect_jumps != table_evidence:
         raise ValueError("parent body contains an unmodeled indirect JMP")
+    if _selector_loads(body_instructions) != {row[1].address for row in selector_rows}:
+        raise ValueError("associated selector maps do not cover every selector-indexed jump")
     for table_row, _selector_row in dispatch_rows:
         table_binding = table_row[0]
         if table_binding.span.start < span.end or table_binding.span.start % 4:
@@ -979,12 +1030,15 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
         switch_alignment = (left == span.end and right == first_table
                             and _is_canonical_hotpatch_padding(original_gap)
                             and span.end % 4 == 2 and first_table % 4 == 0)
+        # Classify the original gap from the original alone. A candidate that
+        # spells or places this gap differently is a byte mismatch reported by
+        # the strict envelope comparison below, never a refused measurement.
         intergroup_switch_alignment = _is_intergroup_hotpatch_gap(
-            original_gap, candidate_gap, left, right,
+            original_gap, original_gap, left, right,
             {row[0].span.end for row in selector_rows},
             {row[0].span.start for row in table_rows})
         intergroup_lea_alignment = _is_intergroup_lea_identity_gap(
-            original_gap, candidate_gap, left, right,
+            original_gap, original_gap, left, right,
             {row[0].span.end for row in selector_rows},
             {row[0].span.start for row in table_rows})
         lea_identity_alignment = (

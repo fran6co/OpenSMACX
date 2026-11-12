@@ -152,3 +152,13 @@ def test_listing_lines_selects_exact_overload_symbol_and_checks_its_bytes():
         listing_lines(listing, '?f@@YAHHH@Z', b'\xc3')
     with pytest.raises(ValueError, match='do not match'):
         listing_lines(listing, '?f@@YAHH@Z', b'\x90')
+
+
+def test_undecodable_trailing_data_is_shown_as_explicit_byte_rows():
+    from match_recovery.source_diff import _instructions
+    # ret, then switch-map bytes capstone cannot decode as an instruction.
+    code = bytes.fromhex("c3 0f 0b 0f")  # ret; ud2; truncated two-byte opcode
+    rows = _instructions(code, 0x1000)
+    assert sum(len(bytes.fromhex(row["bytes"])) for row in rows) == len(code)
+    assert rows[0]["mnemonic"] == "ret"
+    assert rows[-1]["mnemonic"] == ".byte" and rows[-1]["bytes"] == "0f"

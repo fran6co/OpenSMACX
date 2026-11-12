@@ -25,6 +25,10 @@ from .source_listing import listing_lines
 def _instructions(code, base, relocations=(), coff=None, lines=None):
     import capstone
     disassembler = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
+    # A compiled COMDAT carries its switch tables and selector maps after the
+    # body, where linear decoding stops. Show every such byte as an explicit
+    # `.byte` data row instead of refusing or silently dropping it.
+    disassembler.skipdata = True
     rows = []
     consumed = 0
     for ins in disassembler.disasm(code, base):
