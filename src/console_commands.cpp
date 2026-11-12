@@ -929,7 +929,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
     // The native no-candidate branch notifies before releasing the lock.
     if ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) != 0 &&
         candidate_count == 0) {
-        NetMsgPrimary.pop("NOUPGRADE", 5000, 0, nullptr);
+        veh_battle_msg("NOUPGRADE", nullptr);
         NetDaemonNet.unlock_veh();
         popup.close();
         return 0;
@@ -1505,7 +1505,7 @@ void Console::terraform(int vehicle_id, int terraform_id) { // 0x004D3470
 
     const int proto_id = Vehs[vehicle_id].proto_id;
     if (VehPrototypes[proto_id].plan != 9) {
-        NetMsgPrimary.pop("NEEDTERRAFORMERS", 5000, 0, nullptr);
+        veh_battle_msg("NEEDTERRAFORMERS", nullptr);
         return;
     }
 
@@ -1515,7 +1515,7 @@ void Console::terraform(int vehicle_id, int terraform_id) { // 0x004D3470
     const int is_sea = (tile->climate & ~0x1F) < 0x60;
     const uint8_t triad = Chassis[VehPrototypes[proto_id].chassis_id].triad;
     if (triad != TRIAD_AIR && is_sea != (triad == TRIAD_SEA)) {
-        NetMsgPrimary.pop("TERRASEA", 5000, 0, nullptr);
+        veh_battle_msg("TERRASEA", nullptr);
         return;
     }
 
@@ -1540,11 +1540,11 @@ void Console::terraform(int vehicle_id, int terraform_id) { // 0x004D3470
 
     if (Terraforming[terraform_id].prerequisite_tech[is_sea] < -1) {
         if (Terraforming[terraform_id].prerequisite_tech[!is_sea] < -1) {
-            NetMsgPrimary.pop("NOTATALL", 5000, 0, nullptr);
+            veh_battle_msg("NOTATALL", nullptr);
         } else if (is_sea) {
-            NetMsgPrimary.pop("NOTATSEA", 5000, 0, nullptr);
+            veh_battle_msg("NOTATSEA", nullptr);
         } else {
-            NetMsgPrimary.pop("NOTONLAND", 5000, 0, nullptr);
+            veh_battle_msg("NOTONLAND", nullptr);
         }
         return;
     }
@@ -1565,40 +1565,40 @@ void Console::terraform(int vehicle_id, int terraform_id) { // 0x004D3470
         say_tech(StringTemp, Terraforming[terraform_id].prerequisite_tech[is_sea], 0);
         parse_says(0, StringTemp, -1, -1);
         if (terraform_id == TERRA_MAGTUBE) {
-            NetMsgPrimary.pop("HASROAD", 5000, 0, nullptr);
+            veh_battle_msg("HASROAD", nullptr);
         } else if (terraform_id == TERRA_SOIL_ENR) {
-            NetMsgPrimary.pop("HASFARM", 5000, 0, nullptr);
+            veh_battle_msg("HASFARM", nullptr);
         } else {
-            NetMsgPrimary.pop("NOTUNTILTECH", 5000, 0, nullptr);
+            veh_battle_msg("NOTUNTILTECH", nullptr);
         }
         return;
     }
 
     if (base_who(x, y) >= 0) {
-        NetMsgPrimary.pop("NOTBASE", 5000, 0, nullptr);
+        veh_battle_msg("NOTBASE", nullptr);
         return;
     }
     if (Terraforming[terraform_id].bit != 0 &&
         (bit_at(x, y) & Terraforming[terraform_id].bit) == Terraforming[terraform_id].bit) {
         // name and name_sea are read as a two-entry run.
         parse_says(0, (&Terraforming[terraform_id].name)[is_sea], -1, -1);
-        NetMsgPrimary.pop("ALREADYBUILT", 5000, 0, nullptr);
+        veh_battle_msg("ALREADYBUILT", nullptr);
         return;
     }
     if ((bit_at(x, y) & BIT_MONOLITH) != 0 && Terraforming[terraform_id].bit != 0 &&
         terraform_id != TERRA_ROAD && terraform_id != TERRA_MAGTUBE &&
         terraform_id != TERRA_PLANT_FUNGUS) {
-        NetMsgPrimary.pop("NOTONMONOLITH", 5000, 0, nullptr);
+        veh_battle_msg("NOTONMONOLITH", nullptr);
         return;
     }
     if (is_sea && (map_loc(x, y)->climate & ~0x1F) < 0x40 &&
         terraform_id != TERRA_RAISE_LAND && terraform_id != TERRA_LOWER_LAND) {
         if ((Players[faction_id_].rule_flags & RFLAG_AQUATIC) == 0) {
-            NetMsgPrimary.pop("LOWTIDAL", 5000, 0, nullptr);
+            veh_battle_msg("LOWTIDAL", nullptr);
             return;
         }
         if (!has_tech(0x3E, faction_id_)) {
-            NetMsgPrimary.pop("NEEDADVECOENG", 5000, 0, nullptr);
+            veh_battle_msg("NEEDADVECOENG", nullptr);
             return;
         }
     }
@@ -1614,12 +1614,12 @@ void Console::terraform(int vehicle_id, int terraform_id) { // 0x004D3470
         if ((Terraforming[terraform_id].bit & 0x208000u) == 0) {
             strcat(StringTemp, "1");
         }
-        NetMsgPrimary.pop(StringTemp, 5000, 0, nullptr);
+        veh_battle_msg(StringTemp, nullptr);
         return;
     }
     if (!is_sea && rocky_at(x, y) > 0x40 &&
         (Terraforming[terraform_id].bit & 0x208000u) != 0) {
-        NetMsgPrimary.pop("NOTINROCKY", 5000, 0, nullptr);
+        veh_battle_msg("NOTINROCKY", nullptr);
         return;
     }
 
@@ -1630,24 +1630,24 @@ void Console::terraform(int vehicle_id, int terraform_id) { // 0x004D3470
         if ((improvement & BIT_ROAD) != 0) {
             if (!has_tech(Rules.tech_build_roads_fungus, faction_id_)) {
                 if (Rules.tech_build_roads_fungus < 0) {
-                    NetMsgPrimary.pop("NOTINFUNGUS", 5000, 0, nullptr);
+                    veh_battle_msg("NOTINFUNGUS", nullptr);
                 } else {
                     StringTemp[0] = 0;
                     say_tech(StringTemp, Rules.tech_build_roads_fungus, 0);
                     parse_says(0, StringTemp, -1, -1);
-                    NetMsgPrimary.pop("NOTYETFUNGUS", 5000, 0, nullptr);
+                    veh_battle_msg("NOTYETFUNGUS", nullptr);
                 }
                 return;
             }
         } else if (improvement != 0) {
             if (!has_tech(Rules.tech_improve_fungus_sqr, faction_id_)) {
                 if (Rules.tech_improve_fungus_sqr < 0) {
-                    NetMsgPrimary.pop("NOTINFUNGUS", 5000, 0, nullptr);
+                    veh_battle_msg("NOTINFUNGUS", nullptr);
                 } else {
                     StringTemp[0] = 0;
                     say_tech(StringTemp, Rules.tech_improve_fungus_sqr, 0);
                     parse_says(0, StringTemp, -1, -1);
-                    NetMsgPrimary.pop("NOTYETFUNGUS", 5000, 0, nullptr);
+                    veh_battle_msg("NOTYETFUNGUS", nullptr);
                 }
                 return;
             }
@@ -1657,7 +1657,7 @@ void Console::terraform(int vehicle_id, int terraform_id) { // 0x004D3470
     switch (terraform_id) {
     case TERRA_SOLAR_TIDAL:
         if (energy_yield(faction_id_, -1, x, y, 1) == 0) {
-            NetMsgPrimary.pop("LOWSOLAR", 5000, 0, nullptr);
+            veh_battle_msg("LOWSOLAR", nullptr);
             return;
         }
         break;
@@ -1698,7 +1698,7 @@ void Console::terraform(int vehicle_id, int terraform_id) { // 0x004D3470
             if (on_map(adjacent_x, adjacent_y) &&
                 !is_ocean(adjacent_x, adjacent_y) &&
                 (bit_at(adjacent_x, adjacent_y) & BIT_RIVER) != 0) {
-                NetMsgPrimary.pop("NOAQUIFER", 5000, 0, nullptr);
+                veh_battle_msg("NOAQUIFER", nullptr);
                 return;
             }
         }
@@ -1715,18 +1715,18 @@ void Console::terraform(int vehicle_id, int terraform_id) { // 0x004D3470
     case TERRA_RAISE_LAND:
     case TERRA_LOWER_LAND: {
         if ((GameDataStateStorage.fields_.game_rules_ & 0x00800000u) != 0) {
-            NetMsgPrimary.pop("NOTINSCENARIO", 5000, 0, nullptr);
+            veh_battle_msg("NOTINSCENARIO", nullptr);
             return;
         }
         if (terraform_id == TERRA_RAISE_LAND) {
             const int level = alt_at(x, y);
             if (level < 3) {
                 if (level >= 2) {
-                    NetMsgPrimary.pop("SEATOOHIGH", 5000, 0, nullptr);
+                    veh_battle_msg("SEATOOHIGH", nullptr);
                     return;
                 }
             } else if (level >= 6) {
-                NetMsgPrimary.pop("TOOHIGH", 5000, 0, nullptr);
+                veh_battle_msg("TOOHIGH", nullptr);
                 return;
             }
         } else if (terraform_id == TERRA_LOWER_LAND) {
@@ -1734,10 +1734,10 @@ void Console::terraform(int vehicle_id, int terraform_id) { // 0x004D3470
             if (level < 3) {
                 if (level == 0) {
                     // No return: the order is given anyway.
-                    NetMsgPrimary.pop("SEATOOLOW", 5000, 0, nullptr);
+                    veh_battle_msg("SEATOOLOW", nullptr);
                 }
             } else if (level <= 3) {
-                NetMsgPrimary.pop("TOOLOW", 5000, 0, nullptr);
+                veh_battle_msg("TOOLOW", nullptr);
                 return;
             }
         }
@@ -1901,23 +1901,23 @@ void Console::destroy(int veh_id) {
     Popup popup;
 
     if (not_my_turn()) {
-        NetMsgPrimary.pop(ConsoleStrSimulNo, 5000, 0, 0);
+        veh_battle_msg(ConsoleStrSimulNo, nullptr);
         return;
     }
     if (veh_ready(veh_id) == 0) {
-        NetMsgPrimary.pop(ConsoleStrUnitMoved, 5000, 0, 0);
+        veh_battle_msg(ConsoleStrUnitMoved, nullptr);
         return;
     }
     if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, -1) != 0) {
         return;
     }
     if (not_my_turn()) {
-        NetMsgPrimary.pop(ConsoleStrSimulNo2, 5000, 0, 0);
+        veh_battle_msg(ConsoleStrSimulNo2, nullptr);
         NetDaemonNet.unlock_veh();
         return;
     }
     if (veh_ready(veh_id) == 0) {
-        NetMsgPrimary.pop(ConsoleStrUnitMoved2, 5000, 0, 0);
+        veh_battle_msg(ConsoleStrUnitMoved2, nullptr);
         NetDaemonNet.unlock_veh();
         return;
     }
@@ -1926,27 +1926,26 @@ void Console::destroy(int veh_id) {
     const int vx = Vehs[veh_id].x;
     const uint8_t faction = Vehs[veh_id].faction_id;
     Map *const tile = map_loc(vx, vy);
-    const bool is_ocean = (tile->climate & 0xE0) < 0x60;
+    const bool ocean = ::is_ocean(vx, vy) != 0;
     const int proto_id = Vehs[veh_id].proto_id;
     const int weapon_id = VehPrototypes[proto_id].weapon_id;
 
     if ((Weapon[weapon_id].offense_rating == 0) &&
         (Weapon[weapon_id].mode != WPN_MODE_TERRAFORMER)) {
-        NetMsgPrimary.pop(ConsoleStrOnlyCombat, 5000, 0, 0);
+        veh_battle_msg(ConsoleStrOnlyCombat, nullptr);
         NetDaemonNet.unlock_veh();
         return;
     }
-    if (((tile->bit & 1) != 0) && ((tile->val2 & 0xF) < 8) &&
-        ((tile->val2 & 0xF) >= 0)) {
+    if (base_who(vx, vy) >= 0) {
         NetDaemonNet.unlock_veh();
-        NetMsgPrimary.pop(ConsoleStrNotBase, 5000, 0, 0);
+        veh_battle_msg(ConsoleStrNotBase, nullptr);
         return;
     }
 
     const int triad = Chassis[VehPrototypes[proto_id].chassis_id].triad;
-    if ((triad != 2) && (static_cast<int>(is_ocean) != (triad == 1))) {
+    if ((triad != 2) && (static_cast<int>(ocean) != (triad == 1))) {
         NetDaemonNet.unlock_veh();
-        NetMsgPrimary.pop(ConsoleStrNotInTriad, 5000, 0, 0);
+        veh_battle_msg(ConsoleStrNotInTriad, nullptr);
         return;
     }
 
@@ -1968,14 +1967,14 @@ void Console::destroy(int veh_id) {
             continue;
         }
         // Native4D5839 uses its saved ocean boolean, not the vehicle's x/2.
-        dialogs.item(StringTable.get(is_ocean ? Terraforming[a].name_sea
+        dialogs.item(StringTable.get(ocean ? Terraforming[a].name_sea
                                              : Terraforming[a].name), abil_flag);
         item_count++;
     }
 
     if (item_count == 0) {
         NetDaemonNet.unlock_veh();
-        NetMsgPrimary.pop(ConsoleStrNotHere, 5000, 0, 0);
+        veh_battle_msg(ConsoleStrNotHere, nullptr);
         return;
     }
 
@@ -2600,7 +2599,7 @@ void Console::use_ability(int vehicle_id) {
     // tile state.  The message and timing are shared with the other Console
     // order handlers.
     if (not_my_turn() != 0) {
-        NetMsgPrimary.pop("SIMULNO", 5000, 0, nullptr);
+        veh_battle_msg("SIMULNO", nullptr);
         return;
     }
 
@@ -2612,13 +2611,13 @@ void Console::use_ability(int vehicle_id) {
          VehPrototypes[Vehs[vehicle_id].proto_id].plan == PLAN_FUNGAL_MISSILE);
 
     if (!entry_ability_mask && !missile_former) {
-        NetMsgPrimary.pop("NOABILITY", 5000, 0, nullptr);
+        veh_battle_msg("NOABILITY", nullptr);
         return;
     }
     if (entry_ability_mask && !missile_former &&
         (Vehs[vehicle_id].moves_expended != 0 ||
          veh_ready(vehicle_id) == 0)) {
-        NetMsgPrimary.pop("UNITMOVED", 5000, 0, nullptr);
+        veh_battle_msg("UNITMOVED", nullptr);
         return;
     }
 
@@ -2628,7 +2627,7 @@ void Console::use_ability(int vehicle_id) {
     // the ordinary airdrop cursor behavior.
     if (missile_former) {
         if (base_who(entry_x, entry_y) >= 0) {
-            NetMsgPrimary.pop("MISSILEBASE", 5000, 0, nullptr);
+            veh_battle_msg("MISSILEBASE", nullptr);
             return;
         }
         // The tectonic radius count is RadiusRange[altitude + 1 - 3], the
@@ -2637,7 +2636,7 @@ void Console::use_ability(int vehicle_id) {
         int radius_count;
         if (VehPrototypes[Vehs[vehicle_id].proto_id].plan == PLAN_TECTONIC_MISSILE) {
             if (is_ocean(entry_x, entry_y)) {
-                NetMsgPrimary.pop("TECTONICOCEAN", 5000, 0, nullptr);
+                veh_battle_msg("TECTONICOCEAN", nullptr);
                 return;
             }
             radius_count = 1;
@@ -5029,6 +5028,13 @@ void Console::editor_kill_veh(int veh_id) {
     kill(vehicle);
 }
 
+// WORKAROUND(inline): cursor-coordinate accessors spending /Ob2 budget. With
+// editor_who_inline, eight expansions (any of the first nine argument pairs;
+// position only moves register ties) give the image's 29-state EH map and its
+// out-of-line five-argument start; zero gives 34 states, all 24 give 24. The
+// original spent this budget on something not yet identified.
+static inline int veh_cursor_x() { return ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_]; }
+static inline int veh_cursor_y() { return ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]; }
 // ORIGINAL: 0x004DED00 ?editor_veh@Console@@QAEXXZ 0x004DED00-0x004DF4E5;0x0065BD30-0x0065BE73
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004ded00.cpp records the original entry and full body/unwind spans; retained seed is not accepted source structure.", "Task console-scenario-owner-wave and its native grants authorize the thirteen owner methods, typed persistent editor state, existing Popup item sorting, and genuine technology-bit storage. Original instructions resolve callee argument roles and field ownership; dual configured compiler trials and host controls are diagnostics, not acceptance."], "reason": "Recover the selected scenario-editor operation in its existing typed Console owner, retaining its original spans, seed provenance and historical obligations."}
 // TRIED: real RAII locals (Popup for the outer/who dialogs, plus individually-declared Scroll/FlatButton/BasePop/Spot/ Dialogs/Dialog/StringStruct/Sprite/Heap locals for the tile-edit-window cleanup block) so VC6 emits the SEH prologue/epilogue and destructor cascade itself, with item()/veh_avail/veh_init/bit_set/synch_bit/draw_tile argument order verified against raw disasm; compiles, MISMATCH #2 (this function has ~15 embedded local aggregates sharing/reusing stack ranges across mutually exclusive branches - true byte-exactness needs the exact source-level object layout, not attempted further here).
@@ -5071,7 +5077,8 @@ again:
         }
         case 2:
         {
-            const int chosen = editor_who(ScenarioVehicleFaction, 0);
+            // WORKAROUND(inline): the image's editor_who copy calls start 0x0043EF70 out of line.
+            const int chosen = editor_who_inline(ScenarioVehicleFaction, 0);
             if (chosen >= 0) ScenarioVehicleFaction = chosen;
             goto again;
         }
@@ -5082,14 +5089,14 @@ again:
 
         if (selected_prototype == 0x13) {
             ScenarioVehicleFaction = 0;
-            bit_set(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
-                    ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 0x20, 1);
-            bit_set(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
-                    ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 0x0028805C, 0);
-            synch_bit(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
-                      ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 1);
-            synch_bit(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
-                      ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 2);
+            bit_set(veh_cursor_x(),
+                    veh_cursor_y(), 0x20, 1);
+            bit_set(veh_cursor_x(),
+                    veh_cursor_y(), 0x0028805C, 0);
+            synch_bit(veh_cursor_x(),
+                      veh_cursor_y(), 1);
+            synch_bit(veh_cursor_x(),
+                      veh_cursor_y(), 2);
             synch_bit(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
                       ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 3);
             synch_bit(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
@@ -6572,7 +6579,7 @@ void Console::corner_the_market() { // 0x004E2000
     if (PlayersData[faction_id].corner_market_turn > GameDataStateStorage.fields_.turn_current_num_) {
         parse_num(0, static_cast<int>(game_year(PlayersData[faction_id].corner_market_turn)));
         NetMsgPrimary.pop("CORNERALREADY", 5000, 0, nullptr);
-        return;
+        goto shared_return;
     }
 
     if (PlayersData[faction_id].energy_reserves < amount) {
@@ -6600,6 +6607,8 @@ void Console::corner_the_market() { // 0x004E2000
     parse_num(0, static_cast<int>(game_year(PlayersData[faction_id].corner_market_turn)));
     parse_num(1, PlayersData[faction_id].corner_market_active);
     popp(ScriptPopupFile, "CORNERING", 0, "econwin_sm.pcx", nullptr);
+shared_return:
+    ;
 }
 
 /*
