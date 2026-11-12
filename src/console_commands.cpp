@@ -1899,6 +1899,7 @@ void Console::destroy(int veh_id) {
     // The original's UI cleanup addresses all belong to this one Popup.
     // Its genuine member/base lifetimes own normal and exceptional teardown.
     Popup popup;
+    int item_count = 0;
 
     if (not_my_turn()) {
         veh_battle_msg(ConsoleStrSimulNo, nullptr);
@@ -1908,7 +1909,7 @@ void Console::destroy(int veh_id) {
         veh_battle_msg(ConsoleStrUnitMoved, nullptr);
         return;
     }
-    if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, -1) != 0) {
+    if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, 0) != 0) {
         return;
     }
     if (not_my_turn()) {
@@ -1923,10 +1924,10 @@ void Console::destroy(int veh_id) {
     }
 
     const int vy = Vehs[veh_id].y;
+    const int faction = Vehs[veh_id].faction_id;
     const int vx = Vehs[veh_id].x;
-    const uint8_t faction = Vehs[veh_id].faction_id;
     Map *const tile = map_loc(vx, vy);
-    const bool ocean = ::is_ocean(vx, vy) != 0;
+    const int ocean = ::is_ocean(vx, vy);
     const int proto_id = Vehs[veh_id].proto_id;
     const int weapon_id = VehPrototypes[proto_id].weapon_id;
 
@@ -1943,7 +1944,7 @@ void Console::destroy(int veh_id) {
     }
 
     const int triad = Chassis[VehPrototypes[proto_id].chassis_id].triad;
-    if ((triad != 2) && (static_cast<int>(ocean) != (triad == 1))) {
+    if ((triad != 2) && (ocean != (triad == 1))) {
         NetDaemonNet.unlock_veh();
         veh_battle_msg(ConsoleStrNotInTriad, nullptr);
         return;
@@ -1955,7 +1956,6 @@ void Console::destroy(int veh_id) {
     popup.start(PopupStartCaption, title, -1, nullptr, 0x40);
 
     Dialogs &dialogs = popup.dialogs();
-    int item_count = 0;
     for (int a = 0; a < 0x13; a++) {
         // Preserve the original exclusion branches before reading this row.
         if ((a == 5 && (tile_flags & 8) != 0) ||
@@ -1996,7 +1996,7 @@ void Console::destroy(int veh_id) {
         }
         if ((PlayersData[faction].diplo_treaties[territory] & DTREATY_VENDETTA) == 0) {
             if (IsMultiplayerNet != 0) {
-                message_data(0x2440, 0, 0, faction, territory, -1);
+                message_data(0x2440, 0, faction, territory, -1, 0);
                 NetDaemonNet.await_exec(0);
                 message_data(0x2214, 0, 0, 0, 0, 0);
             } else {
@@ -4795,7 +4795,7 @@ void Console::editor_diff() {
 namespace {
 
 void append_decimal(char *output, int value) {
-    char digits[16];
+    char digits[80];
     _itoa(value, digits, 10);
     ::strcat(output, digits);
 }
@@ -4805,6 +4805,19 @@ void update_then_redraw_vehicle_editor_tile(const Veh &vehicle) {
     draw_tile(vehicle.x, vehicle.y, 1);
 }
 
+}
+
+// WORKAROUND(inline): popup.cpp's popup_set_write_check_bit (0x0051DCC0) body,
+// visible here so editor_edit_veh expands it as the image does: each flag test
+// lands in one frame temporary (the parameter copy) before the set/clear branch
+// (0x004DDABD..0x004DDBFD).
+static inline void popup_set_write_check_bit_inline(int bit_index, int enabled) {
+    if (enabled != 0) { const unsigned int mask = 1U << static_cast<unsigned int>(bit_index);
+        PopupWriteCheckState |= static_cast<int>(mask); } else { int value = PopupWriteCheckState;
+        const unsigned int clear_mask = 1U << static_cast<unsigned int>(bit_index);
+        value &= ~static_cast<int>(clear_mask);
+        PopupWriteCheckState = value;
+    }
 }
 
 // ORIGINAL: 0x004DDA50 ?editor_edit_veh@Console@@QAEXH@Z 0x004DDA50-0x004DE95B;0x0065B97E-0x0065BC13
@@ -4818,10 +4831,9 @@ void Console::editor_edit_veh(int vehicle_id) {
         if (ConsoleGlobal.cursor_active_ != 0) {
             vehicle_id = ConsoleGlobal.selected_vehicle_;
         } else {
-            const int history = ConsoleGlobal.cursor_history_index_;
-            const int x = ConsoleGlobal.cursor_history_x_[history];
-            const int y = ConsoleGlobal.cursor_history_y_[history];
-            const int found = veh_at(x, y);
+            const int found = veh_at(
+                ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]);
             if (found < 0) {
                 return;
             }
@@ -4832,170 +4844,161 @@ void Console::editor_edit_veh(int vehicle_id) {
         }
     }
 
-    Veh &vehicle = Vehs[vehicle_id];
-    const VehPrototype &initial_prototype = VehPrototypes[vehicle.proto_id];
-
-    int checks = PopupWriteCheckState;
-    const uint16_t original_flags = vehicle.flags;
-    checks = (checks & ~0x01) | ((original_flags & VFLAG_IS_OBJECTIVE) ? 0x01 : 0);
-    checks = (checks & ~0x02) | ((original_flags & 0x0080) ? 0x02 : 0);
-    checks = (checks & ~0x04) | ((original_flags & 0x0100) ? 0x04 : 0);
-    checks = (checks & ~0x08) | ((original_flags & 0x0200) ? 0x08 : 0);
-    checks = (checks & ~0x10) | ((original_flags & VFLAG_LURKER) ? 0x10 : 0);
-    checks = (checks & ~0x20) | ((original_flags & VFLAG_INVISIBLE) ? 0x20 : 0);
-    checks = (checks & ~0x40) | ((vehicle.state & VSTATE_MONOLITH_UPGRADED) ? 0x40 : 0);
-    PopupWriteCheckState = checks;
+    popup_set_write_check_bit_inline(0, (Vehs[vehicle_id].flags & VFLAG_IS_OBJECTIVE) != 0);
+    popup_set_write_check_bit_inline(1, (Vehs[vehicle_id].flags & 0x0080) != 0);
+    popup_set_write_check_bit_inline(2, (Vehs[vehicle_id].flags & 0x0100) != 0);
+    popup_set_write_check_bit_inline(3, (Vehs[vehicle_id].flags & 0x0200) != 0);
+    popup_set_write_check_bit_inline(4, (Vehs[vehicle_id].flags & VFLAG_LURKER) != 0);
+    popup_set_write_check_bit_inline(5, (Vehs[vehicle_id].flags & VFLAG_INVISIBLE) != 0);
+    popup_set_write_check_bit_inline(6, Vehs[vehicle_id].state & VSTATE_MONOLITH_UPGRADED);
 
     StringTemp[0] = '\0';
-    ::strcat(StringTemp, initial_prototype.veh_name);
-    ::strcat(StringTemp, " ");
-    ::strcat(StringTemp, "(");
+    strcat(StringTemp, VehPrototypes[Vehs[vehicle_id].proto_id].veh_name);
+    strcat(StringTemp, " ");
+    strcat(StringTemp, "(");
     append_decimal(StringTemp, vehicle_id);
-    ::strcat(StringTemp, ")");
+    strcat(StringTemp, ")");
     if (x_pop_short("EDITVEH", 0x41, nullptr) < 0) {
         return;
     }
 
-    vehicle.flags &= static_cast<uint16_t>(0xF81F);
-    vehicle.state &= ~VSTATE_MONOLITH_UPGRADED;
-    checks = PopupWriteCheckState;
-    if (checks & 0x01) vehicle.flags |= VFLAG_IS_OBJECTIVE;
-    if (checks & 0x02) vehicle.flags |= 0x0080;
-    if (checks & 0x04) vehicle.flags |= 0x0100;
-    if (checks & 0x08) vehicle.flags |= 0x0200;
-    if (checks & 0x10) vehicle.flags |= VFLAG_LURKER;
-    if (checks & 0x20) vehicle.flags |= VFLAG_INVISIBLE;
-    if (checks & 0x40) vehicle.state |= VSTATE_MONOLITH_UPGRADED;
-    if (vehicle.flags & VFLAG_INVISIBLE) {
-        // 4DDD47..5E pushes -1, y, x for owner_set(x, y, faction).
-        owner_set(vehicle.x, vehicle.y, -1);
+    Vehs[vehicle_id].flags &= 0xF81F;
+    Vehs[vehicle_id].state &= ~VSTATE_MONOLITH_UPGRADED;
+    if (PopupWriteCheckState & 0x01) Vehs[vehicle_id].flags |= VFLAG_IS_OBJECTIVE;
+    if (PopupWriteCheckState & 0x02) Vehs[vehicle_id].flags |= 0x0080;
+    if (PopupWriteCheckState & 0x04) Vehs[vehicle_id].flags |= 0x0100;
+    if (PopupWriteCheckState & 0x08) Vehs[vehicle_id].flags |= 0x0200;
+    if (PopupWriteCheckState & 0x10) Vehs[vehicle_id].flags |= VFLAG_LURKER;
+    if (PopupWriteCheckState & 0x20) Vehs[vehicle_id].flags |= VFLAG_INVISIBLE;
+    if (PopupWriteCheckState & 0x40) Vehs[vehicle_id].state |= VSTATE_MONOLITH_UPGRADED;
+    if (Vehs[vehicle_id].flags & VFLAG_INVISIBLE) {
+        owner_set(Vehs[vehicle_id].x, Vehs[vehicle_id].y, -1);
     }
-    update_then_redraw_vehicle_editor_tile(vehicle);
+    update_then_redraw_vehicle_editor_tile(Vehs[vehicle_id]);
 
     if (ConsoleGroupAction == 1) {
         popup.start(PopupStartCaption, "EDITMORALE", -1, nullptr, 0x40);
         for (int morale_id = 0; morale_id < MaxMoraleNum; ++morale_id) {
-            LPSTR name = Morale[morale_id].name;
-            const VehPrototype &listed_prototype = VehPrototypes[vehicle.proto_id];
-            if (vehicle.proto_id < 0x40 &&
-                (Weapon[listed_prototype.weapon_id].offense_rating < 0 || vehicle.proto_id == 0x0F)) {
-                name = Morale[morale_id].name_lifecycle;
-            }
-            popup.dialogs().item(StringTable.get(name), morale_id);
-            if (morale_veh(vehicle_id, 1, 0) == morale_id) {
+            StringTemp[0] = '\0';
+            strcat(StringTemp, StringTable.get(
+                Vehs[vehicle_id].proto_id < 0x40
+                    && (Weapon[VehPrototypes[Vehs[vehicle_id].proto_id].weapon_id].offense_rating < 0
+                        || Vehs[vehicle_id].proto_id == 0x0F)
+                ? Morale[morale_id].name_lifecycle : Morale[morale_id].name));
+            popup.dialogs().item(StringTemp, morale_id);
+            if (morale_id == morale_veh(vehicle_id, 1, 0)) {
                 popup.set_value(morale_id);
             }
         }
-
-        const int effective_morale = morale_veh(vehicle_id, 1, 0);
-        const uint8_t old_morale = vehicle.morale;
+        const int bonus = morale_veh(vehicle_id, 1, 0) - Vehs[vehicle_id].morale;
         const int selected = popup.exec(0, nullptr);
         if (selected < 0) {
             return;
         }
-
-        int morale = selected - (effective_morale - old_morale);
-        if (morale < 0) morale = 0;
-        if (morale > 6) morale = 6;
-        vehicle.morale = static_cast<uint8_t>(morale);
-
-        if (vehicle.faction_id == 0) {
-            if (selected != 0) {
-                for (;;) {
-                    const int alien_morale = static_cast<int>(morale_alien(vehicle_id, 0));
-                    const unsigned int rank = (vehicle.flags >> 3) & 3;
-                    if (alien_morale <= selected || rank == 0) break;
-                    vehicle.flags = static_cast<uint16_t>(
-                        (rank * 8 - 8) | (vehicle.flags & 0xFFE7));
+        int morale = selected - bonus;
+        if (morale < 0) {
+            morale = 0;
+        } else if (morale > 6) {
+            morale = 6;
+        }
+        Vehs[vehicle_id].morale = static_cast<uint8_t>(morale);
+        if (!Vehs[vehicle_id].faction_id) {
+            if (selected) {
+                while (1) {
+                    if (selected >= morale_alien(vehicle_id, 0)) {
+                        break;
+                    }
+                    const int rank = (Vehs[vehicle_id].flags >> 3) & 3;
+                    if (!rank) {
+                        break;
+                    }
+                    Vehs[vehicle_id].flags = static_cast<int16_t>(
+                        (rank * 8 - 8) | (Vehs[vehicle_id].flags & ~0x18));
                 }
             }
             if (selected < 7) {
-                for (;;) {
-                    const int alien_morale = static_cast<int>(morale_alien(vehicle_id, 0));
-                    const unsigned int rank = (vehicle.flags >> 3) & 3;
-                    if (selected <= alien_morale || rank >= 3) break;
-                    vehicle.flags = static_cast<uint16_t>(
-                        (rank * 8 + 8) | (vehicle.flags & 0xFFE7));
+                while (1) {
+                    if (selected <= morale_alien(vehicle_id, 0)) {
+                        break;
+                    }
+                    const int rank = (Vehs[vehicle_id].flags >> 3) & 3;
+                    if (rank >= 3) {
+                        break;
+                    }
+                    Vehs[vehicle_id].flags = static_cast<int16_t>(
+                        (rank * 8 + 8) | (Vehs[vehicle_id].flags & ~0x18));
                 }
             }
         }
-        update_then_redraw_vehicle_editor_tile(vehicle);
-        return;
-    }
-
-    if (ConsoleGroupAction == 2) {
+        ConsoleGlobal.update_data(0);
+    } else if (ConsoleGroupAction == 2) {
         StringTemp[0] = '\0';
-        append_decimal(StringTemp, static_cast<uint8_t>(vehicle.order));
+        append_decimal(StringTemp, static_cast<uint8_t>(Vehs[vehicle_id].order));
         parse_says(0, StringTemp, -1, -1);
         StringTemp[0] = '\0';
-        append_decimal(StringTemp, vehicle.moves_expended);
+        append_decimal(StringTemp, Vehs[vehicle_id].moves_expended);
         parse_says(1, StringTemp, -1, -1);
         StringTemp[0] = '\0';
-        append_decimal(StringTemp, vehicle.dmg_incurred);
+        append_decimal(StringTemp, Vehs[vehicle_id].dmg_incurred);
         parse_says(2, StringTemp, -1, -1);
-
-        const uint8_t input_fields_range =
-            Chassis[VehPrototypes[vehicle.proto_id].chassis_id].range;
-        if (input_fields_range > 1) {
+        if (Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].range > 1) {
             StringTemp[0] = '\0';
-            append_decimal(StringTemp, vehicle.terraforming_turns);
+            append_decimal(StringTemp, Vehs[vehicle_id].terraforming_turns);
             parse_says(3, StringTemp, -1, -1);
         }
-        const uint8_t dialog_range =
-            Chassis[VehPrototypes[vehicle.proto_id].chassis_id].range;
-        const char *dialog = dialog_range <= 1 ? "EDITVEH2" : "EDITVEH2A";
-        popup.start(PopupStartCaption, dialog, -1, nullptr, 0x44);
+        popup.start(PopupStartCaption,
+                    Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].range > 1
+                        ? "EDITVEH2A" : "EDITVEH2",
+                    -1, nullptr, 0x44);
         if (popup.exec(0, nullptr) < 0) {
             return;
         }
-        vehicle.order = static_cast<int8_t>(::atoi(ParseStrBuffer[0].str));
-        vehicle.moves_expended = static_cast<uint8_t>(::atoi(ParseStrBuffer[1].str));
-        vehicle.dmg_incurred = static_cast<uint8_t>(::atoi(ParseStrBuffer[2].str));
-        if (Chassis[VehPrototypes[vehicle.proto_id].chassis_id].range > 1) {
-            vehicle.terraforming_turns = static_cast<uint8_t>(::atoi(ParseStrBuffer[3].str));
+        Vehs[vehicle_id].order = static_cast<int8_t>(atoi(ParseStrBuffer[0].str));
+        Vehs[vehicle_id].moves_expended = static_cast<uint8_t>(atoi(ParseStrBuffer[1].str));
+        Vehs[vehicle_id].dmg_incurred = static_cast<uint8_t>(atoi(ParseStrBuffer[2].str));
+        if (Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].range > 1) {
+            Vehs[vehicle_id].terraforming_turns = static_cast<uint8_t>(atoi(ParseStrBuffer[3].str));
         }
-        update_then_redraw_vehicle_editor_tile(vehicle);
-        return;
-    }
-
-    if (ConsoleGroupAction == 3) {
+        update_then_redraw_vehicle_editor_tile(Vehs[vehicle_id]);
+    } else if (ConsoleGroupAction == 3) {
         popup.start(PopupStartCaption, "EDITVEHWHO", -1, nullptr, 0x42);
         for (int faction_id = 0; faction_id < MaxPlayerNum; ++faction_id) {
-            PluralityDefault = Players[faction_id].is_noun_plural;
             StringTemp[0] = '\0';
-            ::strcat(StringTemp, Players[faction_id].noun_faction);
-            GenderDefault = Players[faction_id].noun_gender;
+            strcat(StringTemp, get_noun(faction_id));
             popup.dialogs().item(StringTemp, faction_id);
         }
-        popup.set_value(vehicle.faction_id);
+        popup.set_value(Vehs[vehicle_id].faction_id);
         const int faction = popup.exec(0, nullptr);
         if (faction < 0) {
             return;
         }
-        vehicle.faction_id = static_cast<uint8_t>(faction);
-        ::draw_tile(vehicle.x, vehicle.y, 1);
+        Vehs[vehicle_id].faction_id = static_cast<uint8_t>(faction);
+        ::draw_tile(Vehs[vehicle_id].x, Vehs[vehicle_id].y, 1);
         ConsoleGlobal.update_data(0);
-        return;
-    }
-
-    if (ConsoleGroupAction == 4) {
+    } else if (ConsoleGroupAction == 4) {
         popup.start(PopupStartCaption, "EDITVEHHOME", -1, nullptr, 0x42);
         StringTemp[0] = '\0';
-        ::strcat(StringTemp, label_get(25));
+        strcat(StringTemp, label_get(25));
         popup.dialogs().item(StringTemp, 9999);
         for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
-            if (Bases[base_id].faction_id_current == vehicle.faction_id) {
+            if (Bases[base_id].faction_id_current == Vehs[vehicle_id].faction_id) {
                 popup.dialogs().item(Bases[base_id].name_string, base_id);
             }
         }
-        popup.set_value(vehicle.home_base_id < 0 ? 9999 : vehicle.home_base_id);
+        if (Vehs[vehicle_id].home_base_id < 0) {
+            popup.set_value(9999);
+        } else {
+            popup.set_value(Vehs[vehicle_id].home_base_id);
+        }
         int selected_base = popup.exec(0, nullptr);
         if (selected_base < 0) {
             return;
         }
-        if (selected_base == 9999) selected_base = -1;
-        vehicle.home_base_id = static_cast<int16_t>(selected_base);
-        ::draw_tile(vehicle.x, vehicle.y, 1);
+        if (selected_base == 9999) {
+            selected_base = -1;
+        }
+        Vehs[vehicle_id].home_base_id = static_cast<int16_t>(selected_base);
+        ::draw_tile(Vehs[vehicle_id].x, Vehs[vehicle_id].y, 1);
         ConsoleGlobal.update_data(0);
     }
 }
@@ -5048,7 +5051,7 @@ again:
         PopupModalState = 6;
         popup.start(PopupStartCaption, "EDITORUNIT", -1, nullptr, 0x40);
         for (int proto_idx = 0; proto_idx < MaxVehProtoNum; ++proto_idx) {
-            if (!(VehPrototypes[proto_idx].flags & 1u)) goto again;
+            if (!(VehPrototypes[proto_idx].flags & 1u)) continue;
             if (ScenarioVehicleMode || veh_avail(proto_idx, ScenarioVehicleFaction, -1) ||
                 proto_idx < MaxVehProtoFactionNum) {
                 StringTemp[0] = 0;
