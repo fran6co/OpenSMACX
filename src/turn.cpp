@@ -2023,23 +2023,21 @@ void __cdecl alien_fauna() {
                 break;
             }
         }
-        if (owner >= 0) continue;
-
-        if (BaseFindDist > 1 && BaseFindDist < 6 &&
-            (map_loc(x, y)->bit & BIT_FUNGUS) &&
-            (map_loc(x, y)->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF &&
-            !goody_at(x, y)) {
-            int veh_id;
-            if (rand() % 5 == 0 && ExpansionEnabled) {
-                veh_id = veh_init(15, 0, x, y);
-            } else {
-                veh_id = veh_init(8, 0, x, y);
-            }
-            // Original bug: redraws the stale (x2, y2), not the spawn tile.
-            if (veh_id >= 0 &&
-                alien_tile_vehicle_visible(veh_id, ConsoleGlobal.faction_id_)) {
-                draw_tile(x2, y2, 2);
-            }
+        if (owner >= 0 ||
+            BaseFindDist <= 1 || BaseFindDist >= 6 ||
+            !(map_loc(x, y)->bit & BIT_FUNGUS) ||
+            (map_loc(x, y)->climate & ~0x1F) < ALT_BIT_OCEAN_SHELF ||
+            goody_at(x, y)) continue;
+        int veh_id;
+        if (rand() % 5 == 0 && ExpansionEnabled) {
+            veh_id = veh_init(15, 0, x, y);
+        } else {
+            veh_id = veh_init(8, 0, x, y);
+        }
+        // Original bug: redraws the stale (x2, y2), not the spawn tile.
+        if (veh_id >= 0 &&
+            alien_tile_vehicle_visible(veh_id, ConsoleGlobal.faction_id_)) {
+            draw_tile(x2, y2, 2);
         }
     } while (++attempt < MapNativeLifeForms * 2 + 2);
 
@@ -2065,7 +2063,8 @@ void __cdecl alien_fauna() {
     for (int n = 0; n < count; ++n) {
         do {
             direction = (direction + 1) % 21;
-            x2 = wrap_map_x(x + RadiusOffsetX[direction]);
+            int tx = x + RadiusOffsetX[direction];
+            x2 = (MapIsFlat & 1) ? tx : (tx < 0 ? tx + MapLongitudeBounds : (tx >= MapLongitudeBounds ? tx - MapLongitudeBounds : tx));
             y2 = y + RadiusOffsetY[direction];
         } while (!on_map(x2, y2) ||
                  !(map_loc(x2, y2)->bit & BIT_FUNGUS) ||
