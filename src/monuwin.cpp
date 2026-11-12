@@ -42,13 +42,23 @@
 // RECOVERY_GENERATED: v1 vtable 0x0066C880 ? ??_7MonuWin@@6BWin@@@ 0x00477C80
 // RECOVERY_GENERATED: v1 vtable 0x0066C878 0x0066C880 ??_7MonuWin@@6BBuffer@@@ 0x00477C80
 
+// The window captions the two GraphicWin::init calls pass; each is
+// referenced only by MonuWin::init (0x4722BB, 0x472361) and lies in the
+// uninitialised .data tail after MonumentWindowCount.
+// RECOVERY_OBJECT: v2 0x007FD63C 0x007FD640 ?MonuWinWindowedTitle@@3PADA 0x00472230
+char MonuWinWindowedTitle[4];
+// RECOVERY_OBJECT: v2 0x007FD640 0x007FD644 ?MonuWinFullscreenTitle@@3PADA 0x00472230
+char MonuWinFullscreenTitle[4];
+
 // Main initialization pass.  The coordinate tables and sprite source
 // rectangles below are the observed constructor-owned UI data; all storage
 // is addressed through its recovered members rather than through self+offset.
 // ORIGINAL: 0x00472230 ?init@MonuWin@@QAEHXZ 0x00472230-0x004736DA;0x00656160-0x006561EE
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00472230; retired seed provenance git:d8200f17:src/unrecovered/00472230.cpp; original spans and historical lessons retained.", "image:477C80/477B10 member order and36DC extent; primary66C880 slots12/17/19/25/44.", "image:476A50 binds singleton7F9F58 and independent count7FD634; Player59C and MonumentFaction4F4 strides.", "image:4737EE..475E58 localized owner/grammar cases; 472230/4736E0 resource, clipping, sprite and Spot accesses."], "reason": "Genuine GraphicWin-derived MonuWin owner with actual FlatButton/Spot/Buffer/Sprite members, real callback slots and automatic lifetimes; localized parser owner and grammar inputs follow the original branches rather than current-faction stand-ins."}
 // symbol    ?init@MonuWin@@QAEHXZ
-// TRIED: two of the ~30 unrolled RECT-translate blocks (24 + 6, roughly 15% of the function's bytes) rewritten as a loop over an offset table instead of being unrolled per-field - semantically identical, not byte-exact for that region. Flic's embedded Buffer/Palette sub-object teardown (explicit dtor calls seen at the two cleanup tails) is not modelled since Flic is opaque in this TU; only its close() call is reproduced. Everything else (branches, GraphicWin::init/Buffer::init/Flic::init/decode_frame loop/load_pcx calls/all Sprite::extract calls/both BaseButton caption-button blocks) is a direct field-offset transcription.
+// TRIED: loops over static RECT tables (superseded 2026-11-12 by the image's
+// unrolled stores and offset_rect calls). Remaining: Font::line_advance is
+// expanded at 0x47238B but is an out-of-line function in buffer.cpp here.
 int MonuWin::init() {
   Buffer temporary;
   Flic animation;
@@ -56,126 +66,199 @@ int MonuWin::init() {
   window_width_ = 0x320;
   window_height_ = 0x258;
   spot_.init(0x40);
-
   field_A48_ = ReportIfGlobal.field_1E230_;
-  const bool fullscreen = field_A48_ != 0;
-  if (fullscreen) {
-    origin_x_ = (0x400 - window_width_) / 2;
-    origin_y_ = (0x300 - window_height_) / 2;
-    client_left_ = origin_x_;
-    client_top_ = origin_y_;
-    client_right_ = origin_x_ + window_width_;
-    client_bottom_ = origin_y_ + window_height_;
-    GraphicWin::init((WinScreenWidth - 0x400) / 2, WinScreenHeight - 0x300,
-                     0x400, 0x300, "", 0x1000000, 0, 0,
-                     0);
-  } else {
-    origin_x_ = origin_y_ = client_left_ = client_top_ = 0;
+  if (!field_A48_) {
+    origin_x_ = 0;
+    origin_y_ = 0;
+    client_left_ = 0;
+    client_top_ = 0;
     client_right_ = window_width_;
     client_bottom_ = window_height_;
-    GraphicWin::init(0, 0, window_width_, window_height_, "",
-                     0x1000000, 0, 0, 0);
+    GraphicWin::init(0, 0, 0x320, 0x258, MonuWinWindowedTitle, 0x1000000, 0, 0, 0);
+  } else {
+    const int width = window_width_;
+    const int height = window_height_;
+    const int x = (0x400 - width) / 2;
+    const int y = (0x300 - height) / 2;
+    origin_x_ = x;
+    origin_y_ = y;
+    client_left_ = x;
+    client_top_ = y;
+    client_right_ = x + width;
+    client_bottom_ = y + height;
+    GraphicWin::init((WinScreenWidth - 0x400) / 2, WinScreenHeight - 0x300, 0x400, 0x300,
+                     MonuWinFullscreenTitle, 0x1000000, 0, 0, 0);
   }
   frame_or_page_ = ReportIfGlobal.field_1E184_->line_advance();
   buffer_first_.init(0x400, 0x300, 0, 0);
-
-  // The animation and PCX resources are short-lived decode sources.  Their
-  // embedded Buffer/Palette and the temporary Buffer are ordinary C++
-  // subobjects and release through their destructors on every return path.
-  if (animation.init(&buffer_first_, const_cast<char *>("monument.flc"),
-                     0, 0, 0) != 0) {
+  if (animation.init(&buffer_first_, "monument.flc", 0, 0, 0)) {
     return 1;
   }
   animation.set_palette_offset(10);
-  const int monument = MonumentWindowCount;
-  const int frame_count = monument == 0xE ? 0xD : monument;
-  for (int frame = 0; frame < frame_count; ++frame) {
+  i = 0;
+  while (1) {
+    if (i >= (MonumentWindowCount == 0xE ? 0xD : MonumentWindowCount)) {
+      break;
+    }
     animation.decode_stored_frame();
+    i++;
   }
-  if (buffer_second_.load_pcx(monument < 5 ? "monzoom1.pcx" : "monzoom2.pcx",
-                           0, 0xA, 0xEC) != 0) {
+  if (buffer_second_.load_pcx(MonumentWindowCount < 5 ? "monzoom1.pcx" : "monzoom2.pcx",
+                              0, 0xA, 0xEC)) {
     return 1;
   }
-
-  // The original initializes a fixed set of rectangles.  These first grid
-  // hitboxes are shared by all type panels and are translated by the client
-  // origin before Spot::add is used by the redraw switch.
-  static const RECT source_rects[17] = {
-      {0x13f,0xca,0x1df,0x12b}, {0x90,0x2f,0x293,0x5b},
-      {0x65,0x76,0x2bd,0x1de}, {0x12d,0x1a9,0x159,0x1d3},
-      {0x1c7,0x1a9,0x1f3,0x1d3}, {0x12d,0x175,0x159,0x19f},
-      {0x1c7,0x175,0x1f3,0x19f}, {0xa3,0x1a9,0xcf,0x1d3},
-      {0x24e,0x1a9,0x27a,0x1d3}, {0xb7,0x175,0xe3,0x19f},
-      {0x23a,0x175,0x266,0x19f}, {0,0x1a9,0x2c,0x1d3},
-      {0x2ee,0x1a9,0x31a,0x1d3}, {0x25,0x175,0x51,0x19f},
-      {0x2cc,0x175,0x2f8,0x19f}, {0x45,0x141,0x71,0x16b},
-      {0x2aa,0x141,0x2d6,0x16b}};
-  for (i = 0; i < 17; ++i) {
-    rects_3134_[i] = source_rects[i];
-    rects_3134_[i].left += client_left_;
-    rects_3134_[i].right += client_left_;
-    rects_3134_[i].top += client_top_;
-    rects_3134_[i].bottom += client_top_;
-  }
-  static const RECT large_hit_rects[7] = {
-      {0xFE,0x1FF,0x138,0x231}, {0x1E0,0x1FF,0x21A,0x231},
-      {0xC0,0x1FF,0xFA,0x231}, {0x21E,0x1FF,0x258,0x231},
-      {0x81,0x1FF,0xBB,0x231}, {0x25D,0x1FF,0x297,0x231},
-      {0x16C,0x6F,0x1B3,0xAF}};
-  for (i = 0; i < 7; ++i) {
-    rects_366C_[i] = large_hit_rects[i];
-  }
-  if (monument == 0xE) {
+  rects_3134_[0].left = 0x13F;
+  rects_3134_[0].top = 0xCA;
+  rects_3134_[0].right = 0x1DF;
+  rects_3134_[0].bottom = 0x12B;
+  rects_3134_[3].left = 0x12D;
+  rects_3134_[3].top = 0x1A9;
+  rects_3134_[3].right = 0x159;
+  rects_3134_[3].bottom = 0x1D3;
+  rects_3134_[4].left = 0x1C7;
+  rects_3134_[4].top = 0x1A9;
+  rects_3134_[4].right = 0x1F3;
+  rects_3134_[4].bottom = 0x1D3;
+  rects_3134_[5].left = 0x12D;
+  rects_3134_[5].top = 0x175;
+  rects_3134_[5].right = 0x159;
+  rects_3134_[5].bottom = 0x19F;
+  rects_3134_[6].left = 0x1C7;
+  rects_3134_[6].top = 0x175;
+  rects_3134_[6].right = 0x1F3;
+  rects_3134_[6].bottom = 0x19F;
+  rects_3134_[7].left = 0xA3;
+  rects_3134_[7].top = 0x1A9;
+  rects_3134_[7].right = 0xCF;
+  rects_3134_[7].bottom = 0x1D3;
+  rects_3134_[8].left = 0x24E;
+  rects_3134_[8].top = 0x1A9;
+  rects_3134_[8].right = 0x27A;
+  rects_3134_[8].bottom = 0x1D3;
+  rects_3134_[9].left = 0xB7;
+  rects_3134_[9].top = 0x175;
+  rects_3134_[9].right = 0xE3;
+  rects_3134_[9].bottom = 0x19F;
+  rects_3134_[10].left = 0x23A;
+  rects_3134_[10].top = 0x175;
+  rects_3134_[10].right = 0x266;
+  rects_3134_[10].bottom = 0x19F;
+  rects_3134_[11].left = 0;
+  rects_3134_[11].top = 0x1A9;
+  rects_3134_[11].right = 0x2C;
+  rects_3134_[11].bottom = 0x1D3;
+  rects_3134_[12].left = 0x2EE;
+  rects_3134_[12].top = 0x1A9;
+  rects_3134_[12].right = 0x31A;
+  rects_3134_[12].bottom = 0x1D3;
+  rects_3134_[13].left = 0x25;
+  rects_3134_[13].top = 0x175;
+  rects_3134_[13].right = 0x51;
+  rects_3134_[13].bottom = 0x19F;
+  rects_3134_[14].left = 0x2CC;
+  rects_3134_[14].top = 0x175;
+  rects_3134_[14].right = 0x2F8;
+  rects_3134_[14].bottom = 0x19F;
+  rects_3134_[15].left = 0x45;
+  rects_3134_[15].top = 0x141;
+  rects_3134_[15].right = 0x71;
+  rects_3134_[15].bottom = 0x16B;
+  rects_3134_[16].left = 0x2AA;
+  rects_3134_[16].top = 0x141;
+  rects_3134_[16].right = 0x2D6;
+  rects_3134_[16].bottom = 0x16B;
+  rects_3134_[1].left = 0x90;
+  rects_3134_[1].top = 0x2F;
+  rects_3134_[1].right = 0x293;
+  rects_3134_[1].bottom = 0x5B;
+  rects_3134_[2].left = 0x65;
+  rects_3134_[2].top = 0x76;
+  rects_3134_[2].right = 0x2BD;
+  rects_3134_[2].bottom = 0x1DE;
+  if (MonumentWindowCount == 0xE) {
     rects_366C_[6].left = 0x148;
     rects_366C_[6].top = 6;
     rects_366C_[6].right = 0x1D6;
     rects_366C_[6].bottom = 0x6B;
+  } else {
+    rects_366C_[6].left = 0x16C;
+    rects_366C_[6].top = 0x6F;
+    rects_366C_[6].right = 0x1B3;
+    rects_366C_[6].bottom = 0xAF;
   }
-  for (i = 0; i < 7; ++i) {
-    rects_366C_[i].left += client_left_;
-    rects_366C_[i].right += client_left_;
-    rects_366C_[i].top += client_top_;
-    rects_366C_[i].bottom += client_top_;
-  }
-
-  // Load the player portrait sheet for each faction, extracting the selected
-  // faction's large portrait and the small/large faction marks into the two
-  // seven-element typed runs.  This follows Players[1..7]'s actual filename
-  // ownership; no pointer arithmetic across adjacent Sprite arrays is used.
-  for (int player = 1; player < MaxPlayerNum; ++player) {
+  rects_366C_[0].left = 0xFE;
+  rects_366C_[0].top = 0x1FF;
+  rects_366C_[0].right = 0x138;
+  rects_366C_[0].bottom = 0x231;
+  rects_366C_[1].left = 0x1E0;
+  rects_366C_[1].top = 0x1FF;
+  rects_366C_[1].right = 0x21A;
+  rects_366C_[1].bottom = 0x231;
+  rects_366C_[2].left = 0xC0;
+  rects_366C_[2].top = 0x1FF;
+  rects_366C_[2].right = 0xFA;
+  rects_366C_[2].bottom = 0x231;
+  rects_366C_[3].left = 0x21E;
+  rects_366C_[3].top = 0x1FF;
+  rects_366C_[3].right = 0x258;
+  rects_366C_[3].bottom = 0x231;
+  rects_366C_[4].left = 0x81;
+  rects_366C_[4].top = 0x1FF;
+  rects_366C_[4].right = 0xBB;
+  rects_366C_[4].bottom = 0x231;
+  rects_366C_[5].left = 0x25D;
+  rects_366C_[5].top = 0x1FF;
+  rects_366C_[5].right = 0x297;
+  rects_366C_[5].bottom = 0x231;
+  offset_rect(&rects_3134_[0], client_left_, client_top_);
+  offset_rect(&rects_3134_[3], client_left_, client_top_);
+  offset_rect(&rects_3134_[4], client_left_, client_top_);
+  offset_rect(&rects_3134_[5], client_left_, client_top_);
+  offset_rect(&rects_3134_[6], client_left_, client_top_);
+  offset_rect(&rects_3134_[7], client_left_, client_top_);
+  offset_rect(&rects_3134_[8], client_left_, client_top_);
+  offset_rect(&rects_3134_[9], client_left_, client_top_);
+  offset_rect(&rects_3134_[10], client_left_, client_top_);
+  offset_rect(&rects_3134_[11], client_left_, client_top_);
+  offset_rect(&rects_3134_[12], client_left_, client_top_);
+  offset_rect(&rects_3134_[13], client_left_, client_top_);
+  offset_rect(&rects_3134_[14], client_left_, client_top_);
+  offset_rect(&rects_3134_[15], client_left_, client_top_);
+  offset_rect(&rects_3134_[16], client_left_, client_top_);
+  offset_rect(&rects_3134_[1], client_left_, client_top_);
+  offset_rect(&rects_3134_[2], client_left_, client_top_);
+  offset_rect(&rects_366C_[6], client_left_, client_top_);
+  offset_rect(&rects_366C_[0], client_left_, client_top_);
+  offset_rect(&rects_366C_[1], client_left_, client_top_);
+  offset_rect(&rects_366C_[2], client_left_, client_top_);
+  offset_rect(&rects_366C_[3], client_left_, client_top_);
+  offset_rect(&rects_366C_[4], client_left_, client_top_);
+  offset_rect(&rects_366C_[5], client_left_, client_top_);
+  for (i = 1; i < MaxPlayerNum; i++) {
     StringTemp[0] = '\0';
-    strcat(StringTemp, Players[player].filename);
+    strcat(StringTemp, Players[i].filename);
     strcat(StringTemp, "3.pcx");
-    if (temporary.load_pcx(StringTemp, 0, 0xA, 0xEC) != 0) {
+    if (temporary.load_pcx(StringTemp, 0, 0xA, 0xEC)) {
       return 1;
     }
-    const int transparent = WinFillColour;
-    if (player == ConsoleGlobal.faction_id_) {
-      sprite_first_.extract(&temporary, transparent, 0xA4, 0xB,
-                               0xA0, 0x61, 0);
-      if (monument == 0xE) {
-        sprite_second_.extract(&temporary, transparent, 0xA, 0xB,
-                                 0x8E, 0x65, 0);
+    if (i == ConsoleGlobal.faction_id_) {
+      sprite_first_.extract(&temporary, WinFillColour, 0xA4, 0xB, 0xA0, 0x61, 0);
+      if (MonumentWindowCount == 0xE) {
+        sprite_second_.extract(&temporary, WinFillColour, 0xA, 0xB, 0x8E, 0x65, 0);
       } else {
-        sprite_second_.extract(&temporary, transparent, 0xA, 0x71,
-                                 0x47, 0x40, 0);
+        sprite_second_.extract(&temporary, WinFillColour, 0xA, 0x71, 0x47, 0x40, 0);
       }
     }
-    const int slot = player - 1;
-    sprites_34E0_[slot].extract(&temporary, transparent, 0xA4, 0x6D,
-                                0xA0, 0x61, 0);
-    sprites_33AC_[slot].extract(&temporary, transparent, 0xA, 0xB2,
-                                0x3A, 0x32, 0);
+    sprites_34E0_[i - 1].extract(&temporary, WinFillColour, 0xA4, 0x6D, 0xA0, 0x61, 0);
+    sprites_33AC_[i - 1].extract(&temporary, WinFillColour, 0xA, 0xB2, 0x3A, 0x32, 0);
   }
-
-  if (temporary.load_pcx("monicons.pcx", 0, 0xA, 0xEC) != 0) {
+  if (temporary.load_pcx("monicons.pcx", 0, 0xA, 0xEC)) {
     return 1;
   }
   origin_x_ = 2;
   origin_y_ = 0x226;
-  for (i = 0; i < 15; ++i) {
-    sprites_2C0C_[i].extract(&temporary, WinFillColour, origin_x_, origin_y_,
-                             0x2C, 0x2A, 0);
+  for (i = 0; i < 15; i++) {
+    sprites_2C0C_[i].extract(&temporary, WinFillColour, origin_x_, origin_y_, 0x2C, 0x2A, 0);
     if (i == 7) {
       origin_x_ = 2;
       origin_y_ += 0x2B;
@@ -185,74 +268,91 @@ int MonuWin::init() {
   }
   origin_x_ = 1;
   origin_y_ = 0x89;
-  for (i = 0; i < 15; ++i) {
-    sprites_2EA0_[i].extract(&temporary, WinFillColour, origin_x_, origin_y_,
-                             0xA0, 0x61, 0);
-    if ((i + 1) % 5 == 0) {
+  for (i = 0; i < 15; i++) {
+    sprites_2EA0_[i].extract(&temporary, WinFillColour, origin_x_, origin_y_, 0xA0, 0x61, 0);
+    if ((i + 1) % 5) {
+      origin_x_ += 0xA1;
+    } else {
       origin_x_ = 1;
       origin_y_ += 0x62;
-    } else {
-      origin_x_ += 0xA1;
     }
   }
-  sprites_3244_[0].extract(&temporary, WinFillColour, 0x116, 0x41,
-                           0x4E, 0x3F, 0);
-  const RECT icon_rects[6] = {
-      {0xFD,0x1F4,0x14B,0x233}, {0x1DC,0x1F4,0x225,0x233},
-      {0xBE,0x1F4,0x14B,0x233}, {0x1DC,0x1F4,0x262,0x233},
-      {0x7F,0x1F4,0x14B,0x233}, {0x1DC,0x1F4,0x2B1,0x233}};
-  for (i = 0; i < 6; ++i) {
-    icon_rects_[i] = icon_rects[i];
-    icon_rects_[i].left += client_left_;
-    icon_rects_[i].right += client_left_;
-    icon_rects_[i].top += client_top_;
-    icon_rects_[i].bottom += client_top_;
+  sprites_3244_[0].extract(&temporary, WinFillColour, 0x116, 0x41, 0x4E, 0x3F, 0);
+  icon_rects_[0].left = 0xFD;
+  icon_rects_[0].top = 0x1F4;
+  icon_rects_[0].right = 0x14B;
+  icon_rects_[0].bottom = 0x233;
+  sprites_3244_[1].extract(&temporary, WinFillColour, 0x165, 0x41, 0x49, 0x3F, 0);
+  icon_rects_[1].left = 0x1DC;
+  icon_rects_[1].top = 0x1F4;
+  icon_rects_[1].right = 0x225;
+  icon_rects_[1].bottom = 0x233;
+  sprites_3244_[2].extract(&temporary, WinFillColour, 1, 0x41, 0x8D, 0x3F, 0);
+  icon_rects_[2].left = 0xBE;
+  icon_rects_[2].top = 0x1F4;
+  icon_rects_[2].right = 0x14B;
+  icon_rects_[2].bottom = 0x233;
+  sprites_3244_[3].extract(&temporary, WinFillColour, 0x8F, 0x41, 0x86, 0x3F, 0);
+  icon_rects_[3].left = 0x1DC;
+  icon_rects_[3].top = 0x1F4;
+  icon_rects_[3].right = 0x262;
+  icon_rects_[3].bottom = 0x233;
+  sprites_3244_[4].extract(&temporary, WinFillColour, 1, 1, 0xCC, 0x3F, 0);
+  icon_rects_[4].left = 0x7F;
+  icon_rects_[4].top = 0x1F4;
+  icon_rects_[4].right = 0x14B;
+  icon_rects_[4].bottom = 0x233;
+  sprites_3244_[5].extract(&temporary, WinFillColour, 0xCE, 1, 0xD5, 0x3F, 0);
+  icon_rects_[5].left = 0x1DC;
+  icon_rects_[5].top = 0x1F4;
+  icon_rects_[5].right = 0x2B1;
+  icon_rects_[5].bottom = 0x233;
+  offset_rect(&icon_rects_[0], client_left_, client_top_);
+  offset_rect(&icon_rects_[1], client_left_, client_top_);
+  offset_rect(&icon_rects_[2], client_left_, client_top_);
+  offset_rect(&icon_rects_[3], client_left_, client_top_);
+  offset_rect(&icon_rects_[4], client_left_, client_top_);
+  offset_rect(&icon_rects_[5], client_left_, client_top_);
+  StringTemp[0] = '\0';
+  strcat(StringTemp, label_get(0xA64 / 4));
+  if (field_A48_) {
+    field_A34_ = 0x338;
+    field_A38_ = 0x2EB;
+    field_A3C_ = 0x400;
+    field_A40_ = 0x300;
+  } else {
+    field_A34_ = 0x258;
+    field_A38_ = 0x243;
+    field_A3C_ = 0x320;
+    field_A40_ = 0x258;
   }
-  sprites_3244_[1].extract(&temporary, WinFillColour, 0x165, 0x41,
-                           0x49, 0x3F, 0);
-  sprites_3244_[2].extract(&temporary, WinFillColour, 1, 0x41,
-                           0x8D, 0x3F, 0);
-  sprites_3244_[3].extract(&temporary, WinFillColour, 0x8F, 0x41,
-                           0x86, 0x3F, 0);
-  sprites_3244_[4].extract(&temporary, WinFillColour, 1, 1,
-                           0xCC, 0x3F, 0);
-  sprites_3244_[5].extract(&temporary, WinFillColour, 0xCE, 1,
-                           0xD5, 0x3F, 0);
-
-  // The task's existing Label owner supplies both caption string indices;
-  // StringTable is the canonical parser-populated string owner.
-  static const int label_offsets[2] = {0xA64, 0xB60};
-  for (i = 0; i < 2; ++i) {
-    StringTemp[0] = '\0';
-    strcat(StringTemp, label_get(label_offsets[i] / 4));
-
-    if (field_A48_ != 0) {
-      field_A34_ = 0x338;
-      field_A38_ = 0x2EB;
-      field_A3C_ = 0x400;
-      field_A40_ = 0x300;
-    } else {
-      field_A34_ = 0x258;
-      field_A38_ = 0x243;
-      field_A3C_ = 0x320;
-      field_A40_ = 0x258;
-    }
-    FlatButton &button = i == 0 ? button_first_ : button_second_;
-    button.init(StringTemp, 0x3E7, field_A34_, field_A38_,
-                field_A3C_ - field_A34_, field_A40_ - field_A38_, this, 0);
-    button.set_border_styles(&InterfaceBoxStyles[47],
-                             &InterfaceBoxStyles[46],
-                             &InterfaceBoxStyles[45]);
-    static_cast<Buffer *>(&button)->set_font(&TutWinBaseWindow.font1_,
-                                             0, 0, 0);
-    button.redraw();
-    button.hide();
+  button_first_.init(StringTemp, 0x3E7, field_A34_, field_A38_, field_A3C_ - field_A34_,
+                     field_A40_ - field_A38_, this, 0);
+  button_first_.set_border_styles(&InterfaceBoxStyles[47], &InterfaceBoxStyles[46],
+                                  &InterfaceBoxStyles[45]);
+  button_first_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+  button_first_.redraw();
+  button_first_.hide();
+  StringTemp[0] = '\0';
+  strcat(StringTemp, label_get(0xB60 / 4));
+  if (field_A48_) {
+    field_A34_ = 0x338;
+    field_A38_ = 0x2EB;
+    field_A3C_ = 0x400;
+    field_A40_ = 0x300;
+  } else {
+    field_A34_ = 0x258;
+    field_A38_ = 0x243;
+    field_A3C_ = 0x320;
+    field_A40_ = 0x258;
   }
-
-  // Remaining extracted art and faction portraits stay in typed arrays;
-  // the two action buttons are separate members. The switch cases in on_redraw
-  // populate the live Spot list.  This pass also establishes the initial
-  // preview/selection state after all resources have loaded.
+  button_second_.init(StringTemp, 0x3E7, field_A34_, field_A38_, field_A3C_ - field_A34_,
+                      field_A40_ - field_A38_, this, 0);
+  button_second_.set_border_styles(&InterfaceBoxStyles[47], &InterfaceBoxStyles[46],
+                                   &InterfaceBoxStyles[45]);
+  button_second_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+  button_second_.redraw();
+  button_second_.hide();
   fill(0);
   selection_pending_ = 0;
   preview_faction_or_page_ = ConsoleGlobal.faction_id_;
@@ -263,759 +363,670 @@ int MonuWin::init() {
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x004736E0; retired seed provenance git:d8200f17:src/unrecovered/004736e0.cpp; original spans and historical lessons retained.", "image:477C80/477B10 member order and36DC extent; primary66C880 slots12/17/19/25/44.", "image:476A50 binds singleton7F9F58 and independent count7FD634; Player59C and MonumentFaction4F4 strides.", "image:4737EE..475E58 localized owner/grammar cases; 472230/4736E0 resource, clipping, sprite and Spot accesses."], "reason": "Genuine GraphicWin-derived MonuWin owner with actual FlatButton/Spot/Buffer/Sprite members, real callback slots and automatic lifetimes; localized parser owner and grammar inputs follow the original branches rather than current-faction stand-ins."}
 // symbol    ?on_redraw@MonuWin@@UAEXXZ
 void MonuWin::on_redraw() {
-  // StringList's StringAllocationBase captures and clears the shared heap
-  // during construction, then restores it during destruction.
   StringList description;
-  // The common pre-branch setup targets GraphicWin's secondary Buffer.
-  Buffer *const canvas = static_cast<Buffer *>(this);
-  canvas->set_font(ReportIfGlobal.field_1E184_, 0, 0, 0);
-  canvas->set_text_color(0xF2, -1, 1, 1);
-  canvas->restore_clip();
-  const int faction = ConsoleGlobal.faction_id_;
-  preview_faction_or_page_ = faction;
-  int i, j, row, type;
+  int i;
+  int j;
+  int row;
+  int type;
+  Buffer::set_font(ReportIfGlobal.field_1E184_, 0, 0, 0);
+  Buffer::set_text_color(0xF2, -1, 1, 1);
+  preview_faction_or_page_ = ConsoleGlobal.faction_id_;
+  Buffer::restore_clip();
   if (selection_pending_ != 0) {
     Buffer panel;
     if (field_A48_ != 0) {
-      buffer_second_.copy(canvas, 0, 0, 0, 0, 0x400, 0x300);
+      buffer_second_.copy(this, 0, 0, 0, 0, 0x400, 0x300);
     } else {
-      buffer_second_.copy(canvas, 0x70, 0x54, 0, 0, 0x320, 0x258);
+      buffer_second_.copy(this, 0x70, 0x54, 0, 0, 0x320, 0x258);
     }
-    // Native path begins with the selected record's localized description.
-    // Keep the complete native parser setup and case routing explicit rather
-    // than painting a representative icon for unrelated monument types.
-    const int type = FactionMonuments[faction].latest_type_;
-    const char *description_section = 0;
-    if (static_cast<unsigned int>(type) <= 20u) {
-    const MonumentRecord &record = FactionMonuments[faction].records_[type];
+    StringTemp[0] = '\0';
+    int faction = preview_faction_or_page_;
+    type = FactionMonuments[faction].latest_type_;
     switch (type) {
-    case 0: {
-      parse_num(0, record.year_);
-      GenderDefault = Players[faction].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(0, Players[faction].title_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[faction].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(1, Players[faction].name_leader,
-                 Players[faction].is_leader_female, -1);
-      parse_says(2, FactionMonuments[faction].founding_base_name_, -1, -1);
-      if (record.word_14_ != 0) {
-      description_section = "FOUNDCOLONY1ST";
+    case 0:
+        parse_num(0, FactionMonuments[faction].records_[type].year_);
+        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
+        parse_says(0, Players[preview_faction_or_page_].title_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
+        parse_says(1, Players[preview_faction_or_page_].name_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        parse_says(2, FactionMonuments[preview_faction_or_page_].founding_base_name_, -1, -1);
+        if (FactionMonuments[faction].records_[type].word_14_) {
+            description.load("monument", "FOUNDCOLONY1ST", 1, 0);   // 0x686404 / 0x6863F4 -> 0x475E50
+        } else {
+            parse_says(3, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
+            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
+            parse_says(4, Players[FactionMonuments[faction].records_[type].owner_faction_].title_leader,
+                       Players[preview_faction_or_page_].is_leader_female, -1);
+            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
+            parse_says(5, Players[FactionMonuments[faction].records_[type].owner_faction_].name_leader,
+                       Players[preview_faction_or_page_].is_leader_female, -1);
+            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].noun_gender,
+                      Players[FactionMonuments[faction].records_[type].owner_faction_].is_noun_plural);
+            parse_says(6, Players[FactionMonuments[faction].records_[type].owner_faction_].noun_faction,
+                       Players[preview_faction_or_page_].noun_gender,
+                       Players[preview_faction_or_page_].is_noun_plural);
+            parse_num(1, FactionMonuments[FactionMonuments[faction].records_[type].owner_faction_]
+                             .records_[type].year_);
+            description.load("monument", "FOUNDCOLONY2ND", 1, 0);   // 0x686420 / 0x686410 -> 0x475E50
+        }
+        break;
+
+    case 1:                                                          // 0x473A8B
+        parse_num(0, FactionMonuments[faction].records_[type].year_);
+        parse_says(0, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
+        parse_says(1, tech_name(FactionMonuments[faction].records_[type].word_8_, 0), -1, -1);
+        if (FactionMonuments[faction].records_[type].word_14_) {
+            description.load("monument", "TECHDISCOVER1ST", 1, 0);  // 0x68643C / 0x68642C -> 0x475E50
+        } else {                                                     // 0x473B00
+            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].noun_gender,
+                      Players[FactionMonuments[faction].records_[type].owner_faction_].is_noun_plural);
+            parse_says(2, Players[FactionMonuments[faction].records_[type].owner_faction_].noun_faction,
+                       Players[preview_faction_or_page_].noun_gender,
+                       Players[preview_faction_or_page_].is_noun_plural);
+            parse_num(1, FactionMonuments[FactionMonuments[faction].records_[type].owner_faction_]
+                             .records_[type].year_);
+            description.load("monument", "TECHDISCOVER2ND", 1, 0);  // 0x686458 / 0x686448 -> 0x475E50
+        }
+        break;
+
+    case 2:                                                          // 0x473B94
+        parse_num(0, FactionMonuments[faction].records_[type].year_);
+        parse_says(0, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
+        if (FactionMonuments[faction].records_[type].word_14_) {
+            // 0x473BD5: word_8_ loaded once into eax; `lea ecx,[eax+1]; test; je`
+            if (FactionMonuments[faction].records_[type].word_8_ != -1) {
+                parse_num(1, FactionMonuments[faction].records_[type].word_8_);
+                if (FactionMonuments[faction].records_[type].word_4_ != -1) {
+                    parse_num(2, FactionMonuments[faction].records_[type].word_4_);
+                    description.load("monument", "SECRETS1STC", 1, 0);  // 0x686470 / 0x686464
+                } else {                                                 // 0x473C1A
+                    description.load("monument", "SECRETS1STB", 1, 0);  // 0x686488 / 0x68647C
+                }
+            } else {                                                     // 0x473C2D
+                description.load("monument", "SECRETS1STA", 1, 0);      // 0x6864A0 / 0x686494
+            }
+        } else {                                                         // 0x473C40
+            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].noun_gender,
+                      Players[FactionMonuments[faction].records_[type].owner_faction_].is_noun_plural);
+            parse_says(1, Players[FactionMonuments[faction].records_[type].owner_faction_].noun_faction,
+                       Players[preview_faction_or_page_].noun_gender,
+                       Players[preview_faction_or_page_].is_noun_plural);
+            parse_num(1, FactionMonuments[FactionMonuments[faction].records_[type].owner_faction_]
+                             .records_[type].year_);
+            // 0x473CBE: `mov ecx,word_8_; inc ecx; je` (value not kept; reloaded at 0x473CEF)
+            if (FactionMonuments[faction].records_[type].word_8_ != -1) {
+                parse_says(2, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
+                parse_num(2, FactionMonuments[faction].records_[type].word_8_);
+                if (FactionMonuments[faction].records_[type].word_4_ != -1) {
+                    parse_num(3, FactionMonuments[faction].records_[type].word_4_);
+                    description.load("monument", "SECRETS2NDC", 1, 0);  // 0x6864B8 / 0x6864AC
+                } else {                                                 // 0x473D2D
+                    description.load("monument", "SECRETS2NDB", 1, 0);  // 0x6864D0 / 0x6864C4
+                }
+            } else {                                                     // 0x473D40
+                description.load("monument", "SECRETS2NDA", 1, 0);      // 0x6864E8 / 0x6864DC
+            }
+        }
+        break;
+
+    case 3:                                                          // 0x473D53
+        parse_num(0, FactionMonuments[faction].records_[type].year_);
+        if (FactionMonuments[faction].records_[type].word_14_) {
+            parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
+            parse_says(0, Players[preview_faction_or_page_].title_leader,
+                       Players[preview_faction_or_page_].is_leader_female, -1);
+            parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
+            parse_says(1, Players[preview_faction_or_page_].name_leader,
+                       Players[preview_faction_or_page_].is_leader_female, -1);
+            parse_says(2, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
+            description.load("monument", "PROTO1ST", 1, 0);         // 0x686500 / 0x6864F4
+        } else {                                                     // 0x473E54
+            parse_says(0, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
+            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
+            parse_says(1, Players[FactionMonuments[faction].records_[type].owner_faction_].title_leader,
+                       Players[preview_faction_or_page_].is_leader_female, -1);
+            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
+            parse_says(2, Players[FactionMonuments[faction].records_[type].owner_faction_].name_leader,
+                       Players[preview_faction_or_page_].is_leader_female, -1);
+            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].noun_gender,
+                      Players[FactionMonuments[faction].records_[type].owner_faction_].is_noun_plural);
+            parse_says(3, Players[FactionMonuments[faction].records_[type].owner_faction_].noun_faction,
+                       Players[preview_faction_or_page_].noun_gender,
+                       Players[preview_faction_or_page_].is_noun_plural);
+            parse_num(1, FactionMonuments[FactionMonuments[faction].records_[type].owner_faction_]
+                             .records_[type].year_);
+            description.load("monument", "PROTO2ND", 1, 0);         // 0x686518 / 0x68650C
+        }
+        break;
+
+    case 4:                                                          // 0x473FB7
+        parse_num(0, FactionMonuments[faction].records_[type].year_);
+        parse_says(0, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
+        if (FactionMonuments[faction].records_[type].word_14_) {
+            parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
+            parse_says(1, Players[preview_faction_or_page_].title_leader,
+                       Players[preview_faction_or_page_].is_leader_female, -1);
+            parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
+            parse_says(2, Players[preview_faction_or_page_].name_leader,
+                       Players[preview_faction_or_page_].is_leader_female, -1);
+            parse_says(3, FactionMonuments[preview_faction_or_page_].facility_base_name_, -1, -1);
+            description.load("monument", "FACILITY1ST", 1, 0);      // 0x686530 / 0x686524
+        } else {                                                     // 0x4740DC
+            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
+            parse_says(1, Players[FactionMonuments[faction].records_[type].owner_faction_].title_leader,
+                       Players[preview_faction_or_page_].is_leader_female, -1);
+            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
+            parse_says(2, Players[FactionMonuments[faction].records_[type].owner_faction_].name_leader,
+                       Players[preview_faction_or_page_].is_leader_female, -1);
+            parse_says(3, Players[FactionMonuments[faction].records_[type].owner_faction_].adj_name_faction,
+                       -1, -1);
+            parse_num(1, FactionMonuments[FactionMonuments[faction].records_[type].owner_faction_]
+                             .records_[type].year_);
+            description.load("monument", "FACILITY2ND", 1, 0);      // 0x686548 / 0x68653C
+        }
+        break;
+
+    case 5:                                                          // 0x4741E0
+        parse_num(0, FactionMonuments[faction].records_[type].year_);
+        if (FactionMonuments[faction].records_[type].word_14_) {
+            parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
+            parse_says(0, Players[preview_faction_or_page_].title_leader,
+                       Players[preview_faction_or_page_].is_leader_female, -1);
+            parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
+            parse_says(1, Players[preview_faction_or_page_].name_leader,
+                       Players[preview_faction_or_page_].is_leader_female, -1);
+            // Facility[70 + word_8_].name: [word_8_*0x30 + 0x9A5888]; StringTable @0x9B90D8
+            parse_says(2, StringTable.get(Facility[FacilitySPStart +
+                              FactionMonuments[faction].records_[type].word_8_].name), -1, -1);
+            description.load("monument", "PROJECT1ST", 1, 0);       // 0x686560 / 0x686554
+        } else {                                                     // 0x4742EA
+            parse_says(0, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
+            parse_says(1, StringTable.get(Facility[FacilitySPStart +
+                              FactionMonuments[faction].records_[type].word_8_].name), -1, -1);
+            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
+            parse_says(2, Players[FactionMonuments[faction].records_[type].owner_faction_].title_leader,
+                       Players[preview_faction_or_page_].is_leader_female, -1);
+            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
+            parse_says(3, Players[FactionMonuments[faction].records_[type].owner_faction_].name_leader,
+                       Players[preview_faction_or_page_].is_leader_female, -1);
+            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].noun_gender,
+                      Players[FactionMonuments[faction].records_[type].owner_faction_].is_noun_plural);
+            parse_says(4, Players[FactionMonuments[faction].records_[type].owner_faction_].noun_faction,
+                       Players[preview_faction_or_page_].noun_gender,
+                       Players[preview_faction_or_page_].is_noun_plural);
+            parse_num(1, FactionMonuments[FactionMonuments[faction].records_[type].owner_faction_]
+                             .records_[type].year_);
+            description.load("monument", "PROJECT2ND", 1, 0);       // 0x686578 / 0x68656C
+        }
+        break;
+
+    case 6:                                                          // 0x47447A
+        parse_num(0, FactionMonuments[faction].records_[type].year_);
+        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
+        parse_says(0, Players[preview_faction_or_page_].title_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
+        parse_says(1, Players[preview_faction_or_page_].name_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        if (FactionMonuments[faction].records_[type].word_14_) {
+            // word_8_ is the defeated faction here.
+            parse_set(Players[FactionMonuments[faction].records_[type].word_8_].is_leader_female, 0);
+            parse_says(2, Players[FactionMonuments[faction].records_[type].word_8_].title_leader,
+                       Players[preview_faction_or_page_].is_leader_female, -1);
+            parse_set(Players[FactionMonuments[faction].records_[type].word_8_].is_leader_female, 0);
+            parse_says(3, Players[FactionMonuments[faction].records_[type].word_8_].name_leader,
+                       Players[preview_faction_or_page_].is_leader_female, -1);
+            parse_set(Players[FactionMonuments[faction].records_[type].word_8_].noun_gender,
+                      Players[FactionMonuments[faction].records_[type].word_8_].is_noun_plural);
+            parse_says(4, Players[FactionMonuments[faction].records_[type].word_8_].noun_faction,
+                       Players[preview_faction_or_page_].noun_gender,
+                       Players[preview_faction_or_page_].is_noun_plural);
+            description.load("monument", "BATTLEWIN1ST", 1, 0);     // 0x686594 / 0x686584
+        } else {                                                     // 0x47465C
+            parse_says(2, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
+            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
+            parse_says(3, Players[FactionMonuments[faction].records_[type].owner_faction_].title_leader,
+                       Players[preview_faction_or_page_].is_leader_female, -1);
+            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
+            parse_says(4, Players[FactionMonuments[faction].records_[type].owner_faction_].name_leader,
+                       Players[preview_faction_or_page_].is_leader_female, -1);
+            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].noun_gender,
+                      Players[FactionMonuments[faction].records_[type].owner_faction_].is_noun_plural);
+            parse_says(5, Players[FactionMonuments[faction].records_[type].owner_faction_].noun_faction,
+                       Players[preview_faction_or_page_].noun_gender,
+                       Players[preview_faction_or_page_].is_noun_plural);
+            parse_num(1, FactionMonuments[FactionMonuments[faction].records_[type].owner_faction_]
+                             .records_[type].year_);
+            description.load("monument", "BATTLEWIN2ND", 1, 0);     // 0x6865B0 / 0x6865A0
+        }
+        break;
+
+    case 7:                                                          // 0x4747BF
+        parse_num(0, FactionMonuments[faction].records_[type].year_);
+        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
+        parse_says(0, Players[preview_faction_or_page_].title_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
+        parse_says(1, Players[preview_faction_or_page_].name_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        if (FactionMonuments[faction].records_[type].word_14_) {
+            parse_set(Players[preview_faction_or_page_].noun_gender,
+                      Players[preview_faction_or_page_].is_noun_plural);
+            parse_says(2, Players[preview_faction_or_page_].noun_faction,
+                       Players[preview_faction_or_page_].noun_gender,
+                       Players[preview_faction_or_page_].is_noun_plural);
+            parse_says(3, FactionMonuments[preview_faction_or_page_].conquered_base_name_, -1, -1);
+            description.load("monument", "BASECAP1ST", 1, 0);       // 0x6865C8 / 0x6865BC
+        } else {                                                     // 0x47491C
+            parse_says(2, FactionMonuments[preview_faction_or_page_].conquered_base_name_, -1, -1);
+            parse_says(3, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
+            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
+            parse_says(4, Players[FactionMonuments[faction].records_[type].owner_faction_].title_leader,
+                       Players[preview_faction_or_page_].is_leader_female, -1);
+            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
+            parse_says(5, Players[FactionMonuments[faction].records_[type].owner_faction_].name_leader,
+                       Players[preview_faction_or_page_].is_leader_female, -1);
+            parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].noun_gender,
+                      Players[FactionMonuments[faction].records_[type].owner_faction_].is_noun_plural);
+            parse_says(6, Players[FactionMonuments[faction].records_[type].owner_faction_].noun_faction,
+                       Players[preview_faction_or_page_].noun_gender,
+                       Players[preview_faction_or_page_].is_noun_plural);
+            parse_num(1, FactionMonuments[FactionMonuments[faction].records_[type].owner_faction_]
+                             .records_[type].year_);
+            description.load("monument", "BASECAP2ND", 1, 0);       // 0x6865E0 / 0x6865D4
+        }
+        break;
+    case 8:
+      parse_num(0, FactionMonuments[faction].records_[type].year_);
+      if (FactionMonuments[faction].records_[type].word_14_) {
+        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
+        parse_says(0, Players[preview_faction_or_page_].title_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
+        parse_says(1, Players[preview_faction_or_page_].name_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        parse_set(Players[preview_faction_or_page_].noun_gender,
+                  Players[preview_faction_or_page_].is_noun_plural);
+        parse_says(2, Players[preview_faction_or_page_].noun_faction,
+                   Players[preview_faction_or_page_].noun_gender,
+                   Players[preview_faction_or_page_].is_noun_plural);
+        description.load("monument", "NAVY1ST", 1, 0);          // 0x6865F4 / 0x6865EC
       } else {
-      parse_says(3, Players[faction].adj_name_faction, -1, -1);
-      GenderDefault = Players[record.owner_faction_].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(4, Players[record.owner_faction_].title_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[record.owner_faction_].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(5, Players[record.owner_faction_].name_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[record.owner_faction_].noun_gender;
-      PluralityDefault = Players[record.owner_faction_].is_noun_plural;
-      parse_says(6, Players[record.owner_faction_].noun_faction,
-                 Players[faction].noun_gender, Players[faction].is_noun_plural);
-      parse_num(1, FactionMonuments[record.owner_faction_].records_[0].year_);
-      description_section = "FOUNDCOLONY2ND";
+        parse_says(0, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
+        parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
+        parse_says(1, Players[FactionMonuments[faction].records_[type].owner_faction_].title_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
+        parse_says(2, Players[FactionMonuments[faction].records_[type].owner_faction_].name_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].noun_gender,
+                  Players[FactionMonuments[faction].records_[type].owner_faction_].is_noun_plural);
+        parse_says(3, Players[FactionMonuments[faction].records_[type].owner_faction_].noun_faction,
+                   Players[preview_faction_or_page_].noun_gender,
+                   Players[preview_faction_or_page_].is_noun_plural);
+        // 0x474D05: [edi + owner*0x4F4 + 0x94CA08] - indexed by `type` (edi), not literal 8.
+        parse_num(1, FactionMonuments[FactionMonuments[faction].records_[type].owner_faction_]
+                         .records_[type].year_);
+        description.load("monument", "NAVY2ND", 1, 0);          // 0x686608 / 0x686600
       }
       break;
-    }
-    case 1: {
-      parse_num(0, record.year_);
-      parse_says(0, Players[faction].adj_name_faction, -1, -1);
-      parse_says(1, tech_name(record.word_8_, 0), -1, -1);
-      if (record.word_14_ != 0) {
-      description_section = "TECHDISCOVER1ST";
+
+    case 9:  // 0x474D3F, same shape as case 8
+      parse_num(0, FactionMonuments[faction].records_[type].year_);
+      if (FactionMonuments[faction].records_[type].word_14_) {
+        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
+        parse_says(0, Players[preview_faction_or_page_].title_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
+        parse_says(1, Players[preview_faction_or_page_].name_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        parse_set(Players[preview_faction_or_page_].noun_gender,
+                  Players[preview_faction_or_page_].is_noun_plural);
+        parse_says(2, Players[preview_faction_or_page_].noun_faction,
+                   Players[preview_faction_or_page_].noun_gender,
+                   Players[preview_faction_or_page_].is_noun_plural);
+        description.load("monument", "AIR1ST", 1, 0);           // 0x68661C / 0x686614
       } else {
-      GenderDefault = Players[record.owner_faction_].noun_gender;
-      PluralityDefault = Players[record.owner_faction_].is_noun_plural;
-      parse_says(2, Players[record.owner_faction_].noun_faction,
-                 Players[faction].noun_gender, Players[faction].is_noun_plural);
-      parse_num(1, FactionMonuments[record.owner_faction_].records_[1].year_);
-      description_section = "TECHDISCOVER2ND";
+        parse_says(0, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
+        parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
+        parse_says(1, Players[FactionMonuments[faction].records_[type].owner_faction_].title_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
+        parse_says(2, Players[FactionMonuments[faction].records_[type].owner_faction_].name_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].noun_gender,
+                  Players[FactionMonuments[faction].records_[type].owner_faction_].is_noun_plural);
+        parse_says(3, Players[FactionMonuments[faction].records_[type].owner_faction_].noun_faction,
+                   Players[preview_faction_or_page_].noun_gender,
+                   Players[preview_faction_or_page_].is_noun_plural);
+        parse_num(1, FactionMonuments[FactionMonuments[faction].records_[type].owner_faction_]
+                         .records_[type].year_);
+        description.load("monument", "AIR2ND", 1, 0);           // 0x686630 / 0x686628
       }
       break;
-    }
-    case 2: {
-      parse_num(0, record.year_);
-      parse_says(0, Players[faction].adj_name_faction, -1, -1);
-      if (record.word_14_ != 0) {
-      if (record.word_8_ == -1) {
-      description_section = "SECRETS1STA";
+
+    case 10:  // 0x474FDB
+      parse_num(0, FactionMonuments[faction].records_[type].year_);
+      if (FactionMonuments[faction].records_[type].word_14_) {
+        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
+        parse_says(0, Players[preview_faction_or_page_].title_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
+        parse_says(1, Players[preview_faction_or_page_].name_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        parse_says(2, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
+        description.load("monument", "NATIVE1ST", 1, 0);        // 0x686648 / 0x68663C
       } else {
-      parse_num(1, record.word_8_);
-      if (record.word_4_ == -1) {
-      description_section = "SECRETS1STB";
-      } else {
-      parse_num(2, record.word_4_);
-      description_section = "SECRETS1STC";
-      }
-      }
-      } else {
-      GenderDefault = Players[record.owner_faction_].noun_gender;
-      PluralityDefault = Players[record.owner_faction_].is_noun_plural;
-      parse_says(1, Players[record.owner_faction_].noun_faction,
-                 Players[faction].noun_gender, Players[faction].is_noun_plural);
-      parse_num(1, FactionMonuments[record.owner_faction_].records_[2].year_);
-      if (record.word_8_ == -1) {
-      description_section = "SECRETS2NDA";
-      } else {
-      parse_says(2, Players[faction].adj_name_faction, -1, -1);
-      parse_num(2, record.word_8_);
-      if (record.word_4_ == -1) {
-      description_section = "SECRETS2NDB";
-      } else {
-      parse_num(3, record.word_4_);
-      description_section = "SECRETS2NDC";
-      }
-      }
+        parse_says(0, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
+        parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
+        parse_says(1, Players[FactionMonuments[faction].records_[type].owner_faction_].title_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
+        parse_says(2, Players[FactionMonuments[faction].records_[type].owner_faction_].name_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].noun_gender,
+                  Players[FactionMonuments[faction].records_[type].owner_faction_].is_noun_plural);
+        parse_says(3, Players[FactionMonuments[faction].records_[type].owner_faction_].noun_faction,
+                   Players[preview_faction_or_page_].noun_gender,
+                   Players[preview_faction_or_page_].is_noun_plural);
+        parse_num(1, FactionMonuments[FactionMonuments[faction].records_[type].owner_faction_]
+                         .records_[type].year_);
+        description.load("monument", "NATIVE2ND", 1, 0);        // 0x686660 / 0x686654
       }
       break;
-    }
-    case 3: {
-      parse_num(0, record.year_);
-      if (record.word_14_ != 0) {
-      GenderDefault = Players[faction].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(0, Players[faction].title_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[faction].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(1, Players[faction].name_leader,
-                 Players[faction].is_leader_female, -1);
-      parse_says(2, Players[faction].adj_name_faction, -1, -1);
-      description_section = "PROTO1ST";
+
+    case 11:  // 0x47523F
+      parse_num(0, FactionMonuments[faction].records_[type].year_);
+      // ? 0x475255: [esi+0xA50] is loaded and its *45 lea started BEFORE the
+      // `je`, shared by both arms (each arm starts with Players[pf]); scheduling only.
+      if (FactionMonuments[faction].records_[type].word_14_) {
+        parse_set(Players[preview_faction_or_page_].noun_gender,
+                  Players[preview_faction_or_page_].is_noun_plural);
+        parse_says(0, Players[preview_faction_or_page_].noun_faction,
+                   Players[preview_faction_or_page_].noun_gender,
+                   Players[preview_faction_or_page_].is_noun_plural);
+        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
+        parse_says(1, Players[preview_faction_or_page_].title_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
+        parse_says(2, Players[preview_faction_or_page_].name_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        description.load("monument", "SPACE1ST", 1, 0);         // 0x686678 / 0x68666C
       } else {
-      parse_says(0, Players[faction].adj_name_faction, -1, -1);
-      GenderDefault = Players[record.owner_faction_].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(1, Players[record.owner_faction_].title_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[record.owner_faction_].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(2, Players[record.owner_faction_].name_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[record.owner_faction_].noun_gender;
-      PluralityDefault = Players[record.owner_faction_].is_noun_plural;
-      parse_says(3, Players[record.owner_faction_].noun_faction,
-                 Players[faction].noun_gender, Players[faction].is_noun_plural);
-      parse_num(1, FactionMonuments[record.owner_faction_].records_[3].year_);
-      description_section = "PROTO2ND";
+        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
+        parse_says(0, Players[preview_faction_or_page_].title_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
+        parse_says(1, Players[preview_faction_or_page_].name_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        parse_says(2, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
+        parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].noun_gender,
+                  Players[FactionMonuments[faction].records_[type].owner_faction_].is_noun_plural);
+        parse_says(3, Players[FactionMonuments[faction].records_[type].owner_faction_].noun_faction,
+                   Players[preview_faction_or_page_].noun_gender,
+                   Players[preview_faction_or_page_].is_noun_plural);
+        parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
+        parse_says(4, Players[FactionMonuments[faction].records_[type].owner_faction_].title_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
+        parse_says(5, Players[FactionMonuments[faction].records_[type].owner_faction_].name_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        parse_num(1, FactionMonuments[FactionMonuments[faction].records_[type].owner_faction_]
+                         .records_[type].year_);
+        description.load("monument", "SPACE2ND", 1, 0);         // 0x686690 / 0x686684
       }
       break;
-    }
-    case 4: {
-      parse_num(0, record.year_);
-      parse_says(0, Players[faction].adj_name_faction, -1, -1);
-      if (record.word_14_ != 0) {
-      GenderDefault = Players[faction].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(1, Players[faction].title_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[faction].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(2, Players[faction].name_leader,
-                 Players[faction].is_leader_female, -1);
-      parse_says(3, FactionMonuments[faction].facility_base_name_, -1, -1);
-      description_section = "FACILITY1ST";
+
+    case 12:  // 0x475575 - two pf parse_says BEFORE the word_14_ test
+      parse_num(0, FactionMonuments[faction].records_[type].year_);
+      parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
+      parse_says(0, Players[preview_faction_or_page_].title_leader,
+                 Players[preview_faction_or_page_].is_leader_female, -1);
+      parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
+      parse_says(1, Players[preview_faction_or_page_].name_leader,
+                 Players[preview_faction_or_page_].is_leader_female, -1);
+      if (FactionMonuments[faction].records_[type].word_14_) {
+        parse_set(Players[preview_faction_or_page_].noun_gender,
+                  Players[preview_faction_or_page_].is_noun_plural);
+        parse_says(2, Players[preview_faction_or_page_].noun_faction,
+                   Players[preview_faction_or_page_].noun_gender,
+                   Players[preview_faction_or_page_].is_noun_plural);
+        description.load("monument", "PRESERVE1ST", 1, 0);      // 0x6866A8 / 0x68669C
       } else {
-      GenderDefault = Players[record.owner_faction_].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(1, Players[record.owner_faction_].title_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[record.owner_faction_].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(2, Players[record.owner_faction_].name_leader,
-                 Players[faction].is_leader_female, -1);
-      parse_says(3, Players[record.owner_faction_].adj_name_faction, -1, -1);
-      parse_num(1, FactionMonuments[record.owner_faction_].records_[4].year_);
-      description_section = "FACILITY2ND";
+        parse_says(2, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
+        parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
+        parse_says(3, Players[FactionMonuments[faction].records_[type].owner_faction_].title_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        parse_set(Players[FactionMonuments[faction].records_[type].owner_faction_].is_leader_female, 0);
+        parse_says(4, Players[FactionMonuments[faction].records_[type].owner_faction_].name_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        parse_num(1, FactionMonuments[FactionMonuments[faction].records_[type].owner_faction_]
+                         .records_[type].year_);
+        description.load("monument", "PRESERVE2ND", 1, 0);      // 0x6866C0 / 0x6866B4
       }
       break;
-    }
-    case 5: {
-      parse_num(0, record.year_);
-      if (record.word_14_ != 0) {
-      GenderDefault = Players[faction].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(0, Players[faction].title_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[faction].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(1, Players[faction].name_leader,
-                 Players[faction].is_leader_female, -1);
-      parse_says(2, StringTable.get(
-                     Facility[FacilitySPStart + record.word_8_].name), -1, -1);
-      description_section = "PROJECT1ST";
+
+    case 13:  // 0x4757AD - test is `lea edx,[ecx+1]; test edx,edx` = word_8_ != -1
+      parse_num(0, FactionMonuments[faction].records_[type].year_);
+      if (FactionMonuments[faction].records_[type].word_8_ != -1) {
+        parse_set(Players[FactionMonuments[faction].records_[type].word_8_].is_leader_female, 0);
+        parse_says(0, Players[FactionMonuments[faction].records_[type].word_8_].title_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        parse_set(Players[FactionMonuments[faction].records_[type].word_8_].is_leader_female, 0);
+        parse_says(1, Players[FactionMonuments[faction].records_[type].word_8_].name_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        parse_set(Players[FactionMonuments[faction].records_[type].word_8_].noun_gender,
+                  Players[FactionMonuments[faction].records_[type].word_8_].is_noun_plural);
+        parse_says(2, Players[FactionMonuments[faction].records_[type].word_8_].noun_faction,
+                   Players[preview_faction_or_page_].noun_gender,
+                   Players[preview_faction_or_page_].is_noun_plural);
+        // Bug-for-bug: slot 3 repeats the same noun as slot 2 (0x4758CF).
+        parse_set(Players[FactionMonuments[faction].records_[type].word_8_].noun_gender,
+                  Players[FactionMonuments[faction].records_[type].word_8_].is_noun_plural);
+        parse_says(3, Players[FactionMonuments[faction].records_[type].word_8_].noun_faction,
+                   Players[preview_faction_or_page_].noun_gender,
+                   Players[preview_faction_or_page_].is_noun_plural);
+        description.load("monument", "WINCO-OPUNIFY", 1, 0);    // 0x6866DC / 0x6866CC
       } else {
-      parse_says(0, Players[faction].adj_name_faction, -1, -1);
-      parse_says(1, StringTable.get(
-                     Facility[FacilitySPStart + record.word_8_].name), -1, -1);
-      GenderDefault = Players[record.owner_faction_].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(2, Players[record.owner_faction_].title_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[record.owner_faction_].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(3, Players[record.owner_faction_].name_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[record.owner_faction_].noun_gender;
-      PluralityDefault = Players[record.owner_faction_].is_noun_plural;
-      parse_says(4, Players[record.owner_faction_].noun_faction,
-                 Players[faction].noun_gender, Players[faction].is_noun_plural);
-      parse_num(1, FactionMonuments[record.owner_faction_].records_[5].year_);
-      description_section = "PROJECT2ND";
+        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
+        parse_says(0, Players[preview_faction_or_page_].title_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
+        parse_says(1, Players[preview_faction_or_page_].name_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        parse_says(2, Players[preview_faction_or_page_].adj_name_faction, -1, -1);
+        description.load("monument", "WINUNIFY", 1, 0);         // 0x6866F4 / 0x6866E8
       }
       break;
-    }
-    case 6: {
-      parse_num(0, record.year_);
-      GenderDefault = Players[faction].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(0, Players[faction].title_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[faction].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(1, Players[faction].name_leader,
-                 Players[faction].is_leader_female, -1);
-      if (record.word_14_ != 0) {
-      GenderDefault = Players[record.word_8_].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(2, Players[record.word_8_].title_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[record.word_8_].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(3, Players[record.word_8_].name_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[record.word_8_].noun_gender;
-      PluralityDefault = Players[record.word_8_].is_noun_plural;
-      parse_says(4, Players[record.word_8_].noun_faction,
-                 Players[faction].noun_gender, Players[faction].is_noun_plural);
-      description_section = "BATTLEWIN1ST";
+
+    case 14:  // 0x475A22
+      parse_num(0, FactionMonuments[faction].records_[type].year_);
+      if (FactionMonuments[faction].records_[type].word_8_ != -1) {
+        parse_set(Players[FactionMonuments[faction].records_[type].word_8_].is_leader_female, 0);
+        parse_says(0, Players[FactionMonuments[faction].records_[type].word_8_].title_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        parse_set(Players[FactionMonuments[faction].records_[type].word_8_].is_leader_female, 0);
+        parse_says(1, Players[FactionMonuments[faction].records_[type].word_8_].name_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        parse_set(Players[FactionMonuments[faction].records_[type].word_8_].noun_gender,
+                  Players[FactionMonuments[faction].records_[type].word_8_].is_noun_plural);
+        parse_says(2, Players[FactionMonuments[faction].records_[type].word_8_].noun_faction,
+                   Players[preview_faction_or_page_].noun_gender,
+                   Players[preview_faction_or_page_].is_noun_plural);
+        parse_set(Players[FactionMonuments[faction].records_[type].word_8_].noun_gender,
+                  Players[FactionMonuments[faction].records_[type].word_8_].is_noun_plural);
+        parse_says(3, Players[FactionMonuments[faction].records_[type].word_8_].noun_faction,
+                   Players[preview_faction_or_page_].noun_gender,
+                   Players[preview_faction_or_page_].is_noun_plural);
+        description.load("monument", "WINCO-OPASCENT", 1, 0);   // 0x686710 / 0x686700
       } else {
-      parse_says(2, Players[faction].adj_name_faction, -1, -1);
-      GenderDefault = Players[record.owner_faction_].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(3, Players[record.owner_faction_].title_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[record.owner_faction_].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(4, Players[record.owner_faction_].name_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[record.owner_faction_].noun_gender;
-      PluralityDefault = Players[record.owner_faction_].is_noun_plural;
-      parse_says(5, Players[record.owner_faction_].noun_faction,
-                 Players[faction].noun_gender, Players[faction].is_noun_plural);
-      parse_num(1, FactionMonuments[record.owner_faction_].records_[6].year_);
-      description_section = "BATTLEWIN2ND";
+        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
+        parse_says(0, Players[preview_faction_or_page_].title_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        parse_set(Players[preview_faction_or_page_].is_leader_female, 0);
+        parse_says(1, Players[preview_faction_or_page_].name_leader,
+                   Players[preview_faction_or_page_].is_leader_female, -1);
+        parse_set(Players[preview_faction_or_page_].noun_gender,
+                  Players[preview_faction_or_page_].is_noun_plural);
+        parse_says(2, Players[preview_faction_or_page_].noun_faction,
+                   Players[preview_faction_or_page_].noun_gender,
+                   Players[preview_faction_or_page_].is_noun_plural);
+        description.load("monument", "WINTRANSCEND", 1, 0);     // 0x68672C / 0x68671C
       }
       break;
-    }
-    case 7: {
-      parse_num(0, record.year_);
-      GenderDefault = Players[faction].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(0, Players[faction].title_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[faction].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(1, Players[faction].name_leader,
-                 Players[faction].is_leader_female, -1);
-      if (record.word_14_ != 0) {
-      GenderDefault = Players[faction].noun_gender;
-      PluralityDefault = Players[faction].is_noun_plural;
-      parse_says(2, Players[faction].noun_faction,
-                 Players[faction].noun_gender, Players[faction].is_noun_plural);
-      parse_says(3, FactionMonuments[faction].conquered_base_name_, -1, -1);
-      description_section = "BASECAP1ST";
-      } else {
-      parse_says(2, FactionMonuments[faction].conquered_base_name_, -1, -1);
-      parse_says(3, Players[faction].adj_name_faction, -1, -1);
-      GenderDefault = Players[record.owner_faction_].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(4, Players[record.owner_faction_].title_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[record.owner_faction_].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(5, Players[record.owner_faction_].name_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[record.owner_faction_].noun_gender;
-      PluralityDefault = Players[record.owner_faction_].is_noun_plural;
-      parse_says(6, Players[record.owner_faction_].noun_faction,
-                 Players[faction].noun_gender, Players[faction].is_noun_plural);
-      parse_num(1, FactionMonuments[record.owner_faction_].records_[7].year_);
-      description_section = "BASECAP2ND";
-      }
-      break;
-    }
-    case 8: {
-      parse_num(0, record.year_);
-      if (record.word_14_ != 0) {
-      GenderDefault = Players[faction].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(0, Players[faction].title_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[faction].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(1, Players[faction].name_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[faction].noun_gender;
-      PluralityDefault = Players[faction].is_noun_plural;
-      parse_says(2, Players[faction].noun_faction,
-                 Players[faction].noun_gender, Players[faction].is_noun_plural);
-      description_section = "NAVY1ST";
-      } else {
-      parse_says(0, Players[faction].adj_name_faction, -1, -1);
-      GenderDefault = Players[record.owner_faction_].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(1, Players[record.owner_faction_].title_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[record.owner_faction_].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(2, Players[record.owner_faction_].name_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[record.owner_faction_].noun_gender;
-      PluralityDefault = Players[record.owner_faction_].is_noun_plural;
-      parse_says(3, Players[record.owner_faction_].noun_faction,
-                 Players[faction].noun_gender, Players[faction].is_noun_plural);
-      parse_num(1, FactionMonuments[record.owner_faction_].records_[8].year_);
-      description_section = "NAVY2ND";
-      }
-      break;
-    }
-    case 9: {
-      parse_num(0, record.year_);
-      if (record.word_14_ != 0) {
-      GenderDefault = Players[faction].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(0, Players[faction].title_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[faction].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(1, Players[faction].name_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[faction].noun_gender;
-      PluralityDefault = Players[faction].is_noun_plural;
-      parse_says(2, Players[faction].noun_faction,
-                 Players[faction].noun_gender, Players[faction].is_noun_plural);
-      description_section = "AIR1ST";
-      } else {
-      parse_says(0, Players[faction].adj_name_faction, -1, -1);
-      GenderDefault = Players[record.owner_faction_].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(1, Players[record.owner_faction_].title_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[record.owner_faction_].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(2, Players[record.owner_faction_].name_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[record.owner_faction_].noun_gender;
-      PluralityDefault = Players[record.owner_faction_].is_noun_plural;
-      parse_says(3, Players[record.owner_faction_].noun_faction,
-                 Players[faction].noun_gender, Players[faction].is_noun_plural);
-      parse_num(1, FactionMonuments[record.owner_faction_].records_[9].year_);
-      description_section = "AIR2ND";
-      }
-      break;
-    }
-    case 10: {
-      parse_num(0, record.year_);
-      if (record.word_14_ != 0) {
-      GenderDefault = Players[faction].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(0, Players[faction].title_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[faction].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(1, Players[faction].name_leader,
-                 Players[faction].is_leader_female, -1);
-      parse_says(2, Players[faction].adj_name_faction, -1, -1);
-      description_section = "NATIVE1ST";
-      } else {
-      parse_says(0, Players[faction].adj_name_faction, -1, -1);
-      GenderDefault = Players[record.owner_faction_].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(1, Players[record.owner_faction_].title_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[record.owner_faction_].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(2, Players[record.owner_faction_].name_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[record.owner_faction_].noun_gender;
-      PluralityDefault = Players[record.owner_faction_].is_noun_plural;
-      parse_says(3, Players[record.owner_faction_].noun_faction,
-                 Players[faction].noun_gender, Players[faction].is_noun_plural);
-      parse_num(1, FactionMonuments[record.owner_faction_].records_[10].year_);
-      description_section = "NATIVE2ND";
-      }
-      break;
-    }
-    case 11: {
-      parse_num(0, record.year_);
-      if (record.word_14_ != 0) {
-      GenderDefault = Players[faction].noun_gender;
-      PluralityDefault = Players[faction].is_noun_plural;
-      parse_says(0, Players[faction].noun_faction,
-                 Players[faction].noun_gender, Players[faction].is_noun_plural);
-      GenderDefault = Players[faction].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(1, Players[faction].title_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[faction].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(2, Players[faction].name_leader,
-                 Players[faction].is_leader_female, -1);
-      description_section = "SPACE1ST";
-      } else {
-      GenderDefault = Players[faction].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(0, Players[faction].title_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[faction].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(1, Players[faction].name_leader,
-                 Players[faction].is_leader_female, -1);
-      parse_says(2, Players[faction].adj_name_faction, -1, -1);
-      GenderDefault = Players[record.owner_faction_].noun_gender;
-      PluralityDefault = Players[record.owner_faction_].is_noun_plural;
-      parse_says(3, Players[record.owner_faction_].noun_faction,
-                 Players[faction].noun_gender, Players[faction].is_noun_plural);
-      GenderDefault = Players[record.owner_faction_].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(4, Players[record.owner_faction_].title_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[record.owner_faction_].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(5, Players[record.owner_faction_].name_leader,
-                 Players[faction].is_leader_female, -1);
-      parse_num(1, FactionMonuments[record.owner_faction_].records_[11].year_);
-      description_section = "SPACE2ND";
-      }
-      break;
-    }
-    case 12: {
-      parse_num(0, record.year_);
-      GenderDefault = Players[faction].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(0, Players[faction].title_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[faction].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(1, Players[faction].name_leader,
-                 Players[faction].is_leader_female, -1);
-      if (record.word_14_ != 0) {
-      GenderDefault = Players[faction].noun_gender;
-      PluralityDefault = Players[faction].is_noun_plural;
-      parse_says(2, Players[faction].noun_faction,
-                 Players[faction].noun_gender, Players[faction].is_noun_plural);
-      description_section = "PRESERVE1ST";
-      } else {
-      parse_says(2, Players[faction].adj_name_faction, -1, -1);
-      GenderDefault = Players[record.owner_faction_].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(3, Players[record.owner_faction_].title_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[record.owner_faction_].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(4, Players[record.owner_faction_].name_leader,
-                 Players[faction].is_leader_female, -1);
-      parse_num(1, FactionMonuments[record.owner_faction_].records_[12].year_);
-      description_section = "PRESERVE2ND";
-      }
-      break;
-    }
-    case 13: {
-      parse_num(0, record.year_);
-      if (record.word_8_ != -1) {
-      GenderDefault = Players[record.word_8_].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(0, Players[record.word_8_].title_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[record.word_8_].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(1, Players[record.word_8_].name_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[record.word_8_].noun_gender;
-      PluralityDefault = Players[record.word_8_].is_noun_plural;
-      parse_says(2, Players[record.word_8_].noun_faction,
-                 Players[faction].noun_gender, Players[faction].is_noun_plural);
-      GenderDefault = Players[record.word_8_].noun_gender;
-      PluralityDefault = Players[record.word_8_].is_noun_plural;
-      parse_says(3, Players[record.word_8_].noun_faction,
-                 Players[faction].noun_gender, Players[faction].is_noun_plural);
-      description_section = "WINCO-OPUNIFY";
-      } else {
-      GenderDefault = Players[faction].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(0, Players[faction].title_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[faction].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(1, Players[faction].name_leader,
-                 Players[faction].is_leader_female, -1);
-      parse_says(2, Players[faction].adj_name_faction, -1, -1);
-      description_section = "WINUNIFY";
-      }
-      break;
-    }
-    case 14: {
-      parse_num(0, record.year_);
-      if (record.word_8_ != -1) {
-      GenderDefault = Players[record.word_8_].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(0, Players[record.word_8_].title_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[record.word_8_].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(1, Players[record.word_8_].name_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[record.word_8_].noun_gender;
-      PluralityDefault = Players[record.word_8_].is_noun_plural;
-      parse_says(2, Players[record.word_8_].noun_faction,
-                 Players[faction].noun_gender, Players[faction].is_noun_plural);
-      GenderDefault = Players[record.word_8_].noun_gender;
-      PluralityDefault = Players[record.word_8_].is_noun_plural;
-      parse_says(3, Players[record.word_8_].noun_faction,
-                 Players[faction].noun_gender, Players[faction].is_noun_plural);
-      description_section = "WINCO-OPASCENT";
-      } else {
-      GenderDefault = Players[faction].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(0, Players[faction].title_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[faction].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(1, Players[faction].name_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[faction].noun_gender;
-      PluralityDefault = Players[faction].is_noun_plural;
-      parse_says(2, Players[faction].noun_faction,
-                 Players[faction].noun_gender, Players[faction].is_noun_plural);
-      description_section = "WINTRANSCEND";
-      }
-      break;
-    }
+
     case 15:
     case 16:
     case 17:
     case 18:
     case 19:
-    case 20: {
-      parse_num(0, record.year_);
-      GenderDefault = Players[faction].noun_gender;
-      PluralityDefault = Players[faction].is_noun_plural;
-      parse_says(0, Players[faction].noun_faction,
-                 Players[faction].noun_gender, Players[faction].is_noun_plural);
-      GenderDefault = Players[record.word_8_].noun_gender;
-      PluralityDefault = Players[record.word_8_].is_noun_plural;
-      parse_says(1, Players[record.word_8_].noun_faction,
-                 Players[faction].noun_gender, Players[faction].is_noun_plural);
-      GenderDefault = Players[record.word_8_].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(2, Players[record.word_8_].title_leader,
-                 Players[faction].is_leader_female, -1);
-      GenderDefault = Players[record.word_8_].is_leader_female;
-      PluralityDefault = 0;
-      parse_says(3, Players[record.word_8_].name_leader,
-                 Players[faction].is_leader_female, -1);
-      description_section = "KILLFACTION";
-      break;
+    case 20:  // 0x475CCF
+      parse_num(0, FactionMonuments[faction].records_[type].year_);
+      parse_set(Players[preview_faction_or_page_].noun_gender,
+                Players[preview_faction_or_page_].is_noun_plural);
+      parse_says(0, Players[preview_faction_or_page_].noun_faction,
+                 Players[preview_faction_or_page_].noun_gender,
+                 Players[preview_faction_or_page_].is_noun_plural);
+      parse_set(Players[FactionMonuments[faction].records_[type].word_8_].noun_gender,
+                Players[FactionMonuments[faction].records_[type].word_8_].is_noun_plural);
+      parse_says(1, Players[FactionMonuments[faction].records_[type].word_8_].noun_faction,
+                 Players[preview_faction_or_page_].noun_gender,
+                 Players[preview_faction_or_page_].is_noun_plural);
+      parse_set(Players[FactionMonuments[faction].records_[type].word_8_].is_leader_female, 0);
+      parse_says(2, Players[FactionMonuments[faction].records_[type].word_8_].title_leader,
+                 Players[preview_faction_or_page_].is_leader_female, -1);
+      // ? 0x475E00: here GenderDefault is stored BEFORE PluralityDefault=0
+      // (every other parse_set site in 8..20 stores Plurality first). Likely
+      // scheduling of the same inline parse_set; if it does not match, try
+      // explicit `GenderDefault = ...; PluralityDefault = 0;` for this site.
+      parse_set(Players[FactionMonuments[faction].records_[type].word_8_].is_leader_female, 0);
+      parse_says(3, Players[FactionMonuments[faction].records_[type].word_8_].name_leader,
+                 Players[preview_faction_or_page_].is_leader_female, -1);
+      description.load("monument", "KILLFACTION", 1, 0);        // 0x686744 / 0x686738
+      break;  // falls straight into the shared tail at 0x475E50
     }
-    }
-    }
-    if (description_section != 0) {
-      description.load(const_cast<LPSTR>("monument"),
-                       const_cast<LPSTR>(description_section), 1, 0);
-    }
-    canvas->set_clip(&rects_3134_[1]);
-    canvas->write_strings(&description, rects_3134_[1].left,
-                          rects_3134_[1].top,
-                          rects_3134_[1].right - rects_3134_[1].left, 0);
-    canvas->restore_clip();
+    Buffer::set_clip(&rects_3134_[1]);
+    Buffer::write_strings(&description, rects_3134_[1].left, rects_3134_[1].top,
+                  rects_3134_[1].right - rects_3134_[1].left, 0);
+    Buffer::restore_clip();
+    StringTemp[0] = '\0';
     if (type == 0xD) {
-        StringTemp[0] = '\0';
-        strcat(StringTemp, Players[faction].filename);
-        strcat(StringTemp, "3.pcx");
-        panel.load_pcx(StringTemp, 0, 0xA, 0xEC);
-        panel.copy(canvas, 0x155, 0x0B, rects_3134_[2].left,
-                   rects_3134_[2].top, 0x258, 0x168);
+      strcat(StringTemp, Players[preview_faction_or_page_].filename);
+      strcat(StringTemp, "3.pcx");
+      panel.load_pcx(StringTemp, 0, 0xA, 0xEC);
+      panel.copy(this, 0x155, 0xB, rects_3134_[2].left, rects_3134_[2].top,
+                 0x258, 0x168);
     } else if (type >= 0xF) {
-        int counterpart;
-        if (static_cast<unsigned int>(type) <= 20u) {
-          counterpart = FactionMonuments[faction].records_[type].word_8_;
-        } else {
-          // The original common painter reads +8 at this selector-derived
-          // address even after the switch has routed an out-of-range type to
-          // 0x475E58. Preserve that object-representation read without forming
-          // a reference beyond the 21-element C++ array.
-          const char *const owner_bytes =
-              reinterpret_cast<const char *>(&FactionMonuments[faction]);
-          memcpy(&counterpart,
-                 owner_bytes + type * sizeof(MonumentRecord) +
-                     offsetof(MonumentRecord, word_8_),
-                 sizeof(counterpart));
-        }
-        StringTemp[0] = '\0';
-        strcat(StringTemp, Players[counterpart].filename);
-        strcat(StringTemp, "3.pcx");
-        panel.load_pcx(StringTemp, 0, 0xA, 0xEC);
-        panel.copy(canvas, 0x155, 0x174, rects_3134_[2].left,
-                   rects_3134_[2].top, 0x258, 0x168);
+      strcat(StringTemp,
+             Players[FactionMonuments[faction].records_[type].word_8_]
+                 .filename);
+      strcat(StringTemp, "3.pcx");
+      panel.load_pcx(StringTemp, 0, 0xA, 0xEC);
+      panel.copy(this, 0x155, 0x174, rects_3134_[2].left, rects_3134_[2].top,
+                 0x258, 0x168);
     } else {
-        char number[12];
-        StringTemp[0] = '\0';
-        strcat(StringTemp, "monbig");
-        _itoa(type, number, 10);
-        strcat(StringTemp, number);
-        strcat(StringTemp, ".pcx");
-        panel.load_pcx(StringTemp, 0, 0xA, 0xEC);
-        panel.copy(canvas, 0, 0, rects_3134_[2].left,
-                   rects_3134_[2].top, 0x258, 0x168);
+      char number[12];
+      strcat(StringTemp, "monbig");
+      _itoa(type, number, 10);
+      strcat(StringTemp, number);
+      strcat(StringTemp, ".pcx");
+      panel.load_pcx(StringTemp, 0, 0xA, 0xEC);
+      panel.copy(this, 0, 0, rects_3134_[2].left, rects_3134_[2].top,
+                 0x258, 0x168);
     }
     button_first_.hide();
     button_second_.show(0);
   } else {
-    // Clear transient hit regions, paint the owned decoded animation onto
-    // the inherited canvas, and order the first fifteen monument records
-    // by year before painting their event icons.
     spot_.kill_type(0);
-    const bool fullscreen = field_A48_ != 0;
-    if (fullscreen) {
-      buffer_first_.copy(static_cast<Buffer *>(this), 0, 0, 0, 0,
-                       0x400, 0x300);
+    if (field_A48_ != 0) {
+      buffer_first_.copy(this, 0, 0, 0, 0, 0x400, 0x300);
     } else {
-      buffer_first_.copy(static_cast<Buffer *>(this), 0x70, 0x54, 0, 0,
-                       0x320, 0x258);
+      buffer_first_.copy(this, 0x70, 0x54, 0, 0, 0x320, 0x258);
     }
-
     int order[15];
-    const MonumentFaction &monuments = FactionMonuments[preview_faction_or_page_];
-    for (i = 0; i != 15; ++i) {
-      order[i] = monuments.records_[i].achieved_ != 0 ? i : -1;
-    }
-    for (i = 1; i != 15; ++i) {
-      for (j = i; j != 15; ++j) {
-        if (order[j] == -1) {
-          continue;
-        }
-        if (order[i - 1] == -1 ||
-            monuments.records_[order[i - 1]].year_ >
-            monuments.records_[order[j]].year_) {
-          swap(&order[i - 1], &order[j]);
-        }
-      }
-    }
-
-    RECT row_rect;
-    for (row = 0; row != 15; ++row) {
-      const int type = order[row];
-      if (type == -1 || monuments.records_[type].achieved_ == 0) {
-        continue;
-      }
-      if (row != 14) {
-        row_rect = rects_3134_[row + 3];
+    for (i = 0; i < 15; i++) {
+      if (FactionMonuments[preview_faction_or_page_].records_[i].achieved_) {
+        order[i] = i;
       } else {
-        // Native 0x47621C advances a 16-byte RECT source from +0x3164 for
-        // all fifteen sorted entries. Its final source is +0x3244, exactly
-        // Sprite[0], even though init only establishes RECT entries through
-        // +0x3234. Preserve that object-representation read safely; this is
-        // the native anomalous final-row geometry, not a declared RECT view.
-        memcpy(&row_rect, &sprites_3244_[0], sizeof(row_rect));
+        order[i] = -1;
       }
-      field_A34_ = row_rect.left;
-      field_A38_ = row_rect.top;
-      field_A3C_ = row_rect.right;
-      field_A40_ = row_rect.bottom;
-      sprites_2C0C_[type].draw(
-          static_cast<Buffer *>(this),
-          sprites_2C0C_[type].transparent_index(), field_A34_, field_A38_);
-      spot_.add(type, 0, field_A34_, field_A38_,
-                field_A3C_ - field_A34_, field_A40_ - field_A38_);
     }
-
-    selected_monument_type_ = monuments.latest_type_;
-    const RECT &primary = rects_3134_[0];
-    spot_.add(0x45, 0, primary.left, primary.top,
-              primary.right - primary.left,
-              primary.bottom - primary.top);
-
-    Sprite *selected_sprite;
+    for (i = 0; i < 14; i++) {
+      for (j = i + 1; j < 15; j++) {
+        if (order[j] != -1) {
+          if (order[i] == -1
+              || FactionMonuments[preview_faction_or_page_].records_[order[i]].year_
+                 > FactionMonuments[preview_faction_or_page_].records_[order[j]].year_) {
+            swap(&order[i], &order[j]);
+          }
+        }
+      }
+    }
+    for (row = 0; row < 15; row++) {
+      if (order[row] != -1
+          && FactionMonuments[preview_faction_or_page_].records_[order[row]].achieved_) {
+        // WORKAROUND(type): +0xA34..+0xA40 are one RECT in the image (a
+        // 16-byte struct copy at 0x47620E); monuwin.h declares four ints.
+        *reinterpret_cast<RECT *>(&field_A34_) = rects_3134_[row + 3];
+        sprites_2C0C_[order[row]].draw(this,
+                                       sprites_2C0C_[order[row]].transparent_index(),
+                                       field_A34_, field_A38_);
+        spot_.add(order[row], 0, field_A34_, field_A38_,
+                  field_A3C_ - field_A34_, field_A40_ - field_A38_);
+      }
+    }
+    selected_monument_type_ = FactionMonuments[preview_faction_or_page_].latest_type_;
+    spot_.add(0x45, 0, rects_3134_[0].left, rects_3134_[0].top,
+              rects_3134_[0].right - rects_3134_[0].left,
+              rects_3134_[0].bottom - rects_3134_[0].top);
     if (selected_monument_type_ == 0xD) {
-      selected_sprite = &sprite_first_;
+      sprite_first_.draw(this, sprite_first_.transparent_index(),
+                         rects_3134_[0].left, rects_3134_[0].top);
     } else if (selected_monument_type_ < 0xF) {
-      selected_sprite = &sprites_2EA0_[selected_monument_type_];
+      sprites_2EA0_[selected_monument_type_].draw(
+          this, sprites_2EA0_[selected_monument_type_].transparent_index(),
+          rects_3134_[0].left, rects_3134_[0].top);
     } else {
-      const int counterpart =
-          monuments.records_[selected_monument_type_].word_8_;
-      selected_sprite = counterpart == 0
-          ? &sprites_33AC_[6]
-          : &sprites_34E0_[counterpart - 1];
+      Sprite &mark = sprites_34E0_[FactionMonuments[preview_faction_or_page_]
+                                       .records_[selected_monument_type_].word_8_ - 1];
+      mark.draw(this, mark.transparent_index(), rects_3134_[0].left,
+                rects_3134_[0].top);
     }
-    selected_sprite->draw(static_cast<Buffer *>(this),
-                          selected_sprite->transparent_index(),
-                          primary.left, primary.top);
-
-    int victory_count = 0;
-    for (type = 15; type != 21; ++type) {
-      if (monuments.records_[type].achieved_ != 0) {
-        ++victory_count;
+    int count = 0;
+    for (type = 15; type < 21; type++) {
+      if (FactionMonuments[preview_faction_or_page_].records_[type].achieved_) {
+        count++;
       }
     }
-    if (victory_count != 0) {
-      const int even_icon = (victory_count - 1) / 2;
-      const RECT &even_rect = icon_rects_[even_icon * 2];
-      field_A34_ = even_rect.left;
-      field_A38_ = even_rect.top;
-      field_A3C_ = even_rect.right;
-      field_A40_ = even_rect.bottom;
-      sprites_3244_[even_icon * 2].draw(
-          static_cast<Buffer *>(this),
-          sprites_3244_[even_icon * 2].transparent_index(),
-          field_A34_, field_A38_);
-
-      if (victory_count > 1) {
-        const int odd_icon = (victory_count - 2) / 2;
-        const RECT &odd_rect = icon_rects_[odd_icon * 2 + 1];
-        field_A34_ = odd_rect.left;
-        field_A38_ = odd_rect.top;
-        field_A3C_ = odd_rect.right;
-        field_A40_ = odd_rect.bottom;
-        sprites_3244_[odd_icon * 2 + 1].draw(
-            static_cast<Buffer *>(this),
-            sprites_3244_[odd_icon * 2 + 1].transparent_index(),
+    if (count) {
+      int last = count - 1;
+      *reinterpret_cast<RECT *>(&field_A34_) = icon_rects_[last / 2 * 2];
+      sprites_3244_[last / 2 * 2].draw(this, sprites_3244_[last / 2 * 2].transparent_index(),
+                                      field_A34_, field_A38_);
+      if (last) {
+        *reinterpret_cast<RECT *>(&field_A34_) = icon_rects_[(last - 1) / 2 * 2 + 1];
+        sprites_3244_[(last - 1) / 2 * 2 + 1].draw(
+            this, sprites_3244_[(last - 1) / 2 * 2 + 1].transparent_index(),
             field_A34_, field_A38_);
       }
-
-      int record_type = 15;
-      for (i = 0; i != victory_count; ++i) {
-        const MonumentRecord &record = monuments.records_[record_type];
-        const RECT &row = rects_366C_[i];
-        if (record.achieved_ == 0) {
-          // Native 4764DD advances the absent selector here and again in
-          // the common loop increment. One rectangle slot is consumed.
-          record_type += 2;
+      for (i = 0, type = 15; i < count; i++, type++) {
+        if (!FactionMonuments[preview_faction_or_page_].records_[type].achieved_) {
+          type++;
           continue;
         }
-        const int counterpart = record.word_8_;
-        // The native per-faction lookup uses a 1-based faction id from the
-        // record at +0x08; source-owned mark extraction stores player 1
-        // at sprites_33AC_[0].
-        Sprite &mark = sprites_33AC_[counterpart - 1];
-        mark.draw(static_cast<Buffer *>(this),
-                  mark.transparent_index(), row.left, row.top);
-        spot_.add(record_type, 0, row.left, row.top,
-                  row.right - row.left, row.bottom - row.top);
-        ++record_type;
+        Sprite &mark = sprites_33AC_[FactionMonuments[preview_faction_or_page_]
+                                         .records_[type].word_8_ - 1];
+        mark.draw(this, mark.transparent_index(), rects_366C_[i].left,
+                  rects_366C_[i].top);
+        spot_.add(type, 0, rects_366C_[i].left, rects_366C_[i].top,
+                  rects_366C_[i].right - rects_366C_[i].left,
+                  rects_366C_[i].bottom - rects_366C_[i].top);
       }
     }
-
-    // Native final art is Sprite at +0x3640 and uses the left/top words of
-    // the seventh independent hit rectangle at +0x36CC/+0x36D0.
-    sprite_second_.draw(static_cast<Buffer *>(this),
-                        sprite_second_.transparent_index(),
-                          rects_366C_[6].left,
-                          rects_366C_[6].top);
+    sprite_second_.draw(this, sprite_second_.transparent_index(),
+                        rects_366C_[6].left, rects_366C_[6].top);
     button_second_.hide();
     button_first_.show(0);
   }

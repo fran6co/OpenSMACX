@@ -105,104 +105,6 @@ Win *preference_window() {
   return static_cast<Win *>(static_cast<GraphicWin *>(&ConsolePrefWin));
 }
 
-struct CheckEntry {
-  int id;
-  uint32_t bit;
-  uint8_t group;
-  bool inverted;
-};
-
-// Dialog ids and preference words for the dialog builders. The pinned
-// set_preferences/get_preferences spell each correspondence out inline.
-const CheckEntry kBasic[] = {
-    {7, PREF_BSC_TUTORIAL_MSGS, 0, false},
-    {8, PREF_BSC_AUTO_DESIGN_VEH, 0, false},
-    {9, MPREF_BSC_AUTO_PRUNE_OBS_VEH, 1, false},
-    {10, PREF_BSC_MOUSE_EDGE_SCROLL_VIEW, 0, false},
-    {11, PREF_BSC_AUTOSAVE_EACH_TURN, 0, false},
-    {12, PREF_BSC_PAUSE_END_TURN, 0, false},
-    {13, PREF_BSC_DONT_QUICK_MOVE_ENEMY_VEH, 0, true},
-    {14, PREF_BSC_DONT_QUICK_MOVE_ALLY_VEH, 0, true},
-};
-const CheckEntry kAdvanced[] = {
-    {15, PREF_ADV_RADIO_BTN_NOT_SEL_SING_CLK, 2, true},
-    {16, MPREF_ADV_CLICK_VEH_CANCELS_ORDERS, 3, false},
-    {17, MPREF_ADV_CONFIRM_ODDS_BF_ATTACKING, 3, false},
-    {18, MPREF_ADV_PAUSE_AFTER_BATTLES, 3, false},
-    {19, PREF_ADV_FAST_BATTLE_RESOLUTION, 2, false},
-    {28, MPREF_ADV_QUICK_MOVE_VEH_ORDERS, 3, false},
-    {20, MPREF_ADV_QUICK_MOVE_ALL_VEH, 3, false},
-    {21, PREF_ADV_NO_CENTER_VEH_ORDERS, 2, false},
-    {23, MPREF_ADV_ZOOM_BASE_NO_RECENTER_MAP, 3, false},
-    {24, MPREF_ADV_DETAIL_MAIN_MENUS, 3, false},
-    {25, MPREF_ADV_DETAIL_RIGHT_CLICK_MENUS, 3, false},
-    {26, MPREF_ADV_RIGHT_CLICK_POPS_UP_MENU, 3, false},
-};
-const CheckEntry kAutomation[] = {
-    {29, PREF_AUTO_AIR_VEH_RET_HOME_FUEL_RNG, 4, false},
-    {30, PREF_AUTO_FORMER_PLANT_FORESTS, 4, false},
-    {31, PREF_AUTO_FORMER_RAISE_LWR_TERRAIN, 4, false},
-    {32, PREF_AUTO_FORMER_BUILD_ADV, 4, false},
-    {33, MPREF_AUTO_FORMER_REMOVE_FUNGUS, 5, false},
-    {42, MPREF_AUTO_FORMER_CANT_BUILD_ROADS, 5, true},
-    {34, MPREF_AUTO_FORMER_BUILD_SENSORS, 5, false},
-    {35, PREF_AUTO_END_MOVE_SPOT_VEH_PACT, 4, false},
-    {36, PREF_AUTO_END_MOVE_SPOT_VEH_TREATY, 4, false},
-    {37, PREF_AUTO_END_MOVE_SPOT_VEH_TRUCE, 4, false},
-    {38, PREF_AUTO_END_MOVE_SPOT_VEH_WAR, 4, false},
-    {39, PREF_AUTO_DONT_END_MOVE_DIFF_TRIAD, 4, false},
-    {40, PREF_AUTO_WAKE_VEH_TRANS_REACH_LAND, 4, false},
-    {41, MPREF_AUTO_ALWAYS_INSPECT_MONOLITH, 5, false},
-};
-const CheckEntry kMap[] = {
-    {0x48, MPREF_MAP_SHOW_FOG_WAR, 9, false},
-    {0x49, PREF_MAP_SHOW_GRID, 8, false},
-    {0x4E, MPREF_MAP_SHOW_GRID_OCEAN_SQ, 9, false},
-    {0x4A, PREF_MAP_SHOW_BASE_GRID, 8, false},
-    {0x4B, MPREF_MAP_SHOW_BASE_NAMES, 9, false},
-    {0x4C, MPREF_MAP_SHOW_PROD_WITH_BASE_NAMES, 9, false},
-    {0x4D, MPREF_MAP_SHOW_FLAT_TERRAIN, 9, false},
-    {0x4F, MPREF_MAP_HIDE_ACTIVE_VEH_GOTO_PATH, 9, true},
-};
-const CheckEntry kWarnings[] = {
-    {0x2B, WARN_STOP_NEW_FAC_BUILT, 10, false},
-    {0x2C, WARN_STOP_NON_COMBAT_VEH_BUILT, 10, false},
-    {0x2D, WARN_STOP_COMBAT_VEH_BUILT, 10, false},
-    {0x2E, WARN_STOP_PROTOTYPE_COMPLETE, 10, false},
-    {0x2F, WARN_STOP_BUILT_VIA_GOV_QUEUE, 10, false},
-    {0x30, WARN_STOP_DRONE_RIOTS, 10, false},
-    {0x31, WARN_STOP_DRONE_RIOTS_END, 10, false},
-    {0x32, WARN_STOP_GOLDEN_AGE, 10, false},
-    {0x33, WARN_STOP_GOLDEN_AGE_END, 10, false},
-    {0x34, WARN_STOP_NUTRIENT_SHORTAGE, 10, false},
-    {0x36, WARN_STOP_BUILD_OUT_OF_DATE, 10, false},
-    {0x37, WARN_STOP_POP_LIMIT_REACHED, 10, false},
-    {0x38, WARN_STOP_DELAY_IN_TRANSCEND, 10, false},
-};
-const CheckEntry kWarningContinue[] = {
-    {0x39, WARN_STOP_STARVATION, 10, false},
-    {0x3A, WARN_STOP_MINERAL_SHORTAGE, 10, false},
-    {0x3B, WARN_STOP_ENERGY_SHORTAGE, 10, false},
-    {0x3C, WARN_STOP_RANDOM_EVENT, 10, false},
-};
-const CheckEntry kAudioDialog[] = {
-    {0x40, 0, 10, false}, {0x41, 0, 10, false}, {0x42, 0, 10, false},
-    {0x47, 0, 10, false}, {0x43, 0, 10, false}, {0x44, 0, 10, false},
-    {0x45, 0, 10, false}, {0x16, 0, 10, false},
-};
-
-void add_dialog_items(CheckBox &box, const CheckEntry *items,
-                      unsigned int count, const int *label_offsets) {
-  for (unsigned int i = 0; i < count; ++i) {
-    StringTemp[0] = '\0';
-    text_get();
-    const char *suffix = label_offsets ? label_get(label_offsets[i] / 4) : nullptr;
-    if (suffix) strcat(StringTemp, suffix);
-    if (TextBufferGetPtr) strcat(StringTemp, TextBufferGetPtr);
-    box.item(StringTemp, items[i].id, 0);
-  }
-}
-
 int label_index(int byte_offset) { return byte_offset / 4; }
 
 }  // namespace
@@ -222,7 +124,11 @@ PrefWin::PrefWin() : GraphicWin() {}
 
 // ORIGINAL: 0x0048D840 ?init@PrefWin@@QAEXXZ 0x0048D840-0x0048F9F5 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0048d840.cpp", "recovery/tasks/prefwin-owner-coverage-wave.json", "Original control parent 8578D8; ctor/destructor member order, 800-pixel branch, checkbox text-context and callback order independently reviewed."], "reason": "Recover the complete PrefWin ownership group through a genuine GraphicWin base and compiler-owned embedded control lifetimes; preserve seed identity, original spans and unresolved discoveries without granting byte claims."}
-// TRIED: full hand transcription from raw disassembly (Ghidra had only one benign unreachable-block warning and was trustworthy here). The six "BASICPREFS/ADVANCEDPREFS/AUTOMATIONPREFS/AUDIOVISUALPREFS/ BASEWARNINGS/(unconditional)/MAPPREFS" tab pages each resolve an embedded CheckBox's own vtable slot at +8 (a stored byte offset to an embedded Dialog sub-object, not a function pointer) and dispatch that Dialog's vtable slot 1/2 - confirmed against raw asm receiver setup (`lea ecx,[esi+N]` before each call), not trusted from Ghidra's frequently-dropped implicit `this`. Two VCall shims used since slot002 is nullary on one dispatch chain and takes one int on the sibling chain. First divergence is instruction #5 (prologue scheduling) - not byte-verified beyond the receiver/signature spot-checks cited above.
+// TRIED: loop/array transcription over invented tables (superseded 2026-11-12
+// by the image's straight-line body). Remaining MNEMONIC_ONLY residue: the
+// first set_font of each button group addresses the Buffer base as
+// [edi+0x444] in the image (0x48DA0A, 0x48F6E9, 0x48F8F3) where ours uses
+// [esi+member+0x444]; static_cast and reference spellings add null checks.
 void PrefWin::init() {
   // Original preference reads use four distinct static key starts.
   // Keep function-local storage so init and destroy do not pool identical keys.
@@ -234,192 +140,624 @@ void PrefWin::init() {
   static const char SFXVolumeInitKey[] = "SFX Volume";
   // RECOVERY_OBJECT: v1 0x00686D28 _?MusicVolumeInitKey@?1??init@PrefWin@@QAEXXZ@4QBDB
   static const char MusicVolumeInitKey[] = "Music Volume";
+  int frame_adjustment = 0;                                   // 48D84D [ebp-4]=ebx
+  field_A14_ = 0;
+  field_A18_ = 0;
+  field_A1C_ = 0;
+  field_A5C_ = 0;
 
-  field_A14_ = field_A18_ = field_A1C_ = field_A5C_ = 0;
-
-  const int width = PrefWinDisplayWidth + 0x4E;
-  const int height = PrefWinDisplayHeight;
-  int top = WinScreenHeight - 0x26A;
-  int frame_adjustment = 0;
-  if (WinScreenWidth == 800) {
-    PrefWinGeometryValue_8578D0 -= 0x32;
-    PrefWinNarrowDisplayVerticalOffset = 0x32;
-    top = 0;
-    frame_adjustment = 0x50;
+  int top;                                                    // edi
+  if (WinScreenWidth == 800) {                                // 48D868 [9B7B1C]
+    // ? 48D876: image loads 0x32 into eax once, subtracts it from [8578D0]
+    // and stores it to [872CA8]; either two constant statements or
+    // `PrefWinGeometryValue_8578D0 -= (PrefWinNarrowDisplayVerticalOffset = 50);`
+    PrefWinNarrowDisplayVerticalOffset = 50;                  // 48D883 [872CA8]
+    PrefWinGeometryValue_8578D0 -= 50;                        // 48D888 [8578D0]
+    top = 0;                                                  // 48D88E
+    frame_adjustment = 0x50;                                  // 48D890
+  } else {
+    top = WinScreenHeight - 0x26A;                            // 48D899 [9B7B20]
   }
-  // The original passes 0x872CAC as a mutable caption address. Its first
-  // byte is observed NUL, but extent and indirect writers are unresolved.
-  GraphicWin::init(WinScreenWidth / 2 - PrefWinDisplayWidth / 2, top,
-                   width, height, PrefWinCaption,
-                   0x1000000, console_window(), nullptr,
-                   nullptr);
-  GraphicWin::fill(9);
+  // 48D8A4: x = WinScreenWidth/2 - PrefWinDisplayWidth/2 (both signed /2).
+  // Parent = Console (0x9156B0) converted to Win* through its virtual base,
+  // with the compiler's null test (48D8C0).
+  int left = WinScreenWidth / 2 - PrefWinDisplayWidth / 2;
+  GraphicWin::init(left, top,
+                   PrefWinDisplayWidth + 0x4E, PrefWinDisplayHeight,
+                   PrefWinCaption /* 0x872CAC */, 0x1000000,
+                   console_window(), 0, 0);                   // 48D8F9
+  GraphicWin::fill(9);                                        // 48D902
 
-  font1_ = find_font(16, 0);
-  font2_ = find_font(12, 0);
-  font3_ = find_font(12, 2);
-  font4_ = find_font(12, 1);
-  font5_ = find_font(14, 0);
-  font6_ = find_font(14, 2);
-  font7_ = find_font(14, 1);
-  Buffer::set_font(font2_, font2_, font5_, 0);
-  Buffer::set_text_color(MessageWinTextColor, MessageWinTextBackground, 1, 1);
+  font1_ = find_font(10, 0);                                  // 48D90A  (current src: 16)
+  font2_ = find_font(12, 0);                                  // 48D918
+  font3_ = find_font(12, 2);                                  // 48D927
+  font4_ = find_font(12, 1);                                  // 48D936
+  font5_ = find_font(14, 0);                                  // 48D944
+  font6_ = find_font(14, 2);                                  // 48D953
+  font7_ = find_font(14, 1);                                  // 48D962
+  // ? 48D970: the font arguments are read from the absolute addresses
+  // 0x872C90/0x872C9C (= ConsolePrefWin+0x1B3B8 / +0x1B3C4), not through esi,
+  // although the receiver is this->Buffer (esi+0x444). Source likely spells
+  // them ConsolePrefWin.font2_ / ConsolePrefWin.font5_.
+  Buffer::set_font(ConsolePrefWin.font2_, ConsolePrefWin.font2_,
+                   ConsolePrefWin.font5_, 0);                 // 48D987
+  Buffer::set_text_color(MessageWinTextColor /* [68A5A4] */,
+                         MessageWinTextBackground /* [68A5B0] */, 1, 1); // 48D99F
 
-  FlatButton *tabs[] = {&bscPrefButton_, &advPrefButton_, &warnPrefButton_,
-                        &autoPrefButton_, &audioVisPrefButton_, &mapPrefButton_,
-                        &gammaButton_};
-  const int tabIds[] = {0, 1, 2, 3, 4, 5, 6};
-  const int tabLabels[] = {3000, 0xBBC, 0xBC0, 0xBC4, 0xBC8, 0x10D4, 0x10D8};
-  const int tabY[] = {0, 0x16, 0x2C, 0x42, 0x58, 0x6E, 0x9A};
-  for (unsigned int tab_index = 0; tab_index < 7; ++tab_index) {
-    const char *label = label_get(label_index(tabLabels[tab_index]));
-    tabs[tab_index]->init(const_cast<char *>(label ? label : ""), tabIds[tab_index],
-                  PrefWinGeometryValue_85788C,
-                  PrefWinGeometryValue_857890 + tabY[tab_index],
-                  PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
-                  preference_window(), 0);
-    // Original 6E84B4 is the tutorial BaseWin's constructed Font member,
-    // not find_font(12, 0). Its owner constructs and tears it down.
-    tabs[tab_index]->Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
-    tabs[tab_index]->redraw();
-  }
-  PrefWinButtonGroup.init(0x5D, 0);
-  for (unsigned int tab_member = 0; tab_member < 6; ++tab_member)
-    PrefWinButtonGroup.add(tabs[tab_member]);
-  PrefWinButtonGroup.set(0, 1);
+  // ---- page tabs: label copied into StringTemp, then BaseButton::init ----
+  StringTemp[0] = 0;                                          // 48D9AA
+  strcat(StringTemp, label_get(750));   /* 0xBB8 */           // 48D9C7
+  bscPrefButton_.init(StringTemp, 0, PrefWinGeometryValue_85788C,
+                      PrefWinGeometryValue_857890,
+                      PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
+                      preference_window() /* 0x8578D8 */, 0); // 48D9FD
+  bscPrefButton_.Buffer::set_font(&TutWinBaseWindow.font1_ /* 0x6E84B4 */, 0, 0, 0); // 48DA10
+  bscPrefButton_.redraw();              // ? 48DA19 virtual slot +0xF8 // 48DA19
 
-  CheckBox *boxes[] = {&bscPrefCheckBox_, &advPrefCheckBox_, &autoPrefCheckBox_,
-                       &audioVisPrefCheckBox_, &warnPrefCheckBox_,
-                       &warnContPrefCheckBox_, &mapPrefCheckBox_};
-  const CheckEntry *entries[] = {kBasic, kAdvanced, kAutomation, kAudioDialog,
-                                 kWarnings, kWarningContinue, kMap};
-  const char *sections[] = {"BASICPREFS", "ADVANCEDPREFS", "AUTOMATIONPREFS",
-      "AUDIOVISUALPREFS", "BASEWARNINGS", "BASEWARNINGS", "MAPPREFS"};
-  const unsigned int counts[] = {sizeof(kBasic) / sizeof(kBasic[0]),
-      sizeof(kAdvanced) / sizeof(kAdvanced[0]),
-      sizeof(kAutomation) / sizeof(kAutomation[0]),
-      sizeof(kAudioDialog) / sizeof(kAudioDialog[0]),
-      sizeof(kWarnings) / sizeof(kWarnings[0]),
-      sizeof(kWarningContinue) / sizeof(kWarningContinue[0]),
-      sizeof(kMap) / sizeof(kMap[0])};
-  const int basicLabels[] = {0x6BA4,0x6BA8,0x6BAC,0x6BB0,0x6BB4,0x6BB8,0x6BBC,0x6BC0};
-  const int advancedLabels[] = {0x6BD4,0x6BD8,0x6BDC,0x6BE0,0x6BE4,0x6BE8,0x6BEC,0x6BF0,0x6BF4,0x6BF8,0x6BFC,0x6C00};
-  const int automationLabels[] = {0x6C14,0x6C18,0x6C1C,0x6C20,0x6C24,0x6C28,0x6C2C,0x6C30,0x6C34,0x6C38,0x6C3C,0x6C40,0x6C44,0x6C48};
-  const int audioLabels[] = {0x6C60,0x6C64,0x6C68,0x6C6C,0x6C70,0x6C74,0x6C78,0x6C7C};
-  const int warningLabels[] = {0x6C90,0x6C94,0x6C98,0x6C9C,0x6CA0,0x6CA4,0x6CA8,0x6CAC,0x6CB0,0x6CB4,0x6CB8,0x6CBC,0x6CC0};
-  const int warningContinueLabels[] = {0x6CC4,0x6CC8,0x6CCC,0x6CD0};
-  const int mapLabels[] = {0x6CE0,0x6CE4,0x6CE8,0x6CEC,0x6CF0,0x6CF4,0x6CF8,0x6CFC};
-  const int *itemLabels[] = {basicLabels, advancedLabels, automationLabels,
-      audioLabels, warningLabels, warningContinueLabels, mapLabels};
-  const int y[] = {PrefWinGeometryValue_8578C4, PrefWinGeometryValue_8578C4,
-      PrefWinGeometryValue_8578C4, PrefWinGeometryValue_8578C4,
-      PrefWinGeometryValue_8578A4 - PrefWinGeometryConstant_686B78 -
-          PrefWinGeometryValue_8577E0 - frame_adjustment,
-      PrefWinGeometryValue_8578A4 - PrefWinGeometryConstant_686B78 -
-          PrefWinGeometryValue_8577E0 + 0x28 - frame_adjustment,
-      PrefWinGeometryValue_8578A4};
-  for (unsigned int box_index = 0; box_index < 7; ++box_index) {
-    // The warning-continuation controls are appended to the still-open
-    // BASEWARNINGS text section; the original does not open it a second time.
-    if (box_index != 5 && X_text_open(ScriptPopupFile, sections[box_index]) != 0) return;
-    boxes[box_index]->close();
-    Dialog *dialog = static_cast<Dialog *>(boxes[box_index]);
-    dialog->init(PrefWinGeometryValue_8578C8, y[box_index],
-                 PrefWinGeometryValue_8578A0, PrefWinGeometryValue_8578A4, 0);
-    add_dialog_items(*boxes[box_index], entries[box_index], counts[box_index], itemLabels[box_index]);
-    boxes[box_index]->attach(&ConsolePrefWin, PrefWinGeometryValue_8578C8,
-                     PrefWinGeometryValue_8578C4, 0x1000120);
-    if (box_index != 4) text_close();
-  }
+  StringTemp[0] = 0;                                          // 48DA24
+  strcat(StringTemp, label_get(751));   /* 0xBBC */           // 48DA41
+  advPrefButton_.init(StringTemp, 1, PrefWinGeometryValue_85788C,
+                      PrefWinGeometryValue_857890 + 0x16,
+                      PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
+                      preference_window(), 0);                // 48DA79
+  advPrefButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);  // 48DA8C
+  advPrefButton_.redraw();                                    // 48DA9D
 
-  Scroll *scrolls[] = {&volumeMainScroll_, &volumeVoiceScroll_,
-      &volumeSFXScroll_, &volumeMusicScroll_};
-  for (int scroll_index = 0; scroll_index < 4; ++scroll_index) {
-    scrolls[scroll_index]->init_horz(PrefWinGeometryValue_8578D0 + scroll_index * 0x16,
-        PrefWinGeometryValue_8578B8, 0x50 + scroll_index, preference_window(), 0);
-    scrolls[scroll_index]->set_range(0, 0x7F);
-  }
-  volumeMainScroll_.set_pos(prefs_get(MainVolumeInitKey, 0x7F, 0));
-  volumeVoiceScroll_.set_pos(prefs_get(VoiceVolumeInitKey, 0x55, 0));
-  volumeSFXScroll_.set_pos(prefs_get(SFXVolumeInitKey, 0x5F, 0));
-  if (FactionMusic)
-    volumeMusicScroll_.set_pos(prefs_get(MusicVolumeInitKey, 0x3F, 0));
-  else
-    volumeMusicScroll_.set_pos(0);
-  on_scrolling(0x50, volumeMainScroll_.position());
+  StringTemp[0] = 0;                                          // 48DAA8
+  strcat(StringTemp, label_get(752));   /* 0xBC0 */           // 48DAC5
+  warnPrefButton_.init(StringTemp, 2, PrefWinGeometryValue_85788C,
+                       PrefWinGeometryValue_857890 + 0x2C,
+                       PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
+                       preference_window(), 0);               // 48DAFD
+  warnPrefButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0); // 48DB10
+  warnPrefButton_.redraw();                                   // 48DB21
+
+  StringTemp[0] = 0;                                          // 48DB2C
+  strcat(StringTemp, label_get(753));   /* 0xBC4 */           // 48DB49
+  autoPrefButton_.init(StringTemp, 3, PrefWinGeometryValue_85788C,
+                       PrefWinGeometryValue_857890 + 0x42,
+                       PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
+                       preference_window(), 0);               // 48DB81
+  autoPrefButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0); // 48DB94
+  autoPrefButton_.redraw();                                   // 48DBA5
+
+  StringTemp[0] = 0;                                          // 48DBB0
+  strcat(StringTemp, label_get(754));   /* 0xBC8 */           // 48DBCD
+  audioVisPrefButton_.init(StringTemp, 4, PrefWinGeometryValue_85788C,
+                           PrefWinGeometryValue_857890 + 0x58,
+                           PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
+                           preference_window(), 0);           // 48DC05
+  audioVisPrefButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0); // 48DC18
+  audioVisPrefButton_.redraw();                               // 48DC29
+
+  StringTemp[0] = 0;                                          // 48DC34
+  strcat(StringTemp, label_get(1077));  /* 0x10D4 */          // 48DC51
+  mapPrefButton_.init(StringTemp, 5, PrefWinGeometryValue_85788C,
+                      PrefWinGeometryValue_857890 + 0x6E,
+                      PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
+                      preference_window(), 0);                // 48DC89
+  mapPrefButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);  // 48DC9C
+  mapPrefButton_.redraw();                                    // 48DCAD
+
+  StringTemp[0] = 0;                                          // 48DCB8
+  strcat(StringTemp, label_get(1078));  /* 0x10D8 */          // 48DCD5
+  gammaButton_.init(StringTemp, 6, PrefWinGeometryValue_85788C,
+                    PrefWinGeometryValue_857890 + 0x9A,
+                    PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
+                    preference_window(), 0);                  // 48DD10
+  gammaButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);    // 48DD23
+  gammaButton_.redraw();                                      // 48DD34
+
+  PrefWinButtonGroup.init(0x5D, 0);                           // 48DD42
+  PrefWinButtonGroup.add(&bscPrefButton_);   // edi still = this+0xA60  48DD4D
+  PrefWinButtonGroup.add(&advPrefButton_);                    // 48DD5E
+  PrefWinButtonGroup.add(&warnPrefButton_);                   // 48DD6F
+  PrefWinButtonGroup.add(&autoPrefButton_);                   // 48DD80
+  PrefWinButtonGroup.add(&audioVisPrefButton_);               // 48DD91
+  PrefWinButtonGroup.add(&mapPrefButton_);                    // 48DDA2
+  PrefWinButtonGroup.set(0, 1);                               // 48DDAF
+
+  // ---- BASICPREFS ----
+  if (X_text_open(ScriptPopupFile, "BASICPREFS" /* 0x686B98 */)) return; // 48DDBF
+  text_get();                                                 // 48DDCF
+  text_get();                                                 // 48DDD4
+  text_get();                                                 // 48DDD9
+  // Header inline CheckBox::init(l,t,r,b,heap_size): close(); Dialog::init(...)
+  // through the virtual Dialog base (vbtable [edi]+8).
+  bscPrefCheckBox_.init(PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4,
+                        PrefWinGeometryValue_8578A0, PrefWinGeometryValue_8578A4,
+                        0);                                   // 48DE09 / 48DE26
+  bscPrefCheckBox_.unchecked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[1]; // 48DE2B 0x779504
+  bscPrefCheckBox_.checked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[2];   // 48DE32 0x779530
+  StringTemp[0] = 0;  text_get();                             // 48DE39
+  strcat(StringTemp, " " /* 0x686BA4 */);
+  strcat(StringTemp, TextBufferGetPtr /* [9B7D00] */);
+  bscPrefCheckBox_.item(StringTemp, 7, 0);                    // 48DE71
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686BA8 */);
+  strcat(StringTemp, TextBufferGetPtr);
+  bscPrefCheckBox_.item(StringTemp, 8, 0);                    // 48DEAE
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686BAC */);
+  strcat(StringTemp, TextBufferGetPtr);
+  bscPrefCheckBox_.item(StringTemp, 9, 0);                    // 48DEEA
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686BB0 */);
+  strcat(StringTemp, TextBufferGetPtr);
+  bscPrefCheckBox_.item(StringTemp, 10, 0);                   // 48DF27
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686BB4 */);
+  strcat(StringTemp, TextBufferGetPtr);
+  bscPrefCheckBox_.item(StringTemp, 11, 0);                   // 48DF64
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686BB8 */);
+  strcat(StringTemp, TextBufferGetPtr);
+  bscPrefCheckBox_.item(StringTemp, 12, 0);                   // 48DFA0
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686BBC */);
+  strcat(StringTemp, TextBufferGetPtr);
+  bscPrefCheckBox_.item(StringTemp, 13, 0);                   // 48DFDD
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686BC0 */);
+  strcat(StringTemp, TextBufferGetPtr);
+  bscPrefCheckBox_.item(StringTemp, 14, 0);                   // 48E01A
+  // Virtual attach via the Dialog vbase vtable slot 1 (+4).
+  bscPrefCheckBox_.attach(&ConsolePrefWin, PrefWinGeometryValue_8578C8,
+                          PrefWinGeometryValue_8578C4, 0x1000120); // 48E048
+  text_close();                                               // 48E04B
+
+  // ---- ADVANCEDPREFS ----
+  if (X_text_open(ScriptPopupFile, "ADVANCEDPREFS" /* 0x686BC4 */)) return; // 48E05C
+  text_get();
+  text_get();
+  text_get();                                                 // 48E06C..48E076
+  advPrefCheckBox_.init(PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4,
+                        PrefWinGeometryValue_8578A0, PrefWinGeometryValue_8578A4,
+                        0);                                   // 48E0A6 / 48E0C3
+  advPrefCheckBox_.unchecked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[1]; // 48E0C8
+  advPrefCheckBox_.checked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[2];   // 48E0CF
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686BD4 */);
+  strcat(StringTemp, TextBufferGetPtr);
+  advPrefCheckBox_.item(StringTemp, 15, 0);                   // 48E10E
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686BD8 */);
+  strcat(StringTemp, TextBufferGetPtr);
+  advPrefCheckBox_.item(StringTemp, 16, 0);                   // 48E14A
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686BDC */);
+  strcat(StringTemp, TextBufferGetPtr);
+  advPrefCheckBox_.item(StringTemp, 17, 0);                   // 48E187
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686BE0 */);
+  strcat(StringTemp, TextBufferGetPtr);
+  advPrefCheckBox_.item(StringTemp, 18, 0);                   // 48E1C4
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686BE4 */);
+  strcat(StringTemp, TextBufferGetPtr);
+  advPrefCheckBox_.item(StringTemp, 19, 0);                   // 48E200
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686BE8 */);
+  strcat(StringTemp, TextBufferGetPtr);
+  advPrefCheckBox_.item(StringTemp, 28, 0);                   // 48E23D
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686BEC */);
+  strcat(StringTemp, TextBufferGetPtr);
+  advPrefCheckBox_.item(StringTemp, 20, 0);                   // 48E27A
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686BF0 */);
+  strcat(StringTemp, TextBufferGetPtr);
+  advPrefCheckBox_.item(StringTemp, 21, 0);                   // 48E2B6
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686BF4 */);
+  strcat(StringTemp, TextBufferGetPtr);
+  advPrefCheckBox_.item(StringTemp, 23, 0);  // ? 48E2E9 pushes before mov ecx,edi (scheduling only) // 48E2F3
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686BF8 */);
+  strcat(StringTemp, TextBufferGetPtr);
+  advPrefCheckBox_.item(StringTemp, 24, 0);                   // 48E330
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686BFC */);
+  strcat(StringTemp, TextBufferGetPtr);
+  advPrefCheckBox_.item(StringTemp, 25, 0);                   // 48E36C
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686C00 */);
+  strcat(StringTemp, TextBufferGetPtr);
+  advPrefCheckBox_.item(StringTemp, 26, 0);                   // 48E3A9
+  advPrefCheckBox_.attach(&ConsolePrefWin, PrefWinGeometryValue_8578C8,
+                          PrefWinGeometryValue_8578C4, 0x1000120); // 48E3D7
+  text_close();                                               // 48E3DA
+
+  // ---- AUTOMATIONPREFS ----
+  if (X_text_open(ScriptPopupFile, "AUTOMATIONPREFS" /* 0x686C04 */)) return; // 48E3EB
+  text_get();
+  text_get();
+  text_get();                                                 // 48E3FB..48E405
+  autoPrefCheckBox_.init(PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4,
+                         PrefWinGeometryValue_8578A0, PrefWinGeometryValue_8578A4,
+                         0);                                  // 48E435 / 48E452
+  autoPrefCheckBox_.unchecked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[1]; // 48E457
+  autoPrefCheckBox_.checked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[2];   // 48E45E
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686C14 */);
+  strcat(StringTemp, TextBufferGetPtr);
+  autoPrefCheckBox_.item(StringTemp, 0x1D, 0);                // 48E49D
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686C18 */);
+  strcat(StringTemp, TextBufferGetPtr);
+  autoPrefCheckBox_.item(StringTemp, 0x1E, 0);                // 48E4D9
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686C1C */);
+  strcat(StringTemp, TextBufferGetPtr);
+  autoPrefCheckBox_.item(StringTemp, 0x1F, 0);                // 48E516
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686C20 */);
+  strcat(StringTemp, TextBufferGetPtr);
+  autoPrefCheckBox_.item(StringTemp, 0x20, 0);                // 48E553
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686C24 */);
+  strcat(StringTemp, TextBufferGetPtr);
+  autoPrefCheckBox_.item(StringTemp, 0x21, 0);                // 48E58F
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686C28 */);
+  strcat(StringTemp, TextBufferGetPtr);
+  autoPrefCheckBox_.item(StringTemp, 0x22, 0);                // 48E5CC
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686C2C */);
+  strcat(StringTemp, TextBufferGetPtr);
+  autoPrefCheckBox_.item(StringTemp, 0x2A, 0);                // 48E609
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686C30 */);
+  strcat(StringTemp, TextBufferGetPtr);
+  autoPrefCheckBox_.item(StringTemp, 0x23, 0);                // 48E645
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686C34 */);
+  strcat(StringTemp, TextBufferGetPtr);
+  autoPrefCheckBox_.item(StringTemp, 0x24, 0);  // ? 48E678 pushes before mov ecx,edi (scheduling only) // 48E682
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686C38 */);
+  strcat(StringTemp, TextBufferGetPtr);
+  autoPrefCheckBox_.item(StringTemp, 0x25, 0);                // 48E6BF
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686C3C */);
+  strcat(StringTemp, TextBufferGetPtr);
+  autoPrefCheckBox_.item(StringTemp, 0x26, 0);                // 48E6FB
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686C40 */);
+  strcat(StringTemp, TextBufferGetPtr);
+  autoPrefCheckBox_.item(StringTemp, 0x27, 0);                // 48E738
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686C44 */);
+  strcat(StringTemp, TextBufferGetPtr);
+  autoPrefCheckBox_.item(StringTemp, 0x28, 0);                // 48E775
+  StringTemp[0] = 0;  text_get();
+  strcat(StringTemp, " " /* 0x686C48 */);
+  strcat(StringTemp, TextBufferGetPtr);
+  autoPrefCheckBox_.item(StringTemp, 0x29, 0);                // 48E7B1
+  autoPrefCheckBox_.attach(&ConsolePrefWin, PrefWinGeometryValue_8578C8,
+                           PrefWinGeometryValue_8578C4, 0x1000120); // 48E7E1
+  text_close();                                               // 48E7E4
+
+  // ---- part 2 continues at 0x48E7E9 (4th X_text_open) ----
+  // 0x48E7E9
+  if (X_text_open(ScriptPopupFile, "AUDIOVISUALPREFS")) return;  // 0x686C4C
+  text_get();
+  text_get();
+  text_get();
+  text_get();
+  text_get();
+  text_get();
+  audioVisPrefCheckBox_.init(PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4, PrefWinGeometryValue_8578A0,
+      PrefWinGeometryValue_8578A4 - PrefWinGeometryConstant_686B78 - PrefWinGeometryValue_8577E0 - frame_adjustment, 0);
+  audioVisPrefCheckBox_.unchecked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[1];  // 0x779504
+  audioVisPrefCheckBox_.checked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[2];    // 0x779530
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686C60
+  strcat(StringTemp, TextBufferGetPtr);
+  audioVisPrefCheckBox_.item(StringTemp, 0x40, 0);
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686C64
+  strcat(StringTemp, TextBufferGetPtr);
+  audioVisPrefCheckBox_.item(StringTemp, 0x41, 0);
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686C68
+  strcat(StringTemp, TextBufferGetPtr);
+  audioVisPrefCheckBox_.item(StringTemp, 0x42, 0);
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686C6C
+  strcat(StringTemp, TextBufferGetPtr);
+  audioVisPrefCheckBox_.item(StringTemp, 0x47, 0);
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686C70
+  strcat(StringTemp, TextBufferGetPtr);
+  audioVisPrefCheckBox_.item(StringTemp, 0x43, 0);
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686C74
+  strcat(StringTemp, TextBufferGetPtr);
+  audioVisPrefCheckBox_.item(StringTemp, 0x44, 0);
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686C78
+  strcat(StringTemp, TextBufferGetPtr);
+  audioVisPrefCheckBox_.item(StringTemp, 0x45, 0);
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686C7C
+  strcat(StringTemp, TextBufferGetPtr);
+  audioVisPrefCheckBox_.item(StringTemp, 0x16, 0);
+  audioVisPrefCheckBox_.attach(&ConsolePrefWin, PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4, 0x1000120);
+  text_close();
+
+  // 0x48EAA7
+  if (X_text_open(ScriptPopupFile, "BASEWARNINGS")) return;  // 0x686C80
+  text_get();
+  text_get();
+  text_get();
+  text_get();
+  warnPrefCheckBox_.init(PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4, PrefWinGeometryValue_8578A0,
+      PrefWinGeometryValue_8578A4 - PrefWinGeometryConstant_686B78 - PrefWinGeometryValue_8577E0 + 0x28, 0);
+  warnPrefCheckBox_.unchecked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[1];
+  warnPrefCheckBox_.checked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[2];
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686C90
+  strcat(StringTemp, TextBufferGetPtr);
+  warnPrefCheckBox_.item(StringTemp, 0x2B, 0);
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686C94
+  strcat(StringTemp, TextBufferGetPtr);
+  warnPrefCheckBox_.item(StringTemp, 0x2C, 0);
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686C98
+  strcat(StringTemp, TextBufferGetPtr);
+  warnPrefCheckBox_.item(StringTemp, 0x2D, 0);
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686C9C
+  strcat(StringTemp, TextBufferGetPtr);
+  warnPrefCheckBox_.item(StringTemp, 0x2E, 0);
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686CA0
+  strcat(StringTemp, TextBufferGetPtr);
+  warnPrefCheckBox_.item(StringTemp, 0x2F, 0);
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686CA4
+  strcat(StringTemp, TextBufferGetPtr);
+  warnPrefCheckBox_.item(StringTemp, 0x30, 0);
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686CA8
+  strcat(StringTemp, TextBufferGetPtr);
+  warnPrefCheckBox_.item(StringTemp, 0x31, 0);
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686CAC
+  strcat(StringTemp, TextBufferGetPtr);
+  warnPrefCheckBox_.item(StringTemp, 0x32, 0);
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686CB0
+  strcat(StringTemp, TextBufferGetPtr);
+  warnPrefCheckBox_.item(StringTemp, 0x33, 0);
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686CB4
+  strcat(StringTemp, TextBufferGetPtr);
+  warnPrefCheckBox_.item(StringTemp, 0x34, 0);
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686CB8
+  strcat(StringTemp, TextBufferGetPtr);
+  warnPrefCheckBox_.item(StringTemp, 0x36, 0);
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686CBC
+  strcat(StringTemp, TextBufferGetPtr);
+  warnPrefCheckBox_.item(StringTemp, 0x37, 0);
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686CC0
+  strcat(StringTemp, TextBufferGetPtr);
+  warnPrefCheckBox_.item(StringTemp, 0x38, 0);
+  warnPrefCheckBox_.attach(&ConsolePrefWin, PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4, 0x1000120);
+  // No text_close/X_text_open: the continuation reads on in BASEWARNINGS, and
+  // takes no leading text_get() before its init (0x48EE85).
+  warnContPrefCheckBox_.init(PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4, PrefWinGeometryValue_8578A0,
+      PrefWinGeometryValue_8578A4 - PrefWinGeometryConstant_686B78 - PrefWinGeometryValue_8577E0, 0);
+  warnContPrefCheckBox_.unchecked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[1];
+  warnContPrefCheckBox_.checked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[2];
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686CC4
+  strcat(StringTemp, TextBufferGetPtr);
+  warnContPrefCheckBox_.item(StringTemp, 0x39, 0);
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686CC8
+  strcat(StringTemp, TextBufferGetPtr);
+  warnContPrefCheckBox_.item(StringTemp, 0x3A, 0);
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686CCC
+  strcat(StringTemp, TextBufferGetPtr);
+  warnContPrefCheckBox_.item(StringTemp, 0x3B, 0);
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686CD0
+  strcat(StringTemp, TextBufferGetPtr);
+  warnContPrefCheckBox_.item(StringTemp, 0x3C, 0);
+  warnContPrefCheckBox_.attach(&ConsolePrefWin, PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4, 0x1000120);
+  text_close();
+
+  // 0x48F036
+  if (X_text_open(ScriptPopupFile, "MAPPREFS")) return;  // 0x686CD4
+  text_get();
+  text_get();
+  text_get();
+  text_get();
+  mapPrefCheckBox_.init(PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4, PrefWinGeometryValue_8578A0, PrefWinGeometryValue_8578A4, 0);
+  mapPrefCheckBox_.unchecked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[1];
+  mapPrefCheckBox_.checked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[2];
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686CE0
+  strcat(StringTemp, TextBufferGetPtr);
+  mapPrefCheckBox_.item(StringTemp, 0x48, 0);
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686CE4
+  strcat(StringTemp, TextBufferGetPtr);
+  mapPrefCheckBox_.item(StringTemp, 0x49, 0);
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686CE8
+  strcat(StringTemp, TextBufferGetPtr);
+  mapPrefCheckBox_.item(StringTemp, 0x4E, 0);
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686CEC
+  strcat(StringTemp, TextBufferGetPtr);
+  mapPrefCheckBox_.item(StringTemp, 0x4A, 0);
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686CF0
+  strcat(StringTemp, TextBufferGetPtr);
+  mapPrefCheckBox_.item(StringTemp, 0x4B, 0);
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686CF4
+  strcat(StringTemp, TextBufferGetPtr);
+  mapPrefCheckBox_.item(StringTemp, 0x4C, 0);
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686CF8
+  strcat(StringTemp, TextBufferGetPtr);
+  mapPrefCheckBox_.item(StringTemp, 0x4D, 0);
+  StringTemp[0] = 0;
+  text_get();
+  strcat(StringTemp, " ");  // 0x686CFC
+  strcat(StringTemp, TextBufferGetPtr);
+  mapPrefCheckBox_.item(StringTemp, 0x4F, 0);
+  mapPrefCheckBox_.attach(&ConsolePrefWin, PrefWinGeometryValue_8578C8, PrefWinGeometryValue_8578C4, 0x1000120);
+  text_close();
+
+  // 0x48F306: all four init_horz first, then all four set_range.
+  // Parent pushed as immediate 0x8578D8 (= preference_window() / &ConsolePrefWin).
+  volumeMainScroll_.init_horz(PrefWinGeometryValue_8578CC, PrefWinGeometryValue_8578D0, PrefWinGeometryValue_8578B8, preference_window(), 0x50);
+  volumeVoiceScroll_.init_horz(PrefWinGeometryValue_8578CC, PrefWinGeometryValue_8578D0 + 0x16, PrefWinGeometryValue_8578B8, preference_window(), 0x51);
+  volumeSFXScroll_.init_horz(PrefWinGeometryValue_8578CC, PrefWinGeometryValue_8578D0 + 0x2C, PrefWinGeometryValue_8578B8, preference_window(), 0x52);
+  volumeMusicScroll_.init_horz(PrefWinGeometryValue_8578CC, PrefWinGeometryValue_8578D0 + 0x42, PrefWinGeometryValue_8578B8, preference_window(), 0x53);
+  volumeMainScroll_.set_range(0, 0x7F);
+  volumeVoiceScroll_.set_range(0, 0x7F);
+  volumeSFXScroll_.set_range(0, 0x7F);
+  volumeMusicScroll_.set_range(0, 0x7F);
+
+  // 0x48F3DD: set_pos and its on_scrolling (virtual, vtable +0xC4) interleaved.
+  volumeMainScroll_.set_pos(prefs_get(MainVolumeInitKey, 0x7F, 0));    // 0x686D00 "Main Volume"
+  on_scrolling(0x50, volumeMainScroll_.position());                     // [esi+0xB1B8]
+  volumeVoiceScroll_.set_pos(prefs_get(VoiceVolumeInitKey, 0x55, 0));  // 0x686D0C "Voice Volume"
   on_scrolling(0x51, volumeVoiceScroll_.position());
+  volumeSFXScroll_.set_pos(prefs_get(SFXVolumeInitKey, 0x5F, 0));      // 0x686D1C "SFX Volume"
   on_scrolling(0x52, volumeSFXScroll_.position());
-  if (FactionMusic) on_scrolling(0x53, volumeMusicScroll_.position());
-  for (int scroll_hide_index = 0; scroll_hide_index < 4; ++scroll_hide_index)
-    scrolls[scroll_hide_index]->hide();
-  for (int box_hide_index = 0; box_hide_index < 7; ++box_hide_index)
-    boxes[box_hide_index]->hide();
+  if (FactionMusic) {  // 0x74DAA0; the shared `push 0` precedes the cmp
+    volumeMusicScroll_.set_pos(prefs_get(MusicVolumeInitKey, 0x3F, 0));  // 0x686D28 "Music Volume"
+    on_scrolling(0x53, volumeMusicScroll_.position());
+  } else {
+    volumeMusicScroll_.set_pos(0);
+  }
 
-  FlatButton *volume_toggles[] = {&volumeMainToggle_, &volumeVoiceToggle_,
-      &volumeSFXToggle_, &volumeMusicToggle_};
-  const int volume_ids[] = {0x55, 0x57, 0x56, 0x58};
-  const int volume_labels[] = {0x10E0, 0x10E8, 0x10F0, 0x10F8};
-  for (unsigned int toggle_index = 0; toggle_index < 4; ++toggle_index) {
-    const char *label = label_get(label_index(volume_labels[toggle_index]));
-    volume_toggles[toggle_index]->init(const_cast<char *>(label ? label : ""),
-        volume_ids[toggle_index], PrefWinGeometryValue_8578B4,
-        PrefWinGeometryValue_8578BC - PrefWinNarrowDisplayVerticalOffset +
-            static_cast<int>(toggle_index) * 0x16,
-        PrefWinToggleWidth, PrefWinToggleHeight, preference_window(), 0);
-  }
-  for (unsigned int toggle_redraw = 0; toggle_redraw < 4; ++toggle_redraw) {
-    volume_toggles[toggle_redraw]->Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
-    volume_toggles[toggle_redraw]->redraw();
-  }
-  // The state stores precede all hide callbacks, in main/SFX/voice/music order.
+  // 0x48F4AF
+  volumeMainScroll_.hide();
+  volumeVoiceScroll_.hide();
+  volumeSFXScroll_.hide();
+  volumeMusicScroll_.hide();
+  // The basic page's box is SHOWN (GraphicWin-vbase slot 1 with 0, as in
+  // display()'s page 0); the other six are hidden (slot 2).
+  bscPrefCheckBox_.show(0);  // 0x48F4EB  // ? spelling: show(0) vs a GraphicWin:: qualified call
+  advPrefCheckBox_.hide();
+  autoPrefCheckBox_.hide();
+  audioVisPrefCheckBox_.hide();
+  warnPrefCheckBox_.hide();   // through edi
+  warnContPrefCheckBox_.hide();
+  mapPrefCheckBox_.hide();
+
+  // 0x48F59E: label string pointer passed straight from StringTable.get (no
+  // StringTemp copy, no null substitution).
+  volumeMainToggle_.init(StringTable.get(Labels.strings_ptr[0x10E0 / 4]), 0x55, PrefWinGeometryValue_8578B4,
+      PrefWinGeometryValue_8578BC - PrefWinNarrowDisplayVerticalOffset,
+      PrefWinToggleWidth, PrefWinToggleHeight, preference_window(), 0);
+  volumeVoiceToggle_.init(StringTable.get(Labels.strings_ptr[0x10E8 / 4]), 0x57, PrefWinGeometryValue_8578B4,
+      PrefWinGeometryValue_8578BC - PrefWinNarrowDisplayVerticalOffset + 0x16,
+      PrefWinToggleWidth, PrefWinToggleHeight, preference_window(), 0);
+  volumeSFXToggle_.init(StringTable.get(Labels.strings_ptr[0x10F0 / 4]), 0x56, PrefWinGeometryValue_8578B4,
+      PrefWinGeometryValue_8578BC - PrefWinNarrowDisplayVerticalOffset + 0x2C,
+      PrefWinToggleWidth, PrefWinToggleHeight, preference_window(), 0);
+  volumeMusicToggle_.init(StringTable.get(Labels.strings_ptr[0x10F8 / 4]), 0x58, PrefWinGeometryValue_8578B4,
+      PrefWinGeometryValue_8578BC - PrefWinNarrowDisplayVerticalOffset + 0x42,
+      PrefWinToggleWidth, PrefWinToggleHeight, preference_window(), 0);
+  volumeMainToggle_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);  // 0x6E84B4
+  volumeMainToggle_.redraw();
+  volumeVoiceToggle_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+  volumeVoiceToggle_.redraw();
+  volumeSFXToggle_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+  volumeSFXToggle_.redraw();
+  volumeMusicToggle_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+  volumeMusicToggle_.redraw();
+  // Stores at 0x48F771: main, voice, sfx, music (+0x15820,+0x16EB8,+0x1636C,+0x17A04).
   volumeMainToggle_.field_A18_ = 0;
-  volumeSFXToggle_.field_A18_ = 0;
   volumeVoiceToggle_.field_A18_ = 0;
+  volumeSFXToggle_.field_A18_ = 0;
   volumeMusicToggle_.field_A18_ = 0;
-  for (unsigned int toggle_hide = 0; toggle_hide < 4; ++toggle_hide)
-    volume_toggles[toggle_hide]->hide();
+  volumeMainToggle_.hide();
+  volumeVoiceToggle_.hide();
+  volumeSFXToggle_.hide();
+  volumeMusicToggle_.hide();
 
-  const char *restore_label = label_get(label_index(0x10DC));
-  restoreDefaultButton_.init(const_cast<char *>(restore_label ? restore_label : ""),
-      0x5A, PrefWinGeometryValue_85788C,
-      PrefWinGeometryValue_8578C0 - PrefWinNarrowDisplayVerticalOffset -
-          0x45 + PrefWinGeometryValue_857884,
-      PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
-      preference_window(), 0);
-  const char *ok_label = label_get(label_index(0x194));
-  okButton_.init(const_cast<char *>(ok_label ? ok_label : ""), 0x5C,
-      PrefWinGeometryValue_85788C,
-      PrefWinGeometryValue_8578C0 - PrefWinNarrowDisplayVerticalOffset -
-          0x2E + PrefWinGeometryValue_857884,
-      PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
-      preference_window(), 0);
-  const char *cancel_label = label_get(label_index(0x198));
-  cancelButton_.init(const_cast<char *>(cancel_label ? cancel_label : ""), 0x5B,
-      PrefWinGeometryValue_85788C,
-      PrefWinGeometryValue_8578C0 - PrefWinNarrowDisplayVerticalOffset -
-          0x17 + PrefWinGeometryValue_857884,
-      PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
-      preference_window(), 0);
-  FlatButton *footer_buttons[] = {&restoreDefaultButton_, &okButton_, &cancelButton_};
-  for (unsigned int footer_index = 0; footer_index < 3; ++footer_index) {
-    footer_buttons[footer_index]->Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
-    footer_buttons[footer_index]->redraw();
-  }
+  // 0x48F7B9: restore takes the raw string; OK and Cancel go through StringTemp.
+  restoreDefaultButton_.init(StringTable.get(Labels.strings_ptr[0x10DC / 4]), 0x5A, PrefWinGeometryValue_85788C,
+      PrefWinGeometryValue_8578C0 - PrefWinNarrowDisplayVerticalOffset + PrefWinGeometryValue_857884 - 0x45,  // ? 0x48F7E6 lea [eax+ecx-0x45]
+      PrefWinGeometryValue_857894, PrefWinTitleButtonHeight, preference_window(), 0);
+  StringTemp[0] = 0;
+  strcat(StringTemp, label_get(0x194 / 4));
+  okButton_.init(StringTemp, 0x5C, PrefWinGeometryValue_85788C,
+      PrefWinGeometryValue_8578C0 - PrefWinNarrowDisplayVerticalOffset + PrefWinGeometryValue_857884 - 0x2E,
+      PrefWinGeometryValue_857894, PrefWinTitleButtonHeight, preference_window(), 0);
+  StringTemp[0] = 0;
+  strcat(StringTemp, label_get(0x198 / 4));
+  cancelButton_.init(StringTemp, 0x5B, PrefWinGeometryValue_85788C,
+      PrefWinGeometryValue_8578C0 - PrefWinNarrowDisplayVerticalOffset + PrefWinGeometryValue_857884 - 0x17,
+      PrefWinGeometryValue_857894, PrefWinTitleButtonHeight, preference_window(), 0);
+  restoreDefaultButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+  restoreDefaultButton_.redraw();
+  okButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+  okButton_.redraw();
+  cancelButton_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+  cancelButton_.redraw();
+  // Stores at 0x48F956: restore, ok, cancel (+0x1909C,+0x1A734,+0x19BE8).
   restoreDefaultButton_.field_A18_ = 0;
   okButton_.field_A18_ = 0;
   cancelButton_.field_A18_ = 0;
-  for (unsigned int footer_hide = 0; footer_hide < 3; ++footer_hide)
-    footer_buttons[footer_hide]->hide();
+  restoreDefaultButton_.hide();
+  okButton_.hide();
+  cancelButton_.hide();
 
-  const char *more_label = label_get(label_index(0x1100));
-  moreButton_.init(const_cast<char *>(more_label ? more_label : ""),
-      0x5E, PrefWinGeometryValue_8578C8,
-      PrefWinGeometryValue_857898 - 0x17 + PrefWinGeometryValue_8578A4,
-      PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
-      preference_window(), 0);
-  moreButton_.field_A18_ = 0;
+  // 0x48F989
+  moreButton_.init(StringTable.get(Labels.strings_ptr[0x1100 / 4]), 0x5E, PrefWinGeometryValue_8578C8,
+      PrefWinGeometryValue_857898 + PrefWinGeometryValue_8578A4 - 0x17,  // ? 0x48F9AE lea [eax+ecx-0x17], eax=857898, ecx=8578A4
+      PrefWinGeometryValue_857894, PrefWinTitleButtonHeight, preference_window(), 0);
+  moreButton_.field_A18_ = 0;  // +0x1B280
   moreButton_.hide();
-  Win::hide();
+  hide();  // 0x48F9E7: VIRTUAL dispatch through this's vtable slot 2, not Win::hide()
 }
 
 
