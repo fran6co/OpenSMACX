@@ -3511,7 +3511,7 @@ int __cdecl save_game(int mode) {
 }
 
 /*
-// ORIGINAL: 0x005AAAB0 ?load_game@@YAHHH@Z 0x005AAAB0-0x005AB5E3;0x00661E84-0x006620A7 FILE
+// ORIGINAL: 0x005AAAB0 ?load_game@@YAHHH@Z 0x005AAAB0-0x005AB5E3;0x00661E84-0x006620A7 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:11b8fdc721ac4c20f82188e965534b73d61c8531:src/unrecovered/005aaab0.cpp", "image:0x5aaab0", "task:game-save-load-complete-oct5"], "reason": "Complete original orchestration uses one FileBox and one AlphaSave; the apparent stack widgets are its real embedded objects, not independent locals. Preserve original error/retry branches, first-dot filename handling, owned selected-buffer results and all body/EH spans. Source recovery is not exact constructor/unwind or linked fidelity proof."}
 // Rewritten from the image in block order; the retry closes AlphaSave and its embedded FileWin directly (0x005AB041..0x005AB057). See the WORKAROUND(inline) stand-ins above for unrecovered header context.
 */
