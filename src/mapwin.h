@@ -210,6 +210,8 @@ class MapWin : public virtual GraphicWin {
   void gen_radius(int x, int y, int radius, int faction, int skip_terrain);
   void draw_vehicles(int x, int y, int radius, int faction);
   // Original4216F0: a genuine MapWin receiver, despite the seed's stdcall.
+  // Its body is a guarded header inline in basewin.h (map.h's include
+  // chain reaches this header before map.h's declarations exist).
   int tile_in_view(int x, int y, int margin);
   // 0x0046FD90, resets brightness and altitude in the owned cache in two
   // complete passes. world_climate (src/map.cpp) calls it by name.

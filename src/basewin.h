@@ -673,6 +673,52 @@ class BaseWin : public GraphicWin, public SubInterface {
   Scroll scroll3_;  // 0x456EC, size == sizeof(Scroll)
 };
 
+// MapWin::tile_in_view (0x004216F0) was an inline: BaseWin::exit expands it
+// at every exit site while its out-of-line copy sits in basewin's address
+// range (after BaseWin's members), called from base_editor (0x41CD06),
+// on_button_clicked (0x41D691) and gen_radius (0x4696A6). The ORIGINAL
+// marker stays in mapwin.cpp, whose painters expand it too (draw_base_names).
+// It lives here, not in mapwin.h, because map.h's include chain reaches
+// mapwin.h before map.h declares MapLongitudeBounds and alt_at.
+// WORKAROUND(decl): only TUs defining MAPWIN_TILE_IN_VIEW_INLINE (basewin.cpp,
+// mapwin.cpp) see the body; the other includers keep their out-of-line calls
+// and codegen.
+#ifdef MAPWIN_TILE_IN_VIEW_INLINE
+#include "map.h"
+#include "mapwin.h"
+inline int MapWin::tile_in_view(int x, int y, int margin) {
+    if (margin != 0 && y >= 0 && y < MapLatitudeBounds && x >= 0 &&
+        x < MapLongitudeBounds) {
+        if (alt_at(x, y) > 3 &&
+            y - alt_at(x, y) + 3 < field_1DDA8_ + margin) {
+            return 0;
+        }
+    }
+    if (y < field_1DDA8_ + margin) {
+        return 0;
+    }
+    if (y >= field_1DDD8_ + field_1DDD0_ - margin + field_1DDA8_) {
+        return 0;
+    }
+    if ((MapIsFlat & 1) == 0) {
+        if (x < field_1DDA4_ + margin) {
+            x += MapLongitudeBounds;
+        }
+        if (x >= field_1DDD4_ + field_1DDCC_ - margin + field_1DDA4_) {
+            x -= MapLongitudeBounds;
+        }
+    }
+    if (x < field_1DDA4_ + margin) {
+        return 0;
+    }
+    // The expanded copies branch here; the out-of-line copy still uses setl.
+    if (x >= field_1DDD4_ + field_1DDCC_ - margin + field_1DDA4_) {
+        return 0;
+    }
+    return 1;
+}
+#endif  // MAPWIN_TILE_IN_VIEW_INLINE
+
 // BaseWin::recompute (0x00416D90), delete_queue (0x00416FB0) and exit
 // (0x0041A4C0) are expanded by basewin.cpp callers that precede their
 // out-of-line copies (farm_click, pop_click, queue_click, garrison_click,
@@ -733,34 +779,8 @@ MEASURED inline void BaseWin::exit() {
     if (TutWinBaseWindow.is_visible()) TutWinBaseWindow.release_iface_mode();
     do_all_draws();
     if (!visible || !ConsoleGlobal.cursor_active_ || ConsoleGlobal.selected_vehicle_ < 0) return;
-    // ECX holds y and is checked against MapLatitudeBounds; EDX holds x.
-    // The seed's misleading local names do not change the typed coordinates.
-    const int horizontal = Vehs[ConsoleGlobal.selected_vehicle_].y;
-    int vertical = Vehs[ConsoleGlobal.selected_vehicle_].x;
-    const int left = ConsoleGlobal.field_1DDA8_;
-    int height = MapLongitudeBounds;
-    if (horizontal >= 0 && horizontal < MapLatitudeBounds
-        && vertical >= 0 && vertical < height) {
-        const int terrain = map_tiles()[MapLongitude * horizontal + (vertical >> 1)].climate;
-        if ((terrain & ~0x1F) > 0x60
-            && horizontal - static_cast<int>(static_cast<unsigned>(terrain) >> 5) + 3 < left + 2) {
-            ConsoleGlobal.center();
-            return;
-        }
-        height = MapLongitudeBounds;
-    }
-    if (horizontal < left + 2
-        || horizontal >= ConsoleGlobal.field_1DDD8_ + ConsoleGlobal.field_1DDD0_ + left - 2) {
-        ConsoleGlobal.center();
-        return;
-    }
-    if (!(MapIsFlat & 1)) {
-        if (vertical < ConsoleGlobal.field_1DDA4_ + 2) vertical += height;
-        if (vertical >= ConsoleGlobal.field_1DDD4_ + ConsoleGlobal.field_1DDCC_ + ConsoleGlobal.field_1DDA4_ - 2)
-            vertical -= height;
-    }
-    if (vertical < ConsoleGlobal.field_1DDA4_ + 2
-        || vertical >= ConsoleGlobal.field_1DDD4_ + ConsoleGlobal.field_1DDCC_ + ConsoleGlobal.field_1DDA4_ - 2)
+    if (!ConsoleGlobal.tile_in_view(Vehs[ConsoleGlobal.selected_vehicle_].x,
+                                    Vehs[ConsoleGlobal.selected_vehicle_].y, 2))
         ConsoleGlobal.center();
 }
 #endif  // BASEWIN_INLINE_BODIES

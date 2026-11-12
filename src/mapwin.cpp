@@ -61,6 +61,7 @@
 // ORIGINAL: 0x004620A0 _$E24 0x004620A0-0x004620B4 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682540 selects initializer0x462080..0x462098 and registers exit0x4620a0..0x4620b4; complete independent decode establishes both ends.", "Original operations identify storage0x7d4060, source object?FarmMapWindow@@3VMapWin@@A. MainInterface uses constructor45EF10/destructor45EB80; FarmMap uses virtual-base constructor4626E0 with hidden most-derived argument1 and exit receiver7F5ACC calling own-part420F90 then virtual GraphicWin5D4DD0.", "Fresh physical mapwin.cpp COFF selects _$E26 via .CRT$XCU and registers _$E24, both naming the genuine global. The corrected declarations and actual linked table initialize MainInterface before FarmMap, matching original slots682534/682540; C++ owns reverse destruction and virtual-base lifetime.", "Current compiler-local symbols interpret present emission, not original debug names or historical TU identity. The bounded two-object ordering does not establish complete CRT order, strict linked preservation, runtime or game acceptance."], "reason": "Bind original exit to genuine source-owned ?FarmMapWindow@@3VMapWin@@A compiler-generated lifetime after correcting declaration order; no hand-authored callback or explicit virtual-base flag."}
 // symbol    _$E14
+#define MAPWIN_TILE_IN_VIEW_INLINE  // MapWin::tile_in_view body (basewin.h)
 #include "stdafx.h"
 #include "font_metrics.h"
 #include "interface_fonts.h"
@@ -2536,33 +2537,7 @@ int map_radius_half_width(int extent, int row) {
 // RECOVERY_BINDING: v1 {"evidence": ["Original4216F0..42180C; retired seed git:5605e9af:src/unrecovered/004216f0.cpp records this identity and exact span; gen_radius469190 calls this method for overlay admission."], "reason": "The original uses a MapWin receiver and three stack arguments, testing its viewport and optional altitude margin. The seed stdcall declaration loses the genuine receiver; tile_in_view is a behavior-based provisional name."}
 // TRIED (retired seed git:5605e9af:src/unrecovered/004216f0.cpp): the synthetic Obj4216F0 __thiscall receiver was rejected because disassembly reads [ecx+0x1ddaN] without loading ecx from the stack; this is the this-not-a-parameter signal, so IDA's guessed __stdcall(int,int,int) was wrong (a proposal, not a catalogue fact; no mangled name survives). The seed landed at 0.74 similarity: its tile-pointer expression collapsed arithmetic that the original keeps as an explicit zeroed accumulator beside imul, a register-allocation difference that plain restatement did not move.
 // symbol    ?tile_in_view@MapWin@@QAEHHHH@Z
-int MapWin::tile_in_view(int x, int y, int margin) {
-    if (margin != 0 && y >= 0 && y < MapLatitudeBounds && x >= 0 &&
-        x < MapLongitudeBounds) {
-        if (alt_at(x, y) > 3 &&
-            y - alt_at(x, y) + 3 < field_1DDA8_ + margin) {
-            return 0;
-        }
-    }
-    if (y < field_1DDA8_ + margin) {
-        return 0;
-    }
-    if (y >= field_1DDD8_ + field_1DDD0_ - margin + field_1DDA8_) {
-        return 0;
-    }
-    if ((MapIsFlat & 1) == 0) {
-        if (x < field_1DDA4_ + margin) {
-            x += MapLongitudeBounds;
-        }
-        if (x >= field_1DDD4_ + field_1DDCC_ - margin + field_1DDA4_) {
-            x -= MapLongitudeBounds;
-        }
-    }
-    if (x < field_1DDA4_ + margin) {
-        return 0;
-    }
-    return x < field_1DDD4_ + field_1DDCC_ - margin + field_1DDA4_;
-}
+// body      src/basewin.h
 
 
 // Next vehicle in a stack, -1 past the end (the image re-tests the id).
@@ -2909,24 +2884,7 @@ void MapWin::gen_radius(int x, int y, int radius, int faction, int skip_terrain)
                 }
                 if (tile_y >= 0 && tile_y < MapLatitudeBounds && tile_x >= 0 &&
                     tile_x < MapLongitudeBounds) {
-                    bool tile_visible = false;
-                    int viewport_x = tile_x;
-                    if (tile_y >= field_1DDA8_ &&
-                        tile_y < field_1DDD8_ + field_1DDD0_ + field_1DDA8_) {
-                        if ((MapIsFlat & 1) == 0) {
-                            if (tile_x < field_1DDA4_) {
-                                viewport_x = tile_x + MapLongitudeBounds;
-                            }
-                            if (viewport_x >= field_1DDD4_ + field_1DDCC_ + field_1DDA4_) {
-                                viewport_x -= MapLongitudeBounds;
-                            }
-                        }
-                        if (viewport_x >= field_1DDA4_ &&
-                            viewport_x < field_1DDD4_ + field_1DDCC_ + field_1DDA4_) {
-                            tile_visible = true;
-                        }
-                    }
-                    if (tile_visible) {
+                    if (tile_in_view(tile_x, tile_y, 0)) {
                         int pixel_x;
                         int pixel_y;
                         tile_to_pixel(tile_x, tile_y, &pixel_x, &pixel_y);
@@ -3004,8 +2962,10 @@ void MapWin::gen_radius(int x, int y, int radius, int faction, int skip_terrain)
                 } else {
                     tile_x = column_x;
                 }
+                // WORKAROUND(noinline): the image calls tile_in_view out of line
+                // here (0x4696A6); the original's /Ob2 budget refused it.
                 if (tile_y >= 0 && tile_y < MapLatitudeBounds && tile_x >= 0 &&
-                    tile_x < MapLongitudeBounds && tile_in_view(tile_x, tile_y, 0)) {
+                    tile_x < MapLongitudeBounds && (this->*&MapWin::tile_in_view)(tile_x, tile_y, 0)) {
                     gen_overlays(tile_x, tile_y);
                 }
             }
@@ -3569,9 +3529,11 @@ namespace {
 // the Buffer virtual base, test the text pointer, take strlen and call the
 // four-argument write_cent_l (0x005DD250): an inlined guarded Buffer member
 // whose header declaration is not recovered yet.
-// It takes Buffer& so each call converts `this` to the virtual base
-// before the text test (0x4680AA spill to [ebp-8]).
-inline int mapwin_write_cent(Buffer &buffer, char *text, int x, int y) {
+// The original is a Buffer member (no null check on the conversion); this
+// twin binds the Buffer& first so the conversion still precedes the text
+// test (0x4680AA spill to [ebp-8]), at the cost of a null-checked select.
+inline int mapwin_write_cent(MapWin &window, char *text, int x, int y) {
+    Buffer &buffer = window;
     if (text == 0) {
         return 0;
     }
@@ -5477,22 +5439,8 @@ void MapWin::draw_base_names() {
 
             const int tile_x = base.x;
             const int tile_y = base.y;
-            // 0x00467EEC: the x copy is made before the y range test.
-            int visible_x = tile_x;
-            if (tile_y < field_1DDA8_ ||
-                tile_y >= field_1DDA8_ + field_1DDD8_ + field_1DDD0_) {
-                continue;
-            }
-            if ((MapIsFlat & 1) == 0) {
-                if (visible_x < field_1DDA4_) {
-                    visible_x += MapLongitudeBounds;
-                }
-                if (visible_x >= field_1DDA4_ + field_1DDD4_ + field_1DDCC_) {
-                    visible_x -= MapLongitudeBounds;
-                }
-            }
-            if (visible_x < field_1DDA4_ ||
-                visible_x >= field_1DDA4_ + field_1DDD4_ + field_1DDCC_) {
+            // 0x00467EEC: tile_in_view(tile_x, tile_y, 0) expanded in place.
+            if (!tile_in_view(tile_x, tile_y, 0)) {
                 continue;
             }
 
@@ -5626,22 +5574,8 @@ void MapWin::draw_base_names() {
                 (map_loc(tile_x, tile_y)->visibility & (1 << ConsoleGlobal.faction_id_)) == 0) {
                 continue;
             }
-            // 0x0046877D: the x copy is made before the y range test.
-            int visible_x = tile_x;
-            if (tile_y < field_1DDA8_ ||
-                tile_y >= field_1DDA8_ + field_1DDD8_ + field_1DDD0_) {
-                continue;
-            }
-            if ((MapIsFlat & 1) == 0) {
-                if (tile_x < field_1DDA4_) {
-                    visible_x = MapLongitudeBounds + tile_x;
-                }
-                if (visible_x >= field_1DDA4_ + field_1DDD4_ + field_1DDCC_) {
-                    visible_x -= MapLongitudeBounds;
-                }
-            }
-            if (visible_x < field_1DDA4_ ||
-                visible_x >= field_1DDA4_ + field_1DDD4_ + field_1DDCC_) {
+            // 0x0046877D: tile_in_view(tile_x, tile_y, 0) expanded in place.
+            if (!tile_in_view(tile_x, tile_y, 0)) {
                 continue;
             }
             const Map *const tile = map_loc(tile_x, tile_y);

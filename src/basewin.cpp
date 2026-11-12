@@ -37,6 +37,7 @@
 // symbol    _$E19
 #define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
 #define BASEWIN_INLINE_BODIES  // recompute/delete_queue/exit bodies in basewin.h
+#define MAPWIN_TILE_IN_VIEW_INLINE  // MapWin::tile_in_view body in mapwin.h
 #define BUFFER_WRITE_RIGHT_L3  // guarded Buffer::write_right_l(text, x, y)
 #include "stdafx.h"
 #include "font_metrics.h"
@@ -949,17 +950,7 @@ void BaseWin::base_editor() {
         parse_says(0, BaseCurrent->name_string, -1, -1);
         if (X_pop("REALLYKILLBASE", 0)) {
             base_kill(BaseIDCurrentSelected);
-            const int was_visible = TutWinBaseWindow.is_visible();
-            zoom_wait_pending_ = 0;
-            time_.stop();
-            if (TutWinBaseWindow.is_visible()) TutWinBaseWindow.release_iface_mode();
-            do_all_draws();
-            if (was_visible && ConsoleGlobal.cursor_active_
-                && ConsoleGlobal.selected_vehicle_ >= 0) {
-                const Veh &vehicle = Vehs[ConsoleGlobal.selected_vehicle_];
-                if (!ConsoleGlobal.tile_in_view(vehicle.x, vehicle.y, 2))
-                    ConsoleGlobal.center();
-            }
+            exit();
             draw_map(1);
         }
         break;
@@ -4329,18 +4320,9 @@ void BaseWin::on_button_clicked(int button_id) {
         if (!prodPicker_.is_visible()) production(selected_queue_slot_, 0);
         return;
     case -2:
-    case 0: {
-        const int visible = TutWinBaseWindow.is_visible();
-        zoom_wait_pending_ = 0;
-        time_.stop();
-        if (TutWinBaseWindow.is_visible()) TutWinBaseWindow.release_iface_mode();
-        do_all_draws();
-        if (!visible || !ConsoleGlobal.cursor_active_ || ConsoleGlobal.selected_vehicle_ < 0) return;
-        if (ConsoleGlobal.tile_in_view(Vehs[ConsoleGlobal.selected_vehicle_].x,
-                Vehs[ConsoleGlobal.selected_vehicle_].y, 2)) return;
-        ConsoleGlobal.center();
+    case 0:
+        exit();
         return;
-    }
     case 1: rename(); return;
     case 12: production(0, 0); return;
     case 13: hurry(); return;
@@ -7002,19 +6984,19 @@ void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
         || (state & 0x1000200u) == 0x1000200u
         || ((state & 0x2000200u) == 0x2000200u
             && Vehs[vehicle_id].patrol_current_point < Vehs[vehicle_id].waypoint_count))
-        menu.add_item(1, label_get(0xB6C / 4));
-    menu.add_item(2, label_get(0x958 / 4));
-    if (GameDataStateStorage.fields_.game_state_ & 0x40u) menu.add_item(90, label_get(0xDFC / 4));
+        menu.add_item(1, StringTable.get(Labels.strings_ptr[0xB6C / 4]));
+    menu.add_item(2, StringTable.get(Labels.strings_ptr[0x958 / 4]));
+    if (GameDataStateStorage.fields_.game_state_ & 0x40u) menu.add_item(90, StringTable.get(Labels.strings_ptr[0xDFC / 4]));
     menu.add_separator(99);
-    menu.add_item(10, label_get(0xB70 / 4));
-    menu.add_item(11, label_get(0xB74 / 4));
-    menu.add_item(12, label_get(0xB78 / 4));
+    menu.add_item(10, StringTable.get(Labels.strings_ptr[0xB70 / 4]));
+    menu.add_item(11, StringTable.get(Labels.strings_ptr[0xB74 / 4]));
+    menu.add_item(12, StringTable.get(Labels.strings_ptr[0xB78 / 4]));
     if (Vehs[vehicle_id].home_base_id >= 0
         && Vehs[vehicle_id].home_base_id != BaseIDCurrentSelected) {
         menu.add_separator(99);
         if (Bases[BaseIDCurrentSelected].faction_id_current == Vehs[vehicle_id].faction_id)
-            menu.add_item(20, label_get(0xB7C / 4));
-        menu.add_item(21, label_get(0xB80 / 4));
+            menu.add_item(20, StringTable.get(Labels.strings_ptr[0xB7C / 4]));
+        menu.add_item(21, StringTable.get(Labels.strings_ptr[0xB80 / 4]));
     }
     if (Vehs[vehicle_id].home_base_id == BaseIDCurrentSelected
         && (Vehs[vehicle_id].x != BaseCurrent->x || Vehs[vehicle_id].y != BaseCurrent->y)) {
@@ -7025,9 +7007,9 @@ void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
         if (vehicle_tile.region == base_tile.region
             || Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].triad != 0) {
             menu.add_separator(99);
-            menu.add_item(30, label_get(0xB84 / 4));
+            menu.add_item(30, StringTable.get(Labels.strings_ptr[0xB84 / 4]));
         }
-        menu.add_item(31, label_get(0x910 / 4));
+        menu.add_item(31, StringTable.get(Labels.strings_ptr[0x910 / 4]));
     }
     const int previous_vehicle = vehicle_id;
     // This pointer is borrowed only; the modal callback may remap its referent.
