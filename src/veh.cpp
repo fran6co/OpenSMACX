@@ -4628,25 +4628,23 @@ extern uint32_t UpgradePromptAnswered;
 // TRIED: the two "layout" division computations (0x583F94-0x584054) simplified the signed-rounding cdq/and/sar idiom to a plain shift for the likely-positive case; the upgrade-candidate scan (0x5843D5-0x5843EB) approximated the per-slot style comparison rather than tracing every register precisely.
 int __cdecl design_workshop(int faction_id, int mode) {
     Popup popup;
-    char number[16];
+    char number[80];
 
     // Native mode zero skips the automatic-design search and enters the list.
     if (mode != 0) {
         int best_score = 0;
         int best_prototype = -1;
-        const int faction_first = faction_id * MaxVehProtoFactionNum;
         for (int slot = 0; slot < MaxVehProtoFactionNum; ++slot) {
-            const int prototype_id = faction_first + slot;
-            const VehPrototype &prototype = VehPrototypes[prototype_id];
+            const int prototype_id = faction_id * MaxVehProtoFactionNum + slot;
             int score;
-            if ((prototype.flags & PROTO_ACTIVE) != 0) {
-                if ((prototype.obsolete_factions & (1 << faction_id)) == 0)
+            if (VehPrototypes[prototype_id].flags & PROTO_ACTIVE) {
+                if (!(VehPrototypes[prototype_id].obsolete_factions & (1 << faction_id)))
                     continue;
-                if (PlayersData[faction_id].proto_id_active[prototype_id] != 0)
+                if (PlayersData[faction_id].proto_id_active[prototype_id])
                     continue;
-                score = 0x384 - PlayersData[faction_id].proto_id_queue[prototype_id];
+                score = 900 - PlayersData[faction_id].proto_id_queue[prototype_id];
             } else {
-                score = 0x3e7;
+                score = 999;
             }
             if (score > best_score) {
                 best_score = score;
@@ -4657,140 +4655,122 @@ int __cdecl design_workshop(int faction_id, int mode) {
             return TutWinDesWindow.exec(faction_id, best_prototype);
     }
 
-    for (;;) {
-        proto_sort(faction_id);
-        popups_medium();
-        popup.start(PopupStartCaption, "DESIGNSHOP", -1, 0, 2, 0);
-        WorkshopFaction = faction_id;
-        PopupModalState = 5;
-        popup.dialogs().set_callbacks(&hq_list_draw, 0, 0);
+again:
+    proto_sort(faction_id);
+    popups_medium();
+    popup.start(PopupStartCaption, "DESIGNSHOP", -1, 0, 2, 0);
+    WorkshopFaction = faction_id;
+    PopupModalState = 5;
+    popup.dialogs().set_draw_callback(&hq_list_draw);
+    int width = MapWinCaptionScale > 0
+        ? 132 * MapWinCaptionScale / MapWinCaptionDivisor
+        : 132 * (WorkshopPreviewZoom + 16) / 16;
+    popup.dialogs().field_34_ = width * 2 + 3;
+    popup.dialogs().field_48_ = MapWinCaptionScale > 0
+        ? 75 * MapWinCaptionScale / MapWinCaptionDivisor
+        : 75 * (WorkshopPreviewZoom + 16) / 16;
+    popup.dialogs().field_50_ = 8;
 
-        const int caption_scale = MapWinCaptionScale;
-        const int caption_divisor = MapWinCaptionDivisor;
-        const int metric = WorkshopPreviewZoom;
-        int width = caption_scale > 0
-            ? workshop_scaled_dimension(132, caption_scale, caption_divisor)
-            : workshop_scaled_dimension(132, workshop_signed_bits(static_cast<unsigned int>(metric) + 16u), 16);
-        int height = caption_scale > 0
-            ? workshop_scaled_dimension(75, caption_scale, caption_divisor)
-            : workshop_scaled_dimension(75, workshop_signed_bits(static_cast<unsigned int>(metric) + 16u), 16);
-        Dialog &dialog = static_cast<Dialog &>(popup.dialogs());
-        dialog.field_34_ = workshop_signed_bits(static_cast<unsigned int>(width) * 2u + 3u);
-        dialog.field_48_ = height;
-        dialog.field_50_ = 8;
-
-        for (int row = 0; row < 128; ++row) {
-            const int prototype_id = ProtoSortIds[row];
-            const int prototype_faction = prototype_id / MaxVehProtoFactionNum;
-            if (prototype_faction != 0 && prototype_faction != faction_id)
+    for (int row = 0; row < 128; ++row) {
+        const int prototype_id = ProtoSortIds[row];
+        const int prototype_faction = prototype_id / MaxVehProtoFactionNum;
+        if (prototype_faction != 0 && prototype_faction != faction_id)
+            continue;
+        if (!(VehPrototypes[prototype_id].flags & PROTO_ACTIVE)) {
+            if (prototype_faction != 0)
                 continue;
-            const VehPrototype &prototype = VehPrototypes[prototype_id];
-            const bool active = (prototype.flags & PROTO_ACTIVE) != 0;
-            if (active && prototype_faction != 0
-                && !has_tech(prototype.preq_tech, faction_id))
-                continue;
-
             StringTemp[0] = 0;
-            if (active) {
-                const bool obsolete =
-                    (prototype.obsolete_factions & (1 << faction_id)) != 0;
-                if (obsolete) strcat(StringTemp, "-");
-                strcat(StringTemp, prototype.veh_name);
-                strcat(StringTemp, "|");
-                if (obsolete) {
-                    strcat(StringTemp, label_get(0x368 / 4));
-                    strcat(StringTemp, ", ");
-                }
-                if ((prototype.flags & 4) == 0 && prototype_id >= 64) {
-                    strcat(StringTemp, label_get(0x2e4 / 4));
-                    strcat(StringTemp, ", ");
-                }
-                strcat(StringTemp, label_get(0x160 / 4));
-                strcat(StringTemp, ": ");
-                _itoa(workshop_signed_bits(static_cast<unsigned int>(cost_factor(faction_id, 1, -1)) * prototype.cost),
-                      number, 10);
-                strcat(StringTemp, number);
+            strcat(StringTemp, "- ");
+            strcat(StringTemp, label_get(0x1b8 / 4));
+            strcat(StringTemp, " -");
+        } else {
+            if (prototype_faction != 0
+                && !has_tech(VehPrototypes[prototype_id].preq_tech, faction_id))
+                continue;
+            StringTemp[0] = 0;
+            if (VehPrototypes[prototype_id].obsolete_factions & (1 << faction_id))
+                strcat(StringTemp, "-");
+            strcat(StringTemp, VehPrototypes[prototype_id].veh_name);
+            strcat(StringTemp, "|");
+            if (VehPrototypes[prototype_id].obsolete_factions & (1 << faction_id)) {
+                strcat(StringTemp, label_get(0x368 / 4));
                 strcat(StringTemp, ", ");
-                say_stats(StringTemp, prototype_id, 0);
-            } else if (prototype_faction == 0) {
-                strcat(StringTemp, "- ");
-                strcat(StringTemp, label_get(0x1b8 / 4));
-                strcat(StringTemp, " -");
-            } else {
-                continue;
             }
-            popup.dialogs().item(StringTemp, prototype_id);
-        }
-
-        const int selected = popup.BasePop::exec(0, 0);
-        popups_normal();
-        g_FX.play(0xf);
-        const uint32_t action = popup.input_poll_state();
-        if (action == 0)
-            return -1;
-        if (action == 2) {
-            char *prototype_name = VehPrototypes[selected].veh_name;
-            if (X_pop_ask("DESIGNNAME", 31, prototype_name, 0, 0) != 0)
-                return -1;
-            strcpy(prototype_name, ParseStrBuffer[0].str);
-            synch_proto(selected);
-            return -1;
-        }
-        if (action == 3) {
-            VehPrototype &prototype = VehPrototypes[selected];
-            if ((prototype.obsolete_factions & (1 << faction_id)) != 0) {
-                if ((prototype.flags & 0x8) != 0)
-                    prototype.flags |= 0x200;
-                prototype.flags |= 8;
-            } else {
-                prototype.flags &= static_cast<uint16_t>(~(0x200 | 8));
+            if (!(VehPrototypes[prototype_id].flags & 4) && prototype_id >= MaxVehProtoFactionNum) {
+                strcat(StringTemp, label_get(0x2e4 / 4));
+                strcat(StringTemp, ", ");
             }
-            prototype.obsolete_factions ^= static_cast<uint8_t>(1 << faction_id);
-            synch_obs(selected);
-            continue;
+            strcat(StringTemp, label_get(0x160 / 4));
+            strcat(StringTemp, ": ");
+            _itoa(cost_factor(faction_id, 1, -1) * VehPrototypes[prototype_id].cost, number, 10);
+            strcat(StringTemp, number);
+            strcat(StringTemp, ", ");
+            say_stats(StringTemp, prototype_id, 0);
         }
-        if (action == 4) {
-            if (NetDaemonNet.lock(2, -1, -1, 0, -1, -1) != 0)
-                continue;
-            UpgradePromptAnswered = 0;
-            int replacement = -1;
-            const VehPrototype &old = VehPrototypes[selected];
-            int scanned = 0;
-            for (int slot = 0; slot < MaxVehProtoFactionNum; ++slot) {
-                scanned = slot;
-                const int candidate_id = faction_id * MaxVehProtoFactionNum + slot;
-                if (candidate_id == selected) continue;
-                const VehPrototype &candidate = VehPrototypes[candidate_id];
-                if ((candidate.flags & PROTO_ACTIVE) == 0) continue;
-                if ((candidate.obsolete_factions & (1 << faction_id)) != 0)
-                    continue;
-                if ((candidate.flags & 4) == 0) continue;
-                if (candidate.plan != old.plan || candidate.unk_1 != old.unk_1)
-                    continue;
-                if (Chassis[candidate.chassis_id].triad
-                    == Chassis[old.chassis_id].triad) {
-                    replacement = candidate_id;
-                    break;
-                }
-            }
-            if (replacement < 0) scanned = MaxVehProtoFactionNum;
-            if (replacement >= 0)
-                upgrade_prototype(faction_id, replacement, selected, 0);
-            NetDaemonNet.unlock();
-            if (scanned >= MaxVehProtoFactionNum) {
-                const char *icon = (Players[faction_id].rule_flags & 0x80)
-                    ? "alunit_sm.pcx" : "unit_sm.pcx";
-                popp(ScriptPopupFile, "NOUPGRADE", 0, icon, 0);
-            }
-            continue;
-        }
-        if (selected < MaxVehProtoFactionNum) {
-            NetMsgPrimary.pop("DESIGNNO", 0x1388, 0, 0);
-            return -1;
-        }
-        VehPrototypes[selected].flags &= static_cast<uint16_t>(~0x80);
-        return TutWinDesWindow.exec(faction_id, selected);
+        popup.dialogs().item(StringTemp, prototype_id);
     }
+
+    int selected = popup.BasePop::exec(0, 0);
+    popups_normal();
+    g_FX.play(0xf);
+    const uint32_t action = popup.input_poll_state();
+    if (action == 0)
+        return -1;
+    if (action == 2) {
+        char *prototype_name = VehPrototypes[selected].veh_name;
+        if (X_pop_ask("DESIGNNAME", 31, prototype_name, 0, 0) != 0)
+            return -1;
+        strcpy(prototype_name, ParseStrBuffer[0].str);
+        synch_proto(selected);
+        return -1;
+    }
+    if (action == 3) {
+        if (VehPrototypes[selected].obsolete_factions & (1 << faction_id)) {
+            if (VehPrototypes[selected].flags & 8)
+                VehPrototypes[selected].flags |= 0x200;
+            VehPrototypes[selected].flags |= 8;
+        } else {
+            VehPrototypes[selected].flags &= ~(0x200 | 8);
+        }
+        VehPrototypes[selected].obsolete_factions ^= (1 << faction_id);
+        synch_obs(selected);
+        goto again;
+    }
+    if (action == 4) {
+        if (NetDaemonNet.lock(2, -1, -1, 0, -1, -1) != 0)
+            goto again;
+        UpgradePromptAnswered = 0;
+        int slot;
+        for (slot = 0; slot < MaxVehProtoFactionNum; ++slot) {
+            const int candidate_id = faction_id * MaxVehProtoFactionNum + slot;
+            if (candidate_id != selected
+                && VehPrototypes[candidate_id].flags & PROTO_ACTIVE
+                && !(VehPrototypes[candidate_id].obsolete_factions & (1 << faction_id))
+                && VehPrototypes[candidate_id].flags & 4
+                && VehPrototypes[candidate_id].plan == VehPrototypes[selected].plan
+                && VehPrototypes[candidate_id].unk_1 == VehPrototypes[selected].unk_1
+                && Chassis[VehPrototypes[candidate_id].chassis_id].triad
+                    == Chassis[VehPrototypes[selected].chassis_id].triad) {
+                upgrade_prototype(faction_id, candidate_id, selected, 0);
+                break;
+            }
+        }
+        NetDaemonNet.unlock();
+        if (Players[faction_id].rule_flags & 0x80) {
+            if (slot >= MaxVehProtoFactionNum)
+                popp(ScriptPopupFile, "NOUPGRADE", 0, "alunit_sm.pcx", 0);
+        } else {
+            if (slot >= MaxVehProtoFactionNum)
+                popp(ScriptPopupFile, "NOUPGRADE", 0, "unit_sm.pcx", 0);
+        }
+        goto again;
+    }
+    if (selected / MaxVehProtoFactionNum == 0) {
+        NetMsgPrimary.pop("DESIGNNO", 0x1388, 0, 0);
+        return -1;
+    }
+    VehPrototypes[selected].flags &= ~0x80;
+    return TutWinDesWindow.exec(faction_id, selected);
 }
 
 

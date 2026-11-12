@@ -2420,7 +2420,8 @@ int __cdecl interceptor(int faction_id, int opposing_faction,
         parse_says(0, Players[faction_id].adj_name_faction, -1, -1);
         int x = Vehs[best_vehicle].x;
         int y = Vehs[best_vehicle].y;
-        parse_says(1, Bases[base_find(x, y)].name_string, -1, -1);
+        int base_id = base_find(x, y);
+        parse_says(1, Bases[base_id].name_string, -1, -1);
         ConsoleGlobal.focus(x, y, faction_id);
         NetMsgPrimary.pop("AIRSCRAMBLE", 5000, 0, 0);
         // Animate the interceptor one step at a time toward the target.
