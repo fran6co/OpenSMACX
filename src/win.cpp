@@ -2999,7 +2999,7 @@ Purpose: The tree walk `Win::get_mouse_window` delegates to once it has a
          address while the real body sat in an archive the build never
          compiled.
 */
-// ORIGINAL: 0x005F6AB0 ?get_mouse_window_recurse@@YAHPAUWin@@PAHPAH@Z 0x005F6AB0-0x005F6F06 FILE
+// ORIGINAL: 0x005F6AB0 ?get_mouse_window_recurse@@YAHPAUWin@@PAHPAH@Z 0x005F6AB0-0x005F6F06 FILE BYTE_EXACT
 // symbol    ?get_mouse_window_recurse@@YAPAVWin@@PAV1@PAH1@Z
 // notes     Differs from the catalogued name in both directions: PAV for
 //           the class the catalogue called a struct, and a Win* return
