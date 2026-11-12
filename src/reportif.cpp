@@ -4920,7 +4920,7 @@ void ReportIf::on_status(int mode) {
         }
 
         // Seven category buttons (0x4A42B8..0x4A4391).
-        for (int topic = 0; topic < 7; ++topic) {
+        for (int topic = 0; topic <= 6; ++topic) {
             StringTemp[0] = 0;
             strcat(StringTemp, label_get(0x2B1 + topic));
             FlatButton *category = &flatButtonsB_[topic];
@@ -5889,6 +5889,7 @@ void ReportIf::on_iface_group_clicked(int group, int, int item) {
 void ReportIf::draw_labs() {
     char lab_text[80];   // [ebp-0xC8]
     char text[80];       // [ebp-0x78]
+    int tech;
     MainInterfaceGlobal.Buffer::set_clip(&field_20_);
     field_C_ = field_20_.left + 6;
     field_10_ = field_20_.top + 6;
@@ -5918,7 +5919,7 @@ void ReportIf::draw_labs() {
     listBox1_.set_write_callback(labs_write);
     if (field_1E1D8_) {
         int levels[MaxTechnologyNum + 1];   // [ebp-0x280]
-        for (int tech = 0; tech < MaxTechnologyNum; ++tech) {
+        for (tech = 0; tech < MaxTechnologyNum; ++tech) {
             if (has_tech(tech, report_faction_id_)) {
                 levels[tech] = tech_recurse(tech, 0) * 4 + tech_category(tech);
             } else {
@@ -5992,8 +5993,8 @@ void ReportIf::draw_labs() {
 
     MainInterfaceGlobal.Buffer::set_clip(&field_50_);
     int inset = field_1E230_ ? 0x4C : 0;
-    field_C_ = field_50_.left + inset;
     field_10_ = field_50_.top;
+    field_C_ = field_50_.left + inset;
     field_14_ = report_rect_width(&field_50_) - inset;
     field_18_ = report_rect_height(&field_50_);
     StringTemp[0] = 0;
@@ -6017,7 +6018,8 @@ void ReportIf::draw_labs() {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x178));
     strcat(StringTemp, ": ");
-    _itoa(tech_rate(report_faction_id_), text, 10);
+    int rate = tech_rate(report_faction_id_);
+    _itoa(rate, text, 10);
     strcat(StringTemp, text);
     strcat(StringTemp, " ");
     strcat(StringTemp, " ");
@@ -6075,15 +6077,15 @@ void ReportIf::draw_labs() {
         strcat(StringTemp, label_get(0x2C0));
     }
     strcat(StringTemp, "]");
-    field_18_ -= 4;
     field_10_ += 4;
+    field_18_ -= 4;
     MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_, field_14_);
-    field_18_ -= field_1C_;
     field_10_ += field_1C_;
+    field_18_ -= field_1C_;
     MainInterfaceGlobal.Buffer::set_text_color3(0xE1, -1, 1, 1);
     field_18_ -= 2;
-    field_C_ += 3;
     const int bar_height = static_cast<int>(field_18_) / 4 - 15;
+    field_C_ += 3;
     field_14_ -= 6;
     int explore_total = 0;
     int discover_total = 0;
@@ -6094,24 +6096,24 @@ void ReportIf::draw_labs() {
     int build_owned = 0;
     int conquer_owned = 0;
     // The prerequisite cursor stops before the last record (end 0x009502A0).
-    for (int technology = 0; technology < MaxTechnologyNum - 1; ++technology) {
-        if (Technology[technology].preq_tech_1 != -2 && Technology[technology].preq_tech_2 != -2) {
-            switch (tech_category(technology)) {
+    for (tech = 0; tech < MaxTechnologyNum - 1; ++tech) {
+        if (Technology[tech].preq_tech_1 + 2 != 0 && Technology[tech].preq_tech_2 + 2 != 0) {
+            switch (tech_category(tech)) {
             case 0:
                 ++explore_total;
-                if (has_tech(technology, report_faction_id_)) ++explore_owned;
+                if (has_tech(tech, report_faction_id_)) ++explore_owned;
                 break;
             case 1:
                 ++discover_total;
-                if (has_tech(technology, report_faction_id_)) ++discover_owned;
+                if (has_tech(tech, report_faction_id_)) ++discover_owned;
                 break;
             case 2:
                 ++build_total;
-                if (has_tech(technology, report_faction_id_)) ++build_owned;
+                if (has_tech(tech, report_faction_id_)) ++build_owned;
                 break;
             case 3:
                 ++conquer_total;
-                if (has_tech(technology, report_faction_id_)) ++conquer_owned;
+                if (has_tech(tech, report_faction_id_)) ++conquer_owned;
                 break;
             }
         }
