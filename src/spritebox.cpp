@@ -555,6 +555,10 @@ static inline int current_list_id(SpriteList &list) {
     return list.head_ ? list.current_->id : 0;
 }
 
+static inline char *current_list_text(StringList &list) {
+    return list.head_ ? list.current_->string_payload()->text : 0;
+}
+
 static inline void draw_transparent(Sprite *sprite, Buffer *buffer, int x, int y,
                                     int numerator, int denominator) {
     sprite->draw(buffer, sprite->transparent_index(), x, y, numerator, denominator);
@@ -570,11 +574,12 @@ void SpriteBox::draw_item(int position) {
     if (!list_.seek_pos(position)) return;
     if (!Dialog::item_list_.seek_pos(position)) return;
 
+    // The image stores bottom, right, top, left (0x00610D89..0x00610D9E).
     RECT area;
-    area.left = static_cast<int>(field_54_) + x + 4;
-    area.top = y;
-    area.right = static_cast<int>(Dialog::field_64_) + x;
     area.bottom = static_cast<int>(Dialog::field_68_) + y;
+    area.right = static_cast<int>(Dialog::field_64_) + x;
+    area.top = y;
+    area.left = static_cast<int>(field_54_) + x + 4;
 
     static_cast<Buffer *>(static_cast<GraphicWin *>(parent))->copy(
         static_cast<Buffer *>(this),
@@ -609,8 +614,9 @@ void SpriteBox::draw_item(int position) {
             static_cast<int>(field_8_), static_cast<int>(field_8_));
     }
 
-    char *text = Dialog::item_list_.head_ != 0 ? Dialog::item_list_.current_->string_payload()->text : 0;
-    if (text) static_cast<Buffer *>(this)->write_l(text, &area, strlen(text));
+    // The guarded two-argument writer: the image forms the Buffer receiver
+    // (no null check) before testing the text (0x0061100C..0x00611018).
+    Buffer::write_l(current_list_text(Dialog::item_list_), &area);
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.

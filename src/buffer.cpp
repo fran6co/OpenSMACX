@@ -32,6 +32,9 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned startup 0x005D71D0..0x005D71E6 constructs the Sprite at 0x009B3A50..0x009B3A7C and registers finalizer 0x005D71F0..0x005D720F. Cleanup publishes bit 2 of the same byte 0x009B37CC before Sprite::close at 0x005E3820; constructors do not reset the guard.", "Buffer::shared_sprite_ is ordinary class-static storage defined after the special-text array. Physical compiler output supplies the shared guard and registration edges; consumers access the actual typed Sprite directly.", "Original identities, full spans and historical claims remain unchanged. Static members add no instance fields. Current compiler symbols are binding facts, not historical debug names; complete original TU boundaries, linked storage placement and game fidelity remain unproved. Fresh strict measurement is required; this binding grants no claim."], "reason": "Bind the original lifetime to ordinary typed storage and its compiler-generated initialization/destruction, preserving guard, order and restoration obligations."}
 // symbol    _$E16
 #define FONT_LINE_ADVANCE_INLINE
+// WORKAROUND(decl): the string writers call next_entry (0x00402500) out of
+// line at every site.
+#define STRINGSTRUCT_NEXT_ENTRY_OUT_OF_LINE
 #include "stdafx.h"
 
 // Distinct writable string cells observed at the original call sites.
@@ -405,6 +408,30 @@ int Buffer::copy(Buffer *buffer, int xCoord, int yCoord, int wx, int wy,
 }
 
 
+// WORKAROUND(inline): dead /Ob2 budget probe (folds to no code). The image
+// expands change_color(RECT *) and change_color(int...) here but calls the
+// no-argument get_data (0x005E3373 at 0x005DF39A) out of line, with a 0x58
+// frame; without this spend ours also expands get_data and its DDSURFACEDESC
+// (frame 0xC4). The original spelling that spent this budget is unknown.
+static inline void draw_pie_budget_probe(int x) {
+    if (x == 0) x = 1;
+    if (x == 1) x = 4;
+    if (x == 2) x = 7;
+    if (x == 3) x = 10;
+    if (x == 4) x = 13;
+    if (x == 5) x = 16;
+    if (x == 6) x = 19;
+    if (x == 7) x = 22;
+    if (x == 8) x = 25;
+    if (x == 9) x = 28;
+    if (x == 10) x = 31;
+    if (x == 11) x = 34;
+    if (x == 12) x = 37;
+    if (x == 13) x = 40;
+    if (x == 14) x = 43;
+    if (x == 15) x = 46;
+}
+
 // ORIGINAL: 0x005DEFE0 sub_5defe0 0x005DEFE0-0x005DF56B FILE
 // symbol    ?draw_pie@Buffer@@QAEHPAUtagRECT@@HHHHHH@Z
 // TRIED: MISMATCH #4 (push vs mov, prologue). `this` is a Buffer* (this->get_hdc()/release_hdc-equivalent at fields 0x58/0x60/ 0x64/0x68 via slot17/26, matching every other Buffer HDC-lock site this batch touched); the *second*, separate pixel-lock at fields 0x50/0x58/0x6c via slot32 (offset 0x80) matches the 0x005E07A0-shaped Lock/Unlock pattern, not the HDC one - transcribed as its own inline block rather than reusing release_hdc, since it unlocks through a different slot and counter field. a4/a5 are read via `fild`/`fidiv` (integer loads), not native floats - Ghidra's own `float param_4` typing is wrong; the raw asm is authoritative there. Ghidra's local_XX names also do not track 1:1 with this function's real ebp offsets (verified by hand for the dx/dy/cx/cy/angle block: local_1c looked like "cx" per the disassembly, not "dx" as Ghidra's own text order implied), so the geometry section is transcribed from the raw asm, not the decompiled text.
@@ -413,6 +440,8 @@ int Buffer::copy(Buffer *buffer, int xCoord, int yCoord, int wx, int wy,
 //32-bit operations. CRT/x87 intermediate-status preservation remains unknown.
 int Buffer::draw_pie(RECT *area, int first_color, int second_color,
                      int amount, int total, int thickness, int unused) {
+    draw_pie_budget_probe(0);  // WORKAROUND(inline): see draw_pie_budget_probe
+    draw_pie_budget_probe(0);  // WORKAROUND(inline)
     if (area == 0) return 16;
     int width = area->right - area->left;
     int height = area->bottom - area->top;
@@ -477,8 +506,13 @@ int Buffer::draw_pie(RECT *area, int first_color, int second_color,
         area->right, area->top, area->right, area->top);
     offset_rect(area, 0, -thickness);
     RECT strip;
-    SetRect(&strip, area->left, center_y, width + area->left, center_y + thickness);
-    fill(&strip, amount * 4 < total ? second_color : first_color);
+    if (amount * 4 < total) {
+        SetRect(&strip, area->left, center_y, width + area->left, center_y + thickness);
+        fill(&strip, second_color);
+    } else {
+        SetRect(&strip, area->left, center_y, width + area->left, center_y + thickness);
+        fill(&strip, first_color);
+    }
 
     // The original expands change_color(RECT *) here (0x005DF313 tests the
     // local rectangle's address, then the hand-written search/replace loop).
@@ -6051,10 +6085,7 @@ int Buffer::wrap_flying_flush() {
     }
     *BufferFlyingText = 0;
     BufferFlyingWidth = 0;
-    write_font_slot_ = 0;
-    font_slot_ = 0;
-    field_514_ = 0;
-    markup_pending_ = 0;
+    select_text_slot(0);
     return BufferFlyingY;
 }
 
@@ -10368,10 +10399,15 @@ Return Value: mutable text, or null when head_ is null
 Status: Complete
 */
 // WORKAROUND(inline): file-local twin of StringStruct::current_entry
-// (0x00402530). current_text expands it under its head test (the
-// 0x005E3637 `mov eax,[eax+8]; mov eax,[eax+4]` chase), while
-// Buffer::write_strings 0x005DAD70 calls 0x00402530 out of line six times in
-// this same TU, so the TU keeps only the declaration (VC6 has no noinline).
+// (0x00402530), whose out-of-line copy stringstruct.cpp defines (a header
+// inline visible here would emit a second COMDAT copy, since the string
+// writers call it out of line). current_text expands it under its head test
+// (the 0x005E3637 `mov eax,[eax+8]; mov eax,[eax+4]` chase). The image's
+// copies of current_text inside the two writers call 0x00402530 instead
+// (0x005DAE38, 0x005DB118): the original header expanded current_entry, and
+// /Ob2 refused it there at depth 2. With STRINGSTRUCT_CURRENT_ENTRY_INLINE
+// this unit reproduces that but emits a pick-any copy that collides with
+// stringstruct.cpp's out-of-line definition (LNK2005).
 static inline StringStructPayload *buffer_current_entry(StringStruct *list) {
     if (list->head_) {
         return list->current_->string_payload();
@@ -10380,13 +10416,67 @@ static inline StringStructPayload *buffer_current_entry(StringStruct *list) {
 }
 
 char *StringList::current_text() {
-    return head_ != 0 ? buffer_current_entry(this)->text : 0;
+    if (head_) {
+        return buffer_current_entry(this)->text;
+    }
+    return 0;
 }
 
 // current_text is a provisional descriptive name, not a recovered original
 // spelling. Its six original Buffer callers use this out-of-line boundary;
 // CheckBox/RadioButton and other drawing/selection owners retain the same
 // guarded field chase inline at their original sites.
+
+// WORKAROUND(inline): dead /Ob2 budget probe (folds to no code), one call
+// before each string writer's loop. With it every loop call site matches the
+// image: write_strings_height calls next_entry, current_entry, the flush,
+// text_line_height, wrap_height_flying(char *, int), current_text and
+// wrap_height out of line (0x005DAF3A..0x005DB016), and write_strings keeps
+// only the flush and text_line_height inline. Without it both loops expand
+// several of them. The original spelling that spent this budget is unknown.
+static inline void string_writer_budget_probe(int x) {
+    if (x == 0) x = 1;
+    if (x == 1) x = 4;
+    if (x == 2) x = 7;
+    if (x == 3) x = 10;
+    if (x == 4) x = 13;
+    if (x == 5) x = 16;
+    if (x == 6) x = 19;
+    if (x == 7) x = 22;
+    if (x == 8) x = 25;
+    if (x == 9) x = 28;
+    if (x == 10) x = 31;
+    if (x == 11) x = 34;
+}
+
+// WORKAROUND(inline): the loops' `call next_entry; cmp [list+0xc],0; je;
+// call current_entry` (0x005DAF3C, 0x005DB24F) is a discarded "advance and
+// return the text" helper (SpriteBox's next_text has the same shape). Spelled
+// out at the call site instead, both writers expand different callees; its
+// original name and owner are unknown.
+static inline char *buffer_next_text(StringList *strings) {
+    strings->next_entry();
+    return strings->current_ != 0 ? strings->current_entry()->text : 0;
+}
+
+// WORKAROUND(inline): twin of StringStruct::current_id (0x00401640), which
+// stringstruct.cpp defines out of line. Both writers expand it at their first
+// callback site (`cmp [list+8],0; ...; mov eax,[list+0xc]; mov eax,[eax+4]`)
+// and write_strings calls it out of line in its plain-text arm (0x005DB3B6).
+static inline int buffer_current_id(StringList *strings) {
+    if (strings->head_) {
+        return strings->current_->id;
+    }
+    return 0;
+}
+
+// WORKAROUND(inline): the current entry's metadata word behind a head test;
+// every site in both writers calls current_entry (0x00402530) out of line
+// (0x005DADA7, 0x005DB079). Spelled out at each site, both writers expand
+// different callees; its original name and owner are unknown.
+static inline int buffer_current_kind(StringList *strings) {
+    return strings->head_ != 0 ? strings->current_entry()->field_8_ : 0;
+}
 
 int Buffer::write_strings_height(StringList *strings, int width, int flags) {
     if (strings == 0) {
@@ -10398,11 +10488,10 @@ int Buffer::write_strings_height(StringList *strings, int width, int flags) {
 
     // The payload node's metadata word (+8) and text (+4) are what
     // StringStructPayload declares; `current_entry` walks to the current one.
-    int payload = strings->head_ != 0 ? strings->current_entry()->field_8_ : 0;
+    int payload = buffer_current_kind(strings);
 
     if (field_C_ != 0) {
-        const int id = strings->head_ != 0 ? strings->current_->id : 0;
-        field_C_(id, payload);
+        field_C_(buffer_current_id(strings), payload);
     }
 
     int total_height = 0;
@@ -10416,39 +10505,31 @@ int Buffer::write_strings_height(StringList *strings, int width, int flags) {
         wrap_height_flying(strings->current_text(), width);
     }
 
-    if (strings->current_position_ < strings->entry_count_ - 1) {
-        do {
-            strings->next_entry();
-            if (strings->current_ != 0) {
-                strings->current_entry();
-            }
+    string_writer_budget_probe(0);  // WORKAROUND(inline): see the probe
+    while (strings->current_position_ < strings->entry_count_ - 1) {
+        buffer_next_text(strings);
 
-            const int line_payload =
-                strings->head_ != 0 ? strings->current_entry()->field_8_ : 0;
+        payload = buffer_current_kind(strings);
 
-            if (field_C_ != 0) {
-                const int id =
-                    strings->head_ != 0 ? strings->current_->id : 0;
-                field_C_(id,
-                                                                 line_payload);
-            }
+        if (field_C_ != 0) {
+            field_C_(buffer_current_id(strings), payload);
+        }
 
-            if (strings->head_ == 0 || strings->current_entry()->field_8_ == 0) {
-                wrap_height_flying(strings->current_text());
+        if (buffer_current_kind(strings) != 0) {
+            total_height += wrap_height_flying_flush();
+
+            if (payload == 3) {
+                total_height += text_line_height();
+                wrap_height_flying(nullptr, width);
+            } else if (payload == 2) {
+                total_height += wrap_height(strings->current_text(), width);
+                wrap_height_flying(nullptr, width);
             } else {
-                total_height += wrap_height_flying_flush();
-
-                if (line_payload == 3) {
-                    total_height += text_line_height();
-                    wrap_height_flying(nullptr, width);
-                } else if (line_payload == 2) {
-                    total_height += wrap_height(strings->current_text(), width);
-                    wrap_height_flying(nullptr, width);
-                } else {
-                    wrap_height_flying(strings->current_text(), width);
-                }
+                wrap_height_flying(strings->current_text(), width);
             }
-        } while (strings->current_position_ < strings->entry_count_ - 1);
+        } else {
+            wrap_height_flying(strings->current_text());
+        }
     }
 
     return wrap_height_flying_flush() + total_height;
@@ -10460,10 +10541,9 @@ int Buffer::write_strings(StringList *strings, int left, int top, int width,
     if ((flags & 2) == 0) {
         strings->seek_pos(0);
     }
-    int kind = strings->head_ != 0 ? strings->current_entry()->field_8_ : 0;
+    int kind = buffer_current_kind(strings);
     if (field_C_ != 0) {
-        int id = strings->head_ != 0 ? strings->current_->id : 0;
-        field_C_(id, kind);
+        field_C_(buffer_current_id(strings), kind);
     }
     if (kind == 3) {
         top += text_line_height();
@@ -10475,16 +10555,15 @@ int Buffer::write_strings(StringList *strings, int left, int top, int width,
         wrap_flying(strings->current_text(), left, top, width);
     }
 
+    string_writer_budget_probe(0);  // WORKAROUND(inline): see the probe
     while (strings->current_position_ < strings->entry_count_ - 1) {
         if (top > -dib_.bmiHeader.biHeight) break;
-        strings->next_entry();
-        if (strings->current_ != 0) strings->current_entry();
-        kind = strings->head_ != 0 ? strings->current_entry()->field_8_ : 0;
-        if (strings->head_ != 0 && strings->current_entry()->field_8_ != 0) {
+        buffer_next_text(strings);
+        kind = buffer_current_kind(strings);
+        if (buffer_current_kind(strings) != 0) {
             int y = wrap_flying_flush();
             if (field_C_ != 0) {
-                int id = strings->head_ != 0 ? strings->current_->id : 0;
-                field_C_(id, kind);
+                field_C_(buffer_current_id(strings), kind);
             }
             if (y >= top) top = y;
             if (kind == 3) {
@@ -10538,5 +10617,4 @@ Purpose: Field 0 as an offset into field 0x10, or field 0xc when it is negative.
 Return Value: field 0x10 + field 0, or field 0xc
 Status: Complete
 */
-
 
