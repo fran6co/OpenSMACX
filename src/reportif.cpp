@@ -4942,10 +4942,12 @@ void ReportIf::on_status(int mode) {
         // Report frame and the two window buttons beneath it (0x4A4397..0x4A454F).
         RECT &panel = window.energy_panel_rect_;
         RECT &frame = window.report_frame_rect_;
-        set_rectangle_dimensions(&frame, panel.left + 75, panel.bottom + 7,
-                                 report_rect_width(&panel) - 150, 20);
-        int center = (panel.right + panel.left) / 2;
         StringTemp[0] = 0;
+        frame.top = panel.bottom + 7;
+        frame.bottom = frame.top + 20;
+        frame.left = panel.left + 75;
+        frame.right = frame.left + report_rect_width(&panel) - 150;
+        int center = (panel.right + panel.left) / 2;
         strcat(StringTemp, label_get(0x21B));
         set_rectangle_dimensions(&draw_workspace_rect_, frame.left, frame.top,
                                  center - frame.left - 1, 20);
@@ -5052,7 +5054,8 @@ void ReportIf::on_status(int mode) {
         window.buttonGroup1_.add(&window.flatButton4_);
         window.buttonGroup1_.add(&window.flatButton5_);
         window.buttonGroup1_.add(&window.flatButton6_);
-        window.buttonGroup1_.set(field_1E240_ ? field_1E240_ : 0x8B3, 1);
+        if (field_1E240_) window.buttonGroup1_.set(field_1E240_, 1);
+        else window.buttonGroup1_.set(0x8B3, 1);
 
         // Window two-way selector (0x4A4C13..0x4A4E17).
         field_C_ = panel.left + 3;
