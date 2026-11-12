@@ -868,6 +868,42 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
         if receipt not in rows:
             rows.append(receipt)
 
+    debug_type_twins = {}
+
+    def attach_debug_types(evidence, objects, effective_by_unit, commands):
+        """Give measured body objects proved debug-typed twins; True if any changed."""
+        nonlocal attempts, compiler
+        if not settings.layout_flags:
+            return False
+        from .debug_type_twin import has_debug_records, prove_debug_type_twin
+        owners = sorted({item.unit for item in (*evidence.object_targets, *evidence.object_contents)
+                         if item.unit in body_units and item.unit in objects})
+        changed = False
+        for unit in owners:
+            obj = objects[unit]
+            if obj.debug_type_twin is not None or has_debug_records(obj):
+                continue
+            unit_flags = tuple(effective_by_unit[unit])
+            twin_flags = unit_flags + tuple(settings.layout_flags)
+            key = (unit, tuple(commands[unit]), unit_flags)
+            if key not in debug_type_twins:
+                attempts += 1
+                if compiler is None:
+                    compiler = Compiler(root, profile=settings.compiler_profile)
+                receipt = {"unit": unit, "flags": list(unit_flags), "twin_flags": list(twin_flags)}
+                try:
+                    witness = prove_debug_type_twin(
+                        obj, Coff(compiler(root / unit, tuple(commands[unit]), twin_flags)))
+                    debug_type_twins[key] = (witness, {**receipt, "result": "proved"})
+                except (OSError, ValueError) as error:
+                    debug_type_twins[key] = (None, {**receipt, "result": "refused",
+                                                    "reason": str(error)})
+            witness, _receipt = debug_type_twins[key]
+            if witness is not None:
+                obj.debug_type_twin = witness
+                changed = True
+        return changed
+
     for flags in flag_sets:
         objects, errors = {}, dict(command_errors)
         effective_by_unit = {}
@@ -946,6 +982,16 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
                                                shared_bindings, literal_bindings,
                                                unit_extensions=settings.unit_extensions,
                                                context_targets=externals)
+                # A body unit that also owns selected bounded objects keeps
+                # its measured object. Its extents may come only from a
+                # debug-typed twin proved identical apart from CodeView.
+                if attach_debug_types(evidence, objects, effective_by_unit, commands):
+                    evidence = select_evidence(bindings, selected, objects, object_bindings,
+                                               generated_bindings, import_bindings,
+                                               shared_bindings, literal_bindings,
+                                               unit_extensions=settings.unit_extensions,
+                                               context_targets=externals)
+                    continue
                 # A shared body the closure now checks must come from its
                 # host's measured flags, never an evidence-only /Z7 compile.
                 hosts = {item.object_unit for item in evidence.shared
@@ -1209,6 +1255,10 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
             **({"selected_evidence": {"checks": evidence_checks,
                                       "trials": selection_trials}}
                if record_evidence else {}),
+            # Proved (or refused) debug-typed twins of measured body objects,
+            # used only for bounded data extents; bodies keep measured flags.
+            **({"debug_type_twins": [receipt for _witness, receipt in debug_type_twins.values()]}
+               if debug_type_twins else {}),
             **({"retained_definitions": retained_observations,
                 "retained_definition_policy": "advisory_only; never product emission, restoration or acceptance"}
                if retained_diagnostics else {}),

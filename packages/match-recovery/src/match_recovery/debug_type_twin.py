@@ -1,0 +1,170 @@
+"""Standalone CodeView types for a body object compiled without debug records.
+
+A measured function body keeps the object compiled with its exact measured
+flags. Bounded data dependencies in that same object still need standalone
+CodeView types (`/Z7`) for their extents. A second, debug-typed compile of the
+same unit may supply them only after this module proves that it is the same
+object apart from its `.debug$S`/`.debug$T` records: every other section,
+relocation identity, symbol, COMDAT selection/ownership and weak edge must be
+equal under an explicit section renumbering. Line-number fields that debug
+records add (section-definition line counts, function-definition links and
+`.bf`/`.lf`/`.ef` symbols) are the only tolerated differences. Anything else
+refuses; the plain object then remains without type evidence.
+
+Layout readers resolve a measured extent in the twin and translate only its
+section number back into the plain object's numbering.
+"""
+
+from __future__ import annotations
+
+from collections import Counter
+from dataclasses import dataclass
+import re
+import struct
+
+from .pe_coff import weak_external
+
+_DEBUG = (".debug$S", ".debug$T")
+_DEBUG_FUNCTION_STORAGE = 101  # .bf/.lf/.ef line-number function records
+_FILE_STORAGE = 103
+# Compiler-numbered local labels, EH tables and literals. Debug records shift
+# their counters; a local's identity is its defining section and offset.
+_NUMBERED_LOCAL = re.compile(r"\$(?:L|T|SG|S)\d+")
+
+
+@dataclass(frozen=True)
+class DebugTypeTwin:
+    twin: object
+    section_map: tuple[tuple[int, int], ...]  # (twin section, plain section)
+
+    def plain_section(self, twin_section: int) -> int:
+        for twin, plain in self.section_map:
+            if twin == twin_section:
+                return plain
+        raise ValueError("debug-typed twin layout names an unmapped section")
+
+    def remap(self, layout: dict) -> dict:
+        return {**layout, "section": self.plain_section(layout["section"])}
+
+
+def has_debug_records(obj) -> bool:
+    return any(section.name.startswith(".debug$") and section.name != ".debug$F"
+               for section in obj.sections)
+
+
+def attached_twin(obj):
+    """Return the proved twin only for a plain object without its own records."""
+    witness = getattr(obj, "debug_type_twin", None)
+    if witness is None or has_debug_records(obj):
+        return None
+    if type(witness) is not DebugTypeTwin:
+        raise ValueError("unsupported debug-typed twin evidence")
+    return witness
+
+
+def _section_aux(obj, index, symbol, mapping):
+    length, relocs, _lines, checksum, parent, selection = struct.unpack_from(
+        "<IHHIHB", obj.auxiliary[index])
+    if selection == 5:
+        if parent not in mapping:
+            raise ValueError("debug-typed twin associates code with a debug section")
+        parent = mapping[parent]
+    # Only EXACT_MATCH selection depends on the checksum; contents are
+    # compared byte for byte below either way.
+    return ("section", length, relocs, checksum if selection == 4 else None, parent, selection,
+            obj.auxiliary[index][15:].hex())
+
+
+def _symbols(obj, mapping, *, twin):
+    def key(symbol):
+        if symbol.section > 0:
+            if symbol.section not in mapping:
+                raise ValueError("debug-typed twin relocates or defines through a debug section")
+            section = ("section", mapping[symbol.section])
+        else:
+            section = ("special", symbol.section)
+        name = symbol.name
+        if symbol.storage in (3, 6) and symbol.section > 0 and _NUMBERED_LOCAL.fullmatch(name):
+            name = "<compiler-numbered local>"
+        return (name, symbol.value, section, symbol.type, symbol.storage)
+
+    rows = Counter()
+    for index, symbol in obj.symbols.items():
+        if symbol.storage == _FILE_STORAGE:
+            continue  # Source file names, not linkable content.
+        if symbol.section > 0 and symbol.section not in mapping:
+            if not twin:
+                raise ValueError("plain object defines a symbol in an unmapped section")
+            continue  # Debug section definitions exist only in the twin.
+        if symbol.storage == _DEBUG_FUNCTION_STORAGE:
+            if not twin:
+                raise ValueError("plain body object unexpectedly carries line-number records")
+            if symbol.name not in (".bf", ".lf", ".ef"):
+                raise ValueError("unsupported debug-typed twin function record")
+            continue
+        raw = obj.auxiliary.get(index, b"")
+        if not raw:
+            aux = ("none",)
+        elif symbol.storage == 105:
+            target, mode = weak_external(obj, symbol)
+            aux = ("weak", key(target), mode)
+        elif (symbol.section > 0 and symbol.storage == 3 and symbol.type == 0
+              and symbol.name == obj.sections[symbol.section - 1].name):
+            aux = _section_aux(obj, index, symbol, mapping)
+        elif twin and symbol.section > 0 and symbol.type == 0x20 and symbol.storage in (2, 3):
+            # Function-definition auxiliary records link only line-number
+            # debugging; the plain object must carry no such record.
+            if len(raw) != 18:
+                raise ValueError("unsupported function-definition auxiliary extent")
+            aux = ("none",)
+        else:
+            aux = ("raw", raw.hex())
+        rows[(key(symbol), aux)] += 1
+    return rows, key
+
+
+def prove_debug_type_twin(plain, twin) -> DebugTypeTwin:
+    """Prove that `twin` differs from `plain` only by standalone debug records."""
+    if has_debug_records(plain):
+        raise ValueError("plain object already carries CodeView records")
+    if any(section.name == ".debug$P" for section in twin.sections):
+        raise ValueError("debug-typed twin uses precompiled types")
+    debug = {number for number, section in enumerate(twin.sections, 1) if section.name in _DEBUG}
+    if [twin.sections[n - 1].name for n in sorted(debug)].count(".debug$T") != 1:
+        raise ValueError("debug-typed twin requires one standalone CodeView type section")
+    if any(section.name.startswith(".debug$") and section.name not in (*_DEBUG, ".debug$F")
+           for section in twin.sections):
+        raise ValueError("debug-typed twin carries an unsupported debug section")
+    kept = [number for number in range(1, len(twin.sections) + 1) if number not in debug]
+    if len(kept) != len(plain.sections):
+        raise ValueError("debug-typed twin changes the non-debug section count")
+    mapping = {number: plain_number for plain_number, number in enumerate(kept, 1)}
+    identity = {number: number for number in range(1, len(plain.sections) + 1)}
+    plain_symbols, plain_key = _symbols(plain, identity, twin=False)
+    twin_symbols, twin_key = _symbols(twin, mapping, twin=True)
+    if plain_symbols != twin_symbols:
+        raise ValueError("debug-typed twin changes the COFF symbol table")
+    for number in kept:
+        expected, actual = plain.sections[mapping[number] - 1], twin.sections[number - 1]
+        if (actual.name, actual.flags, actual.data, twin.section_sizes[number - 1]) != (
+                expected.name, expected.flags, expected.data, plain.section_sizes[mapping[number] - 1]):
+            raise ValueError(f"debug-typed twin changes section {actual.name}")
+        if ([(offset, plain_key(plain.symbols[target]), kind) for offset, target, kind in expected.relocations]
+                != [(offset, twin_key(twin.symbols[target]), kind) for offset, target, kind in actual.relocations]):
+            raise ValueError(f"debug-typed twin changes relocations of {actual.name}")
+    twin_associations = {}
+    for child, parent in twin.associations.items():
+        if child in debug:
+            if parent in debug:
+                raise ValueError("debug-typed twin associates debug records with debug records")
+            continue
+        if parent not in mapping:
+            raise ValueError("debug-typed twin associates code with a debug section")
+        twin_associations[mapping[child]] = mapping[parent]
+    if twin_associations != dict(plain.associations):
+        raise ValueError("debug-typed twin changes COMDAT ownership")
+    for number in debug:
+        if twin.sections[number - 1].name == ".debug$T" and (
+                number in twin.associations or twin.sections[number - 1].relocations):
+            raise ValueError("debug-typed twin type stream is not standalone")
+    return DebugTypeTwin(twin, tuple(sorted(mapping.items())))

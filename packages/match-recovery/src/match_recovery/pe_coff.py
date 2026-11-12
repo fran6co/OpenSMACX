@@ -134,6 +134,10 @@ class CoffRecords:
 
 
 class Coff(CoffRecords):
+    # Optional debug_type_twin.DebugTypeTwin, attached only after it is proved
+    # to differ from this object by standalone CodeView records alone.
+    debug_type_twin = None
+
     def __init__(self, data: bytes):
         machine, _, _, _, _, optional, _ = _unpack("<HHIIIHH", data, 0)
         if machine != 0x14C or optional:

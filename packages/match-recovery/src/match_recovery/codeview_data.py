@@ -99,6 +99,11 @@ def data_layout(obj, name):
     Static storage is not an external relocation target. Callers must retain the
     owning object; this does not qualify same-spelled symbols in other TUs.
     """
+    from .debug_type_twin import attached_twin
+    witness = attached_twin(obj)
+    if witness is not None:
+        # Only a proved debug-typed twin of this same object supplies types.
+        return witness.remap(data_layout(witness.twin, name))
     definitions = [s for s in obj.symbols.values() if s.name == name and s.storage in (2, 3)
                    and s.section > 0 and not s.type & 0x20]
     if len(definitions) != 1:
@@ -288,6 +293,10 @@ def member_data_layout(obj, parent_symbol, member_path):
     come only from its directly bound standalone CodeView records. Inherited
     lookup refuses unresolved base graphs rather than guessing offsets.
     """
+    from .debug_type_twin import attached_twin
+    witness = attached_twin(obj)
+    if witness is not None:
+        return witness.remap(member_data_layout(witness.twin, parent_symbol, member_path))
     bounds = array_slice_bounds(member_path)
     if bounds is not None:
         parent = data_layout(obj, parent_symbol)

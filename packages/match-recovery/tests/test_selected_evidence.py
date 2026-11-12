@@ -751,3 +751,79 @@ def test_same_unit_merged_literal_resolves_before_a_same_name_object():
     elsewhere = replace(literal, unit="code/other.cc", evidence=elsewhere_origin)
     evidence = select_evidence((function,), selected, objects, data, (), (), (), (elsewhere,))
     assert data[0] in evidence.object_contents and not evidence.literals
+
+
+def _same_unit_object_project(tmp_path):
+    root = project(tmp_path, layout_flags=("types",))
+    (root / "code/caller.cc").write_text(
+        "// ORIGINAL: 0x00401000 _f 0x00401000-0x00401006\n"
+        "int f() { return 0; }\n"
+        "// RECOVERY_OBJECT: v2 0x00402000 0x00402004 _g 0x00401000\n"
+        "int g;\n")
+    (root / "data/global.cc").write_text(
+        "// RECOVERY_OBJECT: v2 0x00402004 0x00402008 _unused 0x00401010\n"
+        "int unused;\n")
+    return root
+
+
+def _same_unit_objects(*, twin_code=0xA1):
+    from test_codeview import record
+    from test_debug_type_twin import DATA, DEBUG, build_bytes as build
+    code = b"\xa1\0\0\0\0\xc3" + b"\xcc" * 10
+    plain = build([(".text", code, ((1, 1, 6),), 0x60501020),
+                   (".data", bytes(4), ((0, 2, 6),), DATA)],
+                  [("_f", 0, 1, 0x20, 2, b""), ("_g", 0, 2, 0, 2, b""), ("_h", 0, 0, 0, 2, b"")])
+    debug = struct.pack("<I", 2) + record(0x1008, struct.pack("<IIH", 0x403, 0, 0) + b"\x01g")
+    twin = build([(".text", bytes((twin_code,)) + code[1:], ((1, 2, 6),), 0x60501020),
+                  (".debug$S", debug, ((12, 2, 11), (16, 2, 10)), DEBUG),
+                  (".debug$T", struct.pack("<I", 2), (), DEBUG),
+                  (".data", bytes(4), ((0, 3, 6),), DATA)],
+                 [("_f", 0, 1, 0x20, 2, b""), (".bf", 0, 1, 0, 101, b""),
+                  ("_g", 0, 4, 0, 2, b""), ("_h", 0, 0, 0, 2, b"")])
+    return plain, twin
+
+
+@pytest.mark.parametrize("twin_code,expected", [(0xA1, Result.PASS), (0xA3, Result.UNKNOWN)])
+def test_body_unit_object_extent_uses_only_a_proved_debug_typed_twin(tmp_path, twin_code, expected):
+    plain, twin = _same_unit_objects(twin_code=twin_code)
+    root = _same_unit_object_project(tmp_path)
+    calls = []
+
+    def compile(path, command, flags):
+        calls.append((path.relative_to(path.parents[1]).as_posix(), flags))
+        if path.name == "caller.cc":
+            return twin if "types" in flags else plain
+        if path.name == "target.cc":
+            return data_fixture(struct.pack("<I", 7), definition=b"_h", reference=b"_unused")
+        raise AssertionError(f"unexpected owner compiled: {path}")
+
+    report = verify(root, compile)
+    assert report["result"] == expected, report
+    # The measured body keeps its own flags; the twin is an extra compile.
+    assert calls[0] == ("code/caller.cc", ("first",))
+    assert ("code/caller.cc", ("first", "types")) in calls
+    twins = report["debug_type_twins"]
+    assert [(row["unit"], row["flags"], row["twin_flags"], row["result"]) for row in twins] == [
+        ("code/caller.cc", ["first"], ["first", "types"],
+         "proved" if expected == Result.PASS else "refused")]
+    if expected == Result.UNKNOWN:
+        assert "changes section .text" in twins[0]["reason"]
+        assert any("standalone CodeView type section" in row.get("reason", "")
+                   for row in report["selected_evidence"]["checks"])
+
+
+def test_body_unit_object_without_layout_flags_stays_unknown(tmp_path):
+    plain, _twin = _same_unit_objects()
+    root = _same_unit_object_project(tmp_path)
+    settings = json.loads((root / "recovery/project.json").read_text())
+    settings["measurement"]["layout_flags"] = []
+    (root / "recovery/project.json").write_text(json.dumps(settings))
+
+    def compile(path, command, flags):
+        if path.name == "caller.cc":
+            return plain
+        return data_fixture(struct.pack("<I", 7), definition=b"_h", reference=b"_unused")
+
+    report = verify(root, compile)
+    assert report["result"] == Result.UNKNOWN
+    assert "debug_type_twins" not in report
