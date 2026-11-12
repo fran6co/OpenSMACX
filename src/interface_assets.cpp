@@ -3947,24 +3947,23 @@ void __cdecl load_terrain() {
             x += 57;
         }
     }
-    for (i = 0; i < 2; ++i) {
-        g_OCEAN_TEXTURES[i].extract(&g_PCX_PARSE_TEMP_BUFFER1, 280, 79 + i * 57, 56, 56, 0);
+    for (i = 0, y = 79; i < 2; ++i, y += 57) {
+        g_OCEAN_TEXTURES[i].extract(&g_PCX_PARSE_TEMP_BUFFER1, 280, y, 56, 56, 0);
     }
     g_FLAT_ARID_LAND_TEXTURE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 1, 58, 56, 56, 0);
-    // The slot index runs across rows; the column counter only bounds a row.
-    for (x = 1, y = 115, i = 0; i < 16; y += 57, x = 1) {
-        for (col = 0; col < 4; ++col, ++i, x += 57) {
-            g_MOIST_LAND_TEXTURES[i].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 56, 56, 0);
+    for (x = 1, y = 115, row = 0; row < 4; ++row, y += 57, x = 1) {
+        for (col = 0; col < 4; x += 57, ++col) {
+            g_MOIST_LAND_TEXTURES[row * 4 + col].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 56, 56, 0);
         }
     }
-    for (x = 1, y = 343, i = 0; i < 16; y += 57, x = 1) {
-        for (col = 0; col < 4; ++col, ++i, x += 57) {
-            g_RAINY_LAND_TEXTURES[i].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 56, 56, 0);
+    for (x = 1, y = 343, row = 0; row < 4; ++row, y += 57, x = 1) {
+        for (col = 0; col < 4; x += 57, ++col) {
+            g_RAINY_LAND_TEXTURES[row * 4 + col].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 56, 56, 0);
         }
     }
     // 4x4 grid without its final cell.
-    for (x = 526, y = 259, row = 0; row < 4; ++row, y += 57, x = 526) {
-        for (col = 0; col < 4; ++col, x += 57) {
+    for (x = 526, y = 259, row = 0; row < 4; x = 526, y += 57, ++row) {
+        for (col = 0; col < 4; x += 57, ++col) {
             if (row == 3 && col == 3) {
                 break;
             }
@@ -3972,57 +3971,57 @@ void __cdecl load_terrain() {
         }
     }
     g_DUNE_LAND_TEXTURE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 229, 1, 56, 56, 0);
-    for (x = 768, y = 15, i = 0; i < 8; y += 57, x = 768) {
-        for (col = 0; col < 4; ++col, ++i, x += 57) {
-            g_SUNNY_MESA_TEXTURES[i].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 56, 56, 0);
+    for (x = 768, y = 15, row = 0; row < 2; ++row, y += 57, x = 768) {
+        for (col = 0; col < 4; x += 57, ++col) {
+            g_SUNNY_MESA_TEXTURES[row * 4 + col].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 56, 56, 0);
         }
     }
-    for (x = 775, y = 395, i = 0; i < 9; y += 57, x = 775) {
-        for (col = 0; col < 3; ++col, ++i, x += 57) {
-            g_ROAD_TEXTURES[i].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 56, 56, 0);
+    for (x = 775, y = 395, row = 0; row < 3; ++row, y += 57, x = 775) {
+        for (col = 0; col < 3; x += 57, ++col) {
+            g_ROAD_TEXTURES[row * 3 + col].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 56, 56, 0);
         }
     }
-    for (x = 775, y = 566, i = 0; i < 9; y += 57, x = 775) {
-        for (col = 0; col < 3; ++col, ++i, x += 57) {
-            g_MAGTUBE_TEXTURES[i].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 56, 56, 0);
+    for (x = 775, y = 566, row = 0; row < 3; ++row, y += 57, x = 775) {
+        for (col = 0; col < 3; x += 57, ++col) {
+            g_MAGTUBE_TEXTURES[row * 3 + col].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 56, 56, 0);
         }
     }
-    for (x = 280, y = 259, i = 0; i < 16; y += 57, x = 280) {
-        for (col = 0; col < 4; ++col, ++i, x += 57) {
-            g_RIVER_TEXTURES[i].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 56, 56, 0);
+    for (x = 280, y = 259, row = 0; row < 4; ++row, y += 57, x = 280) {
+        for (col = 0; col < 4; x += 57, ++col) {
+            g_RIVER_TEXTURES[row * 4 + col].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 56, 56, 0);
         }
     }
-    for (i = 0; i < 3; ++i) {
-        g_MOUNT_PLANET_TEXTURES[i].extract(&g_PCX_PARSE_TEMP_BUFFER1, 1 + i * 57, 628, 56, 56, 0);
+    for (i = 0, x = 1; i < 3; ++i, x += 57) {
+        g_MOUNT_PLANET_TEXTURES[i].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, 628, 56, 56, 0);
     }
-    for (i = 0; i < 3; ++i) {
-        g_GARLAND_CRATER_TEXTURES[i].extract(&g_PCX_PARSE_TEMP_BUFFER1, 1 + i * 57, 685, 56, 56, 0);
+    for (i = 0, x = 1; i < 3; ++i, x += 57) {
+        g_GARLAND_CRATER_TEXTURES[i].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, 685, 56, 56, 0);
     }
     // Two 4x4 grids without their final cells; the second bank starts at 15.
-    for (x = 280, y = 516, row = 0; row < 4; ++row, y += 57, x = 280) {
-        for (col = 0; col < 4; ++col, x += 57) {
+    for (x = 280, y = 516, row = 0; row < 4; x = 280, y += 57, ++row) {
+        for (col = 0; col < 4; x += 57, ++col) {
             if (row == 3 && col == 3) {
                 break;
             }
             g_FUNGUS_TEXTURES[row * 4 + col].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 56, 56, 0);
         }
     }
-    for (x = 508, y = 516, row = 0; row < 4; ++row, y += 57, x = 508) {
-        for (col = 0; col < 4; ++col, x += 57) {
+    for (x = 508, y = 516, row = 0; row < 4; x = 508, y += 57, ++row) {
+        for (col = 0; col < 4; x += 57, ++col) {
             if (row == 3 && col == 3) {
                 break;
             }
             g_FUNGUS_TEXTURES[15 + row * 4 + col].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 56, 56, 0);
         }
     }
-    for (x = 775, y = 219, i = 0; i < 9; y += 57, x = 775) {
-        for (col = 0; col < 3; ++col, ++i, x += 57) {
-            g_FARM_TEXTURES[i].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 56, 56, 0);
+    for (x = 775, y = 219, row = 0; row < 3; ++row, y += 57, x = 775) {
+        for (col = 0; col < 3; x += 57, ++col) {
+            g_FARM_TEXTURES[row * 3 + col].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 56, 56, 0);
         }
     }
-    for (x = 526, y = 6, i = 0; i < 16; y += 57, x = 526) {
-        for (col = 0; col < 4; ++col, ++i, x += 57) {
-            g_FOREST_TEXTURES[i].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 56, 56, 0);
+    for (x = 526, y = 6, row = 0; row < 4; ++row, y += 57, x = 526) {
+        for (col = 0; col < 4; x += 57, ++col) {
+            g_FOREST_TEXTURES[row * 4 + col].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 56, 56, 0);
         }
     }
 
@@ -4145,24 +4144,24 @@ void __cdecl load_terrain() {
     // RECOVERY_LITERAL: v1 0x00684FF4 0x00684FFD ??_C@_08BFGA@TER1?4PCX?$AA@ 0x00451C50
     g_PCX_PARSE_TEMP_BUFFER1.load_pcx("TER1.PCX", 0, 10, 236);
     scratch.init(100, 62, 0, 0);
-    for (n = 0; n < 3; ++n) {
+    for (n = 0, x = 1; n < 3; ++n, x += 101) {
         g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
         g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-        g_TER1_WHITE_ORG_YEL_TILE_SPRITES[n * 2].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 1 + n * 101, 447, 100, 62, 0);
+        g_TER1_WHITE_ORG_YEL_TILE_SPRITES[n * 2].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, x, 447, 100, 62, 0);
         g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
         g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-        g_TER1_WHITE_ORG_YEL_TILE_SPRITES[n * 2 + 1].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 1 + n * 101, 579, 100, 62, 0);
+        g_TER1_WHITE_ORG_YEL_TILE_SPRITES[n * 2 + 1].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, x, 579, 100, 62, 0);
     }
-    for (n = 0; n < 3; ++n) {
+    for (n = 0, x = 1; n < 3; ++n, x += 101) {
         g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
         g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-        g_TER1_BOTTOM_LEFT_TILE_SPRITES[n * 3].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 1 + n * 101, 510, 100, 62, 0);
+        g_TER1_BOTTOM_LEFT_TILE_SPRITES[n * 3].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, x, 510, 100, 62, 0);
         g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
         g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-        g_TER1_BOTTOM_LEFT_TILE_SPRITES[n * 3 + 1].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 1 + n * 101, 642, 100, 62, 0);
+        g_TER1_BOTTOM_LEFT_TILE_SPRITES[n * 3 + 1].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, x, 642, 100, 62, 0);
         g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
         g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-        g_TER1_BOTTOM_LEFT_TILE_SPRITES[n * 3 + 2].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 1 + n * 101, 705, 100, 62, 0);
+        g_TER1_BOTTOM_LEFT_TILE_SPRITES[n * 3 + 2].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, x, 705, 100, 62, 0);
     }
     g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
     g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
@@ -4194,16 +4193,16 @@ void __cdecl load_terrain() {
     g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
     g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
     g_TER1_SENSOR_ARRAY_SPRITE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 708, 316, 100, 62, 0);
-    for (n = 0; n < 5; ++n) {
+    for (n = 0, y = 453; n < 5; ++n, y += 63) {
         g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
         g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-        g_TER1_UNUSED_SPRITES1[n].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 620, 453 + n * 63, 100, 62, 0);
+        g_TER1_UNUSED_SPRITES1[n].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 620, y, 100, 62, 0);
         g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
         g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-        g_TER1_SOIL_ENRICHER_SPRITES[n].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 822, 453 + n * 63, 100, 62, 0);
+        g_TER1_SOIL_ENRICHER_SPRITES[n].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 822, y, 100, 62, 0);
         g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
         g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-        g_TER1_FARM_SPRITES[n].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 923, 453 + n * 63, 100, 62, 0);
+        g_TER1_FARM_SPRITES[n].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 923, y, 100, 62, 0);
     }
     g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
     g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
@@ -4241,25 +4240,25 @@ void __cdecl load_terrain() {
     g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
     g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
     g_TER1_MANIFOLD_NEXUS_SPRITES[1].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 680, 695, 100, 62, 0);
-    for (n = 0; n < 3; ++n) {
+    for (n = 0, y = 253; n < 3; ++n, y += 63) {
         g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
         g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-        g_TER1_SEA_LAND_RESOURCE_SPRITES[n * 4 + 2].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 1, 253 + n * 63, 100, 62, 0);
+        g_TER1_SEA_LAND_RESOURCE_SPRITES[n * 4 + 2].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 1, y, 100, 62, 0);
         g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
         g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-        g_TER1_SEA_LAND_RESOURCE_SPRITES[n * 4 + 3].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 102, 253 + n * 63, 100, 62, 0);
+        g_TER1_SEA_LAND_RESOURCE_SPRITES[n * 4 + 3].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 102, y, 100, 62, 0);
         g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
         g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-        g_TER1_SEA_LAND_RESOURCE_SPRITES[n * 4].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 203, 253 + n * 63, 100, 62, 0);
+        g_TER1_SEA_LAND_RESOURCE_SPRITES[n * 4].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 203, y, 100, 62, 0);
         g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
         g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-        g_TER1_SEA_LAND_RESOURCE_SPRITES[n * 4 + 1].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 304, 253 + n * 63, 100, 62, 0);
+        g_TER1_SEA_LAND_RESOURCE_SPRITES[n * 4 + 1].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 304, y, 100, 62, 0);
     }
     // Pairs swapped: slots 1, 0, 3, 2, 5, 4.
-    for (n = 0; n < 6; ++n) {
+    for (x = 418, n = 0; n < 6; x += 101, ++n) {
         g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
         g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-        g_TER1_UNITY_POD_SPRITES[(n / 2) * 2 + !(n & 1)].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 418 + n * 101, 379, 100, 62, 0);
+        g_TER1_UNITY_POD_SPRITES[(n / 2) * 2 + !(n & 1)].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, x, 379, 100, 62, 0);
     }
     g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
     g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
@@ -4442,10 +4441,14 @@ void __cdecl load_box_sprites() {
         extract_interface_box_sprite(g_IFACE_MP_COMBO_ARROW_SPRITES[arrow], arrow_x, 537, 7, 13);
     }
 
-    // Seventeen rows of three columns; the style index runs across both.
-    int style = 0;
-    for (int y = 229; style < 51; y += 39) {
-    for (int x = 33; x < 150; x += 39, ++style) {
+    // Seventeen rows of three columns.
+    int row;
+    int col;
+    int x;
+    int y;
+    for (y = 229, row = 0; row < 17; y += 39, ++row) {
+    for (x = 33, col = 0; x < 150; x += 39, ++col) {
+        const int style = row * 3 + col;
         extract_interface_box_sprite(g_IFACE_BOX_SPRITES1[style], x - 32, y, 6, 6);
         extract_interface_box_sprite(g_IFACE_BOX_SPRITES2[style], x, y, 6, 6);
         extract_interface_box_sprite(g_IFACE_BOX_SPRITES3[style], x - 32, y + 32, 6, 6);

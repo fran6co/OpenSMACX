@@ -695,17 +695,17 @@ void __cdecl vehdraw_compute_facet_normals() {
     // 0x93341C is ConsoleGlobal + MapWin::field_1DD6C_, initialized to 25
     // or 8 by MapWin::calculate_dimensions. It is not an independent global.
     const int baseline = ConsoleGlobal.field_1DD6C_;
-    int index = 0;
-    for (int i = 30; i < 240; i += 30) {
+    int i, j, k, l, ti, tj, tk, tl;
+    for (i = 30, ti = 0; ti < 7; i += 30, ++ti) {
         const float height_i = (float)((i >> 2) - baseline);
-        for (int j = 30; j < 240; j += 30) {
+        for (j = 30, tj = 0; j < 240; j += 30, ++tj) {
             const float height_j = (float)((j >> 2) - baseline);
-            for (int k = 30; k < 240; k += 30) {
+            for (k = 30, tk = 0; k < 240; k += 30, ++tk) {
                 const float height_k = (float)((k >> 2) - baseline);
-                for (int l = 30; l < 240; l += 30) {
+                for (l = 30, tl = 0; l < 240; l += 30, ++tl) {
                     const float height_l = (float)((l >> 2) - baseline);
-                    VOX_Vect a = {{0.0f, 50.0f, height_j}};
                     VOX_Vect b = {{-50.0f, 0.0f, height_i}};
+                    VOX_Vect a = {{0.0f, 50.0f, height_j}};
                     VOX_Vect c = {{50.0f, 0.0f, height_k}};
                     VOX_Vect d = {{0.0f, -50.0f, height_l}};
                     VOX_Vect n0, n1, n2, n3;
@@ -717,11 +717,10 @@ void __cdecl vehdraw_compute_facet_normals() {
                     vox_normalise_vector(n1.values, n1.values);
                     vox_normalise_vector(n2.values, n2.values);
                     vox_normalise_vector(n3.values, n3.values);
-                    VehDrawFacetNormals[0][index] = n0;
-                    VehDrawFacetNormals[1][index] = n1;
-                    VehDrawFacetNormals[2][index] = n2;
-                    VehDrawFacetNormals[3][index] = n3;
-                    ++index;
+                    VehDrawFacetNormals[0][((ti * 7 + tj) * 7 + tk) * 7 + tl] = n0;
+                    VehDrawFacetNormals[1][((ti * 7 + tj) * 7 + tk) * 7 + tl] = n1;
+                    VehDrawFacetNormals[2][((ti * 7 + tj) * 7 + tk) * 7 + tl] = n2;
+                    VehDrawFacetNormals[3][((ti * 7 + tj) * 7 + tk) * 7 + tl] = n3;
                 }
             }
         }
