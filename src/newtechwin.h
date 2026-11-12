@@ -75,22 +75,12 @@ class NewTechWin : public GraphicWin {
   RECT label_rects_[4];  // 0xA94
   // RECOVERY_MEMBER: v2 NewTechWin bottom_rect_ tagRECT 0xAD4 0x00483E73
   RECT bottom_rect_;  // 0xAD4
-  uint32_t field_AE4_;  // 0xAE4
-  uint32_t field_AE8_;  // 0xAE8
-  uint32_t field_AEC_;  // 0xAEC
-  uint32_t field_AF0_;  // 0xAF0
-  uint32_t field_AF4_;  // 0xAF4
-  uint32_t field_AF8_;  // 0xAF8
-  uint32_t field_AFC_;  // 0xAFC
-  uint32_t field_B00_;  // 0xB00
-  uint32_t field_B04_;  // 0xB04
-  uint32_t field_B08_;  // 0xB08
-  uint32_t field_B0C_;  // 0xB0C
-  uint32_t field_B10_;  // 0xB10
-  uint32_t field_B14_;  // 0xB14
-  uint32_t field_B18_;  // 0xB18
-  uint32_t field_B1C_;  // 0xB1C
-  uint32_t field_B20_;  // 0xB20
+  // Footer text, OK button and the previous/next technology buttons; exec
+  // builds each as a RECT and redraw/init read them back as rectangles.
+  RECT text_rect_;  // 0xAE4
+  RECT ok_button_rect_;  // 0xAF4
+  RECT prev_button_rect_;  // 0xB04
+  RECT next_button_rect_;  // 0xB14
   uint32_t field_B24_;  // 0xB24
   uint32_t field_B28_;  // 0xB28
   FlatButton flatButtons_[3];  // 0xB2C

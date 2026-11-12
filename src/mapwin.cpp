@@ -382,10 +382,10 @@ int __cdecl alt_get_ocean_detail(int x, int y, int corner, int point) {
         }
     } else if ((map_loc(x, y)->climate & ~0x1F) < ALT_BIT_SHORE_LINE) {
         // Water looking for land.
-        int dir = corner * 2 - 4;
-        for (int i = 0; i < 3; dir++, i++) {
-            int x_scan = wrap_map_x(x + VehMoveDeltaX[dir & 7]);
-            int y_scan = y + VehMoveDeltaY[dir & 7];
+        for (int i = 0; i < 3; i++) {
+            int dir = (corner * 2 - 4 + i) & 7;
+            int x_scan = wrap_map_x(x + VehMoveDeltaX[dir]);
+            int y_scan = y + VehMoveDeltaY[dir];
             if (on_map(x_scan, y_scan)
                 && (map_loc(x_scan, y_scan)->climate & ~0x1F) >= ALT_BIT_SHORE_LINE) {
                 if (point == 1) {
@@ -399,10 +399,10 @@ int __cdecl alt_get_ocean_detail(int x, int y, int corner, int point) {
         }
     } else {
         // Land looking for water.
-        int dir = corner * 2 - 4;
-        for (int i = 0; i < 3; dir++, i++) {
-            int x_scan = wrap_map_x(x + VehMoveDeltaX[dir & 7]);
-            int y_scan = y + VehMoveDeltaY[dir & 7];
+        for (int i = 0; i < 3; i++) {
+            int dir = (corner * 2 - 4 + i) & 7;
+            int x_scan = wrap_map_x(x + VehMoveDeltaX[dir]);
+            int y_scan = y + VehMoveDeltaY[dir];
             if (on_map(x_scan, y_scan)
                 && (map_loc(x_scan, y_scan)->climate & ~0x1F) < ALT_BIT_SHORE_LINE) {
                 if (point == 1) {

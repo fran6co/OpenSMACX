@@ -163,22 +163,22 @@ static bool vehdraw_uses_terrain(int veh_id, int x, int y) {
 }
 
 
-static int vehdraw_facet_index(const int *h1, const int *h2,
-                               const int *h3, const int *h4, int cell) {
-    return ((h1[cell] * 7 + h2[cell]) * 7 + h3[cell]) * 7 + h4[cell] - 400;
+// The scoot sampler's wrap reads the bound separately in each arm.
+static int vehdraw_wrap_x(int x) {
+    if (!(MapIsFlat & 1)) {
+        if (x < 0) {
+            x += MapLongitudeBounds;
+        } else if (x >= MapLongitudeBounds) {
+            x -= MapLongitudeBounds;
+        }
+    }
+    return x;
 }
 
 
-static void vehdraw_average_facets(int index, VOX_Vect *normal) {
-    // Copy every input before the first call, as the original does.
-    const VOX_Vect n0 = VehDrawFacetNormals[0][index];
-    const VOX_Vect n1 = VehDrawFacetNormals[1][index];
-    const VOX_Vect n2 = VehDrawFacetNormals[2][index];
-    const VOX_Vect n3 = VehDrawFacetNormals[3][index];
-    vector_add(n0.values, n1.values, normal->values);
-    vector_add(normal->values, n2.values, normal->values);
-    vector_add(normal->values, n3.values, normal->values);
-    vox_normalise_vector(normal->values, normal->values);
+static int vehdraw_facet_index(const int *h1, const int *h2,
+                               const int *h3, const int *h4, int cell) {
+    return ((h1[cell] * 7 + h2[cell]) * 7 + h3[cell]) * 7 + h4[cell];
 }
 
 
@@ -362,7 +362,7 @@ void __cdecl vehdraw_scoot_start(int veh_id, int direction, int steps, int flags
     int h1[9], h2[9], h3[9], h4[9];
     int x, y;
     for (int cell = 0; cell < 9; ++cell) {
-        x = wrap_map_x(VehMoveDeltaX[cell] + VehLiftX);
+        x = vehdraw_wrap_x(VehMoveDeltaX[cell] + VehLiftX);
         y = VehMoveDeltaY[cell] + VehLiftY;
         h1[cell] = ConsoleGlobal.get_relative_alt(x, y, 1);
         h2[cell] = ConsoleGlobal.get_relative_alt(x, y, 2);
@@ -370,89 +370,139 @@ void __cdecl vehdraw_scoot_start(int veh_id, int direction, int steps, int flags
         h4[cell] = ConsoleGlobal.get_relative_alt(x, y, 4);
     }
     VOX_Vect start, end, midpoint;
+    VOX_Vect a, b, c, d, e, f, g, h;
     if (vehdraw_uses_terrain(veh_id, x, y)) {
-        vehdraw_average_facets(vehdraw_facet_index(h1, h2, h3, h4, 8), &start);
+        a = VehDrawFacetNormals[0][vehdraw_facet_index(h1, h2, h3, h4, 8) - 400];
+        b = VehDrawFacetNormals[1][vehdraw_facet_index(h1, h2, h3, h4, 8) - 400];
+        c = VehDrawFacetNormals[2][vehdraw_facet_index(h1, h2, h3, h4, 8) - 400];
+        d = VehDrawFacetNormals[3][vehdraw_facet_index(h1, h2, h3, h4, 8) - 400];
+        vector_add(a.values, b.values, start.values);
+        vector_add(start.values, c.values, start.values);
+        vector_add(start.values, d.values, start.values);
+        vox_normalise_vector(start.values, start.values);
     } else {
-        start.values[0] = start.values[1] = 0.0f;
+        start.values[0] = 0.0f;
+        start.values[1] = 0.0f;
         start.values[2] = 1.0f;
-        midpoint = start;
+        midpoint.values[0] = 0.0f;
+        midpoint.values[1] = 0.0f;
+        midpoint.values[2] = 1.0f;
     }
     x = VehMoveDeltaX[direction] + VehLiftX;
     VehDrawAnimationStep = 1;
-    x = wrap_map_x(x);
+    x = vehdraw_wrap_x(x);
     y = VehMoveDeltaY[direction] + VehLiftY;
     if (vehdraw_uses_terrain(veh_id, x, y)) {
-        vehdraw_average_facets(vehdraw_facet_index(h1, h2, h3, h4, direction), &end);
+        a = VehDrawFacetNormals[0][vehdraw_facet_index(h1, h2, h3, h4, direction) - 400];
+        b = VehDrawFacetNormals[1][vehdraw_facet_index(h1, h2, h3, h4, direction) - 400];
+        c = VehDrawFacetNormals[2][vehdraw_facet_index(h1, h2, h3, h4, direction) - 400];
+        d = VehDrawFacetNormals[3][vehdraw_facet_index(h1, h2, h3, h4, direction) - 400];
+        vector_add(a.values, b.values, end.values);
+        vector_add(end.values, c.values, end.values);
+        vector_add(end.values, d.values, end.values);
+        vox_normalise_vector(end.values, end.values);
     } else {
-        end.values[0] = end.values[1] = 0.0f;
+        end.values[0] = 0.0f;
+        end.values[1] = 0.0f;
         end.values[2] = 1.0f;
     }
     // Re-read terrain/prototype after the normalizer calls. The midpoint is
     // the shared edge (even directions) or the eight meeting facets (odd).
-    if (!vehdraw_uses_terrain(veh_id, x, y)) {
+    // Every case is written out; the even cases are four identical bodies.
+    if (vehdraw_uses_terrain(veh_id, x, y)) {
+        switch (direction) {
+        case 0:
+            a = VehDrawFacetNormals[3][vehdraw_facet_index(h1, h2, h3, h4, direction) - 400];
+            b = VehDrawFacetNormals[1][vehdraw_facet_index(h1, h2, h3, h4, 8) - 400];
+            vector_add(a.values, b.values, midpoint.values);
+            break;
+        case 1:
+            a = VehDrawFacetNormals[1][vehdraw_facet_index(h1, h2, h3, h4, 8) - 400];
+            b = VehDrawFacetNormals[2][vehdraw_facet_index(h1, h2, h3, h4, 8) - 400];
+            c = VehDrawFacetNormals[2][vehdraw_facet_index(h1, h2, h3, h4, 0) - 400];
+            d = VehDrawFacetNormals[3][vehdraw_facet_index(h1, h2, h3, h4, 0) - 400];
+            e = VehDrawFacetNormals[3][vehdraw_facet_index(h1, h2, h3, h4, 1) - 400];
+            f = VehDrawFacetNormals[0][vehdraw_facet_index(h1, h2, h3, h4, 1) - 400];
+            g = VehDrawFacetNormals[0][vehdraw_facet_index(h1, h2, h3, h4, 2) - 400];
+            h = VehDrawFacetNormals[1][vehdraw_facet_index(h1, h2, h3, h4, 2) - 400];
+            vector_add(a.values, b.values, midpoint.values);
+            vector_add(midpoint.values, c.values, midpoint.values);
+            vector_add(midpoint.values, d.values, midpoint.values);
+            vector_add(midpoint.values, e.values, midpoint.values);
+            vector_add(midpoint.values, f.values, midpoint.values);
+            vector_add(midpoint.values, g.values, midpoint.values);
+            vector_add(midpoint.values, h.values, midpoint.values);
+            break;
+        case 2:
+            a = VehDrawFacetNormals[3][vehdraw_facet_index(h1, h2, h3, h4, direction) - 400];
+            b = VehDrawFacetNormals[1][vehdraw_facet_index(h1, h2, h3, h4, 8) - 400];
+            vector_add(a.values, b.values, midpoint.values);
+            break;
+        case 3:
+            a = VehDrawFacetNormals[2][vehdraw_facet_index(h1, h2, h3, h4, 8) - 400];
+            b = VehDrawFacetNormals[3][vehdraw_facet_index(h1, h2, h3, h4, 8) - 400];
+            c = VehDrawFacetNormals[3][vehdraw_facet_index(h1, h2, h3, h4, 2) - 400];
+            d = VehDrawFacetNormals[0][vehdraw_facet_index(h1, h2, h3, h4, 2) - 400];
+            e = VehDrawFacetNormals[0][vehdraw_facet_index(h1, h2, h3, h4, 3) - 400];
+            f = VehDrawFacetNormals[1][vehdraw_facet_index(h1, h2, h3, h4, 3) - 400];
+            g = VehDrawFacetNormals[1][vehdraw_facet_index(h1, h2, h3, h4, 4) - 400];
+            h = VehDrawFacetNormals[2][vehdraw_facet_index(h1, h2, h3, h4, 4) - 400];
+            vector_add(a.values, b.values, midpoint.values);
+            vector_add(midpoint.values, c.values, midpoint.values);
+            vector_add(midpoint.values, d.values, midpoint.values);
+            vector_add(midpoint.values, e.values, midpoint.values);
+            vector_add(midpoint.values, f.values, midpoint.values);
+            vector_add(midpoint.values, g.values, midpoint.values);
+            vector_add(midpoint.values, h.values, midpoint.values);
+            break;
+        case 4:
+            a = VehDrawFacetNormals[3][vehdraw_facet_index(h1, h2, h3, h4, direction) - 400];
+            b = VehDrawFacetNormals[1][vehdraw_facet_index(h1, h2, h3, h4, 8) - 400];
+            vector_add(a.values, b.values, midpoint.values);
+            break;
+        case 5:
+            a = VehDrawFacetNormals[3][vehdraw_facet_index(h1, h2, h3, h4, 8) - 400];
+            b = VehDrawFacetNormals[0][vehdraw_facet_index(h1, h2, h3, h4, 8) - 400];
+            c = VehDrawFacetNormals[0][vehdraw_facet_index(h1, h2, h3, h4, 4) - 400];
+            d = VehDrawFacetNormals[1][vehdraw_facet_index(h1, h2, h3, h4, 4) - 400];
+            e = VehDrawFacetNormals[1][vehdraw_facet_index(h1, h2, h3, h4, 5) - 400];
+            f = VehDrawFacetNormals[2][vehdraw_facet_index(h1, h2, h3, h4, 5) - 400];
+            g = VehDrawFacetNormals[2][vehdraw_facet_index(h1, h2, h3, h4, 6) - 400];
+            h = VehDrawFacetNormals[3][vehdraw_facet_index(h1, h2, h3, h4, 6) - 400];
+            vector_add(a.values, b.values, midpoint.values);
+            vector_add(midpoint.values, c.values, midpoint.values);
+            vector_add(midpoint.values, d.values, midpoint.values);
+            vector_add(midpoint.values, e.values, midpoint.values);
+            vector_add(midpoint.values, f.values, midpoint.values);
+            vector_add(midpoint.values, g.values, midpoint.values);
+            vector_add(midpoint.values, h.values, midpoint.values);
+            break;
+        case 6:
+            a = VehDrawFacetNormals[3][vehdraw_facet_index(h1, h2, h3, h4, direction) - 400];
+            b = VehDrawFacetNormals[1][vehdraw_facet_index(h1, h2, h3, h4, 8) - 400];
+            vector_add(a.values, b.values, midpoint.values);
+            break;
+        case 7:
+            a = VehDrawFacetNormals[0][vehdraw_facet_index(h1, h2, h3, h4, 8) - 400];
+            b = VehDrawFacetNormals[1][vehdraw_facet_index(h1, h2, h3, h4, 8) - 400];
+            c = VehDrawFacetNormals[1][vehdraw_facet_index(h1, h2, h3, h4, 6) - 400];
+            d = VehDrawFacetNormals[2][vehdraw_facet_index(h1, h2, h3, h4, 6) - 400];
+            e = VehDrawFacetNormals[2][vehdraw_facet_index(h1, h2, h3, h4, 7) - 400];
+            f = VehDrawFacetNormals[3][vehdraw_facet_index(h1, h2, h3, h4, 7) - 400];
+            g = VehDrawFacetNormals[3][vehdraw_facet_index(h1, h2, h3, h4, 0) - 400];
+            h = VehDrawFacetNormals[0][vehdraw_facet_index(h1, h2, h3, h4, 0) - 400];
+            vector_add(a.values, b.values, midpoint.values);
+            vector_add(midpoint.values, c.values, midpoint.values);
+            vector_add(midpoint.values, d.values, midpoint.values);
+            vector_add(midpoint.values, e.values, midpoint.values);
+            vector_add(midpoint.values, f.values, midpoint.values);
+            vector_add(midpoint.values, g.values, midpoint.values);
+            vector_add(midpoint.values, h.values, midpoint.values);
+            break;
+        }
+    } else {
         midpoint.values[0] = midpoint.values[1] = 0.0f;
         midpoint.values[2] = 1.0f;
-    } else {
-        const int centre = vehdraw_facet_index(h1, h2, h3, h4, 8);
-        VOX_Vect n[8];
-        int count = 0;
-        switch (direction) {
-        case 0: case 2: case 4: case 6:
-            n[0] = VehDrawFacetNormals[3][vehdraw_facet_index(h1, h2, h3, h4, direction)];
-            n[1] = VehDrawFacetNormals[1][centre];
-            count = 2;
-            break;
-        case 1: {
-            const int a = vehdraw_facet_index(h1, h2, h3, h4, 0);
-            const int b = vehdraw_facet_index(h1, h2, h3, h4, 1);
-            const int c = vehdraw_facet_index(h1, h2, h3, h4, 2);
-            n[0] = VehDrawFacetNormals[1][centre]; n[1] = VehDrawFacetNormals[2][centre];
-            n[2] = VehDrawFacetNormals[2][a]; n[3] = VehDrawFacetNormals[3][a];
-            n[4] = VehDrawFacetNormals[3][b]; n[5] = VehDrawFacetNormals[0][b];
-            n[6] = VehDrawFacetNormals[0][c]; n[7] = VehDrawFacetNormals[1][c];
-            count = 8;
-            break;
-        }
-        case 3: {
-            const int a = vehdraw_facet_index(h1, h2, h3, h4, 2);
-            const int b = vehdraw_facet_index(h1, h2, h3, h4, 3);
-            const int c = vehdraw_facet_index(h1, h2, h3, h4, 4);
-            n[0] = VehDrawFacetNormals[2][centre]; n[1] = VehDrawFacetNormals[3][centre];
-            n[2] = VehDrawFacetNormals[3][a]; n[3] = VehDrawFacetNormals[0][a];
-            n[4] = VehDrawFacetNormals[0][b]; n[5] = VehDrawFacetNormals[1][b];
-            n[6] = VehDrawFacetNormals[1][c]; n[7] = VehDrawFacetNormals[2][c];
-            count = 8;
-            break;
-        }
-        case 5: {
-            const int a = vehdraw_facet_index(h1, h2, h3, h4, 4);
-            const int b = vehdraw_facet_index(h1, h2, h3, h4, 5);
-            const int c = vehdraw_facet_index(h1, h2, h3, h4, 6);
-            n[0] = VehDrawFacetNormals[3][centre]; n[1] = VehDrawFacetNormals[0][centre];
-            n[2] = VehDrawFacetNormals[0][a]; n[3] = VehDrawFacetNormals[1][a];
-            n[4] = VehDrawFacetNormals[1][b]; n[5] = VehDrawFacetNormals[2][b];
-            n[6] = VehDrawFacetNormals[2][c]; n[7] = VehDrawFacetNormals[3][c];
-            count = 8;
-            break;
-        }
-        case 7: {
-            const int a = vehdraw_facet_index(h1, h2, h3, h4, 6);
-            const int b = vehdraw_facet_index(h1, h2, h3, h4, 7);
-            const int c = vehdraw_facet_index(h1, h2, h3, h4, 0);
-            n[0] = VehDrawFacetNormals[0][centre]; n[1] = VehDrawFacetNormals[1][centre];
-            n[2] = VehDrawFacetNormals[1][a]; n[3] = VehDrawFacetNormals[2][a];
-            n[4] = VehDrawFacetNormals[2][b]; n[5] = VehDrawFacetNormals[3][b];
-            n[6] = VehDrawFacetNormals[3][c]; n[7] = VehDrawFacetNormals[0][c];
-            count = 8;
-            break;
-        }
-        }
-        if (count) {
-            vector_add(n[0].values, n[1].values, midpoint.values);
-            for (int i = 2; i < count; ++i) {
-                vector_add(midpoint.values, n[i].values, midpoint.values);
-            }
-        }
     }
     vox_normalise_vector(midpoint.values, midpoint.values);
     vec3_subtract(midpoint.values, start.values, VehDrawScootFirstIncrement.values);

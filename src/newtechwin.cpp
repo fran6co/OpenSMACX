@@ -181,7 +181,7 @@ void NewTechWin::on_redraw() {
 
     this->box_sprite(&main_rect_, &InterfaceBoxStyles[3]);
 
-    RECT *rect = reinterpret_cast<RECT *>(&field_AF4_);
+    RECT *rect = &ok_button_rect_;
     scratch.left = rect->left - 3;
     scratch.top = rect->top - 3;
     scratch.right = rect->right + 3;
@@ -337,8 +337,8 @@ static inline int newtechwin_run_modal(NewTechWin *win) {
 void NewTechWin::exec(int technology_id, int other_faction_id) {
     field_B28_ = static_cast<uint32_t>(other_faction_id);
     field_B24_ = static_cast<uint32_t>(technology_id);
-    // WORKAROUND(type): the A14/AF4/B04/B14/AE4 words are RECTs in the image
-    // (pointer-parameter stores at 0x00483FA7, 0x00483FF8, 0x00484265...).
+    // WORKAROUND(type): the A14 words are a RECT in the image
+    // (pointer-parameter stores at 0x00483FA7).
     char number[16];
     RECT boxes[4];
     RECT strip;
@@ -352,7 +352,7 @@ void NewTechWin::exec(int technology_id, int other_faction_id) {
     strip.right -= 3;
     strip.bottom -= 3;
     strip.top = strip.bottom - 0x14;
-    RECT *const button = reinterpret_cast<RECT *>(&field_AF4_);
+    RECT *const button = &ok_button_rect_;
     newtechwin_copy_rect(button, &strip);
     rect.bottom = strip.top - 7;
     newtechwin_copy_rect(&main_rect_, &rect);
@@ -396,9 +396,9 @@ void NewTechWin::exec(int technology_id, int other_faction_id) {
     row_rects_[2].right = split;
     row_rects_[3].left = split_right;
 
-    RECT *const next_button = reinterpret_cast<RECT *>(&field_B14_);
-    RECT *const prev_button = reinterpret_cast<RECT *>(&field_B04_);
-    RECT *const text_rect = reinterpret_cast<RECT *>(&field_AE4_);
+    RECT *const next_button = &next_button_rect_;
+    RECT *const prev_button = &prev_button_rect_;
+    RECT *const text_rect = &text_rect_;
     rect = main_rect_;
     rect.right -= 6;
     rect.bottom -= 6;
@@ -450,10 +450,10 @@ void NewTechWin::exec(int technology_id, int other_faction_id) {
     stringBox2_.show(0);
 
     FlatButton &ok_button = flatButtons_[0];
-    ok_button.init(label_get(0x194 / 4), -1, static_cast<int>(field_AF4_),
-                   static_cast<int>(field_AF8_),
-                   static_cast<int>(field_AFC_) - static_cast<int>(field_AF4_),
-                   static_cast<int>(field_B00_) - static_cast<int>(field_AF8_),
+    ok_button.init(label_get(0x194 / 4), -1, ok_button_rect_.left,
+                   ok_button_rect_.top,
+                   ok_button_rect_.right - ok_button_rect_.left,
+                   ok_button_rect_.bottom - ok_button_rect_.top,
                    this, 0);
     ok_button.set_border_styles(&InterfaceBoxStyles[27], &InterfaceBoxStyles[28],
                                 &InterfaceBoxStyles[29]);
