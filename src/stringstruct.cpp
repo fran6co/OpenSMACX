@@ -1,6 +1,9 @@
 // WORKAROUND(noinline): this TU owns the out-of-line StringStruct constructor
 // body that Datalink calls (0x00401000); see datalink.cpp.
 #define STRINGSTRUCT_CTOR_OUT_OF_LINE
+// WORKAROUND(decl): only this unit sees the payloads' direct
+// StringAllocationBase derivation (stringstruct.h explains the gate).
+#define STRINGSTRUCT_PAYLOAD_DIRECT_BASE
 /*
  * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
  * Copyright (C) 2013-2021 Brendan Casey
@@ -85,50 +88,51 @@ int StringStruct::on_insert(void *) { return 0; }
 // RECOVERY_SHARED: v1 0x00404270 0x00404273 ?on_remove@StringStruct@@UAEXPAX@Z 0x006086F0
 void StringStruct::on_remove(void *) { }
 
-// The image expands one allocation function at all four sites: an explicit
-// Heap that cannot satisfy the request is fatal, the process heap may fail
-// quietly, and the chosen Heap is published for the node's allocation base.
-// All eight message-box pushes name the same two literals. No placement
-// delete matches it, so construction carries no unwind cleanup.
-// WORKAROUND(decl): the original's allocation function (probably a class
-// operator new on the list nodes) is not declared in stringstruct.h; this
-// tagged global form stands in for it.
-struct StringListAllocation {};
-inline void *__cdecl operator new(size_t size, StringListAllocation *, Heap *heap,
-                                  StringStruct *list) throw() {
-    void *memory;
-    if (heap != 0) {
-        memory = heap->get(size);
-        if (memory != 0) {
-            StringAllocationHeap = heap;
-            return memory;
-        }
-        MessageBoxA(NULL, "out of heap space in new function", "Aborting", MB_OK);
-        exit(3);
+// The list-node allocation template (MATCHING_GUIDE 2.6), the same pair as
+// ServiceListEntry/ServiceStruct in net_class.cpp: the list's explicit Heap
+// is used by one overload and is fatal when it cannot satisfy the request;
+// the other takes the list, tries its inherited allocation owner (also
+// fatal) and then the process heap, which may fail quietly. The chosen Heap
+// is published for the node's allocation base. The matching placement
+// deletes give each new-expression the image's cleanup flag
+// `mov [ebp-4], ebx` (0x0040110B).
+// WORKAROUND(decl): the original overloads were probably class members of
+// the list nodes; these global forms stand in for them without a header
+// change.
+inline void *__cdecl operator new(size_t size, Heap *heap) throw() {
+    void *memory = heap->get(size);
+    if (memory != 0) {
+        StringAllocationHeap = heap;
+        return memory;
     }
-    heap = list->allocation_owner_;
-    if (heap != 0) {
-        memory = heap->get(size);
+    MessageBoxA(NULL, "out of heap space in new function", "Aborting", MB_OK);
+    exit(3);
+    return 0;
+}
+inline void *__cdecl operator new(size_t size, StringStruct *list) throw() {
+    void *memory;
+    Heap *owner = list->allocation_owner_;
+    if (owner != 0) {
+        memory = owner->get(size);
         if (memory != 0) {
-            StringAllocationHeap = heap;
+            StringAllocationHeap = owner;
             return memory;
         }
         MessageBoxA(NULL, "out of heap space in new function", "Aborting", MB_OK);
         exit(3);
     }
     memory = mem_get(size);
-    if (memory != 0) {
-        StringAllocationHeap = 0;
-    }
+    if (memory == 0) return 0;
+    StringAllocationHeap = owner;
     return memory;
 }
-
-// Matching placement delete, as for SpriteList::add (spritebox.cpp): it gives
-// each new-expression the cleanup state `mov [ebp-4], ebx` (0x0040110B), and
-// the `::new` spelling is what finds it - the nodes' class-scope
-// operator delete would otherwise hide it (0.854 -> 0.922).
-inline void __cdecl operator delete(void *memory, StringListAllocation *, Heap *,
-                                    StringStruct *) {
+inline void __cdecl operator delete(void *memory, Heap *) {
+    if (memory != 0) {
+        if (StringAllocationHeap == 0) free(memory);
+        StringAllocationHeap = 0;
+    }
+}
+inline void __cdecl operator delete(void *memory, StringStruct *) {
     if (memory != 0) {
         if (StringAllocationHeap == 0) free(memory);
         StringAllocationHeap = 0;
@@ -144,41 +148,128 @@ inline void __cdecl operator delete(void *memory, StringListAllocation *, Heap *
 // ORIGINAL: 0x00401100 ?add@StringStruct@@QAEHH@Z 0x00401100-0x00401513
 // RECOVERY_BINDING: v1 {"evidence": ["Original 401100 selects explicit allocator then inherited allocation owner then mem_get, constructs entry size1C and payload size18 with distinct virtual-base tables. Native construction replaces seed vptr writes; source class names remain interpretations.", "Original 4013B1 publishes the entry allocation into the old tail next link before the null test; 4012D2/4014DC publish null payloads before returning4. Insertion hook result is ignored; count and position update only after it returns. Same-span legacy seed retained."], "reason": "Recover circular-list insertion with real node construction and the original partial updates on allocation failure."}
 int StringStruct::add(int id) {
-    Heap *const entry_allocator = allocator_;
     if (entry_count_ == 0) {
-        head_ = ::new(static_cast<StringListAllocation *>(0), entry_allocator, this) StringStructEntry;
-        if (head_ == 0) {
-            return 4;
-        }
+        head_ = allocator_ ? ::new(allocator_) StringStructEntry : ::new(this) StringStructEntry;
+        if (head_ == 0) return 4;
         head_->id = id;
         head_->next = head_;
         head_->previous = head_;
-        head_->payload = ::new(static_cast<StringListAllocation *>(0), allocator_, this) StringStructPayload;
-        if (head_->payload == 0) {
-            return 4;
-        }
+        if (allocator_) head_->payload = ::new(allocator_) StringStructPayload;
+        else head_->payload = ::new(this) StringStructPayload;
+        if (head_->payload == 0) return 4;
         on_insert(head_->payload);
         current_ = head_;
     } else {
-        head_->previous->next = ::new(static_cast<StringListAllocation *>(0), entry_allocator, this) StringStructEntry;
-        if (head_->previous->next == 0) {
-            return 4;
-        }
+        head_->previous->next = allocator_ ? ::new(allocator_) StringStructEntry : ::new(this) StringStructEntry;
+        if (head_->previous->next == 0) return 4;
         head_->previous->next->previous = head_->previous;
         head_->previous->next->next = head_;
         head_->previous = head_->previous->next;
         current_ = head_->previous;
         current_->id = id;
-        current_->payload = ::new(static_cast<StringListAllocation *>(0), allocator_, this) StringStructPayload;
-        if (current_->payload == 0) {
-            return 4;
-        }
+        if (allocator_) current_->payload = ::new(allocator_) StringStructPayload;
+        else current_->payload = ::new(this) StringStructPayload;
+        if (current_->payload == 0) return 4;
         on_insert(current_->payload);
     }
     current_position_ = entry_count_;
     ++entry_count_;
     return 0;
 }
+
+// Moved from spritebox.cpp: 0x00402550 and 0x00402BB0 lie in this unit's
+// address range (0x00401000-0x00402CB2) and, like StringStruct::add, keep
+// the frame pointer this unit's /Oy- recipe gives.
+// SpriteList's half of the list-node allocation template: the explicit-Heap
+// overload above serves its allocator_, this one its inherited allocation
+// owner and then mem_get (0x0040259E..0x004025E6).
+inline void *__cdecl operator new(size_t size, SpriteListBase *list) throw() {
+    void *memory;
+    Heap *owner = list->allocation_owner_;
+    if (owner != 0) {
+        memory = owner->get(size);
+        if (memory != 0) {
+            StringAllocationHeap = owner;
+            return memory;
+        }
+        MessageBoxA(NULL, "out of heap space in new function", "Aborting", MB_OK);
+        exit(3);
+    }
+    memory = mem_get(size);
+    if (memory == 0) return 0;
+    StringAllocationHeap = owner;
+    return memory;
+}
+inline void __cdecl operator delete(void *memory, SpriteListBase *) {
+    if (memory != 0) {
+        if (StringAllocationHeap == 0) free(memory);
+        StringAllocationHeap = 0;
+    }
+}
+
+// ORIGINAL: 0x00402550 SpriteStruct::add 0x00402550-0x00402963 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:1240d9eead700ef28006f35018fca68d1123defd:src/leaf_recoveries.cpp", "pinned:SpriteList tables6708A0/6708A4;6116E0 calls611730 with virtual-baseview+28", "pinned:SpriteListBase tables66943C/669438 and list fields +8..+18; StringStruct independently uses 6693A4/6693A0", "source:src/spritebox.h;source:src/stringstruct.h", "source:recovery/tests/test_sprite_list_producer_actual_source.py"], "reason": "Recover SpriteList insertion through its sibling ring owner and distinct polymorphic string/sprite payload siblings, with compiler-owned virtual allocation-base lifetime. Combined constructor/destructor evidence supports the separate SpriteListBase owner model; the ring fields remain layout-compatible and separately owned. Historical identities, spans, claims and seed discoveries remain obligations. Producer partial-state behavior and null/error returns remain unchanged."}
+// symbol    ?add@SpriteList@@QAEHH@Z
+// Historical seed finding: TRIED fallback __stdcall(int) signature; native ECX/prologue supports thiscall
+// Historical seed finding: signature divergence from ServiceStruct::add sibling begins at instruction 7
+// Historical seed finding: native body allocates the 0x1C entry and 0x20 sprite payload, with calls at 0x5D4510, 0x5D4680 and 0x644DFF
+// Historical seed finding: old fixed-image seam/class attribution was provisional; retain as history, not current hierarchy proof
+// TRIED: fallback __stdcall(int) signature - disasm has `mov esi,ecx` in the prologue (this-in-ecx), matched as __thiscall SpriteStruct::add per the ServiceStruct::add sibling shape; diverges at insn #7, same prologue-order divergence as 0x00401760
+int SpriteList::add(int id) {
+    if (entry_count_ == 0) {
+        head_ = allocator_ ? ::new(allocator_) StringStructEntry : ::new(this) StringStructEntry;
+        if (head_ == 0) return 4;
+        head_->id = id;
+        head_->next = head_;
+        head_->previous = head_;
+        if (allocator_) head_->payload = ::new(allocator_) SpriteStruct;
+        else head_->payload = ::new(this) SpriteStruct;
+        if (head_->payload == 0) return 4;
+        on_insert(head_->payload);
+        current_ = head_;
+    } else {
+        head_->previous->next = allocator_ ? ::new(allocator_) StringStructEntry : ::new(this) StringStructEntry;
+        if (head_->previous->next == 0) return 4;
+        head_->previous->next->previous = head_->previous;
+        head_->previous->next->next = head_;
+        head_->previous = head_->previous->next;
+        current_ = head_->previous;
+        current_->id = id;
+        if (allocator_) current_->payload = ::new(allocator_) SpriteStruct;
+        else current_->payload = ::new(this) SpriteStruct;
+        if (current_->payload == 0) return 4;
+        on_insert(current_->payload);
+    }
+    current_position_ = entry_count_;
+    ++entry_count_;
+    return 0;
+}
+
+// SpriteList owns the sprite-specific payload lifecycle. Ordinary close is a
+// separate list clear with no original identity; 0x611730 is associated with
+// the compiler-generated virtual-base destructor entry by the native writer
+// after caller/layout review. C++ owns all vptr/vbtable staging.
+// Pinned 0x00402BB0 receiver is the allocation virtual-base view (+0x1C);
+// it adjusts to this list, clears through the shared 0x00402970 ring walker,
+// restores the StringAllocationBase table/owner, then honors deleting bit 0.
+// The 0x66943C/0x669438 primary/vbase stage is distinct from StringStruct's
+// 0x6693A4/0x6693A0 stage; shared ring layout does not imply inheritance.
+// 0x00611730 is the SpriteList lifecycle's expanded ring-cleanup body.
+// ORIGINAL: 0x00402BB0 sub_402bb0 0x00402BB0-0x00402C16 FILE
+// kind game
+// symbol    ??_GSpriteListBase@@UAEPAXI@Z
+// Historical seed fact (inactive): size      102 bytes
+// Historical seed fact (inactive): prototype
+// Historical seed fact (inactive): callers   0   call targets   2
+// Historical seed fact (inactive): kind      game
+// Historical seed fact (inactive): flags     frame;sp_ready;purged_ok
+// Historical seed fact (inactive): calls     0x00402970 0x00644EF2
+// Historical seed fact (inactive): PRESERVED UNIT - measured MNEMONIC_ONLY.
+// Historical seed fact (inactive): Historical seed mode (inactive): the artifact record was FILE; this proposal uses BODY because the identity is transferred to a genuine C++ method owner.
+// Historical seed fact (inactive): Historical owner evidence: receiver is the StringAllocationBase virtual view +0x1C.
+// Historical seed fact (inactive): Historical owner evidence: restores the 0x669438/0x66943C list stage, calls 0x402970, clears +0x14, restores 0x6693AC/owner, then tests deleting bit 0 and conditionally frees.
+// Historical seed fact (inactive): Historical measurement note: the seed reported MNEMONIC_ONLY; no BYTE_EXACT or SEMANTIC claim is transferred.
+SpriteList::SpriteList() {}
 
 /*
 Purpose: Return the current string-list item ID.

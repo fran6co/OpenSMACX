@@ -19,7 +19,9 @@
 
 
 class StringStructPayload;
+#ifndef STRINGSTRUCT_PAYLOAD_DIRECT_BASE
 class ListPayloadBase;
+#endif
 struct StringStructEntry;
 struct SpriteStruct;
 class Popup;
@@ -130,10 +132,19 @@ class StringAllocationBase {
   Heap *allocation_owner_;
 };
 
-// Common complete-object type for the two independent list payload layouts.
-// Its virtual allocation base owns dynamic deleting-destructor adjustment;
-// the concrete payload fields begin after this compiler-owned header.
+// The payload classes derive StringAllocationBase directly: the image's
+// payload construction (0x00401209, 0x00402659) stores one derived vftable
+// (0x006693B8, 0x00669444) after the base's, with no intermediate stage, and
+// StringStructPayload's deleting destructor 0x00402C70 has no destructor
+// call. A unit that defines STRINGSTRUCT_PAYLOAD_DIRECT_BASE sees that form.
+// WORKAROUND(decl): every other unit keeps the invented common base
+// ListPayloadBase and its typed payload pointer. Dropping it shifts the
+// declaration counts of about 30 includers and flips ties in their large
+// functions (faction_upkeep, corner_the_market, action_give lost exactness
+// in three whole-tree trials); the layout and every emitted call are the same.
+#ifndef STRINGSTRUCT_PAYLOAD_DIRECT_BASE
 class ListPayloadBase : public virtual StringAllocationBase {};
+#endif
 
 // REAL VIRTUAL INHERITANCE, like StringStructPayload below it: the word
 // add's construction installs at +0 is the VBTABLE 0x006693C8, whose two
@@ -149,7 +160,11 @@ struct StringStructEntry : public virtual StringAllocationBase {
   // StringStructEntry is shared by independent string and sprite lists.
   // The allocation owner supplies the concrete payload interpretation.
   // RECOVERY_MEMBER: v3 StringStructEntry payload ListPayloadBase* 0x08 0x00402550
+#ifdef STRINGSTRUCT_PAYLOAD_DIRECT_BASE
+  void *payload;  // 0x08
+#else
   ListPayloadBase *payload;  // 0x08
+#endif
   StringStructPayload *string_payload();
   const StringStructPayload *string_payload() const;
   SpriteStruct *sprite_payload();
@@ -191,7 +206,11 @@ static_assert(offsetof(StringStructEntry, payload) == 0x8,
 // the image's consumers read the second word as the text (Caviar's
 // unit-list walk indexes payload[1] for the display name), which is the
 // string-related type the accessor family is named for.
+#ifdef STRINGSTRUCT_PAYLOAD_DIRECT_BASE
+class StringStructPayload : public virtual StringAllocationBase {
+#else
 class StringStructPayload : public ListPayloadBase {
+#endif
  public:
   char *text;      // 0x04 - the string this entry carries
   uint32_t field_8_;  // 0x08 - role-dependent metadata, not universally a line count
@@ -264,7 +283,11 @@ class StringStruct : public virtual StringAllocationBase {
       do {
         StringStructEntry *const entry = head_;
         current_ = entry->next;
+#ifdef STRINGSTRUCT_PAYLOAD_DIRECT_BASE
+        StringStructPayload *const payload = (StringStructPayload *)entry->payload;
+#else
         ListPayloadBase *const payload = entry->payload;
+#endif
         on_remove(payload);
         delete payload;
         head_->payload = nullptr;
@@ -355,7 +378,11 @@ class StringList : public StringStruct {
       do {
         StringStructEntry *const entry = head_;
         current_ = entry->next;
+#ifdef STRINGSTRUCT_PAYLOAD_DIRECT_BASE
+        StringStructPayload *const payload = (StringStructPayload *)entry->payload;
+#else
         ListPayloadBase *const payload = entry->payload;
+#endif
         on_remove(payload);
         delete payload;
         head_->payload = nullptr;
@@ -491,7 +518,11 @@ MEASURED inline void StringStruct::remove_all() {
       do {
         StringStructEntry *const entry = head_;
         current_ = entry->next;
+#ifdef STRINGSTRUCT_PAYLOAD_DIRECT_BASE
+        StringStructPayload *const payload = (StringStructPayload *)entry->payload;
+#else
         ListPayloadBase *const payload = entry->payload;
+#endif
         on_remove(payload);
         delete payload;
         head_->payload = nullptr;

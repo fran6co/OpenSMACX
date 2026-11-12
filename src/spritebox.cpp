@@ -1017,31 +1017,11 @@ Purpose: Adjust the receiver from the thunk1 subobject back to SpriteBox and
 Status: Complete
 */
 
-// SpriteList owns the sprite-specific payload lifecycle. Ordinary close is a
-// separate list clear with no original identity; 0x611730 is associated with
-// the compiler-generated virtual-base destructor entry by the native writer
-// after caller/layout review. C++ owns all vptr/vbtable staging.
-// Pinned 0x00402BB0 receiver is the allocation virtual-base view (+0x1C);
-// it adjusts to this list, clears through the shared 0x00402970 ring walker,
-// restores the StringAllocationBase table/owner, then honors deleting bit 0.
-// The 0x66943C/0x669438 primary/vbase stage is distinct from StringStruct's
-// 0x6693A4/0x6693A0 stage; shared ring layout does not imply inheritance.
-// 0x00611730 is the SpriteList lifecycle's expanded ring-cleanup body.
-// ORIGINAL: 0x00402BB0 sub_402bb0 0x00402BB0-0x00402C16 FILE
-// kind game
-// symbol    ??_GSpriteListBase@@UAEPAXI@Z
-// Historical seed fact (inactive): size      102 bytes
-// Historical seed fact (inactive): prototype
-// Historical seed fact (inactive): callers   0   call targets   2
-// Historical seed fact (inactive): kind      game
-// Historical seed fact (inactive): flags     frame;sp_ready;purged_ok
-// Historical seed fact (inactive): calls     0x00402970 0x00644EF2
-// Historical seed fact (inactive): PRESERVED UNIT - measured MNEMONIC_ONLY.
-// Historical seed fact (inactive): Historical seed mode (inactive): the artifact record was FILE; this proposal uses BODY because the identity is transferred to a genuine C++ method owner.
-// Historical seed fact (inactive): Historical owner evidence: receiver is the StringAllocationBase virtual view +0x1C.
-// Historical seed fact (inactive): Historical owner evidence: restores the 0x669438/0x66943C list stage, calls 0x402970, clears +0x14, restores 0x6693AC/owner, then tests deleting bit 0 and conditionally frees.
-// Historical seed fact (inactive): Historical measurement note: the seed reported MNEMONIC_ONLY; no BYTE_EXACT or SEMANTIC claim is transferred.
-SpriteList::SpriteList() {}
+
+// WORKAROUND(inline): SpriteBox::SpriteBox (0x0060FF00) expands this empty
+// constructor, so this unit keeps an inline twin; the out-of-line
+// definition, which hosts 0x00402BB0, lives in stringstruct.cpp.
+inline SpriteList::SpriteList() {}
 
 // ORIGINAL: 0x005EB29F ?fill_entry@SpriteList@@QAEHPAUSpriteStruct@@@Z 0x005EB29F-0x005EB320 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:1240d9eead700ef28006f35018fca68d1123defd:src/unrecovered/005eb29f.cpp", "pinned:SpriteList tables6708A0/6708A4;6116E0 calls611730 with virtual-baseview+28", "pinned:SpriteListBase tables66943C/669438 and list fields +8..+18; StringStruct independently uses 6693A4/6693A0", "source:src/spritebox.h;source:src/stringstruct.h", "source:recovery/tests/test_spritelist_base_lifetime.py", "historical-source:recovery/tests/test_sprite_list_lifecycle_actual_source.py"], "reason": "Recover SpriteList's typed payload insertion on its own ring owner and distinct polymorphic string/sprite payload siblings. SpriteListBase is modeled as a sibling owner with the compatible ring layout and virtual allocation base; combined constructor and destructor table-stage evidence supports this model, while transient constructor-stage elision remains possible. Preserve original identities, spans and historical claims; the original 611730 walk and current lifecycle structure remain matching obligations. The historical kill_entry int-return contract remains unresolved for unknown indirect callers; the current void hook follows observed result-discarding callers without inventing a return."}
@@ -1090,100 +1070,6 @@ void SpriteList::on_remove(void *raw_payload) {
     }
 }
 
-// Three-tier list-node allocator, expanded in line four times in 0x00402550
-// (entry 0x1C at 0x40256C/0x40274F, payload 0x20 at 0x40263F/0x402849):
-//   tier 1 the list's explicit allocator_  (0x40256C..0x402599)
-//   tier 2 its inherited allocation_owner_ (0x40259E..0x4025D5)
-//   tier 3 mem_get                         (0x4025DA..0x4025E6)
-// exit(3) at 0x402599 falls straight into the tier-2 test at 0x40259E, so the
-// tiers are sequential ifs, not an `allocator_ ? allocator_ : owner` select
-// (that select would make a returning exit reach the publication store and
-// the null test instead). Each successful tier publishes its own owner
-// (0x40257D edi, 0x4025B9 edi, 0x4025E6 the known-zero ebx).
-// Same shape as ServiceStruct/ServiceListEntry::operator new(size_t,
-// ServiceProviderList *) in net_class.cpp for the 0x00401760 sibling.
-// The matching placement delete gives the new-expression its cleanup state;
-// with an inline constructor that cannot throw, VC6 drops the fs:0 frame but
-// keeps the ebp frame and the state store `mov [ebp-4], ebx` (0x40255B), the
-// same residue the exact StringList constructor 0x004450B0 shows.
-inline void *operator new(size_t size, SpriteListBase *list) throw() {
-    void *memory;
-    Heap *allocator = list->allocator_;
-    if (allocator != 0) {
-        memory = allocator->get(size);
-        if (memory != 0) {
-            StringAllocationHeap = allocator;
-            return memory;
-        }
-        MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
-        exit(3);
-    }
-    Heap *owner = list->allocation_owner_;
-    if (owner != 0) {
-        memory = owner->get(size);
-        if (memory != 0) {
-            StringAllocationHeap = owner;
-            return memory;
-        }
-        MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
-        exit(3);
-    }
-    memory = mem_get(size);
-    if (memory == 0) return 0;
-    StringAllocationHeap = owner;
-    return memory;
-}
-// Constructor-failure partner of the overload above (never reached: both
-// node constructors are inline stores only). Body mirrors the nodes'
-// owner-aware deallocation policy.
-inline void operator delete(void *memory, SpriteListBase *) {
-    if (memory != 0) {
-        if (StringAllocationHeap == 0) free(memory);
-        StringAllocationHeap = 0;
-    }
-}
-
-// ORIGINAL: 0x00402550 SpriteStruct::add 0x00402550-0x00402963 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["git:1240d9eead700ef28006f35018fca68d1123defd:src/leaf_recoveries.cpp", "pinned:SpriteList tables6708A0/6708A4;6116E0 calls611730 with virtual-baseview+28", "pinned:SpriteListBase tables66943C/669438 and list fields +8..+18; StringStruct independently uses 6693A4/6693A0", "source:src/spritebox.h;source:src/stringstruct.h", "source:recovery/tests/test_sprite_list_producer_actual_source.py"], "reason": "Recover SpriteList insertion through its sibling ring owner and distinct polymorphic string/sprite payload siblings, with compiler-owned virtual allocation-base lifetime. Combined constructor/destructor evidence supports the separate SpriteListBase owner model; the ring fields remain layout-compatible and separately owned. Historical identities, spans, claims and seed discoveries remain obligations. Producer partial-state behavior and null/error returns remain unchanged."}
-// symbol    ?add@SpriteList@@QAEHH@Z
-// Historical seed finding: TRIED fallback __stdcall(int) signature; native ECX/prologue supports thiscall
-// Historical seed finding: signature divergence from ServiceStruct::add sibling begins at instruction 7
-// Historical seed finding: native body allocates the 0x1C entry and 0x20 sprite payload, with calls at 0x5D4510, 0x5D4680 and 0x644DFF
-// Historical seed finding: old fixed-image seam/class attribution was provisional; retain as history, not current hierarchy proof
-// TRIED: fallback __stdcall(int) signature - disasm has `mov esi,ecx` in the prologue (this-in-ecx), matched as __thiscall SpriteStruct::add per the ServiceStruct::add sibling shape; diverges at insn #7, same prologue-order divergence as 0x00401760
-int SpriteList::add(int id) {
-    if (entry_count_ == 0) {
-        // 0x402618: head_ stored before its null test.
-        head_ = ::new(this) StringStructEntry;
-        if (head_ == 0) return 4;
-        head_->id = id;
-        head_->next = head_;
-        head_->previous = head_;
-        // 0x40263F: allocator_ is re-read for the payload.
-        head_->payload = ::new(this) SpriteStruct;
-        // 0x402725: reloads head_->payload for the test and the hook argument.
-        if (head_->payload == 0) return 4;
-        on_insert(head_->sprite_payload());
-        current_ = head_;
-    } else {
-        // 0x4027FB: the new entry is published into the old tail's next link
-        // before the null test (partial update kept on failure).
-        head_->previous->next = ::new(this) StringStructEntry;
-        if (head_->previous->next == 0) return 4;
-        head_->previous->next->previous = head_->previous;
-        head_->previous->next->next = head_;
-        head_->previous = head_->previous->next;
-        current_ = head_->previous;
-        current_->id = id;
-        current_->payload = ::new(this) SpriteStruct;
-        if (current_->payload == 0) return 4;
-        on_insert(current_->sprite_payload());
-    }
-    // 0x40294E: position takes the old count, then the count increments.
-    current_position_ = entry_count_;
-    ++entry_count_;
-    return 0;
-}
 
 // SpriteListBase::seek_pos supplies the cursor contract on its own ring; it
 // has StringStruct-compatible fields but does not inherit StringStruct.

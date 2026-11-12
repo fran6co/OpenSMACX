@@ -26,7 +26,11 @@ extern uint32_t SpriteBoxDefaultField8;
 // A sprite payload is a separately allocated owner-bearing node. Its fields
 // come from 0x5EB29F and 0x402550; the unknown trailing words stay unnamed.
 struct Sprite;
+#ifdef STRINGSTRUCT_PAYLOAD_DIRECT_BASE
+struct SpriteStruct : public virtual StringAllocationBase {
+#else
 struct SpriteStruct : public ListPayloadBase {
+#endif
   // RECOVERY_MEMBER: v3 SpriteStruct sprite_ Sprite* 0x04 0x005EB29F
   Sprite *sprite_;
   // RECOVERY_MEMBER: v1 SpriteStruct label_ 0x08 0x005EB29F
@@ -126,7 +130,11 @@ class SpriteListBase : public virtual StringAllocationBase {
       do {
         StringStructEntry *const entry = head_;
         current_ = entry->next;
+#ifdef STRINGSTRUCT_PAYLOAD_DIRECT_BASE
+        SpriteStruct *const payload = (SpriteStruct *)entry->payload;
+#else
         ListPayloadBase *const payload = entry->payload;
+#endif
         on_remove(payload);
         delete payload;
         head_->payload = nullptr;
