@@ -872,25 +872,19 @@ int __cdecl POP2(const char *a1, const char *a2, int a3) {
         if (a3 == -1) {
             int idx = 1;
             do {
-                const unsigned char bit = static_cast<unsigned char>(
-                    1u << (idx & 0x1F));
-                if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & bit) != 0 &&
-                    (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & bit) != 0) {
+                if (is_human(idx) && is_alive(idx)) {
                     queue_message(MessageWinDeferredBaseMessages[idx], 0x10000000);
                 }
                 ++idx;
             } while (idx < 8);
         } else if (a3 >= 0) {
             const uint8_t idx2 = Bases[a3].faction_id_current;
-            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
-                 static_cast<unsigned char>(1u << (idx2 & 0x1Fu))) != 0) {
+            if (is_human(idx2)) {
                 queue_message(MessageWinDeferredBaseMessages[idx2], a3 | 0x40000000);
             }
         } else if (a3 != -1) {
             int neg = -1 - a3;
-            unsigned char bit = static_cast<unsigned char>(1 << (neg & 0x1F));
-            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & bit) != 0 &&
-                (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & bit) != 0) {
+            if (is_human(neg) && is_alive(neg)) {
                 queue_message(MessageWinDeferredBaseMessages[neg], 0x10000000);
             }
         }
@@ -945,17 +939,12 @@ void __cdecl POP3(const char *section, const char *unused, int recipient,
 
     if (IsMultiplayerPBEM != 0) {
         if (recipient > 0) {
-            if (y >= 0 && y < MapLatitudeBounds && x >= 0 &&
-                x < MapLongitudeBounds) {
+            if (on_map(x, y)) {
                 queue_message(MessageWinDeferredBaseMessages[recipient], (MapLongitudeBounds * y + x) | 0x80000000);
             }
         } else {
             for (int faction = 1; faction < 8; ++faction) {
-                const unsigned char bit = static_cast<unsigned char>(1 << faction);
-                if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & bit) != 0 &&
-                    (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & bit) != 0 &&
-                    y >= 0 && y < MapLatitudeBounds &&
-                    x >= 0 && x < MapLongitudeBounds) {
+                if (is_alive(faction) && is_human(faction) && on_map(x, y)) {
                     queue_message(MessageWinDeferredBaseMessages[faction], (MapLongitudeBounds * y + x) | 0x80000000);
                 }
             }

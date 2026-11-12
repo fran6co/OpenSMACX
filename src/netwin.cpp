@@ -1906,31 +1906,31 @@ void NetWin::pick_player() {
                                : Labels.strings_ptr[0xB88 / 4]));
     popup.start(PopupStartCaption, "CUSTOMNAMES", -1, 0, 0x200044, 0);
     {
-        char *label = StringTable.get(Labels.strings_ptr[0x2B8 / 4]);
+        char *label = label_get(0x2B8 / 4);
         popup.dialogs().edit(label, NetWinLobbyRows.rows_[slot].leader_name_, 0x17);
     }
     {
-        char *label = StringTable.get(Labels.strings_ptr[0x2BC / 4]);
+        char *label = label_get(0x2BC / 4);
         popup.dialogs().edit(label, NetWinLobbyRows.rows_[slot].formal_faction_name_, 0x27);
     }
     {
-        char *label = StringTable.get(Labels.strings_ptr[0x2C0 / 4]);
+        char *label = label_get(0x2C0 / 4);
         popup.dialogs().edit(label, NetWinLobbyRows.rows_[slot].noun_faction_, 0x17);
     }
     {
-        char *label = StringTable.get(Labels.strings_ptr[0x2C4 / 4]);
+        char *label = label_get(0x2C4 / 4);
         popup.dialogs().edit(label, NetWinLobbyRows.rows_[slot].adjective_faction_, 0x17);
     }
     {
-        char *label = StringTable.get(Labels.strings_ptr[0x78C / 4]);
+        char *label = label_get(0x78C / 4);
         popup.dialogs().edit(label, NetWinLobbyRows.rows_[slot].leader_title_, 0x17);
     }
     {
-        char *label = StringTable.get(Labels.strings_ptr[0x790 / 4]);
+        char *label = label_get(0x790 / 4);
         popup.dialogs().edit(label, NetWinLobbyRows.rows_[slot].adjective_leader_, 0x17);
     }
     {
-        char *label = StringTable.get(Labels.strings_ptr[0x794 / 4]);
+        char *label = label_get(0x794 / 4);
         popup.dialogs().edit(label, gender_text, 0x17);
     }
     popup.set_loc(0x1000, 0x1000);
@@ -2245,7 +2245,7 @@ void NetWin::pick_map() {
                 strcpy(row->leader_name_, player.name_leader);
                 strcpy(row->formal_faction_name_, player.formal_name_faction);
                 strcpy(row->noun_faction_,
-                       StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
+                       label_get(0xFE4 / 4));
                 strcpy(row->adjective_faction_, player.adj_name_faction);
                 strcpy(row->leader_title_, player.title_leader);
                 strcpy(row->adjective_leader_, player.adj_leader);
@@ -2270,9 +2270,9 @@ void NetWin::pick_map() {
                 NetWinLobbyRow &row = NetWinLobbyRows.rows_[player_slot];
                 row.faction_or_color_ = -1;
                 strcpy(row.leader_name_,
-                       StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
+                       label_get(0xFE4 / 4));
                 strcpy(row.noun_faction_,
-                       StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
+                       label_get(0xFE4 / 4));
             }
         }
 

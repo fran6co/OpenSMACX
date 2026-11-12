@@ -1070,8 +1070,7 @@ MEASURED int __cdecl social_upheaval(int faction_id, SocialCategory *category_ne
 // budget-exhausted giants (battle_fight, communicate, enemies_war,
 // enemies_treaty, probe) call the copy at 0x0050B930.
 MEASURED inline LPSTR __cdecl get_noun(int faction_id) {   // 0050B930
-    GenderDefault = Players[faction_id].noun_gender;
-    PluralityDefault = Players[faction_id].is_noun_plural;
+    parse_set(Players[faction_id].noun_gender, Players[faction_id].is_noun_plural);
     return Players[faction_id].noun_faction;
 }
 
