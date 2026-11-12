@@ -27,7 +27,7 @@
 // compile_context src/alphanet.cpp
 // kind      game
 // symbol    ??1ServiceProviderList@@UAE@XZ
-// ORIGINAL: 0x00401760 ?add@ServiceStruct@@QAEHH@Z 0x00401760-0x00401B73 FILE
+// ORIGINAL: 0x00401760 ?add@ServiceStruct@@QAEHH@Z 0x00401760-0x00401B73 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:0e184947304cbb843b26264d5145e9b9b452cf16:src/unrecovered/00401760.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the transferred historical seed findings and complete original spans.", "git:0e184947304cbb843b26264d5145e9b9b452cf16:src/unrecovered/00401760.cpp", "Historical seed spelling ?add@ServiceStruct@@QAEHH@Z; current source mapping ?add@ServiceStruct@@QAEHH@Z; emitted symbol ?add@ServiceProviderList@@QAEHH@Z."], "reason": "Original allocates entry1C/payload20 and invokes provider hook. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
 // TRIED: goto-preserving transcription of the Ghidra decompile (3-tier Heap::get/mem_get fallback, twice per node-type A/B, VCall slot0 insert callback); diverges at insn #7 in the prologue/local register allocation, not in the control-flow shape
 // symbol    ?add@ServiceProviderList@@QAEHH@Z

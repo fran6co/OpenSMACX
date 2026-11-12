@@ -48,7 +48,7 @@ static inline int popmenu_current_id(StringStruct *list) {
     return 0;
 }
 
-// ORIGINAL: 0x0059D250 ?exec@PopMenu@@QAEXHHP6AHXZ@Z 0x0059D250-0x0059D392
+// ORIGINAL: 0x0059D250 ?exec@PopMenu@@QAEXHHP6AHXZ@Z 0x0059D250-0x0059D392 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0059D250-0x0059D392"], "reason": "Recovered original behavior through real source classes and owned members; source remains subject to byte and structural verification."}
 // symbol    ?exec@PopMenu@@QAEHHHP6AHXZ@Z
 int PopMenu::exec(int x, int y, int (*poll)()) {
