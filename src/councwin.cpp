@@ -548,107 +548,113 @@ static void set_council_rect(RECT &rect, int left, int top, int right,
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00427230.cpp", "image:terranx_original.exe:0x00427230", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
 // TRIED: the AI diplomatic-negotiation body (faction relationship scan, tech-trade proposal, vote-threshold check, roughly 0x4281XX-0x4282E2 in the disassembly) was left as a stub comment rather than transcribed - it needed more raw-asm cross-checking than remaining time allowed. VCall::slot001 and slot057 were retyped in place to take the args this call site passes (int; int,void*,void*) per the emitter's own "retype in place" convention. Everything else (field-init prologue, widget/font/spot setup, vote-table build) is a direct transcription of a clean Ghidra decompile.
 void CouncWin::init(int proposal, int faction_id) {
-    Buffer local_buffer;
-    for (int i = 0; i < 6; ++i) {
-        buttons_[i].close();
-    }
-    font1_.close();
-    font2_.close();
-    font3_.close();
-    font4_.close();
-    font5_.close();
+    Buffer buffer;
+    close();
     spot_.init(8);
-    SubInterface::field_4_ = 7;
+    register_iface(7);
 
-    field_BC8_ = 7;
-    field_BCC_ = 0x2ee;
-    field_BD0_ = 0x1b;
-    field_BC4_ = 0x1e;
-    set_council_rect(leader_rects_[2], 0x1e, 0x35, 0x80, 0x14f);
-    set_council_rect(leader_rects_[3], 0x82, 0x2d, 0xe4, 0x147);
-    set_council_rect(leader_rects_[4], 0xe6, 0x25, 0x148, 0x13f);
-    set_council_rect(leader_rects_[5], 0x14a, 0x1d, 0x1c2, 0x160);
-    set_council_rect(leader_rects_[6], 0x1c4, 0x25, 0x226, 0x13f);
-    set_council_rect(leader_rects_[7], 0x228, 0x2d, 0x28a, 0x147);
-    set_council_rect(leader_rects_[8], 0x28c, 0x35, 0x2ee, 0x14f);
-    set_council_rect(leader_rects_[9], 0x20, 0x1d, 0x82, 0x137);
-    set_council_rect(leader_rects_[10], 0x87, 0x1d, 0xe9, 0x137);
-    set_council_rect(leader_rects_[11], 0xee, 0x1d, 0x150, 0x137);
-    set_council_rect(leader_rects_[12], 0x155, 0x1d, 0x1b7, 0x137);
-    set_council_rect(leader_rects_[13], 0x1bc, 0x1d, 0x21e, 0x137);
-    set_council_rect(leader_rects_[14], 0x223, 0x1d, 0x285, 0x137);
-    set_council_rect(leader_rects_[15], 0x28a, 0x1d, 0x2ec, 0x137);
-
-    field_BA4_ = 0xf5;
-    field_BA8_ = 0x163;
-    field_BAC_ = 0x21a;
-    field_BB0_ = 0x17a;
-    RECT panel = MainInterfaceGlobal.info_frame_rect();
-    panel.left += 4;
-    panel.top += 4;
-    panel.right -= 4;
-    panel.bottom -= 4;
-    field_BB4_ = static_cast<uint32_t>(panel.left);
-    field_BB8_ = static_cast<uint32_t>(panel.top);
-    field_BBC_ = static_cast<uint32_t>(panel.right);
-    field_BC0_ = static_cast<uint32_t>(panel.bottom);
-
-    const int inner_bottom = panel.bottom - 3;
-    int inner_left = panel.left + 7;
-    const int inner_top = panel.bottom - 0x17;
-    int inner_right = panel.right - 7;
-    const int first_right = ((inner_right - inner_left + 3) / 3) - 3 + inner_left;
-    set_council_rect(leader_rects_[16], inner_left, inner_top, first_right, inner_bottom);
-    const int gap1 = (first_right - inner_left) + 3;
-    inner_left += gap1;
-    inner_right = first_right + gap1;
-    set_council_rect(leader_rects_[17], inner_left, inner_top, inner_right, inner_bottom);
-    const int gap2 = (inner_right - inner_left) + 3;
-    inner_left += gap2;
-    inner_right += gap2;
-    set_council_rect(leader_rects_[18], inner_left, inner_top, inner_right, inner_bottom);
-    set_council_rect(leader_rects_[19], panel.left + 3, panel.bottom - 0x17,
-                     panel.right - 3, panel.bottom - 3);
-
-    font1_.init(DefaultLargeFontFace, 0x14, 1);
-    font2_.init(DefaultLargeFontFace, 0xe, 1);
-    font3_.init(DefaultLargeFontFace, 0xe, 1);
-    font4_.init(DefaultLargeFontFace, 0xc, 1);
-    font3_.unk_1_ = 5;
-    font5_.init(DefaultLargeFontFace, 0xc, 1);
-    local_buffer.set_font(&font1_, &font2_, &font3_, &font4_);
-
-    field_A1C_ = static_cast<uint32_t>(proposal);
-    field_A20_ = static_cast<uint32_t>(faction_id);
-    field_A28_ = static_cast<uint32_t>(GameDataStateStorage.fields_.governor_faction_);
-    field_A44_ = IsMultiplayerPBEM ? 0xffu :
-        ~static_cast<uint32_t>(static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_));
-    CouncilDialogActive = 1;
-    field_A38_ = static_cast<uint32_t>(timeGetTime());
-    field_A40_ = 1;
-    field_A3C_ = static_cast<uint32_t>(bit_count(
-        static_cast<int>(static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_))) * 60000);
-
-    if (!IsMultiplayerPBEM || CouncilPbemGate == 0) {
-        field_A24_ = 0;
-        for (int faction = 0; faction < MaxPlayerNum; ++faction) {
-            leader_tech_[faction] = council_votes(faction);
+    RECT *first;
+    RECT *bottom_row;
+    // WORKAROUND(type): field_BA4_..BB0_, BB4_..BC0_ and BC4_..BD0_ are RECTs in
+    // the image (four-dword copy from the info frame into +0xBB4 at
+    // 0x00427661); the header still declares them as separate dwords.
+    {
+        int wide = WinScreenWidth != 800;
+        set_council_rect(*reinterpret_cast<RECT *>(&field_BC4_), 0x1e, 7, 0x2ee, 0x1b);
+        set_council_rect(leader_rects_[2], 0x1e, 0x35, 0x80, 0x14f);
+        set_council_rect(leader_rects_[4], 0x82, 0x2d, 0xe4, 0x147);
+        set_council_rect(leader_rects_[6], 0xe6, 0x25, 0x148, 0x13f);
+        set_council_rect(leader_rects_[8], 0x14a, 0x1d, 0x1c2, 0x160);
+        set_council_rect(leader_rects_[10], 0x1c4, 0x25, 0x226, 0x13f);
+        set_council_rect(leader_rects_[12], 0x228, 0x2d, 0x28a, 0x147);
+        set_council_rect(leader_rects_[14], 0x28c, 0x35, 0x2ee, 0x14f);
+        set_council_rect(leader_rects_[3], 0x20, 0x1d, 0x82, 0x137);
+        set_council_rect(leader_rects_[5], 0x87, 0x1d, 0xe9, 0x137);
+        set_council_rect(leader_rects_[7], 0xee, 0x1d, 0x150, 0x137);
+        set_council_rect(leader_rects_[9], 0x155, 0x1d, 0x1b7, 0x137);
+        set_council_rect(leader_rects_[11], 0x1bc, 0x1d, 0x21e, 0x137);
+        set_council_rect(leader_rects_[13], 0x223, 0x1d, 0x285, 0x137);
+        set_council_rect(leader_rects_[15], 0x28a, 0x1d, 0x2ec, 0x137);
+        set_council_rect(*reinterpret_cast<RECT *>(&field_BA4_), 0xf5, 0x163, 0x21a, 0x17a);
+        RECT *panel = reinterpret_cast<RECT *>(&field_BB4_);
+        if (!wide) {
+            first = &leader_rects_[16];
+            bottom_row = &leader_rects_[19];
+            set_council_rect(*panel, 0x105, 0x55, 0x235, 0x8c);
+            set_council_rect(*first, 0x105, 0x8e, 0x169, 0xa2);
+            set_council_rect(leader_rects_[17], 0x16b, 0x8e, 0x1cf, 0xa2);
+            set_council_rect(leader_rects_[18], 0x1d1, 0x8e, 0x235, 0xa2);
+            set_council_rect(*bottom_row, 0x105, 0x8e, 0x235, 0xa2);
+        } else {
+            first = &leader_rects_[16];
+            bottom_row = &leader_rects_[19];
+            set_council_rect(*panel, 0x120, 0x58, 0x30b, 0x91);
+            set_council_rect(*first, 0x120, 0x93, 0x1c2, 0xa7);
+            set_council_rect(leader_rects_[17], 0x1c5, 0x93, 0x267, 0xa7);
+            set_council_rect(leader_rects_[18], 0x269, 0x93, 0x30b, 0xa7);
+            set_council_rect(*bottom_row, 0x120, 0x93, 0x30b, 0xa7);
         }
-        for (int round = 0; round < 3; ++round) {
-            for (int faction = 0; faction < MaxPlayerNum; ++faction) {
-                const uint8_t humans = GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
-                const uint8_t alive = GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
-                const uint8_t bit = static_cast<uint8_t>(1u << faction);
-                if ((humans & bit) == 0 ||
-                    (faction != ConsoleGlobal.faction_id_ &&
-                     !IsMultiplayerNet && !IsMultiplayerPBEM)) {
-                    leader_label_kind_[faction] = static_cast<uint32_t>(
-                        council_get_vote(faction, proposal, faction_id));
+        *panel = MainInterfaceGlobal.info_frame_rect();
+        panel->left -= -4;
+        panel->right += -4;
+        panel->top -= -4;
+        panel->bottom += -4;
+        RECT rect = *panel;
+        rect.left += 3;
+        rect.right -= 3;
+        rect.bottom -= 3;
+        rect.top = rect.bottom - 0x14;
+        field_BC0_ = rect.top - 3;
+        set_council_rect(*bottom_row, rect.left, rect.top, rect.right, rect.bottom);
+        rect.right = (rect.right - rect.left + 3) / 3 + rect.left - 3;
+        set_council_rect(*first, rect.left, rect.top, rect.right, rect.bottom);
+        int step = rect.right - rect.left + 3;
+        rect.left += step;
+        rect.right += step;
+        set_council_rect(leader_rects_[17], rect.left, rect.top, rect.right, rect.bottom);
+        step = rect.right - rect.left + 3;
+        rect.left += step;
+        rect.right += step;
+        set_council_rect(leader_rects_[18], rect.left, rect.top, rect.right, rect.bottom);
+
+        font6_.init(DefaultLargeFontFace, wide ? 0x14 : 0x14, 1);
+        font2_.init(DefaultLargeFontFace, 0xe, 1);
+        font1_.init(DefaultLargeFontFace, 0xe, 1);
+        font3_.init(DefaultLargeFontFace, 0xc, 1);
+        font3_.unk_1_ = 5;
+        font4_.init(DefaultLargeFontFace, 0xc, 1);
+        font5_.init(DefaultLargeFontFace, 0xe, 1);
+    }
+
+    field_A1C_ = proposal;
+    field_A20_ = faction_id;
+    field_A28_ = GameDataStateStorage.fields_.governor_faction_;
+    if (IsMultiplayerPBEM) {
+        field_A44_ = 0xff;
+    } else {
+        field_A44_ = ~(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff);
+    }
+    CouncilDialogActive = 1;
+    field_A38_ = timeGetTime();
+    field_A40_ = 1;
+    field_A3C_ = bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff) * 60000;
+
+    int i;
+    if (!IsMultiplayerPBEM || !CouncilPbemGate) {
+        field_A24_ = 0;
+        for (i = 0; i < MaxPlayerNum; i++) {
+            leader_tech_[i] = council_votes(i);
+        }
+        for (int round = 0; round < 3; round++) {
+            for (i = 0; i < MaxPlayerNum; i++) {
+                if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << i))
+                    || (i != ConsoleGlobal.faction_id_ && !IsMultiplayerNet && !IsMultiplayerPBEM)) {
+                    leader_label_kind_[i] = council_get_vote(i, field_A1C_, faction_id);
                 } else {
-                    leader_label_kind_[faction] = 0;
+                    leader_label_kind_[i] = 0;
                 }
-                if ((alive & bit) == 0) {
-                    leader_label_kind_[faction] = static_cast<uint32_t>(-5);
+                if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << i))) {
+                    leader_label_kind_[i] = static_cast<uint32_t>(-5);
                 }
             }
         }
@@ -657,259 +663,186 @@ void CouncWin::init(int proposal, int faction_id) {
         }
     }
 
-    for (int faction = 0; faction < MaxPlayerNum; ++faction) {
-        FactionArt &art = FactionsArt[faction];
-        leader_backing_[faction][0] = &art.council_logo[0];
-        leader_backing_[faction][1] = &art.council_logo[1];
-        leader_portraits_[faction][0] = &art.council_small;
-        leader_portraits_[faction][1] = &art.council_big;
+    for (i = 0; i < MaxPlayerNum; i++) {
+        leader_backing_[i][0] = &FactionsArt[i].council_logo[0];
+        leader_backing_[i][1] = &FactionsArt[i].council_logo[1];
+        leader_portraits_[i][0] = &FactionsArt[i].council_small;
+        leader_portraits_[i][1] = &FactionsArt[i].council_big;
     }
 
-    const int remaining_height = WinScreenHeight - MainInterfaceGlobal.field_D7C_;
+    const int height = WinScreenHeight - MainInterfaceGlobal.field_D7C_;
     int window_height = 0x18b;
-    if (remaining_height < window_height) {
-        window_height = remaining_height;
+    if (height <= window_height) {
+        window_height = height;
     }
-    const int window_y = remaining_height - window_height;
-    static_cast<GraphicWin *>(this)->init((WinScreenWidth - 0x30c) / 2,
-        window_y, 0x32c, window_height, nullptr, 0x1000000,
-        static_cast<Win *>(&ConsoleGlobal), nullptr, nullptr);
-    static_cast<GraphicWin *>(this)->fill(9);
+    GraphicWin::init((WinScreenWidth - 0x30c) / 2, height - window_height, 0x32c,
+                     window_height, nullptr, 0x1000000, &ConsoleGlobal, nullptr, nullptr);
+    fill(9);
 
-    RECT &button1 = leader_rects_[16];
-    RECT &button2 = leader_rects_[17];
-    RECT &button3 = leader_rects_[18];
-    RECT &button4 = leader_rects_[19];
-    StringTemp[0] = '\0';
-    strcat(StringTemp, label_get(0x7bc / 4));
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(495));
     CharUpperA(StringTemp);
-    buttons_[1].init(StringTemp, 1, button1.left, button1.top,
-                     button1.right - button1.left, button1.bottom - button1.top,
-                     static_cast<Win *>(&MainInterfaceGlobal), 0);
-    if (proposal == 0) {
-        StringTemp[0] = '\0';
-        strcat(StringTemp, label_get(0x7ec / 4));
+    buttons_[1].init(StringTemp, 1, first->left, first->top,
+                     first->right - first->left,
+                     first->bottom - first->top,
+                     &MainInterfaceGlobal, 0);
+    if (!field_A1C_) {
+        StringTemp[0] = 0;
+        strcat(StringTemp, label_get(507));
         CharUpperA(StringTemp);
-        buttons_[4].init(StringTemp, 4, button4.left, button4.top,
-                         button4.right - button4.left, button4.bottom - button4.top,
-                         static_cast<Win *>(&MainInterfaceGlobal), 0);
+        buttons_[4].init(StringTemp, 4, bottom_row->left, bottom_row->top,
+                         bottom_row->right - bottom_row->left,
+                         bottom_row->bottom - bottom_row->top,
+                         &MainInterfaceGlobal, 0);
     } else {
-        StringTemp[0] = '\0';
-        strcat(StringTemp, label_get(GameDataStateStorage.fields_.governor_faction_ == ConsoleGlobal.faction_id_
-                                         ? 0x7d0 / 4 : 0x7c0 / 4));
+        StringTemp[0] = 0;
+        strcat(StringTemp, label_get(GameDataStateStorage.fields_.governor_faction_
+                                     == ConsoleGlobal.faction_id_ ? 500 : 496));
         CharUpperA(StringTemp);
-        buttons_[2].init(StringTemp, 2, button2.left, button2.top,
-                         button2.right - button2.left, button2.bottom - button2.top,
-                         static_cast<Win *>(&MainInterfaceGlobal), 0);
-        StringTemp[0] = '\0';
-        strcat(StringTemp, label_get(0x7c4 / 4));
+        buttons_[2].init(StringTemp, 2, leader_rects_[17].left, leader_rects_[17].top,
+                         leader_rects_[17].right - leader_rects_[17].left,
+                         leader_rects_[17].bottom - leader_rects_[17].top,
+                         &MainInterfaceGlobal, 0);
+        StringTemp[0] = 0;
+        strcat(StringTemp, label_get(497));
         CharUpperA(StringTemp);
-        buttons_[3].init(StringTemp, 3, button3.left, button3.top,
-                         button3.right - button3.left, button3.bottom - button3.top,
-                         static_cast<Win *>(&MainInterfaceGlobal), 0);
+        buttons_[3].init(StringTemp, 3, leader_rects_[18].left, leader_rects_[18].top,
+                         leader_rects_[18].right - leader_rects_[18].left,
+                         leader_rects_[18].bottom - leader_rects_[18].top,
+                         &MainInterfaceGlobal, 0);
+        StringTemp[0] = 0;
+        strcat(StringTemp, label_get(495));
+        CharUpperA(StringTemp);
+        buttons_[1].init(StringTemp, 1, first->left, first->top,
+                         first->right - first->left,
+                         first->bottom - first->top,
+                         &MainInterfaceGlobal, 0);
     }
-    StringTemp[0] = '\0';
-    strcat(StringTemp, label_get(0x194 / 4));
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(101));
     CharUpperA(StringTemp);
-    buttons_[5].init(StringTemp, 5, button4.left, button4.top,
-                     button4.right - button4.left, button4.bottom - button4.top,
-                     static_cast<Win *>(&MainInterfaceGlobal), 0);
-
+    buttons_[5].init(StringTemp, 5, bottom_row->left, bottom_row->top,
+                     bottom_row->right - bottom_row->left,
+                     bottom_row->bottom - bottom_row->top,
+                     &MainInterfaceGlobal, 0);
     buttons_[5].hide();
-    for (int button = 0; button < 6; ++button) {
-        buttons_[button].hide();
-        static_cast<Buffer &>(buttons_[button]).set_font(&font1_, nullptr, nullptr, nullptr);
-        buttons_[button].redraw();
-    }
-    if (IsMultiplayerNet) {
-        message_data(0x2602, 0, faction_id, 0, 0, 0);
+    for (i = 0; i < 6; i++) {
+        buttons_[i].hide();
+        buttons_[i].set_font(&font1_, nullptr, nullptr, nullptr);
+        buttons_[i].redraw();
     }
 
-    const bool hide_multi = MultiWindow.is_visible() != 0;
-    if (hide_multi) {
+    TurnRedrawPending = 1;
+    if (IsMultiplayerNet) {
+        message_data(0x2602, 0, ConsoleGlobal.faction_id_, 0, 0, 0);
+    }
+    int multi_visible = 0;
+    if (MultiWindow.is_visible()) {
+        multi_visible = 1;
         MultiWindow.hide();
     }
-    const bool hide_alpha = ConsoleGlobal.alpha_menu_.is_visible() != 0;
-    if (hide_alpha) {
+    int alpha_visible = 0;
+    if (ConsoleGlobal.alpha_menu_.is_visible()) {
+        alpha_visible = 1;
         ConsoleGlobal.alpha_menu_.hide();
     }
     show(0);
 
-    if (!IsMultiplayerNet && field_A1C_ == 0 &&
-        eligible(ConsoleGlobal.faction_id_) == 0) {
-        const int local_faction = ConsoleGlobal.faction_id_;
-        if (PlayersData[local_faction].diff_level != 0) {
-        // Native 0x427DDB..0x427E74 totals live, non-alien voter weights by
-        // their selected faction. 0x427E9B..0x427F4A considers only live,
-        // eligible candidates whose own tally lies in the native top-two
-        // comparisons before calling diplomacy_check(local, candidate, 0).
-        int support_by_faction[MaxPlayerNum];
-        const uint8_t alive_factions = GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
-        for (int tally_candidate = 1; tally_candidate < MaxPlayerNum; ++tally_candidate) {
-            support_by_faction[tally_candidate] = 0;
-            if ((Players[tally_candidate].rule_flags & RFLAG_ALIEN) != 0) {
-                continue;
-            }
-            for (int voter = 1; voter < MaxPlayerNum; ++voter) {
-                if ((Players[voter].rule_flags & RFLAG_ALIEN) == 0 &&
-                    (alive_factions & (1u << voter)) != 0 &&
-                    static_cast<int>(leader_label_kind_[voter]) == tally_candidate) {
-                    support_by_faction[tally_candidate] += leader_tech_[voter];
+    if (!IsMultiplayerNet && !field_A1C_ && !eligible(ConsoleGlobal.faction_id_)) {
+        const int local = ConsoleGlobal.faction_id_;
+        if (PlayersData[local].diff_level) {
+            int support[MaxPlayerNum - 1];
+            int candidate;
+            for (candidate = 1; candidate < MaxPlayerNum; candidate++) {
+                support[candidate - 1] = 0;
+                if (Players[candidate].rule_flags & RFLAG_ALIEN) continue;
+                if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << candidate))) continue;
+                for (int voter = 1; voter < MaxPlayerNum; voter++) {
+                    if (!(Players[voter].rule_flags & RFLAG_ALIEN)
+                        && GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << voter)
+                        && static_cast<int>(leader_label_kind_[voter]) == candidate) {
+                        support[candidate - 1] += leader_tech_[voter];
+                    }
                 }
             }
-        }
-
-        for (int candidate = 1; candidate < MaxPlayerNum; ++candidate) {
-            if ((Players[candidate].rule_flags & RFLAG_ALIEN) != 0 ||
-                (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1u << candidate)) == 0 ||
-                eligible(candidate) == 0) {
-                continue;
-            }
-
-            int greatest_other_support = 0;
-            for (int other = 1; other < MaxPlayerNum; ++other) {
-                if (other != candidate &&
-                    (Players[other].rule_flags & RFLAG_ALIEN) == 0 &&
-                    greatest_other_support <= support_by_faction[other]) {
-                    greatest_other_support = support_by_faction[other];
+            int done = 0;
+            for (candidate = 1; candidate < MaxPlayerNum; candidate++) {
+                if (Players[candidate].rule_flags & RFLAG_ALIEN) continue;
+                if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << candidate))) continue;
+                if (!eligible(candidate)) continue;
+                int best = 0;
+                for (int other = 1; other < MaxPlayerNum; other++) {
+                    if (!(Players[other].rule_flags & RFLAG_ALIEN) && other != candidate
+                        && best <= support[other - 1]) {
+                        best = support[other - 1];
+                    }
                 }
-            }
-
-            const int candidate_support = support_by_faction[candidate];
-            const int local_weight = leader_tech_[local_faction];
-            if (local_weight + candidate_support <= greatest_other_support ||
-                local_weight + greatest_other_support <= candidate_support) {
-                continue;
-            }
-
-            diplomacy_check(local_faction, candidate, 0);
-
-            if (DiploFriction >= 15 || DiploScratchFA60 != 0 ||
-                (PlayersData[1].diplo_treaties[local_faction] & 0x40c31u) != 0) {
-                continue;
-            }
-
-            // At native +0xE3C the image reads one DWORD beginning at the
-            // int16_t proto_id_lost[0xF2] cell: proto_id_lost starts at +0xC58
-            // after the two preceding 0x200-byte prototype arrays, and
-            // 0xF2 * sizeof(int16_t) reaches +0xE3C. Preserve both halves of
-            // that exact read with typed adjacent elements; the member's
-            // semantic role in this negotiation gate remains uncertain.
-            const uint32_t packed_lost_prototypes =
-                static_cast<uint32_t>(static_cast<uint16_t>(
-                    PlayersData[candidate].proto_id_lost[0xf2])) |
-                (static_cast<uint32_t>(static_cast<uint16_t>(
-                    PlayersData[candidate].proto_id_lost[0xf3])) << 16);
-            const int32_t packed_lost_value = packed_lost_prototypes <= 0x7fffffffu
-                ? static_cast<int32_t>(packed_lost_prototypes)
-                : -1 - static_cast<int32_t>(~packed_lost_prototypes);
-            const uint32_t candidate_flag_bits = PlayersData[candidate].flags;
-            const int32_t candidate_flags = candidate_flag_bits <= 0x7fffffffu
-                ? static_cast<int32_t>(candidate_flag_bits)
-                : -1 - static_cast<int32_t>(~candidate_flag_bits);
-            const uint32_t three_flag_bits =
-                static_cast<uint32_t>(candidate_flags) * 3u;
-            const int32_t three_flags = three_flag_bits <= 0x7fffffffu
-                ? static_cast<int32_t>(three_flag_bits)
-                : -1 - static_cast<int32_t>(~three_flag_bits);
-            const int32_t flag_quarter = three_flags / 4;
-            const uint32_t current_lost_limit_bits =
-                static_cast<uint32_t>(GameDataStateStorage.fields_.turn_current_num_) +
-                static_cast<uint32_t>(packed_lost_value) * 5u;
-            const int32_t current_lost_limit =
-                current_lost_limit_bits <= 0x7fffffffu
-                    ? static_cast<int32_t>(current_lost_limit_bits)
-                    : -1 - static_cast<int32_t>(~current_lost_limit_bits);
-            const int32_t lower_limit =
-                flag_quarter < current_lost_limit
-                    ? flag_quarter : current_lost_limit;
-            const int32_t threshold = (lower_limit / 25) * 25;
-
-            // Native 0x427F87..0x427FCF clamps the signed 3/4 flag score
-            // against TurnCurrentNum + five times the packed lost-prototype
-            // DWORD, then rounds that result down to a multiple of 25. A
-            // nonzero threshold not exceeding the candidate's signed flags
-            // takes the credit-request route; otherwise it considers tech.
-            if (threshold != 0 && candidate_flags >= threshold) {
-                parse_num(0, threshold);
-                diplomacy_caption(local_faction, candidate);
-
-                Player &local_player = Players[local_faction];
-                GenderDefault = local_player.is_leader_female;
-                PluralityDefault = 0;
-                parse_says(0, local_player.title_leader, -1, -1);
-                GenderDefault = local_player.is_leader_female;
-                PluralityDefault = 0;
-                parse_says(1, local_player.name_leader, -1, -1);
-                Player &candidate_player = Players[candidate];
-                GenderDefault = candidate_player.is_leader_female;
-                PluralityDefault = 0;
-                parse_says(2, candidate_player.title_leader, -1, -1);
-                GenderDefault = candidate_player.is_leader_female;
-                PluralityDefault = 0;
-                parse_says(3, candidate_player.name_leader, -1, -1);
-
+                const int own = support[candidate - 1];
+                if (leader_tech_[local] + own <= best) continue;
+                if (leader_tech_[local] + best <= own) continue;
+                diplomacy_check(local, candidate, 0);
+                if (DiploFriction >= 15) continue;
+                if (DiploScratchFA60) continue;
+                if (done) continue;
+                if (PlayersData[candidate].diplo_treaties[local] & 0x40c31) continue;
+                const int amount = min(PlayersData[candidate].energy_reserves * 3 / 4,
+                    GameDataStateStorage.fields_.turn_current_num_
+                    + PlayersData[candidate].current_num_bases * 5) / 25 * 25;
+                if (amount && PlayersData[candidate].energy_reserves >= amount) {
+                    parse_num(0, amount);
+                    diplomacy_caption(local, candidate);
+                    parse_set(Players[local].is_leader_female, 0);
+                    parse_says(0, Players[local].title_leader, -1, -1);
+                    parse_set(Players[local].is_leader_female, 0);
+                    parse_says(1, Players[local].name_leader, -1, -1);
+                    parse_set(Players[candidate].is_leader_female, 0);
+                    parse_says(2, Players[candidate].title_leader, -1, -1);
+                    parse_set(Players[candidate].is_leader_female, 0);
+                    parse_says(3, Players[candidate].name_leader, -1, -1);
+                    clock_wait(500);
+                    if (X_pops("VOTEFORME", 0, FactionDiplomacyPortraits[candidate], nullptr)) {
+                        PlayersData[candidate].energy_reserves -= amount;
+                        PlayersData[local].energy_reserves += amount;
+                        ConsoleGlobal.update_data(0);
+                        set_vote(local, candidate);
+                    }
+                    break;
+                }
+                tech_analysis(local, candidate);
+                if (DiploScratchF800 < 0) continue;
+                if (DiploScratchF80C < 0) continue;
+                StringTemp[0] = 0;
+                say_tech(StringTemp, DiploScratchF800, 0);
+                parse_says(4, StringTemp, -1, -1);
+                StringTemp[0] = 0;
+                say_tech(StringTemp, DiploScratchF80C, 0);
+                parse_says(5, StringTemp, -1, -1);
+                diplomacy_caption(local, candidate);
+                parse_set(Players[local].is_leader_female, 0);
+                parse_says(0, Players[local].title_leader, -1, -1);
+                parse_set(Players[local].is_leader_female, 0);
+                parse_says(1, Players[local].name_leader, -1, -1);
+                parse_set(Players[candidate].is_leader_female, 0);
+                parse_says(2, Players[candidate].title_leader, -1, -1);
+                parse_set(Players[candidate].is_leader_female, 0);
+                parse_says(3, Players[candidate].name_leader, -1, -1);
                 clock_wait(500);
-                const int accepted = X_pops(
-                    "VOTEFORME", 0, FactionDiplomacyPortraits[candidate], nullptr);
-                if (accepted != 0) {
-                    PlayersData[candidate].energy_reserves -= threshold;
-                    PlayersData[local_faction].energy_reserves += threshold;
-                    set_vote(local_faction, candidate);
+                if (X_pops("VOTEFORMETECH", 0, FactionDiplomacyPortraits[candidate], nullptr)) {
+                    done = 1;
+                    tech_achieved(local, DiploScratchF800, candidate, 0);
+                    tech_achieved(local, DiploScratchF80C, candidate, 0);
+                    set_vote(local, candidate);
                 }
-                continue;
-            }
-
-            // Native 0x427FD3..0x428151 asks the live technology-analysis
-            // producer, builds both parsed technology names, and only grants
-            // the scratch IDs still present after the modal callback.
-            tech_analysis(local_faction, candidate);
-            if (DiploScratchF800 < 0 || DiploScratchF80C < 0) {
-                continue;
-            }
-
-            StringTemp[0] = '\0';
-            say_tech(StringTemp, DiploScratchF800, 0);
-            parse_says(4, StringTemp, -1, -1);
-            StringTemp[0] = '\0';
-            say_tech(StringTemp, DiploScratchF80C, 0);
-            parse_says(5, StringTemp, -1, -1);
-            diplomacy_caption(local_faction, candidate);
-
-            Player &candidate_player = Players[candidate];
-            GenderDefault = candidate_player.is_leader_female;
-            PluralityDefault = 0;
-            parse_says(0, candidate_player.title_leader, -1, -1);
-            GenderDefault = candidate_player.is_leader_female;
-            PluralityDefault = 0;
-            parse_says(1, candidate_player.name_leader, -1, -1);
-            GenderDefault = candidate_player.is_leader_female;
-            PluralityDefault = 0;
-            parse_says(2, candidate_player.title_leader, -1, -1);
-            GenderDefault = candidate_player.is_leader_female;
-            PluralityDefault = 0;
-            parse_says(3, candidate_player.name_leader, -1, -1);
-
-            clock_wait(500);
-            const int accepted = X_pops(
-                "VOTEFORMETECH", 0, FactionDiplomacyPortraits[candidate], nullptr);
-            if (accepted != 0) {
-                tech_achieved(local_faction, DiploScratchF800, candidate, 0);
-                tech_achieved(local_faction, DiploScratchF80C, candidate, 0);
-                set_vote(local_faction, candidate);
             }
         }
-    }
     }
 
     set_modal(0, pop_wait, &MainInterfaceGlobal);
-    // The original 0x4282F8 call gives up this CouncWin's active interface
-    // mode after the modal proposal loop and before restoring hidden windows.
     SubInterface::release_iface_mode();
-    if (hide_alpha) {
+    if (alpha_visible) {
         ConsoleGlobal.alpha_menu_.show();
     }
-    if (hide_multi) {
+    if (multi_visible) {
         MultiWindow.show();
     }
 }

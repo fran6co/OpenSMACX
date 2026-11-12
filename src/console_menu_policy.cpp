@@ -37,6 +37,7 @@
 #include "palette.h"
 #include "pulldown.h"
 #include "wave.h"
+#include "buffer.h"
 
 // Console initializes its embedded AlphaMenu through this catalogue entry.
 // Population uses the existing rules and StringTable owners; x86 pool keys
@@ -322,7 +323,15 @@ int AlphaMenu::menu_init() {
 // symbol    ?check@AlphaMenu@@QAEXH@Z
 // TRIED: time-boxed - roughly the first quarter of the function (a long sequence of Menu::show_menu_item/hide_menu_item/ enable_menu_item gates against game-option and tech flags, transcribed with goto-labelled control flow matching the disassembly's branch targets) is faithful; the difficulty-table-driven remainder (several hundred more show/hide/enable calls) is a deliberate stub. MISMATCH #2, well past the prologue.
 void AlphaMenu::check(int veh_id) {
-    if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x200000u) != 0) {
+    int i;
+    int sea;
+    int base_id;
+    int owner;
+    int turns;
+    int avail;
+    char turn_text[80];
+
+    if (GameDataStateStorage.fields_.game_more_preferences_ & 0x200000) {
         show_menu_item(0, 0x52);
         hide_menu_item(0, 0x51);
     } else {
@@ -330,60 +339,66 @@ void AlphaMenu::check(int veh_id) {
         hide_menu_item(0, 0x52);
     }
 
-    if (IsMultiplayerNet || IsMultiplayerPBEM) {
-        hide_menu_item(0, 0x5C);
-        goto difficulty_gate;
+    // The image lays the hide-0x5C/debug-mode arm out after the next
+    // unconditional jump (0x461020) and falls from show 0x5C straight into the
+    // shared show 0x5A; an else arm ending in a goto past that join does this.
+    if (!IsMultiplayerNet && !IsMultiplayerPBEM &&
+        !(GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN)) {
+        show_menu_item(0, 0x5C);
+    } else {
+        if (IsMultiplayerNet || IsMultiplayerPBEM) {
+            hide_menu_item(0, 0x5C);
+        }
+        if (!(GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE)) {
+            hide_menu_item(0, 0x5A);
+            goto expansion_gate;
+        }
     }
-    if ((GameDataStateStorage.fields_.game_rules_ & 0x400u) != 0) {
-        goto difficulty_gate;
-    }
-    show_menu_item(0, 0x5C);
     show_menu_item(0, 0x5A);
-    goto expansion_gate;
-
-difficulty_gate:
-    if ((GameDataStateStorage.fields_.game_state_ & 0x1000u) != 0) {
-        show_menu_item(0, 0x5A);
-        goto expansion_gate;
-    }
-    hide_menu_item(0, 0x5A);
-
 expansion_gate:
-    if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x200000u) != 0) {
-        const int general_items[] = {
-            0x205, 0x206, 0x207, 0x208, 0x20C, 0x215, 0x211, 0x212
-        };
-        const int terraforming_items[] = {
-            0x31B, 0x324, 0x306, 0x304, 0x319, 0x31A, 0x317, 0x31F,
-            0x320, 0x307, 0x322
-        };
-        const int scenario_items[] = {
-            0x9F8, 0x9F9, 0x9F6, 0x9F5, 0x9F4, 0x9F3, 0x9F1, 0x9F0,
-            5, 6, 7
-        };
-        for (unsigned int general_index = 0;
-             general_index != sizeof(general_items)/sizeof(general_items[0]);
-             ++general_index)
-            show_menu_item(2, general_items[general_index]);
-        for (unsigned int terraforming_index = 0;
-             terraforming_index != sizeof(terraforming_items)/sizeof(terraforming_items[0]);
-             ++terraforming_index)
-            show_menu_item(3, terraforming_items[terraforming_index]);
-        for (unsigned int scenario_index = 0;
-             scenario_index != sizeof(scenario_items)/sizeof(scenario_items[0]);
-             ++scenario_index)
-            show_menu_item(9, scenario_items[scenario_index]);
+    if (GameDataStateStorage.fields_.game_more_preferences_ & 0x200000) {
+        show_menu_item(2, 0x205);
+        show_menu_item(2, 0x206);
+        show_menu_item(2, 0x207);
+        show_menu_item(2, 0x208);
+        show_menu_item(2, 0x20C);
+        show_menu_item(2, 0x215);
+        show_menu_item(2, 0x211);
+        show_menu_item(2, 0x212);
+        show_menu_item(3, 0x31B);
+        show_menu_item(3, 0x324);
+        show_menu_item(3, 0x306);
+        show_menu_item(3, 0x304);
+        show_menu_item(3, 0x319);
+        show_menu_item(3, 0x31A);
+        show_menu_item(3, 0x317);
+        show_menu_item(3, 0x31F);
+        show_menu_item(3, 0x320);
+        show_menu_item(3, 0x307);
+        show_menu_item(3, 0x322);
+        show_menu_item(9, 0x9F8);
+        show_menu_item(9, 0x9F9);
+        show_menu_item(9, 0x9F6);
+        show_menu_item(9, 0x9F5);
+        show_menu_item(9, 0x9F4);
+        show_menu_item(9, 0x9F3);
+        show_menu_item(9, 0x9F1);
+        show_menu_item(9, 0x9F0);
+        show_menu_item(9, 5);
+        show_menu_item(9, 6);
+        show_menu_item(9, 7);
     }
 
-    if ((GameDataStateStorage.fields_.game_state_ & 0x10u) == 0 && ScenarioSave.objective_req_victory >= 0x3E8 &&
-        static_cast<int32_t>(ScenarioSave.objectives_sudden_death_victory) >= 0x3E8) {
+    if (!(GameDataStateStorage.fields_.game_state_ & STATE_IS_SCENARIO) &&
+        ScenarioSave.objective_req_victory >= 1000 &&
+        static_cast<int32_t>(ScenarioSave.objectives_sudden_death_victory) >= 1000) {
         hide_menu_item(1, 0x115);
     } else {
         show_menu_item(1, 0x115);
     }
 
-    if (IsMultiplayerNet && (GameDataStateStorage.fields_.game_state_ & 2u) != 0 &&
-        NetDaemonNet.factions_waiting_mask() != 0 &&
+    if (IsMultiplayerNet && (GameDataStateStorage.fields_.game_state_ & 2) &&
+        NetDaemonNet.factions_waiting_mask() &&
         NetDaemonNet.factions_waiting_mask() != 0xFF) {
         hide_menu_item(8, 0x807);
         show_menu_item(8, 0x808);
@@ -392,22 +407,33 @@ expansion_gate:
         hide_menu_item(8, 0x808);
     }
 
-    if ((GameDataStateStorage.fields_.game_state_ & 0xC0u) != 0 && (GameDataStateStorage.fields_.net_turn_flags_ & 8u) != 0) {
+    if (!(GameDataStateStorage.fields_.game_state_ & 0xC0) &&
+        (GameDataStateStorage.fields_.net_turn_flags_ & 8)) {
         hide_menu_item(1, 0x105);
     } else {
         show_menu_item(1, 0x105);
     }
 
-    if ((GameDataStateStorage.fields_.game_rules_ & 0x200u) != 0) {
+    if (GameDataStateStorage.fields_.game_rules_ & RULES_BLIND_RESEARCH) {
         show_menu_item(1, 0x106);
-        show_menu_item(1, 0x107);
+        hide_menu_item(1, 0x107);
     } else {
         show_menu_item(1, 0x107);
-        show_menu_item(1, 0x106);
+        hide_menu_item(1, 0x106);
     }
-    hide_menu_item(1, 0x106);
 
-    if (ConsoleGlobal.cursor_active_ != 0) {
+    if ((has_tech(Rules.tech_economic_victory, ConsoleGlobal.faction_id_) &&
+         (GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_ECONOMIC)) ||
+        ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) &&
+         (GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR))) {
+        show_menu_item(1, 0x114);
+        show_menu_item(1, 9);
+    } else {
+        hide_menu_item(1, 0x114);
+        hide_menu_item(1, 9);
+    }
+
+    if (ConsoleGlobal.cursor_active_) {
         show_menu_item(2, 0x201);
         hide_menu_item(2, 0x200);
     } else {
@@ -415,352 +441,302 @@ expansion_gate:
         hide_menu_item(2, 0x201);
     }
 
-    if (ConsoleGlobal.cursor_active_ != 0 && veh_id >= 0) {
-        for (int unit_item_id = 0x300; unit_item_id <= 0x324; ++unit_item_id) {
-            enable_menu_item(3, unit_item_id);
+    if (ConsoleGlobal.cursor_active_ && veh_id >= 0) {
+        for (i = 0x300; i <= 0x324; i++) {
+            enable_menu_item(3, i);
         }
-    // The native branch at 0x4611C2 sends cursor-inactive and negative-ID
-    // calls directly to 0x461E48. Keep the following unit-dependent region
-    // inside this arm; its final join is 0x461E78.
-// Native-derived continuation for AlphaMenu::check after its first known
-// prefix. This block corresponds to original 0x004611D5..0x00461E47 and is
-// dominated by the native cursor/vehicle guards.
-const Veh &selected_veh = Vehs[veh_id];
-if (has_abil(selected_veh.proto_id, ABL_DROP_POD)) {
-    show_menu_item(3, 0x309);
-} else {
-    hide_menu_item(3, 0x309);
-}
-
-// Native 0x00461224-0x00461273 asks for the owner of this unit's map tile and
-// then reads PlayersData[local].diplo_treaties[owner]. The byte at PlayersData
-// base+0x18 is the same treaty member declared in faction.h; the native
-// arithmetic is local*0x833+owner. It shows 0x31F only when bit 0x08 is set
-// and bit 0x10 is clear. The later prototype predicate can overwrite this
-// intermediate menu state, so keep this mutation in its original position.
-const int selected_tile_owner = whose_territory(
-    ConsoleGlobal.faction_id_, selected_veh.x, selected_veh.y, nullptr, 0);
-if (selected_tile_owner >= 0 &&
-    selected_tile_owner != ConsoleGlobal.faction_id_) {
-    const uint32_t treaty = PlayersData[ConsoleGlobal.faction_id_]
-                                .diplo_treaties[selected_tile_owner];
-    if ((treaty & DTREATY_COMMLINK) != 0 &&
-        (treaty & DTREATY_VENDETTA) == 0) {
-        show_menu_item(3, 0x31F);
-    }
-}
-
-const uint32_t selected_proto_id = selected_veh.proto_id;
-if (static_cast<int32_t>(selected_proto_id) < 0x40 &&
-    (get_proto_offense_rating(selected_proto_id) < 0 ||
-     selected_proto_id == BSC_SPORE_LAUNCHER)) {
-    show_menu_item(3, 0x31F);
-} else {
-    hide_menu_item(3, 0x31F);
-}
-
-const VehPrototype &selected_proto = VehPrototypes[selected_proto_id];
-if (Chassis[selected_proto.chassis_id].missile != 0 &&
-    (selected_proto.weapon_id == 0x18 || selected_proto.weapon_id == 0x19)) {
-    show_menu_item(3, 0x30A);
-} else {
-    hide_menu_item(3, 0x30A);
-}
-
-const int selected_base = base_at(selected_veh.x, selected_veh.y);
-if (selected_base >= 0 && has_fac(0x21, selected_base, 0)) {
-    show_menu_item(3, 0x310);
-} else {
-    hide_menu_item(3, 0x310);
-}
-
-if (veh_cargo(veh_id) != 0 || has_abil(selected_proto_id, ABL_CARRIER)) {
-    show_menu_item(3, 0x31D);
-} else {
-    hide_menu_item(3, 0x31D);
-}
-
-if (Chassis[selected_proto.chassis_id].triad == TRIAD_SEA) {
-    show_menu_item(3, 0x306);
-    show_menu_item(3, 0x304);
-} else {
-    hide_menu_item(3, 0x306);
-    hide_menu_item(3, 0x304);
-}
-
-if (can_arty(selected_proto_id, 1)) {
-    show_menu_item(3, 0x305);
-} else {
-    hide_menu_item(3, 0x305);
-}
-
-if (selected_proto.plan == 0x0A) {
-    show_menu_item(3, 0x308);
-    enable_menu_item(3, 0x308);
-} else {
-    hide_menu_item(3, 0x308);
-    disable_menu_item(3, 0x308);
-}
-
-// The image tests plan 8 separately after the plan-10 branch. Preserve the
-// native sequential state transitions rather than collapsing them to a final
-// enable/show bit for each item.
-if (selected_proto.plan == 0x08) {
-    enable_menu_item(3, 0x300);
-    enable_menu_item(3, 0x301);
-    show_menu_item(3, 2);
-    const Map *const selected_tile = map_loc(selected_veh.x, selected_veh.y);
-    const int tile_owner = (selected_tile->bit & 1u) != 0
-        ? static_cast<int>(selected_tile->val2 & 0x0Fu) : -1;
-    if (tile_owner >= 0 && tile_owner < 8) {
-        show_menu_item(3, 0x301);
-        hide_menu_item(3, 0x300);
-    } else {
-        hide_menu_item(3, 0x301);
-        show_menu_item(3, 0x300);
-    }
-} else {
-    hide_menu_item(3, 2);
-    disable_menu_item(3, 0x300);
-    disable_menu_item(3, 0x301);
-    hide_menu_item(3, 0x300);
-    hide_menu_item(3, 0x301);
-}
-
-const Map *const selected_tile_for_action =
-    map_loc(selected_veh.x, selected_veh.y);
-const int action_tile_owner = (selected_tile_for_action->bit & 1u) != 0
-    ? static_cast<int>(selected_tile_for_action->val2 & 0x0Fu) : -1;
-if (get_proto_offense_rating(selected_proto_id) != 0 &&
-    action_tile_owner == static_cast<int>(selected_veh.faction_id) &&
-    Chassis[selected_proto.chassis_id].triad != TRIAD_AIR) {
-    show_menu_item(3, 0x302);
-    enable_menu_item(3, 0x302);
-} else {
-    disable_menu_item(3, 0x302);
-    hide_menu_item(3, 0x302);
-}
-
-// Native continuation beginning at 0x00461672.
-if (Chassis[selected_proto.chassis_id].triad != TRIAD_LAND) {
-    show_menu_item(3, 0x320);
-    show_menu_item(3, 0x311);
-} else {
-    hide_menu_item(3, 0x320);
-    hide_menu_item(3, 0x311);
-}
-
-if (selected_proto.plan != 9) {
-    bool sea_order_labels = false;
-    const uint8_t selected_triad = Chassis[selected_proto.chassis_id].triad;
-    if (selected_triad == TRIAD_SEA) {
-        sea_order_labels = true;
-    } else if (selected_triad == TRIAD_AIR) {
-        const Map *const tile = map_loc(selected_veh.x, selected_veh.y);
-        sea_order_labels = (tile->climate & 0xE0u) < 0x60u;
-    }
-
-    for (int terraform_id = 0; terraform_id != 19; ++terraform_id) {
-        StringTemp[0] = '\0';
-        LPSTR order_name = sea_order_labels ? Order[terraform_id + 4].order_sea
-                                            : Order[terraform_id + 4].order;
-        strcat(StringTemp, StringTable.get(order_name));
-        strcat(StringTemp, "|");
-        strcat(StringTemp, StringTable.get(Terraforming[terraform_id].shortcuts));
-        rename_menu_item(9, 0x900 + terraform_id, StringTemp);
-
-        if (terrain_avail(terraform_id, sea_order_labels,
-                          ConsoleGlobal.faction_id_)) {
-            enable_menu_item(9, 0x900 + terraform_id);
-            if (terraform_id == 18) show_menu_item(9, 1);
+        if (!has_abil(Vehs[veh_id].proto_id, ABL_DROP_POD)) {
+            hide_menu_item(3, 0x309);
         } else {
-            disable_menu_item(9, 0x900 + terraform_id);
-            if (terraform_id == 18) hide_menu_item(9, 1);
+            show_menu_item(3, 0x309);
+        }
+
+        owner = whose_territory(ConsoleGlobal.faction_id_, Vehs[veh_id].x,
+                                Vehs[veh_id].y, NULL, 0);
+        if ((owner >= 0 && owner != ConsoleGlobal.faction_id_ &&
+             (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[owner] & DTREATY_COMMLINK) &&
+             !(PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[owner] & DTREATY_VENDETTA)) ||
+            (Vehs[veh_id].proto_id < MaxVehProtoFactionNum &&
+             (get_proto_offense_rating(Vehs[veh_id].proto_id) < 0 ||
+              Vehs[veh_id].proto_id == BSC_SPORE_LAUNCHER))) {
+            show_menu_item(3, 0x31F);
+        } else {
+            hide_menu_item(3, 0x31F);
+        }
+
+        if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].missile &&
+            (VehPrototypes[Vehs[veh_id].proto_id].weapon_id == 0x18 ||
+             VehPrototypes[Vehs[veh_id].proto_id].weapon_id == 0x19)) {
+            show_menu_item(3, 0x30A);
+        } else {
+            hide_menu_item(3, 0x30A);
+        }
+
+        base_id = base_at(Vehs[veh_id].x, Vehs[veh_id].y);
+        if (base_id >= 0 && has_fac(FAC_PSI_GATE, base_id, 0)) {
+            show_menu_item(3, 0x310);
+        } else {
+            hide_menu_item(3, 0x310);
+        }
+
+        if (!veh_cargo(veh_id) && !has_abil(Vehs[veh_id].proto_id, ABL_CARRIER)) {
+            hide_menu_item(3, 0x31D);
+        } else {
+            show_menu_item(3, 0x31D);
+        }
+
+        if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_AIR &&
+            get_proto_offense_rating(Vehs[veh_id].proto_id)) {
+            show_menu_item(3, 0x306);
+            show_menu_item(3, 0x304);
+        } else {
+            hide_menu_item(3, 0x306);
+            hide_menu_item(3, 0x304);
+        }
+
+        if (can_arty(Vehs[veh_id].proto_id, true)) {
+            show_menu_item(3, 0x305);
+        } else {
+            hide_menu_item(3, 0x305);
+        }
+
+        if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_SUPPLY_CONVOY) {
+            show_menu_item(3, 0x308);
+            enable_menu_item(3, 0x308);
+        } else {
+            hide_menu_item(3, 0x308);
+            disable_menu_item(3, 0x308);
+        }
+
+        if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_COLONIZATION) {
+            enable_menu_item(3, 0x300);
+            enable_menu_item(3, 0x301);
+            show_menu_item(3, 2);
+            if (base_who(Vehs[veh_id].x, Vehs[veh_id].y) >= 0) {
+                show_menu_item(3, 0x301);
+                hide_menu_item(3, 0x300);
+            } else {
+                hide_menu_item(3, 0x301);
+                show_menu_item(3, 0x300);
+            }
+            hide_menu_item(3, 0x302);
+        } else {
+            disable_menu_item(3, 0x300);
+            disable_menu_item(3, 0x301);
+            hide_menu_item(3, 0x300);
+            hide_menu_item(3, 0x301);
+            if (get_proto_offense_rating(Vehs[veh_id].proto_id) &&
+                base_who(Vehs[veh_id].x, Vehs[veh_id].y) == Vehs[veh_id].faction_id &&
+                Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad != TRIAD_AIR) {
+                show_menu_item(3, 0x302);
+                enable_menu_item(3, 0x302);
+            } else {
+                disable_menu_item(3, 0x302);
+                hide_menu_item(3, 0x302);
+            }
+            hide_menu_item(3, 2);
+        }
+
+        if (get_proto_offense_rating(Vehs[veh_id].proto_id)) {
+            show_menu_item(3, 0x320);
+            show_menu_item(3, 0x311);
+        } else {
+            hide_menu_item(3, 0x320);
+            hide_menu_item(3, 0x311);
+        }
+
+        if (VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_TERRAFORMING) {
+            for (i = 0; i < 19; i++) {
+                sea = Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_SEA ||
+                      (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_AIR &&
+                       is_ocean(Vehs[veh_id].x, Vehs[veh_id].y));
+                StringTemp[0] = '\0';
+                strcat(StringTemp, StringTable.get((&Order[i + 4].order)[sea]));
+                strcat(StringTemp, "|");
+                strcat(StringTemp, StringTable.get(Terraforming[i].shortcuts));
+                rename_menu_item(9, i + 0x900, StringTemp);
+                if (!terrain_avail(i, sea, ConsoleGlobal.faction_id_)) {
+                    hide_menu_item(9, i + 0x900);
+                    if (i == 18) {
+                        hide_menu_item(9, 1);
+                    }
+                } else {
+                    show_menu_item(9, i + 0x900);
+                    disable_menu_item(9, i + 0x900);
+                    if (i == 18) {
+                        show_menu_item(9, 1);
+                    }
+                }
+            }
+            disable_menu_item(9, 0x9F8);
+            disable_menu_item(9, 0x9F9);
+            disable_menu_item(9, 0x9F0);
+            disable_menu_item(9, 0x9F1);
+            disable_menu_item(9, 0x9F6);
+            disable_menu_item(9, 0x9F3);
+            disable_menu_item(9, 0x9F4);
+            disable_menu_item(9, 0x9F5);
+            disable_menu_item(9, 0x9F7);
+            disable_menu_item(9, 0x9F2);
+        } else {
+            for (i = 0; i < 19; i++) {
+                sea = Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_SEA ||
+                      (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_AIR &&
+                       is_ocean(Vehs[veh_id].x, Vehs[veh_id].y));
+                // A flag, not one || condition: the image falls from the
+                // farm test into the unavailable row (0x46196D) and defers the
+                // road and terrain_avail tests; the available row's "|"
+                // literal (0x685470) also precedes the unavailable one.
+                if (i == 1 && !(map_loc(Vehs[veh_id].x, Vehs[veh_id].y)->bit & BIT_FARM)) {
+                    avail = 0;
+                } else if (i == 6 && !(map_loc(Vehs[veh_id].x, Vehs[veh_id].y)->bit & BIT_ROAD)) {
+                    avail = 0;
+                } else {
+                    avail = terrain_avail(i, sea, ConsoleGlobal.faction_id_);
+                }
+                if (avail) {
+                    StringTemp[0] = '\0';
+                    strcat(StringTemp, StringTable.get((&Order[i + 4].order)[sea]));
+                    turns = action_terraform(veh_id, i, 0);
+                    strcat(StringTemp, BufferJoinSpace);
+                    strcat(StringTemp, "(");
+                    _itoa(turns + 1, turn_text, 10);
+                    strcat(StringTemp, turn_text);
+                    strcat(StringTemp, BufferJoinSpace);
+                    if (turns == 1) {
+                        strcat(StringTemp, label_get(0x30));
+                    } else {
+                        strcat(StringTemp, label_get(0x31));
+                    }
+                    strcat(StringTemp, ")");
+                    strcat(StringTemp, "|");
+                    strcat(StringTemp, StringTable.get(Terraforming[i].shortcuts));
+                    rename_menu_item(9, i + 0x900, StringTemp);
+                    show_menu_item(9, i + 0x900);
+                    if ((i != 1 || (map_loc(Vehs[veh_id].x, Vehs[veh_id].y)->bit & BIT_FARM)) &&
+                        (i != 6 || (map_loc(Vehs[veh_id].x, Vehs[veh_id].y)->bit & BIT_ROAD))) {
+                        enable_menu_item(9, i + 0x900);
+                    } else {
+                        disable_menu_item(9, i + 0x900);
+                    }
+                    if (i == 18) {
+                        show_menu_item(9, 1);
+                    }
+                } else {
+                    StringTemp[0] = '\0';
+                    strcat(StringTemp, StringTable.get(Order[i + 4].order));
+                    strcat(StringTemp, "|");
+                    strcat(StringTemp, StringTable.get(Terraforming[i].shortcuts));
+                    rename_menu_item(9, i + 0x900, StringTemp);
+                    disable_menu_item(9, i + 0x900);
+                    hide_menu_item(9, i + 0x900);
+                    if (i == 18) {
+                        hide_menu_item(9, 1);
+                    }
+                }
+            }
+            if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_SEA) {
+                hide_menu_item(9, 0x9F8);
+                hide_menu_item(9, 0x9F9);
+            } else {
+                show_menu_item(9, 0x9F8);
+                show_menu_item(9, 0x9F9);
+                enable_menu_item(9, 0x9F8);
+                enable_menu_item(9, 0x9F9);
+            }
+            enable_menu_item(9, 0x9F7);
+            enable_menu_item(9, 0x9F2);
+            if (has_tech(Terraforming[10].prerequisite_tech[sea], ConsoleGlobal.faction_id_)) {
+                enable_menu_item(9, 0x9F6);
+            } else {
+                disable_menu_item(9, 0x9F6);
+            }
+            if (has_tech(Terraforming[5].prerequisite_tech[sea], ConsoleGlobal.faction_id_)) {
+                enable_menu_item(9, 0x9F0);
+                enable_menu_item(9, 0x9F3);
+            } else {
+                disable_menu_item(9, 0x9F0);
+                disable_menu_item(9, 0x9F3);
+            }
+            if (has_tech(Terraforming[6].prerequisite_tech[sea], ConsoleGlobal.faction_id_)) {
+                show_menu_item(9, 0x9F1);
+                show_menu_item(9, 0x9F4);
+                enable_menu_item(9, 0x9F1);
+                enable_menu_item(9, 0x9F4);
+            } else {
+                hide_menu_item(9, 0x9F1);
+                hide_menu_item(9, 0x9F4);
+            }
+            if (has_tech(Terraforming[9].prerequisite_tech[sea], ConsoleGlobal.faction_id_)) {
+                show_menu_item(9, 0x9F5);
+                enable_menu_item(9, 0x9F5);
+            } else {
+                hide_menu_item(9, 0x9F5);
+            }
+        }
+
+        if (base_who(Vehs[veh_id].x, Vehs[veh_id].y) >= 0) {
+            hide_menu_item(3, 0x317);
+            show_menu_item(3, 0x316);
+        } else {
+            show_menu_item(3, 0x317);
+            hide_menu_item(3, 0x316);
+        }
+    } else {
+        for (i = 0x300; i <= 0x324; i++) {
+            if (i != 0x313) {
+                disable_menu_item(3, i);
+            } else {
+                enable_menu_item(3, 0x313);
+            }
         }
     }
 
-    disable_menu_item(9, 0x9F8);
-    disable_menu_item(9, 0x9F9);
-    disable_menu_item(9, 0x9F0);
-    disable_menu_item(9, 0x9F1);
-    disable_menu_item(9, 0x9F6);
-    disable_menu_item(9, 0x9F3);
-    disable_menu_item(9, 0x9F4);
-    disable_menu_item(9, 0x9F5);
-    disable_menu_item(9, 0x9F7);
-    disable_menu_item(9, 0x9F2);
+    for (i = 0x601; i <= 0x61B; i++) {
+        if (GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) {
+            enable_menu_item(6, i);
+        } else {
+            disable_menu_item(6, i);
+        }
+    }
+    for (i = 0xA00; i <= 0xA54; i++) {
+        if (GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) {
+            enable_menu_item(10, i);
+        } else {
+            disable_menu_item(10, i);
+        }
+    }
 
-    const Map *const tile = map_loc(selected_veh.x, selected_veh.y);
-    const int owner = (tile->bit & 1u) != 0
-        ? static_cast<int>(tile->val2 & 0x0Fu) : -1;
-    if (owner >= 0 && owner < 8) {
+    if (!(GameDataStateStorage.fields_.game_more_preferences_ & 0x200000)) {
+        hide_menu_item(2, 0x205);
+        hide_menu_item(2, 0x206);
+        hide_menu_item(2, 0x207);
+        hide_menu_item(2, 0x208);
+        hide_menu_item(2, 0x20C);
+        hide_menu_item(2, 0x215);
+        hide_menu_item(2, 0x211);
+        hide_menu_item(2, 0x212);
+        hide_menu_item(3, 0x31B);
+        hide_menu_item(3, 0x324);
+        hide_menu_item(3, 0x306);
+        hide_menu_item(3, 0x304);
+        hide_menu_item(3, 0x319);
+        hide_menu_item(3, 0x31A);
         hide_menu_item(3, 0x317);
-        show_menu_item(3, 0x316);
-    } else {
-        show_menu_item(3, 0x317);
-        hide_menu_item(3, 0x316);
-    }
-} else {
-    // A plan-9 former gets context-sensitive menu rows. The selector is the
-    // same typed terrain choice, but rows 1 and 6 are gated by the actual
-    // selected-tile flag before their build-cost labels become actionable.
-    bool sea_order_labels = false;
-    const uint8_t selected_triad = Chassis[selected_proto.chassis_id].triad;
-    if (selected_triad == TRIAD_SEA) {
-        sea_order_labels = true;
-    } else if (selected_triad == TRIAD_AIR) {
-        const Map *const tile = map_loc(selected_veh.x, selected_veh.y);
-        sea_order_labels = (tile->climate & 0xE0u) < 0x60u;
-    }
-
-    const Map *const selected_tile = map_loc(selected_veh.x, selected_veh.y);
-    for (int terraform_id = 0; terraform_id != 19; ++terraform_id) {
-        const bool row_action_flag =
-            (terraform_id != 1 && terraform_id != 6) ||
-            (terraform_id == 1 && (selected_tile->bit & BIT_FARM) != 0) ||
-            (terraform_id == 6 && (selected_tile->bit & 0x4u) != 0);
-        const bool can_build_here = row_action_flag && terrain_avail(
-            terraform_id, sea_order_labels, ConsoleGlobal.faction_id_);
-
-        StringTemp[0] = '\0';
-        LPSTR order_name = sea_order_labels ? Order[terraform_id + 4].order_sea
-                                            : Order[terraform_id + 4].order;
-        strcat(StringTemp, StringTable.get(order_name));
-        if (can_build_here) {
-            strcat(StringTemp, " (");
-            char turn_count[10];
-            const int turns = action_terraform(veh_id, terraform_id, 0) + 1;
-            _itoa(turns, turn_count, 10);
-            strcat(StringTemp, turn_count);
-            strcat(StringTemp, " ");
-            strcat(StringTemp, label_get(turns == 1 ? 0x30 : 0x31));
-            strcat(StringTemp, ")");
-        }
-        strcat(StringTemp, "|");
-        strcat(StringTemp, StringTable.get(Terraforming[terraform_id].shortcuts));
-        const int menu_item = 0x900 + terraform_id;
-        rename_menu_item(9, menu_item, StringTemp);
-
-        if (can_build_here) {
-            show_menu_item(9, menu_item);
-            enable_menu_item(9, menu_item);
-            if (terraform_id == 18) show_menu_item(9, 1);
-        } else {
-            disable_menu_item(9, menu_item);
-            hide_menu_item(9, menu_item);
-            if (terraform_id == 18) hide_menu_item(9, 1);
-        }
-    }
-
-    // The native state transitions intentionally occur after the row loop.
-    show_menu_item(9, 0x9F8);
-    show_menu_item(9, 0x9F9);
-    enable_menu_item(9, 0x9F8);
-    enable_menu_item(9, 0x9F9);
-    hide_menu_item(9, 0x9F7);
-    hide_menu_item(9, 0x9F2);
-
-    const int local_faction = ConsoleGlobal.faction_id_;
-    const int terrain_row_10 = sea_order_labels
-        ? Terraforming[10].prerequisite_tech[1] : Terraforming[10].prerequisite_tech[0];
-    if (has_tech(terrain_row_10, local_faction)) {
-        enable_menu_item(9, 0x9F6);
-    } else {
-        disable_menu_item(9, 0x9F6);
-    }
-
-    const int terrain_row_5 = sea_order_labels
-        ? Terraforming[5].prerequisite_tech[1] : Terraforming[5].prerequisite_tech[0];
-    if (has_tech(terrain_row_5, local_faction)) {
-        enable_menu_item(9, 0x9F0);
-        show_menu_item(9, 0x9F3);
-        enable_menu_item(9, 0x9F3);
-    } else {
-        disable_menu_item(9, 0x9F0);
-        hide_menu_item(9, 0x9F3);
-    }
-
-    const int terrain_row_6 = sea_order_labels
-        ? Terraforming[6].prerequisite_tech[1] : Terraforming[6].prerequisite_tech[0];
-    if (has_tech(terrain_row_6, local_faction)) {
-        show_menu_item(9, 0x9F1);
-        show_menu_item(9, 0x9F4);
-        enable_menu_item(9, 0x9F1);
-        enable_menu_item(9, 0x9F4);
-    } else {
-        hide_menu_item(9, 0x9F1);
-        hide_menu_item(9, 0x9F4);
-    }
-
-    const int terrain_row_9 = sea_order_labels
-        ? Terraforming[9].prerequisite_tech[1] : Terraforming[9].prerequisite_tech[0];
-    if (has_tech(terrain_row_9, local_faction)) {
-        show_menu_item(9, 0x9F5);
-        enable_menu_item(9, 0x9F5);
-    } else {
+        hide_menu_item(3, 0x320);
+        hide_menu_item(3, 0x31F);
+        hide_menu_item(3, 0x307);
+        hide_menu_item(3, 0x322);
+        hide_menu_item(9, 0x9F8);
+        hide_menu_item(9, 0x9F9);
+        hide_menu_item(9, 0x9F6);
         hide_menu_item(9, 0x9F5);
+        hide_menu_item(9, 0x9F4);
+        hide_menu_item(9, 0x9F3);
+        hide_menu_item(9, 0x9F1);
+        hide_menu_item(9, 0x9F0);
+        hide_menu_item(9, 5);
+        hide_menu_item(9, 6);
+        hide_menu_item(9, 7);
     }
-
-    const int owner = (selected_tile->bit & 1u) != 0
-        ? static_cast<int>(selected_tile->val2 & 0x0Fu) : -1;
-    if (owner >= 0 && owner < 8) {
-        hide_menu_item(3, 0x317);
-        show_menu_item(3, 0x316);
-    } else {
-        show_menu_item(3, 0x317);
-        hide_menu_item(3, 0x316);
-    }
-
-}
-    } else {
-        // Native 0x00461E48 fallback for a disabled cursor or negative ID.
-        for (int fallback_item_id = 0x300; fallback_item_id <= 0x324;
-             ++fallback_item_id) {
-            if (fallback_item_id == 0x313) enable_menu_item(3, fallback_item_id);
-            else disable_menu_item(3, fallback_item_id);
-        }
-    }
-
-for (int scenario_menu_id = 0x601; scenario_menu_id <= 0x61B; ++scenario_menu_id) {
-    if ((GameDataStateStorage.fields_.game_state_ & 0x40u) != 0) enable_menu_item(6, scenario_menu_id);
-    else disable_menu_item(6, scenario_menu_id);
-}
-for (int scenario_option_id = 0xA00; scenario_option_id <= 0xA54; ++scenario_option_id) {
-    if ((GameDataStateStorage.fields_.game_state_ & 0x40u) != 0) enable_menu_item(10, scenario_option_id);
-    else disable_menu_item(10, scenario_option_id);
-}
-
-if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x200000u) == 0) {
-    hide_menu_item(2, 0x205);
-    hide_menu_item(2, 0x206);
-    hide_menu_item(2, 0x207);
-    hide_menu_item(2, 0x208);
-    hide_menu_item(2, 0x20C);
-    hide_menu_item(2, 0x215);
-    hide_menu_item(2, 0x211);
-    hide_menu_item(2, 0x212);
-    hide_menu_item(3, 0x31B);
-    hide_menu_item(3, 0x324);
-    hide_menu_item(3, 0x306);
-    hide_menu_item(3, 0x304);
-    hide_menu_item(3, 0x319);
-    hide_menu_item(3, 0x31A);
-    hide_menu_item(3, 0x317);
-    hide_menu_item(3, 0x320);
-    hide_menu_item(3, 0x31F);
-    hide_menu_item(3, 0x307);
-    hide_menu_item(3, 0x322);
-    hide_menu_item(9, 0x9F8);
-    hide_menu_item(9, 0x9F9);
-    hide_menu_item(9, 0x9F6);
-    hide_menu_item(9, 0x9F5);
-    hide_menu_item(9, 0x9F4);
-    hide_menu_item(9, 0x9F3);
-    hide_menu_item(9, 0x9F1);
-    hide_menu_item(9, 0x9F0);
-    hide_menu_item(9, 5);
-    hide_menu_item(9, 6);
-    hide_menu_item(9, 7);
-}
-
 }

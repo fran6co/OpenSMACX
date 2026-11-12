@@ -16,6 +16,9 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+// WORKAROUND(decl): calculate calls StringStruct::remove_all (0x00402970)
+// out of line for all three lists (0x00492FC3..0x00492FE9).
+#define STRINGSTRUCT_REMOVE_ALL_OUT_OF_LINE
 #include "font_metrics.h"
 #include "interface_fonts.h"
 #include "basepop.h"
@@ -117,150 +120,136 @@ void ProdPicker::on_mousewheel(int delta) {
     }
 }
 
+// WORKAROUND(inline): StringStruct::current_id (0x00401640) expanded inline;
+// the image reloads head_ for the id read (0x00493F88, and both arms of
+// exec's signed result at 0x00495100).
+static inline int prodpicker_current_id(StringStruct *list) {
+    if (list->head_) {
+        return list->current_->id;
+    }
+    return 0;
+}
+
 // ORIGINAL: 0x004927C0 ?draw_item@ProdPicker@@QAEXHH@Z 0x004927C0-0x00492F9F
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004927c0.cpp", "source:src/prodpicker.h", "source:src/stringstruct.h", "source:src/buffer.h", "source:src/sprite.h", "source:src/veh.h"], "reason": "Paint production-picker cells through typed item lists, buffer/base services, sprite tables and Caviar rendering; preserve observed wrapped icon and panel-style data views."}
 // TRIED: direct translation of Ghidra's (already-clean) pseudocode into RD()-based offset access, matching the bounds check / grid position calc / set_clip+ box_sprite / three seek-list blocks / mandate_color+wrap_cent name draw / veh_fake+veh_draw+Caviar render-or-Sprite::draw_mono branch / veh_cost string; MISMATCH #0 (prologue/frame) not chased further. Typed source now measures 583 compiled instructions versus 672 original, with first divergence in stack-frame setup. The original sign-based icon dispatch conflicts with the positive IDs visible from StringList::current_id(); this source preserves the ID unchanged and leaves that producer/consumer discrepancy unresolved.
 void ProdPicker::draw_item(int item, int update) {
-    const int firstVisible = field_A77C_;
-    if (item < firstVisible || field_A82C_ + firstVisible <= item) return;
+    if (item < field_A77C_ || item >= field_A77C_ + field_A82C_) return;
 
-    const int relativeItem = item - firstVisible;
-    const int row = relativeItem / column_count_;
-    int left = (relativeItem % column_count_) * cell_width_;
-    const int top = row * row_height_;
-    const int cellTop = top + 4;
-    const int cellRight = cell_width_ + left + 0x18;
-    const int cellBottom = top + row_height_ + 1;
-    left += 0x1B;
+    const int relative = item - field_A77C_;
+    const int y = relative / column_count_ * row_height_;
+    const int x = relative % column_count_ * cell_width_ + 0x17;
+    RECT cell;
+    set_rectangle_dimensions(&cell, x, y, cell_width_, row_height_);
+    offset_rect(&cell, 4, 4);
+    cell.right -= 3;
+    cell.bottom -= 3;
+    RECT update_area = cell;
 
-    RECT cell = { left, cellTop, cellRight, cellBottom };
     set_clip(&cell);
-    BoxSpriteParams *frame = &InterfaceBoxStyles[0];
-    if (field_A774_ == static_cast<uint32_t>(item)) {
-        // Each table record is a complete 0x28-byte BoxSpriteParams; the
-        // original selects record 2 for the selected frame.
-        frame = &InterfaceBoxStyles[2];
-    }
-    box_sprite(&cell, frame);
-    if (field_A818_ <= static_cast<uint32_t>(item)) return;
+    box_sprite(&cell, &InterfaceBoxStyles[field_A774_ == item ? 2 : 0]);
+    if (item >= field_A818_) return;
 
-    ++cell.left;
-    --cell.right;
-    ++cell.top;
-    --cell.bottom;
+    cell.left++;
+    cell.right--;
+    cell.top++;
+    cell.bottom--;
 
-    StringList *lists[3] = { &prod_a_, &prod_c_, &prod_b_ };
-    const int counts[3] = { prod_a_.entry_count_, prod_c_.entry_count_, prod_b_.entry_count_ };
-    for (int i = 0; i < 3; ++i) {
-        if (item <= counts[i] - 1) lists[i]->seek_pos(item);
-    }
+    prod_a_.seek_pos(item);
+    prod_c_.seek_pos(item);
+    prod_b_.seek_pos(item);
 
-    int productionId = 0;
-    if (prod_a_.head_ != 0) {
-        productionId = prod_a_.current_->id;
-    }
-    const uint32_t itemFlags = prod_a_.head_ != 0
+    int id = prodpicker_current_id(&prod_a_);
+    const uint32_t flags = prod_a_.head_
         ? prod_a_.current_->string_payload()->field_8_ : 0;
-    // Native 0x492A48..0x492A51 signs the display ID using the vehicle
-    // flag, resolving the producer/consumer discrepancy in the seed notes.
-    // Keep the list's stored ID unchanged and preserve x86 NEG wraparound.
-    uint32_t displayBits = static_cast<uint32_t>(productionId);
-    if ((itemFlags & 0x20) == 0) displayBits = 0U - displayBits;
-    const int displayId = displayBits <= 0x7fffffffU
-        ? static_cast<int>(displayBits) : -1 - static_cast<int>(~displayBits);
+    if (!(flags & 0x20)) id = -id;
     StringTemp[0] = 0;
-    const int textColor = mandate_color(itemFlags & 0xF);
-    StringTemp[0] = 0;
-    set_text_color(textColor, -1, 1, 1);
+    int color = mandate_color(flags & 0xF);
+    StringTemp[1] = 0;
+    set_text_color(color, -1, 1, 1);
     set_font(&font1_, 0, 0, 0);
-    const int nameLineHeight = font_line_advance(font1_);
-    RECT nameArea = { cell.left, cell.top + 5, cell.right,
-                      cell.top + nameLineHeight * 3 + 5 };
-    char *nameText = prod_a_.head_ != 0
-        ? prod_a_.current_->string_payload()->text : 0;
-    wrap_cent(nameText, &nameArea);
+
+    RECT area = cell;
+    area.top = cell.top + 5;
+    area.bottom = cell.top + font_line_advance(font1_) * 3 + 5;
+    wrap_cent(prod_a_.head_ ? prod_a_.current_->string_payload()->text : 0, &area);
 
     font3_.unk_1_ = 3;
     set_text_color(0xA1, -1, 1, 1);
     set_font(&font3_, 0, 0, 0);
-    const int textLeft = cell.left + 2;
-    const int textRight = cell.right - 2;
-    int costBottom = cell.bottom;
-    char *costText = prod_c_.head_ != 0
-        ? prod_c_.current_->string_payload()->text : 0;
-    const int costHeight = wrap_height(costText, textRight - textLeft);
-    int costTop = costBottom - costHeight;
-    RECT costArea = { textLeft, costTop, textRight, costBottom };
-    costText = prod_c_.head_ != 0
-        ? prod_c_.current_->string_payload()->text : 0;
-    wrap_cent(costText, &costArea);
-
-    const int costLineHeight = font_line_advance(font3_);
-    int turnsTop = costTop - costLineHeight;
+    area = cell;
+    area.left += 2;
+    area.right -= 2;
+    area.top = area.bottom - wrap_height(
+        prod_c_.head_ ? prod_c_.current_->string_payload()->text : 0,
+        area.right - area.left);
+    wrap_cent(prod_c_.head_ ? prod_c_.current_->string_payload()->text : 0, &area);
+    area.bottom = area.top;
+    area.top -= font_line_advance(font3_);
     if (prod_b_.head_) {
-        StringStructPayload *turns = prod_b_.current_entry();
-        char *turnsText = turns->text;
-        if (turnsText) {
-            RECT turnsArea = { textLeft, turnsTop, textRight, costBottom };
-            write_cent_l(turnsText, &turnsArea, static_cast<int>(strlen(turnsText)));
-        }
+        write_cent_l(prod_b_.current_entry()->text, &area);
     }
 
-    int hasPrototypeCost = 0;
-    if (displayId < 0) {
-        const int iconId = -displayId;
-        Sprite *icon = iconId < 0x46
-            ? &g_FACILITY_ICON_SPRITES[iconId]
-            : &g_SECRET_PROJECT_ICON_SPRITES[iconId - 0x46];
-        const int iconSize = (row_height_ * 3) / 7;
-        const int iconX = (cell.bottom - cell.left) / 2 - iconSize / 2;
-        const int iconY = (cell.right - cell.left) / 2 - iconSize / 2;
-        icon->draw_mono(this, icon->transparent_index(), iconY + cell.left,
-                        cell.left + iconX, textColor, iconSize, icon->width());
-    } else {
-        const int iconSize = (row_height_ << 1) / 3;
-        const int modelSize = (iconSize * 0x4B) / 100;
-        const int fakeId = veh_fake(displayId, BaseCurrent->faction_id_current);
-        const int rotation = field_A774_ == static_cast<uint32_t>(item)
-            ? static_cast<int>(field_B64_) : 0;
-        MapWinCaptionScale = iconSize;
+    if (id >= 0) {
+        const int size = row_height_ * 2 / 3;
+        const int model = size * 75 / 100;
+        const int veh_id = veh_fake(id, BaseCurrent->faction_id_current);
+        if (field_A774_ == item) {
+            color = field_B64_;
+        } else {
+            color = 0;
+        }
+        MapWinCaptionScale = size;
         MapWinCaptionDivisor = 100;
-        const int rendered = veh_draw(this, fakeId,
-            (cell.bottom - cell.left) / 2 - iconSize / 2 + cell.left,
-            cell.left + ((cell.right - cell.left) / 2 - modelSize / 2),
-            1, 0xCC, 0);
-        if (rendered) {
+        if (veh_draw(this, veh_id,
+                     (cell.right - cell.left) / 2 - size / 2 + cell.left,
+                     (cell.bottom - cell.top) / 2 - model / 2 + cell.top,
+                     1, 0xCC, 0)) {
             caviar_.reset_objects();
-            vehdraw_construct_vehicle(fakeId, &caviar_);
-            caviar_.set_scaling(static_cast<float>(iconSize) * ProdPickerVehicleScaleFactor);
-            caviar_.set_scene_rotation(static_cast<float>(rotation + 0x1E)
-                * ProdPickerRotationRadiansPerDegree, 0, 0);
-            caviar_.render(this, (cell.bottom - cell.left) / 2 + cell.left,
-                           cell.left + (cell.right - cell.left) / 2, 0);
+            vehdraw_construct_vehicle(veh_id, &caviar_);
+            caviar_.set_scaling(size * ProdPickerVehicleScaleFactor);
+            caviar_.set_scene_rotation((color + 0x1E) * ProdPickerRotationRadiansPerDegree, 0, 0);
+            caviar_.render(this, (cell.right - cell.left) / 2 + cell.left,
+                           (cell.bottom - cell.top) / 2 + cell.top, 0);
         }
         MapWinCaptionScale = -1;
         MapWinCaptionDivisor = -1;
-        veh_cost(displayId, BaseIDCurrentSelected, &hasPrototypeCost);
-        if (hasPrototypeCost) {
+        BOOL has_cost;
+        veh_cost(id, BaseIDCurrentSelected, &has_cost);
+        if (has_cost) {
             set_font(&font3_, 0, 0, 0);
             set_text_color(0xFA, -1, 1, 1);
             StringTemp[0] = 0;
             strcat(StringTemp, label_get(185));
             strcat(StringTemp, " +");
-            char number[64];
-            _itoa(prototype_factor(displayId), number, 10);
+            const int factor = prototype_factor(id);
+            char number[80];
+            _itoa(factor, number, 10);
             strcat(StringTemp, number);
             strcat(StringTemp, "%");
-            write_cent_l(StringTemp, &cell, static_cast<int>(strlen(StringTemp)));
+            write_cent_l(StringTemp, &cell);
+        }
+    } else {
+        id = -id;
+        const int size = row_height_ * 3 / 7;
+        if (id < 70) {
+            g_FACILITY_ICON_SPRITES[id].draw_mono(this,
+                g_FACILITY_ICON_SPRITES[id].transparent_index(),
+                (cell.right - cell.left) / 2 - size / 2 + cell.left,
+                (cell.bottom - cell.top) / 2 - size / 2 + cell.top,
+                color, size, g_FACILITY_ICON_SPRITES[0].width());
+        } else {
+            g_SECRET_PROJECT_ICON_SPRITES[id - 70].draw_mono(this,
+                g_SECRET_PROJECT_ICON_SPRITES[id - 70].transparent_index(),
+                (cell.right - cell.left) / 2 - size / 2 + cell.left,
+                (cell.bottom - cell.top) / 2 - size / 2 + cell.top,
+                color, size, g_SECRET_PROJECT_ICON_SPRITES[0].width());
         }
     }
 
-    if (field_A774_ == static_cast<uint32_t>(item)) box(&cell, 0xFF, 0xFF);
+    if (field_A774_ == item) box(&cell, 0xFF, 0xFF);
     set_clip(&rect2_);
-    if (update) {
-        RECT updateArea = { left, cellTop, cellRight, cellBottom };
-        soft_update(&updateArea);
-    }
+    if (update) soft_update(&update_area);
 }
 
 // ORIGINAL: 0x004941C0 ?on_left_click@ProdPicker@@QAEXHH@Z 0x004941C0-0x0049422F BYTE_EXACT
@@ -529,236 +518,234 @@ void __cdecl ProdPicker::UNK2(int, ProdPicker *picker) {
     picker->draw_item(picker->field_A774_, 1);
 }
 
+// The inline edbc_unit/edbc_fac switches keep their tables after the body.
+// TMPASSOC switch_targets 0x00492FA0 0x00493A70 0x00493A94 0x004934B8
+// TMPASSOC switch_targets 0x00492FA0 0x00493A94 0x00493AA4 0x0049389C
+// TMPASSOC switch_selector 0x00492FA0 0x00493AA4 0x00493AE6 0x00493896
 // ORIGINAL: 0x00492FA0 ?calculate@ProdPicker@@QAEXXZ 0x00492FA0-0x00493A6D FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00492fa0.cpp", "Pinned original coordinator review: actual label-pointer dereference, camera word3F48F5C3, static cdecl callback ABI, row-end clamps and modal-parent/button suppression order."], "reason": "Recover ProdPicker owner behavior through existing window bases, owned StringLists/controls and typed Base/Caviar camera state; preserve historical seed identity and extents as restoration obligations, not current match claims."}
 // TRIED: void return confirmed (0,1,2,3 are switch-derived flag bits; 9999/999999 are itoa() display clamps, not status codes - the single `ret` has no `mov eax,K` before it, eax at exit is whatever Font::init() last returned). Structural transcription via named ProdPicker::field_XXXX_ members instead of raw pointer casts didn't close the divergence; prologue shape differs (#0 push vs sub) from local layout, not a wrong op.
 void ProdPicker::calculate() {
-    int anyTech = 0;
-    const int savedFaction = BaseIDCurrentSelected;
-    char nameBuf[256];
-    char statsBuf[256];
-    char thirdBuf[256];
-    char numBuf1[80];
-    char numBuf2[80];
-    char numBuf3[80];
-    char numBuf4[80];
+    int found = 0;
+    const int base_id = BaseIDCurrentSelected;
+    int has_proto_cost = 0;
+    char name[256];
+    char stats[256];
+    char effect[256];
+    char active[80];
+    char queued[80];
 
-    prod_a_.remove_all();
-    prod_a_.current_position_ = 0;
-    prod_a_.allocator_ = 0;
-    prod_b_.remove_all();
-    prod_b_.current_position_ = 0;
-    prod_b_.allocator_ = 0;
-    prod_c_.remove_all();
-    prod_c_.current_position_ = 0;
-    prod_c_.allocator_ = 0;
+    {
+        StringList *list = &prod_a_;
+        list->StringStruct::remove_all();
+        list->current_position_ = 0;
+        list->allocator_ = 0;
+    }
+    {
+        StringList *list = &prod_b_;
+        list->StringStruct::remove_all();
+        list->current_position_ = 0;
+        list->allocator_ = 0;
+    }
+    {
+        StringList *list = &prod_c_;
+        list->StringStruct::remove_all();
+        list->current_position_ = 0;
+        list->allocator_ = 0;
+    }
     field_A818_ = 0;
     field_A774_ = -1;
     field_A77C_ = 0;
 
-    Base *const base = BaseCurrent;
-    const int maxVehCost = base->queue_production_id[field_B68_];
-    const int currentProduction = base->production_id_last;
-    const int faction = static_cast<int>(field_A76C_);
-    proto_sort(faction);
+    const int queued_id = BaseCurrent->queue_production_id[field_B68_];
+    const int last_id = BaseCurrent->production_id_last;
+    proto_sort(field_A76C_);
 
     // A faction with any researched prerequisite above its current weapon,
     // armor, or chassis technology receives the editor's upgrade action.
-    for (int weaponIndex = 0; weaponIndex < MaxWeaponNum && !anyTech; ++weaponIndex) {
-        if (Weapon[weaponIndex].offense_rating > 1
-            && has_tech(Weapon[weaponIndex].preq_tech, faction))
-            anyTech = 1;
+    int i;
+    for (i = 0; i < MaxWeaponNum; i++) {
+        if (Weapon[i].offense_rating > 1 && has_tech(Weapon[i].preq_tech, field_A76C_)) {
+            found = 1;
+            break;
+        }
     }
-    for (int armorIndex = 0; armorIndex < MaxArmorNum && !anyTech; ++armorIndex) {
-        if (Armor[armorIndex].defense_rating > 1
-            && has_tech(Armor[armorIndex].preq_tech, faction))
-            anyTech = 1;
+    for (i = 0; !found && i < MaxArmorNum; i++) {
+        if (Armor[i].defense_rating > 1 && has_tech(Armor[i].preq_tech, field_A76C_)) {
+            found = 1;
+        }
     }
-    for (int chassisIndex = 0; chassisIndex < MaxChassisNum && !anyTech; ++chassisIndex) {
-        if (Chassis[chassisIndex].speed > 1
-            && has_tech(Chassis[chassisIndex].preq_tech, faction))
-            anyTech = 1;
+    for (i = 0; !found && i < MaxChassisNum; i++) {
+        if (Chassis[i].speed > 1 && has_tech(Chassis[i].preq_tech, field_A76C_)) {
+            found = 1;
+        }
     }
 
-    for (int prototypeIndex = 0; prototypeIndex < 128; ++prototypeIndex) {
-        const int protoId = ProtoSortIds[prototypeIndex];
-        if (!veh_avail(protoId, faction, savedFaction)) continue;
+    for (i = 0; i < 128; i++) {
+        const int id = ProtoSortIds[i];
+        if (!veh_avail(id, field_A76C_, BaseIDCurrentSelected)) continue;
 
-        nameBuf[0] = '\0';
-        strcat(nameBuf, VehPrototypes[protoId].veh_name);
+        int flags = 0;
+        name[0] = 0;
+        strcat(name, VehPrototypes[id].veh_name);
         if (GameDataStateStorage.fields_.game_state_ & 0x80) {
-            strcat(nameBuf, "(");
-            _itoa(PlayersData[faction].proto_id_active[protoId], numBuf1, 10);
-            strcat(nameBuf, numBuf1);
-            strcat(nameBuf, " ");
-            _itoa(PlayersData[faction].proto_id_queue[protoId], numBuf2, 10);
-            strcat(nameBuf, numBuf2);
-            strcat(nameBuf, ")");
+            strcat(name, "(");
+            _itoa(PlayersData[field_A76C_].proto_id_active[id], active, 10);
+            strcat(name, active);
+            strcat(name, " ");
+            _itoa(PlayersData[field_A76C_].proto_id_queue[id], queued, 10);
+            strcat(name, queued);
+            strcat(name, ")");
         }
 
-        statsBuf[0] = '\0';
-        int costA = cost_factor(base->faction_id_current, 1, -1)
-            * VehPrototypes[protoId].cost;
-        int costB = cost_factor(base->faction_id_current, 1, -1)
-            * veh_cost(protoId, savedFaction, &field_A77C_);
-
-        if (base->mineral_surplus < 1) {
-            strcat(statsBuf, "[");
-            strcat(statsBuf, label_get(0x10C / 4));
-            strcat(statsBuf, "]");
+        stats[0] = 0;
+        int cost = cost_factor(BaseCurrent->faction_id_current, 1, -1)
+            * VehPrototypes[id].cost;
+        int proto_cost = cost_factor(BaseCurrent->faction_id_current, 1, -1)
+            * veh_cost(id, BaseIDCurrentSelected, &has_proto_cost);
+        if (BaseCurrent->mineral_surplus <= 0) {
+            strcat(stats, "[");
+            strcat(stats, label_get(67));
+            strcat(stats, "]");
         } else {
-            if (field_B68_ == 0) {
-                const int makingA = base_making(protoId, savedFaction);
-                const int makingB = base_making(currentProduction, savedFaction);
-                int threshold = base->minerals_accumulated;
-                if (makingA != makingB && PlayersData[faction].diff_level >= 2
-                    && static_cast<int>(Rules.retool_exemption) < threshold) {
-                    threshold = (threshold - static_cast<int>(Rules.retool_exemption))
-                        * (100 - static_cast<int>(Rules.retool_pct_pen_prod_chg))
-                        / 100 + static_cast<int>(Rules.retool_exemption);
+            if (!field_B68_) {
+                int minerals;
+                if (base_making(id, BaseIDCurrentSelected)
+                        != base_making(last_id, BaseIDCurrentSelected)
+                    && PlayersData[field_A76C_].diff_level > 1) {
+                    minerals = BaseCurrent->minerals_accumulated_2;
+                    if (minerals > static_cast<int>(Rules.retool_exemption)) {
+                        minerals = (minerals - static_cast<int>(Rules.retool_exemption))
+                            * (100 - static_cast<int>(Rules.retool_pct_pen_prod_chg)) / 100
+                            + static_cast<int>(Rules.retool_exemption);
+                    }
+                } else {
+                    minerals = BaseCurrent->minerals_accumulated_2;
                 }
-                costA -= threshold;
-                costB -= threshold;
+                cost -= minerals;
+                proto_cost -= minerals;
             }
-            int turns = (base->mineral_surplus - 1 + costB) / base->mineral_surplus;
-            if (turns < 0) turns = 0;
-            else if (turns > 999999) turns = 999999;
-            _itoa(turns, numBuf3, 10);
-            strcat(statsBuf, numBuf3);
-            if (costA != costB && VehPrototypes[protoId].plan != 8) {
-                strcat(statsBuf, "(");
-                int turnsA = (base->mineral_surplus - 1 + costA)
-                    / base->mineral_surplus;
-                if (turnsA < 0) turnsA = 0;
-                else if (turnsA > 999999) turnsA = 999999;
-                _itoa(turnsA, numBuf4, 10);
-                strcat(statsBuf, numBuf4);
-                strcat(statsBuf, ")");
+            char turns[80];
+            _itoa(range((BaseCurrent->mineral_surplus + proto_cost - 1)
+                        / BaseCurrent->mineral_surplus, 0, 999999),
+                  turns, 10);
+            strcat(stats, turns);
+            if (cost != proto_cost && VehPrototypes[id].plan != 8) {
+                strcat(stats, "(");
+                char retool[80];
+                _itoa(range((BaseCurrent->mineral_surplus + cost - 1)
+                            / BaseCurrent->mineral_surplus, 0, 999999),
+                      retool, 10);
+                strcat(stats, retool);
+                strcat(stats, ")");
             }
-            strcat(statsBuf, " ");
-            strcat(statsBuf, label_get(0xC4 / 4));
+            strcat(stats, " ");
+            strcat(stats, label_get(49));
         }
 
-        thirdBuf[0] = '\0';
-        say_stats_3(thirdBuf, protoId);
-        const uint32_t extraFlags = field_A77C_ != 0 ? 0x80 : 0;
-        const int category = edbc_unit(protoId);
-        prod_a_.pending_text_ = nameBuf;
-        prod_a_.field_20_ = static_cast<uint32_t>(category) | extraFlags | 0x20;
+        effect[0] = 0;
+        say_stats_3(effect, id);
+        if (has_proto_cost) flags = 0x80;
+        prod_a_.pending_text_ = name;
+        prod_a_.field_20_ = edbc_unit(id) | flags | 0x20;
         prod_a_.field_24_ = 0;
-        prod_a_.add(protoId);
-        prod_b_.pending_text_ = statsBuf;
+        prod_a_.add(id);
+        prod_b_.pending_text_ = stats;
         prod_b_.field_20_ = 0;
         prod_b_.field_24_ = 0;
         prod_b_.add(0);
-        prod_c_.pending_text_ = thirdBuf;
+        prod_c_.pending_text_ = effect;
         prod_c_.field_20_ = 0;
         prod_c_.field_24_ = 0;
         prod_c_.add(0);
-        if (protoId == maxVehCost) field_A774_ = field_A818_;
-        ++field_A818_;
+        if (id == queued_id) field_A774_ = field_A818_;
+        field_A818_++;
     }
 
-    for (int facilityId = 1; facilityId <= 0x85; ++facilityId) {
-        if (!facility_avail(facilityId, base->faction_id_current,
-                            savedFaction, field_B68_)) continue;
+    for (i = 1; i <= 0x85; i++) {
+        if (!facility_avail(i, BaseCurrent->faction_id_current, base_id, field_B68_)) continue;
 
-        nameBuf[0] = '\0';
-        if (facilityId == 1) {
-            strcat(nameBuf, "(");
-            strcat(nameBuf, label_get(0x230 / 4));
-            strcat(nameBuf, ")");
-            strcat(nameBuf, " ");
+        name[0] = 0;
+        if (i == 1) {
+            strcat(name, "(");
+            strcat(name, label_get(140));
+            strcat(name, ")");
+            strcat(name, " ");
         }
-        strcat(nameBuf, StringTable.get(Facility[facilityId].name));
+        strcat(name, StringTable.get(Facility[i].name));
 
-        statsBuf[0] = '\0';
-        int cost = cost_factor(base->faction_id_current, 1, -1) * Facility[facilityId].cost;
-        if (field_B68_ == 0) {
-            const int makingA = base_making(-facilityId, savedFaction);
-            const int makingB = base_making(currentProduction, savedFaction);
-            if (makingA == makingB || PlayersData[faction].diff_level < 2)
-                cost -= base->nutrients_accumulated;
-            else
-                cost -= base->nutrients_accumulated / 2;
+        stats[0] = 0;
+        int cost = cost_factor(BaseCurrent->faction_id_current, 1, -1) * Facility[i].cost;
+        if (!field_B68_) {
+            if (base_making(-i, BaseIDCurrentSelected) != base_making(last_id, BaseIDCurrentSelected)
+                && PlayersData[field_A76C_].diff_level > 1) {
+                cost -= BaseCurrent->minerals_accumulated / 2;
+            } else {
+                cost -= BaseCurrent->minerals_accumulated;
+            }
         }
-
-        if (facilityId == 0x45) {
-            int half = (base->mineral_surplus + 1) / 2;
-            if (half < 0) half = 0;
-            else if (half > 9999) half = 9999;
-            _itoa(half, numBuf3, 10);
-            strcat(statsBuf, numBuf3);
-            strcat(statsBuf, " ");
-            strcat(statsBuf, label_get(0x90 / 4));
-            strcat(statsBuf, " ");
-            strcat(statsBuf, label_get(0x264 / 4));
-        } else if (base->mineral_surplus > 0) {
-            int turns = (base->mineral_surplus - 1 + cost) / base->mineral_surplus;
-            _itoa(turns, numBuf1, 10);
-            strcat(statsBuf, numBuf1);
-            strcat(statsBuf, " ");
-            strcat(statsBuf, label_get(0xC4 / 4));
+        if (i == 0x45) {
+            char half[80];
+            _itoa(range((BaseCurrent->mineral_surplus + 1) / 2, 0, 9999), half, 10);
+            strcat(stats, half);
+            strcat(stats, " ");
+            strcat(stats, label_get(36));
+            strcat(stats, " ");
+            strcat(stats, label_get(153));
+        } else if (BaseCurrent->mineral_surplus <= 0) {
+            strcat(stats, "[");
+            strcat(stats, label_get(67));
+            strcat(stats, "]");
         } else {
-            strcat(statsBuf, "[");
-            strcat(statsBuf, label_get(0x10C / 4));
-            strcat(statsBuf, "]");
+            char turns[80];
+            _itoa((BaseCurrent->mineral_surplus + cost - 1) / BaseCurrent->mineral_surplus,
+                  turns, 10);
+            strcat(stats, turns);
+            strcat(stats, " ");
+            strcat(stats, label_get(49));
         }
 
-        thirdBuf[0] = '\0';
-        const char *suffix = StringTable.get(Facility[facilityId].effect);
-        if (strlen(suffix) != 0) strcat(thirdBuf, suffix);
-
-        prod_a_.pending_text_ = nameBuf;
-        prod_a_.field_20_ = static_cast<uint32_t>(edbc_fac(facilityId)) | 0x10;
+        effect[0] = 0;
+        if (strlen(StringTable.get(Facility[i].effect))) {
+            strcat(effect, StringTable.get(Facility[i].effect));
+        }
+        prod_a_.pending_text_ = name;
+        prod_a_.field_20_ = edbc_fac(i) | 0x10;
         prod_a_.field_24_ = 0;
-        prod_a_.add(facilityId);
-        prod_b_.pending_text_ = statsBuf;
+        prod_a_.add(i);
+        prod_b_.pending_text_ = stats;
         prod_b_.field_20_ = 0;
         prod_b_.field_24_ = 0;
         prod_b_.add(0);
-        prod_c_.pending_text_ = thirdBuf;
+        prod_c_.pending_text_ = effect;
         prod_c_.field_20_ = 0;
         prod_c_.field_24_ = 0;
         prod_c_.add(0);
-        if (-currentProduction == facilityId) field_A774_ = field_A818_;
-        ++field_A818_;
+        if (-i == queued_id) field_A774_ = field_A818_;
+        field_A818_++;
     }
 
-    if (field_A818_ != 0) {
-        Buffer *const baseBuffer = static_cast<Buffer *>(
-            static_cast<GraphicWin *>(&TutWinBaseWindow));
-        field_A824_ = static_cast<uint32_t>(baseBuffer->pixel_width());
-        field_A828_ = static_cast<uint32_t>(baseBuffer->pixel_height());
+    if (field_A818_) {
+        field_A824_ = TutWinBaseWindow.pixel_width();
+        field_A828_ = TutWinBaseWindow.pixel_height();
         column_count_ = 5;
         field_A814_ = (WinScreenWidth > 800) + 3;
-        const int cellWidth = (baseBuffer->pixel_width() - 0x51) / 5;
-        const int columns = (baseBuffer->pixel_width() - 0x51) / cellWidth;
+        const int width = (TutWinBaseWindow.pixel_width() - 0x51) / 5;
         row_height_ = field_A838_;
-        cell_width_ = cellWidth;
-        column_count_ = columns;
-        field_A82C_ = field_A814_ * columns;
-
+        cell_width_ = width;
+        column_count_ = (TutWinBaseWindow.pixel_width() - 0x51) / width;
+        field_A82C_ = field_A814_ * column_count_;
         font1_.init(DefaultFontFace, 0xC, 1);
-        int size = cellWidth / 0xF;
+        int size = cell_width_ / 15;
         if (size < 0x18) size = 0x18;
         font2_.init(DefaultFontFace, size, 1);
-        size = cellWidth / 0xF;
+        size = cell_width_ / 15;
         if (size < 10) size = 10;
         font3_.init(DefaultFontFace, size, 0);
         font4_.init(DefaultFontFace, 0xE, 1);
     }
 }
 
-// WORKAROUND(inline): StringStruct::current_id (0x00401640) expanded inline;
-// the image reloads head_ for the id read (0x00493F88, and both arms of
-// exec's signed result at 0x00495100).
-static inline int prodpicker_current_id(StringStruct *list) {
-    if (list->head_) {
-        return list->current_->id;
-    }
-    return 0;
-}
 
 // WORKAROUND(inline): expand_rect (scroll.cpp) is a plain out-of-line
 // function in this tree; exec's footer expands it inline (0x00494F48: the
