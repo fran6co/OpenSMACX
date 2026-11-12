@@ -752,8 +752,11 @@ void(__cdecl *WinButtonHoverHook)();
 // window_proc's right-button arms), passing the translated coordinates; the
 // (HWND, LPARAM) reading came from a window_proc reconstruction that called
 // it from every mouse arm. Only a two-word cdecl call shape is proved.
-// RECOVERY_OBJECT: v2 0x009B7A94 0x009B7A98 ?WinMouseHook@@3P6AXPAUHWND__@@J@ZA 0x005F0B4E
-void(__cdecl *WinMouseHook)(HWND window, LPARAM position);  // 0x009B7A94
+// RECOVERY_OBJECT: v4 0x009B7A94 0x009B7A98 ?WinMouseHook@@3P6AXPAUHWND__@@J@ZA 0x005F0B4E target ?WinMouseHook@@3P6AXHH@ZA
+// (int, int): its only callers, OnRButtonDown and that handler's expansion
+// in window_proc, pass the translated coordinates get_mouse_window wrote
+// back; nothing in the image passes it an HWND. No writer is recovered.
+void(__cdecl *WinMouseHook)(int x, int y);  // 0x009B7A94
 // RECOVERY_OBJECT: v2 0x009B7A8C 0x009B7A90 ?WinKeyHook@@3P6AXI@ZA 0x005F07D8
 void(__cdecl *WinKeyHook)(WPARAM key);                      // 0x009B7A8C
 
@@ -2139,7 +2142,7 @@ Purpose: The window procedure the class registers - route every input
 //
 // INLINE BUDGET. The image expands every first-level handler except
 // OnLButtonDown and none of their nested helpers: get_hdc, release_hdc,
-// get_key_window and sub_5f86a0 stay calls, while OnQueryNewPalette writes
+// get_key_window and play_if_idle stay calls, while OnQueryNewPalette writes
 // its acquire out by hand (its standalone copy has the same shape) and
 // calls release_hdc. The wheel arm is a file-local handler for the same
 // reason the mouse arms are: its x/y live in the incoming argument slots.
@@ -2153,9 +2156,13 @@ Purpose: The window procedure the class registers - route every input
 //     WinMessageHook;
 //   - WM_RBUTTONDOWN/WM_RBUTTONDBLCLK pass WinMouseHook the translated
 //     (x, y) get_mouse_window wrote back, not (HWND, lParam).
-Status: one instruction short, pending the 0x005F86A0 receiver (see
-        OnSysCommand): the image calls it as a member on the owner
-        (`mov ecx,esi`), which needs a declaration in win.h.
+Status: 648/657. The play_if_idle receiver is in (OnSysCommand). What
+        is left is three exits: the wheel arm's null path and the three early
+        outs of the WM_PALETTECHANGED arm jump in the image to the shared
+        `return 0` block at 0x005F0BD4, while ours join each arm's own
+        epilogue copy (short jumps: 4 and 12 bytes short). Early-return
+        spellings of win_mouse_wheel/OnPaletteChanged and probe counts
+        9-40 do not move it.
 */
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x005F0650 0x005F0E28 0x005F0E3C 0x005F069D
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x005F0650 0x005F0E3C 0x005F0F38 0x005F0697
@@ -2182,10 +2189,10 @@ static void win_mouse_wheel(HWND hwnd, int x, int y, WPARAM keys) {
 // WORKAROUND(inline): dead /Ob2 budget probe. Called with 0 it folds to no
 // code. The image refuses every second-level helper inside the expanded
 // handlers (get_hdc/release_hdc in the WM_ACTIVATE and WM_PALETTECHANGED
-// arms at 0x005F073D/0x005F0D48, sub_5f86a0 at 0x005F0946) while still
+// arms at 0x005F073D/0x005F0D48, play_if_idle at 0x005F0946) while still
 // expanding OnQueryNewPalette; without this spend VC6 expands those three.
 // 11-30 calls after the switch all give the image's decisions; fewer leave
-// sub_5f86a0 inlined. The original spending is not identified.
+// play_if_idle inlined. The original spending is not identified.
 static int window_proc_budget_probe(int x) {
     if (x == 1) x = 2;
     return x;
@@ -2884,13 +2891,16 @@ void __cdecl restore_flip_sprite(int do_flip) {
 Purpose: Play the supplied Sound only when it is not already playing.
          HOMED from src/recovered/005f86a0.cpp on 2026-08-25; its former
          integer/Win receiver reconstruction obscured the actual Sound* API.
+         A Win member (2026-11-12): OnSysCommand's expansion in window_proc
+         calls it with the owner in ecx (`mov ecx,esi` at 0x005F0944) and
+         the body never reads it; it has no other caller.
 */
 // ORIGINAL: 0x005F86A0 sub_5f86a0 0x005F86A0-0x005F86BF BYTE_EXACT
-// symbol    ?sub_5f86a0@@YGXPAVSound@@@Z
+// symbol    ?play_if_idle@Win@@QAEXPAVSound@@@Z
 // size      32 bytes
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-void __stdcall sub_5f86a0(Sound *sound) {
+void Win::play_if_idle(Sound *sound) {
     if (sound != 0) {
         if (sound->is_playing() == 0) {
             sound->play();
@@ -5640,14 +5650,9 @@ void __cdecl Win::OnRButtonDown(void * hwnd, long flags, int x, int y, unsigned 
     if (result != 0) {
         result->on_r_button_down(flags, x, y, keys, WinMouseDirect);
     }
-    // 0x009B7A94, which window_proc calls as WinMouseHook(HWND, LPARAM).
-    // SIGNATURES DISAGREE and the image cannot referee it: both sites push
-    // two dwords __cdecl, so the argument TYPES are invisible in the asm.
-    // Here `x` and `y` hold the translated coordinates get_mouse_window
-    // wrote back through them, so this site reads the hook as (int, int).
-    // Merged onto the typed name with the cast kept at this call.
+    // 0x009B7A94 gets the coordinates get_mouse_window wrote back.
     if (WinMouseHook != nullptr) {
-        reinterpret_cast<void(__cdecl *)(int, int)>(WinMouseHook)(x, y);
+        WinMouseHook(x, y);
     }
     if (WinMessageHook != 0) {
         WinMessageHook();
@@ -7715,7 +7720,7 @@ void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
 // The play-if-idle tail is the 0x005F86A0 call, not its body written out
 // (2026-11-12): window_proc's expansion calls it at 0x005F0946, this copy
 // expands it. The image calls it with the owner in ecx (`mov ecx,esi`),
-// so 0x005F86A0 is a member taking the Sound; spelling that needs win.h.
+// so 0x005F86A0 is a Win member taking the Sound (Win::play_if_idle).
 void __cdecl Win::OnSysCommand(HWND hwnd, unsigned int command, int x,
                                int y) {
     Win *self = reinterpret_cast<Win *>(
@@ -7736,7 +7741,7 @@ void __cdecl Win::OnSysCommand(HWND hwnd, unsigned int command, int x,
         cb();
     }
     self->on_sys_close();
-    sub_5f86a0(self->val_6_);
+    self->play_if_idle(self->val_6_);
 }
 
 // ORIGINAL: 0x005EF050 ?client_to_nonclient@Win@@QAEXPAURECT@@@Z 0x005EF050-0x005EF10D FILE BYTE_EXACT

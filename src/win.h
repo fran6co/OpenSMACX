@@ -907,6 +907,10 @@ class Win : public AutoSound {
   static void __cdecl OnKey(void * hwnd, unsigned int key, long flags, int repeat, unsigned int scan);
   static void OnLButtonUp(void *hwnd, int x, int y, unsigned int keys);
   static void __cdecl OnSysCommand(HWND hwnd, unsigned int command, int x, int y);
+  // 0x005F86A0. OnSysCommand's play-if-idle tail. A member: the image
+  // calls it with the owner in ecx (`mov ecx,esi` at 0x005F0946) and the
+  // body never reads it; 0x005F86A0 has no other caller.
+  void play_if_idle(Sound *sound);
   void paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left, int clip_top, int clip_width, int clip_height, int unused8);
   void update_window_to_buffer(Buffer * buffer);
 
@@ -1227,24 +1231,20 @@ Win *__cdecl get_mouse_window_recurse(Win *window, int *x, int *y);
 extern int WinCursorMoved;
 
 // 0x009B7A88 and 0x009B7A94. Two `__cdecl` hooks the procedure calls on the
-// way out: the second on mouse messages with (hwnd, lParam), the first on
-// every message at all, with no arguments. `Effect::init` installs the
+// way out: the second on right-button presses with the (x, y) that
+// get_mouse_window translated, the first on every message at all, with no
+// arguments. `Effect::init` installs the
 // first; `Win::OnKey`, `OnLButtonDown` and `OnRButtonDown` read them too.
 extern void(__cdecl *WinMessageHook)();
 extern void(__cdecl *WinOkHook)();
 extern void(__cdecl *WinCancelHook)();
 extern void(__cdecl *WinButtonHoverHook)();
-extern void(__cdecl *WinMouseHook)(HWND window, LPARAM position);
+extern void(__cdecl *WinMouseHook)(int x, int y);
 
 // 0x009B7A8C. A third hook, called after WM_KEYDOWN with the virtual key.
 // `Win::OnKey` is its only other reader.
 extern void(__cdecl *WinKeyHook)(WPARAM key);
 
-// 0x005F86A0. The one thing `window_proc`'s WM_SYSCOMMAND arm calls that is
-// not a `Win` member. Its body was homed from src/recovered/005f86a0.cpp
-// into win.cpp and measures BYTE_EXACT there.
-// 0x005F86A0, homed into win.cpp.
-void __stdcall sub_5f86a0(Sound *sound);
 
 
 // The cursor refresh this setter triggers is a 2528-byte body with six call
