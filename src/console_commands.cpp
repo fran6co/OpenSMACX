@@ -5037,11 +5037,12 @@ void Console::editor_veh() {
     auto_undo();
     if (ScenarioVehicleFaction < 0) ScenarioVehicleFaction = ConsoleGlobal.faction_id_;
 
-    for (;;) {
+again:
+    {
         PopupModalState = 6;
         popup.start(PopupStartCaption, "EDITORUNIT", -1, nullptr, 0x40);
         for (int proto_idx = 0; proto_idx < MaxVehProtoNum; ++proto_idx) {
-            if (!(VehPrototypes[proto_idx].flags & 1u)) continue;
+            if (!(VehPrototypes[proto_idx].flags & 1u)) goto again;
             if (ScenarioVehicleMode || veh_avail(proto_idx, ScenarioVehicleFaction, -1) ||
                 proto_idx < MaxVehProtoFactionNum) {
                 StringTemp[0] = 0;
@@ -5066,17 +5067,17 @@ void Console::editor_veh() {
                 if (morale == ScenarioVehicleMorale) popup.set_value(morale);
             }
             ScenarioVehicleMorale = popup.exec(0, nullptr);
-            continue;
+            goto again;
         }
         case 2:
         {
             const int chosen = editor_who(ScenarioVehicleFaction, 0);
             if (chosen >= 0) ScenarioVehicleFaction = chosen;
-            continue;
+            goto again;
         }
         case 1:
             ScenarioVehicleMode = ScenarioVehicleMode == 0;
-            continue;
+            goto again;
         }
 
         if (selected_prototype == 0x13) {
@@ -5109,17 +5110,16 @@ void Console::editor_veh() {
             Vehs[vehicle].morale = static_cast<uint8_t>(ScenarioVehicleMorale);
             draw_tile_fixup(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
                             ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_],
-                            VehPrototypes[Vehs[vehicle].proto_id].flags & 2u, 2);
+                            VehPrototypes[Vehs[vehicle].proto_id].ability_flags & ABL_DEEP_RADAR, 2);
             if (Vehs[vehicle].faction_id == ConsoleGlobal.faction_id_) {
                 ConsoleGlobal.selected_vehicle_ = vehicle;
                 if (ConsoleGlobal.cursor_active_) ConsoleGlobal.set_move(1);
             }
-            if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << ScenarioVehicleFaction))) {
+            if (!is_alive(ScenarioVehicleFaction)) {
                 GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ |=
                     static_cast<uint8_t>(1 << ScenarioVehicleFaction);
             }
         }
-        return;
     }
 }
 // stand-in: TU helpers that /Ob2 inlines into editor_view; their cost spends
