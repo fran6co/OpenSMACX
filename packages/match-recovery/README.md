@@ -4554,7 +4554,13 @@ one explicit literal recipe, for example `{"src/library.cpp": {"flags": ["/O2", 
 Explicit recipes contain only a nonempty `flags` array of nonempty string tokens;
 they do not add a global trial. Keys must name existing canonical
 project-relative source TUs; headers, aliases, missing units, boolean indices
-and multiple selections refuse. Unlisted units retain the global alternatives.
+and multiple selections refuse. Unlisted units retain the global alternatives,
+and measurement keeps the best of them, so an unlisted unit can be ranked under a
+profile its build never uses (for example a frame-pointer-omitting trial for a
+unit built with `/Oy-`). `"require_unit_flag_sets": true` makes every unit that
+the configured `mappings.compile_commands` database builds under the source
+roots require an entry; configuration reading refuses and names the missing
+units. The check is membership only; recipe contents remain project policy.
 This is a compiler-policy decision, not inferred library membership or
 permission to weaken historical restoration obligations. The policy participates
 in input fingerprints; prior reports cannot be replayed.

@@ -168,6 +168,7 @@
   "measurement": {
     "backend": "pe-coff-i386",
     "compiler_profile": "application",
+    "require_unit_flag_sets": true,
     "unit_flag_sets": {
       "src/jackal/filewin.cpp": {
         "flags": [
@@ -2215,6 +2216,806 @@
           "/Ob2",
           "-MT",
           "/W4",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/alphanet_records.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "-c"
+        ]
+      },
+      "src/alphasave.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/autosound.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "-c"
+        ]
+      },
+      "src/basebutton.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "-c"
+        ]
+      },
+      "src/battlewin.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/buttongroup.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "-c"
+        ]
+      },
+      "src/caviar/caviar_cpu.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "-c"
+        ]
+      },
+      "src/crt_random.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/cursor.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "-c"
+        ]
+      },
+      "src/directdraw.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "-c"
+        ]
+      },
+      "src/editbox.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "-c"
+        ]
+      },
+      "src/famewin.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/filebox.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "-c"
+        ]
+      },
+      "src/filemap.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "-c"
+        ]
+      },
+      "src/flatbutton.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "-c"
+        ]
+      },
+      "src/font_queue.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "-c"
+        ]
+      },
+      "src/graphicwin_events.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "-c"
+        ]
+      },
+      "src/imagebutton.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "-c"
+        ]
+      },
+      "src/jackal/graphics_language.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "-c"
+        ]
+      },
+      "src/jackal/heap.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "-c"
+        ]
+      },
+      "src/lock.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/matrix3.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "-c"
+        ]
+      },
+      "src/monuwin.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/movie_decoder_idct.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "-c"
+        ]
+      },
+      "src/multiwin.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/net_session_picker.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "-c"
+        ]
+      },
+      "src/netdaemon_message_data.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/node.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "-c"
+        ]
+      },
+      "src/number_parsing.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "-c"
+        ]
+      },
+      "src/path.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/playerlock.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/polygon.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "-c"
+        ]
+      },
+      "src/popup_wrappers.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/quaylewin.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/random.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "-c"
+        ]
+      },
+      "src/scale_adjustment.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/scenario.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "-c"
+        ]
+      },
+      "src/scenario_undo.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/span_math.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/spot.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "-c"
+        ]
+      },
+      "src/stdafx.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "-c"
+        ]
+      },
+      "src/timer_messages.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "-c"
+        ]
+      },
+      "src/uv2player.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/vector.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "-c"
+        ]
+      },
+      "src/vehicle_cost.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/vendor/zlib-1.0.2/adler32.c": {
+        "flags": [
+          "/nologo",
+          "/Zm200",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W0",
+          "/Ob1",
+          "-c"
+        ]
+      },
+      "src/vendor/zlib-1.0.2/compress.c": {
+        "flags": [
+          "/nologo",
+          "/Zm200",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W0",
+          "/Ob1",
+          "-c"
+        ]
+      },
+      "src/vendor/zlib-1.0.2/deflate.c": {
+        "flags": [
+          "/nologo",
+          "/Zm200",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W0",
+          "/Ob1",
+          "-c"
+        ]
+      },
+      "src/vendor/zlib-1.0.2/infblock.c": {
+        "flags": [
+          "/nologo",
+          "/Zm200",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W0",
+          "/Ob1",
+          "-c"
+        ]
+      },
+      "src/vendor/zlib-1.0.2/infcodes.c": {
+        "flags": [
+          "/nologo",
+          "/Zm200",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W0",
+          "/Ob1",
+          "-c"
+        ]
+      },
+      "src/vendor/zlib-1.0.2/inffast.c": {
+        "flags": [
+          "/nologo",
+          "/Zm200",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W0",
+          "/Ob1",
+          "-c"
+        ]
+      },
+      "src/vendor/zlib-1.0.2/inflate.c": {
+        "flags": [
+          "/nologo",
+          "/Zm200",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W0",
+          "/Ob1",
+          "-c"
+        ]
+      },
+      "src/vendor/zlib-1.0.2/inftrees.c": {
+        "flags": [
+          "/nologo",
+          "/Zm200",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W0",
+          "/Ob1",
+          "-c"
+        ]
+      },
+      "src/vendor/zlib-1.0.2/infutil.c": {
+        "flags": [
+          "/nologo",
+          "/Zm200",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W0",
+          "/Ob1",
+          "-c"
+        ]
+      },
+      "src/vendor/zlib-1.0.2/trees.c": {
+        "flags": [
+          "/nologo",
+          "/Zm200",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W0",
+          "/Ob1",
+          "-c"
+        ]
+      },
+      "src/vendor/zlib-1.0.2/uncompr.c": {
+        "flags": [
+          "/nologo",
+          "/Zm200",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W0",
+          "/Ob1",
+          "-c"
+        ]
+      },
+      "src/vendor/zlib-1.0.2/zutil.c": {
+        "flags": [
+          "/nologo",
+          "/Zm200",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W0",
+          "/Ob1",
+          "-c"
+        ]
+      },
+      "src/win_coordinates.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "-c"
+        ]
+      },
+      "src/winnodelist.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "-c"
+        ]
+      },
+      "src/worldwin.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/xpops.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "-MT",
+          "/W4",
+          "/O2",
+          "/Ob2",
           "/Oy-",
           "-c"
         ]

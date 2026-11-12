@@ -237,6 +237,12 @@ and require new instruction-level evidence before more equivalent loop spellings
 
 OpenSMACX currently selects two release comparison flag sets in its local
 compiler configuration: `/c /O2 /Ob2 /Gy /GR- /GX` and the same with `/Oy-`.
+Since 2026-11-12 every compiled unit carries its own `unit_flag_sets` recipe
+(`require_unit_flag_sets`), copied from its production command; the global
+pair is no longer reached. Unpinned units had been scored as the best of both
+trials, which reported 17 of 45 unmatched functions in 61 unpinned units under
+the wrong frame-pointer setting (for example MonuWin::on_redraw and popp
+without a frame although their units build with `/Oy-`).
 The explicit `/Ob2` aligns unpinned standalone measurements with the measured
 CMake Release producer. A real VC6 control retains a normal helper call with
 `/O2` alone and expands it with `/Ob2`; identical `/O2` spellings therefore do

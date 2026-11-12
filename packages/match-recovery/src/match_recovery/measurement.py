@@ -39,6 +39,47 @@ def _referenced_artifacts(root: Path, artifacts: str, database) -> tuple[str, ..
     return tuple(sorted(f"{artifacts}/{name}" for name in names))
 
 
+def _require_unit_recipes(root: Path, project: dict, source: SourceConfiguration,
+                          extensions, pinned) -> None:
+    """Refuse a compiled translation unit that would fall back to the global trials.
+
+    Unpinned units are measured as the best of every global flag trial, so a
+    unit built with one profile can be scored, ranked and even recorded under
+    another (for example with the frame pointer omitted when its production
+    command keeps it). With this policy each unit the configured compilation
+    database builds must carry its own `unit_flag_sets` recipe. Membership is
+    compiler-neutral; whether a pinned recipe equals the production options
+    remains the project's decision. A missing database is not checked here:
+    recipe selection refuses it separately.
+    """
+    from .compilation_database import read_database
+    mappings = project.get("mappings", {})
+    database = mappings.get("compile_commands") if isinstance(mappings, dict) else None
+    if not isinstance(database, str):
+        raise ValueError("measurement require_unit_flag_sets needs mappings.compile_commands")
+    path = source.path(root, database)
+    if not path.is_file():
+        return
+    base = root.resolve()
+    missing = set()
+    for entry in read_database(path, root=root):
+        if not entry.file.is_relative_to(base):
+            continue
+        name = entry.file.relative_to(base).as_posix()
+        if (any(Path(name).is_relative_to(item) for item in source.roots)
+                and Path(name).suffix in extensions
+                and Path(name).suffix not in source.interface_extensions
+                and name not in pinned):
+            missing.add(name)
+    if missing:
+        listed = sorted(missing)
+        raise ValueError(
+            "measurement require_unit_flag_sets: compiled translation units have no "
+            "unit_flag_sets recipe and would be measured against the global flag trials "
+            "instead of their own command: " + ", ".join(listed[:12])
+            + (f" (+{len(listed) - 12} more)" if len(listed) > 12 else ""))
+
+
 @dataclass(frozen=True)
 class Measurement:
     backend: str
@@ -59,8 +100,12 @@ class Measurement:
         source = SourceConfiguration.read(root)
         value = project.get("measurement")
         fields = {"backend", "compiler_profile", "flag_sets", "layout_flags", "unit_extensions", "inputs", "input_roots"}
-        if not isinstance(value, dict) or set(value) not in (fields, fields | {"unit_flag_sets"}):
+        if (not isinstance(value, dict) or not fields <= set(value)
+                or set(value) - fields - {"unit_flag_sets", "require_unit_flag_sets"}):
             raise ValueError("measurement configuration requires backend, compiler_profile, flag_sets, layout_flags, unit_extensions, inputs and input_roots")
+        require_pins = value.get("require_unit_flag_sets", False)
+        if type(require_pins) is not bool:
+            raise ValueError("measurement require_unit_flag_sets must be a boolean")
         if value["backend"] != "pe-coff-i386":
             raise ValueError("unsupported measurement backend")
         if source.address_space != "pe:va":
@@ -165,6 +210,8 @@ class Measurement:
             if len(indices) != len(set(indices)):
                 raise ValueError(f"unit_flag_sets[{path!r}] contains duplicate selections")
             normalized_units.append((path, tuple(indices)))
+        if require_pins:
+            _require_unit_recipes(root, project, source, value["unit_extensions"], unit_flag_sets)
         return cls(value["backend"], value["compiler_profile"], flag_sets,
                    tuple(value["layout_flags"]), tuple(value["unit_extensions"]), inputs,
                    tuple(sorted(roots)), source, tuple(sorted(environment)),

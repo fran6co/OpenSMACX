@@ -98,3 +98,64 @@ def test_explicit_unit_recipe_is_part_of_the_input_fingerprint(tmp_path):
     path.write_text(json.dumps(config))
     second = Measurement.read(tmp_path)
     assert second.snapshot(tmp_path, {}) != before
+
+
+def required(tmp_path, policy, *, require=True, database=("src/owner.cpp",)):
+    """A project whose measurement may require a recipe per compiled unit."""
+    initialize(tmp_path, "unit-profiles", "unused-compiler")
+    for name in ("src/owner.cpp", "src/other.cpp", "src/owner.h"):
+        unit = tmp_path / name
+        unit.parent.mkdir(parents=True, exist_ok=True)
+        unit.write_text("void f() {}\n")
+    if database is not None:
+        (tmp_path / "build").mkdir(exist_ok=True)
+        (tmp_path / "build/compile_commands.json").write_text(json.dumps([
+            {"directory": str(tmp_path / "build"), "file": str(tmp_path / name),
+             "command": f"cl /O2 /Oy- -c {tmp_path / name}"}
+            for name in (*database, "outside/tool.cpp")]))
+    path = tmp_path / "recovery/project.json"
+    config = json.loads(path.read_text())
+    config["measurement"]["flag_sets"] = [["/O2"], ["/O2", "/Oy-"]]
+    config["measurement"]["unit_flag_sets"] = policy
+    config["measurement"]["require_unit_flag_sets"] = require
+    path.write_text(json.dumps(config))
+    return Measurement.read(tmp_path)
+
+
+def test_required_unit_recipes_refuse_a_compiled_unit_left_to_the_global_trials(tmp_path):
+    # An unpinned unit is scored as the best of every global trial, so a unit
+    # built with /Oy- could be ranked and reported under the frame-pointer-
+    # omitting trial. The policy makes that drift a configuration error.
+    with pytest.raises(ValueError, match=r"require_unit_flag_sets.*src/other\.cpp"):
+        required(tmp_path, {"src/owner.cpp": {"flags": ["/O2", "/Oy-"]}},
+                 database=("src/owner.cpp", "src/other.cpp"))
+
+
+def test_required_unit_recipes_accept_explicit_and_indexed_pins(tmp_path):
+    settings = required(tmp_path, {"src/owner.cpp": {"flags": ["/O2", "/Oy-"]},
+                                   "src/other.cpp": [1]},
+                        database=("src/owner.cpp", "src/other.cpp", "src/owner.h"))
+    assert settings.flags_for("src/owner.cpp") == (("/O2", "/Oy-"),)
+    assert settings.flags_for("src/other.cpp") == (("/O2", "/Oy-"),)
+
+
+def test_required_unit_recipes_ignore_units_the_database_does_not_build(tmp_path):
+    # Only database membership is checked; outside-root entries and headers
+    # are not measurable translation units.
+    settings = required(tmp_path, {"src/owner.cpp": [0]})
+    assert settings.flags_for("src/other.cpp") == (("/O2",), ("/O2", "/Oy-"))
+
+
+def test_unit_recipes_stay_optional_without_the_policy(tmp_path):
+    settings = required(tmp_path, {}, require=False, database=("src/owner.cpp", "src/other.cpp"))
+    assert settings.flags_for("src/owner.cpp") == (("/O2",), ("/O2", "/Oy-"))
+
+
+def test_required_unit_recipe_policy_must_be_boolean(tmp_path):
+    with pytest.raises(ValueError, match="boolean"):
+        required(tmp_path, {"src/owner.cpp": [0]}, require="yes")
+
+
+def test_required_unit_recipes_defer_a_missing_database_to_recipe_selection(tmp_path):
+    settings = required(tmp_path, {}, database=None)
+    assert settings.flags_for("src/owner.cpp") == (("/O2",), ("/O2", "/Oy-"))
