@@ -3138,17 +3138,15 @@ int NetWin::pick_pass(int payload) {
             if (ParseStrBuffer[0].str[0] != 0) {
                 verify_hash = checksum_password(ParseStrBuffer[0].str);
             }
-            if (entered_hash != verify_hash) {
-                X_pop("DIFFERENTPASSWORDS", nullptr);
-                continue;
+            if (entered_hash == verify_hash) {
+                break;
             }
-        } else if (faction_mode) {
-            goto check;
+            X_pop("DIFFERENTPASSWORDS", nullptr);
+            continue;
         }
-        NetWinLobbyRows.rows_[slot].owner_ = entered_hash;
-        memcpy(&updated, &NetWinLobbyRows.rows_[slot], 0x17C);
-        sub_47b1d0(slot, &updated);
-        return 1;
+        if (!faction_mode) {
+            break;
+        }
     check:
         // Native 47CD43..47CD4C checks the live post-modal allocation.
         if (faction_records_[faction].owner_ != entered_hash) {
@@ -3158,6 +3156,10 @@ int NetWin::pick_pass(int payload) {
         NetWinLobbyRows.rows_[slot].owner_ = entered_hash;
         return 1;
     }
+    NetWinLobbyRows.rows_[slot].owner_ = entered_hash;
+    memcpy(&updated, &NetWinLobbyRows.rows_[slot], 0x17C);
+    sub_47b1d0(slot, &updated);
+    return 1;
 }
 #if defined(_MSC_VER) && _MSC_VER == 1200
 #pragma intrinsic(memcpy)

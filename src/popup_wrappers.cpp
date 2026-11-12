@@ -100,8 +100,12 @@ int __cdecl popp(LPCSTR caption, LPCSTR label, int flags, LPCSTR picture,
             }
         }
     }
-    if (!alternative || popup.start(alternative, label, -1, nullptr,
-                                    flags, nullptr) != 0) {
+    if (alternative) {
+        if (popup.start(alternative, label, -1, nullptr, flags, nullptr) != 0) {
+            popup.start(const_cast<char *>(caption), label, -1, nullptr,
+                        flags, nullptr);
+        }
+    } else {
         popup.start(const_cast<char *>(caption), label, -1, nullptr,
                     flags, nullptr);
     }

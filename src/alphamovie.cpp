@@ -414,7 +414,7 @@ void __cdecl amovie_project(char *movie) {
     UV2Player player;
     AlphaMovie win;
     char movie_path[260];
-    char movie_file[208];
+    char movie_file[260];
 
     // Keep the window and its embedded MCI player in one AlphaMovie object.
     // The original body dressed a GraphicWin and an adjacent MCIVideo local

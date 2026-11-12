@@ -3525,19 +3525,22 @@ int __cdecl save_game(int mode) {
     // Both scenario branches mark the game state and clear every faction's
     // unk_102 (native 0x5AA456); the saved names are the whole stem.
     if (mode != 0) {
-        strcpy(ScenarioSaveNameBuffer,
-               _stricmp(selected_basename, default_basename) != 0
-                   ? filename_stem
-                   : SaveNameDefaultStorageGlobal.scenario_equal_default_);
+        if (_stricmp(selected_basename, default_basename) != 0) {
+            strcpy(ScenarioSaveNameBuffer, filename_stem);
+        } else {
+            strcpy(ScenarioSaveNameBuffer, SaveNameDefaultStorageGlobal.scenario_equal_default_);
+        }
         GameDataStateStorage.fields_.game_state_ |= 0x10;
         for (int faction = 0; faction < MaxPlayerNum; ++faction) {
             PlayersData[faction].unk_101 = 0;
         }
     } else {
-        strcpy(GameDataStateStorage.fields_.legacy_game_save_name_,
-               _stricmp(selected_basename, default_basename) != 0
-                   ? filename_stem
-                   : SaveNameDefaultStorageGlobal.save_equal_default_);
+        if (_stricmp(selected_basename, default_basename) != 0) {
+            strcpy(GameDataStateStorage.fields_.legacy_game_save_name_, filename_stem);
+        } else {
+            strcpy(GameDataStateStorage.fields_.legacy_game_save_name_,
+                   SaveNameDefaultStorageGlobal.save_equal_default_);
+        }
         prefs_put("Latest Save", filename_stem);
     }
 
