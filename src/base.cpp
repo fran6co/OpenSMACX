@@ -6430,11 +6430,10 @@ void __cdecl base_check_support() {
                 ? 0 : (support <= -4 ? 2 : 1);
         }
         int support = PlayersData[faction].soc_effect_pending.values_[SocialEffect::SUPPORT];
-        int cost = has_abil(Vehs[best_veh].proto_id, ABL_CLEAN_REACTOR) ? 0 : (support <= -4 ? 2 : 1);
-        if (!cost) {
+        if (has_abil(Vehs[best_veh].proto_id, ABL_CLEAN_REACTOR)) {
             break;
         }
-        BaseCurrentForcesMaintCost -= cost;
+        BaseCurrentForcesMaintCost -= support <= -4 ? 2 : 1;
         kill(best_veh);
     }
     int faction_bit = 1 << faction;
@@ -7336,12 +7335,14 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
     // Bonus id 3 is the energy bonus.
     BOOL has_energy_bonus = bonus_at(x, y, 0) == 3;
     tile = yield_tile(x, y);
-    BOOL landmark_bonus =
-        (((tile->bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO)) == BIT2_VOLCANO)
+    BOOL landmark_bonus = false;
+    if ((((tile->bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO)) == BIT2_VOLCANO)
             && code < 9)
         || ((tile->bit2 & (BIT2_UNK_80000000 | BIT2_URANIUM)) == BIT2_URANIUM)
         || ((tile->bit2 & (BIT2_UNK_80000000 | BIT2_GEOTHERMAL)) == BIT2_GEOTHERMAL)
-        || ((tile->bit2 & (BIT2_UNK_80000000 | BIT2_RIDGE)) == BIT2_RIDGE);
+        || ((tile->bit2 & (BIT2_UNK_80000000 | BIT2_RIDGE)) == BIT2_RIDGE)) {
+        landmark_bonus = true;
+    }
     BOOL skip_shared_tail = false;
 
     if (has_base_in_tile) {
@@ -10551,26 +10552,30 @@ static int upgrade_arithmetic_shift_three(int value) {
 int __cdecl upgrade_prototype(int faction_id, int proto_id_new,
                                  int proto_id_old, int set_flag) {
     int flag_clear;
+    int cost;
+    int faction_bit;
+    int minerals;
+    int energy;
     if ((GameDataStateStorage.fields_.game_state_ & 1)
         && !(GameDataStateStorage.fields_.game_state_ & 8)) {
-        return 0;
+        goto fail;
     }
-    int cost = upgrade_cost(faction_id, proto_id_new, proto_id_old)
+    cost = upgrade_cost(faction_id, proto_id_new, proto_id_old)
         * PlayersData[faction_id].proto_id_active[proto_id_old] * 10;
     if (!cost) {
         if (set_flag) {
-            return 0;
+            goto fail;
         }
         if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_
               & (1 << faction_id))) {
-            return 0;
+            goto fail;
         }
     }
-    int faction_bit = 1 << faction_id;
+    faction_bit = 1 << faction_id;
     if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit)) {
-        int minerals = GameDataStateStorage.fields_.diff_level_current_ * cost / 10
+        minerals = GameDataStateStorage.fields_.diff_level_current_ * cost / 10
             / (8 - PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk1_].ranking);
-        int energy = PlayersData[faction_id].energy_reserves;
+        energy = PlayersData[faction_id].energy_reserves;
         if (energy > PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk2_].energy_reserves) {
             if (energy >= 1000) {
                 minerals /= 2;
@@ -10579,14 +10584,14 @@ int __cdecl upgrade_prototype(int faction_id, int proto_id_new,
                 minerals = 0;
             }
         }
-        if (cost - minerals > (((VehPrototypes[proto_id_new].plan == 2)
+        if (cost - minerals <= (((VehPrototypes[proto_id_new].plan == 2)
                 + PlayersData[faction_id].ai_power
                 + PlayersData[faction_id].ai_tech) * 2 + 1) * energy / 8) {
-            return 0;
+            goto net_check;
         }
     } else {
         if (faction_id != ConsoleGlobal.faction_id_) {
-            return 0;
+            goto fail;
         }
         if (cost) {
             int i;
@@ -10641,7 +10646,7 @@ int __cdecl upgrade_prototype(int faction_id, int proto_id_new,
                                 : Chassis[VehPrototypes[proto_id_new].chassis_id].triad == 1 ? "navun_sm.pcx" : "unit_sm.pcx", 0);
                     }
                     if (!result) {
-                        return 0;
+                        goto fail;
                     }
                     if (result > 1) {
                         UpgradePromptAnswered = 1;
@@ -10651,7 +10656,11 @@ int __cdecl upgrade_prototype(int faction_id, int proto_id_new,
                 goto no_energy;
             }
         }
+        goto net_check;
     }
+fail:
+    return 0;
+net_check:
     if ((faction_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)
         && IsMultiplayerNet) {
         message_data(0x2411, 0, faction_id, proto_id_new, proto_id_old, 0);
@@ -10664,7 +10673,7 @@ no_energy:
         // Image places this block out of line, after the network then-block.
         if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
             if (set_flag && !(GameDataStateStorage.fields_.game_warnings_ & 4)) {
-                return 0;
+                goto fail;
             }
             popp(ScriptPopupFile,
                 flag_clear ? "UPGRADEPROTOCOST2" : "UPGRADEPROTOCOST", 0,
@@ -10673,7 +10682,7 @@ no_energy:
             return 0;
         }
         if (set_flag && !(GameDataStateStorage.fields_.game_warnings_ & 4)) {
-            return 0;
+            goto fail;
         }
         popp(ScriptPopupFile,
             flag_clear ? "UPGRADEPROTOCOST2" : "UPGRADEPROTOCOST", 0,

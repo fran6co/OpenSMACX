@@ -4896,9 +4896,8 @@ skip_upkeep_synch:
             if ((proto_flags & 1u) != 0) {
                 const int faction = i / 64;
                 const int faction_bit = 1 << faction;
-                const uint16_t upgrade = static_cast<uint16_t>(proto_flags & 0x100u);
                 if ((prototype.obsolete_factions & faction_bit) == 0 &&
-                    upgrade != 0) {
+                    static_cast<short>(proto_flags & 0x100u) != 0) {
                     flags = 1;
                     prototype.flags = static_cast<uint16_t>(proto_flags & 0xFEFFu);
                     if (faction == ConsoleGlobal.faction_id_ &&
