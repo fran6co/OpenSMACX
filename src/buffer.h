@@ -542,6 +542,19 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   // font-slot override around the four-argument RECT writer below.
   int write_right_l(Font *font, char *text, RECT *area, int len);
   int write_right_l(char *text, int x_coord, int y_coord, int width);
+  // Guarded full-length form (draw_farm 0x40FC37, StatusWin::draw_status
+  // 0x4B7FEC): the callers expand the null test before strlen and 0x5DD3B0.
+  // WORKAROUND(decl): only TUs defining BUFFER_WRITE_RIGHT_L3 see it; adding
+  // a Buffer member perturbs ~50 unrelated includers (52 of 148 objects
+  // changed when it was visible everywhere).
+#ifdef BUFFER_WRITE_RIGHT_L3
+  int write_right_l(char *text, int x_coord, int y_coord) {
+    if (!text) {
+      return x_coord;
+    }
+    return write_right_l(text, x_coord, y_coord, static_cast<int>(strlen(text)));
+  }
+#endif
   int wrap(Font *font, char *text, RECT *area);
   int wrap(char *text, RECT *area);
   int wrap(char *text, int x_coord, int y_coord, int width);

@@ -28,6 +28,13 @@
 #include "scroll.h"
 
 #include "graphicwin.h"
+// basewin.cpp emits the measured out-of-line copies of the three bodies at
+// the end of this header; other includers see plain declarations.
+#ifdef BASEWIN_INLINE_BODIES
+#define BASEWIN_INLINE_BODY MEASURED
+#else
+#define BASEWIN_INLINE_BODY
+#endif
 #include "maininterface.h"  // MainInterfaceGlobal and shared interface storage
 #include "subinterface.h"
 
@@ -176,16 +183,16 @@ class BaseWin : public GraphicWin, public SubInterface {
   void draw_info(int a1);                               // 0x00415B20
   void gov_on(int a1);                                  // 0x00415F70
   void gov_activate();                                  // 0x00415F00
-  void recompute(int a1);                               // 0x00416D90
+  BASEWIN_INLINE_BODY void recompute(int a1);                               // 0x00416D90
   void add_queue(int a1, int a2);                       // 0x00416DE0
-  void delete_queue(int a1);                            // 0x00416FB0
+  BASEWIN_INLINE_BODY void delete_queue(int a1);                            // 0x00416FB0
   void production(int a1, int a2);                      // 0x00417040
   void hurry();                                         // 0x00418DF0
   int governor(int a1);                                 // 0x00419A90
   void prev();                                          // 0x0041A010
   void next();                                          // 0x0041A160
   void rename();                                        // 0x0041A2B0
-  void exit();                                          // 0x0041A4C0
+  BASEWIN_INLINE_BODY void exit();                                          // 0x0041A4C0
   void base_killed(int baseID);                         // 0x0041A620
   void check_base(int base_id);                         // 0x0041A7A0
   void check_loc(int x, int y, int radius);              // 0x0041A7E0
@@ -212,6 +219,10 @@ class BaseWin : public GraphicWin, public SubInterface {
   // garrison_click's arguments select a vehicle and screen coordinates, with
   // the final argument selecting the right-button path (original40B140).
   void garrison_click(int vehicle_id, int x, int y, int right);  // 0x0040B140
+  // WORKAROUND(decl): no definition (the hand-copied stand-in was removed;
+  // garrison_click expands exit() itself). The declaration stays because the
+  // BaseWin member count shifts VC6 counters in includers: dropping it changed
+  // end_of_game (0x00524870, turn.cpp) and nine other functions.
   void dismiss_garrison_selection();
   int on_key_click(int repeat, int key) override;  // 0x0041AF50
   void draw_facilities(int a1);                            // 0x0040FCC0
@@ -661,3 +672,95 @@ class BaseWin : public GraphicWin, public SubInterface {
   // constructed global, so this is the last member and BaseWin ends here.
   Scroll scroll3_;  // 0x456EC, size == sizeof(Scroll)
 };
+
+// BaseWin::recompute (0x00416D90), delete_queue (0x00416FB0) and exit
+// (0x0041A4C0) are expanded by basewin.cpp callers that precede their
+// out-of-line copies (farm_click, pop_click, queue_click, garrison_click,
+// base_killed, production, base_editor), so the original bodies were visible
+// as inlines; MEASURED keeps the copies that console.cpp and turn.cpp call
+// out of line (load_proc, on_key_click, center, control_turn,
+// net_end_of_turn). The ORIGINAL markers stay in basewin.cpp.
+// WORKAROUND(decl): only TUs defining BASEWIN_INLINE_BODIES see the bodies,
+// so the other includers keep their out-of-line calls and codegen.
+#ifdef BASEWIN_INLINE_BODIES
+#include "base.h"
+#include "console.h"
+#include "map.h"
+#include "veh.h"
+#include "win.h"
+extern BaseWin TutWinBaseWindow;
+
+MEASURED inline void BaseWin::recompute(int) {
+    if (Win::is_visible()) {
+        set_base(static_cast<int>(focusedBaseID_));
+        base_compute(1);
+        redraw();
+        MainInterfaceGlobal.GraphicWin::redraw();
+    }
+}
+
+MEASURED inline void BaseWin::delete_queue(int index) {
+    if (index > static_cast<int>(BaseCurrent->queue_size)) {
+        int selected = --selected_queue_slot_;
+        if (selected <= 1) {
+            selected = 1;
+        }
+        selected_queue_slot_ = selected;
+        return;
+    }
+    if (index < 9) {
+        for (int slot = index; slot < 9; ++slot) {
+            BaseCurrent->queue_production_id[slot] =
+                BaseCurrent->queue_production_id[slot + 1];
+        }
+    }
+    --BaseCurrent->queue_size;
+    const int count = static_cast<int>(BaseCurrent->queue_size);
+    if (selected_queue_slot_ > count) {
+        int selected = count;
+        if (selected <= 1) {
+            selected = 1;
+        }
+        selected_queue_slot_ = selected;
+    }
+    draw_queue(1);
+}
+
+MEASURED inline void BaseWin::exit() {
+    const int visible = TutWinBaseWindow.is_visible();
+    zoom_wait_pending_ = 0;
+    time_.stop();
+    if (TutWinBaseWindow.is_visible()) TutWinBaseWindow.release_iface_mode();
+    do_all_draws();
+    if (!visible || !ConsoleGlobal.cursor_active_ || ConsoleGlobal.selected_vehicle_ < 0) return;
+    // ECX holds y and is checked against MapLatitudeBounds; EDX holds x.
+    // The seed's misleading local names do not change the typed coordinates.
+    const int horizontal = Vehs[ConsoleGlobal.selected_vehicle_].y;
+    int vertical = Vehs[ConsoleGlobal.selected_vehicle_].x;
+    const int left = ConsoleGlobal.field_1DDA8_;
+    int height = MapLongitudeBounds;
+    if (horizontal >= 0 && horizontal < MapLatitudeBounds
+        && vertical >= 0 && vertical < height) {
+        const int terrain = map_tiles()[MapLongitude * horizontal + (vertical >> 1)].climate;
+        if ((terrain & ~0x1F) > 0x60
+            && horizontal - static_cast<int>(static_cast<unsigned>(terrain) >> 5) + 3 < left + 2) {
+            ConsoleGlobal.center();
+            return;
+        }
+        height = MapLongitudeBounds;
+    }
+    if (horizontal < left + 2
+        || horizontal >= ConsoleGlobal.field_1DDD8_ + ConsoleGlobal.field_1DDD0_ + left - 2) {
+        ConsoleGlobal.center();
+        return;
+    }
+    if (!(MapIsFlat & 1)) {
+        if (vertical < ConsoleGlobal.field_1DDA4_ + 2) vertical += height;
+        if (vertical >= ConsoleGlobal.field_1DDD4_ + ConsoleGlobal.field_1DDCC_ + ConsoleGlobal.field_1DDA4_ - 2)
+            vertical -= height;
+    }
+    if (vertical < ConsoleGlobal.field_1DDA4_ + 2
+        || vertical >= ConsoleGlobal.field_1DDD4_ + ConsoleGlobal.field_1DDCC_ + ConsoleGlobal.field_1DDA4_ - 2)
+        ConsoleGlobal.center();
+}
+#endif  // BASEWIN_INLINE_BODIES

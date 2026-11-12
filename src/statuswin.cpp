@@ -25,6 +25,7 @@
 // ORIGINAL: 0x004B3FC0 _$E19 0x004B3FC0-0x004B3FCA FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x6825f4 selects original initializer0x4b3fa0..0x4b3fb6, registering fini0x4b3fc0..0x4b3fca; complete independent decode establishes exclusive boundaries.", "Source-owned object?ConsoleStatusWin@@3VStatusWin@@A identifies original storage0x8c5568. Startup arguments/calls: call 0x4ba1a0; push 0x4b3fc0. Cleanup receiver/calls: mov ecx, 0x8c5568; jmp 0x4ba120. Constructor/destructor targets retain their existing class-owned source mappings.", "Fresh physical src/statuswin.cpp COFF selects _$E21 through .CRT$XCU and registers _$E19, both referencing the genuine source global. Original NetMsg argument triples and implicit PlanWin/Console most-derived flags are preserved by the existing declarations; complete virtual-base teardown is compiler-owned, not authored offsets.", "Current local helper symbols interpret present emission, not original debug names or historical TU boundaries. Object starts do not prove allocation extents. This binding establishes neither cross-TU global order, masked-reference correctness, strict linked preservation, dependency-provider equivalence nor runtime/game acceptance; excluded guarded sprite cleanup remains separate."], "reason": "Bind original exit identity to the genuine compiler-generated lifetime of ?ConsoleStatusWin@@3VStatusWin@@A in its actual source owner; no manual lifecycle callback is authored."}
 // symbol    _$E14
+#define BUFFER_WRITE_RIGHT_L3  // guarded Buffer::write_right_l(text, x, y)
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "base.h"
@@ -415,20 +416,6 @@ StatusWin ConsoleStatusWin;  // 0x008C5568
 // Typed StatusWin::draw_status recovery from the pinned native body.
 // Retained KUNA pseudocode was used only as a control-flow aid; all data and
 // calls below are expressed through current source owners.
-// WORKAROUND(decl): the image expands a guarded 3-argument
-// Buffer::write_right_l(text, x, y) inline at 0x4B7FEC (arguments first,
-// then the null test, strlen and 0x5DD3B0), the shape of buffer.h's
-// write_l(text, x, y). buffer.h does not declare it; this file-local twin
-// stands in until the header is reconstructed.
-static inline int status_write_right_l(MainInterface &buffer, char *text, int x_coord,
-                                       int y_coord) {
-    if (!text) {
-        return x_coord;
-    }
-    return buffer.write_right_l(text, x_coord, y_coord,
-                                static_cast<int>(strlen(text)));
-}
-
 void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
     field_15DC_ = 0;
     if (a1 >= 0 && a2 >= 0) {
@@ -851,8 +838,8 @@ void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
         strcat(StringTemp, digits);
         strcat(StringTemp, ")");
         MainInterfaceGlobal.set_text_color(TextColourTable[18], TextColourTable[19], 1, 1);
-        status_write_right_l(MainInterfaceGlobal, StringTemp, area.right - 2,
-                             area.bottom - row_pitch);
+        MainInterfaceGlobal.write_right_l(StringTemp, area.right - 2,
+                                          area.bottom - row_pitch);
     }
     MainInterfaceGlobal.restore_clip();
     spot_.add(0, 3, MainInterfaceGlobal.status_right_rect().left,

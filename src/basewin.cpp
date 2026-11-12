@@ -36,6 +36,8 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682064 selects initializer0x4083e0..0x4083f6, registering exit0x408400..0x40840a. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x6eee68 bound to?g_BASEWIN_WAVE@@3VWave@@A.", "Original startup instruction evidence: [[\"0x4083e0\", \"mov\", \"ecx, 0x6eee68\"], [\"0x4083e5\", \"call\", \"0x4c66e0\"], [\"0x4083ea\", \"push\", \"0x408400\"], [\"0x4083ef\", \"call\", \"0x645398\"], [\"0x4083f4\", \"pop\", \"ecx\"], [\"0x4083f5\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x408400\", \"mov\", \"ecx, 0x6eee68\"], [\"0x408405\", \"jmp\", \"0x4c67c0\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/basewin.cpp COFF selects _$E26 via .CRT$XCU, registering _$E24. Startup relocation targets: [\"?g_BASEWIN_WAVE@@3VWave@@A\", \"??0Wave@@QAE@XZ\", \"_$E24\", \"_atexit\"]; exit targets: [\"?g_BASEWIN_WAVE@@3VWave@@A\", \"??1Wave@@UAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f2b4; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned ?g_BASEWIN_WAVE@@3VWave@@A; preserve complete original identity and remaining restoration/structure obligations."}
 // symbol    _$E19
 #define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
+#define BASEWIN_INLINE_BODIES  // recompute/delete_queue/exit bodies in basewin.h
+#define BUFFER_WRITE_RIGHT_L3  // guarded Buffer::write_right_l(text, x, y)
 #include "stdafx.h"
 #include "font_metrics.h"
 #include "interface_fonts.h"
@@ -129,18 +131,11 @@ int specialist_at(const Base &base, int position) {
 }
 }
 
-// ORIGINAL: 0x00416D90 ?recompute@BaseWin@@QAEXH@Z 0x00416D90-0x00416DCA FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x00416D90-0x00416DCA tests Win visibility, selects focusedBaseID_, recomputes, dispatches Win redraw slot 62 and directly redraws MainInterfaceGlobal", "source:src/basewin.h", "source:src/base.h", "source:src/maininterface.h"], "reason": "Refresh the selected base through typed focus state and real virtual/direct redraw calls; the integer argument is unused by the original."}
 // farm_click, pop_click, base_editor and garrison_click expand this body
 // although they precede the out-of-line copy (Console::on_key_click calls it).
-inline void BaseWin::recompute(int) {
-    if (Win::is_visible()) {
-        set_base(static_cast<int>(focusedBaseID_));
-        base_compute(1);
-        redraw();
-        MainInterfaceGlobal.GraphicWin::redraw();
-    }
-}
+// ORIGINAL: 0x00416D90 ?recompute@BaseWin@@QAEXH@Z 0x00416D90-0x00416DCA FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00416D90-0x00416DCA tests Win visibility, selects focusedBaseID_, recomputes, dispatches Win redraw slot 62 and directly redraws MainInterfaceGlobal", "source:src/basewin.h", "source:src/base.h", "source:src/maininterface.h"], "reason": "Refresh the selected base through typed focus state and real virtual/direct redraw calls; the integer argument is unused by the original."}
+// body src/basewin.h
 
 // ORIGINAL: 0x0040A1D0 ?farm_click@BaseWin@@QAEXHHH@Z 0x0040A1D0-0x0040A87F
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/0040a1d0.cpp", "source:src/basewin.h", "image:0x40a1d0"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
@@ -335,37 +330,12 @@ void BaseWin::pop_click(int position, int, int, int) {
     NetDaemonNet.unlock_base(BaseIDCurrentSelected);
 }
 
-// ORIGINAL: 0x00416FB0 ?delete_queue@BaseWin@@QAEXH@Z 0x00416FB0-0x0041703C FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x00416FB0-0x0041703C removes one queue entry, shifts later ids, clamps the selected index to at least one, and redraws the queue", "source:src/base.h:Base::queue_size", "source:src/base.h:Base::queue_production_id"], "reason": "Delete a selected production queue entry through the typed Base queue representation; the drawing dependency remains explicitly unfinished."}
 // queue_click (0x4097F5..) and production (0x417875..) expand this body
 // although both precede the out-of-line copy: the original body was visible
 // to them as an inline.
-inline void BaseWin::delete_queue(int index) {
-    if (index > static_cast<int>(BaseCurrent->queue_size)) {
-        int selected = --selected_queue_slot_;
-        if (selected <= 1) {
-            selected = 1;
-        }
-        selected_queue_slot_ = selected;
-        return;
-    }
-    if (index < 9) {
-        for (int slot = index; slot < 9; ++slot) {
-            BaseCurrent->queue_production_id[slot] =
-                BaseCurrent->queue_production_id[slot + 1];
-        }
-    }
-    --BaseCurrent->queue_size;
-    const int count = static_cast<int>(BaseCurrent->queue_size);
-    if (selected_queue_slot_ > count) {
-        int selected = count;
-        if (selected <= 1) {
-            selected = 1;
-        }
-        selected_queue_slot_ = selected;
-    }
-    draw_queue(1);
-}
+// ORIGINAL: 0x00416FB0 ?delete_queue@BaseWin@@QAEXH@Z 0x00416FB0-0x0041703C FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00416FB0-0x0041703C removes one queue entry, shifts later ids, clamps the selected index to at least one, and redraws the queue", "source:src/base.h:Base::queue_size", "source:src/base.h:Base::queue_production_id"], "reason": "Delete a selected production queue entry through the typed Base queue representation; the drawing dependency remains explicitly unfinished."}
+// body src/basewin.h
 // ORIGINAL: 0x00409200 ?queue_click@BaseWin@@QAEXHHHH@Z 0x00409200-0x0040A1B9;0x0065158B-0x006518EA
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/00409200.cpp", "source:src/basewin.h", "image:0x409200"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
 void BaseWin::queue_click(int row, int x, int y, int right) {
@@ -1099,46 +1069,10 @@ void BaseWin::draw_support() {
     Buffer::set_clip(&saved);
 }
 
-// base_killed inlines this whole body: the original defined it inline here.
+// base_killed inlines this whole body: the original defined it inline.
 // ORIGINAL: 0x0041A4C0 ?exit@BaseWin@@QAEXXZ 0x0041A4C0-0x0041A609 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/recovered/units/0041a4c0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
-inline void BaseWin::exit() {
-    const int visible = TutWinBaseWindow.is_visible();
-    zoom_wait_pending_ = 0;
-    time_.stop();
-    if (TutWinBaseWindow.is_visible()) TutWinBaseWindow.release_iface_mode();
-    do_all_draws();
-    if (!visible || !ConsoleGlobal.cursor_active_ || ConsoleGlobal.selected_vehicle_ < 0) return;
-    // ECX holds y and is checked against MapLatitudeBounds; EDX holds x.
-    // The seed's misleading local names do not change the typed coordinates.
-    const int horizontal = Vehs[ConsoleGlobal.selected_vehicle_].y;
-    int vertical = Vehs[ConsoleGlobal.selected_vehicle_].x;
-    const int left = ConsoleGlobal.field_1DDA8_;
-    int height = MapLongitudeBounds;
-    if (horizontal >= 0 && horizontal < MapLatitudeBounds
-        && vertical >= 0 && vertical < height) {
-        const int terrain = map_tiles()[MapLongitude * horizontal + (vertical >> 1)].climate;
-        if ((terrain & ~0x1F) > 0x60
-            && horizontal - static_cast<int>(static_cast<unsigned>(terrain) >> 5) + 3 < left + 2) {
-            ConsoleGlobal.center();
-            return;
-        }
-        height = MapLongitudeBounds;
-    }
-    if (horizontal < left + 2
-        || horizontal >= ConsoleGlobal.field_1DDD8_ + ConsoleGlobal.field_1DDD0_ + left - 2) {
-        ConsoleGlobal.center();
-        return;
-    }
-    if (!(MapIsFlat & 1)) {
-        if (vertical < ConsoleGlobal.field_1DDA4_ + 2) vertical += height;
-        if (vertical >= ConsoleGlobal.field_1DDD4_ + ConsoleGlobal.field_1DDCC_ + ConsoleGlobal.field_1DDA4_ - 2)
-            vertical -= height;
-    }
-    if (vertical < ConsoleGlobal.field_1DDA4_ + 2
-        || vertical >= ConsoleGlobal.field_1DDD4_ + ConsoleGlobal.field_1DDCC_ + ConsoleGlobal.field_1DDA4_ - 2)
-        ConsoleGlobal.center();
-}
+// body src/basewin.h
 
 
 // ORIGINAL: 0x0041A620 ?base_killed@BaseWin@@QAEXH@Z 0x0041A620-0x0041A79D BYTE_EXACT
@@ -6330,12 +6264,7 @@ draw_map:
             strcat(StringTemp, label_get(759));
             Buffer::set_text_color(TextColourTable[86], TextColourTable[87], 1, 1);
         }
-        // 0x40FC37 tests the text pointer before strlen, as buffer.h's guarded
-        // write_l(text, x, y) does.
-        // WORKAROUND(decl): buffer.h has no guarded write_right_l(text, x, y)
-        // twin yet; this spells its expansion in place.
-        if (StringTemp)
-            Buffer::write_right_l(StringTemp, text_right, text_top, static_cast<int>(strlen(StringTemp)));
+        Buffer::write_right_l(StringTemp, text_right, text_top);
     }
     SpriteScaleNumerator = SpriteScaleDenominator = 1;
     MapWinCaptionScale = MapWinCaptionDivisor = -1;
@@ -7191,14 +7120,6 @@ void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
     }
 }
 
-void BaseWin::dismiss_garrison_selection() {
-    // Original four copies of 40B24D..40B38C. exit() already implements the
-    // identical three visibility reads, zoom latch/time, iface release, draws
-    // and terrain-sensitive Console recenter checks in the genuine owner.
-    if (TutWinBaseWindow.is_visible()) exit();
-    else if (ReportWinGlobal.is_visible()) ReportIfGlobal.done();
-}
-
 // 0040C850..0040D24C, EH cleanup 00651A8D..00651AA2.
 // ORIGINAL: 0x0040C850 ?draw_supported@BaseWin@@QAEXH@Z 0x0040C850-0x0040D24C;0x00651A8D-0x00651AA2
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0040C850; retired seed provenance git:ac469904:src/unrecovered/0040c850.cpp; all original spans and historical obligations retained.", "image:41E8D0 initializes existing Font/FlatButton/Sprite/RECT and Caviar camera members; 420A70 tears down the same declaration order.", "image:41AF5B supplies ConsoleGlobal GraphicWin virtual-base receiver939444; qualified Console callback leaves the result intact.", "image:40B8F8 borrows the vehicle-ID pointer in NetDaemon row1 payload; normal menu cancel-1 reads inherited GraphicWinA0C. Undefined icon-spacing/invalid-index/modal-borrow inputs remain explicit."], "reason": "Genuine BaseWin owner with actual members, automatic base/member lifetimes and native callback receivers, not fixed executable-address forwarding or raw self-offset access."}
@@ -7380,37 +7301,37 @@ void BaseWin::draw_facilities(int update_mode) {
     const int row_height = font_line_advance(font);
     int capacity = (content.bottom - content.top) / row_height;
     if (font_line_advance(font) * capacity + font.pixel_height() <= content.bottom - content.top) ++capacity;
+    int facility = 0;
     int count = 0;
-    for (int facility = 0; facility < 134; ++facility) {
-        bool present = false;
+    while (facility < 134) {
         if (facility < 70) {
-            if (facility < 65) present = has_fac_built(facility, BaseIDCurrentSelected) != 0;
-            if (!present) present = redundant(facility, BaseCurrent->faction_id_current) != 0;
-        } else present = base_project(facility - 70) == BaseIDCurrentSelected;
-        if (present) ++count;
+            if (has_fac(facility, BaseIDCurrentSelected, 0)
+                || redundant(facility, BaseCurrent->faction_id_current)) ++count;
+        } else if (base_project(facility - 70) == BaseIDCurrentSelected) ++count;
+        ++facility;
     }
-    if (count < capacity) scroll1_.close();
-    else {
-        RECT scroll_rect = {content.right - 12, content.top, content.right, content.bottom};
+    if (count >= capacity) {
+        RECT scroll_rect = content;
+        scroll_rect.left = scroll_rect.right - 12;
         scroll_small(); scroll1_.init(&scroll_rect, this, 1, 0);
         scroll1_.set_range(0, count - 1); scroll1_.set_pos(static_cast<int>(field_40B10_));
         scroll1_.set_paging(capacity - 1); scroll1_.show(0); scroll_normal();
-    }
+    } else scroll1_.close();
     int ordinal = -1, y = content.top;
     for (int row = 0; row < 134; ++row) {
-        const int facility = row == 0 ? 26 : row == 26 ? 0 : row;
-        bool present = false;
+        int facility = row;
+        if (row == 0) facility = 26;
+        else if (row == 26) facility = 0;
         if (row < 70) {
-            if (facility < 65) present = has_fac_built(facility, BaseIDCurrentSelected) != 0;
-            if (!present) present = redundant(facility, BaseCurrent->faction_id_current) != 0;
-        } else present = base_project(row - 70) == BaseIDCurrentSelected;
-        if (!present) continue;
+            if (!has_fac(facility, BaseIDCurrentSelected, 0)
+                && !redundant(facility, BaseCurrent->faction_id_current)) continue;
+        } else if (base_project(row - 70) != BaseIDCurrentSelected) continue;
         ++ordinal;
         if (ordinal < static_cast<int>(field_40B10_)
             || ordinal >= static_cast<int>(field_40B10_) + capacity) continue;
         StringTemp[0] = 0;
         if (redundant(facility, BaseCurrent->faction_id_current)) {
-            if (facility < 65 && has_fac_built(facility, BaseIDCurrentSelected)) strcat(StringTemp, "*");
+            if (has_fac(facility, BaseIDCurrentSelected, 0)) strcat(StringTemp, "*");
             Buffer::set_text_color(TextColourTable[124], TextColourTable[125], 1, 1);
         } else Buffer::set_text_color(TextColourTable[122], TextColourTable[123], 1, 1);
         strcat(StringTemp, StringTable.get(Facility[facility].name));
@@ -7426,8 +7347,13 @@ void BaseWin::draw_facilities(int update_mode) {
             else StringTemp[strlen(StringTemp) - 1] = 0;
         }
         Buffer::write_l(StringTemp, content.left + 1, y);
-        spot2_.add(facility, 2, content.left, y, width, row_height);
+        // 0x410306..0x410327: the row rectangle reuses the clip RECT's slot.
+        outer = content;
+        outer.top = y;
         y += row_height;
+        outer.bottom = y;
+        spot2_.add(facility, 2, outer.left, outer.top, outer.right - outer.left,
+                   outer.bottom - outer.top);
     }
     if (update_mode) update(&facilities_help_rect_, 0);
     else soft_update(&facilities_help_rect_);
@@ -7912,21 +7838,4 @@ int BaseWin::farm_get(int a1, int a2) {
 }
 // RECOVERY_GENERATED: v1 vtable 0x0066A40C ? ??_7BaseWin@@6BWin@@@ 0x00408490
 // RECOVERY_GENERATED: v1 vtable 0x0066A404 ? ??_7BaseWin@@6BBuffer@@@ 0x00408490
-
-// WORKAROUND(decl): BaseWin::exit (0x0041A4C0), BaseWin::delete_queue
-// (0x00416FB0) and BaseWin::recompute (0x00416D90) are expanded by every basewin.cpp caller (garrison_click
-// 0x40B240.., base_killed, queue_click 0x4097F5.., production 0x417875..)
-// although those callers precede the copies, so the original bodies were
-// visible to them as inlines (presumably in basewin.h). console.cpp and
-// turn.cpp still call exit out of line (load_proc, on_key_click, center,
-// control_turn, net_end_of_turn). Until the bodies move to the header, this
-// never-called function, compiled with expansion disabled, keeps both
-// out-of-line COMDAT copies emitted without adding a dynamic initializer.
-#pragma inline_depth(0)
-void basewin_emit_inline_copies(BaseWin *window) {
-    window->exit();
-    window->delete_queue(0);
-    window->recompute(0);
-}
-#pragma inline_depth()
 
