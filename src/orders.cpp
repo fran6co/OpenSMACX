@@ -268,7 +268,7 @@ int __cdecl supply_options(int veh_id, int base_id) {
     text_get();
     StringTemp[0] = '\0';
     parse_string(TextBufferGetPtr, StringTemp);
-    popup.dialogs().item(StringTemp, 0);
+    popup.item(StringTemp, 0);
     int item_count = 1;
 
     text_get();
@@ -277,7 +277,7 @@ int __cdecl supply_options(int veh_id, int base_id) {
         queued_cost = cost_factor(owner, 1, -1) * Facility[facility_id].cost;
         parse_say(0, Facility[facility_id].name, -1, -1);
         parse_string(TextBufferGetPtr, StringTemp);
-        popup.dialogs().item(StringTemp, 1);
+        popup.item(StringTemp, 1);
         item_count = 2;
     }
 
@@ -288,7 +288,7 @@ int __cdecl supply_options(int veh_id, int base_id) {
         if (production >= 64 && (VehPrototypes[production].flags & 4u) == 0) {
             parse_says(0, VehPrototypes[production].veh_name, -1, -1);
             parse_string(TextBufferGetPtr, StringTemp);
-            popup.dialogs().item(StringTemp, 1);
+            popup.item(StringTemp, 1);
             ++item_count;
         }
     }
@@ -297,7 +297,7 @@ int __cdecl supply_options(int veh_id, int base_id) {
         for (int convoy_line = 2; convoy_line <= 4; ++convoy_line) {
             text_get();
             parse_string(TextBufferGetPtr, StringTemp);
-            popup.dialogs().item(StringTemp, convoy_line);
+            popup.item(StringTemp, convoy_line);
         }
     }
     if (item_count <= 1) {

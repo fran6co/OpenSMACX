@@ -98,6 +98,7 @@ void WorldWin::init(int reset_map) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004C3AB0 ?right_menu@WorldWin@@QAEXHH@Z 0x004C3AB0-0x004C3D0C;0x00659E80-0x00659E95
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004c3ab0.cpp and original 0x004C3AB0 disassembly; PullDown::get_selected_id owns 0xA20 item indexing."], "reason": "Home the retained world context menu over PullDown and owned map windows, preserving the EH cleanup span."}
+#pragma optimize("y", off)
 void WorldWin::right_menu(int x, int y) {
     PullDown menu;
     int tile_x;
@@ -109,14 +110,14 @@ void WorldWin::right_menu(int x, int y) {
     }
     Win::client_to_screen(&x, &y);
     menu.init(0);
-    menu.add_item(4, label_get(0x300));
+    menu.add_item(4, StringTable.get(Labels.strings_ptr[0x300]));
     menu.add_separator(0x63);
     if (in_range) {
-        menu.add_item(1, label_get(0x244));
-        menu.add_item(2, label_get(0x245));
+        menu.add_item(1, StringTable.get(Labels.strings_ptr[0x244]));
+        menu.add_item(2, StringTable.get(Labels.strings_ptr[0x245]));
     }
     menu.add_separator(0x63);
-    menu.add_item(0x14, label_get(0x23F));
+    menu.add_item(0x14, StringTable.get(Labels.strings_ptr[0x23F]));
     menu.show(x, y, pop_expire);
 
     if ((GameDataStateStorage.fields_.game_state_ & 0x800) != 0) {
@@ -144,6 +145,7 @@ void WorldWin::right_menu(int x, int y) {
         break;
     }
 }
+#pragma optimize("", on)
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004C3D40 ?click@WorldWin@@QAEXHHHH@Z 0x004C3D40-0x004C3E48 BYTE_EXACT

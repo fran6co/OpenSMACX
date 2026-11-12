@@ -1603,20 +1603,20 @@ void DiploWin::on_button_clicked(int button_id) {
     case -2:
     case 4:
       release_modal();
-      return;
+      break;
 
     case -1:
-      return;
+      break;
 
     case 0:
       offer_count_[0] = 0;
       message_data(0x1508, faction_id_with_, 0, 0, 0, 0);
       release_modal();
-      return;
+      break;
 
     case 1:
       ConsoleGlobal.chat(0);
-      return;
+      break;
 
     case 2:
       DiploOffersDirty = 1;
@@ -1627,14 +1627,14 @@ void DiploWin::on_button_clicked(int button_id) {
         message_data(0x150A, faction_id_with_, 0, 0, 0, 0);
         if (IsMultiplayerPBEM != 0) do_it();
       }
-      return;
+      break;
 
     case 3: {
       DiploOffersDirty = 1;
       offer_state_[0] = 2;
       redraw();
       message_data(0x1509, faction_id_with_, 2, 0, 0, 0);
-      if (IsMultiplayerNet != 0 || IsMultiplayerPBEM != 0) return;
+      if (IsMultiplayerNet != 0 || IsMultiplayerPBEM != 0) break;
 
       offer_count_[1] = 0;
       if (rand() % 2 != 0) {
@@ -1666,7 +1666,7 @@ void DiploWin::on_button_clicked(int button_id) {
         case 1: offer_type_[0][0] = 2; break;
       }
       redraw();
-      return;
+      break;
     }
 
     case 5: {
@@ -1736,8 +1736,9 @@ void DiploWin::on_button_clicked(int button_id) {
 
       if (line_count == 0) return;
       const int chosen = popup.exec(0, pop_wait);
-      if (chosen >= 0) add_offer(0, 5, chosen);
-      return;
+      if (chosen < 0) return;
+      add_offer(0, 5, chosen);
+      break;
     }
 
     case 6: {
@@ -1755,7 +1756,7 @@ void DiploWin::on_button_clicked(int button_id) {
         ParseNumTable[0] = amount;
       }
       add_offer(0, 1, amount);
-      return;
+      break;
     }
 
     case 7: {
@@ -1792,7 +1793,7 @@ void DiploWin::on_button_clicked(int button_id) {
         if (!already_offered) add_offer(0, 0, tech_id);
       }
       add_offer(0, 0, 0x270F);
-      return;
+      break;
     }
 
     case 8: {
@@ -1828,20 +1829,20 @@ void DiploWin::on_button_clicked(int button_id) {
       } else {
         NetMsgPrimary.pop("DIPLONOVENDETTA", 0x1388, 0, 0);
       }
-      return;
+      break;
     }
 
     case 9:
       add_offer(0, 4, 0);
-      return;
+      break;
 
     case 10:
       add_offer(0, 3, 0);
-      return;
+      break;
 
     case 11:
       add_offer(0, 2, 0);
-      return;
+      break;
 
     case 12: {
       const int other = faction_id_with_;
@@ -1857,19 +1858,19 @@ void DiploWin::on_button_clicked(int button_id) {
 
       if ((PlayersData[faction_id_].diplo_treaties[other] & 1) == 0) {
         X_pop("DONTHAVEPACT", 0);
-        return;
+        break;
       }
-      if (X_pop("REALLYENDPACT", pop_wait) == 0) return;
+      if (X_pop("REALLYENDPACT", pop_wait) == 0) break;
       if (diplo_lock(0x32) == 0) {
         net_pact_ends(faction_id_, other, 1);
         diplo_unlock();
       }
       DiploOffersDirty = 1;
-      return;
+      break;
     }
 
     default:
-      return;
+      break;
   }
 }
 

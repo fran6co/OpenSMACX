@@ -211,7 +211,7 @@ void NetMsg::pop(const char *label, int duration, int channel,
                          static_cast<int>(field_5380_));
         if (Popup::start(PopupStartCaption, label, -1, nullptr, 0x180,
                          nullptr) == 0) {
-            char button_label[64];
+            char button_label[80];
             button_label[0] = '\0';
             strcat(button_label, label_get(219));
             BasePop::button(button_label);
@@ -226,26 +226,25 @@ void NetMsg::pop(const char *label, int duration, int channel,
             }
         }
         PopupModalState = 0;
+    } else {
+        popup.start(PopupStartCaption, label, -1, nullptr, 0, nullptr);
+
+        // Native predicates: active is false only for a non-network game with a
+        // negative duration (47ABD3..47ABE9).
+        const bool active = IsMultiplayerNet != 0 || duration >= 0;
+        popup.set_auto_hide_value(active ? 1u : 0u);
+        if (target != nullptr && !active) {
+            int size[2];  // image frame: height [ebp-0x14], width [ebp-0x10]
+            if (Buffer::get_pcx_dimensions(target, &size[1], &size[0]) == 0 &&
+                popup.owned_picture().init(const_cast<char *>(target), size[1],
+                                           size[0]) == 0) {
+                popup.select_owned_picture();
+            }
+        }
+
+        popup.BasePop::exec(0, 0);
         return;
     }
-
-    popup.start(PopupStartCaption, label, -1, nullptr, 0, nullptr);
-
-    // Native predicates: active is false only for a non-network game with a
-    // negative duration (47ABD3..47ABE9).
-    const bool active = IsMultiplayerNet != 0 || duration >= 0;
-    popup.set_auto_hide_value(active ? 1u : 0u);
-    if (target != nullptr && !active) {
-        int width = 0;
-        int height = 0;
-        if (Buffer::get_pcx_dimensions(target, &width, &height) == 0 &&
-            popup.owned_picture().init(const_cast<char *>(target), width,
-                                       height) == 0) {
-            popup.select_owned_picture();
-        }
-    }
-
-    popup.BasePop::exec(0, 0);
 }
 
 // Pinned wrapper reads [ebp+8/+0xc], uses plain RET, and callers clean both args.

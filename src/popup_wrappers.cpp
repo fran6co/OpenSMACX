@@ -153,6 +153,7 @@ int __cdecl popv(char *caption, const char *label, int vehicle, int flags) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:391232e01af6824fcf4bf348d5277f5b58c0c53a:src/unrecovered/0048c650.cpp", "pinned:terranx_original:0x48c650", "source:src/popup.cpp"], "reason": "Recover complete popup operation with native early gates, warning/focus/result effects and genuine owned Sprite/Dialogs members, never duplicate locals. Preserve complete spans, original identity and historical obligations; scoped compiler/host observations are not game acceptance."}
 // symbol    ?popb@@YAHPBDHH0PAVSprite@@@Z
 // TRIED: no Ghidra hypothesis was available for this one (brief carried none). This function registers a real SEH frame (mov fs:[0],esp) around a huge local Popup (which embeds Scroll/2xFlatButton/Sprite/Heap per the scaffold's own already- reverse-engineered layout) plus several more locals (Dialogs embedding Dialog+GraphicWin, a second Sprite, SpriteBox) - the destructor cascades visible in the disasm are the INLINED expansion of each object's own close()/dtor. A plain `Popup popup_;` local compiled but left `??1Popup@@QAE@XZ` as a SECOND external .text symbol (the compiler declined to inline it here, unlike the proven pattern from other landings) - fixed by placement-new into a raw byte buffer with explicit `popup_->close(); popup_->~Popup();` at every exit instead of relying on scope-exit RAII. Also needed `struct Sprite` (not `class`) and a `static` fix on `Buffer::get_pcx_dimensions` to match the catalogued mangled name (PAU not PAV; QAA not QAE). The early-return bailout conditions (3 checks on 9a64c0/9a64e8/939284/93a95c) and the mid-function dialog-population logic are a good-faith reading of the raw disasm, not independently re-verified argument- by-argument the way the other 7 addresses were - lowest-confidence landing in this batch. Compiles; not chased to byte-exact given size (2572 bytes) and time.
+#pragma optimize("y", off)
 int __cdecl popb(LPCSTR text_label, int warning_mask, int sound_id,
                  LPCSTR picture_file, Sprite *caller_picture) {
     Popup popup;
@@ -196,11 +197,11 @@ int __cdecl popb(LPCSTR text_label, int warning_mask, int sound_id,
                 ConsoleGlobal.focus(BaseCurrent->x, BaseCurrent->y, faction);
             }
         }
-        int size[2];
+        int size[2];  // image frame: height at [ebp-0x14], width at [ebp-0x10]
         if (picture_file != 0
-            && Buffer::get_pcx_dimensions(picture_file, &size[0], &size[1]) == 0
+            && Buffer::get_pcx_dimensions(picture_file, &size[1], &size[0]) == 0
             && popup.owned_picture().init(const_cast<char *>(picture_file),
-                                          size[0], size[1]) == 0) {
+                                          size[1], size[0]) == 0) {
             popup.select_owned_picture();
         }
     } else {
@@ -211,8 +212,8 @@ int __cdecl popb(LPCSTR text_label, int warning_mask, int sound_id,
         && faction == ConsoleGlobal.faction_id_
         && IsMultiplayerNet == 0
         && !IsMultiplayerPBEM) {
-        popup.dialogs().item(label_get(0xB0 / 4), 0);
-        popup.dialogs().item(label_get(0xB4 / 4), 1);
+        popup.item(label_get(0xB0 / 4), 0);
+        popup.item(label_get(0xB4 / 4), 1);
         if ((warning_mask & 8) != 0 && BaseCurrent->population_size > 1
             && IsMultiplayerNet == 0) {
             int facility_offset;
@@ -224,7 +225,7 @@ int __cdecl popb(LPCSTR text_label, int warning_mask, int sound_id,
             // Nerve stapling needs POLICE >= 0, a punishment sphere adding 2.
             if (PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE]
                     + has_facility * 2 >= 0) {
-                popup.dialogs().item(label_get(0x7AC / 4), 3);
+                popup.item(label_get(0x7AC / 4), 3);
             }
         }
         if (warning_mask != 0) {
@@ -270,6 +271,7 @@ int __cdecl popb(LPCSTR text_label, int warning_mask, int sound_id,
     }
     return result;
 }
+#pragma optimize("", on)
 
 // ORIGINAL: 0x0048CEB0 ?veh_sprite_draw@@YAHPAUSprite@@PAUGraphicWin@@HHH@Z 0x0048CEB0-0x0048CEF2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0048ceb0.cpp: canonical original identity, complete spans and retained historical obligations", "source:src/basepop.h: real owned Dialogs, Sprite and draw callback contract", "source:src/popup.h: Popup lifetime and start interface"], "reason": "The original vehicle draw callback is installed by popv in BasePop draw callback storage3168; real Sprite and GraphicWin pointer formals, GraphicWin Buffer base and source-owned scale globals express its actual owner relationships."}

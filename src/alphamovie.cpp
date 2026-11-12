@@ -188,6 +188,25 @@ AlphaMovie::~AlphaMovie() {
 }
 
 /*
+Purpose: Tear down a UV2Player: close it, then destroy its Buffer member.
+         buffer_ is a real member, so the compiler installs its own SEH
+         unwind protection around close() automatically - matching the
+         image, which protects the same call so the Buffer subobject is
+         still destroyed if close() throws.
+// ORIGINAL: 0x004043D0 ??1UV2Player@@QAE@XZ 0x004043D0-0x0040441C;0x00650740-0x00650758 BYTE_EXACT
+// body src/uv2player.h
+// LEVER: MEASURED 22/22 agreeing. `Buffer buffer_` being a REAL typed member (not raw storage) is what does it - the compiler installs the exact SEH-wrapped-close()-then-destroy-Buffer shape on its own once the member is real, so the body is just `close();` with no explicit try/catch and no explicit `~Buffer()` call at all.
+// size      100 bytes
+// prototype void (__thiscall ??1UV2Player@@QAE@XZ)(UV2Player* this)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004BF400 0x005D7410
+Return Value: n/a
+Status: Complete
+*/
+
+/*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
 // ORIGINAL: 0x00404280 ?UNK7@AlphaMovie@@QAEXXZ 0x00404280-0x00404281 BYTE_EXACT
 // size      1 bytes
@@ -365,6 +384,15 @@ Return Value: the forwarded call's
 Status: Complete
 */
 
+// WORKAROUND(inline): dead /Ob2 spend after amovie_project's first return
+// site. The image tears the first .wve site down one inline level shallower
+// (out-of-line ??1MCIVideo at 0x004042C0, 22 EH states) than this body
+// otherwise does (inline close/~Palette, 23 states). An object-level sweep
+// matched the image's teardown only with eight or more first-level
+// expansions after that site; nested or branchy spend, or spend at the end,
+// gives other distributions. The original's spending call sites are unknown.
+static inline int amovie_spend(int k) { return k; }
+
 /*
 Purpose: Play the opening movie. Builds the player and a stack window dressed
          as an AlphaMovie, then hunts for the movie as a .wve under movies\,
@@ -432,6 +460,9 @@ void __cdecl amovie_project(char *movie) {
         player.exec(found, 0x280, 0x1E0, 0xC);
         return;
     }
+    // WORKAROUND(inline): see amovie_spend.
+    amovie_spend(0); amovie_spend(1); amovie_spend(2); amovie_spend(3);
+    amovie_spend(4); amovie_spend(5); amovie_spend(6); amovie_spend(7);
 
     if (prefs_get("Firaxis", 0, 0) != 0) {
         movie_file[0] = 0;

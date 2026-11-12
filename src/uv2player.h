@@ -25,7 +25,9 @@
 class UV2Player {
  public:
   UV2Player();
-  ~UV2Player();
+  // Header inline: the image keeps one COMDAT copy in alphamovie.obj and
+  // expands it into amovie_project's teardowns.
+  ~UV2Player() { close(); }
   // Release the native display interfaces before automatic Buffer destruction.
   void close();
   int play(int width, int height);
