@@ -3908,24 +3908,6 @@ void __cdecl load_palette() {
     gamma.exec(&g_PALETTE1, PrefWinGammaCorrection, 1);
 }
 
-namespace {
-void terrain_extract_texture_grid(Texture *textures, int count, int columns,
-                                  int first_x, int first_y) {
-    for (int index = 0; index < count; ++index) {
-        textures[index].extract(&g_PCX_PARSE_TEMP_BUFFER1,
-            first_x + (index % columns) * 57,
-            first_y + (index / columns) * 57, 56, 56, 0);
-    }
-}
-
-void terrain_extract_sprite(Sprite &sprite, int x, int y, int height) {
-    // Both recolors occur before EVERY extraction, even if earlier calls
-    // already replaced those colors. Preserve callback timing and failures.
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
-    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
-    sprite.extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, x, y, 100, height, 0);
-}
-}
 
 // RECOVERY_OBJECT: v2 0x006846F8 0x0068472D _TerrainCoastRemapSource 0x00451C50
 static const unsigned char TerrainCoastRemapSource[] = {
@@ -3937,180 +3919,352 @@ static_assert(sizeof(TerrainCoastRemapSource) == 53, "terrain remap extent");
 // RECOVERY_BINDING: v1 {"evidence": ["Body451C50..45370C and cleanup6550F9..65513A construct two four-Sprite arrays then a Buffer, with reverse destruction and partial-construction unwind. The unused first array remains real. CRT initializer/exit evidence beside asset definitions determines their counts and extents, not adjacency.", "Original451CD2 sets TextureRasterKey before the first load;452BB7 reinitializes scratch100x62 after TER1.PCX. Both correct retained-seed omissions/order. All service results are ignored; no rollback or early return is invented.", "Five sheets drive163 Texture extracts,101 Sprite extracts and198 repeated recolors. Twelve get_pixel results publish their low bytes immediately into TerrainCoastPalette. Two conversions call the genuine five-argument source-remap Sprite::draw5E9D44, reading its key after scratch init/fill.", "Original452258 reads the bounded53-byte remap input6846F8..68472D. No writer/escape was observed; const is a bounded interpretation. Source owns its mapping and type; CMake materializes only pinned data into ignored build context. No runtime access to the old executable is used.", "Rocky receiver order0,2,1,3; fungus banks15+15; wreck/fossil/nexus/resource/pod permutations follow original calls. Source grouping is not proof of the historical TU or cross-TU CRT order. Buffer::change_color and other existing callees retain separate structural debt. Preserve full seed git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00451c50.cpp; no byte or runtime acceptance is claimed."], "reason": "Recover the complete terrain-sheet loader through genuine Texture, Sprite and Buffer owners, preserving asset ordering, shared palette publication and C++ lifetime."}
 // TRIED: sim 0.94, 1704/1715 mnemonics (99.4%); first divergence is the missing `mov byte ptr[ebp-4],N` SEH local-unwind state byte the compiler writes between constructing locals and the first call - not reproduced since it falls out of the compiler's own bookkeeping for the `Sprite arr1[4]; Sprite arr2[4]; Buffer buf804;` RAII locals (matching the original's `??_L`/`??_M` array-constructor-iterator calls) rather than anything we write by hand. Every Texture::extract/Sprite::extract/ change_color loop (including the two 4x4 grids with the `ebx==3&&esi==3` skip, the register-relative `esi±0x2c` sprite-table walks, and the get_pixel/palette-remap blocks) is transcribed from the disassembly, not approximated.
 void __cdecl load_terrain() {
-    // Original constructs both four-Sprite arrays, even though the first
-    // array is unused and only the first element of the second is extracted.
-    // Native C++ owns successful construction, partial unwinds, and teardown
-    // in reverse order: local buffer, remapped[], unused[].
+    // Both four-Sprite arrays are constructed; only remapped[0] is used.
     Sprite unused[4];
     Sprite remapped[4];
     Buffer scratch;
+    int i;
+    int j;
+    int row;
+    int col;
+    int x;
+    int y;
+    int n;
+    unsigned char *coast;
+    unsigned char remap[256];
 
-    // This sheet name retains its own original storage identity, separate from
-    // the icon loader copy even though both byte strings are equal.
+    TextureRasterKey = 9;
     // RECOVERY_LITERAL: v1 0x00684FBC 0x00684FC8 ??_C@_0M@DGKG@TEXTURE?4PCX?$AA@ 0x00451C50
-    // RECOVERY_LITERAL: v1 0x00684FC8 0x00684FD5 ??_C@_0N@CDGJ@RAINFALL?4PCX?$AA@ 0x00451C50
-    // RECOVERY_LITERAL: v1 0x00684FD8 0x00684FE1 ??_C@_08EOGP@glow?4pcx?$AA@ 0x00451C50
-    // RECOVERY_LITERAL: v1 0x00684FF4 0x00684FFD ??_C@_08BFGA@TER1?4PCX?$AA@ 0x00451C50
-    TextureRasterKey = 9;  // Before the first load, not afterward as in seed.
     g_PCX_PARSE_TEMP_BUFFER1.load_pcx("TEXTURE.PCX", 0, 10, 236);
     scratch.init(28, 28, 0, 0);
     g_RADIUS1_TEXTURE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 1, 571, 56, 56, 0);
     g_RADIUS2_TEXTURE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 58, 571, 56, 56, 0);
-    {
-        const int order[4] = {0, 2, 1, 3};
-        for (int n = 0; n < 4; ++n) {
-            g_ROCKY_TEXTURES[order[n]].extract(
-                &g_PCX_PARSE_TEMP_BUFFER1, 1 + n * 57, 1, 56, 56, 0);
+    // Column-major fill of a 2x2 block: slots 0, 2, 1, 3.
+    x = 1;
+    for (i = 0; i < 2; ++i) {
+        for (j = 0; j < 2; ++j) {
+            g_ROCKY_TEXTURES[j * 2 + i].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, 1, 56, 56, 0);
+            x += 57;
         }
     }
-    terrain_extract_texture_grid(g_OCEAN_TEXTURES, 2, 1, 280, 79);
+    for (i = 0; i < 2; ++i) {
+        g_OCEAN_TEXTURES[i].extract(&g_PCX_PARSE_TEMP_BUFFER1, 280, 79 + i * 57, 56, 56, 0);
+    }
     g_FLAT_ARID_LAND_TEXTURE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 1, 58, 56, 56, 0);
-    terrain_extract_texture_grid(g_MOIST_LAND_TEXTURES, 16, 4, 1, 115);
-    terrain_extract_texture_grid(g_RAINY_LAND_TEXTURES, 16, 4, 1, 343);
-    terrain_extract_texture_grid(g_JUNGLE_LAND_TEXTURES, 15, 4, 526, 259);
-    g_DUNE_LAND_TEXTURE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 229, 1, 56, 56, 0);
-    terrain_extract_texture_grid(g_SUNNY_MESA_TEXTURES, 8, 4, 768, 15);
-    terrain_extract_texture_grid(g_ROAD_TEXTURES, 9, 3, 775, 395);
-    terrain_extract_texture_grid(g_MAGTUBE_TEXTURES, 9, 3, 775, 566);
-    terrain_extract_texture_grid(g_RIVER_TEXTURES, 16, 4, 280, 259);
-    terrain_extract_texture_grid(g_MOUNT_PLANET_TEXTURES, 3, 3, 1, 628);
-    terrain_extract_texture_grid(g_GARLAND_CRATER_TEXTURES, 3, 3, 1, 685);
-    // Each 4x4 grid skips its final cell; the second bank starts at15, not16.
-    terrain_extract_texture_grid(g_FUNGUS_TEXTURES, 15, 4, 280, 516);
-    terrain_extract_texture_grid(g_FUNGUS_TEXTURES + 15, 15, 4, 508, 516);
-    terrain_extract_texture_grid(g_FARM_TEXTURES, 9, 3, 775, 219);
-    terrain_extract_texture_grid(g_FOREST_TEXTURES, 16, 4, 526, 6);
-
-    g_PCX_PARSE_TEMP_BUFFER1.load_pcx("RAINFALL.PCX", 0, 10, 236);
-    terrain_extract_sprite(g_RAINFALL_DOUBLE_TILE_SPRITES[0], 1, 52, 100);
-    remapped[0].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 2, 333, 113, 56, 0);
-    {
-        for (int row = 0; row < 3; ++row) {
-            for (int column = 0; column < 4; ++column) {
-                // Each byte is published immediately after its get_pixel,
-                // before the next callback. No delayed local palette copy.
-                TerrainCoastPalette[row * 4 + column] =
-                    static_cast<unsigned char>(g_PCX_PARSE_TEMP_BUFFER1.get_pixel(
-                        130 + column * 14, 344 + row * 17));
-            }
+    // The slot index runs across rows; the column counter only bounds a row.
+    for (x = 1, y = 115, i = 0; i < 16; y += 57, x = 1) {
+        for (col = 0; col < 4; ++col, ++i, x += 57) {
+            g_MOIST_LAND_TEXTURES[i].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 56, 56, 0);
         }
     }
-    unsigned char remap[256];
-    memset(remap, 0, sizeof(remap));
-    {
-        for (int index = 0; index < 53; ++index) {
-            const unsigned char color = static_cast<unsigned char>(
-                TerrainCoastRemapSource[index] + 10);
-            remap[color] = static_cast<unsigned char>(index);
+    for (x = 1, y = 343, i = 0; i < 16; y += 57, x = 1) {
+        for (col = 0; col < 4; ++col, ++i, x += 57) {
+            g_RAINY_LAND_TEXTURES[i].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 56, 56, 0);
         }
+    }
+    // 4x4 grid without its final cell.
+    for (x = 526, y = 259, row = 0; row < 4; ++row, y += 57, x = 526) {
+        for (col = 0; col < 4; ++col, x += 57) {
+            if (row == 3 && col == 3) {
+                break;
+            }
+            g_JUNGLE_LAND_TEXTURES[row * 4 + col].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 56, 56, 0);
+        }
+    }
+    g_DUNE_LAND_TEXTURE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 229, 1, 56, 56, 0);
+    for (x = 768, y = 15, i = 0; i < 8; y += 57, x = 768) {
+        for (col = 0; col < 4; ++col, ++i, x += 57) {
+            g_SUNNY_MESA_TEXTURES[i].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 56, 56, 0);
+        }
+    }
+    for (x = 775, y = 395, i = 0; i < 9; y += 57, x = 775) {
+        for (col = 0; col < 3; ++col, ++i, x += 57) {
+            g_ROAD_TEXTURES[i].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 56, 56, 0);
+        }
+    }
+    for (x = 775, y = 566, i = 0; i < 9; y += 57, x = 775) {
+        for (col = 0; col < 3; ++col, ++i, x += 57) {
+            g_MAGTUBE_TEXTURES[i].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 56, 56, 0);
+        }
+    }
+    for (x = 280, y = 259, i = 0; i < 16; y += 57, x = 280) {
+        for (col = 0; col < 4; ++col, ++i, x += 57) {
+            g_RIVER_TEXTURES[i].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 56, 56, 0);
+        }
+    }
+    for (i = 0; i < 3; ++i) {
+        g_MOUNT_PLANET_TEXTURES[i].extract(&g_PCX_PARSE_TEMP_BUFFER1, 1 + i * 57, 628, 56, 56, 0);
+    }
+    for (i = 0; i < 3; ++i) {
+        g_GARLAND_CRATER_TEXTURES[i].extract(&g_PCX_PARSE_TEMP_BUFFER1, 1 + i * 57, 685, 56, 56, 0);
+    }
+    // Two 4x4 grids without their final cells; the second bank starts at 15.
+    for (x = 280, y = 516, row = 0; row < 4; ++row, y += 57, x = 280) {
+        for (col = 0; col < 4; ++col, x += 57) {
+            if (row == 3 && col == 3) {
+                break;
+            }
+            g_FUNGUS_TEXTURES[row * 4 + col].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 56, 56, 0);
+        }
+    }
+    for (x = 508, y = 516, row = 0; row < 4; ++row, y += 57, x = 508) {
+        for (col = 0; col < 4; ++col, x += 57) {
+            if (row == 3 && col == 3) {
+                break;
+            }
+            g_FUNGUS_TEXTURES[15 + row * 4 + col].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 56, 56, 0);
+        }
+    }
+    for (x = 775, y = 219, i = 0; i < 9; y += 57, x = 775) {
+        for (col = 0; col < 3; ++col, ++i, x += 57) {
+            g_FARM_TEXTURES[i].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 56, 56, 0);
+        }
+    }
+    for (x = 526, y = 6, i = 0; i < 16; y += 57, x = 526) {
+        for (col = 0; col < 4; ++col, ++i, x += 57) {
+            g_FOREST_TEXTURES[i].extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 56, 56, 0);
+        }
+    }
+
+    // RECOVERY_LITERAL: v1 0x00684FC8 0x00684FD5 ??_C@_0N@CDGJ@RAINFALL?4PCX?$AA@ 0x00451C50
+    g_PCX_PARSE_TEMP_BUFFER1.load_pcx("RAINFALL.PCX", 0, 10, 236);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_RAINFALL_DOUBLE_TILE_SPRITES[0].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 1, 52, 100, 100, 0);
+    remapped[0].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 2, 333, 113, 56, 0);
+    // Each sampled byte is stored before the next get_pixel call.
+    coast = TerrainCoastPalette;
+    for (y = 344; y < 395; y += 17) {
+        for (x = 130; x < 186; x += 14) {
+            *coast++ = static_cast<unsigned char>(g_PCX_PARSE_TEMP_BUFFER1.get_pixel(x, y));
+        }
+    }
+    memset(remap, 0, sizeof(remap));
+    for (i = 0; i < 53; ++i) {
+        remap[static_cast<unsigned char>(TerrainCoastRemapSource[i] + 10)] =
+            static_cast<unsigned char>(i);
     }
     scratch.init(170, 60, 0, 0);
     remapped[0].draw(&scratch, remapped[0].transparent_index(), 0, 0, remap);
     g_RAINFALL_SINGLE_TILE_TEXTURES[0].extract(&scratch, 0, 0, 56, 56, 0);
     g_RAINFALL_SINGLE_TILE_TEXTURES[1].extract(&scratch, 57, 0, 56, 56, 0);
-    const unsigned char nine_colors[9] = {211,208,41,143,116,151,206,95,192};
+    const unsigned char nine_colors[9] = {211, 208, 41, 143, 116, 151, 206, 95, 192};
     remapped[0].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 2, 254, 60, 60, 0);
     memset(remap, 0, sizeof(remap));
-    {
-        for (int index = 0; index < 9; ++index) {
-            remap[static_cast<unsigned char>(nine_colors[index] + 10)] =
-                static_cast<unsigned char>(index);
-        }
+    for (i = 0; i < 9; ++i) {
+        remap[static_cast<unsigned char>(nine_colors[i] + 10)] = static_cast<unsigned char>(i);
     }
     scratch.fill(9);
     remapped[0].draw(&scratch, remapped[0].transparent_index(), 0, 0, remap);
     g_RAINFALL_SINGLE_TILE_TEXTURE.extract(&scratch, 0, 0, 60, 60, 0);
 
+    // RECOVERY_LITERAL: v1 0x00684FD8 0x00684FE1 ??_C@_08EOGP@glow?4pcx?$AA@ 0x00451C50
     g_PCX_PARSE_TEMP_BUFFER1.load_pcx("glow.pcx", 0, 0, 256);
-    terrain_extract_sprite(g_GLOW_SPRITES[0], 1, 1, 62);
-    terrain_extract_sprite(g_GLOW_SPRITES[1], 102, 1, 62);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_GLOW_SPRITES[0].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 1, 1, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_GLOW_SPRITES[1].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 102, 1, 100, 62, 0);
     g_PCX_PARSE_TEMP_BUFFER1.load_pcx(TerrainWreckSheetName, 0, 10, 236);
-    {
-        const int order[15] = {13,10,14,6,7,8,5,0,1,4,3,2,12,9,11};
-        for (int n = 0; n < 15; ++n) {
-            terrain_extract_sprite(g_TER1WRECK_UNITY_WRECKAGE_SPRITES[order[n]],
-                26 + (n % 3) * 101, 21 + (n / 3) * 63, 62);
-        }
-    }
-    {
-        for (int n = 0; n < 4; ++n) {
-            terrain_extract_sprite(g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES[n],
-                329 + (n % 2) * 101, 147 + (n / 2) * 63, 62);
-        }
-    }
-    {
-        const int order[6] = {5,0,1,4,3,2};
-        for (int n = 0; n < 6; ++n) {
-            terrain_extract_sprite(g_FOSSIL_FIELD_RIDGE_SPRITES[order[n]],
-                329 + (n % 3) * 101, 21 + (n / 3) * 63, 62);
-        }
-    }
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1WRECK_UNITY_WRECKAGE_SPRITES[13].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 26, 21, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1WRECK_UNITY_WRECKAGE_SPRITES[10].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 127, 21, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1WRECK_UNITY_WRECKAGE_SPRITES[14].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 228, 21, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1WRECK_UNITY_WRECKAGE_SPRITES[6].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 26, 84, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1WRECK_UNITY_WRECKAGE_SPRITES[7].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 127, 84, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1WRECK_UNITY_WRECKAGE_SPRITES[8].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 228, 84, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1WRECK_UNITY_WRECKAGE_SPRITES[5].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 26, 147, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1WRECK_UNITY_WRECKAGE_SPRITES[0].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 127, 147, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1WRECK_UNITY_WRECKAGE_SPRITES[1].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 228, 147, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1WRECK_UNITY_WRECKAGE_SPRITES[4].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 26, 210, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1WRECK_UNITY_WRECKAGE_SPRITES[3].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 127, 210, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1WRECK_UNITY_WRECKAGE_SPRITES[2].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 228, 210, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1WRECK_UNITY_WRECKAGE_SPRITES[12].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 26, 273, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1WRECK_UNITY_WRECKAGE_SPRITES[9].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 127, 273, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1WRECK_UNITY_WRECKAGE_SPRITES[11].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 228, 273, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES[0].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 329, 147, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES[1].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 430, 147, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES[2].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 329, 210, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES[3].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 430, 210, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_FOSSIL_FIELD_RIDGE_SPRITES[5].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 329, 21, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_FOSSIL_FIELD_RIDGE_SPRITES[0].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 430, 21, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_FOSSIL_FIELD_RIDGE_SPRITES[1].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 531, 21, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_FOSSIL_FIELD_RIDGE_SPRITES[4].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 329, 84, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_FOSSIL_FIELD_RIDGE_SPRITES[3].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 430, 84, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_FOSSIL_FIELD_RIDGE_SPRITES[2].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 531, 84, 100, 62, 0);
+    // RECOVERY_LITERAL: v1 0x00684FF4 0x00684FFD ??_C@_08BFGA@TER1?4PCX?$AA@ 0x00451C50
     g_PCX_PARSE_TEMP_BUFFER1.load_pcx("TER1.PCX", 0, 10, 236);
-    scratch.init(100, 62, 0, 0); // 452BB7; omitted by the retained seed.
-    {
-        for (int n = 0; n < 3; ++n) {
-            terrain_extract_sprite(g_TER1_WHITE_ORG_YEL_TILE_SPRITES[n * 2],
-                1 + n * 101, 447, 62);
-            terrain_extract_sprite(g_TER1_WHITE_ORG_YEL_TILE_SPRITES[n * 2 + 1],
-                1 + n * 101, 579, 62);
-        }
+    scratch.init(100, 62, 0, 0);
+    for (n = 0; n < 3; ++n) {
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+        g_TER1_WHITE_ORG_YEL_TILE_SPRITES[n * 2].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 1 + n * 101, 447, 100, 62, 0);
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+        g_TER1_WHITE_ORG_YEL_TILE_SPRITES[n * 2 + 1].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 1 + n * 101, 579, 100, 62, 0);
     }
-    {
-        for (int n = 0; n < 3; ++n) {
-            terrain_extract_sprite(g_TER1_BOTTOM_LEFT_TILE_SPRITES[n * 3],
-                1 + n * 101, 510, 62);
-            terrain_extract_sprite(g_TER1_BOTTOM_LEFT_TILE_SPRITES[n * 3 + 1],
-                1 + n * 101, 642, 62);
-            terrain_extract_sprite(g_TER1_BOTTOM_LEFT_TILE_SPRITES[n * 3 + 2],
-                1 + n * 101, 705, 62);
-        }
+    for (n = 0; n < 3; ++n) {
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+        g_TER1_BOTTOM_LEFT_TILE_SPRITES[n * 3].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 1 + n * 101, 510, 100, 62, 0);
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+        g_TER1_BOTTOM_LEFT_TILE_SPRITES[n * 3 + 1].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 1 + n * 101, 642, 100, 62, 0);
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+        g_TER1_BOTTOM_LEFT_TILE_SPRITES[n * 3 + 2].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 1 + n * 101, 705, 100, 62, 0);
     }
-    terrain_extract_sprite(g_TER1_UNUSED_SPRITES2[1], 506, 1, 62);
-    terrain_extract_sprite(g_TER1_MINE_SPRITE, 607, 64, 62);
-    terrain_extract_sprite(g_TER1_MINING_PLATFORM_SPRITE, 506, 64, 62);
-    terrain_extract_sprite(g_TER1_SOLAR_COLLECTOR_SPRITE, 607, 127, 62);
-    terrain_extract_sprite(g_TER1_TIDAL_HARNESS_SPRITE, 506, 127, 62);
-    terrain_extract_sprite(g_TER1_TUT_BLANK_SPRITE, 506, 190, 62);
-    terrain_extract_sprite(g_TER1_KELP_FARM_SPRITE, 607, 190, 62);
-    terrain_extract_sprite(g_TER1_BUNKER_SPRITE, 506, 316, 62);
-    terrain_extract_sprite(g_TER1_AIRBASE_SPRITE, 607, 316, 62);
-    terrain_extract_sprite(g_TER1_SENSOR_ARRAY_SPRITE, 708, 316, 62);
-    {
-        for (int n = 0; n < 5; ++n) {
-            terrain_extract_sprite(g_TER1_UNUSED_SPRITES1[n], 620, 453 + n * 63, 62);
-            terrain_extract_sprite(g_TER1_SOIL_ENRICHER_SPRITES[n], 822, 453 + n * 63, 62);
-            terrain_extract_sprite(g_TER1_FARM_SPRITES[n], 923, 453 + n * 63, 62);
-        }
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1_UNUSED_SPRITES2[1].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 506, 1, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1_MINE_SPRITE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 607, 64, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1_MINING_PLATFORM_SPRITE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 506, 64, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1_SOLAR_COLLECTOR_SPRITE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 607, 127, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1_TIDAL_HARNESS_SPRITE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 506, 127, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1_TUT_BLANK_SPRITE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 506, 190, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1_KELP_FARM_SPRITE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 607, 190, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1_BUNKER_SPRITE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 506, 316, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1_AIRBASE_SPRITE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 607, 316, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1_SENSOR_ARRAY_SPRITE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 708, 316, 100, 62, 0);
+    for (n = 0; n < 5; ++n) {
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+        g_TER1_UNUSED_SPRITES1[n].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 620, 453 + n * 63, 100, 62, 0);
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+        g_TER1_SOIL_ENRICHER_SPRITES[n].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 822, 453 + n * 63, 100, 62, 0);
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+        g_TER1_FARM_SPRITES[n].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 923, 453 + n * 63, 100, 62, 0);
     }
-    terrain_extract_sprite(g_TER1_CONDENSER_SPRITE, 506, 253, 62);
-    terrain_extract_sprite(g_TER1_ECHELON_MIRROR_SPRITE, 607, 253, 62);
-    terrain_extract_sprite(g_TER1_BOREHOLE_SPRITE, 708, 253, 62);
-    terrain_extract_sprite(g_TER1_BOREHOLE_CLUSTER_SPRITE, 708, 190, 62);
-    terrain_extract_sprite(g_TER1_LANDMARK_RESOURCE_SPRITES[4], 822, 253, 62);
-    terrain_extract_sprite(g_TER1_LANDMARK_RESOURCE_SPRITES[5], 822, 190, 62);
-    {
-        const int order[6] = {3,2,4,0,5,1};
-        for (int n = 0; n < 6; ++n) {
-            terrain_extract_sprite(g_TER1_MANIFOLD_NEXUS_SPRITES[order[n]],
-                478 + (n / 2) * 101, 632 + (n % 2) * 63, 62);
-        }
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1_CONDENSER_SPRITE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 506, 253, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1_ECHELON_MIRROR_SPRITE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 607, 253, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1_BOREHOLE_SPRITE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 708, 253, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1_BOREHOLE_CLUSTER_SPRITE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 708, 190, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1_LANDMARK_RESOURCE_SPRITES[4].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 822, 253, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1_LANDMARK_RESOURCE_SPRITES[5].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 822, 190, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1_MANIFOLD_NEXUS_SPRITES[3].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 478, 632, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1_MANIFOLD_NEXUS_SPRITES[2].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 478, 695, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1_MANIFOLD_NEXUS_SPRITES[4].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 579, 632, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1_MANIFOLD_NEXUS_SPRITES[0].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 579, 695, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1_MANIFOLD_NEXUS_SPRITES[5].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 680, 632, 100, 62, 0);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1_MANIFOLD_NEXUS_SPRITES[1].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 680, 695, 100, 62, 0);
+    for (n = 0; n < 3; ++n) {
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+        g_TER1_SEA_LAND_RESOURCE_SPRITES[n * 4 + 2].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 1, 253 + n * 63, 100, 62, 0);
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+        g_TER1_SEA_LAND_RESOURCE_SPRITES[n * 4 + 3].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 102, 253 + n * 63, 100, 62, 0);
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+        g_TER1_SEA_LAND_RESOURCE_SPRITES[n * 4].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 203, 253 + n * 63, 100, 62, 0);
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+        g_TER1_SEA_LAND_RESOURCE_SPRITES[n * 4 + 1].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 304, 253 + n * 63, 100, 62, 0);
     }
-    {
-        for (int n = 0; n < 3; ++n) {
-            terrain_extract_sprite(g_TER1_SEA_LAND_RESOURCE_SPRITES[n * 4 + 2], 1, 253 + n * 63, 62);
-            terrain_extract_sprite(g_TER1_SEA_LAND_RESOURCE_SPRITES[n * 4 + 3], 102, 253 + n * 63, 62);
-            terrain_extract_sprite(g_TER1_SEA_LAND_RESOURCE_SPRITES[n * 4], 203, 253 + n * 63, 62);
-            terrain_extract_sprite(g_TER1_SEA_LAND_RESOURCE_SPRITES[n * 4 + 1], 304, 253 + n * 63, 62);
-        }
+    // Pairs swapped: slots 1, 0, 3, 2, 5, 4.
+    for (n = 0; n < 6; ++n) {
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+        g_TER1_UNITY_POD_SPRITES[(n / 2) * 2 + !(n & 1)].extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 418 + n * 101, 379, 100, 62, 0);
     }
-    {
-        for (int n = 0; n < 6; ++n) {
-            terrain_extract_sprite(g_TER1_UNITY_POD_SPRITES[n ^ 1], 418 + n * 101, 379, 62);
-        }
-    }
-    terrain_extract_sprite(g_TER1_MONOLITH_SPRITE, 304, 1, 62);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(263, 265);
+    g_PCX_PARSE_TEMP_BUFFER1.change_color(262, 265);
+    g_TER1_MONOLITH_SPRITE.extract(&g_PCX_PARSE_TEMP_BUFFER1, 265, 304, 1, 100, 62, 0);
     g_PCX_PARSE_TEMP_BUFFER1.close();
-    // Return codes were ignored throughout. No early return/rollback is added.
 }
 
 // RECOVERY_OBJECT: v2 0x00787E54 0x00787E60 ?TerrainCoastPalette@@3PAEA 0x00451C50

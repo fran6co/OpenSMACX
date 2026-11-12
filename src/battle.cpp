@@ -916,40 +916,28 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                             int combat_type) {
     int offense = 8;
     int defense = 8;
-    int proto_id_atk = -1;
-    int proto_id_def = -1;
-    uint32_t faction_id_atk = 0;
-    uint32_t faction_id_def = 0;
-    if (veh_id_atk >= 0) {
-        proto_id_atk = Vehs[veh_id_atk].proto_id;
-        faction_id_atk = Vehs[veh_id_atk].faction_id;
-    }
-    if (veh_id_def >= 0) {
-        proto_id_def = Vehs[veh_id_def].proto_id;
-        faction_id_def = Vehs[veh_id_def].faction_id;
-    }
     battle_init();
     BOOL is_artillery = combat_type & 1;
     // Native non-artillery selection reads this row even for a negative attacker.
     BOOL is_bombard = (is_artillery
-        || is_proto_missile(Vehs[veh_id_atk].proto_id)) ? true : false;
-    uint32_t psi_combat_type = 0;
+        || is_proto_missile(Vehs[veh_id_atk].proto_id)) ? 1 : 0;
+    int psi_combat_type = 0;
+    // Only the PSI detection and its display rows are gated; the offense and
+    // defense computation below runs for every bombardment as well.
     if (!is_bombard || Vehs[veh_id_atk].proto_id == BSC_SPORE_LAUNCHER
         || Vehs[veh_id_def].proto_id == BSC_SPORE_LAUNCHER) {
-        if (veh_id_atk >= 0 && get_proto_offense_rating(proto_id_atk) < 0) {
+        if (veh_id_atk >= 0 && get_proto_offense_rating(Vehs[veh_id_atk].proto_id) < 0) {
             psi_combat_type = 1; // PSI attacker
         }
-        if (veh_id_def >= 0 && get_proto_defense_rating(proto_id_def) < 0) {
+        if (veh_id_def >= 0 && get_proto_defense_rating(Vehs[veh_id_def].proto_id) < 0) {
             psi_combat_type |= 2; // PSI defender
         }
         // NOTE: PSI bonuses below are only for display purposes, actual calculation is done in
         //       combat morale functions.
         if (psi_combat_type) {
-            // Calculate PSI attack bonus
-            faction_id_atk = Vehs[veh_id_atk].faction_id;
-            int rule_psi_atk = Players[faction_id_atk].rule_psi;
-            if (rule_psi_atk) {
-                add_bat(0, rule_psi_atk, label_get(342)); // "Gaian Psi Bonus"
+            int faction_id_atk = Vehs[veh_id_atk].faction_id;
+            if (Players[faction_id_atk].rule_psi) {
+                add_bat(0, Players[faction_id_atk].rule_psi, label_get(342)); // "Gaian Psi Bonus"
             }
             if (has_project(SP_DREAM_TWISTER, faction_id_atk)) {
                 add_bat(0, 50, label_get(343)); // "Dream Twist"
@@ -957,432 +945,433 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
         }
         // Native reads the defender row before testing the PSI display gate,
         // including a negative ID. Do not substitute faction zero here.
-        faction_id_def = Vehs[veh_id_def].faction_id;
+        int faction_id_def = Vehs[veh_id_def].faction_id;
         if (psi_combat_type) {
-            int rule_psi_def = Players[faction_id_def].rule_psi;
-            if (rule_psi_def) {
-                add_bat(1, rule_psi_def, label_get(342)); // "Gaian Psi Bonus"
+            if (Players[faction_id_def].rule_psi) {
+                add_bat(1, Players[faction_id_def].rule_psi, label_get(342)); // "Gaian Psi Bonus"
             }
             if (has_project(SP_NEURAL_AMPLIFIER, faction_id_def)) {
                 add_bat(1, 50, label_get(344)); // "Neural Amp"
             }
-            if (veh_id_def >= 0 && proto_id_def == BSC_FUNGAL_TOWER) {
+            if (veh_id_def >= 0 && Vehs[veh_id_def].proto_id == BSC_FUNGAL_TOWER) {
                 add_bat(1, 50, VehPrototypes[BSC_FUNGAL_TOWER].veh_name); // "Fungal Tower"
             }
         }
-        if (veh_id_atk >= 0) {
-            offense = get_basic_offense(veh_id_atk, veh_id_def, psi_combat_type, is_bombard, false);
-            if (VehPrototypes[proto_id_atk].plan != PLAN_INFO_WARFARE) {
-                if (veh_id_def >= 0 && !combat_type) { // checking if isn't wpn vs wpn ; air toggle
-                    int x_def = Vehs[veh_id_def].x;
-                    int y_def = Vehs[veh_id_def].y;
-                    if (bit_at(x_def, y_def) & BIT_FUNGUS
-                        && altitude_at(x_def, y_def) >= ALT_BIT_OCEAN_SHELF
-                        && ((proto_id_atk < MaxVehProtoFactionNum
-                            && get_proto_offense_rating(proto_id_atk) < 0)
-                            || has_project(SP_PHOLUS_MUTAGEN, faction_id_atk))
-                        && get_proto_offense_rating(proto_id_def) >= 0) {
-                        offense += offense / 2;
-                        add_bat(0, 50, label_get(338)); // "Fungus"
-                    }
-                    if (psi_combat_type & 2
-                        && (VehPrototypes[proto_id_atk].weapon_id == WPN_RESONANCE_LASER
-                            || VehPrototypes[proto_id_atk].weapon_id == WPN_RESONANCE_BOLT)) {
-                        offense = (offense * 125) / 100;
-                        add_bat(0, 25, label_get(1110)); // "Resonance Attack"
-                    }
-                    if (!has_abil(proto_id_def, ABL_DISSOCIATIVE_WAVE) && (psi_combat_type & 2)
-                        && has_abil(proto_id_atk, ABL_EMPATHIC)
-                        && Rules.combat_pct_emp_song_atk_vs_psi) {
-                        offense = (Rules.combat_pct_emp_song_atk_vs_psi + 100) * offense / 100;
-                        add_bat(0, Rules.combat_pct_emp_song_atk_vs_psi,
-                            Ability[abil_index(ABL_EMPATHIC)].name);
-                    }
+    }
+    if (veh_id_atk >= 0) {
+        offense = get_basic_offense(veh_id_atk, veh_id_def, psi_combat_type, is_bombard, false);
+        if (VehPrototypes[Vehs[veh_id_atk].proto_id].plan != PLAN_INFO_WARFARE) {
+            if (veh_id_def >= 0 && !combat_type) { // checking if isn't wpn vs wpn ; air toggle
+                if (bit_at(Vehs[veh_id_def].x, Vehs[veh_id_def].y) & BIT_FUNGUS
+                    && altitude_at(Vehs[veh_id_def].x, Vehs[veh_id_def].y) >= ALT_BIT_OCEAN_SHELF
+                    && ((Vehs[veh_id_atk].proto_id < MaxVehProtoFactionNum
+                        && get_proto_offense_rating(Vehs[veh_id_atk].proto_id) < 0)
+                        || has_project(SP_PHOLUS_MUTAGEN, Vehs[veh_id_atk].faction_id))
+                    && get_proto_offense_rating(Vehs[veh_id_def].proto_id) >= 0) {
+                    offense += offense / 2;
+                    add_bat(0, 50, label_get(338)); // "Fungus"
                 }
-                if (Vehs[veh_id_atk].state & VSTATE_MADE_AIRDROP
-                    && has_abil(proto_id_atk, ABL_DROP_POD) && Rules.combat_pen_pct_atk_airdrop) {
-                    offense = (100 - Rules.combat_pen_pct_atk_airdrop) * offense / 100;
-                    /*
-                    uint32_t dropRange;
-                    if (has_tech(Rules.tech_orb_insert_sans_spc_elev, faction_id_atk)
-                        || has_project(SP_SPACE_ELEVATOR, faction_id_atk)) {
-                        dropRange = (*MapHorizontalBounds <= MapLatitudeBounds)
-                            ? MapLatitudeBounds : *MapHorizontalBounds;
-                    } else {
-                        dropRange = Rules.max_airdrop_sans_orb_insert;
+                if (psi_combat_type & 2
+                    && (VehPrototypes[Vehs[veh_id_atk].proto_id].weapon_id == WPN_RESONANCE_LASER
+                        || VehPrototypes[Vehs[veh_id_atk].proto_id].weapon_id == WPN_RESONANCE_BOLT)) {
+                    offense = (offense * 125) / 100;
+                    add_bat(0, 25, label_get(1110)); // "Resonance Attack"
+                }
+                if (!has_abil(Vehs[veh_id_def].proto_id, ABL_DISSOCIATIVE_WAVE)
+                    && (psi_combat_type & 2)
+                    && has_abil(Vehs[veh_id_atk].proto_id, ABL_EMPATHIC)
+                    && Rules.combat_pct_emp_song_atk_vs_psi) {
+                    offense = (Rules.combat_pct_emp_song_atk_vs_psi + 100) * offense / 100;
+                    add_bat(0, Rules.combat_pct_emp_song_atk_vs_psi,
+                        StringTable.get(Ability[abil_index(ABL_EMPATHIC)].name));
+                }
+            }
+            if (Vehs[veh_id_atk].state & VSTATE_MADE_AIRDROP
+                && has_abil(Vehs[veh_id_atk].proto_id, ABL_DROP_POD)
+                && Rules.combat_pen_pct_atk_airdrop) {
+                offense = (100 - Rules.combat_pen_pct_atk_airdrop) * offense / 100;
+                add_bat(0, -Rules.combat_pen_pct_atk_airdrop,
+                    drop_range(Vehs[veh_id_atk].faction_id) > Rules.max_airdrop_sans_orb_insert
+                    ? label_get(438) // "Orbital Insertion"
+                    : label_get(437)); // "Air Drop"
+            }
+            if (Players[Vehs[veh_id_atk].faction_id].rule_flags & RFLAG_FANATIC
+                && Rules.combat_pct_fanatic_atk_bonus && !combat_type && !psi_combat_type) {
+                offense = (Rules.combat_pct_fanatic_atk_bonus + 100) * offense / 100;
+                add_bat(0, Rules.combat_pct_fanatic_atk_bonus, label_get(528));
+            }
+            int faction_id_bonus = Vehs[veh_id_atk].faction_id;
+            for (int i = 0; i < Players[faction_id_bonus].faction_bonus_count; i++) {
+                if (Players[faction_id_bonus].faction_bonus_id[i] == RULE_OFFENSE) {
+                    offense = Players[faction_id_bonus].faction_bonus_val1[i] * offense / 100;
+                    add_bat(0, Players[faction_id_bonus].faction_bonus_val1[i] - 100,
+                        label_get(1108)); // "Alien Offense"
+                }
+            }
+            if (psi_combat_type && Vehs[veh_id_atk].faction_id) {
+                if (PlayersData[Vehs[veh_id_atk].faction_id].soc_effect_active.values_[SocialEffect::PLANET]
+                    && Rules.combat_pct_psi_atk_bonus_planet) {
+                    add_bat(0, PlayersData[Vehs[veh_id_atk].faction_id]
+                        .soc_effect_active.values_[SocialEffect::PLANET]
+                        * Rules.combat_pct_psi_atk_bonus_planet, label_get(625)); // "Planet"
+                    offense = (PlayersData[Vehs[veh_id_atk].faction_id]
+                        .soc_effect_active.values_[SocialEffect::PLANET]
+                        * Rules.combat_pct_psi_atk_bonus_planet + 100) * offense / 100;
+                }
+            }
+        }
+    }
+    if (combat_type & 2) {
+        if (veh_id_def >= 0) {
+            defense = get_basic_offense(veh_id_def, veh_id_atk, psi_combat_type, is_bombard, true);
+            if (!(combat_type & 0x18)) {
+                if (get_triad(veh_id_def) == TRIAD_SEA && get_triad(veh_id_atk) == TRIAD_LAND) {
+                    if (Rules.combat_pct_land_gun_vs_ship_art) {
+                        offense = (Rules.combat_pct_land_gun_vs_ship_art + 100) * offense / 100;
+                        // "Land Based Guns"
+                        add_bat(0, Rules.combat_pct_land_gun_vs_ship_art, label_get(435));
                     }
-                    */
-                    add_bat(0, -Rules.combat_pen_pct_atk_airdrop,
-                        drop_range(faction_id_atk) <= Rules.max_airdrop_sans_orb_insert
-                        ? label_get(437) // "Air Drop"
-                        : label_get(438)); // "Orbital Insertion"
-                }
-                if (Players[faction_id_atk].rule_flags & RFLAG_FANATIC
-                    && Rules.combat_pct_fanatic_atk_bonus && !combat_type && !psi_combat_type) {
-                    offense = (Rules.combat_pct_fanatic_atk_bonus + 100) * offense / 100;
-                    add_bat(0, Rules.combat_pct_fanatic_atk_bonus, label_get(528));
-                }
-                int bonus_count = Players[faction_id_atk].faction_bonus_count;
-                for (int i = 0; i < bonus_count; i++) {
-                    if (Players[faction_id_atk].faction_bonus_id[i] == RULE_OFFENSE) {
-                        int rule_off_bonus = Players[faction_id_atk].faction_bonus_val1[i];
-                        offense = rule_off_bonus * offense / 100;
-                        add_bat(0, rule_off_bonus - 100, label_get(1108)); // "Alien Offense"
+                } else if (get_triad(veh_id_atk) == TRIAD_SEA
+                    && get_triad(veh_id_def) == TRIAD_LAND) {
+                    if (Rules.combat_pct_land_gun_vs_ship_art) {
+                        defense = (Rules.combat_pct_land_gun_vs_ship_art + 100) * defense / 100;
+                        // "Land Based Guns"
+                        add_bat(1, Rules.combat_pct_land_gun_vs_ship_art, label_get(435));
                     }
-                }
-                if (psi_combat_type && faction_id_atk) {
-                    int planet_atk = PlayersData[faction_id_atk].soc_effect_active.values_[SocialEffect::PLANET];
-                    if (planet_atk && Rules.combat_pct_psi_atk_bonus_planet) {
-                        int planet_modifier = planet_atk * Rules.combat_pct_psi_atk_bonus_planet;
-                        add_bat(0, planet_modifier, label_get(625)); // "Planet"
-                        offense = (planet_modifier + 100) * offense / 100;
+                } else if (Rules.combat_pct_art_bonus_lvl_alt) {
+                    int alt_atk = alt_at(Vehs[veh_id_atk].x, Vehs[veh_id_atk].y);
+                    int alt_def = alt_at(Vehs[veh_id_def].x, Vehs[veh_id_def].y);
+                    if (alt_def < alt_atk) {
+                        offense = ((alt_atk - alt_def) * Rules.combat_pct_art_bonus_lvl_alt + 100)
+                            * offense / 100;
+                        // "Altitude"
+                        add_bat(0, (alt_atk - alt_def) * Rules.combat_pct_art_bonus_lvl_alt,
+                            label_get(576));
+                    } else if (alt_def > alt_atk) {
+                        defense = ((alt_def - alt_atk) * Rules.combat_pct_art_bonus_lvl_alt + 100)
+                            * defense / 100;
+                        // "Altitude"
+                        add_bat(1, (alt_def - alt_atk) * Rules.combat_pct_art_bonus_lvl_alt,
+                            label_get(576));
                     }
                 }
             }
         }
-        if (!(combat_type & 2) && veh_id_def >= 0) {
-            defense = get_basic_defense(veh_id_def, veh_id_atk, psi_combat_type, is_bombard);
-            int bonus_count = Players[faction_id_def].faction_bonus_count;
-            for (int i = 0; i < bonus_count; i++) {
-                if (Players[faction_id_def].faction_bonus_id[i] == RULE_DEFENSE) {
-                    int rule_def_bonus = Players[faction_id_def].faction_bonus_val1[i];
-                    defense = rule_def_bonus * defense / 100;
-                    add_bat(1, rule_def_bonus - 100, label_get(1109)); // "Alien Defense"
-                }
+    } else if (veh_id_def >= 0) {
+        defense = get_basic_defense(veh_id_def, veh_id_atk, psi_combat_type, is_bombard);
+        for (int i = 0; i < Players[Vehs[veh_id_def].faction_id].faction_bonus_count; i++) {
+            if (Players[Vehs[veh_id_def].faction_id].faction_bonus_id[i] == RULE_DEFENSE) {
+                defense = Players[Vehs[veh_id_def].faction_id].faction_bonus_val1[i] * defense / 100;
+                add_bat(1, Players[Vehs[veh_id_def].faction_id].faction_bonus_val1[i] - 100,
+                    label_get(1109)); // "Alien Defense"
             }
-            if (veh_id_atk >= 0 && VehPrototypes[proto_id_def].plan == PLAN_INFO_WARFARE) {
-                defense *= 4;
-            } else {
-                int x_def = Vehs[veh_id_def].x;
-                int y_def = Vehs[veh_id_def].y;
-                int base_id_def = base_at(x_def, y_def);
-                if (psi_combat_type) {
-                    if (base_id_def >= 0 && Rules.combat_pct_base_def) {
+        }
+        // The attacker's plan, not the defender's.
+        if (veh_id_atk >= 0
+            && VehPrototypes[Vehs[veh_id_atk].proto_id].plan == PLAN_INFO_WARFARE) {
+            defense *= 4;
+        } else {
+            int x_def = Vehs[veh_id_def].x;
+            int y_def = Vehs[veh_id_def].y;
+            int base_id_def = base_at(x_def, y_def);
+            if (!psi_combat_type) {
+                int terrain_def = (get_triad(veh_id_def) != TRIAD_AIR)
+                    ? defense_value(Vehs[veh_id_def].faction_id, x_def, y_def, veh_id_def,
+                        veh_id_atk)
+                    : 2;
+                if (veh_id_atk >= 0 && get_triad(veh_id_atk) == TRIAD_LAND) {
+                    if (combat_type && Rules.combat_pct_art_bonus_lvl_alt
+                        && get_triad(veh_id_def) == TRIAD_LAND) {
+                        int alt_atk = alt_at(Vehs[veh_id_atk].x, Vehs[veh_id_atk].y);
+                        int alt_def = alt_at(Vehs[veh_id_def].x, Vehs[veh_id_def].y);
+                        if (alt_atk > alt_def) {
+                            offense = ((alt_atk - alt_def) * Rules.combat_pct_art_bonus_lvl_alt
+                                + 100) * offense / 100;
+                            // "Altitude"
+                            add_bat(0, (alt_atk - alt_def) * Rules.combat_pct_art_bonus_lvl_alt,
+                                label_get(576));
+                        }
+                    }
+                    if (Rules.combat_pct_mobile_open_ground && !combat_type && base_id_def < 0
+                        && terrain_def == 2
+                        && rocky_at(x_def, y_def) < TERRAIN_BIT_ROCKY
+                        && speed_proto(Vehs[veh_id_atk].proto_id) > Rules.move_rate_roads
+                        && speed_proto(Vehs[veh_id_atk].proto_id)
+                            >= speed_proto(Vehs[veh_id_def].proto_id)) {
+                        offense = (Rules.combat_pct_mobile_open_ground + 100) * offense / 100;
+                        // "Mobile in open"
+                        add_bat(0, Rules.combat_pct_mobile_open_ground, label_get(611));
+                    }
+                    if (Rules.combat_pct_def_vs_mobile_rough && !combat_type
+                        && (terrain_def > 2 || base_id_def >= 0)
+                        && speed_proto(Vehs[veh_id_atk].proto_id) > Rules.move_rate_roads) {
+                        defense = (Rules.combat_pct_def_vs_mobile_rough + 100) * defense / 100;
+                        // "Mobile vs. Base" : "Rough vs. Mobile"
+                        add_bat(1, Rules.combat_pct_def_vs_mobile_rough, base_id_def >= 0
+                            ? label_get(612) : label_get(548));
+                    }
+                    if (Rules.combat_pct_atk_road && !combat_type) {
+                        offense = (Rules.combat_pct_atk_road + 100) * offense / 100;
+                        add_bat(0, Rules.combat_pct_atk_road, label_get(606)); // "Road Attack"
+                    }
+                    if (Rules.combat_pen_pct_atk_lwr_elev && !combat_type
+                        && altitude_at(x_def, y_def)
+                        > altitude_at(Vehs[veh_id_atk].x, Vehs[veh_id_atk].y)
+                        && !has_abil(Vehs[veh_id_atk].proto_id, ABL_ANTIGRAV_STRUTS)) {
+                        // "Uphill"
+                        add_bat(1, Rules.combat_pen_pct_atk_lwr_elev, label_get(441));
+                        defense = (Rules.combat_pen_pct_atk_lwr_elev + 100) * defense / 100;
+                    }
+                    if (Rules.combat_pct_atk_higher_elev && !combat_type
+                        && altitude_at(Vehs[veh_id_atk].x, Vehs[veh_id_atk].y)
+                        > altitude_at(x_def, y_def)
+                        && !has_abil(Vehs[veh_id_def].proto_id, ABL_ANTIGRAV_STRUTS)) {
+                        add_bat(0, Rules.combat_pct_atk_higher_elev, label_get(330)); // "Downhill"
+                        offense = (Rules.combat_pct_atk_higher_elev + 100) * offense / 100;
+                    }
+                }
+                defense *= terrain_def;
+                if (terrain_def > 2) {
+                    // NO C++ LIBRARY: the image's callees here are strcat only,
+                    // after clearing the shared buffer; add_bat copies the text.
+                    StringTemp[0] = '\0';
+                    strcat(StringTemp, label_get(331)); // "Terrain"
+                    strcat(StringTemp, " ");
+                    strcat(StringTemp, "(");
+                    strcat(StringTemp, StringTable.get(VehBattleDisplayTerrain));
+                    strcat(StringTemp, ")");
+                    add_bat(1, 10 * (5 * terrain_def - 10), StringTemp);
+                }
+                // Raw label pointers: StringTable.get runs once, at the add_bat.
+                LPSTR display_def = 0; // only one is displayed
+                int def_multi = 2;
+                if (bit_at(x_def, y_def) & BIT_BUNKER && (veh_id_atk < 0
+                    || get_triad(veh_id_atk) != TRIAD_AIR)) {
+                    def_multi = 3;
+                    display_def = Labels.strings_ptr[358]; // "Bunker"
+                }
+                if (base_id_def >= 0) {
+                    display_def = Labels.strings_ptr[332]; // "Base"
+                    def_multi = 2;
+                    int fac_modifier = 2;
+                    if (veh_id_atk >= 0) {
+                        switch (get_triad(veh_id_atk)) {
+                          case TRIAD_LAND:
+                            if (has_fac(FAC_PERIMETER_DEFENSE, base_id_def, 0)
+                                || has_project(SP_CITIZENS_DEFENSE_FORCE,
+                                    Vehs[veh_id_def].faction_id)) {
+                                display_def = Labels.strings_ptr[354]; // "Perimeter"
+                                fac_modifier = 4;
+                            }
+                            break;
+                          case TRIAD_SEA:
+                            // The base's owner, not the defending unit's faction.
+                            if (has_fac(FAC_NAVAL_YARD, base_id_def, 0)
+                                || has_project(SP_MARITIME_CONTROL_CENTER,
+                                    Bases[base_id_def].faction_id_current)) {
+                                display_def = Facility[FAC_NAVAL_YARD].name;
+                                fac_modifier = 4;
+                            }
+                            break;
+                          case TRIAD_AIR:
+                            if (has_fac(FAC_AEROSPACE_COMPLEX, base_id_def, 0)
+                                || has_project(SP_CLOUDBASE_ACADEMY,
+                                    Bases[base_id_def].faction_id_current)) {
+                                display_def = Facility[FAC_AEROSPACE_COMPLEX].name;
+                                fac_modifier = 4;
+                            }
+                            break;
+                          default:
+                            break;
+                        }
+                    } else {
+                        // Bug-for-bug: a negative attacker id becomes the modifier.
+                        fac_modifier = veh_id_atk;
+                    }
+                    if (has_fac(FAC_TACHYON_FIELD, base_id_def, 0)) {
+                        fac_modifier += 2;
+                        display_def = Labels.strings_ptr[357]; // "Tachyon"
+                    }
+                    if (fac_modifier >= 2) {
+                        def_multi = fac_modifier;
+                    }
+                    if (fac_modifier <= 2
+                        && (veh_id_atk < 0
+                            || !has_abil(Vehs[veh_id_atk].proto_id, ABL_BLINK_DISPLACER))
+                        && Rules.combat_pct_base_def) {
                         add_bat(1, Rules.combat_pct_base_def, label_get(332)); // "Base"
                         defense = (Rules.combat_pct_base_def + 100) * defense / 100;
                     }
-                    defense *= 4;
-                } else {
-                    uint32_t triad_def = get_proto_triad(proto_id_def);
-                    int terrain_def = (triad_def == TRIAD_AIR)
-                        ? 2 : defense_value(faction_id_def, x_def, y_def, veh_id_def, veh_id_atk);
-                    int alt_atk;
-                    int alt_def;
-                    if (veh_id_atk >= 0 && get_triad(veh_id_atk) == TRIAD_LAND) {
-                        if (combat_type && Rules.combat_pct_art_bonus_lvl_alt
-                            && triad_def == TRIAD_LAND
-                            && (alt_atk = alt_at(Vehs[veh_id_atk].x, Vehs[veh_id_atk].y),
-                                alt_def = alt_at(x_def, y_def), alt_atk > alt_def)) {
-                            offense = (Rules.combat_pct_art_bonus_lvl_alt
-                                * (alt_atk - alt_def) + 100) * offense / 100;
-                            // "Altitude"
-                            add_bat(0, Rules.combat_pct_art_bonus_lvl_alt
-                                * (alt_atk - alt_def), label_get(576));
-                        }
-                        if (Rules.combat_pct_mobile_open_ground && !combat_type && base_id_def < 0
-                            && terrain_def == 2
-                            && rocky_at(x_def, y_def) < TERRAIN_BIT_ROCKY) {
-                            int speed_atk = speed_proto(proto_id_atk);
-                            if (speed_atk > Rules.move_rate_roads
-                                && speed_proto(proto_id_def) <= speed_atk) {
-                                offense = (Rules.combat_pct_mobile_open_ground + 100) * offense / 100;
-                                // "Mobile in open"
-                                add_bat(0, Rules.combat_pct_mobile_open_ground, label_get(611));
-                            }
-                        }
-                        if (Rules.combat_pct_def_vs_mobile_rough && !combat_type
-                            && (terrain_def > 2 || base_id_def >= 0)
-                            && speed_proto(proto_id_atk) > Rules.move_rate_roads) {
-                            defense = (Rules.combat_pct_def_vs_mobile_rough + 100) * defense / 100;
-                            // "Rough vs. Mobile" : "Mobile vs. Base"
-                            add_bat(1, Rules.combat_pct_def_vs_mobile_rough, base_id_def < 0
-                                ? label_get(548) : label_get(612));
-                        }
-                        if (Rules.combat_pct_atk_road && !combat_type) {
-                            offense = (Rules.combat_pct_atk_road + 100) * offense / 100;
-                            add_bat(0, Rules.combat_pct_atk_road, label_get(606)); // "Road Attack"
-                        }
-
-                        if (Rules.combat_pen_pct_atk_lwr_elev && !combat_type
-                            && altitude_at(x_def, y_def)
-                            > altitude_at(Vehs[veh_id_atk].x, Vehs[veh_id_atk].y)
-                            && !has_abil(proto_id_atk, ABL_ANTIGRAV_STRUTS)) {
-                            // "Uphill"
-                            add_bat(1, Rules.combat_pen_pct_atk_lwr_elev, label_get(441));
-                            defense = (Rules.combat_pen_pct_atk_lwr_elev + 100) * defense / 100;
-                        }
-                        if (Rules.combat_pct_atk_higher_elev && !combat_type
-                            && altitude_at(Vehs[veh_id_atk].x, Vehs[veh_id_atk].y)
-                            > altitude_at(x_def, y_def)
-                            && !has_abil(proto_id_def, ABL_ANTIGRAV_STRUTS)) {
-                            add_bat(0, Rules.combat_pct_atk_higher_elev, label_get(330)); // "Downhill"
-                            offense = (Rules.combat_pct_atk_higher_elev + 100) * offense / 100;
-                        }
-                    }
-                    defense *= terrain_def;
-                    if (terrain_def > 2) {
-                        // NO C++ LIBRARY. The image's own callee list for this
-                        // body is strcpy (0x00645460) and strcat (0x00645470),
-                        // and add_bat copies what it is handed, so the shared
-                        // StringTemp buffer is safe here.
-                        strcpy(StringTemp, label_get(331)); // "Terrain"
-                        strcat(StringTemp, " (");
-                        strcat(StringTemp, StringTable.get(VehBattleDisplayTerrain));
-                        strcat(StringTemp, ")");
-                        add_bat(1, 10 * (5 * terrain_def - 10), StringTemp);
-                    }
-                    LPSTR display_def = 0; // only one is displayed
-                    uint32_t def_multi = 2;
-                    if (bit_at(x_def, y_def) & BIT_BUNKER && (veh_id_atk < 0
-                        || get_triad(veh_id_atk) != TRIAD_AIR)) {
-                        def_multi = 3;
-                        display_def = label_get(358); // "Bunker"
-                    }
-                    if (base_id_def >= 0) {
-                        display_def = label_get(332); // "Base"
-                        def_multi = 2;
-                        int fac_modifier = veh_id_atk < 0 ? veh_id_atk : 2;
-                        if (veh_id_atk >= 0) {
-                            uint32_t triad_atk = get_triad(veh_id_atk);
-                            switch (triad_atk) {
-                              case TRIAD_LAND:
-                                if (has_fac(FAC_PERIMETER_DEFENSE, base_id_def, 0)
-                                    || has_project(SP_CITIZENS_DEFENSE_FORCE, faction_id_def)) {
-                                    display_def = label_get(354); // "Perimeter"
-                                    fac_modifier = 4;
-                                }
-                                break;
-                              case TRIAD_SEA:
-                                if (has_fac(FAC_NAVAL_YARD, base_id_def, 0)
-                                    || has_project(SP_MARITIME_CONTROL_CENTER, faction_id_def)) {
-                                    display_def = Facility[FAC_NAVAL_YARD].name;
-                                    fac_modifier = 4;
-                                }
-                                break;
-                              case TRIAD_AIR:
-                                if (has_fac(FAC_AEROSPACE_COMPLEX, base_id_def, 0)
-                                    || has_project(SP_CLOUDBASE_ACADEMY, faction_id_def)) {
-                                    display_def = Facility[FAC_AEROSPACE_COMPLEX].name;
-                                    fac_modifier = 4;
-                                }
-                                break;
-                              default:
-                                fac_modifier = def_multi;
-                                break;
-                            }
-                        }
-                        if (has_fac(FAC_TACHYON_FIELD, base_id_def, 0)) {
-                            fac_modifier += 2;
-                            display_def = label_get(357); // "Tachyon"
-                        }
-                        if (fac_modifier >= 2) {
-                            def_multi = fac_modifier;
-                        }
-                        if (fac_modifier <= 2
-                            && (veh_id_atk < 0 || !has_abil(proto_id_atk, ABL_BLINK_DISPLACER))
-                            && Rules.combat_pct_base_def) {
-                            add_bat(1, Rules.combat_pct_base_def, label_get(332)); // "Base"
-                            defense = (Rules.combat_pct_base_def + 100) * defense / 100;
-                        }
-                    }
-                    if (veh_id_atk >= 0 && has_abil(proto_id_atk, ABL_BLINK_DISPLACER)) {
-                        if (def_multi > 2) {
-                            def_multi = 2;
-                        }
-                        display_def = label_get(428); // "Base vs. Blink"
-                    }
-                    if (Rules.combat_pct_infantry_vs_base && !combat_type
-                        && base_id_def >= 0 && Vehs[veh_id_atk].faction_id) {
-                        const int infantry_proto = Vehs[veh_id_atk].proto_id;
-                        if ((infantry_proto >= MaxVehProtoFactionNum
-                            || (get_proto_offense_rating(infantry_proto) >= 0
-                                && infantry_proto != BSC_SPORE_LAUNCHER))
-                            && !get_proto_triad(infantry_proto)
-                            && Chassis[VehPrototypes[infantry_proto].chassis_id].speed == 1) {
-                            offense = (Rules.combat_pct_infantry_vs_base + 100) * offense / 100;
-                            // "Infantry vs. Base"
-                            add_bat(0, Rules.combat_pct_infantry_vs_base, label_get(547));
-                        }
-                    }
-                    uint32_t bit_def;
-                    if (is_artillery && def_multi <= 2 && base_id_def < 0
-                        && rocky_at(x_def, y_def) < TERRAIN_BIT_ROCKY
-                        && (bit_def = bit_at(x_def, y_def),
-                            !(bit_def & BIT_FOREST)) && (!(bit_def & BIT_FUNGUS)
-                                || altitude_at(x_def, y_def)
-                                < ALT_BIT_OCEAN_SHELF)) {
-                        def_multi = 3;
-                        display_def = label_get(525); // "Open Ground"
-                    }
-                    defense *= def_multi;
+                }
+                if (veh_id_atk >= 0 && has_abil(Vehs[veh_id_atk].proto_id, ABL_BLINK_DISPLACER)) {
                     if (def_multi > 2) {
-                        add_bat(1, 10 * (5 * def_multi - 10),
-                            StringTable.get(display_def));
+                        def_multi = 2;
+                    }
+                    display_def = Labels.strings_ptr[428]; // "Base vs. Blink"
+                    StringTable.get(display_def); // result unused
+                }
+                if (Rules.combat_pct_infantry_vs_base && !combat_type
+                    && base_id_def >= 0 && Vehs[veh_id_atk].faction_id) {
+                    const int infantry_proto = Vehs[veh_id_atk].proto_id;
+                    if ((infantry_proto >= MaxVehProtoFactionNum
+                        || (get_proto_offense_rating(infantry_proto) >= 0
+                            && infantry_proto != BSC_SPORE_LAUNCHER))
+                        && !get_proto_triad(infantry_proto)
+                        && Chassis[VehPrototypes[infantry_proto].chassis_id].speed == 1) {
+                        offense = (Rules.combat_pct_infantry_vs_base + 100) * offense / 100;
+                        // "Infantry vs. Base"
+                        add_bat(0, Rules.combat_pct_infantry_vs_base, label_get(547));
                     }
                 }
-                if (faction_id_def && veh_id_atk >= 0 && is_proto_missile(proto_id_atk)) {
-                    for (int i = 0; i < 25; i++) {
-                        int x_radius = wrap_map_x(x_def + RadiusOffsetX[i]);
-                        int y_radius = y_def + RadiusOffsetY[i];
-                        if (on_map(x_radius, y_radius)) {
-                            int base_id_radius = base_at(x_radius, y_radius);
-                            if (base_id_radius >= 0
-                                && Bases[base_id_radius].faction_id_current == faction_id_def
-                                && has_fac(FAC_FLECHETTE_DEFENSE_SYS, base_id_radius, 0)) {
-                                defense = 3 * defense / 2;
-                                add_bat(1, 50, label_get(1113)); // "Flechette"
-                            }
+                if (is_artillery && def_multi <= 2 && base_id_def < 0
+                    && rocky_at(x_def, y_def) < TERRAIN_BIT_ROCKY
+                    && !(bit_at(x_def, y_def) & BIT_FOREST)
+                    && (!(bit_at(x_def, y_def) & BIT_FUNGUS)
+                        || altitude_at(x_def, y_def) < ALT_BIT_OCEAN_SHELF)) {
+                    def_multi = 3;
+                    display_def = Labels.strings_ptr[525]; // "Open Ground"
+                }
+                defense *= def_multi;
+                if (def_multi > 2) {
+                    add_bat(1, 10 * (5 * def_multi - 10), StringTable.get(display_def));
+                }
+            } else {
+                if (base_id_def >= 0 && Rules.combat_pct_base_def) {
+                    add_bat(1, Rules.combat_pct_base_def, label_get(332)); // "Base"
+                    defense = (Rules.combat_pct_base_def + 100) * defense / 100;
+                }
+                defense *= 4;
+            }
+            if (Vehs[veh_id_def].faction_id && veh_id_atk >= 0
+                && is_proto_missile(Vehs[veh_id_atk].proto_id)) {
+                for (int i = 0; i < 25; i++) {
+                    int x_radius = wrap_map_x(x_def + RadiusOffsetX[i]);
+                    int y_radius = y_def + RadiusOffsetY[i];
+                    if (on_map(x_radius, y_radius)) {
+                        int base_id_radius = base_at(x_radius, y_radius);
+                        if (base_id_radius >= 0
+                            && Bases[base_id_radius].faction_id_current
+                                == Vehs[veh_id_def].faction_id
+                            && has_fac(FAC_FLECHETTE_DEFENSE_SYS, base_id_radius, 0)) {
+                            defense = 3 * defense / 2;
+                            add_bat(1, 50, label_get(1113)); // "Flechette"
                         }
-                    }
-                }
-                if (!is_ocean(x_def, y_def)) {
-                    uint32_t sensor_def = 0;
-                    if (faction_id_def) {
-                        for (int i = 0; i < 25; i++) {
-                            int x_radius = wrap_map_x(x_def + RadiusOffsetX[i]);
-                            int y_radius = y_def + RadiusOffsetY[i];
-                            uint32_t sensor_status;
-                            if (on_map(x_radius, y_radius)
-                                && (sensor_status = is_sensor(x_radius, y_radius), sensor_status)) {
-                                BOOL has_sensor = false;
-                                if (!is_ocean(x_radius, y_radius)) {
-                                    int base_id_find = base_find(x_radius, y_radius);
-                                    // Preserve the original unchecked lookup result.
-                                    if (Bases[base_id_find].faction_id_current == faction_id_def) {
-                                        has_sensor = true;
-                                    }
-                                } else {
-                                    int faction_id_terr = whose_territory(faction_id_def, x_radius,
-                                        y_radius, NULL, false);
-                                    if (faction_id_terr < 0
-                                        || (uint32_t)faction_id_terr == faction_id_def) {
-                                        has_sensor = true;
-                                    }
-                                }
-                                if (has_sensor) {
-                                    sensor_def |= 1;
-                                    if (sensor_status > 1) {
-                                        sensor_def |= 2;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if (sensor_def & 1) {
-                        defense = (Rules.combat_pct_def_range_sensor + 100) * defense / 100;
-                        add_bat(1, Rules.combat_pct_def_range_sensor, label_get(613)); // "Sensor"
-                    }
-                    if (sensor_def & 2) {
-                        defense = (Rules.combat_pct_def_range_sensor + 100) * defense / 100;
-                        add_bat(1, Rules.combat_pct_def_range_sensor, label_get(1123)); // "GSP"
-                    }
-                }
-                if (!has_abil(Vehs[veh_id_atk].proto_id, ABL_DISSOCIATIVE_WAVE)
-                    && Rules.combat_pct_trance_def_vs_psi && veh_id_atk >= 0
-                    && (psi_combat_type & 1)
-                    && has_abil(proto_id_def, ABL_TRANCE)) {
-                    defense = (Rules.combat_pct_trance_def_vs_psi + 100) * defense / 100;
-                    add_bat(1, Rules.combat_pct_trance_def_vs_psi, label_get(329)); // "Trance"
-                }
-                if (veh_id_atk >= 0) {
-                    uint32_t armor_id_def = VehPrototypes[proto_id_def].armor_id;
-                    if ((psi_combat_type & 1) && (armor_id_def == ARM_RESONANCE_3_ARMOR
-                        || armor_id_def == ARM_RESONANCE_8_ARMOR)) {
-                        defense = 125 * defense / 100;
-                        add_bat(1, 25, label_get(1111)); // "Resonance Def."
-                    }
-                    if (get_proto_triad(proto_id_atk) == TRIAD_AIR
-                        && has_abil(proto_id_atk, ABL_AIR_SUPERIORITY) && !psi_combat_type) {
-                        if (get_proto_triad(proto_id_def) != TRIAD_AIR) {
-                            int ground_strike_pen = Rules.combat_pen_pct_air_supr_vs_grnd;
-                            if (ground_strike_pen) {
-                                offense = (100 - ground_strike_pen) * offense / 100;
-                                add_bat(0, -ground_strike_pen, label_get(448)); // "Ground Strike"
-                            }
-                        } else {
-                            int air_to_air = Rules.combat_pct_air_supr_vs_air;
-                            if (air_to_air && !has_abil(proto_id_def, ABL_AIR_SUPERIORITY)) {
-                                offense = (air_to_air + 100) * offense / 100;
-                                add_bat(0, air_to_air, label_get(449)); // "Air-to-Air"
-                            }
-                        }
-                    }
-                    if (get_proto_triad(proto_id_atk) == TRIAD_AIR
-                        && get_proto_triad(proto_id_def) == TRIAD_AIR
-                        && has_abil(proto_id_def, ABL_AIR_SUPERIORITY)
-                        && !has_abil(proto_id_atk, ABL_AIR_SUPERIORITY) && !psi_combat_type
-                        && !is_proto_missile(proto_id_atk) && !is_proto_missile(proto_id_def)
-                        && Rules.combat_pct_air_supr_vs_air) {
-                        defense = (Rules.combat_pct_air_supr_vs_air + 100) * defense / 100;
-                        add_bat(1, Rules.combat_pct_air_supr_vs_air, label_get(449)); // "Air-to-Air"
-                    }
-                    if (!get_proto_offense_rating(proto_id_def)
-                        && get_proto_defense_rating(proto_id_def) == 1 && (faction_id_atk
-                            || base_id_def < 0) && Rules.combat_pen_pct_non_cbt_def_vs_cbt) {
-                        defense = (100 - Rules.combat_pen_pct_non_cbt_def_vs_cbt) * defense / 100;
-                        // "Non Combat"
-                        add_bat(1, -Rules.combat_pen_pct_non_cbt_def_vs_cbt, label_get(439));
-                    }
-                    if (get_proto_triad(proto_id_atk) == TRIAD_SEA
-                        && get_proto_triad(proto_id_def) == TRIAD_SEA && base_id_def >= 0
-                        && Rules.combat_pct_bonus_vs_ship_port) {
-                        offense = (Rules.combat_pct_bonus_vs_ship_port + 100) * offense / 100;
-                        add_bat(0, Rules.combat_pct_bonus_vs_ship_port, label_get(335)); // "In Port"
-                    }
-                    if ((armor_id_def == ARM_PULSE_3_ARMOR || armor_id_def == ARM_PULSE_8_ARMOR)
-                        && get_proto_triad(proto_id_atk) == TRIAD_LAND
-                        && Chassis[VehPrototypes[proto_id_atk].chassis_id].speed > 1) {
-                        defense = 125 * defense / 100;
-                        add_bat(1, 25, label_get(1112)); // "Pulse Defense"
-                    }
-                    if (!has_abil(proto_id_atk, ABL_DISSOCIATIVE_WAVE)
-                        && has_abil(proto_id_def, ABL_COMM_JAMMER)
-                        && get_proto_triad(proto_id_atk) == TRIAD_LAND
-                        && Chassis[VehPrototypes[proto_id_atk].chassis_id].speed > 1
-                        && Rules.combat_pct_com_jam_def_vs_mobl) {
-                        defense = (Rules.combat_pct_com_jam_def_vs_mobl + 100) * defense / 100;
-                        add_bat(1, Rules.combat_pct_com_jam_def_vs_mobl, label_get(336)); // "Jammer"
-                    }
-                    if (!has_abil(proto_id_atk, ABL_DISSOCIATIVE_WAVE)
-                        && has_abil(proto_id_def, ABL_AAA) && get_proto_triad(proto_id_atk) == TRIAD_AIR
-                        && Rules.combat_pct_aaa_bonus_vs_air) {
-                        defense = (Rules.combat_pct_aaa_bonus_vs_air + 100) * defense / 100;
-                        add_bat(1, Rules.combat_pct_aaa_bonus_vs_air, label_get(337)); // "Tracking"
                     }
                 }
             }
-        } else if (veh_id_def >= 0) {
-            defense = get_basic_offense(veh_id_def, veh_id_atk, psi_combat_type, is_bombard, true);
-            if (!(combat_type & 0x18)) {
-                uint32_t triad_atk = get_proto_triad(proto_id_atk);
-                uint32_t triad_def = get_proto_triad(proto_id_def);
-                if (triad_def == TRIAD_SEA && triad_atk == TRIAD_LAND) {
-                    int gun_vs_ship_art = Rules.combat_pct_land_gun_vs_ship_art;
-                    if (gun_vs_ship_art) {
-                        offense = (gun_vs_ship_art + 100) * offense / 100;
-                        add_bat(0, gun_vs_ship_art, label_get(435)); // "Land Based Guns"
-                    }
-                } else if (triad_atk == TRIAD_SEA && triad_def == TRIAD_LAND) {
-                    int gun_vs_ship_art = Rules.combat_pct_land_gun_vs_ship_art;
-                    if (gun_vs_ship_art) {
-                        defense = (gun_vs_ship_art + 100) * defense / 100;
-                        add_bat(1, gun_vs_ship_art, label_get(435)); // "Land Based Guns"
-                    }
-                } else if (Rules.combat_pct_art_bonus_lvl_alt) {
-                    uint32_t alt_atk = alt_at(Vehs[veh_id_atk].x, Vehs[veh_id_atk].y);
-                    uint32_t alt_def = alt_at(Vehs[veh_id_def].x, Vehs[veh_id_def].y);
-                    if (alt_def >= alt_atk) {
-                        if (alt_def > alt_atk) {
-                            int alt_modifier_def = (alt_def - alt_atk)
-                                * Rules.combat_pct_art_bonus_lvl_alt;
-                            defense = (alt_modifier_def + 100) * defense / 100;
-                            add_bat(1, alt_modifier_def, label_get(576)); // "Altitude"
+            if (!is_ocean(x_def, y_def)) {
+                int sensor_def = 0;
+                if (Vehs[veh_id_def].faction_id) {
+                    for (int i = 0; i < 25; i++) {
+                        int x_radius = wrap_map_x(x_def + RadiusOffsetX[i]);
+                        int y_radius = y_def + RadiusOffsetY[i];
+                        if (on_map(x_radius, y_radius) && is_sensor(x_radius, y_radius)) {
+                            BOOL has_sensor;
+                            if (is_ocean(x_radius, y_radius)) {
+                                // Preserve the unchecked lookup result.
+                                has_sensor = Bases[base_find(x_radius, y_radius)].faction_id_current
+                                    == Vehs[veh_id_def].faction_id;
+                            } else {
+                                int faction_id_terr = whose_territory(Vehs[veh_id_def].faction_id,
+                                    x_radius, y_radius, NULL, false);
+                                has_sensor = faction_id_terr < 0
+                                    || faction_id_terr == Vehs[veh_id_def].faction_id;
+                            }
+                            if (has_sensor) {
+                                sensor_def |= 1;
+                                if (is_sensor(x_radius, y_radius) > 1) {
+                                    sensor_def |= 2;
+                                }
+                            }
                         }
-                    } else {
-                        int alt_mod_atk = (alt_atk - alt_def) * Rules.combat_pct_art_bonus_lvl_alt;
-                        offense = (alt_mod_atk + 100) * offense / 100;
-                        add_bat(0, alt_mod_atk, label_get(576)); // "Altitude"
                     }
+                }
+                if (sensor_def & 1) {
+                    defense = (Rules.combat_pct_def_range_sensor + 100) * defense / 100;
+                    add_bat(1, Rules.combat_pct_def_range_sensor, label_get(613)); // "Sensor"
+                }
+                if (sensor_def & 2) {
+                    defense = (Rules.combat_pct_def_range_sensor + 100) * defense / 100;
+                    add_bat(1, Rules.combat_pct_def_range_sensor, label_get(1123)); // "GSP"
+                }
+            }
+            if (!has_abil(Vehs[veh_id_atk].proto_id, ABL_DISSOCIATIVE_WAVE)
+                && Rules.combat_pct_trance_def_vs_psi && veh_id_atk >= 0
+                && (psi_combat_type & 1)
+                && has_abil(Vehs[veh_id_def].proto_id, ABL_TRANCE)) {
+                defense = (Rules.combat_pct_trance_def_vs_psi + 100) * defense / 100;
+                add_bat(1, Rules.combat_pct_trance_def_vs_psi, label_get(329)); // "Trance"
+            }
+            if ((psi_combat_type & 1) && veh_id_atk >= 0
+                && (VehPrototypes[Vehs[veh_id_def].proto_id].armor_id == ARM_RESONANCE_3_ARMOR
+                    || VehPrototypes[Vehs[veh_id_def].proto_id].armor_id
+                        == ARM_RESONANCE_8_ARMOR)) {
+                defense = 125 * defense / 100;
+                add_bat(1, 25, label_get(1111)); // "Resonance Def."
+            }
+            if (veh_id_atk >= 0) {
+                if (get_triad(veh_id_atk) == TRIAD_AIR
+                    && has_abil(Vehs[veh_id_atk].proto_id, ABL_AIR_SUPERIORITY)
+                    && !psi_combat_type) {
+                    if (get_triad(veh_id_def) != TRIAD_AIR) {
+                        if (Rules.combat_pen_pct_air_supr_vs_grnd) {
+                            offense = (100 - Rules.combat_pen_pct_air_supr_vs_grnd) * offense / 100;
+                            // "Ground Strike"
+                            add_bat(0, -Rules.combat_pen_pct_air_supr_vs_grnd, label_get(448));
+                        }
+                    } else if (Rules.combat_pct_air_supr_vs_air
+                        && !has_abil(Vehs[veh_id_def].proto_id, ABL_AIR_SUPERIORITY)) {
+                        offense = (Rules.combat_pct_air_supr_vs_air + 100) * offense / 100;
+                        add_bat(0, Rules.combat_pct_air_supr_vs_air, label_get(449)); // "Air-to-Air"
+                    }
+                }
+                if (get_triad(veh_id_atk) == TRIAD_AIR
+                    && get_triad(veh_id_def) == TRIAD_AIR
+                    && has_abil(Vehs[veh_id_def].proto_id, ABL_AIR_SUPERIORITY)
+                    && !has_abil(Vehs[veh_id_atk].proto_id, ABL_AIR_SUPERIORITY)
+                    && !psi_combat_type
+                    && !is_proto_missile(Vehs[veh_id_atk].proto_id)
+                    && !is_proto_missile(Vehs[veh_id_def].proto_id)
+                    && Rules.combat_pct_air_supr_vs_air) {
+                    defense = (Rules.combat_pct_air_supr_vs_air + 100) * defense / 100;
+                    add_bat(1, Rules.combat_pct_air_supr_vs_air, label_get(449)); // "Air-to-Air"
+                }
+                if (!get_proto_offense_rating(Vehs[veh_id_def].proto_id)
+                    && get_proto_defense_rating(Vehs[veh_id_def].proto_id) == 1
+                    && (Vehs[veh_id_atk].faction_id || base_id_def < 0)
+                    && Rules.combat_pen_pct_non_cbt_def_vs_cbt) {
+                    defense = (100 - Rules.combat_pen_pct_non_cbt_def_vs_cbt) * defense / 100;
+                    // "Non Combat"
+                    add_bat(1, -Rules.combat_pen_pct_non_cbt_def_vs_cbt, label_get(439));
+                }
+                // A non-ship attacker against a ship in port.
+                if (get_triad(veh_id_atk) != TRIAD_SEA
+                    && get_triad(veh_id_def) == TRIAD_SEA && base_id_def >= 0
+                    && Rules.combat_pct_bonus_vs_ship_port) {
+                    offense = (Rules.combat_pct_bonus_vs_ship_port + 100) * offense / 100;
+                    add_bat(0, Rules.combat_pct_bonus_vs_ship_port, label_get(335)); // "In Port"
+                }
+                if ((VehPrototypes[Vehs[veh_id_def].proto_id].armor_id == ARM_PULSE_3_ARMOR
+                    || VehPrototypes[Vehs[veh_id_def].proto_id].armor_id == ARM_PULSE_8_ARMOR)
+                    && get_triad(veh_id_atk) == TRIAD_LAND
+                    && Chassis[VehPrototypes[Vehs[veh_id_atk].proto_id].chassis_id].speed > 1) {
+                    defense = 125 * defense / 100;
+                    add_bat(1, 25, label_get(1112)); // "Pulse Defense"
+                }
+                if (!has_abil(Vehs[veh_id_atk].proto_id, ABL_DISSOCIATIVE_WAVE)
+                    && has_abil(Vehs[veh_id_def].proto_id, ABL_COMM_JAMMER)
+                    && get_triad(veh_id_atk) == TRIAD_LAND
+                    && Chassis[VehPrototypes[Vehs[veh_id_atk].proto_id].chassis_id].speed > 1
+                    && Rules.combat_pct_com_jam_def_vs_mobl) {
+                    defense = (Rules.combat_pct_com_jam_def_vs_mobl + 100) * defense / 100;
+                    add_bat(1, Rules.combat_pct_com_jam_def_vs_mobl, label_get(336)); // "Jammer"
+                }
+                if (!has_abil(Vehs[veh_id_atk].proto_id, ABL_DISSOCIATIVE_WAVE)
+                    && has_abil(Vehs[veh_id_def].proto_id, ABL_AAA)
+                    && get_triad(veh_id_atk) == TRIAD_AIR
+                    && Rules.combat_pct_aaa_bonus_vs_air) {
+                    defense = (Rules.combat_pct_aaa_bonus_vs_air + 100) * defense / 100;
+                    add_bat(1, Rules.combat_pct_aaa_bonus_vs_air, label_get(337)); // "Tracking"
                 }
             }
         }
@@ -1561,11 +1550,6 @@ static const int BoomColorGroupByWeapon[MaxWeaponNum] = {
 // RECOVERY_OBJECT: v2 0x0090F7D4 0x0090F7D8 ?BoomAnimationLevel@@3HA 0x00500B60
 int BoomAnimationLevel;
 
-static int boom_zoomed_extent(int zoom, int extent) {
-    const int product = zoom * extent;
-    return (product + (product >> 31 & 0x0f)) >> 4;
-}
-
 // ORIGINAL: 0x00504AA0 ?boom@@YAHHHH@Z 0x00504AA0-0x00505D1B FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00504aa0.cpp", "src/veh.h", "src/flic.h", "recovery/tasks/mapwin-owner-coverage-wave.json", "Pinned 0x00504AA0 guard 0x0090F7D8 lazily constructs the two Buffer[8] arrays at 0x0090F7E0 and 0x00912428, registers distinct atexit destructors, then constructs/registers Flic at 0x0090EA68 and Buffer at 0x00915068.", "The four adjacent original teardown identities now have source-owned local-static object bindings at their exact original data extents; fresh retained COFF callback relocations and MAP owner rows are preserved in the generated identity records beside each declaration.", "All original callback spans, claims and TRIED lesson text are transferred to the corresponding source declaration mapping. Physical wrapper names are written back from retained COFF facts, not inferred from seed names."], "reason": "Recover per-window explosion and Flic animation with genuine typed static buffers, real MapWin/GraphicWin bases, source-owned weapon tables and original branch/timing/sound behavior; preserve the original seed and its correction evidence."}
 // TRIED: mechanical transcription of the Ghidra decompilation (integer fixed-point animation math, no float). Two one-time static-init pools (8 Buffers at 0x912428, 8 more at 0x90f7e0, each array-constructed via the compiler's own `??_L` array- construct helper already declared as fn_006457c2) plus a lone Flic/Buffer pair at 0x90ea68/0x915068 constructed with placement `new` and registered via atexit for teardown - all four receivers confirmed from the raw disassembly's `mov ecx, ADDR` before each ctor call. Every FUN_ callee resolved to a real name from the disassembly's own comments. Not fully chased: several Buffer::copy/init/draw_multi_ table_dest calls inside the 8-slot animation loop use a fixed 0x915068 receiver as a placeholder - the raw asm shows the true receiver is a per-iteration resolved screen-buffer pointer (the same `*(int*)0x7d3c3c`-based idiom used throughout this codebase) that would take another pass to thread through every call site correctly. Landed at MISMATCH #4 without chasing the prologue divergence, given the size of this function and the remaining time in this batch.
@@ -1574,6 +1558,8 @@ int __cdecl boom(int x, int y, int flags) {
     // The two arrays and both working buffers are genuine function-local
     // statics. Their constructors/destructors and first-use guard are thus
     // compiler-owned rather than replayed through fixed image addresses.
+    // Cleared before the static guards (0x00504AAE).
+    int any_window = 0;
 // ORIGINAL: 0x00505D60 ??__Eg_BOOM_BUFFERS2@@YAXXZ 0x00505D60-0x00505D77 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned original initializer 0x00504AA0 constructs and registers this object's matching teardown callback", "retained COFF build/recovery/builds/build-sep4rpby/CMakeFiles/OpenSMACX.dir/src/veh.cpp.obj: _$E19 physically relocates to _?original_screen_snapshots@?1??boom@@YAHHHH@Z@4PAVBuffer@@A", "retained MAP names veh.cpp.obj as the generated wrapper's physical contribution", "full original span, historical claim and seed lessons are retained; this mapping does not assert byte equality"], "reason": "Map the original BOOM atexit identity to the compiler-emitted destructor wrapper owned by the corresponding genuine function-local object."}
 // symbol    _$E14
@@ -1602,458 +1588,425 @@ int __cdecl boom(int x, int y, int flags) {
 // RECOVERY_OBJECT: v2 0x00915068 0x009155F0 _?working_buffer@?1??boom@@YAHHHH@Z@4VBuffer@@A 0x00504AA0
     static Buffer working_buffer;
 
-    int selected_vehicle = VehDrawSelection689F28;
-    int other_selected_vehicle = VehDrawSelection689F2C;
-    int saved_selection = selected_vehicle;
-    int second_selection = other_selected_vehicle;
+    // Explosion colour group by faction; read by the Flic draw (0x0050595A).
+    int veh_a = VehDrawSelection689F28;  // EBP-0x1C
+    int veh_b = VehDrawSelection689F2C;  // EBP-0x14
     int animation_state = flags & 0x70;
-    int sprite_bank = 0;
-    int palette_row = 0;
-    int frame_span = 0;
-    int animation_height = 0;
-    bool special_chassis = false;
-    bool flic_mode = false;
-    int faction_color_group[28];
-
-    if (animation_state == 0) {
-        const Veh &initial_selected = Vehs[selected_vehicle];
-        const VehPrototype &initial_prototype =
-            VehPrototypes[initial_selected.proto_id];
-        if (initial_prototype.chassis_id == CHSI_MISSILE && (flags & 1) != 0) {
-            g_FX.play(0x52, initial_selected.x, initial_selected.y);
-            return 0;
-        }
-        if ((flags & 1) != 0) {
-            if (VehPrototypes[Vehs[selected_vehicle].proto_id].weapon_id == 15 ||
-                VehPrototypes[Vehs[other_selected_vehicle].proto_id].weapon_id == 15) {
-                special_chassis = true;
-            }
-            if (Vehs[other_selected_vehicle].proto_id == 1) {
-                g_FX.play(1);
-            }
-        }
-        if ((flags & 8) == 0 && !special_chassis) {
-            selected_vehicle = VehDrawSelection689F2C;
-            other_selected_vehicle = VehDrawSelection689F28;
-            saved_selection = selected_vehicle;
-            second_selection = other_selected_vehicle;
-        }
-
-        if ((flags & 2) != 0 && other_selected_vehicle >= 0) {
-            const int selected_proto = Vehs[other_selected_vehicle].proto_id;
-            if (selected_proto == 8 || selected_proto == 9 ||
-                selected_proto == 10 || selected_proto == 14 ||
-                selected_proto == 15 || selected_proto == 19) {
-                flags |= 0x100;
-            }
-        }
-        if ((flags & 1) != 0) {
-            if (special_chassis) {
-                sprite_bank = BoomIndexedSpriteBankByWeapon[12];
-                palette_row = BoomColorGroupByWeapon[12];
-            } else if (saved_selection != -1) {
-                const VehPrototype &prototype =
-                    VehPrototypes[Vehs[other_selected_vehicle].proto_id];
-                sprite_bank = BoomIndexedSpriteBankByWeapon[prototype.weapon_id];
-                palette_row = BoomColorGroupByWeapon[prototype.weapon_id];
-            }
-        }
-    } else {
-        flic_mode = true;
-        if ((flags & 0x20) != 0 &&
-            working_buffer.init(300, 0xf8, 0, nullptr) == 0) {
-            char animation_file[] = "buster.flc";
-            if (animation.init(&working_buffer, animation_file, 0, 0, 0) == 0) {
+    int faction_color_group[8] = { 0, 5, 2, 10, 9, 11, 0, 2 };
+    // EBP-0x10: PSI flag in the sprite path, Flic size numerator otherwise.
+    // The post-loop FX test (0x0050550C) reads it in both modes.
+    int size_or_psi;
+    // EBP-0x0C: XI sprite bank in the sprite path, Flic size divisor otherwise.
+    int divisor_or_bank;
+    int palette_row;
+    {
+        // These two share stack with active_windows (EBP-0x94..-0x78).
+        int flic_divisor[4] = { 2, 2, 2, 2 };
+        int flic_size[4] = { 3, 4, 5, 5 };
+        if (animation_state) {
+            if ((flags & 0x20) && !working_buffer.init(300, 0xf8, 0, nullptr) &&
+                !animation.init(&working_buffer, "buster.flc", 0, 0, 0)) {
                 animation_state = 1;
             }
-        }
-        faction_color_group[0] = 0;
-        faction_color_group[1] = 5;
-        faction_color_group[2] = 2;
-        faction_color_group[3] = 10;
-        faction_color_group[4] = 9;
-        faction_color_group[5] = 11;
-        faction_color_group[6] = 0;
-        faction_color_group[7] = 2;
-        faction_color_group[12] = 2;
-        faction_color_group[13] = 2;
-        faction_color_group[14] = 2;
-        faction_color_group[15] = 2;
-        faction_color_group[16] = 3;
-        faction_color_group[17] = 4;
-        faction_color_group[18] = 5;
-        faction_color_group[19] = 5;
-        const int level = BoomAnimationLevel;
-        animation_height = faction_color_group[level + 15];
-        frame_span = faction_color_group[level + 11];
-    }
-
-    // Original X/Y are distinct eight-DWORD windows at EBP-0x74/-0x54;
-    // RECTs at EBP-0x144 advance 16 bytes. Draw/copy use X/Y, update a RECT.
-    int pixel_x_by_slot[8];
-    int pixel_y_by_slot[8];
-    RECT saved_rectangles[8];
-    // Original 0x00504DF5/0x00504EB8 store DWORD flags; the slot cursor
-    // advances four bytes over eight entries (0x005054C2/0x005054CB).
-    int active_windows[8];
-    bool any_window = false;
-
-    for (int slot = 0; slot < 8; ++slot) {
-        MapWin *window = MapWinTable[slot];
-        active_windows[slot] = false;
-        if (window == nullptr || (slot != 0 && window->view_active_ == 0)) {
-            continue;
-        }
-        if (y < window->field_1DDA8_ ||
-            y >= window->field_1DDA8_ + window->field_1DDD8_ +
-                     window->field_1DDD0_) {
-            continue;
-        }
-        int adjusted_x = x;
-        if ((MapIsFlat & 1) == 0) {
-            if (adjusted_x < window->field_1DDA4_) {
-                adjusted_x += MapLongitudeBounds;
-            }
-            if (adjusted_x >= window->field_1DDA4_ + window->field_1DDD4_ +
-                                  window->field_1DDCC_) {
-                adjusted_x -= MapLongitudeBounds;
-            }
-        }
-        if (adjusted_x < window->field_1DDA4_ ||
-            adjusted_x >= window->field_1DDA4_ + window->field_1DDD4_ +
-                              window->field_1DDCC_) {
-            continue;
-        }
-
-        int &pixel_x = pixel_x_by_slot[slot];
-        int &pixel_y = pixel_y_by_slot[slot];
-        // Original 0x00504EC5 uses this slot; 0x00504ECA..0x00504ECD
-        // reloads the slot after the call.
-        window->tile_to_pixel(x, y, &pixel_x_by_slot[slot],
-                              &pixel_y_by_slot[slot]);
-        window = MapWinTable[slot];
-        pixel_x += window->tile_pixel_width_ / 2;
-        pixel_y += window->tile_pixel_height_;
-
-        const int zoom = window->zoom_offset_ + 0x10;
-        if (!flic_mode) {
-            const bool use_xf = (flags & 1) == 0;
-            Sprite *const sizing_sprite = use_xf
-                ? &g_XF_BOOM_VEH_SPRITES[0]
-                : &g_XI_BOOM_VEH_SPRITES[0];
-            const int source_width = sizing_sprite->width();
-            const int source_height = sizing_sprite->height();
-            int scaled_width;
-            int scaled_height;
-            int full_scaled_width;
-            if (MapWinCaptionScale < 1) {
-                scaled_width = boom_zoomed_extent(zoom, source_width / 2);
-                full_scaled_width = boom_zoomed_extent(zoom, source_width);
-                scaled_height = boom_zoomed_extent(zoom, source_height);
-            } else {
-                scaled_width = ((source_width / 2) * MapWinCaptionScale) /
-                               MapWinCaptionDivisor;
-                full_scaled_width = (source_width * MapWinCaptionScale) /
-                                    MapWinCaptionDivisor;
-                scaled_height = (source_height * MapWinCaptionScale) /
-                                MapWinCaptionDivisor;
-            }
-            pixel_x -= scaled_width;
-            pixel_y -= scaled_height;
-            saved_rectangles[slot].left = pixel_x;
-            saved_rectangles[slot].top = pixel_y;
-            saved_rectangles[slot].right = pixel_x + full_scaled_width;
-            saved_rectangles[slot].bottom = pixel_y + scaled_height;
+            size_or_psi = flic_size[BoomAnimationLevel - 1];
+            divisor_or_bank = flic_divisor[BoomAnimationLevel - 1];
         } else {
-            const int unscaled_width = (animation_height * 300) / frame_span;
-            const int unscaled_height = (animation_height * 0xf8) / frame_span;
-            const int vertical_offset =
-                (animation_height * 0x3c) / frame_span;
-            int scaled_width;
-            int scaled_height;
-            if (MapWinCaptionScale < 1) {
-                scaled_width = boom_zoomed_extent(zoom, unscaled_width);
-                scaled_height = boom_zoomed_extent(zoom, unscaled_height);
-                pixel_y += boom_zoomed_extent(zoom, vertical_offset);
-            } else {
-                scaled_width = unscaled_width * MapWinCaptionScale /
-                               MapWinCaptionDivisor;
-                scaled_height = unscaled_height * MapWinCaptionScale /
-                                MapWinCaptionDivisor;
-                pixel_y += vertical_offset * MapWinCaptionScale /
-                           MapWinCaptionDivisor;
+            if (VehPrototypes[Vehs[veh_a].proto_id].chassis_id == CHSI_MISSILE &&
+                (flags & 1)) {
+                g_FX.play(0x52, Vehs[veh_a].x, Vehs[veh_a].y);
+                return 0;
             }
-            pixel_x -= scaled_width / 2;
-            pixel_y -= scaled_height;
-            saved_rectangles[slot].left = pixel_x;
-            saved_rectangles[slot].top = pixel_y;
-            saved_rectangles[slot].right = pixel_x + scaled_width;
-            saved_rectangles[slot].bottom = pixel_y + scaled_height;
-        }
-
-        active_windows[slot] = true;
-        any_window = true;
-
-        if (animation_state == 0 && (flags & 1) == 0) {
-            if ((flags & 0x100) == 0) {
-                if (Vehs[second_selection].proto_id == BSC_SPORE_LAUNCHER) {
-                    g_FX.play(0x5a, Vehs[second_selection].x,
-                              Vehs[second_selection].y);
-                } else if (VehPrototypes[Vehs[saved_selection].proto_id]
-                               .chassis_id != CHSI_MISSILE) {
-                    g_FX.play(0x3e, x, y);
+            size_or_psi = 0;
+            if (flags & 1) {
+                if (VehPrototypes[Vehs[veh_a].proto_id].weapon_id == WPN_PSI_ATTACK ||
+                    VehPrototypes[Vehs[veh_b].proto_id].weapon_id == WPN_PSI_ATTACK) {
+                    size_or_psi = 1;
                 }
-            } else {
-                g_FX.play(0x3d, x, y);
+                if (Vehs[veh_b].proto_id == 1) {
+                    g_FX.play(1);
+                }
+            }
+            if (!size_or_psi && !(flags & 8)) {
+                veh_b = VehDrawSelection689F28;
+                veh_a = VehDrawSelection689F2C;
+            }
+            if ((flags & 2) && veh_b >= 0) {
+                const int16_t proto_id = Vehs[veh_b].proto_id;
+                if (proto_id == BSC_MIND_WORMS || proto_id == BSC_ISLE_OF_THE_DEEP ||
+                    proto_id == BSC_LOCUSTS_OF_CHIRON) {
+                    flags |= 0x100;
+                }
+                if (proto_id == BSC_SEALURK || proto_id == BSC_SPORE_LAUNCHER ||
+                    proto_id == BSC_FUNGAL_TOWER) {
+                    flags |= 0x100;
+                }
+            }
+            if (flags & 1) {
+                if (size_or_psi) {
+                    divisor_or_bank = BoomIndexedSpriteBankByWeapon[12];
+                    palette_row = BoomColorGroupByWeapon[12];
+                } else if (veh_a != -1) {
+                    const int weapon_id =
+                        VehPrototypes[Vehs[veh_b].proto_id].weapon_id;
+                    divisor_or_bank = BoomIndexedSpriteBankByWeapon[weapon_id];
+                    palette_row = BoomColorGroupByWeapon[weapon_id];
+                } else {
+                    divisor_or_bank = 0;
+                    palette_row = 0;
+                }
             }
         }
-
-        // The preceding FX dispatch is callback-capable. The image reloads
-        // this slot before resolving its per-window Buffer receiver.
-        window = MapWinTable[slot];
-
-        Buffer *window_buffer =
-            static_cast<Buffer *>(static_cast<GraphicWin *>(window));
-        const RECT &area = saved_rectangles[slot];
-        const int width = area.right - area.left;
-        const int height = area.bottom - area.top;
-        if (animation_state != 0 && (flags & 0x60) == 0) {
-            continue;
-        }
-        if ((flags & 0x40) == 0) {
-            original_screen_snapshots[slot].init(width, height, 0, nullptr);
-            window = MapWinTable[slot];
-            window_buffer =
-                static_cast<Buffer *>(static_cast<GraphicWin *>(window));
-            window_buffer->copy(&original_screen_snapshots[slot], pixel_x_by_slot[slot],
-                                pixel_y_by_slot[slot], 0, 0,
-                                original_screen_snapshots[slot].pixel_width(),
-                                original_screen_snapshots[slot].pixel_height());
-        }
-        if (((flags & 2) == 0 || (flags & 0x20) != 0) &&
-            (flags & 0x40) == 0) {
-            continue;
-        }
-        if ((flags & 2) != 0 && (flags & 0x20) == 0 &&
-            (flags & 0x40) == 0) {
-            VehDrawSuppressedVehicle = (flags & 8) == 0
-                ? VehDrawSelection689F28 : VehDrawSelection689F2C;
-            window = MapWinTable[slot];
-            window->draw_tile(x, y, 0);
-            VehDrawSuppressedVehicle = -1;
-            window = MapWinTable[slot];
-            window_buffer =
-                static_cast<Buffer *>(static_cast<GraphicWin *>(window));
-        }
-        redrawn_map_snapshots[slot].init(width, height, 0, nullptr);
-        window = MapWinTable[slot];
-        window_buffer =
-            static_cast<Buffer *>(static_cast<GraphicWin *>(window));
-        window_buffer->copy(&redrawn_map_snapshots[slot], pixel_x_by_slot[slot], pixel_y_by_slot[slot],
-                            0, 0, redrawn_map_snapshots[slot].pixel_width(),
-                            redrawn_map_snapshots[slot].pixel_height());
-        window = MapWinTable[slot];
-        window_buffer =
-            static_cast<Buffer *>(static_cast<GraphicWin *>(window));
-        original_screen_snapshots[slot].copy(window_buffer, 0, 0,
-                                             pixel_x_by_slot[slot], pixel_y_by_slot[slot],
-                                             original_screen_snapshots[slot].pixel_width(),
-                                             original_screen_snapshots[slot].pixel_height());
     }
 
-    if ((flags & 0x60) != 0 || !any_window) return 0;
-    const int play_animation = flags & 1;
+    // RECTs at EBP-0x144, X at EBP-0x74, Y at EBP-0x54.
+    RECT rects[8];
+    int active_windows[8];
+    int pixel_x[8];
+    int pixel_y[8];
+    int slot;
+
+    for (slot = 0; slot < 8; ++slot) {
+        active_windows[slot] = 0;
+        if (!MapWinTable[slot]) {
+            continue;
+        }
+        if (slot && !MapWinTable[slot]->view_active_) {
+            continue;
+        }
+        if (y < MapWinTable[slot]->field_1DDA8_) {
+            continue;
+        }
+        if (y >= MapWinTable[slot]->field_1DDA8_ +
+                     MapWinTable[slot]->field_1DDD8_ +
+                     MapWinTable[slot]->field_1DDD0_) {
+            continue;
+        }
+        int wrapped_x = x;
+        if (!(MapIsFlat & 1)) {
+            if (wrapped_x < MapWinTable[slot]->field_1DDA4_) {
+                wrapped_x += MapLongitudeBounds;
+            }
+            if (wrapped_x >= MapWinTable[slot]->field_1DDA4_ +
+                                 MapWinTable[slot]->field_1DDD4_ +
+                                 MapWinTable[slot]->field_1DDCC_) {
+                wrapped_x -= MapLongitudeBounds;
+            }
+        }
+        if (wrapped_x < MapWinTable[slot]->field_1DDA4_) {
+            continue;
+        }
+        if (wrapped_x >= MapWinTable[slot]->field_1DDA4_ +
+                             MapWinTable[slot]->field_1DDD4_ +
+                             MapWinTable[slot]->field_1DDCC_) {
+            continue;
+        }
+        any_window = 1;
+        active_windows[slot] = 1;
+        MapWinTable[slot]->tile_to_pixel(x, y, &pixel_x[slot], &pixel_y[slot]);
+        pixel_x[slot] += MapWinTable[slot]->tile_pixel_width_ / 2;
+        pixel_y[slot] += MapWinTable[slot]->tile_pixel_height_;
+
+        if (animation_state) {
+            const int width = size_or_psi * 300 / divisor_or_bank;
+            pixel_x[slot] -= (MapWinCaptionScale > 0
+                ? MapWinCaptionScale * width / MapWinCaptionDivisor
+                : (MapWinTable[slot]->zoom_offset_ + 16) * width / 16) / 2;
+            const int height = size_or_psi * 248 / divisor_or_bank;
+            pixel_y[slot] = pixel_y[slot] -
+                (MapWinCaptionScale > 0
+                    ? MapWinCaptionScale * height / MapWinCaptionDivisor
+                    : (MapWinTable[slot]->zoom_offset_ + 16) * height / 16) +
+                (MapWinCaptionScale > 0
+                    ? MapWinCaptionScale * (size_or_psi * 60 / divisor_or_bank) /
+                          MapWinCaptionDivisor
+                    : (MapWinTable[slot]->zoom_offset_ + 16) *
+                          (size_or_psi * 60 / divisor_or_bank) / 16);
+            {
+                const int rect_height = MapWinCaptionScale > 0 ? MapWinCaptionScale * height / MapWinCaptionDivisor : (MapWinTable[slot]->zoom_offset_ + 16) * height / 16;
+                const int rect_width = MapWinCaptionScale > 0 ? MapWinCaptionScale * width / MapWinCaptionDivisor : (MapWinTable[slot]->zoom_offset_ + 16) * width / 16;
+                rects[slot].left = pixel_x[slot];
+                rects[slot].top = pixel_y[slot];
+                rects[slot].right = pixel_x[slot] + rect_width;
+                rects[slot].bottom = pixel_y[slot] + rect_height;
+            }
+            if (!(flags & 0x60)) {
+                continue;
+            }
+        } else if (flags & 1) {
+            pixel_x[slot] -= MapWinCaptionScale > 0
+                ? MapWinCaptionScale * (g_XI_BOOM_VEH_SPRITES[0].width() / 2) /
+                      MapWinCaptionDivisor
+                : (MapWinTable[slot]->zoom_offset_ + 16) *
+                      (g_XI_BOOM_VEH_SPRITES[0].width() / 2) / 16;
+            pixel_y[slot] -= MapWinCaptionScale > 0
+                ? MapWinCaptionScale * g_XI_BOOM_VEH_SPRITES[0].height() /
+                      MapWinCaptionDivisor
+                : (MapWinTable[slot]->zoom_offset_ + 16) *
+                      g_XI_BOOM_VEH_SPRITES[0].height() / 16;
+            {
+                const int rect_height = MapWinCaptionScale > 0 ? MapWinCaptionScale * g_XI_BOOM_VEH_SPRITES[0].height() / MapWinCaptionDivisor : (MapWinTable[slot]->zoom_offset_ + 16) * g_XI_BOOM_VEH_SPRITES[0].height() / 16;
+                const int rect_width = MapWinCaptionScale > 0 ? MapWinCaptionScale * g_XI_BOOM_VEH_SPRITES[0].width() / MapWinCaptionDivisor : (MapWinTable[slot]->zoom_offset_ + 16) * g_XI_BOOM_VEH_SPRITES[0].width() / 16;
+                rects[slot].left = pixel_x[slot];
+                rects[slot].top = pixel_y[slot];
+                rects[slot].right = pixel_x[slot] + rect_width;
+                rects[slot].bottom = pixel_y[slot] + rect_height;
+            }
+        } else {
+            pixel_x[slot] -= MapWinCaptionScale > 0
+                ? MapWinCaptionScale * (g_XF_BOOM_VEH_SPRITES[0].width() / 2) /
+                      MapWinCaptionDivisor
+                : (MapWinTable[slot]->zoom_offset_ + 16) *
+                      (g_XF_BOOM_VEH_SPRITES[0].width() / 2) / 16;
+            pixel_y[slot] -= MapWinCaptionScale > 0
+                ? MapWinCaptionScale * g_XF_BOOM_VEH_SPRITES[0].height() /
+                      MapWinCaptionDivisor
+                : (MapWinTable[slot]->zoom_offset_ + 16) *
+                      g_XF_BOOM_VEH_SPRITES[0].height() / 16;
+            {
+                const int rect_height = MapWinCaptionScale > 0 ? MapWinCaptionScale * g_XF_BOOM_VEH_SPRITES[0].height() / MapWinCaptionDivisor : (MapWinTable[slot]->zoom_offset_ + 16) * g_XF_BOOM_VEH_SPRITES[0].height() / 16;
+                const int rect_width = MapWinCaptionScale > 0 ? MapWinCaptionScale * g_XF_BOOM_VEH_SPRITES[0].width() / MapWinCaptionDivisor : (MapWinTable[slot]->zoom_offset_ + 16) * g_XF_BOOM_VEH_SPRITES[0].width() / 16;
+                rects[slot].left = pixel_x[slot];
+                rects[slot].top = pixel_y[slot];
+                rects[slot].right = pixel_x[slot] + rect_width;
+                rects[slot].bottom = pixel_y[slot] + rect_height;
+            }
+            if (flags & 0x100) {
+                g_FX.play(0x3d, x, y);
+            } else if (Vehs[veh_b].proto_id == BSC_SPORE_LAUNCHER) {
+                g_FX.play(0x5a, Vehs[veh_b].x, Vehs[veh_b].y);
+            } else if (VehPrototypes[Vehs[veh_a].proto_id].chassis_id !=
+                       CHSI_MISSILE) {
+                g_FX.play(0x3e, x, y);
+            }
+        }
+
+        if (!(flags & 2) || (flags & 0x20)) {
+            if (!(flags & 0x40)) {
+                original_screen_snapshots[slot].init(
+                    rects[slot].right - rects[slot].left,
+                    rects[slot].bottom - rects[slot].top, 0, nullptr);
+                MapWinTable[slot]->copy(&original_screen_snapshots[slot],
+                    pixel_x[slot], pixel_y[slot], 0, 0,
+                    original_screen_snapshots[slot].pixel_width(),
+                    original_screen_snapshots[slot].pixel_height());
+                continue;
+            }
+        } else if (!(flags & 0x40)) {
+            original_screen_snapshots[slot].init(
+                rects[slot].right - rects[slot].left,
+                rects[slot].bottom - rects[slot].top, 0, nullptr);
+            MapWinTable[slot]->copy(&original_screen_snapshots[slot],
+                pixel_x[slot], pixel_y[slot], 0, 0,
+                original_screen_snapshots[slot].pixel_width(),
+                original_screen_snapshots[slot].pixel_height());
+            if (flags & 8) {
+                VehDrawSuppressedVehicle = VehDrawSelection689F2C;
+            } else {
+                VehDrawSuppressedVehicle = VehDrawSelection689F28;
+            }
+            MapWinTable[slot]->draw_tile(x, y, 0);
+            VehDrawSuppressedVehicle = -1;
+        }
+        redrawn_map_snapshots[slot].init(
+            rects[slot].right - rects[slot].left,
+            rects[slot].bottom - rects[slot].top, 0, nullptr);
+        MapWinTable[slot]->copy(&redrawn_map_snapshots[slot],
+            pixel_x[slot], pixel_y[slot], 0, 0,
+            redrawn_map_snapshots[slot].pixel_width(),
+            redrawn_map_snapshots[slot].pixel_height());
+        original_screen_snapshots[slot].copy(MapWinTable[slot], 0, 0,
+            pixel_x[slot], pixel_y[slot],
+            original_screen_snapshots[slot].pixel_width(),
+            original_screen_snapshots[slot].pixel_height());
+    }
+
+    if (flags & 0x60) {
+        return 0;
+    }
+    if (!any_window) {
+        return 0;
+    }
+    const int play = flags & 1;
     TimerHoldFlag = 1;
-    if (play_animation != 0) {
-        if (special_chassis) {
+    if (play) {
+        if (size_or_psi) {
             g_FX.play(0);
         } else {
-            if (VehPrototypes[Vehs[second_selection].proto_id].weapon_id == 0) {
+            if (VehPrototypes[Vehs[veh_b].proto_id].weapon_id == 0) {
                 g_FX.play(1);
             }
-            // Native 0x0050558A..0x00505842 tests independently; each
-            // condition reloads after any preceding FX call.
-            if (VehPrototypes[Vehs[second_selection].proto_id].weapon_id == 1) {
-                g_FX.play(0x4, Vehs[second_selection].x,
-                          Vehs[second_selection].y);
+            if (VehPrototypes[Vehs[veh_b].proto_id].weapon_id == 1) {
+                g_FX.play(0x04, Vehs[veh_b].x, Vehs[veh_b].y);
             }
-            if (VehPrototypes[Vehs[second_selection].proto_id].weapon_id == 2) {
-                g_FX.play(0x49, Vehs[second_selection].x,
-                          Vehs[second_selection].y);
+            if (VehPrototypes[Vehs[veh_b].proto_id].weapon_id == 2) {
+                g_FX.play(0x49, Vehs[veh_b].x, Vehs[veh_b].y);
             }
-            if (VehPrototypes[Vehs[second_selection].proto_id].weapon_id == 3) {
-                g_FX.play(0x4a, Vehs[second_selection].x,
-                          Vehs[second_selection].y);
+            if (VehPrototypes[Vehs[veh_b].proto_id].weapon_id == 3) {
+                g_FX.play(0x4a, Vehs[veh_b].x, Vehs[veh_b].y);
             }
-            if (VehPrototypes[Vehs[second_selection].proto_id].weapon_id == 4) {
-                g_FX.play(0x59, Vehs[second_selection].x,
-                          Vehs[second_selection].y);
+            if (VehPrototypes[Vehs[veh_b].proto_id].weapon_id == 4) {
+                g_FX.play(0x59, Vehs[veh_b].x, Vehs[veh_b].y);
             }
-            if (VehPrototypes[Vehs[second_selection].proto_id].weapon_id == 5) {
-                g_FX.play(0x4c, Vehs[second_selection].x,
-                          Vehs[second_selection].y);
+            if (VehPrototypes[Vehs[veh_b].proto_id].weapon_id == 5) {
+                g_FX.play(0x4c, Vehs[veh_b].x, Vehs[veh_b].y);
             }
-            if (VehPrototypes[Vehs[second_selection].proto_id].weapon_id == 6) {
-                g_FX.play(0x4d, Vehs[second_selection].x,
-                          Vehs[second_selection].y);
+            if (VehPrototypes[Vehs[veh_b].proto_id].weapon_id == 6) {
+                g_FX.play(0x4d, Vehs[veh_b].x, Vehs[veh_b].y);
             }
-            if (VehPrototypes[Vehs[second_selection].proto_id].weapon_id == 7) {
-                g_FX.play(0x4e, Vehs[second_selection].x,
-                          Vehs[second_selection].y);
+            if (VehPrototypes[Vehs[veh_b].proto_id].weapon_id == 7) {
+                g_FX.play(0x4e, Vehs[veh_b].x, Vehs[veh_b].y);
             }
-            if (VehPrototypes[Vehs[second_selection].proto_id].weapon_id == 8) {
-                g_FX.play(0x4f, Vehs[second_selection].x,
-                          Vehs[second_selection].y);
+            if (VehPrototypes[Vehs[veh_b].proto_id].weapon_id == 8) {
+                g_FX.play(0x4f, Vehs[veh_b].x, Vehs[veh_b].y);
             }
-            if (VehPrototypes[Vehs[second_selection].proto_id].weapon_id == 9) {
-                g_FX.play(0x50, Vehs[second_selection].x,
-                          Vehs[second_selection].y);
+            if (VehPrototypes[Vehs[veh_b].proto_id].weapon_id == 9) {
+                g_FX.play(0x50, Vehs[veh_b].x, Vehs[veh_b].y);
             }
-            if (VehPrototypes[Vehs[second_selection].proto_id].weapon_id == 10) {
-                g_FX.play(0x51, Vehs[second_selection].x,
-                          Vehs[second_selection].y);
+            if (VehPrototypes[Vehs[veh_b].proto_id].weapon_id == 10) {
+                g_FX.play(0x51, Vehs[veh_b].x, Vehs[veh_b].y);
             }
-            if (VehPrototypes[Vehs[second_selection].proto_id].weapon_id == 11) {
-                g_FX.play(0x58, Vehs[second_selection].x,
-                          Vehs[second_selection].y);
+            if (VehPrototypes[Vehs[veh_b].proto_id].weapon_id == 11) {
+                g_FX.play(0x58, Vehs[veh_b].x, Vehs[veh_b].y);
             }
-            if (VehPrototypes[Vehs[second_selection].proto_id].weapon_id == 12) {
-                g_FX.play(0x55, Vehs[second_selection].x,
-                          Vehs[second_selection].y);
+            if (VehPrototypes[Vehs[veh_b].proto_id].weapon_id == 12) {
+                g_FX.play(0x55, Vehs[veh_b].x, Vehs[veh_b].y);
             }
-            if (VehPrototypes[Vehs[second_selection].proto_id].weapon_id == 13) {
-                g_FX.play(0x56, Vehs[second_selection].x,
-                          Vehs[second_selection].y);
+            if (VehPrototypes[Vehs[veh_b].proto_id].weapon_id == 13) {
+                g_FX.play(0x56, Vehs[veh_b].x, Vehs[veh_b].y);
             }
-            if (VehPrototypes[Vehs[second_selection].proto_id].weapon_id == 14) {
-                g_FX.play(0x57, Vehs[second_selection].x,
-                          Vehs[second_selection].y);
+            if (VehPrototypes[Vehs[veh_b].proto_id].weapon_id == 14) {
+                g_FX.play(0x57, Vehs[veh_b].x, Vehs[veh_b].y);
             }
-            if (Vehs[saved_selection].proto_id == BSC_SPORE_LAUNCHER) {
-                g_FX.play(0x5a, Vehs[second_selection].x,
-                          Vehs[second_selection].y);
+            if (Vehs[veh_a].proto_id == BSC_SPORE_LAUNCHER) {
+                g_FX.play(0x5a, Vehs[veh_b].x, Vehs[veh_b].y);
             }
         }
     }
 
-    unsigned long last_tick = timeGetTime();
-    // Native 0x00505533..0x00505546 reloads the unsigned header word at
-    // every signed frame latch, after initialization and callback work.
+    DWORD last_tick = timeGetTime();
     for (int frame = 0;
-         frame < (flic_mode ? (animation.frame_count() >> 1) : 16);
+         frame < (animation_state ? animation.frame_count() >> 1 : 16);
          ++frame) {
-        const bool skip_multiplayer_frame = IsMultiplayerNet &&
-                                            play_animation != 0 &&
-                                            (frame & 1ul) == 0;
-        if (!skip_multiplayer_frame) {
-            for (int slot = 0; slot < 8; ++slot) {
-                if (!active_windows[slot]) continue;
-                MapWin *window = MapWinTable[slot];
-                Buffer *destination =
-                    static_cast<Buffer *>(static_cast<GraphicWin *>(window));
-                int draw_type = window->zoom_offset_ + 0x10;
-                if (MapWinCaptionScale < 1) {
-                    SpriteScaleNumerator = draw_type;
-                    SpriteScaleDenominator = 0x10;
-                } else {
-                    SpriteScaleNumerator = MapWinCaptionScale;
-                    SpriteScaleDenominator = MapWinCaptionDivisor;
-                }
-
-                if (flic_mode) {
-                    animation.decode_stored_frame();
-                    window = MapWinTable[slot];
-                    destination =
-                        static_cast<Buffer *>(static_cast<GraphicWin *>(window));
-                    draw_type = window->zoom_offset_ + 0x10;
-                    const int faction = Vehs[saved_selection].faction_id;
-                    working_buffer.draw_multi_table_dest(
-                        destination, 0xff, pixel_x_by_slot[slot],
-                        pixel_y_by_slot[slot],
-                        draw_type * animation_height, frame_span << 4,
-                        ExplosionColorTables[faction_color_group[faction]]);
-                } else {
-                    const int bank = (flags & 0x100) != 0 ? 3
-                        : (flags & 0x80) != 0 ? 2
-                        : (VehPrototypes[Vehs[second_selection].proto_id]
-                               .reactor_id > 1
-                               ? 1 : 0);
-                    Sprite &sprite = (flags & 1) != 0
-                        ? g_XI_BOOM_VEH_SPRITES[sprite_bank * 16 + frame]
-                        : g_XF_BOOM_VEH_SPRITES[bank * 16 + frame];
-                    const int table_row = (flags & 1) != 0
-                        ? palette_row : ((flags & 0x100) != 0 ? 6 : 0);
-                    sprite.draw_multi_table_dest(
-                        destination, sprite.transparent_index(),
-                        pixel_x_by_slot[slot],
-                        pixel_y_by_slot[slot],
-                        ExplosionColorTables[table_row]);
-                }
-                window = MapWinTable[slot];
-                window->update(&saved_rectangles[slot], 0);
-                if (IsMultiplayerNet) break;
+        if (IsMultiplayerNet && play && !(frame & 1)) {
+            continue;
+        }
+        for (slot = 0; slot < 8; ++slot) {
+            if (!active_windows[slot]) {
+                continue;
             }
-            const SHORT shift = GetAsyncKeyState(VK_SHIFT);
-            const bool fast = (shift & 0xff00) != 0 ||
-                              (((GameDataStateStorage.fields_.game_preferences_ & 8u) != 0) &&
-                               ((flags & 0x12) == 0)) || IsMultiplayerNet;
-            const int delay = fast ? 0
-                : (flags & 0x12) == 0 ? 0x19 : 0x32;
-            unsigned long now;
-            do {
-                now = timeGetTime();
-                do_non_input();
-            } while (static_cast<int>(now - last_tick) < delay);
-            last_tick = now;
+            if (MapWinCaptionScale > 0) {
+                SpriteScaleNumerator = MapWinCaptionScale;
+                SpriteScaleDenominator = MapWinCaptionDivisor;
+            } else {
+                SpriteScaleNumerator = MapWinTable[slot]->zoom_offset_ + 16;
+                SpriteScaleDenominator = 16;
+            }
+            if (animation_state) {
+                animation.decode_stored_frame();
+                working_buffer.draw_multi_table_dest(MapWinTable[slot], 0xff,
+                    pixel_x[slot], pixel_y[slot],
+                    (MapWinTable[slot]->zoom_offset_ + 16) * size_or_psi,
+                    divisor_or_bank << 4,
+                    ExplosionColorTables[faction_color_group[Vehs[veh_a].faction_id]]);
+            } else if (play) {
+                Sprite *const sprite =
+                    &g_XI_BOOM_VEH_SPRITES[divisor_or_bank * 16 + frame];
+                sprite->draw_multi_table_dest(MapWinTable[slot],
+                    sprite->transparent_index(), pixel_x[slot], pixel_y[slot],
+                    ExplosionColorTables[palette_row]);
+            } else {
+                const int bank = (flags & 0x100) ? 3
+                    : (flags & 0x80) ? 2
+                    : VehPrototypes[Vehs[veh_b].proto_id].reactor_id >= 2;
+                Sprite *const sprite = &g_XF_BOOM_VEH_SPRITES[bank * 16 + frame];
+                sprite->draw_multi_table_dest(MapWinTable[slot],
+                    sprite->transparent_index(), pixel_x[slot], pixel_y[slot],
+                    ExplosionColorTables[bank == 3 ? 6 : 0]);
+            }
+            MapWinTable[slot]->update(&rects[slot], 0);
+            if (IsMultiplayerNet) {
+                break;
+            }
+        }
+        const int fast = HIBYTE(GetAsyncKeyState(VK_SHIFT)) ||
+            ((GameDataStateStorage.fields_.game_preferences_ & 8) &&
+             !(flags & 0x12)) ||
+            IsMultiplayerNet;
+        int delay;
+        if (flags & 0x12) {
+            delay = (!fast && !IsMultiplayerNet) ? 50 : 0;
+        } else {
+            delay = (!fast && !IsMultiplayerNet) ? 25 : 0;
+        }
+        DWORD now;
+        do {
+            now = timeGetTime();
+            do_non_input();
+        } while (static_cast<int>(now - last_tick) < delay);
+        last_tick = now;
 
-            for (int restore_slot = 0; restore_slot < 8; ++restore_slot) {
-                if (!active_windows[restore_slot]) continue;
-                MapWin *const window = MapWinTable[restore_slot];
-                Buffer *const destination =
-                    static_cast<Buffer *>(static_cast<GraphicWin *>(window));
-                const bool use_redrawn_snapshot = flic_mode
-                    ? (play_animation == 0)
-                    : ((flags & 2) != 0 && frame > 7);
-                Buffer &snapshot = use_redrawn_snapshot
-                    ? redrawn_map_snapshots[restore_slot]
-                    : original_screen_snapshots[restore_slot];
-                snapshot.copy(destination, 0, 0,
-                              pixel_x_by_slot[restore_slot],
-                              pixel_y_by_slot[restore_slot],
-                              snapshot.pixel_width(), snapshot.pixel_height());
-                if (IsMultiplayerNet) break;
+        for (slot = 0; slot < 8; ++slot) {
+            if (!active_windows[slot]) {
+                continue;
+            }
+            if (animation_state) {
+                if (play) {
+                    original_screen_snapshots[slot].copy(MapWinTable[slot], 0, 0,
+                        pixel_x[slot], pixel_y[slot],
+                        original_screen_snapshots[slot].pixel_width(),
+                        original_screen_snapshots[slot].pixel_height());
+                } else {
+                    redrawn_map_snapshots[slot].copy(MapWinTable[slot], 0, 0,
+                        pixel_x[slot], pixel_y[slot],
+                        redrawn_map_snapshots[slot].pixel_width(),
+                        redrawn_map_snapshots[slot].pixel_height());
+                }
+            } else if ((flags & 2) && frame >= 8) {
+                redrawn_map_snapshots[slot].copy(MapWinTable[slot], 0, 0,
+                    pixel_x[slot], pixel_y[slot],
+                    redrawn_map_snapshots[slot].pixel_width(),
+                    redrawn_map_snapshots[slot].pixel_height());
+            } else {
+                original_screen_snapshots[slot].copy(MapWinTable[slot], 0, 0,
+                    pixel_x[slot], pixel_y[slot],
+                    original_screen_snapshots[slot].pixel_width(),
+                    original_screen_snapshots[slot].pixel_height());
+            }
+            if (IsMultiplayerNet) {
+                break;
             }
         }
     }
 
     if (flags != 0x11) {
-        for (int slot = 0; slot < 8; ++slot) {
+        for (slot = 0; slot < 8; ++slot) {
             if (active_windows[slot]) {
-                MapWinTable[slot]->update(&saved_rectangles[slot], 0);
-                if (IsMultiplayerNet) break;
+                MapWinTable[slot]->update(&rects[slot], 0);
+                if (IsMultiplayerNet) {
+                    break;
+                }
             }
         }
     }
-    if (flic_mode && (flags & 2) != 0) {
-        working_buffer.close();
-        animation.close();
-        // Native 0x00505C6B..0x00505C7E restores the Console Buffer clip.
-        GraphicWin *const console = static_cast<GraphicWin *>(&ConsoleGlobal);
-        console->set_clip(console->buffer_working_rect());
+    if (animation_state) {
+        if (flags & 2) {
+            working_buffer.close();
+            animation.close();
+            ConsoleGlobal.restore_clip();
+        }
+        if (play) {
+            ConsoleGlobal.set_clip(rects);
+        }
     }
-    if (flic_mode && (flags & 1) != 0) {
-        // Resolve the Console again after the preceding clip call.
-        GraphicWin *const console = static_cast<GraphicWin *>(&ConsoleGlobal);
-        console->set_clip(saved_rectangles);
-    }
-    if (!flic_mode || (flags & 2) != 0) {
-        for (int slot = 0; slot < 8; ++slot) {
+    if (!animation_state || (flags & 2)) {
+        for (slot = 0; slot < 8; ++slot) {
             original_screen_snapshots[slot].close();
             redrawn_map_snapshots[slot].close();
         }
     }
-    if ((GetAsyncKeyState(VK_SHIFT) & 0xff00) == 0 &&
-        (GameDataStateStorage.fields_.game_preferences_ & 8u) == 0 && !IsMultiplayerNet) {
+    if (!HIBYTE(GetAsyncKeyState(VK_SHIFT)) &&
+        !(GameDataStateStorage.fields_.game_preferences_ & 8) &&
+        !IsMultiplayerNet) {
         clock_wait(0x32);
     }
     TimerHoldFlag = 0;
