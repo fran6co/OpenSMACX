@@ -171,7 +171,7 @@ NetMsg NetMsgPrimary(4096, 8, 0);
 NetMsg NetMsgSecondary(-5, 40, 1);
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0047ADA0 ??1NetMsg@@QAE@XZ 0x0047ADA0-0x0047AFD2;0x00656460-0x0065654F
+// ORIGINAL: 0x0047ADA0 ??1NetMsg@@QAE@XZ 0x0047ADA0-0x0047AFD2;0x00656460-0x0065654F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0047ada0.cpp"], "reason": "Complete genuine NetMsg owner implementation replaces executable aliases/forwarders; original seed establishes catalogue identity and spans, native emitted symbols are separately recorded. Full private application compile/link and both native flag sets checked; preserve seed and historical claims, no exactness granted by binding."}
 // symbol    ??1NetMsg@@UAE@XZ
 // The destructor is compiler-generated: Time, then Popup and its members.

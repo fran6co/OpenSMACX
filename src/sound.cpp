@@ -5211,7 +5211,7 @@ Purpose: The sound-DLL version complaint box. load_sound_dll shows it through
          and torn down by the real destructor; the two copies of the caller's
          strings are the two 0x100 buffers the frame sits beside. It has C++
          linkage: an extern "C" definition loses the EH frame entirely.
-// ORIGINAL: 0x004C9080 sub_4c9080 0x004C9080-0x004C92CF;0x00659FF2-0x0065A090 FILE
+// ORIGINAL: 0x004C9080 sub_4c9080 0x004C9080-0x004C92CF;0x00659FF2-0x0065A090 FILE BYTE_EXACT
 // symbol    ?sound_version_warning@@YAXPBD0@Z
 // size      749 bytes
 // prototype
