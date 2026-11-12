@@ -184,30 +184,9 @@ void MessageWin::add_message(char *text, int item_id) {
     while (ConsoleGlobal.message_count_ > 100) {
         --ConsoleGlobal.message_count_;
 
-        const int first_id = listBox_.pos_to_id(0);
-        {
-            StringList &items = listBox_.item_list_;
-            if (items.head_ != 0) {
-                const int entry_count = items.entry_count_;
-                items.current_position_ = 0;
-                items.current_ = items.head_;
-                if (entry_count > 0) {
-                    int index = 0;
-                    do {
-                        if (items.current_->id == first_id) {
-                            break;
-                        }
-                        ++items.current_position_;
-                        ++index;
-                        items.current_ = items.current_->next;
-                    } while (index < entry_count);
-                }
-            }
-        }
+        listBox_.item_list_.seek_id(listBox_.pos_to_id(0));
 
-        const uint32_t height = listBox_.item_list_.head_ != 0
-            ? listBox_.item_list_.current_->string_payload()->field_C_ : 0;
-        listBox_.field_20_ -= height;
+        listBox_.field_20_ -= current_message_height(listBox_.item_list_);
         StringList &items = listBox_.item_list_;
         if (items.head_ != 0) {
             items.current_->next->previous = items.current_->previous;

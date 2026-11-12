@@ -371,7 +371,13 @@ Purpose: Find a space in the input string that can be used as a natural line bre
 // calls     0x006453E0 0x006473F0
 // indirect  0x006193EB 0x006193FA 0x00619402 0x00619410 0x006194AD 0x006194BC 0x006194C4 0x006194D2
 // Historical context: the following LEVER records the earlier in-class
-// source arrangement; the call sites now use the private source-only helper.
+// source arrangement. The call sites now call the out-of-line
+// Font::width(LPSTR, int) defined earlier in this unit, which /Ob2 expands
+// at both sites; the private header copy (measure_bounded_width) is unused.
+// The loop is a pre-tested `while (len)`, each width test compares the
+// cursor with the input first, the `*break_len = 0` store sits in each
+// return arm, and the no-space exit writes its own copy of the tail: these
+// took the body from 175 to 208 of the image's 208 instructions.
 // LEVER: `width(LPSTR, size_t)` moved IN-CLASS (font.h) so it inlines here
 //        twice, matching the image's own `calls`/`indirect` lists (no
 //        0x006192F0, but 8 indirect WinAPI calls and strlen showing up
@@ -412,39 +418,47 @@ Status: Complete
 LPSTR Font::find_line_break_l(LPSTR input, int *break_len, int len) {
     int search_brk = *break_len;
     LPSTR search_str = input;
-    // `if (len) { do ... }`, not `if (!len) return NULL; do ...`. The image
-    // tests `len` once at the top and, when it is zero, jumps to the SAME
-    // shared epilogue the loop falls out of (0x00619456, reached again from
-    // 0x00619452) - `BufferStrHeight += *break_len - search_brk` with a zero
-    // delta, `*break_len = search_brk`, return NULL. A bare `return NULL`
-    // skips that epilogue and is a different program shape for the same
-    // behaviour; it also costs the image's back-edge into 0x0061939B, which
-    // is where the loop re-enters rather than the `test`.
-    if (len) {
-        do {
+    // A pre-tested loop: the image tests `len` once on entry, jumping to the
+    // shared tail, and re-enters at the memchr from its bottom test.
+    while (len) {
         LPSTR space = (LPSTR)memchr(search_str + 1, ' ', len);
         if (!space) {
-            search_brk -= measure_bounded_width(search_str, len);
-            if (search_brk < 0) {
-                *break_len = 0;
-                if (search_str != input) {
-                    return search_str + 1;
+            search_brk -= width(search_str, len);
+            // The image compares the cursor with the input before it tests
+            // the remaining width, on both paths.
+            if (search_str == input) {
+                if (search_brk < 0) {
+                    if (BufferStrHeight) {
+                        *break_len = 0;
+                        return search_str;
+                    }
+                    *break_len = 0;
+                    return NULL;
                 }
-                return BufferStrHeight ? search_str : NULL;
-            }
-            break;
-        }
-        search_brk -= measure_bounded_width(search_str, space - search_str);
-        if (search_brk < 0) {
-            *break_len = 0;
-            if (search_str != input) {
+            } else if (search_brk < 0) {
+                *break_len = 0;
                 return search_str + 1;
             }
-            return BufferStrHeight ? search_str : space + 1;
+            BufferStrHeight += *break_len - search_brk;
+            *break_len = search_brk;
+            return NULL;
+        }
+        search_brk -= width(search_str, space - search_str);
+        if (search_str == input) {
+            if (search_brk < 0) {
+                if (BufferStrHeight) {
+                    *break_len = 0;
+                    return search_str;
+                }
+                *break_len = 0;
+                return space + 1;
+            }
+        } else if (search_brk < 0) {
+            *break_len = 0;
+            return search_str + 1;
         }
         len += search_str - space;
         search_str = space;
-        } while (len);
     }
     BufferStrHeight += *break_len - search_brk;
     *break_len = search_brk;

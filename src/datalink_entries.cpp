@@ -557,19 +557,17 @@ void DatalinkSelectionQueue::dispatch_matching(int entry_id) {
   int matched_count = 0;
   int first_match_index;
   for (int index = 0; index < count_; ++index) {
-    DatalinkSelectionEntry &entry = entries_[index];
-    if (entry.entry_id == entry_id) {
-      if (matched_count == 0) {
+    if (entries_[index].entry_id == entry_id) {
+      if (matched_count++ == 0) {
         first_match_index = index;
       }
-      ++matched_count;
       StringTemp[0] = 0;
 
-      if (entry.category == 5 && entry.value >= 0x46) {
-        entry.category = 10;
-        entry.value = static_cast<unsigned char>(entry.value + 0xBA);
+      if (entries_[index].category == 5 && entries_[index].value >= 0x46) {
+        entries_[index].category = 10;
+        entries_[index].value -= 0x46;
       }
-      entry.append_text(StringTemp, 1);
+      entries_[index].append_text(StringTemp, 1);
     }
   }
 
