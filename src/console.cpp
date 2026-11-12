@@ -3720,7 +3720,7 @@ Purpose: A non-client mouse move while a splitter drag is armed: whichever of
          its half-track clamp bounds, the dragged edge repaints without the
          line, and the crossing drag line is drawn at the new position.
 
-// ORIGINAL: 0x00510110 ?on_nc_mouse_move@Console@@QAEXHH@Z 0x00510110-0x005103FF FILE
+// ORIGINAL: 0x00510110 ?on_nc_mouse_move@Console@@QAEXHH@Z 0x00510110-0x005103FF FILE BYTE_EXACT
 // symbol    ?on_nc_mouse_move@Console@@UAEXHH@Z
 // size      751 bytes
 // prototype void (__thiscall ?on_nc_mouse_move@Console@@QAEXHH@Z)(Console* this, int, int)
@@ -4193,7 +4193,7 @@ static int show_movies_budget_probe(int x) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00515F70 ?show_movies@Console@@QAEXXZ 0x00515F70-0x00516291;0x0065D3F3-0x0065D4D0
+// ORIGINAL: 0x00515F70 ?show_movies@Console@@QAEXXZ 0x00515F70-0x00516291;0x0065D3F3-0x0065D4D0 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Native515FA5..516035 rebuilds64 FacilitySPStart rows through StringTable and owned Dialogs, sorts the virtual-base StringList and dispatches403BA0 until exec returns negative; Popup lifetime is compiler-managed.", "src/recovered/units/00515f70.cpp", "Root-only console-movie-wrapper-20261001 central dependency closure; immutable task baseline preserved."], "reason": "Recover complete source-owned movie selection and project-index wrapper with proper Popup lifetime, typed facilities, actual text parsing and existing movie playback. Retain exact seed identities and all original spans; no match or acceptance claim is granted by this binding."}
 void Console::show_movies() { // 0x00515F70
     show_movies_budget_probe(2);  // WORKAROUND(inline): see show_movies_budget_probe

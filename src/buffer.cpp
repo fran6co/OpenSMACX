@@ -2927,7 +2927,7 @@ Purpose: The Buffer wide-line filler that sits between the blitter and the
          row on shallow slopes, Bresenham steps on steep ones - and release
          the lock when this body holds the last one.
 
-// ORIGINAL: 0x005E07A0 sub_5e07a0 0x005E07A0-0x005E09CB FILE
+// ORIGINAL: 0x005E07A0 sub_5e07a0 0x005E07A0-0x005E09CB FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:0x005E07A0-0x005E09CB uses ECX as receiver and reads the Buffer pixel, surface, clip, lock-count and stride fields", "source:src/buffer.h declares those members and IDirectDrawSurface2* surface_ at the observed offsets", "pinned:0x005E07F5 Lock, 0x005E09B3 Unlock, and the saved 0x14-byte thiscall cleanup"], "reason": "Bind the original wide-line raster routine to Buffer's named pixel, clip, pitch and DirectDraw members."}
 // symbol    ?fill_line@Buffer@@QAEXHHHHD@Z
 // size      555 bytes
