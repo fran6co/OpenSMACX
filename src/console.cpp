@@ -1711,7 +1711,7 @@ void Console::zoom(int zoom_command, int window_index) {
             MapWinTable[0]->center_x_ = tile_x;
             MapWinTable[0]->center_y_ = tile_y;
         } else {
-            for (; slot < static_cast<int>(MapWinTableSlots); ++slot) {
+            do {
                 if (MapWinTable[slot] == nullptr ||
                     (slot != 0 && MapWinTable[slot]->view_active_ == 0) ||
                     MapWinTable[slot]->zoom_offset_ >= 0) {
@@ -1734,7 +1734,7 @@ void Console::zoom(int zoom_command, int window_index) {
                     MapWinTable[slot]->center_y_ = tile_y;
                     goto found;
                 }
-            }
+            } while (++slot < static_cast<int>(MapWinTableSlots));
             goto zoom_windows;
         }
     found:
@@ -3763,7 +3763,9 @@ void Console::on_nc_mouse_move(int x_coord, int y_coord) {
     } else {
         // Both coordinates take x here, as in the image.
         line_x = x_coord;
-        line_y = x_coord;
+        // WORKAROUND(volatile): the image reloads x_coord from its stack slot
+        // for line_y (0x005101EA) where every plain spelling copies edi.
+        line_y = *(volatile int *)&x_coord;
     }
 
     if (pair_armed(field_23D88_, field_23D8C_)) {
@@ -4178,10 +4180,23 @@ void Console::retire_game() { // 0x00514B30
     log_say("Retire*****************************", 0, 0, 0);
 }
 
+// WORKAROUND(inline): dead /Ob2 budget probe for show_movies (folds away,
+// spends budget). With the loop's `break` exit the image's EH map (20
+// states) matches, but its return-site Popup teardown calls ~StringList
+// (0x004066C0) out of line where this unit's budget still expands it; two
+// chained ifs here starve that expansion exactly. The original spent this
+// budget on something not yet identified.
+static int show_movies_budget_probe(int x) {
+    if (x == 0) x = 1;
+    if (x == 1) x = 4;
+    return x;
+}
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00515F70 ?show_movies@Console@@QAEXXZ 0x00515F70-0x00516291;0x0065D3F3-0x0065D4D0
 // RECOVERY_BINDING: v1 {"evidence": ["Native515FA5..516035 rebuilds64 FacilitySPStart rows through StringTable and owned Dialogs, sorts the virtual-base StringList and dispatches403BA0 until exec returns negative; Popup lifetime is compiler-managed.", "src/recovered/units/00515f70.cpp", "Root-only console-movie-wrapper-20261001 central dependency closure; immutable task baseline preserved."], "reason": "Recover complete source-owned movie selection and project-index wrapper with proper Popup lifetime, typed facilities, actual text parsing and existing movie playback. Retain exact seed identities and all original spans; no match or acceptance claim is granted by this binding."}
 void Console::show_movies() { // 0x00515F70
+    show_movies_budget_probe(2);  // WORKAROUND(inline): see show_movies_budget_probe
     Popup popup;
     for (;;) {
         popup.start(PopupStartCaption, "SHOWMOVIES", -1, nullptr, 0x42,
@@ -4191,14 +4206,15 @@ void Console::show_movies() { // 0x00515F70
              ++project_id) {
             ::clear();
             const int facility_id = FacilitySPStart + project_id;
-            strcat(StringTemp, StringTable.get(Facility[facility_id].name));
+            char *name = Facility[facility_id].name;
+            strcat(StringTemp, StringTable.get(name));
             popup.dialogs().item(StringTemp, project_id);
         }
         popup.dialogs().item_list_.sort(0);
 
         const int selected_project = popup.exec(0, nullptr);
         if (selected_project < 0) {
-            return;
+            break;
         }
         amovie_project(selected_project);
     }

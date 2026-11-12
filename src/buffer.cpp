@@ -2929,7 +2929,7 @@ Purpose: The Buffer wide-line filler that sits between the blitter and the
 
 // ORIGINAL: 0x005E07A0 sub_5e07a0 0x005E07A0-0x005E09CB FILE
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:0x005E07A0-0x005E09CB uses ECX as receiver and reads the Buffer pixel, surface, clip, lock-count and stride fields", "source:src/buffer.h declares those members and IDirectDrawSurface2* surface_ at the observed offsets", "pinned:0x005E07F5 Lock, 0x005E09B3 Unlock, and the saved 0x14-byte thiscall cleanup"], "reason": "Bind the original wide-line raster routine to Buffer's named pixel, clip, pitch and DirectDraw members."}
-// symbol    ?fill_line@Buffer@@QAEHHHHHD@Z
+// symbol    ?fill_line@Buffer@@QAEXHHHHD@Z
 // size      555 bytes
 // Deleted seed provenance: git:123267b4afb63f4fd3396772db0fcf89d35259c9:src/unrecovered/005e07a0.cpp
 Status: Coverage transcription of the retained seed (src/unrecovered/005e07a0.cpp,
@@ -2948,9 +2948,9 @@ Status: Coverage transcription of the retained seed (src/unrecovered/005e07a0.cp
 
 
 
-int Buffer::fill_line(int x1, int y1, int x2, int y2, char fill_colour) {
+void Buffer::fill_line(int x1, int y1, int x2, int y2, char fill_colour) {
     int error = 0;
-    // No return statement anywhere: the caller sees whatever EAX holds.
+    // void in the original: no return value, one epilogue per early exit.
     if (acquire_pixels() != 0) {
         RECT clip = rect1_;
         // Only a downward segment is clipped; the far edges are inclusive.
@@ -9623,11 +9623,8 @@ BufferSpecialText::~BufferSpecialText() {
                                 dib_.bmiColors[color].rgbBlue));              \
     else                                                                      \
         SetTextColor(hdc2_, (WORD)(color) | 0x10ff0000)
-#define BUFFER_TEXT_COLOR(color)                                              \
-    ((init_flags_ & 4) != 0                                                   \
-         ? RGB(dib_.bmiColors[color].rgbRed, dib_.bmiColors[color].rgbGreen,   \
-               dib_.bmiColors[color].rgbBlue)                                 \
-         : (COLORREF)((WORD)(color) | 0x10ff0000))
+// One physical line: the symbol-fact writer refuses '?' in a spliced #define.
+#define BUFFER_TEXT_COLOR(color) ((init_flags_ & 4) != 0 ? RGB(dib_.bmiColors[color].rgbRed, dib_.bmiColors[color].rgbGreen, dib_.bmiColors[color].rgbBlue) : (COLORREF)((WORD)(color) | 0x10ff0000))
 
 // ORIGINAL: 0x005DBD00 ?write_raw_l@Buffer@@QAEHPADHHH@Z 0x005DBD00-0x005DC2C3 FILE
 // TRIED: near-verbatim transcription of the (clean, no-SEH) Ghidra decompilation via `int *p = (int*)this;` field indexing (cross-checked against raw asm offsets: 0x50/0x58/0x60/0x520 /0x52c/0x53c/0x54c/0x55c/0x56c all confirmed). The five `call dword ptr [0x6690xx]` sites are real Win32 GDI calls (SetBkMode/SelectObject/SetTextColor/TextOutA/GetStockObject, identified via Ghidra's WinAPI signatures) dispatched through the catalogued IAT-slot globals via a typedef'd function pointer, matching the original's indirect-call-through-memory shape. The two `(**(code**)(*piVar1+N))(piVar1,arg)` heap callbacks are cast as `__stdcall(int,int)` rather than routed through the VCall thiscall shim, since the disassembly pushes the receiver as an explicit stack arg instead of leaving it in ecx. The Font::width() receiver index (uStack_10 vs uStack_8 vs a third stack slot) is not fully disambiguated across all five call sites - used uStack_10 uniformly as the closest guess. Reaches MISMATCH #0 ('sub' vs 'push'): the original has no EBP frame (esp-relative addressing throughout), which a plain C++ local-variable body does not reproduce.
