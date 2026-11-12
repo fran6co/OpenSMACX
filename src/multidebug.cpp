@@ -165,7 +165,7 @@ void MultiDebug::timer_callback() {
 // _itoa's scaffold declaration above is nullary (a fallback); the real
 // 3-argument call is declared here under a different name. The relocation
 // it needs is masked by the comparison regardless of the symbol it names.
-// ORIGINAL: 0x005C9920 ?on_redraw@MultiDebug@@QAEXXZ 0x005C9920-0x005C9DF9 FILE
+// ORIGINAL: 0x005C9920 ?on_redraw@MultiDebug@@QAEXXZ 0x005C9920-0x005C9DF9 FILE BYTE_EXACT
 // symbol    ?on_redraw@MultiDebug@@UAEXXZ
 // The original primary table's slot 12 selects this painter. The timer's
 // inherited GraphicWin::redraw reaches it through ordinary virtual dispatch.
