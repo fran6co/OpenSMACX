@@ -320,9 +320,9 @@ int AlphaMenu::menu_init() {
 
 // ORIGINAL: 0x00460DD0 ?check@MainMenu@@QAEXH@Z 0x00460DD0-0x0046207E
 // RECOVERY_BINDING: v1 {"evidence": ["historical retired seed src/unrecovered/00460dd0.cpp", "recovery/tasks/alphamenu-check-owner-oct5.json", "Console embedded member +22A2C, actual constructor and by-name callers", "complete pinned 460DD0..46207E CFG and fresh native current owner symbol; actual-source bounded trace/mutant controls"], "reason": "Recover complete menu policy in the actual Console::alpha_menu_ subobject. Preserve historical MainMenu catalogue identity separately from the observed current AlphaMenu symbol; genuine source ownership corrects the old seed hypothesis. No current byte or runtime acceptance claim."}
-// symbol    ?check@AlphaMenu@@QAEXH@Z
+// symbol    ?check@AlphaMenu@@QAEHH@Z
 // TRIED: time-boxed - roughly the first quarter of the function (a long sequence of Menu::show_menu_item/hide_menu_item/ enable_menu_item gates against game-option and tech flags, transcribed with goto-labelled control flow matching the disassembly's branch targets) is faithful; the difficulty-table-driven remainder (several hundred more show/hide/enable calls) is a deliberate stub. MISMATCH #2, well past the prologue.
-void AlphaMenu::check(int veh_id) {
+int AlphaMenu::check(int veh_id) {
     int i;
     int sea;
     int base_id;
@@ -739,4 +739,5 @@ expansion_gate:
         hide_menu_item(9, 6);
         hide_menu_item(9, 7);
     }
+    return 0;
 }

@@ -58,7 +58,9 @@ class AlphaMenu : public Menu {
   // distinguish an original MainMenu subclass, alias or class naming error.
   // Application policy is defined separately in console_menu_policy.cpp;
   // the catalogue identity and unresolved relationship remain explicit.
-  void check(int veh_id);
+  // The catalogue's void is wrong: the single exit sets `xor eax,eax` before
+  // `ret 4` (0x462075), so it returns int (always 0).
+  int check(int veh_id);
   int menu_init(); // original catalogue MainMenu::menu_init, Console-owned receiver
 
   Buffer buffer_;      // 0xB64, IDB `buffer`, size == sizeof(Buffer)

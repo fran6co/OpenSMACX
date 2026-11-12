@@ -47,7 +47,7 @@ class SetupWin : public GraphicWin {
   int do_menu_rightside(char* a1, int a2);
   void on_mouse_move(int x, int y) override;
   void on_left_click(int x, int y) override;
-  int draw_item(int position, int selected);
+  void draw_item(int position, int selected);
   int on_key_click(int, int);
   SetupWin();
   void close();

@@ -329,7 +329,9 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
         menu_height += 0x14 - buffer2_.dib_.bmiHeader.biHeight;
         ++row_count_;
     }
-    GraphicWin::init(field_A14_ - buffer2_.dib_.bmiHeader.biWidth, field_A18_ - menu_height,
+    int y = field_A18_ - menu_height;
+    int x = field_A14_ - buffer2_.dib_.bmiHeader.biWidth;
+    GraphicWin::init(x, y,
                      buffer2_.dib_.bmiHeader.biWidth, menu_height, nullptr, 0x1000020,
                      opening_window_snapshot_, nullptr, nullptr);
 
@@ -448,13 +450,11 @@ void SetupWin::on_mouse_move(int x, int y) {
 
 // ORIGINAL: 0x004AE4D0 ?draw_item@SetupWin@@QAEHHH@Z 0x004AE4D0-0x004AE757
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004ae4d0.cpp", "source:src/setupwin.h:SetupWin", "source:src/stringstruct.h:StringList", "source:src/game.h:opening_window"], "reason": "Restore the item-row painter, text cursor, and selected overlay through typed SetupWin members and a real StringList; the opening-window producer remains a separate storage migration."}
+// symbol    ?draw_item@SetupWin@@QAEXHH@Z
 // TRIED: void return (no eax set anywhere in 647 bytes, so int->void); matches to #29/647 bytes. neg/sbb/and guard for the `this!=0` select before the first copy() call got closest; inlining the set_text_color color ternary into the call vs. a named local made no difference to where it first diverges.
-#pragma warning(push)
-#pragma warning(disable: 4716)
-int SetupWin::draw_item(int position, int selected) {
-    // WORKAROUND(decl): the original returns nothing - its early exit
-    // (0x004AE4E3) and its end both reach `ret 8` without setting eax - so it
-    // was void; setupwin.h still declares the catalogue's int.
+// The catalogue's int return is wrong: the early exit (0x004AE4E3) and the
+// end both reach `ret 8` without setting eax, and no caller reads it.
+void SetupWin::draw_item(int position, int selected) {
     if (position < static_cast<int>(row_count_)) {
         RECT row;
         spot_.get_rect(position, 0, &row);
@@ -519,7 +519,6 @@ int SetupWin::draw_item(int position, int selected) {
         Buffer::restore_clip();
     }
 }
-#pragma warning(pop)
 
 // ORIGINAL: 0x004AD880 ??0SetupWin@@QAE@XZ 0x004AD880-0x004AD9C0;0x006595D0-0x0065960C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:391d42a9:src/recovered/units/004ad880.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x004ad880; physical VC6 COFF emitted symbol ??0SetupWin@@QAE@XZ."]}
