@@ -415,185 +415,134 @@ void FlatButton::on_mouse_leave(int x, int y) {
 }
 
 
+// WORKAROUND(inline): expand_rect (scroll.cpp) is a plain out-of-line
+// function in this tree; on_redraw expands it inline (0x00608208: each
+// `++left; --right; ++top; --bottom` run after a box is its (-1, -1) form,
+// and 0x00608456 holds the text margin 3 in eax for left/right).
+static inline RECT *flatbutton_expand_rect(RECT *rect, int horizontal, int vertical) {
+    rect->left -= horizontal;
+    rect->right += horizontal;
+    rect->top -= vertical;
+    rect->bottom += vertical;
+    return rect;
+}
+
 // ORIGINAL: 0x00607E50 ?on_redraw@FlatButton@@QAEXXZ 0x00607E50-0x006084F9
 // RECOVERY_BINDING: v1 {"evidence": ["task:pulldown-flatbutton-renderer-and-sprite-ownership", "historical seed:src/unrecovered/00607e50.cpp", "Pinned original00607E50; full native instructions, current class and producer/consumer closure."], "reason": "Recover the complete redraw in its genuine virtual C++ owner using real source-owned members, callbacks, sprites and Buffer operations; pointer configuration is borrowed, not owned."}
 // symbol    ?on_redraw@FlatButton@@UAEXXZ
 // TRIED: faithful port of the 4-way fill/box_sprite/8-tile/bevel-box draw dispatch (indexed by the clamped 0/1/2 state, using the FlatButton pseudo-arrays at 0xAD4/AC8/B10/B1C/B28/B34/AE0/AEC/AF8/B04/B40 via raw offset casts) plus the trailing text layout; verified Buffer.width_/ height_ land at 0x4C4/0x4C8 (buffer_ embedded at 0x444, matching Win's real size) and Sprite.iWidth_/iHeight_/cTransparentIndex_ against the disassembly's +0x18/+0x1c/+8. The tail's Ghidra "unaff_EBX"/"unaff_EBP" are mistraced [esp+0x14]/[esp+0x1c] RECT slots, not live registers; rebuilt from raw asm as rectLeft/rectRight instead. The final two-string fallback clip-rect arithmetic (stack-slot reuse interacting with a push) was approximated rather than traced exactly. Compiles and matches through instr #14; not chased further given the size.
 void FlatButton::on_redraw() {
-  Win *const parent = parent_window();
-  WinCallbackWindow = parent;
-  if (HandleMain == 0 || parent == 0) {
+  WinCallbackWindow = parent_window();
+  if (HandleMain == 0 || parent_window() == 0) {
     return;
   }
 
-  Buffer *const buffer = static_cast<Buffer *>(this);
-  buffer->sync_to_palette(PaletteActive);
+  sync_to_palette(PaletteActive);
   // The pinned redraw reads the raw, negative DIB biHeight and negates its
   // sums to form positive destination coordinates; pixel_height() is positive.
-  const RECT working = buffer->current_clip();
-  int rect_left = working.left;
-  int rect_top = working.top;
-  int rect_right = working.right;
-  int rect_bottom = working.bottom;
+  RECT rectangle = *buffer_working_rect();
   fill(WinFillColour);
 
   int state = static_cast<int>(field_AB8_);
   if (state < 0 || state > 2) {
     if (field_A9C_ == 0 && field_A18_ == 0) {
-      state = field_A74_ != 0 ? 1 : 0;
+      state = field_A74_ != 0;
     } else {
       state = 2;
     }
   }
 
-  int drawn_count = 0;
-  Sprite *const fill_sprite = field_AD4_[state];
-  if (fill_sprite != 0) {
-    const int x = (buffer->pixel_width() - fill_sprite->width()) / 2;
-    const int y = -((fill_sprite->height() + buffer->dib_.bmiHeader.biHeight) / 2);
-    fill_sprite->draw(buffer, fill_sprite->transparent_index(), x, y, 1, 1);
+  if (field_AD4_[state] != 0) {
+    field_AD4_[state]->draw(this, field_AD4_[state]->transparent_index(),
+                            (dib_.bmiHeader.biWidth - field_AD4_[state]->width()) / 2,
+                            -((field_AD4_[state]->height() + dib_.bmiHeader.biHeight) / 2),
+                            1, 1);
   } else if (border_styles_[state] != 0) {
-    RECT box = {rect_left, rect_top, rect_right, rect_bottom};
-    buffer->box_sprite(&box, border_styles_[state]);
+    box_sprite(&rectangle, border_styles_[state]);
+  } else if (config[12 + state] != 0) {
+    int count = 1;
+    config[12 + state]->draw(this, config[12 + state]->transparent_index(), 0, 0, 1, 1);
+    if (config[15 + state] != 0) {
+      count = 2;
+      config[15 + state]->draw(this, config[15 + state]->transparent_index(),
+                               dib_.bmiHeader.biWidth - config[15 + state]->width(),
+                               0, 1, 1);
+    }
+    if (config[18 + state] != 0) {
+      ++count;
+      config[18 + state]->draw(this, config[18 + state]->transparent_index(), 0,
+                               -(config[18 + state]->height() + dib_.bmiHeader.biHeight),
+                               1, 1);
+    }
+    if (config[21 + state] != 0) {
+      ++count;
+      config[21 + state]->draw(this, config[21 + state]->transparent_index(),
+                               dib_.bmiHeader.biWidth - config[21 + state]->width(),
+                               -(config[21 + state]->height() + dib_.bmiHeader.biHeight),
+                               1, 1);
+    }
+    if (config[state] != 0 && config[12 + state] != 0 && config[18 + state] != 0) {
+      ++count;
+      tile(config[state], 0, 0, 0, config[12 + state]->height(), config[state]->width(),
+           -(config[18 + state]->height() + dib_.bmiHeader.biHeight
+             + config[12 + state]->height()));
+    }
+    if (config[3 + state] != 0 && config[15 + state] != 0 && config[21 + state] != 0) {
+      ++count;
+      tile(config[3 + state], 0, 0, dib_.bmiHeader.biWidth - config[3 + state]->width(),
+           config[15 + state]->height(), config[3 + state]->width(),
+           -(config[21 + state]->height() + dib_.bmiHeader.biHeight
+             + config[15 + state]->height()));
+    }
+    if (config[6 + state] != 0 && config[12 + state] != 0 && config[15 + state] != 0) {
+      ++count;
+      tile(config[6 + state], 0, 0, config[12 + state]->width(), 0,
+           dib_.bmiHeader.biWidth - config[15 + state]->width()
+               - config[12 + state]->width(),
+           config[6 + state]->height());
+    }
+    if (config[9 + state] != 0 && config[18 + state] != 0 && config[21 + state] != 0) {
+      ++count;
+      tile(config[9 + state], 0, 0, config[18 + state]->width(),
+           -(dib_.bmiHeader.biHeight + config[9 + state]->height()),
+           dib_.bmiHeader.biWidth - config[21 + state]->width()
+               - config[18 + state]->width(),
+           config[9 + state]->height());
+    }
+    if (config[24 + state] != 0 && count == 8) {
+      tile(config[24 + state], 0, 0, config[3 + state]->width(),
+           config[6 + state]->height(),
+           dib_.bmiHeader.biWidth - config[state]->width() - config[3 + state]->width(),
+           -(config[9 + state]->height() + dib_.bmiHeader.biHeight
+             + config[6 + state]->height()));
+    }
   } else {
-    Sprite *const center = config[12 + state];
-    if (center != 0) {
-      drawn_count = 1;
-      center->draw(buffer, center->transparent_index(), 0, 0, 1, 1);
-
-      Sprite *const right = config[15 + state];
-      if (right != 0) {
-        drawn_count = 2;
-        right->draw(buffer, right->transparent_index(),
-                    buffer->pixel_width() - right->width(), 0, 1, 1);
+    int count = 0;
+    if (field_A94_ != 0xFFFFFFFFU) {
+      box(&rectangle, static_cast<int>(field_A94_), static_cast<int>(field_A94_));
+      flatbutton_expand_rect(&rectangle, -1, -1);
+      // WORKAROUND(decl): the image tests `not edx; test dh,0x10` on the
+      // parent's flags (0x00608238), the form of `~iFlags_ & 0x1000`; Win
+      // has no accessor for it and iFlags_ is protected.
+      if ((~parent_window()->has_dialog_focus_flag() & 0x1000) && is_dialog_focus() != 0) {
+        box(&rectangle, static_cast<int>(field_A94_), static_cast<int>(field_A94_));
+        flatbutton_expand_rect(&rectangle, -1, -1);
+        count = 1;
       }
-
-      Sprite *const bottom = config[18 + state];
-      if (bottom != 0) {
-        ++drawn_count;
-        bottom->draw(buffer, bottom->transparent_index(), 0,
-                     -(bottom->height() + buffer->dib_.bmiHeader.biHeight), 1, 1);
-      }
-
-      Sprite *const bottom_right =
-          config[21 + state];
-      if (bottom_right != 0) {
-        ++drawn_count;
-        bottom_right->draw(buffer, bottom_right->transparent_index(),
-                           buffer->pixel_width() - bottom_right->width(),
-                           -(bottom_right->height() + buffer->dib_.bmiHeader.biHeight),
-                           1, 1);
-      }
-
-      Sprite *const top_left_tile = config[state];
-      if (top_left_tile != 0 && bottom != 0) {
-        const int center_height = center->height();
-        ++drawn_count;
-        buffer->tile(top_left_tile, 0, 0, 0, center_height,
-                     top_left_tile->width(),
-                     -(bottom->height() + buffer->dib_.bmiHeader.biHeight
-                       + center_height));
-      }
-
-      Sprite *const bottom_left_tile =
-          config[3 + state];
-      if (bottom_left_tile != 0 && right != 0 && bottom_right != 0) {
-        const int right_height = right->height();
-        const int tile_width = bottom_left_tile->width();
-        ++drawn_count;
-        buffer->tile(bottom_left_tile, 0, 0,
-                     buffer->pixel_width() - tile_width, right_height,
-                     tile_width,
-                     -(bottom_right->height() + buffer->dib_.bmiHeader.biHeight
-                       + right_height));
-      }
-
-      Sprite *const top_right_tile =
-          config[6 + state];
-      if (top_right_tile != 0 && right != 0) {
-        const int center_width = center->width();
-        ++drawn_count;
-        buffer->tile(top_right_tile, 0, 0, center_width, 0,
-                     (buffer->pixel_width() - right->width()) - center_width,
-                     top_right_tile->height());
-      }
-
-      Sprite *const bottom_right_mid_tile =
-          config[9 + state];
-      if (bottom_right_mid_tile != 0 && bottom != 0 && bottom_right != 0) {
-        const int bottom_width = bottom->width();
-        const int tile_height = bottom_right_mid_tile->height();
-        ++drawn_count;
-        buffer->tile(bottom_right_mid_tile, 0, 0, bottom_width,
-                     -(buffer->dib_.bmiHeader.biHeight + tile_height),
-                     (buffer->pixel_width() - bottom_right->width())
-                         - bottom_width,
-                     tile_height);
-      }
-
-      Sprite *const full_center_tile =
-          config[24 + state];
-      if (full_center_tile != 0 && drawn_count == 8) {
-        Sprite *const bottom_left =
-            config[3 + state];
-        const int tile_height = top_right_tile->height();
-        const int tile_left = bottom_left->width();
-        buffer->tile(full_center_tile, 0, 0, tile_left, tile_height,
-                     (buffer->pixel_width()
-                      - top_left_tile->width()) - tile_left,
-                     -(bottom_right_mid_tile->height()
-                       + buffer->dib_.bmiHeader.biHeight + tile_height));
+    }
+    if (field_A9C_ == 0) {
+      while (count < static_cast<int>(bevel_thickness_)) {
+        box(&rectangle, static_cast<int>(bevel_upper_), static_cast<int>(bevel_lower_));
+        flatbutton_expand_rect(&rectangle, -1, -1);
+        ++count;
       }
     } else {
-      int highlight_color = static_cast<int>(field_A94_);
-      drawn_count = 0;
-      RECT bevel = {rect_left, rect_top, rect_right, rect_bottom};
-      if (highlight_color != -1) {
-        buffer->box(&bevel, highlight_color, highlight_color);
-        ++bevel.left;
-        --bevel.right;
-        ++bevel.top;
-        --bevel.bottom;
-        if (!parent->has_dialog_focus_flag() && is_dialog_focus() != 0) {
-          highlight_color = static_cast<int>(field_A94_);
-          buffer->box(&bevel, highlight_color, highlight_color);
-          ++bevel.left;
-          --bevel.right;
-          ++bevel.top;
-          --bevel.bottom;
-          drawn_count = 1;
-        }
+      while (count < static_cast<int>(bevel_thickness_)) {
+        box(&rectangle, static_cast<int>(bevel_lower_), static_cast<int>(bevel_upper_));
+        flatbutton_expand_rect(&rectangle, -1, -1);
+        ++count;
       }
-
-      if (field_A9C_ == 0) {
-        while (drawn_count < static_cast<int>(bevel_thickness_)) {
-          buffer->box(&bevel, static_cast<int>(bevel_upper_),
-                      static_cast<int>(bevel_lower_));
-          ++bevel.left;
-          --bevel.right;
-          ++bevel.top;
-          --bevel.bottom;
-          ++drawn_count;
-        }
-      } else {
-        while (drawn_count < static_cast<int>(bevel_thickness_)) {
-          buffer->box(&bevel, static_cast<int>(bevel_lower_),
-                      static_cast<int>(bevel_upper_));
-          ++bevel.left;
-          --bevel.right;
-          ++bevel.top;
-          --bevel.bottom;
-          ++drawn_count;
-        }
-        bevel.left += static_cast<int>(bevel_thickness_);
-        bevel.top += static_cast<int>(bevel_thickness_);
-        bevel.right += static_cast<int>(bevel_thickness_);
-        bevel.bottom += static_cast<int>(bevel_thickness_);
-      }
-      rect_left = bevel.left;
-      rect_top = bevel.top;
-      rect_right = bevel.right;
-      rect_bottom = bevel.bottom;
+      offset_rect(&rectangle, bevel_thickness_, bevel_thickness_);
     }
   }
 
@@ -602,37 +551,24 @@ void FlatButton::on_redraw() {
     if (text_color >= 0) {
       set_text_color(text_color, -1, 1, 1);
     }
-
-    if (parent->on_button_text_draw(this, name_,
-                                   static_cast<int>(field_A78_)) == 0) {
-      const int text_width = rect_right - rect_left - 6;
-      const int wrapped_height = buffer->wrap_height(name_, text_width);
-      const int line_height = buffer->text_line_height();
-      const int text_height = buffer->text_height();
-      const int vertical_shift = (wrapped_height - line_height) + text_height;
-      const int y = ((rect_bottom - rect_top) - vertical_shift) / 2 + rect_top;
-
-      if (y >= 0 && (static_cast<int>(field_18_) > 1
-                     || buffer->text_width(name_) <= text_width)) {
-        buffer->wrap_cent(name_, rect_left + 3, y, text_width);
-      } else {
-        const int ellipsis_width = buffer->text_width("...");
-        // Native fallback reuses the rectangle rather than the wrap baseline:
-        // inset both sides, reserve the dots, then translate that rectangle
-        // by its own width for the second write.
-        RECT clipped_text = {rect_left + 3, rect_top,
-                             rect_right - 3 - ellipsis_width, rect_bottom};
-        buffer->set_clip(&clipped_text);
-        buffer->write_l(name_, &clipped_text,
-                        static_cast<int>(strlen(name_)));
-        buffer->restore_clip();
-
-        const int clipped_width = clipped_text.right - clipped_text.left;
-        RECT ellipsis = {clipped_text.right, clipped_text.top,
-                         clipped_text.right + clipped_width,
-                         clipped_text.bottom};
-        buffer->write_l("...", &ellipsis, 3);
+    if (parent_window() != 0
+        && parent_window()->on_button_text_draw(this, name_,
+                                                static_cast<int>(field_A78_)) == 0) {
+      const int shift = wrap_height(name_, rectangle.right - rectangle.left - 6)
+          - text_line_height() + text_height();
+      const int y = ((rectangle.bottom - rectangle.top) - shift) / 2 + rectangle.top;
+      if (y >= 0 && (static_cast<int>(field_18_) >= 2
+                     || text_width(name_) <= rectangle.right - rectangle.left - 6)) {
+        wrap_cent(name_, rectangle.left + 3, y, rectangle.right - rectangle.left - 6);
+        return;
       }
+      flatbutton_expand_rect(&rectangle, -3, 0);
+      rectangle.right -= text_width("...");
+      set_clip(&rectangle);
+      write_l(name_, &rectangle);
+      restore_clip();
+      offset_rect(&rectangle, rectangle.right - rectangle.left, 0);
+      write_l("...", &rectangle);
     }
   }
 }

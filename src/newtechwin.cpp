@@ -272,228 +272,196 @@ void NewTechWin::on_redraw() {
     this->box_sprite(&bottom_rect_, &InterfaceBoxStyles[0]);
 }
 
+// WORKAROUND(type): 0x00483FA7..483FC9 stores the four bounds constants
+// through a pointer copy and 0x00483FD0.. reads them back through another
+// instead of folding the constants: the original store and the RECT read use
+// different types. The A14 words are uint32_t in newtechwin.h; this
+// word-typed setter reproduces the unfolded store/reload.
+static inline void newtechwin_set_words(uint32_t *rect, int left, int top, int right,
+                                        int bottom) {
+    rect[0] = left;
+    rect[1] = top;
+    rect[2] = right;
+    rect[3] = bottom;
+}
+
+// WORKAROUND(decl): 0x00483FB3..483FF2 loads all four source edges through a
+// copy of the source pointer, then +n/-n into the destination.
+static inline void newtechwin_inset_copy(RECT *dst, const RECT *src, int amount) {
+    dst->left = src->left + amount;
+    dst->top = src->top + amount;
+    dst->right = src->right - amount;
+    dst->bottom = src->bottom - amount;
+}
+
+// WORKAROUND(decl): 0x00484140..484163 copies a RECT through separate
+// source/destination pointer copies (label, row and AE4 rectangles).
+static inline void newtechwin_copy_rect(RECT *dst, const RECT *src) {
+    dst->left = src->left;
+    dst->top = src->top;
+    dst->right = src->right;
+    dst->bottom = src->bottom;
+}
+
+// WORKAROUND(inline): expand_rect (scroll.cpp) is out of line in this tree;
+// the StringBox loop at 0x0048438C..4843AA adds 4 to left/top and a register
+// holding -4 to right/bottom, the expand_rect(rect, -4, -4) shape.
+static inline void newtechwin_expand_rect(RECT *rect, int horizontal, int vertical) {
+    rect->left -= horizontal;
+    rect->right += horizontal;
+    rect->top -= vertical;
+    rect->bottom += vertical;
+}
+
+// WORKAROUND(inline): 0x00484783..4847A7 is a non-rotated loop whose head
+// runs the modal pass, hide and redraw before the -1 test, the shape of a
+// break test on an inline helper (VC6 rotates every other loop form).
+static inline int newtechwin_run_modal(NewTechWin *win) {
+    win->set_modal(1, 0, 0);
+    win->hide();
+    do_all_draws();
+    return PendingTechnologyLink;
+}
 // ORIGINAL: 0x00483F90 ?exec@NewTechWin@@QAEXHH@Z 0x00483F90-0x0048480F
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00483f90.cpp retained full original extent; independent pinned geometry review and actual-source controls in recovery/tests/test_newtechwin_exec_behavior.py"], "reason": "Technology popup uses real embedded controls, callback receiver, shared data owners, audio and modal hyperlink dispatch."}
 // TRIED: literal transcription of the RECT-cascade prologue (traced every register's concrete value through ~150 straight-line instrs) plus the loop-over-4-StringBox body using a LOCAL scratch array (the original inset math lives on the stack, not the object's fields - the loop never writes field_AA4_ etc back). Named scaffold members (flatButtons_[3], buttonGroup_, stringBoxes_[4], stringBox2_) used directly instead of raw offsets where the class already typed them. Compiles; not chased to byte-exact given size (2175 bytes).
 void NewTechWin::exec(int technology_id, int other_faction_id) {
     field_B28_ = static_cast<uint32_t>(other_faction_id);
     field_B24_ = static_cast<uint32_t>(technology_id);
-    field_A14_ = 0;
-    field_A18_ = 0;
-    field_A1C_ = 0x226;
-    field_A20_ = 0x258;
+    // WORKAROUND(type): the A14/AF4/B04/B14/AE4 words are RECTs in the image
+    // (pointer-parameter stores at 0x00483FA7, 0x00483FF8, 0x00484265...).
+    char number[16];
+    RECT boxes[4];
+    RECT strip;
+    RECT rect;
+    uint32_t category_id;
+    RECT *const bounds = reinterpret_cast<RECT *>(&field_A14_);
+    newtechwin_set_words(&field_A14_, 0, 0, 0x226, 0x258);
+    newtechwin_inset_copy(&rect, bounds, 12);
+    strip = rect;
+    strip.left += 3;
+    strip.right -= 3;
+    strip.bottom -= 3;
+    strip.top = strip.bottom - 0x14;
+    RECT *const button = reinterpret_cast<RECT *>(&field_AF4_);
+    newtechwin_copy_rect(button, &strip);
+    rect.bottom = strip.top - 7;
+    newtechwin_copy_rect(&main_rect_, &rect);
 
-    int left = static_cast<int>(field_A14_) + 0xc;
-    int top = static_cast<int>(field_A18_) + 0xc;
-    int right = static_cast<int>(field_A1C_) - 0xc;
-    int bottom = static_cast<int>(field_A20_) - 0xc;
-    int inset_right = right - 3;
-    bottom -= 3;
-    const int row_top = top + 3;
-    const int base_bottom = bottom;
-    field_AF4_ = static_cast<uint32_t>(left + 3);
-    field_AF8_ = static_cast<uint32_t>(bottom - 0x14);
-    field_AFC_ = static_cast<uint32_t>(inset_right);
-    field_B00_ = static_cast<uint32_t>(base_bottom);
-    int row_bottom = base_bottom - 0x14 - 7;
+    RECT inner;
+    newtechwin_inset_copy(&inner, &main_rect_, 3);
+    newtechwin_copy_rect(&title_rect_, &inner);
+    title_rect_.bottom = title_rect_.top + 0x17;
+    newtechwin_copy_rect(&category_rect_, &inner);
+    category_rect_.top = title_rect_.bottom + 3;
+    category_rect_.bottom = category_rect_.top + 0xd9;
+    newtechwin_copy_rect(&label_rects_[0], &inner);
+    label_rects_[0].top = category_rect_.bottom + 3;
+    label_rects_[0].bottom = label_rects_[0].top + 0x14;
+    newtechwin_copy_rect(&row_rects_[0], &inner);
+    row_rects_[0].top = label_rects_[0].bottom + 3;
+    row_rects_[0].bottom = row_rects_[0].top + 0x4c;
+    newtechwin_copy_rect(&label_rects_[2], &inner);
+    label_rects_[2].top = row_rects_[0].bottom + 3;
+    label_rects_[2].bottom = label_rects_[2].top + 0x14;
+    newtechwin_copy_rect(&row_rects_[2], &inner);
+    row_rects_[2].top = label_rects_[2].bottom + 3;
+    row_rects_[2].bottom = row_rects_[2].top + 0x4c;
+    newtechwin_copy_rect(&bottom_rect_, &inner);
+    bottom_rect_.top = row_rects_[2].bottom + 3;
+    bottom_rect_.bottom = main_rect_.bottom - 3;
 
-    main_rect_.left = static_cast<uint32_t>(left);
-    main_rect_.top = static_cast<uint32_t>(top);
-    main_rect_.right = static_cast<uint32_t>(right);
-    main_rect_.bottom = static_cast<uint32_t>(row_bottom);
-    title_rect_.left = static_cast<uint32_t>(row_top);
-    title_rect_.top = static_cast<uint32_t>(top + 3);
-    title_rect_.right = static_cast<uint32_t>(right - 3);
-    title_rect_.bottom = static_cast<uint32_t>(row_bottom - 3);
+    newtechwin_copy_rect(&label_rects_[1], &label_rects_[0]);
+    const int split = label_rects_[0].left +
+                      (label_rects_[0].right - label_rects_[0].left + 3) / 2 - 3;
+    label_rects_[0].right = split;
+    const int split_right = split + 3;
+    label_rects_[1].left = split_right;
+    newtechwin_copy_rect(&row_rects_[1], &row_rects_[0]);
+    row_rects_[0].right = split;
+    row_rects_[1].left = split_right;
+    newtechwin_copy_rect(&label_rects_[3], &label_rects_[2]);
+    label_rects_[2].right = split;
+    label_rects_[3].left = split_right;
+    newtechwin_copy_rect(&row_rects_[3], &row_rects_[2]);
+    row_rects_[2].right = split;
+    row_rects_[3].left = split_right;
 
-    int y = static_cast<int>(title_rect_.top) + 0x17;
-    title_rect_.bottom = static_cast<uint32_t>(y);
-    category_rect_.left = static_cast<uint32_t>(row_top);
-    category_rect_.top = static_cast<uint32_t>(title_rect_.top);
-    category_rect_.right = static_cast<uint32_t>(title_rect_.right);
-    category_rect_.bottom = static_cast<uint32_t>(row_bottom - 3);
-    y = static_cast<int>(title_rect_.bottom) + 3;
-    category_rect_.top = static_cast<uint32_t>(y);
-    y += 0xd9;
-    category_rect_.bottom = static_cast<uint32_t>(y);
-    label_rects_[0].left = static_cast<uint32_t>(row_top);
-    y += 3;
-    label_rects_[0].top = static_cast<uint32_t>(y);
-    label_rects_[0].right = static_cast<uint32_t>(title_rect_.right);
-    label_rects_[0].bottom = static_cast<uint32_t>(title_rect_.bottom);
-    y = static_cast<int>(label_rects_[0].top) + 0x14;
-    row_rects_[0].left = static_cast<uint32_t>(row_top);
-    label_rects_[0].bottom = static_cast<uint32_t>(y);
-    y += 3;
-    row_rects_[0].top = static_cast<uint32_t>(y);
-    row_rects_[0].right = static_cast<uint32_t>(title_rect_.right);
-    row_rects_[0].bottom = static_cast<uint32_t>(title_rect_.bottom);
-    y = static_cast<int>(row_rects_[0].top) + 0x4c;
-    row_rects_[0].bottom = static_cast<uint32_t>(y);
-    y += 3;
-    label_rects_[2].left = static_cast<uint32_t>(row_top);
-    label_rects_[2].top = static_cast<uint32_t>(y);
-    label_rects_[2].right = static_cast<uint32_t>(title_rect_.right);
-    label_rects_[2].bottom = static_cast<uint32_t>(title_rect_.bottom);
-    y = static_cast<int>(label_rects_[2].top) + 0x14;
-    row_rects_[2].left = static_cast<uint32_t>(row_top);
-    label_rects_[2].bottom = static_cast<uint32_t>(y);
-    y += 3;
-    row_rects_[2].top = static_cast<uint32_t>(y);
-    row_rects_[2].right = static_cast<uint32_t>(title_rect_.right);
-    row_rects_[2].bottom = static_cast<uint32_t>(title_rect_.bottom);
-    y = static_cast<int>(row_rects_[2].top) + 0x4c;
-    row_rects_[2].bottom = static_cast<uint32_t>(y);
-    y += 3;
-    bottom_rect_.left = static_cast<uint32_t>(row_top);
-    bottom_rect_.top = static_cast<uint32_t>(y);
-    bottom_rect_.right = static_cast<uint32_t>(title_rect_.right);
-    bottom_rect_.bottom = static_cast<uint32_t>(row_bottom - 3);
-    bottom_rect_.bottom = static_cast<uint32_t>(static_cast<int>(main_rect_.bottom) - 3);
+    RECT *const next_button = reinterpret_cast<RECT *>(&field_B14_);
+    RECT *const prev_button = reinterpret_cast<RECT *>(&field_B04_);
+    RECT *const text_rect = reinterpret_cast<RECT *>(&field_AE4_);
+    rect = main_rect_;
+    rect.right -= 6;
+    rect.bottom -= 6;
+    rect.left = rect.right - 0x1c;
+    rect.top = rect.bottom - 0x22;
+    newtechwin_copy_rect(next_button, &rect);
+    offset_rect(&rect, -0x1f, 0);
+    newtechwin_copy_rect(prev_button, &rect);
+    newtechwin_copy_rect(text_rect, &bottom_rect_);
+    text_rect->right = prev_button->left - 4;
 
-    label_rects_[1].left = label_rects_[0].left;
-    label_rects_[1].top = label_rects_[0].top;
-    label_rects_[1].right = label_rects_[0].right;
-    label_rects_[1].bottom = label_rects_[0].bottom;
-    int width = static_cast<int>(label_rects_[0].right) - static_cast<int>(label_rects_[0].left);
-    width += 3;
-    width >>= 1;
-    width = width + static_cast<int>(label_rects_[0].left) - 3;
-    label_rects_[0].right = static_cast<uint32_t>(width);
-    technology_id = width;
-    label_rects_[1].left = static_cast<uint32_t>(width + 3);
-
-    row_rects_[1].left = row_rects_[0].left;
-    row_rects_[1].top = row_rects_[0].top;
-    row_rects_[1].right = row_rects_[0].right;
-    row_rects_[1].bottom = row_rects_[0].bottom;
-    row_rects_[1].left = static_cast<uint32_t>(width + 3);
-    row_rects_[0].right = static_cast<uint32_t>(width);
-    label_rects_[3].left = label_rects_[2].left;
-    label_rects_[3].top = label_rects_[2].top;
-    label_rects_[3].right = label_rects_[2].right;
-    label_rects_[3].bottom = label_rects_[2].bottom;
-    label_rects_[2].right = static_cast<uint32_t>(width);
-    label_rects_[3].left = static_cast<uint32_t>(width + 3);
-
-    row_rects_[3].left = row_rects_[2].left;
-    row_rects_[3].top = row_rects_[2].top;
-    row_rects_[3].right = row_rects_[2].right;
-    row_rects_[2].right = static_cast<uint32_t>(technology_id);
-    row_rects_[3].bottom = row_rects_[2].bottom;
-
-    field_B14_ = static_cast<uint32_t>(static_cast<int>(main_rect_.right) - 6 - 0x1c);
-    field_B18_ = static_cast<uint32_t>(static_cast<int>(main_rect_.bottom) - 6 - 0x22);
-    field_B1C_ = static_cast<uint32_t>(static_cast<int>(main_rect_.right) - 6);
-    field_B20_ = static_cast<uint32_t>(static_cast<int>(main_rect_.bottom) - 6);
-    field_B04_ = static_cast<uint32_t>(static_cast<int>(field_B14_) - 0x1f);
-    field_B08_ = field_B18_;
-    field_B0C_ = static_cast<uint32_t>(static_cast<int>(field_B1C_) - 0x1f);
-    field_B10_ = field_B20_;
-    field_AE4_ = bottom_rect_.left;
-    field_AE8_ = bottom_rect_.top;
-    field_AEC_ = bottom_rect_.right;
-    field_AF0_ = bottom_rect_.bottom;
-    field_AEC_ = static_cast<uint32_t>(static_cast<int>(field_B04_) - 4);
-
-    RECT bounds;
-    bounds.left = static_cast<LONG>(field_A14_);
-    bounds.top = static_cast<LONG>(field_A18_);
-    bounds.right = static_cast<LONG>(field_A1C_);
-    bounds.bottom = static_cast<LONG>(field_A20_);
-    init(&bounds, 0, 0x05000000, 0, 0, 0);
+    init(bounds, 0, 0x05000000, 0, 0, 0);
     fill(9);
     field_16C_ = 0x1a;
     center();
 
-    RECT local_rects[4];
-    local_rects[0].left = static_cast<LONG>(label_rects_[1].left);
-    local_rects[0].top = static_cast<LONG>(label_rects_[1].top);
-    local_rects[0].right = static_cast<LONG>(label_rects_[1].right);
-    local_rects[0].bottom = static_cast<LONG>(label_rects_[1].bottom);
-    local_rects[1].left = static_cast<LONG>(row_rects_[1].left);
-    local_rects[1].top = static_cast<LONG>(row_rects_[1].top);
-    local_rects[1].right = static_cast<LONG>(row_rects_[1].right);
-    local_rects[1].bottom = static_cast<LONG>(row_rects_[1].bottom);
-    local_rects[2].left = static_cast<LONG>(bottom_rect_.left);
-    local_rects[2].top = static_cast<LONG>(bottom_rect_.top);
-    local_rects[2].right = static_cast<LONG>(bottom_rect_.right);
-    local_rects[2].bottom = static_cast<LONG>(bottom_rect_.bottom);
-    local_rects[3].left = static_cast<LONG>(row_rects_[3].left);
-    local_rects[3].top = static_cast<LONG>(row_rects_[3].top);
-    local_rects[3].right = static_cast<LONG>(row_rects_[3].right);
-    local_rects[3].bottom = static_cast<LONG>(row_rects_[3].bottom);
-
+    boxes[0] = row_rects_[0];
+    boxes[1] = row_rects_[1];
+    boxes[2] = row_rects_[2];
+    boxes[3] = row_rects_[3];
     for (int box_index = 0; box_index < 4; ++box_index) {
+        RECT *const rect = &boxes[box_index];
+        newtechwin_expand_rect(rect, -4, -4);
         StringBox &box = stringBoxes_[box_index];
-        RECT &rect = local_rects[box_index];
-        rect.left += 4;
-        rect.top += 4;
-        rect.right -= 4;
-        rect.bottom -= 4;
-        box.init(rect.left, rect.top, rect.right - rect.left,
-                 rect.bottom - rect.top, this, 0, -1);
-
-        const int multiplayer_style = IsMultiplayerNet != 0 ? 2 : 3;
-        Buffer *const buffer = static_cast<Buffer *>(&box);
-        buffer->set_font(find_font(0xe, 0), find_font(0xe, 1),
-                         find_font(0xe, 2),
-                         find_font(0xe, multiplayer_style));
-        buffer->set_text_color(0xe1, -1, 1, 1);
-
+        box.init(rect->left, rect->top, rect->right - rect->left,
+                 rect->bottom - rect->top, this, 0, -1);
+        box.Buffer::set_font(find_font(0xe, 0), find_font(0xe, 1),
+                             find_font(0xe, 2),
+                             find_font(0xe, IsMultiplayerNet != 0 ? 2 : 3));
+        box.Buffer::set_text_color(0xe1, -1, 1, 1);
         CurrentTechnologyBoxIndex = box_index;
         help_tech_info(newtech_info, static_cast<int>(field_B24_),
                        ConsoleGlobal.faction_id_, box_index);
         box.show(0);
     }
 
-    const int left2 = static_cast<int>(field_AE8_) + 3;
-    const int top2 = static_cast<int>(field_AE4_) + 3;
-    const int height2 = static_cast<int>(field_AF0_) - 3 - left2;
-    const int width2 = static_cast<int>(field_AEC_) - 3 - top2;
-    stringBox2_.init(top2, left2, width2, height2, this, 0, -1);
-    Buffer *const description_buffer = static_cast<Buffer *>(&stringBox2_);
-    description_buffer->set_font(find_font(0xc, 0), find_font(0xc, 1),
+    newtechwin_inset_copy(&rect, text_rect, 3);
+    stringBox2_.init(rect.left, rect.top, rect.right - rect.left,
+                     rect.bottom - rect.top, this, 0, -1);
+    stringBox2_.Buffer::set_font(find_font(0xc, 0), find_font(0xc, 1),
                                  find_font(0xc, 2), 0);
-    description_buffer->set_text_color(0x98, -1, 1, 1);
+    stringBox2_.Buffer::set_text_color(0x98, -1, 1, 1);
     StringTemp[0] = '\0';
     strcat(StringTemp, "TECH");
-    char technology_number[24];
-    _itoa(static_cast<int>(field_B24_), technology_number, 10);
-    strcat(StringTemp, technology_number);
+    _itoa(static_cast<int>(field_B24_), number, 10);
+    strcat(StringTemp, number);
     stringBox2_.strings().load(DatalinkBlurbFile, StringTemp, 1, 0);
     stringBox2_.add_fixup();
     stringBox2_.show(0);
 
-    const int button_width = static_cast<int>(field_B00_) -
-                             static_cast<int>(field_AF8_);
-    const int button_height = static_cast<int>(field_AFC_) -
-                              static_cast<int>(field_AF4_);
-    const int button_x = static_cast<int>(field_AF4_);
-    const int button_y = static_cast<int>(field_AF8_);
-    char *const button_label = label_get(0x194 / 4);
-    flatButtons_[0].init(button_label, -1, button_x, button_y,
-                         button_height, button_width, this, 0);
-    flatButtons_[0].set_border_styles(&InterfaceBoxStyles[27],
-                                      &InterfaceBoxStyles[28],
-                                      &InterfaceBoxStyles[29]);
-    static_cast<Buffer *>(&flatButtons_[0])->set_font(
-        MainInterfaceGlobal.primary_font(), 0, 0, 0);
-    flatButtons_[0].redraw();
-    flatButtons_[0].redraw();
+    FlatButton &ok_button = flatButtons_[0];
+    ok_button.init(label_get(0x194 / 4), -1, static_cast<int>(field_AF4_),
+                   static_cast<int>(field_AF8_),
+                   static_cast<int>(field_AFC_) - static_cast<int>(field_AF4_),
+                   static_cast<int>(field_B00_) - static_cast<int>(field_AF8_),
+                   this, 0);
+    ok_button.set_border_styles(&InterfaceBoxStyles[27], &InterfaceBoxStyles[28],
+                                &InterfaceBoxStyles[29]);
+    ok_button.Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+    ok_button.redraw();
+    ok_button.redraw();
 
     buttonGroup_.init(0, 0);
-    flatButtons_[1].init(0, 1, static_cast<int>(field_B04_),
-        static_cast<int>(field_B08_),
-        static_cast<int>(field_B0C_) - static_cast<int>(field_B04_),
-        static_cast<int>(field_B10_) - static_cast<int>(field_B08_), this, 0);
+    flatButtons_[1].init(0, 1, prev_button->left, prev_button->top,
+                         prev_button->right - prev_button->left,
+                         prev_button->bottom - prev_button->top, this, 0);
     flatButtons_[1].set_report_icons(&technology_sprites_[0],
         &technology_sprites_[1], &technology_sprites_[2]);
     flatButtons_[1].redraw();
-    flatButtons_[2].init(0, 2, static_cast<int>(field_B14_),
-        static_cast<int>(field_B18_),
-        static_cast<int>(field_B1C_) - static_cast<int>(field_B14_),
-        static_cast<int>(field_B20_) - static_cast<int>(field_B18_), this, 0);
+    flatButtons_[2].init(0, 2, next_button->left, next_button->top,
+                         next_button->right - next_button->left,
+                         next_button->bottom - next_button->top, this, 0);
     flatButtons_[2].set_report_icons(&technology_sprites_[3],
         &technology_sprites_[4], &technology_sprites_[5]);
     flatButtons_[2].redraw();
@@ -506,32 +474,26 @@ void NewTechWin::exec(int technology_id, int other_faction_id) {
 
     StringTemp[0] = '\0';
     strcat(StringTemp, "voices\\tech");
-    char voice_number[24];
-    _itoa(static_cast<int>(field_B24_), voice_number, 10);
-    strcat(StringTemp, voice_number);
+    _itoa(static_cast<int>(field_B24_), number, 10);
+    strcat(StringTemp, number);
     strcat(StringTemp, ".mp3");
-    if ((GameDataStateStorage.fields_.game_more_preferences_ & MPREF_AV_VOICEOVER_TECH_FAC) != 0) {
-        const int faction = ConsoleGlobal.faction_id_;
-        if ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
-             static_cast<uint8_t>(1u << (faction & 0x1F))) != 0) {
-            g_WAVE_GENERAL.unload();
-            g_WAVE_GENERAL.load(StringTemp);
-            g_WAVE_GENERAL.set_volume(WaveDeviceGlobal.get_group_volume(0));
-            g_WAVE_GENERAL.play();
-        }
+    if ((GameDataStateStorage.fields_.game_more_preferences_ & MPREF_AV_VOICEOVER_TECH_FAC) != 0 &&
+        is_human(ConsoleGlobal.faction_id_)) {
+        g_WAVE_GENERAL.unload();
+        g_WAVE_GENERAL.load(StringTemp);
+        g_WAVE_GENERAL.set_volume(WaveDeviceGlobal.get_group_volume(0));
+        g_WAVE_GENERAL.play();
     }
 
-    do {
-        set_modal(1, 0, 0);
-        hide();
-        do_all_draws();
-        if (PendingTechnologyLink == -1) break;
-        uint32_t category_id = 0;
-        int entry_id = 0;
+    while (1) {
+        if (newtechwin_run_modal(this) == -1) {
+            break;
+        }
+        int entry_id;
         DatalinkMain.parse_id(PendingTechnologyLink, &category_id, &entry_id);
         DatalinkMain.exec(category_id, entry_id);
         PendingTechnologyLink = -1;
-    } while (true);
+    }
 
     if ((GameDataStateStorage.fields_.game_more_preferences_ & MPREF_AV_VOICEOVER_TECH_FAC) != 0 &&
         (GameDataStateStorage.fields_.game_more_preferences_ & MPREF_AV_VOICEOVER_STOP_CLOSE_POPUP) != 0) {

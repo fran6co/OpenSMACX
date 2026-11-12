@@ -93,6 +93,18 @@ Purpose: Destroy PushButton through its real BaseButton subobject.
 PushButton::~PushButton() {
 }
 
+// WORKAROUND(inline): expand_rect (scroll.cpp) is a plain out-of-line
+// function in this tree; on_redraw expands it inline (0x0062C194: the negated
+// bevel thickness held in edx, applied left/right/top/bottom; each `++left;
+// --right; ++top; --bottom` run after a box is its (-1, -1) form).
+static inline RECT *pushbutton_expand_rect(RECT *rect, int horizontal, int vertical) {
+    rect->left -= horizontal;
+    rect->right += horizontal;
+    rect->top -= vertical;
+    rect->bottom += vertical;
+    return rect;
+}
+
 // ORIGINAL: 0x0062C110 ?on_redraw@PushButton@@QAEXXZ 0x0062C110-0x0062C82D
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned PushButton table 0x670C60 slot 12 selects 0x62C110.", "The original body consumes all eighteen AB8..AFC words as Sprite receivers/tile arguments. pushbutton.cpp copies the table into those words; game.cpp publishes six borrowed sprite pointers and nulls the other twelve.", "The retained seed TRIED note documents the two parallel nine-sprite sets and pressed-state nesting; both branches remain in this source body."], "reason": "Recover the complete inherited-buffer painter in PushButton, using typed Sprite consumers and its actual BaseButton/GraphicWin hierarchy."}
 // kind      game
@@ -100,168 +112,166 @@ PushButton::~PushButton() {
 // TRIED: transcribed from Ghidra's decompile, fixing a real structural miss on the first pass - the sprite/tile draw block (0xac8!=0 branch) nests on `*(self+0xa9c)==0`, selecting between TWO parallel 9-draw sets (0xac8.. vs 0xaec..) that share one closing `tile()` call after the if/else, not one flat sequence. `this`-null guards (`-(uint)(this!=0)&buf`) are dropped in favour of `buf` directly - a member fn's `this` is never null, and the brief warns the ternary form of this idiom gets optimized away anyway. Frameless build compiles and matches through instr #2 (mov vs push) - not chased further, large member function with many null-guarded draws, landed for coverage.
 void PushButton::on_redraw() {
     WinCallbackWindow = parent_window();
-    if (HandleMain == 0) return;
+    if (HandleMain == 0 || parent_window() == 0) return;
 
-    Buffer *buffer = static_cast<Buffer *>(this);
-    buffer->sync_to_palette(PaletteActive);
+    sync_to_palette(PaletteActive);
     RECT rectangle = *buffer_working_rect();
     fill(static_cast<int>(color_));
 
-    if (field_AC8_ == 0) {
+    if (field_AC8_ != 0) {
+        int draw_count = 0;
+        pushbutton_expand_rect(&rectangle, -static_cast<int>(bevel_thickness_),
+                               -static_cast<int>(bevel_thickness_));
+
+        // Keep the original signed, top-down DIB member at each bottom/tile
+        // coordinate site. The pinned body reloads biHeight and adds it to
+        // Sprite heights before negating; pixel_height() is its positive
+        // magnitude and changes those coordinates when substituted here.
+        if (field_A9C_ == 0) {
+            if (field_AC8_ != 0) {
+                draw_count = 1;
+                field_AC8_->draw(this, field_AC8_->transparent_index(), 0, 0, 1, 1);
+            }
+            if (field_ACC_ != 0) {
+                ++draw_count;
+                field_ACC_->draw(this, field_ACC_->transparent_index(),
+                                 dib_.bmiHeader.biWidth - field_ACC_->width(), 0, 1, 1);
+            }
+            if (field_AD0_ != 0) {
+                ++draw_count;
+                field_AD0_->draw(this, field_AD0_->transparent_index(), 0,
+                                 -(field_AD0_->height() + dib_.bmiHeader.biHeight), 1, 1);
+            }
+            if (field_AD4_ != 0) {
+                ++draw_count;
+                field_AD4_->draw(this, field_AD4_->transparent_index(),
+                                 dib_.bmiHeader.biWidth - field_AD4_->width(),
+                                 -(field_AD4_->height() + dib_.bmiHeader.biHeight), 1, 1);
+            }
+            if (field_AB8_ != 0 && field_AC8_ != 0 && field_AD0_ != 0) {
+                ++draw_count;
+                tile(field_AB8_, 0, 0, 0, field_AC8_->height(), field_AB8_->width(),
+                     -(field_AD0_->height() + dib_.bmiHeader.biHeight
+                       + field_AC8_->height()));
+            }
+            if (field_ABC_ != 0 && field_ACC_ != 0 && field_AD4_ != 0) {
+                ++draw_count;
+                tile(field_ABC_, 0, 0, dib_.bmiHeader.biWidth - field_ABC_->width(),
+                     field_ACC_->height(), field_ABC_->width(),
+                     -(field_AD4_->height() + dib_.bmiHeader.biHeight
+                       + field_ACC_->height()));
+            }
+            if (field_AC0_ != 0 && field_AC8_ != 0 && field_ACC_ != 0) {
+                ++draw_count;
+                tile(field_AC0_, 0, 0, field_AC8_->width(), 0,
+                     dib_.bmiHeader.biWidth - field_ACC_->width() - field_AC8_->width(),
+                     field_AC0_->height());
+            }
+            if (field_AC4_ != 0 && field_AD0_ != 0 && field_AD4_ != 0) {
+                ++draw_count;
+                tile(field_AC4_, 0, 0, field_AD0_->width(),
+                     -(dib_.bmiHeader.biHeight + field_AC4_->height()),
+                     dib_.bmiHeader.biWidth - field_AD4_->width() - field_AD0_->width(),
+                     field_AC4_->height());
+            }
+            if (field_AD8_ != 0 && draw_count == 8) {
+                tile(field_AD8_, 0, 0, field_ABC_->width(), field_AC0_->height(),
+                     dib_.bmiHeader.biWidth - field_AB8_->width() - field_ABC_->width(),
+                     -(dib_.bmiHeader.biHeight + field_AC4_->height()
+                       + field_AC0_->height()));
+            }
+        } else {
+            offset_rect(&rectangle, bevel_thickness_, bevel_thickness_);
+            if (field_AEC_ != 0) {
+                draw_count = 1;
+                field_AEC_->draw(this, field_AEC_->transparent_index(), 0, 0, 1, 1);
+            }
+            if (field_AF0_ != 0) {
+                ++draw_count;
+                field_AF0_->draw(this, field_AF0_->transparent_index(),
+                                 dib_.bmiHeader.biWidth - field_AF0_->width(), 0, 1, 1);
+            }
+            if (field_AF4_ != 0) {
+                ++draw_count;
+                field_AF4_->draw(this, field_AF4_->transparent_index(), 0,
+                                 -(field_AF4_->height() + dib_.bmiHeader.biHeight), 1, 1);
+            }
+            if (field_AF8_ != 0) {
+                ++draw_count;
+                field_AF8_->draw(this, field_AF8_->transparent_index(),
+                                 dib_.bmiHeader.biWidth - field_AF8_->width(),
+                                 -(field_AF8_->height() + dib_.bmiHeader.biHeight), 1, 1);
+            }
+            if (field_ADC_ != 0 && field_AEC_ != 0 && field_AF4_ != 0) {
+                ++draw_count;
+                tile(field_ADC_, 0, 0, 0, field_AEC_->height(), field_ADC_->width(),
+                     -(field_AF4_->height() + dib_.bmiHeader.biHeight
+                       + field_AEC_->height()));
+            }
+            if (field_AE0_ != 0 && field_AF0_ != 0 && field_AF8_ != 0) {
+                ++draw_count;
+                tile(field_AE0_, 0, 0, dib_.bmiHeader.biWidth - field_AE0_->width(),
+                     field_AF0_->height(), field_AE0_->width(),
+                     -(field_AF8_->height() + dib_.bmiHeader.biHeight
+                       + field_AF0_->height()));
+            }
+            if (field_AE4_ != 0 && field_AEC_ != 0 && field_AF0_ != 0) {
+                ++draw_count;
+                tile(field_AE4_, 0, 0, field_AEC_->width(), 0,
+                     dib_.bmiHeader.biWidth - field_AF0_->width() - field_AEC_->width(),
+                     field_AE4_->height());
+            }
+            if (field_AE8_ != 0 && field_AF4_ != 0 && field_AF8_ != 0) {
+                ++draw_count;
+                tile(field_AE8_, 0, 0, field_AF4_->width(),
+                     -(dib_.bmiHeader.biHeight + field_AE8_->height()),
+                     dib_.bmiHeader.biWidth - field_AF8_->width() - field_AF4_->width(),
+                     field_AE8_->height());
+            }
+            if (field_AFC_ != 0 && draw_count == 8) {
+                tile(field_AFC_, 0, 0, field_AE0_->width(), field_AE4_->height(),
+                     dib_.bmiHeader.biWidth - field_ADC_->width() - field_AE0_->width(),
+                     -(dib_.bmiHeader.biHeight + field_AE8_->height()
+                       + field_AE4_->height()));
+            }
+        }
+    } else {
         int bevel_count = 0;
         if (field_A94_ != 0xFFFFFFFFU) {
-            buffer->box(&rectangle, static_cast<int>(field_A94_),
+            box(&rectangle, static_cast<int>(field_A94_),
                         static_cast<int>(field_A94_));
-            ++rectangle.left;
-            --rectangle.right;
-            ++rectangle.top;
-            --rectangle.bottom;
-            if (parent_window()->has_dialog_focus_flag() == false &&
+            pushbutton_expand_rect(&rectangle, -1, -1);
+            // WORKAROUND(decl): the image tests `not ecx; test ch,0x10` on the
+            // parent's flags (0x0062C6D7), the form of `~iFlags_ & 0x1000`; Win
+            // has no accessor for it and iFlags_ is protected.
+            if ((~parent_window()->has_dialog_focus_flag() & 0x1000) &&
                 is_dialog_focus() != 0) {
-                buffer->box(&rectangle, static_cast<int>(field_A94_),
+                box(&rectangle, static_cast<int>(field_A94_),
                             static_cast<int>(field_A94_));
-                ++rectangle.left;
-                --rectangle.right;
-                ++rectangle.top;
-                --rectangle.bottom;
+                pushbutton_expand_rect(&rectangle, -1, -1);
                 bevel_count = 1;
             }
         }
 
         if (field_A9C_ == 0) {
             while (bevel_count < static_cast<int>(bevel_thickness_)) {
-                buffer->box(&rectangle, static_cast<int>(bevel_upper_),
+                box(&rectangle, static_cast<int>(bevel_upper_),
                             static_cast<int>(bevel_lower_));
-                ++rectangle.left;
-                --rectangle.right;
-                ++rectangle.top;
-                --rectangle.bottom;
+                pushbutton_expand_rect(&rectangle, -1, -1);
                 ++bevel_count;
             }
         } else {
             while (bevel_count < static_cast<int>(bevel_thickness_)) {
-                buffer->box(&rectangle, static_cast<int>(bevel_lower_),
+                box(&rectangle, static_cast<int>(bevel_lower_),
                             static_cast<int>(bevel_upper_));
-                ++rectangle.left;
-                --rectangle.right;
-                ++rectangle.top;
-                --rectangle.bottom;
+                pushbutton_expand_rect(&rectangle, -1, -1);
                 ++bevel_count;
             }
-            rectangle.left += static_cast<LONG>(bevel_thickness_);
-            rectangle.right += static_cast<LONG>(bevel_thickness_);
-            rectangle.top += static_cast<LONG>(bevel_thickness_);
-            rectangle.bottom += static_cast<LONG>(bevel_thickness_);
-        }
-    } else {
-        const int inset = static_cast<int>(bevel_thickness_);
-        rectangle.left += inset;
-        rectangle.right -= inset;
-        rectangle.top += inset;
-        rectangle.bottom -= inset;
-
-        Sprite *top_left;
-        Sprite *top_right;
-        Sprite *bottom_left;
-        Sprite *bottom_right;
-        Sprite *top_edge;
-        Sprite *bottom_edge;
-        Sprite *left_edge;
-        Sprite *right_edge;
-        Sprite *center;
-        if (field_A9C_ == 0) {
-            top_left = field_AC8_; top_right = field_ACC_;
-            bottom_left = field_AD0_; bottom_right = field_AD4_;
-            top_edge = field_AB8_; bottom_edge = field_ABC_;
-            left_edge = field_AC0_; right_edge = field_AC4_; center = field_AD8_;
-        } else {
-            rectangle.left += inset;
-            rectangle.right += inset;
-            rectangle.top += inset;
-            rectangle.bottom += inset;
-            top_left = field_AEC_; top_right = field_AF0_;
-            bottom_left = field_AF4_; bottom_right = field_AF8_;
-            top_edge = field_ADC_; bottom_edge = field_AE0_;
-            left_edge = field_AE4_; right_edge = field_AE8_; center = field_AFC_;
-        }
-
-        int draw_count = 0;
-        if (top_left != 0) {
-            top_left->draw(buffer, top_left->transparent_index(), 0, 0, 1, 1);
-            draw_count = 1;
-        }
-        const int width = buffer->pixel_width();
-        // Keep the original signed, top-down DIB member at each bottom/tile
-        // coordinate site. The pinned body reloads biHeight and adds it to
-        // Sprite heights before negating; pixel_height() is its positive
-        // magnitude and changes those coordinates when substituted here.
-        if (top_right != 0) {
-            ++draw_count;
-            top_right->draw(buffer, top_right->transparent_index(),
-                            width - top_right->width(), 0, 1, 1);
-        }
-        if (bottom_left != 0) {
-            ++draw_count;
-            bottom_left->draw(buffer, bottom_left->transparent_index(), 0,
-                              -(bottom_left->height()
-                                + buffer->dib_.bmiHeader.biHeight), 1, 1);
-        }
-        if (bottom_right != 0) {
-            ++draw_count;
-            bottom_right->draw(buffer, bottom_right->transparent_index(),
-                               width - bottom_right->width(),
-                               -(bottom_right->height()
-                                 + buffer->dib_.bmiHeader.biHeight), 1, 1);
-        }
-        if (top_edge != 0 && top_left != 0 && bottom_left != 0) {
-            const int source_height = top_left->height();
-            ++draw_count;
-            buffer->tile(top_edge, 0, 0, 0, source_height,
-                         top_edge->width(),
-                         -(bottom_left->height()
-                           + buffer->dib_.bmiHeader.biHeight + source_height));
-        }
-        if (bottom_edge != 0 && top_right != 0 && bottom_right != 0) {
-            const int source_height = top_right->height();
-            ++draw_count;
-            buffer->tile(bottom_edge, 0, 0, width - bottom_edge->width(),
-                         source_height, bottom_edge->width(),
-                         -(bottom_right->height()
-                           + buffer->dib_.bmiHeader.biHeight + source_height));
-        }
-        if (left_edge != 0 && top_left != 0 && top_right != 0) {
-            const int source_width = top_left->width();
-            ++draw_count;
-            buffer->tile(left_edge, 0, 0, source_width, 0,
-                         (width - top_right->width()) - source_width,
-                         left_edge->height());
-        }
-        if (right_edge != 0 && bottom_left != 0 && bottom_right != 0) {
-            const int source_width = bottom_left->width();
-            ++draw_count;
-            buffer->tile(right_edge, 0, 0, source_width,
-                         -(buffer->dib_.bmiHeader.biHeight
-                           + right_edge->height()),
-                         (width - bottom_right->width()) - source_width,
-                         right_edge->height());
-        }
-
-        if (center != 0 && draw_count == 8 && top_edge != 0 && left_edge != 0 &&
-            right_edge != 0 && bottom_edge != 0 && top_right != 0 &&
-            bottom_left != 0 && bottom_right != 0) {
-            const int source_y = left_edge->height();
-            const int source_x = bottom_edge->width();
-            const int tile_height = buffer->dib_.bmiHeader.biHeight
-                + right_edge->height() + source_y;
-            buffer->tile(center, 0, 0, source_x, source_y,
-                         (width - top_edge->width()) - source_x, -tile_height);
+            offset_rect(&rectangle, bevel_thickness_, bevel_thickness_);
         }
     }
 
-    if (name_ != 0) {
-        buffer->write_cent_l(name_, &rectangle,
-                             static_cast<unsigned int>(strlen(name_)));
-    }
+    write_cent_l(name_, &rectangle);
 }
 
 // Reset the base first, then consume the current shared defaults. This is

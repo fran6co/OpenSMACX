@@ -107,6 +107,27 @@ void DiploPop::start(int faction_id) {
     MainInterfaceGlobal.soft_update(flic1_.update_rect());
 }
 
+// WORKAROUND(inline): expand_rect (scroll.cpp) is a plain out-of-line
+// function in this tree; init expands it inline (0x0044086F: +4 to
+// left/top and a register holding -4 added to right/bottom).
+static inline RECT *diplopop_expand_rect(RECT *rect, int horizontal, int vertical) {
+    rect->left -= horizontal;
+    rect->right += horizontal;
+    rect->top -= vertical;
+    rect->bottom += vertical;
+    return rect;
+}
+
+// WORKAROUND(decl): file-local RECT setter stand-in (original name unknown);
+// 0x00440923 stores the button rectangle through a pointer copy.
+static inline void diplopop_set_rect(RECT *rect, int left, int top, int right,
+                                     int bottom) {
+    rect->left = left;
+    rect->top = top;
+    rect->right = right;
+    rect->bottom = bottom;
+}
+
 // ORIGINAL: 0x00440700 ?init@DiploPop@@QAEXXZ 0x00440700-0x00440D4B;0x006548F4-0x0065491F
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00440700.cpp", "image:terranx_original.exe:0x00440700", "source:src/diplopop.h:DiploPop"], "reason": "Recover the complete DiploPop initializer with temporary Flic, MainInterface geometry, owned fonts/buttons, and native state."}
 // TRIED: the SEH __try/__finally frame and its per-object unwind-state byte; the layout arithmetic (0x004407B3-0x00440A21) is transcribed as algebraically-simplified named quantities rather than a literal register-by-register replay, so it matches the VALUES the original computes but not the register shuffling that produces them.
@@ -124,75 +145,55 @@ void DiploPop::init() {
     // its ordinary destructor closes the file and destroys Buffer/Palette.
     layout_flic.init(static_cast<Buffer *>(this),
                      const_cast<char *>("faction.flc"), 0, 0, 0);
-    int frame_width = layout_flic.decoded_width();
-    if (frame_width < 0x28) {
-        frame_width = 0x28;
+    RECT rect;
+    int frame_width = 0x28;
+    if (layout_flic.decoded_width() >= 0x28) {
+        frame_width = layout_flic.decoded_width();
     }
     layout_flic.close();
 
-    const RECT &right_frame = MainInterfaceGlobal.right_frame_rect();
-    const RECT &side_rect = MainInterfaceGlobal.rect3();
-    const RECT &list_rect = MainInterfaceGlobal.rect2();
-    right_panel_button_rect_.left =
-        right_frame.right - side_rect.right + right_frame.left;
-    right_panel_button_rect_.top = list_rect.top;
-    right_panel_button_rect_.right = list_rect.left - 3;
-    right_panel_button_rect_.bottom = list_rect.bottom;
+    rect = MainInterfaceGlobal.rect2();
+    rect.right = rect.left - 3;
+    diplopop_set_rect(&right_panel_button_rect_,
+                      MainInterfaceGlobal.right_frame_rect().right
+                          - MainInterfaceGlobal.rect3().right
+                          + MainInterfaceGlobal.right_frame_rect().left,
+                      rect.top, rect.right, rect.bottom);
 
-    frame_inset_rect_ = right_frame;
-    frame_inset_rect_.left += 4;
-    frame_inset_rect_.top += 4;
-    frame_inset_rect_.right -= 4;
-    frame_inset_rect_.bottom = right_panel_button_rect_.top - 6;
+    rect = MainInterfaceGlobal.right_frame_rect();
+    diplopop_expand_rect(&rect, -4, -4);
+    diplopop_set_rect(&frame_inset_rect_, rect.left, rect.top, rect.right,
+                      right_panel_button_rect_.top - 6);
 
     content_rect_ = MainInterfaceGlobal.lower_frame_rect();
-    content_rect_.left += 4;
-    content_rect_.top += 4;
-    content_rect_.right -= 4;
-    content_rect_.bottom -= 4;
+    diplopop_expand_rect(&content_rect_, -4, -4);
 
     rect1_ = MainInterfaceGlobal.main_layout_rect();
-    rect1_.left += 4;
-    rect1_.top += 4;
-    rect1_.right -= 4;
-    rect1_.bottom -= 4;
-    rect1_.left += 3;
-    rect1_.top += 3;
-    rect1_.right -= 3;
-    rect1_.bottom -= 3;
+    diplopop_expand_rect(&rect1_, -4, -4);
+    diplopop_expand_rect(&rect1_, -3, -3);
 
-    const int button_width = rect1_.right - rect1_.left;
-    const int split = rect1_.left + (button_width + 3) / 2 - 3;
-    const int row_top = rect1_.bottom - 20;
-    button_left_rect_.left = rect1_.left;
-    button_left_rect_.top = row_top;
-    button_left_rect_.right = split;
-    button_left_rect_.bottom = rect1_.bottom;
-    const int second_delta = split - rect1_.left + 3;
-    button_right_rect_.left = rect1_.left + second_delta;
-    button_right_rect_.top = row_top;
-    button_right_rect_.right = split + second_delta;
-    button_right_rect_.bottom = rect1_.bottom;
-    // Native reuses the bottom member of rect1_ as scratch at +0x2100
-    // after deriving both button rectangles; there is no independent scalar.
-    rect1_.bottom = row_top - 3;
+    rect = rect1_;
+    rect.top = rect.bottom - 20;
+    rect.right = rect.left + (rect.right - rect.left + 3) / 2 - 3;
+    button_left_rect_ = rect;
+    offset_rect(&rect, rect.right - rect.left + 3, 0);
+    button_right_rect_ = rect;
+    rect1_.bottom = rect.top - 3;
 
-    const RECT &main_frame = MainInterfaceGlobal.main_frame_rect();
-    portrait_text_rect_.left = main_frame.right - 4 - frame_width - 2;
-    portrait_text_rect_.top = main_frame.top + 4;
-    portrait_text_rect_.right = main_frame.right - 4;
-    portrait_text_rect_.bottom = main_frame.bottom - 4;
+    rect = MainInterfaceGlobal.main_frame_rect();
+    diplopop_expand_rect(&rect, -4, -4);
+    diplopop_set_rect(&portrait_text_rect_, rect.right - frame_width - 2, rect.top,
+                      rect.right, rect.bottom);
 
-    bioscan_title_rect_.left = main_frame.left + 4;
-    bioscan_title_rect_.top = main_frame.top + 4;
-    bioscan_title_rect_.right = portrait_text_rect_.left - 3;
+    rect = MainInterfaceGlobal.main_frame_rect();
+    diplopop_expand_rect(&rect, -4, -4);
+    rect.right = portrait_text_rect_.left - 3;
+    bioscan_title_rect_ = rect;
     bioscan_title_rect_.bottom = bioscan_title_rect_.top + 20;
-    bioscan_picture_rect_.left = main_frame.left + 4;
+    bioscan_picture_rect_ = rect;
     bioscan_picture_rect_.top = bioscan_title_rect_.bottom + 2;
-    bioscan_picture_rect_.right = portrait_text_rect_.left - 3;
-    bioscan_picture_rect_.bottom = main_frame.bottom - 4;
 
-    field_4_ = 4;
+    register_iface(4);
     font1_.init(DefaultFontFace, 10, 0);
     if (WinScreenWidth == 0x320) {
         font2_.init(DefaultFontFace, 10, 0);
@@ -202,28 +203,27 @@ void DiploPop::init() {
         font3_.init(DefaultFontFace, 14, 1);
     }
 
-    const int window_height = (WinScreenWidth == 0x320)
-        ? (0x258 - MainInterfaceGlobal.panel_height()) : 0x1C2;
-    GraphicWin::init(0, 0, 0x2BC, window_height, 0,
-                     0x05000000, static_cast<Win *>(&ConsoleGlobal),
-                     0, 0);
+    GraphicWin::init(0, 0, 0x2BC,
+                     (WinScreenWidth == 0x320)
+                         ? (0x258 - MainInterfaceGlobal.panel_height()) : 0x1C2,
+                     0, 0x05000000, static_cast<Win *>(&ConsoleGlobal), 0, 0);
     field_16C_ = 0x1A;
     move((WinScreenWidth - pixel_width() + 0x20) / 2,
          WinScreenHeight - pixel_height() - MainInterfaceGlobal.panel_height());
     Buffer::sync_to_palette(PaletteCurrent);
     GraphicWin::fill(9);
 
-    RECT frame = clip_rect();
-    frame.left += 0x17;
-    frame.right -= 0x37;
-    Buffer::box_sprite(&frame, &InterfaceBoxStyles[9]);
+    rect = *buffer_working_rect();
+    rect.left += 0x17;
+    rect.right -= 0x37;
+    Buffer::box_sprite(&rect, &InterfaceBoxStyles[9]);
 
-    flatButtons_[0].init(label_get(0xEA8 / 4), 0,
+    flatButtons_[0].init(StringTable.get(Labels.strings_ptr[0xEA8 / 4]), 0,
                          button_left_rect_.left, button_left_rect_.top,
                          button_left_rect_.right - button_left_rect_.left,
                          button_left_rect_.bottom - button_left_rect_.top,
                          &MainInterfaceGlobal, 0);
-    flatButtons_[1].init(label_get(0xEAC / 4), 2,
+    flatButtons_[2].init(StringTable.get(Labels.strings_ptr[0xEAC / 4]), 2,
                          right_panel_button_rect_.left,
                          right_panel_button_rect_.top,
                          right_panel_button_rect_.right - right_panel_button_rect_.left,
@@ -233,7 +233,7 @@ void DiploPop::init() {
     StringTemp[0] = '\0';
     strcat(StringTemp, label_get(0x774 / 4));
     CharUpperA(StringTemp);
-    flatButtons_[2].init(StringTemp, 1,
+    flatButtons_[1].init(StringTemp, 1,
                          button_right_rect_.left, button_right_rect_.top,
                          button_right_rect_.right - button_right_rect_.left,
                          button_right_rect_.bottom - button_right_rect_.top,
@@ -244,8 +244,7 @@ void DiploPop::init() {
             &InterfaceBoxStyles[27], &InterfaceBoxStyles[28],
             &InterfaceBoxStyles[29]);
         flatButtons_[button_index].set_text_color(0x41, -1, 1, 1);
-        static_cast<Buffer &>(flatButtons_[button_index]).set_font(
-            &font3_, 0, 0, 0);
+        flatButtons_[button_index].Buffer::set_font(&font3_, 0, 0, 0);
         flatButtons_[button_index].redraw();
         flatButtons_[button_index].hide();
     }
