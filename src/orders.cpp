@@ -327,9 +327,13 @@ int __cdecl supply_options(int veh_id, int base_id) {
     }
 
     if (action == 1) {
-        Bases[base_id].minerals_accumulated +=
-            cost_factor(owner, 1, -1) * VehPrototypes[Vehs[veh_id].proto_id].cost;
-        Bases[base_id].mineral_surplus_final = Bases[base_id].minerals_accumulated;
+        // The product goes through a variable before the add (the image keeps
+        // the cost_factor result in eax as the imul destination); a fresh
+        // local here flips order_veh's block layout, so the dead `production`
+        // carries it.
+        production = cost_factor(owner, 1, -1) * VehPrototypes[Vehs[veh_id].proto_id].cost;
+        Bases[base_id].minerals_accumulated += production;
+        Bases[base_id].minerals_accumulated_2 = Bases[base_id].minerals_accumulated;
         Bases[base_id].production_id_last = Bases[base_id].queue_production_id[0];
         synch_base(base_id);
 
@@ -1805,14 +1809,8 @@ L_598cb9:
                                 >= Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range)
                             && !zoc_veh(dest_x, dest_y, faction))))
                 goto L_599121;
-        } else if (!stranded) {
-L_599121:
-            Vehs[veh_id].terraforming_turns = 0;
-            veh_skip(veh_id);
-            veh_demote(veh_id);
-            draw_tile(Vehs[veh_id].x, Vehs[veh_id].y, 2);
-            goto L_599154;
-        }
+        } else if (!stranded)
+            goto L_599121;
 
         // 598f9e
         if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range) {
@@ -1869,6 +1867,12 @@ L_599121:
                 }
             }
         }
+        goto L_599154;
+L_599121:
+            Vehs[veh_id].terraforming_turns = 0;
+            veh_skip(veh_id);
+            veh_demote(veh_id);
+            draw_tile(Vehs[veh_id].x, Vehs[veh_id].y, 2);
     }
 L_599154:
     // 599154: monolith and supply pod.

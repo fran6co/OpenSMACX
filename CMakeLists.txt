@@ -840,7 +840,8 @@ set(OPENSMACX_UNPOOLED_SOURCES
     src/datalink.cpp
     src/netwin.cpp
     src/maininterface.cpp
-    src/council.cpp)
+    src/council.cpp
+    src/orders.cpp)
 set(OPENSMACX_UNPOOLED_OY_SOURCES
     src/net_class.cpp)
 function(opensmacx_apply_optimization target)
