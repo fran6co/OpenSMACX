@@ -90,6 +90,18 @@ static inline void dl_draw_scaled(Buffer *buffer, Sprite *sprite, int x, int y,
                                   int numerator, int denominator) {
     sprite->draw(buffer, sprite->transparent_index(), x, y, numerator, denominator);
 }
+// WORKAROUND(inline): the faction, facility and project drawers spend more
+// /Ob2 budget before their Popup teardown than written-out calls do: the
+// image calls ~StringList (0x004066C0) out of line for both BasePop lists
+// while still expanding ~Sprite/~FlatButton (draw_faction's EH table
+// 0x00674378 has 19 states, ours 21 without these helpers; draw_project's
+// cold region 0x00653927 likewise). The original inline providers are
+// unknown; these helpers spend that budget. The sprite helpers also give the
+// argument order the image uses (0x00430D70, 0x0042F583, 0x0042FBC3): `this`
+// converted to Buffer* first, the sprite address after.
+static inline void dl_draw_sprite(Buffer *buffer, Sprite *sprite, int x, int y) {
+    sprite->draw(buffer, sprite->transparent_index(), x, y, 1, 1);
+}
 static inline void dl_upper_name(LPSTR name) {
     StringTemp[0] = 0;
     strcat(StringTemp, StringTable.get(name));
@@ -381,22 +393,20 @@ void Datalink::draw_unit() {
 // TRIED: full transcription landed (MISMATCH #2, no SEH frame reproduced). Caught a real Ghidra error via byte-level cross check: Ghidra's `write_strings(&local_44,local_54,local_50, local_4c-local_54,0)` invents a `local_54` stack slot that never appears anywhere in the raw disassembly (only -0x50, -0x4c, -0x48, -0x44 are ever touched); the real call reads [ebp-0x50] and [ebp-0x48] for the width term. Used the StringStruct(0) local + explicit remove_all()/add(0) calls, matching this function's calls to those symbols directly (unlike the inlined form seen on other StringStruct-using functions in this batch).
 void Datalink::draw_chassis() {
     StringList description;
+    const int id = history_[0];
     RECT rect = description_rect_;
     rect.left += 6;
-    rect.top += 6;
     rect.right -= 6;
-    const int id = history_[0];
+    rect.top += 6;
     caviar_.reset_objects();
     vehdraw_construct_chassis(ConsoleGlobal.faction_id_, id, 0, 0, 1, &caviar_);
     caviar_.set_scaling(0.1f);
-    caviar_.render(static_cast<Buffer *>(this),
-                   (illustration_rect_.left + illustration_rect_.right) / 2,
-                   (illustration_rect_.top + illustration_rect_.bottom) / 2, 6);
+    RECT *area = &illustration_rect_;
+    caviar_.render(static_cast<Buffer *>(this), (area->left + area->right) / 2,
+                   (area->top + area->bottom) / 2, 6);
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
-    StringTemp[0] = 0;
-    strcat(StringTemp, StringTable.get(Chassis[id].offsv_1_name));
-    CharUpperA(StringTemp);
+    dl_upper_name(Chassis[id].offsv_1_name);
     write_cent_l(StringTemp, &title_rect_);
     rect.left += illustration_rect_.right - illustration_rect_.left + 3;
     char number[80];
@@ -524,15 +534,12 @@ void Datalink::draw_reactor() {
     caviar_.reset_objects();
     vehdraw_construct_reactor(ConsoleGlobal.faction_id_, -1, -1, id, 0, &caviar_);
     caviar_.set_scaling(0.2f);
-    caviar_.render(static_cast<Buffer *>(this),
-                   (illustration_rect_.left + illustration_rect_.right) / 2,
-                   (illustration_rect_.top + illustration_rect_.bottom) / 2, 6);
+    RECT *area = &illustration_rect_;
+    caviar_.render(static_cast<Buffer *>(this), (area->left + area->right) / 2,
+                   (area->top + area->bottom) / 2, 6);
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
-    StringTemp[0] = 0;
-    char *name = Reactor[id - 1].name;
-    strcat(StringTemp, StringTable.get(name));
-    CharUpperA(StringTemp);
+    dl_upper_name(Reactor[id - 1].name);
     write_cent_l(StringTemp, &title_rect_);
     rect.left += illustration_rect_.right - illustration_rect_.left + 3;
     parse_num(0, id);
@@ -786,16 +793,17 @@ void Datalink::draw_ability() {
     }
     soft_update(&description_rect_);
 }
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00431180 0x00431D54 0x00431DA4 0x004312BF
 // ORIGINAL: 0x00431180 ?draw_terraform@Datalink@@QAEXXZ 0x00431180-0x00431D51;0x00653C7A-0x00653E66
 // RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/00431180.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
 // Historical scaffold experiment, retained from the replaced seed:
 // TRIED: no SEH/frame modelling (plain body, not try/finally); the giant local widget teardown (Popup/Scroll/2xFlatButton/Spot/Dialogs region/Sprite/2xFlatButton/Heap) modelled as one raw ebp-relative byte buffer with explicit close()/dtor calls in original order, rather than real RAII locals - the vtable-poke-then-call shape the original uses for each teardown step is not reproduced, only the call itself (identity of the call target is masked by the scorer regardless). MISMATCH at instruction #0 (prologue: no SEH frame).
 void Datalink::draw_terraform() {
     Popup popup;
+    int z[4] = {0, 0, 0, 0};
     Vert uv[4] = {{0, 0}, {55, 0}, {55, 55}, {0, 55}};
     const int topic = history_[0];
     const int land = topic < 20;
-    int z[4] = {0, 0, 0, 0};
     const int action = topic % 20;
     RECT rect = description_rect_;
     rect.left += 5;
@@ -815,24 +823,24 @@ void Datalink::draw_terraform() {
         if (land) {
             g_FARM_TEXTURES[0].draw(this, quad, z, 4, uv);
         } else {
-            g_TER1_KELP_FARM_SPRITE.draw(this, g_TER1_KELP_FARM_SPRITE.transparent_index(), rect.left, rect.top + 25, 1, 1);
+            dl_draw_sprite(this, &g_TER1_KELP_FARM_SPRITE, rect.left, rect.top + 25);
         }
         break;
     case 1:
-        g_TER1_SOIL_ENRICHER_SPRITES[0].draw(this, g_TER1_SOIL_ENRICHER_SPRITES[0].transparent_index(), rect.left, rect.top + 25, 1, 1);
+        dl_draw_sprite(this, &g_TER1_SOIL_ENRICHER_SPRITES[0], rect.left, rect.top + 25);
         break;
     case 2:
         if (land) {
-            g_TER1_MINE_SPRITE.draw(this, g_TER1_MINE_SPRITE.transparent_index(), rect.left, rect.top + 25, 1, 1);
+            dl_draw_sprite(this, &g_TER1_MINE_SPRITE, rect.left, rect.top + 25);
         } else {
-            g_TER1_MINING_PLATFORM_SPRITE.draw(this, g_TER1_MINING_PLATFORM_SPRITE.transparent_index(), rect.left, rect.top + 25, 1, 1);
+            dl_draw_sprite(this, &g_TER1_MINING_PLATFORM_SPRITE, rect.left, rect.top + 25);
         }
         break;
     case 3:
         if (land) {
-            g_TER1_SOLAR_COLLECTOR_SPRITE.draw(this, g_TER1_SOLAR_COLLECTOR_SPRITE.transparent_index(), rect.left, rect.top + 25, 1, 1);
+            dl_draw_sprite(this, &g_TER1_SOLAR_COLLECTOR_SPRITE, rect.left, rect.top + 25);
         } else {
-            g_TER1_TIDAL_HARNESS_SPRITE.draw(this, g_TER1_TIDAL_HARNESS_SPRITE.transparent_index(), rect.left, rect.top + 25, 1, 1);
+            dl_draw_sprite(this, &g_TER1_TIDAL_HARNESS_SPRITE, rect.left, rect.top + 25);
         }
         break;
     case 4:
@@ -845,13 +853,13 @@ void Datalink::draw_terraform() {
         g_MAGTUBE_TEXTURES[0].draw_trans(this, quad, z, 4, uv);
         break;
     case 7:
-        g_TER1_BUNKER_SPRITE.draw(this, g_TER1_BUNKER_SPRITE.transparent_index(), rect.left, rect.top + 25, 1, 1);
+        dl_draw_sprite(this, &g_TER1_BUNKER_SPRITE, rect.left, rect.top + 25);
         break;
     case 8:
-        g_TER1_AIRBASE_SPRITE.draw(this, g_TER1_AIRBASE_SPRITE.transparent_index(), rect.left, rect.top + 25, 1, 1);
+        dl_draw_sprite(this, &g_TER1_AIRBASE_SPRITE, rect.left, rect.top + 25);
         break;
     case 9:
-        g_TER1_SENSOR_ARRAY_SPRITE.draw(this, g_TER1_SENSOR_ARRAY_SPRITE.transparent_index(), rect.left, rect.top + 25, 1, 1);
+        dl_draw_sprite(this, &g_TER1_SENSOR_ARRAY_SPRITE, rect.left, rect.top + 25);
         break;
     case 11:
         if (land) {
@@ -861,19 +869,19 @@ void Datalink::draw_terraform() {
         }
         break;
     case 12:
-        g_TER1_CONDENSER_SPRITE.draw(this, g_TER1_CONDENSER_SPRITE.transparent_index(), rect.left, rect.top + 25, 1, 1);
+        dl_draw_sprite(this, &g_TER1_CONDENSER_SPRITE, rect.left, rect.top + 25);
         break;
     case 13:
-        g_TER1_ECHELON_MIRROR_SPRITE.draw(this, g_TER1_ECHELON_MIRROR_SPRITE.transparent_index(), rect.left, rect.top + 25, 1, 1);
+        dl_draw_sprite(this, &g_TER1_ECHELON_MIRROR_SPRITE, rect.left, rect.top + 25);
         break;
     case 14:
-        g_TER1_BOREHOLE_SPRITE.draw(this, g_TER1_BOREHOLE_SPRITE.transparent_index(), rect.left, rect.top + 25, 1, 1);
+        dl_draw_sprite(this, &g_TER1_BOREHOLE_SPRITE, rect.left, rect.top + 25);
         break;
     case 15:
         g_RIVER_TEXTURES[0].draw_trans(this, quad, z, 4, uv);
         break;
     case 19:
-        g_TER1_MONOLITH_SPRITE.draw(this, g_TER1_MONOLITH_SPRITE.transparent_index(), rect.left, rect.top + 25, 1, 1);
+        dl_draw_sprite(this, &g_TER1_MONOLITH_SPRITE, rect.left, rect.top + 25);
         break;
     }
     if (action < 16 || action > 18) {
@@ -882,15 +890,14 @@ void Datalink::draw_terraform() {
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
     const int sea = land == 0;
-    StringTemp[0] = 0;
     // WORKAROUND(type): 0x004316F8 indexes the order/order_sea pair as a
     // two-entry array by (land == 0); RulesOrder declares two members.
-    strcat(StringTemp, StringTable.get((&Order[action + 4].order)[sea]));
-    CharUpperA(StringTemp);
+    dl_upper_name((&Order[action + 4].order)[sea]);
     write_cent_l(StringTemp, &title_rect_);
     const int technology = Terraforming[action].prerequisite_tech[sea];
     parse_says(1, tech_name(technology, 0), -1, -1);
-    parse_num(0, technology + 140000);
+    const int link = technology + 140000;
+    parse_num(0, link);
     parse_num(1, Terraforming[action].rate);
     if (action == 5 || action == 6 || action == 3) {
         parse_says(2, label_get(0x1110 / 4), -1, -1);
@@ -924,18 +931,6 @@ void Datalink::draw_terraform() {
         rect.left += 103;
     }
     write_strings(&popup.unit_ids_, rect.left, rect.top, rect.right - rect.left, 0);
-}
-// WORKAROUND(inline): the faction, facility and project drawers spend more
-// /Ob2 budget before their Popup teardown than written-out calls do: the
-// image calls ~StringList (0x004066C0) out of line for both BasePop lists
-// while still expanding ~Sprite/~FlatButton (draw_faction's EH table
-// 0x00674378 has 19 states, ours 21 without these helpers; draw_project's
-// cold region 0x00653927 likewise). The original inline providers are
-// unknown; these helpers spend that budget. The sprite helpers also give the
-// argument order the image uses (0x00430D70, 0x0042F583, 0x0042FBC3): `this`
-// converted to Buffer* first, the sprite address after.
-static inline void dl_draw_sprite(Buffer *buffer, Sprite *sprite, int x, int y) {
-    sprite->draw(buffer, sprite->transparent_index(), x, y, 1, 1);
 }
 // ORIGINAL: 0x0042F490 ?draw_facility@Datalink@@QAEXXZ 0x0042F490-0x0042FAC5;0x0065384A-0x00653927
 // RECOVERY_BINDING: v1 {"evidence": ["git:f2ebb605:src/unrecovered/0042f490.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
