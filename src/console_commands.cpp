@@ -672,241 +672,181 @@ void Console::unload(int veh_id) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004d06c0.cpp", "image:0x004D06C0-0x004D2218 and 0x0065A090-0x0065A559"], "reason": "Recover Console vehicle upgrade through real Popup lifetime, loaded design tables, faction-local candidate selection and live human/AI transaction state. Preserve the original seed and complete ordinary/unwind spans; native locks, callbacks, picture selection and completion publication identify the owner and argument roles."}
 // TRIED: mismatch #0 - Popup/BasePop declared as real C++ locals (Popup ctor + explicit close()) rather than the original's staggered same-slot vtable pokes; the 0x40-entry candidate scan uses Vehs[]/VehPrototypes[] (0x952828/0x9AB868, stride 0x34) by raw offset, and the "single auto-selected candidate" fast path is approximated (falls through rather than tracking which slot was picked) - faithful call order and eligibility conditions, not byte fidelity.
 int Console::upgrade(int veh_id) { // 0x004D06C0
-    // The original constructs a Popup before its negative-id early exit.
-    // Its BasePop and Scroll subobjects are ordinary members, so keep their
-    // lifetime in C++ rather than reconstructing the old local vtable writes.
     Popup popup;
     if (veh_id < 0) {
-        popup.close();
+        return 0;
+    }
+    if (Vehs[veh_id].moves_expended
+        && (is_human(Vehs[veh_id].faction_id))) {
+        NetMsgPrimary.pop(Language ? "UNITMOVED" : "UNITMOVED2",
+                          5000, 0, nullptr);
         return 0;
     }
 
-    const int faction_id = Vehs[veh_id].faction_id;
-    const uint32_t faction_bit = 1U << faction_id;
-    const uint8_t human_factions = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
-    const bool human_faction = (human_factions & faction_bit) != 0;
-    if (Vehs[veh_id].moves_expended != 0 && human_faction) {
-        NetMsgPrimary.pop(IsMultiplayerNet ? "UNITMOVED" : "UNITMOVED2",
-                         5000, 0, nullptr);
-        popup.close();
-        return 0;
-    }
-
-    int proto_id;
-    if (human_faction) {
-        if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, 0) != 0) {
-            popup.close();
+    int count = 0;
+    int faction_id = Vehs[veh_id].faction_id;
+    if (is_human(faction_id)) {
+        if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, 0)) {
             return 0;
         }
-
-        // lock_veh may rewrite the ID. The original pre-lock faction stays
-        // in use, while this moved-state check addresses the returned slot.
-        if (Vehs[veh_id].moves_expended != 0) {
-            NetMsgPrimary.pop(IsMultiplayerNet ? "UNITMOVED" : "UNITMOVED2",
-                             5000, 0, nullptr);
+        if (Vehs[veh_id].moves_expended) {
+            NetMsgPrimary.pop(Language ? "UNITMOVED" : "UNITMOVED2",
+                              5000, 0, nullptr);
             NetDaemonNet.unlock_veh();
-            popup.close();
             return 0;
         }
-    }
-
-    if (human_faction) {
-    // Parse the current-unit caption before building candidates. Re-read the
-    // selected vehicle's prototype after parser callbacks, as the native path
-    // does rather than carrying a stale record reference into the list pass.
-    proto_id = Vehs[veh_id].proto_id;
-    const VehPrototype &caption_prototype = VehPrototypes[proto_id];
-    StringTemp[0] = '\0';
-    strcat(StringTemp, caption_prototype.veh_name);
-    strcat(StringTemp, " ");
-    strcat(StringTemp, "(");
-    say_stats_2(StringTemp, proto_id);
-    if (caption_prototype.ability_flags != 0) {
+        StringTemp[0] = '\0';
+        strcat(StringTemp, VehPrototypes[Vehs[veh_id].proto_id].veh_name);
         strcat(StringTemp, " ");
-        for (int ability_id = 0; ability_id < MaxAbilityNum; ++ability_id) {
-            if (has_abil(proto_id, 1 << ability_id)) {
-                strcat(StringTemp,
-                       StringTable.get(Ability[ability_id].abbreviation));
+        strcat(StringTemp, "(");
+        say_stats_2(StringTemp, Vehs[veh_id].proto_id);
+        if (VehPrototypes[Vehs[veh_id].proto_id].ability_flags) {
+            strcat(StringTemp, " ");
+            for (int i = 0; i < MaxAbilityNum; i++) {
+                if (has_abil(Vehs[veh_id].proto_id, 1 << i)) {
+                    strcat(StringTemp, StringTable.get(Ability[i].abbreviation));
+                }
+            }
+        }
+        strcat(StringTemp, ")");
+        parse_says(0, StringTemp, -1, -1);
+        popup.start("WHICHUPGRADE", 0x40);
+
+        int width;
+        int height;
+        if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+            if (!Buffer::get_pcx_dimensions(
+                    get_triad(veh_id) == TRIAD_AIR
+                        ? "alair_sm.pcx"
+                        : get_triad(veh_id) == TRIAD_SEA
+                              ? "navun_sm.pcx" : "alunit_sm.pcx",
+                    &width, &height)
+                && !popup.owned_picture().init(
+                    get_triad(veh_id) == TRIAD_AIR
+                        ? "alair_sm.pcx"
+                        : get_triad(veh_id) == TRIAD_SEA
+                              ? "navun_sm.pcx" : "alunit_sm.pcx",
+                    width, height)) {
+                popup.select_owned_picture();
+            }
+        } else {
+            if (!Buffer::get_pcx_dimensions(
+                    get_triad(veh_id) == TRIAD_AIR
+                        ? "air_sm.pcx"
+                        : get_triad(veh_id) == TRIAD_SEA
+                              ? "navun_sm.pcx" : "unit_sm.pcx",
+                    &width, &height)
+                && !popup.owned_picture().init(
+                    get_triad(veh_id) == TRIAD_AIR
+                        ? "air_sm.pcx"
+                        : get_triad(veh_id) == TRIAD_SEA
+                              ? "navun_sm.pcx" : "unit_sm.pcx",
+                    width, height)) {
+                popup.select_owned_picture();
             }
         }
     }
-    strcat(StringTemp, ")");
-    parse_says(0, StringTemp, -1, -1);
-    popup.start(PopupStartCaption, "WHICHUPGRADE", -1, nullptr, 0x40);
 
-    // The popup's embedded Sprite is initialized from the selected unit's
-    // faction/triad artwork. Native first probes dimensions using the current
-    // prototype, then reloads the prototype after that call before choosing
-    // the filename passed to Sprite::init.
-    const bool alien_faction =
-        (Players[faction_id].rule_flags & RFLAG_ALIEN) != 0;
-    const int picture_proto_id = Vehs[veh_id].proto_id;
-    const uint8_t picture_triad =
-        Chassis[VehPrototypes[picture_proto_id].chassis_id].triad;
-    const char *picture_file = alien_faction
-                                   ? (picture_triad == TRIAD_AIR
-                                          ? "alair_sm.pcx"
-                                          : picture_triad == TRIAD_SEA
-                                                ? "navun_sm.pcx"
-                                                : "alunit_sm.pcx")
-                                   : (picture_triad == TRIAD_AIR
-                                          ? "air_sm.pcx"
-                                          : picture_triad == TRIAD_SEA
-                                                ? "navun_sm.pcx"
-                                                : "unit_sm.pcx");
-    int picture_width = 0;
-    int picture_height = 0;
-    if (Buffer::get_pcx_dimensions(picture_file, &picture_width,
-                                  &picture_height) == 0) {
-        const int sprite_proto_id = Vehs[veh_id].proto_id;
-        const uint8_t sprite_triad =
-            Chassis[VehPrototypes[sprite_proto_id].chassis_id].triad;
-        char *sprite_file = const_cast<char *>(
-            alien_faction
-                ? (sprite_triad == TRIAD_AIR
-                       ? "alair_sm.pcx"
-                       : sprite_triad == TRIAD_SEA ? "navun_sm.pcx"
-                                                   : "alunit_sm.pcx")
-                : (sprite_triad == TRIAD_AIR
-                       ? "air_sm.pcx"
-                       : sprite_triad == TRIAD_SEA ? "navun_sm.pcx"
-                                                   : "unit_sm.pcx"));
-        if (popup.owned_picture().init(sprite_file, picture_width,
-                                       picture_height) == 0) {
-            popup.select_owned_picture();
-        }
-    }
-    }
-
-    proto_id = Vehs[veh_id].proto_id;
-    const VehPrototype &current = VehPrototypes[proto_id];
-    // Walk the native candidate set in prototype-table order. The image calls
-    // upgrade_cost for every eligible design, including the AI path.
-    const int current_weapon_rating =
-        Weapon[current.weapon_id].offense_rating;
-    const int current_armor_rating =
-        Armor[current.armor_id].defense_rating;
-    int candidate_count = 0;
-    int only_candidate_id = -1;
-
-    bool scan_candidates = true;
-    if (proto_id < MaxVehProtoFactionNum &&
-        (Weapon[current.weapon_id].offense_rating < 0 || proto_id == 15)) {
-        scan_candidates = false;
-    }
-    const int first_candidate_id = faction_id * MaxVehProtoFactionNum;
-    for (int candidate_id = first_candidate_id; scan_candidates &&
-         candidate_id < first_candidate_id + MaxVehProtoFactionNum;
-         ++candidate_id) {
-        const VehPrototype &candidate = VehPrototypes[candidate_id];
-        if ((candidate.flags & 1U) == 0) {
-            continue;
-        }
-
-        const uint8_t human_factions =
-            static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
-        const bool human_faction = (human_factions & faction_bit) != 0;
-        if ((candidate.flags & 4U) == 0 && !human_faction) {
-            continue;
-        }
-        if ((static_cast<uint8_t>(candidate.obsolete_factions) &
-             faction_bit) != 0 || candidate_id == proto_id) {
-            continue;
-        }
-        if (!human_faction && candidate.unk_1 != current.unk_1) {
-            continue;
-        }
-        if (candidate.chassis_id != current.chassis_id ||
-            has_abil(candidate_id, 0x8000) != has_abil(proto_id, 0x8000)) {
-            continue;
-        }
-        if (candidate.plan != current.plan &&
-            (!human_faction || current.plan > 3 || candidate.plan > 3)) {
-            continue;
-        }
-
-        const int candidate_weapon_rating =
-            Weapon[candidate.weapon_id].offense_rating;
-        if ((current_weapon_rating == 0 &&
-             candidate.weapon_id != current.weapon_id) ||
-            (current_weapon_rating != 0 &&
-             current_weapon_rating > candidate_weapon_rating)) {
-            continue;
-        }
-
-        const int candidate_armor_rating =
-            Armor[candidate.armor_id].defense_rating;
-        if (current_armor_rating > candidate_armor_rating &&
-            (!human_faction || candidate_armor_rating == 1 ||
-             (current_weapon_rating != 0 &&
-              candidate_weapon_rating <= current_weapon_rating))) {
-            continue;
-        }
-
-        const int displayed_cost =
-            upgrade_cost(faction_id, proto_id, candidate_id) * 10;
-        if ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) == 0) {
-            // The non-human path evaluates the first eligible prototype
-            // immediately. Its native threshold is based on the highest and
-            // lowest ranked human factions' energy/rank state, then the
-            // active faction's AI settings and base count.
-            const int ranking_divisor =
-                8 - static_cast<int>(PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk1_].ranking);
-            int energy_threshold =
-                (static_cast<int>(static_cast<uint32_t>(GameDataStateStorage.fields_.diff_level_current_) *
-                                  static_cast<uint32_t>(displayed_cost)) /
-                 10) /
-                ranking_divisor;
-            const int faction_energy = PlayersData[faction_id].energy_reserves;
-            const int comparison_energy =
-                PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk2_].energy_reserves;
-            if (faction_energy > comparison_energy) {
-                if (faction_energy >= 1000) {
-                    energy_threshold /= 2;
-                }
-                if (faction_energy >= 2000) {
-                    energy_threshold = 0;
-                }
+    int choice;
+    if (Vehs[veh_id].proto_id >= MaxVehProtoFactionNum
+        || (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating >= 0
+            && Vehs[veh_id].proto_id != 15)) {
+        for (int i = 0; i < MaxVehProtoFactionNum; i++) {
+            int proto_id = faction_id * MaxVehProtoFactionNum + i;
+            if (!(VehPrototypes[proto_id].flags & 1)) {
+                continue;
             }
-
-            const int ai_cost = static_cast<int>(
-                static_cast<uint32_t>(displayed_cost) -
-                static_cast<uint32_t>(energy_threshold));
-            uint32_t denominator_bits = static_cast<uint32_t>(candidate.plan != 2);
-            denominator_bits -= static_cast<uint32_t>(PlayersData[faction_id].ai_power);
-            denominator_bits += static_cast<uint32_t>(PlayersData[faction_id].ai_wealth);
-            denominator_bits += PlayersData[faction_id].current_num_bases + 1U;
-            const int denominator = static_cast<int>(denominator_bits);
-            if (ai_cost >= faction_energy / denominator) {
-                popup.close();
+            if (!(VehPrototypes[proto_id].flags & 4)
+                && !(is_human(faction_id))) {
+                continue;
+            }
+            if (VehPrototypes[proto_id].obsolete_factions & (1 << faction_id)) {
+                continue;
+            }
+            if (proto_id == Vehs[veh_id].proto_id) {
+                continue;
+            }
+            if (!(is_human(faction_id))
+                && VehPrototypes[proto_id].unk_1
+                       != VehPrototypes[Vehs[veh_id].proto_id].unk_1) {
+                continue;
+            }
+            if (VehPrototypes[proto_id].chassis_id
+                != VehPrototypes[Vehs[veh_id].proto_id].chassis_id) {
+                continue;
+            }
+            if (has_abil(Vehs[veh_id].proto_id, 0x8000) != has_abil(proto_id, 0x8000)) {
+                continue;
+            }
+            int human = static_cast<uint8_t>(
+                            GameDataStateStorage.fields_.lock_masks_.enable_mask_)
+                        & (1 << faction_id);
+            if ((!human || VehPrototypes[Vehs[veh_id].proto_id].plan > 3
+                 || VehPrototypes[proto_id].plan > 3)
+                && VehPrototypes[proto_id].plan
+                       != VehPrototypes[Vehs[veh_id].proto_id].plan) {
+                continue;
+            }
+            if (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating) {
+                if (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating
+                    > Weapon[VehPrototypes[proto_id].weapon_id].offense_rating) {
+                    continue;
+                }
+            } else if (VehPrototypes[Vehs[veh_id].proto_id].weapon_id
+                       != VehPrototypes[proto_id].weapon_id) {
+                continue;
+            }
+            if (Armor[VehPrototypes[Vehs[veh_id].proto_id].armor_id].defense_rating
+                    > Armor[VehPrototypes[proto_id].armor_id].defense_rating
+                && (!human
+                    || Armor[VehPrototypes[proto_id].armor_id].defense_rating == 1
+                    || (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating
+                        && Weapon[VehPrototypes[proto_id].weapon_id].offense_rating
+                               <= Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating))) {
+                continue;
+            }
+            choice = upgrade_cost(faction_id, proto_id, Vehs[veh_id].proto_id) * 10;
+            if (!(is_human(faction_id))) {
+                int threshold =
+                    static_cast<int>(static_cast<uint32_t>(GameDataStateStorage.fields_.diff_level_current_)
+                                     * static_cast<uint32_t>(choice)) / 10
+                    / (8 - PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk1_].ranking);
+                if (PlayersData[faction_id].energy_reserves
+                    > PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk2_].energy_reserves) {
+                    if (PlayersData[faction_id].energy_reserves >= 1000) {
+                        threshold /= 2;
+                    }
+                    if (PlayersData[faction_id].energy_reserves >= 2000) {
+                        threshold = 0;
+                    }
+                }
+                choice -= threshold;
+                if (choice < PlayersData[faction_id].energy_reserves
+                        / ((VehPrototypes[proto_id].plan != 2)
+                           - PlayersData[faction_id].ai_power
+                           + PlayersData[faction_id].ai_wealth
+                           + PlayersData[faction_id].current_num_bases + 1)) {
+                    PlayersData[faction_id].energy_reserves -= choice;
+                    --PlayersData[faction_id].proto_id_active[Vehs[veh_id].proto_id];
+                    Vehs[veh_id].proto_id = static_cast<int16_t>(proto_id);
+                    ++PlayersData[faction_id].proto_id_active[proto_id];
+                    if (get_triad(veh_id) != TRIAD_AIR) {
+                        veh_skip(veh_id);
+                    }
+                    return 1;
+                }
                 return 0;
             }
-
-            PlayersData[faction_id].energy_reserves -= ai_cost;
-            const int old_proto_id = Vehs[veh_id].proto_id;
-            --PlayersData[faction_id].proto_id_active[old_proto_id];
-            Vehs[veh_id].proto_id = static_cast<uint16_t>(candidate_id);
-            ++PlayersData[faction_id].proto_id_active[candidate_id];
-            if (Chassis[VehPrototypes[candidate_id].chassis_id].triad != TRIAD_AIR) {
-                veh_skip(veh_id);
-            }
-            popup.close();
-            return 1;
-        }
-
-        if ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) != 0) {
             StringTemp[0] = '\0';
-            strcat(StringTemp, candidate.veh_name);
+            strcat(StringTemp, VehPrototypes[proto_id].veh_name);
             strcat(StringTemp, " ");
             strcat(StringTemp, "(");
-            say_stats_2(StringTemp, candidate_id);
-            if (candidate.ability_flags != 0) {
+            say_stats_2(StringTemp, proto_id);
+            if (VehPrototypes[proto_id].ability_flags) {
                 strcat(StringTemp, " ");
-                for (int ability_id = 0; ability_id < MaxAbilityNum;
-                     ++ability_id) {
-                    if (has_abil(candidate_id, 1 << ability_id)) {
-                        strcat(StringTemp,
-                               StringTable.get(Ability[ability_id].abbreviation));
+                for (int j = 0; j < MaxAbilityNum; j++) {
+                    if (has_abil(proto_id, 1 << j)) {
+                        strcat(StringTemp, StringTable.get(Ability[j].abbreviation));
                     }
                 }
             }
@@ -914,62 +854,44 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
             strcat(StringTemp, "|");
             strcat(StringTemp, label_get(88));
             strcat(StringTemp, ": ");
-            char cost_text[16];
-            _itoa(displayed_cost, cost_text, 10);
+            char cost_text[80];
+            _itoa(choice, cost_text, 10);
             strcat(StringTemp, cost_text);
-            if ((candidate.flags & 4U) == 0) {
+            if (!(VehPrototypes[proto_id].flags & 4)) {
                 strcat(StringTemp, "*");
             }
-            ++candidate_count;
-            only_candidate_id = candidate_id;
-            popup.dialogs().item(StringTemp, candidate_id);
+            count++;
+            popup.item(StringTemp, proto_id);
+            choice = proto_id;
         }
     }
 
-    // The native no-candidate branch notifies before releasing the lock.
-    if ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) != 0 &&
-        candidate_count == 0) {
+    if (!(is_human(faction_id))) {
+        return 0;
+    }
+    if (!count) {
         veh_battle_msg("NOUPGRADE", nullptr);
         NetDaemonNet.unlock_veh();
-        popup.close();
         return 0;
     }
-
-    // AI candidates have already returned from their score/commit path in
-    // the loop. Reaching here without one means the native scan found none.
-    if ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) == 0) {
-        popup.close();
-        return 0;
-    }
-
-    // A sole human candidate is selected directly; with multiple candidates,
-    // the popup returns the prototype ID stored in the list item.
-    int selected_proto_id = only_candidate_id;
-    if (candidate_count > 1) {
-        selected_proto_id = popup.exec(0, nullptr);
-        if (selected_proto_id < 0) {
+    if (count > 1) {
+        choice = popup.exec();
+        if (choice < 0) {
             NetDaemonNet.unlock_veh();
-            popup.close();
             return 0;
         }
     }
 
-    // The selection and confirmation callbacks can change the vehicle's
-    // prototype. Native reloads it for pricing, then reloads it again after
-    // the confirmation before changing the prototype-count table.
-    proto_id = Vehs[veh_id].proto_id;
-    const VehPrototype &selected = VehPrototypes[selected_proto_id];
     StringTemp[0] = '\0';
-    strcat(StringTemp, VehPrototypes[proto_id].veh_name);
+    strcat(StringTemp, VehPrototypes[Vehs[veh_id].proto_id].veh_name);
     strcat(StringTemp, " ");
     strcat(StringTemp, "(");
-    say_stats_2(StringTemp, proto_id);
-    if (VehPrototypes[proto_id].ability_flags != 0) {
+    say_stats_2(StringTemp, Vehs[veh_id].proto_id);
+    if (VehPrototypes[Vehs[veh_id].proto_id].ability_flags) {
         strcat(StringTemp, " ");
-        for (int ability_id = 0; ability_id < MaxAbilityNum; ++ability_id) {
-            if (has_abil(proto_id, 1 << ability_id)) {
-                strcat(StringTemp,
-                       StringTable.get(Ability[ability_id].abbreviation));
+        for (int i = 0; i < MaxAbilityNum; i++) {
+            if (has_abil(Vehs[veh_id].proto_id, 1 << i)) {
+                strcat(StringTemp, StringTable.get(Ability[i].abbreviation));
             }
         }
     }
@@ -977,107 +899,111 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
     parse_says(0, StringTemp, -1, -1);
 
     StringTemp[0] = '\0';
-    strcat(StringTemp, selected.veh_name);
+    strcat(StringTemp, VehPrototypes[choice].veh_name);
     strcat(StringTemp, " ");
     strcat(StringTemp, "(");
-    say_stats_2(StringTemp, selected_proto_id);
-    if (selected.ability_flags != 0) {
+    say_stats_2(StringTemp, choice);
+    if (VehPrototypes[choice].ability_flags) {
         strcat(StringTemp, " ");
-        for (int ability_id = 0; ability_id < MaxAbilityNum; ++ability_id) {
-            if (has_abil(selected_proto_id, 1 << ability_id)) {
-                strcat(StringTemp,
-                               StringTable.get(Ability[ability_id].abbreviation));
+        for (int i = 0; i < MaxAbilityNum; i++) {
+            if (has_abil(choice, 1 << i)) {
+                strcat(StringTemp, StringTable.get(Ability[i].abbreviation));
             }
         }
     }
     strcat(StringTemp, ")");
     parse_says(1, StringTemp, -1, -1);
 
-    // Parsing the selected-design prompt can mutate the vehicle's prototype;
-    // the native pricing call reloads that field only after both parses.
-    proto_id = Vehs[veh_id].proto_id;
-    const int selected_cost =
-        upgrade_cost(faction_id, proto_id, selected_proto_id) * 10;
-    parse_num(0, selected_cost);
+    int cost = upgrade_cost(faction_id, choice, Vehs[veh_id].proto_id) * 10;
+    parse_num(0, cost);
     parse_num(1, PlayersData[faction_id].energy_reserves);
-    if (selected_cost > PlayersData[faction_id].energy_reserves) {
+    if (cost <= PlayersData[faction_id].energy_reserves) {
+        if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+            if (popp(ScriptPopupFile,
+                     (VehPrototypes[choice].flags & 4) ? "THISUPGRADE" : "THISUPGRADE2", 0,
+                     get_proto_triad(choice) == TRIAD_AIR
+                         ? "alair_sm.pcx"
+                         : get_proto_triad(choice) == TRIAD_SEA
+                               ? "navun_sm.pcx" : "alunit_sm.pcx",
+                     nullptr)) {
+                PlayersData[faction_id].energy_reserves -= cost;
+                synch_energy(faction_id);
+                --PlayersData[faction_id].proto_id_active[Vehs[veh_id].proto_id];
+                Vehs[veh_id].proto_id = static_cast<int16_t>(choice);
+                ++PlayersData[faction_id].proto_id_active[choice];
+                // The prototype was already replaced, so both morale adjustments
+                // compare the new design with itself and never fire.
+                if (has_abil(choice, 0x4000) && !has_abil(Vehs[veh_id].proto_id, 0x4000)) {
+                    Vehs[veh_id].morale = static_cast<uint8_t>(range(Vehs[veh_id].morale + 1, 0, 6));
+                }
+                if (!has_abil(choice, 0x4000) && has_abil(Vehs[veh_id].proto_id, 0x4000)) {
+                    Vehs[veh_id].morale = static_cast<uint8_t>(range(Vehs[veh_id].morale - 1, 0, 6));
+                }
+                veh_skip(veh_id);
+                ::draw_tile(Vehs[veh_id].x, Vehs[veh_id].y, 1);
+                synch_veh(veh_id);
+                NetDaemonNet.await_synch();
+                if (!(VehPrototypes[choice].flags & PROTO_TYPED_COMPLETE)) {
+                    VehPrototypes[choice].flags |= PROTO_TYPED_COMPLETE;
+                    synch_proto(choice);
+                    NetDaemonNet.await_synch();
+                }
+            }
+        } else {
+            if (popp(ScriptPopupFile,
+                     (VehPrototypes[choice].flags & 4) ? "THISUPGRADE" : "THISUPGRADE2", 0,
+                     get_proto_triad(choice) == TRIAD_AIR
+                         ? "air_sm.pcx"
+                         : get_proto_triad(choice) == TRIAD_SEA
+                               ? "navun_sm.pcx" : "unit_sm.pcx",
+                     nullptr)) {
+                PlayersData[faction_id].energy_reserves -= cost;
+                synch_energy(faction_id);
+                --PlayersData[faction_id].proto_id_active[Vehs[veh_id].proto_id];
+                Vehs[veh_id].proto_id = static_cast<int16_t>(choice);
+                ++PlayersData[faction_id].proto_id_active[choice];
+                if (has_abil(choice, 0x4000) && !has_abil(Vehs[veh_id].proto_id, 0x4000)) {
+                    Vehs[veh_id].morale = static_cast<uint8_t>(range(Vehs[veh_id].morale + 1, 0, 6));
+                }
+                if (!has_abil(choice, 0x4000) && has_abil(Vehs[veh_id].proto_id, 0x4000)) {
+                    Vehs[veh_id].morale = static_cast<uint8_t>(range(Vehs[veh_id].morale - 1, 0, 6));
+                }
+                veh_skip(veh_id);
+                ::draw_tile(Vehs[veh_id].x, Vehs[veh_id].y, 1);
+                synch_veh(veh_id);
+                NetDaemonNet.await_synch();
+                if (!(VehPrototypes[choice].flags & PROTO_TYPED_COMPLETE)) {
+                    VehPrototypes[choice].flags |= PROTO_TYPED_COMPLETE;
+                    synch_proto(choice);
+                    NetDaemonNet.await_synch();
+                }
+            }
+        }
+        // A declined confirmation still unlocks and reports success.
         NetDaemonNet.unlock_veh();
-        const bool alien = (Players[faction_id].rule_flags & RFLAG_ALIEN) != 0;
-        const uint8_t triad = Chassis[selected.chassis_id].triad;
-        const char *const picture = alien
-                                        ? (triad == TRIAD_AIR
-                                               ? "alair_sm.pcx"
-                                               : triad == TRIAD_SEA
-                                                     ? "navun_sm.pcx"
-                                                     : "alunit_sm.pcx")
-                                        : (triad == TRIAD_AIR
-                                               ? "air_sm.pcx"
-                                               : triad == TRIAD_SEA
-                                                     ? "navun_sm.pcx"
-                                                     : "unit_sm.pcx");
-        const char *const label = (selected.flags & 4U) != 0
-                                      ? "COSTTHISUPGRADE"
-                                      : "COSTTHISUPGRADE2";
-        popp(ScriptPopupFile, label, 0, picture, pop_wait);
-        popup.close();
-        return 0;
-    }
-
-    const bool alien = (Players[faction_id].rule_flags & RFLAG_ALIEN) != 0;
-    const uint8_t triad = Chassis[selected.chassis_id].triad;
-    const char *const confirmation_picture =
-        alien ? (triad == TRIAD_AIR
+        return 1;
+    } else {
+        NetDaemonNet.unlock_veh();
+        if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+            popp(ScriptPopupFile,
+                 (VehPrototypes[choice].flags & 4) ? "COSTTHISUPGRADE" : "COSTTHISUPGRADE2", 0,
+                 get_proto_triad(choice) == TRIAD_AIR
                      ? "alair_sm.pcx"
-                     : triad == TRIAD_SEA ? "navun_sm.pcx" : "alunit_sm.pcx")
-              : (triad == TRIAD_AIR
+                     : get_proto_triad(choice) == TRIAD_SEA
+                           ? "navun_sm.pcx" : "alunit_sm.pcx",
+                 pop_wait);
+        } else {
+            popp(ScriptPopupFile,
+                 (VehPrototypes[choice].flags & 4) ? "COSTTHISUPGRADE" : "COSTTHISUPGRADE2", 0,
+                 get_proto_triad(choice) == TRIAD_AIR
                      ? "air_sm.pcx"
-                     : triad == TRIAD_SEA ? "navun_sm.pcx" : "unit_sm.pcx");
-    const char *const confirmation_label = (selected.flags & 4U) != 0
-                                               ? "THISUPGRADE"
-                                               : "THISUPGRADE2";
-    if (!popp(ScriptPopupFile, confirmation_label, 0,
-              confirmation_picture, nullptr)) {
-        NetDaemonNet.unlock_veh();
-        popup.close();
+                     : get_proto_triad(choice) == TRIAD_SEA
+                           ? "navun_sm.pcx" : "unit_sm.pcx",
+                 pop_wait);
+        }
         return 0;
     }
-
-    PlayersData[faction_id].energy_reserves -= selected_cost;
-    synch_energy(faction_id);
-    const int old_proto_id = Vehs[veh_id].proto_id;
-    --PlayersData[faction_id].proto_id_active[old_proto_id];
-    Vehs[veh_id].proto_id = static_cast<uint16_t>(selected_proto_id);
-    ++PlayersData[faction_id].proto_id_active[selected_proto_id];
-
-    // Keep the original's post-write reads: both ability probes address the
-    // now-updated vehicle record, even though this makes the normal delta a
-    // no-op unless intervening code changed its prototype.
-    if (has_abil(selected_proto_id, 0x4000) != 0 &&
-        has_abil(Vehs[veh_id].proto_id, 0x4000) == 0) {
-        const int morale = Vehs[veh_id].morale + 1;
-        Vehs[veh_id].morale = static_cast<uint8_t>(morale < 0 ? 0 :
-                                                    morale > 6 ? 6 : morale);
-    }
-    if (has_abil(selected_proto_id, 0x4000) == 0 &&
-        has_abil(Vehs[veh_id].proto_id, 0x4000) != 0) {
-        const int morale = Vehs[veh_id].morale - 1;
-        Vehs[veh_id].morale = static_cast<uint8_t>(morale < 0 ? 0 :
-                                                    morale > 6 ? 6 : morale);
-    }
-    veh_skip(veh_id);
-    ::draw_tile(Vehs[veh_id].x, Vehs[veh_id].y, 1);
-    synch_veh(veh_id);
-    NetDaemonNet.await_synch();
-    if ((VehPrototypes[selected_proto_id].flags & PROTO_TYPED_COMPLETE) == 0) {
-        VehPrototypes[selected_proto_id].flags |= PROTO_TYPED_COMPLETE;
-        synch_proto(selected_proto_id);
-        NetDaemonNet.await_synch();
-    }
-    NetDaemonNet.unlock_veh();
-    popup.close();
-    return 1;
 }
-
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004D2220 ?sentry@Console@@QAEXHH@Z 0x004D2220-0x004D24BB BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 004D2220; retained seed src/recovered/units/004d2220.cpp", "Native4D245B parameter store is Veh+1C waypoint_y[0], not waypoint_x[2]. Typed Chassis triad, stack links, receiver faction, network locking and mapped tile state preserve original landing/load paths.", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions retain the original task baseline"], "reason": "Recover the complete Console command into its genuine owner using typed state and existing lifecycle/network APIs. Preserve original spans and retained seed evidence; this binding is not a byte, reference or runtime acceptance claim."}
@@ -2176,274 +2102,415 @@ void __cdecl Console::goto_routine(int base_id) {
     PlanWindow.on_redraw();
 }
 
-static int console_destination_distance(int x1, int y1, int x2, int y2) {
-    int dx = abs(x1 - x2);
-    if (!(MapIsFlat & 1) && dx > static_cast<int>(MapLongitude)) dx = MapLongitudeBounds - dx;
-    return (dx + abs(y1 - y2)) >> 1;
-}
-
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x004D61A0 0x004D7B3C 0x004D7B5C 0x004D6E48
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x004D61A0 0x004D7B5C 0x004D7BE0 0x004D6E42
 // ORIGINAL: 0x004D61A0 ?go_to@Console@@QAEXHHH@Z 0x004D61A0-0x004D7B3C;0x0065AD6A-0x0065AFD2
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004d61a0.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
 // TRIED: full-function transcription (~95% of the call sequence by count) of a genuine multi-branch dispatcher: the a2==-1 multi-option popup, a2==-2 "next unit", a1<0/a2==-3 fake-veh "go home", the real-vehicle lock/cargo-check/base-at/action_home paths, the shared cursor-position tail, the 8-case jump-table message builder, the base-candidate eligibility+sort loop (fixed 512-entry stack arrays inferred from the frame span, not confirmed against a named constant), and the post-exec() a2 in {-2,-1,-3,default} redispatch. Confirmed via the exception funclet table (0x0065AD6A-0x0065AFD2) that every "standalone-looking" teardown local (2 FlatButton, Sprite, Heap, Spot, Dialogs, RadioButton/ListBox/EditGroup/SpriteBox/ CheckBox/Dialog/GraphicWin sub-objects, 2 StringStruct-shaped fields) is actually embedded inside Popup/BasePop/Scroll/ Dialogs at a fixed offset - so the whole function needs only one real local (`Popup popup;`) and the RAII lever applies to it alone. Approximated rather than exact: the per-pair diplomacy bit-matrix index feeding the eligibility test (0x004D7179-0x004D718B / 0x004D720B-0x004D721D), the speed-based "half speed" gate deep in that same loop (0x004D7382 area), and the name/distance tie-break in the candidate sort (0x004D706E-0x004D7124) - all replaced with a same-faction/plain-distance stand-in that keeps the same call shape. MISMATCH at instruction #12 (xor vs push), which is register/stack-slot allocation this early, not a logic fork.
 void Console::go_to(int subject, int order, int grouped) {
+    int artifact = 0;
     Popup popup;
     const unsigned int saved_flags = MapWinTable[0]->field_1DD70_;
     int sorting = prefs_get("Base Sort", 0, 0);
-    int source_x, source_y, faction, triad = -1, forward_triad = -1;
-    int centre_x = 0, centre_y = 0, maximum_range = 0;
-    bool cargo = false;
-    int ids[512], scores[512];
+    int source_x;
+    int source_y;
+    int faction;
+    int triad;
+    int base_id;
+    int max_range;
+    int centre_x;
+    int centre_y;
+    int ids[512];
+    int scores[512];
     GoToPreviewActive = 1;
     if (order == -1) {
-        Base &base = Bases[subject];
-        source_x = base.x; source_y = base.y; faction = base.faction_id_current;
-        set_base(subject);
-        if (NetDaemonNet.lock_base(subject, 0, -1, -1)) return;
+        base_id = subject;
+        faction = Bases[base_id].faction_id_current;
+        source_x = Bases[base_id].x;
+        source_y = Bases[base_id].y;
+        set_base(base_id);
+        if (NetDaemonNet.lock_base(base_id, 0, -1, -1)) {
+            return;
+        }
         if (!(saved_flags & 0x40000)) {
             MapWinTable[0]->field_1DD70_ &= ~0x40u;
             MapWinTable[0]->field_1DD70_ |= 0x40000;
             ::draw_map(1);
         }
-        parse_says(0, base.name_string, -1, -1);
-        popup.start(PopupStartCaption, "DESTTRIAD", -1, nullptr, 0x40);
-        for (int i = 0; i < 3; ++i) {
-            const int destination = i == 0 ? base.auto_forward_slots[Base::AutoForwardLand]
-                : i == 1 ? base.auto_forward_slots[Base::AutoForwardSea]
-                         : base.auto_forward_slots[Base::AutoForwardAir];
-            strcpy(StringTemp, StringTable.get(Triad[i]));
-            strcat(StringTemp, " (");
-            say_base(StringTemp, destination);
+        parse_says(0, Bases[base_id].name_string, -1, -1);
+        popup.start("DESTTRIAD", 0x40);
+        for (int i = 0; i < MaxTriadNum; i++) {
+            StringTemp[0] = '\0';
+            strcat(StringTemp, StringTable.get(Triad[i]));
+            strcat(StringTemp, " ");
+            strcat(StringTemp, "(");
+            say_base(StringTemp, Bases[base_id].auto_forward_slots[i]);
             strcat(StringTemp, ")");
-            popup.dialogs().item(StringTemp, i);
+            popup.item(StringTemp, i);
         }
-        forward_triad = popup.exec(0, nullptr);
-        if (forward_triad < 0) goto finish;
-        triad = forward_triad;
+        triad = popup.exec();
+        if (triad < 0) {
+            goto finish;
+        }
         parse_say(0, Triad[triad], -1, -1);
-        parse_says(1, base.name_string, -1, -1);
+        parse_says(1, Bases[base_id].name_string, -1, -1);
     } else if (order == -2) {
         source_x = ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
         source_y = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
         faction = ConsoleGlobal.faction_id_;
+        triad = -1;
         GoToPreviewActive = 0;
     } else {
         if (subject < 0) {
-            if (order == -3) return;
+            if (order == -3) {
+                return;
+            }
             subject = veh_fake(0, ConsoleGlobal.faction_id_);
-            Vehs[subject].x = static_cast<short>(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_]);
-            Vehs[subject].y = static_cast<short>(ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]);
+            Vehs[subject].x = static_cast<int16_t>(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_]);
+            Vehs[subject].y = static_cast<int16_t>(ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]);
             Vehs[subject].state = 0;
         }
-        if (NetDaemonNet.lock_veh(&subject, 0, -1, -1, 0)) return;
-        Veh &vehicle = Vehs[subject];
-        source_x = vehicle.x; source_y = vehicle.y; faction = vehicle.faction_id;
-        const int proto = vehicle.proto_id;
-        triad = Chassis[VehPrototypes[proto].chassis_id].triad;
-        parse_says(0, VehPrototypes[proto].veh_name, -1, -1);
-        cargo = VehPrototypes[proto].plan == 12
-            || (veh_cargo(subject) && stack_check(subject, 2, 12, -1, -1));
-        if (order == -3) {
-            const int base = base_at(source_x, source_y);
-            if (base < 0) {
-                NetMsgPrimary.pop("GATENOBASE", 0x1388, 0, 0);
-                goto finish;
-            }
-            if (!has_fac(0x21, base, 0)) {
-                NetMsgPrimary.pop("GATENOGATE", 0x1388, 0, 0);
-                goto finish;
-            }
-            if (Bases[base].state & 0x20000000) {
-                parse_says(0, Bases[base].name_string, -1, -1);
-                NetMsgPrimary.pop("GATEUSED", 0x1388, 0, 0);
-                goto finish;
-            }
+        if (NetDaemonNet.lock_veh(&subject, 0, -1, -1, 0)) {
+            return;
         }
-        if (order == 128) {
-            maximum_range = speed(subject, 0);
-            if (Chassis[VehPrototypes[proto].chassis_id].range == 1) maximum_range /= 2;
-            Map *tile = map_loc(source_x, source_y);
-            if ((tile->bit & 1) && (tile->val2 & 15) < 8) {
-                centre_x = source_x; centre_y = source_y;
+        faction = Vehs[subject].faction_id;
+        source_x = Vehs[subject].x;
+        source_y = Vehs[subject].y;
+        triad = Chassis[VehPrototypes[Vehs[subject].proto_id].chassis_id].triad;
+        parse_says(0, VehPrototypes[Vehs[subject].proto_id].veh_name, -1, -1);
+        if (VehPrototypes[Vehs[subject].proto_id].plan == PLAN_ALIEN_ARTIFACT) {
+            artifact = 1;
+        }
+        if (veh_cargo(subject) && stack_check(subject, 2, PLAN_ALIEN_ARTIFACT, -1, -1)) {
+            artifact = 1;
+        }
+        if (order == -3) {
+            const int gate_base = base_at(source_x, source_y);
+            if (gate_base < 0) {
+                NetMsgPrimary.pop("GATENOBASE", 5000, 0, 0);
+                goto finish;
+            }
+            if (!has_fac(FAC_PSI_GATE, gate_base, 0)) {
+                NetMsgPrimary.pop("GATENOGATE", 5000, 0, 0);
+                goto finish;
+            }
+            if (Bases[gate_base].state & 0x20000000) {
+                parse_says(0, Bases[gate_base].name_string, -1, -1);
+                NetMsgPrimary.pop("GATEUSED", 5000, 0, 0);
+                goto finish;
+            }
+        } else if (order == 128) {
+            if (Chassis[VehPrototypes[Vehs[subject].proto_id].chassis_id].range == 1) {
+                max_range = speed(subject, 0) / 2;
+            } else {
+                max_range = speed(subject, 0);
+            }
+            if (base_who(source_x, source_y) >= 0) {
+                centre_x = source_x;
+                centre_y = source_y;
             } else {
                 action_home(subject, 0);
-                if (vehicle.order != 24) { NetDaemonNet.unlock_veh(); return; }
-                centre_x = vehicle.waypoint_x[0]; centre_y = vehicle.waypoint_y[0];
-                vehicle.order = 0;
+                if (Vehs[subject].order != ORDER_MOVE_TO) {
+                    NetDaemonNet.unlock_veh();
+                    return;
+                }
+                centre_x = Vehs[subject].waypoint_x[0];
+                centre_y = Vehs[subject].waypoint_y[0];
+                Vehs[subject].order = 0;
             }
         }
     }
-    PlanWindow.init(label_get(0x868 / 4));
-    GoToSourceX = PlanWindow.center_x_ = source_x;
-    GoToSourceY = PlanWindow.center_y_ = source_y;
+    {
+    const int region = map_loc(source_x, source_y)->region;
+    const int ocean = is_ocean(source_x, source_y);
+    PlanWindow.init(label_get(0x21A));
+    GoToSourceX = source_x;
+    PlanWindow.center_x_ = source_x;
+    GoToSourceY = source_y;
+    PlanWindow.center_y_ = source_y;
     PlanWindow.GraphicWin::show(0);
     for (;;) {
-        const char *title = "";
-        if (order == -3) title = "GATETO";
-        else if (order == -2) title = "FINDTO";
-        else if (order == -1) title = "DESTTO";
-        else if (order == 24) title = grouped ? "GROUPTO" : "GOTO";
-        else if (order == 27) title = "ROADTO";
-        else if (order == 28) title = "TUBETO";
-        else if (order == 128) title = "BOMBTO";
-        strcpy(StringTemp, title);
-        popup.start(PopupStartCaption, StringTemp, -1, nullptr, 0x42);
-        popup.button(label_get(0x70c / 4)); popup.button(label_get(0x710 / 4)); popup.button(label_get(0x714 / 4));
+        StringTemp[0] = '\0';
+        switch (order) {
+        case 24:
+            strcat(StringTemp, grouped ? "GROUPTO" : "GOTO");
+            break;
+        case 27:
+            strcat(StringTemp, "ROADTO");
+            break;
+        case 28:
+            strcat(StringTemp, "TUBETO");
+            break;
+        case 128:
+            strcat(StringTemp, "BOMBTO");
+            break;
+        case -1:
+            strcat(StringTemp, "DESTTO");
+            break;
+        case -2:
+            strcat(StringTemp, "FINDTO");
+            break;
+        case -3:
+            strcat(StringTemp, "GATETO");
+            break;
+        }
+        popup.start(StringTemp, 0x42);
+        popup.button(label_get(0x1C3));
+        popup.button(label_get(0x1C4));
+        popup.button(label_get(0x1C5));
         popup.set_loc(-10, -10);
-        if (order == -2) popup.button(label_get(0x718 / 4));
+        if (order == -2) {
+            popup.button(label_get(0x1C6));
+        }
         int count = 0;
         if (order == -1) {
-            strcpy(StringTemp, "("); strcat(StringTemp, label_get(0x3ec / 4)); strcat(StringTemp, ")");
-            popup.dialogs().item(StringTemp, 9999); count = 1;
+            StringTemp[0] = '\0';
+            strcat(StringTemp, "(");
+            strcat(StringTemp, label_get(0xFB));
+            strcat(StringTemp, ")");
+            popup.item(StringTemp, 9999);
+            count = 1;
         }
-        for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; ++i) {
+        int i;
+        for (i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
             ids[i] = i;
-            if (sorting == 1) scores[i] = Bases[i].population_size;
-            else if (sorting == 2) scores[i] = -console_destination_distance(source_x, source_y, Bases[i].x, Bases[i].y);
+            switch (sorting) {
+            case 1:
+                scores[i] = Bases[i].population_size;
+                break;
+            case 2:
+                scores[i] = -cursor_dist(source_x, source_y, Bases[i].x, Bases[i].y);
+                break;
+            }
         }
+        int changed;
         if (sorting) {
-            const int bounds = GameDataStateStorage.fields_.base_current_count_ - 1;
-            int changed;
+            const int bound = GameDataStateStorage.fields_.base_current_count_ - 1;
             do {
                 changed = 0;
-                for (int j = 0; j < bounds; ++j) {
-                    if (scores[j] < scores[j + 1]) {
+                for (i = 0; i < bound; i++) {
+                    if (scores[i] < scores[i + 1]) {
                         changed = 1;
-                        swap(&scores[j], &scores[j + 1]);
-                        swap(&ids[j], &ids[j + 1]);
+                        swap(&scores[i], &scores[i + 1]);
+                        swap(&ids[i], &ids[i + 1]);
                     }
                 }
-            } while (changed != 0);
+            } while (changed);
         } else {
-            int changed;
             do {
                 changed = 0;
-                for (int j = 0; j < GameDataStateStorage.fields_.base_current_count_ - 1; ++j) {
-                    if (_stricmp(Bases[ids[j]].name_string,
-                                 Bases[ids[j + 1]].name_string) > 0) {
+                for (i = 0; i < GameDataStateStorage.fields_.base_current_count_ - 1; i++) {
+                    if (_stricmp(Bases[ids[i]].name_string, Bases[ids[i + 1]].name_string) > 0) {
                         changed = 1;
-                        swap(&ids[j], &ids[j + 1]);
+                        swap(&ids[i], &ids[i + 1]);
                     }
                 }
-            } while (changed != 0);
+            } while (changed);
         }
-        for (int candidate = 0; candidate < GameDataStateStorage.fields_.base_current_count_; ++candidate) {
-            const int id = ids[candidate]; Base &base = Bases[id];
-            if (base.faction_id_current != faction) {
-                if (order == 128 ? !(PlayersData[faction].diplo_treaties[base.faction_id_current] & 0x10)
-                    : order < 0 || !(PlayersData[faction].diplo_treaties[base.faction_id_current] & 1)) continue;
-            } else if (order == 128) continue;
-            if (order == -3) {
-                if (!has_fac(0x21, id, 0)) continue;
-            } else if (triad == 1) {
-                if ((map_loc(source_x, source_y)->climate & 0xe0) >= 0x60) {
-                    if (id >= 0 && !port_to_port(base_at(source_x, source_y), id)) continue;
-                } else if (!base_on_sea(id, map_loc(source_x, source_y)->region)) continue;
-            } else if (triad == 0) {
-                if (map_loc(base.x, base.y)->region != map_loc(source_x, source_y)->region) continue;
-            } else if (triad == 2) {
+        for (i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
+            const int id = ids[i];
+            if (Bases[id].faction_id_current != faction) {
                 if (order == 128) {
-                    if (console_destination_distance(centre_x, centre_y, base.x, base.y) > maximum_range) continue;
-                } else if (order >= 0) {
-                    Veh &vehicle = Vehs[subject];
-                    const int range = Chassis[VehPrototypes[vehicle.proto_id].chassis_id].range;
-                    if (range) {
-                        const int moves = speed(subject, 0);
-                        const int remaining = ::range(moves - vehicle.moves_expended, 0, 999);
-                        if (console_destination_distance(source_x, source_y, base.x, base.y)
-                            > (moves * (range - vehicle.terraforming_turns - 1) + remaining)
-                               / static_cast<int>(Rules.move_rate_roads)) continue;
+                    if (!(PlayersData[faction].diplo_treaties[Bases[id].faction_id_current] & 0x10)) {
+                        continue;
+                    }
+                } else {
+                    if (order < 0) {
+                        continue;
+                    }
+                    if (!(PlayersData[faction].diplo_treaties[Bases[id].faction_id_current] & 1)) {
+                        continue;
+                    }
+                }
+            } else if (order == 128) {
+                continue;
+            }
+            if (order == -3) {
+                if (!has_fac(FAC_PSI_GATE, id, 0)) {
+                    continue;
+                }
+            } else {
+                const int base_region = map_loc(Bases[id].x, Bases[id].y)->region;
+                if (triad == TRIAD_SEA) {
+                    if (ocean) {
+                        if (!base_on_sea(id, region)) {
+                            continue;
+                        }
+                    } else {
+                        const int port = base_at(source_x, source_y);
+                        if (id >= 0 && !port_to_port(port, id)) {
+                            continue;
+                        }
+                    }
+                } else if (triad == TRIAD_LAND) {
+                    if (base_region != region) {
+                        continue;
+                    }
+                } else if (triad == TRIAD_AIR) {
+                    if (order == 128) {
+                        if (cursor_dist(centre_x, centre_y, Bases[id].x, Bases[id].y) > max_range) {
+                            continue;
+                        }
+                    } else if (order >= 0) {
+                        if (Chassis[VehPrototypes[Vehs[subject].proto_id].chassis_id].range) {
+                            if (cursor_dist(source_x, source_y, Bases[id].x, Bases[id].y)
+                                > (speed(subject, 0)
+                                       * (Chassis[VehPrototypes[Vehs[subject].proto_id].chassis_id].range
+                                          - Vehs[subject].terraforming_turns - 1)
+                                   + range(speed(subject, 0) - Vehs[subject].moves_expended, 0, 999))
+                                      / static_cast<int>(Rules.move_rate_roads)) {
+                                continue;
+                            }
+                        }
                     }
                 }
             }
-            if (base.faction_id_current != faction && !(base.visibility & (1 << faction)) && !(GameDataStateStorage.fields_.game_state_ & 0x80)) continue;
-            strcpy(StringTemp, base.name_string); strcat(StringTemp, "|");
-            if (base.faction_id_current != faction) {
-                strcat(StringTemp, " ("); GenderDefault = Players[base.faction_id_current].noun_gender;
-                PluralityDefault = Players[base.faction_id_current].is_noun_plural;
-                strcat(StringTemp, Players[base.faction_id_current].noun_faction); strcat(StringTemp, ")");
+            if (Bases[id].faction_id_current != faction
+                && !(Bases[id].visibility & (1 << faction))
+                && !(GameDataStateStorage.fields_.game_state_ & 0x80)) {
+                continue;
             }
-            if (cargo && base.faction_id_current == faction) {
-                if (id == GameDataStateStorage.fields_.secret_project_.universal_translator() || (has_fac(8, id, 0) && !(base.state & 0x400))) {
-                    strcat(StringTemp, " (");
-                    strcat(StringTemp, id == GameDataStateStorage.fields_.secret_project_.universal_translator()
-                        ? StringTable.get(Facility[90].name) : label_get(0x4c4 / 4));
+            StringTemp[0] = '\0';
+            strcat(StringTemp, Bases[id].name_string);
+            strcat(StringTemp, "|");
+            if (Bases[id].faction_id_current != faction) {
+                strcat(StringTemp, " ");
+                strcat(StringTemp, "(");
+                strcat(StringTemp, get_noun(Bases[id].faction_id_current));
+                strcat(StringTemp, ")");
+            }
+            if (artifact && Bases[id].faction_id_current == faction) {
+                if (id == GameDataStateStorage.fields_.secret_project_.universal_translator()) {
+                    strcat(StringTemp, " ");
+                    strcat(StringTemp, "(");
+                    strcat(StringTemp, StringTable.get(Facility[FAC_UNIVERSAL_TRANSLATOR].name));
+                    strcat(StringTemp, ")");
+                } else if (has_fac(FAC_NETWORK_NODE, id, 0) && !(Bases[id].state & 0x400)) {
+                    strcat(StringTemp, " ");
+                    strcat(StringTemp, "(");
+                    strcat(StringTemp, label_get(0x131));
                     strcat(StringTemp, ")");
                 }
             }
-            strcat(StringTemp, " ");
-            if (order == -3) strcat(StringTemp, label_get((base.state & 0x20000000 ? 0x848 : 0x844) / 4));
-            else {
-                char number[40]; strcat(StringTemp, label_get(0x3e8 / 4)); strcat(StringTemp, ": ");
-                strcat(StringTemp, _itoa(console_destination_distance(source_x, source_y, base.x, base.y), number, 10));
+            if (order == -3) {
+                strcat(StringTemp, " ");
+                strcat(StringTemp, label_get((Bases[id].state & 0x20000000) ? 0x212 : 0x211));
+            } else {
+                strcat(StringTemp, " ");
+                strcat(StringTemp, label_get(0xFA));
+                strcat(StringTemp, ": ");
+                char distance_text[80];
+                _itoa(cursor_dist(source_x, source_y, Bases[id].x, Bases[id].y), distance_text, 10);
+                strcat(StringTemp, distance_text);
                 if (sorting == 1) {
-                    strcat(StringTemp, ", "); strcat(StringTemp, label_get(0x90c / 4)); strcat(StringTemp, ": ");
-                    strcat(StringTemp, _itoa(base.population_size, number, 10));
+                    strcat(StringTemp, ", ");
+                    strcat(StringTemp, label_get(0x243));
+                    strcat(StringTemp, ": ");
+                    char size_text[80];
+                    _itoa(Bases[id].population_size, size_text, 10);
+                    strcat(StringTemp, size_text);
                 }
             }
-            popup.dialogs().item(StringTemp, id); ++count;
-            int preferred = GoToLastSelection;
-            if (order == -1) preferred = forward_triad == 0
-                ? Bases[subject].auto_forward_slots[Base::AutoForwardLand]
-                : forward_triad == 1 ? Bases[subject].auto_forward_slots[Base::AutoForwardSea]
-                                     : Bases[subject].auto_forward_slots[Base::AutoForwardAir];
-            else if (order != -2 && preferred < 0) preferred = Vehs[subject].home_base_id;
-            if (id == preferred) popup.set_value(id);
+            popup.item(StringTemp, id);
+            count++;
+            if (order == -2) {
+                if (id == GoToLastSelection) {
+                    popup.set_value(id);
+                }
+            } else if (order == -1) {
+                if (id == Bases[base_id].auto_forward_slots[triad]) {
+                    popup.set_value(id);
+                }
+            } else if (GoToLastSelection < 0) {
+                if (id == Vehs[subject].home_base_id) {
+                    popup.set_value(id);
+                }
+            } else if (id == GoToLastSelection) {
+                popup.set_value(id);
+            }
         }
         if (!count) {
-            if (order == -3) NetMsgPrimary.pop("GATENODEST", 0x1388, 0, 0);
-            PlanWindow.close(); break;
+            if (order == -3) {
+                NetMsgPrimary.pop("GATENODEST", 5000, 0, 0);
+            }
+            PlanWindow.close();
+            break;
         }
         popup.dialogs().set_selection_callback(goto_routine);
         goto_routine(popup.dialogs().get_selected_id());
-        const int selected = popup.exec(0, nullptr);
+        int selected = popup.exec();
         PlanWindow.close();
-        if (selected < 0) break;
+        if (selected < 0) {
+            break;
+        }
         GoToLastSelection = selected;
-        if (popup.input_poll_state() > 0 && popup.input_poll_state() <= 3) {
-            sorting = popup.input_poll_state() - 1; prefs_put("Base Sort", sorting, 0); continue;
+        const int button = popup.input_poll_state();
+        if (button > 0 && button <= 3) {
+            sorting = button - 1;
+            prefs_put("Base Sort", sorting, 0);
+            continue;
         }
         if (order == -2) {
             ConsoleGlobal.cursor_next(Bases[selected].x, Bases[selected].y);
             MapWinTable[0]->set_center(Bases[selected].x, Bases[selected].y, 1);
-            if (popup.input_poll_state() == 4 && Bases[selected].faction_id_current == ConsoleGlobal.faction_id_)
+            if (popup.input_poll_state() == 4
+                && Bases[selected].faction_id_current == ConsoleGlobal.faction_id_) {
                 TutWinBaseWindow.zoom(selected, 0);
+            }
         } else if (order == -1) {
-            const short destination = static_cast<short>(selected == 9999 ? -1 : selected);
-            if (!forward_triad)
-                Bases[subject].auto_forward_slots[Base::AutoForwardLand] = destination;
-            else if (forward_triad == 1)
-                Bases[subject].auto_forward_slots[Base::AutoForwardSea] = destination;
-            else Bases[subject].auto_forward_slots[Base::AutoForwardAir] = destination;
+            if (selected == 9999) {
+                selected = -1;
+            }
+            Bases[base_id].auto_forward_slots[triad] = static_cast<int16_t>(selected);
             ::draw_map(1);
         } else if (order == -3) {
             if (Bases[selected].x != Vehs[subject].x || Bases[selected].y != Vehs[subject].y) {
                 log_say("Psi Gate teleport", subject, selected, 0);
                 if (!NetDaemonNet.add_lock(0, Bases[selected].x, Bases[selected].y)) {
-                    if (IsMultiplayerNet) { message_veh(0x2410, subject, selected, 0); NetDaemonNet.await_exec(1); }
-                    else action_gate(subject, selected);
+                    if (IsMultiplayerNet) {
+                        message_veh(0x2410, subject, selected, 0);
+                        NetDaemonNet.await_exec(1);
+                    } else {
+                        action_gate(subject, selected);
+                    }
                 }
             }
         } else {
             log_say("Setting special veh orders", subject, order, 0);
-            Veh &vehicle = Vehs[subject];
             if (order == 128) {
-                vehicle.state = (vehicle.state & 0xfcffffff) | 0x200;
-                vehicle.order_auto_type = 10;
-                vehicle.waypoint_x[1] = Bases[selected].x; vehicle.waypoint_y[1] = Bases[selected].y;
+                Vehs[subject].state = (Vehs[subject].state & 0xFCFFFFFF) | 0x200;
+                Vehs[subject].order_auto_type = 10;
+                Vehs[subject].waypoint_x[1] = Bases[selected].x;
+                Vehs[subject].waypoint_y[1] = Bases[selected].y;
             } else {
-                vehicle.order = static_cast<signed char>(order);
-                vehicle.waypoint_x[0] = Bases[selected].x; vehicle.waypoint_y[0] = Bases[selected].y;
-                if (order == 24) { vehicle.state &= ~0x10000u; if (grouped) group(subject); }
+                Vehs[subject].order = static_cast<char>(order);
+                if (order == ORDER_MOVE_TO) {
+                    Vehs[subject].waypoint_x[0] = Bases[selected].x;
+                    Vehs[subject].waypoint_y[0] = Bases[selected].y;
+                    Vehs[subject].state &= ~0x10000u;
+                    if (grouped) {
+                        group(subject);
+                    }
+                } else {
+                    Vehs[subject].waypoint_x[0] = Bases[selected].x;
+                    Vehs[subject].waypoint_y[0] = Bases[selected].y;
+                }
             }
-            synch_veh(subject); NetDaemonNet.await_synch();
+            synch_veh(subject);
+            NetDaemonNet.await_synch();
         }
         break;
     }
+    }
 finish:
-    if (order == -1) NetDaemonNet.unlock_base(BaseIDCurrentSelected);
-    else if (order != -2) NetDaemonNet.unlock_veh();
+    if (order == -1) {
+        NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+    } else if (order != -2) {
+        NetDaemonNet.unlock_veh();
+    }
     if (MapWinTable[0]->field_1DD70_ != saved_flags) {
-        MapWinTable[0]->field_1DD70_ = saved_flags; ::draw_map(1);
+        MapWinTable[0]->field_1DD70_ = saved_flags;
+        ::draw_map(1);
     }
 }
 
