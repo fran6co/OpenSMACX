@@ -431,27 +431,9 @@ static int polygon_difference(int a, int b) {
     return static_cast<int>(static_cast<unsigned int>(a) - static_cast<unsigned int>(b));
 }
 
-static void polygon_reset_fpu() {
-    // FNINIT resets, rather than restores, the caller's environment. VC6's
-    // _fpreset selects 53-bit precision; the image resets to 64-bit instead.
-    _fpreset();
-    _control87(_MCW_EM | _PC_64 | _RC_NEAR | _IC_PROJECTIVE,
-               _MCW_EM | _MCW_PC | _MCW_RC | _MCW_IC);
-}
 
-// The image directly divides delta by width_fixed under PC24/chop, scales
-// by the exact power of two 256, then converts to a signed WORD. Every
-// in-range integer boundary is representable at that precision, so truncating
-// this exact rational gives the same final WORD. Conversion overflow yields
-// the x87 integer-indefinite bits. This does not emulate arithmetic exception
-// flags or the pending x87 stack visible inside a release callback.
-static unsigned short polygon_light_step(int delta, int width_fixed) {
-    const int64_t step = static_cast<int64_t>(delta) * 256 / width_fixed;
-    if (step < -32768 || step > 32767) {
-        return 0x8000;
-    }
-    return static_cast<unsigned short>(step);
-}
+// RECOVERY_OBJECT: v1 0x00670C00 _PolygonLightScale
+static const float PolygonLightScale = 256.0f;
 
 // This setup uses the existing fifteen-word EdgeScan representation, with
 // its four UV words untouched. Matching layout is not proof that the
@@ -517,144 +499,198 @@ int __cdecl setup_gouraud_polygon_edge(EdgeScan *edge, int vertex) {
 // RECOVERY_BINDING: v1 {"evidence": ["626A27 acquires Buffer pixels;626AED/626AFA/626B0A convert row/bottom/top storage;626B76..626B7C divide directly under PC24/chop;626C62 publishes WORD light step;626D07 shifts clipped unsigned-step product right8;626D41..626D48 write inclusive endpoints;626D6F release precedes626D75 FPU reset."], "reason": "This free cdecl rasterizer consumes exactly four Vert coordinates and four signed light values, sharing polygon scratch and converting its three row slots from coordinates to addresses."}
 // symbol    ?polygon_gouraud@@YAHPAVBuffer@@PAUVert@@PAH@Z
 int __cdecl polygon_gouraud(Buffer *buffer, Vert *vertices, int *lights) {
+    int minimum_y;
+    int maximum_y;
+    int minimum_x;
+    int maximum_x;
+    int minimum_vertex;
+    EdgeScan backward;
+    EdgeScan forward;
+    unsigned short control;
+    int width;
+    int delta;
+    int done;
     if (vertices == 0 || lights == 0) {
         return 16;
     }
     PolygonPixels = static_cast<unsigned char *>(buffer->get_data());
     if (PolygonPixels != 0) {
-        polygon_reset_fpu();
+        // Hand-written assembly: the rasterizer resets the FPU with FINIT.
+        __asm finit
         PolygonVertices = vertices;
         PolygonLights = lights;
         PolygonPitch = static_cast<int>(buffer->stride_);
-        PolygonClipRight = buffer->rect1_.right;
-        PolygonClipLeft = buffer->rect1_.left;
-        PolygonClipBottom.coordinate = buffer->rect1_.bottom;
-        PolygonClipTop.coordinate = buffer->rect1_.top;
-        int minimum_y = 32767;
-        int maximum_y = -32765;
-        int minimum_vertex;
-        for (int vertex = 0; vertex < 4; ++vertex) {
-            if (vertices[vertex].y < minimum_y) {
-                minimum_y = vertices[vertex].y;
-                minimum_vertex = vertex;
+        RECT *clip = &buffer->rect1_;
+        if (clip != 0) {
+            PolygonClipRight = clip->right;
+            PolygonClipLeft = clip->left;
+            PolygonClipBottom.coordinate = clip->bottom;
+            PolygonClipTop.coordinate = clip->top;
+            minimum_y = 0x7fff;
+            maximum_y = -0x7ffd;
+            maximum_x = -0x7ffd;
+            minimum_x = 0x7fff;
+            for (int vertex = 0; vertex < 4; ++vertex) {
+                if (vertices[vertex].y < minimum_y) {
+                    minimum_y = vertices[vertex].y;
+                    minimum_vertex = vertex;
+                }
+                if (vertices[vertex].y > maximum_y) {
+                    maximum_y = vertices[vertex].y;
+                    PolygonBottomVertex = vertex;
+                }
+                if (vertices[vertex].x < minimum_x) {
+                    minimum_x = vertices[vertex].x;
+                }
+                if (vertices[vertex].x > maximum_x) {
+                    maximum_x = vertices[vertex].x;
+                }
             }
-            if (vertices[vertex].y > maximum_y) {
-                maximum_y = vertices[vertex].y;
-                PolygonBottomVertex = vertex;
-            }
-        }
-        if (minimum_y < maximum_y) {
-            const uintptr_t pixels = reinterpret_cast<uintptr_t>(PolygonPixels);
-            PolygonY.address = pixels + static_cast<int64_t>(minimum_y) * PolygonPitch;
-            PolygonClipBottom.address = pixels
-                + static_cast<int64_t>(PolygonClipBottom.coordinate) * PolygonPitch;
-            PolygonClipTop.address = pixels
-                + static_cast<int64_t>(PolygonClipTop.coordinate) * PolygonPitch;
-            EdgeScan backward;
-            EdgeScan forward;
-            backward.f0 = -1;
-            if (setup_gouraud_polygon_edge(&backward, minimum_vertex)) {
-                forward.f0 = 1;
-                if (setup_gouraud_polygon_edge(&forward, minimum_vertex)) {
-                    _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
-                    int pending_width = polygon_fixed(
-                        polygon_difference(forward.accumC, backward.accumC));
-                    int pending_delta = 0;
-                    if (pending_width > 0) {
-                        pending_delta = polygon_difference(forward.accumD, backward.accumD);
-                    }
-                    if (static_cast<intptr_t>(PolygonY.address)
-                        < static_cast<intptr_t>(PolygonClipBottom.address)) {
-                        bool done = false;
-                        do {
-                            PolygonSpanRight = forward.accumC;
-                            PolygonSpanLeft = backward.accumC;
-                            PolygonLight = backward.accumD;
-
-                            if (--backward.counter == 0) {
-                                if (!setup_gouraud_polygon_edge(&backward, backward.id)) {
-                                    done = true;
-                                }
-                            } else {
-                                backward.accumD = static_cast<int>(
-                                    static_cast<unsigned int>(backward.accumD) + backward.deltaD);
-                                backward.accumC += backward.deltaC;
-                                backward.fracAccum += backward.fracDelta;
-                                if (backward.fracAccum > 0) {
-                                    backward.accumC += backward.extraDeltaC;
-                                    backward.fracAccum -= backward.fracSub;
-                                }
+            if (minimum_y < maximum_y) {
+                const int pitch = PolygonPitch;
+                const int base = reinterpret_cast<int>(PolygonPixels);
+                PolygonY.coordinate = pitch * minimum_y + base;
+                PolygonClipBottom.coordinate = PolygonClipBottom.coordinate * pitch + base;
+                PolygonClipTop.coordinate = PolygonClipTop.coordinate * pitch + base;
+                backward.f0 = -1;
+                if (setup_gouraud_polygon_edge(&backward, minimum_vertex)) {
+                    forward.f0 = 1;
+                    if (setup_gouraud_polygon_edge(&forward, minimum_vertex)) {
+                        // Hand-written assembly: truncating rounding, 24-bit
+                        // precision control word.
+                        __asm {
+                            fstcw control
+                            mov ax, control
+                            and ax, 0xfcff
+                            or ax, 0xc00
+                            mov control, ax
+                            fldcw control
+                        }
+                        width = (forward.accumC - backward.accumC) << 16;
+                        if (width > 0) {
+                            delta = forward.accumD - backward.accumD;
+                            // Hand-written assembly: the light slope stays on
+                            // the x87 stack until the next row stores it.
+                            __asm {
+                                fild delta
+                                fild width
+                                fdivp st(1), st
                             }
-                            if (!done) {
+                        }
+                        if (PolygonY.coordinate < PolygonClipBottom.coordinate) {
+                            done = 0;
+                            for (;;) {
+                                PolygonSpanRight = forward.accumC;
+                                PolygonSpanLeft = backward.accumC;
+                                PolygonLight = backward.accumD;
+                                if (--backward.counter == 0) {
+                                    if (!setup_gouraud_polygon_edge(&backward, backward.id)) {
+                                        done = 1;
+                                        goto edges_done;
+                                    }
+                                } else {
+                                    backward.accumC += backward.deltaC;
+                                    backward.accumD += backward.deltaD;
+                                    backward.fracAccum += backward.fracDelta;
+                                    if (backward.fracAccum > 0) {
+                                        backward.accumC += backward.extraDeltaC;
+                                        backward.fracAccum -= backward.fracSub;
+                                    }
+                                }
                                 if (--forward.counter == 0) {
                                     if (!setup_gouraud_polygon_edge(&forward, forward.id)) {
-                                        done = true;
+                                        done = 1;
                                     }
                                 } else {
                                     forward.accumC += forward.deltaC;
-                                    forward.accumD = static_cast<int>(
-                                        static_cast<unsigned int>(forward.accumD) + forward.deltaD);
+                                    forward.accumD += forward.deltaD;
                                     forward.fracAccum += forward.fracDelta;
                                     if (forward.fracAccum > 0) {
                                         forward.accumC += forward.extraDeltaC;
                                         forward.fracAccum -= forward.fracSub;
                                     }
                                 }
-                            }
-
-                            if (pending_width > 0) {
-                                PolygonLightStep = polygon_light_step(pending_delta, pending_width);
-                            }
-                            // The image prepares the next ratio even after an
-                            // edge has ended, before drawing the saved span.
-                            pending_width = polygon_fixed(
-                                polygon_difference(forward.accumC, backward.accumC));
-                            if (pending_width > 0) {
-                                pending_delta = polygon_difference(forward.accumD, backward.accumD);
-                            }
-                            if (static_cast<intptr_t>(PolygonY.address)
-                                >= static_cast<intptr_t>(PolygonClipBottom.address)) {
-                                break;
-                            }
-                            if (static_cast<intptr_t>(PolygonY.address)
-                                    >= static_cast<intptr_t>(PolygonClipTop.address)
-                                && PolygonSpanRight > PolygonClipLeft
-                                && PolygonSpanLeft < PolygonClipRight
-                                && PolygonSpanRight - PolygonSpanLeft > 0) {
-                                int right = PolygonSpanRight;
-                                if (right >= PolygonClipRight) {
-                                    right = PolygonClipRight;
+                            edges_done:
+                                if (width > 0) {
+                                    // Hand-written assembly: scale the light
+                                    // slope and store it as a 16-bit step.
+                                    __asm {
+                                        fmul PolygonLightScale
+                                        fistp PolygonLightStep
+                                    }
                                 }
-                                if (PolygonSpanLeft < PolygonClipLeft) {
-                                    const int skip = PolygonClipLeft - PolygonSpanLeft;
-                                    const uint64_t product = static_cast<uint64_t>(PolygonLightStep) * skip;
-                                    PolygonLight = static_cast<int>(
-                                        static_cast<unsigned int>(PolygonLight)
-                                        + static_cast<unsigned int>(product >> 8));
-                                    PolygonSpanLeft = PolygonClipLeft;
+                                width = (forward.accumC - backward.accumC) << 16;
+                                if (width > 0) {
+                                    delta = forward.accumD - backward.accumD;
+                                    __asm {
+                                        fild delta
+                                        fild width
+                                        fdivp st(1), st
+                                    }
                                 }
-                                int remaining = right - PolygonSpanLeft;
-                                unsigned char *pixel = reinterpret_cast<unsigned char *>(
-                                    PolygonY.address + PolygonSpanLeft);
-                                unsigned short light = static_cast<unsigned short>(
-                                    static_cast<unsigned int>(PolygonLight) >> 8);
-                                const unsigned short step = PolygonLightStep;
-                                do {
-                                    *pixel++ = static_cast<unsigned char>(light >> 8);
-                                    light = static_cast<unsigned short>(light + step);
-                                } while (--remaining >= 0);
+                                if (PolygonY.coordinate >= PolygonClipBottom.coordinate) {
+                                    break;
+                                }
+                                if (PolygonY.coordinate >= PolygonClipTop.coordinate) {
+                                    // Hand-written assembly: clipped span with
+                                    // a shrd light skip and an AH pixel store.
+                                    __asm {
+                                    mov ebx, PolygonSpanRight
+                                    mov ecx, PolygonSpanLeft
+                                    cmp ebx, PolygonClipLeft
+                                    jle span_done
+                                    cmp ecx, PolygonClipRight
+                                    jge span_done
+                                    sub ebx, ecx
+                                    jle span_done
+                                    shl ebx, 0x10
+                                    mov ebx, PolygonSpanRight
+                                    cmp ebx, PolygonClipRight
+                                    jl right_clipped
+                                    mov ebx, PolygonClipRight
+                                right_clipped:
+                                    mov edi, PolygonSpanLeft
+                                    cmp edi, PolygonClipLeft
+                                    jge left_clipped
+                                    sub edi, PolygonClipLeft
+                                    neg edi
+                                    xor eax, eax
+                                    mov ax, PolygonLightStep
+                                    imul edi
+                                    shrd eax, edx, 8
+                                    add eax, PolygonLight
+                                    mov PolygonLight, eax
+                                    mov edi, PolygonClipLeft
+                                    mov PolygonSpanLeft, edi
+                                left_clipped:
+                                    sub ebx, edi
+                                    mov ecx, ebx
+                                    mov edi, dword ptr [PolygonY]
+                                    add edi, PolygonSpanLeft
+                                    mov eax, PolygonLight
+                                    shr eax, 8
+                                    mov bx, PolygonLightStep
+                                pixel:
+                                    mov byte ptr [edi], ah
+                                    add ax, bx
+                                    inc edi
+                                    dec ecx
+                                    jns pixel
+                                span_done:
+                                    }
+                                }
+                                if (done) {
+                                    break;
+                                }
+                                PolygonY.coordinate += PolygonPitch;
                             }
-                            if (done) {
-                                break;
-                            }
-                            PolygonY.address += PolygonPitch;
-                        } while (true);
+                        }
                     }
                 }
             }
         }
     }
     buffer->free_data(1);
-    polygon_reset_fpu();
+    __asm finit
     return 0;
 }

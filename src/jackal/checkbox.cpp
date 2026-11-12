@@ -214,6 +214,19 @@ CheckBox::~CheckBox() {
     close();
 }
 
+// WORKAROUND(decl): draw_item (0x60F030) reloads this count before each
+// text_line_height call inside max(), the shape of an inline StringStruct
+// accessor expanded twice per max() (RadioButton::draw_item has the same
+// pair). The accessor's original name and header are unknown.
+static inline int current_lines(StringStruct &items) {
+    return items.head_ != 0
+        ? static_cast<int>(items.current_->string_payload()->field_8_) : 0;
+}
+
+static inline char *current_text(StringStruct &items) {
+    return items.head_ != 0 ? items.current_->string_payload()->text : 0;
+}
+
 // Seed identity: ?draw_item@CheckBox@@QAEXHHH@Z at 0x0060F030.
 // This is the product implementation corresponding to the archived seed.
 // The original reads the state argument before selecting the sprite: a
@@ -231,153 +244,102 @@ void CheckBox::draw_item(int position, int state, int) {
     int extra_height = 0;
     Dialog::item_list_.seek_pos(-1);
     for (int i = 0; i < position; ++i) {
-        Dialog::item_list_.next_entry();
-        if (Dialog::item_list_.current_ != 0 &&
-            static_cast<int>(Dialog::item_list_.current_entry()->field_8_) > 1) {
-            int lines = Dialog::item_list_.head_ != 0
-                ? static_cast<int>(Dialog::item_list_.current_->string_payload()->field_8_)
-                : 0;
-            int height = static_cast<int>(Dialog::field_68_);
-            if (height <= Buffer::text_line_height() * lines) {
-                lines = Dialog::item_list_.head_ != 0
-                    ? static_cast<int>(Dialog::item_list_.current_->string_payload()->field_8_)
-                    : 0;
-                height = Buffer::text_line_height() * lines;
-            }
-            extra_height += height - static_cast<int>(Dialog::field_68_);
+        StringStruct &items = Dialog::item_list_;
+        if (items.head_ != 0) {
+            items.current_ = items.current_->next;
+            if (++items.current_position_ == items.entry_count_) items.current_position_ = 0;
+        }
+        if (items.current_ != 0 &&
+            static_cast<int>(items.current_entry()->field_8_) > 1) {
+            extra_height += max(Dialog::field_68_,
+                                Buffer::text_line_height() *
+                                    current_lines(Dialog::item_list_))
+                          - Dialog::field_68_;
         }
     }
 
-    const int columns = Dialog::row_count_;
-    const int column = position / columns;
-    const int column_width = Dialog::field_64_;
-    const int cell_height = Dialog::field_44_;
-    const uint32_t x_bits = (static_cast<uint32_t>(column_width)
-                           + static_cast<uint32_t>(cell_height))
-                          * static_cast<uint32_t>(column)
-                          + static_cast<uint32_t>(Dialog::field_40_);
-    const int x = static_cast<int32_t>(x_bits);
-    const uint32_t row_step = static_cast<uint32_t>(Dialog::field_68_)
-                            + static_cast<uint32_t>(cell_height);
-    const uint32_t row_position = static_cast<uint32_t>(position)
-                                - static_cast<uint32_t>(column)
-                                  * static_cast<uint32_t>(columns);
-    const uint32_t y_bits = (static_cast<uint32_t>(cell_height >> 1)
-                           + static_cast<uint32_t>(extra_height))
-                          + row_position * row_step;
-    const int y = static_cast<int32_t>(y_bits);
+    const int x = (Dialog::field_64_ + static_cast<int>(Dialog::field_44_)) *
+                      (position / Dialog::row_count_) +
+                  Dialog::field_40_;
+    const int y = (static_cast<int>(Dialog::field_44_) >> 1) +
+                  (extra_height +
+                   (position - position / Dialog::row_count_ * Dialog::row_count_) *
+                       (Dialog::field_68_ + static_cast<int>(Dialog::field_44_)));
     if (!Dialog::item_list_.seek_pos(position)) {
         return;
     }
 
-    int text_lines = Dialog::item_list_.head_ != 0
-        ? static_cast<int>(Dialog::item_list_.current_->string_payload()->field_8_)
-        : 0;
-    int item_height = static_cast<int>(Dialog::field_68_);
-    if (item_height <= Buffer::text_line_height() * text_lines) {
-        text_lines = Dialog::item_list_.head_ != 0
-            ? static_cast<int>(Dialog::item_list_.current_->string_payload()->field_8_)
-            : 0;
-        item_height = Buffer::text_line_height() * text_lines;
-    }
-
-    const int original_x = x;
-    const int original_y = y;
-    const int original_bottom = static_cast<int32_t>(
-        static_cast<uint32_t>(y) + static_cast<uint32_t>(item_height));
+    const int item_height = max(Dialog::field_68_,
+                                Buffer::text_line_height() *
+                                    current_lines(Dialog::item_list_));
 
     RECT area;
     area.left = x;
     area.top = y;
-    area.right = static_cast<int32_t>(static_cast<uint32_t>(x)
-                                    + static_cast<uint32_t>(Dialog::field_64_));
-    area.bottom = original_bottom;
+    area.right = Dialog::field_64_ + x;
+    const int bottom = item_height + y;
+    area.bottom = bottom;
 
-    const int callback_state = state != 0
-        ? 2
-        : (Dialog::field_F0_ == static_cast<uint32_t>(position) ? 1 : 0);
-    const int callback_result = parent->on_dialog_item_back_draw(
-        static_cast<GraphicWin *>(this), Dialog::pos_to_id(position),
-        callback_state, &area);
-    if (callback_result == 0) {
+    if (parent->on_dialog_item_back_draw(
+            static_cast<GraphicWin *>(this), Dialog::pos_to_id(position),
+            state != 0 ? 2 : Dialog::field_F0_ == static_cast<uint32_t>(position),
+            &area) == 0) {
         static_cast<GraphicWin *>(parent)->copy(
-            this,
-            static_cast<int32_t>(static_cast<uint32_t>(Dialog::window_x_) +
-                                 static_cast<uint32_t>(original_x)),
-            static_cast<int32_t>(static_cast<uint32_t>(Dialog::window_y_) +
-                                 static_cast<uint32_t>(original_y)),
-            original_x, original_y,
+            this, Dialog::window_x_ + x, Dialog::window_y_ + y, x, y,
             Dialog::field_64_, item_height);
 
         if (checked_sprite_ != 0 && unchecked_sprite_ != 0) {
             if (state != 0) {
                 checked_sprite_->draw(
-                    this, checked_sprite_->cTransparentIndex_, original_x,
-                    original_y + ((area.bottom - checked_sprite_->iHeight_ -
-                                   area.top) >> 1), 1, 1);
+                    this, checked_sprite_->cTransparentIndex_, x,
+                    y + ((area.bottom - checked_sprite_->iHeight_ - area.top) >> 1),
+                    1, 1);
             } else {
                 unchecked_sprite_->draw(
-                    this, unchecked_sprite_->cTransparentIndex_, original_x,
-                    original_y + ((area.bottom - unchecked_sprite_->iHeight_ -
-                                   area.top) >> 1), 1, 1);
+                    this, unchecked_sprite_->cTransparentIndex_, x,
+                    y + ((area.bottom - unchecked_sprite_->iHeight_ - area.top) >> 1),
+                    1, 1);
             }
         }
     }
 
     area.top += Buffer::fonts_[0]->descent_;
     area.left += Dialog::field_34_;
-    if (Dialog::item_list_.head_ != 0 &&
-        Dialog::item_list_.current_->string_payload()->field_8_ == 1) {
-        char *text = Dialog::item_list_.head_ != 0
-            ? Dialog::item_list_.current_->string_payload()->text : 0;
-        char *separator = strchr(text, '|');
+    if (current_lines(Dialog::item_list_) == 1) {
+        char *separator = strchr(current_text(Dialog::item_list_), '|');
         if (separator == 0) {
-            text = Dialog::item_list_.head_ != 0
-                ? Dialog::item_list_.current_->string_payload()->text : 0;
-            if (text != 0) {
-                Buffer::write_l(text, &area, strlen(text));
-            }
+            Buffer::write_l(current_text(Dialog::item_list_), &area);
         } else {
             *separator = 0;
-            text = Dialog::item_list_.head_ != 0
-                ? Dialog::item_list_.current_->string_payload()->text : 0;
-            if (text != 0) {
-                Buffer::write_l(text, &area, strlen(text));
-            }
+            Buffer::write_l(current_text(Dialog::item_list_), &area);
             *separator = '|';
             ++separator;
-            if (separator != 0) {
-                Buffer::write_right_l(separator, &area, strlen(separator));
-            }
+            Buffer::write_right_l(separator, &area);
         }
     } else {
-        char *text = Dialog::item_list_.head_ != 0
-            ? Dialog::item_list_.current_->string_payload()->text : 0;
-        char *separator = strchr(text, '|');
+        char *separator = strchr(current_text(Dialog::item_list_), '|');
         if (separator == 0) {
-            text = Dialog::item_list_.head_ != 0
-                ? Dialog::item_list_.current_->string_payload()->text : 0;
-            Buffer::wrap(text, &area);
+            Buffer::wrap(current_text(Dialog::item_list_), &area);
         } else {
             *separator = 0;
-            text = Dialog::item_list_.head_ != 0
-                ? Dialog::item_list_.current_->string_payload()->text : 0;
-            Buffer::wrap(text, &area);
+            Buffer::wrap(current_text(Dialog::item_list_), &area);
             *separator = '|';
             ++separator;
-            if (separator != 0) {
-                Buffer::write_right_l(separator, &area, strlen(separator));
-            }
+            Buffer::write_right_l(separator, &area);
         }
     }
 
     if (Dialog::field_B8_ != static_cast<uint32_t>(-1) &&
         state != 0 && Win::is_dialog_focus() != 0) {
-        const int text_width = area.right - area.left;
+        const int width = area.right - area.left;
+        area.left = 0;
+        area.top = 0;
+        area.right = width;
+        area.bottom = item_height;
         area.left = Dialog::field_34_;
-        area.top = original_y;
-        area.right = area.left + text_width;
-        area.bottom = original_bottom;
+        area.top = y;
+        area.right = Dialog::field_34_ + width;
+        area.bottom = bottom;
         Buffer::dotted_box(&area, Dialog::field_B8_);
     }
 }

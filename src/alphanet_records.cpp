@@ -229,60 +229,75 @@ Purpose: Sort one pass of the string list: walk the ring from the current
 // symbol    ?sort_sessions@AlphaNetStringStruct@@QAEXXZ
 Status: Coverage transcription - unclaimed body
 */
+// WORKAROUND(inline): dead /Ob2 spend; with it sort_sessions keeps the image's
+// out-of-line seek_pos(walk_index) call (0x005D4B50) and its block layout.
+// The original spelling that spent this budget is unknown.
+static int sort_sessions_budget_probe(int x)
+{
+    if (x == 0) x = 1;
+    if (x == 1) x = 4;
+    if (x == 2) x = 7;
+    if (x == 3) x = 10;
+    if (x == 4) x = 13;
+    if (x == 5) x = 16;
+    if (x == 6) x = 19;
+    if (x == 7) x = 22;
+    if (x == 8) x = 25;
+    if (x == 9) x = 28;
+    if (x == 10) x = 31;
+    if (x == 11) x = 34;
+    if (x == 12) x = 37;
+    if (x == 13) x = 40;
+    if (x == 14) x = 43;
+    if (x == 15) x = 46;
+    if (x == 16) x = 49;
+    if (x == 17) x = 52;
+    if (x == 18) x = 55;
+    if (x == 19) x = 58;
+    if (x == 20) x = 61;
+    if (x == 21) x = 64;
+    if (x == 22) x = 67;
+    if (x == 23) x = 70;
+    return x;
+}
+
+
 void AlphaNetStringStruct::sort_sessions() {
-    int total = entry_count_;
-    int limit = total - 1;
-    int walk_index = 0;
-    if (limit <= 0) return;
-    do {
+    for (int walk_index = 0; walk_index < entry_count_ - 1; walk_index++) {
         // Native inlines this same signed circular seek, including its abs
         // behavior; the callback-free scan starts only from valid list state.
+        sort_sessions_budget_probe(2); // WORKAROUND(inline): see above
         seek_pos(walk_index);
-        const GUID *best = head_ == 0 ? 0 : &current_->payload_->instance_guid_;
+        const GUID *best = head_ ? &current_->payload_->instance_guid_ : 0;
         int best_index = walk_index;
-        int scan_index = walk_index + 1;
-        const int next_walk = scan_index;
-        if (scan_index < total) {
-            do {
-                if (head_ != 0) {
-                    current_ = current_->next_;
-                    ++current_position_;
-                    if (current_position_ == total) current_position_ = 0;
-                }
-                const GUID *candidate = 0;
-                if (current_ != 0) {
-                    // If count/head/current disagree, native may pass null+C
-                    // to the comparator. This named-member expression retains
-                    // that invalid-domain UB; it does not clamp or repair it.
-                    NetAllocationNode *payload = head_ == 0 ? 0 : current_->payload_;
-                    candidate = &payload->instance_guid_;
-                }
-                if (compare_session_guid(candidate, best) < 0) {
-                    best = head_ == 0 ? 0 : &current_->payload_->instance_guid_;
-                    best_index = current_position_;
-                }
-                total = entry_count_;
-                ++scan_index;
-            } while (scan_index < total);
-            if (best_index != walk_index && best_index <= total - 1) {
-                if (seek_pos(best_index) != 0) {
-                    AlphaNetLedgerEntry *winner = current_;
-                    if (seek_pos(walk_index) != 0) {
-                        AlphaNetLedgerEntry *walked = current_;
-                        const int saved_id = winner->id_;
-                        NetAllocationNode *saved_payload = winner->payload_;
-                        winner->id_ = walked->id_;
-                        winner->payload_ = walked->payload_;
-                        walked->id_ = saved_id;
-                        walked->payload_ = saved_payload;
-                    }
+        for (int scan_index = walk_index + 1; scan_index < entry_count_; scan_index++) {
+            next_owned_list(this);
+            // If count/head/current disagree, native may pass null+C to the
+            // comparator. This named-member expression retains that
+            // invalid-domain UB; it does not clamp or repair it.
+            const GUID *candidate = current_
+                ? &(head_ ? current_->payload_ : 0)->instance_guid_ : 0;
+            if (compare_session_guid(candidate, best) < 0) {
+                best = head_ ? &current_->payload_->instance_guid_ : 0;
+                best_index = current_position_;
+            }
+        }
+        if (best_index != walk_index) {
+            if (seek_pos(best_index)) {
+                AlphaNetLedgerEntry *winner = current_;
+                if (seek_pos(walk_index)) {
+                    AlphaNetLedgerEntry *walked = current_;
+                    // The image exchanges the ids with three XORs.
+                    winner->id_ ^= walked->id_;
+                    walked->id_ ^= winner->id_;
+                    winner->id_ ^= walked->id_;
+                    NetAllocationNode *saved_payload = winner->payload_;
+                    winner->payload_ = walked->payload_;
+                    walked->payload_ = saved_payload;
                 }
             }
         }
-        total = entry_count_;
-        limit = total - 1;
-        walk_index = next_walk;
-    } while (walk_index < limit);
+    }
 }
 
 

@@ -85,6 +85,44 @@ int StringStruct::on_insert(void *) { return 0; }
 // RECOVERY_SHARED: v1 0x00404270 0x00404273 ?on_remove@StringStruct@@UAEXPAX@Z 0x006086F0
 void StringStruct::on_remove(void *) { }
 
+// The image expands one allocation function at all four sites: an explicit
+// Heap that cannot satisfy the request is fatal, the process heap may fail
+// quietly, and the chosen Heap is published for the node's allocation base.
+// All eight message-box pushes name the same two literals. No placement
+// delete matches it, so construction carries no unwind cleanup.
+// WORKAROUND(decl): the original's allocation function (probably a class
+// operator new on the list nodes) is not declared in stringstruct.h; this
+// tagged global form stands in for it.
+struct StringListAllocation {};
+inline void *__cdecl operator new(size_t size, StringListAllocation *, Heap *heap,
+                                  StringStruct *list) throw() {
+    void *memory;
+    if (heap != 0) {
+        memory = heap->get(size);
+        if (memory != 0) {
+            StringAllocationHeap = heap;
+            return memory;
+        }
+        MessageBoxA(NULL, "out of heap space in new function", "Aborting", MB_OK);
+        exit(3);
+    }
+    heap = list->allocation_owner_;
+    if (heap != 0) {
+        memory = heap->get(size);
+        if (memory != 0) {
+            StringAllocationHeap = heap;
+            return memory;
+        }
+        MessageBoxA(NULL, "out of heap space in new function", "Aborting", MB_OK);
+        exit(3);
+    }
+    memory = mem_get(size);
+    if (memory != 0) {
+        StringAllocationHeap = 0;
+    }
+    return memory;
+}
+
 // Append before the circular head. Preserve the original partial mutations on
 // allocation failure and ignore the insertion hook's return value: neither
 // rollback nor propagating that value is part of 0x00401100's behavior.
@@ -96,70 +134,21 @@ void StringStruct::on_remove(void *) { }
 int StringStruct::add(int id) {
     Heap *const entry_allocator = allocator_;
     if (entry_count_ == 0) {
-        Heap *entry_owner = entry_allocator;
-        if (entry_owner == 0) {
-            entry_owner = allocation_owner_;
-        }
-        void *entry_memory = entry_owner != 0
-            ? entry_owner->get(sizeof(StringStructEntry))
-            : mem_get(sizeof(StringStructEntry));
-        if (entry_owner != 0 && entry_memory == 0) {
-            MessageBoxA(NULL, "out of heap space in new function", "Aborting", MB_OK);
-            exit(3);
-        }
-        StringStructEntry *new_head = 0;
-        if (entry_memory != 0) {
-            StringAllocationHeap = entry_owner;
-            new_head = ::new(entry_memory) StringStructEntry;
-        }
-        head_ = new_head;
+        head_ = new(static_cast<StringListAllocation *>(0), entry_allocator, this) StringStructEntry;
         if (head_ == 0) {
             return 4;
         }
         head_->id = id;
         head_->next = head_;
         head_->previous = head_;
-        Heap *const payload_allocator = allocator_;
-        Heap *payload_owner = payload_allocator;
-        if (payload_owner == 0) {
-            payload_owner = allocation_owner_;
-        }
-        void *payload_memory = payload_owner != 0
-            ? payload_owner->get(sizeof(StringStructPayload))
-            : mem_get(sizeof(StringStructPayload));
-        if (payload_owner != 0 && payload_memory == 0) {
-            MessageBoxA(NULL, "out of heap space in new function", "Aborting", MB_OK);
-            exit(3);
-        }
-        StringStructPayload *new_payload = 0;
-        if (payload_memory != 0) {
-            StringAllocationHeap = payload_owner;
-            new_payload = ::new(payload_memory) StringStructPayload;
-        }
-        head_->payload = new_payload;
+        head_->payload = new(static_cast<StringListAllocation *>(0), allocator_, this) StringStructPayload;
         if (head_->payload == 0) {
             return 4;
         }
-        on_insert(head_->string_payload());
+        on_insert(head_->payload);
         current_ = head_;
     } else {
-        Heap *append_entry_owner = entry_allocator;
-        if (append_entry_owner == 0) {
-            append_entry_owner = allocation_owner_;
-        }
-        void *append_entry_memory = append_entry_owner != 0
-            ? append_entry_owner->get(sizeof(StringStructEntry))
-            : mem_get(sizeof(StringStructEntry));
-        if (append_entry_owner != 0 && append_entry_memory == 0) {
-            MessageBoxA(NULL, "out of heap space in new function", "Aborting", MB_OK);
-            exit(3);
-        }
-        StringStructEntry *new_entry = 0;
-        if (append_entry_memory != 0) {
-            StringAllocationHeap = append_entry_owner;
-            new_entry = ::new(append_entry_memory) StringStructEntry;
-        }
-        head_->previous->next = new_entry;
+        head_->previous->next = new(static_cast<StringListAllocation *>(0), entry_allocator, this) StringStructEntry;
         if (head_->previous->next == 0) {
             return 4;
         }
@@ -168,28 +157,11 @@ int StringStruct::add(int id) {
         head_->previous = head_->previous->next;
         current_ = head_->previous;
         current_->id = id;
-        Heap *const payload_allocator = allocator_;
-        Heap *append_payload_owner = payload_allocator;
-        if (append_payload_owner == 0) {
-            append_payload_owner = allocation_owner_;
-        }
-        void *append_payload_memory = append_payload_owner != 0
-            ? append_payload_owner->get(sizeof(StringStructPayload))
-            : mem_get(sizeof(StringStructPayload));
-        if (append_payload_owner != 0 && append_payload_memory == 0) {
-            MessageBoxA(NULL, "out of heap space in new function", "Aborting", MB_OK);
-            exit(3);
-        }
-        StringStructPayload *new_payload = 0;
-        if (append_payload_memory != 0) {
-            StringAllocationHeap = append_payload_owner;
-            new_payload = ::new(append_payload_memory) StringStructPayload;
-        }
-        current_->payload = new_payload;
+        current_->payload = new(static_cast<StringListAllocation *>(0), allocator_, this) StringStructPayload;
         if (current_->payload == 0) {
             return 4;
         }
-        on_insert(current_->string_payload());
+        on_insert(current_->payload);
     }
     current_position_ = entry_count_;
     ++entry_count_;

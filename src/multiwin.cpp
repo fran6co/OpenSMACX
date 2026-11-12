@@ -446,6 +446,14 @@ write_clock_text:
   MultiWinState7FFF78 = local_c;
 }
 
+// WORKAROUND(decl): every panel draw computes the sprite address before
+// reading its transparent index, the shape of a header-inline
+// Sprite::draw(Buffer *, int x, int y) that passes its own index. sprite.h
+// declares no such overload; this file-local helper stands in for it.
+static inline int draw_sprite(Sprite &sprite, Buffer *destination, int x, int y) {
+  return sprite.draw(destination, sprite.transparent_index(), x, y);
+}
+
 // ORIGINAL: 0x00479330 ?draw@MultiWin@@QAEXH@Z 0x00479330-0x004798EC
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00479330.cpp", "src/multiwin.h", "src/faction.h", "src/spot.h"], "reason": "Move the panel painter from its fixed-address seed onto MultiWin's owned sprites, Spot and GraphicWin buffer; the two separately mapped row painters remain explicit dependencies."}
 // TRIED: raw self+offset field reads (MultiWin left opaque) with reinterpret_cast to Spot/GraphicWin/Buffer sub-objects at their disassembly-derived offsets; diverges at insn #11
@@ -455,15 +463,14 @@ void MultiWin::draw(int draw_type) {
   spot_.kill_type(1);
   GraphicWin::fill(9);
 
-  Buffer *canvas = static_cast<Buffer *>(this);
-  int y = (!IsMultiplayerNet || panel_open_)
-              ? 0 : sprite5_.height() * 7 + sprite7_.height() * 2;
-  sprite3_.draw(canvas, sprite3_.transparent_index(), 0, y);
+  int y = (IsMultiplayerNet && !panel_open_)
+              ? sprite5_.height() * 7 + sprite7_.height() * 2 : 0;
+  draw_sprite(sprite3_, this, 0, y);
   y += sprite3_.height();
 
   RECT rect;
   if (IsMultiplayerNet) {
-    sprite4_.draw(canvas, sprite4_.transparent_index(), 0, y);
+    draw_sprite(sprite4_, this, 0, y);
     rect.left = 0;
     rect.top = y;
     rect.right = dib_.bmiHeader.biWidth;
@@ -475,88 +482,95 @@ void MultiWin::draw(int draw_type) {
     rect.left = 0;
     rect.top = y;
     rect.right = dib_.bmiHeader.biWidth;
-    rect.bottom = y + 14;
-    y = rect.bottom;
-    sprite5_.draw(canvas, sprite5_.transparent_index(), 0, rect.top);
-    canvas->set_clip(&rect);
+    const int row_bottom = y + 14;
+    rect.bottom = row_bottom;
+    draw_sprite(sprite5_, this, 0, y);
+    set_clip(&rect);
     spot_.add(3, 2, &rect);
 
     // The seed reads PlayerData +0x2054: the local faction's time bonus.
     const int time_bonus = PlayersData[ConsoleGlobal.faction_id_].time_bonus_count;
-    if (time_bonus > 0) {
-      int carets = time_bonus > 3 ? 3 : time_bonus;
+    int carets = time_bonus < 0 ? 0 : time_bonus > 3 ? 3 : time_bonus;
+    if (carets != 0) {
       StringTemp[0] = 0;
-      strcat(StringTemp, " ");
-      while (carets-- > 0) strcat(StringTemp, "^");
-      canvas->write_cent_l(StringTemp, &rect);
+      strcat(StringTemp, BufferJoinSpace);
+      for (; carets > 0; --carets) strcat(StringTemp, CaretSeparator);
+      // WORKAROUND(noinline): the image calls 0x0047A720 out of line here and
+      // expands the same inline at the no-player label below.
+      int (Buffer::*const write_centered)(LPSTR, RECT *) = &Buffer::write_cent_l;
+      Buffer &canvas = *this;
+      (canvas.*write_centered)(StringTemp, &rect);
     }
-    canvas->set_clip(&rect2_);
-    y = val_2_;
+    set_clip(&rect2_);
+    y = row_bottom;
   }
 
+  const int saved_right = dib_.bmiHeader.biWidth;
   const int saved_top = y;
   const int saved_bottom = y + sprite5_.height();
-  const int saved_right = dib_.bmiHeader.biWidth;
-  bool drew_player = false;
+  int drew_player = 0;
   if (!IsMultiplayerNet || panel_open_) {
     int row = 0;
     for (int faction = 1; faction < 8; ++faction) {
       if (faction == ConsoleGlobal.faction_id_) continue;
-      const unsigned int mask = 1u << faction;
-      if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & mask)) continue;
+      if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << faction))) continue;
       if (!(GameDataStateStorage.fields_.game_state_ & 0x80) &&
           !(PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 8) &&
-          !(GameDataStateStorage.fields_.secret_project_.empath_guild() >= 0 && Bases[GameDataStateStorage.fields_.secret_project_.empath_guild()].faction_id_current == ConsoleGlobal.faction_id_) &&
-          !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & mask && auto_contact())) continue;
+          !has_project(SP_EMPATH_GUILD, ConsoleGlobal.faction_id_) &&
+          !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction) && auto_contact())) continue;
 
       ++row;
-      drew_player = true;
-      Sprite &background = hovered_spot_ == faction ? sprite6_ : sprite5_;
-      background.draw(canvas, background.transparent_index(), 0, y);
+      drew_player = 1;
+      if (hovered_spot_ > 0 && hovered_spot_ == faction) {
+        draw_sprite(sprite6_, this, 0, y);
+      } else {
+        draw_sprite(sprite5_, this, 0, y);
+      }
       rect.left = 0;
       rect.top = y;
-      rect.right = saved_right;
+      rect.right = dib_.bmiHeader.biWidth;
       rect.bottom = y + sprite5_.height();
       draw_player(faction, row, &rect);
       y += sprite5_.height();
     }
     for (; row < 7; ++row) {
-      sprite5_.draw(canvas, sprite5_.transparent_index(), 0, y);
+      draw_sprite(sprite5_, this, 0, y);
       y += sprite5_.height();
     }
 
-    canvas->set_font(&font1_, 0, 0, 0);
+    set_font(&font1_, 0, 0, 0);
     y += sprites1_[0].height() - sprite5_.height();
-    sprite5_.draw(canvas, sprite5_.transparent_index(), 0, y);
+    draw_sprite(sprite5_, this, 0, y);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x80c / 4));
     strcat(StringTemp, ": ");
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     char votes_text[84];
-    _itoa(council_votes(ConsoleGlobal.faction_id_), votes_text, 10);
+    const int votes = council_votes(ConsoleGlobal.faction_id_);
+    _itoa(votes, votes_text, 10);
     strcat(StringTemp, votes_text);
-    canvas->set_text_color(0xff, -1, 1, 1);
+    set_text_color(0xff, -1, 1, 1);
     if (!(Players[ConsoleGlobal.faction_id_].rule_flags & 0x80)) {
-      canvas->write_cent_l(StringTemp, 0, y + 10, 0x8a, strlen(StringTemp));
+      write_cent_text(StringTemp, 0, y + 10, 0x8a);
       y += sprite5_.height();
     }
     if (IsMultiplayerNet) {
-      sprite7_.draw(canvas, sprite7_.transparent_index(), 0, y);
+      draw_sprite(sprite7_, this, 0, y);
       y += sprite7_.height();
     }
-    sprite7_.draw(canvas, sprite7_.transparent_index(), 0, y);
+    draw_sprite(sprite7_, this, 0, y);
   }
 
   if (!drew_player) {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x9d0 / 4));
-    canvas->set_text_color(MessageWinTextColor, MessageWinTextBackground, 1, 1);
+    set_text_color(MessageWinTextColor, MessageWinTextBackground, 1, 1);
     rect.left = 0;
     rect.top = saved_top;
     rect.right = saved_right;
     rect.bottom = saved_bottom;
-    canvas->set_font(find_font(12, 1), 0, 0, 0);
-    canvas->write_cent_l(StringTemp, &rect, strlen(StringTemp));
+    set_font(find_font(12, 1), 0, 0, 0);
+    write_cent_l(StringTemp, &rect);
   }
   if (!MultiWindowRedrawSuppressed) soft_update();
 }
