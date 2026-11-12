@@ -1460,23 +1460,24 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
     text_clear_index();
     text_make_index(ScriptTxtID);
     text_make_index(AlphaxFileID);
-    if (read_tech() || read_basic_rules() || text_open(AlphaxFileID, "TERRAIN")) {
+    if (read_tech()) {
+        return true;
+    }
+    if (read_basic_rules()) {
+        return true;
+    }
+    if (text_open(AlphaxFileID, "TERRAIN")) {
         return true;
     }
     for (int i = 0; i < MaxTerrainNum; i++) {
         text_get();
-        // Land + sea terraforming
+        // Land + sea names and prerequisites; the bit masks are static data.
+        // WORKAROUND(type): the image walks name/name_sea and order/order_sea
+        // as two-element arrays (one pointer, dec/jne at 0x00587494 and
+        // 0x00587507); RulesTerraforming/RulesOrder still name the fields.
         for (int j = 0; j < 2; j++) {
-            if (j == 0) {
-                Terraforming[i].name = text_item_string();
-                Terraforming[i].prerequisite_tech[0] = tech_name(text_item());
-            } else {
-                Terraforming[i].name_sea = text_item_string();
-                Terraforming[i].prerequisite_tech[1] = tech_name(text_item());
-            }
-            // Add in bits & incompatible bits vs hard coded constant struct
-            if (j == 0) Terraforming[i].bit = TerraformingBits[i][j];
-            else Terraforming[i].bit_incompatible = TerraformingBits[i][j];
+            (&Terraforming[i].name)[j] = text_item_string();
+            Terraforming[i].prerequisite_tech[j] = tech_name(text_item());
         }
         Terraforming[i].rate = text_item_number();
         // Land + sea orders
@@ -1488,13 +1489,10 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
         char order_buf[256];
         strcpy(order_buf, text_item());
         for (j = 0; j < 2; j++) {
-            parse_say(0, j == 0 ? Terraforming[i].name
-                                : Terraforming[i].name_sea,
-                      -1, -1);
+            parse_say(0, (&Terraforming[i].name)[j], -1, -1);
             StringTemp[0] = 0;
             parse_string(order_buf, StringTemp);
-            if (j == 0) Order[i + 4].order = StringTable.put(StringTemp);
-            else Order[i + 4].order_sea = StringTable.put(StringTemp);
+            (&Order[i + 4].order)[j] = StringTable.put(StringTemp);
         }
         Order[i + 4].letter = text_item_string();
         Terraforming[i].shortcuts = text_item_string();
@@ -1505,10 +1503,11 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
     for (i = 0; i < MaxResourceInfoNum; i++) {
         text_get();
         text_item();
-        ResourceInfo[i].nutrients = text_item_number();
-        ResourceInfo[i].minerals = text_item_number();
-        ResourceInfo[i].energy = text_item_number();
-        ResourceInfo[i].unused = text_item_number();
+        // WORKAROUND(type): one int pointer runs through every row
+        // (dec/jne inside, jl against the table end at 0x00587586).
+        for (int j = 0; j < 4; j++) {
+            ((int *)ResourceInfo)[i * 4 + j] = text_item_number();
+        }
     }
     if (text_open(AlphaxFileID, "TIMECONTROLS")) {
         return true;
@@ -1725,9 +1724,11 @@ for (i = 0; i < MaxCompassNum; i++) {
         if (i < 7) {
             Citizen[i].preq_tech = tech_name(text_item());
             Citizen[i].obsol_tech = tech_name(text_item());
-            Citizen[i].ops_bonus = text_item_number();
-            Citizen[i].psych_bonus = text_item_number();
-            Citizen[i].research_bonus = text_item_number();
+            // WORKAROUND(type): the three bonuses are filled by a dec/jne
+            // loop over consecutive ints (0x00587E30).
+            for (int j = 0; j < 3; j++) {
+                (&Citizen[i].ops_bonus)[j] = text_item_number();
+            }
         }
     }
     if (text_open(AlphaxFileID, "SOCIO")) {
@@ -1750,10 +1751,11 @@ for (i = 0; i < MaxCompassNum; i++) {
             text_get();
             SocialCategories[i].name[j] = text_item_string();
             SocialCategories[i].preq_tech[j] = tech_name(text_item());
-            ZeroMemory(&SocialCategories[i].model_effect[j], sizeof(SocialEffect));
-            LPSTR mod_value = text_item();
-            size_t mod_len = strlen(mod_value);
-            while (mod_len) {
+            SocialEffect *effect = &SocialCategories[i].model_effect[j];
+            ZeroMemory(effect, sizeof(SocialEffect));
+            // The image adds the value to every matching effect: no break.
+            while (strlen(text_item())) {
+                LPSTR mod_value = TextBufferItemPtr;
                 int value = 0;
                 while (mod_value[0] == '+' || mod_value[0] == '-') {
                     (mod_value[0] == '+') ? value++ : value--;
@@ -1761,12 +1763,9 @@ for (i = 0; i < MaxCompassNum; i++) {
                 }
                 for (int k = 0; k < MaxSocialEffectNum; k++) {
                     if (!_stricmp(mod_value, SocialEffects[k].set1)) {
-                        *(&SocialCategories[i].model_effect[j].values_[SocialEffect::ECONOMY] + k) = value;
-                        break;
+                        effect->values_[k] += value;
                     }
                 }
-                mod_value = text_item();
-                mod_len = strlen(mod_value);
             }
         }
     }

@@ -4492,7 +4492,7 @@ void __cdecl load_box_sprites() {
     g_IFACE_STD_POPUPS_MIDDLE_BUFFER.init(61, 44, 0, nullptr);
     canvas.copy(&g_IFACE_STD_POPUPS_MIDDLE_BUFFER, 358, 756, 0, 0, 61, 44);
 
-    for (arrow = 0, arrow_x = 140; arrow < 3; ++arrow, arrow_x += 8) {
+    for (arrow_x = 140, arrow = 0; arrow_x < 164; arrow_x += 8, ++arrow) {
         extract_interface_box_sprite(g_IFACE_TECH_TREE_ARROW_SPRITES[arrow], arrow_x, 37, 7, 13);
     }
     // Unlike the style pool, these six slots are column-major.
@@ -4500,8 +4500,9 @@ void __cdecl load_box_sprites() {
     int tech_row;
     int tech_x;
     int tech_y;
-    for (tech_column = 0, tech_x = 391; tech_column < 2; ++tech_column, tech_x += 29) {
-        for (tech_row = 0, tech_y = 566; tech_row < 3; ++tech_row, tech_y += 35) {
+    for (tech_x = 391, tech_y = 566, tech_column = 0; tech_column < 2;
+         tech_x += 29, ++tech_column, tech_y = 566) {
+        for (tech_row = 0; tech_row < 3; tech_y += 35, ++tech_row) {
             extract_interface_box_sprite(
                 NewTechWin::technology_sprites_[tech_column * 3 + tech_row],
                 tech_x, tech_y, 28, 34);
@@ -4629,16 +4630,16 @@ void __cdecl load_vehicles() {
     int faction;
     // The image keeps each sheet coordinate as its own induction variable
     // (x += 45, x += 102, ...) beside a separate down-counted loop index.
-    for (row = 0, y = 2; row < 9; ++row, y += 49) {
-        for (column = 0, x = 2; column < 16; ++column, x += 45) {
+    for (x = 2, y = 2, row = 0; row < 9; y += 49, ++row, x = 2) {
+        for (column = 0; column < 16; x += 45, ++column) {
             g_XI_BOOM_VEH_SPRITES[row * 16 + column].extract(
                 &sheet, 255, x, y, 43, 47, 0);
         }
     }
     sheet.load_pcx("XF.PCX", 0, 0, 18);
     sheet.change_color(253, 255);
-    for (row = 0, y = 2; row < 4; ++row, y += 304) {
-        for (column = 0, x = 2; column < 8; ++column, x += 102) {
+    for (x = 2, y = 2, row = 0; row < 4; y += 304, ++row, x = 2) {
+        for (column = 0; column < 8; x += 102, ++column) {
             g_XF_BOOM_VEH_SPRITES[row * 16 + column].extract(
                 &sheet, 255, x, y, 100, 150, 0);
             g_XF_BOOM_VEH_SPRITES[row * 16 + column + 8].extract(
@@ -4647,7 +4648,7 @@ void __cdecl load_vehicles() {
     }
     sheet.load_pcx("PALETTE.PCX", 0, 10, 236);
     // The original's eight-iteration loop performs work only for faction 0.
-    for (faction = 0, x = 580; faction < 8; ++faction, x += 8) {
+    for (x = 580, faction = 0; faction < 8; ++faction, x += 8) {
         if (faction == 0) {
             InfoFactionTextColors[faction] = sheet.get_pixel(x, 23);
             InfoFactionShadowColors[faction] = sheet.get_pixel(x, 31);

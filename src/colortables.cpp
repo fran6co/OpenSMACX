@@ -518,11 +518,11 @@ void __cdecl colortables_init() {
             for (int row = 0; row < 24; ++row) {
                 const unsigned char *source = g_VBP_CAVIARDATA.record()->palette_ + 0x302 + row * 256;
                 for (int color = 0; color < 256; ++color) {
-                    const PALETTEENTRY entry = g_PALETTE1.entries()[source[color]];
-                    const unsigned char red = (unsigned char)(int)((double)tint.peRed * entry.peRed * (1.0f / 255.0f));
-                    const unsigned char green = (unsigned char)(int)((double)tint.peGreen * entry.peGreen * (1.0f / 255.0f));
-                    const unsigned char blue = (unsigned char)(int)((double)tint.peBlue * entry.peBlue * (1.0f / 255.0f));
-                    BodyTintColorTables[body][row][color] = (unsigned char)g_PALETTE1.get_nearest_palette_index(red, green, blue, 0);
+                    PALETTEENTRY entry = g_PALETTE1.entries()[source[color]];
+                    entry.peRed = (unsigned char)(int)((float)entry.peRed * tint.peRed * (1.0f / 255.0f));
+                    entry.peGreen = (unsigned char)(int)((float)entry.peGreen * tint.peGreen * (1.0f / 255.0f));
+                    entry.peBlue = (unsigned char)(int)((float)entry.peBlue * tint.peBlue * (1.0f / 255.0f));
+                    BodyTintColorTables[body][row][color] = (unsigned char)g_PALETTE1.get_nearest_palette_index(entry.peRed, entry.peGreen, entry.peBlue, 0);
                 }
             }
         }
@@ -548,11 +548,11 @@ void __cdecl colortables_init() {
             for (int row = 0; row < 24; ++row) {
                 const unsigned char *source = g_VBP_CAVIARDATA.record()->palette_ + 0x302 + row * 256;
                 for (int color = 0; color < 256; ++color) {
-                    const PALETTEENTRY entry = g_PALETTE1.entries()[source[color]];
-                    const unsigned char red = (unsigned char)(int)((double)tint.peRed * entry.peRed * (1.0f / 255.0f));
-                    const unsigned char green = (unsigned char)(int)((double)tint.peGreen * entry.peGreen * (1.0f / 255.0f));
-                    const unsigned char blue = (unsigned char)(int)((double)tint.peBlue * entry.peBlue * (1.0f / 255.0f));
-                    ArmorTintColorTables[armor][row][color] = (unsigned char)g_PALETTE1.get_nearest_palette_index(red, green, blue, 0);
+                    PALETTEENTRY entry = g_PALETTE1.entries()[source[color]];
+                    entry.peRed = (unsigned char)(int)((float)entry.peRed * tint.peRed * (1.0f / 255.0f));
+                    entry.peGreen = (unsigned char)(int)((float)entry.peGreen * tint.peGreen * (1.0f / 255.0f));
+                    entry.peBlue = (unsigned char)(int)((float)entry.peBlue * tint.peBlue * (1.0f / 255.0f));
+                    ArmorTintColorTables[armor][row][color] = (unsigned char)g_PALETTE1.get_nearest_palette_index(entry.peRed, entry.peGreen, entry.peBlue, 0);
                 }
             }
         }

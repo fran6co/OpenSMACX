@@ -2560,27 +2560,24 @@ void SocialWin::init(int faction_id) {
 
     if (!effectIcons_[0].has_pixel_pointer()) {
         sheet.load_pcx(SocialWinPcxName, 0, 10, 0xec);
-        {
-            // Ten rows of three triplets; x restarts only per row.
-            Sprite *icon = effectIcons_;
-            int y = 1;
-            for (int r = 0; r < 10; ++r) {
-                int x = 1;
-                for (int g = 0; g < 3; ++g) {
-                    for (int k = 0; k < 3; ++k) {
-                        icon->extract(&sheet, WinFillColour, x, y, 0x1a, 0x1a, 0);
-                        x += 0x1b;
-                        ++icon;
-                    }
+        // Ten rows of three triplets; x restarts in the row clause.
+        Sprite *icon = effectIcons_;
+        int x = 1;
+        int y = x;
+        for (int r = 0; r < 10; y += 0x1b, ++r, x = 1) {
+            for (int g = 0; g < 3; ++g) {
+                for (int k = 0; k < 3; ++k) {
+                    icon->extract(&sheet, WinFillColour, x, y, 0x1a, 0x1a, 0);
+                    x += 0x1b;
+                    ++icon;
                 }
-                y += 0x1b;
             }
         }
         energyAllocLock_[0].extract(&sheet, WinFillColour, 0xf5, 1, 0x18, 0xe, 0);
         energyAllocLock_[1].extract(&sheet, WinFillColour, 0xf5, 0x10, 0x18, 0xe, 0);
         {
             int i = 0;
-            for (int y = 1; y < 0x40; y += 0x15) {
+            for (y = 1; y < 0x40; y += 0x15) {
                 energyAllocArrow_[i].extract(&sheet, WinFillColour, 0x13b, y, 0x14, 0x14, 0);
                 energyAllocArrow_[i + 3].extract(&sheet, WinFillColour, 0x150, y, 0x14, 0x14, 0);
                 ++i;
@@ -2589,8 +2586,8 @@ void SocialWin::init(int faction_id) {
         {
             int y = 0x10e;
             Buffer *slider = energyAllocSlider_;
-            for (int r = 0; r < 3; ++r) {
-                int x = 1;
+            x = 1;
+            for (int r = 0; r < 3; y += 0xf, ++r, x = 1) {
                 for (int c = 0; c < 2; ++c) {
                     slider->init(0xe, 0xe, 0, 0);
                     // The original's call pushes seven arguments; the two
@@ -2599,7 +2596,6 @@ void SocialWin::init(int faction_id) {
                     x += 0xf;
                     ++slider;
                 }
-                y += 0xf;
             }
         }
     }
