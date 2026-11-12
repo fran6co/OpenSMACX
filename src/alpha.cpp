@@ -787,7 +787,7 @@ static inline void faction_copy_text(char *destination, const char *source, int 
 /*
 Purpose: Parse the 1st eight lines of the specified faction's file into a player structure. The 
          toggle parameter will end the function early if set to 2 (original code never uses this).
-// ORIGINAL: 0x00586090 ?read_faction@@YAXPAUPlayer@@H@Z 0x00586090-0x00586F2B
+// ORIGINAL: 0x00586090 ?read_faction@@YAXPAUPlayer@@H@Z 0x00586090-0x00586F2B BYTE_EXACT
 // LEVER: clear_faction moved to `MEASURED inline` in alpha.h (see its own marker) - the image
 //   writes its 15 stores out inline here instead of calling it. Moved 44/985 -> 101/985.
 // LEVER: the faction-bonus rule parser's `LPSTR parse_rule = new char[len + 1]; strcpy_s(...);

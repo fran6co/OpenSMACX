@@ -59,7 +59,7 @@ QuayleWin::QuayleWin() {}
 // compile_context src/quaylewin.cpp
 // symbol    ??1QuayleWin@@UAE@XZ
 
-// ORIGINAL: 0x004951A0 ?init@QuayleWin@@QAEHXZ 0x004951A0-0x004956C1
+// ORIGINAL: 0x004951A0 ?init@QuayleWin@@QAEHXZ 0x004951A0-0x004956C1 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 004951A0; retained seed git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004951a0.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations."}
 // TRIED: field-by-offset access on `char *self`, per the scaffold's own hint, plus GraphicWin::init/Buffer::load_pcx/BaseButton::init argument order re-derived from the disassembly's push order (Ghidra's own decompilation independently agreed on all three). Reaches MISMATCH #1 (`push esi` vs a `mov`, one instruction into the __thiscall prologue's register-save order) - not chased further, a register-allocation detail this pass's budget does not cover.
 // WORKAROUND(inline): the image expands Font::line_advance (0x005E3650) at
@@ -448,7 +448,7 @@ extern "C" void __cdecl sub_496610(int page) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // Historical seed observations (not fresh measurements or acceptance):
 // TRIED: MISMATCH #15 add/mov, table-index lea chain differs from the do/while division idiom form used
-// ORIGINAL: 0x00496670 ?quayle@@YAXH@Z 0x00496670-0x0049670F
+// ORIGINAL: 0x00496670 ?quayle@@YAXH@Z 0x00496670-0x0049670F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 00496670; retained seed src/unrecovered/00496670.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations."}
 #pragma optimize("y", off)
 void __cdecl quayle(int faction_id) {
