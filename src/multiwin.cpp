@@ -849,6 +849,7 @@ void MultiWin::on_left_click(int x, int y) {
 }
 #pragma optimize("", on)
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00478150 0x004785FC 0x00478628 0x0047850A
 // ORIGINAL: 0x00478150 ?on_right_click@MultiWin@@QAEXHH@Z 0x00478150-0x004785FA;0x006563E0-0x006563F5
 // RECOVERY_BINDING: v1 {"evidence": ["task:multiwin-contact-owner", "historical seed:src/recovered/units/00478150.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete original mapped span and native call/branch order", "native:478500 subtracts item ID1; jump-table indices7..10 select items8renounce,9withdrawal,10contact,11chat; withdrawal arguments local then clicked", "source:existing typed subobjects, faction/player/parser/network and separate bounded contact-state storage; automatic PullDown/Buffer lifetime"], "reason": "Recover the complete original in its genuine MultiWin or diplomacy C++ owner, retaining identity, auxiliary spans and historical seed findings; no current match or runtime claim."}
 // symbol    ?on_right_click@MultiWin@@UAEXHH@Z
@@ -870,11 +871,10 @@ void MultiWin::on_right_click(int x, int y) {
     GenderDefault = Players[faction].is_leader_female;
     strcat(StringTemp, Players[faction].title_leader);
     strcat(StringTemp, " ");
-    PluralityDefault = 0;
-    GenderDefault = Players[faction].is_leader_female;
+    parse_set(Players[faction].is_leader_female, 0);
     strcat(StringTemp, Players[faction].name_leader);
     menu.add_item(1, StringTemp);
-    menu.add_item(2, label_get(0x9F4 / 4));
+    menu.add_item(2, StringTable.get(Labels.strings_ptr[0x9F4 / 4]));
 
     if (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 7) {
         menu.add_separator(0x63);
@@ -901,14 +901,11 @@ void MultiWin::on_right_click(int x, int y) {
     if (action < 0) return;
 
     if (!is_alive(static_cast<uint32_t>(faction))) {
-        GenderDefault = Players[faction].is_leader_female;
-        PluralityDefault = 0;
+        parse_set(Players[faction].is_leader_female, 0);
         parse_says(0, Players[faction].title_leader, -1, -1);
-        GenderDefault = Players[faction].is_leader_female;
-        PluralityDefault = 0;
+        parse_set(Players[faction].is_leader_female, 0);
         parse_says(1, Players[faction].name_leader, -1, -1);
-        PluralityDefault = Players[faction].is_noun_plural;
-        GenderDefault = Players[faction].noun_gender;
+        parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
         parse_says(2, Players[faction].noun_faction, -1, -1);
         NetMsgPrimary.pop("ELIMINATED", 5000, 0, 0);
         return;
@@ -932,9 +929,10 @@ void MultiWin::on_right_click(int x, int y) {
         break;
     case 10: {
         const unsigned int bit = 1u << faction;
-        const unsigned int mask = MultiWindowContactStatusMask;
+        unsigned int mask = MultiWindowContactStatusMask;
         if (mask & bit) {
-            MultiWindowContactStatusMask = mask & ~bit;
+            mask &= ~bit;
+            MultiWindowContactStatusMask = mask;
             NetDaemonNet.channels_[1].trailing_words_[6] |= bit;
             draw(0);
         } else if (NetDaemonNet.channels_[1].trailing_words_[6] & bit) {
