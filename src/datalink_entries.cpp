@@ -547,7 +547,7 @@ void DatalinkSelectionQueue::append(short entry_id, unsigned char category,
   }
 }
 
-// ORIGINAL: 0x00590DC0 sub_590dc0 0x00590DC0-0x00590E90
+// ORIGINAL: 0x00590DC0 sub_590dc0 0x00590DC0-0x00590E90 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:datalink-selection-queue-owner", "Pinned queue/record operations share four-byte records and count at0x200; typed callbacks dispatch on category/value. Constructor owns minimum11-entry callback table, with zero-filled pair0 and CRT registration; exact total capacity and original TU remain unknown.", "historical seed:src/unrecovered/00590dc0.cpp"], "reason": "Recover genuine selection record/queue and callback lifecycle using provisional behavior names in its current Datalink family home; retain all original obligations and seed lessons."}
 // symbol    ?dispatch_matching@DatalinkSelectionQueue@@QAEXH@Z
 // TRIED: `if (count > 0)` reads as `cmp;jle` here, not the original's `test;jle`; tried elsewhere didn't move it. Indexed struct field access (`g_945a60[i].fn`) collapses lea+mov into one mov; original keeps them split (address-of first).
