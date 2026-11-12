@@ -26,6 +26,7 @@
 #define JACKALVOICERX_CLEAR_OUT_OF_LINE  // stand-in: register ties in corner_the_market (0x004E2000)
 #define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h
 #include "stdafx.h"
+#define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h (editor_tech's start(label, value))
 // Original Console::edit_lock at 0x004E1F40 queries this USER32 export through its import pointer.
 // RECOVERY_IMPORT: v1 __imp__GetKeyState@4 USER32.dll name:GetKeyState
 #include "prefwin.h"
@@ -5221,6 +5222,26 @@ void Console::editor_view() {
     ::draw_map(1);
 }
 
+// WORKAROUND(inline): dead /Ob2 budget probe for editor_tech (folds away,
+// spends budget). With the goto loop, editor_who and start(label, value) the
+// image's EH map (25 states) needs 10-12 chained ifs here: 7-9 let the
+// picker teardown grow one more state, 5-6 inline ~BasePop at the return
+// site, 16 regresses. The original spent this budget on something not yet
+// identified.
+static int editor_tech_budget_probe(int x) {
+    if (x == 0) x = 1;
+    if (x == 1) x = 4;
+    if (x == 2) x = 7;
+    if (x == 3) x = 10;
+    if (x == 4) x = 13;
+    if (x == 5) x = 16;
+    if (x == 6) x = 19;
+    if (x == 7) x = 22;
+    if (x == 8) x = 25;
+    if (x == 9) x = 28;
+    return x;
+}
+
 // Historical seed finding: original 65BFBC is a borrowed-frame Popup cleanup at EBP-0x5398, not a standalone function; the isolated constant-null Popup pointer scaffold diverged at instruction 0 (7/11 bytes). Preserve as a failed standalone experiment, not candidate implementation.
 // ORIGINAL: 0x0065BFBC sub_65bfbc 0x0065BFBC-0x0065BFC7 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:editor_tech prologue at 0x004DFADB registers handler 0x0065C0BE; its FuncInfo unwind row at 0x0067ABD8 names action 0x0065BFBC", "src:console_commands.cpp Console::editor_tech contains the branch-local automatic Popup who at the source location carrying this child identity", "src:Popup is a BasePop with its real automatic branch-scoped destructor; no standalone callable definition is supplied for the child"], "reason": "Retain 0x0065BFBC as the generated cleanup action of editor_tech's branch-local automatic Popup who; this borrowed-frame EH child is not a standalone function body, and generated-action matching remains an explicit obligation."}
@@ -5329,16 +5350,21 @@ void Console::editor_view() {
 // TRIED: the SEH __try/__finally frame and its per-object unwind-state byte (tracked at ebp-4 in the original, one value per live local); a real nested class model for the two Popup dialogs and their widget cascades, since the scaffold's BasePop/Popup are missing the Dialogs/Dialog/Spot members this function's *second* popup actually has - a raw ebp-relative buffer addressed the same way the disassembly does instead, so every call lands on the right bytes without needing the class widened.
 void Console::editor_tech() {
     Popup popup;
+    editor_tech_budget_probe(2);  // WORKAROUND(inline): see editor_tech_budget_probe
     auto_undo();
     if (ScenarioTechFaction < 0) {
         ScenarioTechFaction = ConsoleGlobal.faction_id_;
     }
 
-    for (;;) {
+    // A top-level backward goto, not for(;;): VC6 emits a dead closing-brace
+    // Popup teardown (EH states, /Ob2 budget, no code) unless the function's
+    // last top-level statement is a jump; the image has none.
+again:
+    {
         PopupModalState = 6;
         parse_set(Players[ScenarioTechFaction].noun_gender, Players[ScenarioTechFaction].is_noun_plural);
         parse_says(0, Players[ScenarioTechFaction].noun_faction, -1, -1);
-        popup.start(PopupStartCaption, "EDITORTECH", -1, nullptr, 0x42, nullptr);
+        popup.start("EDITORTECH", 0x42);
         popup.set_cancel_text(StringTable.get(Labels.strings_ptr[270]));
         popup.set_ok_text(StringTable.get(Labels.strings_ptr[1008]));
 
@@ -5373,18 +5399,7 @@ void Console::editor_tech() {
         case 1:
         {
             const int default_faction = ScenarioTechFaction;
-            int chosen;
-            {
-                Popup who;
-                PopupModalState = 6;
-                who.start(PopupStartCaption, ConsoleStrEditorWhoListTitle, -1, 0, 0x40);
-                popup_faction_items(who, 1);
-                if (default_faction >= 0) {
-                    who.set_value(default_faction);
-                }
-                chosen = who.exec(0, 0);
-                PopupModalState = 0;
-            }
+            const int chosen = editor_who(default_faction, 1);
             if (chosen > 0) {
                 ScenarioTechFaction = chosen;
             }
@@ -5414,6 +5429,7 @@ void Console::editor_tech() {
             break;
         }
     }
+    goto again;
 }
 
 /*
