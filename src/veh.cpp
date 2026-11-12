@@ -4653,7 +4653,7 @@ int __cdecl design_workshop(int faction_id, int mode) {
 again:
     proto_sort(faction_id);
     popups_medium();
-    popup.start(PopupStartCaption, "DESIGNSHOP", -1, 0, 2, 0);
+    popup.start("DESIGNSHOP", 2);
     WorkshopFaction = faction_id;
     PopupModalState = 5;
     popup.dialogs().set_draw_callback(&hq_list_draw);
@@ -4672,14 +4672,14 @@ again:
         if (prototype_faction != 0 && prototype_faction != faction_id)
             continue;
         if (!(VehPrototypes[prototype_id].flags & PROTO_ACTIVE)) {
-            if (prototype_faction != 0)
+            if (prototype_faction == 0)
                 continue;
             StringTemp[0] = 0;
             strcat(StringTemp, "- ");
             strcat(StringTemp, label_get(0x1b8 / 4));
             strcat(StringTemp, " -");
         } else {
-            if (prototype_faction != 0
+            if (prototype_faction == 0
                 && !has_tech(VehPrototypes[prototype_id].preq_tech, faction_id))
                 continue;
             StringTemp[0] = 0;
@@ -4697,15 +4697,16 @@ again:
             }
             strcat(StringTemp, label_get(0x160 / 4));
             strcat(StringTemp, ": ");
-            _itoa(cost_factor(faction_id, 1, -1) * VehPrototypes[prototype_id].cost, number, 10);
+            const int cost = cost_factor(faction_id, 1, -1) * VehPrototypes[prototype_id].cost;
+            _itoa(cost, number, 10);
             strcat(StringTemp, number);
             strcat(StringTemp, ", ");
             say_stats(StringTemp, prototype_id, 0);
         }
-        popup.dialogs().item(StringTemp, prototype_id);
+        popup.item(StringTemp, prototype_id);
     }
 
-    int selected = popup.BasePop::exec(0, 0);
+    int selected = popup.exec();
     popups_normal();
     g_FX.play(0xf);
     const uint32_t action = popup.input_poll_state();

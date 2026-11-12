@@ -169,6 +169,16 @@ int __cdecl pick_top_veh(int veh_id) {
     return best;
 }
 
+// WORKAROUND(decl): 0x0055AFEF-0x0055B05B computes the y inset before the x
+// inset, i.e. the right-to-left arguments of an inlined rect shrink; the
+// original helper's name/spelling is unknown.
+static inline void base_draw_shrink_rect(RECT *rect, int dx, int dy) {
+    rect->left += dx;
+    rect->right -= dx;
+    rect->top += dy;
+    rect->bottom -= dy;
+}
+
 // Every size/offset on the map overlay scales the same way: by the caption
 // override when one is active, otherwise by the zoom step out of 16. The image
 // evaluates the value once before the scale test (0x55983A, 0x559874), which a
@@ -205,29 +215,19 @@ int __cdecl veh_draw(Buffer * buffer, int veh_id, int screen_x, int screen_y, in
         if (flags & 0x400) {
             return 0;
         }
-        int bottom = screen_y + veh_draw_scale(50, zoom);
-        int right = screen_x + veh_draw_scale(100, zoom);
-        int left = screen_x;
-        int top = screen_y;
+        set_rectangle_dimensions(&rect, screen_x, screen_y,
+                                 veh_draw_scale(100, zoom), veh_draw_scale(50, zoom));
         if (!(flags & 0x200)) {
-            const int inset_y = veh_draw_scale(8, zoom);
-            const int inset_x = veh_draw_scale(8, zoom);
-            left += inset_x;
-            right -= inset_x;
-            top += inset_y;
-            bottom -= inset_y;
+            base_draw_shrink_rect(&rect, veh_draw_scale(8, zoom), veh_draw_scale(8, zoom));
         } else {
-            left -= 2;
-            right += 2;
-            top -= 2;
-            bottom += 2;
+            base_draw_shrink_rect(&rect, -2, -2);
         }
-        const int quarter = (bottom - top) / 4;
-        rect.top = top + quarter;
-        rect.bottom = bottom + quarter;
-        const int half = (right - left - rect.bottom + rect.top) / 2;
-        rect.left = left + half;
-        rect.right = right - half;
+        const int quarter = (rect.bottom - rect.top) / 4;
+        rect.top += quarter;
+        rect.bottom += quarter;
+        const int half = (rect.right - rect.left - rect.bottom + rect.top) / 2;
+        rect.left += half;
+        rect.right -= half;
         const int frame_color = strcmp(Players[faction].search_key, "SPARTANS") == 0 ? 44 : 0;
         buffer->box(&rect, frame_color, frame_color);
         rect.left++;
@@ -279,11 +279,14 @@ int __cdecl veh_draw(Buffer * buffer, int veh_id, int screen_x, int screen_y, in
 
     // The body sprites keep the raw screen origin; only the flag, health
     // bar and order label use the chassis-adjusted position.
-    int x = screen_x;
-    int y = screen_y;
+    int x;
+    int y;
     if (!(flags & 0x1000)) {
-        x += veh_draw_scale(Chassis[category].sprite_flag_x_off[variation], zoom);
-        y += veh_draw_scale(Chassis[category].sprite_flag_y_off[variation], zoom);
+        x = screen_x + veh_draw_scale(Chassis[category].sprite_flag_x_off[variation], zoom);
+        y = screen_y + veh_draw_scale(Chassis[category].sprite_flag_y_off[variation], zoom);
+    } else {
+        x = screen_x;
+        y = screen_y;
     }
 
     const int no_sprite = flags & 0x800;
@@ -325,9 +328,11 @@ int __cdecl veh_draw(Buffer * buffer, int veh_id, int screen_x, int screen_y, in
     {
         // One shared `exhausted = 1` (0x559A44) reached from both arms.
         int exhausted = 0;
-        if (IsMultiplayerNet
-                ? !veh_moves(veh_id)
-                : faction == ConsoleGlobal.faction_id_ && !veh_moves(veh_id)) {
+        if (IsMultiplayerNet) {
+            if (!veh_moves(veh_id)) {
+                exhausted = 1;
+            }
+        } else if (faction == ConsoleGlobal.faction_id_ && !veh_moves(veh_id)) {
             exhausted = 1;
         }
 
@@ -407,7 +412,11 @@ int __cdecl veh_draw(Buffer * buffer, int veh_id, int screen_x, int screen_y, in
                     label[0] = Vehs[veh_id].move_to_ai_type;
                 }
                 if (label[0] != '-' && (Vehs[veh_id].state & 0x40000)) {
-                    buffer->set_text_color((Vehs[veh_id].state & 0x20000) ? 0xF8 : 0xFB, -1, 1, 1);
+                    if (Vehs[veh_id].state & 0x20000) {
+                        buffer->set_text_color(0xF8, -1, 1, 1);
+                    } else {
+                        buffer->set_text_color(0xFB, -1, 1, 1);
+                    }
                 }
             }
         }
@@ -438,10 +447,10 @@ int __cdecl veh_draw(Buffer * buffer, int veh_id, int screen_x, int screen_y, in
 tail:
     SpriteScaleNumerator = 1;
     SpriteScaleDenominator = 1;
-    if (no_sprite) {
-        return 0;
+    if (!no_sprite) {
+        return category < 9;
     }
-    return category < 9;
+    return 0;
 }
 
 // Visible-interval test for one map tile in one map window, across the seam.
@@ -686,16 +695,6 @@ Font *BaseDrawFont;
 // first (`test esi,esi; jle`), else (style + 16) * n / 16.
 #define BASE_DRAW_SCALE(n) (MapWinCaptionScale > 0 ? MapWinCaptionScale * (n) / MapWinCaptionDivisor : (style + 16) * (n) / 16)
 
-// WORKAROUND(decl): 0x0055AFEF-0x0055B05B computes the y inset before the x
-// inset, i.e. the right-to-left arguments of an inlined rect shrink; the
-// original helper's name/spelling is unknown.
-static inline void base_draw_shrink_rect(RECT *rect, int dx, int dy) {
-    rect->left += dx;
-    rect->right -= dx;
-    rect->top += dy;
-    rect->bottom -= dy;
-}
-
 // ORIGINAL: 0x0055AF20 ?base_draw@@YAXPAUBuffer@@HHHHH@Z 0x0055AF20-0x0055B739
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0055af20.cpp retains the 2073-byte transcription and original span; the seed's Base, Map, Sprite, FontQueue and Buffer dependencies have typed product owners."], "reason": "Recover the base renderer's distant zoom badge, faction sprite, population caption, visibility check and riot marker through typed objects; compiler and runtime verification remain separate."}
 // symbol    ?base_draw@@YAXPAVBuffer@@HHHHH@Z
@@ -719,7 +718,8 @@ void __cdecl base_draw(Buffer *target, int base_id, int pixel_x, int pixel_y,
         int trim = (rect.right - rect.bottom - rect.left + rect.top) / 2;
         rect.left += trim;
         rect.right -= trim;
-        int shift = BASE_DRAW_SCALE(6) - (outline ? 2 : BASE_DRAW_SCALE(4));
+        const int inset = outline ? 2 : BASE_DRAW_SCALE(4);
+        int shift = BASE_DRAW_SCALE(6) - inset;
         rect.top += shift;
         rect.bottom += shift;
         int border = strcmp(Players[faction].search_key, "SPARTANS") == 0 ? 44 : 0;
@@ -750,15 +750,15 @@ void __cdecl base_draw(Buffer *target, int base_id, int pixel_x, int pixel_y,
                < max(Rules.pop_limit_sans_hab_dome + 1, 10)) {
         mode = 2;
     }
-    if (has_fac_built(FAC_HEADQUARTERS, base_id)) {
+    if (has_fac(FAC_HEADQUARTERS, base_id, 0)) {
         mode = range(mode + 1, 0, 3);
     }
     int danger = 0;
-    if (has_fac_built(FAC_PERIMETER_DEFENSE, base_id)
+    if (has_fac(FAC_PERIMETER_DEFENSE, base_id, 0)
         || has_project(SP_CITIZENS_DEFENSE_FORCE, faction)) {
         danger = 1;
     }
-    if (has_fac_built(FAC_TACHYON_FIELD, base_id)) {
+    if (has_fac(FAC_TACHYON_FIELD, base_id, 0)) {
         danger = 2;
     }
 
@@ -770,84 +770,82 @@ void __cdecl base_draw(Buffer *target, int base_id, int pixel_x, int pixel_y,
     }
 
     BaseDrawFont = g_FONTQUEUE_VAL1.get_zoom(style, 1, 3, 1);
-    if (flags & 0x40) {
-        SpriteScaleNumerator = 1;
-        SpriteScaleDenominator = 1;
-        return;
-    }
+    if (!(flags & 0x40)) {
 
-    char number[80];
-    char measure[80];
-    char caption[80];
-    caption[0] = '\0';
-    measure[0] = '\0';
-    _itoa(Bases[base_id].population_size, number, 10);
-    strcat(caption, number);
-    strcat(measure, "8");
-    if (Bases[base_id].population_size >= 10) {
+        char number[80];
+        char measure[80];
+        char caption[80];
+        caption[0] = '\0';
+        measure[0] = '\0';
+        _itoa(Bases[base_id].population_size, number, 10);
+        strcat(caption, number);
         strcat(measure, "8");
-    }
-    set_rectangle_dimensions(&rect, pixel_x, pixel_y,
-                             BaseDrawFont->width(measure) + 5,
-                             BaseDrawFont->pixel_height() + 4);
-
-    int occupied = veh_who(x, y) >= 0;
-    if (!occupied) {
-        if ((PlayersData[Bases[base_id].faction_id_current]
-                 .diplo_treaties[ConsoleGlobal.faction_id_] & 1)
-            || spying(Bases[base_id].faction_id_current)
-            || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
-            || (PlayersData[ConsoleGlobal.faction_id_].flags & PFLAG_MAP_REVEALED)
-            || faction == ConsoleGlobal.faction_id_) {
-            goto revealed;
+        if (Bases[base_id].population_size >= 10) {
+            strcat(measure, "8");
         }
-        for (int i = 0; i < 8; i++) {
-            int nx = wrap_map_x(Bases[base_id].x + VehMoveDeltaX[i]);
-            int ny = Bases[base_id].y + VehMoveDeltaY[i];
-            if (on_map(nx, ny) && veh_who(nx, ny) == ConsoleGlobal.faction_id_) {
-                goto revealed;
+        set_rectangle_dimensions(&rect, pixel_x, pixel_y,
+                                 BaseDrawFont->width(measure) + 5,
+                                 BaseDrawFont->pixel_height() + 4);
+
+        int occupied = veh_who(x, y) >= 0;
+        int revealed = 0;
+        if (!occupied) {
+            if ((PlayersData[Bases[base_id].faction_id_current]
+                     .diplo_treaties[ConsoleGlobal.faction_id_] & 1)
+                || spying(Bases[base_id].faction_id_current)
+                || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
+                || (PlayersData[ConsoleGlobal.faction_id_].flags & PFLAG_MAP_REVEALED)
+                || faction == ConsoleGlobal.faction_id_) {
+                revealed = 1;
+            } else {
+                for (int i = 0; i < 8; i++) {
+                    int nx = wrap_map_x(Bases[base_id].x + VehMoveDeltaX[i]);
+                    int ny = Bases[base_id].y + VehMoveDeltaY[i];
+                    if (on_map(nx, ny) && veh_who(nx, ny) == ConsoleGlobal.faction_id_) {
+                        revealed = 1;
+                        break;
+                    }
+                }
             }
         }
-    }
-    {
-        int border = strcmp(Players[faction].search_key, "SPARTANS") == 0
-            ? InfoFactionShadowColors[faction] : 0;
-        target->box(&rect, border, border);
-        ++rect.left;
-        --rect.right;
-        ++rect.top;
-        --rect.bottom;
-        target->fill(&rect, InfoFactionTextColors[faction]);
-        target->set_font(BaseDrawFont, 0, 0, 0);
-        target->set_text_color(strcmp(Players[faction].search_key, "SPARTANS") == 0
-                                   ? 44 : 0, -1, 1, 1);
-        target->write_l(caption, rect.left + 2, rect.top + 1);
-    }
-    goto outline;
-revealed:
-    target->box(&rect, 0, 0);
-    ++rect.left;
-    --rect.right;
-    ++rect.top;
-    --rect.bottom;
-    target->set_font(BaseDrawFont, 0, 0, 0);
-    target->set_text_color(ChatItemIdTable[faction], -1, 1, 1);
-    target->write_l(caption, rect.left + 2, rect.top + 1);
-outline:
-    --rect.left;
-    ++rect.right;
-    --rect.top;
-    ++rect.bottom;
-    if (Bases[base_id].state & BSTATE_DRONE_RIOTS_ACTIVE) {
-        int icon_x = pixel_x + (rect.right - rect.left) + 2;
-        if (Players[Bases[base_id].faction_id_current].rule_flags & RFLAG_ALIEN) {
-            g_RED_ALIEN_HEAD_ICON_SPRITE.draw(
-                target, g_RED_ALIEN_HEAD_ICON_SPRITE.transparent_index(),
-                icon_x + 2, pixel_y - 6);
+        if (!revealed) {
+            int border = strcmp(Players[faction].search_key, "SPARTANS") == 0
+                ? InfoFactionShadowColors[faction] : 0;
+            target->box(&rect, border, border);
+            ++rect.left;
+            --rect.right;
+            ++rect.top;
+            --rect.bottom;
+            target->fill(&rect, InfoFactionTextColors[faction]);
+            target->set_font(BaseDrawFont, 0, 0, 0);
+            target->set_text_color(strcmp(Players[faction].search_key, "SPARTANS") == 0
+                                       ? 44 : 0, -1, 1, 1);
+            target->write_l(caption, rect.left + 2, rect.top + 1);
         } else {
-            g_RED_MALE_HEAD_ICON_SPRITE.draw(
-                target, g_RED_MALE_HEAD_ICON_SPRITE.transparent_index(),
-                icon_x, pixel_y);
+            target->box(&rect, 0, 0);
+            ++rect.left;
+            --rect.right;
+            ++rect.top;
+            --rect.bottom;
+            target->set_font(BaseDrawFont, 0, 0, 0);
+            target->set_text_color(ChatItemIdTable[faction], -1, 1, 1);
+            target->write_l(caption, rect.left + 2, rect.top + 1);
+        }
+        --rect.left;
+        ++rect.right;
+        --rect.top;
+        ++rect.bottom;
+        if (Bases[base_id].state & BSTATE_DRONE_RIOTS_ACTIVE) {
+            int icon_x = pixel_x + (rect.right - rect.left) + 2;
+            if (Players[Bases[base_id].faction_id_current].rule_flags & RFLAG_ALIEN) {
+                g_RED_ALIEN_HEAD_ICON_SPRITE.draw(
+                    target, g_RED_ALIEN_HEAD_ICON_SPRITE.transparent_index(),
+                    icon_x + 2, pixel_y - 6);
+            } else {
+                g_RED_MALE_HEAD_ICON_SPRITE.draw(
+                    target, g_RED_MALE_HEAD_ICON_SPRITE.transparent_index(),
+                    icon_x, pixel_y);
+            }
         }
     }
     SpriteScaleNumerator = 1;

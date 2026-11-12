@@ -112,29 +112,6 @@ Cursor::~Cursor() {
     hotspot_y_ = 0;
 }
 
-static int cursor_signed_word(uint32_t bits) {
-    return bits <= 0x7FFFFFFFU ? static_cast<int>(bits)
-        : -1 - static_cast<int>(~bits);
-}
-
-static int cursor_subtract(int left, int right) {
-    return cursor_signed_word(static_cast<uint32_t>(left) - static_cast<uint32_t>(right));
-}
-
-static int cursor_add(int left, int right) {
-    return cursor_signed_word(static_cast<uint32_t>(left) + static_cast<uint32_t>(right));
-}
-
-static int cursor_half(int value) {
-    return value / 2;
-}
-
-static int cursor_clip_hotspot(int value, int extent) {
-    const int last = cursor_subtract(extent, 1);
-    const int clipped = value > last ? last : value;
-    return clipped < 0 ? 0 : clipped;
-}
-
 // ORIGINAL: 0x0063B2E0 ?init@Cursor@@QAEXPAUSprite@@HH@Z 0x0063B2E0-0x0063B8CA;0x00663910-0x0066393E
 // RECOVERY_BINDING: v1 {"evidence": ["task:cursor-init-owner", "pinned:63B42F..63B443/63B4A2..63B4BA signed truncating half and independent centering reloads", "pinned:63B6EF..63B728 color DIB dimensions snapshotted before get_hdc;63B734..63B7A8 live hotspot rereads", "source:Buffer DIB palette, Sprite pixels/dimensions and Cursor handle/owned Sprite/hotspot members", "historical seed:src/unrecovered/0063b2e0.cpp"], "reason": "Recover complete cursor initialization through real automatic Buffers, Sprite ownership and SDK cursor/GDI APIs; preserve native status and failure effects, live callback reads, original primary/cleanup spans and useful seed findings without a new byte claim."}
 // symbol    ?init@Cursor@@QAEHPAVSprite@@HH@Z
@@ -168,16 +145,20 @@ int Cursor::init(Sprite *sprite, int hotspot_x, int hotspot_y) {
     mono.init(CursorWidth, CursorHeight, 0, 0);
     mono.sync_to_palette(PaletteCurrent);
     mono.fill(0xff);
-    const int draw_x = cursor_half(cursor_subtract(CursorWidth, sprite->iWidth_));
-    const int draw_y = cursor_half(cursor_subtract(CursorHeight, sprite->iHeight_));
-    sprite->draw_mono(&mono, sprite->cTransparentIndex_, draw_x, draw_y, 0);
+    {
+        int y = (CursorHeight - sprite->height()) / 2;
+        int x = (CursorWidth - sprite->iWidth_) / 2;
+        sprite->draw_mono(&mono, sprite->cTransparentIndex_, x, y, 0);
+    }
 
     color.init(CursorWidth, CursorHeight, 0, 0);
     color.sync_to_palette(PaletteCurrent);
     color.fill(0);
-    const int color_x = cursor_half(cursor_subtract(CursorWidth, sprite->iWidth_));
-    const int color_y = cursor_half(cursor_subtract(CursorHeight, sprite->iHeight_));
-    sprite->draw(&color, sprite->cTransparentIndex_, color_x, color_y);
+    {
+        int y = (CursorHeight - sprite->height()) / 2;
+        int x = (CursorWidth - sprite->iWidth_) / 2;
+        sprite->draw(&color, sprite->cTransparentIndex_, x, y);
+    }
 
     Dib mono_info;
     mono_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -191,21 +172,20 @@ int Cursor::init(Sprite *sprite, int hotspot_x, int hotspot_y) {
     mono_info.bmiHeader.biYPelsPerMeter = 0;
     mono_info.bmiHeader.biClrUsed = 0;
     mono_info.bmiHeader.biClrImportant = 0;
-    mono_info.bmiColors[0].rgbBlue = 0;
-    mono_info.bmiColors[0].rgbGreen = 0;
     mono_info.bmiColors[0].rgbRed = 0;
-    mono_info.bmiColorsRest[0].rgbBlue = 0xff;
-    mono_info.bmiColorsRest[0].rgbGreen = 0xff;
+    mono_info.bmiColors[0].rgbGreen = 0;
+    mono_info.bmiColors[0].rgbBlue = 0;
     mono_info.bmiColorsRest[0].rgbRed = 0xff;
+    mono_info.bmiColorsRest[0].rgbGreen = 0xff;
+    mono_info.bmiColorsRest[0].rgbBlue = 0xff;
 
     HDC mono_dc = CreateCompatibleDC(nullptr);
     if (mono_dc == nullptr) {
         return 1;
     }
-    void *mono_bits = nullptr;
-    HBITMAP mono_bitmap = CreateDIBSection(mono_dc,
-        &mono_info, DIB_RGB_COLORS,
-        &mono_bits, nullptr, 0);
+    void *bits;
+    HBITMAP mono_bitmap = CreateDIBSection(mono_dc, &mono_info, DIB_RGB_COLORS,
+                                           &bits, nullptr, 0);
     if (mono_bitmap == nullptr) {
         DeleteDC(mono_dc);
         return 1;
@@ -216,26 +196,17 @@ int Cursor::init(Sprite *sprite, int hotspot_x, int hotspot_y) {
     SetDIBits(mono_dc, mono_bitmap, 0, CursorHeight,
         mono.get_data(), &mono.dib_, DIB_RGB_COLORS);
 
-    HDC display_dc = CreateDCA("DISPLAY", nullptr, nullptr, nullptr);
-    const int display_planes = GetDeviceCaps(display_dc, PLANES);
-    const int display_bits = GetDeviceCaps(display_dc, BITSPIXEL);
-    DeleteDC(display_dc);
-
-    HDC color_dc = CreateCompatibleDC(nullptr);
-    if (color_dc == nullptr) {
-        // The original exits here without releasing the mono bitmap/DC.
-        return 1;
-    }
-
     // This is a separate automatic Dib from color.dib_. The pinned stack
     // layout gives it the complete Dib extent; preserve the uninitialized
     // palette and reserved bytes beyond the header fields written here.
     Dib color_info;
+    HDC display_dc = CreateDCA("DISPLAY", nullptr, nullptr, nullptr);
     color_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     color_info.bmiHeader.biWidth = CursorWidth;
     color_info.bmiHeader.biHeight = -CursorHeight;
-    color_info.bmiHeader.biPlanes = static_cast<WORD>(display_planes);
-    color_info.bmiHeader.biBitCount = static_cast<WORD>(display_bits);
+    color_info.bmiHeader.biPlanes = static_cast<WORD>(GetDeviceCaps(display_dc, PLANES));
+    color_info.bmiHeader.biBitCount = static_cast<WORD>(GetDeviceCaps(display_dc, BITSPIXEL));
+    DeleteDC(display_dc);
     color_info.bmiHeader.biCompression = BI_RGB;
     color_info.bmiHeader.biSizeImage = 0;
     color_info.bmiHeader.biXPelsPerMeter = 0;
@@ -243,9 +214,13 @@ int Cursor::init(Sprite *sprite, int hotspot_x, int hotspot_y) {
     color_info.bmiHeader.biClrUsed = 0;
     color_info.bmiHeader.biClrImportant = 0;
 
-    void *color_bits = nullptr;
-    HBITMAP color_bitmap = CreateDIBSection(color_dc,
-        &color_info, DIB_RGB_COLORS, &color_bits, nullptr, 0);
+    HDC color_dc = CreateCompatibleDC(nullptr);
+    if (color_dc == nullptr) {
+        // The original exits here without releasing the mono bitmap/DC.
+        return 1;
+    }
+    HBITMAP color_bitmap = CreateDIBSection(color_dc, &color_info, DIB_RGB_COLORS,
+                                            &bits, nullptr, 0);
     if (color_bitmap == nullptr) {
         DeleteDC(color_dc);
         // The original exits here without releasing mono_bitmap/mono_dc.
@@ -259,19 +234,16 @@ int Cursor::init(Sprite *sprite, int hotspot_x, int hotspot_y) {
 
     const int blit_height = color.pixel_height();
     const int blit_width = color.pixel_width();
-    HDC source_dc = color.get_hdc();
-    BitBlt(color_dc, 0, 0, blit_width, blit_height, source_dc, 0, 0,
+    BitBlt(color_dc, 0, 0, blit_width, blit_height, color.get_hdc(), 0, 0,
            SRCCOPY);
     GdiFlush();
 
     ICONINFO icon_info;
     icon_info.fIcon = FALSE;
-    icon_info.xHotspot = cursor_clip_hotspot(
-        cursor_add(cursor_half(cursor_subtract(CursorWidth, sprite->iWidth_)), hotspot_x),
-                                             CursorWidth);
-    icon_info.yHotspot = cursor_clip_hotspot(
-        cursor_add(cursor_half(cursor_subtract(CursorHeight, sprite->iHeight_)), hotspot_y),
-                                             CursorHeight);
+    icon_info.xHotspot = (CursorWidth - sprite->iWidth_) / 2 + hotspot_x;
+    icon_info.xHotspot = max(0, min(CursorWidth - 1, (int)icon_info.xHotspot));
+    icon_info.yHotspot = (CursorHeight - sprite->iHeight_) / 2 + hotspot_y;
+    icon_info.yHotspot = max(0, min(CursorHeight - 1, (int)icon_info.yHotspot));
     icon_info.hbmMask = mono_bitmap;
     icon_info.hbmColor = color_bitmap;
     cursor_handle_ = CreateIconIndirect(&icon_info);
@@ -287,11 +259,11 @@ int Cursor::init(Sprite *sprite, int hotspot_x, int hotspot_y) {
     if (owned_sprite_ == 0) {
         owned_sprite_ = new Sprite;
     }
-    Sprite *owned_sprite = owned_sprite_;
-    if (owned_sprite != nullptr) {
-        sprite->copy(owned_sprite);
+    if (owned_sprite_ != nullptr) {
+        sprite->copy(owned_sprite_);
         hotspot_x_ = hotspot_x;
         hotspot_y_ = hotspot_y;
     }
     return 0;
 }
+
