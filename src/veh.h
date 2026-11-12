@@ -29,7 +29,26 @@ void __cdecl proto_bung_put(int faction_id, int proto_id);
 // Bounded network access to the genuine prototype-history owner.
 bool veh_bung_copy_chunk(size_t offset, unsigned char *packet, size_t count,
                          bool packet_to_owner);
-int __cdecl veh_game_data_bunglist(FILE *file, int format_version);
+// WORKAROUND(decl): a visible ProtoBung definition flips a register tie in
+// console_commands.cpp corner_the_market (0x004E2000, BYTE_EXACT -> MNEMONIC_ONLY)
+// in any position of this header; only its owner veh.cpp and game_data's
+// game.cpp define VEH_BUNGLIST_VISIBLE until the header context is known.
+#ifdef VEH_BUNGLIST_VISIBLE
+// The faction prototype-design list. 0x0094B558, eight factions x 64 entries x
+// 8 bytes - one entry is VehPrototype's ability_flags dword followed by its
+// chassis/weapon/armor/reactor bytes, which is exactly the 8 bytes
+// 0x0057DF30 copies in. clear_bunglist (0x0057DF00) fills a faction's 64 with
+// -1 then 0xFF, which is why the comparison bytes sit at +4..+7 and the dword
+// at +0. game_data transfers the whole table inline (0x005A7C54..0x005A7CC9).
+struct ProtoBung {
+    uint32_t ability_flags;
+    uint8_t chassis_id;
+    uint8_t weapon_id;
+    uint8_t armor_id;
+    uint8_t reactor_id;
+};
+extern ProtoBung BungList[8][64];
+#endif
 // Existing terraform announcement state, also transferred by game sync.
 extern uint32_t TerraformAnnouncedMask[2];
 extern uint32_t VehTerraformStingLatch;
@@ -758,6 +777,11 @@ int __cdecl get_plan(int faction_id, int plan);
 void __cdecl spot_tile(int x, int y, int faction_id);
 void __cdecl spot_base(int base_id, int faction_id);
 void __cdecl spot_stack(int veh_id, int faction_id);
+// veh_stack.cpp owns this; orders and terraforming_actions call it. Declared
+// here it also restores the declaration count that removing the invented
+// veh_game_data_bunglist changed (ReportIf::on_iface_button_clicked 0x004A6330
+// flips a register tie on that count).
+void __cdecl unspot_stack(int veh_id);
 void __cdecl spot_loc(int x, int y, int faction_id);
 BOOL __cdecl want_to_wake(int faction_id, int veh_id, int spotted_veh_id);
 void __cdecl wake_stack(int veh_id);

@@ -1948,13 +1948,6 @@ Time BlinkTimer,   // 0x00915688
 
 // Historical seed finding: Native destruction order: Turn, Go, Line, Blink2, Blink.
 // Historical seed finding: The former separate per-object declarations did not own the complete original aggregate.
-int Console::game_data_private_word(FILE *file, int write_mode) {
-    if (write_mode != 0) {
-        message_count_ = 0;
-    }
-    return game_data_transfer_block(file, &message_count_, sizeof(message_count_));
-}
-
 
 // Shared four-field rectangle written by original Console51D760/51D890.
 // Start binding only: no complete original allocation/lifetime claim.

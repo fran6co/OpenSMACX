@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+#define VEH_BUNGLIST_VISIBLE  // stand-in: see BungList in veh.h
 #include "stdafx.h"
 #include "popup.h"
 #include "basepop.h"
@@ -1283,27 +1284,16 @@ void __cdecl fill_eight_bytes_ff(void *target) {
 // out of line from propose_proto5808B3, which tests full EAX at5808BB; both
 // original predicate exits define full EAX.
 
-// The faction prototype-design list. 0x0094B558, eight factions x 64 entries x
-// 8 bytes - one entry is VehPrototype's ability_flags dword followed by its
-// chassis/weapon/armor/reactor bytes, which is exactly the 8 bytes
-// 0x0057DF30 copies in. clear_bunglist (0x0057DF00) fills a faction's 64 with
-// -1 then 0xFF, which is why the comparison bytes sit at +4..+7 and the dword
-// at +0.
-struct ProtoBung {
-    uint32_t ability_flags;
-    uint8_t chassis_id;
-    uint8_t weapon_id;
-    uint8_t armor_id;
-    uint8_t reactor_id;
-};
 static_assert(sizeof(ProtoBung) == 8, "Prototype history record stride");
 static_assert(offsetof(ProtoBung, chassis_id) == 4,
               "Prototype history component offset");
-// Eight faction histories, 64 records each. Initial loaded storage is zero.
+
+// The faction prototype-design list (ProtoBung, declared in veh.h). Eight
+// faction histories, 64 records each. Initial loaded storage is zero.
 // Native clear57DF00 uses base94B558+5 then stores at -5..+2; the former
 // address alias started five bytes too early and corrupted the preceding data.
 // RECOVERY_OBJECT: v2 0x0094B558 0x0094C558 _BungList 0x0057DF00
-static ProtoBung BungList[8][64];
+ProtoBung BungList[8][64];
 
 bool veh_bung_copy_chunk(size_t offset, unsigned char *packet, size_t count,
                          bool packet_to_owner) {
@@ -1337,14 +1327,6 @@ void __cdecl clear_bunglist(int faction_id) {
     for (int i = 0; i < 64; i++) {
         fill_eight_bytes_ff(&BungList[faction_id][i]);
     }
-}
-
-int __cdecl veh_game_data_bunglist(FILE *file, int format_version) {
-    if (format_version >= 6) {
-        return game_data_transfer_block(file, &BungList[0][0], sizeof(BungList));
-    }
-    for (int faction = 0; faction < 8; ++faction) clear_bunglist(faction);
-    return 1;
 }
 
 /*

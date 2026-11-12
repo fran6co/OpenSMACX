@@ -22,6 +22,7 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682550 selects original initializer0x477e10..0x477e26, registering fini0x477e30..0x477e3a; complete independent decode establishes exclusive boundaries.", "Source-owned object?MultiWindow@@3VMultiWin@@A identifies original storage0x7fd648. Startup arguments/calls: call 0x47a590; push 0x477e30. Cleanup receiver/calls: mov ecx, 0x7fd648; jmp 0x47a430. Constructor/destructor targets retain their existing class-owned source mappings.", "Fresh physical src/game.cpp COFF selects _$E26 through .CRT$XCU and registers _$E24, both referencing the genuine source global. Original NetMsg argument triples and implicit PlanWin/Console most-derived flags are preserved by the existing declarations; complete virtual-base teardown is compiler-owned, not authored offsets.", "Current local helper symbols interpret present emission, not original debug names or historical TU boundaries. Object starts do not prove allocation extents. This binding establishes neither cross-TU global order, masked-reference correctness, strict linked preservation, dependency-provider equivalence nor runtime/game acceptance; excluded guarded sprite cleanup remains separate."], "reason": "Bind original exit identity to the genuine compiler-generated lifetime of ?MultiWindow@@3VMultiWin@@A in its actual source owner; no manual lifecycle callback is authored."}
 // symbol    _$E18
 #define NETDAEMON_RESET_INLINE  // stand-in: see NetDaemon::reset in netdaemon.h
+#define VEH_BUNGLIST_VISIBLE  // stand-in: see BungList in veh.h
 #include "stdafx.h"
 
 #include <shellapi.h>
@@ -2272,9 +2273,7 @@ static int game_data_candidate_transfer(FILE *file, void *buffer,
     return fread(buffer, byte_count, 1, file);
 }
 
-// BungList remains private to veh.cpp behind its owner-local transfer API.
-extern int __cdecl veh_game_data_bunglist(FILE *file, int format_version);
-// Console owns its private word; ScenarioSave owns one native 0x98 transfer.
+// ScenarioSave owns one native 0x98 transfer.
 // The native StringList records deliberately use raw fread/fwrite, unlike the
 // surrounding encrypted-aware fixed blocks.
 extern int __cdecl game_data_plain_transfer(FILE *file, void *buffer,
@@ -2729,21 +2728,12 @@ int __cdecl game_data(FILE *file, int write_mode) {
     } else {
         if (GameDataLoadRequest == 0
             && (GameDataStateStorage.fields_.game_state_ & 1u) == 0) {
-            const unsigned int lock_mask =
-                GameDataStateStorage.fields_.lock_masks_.enable_mask_;
-            const unsigned int alive = (lock_mask >> 8) & 0xffu;
-            const unsigned int human = lock_mask & 0xffu;
-            unsigned int both = alive & human;
-            unsigned int faction_bits = both;
-            int matching_factions = 0;
-            while (faction_bits != 0) {
-                matching_factions += static_cast<int>(faction_bits & 1u);
-                faction_bits >>= 1;
-            }
-            if (matching_factions > 1) {
+            // 0x005A7978 counts the alive human factions with bit_count.
+            if (bit_count(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_
+                          & GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_) > 1) {
                 for (int faction = 1; faction < 8; ++faction) {
-                    const unsigned int bit = 1u << faction;
-                    if ((alive & bit) != 0 && (human & bit) != 0
+                    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << faction)) != 0
+                        && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction)) != 0
                         && PlayersData[faction].unk_102 != 0) {
                         GameDataLoadStatusWord = 1;
                         return 1;
@@ -2791,9 +2781,12 @@ int __cdecl game_data(FILE *file, int write_mode) {
         }
     }
 
-    if (veh_game_data_bunglist(
-            file, GameDataStateStorage.fields_.save_daemon_state_word_) == 0)
-        return 1;
+    if (GameDataStateStorage.fields_.save_daemon_state_word_ >= 6) {
+        if (game_data_candidate_transfer(file, BungList, sizeof(BungList)) == 0)
+            return 1;
+    } else {
+        for (int faction = 0; faction < 8; ++faction) clear_bunglist(faction);
+    }
 
     // 5A7CCB retains this format across the prototype-ID and vehicle stages.
     const int vehicle_format =
@@ -2956,7 +2949,9 @@ int __cdecl game_data(FILE *file, int write_mode) {
     if (game_data_candidate_transfer(
             file, &ConsoleGlobal.cursor_history_y_[history_index], 4) == 0)
         return 1;
-    if (ConsoleGlobal.game_data_private_word(file, GameDataWriteMode) == 0)
+    if (GameDataWriteMode) ConsoleGlobal.message_count_ = 0;
+    if (game_data_candidate_transfer(
+            file, &ConsoleGlobal.message_count_, 4) == 0)
         return 1;
 
     for (int map_slot = 0; map_slot < 8; ++map_slot) {

@@ -651,7 +651,6 @@ class Console : public MapWin {
   // Sprite at +0x23D28. MessageWin's add/clear paths and game_data's
   // dword clear and 4-byte transfer (0x005A85B2/0x005A85CD) use it.
   int message_count_;  // 0x23D20
-  int game_data_private_word(FILE *file, int write_mode);
  private:
   uint32_t field_23D24_;  // 0x23D24
   // THE TWO SPRITES, carved from what was field_23D28_[0x58]: two
