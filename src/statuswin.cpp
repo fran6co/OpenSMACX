@@ -102,51 +102,6 @@ void StatusWin::UNK2() {
     ConsoleGlobal.cover_window_.Win::hide();
 }
 
-/*
-Purpose: Re-init the three status fonts when the screen size changed enough
-         to want a different point size, force default character spacing at
-         low resolution, redraw the whole status area, then invalidate the
-         union of three fixed-address rects on the main interface window.
-// ORIGINAL: 0x004B9EA0 ?redraw@StatusWin@@QAEXXZ 0x004B9EA0-0x004B9F7B BYTE_EXACT
-// size      219 bytes
-// prototype void (__thiscall ?redraw@StatusWin@@QAEXXZ)(StatusWin* this)
-// callers   17   call targets   3
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x004B6570 0x005D5930 0x00618F40
-// indirect  0x004B9F56 0x004B9F65
-Return Value: n/a
-Status: Complete
-*/
-// WORKAROUND(inline): on_right_click (0x004B9010) expands this body at all
-// three of its call sites, which this unit's plain member does not reproduce;
-// the explicit inline is defined ahead of it, and sub_50f630's real call
-// (under inline_depth(0)) emits the out-of-line copy at 0x004B9EA0.
-inline void StatusWin::redraw() {
-    int sizeVal = (WinScreenWidth != 0x320) ? 0xC : 0xA;
-    if (sizeVal != font_size_) {
-        font_size_ = sizeVal;
-        font1_.init(DefaultFontFace, sizeVal, 0);
-        font2_.init(DefaultFontFace, sizeVal, 2);
-        font3_.init(DefaultFontFace, sizeVal, 1);
-    }
-    if (WinScreenWidth != 0x320) {
-        // font.h's `int unk_1_; // height offset? set outside of class
-        // function` - and THIS IS that outside setter. The offsets are the
-        // embedded Fonts' own starts (font1_ 0x1530, font2_ 0x1558, font3_
-        // 0x1580), so the int written is each Font's first member.
-        font1_.unk_1_ = 4;
-        font2_.unk_1_ = 4;
-        font3_.unk_1_ = 4;
-    }
-    draw_status(-1, -1, -1, -1, 0);
-    RECT localRect;
-    UnionRect(&localRect, &MainInterfaceGlobal.status_hit_rect(),
-              &MainInterfaceGlobal.status_right_rect());
-    UnionRect(&localRect, &localRect, &MainInterfaceGlobal.status_left_rect());
-    MainInterfaceGlobal.soft_update(&localRect);
-}
-
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x004B9010 0x004B9E30 0x004B9E8A 0x004B9659
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004B9010 0x004B9DF8 0x004B9E30 0x004B965F
 // ORIGINAL: 0x004B9010 ?on_right_click@StatusWin@@QAEXHHH@Z 0x004B9010-0x004B9DF8;0x00659AA0-0x00659BCA
@@ -446,14 +401,6 @@ void StatusWin::reset() {
 // Three fixed-address RECTs redraw() unions together, no established
 // identity beyond what this one function shows. Now defined in statuswin.h,
 // where the internal linkage folds the address to the immediate in every TU.
-
-// WORKAROUND(noinline): redraw is an explicit inline defined above; this
-// non-original redirect keeps the real call.
-#pragma inline_depth(0)
-void __fastcall status_win_redraw_redirect(StatusWin *self, void *) {
-    self->redraw();
-}
-#pragma inline_depth(8)
 
 // The process-wide status window, 0x008C5568 in the image - REAL STORAGE, not
 // the `StatusWin *const ConsoleStatusWin` binding that named terranx.exe data
@@ -2021,6 +1968,63 @@ void StatusWin::UNK4() {
     StatusFlags |= 0x20;
 }
 
+/*
+Purpose: Re-init the three status fonts when the screen size changed enough
+         to want a different point size, force default character spacing at
+         low resolution, redraw the whole status area, then invalidate the
+         union of three fixed-address rects on the main interface window.
+// ORIGINAL: 0x004B9EA0 ?redraw@StatusWin@@QAEXXZ 0x004B9EA0-0x004B9F7B BYTE_EXACT
+// size      219 bytes
+// prototype void (__thiscall ?redraw@StatusWin@@QAEXXZ)(StatusWin* this)
+// callers   17   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004B6570 0x005D5930 0x00618F40
+// indirect  0x004B9F56 0x004B9F65
+Return Value: n/a
+Status: Complete
+*/
+// WORKAROUND(inline): on_right_click (0x004B9010) expands this body at all
+// three of its call sites, while every other caller (console, battle, mapwin)
+// calls the copy at 0x004B9EA0. A plain member is not auto-inlined there
+// (too large, whether defined before or after); the explicit inline member
+// is, even defined here at its image position after UNK4. Measured
+// 2026-11-12: a header inline is refuted, since console.cpp then expands all
+// 26 of its sites. Nothing in the image needs the copy from this unit, so
+// the redirect below is what emits it.
+inline void StatusWin::redraw() {
+    int sizeVal = (WinScreenWidth != 0x320) ? 0xC : 0xA;
+    if (sizeVal != font_size_) {
+        font_size_ = sizeVal;
+        font1_.init(DefaultFontFace, sizeVal, 0);
+        font2_.init(DefaultFontFace, sizeVal, 2);
+        font3_.init(DefaultFontFace, sizeVal, 1);
+    }
+    if (WinScreenWidth != 0x320) {
+        // font.h's `int unk_1_; // height offset? set outside of class
+        // function` - and THIS IS that outside setter. The offsets are the
+        // embedded Fonts' own starts (font1_ 0x1530, font2_ 0x1558, font3_
+        // 0x1580), so the int written is each Font's first member.
+        font1_.unk_1_ = 4;
+        font2_.unk_1_ = 4;
+        font3_.unk_1_ = 4;
+    }
+    draw_status(-1, -1, -1, -1, 0);
+    RECT localRect;
+    UnionRect(&localRect, &MainInterfaceGlobal.status_hit_rect(),
+              &MainInterfaceGlobal.status_right_rect());
+    UnionRect(&localRect, &localRect, &MainInterfaceGlobal.status_left_rect());
+    MainInterfaceGlobal.soft_update(&localRect);
+}
+
+// WORKAROUND(noinline): non-original; its real call under inline_depth(0)
+// emits redraw's out-of-line copy for the other units.
+#pragma inline_depth(0)
+void __fastcall status_win_redraw_redirect(StatusWin *self, void *) {
+    self->redraw();
+}
+#pragma inline_depth(8)
+
 // ORIGINAL: 0x004B8DF0 ?UNK3@StatusWin@@QAEXXZ 0x004B8DF0-0x004B8E31 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["The historical body tests StatusWin offsets +0x15BC and +0x15C0; statuswin.h maps these to iUnitIndex_ and iCityIndex_.", "The store at 0x0093928C is ConsoleGlobal.selected_vehicle_ (Console offset +0x23BDC), and the remaining dispatches match veh_wake, Console::set_move, and TutWinBaseWindow.zoom.", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/004b8df0.cpp"], "reason": "Home the compact selected-unit/base action in StatusWin using the recovered members and process-owned C++ objects. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
@@ -2211,18 +2215,6 @@ void StatusWin::init() {
     caviar_.shadow_vector() = direction;
     caviar_.light_vector() = direction;
 }
-
-// ORIGINAL: 0x0050F630 sub_50f630 0x0050F630-0x0050F640 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:3f7fc8f78d783f09c46cddc646c31c2f5eb6d013:src/recovered/0050f630.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x50f630 complete original body; independent source-owner review.", "source:src/statuswin.cpp and corresponding header own real receiver/dependencies; count-zero copy underflow is intentionally unchanged."], "reason": "Complete typed application helper; retain original call ordering, argument contract and historical obligation."}
-// symbol    ?sub_50f630@@YGXH@Z
-// WORKAROUND(noinline): the image calls 0x004B9EA0 here; redraw is an
-// explicit inline defined earlier in this unit (see on_right_click).
-#pragma inline_depth(0)
-void __stdcall sub_50f630(int unused) {
-    (void)unused;
-    ConsoleStatusWin.redraw();
-}
-#pragma inline_depth(8)
 
 // ORIGINAL: 0x00515430 sub_515430 0x00515430-0x00515443 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/00515430.cpp", "task:owned-helper-coverage-batch", "StatusFlags939ED8 is already owned by statuswin.cpp; native515430 clears it before desktop_init(1)."], "reason": "Recover a complete native helper through genuine source owners and SDK calls, preserving original identity, extent and historical obligations. Source home is not proof of original TU or complete-game acceptance."}
