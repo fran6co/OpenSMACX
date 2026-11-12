@@ -3368,24 +3368,31 @@ void Datalink::init() {
     history_[0] = 0;
     field_2A34_ = 0;
     field_2A38_ = 0;
-    SubInterface::field_4_ = 8;
-    register_iface_mode(8, static_cast<SubInterface *>(this));
-    const bool compact = WinScreenWidth == 800;
-    const int panel_height = MainInterfaceGlobal.panel_height();
-    const int content_height = compact ? 600 - panel_height : 0x2e2 - panel_height;
-    const int side_width = compact ? 0 : 0x8a;
+    register_iface(8);
+    // 0x0042935B keeps this flag (setne) for the font block; the geometry
+    // below compares the width again.
+    const int wide = WinScreenWidth != 800;
+    int content_height;
+    int side_width;
+    if (WinScreenWidth == 800) {
+        side_width = 0;
+        content_height = 600 - MainInterfaceGlobal.panel_height();
+    } else {
+        side_width = 0x8a;
+        content_height = 0x2e2 - MainInterfaceGlobal.panel_height();
+    }
     const int left = (WinScreenWidth - 800) / 2;
-    const int top = (WinScreenHeight - panel_height) - content_height;
+    const int top = WinScreenHeight - MainInterfaceGlobal.panel_height() - content_height;
 
     interface_update_rect_ = MainInterfaceGlobal.main_layout_rect();
     category_rect_.left = 30;
     category_rect_.top = 7;
     category_rect_.right = 230;
     category_rect_.bottom = 0x1b;
-    field_103E4_ = 0x1e;
-    field_103E8_ = 0x1d;
     field_103EC_ = 0xe6;
     field_103F0_ = side_width + 0x143;
+    field_103E4_ = 0x1e;
+    field_103E8_ = 0x1d;
 
     illustration_rect_.left = 0xf8;
     illustration_rect_.top = 0x2c;
@@ -3396,28 +3403,31 @@ void Datalink::init() {
     title_rect_.top = 7;
     title_rect_.right = 0x302;
     title_rect_.bottom = 0x22;
-    description_rect_.left = 0xdb;
-    description_rect_.top = 0x24;
-    description_rect_.right = 0x302;
-    description_rect_.bottom = side_width / 2 + 0xb4;
-    const int title_left = field_103EC_ + 9;
-    title_rect_.left = title_left;
-    description_rect_.left = title_left;
-    lower_description_rect_.left = title_left;
-    lower_description_rect_.top = side_width / 2 + 0xb6;
-    lower_description_rect_.right = 0x302;
-    lower_description_rect_.bottom = side_width + 0x143;
+    RECT &description_rect = description_rect_;
+    description_rect.left = 0xdb;
+    description_rect.top = 0x24;
+    description_rect.right = 0x302;
+    description_rect.bottom = side_width / 2 + 0xb4;
     // Original 4294D0/4294F2 passes the member itself to UnionRect.
     // Keep the later detail-box geometry bound to that same live rectangle.
-    const RECT &lower_description_rect = lower_description_rect_;
-    UnionRect(&panel_rect_, &description_rect_, &lower_description_rect);
-    UnionRect(&entry_clip_rect_, &description_rect_, &lower_description_rect);
+    RECT &lower_description_rect = lower_description_rect_;
+    lower_description_rect.left = 0xdb;
+    lower_description_rect.top = side_width / 2 + 0xb6;
+    lower_description_rect.right = 0x302;
+    lower_description_rect.bottom = lower_description_rect.top + side_width / 2 + 0x8d;
+    const int title_left = field_103EC_ + 9;
+    title_rect_.left = title_left;
+    description_rect.left = title_left;
+    lower_description_rect.left = title_left;
+    UnionRect(&panel_rect_, &description_rect, &lower_description_rect);
+    UnionRect(&entry_clip_rect_, &description_rect, &lower_description_rect);
     UnionRect(&entry_clip_rect_, &entry_clip_rect_, &title_rect_);
-    entry_update_rect_ = entry_clip_rect_;
-    entry_update_rect_.right += 3;
-    entry_update_rect_.left -= 3;
-    entry_update_rect_.top -= 3;
-    entry_update_rect_.bottom += 3;
+    RECT &entry_update_rect = entry_update_rect_;
+    entry_update_rect = entry_clip_rect_;
+    entry_update_rect.left -= 3;
+    entry_update_rect.right += 3;
+    entry_update_rect.top -= 3;
+    entry_update_rect.bottom += 3;
     entry_clip_rect_ = panel_rect_;
     entry_frame_rect_.left = left;
     entry_frame_rect_.top = top;
@@ -3426,36 +3436,28 @@ void Datalink::init() {
 
     // Native row stores establish eighteen consecutive RECTs; index 16 is
     // deliberately overwritten after the two panel-row loops.
-    {
-        int right = MainInterfaceGlobal.main_frame_rect().right - 4;
-        int row_top = MainInterfaceGlobal.main_frame_rect().bottom - 0x19;
-        int row_bottom = MainInterfaceGlobal.main_frame_rect().bottom - 3;
-        int left_edge = MainInterfaceGlobal.main_frame_rect().left + 4;
-        for (int i = 7; i >= 0; --i) {
-            RECT &row = topic_button_bounds_[i];
-            row.left = left_edge;
-            row.top = row_top;
-            row.right = right;
-            row.bottom = row_bottom;
-            row_top -= 0x18;
-            row_bottom -= 0x18;
-        }
+    RECT rect = MainInterfaceGlobal.main_frame_rect();
+    rect.left += 4;
+    rect.right -= 4;
+    rect.bottom -= 4;
+    rect.top = rect.bottom - 0x15;
+    ++rect.bottom;
+    int i;
+    for (i = 7; i >= 0; --i) {
+        topic_button_bounds_[i] = rect;
+        rect.top -= 0x18;
+        rect.bottom -= 0x18;
     }
-    {
-        const RECT &right_panel = MainInterfaceGlobal.right_frame_rect();
-        int right = right_panel.right - 4;
-        int left_edge = right_panel.left + 4;
-        int row_top = right_panel.bottom - 0x19;
-        int row_bottom = right_panel.bottom - 3;
-        for (int i = 8; i < 17; ++i) {
-            RECT &row = topic_button_bounds_[i];
-            row.left = left_edge;
-            row.top = row_top;
-            row.right = right;
-            row.bottom = row_bottom;
-            row_top -= 0x18;
-            row_bottom -= 0x18;
-        }
+    rect = MainInterfaceGlobal.right_frame_rect();
+    rect.left += 4;
+    rect.right -= 4;
+    rect.bottom -= 4;
+    rect.top = rect.bottom - 0x15;
+    ++rect.bottom;
+    for (i = 8; i < 17; ++i) {
+        topic_button_bounds_[i] = rect;
+        rect.top -= 0x18;
+        rect.bottom -= 0x18;
     }
 
     topic_button_bounds_[16].left = 0x98;
@@ -3467,48 +3469,59 @@ void Datalink::init() {
     topic_button_bounds_[17].right = 0x288;
     topic_button_bounds_[17].bottom = side_width + 0x162;
 
-    const int regular_style = compact ? 12 : 14;
-    auxiliary_font10_.init(DefaultFontFace, compact ? 12 : 14, 4);
-    auxiliary_font11_.init(DefaultFontFace, compact ? 12 : 14, 0);
-    font1_.init(DefaultFontFace, 18, 1);
-    font3_.init(DefaultFontFace, 14, 1);
-    auxiliary_font4_.init(DefaultFontFace, 14, 1);
-    auxiliary_font5_.init(DefaultFontFace, 14, 1);
-    body_font_.init(DefaultFontFace, 14, 1);
-    secondary_body_font_.init(DefaultFontFace, 14, 0);
-    link_font_.init(DefaultFontFace, 14, 5);
-    auxiliary_font8_.init(DefaultFontFace, compact ? 10 : 12, 0);
-    if (compact) auxiliary_font8_.unk_1_ = 4;
-    font2_.init(DefaultFontFace, regular_style == 12 ? 12 : 14, 0);
+    if (!wide) {
+        auxiliary_font10_.init(DefaultFontFace, 12, 4);
+        auxiliary_font11_.init(DefaultFontFace, 12, 0);
+        font1_.init(DefaultFontFace, 18, 1);
+        font3_.init(DefaultFontFace, 14, 1);
+        auxiliary_font4_.init(DefaultFontFace, 14, 1);
+        auxiliary_font5_.init(DefaultFontFace, 14, 1);
+        body_font_.init(DefaultFontFace, 14, 1);
+        secondary_body_font_.init(DefaultFontFace, 14, 0);
+        link_font_.init(DefaultFontFace, 14, 5);
+        auxiliary_font8_.init(DefaultFontFace, 10, 0);
+        auxiliary_font8_.unk_1_ = 4;
+        font2_.init(DefaultFontFace, 12, 0);
+    } else {
+        auxiliary_font10_.init(DefaultFontFace, 14, 4);
+        auxiliary_font11_.init(DefaultFontFace, 14, 0);
+        font1_.init(DefaultFontFace, 18, 1);
+        font3_.init(DefaultFontFace, 14, 1);
+        auxiliary_font4_.init(DefaultFontFace, 14, 1);
+        auxiliary_font5_.init(DefaultFontFace, 14, 1);
+        body_font_.init(DefaultFontFace, 14, 1);
+        secondary_body_font_.init(DefaultFontFace, 14, 0);
+        link_font_.init(DefaultFontFace, 14, 5);
+        auxiliary_font8_.init(DefaultFontFace, 12, 0);
+        font2_.init(DefaultFontFace, 14, 0);
+    }
 
     caviar_.init();
     caviar_.set_field_A4(0);
-    union { uint32_t bits; float value; } camera_angle;
-    camera_angle.bits = 0x3f48f5c3;
-    const float angles[3] = {0.0f, 0.0f, camera_angle.value};
+    float angles[3];
+    angles[0] = 0.0f;
+    angles[1] = 0.0f;
+    angles[2] = 0.785f;
     VOX_Matrix camera_rotation;
     caviar_apply_rotation(angles, &camera_rotation);
-    VOX_Vect camera_position;
-    int axis;
-    for (axis = 0; axis != 3; ++axis) {
-        camera_rotation.values[2][axis] = -camera_rotation.values[2][axis];
-    }
-    for (axis = 0; axis != 3; ++axis) {
-        camera_position.values[axis] =
-            camera_rotation.values[2][axis] * CaviarCameraDistance;
-    }
-    caviar_.set_camera_direct(&camera_position, &camera_rotation);
-    union { uint32_t bits; float value; } scene_angle;
-    scene_angle.bits = 0x3f05f92d;
-    caviar_.set_scene_rotation(scene_angle.value, 0.0f, 0.0f);
-    const float forward[3] = {0.0f, 0.0f, 1.0f};
+    camera_rotation.values[2][0] = -camera_rotation.values[2][0];
+    camera_rotation.values[2][1] = -camera_rotation.values[2][1];
+    camera_rotation.values[2][2] = -camera_rotation.values[2][2];
+    VOX_Vect vector;
+    vector.values[0] = camera_rotation.values[2][0] * -10000.0f;
+    vector.values[1] = camera_rotation.values[2][1] * -10000.0f;
+    vector.values[2] = camera_rotation.values[2][2] * -10000.0f;
+    caviar_.set_camera_direct(&vector, &camera_rotation);
+    caviar_.set_scene_rotation(3.14f / 6, 0.0f, 0.0f);
+    // 0x0042997C reuses the camera position's slot for the forward vector.
+    vector.values[0] = 0.0f;
+    vector.values[1] = 0.0f;
+    vector.values[2] = 1.0f;
     float transformed_forward[3];
-    vox_matrix_vector_mul(camera_rotation.values, forward,
+    vox_matrix_vector_mul(camera_rotation.values, vector.values,
                           transformed_forward);
-    caviar_.shadow_vector().values[0] = forward[0];
-    caviar_.shadow_vector().values[1] = forward[1];
-    caviar_.shadow_vector().values[2] = forward[2];
-    caviar_.light_vector() = caviar_.shadow_vector();
+    caviar_.shadow_vector() = vector;
+    caviar_.light_vector() = vector;
 
     // The legacy parent computation reaches Console's real Win base. Its
     // static conversion applies the compiler's current virtual-base layout.
@@ -3518,49 +3531,46 @@ void Datalink::init() {
                      0, 0x1000000, static_cast<Win *>(&ConsoleGlobal), 0, 0);
     GraphicWin::fill(9);
 
-    RECT rect = {0x17, 0, 0x309, content_height};
-    Buffer &canvas = *static_cast<Buffer *>(this);
-    canvas.box_sprite(&rect, &InterfaceBoxStyles[9]);
-    canvas.box_sprite(&entry_update_rect_, &InterfaceBoxStyles[3]);
-    const RECT &special_left = topic_button_bounds_[16];
-    const RECT &special_right = topic_button_bounds_[17];
-    UnionRect(&rect, &special_right, &special_left);
+    rect.left = 0x17;
+    rect.top = 0;
+    rect.right = 0x309;
+    rect.bottom = content_height;
+    box_sprite(&rect, &InterfaceBoxStyles[9]);
+    box_sprite(&entry_update_rect, &InterfaceBoxStyles[3]);
+    UnionRect(&rect, &topic_button_bounds_[17], &topic_button_bounds_[16]);
     rect.left -= 3;
     rect.right += 3;
     rect.top -= 3;
     rect.bottom += 3;
-    canvas.box_sprite(&rect, &InterfaceBoxStyles[3]);
-    canvas.box_sprite(&category_rect_, &InterfaceBoxStyles[6]);
-    const RECT category_frame = {
-        static_cast<LONG>(field_103E4_), static_cast<LONG>(field_103E8_),
-        static_cast<LONG>(field_103EC_), static_cast<LONG>(field_103F0_)
-    };
-    UnionRect(&rect, &category_rect_, &category_frame);
+    box_sprite(&rect, &InterfaceBoxStyles[3]);
+    box_sprite(&category_rect_, &InterfaceBoxStyles[6]);
+    // WORKAROUND(type): 0x00429AD3 passes this+0x103E4 as one RECT to
+    // UnionRect and copies it whole at 0x00429B20; the header still spells
+    // it as four dwords.
+    UnionRect(&rect, &category_rect_, reinterpret_cast<RECT *>(&field_103E4_));
     rect.left -= 3;
     rect.right += 3;
     rect.top -= 3;
     rect.bottom += 3;
-    canvas.box_sprite(&rect, &InterfaceBoxStyles[3]);
-    rect = category_frame;
-    canvas.box_sprite(&rect, &InterfaceBoxStyles[6]);
+    box_sprite(&rect, &InterfaceBoxStyles[3]);
+    rect = *reinterpret_cast<RECT *>(&field_103E4_);
+    box_sprite(&rect, &InterfaceBoxStyles[6]);
     rect.left += 3;
+    rect.right -= 3;
     rect.top += 3;
     rect.bottom -= 3;
-    rect.right -= 3;
 
-    listBox_.close();
-    Dialog &dialog = listBox_;
-    dialog.init(&rect, static_cast<Heap *>(0));
+    listBox_.init(&rect, static_cast<Heap *>(0));
     listBox_.field_8_ = 1;
     listBox_.field_2C_ = 0;
-    dialog.field_44_ = 0;
-    dialog.field_B4_ = 0;
-    dialog.set_dialog_font(&font2_, 0, 0);
-    dialog.attach(static_cast<GraphicWin *>(this), rect.left, rect.top,
-                  0x1000020);
+    listBox_.field_44_ = 0;
+    listBox_.field_B4_ = 0;
+    listBox_.set_dialog_font(&font2_, 0, 0);
+    listBox_.attach(static_cast<GraphicWin *>(this), rect.left, rect.top,
+                    0x1000020);
     buttonGroup_.init(0, 0);
 
-    for (int i = 0; i < 16; ++i) {
+    for (i = 0; i < 16; ++i) {
         const RECT &row = topic_button_bounds_[i];
         topic_buttons_[i].init(label_get(0xb20 / 4 + i), i,
                                row.left, row.top, row.right - row.left,
@@ -3569,7 +3579,7 @@ void Datalink::init() {
         topic_buttons_[i].set_border_styles(&InterfaceBoxStyles[27],
                                              &InterfaceBoxStyles[28],
                                              &InterfaceBoxStyles[29]);
-        static_cast<Buffer &>(topic_buttons_[i]).set_font(
+        topic_buttons_[i].Buffer::set_font(
             &auxiliary_font4_, 0, 0, 0);
         topic_buttons_[i].redraw();
         topic_buttons_[i].hide();
@@ -3579,57 +3589,68 @@ void Datalink::init() {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x9c / 4));
     CharUpperA(StringTemp);
-    topic_buttons_[17].init(StringTemp, 0x11,
-                            special_right.left, special_right.top,
-                            special_right.right - special_right.left,
-                            special_right.bottom - special_right.top,
+    FlatButton *button = &topic_buttons_[17];
+    button->init(StringTemp, 0x11,
+                            topic_button_bounds_[17].left,
+                            topic_button_bounds_[17].top,
+                            topic_button_bounds_[17].right - topic_button_bounds_[17].left,
+                            topic_button_bounds_[17].bottom - topic_button_bounds_[17].top,
                             static_cast<Win *>(this), 0);
-    static_cast<Buffer &>(topic_buttons_[17]).set_font(
+    button->Buffer::set_font(
         &auxiliary_font4_, 0, 0, 0);
-    topic_buttons_[17].redraw();
-    topic_buttons_[17].hide();
+    button->redraw();
+    button->hide();
 
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0xa60 / 4));
     CharUpperA(StringTemp);
-    topic_buttons_[16].init(StringTemp, 0x10,
-                            special_left.left, special_left.top,
-                            special_left.right - special_left.left,
-                            special_left.bottom - special_left.top,
+    button = &topic_buttons_[16];
+    button->init(StringTemp, 0x10,
+                            topic_button_bounds_[16].left,
+                            topic_button_bounds_[16].top,
+                            topic_button_bounds_[16].right - topic_button_bounds_[16].left,
+                            topic_button_bounds_[16].bottom - topic_button_bounds_[16].top,
                             static_cast<Win *>(this), 0);
-    static_cast<Buffer &>(topic_buttons_[16]).set_font(
+    button->Buffer::set_font(
         &auxiliary_font4_, 0, 0, 0);
-    topic_buttons_[16].redraw();
-    topic_buttons_[16].hide();
+    button->redraw();
+    button->hide();
 
-    blurb_box_.init(interface_update_rect_.left + 3,
-                    interface_update_rect_.top + 3,
-                    interface_update_rect_.right - interface_update_rect_.left - 6,
-                    interface_update_rect_.bottom - interface_update_rect_.top - 6,
+    rect.left = interface_update_rect_.left + 3;
+    rect.top = interface_update_rect_.top + 3;
+    rect.right = interface_update_rect_.right - 3;
+    rect.bottom = interface_update_rect_.bottom - 3;
+    blurb_box_.init(rect.left, rect.top, rect.right - rect.left,
+                    rect.bottom - rect.top,
                     static_cast<Win *>(&MainInterfaceGlobal), 0, -1);
-    static_cast<Buffer &>(blurb_box_).set_font(&auxiliary_font8_, 0, 0, 0);
-    static_cast<Buffer &>(blurb_box_).set_text_color(0x98, -1, 1, 1);
-    static_cast<Buffer &>(blurb_box_).set_text_color2(0x96, -1, 1, 1);
-    static_cast<Buffer &>(blurb_box_).set_text_color_hyper(0x96, -1, 1, 1);
+    blurb_box_.Buffer::set_font(&auxiliary_font8_, 0, 0, 0);
+    blurb_box_.Buffer::set_text_color(0x98, -1, 1, 1);
+    blurb_box_.Buffer::set_text_color2(0x96, -1, 1, 1);
+    blurb_box_.Buffer::set_text_color_hyper(0x96, -1, 1, 1);
 
-    concept_box_.init(panel_rect_.left + 3, panel_rect_.top + 3,
-                      panel_rect_.right - panel_rect_.left - 6,
-                      panel_rect_.bottom - panel_rect_.top - 6,
+    rect.left = panel_rect_.left + 3;
+    rect.top = panel_rect_.top + 3;
+    rect.right = panel_rect_.right - 3;
+    rect.bottom = panel_rect_.bottom - 3;
+    concept_box_.init(rect.left, rect.top, rect.right - rect.left,
+                      rect.bottom - rect.top,
                       static_cast<Win *>(this), 0, -1);
-    static_cast<Buffer &>(concept_box_).set_font(&body_font_, 0, 0, &link_font_);
-    static_cast<Buffer &>(concept_box_).set_text_color(0x98, -1, 1, 1);
-    static_cast<Buffer &>(concept_box_).set_text_color2(0x96, -1, 1, 1);
-    static_cast<Buffer &>(concept_box_).set_text_color_hyper(0x96, -1, 1, 1);
+    concept_box_.Buffer::set_font(&body_font_, 0, 0, &link_font_);
+    concept_box_.Buffer::set_text_color(0x98, -1, 1, 1);
+    concept_box_.Buffer::set_text_color2(0x96, -1, 1, 1);
+    concept_box_.Buffer::set_text_color_hyper(0x96, -1, 1, 1);
 
-    detail_box_.init(lower_description_rect.left + 6,
-                     lower_description_rect.top + 6,
-                     lower_description_rect.right - lower_description_rect.left - 12,
-                     lower_description_rect.bottom - lower_description_rect.top - 12,
+    rect.left = lower_description_rect.left + 6;
+    rect.top = lower_description_rect.top + 6;
+    rect.right = lower_description_rect.right - 6;
+    rect.bottom = lower_description_rect.bottom - 6;
+    detail_box_.init(rect.left, rect.top, rect.right - rect.left,
+                     rect.bottom - rect.top,
                      static_cast<Win *>(this), 0, -1);
-    static_cast<Buffer &>(detail_box_).set_font(&body_font_, 0, 0, &link_font_);
-    static_cast<Buffer &>(detail_box_).set_text_color(0x98, -1, 1, 1);
-    static_cast<Buffer &>(detail_box_).set_text_color2(0x96, -1, 1, 1);
-    static_cast<Buffer &>(detail_box_).set_text_color_hyper(0x96, -1, 1, 1);
+    detail_box_.Buffer::set_font(&body_font_, 0, 0, &link_font_);
+    detail_box_.Buffer::set_text_color(0x98, -1, 1, 1);
+    detail_box_.Buffer::set_text_color2(0x96, -1, 1, 1);
+    detail_box_.Buffer::set_text_color_hyper(0x96, -1, 1, 1);
     (void)temporary_buffer;
 }
 
