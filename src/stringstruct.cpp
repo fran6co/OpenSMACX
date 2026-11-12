@@ -18,7 +18,7 @@
 
 // ORIGINAL: 0x00402C20 ??_GStringStructEntry@@UAEPAXI@Z 0x00402C20-0x00402C62 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original table installed by 401100 construction dispatches deletion through StringStructEntry allocation base at +0x14. This original body publishes saved Heap owner, conditionally frees the complete allocation and clears owner on deleting paths. Same-span seed retired; the complete original identity and spans remain on this compiled owner.", "Original construction at 401100 and typed deletion at 402970 establish the owning node lifecycle. The canonical source host is stringstruct.cpp; the compiler owns the virtual-base adjustment and deleting-flag entry.", "git:0e184947304cbb843b26264d5145e9b9b452cf16:src/recovered/units/00402c20.cpp", "Historical seed spelling sub_402c20; current source mapping ??_GStringStructEntry@@UAEPAXI@Z; emitted symbol ??_GStringStructEntry@@UAEPAXI@Z."], "reason": "Map the compiler-generated scalar deleting destructor emitted by actual list-node construction, not a handwritten wrapper. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
-// ORIGINAL: 0x00402C70 ??_GStringStructPayload@@UAEPAXI@Z 0x00402C70-0x00402CB2 FILE
+// ORIGINAL: 0x00402C70 ??_GStringStructPayload@@UAEPAXI@Z 0x00402C70-0x00402CB2 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original table installed by 401100 construction dispatches deletion through StringStructPayload allocation base at +0x10. This original body publishes saved Heap owner, conditionally frees the complete allocation and clears owner on deleting paths. Same-span seed retired; the complete original identity and spans remain on this compiled owner.", "Original construction at 401100 and typed deletion at 402970 establish the owning node lifecycle. The canonical source host is stringstruct.cpp; the compiler owns the virtual-base adjustment and deleting-flag entry.", "git:0e184947304cbb843b26264d5145e9b9b452cf16:src/recovered/units/00402c70.cpp", "Historical seed spelling sub_402c70; current source mapping ??_GStringStructPayload@@UAEPAXI@Z; emitted symbol ??_GStringStructPayload@@UAEPAXI@Z."], "reason": "Map the compiler-generated scalar deleting destructor emitted by actual list-node construction, not a handwritten wrapper. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
 // ORIGINAL: 0x004029F0 ??1StringStruct@@QAE@H@Z 0x004029F0-0x00402A56 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:stringstruct-lifecycle-coverage", "Pinned original0x4029f0", "historical seed:src/recovered/units/004029f0.cpp", "Real virtual-base construction and physical compiler-generated lifecycle symbols."], "reason": "Original allocation-base receiver adjustment, list teardown and owner-aware conditional deallocation belong to the real compiler-generated scalar deleting destructor. Source virtual inheritance, destructor and inherited operator delete supply lifetime; catalogue destructor spelling remains historical. No handwritten adjustment or assembly."}
@@ -145,7 +145,7 @@ inline void __cdecl operator delete(void *memory, StringStruct *) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // Historical seed observations (not fresh measurements or acceptance):
 // TRIED: alloc_entry_node/alloc_id_node/report_fatal helper functions factoring the repeated Heap::get-or-mem_get pattern; introduces real CALLs the inlined original does not have, diverges at insn #4
-// ORIGINAL: 0x00401100 ?add@StringStruct@@QAEHH@Z 0x00401100-0x00401513
+// ORIGINAL: 0x00401100 ?add@StringStruct@@QAEHH@Z 0x00401100-0x00401513 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original 401100 selects explicit allocator then inherited allocation owner then mem_get, constructs entry size1C and payload size18 with distinct virtual-base tables. Native construction replaces seed vptr writes; source class names remain interpretations.", "Original 4013B1 publishes the entry allocation into the old tail next link before the null test; 4012D2/4014DC publish null payloads before returning4. Insertion hook result is ignored; count and position update only after it returns. Same-span legacy seed retained."], "reason": "Recover circular-list insertion with real node construction and the original partial updates on allocation failure."}
 int StringStruct::add(int id) {
     if (entry_count_ == 0) {
@@ -207,7 +207,7 @@ inline void __cdecl operator delete(void *memory, SpriteListBase *) {
     }
 }
 
-// ORIGINAL: 0x00402550 SpriteStruct::add 0x00402550-0x00402963 FILE
+// ORIGINAL: 0x00402550 SpriteStruct::add 0x00402550-0x00402963 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:1240d9eead700ef28006f35018fca68d1123defd:src/leaf_recoveries.cpp", "pinned:SpriteList tables6708A0/6708A4;6116E0 calls611730 with virtual-baseview+28", "pinned:SpriteListBase tables66943C/669438 and list fields +8..+18; StringStruct independently uses 6693A4/6693A0", "source:src/spritebox.h;source:src/stringstruct.h", "source:recovery/tests/test_sprite_list_producer_actual_source.py"], "reason": "Recover SpriteList insertion through its sibling ring owner and distinct polymorphic string/sprite payload siblings, with compiler-owned virtual allocation-base lifetime. Combined constructor/destructor evidence supports the separate SpriteListBase owner model; the ring fields remain layout-compatible and separately owned. Historical identities, spans, claims and seed discoveries remain obligations. Producer partial-state behavior and null/error returns remain unchanged."}
 // symbol    ?add@SpriteList@@QAEHH@Z
 // Historical seed finding: TRIED fallback __stdcall(int) signature; native ECX/prologue supports thiscall
@@ -255,7 +255,7 @@ int SpriteList::add(int id) {
 // The 0x66943C/0x669438 primary/vbase stage is distinct from StringStruct's
 // 0x6693A4/0x6693A0 stage; shared ring layout does not imply inheritance.
 // 0x00611730 is the SpriteList lifecycle's expanded ring-cleanup body.
-// ORIGINAL: 0x00402BB0 sub_402bb0 0x00402BB0-0x00402C16 FILE
+// ORIGINAL: 0x00402BB0 sub_402bb0 0x00402BB0-0x00402C16 FILE BYTE_EXACT
 // kind game
 // symbol    ??_GSpriteListBase@@UAEPAXI@Z
 // Historical seed fact (inactive): size      102 bytes
