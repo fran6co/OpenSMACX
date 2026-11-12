@@ -170,6 +170,16 @@ The fix is a top-level `again: { … } goto again;`, or ending with a top-level
   4. Replace the probe with a natural spelling (getter, wrapper, `on_map`,
      accessor).
 
+  A probe sweep compiled to an object and read straight from the FuncInfo unwind
+  map, with no `recover measure`, answers three things in minutes: where spend
+  is missing, how much, and whether spend can fix the function at all. It
+  cannot when freed budget flows into the final teardown instead (make_gift:
+  the original caller was smaller, not costlier), or when the image calls a
+  helper out of line at every budget level (POP2/POP3's `next_entry`).
+  Natural spellings that supplied missing spend: `on_map`, `is_alive`,
+  `is_human`, per-site `label_get`, and header getters (`get_noun` through
+  `parse_set`). These made POP3 and pick_map's topology exact.
+
   Keep a dead probe (a static helper of chained `if (x == k) x = c;` called with
   a constant, which folds to zero code) only as `WORKAROUND(inline)` when no
   natural spelling is found.
@@ -205,6 +215,14 @@ for v in p[1:]:
   - A running index (`arr[i++]`) gives a saved base per level.
   - A real `T*` gives `jb`.
   - `(int)p < (int)end` gives `jl` but swaps registers.
+- **Column resets.** A grid loop that restarts its column variable in the outer
+  increment clause (`…, ++row, x = C`) shows as `mov reg, C` just before the
+  outer back-branch, and VC6 reuses that register as the literal C afterwards.
+- **Finding candidates.** True linear-subscript cases are rare. A census of
+  `cmp reg, <data address>; jl` outer back-edges with nested inner loops mostly
+  turns up budget, register or missing-code differences. A global table that
+  gives `jb` where the image has `jl` was one `int[N]` array declared as
+  separate globals; it needs a declaration change (load_interface).
 - **Increment order.** The for-clause order sets the order of increments.
   load_terrain became exact with this rule alone. SP3, VC5 and other `/O` flags
   all give the saved base, so this is a matter of source shape.
@@ -288,6 +306,12 @@ for v in p[1:]:
   shared tail.
 - **The image repeats a compare or reload VC6 would fold.** That is an inline
   helper boundary: wrap the subexpression in a small static inline.
+- **The diff reads as "a different program" (N instructions against M)** in a
+  function with `jmp [4*reg+table]`. The in-body jump table lacks its
+  `RECOVERY_ASSOCIATED: v1 switch_targets` annotation. Add it from the image's
+  table bounds before reading anything else into the diff.
+- **Raw `GenderDefault`/`PluralityDefault` store pairs.** Write `parse_set(...)`
+  or the header getter instead; the raw pair rotates registers in later code.
 - **The image calls `memcpy`/`memset` out of line.** Wrap the function in
   `#pragma function(...)` … `#pragma intrinsic(...)`.
 - **A `vector_dist`-style computation is inlined.** Write a two-level static
