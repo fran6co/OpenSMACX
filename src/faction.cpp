@@ -3611,11 +3611,11 @@ int __cdecl value_of_base(int base_id, int faction_id_req, int faction_id_res,
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0054cf40.cpp retains original identity/spans and contradictory scaffold history.", "Pinned full-span review and genuine Player/PlayerData/Base/Veh/Map declarations own the field interpretation; Popup uses the real C++ lifecycle.", "Related intervention50BA50/pact_withdraw53C370 bodies own the coupled helper behavior. Shared proposal cell93FAB0 and map outcome93FAD8 have native producer/consumer evidence; seed-only workflow producers remain explicit obligations."], "reason": "Recover this original diplomacy identity in its genuine faction owner, preserving typed game records, shared-state lifetimes and every seed obligation. This binding is not a byte or runtime claim."}
 void __cdecl give_a_base(int base_id, int new_owner) {
     int x = Bases[base_id].x;
-    int y = Bases[base_id].y;
     int old_owner = Bases[base_id].faction_id_current;
+    int y = Bases[base_id].y;
     for (int i = 0; i < 21; i++) {
-        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
+        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
         if (on_map(x_radius, y_radius)) {
             map_loc(x_radius, y_radius)->visibility |= 1 << new_owner;
             synch_bit(x_radius, y_radius, new_owner);
