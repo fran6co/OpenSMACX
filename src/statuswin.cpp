@@ -102,83 +102,166 @@ void StatusWin::UNK2() {
     ConsoleGlobal.cover_window_.Win::hide();
 }
 
+/*
+Purpose: Re-init the three status fonts when the screen size changed enough
+         to want a different point size, force default character spacing at
+         low resolution, redraw the whole status area, then invalidate the
+         union of three fixed-address rects on the main interface window.
+// ORIGINAL: 0x004B9EA0 ?redraw@StatusWin@@QAEXXZ 0x004B9EA0-0x004B9F7B BYTE_EXACT
+// size      219 bytes
+// prototype void (__thiscall ?redraw@StatusWin@@QAEXXZ)(StatusWin* this)
+// callers   17   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004B6570 0x005D5930 0x00618F40
+// indirect  0x004B9F56 0x004B9F65
+Return Value: n/a
+Status: Complete
+*/
+// WORKAROUND(inline): on_right_click (0x004B9010) expands this body at all
+// three of its call sites, which this unit's plain member does not reproduce;
+// the explicit inline is defined ahead of it, and sub_50f630's real call
+// (under inline_depth(0)) emits the out-of-line copy at 0x004B9EA0.
+inline void StatusWin::redraw() {
+    int sizeVal = (WinScreenWidth != 0x320) ? 0xC : 0xA;
+    if (sizeVal != font_size_) {
+        font_size_ = sizeVal;
+        font1_.init(DefaultFontFace, sizeVal, 0);
+        font2_.init(DefaultFontFace, sizeVal, 2);
+        font3_.init(DefaultFontFace, sizeVal, 1);
+    }
+    if (WinScreenWidth != 0x320) {
+        // font.h's `int unk_1_; // height offset? set outside of class
+        // function` - and THIS IS that outside setter. The offsets are the
+        // embedded Fonts' own starts (font1_ 0x1530, font2_ 0x1558, font3_
+        // 0x1580), so the int written is each Font's first member.
+        font1_.unk_1_ = 4;
+        font2_.unk_1_ = 4;
+        font3_.unk_1_ = 4;
+    }
+    draw_status(-1, -1, -1, -1, 0);
+    RECT localRect;
+    UnionRect(&localRect, &MainInterfaceGlobal.status_hit_rect(),
+              &MainInterfaceGlobal.status_right_rect());
+    UnionRect(&localRect, &localRect, &MainInterfaceGlobal.status_left_rect());
+    MainInterfaceGlobal.soft_update(&localRect);
+}
+
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x004B9010 0x004B9E30 0x004B9E8A 0x004B9659
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x004B9010 0x004B9DF8 0x004B9E30 0x004B965F
 // ORIGINAL: 0x004B9010 ?on_right_click@StatusWin@@QAEXHHH@Z 0x004B9010-0x004B9DF8;0x00659AA0-0x00659BCA
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x4b9010"], "reason": "Recover the full original operation using owned C++ members and base lifetimes; retain all original branches and expose unresolved callees instead of executing original-address forwarders."}
 void StatusWin::on_right_click(int x, int y, int) {
     PullDown menu;
     PopMenu display_menu;
     menu.init(0);
-    int object_index = -1;
-    int menu_id = -1;
-    if (spot_.check(x, y, &object_index, &menu_id) < 0) {
-        return;
-    }
-    if (menu_id == 3) {
-        display_menu.init();
-        display_menu.dialogs().item(label_get(0xFEC / 4), 0);
-        display_menu.dialogs().item(label_get(0xFF0 / 4), 1);
-        display_menu.dialogs().item(label_get(0xFF4 / 4), 2);
-        int screen_x, screen_y;
-        MainInterfaceGlobal.get_mouse_pos(&screen_x, &screen_y);
-        MainInterfaceGlobal.client_to_screen(&screen_x, &screen_y);
-        int choice = display_menu.exec(screen_x, screen_y, 0);
-        if (choice == 0 || choice == 1) {
-            field_15A8_ = choice == 0 ? 0 : -1;
-            draw_status(-1, -1, -1, -1, 0);
-        } else if (choice == 2) {
-            DatalinkMain.exec(9, 0);
+    // Neither out-parameter is seeded; a missed spot still offers Help.
+    int object_index;
+    int menu_id;
+    int base_id;
+    int screen_y, screen_x;
+    if (spot_.check(x, y, &object_index, &menu_id) >= 0) {
+        if (menu_id == 3) {
+            display_menu.init();
+            char *text = label_get(0xFEC / 4);
+            display_menu.dialogs().item(text, 0);
+            text = StringTable.get(Labels.strings_ptr[0xFF0 / 4]);
+            display_menu.dialogs().item(text, 1);
+            text = label_get(0xFF4 / 4);
+            display_menu.dialogs().item(text, 2);
+            MainInterfaceGlobal.get_mouse_pos(&screen_x, &screen_y);
+            MainInterfaceGlobal.client_to_screen(&screen_x, &screen_y);
+            const int choice = display_menu.exec(screen_x, screen_y, 0);
+            if (choice >= 0) {
+                switch (choice) {
+                case 0:
+                    field_15A8_ = 0;
+                    draw_status(-1, -1, -1, -1, 0);
+                    break;
+                case 1:
+                    field_15A8_ = -1;
+                    draw_status(-1, -1, -1, -1, 0);
+                    break;
+                case 2:
+                    DatalinkMain.exec(9, 0);
+                    break;
+                }
+            }
+            return;
         }
-        return;
-    }
-
-    int base_id = -1;
-    if (menu_id != 2) {
-        if (menu_id == 0 || menu_id == 10) {
-            if (menu_id == 10) object_index = ConsoleGlobal.selected_vehicle_;
-            menu.add_item(6, label_get(0x958 / 4));
-            menu.add_item(7, label_get(0x112C / 4));
-            if (GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) {
-                menu.add_item(90, label_get(0xDFC / 4));
-            }
-            menu.add_separator(99);
-        } else {
-            base_id = object_index;
-            int owner = Bases[base_id].faction_id_current;
-            if ((GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) || owner == ConsoleGlobal.faction_id_
-                || spying(owner) || (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[owner] & 1)) {
-                menu.add_item(5, label_get(0x894 / 4));
-            }
-            if (owner == ConsoleGlobal.faction_id_ || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) {
-                for (int action = 51; action <= 56; ++action) {
-                    StringTemp[0] = '\0';
-                    strcat(StringTemp, " ");
-                    strcat(StringTemp, label_get(0x898 / 4 + action - 51));
-                    if (action == 52) {
-                        strcat(StringTemp, " ");
-                        int production = Bases[base_id].queue_production_id[0];
-                        // This caller passes the facility name through Strings::get.
-                        // RulesFacility still types its stored string offset as LPSTR;
-                        // that shared type/loader disagreement needs coupled recovery.
-                        char *name = production < 0
-                            ? StringTable.get(Facility[-production].name)
-                            : VehPrototypes[production].veh_name;
-                        strcat(StringTemp, name);
-                    }
-                    menu.add_item(action, StringTemp);
+        if (menu_id != 2) {
+            if (menu_id == 0 || menu_id == 10) {
+                if (menu_id == 10) object_index = ConsoleGlobal.selected_vehicle_;
+                menu.add_item(6, label_get(0x958 / 4));
+                menu.add_item(7, label_get(0x112C / 4));
+                if (GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) {
+                    menu.add_item(90, label_get(0xDFC / 4));
                 }
                 menu.add_separator(99);
+            } else {
+                base_id = object_index;
+                if ((GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
+                    || Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_
+                    || spying(Bases[base_id].faction_id_current)
+                    || (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[Bases[base_id].faction_id_current] & 1)) {
+                    menu.add_item(5, StringTable.get(Labels.strings_ptr[0x894 / 4]));
+                }
+                if (Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_
+                    || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) {
+                ::clear();
+                strcat(StringTemp, BufferJoinSpace);
+                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x898 / 4]));
+                menu.add_item(51, StringTemp);
+                ::clear();
+                strcat(StringTemp, BufferJoinSpace);
+                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x89C / 4]));
+                strcat(StringTemp, BufferJoinSpace);
+                // This caller passes the facility name through Strings::get.
+                // RulesFacility still types its stored string offset as LPSTR;
+                // that shared type/loader disagreement needs coupled recovery.
+                const int production = Bases[base_id].queue_production_id[0];
+                strcat(StringTemp, production < 0
+                    ? StringTable.get(Facility[-production].name)
+                    : VehPrototypes[production].veh_name);
+                menu.add_item(52, StringTemp);
+                ::clear();
+                strcat(StringTemp, BufferJoinSpace);
+                strcat(StringTemp, label_get(0x8A0 / 4));
+                menu.add_item(53, StringTemp);
+                ::clear();
+                strcat(StringTemp, BufferJoinSpace);
+                strcat(StringTemp, label_get(0x8A4 / 4));
+                menu.add_item(54, StringTemp);
+                ::clear();
+                strcat(StringTemp, BufferJoinSpace);
+                strcat(StringTemp, label_get(0x8A8 / 4));
+                menu.add_item(55, StringTemp);
+                ::clear();
+                strcat(StringTemp, BufferJoinSpace);
+                strcat(StringTemp, label_get(0x8AC / 4));
+                menu.add_item(56, StringTemp);
+                menu.add_separator(99);
+                }
             }
         }
     }
     menu.add_item(20, label_get(0x8FC / 4));
     MainInterfaceGlobal.client_to_screen(&x, &y);
     menu.show(x, y, 0);
-    int selected = menu.get_selected_id();
-    bool network_blocked = IsMultiplayerNet &&
-        (ConsoleControlTurnActive || NetDaemonNet.channels_[1].payload_.flags
-         || NetDaemonNet.primary_state_.leading_words_[2]);
-    bool faction_blocked = IsMultiplayerNet &&
-        (NetDaemonNet.primary_state_.trailing_words_[6] & (1U << ConsoleGlobal.faction_id_));
+    // Only the signed upper bound is tested, as in the image (0x004B95EB).
+    const int slot = menu.get_selected();
+    const int selected = slot < 64 ? menu.item_id(slot) : -1;
+    int network_blocked;
+    int faction_blocked;
+    if (IsMultiplayerNet) {
+        network_blocked = ConsoleControlTurnActive || NetDaemonNet.channels_[1].payload_.flags
+            || NetDaemonNet.primary_state_.leading_words_[2];
+        faction_blocked = (1 << ConsoleGlobal.faction_id_)
+            & NetDaemonNet.primary_state_.trailing_words_[6];
+    } else {
+        faction_blocked = 0;
+        network_blocked = 0;
+    }
 
     switch (selected) {
     case 1:
@@ -193,6 +276,42 @@ void StatusWin::on_right_click(int x, int y, int) {
         break;
     case 5:
         TutWinBaseWindow.zoom(base_id, 0);
+        break;
+    case 51:
+        if (!network_blocked && !faction_blocked) {
+            TutWinBaseWindow.soft_zoom(base_id);
+            TutWinBaseWindow.production(0, 0);
+        }
+        break;
+    case 52:
+        if (!network_blocked && !faction_blocked) {
+            TutWinBaseWindow.soft_zoom(base_id);
+            TutWinBaseWindow.hurry();
+        }
+        break;
+    case 53:
+        if (!network_blocked && !faction_blocked) {
+            TutWinBaseWindow.soft_zoom(base_id);
+            TutWinBaseWindow.gov_on(0x1000000);
+        }
+        break;
+    case 54:
+        if (!network_blocked && !faction_blocked) {
+            TutWinBaseWindow.soft_zoom(base_id);
+            TutWinBaseWindow.gov_on(0x2000000);
+        }
+        break;
+    case 55:
+        if (!network_blocked && !faction_blocked) {
+            TutWinBaseWindow.soft_zoom(base_id);
+            TutWinBaseWindow.gov_on(0x4000000);
+        }
+        break;
+    case 56:
+        if (!network_blocked && !faction_blocked) {
+            TutWinBaseWindow.soft_zoom(base_id);
+            TutWinBaseWindow.gov_on(0x8000000);
+        }
         break;
     case 6:
         if (veh_selectable(object_index)) {
@@ -212,14 +331,6 @@ void StatusWin::on_right_click(int x, int y, int) {
         break;
     case 20:
         help_any();
-        break;
-    case 51: case 52: case 53: case 54: case 55: case 56:
-        if (!network_blocked && !faction_blocked) {
-            TutWinBaseWindow.soft_zoom(base_id);
-            if (selected == 51) TutWinBaseWindow.production(0, 0);
-            else if (selected == 52) TutWinBaseWindow.hurry();
-            else TutWinBaseWindow.gov_on(0x1000000 << (selected - 53));
-        }
         break;
     case 90:
         ConsoleGlobal.editor_edit_veh(object_index);
@@ -336,50 +447,13 @@ void StatusWin::reset() {
 // identity beyond what this one function shows. Now defined in statuswin.h,
 // where the internal linkage folds the address to the immediate in every TU.
 
-/*
-Purpose: Re-init the three status fonts when the screen size changed enough
-         to want a different point size, force default character spacing at
-         low resolution, redraw the whole status area, then invalidate the
-         union of three fixed-address rects on the main interface window.
-// ORIGINAL: 0x004B9EA0 ?redraw@StatusWin@@QAEXXZ 0x004B9EA0-0x004B9F7B BYTE_EXACT
-// size      219 bytes
-// prototype void (__thiscall ?redraw@StatusWin@@QAEXXZ)(StatusWin* this)
-// callers   17   call targets   3
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x004B6570 0x005D5930 0x00618F40
-// indirect  0x004B9F56 0x004B9F65
-Return Value: n/a
-Status: Complete
-*/
-void StatusWin::redraw() {
-    int sizeVal = (WinScreenWidth != 0x320) ? 0xC : 0xA;
-    if (sizeVal != font_size_) {
-        font_size_ = sizeVal;
-        font1_.init(DefaultFontFace, sizeVal, 0);
-        font2_.init(DefaultFontFace, sizeVal, 2);
-        font3_.init(DefaultFontFace, sizeVal, 1);
-    }
-    if (WinScreenWidth != 0x320) {
-        // font.h's `int unk_1_; // height offset? set outside of class
-        // function` - and THIS IS that outside setter. The offsets are the
-        // embedded Fonts' own starts (font1_ 0x1530, font2_ 0x1558, font3_
-        // 0x1580), so the int written is each Font's first member.
-        font1_.unk_1_ = 4;
-        font2_.unk_1_ = 4;
-        font3_.unk_1_ = 4;
-    }
-    draw_status(-1, -1, -1, -1, 0);
-    RECT localRect;
-    UnionRect(&localRect, &MainInterfaceGlobal.status_hit_rect(),
-              &MainInterfaceGlobal.status_right_rect());
-    UnionRect(&localRect, &localRect, &MainInterfaceGlobal.status_left_rect());
-    MainInterfaceGlobal.soft_update(&localRect);
-}
-
+// WORKAROUND(noinline): redraw is an explicit inline defined above; this
+// non-original redirect keeps the real call.
+#pragma inline_depth(0)
 void __fastcall status_win_redraw_redirect(StatusWin *self, void *) {
     self->redraw();
 }
+#pragma inline_depth(8)
 
 // The process-wide status window, 0x008C5568 in the image - REAL STORAGE, not
 // the `StatusWin *const ConsoleStatusWin` binding that named terranx.exe data
@@ -1060,7 +1134,8 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
 
     if (base_id < 0 && vehicle_id >= 0) {
         MainInterfaceGlobal.set_clip(&area);
-        veh_draw(&MainInterfaceGlobal, vehicle_id,
+        Buffer *buffer = &MainInterfaceGlobal;
+        veh_draw(buffer, vehicle_id,
                  (area.right - (MapWinCaptionScale > 0
                      ? MapWinCaptionScale * 100 / MapWinCaptionDivisor : 75)
                   - area.left) / 2 + content_x,
@@ -2140,10 +2215,14 @@ void StatusWin::init() {
 // ORIGINAL: 0x0050F630 sub_50f630 0x0050F630-0x0050F640 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:3f7fc8f78d783f09c46cddc646c31c2f5eb6d013:src/recovered/0050f630.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x50f630 complete original body; independent source-owner review.", "source:src/statuswin.cpp and corresponding header own real receiver/dependencies; count-zero copy underflow is intentionally unchanged."], "reason": "Complete typed application helper; retain original call ordering, argument contract and historical obligation."}
 // symbol    ?sub_50f630@@YGXH@Z
+// WORKAROUND(noinline): the image calls 0x004B9EA0 here; redraw is an
+// explicit inline defined earlier in this unit (see on_right_click).
+#pragma inline_depth(0)
 void __stdcall sub_50f630(int unused) {
     (void)unused;
     ConsoleStatusWin.redraw();
 }
+#pragma inline_depth(8)
 
 // ORIGINAL: 0x00515430 sub_515430 0x00515430-0x00515443 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/00515430.cpp", "task:owned-helper-coverage-batch", "StatusFlags939ED8 is already owned by statuswin.cpp; native515430 clears it before desktop_init(1)."], "reason": "Recover a complete native helper through genuine source owners and SDK calls, preserving original identity, extent and historical obligations. Source home is not proof of original TU or complete-game acceptance."}
