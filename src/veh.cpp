@@ -1295,16 +1295,6 @@ static_assert(offsetof(ProtoBung, chassis_id) == 4,
 // RECOVERY_OBJECT: v2 0x0094B558 0x0094C558 _BungList 0x0057DF00
 ProtoBung BungList[8][64];
 
-bool veh_bung_copy_chunk(size_t offset, unsigned char *packet, size_t count,
-                         bool packet_to_owner) {
-    if (count == 0) return true;
-    unsigned char *owner = reinterpret_cast<unsigned char *>(&BungList);
-    const uint32_t native_offset = static_cast<uint32_t>(offset);
-    if (packet_to_owner) memmove(owner + native_offset, packet, count);
-    else memmove(packet, owner + native_offset, count);
-    return true;
-}
-
 /*
 Purpose: Empty one faction's prototype-design run.
 // ORIGINAL: 0x0057DF00 ?clear_bunglist@@YAXH@Z 0x0057DF00-0x0057DF2F BYTE_EXACT

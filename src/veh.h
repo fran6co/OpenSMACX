@@ -26,9 +26,6 @@ int __cdecl is_bunged(int faction_id, int chassis_id, int weapon_id,
                        int armor_id, int ability_flags, int reactor_id);
 void __cdecl clear_bunglist(int faction_id);
 void __cdecl proto_bung_put(int faction_id, int proto_id);
-// Bounded network access to the genuine prototype-history owner.
-bool veh_bung_copy_chunk(size_t offset, unsigned char *packet, size_t count,
-                         bool packet_to_owner);
 // WORKAROUND(decl): a visible ProtoBung definition flips a register tie in
 // console_commands.cpp corner_the_market (0x004E2000, BYTE_EXACT -> MNEMONIC_ONLY)
 // in any position of this header; only its owner veh.cpp and game_data's

@@ -6903,8 +6903,9 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
                 RulesTerraforming *stage =
                     reinterpret_cast<RulesTerraforming *>(NetDaemonRulesSyncStaging);
                 for (int k = 0; k < MaxTerrainNum; k++, stage++) {
-                    Terraforming[k].prerequisite_tech[0] = stage->prerequisite_tech[0];
-                    Terraforming[k].prerequisite_tech[1] = stage->prerequisite_tech[1];
+                    for (int j = 0; j < 2; j++) {
+                        Terraforming[k].prerequisite_tech[j] = stage->prerequisite_tech[j];
+                    }
                     Terraforming[k].bit = stage->bit;
                     Terraforming[k].bit_incompatible = stage->bit_incompatible;
                     Terraforming[k].rate = stage->rate;
@@ -6995,9 +6996,14 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
                 for (int k = 0; k < MaxCitizenNum; k++, stage++) {
                     Citizen[k].preq_tech = stage->preq_tech;
                     Citizen[k].obsol_tech = stage->obsol_tech;
-                    Citizen[k].ops_bonus = stage->ops_bonus;
-                    Citizen[k].psych_bonus = stage->psych_bonus;
-                    Citizen[k].research_bonus = stage->research_bonus;
+                    // WORKAROUND(type): the image copies the three bonuses with
+                    // an unrolled three-step loop (0x00533EB8), so the original
+                    // member was an int[3]; RulesCitizen keeps the named
+                    // fields because an anonymous-union int[3] view in base.h
+                    // flips five BYTE_EXACT claims in other units.
+                    for (int j = 0; j < 3; j++) {
+                        (&Citizen[k].ops_bonus)[j] = (&stage->ops_bonus)[j];
+                    }
                 }
                 break;
             }

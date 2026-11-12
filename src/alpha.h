@@ -814,6 +814,11 @@ __forceinline LPSTR __cdecl label_get(int label_offset) {
 }
 
 
+// WORKAROUND(decl): these two declarations name helpers that no longer exist
+// (NetDaemon::synch now does its own rule compaction). Removing them flips
+// corner_the_market (0x004E2000) and action_give (0x004CEDE0) from BYTE_EXACT
+// to MNEMONIC_ONLY; keep them until the header's original declaration set is
+// reconstructed.
 namespace NetDaemonSyncRules {
 bool copy_rule_wire_chunk(int opcode, size_t offset, unsigned char *chunk,
                           size_t count, bool packet_to_owner,
