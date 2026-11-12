@@ -78,6 +78,11 @@ preservation. Never fix an original bug. Read `AGENTS.md` ("Current mode" and
 Tooling traps:
 - `pgrep -f <pat>` and `pkill -f <pat>` match the waiting shell itself; wait on a
   PID or an output file.
+- `llvm-objdump` mis-decodes VC6 objects at `.lf`/`.ef` symbols: disassemble a
+  *copy* stripped of them (`llvm-objcopy -w --strip-symbol=.lf
+  --strip-symbol=.ef in out`, never in place on a qualified input).
+- In callers of thousands of instructions, flat probes grow the budget as much
+  as they spend; use branchy probes to measure missing spend.
 - `/tmp` is a small tmpfs; keep large output under the worktree's `build/`.
 - `permute --candidates` can give identical distances for variants that
   `measure` scores differently (extent-mismatched functions); confirm with
@@ -220,6 +225,12 @@ arms both return; end the function with that if/else, not a trailing return
   For a deep closing-brace teardown with a shallow teardown laid out last,
   write `if (A) { ... } else { ...; return; }` (NetMsg::pop).
 
+  One-expression inlines (is_human, map_tiles) spend nothing; large single
+  branchy chains used once or twice may spend nothing either. What moved
+  tech_achieved's five early sites was the *number* of cheap branchy
+  expansions after the last early return (about two per site), independent
+  of their position.
+
   Keep a dead probe (a static helper of chained `if (x == k) x = c;` called with
   a constant, which folds to zero code) only as `WORKAROUND(inline)` when no
   natural spelling is found.
@@ -341,6 +352,15 @@ for v in p[1:]:
   (prune_protos moved 135 instructions).
 - **Nested call results.** A nested cdecl call made before the outer call's
   constant pushes was stored to a local first.
+- **An unreferenced literal** inside a unit's unpooled literal run, between
+  referenced neighbours, is source text in a branch VC6 folded away: evidence
+  that the text was written out at that site, not in a helper.
+- **`label_get(c ? a : b)`** compiles to setl/dec/and/add index arithmetic;
+  two branch loads joined before one get call is
+  `StringTable.get(c ? Labels.strings_ptr[a] : Labels.strings_ptr[b])`.
+- **`cmp reg,1; jle` back-edges** come from `j <= 1`; `j < 2` gives `cmp 2; jl`.
+- **A byte test of `enable_mask_` against `1 << f`** is `is_human(f)`
+  (human_mask_ is byte 0 of that union).
 - **One literal address pushed several times** in an unpooled image function
   is a named global string object (SocialWinColonSpaceText, BufferJoinSpace),
   not a literal. Conversely, identical literals the image keeps separate but
@@ -401,6 +421,8 @@ for v in p[1:]:
   - Unreferenced labels change layout.
   - `while(1){ if(x) break; … }` is the only non-rotated loop.
   - `default:` is placed last.
+  - A block reached only by gotos was usually written inline at its *first*
+    unconditional goto in source order (order_veh's 59512c block).
   - A goto target is placed after the *last* goto that reaches it, whatever
     the source order. For an image block that an earlier arm falls into and
     later arms jump back to, have the later arms set a flag the join tests
