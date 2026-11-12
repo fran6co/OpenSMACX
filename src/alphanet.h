@@ -75,7 +75,17 @@ class AlphaNetStringStruct : public virtual StringAllocationBase {
   typedef NetAllocationNode Payload;
   int add(int id);
   void sort_sessions();
+#ifdef ALPHANET_REMOVE_ALL_CALLED
+  // WORKAROUND(noinline): AlphaNet::join calls the list drain out of line
+  // (0x004E2F0C, 0x004E3126 -> 0x00402970, the folded StringStruct body)
+  // while the destructors this unit emits (0x00401CE0, 0x004E3350) expand
+  // it; join's unit sees remove_all() as a declaration and the destructors
+  // use this twin.
+  void remove_all();
+  void remove_all_walk() {
+#else
   void remove_all() {
+#endif
     if (head_ != 0) {
       for (int removed = 0; removed < entry_count_; ++removed) {
         current_ = head_->next_;
@@ -92,6 +102,12 @@ class AlphaNetStringStruct : public virtual StringAllocationBase {
       entry_count_ = 0;
     }
   }
+#ifdef ALPHANET_REMOVE_ALL_CALLED
+  void close_walk() {
+    remove_all_walk();
+    current_position_ = 0;
+  }
+#endif
   // Destructor cleanup; same inline split as ServiceProviderList::close.
   void close() {
     remove_all();
@@ -107,7 +123,11 @@ class AlphaNetStringStruct : public virtual StringAllocationBase {
   Heap *allocator_;
 
   inline AlphaNetStringStruct();
+#ifdef ALPHANET_REMOVE_ALL_CALLED
+  ~AlphaNetStringStruct() { close_walk(); }
+#else
   ~AlphaNetStringStruct() { close(); }
+#endif
 
  private:
   // At original 0x005D4AB8, sort_sessions sets ECX from its saved ESI
@@ -149,7 +169,11 @@ class AlphaNetLedger : public AlphaNetStringStruct {
   // RECOVERY_GENERATED: v1 vtable 0x0066EAE8 0x0066EAF0 ??_7AlphaNetLedger@@6BAlphaNetStringStruct@@@ 0x004E2490
   virtual int on_insert(NetAllocationNode *payload);
   virtual void on_remove(NetAllocationNode *payload);
+#ifdef ALPHANET_REMOVE_ALL_CALLED
+  ~AlphaNetLedger() { close_walk(); }
+#else
   ~AlphaNetLedger() { close(); }
+#endif
 
   // Original enumeration 0x00630C30 passes DPSESSIONDESC2's name, instance
   // GUID, flags, maximum/current player counts and password at these offsets.

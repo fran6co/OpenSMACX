@@ -429,10 +429,11 @@ void MessageWin::init() {
     }
     scratch.close();
 
-    bounds_ = MainInterfaceGlobal.message_bounds_;
+    RECT *rect = &bounds_;
+    *rect = MainInterfaceGlobal.message_bounds_;
 
     listBox_.close();
-    listBox_.Dialog::init(&bounds_, static_cast<Heap *>(0));
+    listBox_.Dialog::init(rect, static_cast<Heap *>(0));
     listBox_.Dialog::field_38_ = 3;
     listBox_.Dialog::field_3C_ = 3;
     listBox_.Dialog::field_6C_ = 0;
@@ -442,13 +443,13 @@ void MessageWin::init() {
     listBox_.set_dialog_text_color2(255, -1, 1, 1);
     listBox_.set_dialog_text_color3(255, -1, 1, 1);
     listBox_.Dialog::field_4C_ = 1;
-    listBox_.Dialog::field_48_ = (bounds_.bottom - bounds_.top) / 5;
-    listBox_.Dialog::field_34_ = (bounds_.bottom - bounds_.top) / 4;
+    listBox_.Dialog::field_48_ = (rect->bottom - rect->top) / 5;
+    listBox_.Dialog::field_34_ = (rect->bottom - rect->top) / 4;
     listBox_.set_callbacks(&MessageWin::listbox_draw,
                            &MessageWin::listbox_write,
                            &MessageWin::listbox_fill);
     listBox_.Dialog::field_B4_ = 0;
-    listBox_.attach(&MainInterfaceGlobal, bounds_.left, bounds_.top, 0x1000000);
+    listBox_.attach(&MainInterfaceGlobal, rect->left, bounds_.top, 0x1000000);
     ConsoleGlobal.message_count_ = 0;
 }
 

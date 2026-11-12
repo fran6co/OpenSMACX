@@ -28,6 +28,8 @@
 // ORIGINAL: 0x004E31E0 ?setup@AlphaNet@@QAEHH@Z 0x004E31E0-0x004E32BA FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004e31e0.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Existing actual LobbyAppGuid689218 and provider selection/setup state."}
 // symbol    ?setup@AlphaNet@@QAEHH@Z
+#define ALPHANET_REMOVE_ALL_CALLED
+#define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
 #include "stdafx.h"
 #include "alphanet.h"
 #include "spritebox.h"
@@ -349,6 +351,16 @@ int AlphaNet::create() {
     return NetDaemonNet.local_player_id();
 }
 
+// WORKAROUND(inline): the image reads the ledger cursor through the list
+// receiver (0x004E2FC3..0x004E2FCA via ESI), an inline accessor's shape.
+static inline NetAllocationNode *alphanet_ledger_payload(AlphaNetStringStruct *list) {
+    return list->head_ != 0 ? list->current_->payload_ : 0;
+}
+
+static inline char *alphanet_ledger_name(AlphaNetStringStruct *list) {
+    return list->current_ != 0 ? alphanet_ledger_payload(list)->session_name_ : 0;
+}
+
 int AlphaNet::join() {
     Popup popup;
     prefs_get("Net Name", "---", 0);
@@ -356,43 +368,44 @@ int AlphaNet::join() {
     if (x_pop_caption_value_flags(AlphaNetJoinScript, "NETCONNECT_JOIN", 0x1F, 0x44, 0) == -1) return 0;
     prefs_put("Net Name", ParseStrBuffer[0].str);
     int selected;
-    do {
-        for (;;) {
-            ledger_.remove_all();
-            ledger_.current_position_ = 0;
-            ledger_.allocator_ = 0;
-            NetDaemonNet.enumerate_sessions(&ledger_, 0);
-            if (ledger_.entry_count_ != 0) break;
-            X_pop(AlphaNetNoSessionsScript, "NETCONNECT_SESSION_NOT_FOUND", 0);
-            if (ConsoleGroupAction != 1) return 0;
-        }
-        popup.start(AlphaNetSessionsScript, "NETCONNECT_SESSIONS", -1, 0, 0x42, nullptr);
-        ledger_.seek_pos(-1);
-        for (int row = 0; row < ledger_.entry_count_; ++row) {
-            ledger_.next_entry();
-            char *name;
-            if (ledger_.current_ == 0) name = 0;
-            else {
-                NetAllocationNode *payload = ledger_.head_ == 0 ? 0 : ledger_.current_->payload_;
-                name = payload->session_name_;
-            }
-            popup.dialogs().Dialogs::item(name, row);
-        }
-        selected = popup.exec(0, 0);
-        if (selected < 0) break;
-    } while (popup.input_poll_state() == 1);
-    // Original 4E3006 branches negative cancellation directly to 4E311C.
-    // Seek only in the nonnegative join arm; cancellation must not alter the
-    // cursor before removal hooks, or evaluate abs(INT_MIN).
-    int result;
+again:
+    {
+        AlphaNetStringStruct *list = &ledger_;
+        list->remove_all();
+        list->current_position_ = 0;
+        list->allocator_ = 0;
+    }
+    NetDaemonNet.enumerate_sessions(&ledger_, 0);
+    if (ledger_.entry_count_ == 0) {
+        X_pop(AlphaNetNoSessionsScript, "NETCONNECT_SESSION_NOT_FOUND", 0);
+        if (ConsoleGroupAction != 1) return 0;
+        goto again;
+    }
+    popup.start(AlphaNetSessionsScript, "NETCONNECT_SESSIONS", -1, 0, 0x42);
+    ledger_.seek_pos(-1);
+    for (int row = 0; row < ledger_.entry_count_; ++row) {
+        ledger_.next_entry();
+        popup.item(alphanet_ledger_name(&ledger_), row);
+    }
+    selected = popup.exec();
+    // Original 4E3006 branches negative cancellation directly to 4E311C;
+    // cancellation must not alter the cursor before removal hooks.
+    if (selected < 0) goto cancel;
+    if (popup.input_poll_state() == 1) goto again;
+    ledger_.seek_pos(selected);
     if (selected >= 0) {
-        ledger_.seek_pos(selected);
-        NetAllocationNode *session = ledger_.head_ == 0 ? 0 : ledger_.current_->payload_;
-        result = NetDaemonNet.join_session(session, ParseStrBuffer[0].str, 0);
-    } else result = 0;
-    ledger_.remove_all();
-    ledger_.current_position_ = 0;
-    return result;
+        selected = NetDaemonNet.join_session(alphanet_ledger_payload(&ledger_), ParseStrBuffer[0].str, 0);
+    } else {
+cancel:
+        selected = 0;
+    }
+    // WORKAROUND(inline): two dead budget probes give the closing ~Popup the
+    // image's depth (EH predecessor tuples equal with them, one level deep
+    // without); the natural spend is still unknown.
+    pick_service_probe(0);
+    pick_service_probe(0);
+    ledger_.close();
+    return selected;
 }
 
 int AlphaNet::setup(int option) {
@@ -434,3 +447,11 @@ ServiceList::~ServiceList() {
     close();
 }
 #pragma optimize("", on)
+
+// Drain for this unit's explicit callers (see alphanet.h); the image's copy
+// is the linker-folded StringStruct body at 0x00402970. Defined after join
+// so its calls stay out of line; `inline` keeps it a pick-any COMDAT beside
+// the other units' expansions.
+inline void AlphaNetStringStruct::remove_all() {
+    remove_all_walk();
+}
