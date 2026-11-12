@@ -79,7 +79,8 @@ Tooling traps:
 - `pgrep -f <pat>` and `pkill -f <pat>` match the waiting shell itself; wait on a
   PID or an output file.
 - `/tmp` is a small tmpfs; keep large output under the worktree's `build/`.
-- Editing the permuted file mid-run stops `permute` (`inputs_changed`).
+- Editing *any* source file in the worktree mid-run stops `permute`
+  (`inputs_changed`), not only the permuted one.
 - Body comments must not contain the word `ORIGINAL`.
 - `recover measure` refuses backslash-continued macros.
 - `measure` similarity uses difflib autojunk, which underrates functions above
@@ -180,9 +181,18 @@ The fix is a top-level `again: { … } goto again;`, or ending with a top-level
   `is_human`, per-site `label_get`, and header getters (`get_noun` through
   `parse_set`). These made POP3 and pick_map's topology exact.
 
+  When a sweep leaves almost every placement unchanged (crash_landing: 352 of
+  377 variants identical), spend is not the cause; look for an over-sized
+  caller or a header-level inline difference (which helper copy a teardown
+  calls) instead.
+
   Keep a dead probe (a static helper of chained `if (x == k) x = c;` called with
   a constant, which folds to zero code) only as `WORKAROUND(inline)` when no
   natural spelling is found.
+- **Two destructor stages walking one inline body** (StringList's ~StringList
+  and ~StringStruct): a budget covering one expansion picks the first stage;
+  slightly less (about 4 probe units more spent) moves it to the final stage.
+  Fix it with a natural spending helper, not a header change.
 - **Hand-copied helper bodies.** Raw `has_treaty` tests or hand-inlined writers
   inflate each caller's own size, so every teardown expands one level too deep
   (call_off_vendetta had 48 states against 22). Restore the helper calls
@@ -252,6 +262,15 @@ for v in p[1:]:
   Gate new bodies per TU (`#ifdef`, tagged `WORKAROUND(decl)`), and keep a
   header change only when the scoped `check-matches --since` shows gains and no
   losses.
+- **Extern-name count.** Codegen in a TU depends on how many *distinct* extern
+  variable names it declares; the names and their lengths don't matter, and
+  repeated declarations and enumerators don't count (action_give stays exact
+  with 6–7 PopupTheme* names, flips with 1–5; one extra name flips
+  base_production, pop_click, sat_attack). When merging globals into an array,
+  let the array declaration replace one old declaration and keep the rest as
+  `WORKAROUND(decl)` declarations shadowed by element macros, then compare
+  every TU's objects function by function (the IfaceColorTable change touched
+  only load_interface).
 - **Include position.** A header's position in the include order can flip ties
   even when it arrives later anyway. Dropping an unused direct include is a
   faithful lever.
@@ -271,6 +290,11 @@ for v in p[1:]:
   (prune_protos moved 135 instructions).
 - **Nested call results.** A nested cdecl call made before the outer call's
   constant pushes was stored to a local first.
+- **Strict refusal with a masked BYTE_EXACT.** "strict selected evidence
+  result: unknown" while `masked_verdict` is BYTE_EXACT usually means a system
+  import relocation lacks its `RECOVERY_IMPORT` binding; functions with
+  `RECOVERY_ASSOCIATED` always take the strict path. Also check
+  `rebind-literals` first (renumbered `$SG`).
 - **Missing `void`.** An `int` function with a separate epilogue at each exit and
   no zero register was `void`. The catalogue's mangled return type can be wrong.
 - **StringList locals.** In drawer functions they call
@@ -288,6 +312,11 @@ for v in p[1:]:
 - **Frame too large by N×4.** If the image shows unrelated values sharing a
   slot, move setup-only locals into the mutually exclusive block that uses them
   so they overlap (sub_5cc940's frame became exact).
+- **Tail duplication.** VC6 copies a small shared `fail:` tail into a
+  predecessor only when that predecessor ends in an unconditional `goto`; a
+  conditional `if (x) goto fail;` jumps to the shared copy. For an image's
+  private copy with the status store after the receiver set-up, write
+  `{ const int r = f(); if (r) { status = r; goto fail; } }` (Video::load).
 - **Throwing CRT calls.** VC6 treats CRT `memset` as throwing and a same-TU
   callee without throwing calls as nothrow, which shows in constructor unwind
   states.
@@ -299,6 +328,10 @@ for v in p[1:]:
   - Unreferenced labels change layout.
   - `while(1){ if(x) break; … }` is the only non-rotated loop.
   - `default:` is placed last.
+  - In a jump-table switch, only case source order moves case blocks;
+    rewriting `break`/`goto`/`default` structure compiles identically. A case
+    table read straight from the image also catches swapped case bodies
+    (CouncWin::draw_leader had five label cases reversed).
   - Switch cases follow source order; out-of-order cases make strict measurement
     refuse with a jump-table cell diagnostic.
 
@@ -324,6 +357,11 @@ for v in p[1:]:
   table bounds before reading anything else into the diff.
 - **Raw `GenderDefault`/`PluralityDefault` store pairs.** Write `parse_set(...)`
   or the header getter instead; the raw pair rotates registers in later code.
+  The register of a following `lea` of a leader field follows the spelling:
+  raw stores then `strcat(..., Players[f].title_leader)` give edx; a named local
+  assigned after the stores gives eax; one assigned before the stores gives
+  ecx. An image span equal to an accessor's body does not prove the accessor
+  was a header inline (get_title/get_name as faction.h inlines were rejected).
 - **The image calls `memcpy`/`memset` out of line.** Wrap the function in
   `#pragma function(...)` … `#pragma intrinsic(...)`.
 - **A `vector_dist`-style computation is inlined.** Write a two-level static
@@ -333,6 +371,10 @@ for v in p[1:]:
 - **Operand order of commutatives.** For `a + b` of globals, VC6 loads `b` first.
   For `f(a) OP f(b)` it calls the right side first. It canonicalises
   `(a + b) / 2`.
+- **Commutative order through a pointer local.** VC6 canonicalises
+  `(m.left + m.right) / 2` on directly read members, so swapping operands does
+  nothing; reading through `RECT *r = &m;` gives the other load order with
+  otherwise identical code (draw_reactor became exact).
 - **Locals and declaration order.** Declaration order of locals loaded from one
   struct sets load and slot order. A named local takes a callee-saved register,
   while an unnamed temporary spills.
@@ -345,6 +387,9 @@ for v in p[1:]:
   after `test eax,eax`.
 - **`cmp eax,<zero register>` where we emit `test eax,eax`.** Store the call
   result in a named local.
+- **Canonicalised forms (not levers).** `f(a) < f(b)` and its mirrored or
+  negated forms give the same call order; `a * b` vs `b * a` compile
+  identically.
 - **Spill reloads in exactly reversed order** at loop boundaries: a known
   blocker, so skip.
 
