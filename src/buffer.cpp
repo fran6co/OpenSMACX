@@ -42,7 +42,6 @@ static char BufferPcxLoadSuffix[] = ".pcx";
 #include "graphicwin.h"
 #include "filemap.h"
 #include "font.h"
-#include "font_metrics.h"
 #include "general.h"   // mem_get, for the link labels this owns
 #include "palette.h"
 #include "rectangle_operations.h"  // inline rectangle builder
@@ -455,8 +454,7 @@ int Buffer::draw_pie(RECT *area, int first_color, int second_color,
             remap.right = static_cast<int>(radius) + center_x;
         }
     }
-    remap.top += thickness;
-    remap.bottom += thickness;
+    offset_rect(&remap, 0, thickness);
     // get_hdc itself performs the one native locked-pixels query. The seed
     // prequery followed by get_hdc would incorrectly call the virtual twice.
     HDC dc = get_hdc();
@@ -468,13 +466,15 @@ int Buffer::draw_pie(RECT *area, int first_color, int second_color,
     HGDIOBJ old_brush = SelectObject(dc, first_brush);
     HGDIOBJ null_pen = GetStockObject(NULL_PEN);
     HGDIOBJ old_pen = SelectObject(dc, null_pen);
-    area->bottom += thickness;
-    area->top += thickness;
-    SelectObject(dc, amount * 4 < total ? second_brush : first_brush);
+    offset_rect(area, 0, thickness);
+    if (amount * 4 < total) {
+        SelectObject(dc, second_brush);
+    } else {
+        SelectObject(dc, first_brush);
+    }
     Pie(dc, area->left, area->top, area->right, area->bottom,
         area->right, area->top, area->right, area->top);
-    area->bottom -= thickness;
-    area->top -= thickness;
+    offset_rect(area, 0, -thickness);
     RECT strip;
     SetRect(&strip, area->left, center_y, width + area->left, center_y + thickness);
     fill(&strip, amount * 4 < total ? second_color : first_color);
@@ -1238,9 +1238,9 @@ void Buffer::free_data(int count) {
 Purpose: Report the line height of the buffer's primary font, falling back to
          the global default font when none is set.
 // ORIGINAL: 0x005DCAB0 ?text_line_height@Buffer@@QAEHXZ 0x005DCAB0-0x005DCADB BYTE_EXACT
-// LEVER: branch polarity - image falls through to the override-add case and
-//        jumps AWAY to the no-override case at the end; `if (>= 0) { add }
-//        return { no override }` matches, `if (< 0) return` inverted it.
+// The body returns Font::line_advance (0x005E3650), expanded here: where
+// a caller's /Ob2 budget is spent (write_strings_height's head) the image
+// expands this function but calls 0x005E3650 out of line.
 // size      43 bytes
 // prototype int (__thiscall ?text_line_height@Buffer@@QAEHXZ)(Buffer* this)
 // callers   21   call targets   0
@@ -1254,15 +1254,7 @@ int Buffer::text_line_height() {
     if (!fonts_[0]) {
         fonts_[0] = FontDefault;
     }
-    const Font *const font = fonts_[0];
-    const int height_override = font->unk_1_;
-    if (height_override >= 0) {
-        return static_cast<int>(
-            static_cast<uint32_t>(font->height_)
-            + static_cast<uint32_t>(height_override));
-    }
-    // No override: the font's own line height already includes leading.
-    return font->line_height_;
+    return fonts_[0]->line_advance();
 }
 
 
@@ -5679,34 +5671,18 @@ int Buffer::wrap_cent(char * text, int x_coord, int y_coord, int width) {
     BufferStrHeight = 0;
     field_18_ = 0;
 
-    int total = y_coord;
-    char *cur = text;
-    char *next;
     do {
-        int line_width = width;
-        if (cur == 0) {
-            next = 0;
+        char *next = find_line_break(text, width);
+        if (next != 0) {
+            write_cent_l(text, x_coord, y_coord, width, next - text);
         } else {
-            BufferStrHeight = 0;
-            unsigned int len = strlen(cur);
-            next = find_line_break_l(cur, &line_width, len);
-            if (next != 0) {
-                write_cent_l(cur, x_coord, total, width, next - cur);
-            } else {
-                write_cent_l(cur, x_coord, total, width, strlen(cur));
-            }
+            write_cent(text, x_coord, y_coord, width);
         }
-        field_18_ = field_18_ + 1;
-        if (fonts_[0] == 0) {
-            fonts_[0] = FontDefault;
-        }
-        Font *font = fonts_[0];
-        int delta = (font->unk_1_ >= 0) ? (font->height_ + font->unk_1_) : font->line_height_;
-        total += delta;
-        cur = next;
-    } while (next != 0);
-
-    return total;
+        ++field_18_;
+        y_coord += text_line_height();
+        text = next;
+    } while (text != 0);
+    return y_coord;
 }
 
 // ORIGINAL: 0x005DDAB0 ?wrap_cent@Buffer@@QAEHPADPAURECT@@@Z 0x005DDAB0-0x005DDBA6 FILE BYTE_EXACT
@@ -6047,7 +6023,10 @@ int Buffer::write_multi_font_raw(char *text, int x, int y) {
 // The retained seed's BufferProxy receiver is now the genuine Buffer owner.
 
 int Buffer::write_cent(char *text, int x, int y, int width) {
-    return write_cent_text(text, x, y, width);
+    if (text == 0) {
+        return x;
+    }
+    return write_cent_l(text, x, y, width, static_cast<int>(strlen(text)));
 }
 
 
@@ -6824,9 +6803,9 @@ int Buffer::wrap_flying(char *a1, int a2, int a3, int a4) {
     field_18_ = 0;
     field_14_ = saved;
     BufferFlyingX = a2;
-    BufferStrHeight = 0;
     BufferFlyingY = a3;
     BufferFlyingWidth = a4;
+    BufferStrHeight = 0;
     markup_pending_ = 0;
     BufferFlyingText[0] = 0;
     return wrap_flying(a1);
@@ -10412,9 +10391,8 @@ int Buffer::write_strings_height(StringList *strings, int width, int flags) {
     if (strings == 0) {
         return 0;
     }
-    if ((flags & 2) == 0 && strings->entry_count_ - 1 >= 0) {
-        strings->current_position_ = 0;
-        strings->current_ = strings->head_;
+    if ((flags & 2) == 0) {
+        strings->seek_pos(0);
     }
 
     // The payload node's metadata word (+8) and text (+4) are what
@@ -10428,19 +10406,13 @@ int Buffer::write_strings_height(StringList *strings, int width, int flags) {
 
     int total_height = 0;
     if (payload == 3) {
-        if (fonts_[0] == 0) {
-            fonts_[0] = FontDefault;
-        }
-        total_height = fonts_[0]->line_advance();
+        total_height = text_line_height();
         wrap_height_flying(nullptr, width);
     } else if (payload == 2) {
-        // The image expands wrap_height inline here and calls it below.
-        total_height = wrap_height(
-            strings->head_ != 0 ? strings->current_entry()->text : 0, width);
+        total_height = wrap_height(strings->current_text(), width);
         wrap_height_flying(nullptr, width);
     } else {
-        wrap_height_flying(
-            strings->head_ != 0 ? strings->current_entry()->text : 0, width);
+        wrap_height_flying(strings->current_text(), width);
     }
 
     if (strings->current_position_ < strings->entry_count_ - 1) {
@@ -10484,106 +10456,56 @@ int Buffer::write_strings_height(StringList *strings, int width, int flags) {
 int Buffer::write_strings(StringList *strings, int left, int top, int width,
                           int flags) {
     if (strings == 0) return top;
-    if ((flags & 2) == 0 && strings->entry_count_ - 1 >= 0) {
-        strings->current_position_ = 0;
-        strings->current_ = strings->head_;
+    if ((flags & 2) == 0) {
+        strings->seek_pos(0);
     }
     int kind = strings->head_ != 0 ? strings->current_entry()->field_8_ : 0;
     if (field_C_ != 0) {
         int id = strings->head_ != 0 ? strings->current_->id : 0;
         field_C_(id, kind);
     }
-    int extent = top;
-    char *first_text = 0;
     if (kind == 3) {
-        if (fonts_[0] == 0) fonts_[0] = FontDefault;
-        extent += fonts_[0]->line_advance();
+        top += text_line_height();
+        wrap_flying(0, left, top, width);
+    } else if (kind == 2) {
+        top = wrap_cent(strings->current_text(), left, top, width);
+        wrap_flying(0, left, top, width);
     } else {
-        first_text = strings->head_ != 0
-            ? strings->current_entry()->text : 0;
-        if (kind == 2 && first_text != 0) {
-            BufferStrHeight = 0;
-            field_18_ = 0;
-            char *cursor = first_text;
-            do {
-                char *next = find_line_break(cursor, width);
-                if (next != 0) {
-                    write_cent_l(cursor, left, extent, width,
-                                 static_cast<int>(next - cursor));
-                } else {
-                    write_cent(cursor, left, extent, width);
-                }
-                ++field_18_;
-                extent += text_line_height();
-                cursor = next;
-            } while (cursor != 0);
-        }
+        wrap_flying(strings->current_text(), left, top, width);
     }
-    // Original stores branch3's count before width, the other branches do
-    // width before count. No intervening callback observes that distinction.
-    if (kind == 3) {
-        field_18_ = 0;
-        field_14_ = field_10_;
-    } else {
-        field_14_ = field_10_;
-        field_18_ = 0;
-    }
-    BufferFlyingX = left;
-    BufferFlyingY = extent;
-    BufferFlyingWidth = width;
-    BufferStrHeight = 0;
-    markup_pending_ = 0;
-    BufferFlyingText[0] = 0;
-    wrap_flying(kind == 3 || kind == 2 ? 0 : first_text);
 
     while (strings->current_position_ < strings->entry_count_ - 1) {
-        if (extent > -dib_.bmiHeader.biHeight) break;
+        if (top > -dib_.bmiHeader.biHeight) break;
         strings->next_entry();
         if (strings->current_ != 0) strings->current_entry();
-        int entry_kind = strings->head_ != 0
-            ? strings->current_entry()->field_8_ : 0;
-        bool plain = strings->head_ == 0;
-        if (!plain) plain = strings->current_entry()->field_8_ == 0;
-        if (plain) {
-            if (field_C_ != 0) {
-                // The native evaluates current_id then RELOADS field_C_;
-                // unlike its two earlier callbacks, it does not capture the
-                // procedure before this service call.
-                int id = strings->current_id();
-                field_C_(id, entry_kind);
-            }
-            wrap_flying(strings->current_text());
-        } else {
-            if (BufferFlyingText[0] != 0) {
-                write_multi_font_raw(BufferFlyingText, BufferFlyingX, BufferFlyingY);
-                int advance = text_line_height();
-                BufferFlyingY += advance;
-                ++field_18_;
-            }
-            BufferFlyingText[0] = 0;
-            BufferFlyingWidth = 0;
-            select_text_slot(0);
-            int saved_y = BufferFlyingY;
+        kind = strings->head_ != 0 ? strings->current_entry()->field_8_ : 0;
+        if (strings->head_ != 0 && strings->current_entry()->field_8_ != 0) {
+            int y = wrap_flying_flush();
             if (field_C_ != 0) {
                 int id = strings->head_ != 0 ? strings->current_->id : 0;
-                field_C_(id, entry_kind);
+                field_C_(id, kind);
             }
-            if (saved_y >= extent) extent = saved_y;
-            if (entry_kind == 3) {
-                if (fonts_[0] == 0) fonts_[0] = FontDefault;
-                extent += fonts_[0]->line_advance();
-                wrap_flying(0, left, extent, width);
-            } else if (entry_kind == 2) {
-                extent = wrap_cent(strings->current_text(), left, extent, width);
-                wrap_flying(0, left, extent, width);
+            if (y >= top) top = y;
+            if (kind == 3) {
+                top += text_line_height();
+                wrap_flying(0, left, top, width);
+            } else if (kind == 2) {
+                top = wrap_cent(strings->current_text(), left, top, width);
+                wrap_flying(0, left, top, width);
             } else {
-                wrap_flying(strings->current_text(), left, extent, width);
+                wrap_flying(strings->current_text(), left, top, width);
             }
+        } else {
+            if (field_C_ != 0) {
+                // current_id is called out of line here (0x00401640).
+                field_C_(strings->current_id(), kind);
+            }
+            wrap_flying(strings->current_text());
         }
     }
     int flushed = wrap_flying_flush();
-    if (flushed >= extent) extent = flushed;
-    return extent;
+    if (flushed >= top) top = flushed;
+    return top;
 }
 // Provider evidence for the moved Font helper: the pinned image has three
 // direct calls from these two Buffer string writers and two inline expansions.
@@ -10616,6 +10538,11 @@ Status: Complete
 */
 
 int Font::line_advance() const {
-    return font_line_advance(*this);
+    const int adjustment = unk_1_;
+    if (adjustment >= 0) {
+        return static_cast<int>(static_cast<unsigned int>(height_)
+                                + static_cast<unsigned int>(adjustment));
+    }
+    return line_height_;
 }
 
