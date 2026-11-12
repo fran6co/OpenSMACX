@@ -3287,6 +3287,11 @@ static inline void parse_prototype_report(int parse_id, int design_id) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0057f4b0.cpp; image:0x0057F4B0-0x00580859", "Completion propagation:0x0057F4BF-0x0057F693", "LockEnableMask separates retirement modes, unlocked epilogue returns:0x0057F699-0x0057F6AD;0x0057FCF3-0x0057FCFA", "Lower-reactor early marks:0x0057F7C8-0x0057F7DB;0x0057FA95-0x0057FAA0", "Locked replacement/target banks and non-positive armor bypass:0x0057FD13-0x005802A9;0x0057FEC2-0x0057FFC6", "Queue presence and callback-sensitive prompt/rewrite/unlock/report:0x005802AA-0x00580852"], "reason": "Recover typed completion and both mutually exclusive prototype-retirement modes in the genuine vehicle-design owner. Loaded weapon/armor/chassis rules, faction design banks and active/queued counts determine obsolescence; owned Base queues and NetDaemon locking supply production migration, with native local prompt and multiplayer report ordering. Preserve the complete seed and original spans as evidence; this structural interpretation is not a measured matching claim."}
 // Rewritten from the image 2026-11-08 (0.85 full-text); remaining gaps are register ties.
 void __cdecl prune_protos(int faction_id, int prototype_id, int options) {
+    // Two function-scope ids, as the image's shared frame slots show: k is the
+    // completion walk, the AI target and the upgrade target walk ([ebp-0x18]);
+    // m is the AI candidate and the upgrade target id ([ebp-0x8]).
+    int k;
+    int m;
     if (prototype_id < MaxVehProtoFactionNum
         || VehPrototypes[prototype_id].flags & PROTO_TYPED_COMPLETE) {
         for (int i = 0; i < MaxVehProtoFactionNum; i++) {
@@ -3298,9 +3303,9 @@ void __cdecl prune_protos(int faction_id, int prototype_id, int options) {
             int chassis_done = 0;
             int armor_done = 0;
             int weapon_done = 0;
-            for (int walk = 0; walk < 2 * MaxVehProtoFactionNum; walk++) {
-                const int id = walk % MaxVehProtoFactionNum
-                    + (walk < MaxVehProtoFactionNum ? 0 : faction_id * MaxVehProtoFactionNum);
+            for (k = 0; k < 2 * MaxVehProtoFactionNum; k++) {
+                const int id = k % MaxVehProtoFactionNum
+                    + (k < MaxVehProtoFactionNum ? 0 : faction_id * MaxVehProtoFactionNum);
                 if (!(VehPrototypes[id].flags & PROTO_ACTIVE)) continue;
                 if (id < MaxVehProtoFactionNum) {
                     if (!has_tech(VehPrototypes[id].preq_tech, faction_id)) continue;
@@ -3341,75 +3346,75 @@ void __cdecl prune_protos(int faction_id, int prototype_id, int options) {
 
     if (!is_human(faction_id)) {
         for (int i = 0; i < MaxVehProtoFactionNum; i++) {
-            const int target_id = faction_id * MaxVehProtoFactionNum + i;
-            if (!(VehPrototypes[target_id].flags & PROTO_ACTIVE)
-                || VehPrototypes[target_id].obsolete_factions & (1 << faction_id)) {
+            k = faction_id * MaxVehProtoFactionNum + i;
+            if (!(VehPrototypes[k].flags & PROTO_ACTIVE)
+                || VehPrototypes[k].obsolete_factions & (1 << faction_id)) {
                 continue;
             }
-            if (target_id < MaxVehProtoFactionNum
-                && !has_tech(VehPrototypes[target_id].preq_tech, faction_id)) {
+            if (k < MaxVehProtoFactionNum
+                && !has_tech(VehPrototypes[k].preq_tech, faction_id)) {
                 continue;
             }
             int typed;
-            if (target_id < MaxVehProtoFactionNum
-                || VehPrototypes[target_id].flags & PROTO_TYPED_COMPLETE) {
+            if (k < MaxVehProtoFactionNum
+                || VehPrototypes[k].flags & PROTO_TYPED_COMPLETE) {
                 typed = 1;
-                for (int cand = 0; cand < MaxVehProtoFactionNum; cand++) {
-                    if (!(VehPrototypes[cand].flags & PROTO_ACTIVE)) continue;
-                    if (cand == target_id) continue;
-                    if (cand < MaxVehProtoFactionNum
-                        && (Weapon[VehPrototypes[cand].weapon_id].offense_rating < 0
-                            || cand == BSC_SPORE_LAUNCHER)) {
+                for (m = 0; m < MaxVehProtoFactionNum; m++) {
+                    if (!(VehPrototypes[m].flags & PROTO_ACTIVE)) continue;
+                    if (m == k) continue;
+                    if (m < MaxVehProtoFactionNum
+                        && (Weapon[VehPrototypes[m].weapon_id].offense_rating < 0
+                            || m == BSC_SPORE_LAUNCHER)) {
                         continue;
                     }
-                    if (VehPrototypes[cand].unk_1 != VehPrototypes[target_id].unk_1) continue;
-                    if (Chassis[VehPrototypes[cand].chassis_id].triad
-                        != Chassis[VehPrototypes[target_id].chassis_id].triad) {
+                    if (VehPrototypes[m].unk_1 != VehPrototypes[k].unk_1) continue;
+                    if (Chassis[VehPrototypes[m].chassis_id].triad
+                        != Chassis[VehPrototypes[k].chassis_id].triad) {
                         continue;
                     }
-                    if (VehPrototypes[cand].plan != VehPrototypes[target_id].plan) continue;
-                    if (VehPrototypes[cand].reactor_id >= VehPrototypes[target_id].reactor_id
-                        || Weapon[VehPrototypes[cand].weapon_id].offense_rating < 0) {
-                        if (Chassis[VehPrototypes[cand].chassis_id].range
-                            != Chassis[VehPrototypes[target_id].chassis_id].range) {
+                    if (VehPrototypes[m].plan != VehPrototypes[k].plan) continue;
+                    if (VehPrototypes[m].reactor_id >= VehPrototypes[k].reactor_id
+                        || Weapon[VehPrototypes[m].weapon_id].offense_rating < 0) {
+                        if (Chassis[VehPrototypes[m].chassis_id].range
+                            != Chassis[VehPrototypes[k].chassis_id].range) {
                             continue;
                         }
-                        if (Weapon[VehPrototypes[cand].weapon_id].offense_rating <= 0) {
-                            if (VehPrototypes[cand].weapon_id != VehPrototypes[target_id].weapon_id) {
+                        if (Weapon[VehPrototypes[m].weapon_id].offense_rating <= 0) {
+                            if (VehPrototypes[m].weapon_id != VehPrototypes[k].weapon_id) {
                                 continue;
                             }
-                        } else if (Weapon[VehPrototypes[cand].weapon_id].offense_rating
-                                   > Weapon[VehPrototypes[target_id].weapon_id].offense_rating) {
+                        } else if (Weapon[VehPrototypes[m].weapon_id].offense_rating
+                                   > Weapon[VehPrototypes[k].weapon_id].offense_rating) {
                             continue;
                         }
-                        if (VehPrototypes[cand].carry_capacity
-                            > VehPrototypes[target_id].carry_capacity) {
+                        if (VehPrototypes[m].carry_capacity
+                            > VehPrototypes[k].carry_capacity) {
                             continue;
                         }
-                        if (Armor[VehPrototypes[cand].armor_id].defense_rating <= 0) {
-                    if (VehPrototypes[cand].armor_id != VehPrototypes[target_id].armor_id) {
+                        if (Armor[VehPrototypes[m].armor_id].defense_rating <= 0) {
+                    if (VehPrototypes[m].armor_id != VehPrototypes[k].armor_id) {
                         continue;
                     }
-                } else if (armor_val(cand, faction_id)
-                           > armor_val(target_id, faction_id)) {
+                } else if (armor_val(m, faction_id)
+                           > armor_val(k, faction_id)) {
                     continue;
                 }
-                        if (Chassis[VehPrototypes[cand].chassis_id].speed
-                            > Chassis[VehPrototypes[target_id].chassis_id].speed) {
+                        if (Chassis[VehPrototypes[m].chassis_id].speed
+                            > Chassis[VehPrototypes[k].chassis_id].speed) {
                             continue;
                         }
-                        if (bit_count(VehPrototypes[cand].ability_flags
-                                      & VehPrototypes[target_id].ability_flags)
-                            < bit_count(VehPrototypes[cand].ability_flags)) {
+                        if (bit_count(VehPrototypes[m].ability_flags
+                                      & VehPrototypes[k].ability_flags)
+                            < bit_count(VehPrototypes[m].ability_flags)) {
                             continue;
                         }
-                        if ((VehPrototypes[cand].ability_flags
-                             ^ VehPrototypes[target_id].ability_flags) & 0x408418) {
+                        if ((VehPrototypes[m].ability_flags
+                             ^ VehPrototypes[k].ability_flags) & 0x408418) {
                             continue;
                         }
                     }
-                    VehPrototypes[cand].obsolete_factions |= 1 << faction_id;
-                    if (options) synch_obs(cand);
+                    VehPrototypes[m].obsolete_factions |= 1 << faction_id;
+                    if (options) synch_obs(m);
                 }
             } else {
                 typed = 0;
@@ -3417,50 +3422,50 @@ void __cdecl prune_protos(int faction_id, int prototype_id, int options) {
             for (int j = 0; j < MaxVehProtoFactionNum; j++) {
                 const int peer = faction_id * MaxVehProtoFactionNum + j;
                 if (!(VehPrototypes[peer].flags & PROTO_ACTIVE)) continue;
-                if (peer == target_id) continue;
-                if (VehPrototypes[peer].unk_1 != VehPrototypes[target_id].unk_1) continue;
+                if (peer == k) continue;
+                if (VehPrototypes[peer].unk_1 != VehPrototypes[k].unk_1) continue;
                 if (Chassis[VehPrototypes[peer].chassis_id].triad
-                    != Chassis[VehPrototypes[target_id].chassis_id].triad) {
+                    != Chassis[VehPrototypes[k].chassis_id].triad) {
                     continue;
                 }
-                if (VehPrototypes[peer].plan != VehPrototypes[target_id].plan) continue;
+                if (VehPrototypes[peer].plan != VehPrototypes[k].plan) continue;
                 if (!typed && VehPrototypes[peer].flags & PROTO_TYPED_COMPLETE) continue;
-                if (VehPrototypes[peer].reactor_id >= VehPrototypes[target_id].reactor_id) {
+                if (VehPrototypes[peer].reactor_id >= VehPrototypes[k].reactor_id) {
                     if (VehPrototypes[peer].carry_capacity
-                        > VehPrototypes[target_id].carry_capacity) {
+                        > VehPrototypes[k].carry_capacity) {
                         continue;
                     }
                     if (Chassis[VehPrototypes[peer].chassis_id].range
-                        != Chassis[VehPrototypes[target_id].chassis_id].range) {
+                        != Chassis[VehPrototypes[k].chassis_id].range) {
                         continue;
                     }
                     if (Weapon[VehPrototypes[peer].weapon_id].offense_rating <= 0) {
-                        if (VehPrototypes[peer].weapon_id != VehPrototypes[target_id].weapon_id) {
+                        if (VehPrototypes[peer].weapon_id != VehPrototypes[k].weapon_id) {
                             continue;
                         }
                     } else if (Weapon[VehPrototypes[peer].weapon_id].offense_rating
-                               > Weapon[VehPrototypes[target_id].weapon_id].offense_rating) {
+                               > Weapon[VehPrototypes[k].weapon_id].offense_rating) {
                         continue;
                     }
                     if (Armor[VehPrototypes[peer].armor_id].defense_rating <= 0) {
-                    if (VehPrototypes[peer].armor_id != VehPrototypes[target_id].armor_id) {
+                    if (VehPrototypes[peer].armor_id != VehPrototypes[k].armor_id) {
                         continue;
                     }
                 } else if (armor_val(peer, faction_id)
-                           > armor_val(target_id, faction_id)) {
+                           > armor_val(k, faction_id)) {
                     continue;
                 }
                     if (Chassis[VehPrototypes[peer].chassis_id].speed
-                        > Chassis[VehPrototypes[target_id].chassis_id].speed) {
+                        > Chassis[VehPrototypes[k].chassis_id].speed) {
                         continue;
                     }
                     if (VehPrototypes[peer].flags & PROTO_TYPED_COMPLETE
-                        && bit_count(VehPrototypes[target_id].ability_flags
+                        && bit_count(VehPrototypes[k].ability_flags
                                      & VehPrototypes[peer].ability_flags)
                             < bit_count(VehPrototypes[peer].ability_flags)) {
                         continue;
                     }
-                    if ((VehPrototypes[target_id].ability_flags
+                    if ((VehPrototypes[k].ability_flags
                          ^ VehPrototypes[peer].ability_flags) & 0x408418) {
                         continue;
                     }
@@ -3485,123 +3490,123 @@ void __cdecl prune_protos(int faction_id, int prototype_id, int options) {
         }
         if (VehPrototypes[rid].obsolete_factions & (1 << faction_id)) continue;
         if (!(VehPrototypes[rid].flags & PROTO_ACTIVE)) continue;
-        for (int twalk = 0; twalk < 2 * MaxVehProtoFactionNum; twalk++) {
-            int tid = twalk % MaxVehProtoFactionNum;
-            if (twalk >= MaxVehProtoFactionNum) {
-                tid += faction_id * MaxVehProtoFactionNum;
+        for (k = 0; k < 2 * MaxVehProtoFactionNum; k++) {
+            m = k % MaxVehProtoFactionNum;
+            if (k >= MaxVehProtoFactionNum) {
+                m += faction_id * MaxVehProtoFactionNum;
             }
-            if (twalk == rwalk) continue;
-            if (!(VehPrototypes[tid].flags & PROTO_ACTIVE)) continue;
-            if (VehPrototypes[tid].obsolete_factions & (1 << faction_id)) continue;
-            if (tid < MaxVehProtoFactionNum
-                && (Weapon[VehPrototypes[tid].weapon_id].offense_rating < 0
-                    || tid == BSC_SPORE_LAUNCHER)) {
+            if (k == rwalk) continue;
+            if (!(VehPrototypes[m].flags & PROTO_ACTIVE)) continue;
+            if (VehPrototypes[m].obsolete_factions & (1 << faction_id)) continue;
+            if (m < MaxVehProtoFactionNum
+                && (Weapon[VehPrototypes[m].weapon_id].offense_rating < 0
+                    || m == BSC_SPORE_LAUNCHER)) {
                 continue;
             }
-            if (VehPrototypes[tid].flags & 0x200) continue;
-            int prototyped = (VehPrototypes[tid].flags & 8u) >> 3;
+            if (VehPrototypes[m].flags & 0x200) continue;
+            int prototyped = (VehPrototypes[m].flags & 8u) >> 3;
             if (rid >= MaxVehProtoFactionNum
                 && !(VehPrototypes[rid].flags & PROTO_TYPED_COMPLETE)
-                && (tid < MaxVehProtoFactionNum
-                    || VehPrototypes[tid].flags & PROTO_TYPED_COMPLETE)) {
+                && (m < MaxVehProtoFactionNum
+                    || VehPrototypes[m].flags & PROTO_TYPED_COMPLETE)) {
                 continue;
             }
             if (prototyped
-                && VehPrototypes[tid].reactor_id >= VehPrototypes[rid].reactor_id) {
+                && VehPrototypes[m].reactor_id >= VehPrototypes[rid].reactor_id) {
                 continue;
             }
-            if (Weapon[VehPrototypes[tid].weapon_id].offense_rating <= 0) {
-                        if (VehPrototypes[tid].weapon_id != VehPrototypes[rid].weapon_id) {
+            if (Weapon[VehPrototypes[m].weapon_id].offense_rating <= 0) {
+                        if (VehPrototypes[m].weapon_id != VehPrototypes[rid].weapon_id) {
                             continue;
                         }
-                    } else if (Weapon[VehPrototypes[tid].weapon_id].offense_rating
+                    } else if (Weapon[VehPrototypes[m].weapon_id].offense_rating
                                > Weapon[VehPrototypes[rid].weapon_id].offense_rating) {
                         continue;
                     }
-            if (Armor[VehPrototypes[tid].armor_id].defense_rating <= 0) {
-                    if (VehPrototypes[tid].armor_id != VehPrototypes[rid].armor_id) {
+            if (Armor[VehPrototypes[m].armor_id].defense_rating <= 0) {
+                    if (VehPrototypes[m].armor_id != VehPrototypes[rid].armor_id) {
                         continue;
                     }
-                } else if (armor_val(tid, faction_id)
+                } else if (armor_val(m, faction_id)
                            > armor_val(rid, faction_id)) {
                     continue;
                 }
-            if (VehPrototypes[tid].plan != 3) {
-                if ((Weapon[VehPrototypes[tid].weapon_id].offense_rating > 1)
+            if (VehPrototypes[m].plan != 3) {
+                if ((Weapon[VehPrototypes[m].weapon_id].offense_rating > 1)
                     != (Weapon[VehPrototypes[rid].weapon_id].offense_rating > 1)) {
                     continue;
                 }
-                if ((Armor[VehPrototypes[tid].armor_id].defense_rating > 1)
+                if ((Armor[VehPrototypes[m].armor_id].defense_rating > 1)
                     != (Armor[VehPrototypes[rid].armor_id].defense_rating > 1)) {
                     continue;
                 }
             }
-            if (VehPrototypes[tid].reactor_id > VehPrototypes[rid].reactor_id) continue;
-            if (VehPrototypes[tid].carry_capacity > VehPrototypes[rid].carry_capacity) continue;
-            if (Chassis[VehPrototypes[tid].chassis_id].range
+            if (VehPrototypes[m].reactor_id > VehPrototypes[rid].reactor_id) continue;
+            if (VehPrototypes[m].carry_capacity > VehPrototypes[rid].carry_capacity) continue;
+            if (Chassis[VehPrototypes[m].chassis_id].range
                 != Chassis[VehPrototypes[prototype_id].chassis_id].range) {
                 continue;
             }
-            if (Chassis[VehPrototypes[tid].chassis_id].triad
+            if (Chassis[VehPrototypes[m].chassis_id].triad
                 != Chassis[VehPrototypes[rid].chassis_id].triad) {
                 continue;
             }
-            if (Chassis[VehPrototypes[tid].chassis_id].speed
+            if (Chassis[VehPrototypes[m].chassis_id].speed
                 > Chassis[VehPrototypes[rid].chassis_id].speed) {
                 continue;
             }
-            if (VehPrototypes[tid].ability_flags != VehPrototypes[rid].ability_flags) {
-                if ((VehPrototypes[rid].ability_flags ^ VehPrototypes[tid].ability_flags)
+            if (VehPrototypes[m].ability_flags != VehPrototypes[rid].ability_flags) {
+                if ((VehPrototypes[rid].ability_flags ^ VehPrototypes[m].ability_flags)
                     & 0xFFFBD5FC) {
                     continue;
                 }
-                if (VehPrototypes[tid].reactor_id >= VehPrototypes[rid].reactor_id
-                    && (VehPrototypes[rid].ability_flags & VehPrototypes[tid].ability_flags)
-                        != VehPrototypes[tid].ability_flags) {
+                if (VehPrototypes[m].reactor_id >= VehPrototypes[rid].reactor_id
+                    && (VehPrototypes[rid].ability_flags & VehPrototypes[m].ability_flags)
+                        != VehPrototypes[m].ability_flags) {
                     if (rid < MaxVehProtoFactionNum) continue;
-                    if (PlayersData[faction_id].proto_id_active[tid]) continue;
-                    if (PlayersData[faction_id].proto_id_queue[tid]) continue;
+                    if (PlayersData[faction_id].proto_id_active[m]) continue;
+                    if (PlayersData[faction_id].proto_id_queue[m]) continue;
                 }
             }
-            if (VehPrototypes[tid].plan != VehPrototypes[rid].plan) continue;
+            if (VehPrototypes[m].plan != VehPrototypes[rid].plan) continue;
             if (prototyped) {
-                if (VehPrototypes[tid].unk_1 != VehPrototypes[rid].unk_1) continue;
-                if ((VehPrototypes[rid].ability_flags & VehPrototypes[tid].ability_flags)
-                    != VehPrototypes[tid].ability_flags) {
+                if (VehPrototypes[m].unk_1 != VehPrototypes[rid].unk_1) continue;
+                if ((VehPrototypes[rid].ability_flags & VehPrototypes[m].ability_flags)
+                    != VehPrototypes[m].ability_flags) {
                     continue;
                 }
             }
-            if (VehPrototypes[tid].cost < VehPrototypes[rid].cost
-                && VehPrototypes[rid].reactor_id <= VehPrototypes[tid].reactor_id) {
-                if (tid < MaxVehProtoFactionNum) continue;
-                if (VehPrototypes[tid].flags & 8) continue;
+            if (VehPrototypes[m].cost < VehPrototypes[rid].cost
+                && VehPrototypes[rid].reactor_id <= VehPrototypes[m].reactor_id) {
+                if (m < MaxVehProtoFactionNum) continue;
+                if (VehPrototypes[m].flags & 8) continue;
             }
-            if (VehPrototypes[tid].weapon_id == VehPrototypes[rid].weapon_id
-                && VehPrototypes[tid].armor_id == VehPrototypes[rid].armor_id
-                && VehPrototypes[tid].chassis_id == VehPrototypes[rid].chassis_id
-                && VehPrototypes[tid].reactor_id == VehPrototypes[rid].reactor_id
-                && (tid < MaxVehProtoFactionNum || rid < MaxVehProtoFactionNum)) {
+            if (VehPrototypes[m].weapon_id == VehPrototypes[rid].weapon_id
+                && VehPrototypes[m].armor_id == VehPrototypes[rid].armor_id
+                && VehPrototypes[m].chassis_id == VehPrototypes[rid].chassis_id
+                && VehPrototypes[m].reactor_id == VehPrototypes[rid].reactor_id
+                && (m < MaxVehProtoFactionNum || rid < MaxVehProtoFactionNum)) {
                 continue;
             }
-            if (tid == prototype_id) {
-                VehPrototypes[tid].flags |= 8;
-                if (options) synch_obs(tid);
+            if (m == prototype_id) {
+                VehPrototypes[m].flags |= 8;
+                if (options) synch_obs(m);
                 continue;
             }
             const uint8_t bit = static_cast<uint8_t>(1 << faction_id);
-            VehPrototypes[tid].obsolete_factions |= bit;
-            if (options) synch_obs(tid);
+            VehPrototypes[m].obsolete_factions |= bit;
+            if (options) synch_obs(m);
             int latch = 0;
             int processed = 0;
-            if (tid < MaxVehProtoFactionNum
-                && !has_tech(VehPrototypes[tid].preq_tech, faction_id)) {
+            if (m < MaxVehProtoFactionNum
+                && !has_tech(VehPrototypes[m].preq_tech, faction_id)) {
                 continue;
             }
             int found = 0;
             for (int b = 0; b < GameDataStateStorage.fields_.base_current_count_; b++) {
                 if (Bases[b].faction_id_current == faction_id) {
                     for (int q = 0; q <= Bases[b].queue_size; q++) {
-                        if (Bases[b].queue_production_id[q] == tid) {
+                        if (Bases[b].queue_production_id[q] == m) {
                             found = 1;
                             goto searched;
                         }
@@ -3618,25 +3623,25 @@ void __cdecl prune_protos(int faction_id, int prototype_id, int options) {
                                   || !NetDaemonNet.lock_base(base_id, 0, -1, -1)))) {
                     if (!IsMultiplayerNet && ConsoleGlobal.faction_id_ == faction_id
                         && !processed) {
-                        parse_prototype_report(0, tid);
+                        parse_prototype_report(0, m);
                         parse_prototype_report(1, rid);
                         int choice = 1;
-                        if (!(VehPrototypes[tid].flags & 0x200) && !latch) {
+                        if (!(VehPrototypes[m].flags & 0x200) && !latch) {
                             choice = X_pop("ASKPRODUPGRADE", 0);
                             if (choice > 1) latch = 1;
                         }
-                        if (!latch && (VehPrototypes[tid].flags & 0x200 || choice == 1)) {
-                            VehPrototypes[tid].obsolete_factions &= ~bit;
-                            if (VehPrototypes[tid].flags & 8) {
-                                VehPrototypes[tid].flags |= 0x200;
+                        if (!latch && (VehPrototypes[m].flags & 0x200 || choice == 1)) {
+                            VehPrototypes[m].obsolete_factions &= ~bit;
+                            if (VehPrototypes[m].flags & 8) {
+                                VehPrototypes[m].flags |= 0x200;
                             }
-                            VehPrototypes[tid].flags |= 8;
+                            VehPrototypes[m].flags |= 8;
                             goto next_target;
                         }
                     }
                     processed = 1;
                     for (int q = 0; q <= Bases[base_id].queue_size; q++) {
-                        if (Bases[base_id].queue_production_id[q] == tid) {
+                        if (Bases[base_id].queue_production_id[q] == m) {
                             Bases[base_id].queue_production_id[q] = rid;
                         }
                     }
@@ -3646,7 +3651,7 @@ void __cdecl prune_protos(int faction_id, int prototype_id, int options) {
                 }
             }
             if (processed && IsMultiplayerNet && faction_id == ConsoleGlobal.faction_id_) {
-                parse_prototype_report(0, tid);
+                parse_prototype_report(0, m);
                 parse_prototype_report(1, rid);
                 if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
                     popp(ScriptPopupFile, "PRODUPGRADE", 0, "alunit_sm.pcx", 0);
