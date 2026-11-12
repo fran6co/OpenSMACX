@@ -1081,6 +1081,8 @@ inline void JackalVoiceRx::remove_id(unsigned long id) {
     }
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00632350 0x00632718 0x00632728 0x0063247F
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00632350 0x00632728 0x00632738 0x00632528
 /*
 Purpose: Cut one player out of the session by id, or everyone when the caller
          hands 0xFFFFFFFF. The interactive half (reason 0) asks first: the

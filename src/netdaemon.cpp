@@ -23,6 +23,7 @@
 // symbol    _$E14
 #define JACKALVOICERX_CLEAR_OUT_OF_LINE  // stand-in: see net_class.h
 #define NETDAEMON_RESET_INLINE  // stand-in: see NetDaemon::reset in netdaemon.h
+#define VEH_BUNGLIST_VISIBLE  // WORKAROUND(decl): synch addresses BungList directly; see veh.h
 #include "stdafx.h"
 #include <mmsystem.h>
 #include "netdaemon.h"
@@ -3215,28 +3216,6 @@ private:
     const unsigned char *bytes_;
 };
 
-class SyncHeaderPrefixWriter {
-public:
-    explicit SyncHeaderPrefixWriter(unsigned char *bytes) : bytes_(bytes) {}
-
-    void store_flags(int16_t value) { write(offsetof(SyncHeaderPrefix, flags), value); }
-    void store_faction(uint32_t value) { write(offsetof(SyncHeaderPrefix, faction), value); }
-    void store_sequence(uint32_t value) { write(offsetof(SyncHeaderPrefix, sequence), value); }
-    void store_opcode(int16_t value) { write(offsetof(SyncHeaderPrefix, opcode), value); }
-    void store_index(int16_t value) { write(offsetof(SyncHeaderPrefix, index), value); }
-    void store_argument_2(int32_t value) { write(offsetof(SyncHeaderPrefix, argument_2), value); }
-    void store_argument_3(int32_t value) { write(offsetof(SyncHeaderPrefix, argument_3), value); }
-    void store_argument_4(int32_t value) { write(offsetof(SyncHeaderPrefix, argument_4), value); }
-
-private:
-    template <typename Value>
-    void write(size_t offset, Value value) {
-        std::memcpy(bytes_ + offset, &value, sizeof value);
-    }
-
-    unsigned char *bytes_;
-};
-
 // ORIGINAL: 0x00534330 ?fixup_message@NetDaemon@@QAEHPAD@Z 0x00534330-0x005343FC FILE BYTE_EXACT
 // A switch over the direct packet fields. 0x2403 is a separate (empty) label
 // that falls into the shared body: the image's decision tree tests it alone.
@@ -6292,818 +6271,790 @@ int NetDaemon::maybe_lock(int *veh_id, int flag, int payload_1C, int payload_20,
 char NetDaemonFileTransferPath[0x104];
 
 
-namespace NetDaemonSyncWire {
-
-// The saved diplomacy words are one native 0x48-byte local tuple. Pair IDs
-// are captured by NetDaemon::synch before callbacks and retained through the
-// epilogue; they must not be reconstructed from a later callback-modified
-// packet header.
-void gather_saved_diplomacy(int faction_a, int faction_b, uint32_t wire[18]);
-void scatter_saved_diplomacy(int faction_a, int faction_b,
-                             const uint32_t wire[18]);
-template <class T>
-static uint32_t native_word(const T &value) {
-    typedef char NativeWordMustBeFourBytes[
-        sizeof(T) == sizeof(uint32_t) ? 1 : -1];
-    (void)sizeof(NativeWordMustBeFourBytes);
-    uint32_t bits;
-    memcpy(&bits, &value, sizeof bits);
-    return bits;
-}
-
-static uint32_t sign_extended_char(char value) {
-    const uint32_t byte = static_cast<unsigned char>(value);
-    return (byte & 0x80u) ? (byte | 0xFFFFFF00u) : byte;
-}
-
-void gather_saved_diplomacy(int faction_a, int faction_b, uint32_t wire[18]) {
-    const PlayerData &a = PlayersData[faction_a];
-    const PlayerData &b = PlayersData[faction_b];
-    wire[0] = sign_extended_char(a.diplo_patience[faction_b]);
-    wire[1] = sign_extended_char(b.diplo_patience[faction_a]);
-    wire[2] = native_word(a.diplo_friction[faction_b]);
-    wire[3] = native_word(b.diplo_friction[faction_a]);
-    wire[4] = native_word(a.global_reputation);
-    wire[5] = native_word(b.global_reputation);
-    wire[6] = native_word(a.diplo_unk1[faction_b]);
-    wire[7] = native_word(b.diplo_unk1[faction_a]);
-    wire[8] = native_word(a.diplo_wrongs[faction_b]);
-    wire[9] = native_word(b.diplo_wrongs[faction_a]);
-    wire[10] = native_word(a.diplo_spoke[faction_b]);
-    wire[11] = native_word(b.diplo_spoke[faction_a]);
-    wire[12] = a.diplo_treaties[faction_b];
-    wire[13] = b.diplo_treaties[faction_a];
-    wire[14] = native_word(a.diplo_agenda[faction_b]);
-    wire[15] = native_word(b.diplo_agenda[faction_a]);
-    wire[16] = native_word(a.diplo_merc[faction_b]);
-    wire[17] = native_word(b.diplo_merc[faction_a]);
-}
-
-template <class T>
-static void scatter_word(T &field, uint32_t bits) {
-    typedef char NativeWordMustBeFourBytes[
-        sizeof(T) == sizeof(uint32_t) ? 1 : -1];
-    (void)sizeof(NativeWordMustBeFourBytes);
-    memcpy(&field, &bits, sizeof bits);
-}
-
-void scatter_saved_diplomacy(int faction_a, int faction_b,
-                             const uint32_t wire[18]) {
-    PlayerData &a = PlayersData[faction_a];
-    PlayerData &b = PlayersData[faction_b];
-    memcpy(&a.diplo_patience[faction_b], &wire[0], 1);
-    memcpy(&b.diplo_patience[faction_a], &wire[1], 1);
-    scatter_word(a.diplo_friction[faction_b], wire[2]);
-    scatter_word(b.diplo_friction[faction_a], wire[3]);
-    scatter_word(a.global_reputation, wire[4]);
-    scatter_word(b.global_reputation, wire[5]);
-    scatter_word(a.diplo_unk1[faction_b], wire[6]);
-    scatter_word(b.diplo_unk1[faction_a], wire[7]);
-    scatter_word(a.diplo_wrongs[faction_b], wire[8]);
-    scatter_word(b.diplo_wrongs[faction_a], wire[9]);
-    scatter_word(a.diplo_spoke[faction_b], wire[10]);
-    scatter_word(b.diplo_spoke[faction_a], wire[11]);
-    memcpy(&a.diplo_treaties[faction_b], &wire[12], sizeof wire[12]);
-    memcpy(&b.diplo_treaties[faction_a], &wire[13], sizeof wire[13]);
-    scatter_word(a.diplo_agenda[faction_b], wire[14]);
-    scatter_word(b.diplo_agenda[faction_a], wire[15]);
-    scatter_word(a.diplo_merc[faction_b], wire[16]);
-    scatter_word(b.diplo_merc[faction_a], wire[17]);
-}
-
-
-static bool native_owner_copy(void *owner, uint32_t native_offset,
-                              unsigned char *packet, size_t count,
-                              bool packet_to_owner) {
-    if (count == 0) return true;
-    unsigned char *const owner_bytes =
-        reinterpret_cast<unsigned char *>(owner) + native_offset;
-    if (packet_to_owner) memmove(owner_bytes, packet, count);
-    else memmove(packet, owner_bytes, count);
-    return true;
-}
-
-// Guarded-table defaults leave ESI as the selected low-DWORD chunk address;
-// they do not add a named data owner or an executable address. The caller
-// captures these address bits and count before receive callbacks. Preserve
-// this raw data-pointer behavior; its fault/neighbor effects remain unknown.
-static bool native_default_copy(uint32_t captured_address,
-                                unsigned char *packet, uint32_t count,
-                                bool packet_to_owner) {
-    if (count == 0) return true;
-    void *const address = reinterpret_cast<void *>(
-        static_cast<uintptr_t>(captured_address));
-    if (packet_to_owner) memmove(address, packet, count);
-    else memmove(packet, address, count);
-    return true;
-}
-
-static const unsigned char *native_notification_view(int16_t opcode, int a2,
-                                                       size_t offset) {
-    uint32_t native_offset = static_cast<uint32_t>(offset);
-    if (opcode == 0x11)
-        native_offset += static_cast<uint32_t>(a2) * 0x34u;
-    else if (opcode == 0x13)
-        native_offset += static_cast<uint32_t>(a2) * 0x134u;
-    else
-        return 0;
-    const void *owner = opcode == 0x11
-        ? static_cast<const void *>(&Vehs)
-        : static_cast<const void *>(&Bases);
-    return reinterpret_cast<const unsigned char *>(owner) + native_offset;
-}
-
-static const unsigned char *native_notification_owner_view(int16_t opcode,
-                                                            int a2) {
-    uint32_t native_offset;
-    const void *owner;
-    if (opcode == 0x11) {
-        native_offset = static_cast<uint32_t>(a2) * 0x34u;
-        owner = &Vehs;
-    } else if (opcode == 0x13) {
-        native_offset = static_cast<uint32_t>(a2) * 0x134u;
-        owner = &Bases;
-    } else {
-        return 0;
-    }
-    return reinterpret_cast<const unsigned char *>(owner) + native_offset;
-}
-
-bool copy_nonrule_chunk(int16_t opcode, int a2, int a3, int a4,
-                        size_t payload_size, size_t offset,
-                        unsigned char *packet, size_t count,
-                        bool packet_to_owner, uint32_t diplomacy_wire[18],
-                        Map *captured_map_tiles,
-                        uint32_t captured_map_tile_offset) {
-    (void)a3;
-    (void)a4;
-    (void)payload_size;
-    const uint32_t chunk = static_cast<uint32_t>(offset);
-#define NATIVE_COPY(owner, base_offset) \
-    native_owner_copy(owner, static_cast<uint32_t>(base_offset) + chunk, \
-                      packet, count, packet_to_owner)
-#define NATIVE_COPY_MOV(owner) \
-    native_owner_copy(owner, 0, packet, count, packet_to_owner)
-#define NATIVE_ARRAY(owner, base_offset, index, stride) \
-    native_owner_copy(owner, static_cast<uint32_t>(base_offset) + \
-                      static_cast<uint32_t>(index) * \
-                          static_cast<uint32_t>(stride) + chunk, \
-                      packet, count, packet_to_owner)
-
-    // These declarations are the actual owners used by native pointer routes.
-    // Preserve their proved strides; effects beyond a complete owner remain
-    // unresolved and are not exercised by the in-owner host controls.
-    typedef char PlayerDataHasNativeStride[sizeof(PlayerData) == 0x20CC ? 1 : -1];
-    typedef char PlayerHasNativeStride[sizeof(Players[0]) == 0x59C ? 1 : -1];
-    typedef char VehicleHasNativeStride[sizeof(Vehs[0]) == 0x34 ? 1 : -1];
-    typedef char VehiclePrototypeAtNativeOffset[
-        offsetof(Veh, proto_id) == 0x0A ? 1 : -1];
-    typedef char VehicleFactionAtNativeOffset[
-        offsetof(Veh, faction_id) == 0x0E ? 1 : -1];
-    typedef char PrototypeHasNativeStride[sizeof(VehPrototypes[0]) == 0x34 ? 1 : -1];
-    typedef char BaseHasNativeStride[sizeof(Bases[0]) == 0x134 ? 1 : -1];
-    typedef char PlayerEnergyAtNativeOffset[
-        offsetof(PlayerData, energy_reserves) == 0x220 ? 1 : -1];
-    typedef char PlayerSocialAtNativeOffset[
-        offsetof(PlayerData, soc_category_pending) == 0x228 ? 1 : -1];
-    typedef char PlayerSeAtNativeOffset[
-        offsetof(PlayerData, se_alloc_psych) == 0x324 ? 1 : -1];
-    typedef char PlayerTechnologyAtNativeOffset[
-        offsetof(PlayerData, tech_accumulated) == 0x3C8 ? 1 : -1];
-    typedef char PlayerAiAtNativeOffset[
-        offsetof(PlayerData, ai_fight) == 0x3DC ? 1 : -1];
-    typedef char PlayerQueueSyncAtNativeOffset[
-        offsetof(PlayerData, unk_37) == 0x46C ? 1 : -1];
-    typedef char PlayerSavedQueueAfterNativeStart[
-        offsetof(PlayerData, saved_queue_name) == 0x470 ? 1 : -1];
-    typedef char PrototypeObsoleteAtNativeOffset[
-        offsetof(VehPrototype, obsolete_factions) == 0x2C ? 1 : -1];
-    typedef char GameLockMaskAtNativeOffset[
-        offsetof(GameDataStateWindowFields, lock_masks_) == 0x58 ? 1 : -1];
-    (void)sizeof(PlayerDataHasNativeStride);
-    (void)sizeof(PlayerHasNativeStride);
-    (void)sizeof(VehicleHasNativeStride);
-    (void)sizeof(VehiclePrototypeAtNativeOffset);
-    (void)sizeof(VehicleFactionAtNativeOffset);
-    (void)sizeof(PrototypeHasNativeStride);
-    (void)sizeof(BaseHasNativeStride);
-    (void)sizeof(PlayerEnergyAtNativeOffset);
-    (void)sizeof(PlayerSocialAtNativeOffset);
-    (void)sizeof(PlayerSeAtNativeOffset);
-    (void)sizeof(PlayerTechnologyAtNativeOffset);
-    (void)sizeof(PlayerAiAtNativeOffset);
-    (void)sizeof(PlayerQueueSyncAtNativeOffset);
-    (void)sizeof(PlayerSavedQueueAfterNativeStart);
-    (void)sizeof(PrototypeObsoleteAtNativeOffset);
-    (void)sizeof(GameLockMaskAtNativeOffset);
-
-    switch (opcode) {
-    case 0x00: {
-        typedef char GameDataStateHasNativeExtent[
-            sizeof(GameDataStateStorage) == 0x398 ? 1 : -1];
-        (void)sizeof(GameDataStateHasNativeExtent);
-        NATIVE_COPY(&GameDataStateStorage, 0);
-        return true;
-    }
-    case 0x01: NATIVE_COPY(&GameDataStateStorage,
-        offsetof(GameDataStateWindowFields, lock_masks_)); return true;
-    case 0x02: case 0x1002:
-        NATIVE_COPY(&MapStorage, offsetof(MapStorageWindow, metadata_));
-        return true;
-    // The loaded pointer owns the dynamic tile allocation. Native selection
-    // uses byte offsets, without consulting the live metadata for its capacity.
-    // Effects beyond that allocation remain unresolved.
-    case 0x04: NATIVE_COPY(captured_map_tiles, 0); return true;
-    case 0x30: NATIVE_COPY(captured_map_tiles, captured_map_tile_offset);
-        return true;
-    case 0x05: NATIVE_COPY(&Continents, 0); return true;
-    case 0x06: case 0x17:
-        NATIVE_ARRAY(&PlayersData, 0, a2, 0x20CC); return true;
-    case 0x07: NATIVE_ARRAY(&Players, 0, a2, 0x59C); return true;
-    case 0x08: NATIVE_ARRAY(&PlayersData, offsetof(PlayerData, ai_fight),
-                             a2, 0x20CC); return true;
-    case 0x09: NATIVE_ARRAY(&PlayersData, offsetof(PlayerData, tech_accumulated),
-                             a2, 0x20CC); return true;
-    case 0x0A: NATIVE_ARRAY(&PlayersData, offsetof(PlayerData, tech_id_researching),
-                             a2, 0x20CC); return true;
-    case 0x0B: NATIVE_ARRAY(&PlayersData, offsetof(PlayerData, energy_reserves),
-                             a2, 0x20CC); return true;
-    case 0x0C: NATIVE_ARRAY(&PlayersData, offsetof(PlayerData, se_alloc_psych),
-                             a2, 0x20CC); return true;
-    case 0x0D: NATIVE_ARRAY(&PlayersData, offsetof(PlayerData, soc_category_pending),
-                             a2, 0x20CC); return true;
-    case 0x0E: case 0x0F:
-        NATIVE_ARRAY(&VehPrototypes, 0, a2, 0x34); return true;
-    case 0x10: NATIVE_ARRAY(&VehPrototypes,
-        offsetof(VehPrototype, obsolete_factions), a2, 0x34); return true;
-    case 0x11: NATIVE_ARRAY(&Vehs, 0, a2, 0x34); return true;
-    case 0x12: NATIVE_COPY(&Vehs, 0); return true;
-    case 0x13: NATIVE_ARRAY(&Bases, 0, a2, 0x134); return true;
-    case 0x14: NATIVE_COPY(&Bases, 0); return true;
-    case 0x15: NATIVE_COPY(&ControlTurnPhase, 0); return true;
-    // Native 533618/53361B replaces both address and count: a MOV-like local
-    // tuple route, not a displaced or clipped slice of the common chunk.
-    case 0x16: return native_owner_copy(diplomacy_wire, 0, packet, 0x48,
-                                       packet_to_owner);
-    case 0x18: NATIVE_ARRAY(&PlayersData,
-        offsetof(PlayerData, unk_37), a2, 0x20CC); return true;
-    case 0x19: NATIVE_COPY(&FactionRankingsUnk, 0); return true;
-    case 0x20: NATIVE_COPY(&FactionRankingHistory, 0); return true;
-    case 0x21: NATIVE_COPY_MOV(&ReplayEventBytes); return true;
-    case 0x22: NATIVE_COPY(&ReplayEvents, 0); return true;
-    case 0x23: {
-        typedef char BaseSyncTailAtNativeOffset[
-            offsetof(Base, resource_sqr_radius) == 0x78 ? 1 : -1];
-        (void)sizeof(BaseSyncTailAtNativeOffset);
-        NATIVE_ARRAY(&Bases, 0x78, a2, 0x134); return true;
-    }
-    case 0x24: NATIVE_COPY(&ScenarioSave, 0); return true;
-    case 0x25:
-        NATIVE_COPY_MOV(&GameDataStateStorage.fields_.vehicle_current_count_);
-        return true;
-    case 0x26:
-        NATIVE_COPY_MOV(&GameDataStateStorage.fields_.base_current_count_);
-        return true;
-    case 0x27: NATIVE_COPY_MOV(&NetDaemonFileTransferPath); return true;
-    case 0x28: return true;
-    case 0x29: return veh_bung_copy_chunk(offset, packet, count,
-                                          packet_to_owner);
-    default: break;
-    }
-
-#undef NATIVE_ARRAY
-#undef NATIVE_COPY_MOV
-#undef NATIVE_COPY
-
-    return native_default_copy(chunk, packet, static_cast<uint32_t>(count),
-                               packet_to_owner);
-}
-
-} // namespace NetDaemonSyncWire
-
-
-namespace NetDaemonSyncWire {
-    uint32_t current_faction();
-    struct MapRouteCapture {
-        Map *tiles;
-        uint32_t byte_offset;
-    };
-    // Copy the opcode's native wire view. High rules 81/82/84 are direct MOV
-    // owners in both directions, ignoring offset; the remaining high rules
-    // receive into shared native staging and compact only on the last chunk.
-    // Opcode 0 is one native byte view of GameDataStateStorage. Contiguous
-    // owner routes copy that aggregate directly; dynamic map routes retain
-    // their captured allocation pointer and native byte displacement.
-    // Fixed owners use current bytes; map routes use the supplied capture.
-    bool copy_out(int16_t opcode, int a2, int a3, int a4,
-                  size_t payload_size, size_t offset, void *packet_bytes,
-                  size_t length,
-                  const MapRouteCapture &map_capture,
-                  uint32_t diplomacy_wire[18]);
-    bool copy_in(int16_t opcode, int a2, int a3, int a4,
-                 size_t payload_size, size_t offset,
-                 const void *packet_bytes, size_t length,
-                 const MapRouteCapture &map_capture,
-                 uint32_t diplomacy_wire[18]);
-    bool compare_and_notify(int16_t opcode, int a2, int a3, int a4,
-                            const void *native_view,
-                            const void *native_owner_view,
-                            const void *packet_bytes,
-                            int log_arg_lo, int log_arg_hi);
-    void commit_rules(int16_t opcode);
-    void gather_saved_diplomacy(int faction_a, int faction_b,
-                                uint32_t wire[18]);
-    void scatter_saved_diplomacy(int faction_a, int faction_b,
-                                 const uint32_t wire[18]);
-}
-
-// Persistent incoming-only staging shared by every native rule transfer.
-// The observed required window is 0x1920; the image's complete allocation
-// extent remains unknown. This object is not cleared between calls.
+// Persistent incoming-only staging shared by every rule transfer. The
+// observed required window is 0x1920; the image's complete allocation extent
+// remains unknown. This object is not cleared between calls.
 // RECOVERY_OBJECT: v1 0x0093AD8C _NetDaemonRulesSyncStaging
 static unsigned char NetDaemonRulesSyncStaging[0x1920];
 
-static int native_map_sync_rows(int latitude, int a2, int &map_strip_quotient) {
-    // x86's add-sign-mask/sar sequence is signed division toward zero here.
-    const int q = latitude / 16;
-    map_strip_quotient = q;
-    return a2 == 0xF ? latitude - q * 15 : q;
-}
-
-static NetDaemonSyncWire::MapRouteCapture capture_map_route(
-    int16_t opcode, int a2, int map_strip_quotient) {
-    NetDaemonSyncWire::MapRouteCapture captured;
-    captured.tiles = 0;
-    captured.byte_offset = 0;
-    if (opcode == 0x04 || opcode == 0x30) captured.tiles = MapTiles;
-    if (opcode == 0x30) {
-        // The first dispatch saves latitude/16 before enlarging the final
-        // strip's payload. Address selection uses that saved quotient and
-        // reloads the row stride/pointer for every outgoing chunk, or once
-        // before the receive display callback. IMUL/LEA retain low DWORDs.
-        captured.byte_offset = static_cast<uint32_t>(map_strip_quotient) *
-            static_cast<uint32_t>(a2) * MapLongitude * 44u;
-    }
-    return captured;
-}
-
-static int native_sync_signed_word(uint32_t bits) {
-    int32_t value;
-    memcpy(&value, &bits, sizeof value);
-    return value;
-}
-
-// Uses the actual NetDaemon declaration from netdaemon.h: lock_state_ and
-// this->send_message remain receiver-relative, unlike the singleton notify
-// gate below.
-static void synch_notify_or_queue() {
-    const bool rules_notify = (GameDataStateStorage.fields_.game_rules_ & 0x10u) != 0;
-    const bool scripted_turn = ConsoleControlTurnActive != 0;
-    if (rules_notify && !scripted_turn) {
-        if (GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
-            message_data(0x2308, 0, 0, 0, 0, 0);
-        } else {
-            SpockNotifyPending = 1;
-        }
-    } else if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
-        SpockNotifyPending = 1;
-    } else {
-        message_data(0x2308, 0, 0, 0, 0, 0);
-    }
-}
-
-// Native USER32 import directory independently identifies slot0x00669330.
-// GetAsyncKeyState's shared import identity is declared in src/editbox.cpp.
-static void synch_debug_popup() {
-    if (BaseAtDebugPopupFlag) {
-        X_pop("VEHSYNCH", 0);
-        // The popup may change the shared action result; read it afterwards.
-        if (!ConsoleGroupAction) GetAsyncKeyState(VK_CONTROL);
-    }
-}
-
-bool NetDaemonSyncWire::compare_and_notify(int16_t opcode, int a2, int a3,
-    int a4, const void *native_view, const void *native_owner_view,
-    const void *packet_payload,
-    int log_arg_lo, int log_arg_hi) {
-    (void)a3; (void)a4;
-    const unsigned char *current_bytes =
-        static_cast<const unsigned char *>(native_view);
-    const unsigned char *owner_bytes =
-        static_cast<const unsigned char *>(native_owner_view);
-    const unsigned char *old_bytes =
-        static_cast<const unsigned char *>(packet_payload);
-    if (opcode == 0x11) { // decimal 17; caller gates on native total_chunks == 1
-        int16_t old_x, old_y, current_x, current_y, current_proto;
-        uint8_t current_faction;
-        memcpy(&old_x, old_bytes, sizeof old_x);
-        memcpy(&old_y, old_bytes + 2, sizeof old_y);
-        memcpy(&current_x, current_bytes + offsetof(Veh, x), sizeof current_x);
-        memcpy(&current_y, current_bytes + offsetof(Veh, y), sizeof current_y);
-        if (old_x == current_x && old_y == current_y) return false;
-        parse_num(0, old_x);
-        memcpy(&old_y, old_bytes + 2, sizeof old_y);
-        parse_num(1, old_y);
-        memcpy(&current_x, current_bytes + offsetof(Veh, x), sizeof current_x);
-        parse_num(2, current_x);
-        memcpy(&current_y, current_bytes + offsetof(Veh, y), sizeof current_y);
-        parse_num(3, current_y);
-        // Native recomputes a2*0x34 for these identity fields and prototype
-        // lookups; only coordinate reads retain the selected chunk view.
-        memcpy(&current_faction, owner_bytes + offsetof(Veh, faction_id),
-               sizeof current_faction);
-        parse_num(4, current_faction);
-        memcpy(&current_proto, owner_bytes + offsetof(Veh, proto_id),
-               sizeof current_proto);
-        parse_num(5, current_proto);
-        parse_num(6, a2);
-        memcpy(&current_proto, owner_bytes + offsetof(Veh, proto_id),
-               sizeof current_proto);
-        parse_says(0, VehPrototypes[current_proto].veh_name, -1, -1);
-        log_say("Synch changed vehicle", ParseStrBuffer[0].str,
-                a2, log_arg_lo, log_arg_hi);
-        synch_debug_popup();
-        synch_notify_or_queue();
-        return true;
-    }
-    if (opcode == 0x13) { // decimal 19; caller gates on native total_chunks == 1
-        int16_t old_x, old_y, current_x, current_y;
-        memcpy(&old_x, old_bytes, sizeof old_x);
-        memcpy(&old_y, old_bytes + 2, sizeof old_y);
-        memcpy(&current_x, current_bytes + offsetof(Base, x), sizeof current_x);
-        memcpy(&current_y, current_bytes + offsetof(Base, y), sizeof current_y);
-        if (old_x == current_x && old_y == current_y) return false;
-        parse_num(0, old_x);
-        memcpy(&old_y, old_bytes + 2, sizeof old_y);
-        parse_num(1, old_y);
-        memcpy(&current_x, current_bytes + offsetof(Base, x), sizeof current_x);
-        parse_num(2, current_x);
-        memcpy(&current_y, current_bytes + offsetof(Base, y), sizeof current_y);
-        parse_num(3, current_y);
-        parse_num(4, a2);
-        parse_says(0, reinterpret_cast<const char *>(old_bytes + 0x13), -1, -1);
-        parse_says(1, reinterpret_cast<const char *>(current_bytes +
-            offsetof(Base, name_string)), -1, -1);
-        log_say("Synch changed base", ParseStrBuffer[0].str,
-                a2, log_arg_lo, log_arg_hi);
-        synch_debug_popup();
-        synch_notify_or_queue();
-        return true;
-    }
-    return false;
-}
-
-namespace NetDaemonSyncWire {
-bool copy_nonrule_chunk(int16_t opcode, int a2, int a3, int a4,
-                        size_t payload_size, size_t offset,
-                        unsigned char *packet, size_t count,
-                        bool packet_to_owner, uint32_t diplomacy_wire[18],
-                        Map *captured_map_tiles,
-                        uint32_t captured_map_tile_offset);
-}
-static int netdaemon_sync_payload_size(int16_t opcode, int a2, int a3,
-                                        int &map_strip_quotient);
-
-uint32_t NetDaemonSyncWire::current_faction() {
-    return static_cast<uint32_t>(ConsoleGlobal.faction_id_);
-}
-
-bool NetDaemonSyncWire::copy_out(int16_t opcode, int a2, int a3, int a4,
-    size_t payload_size, size_t offset, void *packet_bytes, size_t length,
-    const MapRouteCapture &map_capture, uint32_t diplomacy_wire[18]) {
-    unsigned char *bytes = static_cast<unsigned char *>(packet_bytes);
-    if (opcode >= 0x80 && opcode <= 0x8D)
-        return NetDaemonSyncRules::copy_rule_wire_chunk(opcode, offset,
-            bytes, length, false, NetDaemonRulesSyncStaging);
-    return copy_nonrule_chunk(opcode, a2, a3, a4,
-        payload_size,
-        offset, bytes, length, false, diplomacy_wire, map_capture.tiles,
-        map_capture.byte_offset);
-}
-
-bool NetDaemonSyncWire::copy_in(int16_t opcode, int a2, int a3, int a4,
-    size_t payload_size, size_t offset, const void *packet_bytes,
-    size_t length,
-    const MapRouteCapture &map_capture, uint32_t diplomacy_wire[18]) {
-    unsigned char *bytes = const_cast<unsigned char *>(
-        static_cast<const unsigned char *>(packet_bytes));
-    if (opcode >= 0x80 && opcode <= 0x8D)
-        return NetDaemonSyncRules::copy_rule_wire_chunk(opcode, offset,
-            bytes, length, true, NetDaemonRulesSyncStaging);
-    return copy_nonrule_chunk(opcode, a2, a3, a4,
-        payload_size,
-        offset, bytes, length, true, diplomacy_wire, map_capture.tiles,
-        map_capture.byte_offset);
-}
-
-void NetDaemonSyncWire::commit_rules(int16_t opcode) {
-    NetDaemonSyncRules::commit_staged_rules(opcode,
-                                            NetDaemonRulesSyncStaging);
-}
-
-static int netdaemon_sync_payload_size(int16_t opcode, int a2, int a3,
-                                        int &map_strip_quotient) {
-    switch (opcode) {
-    case 0x00: return 0x398;                         // decimal 0
-    case 0x01: case 0x10: return 1;                 // decimal 1, 16
-    case 0x02: case 0x1002: return 0xA9C;           // decimal 2, 4098
-    case 0x04: return native_sync_signed_word(MapArea * 44u); // decimal 4
-    case 0x05: return 0xE00;                        // decimal 5
-    case 0x06: return 0x20CC;                       // decimal 6
-    case 0x07: return 0x59C;                        // decimal 7
-    case 0x08: case 0x0D: case 0x23: return 0x14;   // decimal 8, 13, 35
-    case 0x09: case 0x0C: return 8;                 // decimal 9, 12
-    case 0x0A: case 0x0B: case 0x17:
-    case 0x25: case 0x26: return 4;                 // decimal 10,11,23,37,38
-    case 0x0E: return 0x34;                         // decimal 14; VehPrototype[a2]
-    case 0x0F: return native_sync_signed_word(static_cast<uint32_t>(a3) * 52u); // 15
-    case 0x11: return 0x30;                         // decimal 17
-    case 0x12: {
-        const int count = GameDataStateStorage.fields_.vehicle_current_count_;
-        // -1 represents only the native literal-zero early return: a wrapped
-        // product by 52 cannot have that bit pattern.
-        return count == 0 ? -1 : native_sync_signed_word(static_cast<uint32_t>(count) * 52u);
-    }
-    case 0x13: return 0x134;                        // decimal 19
-    case 0x14: {
-        const int count = GameDataStateStorage.fields_.base_current_count_;
-        return count == 0 ? -1 : native_sync_signed_word(static_cast<uint32_t>(count) * 308u);
-    }
-    case 0x15: return 4;                            // decimal 21
-    case 0x16: return 0x48;                         // decimal 22
-    case 0x18: return 0x224;                        // decimal 24
-    case 0x19: return 0x20;                         // decimal 25
-    case 0x20: return native_sync_signed_word(
-        static_cast<uint32_t>(GameDataStateStorage.fields_.turn_current_num_) << 4); // 32
-    case 0x21: return 4;                            // decimal 33
-    case 0x22: return ReplayEventBytes;              // decimal 34
-    case 0x24: return 0x98;                         // decimal 36
-    case 0x27: return 0x104;                        // decimal 39
-    case 0x28: return 0;                            // decimal 40
-    case 0x29: return 0x1000;                       // decimal 41
-    case 0x30: {
-        const int latitude = MapLatitudeBounds;
-        const int rows = native_map_sync_rows(latitude, a2, map_strip_quotient);
-        return native_sync_signed_word(
-            static_cast<uint32_t>(MapLongitudeBounds >> 1) *
-            static_cast<uint32_t>(rows) * 44u);
-    }
-    case 0x80: return 0xF4C;  // decimal 128
-    case 0x81: return 0x13C;  // decimal 129
-    case 0x82: return 0x7C;   // decimal 130
-    case 0x83: return 0x280;  // decimal 131
-    case 0x84: return 0x90;   // decimal 132
-    case 0x85: return 0xC0;   // decimal 133
-    case 0x86: return 0x510;  // decimal 134
-    case 0x87: return 0x30;   // decimal 135
-    case 0x88: return 0x1A0;  // decimal 136
-    case 0x89: return 0xE0;   // decimal 137
-    case 0x8A: return 0x32C;  // decimal 138
-    case 0x8B: return 0x1920; // decimal 139
-    case 0x8C: return 0x118;  // decimal 140
-    case 0x8D: return 0x350;  // decimal 141
-    default: return a2;
-    }
-}
-
-static void netdaemon_sync_send_chunk(NetDaemon &self, int16_t opcode,
-    int a2, int a3, int a4, int16_t flags, int payload_size,
-    int total_chunks, int remainder,
-    int chunk_index, const NetDaemonSyncWire::MapRouteCapture &map_capture,
-    uint32_t diplomacy_wire[18]) {
-    (void)a3;
-    const int payload_length = (chunk_index == total_chunks - 1 && remainder)
-        ? remainder : 0x800;
-    int source_offset = chunk_index * 0x800;
-    if (chunk_index == total_chunks - 1 && remainder) {
-        source_offset = total_chunks == 1 ? 0 : (total_chunks - 1) * 0x800;
-    }
-    const uint32_t packet_length = static_cast<uint32_t>(payload_length) + 0x24u;
-    char *packet = static_cast<char *>(mem_get(packet_length));
-    uint8_t *bytes = reinterpret_cast<uint8_t *>(packet);
-    // Native writes only the named synchronization prefix fields; its
-    // unresolved byte intervals remain allocator contents.
-    const uint32_t faction = NetDaemonSyncWire::current_faction();
-    const uint32_t sequence = self.deletion_list_.sequence_bits();
-    const int32_t wire_a2 = a2, wire_a3 = a3, wire_a4 = a4;
-    SyncHeaderPrefixWriter prefix(bytes);
-    prefix.store_flags(flags);
-    prefix.store_faction(faction);
-    prefix.store_sequence(sequence);
-    prefix.store_opcode(opcode);
-    const int16_t wire_index = static_cast<int16_t>(chunk_index);
-    prefix.store_index(wire_index);
-    prefix.store_argument_2(wire_a2);
-    prefix.store_argument_3(wire_a3);
-    prefix.store_argument_4(wire_a4);
-    if (!NetDaemonSyncWire::copy_out(opcode, a2, a3, a4,
-            static_cast<uint32_t>(payload_size),
-            static_cast<size_t>(source_offset), bytes + 0x24,
-            static_cast<uint32_t>(payload_length), map_capture,
-            diplomacy_wire)) {
-        free(packet);
-        return;
-    }
-    self.send_message(packet, packet_length, 0);
-    free(packet);
-}
-
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00532E00 0x0053412C 0x005341D4 0x00532E4E
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00532E00 0x005341D4 0x0053420C 0x005331E5
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00532E00 0x0053420C 0x005342B4 0x0053344D
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00532E00 0x005342B4 0x005342EC 0x00533803
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00532E00 0x005342EC 0x00534324 0x00533CA4
 // ORIGINAL: 0x00532E00 ?synch@NetDaemon@@QAEXFHHHPADHF@Z 0x00532E00-0x00534129
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned532E00..534129; retained git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00532e00.cpp; independent jump-table and chunk/callback review.", "Opcode0 exact398-byte partition uses existing source objects and bounded fields; rule80..8D receive stages persist and compact into Alpha-owned fields only on the final chunk.", "Map destinations and diplomacy pair captured before callbacks; outgoing owners reread per chunk; changed base/vehicle notification suppresses scatter; sender mask is lock_state_[2].dword_[6].", "Path93AC88 send_files producer52ED40 remains pending. Stage93AD8C and game tail94B4D8 have observed window bounds only, not complete allocation extents.", "recovery/tasks/netdaemon-player-lifecycle-recovery.json; retained historical claims and prototype-history owner migration."], "reason": "Recover the complete synchronization protocol through genuine NetDaemon state and source-owned game, vehicle, faction, map and rule data. Wire serializers describe explicit member intervals, not an invented contiguous game object. Retain seed provenance and original identity; no matching or runtime acceptance is implied."}
 // TRIED: full transcription of both jump-table dispatches (size switch, address switch, tail array-compaction switch) and the chunk loop; MISMATCH #0 in the prologue (frame-size/local-order only), not in the dispatch logic - coverage is close to 100% of the original's ~4900 bytes, byte-exactness not chased further.
+// One switch sizes the transfer (and raises the receive-side progress
+// popups), the chunk loop selects each chunk's owner address in a second
+// switch, and a third switch compacts staged rule tables on the final chunk.
+// Opcodes without an address case use the chunk offset itself as the address,
+// exactly as the image does. Diplomacy (0x16) travels through a local tuple
+// that is scattered back after the loop.
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
                       int outgoing, int16_t flags) {
+    int wire[18];
+    int faction1;
+    int faction2;
+    int map_rows;
+    int x;
+    int y;
+    int length;
+    int remainder;
+    int total;
+    int size;
+    char *src;
+    SyncHeaderPrefix *header;
+    int i;
+
     if (!IsMultiplayerNet) return;
 
-    // Native synchronization progress is owned by lock_state_[0]'s existing
-    // dword slots 7/8. The popup and state transition order follows the native
-    // first dispatch; these calls are before target capture/chunk callbacks.
-    if (!outgoing) {
-        uint32_t &game_phase = primary_state_.trailing_words_[1];
-        uint32_t &rules_phase = primary_state_.trailing_words_[2];
-        if (opcode == 0x00 && static_cast<int32_t>(game_phase) >= 0) {
-            NetMsgPrimary.pop("SYNCHINGGAME", outgoing, 1,
-                             reinterpret_cast<const char *>(outgoing));
-            do_all_draws(); game_phase = 1;
-        } else if (opcode == 0x04 && game_phase == 1) {
-            NetMsgPrimary.pop("SYNCHINGWORLD", outgoing, 1,
-                             reinterpret_cast<const char *>(outgoing));
-            do_all_draws(); game_phase = 2;
-        } else if (opcode == 0x05 && game_phase == 2) {
-            NetMsgPrimary.pop("SYNCHINGREGIONS", outgoing, 1,
-                             reinterpret_cast<const char *>(outgoing));
-            do_all_draws(); game_phase = 3;
-        } else if (opcode == 0x06 && game_phase == 3) {
-            NetMsgPrimary.pop("SYNCHINGPLAYERS", outgoing, 1,
-                             reinterpret_cast<const char *>(outgoing));
-            do_all_draws(); game_phase = 4;
-        } else if (opcode == 0x12 && game_phase == 4) {
-            NetMsgPrimary.pop("SYNCHINGUNITS", outgoing, 1,
-                             reinterpret_cast<const char *>(outgoing));
-            do_all_draws(); game_phase = 5;
-        } else if (opcode == 0x19 && game_phase == 5) {
-            NetMsgPrimary.pop("SYNCHINGPRESTIGE", outgoing, 1,
-                             reinterpret_cast<const char *>(outgoing));
-            do_all_draws(); game_phase = 6;
-        } else if (opcode == 0x21 && game_phase == 6) {
-            NetMsgPrimary.pop("SYNCHINGREPLAY", outgoing, 1,
-                             reinterpret_cast<const char *>(outgoing));
-            do_all_draws(); game_phase = 7;
-        } else if (opcode == 0x15) {
-            NetMsgPrimary.close(); do_all_draws(); game_phase = 8;
+    header = reinterpret_cast<SyncHeaderPrefix *>(packet);
+    switch (opcode) {
+    case 0x00:
+        if (!outgoing && static_cast<int>(primary_state_.trailing_words_[1]) >= 0) {
+            NetMsgPrimary.pop("SYNCHINGGAME", 0, 1, 0);
+            do_all_draws();
+            primary_state_.trailing_words_[1] = 1;
         }
-        if (opcode == 0x80 && static_cast<int32_t>(rules_phase) >= 0) {
-            NetMsgPrimary.pop("RULESYNCHTECH", outgoing, 1,
-                             reinterpret_cast<const char *>(outgoing));
-            do_all_draws(); rules_phase = 1;
-        } else if (opcode == 0x83 && rules_phase == 1) {
-            NetMsgPrimary.pop("RULESYNCHTERR", outgoing, 1,
-                             reinterpret_cast<const char *>(outgoing));
-            do_all_draws(); rules_phase = 2;
-        } else if (opcode == 0x86 && rules_phase == 2) {
-            NetMsgPrimary.pop("RULESYNCHVEH", outgoing, 1,
-                             reinterpret_cast<const char *>(outgoing));
-            do_all_draws(); rules_phase = 3;
-        } else if (opcode == 0x8B && rules_phase == 3) {
-            NetMsgPrimary.pop("RULESYNCHFAC", outgoing, 1,
-                             reinterpret_cast<const char *>(outgoing));
-            do_all_draws(); rules_phase = 4;
-        } else if (opcode == 0x8D && rules_phase == 4) {
-            NetMsgPrimary.close(); do_all_draws(); rules_phase = 5;
+        size = 0x398;
+        break;
+    case 0x24:
+        size = 0x98;
+        break;
+    case 0x15:
+        if (!outgoing) {
+            NetMsgPrimary.close();
+            do_all_draws();
+            primary_state_.trailing_words_[1] = 8;
+        }
+        size = 4;
+        break;
+    case 0x0A:
+    case 0x0B:
+    case 0x17:
+    case 0x25:
+    case 0x26:
+        size = 4;
+        break;
+    case 0x04:
+        if (!outgoing && primary_state_.trailing_words_[1] == 1) {
+            NetMsgPrimary.pop("SYNCHINGWORLD", 0, 1, 0);
+            do_all_draws();
+            primary_state_.trailing_words_[1] = 2;
+        }
+        size = MapArea * sizeof(Map);
+        break;
+    case 0x05:
+        if (!outgoing && primary_state_.trailing_words_[1] == 2) {
+            NetMsgPrimary.pop("SYNCHINGREGIONS", 0, 1, 0);
+            do_all_draws();
+            primary_state_.trailing_words_[1] = 3;
+        }
+        size = 0xE00;
+        break;
+    case 0x06:
+        if (!outgoing && primary_state_.trailing_words_[1] == 3) {
+            NetMsgPrimary.pop("SYNCHINGPLAYERS", 0, 1, 0);
+            do_all_draws();
+            primary_state_.trailing_words_[1] = 4;
+        }
+        size = sizeof(PlayerData);
+        break;
+    case 0x07:
+        size = sizeof(Player);
+        break;
+    case 0x0E:
+        size = sizeof(VehPrototype);
+        break;
+    case 0x0F:
+        size = a3 * sizeof(VehPrototype);
+        break;
+    case 0x01:
+    case 0x10:
+        size = 1;
+        break;
+    case 0x11:
+        if (outgoing) {
+            log_say("Sent SYNCH VEH", a2, Vehs[a2].x, Vehs[a2].y);
+        } else {
+            log_say("Received SYNCH VEH", a2, Vehs[a2].x, Vehs[a2].y);
+        }
+        size = 0x30;
+        break;
+    case 0x12:
+        if (!outgoing && primary_state_.trailing_words_[1] == 4) {
+            NetMsgPrimary.pop("SYNCHINGUNITS", 0, 1, 0);
+            do_all_draws();
+            primary_state_.trailing_words_[1] = 5;
+        }
+        if (!GameDataStateStorage.fields_.vehicle_current_count_) return;
+        size = GameDataStateStorage.fields_.vehicle_current_count_ * sizeof(Veh);
+        break;
+    case 0x13:
+        if (outgoing) {
+            log_say("Sending SYNCH_BASE", Bases[a2].name_string, a2, 0, 0);
+        } else {
+            log_say("Received SYNCH_BASE", Bases[a2].name_string, a2, 0, 0);
+        }
+        size = sizeof(Base);
+        break;
+    case 0x14:
+        if (!GameDataStateStorage.fields_.base_current_count_) return;
+        size = GameDataStateStorage.fields_.base_current_count_ * sizeof(Base);
+        break;
+    case 0x08:
+    case 0x0D:
+    case 0x23:
+        size = 0x14;
+        break;
+    case 0x16:
+        size = sizeof(wire);
+        break;
+    case 0x18:
+        size = 0x224;
+        break;
+    case 0x19:
+        if (!outgoing && primary_state_.trailing_words_[1] == 5) {
+            NetMsgPrimary.pop("SYNCHINGPRESTIGE", 0, 1, 0);
+            do_all_draws();
+            primary_state_.trailing_words_[1] = 6;
+        }
+        size = 0x20;
+        break;
+    case 0x20:
+        size = GameDataStateStorage.fields_.turn_current_num_ << 4;
+        break;
+    case 0x21:
+        if (!outgoing && primary_state_.trailing_words_[1] == 6) {
+            NetMsgPrimary.pop("SYNCHINGREPLAY", 0, 1, 0);
+            do_all_draws();
+            primary_state_.trailing_words_[1] = 7;
+        }
+        size = 4;
+        break;
+    case 0x22:
+        size = ReplayEventBytes;
+        break;
+    case 0x28:
+        size = 0;
+        break;
+    case 0x27:
+        size = 0x104;
+        break;
+    case 0x29:
+        size = 0x1000;
+        break;
+    case 0x30:
+        map_rows = MapLatitudeBounds / 16;
+        size = map_rows;
+        if (a2 == 15) size = MapLatitudeBounds - map_rows * 15;
+        size = (MapLongitudeBounds >> 1) * size * sizeof(Map);
+        break;
+    case 0x80:
+        if (!outgoing && static_cast<int>(primary_state_.trailing_words_[2]) >= 0) {
+            NetMsgPrimary.pop("RULESYNCHTECH", 0, 1, 0);
+            do_all_draws();
+            primary_state_.trailing_words_[2] = 1;
+        }
+        size = 0xF4C;
+        break;
+    case 0x81:
+        size = 0x13C;
+        break;
+    case 0x82:
+        size = 0x7C;
+        break;
+    case 0x83:
+        if (!outgoing && primary_state_.trailing_words_[2] == 1) {
+            NetMsgPrimary.pop("RULESYNCHTERR", 0, 1, 0);
+            do_all_draws();
+            primary_state_.trailing_words_[2] = 2;
+        }
+        size = 0x280;
+        break;
+    case 0x84:
+        size = 0x90;
+        break;
+    case 0x85:
+        size = 0xC0;
+        break;
+    case 0x86:
+        if (!outgoing && primary_state_.trailing_words_[2] == 2) {
+            NetMsgPrimary.pop("RULESYNCHVEH", 0, 1, 0);
+            do_all_draws();
+            primary_state_.trailing_words_[2] = 3;
+        }
+        size = 0x510;
+        break;
+    case 0x87:
+        size = 0x30;
+        break;
+    case 0x88:
+        size = 0x1A0;
+        break;
+    case 0x89:
+        size = 0xE0;
+        break;
+    case 0x8A:
+        size = 0x32C;
+        break;
+    case 0x8B:
+        if (!outgoing && primary_state_.trailing_words_[2] == 3) {
+            NetMsgPrimary.pop("RULESYNCHFAC", 0, 1, 0);
+            do_all_draws();
+            primary_state_.trailing_words_[2] = 4;
+        }
+        size = 0x1920;
+        break;
+    case 0x8C:
+        size = 0x118;
+        break;
+    case 0x8D:
+        if (!outgoing && primary_state_.trailing_words_[2] == 4) {
+            NetMsgPrimary.close();
+            do_all_draws();
+            primary_state_.trailing_words_[2] = 5;
+        }
+        size = 0x350;
+        break;
+    case 0x02:
+    case 0x1002:
+        size = 0xA9C;
+        break;
+    default:
+        size = a2;
+        break;
+    case 0x09:
+    case 0x0C:
+        size = 8;
+        break;
+    }
+
+    total = size / 0x800;
+    remainder = size - total * 0x800;
+    if (remainder) total++;
+
+    for (i = 0; i < total; i++) {
+        if (!outgoing) {
+            if (header->index == total - 1 && remainder) {
+                if (total == 1) {
+                    src = 0;
+                } else {
+                    src = reinterpret_cast<char *>(total * 0x800 - 0x800);
+                }
+                length = remainder;
+            } else {
+                src = reinterpret_cast<char *>(header->index * 0x800);
+                length = 0x800;
+            }
+            if (header->index == total - 1) {
+                channels_[1].trailing_words_[1] &= ~(1 << header->faction);
+            }
+            i = total - 1;
+        } else {
+            if (i == total - 1 && remainder) {
+                if (total == 1) {
+                    src = 0;
+                } else {
+                    src = reinterpret_cast<char *>(total * 0x800 - 0x800);
+                }
+                length = remainder;
+            } else {
+                src = reinterpret_cast<char *>(i * 0x800);
+                length = 0x800;
+            }
+        }
+
+        switch (opcode) {
+        case 0x00:
+            src += reinterpret_cast<int>(&GameDataStateStorage);
+            break;
+        case 0x01:
+            src += reinterpret_cast<int>(&GameDataStateStorage.fields_.lock_masks_);
+            break;
+        case 0x15:
+            src += reinterpret_cast<int>(&ControlTurnPhase);
+            break;
+        case 0x24:
+            src += reinterpret_cast<int>(&ScenarioSave);
+            break;
+        case 0x04:
+            src += reinterpret_cast<int>(MapTiles);
+            break;
+        case 0x05:
+            src += reinterpret_cast<int>(Continents);
+            break;
+        case 0x07:
+            src += reinterpret_cast<int>(&Players[a2]);
+            break;
+        case 0x08:
+            src += reinterpret_cast<int>(&PlayersData[a2].ai_fight);
+            break;
+        case 0x09:
+            src += reinterpret_cast<int>(&PlayersData[a2].tech_accumulated);
+            break;
+        case 0x0A:
+            src += reinterpret_cast<int>(&PlayersData[a2].tech_id_researching);
+            break;
+        case 0x0B:
+            src += reinterpret_cast<int>(&PlayersData[a2].energy_reserves);
+            break;
+        case 0x0C:
+            src += reinterpret_cast<int>(&PlayersData[a2].se_alloc_psych);
+            break;
+        case 0x0D:
+            src += reinterpret_cast<int>(&PlayersData[a2].soc_category_pending);
+            break;
+        case 0x0E:
+            src += reinterpret_cast<int>(&VehPrototypes[a2]);
+            break;
+        case 0x0F:
+            src += reinterpret_cast<int>(&VehPrototypes[a2]);
+            break;
+        case 0x10:
+            src += reinterpret_cast<int>(&VehPrototypes[a2].obsolete_factions);
+            break;
+        case 0x11:
+            x = Vehs[a2].x;
+            y = Vehs[a2].y;
+            src += reinterpret_cast<int>(&Vehs[a2]);
+            break;
+        case 0x12:
+            src += reinterpret_cast<int>(Vehs);
+            break;
+        case 0x13:
+            x = Bases[a2].x;
+            y = Bases[a2].y;
+            src += reinterpret_cast<int>(&Bases[a2]);
+            break;
+        case 0x14:
+            src += reinterpret_cast<int>(Bases);
+            break;
+        case 0x23:
+            src += reinterpret_cast<int>(&Bases[a2].resource_sqr_radius);
+            break;
+        case 0x16:
+            faction1 = a2;
+            faction2 = a3;
+            src = reinterpret_cast<char *>(wire);
+            length = sizeof(wire);
+            if (outgoing) {
+                wire[0] = PlayersData[a2].diplo_patience[a3];
+                wire[1] = PlayersData[a3].diplo_patience[a2];
+                wire[2] = PlayersData[a2].diplo_friction[a3];
+                wire[3] = PlayersData[a3].diplo_friction[a2];
+                wire[4] = PlayersData[a2].global_reputation;
+                wire[5] = PlayersData[a3].global_reputation;
+                wire[6] = PlayersData[a2].diplo_unk1[a3];
+                wire[7] = PlayersData[a3].diplo_unk1[a2];
+                wire[8] = PlayersData[a2].diplo_wrongs[a3];
+                wire[9] = PlayersData[a3].diplo_wrongs[a2];
+                wire[10] = PlayersData[a2].diplo_spoke[a3];
+                wire[11] = PlayersData[a3].diplo_spoke[a2];
+                wire[12] = PlayersData[a2].diplo_treaties[a3];
+                wire[13] = PlayersData[a3].diplo_treaties[a2];
+                wire[14] = PlayersData[a2].diplo_agenda[a3];
+                wire[15] = PlayersData[a3].diplo_agenda[a2];
+                wire[16] = PlayersData[a2].diplo_merc[a3];
+                wire[17] = PlayersData[a3].diplo_merc[a2];
+            }
+            break;
+        case 0x06:
+        case 0x17:
+            src += reinterpret_cast<int>(&PlayersData[a2]);
+            break;
+        case 0x18:
+            src += reinterpret_cast<int>(&PlayersData[a2].unk_37);
+            break;
+        case 0x19:
+            src += reinterpret_cast<int>(FactionRankingsUnk);
+            break;
+        case 0x20:
+            src += reinterpret_cast<int>(FactionRankingHistory);
+            break;
+        case 0x21:
+            src = reinterpret_cast<char *>(&ReplayEventBytes);
+            break;
+        case 0x22:
+            src += reinterpret_cast<int>(ReplayEvents);
+            break;
+        case 0x25:
+            src = reinterpret_cast<char *>(&GameDataStateStorage.fields_.vehicle_current_count_);
+            break;
+        case 0x26:
+            src = reinterpret_cast<char *>(&GameDataStateStorage.fields_.base_current_count_);
+            break;
+        case 0x28:
+            src = StringTemp;
+            break;
+        case 0x27:
+            src = NetDaemonFileTransferPath;
+            break;
+        case 0x29:
+            src += reinterpret_cast<int>(BungList);
+            break;
+        case 0x30:
+            y = map_rows * a2;
+            src += reinterpret_cast<int>(&MapTiles[MapLongitude * y]);
+            break;
+        case 0x80:
+            if (outgoing) {
+                src += reinterpret_cast<int>(Technology);
+            } else {
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging);
+            }
+            break;
+        case 0x83:
+            if (outgoing) {
+                src += reinterpret_cast<int>(Terraforming);
+            } else {
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging);
+            }
+            break;
+        case 0x85:
+            if (outgoing) {
+                src += reinterpret_cast<int>(TimeControl);
+            } else {
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging);
+            }
+            break;
+        case 0x86:
+            if (outgoing) {
+                src += reinterpret_cast<int>(Chassis);
+            } else {
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging);
+            }
+            break;
+        case 0x87:
+            if (outgoing) {
+                src += reinterpret_cast<int>(Reactor);
+            } else {
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging);
+            }
+            break;
+        case 0x88:
+            if (outgoing) {
+                src += reinterpret_cast<int>(Weapon);
+            } else {
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging);
+            }
+            break;
+        case 0x89:
+            if (outgoing) {
+                src += reinterpret_cast<int>(Armor);
+            } else {
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging);
+            }
+            break;
+        case 0x8A:
+            if (outgoing) {
+                src += reinterpret_cast<int>(Ability);
+            } else {
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging);
+            }
+            break;
+        case 0x8B:
+            if (outgoing) {
+                src += reinterpret_cast<int>(Facility);
+            } else {
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging);
+            }
+            break;
+        case 0x8C:
+            if (outgoing) {
+                src += reinterpret_cast<int>(Citizen);
+            } else {
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging);
+            }
+            break;
+        case 0x8D:
+            if (outgoing) {
+                src += reinterpret_cast<int>(SocialCategories);
+            } else {
+                src += reinterpret_cast<int>(NetDaemonRulesSyncStaging);
+            }
+            break;
+        case 0x81:
+            src = reinterpret_cast<char *>(&RulesStorage);
+            break;
+        case 0x82:
+            src = reinterpret_cast<char *>(&WorldBuilder);
+            break;
+        case 0x84:
+            src = reinterpret_cast<char *>(ResourceInfo);
+            break;
+        case 0x02:
+        case 0x1002:
+            src += reinterpret_cast<int>(&MapStorage.metadata_);
+            break;
+        }
+
+        if (outgoing) {
+            const int packet_length = length + sizeof(SyncHeaderPrefix);
+            SyncHeaderPrefix *message =
+                static_cast<SyncHeaderPrefix *>(mem_get(packet_length));
+            message->flags = flags;
+            message->opcode = opcode;
+            message->faction = ConsoleGlobal.faction_id_;
+            message->sequence = deletion_list_.sequence_bits();
+            message->argument_4 = a4;
+            header = message;
+            message->argument_2 = a2;
+            message->argument_3 = a3;
+            message->index = static_cast<int16_t>(i);
+            if (length) memcpy(message + 1, src, length);
+            send_message(reinterpret_cast<char *>(message), packet_length, 0);
+            if (message) free(header);
+            continue;
+        }
+
+        synch_display(opcode, header->index + 1, total, a2);
+        char *payload = packet + sizeof(SyncHeaderPrefix);
+        if (length) {
+            if (opcode == 0x11) {
+                if (total == 1 &&
+                    (*reinterpret_cast<int16_t *>(payload) != *reinterpret_cast<int16_t *>(src) ||
+                     *reinterpret_cast<int16_t *>(payload + 2) != *reinterpret_cast<int16_t *>(src + 2))) {
+                    parse_num(0, *reinterpret_cast<int16_t *>(payload));
+                    parse_num(1, *reinterpret_cast<int16_t *>(payload + 2));
+                    parse_num(2, *reinterpret_cast<int16_t *>(src));
+                    parse_num(3, *reinterpret_cast<int16_t *>(src + 2));
+                    parse_num(4, Vehs[a2].faction_id);
+                    parse_num(5, Vehs[a2].proto_id);
+                    parse_num(6, a2);
+                    parse_says(0, VehPrototypes[Vehs[a2].proto_id].veh_name, -1, -1);
+                    log_say("Synch changed vehicle", ParseStrBuffer[0].str, a2, x, y);
+                    if (BaseAtDebugPopupFlag) {
+                        X_pop("VEHSYNCH", 0);
+                        if (!ConsoleGroupAction) GetAsyncKeyState(VK_CONTROL);
+                    }
+                    int local_turn = 0;
+                    if ((GameDataStateStorage.fields_.game_rules_ & 0x10) && !ConsoleControlTurnActive) {
+                        local_turn = GameDataStateStorage.fields_.net_turn_faction_ == ConsoleGlobal.faction_id_;
+                    }
+                    if (local_turn
+                        || !((GameDataStateStorage.fields_.game_rules_ & 0x10) && !ConsoleControlTurnActive)
+                            && NetDaemonNet.primary_state_.leading_words_[0]) {
+                        SpockNotifyPending = 1;
+                    } else {
+                        message_data(0x2308, 0, 0, 0, 0, 0);
+                    }
+                    goto chunk_done;
+                }
+            } else if (opcode == 0x13) {
+                if (total == 1 &&
+                    (*reinterpret_cast<int16_t *>(payload) != *reinterpret_cast<int16_t *>(src) ||
+                     *reinterpret_cast<int16_t *>(payload + 2) != *reinterpret_cast<int16_t *>(src + 2))) {
+                    parse_num(0, *reinterpret_cast<int16_t *>(payload));
+                    parse_num(1, *reinterpret_cast<int16_t *>(payload + 2));
+                    parse_num(2, *reinterpret_cast<int16_t *>(src));
+                    parse_num(3, *reinterpret_cast<int16_t *>(src + 2));
+                    parse_num(4, a2);
+                    parse_says(0, payload + 0x13, -1, -1);
+                    parse_says(1, src + 0x13, -1, -1);
+                    log_say("Synch changed base", ParseStrBuffer[0].str, a2, x, y);
+                    if (BaseAtDebugPopupFlag) {
+                        X_pop("VEHSYNCH", 0);
+                        if (!ConsoleGroupAction) GetAsyncKeyState(VK_CONTROL);
+                    }
+                    int local_turn = 0;
+                    if ((GameDataStateStorage.fields_.game_rules_ & 0x10) && !ConsoleControlTurnActive) {
+                        local_turn = GameDataStateStorage.fields_.net_turn_faction_ == ConsoleGlobal.faction_id_;
+                    }
+                    if (local_turn
+                        || !((GameDataStateStorage.fields_.game_rules_ & 0x10) && !ConsoleControlTurnActive)
+                            && NetDaemonNet.primary_state_.leading_words_[0]) {
+                        SpockNotifyPending = 1;
+                    } else {
+                        message_data(0x2308, 0, 0, 0, 0, 0);
+                    }
+                    goto chunk_done;
+                }
+            }
+            memcpy(src, payload, length);
+        }
+        if (opcode == 0x12) {
+            if (header->index == total - 1) rebuild_vehicle_bits();
+        } else if (opcode == 0x14) {
+            if (header->index == total - 1) rebuild_base_bits();
+        }
+    chunk_done:
+        if (header->index == total - 1) {
+            switch (opcode) {
+            case 0x80: {
+                RulesTechnology *stage =
+                    reinterpret_cast<RulesTechnology *>(NetDaemonRulesSyncStaging);
+                for (int k = 0; k < MaxTechnologyNum; k++, stage++) {
+                    Technology[k].flags = stage->flags;
+                    Technology[k].growth_value = stage->growth_value;
+                    Technology[k].tech_value = stage->tech_value;
+                    Technology[k].wealth_value = stage->wealth_value;
+                    Technology[k].power_value = stage->power_value;
+                    Technology[k].preq_tech_1 = stage->preq_tech_1;
+                    Technology[k].preq_tech_2 = stage->preq_tech_2;
+                }
+                break;
+            }
+            case 0x83: {
+                RulesTerraforming *stage =
+                    reinterpret_cast<RulesTerraforming *>(NetDaemonRulesSyncStaging);
+                for (int k = 0; k < MaxTerrainNum; k++, stage++) {
+                    Terraforming[k].prerequisite_tech[0] = stage->prerequisite_tech[0];
+                    Terraforming[k].prerequisite_tech[1] = stage->prerequisite_tech[1];
+                    Terraforming[k].bit = stage->bit;
+                    Terraforming[k].bit_incompatible = stage->bit_incompatible;
+                    Terraforming[k].rate = stage->rate;
+                }
+                break;
+            }
+            case 0x85: {
+                RulesTimeControl *stage =
+                    reinterpret_cast<RulesTimeControl *>(NetDaemonRulesSyncStaging);
+                for (int k = 0; k < MaxTimeControlNum; k++, stage++) {
+                    LPSTR name = TimeControl[k].name;
+                    TimeControl[k] = *stage;
+                    TimeControl[k].name = name;
+                }
+                break;
+            }
+            case 0x86: {
+                RulesChassis *stage =
+                    reinterpret_cast<RulesChassis *>(NetDaemonRulesSyncStaging);
+                for (int k = 0; k < MaxChassisNum; k++, stage++) {
+                    Chassis[k].speed = stage->speed;
+                    Chassis[k].triad = stage->triad;
+                    Chassis[k].range = stage->range;
+                    Chassis[k].missile = stage->missile;
+                    Chassis[k].cargo = stage->cargo;
+                    Chassis[k].cost = stage->cost;
+                    Chassis[k].preq_tech = stage->preq_tech;
+                }
+                break;
+            }
+            case 0x87: {
+                RulesReactor *stage =
+                    reinterpret_cast<RulesReactor *>(NetDaemonRulesSyncStaging);
+                for (int k = 0; k < MaxReactorNum; k++, stage++) {
+                    Reactor[k].preq_tech = stage->preq_tech;
+                }
+                break;
+            }
+            case 0x88: {
+                RulesWeapon *stage =
+                    reinterpret_cast<RulesWeapon *>(NetDaemonRulesSyncStaging);
+                for (int k = 0; k < MaxWeaponNum; k++, stage++) {
+                    Weapon[k].offense_rating = stage->offense_rating;
+                    Weapon[k].icon = stage->icon;
+                    Weapon[k].mode = stage->mode;
+                    Weapon[k].cost = stage->cost;
+                    Weapon[k].preq_tech = stage->preq_tech;
+                }
+                break;
+            }
+            case 0x89: {
+                RulesArmor *stage =
+                    reinterpret_cast<RulesArmor *>(NetDaemonRulesSyncStaging);
+                for (int k = 0; k < MaxArmorNum; k++, stage++) {
+                    Armor[k].defense_rating = stage->defense_rating;
+                    Armor[k].mode = stage->mode;
+                    Armor[k].cost = stage->cost;
+                    Armor[k].preq_tech = stage->preq_tech;
+                }
+                break;
+            }
+            case 0x8A: {
+                RulesAbility *stage =
+                    reinterpret_cast<RulesAbility *>(NetDaemonRulesSyncStaging);
+                for (int k = 0; k < MaxAbilityNum; k++, stage++) {
+                    Ability[k].cost_factor = stage->cost_factor;
+                    Ability[k].unk_1 = stage->unk_1;
+                    Ability[k].flags = stage->flags;
+                    Ability[k].preq_tech = stage->preq_tech;
+                }
+                break;
+            }
+            case 0x8B: {
+                RulesFacility *stage =
+                    reinterpret_cast<RulesFacility *>(NetDaemonRulesSyncStaging);
+                for (int k = 0; k < MaxFacilityNum; k++, stage++) {
+                    LPSTR name = Facility[k].name;
+                    LPSTR effect = Facility[k].effect;
+                    Facility[k] = *stage;
+                    Facility[k].name = name;
+                    Facility[k].effect = effect;
+                }
+                break;
+            }
+            case 0x8C: {
+                RulesCitizen *stage =
+                    reinterpret_cast<RulesCitizen *>(NetDaemonRulesSyncStaging);
+                for (int k = 0; k < MaxCitizenNum; k++, stage++) {
+                    Citizen[k].preq_tech = stage->preq_tech;
+                    Citizen[k].obsol_tech = stage->obsol_tech;
+                    Citizen[k].ops_bonus = stage->ops_bonus;
+                    Citizen[k].psych_bonus = stage->psych_bonus;
+                    Citizen[k].research_bonus = stage->research_bonus;
+                }
+                break;
+            }
+            case 0x8D: {
+                RulesSocialCategory *stage =
+                    reinterpret_cast<RulesSocialCategory *>(NetDaemonRulesSyncStaging);
+                for (int k = 0; k < MaxSocialCatNum; k++, stage++) {
+                    for (int j = 0; j < 4; j++) {
+                        SocialCategories[k].preq_tech[j] = stage->preq_tech[j];
+                        SocialCategories[k].model_effect[j] = stage->model_effect[j];
+                    }
+                }
+                break;
+            }
+            }
         }
     }
 
-    int log_arg_lo = 0, log_arg_hi = 0;
-    if (opcode == 0x11) { // decimal 17
-        const Veh &veh = Vehs[a2];
-        log_arg_lo = veh.x;
-        log_arg_hi = veh.y;
-        log_say(outgoing ? "Sent SYNCH VEH" : "Received SYNCH VEH",
-                a2, log_arg_lo, log_arg_hi);
-    } else if (opcode == 0x13) { // decimal 19
-        log_arg_lo = Bases[a2].x;
-        log_arg_hi = Bases[a2].y;
-        log_say(outgoing ? "Sending SYNCH_BASE" : "Received SYNCH_BASE",
-                Bases[a2].name_string, a2, 0, 0);
-    }
-
-    // These locals preserve the native pair identities and dword tuple across
-    // callbacks. On receive the tuple is filled from the one 0x48-byte packet;
-    // the PlayerData pair is not changed until the post-loop epilogue.
-    const int saved_diplomacy_a = a2;
-    const int saved_diplomacy_b = a3;
-    uint32_t diplomacy_wire[18];
-    if (opcode == 0x16 && outgoing)
-        NetDaemonSyncWire::gather_saved_diplomacy(
-            saved_diplomacy_a, saved_diplomacy_b, diplomacy_wire);
-
-    int map_strip_quotient = 0;
-    const int size = netdaemon_sync_payload_size(opcode, a2, a3, map_strip_quotient);
-    // Only literal-zero vehicle/base counts take their native early return.
-    // The helper's -1 sentinel cannot be produced by either wrapped product.
-    if (size == -1 && (opcode == 0x12 || opcode == 0x14)) return;
-    // Native truncates signed division toward zero, retains the signed
-    // remainder, increments on any nonzero remainder, then tests the total.
-    // Invalid huge copy/allocation effects are not established by host hooks.
-    const int quotient = size / 0x800;
-    const int remainder = size % 0x800;
-    const int total_chunks = quotient + (remainder != 0 ? 1 : 0);
-    if (total_chunks <= 0) {
-        // Native jumps directly to the epilogue; no callback or packet.
-    } else if (outgoing) {
-        for (int i = 0; i < total_chunks; ++i) {
-            // Native resolves source pointers inside each loop iteration, so
-            // send_message mutations can affect the next chunk's live owner.
-            const NetDaemonSyncWire::MapRouteCapture map_capture =
-                capture_map_route(opcode, a2, map_strip_quotient);
-            netdaemon_sync_send_chunk(*this, opcode, a2, a3, a4, flags, size,
-                                      total_chunks, remainder, i, map_capture,
-                                      diplomacy_wire);
-        }
-    } else {
-        // Native receives one packet/chunk per call. It reads the signed short
-        // index, calls the display callback, then reloads packet fields/payload.
-        const SyncHeaderPrefixReader incoming(
-            reinterpret_cast<const unsigned char *>(packet));
-        const int16_t incoming_index = incoming.index();
-        const int last_index = total_chunks - 1;
-        const bool initial_is_last = incoming_index == last_index;
-        // The diplomacy address arm overwrites the common count with 0x48
-        // and selects the local tuple start for every incoming index.
-        const int current_length = opcode == 0x16 ? 0x48 :
-            ((initial_is_last && remainder) ? remainder : 0x800);
-        const size_t current_offset = opcode == 0x16 ? 0 : initial_is_last && remainder
-            ? (total_chunks == 1 ? 0 :
-               static_cast<size_t>(total_chunks - 1) * 0x800)
-            : static_cast<uint32_t>(incoming_index) * 0x800u;
-        // Native computes the destination address before synch_display.
-        // current_offset captures default-route integer address bits; later
-        // pointer conversion does not reread the packet or index. Keep the
-        // allocation pointer/displacement stable across that callback for this
-        // received packet, while reading the selected object's current bytes
-        // only when the later compare/scatter instruction does so.
-        const NetDaemonSyncWire::MapRouteCapture map_capture =
-            capture_map_route(opcode, a2, map_strip_quotient);
-        const unsigned char *const notification_view =
-            NetDaemonSyncWire::native_notification_view(opcode, a2, current_offset);
-        const unsigned char *const notification_owner_view =
-            NetDaemonSyncWire::native_notification_owner_view(opcode, a2);
-        uint32_t sender;
-        memcpy(&sender, packet + 0x04, sizeof sender);
-        if (initial_is_last)
-            channels_[1].trailing_words_[1] &=
-                ~(static_cast<uint32_t>(1) << (sender & 31));
-        synch_display(opcode, static_cast<int>(incoming_index) + 1,
-                      total_chunks, a2);
-
-        // Native resolves the destination/length before synch_display, then
-        // reloads payload from the original packet argument after the callback.
-        // The final-chunk postprocessing below independently reloads +0x12.
-        bool suppress_copy = false;
-        if (total_chunks == 1 &&
-            (opcode == 0x11 || opcode == 0x13)) { // decimal 17 or 19
-            suppress_copy = NetDaemonSyncWire::compare_and_notify(
-                opcode, a2, a3, a4, notification_view,
-                notification_owner_view, packet + 0x24,
-                log_arg_lo, log_arg_hi);
-        }
-        if (!suppress_copy && !NetDaemonSyncWire::copy_in(
-                opcode, a2, a3, a4, static_cast<uint32_t>(size),
-                current_offset, packet + 0x24,
-                static_cast<uint32_t>(current_length), map_capture,
-                diplomacy_wire)) return;
-
-        const int16_t reloaded_index = incoming.index();
-        if (reloaded_index == last_index) {
-            if (opcode == 0x12) // decimal 18
-                rebuild_vehicle_bits();
-            else if (opcode == 0x14) // decimal 20
-                rebuild_base_bits();
-            else if (opcode == 0x80 || opcode == 0x83 ||
-                     (opcode >= 0x85 && opcode <= 0x8D))
-                NetDaemonSyncWire::commit_rules(opcode);
-        }
-    }
-
-    // Native epilogue is keyed by the original signed opcode and runs after
-    // send loop / received chunk processing.
     if (opcode == 0) {
         prefs_use();
-    } else if (opcode == 0x02 && primary_state_.leading_words_[0] == 0) { // decimal 2
-        map_shutdown();
-        map_init();
-        Paths.init();
-    } else if (opcode == 0x13) { // decimal 19
+    } else if (opcode == 0x02) {
+        if (!primary_state_.leading_words_[0]) {
+            map_shutdown();
+            map_init();
+            Paths.init();
+        }
+    } else if (opcode == 0x13) {
         TutWinBaseWindow.check_base(a2);
-    } else if (opcode == 0x11) { // decimal 17
+    } else if (opcode == 0x11) {
         TutWinBaseWindow.check_veh(a2);
-    } else if (opcode == 0x16) { // decimal 22
-        NetDaemonSyncWire::scatter_saved_diplomacy(
-            saved_diplomacy_a, saved_diplomacy_b, diplomacy_wire);
-    } else if (opcode == 0x0D) { // decimal 13
-        social_set(static_cast<uint32_t>(a2));
+    } else if (opcode == 0x16) {
+        PlayersData[faction1].diplo_patience[faction2] = static_cast<char>(wire[0]);
+        PlayersData[faction2].diplo_patience[faction1] = static_cast<char>(wire[1]);
+        PlayersData[faction1].diplo_friction[faction2] = wire[2];
+        PlayersData[faction2].diplo_friction[faction1] = wire[3];
+        PlayersData[faction1].global_reputation = wire[4];
+        PlayersData[faction2].global_reputation = wire[5];
+        PlayersData[faction1].diplo_unk1[faction2] = wire[6];
+        PlayersData[faction2].diplo_unk1[faction1] = wire[7];
+        PlayersData[faction1].diplo_wrongs[faction2] = wire[8];
+        PlayersData[faction2].diplo_wrongs[faction1] = wire[9];
+        PlayersData[faction1].diplo_spoke[faction2] = wire[10];
+        PlayersData[faction2].diplo_spoke[faction1] = wire[11];
+        PlayersData[faction1].diplo_treaties[faction2] = wire[12];
+        PlayersData[faction2].diplo_treaties[faction1] = wire[13];
+        PlayersData[faction1].diplo_agenda[faction2] = wire[14];
+        PlayersData[faction2].diplo_agenda[faction1] = wire[15];
+        PlayersData[faction1].diplo_merc[faction2] = wire[16];
+        PlayersData[faction2].diplo_merc[faction1] = wire[17];
+    } else if (opcode == 0x0D) {
+        social_set(a2);
     }
 }
+
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
 
 // Clear the real daemon lock entries, then close its AlphaNet base.
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -7467,15 +7418,17 @@ send_move:
                             (PlayersData[other_faction]
                                  .diplo_treaties[ConsoleGlobal.faction_id_] & 0x10U) != 0 &&
                             is_human(other_faction)) {
-                            int other_vehicle = veh_at(adjacent_x, adjacent_y);
-                            while (other_vehicle >= 0) {
-                                if (Vehs[other_vehicle].faction_id == other_faction) {
-                                    if (veh_moves(other_vehicle) != 0) {
+                            // The image keeps this walk in the veh_id
+                            // parameter's frame slot ([ebp+8]).
+                            veh_id = veh_at(adjacent_x, adjacent_y);
+                            while (veh_id >= 0) {
+                                if (Vehs[veh_id].faction_id == other_faction) {
+                                    if (veh_moves(veh_id) != 0) {
                                         have_other_vehicle = 1;
                                         other_faction_found = other_faction;
                                     }
                                 }
-                                other_vehicle = Vehs[other_vehicle].next_veh_id_stack;
+                                veh_id = veh_next_stack_id(veh_id);
                             }
                         }
                     }
