@@ -346,7 +346,13 @@ for v in p[1:]:
   not a literal. Conversely, identical literals the image keeps separate but
   our pooled recipe merges make strict verification refuse a masked-exact
   function; that unit needs the unpooled recipe.
-- **Strict refusal with a masked BYTE_EXACT.** "strict selected evidence
+- **Materialised compare after a counting loop** (`xor; cmp; setl; test; je`
+  with the count in a dead parameter slot) is an inline helper taking the
+  counter by reference and returning the comparison.
+- **Strict refusal with a masked BYTE_EXACT.** First check for `$SG`
+  relocations without a `RECOVERY_LITERAL` binding (seed them from the image's
+  push operands); import bindings are global, so a second copy is an error.
+  "strict selected evidence
   result: unknown" while `masked_verdict` is BYTE_EXACT usually means a system
   import relocation lacks its `RECOVERY_IMPORT` binding; functions with
   `RECOVERY_ASSOCIATED` always take the strict path. Also check
@@ -395,6 +401,13 @@ for v in p[1:]:
   - Unreferenced labels change layout.
   - `while(1){ if(x) break; … }` is the only non-rotated loop.
   - `default:` is placed last.
+  - A goto target is placed after the *last* goto that reaches it, whatever
+    the source order. For an image block that an earlier arm falls into and
+    later arms jump back to, have the later arms set a flag the join tests
+    (`if (!flag) return;`); VC6 threads the jump (council_action).
+  - A switch whose result lives in memory with `mov [ebp-4],X; ...; ret`
+    sites is `score = X; break;` with one final `return score;` (VC6
+    tail-duplicates that epilogue).
   - In a jump-table switch, only case source order moves case blocks;
     rewriting `break`/`goto`/`default` structure compiles identically. A case
     table read straight from the image also catches swapped case bodies
@@ -539,6 +552,13 @@ for v in p[1:]:
   identically to the recipe in all 182 game units. `/G6` changes 175 units but
   made 0 functions exact and lost 2,390 of 5,015 when applied per unit; only
   movie_media_decoder_g6.cpp is a real `/G6` unit (2026-11-12 sweep).
+- **TU counter shifts.** Inserting 1-8 extra extern/function declarations,
+  unused literals, unused inlines, referenced externs or helper expansions at
+  the top of a unit changed no non-exact function in 6 units (204 variants,
+  49 near-misses). Near-misses are not decided by $SG/$L or declaration
+  counters; they need per-function body, type or structure work. Such shifts
+  only ever *break* exact functions, non-monotonically (end_of_game flips at
+  7-8 externs but not 1-6) (2026-11-12 sweep).
 - **Flags.** `/Ob1`, `inline_depth` and other `/O` variations either change
   nothing or lose claims.
 - **Inline keywords.** `__forceinline` vs `inline` changes nothing. The per-site
