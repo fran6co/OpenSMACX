@@ -61,10 +61,10 @@
 #include "net_class.h"
 #include "multidebug.h"
 
-// ORIGINAL: 0x005F8630 ??1AutoSound@@UAE@XZ 0x005F8630-0x005F863B FILE
+// ORIGINAL: 0x005F8630 ??1AutoSound@@UAE@XZ 0x005F8630-0x005F863B FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "pinned:0x00662C60 mov ecx,[ebp-0x10]; jmp 0x005F8630 is Win::~Win's state-0 unwind funclet (funcInfo 0x0067F8B8 via handler 0x00662C76)", "pinned:0x005F8630 mov dword ptr [ecx],0x0066FF34; jmp 0x0062BBF0, ending in int3/nop padding before ??_GAutoSound at 0x005F8640", "source:src/autosound.h AutoSound declares virtual ~AutoSound() { close(); } in class", "source:src/autosound.cpp ??_GAutoSound@@UAEPAXI@Z at 0x005F8640 already maps the deleting twin (same vftable store and close call)"], "reason": "0x005F8630-0x005F863B is the separate AutoSound complete destructor, not a chunk of Win::~Win: it stores AutoSound's vftable 0x0066FF34 and tail-jumps to AutoSound::close 0x0062BBF0; ~Win's state-0 unwind funclet 0x00662C60 jumps to it, and win.cpp emits it as the COMDAT ??1AutoSound@@UAE@XZ from the in-class virtual ~AutoSound."}
 // symbol    ??1AutoSound@@UAE@XZ
-// ORIGINAL: 0x005F86F0 ??1WinNodeList@@UAE@XZ 0x005F86F0-0x005F8767 FILE
+// ORIGINAL: 0x005F86F0 ??1WinNodeList@@UAE@XZ 0x005F86F0-0x005F8767 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "pinned:0x00662C68 mov ecx,[ebp-0x10]; add ecx,0xC8; jmp 0x005F86F0 is Win::~Win's state-1 unwind funclet for the list_ member at +0xC8", "pinned:0x005F86F0 stores 0x0066FF30 and walks the list ending at ret 0x005F8766, followed by nop padding before ??_GWinNodeList at 0x005F8770", "source:src/winnodelist.h WinNodeList declares an in-class virtual ~WinNodeList()", "source:src/win.cpp ??_GWinNodeList@@UAEPAXI@Z at 0x005F8770 already maps the deleting twin with the same inlined walk"], "reason": "0x005F86F0-0x005F8767 is the separate WinNodeList complete destructor, not a chunk of Win::~Win: it stores WinNodeList's vftable 0x0066FF30 and walks and frees the node list; ~Win's state-1 unwind funclet 0x00662C68 jumps to it with this+0xC8, and win.cpp emits it as the COMDAT ??1WinNodeList@@UAE@XZ from the in-class virtual ~WinNodeList."}
 // symbol    ??1WinNodeList@@UAE@XZ
 typedef signed char int8;  // a scaffold spelling the artifacts use
@@ -8753,7 +8753,7 @@ Purpose: Destroy a Win. The body closes the window; everything else the image
          state 1 -> list teardown, state 0 -> base close). Calling close()
          FIRST is what matches the image: member destruction happens after
          the destructor body, exactly where the image has it.
-// ORIGINAL: 0x005EBC90 ??1Win@@QAE@XZ 0x005EBC90-0x005EBD7F;0x00662C60-0x00662C80
+// ORIGINAL: 0x005EBC90 ??1Win@@QAE@XZ 0x005EBC90-0x005EBD7F;0x00662C60-0x00662C80 BYTE_EXACT
 // symbol    ??1Win@@UAE@XZ
 // size      401 bytes
 // prototype void (__thiscall ??1Win@@QAE@XZ)(Win* this)
