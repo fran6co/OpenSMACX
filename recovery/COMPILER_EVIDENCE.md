@@ -6,6 +6,10 @@ and its complete experiments remain available with
 `git show 12aeb250:docs/recovery/AGENT_BRIEF.md`. Current ownership and verification
 policy is in `WORKFLOW.md`; no spelling trick overrides that policy.
 
+Rules established by the 2026-11 lean match loop (inline budget, EH teardown,
+loop shape, unit coupling) and the measured-neutral levers live in
+`MATCHING_GUIDE.md`.
+
 ## Structural questions first
 
 - Regrouping MainInterface exposed duplicate dynamic initialization: a Wave

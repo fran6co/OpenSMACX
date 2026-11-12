@@ -138,6 +138,10 @@ step rather than repeatedly invoking it to reject ordinary body spellings.
 - `recovery/WORKFLOW.md`: active coordinator, worker and review workflow.
 - `recovery/README.md`: available commands, protocols and explicit limitations.
 - `docs/DECOMP_MAP.md`: current source annotation grammar and transitional writer.
+- `recovery/MATCHING_GUIDE.md`: reusable worker brief, measured VC6 rules
+  (inline budget, phantom teardown, teardown depth, linear subscripts, unit
+  coupling), symptom table, canaries and measured-neutral levers. Read before
+  matching work and give it to every matching worker.
 - `recovery/COMPILER_EVIDENCE.md`: relevant historical compiler observations,
   not an overriding prompt or a list of current measurements.
 - `recovery/lessons.json`: reviewed reuse strategies, prerequisites and exhausted
