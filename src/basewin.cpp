@@ -264,7 +264,9 @@ void BaseWin::pop_click(int position, int, int, int) {
     compute_selected_base();
     if (BaseCurrent->faction_id_current != ConsoleGlobal.faction_id_
         && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) return;
-    int current = position >= 0 ? specialist_type(position) : 999;
+    int current;
+    if (position < 0) current = 999;
+    else current = specialist_type(position);
     if (current < 0) current = 1;
     popup.start("CITIZEN", 0x40);
     StringTemp[0] = 0;
@@ -4297,6 +4299,18 @@ void BaseWin::on_iface_button_clicked(int button_id) {
 // HANDOFF (basewin, added by the win.h slot-44/45 rename, 2026-09-06): Win's
 //        slot 44 is spelled `on_button_clicked`, so this implementation is
 //        the front table's override as well as the mapped original body.
+// WORKAROUND(decl): the image's panel-mode cases load the new mode into a
+// register before comparing it (0x41D85C `mov eax, 2; cmp ecx, eax`), the
+// shape of one inline taking the mode as a parameter; its three expansions
+// are also the spend that keeps exit's tile_in_view a call (0x41D691). The
+// original was probably a BaseWin member.
+static inline void set_view_mode(BaseWin *win, uint32_t mode) {
+    if (win->field_40AFC_ != mode) {
+        win->field_40AFC_ = mode;
+        win->redraw();
+    }
+}
+
 // symbol    ?on_button_clicked@BaseWin@@UAEXH@Z
 //           Q->U 2026-09-06, Win's slot 44 taking the image's name: the body
 //           is now an override of Win's slot, so VC6 mangles it virtual and
@@ -4357,27 +4371,13 @@ void BaseWin::on_button_clicked(int button_id) {
         if (BaseCurrent->faction_id_current == ConsoleGlobal.faction_id_
             || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) gov_on(0x8000000);
         return;
-    case 10:
-        if (field_40AFC_ != 0) {
-            field_40AFC_ = 0;
-            redraw();
-        }
-        return;
-    case 9:
-        if (field_40AFC_ != 2) {
-            field_40AFC_ = 2;
-            redraw();
-        }
-        return;
-    case 11:
-        if (field_40AFC_ != 1) {
-            field_40AFC_ = 1;
-            redraw();
-        }
-        return;
-    case 17:
+    case 10: set_view_mode(this, 0); return;
+    case 9: set_view_mode(this, 2); return;
+    case 11: set_view_mode(this, 1); return;
+    case 17: {
+        const int selected = flatButtons_[17].selected_state();
         StringTemp[0] = 0;
-        if (flatButtons_[17].selected_state()) {
+        if (selected) {
             strcat(StringTemp, label_get(0xA4C / 4));
             CharUpperA(StringTemp);
             flatButtons_[17].set_name(StringTemp);
@@ -4390,6 +4390,7 @@ void BaseWin::on_button_clicked(int button_id) {
         }
         draw_expenses(1);
         return;
+    }
     case 2: prev(); return;
     case 3: next(); return;
     case 16:

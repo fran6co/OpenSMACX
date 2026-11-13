@@ -1825,7 +1825,6 @@ void Console::destroy(int veh_id) {
     // The original's UI cleanup addresses all belong to this one Popup.
     // Its genuine member/base lifetimes own normal and exceptional teardown.
     Popup popup;
-    int item_count = 0;
 
     if (not_my_turn()) {
         veh_battle_msg(ConsoleStrSimulNo, nullptr);
@@ -1869,7 +1868,7 @@ void Console::destroy(int veh_id) {
         return;
     }
 
-    const int triad = Chassis[VehPrototypes[proto_id].chassis_id].triad;
+    const uint8_t triad = Chassis[VehPrototypes[proto_id].chassis_id].triad;
     if ((triad != 2) && (ocean != (triad == 1))) {
         NetDaemonNet.unlock_veh();
         veh_battle_msg(ConsoleStrNotInTriad, nullptr);
@@ -1881,7 +1880,7 @@ void Console::destroy(int veh_id) {
     // Native4D57E9 passes -1, not the tile flags used by the option filter.
     popup.start(PopupStartCaption, title, -1, nullptr, 0x40);
 
-    Dialogs &dialogs = popup.dialogs();
+    int item_count = 0;
     for (int a = 0; a < 0x13; a++) {
         // Preserve the original exclusion branches before reading this row.
         if ((a == 5 && (tile_flags & 8) != 0) ||
@@ -1893,8 +1892,8 @@ void Console::destroy(int veh_id) {
             continue;
         }
         // Native4D5839 uses its saved ocean boolean, not the vehicle's x/2.
-        dialogs.item(StringTable.get(ocean ? Terraforming[a].name_sea
-                                             : Terraforming[a].name), abil_flag);
+        char *label = StringTable.get((&Terraforming[a].name)[ocean]);
+        popup.item(label, abil_flag);
         item_count++;
     }
 

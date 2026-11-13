@@ -4171,8 +4171,9 @@ turn_loop:
                         PendingDiplomacyFlags[ConsoleGlobal.faction_id_][other];
                     PendingDiplomacyFlags[ConsoleGlobal.faction_id_][other] = 0;
                     if (other != ConsoleGlobal.faction_id_) {
+                        const uint32_t flags = FactionDiplomacyFlags[other];
                         if (is_human(other)) {
-                            if (FactionDiplomacyFlags[other] != 0) {
+                            if (flags != 0) {
                                 if (OfferResetCells[ConsoleGlobal.faction_id_][other].state_[0] == 3) {
                                     OfferResetCells[ConsoleGlobal.faction_id_][other].state_[0] = 0;
                                     parse_set(Players[other].is_leader_female, 0);
@@ -4186,7 +4187,7 @@ turn_loop:
                                     diplo(ConsoleGlobal.faction_id_, other);
                                 }
                             }
-                        } else if (FactionDiplomacyFlags[other] != 0) {
+                        } else if (flags != 0) {
                             communicate(ConsoleGlobal.faction_id_, other, 0);
                         }
                         FactionDiplomacyFlags[other] = 0;
