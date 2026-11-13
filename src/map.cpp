@@ -628,7 +628,7 @@ BOOL __cdecl naval_base(int base_id) {
 
 /*
 Purpose: Determine if specified unit can set up a convoy route with specified base.
-// ORIGINAL: 0x0050E5C0 ?convoy@@YAHHH@Z 0x0050E5C0-0x0050E81C
+// ORIGINAL: 0x0050E5C0 ?convoy@@YAHHH@Z 0x0050E5C0-0x0050E81C BYTE_EXACT
 // TRIED: call count already matches the image (0 calls - `port_to_port`
 //            fully inlines, same as the image; `call_diff` agrees). Best of
 //            every flag set is the default (18/200, 0.514 similar) - same
