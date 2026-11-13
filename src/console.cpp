@@ -3915,7 +3915,7 @@ void Console::use_time_bonus() {
 // ORIGINAL: 0x00514990 ?quit_game@Console@@QAEXXZ 0x00514990-0x00514B2C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00514990.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
 void Console::quit_game() {
-// RECOVERY_LITERAL: v1 0x0068A7E4 0x0068A7EF ??_C@_0L@GOAC@REALLYQUIT?$AA@ 0x00514990
+// RECOVERY_LITERAL: v1 0x0068A7E4 0x0068A7EF $SG63823 0x00514990
     if (!X_pop((IsMultiplayerNet || IsMultiplayerPBEM) &&
                bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 255) > 1
                    ? ConsoleReallyWimpOut : "REALLYQUIT", nullptr)) return;
@@ -3933,7 +3933,7 @@ void Console::quit_game() {
         IsMultiplayerNet = 0;
     }
     ExitTurnLoop = 1;
-// RECOVERY_LITERAL: v1 0x0068A7F0 0x0068A818 ??_C@_0CI@GLBI@Quit?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK@ 0x00514990
+// RECOVERY_LITERAL: v1 0x0068A7F0 0x0068A818 $SG63830 0x00514990
     log_say("Quit***********************************", 0, 0, 0);
 }
 
@@ -4133,8 +4133,8 @@ void Console::retire_game() { // 0x00514B30
         (IsMultiplayerNet || IsMultiplayerPBEM) &&
         bit_count(static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) > 1) != 0;
     const char *const prompt = multiple_players ? retire_wimpout :
-// RECOVERY_LITERAL: v1 0x0068A828 0x0068A836 $SG63945 0x00514B30
-// RECOVERY_LITERAL: v1 0x0068A838 0x0068A845 $SG63946 0x00514B30
+// RECOVERY_LITERAL: v1 0x0068A828 0x0068A836 $SG63929 0x00514B30
+// RECOVERY_LITERAL: v1 0x0068A838 0x0068A845 $SG63930 0x00514B30
         (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) ? "REALLYRETIRE2" : "REALLYRETIRE";
     if (!X_pop(prompt, nullptr)) {
         return;
@@ -4167,7 +4167,7 @@ void Console::retire_game() { // 0x00514B30
     }
     GameRestartQueued = !closed_network;
     ExitTurnLoop = 1;
-// RECOVERY_LITERAL: v1 0x0068A848 0x0068A86C $SG63956 0x00514B30
+// RECOVERY_LITERAL: v1 0x0068A848 0x0068A86C $SG63940 0x00514B30
     log_say("Retire*****************************", 0, 0, 0);
 }
 
