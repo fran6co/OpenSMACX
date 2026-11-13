@@ -236,13 +236,16 @@ struct MediaRuntime {
   // Also advanced by the 5CDFA0 output thread; 5CE4B0 orders its store.
   volatile DWORD playback_cursor;                 // +36c
   LONG output_consumer_cursor;                    // +370
-  LONG output_producer_cursor;                    // +374
+  // The producer cursors and the two record counters are read at every use
+  // by sub_5ca230/sub_5ca310 (0x005CA295, 0x005CA660): volatile, like the
+  // pending_*_records counters they are incremented with.
+  volatile LONG output_producer_cursor;           // +374
   LONG read_consumer_cursor;                      // +378
-  LONG read_producer_cursor;                      // +37c
+  volatile LONG read_producer_cursor;             // +37c
   volatile LONG pending_read_records;             // +380
   volatile LONG pending_output_records;           // +384
-  LONG read_counter;                              // +388
-  LONG output_counter;                            // +38c
+  volatile LONG read_counter;                     // +388
+  volatile LONG output_counter;                   // +38c
   volatile LONG output_lock_word;                 // +390
   BYTE unresolved_original_storage_394_397[4];    // +394..+397
   LONG stream_eof;                                // +398

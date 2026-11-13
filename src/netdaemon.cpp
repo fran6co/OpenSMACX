@@ -3427,14 +3427,12 @@ int NetDaemon::send_files() {
         strcat(path_message.path, NetDaemonFileTransferPath);
         send_message(reinterpret_cast<char *>(&path_message), 0x11C, 0);
         NetDaemonFileTransferAckMask = 0;
-        if (send_mask != 0) {
-            do {
-                unsigned long sender, channel;
-                void *packet = NetDaemonNet.Net::get(&sender, &channel);
-                if (packet != 0)
-                    process_message(static_cast<char *>(packet), channel,
-                                    static_cast<int>(sender));
-            } while (NetDaemonFileTransferAckMask != send_mask);
+        while (NetDaemonFileTransferAckMask != send_mask) {
+            unsigned long sender, channel;
+            void *packet = NetDaemonNet.Net::get(&sender, &channel);
+            if (packet != 0)
+                process_message(static_cast<char *>(packet), channel,
+                                static_cast<int>(sender));
         }
     } else {
         while (NetDaemonFileTransferMode != 1) {
@@ -3567,15 +3565,15 @@ int NetDaemon::send_files() {
         }
         if (send_buffer != 0) free(send_buffer);
 
-    wait_for_files:
-        if ((GetAsyncKeyState(VK_ESCAPE) & 0x8000) == 0) {
+        while (1) {
+            if ((GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0) break;
             unsigned long sender, channel;
             void *packet = NetDaemonNet.Net::get(&sender, &channel);
             if (packet != 0)
                 process_message(static_cast<char *>(packet), channel,
                                 static_cast<int>(sender));
             do_draw();
-            if (!netdaemon_slots_reached(this, 2)) goto wait_for_files;
+            if (netdaemon_slots_reached(this, 2)) break;
         }
         control.opcode = 0xF07;
         control.state = 3;
@@ -5376,6 +5374,7 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
     char *src;
     SyncHeaderPrefix *header;
     int i;
+    int local_turn;
 
     if (!IsMultiplayerNet) return;
 
@@ -5899,15 +5898,21 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
                         X_pop("VEHSYNCH", 0);
                         if (!ConsoleGroupAction) GetAsyncKeyState(VK_CONTROL);
                     }
-                    int local_turn = 0;
+                    // The base branch below jumps into this branch's
+                    // notification and message blocks; VC6 places them after
+                    // that branch's gotos (image 0x533C14/0x533C20), where this
+                    // branch's sete and message exits reach them too.
+                    local_turn = 0;
                     if ((GameDataStateStorage.fields_.game_rules_ & 0x10) && !ConsoleControlTurnActive) {
                         local_turn = GameDataStateStorage.fields_.net_turn_faction_ == ConsoleGlobal.faction_id_;
                     }
                     if (local_turn
                         || !((GameDataStateStorage.fields_.game_rules_ & 0x10) && !ConsoleControlTurnActive)
                             && NetDaemonNet.primary_state_.leading_words_[0]) {
+                    notify_spock:
                         SpockNotifyPending = 1;
                     } else {
+                    notify_message:
                         message_data(0x2308, 0, 0, 0, 0, 0);
                     }
                     goto chunk_done;
@@ -5928,18 +5933,16 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
                         X_pop("VEHSYNCH", 0);
                         if (!ConsoleGroupAction) GetAsyncKeyState(VK_CONTROL);
                     }
-                    int local_turn = 0;
+                    local_turn = 0;
                     if ((GameDataStateStorage.fields_.game_rules_ & 0x10) && !ConsoleControlTurnActive) {
                         local_turn = GameDataStateStorage.fields_.net_turn_faction_ == ConsoleGlobal.faction_id_;
                     }
                     if (local_turn
                         || !((GameDataStateStorage.fields_.game_rules_ & 0x10) && !ConsoleControlTurnActive)
                             && NetDaemonNet.primary_state_.leading_words_[0]) {
-                        SpockNotifyPending = 1;
-                    } else {
-                        message_data(0x2308, 0, 0, 0, 0, 0);
+                        goto notify_spock;
                     }
-                    goto chunk_done;
+                    goto notify_message;
                 }
             }
             memcpy(src, payload, length);

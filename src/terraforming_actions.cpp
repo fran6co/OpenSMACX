@@ -432,13 +432,14 @@ extern Sprite g_TER1_SOIL_ENRICHER_SPRITES[5];    // 0x0079A710, sprite.cpp
 extern Sprite g_TER1_MINE_SPRITE;                 // 0x00776A50, sprite.cpp
 extern Sprite g_TER1_SOLAR_COLLECTOR_SPRITE;      // 0x007991F8, sprite.cpp
 
-// WORKAROUND(decl): fifteen unreferenced extern names. The image pushes the
+// WORKAROUND(decl): seventeen unreferenced extern names. The image pushes the
 // sprite addresses directly (no pointer objects), and dropping the four old
 // static pointer objects moved action_give's (0x004CEDE0) bistable reload
 // tie at its loop join; VC6 codegen in this unit depends on the number of
 // distinct extern variable names (MATCHING_GUIDE 2.5). Measured window with
-// the current action_terraform: 14-16 names keep action_give exact, 0-13 and
-// 17-24 do not. Remove when the unit's real declaration set is known.
+// the current action_terraform and shoot_it: 16-18 names keep action_give
+// exact, 0-15 and 19-24 do not. Remove when the unit's real declaration set
+// is known.
 extern int ActionGiveDeclTie01;
 extern int ActionGiveDeclTie02;
 extern int ActionGiveDeclTie03;
@@ -454,6 +455,8 @@ extern int ActionGiveDeclTie12;
 extern int ActionGiveDeclTie13;
 extern int ActionGiveDeclTie14;
 extern int ActionGiveDeclTie15;
+extern int ActionGiveDeclTie16;
+extern int ActionGiveDeclTie17;
 
 /*
 Purpose: Perform one terraforming action on a unit's tile, over its stack.
@@ -2205,13 +2208,12 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
                 }
             }
         }
-        if (!PlayersData[defender].satellites_[3]) {
-            goto flechette_failed;
-        }
-        if (!IsMultiplayerNet && (1 << defender) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) {
-            if (defender == ConsoleGlobal.faction_id_) {
+        if (PlayersData[defender].satellites_[3]) {
+            if (!IsMultiplayerNet && GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << defender)
+                && defender == ConsoleGlobal.faction_id_) {
                 parse_num(0, PlayersData[defender].satellites_[3]);
-                parse_says(0, Bases[base_find(x, y)].name_string, -1, -1);
+                int base_id = base_find(x, y);
+                parse_says(0, Bases[base_id].name_string, -1, -1);
                 parse_says(1, Players[attacker].adj_name_faction, -1, -1);
                 int dismissed;
                 if (fungal_attack) {
@@ -2222,25 +2224,33 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
                 if (dismissed) {
                     goto flechette_failed;
                 }
+            } else if (defender == ConsoleGlobal.faction_id_) {
+                if (fungal_attack) {
+                    popp(ScriptPopupFile, "FWEMUSTSAC", 0, "space_sm.pcx", 0);
+                } else {
+                    popp(ScriptPopupFile, "TWEMUSTSAC", 0, "space_sm.pcx", 0);
+                }
             } else if (attacker == ConsoleGlobal.faction_id_) {
                 parse_set(Players[defender].noun_gender, Players[defender].is_noun_plural);
                 parse_says(0, Players[defender].noun_faction, -1, -1);
                 popp(ScriptPopupFile, "THEYMUSTSAC", 0, "space_sm.pcx", 0);
             }
-        } else if (defender == ConsoleGlobal.faction_id_) {
-            if (fungal_attack) {
-                popp(ScriptPopupFile, "FWEMUSTSAC", 0, "space_sm.pcx", 0);
-            } else {
-                popp(ScriptPopupFile, "TWEMUSTSAC", 0, "space_sm.pcx", 0);
+            PlayersData[defender].satellites_[3]--;
+            if ((int)(PlayersData[defender].satellites_[3] - PlayersData[defender].sat_odp_deployed) < 0) {
+                PlayersData[defender].sat_odp_deployed = PlayersData[defender].satellites_[3];
             }
-        } else if (attacker == ConsoleGlobal.faction_id_) {
-            parse_set(Players[defender].noun_gender, Players[defender].is_noun_plural);
-            parse_says(0, Players[defender].noun_faction, -1, -1);
-            popp(ScriptPopupFile, "THEYMUSTSAC", 0, "space_sm.pcx", 0);
-        }
-        PlayersData[defender].satellites_[3]--;
-        if ((int)(PlayersData[defender].satellites_[3] - PlayersData[defender].sat_odp_deployed) < 0) {
-            PlayersData[defender].sat_odp_deployed = PlayersData[defender].satellites_[3];
+        } else {
+        flechette_failed:
+            if (has_flechette) {
+                if (defender == ConsoleGlobal.faction_id_) {
+                    parse_says(1, Players[attacker].adj_name_faction, -1, -1);
+                    popp(ScriptPopupFile, "WEFAILEDFLECHETTE", 0, "space_sm.pcx", 0);
+                } else if (attacker == ConsoleGlobal.faction_id_) {
+                    parse_says(1, Players[defender].adj_name_faction, -1, -1);
+                    popp(ScriptPopupFile, "THEYFAILEDFLECHETTE", 0, "space_sm.pcx", 0);
+                }
+            }
+            return 0;
         }
     }
     {
@@ -2268,17 +2278,6 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
         popp(ScriptPopupFile, "TTHEYSHOTIT", 0, "space_sm.pcx", 0);
     }
     return 1;
-flechette_failed:
-    if (has_flechette) {
-        if (defender == ConsoleGlobal.faction_id_) {
-            parse_says(1, Players[attacker].adj_name_faction, -1, -1);
-            popp(ScriptPopupFile, "WEFAILEDFLECHETTE", 0, "space_sm.pcx", 0);
-        } else if (attacker == ConsoleGlobal.faction_id_) {
-            parse_says(1, Players[defender].adj_name_faction, -1, -1);
-            popp(ScriptPopupFile, "THEYFAILEDFLECHETTE", 0, "space_sm.pcx", 0);
-        }
-    }
-    return 0;
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.

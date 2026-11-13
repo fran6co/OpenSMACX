@@ -1261,7 +1261,7 @@ int __fastcall MediaRuntime::initialize_stream(LPSTR filename,
     }
   }
   r.descriptor->stream_gate_80 =
-      (*reinterpret_cast<volatile LONG *>(&r.read_counter) == 0);
+      (r.read_counter == 0);
   return 0;
 }
 
@@ -1588,9 +1588,8 @@ extern "C" void __cdecl sub_5cdd10(int count, int *cursor,
 // switch cases sit in the image's block order (0x0A, 7, 0), the ADPCM
 // decoders receive the sample count output_bytes / 4 (not the block count),
 // and an unknown format leaves output_bytes uninitialized, as the image's
-// stack reload shows. Left: VC6 load placement of decoded_ring_current
-// (a volatile stand-in moves 55 -> 241 matching instructions but is not
-// exact, so it is not kept).
+// stack reload shows. Exact once read_counter, output_counter and the
+// producer cursors are volatile fields (movie_media.h).
 extern "C" int __fastcall sub_5ca310(MediaRuntime *r, int byte_count) {
   BYTE buffer[0xc000];
   int output_bytes;
@@ -1662,21 +1661,19 @@ extern "C" int __fastcall sub_5ca310(MediaRuntime *r, int byte_count) {
 
   if (r->channel_state == 2) r->descriptor->stream_gate_80 = 1;
   if (r->descriptor->stream_gate_80 != 0)
-    InterlockedIncrement(&r->read_counter);
-  // WORKAROUND(volatile): as in sub_5ca230, the image reads both interlocked
-  // counters through their pointers (0x005CA660, 0x005CA689), loading the
-  // record count before the slot store; volatile pointers reproduce it.
-  volatile LONG *cursor = &r->output_producer_cursor;
-  int slot = *cursor % 24;
+    InterlockedIncrement((LONG *)&r->read_counter);
+  // The interlocked counters are volatile (movie_media.h): the image reads
+  // them at every use (0x005CA660, 0x005CA689), loading the record count
+  // before the slot store.
+  int slot = r->output_producer_cursor % 24;
   r->output_records[slot].payload = r->decoded_ring_current;
   r->output_records[slot].field_04 = (DWORD)output_bytes;
   r->output_records[slot].field_08 = (DWORD)r->read_counter;
-  volatile LONG *counter = &r->output_counter;
-  r->output_records[slot].field_0c = (DWORD)*counter;
+  r->output_records[slot].field_0c = (DWORD)r->output_counter;
   r->decoded_ring_current += output_bytes;
-  InterlockedIncrement((LONG *)cursor);
+  InterlockedIncrement((LONG *)&r->output_producer_cursor);
   InterlockedIncrement((LONG *)&r->pending_output_records);
-  InterlockedIncrement((LONG *)counter);
+  InterlockedIncrement((LONG *)&r->output_counter);
   return 2;
 }
 
@@ -2670,7 +2667,7 @@ Purpose: Advance the mmio ring buffer by one read: when the pending offset
 // calls     (none)
 // indirect  0x005CA25F 0x005CA2ED 0x005CA2F6 0x005CA2F9
 Status: Exact. The entry `push ecx` is the frame slot `size` spills to once
-        the counters are read through volatile pointers (seed TRIED had
+        the interlocked counters are volatile fields (seed TRIED had
         called it unreproducible).
 */
 int __fastcall MediaRuntime::sub_5ca230(int size, int kind) {
@@ -2682,21 +2679,16 @@ int __fastcall MediaRuntime::sub_5ca230(int size, int kind) {
   if (read == 0) { stream_eof = 1; return -1; }
   if (read == -1) return -2;
 
-  // WORKAROUND(volatile): the image reads both interlocked counters through
-  // their pointers at every use (0x005CA295, 0x005CA2C4) and loads the
-  // record count before the slot index; volatile pointers reproduce both.
-  // The real cause is probably `volatile LONG` declarations of
-  // read_producer_cursor/read_counter in movie_media.h (pending_read_records
-  // already is).
-  volatile LONG *cursor = &read_producer_cursor;
-  read_records[*cursor % 0x18].payload = input_ring_current;
-  read_records[*cursor % 0x18].field_0c = static_cast<DWORD>(kind);
-  volatile LONG *counter = &read_counter;
-  read_records[*cursor % 0x18].field_08 = static_cast<DWORD>(*counter);
+  // The interlocked counters are volatile (movie_media.h): the image reads
+  // them at every use (0x005CA295, 0x005CA2C4) and loads the record count
+  // before the slot index.
+  read_records[read_producer_cursor % 0x18].payload = input_ring_current;
+  read_records[read_producer_cursor % 0x18].field_0c = static_cast<DWORD>(kind);
+  read_records[read_producer_cursor % 0x18].field_08 = static_cast<DWORD>(read_counter);
   input_ring_current += size;
-  InterlockedIncrement((LONG *)cursor);
+  InterlockedIncrement((LONG *)&read_producer_cursor);
   InterlockedIncrement((LONG *)&pending_read_records);
-  InterlockedIncrement((LONG *)counter);
+  InterlockedIncrement((LONG *)&read_counter);
   return 1;
 }
 

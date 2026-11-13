@@ -921,18 +921,20 @@ void __cdecl caviar_build_projection_tables() {
 
     // Cell (a,b,c) = a*basis0 + b*basis1 + c*basis2, a,b,c in {-1,0,1},
     // c fastest, (0,0,0) omitted. z is kept in 24.8 fixed point.
-    // The z sums follow the image's association (6404F0..64056E: z0+z2
-    // then +z1; 6406F5: (z2-z0)+z1; 6408D6: (z2-z1)+z0; 640979:
-    // (z1-z2)+z0), which differs from the x/y "positives first" form.
-    PROJ_CELL(0).x_ = -(PROJ_X0 + PROJ_X1 + PROJ_X2);
-    PROJ_CELL(0).y_ = -(PROJ_Y0 + PROJ_Y1 + PROJ_Y2);
-    PROJ_CELL(0).z_ = -(PROJ_Z0 + PROJ_Z2 + PROJ_Z1) << 8;
+    // VC6 re-associates these sums against the cells already computed, so
+    // the operand order written here is a code-generation lever rather than
+    // the evaluation order: the orders below were chosen by measuring every
+    // permutation of each cell against the image (6404F0..6409E3), not read
+    // from it.
+    PROJ_CELL(0).x_ = -(PROJ_X1 + PROJ_X2 + PROJ_X0);
+    PROJ_CELL(0).y_ = -(PROJ_Y1 + PROJ_Y2 + PROJ_Y0);
+    PROJ_CELL(0).z_ = -(PROJ_Z2 + PROJ_Z0 + PROJ_Z1) << 8;
     PROJ_CELL(1).x_ = -(PROJ_X0 + PROJ_X1);
     PROJ_CELL(1).y_ = -(PROJ_Y0 + PROJ_Y1);
     PROJ_CELL(1).z_ = -(PROJ_Z0 + PROJ_Z1) << 8;
     PROJ_CELL(2).x_ = PROJ_X2 - PROJ_X0 - PROJ_X1;
     PROJ_CELL(2).y_ = PROJ_Y2 - PROJ_Y0 - PROJ_Y1;
-    PROJ_CELL(2).z_ = (PROJ_Z2 - PROJ_Z0 - PROJ_Z1) << 8;
+    PROJ_CELL(2).z_ = (PROJ_Z2 - PROJ_Z1 - PROJ_Z0) << 8;
     PROJ_CELL(3).x_ = -(PROJ_X0 + PROJ_X2);
     PROJ_CELL(3).y_ = -(PROJ_Y0 + PROJ_Y2);
     PROJ_CELL(3).z_ = -(PROJ_Z0 + PROJ_Z2) << 8;
@@ -944,11 +946,11 @@ void __cdecl caviar_build_projection_tables() {
     PROJ_CELL(5).z_ = (PROJ_Z2 - PROJ_Z0) << 8;
     PROJ_CELL(6).x_ = PROJ_X1 - PROJ_X0 - PROJ_X2;
     PROJ_CELL(6).y_ = PROJ_Y1 - PROJ_Y0 - PROJ_Y2;
-    PROJ_CELL(6).z_ = (PROJ_Z1 - PROJ_Z0 - PROJ_Z2) << 8;
+    PROJ_CELL(6).z_ = (PROJ_Z1 - PROJ_Z2 - PROJ_Z0) << 8;
     PROJ_CELL(7).x_ = PROJ_X1 - PROJ_X0;
     PROJ_CELL(7).y_ = PROJ_Y1 - PROJ_Y0;
     PROJ_CELL(7).z_ = (PROJ_Z1 - PROJ_Z0) << 8;
-    PROJ_CELL(8).x_ = PROJ_X1 + PROJ_X2 - PROJ_X0;
+    PROJ_CELL(8).x_ = PROJ_X2 + PROJ_X1 - PROJ_X0;
     PROJ_CELL(8).y_ = PROJ_Y1 + PROJ_Y2 - PROJ_Y0;
     PROJ_CELL(8).z_ = (PROJ_Z2 - PROJ_Z0 + PROJ_Z1) << 8;
     PROJ_CELL(9).x_ = -(PROJ_X1 + PROJ_X2);
@@ -975,8 +977,8 @@ void __cdecl caviar_build_projection_tables() {
     PROJ_CELL(16).x_ = PROJ_X1 + PROJ_X2;
     PROJ_CELL(16).y_ = PROJ_Y1 + PROJ_Y2;
     PROJ_CELL(16).z_ = (PROJ_Z1 + PROJ_Z2) << 8;
-    PROJ_CELL(17).x_ = PROJ_X0 - PROJ_X1 - PROJ_X2;
-    PROJ_CELL(17).y_ = PROJ_Y0 - PROJ_Y1 - PROJ_Y2;
+    PROJ_CELL(17).x_ = PROJ_X0 - PROJ_X2 - PROJ_X1;
+    PROJ_CELL(17).y_ = PROJ_Y0 - PROJ_Y2 - PROJ_Y1;
     PROJ_CELL(17).z_ = (PROJ_Z0 - PROJ_Z1 - PROJ_Z2) << 8;
     PROJ_CELL(18).x_ = PROJ_X0 - PROJ_X1;
     PROJ_CELL(18).y_ = PROJ_Y0 - PROJ_Y1;
@@ -999,7 +1001,7 @@ void __cdecl caviar_build_projection_tables() {
     PROJ_CELL(24).x_ = PROJ_X0 + PROJ_X1;
     PROJ_CELL(24).y_ = PROJ_Y0 + PROJ_Y1;
     PROJ_CELL(24).z_ = (PROJ_Z0 + PROJ_Z1) << 8;
-    PROJ_CELL(25).x_ = PROJ_X0 + PROJ_X1 + PROJ_X2;
+    PROJ_CELL(25).x_ = PROJ_X1 + PROJ_X2 + PROJ_X0;
     PROJ_CELL(25).y_ = PROJ_Y0 + PROJ_Y1 + PROJ_Y2;
     PROJ_CELL(25).z_ = (PROJ_Z0 + PROJ_Z2 + PROJ_Z1) << 8;
 
