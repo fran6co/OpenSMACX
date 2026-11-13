@@ -2365,281 +2365,178 @@ static void game_data_migrate_legacy_header(
             header->legacy_terminal_words_);
 }
 
-// Version 3..10 PlayerData wire rows are 0x20BC bytes, while the live owner
-// stride is 0x20CC. Native first copies the complete 0x20BC prefix to the
-// PlayerData object, then applies the member rewrites below. Keep this as a
-// wire-record view: the old format is not itself the current C++ class.
-struct GameDataLegacyPlayerRowV3 {
-    unsigned char bytes_[0x20BC];
+// Legacy save-format rows converted by game_data. Offsets are the pinned
+// conversion code's (0x005A6EC1..0x005A7894 players, 0x005A7FF3.. bases);
+// member names mirror the live PlayerData/Base members they convert into.
+struct GameDataPlayerV3 {                       // 0x20BC bytes (0x82F dwords)
+    uint8_t prefix_[0x458];                     // 0x0000 same layout as PlayerData 0x000..0x458
+    uint8_t facility_announced[5];              // 0x0458 (new: [9])
+                                                // 0x045D 3 pad
+    int planet_ecology;                         // 0x0460  -> new 0x0464
+    int base_id_atk_target;                     // 0x0464  -> 0x0468
+    int unk_37;                                 // 0x0468  -> 0x046C
+    char saved_queue_name[8][24];               // 0x046C  -> 0x0470
+    int saved_queue_size[8];                    // 0x052C  -> 0x0530  (0x52C/4 = 0x14B)
+    int saved_queue_items[8][10];               // 0x054C  -> 0x0550
+    int unk_38[8];                              // 0x068C  -> 0x0690
+    int unk_39[8][9];                           // 0x06AC  -> 0x06B0
+    int unk_46[9];                              // 0x07CC  -> 0x07D0
+    int unk_47;                                 // 0x07F0  -> 0x07F4
+    int unk_48;                                 // 0x07F4  -> 0x07F8
+    int unk_49;                                 // 0x07F8  -> 0x07FC
+    int nutrient_surplus_total;                 // 0x07FC  -> 0x0800
+    int labs_total;                             // 0x0800  -> 0x0804
+    uint32_t satellites_[4];                    // 0x0804  -> 0x0808
+    int best_weapon_value;                      // 0x0814  -> 0x0818
+    int best_psi_offense;                       // 0x0818
+    int best_psi_defense;                       // 0x081C
+    int best_armor_value;                       // 0x0820
+    int best_land_speed;                        // 0x0824
+    int enemy_best_weapon_value;                // 0x0828
+    int enemy_best_armor_value;                 // 0x082C
+    int enemy_best_land_speed;                  // 0x0830
+    int enemy_best_psi_offense;                 // 0x0834
+    int enemy_best_psi_defense;                 // 0x0838
+    int unk_64;                                 // 0x083C
+    int unk_65;                                 // 0x0840
+    int unk_66;                                 // 0x0844
+    int unk_67;                                 // 0x0848
+    int unk_68;                                 // 0x084C  -> 0x0850
+    int unk_69;                                 // 0x0850  -> 0x0854 (dword copy; new is char[4])
+    uint8_t proto_id_active[512];               // 0x0854  -> 0x0858
+    uint8_t proto_id_queue[512];                // 0x0A54  -> 0x0A58
+    int16_t proto_id_lost[512];                 // 0x0C54  -> 0x0C58
+    int total_mil_veh;                          // 0x1054  -> 0x1058
+    int current_num_bases;                      // 0x1058
+    int mil_strength_1;                         // 0x105C
+    int mil_strength_2;                         // 0x1060
+    int pop_total;                              // 0x1064
+    int unk_70;                                 // 0x1068
+    int planet_busters;                         // 0x106C
+    int unk_71;                                 // 0x1070
+    int unk_72;                                 // 0x1074  -> 0x1078
+    uint16_t region_total_combat_vehs[128];     // 0x1078  -> 0x107C
+    uint8_t region_total_bases[128];            // 0x1178  -> 0x117C
+    uint8_t region_total_offensive_vehs[128];   // 0x11F8  -> 0x11FC
+    uint16_t region_force_rating[128];          // 0x1278  -> 0x127C
+    uint16_t unk_77[128];                       // 0x1378  -> 0x137C
+    uint16_t unk_78[128];                       // 0x1478
+    uint16_t unk_79[128];                       // 0x1578
+    uint16_t unk_80[128];                       // 0x1678
+    uint16_t unk_81[128];                       // 0x1778  -> 0x177C
+    uint8_t unk_82[128];                        // 0x1878  -> 0x187C
+    uint8_t unk_83[128];                        // 0x18F8  -> 0x18FC
+    uint8_t region_base_plan[128];              // 0x1978  -> 0x197C
+    Goal goals[75];                             // 0x19F8  -> 0x19FC
+    Goal sites[25];                             // 0x1EA8  -> 0x1EAC
+    int unk_93;                                 // 0x2038  -> 0x203C
+    int unk_94;                                 // 0x203C
+    int unk_95;                                 // 0x2040
+    int unk_96;                                 // 0x2044
+    int unk_97;                                 // 0x2048
+    uint32_t tech_achieved;                     // 0x204C
+    int time_bonus_count;                       // 0x2050
+    int unk_99;                                 // 0x2054  -> 0x2058
+    uint32_t secret_project_intel[5];           // 0x2058  -> 0x205C (new: [8], [5..7] cleared)
+    int corner_market_[10];                     // 0x206C  -> 0x207C..0x20A3 (one 10-dword loop;
+                                                //   new: corner_market_turn..unk_108)
+    int unk_109;                                // 0x2094  -> 0x20A4
+    int score_items_[9];                        // 0x2098  -> 0x20A8
+};                                              // 0x20BC
+typedef char GameDataPlayerV3Extent[sizeof(GameDataPlayerV3) == 0x20BC ? 1 : -1];
+
+// v2 (<3) player rows: 0x1CBC bytes. Same as the v3 row up to +0x854, then
+// the prototype tables hold 32 entries per faction instead of 64.
+struct GameDataPlayerV2 {
+    unsigned char prefix_[0x854];          // +0x000 same as the v3 row
+    uint8_t proto_id_active[256];          // +0x854
+    uint8_t proto_id_queue[256];           // +0x954
+    int16_t proto_id_lost[256];            // +0xA54
+    int total_mil_veh;                     // +0xC54
+    int current_num_bases;
+    int mil_strength_1;
+    int mil_strength_2;
+    int pop_total;
+    int unk_70;
+    int planet_busters;
+    int unk_71;
+    int unk_72;
+    uint16_t region_total_combat_vehs[128]; // +0xC78
+    uint8_t region_total_bases[128];
+    uint8_t region_total_offensive_vehs[128];
+    uint16_t region_force_rating[128];
+    uint16_t unk_77[128];
+    uint16_t unk_78[128];
+    uint16_t unk_79[128];
+    uint16_t unk_80[128];
+    uint16_t unk_81[128];
+    uint8_t unk_82[128];
+    uint8_t unk_83[128];
+    uint8_t region_base_plan[128];
+    Goal goals[75];                        // +0x15F8
+    Goal sites[25];                        // +0x1AA8
+    int unk_93;                            // +0x1C38
+    int unk_94;
+    int unk_95;
+    int unk_96;
+    int unk_97;
+    uint32_t tech_achieved;
+    int time_bonus_count;
+    int unk_99;
+    uint32_t secret_project_intel[5];      // +0x1C58
+    int corner_market_[10];                // +0x1C6C
+    int unk_109;                           // +0x1C94
+    int score_items_[9];                   // +0x1C98
 };
+typedef char GameDataPlayerV2Extent[sizeof(GameDataPlayerV2) == 0x1CBC ? 1 : -1];
 
-typedef char GameDataLegacyPlayerRowV3HasNativeExtent[
-    sizeof(GameDataLegacyPlayerRowV3) == 0x20BC ? 1 : -1];
-
-struct GameDataLegacyPlayerRowV2 {
-    unsigned char bytes_[0x1CBC];
+struct GameDataBaseV1 {
+    // 0x00..0x8B identical to Base (copied wholesale by the memcpy).
+    int16_t x;                          // 0x00
+    int16_t y;                          // 0x02
+    uint8_t faction_id_current;         // 0x04
+    uint8_t faction_id_former;          // 0x05
+    int8_t population_size;             // 0x06
+    uint8_t assimilation_turns_left;    // 0x07
+    uint8_t nerve_staple_turns_left;    // 0x08
+    uint8_t unk_1;                      // 0x09
+    uint8_t visibility;                 // 0x0A
+    uint8_t faction_pop_size_intel[8];  // 0x0B
+    char name_string[25];               // 0x13
+    int16_t unk_x;                      // 0x2C
+    int16_t unk_y;                      // 0x2E
+    uint32_t state;                     // 0x30
+    uint32_t event;                     // 0x34
+    uint32_t governor;                  // 0x38
+    int nutrients_accumulated;          // 0x3C
+    int minerals_accumulated;           // 0x40
+    int production_id_last;             // 0x44
+    int eco_damage;                     // 0x48
+    int queue_size;                     // 0x4C
+    int queue_production_id[10];        // 0x50
+    int resource_sqr_radius;            // 0x78
+    int specialist_total;               // 0x7C
+    int specialist_unk_1;               // 0x80
+    int spec[2];                        // 0x84
+    // ---- diverges from Base here (Base: facilities_built[12]) ----
+    uint8_t facilities_built[8];        // 0x8C  (only [0..4] read)
+    int mineral_surplus_final;          // 0x94 -> Base 0x98
+    int minerals_accumulated_2;         // 0x98 -> Base 0x9C
+    int unk_6[4];                       // 0x9C -> Base 0xA0
+    int intake_1[4];                    // 0xAC -> Base 0xB0
+    int intake_2[4];                    // 0xBC -> Base 0xC0
+    int surplus[4];                     // 0xCC -> Base 0xD0
+    int inefficiency[4];                // 0xDC -> Base 0xE0
+    int consumption[4];                 // 0xEC -> Base 0xF0
+    int economy_total[4];               // 0xFC -> Base 0x100 (economy, psych, labs, unk_10)
+    int16_t auto_forward_slots[3];      // 0x10C -> Base 0x110 (+0x112 pad)
+    int talent_total;                   // 0x114 -> Base 0x118
+    int drone_total;                    // 0x118 -> Base 0x11C
+    int super_drone_total;              // 0x11C -> Base 0x120
+    int random_event_turns[4];          // 0x120 -> Base 0x124 (rand, staple, unk_11, location)
 };
+typedef char GameDataBaseV1Extent[sizeof(GameDataBaseV1) == 0x130 ? 1 : -1];
 
-typedef char GameDataLegacyPlayerRowV2HasNativeExtent[
-    sizeof(GameDataLegacyPlayerRowV2) == 0x1CBC ? 1 : -1];
-
-struct GameDataLegacyBaseRowV1 {
-    unsigned char bytes_[0x130];
-};
-typedef char GameDataLegacyBaseRowV1HasNativeExtent[
-    sizeof(GameDataLegacyBaseRowV1) == 0x130 ? 1 : -1];
-
-static void game_data_migrate_legacy_base(Base &base,
-                                           const unsigned char *row) {
-    // Native 5A7Fxx first copies the complete 0x130-byte legacy prefix into
-    // the existing Base, leaving its current-only final dword untouched.
-    memcpy(&base, row, 0x130);
-
-    // The native conversion then recopies five facility bytes and clears the
-    // following four bytes before its later wider facility writes.
-    memcpy(base.facilities_built, row + 0x8C, 5);
-    memset(base.facilities_built + 5, 0, 4);
-    memcpy(&base.mineral_surplus_final, row + 0x94, 4);
-    memcpy(&base.minerals_accumulated_2, row + 0x98, 4);
-
-    // The six parallel native copy lanes start at destination offsets
-    // A0/B0/C0/D0/E0/F0 and wire offsets 9C/AC/BC/CC/DC/EC respectively.
-    // Express their destinations as the current Base members, retaining the
-    // native interleaving order rather than treating the wire row as a Base.
-    int *const lane_a[] = {&base.unk_6, &base.unk_7, &base.unk_8, &base.unk_9};
-    int *const lane_b = base.intake_1;
-    int *const lane_c = base.intake_2;
-    int *const lane_d[] = {&base.nutrient_surplus, &base.mineral_surplus,
-                           &base.energy_surplus, &base.unused_surplus};
-    int *const lane_e[] = {&base.nutrient_inefficiency,
-                           &base.mineral_inefficiency,
-                           &base.energy_inefficiency,
-                           &base.unused_inefficiency};
-    int *const lane_f[] = {&base.nutrient_consumption,
-                           &base.mineral_consumption,
-                           &base.energy_consumption,
-                           &base.unused_consumption};
-    for (int field = 0; field < 4; ++field) {
-        memcpy(lane_a[field], row + 0x9C + field * 4, 4);
-        memcpy(&lane_b[field], row + 0xAC + field * 4, 4);
-        memcpy(&lane_c[field], row + 0xBC + field * 4, 4);
-        memcpy(lane_d[field], row + 0xCC + field * 4, 4);
-        memcpy(lane_e[field], row + 0xDC + field * 4, 4);
-        memcpy(lane_f[field], row + 0xEC + field * 4, 4);
-    }
-    memcpy(&base.economy_total, row + 0xFC, 4);
-    memcpy(&base.psych_total, row + 0x100, 4);
-    memcpy(&base.labs_total, row + 0x104, 4);
-    memcpy(&base.unk_10, row + 0x108, 4);
-    // Native 0x5A80B3..0x5A8120: three words into +0x110 (the fourth,
-    // +0x116, is not copied), then +0x118..+0x130 from row +0x114..+0x12C.
-    for (int slot = 0; slot < 3; ++slot)
-        memcpy(&base.auto_forward_slots[slot], row + 0x10C + slot * 2, 2);
-    memcpy(&base.talent_total, row + 0x114, 4);
-    memcpy(&base.drone_total, row + 0x118, 4);
-    memcpy(&base.super_drone_total, row + 0x11C, 4);
-    int *const lane_g[] = {&base.random_event_turns, &base.nerve_staple_count,
-                           &base.unk_11, &base.location};
-    for (int tail = 0; tail < 4; ++tail)
-        memcpy(lane_g[tail], row + 0x120 + tail * 4, 4);
-
-    for (int item = 0; item < 10; ++item) {
-        if (base.queue_production_id[item] <= -0x22)
-            base.queue_production_id[item] += -0x1F;
-    }
-}
-
-static int game_data_expand_legacy_prototype_id(int value) {
-    int low = value & 0x1F;
-    if ((low & 0x10) != 0) low -= 0x20;
-    const int high = (value + (value < 0 ? 0x1F : 0)) >> 5;
-    return (high << 6) + low;
-}
-
-static void game_data_copy_wire_bytes(unsigned char *destination,
-                                      unsigned int destination_offset,
-                                      const unsigned char *source,
-                                      unsigned int source_offset,
-                                      unsigned int byte_count) {
-    memcpy(destination + destination_offset, source + source_offset,
-           byte_count);
-}
-
-// Native <=2 conversion first copies each complete 0x1CBC source row into a
-// 0x20BC temporary row, then clears/remaps the old diplomacy/prototype and
-// region arrays. Offsets here are within explicitly-sized wire records, not
-// live C++ object aliases. The later current-PlayerData conversion consumes
-// this intermediate row in the same eight-faction order.
-static void game_data_expand_legacy_player_v2(
-        GameDataLegacyPlayerRowV3 &destination,
-        const GameDataLegacyPlayerRowV2 &source) {
-    unsigned char *const out = destination.bytes_;
-    const unsigned char *const in = source.bytes_;
-    memcpy(out, in, sizeof(source));
-
-    // These clears happen after the record copy and before the interleaving
-    // loops in the native converter.
-    memset(out + 0x854, 0, 0x200);
-    memset(out + 0xA54, 0, 0x200);
-    memset(out + 0xC54, 0, 0x400);
-
-    for (int faction = 0; faction < 8; ++faction) {
-        for (int item = 0; item < 0x20; ++item) {
-            out[0x854 + faction * 0x20 + item] =
-                in[0x854 + faction * 0x20 + item];
-            out[0xA54 + faction * 0x20 + item] =
-                in[0x954 + faction * 0x20 + item];
-            memcpy(out + 0xC54 + (faction * 0x20 + item) * 2,
-                   in + 0xA54 + (faction * 0x20 + item) * 2, 2);
-        }
-    }
-
-    // Fixed tail fields and arrays are copied in the source's original order.
-    game_data_copy_wire_bytes(out, 0x1054, in, 0xC54, 9 * 4);
-    for (int index = 0; index < 0x80; ++index) {
-        game_data_copy_wire_bytes(out, 0x1078 + index * 2, in,
-                                  0xC78 + index * 2, 2);
-        game_data_copy_wire_bytes(out, 0x1178 + index, in, 0xD78 + index, 1);
-        game_data_copy_wire_bytes(out, 0x11F8 + index, in, 0xDF8 + index, 1);
-        game_data_copy_wire_bytes(out, 0x1278 + index * 2, in,
-                                  0xE78 + index * 2, 2);
-        game_data_copy_wire_bytes(out, 0x1378 + index * 2, in,
-                                  0xF78 + index * 2, 2);
-        game_data_copy_wire_bytes(out, 0x1478 + index * 2, in,
-                                  0x1078 + index * 2, 2);
-        game_data_copy_wire_bytes(out, 0x1578 + index * 2, in,
-                                  0x1178 + index * 2, 2);
-        game_data_copy_wire_bytes(out, 0x1678 + index * 2, in,
-                                  0x1278 + index * 2, 2);
-        game_data_copy_wire_bytes(out, 0x1778 + index * 2, in,
-                                  0x1378 + index * 2, 2);
-        game_data_copy_wire_bytes(out, 0x1878 + index, in, 0x1378 + index, 1);
-        game_data_copy_wire_bytes(out, 0x18F8 + index, in, 0x13F8 + index, 1);
-        game_data_copy_wire_bytes(out, 0x1978 + index, in, 0x1578 + index, 1);
-    }
-    game_data_copy_wire_bytes(out, 0x13F8, in, 0x15F8, 0x12C);
-    game_data_copy_wire_bytes(out, 0x1EA8, in, 0x1AA8, 0x190);
-    game_data_copy_wire_bytes(out, 0x2038, in, 0x1C38, 8 * 4);
-    game_data_copy_wire_bytes(out, 0x2058, in, 0x1C58, 8 * 4);
-    game_data_copy_wire_bytes(out, 0x206C, in, 0x1C6C, 10 * 4);
-    game_data_copy_wire_bytes(out, 0x2094, in, 0x1C94, 4);
-    game_data_copy_wire_bytes(out, 0x2098, in, 0x1C98, 9 * 4);
-}
-
-// Complete per-row translation of the v3..10 body through 0x5A783A. ESI is
-// the current PlayerData row plus facility_announced, and EDI is the legacy
-// wire row plus 0x460; source/destination expressions below are expressed
-// through the actual PlayerData members rather than a live-object byte view.
-static void game_data_migrate_legacy_player_v3(
-        PlayerData &player, const GameDataLegacyPlayerRowV3 &wire) {
-    const unsigned char *const bytes = wire.bytes_;
-    memcpy(&player, bytes, sizeof(wire));
-    memcpy(player.facility_announced, bytes + 0x458, 5);
-    memset(player.facility_announced + 5, 0, 4);
-    memcpy(&player.planet_ecology, bytes + 0x460, sizeof(int));
-    memcpy(&player.base_id_atk_target, bytes + 0x464, sizeof(int));
-    memcpy(&player.unk_37, bytes + 0x468, sizeof(int));
-    memcpy(player.saved_queue_name, bytes + 0x46C,
-           sizeof(player.saved_queue_name));
-    memcpy(player.saved_queue_size, bytes + 0x52C,
-           sizeof(player.saved_queue_size));
-    memcpy(player.saved_queue_items, bytes + 0x54C,
-           sizeof(player.saved_queue_items));
-    memcpy(player.unk_38, bytes + 0x68C, sizeof(player.unk_38));
-    for (int row = 0; row < 9; ++row) {
-        for (int column = 0; column < 8; ++column) {
-            memcpy(&player.unk_39[column][row],
-                   bytes + 0x6AC + (row + column * 9) * sizeof(int),
-                   sizeof(int));
-        }
-    }
-    memcpy(player.unk_46, bytes + 0x7CC, sizeof(player.unk_46));
-
-    memcpy(&player.unk_47, bytes + 0x7F0, sizeof(player.unk_47) * 3);
-    memcpy(&player.nutrient_surplus_total, bytes + 0x85C, sizeof(int));
-    memcpy(&player.labs_total, bytes + 0x860, sizeof(int));
-    memcpy(player.satellites_, bytes + 0x864, sizeof(player.satellites_));
-    memcpy(&player.best_weapon_value, bytes + 0x874,
-           sizeof(player.best_weapon_value) * 15);
-    memcpy(player.unk_69, bytes + 0x850, sizeof(player.unk_69));
-
-    memcpy(player.proto_id_active, bytes + 0x854,
-           sizeof(player.proto_id_active));
-    memcpy(player.proto_id_queue, bytes + 0xA54,
-           sizeof(player.proto_id_queue));
-    memcpy(player.proto_id_lost, bytes + 0xC54,
-           sizeof(player.proto_id_lost));
-    memcpy(&player.total_mil_veh, bytes + 0xF54,
-           sizeof(player.total_mil_veh) * 9);
-
-    memcpy(player.region_total_combat_vehs, bytes + 0x1078,
-           sizeof(player.region_total_combat_vehs));
-    memcpy(player.region_total_bases, bytes + 0x1178,
-           sizeof(player.region_total_bases));
-    memcpy(player.region_total_offensive_vehs, bytes + 0x11F8,
-           sizeof(player.region_total_offensive_vehs));
-    memcpy(player.region_force_rating, bytes + 0x1278,
-           sizeof(player.region_force_rating));
-    memcpy(player.unk_77, bytes + 0x1378, sizeof(player.unk_77));
-    memcpy(player.unk_78, bytes + 0x1478, sizeof(player.unk_78));
-    memcpy(player.unk_79, bytes + 0x1578, sizeof(player.unk_79));
-    memcpy(player.unk_80, bytes + 0x1678, sizeof(player.unk_80));
-    memcpy(player.unk_81, bytes + 0x1778, sizeof(player.unk_81));
-    memcpy(player.unk_82, bytes + 0x1878, sizeof(player.unk_82));
-    memcpy(player.unk_83, bytes + 0x18F8, sizeof(player.unk_83));
-    memcpy(player.region_base_plan, bytes + 0x1978,
-           sizeof(player.region_base_plan));
-
-    memcpy(player.goals, bytes + 0x19F8, sizeof(player.goals));
-    memcpy(player.sites, bytes + 0x1EA8, sizeof(player.sites));
-    memcpy(&player.unk_93, bytes + 0x2038,
-           sizeof(player.unk_93) * 8);
-    memcpy(player.secret_project_intel, bytes + 0x2058,
-           sizeof(unsigned int) * 5);
-    memset(player.secret_project_intel + 5, 0,
-           sizeof(player.secret_project_intel) - sizeof(unsigned int) * 5);
-    memcpy(&player.corner_market_turn, bytes + 0x206C,
-           sizeof(player.corner_market_turn) * 10);
-    memcpy(&player.unk_109, bytes + 0x2094, sizeof(player.unk_109));
-    memcpy(player.score_items_, bytes + 0x2098,
-           sizeof(player.score_items_));
-}
-
-static int game_data_candidate_transfer_players(FILE *file) {
-    // Native allocates the v3 row window even for a current v11+ file. Keep
-    // allocation and failed-transfer return order: early errors leak these
-    // buffers in the original routine.
-    GameDataLegacyPlayerRowV3 *const rows =
-        static_cast<GameDataLegacyPlayerRowV3 *>(mem_get(0x105E0));
-    if (GameDataStateStorage.fields_.save_daemon_state_word_ < 3) {
-        GameDataLegacyPlayerRowV2 *const old_rows =
-            static_cast<GameDataLegacyPlayerRowV2 *>(mem_get(0xE5E0));
-        if (game_data_candidate_transfer(file, old_rows, 0xE5E0) == 0)
-            return 1;
-        for (int old_faction = 0; old_faction < 8; ++old_faction)
-            game_data_expand_legacy_player_v2(
-                rows[old_faction], old_rows[old_faction]);
-        free(old_rows);
-    }
-
-    // 5A7252 reloads after the optional old-row transfer and expansion.
-    // This one value selects both the current and remaining legacy paths.
-    const int player_format =
-        GameDataStateStorage.fields_.save_daemon_state_word_;
-    if (player_format >= 0xB) {
-        if (game_data_candidate_transfer(file, PlayersData, 0x10660) == 0)
-            return 1;
-    } else {
-        if (player_format >= 3
-            && game_data_candidate_transfer(file, rows, 0x105E0) == 0)
-            return 1;
-        for (int legacy_faction = 0; legacy_faction < 8; ++legacy_faction)
-            game_data_migrate_legacy_player_v3(
-                PlayersData[legacy_faction], rows[legacy_faction]);
-    }
-    free(rows);
-    return 0;
-}
 
 // The image calls memcpy out of line for the whole-record copies here.
 #pragma function(memcpy)
@@ -2705,39 +2602,205 @@ int __cdecl game_data(FILE *file, int write_mode) {
             sizeof(ConsoleGlobal.faction_id_)) == 0)
         return 1;
 
-    if (game_data_candidate_transfer_players(file) != 0)
-        return 1;
+    // Native allocates the v3 row window even for a current v11+ file;
+    // failed transfers return without freeing it.
+    {
+        GameDataPlayerV3 *const rows =
+            static_cast<GameDataPlayerV3 *>(mem_get(sizeof(GameDataPlayerV3) * 8));
+        int v;
+        int f;
+        int j;
+        int k;
+        if (GameDataStateStorage.fields_.save_daemon_state_word_ < 3) {
+            GameDataPlayerV2 *const old_rows =
+                static_cast<GameDataPlayerV2 *>(mem_get(sizeof(GameDataPlayerV2) * 8));
+            if (game_data_candidate_transfer(file, old_rows, sizeof(GameDataPlayerV2) * 8) == 0)
+                return 1;
+            for (v = 0; v < 8; ++v) {
+                memcpy(&rows[v], &old_rows[v], sizeof(GameDataPlayerV2));
+                for (k = 0; k < 0x200; ++k) {
+                    rows[v].proto_id_active[k] = 0;
+                    rows[v].proto_id_queue[k] = 0;
+                    rows[v].proto_id_lost[k] = 0;
+                }
+                for (f = 0; f < 8; ++f) {
+                    for (k = 0; k < 32; ++k) {
+                        rows[v].proto_id_active[f * 64 + k] = old_rows[v].proto_id_active[f * 32 + k];
+                        rows[v].proto_id_queue[f * 64 + k] = old_rows[v].proto_id_queue[f * 32 + k];
+                        rows[v].proto_id_lost[f * 64 + k] = old_rows[v].proto_id_lost[f * 32 + k];
+                    }
+                }
+                rows[v].total_mil_veh = old_rows[v].total_mil_veh;
+                rows[v].current_num_bases = old_rows[v].current_num_bases;
+                rows[v].mil_strength_1 = old_rows[v].mil_strength_1;
+                rows[v].mil_strength_2 = old_rows[v].mil_strength_2;
+                rows[v].pop_total = old_rows[v].pop_total;
+                rows[v].unk_70 = old_rows[v].unk_70;
+                rows[v].planet_busters = old_rows[v].planet_busters;
+                rows[v].unk_71 = old_rows[v].unk_71;
+                rows[v].unk_72 = old_rows[v].unk_72;
+                for (k = 0; k < 128; ++k) {
+                    rows[v].region_total_combat_vehs[k] = old_rows[v].region_total_combat_vehs[k];
+                    rows[v].region_total_bases[k] = old_rows[v].region_total_bases[k];
+                    rows[v].region_total_offensive_vehs[k] = old_rows[v].region_total_offensive_vehs[k];
+                    rows[v].region_force_rating[k] = old_rows[v].region_force_rating[k];
+                    rows[v].unk_77[k] = old_rows[v].unk_77[k];
+                    rows[v].unk_78[k] = old_rows[v].unk_78[k];
+                    rows[v].unk_79[k] = old_rows[v].unk_79[k];
+                    rows[v].unk_80[k] = old_rows[v].unk_80[k];
+                    rows[v].unk_81[k] = old_rows[v].unk_81[k];
+                    rows[v].unk_82[k] = old_rows[v].unk_82[k];
+                    rows[v].unk_83[k] = old_rows[v].unk_83[k];
+                    rows[v].region_base_plan[k] = old_rows[v].region_base_plan[k];
+                }
+                for (k = 0; k < 75; ++k) rows[v].goals[k] = old_rows[v].goals[k];
+                for (k = 0; k < 25; ++k) rows[v].sites[k] = old_rows[v].sites[k];
+                rows[v].unk_93 = old_rows[v].unk_93;
+                rows[v].unk_94 = old_rows[v].unk_94;
+                rows[v].unk_95 = old_rows[v].unk_95;
+                rows[v].unk_96 = old_rows[v].unk_96;
+                rows[v].unk_97 = old_rows[v].unk_97;
+                rows[v].tech_achieved = old_rows[v].tech_achieved;
+                rows[v].time_bonus_count = old_rows[v].time_bonus_count;
+                rows[v].unk_99 = old_rows[v].unk_99;
+                // Original bug: eight words copied through five-word arrays.
+                for (k = 0; k < 8; ++k) rows[v].secret_project_intel[k] = old_rows[v].secret_project_intel[k];
+                for (k = 0; k < 10; ++k) rows[v].corner_market_[k] = old_rows[v].corner_market_[k];
+                rows[v].unk_109 = old_rows[v].unk_109;
+                for (k = 0; k < 9; ++k) rows[v].score_items_[k] = old_rows[v].score_items_[k];
+            }
+            if (old_rows) free(old_rows);
+        }
+        if (GameDataStateStorage.fields_.save_daemon_state_word_ < 0xB) {
+            if (GameDataStateStorage.fields_.save_daemon_state_word_ >= 3
+                && game_data_candidate_transfer(file, rows, sizeof(GameDataPlayerV3) * 8) == 0)
+                return 1;
+            for (v = 0; v < 8; ++v) {
+                memcpy(&PlayersData[v], &rows[v], sizeof(GameDataPlayerV3));
+                                for (k = 0; k < 5; k++)
+                    PlayersData[v].facility_announced[k] = rows[v].facility_announced[k];
+                memset(&PlayersData[v].facility_announced[5], 0, 4);
+                PlayersData[v].planet_ecology = rows[v].planet_ecology;
+                PlayersData[v].base_id_atk_target = rows[v].base_id_atk_target;
+                PlayersData[v].unk_37 = rows[v].unk_37;
+                for (j = 0; j < 8; j++) {
+                    for (k = 0; k < 24; k++)
+                        PlayersData[v].saved_queue_name[j][k] = rows[v].saved_queue_name[j][k];
+                    PlayersData[v].saved_queue_size[j] = rows[v].saved_queue_size[j];
+                    for (k = 0; k < 10; k++)
+                        PlayersData[v].saved_queue_items[j][k] = rows[v].saved_queue_items[j][k];
+                }
+                for (j = 0; j < 8; j++)
+                    PlayersData[v].unk_38[j] = rows[v].unk_38[j];
+                for (k = 0; k < 9; k++)                     // outer = column (count 9, +4)
+                    for (j = 0; j < 8; j++)                 // inner = row (count 8, +0x24)
+                        PlayersData[v].unk_39[j][k] = rows[v].unk_39[j][k];
+                for (k = 0; k < 9; k++)
+                    PlayersData[v].unk_46[k] = rows[v].unk_46[k];
+                PlayersData[v].unk_47 = rows[v].unk_47;
+                PlayersData[v].unk_48 = rows[v].unk_48;
+                PlayersData[v].unk_49 = rows[v].unk_49;
+                PlayersData[v].nutrient_surplus_total = rows[v].nutrient_surplus_total;
+                PlayersData[v].labs_total = rows[v].labs_total;
+                for (k = 0; k < 4; k++)
+                    PlayersData[v].satellites_[k] = rows[v].satellites_[k];
+                PlayersData[v].best_weapon_value = rows[v].best_weapon_value;
+                PlayersData[v].best_psi_offense = rows[v].best_psi_offense;
+                PlayersData[v].best_psi_defense = rows[v].best_psi_defense;
+                PlayersData[v].best_armor_value = rows[v].best_armor_value;
+                PlayersData[v].best_land_speed = rows[v].best_land_speed;
+                PlayersData[v].enemy_best_weapon_value = rows[v].enemy_best_weapon_value;
+                PlayersData[v].enemy_best_armor_value = rows[v].enemy_best_armor_value;
+                PlayersData[v].enemy_best_land_speed = rows[v].enemy_best_land_speed;
+                PlayersData[v].enemy_best_psi_offense = rows[v].enemy_best_psi_offense;
+                PlayersData[v].enemy_best_psi_defense = rows[v].enemy_best_psi_defense;
+                PlayersData[v].unk_64 = rows[v].unk_64;
+                PlayersData[v].unk_65 = rows[v].unk_65;
+                PlayersData[v].unk_66 = rows[v].unk_66;
+                PlayersData[v].unk_67 = rows[v].unk_67;
+                PlayersData[v].unk_68 = rows[v].unk_68;
+                // WORKAROUND(type): image copies unk_69 as one dword; PlayerData declares char[4].
+                *(int *)PlayersData[v].unk_69 = rows[v].unk_69;
+                for (k = 0; k < 512; k++) {                 // one loop, three statements
+                    PlayersData[v].proto_id_active[k] = rows[v].proto_id_active[k];
+                    PlayersData[v].proto_id_queue[k] = rows[v].proto_id_queue[k];
+                    PlayersData[v].proto_id_lost[k] = rows[v].proto_id_lost[k];
+                }
+                PlayersData[v].total_mil_veh = rows[v].total_mil_veh;
+                PlayersData[v].current_num_bases = rows[v].current_num_bases;
+                PlayersData[v].mil_strength_1 = rows[v].mil_strength_1;
+                PlayersData[v].mil_strength_2 = rows[v].mil_strength_2;
+                PlayersData[v].pop_total = rows[v].pop_total;
+                PlayersData[v].unk_70 = rows[v].unk_70;
+                PlayersData[v].planet_busters = rows[v].planet_busters;
+                PlayersData[v].unk_71 = rows[v].unk_71;
+                PlayersData[v].unk_72 = rows[v].unk_72;
+                for (k = 0; k < 128; k++) {                 // one loop, twelve statements, decl order
+                    PlayersData[v].region_total_combat_vehs[k] = rows[v].region_total_combat_vehs[k];
+                    PlayersData[v].region_total_bases[k] = rows[v].region_total_bases[k];
+                    PlayersData[v].region_total_offensive_vehs[k] = rows[v].region_total_offensive_vehs[k];
+                    PlayersData[v].region_force_rating[k] = rows[v].region_force_rating[k];
+                    PlayersData[v].unk_77[k] = rows[v].unk_77[k];
+                    PlayersData[v].unk_78[k] = rows[v].unk_78[k];
+                    PlayersData[v].unk_79[k] = rows[v].unk_79[k];
+                    PlayersData[v].unk_80[k] = rows[v].unk_80[k];
+                    PlayersData[v].unk_81[k] = rows[v].unk_81[k];
+                    PlayersData[v].unk_82[k] = rows[v].unk_82[k];
+                    PlayersData[v].unk_83[k] = rows[v].unk_83[k];
+                    PlayersData[v].region_base_plan[k] = rows[v].region_base_plan[k];
+                }
+                for (k = 0; k < 75; k++)
+                    PlayersData[v].goals[k] = rows[v].goals[k];   // Goal struct assignment = 4 dword movs
+                for (k = 0; k < 25; k++)
+                    PlayersData[v].sites[k] = rows[v].sites[k];
+                PlayersData[v].unk_93 = rows[v].unk_93;
+                PlayersData[v].unk_94 = rows[v].unk_94;
+                PlayersData[v].unk_95 = rows[v].unk_95;
+                PlayersData[v].unk_96 = rows[v].unk_96;
+                PlayersData[v].unk_97 = rows[v].unk_97;
+                PlayersData[v].tech_achieved = rows[v].tech_achieved;
+                PlayersData[v].time_bonus_count = rows[v].time_bonus_count;
+                PlayersData[v].unk_99 = rows[v].unk_99;
+                for (k = 0; k < 5; k++)
+                    PlayersData[v].secret_project_intel[k] = rows[v].secret_project_intel[k];
+                memset(&PlayersData[v].secret_project_intel[5], 0, 3 * sizeof(uint32_t));
+                // WORKAROUND(type): one 10-dword loop -> these 10 PlayerData scalars were an array.
+                for (k = 0; k < 10; k++)
+                    (&PlayersData[v].corner_market_turn)[k] = rows[v].corner_market_[k];
+                PlayersData[v].unk_109 = rows[v].unk_109;
+                for (k = 0; k < 9; k++)
+                    PlayersData[v].score_items_[k] = rows[v].score_items_[k];
+            }
+        } else if (game_data_candidate_transfer(file, PlayersData, 0x10660) == 0) {
+            return 1;
+        }
+        if (rows) free(rows);
+    }
 
     if (game_data_candidate_transfer(file, Players, 0x2CE0) == 0)
         return 1;
     if (game_data_candidate_transfer(file, FactionRankingsUnk, 0x20) == 0)
         return 1;
 
-    if (GameDataWriteMode != 0) {
-        if (map_write(file) != 0) return 1;
-    } else {
-        if (GameDataLoadRequest == 0
-            && (GameDataStateStorage.fields_.game_state_ & 1u) == 0) {
-            // 0x005A7978 counts the alive human factions with bit_count.
-            if (bit_count(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_
-                          & GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_) > 1) {
-                for (int faction = 1; faction < 8; ++faction) {
-                    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << faction)) != 0
-                        && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction)) != 0
-                        && PlayersData[faction].unk_102 != 0) {
-                        GameDataLoadStatusWord = 1;
-                        return 1;
-                    }
+    if (GameDataWriteMode == 0 && GameDataLoadRequest == 0
+        && (GameDataStateStorage.fields_.game_state_ & 1u) == 0) {
+        // 0x005A7978 counts the alive human factions with bit_count.
+        if (bit_count(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_
+                      & GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_) > 1) {
+            for (int faction = 1; faction < 8; ++faction) {
+                if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << faction)) != 0
+                    && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction)) != 0
+                    && PlayersData[faction].unk_102 != 0) {
+                    GameDataLoadStatusWord = 1;
+                    return 1;
                 }
             }
         }
-        // Native reloads the direction global after the legacy permission
-        // probe and can branch to map_write at this second test.
-        if (GameDataWriteMode != 0) {
-            if (map_write(file) != 0) return 1;
-        } else if (map_read(file) != 0) {
-            return 1;
-        }
+    }
+    if (GameDataWriteMode != 0) {
+        if (map_write(file) != 0) return 1;
+    } else if (map_read(file) != 0) {
+        return 1;
     }
 
     if (game_data_candidate_transfer(
@@ -2761,12 +2824,11 @@ int __cdecl game_data(FILE *file, int write_mode) {
             if (game_data_candidate_transfer(
                     file, &VehPrototypes[prototype_block], 0x680) == 0)
                 return 1;
-            for (int cleared_prototype = prototype_block + 32;
-                 cleared_prototype < prototype_block + 64;
-                ++cleared_prototype) {
-                VehPrototypes[cleared_prototype].veh_name[0] = '\0';
-                VehPrototypes[cleared_prototype].flags = 0;
-                VehPrototypes[cleared_prototype].unk_1 = 0;
+            for (int cleared_prototype = 32; cleared_prototype < 64;
+                 ++cleared_prototype) {
+                VehPrototypes[prototype_block + cleared_prototype].veh_name[0] = '\0';
+                VehPrototypes[prototype_block + cleared_prototype].flags = 0;
+                VehPrototypes[prototype_block + cleared_prototype].unk_1 = 0;
             }
         }
     }
@@ -2850,50 +2912,71 @@ int __cdecl game_data(FILE *file, int write_mode) {
         VehPrototypes[7].icon_offset = 2;
     }
 
-    if (base_format >= 0xB) {
-        if (GameDataStateStorage.fields_.base_current_count_ != 0
-            && game_data_candidate_transfer(
-                   file, Bases,
-                   static_cast<unsigned int>(GameDataStateStorage.fields_.base_current_count_) * 0x134u) == 0)
-            return 1;
-    } else if (GameDataStateStorage.fields_.base_current_count_ != 0) {
-        GameDataLegacyBaseRowV1 *const old_rows =
-            static_cast<GameDataLegacyBaseRowV1 *>(
-                mem_get(GameDataStateStorage.fields_.base_current_count_ * 0x130));
-        if (game_data_candidate_transfer(
-                file, old_rows,
-                static_cast<unsigned int>(GameDataStateStorage.fields_.base_current_count_) * 0x130u) == 0)
-            return 1;
-        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id)
-            game_data_migrate_legacy_base(
-                Bases[base_id], old_rows[base_id].bytes_);
-        if (old_rows != 0) free(old_rows);
+    // WORKAROUND(type): the (&Base::x)[k] lanes below are int[4] arrays in
+    // the original Base (one loop indexes them); base.h declares scalars.
+    if (GameDataStateStorage.fields_.save_daemon_state_word_ >= 0xB) { // 5A7F05
+        if (GameDataStateStorage.fields_.base_current_count_) {        // je 5A8179
+            if (!game_data_candidate_transfer(file, Bases,
+                    GameDataStateStorage.fields_.base_current_count_ * sizeof(Base)))
+                return 1;
+        }
+    } else if (GameDataStateStorage.fields_.base_current_count_) {    // 5A7F77
+        GameDataBaseV1 *old = (GameDataBaseV1 *)mem_get(
+            GameDataStateStorage.fields_.base_current_count_ * sizeof(GameDataBaseV1));
+        // count reloaded after mem_get (5A7F90)
+        if (!game_data_candidate_transfer(file, old,
+                GameDataStateStorage.fields_.base_current_count_ * sizeof(GameDataBaseV1)))
+            return 1;                                   // BUG kept: leaks old
+        // i in [ebp-4]; count re-read every iteration (5A813F)
+        for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
+            memcpy(&Bases[i], &old[i], sizeof(GameDataBaseV1));   // 0x130, call
+            int k;
+            for (k = 0; k < 5; k++)                                // 5A8033
+                Bases[i].facilities_built[k] = old[i].facilities_built[k];
+            memset(&Bases[i].facilities_built[5], 0, 4);           // 5A8040
+            Bases[i].mineral_surplus_final = old[i].mineral_surplus_final;   // +98 <- +94
+            Bases[i].minerals_accumulated_2 = old[i].minerals_accumulated_2; // +9C <- +98
+            for (k = 0; k < 4; k++) {                              // 5A8061, counter [ebp+8]
+                (&Bases[i].unk_6)[k] /* WORKAROUND(type) */ = old[i].unk_6[k];                    // A0 <- 9C
+                Bases[i].intake_1[k] = old[i].intake_1[k];                 // B0 <- AC
+                Bases[i].intake_2[k] = old[i].intake_2[k];                 // C0 <- BC
+                (&Bases[i].nutrient_surplus)[k] = old[i].surplus[k];       // D0 <- CC
+                (&Bases[i].nutrient_inefficiency)[k] = old[i].inefficiency[k]; // E0 <- DC
+                (&Bases[i].nutrient_consumption)[k] = old[i].consumption[k];   // F0 <- EC
+            }
+            for (k = 0; k < 4; k++)                                // 5A80A0
+                (&Bases[i].economy_total)[k] = old[i].economy_total[k];    // 100 <- FC
+            for (k = 0; k < 3; k++)                                // 5A80C3 (words)
+                Bases[i].auto_forward_slots[k] = old[i].auto_forward_slots[k]; // 110 <- 10C
+            Bases[i].talent_total = old[i].talent_total;           // 118 <- 114
+            Bases[i].drone_total = old[i].drone_total;             // 11C <- 118
+            Bases[i].super_drone_total = old[i].super_drone_total; // 120 <- 11C
+            for (k = 0; k < 4; k++)                                // 5A810F
+                (&Bases[i].random_event_turns)[k] = old[i].random_event_turns[k]; // 124 <- 120
+            for (k = 0; k < 10; k++) {                             // 5A812A, edx=10
+                if (Bases[i].queue_production_id[k] <= -34)        // cmp -0x22; jg
+                    Bases[i].queue_production_id[k] -= 31;         // add -0x1f
+            }
+        }
+        if (old)                                                   // 5A8160
+            free(old);
     }
-
-    // The fresh 5A8179 gate follows base loading and cleanup; failures there
-    // must leave these vehicle and queue IDs unconverted.
-    if (GameDataStateStorage.fields_.save_daemon_state_word_ < 3) {
-        for (int expanded_vehicle_id = 0;
-             expanded_vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_;
-             ++expanded_vehicle_id)
-            Vehs[expanded_vehicle_id].proto_id = static_cast<int16_t>(
-                game_data_expand_legacy_prototype_id(
-                    Vehs[expanded_vehicle_id].proto_id));
-        for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
-            Base &base = Bases[base_id];
-            const int queue_count = static_cast<int>(base.queue_size);
-            if (queue_count >= 0) {
-                for (int queue_item = 0; queue_item <= queue_count;
-                     ++queue_item) {
-                    int &production_id = base.queue_production_id[queue_item];
-                    if (production_id >= 0)
-                        production_id = game_data_expand_legacy_prototype_id(
-                            production_id);
-                }
+    if (GameDataStateStorage.fields_.save_daemon_state_word_ < 3) {   // 5A8179
+        int i;
+        // counter [ebp+8] counts down from vehicle_current_count_ (read once)
+        for (i = 0; i < GameDataStateStorage.fields_.vehicle_current_count_; i++)
+            Vehs[i].proto_id = Vehs[i].proto_id / 32 * 64 + Vehs[i].proto_id % 32;
+        // counter [ebp-4] counts down from base_current_count_ (read once)
+        for (i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
+            // queue_size re-read each inner iteration (5A8203); guard 0 <= qs
+            for (int j = 0; j <= Bases[i].queue_size; j++) {
+                if (Bases[i].queue_production_id[j] >= 0)          // test; jl
+                    Bases[i].queue_production_id[j] =
+                        Bases[i].queue_production_id[j] / 32 * 64
+                        + Bases[i].queue_production_id[j] % 32;
             }
         }
     }
-
     if ((GameDataStateStorage.fields_.game_state_ & 0x10u) != 0
         && game_data_candidate_transfer(file, ScenarioSaveNameBuffer, 0x100) == 0)
         return 1;
@@ -3117,6 +3200,16 @@ int __cdecl game_data(FILE *file, int write_mode) {
 // ORIGINAL: 0x005AB600 ?load_map@@YAHXZ 0x005AB600-0x005ABB8D;0x006620A7-0x0066221F
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005ab600.cpp", "recovery/tasks/game-save-load-owner-coverage.json", "pinned image sha256:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_load_map_behavior.py"], "reason": "Recover map loading through AlphaSave's real selected-path return and existing extension, map-daemon, multiplayer, preference, and dialog owners."}
 // TRIED: FileBox/AlphaSave are opaque (no fields) in this scaffold, so their real stack sizes are unknown; used one raw byte buffer + placement-new/reinterpret_cast at the exact ebp-relative offsets from the disasm (incl. the manual vtable pokes before AlphaSave/Scroll/FlatButton close() calls) instead of real SEH locals. Compiles, right call order/addresses/args, sim 0.34-0.50 - the missing SEH frame and giant flat buffer (vs per-object locals) rule out byte-exact; not retried given size (1797 bytes, ~30 embedded objects).
+// WORKAROUND(inline): dead /Ob2 budget probe; folds to nothing. The image's
+// early return teardown (0x005AB77E) expands ~AlphaSave one level only and
+// its final teardown expands ~FileWin's members; ten zero-code expansions
+// after the early return reproduce both (31 EH states, sites 8 and 21).
+static int load_map_budget_probe(int x)
+{
+    if (x == 1) x = 4;
+    return x;
+}
+
 int __cdecl load_map() {
     FileBox file_box_lifetime;
     AlphaSave dialog;
@@ -3150,6 +3243,16 @@ int __cdecl load_map() {
     }
 
     strcpy(selected_path, selected);
+    load_map_budget_probe(0);
+    load_map_budget_probe(1);
+    load_map_budget_probe(2);
+    load_map_budget_probe(0);
+    load_map_budget_probe(1);
+    load_map_budget_probe(2);
+    load_map_budget_probe(0);
+    load_map_budget_probe(1);
+    load_map_budget_probe(2);
+    load_map_budget_probe(0);
     char preference_value[256];
     strcpy(preference_value, selected);
     char *dot = strchr(preference_value, '.');
@@ -3560,6 +3663,11 @@ int __cdecl save_game(int mode) {
         ExitTurnLoop = 1;
         return 1;
     }
+    // WORKAROUND(inline): load_map's dead budget probe. One zero-code
+    // expansion here gives the image's first three return teardowns (17, 17
+    // and 16 EH states); the final one stays one state deeper than the
+    // image's 15 at every probe count and placement tried.
+    load_map_budget_probe(0);
 
     if (mode == 0 && (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) != 0) {
         auto_save();
