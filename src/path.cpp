@@ -116,8 +116,8 @@ void Path::shutdown() {
  Return Value: Map table value
  Status: Complete
 */
-int Path::get(uint32_t x, uint32_t y) {
-    return map_table_[(x >> 1) + y * MapLongitude];
+inline int Path::get(int x, int y) {
+    return map_table_[(x >> 1) + (MapLongitudeBounds >> 1) * y];
 }
 
 /*
@@ -126,8 +126,8 @@ int Path::get(uint32_t x, uint32_t y) {
  Return Value: n/a
  Status: Complete
 */
-void Path::set(uint32_t x, uint32_t y, int val) {
-    map_table_[(x >> 1) + y * MapLongitude] = val;
+inline void Path::set(int x, int y, int val) {
+    map_table_[(x >> 1) + (MapLongitudeBounds >> 1) * y] = val;
 }
 
 /*
@@ -1580,6 +1580,11 @@ void Path::continents() {
 #pragma function(memset)
 #endif
 
+// Rewritten 2026-11-13 from 0x0059CCA0-0x0059D227: the radius scans run 25
+// fixed squares; the first takes an own-territory sensor or a planned tile
+// (get), the base scan stops on any covered own-territory square; the
+// penalties apply when flags 4/8 are CLEAR, and a planned tile stores
+// proximity + 1 through the inline set.
 BOOL Path::sensors(int faction_id, int *x_sensor, int *y_sensor) {
     BOOL has_sensor = true;
     ZeroMemory(map_table_, MapArea * sizeof(*map_table_));
@@ -1587,88 +1592,96 @@ BOOL Path::sensors(int faction_id, int *x_sensor, int *y_sensor) {
     int x_search = *x_sensor;
     int y_search = *y_sensor;
     int search = 9999;
-    uint32_t region = region_at(x_search, y_search);
+    int region = region_at(x_search, y_search);
     for (int y = 0; y < MapLatitudeBounds; y++) {
         for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
-            int veh_faction_id;
-            if (region_at(x, y) == region 
-                && whose_territory(faction_id, x, y, NULL, false) == (int)faction_id
-                && base_who(x, y) < 0 && (veh_faction_id = veh_who(x, y), veh_faction_id < 0 
-                    || veh_faction_id == (int)faction_id
-                    || has_treaty(faction_id, veh_faction_id, DTREATY_PACT))) {
-                int zoc_faction_id = zoc_veh(x, y, faction_id);
-                if (zoc_faction_id != 1 && (!zoc_faction_id
-                    || !has_treaty(faction_id, zoc_faction_id, DTREATY_VENDETTA))
-                    && !(bit_at(x, y) & (BIT_MINE | BIT_SOLAR_TIDAL))
-                    && !(bit_at(x, y) & (BIT_MONOLITH | BIT_CONDENSER | BIT_THERMAL_BORE))
-                    && !bonus_at(x, y, 0) && ((map_loc(x, y)->val3 & ~0x3F) > TERRAIN_BIT_ROLLING
-                        || climate_at(x, y) == RAINFALL_ARID
-                        || ((bit_at(x, y) & BIT_FUNGUS)
-                            && altitude_at(x, y) >= ALT_BIT_OCEAN_SHELF))
-                    && (!(bit_at(x, y) & BIT_FUNGUS)
-                        || altitude_at(x, y) < ALT_BIT_OCEAN_SHELF
-                        || has_tech(Rules.tech_improve_fungus_sqr, faction_id))) {
-                    uint32_t flags = 0;
-                    for (int i = 0; i < RadiusRange[2]; i++) {
-                        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
-                        int y_radius = y + RadiusOffsetY[i];
-                        if (on_map(x_radius, y_radius) && !is_sensor(x_radius, y_radius)
-                            && (whose_territory(faction_id, x_radius, y_radius, NULL, false)
-                                == (int)faction_id || get(x_radius, y_radius))) {
-                            if (i >= 9) {
-                                flags |= 1;
-                            }
-                            flags |= 2;
+            if (region_at(x, y) != region
+                || whose_territory(faction_id, x, y, NULL, false) != faction_id
+                || base_who(x, y) >= 0) {
+                continue;
+            }
+            int veh_faction_id = veh_who(x, y);
+            if (veh_faction_id >= 0 && veh_faction_id != faction_id
+                && !has_treaty(faction_id, veh_faction_id, DTREATY_PACT)) {
+                continue;
+            }
+            int zoc_faction_id = zoc_veh(x, y, faction_id);
+            if (zoc_faction_id == 1 || (zoc_faction_id
+                && has_treaty(faction_id, zoc_faction_id, DTREATY_VENDETTA))) {
+                continue;
+            }
+            if (bit_at(x, y) & (BIT_MINE | BIT_SOLAR_TIDAL)
+                || bit_at(x, y) & (BIT_MONOLITH | BIT_CONDENSER | BIT_THERMAL_BORE)
+                || bonus_at(x, y, 0)) {
+                continue;
+            }
+            if (!((map_loc(x, y)->val3 & ~0x3F) > TERRAIN_BIT_ROLLING
+                || climate_at(x, y) == RAINFALL_ARID
+                || ((bit_at(x, y) & BIT_FUNGUS) && (map_loc(x, y)->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF))) {
+                continue;
+            }
+            if ((bit_at(x, y) & BIT_FUNGUS) && (map_loc(x, y)->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF
+                && !has_tech(Rules.tech_improve_fungus_sqr, faction_id)) {
+                continue;
+            }
+            int flags = 0;
+            int i;
+            for (i = 0; i < 25; i++) {
+                int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
+                int y_radius = y + RadiusOffsetY[i];
+                if (on_map(x_radius, y_radius)
+                    && ((is_sensor(x_radius, y_radius)
+                        && whose_territory(faction_id, x_radius, y_radius, NULL, false)
+                            == faction_id)
+                        || get(x_radius, y_radius))) {
+                    if (i < 9) {
+                        flags |= 1;
+                    }
+                    flags |= 2;
+                }
+            }
+            if (flags & 1) {
+                continue;
+            }
+            int proximity = vector_dist(x_search, y_search, x, y);
+            for (i = 0; i < 25; i++) {
+                int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
+                int y_radius = y + RadiusOffsetY[i];
+                if (on_map(x_radius, y_radius) && base_who(x_radius, y_radius) == faction_id) {
+                    flags |= 4;
+                    BOOL check = true;
+                    for (int j = 0; j < 25; j++) {
+                        int x_radius2 = wrap_map_x(x_radius + RadiusOffsetX[j]);
+                        int y_radius2 = y_radius + RadiusOffsetY[j];
+                        if (on_map(x_radius2, y_radius2)
+                            && (is_sensor(x_radius2, y_radius2) || get(x_radius2, y_radius2))
+                            && whose_territory(faction_id, x_radius2, y_radius2, NULL, false)
+                                == faction_id) {
+                            check = false;
+                            break;
                         }
                     }
-                    if (!(flags & 1)) {
-                        int proxminity = vector_dist(x_search, y_search, x, y);
-                        for (uint32_t i = 0; i < 25; i++) {
-                            int tile_faction_id;
-                            int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
-                            int y_radius = y + RadiusOffsetY[i];
-                            if (on_map(x_radius, y_radius) 
-                                && (tile_faction_id = base_who(x_radius, y_radius), 
-                                    tile_faction_id == (int)faction_id)) {
-                                flags |= 4;
-                                BOOL check = true;
-                                for (int j = 0; j < RadiusRange[2]; j++) {
-                                    int x_radius2 = wrap_map_x(x_radius + RadiusOffsetX[j]);
-                                    int y_radius2 = y_radius + RadiusOffsetY[j];
-                                    if (on_map(x_radius2, y_radius2)
-                                        && !is_sensor(x_radius2, y_radius2)
-                                        && (whose_territory(faction_id, x_radius2, y_radius2, NULL,
-                                            false) == (int)faction_id 
-                                            || get(x_radius2, y_radius2))) {
-                                        check = false;
-                                        break;
-                                    }
-                                }
-                                if (check) {
-                                    flags |= 8;
-                                }
-                            }
-                        }
-                        if (flags & 4) {
-                            proxminity += 400;
-                        }
-                        if (flags & 8) {
-                            proxminity += 800;
-                        }
-                        if (!(flags & 2) || flags & 8) {
-                            proxminity++;
-                            set(x, y, 0);
-                        } else {
-                            proxminity += 200;
-                        }
-                        if (proxminity < search) {
-                            *x_sensor = x;
-                            *y_sensor = y;
-                            search = proxminity;
-                            has_sensor = false;
-                        }
+                    if (check) {
+                        flags |= 8;
                     }
                 }
+            }
+            if (!(flags & 4)) {
+                proximity += 400;
+            }
+            if (!(flags & 8)) {
+                proximity += 800;
+            }
+            if ((flags & 2) && !(flags & 8)) {
+                proximity += 200;
+            } else {
+                set(x, y, proximity + 1);
+            }
+            if (proximity < search) {
+                search = proximity;
+                *x_sensor = x;
+                *y_sensor = y;
+                has_sensor = false;
             }
         }
     }

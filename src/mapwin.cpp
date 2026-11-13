@@ -3508,6 +3508,14 @@ static inline unsigned char sprite_transparent(const Sprite &sprite) {
 }
 
 
+// Path::get has no out-of-line copy in the image: every caller expands it
+// with the (MapLongitudeBounds >> 1) row stride (0x466793 here, sensors in
+// path.cpp). path.h is included before map.h, so the body is repeated here.
+// WORKAROUND(decl): the original header placement of this inline is unknown.
+inline int Path::get(int x, int y) {
+    return map_table_[(x >> 1) + (MapLongitudeBounds >> 1) * y];
+}
+
 /*
 Purpose: Render one map tile's terrain polygon stack - the base land or
          ocean fill with per-corner lighting, landmark overlays, farms,
@@ -3609,6 +3617,7 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
     Vert edge_uv[16];
     Vert land_uv[12];
     Vert land_vertices[12];
+    int ocean_zvals[4];
     int triangle_light[3];
     uint32_t local_11c;
     int coastal_mask[4];
@@ -3619,6 +3628,9 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
     uint32_t local_c0;
     uint32_t local_bc;
     int local_b8[4];
+    Vert quad[4];
+    int quad_z[4];
+    int edge_vertex;
     int local_a8;
     int local_a4;
     int local_a0;
@@ -3687,14 +3699,13 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
         return 0;
     }
     local_14 = a7 >> 1;
-    Map *const tile = &map_tiles()[MapLongitude * a8 + local_14];
-    uint32_t *const tile_bit2_ptr = &tile->bit2;
+    uint32_t *const tile_bit2_ptr = &map_tiles()[MapLongitude * a8 + local_14].bit2;
     local_34 = *tile_bit2_ptr;
     if (window != 0 && window == &WorldClimateWorldWin.mapWin_ &&
         (a6 & 0x80000000) == 0 && (local_34 & 0x400000) == 0) {
         return 1;
     }
-    local_rand.reseed(static_cast<uint32_t>(reinterpret_cast<uintptr_t>(tile)));
+    local_rand.reseed(static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&map_tiles()[MapLongitude * a8 + local_14])));
     local_18 = is_ocean(a7, a8);
     if (local_18 == 0) {
         TextureLightFloor = 0xfffffffc;
@@ -3854,12 +3865,12 @@ LAB_004635f8:
                 iVar6 = RadiusOffsetY[iVar7];
                 iVar19 = RadiusOffsetX[iVar7];
                 iVar13 = (iVar6 - iVar19) >> 1;
-                iVar5 = (iVar19 + iVar6) >> 1;
+                iVar5 = (iVar6 + iVar19) >> 1;
                 if (iVar13 * iVar13 + iVar5 * iVar5 < 25) {
                     iVar19 = wrap_map_x(iVar19 + a7);
-                    iVar6 = iVar6 + a8;
-                    if (on_map(iVar19, iVar6) && base_who(iVar19, iVar6) == a4 &&
-                        has_fac(FAC_GEOSYNC_SURVEY_POD, base_at(iVar19, iVar6), 0)) {
+                    iVar5 = iVar6 + a8;
+                    if (on_map(iVar19, iVar5) && base_who(iVar19, iVar5) == a4 &&
+                        has_fac(FAC_GEOSYNC_SURVEY_POD, base_at(iVar19, iVar5), 0)) {
                         goto LAB_00463b55;
                     }
                 }
@@ -3980,21 +3991,21 @@ LAB_00463b55:
             if (local_38 != 0) {
                 rocky_uv[vertex] = LandCornerUVs[vertex];
             }
-            if (2 < (int)local_8c && local_84 != 0) {
+            if ((int)local_8c >= 3 && local_84 != 0) {
                 local_bc = LandMoistureTable[local_28][0];
             }
         }
     }
     // 463F9F-46401E initializes four quads, not eight vertices.
+    edge_vertex = 0;
     for (corner = 0; corner < 4; ++corner) {
-        for (int sub = 0; sub < 4; ++sub) {
-            const int vertex = corner * 4 + sub;
-            const int direction = (corner - 2 + sub) & 3;
-            edge_vertices[vertex].x =
-                CornerOffsetX[corner][direction] * local_78 + a9;
-            edge_vertices[vertex].y =
-                CornerOffsetY[corner][direction] * local_98 + a10;
-            edge_uv[vertex] = EdgeMidUVs[vertex];
+        for (int direction = corner - 2; direction < corner + 2; ++direction, ++edge_vertex) {
+            edge_vertices[edge_vertex].x =
+                CornerOffsetX[corner][direction & 3] * local_78 + a9;
+            edge_vertices[edge_vertex].y =
+                CornerOffsetY[corner][direction & 3] * local_98 + a10;
+            edge_uv[edge_vertex].x = EdgeMidUVs[edge_vertex].x;
+            edge_uv[edge_vertex].y = EdgeMidUVs[edge_vertex].y;
         }
     }
     local_80 = 0;
@@ -4036,25 +4047,25 @@ LAB_00463b55:
         }
         MapCornerScratch[tri] = land_vertices[tri * 3 + 1];
         local_b8[tri] = triangle_light[1];
-        if (local_18 == 0 && (local_80 == 0 || (int)territory_faction < 1) &&
+        if (local_18 == 0 && (local_80 == 0 || (int)territory_faction <= 0) &&
             local_20 == 0) {
             if ((local_24 & 0x8000) != 0 && (a6 & 1) != 0) {
                 g_FARM_TEXTURES[local_84 + 3 * local_c4].draw(
                     buffer, land_vertices + tri * 3, triangle_light, 3,
                     land_uv + tri * 3,
-                    (-(uint32_t)(local_1c != 0) & 0xffffffbe) + 0x41);
+                    local_1c != 0 ? -1 : 0x41);
                 if (local_38 != 0) {
                     g_ROCKY_TEXTURES[local_c4 + 2 * local_38 - 2].draw_trans_3(
                         buffer, land_vertices + tri * 3, triangle_light, 3,
                         rocky_uv + tri * 3,
-                        (-(uint32_t)(local_1c != 0) & 0xffffffbe) + 0x41);
+                        local_1c != 0 ? -1 : 0x41);
                 }
             } else {
                 if ((local_34 & 0x40) != 0) {
                     g_DUNE_LAND_TEXTURE.draw(
                         buffer, land_vertices + tri * 3, triangle_light, 3,
                         LandCornerUVs + tri * 3,
-                        (-(uint32_t)(local_1c != 0) & 0xffffffbe) + 0x41);
+                        local_1c != 0 ? -1 : 0x41);
                 } else {
                     // `sub eax, 0; je / dec; je / dec; jne` (0x464284) with
                     // the bodies laid out rainy, moist, flat.
@@ -4063,19 +4074,19 @@ LAB_00463b55:
                         g_RAINY_LAND_TEXTURES[local_bc].draw(
                             buffer, land_vertices + tri * 3, triangle_light, 3,
                             land_uv + tri * 3,
-                            (-(uint32_t)(local_1c != 0) & 0xffffffbe) + 0x41);
+                            local_1c != 0 ? -1 : 0x41);
                         break;
                     case 1:
                         g_MOIST_LAND_TEXTURES[local_bc].draw(
                             buffer, land_vertices + tri * 3, triangle_light, 3,
                             land_uv + tri * 3,
-                            (-(uint32_t)(local_1c != 0) & 0xffffffbe) + 0x41);
+                            local_1c != 0 ? -1 : 0x41);
                         break;
                     case 0:
                         g_FLAT_ARID_LAND_TEXTURE.draw(
                             buffer, land_vertices + tri * 3, triangle_light, 3,
                             land_uv + tri * 3,
-                            (-(uint32_t)(local_1c != 0) & 0xffffffbe) + 0x41);
+                            local_1c != 0 ? -1 : 0x41);
                         break;
                     }
                 }
@@ -4083,7 +4094,7 @@ LAB_00463b55:
                     g_ROCKY_TEXTURES[local_c4 + 2 * local_38 - 2].draw_trans_3(
                         buffer, land_vertices + tri * 3, triangle_light, 3,
                         rocky_uv + tri * 3,
-                        (-(uint32_t)(local_1c != 0) & 0xffffffbe) + 0x41);
+                        local_1c != 0 ? -1 : 0x41);
                 }
             }
         }
@@ -4178,7 +4189,6 @@ LAB_0046441f:
                         OceanCornerShades[corner * 4 + 1] >= 0x10 ||
                         OceanCornerShades[corner * 4 + 2] >= 0x10 ||
                         OceanCornerShades[corner * 4 + 3] >= 0x10) {
-                        int ocean_zvals[4];
                         ocean_zvals[0] = OceanCornerShades[corner * 4 + 0] - 0x10;
                         ocean_zvals[1] = OceanCornerShades[corner * 4 + 1] - 0x10;
                         ocean_zvals[2] = OceanCornerShades[corner * 4 + 2] - 0x10;
@@ -4218,8 +4228,6 @@ LAB_0046441f:
     // and mesa re-read it at the draw, the crater keeps it in ebx.
     if (local_70 == 0 && (local_34 & 2) != 0 && local_94 >= 0 &&
         TerrainLandmarkStorageWindowData.mount_planet[local_94].texture != -1) {
-        Vert quad[4];
-        int quad_z[4];
         const int rotation =
             TerrainLandmarkStorageWindowData.mount_planet[local_94].rotation;
         quad[0].x = MapCornerScratch[rotation & 3].x;
@@ -4255,8 +4263,6 @@ LAB_0046441f:
     }
     if ((local_34 & 0x100) != 0 && local_70 == 0 && local_94 >= 0 &&
         TerrainLandmarkStorageWindowData.sunny_mesa[local_94].texture != -1) {
-        Vert quad[4];
-        int quad_z[4];
         const int rotation =
             TerrainLandmarkStorageWindowData.sunny_mesa[local_94].rotation;
         quad[0].x = MapCornerScratch[rotation & 3].x;
@@ -4287,8 +4293,6 @@ LAB_0046441f:
         const int texture =
             TerrainLandmarkStorageWindowData.garland_crater[local_94].texture;
         if (texture != -1) {
-            Vert quad[4];
-            int quad_z[4];
             const int rotation = TerrainLandmarkStorageWindowData
                                      .garland_crater[local_94].rotation;
             quad[0].x = MapCornerScratch[rotation & 3].x;
@@ -4327,14 +4331,7 @@ LAB_0046441f:
         ((map_tiles()[MapLongitude * a8 + local_14].climate & ~0x1F) >= 0x60 ||
          local_20 != 0 ||
          (GameDataStateStorage.fields_.game_more_preferences_ & 0x800000) != 0)) {
-        iVar5 = a7 - 1;
-        if ((MapIsFlat & 1) == 0) {
-            if (iVar5 < 0) {
-                iVar5 = iVar5 + MapLongitudeBounds;
-            } else if (MapLongitudeBounds <= iVar5) {
-                iVar5 = iVar5 - MapLongitudeBounds;
-            }
-        }
+        iVar5 = wrap_map_x(a7 - 1);
         for (int edge = 0; edge < 2; edge++) {
             iVar19 = a8 - 1;
             if (iVar19 >= 0 && iVar19 < MapLatitudeBounds && iVar5 >= 0 &&
@@ -4358,14 +4355,7 @@ LAB_0046441f:
                                  MapCornerScratch[(edge + 1) & 3].y, uVar15);
                 }
             }
-            iVar5 = iVar5 + 2;
-            if ((MapIsFlat & 1) == 0) {
-                if (iVar5 < 0) {
-                    iVar5 = iVar5 + MapLongitudeBounds;
-                } else if (MapLongitudeBounds <= iVar5) {
-                    iVar5 = iVar5 - MapLongitudeBounds;
-                }
-            }
+            iVar5 = wrap_map_x(iVar5 + 2);
         }
     }
     if (ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_] ==
@@ -4412,7 +4402,7 @@ LAB_0046441f:
             if ((MapIsFlat & 1) == 0) {
                 if (nx < 0) {
                     nx += MapLongitudeBounds;
-                } else if (MapLongitudeBounds <= nx) {
+                } else if (nx >= MapLongitudeBounds) {
                     nx -= MapLongitudeBounds;
                 }
             }
@@ -4450,7 +4440,7 @@ LAB_0046441f:
                 if ((MapIsFlat & 1) == 0) {
                     if (nx < 0) {
                         nx += MapLongitudeBounds;
-                    } else if (MapLongitudeBounds <= nx) {
+                    } else if (nx >= MapLongitudeBounds) {
                         nx -= MapLongitudeBounds;
                     }
                 }
@@ -4516,7 +4506,7 @@ LAB_0046441f:
                 if ((MapIsFlat & 1) == 0) {
                     if (iVar5 < 0) {
                         iVar5 = MapLongitudeBounds + iVar5;
-                    } else if (MapLongitudeBounds <= iVar5) {
+                    } else if (iVar5 >= MapLongitudeBounds) {
                         iVar5 = iVar5 - MapLongitudeBounds;
                     }
                 }
@@ -4539,12 +4529,10 @@ LAB_0046441f:
                             if (k == 0) {
                                 faction_mask[8] = cVar4 + 1;
                                 faction_mask[2] = cVar4 + 1;
-                                // 0x4652C6 indexes this store by k.
-                                faction_mask[k + 1] = cVar4 + 1;
-                                continue;
+                            } else {
+                                faction_mask[k] = cVar4 + 1;
+                                faction_mask[k + 2] = cVar4 + 1;
                             }
-                            faction_mask[k] = cVar4 + 1;
-                            faction_mask[k + 2] = cVar4 + 1;
                         }
                         faction_mask[k + 1] = cVar4 + 1;
                     }
@@ -4574,10 +4562,9 @@ LAB_0046441f:
             uVar12 = (uint32_t)coastal_mask[corner];
             if (uVar12 != 0) {
                 for (int i = 0; i < 0x35; i++) {
-                    const uint8_t code = CoastMaskTable[i][uVar12];
-                    coast_remap[i] = code;
-                    if (code > 1) {
-                        coast_remap[i] = TerrainCoastPalette[code + 2];
+                    coast_remap[i] = CoastMaskTable[i][uVar12];
+                    if (coast_remap[i] > 1) {
+                        coast_remap[i] = TerrainCoastPalette[coast_remap[i] + 2];
                     }
                 }
                 if (uVar12 == 7 && ((a8 - a7) & 2) != 0) {
@@ -4587,14 +4574,14 @@ LAB_0046441f:
                     // Three separate runs (0x4653CA/0x4653E6/0x465402),
                     // each reading the four published colors backward.
                     int shade;
-                    for (shade = 0; shade < 4; ++shade) {
-                        coast_remap[0x12 + shade] = TerrainCoastPalette[7 - shade];
+                    for (shade = 0x12; shade <= 0x15; ++shade) {
+                        coast_remap[shade] = TerrainCoastPalette[0x19 - shade];
                     }
-                    for (shade = 0; shade < 4; ++shade) {
-                        coast_remap[0x16 + shade] = TerrainCoastPalette[7 - shade];
+                    for (shade = 0x16; shade <= 0x19; ++shade) {
+                        coast_remap[shade] = TerrainCoastPalette[0x1d - shade];
                     }
-                    for (shade = 0; shade < 4; ++shade) {
-                        coast_remap[0x1a + shade] = TerrainCoastPalette[7 - shade];
+                    for (shade = 0x1a; shade <= 0x1d; ++shade) {
+                        coast_remap[shade] = TerrainCoastPalette[0x21 - shade];
                     }
                 }
                 // The image copies the mid-UV run for this corner field by
@@ -4837,7 +4824,7 @@ LAB_00465605:;
             if (iVar5 == 4) {
                 g_TER1_LANDMARK_RESOURCE_SPRITES
                     [4 + (local_18 != 0)]
-                        .draw(buffer, sprite_transparent(g_TER1_LANDMARK_RESOURCE_SPRITES [4 + (local_18 != 0)]),
+                        .draw(buffer, g_TER1_LANDMARK_RESOURCE_SPRITES[4 + (local_18 != 0)].transparent_index(),
                               a9, a10);
             } else {
                 g_TER1_SEA_LAND_RESOURCE_SPRITES
@@ -4845,12 +4832,11 @@ LAB_00465605:;
                       ((uint32_t)(local_18 != 0) + iVar5 * 2) * 2)]
                         .draw_dest(
                             buffer,
-                            sprite_transparent(
-                                g_TER1_SEA_LAND_RESOURCE_SPRITES
-                                    [(((local_14 + a8 & 1U) - 4) +
-                                      ((uint32_t)(local_18 != 0) +
-                                       iVar5 * 2) *
-                                          2)]),
+                            g_TER1_SEA_LAND_RESOURCE_SPRITES
+                                [(((local_14 + a8 & 1U) - 4) +
+                                  ((uint32_t)(local_18 != 0) +
+                                   iVar5 * 2) *
+                                      2)].transparent_index(),
                             a9, a10, ShadowColorTable);
             }
         }
@@ -5105,14 +5091,14 @@ nexus_done:
         RECT text_rect;
         if ((a6 & 4) != 0) {
             StringTemp[0] = 0;
-            if ((tile->bit & 0x1000) == 0) {
-                uVar12 = (uint32_t)(tile->val2 >> 4);
+            if ((map_tiles()[MapLongitude * a8 + local_14].bit & 0x1000) != 0) {
+                uVar12 = 0;
+            } else {
+                uVar12 = (uint32_t)(map_tiles()[MapLongitude * a8 + local_14].val2 >> 4);
                 if (uVar12 == 0) {
                     uVar12 = (uint32_t)world_site(a7, a8, 0);
                     site_set(a7, a8, uVar12);
                 }
-            } else {
-                uVar12 = 0;
             }
             _itoa(uVar12, numbuf, 10);
             strcat(StringTemp, numbuf);
@@ -5121,7 +5107,7 @@ nexus_done:
             text_rect.bottom = a10 + local_78 * 2;
             text_rect.right = a9 + local_78 * 4;
             window->set_text_color(
-                ((0x5f < (tile->climate & 0xe0)) - 1 & 0xfffffffd) + 0xff,
+                is_ocean(a7, a8) ? 0xFC : 0xFF,
                 0, 1, 1);
             window->set_font(&window->font_b_, 0, 0, 0);
             if (uVar12 != 0 && local_18 == 0) {
@@ -5131,7 +5117,7 @@ nexus_done:
         if ((a6 & 0x4000) != 0) {
             StringTemp[0] = 0;
             // 0x466793 expands Path::get inline ((MapLongitudeBounds >> 1)
-            // row stride); here it is still the out-of-line path.cpp body.
+            // row stride).
             _itoa(Paths.get(a7, a8), numbuf, 10);
             strcat(StringTemp, numbuf);
             window->set_text_color(0xff, 0, 1, 1);
@@ -5144,27 +5130,27 @@ nexus_done:
         }
         // THE LOCK-FACTION READOUT, written out twice in the image (both
         // blocks identical, 0x466870 and 0x46699C - kept faithfully).
-        if ((a6 & 0x80000) != 0 && (tile->val3 & 0x38) != 0) {
+        if ((a6 & 0x80000) != 0 && (map_tiles()[MapLongitude * a8 + local_14].val3 & 0x38) != 0) {
             text_rect.left = a9;
             text_rect.top = a10;
             text_rect.right = a9 + local_78 * 4;
             text_rect.bottom = a10 + local_78 * 2;
-            window->set_text_color(InfoFactionTextColors[(tile->val3 >> 3) & 7], 0, 1, 1);
+            window->set_text_color(InfoFactionTextColors[(map_tiles()[MapLongitude * a8 + local_14].val3 >> 3) & 7], 0, 1, 1);
             window->set_font(&window->font_b_, 0, 0, 0);
             StringTemp[0] = 0;
-            _itoa((tile->val3 >> 3) & 7, numbuf, 10);
+            _itoa((map_tiles()[MapLongitude * a8 + local_14].val3 >> 3) & 7, numbuf, 10);
             strcat(StringTemp, numbuf);
             window->write_cent_l(StringTemp, &text_rect);
         }
-        if ((a6 & 0x80000) != 0 && (tile->val3 & 0x38) != 0) {
+        if ((a6 & 0x80000) != 0 && (map_tiles()[MapLongitude * a8 + local_14].val3 & 0x38) != 0) {
             text_rect.left = a9;
             text_rect.top = a10;
             text_rect.right = a9 + local_78 * 4;
             text_rect.bottom = a10 + local_78 * 2;
-            window->set_text_color(InfoFactionTextColors[(tile->val3 >> 3) & 7], 0, 1, 1);
+            window->set_text_color(InfoFactionTextColors[(map_tiles()[MapLongitude * a8 + local_14].val3 >> 3) & 7], 0, 1, 1);
             window->set_font(&window->font_b_, 0, 0, 0);
             StringTemp[0] = 0;
-            _itoa((tile->val3 >> 3) & 7, numbuf, 10);
+            _itoa((map_tiles()[MapLongitude * a8 + local_14].val3 >> 3) & 7, numbuf, 10);
             strcat(StringTemp, numbuf);
             window->write_cent_l(StringTemp, &text_rect);
         }
@@ -5185,15 +5171,14 @@ LAB_wireframe:
                     // test; the cache byte is signed (movsx).
                     const int corner_id = LandCornerId[step];
                     int delta;
-                    if (a8 < MapLatitudeBounds && a7 < MapLongitudeBounds) {
-                        window->get_alt(a7, a8, corner_id);
-                        const signed char alt = window->owned_ == 0
-                            ? 0
-                            : window->owned_[(MapLongitudeBounds >> 1) * a8 + local_14]
-                                  .altitude[corner_id];
-                        delta = alt;
-                    } else {
+                    if (a8 >= MapLatitudeBounds || a7 >= MapLongitudeBounds) {
                         delta = 0;
+                    } else {
+                        window->get_alt(a7, a8, corner_id);
+                        delta = (signed char)(window->owned_ == 0
+                            ? 0
+                            : (unsigned char)window->owned_[(MapLongitudeBounds >> 1) * a8 + local_14]
+                                  .altitude[corner_id]);
                     }
                     land_vertices[step].y -= delta;
                 }
@@ -5569,14 +5554,16 @@ void MapWin::draw_base_names() {
 // action. PullDown and MenuEntry own the modal menu and nested submenus.
 // ORIGINAL: 0x0046C0D0 ?right_menu@MapWin@@QAEXHHHH@Z 0x0046C0D0-0x0046D552;0x00655944-0x00655959 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0046c0d0.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
+// symbol    ?right_menu@MapWin@@QAEHHHHH@Z
 // TRIED: full transcription of both menu-build paths (quick 6-item and the full context menu) and the whole 3-level action dispatch (39 item ids across 4 jump-table ranges); MISMATCH #15 is in the SEH/PullDown-construction prologue, not the menu logic - coverage is close to 100% of the original's ~5270 bytes. A few multi-arg call orderings (e.g. lock_veh) were derived from push order rather than re-verified against a second source.
-void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
+int MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
     PullDown menu;
     client_to_screen(&screen_x, &screen_y);
     int base_id = base_at(tile_x, tile_y);
     int vehicle_id = veh_at(tile_x, tile_y);
     // Address-taken by lock_veh below, so every use reloads it from the frame.
     int selected_vehicle = ConsoleGlobal.selected_vehicle_;
+    int zoom;
     menu.init(0);
 
     if (map_view_index_ == 1) {
@@ -5589,16 +5576,16 @@ void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
         menu.add_item(0x321, label_get(0x910 / 4));
         menu.add_item(0x322, label_get(0x914 / 4));
         menu.show(screen_x, screen_y, pop_expire);
-        if ((GameDataStateStorage.fields_.game_state_ & 0x800U) != 0) return;
+        if ((GameDataStateStorage.fields_.game_state_ & 0x800U) != 0) return 0;
 
         // Both original paths apply only a signed upper bound to the slot;
         // the convenience get_selected_id() adds a non-original lower bound.
         const int selected_item = menu.get_selected();
         const int item_id = selected_item < 64 ? menu.item_id(selected_item) : -1;
         // 0x0046C2C4/2E3/2F8: three separate early returns.
-        if (base_id != base_at(tile_x, tile_y)) return;
-        if (vehicle_id != veh_at(tile_x, tile_y)) return;
-        if (selected_vehicle != ConsoleGlobal.selected_vehicle_) return;
+        if (base_id != base_at(tile_x, tile_y)) return 0;
+        if (vehicle_id != veh_at(tile_x, tile_y)) return 0;
+        if (selected_vehicle != ConsoleGlobal.selected_vehicle_) return 0;
         if (IsMultiplayerNet != 0) {
             base_at(tile_x, tile_y);
             veh_at(tile_x, tile_y);
@@ -5612,37 +5599,39 @@ void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
             WorldClimateWorldWin.set_center(tile_x, tile_y);
             WorldClimateWorldWin.set_world_map();
             MainInterfaceGlobal.button_group(1).set(0x3EE, 1);
-            return;
+            return 0;
         case 0x323:
             MapWinTable[0]->set_center(tile_x, tile_y, 1);
-            return;
+            return 0;
         case 0x324:
             set_center(tile_x, tile_y, 1);
-            return;
+            return 0;
         // 0x0046C406: the three zoom cases share one store + Win slot 62
         // (redraw, +0xF8) tail.
         case 0x325:
             if (zoom_offset_ < 0) {
-                zoom_offset_ += 2;
-                redraw();
+                zoom = zoom_offset_ + 2;
+                goto set_zoom;
             }
             break;
         case 0x321:
             if (zoom_offset_ > -0xE) {
-                zoom_offset_ -= 2;
-                redraw();
+                zoom = zoom_offset_ - 2;
+                goto set_zoom;
             }
             break;
         case 0x322:
-            if (zoom_offset_ != -8) {
-                zoom_offset_ = -8;
+            zoom = -8;
+            if (zoom_offset_ != zoom) {
+            set_zoom:
+                zoom_offset_ = zoom;
                 redraw();
             }
             break;
         default:
             break;
         }
-        return;
+        return 0;
     }
 
     // Eligibility uses the entry-selected unit, not the clicked tile's stack.
@@ -5684,44 +5673,46 @@ void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
             (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0) {
             // The original shares StringTemp and indents these entries with
             // BufferJoinSpace; production also includes the label before the name.
-            StringTemp[0] = '\0';
+            ::clear();
             strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, label_get(0x898 / 4));
             menu.add_item(0x33, StringTemp);
 
-            StringTemp[0] = '\0';
+            ::clear();
             strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, label_get(0x89C / 4));
             strcat(StringTemp, BufferJoinSpace);
             const int production = Bases[base_id].queue_production_id[0];
-            strcat(StringTemp, production < 0
-                ? StringTable.get(Facility[-production].name)
-                : VehPrototypes[production].veh_name);
+            if (production < 0) {
+                strcat(StringTemp, StringTable.get(Facility[-production].name));
+            } else {
+                strcat(StringTemp, VehPrototypes[production].veh_name);
+            }
             menu.add_item(0x34, StringTemp);
 
-            StringTemp[0] = '\0';
+            ::clear();
             strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, label_get(0x8A0 / 4));
             menu.add_item(0x35, StringTemp);
 
-            StringTemp[0] = '\0';
+            ::clear();
             strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, label_get(0x8A4 / 4));
             menu.add_item(0x36, StringTemp);
 
-            StringTemp[0] = '\0';
+            ::clear();
             strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, label_get(0x8A8 / 4));
             menu.add_item(0x37, StringTemp);
 
-            StringTemp[0] = '\0';
+            ::clear();
             strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, label_get(0x8AC / 4));
             menu.add_item(0x38, StringTemp);
 
             if ((GameDataStateStorage.fields_.game_more_preferences_ &
                  MPREF_ADV_DETAIL_RIGHT_CLICK_MENUS) != 0) {
-                StringTemp[0] = '\0';
+                ::clear();
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, label_get(0x8B0 / 4));
                 menu.add_item(0x39, StringTemp);
@@ -5808,13 +5799,13 @@ void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
     }
 
     menu.show(screen_x, screen_y, pop_expire);
-    if ((GameDataStateStorage.fields_.game_state_ & 0x800U) != 0) return;
+    if ((GameDataStateStorage.fields_.game_state_ & 0x800U) != 0) return 0;
     const int selected_item = menu.get_selected();
     const int item_id = selected_item < 64 ? menu.item_id(selected_item) : -1;
     if (base_id != base_at(tile_x, tile_y) ||
         vehicle_id != veh_at(tile_x, tile_y) ||
         selected_vehicle != ConsoleGlobal.selected_vehicle_) {
-        return;
+        return 0;
     }
     int net_blocked;  // edi
     int net_mask;     // esi
@@ -5989,6 +5980,7 @@ void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
     default:
         break;
     }
+    return 0;
 }
 
 // Original0x00469720 labels the eight neighboring tiles around the current

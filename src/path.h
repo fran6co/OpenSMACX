@@ -29,8 +29,8 @@ class Path {
   void init();
   void clear_destination() { x_dst_ = -1; y_dst_ = -1; }
   MEASURED void shutdown(); // 0059A2D0
-  int get(uint32_t x, uint32_t y);
-  void set(uint32_t x, uint32_t y, int val);
+  int get(int x, int y);
+  void set(int x, int y, int val);
   int zoc_path(int x, int y, int faction_id);
   int find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int faction_id, int unk1, 
            int unk2);

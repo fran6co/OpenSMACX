@@ -193,7 +193,7 @@ class MapWin : public virtual GraphicWin {
   // 0x0046D5D0, source-owned waypoint, editor and action dispatcher.
   void click(int a1, int a2, int a3);
   // 0x0046C0D0 builds and dispatches the typed map context menu.
-  void right_menu(int tile_x, int tile_y, int screen_x, int screen_y);
+  int right_menu(int tile_x, int tile_y, int screen_x, int screen_y);
 
  public:
   // Win slot13, through generated MapWin/PlanWin/Console vtordisp thunks.
