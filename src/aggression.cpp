@@ -358,668 +358,491 @@ int __cdecl steal_energy(int base_id) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:cc76bd4a7bb6ad460724dd032c15b58553d31c8f:src/unrecovered/0050c510.cpp: complete original identity, span and seed transcription", "src/base.h: canonical capture_base(base_id, faction_id, mode) caller contract", "Facility[70..133] owns project names; SecretProject/base_project owns the separate project base ids", "recovery/tasks/capture-base-owner-oct5.json", "recovery/tests/test_capture_base_source.py"], "reason": "Recover complete base capture through existing Base, PlayerData, Facility, SecretProject, Map, Vehicle, Console and network owners; preserve original callback ordering, arithmetic and error paths. Historical span and findings remain obligations, not a matching or runtime claim."}
 // TRIED: full struct-based transcription (Base@0x97D040, PlayerData@0x96C9E0, Player@0x946A50, Map@0x94A30C, Veh@0x952828, RulesFacility@0x9A4B68, all cross-checked against base.h/faction.h/map.h/veh.h offsets and static_asserts) diverges at instruction #3 (prologue reg-save/stack layout order) - not yet matched at the frame-shape level.
 void __cdecl capture_base(int base_id, int faction_id, int mode) {
-    unsigned char bVar11;
-    char cVar2, cVar4;
-    int iVar5, iVar8, iVar10, iVar15, iVar17;
-    unsigned int uVar13, uVar14;
-    int uVar7, uVar20, uVar21;
-    char *pcVar18;
-    char *pcVar19;
-    char *hqName;
-    char *hqDirectionName;
-    char local_174[256];
-    char local_74[32];
-    unsigned int local_5c;
-    int local_58;
-    int local_54;
-    int local_50;
-    unsigned int local_4c;
-    int local_48;
-    unsigned int local_44;
-    int local_40;
-    unsigned int local_3c;
-    int local_38;
-    int local_34;
-    int local_30;
-    unsigned int local_2c;
-    int local_28;
-    int local_1c;
-    unsigned int local_18;
-    int local_14;
-    unsigned int local_10;
-    unsigned int local_8;
-    int wipeOut;
-    int j, k, otherIdx, techIdx, fc, dirOff, i, f;
-    int found;
-    int idxTmp, maskTmp;
-    int cnt3, popFactor, techVal;
-    int doSkip;
-    unsigned int owner2;
-    int tileIdx, protoBase;
-    Map *tile;
-    int bestBase;
+    char label[256];
+    char base_name[32];
+    int best_base;
+    int best_score;
 
     log_say("Capture Base", Bases[base_id].name_string, base_id, faction_id, 0);
-    local_8 = (unsigned int)(unsigned char)Bases[base_id].faction_id_current;
-    local_1c = (int)Bases[base_id].y;
-    local_3c = (unsigned int)(Bases[base_id].faction_id_former == faction_id);
-    local_28 = (int)Bases[base_id].x;
-    local_44 = (unsigned int)MapTiles[(MapLongitude) * local_1c + (local_28 >> 1)].region;
-    local_4c = (unsigned int)faction_id * 2099u;
-    cVar4 = Bases[base_id].population_size;
-    local_48 = (int)((local_4c + local_8) * 4u);
-    PlayersData[faction_id].diplo_unk4[local_8] = PlayersData[faction_id].diplo_unk4[local_8] + cVar4 * 2;
-    PlayersData[faction_id].diplo_unk3[local_8] = PlayersData[faction_id].diplo_unk3[local_8] + cVar4 * 2;
-    strcpy(local_74, Bases[base_id].name_string);
-    treaty_off(faction_id, (int)local_8, 0x40);
-    bVar11 = (unsigned char)faction_id;
-    local_5c = 1u << (bVar11 & 0x1f);
-    if (((local_5c & GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff) != 0) ||
-        ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff & (1u << (local_8 & 0x1f))) != 0)) {
-        treaty_on(faction_id, (int)local_8, 0x2000);
+    int faction_id_def = Bases[base_id].faction_id_current;
+    BOOL liberated = Bases[base_id].faction_id_former == faction_id;
+    int base_y = Bases[base_id].y;
+    int base_x = Bases[base_id].x;
+    int region = region_at(base_x, base_y);
+    PlayersData[faction_id].diplo_unk4[faction_id_def] += Bases[base_id].population_size * 2;
+    PlayersData[faction_id].diplo_unk3[faction_id_def] += Bases[base_id].population_size * 2;
+    strcpy(base_name, Bases[base_id].name_string);
+    treaty_off(faction_id, faction_id_def, DTREATY_UNK_40);
+    if (is_human(faction_id) || is_human(faction_id_def)) {
+        treaty_on(faction_id, faction_id_def, DTREATY_WANT_TO_TALK);
     }
-
-    uVar14 = local_8;
-    for (uVar13 = 1; (int)uVar13 < 8; uVar13++) {
-        if (uVar13 != (unsigned int)faction_id && uVar13 != uVar14 &&
-            (PlayersData[uVar14].diplo_treaties[uVar13] & 1) != 0 &&
-            (PlayersData[uVar13].diplo_treaties[faction_id] & 0x10) == 0) {
-            treaty_on((int)uVar14, (int)uVar13, 0x2000);
-            uVar14 = local_8;
+    for (int player_id = 1; player_id < MaxPlayerNum; player_id++) {
+        if (player_id != faction_id && player_id != faction_id_def
+            && has_treaty(faction_id_def, player_id, DTREATY_PACT)
+            && !has_treaty(player_id, faction_id, DTREATY_VENDETTA)) {
+            treaty_on(faction_id_def, player_id, DTREATY_WANT_TO_TALK);
         }
     }
 
     if (faction_id == ConsoleGlobal.faction_id_) {
-        iVar5 = Bases[base_id].queue_production_id[0];
-        if (iVar5 < -0x45) {
-            if (iVar5 < 0) iVar5 = -iVar5;
-            if (base_project(iVar5 - FAC_HUMAN_GENOME_PROJ) == -1) {
-                found = 0;
-                if (GameDataStateStorage.fields_.base_current_count_ > 0) {
-                    for (otherIdx = 0; otherIdx < GameDataStateStorage.fields_.base_current_count_; otherIdx++) {
-                        if (otherIdx != base_id &&
-                            Bases[otherIdx].faction_id_current == uVar14 &&
-                            Bases[otherIdx].queue_production_id[0] == Bases[base_id].queue_production_id[0]) {
-                            local_18 = (unsigned int)Bases[otherIdx].queue_production_id[0];
-                            parse_says(0, Players[uVar14].adj_name_faction, -1, -1);
-                            parse_say(1, Facility[(int)local_18].name, -1, -1);
-                            popp(ScriptPopupFile, "SURVIVEPROJECT", 0, "secproj_sm.pcx", 0);
-                            uVar14 = local_8;
-                            found = 1;
-                            break;
-                        }
+        int item_id = Bases[base_id].queue_production_id[0];
+        if (item_id <= -FAC_HUMAN_GENOME_PROJ) {
+            if (item_id < 0) {
+                item_id = -item_id;
+            }
+            if (base_project(item_id - FAC_HUMAN_GENOME_PROJ) == -1) {
+                int survivor;
+                for (survivor = 0; survivor < GameDataStateStorage.fields_.base_current_count_; survivor++) {
+                    if (survivor != base_id
+                        && Bases[survivor].faction_id_current == faction_id_def
+                        && Bases[survivor].queue_production_id[0] == Bases[base_id].queue_production_id[0]) {
+                        int survivor_item = Bases[survivor].queue_production_id[0];
+                        parse_says(0, get_adjective(faction_id_def), -1, -1);
+                        parse_say(1, Facility[survivor_item].name, -1, -1);
+                        popp(ScriptPopupFile, "SURVIVEPROJECT", 0, "secproj_sm.pcx", 0);
+                        break;
                     }
                 }
-                if (!found) {
-                    PluralityDefault = 0;
-                    GenderDefault = Players[uVar14].is_leader_female;
-                    parse_says(0, Players[uVar14].title_leader, -1, -1);
-                    GenderDefault = Players[uVar14].is_leader_female;
-                    PluralityDefault = 0;
-                    parse_says(1, Players[uVar14].name_leader, -1, -1);
-                    GenderDefault = Players[uVar14].noun_gender;
-                    PluralityDefault = Players[uVar14].is_noun_plural;
-                    parse_says(2, Players[uVar14].noun_faction, -1, -1);
-                    iVar5 = Bases[base_id].queue_production_id[0];
-                    if (iVar5 < 0) iVar5 = -iVar5;
-                    parse_say(3, Facility[iVar5].name, -1, -1);
+                if (survivor >= GameDataStateStorage.fields_.base_current_count_) {
+                    parse_set(Players[faction_id_def].is_leader_female, FALSE);
+                    parse_says(0, Players[faction_id_def].title_leader, -1, -1);
+                    parse_set(Players[faction_id_def].is_leader_female, FALSE);
+                    parse_says(1, Players[faction_id_def].name_leader, -1, -1);
+                    parse_says(2, get_noun(faction_id_def), -1, -1);
+                    int halted_id = Bases[base_id].queue_production_id[0];
+                    if (halted_id < 0) {
+                        halted_id = -halted_id;
+                    }
+                    parse_say(3, Facility[halted_id].name, -1, -1);
                     popp(ScriptPopupFile, "HALTPROJECT", 0, "secproj_sm.pcx", 0);
-                    iVar5 = Bases[base_id].queue_production_id[0];
-                    if (iVar5 < 0) iVar5 = -iVar5;
-                    bitmask(iVar5 - 0x46, &local_54, &local_58);
-                    PlayersData[local_8].secret_project_intel[local_54] &= ~(unsigned int)local_58;
-                    uVar14 = local_8;
+                    halted_id = Bases[base_id].queue_production_id[0];
+                    if (halted_id < 0) {
+                        halted_id = -halted_id;
+                    }
+                    int intel_offset;
+                    int intel_mask;
+                    bitmask(halted_id - FAC_HUMAN_GENOME_PROJ, &intel_offset, &intel_mask);
+                    PlayersData[faction_id_def].secret_project_intel[intel_offset] &= ~intel_mask;
                 }
             }
         }
     }
 
-    if (faction_id == ConsoleGlobal.faction_id_ || uVar14 == (unsigned int)ConsoleGlobal.faction_id_) {
-        for (int project_record_id = 0; project_record_id < 64; ++project_record_id) {
-            if (base_project(project_record_id) == base_id) {
-                parse_say(0, Facility[70 + project_record_id].name, -1, -1);
+    if (faction_id == ConsoleGlobal.faction_id_ || faction_id_def == ConsoleGlobal.faction_id_) {
+        for (int project_id = 0; project_id < MaxSecretProjectNum; project_id++) {
+            if (base_project(project_id) == base_id) {
+                parse_say(0, Facility[FAC_HUMAN_GENOME_PROJ + project_id].name, -1, -1);
                 if (faction_id == ConsoleGlobal.faction_id_) {
-                    pcVar19 = "secproj_sm.pcx";
-                    pcVar18 = "SEIZEPROJECT";
+                    popp(ScriptPopupFile, "SEIZEPROJECT", 0, "secproj_sm.pcx", 0);
                 } else {
-                    pcVar19 = "secproj_sm.pcx";
-                    pcVar18 = "LOSEPROJECT";
-                }
-                popp(ScriptPopupFile, pcVar18, 0, pcVar19, 0);
-            }
-        }
-    }
-
-    if (PlayersData[local_8].energy_reserves < 1) {
-        local_40 = 0;
-    } else {
-        local_40 = (Bases[base_id].population_size * PlayersData[local_8].energy_reserves) /
-                   (PlayersData[local_8].pop_total + 1);
-    }
-
-    bitmask(1, &idxTmp, &maskTmp);
-    local_10 = (unsigned int)((Bases[base_id].facilities_built[idxTmp] & maskTmp) != 0);
-    if (local_10 != 0 && 999 < PlayersData[local_8].energy_reserves) {
-        local_34 = 9999;
-        local_38 = -1;
-        if (GameDataStateStorage.fields_.base_current_count_ > 0) {
-            for (local_14 = 0; local_14 < GameDataStateStorage.fields_.base_current_count_; local_14++) {
-                if (local_14 != base_id && Bases[local_14].faction_id_current == (unsigned char)local_8) {
-                    int aBase, bBase, hi, lo;
-                    local_30 = Bases[local_14].y;
-                    uVar14 = (unsigned int)(unsigned short)Bases[local_14].x;
-                    local_50 = 1;
-                    local_2c = (unsigned int)MapTiles[(MapLongitude) * local_30 + ((int)uVar14 >> 1)].region;
-                    local_10 = uVar14;
-                    if (GameDataStateStorage.fields_.base_current_count_ > 0) {
-                        for (j = 0; j < GameDataStateStorage.fields_.base_current_count_; j++) {
-                            if (j != local_14 && j != base_id &&
-                                Bases[j].faction_id_current == (unsigned char)local_8) {
-                                iVar15 = abs((int)uVar14 - (int)Bases[j].x);
-                                if ((MapIsFlat & 1) == 0 && MapLongitude < iVar15) {
-                                    iVar15 = MapLongitudeBounds - iVar15;
-                                }
-                                iVar8 = abs(local_30 - (int)Bases[j].y);
-                                aBase = abs(iVar15);
-                                bBase = abs(iVar8);
-                                hi = (aBase > bBase) ? aBase : bBase;
-                                lo = (aBase < bBase) ? aBase : bBase;
-                                iVar15 = hi - (((aBase + bBase >> 1) - lo) + 1 >> 1);
-                                tile = &MapTiles[(MapLongitude) * (int)Bases[j].y + ((int)Bases[j].x >> 1)];
-                                if ((unsigned int)tile->region != local_2c) {
-                                    iVar15 = iVar15 * 2;
-                                }
-                                local_50 = local_50 + iVar15;
-                                uVar14 = local_10;
-                            }
-                        }
-                    }
-                    iVar8 = (local_50 << 8) /
-                            (int)((unsigned int)PlayersData[local_8].region_total_bases[local_2c] +
-                                  (int)Bases[local_14].population_size * 2);
-                    if (iVar8 < local_34) {
-                        local_38 = local_14;
-                        local_34 = iVar8;
-                    }
-                }
-            }
-            if (0 < local_38) {
-                parse_says(0, local_74, -1, -1);
-                parse_says(1, Bases[local_38].name_string, -1, -1);
-                if (IsMultiplayerNet != 0 || local_8 != (unsigned int)ConsoleGlobal.faction_id_ ||
-                    X_pop("ESCAPE", 0) != 0) {
-                    uVar14 = local_8;
-                    PlayersData[local_8].energy_reserves -= 1000;
-                    set_fac(1, local_38, 1);
-                    set_fac(1, base_id, 0);
-                    if (uVar14 == (unsigned int)ConsoleGlobal.faction_id_) {
-                        if (IsMultiplayerNet != 0) {
-                            pcVar18 = "ESCAPED2";
-                            NetMsgPrimary.pop(pcVar18, 5000, 0, 0);
-                        }
-                    } else {
-                        GenderDefault = Players[uVar14].noun_gender;
-                        PluralityDefault = Players[uVar14].is_noun_plural;
-                        parse_says(2, Players[uVar14].noun_faction, -1, -1);
-                        pcVar18 = "ESCAPED";
-                        NetMsgPrimary.pop(pcVar18, 5000, 0, 0);
-                    }
-                    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << (uVar14 & 0x1f))) == 0) {
-                        base_reset(local_38, 0);
-                    }
+                    popp(ScriptPopupFile, "LOSEPROJECT", 0, "secproj_sm.pcx", 0);
                 }
             }
         }
     }
 
-    bitmask(1, &idxTmp, &maskTmp);
-    uVar14 = local_8;
-    local_10 = (unsigned int)((Bases[base_id].facilities_built[idxTmp] & maskTmp) != 0);
-    if (local_10 != 0 && GameDataStateStorage.fields_.turn_current_num_ < PlayersData[local_8].corner_market_turn &&
-        0 < PlayersData[local_8].corner_market_active) {
-        PlayersData[local_8].energy_reserves += PlayersData[local_8].corner_market_active;
-        uVar13 = (unsigned int)ConsoleGlobal.faction_id_;
-        local_40 = local_40 + PlayersData[local_8].corner_market_active / 2;
-        PlayersData[local_8].corner_market_active = 0;
-        PlayersData[local_8].corner_market_turn = 0;
-        if (local_8 == uVar13) {
+    int energy_stolen = steal_energy(base_id);
+
+    if (has_fac(FAC_HEADQUARTERS, base_id, 0)
+        && PlayersData[faction_id_def].energy_reserves >= 1000) {
+        best_score = 9999;
+        best_base = -1;
+        for (int candidate = 0; candidate < GameDataStateStorage.fields_.base_current_count_; candidate++) {
+            if (candidate != base_id && Bases[candidate].faction_id_current == faction_id_def) {
+                int other_y = Bases[candidate].y;
+                int other_x = Bases[candidate].x;
+                int dist_sum = 1;
+                int other_region = region_at(other_x, other_y);
+                for (int neighbor = 0; neighbor < GameDataStateStorage.fields_.base_current_count_; neighbor++) {
+                    if (neighbor != candidate && neighbor != base_id
+                        && Bases[neighbor].faction_id_current == faction_id_def) {
+                        int dist = vector_dist(other_x, other_y, Bases[neighbor].x, Bases[neighbor].y);
+                        if (region_at(Bases[neighbor].x, Bases[neighbor].y) != other_region) {
+                            dist *= 2;
+                        }
+                        dist_sum += dist;
+                    }
+                }
+                int score = (dist_sum << 8)
+                    / (PlayersData[faction_id_def].region_total_bases[other_region]
+                       + Bases[candidate].population_size * 2);
+                if (score < best_score) {
+                    best_score = score;
+                    best_base = candidate;
+                }
+            }
+        }
+        if (best_base > 0) {  // base 0 is never chosen (0x0050CB95)
+            parse_says(0, base_name, -1, -1);
+            parse_says(1, Bases[best_base].name_string, -1, -1);
+            if (IsMultiplayerNet || faction_id_def != ConsoleGlobal.faction_id_
+                || X_pop("ESCAPE", 0)) {
+                PlayersData[faction_id_def].energy_reserves -= 1000;
+                set_fac(FAC_HEADQUARTERS, best_base, 1);
+                set_fac(FAC_HEADQUARTERS, base_id, 0);
+                if (faction_id_def != ConsoleGlobal.faction_id_) {
+                    parse_says(2, get_noun(faction_id_def), -1, -1);
+                    NetMsgPrimary.pop("ESCAPED", 5000, 0, 0);
+                } else if (IsMultiplayerNet) {
+                    NetMsgPrimary.pop("ESCAPED2", 5000, 0, 0);
+                }
+                if (!is_human(faction_id_def)) {
+                    base_reset(best_base, 0);
+                }
+            }
+        }
+    }
+
+    if (has_fac(FAC_HEADQUARTERS, base_id, 0)
+        && PlayersData[faction_id_def].corner_market_turn > GameDataStateStorage.fields_.turn_current_num_
+        && PlayersData[faction_id_def].corner_market_active > 0) {
+        PlayersData[faction_id_def].energy_reserves += PlayersData[faction_id_def].corner_market_active;
+        energy_stolen += PlayersData[faction_id_def].corner_market_active / 2;
+        PlayersData[faction_id_def].corner_market_active = 0;
+        PlayersData[faction_id_def].corner_market_turn = 0;
+        if (faction_id_def == ConsoleGlobal.faction_id_) {
             popp(ScriptPopupFile, "CORNERFOILED", 0, "econwin_sm.pcx", 0);
         } else {
-            parse_says(0, Players[local_8].adj_name_faction, -1, -1);
+            parse_says(0, get_adjective(faction_id_def), -1, -1);
             popp(ScriptPopupFile, "CORNERTHEMFOILED", 0, "econwin_sm.pcx", 0);
         }
     }
 
-    PlayersData[faction_id].energy_reserves += local_40;
-    {
-        int newVal = PlayersData[uVar14].energy_reserves - local_40;
-        if (newVal < 0) newVal = 0;
-        else if (9999999 < newVal) newVal = 9999999;
-        PlayersData[uVar14].energy_reserves = newVal;
+    PlayersData[faction_id].energy_reserves += energy_stolen;
+    PlayersData[faction_id_def].energy_reserves =
+        range(PlayersData[faction_id_def].energy_reserves - energy_stolen, 0, 9999999);
+
+    if (!mode && !liberated
+        && !(Bases[base_id].state & BSTATE_ASSISTANT_KILLER_HOME)
+        && !is_objective(base_id)
+        && (Bases[base_id].population_size > 1
+            || (Bases[base_id].visibility & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)
+            || IsMultiplayerNet)) {
+        if (!--Bases[base_id].population_size) {
+            base_kill(base_id);
+            draw_map(1);
+            base_id = -1;
+        }
     }
 
-    wipeOut = 0;
-    if (mode == 0 && local_3c == 0 &&
-        (Bases[base_id].state & 0x40000) == 0 &&
-        is_objective(base_id) == 0 &&
-        (Bases[base_id].population_size > 1 ||
-         (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & Bases[base_id].visibility) != 0 ||
-         IsMultiplayerNet != 0)) {
-        cVar4 = Bases[base_id].population_size - 1;
-        Bases[base_id].population_size = cVar4;
-        wipeOut = (cVar4 == 0);
-    }
-
-    if (wipeOut) {
-        base_kill(base_id);
-        draw_map(1);
-        base_id = -1;
-    } else if (base_id >= 0) {
-        Bases[base_id].faction_id_current = bVar11;
-        for (f = 1; f < 8; f++) {
-            if (PlayersData[f].base_id_atk_target == base_id) PlayersData[f].base_id_atk_target = -1;
+    if (base_id >= 0) {
+        Bases[base_id].faction_id_current = faction_id;
+        for (int planner = 1; planner < MaxPlayerNum; planner++) {
+            if (PlayersData[planner].base_id_atk_target == base_id) {
+                PlayersData[planner].base_id_atk_target = -1;
+            }
         }
         Bases[base_id].nerve_staple_turns_left = 0;
-        if (Bases[base_id].faction_id_former == faction_id) {
-            Bases[base_id].assimilation_turns_left = 0;
+        if (Bases[base_id].faction_id_former != faction_id) {
+            Bases[base_id].faction_id_former = faction_id_def;
+            Bases[base_id].assimilation_turns_left = 50;
         } else {
-            Bases[base_id].faction_id_former = (unsigned char)uVar14;
-            Bases[base_id].assimilation_turns_left = 0x32;
+            Bases[base_id].assimilation_turns_left = 0;
         }
         PlayersData[faction_id].last_turn_new_base = GameDataStateStorage.fields_.turn_current_num_;
-        PlayersData[uVar14].current_num_bases -= 1;
-        PlayersData[faction_id].current_num_bases += 1;
-        replay_base(1, local_28, local_1c, faction_id);
+        PlayersData[faction_id_def].current_num_bases--;
+        PlayersData[faction_id].current_num_bases++;
+        replay_base(1, base_x, base_y, faction_id);
         Bases[base_id].minerals_accumulated = 0;
-        Bases[base_id].unk_6 = 0;
-        if ((int)Bases[base_id].queue_size >= 0) {
-            int *item = &Bases[base_id].queue_production_id[0];
-            int cnt = (int)Bases[base_id].queue_size + 1;
-            do {
-                if (*item >= 0) {
-                    PlayersData[uVar14].proto_id_queue[*item] -= 1;
-                }
-                item++;
-                cnt--;
-            } while (cnt != 0);
+        Bases[base_id].minerals_accumulated_2 = 0;
+        for (int queue_index = 0; queue_index <= Bases[base_id].queue_size; queue_index++) {
+            int queue_item = Bases[base_id].queue_production_id[queue_index];
+            if (queue_item >= 0) {
+                PlayersData[faction_id_def].proto_id_queue[queue_item]--;
+            }
         }
         Bases[base_id].queue_size = 0;
-        Bases[base_id].production_id_last = -69;
-        Bases[base_id].queue_production_id[0] = -69;
+        Bases[base_id].production_id_last = -FAC_STOCKPILE_ENERGY;
+        Bases[base_id].queue_production_id[0] = -FAC_STOCKPILE_ENERGY;
 
-        local_34 = 0;
-        local_38 = -1;
-        if (GameDataStateStorage.fields_.base_current_count_ > 0) {
-            for (j = 0; j < GameDataStateStorage.fields_.base_current_count_; j++) {
-                if (j != base_id && Bases[j].faction_id_current == (unsigned char)faction_id) {
-                    int val = (int)Bases[j].population_size;
-                    bitmask(1, &idxTmp, &maskTmp);
-                    if ((Bases[j].facilities_built[idxTmp] & maskTmp) != 0) val = val * 2;
-                    if (local_34 < val) { local_38 = j; local_34 = val; }
+        best_score = 0;
+        best_base = -1;
+        for (int donor = 0; donor < GameDataStateStorage.fields_.base_current_count_; donor++) {
+            if (donor != base_id && Bases[donor].faction_id_current == faction_id) {
+                int donor_score = Bases[donor].population_size;
+                if (has_fac(FAC_HEADQUARTERS, donor, 0)) {
+                    donor_score *= 2;
                 }
-            }
-            if (local_38 >= 0) {
-                Bases[base_id].governor = Bases[local_38].governor;
-            }
-        }
-
-        Bases[base_id].state &= 0xffdef7b1u;
-
-        if (mode == 0 && local_3c == 0) {
-            for (k = 1; k < 0x46; k++) {
-                if (k != 0x1a && (rand() % 3) == 0) {
-                    set_fac(k, base_id, 0);
+                if (donor_score > best_score) {
+                    best_score = donor_score;
+                    best_base = donor;
                 }
             }
         }
-        set_fac(1, base_id, 0);
-        if (local_3c == 0) {
-            set_fac(6, base_id, 0);
-            set_fac(3, base_id, 0);
+        if (best_base >= 0) {
+            Bases[base_id].governor = Bases[best_base].governor;
         }
 
-        {
-            int mapW = MapLongitudeBounds;
-            for (dirOff = 0; dirOff < 0x54; dirOff += 4) {
-                int dx = RadiusOffsetX[dirOff / 4];
-                int tx = dx + local_28;
-                int dy, ty;
-                if ((MapIsFlat & 1) == 0) {
-                    if (tx < 0) tx += mapW;
-                    else if (mapW <= tx) tx -= mapW;
+        Bases[base_id].state &= 0xFFDEF7B1;
+        if (!mode && !liberated) {
+            for (int facility_id = FAC_HEADQUARTERS; facility_id < FAC_HUMAN_GENOME_PROJ; facility_id++) {
+                if (facility_id != FAC_PRESSURE_DOME && !(rand() % 3)) {
+                    set_fac(facility_id, base_id, 0);
                 }
-                dy = RadiusOffsetY[dirOff / 4];
-                ty = dy + local_1c;
-                if (ty >= 0 && ty < MapLatitudeBounds && tx >= 0 && tx < mapW) {
-                    using_set(tx, ty, faction_id);
-                    tile = &MapTiles[(MapLongitude) * ty + (tx >> 1)];
-                    tile->visibility = (unsigned char)(tile->visibility | (1u << (bVar11 & 0x1f)));
-                    synch_bit(tx, ty, faction_id);
-                    iVar5 = veh_at(tx, ty);
-                    mapW = MapLongitudeBounds;
-                    if (iVar5 >= 0 && Vehs[iVar5].faction_id == (unsigned char)faction_id) {
-                        while (iVar5 >= 0) {
-                            Vehs[iVar5].state &= 0xfffbffffu;
-                            iVar5 = Vehs[iVar5].next_veh_id_stack;
-                            mapW = MapLongitudeBounds;
-                        }
-                    }
+            }
+        }
+        set_fac(FAC_HEADQUARTERS, base_id, 0);
+        if (!liberated) {
+            set_fac(FAC_RECREATION_COMMONS, base_id, 0);
+            set_fac(FAC_RECYCLING_TANKS, base_id, 0);
+        }
+
+        for (int radius_index = 0; radius_index < 21; radius_index++) {
+            int tile_x = wrap_map_x(base_x + RadiusOffsetX[radius_index]);
+            int tile_y = base_y + RadiusOffsetY[radius_index];
+            if (on_map(tile_x, tile_y)) {
+                using_set(tile_x, tile_y, faction_id);
+                map_loc(tile_x, tile_y)->visibility |= 1 << faction_id;
+                synch_bit(tile_x, tile_y, faction_id);
+                int veh_id = veh_at(tile_x, tile_y);
+                if (veh_id >= 0 && Vehs[veh_id].faction_id == faction_id) {
+                    do {
+                        Vehs[veh_id].state &= ~0x40000;
+                        veh_id = Vehs[veh_id].next_veh_id_stack;
+                    } while (veh_id >= 0);
                 }
             }
         }
 
-        spot_base(base_id, (int)local_8);
+        spot_base(base_id, faction_id_def);
         reset_territory();
-        for (i = GameDataStateStorage.fields_.vehicle_current_count_ - 1; i >= 0; i--) {
-            if (i < GameDataStateStorage.fields_.vehicle_current_count_ && Vehs[i].faction_id == (unsigned char)local_8 &&
-                Vehs[i].home_base_id == base_id) {
-                int vy, dx8, dy8, killIt;
-                Bases[base_id].faction_id_current = 0xff;
-                iVar5 = base_find(local_28, local_1c, (int)local_8);
-                Bases[base_id].faction_id_current = bVar11;
-                killIt = 1;
-                if (iVar5 >= 0) {
-                    vy = Vehs[i].y;
-                    dx8 = abs(local_28 - Vehs[i].x);
-                    if ((MapIsFlat & 1) == 0 && MapLongitude < dx8) {
-                        dx8 = MapLongitudeBounds - dx8;
-                    }
-                    dy8 = abs(local_1c - vy);
-                    if (((dx8 + dy8) & 0xfffffffe) != 0) {
-                        Vehs[i].home_base_id = (short)iVar5;
-                        killIt = 0;
-                    }
-                }
-                if (killIt) {
-                    kill(i);
+        for (int veh_index = GameDataStateStorage.fields_.vehicle_current_count_ - 1; veh_index >= 0; veh_index--) {
+            if (veh_index < GameDataStateStorage.fields_.vehicle_current_count_
+                && Vehs[veh_index].faction_id == faction_id_def
+                && Vehs[veh_index].home_base_id == base_id) {
+                Bases[base_id].faction_id_current = 0xFF;
+                int home_id = base_find(base_x, base_y, faction_id_def);
+                Bases[base_id].faction_id_current = faction_id;
+                if (home_id >= 0
+                    && territory_dist(base_x, base_y, Vehs[veh_index].x, Vehs[veh_index].y)) {
+                    Vehs[veh_index].home_base_id = home_id;
+                } else {
+                    kill(veh_index);
                 }
             }
         }
 
-        for (fc = 0; fc < 2; fc++) {
-            int fid = (fc == 0) ? faction_id : (int)local_8;
-            int cnt2 = Players[fid].faction_bonus_count;
-            for (k = 0; k < cnt2; k++) {
-                if (Players[fid].faction_bonus_id[k] == 2 ||
-                    (Players[fid].faction_bonus_id[k] == 0xc &&
-                     has_tech(Facility[Players[fid].faction_bonus_val1[k]].preq_tech, faction_id) != 0)) {
-                    int fv = Players[fid].faction_bonus_val1[k];
-                    if (fv < 1) fv = 1;
-                    else if (fv > 0x45) fv = 0x45;
-                    set_fac(fv, BaseIDCurrentSelected, 1);
-                }
+        for (int bonus_new = 0; bonus_new < Players[faction_id].faction_bonus_count; bonus_new++) {
+            if (Players[faction_id].faction_bonus_id[bonus_new] == RULE_FACILITY
+                || (Players[faction_id].faction_bonus_id[bonus_new] == RULE_FREEFAC
+                    && has_tech(Facility[Players[faction_id].faction_bonus_val1[bonus_new]].preq_tech, faction_id))) {
+                set_fac(range(Players[faction_id].faction_bonus_val1[bonus_new],
+                              FAC_HEADQUARTERS, FAC_STOCKPILE_ENERGY),
+                        BaseIDCurrentSelected, 1);
+            }
+        }
+        for (int bonus_old = 0; bonus_old < Players[faction_id_def].faction_bonus_count; bonus_old++) {
+            if (Players[faction_id_def].faction_bonus_id[bonus_old] == RULE_FACILITY
+                || (Players[faction_id_def].faction_bonus_id[bonus_old] == RULE_FREEFAC
+                    && has_tech(Facility[Players[faction_id_def].faction_bonus_val1[bonus_old]].preq_tech, faction_id))) {
+                set_fac(range(Players[faction_id_def].faction_bonus_val1[bonus_old],
+                              FAC_HEADQUARTERS, FAC_STOCKPILE_ENERGY),
+                        BaseIDCurrentSelected, 1);
             }
         }
         base_first(base_id);
     }
 
-    iVar5 = local_1c;
-    iVar15 = local_28;
-    owner_set(local_28, local_1c, faction_id);
+    owner_set(base_x, base_y, faction_id);
     draw_map(1);
     WorldClimateWorldWin.field_239BC_ |= 2;
     WorldClimateWorldWin.redraw();
-
-    GenderDefault = Players[faction_id].noun_gender;
-    PluralityDefault = Players[faction_id].is_noun_plural;
-    parse_says(0, Players[faction_id].noun_faction, -1, -1);
-    parse_says(1, local_74, -1, -1);
-    GenderDefault = Players[local_8].noun_gender;
-    PluralityDefault = Players[local_8].is_noun_plural;
-    parse_says(2, Players[local_8].noun_faction, -1, -1);
-    parse_num(0, local_40);
-    local_174[0] = 0;
-    pcVar18 = "LIBERATE";
-    if (local_3c == 0) pcVar18 = "SEIZE";
-    strcat(local_174, pcVar18);
-    strcat(local_174, "BASE");
-
-    local_10 = 1u << (local_8 & 0x1f);
-    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff & local_10) != 0 &&
-        (local_5c & GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff) == 0 &&
-        base_id >= 0 &&
-        (Bases[base_id].state & 0x80) == 0 && local_3c == 0) {
-        Bases[base_id].state |= 0x10000;
+    parse_says(0, get_noun(faction_id), -1, -1);
+    parse_says(1, base_name, -1, -1);
+    parse_says(2, get_noun(faction_id_def), -1, -1);
+    parse_num(0, energy_stolen);
+    label[0] = '\0';
+    strcat(label, liberated ? "LIBERATE" : "SEIZE");
+    strcat(label, "BASE");
+    if (is_human(faction_id_def) && !is_human(faction_id) && base_id >= 0
+        && !(Bases[base_id].state & BSTATE_UNK_80) && !liberated) {
+        Bases[base_id].state |= BSTATE_UNK_10000;
     }
 
-    if (faction_id == ConsoleGlobal.faction_id_ || local_8 == (unsigned int)ConsoleGlobal.faction_id_) {
-        iVar10 = ConsoleGlobal.focus(iVar15, iVar5, ConsoleGlobal.faction_id_);
-        if (iVar10 == 0) {
-            draw_tile_fixup(iVar15, iVar5, 1, 2);
+    if (faction_id == ConsoleGlobal.faction_id_ || faction_id_def == ConsoleGlobal.faction_id_) {
+        if (!ConsoleGlobal.focus(base_x, base_y, ConsoleGlobal.faction_id_)) {
+            draw_tile_fixup(base_x, base_y, 1, 2);
         }
         ConsoleGlobal.update_data(0);
-        pcVar18 = "liberate_sm.pcx";
-        if (faction_id != ConsoleGlobal.faction_id_) pcVar18 = "seized_sm.pcx";
-        popp(ScriptPopupFile, local_174, 0, pcVar18, 0);
-        ambience(0xd5);
+        popp(ScriptPopupFile, label, 0,
+             faction_id == ConsoleGlobal.faction_id_ ? "liberate_sm.pcx" : "seized_sm.pcx", 0);
+        ambience(0xD5);
     } else {
-        draw_tile_fixup(iVar15, iVar5, 1, 2);
-        if ((PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction_id] & 1) == 0 &&
-            ((PlayersData[faction_id].diplo_treaties[ConsoleGlobal.faction_id_] & 0x80) == 0 ||
-             (PlayersData[faction_id].diplo_treaties[local_8] & 0x40) == 0)) {
-            if ((PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[local_8] & 1) == 0 &&
-                ((PlayersData[local_8].diplo_treaties[ConsoleGlobal.faction_id_] & 0x80) == 0 ||
-                 (PlayersData[local_8].diplo_treaties[faction_id] & 0x40) == 0)) {
-                int notSpying = 0;
-                iVar15 = spying(faction_id);
-                if (iVar15 == 0) {
-                    iVar15 = spying((int)local_8);
-                    if (iVar15 == 0) notSpying = 1;
-                }
-                if (!notSpying) {
-                    strcat(local_174, "4");
-                    pcVar18 = "seized_sm.pcx";
-                    popp(ScriptPopupFile, local_174, 0, pcVar18, 0);
-                }
-            } else {
-                strcat(local_174, "3");
-                pcVar18 = "seized_sm.pcx";
-                popp(ScriptPopupFile, local_174, 0, pcVar18, 0);
-            }
-        } else {
-            strcat(local_174, "2");
-            pcVar18 = "liberate_sm.pcx";
-            popp(ScriptPopupFile, local_174, 0, pcVar18, 0);
+        draw_tile_fixup(base_x, base_y, 1, 2);
+        if (has_treaty(ConsoleGlobal.faction_id_, faction_id, DTREATY_PACT)
+            || (has_treaty(faction_id, ConsoleGlobal.faction_id_, DTREATY_UNK_80)
+                && has_treaty(faction_id, faction_id_def, DTREATY_UNK_40))) {
+            strcat(label, "2");
+            popp(ScriptPopupFile, label, 0, "liberate_sm.pcx", 0);
+        } else if (has_treaty(ConsoleGlobal.faction_id_, faction_id_def, DTREATY_PACT)
+                   || (has_treaty(faction_id_def, ConsoleGlobal.faction_id_, DTREATY_UNK_80)
+                       && has_treaty(faction_id_def, faction_id, DTREATY_UNK_40))) {
+            strcat(label, "3");
+            popp(ScriptPopupFile, label, 0, "seized_sm.pcx", 0);
+        } else if (spying(faction_id) || spying(faction_id_def)) {
+            strcat(label, "4");
+            popp(ScriptPopupFile, label, 0, "seized_sm.pcx", 0);
         }
     }
 
-    if (((Players[local_8].rule_flags ^ Players[faction_id].rule_flags) & 0x80) != 0 && base_id >= 0 &&
-        Bases[base_id].population_size >= 2) {
-        PluralityDefault = Players[faction_id].is_noun_plural;
-        GenderDefault = Players[faction_id].noun_gender;
-        uVar14 = (unsigned int)(Bases[base_id].population_size / 2);
-        local_18 = uVar14;
-        parse_says(0, Players[faction_id].noun_faction, -1, -1);
-        parse_says(1, local_74, -1, -1);
-        parse_num(0, (int)uVar14);
+    if (((Players[faction_id].rule_flags ^ Players[faction_id_def].rule_flags) & RFLAG_ALIEN)
+        && base_id >= 0 && Bases[base_id].population_size > 1) {
+        int refugees = Bases[base_id].population_size / 2;
+        parse_says(0, get_noun(faction_id), -1, -1);
+        parse_says(1, base_name, -1, -1);
+        parse_num(0, refugees);
         Bases[base_id].population_size = 1;
-        draw_tile((int)Bases[base_id].x, (int)Bases[base_id].y, 2);
-
-        if ((Players[faction_id].rule_flags & 0x80) == 0) {
+        draw_tile(Bases[base_id].x, Bases[base_id].y, 2);
+        if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
             if (faction_id == ConsoleGlobal.faction_id_) {
-                if (uVar14 == 1) {
-                    pcVar19 = "alienref_sm.pcx"; pcVar18 = "HOMELESSONE";
-                    popp(ScriptPopupFile, pcVar18, 0, pcVar19, 0);
-                } else if (uVar14 != 0) {
-                    pcVar19 = "alienref_sm.pcx"; pcVar18 = "HOMELESS";
-                    popp(ScriptPopupFile, pcVar18, 0, pcVar19, 0);
-                }
-                interlude(0x19, Bases[base_id].name_string, 1, 0);
-            }
-            if (local_8 == (unsigned int)ConsoleGlobal.faction_id_) {
-                if (uVar14 == 1) {
-                    pcVar19 = "alienref_sm.pcx"; pcVar18 = "HOMELESSONE";
-                    popp(ScriptPopupFile, pcVar18, 0, pcVar19, 0);
-                } else if (uVar14 != 0) {
-                    pcVar19 = "alienref_sm.pcx"; pcVar18 = "HOMELESS";
-                    popp(ScriptPopupFile, pcVar18, 0, pcVar19, 0);
-                }
-            }
-            mode = 1;
-            iVar5 = MapLongitudeBounds;
-        } else {
-            if (faction_id == ConsoleGlobal.faction_id_) {
-                if (uVar14 == 1) {
-                    pcVar19 = "humanref_sm.pcx"; pcVar18 = "HOMELESSONE";
-                    popp(ScriptPopupFile, pcVar18, 0, pcVar19, 0);
-                } else if (uVar14 != 0) {
-                    pcVar19 = "humanref_sm.pcx"; pcVar18 = "HOMELESS";
-                    popp(ScriptPopupFile, pcVar18, 0, pcVar19, 0);
+                if (refugees == 1) {
+                    popp(ScriptPopupFile, "HOMELESSONE", 0, "humanref_sm.pcx", 0);
+                } else if (refugees) {
+                    popp(ScriptPopupFile, "HOMELESS", 0, "humanref_sm.pcx", 0);
                 }
                 interlude(0x25, Bases[base_id].name_string, 1, 0);
             }
-            if (local_8 == (unsigned int)ConsoleGlobal.faction_id_) {
-                if (uVar14 == 1) {
-                    pcVar19 = "humanref_sm.pcx"; pcVar18 = "HOMELESSONE";
-                    popp(ScriptPopupFile, pcVar18, 0, pcVar19, 0);
-                } else if (uVar14 != 0) {
-                    pcVar19 = "humanref_sm.pcx"; pcVar18 = "HOMELESS";
-                    popp(ScriptPopupFile, pcVar18, 0, pcVar19, 0);
+            if (faction_id_def == ConsoleGlobal.faction_id_) {
+                if (refugees == 1) {
+                    popp(ScriptPopupFile, "HOMELESSONE", 0, "humanref_sm.pcx", 0);
+                } else if (refugees) {
+                    popp(ScriptPopupFile, "HOMELESS", 0, "humanref_sm.pcx", 0);
                 }
                 interlude(0x18, Bases[base_id].name_string, 1, 0);
             }
-            mode = 1;
-            iVar5 = MapLongitudeBounds;
-        }
-
-        do {
-            iVar10 = mode;
-            if (mode < 9) {
-                uVar14 = (unsigned int)rand();
-                uVar14 = uVar14 & 0x80000007u;
-                if ((int)uVar14 < 0) {
-                    uVar14 = (uVar14 - 1) | 0xfffffff8u;
-                    uVar14 = uVar14 + 1;
+        } else {
+            if (faction_id == ConsoleGlobal.faction_id_) {
+                if (refugees == 1) {
+                    popp(ScriptPopupFile, "HOMELESSONE", 0, "alienref_sm.pcx", 0);
+                } else if (refugees) {
+                    popp(ScriptPopupFile, "HOMELESS", 0, "alienref_sm.pcx", 0);
                 }
-                iVar10 = (int)uVar14 + 1;
-                iVar5 = MapLongitudeBounds;
+                interlude(0x19, Bases[base_id].name_string, 1, 0);
             }
-            iVar15 = RadiusOffsetX[iVar10] + (int)Bases[base_id].x;
-            if ((MapIsFlat & 1) == 0) {
-                if (iVar15 < 0) iVar15 += iVar5;
-                else if (iVar5 <= iVar15) iVar15 -= iVar5;
+            if (faction_id_def == ConsoleGlobal.faction_id_) {
+                if (refugees == 1) {
+                    popp(ScriptPopupFile, "HOMELESSONE", 0, "alienref_sm.pcx", 0);
+                } else if (refugees) {
+                    popp(ScriptPopupFile, "HOMELESS", 0, "alienref_sm.pcx", 0);
+                }
             }
-            iVar10 = RadiusOffsetY[iVar10] + (int)Bases[base_id].y;
-            if (-1 < iVar10 && iVar10 < MapLatitudeBounds && -1 < iVar15 && iVar15 < iVar5) {
-                tileIdx = (MapLongitude) * iVar10 + (iVar15 >> 1);
-                tile = &MapTiles[tileIdx];
-                doSkip = 0;
-                if ((tile->bit & 3) != 0 && (unsigned int)(tile->val2 & 0xf) < 8) {
-                    if ((tile->bit & 3) == 0 || (owner2 = (unsigned int)(tile->val2 & 0xf), owner2 > 7)) {
-                        owner2 = 0xffffffff;
+        }
+        for (int spot = 1; spot < 21; spot++) {
+            int offset_index = spot < 9 ? rand() % 8 + 1 : spot;
+            int tile_x = wrap_map_x(Bases[base_id].x + RadiusOffsetX[offset_index]);
+            int tile_y = Bases[base_id].y + RadiusOffsetY[offset_index];
+            if (on_map(tile_x, tile_y)) {
+                if (anything_at(tile_x, tile_y) < 0 || anything_at(tile_x, tile_y) == faction_id_def) {
+                    if (is_ocean(tile_x, tile_y)) {
+                        veh_init(BSC_SEA_ESCAPE_POD, faction_id_def, tile_x, tile_y);
+                    } else {
+                        veh_init(BSC_COLONY_POD, faction_id_def, tile_x, tile_y);
                     }
-                    iVar5 = MapLongitudeBounds;
-                    if (owner2 != local_8) {
-                        doSkip = 1;
-                    }
-                }
-                if (!doSkip) {
-                    protoBase = ((tile->climate & 0xe0) < 0x60) ? 0x15 : 0;
-                    veh_init(protoBase, (int)local_8, iVar15, iVar10);
-                    draw_tile(iVar15, iVar10, 2);
-                    local_18 = local_18 - 1;
-                    iVar5 = MapLongitudeBounds;
-                    if (local_18 == 0) break;
-                }
-            }
-            mode = mode + 1;
-        } while (mode < 0x15);
-    }
-
-    uVar14 = local_8;
-    if ((GameDataStateStorage.fields_.game_rules_ & 0x4000) == 0 && (Players[faction_id].rule_flags & 0x10) == 0) {
-        cnt3 = 0;
-        for (techIdx = 0; techIdx < 0x59; techIdx++) {
-            if (has_tech(techIdx, (int)local_8) != 0 && has_tech(techIdx, faction_id) == 0) {
-                cnt3 = cnt3 + 1;
-            }
-        }
-        if (base_id < 0) popFactor = 1;
-        else popFactor = (int)Bases[base_id].population_size + 1;
-        techVal = (PlayersData[faction_id].tech_ranking + 3) * cnt3 * popFactor;
-        PlayersData[faction_id].tech_accumulated += (techVal + ((techVal >> 0x1f) & 7)) >> 3;
-    } else {
-        steal_tech(faction_id, (int)local_8, 1);
-        if (base_id >= 0 && GameDataStateStorage.fields_.secret_project_.universal_translator() == base_id) {
-            steal_tech(faction_id, (int)uVar14, 1);
-        }
-    }
-
-    if (((unsigned char)local_10 & (unsigned char)GameDataStateStorage.fields_.lock_masks_.enable_mask_) == 0) {
-        bases_reset((int)local_8, (int)local_44, 0);
-    }
-    mon_conquer_base(faction_id, local_74);
-
-    if (faction_id == ConsoleGlobal.faction_id_ && base_id >= 0 &&
-        (Bases[base_id].state & 0x40000) != 0 &&
-        (GameDataStateStorage.fields_.game_preferences_ & 0x40000) == 0 && IsMultiplayerNet == 0) {
-        parse_says(6, Players[ConsoleGlobal.faction_id_].assistant_city, -1, -1);
-        hqName = Bases[base_id].name_string;
-        parse_says(5, hqName, -1, -1);
-        parse_says(7, Players[local_8].adj_name_faction, -1, -1);
-        cVar4 = 0;
-        if (GameDataStateStorage.fields_.base_current_count_ > 0) {
-            bestBase = -1;
-            for (iVar15 = 0; iVar15 < GameDataStateStorage.fields_.base_current_count_; iVar15++) {
-                if (Bases[iVar15].faction_id_current == faction_id && iVar15 != base_id) {
-                    bitmask(1, &idxTmp, &maskTmp);
-                    if ((Bases[iVar15].facilities_built[idxTmp] & maskTmp) != 0) {
-                        parse_says(2, Bases[iVar15].name_string, -1, -1);
-                        bestBase = iVar15;
+                    draw_tile(tile_x, tile_y, 2);
+                    if (!--refugees) {
                         break;
                     }
-                    cVar2 = Bases[iVar15].population_size;
-                    if (cVar4 < cVar2) {
-                        parse_says(2, Bases[iVar15].name_string, -1, -1);
-                        cVar4 = cVar2;
-                    }
                 }
             }
-            (void)bestBase;
         }
-        iVar15 = local_28;
-        iVar5 = base_find(local_28, local_1c, (int)local_8);
-        if (iVar5 < 0) {
-            hqDirectionName = label_get(403);
-        } else {
-            iVar10 = (int)Bases[iVar5].x;
-            iVar8 = iVar10 - iVar15;
-            if (iVar8 < 0) iVar8 = iVar15 - iVar10;
-            iVar17 = (int)Bases[iVar5].y;
-            iVar5 = iVar17 - local_1c;
-            if (iVar5 < 0) iVar5 = local_1c - iVar17;
-            if ((iVar8 * 3) / 2 < iVar5) {
-                if (iVar17 < local_1c) hqDirectionName = label_get(403);
-                else hqDirectionName = label_get(405);
-            } else {
-                iVar15 = iVar15 - iVar10;
-                if (MapLongitudeBounds / 2 < iVar15) iVar15 -= MapLongitudeBounds;
-                if (iVar15 < -(MapLongitudeBounds / 2)) iVar15 += MapLongitudeBounds;
-                if (iVar15 < 1) hqDirectionName = label_get(404);
-                else hqDirectionName = label_get(406);
+    }
+
+    if (!(GameDataStateStorage.fields_.game_rules_ & RULES_SPOILS_OF_WAR)
+        && !(Players[faction_id].rule_flags & RFLAG_TECHSTEAL)) {
+        int tech_count = 0;
+        for (int tech_id = 0; tech_id < MaxTechnologyNum; tech_id++) {
+            if (has_tech(tech_id, faction_id_def) && !has_tech(tech_id, faction_id)) {
+                tech_count++;
             }
         }
-        uVar21 = -1; uVar20 = -1;
-        parse_says(4, hqDirectionName, uVar20, uVar21);
-        strcpy(hqName, Players[ConsoleGlobal.faction_id_].assistant_city);
+        int multiplier = base_id >= 0 ? Bases[base_id].population_size + 1 : 1;
+        PlayersData[faction_id].tech_accumulated +=
+            (PlayersData[faction_id].tech_ranking + 3) * tech_count * multiplier / 8;
+    } else {
+        steal_tech(faction_id, faction_id_def, 1);
+        if (base_id >= 0
+            && GameDataStateStorage.fields_.secret_project_.universal_translator() == base_id) {
+            steal_tech(faction_id, faction_id_def, 1);
+        }
+    }
+
+    if (!is_human(faction_id_def)) {
+        bases_reset(faction_id_def, region, 0);
+    }
+    mon_conquer_base(faction_id, base_name);
+
+    if (faction_id == ConsoleGlobal.faction_id_ && base_id >= 0
+        && (Bases[base_id].state & BSTATE_ASSISTANT_KILLER_HOME)
+        && !(GameDataStateStorage.fields_.game_preferences_ & PREF_AV_INTERLUDES_DISABLED)
+        && !IsMultiplayerNet) {
+        parse_says(6, Players[ConsoleGlobal.faction_id_].assistant_city, -1, -1);
+        char *hq_name = Bases[base_id].name_string;
+        parse_says(5, hq_name, -1, -1);
+        parse_says(7, get_adjective(faction_id_def), -1, -1);
+        int best_pop = 0;
+        for (int hq_candidate = 0; hq_candidate < GameDataStateStorage.fields_.base_current_count_; hq_candidate++) {
+            if (Bases[hq_candidate].faction_id_current == faction_id && hq_candidate != base_id) {
+                if (has_fac(FAC_HEADQUARTERS, hq_candidate, 0)) {
+                    parse_says(2, Bases[hq_candidate].name_string, -1, -1);
+                    break;
+                }
+                int candidate_pop = Bases[hq_candidate].population_size;
+                if (candidate_pop > best_pop) {
+                    parse_says(2, Bases[hq_candidate].name_string, -1, -1);
+                    best_pop = candidate_pop;
+                }
+            }
+        }
+        int near_id = base_find(base_x, base_y, faction_id_def);
+        if (near_id >= 0) {
+            int near_x = Bases[near_id].x;
+            int dx = near_x - base_x;
+            if (dx < 0) {
+                dx = base_x - near_x;
+            }
+            int near_y = Bases[near_id].y;
+            int dy = near_y - base_y;
+            if (dy < 0) {
+                dy = base_y - near_y;
+            }
+            if (dx * 3 / 2 >= dy) {
+                int wrap_dx = base_x - near_x;
+                if (wrap_dx > MapLongitudeBounds / 2) {
+                    wrap_dx -= MapLongitudeBounds;
+                }
+                if (wrap_dx < -(MapLongitudeBounds / 2)) {
+                    wrap_dx += MapLongitudeBounds;
+                }
+                if (wrap_dx > 0) {
+                    parse_says(4, StringTable.get(Labels.strings_ptr[406]), -1, -1);
+                } else {
+                    parse_says(4, StringTable.get(Labels.strings_ptr[404]), -1, -1);
+                }
+            } else if (base_y > near_y) {
+                parse_says(4, StringTable.get(Labels.strings_ptr[403]), -1, -1);
+            } else {
+                parse_says(4, StringTable.get(Labels.strings_ptr[405]), -1, -1);
+            }
+        } else {
+            parse_says(4, StringTable.get(Labels.strings_ptr[403]), -1, -1);
+        }
+        strcpy(hq_name, Players[ConsoleGlobal.faction_id_].assistant_city);
         make_base_unique(base_id);
         interlude(7, 0, 1, 1);
         draw_map(1);
         text_close();
     }
 
-    eliminate_player((int)local_8, faction_id);
+    eliminate_player(faction_id_def, faction_id);
     if (base_id >= 0) {
         set_base(base_id);
         base_compute(1);
         if (faction_id == ConsoleGlobal.faction_id_) {
-            iVar15 = ConsoleGlobal.ready_search(-1);
-            if (iVar15 < 0) {
+            if (ConsoleGlobal.ready_search(-1) < 0) {
                 GameDataStateStorage.fields_.game_state_ |= 4;
                 return;
             }
             TutWinBaseWindow.zoom(base_id, 0);
         }
     }
-    return;
 }

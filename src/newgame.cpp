@@ -300,12 +300,12 @@ difficulty_menu:
                 if (i == 0) {
                     strcat(StringTemp, BufferJoinSpace);
                     strcat(StringTemp, "(");
-                    strcat(StringTemp, label_get(113));
+                    strcat(StringTemp, StringTable.get(Labels.strings_ptr[113]));
                     strcat(StringTemp, ")");
                 } else if (i == 5) {
                     strcat(StringTemp, BufferJoinSpace);
                     strcat(StringTemp, "(");
-                    strcat(StringTemp, label_get(114));
+                    strcat(StringTemp, StringTable.get(Labels.strings_ptr[114]));
                     strcat(StringTemp, ")");
                 }
                 popup.item(StringTemp, i);

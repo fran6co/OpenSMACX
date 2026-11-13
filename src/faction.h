@@ -405,7 +405,7 @@ struct PlayerData {
     SocialEffect soc_effect_temp; // maybe previous turn?
     SocialEffect soc_effect_base; // from faction files?
     int unk_13;
-    uint32_t maint_cost_total; // Total maintenance costs for all bases (current turn)
+    int maint_cost_total; // Total maintenance costs for all bases (current turn); wants_prop compares it signed (jle)
     int tech_commerce_bonus; // Increases commerce income
     int turn_commerce_income;
     int unk_17;

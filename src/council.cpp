@@ -583,10 +583,8 @@ int __cdecl wants_prop(int faction, int proposal, int option) {
                 } else {
                     relative--;
                 }
-                // WORKAROUND(type): the image compares with jle (signed);
-                // PlayerData::maint_cost_total is declared uint32_t.
-                if (PlayersData[other].unk_13 - static_cast<int>(PlayersData[other].maint_cost_total)
-                    > PlayersData[faction].unk_13 - static_cast<int>(PlayersData[faction].maint_cost_total)) {
+                if (PlayersData[other].unk_13 - PlayersData[other].maint_cost_total
+                    > PlayersData[faction].unk_13 - PlayersData[faction].maint_cost_total) {
                     relative++;
                 } else {
                     relative--;

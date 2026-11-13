@@ -197,7 +197,7 @@ check_selection:
     if (IsMultiplayerNet) {
         field_A40_ = 0;
         if (!council_humans_present(field_A44_)) {
-            NetMsgPrimary.pop("COUNCILVOTEGOV", 0x1388, 1, nullptr);
+            NetMsgPrimary.pop("VOTING", 0x1388, 1, nullptr);
             field_A40_ = 1;
             goto draw;
         }

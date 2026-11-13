@@ -57,9 +57,11 @@ void DiploPop::start(int faction_id) {
     if (counterpart_faction_ != faction_id) {
         counterpart_faction_ = faction_id;
         frame_sprite_ = MainInterfaceGlobal.diplomacy_frame_sprite();
-        landscape_sprite_ = &FactionsArt[faction_id].diplomacy_landscape;
-        portrait_sprite_ = &FactionsArt[faction_id].diplomacy;
-        hq_sprite_ = &FactionsArt[faction_id].diplomacy_logo;
+        // 0x0043F32C..50: +0x20B4 takes the datalink sprite, +0x20BC the
+        // logo and +0x20C0 the landscape (the member names predate this).
+        landscape_sprite_ = &FactionsArt[faction_id].datalink;
+        portrait_sprite_ = &FactionsArt[faction_id].diplomacy_logo;
+        hq_sprite_ = &FactionsArt[faction_id].diplomacy_landscape;
         set_iface_mode();
 
         StringTemp[0] = '\0';
@@ -944,7 +946,7 @@ void DiploPop::draw_info() {
         MainInterfaceGlobal.set_text_color(ChatItemIdTable[faction], -1, 1, 1);
         MainInterfaceGlobal.set_font(&font3_, nullptr, nullptr, nullptr);
         StringTemp[0] = '\0';
-        strcat(StringTemp, Players[faction].name_leader);
+        strcat(StringTemp, Players[faction].formal_name_faction);
         CharUpperA(StringTemp);
 
         RECT name_area = r;
