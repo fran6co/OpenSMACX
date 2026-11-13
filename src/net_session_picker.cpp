@@ -506,6 +506,13 @@ int NetSessionPickerWin::initialize(Net *network, char *caption,
   return 0;
 }
 
+// The image pushes one "jackal"/"NETCONNECT_CREATE" pair (0x698BC8/0x698BB4)
+// at both of connect_session's create prompts while every other literal in
+// the unit is a separate object: both prompts expand this one inline body.
+static inline int ask_create_session() {
+  return pop_caption_value_title("jackal", "NETCONNECT_CREATE", 0x3c, 0x44, 0);
+}
+
 // ORIGINAL: 0x0063C510 sub_63c510 0x0063C510-0x0063C6CA FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor/destructor calls and direct accesses establish the GraphicWin base, ordered Time/Heap/ListBox/PushButton/list members, and observed tail through +0x37A4. The descriptive owner name and complete original allocation remain unproved.", "The integer timer adapter checks nonzero context; the distinct nullary focus member does not. Pinned table 0x670DDC establishes slot 12 at 0x670E0C -> 0x63C9D0 and slot 44 at 0x670E8C -> 0x63C3A0. Automatic owner destruction replaces manual table staging and executable-address forwarding.", "The Net caller retains one automatic picker, original unchecked copies and invalid-node error paths, and password-pointer reloads after modal execution. Indirect event linkage, precise unwind correspondence, historical matching and full linked/runtime fidelity remain obligations."], "reason": "Typed session-picker ownership and its Net receiver-backed caller, preserving the original entries and compiler-generated lifetime identities."}
 // symbol    ?connect_session@NetSessionPickerWin@@QAEHXZ
@@ -515,8 +522,7 @@ int NetSessionPickerWin::connect_session() {
   parse_says(1, "My Name", -1, -1);
   parse_says(2, &SessionPickerPasswordPrompt, -1, -1);
 
-  int status = pop_caption_value_title("jackal", "NETCONNECT_CREATE",
-                                       0x3c, 0x44, 0);
+  int status = ask_create_session();
   for (;;) {
     if (status == -1) return 1;
     if (ParseStrBuffer[0].str[0] == 0) {
@@ -555,8 +561,7 @@ int NetSessionPickerWin::connect_session() {
         return net_->join_session(session, ParseStrBuffer[1].str, 0) == 0;
       }
     }
-    status = pop_caption_value_title("jackal", "NETCONNECT_CREATE",
-                                     0x3c, 0x44, 0);
+    status = ask_create_session();
   }
 }
 

@@ -59,6 +59,10 @@
 #include "text.h"
 
 extern char *DatalinkHelpFile;
+// The image pushes these shared separators (0x00682820 " ", 0x00682E90 ", ")
+// in the security, intel and score reports instead of unit literals.
+extern const char BufferJoinSpace[];
+extern char SocialWinCommaSpaceText[];
 // The observed report scratch inputs are six immediate char-addresses, not
 // pointer cells. Their original extent/owner is unknown; represent only the
 // observed empty NUL-terminated contents, without asserting a larger bound.
@@ -4324,7 +4328,7 @@ void ReportWin::draw_security() {
     strcat(StringTemp, "[");
     strcat(StringTemp, Players[faction_id].adj_name_faction);
     CharUpperA(StringTemp);
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, label_get(0xAD8 / 4));
     strcat(StringTemp, "]");
     --title.top;
@@ -4423,18 +4427,18 @@ void ReportWin::draw_security() {
         strcat(StringTemp, "{");
         reportwin_append_number(StringTemp, PlayersData[faction_id].proto_id_active[id] > 250
             ? 0 : PlayersData[faction_id].proto_id_active[id]);
-        strcat(StringTemp, " ");
+        strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, label_get(0x614 / 4));
-        strcat(StringTemp, ", ");
+        strcat(StringTemp, SocialWinCommaSpaceText);
         strcat(StringTemp, "}");
         reportwin_append_number(StringTemp, PlayersData[faction_id].proto_id_queue[id] > 250
             ? 0 : PlayersData[faction_id].proto_id_queue[id]);
-        strcat(StringTemp, " ");
+        strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, label_get(0x618 / 4));
-        strcat(StringTemp, ", ");
+        strcat(StringTemp, SocialWinCommaSpaceText);
         strcat(StringTemp, "[");
         reportwin_append_number(StringTemp, PlayersData[faction_id].proto_id_lost[id]);
-        strcat(StringTemp, " ");
+        strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, label_get(0x61C / 4));
         strcat(StringTemp, "]");
         reportwin_write_right(this, StringTemp, rect1_.right - 2, text_y);
@@ -6027,9 +6031,9 @@ int ReportIf::on_iface_dialog_item_back_draw(::GraphicWin *, int, int, RECT *) {
 // The three log_say texts are this handler's own copies in the pinned image
 // (0x687280, 0x687298, 0x6872B8; on_left_click keeps a separate EDBC copy at
 // 0x686F04). The image's advanced-governor text ends in "set".
-// RECOVERY_LITERAL: v1 0x00687280 0x00687295 $SG63559 0x004A6330
-// RECOVERY_LITERAL: v1 0x00687298 0x006872B5 $SG63574 0x004A6330
-// RECOVERY_LITERAL: v1 0x006872B8 0x006872CC $SG63585 0x004A6330
+// RECOVERY_LITERAL: v1 0x00687280 0x00687295 $SG63554 0x004A6330
+// RECOVERY_LITERAL: v1 0x00687298 0x006872B5 $SG63569 0x004A6330
+// RECOVERY_LITERAL: v1 0x006872B8 0x006872CC $SG63580 0x004A6330
 // symbol    ?on_iface_button_clicked@ReportIf@@UAEXH@Z
 void ReportIf::on_iface_button_clicked(int button) {
     int row;
@@ -7650,13 +7654,13 @@ void ReportIf::draw_security() {
     MainInterfaceGlobal.Buffer::set_text_color(0xE1, -1, 1, 1);
     strcat(StringTemp, Players[report_faction_id_].adj_name_faction);
     CharUpperA(StringTemp);
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, label_get(0x2B6));
     if (field_1E230_) {
-        strcat(StringTemp, ", ");
-        strcat(StringTemp, " ");
+        strcat(StringTemp, SocialWinCommaSpaceText);
+        strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, label_get(0x2DA));
-        strcat(StringTemp, " ");
+        strcat(StringTemp, BufferJoinSpace);
         say_year(StringTemp);
     }
     MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 10, field_14_);
@@ -7700,9 +7704,8 @@ void ReportIf::close_security() {
 // ORIGINAL: 0x004ABE70 ?draw_score@ReportIf@@QAEXXZ 0x004ABE70-0x004AC127 BYTE_EXACT
 // The report renderer uses the ReportIf-owned panel rectangles and fonts,
 // MainInterfaceGlobal's Buffer base, and the source-owned faction/string
-// tables. The original's two static separators are represented by ordinary
-// literals; their bytes at 0x00682820 and 0x00682E90 are respectively " "
-// and ", ".
+// tables. Its two separators are the shared objects BufferJoinSpace
+// (0x00682820, " ") and SocialWinCommaSpaceText (0x00682E90, ", ").
 void ReportIf::draw_score() {
     MainInterfaceGlobal.Buffer::set_clip(&field_20_);
     field_C_ = field_20_.left + 6;
@@ -7727,14 +7730,14 @@ void ReportIf::draw_score() {
 
     strcat(StringTemp, Players[report_faction_id_].adj_name_faction);
     CharUpperA(StringTemp);
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, label_get(0x2B7));
 
     if (field_1E230_ != 0) {
-        strcat(StringTemp, ", ");
-        strcat(StringTemp, " ");
+        strcat(StringTemp, SocialWinCommaSpaceText);
+        strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, label_get(0x2DA));
-        strcat(StringTemp, " ");
+        strcat(StringTemp, BufferJoinSpace);
         say_year(StringTemp);
     }
 
@@ -7834,13 +7837,13 @@ void ReportIf::draw_intel() {
     MainInterfaceGlobal.Buffer::set_text_color(0xE1, -1, 1, 1);
     strcat(StringTemp, Players[report_faction_id_].adj_name_faction);
     CharUpperA(StringTemp);
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, label_get(0x2B8));
     if (field_1E230_) {
-        strcat(StringTemp, ", ");
-        strcat(StringTemp, " ");
+        strcat(StringTemp, SocialWinCommaSpaceText);
+        strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, label_get(0x2DA));
-        strcat(StringTemp, " ");
+        strcat(StringTemp, BufferJoinSpace);
         say_year(StringTemp);
     }
     MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 10, field_14_);
