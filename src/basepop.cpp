@@ -3251,7 +3251,13 @@ int BasePop::UNK2() {
 // behaviour: the walk now starts from the first entry, and the non-text
 // arms re-read the current entry's text as the image does). The list
 // edge is the windef max macro over the Dialog's drawn width, evaluated
-// twice. RESIDUAL: register colouring (zero/0x400 constants in ebp/edi,
+// twice. The caller sprite is read once into a local (the image holds it
+// in ebx across the scale stores), the start-up position goes through the
+// same-unit set_loc (both loads before either test, 0x00603AEF), and the
+// show bit uses Dialog::set_style_bits (0.917 -> 0.919). The image computes
+// the Dialog receiver once for the |= and the set_style_bit_1 call; ours
+// recomputes it, and a `Dialog &` local adds a null check.
+// RESIDUAL: register colouring (zero/0x400 constants in ebp/edi,
 // caller_sprite_ held in ebx, border_x spilled); an inline Dialog accessor
 // for the 5C/2C and 60/30 pairs (header proposal) moves it 0.917 -> 0.920.
 // TRIED: folding the anchor away, each store written
@@ -3656,10 +3662,11 @@ int BasePop::calculate_dimensions() {
         field_30EC_ = field_21BC_;
     }
 
-    field_30F0_ = field_21B0_;
-    field_30F4_ = field_21B4_;
     const int border_x = field_21B0_;
-    if (caller_sprite_ != 0) {
+    Sprite *const sprite = caller_sprite_;
+    field_30F0_ = border_x;
+    field_30F4_ = field_21B4_;
+    if (sprite != 0) {
         // The caller's picture scales the dialog: its width sets the left
         // edge, its height the top one, both through the shared pair at
         // 0x3104/0x3108, and the top one adds the inset when the list is
@@ -3670,9 +3677,9 @@ int BasePop::calculate_dimensions() {
         }
         const int scale = field_3104_;
         const int divide = field_3108_;
-        field_30D8_ = caller_sprite_->iWidth_ * scale / divide + field_30E0_ +
+        field_30D8_ = sprite->iWidth_ * scale / divide + field_30E0_ +
                       top_extra;
-        field_30DC_ = caller_sprite_->iHeight_ * scale / divide;
+        field_30DC_ = sprite->iHeight_ * scale / divide;
     } else {
         field_30D8_ = 0;
         field_30DC_ = 0;
@@ -3693,13 +3700,8 @@ int BasePop::calculate_dimensions() {
             height = (height * 3) / 2;
         }
         dialogs_.Dialog::field_30_ = height;
-        if (default_loc_a_ != 0x2000) {
-            loc_a_ = default_loc_a_;
-        }
-        if (default_loc_b_ != 0x2000) {
-            loc_b_ = default_loc_b_;
-        }
-        dialogs_.Dialog::field_20_ |= 1;
+        set_loc(default_loc_a_, default_loc_b_);
+        dialogs_.Dialog::set_style_bits(1);
         dialogs_.Dialog::set_style_bit_1(1);
     }
 
@@ -3881,12 +3883,7 @@ int BasePop::calculate_dimensions() {
             height = (height * 3) / 2;
         }
         dialogs_.Dialog::field_30_ = height;
-        if (default_loc_a_ != 0x2000) {
-            loc_a_ = default_loc_a_;
-        }
-        if (default_loc_b_ != 0x2000) {
-            loc_b_ = default_loc_b_;
-        }
+        set_loc(default_loc_a_, default_loc_b_);
         dialogs_.set_style_bits(3);
         if (external_window_ != 0) {
             field_30BC_ = dialog_width_;

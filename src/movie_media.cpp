@@ -1663,17 +1663,20 @@ extern "C" int __fastcall sub_5ca310(MediaRuntime *r, int byte_count) {
   if (r->channel_state == 2) r->descriptor->stream_gate_80 = 1;
   if (r->descriptor->stream_gate_80 != 0)
     InterlockedIncrement(&r->read_counter);
-  LONG *cursor = &r->output_producer_cursor;
+  // WORKAROUND(volatile): as in sub_5ca230, the image reads both interlocked
+  // counters through their pointers (0x005CA660, 0x005CA689), loading the
+  // record count before the slot store; volatile pointers reproduce it.
+  volatile LONG *cursor = &r->output_producer_cursor;
   int slot = *cursor % 24;
   r->output_records[slot].payload = r->decoded_ring_current;
   r->output_records[slot].field_04 = (DWORD)output_bytes;
   r->output_records[slot].field_08 = (DWORD)r->read_counter;
-  LONG *counter = &r->output_counter;
+  volatile LONG *counter = &r->output_counter;
   r->output_records[slot].field_0c = (DWORD)*counter;
   r->decoded_ring_current += output_bytes;
-  InterlockedIncrement(cursor);
+  InterlockedIncrement((LONG *)cursor);
   InterlockedIncrement((LONG *)&r->pending_output_records);
-  InterlockedIncrement(counter);
+  InterlockedIncrement((LONG *)counter);
   return 2;
 }
 
@@ -2666,9 +2669,9 @@ Purpose: Advance the mmio ring buffer by one read: when the pending offset
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 // indirect  0x005CA25F 0x005CA2ED 0x005CA2F6 0x005CA2F9
-Status: Coverage transcription - unclaimed body (the entry `push ecx` dummy
-        slot idiom ahead of the callee-saved pushes is not reproducible,
-        seed TRIED).
+Status: Exact. The entry `push ecx` is the frame slot `size` spills to once
+        the counters are read through volatile pointers (seed TRIED had
+        called it unreproducible).
 */
 int __fastcall MediaRuntime::sub_5ca230(int size, int kind) {
   if (input_ring_current + size >= input_ring_base + 1200000)
@@ -2679,15 +2682,21 @@ int __fastcall MediaRuntime::sub_5ca230(int size, int kind) {
   if (read == 0) { stream_eof = 1; return -1; }
   if (read == -1) return -2;
 
-  LONG *cursor = &read_producer_cursor;
+  // WORKAROUND(volatile): the image reads both interlocked counters through
+  // their pointers at every use (0x005CA295, 0x005CA2C4) and loads the
+  // record count before the slot index; volatile pointers reproduce both.
+  // The real cause is probably `volatile LONG` declarations of
+  // read_producer_cursor/read_counter in movie_media.h (pending_read_records
+  // already is).
+  volatile LONG *cursor = &read_producer_cursor;
   read_records[*cursor % 0x18].payload = input_ring_current;
   read_records[*cursor % 0x18].field_0c = static_cast<DWORD>(kind);
-  LONG *counter = &read_counter;
+  volatile LONG *counter = &read_counter;
   read_records[*cursor % 0x18].field_08 = static_cast<DWORD>(*counter);
   input_ring_current += size;
-  InterlockedIncrement(cursor);
+  InterlockedIncrement((LONG *)cursor);
   InterlockedIncrement((LONG *)&pending_read_records);
-  InterlockedIncrement(counter);
+  InterlockedIncrement((LONG *)counter);
   return 1;
 }
 

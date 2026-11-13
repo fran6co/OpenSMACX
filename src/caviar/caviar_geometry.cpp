@@ -34,24 +34,33 @@
 #pragma intrinsic(sin, cos)
 // ORIGINAL: 0x00627D00 ?caviar_apply_rotation@@YAXPBMPAUVOX_Matrix@@@Z 0x00627D00-0x00627E19
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original body, complete seed extent, and fresh VC6 symbol observation; recovery/tests/test_caviar_geometry.py checks original expression trees and bounded host behavior.", "Inverse snapshots cofactor inputs before stores and has no singular guard; cross preserves sequential overlapping writes; rotation uses scoped x87 intrinsics and reads all angles before stores. Numerical spill precision is not established by these structural bindings."], "reason": "Source-owned voxel geometry with typed matrix rows and original arithmetic/store ordering."}
+// The image stores the nine entries through one walking pointer (`lea
+// eax,[edx+4]` then `add eax,4` steps, 0x00627D0F..), so the body writes
+// `*out++`. The sine/cosine declaration order was chosen by screening all
+// 720 orders against the image's x87 schedule (0.626 -> 0.673); it is not
+// otherwise evidenced. Left: VC5 spills the shared cz*sy product to a frame
+// slot where the image keeps it on the FPU stack. Spelling the walk's start
+// `matrix->values[0]` (or `&matrix->values[0][0]`) flips vox_matrix_vector_mul
+// and vector_add to MNEMONIC_ONLY; the cast keeps them exact.
 void __cdecl caviar_apply_rotation(const float *angles, VOX_Matrix *matrix) {
-    float sx = (float)sin(angles[0]);
     float cx = (float)cos(angles[0]);
     float sy = (float)sin(angles[1]);
-    float cy = (float)cos(angles[1]);
     float sz = (float)sin(angles[2]);
+    float sx = (float)sin(angles[0]);
+    float cy = (float)cos(angles[1]);
     float cz = (float)cos(angles[2]);
     float sz_sy = sz * sy;
+    float *out = (float *)matrix;
 
-    matrix->values[0][0] = cy * cx;
-    matrix->values[0][1] = cx * sz_sy - cz * sx;
-    matrix->values[0][2] = cx * (cz * sy) + sz * sx;
-    matrix->values[1][0] = cy * sx;
-    matrix->values[1][1] = sx * sz_sy + cz * cx;
-    matrix->values[1][2] = sx * (cz * sy) - sz * cx;
-    matrix->values[2][0] = -sy;
-    matrix->values[2][1] = sz * cy;
-    matrix->values[2][2] = cz * cy;
+    *out++ = cy * cx;
+    *out++ = cx * sz_sy - cz * sx;
+    *out++ = cx * (cz * sy) + sz * sx;
+    *out++ = cy * sx;
+    *out++ = sx * sz_sy + cz * cx;
+    *out++ = sx * (cz * sy) - sz * cx;
+    *out++ = -sy;
+    *out++ = sz * cy;
+    *out++ = cz * cy;
 }
 #pragma function(sin, cos)
 
