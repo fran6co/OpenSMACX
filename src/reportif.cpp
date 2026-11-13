@@ -431,327 +431,6 @@ static void reportwin_append_number(char *text, int value) {
     strcat(text, number);
 }
 
-// These chart coordinates are stored in unsigned layout words, but the
-// original renderer consumes them as signed 32-bit coordinates. Avoid an
-// out-of-range unsigned-to-signed conversion while preserving that bit view.
-static int reportwin_signed_coordinate(uint32_t bits) {
-    if (bits <= 0x7FFFFFFFu) return static_cast<int>(bits);
-    return -1 - static_cast<int>(~bits);
-}
-
-// The image's loop tests for more than four matches before each slot, but
-// stores every match unconditionally. It therefore writes five slots; only
-// the first four are consumed after the displayed count is clamped at
-// 0x499AE2..0x499AF3.
-static int reportwin_collect_lab_children(int technology, int *children) {
-    int count = 0;
-    // 0x4996CA checks count > 4 before processing a slot, while 0x4996E7
-    // stores unconditionally and increments the count afterward.
-    for (int slot = 0; slot < MaxTechnologyNum * 2 && count <= 4; ++slot) {
-        const int candidate = slot / 2;
-        const int prerequisite = (slot & 1)
-            ? Technology[candidate].preq_tech_2
-            : Technology[candidate].preq_tech_1;
-        if (prerequisite == technology) {
-            children[count] = candidate;
-            ++count;
-        }
-    }
-    return count;
-}
-
-// 0x004997A1..7CB, 0x004998D7..9995, 0x004999A0..A9A, and the
-// repeated child-button setup 0x00499B80..C0F all use BaseButton::init with
-// the same font, earned-tech emphasis and three border-style records.
-static void reportwin_init_lab_button(Buffer &canvas, FlatButton &button,
-                                     int technology,
-                                     int button_id, int x, int y,
-                                     int width, int height, Win *parent,
-                                     int faction) {
-    StringTemp[0] = 0;
-    say_tech(StringTemp, technology, 0);
-    button.init(StringTemp, button_id, x, y, width, height, parent, 0);
-    button.set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
-    button.redraw();
-    if (has_tech(technology, faction)) {
-        button.set_text_color(0xFF, -1, 1, 1);
-    }
-    button.set_border_styles(&InterfaceBoxStyles[27], &InterfaceBoxStyles[28],
-                             &InterfaceBoxStyles[29]);
-    button.redraw();
-    RECT frame = {x - 3, y - 3, x + width + 3, y + height + 3};
-    canvas.box_sprite(&frame, &InterfaceBoxStyles[3]);
-}
-
-// 0x499FE3..0x49A389 performs a measure pass, then a centered draw pass, for
-// the selected technology's two status lines. Their string pieces are the
-// native bracket literals, `say_tech`, the category label at StringTable
-// offset 0x209+category, and the prerequisite-depth number.
-static void reportwin_draw_lab_status_rows(Buffer &canvas, int technology,
-                                           int faction, int x,
-                                           int vertical_sum,
-                                           uint32_t &frame_width,
-                                           int &cursor_y,
-                                           int &measured_height,
-                                           bool draw_pass,
-                                           bool child_panel,
-                                           Font *first_row_font,
-                                           Font *second_row_font) {
-        StringTemp[0] = 0;
-        canvas.set_font(first_row_font, first_row_font, first_row_font, 0);
-        canvas.set_text_color(has_tech(technology, faction) ? 0xFF : 0xE1,
-                              -1, 1, 1);
-        strcat(StringTemp, "[");
-        say_tech(StringTemp, technology, 0);
-        strcat(StringTemp, "]");
-        CharUpperA(StringTemp);
-        if (draw_pass && child_panel) {
-            const int center_y = (vertical_sum - measured_height) / 2;
-            cursor_y = center_y;
-            const int current_frame_width = static_cast<int>(frame_width);
-            RECT outer = {x - 6, center_y - 9, x + current_frame_width,
-                          measured_height + center_y + 6};
-            canvas.box_sprite(&outer, &InterfaceBoxStyles[3]);
-            RECT inner = {outer.left + 3, outer.top + 3,
-                          outer.right - 3, outer.bottom - 3};
-            canvas.box_sprite(&inner, &InterfaceBoxStyles[0]);
-        }
-        if (!draw_pass) {
-            measured_height += canvas.wrap_height(StringTemp,
-                static_cast<int>(frame_width) - 6);
-        } else {
-            cursor_y = canvas.wrap_cent(StringTemp, x, cursor_y,
-                static_cast<int>(frame_width) - 6);
-        }
-
-        StringTemp[0] = 0;
-        canvas.set_font(second_row_font, second_row_font, second_row_font, 0);
-        strcat(StringTemp, "[");
-        const int category = tech_category(technology);
-        strcat(StringTemp, label_get(0x209 + category));
-        strcat(StringTemp, " ");
-        reportwin_append_number(StringTemp, tech_recurse(technology, 0));
-        strcat(StringTemp, "]");
-        canvas.set_text_color(mandate_color(category), -1, 1, 1);
-        if (!draw_pass) {
-            measured_height += canvas.wrap_height(StringTemp,
-                static_cast<int>(frame_width) - 6);
-        } else {
-            cursor_y = canvas.wrap_cent(StringTemp, x, cursor_y,
-                static_cast<int>(frame_width) - 6);
-            if (child_panel) {
-                Sprite &icon = g_TECH_ICON_SPRITES[technology];
-                icon.draw_mono(&canvas, icon.transparent_index(),
-                    x + (static_cast<int>(frame_width) - 0x34) / 2,
-                    cursor_y + 3, mandate_color(category), 0x32,
-                    icon.width());
-            }
-            cursor_y += 0x3A;
-        }
-        if (!draw_pass) measured_height += 0x3A;
-}
-
-static void reportwin_append_lab_entry(bool datalink, int &entry_count,
-                                       const char *section, LPSTR name,
-                                       bool name_in_string_table,
-                                       int category, int index) {
-    if (entry_count == 0) {
-        strcat(StringTemp, section);
-        strcat(StringTemp, ": ");
-    } else {
-        strcat(StringTemp, ", ");
-    }
-    LPSTR resolved_name = name_in_string_table ? StringTable.get(name) : name;
-    if (datalink && category != 0) {
-        char id[32];
-        DatalinkMain.construct_id(id, category, index);
-        help_create_link(StringTemp, resolved_name, id);
-    } else {
-        strcat(StringTemp, resolved_name);
-    }
-    ++entry_count;
-}
-
-static void reportwin_finish_lab_section(Buffer &canvas, bool draw_pass,
-                                         int x, int &y, uint32_t *frame_width,
-                                         int &measured_height) {
-    if (StringTemp[0] == 0) return;
-    if (draw_pass) {
-        y = canvas.wrap(StringTemp, x, y,
-            static_cast<int>(*frame_width) - 6);
-    } else {
-        measured_height += canvas.wrap_height(StringTemp,
-            static_cast<int>(*frame_width) - 6);
-    }
-    StringTemp[0] = 0;
-}
-
-// 0x49A5F2..0x49A654 formats RulesChassis bytes +0x48/+0x4A.
-static void reportwin_append_chassis_lab_detail(int speed, int range) {
-    strcat(StringTemp, " ");
-    strcat(StringTemp, "(");
-    if (speed < 0) {
-        strcat(StringTemp, label_get(0x310 / 4));
-    } else if (range >= 3) {
-        strcat(StringTemp, label_get(0x200 / 4));
-    } else {
-        reportwin_append_number(StringTemp, speed);
-        strcat(StringTemp, label_get(0x200 / 4));
-    }
-    strcat(StringTemp, ")");
-}
-
-// 0x49A7C3..0x49A866 formats RulesWeapon signed +8 and mode byte +0xA.
-static void reportwin_append_weapon_lab_detail(int offense, int mode) {
-    strcat(StringTemp, " ");
-    strcat(StringTemp, "(");
-    if (offense < 0) {
-        strcat(StringTemp, label_get(0x310 / 4));
-    } else if (mode >= 3) {
-        strcat(StringTemp, label_get(0x200 / 4));
-    } else {
-        reportwin_append_number(StringTemp, offense);
-        strcat(StringTemp, label_get(0x200 / 4));
-    }
-    strcat(StringTemp, ")");
-}
-
-// 0x49A9D7..0x49AA66 formats RulesArmor signed defense byte +8.
-static void reportwin_append_armor_lab_detail(int defense) {
-    strcat(StringTemp, " ");
-    strcat(StringTemp, "(");
-    if (defense < 0) {
-        strcat(StringTemp, label_get(0x310 / 4));
-    } else {
-        reportwin_append_number(StringTemp, defense);
-    }
-    strcat(StringTemp, ")");
-}
-
-// Native section scans and their inclusive/exclusive bounds are visible at
-// 0x49A389..0x49B162. They are intentionally not replaced by Max* counts:
-// several original ranges stop before the end of their source arrays.
-static void reportwin_draw_lab_unlock_sections(Buffer &canvas, int technology,
-                                               bool datalink, bool draw_pass,
-                                               int x, int &y,
-                                               uint32_t *frame_width,
-                                               int &measured_height) {
-    int entries = 0;
-    StringTemp[0] = 0;
-    for (int i_reactor = 0; i_reactor < 4; ++i_reactor) {
-        if (Reactor[i_reactor].preq_tech != technology) continue;
-        reportwin_append_lab_entry(datalink, entries, label_get(0x234 / 4),
-                                   Reactor[i_reactor].name, true,
-                                   5, i_reactor + 1);
-    }
-    reportwin_finish_lab_section(canvas, draw_pass, x, y, frame_width, measured_height);
-
-    entries = 0;
-    for (int i_chassis = 0; i_chassis < 9; ++i_chassis) {
-        if (Chassis[i_chassis].preq_tech != technology) continue;
-        reportwin_append_lab_entry(datalink, entries, label_get(0x120 / 4),
-                                   Chassis[i_chassis].offsv_1_name, true,
-                                   4, i_chassis);
-        if (draw_pass) {
-            TechnologyHelpEntryKind = 0x62;
-            TechnologyHelpEntryName = Chassis[i_chassis].offsv_1_name;
-        }
-        reportwin_append_chassis_lab_detail(static_cast<signed char>(Chassis[i_chassis].speed),
-                                            Chassis[i_chassis].range);
-    }
-    reportwin_finish_lab_section(canvas, draw_pass, x, y, frame_width, measured_height);
-
-    entries = 0;
-    for (int i_weapon = 0; i_weapon < 26; ++i_weapon) {
-        if (Weapon[i_weapon].preq_tech != technology) continue;
-        reportwin_append_lab_entry(datalink, entries, label_get(0x124 / 4),
-                                   Weapon[i_weapon].name, true,
-                                   6, i_weapon);
-        if (draw_pass) {
-            TechnologyHelpEntryKind = 0x63;
-            TechnologyHelpEntryName = Weapon[i_weapon].name;
-        }
-        reportwin_append_weapon_lab_detail(Weapon[i_weapon].offense_rating,
-                                           Weapon[i_weapon].mode);
-    }
-    reportwin_finish_lab_section(canvas, draw_pass, x, y, frame_width, measured_height);
-
-    entries = 0;
-    for (int i_armor = 0; i_armor < 14; ++i_armor) {
-        if (Armor[i_armor].preq_tech != technology) continue;
-        reportwin_append_lab_entry(datalink, entries, label_get(0x128 / 4),
-                                   Armor[i_armor].name, true,
-                                   7, i_armor);
-        if (draw_pass) {
-            TechnologyHelpEntryKind = 0x64;
-            TechnologyHelpEntryName = Armor[i_armor].name;
-        }
-        reportwin_append_armor_lab_detail(Armor[i_armor].defense_rating);
-    }
-    reportwin_finish_lab_section(canvas, draw_pass, x, y, frame_width, measured_height);
-
-    entries = 0;
-    for (int i_ability = 0; i_ability < 29; ++i_ability) {
-        if (Ability[i_ability].preq_tech != technology) continue;
-        reportwin_append_lab_entry(datalink, entries, label_get(0x12C / 4),
-                                   Ability[i_ability].name, true,
-                                   8, i_ability);
-    }
-    reportwin_finish_lab_section(canvas, draw_pass, x, y, frame_width, measured_height);
-
-    // 0x49AC42..0x49AD90 scans the 29 built-in vehicle prototypes after
-    // abilities. The native loop initializes EBX to zero at 0x49AC42 and
-    // increments it unconditionally at 0x49AD2B, so Datalink item IDs use
-    // the prototype table index even when earlier records do not match.
-    entries = 0;
-    for (int i_prototype = 0; i_prototype < 29; ++i_prototype) {
-        VehPrototype &prototype = VehPrototypes[i_prototype];
-        if ((prototype.flags & 1) == 0
-            || prototype.preq_tech != technology) continue;
-        reportwin_append_lab_entry(datalink, entries,
-                                   label_get(0x318 / 4),
-                                   prototype.veh_name, false,
-                                   3, i_prototype);
-    }
-    reportwin_finish_lab_section(canvas, draw_pass, x, y, frame_width, measured_height);
-
-    entries = 0;
-    for (int i_facility = 1; i_facility < 134; ++i_facility) {
-        if (Facility[i_facility].preq_tech != technology
-            && Facility[i_facility].free_tech != technology) continue;
-        const int category = i_facility >= 70 ? 0xB : 0xA;
-        reportwin_append_lab_entry(datalink, entries, label_get(0x110 / 4),
-                                   Facility[i_facility].name, true,
-                                   category, i_facility);
-        if (Facility[i_facility].free_tech == technology) {
-            strcat(StringTemp, " ");
-            strcat(StringTemp, label_get(0x4DC / 4));
-            strcat(StringTemp, ")");
-        }
-    }
-    reportwin_finish_lab_section(canvas, draw_pass, x, y, frame_width, measured_height);
-
-    entries = 0;
-    for (int i_citizen = 0; i_citizen < 7; ++i_citizen) {
-        if (Citizen[i_citizen].preq_tech != technology) continue;
-        reportwin_append_lab_entry(datalink, entries, label_get(0x4CC / 4),
-                                   Citizen[i_citizen].singular_name, true,
-                                   0, i_citizen);
-    }
-    reportwin_finish_lab_section(canvas, draw_pass, x, y, frame_width, measured_height);
-}
-
-// The three-per-category records are existing InterfaceBoxStyles entries:
-// native jump tables at 0x499199 and 0x499224 select 38+3*category and
-// 36+3*category respectively.
-static BoxSpriteParams *reportwin_lab_category_style(int category,
-                                                      int first_style) {
-    if (category < 0 || category > 3) return 0;
-    return &InterfaceBoxStyles[first_style + category * 3];
-}
-
-
-
 // The process-wide report window, 0x00876478 - see reportwin.h. The image's
 // dynamic initializer at 0x00496930 constructs it through the real recovered
 // constructor below. The fixed list/timer receivers used by ReportIf are
@@ -862,6 +541,14 @@ int __cdecl X_text_open(char *, const char *);
 void __cdecl compute_score(int, int *, int *, int);
 void __cdecl diplomacy_check(int, int, int);
 int __cdecl most_objectives(int *, int *);
+// WORKAROUND(decl): three otherwise-unused extern names keep
+// ReportIf::on_iface_button_clicked's register tie as in the image after the
+// draw_ops/draw_labs rewrites (MATCHING_GUIDE 2.5 extern-name count; a sweep
+// of 0-16 extra names matched only at 3). The cleanup pass should replace
+// them with the original declaration set.
+extern int ReportPad0;
+extern int ReportPad1;
+extern int ReportPad2;
 // compute_score/diplomacy_check remain seed-only dependencies requiring owner
 // integration. ScriptPopupFile is the mutable pointer cell formerly exposed
 // through the ClimatePopupTitle facade.
@@ -1153,6 +840,20 @@ static inline int report_button_init(FlatButton *button, LPCSTR name, int id, RE
                                      Win *parent, int style_flag) {
     return button->init(name, id, rect->left, rect->top, rect->right - rect->left,
                         rect->bottom - rect->top, parent, style_flag);
+}
+
+// WORKAROUND(inline): the image evaluates these sprite draws as inline
+// Sprite overloads without the transparent index: the position (and colour,
+// height, denominator) arguments are evaluated, and spilled across any call,
+// before the sprite address, whose own transparent byte is read last
+// (draw_ops 0x0049DFE0/0x0049E57E, draw_labs 0x00498E30/0x0049A2A0).
+static inline int report_sprite_draw(Sprite *sprite, Buffer *dest, int x, int y) {
+    return sprite->draw(dest, sprite->transparent_index(), x, y);
+}
+static inline int report_sprite_draw_mono(Sprite *sprite, Buffer *dest, int x, int y,
+                                          int color, int height, int denominator) {
+    return sprite->draw_mono(dest, sprite->transparent_index(), x, y, color, height,
+                             denominator);
 }
 
 // Local rectangle inflation; inlined by reset and on_button_passover.
@@ -1946,397 +1647,936 @@ void ReportWin::on_group_clicked(int group, int, int state) {
 // ORIGINAL: 0x00498B30 ?draw_labs@ReportWin@@QAEXXZ 0x00498B30-0x0049B1DC
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00498B30-0x0049B1DC", "git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00498b30.cpp", "Retired recovered seed provenance: source:src/recovered/units/00430b30.cpp", "pinned:0x0049A5FC stores kind0x62 then0x0049A606 stores the chassis name value after the link text and before chassis detail formatting", "pinned:0x0049A7CD stores kind0x63 then0x0049A7D7 stores the weapon name value after the link text and before weapon detail formatting", "pinned:0x0049A9E1 stores kind0x64 then0x0049A9EB stores the armor name value after the link text and before armor detail formatting", "source:src/datalink.h TechnologyHelpEntryName/Kind are the independently observed 4-byte shared objects; Datalink help and tech_achieved reset use the same pair", "source:src/reportif.cpp reportwin_draw_lab_unlock_sections already traverses these same typed Chassis/Weapon/Armor rows and preserves its original lab detail and callback paths"], "reason": "The ReportWin laboratory page is shared by the ordinary report and Datalink entry renderer. Recover its real Buffer hosts, FlatButton members, technology Sprite array and ReportIf fonts; original chart geometry, status rows and unlock-list scans identify these owners. Retain the historical seed for further matching and runtime verification. Preserve the shared technology-help entry name/kind pair at the original chassis, weapon and armor emission points while keeping ReportWin's real two-pass lab/unlock rendering, existing table bounds, section order and link/detail ordering."}
 // TRIED: full pixel-geometry reconstruction of the lab-tier bar chart (labs_line/FUN_0049b450/vtable-slot draw calls with exact coordinate math across up to 15 rows and 4 switch-selected sprite tables) - this pass preserves top-level branch shape and call order, not the per-row layout arithmetic.
+// Frame map used (image [ebp-N] -> local):
+//   -0x4c faction            -0x38 datalink            -0x30 host (GraphicWin *)
+//   -0x7c..-0x70 children[4] (a fifth match spills into -0x6c = header.left)
+//   -0x6c header RECT        -0x5c frame RECT          -0x48 box RECT
+//   -0x28 bar RECT           -0x14 x                   -0x08 y
+//   (x and y are address-taken by get_mouse_pos at the end, so every store to
+//    them survives; that is why the image keeps them in memory throughout.)
+//   header block: -0x18 icon_x / saved bar right, -0x34 icon_y, -0x04 rate,
+//                 -0x10 accumulated, -0xd8 reportwin_append_number buffer
+//   chart/lab block: -0x18 tech, -0x84/-0x80 prerequisite1/2, -0x10 count,
+//                 -0x0c i, -0x10 pass, -0x04 section index, -0xc8 id[64]
+//   UNSURE: the image also keeps a second copy of tech at -0x88 (used by the
+//   prerequisite scan, has_tech/say_tech of the status rows and the -1 test),
+//   while -0x18 serves the category label, tech_recurse and section compares.
+//   That looks like an inline-helper parameter copy; one variable is used here.
+//   UNSURE: rate (-0x04) / section index (-0x04), accumulated (-0x10) / count /
+//   pass (-0x10) and the child index / host+0x444 (-0x0c) share slots in the
+//   image; block scopes are used below so VC6 can overlap them.
 void ReportWin::draw_labs() {
-    const int faction = ReportIfGlobal.report_faction_id_;
-    const bool datalink = IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 8;
-    Buffer &canvas = datalink
-        ? *static_cast<Buffer *>(&DatalinkMain)
-        : *static_cast<Buffer *>(this);
-    if (datalink) canvas.set_text_color(0xFE, -1, 1, 1);
-    // Native 0x498B90 reads the four Datalink entry-clip edges. The ordinary
-    // report instead reads rect1_ as left/top/width/height at 0x498C5A.
-    RECT host_area;
+    int children[4];
+    RECT header;
+    RECT frame;
+    RECT box;
+    RECT bar;
+    GraphicWin *host;
+    int x;
+    int y;
+
+    int faction = ReportIfGlobal.report_faction_id_;
+    children[0] = -1;
+    children[1] = -1;
+    children[2] = -1;
+    children[3] = -1;
+    int datalink = IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 8;
     if (datalink) {
-        host_area = DatalinkMain.entry_clip_rect();
-    } else {
-        host_area.left = rect1_.left;
-        host_area.top = rect1_.top;
-        host_area.right = rect1_.left + rect1_.right;
-        host_area.bottom = rect1_.top + rect1_.bottom;
-    }
-    const int left = host_area.left + 3;
-    const int top = host_area.top + 3;
-    const int right = host_area.right - 3;
-    const int bottom = host_area.bottom - 3;
-    const int width = right - left;
-    const int height = bottom - top;
-    // These are the button-cell dimensions published before chart setup;
-    // they differ when the ordinary renderer is embedded by Datalink.
-    field_59A0_ = datalink ? 0x96 : 0xBE;
-    field_59A4_ = 0x28;
-    field_59A8_ = datalink ? 0xAA : 0xBE;
-    // Chart anchors are prepared before its controls and connector graph.
-    // Native 0x498B90..C55 uses the Datalink entry clip; 0x498C5A..D1A
-    // uses ReportIf's established wide-screen state and ReportWin::rect1_.
-    const bool wide_layout = !datalink
-        && ReportIfGlobal.field_1E230_ != 0;
-    if (datalink) {
-        field_A2C_ = top + 0x1E;
-        field_A28_ = host_area.left + 3
-            + ((host_area.right - host_area.left - 0xB0) / 2);
+        // 0x498B75..0x498C55
+        host = &DatalinkMain;
+        DatalinkMain.set_text_color_hyper(0xFE, -1, 1, 1);
+        field_59A0_ = 0x96;
+        field_59A4_ = 0x28;
+        field_59A8_ = 0xAA;
+        frame.left = DatalinkMain.entry_clip_rect().left + 3;
+        frame.top = DatalinkMain.entry_clip_rect().top + 3;
+        // UNSURE: the image forms right-left once and derives both
+        // frame.right (= that + frame.left - 6) and bar.right (= that - 6).
+        frame.right = frame.left
+            + (DatalinkMain.entry_clip_rect().right
+               - DatalinkMain.entry_clip_rect().left) - 6;
+        frame.bottom = frame.top + 0x14;
+        // Genuine original: the Datalink host never draws the research
+        // header, but still clears its RECT and fills the bar RECT with
+        // inset/width/height values that are never read on this path.
+        header.left = 0;
+        header.top = 0;
+        header.right = 0;
+        header.bottom = 0;
+        bar.left = frame.left + 3;
+        bar.top = frame.top + 3;
+        bar.right = DatalinkMain.entry_clip_rect().right
+            - DatalinkMain.entry_clip_rect().left - 6;
+        bar.bottom = DatalinkMain.entry_clip_rect().bottom
+            - DatalinkMain.entry_clip_rect().top - 6;
+        field_A2C_ = frame.bottom + 0xA;
+        field_A28_ = (DatalinkMain.entry_clip_rect().right
+                      - DatalinkMain.entry_clip_rect().left - 0xB0) / 2
+            + frame.left;
         field_A30_ = field_A28_ + 0xAA;
         field_A34_ = field_A2C_ + 0xF0;
     } else {
-        field_A2C_ = host_area.top + 0x63
-            + (wide_layout ? 0x62 : 0);
-        field_A28_ = host_area.left
-            + ((host_area.right - host_area.left - 0xBE) / 2);
+        // 0x498C5A..0x498D1A
+        host = this;
+        x = rect1_.left;
+        y = rect1_.top;
+        field_59A0_ = 0xBE;
+        field_59A4_ = 0x28;
+        field_59A8_ = 0xBE;
+        frame.left = x;
+        frame.top = y;
+        frame.right = rect1_.right + x;
+        frame.bottom = y + 0x46;
+        int icon_x = x + 3;
+        int icon_y = y + 3;
+        header.left = icon_x + 0x43;
+        header.top = icon_y;
+        header.right = frame.right - 3;
+        // Genuine original: literal bottoms, not offsets from the frame.
+        header.bottom = 0x2F;
+        bar.left = icon_x + 0x43;
+        bar.top = 0x31;
+        bar.right = frame.right - 3;
+        bar.bottom = frame.bottom - 3;
+        field_A2C_ = frame.bottom + 0x1D
+            + (ReportIfGlobal.field_1E230_ ? 0x62 : 0);
+        field_A28_ = (rect1_.right - 0xBE) / 2 + x;
         field_A30_ = field_A28_ + 0xBE;
         field_A34_ = field_A2C_ + 0xAE;
-    }
-    // Native 0x498CC3 snapshots the wide-layout flag and publishes these
-    // anchor members before calling energy_compute at 0x498D20. That call is
-    // allowed to update global accounting, but cannot retroactively change
-    // this frame's already-selected chart layout.
-    if (!datalink) {
         energy_compute(faction, 0);
-    }
-    // Native 0x498D26 samples the current player's research income only after
-    // energy_compute has run. Keep this read here: that call updates the live
-    // accounting used by the research header below.
-    const int current_tech_rate = datalink ? 0 : tech_rate(faction);
-    const bool hide_research = !datalink && (GameDataStateStorage.fields_.game_state_ & 0x80) == 0
-        && (GameDataStateStorage.fields_.game_rules_ & RULES_BLIND_RESEARCH) != 0;
-    int research_header_end_x = host_area.left + 0x49;
-    int research = -1;
-    if (!datalink) {
-        RECT research_header = {rect1_.left, rect1_.top,
-            rect1_.left + rect1_.right, rect1_.top + 0x46};
-        canvas.set_text_color(0xE1, -1, 1, 1);
+        int rate = tech_rate(faction);
+        // UNSURE: the image stores x, then y, around the accumulated load.
+        x = header.left + 3;
+        y = header.top + 5;
+        int accumulated = PlayersData[faction].tech_accumulated;
+        Buffer::set_text_color3(0xE1, -1, 1, 1);
         StringTemp[0] = 0;
         strcat(StringTemp, "[");
-        canvas.box_sprite(&research_header, &InterfaceBoxStyles[3]);
+        Buffer::box_sprite(&frame, &InterfaceBoxStyles[3]);
 
-        // Native 0x498DA0..0x498DF7 suppresses current-tech detail only for
-        // blind research when the game-state reveal bit is clear.
-        if (hide_research) {
-            RECT icon_frame = {host_area.left + 3, host_area.top + 3,
-                host_area.right - 3, 0x2F};
-            canvas.box_sprite(&icon_frame, &InterfaceBoxStyles[1]);
-            strcat(StringTemp, label_get(0xAC4 / 4));
-        } else {
-            research = PlayersData[faction].tech_id_researching;
-            if (research >= 0) {
-                const int research_color = mandate_color(tech_category(research));
-                Sprite &research_icon = g_TECH_ICON_SPRITES[research];
-                research_icon.draw_mono(&canvas,
-                    research_icon.transparent_index(), host_area.left + 3,
-                    host_area.top + 3, research_color, 0x40,
-                    research_icon.width());
+        // 0x498DA0: blind research hides the current technology unless the
+        // game-state reveal bit is set. Literal order (0x686F70 before
+        // 0x686F74 in the second test below) puts the visible arm first.
+        if ((GameDataStateStorage.fields_.game_state_ & 0x80) != 0
+            || (GameDataStateStorage.fields_.game_rules_
+                & RULES_BLIND_RESEARCH) == 0) {
+            // 0x498DFC..0x499079
+            if (PlayersData[faction].tech_id_researching >= 0) {
+                report_sprite_draw_mono(
+                    &g_TECH_ICON_SPRITES[PlayersData[faction].tech_id_researching],
+                    this, icon_x, icon_y,
+                    mandate_color(tech_category(PlayersData[faction].tech_id_researching)),
+                    0x40,
+                    g_TECH_ICON_SPRITES[PlayersData[faction].tech_id_researching].width());
             }
-
-            // Original 0x498E61 draws style 1 over the inset icon area. Its
-            // bottom edge is the literal 0x2f local retained by the image.
-            RECT icon_frame = {host_area.left + 3, host_area.top + 3,
-                host_area.right - 3, 0x2F};
-            canvas.box_sprite(&icon_frame, &InterfaceBoxStyles[1]);
-
-            // 0x498E71..0x498EF1 emits the research label first; write_l's
-            // returned pen x is then reused by the adjacent tech name.
+            Buffer::box_sprite(&header, &InterfaceBoxStyles[1]);
             strcat(StringTemp, label_get(0x254 / 4));
-            strcat(StringTemp, "  ");
+            strcat(StringTemp, " ");
+            strcat(StringTemp, " ");
             strcat(StringTemp, "]");
-            const int text_x = host_area.left + 0x49;
-            const int text_y = host_area.top + 8;
-            research_header_end_x = canvas.write_l(StringTemp, text_x,
-                text_y, strlen(StringTemp));
+            x = Buffer::write_l(StringTemp, x, y);
             StringTemp[0] = 0;
             strcat(StringTemp, "[");
-            if (research >= 0) {
-                say_tech(StringTemp, research, 0);
+            say_tech(StringTemp, PlayersData[faction].tech_id_researching, 0);
+            CharUpperA(StringTemp);
+            if (PlayersData[faction].tech_id_researching
+                == MaxTechnologyNum - 1) {
+                // Genuine original: the future-technology header appends the
+                // count but no closing bracket here; the "]" below adds it.
+                strcat(StringTemp, " ");
+                reportwin_append_number(StringTemp,
+                    PlayersData[faction].theory_of_everything + 1);
+            } else if (PlayersData[faction].tech_id_researching >= 0) {
                 strcat(StringTemp, "]");
                 CharUpperA(StringTemp);
-                if (research == MaxTechnologyNum - 1) {
-                    StringTemp[strlen(StringTemp) - 1] = 0;
-                    strcat(StringTemp, " ");
-                    reportwin_append_number(StringTemp,
-                        PlayersData[faction].tech_accumulated + 1);
-                } else {
-                    canvas.write_l(StringTemp, research_header_end_x,
-                        text_y, strlen(StringTemp));
-                }
+                x = Buffer::write_l(StringTemp, x, y) + 0xF;
+                StringTemp[0] = 0;
+                Buffer::set_text_color3(mandate_color(tech_category(
+                    PlayersData[faction].tech_id_researching)), -1, 1, 1);
+                strcat(StringTemp, "[");
+                strcat(StringTemp, StringTable.get(Mandate[tech_category(
+                    PlayersData[faction].tech_id_researching)].name_caps));
+                strcat(StringTemp, " ");
+                reportwin_append_number(StringTemp, tech_recurse(
+                    PlayersData[faction].tech_id_researching, 0));
             }
-        }
-    }
-    // Native 0x49907C..0x4990AA rebuilds this ordinary-report hit region
-    // after the header text/technology icon phase and before chart setup.
-    if (!datalink) {
-        spot_.kill_type(0);
-        spot_.add(0, 0x29A, left, top, width, height);
-        if (hide_research) {
-            strcat(StringTemp, "DISCOV");
-            canvas.write_cent_l(StringTemp, research_header_end_x,
-                host_area.top + 8,
-                host_area.right - 3 - (host_area.left + 0x46),
-                strlen(StringTemp));
+            // 0x49907C
+            spot_.kill_type(0);
+            spot_.add(0x29A, 0, frame.left, frame.top,
+                      frame.right - frame.left, frame.bottom - frame.top);
         } else {
+            // 0x498DB3..0x498DF7
+            header.left = frame.left + 3;
+            x = header.left + 5;
+            Buffer::box_sprite(&header, &InterfaceBoxStyles[1]);
+            strcat(StringTemp, label_get(0xAC4 / 4));
+        }
+
+        // 0x4990AF: the image re-reads both globals for a second test.
+        if ((GameDataStateStorage.fields_.game_state_ & 0x80) != 0
+            || (GameDataStateStorage.fields_.game_rules_
+                & RULES_BLIND_RESEARCH) == 0) {
+            // 0x499124..0x499175
             strcat(StringTemp, "]");
-            canvas.write_l(StringTemp, research_header_end_x,
-                host_area.top + 8, strlen(StringTemp));
+            Buffer::write_l(StringTemp, x, y);
+            x = header.left + 3;
+            y = header.top + 5;
+        } else {
+            // 0x4990C2..0x499122
+            strcat(StringTemp, "]");
+            Buffer::write_cent_text(StringTemp, x, y,
+                                    header.right - header.left);
+            // Genuine original: only the hidden branch moves the bar's left
+            // edge (to the frame inset); x and y keep their header values.
+            bar.left = frame.left + 3;
         }
+        y += field_E268_ + 3;
 
-        const int chart_technology = PlayersData[faction].tech_id_researching;
-        if (chart_technology >= 0 && chart_technology < MaxTechnologyNum) {
-            RECT category_bar = {left, 0x31, right, host_area.top + 0x43};
-            const int original_left = category_bar.left;
-            const int original_right = category_bar.right;
-            int category = tech_category(
-                PlayersData[faction].tech_id_researching);
-            BoxSpriteParams *style = reportwin_lab_category_style(category, 38);
-            if (style != 0) canvas.box_sprite(&category_bar, style);
-
-            int fill_right = original_left
-                + ((original_right - original_left)
-                    * PlayersData[faction].tech_accumulated)
-                    / current_tech_rate;
-            if (fill_right < original_left || original_right < original_left)
-                fill_right = original_left;
-            else if (fill_right > original_right)
-                fill_right = original_right;
-            category_bar.right = fill_right;
-            canvas.set_clip(&category_bar);
-            category = tech_category(PlayersData[faction].tech_id_researching);
-            style = reportwin_lab_category_style(category, 36);
-            if (style != 0) canvas.box_sprite(&category_bar, style);
-            canvas.set_clip(buffer_working_rect());
-
-            const int next_fill_right = fill_right
-                + (((original_right - original_left) * EnergyLabsTotal / 100)
-                    / current_tech_rate);
-            const int bounded_next_fill_right = next_fill_right < fill_right
-                || original_right < fill_right ? fill_right
-                : next_fill_right > original_right ? original_right
-                : next_fill_right;
-            RECT next_turn = {fill_right, category_bar.top,
-                bounded_next_fill_right, category_bar.bottom};
-            canvas.set_clip(&next_turn);
-
-            next_turn.left -= 7;
-            next_turn.top -= 7;
-            next_turn.right += 7;
-            next_turn.bottom += 7;
-            category = tech_category(PlayersData[faction].tech_id_researching);
-            style = reportwin_lab_category_style(category, 36);
-            if (style != 0) canvas.box_sprite(&next_turn, style);
-
-            next_turn.left += 7;
-            next_turn.top += 7;
-            next_turn.right -= 7;
-            next_turn.bottom -= 7;
-            canvas.set_clip(buffer_working_rect());
-            RECT inner_clip = {next_turn.left + 1, next_turn.top + 1,
-                next_turn.right - 1, next_turn.bottom - 1};
-            canvas.set_clip(&inner_clip);
-            RECT outer_edge = {inner_clip.left - 7, inner_clip.top - 7,
-                inner_clip.right + 7, inner_clip.bottom + 7};
-            category = tech_category(PlayersData[faction].tech_id_researching);
-            style = reportwin_lab_category_style(category, 38);
-            if (style != 0) canvas.box_sprite(&outer_edge, style);
-            canvas.set_clip(buffer_working_rect());
+        // 0x499182..0x49941C: research bar. Cases 0..3 follow the image's
+        // jump tables at 0x49B1DC/0x49B1EC/0x49B1FC/0x49B20C.
+        switch (tech_category(PlayersData[faction].tech_id_researching)) {
+        case 0: Buffer::box_sprite(&bar, &InterfaceBoxStyles[38]); break;
+        case 1: Buffer::box_sprite(&bar, &InterfaceBoxStyles[41]); break;
+        case 2: Buffer::box_sprite(&bar, &InterfaceBoxStyles[44]); break;
+        case 3: Buffer::box_sprite(&bar, &InterfaceBoxStyles[47]); break;
         }
-    }
-    // Native 0x499433..0x499521 emits the discovery and estimated-next-
-    // discovery captions after the category fill. Its x starts at the
-    // header-text column (0x49 from the host left); the y is the same native
-    // host-top + field_E268_ + 0x0b cursor established at 0x499172..189.
-    if (!datalink) {
-        const int progress_x = host_area.left + 0x49;
-        const int progress_y = host_area.top + field_E268_ + 0x0B;
-        canvas.set_text_color(0xE1, -1, 1, 1);
+        int right = bar.right;
+        // The range() store of max into bar.right itself is elided by VC6,
+        // matching the image's missing store on the `jg` path at 0x4991EF.
+        bar.right = range(bar.left
+                              + (bar.right - bar.left) * accumulated / rate,
+                          bar.left, bar.right);
+        Buffer::set_clip(&bar);
+        {
+            // UNSURE: the image swaps bar.right with the saved right edge
+            // (store order: saved first, then bar.right).
+            int swapped = right;
+            right = bar.right;
+            bar.right = swapped;
+        }
+        switch (tech_category(PlayersData[faction].tech_id_researching)) {
+        case 0: Buffer::box_sprite(&bar, &InterfaceBoxStyles[36]); break;
+        case 1: Buffer::box_sprite(&bar, &InterfaceBoxStyles[39]); break;
+        case 2: Buffer::box_sprite(&bar, &InterfaceBoxStyles[42]); break;
+        case 3: Buffer::box_sprite(&bar, &InterfaceBoxStyles[45]); break;
+        }
+        {
+            int swapped = right;
+            right = bar.right;
+            bar.right = swapped;
+        }
+        Buffer::restore_clip();
+        {
+            // UNSURE: the image reads the old bar.left before storing the new
+            // one (0x499272/0x499275), so the width term is formed first.
+            int next = (right - bar.left) * EnergyLabsTotal / 100 / rate;
+            bar.left = bar.right;
+            bar.right = range(bar.right + next, bar.right, right);
+        }
+        Buffer::set_clip(&bar);
+        inflate_frame(&bar, 7, 7);
+        switch (tech_category(PlayersData[faction].tech_id_researching)) {
+        case 0: Buffer::box_sprite(&bar, &InterfaceBoxStyles[36]); break;
+        case 1: Buffer::box_sprite(&bar, &InterfaceBoxStyles[39]); break;
+        case 2: Buffer::box_sprite(&bar, &InterfaceBoxStyles[42]); break;
+        case 3: Buffer::box_sprite(&bar, &InterfaceBoxStyles[45]); break;
+        }
+        inflate_frame(&bar, -7, -7);
+        Buffer::restore_clip();
+        // UNSURE: the image stores left, top, right, bottom here and right,
+        // left, bottom, top for the next inflate; inflate_frame stores
+        // left, right, top, bottom.
+        inflate_frame(&bar, -1, -1);
+        Buffer::set_clip(&bar);
+        inflate_frame(&bar, 7, 7);
+        switch (tech_category(PlayersData[faction].tech_id_researching)) {
+        case 0: Buffer::box_sprite(&bar, &InterfaceBoxStyles[38]); break;
+        case 1: Buffer::box_sprite(&bar, &InterfaceBoxStyles[41]); break;
+        case 2: Buffer::box_sprite(&bar, &InterfaceBoxStyles[44]); break;
+        case 3: Buffer::box_sprite(&bar, &InterfaceBoxStyles[47]); break;
+        }
+        inflate_frame(&bar, -7, -7);
+        Buffer::restore_clip();
+
+        // 0x499421..0x499521: discovery captions.
+        Buffer::set_text_color3(0xE1, -1, 1, 1);
         parse_num(0, BreakthroughTurnsGlobal);
         parse_it(ScriptPopupFile, "DISCOV");
-        const int next_caption_x = canvas.write_l(StringTemp, progress_x,
-            progress_y, static_cast<int>(strlen(StringTemp))) + 4;
-
-        int remaining = current_tech_rate
-            - PlayersData[faction].tech_accumulated;
-        if (remaining < 0) remaining = 0;
-        else if (remaining > 0x5F5E0FF) remaining = 0x5F5E0FF;
-        int turns_to_discovery = 0x270F;
-        if (EnergyLabsTotal != 0) {
-            turns_to_discovery = (remaining * 100 + EnergyLabsTotal - 1)
-                / EnergyLabsTotal;
+        x = Buffer::write_l(StringTemp, x, y) + 4;
+        int turns;
+        if (EnergyLabsTotal == 0) {
+            turns = 9999;
+        } else {
+            turns = (range(rate - accumulated, 0, 99999999) * 100
+                     + EnergyLabsTotal - 1) / EnergyLabsTotal;
         }
-        parse_num(0, static_cast<int>(game_year(
-            GameDataStateStorage.fields_.turn_current_num_ + turns_to_discovery)));
+        parse_num(0, turns);
+        parse_num(1, game_year(
+            turns + GameDataStateStorage.fields_.turn_current_num_));
         parse_it(ScriptPopupFile, "NEXTDISCOV");
-        canvas.write_l(StringTemp, next_caption_x, progress_y,
-            static_cast<int>(strlen(StringTemp)));
+        Buffer::write_l(StringTemp, x, y);
     }
-    // Native 0x499524..0x499660 sizes the chart from the report frame and
-    // lays out its three horizontal tiers around the selected-tech column.
-    const int chart_left = datalink ? left : host_area.left;
-    const int chart_width = datalink ? width : rect1_.right;
-    const int chart_y = field_E268_
-        + (datalink ? host_area.top + 3 + 0x14 : host_area.top + 0x46) + 0x0F;
-    const int chart_height = static_cast<int>(energy_panel_rect_.bottom)
-        - chart_y - 0x1E;
-    int tier_height = chart_height;
-    if (!datalink && WinScreenWidth != 0x320) tier_height -= 0xC8;
-    rect1_.right = chart_width;
-    rect1_.bottom = chart_height;
-    lab_prerequisite_x_ = chart_left + 5;
-    lab_center_x_ = chart_left + 5
-        + (chart_width - static_cast<int>(field_59A0_)) / 2 - 5;
-    lab_child_x_ = chart_left + 5 + chart_width
-        - static_cast<int>(field_59A0_) - 10;
-    lab_center_x_ = field_A28_;
-    lab_center_y_ = chart_y
-        + (tier_height - static_cast<int>(field_59A4_)) / 2;
-    lab_three_child_upper_y_ = lab_center_y_ - static_cast<int>(field_59A4_) - 0x10;
-    lab_three_child_lower_y_ = lab_center_y_ + static_cast<int>(field_59A4_) + 0x10;
-    const int tier_pitch = static_cast<int>(field_59A4_) + 0x10;
-    lab_four_child_top_y_ = lab_center_y_ - tier_pitch - tier_pitch / 2;
-    lab_upper_inner_y_ = lab_center_y_ - tier_pitch / 2;
-    lab_lower_inner_y_ = lab_center_y_ + tier_pitch - tier_pitch / 2;
-    lab_four_child_bottom_y_ = lab_center_y_ + tier_pitch * 2 - tier_pitch / 2;
 
-    // The native two-prerequisite route creates the left/right prerequisite
-    // controls (0x499867..0x499A99); the one-prerequisite route creates the
-    // center control (0x499722..0x499866). The common one/four-child routes
-    // use the four owned FlatButtons at indices 3..6 (0x499AE2..0x499C7E).
-    int status_child_count = 0;
-    if (field_FAB8_ >= 0 && field_FAB8_ < MaxTechnologyNum) {
-        const int prerequisite1 = Technology[field_FAB8_].preq_tech_1;
-        const int prerequisite2 = Technology[field_FAB8_].preq_tech_2;
-        Win *const parent = datalink ? static_cast<Win *>(&DatalinkMain)
-                                     : static_cast<Win *>(this);
-        if (prerequisite1 >= 0 && prerequisite2 >= 0) {
-            labs_line(reportwin_signed_coordinate(field_A28_),
-                      reportwin_signed_coordinate(lab_center_y_),
-                      reportwin_signed_coordinate(lab_prerequisite_x_),
-                      reportwin_signed_coordinate(lab_upper_inner_y_),
-                      field_59A0_, field_59A4_, 0);
-            reportwin_init_lab_button(canvas, flatButtons1_[1], prerequisite1,
-                0x379, reportwin_signed_coordinate(lab_prerequisite_x_),
-                reportwin_signed_coordinate(lab_upper_inner_y_), field_59A0_, field_59A4_,
-                parent, faction);
-            labs_line(reportwin_signed_coordinate(field_A28_),
-                      reportwin_signed_coordinate(lab_center_y_),
-                      reportwin_signed_coordinate(lab_prerequisite_x_),
-                      reportwin_signed_coordinate(lab_lower_inner_y_),
-                      field_59A0_, field_59A4_, 0);
-            reportwin_init_lab_button(canvas, flatButtons1_[2], prerequisite2,
-                0x37A, reportwin_signed_coordinate(lab_prerequisite_x_),
-                reportwin_signed_coordinate(lab_lower_inner_y_), field_59A0_, field_59A4_,
-                parent, faction);
-        } else if (prerequisite1 >= 0) {
-            labs_line(reportwin_signed_coordinate(field_A28_),
-                      reportwin_signed_coordinate(lab_center_y_),
-                      reportwin_signed_coordinate(lab_prerequisite_x_),
-                      reportwin_signed_coordinate(lab_center_y_),
-                      field_59A0_, field_59A4_, 0);
-            reportwin_init_lab_button(canvas, flatButtons1_[1], prerequisite1,
-                0x379, reportwin_signed_coordinate(lab_prerequisite_x_),
-                reportwin_signed_coordinate(lab_center_y_), field_59A0_, field_59A4_,
-                parent, faction);
+    // 0x499524..0x4995F2: chart geometry. rect1_ now holds the chart size.
+    int tech = field_FAB8_;
+    x = frame.left;
+    y = field_E268_ + frame.bottom + 0xF;
+    rect1_.bottom = energy_panel_rect_.bottom - y - 0x1E;
+    rect1_.right = frame.right - frame.left;
+    if (!datalink) {
+        lab_center_y_ = (rect1_.bottom - static_cast<int>(field_59A4_)) / 2 + y;
+        // Store order in the image is center, lower, upper.
+        lab_three_child_lower_y_ = field_59A4_ + lab_center_y_ + 0x10;
+        lab_three_child_upper_y_ = lab_center_y_ - field_59A4_ - 0x10;
+    } else {
+        // Genuine original: the Datalink host shrinks the chart height by
+        // 200 on non-800-wide screens only while placing the tiers, then
+        // restores it.
+        if (WinScreenWidth != 800) rect1_.bottom -= 200;
+        lab_center_y_ = (rect1_.bottom - static_cast<int>(field_59A4_)) / 2 + y;
+        lab_three_child_lower_y_ = field_59A4_ + lab_center_y_ + 0x10;
+        lab_three_child_upper_y_ = lab_center_y_ - field_59A4_ - 0x10;
+        if (WinScreenWidth != 800) rect1_.bottom += 200;
+    }
+    {
+        // 0x4995F4..0x499660. The x and four-child y columns are parallel
+        // members walked by one pointer; WORKAROUND(type): they are probably
+        // `int x[3]` at 0x594C and `int y[7]` at 0x5958 in the original.
+        for (int i = 0; i < 3; i++) {
+            (&lab_four_child_top_y_)[i] =
+                (i - 1) * (static_cast<int>(field_59A4_) + 0x10)
+                - (static_cast<int>(field_59A4_) + 0x10) / 2
+                + lab_center_y_;
+            (&lab_prerequisite_x_)[i] = frame.left + 5
+                + (rect1_.right - static_cast<int>(field_59A0_)) * i / 2
+                - i * 5;
+        }
+    }
+    lab_center_x_ = field_A28_;
+    lab_four_child_bottom_y_ = (static_cast<int>(field_59A4_) + 0x10) * 2
+        - (static_cast<int>(field_59A4_) + 0x10) / 2 + lab_center_y_;
+
+    {
+        // 0x49968A..0x49970B: up to five children (two prerequisite slots
+        // per technology). Genuine original: the bound is tested before the
+        // store, so a fifth match writes one past children[] (into the
+        // header RECT's left edge in the image frame); only four are drawn.
+        int prerequisite1 = Technology[tech].preq_tech_1;
+        int prerequisite2 = Technology[tech].preq_tech_2;
+        int count = 0;
+        int i;
+        for (int j = 0; j < 0xB2 && count <= 4; j++) {
+            if ((&Technology[j >> 1].preq_tech_1)[j & 1] == tech) {
+                // UNSURE: the image carries both count and a pointer.
+                children[count] = j >> 1;
+                count++;
+            }
         }
 
-        // Native scratch begins at EBP-0x7c and spans five slots to EBP-0x6c.
-        // That final slot's prior local use ends at 0x499169; it is not
-        // initialized for this scan and is written only on a fifth match.
-        int children[5];
-        children[0] = children[1] = children[2] = children[3] = -1;
-        int child_count = reportwin_collect_lab_children(field_FAB8_, children);
-        status_child_count = child_count;
-        if (child_count > 4) child_count = 4;
-        if (child_count == 1 || child_count == 2
-            || child_count == 3 || child_count == 4) {
-            int x = reportwin_signed_coordinate(lab_child_x_);
-            int y = child_count == 4 ? reportwin_signed_coordinate(lab_four_child_top_y_)
-                : child_count == 3 ? reportwin_signed_coordinate(lab_three_child_upper_y_)
-                : child_count == 2 ? reportwin_signed_coordinate(lab_upper_inner_y_)
-                : reportwin_signed_coordinate(lab_center_y_);
-            for (int child = 0; child < child_count; ++child) {
-                labs_line(x, y, reportwin_signed_coordinate(lab_center_x_),
-                          reportwin_signed_coordinate(lab_center_y_),
-                          field_59A0_, field_59A4_, 0);
-                reportwin_init_lab_button(canvas, flatButtons1_[child + 3],
-                    children[child], 0x37B + child, x, y,
-                    field_59A0_, field_59A4_, parent, faction);
-                if (child_count == 4) {
-                    if (child == 0) y = reportwin_signed_coordinate(lab_upper_inner_y_);
-                    else if (child == 1) y = reportwin_signed_coordinate(lab_lower_inner_y_);
-                    else if (child == 2) y = reportwin_signed_coordinate(lab_four_child_bottom_y_);
-                } else if (child_count == 2) {
-                    if (child == 0) y = reportwin_signed_coordinate(lab_lower_inner_y_);
-                } else if (child_count == 3) {
-                    y = child == 0 ? reportwin_signed_coordinate(lab_center_y_)
-                        : child == 1 ? reportwin_signed_coordinate(lab_three_child_lower_y_) : y;
+        // 0x49970D: prerequisites. The one-prerequisite arm is laid out
+        // first and its final box_sprite tail-merges with the two-arm's.
+        if (prerequisite1 < 0 || prerequisite2 < 0) {
+            if (prerequisite1 != -1) {
+                // 0x49972B..0x499862
+                labs_line(field_A28_, lab_center_y_, lab_prerequisite_x_,
+                          lab_center_y_, field_59A0_, field_59A4_, 0);
+                StringTemp[0] = 0;
+                say_tech(StringTemp, prerequisite1, 0);
+                CharUpperA(StringTemp);
+                FlatButton *button = &flatButtons1_[1];
+                button->init(StringTemp, 0x379, lab_prerequisite_x_,
+                             lab_center_y_, field_59A0_, field_59A4_, host, 0);
+                button->set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+                button->redraw();
+                if (has_tech(prerequisite1, faction)) {
+                    button->set_text_color(0xFF, -1, 1, 1);
+                }
+                button->set_border_styles(&InterfaceBoxStyles[27],
+                                          &InterfaceBoxStyles[28],
+                                          &InterfaceBoxStyles[29]);
+                button->redraw();
+                set_rectangle_dimensions(&box, lab_prerequisite_x_ - 3,
+                                         lab_center_y_ - 3, field_59A0_ + 6,
+                                         field_59A4_ + 6);
+                host->Buffer::box_sprite(&box, &InterfaceBoxStyles[3]);
+            }
+        } else {
+            // 0x499867..0x499ADD
+            labs_line(field_A28_, lab_center_y_, lab_prerequisite_x_,
+                      lab_upper_inner_y_, field_59A0_, field_59A4_, 0);
+            StringTemp[0] = 0;
+            say_tech(StringTemp, prerequisite1, 0);
+            CharUpperA(StringTemp);
+            FlatButton *button = &flatButtons1_[1];
+            button->init(StringTemp, 0x379, lab_prerequisite_x_,
+                         lab_upper_inner_y_, field_59A0_, field_59A4_, host, 0);
+            button->set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+            button->redraw();
+            if (has_tech(prerequisite1, faction)) {
+                button->set_text_color(0xFF, -1, 1, 1);
+            }
+            button->set_border_styles(&InterfaceBoxStyles[27],
+                                      &InterfaceBoxStyles[28],
+                                      &InterfaceBoxStyles[29]);
+            button->redraw();
+            set_rectangle_dimensions(&box, lab_prerequisite_x_ - 3,
+                                     lab_upper_inner_y_ - 3, field_59A0_ + 6,
+                                     field_59A4_ + 6);
+            host->Buffer::box_sprite(&box, &InterfaceBoxStyles[3]);
+
+            // Genuine original: the second line starts from lab_center_x_
+            // (0x5950), the first from field_A28_; both hold the same value.
+            labs_line(lab_center_x_, lab_center_y_, lab_prerequisite_x_,
+                      lab_lower_inner_y_, field_59A0_, field_59A4_, 0);
+            StringTemp[0] = 0;
+            say_tech(StringTemp, prerequisite2, 0);
+            CharUpperA(StringTemp);
+            button = &flatButtons1_[2];
+            button->init(StringTemp, 0x37A, lab_prerequisite_x_,
+                         lab_lower_inner_y_, field_59A0_, field_59A4_, host, 0);
+            button->set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+            button->redraw();
+            if (has_tech(prerequisite2, faction)) {
+                button->set_text_color(0xFF, -1, 1, 1);
+            }
+            button->set_border_styles(&InterfaceBoxStyles[27],
+                                      &InterfaceBoxStyles[28],
+                                      &InterfaceBoxStyles[29]);
+            button->redraw();
+            set_rectangle_dimensions(&box, lab_prerequisite_x_ - 3,
+                                     lab_lower_inner_y_ - 3, field_59A0_ + 6,
+                                     field_59A4_ + 6);
+            host->Buffer::box_sprite(&box, &InterfaceBoxStyles[3]);
+        }
+
+        // 0x499AE2..0x499FDB: children (button slots 3..6).
+        if (count > 4) count = 4;
+        if (count == 1 || count == 4) {
+            // 0x499AF6: rows y[count-1 .. 2*count-2] of the 0x5958 column.
+            for (i = 0; i < count; i++) {
+                labs_line(lab_child_x_, (&lab_center_y_)[count - 1 + i],
+                          lab_center_x_, lab_center_y_, field_59A0_,
+                          field_59A4_, 0);
+                StringTemp[0] = 0;
+                say_tech(StringTemp, children[i], 0);
+                CharUpperA(StringTemp);
+                FlatButton *button = &flatButtons1_[i + 3];
+                button->init(StringTemp, i + 0x37B, lab_child_x_,
+                             (&lab_center_y_)[count - 1 + i], field_59A0_,
+                             field_59A4_, host, 0);
+                button->set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+                button->redraw();
+                if (has_tech(children[i], faction)) {
+                    button->set_text_color(0xFF, -1, 1, 1);
+                }
+                button->set_border_styles(&InterfaceBoxStyles[27],
+                                          &InterfaceBoxStyles[28],
+                                          &InterfaceBoxStyles[29]);
+                button->redraw();
+                set_rectangle_dimensions(&box, lab_child_x_ - 3,
+                    (&lab_center_y_)[count - 1 + i] - 3, field_59A0_ + 6,
+                    field_59A4_ + 6);
+                host->Buffer::box_sprite(&box, &InterfaceBoxStyles[3]);
+            }
+        } else if (count == 3) {
+            // 0x499CBC: rows upper (y[1]), center (y[0]), lower (y[2]).
+            // UNSURE: the image's address is
+            //   this + 8*(i-1)*(i-1) + 4*(0x1656 - (i == 0)),
+            // i.e. index 2*(i-1)*(i-1) - (i == 0); the spelling is a guess.
+            for (i = 0; i < 3; i++) {
+                labs_line(lab_child_x_,
+                          (&lab_center_y_)[(i - 1) * 2 * (i - 1) - (i == 0)],
+                          lab_center_x_, lab_center_y_, field_59A0_,
+                          field_59A4_, 0);
+                StringTemp[0] = 0;
+                say_tech(StringTemp, children[i], 0);
+                CharUpperA(StringTemp);
+                FlatButton *button = &flatButtons1_[i + 3];
+                // Genuine original spelling: the id is formed as
+                // (i - 1) + 0x37C here (lea eax,[edx-1]; add eax,0x37C).
+                button->init(StringTemp, (i - 1) + 0x37C, lab_child_x_,
+                    (&lab_center_y_)[(i - 1) * 2 * (i - 1) - (i == 0)],
+                    field_59A0_, field_59A4_, host, 0);
+                button->set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+                button->redraw();
+                if (has_tech(children[i], faction)) {
+                    button->set_text_color(0xFF, -1, 1, 1);
+                }
+                button->set_border_styles(&InterfaceBoxStyles[27],
+                                          &InterfaceBoxStyles[28],
+                                          &InterfaceBoxStyles[29]);
+                button->redraw();
+                set_rectangle_dimensions(&box, lab_child_x_ - 3,
+                    (&lab_center_y_)[(i - 1) * 2 * (i - 1) - (i == 0)] - 3,
+                    field_59A0_ + 6, field_59A4_ + 6);
+                host->Buffer::box_sprite(&box, &InterfaceBoxStyles[3]);
+            }
+        } else {
+            // 0x499E5E: count 2 (or 0) uses y[4], y[5].
+            for (i = 0; i < count; i++) {
+                labs_line(lab_child_x_, (&lab_upper_inner_y_)[i],
+                          lab_center_x_, lab_center_y_, field_59A0_,
+                          field_59A4_, 0);
+                StringTemp[0] = 0;
+                say_tech(StringTemp, children[i], 0);
+                CharUpperA(StringTemp);
+                FlatButton *button = &flatButtons1_[i + 3];
+                button->init(StringTemp, i + 0x37B, lab_child_x_,
+                             (&lab_upper_inner_y_)[i], field_59A0_,
+                             field_59A4_, host, 0);
+                button->set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+                button->redraw();
+                if (has_tech(children[i], faction)) {
+                    button->set_text_color(0xFF, -1, 1, 1);
+                }
+                button->set_border_styles(&InterfaceBoxStyles[27],
+                                          &InterfaceBoxStyles[28],
+                                          &InterfaceBoxStyles[29]);
+                button->redraw();
+                set_rectangle_dimensions(&box, lab_child_x_ - 3,
+                    (&lab_upper_inner_y_)[i] - 3, field_59A0_ + 6,
+                    field_59A4_ + 6);
+                host->Buffer::box_sprite(&box, &InterfaceBoxStyles[3]);
+            }
+        }
+    }
+
+    // 0x499C7E..0x49B172: measure pass (0) then draw pass (1).
+    field_A24_ = 0;
+    for (int pass = 0; pass < 2; pass++) {
+        char id[64];  // UNSURE: size from the frame gap (-0xc8 .. -0x88)
+        int i;
+
+        // 0x499FE3..0x49A12C: first status row.
+        host->Buffer::set_font(ReportIfGlobal.field_1E19C_,
+                               ReportIfGlobal.field_1E19C_,
+                               ReportIfGlobal.field_1E19C_, 0);
+        host->Buffer::set_text_color3(has_tech(tech, faction) ? 0xFF : 0xE1,
+                                      -1, 1, 1);
+        StringTemp[0] = 0;
+        strcat(StringTemp, "[");
+        say_tech(StringTemp, tech, 0);
+        CharUpperA(StringTemp);
+        strcat(StringTemp, "]");
+        if (pass) {
+            x = field_A28_;
+            y = static_cast<int>(field_A34_ + field_A2C_ - field_A24_) / 2;
+            box.left = x - 3;
+            box.right = x + field_59A8_ + 3;
+            box.top = y - 9;
+            box.bottom = field_A24_ + y + 6;
+            host->Buffer::box_sprite(&box, &InterfaceBoxStyles[3]);
+            inflate_frame(&box, -3, -3);
+            host->Buffer::box_sprite(&box, &InterfaceBoxStyles[0]);
+            y = host->Buffer::wrap_cent(StringTemp, x + 3, y, field_59A8_ - 6);
+        } else {
+            field_A24_ += host->Buffer::wrap_height(StringTemp,
+                                                    field_59A8_ - 6);
+        }
+
+        // 0x49A14A..0x49A2F1: second status row (category and depth).
+        host->Buffer::set_font(ReportIfGlobal.field_1E190_,
+                               ReportIfGlobal.field_1E190_,
+                               ReportIfGlobal.field_1E190_, 0);
+        host->Buffer::set_text_color3(mandate_color(tech_category(tech)),
+                                      -1, 1, 1);
+        StringTemp[0] = 0;
+        strcat(StringTemp, "[");
+        strcat(StringTemp, label_get(0x209 + tech_category(tech)));
+        strcat(StringTemp, " ");
+        reportwin_append_number(StringTemp, tech_recurse(tech, 0));
+        strcat(StringTemp, "]");
+        // Genuine original: field_E268_ is added to the row result and then
+        // taken back off y on both passes (0x49A235/0x49A268).
+        if (pass) {
+            y = host->Buffer::wrap_cent(StringTemp, x + 3, y, field_59A8_ - 6)
+                + field_E268_;
+        } else {
+            // UNSURE: the image loads field_E268_ before the wrap_height call.
+            field_A24_ += field_E268_
+                + host->Buffer::wrap_height(StringTemp, field_59A8_ - 6);
+        }
+        y -= field_E268_;
+        if (pass) {
+            report_sprite_draw_mono(&g_TECH_ICON_SPRITES[tech], host,
+                x + (static_cast<int>(field_59A8_) - 0x34) / 2 + 3, y + 3,
+                mandate_color(tech_category(tech)), 0x32,
+                g_TECH_ICON_SPRITES[tech].width());
+            y += 0x3A;
+        } else {
+            field_A24_ += 0x3A - field_E268_;
+        }
+
+        if (tech != -1) {
+            // 0x49A308..0x49A376: host text configuration.
+            if (!datalink) {
+                host->Buffer::set_text_color(0xE1, -1, 1, 1);
+                host->Buffer::set_text_color2(0xE1, -1, 1, 1);
+            } else {
+                host->set_wrap_width(10);
+                host->Buffer::set_font(DatalinkMain.entry_text_font(), 0, 0,
+                                       DatalinkMain.entry_link_font());
+                host->Buffer::set_text_color(0x99, -1, 1, 1);
+                host->Buffer::set_text_color_hyper(0x96, -1, 1, 1);
+            }
+
+            // 0x49A37B..0x49A4E2: reactors.
+            StringTemp[0] = 0;
+            for (i = 0; i < 4; i++) {
+                if (Reactor[i].preq_tech == tech) {
+                    if (!StringTemp[0]) {
+                        strcat(StringTemp, label_get(0x234 / 4));
+                        strcat(StringTemp, ": ");
+                    } else {
+                        strcat(StringTemp, ", ");
+                    }
+                    if (!datalink) {
+                        strcat(StringTemp, StringTable.get(Reactor[i].name));
+                    } else {
+                        // Reactor link ids are one-based.
+                        DatalinkMain.construct_id(id, 5, i + 1);
+                        LPSTR name = StringTable.get(Reactor[i].name);
+                        strcat(StringTemp, "$LINK<");
+                        strcat(StringTemp, name);
+                        strcat(StringTemp, "=");
+                        strcat(StringTemp, id);
+                        strcat(StringTemp, ">");
+                    }
+                }
+            }
+            if (StringTemp[0]) {
+                if (pass) {
+                    y = host->Buffer::wrap(StringTemp, x + 3, y,
+                                           field_59A8_ - 6);
+                } else {
+                    field_A24_ += host->Buffer::wrap_height(StringTemp,
+                                                            field_59A8_ - 6);
+                }
+            }
+
+            // 0x49A4E8..0x49A6B6: chassis.
+            StringTemp[0] = 0;
+            for (i = 0; i < 9; i++) {
+                if (Chassis[i].preq_tech == tech) {
+                    if (!StringTemp[0]) {
+                        strcat(StringTemp, label_get(0x120 / 4));
+                        strcat(StringTemp, ": ");
+                    } else {
+                        strcat(StringTemp, ", ");
+                    }
+                    if (!datalink) {
+                        strcat(StringTemp,
+                               StringTable.get(Chassis[i].offsv_1_name));
+                    } else {
+                        DatalinkMain.construct_id(id, 4, i);
+                        LPSTR name = StringTable.get(Chassis[i].offsv_1_name);
+                        strcat(StringTemp, "$LINK<");
+                        strcat(StringTemp, name);
+                        strcat(StringTemp, "=");
+                        strcat(StringTemp, id);
+                        strcat(StringTemp, ">");
+                    }
+                    // Pinned 0x49A5FC/0x49A606: kind, then the raw name, on
+                    // both passes.
+                    TechnologyHelpEntryKind = 0x62;
+                    TechnologyHelpEntryName = Chassis[i].offsv_1_name;
+                    strcat(StringTemp, " ");
+                    strcat(StringTemp, "(");
+                    reportwin_append_number(StringTemp, Chassis[i].speed);
+                    strcat(StringTemp, ")");
+                }
+            }
+            if (StringTemp[0]) {
+                if (pass) {
+                    y = host->Buffer::wrap(StringTemp, x + 3, y,
+                                           field_59A8_ - 6);
+                } else {
+                    field_A24_ += host->Buffer::wrap_height(StringTemp,
+                                                            field_59A8_ - 6);
+                }
+            }
+
+            // 0x49A6BC..0x49A8CA: weapons.
+            StringTemp[0] = 0;
+            for (i = 0; i < 26; i++) {
+                if (Weapon[i].preq_tech == tech) {
+                    if (!StringTemp[0]) {
+                        strcat(StringTemp, label_get(0x124 / 4));
+                        strcat(StringTemp, ": ");
+                    } else {
+                        strcat(StringTemp, ", ");
+                    }
+                    if (!datalink) {
+                        strcat(StringTemp, StringTable.get(Weapon[i].name));
+                    } else {
+                        DatalinkMain.construct_id(id, 6, i);
+                        LPSTR name = StringTable.get(Weapon[i].name);
+                        strcat(StringTemp, "$LINK<");
+                        strcat(StringTemp, name);
+                        strcat(StringTemp, "=");
+                        strcat(StringTemp, id);
+                        strcat(StringTemp, ">");
+                    }
+                    TechnologyHelpEntryKind = 0x63;
+                    TechnologyHelpEntryName = Weapon[i].name;
+                    strcat(StringTemp, " ");
+                    strcat(StringTemp, "(");
+                    // The two label arms share their get/strcat tail.
+                    if (Weapon[i].offense_rating < 0) {
+                        strcat(StringTemp, label_get(0x310 / 4));
+                    } else if (Weapon[i].mode < 3) {
+                        reportwin_append_number(StringTemp,
+                                                Weapon[i].offense_rating);
+                    } else {
+                        strcat(StringTemp, label_get(0x200 / 4));
+                    }
+                    strcat(StringTemp, ")");
+                }
+            }
+            if (StringTemp[0]) {
+                if (pass) {
+                    y = host->Buffer::wrap(StringTemp, x + 3, y,
+                                           field_59A8_ - 6);
+                } else {
+                    field_A24_ += host->Buffer::wrap_height(StringTemp,
+                                                            field_59A8_ - 6);
+                }
+            }
+
+            // 0x49A8D0..0x49AACA: armor.
+            StringTemp[0] = 0;
+            for (i = 0; i < 14; i++) {
+                if (Armor[i].preq_tech == tech) {
+                    if (!StringTemp[0]) {
+                        strcat(StringTemp, label_get(0x128 / 4));
+                        strcat(StringTemp, ": ");
+                    } else {
+                        strcat(StringTemp, ", ");
+                    }
+                    if (!datalink) {
+                        strcat(StringTemp, StringTable.get(Armor[i].name));
+                    } else {
+                        DatalinkMain.construct_id(id, 7, i);
+                        LPSTR name = StringTable.get(Armor[i].name);
+                        strcat(StringTemp, "$LINK<");
+                        strcat(StringTemp, name);
+                        strcat(StringTemp, "=");
+                        strcat(StringTemp, id);
+                        strcat(StringTemp, ">");
+                    }
+                    TechnologyHelpEntryKind = 0x64;
+                    TechnologyHelpEntryName = Armor[i].name;
+                    strcat(StringTemp, " ");
+                    strcat(StringTemp, "(");
+                    if (Armor[i].defense_rating < 0) {
+                        strcat(StringTemp, label_get(0x310 / 4));
+                    } else {
+                        reportwin_append_number(StringTemp,
+                                                Armor[i].defense_rating);
+                    }
+                    strcat(StringTemp, ")");
+                }
+            }
+            if (StringTemp[0]) {
+                if (pass) {
+                    y = host->Buffer::wrap(StringTemp, x + 3, y,
+                                           field_59A8_ - 6);
+                } else {
+                    field_A24_ += host->Buffer::wrap_height(StringTemp,
+                                                            field_59A8_ - 6);
+                }
+            }
+
+            // 0x49AAD0..0x49AC35: abilities.
+            StringTemp[0] = 0;
+            for (i = 0; i < 29; i++) {
+                if (Ability[i].preq_tech == tech) {
+                    if (!StringTemp[0]) {
+                        strcat(StringTemp, label_get(0x12C / 4));
+                        strcat(StringTemp, ": ");
+                    } else {
+                        strcat(StringTemp, ", ");
+                    }
+                    if (!datalink) {
+                        strcat(StringTemp, StringTable.get(Ability[i].name));
+                    } else {
+                        DatalinkMain.construct_id(id, 8, i);
+                        LPSTR name = StringTable.get(Ability[i].name);
+                        strcat(StringTemp, "$LINK<");
+                        strcat(StringTemp, name);
+                        strcat(StringTemp, "=");
+                        strcat(StringTemp, id);
+                        strcat(StringTemp, ">");
+                    }
+                }
+            }
+            if (StringTemp[0]) {
+                if (pass) {
+                    y = host->Buffer::wrap(StringTemp, x + 3, y,
+                                           field_59A8_ - 6);
+                } else {
+                    field_A24_ += host->Buffer::wrap_height(StringTemp,
+                                                            field_59A8_ - 6);
+                }
+            }
+
+            // 0x49AC3B..0x49AD80: predefined prototypes. Genuine original:
+            // all 64 prototype rows are scanned (0x9AB868..0x9AC568).
+            StringTemp[0] = 0;
+            for (i = 0; i < 64; i++) {
+                if ((VehPrototypes[i].flags & 1)
+                    && VehPrototypes[i].preq_tech == tech) {
+                    if (!StringTemp[0]) {
+                        strcat(StringTemp, label_get(0x318 / 4));
+                        strcat(StringTemp, ": ");
+                    } else {
+                        strcat(StringTemp, ", ");
+                    }
+                    if (!datalink) {
+                        strcat(StringTemp, VehPrototypes[i].veh_name);
+                    } else {
+                        DatalinkMain.construct_id(id, 3, i);
+                        strcat(StringTemp, "$LINK<");
+                        strcat(StringTemp, VehPrototypes[i].veh_name);
+                        strcat(StringTemp, "=");
+                        strcat(StringTemp, id);
+                        strcat(StringTemp, ">");
+                    }
+                }
+            }
+            if (StringTemp[0]) {
+                if (pass) {
+                    y = host->Buffer::wrap(StringTemp, x + 3, y,
+                                           field_59A8_ - 6);
+                } else {
+                    field_A24_ += host->Buffer::wrap_height(StringTemp,
+                                                            field_59A8_ - 6);
+                }
+            }
+
+            // 0x49AD86..0x49AF76: facilities 1..133.
+            StringTemp[0] = 0;
+            for (i = 1; i < 134; i++) {
+                if (Facility[i].preq_tech == tech
+                    || Facility[i].free_tech == tech) {
+                    if (!StringTemp[0]) {
+                        strcat(StringTemp, label_get(0x110 / 4));
+                        strcat(StringTemp, ": ");
+                    } else {
+                        strcat(StringTemp, ", ");
+                    }
+                    // Genuine original: the opening parenthesis of the
+                    // free-facility note precedes the facility name.
+                    if (Facility[i].free_tech == tech) {
+                        strcat(StringTemp, "(");
+                    }
+                    if (!datalink) {
+                        strcat(StringTemp, StringTable.get(Facility[i].name));
+                    } else {
+                        if (i < 70) {
+                            DatalinkMain.construct_id(id, 0xA, i);
+                        } else {
+                            DatalinkMain.construct_id(id, 0xB, i);
+                        }
+                        LPSTR name = StringTable.get(Facility[i].name);
+                        strcat(StringTemp, "$LINK<");
+                        strcat(StringTemp, name);
+                        strcat(StringTemp, "=");
+                        strcat(StringTemp, id);
+                        strcat(StringTemp, ">");
+                    }
+                    if (Facility[i].free_tech == tech) {
+                        strcat(StringTemp, " ");
+                        strcat(StringTemp, label_get(0x4DC / 4));
+                        strcat(StringTemp, ")");
+                    }
+                }
+            }
+            if (StringTemp[0]) {
+                if (pass) {
+                    y = host->Buffer::wrap(StringTemp, x + 3, y,
+                                           field_59A8_ - 6);
+                } else {
+                    field_A24_ += host->Buffer::wrap_height(StringTemp,
+                                                            field_59A8_ - 6);
+                }
+            }
+
+            // 0x49AF7B..0x49B07D: social models. Genuine original: the
+            // section is flushed after every match without clearing
+            // StringTemp, so the accumulated text is wrapped again each time.
+            StringTemp[0] = 0;
+            for (i = 0; i < 4; i++) {
+                for (int j = 0; j < 4; j++) {
+                    if (SocialCategories[i].preq_tech[j] == tech) {
+                        if (!StringTemp[0]) {
+                            strcat(StringTemp, label_get(0x118 / 4));
+                            strcat(StringTemp, ": ");
+                        } else {
+                            strcat(StringTemp, ", ");
+                        }
+                        // UNSURE: the image tests datalink here with no
+                        // branch (0x49AFEF..0x49AFF7); identical arms that VC6
+                        // merged would leave exactly that test.
+                        if (!datalink) {
+                            strcat(StringTemp, StringTable.get(
+                                SocialCategories[i].name[j]));
+                        } else {
+                            strcat(StringTemp, StringTable.get(
+                                SocialCategories[i].name[j]));
+                        }
+                        if (StringTemp[0]) {
+                            if (pass) {
+                                y = host->Buffer::wrap(StringTemp, x + 3, y,
+                                                       field_59A8_ - 6);
+                            } else {
+                                field_A24_ += host->Buffer::wrap_height(
+                                    StringTemp, field_59A8_ - 6);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 0x49B083..0x49B162: citizens. Same per-match flush; no link.
+            StringTemp[0] = 0;
+            for (i = 0; i < 7; i++) {
+                if (Citizen[i].preq_tech == tech) {
+                    if (!StringTemp[0]) {
+                        strcat(StringTemp, label_get(0x4CC / 4));
+                        strcat(StringTemp, ": ");
+                    } else {
+                        strcat(StringTemp, ", ");
+                    }
+                    strcat(StringTemp,
+                           StringTable.get(Citizen[i].singular_name));
+                    if (StringTemp[0]) {
+                        if (pass) {
+                            y = host->Buffer::wrap(StringTemp, x + 3, y,
+                                                   field_59A8_ - 6);
+                        } else {
+                            field_A24_ += host->Buffer::wrap_height(
+                                StringTemp, field_59A8_ - 6);
+                        }
+                    }
                 }
             }
         }
     }
 
-    int measured_height = 0;
-    int status_y = 0;
-    const int section_x = left + (datalink ? 3 : 0);
-    field_A24_ = 0;
-    for (int pass = 0; pass < 2; ++pass) {
-        const bool draw_pass = pass != 0;
-        reportwin_draw_lab_status_rows(canvas, field_FAB8_, faction,
-            field_A28_ + 3, field_A34_ + field_A2C_,
-            field_59A8_, status_y, measured_height, draw_pass,
-            status_child_count == 3,
-            ReportIfGlobal.field_1E19C_, ReportIfGlobal.field_1E190_);
-
-        if (field_FAB8_ != -1) {
-            // The native host configuration runs in each outer pass. HOST
-            // chooses the font and colors; PASS chooses measure versus draw.
-            if (datalink) {
-                canvas.set_wrap_width(10);
-                canvas.set_font(DatalinkMain.entry_text_font(), 0, 0,
-                                DatalinkMain.entry_link_font());
-                canvas.set_text_color(0x99, -1, 1, 1);
-                canvas.set_text_color_hyper(0x96, -1, 1, 1);
-            } else {
-                canvas.set_text_color(0xE1, -1, 1, 1);
-                canvas.set_text_color2(0xE1, -1, 1, 1);
-            }
-            int section_y = status_y;
-            reportwin_draw_lab_unlock_sections(canvas, field_FAB8_, datalink,
-                draw_pass, section_x, section_y, &field_59A8_, measured_height);
-        }
-        if (!draw_pass) field_A24_ = measured_height;
+    // 0x49B178..0x49B1CF
+    host->set_wrap_width(0);
+    for (int button_index = 1; button_index < 7; button_index++) {
+        FlatButton *button = &flatButtons1_[button_index];
+        // Genuine original: the mouse position is read into x/y.
+        button->get_mouse_pos(&x, &y);
+        button->on_mouse_move(x, y);
     }
-
-    // The six native list controls have completed their status rows. The
-    // host's wrap width is cleared before mouse feedback at 0x49B186.
-    canvas.set_wrap_width(0);
-
-    // 0x49B178..0x49B1B5 refreshes mouse feedback on the six technology
-    // controls after their geometry has settled. The original uses the
-    // inherited Win::get_mouse_pos and virtual on_mouse_move methods
-    // (slot 17); these are real FlatButton subobjects, not an address table.
-    int mouse_x = 0;
-    int mouse_y = 0;
-    for (int button = 1; button < 7; ++button) {
-        flatButtons1_[button].get_mouse_pos(&mouse_x, &mouse_y);
-        flatButtons1_[button].on_mouse_move(mouse_x, mouse_y);
-    }
-
-    // The native host clears Buffer::field_10_ at GraphicWin+0x454, refreshes
-    // the six buttons above, then restores the host's working clip at
-    // 0x49B1BA..1D5. This typed host path supplies that real Buffer subobject.
-    canvas.set_clip(datalink ? DatalinkMain.buffer_working_rect()
-                            : buffer_working_rect());
-    // 0x49B1C3..1CF publishes the final chart cursor in the owned RECT.
-    rect1_.left = mouse_x;
-    rect1_.top = mouse_y;
-    // Native 0x498D25..0x499523 is covered above: the icon uses the sprite's
-    // native width as its draw_mono denominator, the final technology formats
-    // accumulated research instead of a normal technology name, and the four
-    // category-bar boxes retain their native style dispatch and clip sequence.
+    host->Buffer::set_clip(host->buffer_working_rect());
+    // Genuine original: the last button's mouse position is published into
+    // rect1_'s left/top (the ordinary host loaded them as x/y at entry).
+    rect1_.left = x;
+    rect1_.top = y;
 }
 
 // ORIGINAL: 0x0049B220 ?on_button_passover@ReportWin@@QAEXHH@Z 0x0049B220-0x0049B446 BYTE_EXACT
@@ -2426,7 +2666,8 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
     GraphicWin *host = &DatalinkMain;
     if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] != 8) host = this;
     const int half = line_height / 2;
-    const int centre_y = static_cast<int>(lab_center_y_) + half;
+    // The image keeps the row centre in the line-height parameter's slot.
+    line_height = static_cast<int>(lab_center_y_) + half;
     RECT *const rect = &report_work_rect_;
 
     if (first_id == static_cast<int>(lab_center_x_)) {
@@ -2437,9 +2678,9 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
             && branch_id != static_cast<int>(lab_lower_inner_y_)) {
             // 0x49B4D3
             rect->right = mid + 7;
-            rect->top = centre_y;
+            rect->top = line_height;
             rect->left = static_cast<int>(lab_prerequisite_x_) + x_offset - 4;
-            rect->bottom = centre_y + 20;
+            rect->bottom = line_height + 20;
             rect->left += 7;
             rect->right -= 7;
             report_work_rect_.bottom -= 7;
@@ -2459,9 +2700,9 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
             rect->right = mid;
             rect->bottom = static_cast<int>(lab_lower_inner_y_) + half;
             if (branch_id == static_cast<int>(lab_upper_inner_y_)) {
-                report_work_rect_.bottom = centre_y;
+                report_work_rect_.bottom = line_height;
             } else {
-                report_work_rect_.top = centre_y + 1;
+                report_work_rect_.top = line_height + 1;
             }
             host->Buffer::set_clip(rect);
             rect->bottom = static_cast<int>(lab_lower_inner_y_) + half;
@@ -2474,9 +2715,9 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
         host->Buffer::restore_clip();
         // 0x49B62F
         rect->left = mid - 7;
-        rect->top = centre_y;
+        rect->top = line_height;
         rect->right = static_cast<int>(lab_center_x_) + 4;
-        rect->bottom = centre_y + 20;
+        rect->bottom = line_height + 20;
         rect->left += 7;
         rect->right -= 7;
         report_work_rect_.bottom -= 7;
@@ -2507,11 +2748,11 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
                 // 0x49B77A: the arrow is drawn before the line.
                 Sprite *arrow = &g_IFACE_TECH_TREE_ARROW_SPRITES[style_select ? 2 : 0];
                 arrow->draw(host, arrow->transparent_index(),
-                            static_cast<int>(lab_child_x_) - 10, centre_y - 6);
+                            static_cast<int>(lab_child_x_) - 10, line_height - 6);
                 rect->right = static_cast<int>(lab_child_x_) + 4;
-                rect->top = centre_y;
+                rect->top = line_height;
                 rect->left = mid - 7;
-                rect->bottom = centre_y + 20;
+                rect->bottom = line_height + 20;
                 rect->left += 7;
                 rect->right -= 7;
                 report_work_rect_.bottom -= 7;
@@ -2526,13 +2767,13 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
                 rect->right = static_cast<int>(lab_child_x_) - 3;
                 rect->bottom = static_cast<int>(lab_lower_inner_y_) + half;
                 if (second_id == static_cast<int>(lab_upper_inner_y_)) {
-                    report_work_rect_.bottom = centre_y;
+                    report_work_rect_.bottom = line_height;
                     Sprite *arrow = &g_IFACE_TECH_TREE_ARROW_SPRITES[style_select ? 2 : 0];
                     arrow->draw(host, arrow->transparent_index(),
                                 static_cast<int>(lab_child_x_) - 10,
                                 static_cast<int>(lab_upper_inner_y_) + half - 6);
                 } else {
-                    report_work_rect_.top = centre_y + 1;
+                    report_work_rect_.top = line_height + 1;
                     Sprite *arrow = &g_IFACE_TECH_TREE_ARROW_SPRITES[style_select ? 2 : 0];
                     arrow->draw(host, arrow->transparent_index(),
                                 static_cast<int>(lab_child_x_) - 10,
@@ -2551,13 +2792,13 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
             rect->right = static_cast<int>(lab_child_x_) - 3;
             rect->bottom = static_cast<int>(lab_four_child_bottom_y_) + half;
             if (second_id == static_cast<int>(lab_four_child_top_y_)) {
-                report_work_rect_.bottom = centre_y;
+                report_work_rect_.bottom = line_height;
                 Sprite *arrow = &g_IFACE_TECH_TREE_ARROW_SPRITES[style_select ? 2 : 0];
                 arrow->draw(host, arrow->transparent_index(),
                             static_cast<int>(lab_child_x_) - 10,
                             static_cast<int>(lab_four_child_top_y_) + half - 6);
             } else {
-                report_work_rect_.top = centre_y + 1;
+                report_work_rect_.top = line_height + 1;
                 Sprite *arrow = &g_IFACE_TECH_TREE_ARROW_SPRITES[style_select ? 2 : 0];
                 arrow->draw(host, arrow->transparent_index(),
                             static_cast<int>(lab_child_x_) - 10,
@@ -2576,13 +2817,13 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
         rect->right = static_cast<int>(lab_child_x_) - 3;
         rect->bottom = static_cast<int>(lab_three_child_lower_y_) + half;
         if (second_id == static_cast<int>(lab_three_child_upper_y_)) {
-            report_work_rect_.bottom = centre_y;
+            report_work_rect_.bottom = line_height;
             Sprite *arrow = &g_IFACE_TECH_TREE_ARROW_SPRITES[style_select ? 2 : 0];
             arrow->draw(host, arrow->transparent_index(),
                         static_cast<int>(lab_child_x_) - 10,
                         static_cast<int>(lab_three_child_upper_y_) + half - 6);
         } else {
-            report_work_rect_.top = centre_y + 1;
+            report_work_rect_.top = line_height + 1;
             Sprite *arrow = &g_IFACE_TECH_TREE_ARROW_SPRITES[style_select ? 2 : 0];
             arrow->draw(host, arrow->transparent_index(),
                         static_cast<int>(lab_child_x_) - 10,
@@ -2600,10 +2841,10 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
     host->Buffer::restore_clip();
     // 0x49BBCF
     rect->left = static_cast<int>(field_59A8_) + static_cast<int>(lab_center_x_) - 4;
-    rect->top = centre_y;
+    rect->top = line_height;
     if (style_select) {
         rect->right = mid + 7;
-        rect->bottom = centre_y + 20;
+        rect->bottom = line_height + 20;
         rect->left += 7;
         rect->right -= 7;
         report_work_rect_.bottom -= 7;
@@ -2614,7 +2855,7 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
         host->Buffer::box_sprite(rect, &InterfaceBoxStyles[5]);
     } else {
         rect->right = mid + 7;
-        rect->bottom = centre_y + 20;
+        rect->bottom = line_height + 20;
         rect->left += 7;
         rect->right -= 7;
         report_work_rect_.bottom -= 7;
@@ -3067,244 +3308,384 @@ void ReportWin::on_selected(int selection_id, int) {
 // ORIGINAL: 0x0049D540 ?draw_ops@ReportWin@@QAEXXZ 0x0049D540-0x0049EAEB;0x00659435-0x00659447
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/0049d540.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 void ReportWin::draw_ops() {
-    Buffer &canvas = *static_cast<Buffer *>(this);
-    const int faction = ReportIfGlobal.report_faction_id_;
-    Random rng;
+    const int faction = ReportIfGlobal.report_faction_id_;       // edi, spilled to [ebp-0x74]
+    Random rng;                                                  // [ebp-0x54]
     rng.reseed(timeGetTime());
+    // Image stores 59A0 then 59A4 from one register.
     field_59A0_ = field_59A4_ = 40;
     const int split = energy_panel_rect_.top + 34 + field_E268_;
-    RECT upper = {energy_panel_rect_.left, energy_panel_rect_.top,
+    RECT upper = {energy_panel_rect_.left, energy_panel_rect_.top,           // [ebp-0x94]
         energy_panel_rect_.right, split};
-    RECT title = {energy_panel_rect_.left + 3, energy_panel_rect_.top + 3,
+    RECT title = {energy_panel_rect_.left + 3, energy_panel_rect_.top + 3,   // [ebp-0x6c]
         energy_panel_rect_.right - 3, energy_panel_rect_.top + field_E268_ + 9};
-    RECT lower = {energy_panel_rect_.left, split + 2,
+    RECT lower = {energy_panel_rect_.left, split + 2,                        // [ebp-0x84]
         energy_panel_rect_.right, energy_panel_rect_.bottom};
-    RECT icon = {energy_panel_rect_.left + 3, split + 5,
+    RECT icon = {energy_panel_rect_.left + 3, split + 5,                     // [ebp-0x34]
         energy_panel_rect_.left + 43, split + 45};
-    RECT text = {energy_panel_rect_.left + 45, split + 5,
+    RECT text = {energy_panel_rect_.left + 45, split + 5,                    // [ebp-0x48]
         energy_panel_rect_.right - 3, split + 45};
-    canvas.box_sprite(&upper, &InterfaceBoxStyles[0]);
-    canvas.box_sprite(&title, &InterfaceBoxStyles[1]);
-    canvas.box_sprite(&lower, &InterfaceBoxStyles[0]);
-    const int pitch = field_59A4_ + 2;
-    const int rows = (lower.bottom - lower.top - 6) / pitch;
-    flatButton4_.show(0); flatButton5_.show(0); flatButton6_.show(0);
-    const int count = PlayersData[faction].current_num_bases;
-    if (!field_C0F8_) {
-        if (rows <= count) field_E26C_ = 1;
-    } else if (count < rows) {
+    Buffer::box_sprite(&upper, &InterfaceBoxStyles[0]);
+    Buffer::box_sprite(&title, &InterfaceBoxStyles[1]);
+    Buffer::box_sprite(&lower, &InterfaceBoxStyles[0]);
+    const int pitch = field_59A4_ + 2;                           // [ebp-0x1c]
+    const int rows = (lower.bottom - lower.top - 6) / pitch;     // [ebp-0x4c]
+    flatButton4_.show(0);
+    flatButton5_.show(0);
+    flatButton6_.show(0);
+    // The image CSEs &PlayersData[faction].current_num_bases into [ebp-0x20]
+    // and re-reads the count through it in the field_E270_ block.
+    if (field_C0F8_ == 0) {
+        if (PlayersData[faction].current_num_bases >= rows) {
+            field_E26C_ = 1;
+        }
+    } else if (PlayersData[faction].current_num_bases < rows) {
         scroll_hide(this, &scroll_);
         field_C0F8_ = 0;
     }
-    if (field_E270_) {
+    if (field_E270_ != 0) {
         field_C108_ = rows - 1;
         field_C0FC_ = field_C100_ = 0;
-        field_C104_ = count - 1;
-        scroll_.set_range(0, count - 1);
+        field_C104_ = PlayersData[faction].current_num_bases - 1;
+        scroll_.set_range(0, PlayersData[faction].current_num_bases - 1);
         scroll_.paging_ = field_C108_;
         scroll_.set_pos(field_C0FC_);
         field_E270_ = 0;
     }
     spot_.kill_type(0);
     spot_.reset_count();
-    strcpy(StringTemp, "[");
+    StringTemp[0] = 0;
+    strcat(StringTemp, "[");
+    // Players[faction] offset (faction * 0x5A4) is CSE'd into [ebp-0x70] and
+    // reused by is_alien_faction(faction) in the 0x8B4 page below.
     strcat(StringTemp, get_adjective(faction));
     strcat(StringTemp, " ");
     strcat(StringTemp, label_get(0xACC / 4));
     if (field_5A08_) {
-        strcat(StringTemp, " - ");
-        const int labels[8] = {0xA0, 0xA4, 0xE4, 0xAAC, 0xAB0, 0xAB4, 0xFC, 0xAB8};
-        if (field_5A08_ >= 1 && field_5A08_ <= 8)
-            strcat(StringTemp, label_get(labels[field_5A08_ - 1] / 4));
+        // Image: three separate strcats, not one " - " literal.
+        strcat(StringTemp, " ");
+        strcat(StringTemp, "-");
+        strcat(StringTemp, " ");
+        // Jump table 0x0049EAEC (8 entries); the shared Strings::get+strcat
+        // tail is VC6 cross-jumping.
+        switch (field_5A08_) {
+        case 1:
+            strcat(StringTemp, label_get(0xA0 / 4));
+            break;
+        case 2:
+            strcat(StringTemp, label_get(0xA4 / 4));
+            break;
+        case 3:
+            strcat(StringTemp, label_get(0xE4 / 4));
+            break;
+        case 4:
+            strcat(StringTemp, label_get(0xAAC / 4));
+            break;
+        case 5:
+            strcat(StringTemp, label_get(0xAB0 / 4));
+            break;
+        case 6:
+            strcat(StringTemp, label_get(0xAB4 / 4));
+            break;
+        case 7:
+            strcat(StringTemp, label_get(0xFC / 4));
+            break;
+        case 8:
+            strcat(StringTemp, label_get(0xAB8 / 4));
+            break;
+        }
     }
     CharUpperA(StringTemp);
     strcat(StringTemp, "]");
-    --title.top; --title.bottom;
-    canvas.write_cent_l(StringTemp, &title, strlen(StringTemp));
-    int ordinal = -1;
-    // Original 49DF66/49E0CB assign this only for facilities; 49E0C4 reads
-    // it on the unit path too. Preserve the stale/uninitialized value.
-    int facility_scratch;
-    for (int list_index = 0; list_index < GameDataStateStorage.fields_.base_current_count_; ++list_index) {
-        const int base_id = ReportIfGlobal.sort_entries_[list_index].base_id;
-        Base &base = Bases[base_id];
-        if (base.faction_id_current != faction) continue;
-        ++ordinal;
-        if (ordinal < static_cast<int>(field_C0FC_) || ordinal >= static_cast<int>(field_C0FC_) + rows) continue;
-        if (ordinal > static_cast<int>(field_C0FC_)) {
-            text.top += pitch; text.bottom += pitch;
-            icon.top += pitch; icon.bottom += pitch;
+    --title.top;
+    --title.bottom;
+    Buffer::write_cent_l(StringTemp, &title);
+    ++title.top;
+    ++title.bottom;
+
+    int ordinal = -1;                                            // [ebp-0x20]
+    // Genuine original: assigned only on the facility paths of the 0x8B3
+    // page (49DF66/49E0CB) but read on the unit path too (49E0C4) for the
+    // "== FAC_STOCKPILE_ENERGY" test. Preserve the stale/uninitialised value.
+    int facility;                                                // [ebp-0x50]
+    for (int list_index = 0;                                     // [ebp-0x18]
+         list_index < GameDataStateStorage.fields_.base_current_count_; ++list_index) {
+        // ebx = &sort_entries_[list_index]; base_id is re-read through it
+        // after every call, so it is not cached in a local.
+        const ReportSortEntry &entry = ReportIfGlobal.sort_entries_[list_index];
+        // Image re-reads the global here (not the faction local).
+        if (Bases[entry.base_id].faction_id_current != ReportIfGlobal.report_faction_id_) {
+            continue;
         }
-        report_work_rect_.left = icon.left;
-        report_work_rect_.top = text.top;
-        report_work_rect_.right = text.right + 1;
-        report_work_rect_.bottom = text.bottom;
-        spot_.add(base_id + 0x400, 0, &report_work_rect_);
-        spot_.add(base_id + 0xC00, 0, &icon);
-        const bool selected = (selected_bases_[base_id / 32] & (1u << (base_id & 31))) != 0;
-        canvas.box_sprite(&text, &InterfaceBoxStyles[selected ? 2 : 1]);
-        if (selected) canvas.box_sprite(&text, &InterfaceBoxStyles[5]);
-        canvas.box_sprite(&icon, &InterfaceBoxStyles[selected ? 2 : 1]);
-        if (selected) canvas.box_sprite(&icon, &InterfaceBoxStyles[5]);
-        if (base.governor & 0x80000000u) {
+        ++ordinal;
+        if (ordinal < static_cast<int>(field_C0FC_)) {
+            continue;
+        }
+        if (ordinal >= static_cast<int>(field_C0FC_) + rows) {
+            continue;
+        }
+        if (ordinal > static_cast<int>(field_C0FC_)) {
+            text.top += pitch;
+            text.bottom += pitch;
+            icon.top += pitch;
+            icon.bottom += pitch;
+        }
+        // UNSURE: the image computes right as
+        //   ((text.right - text.left) - icon.left) + icon.right + 3 + icon.left
+        // (sub, sub, lea [edx+edi+3], add). Alternative width spelling:
+        //   report_rect_width(&text) + report_rect_width(&icon) + 3.
+        set_rectangle_dimensions(&report_work_rect_, icon.left, text.top,
+            text.right - text.left - icon.left + icon.right + 3, text.bottom - text.top);
+        report_spot_add(&spot_, entry.base_id + 0x400, 0, &report_work_rect_);
+        report_spot_add(&spot_, entry.base_id + 0xC00, 0, &icon);
+        if (selected_bases_[entry.base_id / 32] & (1 << (entry.base_id % 32))) {
+            Buffer::box_sprite(&text, &InterfaceBoxStyles[2]);
+            Buffer::box_sprite(&text, &InterfaceBoxStyles[5]);
+            Buffer::box_sprite(&icon, &InterfaceBoxStyles[2]);
+            Buffer::box_sprite(&icon, &InterfaceBoxStyles[5]);
+        } else {
+            Buffer::box_sprite(&text, &InterfaceBoxStyles[1]);
+            Buffer::box_sprite(&icon, &InterfaceBoxStyles[1]);
+        }
+        const uint32_t governor = Bases[entry.base_id].governor;
+        if (governor & 0x80000000u) {
             for (int priority = 0; priority < 4; ++priority) {
-                if (base.governor & (0x1000000u << priority)) {
-                    RECT inner = {icon.left + 1, icon.top + 1, icon.right - 1, icon.bottom - 1};
-                    canvas.box_sprite(&inner, &InterfaceBoxStyles[36 + 3 * priority]);
+                if (governor & (0x1000000u << priority)) {
+                    // UNSURE: inset/restore statement order. Image shrink
+                    // stores left, bottom, right, top; restore loads/stores
+                    // left, right, top, bottom.
+                    ++icon.left;
+                    --icon.right;
+                    ++icon.top;
+                    --icon.bottom;
+                    Buffer::box_sprite(&icon, &InterfaceBoxStyles[36 + 3 * priority]);
+                    --icon.left;
+                    ++icon.right;
+                    --icon.top;
+                    ++icon.bottom;
                     break;
                 }
             }
         }
-        const int text_y = pitch / 2 - static_cast<int>(field_E268_) / 2 + text.top;
-        const int base_width = MapWinCaptionScale < 1 ? 62 : MapWinCaptionScale * 100 / MapWinCaptionDivisor;
-        const int base_height = MapWinCaptionScale < 1 ? 46 : MapWinCaptionScale * 75 / MapWinCaptionDivisor;
-        rect1_.left = (static_cast<int>(field_59A0_) - base_width) / 2 + 1 + icon.left;
-        rect1_.top = (static_cast<int>(field_59A4_) - base_height) / 2 + 1 + icon.top;
-        base_draw(&canvas, base_id, rect1_.left, rect1_.top, -6, 0x40);
-        canvas.set_text_color(0xE1, -1, 1, 1);
-        canvas.set_font(ReportIfGlobal.field_1E18C_, ReportIfGlobal.field_1E184_, ReportIfGlobal.field_1E18C_, 0);
-        set_base(base_id);
+        // pitch / 2 is CSE'd into [ebp-0x14] and reused by the 0x8B4 page.
+        const int text_y = pitch / 2 - static_cast<int>(field_E268_) / 2 + text.top;  // [ebp-0x5c]
+        rect1_.left = (static_cast<int>(field_59A0_)
+            - (MapWinCaptionScale > 0 ? MapWinCaptionScale * 100 / MapWinCaptionDivisor : 62))
+            / 2 + icon.left + 1;
+        rect1_.top = (static_cast<int>(field_59A4_)
+            - (MapWinCaptionScale > 0 ? MapWinCaptionScale * 75 / MapWinCaptionDivisor : 46))
+            / 2 + icon.top + 1;
+        base_draw(this, entry.base_id, rect1_.left, rect1_.top, -6, 0x40);
+        Buffer::set_text_color(0xE1, -1, 1, 1);
+        Buffer::set_font(ReportIfGlobal.field_1E18C_, ReportIfGlobal.field_1E184_,
+            ReportIfGlobal.field_1E18C_, 0);
+        set_base(entry.base_id);
         base_compute(0);
         StringTemp[0] = 0;
-        say_base(StringTemp, base_id);
-        const int matrix = base_project(FAC_TELEPATHIC_MATRIX);
-        if (BaseCurrent->talent_total < BaseCurrent->drone_total
-            && (matrix < 0 || Bases[matrix].faction_id_current != faction)) {
-            canvas.set_text_color(0xF9, -1, 1, 1);
+        say_base(StringTemp, entry.base_id);
+        // Image reads project_base[30] (0x009A658C) inline: has_project.
+        if (BaseCurrent->drone_total > BaseCurrent->talent_total
+            && !has_project(SP_TELEPATHIC_MATRIX, faction)) {
+            Buffer::set_text_color(0xF9, -1, 1, 1);
         } else if (!BaseCurrent->drone_total && BaseCurrent->population_size > 2
-            && (BaseCurrent->population_size + 1) / 2 <= BaseCurrent->talent_total) {
+            && BaseCurrent->talent_total >= (BaseCurrent->population_size + 1) / 2) {
             strcat(StringTemp, "(!)");
-            canvas.set_text_color(0xFF, -1, 1, 1);
+            Buffer::set_text_color(0xFF, -1, 1, 1);
         }
         rect1_.left = text.left + 5;
         CharUpperA(StringTemp);
-        canvas.write_l(StringTemp, rect1_.left, text.top + 5, strlen(StringTemp));
+        Buffer::write_l(StringTemp, rect1_.left, text.top + 5);
         StringTemp[0] = 0;
-        if (is_objective(base_id) && !(GameDataStateStorage.fields_.game_rules_ & 0x20000000)) {
-            // The original indexes colour by list position, not sorted base ID.
-            canvas.set_text_color(InfoFactionTextColors[Bases[list_index].faction_id_current], -1, 1, 1);
+        if (is_objective(entry.base_id)
+            && !(GameDataStateStorage.fields_.game_rules_ & 0x20000000)) {
+            // Genuine original: colour indexed by list position, not by the
+            // sorted base id (Bases[list_index]).
+            Buffer::set_text_color(InfoFactionTextColors[Bases[list_index].faction_id_current],
+                -1, 1, 1);
             strcat(StringTemp, label_get(0xE08 / 4));
             CharUpperA(StringTemp);
-        } else if (!(base.governor & 0x80000000u)) {
-            canvas.set_text_color(0xE1, -1, 1, 1);
-            strcat(StringTemp, label_get(0xBFC / 4));
-        } else {
+        } else if (Bases[entry.base_id].governor & 0x80000000u) {
             for (int status_priority = 0; status_priority < 4; ++status_priority) {
-                if (base.governor & (0x1000000u << status_priority)) {
-                    canvas.set_text_color(mandate_color(status_priority), -1, 1, 1);
+                if (Bases[entry.base_id].governor & (0x1000000u << status_priority)) {
+                    Buffer::set_text_color(mandate_color(status_priority), -1, 1, 1);
                     strcat(StringTemp, label_get(0x824 / 4 + status_priority));
                     break;
                 }
             }
+        } else {
+            Buffer::set_text_color(0xE1, -1, 1, 1);
+            strcat(StringTemp, label_get(0xBFC / 4));
         }
-        canvas.write_l(StringTemp, rect1_.left + 20, text.bottom - field_E268_ - 1, strlen(StringTemp));
+        Buffer::write_l(StringTemp, rect1_.left + 20, text.bottom - field_E268_ - 1);
         rect1_.left += 192;
         const int mode = buttonGroup1_.field_84_;
         if (mode == 0x8B3) {
-            const int production = BaseCurrent->queue_production_id[0];
-            if (production < 0) {
-                const int facility = -production;
-                facility_scratch = facility;
-                Sprite &sprite = facility < 70 ? g_FACILITY_ICON_SPRITES[facility]
-                    : g_SECRET_PROJECT_ICON_SPRITES[facility - 70];
-                const int denominator = facility < 70 ? g_FACILITY_ICON_SPRITES[0].height()
-                    : g_SECRET_PROJECT_ICON_SPRITES[0].height();
-                const int color = mandate_color(facility < 70 ? TutWinBaseWindow.prodPicker_.edbc_fac(facility) : 1);
-                sprite.draw_mono(&canvas, sprite.transparent_index(), rect1_.left + 8,
-                    rect1_.top + 4, color, text.bottom - text.top - 2, denominator);
+            const int production = BaseCurrent->queue_production_id[0];   // edi / [ebp-0x10]
+            if (production >= 0) {
+                const int vehicle = veh_fake(production, BaseCurrent->faction_id_current);
+                veh_draw(this, vehicle, rect1_.left, rect1_.top + 4, -8, 0x4C, 0);
             } else {
-                veh_draw(&canvas, veh_fake(production, BaseCurrent->faction_id_current),
-                    rect1_.left, rect1_.top + 4, -8, 0x4C, 0);
+                facility = -production;
+                if (facility < 70) {
+                    report_sprite_draw_mono(&g_FACILITY_ICON_SPRITES[facility], this,
+                        rect1_.left + 8, rect1_.top + 4,
+                        mandate_color(TutWinBaseWindow.prodPicker_.edbc_fac(facility)),
+                        text.bottom - text.top - 2, g_FACILITY_ICON_SPRITES[0].height());
+                } else {
+                    report_sprite_draw_mono(&g_SECRET_PROJECT_ICON_SPRITES[facility - 70], this,
+                        rect1_.left + 8, rect1_.top + 4, mandate_color(1),
+                        text.bottom - text.top - 2, g_SECRET_PROJECT_ICON_SPRITES[0].height());
+                }
             }
             StringTemp[0] = 0;
-            canvas.set_font(ReportIfGlobal.field_1E18C_, ReportIfGlobal.field_1E18C_, ReportIfGlobal.field_1E18C_, 0);
-            int item_cost;
-            if (production < 0) {
-                const int facility = -production;
-                item_cost = Facility[facility].cost;
-                facility_scratch = facility;
-                strcat(StringTemp, StringTable.get(Facility[facility].name));
-                canvas.set_text_color(mandate_color(TutWinBaseWindow.prodPicker_.edbc_fac(facility)), -1, 1, 1);
-            } else {
+            Buffer::set_font(ReportIfGlobal.field_1E18C_, ReportIfGlobal.field_1E18C_,
+                ReportIfGlobal.field_1E18C_, 0);
+            int item_cost;                                       // shares [ebp-0x10]
+            if (production >= 0) {
                 strcat(StringTemp, VehPrototypes[production].veh_name);
-                BOOL prototype_cost;
-                item_cost = veh_cost(production, BaseIDCurrentSelected, &prototype_cost);
-                canvas.set_text_color(mandate_color(TutWinBaseWindow.prodPicker_.edbc_unit(production)), -1, 1, 1);
+                BOOL has_proto_cost;                             // [ebp-0x98]
+                item_cost = veh_cost(production, BaseIDCurrentSelected, &has_proto_cost);
+                Buffer::set_text_color(
+                    mandate_color(TutWinBaseWindow.prodPicker_.edbc_unit(production)), -1, 1, 1);
+            } else {
+                facility = -production;
+                item_cost = Facility[facility].cost;
+                strcat(StringTemp, StringTable.get(Facility[facility].name));
+                Buffer::set_text_color(
+                    mandate_color(TutWinBaseWindow.prodPicker_.edbc_fac(facility)), -1, 1, 1);
             }
             rect1_.left += 60;
-            canvas.write_l(StringTemp, rect1_.left, text_y, strlen(StringTemp));
-            canvas.set_text_color(0xF2, -1, 1, 1);
-            strcpy(StringTemp, "(");
-            reportwin_append_number(StringTemp, facility_scratch == 69 ? 0 : BaseCurrent->minerals_accumulated);
+            Buffer::write_l(StringTemp, rect1_.left, text_y);
+            Buffer::set_text_color(0xF2, -1, 1, 1);
+            StringTemp[0] = 0;
+            strcat(StringTemp, "(");
+            // Five separate _itoa buffers in the image ([ebp-0xe8], -0x1d8,
+            // -0x138, -0x188, -0x228) = five inline expansions.
+            if (facility == FAC_STOCKPILE_ENERGY) {   // stale on the unit path (see above)
+                reportwin_append_number(StringTemp, 0);
+            } else {
+                reportwin_append_number(StringTemp, BaseCurrent->minerals_accumulated);
+            }
             strcat(StringTemp, "/");
-            const int cost = cost_factor(BaseCurrent->faction_id_current, 1, -1) * item_cost;
+            int cost = cost_factor(BaseCurrent->faction_id_current, 1, -1) * item_cost;  // edi
             reportwin_append_number(StringTemp, cost);
-            strcat(StringTemp, ")    ");
-            const int minerals = BaseCurrent->mineral_surplus_final;
-            if (minerals < 1) strcat(StringTemp, label_get(0x10C / 4));
-            else {
-                strcat(StringTemp, label_get(0xC4 / 4)); strcat(StringTemp, ": "); strcat(StringTemp, " ");
-                int turns = 0;
+            strcat(StringTemp, ")");
+            strcat(StringTemp, " ");
+            strcat(StringTemp, " ");
+            strcat(StringTemp, " ");
+            strcat(StringTemp, " ");
+            if (BaseCurrent->mineral_surplus_final <= 0) {
+                strcat(StringTemp, label_get(0x10C / 4));
+            } else {
+                strcat(StringTemp, label_get(0xC4 / 4));
+                strcat(StringTemp, ": ");
+                strcat(StringTemp, " ");
                 if (cost > BaseCurrent->minerals_accumulated) {
-                    const int divisor = minerals < 1 ? 1 : minerals > 99999 ? 99999 : minerals;
-                    turns = (minerals - 1 + cost - BaseCurrent->minerals_accumulated) / divisor;
-                    if (turns < 0) turns = 0; else if (turns > 999999) turns = 999999;
+                    cost -= BaseCurrent->minerals_accumulated;
+                    reportwin_append_number(StringTemp,
+                        range((BaseCurrent->mineral_surplus_final + cost - 1)
+                            / range(BaseCurrent->mineral_surplus_final, 1, 99999), 0, 999999));
+                } else {
+                    reportwin_append_number(StringTemp, 0);
                 }
-                reportwin_append_number(StringTemp, turns);
             }
-            canvas.write_right_l(StringTemp, text.right - 4, text_y, strlen(StringTemp));
+            {
+                // Guarded write_right_l (0x005DD3B0) expansion: x is
+                // evaluated before the null test (lea edi,[edx-4]).
+                // UNSURE: reportwin_write_right (defined after this function)
+                // or Buffer's BUFFER_WRITE_RIGHT_L3 inline would be the
+                // natural spelling; neither is visible here.
+                char *const right_text = StringTemp;
+                const int right_x = text.right - 4;
+                if (right_text != 0) {
+                    Buffer::write_right_l(right_text, right_x, text_y,
+                        static_cast<int>(strlen(right_text)));
+                }
+            }
         } else if (mode == 0x8B4) {
-            const int population = BaseCurrent->population_size;
-            int spacing = population < 2 ? 34 : (text.right - text.left - 226) / (population - 1);
-            if (spacing < 1) spacing = 1; else if (spacing > 34) spacing = 34;
-            rect1_.left = spacing - 32 + text.right;
+            // UNSURE: `<= 1` from cmp reg,1 / jg (the 34 arm falls through).
+            const int spacing = BaseCurrent->population_size <= 1 ? 34    // edi
+                : range((text.right - text.left - 226) / (BaseCurrent->population_size - 1), 1, 34);
+            rect1_.left = text.right + spacing - 32;
             rect1_.top = text.bottom - pitch / 2 - 18;
-            const bool alien = ExpansionEnabled && (Players[faction].rule_flags & RFLAG_ALIEN);
-            for (int specialist = 0; specialist < BaseCurrent->specialist_total; ++specialist) {
-                rect1_.left -= spacing;
-                spot_.add(list_index, 0, rect1_.left, rect1_.top, spacing, pitch);
-                const int index = BaseCurrent->specialist_total - specialist - 1;
-                const int type = index < 16 ? (BaseCurrent->spec[index >> 3] >> ((index & 7) * 4)) & 15 : best_specialist();
-                Sprite &sprite = alien ? g_AL_SPECIALIST_SM_CURSOR_SPRITES[type] : g_SPECIALIST_SM_CURSOR_SPRITES[type];
-                sprite.draw(&canvas, sprite.transparent_index(), rect1_.left, rect1_.top);
-            }
-            for (int drone = 0; drone < BaseCurrent->drone_total; ++drone) {
-                rect1_.left -= spacing;
-                spot_.add(list_index, 0, rect1_.left, rect1_.top, spacing, pitch);
-                const int type = 2 + (drone < BaseCurrent->super_drone_total) + (alien ? 0 : rng.get(0, 2) * 4);
-                Sprite &sprite = alien ? g_AL_CITIZEN_SM_CURSOR_SPRITES[type] : g_CITIZEN_SM_CURSOR_SPRITES[type];
-                sprite.draw(&canvas, sprite.transparent_index(), rect1_.left, rect1_.top);
-            }
-            const int workers = population - BaseCurrent->talent_total - BaseCurrent->specialist_total
-                - (BaseCurrent->drone_total > 0 ? BaseCurrent->drone_total : 0);
-            for (int worker = 0; worker < workers; ++worker) {
-                rect1_.left -= spacing;
-                spot_.add(list_index, 0, rect1_.left, rect1_.top, spacing, pitch);
-                const int type = 1 + (alien ? 0 : rng.get(0, 2) * 4);
-                Sprite &sprite = alien ? g_AL_CITIZEN_SM_CURSOR_SPRITES[type] : g_CITIZEN_SM_CURSOR_SPRITES[type];
-                sprite.draw(&canvas, sprite.transparent_index(), rect1_.left, rect1_.top);
-            }
-            for (int talent = 0; talent < BaseCurrent->talent_total; ++talent) {
-                rect1_.left -= spacing;
-                spot_.add(list_index, 0, rect1_.left, rect1_.top, spacing, pitch);
-                const int type = alien ? 0 : rng.get(0, 2) * 4;
-                Sprite &sprite = alien ? g_AL_CITIZEN_SM_CURSOR_SPRITES[type] : g_CITIZEN_SM_CURSOR_SPRITES[type];
-                sprite.draw(&canvas, sprite.transparent_index(), rect1_.left, rect1_.top);
+            if (is_alien_faction(faction)) {
+                for (int specialist = 0; specialist < BaseCurrent->specialist_total; ++specialist) {
+                    rect1_.left -= spacing;
+                    spot_.add(list_index, 0, rect1_.left, rect1_.top, spacing, pitch);
+                    const int index = BaseCurrent->specialist_total - specialist - 1;
+                    const int type = index >= 16 ? best_specialist()
+                        : (BaseCurrent->spec[index >> 3] >> ((index & 7) * 4)) & 15;
+                    report_sprite_draw(&g_AL_SPECIALIST_SM_CURSOR_SPRITES[type], this, rect1_.left, rect1_.top);
+                }
+                for (int drone = 0; drone < BaseCurrent->drone_total; ++drone) {
+                    rect1_.left -= spacing;
+                    spot_.add(list_index, 0, rect1_.left, rect1_.top, spacing, pitch);
+                    report_sprite_draw(&g_AL_CITIZEN_SM_CURSOR_SPRITES[(drone < BaseCurrent->super_drone_total) + 2], this, rect1_.left, rect1_.top);
+                }
+                // Head-tested loop; bound re-read each pass.
+                // UNSURE: max(drone_total, 0) is setl/dec/and: `< 0 ? 0 : x`.
+                for (int worker = 0; worker < BaseCurrent->population_size
+                        - BaseCurrent->talent_total - BaseCurrent->specialist_total
+                        - (BaseCurrent->drone_total < 0 ? 0 : BaseCurrent->drone_total);
+                     ++worker) {
+                    rect1_.left -= spacing;
+                    spot_.add(list_index, 0, rect1_.left, rect1_.top, spacing, pitch);
+                    report_sprite_draw(&g_AL_CITIZEN_SM_CURSOR_SPRITES[1], this, rect1_.left, rect1_.top);
+                }
+                for (int talent = 0; talent < BaseCurrent->talent_total; ++talent) {
+                    rect1_.left -= spacing;
+                    spot_.add(list_index, 0, rect1_.left, rect1_.top, spacing, pitch);
+                    report_sprite_draw(&g_AL_CITIZEN_SM_CURSOR_SPRITES[0], this, rect1_.left, rect1_.top);
+                }
+            } else {
+                for (int specialist = 0; specialist < BaseCurrent->specialist_total; ++specialist) {
+                    rect1_.left -= spacing;
+                    spot_.add(list_index, 0, rect1_.left, rect1_.top, spacing, pitch);
+                    const int index = BaseCurrent->specialist_total - specialist - 1;
+                    const int type = index >= 16 ? best_specialist()
+                        : (BaseCurrent->spec[index >> 3] >> ((index & 7) * 4)) & 15;
+                    report_sprite_draw(&g_SPECIALIST_SM_CURSOR_SPRITES[type], this, rect1_.left, rect1_.top);
+                }
+                // UNSURE (the three rng loops): the image loads rect1_.left/top
+                // and the Buffer* conversion into frame slots ([ebp-0x24],
+                // [ebp-0x14], [ebp-0x58]) BEFORE calling rng.get, i.e. the
+                // original evaluated x/y before the random sprite index - the
+                // shape of basewin.cpp's psych_sprite(dest, sprite, x, y)
+                // helper's argument evaluation. Locals reproduce that order.
+                for (int drone = 0; drone < BaseCurrent->drone_total; ++drone) {
+                    rect1_.left -= spacing;
+                    spot_.add(list_index, 0, rect1_.left, rect1_.top, spacing, pitch);
+                    report_sprite_draw(&g_CITIZEN_SM_CURSOR_SPRITES[
+                        (drone < BaseCurrent->super_drone_total) + 2 + rng.get(0, 2) * 4], this, rect1_.left, rect1_.top);
+                }
+                for (int worker = 0; worker < BaseCurrent->population_size
+                        - BaseCurrent->talent_total - BaseCurrent->specialist_total
+                        - (BaseCurrent->drone_total < 0 ? 0 : BaseCurrent->drone_total);
+                     ++worker) {
+                    rect1_.left -= spacing;
+                    spot_.add(list_index, 0, rect1_.left, rect1_.top, spacing, pitch);
+                    report_sprite_draw(&g_CITIZEN_SM_CURSOR_SPRITES[rng.get(0, 2) * 4 + 1], this, rect1_.left, rect1_.top);
+                }
+                for (int talent = 0; talent < BaseCurrent->talent_total; ++talent) {
+                    rect1_.left -= spacing;
+                    spot_.add(list_index, 0, rect1_.left, rect1_.top, spacing, pitch);
+                    report_sprite_draw(&g_CITIZEN_SM_CURSOR_SPRITES[rng.get(0, 2) * 4], this, rect1_.left, rect1_.top);
+                }
             }
         } else if (mode == 0x8B5) {
-            int vehicle = veh_at(BaseCurrent->x, BaseCurrent->y);
+            const int vehicle = veh_at(BaseCurrent->x, BaseCurrent->y);
             const int slots = stack_check(vehicle, 1, -1, -1, -1);
-            int spacing = slots < 2 ? 40 : (text.right - text.left - 232) / (slots - 1);
-            if (spacing < 1) spacing = 1; else if (spacing > 40) spacing = 40;
-            rect1_.left = spacing - 45 + text.right;
+            // UNSURE: `<= 1` from cmp ecx,1 / jg (the 40 arm falls through).
+            const int spacing = slots <= 1 ? 40                          // [ebp-0x10]
+                : range((text.right - text.left - 232) / (slots - 1), 1, 40);
+            rect1_.left = text.right + spacing - 45;
             rect1_.top = text.top;
-            if (vehicle >= 0) {
-                while (Vehs[vehicle].prev_veh_id_stack >= 0) vehicle = Vehs[vehicle].prev_veh_id_stack;
-                for (; vehicle >= 0; vehicle = Vehs[vehicle].next_veh_id_stack) {
-                    rect1_.left -= spacing;
-                    veh_draw(&canvas, vehicle, rect1_.left, rect1_.top, -8, 8, 0);
-                    spot_.add(base_id + 0x800, vehicle, rect1_.left, rect1_.top, spacing, pitch);
-                }
+            // veh_top inline: its `veh_id < 0` early -1 is jump-threaded
+            // straight to the loop exit (49EA13).
+            for (int veh_id = veh_top(vehicle); veh_id >= 0;
+                 veh_id = Vehs[veh_id].next_veh_id_stack) {
+                rect1_.left -= spacing;
+                veh_draw(this, veh_id, rect1_.left, rect1_.top, -8, 8, 0);
+                spot_.add(entry.base_id + 0x800, veh_id, rect1_.left, rect1_.top, spacing, pitch);
             }
         }
     }
@@ -3855,15 +4236,17 @@ void __cdecl sat_attack(int attacker, int target, int kind) {
         if (Bases[base].faction_id_current == target && has_fac(41, base, 0)) ++targets;
     }
     // Original guards only the signed upper bound; no new lower guard.
-    if (kind == 4 ? !targets : (kind >= 4 || !PlayersData[target].satellites_[kind])) return;
+    if ((kind == 4 && !targets)
+        || (kind != 4 && (kind >= 4 || !PlayersData[target].satellites_[kind]))) return;
     if (break_treaty(attacker, target, 7)) return;
     if (diplo_lock(100)) return;
     if (PlayersData[attacker].satellites_[3]
         && static_cast<int>(PlayersData[attacker].sat_odp_deployed)
-            < static_cast<int>(PlayersData[attacker].satellites_[3])) {
+            < static_cast<int>(PlayersData[attacker].satellites_[3])
+        && ((kind == 4 && targets)
+            || (kind != 4 && kind < 4 && PlayersData[target].satellites_[kind]))) {
         int attack_target;
         if (kind == 4) {
-            if (!targets) goto unlock;
             popup.start(PopupStartCaption, "WHICHGSP", -1, 0, 0x40, 0);
             int width, height;
             if (Buffer::get_pcx_dimensions("satbat_sm.pcx", &width, &height) == 0
@@ -3876,7 +4259,6 @@ void __cdecl sat_attack(int attacker, int target, int kind) {
             attack_target = popup.exec(0, 0);
             if (attack_target < 0) goto unlock;
         } else {
-            if (kind >= 4 || !PlayersData[target].satellites_[kind]) goto unlock;
             attack_target = attacker;
         }
         if (IsMultiplayerNet) {
@@ -4130,7 +4512,8 @@ void ReportWin::draw_score() {
         }
         report_topic_line(this, rect1_, rect1_.left);
         StringTemp[0] = 0;
-        strcat(StringTemp, PlayersData[faction].score_items_[item] < 0 ? "- " : "+ ");
+        if (PlayersData[faction].score_items_[item] >= 0) strcat(StringTemp, "+ ");
+        else strcat(StringTemp, "- ");
         report_topic_number(abs(PlayersData[faction].score_items_[item]));
         reportwin_write_right(this, StringTemp, rect1_.left + rect1_.right, rect1_.top);
         rect1_.top += field_E268_;
@@ -4150,7 +4533,8 @@ void ReportWin::draw_score() {
         }
         report_topic_line(this, rect1_, rect1_.left);
         StringTemp[0] = 0;
-        strcat(StringTemp, PlayersData[faction].score_items_[5] < 0 ? "- " : "+ ");
+        if (PlayersData[faction].score_items_[5] >= 0) strcat(StringTemp, "+ ");
+        else strcat(StringTemp, "- ");
         report_topic_number(abs(PlayersData[faction].score_items_[5]));
         reportwin_write_right(this, StringTemp, rect1_.left + rect1_.right, rect1_.top);
         rect1_.top += field_E268_;
@@ -4264,19 +4648,16 @@ void ReportWin::draw_score() {
                 const char *section = outcome > 1 ? "DRAWSTRING" : outcome ? "WINSTRING2" : "WINSTRING";
                 if (X_text_open(ScriptPopupFile, section)) break;
                 text_get();
-                PluralityDefault = 0;
-                GenderDefault = Players[other].is_leader_female;
+                parse_set(Players[other].is_leader_female, FALSE);
                 parse_says(0, Players[other].title_leader, -1, -1);
-                PluralityDefault = 0;
-                GenderDefault = Players[other].is_leader_female;
+                parse_set(Players[other].is_leader_female, FALSE);
                 parse_says(1, Players[other].name_leader, -1, -1);
-                GenderDefault = Players[other].noun_gender;
-                PluralityDefault = Players[other].is_noun_plural;
+                parse_set(Players[other].noun_gender, Players[other].is_noun_plural);
                 parse_says(2, Players[other].noun_faction, -1, -1);
                 StringTemp[0] = 0;
                 report_topic_number(num_objectives(other, 0));
-                const int all = num_objectives(other, GameDataStateStorage.fields_.game_rules_ & 0x1000);
-                if (all > num_objectives(other, 0)) {
+                if (num_objectives(other, GameDataStateStorage.fields_.game_rules_ & 0x1000)
+                    > num_objectives(other, 0)) {
                     strcat(StringTemp, "(");
                     report_topic_number(num_objectives(other, GameDataStateStorage.fields_.game_rules_ & 0x1000));
                     strcat(StringTemp, ")");
@@ -6778,45 +7159,31 @@ void ReportIf::draw_projects() {
     MainInterfaceGlobal.Buffer::set_clip(&field_20_);
     field_C_ = field_20_.left + 6;
     field_10_ = field_20_.top + 6;
-    field_14_ = field_20_.right - field_20_.left - 12;
-    field_18_ = field_20_.bottom - field_20_.top - 12;
+    field_14_ = report_rect_width(&field_20_) - 0xC;
+    field_18_ = report_rect_height(&field_20_) - 0xC;
 
     // The seed draws a narrow title frame followed by a second frame around
     // the selected project's description.  Both use the shared work rectangle.
-    draw_workspace_rect_.left = field_C_;
-    draw_workspace_rect_.top = field_10_;
-    draw_workspace_rect_.right = field_C_ + field_14_;
-    draw_workspace_rect_.bottom = field_10_ + field_1C_ + 6;
+    set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, field_1C_ + 6);
     MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
     draw_workspace_rect_.top = draw_workspace_rect_.bottom + 2;
     draw_workspace_rect_.bottom = field_20_.bottom - 6;
     MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
 
-    draw_workspace_rect_.left += 3;
-    draw_workspace_rect_.right -= 3;
-    draw_workspace_rect_.top += 3;
-    draw_workspace_rect_.bottom -= 3;
+    inflate_frame(&draw_workspace_rect_, -3, -3);
     MainInterfaceGlobal.Buffer::set_font(field_1E184_, field_1E194_, field_1E198_, nullptr);
     StringTemp[0] = 0;
     strcat(StringTemp, "[");
     strcat(StringTemp, label_get(0x32A));
     strcat(StringTemp, "]");
-    MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, draw_workspace_rect_.left, field_10_ + 4,
-                         field_14_);
+    MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 4, field_14_);
 
-    int project = ReportWinGlobal.shared_report_selection();
-    if (project >= 0x400)
-        project = -70 - Bases[project - 0x400].queue_production_id[0];
-    if (project == -1) {
-        if (ReportWinGlobal.shared_report_selection() == -1) {
-            StringTemp[0] = 0;
-            strcat(StringTemp, label_get(0x32B));
-            MainInterfaceGlobal.Buffer::set_text_color(0xE1, -1, 1, 1);
-            MainInterfaceGlobal.Buffer::wrap(StringTemp, draw_workspace_rect_.left,
-                draw_workspace_rect_.top,
-                draw_workspace_rect_.right - draw_workspace_rect_.left);
-        }
-    } else {
+    int project;
+    if (ReportWinGlobal.shared_report_selection() < 0x400)
+        project = ReportWinGlobal.shared_report_selection();
+    else
+        project = -70 - Bases[ReportWinGlobal.shared_report_selection() - 0x400].queue_production_id[0];
+    if (project + 1 != 0) {
         // Preserve the original copies even though their destinations are
         // not subsequently consumed by this panel.
         char copied_small[1024];
@@ -6829,30 +7196,35 @@ void ReportIf::draw_projects() {
         _itoa(project, number, 10);
         strcat(StringTemp, number);
         if (description.load(DatalinkHelpFile, StringTemp, 1, 0) == 0) {
-            const int width = draw_workspace_rect_.right - draw_workspace_rect_.left;
-            if (draw_workspace_rect_.bottom - draw_workspace_rect_.top
-                < MainInterfaceGlobal.Buffer::write_strings_height(&description, width, 0)) {
-                Font *italic = find_font(10, 1);
-                Font *bold = find_font(10, 2);
-                Font *normal = find_font(10, 0);
-                MainInterfaceGlobal.Buffer::set_font(normal, bold, italic, 0);
+            if (report_rect_height(&draw_workspace_rect_)
+                < MainInterfaceGlobal.Buffer::write_strings_height(
+                    &description, report_rect_width(&draw_workspace_rect_), 0)) {
+                MainInterfaceGlobal.Buffer::set_font(find_font(10, 0), find_font(10, 2),
+                                                     find_font(10, 1), 0);
             }
             MainInterfaceGlobal.Buffer::set_text_color(0xE1, -1, 1, 1);
             MainInterfaceGlobal.Buffer::write_strings(&description, draw_workspace_rect_.left,
-                draw_workspace_rect_.top, width, 0);
+                draw_workspace_rect_.top,
+                report_rect_width(&draw_workspace_rect_), 0);
         }
+    } else if (ReportWinGlobal.shared_report_selection() + 1 == 0) {
+        StringTemp[0] = 0;
+        strcat(StringTemp, label_get(0x32B));
+        MainInterfaceGlobal.Buffer::set_text_color(0xE1, -1, 1, 1);
+        MainInterfaceGlobal.Buffer::wrap(StringTemp, draw_workspace_rect_.left,
+            draw_workspace_rect_.top,
+            report_rect_width(&draw_workspace_rect_));
     }
 
     MainInterfaceGlobal.Buffer::set_clip(MainInterfaceGlobal.buffer_working_rect());
     MainInterfaceGlobal.Buffer::set_clip(&field_50_);
+    field_C_ = field_50_.left + (field_1E230_ ? 0x4C : 0);
     field_10_ = field_50_.top;
-    const int inset = field_1E230_ ? 0x4C : 0;
-    field_C_ = field_50_.left + inset;
-    field_14_ = field_50_.right - field_50_.left - inset;
-    field_18_ = field_50_.bottom - field_50_.top;
+    field_14_ = report_rect_width(&field_50_) - (field_1E230_ ? 0x4C : 0);
+    field_18_ = report_rect_height(&field_50_);
+    StringTemp[0] = 0;
     MainInterfaceGlobal.Buffer::set_font(field_1E190_, field_1E194_, field_1E198_, nullptr);
     MainInterfaceGlobal.Buffer::set_text_color(0xE1, -1, 1, 1);
-    StringTemp[0] = 0;
     strcat(StringTemp, Players[report_faction_id_].adj_name_faction);
     CharUpperA(StringTemp);
     strcat(StringTemp, " ");
@@ -6860,7 +7232,7 @@ void ReportIf::draw_projects() {
     if (field_1E230_) {
         strcat(StringTemp, ", ");
         strcat(StringTemp, " ");
-        strcat(StringTemp, label_get(0x2DA));
+        strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x2DA]));
         strcat(StringTemp, " ");
         say_year(StringTemp);
     }
@@ -6873,23 +7245,18 @@ void ReportIf::draw_projects() {
     MainInterfaceGlobal.Buffer::set_clip(&field_30_);
     field_C_ = field_30_.left + 6;
     field_10_ = field_30_.top + 6;
-    field_14_ = field_30_.right - field_30_.left - 12;
-    field_18_ = field_30_.bottom - field_30_.top - 12;
+    field_14_ = report_rect_width(&field_30_) - 0xC;
+    field_18_ = report_rect_height(&field_30_) - 0xC;
     MainInterfaceGlobal.Buffer::box_sprite(&field_30_, &InterfaceBoxStyles[33]);
-    draw_workspace_rect_.left = field_C_ - 3;
-    draw_workspace_rect_.top = field_10_ - 3;
-    draw_workspace_rect_.right = field_C_ + field_14_ + 3;
-    draw_workspace_rect_.bottom = field_10_ + field_1C_ + 9;
+    set_rectangle_dimensions(&draw_workspace_rect_, field_C_, field_10_, field_14_, field_1C_ + 6);
+    inflate_frame(&draw_workspace_rect_, 3, 3);
     MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[3]);
-    draw_workspace_rect_.left += 3;
-    draw_workspace_rect_.top += 3;
-    draw_workspace_rect_.right -= 3;
-    draw_workspace_rect_.bottom -= 3;
+    inflate_frame(&draw_workspace_rect_, -3, -3);
     MainInterfaceGlobal.Buffer::box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
     MainInterfaceGlobal.Buffer::set_font(field_1E190_, field_1E194_, field_1E198_, nullptr);
     StringTemp[0] = 0;
     strcat(StringTemp, "[");
-    strcat(StringTemp, label_get(0x3C3));
+    strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x3C3]));
     strcat(StringTemp, "]");
     MainInterfaceGlobal.Buffer::write_cent_text(StringTemp, field_C_, field_10_ + 4, field_14_);
     MainInterfaceGlobal.Buffer::set_clip(MainInterfaceGlobal.buffer_working_rect());
