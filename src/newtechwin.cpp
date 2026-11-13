@@ -303,15 +303,6 @@ static inline void newtechwin_set_words(uint32_t *rect, int left, int top, int r
 }
 
 
-// WORKAROUND(decl): 0x00484140..484163 copies a RECT through separate
-// source/destination pointer copies (label, row and AE4 rectangles).
-static inline void newtechwin_copy_rect(RECT *dst, const RECT *src) {
-    dst->left = src->left;
-    dst->top = src->top;
-    dst->right = src->right;
-    dst->bottom = src->bottom;
-}
-
 // WORKAROUND(inline): expand_rect (scroll.cpp) is out of line in this tree;
 // the StringBox loop at 0x0048438C..4843AA adds 4 to left/top and a register
 // holding -4 to right/bottom, the expand_rect(rect, -4, -4) shape.
@@ -353,46 +344,46 @@ void NewTechWin::exec(int technology_id, int other_faction_id) {
     strip.bottom -= 3;
     strip.top = strip.bottom - 0x14;
     RECT *const button = &ok_button_rect_;
-    newtechwin_copy_rect(button, &strip);
+    *button = strip;
     rect.bottom = strip.top - 7;
-    newtechwin_copy_rect(&main_rect_, &rect);
+    main_rect_ = rect;
 
     RECT inner;
-    newtechwin_inset_copy(&inner, &main_rect_, 3);
-    newtechwin_copy_rect(&title_rect_, &inner);
+    newtechwin_inset_copy(&inner, &rect, 3);
+    title_rect_ = inner;
     title_rect_.bottom = title_rect_.top + 0x17;
-    newtechwin_copy_rect(&category_rect_, &inner);
+    category_rect_ = inner;
     category_rect_.top = title_rect_.bottom + 3;
     category_rect_.bottom = category_rect_.top + 0xd9;
-    newtechwin_copy_rect(&label_rects_[0], &inner);
+    label_rects_[0] = inner;
     label_rects_[0].top = category_rect_.bottom + 3;
     label_rects_[0].bottom = label_rects_[0].top + 0x14;
-    newtechwin_copy_rect(&row_rects_[0], &inner);
+    row_rects_[0] = inner;
     row_rects_[0].top = label_rects_[0].bottom + 3;
     row_rects_[0].bottom = row_rects_[0].top + 0x4c;
-    newtechwin_copy_rect(&label_rects_[2], &inner);
+    label_rects_[2] = inner;
     label_rects_[2].top = row_rects_[0].bottom + 3;
     label_rects_[2].bottom = label_rects_[2].top + 0x14;
-    newtechwin_copy_rect(&row_rects_[2], &inner);
+    row_rects_[2] = inner;
     row_rects_[2].top = label_rects_[2].bottom + 3;
     row_rects_[2].bottom = row_rects_[2].top + 0x4c;
-    newtechwin_copy_rect(&bottom_rect_, &inner);
+    bottom_rect_ = inner;
     bottom_rect_.top = row_rects_[2].bottom + 3;
     bottom_rect_.bottom = main_rect_.bottom - 3;
 
-    newtechwin_copy_rect(&label_rects_[1], &label_rects_[0]);
+    label_rects_[1] = label_rects_[0];
     const int split = label_rects_[0].left +
                       (label_rects_[0].right - label_rects_[0].left + 3) / 2 - 3;
     label_rects_[0].right = split;
     const int split_right = split + 3;
     label_rects_[1].left = split_right;
-    newtechwin_copy_rect(&row_rects_[1], &row_rects_[0]);
+    row_rects_[1] = row_rects_[0];
     row_rects_[0].right = split;
     row_rects_[1].left = split_right;
-    newtechwin_copy_rect(&label_rects_[3], &label_rects_[2]);
+    label_rects_[3] = label_rects_[2];
     label_rects_[2].right = split;
     label_rects_[3].left = split_right;
-    newtechwin_copy_rect(&row_rects_[3], &row_rects_[2]);
+    row_rects_[3] = row_rects_[2];
     row_rects_[2].right = split;
     row_rects_[3].left = split_right;
 
@@ -404,10 +395,10 @@ void NewTechWin::exec(int technology_id, int other_faction_id) {
     rect.bottom -= 6;
     rect.left = rect.right - 0x1c;
     rect.top = rect.bottom - 0x22;
-    newtechwin_copy_rect(next_button, &rect);
+    *next_button = rect;
     offset_rect(&rect, -0x1f, 0);
-    newtechwin_copy_rect(prev_button, &rect);
-    newtechwin_copy_rect(text_rect, &bottom_rect_);
+    *prev_button = rect;
+    *text_rect = bottom_rect_;
     text_rect->right = prev_button->left - 4;
 
     init(bounds, 0, 0x05000000, 0, 0, 0);

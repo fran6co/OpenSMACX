@@ -1645,7 +1645,9 @@ BOOL Path::sensors(int faction_id, int *x_sensor, int *y_sensor) {
             }
             int proximity = vector_dist(x_search, y_search, x, y);
             for (i = 0; i < 25; i++) {
-                int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
+                // Written-out wrap: the image stores x_radius per arm (0x0059D045).
+                int t = x + RadiusOffsetX[i];
+                int x_radius = (MapIsFlat & 1) ? t : t < 0 ? t + MapLongitudeBounds : t >= MapLongitudeBounds ? t - MapLongitudeBounds : t;
                 int y_radius = y + RadiusOffsetY[i];
                 if (on_map(x_radius, y_radius) && base_who(x_radius, y_radius) == faction_id) {
                     flags |= 4;
