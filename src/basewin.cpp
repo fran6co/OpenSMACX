@@ -576,7 +576,7 @@ void BaseWin::facilities_click(int facility, int, int, int) {
                     for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
                         if (Bases[base].faction_id_current != faction) continue;
                         if (facility == 26 && (map_tiles()[Bases[base].y * MapLongitude + (Bases[base].x >> 1)].climate & ~0x1F) < 0x60) continue;
-                        if (has_fac_built(facility, base)) {
+                        if (has_fac(facility, base, 0)) {
                             ++possessed;
                             if (!(BaseCurrent->state & BSTATE_FACILITY_SCRAPPED) || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) ++proceeds;
                         }
