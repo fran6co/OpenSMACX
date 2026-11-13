@@ -2060,6 +2060,22 @@ def diagnostic_comparison(record: DecompilationState, exe: Path | str, source: P
     CodeView labels). The result is reported beside, never instead of, the
     strict verdict.
     """
+    best, best_notes, best_regions, errors = _masked_region_comparison(
+        record, exe, source, command, attempts, compiler=compiler)
+    if best is None:
+        return {"authoritative": False, "claimable": False, "available": False,
+                "reason": errors[0] if errors else "no compiler trial produced a comparable body"}
+    return {"available": True, **diagnostic_payload(best, regions=best_regions, notes=best_notes)}
+
+
+def _masked_region_comparison(record: DecompilationState, exe: Path | str, source: Path | str,
+                              command, attempts, *, compiler):
+    """Best-of-trials masked comparison over the record's region pairs.
+
+    Returns (best AsmComparison or None, notes, region count, errors). This
+    proves nothing: callers either label it diagnostic, or use it only to
+    rank a body whose strict verdict is already a conclusive FAIL.
+    """
     exe = Path(exe)
     best, best_notes, best_regions, errors = None, (), 1, []
     for attempt in attempts:
@@ -2082,10 +2098,43 @@ def diagnostic_comparison(record: DecompilationState, exe: Path | str, source: P
             best, best_notes, best_regions = result, notes, len(pairs)
         if best.verdict is Tier.BYTE_EXACT:
             break
+    return best, best_notes, best_regions, errors
+
+
+def _ranked_strict_failure(record: DecompilationState, diagnostic: str, exe, source, command,
+                           attempts, *, compiler, diagnostics: bool) -> AsmComparison:
+    """An ordinary MISMATCH for a strict FAIL, ranked like any other miss.
+
+    The strict proof already decided the verdict: a conclusive FAIL (for
+    example a compiled extent that differs from the recorded original
+    envelope) can never become a claim, so the masked comparison over the
+    same region pairs is used here only for the distance fields every other
+    MISMATCH carries. The verdict stays MISMATCH whatever the masked bytes
+    say, `allocation_only` stays undecided, and an unavailable comparison
+    leaves the zero distance. Strict UNKNOWN outcomes never come here; they
+    remain REFUSED.
+    """
+    best, notes, regions, errors = _masked_region_comparison(
+        record, exe, source, command, attempts, compiler=compiler)
     if best is None:
-        return {"authoritative": False, "claimable": False, "available": False,
-                "reason": errors[0] if errors else "no compiler trial produced a comparable body"}
-    return {"available": True, **diagnostic_payload(best, regions=best_regions, notes=best_notes)}
+        return AsmComparison(
+            verdict=Tier.MISMATCH, diagnostic=diagnostic,
+            diagnostic_comparison=({"authoritative": False, "claimable": False, "available": False,
+                                    "reason": errors[0] if errors else
+                                    "no compiler trial produced a comparable body"}
+                                   if diagnostics else None))
+    return AsmComparison(
+        verdict=Tier.MISMATCH, diagnostic=diagnostic, flags=best.flags,
+        compared_bytes=best.compared_bytes, masked_bytes=best.masked_bytes,
+        original_instructions=best.original_instructions,
+        compiled_instructions=best.compiled_instructions,
+        matching_instructions=best.matching_instructions,
+        mnemonic_similarity=best.mnemonic_similarity,
+        first_divergence=best.first_divergence, context=best.context,
+        data_bytes=best.data_bytes, data_divergence=best.data_divergence,
+        diagnostic_comparison=({"available": True,
+                                **diagnostic_payload(best, regions=regions, notes=notes)}
+                               if diagnostics else None))
 
 
 @dataclass(frozen=True)
@@ -2328,10 +2377,9 @@ def compare_unit(records, exe: Path | str, source: Path | str,
                 if result == Result.PASS and strict.get("result") == Result.PASS:
                     observed = AsmComparison(verdict=Tier.BYTE_EXACT)
                 elif result == Result.FAIL or strict.get("result") == Result.FAIL:
-                    observed = AsmComparison(
-                        verdict=Tier.MISMATCH,
-                        diagnostic=diagnostic or "strict associated owner or selected dependency check failed",
-                    )
+                    observed = _ranked_strict_failure(
+                        record, diagnostic or "strict associated owner or selected dependency check failed",
+                        exe, source, command, attempts, compiler=shared_compile, diagnostics=diagnostics)
                 else:
                     observed = AsmComparison(
                         verdict=Tier.REFUSED,

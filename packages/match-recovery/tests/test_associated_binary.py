@@ -67,7 +67,7 @@ def _pe_fixture(*, gap_relocation=False):
 
 def _coff_fixture(*, cell_addend=0, selector_byte=0, extra_relocation=False,
                   candidate_gap=None, gap_relocation=False,
-                  truncate_candidate_at=None):
+                  truncate_candidate_at=None, append_candidate=b""):
     # The exact body and data bytes are represented by compiler output with
     # zeroed absolute fields plus physical same-section COFF relocations.
     if candidate_gap is None:
@@ -85,6 +85,7 @@ def _coff_fixture(*, cell_addend=0, selector_byte=0, extra_relocation=False,
         relocations.append((table_start + 4, 4, 6))
     if truncate_candidate_at is not None:
         data = data[:truncate_candidate_at]
+    data += append_candidate
     relocation_blob = b"".join(struct.pack("<IIH", *row) for row in relocations)
 
     symbols = bytearray()

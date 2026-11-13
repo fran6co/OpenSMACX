@@ -408,6 +408,48 @@ def test_associated_compare_requires_whole_native_selection_to_pass(tmp_path, mo
         Tier.MISMATCH if overall == Result.FAIL else Tier.REFUSED)
 
 
+@pytest.mark.parametrize("diagnostics", [False, True])
+def test_associated_boundary_failure_is_a_ranked_mismatch_never_a_claim(tmp_path, diagnostics):
+    # EH/switch owners whose compiled extent differs from the recorded
+    # envelope (0x00489BA0, 0x00431180) failed strictly but carried no
+    # distance, so the loop could not rank them. The strict FAIL decides the
+    # verdict; the masked comparison only supplies the distance fields, even
+    # when it sees no difference within the original extent.
+    from test_associated_binary import _coff_fixture
+
+    root, _task, _raw = project(tmp_path)
+    records = read_file(root / "code/unit.cc")
+    longer = _coff_fixture(append_candidate=b"\x40" * 16)
+    observed = compare_unit(records, root / "image.exe", root / "code/unit.cc", (),
+                            ("first",), compiler=lambda *_: longer, root=root,
+                            strict_command_for=lambda _path: (),
+                            diagnostics=diagnostics).results[0][1]
+    assert observed.verdict is Tier.MISMATCH
+    assert observed.diagnostic == "candidate exceeds or misses the independently recorded extent"
+    assert observed.mnemonic_similarity > 0 and observed.compared_bytes > 0
+    assert observed.original_instructions > 0 and observed.flags == "first"
+    assert observed.allocation_only == "?"
+    assert (observed.diagnostic_comparison is not None) is diagnostics
+    if diagnostics:
+        assert observed.diagnostic_comparison["claimable"] is False
+
+
+def test_associated_unknown_stays_refused_without_a_distance(tmp_path, monkeypatch):
+    from match_recovery.source import asm
+
+    root, _task, raw = project(tmp_path)
+    records = read_file(root / "code/unit.cc")
+    monkeypatch.setattr(asm, "verify_records", lambda *_a, **_k: {
+        "result": Result.UNKNOWN,
+        "functions": [{"address": f"{records[0].address:08X}", "result": Result.UNKNOWN,
+                       "reason": "unsupported associated layout"}]})
+    observed = compare_unit(records, root / "image.exe", root / "code/unit.cc", (),
+                            (("first",),), compiler=lambda *_: raw,
+                            root=root, strict_command_for=lambda _path: ()).results[0][1]
+    assert observed.verdict is Tier.REFUSED
+    assert observed.mnemonic_similarity == 0.0 and observed.compared_bytes == 0
+
+
 def test_associated_refusal_keeps_selected_dependency_reason(tmp_path, monkeypatch):
     from match_recovery.source import asm
 
