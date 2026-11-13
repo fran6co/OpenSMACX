@@ -821,6 +821,127 @@ raw field access where the original used inline accessors.
   closing-brace phantom teardown: the original had no top-level return,
   typically a `for (;;)` body left only through returns. Wrap the body
   instead of keeping the probe (top_menu).
+- **Bistable neighbours.** In battle.cpp any edit to boom (one new goto
+  label, two block-scoped const locals) flips battle_fight's kill/damage
+  if-else layout (562 -> 751 rows). Diff the next function in the unit
+  before keeping an edit.
+- **One strcat per arm** of an if/else gives separate `add esp,8`
+  cleanups; a `?:` argument merges them.
+- **Shared blocks between sibling branches.** When an earlier branch's
+  exits jump forward into a later branch's blocks, the labels were in the
+  earlier branch and the later one used `goto`s (synch).
+- **+/- chains re-associate against available CSEs**: search operand
+  order per line rather than reading it from the image (sub_6404f0).
+- **Separate identical literals per arm** (distinct string addresses)
+  mean an unpooled unit; under /GF VC6 hoists the merged pushes.
+- **A widely included header is not a free home for a one-file
+  stand-in.** Adding even one or two inline members to sprite.h changed
+  code in about 20 unrelated units and broke claims; inside a unit, a new
+  static inline helper can flip a canary where reusing an existing helper
+  does not.
+- **A virtual-base adjustment off a pointer register** (`mov eax,[edi];
+  mov eax,[eax+8]; add eax,edi`, then `[eax+off]`), or a virtual call
+  whose receiver is formed by `lea ecx` before the vtable load, means
+  access through a pointer (`T *p = &member` or an inline parameter);
+  direct member access folds to `[edx+edi+off]`.
+- **Template RECT with half its fields in the frame.** Only right/bottom
+  stored and left/top in separate slots: `RECT base` with named left/top,
+  copied per cell and moved with `offset_rect` (EditGroup).
+- **`test; js L; cmp K; jle; mov K; jmp; L: xor`** after a `mov eax,edx`
+  copy is general.h `range(x, 0, K)`; an if/else clamp misses the copy.
+- **A null test returning 3 before `EditBox::init`** is an inline
+  `EditBox::init(RECT*, Win*, int)` overload (header candidate).
+- **A static inline helper boundary can supply missing spend** like a
+  probe, but which calls stay outside it matters (POP3's seek_pos).
+- **Tail cross-jumping depends on the whole function.** VC6's merge of
+  identical tails switches on or off with changes elsewhere: production's
+  duplicated case tails merged only after five hand-written
+  `T &r = x; r = cast(r +/- 1)` updates became `x++`/`x--` (size, local
+  and reference counts alone do not trigger it). Fix hand-written idioms
+  elsewhere before touching the tails; merging also removes CSE temps.
+  Write duplicated tails out in full: a shared `goto` label lays out
+  differently from the machine cross-jump.
+- **`lea reg,[this+off]` at every use** means no pointer local; a pointer
+  local holds a callee-saved register for the whole function.
+- **`inflate_frame(&member, ...)` keeps a dead first store and reloads
+  the right edge**; through a `RECT *` local the stores are forwarded.
+- **if/else of two calls vs a ternary argument** is not counter-neutral in
+  a canary unit: check the whole unit's objects before keeping either.
+- **Switch tail-merge direction.** Cases ending in identical
+  `f(); return K;` tails keep the first case's copy; ending them with
+  `break` and one `return K` after the switch keeps the later copy; a
+  case with its own `return` keeps a private tail.
+- **Auto-inline eligibility follows the callee's named locals**: gen_tile
+  with two const locals was never auto-inlined at /Ob2, with one it was.
+- **A refused later site of an inline depends on caller spend**, not
+  callee cost: probes in the callee body do not move it.
+- **A member-pointer call on a class with virtual bases** adds a vbtable
+  adjustment; it is not an out-of-line stand-in.
+- **Natural spend from invented out-of-line helpers.** When early sites
+  under-spend, compare the image's call list with ours: invented helpers
+  the image expands (make them inline members), repeated blocks the
+  image cross-jumps (one inline helper), and raw mask tests where an
+  accessor exists (is_alive/is_human) supplied all of process_message's
+  missing budget without probes.
+- **Dialog-control twins** (CheckBox/RadioButton/SpriteBox): copy the
+  exact sibling's spelling first.
+- **A local copied from a struct-member global is rematerialized**:
+  `int w = MapLongitudeBounds;` is reloaded from the global at each use.
+  When the image holds the value in a callee-saved register, read the
+  global directly at each use and VC6 CSEs it (editor: 244 -> 57 rows).
+- **A cast at the use is not an unsigned field.** On an int16_t field
+  the casts give byte ops (`and ah,-0x21`); an unsigned short field gives
+  `and eax,0xdfff`. Fix the field type when the image shows the dword form.
+- **Score probe grids on the teardown call sequence**, not only the state
+  tuple; map call targets through `// symbol` lines first.
+- **Out-parameter copied to a plain local.** An address-taken local is
+  reloaded after every call; when the image holds the value in a
+  callee-saved register, copy the out-param into a plain local
+  (on_left_click: 853 -> 805 instructions).
+- **`lea r1,[esi+off]; mov r2,r1` then stores through r2** is a RECT
+  struct assignment; an inline set_rect helper folds to direct stores.
+- **Per-arm Labels loads joining one StringTable.get** is an if/else
+  chain assigning an LPSTR, then one get call.
+- **A contiguous ascending 8-byte double run is an array** (`double
+  v[3]`, `int b[3]`): named scalars coalesce into dead parameter slots
+  and interleave the `_ftol` stores (adjust_pal).
+- **The shallowest EH depth may need nested spend**: only nested-4 probes
+  kept two ??_D StringList stages out of line (supply_options).
+- **New helper definitions flip bistable neighbours**: define them at the
+  end of the unit behind a forward declaration.
+- **Constant-argument dead probes can spend nothing.** When probes show
+  no effect, try a natural inline taking a live parameter before deciding
+  spend is irrelevant (on_button_clicked: 16 constant probes nothing, two
+  real expansions enough).
+- **`mov reg,K; cmp field,reg`** repeated across cases with different K
+  is an inline helper taking K as a parameter.
+- **Pooled literals change tail merging**: identical `X_pop("LABEL",0)`
+  arms merge whole in a pooled unit; check pooling before chasing a
+  cross-jump difference.
+- **Hand-expanded setcc arithmetic is a ternary.** The image's `neg; sbb;
+  and; add` is `c != 0 ? -1 : K`; Ghidra's `(-(uint32_t)(c != 0) & M) + K`
+  compiles to setne/neg/and/add.
+- **A named tile-pointer local** is propagated across calls into a frame
+  slot; where the image re-indexes after each call, index at each use.
+- **A named local keeps a dead store** (`int t = expr; if (t == 0)` stores
+  t into a dead parameter slot under /GX); `if (expr == 0)` does not.
+- **A dead `lea reg,[ebp+reg-base]` after a store** marks an inline member
+  setter on a virtual base (`obj.dialogs().set_x(v)`); a direct write
+  leaves none and a free helper taking `Base&` adds a null check.
+- **Every game unit is unpooled** (only the Caviar library pools). A unit
+  literal is its own `$SG` object, so a literal the original shared must be
+  named: `" "`, `", "` and `": "` appends are BufferJoinSpace (0x682820),
+  SocialWinCommaSpaceText (0x682E90) and SocialWinColonSpaceText (0x682E94);
+  one literal pushed from one address at two sites is one object (a shared
+  inline helper or named string). Check the image's push addresses before
+  writing a literal.
+- **Canary windows move with the recipe**: an extern-name window or
+  file-state redeclaration found under one recipe must be re-swept after a
+  recipe or literal change, and may no longer be needed at all
+  (corner_the_market's two redeclarations, action_give's 17 names).
+- **Fix before reverting.** When a faithful change breaks a claim, diagnose
+  and repair the break (widening scope is fine) before considering a
+  revert; revert only if no repair exists and the change is not faithful.
 - **Canonicalised forms (not levers).** `f(a) < f(b)` and its mirrored or
   negated forms give the same call order; `a * b` vs `b * a` compile
   identically.
