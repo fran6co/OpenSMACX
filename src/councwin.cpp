@@ -652,7 +652,15 @@ void CouncWin::init(int proposal, int faction_id) {
         rect.right += step;
         leader_rects_[18] = rect;
 
-        font6_.init(DefaultLargeFontFace, wide ? 0x14 : 0x14, 1);
+        // The image tests `wide` before the face load with no branch after
+        // it (0x0042777C): a conditional with identical arms. A ternary on
+        // either argument folds away; this if/else keeps the test (ours still
+        // branches on the face load) and brings the frame code closer.
+        if (wide) {
+            font6_.init(DefaultLargeFontFace, 0x14, 1);
+        } else {
+            font6_.init(DefaultLargeFontFace, 0x14, 1);
+        }
         font2_.init(DefaultLargeFontFace, 0xe, 1);
         font1_.init(DefaultLargeFontFace, 0xe, 1);
         font3_.init(DefaultLargeFontFace, 0xc, 1);
