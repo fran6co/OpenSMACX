@@ -8135,9 +8135,13 @@ int Sprite::load(const char *filename) {
     const unsigned char *byte_cursor = reinterpret_cast<const unsigned char *>(cursor);
     cTransparentIndex_ = *byte_cursor++;
     cursor = reinterpret_cast<const SpriteFileInt *>(byte_cursor);
-    iSpriteWidth2_ = cursor++->value;
-    memcpy(pcBits_, cursor,
-           static_cast<uint32_t>(iSpriteWidth2_) * iSpriteHeight_);
+    // The image sizes the copy from its own copy of the stride before the
+    // stride store (mov edx, ecx at 0x005EB1BF).
+    const int stride = cursor->value;
+    const uint32_t size = stride * iSpriteHeight_;
+    iSpriteWidth2_ = stride;
+    cursor++;
+    memcpy(pcBits_, cursor, size);
     fm.close();
     return 0;
 }

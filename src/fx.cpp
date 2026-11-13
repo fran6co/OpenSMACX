@@ -63,6 +63,16 @@ extern uint32_t BasePopDefaultBlock2E64[70];
 extern Wave g_OK_WAVE, g_ALPHAMENU_WAVE, g_SCOOT_WAVE, g_PASSOVER_WAVE;
 extern Wave g_MENU_UP_WAVE, g_MENU_DOWN_WAVE;
 
+// load_music's ambience set names are not literals: they are eight 24-byte
+// writable slots at 0x00683A18..0x00683AD7 (strcat pushes 0x00683A30 ..
+// 0x00683AC0 in steps of 0x18). Slot 0 is never referenced; the default
+// "aset1.amb" (0x00683C98) is an ordinary literal. Name and role are
+// descriptive; the original spelling is unknown.
+// RECOVERY_OBJECT: v1 0x00683A18 _FxAmbienceSetFiles
+static char FxAmbienceSetFiles[8][24] = {
+    "mset1.amb", "gset1.amb", "mset1.amb", "uset2.amb",
+    "mset1.amb", "sset1.amb", "bset1.amb", "gset1.amb"};
+
 // Original FX initialization copies 70 words from 0x00683AD8. The shared
 // text-block type supplies the extent and callback-visible field meanings.
 // RECOVERY_OBJECT: v2 0x00683AD8 0x00683BF0 _FxPopupSoundDefaults 0x00445CD0
@@ -525,25 +535,25 @@ void __cdecl load_music(int faction_id) {
     const char *const name = Players[faction_id].search_key;
     FactionAmbience *music;
     if (stricmp(name, "gaians") == 0) {
-        strcat(StringTemp, "gset1.amb");
+        strcat(StringTemp, FxAmbienceSetFiles[1]);
         music = new GAmbience;
     } else if (stricmp(name, "hive") == 0) {
-        strcat(StringTemp, "mset1.amb");
+        strcat(StringTemp, FxAmbienceSetFiles[2]);
         music = new MAmbience;
     } else if (stricmp(name, "univ") == 0) {
-        strcat(StringTemp, "uset2.amb");
+        strcat(StringTemp, FxAmbienceSetFiles[3]);
         music = new UAmbience;
     } else if (stricmp(name, "morgan") == 0) {
-        strcat(StringTemp, "mset1.amb");
+        strcat(StringTemp, FxAmbienceSetFiles[4]);
         music = new MAmbience;
     } else if (stricmp(name, "spartans") == 0) {
-        strcat(StringTemp, "sset1.amb");
+        strcat(StringTemp, FxAmbienceSetFiles[5]);
         music = new SAmbience;
     } else if (stricmp(name, "believers") == 0) {
-        strcat(StringTemp, "bset1.amb");
+        strcat(StringTemp, FxAmbienceSetFiles[6]);
         music = new BAmbience;
     } else if (stricmp(name, "peace") == 0) {
-        strcat(StringTemp, "gset1.amb");
+        strcat(StringTemp, FxAmbienceSetFiles[7]);
         music = new GAmbience;
     } else {
         strcat(StringTemp, "aset1.amb");

@@ -674,27 +674,29 @@ void TextIndex::make_index(LPCSTR source_txt) {
     if (!strchr(file_name_, '.')) {
         strcat(file_name_, TextFileExtension); // append extension if missing
     }
-    LPVOID txt_addr_base = txt_file_map.open_read(file_name_, false);
-    if (txt_addr_base) {
-        LPVOID seek_addr = txt_addr_base;
-        LPVOID eof_addr = LPVOID(uint32_t(txt_addr_base) + GetFileSize(txt_file_map.get_handle(), NULL));
+    char *txt_addr_base = static_cast<char *>(txt_file_map.open_read(file_name_, false));
+    if (!txt_addr_base) {
+        return;
+    }
+    {
+        char *eof_addr = txt_addr_base + GetFileSize(txt_file_map.get_handle(), NULL);
         heap_.init(0x8000); // maximum amount of memory per section index
-        while (seek_addr < eof_addr) {
-            LPVOID found_addr = memchr(seek_addr, '\n', uint32_t(eof_addr) - uint32_t(seek_addr));
+        for (char *seek_addr = txt_addr_base; seek_addr < eof_addr;) {
+            char *found_addr = static_cast<char *>(memchr(seek_addr, '\n', eof_addr - seek_addr));
             if (!found_addr) {
                 break; // invalid file, no newlines
             }
-            memcpy(TextBufferGetPtr, seek_addr, uint32_t(found_addr) - uint32_t(seek_addr) + 1);
+            memcpy(TextBufferGetPtr, seek_addr, found_addr - seek_addr + 1);
             kill_lf(TextBufferGetPtr);
             purge_spaces(TextBufferGetPtr);
             if (TextBufferGetPtr[0] == '#' && isupper(TextBufferGetPtr[1])) {
                 size_t len = strlen(&TextBufferGetPtr[1]) + 1;
                 LPVOID store_addr = heap_.get(len + 4); // section name + address
-                *(LPDWORD)store_addr = uint32_t(seek_addr) - uint32_t(txt_addr_base); // file offset
+                *(LPDWORD)store_addr = seek_addr - txt_addr_base; // file offset
                 strcpy(LPSTR(store_addr) + 4, &TextBufferGetPtr[1]);
                 section_count_++;
             }
-            seek_addr = LPVOID(uint32_t(found_addr) + 1);
+            seek_addr = found_addr + 1;
         }
         heap_.squeeze(true);
         txt_file_map.close();

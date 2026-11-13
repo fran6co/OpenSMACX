@@ -1050,10 +1050,8 @@ void Datalink::draw_social() {
     rect.top += 3;
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
-    StringTemp[0] = 0;
-    strcat(StringTemp, StringTable.get(model < 0 ? SocialCategories[category].type
-                                                 : SocialCategories[category].name[model]));
-    CharUpperA(StringTemp);
+    dl_upper_name(model < 0 ? SocialCategories[category].type
+                            : SocialCategories[category].name[model]);
     write_cent_l(StringTemp, &title_rect_);
     if (model >= 0) {
         const int technology = SocialCategories[category].preq_tech[model];
@@ -1071,9 +1069,7 @@ void Datalink::draw_social() {
     }
     popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
     set_font(&body_font_, 0, 0, &link_font_);
-    set_text_color(0x98, -1, 1, 1);
-    set_text_color2(0x96, -1, 1, 1);
-    set_text_color_hyper(0x96, -1, 1, 1);
+    dl_body_colors(this, 0x96);
     write_strings(&popup.unit_ids_, rect.left, rect.top, rect.right - rect.left, 0);
     rect = lower_description_rect_;
     rect.left += 3;
@@ -1091,18 +1087,16 @@ void Datalink::draw_social() {
         }
         if (count == 0) {
             rect.left += 20;
-            char *text = label_get(0xFD4 / 4);
-            if (text != 0) {
-                write_l(text, &rect, strlen(text));
-            }
+            write_l(label_get(0xFD4 / 4), &rect);
         } else {
             const int x = rect.left + 20;
             int y = rect.top
                 + (rect.bottom - font_line_advance(body_font_) * count - rect.top) / 2;
             for (i = 0; i < 11; ++i) {
-                if (effect.values_[i] != 0) {
+                const int value = effect.values_[i];
+                if (value != 0) {
                     StringTemp[0] = 0;
-                    _itoa(effect.values_[i], number, 10);
+                    _itoa(value, number, 10);
                     strcat(StringTemp, number);
                     // 0x0043041E tests the buffer address before strlen, the
                     // guarded full-length writer form.
