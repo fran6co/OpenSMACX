@@ -2681,12 +2681,10 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
             rect->top = line_height;
             rect->left = static_cast<int>(lab_prerequisite_x_) + x_offset - 4;
             rect->bottom = line_height + 20;
-            rect->left += 7;
-            rect->right -= 7;
+            inflate_frame(rect, -7, 0);
             report_work_rect_.bottom -= 7;
             host->Buffer::set_clip(rect);
-            rect->left -= 7;
-            rect->right += 7;
+            inflate_frame(rect, 7, 0);
             report_work_rect_.bottom += 7;
             if (style_select) {
                 host->Buffer::box_sprite(rect, &InterfaceBoxStyles[5]);
@@ -2718,12 +2716,10 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
         rect->top = line_height;
         rect->right = static_cast<int>(lab_center_x_) + 4;
         rect->bottom = line_height + 20;
-        rect->left += 7;
-        rect->right -= 7;
+        inflate_frame(rect, -7, 0);
         report_work_rect_.bottom -= 7;
         host->Buffer::set_clip(rect);
-        rect->left -= 7;
-        rect->right += 7;
+        inflate_frame(rect, 7, 0);
         report_work_rect_.bottom += 7;
         host->Buffer::box_sprite(rect, style_select ? &InterfaceBoxStyles[5]
                                                      : &InterfaceBoxStyles[3]);
@@ -2753,12 +2749,10 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
                 rect->top = line_height;
                 rect->left = mid - 7;
                 rect->bottom = line_height + 20;
-                rect->left += 7;
-                rect->right -= 7;
+                inflate_frame(rect, -7, 0);
                 report_work_rect_.bottom -= 7;
                 host->Buffer::set_clip(rect);
-                rect->left -= 7;
-                rect->right += 7;
+                inflate_frame(rect, 7, 0);
                 report_work_rect_.bottom += 7;
             } else {
                 // 0x49B836
@@ -2845,23 +2839,19 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
     if (style_select) {
         rect->right = mid + 7;
         rect->bottom = line_height + 20;
-        rect->left += 7;
-        rect->right -= 7;
+        inflate_frame(rect, -7, 0);
         report_work_rect_.bottom -= 7;
         host->Buffer::set_clip(rect);
-        rect->left -= 7;
-        rect->right += 7;
+        inflate_frame(rect, 7, 0);
         report_work_rect_.bottom += 7;
         host->Buffer::box_sprite(rect, &InterfaceBoxStyles[5]);
     } else {
         rect->right = mid + 7;
         rect->bottom = line_height + 20;
-        rect->left += 7;
-        rect->right -= 7;
+        inflate_frame(rect, -7, 0);
         report_work_rect_.bottom -= 7;
         host->Buffer::set_clip(rect);
-        rect->left -= 7;
-        rect->right += 7;
+        inflate_frame(rect, 7, 0);
         report_work_rect_.bottom += 7;
         host->Buffer::box_sprite(rect, &InterfaceBoxStyles[3]);
     }
