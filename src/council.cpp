@@ -119,8 +119,7 @@ int __cdecl can_call_council(int faction_id, int announce) {
         if (announce != 0 && faction_id == ConsoleGlobal.faction_id_ &&
             ((1 << faction_id) &
              GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) != 0) {
-            NetMsgPrimary.pop(CouncilSunspotLabel, 0xffffec78, 0,
-                             CouncilSunspotPcx);
+            NetMsgPrimary.pop(CouncilSunspotLabel, CouncilSunspotPcx);
         }
         return 0;
     }
@@ -129,8 +128,7 @@ int __cdecl can_call_council(int faction_id, int announce) {
         if (announce != 0 && faction_id == ConsoleGlobal.faction_id_ &&
             ((1 << faction_id) &
              GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) != 0) {
-            NetMsgPrimary.pop(CouncilPbemLabel, 0xffffec78, 0,
-                             static_cast<const char *>(0));
+            NetMsgPrimary.pop(CouncilPbemLabel, static_cast<const char *>(0));
         }
         return 0;
     }
@@ -186,8 +184,7 @@ int __cdecl can_call_council(int faction_id, int announce) {
         if (announce != 0 && faction_id == ConsoleGlobal.faction_id_ &&
             (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
              (1 << faction_id)) != 0) {
-            NetMsgPrimary.pop(CouncilBlockedLabel, 0xffffec78, 0,
-                             CouncilBlockedPcx);
+            NetMsgPrimary.pop(CouncilBlockedLabel, CouncilBlockedPcx);
         }
         return 0;
     }
@@ -284,7 +281,7 @@ static inline int wants_prop_candidate(int option, int &count) {
     }
     const int votes = council_votes(option);
     for (int other = 1; other < MaxPlayerNum; ++other) {
-        if (other != option
+        if (option != other
             && (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << other))
             && council_votes(other) > votes) {
             count++;
@@ -586,8 +583,10 @@ int __cdecl wants_prop(int faction, int proposal, int option) {
                 } else {
                     relative--;
                 }
-                if (PlayersData[other].unk_13 - PlayersData[other].maint_cost_total
-                    > PlayersData[faction].unk_13 - PlayersData[faction].maint_cost_total) {
+                // WORKAROUND(type): the image compares with jle (signed);
+                // PlayerData::maint_cost_total is declared uint32_t.
+                if (PlayersData[other].unk_13 - static_cast<int>(PlayersData[other].maint_cost_total)
+                    > PlayersData[faction].unk_13 - static_cast<int>(PlayersData[faction].maint_cost_total)) {
                     relative++;
                 } else {
                     relative--;
