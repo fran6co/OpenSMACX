@@ -8251,8 +8251,7 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
             popup.start("COUNCILVOTEGOV", 0x100000);
             popup.set_picture(FactionDiplomacyPortraits[other_faction_id], 0, nullptr);
             for (int candidate = 1; candidate < MaxPlayerNum; ++candidate) {
-                if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << candidate)) &&
-                    eligible(candidate)) {
+                if (is_alive(candidate) && eligible(candidate)) {
                     clear();
                     parse_set(Players[candidate].is_leader_female, FALSE);
                     strcat(StringTemp, Players[candidate].title_leader);

@@ -3768,6 +3768,7 @@ int Net::join_session(NetAllocationNode *session, char *player_name,
             goto fail;
         }
 
+        DPSESSIONDESC2 requested;
         if (session != 0) {
             if (allocation_node_.session_name_ != 0
                 && &allocation_node_ != session) {
@@ -3777,7 +3778,6 @@ int Net::join_session(NetAllocationNode *session, char *player_name,
             free_if_set(allocation_node_.password_);
             allocation_node_.password_ = 0;
 
-            DPSESSIONDESC2 requested;
             memset(&requested, 0, sizeof(requested));
             requested.dwSize = sizeof(requested);
             requested.guidInstance = session->instance_guid_;
@@ -3797,7 +3797,7 @@ int Net::join_session(NetAllocationNode *session, char *player_name,
             }
         }
 
-        DWORD descriptor_size = 0;
+        DWORD descriptor_size;  // uninitialised in the image (0x0062E6E1)
         NetDirectPlay->GetSessionDesc(0, &descriptor_size);
         DPSESSIONDESC2 *descriptor = static_cast<DPSESSIONDESC2 *>(
             mem_get(static_cast<int>(descriptor_size)));
@@ -3809,20 +3809,25 @@ int Net::join_session(NetAllocationNode *session, char *player_name,
             goto fail;
         }
 
-        const int local_version = static_cast<int>(field_44_);
-        const int remote_version = static_cast<int>(descriptor->dwUser1);
-        if (local_version != remote_version) {
-            parse_num(0, local_version);
-            parse_num(1, remote_version);
-            if (local_version < remote_version) {
-                older_version_font.init("Times New Roman", 0xE, 0);
-                older_version_shadow.init("Times New Roman", 0xE, 2);
-                pop_caption("jackal.txt", "CLIENTOLDERVERSION", 0);
-            } else {
-                older_version_font.init("Times New Roman", 0xE, 0);
-                older_version_shadow.init("Times New Roman", 0xE, 2);
-                pop_caption("jackal.txt", "CLIENTNEWERVERSION", 0);
-            }
+        // BUG IN THE ORIGINAL: each warning's second number is the local
+        // join request's dwUser1 (zeroed, or stale when no session was
+        // passed), not the remote version just compared (0x0062E72E,
+        // 0x0062E78F read [esp+0xc8]).
+        if (static_cast<int>(descriptor->dwUser1) > static_cast<int>(field_44_)) {
+            parse_num(0, field_44_);
+            parse_num(1, requested.dwUser1);
+            older_version_font.init("Times New Roman", 0xE, 0);
+            older_version_shadow.init("Times New Roman", 0xE, 2);
+            pop_caption("jackal.txt", "CLIENTOLDERVERSION", 0);
+            NetDirectPlay->Close();
+            goto fail;
+        }
+        if (static_cast<int>(descriptor->dwUser1) < static_cast<int>(field_44_)) {
+            parse_num(0, field_44_);
+            parse_num(1, requested.dwUser1);
+            older_version_font.init("Times New Roman", 0xE, 0);
+            older_version_shadow.init("Times New Roman", 0xE, 2);
+            pop_caption("jackal.txt", "CLIENTNEWERVERSION", 0);
             NetDirectPlay->Close();
             goto fail;
         }

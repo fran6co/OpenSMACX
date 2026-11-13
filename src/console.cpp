@@ -3915,12 +3915,10 @@ void Console::use_time_bonus() {
 // ORIGINAL: 0x00514990 ?quit_game@Console@@QAEXXZ 0x00514990-0x00514B2C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00514990.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
 void Console::quit_game() {
-    const char *prompt;
-    if ((IsMultiplayerNet || IsMultiplayerPBEM) &&
-        bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 255) > 1) prompt = ConsoleReallyWimpOut;
 // RECOVERY_LITERAL: v1 0x0068A7E4 0x0068A7EF ??_C@_0L@GOAC@REALLYQUIT?$AA@ 0x00514990
-    else prompt = "REALLYQUIT";
-    if (!X_pop(prompt, nullptr)) return;
+    if (!X_pop((IsMultiplayerNet || IsMultiplayerPBEM) &&
+               bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 255) > 1
+                   ? ConsoleReallyWimpOut : "REALLYQUIT", nullptr)) return;
     if (IsMultiplayerPBEM) {
         // The original modifies only the human-faction byte of this word.
         unsigned char &human_mask = reinterpret_cast<unsigned char &>(
@@ -3944,28 +3942,7 @@ void Console::quit_game() {
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00514d30.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
 void Console::new_game() {
     if (IsMultiplayerNet) return;
-    const char *prompt;
-    if (IsMultiplayerPBEM && bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 255) > 1)
-        prompt = ConsoleReallyWimpOut;
-    else prompt = "REALLYQUIT";
-    if (X_pop(prompt, nullptr)) {
-        if (IsMultiplayerPBEM) {
-            unsigned char &human_mask = reinterpret_cast<unsigned char &>(
-                GameDataStateStorage.fields_.lock_masks_.enable_mask_);
-            human_mask &= static_cast<unsigned char>(~(1u << ConsoleGlobal.faction_id_));
-            save_game(0);
-        }
-        if ((GameDataStateStorage.fields_.game_rules_ & 0x400) && !IsMultiplayerPBEM) auto_save();
-        // Re-read after callbacks; the initial network refusal does not
-        // establish that the network flag stayed clear during the popup.
-        if (IsMultiplayerNet) {
-            NetDaemonNet.hang_up();
-            NetDaemonNet.reset();
-            IsMultiplayerNet = 0;
-        }
-        ExitTurnLoop = 1;
-        log_say("Quit***********************************", 0, 0, 0);
-    }
+    quit_game();
     if (ExitTurnLoop) GameRestartQueued = 1;
 }
 
@@ -5671,7 +5648,8 @@ void Console::menu_proc(int command) {
     TutorialWindow.reset();
     go_reset();
     // 0x51BCAE..0x51BD41 is Console::cursor_off (0x510520) expanded.
-    // WORKAROUND(inline): written out; a cursor_off() call stays out of line here.
+    // WORKAROUND(inline): written out; a cursor_off() call stays out of line
+    // here (C4711 refuses it: over the auto-inline size cap).
     field_23D10_ = 0;
     for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
         MapWin *const window = MapWinTable[slot];
@@ -5684,10 +5662,11 @@ void Console::menu_proc(int command) {
             window->cursor_resource_id_ = 0x7F00;
             window->cursor_sprite_ = nullptr;
         }
-        const uint32_t dirty = window->field_1DD70_ & 0x00C40000u;
-        if (dirty != 0) {
-            window->field_1DD70_ &= ~0x00C40000u;
-            window->draw_map(1);
+        // cursor_off's post-callback reload through the table.
+        const uint32_t dirty = MapWinTable[slot]->field_1DD70_;
+        if ((dirty & 0x00C40000u) != 0) {
+            MapWinTable[slot]->field_1DD70_ = dirty & ~0x00C40000u;
+            MapWinTable[slot]->draw_map(1);
         }
         do_non_input();
     }
@@ -5733,52 +5712,8 @@ void Console::menu_proc(int command) {
     case 0x59: save_game(0); break;
     case 0x5A: load_proc(0, 0); break;
     case 0x5B: retire_game(); break;
-    // WORKAROUND(inline): new_game (0x514D30) and quit_game (0x514990) are
-    // expanded in the image; calls to them stay out of line here.
-    case 0x5C:
-        if (IsMultiplayerNet != 0) break;
-        if (X_pop(IsMultiplayerPBEM == 0
-                      ? "REALLYQUIT"
-                      : (bit_count(static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) > 1
-                             ? ConsoleReallyWimpOut
-                             : "REALLYQUIT"),
-                  0) != 0) {
-            if (IsMultiplayerPBEM != 0) {
-                GameDataStateStorage.fields_.lock_masks_.enable_mask_ &= ~(1u << (ConsoleGlobal.faction_id_ & 0x1F));
-                save_game(0);
-            }
-            if ((GameDataStateStorage.fields_.game_rules_ & 0x400) != 0 && IsMultiplayerPBEM == 0) auto_save();
-            if (IsMultiplayerNet != 0) {
-                NetDaemonNet.hang_up();
-                { void (NetDaemon::*reset_call)() = &NetDaemon::reset; (NetDaemonNet.*reset_call)(); }  // WORKAROUND(noinline): the image calls 0x51DD00 here
-                IsMultiplayerNet = 0;
-            }
-            ExitTurnLoop = 1;
-            log_say("Quit***********************************", 0, 0, 0);
-        }
-        if (ExitTurnLoop != 0) GameRestartQueued = 1;
-        break;
-    case 0x5D:
-        if (X_pop(IsMultiplayerNet == 0 && IsMultiplayerPBEM == 0
-                      ? "REALLYQUIT"
-                      : (bit_count(static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) > 1
-                             ? ConsoleReallyWimpOut
-                             : "REALLYQUIT"),
-                  0) != 0) {
-            if (IsMultiplayerPBEM != 0) {
-                GameDataStateStorage.fields_.lock_masks_.enable_mask_ &= ~(1u << (ConsoleGlobal.faction_id_ & 0x1F));
-                save_game(0);
-            }
-            if ((GameDataStateStorage.fields_.game_rules_ & 0x400) != 0 && IsMultiplayerPBEM == 0) auto_save();
-            if (IsMultiplayerNet != 0) {
-                NetDaemonNet.hang_up();
-                { void (NetDaemon::*reset_call)() = &NetDaemon::reset; (NetDaemonNet.*reset_call)(); }  // WORKAROUND(noinline): the image calls 0x51DD00 here
-                IsMultiplayerNet = 0;
-            }
-            ExitTurnLoop = 1;
-            log_say("Quit***********************************", 0, 0, 0);
-        }
-        break;
+    case 0x5C: new_game(); break;                // 0x514D30 expanded
+    case 0x5D: quit_game(); break;               // 0x514990 expanded
     case 0x103: design_new_veh(ConsoleGlobal.faction_id_, -1); break;
     case 0x105: social_select(ConsoleGlobal.faction_id_); break;
     case 0x106:
@@ -7271,29 +7206,7 @@ int Console::on_key_click(int a1, int a2) {
             ReportIfGlobal.done();
             break;
         }
-        // 0x51A615..0x51A6A9 is Console::quit_game (0x514990) expanded.
-        // WORKAROUND(inline): written out; a quit_game() call stays out of line in this unit (menu_proc).
-        {
-            const char *prompt;
-            if ((IsMultiplayerNet || IsMultiplayerPBEM) &&
-                bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 255) > 1) prompt = ConsoleReallyWimpOut;
-            else prompt = "REALLYQUIT";
-            if (X_pop(prompt, 0) != 0) {
-                if (IsMultiplayerPBEM) {
-                    GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &=
-                        static_cast<unsigned char>(~(1u << ConsoleGlobal.faction_id_));
-                    save_game(0);
-                }
-                if ((GameDataStateStorage.fields_.game_rules_ & 0x400) && !IsMultiplayerPBEM) auto_save();
-                if (IsMultiplayerNet) {
-                    NetDaemonNet.hang_up();
-                    NetDaemonNet.reset();
-                    IsMultiplayerNet = 0;
-                }
-                ExitTurnLoop = 1;
-                log_say("Quit***********************************", 0, 0, 0);
-            }
-        }
+        quit_game();  // 0x514990 expanded (tail cross-jumped into 0x20051's copy)
         break;
     case 0x08:
         if (consumed != 0) {
@@ -7383,29 +7296,7 @@ int Console::on_key_click(int a1, int a2) {
         retire_game();
         // fall through: 0x20051 enters the confirmation at 0x51AA0D.
     case 0x20051:
-        // 0x51AA0D..0x51ABA4 is Console::quit_game (0x514990) expanded.
-        // WORKAROUND(inline): written out; a quit_game() call stays out of line in this unit (menu_proc).
-        {
-            const char *prompt;
-            if ((IsMultiplayerNet || IsMultiplayerPBEM) &&
-                bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 255) > 1) prompt = ConsoleReallyWimpOut;
-            else prompt = "REALLYQUIT";
-            if (X_pop(prompt, 0) != 0) {
-                if (IsMultiplayerPBEM) {
-                    GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &=
-                        static_cast<unsigned char>(~(1u << ConsoleGlobal.faction_id_));
-                    save_game(0);
-                }
-                if ((GameDataStateStorage.fields_.game_rules_ & 0x400) && !IsMultiplayerPBEM) auto_save();
-                if (IsMultiplayerNet) {
-                    NetDaemonNet.hang_up();
-                    NetDaemonNet.reset();
-                    IsMultiplayerNet = 0;
-                }
-                ExitTurnLoop = 1;
-                log_say("Quit***********************************", 0, 0, 0);
-            }
-        }
+        quit_game();  // 0x514990 expanded
         break;
     case 0x1004E:
         if (consumed != 0) {
@@ -7462,31 +7353,7 @@ int Console::on_key_click(int a1, int a2) {
         prefs_save(0);
         break;
     case 0x30051:
-        // 0x51AE3F..0x51AFF0 is Console::new_game (0x514D30) expanded.
-        // WORKAROUND(inline): written out; a new_game() call stays out of line in this unit (menu_proc).
-        if (IsMultiplayerNet) break;
-        {
-            const char *prompt;
-            if (IsMultiplayerPBEM && bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 255) > 1)
-                prompt = ConsoleReallyWimpOut;
-            else prompt = "REALLYQUIT";
-            if (X_pop(prompt, 0)) {
-                if (IsMultiplayerPBEM) {
-                    GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &=
-                        static_cast<unsigned char>(~(1u << ConsoleGlobal.faction_id_));
-                    save_game(0);
-                }
-                if ((GameDataStateStorage.fields_.game_rules_ & 0x400) && !IsMultiplayerPBEM) auto_save();
-                if (IsMultiplayerNet) {
-                    NetDaemonNet.hang_up();
-                    NetDaemonNet.reset();
-                    IsMultiplayerNet = 0;
-                }
-                ExitTurnLoop = 1;
-                log_say("Quit***********************************", 0, 0, 0);
-            }
-            if (ExitTurnLoop) GameRestartQueued = 1;
-        }
+        new_game();  // 0x514D30 expanded
         break;
     case 0x3004E:
         if (consumed != 0) {
