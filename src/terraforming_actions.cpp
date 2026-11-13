@@ -65,6 +65,12 @@
 #include "fx.h"
 #include <mmsystem.h>
 #include "designwin.h" // Crawler animation advances while the design window is visible.
+// WORKAROUND(decl): action_give (0x004CEDE0) is a canary whose two spill
+// reloads after owner_set flip with the unit's extern-name count; with
+// action_airdrop's image loop shape it stays exact with 1-3 or 6 extra names
+// (0, 4, 5, 8-24 flip it). Two unused names sit in the middle of the window.
+extern int TerraformingActionsExternPad1;
+extern int TerraformingActionsExternPad2;
 #include "vector.h"  // vector_add operates on actual three-float arrays.
 
 extern void __cdecl unspot_stack(int veh_id);
@@ -1545,20 +1551,20 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
         if (NetDaemonNet.channels_[0].leading_words_[3] & 1 && faction_id == ConsoleGlobal.faction_id_) {
             parse_num(0, Rules.max_airdrop_sans_orb_insert);
             if (Players[faction_id].rule_flags & 0x80) {
-                NetMsgPrimary.pop(VehLabelDROPRANGE, -5000, 0, VehIconAL_DROP_SM_PCX);
+                NetMsgPrimary.pop(VehLabelDROPRANGE, VehIconAL_DROP_SM_PCX);
                 return 0;
             }
-            NetMsgPrimary.pop(VehLabelDROPRANGE2, -5000, 0, VehIconAIRDP_SM_PCX);
+            NetMsgPrimary.pop(VehLabelDROPRANGE2, VehIconAIRDP_SM_PCX);
         }
         return 0;
     }
     if ((map_loc(x, y)->climate & ~0x1F) < ALT_BIT_SHORE_LINE) {
         if (NetDaemonNet.channels_[0].leading_words_[3] & 1 && faction_id == ConsoleGlobal.faction_id_) {
             if (Players[faction_id].rule_flags & 0x80) {
-                NetMsgPrimary.pop(VehLabelDROPSEA, -5000, 0, VehIconAL_DROP_SM_PCX2);
+                NetMsgPrimary.pop(VehLabelDROPSEA, VehIconAL_DROP_SM_PCX2);
                 return 0;
             }
-            NetMsgPrimary.pop(VehLabelDROPSEA2, -5000, 0, VehIconAIRDP_SM_PCX2);
+            NetMsgPrimary.pop(VehLabelDROPSEA2, VehIconAIRDP_SM_PCX2);
         }
         return 0;
     }
@@ -1567,20 +1573,20 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
         && !(PlayersData[faction_id].diplo_treaties[owner] & DTREATY_PACT)) {
         if (NetDaemonNet.channels_[0].leading_words_[3] & 1 && faction_id == ConsoleGlobal.faction_id_) {
             if (Players[faction_id].rule_flags & 0x80) {
-                NetMsgPrimary.pop(VehLabelDROPUNIT, -5000, 0, VehIconAL_DROP_SM_PCX3);
+                NetMsgPrimary.pop(VehLabelDROPUNIT, VehIconAL_DROP_SM_PCX3);
                 return 0;
             }
-            NetMsgPrimary.pop(VehLabelDROPUNIT2, -5000, 0, VehIconAIRDP_SM_PCX3);
+            NetMsgPrimary.pop(VehLabelDROPUNIT2, VehIconAIRDP_SM_PCX3);
         }
         return 0;
     }
     if (!get_proto_offense_rating(Vehs[veh_id].proto_id) && zoc_move(x, y, faction_id)) {
         if (NetDaemonNet.channels_[0].leading_words_[3] & 1 && faction_id == ConsoleGlobal.faction_id_) {
             if (Players[faction_id].rule_flags & 0x80) {
-                NetMsgPrimary.pop(VehLabelNONCOMDROP, -5000, 0, VehIconAL_DROP_SM_PCX4);
+                NetMsgPrimary.pop(VehLabelNONCOMDROP, VehIconAL_DROP_SM_PCX4);
                 return 0;
             }
-            NetMsgPrimary.pop(VehLabelNONCOMDROP2, -5000, 0, VehIconAIRDP_SM_PCX4);
+            NetMsgPrimary.pop(VehLabelNONCOMDROP2, VehIconAIRDP_SM_PCX4);
         }
         return 0;
     }
@@ -1590,10 +1596,10 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
         if (!get_proto_offense_rating(Vehs[veh_id].proto_id)) {
             if (NetDaemonNet.channels_[0].leading_words_[3] & 1 && faction_id == ConsoleGlobal.faction_id_) {
                 if (Players[faction_id].rule_flags & 0x80) {
-                    NetMsgPrimary.pop(VehLabelNONCOMDROP3, -5000, 0, VehIconAL_DROP_SM_PCX5);
+                    NetMsgPrimary.pop(VehLabelNONCOMDROP3, VehIconAL_DROP_SM_PCX5);
                     return 0;
                 }
-                NetMsgPrimary.pop(VehLabelNONCOMDROP4, -5000, 0, VehIconAIRDP_SM_PCX5);
+                NetMsgPrimary.pop(VehLabelNONCOMDROP4, VehIconAIRDP_SM_PCX5);
             }
             return 0;
         }
@@ -1617,10 +1623,10 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
                     if (NetDaemonNet.channels_[0].leading_words_[3] & 1 && faction_id == ConsoleGlobal.faction_id_) {
                         parse_says(0, Bases[base_id].name_string, -1, -1);
                         if (Players[faction_id].rule_flags & 0x80) {
-                            NetMsgPrimary.pop(VehLabelAIRDEFENSES, -5000, 0, VehIconALAIR_SM_PCX);
+                            NetMsgPrimary.pop(VehLabelAIRDEFENSES, VehIconALAIR_SM_PCX);
                             return 0;
                         }
-                        NetMsgPrimary.pop(VehLabelAIRDEFENSES2, -5000, 0, VehIconAIR_SM_PCX);
+                        NetMsgPrimary.pop(VehLabelAIRDEFENSES2, VehIconAIR_SM_PCX);
                     }
                     return 0;
                 }
@@ -1632,17 +1638,12 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
         int is_seen = faction_id == ConsoleGlobal.faction_id_
             || anything_at(x, y) == ConsoleGlobal.faction_id_
             || GameDataStateStorage.fields_.game_state_ & 0x80;
-        if (!is_seen) {
-            int i = 0;
-            while (1) {
-                if (i >= 8) break;
-                int x_radius = wrap_map_x(x + VehMoveDeltaX[i]);
-                int y_radius = y + VehMoveDeltaY[i];
-                if (on_map(x_radius, y_radius) && anything_at(x_radius, y_radius) == ConsoleGlobal.faction_id_) {
-                    is_seen = true;
-                    break;
-                }
-                i++;
+        for (int i = 0; !is_seen && i < 8; i++) {
+            int x_radius = wrap_map_x(x + VehMoveDeltaX[i]);
+            int y_radius = y + VehMoveDeltaY[i];
+            if (on_map(x_radius, y_radius) && anything_at(x_radius, y_radius) == ConsoleGlobal.faction_id_) {
+                is_seen = true;
+                break;
             }
         }
         int is_shown;

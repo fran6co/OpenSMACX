@@ -33,6 +33,10 @@
 // ORIGINAL: 0x00432870 _$E19 0x00432870-0x0043287A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682078 selects initializer0x432850..0x432866, registering exit0x432870..0x43287a. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x71f2b0 bound to?TutWinDesWindow@@3VDesignWin@@A.", "Original startup instruction evidence: [[\"0x432850\", \"mov\", \"ecx, 0x71f2b0\"], [\"0x432855\", \"call\", \"0x434480\"], [\"0x43285a\", \"push\", \"0x432870\"], [\"0x43285f\", \"call\", \"0x645398\"], [\"0x432864\", \"pop\", \"ecx\"], [\"0x432865\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x432870\", \"mov\", \"ecx, 0x71f2b0\"], [\"0x432875\", \"jmp\", \"0x43ecb0\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/designwin.cpp COFF selects _$E21 via .CRT$XCU, registering _$E19. Startup relocation targets: [\"?TutWinDesWindow@@3VDesignWin@@A\", \"??0DesignWin@@QAE@XZ\", \"_$E19\", \"_atexit\"]; exit targets: [\"?TutWinDesWindow@@3VDesignWin@@A\", \"??1DesignWin@@UAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f2dc; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned ?TutWinDesWindow@@3VDesignWin@@A; preserve complete original identity and remaining restoration/structure obligations."}
 // symbol    _$E14
+// on_button_clicked expands BasePop::item (0x00438D10 calls Dialogs::item
+// 0x00612A70, not the out-of-line copy 0x00558FE0).
+#define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h
+#define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
 #include "stdafx.h"
 #include "font_metrics.h"
 #include "interface_fonts.h"
@@ -1232,7 +1236,9 @@ int DesignWin::init() {
     preview_panel_rect_ = MainInterfaceGlobal.main_frame_rect();
     preview_panel_rect_.bottom = field_B0C_rect_.top;
     design_inflate_rect(&preview_panel_rect_, -3, -3);
-    info_panel_rect_ = MainInterfaceGlobal.lower_frame_rect();
+    // 0x0043C4AF copies +0xDA0 (0x007AF5C0), the info panel frame, not
+    // +0xDB0's lower frame.
+    info_panel_rect_ = MainInterfaceGlobal.info_frame_rect();
     design_inflate_rect(&info_panel_rect_, -4, -4);
     design_inset_rect(&frame_rect_, &MainInterfaceGlobal.right_frame_rect(), 4);
     design_inset_rect(&caption_rect_, &frame_rect_, 3);
@@ -2140,9 +2146,9 @@ void DesignWin::on_button_clicked(int button_id) {
         synch_obs(protoID_);
         // No proto_sort_2 here: scans the existing ranking and steps to the
         // entry after the one just (un)obsoleted.
+        int scan = prototype_stack_start_;
         int count = ProtoSortCount;
-        for (int scan = prototype_stack_start_;
-             scan < prototype_stack_start_ + count; ++scan) {
+        for (; scan < prototype_stack_start_ + count; ++scan) {
             if (protoID_ == ProtoSortIds[scan % count]) {
                 protoID_ = ProtoSortIds[(scan + 1) % count];
                 break;
@@ -2246,7 +2252,8 @@ void DesignWin::on_button_clicked(int button_id) {
             break;
         }
         // Tests the OLD prototype's active-unit count, before the upgrade.
-        int no_units = PlayersData[factionID_].proto_id_active[protoID_] == 0;
+        // The flag reuses `selected`'s frame slot (0x00438D15/0x00438DEC).
+        selected = PlayersData[factionID_].proto_id_active[protoID_] == 0;
         if (upgrade_prototype(factionID_, choice, protoID_, 0)) {
             protoID_ = choice;
             setup_veh(choice, 0);
@@ -2254,12 +2261,12 @@ void DesignWin::on_button_clicked(int button_id) {
             redraw();
         }
         if (Players[factionID_].rule_flags & 0x80) {
-            if (no_units) {
+            if (selected) {
                 popp(ScriptPopupFile, "YESUPGRADE", 0, "alunit_sm.pcx",
                      pop_wait);
             }
         } else {
-            if (no_units) {
+            if (selected) {
                 popp(ScriptPopupFile, "YESUPGRADE", 0, "unit_sm.pcx",
                      pop_wait);
             }
@@ -5505,11 +5512,15 @@ void DesignWin::select_special(int which) {
         }
     }
 
-    popup.start(PopupStartCaption, "UNITSPECIAL", -1, nullptr, 0x200042);
+    // WORKAROUND(noinline): 0x0043AED5 calls the five-argument start
+    // (0x0043EF70) out of line; the member pointer keeps /Ob2 from expanding
+    // the MEASURED header body (as in diplomacy_menu).
+    void (Popup::*const start5)(char *, const char *, int, char *, int) = &Popup::start;
+    (popup.*start5)(PopupStartCaption, "UNITSPECIAL", -1, nullptr, 0x200042);
     Dialogs &dialogs = popup.dialogs();
 
     StringTemp[0] = 0;
-    strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x88]));
+    strcat(StringTemp, label_get(0x88));
     dialogs.item(StringTemp, 0x1D);
 
     int count = 1;
@@ -5550,7 +5561,7 @@ void DesignWin::select_special(int which) {
         strcat(StringTemp, SocialWinColonSpaceText);
         strcat(StringTemp, StringTable.get(Ability[i].description));
         strcat(StringTemp, "|");
-        strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x58]));
+        strcat(StringTemp, label_get(0x58));
         strcat(StringTemp, SocialWinColonSpaceText);
 
         int cost = Ability[i].cost_factor;
@@ -5567,9 +5578,9 @@ void DesignWin::select_special(int which) {
                 say_num(ratio);
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, "(");
-                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x7C]));
+                strcat(StringTemp, label_get(0x7C));
                 strcat(StringTemp, "/");
-                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x55]));
+                strcat(StringTemp, label_get(0x55));
                 strcat(StringTemp, ")");
                 break;
             }
@@ -5577,7 +5588,7 @@ void DesignWin::select_special(int which) {
                 say_num(Weapon[protoWeaponType_].cost - 1);
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, "(");
-                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x7C]));
+                strcat(StringTemp, label_get(0x7C));
                 strcat(StringTemp, "-1");
                 strcat(StringTemp, ")");
                 break;
@@ -5585,7 +5596,7 @@ void DesignWin::select_special(int which) {
                 say_num(Armor[protoArmorType_].cost - 1);
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, "(");
-                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x55]));
+                strcat(StringTemp, label_get(0x55));
                 strcat(StringTemp, "-1");
                 strcat(StringTemp, ")");
                 break;
@@ -5593,7 +5604,7 @@ void DesignWin::select_special(int which) {
                 say_num(Chassis[protoChassisType_].speed - 1);
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, "(");
-                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x2C5]));
+                strcat(StringTemp, label_get(0x2C5));
                 strcat(StringTemp, "-1");
                 strcat(StringTemp, ")");
                 break;
@@ -5602,9 +5613,9 @@ void DesignWin::select_special(int which) {
                         + Weapon[protoWeaponType_].cost - 2);
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, "(");
-                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x7C]));
+                strcat(StringTemp, label_get(0x7C));
                 strcat(StringTemp, "+");
-                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x55]));
+                strcat(StringTemp, label_get(0x55));
                 strcat(StringTemp, "-2");
                 strcat(StringTemp, ")");
                 break;
@@ -5613,9 +5624,9 @@ void DesignWin::select_special(int which) {
                         + Weapon[protoWeaponType_].cost - 2);
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, "(");
-                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x7C]));
+                strcat(StringTemp, label_get(0x7C));
                 strcat(StringTemp, "+");
-                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x2C5]));
+                strcat(StringTemp, label_get(0x2C5));
                 strcat(StringTemp, "-2");
                 strcat(StringTemp, ")");
                 break;
@@ -5624,9 +5635,9 @@ void DesignWin::select_special(int which) {
                         + Armor[protoArmorType_].cost - 2);
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, "(");
-                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x55]));
+                strcat(StringTemp, label_get(0x55));
                 strcat(StringTemp, "+");
-                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x2C5]));
+                strcat(StringTemp, label_get(0x2C5));
                 strcat(StringTemp, "-2");
                 strcat(StringTemp, ")");
                 break;

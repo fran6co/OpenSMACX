@@ -305,14 +305,14 @@ void ProdPicker::on_button_clicked(int button_id) {
     case 1:
         field_A778_ = 2;
         break;
+    case 3:
+        field_A778_ = 3;
+        break;
     case 2:
         if (field_A774_ == static_cast<uint32_t>(-1)) return;
         // fall through
     case 7:
         field_A778_ = 7;
-        break;
-    case 3:
-        field_A778_ = 3;
         break;
     case 4:
         field_A778_ = 4;
@@ -324,12 +324,12 @@ void ProdPicker::on_button_clicked(int button_id) {
     case 6:
         field_A778_ = 6;
         break;
+    case -1:
+        field_A778_ = 0;
+        break;
     case -2:
         field_A778_ = 0;
         field_A774_ = static_cast<uint32_t>(-1);
-        break;
-    case -1:
-        field_A778_ = 0;
         break;
     default:
         return;
@@ -538,24 +538,15 @@ void ProdPicker::calculate() {
     char active[80];
     char queued[80];
 
-    {
-        StringList *list = &prod_a_;
-        list->StringStruct::remove_all();
-        list->current_position_ = 0;
-        list->allocator_ = 0;
-    }
-    {
-        StringList *list = &prod_b_;
-        list->StringStruct::remove_all();
-        list->current_position_ = 0;
-        list->allocator_ = 0;
-    }
-    {
-        StringList *list = &prod_c_;
-        list->StringStruct::remove_all();
-        list->current_position_ = 0;
-        list->allocator_ = 0;
-    }
+    prod_a_.StringStruct::remove_all();
+    prod_a_.current_position_ = 0;
+    prod_a_.allocator_ = 0;
+    prod_b_.StringStruct::remove_all();
+    prod_b_.current_position_ = 0;
+    prod_b_.allocator_ = 0;
+    prod_c_.StringStruct::remove_all();
+    prod_c_.current_position_ = 0;
+    prod_c_.allocator_ = 0;
     field_A818_ = 0;
     field_A774_ = -1;
     field_A77C_ = 0;
@@ -595,7 +586,7 @@ void ProdPicker::calculate() {
             strcat(name, "(");
             _itoa(PlayersData[field_A76C_].proto_id_active[id], active, 10);
             strcat(name, active);
-            strcat(name, " ");
+            strcat(name, "/");
             _itoa(PlayersData[field_A76C_].proto_id_queue[id], queued, 10);
             strcat(name, queued);
             strcat(name, ")");
@@ -607,9 +598,9 @@ void ProdPicker::calculate() {
         int proto_cost = cost_factor(BaseCurrent->faction_id_current, 1, -1)
             * veh_cost(id, BaseIDCurrentSelected, &has_proto_cost);
         if (BaseCurrent->mineral_surplus <= 0) {
-            strcat(stats, "[");
+            strcat(stats, "-");
             strcat(stats, label_get(67));
-            strcat(stats, "]");
+            strcat(stats, "-");
         } else {
             if (!field_B68_) {
                 int minerals;
@@ -706,9 +697,9 @@ void ProdPicker::calculate() {
             strcat(stats, " ");
             strcat(stats, label_get(153));
         } else if (BaseCurrent->mineral_surplus <= 0) {
-            strcat(stats, "[");
+            strcat(stats, "-");
             strcat(stats, label_get(67));
-            strcat(stats, "]");
+            strcat(stats, "-");
         } else {
             char turns[80];
             _itoa((BaseCurrent->mineral_surplus + cost - 1) / BaseCurrent->mineral_surplus,
