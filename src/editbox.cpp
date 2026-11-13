@@ -182,7 +182,7 @@ int EditBox::text_fits() {
 }
 
 // 615630. No invented bounds clamp: preserve the original selection cases.
-// ORIGINAL: 0x00615630 ?on_key_click@EditBox@@QAEHHH@Z 0x00615630-0x00615839
+// ORIGINAL: 0x00615630 ?on_key_click@EditBox@@QAEHHH@Z 0x00615630-0x00615839 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00615630.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
 // Deleted seed provenance: git:b5a8554e33a26faf238f51538994e24a254783a3:src/unrecovered/00615630.cpp
 // symbol    ?on_key_click@EditBox@@UAEHHH@Z
