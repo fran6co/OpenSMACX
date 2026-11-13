@@ -94,6 +94,8 @@
 // symbol    ?enumerate_session_callback@@YGHPBUDPSESSIONDESC2@@PAKKPAX@Z
 // WORKAROUND(decl): JackalVoiceRx::add_player node allocation (net_class.h).
 #define NET_CLASS_VOICE_NODE_NEW
+#define ALPHANET_LEDGER_DTOR_CALLED  // see alphanet.h
+#define ALPHANET_CURRENT_ENTRY_DECL  // see alphanet.h
 #include "stdafx.h"
 #include <process.h>
 #include <mmsystem.h>
@@ -2315,21 +2317,6 @@ int Net::choose_service() {
     return result;
 }
 
-namespace {
-
-// 0x631050 brackets its stack-owned session structures with the shared
-// StringAllocationHeap handoff. Declare this before those objects so it
-// restores the incoming value after their natural destruction.
-struct SessionPickerAllocationHandoff {
-  Heap *saved_;
-  SessionPickerAllocationHandoff() : saved_(StringAllocationHeap) {
-    StringAllocationHeap = 0;
-  }
-  ~SessionPickerAllocationHandoff() { StringAllocationHeap = saved_; }
-};
-
-}  // namespace
-
 // Descriptive method name only. The pinned 0x631050 entry proves a Net
 // receiver, but not its original source identifier. The original local window
 // is constructed/closed here; the separate modal BasePop is obtained from
@@ -2339,16 +2326,13 @@ struct SessionPickerAllocationHandoff {
 // symbol    ?session_picker_dialog@Net@@QAEHXZ
 // TRIED: no ESP-relative frame (raw buffer + manual calls, not a real frame pointer omission); the entry receiver (`mov edi,ecx`) and Ghidra's `param_2` are not recoverable under the mandated 0-arg `__cdecl` signature, so both are read from placeholder storage instead of a real caller-supplied value; sub_63bb20/ sub_63bd10/sub_4e34b0/sub_4e3350/sub_4080b0/fn_00401c80/ fn_00401ce0/fn_00402970 called with no receiver/args since their declared prototypes are 0-arg extern "C" and changing them would break linkage to the real symbol.
 int Net::session_picker_dialog() {
-  SessionPickerAllocationHandoff allocation_handoff;
-  AlphaNetLedger available_sessions;
+  // The ledger's virtual StringAllocationBase captures and clears the
+  // pending allocation owner (image 0x63106F-0x63109D) and republishes it on
+  // every exit; no separate handoff object exists in the image.
+  AlphaNetLedger sessions;
   NetSessionPickerWin picker;
-  int result = 0;
-  NetAllocationNode *selected_session = 0;
+  NetAllocationNode *session;
 
-  // Native checks Net+0x6E0 before allocating the modal popup. The one
-  // 0x63BD10 call in each teardown is the local picker's destructor body,
-  // which the compiler expands before natural member/base destruction; do
-  // not add a second explicit close here.
   if (buffer_6E0_ == 0) {
     return 0;
   }
@@ -2366,6 +2350,8 @@ int Net::session_picker_dialog() {
   static char yes_text[] = "Yes";
   static char no_text[] = "No";
   static char create_text[] = "Create Session";
+  // The session list's button has its own copy of the text (0x697AB0).
+  static char list_create_text[] = "Create Session";
   static char session_name_text[] = "Session Name:";
   static char player_limit_text[] = "Maximum Players:";
   static char session_password_text[] = "Session Password (Optional):";
@@ -2373,69 +2359,66 @@ int Net::session_picker_dialog() {
   static char password_required_text[] =
       "Password required for this session:";
 
-  if (popup->init(0x10, 0) != 0) goto session_picker_cleanup;
+  if (popup->init(0x10, 0) != 0) goto fail;
   popup->string(choose_title);
   popup->dialogs().Dialogs::item(create_or_join, 0);
   popup->dialogs().Dialogs::item(find_session, 1);
+  if (popup->exec(0, 0) == 0) goto create;
 
-  if (popup->exec(0, 0) == 0) goto session_picker_create;
-
-  for (;;) {
-    if (enumerate_sessions(&available_sessions, 0) != 0) {
-      result = 0;
-      goto session_picker_cleanup;
-    }
-
-    if (available_sessions.entry_count_ == 0) {
-      if (popup->init(0x10, 0) != 0) goto session_picker_cleanup;
-      popup->string(no_sessions);
-      popup->dialogs().Dialogs::item(yes_text, 0);
-      popup->dialogs().Dialogs::item(no_text, 1);
-      popup->button(create_text);
-      const int retry_choice = popup->exec(0, 0);
-      if (popup->input_poll_state() == 1) goto session_picker_create;
-      if (retry_choice != 0) {
-        // The original calls exit(2) on this affirmative-looking branch.
-        exit(2);
-      }
-      continue;
-    }
-
-    if (popup->init(0x42, 0) != 0) goto session_picker_cleanup;
-    available_sessions.seek_pos(-1);
-    int row = 0;
-    while (row < available_sessions.entry_count_) {
-      NetAllocationNode *session = available_sessions.next_entry();
-      char *name = session == 0 ? 0 : session->session_name_;
-      popup->dialogs().Dialogs::item(name, row);
-      ++row;
-    }
+  // Search: enumerate, and while nothing is running offer to retry. The
+  // declined-retry exit falls into the list code in the image.
+  if (enumerate_sessions(&sessions, 0) != 0) goto fail;
+  while (1) {
+    if (sessions.entry_count_ != 0) break;
+    if (popup->init(0x10, 0) != 0) goto fail;
+    popup->string(no_sessions);
+    popup->dialogs().Dialogs::item(yes_text, 0);
+    popup->dialogs().Dialogs::item(no_text, 1);
     popup->button(create_text);
-
-    const int selected_row = popup->exec(0, 0);
-    if (selected_row == -1) {
-      result = 0;
-      goto session_picker_cleanup;
+    {
+      const int retry_choice = popup->exec(0, 0);
+      if (popup->input_poll_state() == 1) goto create;
+      // The original exits the process when the player declines to retry.
+      if (retry_choice != 0) {
+        exit(2);
+        break;
+      }
     }
-    if (popup->input_poll_state() == 1) goto session_picker_create;
-
-    available_sessions.seek_pos(selected_row);
-    selected_session = available_sessions.head_ == 0
-        ? 0 : available_sessions.current_->payload_;
-    goto session_picker_credentials;
+    if (enumerate_sessions(&sessions, 0) != 0) goto fail;
   }
 
-session_picker_create:
-  for (;;) {
-    if (popup->init(0x44, 0) != 0) {
-      result = 0;
-      goto session_picker_cleanup;
+list:
+  if (popup->init(0x42, 0) != 0) goto fail;
+  sessions.seek_pos(-1);
+  {
+    for (int row = 0; row < sessions.entry_count_; ++row) {
+      // The image discards next_entry's result and reads the name through
+      // the out-of-line current-payload accessor guarded by current_.
+      sessions.next_entry();
+      popup->dialogs().Dialogs::item(
+          sessions.current_ != 0 ? sessions.current_entry()->session_name_ : 0,
+          row);
     }
+  }
+  popup->button(list_create_text);
+  {
+    const int selected_row = popup->exec(0, 0);
+    if (selected_row == -1) goto fail;
+    if (popup->input_poll_state() != 1) {
+      sessions.seek_pos(selected_row);  // original ignores failure
+      session = sessions.head_ != 0 ? sessions.current_->payload_ : 0;
+      goto join;
+    }
+  }
+
+create:
+  if (popup->init(0x44, 0) != 0) goto fail;
+  {
     popup->set_width(0x190);
-    char default_players[16];
-    _itoa(0x10, default_players, 10);
     popup->dialogs().EditGroup::edit(session_name_text, 0, 0x32);
-    popup->dialogs().EditGroup::edit(player_limit_text, default_players, 2);
+    char default_players[12];
+    char *const players_text = _itoa(0x10, default_players, 10);
+    popup->dialogs().EditGroup::edit(player_limit_text, players_text, 2);
     popup->dialogs().EditGroup::edit(session_password_text, 0, 0x32);
     // Native 0x63156D resolves the Dialog virtual-base displacement from
     // Dialogs' vbtable, then writes 1 to Dialog::field_4C_. Qualification is
@@ -2444,57 +2427,65 @@ session_picker_create:
     ParseStrBuffer[0].str[0] = 0;
     ParseStrBuffer[1].str[0] = 0;
     ParseStrBuffer[2].str[0] = 0;
-
-    if (popup->exec(0, 0) == -1) {
-      result = 0;
-      goto session_picker_cleanup;
-    }
+    // Cancelling the create form returns to the session list.
+    if (popup->exec(0, 0) == -1) goto list;
+    // An oversized player limit shows the form again.
     if (ParseStrBuffer[1].str[0] != 0 &&
-        atoi(ParseStrBuffer[1].str) > 0x10) {
-      continue;
-    }
+        atoi(ParseStrBuffer[1].str) > 0x10) goto create;
+  }
 
-    // The native local begins at frame+0x58 and the following integer-to-text
-    // buffer begins at frame+0x70, leaving 0x18 bytes for this unchecked
-    // strcat destination. Preserve that small local rather than widening it.
+created:
+  {
+    // The native local begins at frame+0x58 and the integer-to-text buffer
+    // begins at frame+0x70, leaving 0x18 bytes for this unchecked strcat
+    // destination. Preserve that small local rather than widening it.
     char session_name[0x18];
     session_name[0] = 0;
     strcat(session_name, ParseStrBuffer[0].str);
-    char *password = ParseStrBuffer[2].str[0] == 0
-        ? 0 : ParseStrBuffer[2].str;
-    NetAllocationNode *created = create_session(
-        session_name, atoi(ParseStrBuffer[1].str), password);
-    if (created == 0) goto session_picker_cleanup;
-    selected_session = created;
-    goto session_picker_credentials;
+    if (ParseStrBuffer[2].str[0] != 0) {
+      session = create_session(session_name, atoi(ParseStrBuffer[1].str),
+                               ParseStrBuffer[2].str);
+    } else {
+      session = create_session(session_name, atoi(ParseStrBuffer[1].str), 0);
+    }
+    if (session == 0) goto fail;
   }
 
-session_picker_credentials:
-  if (popup->init(4, 0) != 0) goto session_picker_cleanup;
-  popup->dialogs().EditGroup::edit(player_name_text, 0, 0x32);
-  if (selected_session->password_ != 0 &&
-      selected_session->password_[0] != 0) {
-    popup->dialogs().EditGroup::edit(password_required_text, 0, 0x32);
+join:
+  if (popup->init(4, 0) == 0) {
+    popup->dialogs().EditGroup::edit(player_name_text, 0, 0x32);
+    if (session->password_ != 0 && session->password_[0] != 0) {
+      popup->dialogs().EditGroup::edit(password_required_text, 0, 0x32);
+    }
+    // The original ignores the credentials dialog's result and releases the
+    // popup before joining.
+    popup->exec(0, 0);
+    delete popup;
+    // The pinned code reloads the node's password pointer after the modal
+    // dialog. If a password is present it uses both parse buffers; if not, it
+    // snapshots the player name through the unchecked strcat local and passes
+    // a null password.
+    if (session->password_ != 0 && session->password_[0] != 0) {
+      return join_session(session, ParseStrBuffer[0].str, ParseStrBuffer[1].str);
+    } else {
+      char player_name[0x18];
+      player_name[0] = 0;
+      strcat(player_name, ParseStrBuffer[0].str);
+      return join_session(session, player_name, 0);
+    }
   }
-  if (popup->exec(0, 0) == -1) goto session_picker_cleanup;
-  // The pinned code reloads the node's password pointer after the modal
-  // dialog. If a password is now present it uses both parse buffers; if not,
-  // it snapshots the player name through the native unchecked strcat local
-  // and passes a null password (not the empty second parse buffer).
-  if (selected_session->password_ != 0 &&
-      selected_session->password_[0] != 0) {
-    result = join_session(selected_session, ParseStrBuffer[0].str,
-                           ParseStrBuffer[1].str);
-  } else {
-    char player_name[0x18];
-    player_name[0] = 0;
-    strcat(player_name, ParseStrBuffer[0].str);
-    result = join_session(selected_session, player_name, 0);
-  }
-
-session_picker_cleanup:
+fail:
   delete popup;
-  return result;
+  return 0;
+}
+
+// The ledger's current payload, guarded by head_; the image folds this copy
+// into StringStruct::current_entry (0x00402530).
+NetAllocationNode *AlphaNetStringStruct::current_entry() {
+  if (head_) {
+    return current_->payload_;
+  }
+  return 0;
 }
 
 // Unreferenced in the pinned image (no call, jump or data reference).

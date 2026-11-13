@@ -115,6 +115,14 @@ class AlphaNetStringStruct : public virtual StringAllocationBase {
   }
   int seek_pos(int position);
   NetAllocationNode *next_entry();
+#ifdef ALPHANET_CURRENT_ENTRY_DECL
+  // Out of line: session_picker_dialog calls it (0x00631434); the linker
+  // folds its copy into StringStruct::current_entry 0x00402530.
+  // WORKAROUND(decl): visible only where it is defined or called; one more
+  // member declaration in every includer re-ties battle_fight, enemy_move,
+  // setup_player and other canaries.
+  NetAllocationNode *current_entry();
+#endif
   AlphaNetLedgerEntry *head_;     // +0x08 - the five the constructor zeroes
   AlphaNetLedgerEntry *current_;  // +0x0C
   int entry_count_;              // +0x10
@@ -169,7 +177,14 @@ class AlphaNetLedger : public AlphaNetStringStruct {
   // RECOVERY_GENERATED: v1 vtable 0x0066EAE8 0x0066EAF0 ??_7AlphaNetLedger@@6BAlphaNetStringStruct@@@ 0x004E2490
   virtual int on_insert(NetAllocationNode *payload);
   virtual void on_remove(NetAllocationNode *payload);
-#ifdef ALPHANET_REMOVE_ALL_CALLED
+#if defined(ALPHANET_LEDGER_DTOR_CALLED)
+  // WORKAROUND(noinline): session_picker_dialog calls the copy 0x004E3350
+  // at the teardowns of its local ledger (0x00631215), while the copy
+  // 0x00633010 of ~NetSessionPickerWin expands it; the original header body
+  // was visible and /Ob2 refused it there. net_class.cpp sees this
+  // declaration only.
+  ~AlphaNetLedger();
+#elif defined(ALPHANET_REMOVE_ALL_CALLED)
   ~AlphaNetLedger() { close_walk(); }
 #else
   ~AlphaNetLedger() { close(); }

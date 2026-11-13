@@ -19,6 +19,9 @@
 // StringStruct::StringStruct (0x00401000) out of line (0x004BEF71), giving
 // its three-state EH layout; see stringstruct.h.
 #define STRINGSTRUCT_CTOR_OUT_OF_LINE
+// show_post_movie_text clears its help list through the out-of-line drain
+// 0x00402970 (0x004BF0D5) while the list destructors walk it inline.
+#define STRINGSTRUCT_REMOVE_ALL_CALLED
 #include "stdafx.h"
 #include "uv2player.h"
 #include <mmsystem.h>
@@ -362,7 +365,7 @@ void UV2Player::show_post_movie_text() {
         text_get();
         LPSTR help_line = text_get();
 
-        help_lines.remove_all();
+        help_lines.StringStruct::remove_all();
         help_lines.current_position_ = 0;
         help_lines.allocator_ = 0;
         while (help_line != 0 && help_line[0] != '\0') {

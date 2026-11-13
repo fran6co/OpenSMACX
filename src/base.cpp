@@ -1262,6 +1262,10 @@ void __cdecl base_kill(int base_id) {
 int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *out_score) {
     // stand-in: the image calls has_fac_built (0x00500290) out of line at every site here.
     int (__cdecl *const has_fac_built_call)(int) = has_fac_built;
+    // WORKAROUND(inline): the image calls range (0x00422F00) and has_project
+    // (0x004F80D0) out of line at these sites of base_build.
+    int (__cdecl *const range_call)(int, int, int) = range;
+    BOOL (__cdecl *const project_call)(int, int) = has_project;
     int a_1f6c[512];
     int a_176c[512];
     int a_f6c[512];
@@ -1375,7 +1379,7 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
     l_54 = Bases[base_id].x;
     l_8c = Bases[base_id].y;
     l_8 = Bases[base_id].faction_id_current;
-    l_38 = (map_loc(l_54, l_8c)->climate & 0xE0) < 0x60;
+    l_38 = (map_loc(l_54, l_8c)->climate & ~0x1F) < 0x60;
     l_10 = map_loc(l_54, l_8c)->region;
     l_c = PlayersData[l_8].region_base_plan[l_10];
     l_100 = best_reactor(l_8);
@@ -1515,10 +1519,12 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
             if (l_c == 7) {
                 l_70 = 1;
             }
-            if (PlayersData[i].region_total_bases[l_10]) {
+            if (!PlayersData[i].region_total_bases[l_10]) {
+                if (l_c == 7) {
+                    l_f8 = i;
+                }
+            } else {
                 l_13c = i;
-            } else if (l_c == 7) {
-                l_f8 = i;
             }
         }
     }
@@ -1640,29 +1646,27 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
         if (Bases[base_id].population_size > l_d8) {
             l_d8 = Bases[base_id].population_size;
         }
-        if ((map_loc(Bases[base_id].x, Bases[base_id].y)->climate & 0xE0) < 0x60) {
+        if ((map_loc(Bases[base_id].x, Bases[base_id].y)->climate & ~0x1F) < 0x60) {
             l_a8++;
         }
         int dist = vector_dist(l_54, l_8c, Bases[base_id].x, Bases[base_id].y);
-        l_50 = has_fac_built(FAC_NAVAL_YARD, base_id);
-        if (l_50 && dist < l_15c) {
+        // has_fac(.., 0): the image keeps each inline's materialized is_built store.
+        if (has_fac(FAC_NAVAL_YARD, base_id, 0) && dist < l_15c) {
             l_15c = dist;
         }
-        l_50 = has_fac_built(FAC_AEROSPACE_COMPLEX, base_id);
-        if ((l_50 || has_project(SP_CLOUDBASE_ACADEMY, Bases[base_id].faction_id_current))
+        if ((has_fac(FAC_AEROSPACE_COMPLEX, base_id, 0)
+             || has_project(SP_CLOUDBASE_ACADEMY, Bases[base_id].faction_id_current))
             && dist < l_164) {
             l_164 = dist;
         }
-        l_50 = has_fac_built(FAC_PSI_GATE, base_id);
-        if (l_50) {
+        if (has_fac(FAC_PSI_GATE, base_id, 0)) {
             l_b4++;
         }
-        l_50 = has_fac_built(FAC_PUNISHMENT_SPHERE, base_id);
-        if (l_50) {
+        if (has_fac(FAC_PUNISHMENT_SPHERE, base_id, 0)) {
             l_140++;
         }
-        l_50 = has_fac_built(FAC_HEADQUARTERS, base_id);
-        if (l_50 || Bases[base_id].queue_production_id[0] == -FAC_HEADQUARTERS) {
+        if (has_fac(FAC_HEADQUARTERS, base_id, 0)
+            || Bases[base_id].queue_production_id[0] == -FAC_HEADQUARTERS) {
             l_14c++;
         }
         if (base_id == BaseIDCurrentSelected) {
@@ -1682,11 +1686,14 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
                         l_dc++;
                     }
                 } else if (Bases[base_id].mineral_surplus_final > 0) {
-                    int cost = cost_factor(BaseCurrent->faction_id_current, 1, -1)
-                        * Facility[-BaseCurrent->queue_production_id[0]].cost;
-                    if ((cost - BaseCurrent->minerals_accumulated) / BaseCurrent->mineral_surplus_final
-                        > (cost - Bases[base_id].minerals_accumulated)
-                              / Bases[base_id].mineral_surplus_final) {
+                    // The image indexes Facility before the cost_factor call and
+                    // divides for this base first.
+                    int cost = Facility[-BaseCurrent->queue_production_id[0]].cost
+                        * cost_factor(BaseCurrent->faction_id_current, 1, -1);
+                    if ((cost - Bases[base_id].minerals_accumulated)
+                            / Bases[base_id].mineral_surplus_final
+                        < (cost - BaseCurrent->minerals_accumulated)
+                              / BaseCurrent->mineral_surplus_final) {
                         l_dc++;
                     }
                 }
@@ -1712,7 +1719,7 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
             a_3c4[l_20 + plan * 3] += (VehPrototypes[item].reactor_id >= l_100) + 1;
             a_1f6c[item]++;
         }
-        if (region_at(Bases[base_id].x, Bases[base_id].y) != l_10) {
+        if (l_10 != region_at(Bases[base_id].x, Bases[base_id].y)) {
             continue;
         }
         if (Bases[base_id].state & 1) {
@@ -1721,32 +1728,30 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
         if (Bases[base_id].queue_production_id[0] <= -70) {
             l_d4++;
         }
-        l_50 = has_fac_built(FAC_COMMAND_CENTER, base_id);
-        if (l_50 || Bases[base_id].queue_production_id[0] == -FAC_COMMAND_CENTER) {
+        if (has_fac(FAC_COMMAND_CENTER, base_id, 0)
+            || Bases[base_id].queue_production_id[0] == -FAC_COMMAND_CENTER) {
             l_11c++;
         }
-        l_50 = has_fac_built(FAC_BIOENHANCEMENT_CENTER, base_id);
-        if (l_50 || Bases[base_id].queue_production_id[0] == -FAC_BIOENHANCEMENT_CENTER) {
+        if (has_fac(FAC_BIOENHANCEMENT_CENTER, base_id, 0)
+            || Bases[base_id].queue_production_id[0] == -FAC_BIOENHANCEMENT_CENTER) {
             l_134++;
         }
-        l_50 = has_fac_built(FAC_NAVAL_YARD, base_id);
-        if (l_50 || Bases[base_id].queue_production_id[0] == -FAC_NAVAL_YARD) {
+        if (has_fac(FAC_NAVAL_YARD, base_id, 0)
+            || Bases[base_id].queue_production_id[0] == -FAC_NAVAL_YARD) {
             l_118++;
         }
-        l_50 = has_fac_built(FAC_AEROSPACE_COMPLEX, base_id);
-        if (l_50 || Bases[base_id].queue_production_id[0] == -FAC_AEROSPACE_COMPLEX) {
+        if (has_fac(FAC_AEROSPACE_COMPLEX, base_id, 0)
+            || Bases[base_id].queue_production_id[0] == -FAC_AEROSPACE_COMPLEX) {
             l_ac++;
         }
-        l_50 = has_fac_built(FAC_SKUNKWORKS, base_id);
-        if (l_50 || Bases[base_id].queue_production_id[0] == -FAC_SKUNKWORKS) {
+        if (has_fac(FAC_SKUNKWORKS, base_id, 0)
+            || Bases[base_id].queue_production_id[0] == -FAC_SKUNKWORKS) {
             l_ec++;
         }
-        l_50 = has_fac_built(FAC_CENTAURI_PRESERVE, base_id);
-        if (l_50) {
+        if (has_fac(FAC_CENTAURI_PRESERVE, base_id, 0)) {
             l_bc++;
         }
-        l_50 = has_fac_built(FAC_TEMPLE_OF_PLANET, base_id);
-        if (l_50) {
+        if (has_fac(FAC_TEMPLE_OF_PLANET, base_id, 0)) {
             l_e4++;  // BUG(original)?: l_e4 is reset to 0 after this loop; the count is dead
         }
         if (Bases[base_id].queue_production_id[0] >= 0) {
@@ -1760,21 +1765,20 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
         }
         // Garrison of the region's other bases (when this base has a command center
         // and the other one does not).
-        l_50 = has_fac_built(FAC_COMMAND_CENTER, BaseIDCurrentSelected);
-        if (!l_50) {
+        if (!has_fac(FAC_COMMAND_CENTER, BaseIDCurrentSelected, 0)) {
             continue;
         }
-        l_50 = has_fac_built(FAC_COMMAND_CENTER, base_id);
-        if (l_50) {
+        if (has_fac(FAC_COMMAND_CENTER, base_id, 0)) {
             continue;
         }
         int veh = stack_fix(veh_at(Bases[base_id].x, Bases[base_id].y));
         l_f0 = garrison_check(base_id);
         l_c8 = defensive_check(base_id);
         l_5c = stack_check(veh, 11, 0x10000000, 0x10000000, l_8);
-        int def = stack_check(veh, 2, 2, l_8, -1);
-        if (def >= 0 && l_c8 >= 0) {
-            def = (def > l_c8) ? l_c8 : def;
+        int def;
+        int t = stack_check(veh, 2, 2, l_8, -1);
+        if (t >= 0 && l_c8 >= 0) {
+            def = min(l_c8, t);  // the image takes the result and its l_c8 arm in different registers
             if (def && l_5c) {
                 def++;
             }
@@ -1795,7 +1799,7 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
             if (Vehs[j].faction_id == l_8
                 && (VehPrototypes[Vehs[j].proto_id].plan == 2 || (Vehs[j].state & 0x10000000))
                 && region_at(Vehs[j].x, Vehs[j].y) == l_10
-                && veh_who(Vehs[j].x, Vehs[j].y) < 0
+                && base_who(Vehs[j].x, Vehs[j].y) < 0
                 && (Vehs[j].home_base_id == base_id
                     || Vehs[j].home_base_id == BaseIDCurrentSelected)) {
                 if (Vehs[j].home_base_id == BaseIDCurrentSelected) {
@@ -1809,16 +1813,14 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
             }
         }
         if (def < l_f0) {
+            // The image loads the production item once, before the l_5c test.
+            int prod = Bases[base_id].queue_production_id[0];
             if (!l_5c && l_f0 != l_c8) {
-                if (Bases[base_id].queue_production_id[0] >= 0
-                    && VehPrototypes[Bases[base_id].queue_production_id[0]].plan <= 1
-                    && ++def >= l_f0) {
+                if (prod >= 0 && VehPrototypes[prod].plan <= 1 && ++def >= l_f0) {
                     continue;
                 }
             } else {
-                if (Bases[base_id].queue_production_id[0] >= 0
-                    && VehPrototypes[Bases[base_id].queue_production_id[0]].plan == 2
-                    && ++def >= l_f0) {
+                if (prod >= 0 && VehPrototypes[prod].plan == 2 && ++def >= l_f0) {
                     continue;
                 }
             }
@@ -1837,9 +1839,9 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
         if (Vehs[l_4c].faction_id != l_8) {
             continue;
         }
-        int plan = VehPrototypes[Vehs[l_4c].proto_id].plan;
         l_68++;
         l_20 = Chassis[VehPrototypes[Vehs[l_4c].proto_id].chassis_id].triad;
+        int plan = VehPrototypes[Vehs[l_4c].proto_id].plan;
         if (plan == 7
             && (veh_cargo(l_4c) < 2 || veh_cargo(l_4c) < PlayersData[l_8].unk_70 / 0x400000)) {
             plan = 15;
@@ -1858,14 +1860,14 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
             a_76c[l_20 + plan * 3]++;
             if (VehPrototypes[Vehs[l_4c].proto_id].plan == 3
                 && has_abil(Vehs[l_4c].proto_id, 0x40000)
-                && region_at(Vehs[l_4c].x, Vehs[l_4c].y) == l_10) {
+                && l_10 == region_at(Vehs[l_4c].x, Vehs[l_4c].y)) {
                 l_e4++;
             }
         }
-        if (region_at(Vehs[l_4c].x, Vehs[l_4c].y) == l_10) {
+        if (l_10 == region_at(Vehs[l_4c].x, Vehs[l_4c].y)) {
             a_176c[Vehs[l_4c].proto_id]++;
             a_4bc[l_20 + plan * 3] += (VehPrototypes[Vehs[l_4c].proto_id].reactor_id >= l_100) + 1;
-            if (veh_who(Vehs[l_4c].x, Vehs[l_4c].y) < 0 && plan <= 3) {
+            if (base_who(Vehs[l_4c].x, Vehs[l_4c].y) < 0 && plan <= 3) {
                 l_e8++;
             }
         }
@@ -1897,12 +1899,13 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
     if (has_project(SP_MARITIME_CONTROL_CENTER, l_8)) {
         l_c4 = l_c4 * 2 + 1;
     }
-    if (PlayersData[l_8].soc_effect_pending.values_[SocialEffect::POLICE]
-            + has_fac_built(FAC_BROOD_PIT, BaseIDCurrentSelected) * 2 <= -3) {
+    // The image loads the police rating before the brood pit bit: it is the right operand.
+    if (has_fac_built(FAC_BROOD_PIT, BaseIDCurrentSelected) * 2
+            + PlayersData[l_8].soc_effect_pending.values_[SocialEffect::POLICE] <= -3) {
         l_c4 = (l_c4 + 1) / 2;
     }
-    if (PlayersData[l_8].soc_effect_pending.values_[SocialEffect::POLICE]
-            + has_fac_built(FAC_BROOD_PIT, BaseIDCurrentSelected) * 2 <= -5) {
+    if (has_fac_built(FAC_BROOD_PIT, BaseIDCurrentSelected) * 2
+            + PlayersData[l_8].soc_effect_pending.values_[SocialEffect::POLICE] <= -5) {
         l_c4 = l_c4 / 2;
     }
 
@@ -1914,7 +1917,7 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
         int y = RadiusOffsetY[i] + l_8c;
         if (on_map(x, y)) {
             if (map_loc(x, y)->bit & 0x200000) {
-                l_84 += (((1 << i) & BaseCurrent->resource_sqr_radius) != 0) + 1;
+                l_84 += ((1 << i) & BaseCurrent->resource_sqr_radius) ? 2 : 1;
             }
             int v = veh_at(x, y);
             if (v >= 0 && Vehs[v].faction_id != l_8
@@ -1932,10 +1935,7 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
     {
         int t = stack_check(l_4c, 2, 2, l_8, -1);
         if (t >= 0 && l_c8 >= 0) {
-            l_88 = l_c8;
-            if (t <= l_c8) {
-                l_88 = t;
-            }
+            l_88 = min(l_c8, t);  // one store: the image computes it in a register
             if (l_88 && l_5c) {
                 l_88++;
             }
@@ -1965,13 +1965,9 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
     }
 
     // Need for defense (0-3).
-    if (l_88 < 1) {
-        l_28 = 3;
-    } else if (l_88 < l_f0 - 1) {
-        l_28 = 2;
-    } else {
-        l_28 = l_88 < l_f0;
-    }
+    // One store after the chain; the image keeps the value in a register for the
+    // governor test below.
+    l_28 = (l_88 < 1) ? 3 : (l_88 < l_f0 - 1) ? 2 : (l_88 < l_f0);
     l_9c = GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c;
     if (l_9c && BaseCurrent->minerals_accumulated > Rules.retool_exemption
         && !(BaseCurrent->state & 8)) {
@@ -2006,7 +2002,7 @@ L_4f9c43:
                 && (PlayersData[i].region_total_combat_vehs[l_10]
                     || PlayersData[i].region_total_bases[l_10])) {
                 if ((PlayersData[l_8].diplo_treaties[i] & 0x30)
-                    || ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff & (1 << i))
+                    || ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << i))
                         && (PlayersData[i].diplo_treaties[l_8] & 8)
                         && (!(PlayersData[l_8].diplo_treaties[i] & 2)
                             || PlayersData[i].integrity_blemishes))) {
@@ -2097,8 +2093,101 @@ L_4fa03d:
     l_78 = 0;
     l_90 = VehPrototypes[l_14].plan < 8;
     w = (VehPrototypes[l_14].cost + 2) << 8;
+    // Triad switch. Case source order is sea, land, air: air is the dispatch
+    // fall-through laid first, sea follows it and falls into the join at 0x4fa54b,
+    // land is deferred past the plan dispatch (0x4fa5a9). The same order fits the
+    // image's range inlining (sea and land expanded, air's later sites called).
     switch (l_20) {
+    case 1: {
+        // WORKAROUND(inline): the image calls is_coast (0x004E49D0) out of line at 0x4fa380.
+        int (__cdecl *const is_coast_call)(int, int, BOOL) = is_coast;
+        if (l_c != 7 && !l_38
+            && PlayersData[l_8].region_total_combat_vehs[l_10]
+                   < PlayersData[l_8].region_total_bases[l_10] * 2 + 2) {
+            goto L_4fd8f6;
+        }
+        if (!is_coast_call(Bases[BaseIDCurrentSelected].x, Bases[BaseIDCurrentSelected].y, 0)) {
+            goto L_4fd8f6;
+        }
+        int coast = base_coast(BaseIDCurrentSelected);
+        if (bad_reg(coast)) goto L_4fd8f6;
+        if (sea_coasts(coast) < 2 && !l_38
+            && (l_2c == 7 || Continents[coast].tile_count < 48)) {
+            goto L_4fd8f6;
+        }
+        l_18 = a_2ec[l_2c * 3 + 1] + a_3c4[l_2c * 3 + 1] * 2;
+        if (l_c != 7 && !l_38) {
+            if (l_c == 2) l_18++;
+            if (PlayersData[l_8].unk_77[l_10] & 0x400) l_18++;
+            l_18 += a_1dc[1];
+        }
+        if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+            && (PlayersData[l_8].flags & 0x8000000)) {
+            w /= 2;
+        }
+        if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+            && (Players[l_8].rule_flags & 0x100)) {
+            w /= 2;
+            l_fc++;  // BUG(original): persists for the following units
+        }
+        w = range(8 - l_fc, 4, 8) * w / 8;
+        int minerals = range(BaseCurrent->mineral_surplus, 1, 999);
+        w = range(veh_cost(l_14, BaseIDCurrentSelected, NULL) * cost_factor(l_8, 1, -1) * w
+                         / (minerals * 15),
+                     w, w * 10);
+        break;
+    }
+    case 0:
+        if (Weapon[VehPrototypes[l_14].weapon_id].mode <= 2) {
+            int lim = 99;
+            if (VehPrototypes[l_14].plan <= 1) {
+                // lim = 1 is the deferred else arm (0x4fa631/0x4fa634) shared by both
+                // of its paths; the two lim = 2 stores stay separate (0x4fa603, 0x4fa62a).
+                if (!PlayersData[l_8].unk_71
+                    && (l_c != 2 || !(PlayersData[l_8].unk_77[l_10] & 0x400))) {
+                    if (l_c == 2) {
+                        lim = 2;
+                    } else if (PlayersData[l_8].unk_77[l_10] & 0x600) {
+                        lim = 2;
+                    }
+                } else {
+                    lim = 1;
+                }
+            }
+            int extra;
+            if (l_c != 2 && !(PlayersData[l_8].unk_77[l_10] & 0x400)) {
+                extra = a_594[l_2c * 3];
+            } else {
+                extra = 0;
+            }
+            l_18 = (a_f6c[l_14]
+                    + range(a_176c[l_14] + a_3c4[l_2c * 3] + a_4bc[l_2c * 3], 0, lim)
+                    + extra + 1) / 2;
+            if (has_fac(FAC_COMMAND_CENTER, BaseIDCurrentSelected, 0)) {
+                w = (l_11c + 2) * w / (l_11c + 3);
+            }
+            if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+                && (PlayersData[l_8].flags & 0x4000000)) {
+                w /= 2;  // cross-jumped into the air arm's l_38 tail (0x4fa2fe)
+            }
+        } else if (l_2c == 8 && l_c == 8 && !(BaseCurrent->state & 0x2000000)
+                   && GameDataStateStorage.fields_.diff_level_current_ >= 3) {
+            l_18 = 0;
+        } else {
+            l_18 = a_4bc[l_2c * 3];
+            if (!(l_2c == 8 && l_c == 8 && !(BaseCurrent->state & 0x1000000)
+                  && GameDataStateStorage.fields_.diff_level_current_ >= 3)) {
+                l_18 += a_594[l_2c * 3] + a_f6c[l_14];
+                if (l_2c == 8) {
+                    l_18 += a_3c4[24];
+                }
+            }
+        }
+        break;
     case 2: {
+        // WORKAROUND(inline): the image calls range (0x00422F00) out of line for the
+        // three clamps after n - 2 (0x4fa280, 0x4fa2d9, 0x4fa2ec).
+        int (__cdecl *const range_call)(int, int, int) = range;
         if (l_c != 7 && !l_38
             && PlayersData[l_8].region_total_combat_vehs[l_10]
                    < PlayersData[l_8].region_total_bases[l_10] * 2 + 2) {
@@ -2122,98 +2211,15 @@ L_4fa03d:
             w /= 2;
         }
         l_18 = ((l_2c != 4) + 1) * l_48 + range(n - 2, 0, 99) + l_b8;
-        int s = range(8 - l_fc, 4, 8) * w / 8;
-        w = range(veh_cost(l_14, BaseIDCurrentSelected, NULL) * cost_factor(l_8, 1, -1) * s
-                         / (range(BaseCurrent->mineral_surplus, 1, 999) * 15),
-                     s, s * 10);
+        int s = range_call(8 - l_fc, 4, 8) * w / 8;
+        w = range_call(veh_cost(l_14, BaseIDCurrentSelected, NULL) * cost_factor(l_8, 1, -1) * s
+                           / (range_call(BaseCurrent->mineral_surplus, 1, 999) * 15),
+                       s, s * 10);
         if (l_38) {
             w /= 2;  // tail shared with the triad 0 test at 0x4fa2fe
         }
         break;
     }
-    case 1: {
-        if (l_c != 7 && !l_38
-            && PlayersData[l_8].region_total_combat_vehs[l_10]
-                   < PlayersData[l_8].region_total_bases[l_10] * 2 + 2) {
-            goto L_4fd8f6;
-        }
-        if (!is_coast(Bases[BaseIDCurrentSelected].x, Bases[BaseIDCurrentSelected].y, 0)) {
-            goto L_4fd8f6;
-        }
-        int coast = base_coast(BaseIDCurrentSelected);
-        if (bad_reg(coast)) goto L_4fd8f6;
-        if (sea_coasts(coast) < 2 && !l_38
-            && (l_2c == 7 || Continents[coast].tile_count < 48)) {
-            goto L_4fd8f6;
-        }
-        l_18 = a_2ec[l_2c * 3 + 1] + a_3c4[l_2c * 3 + 1] * 2;
-        if (l_c != 7 && !l_38) {
-            if (l_c == 2) l_18++;
-            if (PlayersData[l_8].unk_77[l_10] & 0x400) l_18++;
-            l_18 += a_1dc[1];
-        }
-        if (!(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff & l_1c)
-            && (PlayersData[l_8].flags & 0x8000000)) {
-            w /= 2;
-        }
-        if (!(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff & l_1c)
-            && (Players[l_8].rule_flags & 0x100)) {
-            w /= 2;
-            l_fc++;  // BUG(original): persists for the following units
-        }
-        w = range(8 - l_fc, 4, 8) * w / 8;
-        int minerals = range(BaseCurrent->mineral_surplus, 1, 999);
-        w = range(veh_cost(l_14, BaseIDCurrentSelected, NULL) * cost_factor(l_8, 1, -1) * w
-                         / (minerals * 15),
-                     w, w * 10);
-        break;
-    }
-    case 0:
-        if (Weapon[VehPrototypes[l_14].weapon_id].mode <= 2) {
-            int lim = 99;
-            if (VehPrototypes[l_14].plan <= 1) {
-                if (PlayersData[l_8].unk_71) {
-                    lim = 1;
-                } else if (l_c == 2) {
-                    if (PlayersData[l_8].unk_77[l_10] & 0x400) {
-                        lim = 1;
-                    } else {
-                        lim = 2;
-                    }
-                } else if (PlayersData[l_8].unk_77[l_10] & 0x600) {
-                    lim = 2;
-                }
-            }
-            int extra;
-            if (l_c != 2 && !(PlayersData[l_8].unk_77[l_10] & 0x400)) {
-                extra = a_594[l_2c * 3];
-            } else {
-                extra = 0;
-            }
-            l_18 = (a_f6c[l_14]
-                    + range(a_176c[l_14] + a_3c4[l_2c * 3] + a_4bc[l_2c * 3], 0, lim)
-                    + extra + 1) / 2;
-            if (has_fac(FAC_COMMAND_CENTER, BaseIDCurrentSelected, 0)) {
-                w = (l_11c + 2) * w / (l_11c + 3);
-            }
-            if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
-                && (PlayersData[l_8].flags & 0x4000000)) {
-                w /= 2;
-            }
-        } else if (l_2c == 8 && l_c == 8 && !(BaseCurrent->state & 0x2000000)
-                   && GameDataStateStorage.fields_.diff_level_current_ >= 3) {
-            l_18 = 0;
-        } else {
-            l_18 = a_4bc[l_2c * 3];
-            if (!(l_2c == 8 && l_c == 8 && !(BaseCurrent->state & 0x1000000)
-                  && GameDataStateStorage.fields_.diff_level_current_ >= 3)) {
-                l_18 += a_f6c[l_14] + a_594[l_2c * 3];
-                if (l_2c == 8) {
-                    l_18 += a_3c4[24];
-                }
-            }
-        }
-        break;
     }
     l_18++;
     b_50 = VehPrototypes[l_14].plan;
@@ -2314,6 +2320,8 @@ L_4fa03d:
         }
         goto L_4fc68f;
     case 3: {  // reconnaissance
+        // WORKAROUND(inline): the image calls range (0x00422F00) out of line at 0x4fac23.
+        int (__cdecl *const range_call)(int, int, int) = range;
         l_48 = has_abil(l_14, 0x40000);
         if (!l_28 && (l_e4 || !l_48)) {
             int lim;
@@ -2333,8 +2341,8 @@ L_4fa03d:
                 l_78 = 1;
             }
             if (a_176c[l_14] > PlayersData[l_8].current_num_bases
-                    - range(GameDataStateStorage.fields_.turn_current_num_ / 50, 0,
-                            PlayersData[l_8].current_num_bases - 1)) {
+                    - range_call(GameDataStateStorage.fields_.turn_current_num_ / 50, 0,
+                                 PlayersData[l_8].current_num_bases - 1)) {
                 l_78 = 1;
             }
         }
@@ -2358,6 +2366,63 @@ L_4fa03d:
             w = ((!l_28 && !l_64 && PlayersData[l_8].best_armor_value >= 2) ? 0x80 : 0x20) * w;
         }
         if (l_30 && PlayersData[l_8].best_armor_value < 2 && !l_38) {
+            w /= 2;
+        }
+        goto L_4fc68f;
+    }
+    case 6: {  // naval superiority (laid between reconnaissance and air superiority, 0x4fad54)
+        // WORKAROUND(inline): the image calls range (0x00422F00) out of line at 0x4fae88.
+        int (__cdecl *const range_call)(int, int, int) = range;
+        if (!naval_base(BaseIDCurrentSelected)) goto L_4fd8f6;
+        w = (l_70 != 1 ? 128 : 256) * w * 56 / MapAreaSqRoot;
+        if (l_c == 7) {
+            w = w * 2 / 3;
+        }
+        if (has_fac_built_call(FAC_NAVAL_YARD)) {
+            w = (l_118 + 2) * w / (l_118 + 3);
+        }
+        if (VehPrototypes[l_14].unk_1 == 21) {
+            if (l_38) {
+                w /= 2;
+            }
+            if (a_3c4[l_2c * 3 + 1] + a_2ec[l_2c * 3 + 1] >= a_2ec[22]) {
+                w *= 2;
+            }
+            if (a_2ec[22] > (a_3c4[l_2c * 3 + 1] + a_2ec[l_2c * 3 + 1]) * 3 / 2) {
+                w /= 2;
+            }
+            goto L_4fc68f;
+        }
+        if (at_goal(l_8, 6, BaseCurrent->x, BaseCurrent->y)) {
+            w /= 2;
+        }
+        w = (range_call((a_2ec[l_20 + 18] - (PlayersData[l_8].unk_64 & 0x7ff)) * 2 + 8
+                            - PlayersData[l_8].unk_65 / 2, 0, 8) + 8) * w / 16;
+        if (a_2ec[19] + a_3c4[19] * 2 < l_c4) {
+            w /= 2;
+            if (l_c == 7) {
+                w /= 2;
+            }
+        }
+        if (a_3c4[19] + a_2ec[19] < a_3c4[22] + a_2ec[22]) {
+            w /= 2;
+            if (l_c == 7) {
+                w /= 2;
+            }
+        }
+        if (l_64) {
+            w = w * 3 / 4;
+        }
+        if (PlayersData[l_8].flags & 0x80000) {
+            w /= 2;
+        }
+        if (Players[l_8].rule_flags & 0x100) {
+            w /= 2;
+        }
+        if (l_38) {
+            w /= 2;
+        }
+        if (l_30 && l_38) {
             w /= 2;
         }
         goto L_4fc68f;
@@ -2457,60 +2522,6 @@ L_4fa03d:
             w /= 2;
         }
         goto L_4fc68f;
-    case 6:  // naval superiority
-        if (!naval_base(BaseIDCurrentSelected)) goto L_4fd8f6;
-        w = (l_70 != 1 ? 128 : 256) * w * 56 / MapAreaSqRoot;
-        if (l_c == 7) {
-            w = w * 2 / 3;
-        }
-        if (has_fac_built_call(FAC_NAVAL_YARD)) {
-            w = (l_118 + 2) * w / (l_118 + 3);
-        }
-        if (VehPrototypes[l_14].unk_1 == 21) {
-            if (l_38) {
-                w /= 2;
-            }
-            if (a_3c4[l_2c * 3 + 1] + a_2ec[l_2c * 3 + 1] >= a_2ec[22]) {
-                w *= 2;
-            }
-            if (a_2ec[22] > (a_3c4[l_2c * 3 + 1] + a_2ec[l_2c * 3 + 1]) * 3 / 2) {
-                w /= 2;
-            }
-            goto L_4fc68f;
-        }
-        if (at_goal(l_8, 6, BaseCurrent->x, BaseCurrent->y)) {
-            w /= 2;
-        }
-        w = (range((a_2ec[l_20 + 18] - (PlayersData[l_8].unk_64 & 0x7ff)) * 2 + 8
-                          - PlayersData[l_8].unk_65 / 2, 0, 8) + 8) * w / 16;
-        if (a_2ec[19] + a_3c4[19] * 2 < l_c4) {
-            w /= 2;
-            if (l_c == 7) {
-                w /= 2;
-            }
-        }
-        if (a_3c4[19] + a_2ec[19] < a_3c4[22] + a_2ec[22]) {
-            w /= 2;
-            if (l_c == 7) {
-                w /= 2;
-            }
-        }
-        if (l_64) {
-            w = w * 3 / 4;
-        }
-        if (PlayersData[l_8].flags & 0x80000) {
-            w /= 2;
-        }
-        if (Players[l_8].rule_flags & 0x100) {
-            w /= 2;
-        }
-        if (l_38) {
-            w /= 2;
-        }
-        if (l_30 && l_38) {
-            w /= 2;
-        }
-        goto L_4fc68f;
     case 7: {  // transport
         if (l_20 == 1 && !transport_base(BaseIDCurrentSelected)) goto L_4fd8f6;
         w = (l_c == 7 ? 16 : (l_c != 8 ? 128 : 64)) * w;
@@ -2575,35 +2586,39 @@ L_4fa03d:
         }
         goto L_4fc68f;
     }
+    default:
+        goto L_4fc68f;  // also plan 12 and plans > 14 (position in the switch is immaterial)
     case 8:  // colony
         // The whole block below is skipped (to 0x4fb650) for a governed human base
         // whose governor only has the 0x20000 permission among 0xDFBE00.
-        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff & l_1c)
+        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
             && (BaseCurrent->governor & 0xdfbe00) == 0x20000) {
             goto L_4fb650;
         }
-        if (!((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff & l_1c)
+        if (!((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
               && (BaseCurrent->governor & 0x80000000))) {
-            if (((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff & l_1c) || l_28 >= 3)
+            if (((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c) || l_28 >= 3)
                 && BaseCurrent->population_size < 2) {
                 goto L_4fd8f6;
             }
-            if (a_594[l_20 + 24] + a_4bc[l_20 + 24] > 1 && l_c != 8) goto L_4fd8f6;
+            if (a_4bc[l_20 + 24] + a_594[l_20 + 24] > 1 && l_c != 8) goto L_4fd8f6;
         }
         if (BaseCurrent->nutrient_surplus < 1 && (a_2ec[l_20 + 24] || a_594[l_20 + 24])) {
             goto L_4fd8f6;
         }
-        if (!l_20) goto L_4fb622;  // land colony pods: else-branch at 0x4fb622 (chunk 2)
-        if (!l_38
-            && ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff & l_1c)
-                || !(PlayersData[l_8].flags_ext & 4))
-            && (PlayersData[l_8].proto_id_active[l_14] || a_1f6c[l_14])) {
+        if (l_20) {
+            // sea colony pods: the skip is the fall-through `jmp` at 0x4fb61d, the
+            // keep path jumps over the land block to 0x4fb650.
+            if (l_38
+                || (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+                    && (PlayersData[l_8].flags_ext & 4))
+                || (!PlayersData[l_8].proto_id_active[l_14] && !a_1f6c[l_14])) {
+                goto L_4fb650;
+            }
             goto L_4fd8f6;
         }
-        goto L_4fb650;
-    default:
-        goto L_4fc68f;  // also plan 12 and plans > 14
-    // (chunk 2 continues at 0x4fb622, reached only by the goto above)
+        goto L_4fb622;  // land colony pods: laid next, at 0x4fb622 (chunk 2)
+    // (chunk 2 continues at 0x4fb622)
     // ---- chunk 2: 0x4FB622-0x4FCE6A ----
     // (inside the plan switch of the unit loop: tail of case PLAN_COLONIZATION)
 L_4fb622:
@@ -2615,11 +2630,12 @@ L_4fb622:
             goto L_4fd8f6;
         }
 L_4fb650:
-        expanding = BaseCurrent->state & 0x1000000;
-        if (expanding) {
+        // The image keeps `state & 0x1000000` and the dword human test (chunk 1's esi)
+        // in registers across this block: common subexpressions, not variables.
+        if (BaseCurrent->state & 0x1000000) {
             int t = PlayersData[l_8].current_num_bases
                 - GameDataStateStorage.fields_.turn_current_num_
-                    / ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c) ? 40 : 20)
+                    / ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff & l_1c) ? 40 : 20)
                 - l_60 - l_a4 - 1;
             l_18 += (t < 0) ? 0 : t;
         }
@@ -2628,14 +2644,14 @@ L_4fb650:
             && (BaseCurrent->nutrient_surplus < BaseCurrent->mineral_surplus
                 || BaseCurrent->nutrient_surplus < 1)) {
             w *= 2;
-        } else if (l_c > 2 && !expanding) {
-            if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c) || l_c != 7
+        } else if (l_c > 2 && !(BaseCurrent->state & 0x1000000)) {
+            if (!(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff & l_1c) || l_c != 7
                 || PlayersData[l_8].current_num_bases < GameDataStateStorage.fields_.base_current_count_ / 5
                 || PlayersData[l_8].current_num_bases < 10) {
-                if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
+                if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff & l_1c)
                     && (BaseCurrent->governor & 0x80000000)) {
                     if (l_64) {
-                        w /= range(GameDataStateStorage.fields_.diff_level_current_ + 1, 2, 99);
+                        w /= range_call(GameDataStateStorage.fields_.diff_level_current_ + 1, 2, 99);
                     } else if (l_40 || l_30) {
                         w /= 2;
                     }
@@ -2896,7 +2912,7 @@ L_4fbd3d:
             if (!PlayersData[i].region_total_bases[l_10]) {
                 continue;
             }
-            if (has_project(SP_HUNTER_SEEKER_ALGO, i)) {
+            if (project_call(SP_HUNTER_SEEKER_ALGO, i)) {
                 continue;
             }
             if (!has_treaty(l_8, i, 8)) {
@@ -2942,13 +2958,13 @@ L_4fbd3d:
         if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c) {
             l_b8 = 0;
         } else {
-            l_b8 = PlayersData[l_8].energy_reserves / range(PlayersData[target].energy_reserves, 100, 999999);
+            l_b8 = PlayersData[l_8].energy_reserves / range_call(PlayersData[target].energy_reserves, 100, 999999);
         }
         if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c) {
             l_8c = 0;
         } else {
             l_8c = PlayersData[target].mil_strength_1
-                / range(PlayersData[l_8].mil_strength_1, PlayersData[l_8].current_num_bases + 1, 999999);
+                / range_call(PlayersData[l_8].mil_strength_1, PlayersData[l_8].current_num_bases + 1, 999999);
         }
         if (GameDataStateStorage.fields_.game_rules_ & 0x40) {
             l_bc = 5;
@@ -2956,7 +2972,7 @@ L_4fbd3d:
             l_bc = PlayersData[target].diff_level;
         }
         k = (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c) ? 4 : 2;
-        w = range(PlayersData[l_8].tech_ranking / k - PlayersData[target].tech_ranking / k
+        w = range_call(PlayersData[l_8].tech_ranking / k - PlayersData[target].tech_ranking / k
                       + PlayersData[target].soc_effect_pending.values_[SocialEffect::PROBE]
                       - l_bc - l_8c - l_b8 - l_54
                       + a_4bc[l_20 + l_2c * 3] + bit_count(has_treaty(l_8, target, 7)) + 13,
@@ -3021,25 +3037,25 @@ L_4fbd3d:
             goto L_4fd8f6;
         }
         l_34 = 3;  // slot reused: convoys still allowed
-        if (GameDataStateStorage.fields_.vehicle_current_count_ > 0) {
-            for (i = 0; i < GameDataStateStorage.fields_.vehicle_current_count_; i++) {
-                if (Vehs[i].faction_id == l_8
-                    && VehPrototypes[Vehs[i].proto_id].plan == b_50) {
-                    if (Vehs[i].home_base_id == BaseIDCurrentSelected) {
-                        w *= 2;
-                    }
-                    if (Vehs[i].order != ORDER_CONVOY) {
-                        goto L_4fd8f6;
-                    }
-                    if (l_34) {
-                        l_34--;
-                    }
-                    w = w * 3 / 2;
+        // One loop guard in the image; its skip edge bypasses the `!l_34` test
+        // (l_34 is still 3 there).
+        for (i = 0; i < GameDataStateStorage.fields_.vehicle_current_count_; i++) {
+            if (Vehs[i].faction_id == l_8
+                && VehPrototypes[Vehs[i].proto_id].plan == b_50) {
+                if (Vehs[i].home_base_id == BaseIDCurrentSelected) {
+                    w *= 2;
                 }
+                if (Vehs[i].order != ORDER_CONVOY) {
+                    goto L_4fd8f6;
+                }
+                if (l_34) {
+                    l_34--;
+                }
+                w = w * 3 / 2;
             }
-            if (!l_34) {
-                goto L_4fd8f6;
-            }
+        }
+        if (!l_34) {
+            goto L_4fd8f6;
         }
         if (!l_b0 && l_c == 7 && PlayersData[l_8].ai_tech) {
             w /= 2;
@@ -3101,12 +3117,10 @@ L_4fc68f:
         if (!l_124) {
             if (l_2c != 5 || PlayersData[l_8].planet_busters) {
                 if (!l_80) {
-                    l_18 += range((l_c > 2) - (l_30 || l_3c) + l_a4, 0, 2);
+                    l_18 += range_call((l_c > 2) - (l_30 || l_3c) + l_a4, 0, 2);
                 }
                 if (l_c == 8 || (l_c == 7 && !(BaseCurrent->state & 0x1000000))) {
-                    if (l_2c == 8) {
-                        w /= 2;
-                    } else {
+                    if (l_2c != 8) {
                         if (!l_30) {
                             l_18++;
                             if (!l_f4 && !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)) {
@@ -3125,6 +3139,8 @@ L_4fc68f:
                         if (!(BaseCurrent->state & 0x1000000)) {
                             w *= 2;
                         }
+                    } else {
+                        w /= 2;
                     }
                 }
             }
@@ -3211,21 +3227,18 @@ L_4fc68f:
 
     // Defense needs (prio capped by the need), or the cost of supporting one more unit.
     // if (l_28) { ... } else { L_4fce99 (chunk 3) } ; join at L_4fcf6d (chunk 3)
-    if (!l_28) {
-        goto L_4fce99;
-    }
+    if (l_28) {
     if (l_2c != 2) {
         if (l_2c != 3) {
-            if (l_2c == 0) {
-                if (has_abil(l_14, 0x8000) && (BaseCurrent->state & 0x200000)) {
-                    goto L_4fcd31;
-                }
-            } else if (l_2c != 1
+            // One test chain in the image (0x4fcc96): plan 0 needs the ability and the
+            // base flag, plan 1 the guard condition, any other plan passes.
+            if (l_2c == 0
+                    ? (has_abil(l_14, 0x8000) && (BaseCurrent->state & 0x200000))
+                    : (l_2c != 1
                        || ((l_28 == 3
                             || (l_5c + l_c8 >= l_f0
                                 && PlayersData[l_8].region_total_offensive_vehs[l_10] >= guard_check(l_8, l_10)))
-                           && (!l_c || l_c == 7) && l_5c + l_c8 >= l_f0)) {
-L_4fcd31:
+                           && (!l_c || l_c == 7) && l_5c + l_c8 >= l_f0))) {
                 if (l_28 == 3
                     && (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
                         || (BaseCurrent->governor & 0x1000))) {
@@ -3248,27 +3261,22 @@ L_4fcd31:
     if (has_abil(l_14, 0x200) && stack_check(l_4c, 6, 0x200, -1, -1) < l_c8 / 2 - 1) {
         w /= 2;
     }
-    if (l_28 != 3) {
-        goto L_4fce6a;
+    if (l_28 == 3) {
+        w *= (VehPrototypes[l_14].cost + 1) / 2;
+        if ((l_2c == 2 || PlayersData[l_8].best_armor_value == 1)
+            && (l_14 < 64 || (VehPrototypes[l_14].flags & 4))) {
+            l_18 = 0;
+            goto L_4fcf70;
+        }
     }
-    w *= (VehPrototypes[l_14].cost + 1) / 2;
-    if (l_2c != 2 && PlayersData[l_8].best_armor_value != 1) {
-        goto L_4fce6d;
-    }
-    if (l_14 >= 64 && !(VehPrototypes[l_14].flags & 4)) {
-        goto L_4fce6d;
-    }
-    l_18 = 0;
-    goto L_4fcf70;
+    // falls into the rank cap at L_4fce6a/L_4fce6d (chunk 3)
     // ---- chunk 3: 0x4FCE6A-0x4FE99D ----
     // Unit loop, tail of the plan weighting (need == 3 handled by chunk 2): cap the rank.
-L_4fce6a:
-L_4fce6d:
     if (l_74 < 2 && l_18 >= 1 << (3 - l_28)) {
         l_18 = 1 << (3 - l_28);
     }
     goto L_4fcf70;
-L_4fce99:
+    } else {
     // Else-branch of chunk 2's `if (l_28)` (0x4fcc7b): no defense need.
     if (VehPrototypes[l_14].plan <= 9 && BaseCurrent->intake_2[RSC_MINERALS]
         && (VehPrototypes[l_14].plan != 7 || l_c != 7)) {
@@ -3295,6 +3303,7 @@ L_4fce99:
         int t = (l_98 - (l_70 || l_cc) - l_60 + 3) * cons;
         w = (t * t / 9 + BaseCurrent->intake_2[RSC_MINERALS]) * w
                / BaseCurrent->intake_2[RSC_MINERALS];
+    }
     }
 L_4fcf6d:
 L_4fcf70:
@@ -3380,6 +3389,9 @@ L_4fcf70:
     if (Weapon[VehPrototypes[l_14].weapon_id].offense_rating) {
         // stand-in: forces the image's two out-of-line worm_mod calls here.
         int (__cdecl *const worm_mod_call)(int, int) = worm_mod;
+        // WORKAROUND(inline): the image calls range (0x422F00) out of line at all four
+        // sites of this block; plain `range` is expanded at three of them here.
+        int (__cdecl *const range_call)(int, int, int) = range;
         int worm = worm_mod_call(BaseIDCurrentSelected, l_8);
         int morale = morale_mod(BaseIDCurrentSelected, l_8,
                                 Chassis[VehPrototypes[l_14].chassis_id].triad)
@@ -3391,13 +3403,13 @@ L_4fcf70:
             }
         }
         if (Weapon[VehPrototypes[l_14].weapon_id].offense_rating < 0 && l_14 < 64) {
-            l_18 += 2 - range(worm_mod_call(BaseIDCurrentSelected, l_8), 0, 2);
+            l_18 += 2 - range_call(worm_mod_call(BaseIDCurrentSelected, l_8), 0, 2);
             if (morale > worm) {
                 l_18 += morale - worm;
             }
-            w = w * 8 / range(worm - morale + 6, 1, 16);
+            w = w * 8 / range_call(worm - morale + 6, 1, 16);
             if (Players[l_8].rule_psi) {
-                w = w * 100 / range(Players[l_8].rule_psi + 100, 50, 200);
+                w = w * 100 / range_call(Players[l_8].rule_psi + 100, 50, 200);
             }
             if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c)
                 && morale >= 0 && worm < 3) {
@@ -3408,7 +3420,7 @@ L_4fcf70:
             if (l_20 != 2 && worm > morale + 1) {
                 l_18++;
             }
-            w = w * 8 / range(worm - morale + 8, 1, 16);
+            w = w * 8 / range_call(worm - morale + 8, 1, 16);
         }
     }
     {
@@ -3574,10 +3586,12 @@ L_4fd912:
     l_24 = 0x10000;
     l_34 = 0x100;
     // Jump table 0x500048 through the byte index table 0x5000d8. Bodies past 0x4fe99d are
-    // chunk 4's; `break` is spelled `goto L_4fef49` (the end of the switch, chunk 4).
+    // chunk 4's. Cases end in `break` (the end of the switch is L_4fef49, chunk 4); the
+    // image's shared tails are VC6 tail merges of identical `break` arms, which keep the
+    // later copy (fusion/quantum lab, the `| l_40` 0-arm at 0x4fec33).
     switch (l_20) {
     default:
-        goto L_4fef49;
+        break;
 
     case FAC_HEADQUARTERS:
         if (l_c != 2
@@ -3585,15 +3599,15 @@ L_4fd912:
             && (!l_14c || (l_14c == 1 && BaseCurrent->queue_production_id[0] == -1))) {
             value = 3 - BaseCurrent->population_size / 5;
         }
-        goto L_4fef49;
+        break;
 
     case FAC_CHILDREN_CRECHE: {
-        int ineff = (PlayersData[l_8].soc_effect_pending.values_[SocialEffect::EFFICIENCY] > -4)
-                        ? BaseCurrent->energy_inefficiency : 0;
+        // Image: `12 - ineff` is formed (esi) before the morale divisor is computed.
+        value = 12 - ((PlayersData[l_8].soc_effect_pending.values_[SocialEffect::EFFICIENCY] > -4)
+                          ? BaseCurrent->energy_inefficiency : 0);
         int mor = PlayersData[l_8].soc_effect_pending.values_[SocialEffect::MORALE];
-        value = 12 - ineff
-                    - BaseCurrent->population_size * ((l_c <= 2) + 1)
-                          / range((mor + (mor > 0 ? 1 : (mor < 0 ? -1 : 0)) + 6) / 2, 1, 999);
+        value -= BaseCurrent->population_size * ((l_c <= 2) + 1)
+                 / range((mor + (mor > 0 ? 1 : (mor < 0 ? -1 : 0)) + 6) / 2, 1, 999);
         if (!has_project(SP_CLONING_VATS, l_8) && BaseCurrent->mineral_surplus > 2
             && value > 4) {
             value = 4;
@@ -3605,14 +3619,14 @@ L_4fd912:
         }
         value = range(value, 1, 12);
         if (!has_fac_built_call(FAC_RECYCLING_TANKS) && BaseCurrent->population_size < 5) {
-            goto L_4fef49;
+            break;
         }
         if (BaseCurrent->energy_inefficiency < BaseCurrent->population_size / 2
             && BaseCurrent->energy_inefficiency < BaseCurrent->intake_2[RSC_ENERGY] / 2) {
-            goto L_4fef49;
+            break;
         }
         bonus = l_40 * 2;
-        goto L_4fef49;
+        break;
     }
 
     case FAC_RECYCLING_TANKS:
@@ -3665,7 +3679,7 @@ L_4fd912:
             }
             if (!l_78) {
                 value = 999;
-                goto L_4fef49;
+                break;
             }
             l_18 -= l_78;
         }
@@ -3678,17 +3692,16 @@ L_4fd912:
                 || PlayersData[l_8].proto_id_active[0] + PlayersData[l_8].current_num_bases < 4)) {
             value *= 2;
         }
-        if (!l_3c) goto L_4fef49;
+        if (!l_3c) break;
         if (!(BaseCurrent->state & 0x1000000) && l_c == 8) {
-            bonus = 1;  // image: jumps to the shared `bonus = 1` at 0x4fef0c
-        } else {
-            bonus = 2;
+            goto L_4fef0c;  // the shared `bonus = 1` (chunk 4)
         }
-        goto L_4fef49;
+        bonus = 2;
+        break;
     }
 
     case FAC_PERIMETER_DEFENSE: {
-        if (has_project(SP_CITIZENS_DEFENSE_FORCE, l_8)) goto L_4fef49;
+        if (has_project(SP_CITIZENS_DEFENSE_FORCE, l_8)) break;
         l_90 = 1;
         int b = range(8 - BaseCurrent->population_size - (has_fac_built_call(FAC_HEADQUARTERS) ? 2 : 0),
                       1, 10);
@@ -3711,8 +3724,8 @@ L_4fd912:
             l_34 = 0x80;
         }
         value = range(b, 1, 10);
-        bonus = (l_30 && l_c == 2 && !l_28) | l_40;  // 0-tail is chunk 4's 0x4fec33
-        goto L_4fef49;
+        bonus = (l_30 && l_c == 2 && !l_28) | l_40;  // 0-arm merges with chunk 4's 0x4fec33
+        break;
     }
 
     case FAC_TACHYON_FIELD:
@@ -3737,17 +3750,17 @@ L_4fd912:
             l_34 = 0x80;
         }
         value = range(b, 1, 10);
-        bonus = (l_30 && l_c == 2 && !l_28) | l_40;  // 0-tail is chunk 4's 0x4fec33
-        goto L_4fef49;
+        bonus = (l_30 && l_c == 2 && !l_28) | l_40;  // 0-arm merges with chunk 4's 0x4fec33
+        break;
     }
 
     case FAC_ENERGY_BANK:
         value = range((6 - l_98) * 2 - BaseCurrent->intake_2[RSC_ENERGY] / 2, 1, 10);
         if (!has_fac_built_call(FAC_RECYCLING_TANKS) && BaseCurrent->population_size < 5) {
-            goto L_4fef49;
+            break;
         }
         bonus = l_40 * 2;
-        goto L_4fef49;
+        break;
 
     case FAC_HAB_COMPLEX:
     case FAC_HABITATION_DOME: {
@@ -3773,7 +3786,7 @@ L_4fd912:
             value /= 2;
         }
         bonus = l_40 | l_64;
-        if (BaseCurrent->population_size < lim) goto L_4fef49;
+        if (BaseCurrent->population_size < lim) break;
         if (!l_30) {
             bonus *= 2;
         }
@@ -3782,7 +3795,7 @@ L_4fd912:
         if (aah_ooga(l_8, l_8)) {
             value /= 2;
         }
-        goto L_4fef49;
+        break;
     }
 
     case FAC_RECREATION_COMMONS:
@@ -3799,7 +3812,7 @@ L_4fd912:
             l_24 = 0;
             value = -10;
         }
-        goto L_4fef49;
+        break;
 
     case FAC_HOLOGRAM_THEATRE:
         if (l_74 < 2) {
@@ -3811,7 +3824,7 @@ L_4fd912:
             l_24 = 0;
             value = -8;
         }
-        goto L_4fef49;
+        break;
 
     case FAC_RESEARCH_HOSPITAL:
         if (l_74 < 2) {
@@ -3823,7 +3836,7 @@ L_4fd912:
             l_24 = 0;
             value = -4;
         }
-        goto L_4fef49;
+        break;
 
     case FAC_NANOHOSPITAL:
         if (l_74 < 2) {
@@ -3835,7 +3848,7 @@ L_4fd912:
             l_24 = 0;
             value = -2;
         }
-        goto L_4fef49;
+        break;
 
     case FAC_PARADISE_GARDEN:
         if (l_74 < 2) {
@@ -3844,7 +3857,7 @@ L_4fd912:
             l_24 = 0;
             value = -6;
         }
-        goto L_4fef49;
+        break;
 
     case FAC_NETWORK_NODE:
         value = range((5 - l_58 - stack_check(l_4c, 2, 12, l_8, -1)) * 2
@@ -3862,7 +3875,7 @@ L_4fd912:
             }
         }
         bonus = (has_project(SP_VIRTUAL_WORLD, l_8) ? 3 : 1) * l_3c;
-        goto L_4fef49;
+        break;
 
     case FAC_BIOLOGY_LAB: {
         value = (5 - l_58 - l_a4) * 2;
@@ -3881,9 +3894,10 @@ L_4fd912:
         }
     }
     L_4fe410:
-        // Shared `bonus = 0` tail; chunk 4 also jumps here.
+        // Shared `bonus = 0` tail. Every reference from the later cases (and chunk 4) is a
+        // conditional goto: an unconditional one makes VC6 chain this block after it.
         bonus = 0;
-        goto L_4fef49;
+        break;
 
     case FAC_SKUNKWORKS:
         value = (l_ec - l_60) * 2 + 6
@@ -3896,20 +3910,22 @@ L_4fd912:
         if (has_fac_built_call(FAC_BIOENHANCEMENT_CENTER)) {
             value--;
         }
+        // Image: the two stores follow the range call and the arm keeps its own
+        // `mov esi, eax` (it is not merged into the psi gate's tail).
+        value = PlayersData[l_8].unk_28 * value / range(l_e0, 1, 999);
         bonus = l_3c;
         l_14 = 1;
-        value = PlayersData[l_8].unk_28 * value / range(l_e0, 1, 999);
-        goto L_4fef49;
+        break;
 
     case FAC_FUSION_LAB:
         value = range((6 - l_58) * 2 - BaseCurrent->intake_2[RSC_ENERGY] / 3, 1, 12);
         bonus = l_40 | l_3c;
-        goto L_4fef49;
+        break;
 
     case FAC_QUANTUM_LAB:
         value = range((6 - l_58) * 2 - BaseCurrent->intake_2[RSC_ENERGY] / 4, 1, 12);
         bonus = l_40 | l_3c;
-        goto L_4fef49;
+        break;
 
     case FAC_TREE_FARM:
         if (aah_ooga(l_8, l_8)) {
@@ -3918,17 +3934,17 @@ L_4fd912:
         value = range(12 - (l_84 + 2) / 4 - (BaseCurrent->eco_damage + 1) / 2
                               - BaseCurrent->intake_2[RSC_ENERGY] / 3,
                           1, 10);
-        goto L_4fef49;
+        break;
 
     case FAC_HYBRID_FOREST:
         value = range(12 - (l_84 + 2) / 4 - (BaseCurrent->eco_damage + 2) / 3
                               - BaseCurrent->intake_2[RSC_ENERGY] / 4,
                           1, 10);
-        goto L_4fef49;
+        break;
 
     case FAC_COVERT_OPS_CENTER:
         value = (2 - ((PlayersData[l_8].flags_ext >> 3) & 1)) * 5;
-        goto L_4fef49;
+        break;
 
     case FAC_GEOSYNC_SURVEY_POD:
         value = 7;
@@ -3945,7 +3961,7 @@ L_4fd912:
         if (PlayersData[l_8].ai_power) {
             l_4c--;
         }
-        goto L_4fef49;
+        break;
 
     case FAC_COMMAND_CENTER:
     case FAC_BIOENHANCEMENT_CENTER:
@@ -3981,11 +3997,10 @@ L_4fd912:
             || (PlayersData[l_8].unk_77[l_10] & 0x4000)
             || (GameDataStateStorage.fields_.turn_current_num_ >= 100
                 && PlayersData[l_8].region_total_bases[l_10] <= 8 && l_c != 7)) {
-            bonus = 0;  // image: jumps to L_4fe410
-        } else {
-            bonus = l_30;
+            goto L_4fe410;
         }
-        goto L_4fef49;
+        bonus = l_30;
+        break;
     }
 
     case FAC_NAVAL_YARD:
@@ -4003,13 +4018,12 @@ L_4fd912:
                 value /= 3;
             }
         }
-        // Image: jumps to chunk 4's identical tail at 0x4feef7.
-        if (l_30 && l_c == 7) {
-            bonus = 1;
-        } else {
-            bonus = 0;
+        // Image: merged into chunk 4's identical tail at 0x4feef7 (spelled the same).
+        if (!l_30 || l_c != 7) {
+            goto L_4fe410;
         }
-        goto L_4fef49;
+        bonus = 1;
+        break;
 
     case FAC_AEROSPACE_COMPLEX: {
         l_24 = 0x10800;
@@ -4030,20 +4044,19 @@ L_4fd912:
         }
         value = range(c, 1, 24);
         // Image: `test` here, then `jmp 0x4fef06` (chunk 4's jne L_4fe410 / bonus = 1).
-        if (l_30 && l_c != 2 && !(PlayersData[l_8].unk_77[l_10] & 0x4000)) {
-            bonus = 1;
-        } else {
-            bonus = 0;
+        if (!l_30 || l_c == 2 || (PlayersData[l_8].unk_77[l_10] & 0x4000)) {
+            goto L_4fe410;
         }
-        goto L_4fef49;
+        bonus = 1;
+        break;
     }
 
     case FAC_PRESSURE_DOME:
-        if (alt_at(BaseCurrent->x, BaseCurrent->y) != 3) goto L_4fef49;
+        if (alt_at(BaseCurrent->x, BaseCurrent->y) != 3) break;
         if (alt_detail_at(BaseCurrent->x, BaseCurrent->y) - MapSeaLevel
             < (int)AltNatural[3] + GameDataStateStorage.fields_.climate_sea_level_delta_) {
             value = -16;
-            goto L_4fef49;
+            break;
         }
         // Falls through into chunk 4 (0x4fe99d), the rest of this case.
     // ---- chunk 4: 0x4FE99D-0x4FFFB8 ----
@@ -4101,11 +4114,11 @@ L_4fe99d:
                       - BaseCurrent->intake_1[RSC_MINERALS]
                       - PlayersData[l_8].soc_effect_pending.values_[SocialEffect::POLICE],
                       1, 16);
-        if (l_30 && l_c > 2) {
-            bonus = 1;
-            break;
+        if (!l_30 || l_c <= 2) {
+            goto L_4fe410;
         }
-        goto L_4fe410;
+        bonus = 1;
+        break;
 
     case FAC_PUNISHMENT_SPHERE:
         if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & l_1c) {
@@ -4125,14 +4138,9 @@ L_4fe99d:
 
     case FAC_ROBOTIC_ASSEMBLY_PLANT:
         value = range(10 - BaseCurrent->intake_1[RSC_MINERALS], 1, 10);
-        // Probably `bonus = (l_30 && l_c > 2) | l_40;` (see notes); the false arm
-        // at 0x4fec33 is shared with chunk 3's cases.
-        if (l_30 && l_c > 2) {
-            bonus = 1 | l_40;
-            break;
-        }
-L_4fec33:
-        bonus = 0 | l_40;
+        // The image materializes the condition (ebx = 1 / ebx = 0, then `or ebx, l_40`);
+        // its 0-arm (0x4fec33) is the merged tail of the perimeter/tachyon cases too.
+        bonus = (l_30 && l_c > 2) | l_40;
         break;
 
     // The image places case 21's body before case 20's; the two are identical.
@@ -4213,12 +4221,12 @@ L_4fec33:
         l_14 = 1;
         // Shared tail; chunk 3's FAC_NAVAL_YARD case jumps here.
 L_4feef7:
-        if (l_30 && l_c == 7) {
-L_4fef0c:
-            bonus = 1;
-            break;
+        if (!l_30 || l_c != 7) {
+            goto L_4fe410;  // conditional, so L_4fe410 stays in the biology lab case
         }
-        goto L_4fe410;
+L_4fef0c:
+        bonus = 1;
+        break;
 
     case FAC_PSI_GATE:
         value = range((climactic_battle() ? 2 : 4) - l_154 - at_climax(l_8), 0, 4);
@@ -4660,10 +4668,11 @@ L_4ffea4:
             }
         }
     }
+    base_id = a_130[0];
     if (out_score) {
         *out_score = a_114[0];
     }
-    return a_130[0];
+    return base_id;
 }
 
 int __cdecl has_fac_built(int facility_id) {

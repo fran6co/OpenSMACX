@@ -70,7 +70,9 @@ static_assert(offsetof(NetSessionPickerTail, action_result_) == 0xBC,
 class NetSessionPickerWin : public GraphicWin {
  public:
   NetSessionPickerWin();
-  virtual ~NetSessionPickerWin();
+  // Header inline: session_picker_dialog (0x00631050) expands it at every
+  // normal exit and only its unwind funclets call the COMDAT copy 0x00633010.
+  virtual ~NetSessionPickerWin() { close(); }
 
   // Pinned constructor installs table 0x670DDC: slot 12 -> 0x63C9D0.
   void on_redraw() override;
