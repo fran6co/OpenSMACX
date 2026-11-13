@@ -823,11 +823,12 @@ void BaseWin::draw_flash(int redraw_mode) {
             StringTemp[0] = 0;
             strcat(StringTemp, label_get(0x360 / 4));
             strcat(StringTemp, SocialWinColonSpaceText);
-            const int stacked = stack_veh(vehicle_id, 0);
-            _itoa(veh_cargo(vehicle_id) - stacked, number, 10);
+            int cargo = veh_cargo(vehicle_id) - stack_veh(vehicle_id, 0);
+            _itoa(cargo, number, 10);
             strcat(StringTemp, number);
             strcat(StringTemp, "/");
-            _itoa(veh_cargo(vehicle_id), number, 10);
+            cargo = veh_cargo(vehicle_id);
+            _itoa(cargo, number, 10);
             strcat(StringTemp, number);
             MainInterfaceGlobal.write_l(StringTemp, x, y);
             y += line;
@@ -5946,18 +5947,20 @@ void BaseWin::draw_pop(int update_mode) {
     panel.bottom = rect->bottom - 3;
     MainInterfaceGlobal.set_clip(&panel);
 
-    const int population = BaseCurrent->population_size;
-    const int top = panel.top;
-    const int height = panel.bottom - top;
+    int top = panel.top;
+    int height = panel.bottom - panel.top;
+    int population = BaseCurrent->population_size;
     int spacing;
     if (population <= 1) {
         spacing = height;
     } else {
-        spacing = (panel.right - panel.left - height) / (population - 1);
-        if (spacing < 1 || height < 1) {
+        int step = (panel.right - panel.left - height) / (population - 1);
+        if (step < 1 || height < 1) {
             spacing = 1;
-        } else if (spacing > height) {
+        } else if (step > height) {
             spacing = height;
+        } else {
+            spacing = step;
         }
     }
 

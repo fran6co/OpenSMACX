@@ -3956,12 +3956,29 @@ char ControlTurnPasswordInitialText[1];      // 0x0093AA08 lower bound
 
 extern uint32_t FactionDiplomacyFlags[MaxPlayerNum];
 
+// WORKAROUND(inline): ~Dialogs is a header inline in the original
+// (dialogs.h); control_turn's final teardown expands it (0x00528BC7..0x00528CD3).
+// Defined here rather than through DIALOGS_DTOR_INLINE so the unit's earlier
+// functions keep their code (faction_upkeep's add flips with the header body).
+#pragma optimize("y", off)
+inline Dialogs::~Dialogs() { close(); }
+#pragma optimize("", on)
+
 // save_game is declared by the real game owner header.
 void __cdecl crash_landing(int faction_id);
 
 // ORIGINAL: 0x005275B0 ?control_turn@@YAXXZ 0x005275B0-0x00528E94;0x0065D6DD-0x0065DB67 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:6167e270cb6ddcd091b2294560a31b1ec1372cef:src/unrecovered/005275b0.cpp: full original identity/spans and useful historical findings", "ConsoleInfoWin original object7AD2A0 owns suppression memberAC at7AD34C; native527A70/527C9E set1/0; init4592A0 and timer_proc459150 confirm ownership.", "OfferResetCells, PendingDiplomacyFlags and FactionDiplomacyFlags retain original flattened indexing through their actual typed owners.", "Initial text at93AA04/08/0C is proven loader-zero and only read by observed consumers; one-byte source bounds are lower-bound interpretations, not claims of complete original capacity or absence of indirect writers.", "Complete native cleanup-route review supports one real Popup owner; matching and exceptional cleanup restoration remain unfinished.", "recovery/tasks/control-turn-owner-oct5.json", "recovery/tests/test_control_turn_actual_source.py"], "reason": "Recover complete turn orchestration through existing genuine application owners and automatic Popup lifetime. Preserve original branch ordering and error behavior; all primary and exceptional spans remain restoration obligations, not a claim of current native lifetime/byte/runtime equivalence."}
 // TRIED: mismatch #11 near prologue (xor vs push) - popup/end_game_pop declared as real C++ locals rather than the original's staggered same-slot vtable-poke construction; the "big dialog" tail (Dialogs/Spot/ListBox/CheckBox/EditGroup/ SpriteBox/StringStruct x2/Sprite) is reached by raw offset casts into BasePop's own dialogs_/spot_/sprite_ members, not by a modelled derived class - faithful call order/args, not byte fidelity. Main loop, faction dispatch, diplomacy/ tech/council logic transcribed directly from the disasm.
+// WORKAROUND(inline): dead /Ob2 spend. The image tears its first return site
+// (end_of_game(1)) and the shared ExitTurnLoop/end_of_game(0) site down
+// shallower than this body otherwise does (calls ~FlatButton 0x00406880 and
+// keeps ~Dialogs 0x00406910 out of line there; per-site depths 5,5,6,6,7+13,
+// 7+13,7+18). Two expansions before the password loop and two after the
+// faction loop give 5,6,6,6,7+13,7+13,7+18; the original's spending call
+// sites are unknown, and the second site (save failed, ExitTurnLoop set)
+// stays one level deep under every placement tried.
+static inline int control_turn_spend(int k) { if (k == 1) k = 2; return k; }
 void __cdecl control_turn() {
     int retry_count = 0;
     Popup popup;
@@ -4055,6 +4072,8 @@ turn_loop:
                 ConsoleGlobal.cover_window_.fill(0);
                 ConsoleGlobal.cover_window_.Win::show(0);
                 do_all_draws();
+                control_turn_spend(3); // WORKAROUND(inline): see control_turn_spend
+                control_turn_spend(4);
                 MainInterfaceGlobal.string_box_.clear();
 
                 for (;;) {
@@ -4262,6 +4281,8 @@ turn_loop:
                 return;
             }
         }
+        control_turn_spend(20); // WORKAROUND(inline): see control_turn_spend
+        control_turn_spend(21);
         if (human_turn_shown == 0) {
             ConsoleGlobal.human_turn();
         }
