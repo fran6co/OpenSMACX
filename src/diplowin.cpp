@@ -547,11 +547,11 @@ void DiploWin::on_redraw() {
 
   StringTemp[0] = 0;
   strcat(StringTemp, label_get(0x748 / 4));
-  strcat(StringTemp, " ");
-  strcat(StringTemp, " ");
+  strcat(StringTemp, BufferJoinSpace);
+  strcat(StringTemp, BufferJoinSpace);
   strcat(StringTemp, "(");
   strcat(StringTemp, label_get(0x788 / 4));
-  strcat(StringTemp, ": ");
+  strcat(StringTemp, SocialWinColonSpaceText);
   strcat(StringTemp, "{");
 
   const uint32_t treaties =
@@ -1033,8 +1033,8 @@ void DiploWin::new_chat(char *text, int faction_id) {
     PluralityDefault = 0;
     strcat(line, Players[faction_id].name_leader);
     CharUpperA(line);
-    strcat(line, ": ");
-    strcat(line, " ");
+    strcat(line, SocialWinColonSpaceText);
+    strcat(line, BufferJoinSpace);
     strcat(line, text);
     stringBox_.add(line, faction_id, 1);
     DiploOffersDirty = 1;

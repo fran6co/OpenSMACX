@@ -37,6 +37,11 @@
 #include "terraforming.h"
 #include "shared_word.h"
 
+// help_tech_info pushes the shared separators 0x00682820 (" ") and
+// 0x00682E90 (", ") rather than unit literals.
+extern const char BufferJoinSpace[];
+extern char SocialWinCommaSpaceText[];
+
 
 // Native4050A0 publishes this buffer and44CBD0 consumes it. The existing
 // 256-byte source capacity is retained; original allocation bounds unverified.
@@ -297,7 +302,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
                     strcat(buf, s);
                     strcat(buf, ": ");
                 } else {
-                    strcat(buf, ", ");
+                    strcat(buf, SocialWinCommaSpaceText);
                 }
             } else {
                 strcat(buf, "^");
@@ -330,7 +335,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
                     strcat(buf, s);
                     strcat(buf, ": ");
                 } else {
-                    strcat(buf, ", ");
+                    strcat(buf, SocialWinCommaSpaceText);
                 }
             } else {
                 strcat(buf, "^");
@@ -341,7 +346,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             help_create_link_call(buf, reinterpret_cast<char *>(link), idbuf);
             TechnologyHelpEntryKind = 0x62;
             TechnologyHelpEntryName = record.offsv_1_name;
-            strcat(buf, " ");
+            strcat(buf, BufferJoinSpace);
             strcat(buf, "(");
             _itoa(record.speed, numbuf, 10);
             strcat(buf, numbuf);
@@ -369,7 +374,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
                     strcat(buf, s);
                     strcat(buf, ": ");
                 } else {
-                    strcat(buf, ", ");
+                    strcat(buf, SocialWinCommaSpaceText);
                 }
             } else {
                 strcat(buf, "^");
@@ -380,7 +385,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             help_create_link(buf, link, idbuf);
             TechnologyHelpEntryKind = 0x63;
             TechnologyHelpEntryName = Weapon[idx].name;
-            strcat(buf, " ");
+            strcat(buf, BufferJoinSpace);
             strcat(buf, "(");
             if (Weapon[idx].offense_rating < 0) {
                 strcat(buf, label_get(0x310 / 4));
@@ -418,7 +423,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
                     strcat(buf, s);
                     strcat(buf, ": ");
                 } else {
-                    strcat(buf, ", ");
+                    strcat(buf, SocialWinCommaSpaceText);
                 }
             } else {
                 strcat(buf, "^");
@@ -429,7 +434,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             help_create_link(buf, link, idbuf);
             TechnologyHelpEntryKind = 0x64;
             TechnologyHelpEntryName = Armor[idx].name;
-            strcat(buf, " ");
+            strcat(buf, BufferJoinSpace);
             strcat(buf, "(");
             if (Armor[idx].defense_rating < 0) {
                 strcat(buf, label_get(0x310 / 4));
@@ -466,7 +471,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
                     strcat(buf, s);
                     strcat(buf, ": ");
                 } else {
-                    strcat(buf, ", ");
+                    strcat(buf, SocialWinCommaSpaceText);
                 }
             } else {
                 strcat(buf, "^");
@@ -504,7 +509,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
                     strcat(buf, s);
                     strcat(buf, ": ");
                 } else {
-                    strcat(buf, ", ");
+                    strcat(buf, SocialWinCommaSpaceText);
                 }
             } else {
                 strcat(buf, "^");
@@ -538,7 +543,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
                     strcat(buf, s);
                     strcat(buf, ": ");
                 } else {
-                    strcat(buf, ", ");
+                    strcat(buf, SocialWinCommaSpaceText);
                 }
             } else {
                 strcat(buf, "^");
@@ -553,7 +558,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             char *link = StringTable.get(record.name);
             help_create_link(buf, link, idbuf);
             if (record.free_tech == a2) {
-                strcat(buf, " ");
+                strcat(buf, BufferJoinSpace);
                 char *s2 = label_get(0x4DC / 4);
                 strcat(buf, s2);
                 strcat(buf, ")");
@@ -582,7 +587,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
                             strcat(buf, s);
                             strcat(buf, ": ");
                         } else {
-                            strcat(buf, ", ");
+                            strcat(buf, SocialWinCommaSpaceText);
                         }
                     } else {
                         strcat(buf, "^");
@@ -613,7 +618,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
                     strcat(buf, s);
                     strcat(buf, ": ");
                 } else {
-                    strcat(buf, ", ");
+                    strcat(buf, SocialWinCommaSpaceText);
                 }
             } else {
                 strcat(buf, "^");
@@ -642,7 +647,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
                     strcat(buf, s);
                     strcat(buf, ": ");
                 } else {
-                    strcat(buf, ", ");
+                    strcat(buf, SocialWinCommaSpaceText);
                 }
             } else {
                 strcat(buf, "^");
@@ -1066,7 +1071,7 @@ Status: Complete
 int __cdecl popup_faction_datalinks(int faction_id) {
     // Native44CA90 uses this exact NUL-terminated label. Both comparison
     // profiles emit its independent ten-byte literal COMDAT in this TU.
-    // RECOVERY_LITERAL: v1 0x0068469C 0x006846A6 $SG54691 0x0044CA90
+    // RECOVERY_LITERAL: v1 0x0068469C 0x006846A6 $SG54678 0x0044CA90
     return X_pop(Players[faction_id].filename, "DATALINKS",
                                0);
 }
@@ -1199,13 +1204,13 @@ Status: Product body; measure before granting a byte claim.
 void __cdecl help_create_link(char *out, char *label, char *id) {
 // The help-link grammar uses these prefix, separator and closing tokens in order.
 // Bounds cover the literal payload, not surrounding allocation or lifetime.
-// RECOVERY_LITERAL: v1 0x00683544 0x0068354B $SG54716 0x0044CB80
+// RECOVERY_LITERAL: v1 0x00683544 0x0068354B $SG54703 0x0044CB80
     strcat(out, "$LINK<");
     strcat(out, label);
-// RECOVERY_LITERAL: v1 0x00683540 0x00683542 $SG54717 0x0044CB80
+// RECOVERY_LITERAL: v1 0x00683540 0x00683542 $SG54704 0x0044CB80
     strcat(out, "=");
     strcat(out, id);
-// RECOVERY_LITERAL: v1 0x0068353C 0x0068353E $SG54718 0x0044CB80
+// RECOVERY_LITERAL: v1 0x0068353C 0x0068353E $SG54705 0x0044CB80
     strcat(out, ">");
 }
 
