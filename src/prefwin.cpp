@@ -1080,7 +1080,10 @@ void PrefWin::set_preferences() {
 
 // ORIGINAL: 0x00490B00 ?get_preferences@PrefWin@@QAEXXZ 0x00490B00-0x004911FD FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00490b00.cpp", "recovery/tasks/prefwin-owner-coverage-wave.json", "Original control parent 8578D8; ctor/destructor member order, 800-pixel branch, checkbox text-context and callback order independently reviewed."], "reason": "Recover the complete PrefWin ownership group through a genuine GraphicWin base and compiler-owned embedded control lifetimes; preserve seed identity, original spans and unresolved discoveries without granting byte claims."}
-// TRIED: 7 do/while loops over switch(i){id,flag} pairs calling CheckBox::set_state_id, matching Ghidra's structure; the three byte-indexed jump-table dispatches (0x490DCE/0x490F03, whose table bytes are not in the brief) were simplified to a uniform field test per loop, dropping the change_volume_button_text special cases - MISMATCH #2 (prologue) not chased further.
+// TRIED (2026-11-13): with its nine in-text tables declared the body matches
+// the image block for block except `test bit, flags` operand order and three
+// AV-loop `mov eax, [morePrefsAVPending_]` loads; operand swap, int/uint
+// types, a local `more`, `!= 0` forms and a helper inline all compile alike.
 void PrefWin::get_preferences() {
   int id = 0;
   uint32_t bit = 0;
@@ -1357,6 +1360,17 @@ void PrefWin::get_preferences() {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00490B00 0x00491200 0x00491220 0x00490B28
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00490B00 0x00491220 0x00491250 0x00490BF5
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00490B00 0x00491250 0x00491288 0x00490D20
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00490B00 0x00491288 0x00491294 0x00490DDE
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x00490B00 0x00491294 0x0049129E 0x00490DD8
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00490B00 0x004912A0 0x004912CC 0x00490E66
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00490B00 0x004912CC 0x004912E8 0x00490F03
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x00490B00 0x004912E8 0x0049131A 0x00490EFD
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00490B00 0x0049131C 0x00491350 0x00490FFE
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00490B00 0x00491350 0x00491360 0x004910D5
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00490B00 0x00491360 0x00491380 0x00491146
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00491380 0x004913E8 0x004913F8 0x0049138E
 // ORIGINAL: 0x00491380 ?on_scrolling@PrefWin@@QAEXHH@Z 0x00491380-0x004913E6 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00491380.cpp", "recovery/tasks/prefwin-owner-coverage-wave.json", "Original control parent 8578D8; ctor/destructor member order, 800-pixel branch, checkbox text-context and callback order independently reviewed."], "reason": "Recover the complete PrefWin ownership group through a genuine GraphicWin base and compiler-owned embedded control lifetimes; preserve seed identity, original spans and unresolved discoveries without granting byte claims."}

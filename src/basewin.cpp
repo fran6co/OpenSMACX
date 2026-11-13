@@ -131,6 +131,10 @@ void BaseWin::compute_selected_base() {
 }
 
 namespace {
+inline int specialist_type(int i) {
+    return i >= 16 ? best_specialist()
+        : (BaseCurrent->spec[i >> 3] >> ((i & 7) * 4)) & 15;
+}
 int specialist_at(const Base &base, int position) {
     return (base.spec[position >> 3] >> ((position & 7) * 4)) & 15;
 }
@@ -256,13 +260,11 @@ unchanged:
 void BaseWin::pop_click(int position, int, int, int) {
     Popup popup;
     int selected = 999;
-    bool too_small = false;
+    int too_small = 0;
     compute_selected_base();
     if (BaseCurrent->faction_id_current != ConsoleGlobal.faction_id_
         && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) return;
-    int current = position >= 0
-        ? (position >= 16 ? best_specialist() : specialist_at(*BaseCurrent, position))
-        : 999;
+    int current = position >= 0 ? specialist_type(position) : 999;
     if (current < 0) current = 1;
     popup.start("CITIZEN", 0x40);
     StringTemp[0] = 0;
@@ -274,7 +276,7 @@ void BaseWin::pop_click(int position, int, int, int) {
             && i != current) continue;
         if (BaseCurrent->population_size < Rules.min_base_size_specialists
             && Citizen[i].psych_bonus < 2) {
-            too_small = true;
+            too_small = 1;
             continue;
         }
         StringTemp[0] = 0;
@@ -1990,6 +1992,8 @@ setup:
         GameDataStateStorage.fields_.game_interlude_flags_ |= 0x800u;
     }
 }
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00417040 0x00418DC0 0x00418DDC 0x0041786E
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00417040 0x00418DDC 0x00418DEC 0x00417C0B
 
 // Reads the next text line and expands it into StringTemp.
 static char *hurry_next_item() {

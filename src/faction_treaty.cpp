@@ -1956,604 +1956,388 @@ int __cdecl break_treaty(int faction_id, int target_faction_id,
 }
 
 
-// The two original opponent walks carry territory state into orbital attacks.
+// The base_id written by territory() is the same variable the orbital tail
+// uses as its base scan index and passes to action_sat_attack.
 // ORIGINAL: 0x0055F930 ?enemy_diplomacy@@YAXH@Z 0x0055F930-0x00560ACD
 // RECOVERY_BINDING: v1 {"reason":"Recover the complete AI diplomacy turn owner through typed faction, parser, base, project, network and orbital-attack interfaces. Preserve the two opponent walks, callback order, directed relationships and source-owned original identity; this is not a byte or game acceptance claim.","evidence":["original:0x55F930-0x560ACD; image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","git:ebe4c952:src/unrecovered/0055f930.cpp","Native560404 consumes the territory result, not the faction ID; signed ranking comparisons and wrap-preserving scoring follow native instructions.","Native55FBB1 selects all human-mask peers;55FBCA/55FBDF restrict notifications to the console/contact domain. Pending flag rows here are peer then actor, unlike comm_check.","Native56004D opens encounter for treaty bit20000000;5603A6 falls through to the pending notification write;560A9B carries the selected orbital target base.","recovery/tasks/base-colony-economy-coverage-wave.json; recovery/tests/test_enemy_diplomacy_behavior.py"]}
-// TRIED: this is the most complex of the batch (4509 bytes of AI diplomacy state-machine over 8 faction-pair records). Landed a heavily compressed transcription: phase boundaries (early exit, two 1..7/1..8 relationship loops, war-weariness scan, satellite-defense scan) and the callee sequence are faithful, but per-faction-pair array index chains and the deep bitfield arithmetic within each phase are approximated, not a literal instruction-by-instruction transcription.
+// Rewritten 2026-11-13 in the image's block order. Remaining gap: the shared
+// `attack_type = 3` block sits after the epilogue in the image and before the
+// sat-attack call here (tried else/continue, break-out and guarded-call forms).
 // kind      game
 void __cdecl enemy_diplomacy(int faction_id) {
-    if (faction_id == 0) return;
-
-    // Native prefix 0x55F930..0x55FB9F synchronizes agenda pairs before the
-    // lock-mask early return and then processes each opponent in order.
-    {
-        for (int other_id = 1; other_id < MaxPlayerNum; ++other_id) {
-            PlayersData[faction_id].diplo_treaties[other_id] &= ~0x100u;
-            int &agenda = PlayersData[faction_id].diplo_agenda[other_id];
-            int &reverse_agenda = PlayersData[other_id].diplo_agenda[faction_id];
-            if ((agenda & 0x20) == 0) continue;
-            if ((agenda & 0x40) == 0) {
-                agenda |= 0x40;
-                reverse_agenda |= 0x40;
+    int i;
+    int j;
+    int score;
+    int base_id;
+    int pod_count;
+    if (!faction_id) {
+        return;
+    }
+    for (i = 1; i < MaxPlayerNum; i++) {
+        PlayersData[faction_id].diplo_treaties[i] &= ~0x100u;
+        if (PlayersData[faction_id].diplo_agenda[i] & 0x20) {
+            if (!(PlayersData[faction_id].diplo_agenda[i] & 0x40)) {
+                PlayersData[faction_id].diplo_agenda[i] |= 0x40;
+                PlayersData[i].diplo_agenda[faction_id] |= 0x40;
             } else {
-                agenda &= ~0x20;
-                reverse_agenda &= ~0x20;
+                PlayersData[faction_id].diplo_agenda[i] &= ~0x20;
+                PlayersData[i].diplo_agenda[faction_id] &= ~0x20;
             }
         }
     }
-    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << static_cast<unsigned>(faction_id))) != 0)
+    if (is_human(faction_id)) {
         return;
-
+    }
     int vendetta_count = 0;
-    for (int other_id = 1; other_id < MaxPlayerNum; ++other_id) {
-        if (other_id == faction_id || !is_alive(other_id)) continue;
-        {
-            uint32_t &relation = PlayersData[faction_id].diplo_treaties[other_id];
-            if ((relation & 0x10u) != 0) ++vendetta_count;
-
-            int &mercifulness = PlayersData[faction_id].diplo_merc[other_id];
-            if (mercifulness != 0) {
-                mercifulness = diplo_sub(mercifulness, 1);
-                if (mercifulness == 0)
-                    PlayersData[faction_id].diplo_treaties[other_id] &= ~0x40u;
+    for (i = 1; i < MaxPlayerNum; i++) {
+        if (i == faction_id || !is_alive(i)) {
+            continue;
+        }
+        if (PlayersData[faction_id].diplo_treaties[i] & DTREATY_VENDETTA) {
+            vendetta_count++;
+        }
+        if (PlayersData[faction_id].diplo_merc[i]) {
+            if (!--PlayersData[faction_id].diplo_merc[i]) {
+                PlayersData[faction_id].diplo_treaties[i] &= ~0x40u;
             }
-            if ((GameDataStateStorage.fields_.turn_current_num_ & 1) != 0) {
-                char &patience = PlayersData[faction_id].diplo_patience[other_id];
-                if (patience > 0) --patience;
+        }
+        if (GameDataStateStorage.fields_.turn_current_num_ & 1) {
+            if (PlayersData[faction_id].diplo_patience[i] > 0) {
+                PlayersData[faction_id].diplo_patience[i]--;
             }
-
-            if ((PlayersData[faction_id].diplo_treaties[other_id] & 0x400u) != 0) {
-                const uint32_t agenda = static_cast<uint32_t>(
-                    PlayersData[faction_id].diplo_agenda[other_id]);
-                int pressure = diplo_sub(
-                    8 - static_cast<int>((agenda >> 9) & 2u),
-                    PlayersData[other_id].integrity_blemishes);
-                if (pressure < 1) pressure = 1;
-                if (pressure > 8) pressure = 8;
-
-                const bool roll_is_zero = pressure == 1 || (rand() % pressure) == 0;
-                const bool has_pact =
-                    (PlayersData[faction_id].diplo_treaties[other_id] & DTREATY_PACT) != 0;
-                if (has_pact) {
-                    cause_friction(faction_id, other_id, 0x14);
-                    PlayersData[faction_id].diplo_treaties[other_id] &= ~0x20C00u;
-                    treaty_on(faction_id, other_id, 0x2000);
-                } else if (roll_is_zero) {
-                    if (PlayersData[other_id].x_target >= 0) {
-                        PlayersData[faction_id].diplo_treaties[other_id] |= 0x20000u;
-                    } else {
-                        int &last_spoke = PlayersData[other_id].diplo_spoke[faction_id];
-                        const int oldest_allowed = diplo_sub(
-                            GameDataStateStorage.fields_.turn_current_num_, 8);
-                        if (last_spoke < oldest_allowed) last_spoke = oldest_allowed;
-                        uint32_t &updated_relation =
-                            PlayersData[faction_id].diplo_treaties[other_id];
-                        updated_relation = (updated_relation & ~0x20400u) | 0x840u;
-                        PlayersData[faction_id].diplo_merc[other_id] = 0x32;
+        }
+        if (PlayersData[faction_id].diplo_treaties[i] & 0x400) {
+            int odds = range(8 - ((PlayersData[faction_id].diplo_agenda[i] >> 9) & 2)
+                             - PlayersData[i].integrity_blemishes, 1, 8);
+            if (!bounded_crt_random(odds) || (PlayersData[faction_id].diplo_treaties[i] & DTREATY_PACT)) {
+                if (PlayersData[faction_id].diplo_treaties[i] & DTREATY_PACT) {
+                    cause_friction(faction_id, i, 20);
+                    PlayersData[faction_id].diplo_treaties[i] &= ~0x20C00u;
+                    treaty_on(faction_id, i, 0x2000);
+                } else if (PlayersData[i].x_target < 0) {
+                    PlayersData[i].diplo_spoke[faction_id] = max(
+                        PlayersData[i].diplo_spoke[faction_id],
+                        GameDataStateStorage.fields_.turn_current_num_ - 8);
+                    PlayersData[faction_id].diplo_treaties[i] =
+                        (PlayersData[faction_id].diplo_treaties[i] & ~0x20400u) | 0x840;
+                    PlayersData[faction_id].diplo_merc[i] = 50;
+                } else {
+                    PlayersData[faction_id].diplo_treaties[i] |= 0x20000;
+                }
+            }
+        }
+        if ((GameDataStateStorage.fields_.turn_current_num_ & 0xF) == faction_id * 2 + 1) {
+            PlayersData[faction_id].diplo_treaties[i] &= ~0x8000u;
+            PlayersData[i].diplo_treaties[faction_id] &= ~0x8000u;
+        }
+        if (is_human(i) && GameDataStateStorage.fields_.sunspot_duration_ <= 0) {
+            if (i == ConsoleGlobal.faction_id_
+                && (PlayersData[faction_id].diplo_treaties[i] & 0x40018) == DTREATY_COMMLINK) {
+                for (j = 1; j < MaxPlayerNum; j++) {
+                    if (is_alive(j) && j != faction_id && j != i
+                        && (PlayersData[faction_id].diplo_treaties[j] & 0x8018) == 0x8018
+                        && (PlayersData[i].diplo_treaties[j] & 0x18) == DTREATY_COMMLINK
+                        && PlayersData[j].mil_strength_1 > PlayersData[faction_id].mil_strength_1) {
+                        break;
+                    }
+                }
+                if (j < MaxPlayerNum && !(PlayersData[faction_id].diplo_treaties[i] & DTREATY_PACT)
+                    && reputation(i, faction_id) < 5
+                    && ((GameDataStateStorage.fields_.turn_current_num_ - PlayersData[i].diplo_spoke[faction_id] > 8
+                         && (GameDataStateStorage.fields_.turn_current_num_ & 0xF) == faction_id * 2)
+                        || (PlayersData[faction_id].diplo_treaties[i] & 0x2000))) {
+                    FactionDiplomacyFlags[faction_id] |= 0x41;
+                    PendingDiplomacyFlags[i][faction_id] |= 0x41;
+                    if (!IsMultiplayerNet && !IsMultiplayerPBEM) {
+                        communicate(i, faction_id, 0);
+                        treaty_on(i, faction_id, 0x88000008);
+                    }
+                } else if (!(PlayersData[faction_id].diplo_treaties[i] & 0x20)
+                           && (GameDataStateStorage.fields_.turn_current_num_ - PlayersData[i].diplo_spoke[faction_id] > 32
+                               || ((PlayersData[faction_id].diplo_treaties[i] & 0x20000000)
+                                   && GameDataStateStorage.fields_.turn_current_num_ == faction_id + 8)
+                               || ((PlayersData[faction_id].diplo_treaties[i] & DTREATY_PACT)
+                                   && (PlayersData[faction_id].diplo_treaties[i] & 0x2000)))) {
+                    if (!random(0, 16) || (PlayersData[faction_id].diplo_treaties[i] & 0x2000)
+                        || GameDataStateStorage.fields_.turn_current_num_ == faction_id + 8) {
+                        if (IsMultiplayerNet || IsMultiplayerPBEM) {
+                            FactionDiplomacyFlags[faction_id] |= 1;
+                            PendingDiplomacyFlags[i][faction_id] |= 1;
+                        } else {
+                            communicate(i, faction_id, 0);
+                            treaty_on(i, faction_id, 0x88000008);
+                        }
                     }
                 }
             }
-
-            if ((GameDataStateStorage.fields_.turn_current_num_ & 0xF) == 2 * faction_id + 1) {
-                PlayersData[faction_id].diplo_treaties[other_id] &= ~0x8000u;
-                PlayersData[other_id].diplo_treaties[faction_id] &= ~0x8000u;
+            if (IsMultiplayerPBEM) {
+                if (PendingDiplomacyFlags[i][faction_id]) {
+                    continue;
+                }
+            } else if (FactionDiplomacyFlags[faction_id]) {
+                continue;
+            }
+            diplomacy_check(i, faction_id, 0);
+            if (DiploScratchFAA0) {
+                if ((PlayersData[faction_id].diplo_treaties[i] & 0x20)
+                    || (PlayersData[faction_id].flags_ext & 0x20)
+                    || (PlayersData[i].diff_level > 4 && (GameDataStateStorage.fields_.game_rules_ & 0x40))) {
+                    PlayersData[faction_id].diplo_treaties[i] =
+                        (PlayersData[faction_id].diplo_treaties[i] & ~0x20400u) | 0x840;
+                    PlayersData[faction_id].diplo_merc[i] = 50;
+                }
+            }
+        } else if (faction_id > i && GameDataStateStorage.fields_.sunspot_duration_ <= 0
+                   && (!((GameDataStateStorage.fields_.turn_current_num_ + i + faction_id) & 7)
+                       || (PlayersData[faction_id].diplo_treaties[i] & 0x2000))) {
+            if ((PlayersData[faction_id].diplo_treaties[i] & 0x80000000)
+                && !(PlayersData[faction_id].diplo_treaties[i] & 0x2000)) {
+                PlayersData[faction_id].diplo_treaties[i] &= ~0x80000000u;
+                PlayersData[i].diplo_treaties[faction_id] &= ~0x80000000u;
+                for (j = 1; j < MaxPlayerNum; j++) {
+                    if (is_human(j) && ((PlayersData[faction_id].diplo_treaties[j] & DTREATY_VENDETTA)
+                                        || (PlayersData[i].diplo_treaties[j] & DTREATY_VENDETTA))) {
+                        PlayersData[faction_id].diplo_treaties[i] &= ~0x4000000u;
+                        PlayersData[i].diplo_treaties[faction_id] &= ~0x4000000u;
+                    }
+                }
+            } else {
+                PlayersData[faction_id].diplo_treaties[i] &= ~0x2000u;
+                PlayersData[i].diplo_treaties[faction_id] &= ~0x2000u;
+                if (PlayersData[faction_id].diplo_treaties[i] & DTREATY_PACT) {
+                    enemies_trade_tech(faction_id, i);
+                } else if (((PlayersData[faction_id].diplo_treaties[i] & DTREATY_TREATY)
+                            && (GameDataStateStorage.fields_.game_state_ & 0x200))
+                           || has_project(SP_EMPATH_GUILD, faction_id)
+                           || has_project(SP_EMPATH_GUILD, i)
+                           || (PlayersData[faction_id].diplo_treaties[i] & 0x20000000)
+                           || ((PlayersData[faction_id].diplo_treaties[i] & DTREATY_COMMLINK)
+                               && (PlayersData[faction_id].diplo_treaties[i] & 0x10000000))) {
+                    encounter(faction_id, i, -1, -1, 0, 0);
+                }
+                treaty_on(faction_id, i, 0x80000000);
+                PlayersData[faction_id].diplo_treaties[i] &= ~0x4000000u;
+                PlayersData[i].diplo_treaties[faction_id] &= ~0x4000000u;
             }
         }
-
-        const uint32_t peer_human_bit =
-            1u << static_cast<unsigned>(other_id);
-        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu & peer_human_bit) != 0 &&
-            GameDataStateStorage.fields_.sunspot_duration_ <= 0) {
-            // Native console-human paths rejoin the peer loop here, bypassing
-            // cleanup and pair dispatch for this opponent.
-            do {
-                bool has_reached_common_network_gate = false;
-                const uint32_t relation_before_rival_scan =
-                    PlayersData[faction_id].diplo_treaties[other_id];
-                const bool console_notification_domain =
-                    other_id == ConsoleGlobal.faction_id_ &&
-                    (relation_before_rival_scan & 0x00040018u) == 8u;
-                if (console_notification_domain) {
-                    int stronger_rival = -1;
-                    const uint8_t alive_snapshot =
-                        static_cast<uint8_t>((GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & 0xFFu);
-                    for (int rival = 1; rival < MaxPlayerNum; ++rival) {
-                        if ((alive_snapshot & (1u << static_cast<unsigned>(rival))) == 0 ||
-                            rival == faction_id || rival == other_id)
-                            continue;
-                        const uint32_t actor_to_rival =
-                            PlayersData[faction_id].diplo_treaties[rival];
-                        const uint32_t peer_to_rival =
-                            PlayersData[other_id].diplo_treaties[rival];
-                        if ((actor_to_rival & 0x00008018u) != 0x00008018u ||
-                            (peer_to_rival & 0x18u) != 8u)
-                            continue;
-                        if (PlayersData[rival].mil_strength_1 <=
-                            PlayersData[faction_id].mil_strength_1)
-                            continue;
-                        stronger_rival = rival;
-                        break;
-                    }
-
-                    if (stronger_rival >= 0 &&
-                        (relation_before_rival_scan & DTREATY_PACT) == 0 &&
-                        reputation(other_id, faction_id) < 5) {
-                        const int elapsed = diplo_sub(
-                            GameDataStateStorage.fields_.turn_current_num_, PlayersData[other_id].diplo_spoke[faction_id]);
-                        const uint32_t current_relation =
-                            PlayersData[faction_id].diplo_treaties[other_id];
-                        const bool notify =
-                            (elapsed > 8 && (GameDataStateStorage.fields_.turn_current_num_ & 0xF) == 2 * faction_id) ||
-                            (current_relation & 0x2000u) != 0;
-                        if (notify) {
-                            FactionDiplomacyFlags[faction_id] |= 0x41u;
-                            PendingDiplomacyFlags[other_id][faction_id] |= 0x41u;
-                            has_reached_common_network_gate = true;
-                            if (IsMultiplayerNet == 0 && IsMultiplayerPBEM == 0) {
-                                communicate(other_id, faction_id, 0);
-                                treaty_on(other_id, faction_id, 0x88000008u);
+    }
+    for (i = 1; i < MaxPlayerNum; i++) {
+        if (!is_human(i) || !(PlayersData[faction_id].diplo_treaties[i] & DTREATY_COMMLINK)) {
+            continue;
+        }
+        if (GameDataStateStorage.fields_.turn_current_num_ - PlayersData[i].diplo_spoke[faction_id] < 4
+            && GameDataStateStorage.fields_.sunspot_duration_ <= 0
+            && !(PlayersData[faction_id].diplo_treaties[i] & 0x20)) {
+            score = 0;
+        } else {
+            score = territory(faction_id, i, 1, &base_id, &pod_count);
+            if (score && i == ConsoleGlobal.faction_id_
+                && !(PlayersData[faction_id].diplo_treaties[i] & DTREATY_VENDETTA)) {
+                if (GameDataStateStorage.fields_.sunspot_duration_ > 0) {
+                    diplomacy_check(i, faction_id, 0);
+                    if (DiploScratchFA60 || (PlayersData[faction_id].diplo_treaties[i] & 0x20)
+                        || DiploFriction + PlayersData[i].integrity_blemishes * 2 + score
+                               >= (9 - PlayersData[faction_id].ai_fight) * 2) {
+                        if (PlayersData[faction_id].diplo_treaties[i] & DTREATY_TREATY) {
+                            PlayersData[faction_id].diplo_treaties[i] |= 0x800;
+                        } else if (!(PlayersData[faction_id].diplo_treaties[i] & 0xC00)) {
+                            if (PlayersData[faction_id].diplo_treaties[i] & 0x20) {
+                                PlayersData[faction_id].diplo_treaties[i] |= 0x800;
+                            } else {
+                                PlayersData[faction_id].diplo_treaties[i] |= 0x400;
                             }
                         }
                     }
-                }
-
-                uint32_t relation = PlayersData[faction_id].diplo_treaties[other_id];
-                if (console_notification_domain && !has_reached_common_network_gate &&
-                    (relation & 0x20u) == 0) {
-                    const int elapsed = diplo_sub(
-                        GameDataStateStorage.fields_.turn_current_num_, PlayersData[other_id].diplo_spoke[faction_id]);
-                    bool eligible = elapsed > 32;
-                    if (!eligible && (relation & 0x20000000u) != 0 &&
-                        GameDataStateStorage.fields_.turn_current_num_ == faction_id + 8)
-                        eligible = true;
-                    if (!eligible && (relation & 1u) != 0 && (relation & 0x2000u) != 0)
-                        eligible = true;
-                    if (eligible) {
-                        const int roll = static_cast<int>(random(0, 16));
-                        if (roll != 0) {
-                            relation = PlayersData[faction_id].diplo_treaties[other_id];
-                            if ((relation & 0x2000u) == 0 &&
-                                GameDataStateStorage.fields_.turn_current_num_ != faction_id + 8)
-                                eligible = false;
+                } else {
+                    if (PlayersData[faction_id].diplo_treaties[i] & DTREATY_TREATY) {
+                        if (score >= 5) {
+                            PendingDiplomacyFlags[i][faction_id] |= 4;
+                            FactionDiplomacyFlags[faction_id] |= 4;
+                        } else if (!((GameDataStateStorage.fields_.turn_current_num_ + faction_id) & 3)) {
+                            FactionDiplomacyFlags[faction_id] |= 0x20;
+                            PendingDiplomacyFlags[i][faction_id] |= 0x20;
+                        }
+                    } else if (PlayersData[faction_id].diplo_agenda[i] & 0x800) {
+                        FactionDiplomacyFlags[faction_id] |= 0x18;
+                        PendingDiplomacyFlags[i][faction_id] |= 0x18;
+                    } else if ((PlayersData[faction_id].diplo_agenda[i] & 0x400) && pod_count) {
+                        FactionDiplomacyFlags[faction_id] |= 0x18;
+                        PendingDiplomacyFlags[i][faction_id] |= 0x18;
+                    } else if ((PlayersData[faction_id].diplo_treaties[i] & 0x20) && !pod_count) {
+                        FactionDiplomacyFlags[faction_id] |= 8;
+                        PendingDiplomacyFlags[i][faction_id] |= 8;
+                        if ((int)random(0, score + (PlayersData[i].integrity_blemishes + 1) * 5) > 10) {
+                            if (i == ConsoleGlobal.faction_id_) {
+                                FactionDiplomacyFlags[faction_id] |= 0x10;
+                            }
+                            PendingDiplomacyFlags[i][faction_id] |= 0x10;
+                        }
+                    } else if (!((GameDataStateStorage.fields_.turn_current_num_ + faction_id) & 3)) {
+                        FactionDiplomacyFlags[faction_id] |= 8;
+                        PendingDiplomacyFlags[i][faction_id] |= 8;
+                        if ((int)random(0, score + (PlayersData[i].integrity_blemishes + pod_count) * 5
+                                + ((PlayersData[faction_id].diplo_treaties[i] & 0x20) ? 5 : 0)) > 10) {
+                            if (i == ConsoleGlobal.faction_id_) {
+                                FactionDiplomacyFlags[faction_id] |= 0x10;
+                            }
+                            PendingDiplomacyFlags[i][faction_id] |= 0x10;
                         }
                     }
-                    if (eligible) {
-                        has_reached_common_network_gate = true;
-                        if (IsMultiplayerNet != 0 || IsMultiplayerPBEM != 0) {
-                            FactionDiplomacyFlags[faction_id] |= 1u;
-                            PendingDiplomacyFlags[other_id][faction_id] |= 1u;
-                        } else {
-                            communicate(other_id, faction_id, 0);
-                            treaty_on(other_id, faction_id, 0x88000008u);
-                        }
+                    if (FactionDiplomacyFlags[faction_id] && !IsMultiplayerNet && !IsMultiplayerPBEM) {
+                        communicate(i, faction_id, 0);
+                        treaty_on(i, faction_id, 0x88000008);
                     }
                 }
-
-                if (IsMultiplayerPBEM != 0) {
-                    if (PendingDiplomacyFlags[other_id][faction_id] != 0) break;
-                } else if (FactionDiplomacyFlags[faction_id] != 0) {
-                    break;
+            }
+        }
+        score = (score + (GameDataStateStorage.fields_.turn_current_num_ & 1) + 3) / 5;
+        if (PlayersData[faction_id].diplo_treaties[i] & DTREATY_PACT) {
+            if (!vendetta_count) {
+                int our_tech = PlayersData[faction_id].tech_ranking / 2;
+                int their_tech = PlayersData[i].tech_ranking / 2;
+                if (their_tech > PlayersData[faction_id].ai_tech - PlayersData[faction_id].ai_power
+                        - PlayersData[faction_id].ai_fight + our_tech + 5) {
+                    score++;
                 }
-
-                diplomacy_check(other_id, faction_id, 0);
-                if (DiploScratchFAA0 == 0) break;
-
-                relation = PlayersData[faction_id].diplo_treaties[other_id];
-                if ((relation & 0x20u) != 0 ||
-                    (PlayersData[faction_id].flags_ext & 0x20u) != 0 ||
-                    (PlayersData[other_id].diff_level > 4 && (GameDataStateStorage.fields_.game_rules_ & 0x40u) != 0)) {
-                    relation = (relation & ~0x020400u) | 0x840u;
-                    PlayersData[faction_id].diplo_treaties[other_id] = relation;
-                    PlayersData[faction_id].diplo_merc[other_id] = 0x32;
+                if (our_tech > their_tech + 5) {
+                    score--;
                 }
-            } while (false);
+                if (PlayersData[i].ranking > PlayersData[faction_id].ranking + 1
+                    && PlayersData[i].diff_level) {
+                    score++;
+                }
+            } else {
+                score += 1 - vendetta_count;
+            }
+            if (!(PlayersData[faction_id].diplo_treaties[i] & 0x1000000)) {
+                for (j = 1; j < MaxPlayerNum; j++) {
+                    if ((PlayersData[faction_id].diplo_treaties[j] & DTREATY_VENDETTA)
+                        && (PlayersData[i].diplo_treaties[j] & DTREATY_COMMLINK)
+                        && !(PlayersData[i].diplo_treaties[j] & DTREATY_VENDETTA)) {
+                        score++;
+                    }
+                }
+            }
+            if ((GameDataStateStorage.fields_.game_rules_ & 0x1000)
+                && PlayersData[faction_id].ranking < 6
+                && GameDataStateStorage.fields_.turn_current_num_ >= 200 && score >= 0) {
+                score = -1;
+            }
+        } else {
+            if ((GameDataStateStorage.fields_.game_rules_ & 0x40)
+                && (GameDataStateStorage.fields_.turn_current_num_ & 1)) {
+                score++;
+            }
+            int their_strength = PlayersData[i].mil_strength_1;
+            score += PlayersData[faction_id].mil_strength_1 * 2
+                / range(their_strength * 3, 1, 99999);
+            score += -their_strength * 2
+                / range(PlayersData[faction_id].mil_strength_1 * 3, 1, 99999);
+            if (great_satan(i, 0)) {
+                score++;
+            }
+            if (aah_ooga(i, -1)) {
+                score++;
+            }
+        }
+        if (GameDataStateStorage.fields_.turn_current_num_ & 1) {
+            int category = Players[faction_id].soc_ideology_category;
+            if (category >= 0 && Players[faction_id].soc_ideology_model) {
+                int model = PlayersData[i].soc_category_pending.models_[category];
+                if (model == Players[faction_id].soc_ideology_model) {
+                    score--;
+                } else if (model) {
+                    score++;
+                }
+            }
+        }
+        score += PlayersData[faction_id].ai_fight;
+        if (!(GameDataStateStorage.fields_.turn_current_num_ & 3)) {
+            if (PlayersData[faction_id].diplo_treaties[i] & DTREATY_TREATY) {
+                score--;
+            }
+            int our_rank = PlayersData[faction_id].ranking;
+            if (our_rank >= 6 && PlayersData[i].ranking >= 6) {
+                score += 3;
+            } else if (our_rank >= 5 && PlayersData[i].ranking >= 5) {
+                if (GameDataStateStorage.fields_.turn_current_num_ >= 100) {
+                    score++;
+                }
+            } else {
+                int diff = PlayersData[i].ranking - our_rank;
+                score += 3 * (diff > 0 ? 1 : (diff >= 0) - 1)
+                    - (diff + (diff > 0 ? 1 : (diff >= 0) - 1)) / 2;
+            }
+            if (PlayersData[i].energy_reserves > PlayersData[faction_id].energy_reserves
+                && !strcmp(Players[faction_id].filename, "MORGAN")) {
+                score++;
+            }
+            if (PlayersData[i].tech_ranking > PlayersData[faction_id].tech_ranking) {
+                score += PlayersData[faction_id].ai_power - PlayersData[faction_id].ai_tech + 1;
+            }
+        }
+        if ((PlayersData[faction_id].diplo_treaties[i] & DTREATY_PACT)
+            && (GameDataStateStorage.fields_.game_rules_ & 0x1000)
+            && PlayersData[i].ranking > PlayersData[faction_id].ranking
+            && GameDataStateStorage.fields_.turn_current_num_ >= 200) {
+            score = score > 0 ? 0 : score;
+        }
+        PlayersData[faction_id].diplo_treaties[i] &= ~0x200u;
+        PlayersData[i].diplo_treaties[faction_id] &= ~0x200u;
+        if (!(PlayersData[faction_id].diplo_treaties[i] & DTREATY_VENDETTA) || score >= 0) {
+            cause_friction(faction_id, i, score);
+        }
+    }
+    int threshold = 0;
+    for (i = 1; i < MaxPlayerNum; i++) {
+        if (i == faction_id || (PlayersData[faction_id].diplo_treaties[i] & DTREATY_PACT)) {
             continue;
         }
-
-        // Native 0x55FE97..0x55FFCE cleanup can bypass pair dispatch for a
-        // special target; only the ordinary cleanup path sets this gate.
-        bool dispatch_pair = false;
-        {
-            uint32_t &relation = PlayersData[faction_id].diplo_treaties[other_id];
-            const int elapsed = diplo_add(
-                diplo_add(GameDataStateStorage.fields_.turn_current_num_, faction_id), other_id);
-            if (faction_id > other_id && GameDataStateStorage.fields_.sunspot_duration_ <= 0 &&
-                (((elapsed & 7) == 0) || (relation & 0x2000u) != 0)) {
-                if ((relation & 0x80000000u) != 0 && (relation & 0x2000u) == 0) {
-                    PlayersData[other_id].diplo_treaties[faction_id] &= ~0x80000000u;
-                    relation &= ~0x80000000u;
-                    const uint8_t alive_snapshot =
-                        static_cast<uint8_t>((GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & 0xFFu);
-                    for (int rival = 1; rival < MaxPlayerNum; ++rival) {
-                        if ((alive_snapshot & (1u << static_cast<unsigned>(rival))) == 0)
-                            continue;
-                        if ((PlayersData[faction_id].diplo_treaties[rival] & 0x10u) != 0 ||
-                            (PlayersData[other_id].diplo_treaties[rival] & 0x10u) != 0) {
-                            PlayersData[faction_id].diplo_treaties[other_id] &=
-                                ~0x04000000u;
-                            PlayersData[other_id].diplo_treaties[faction_id] &=
-                                ~0x04000000u;
-                        }
-                    }
-                } else {
-                    PlayersData[faction_id].diplo_treaties[other_id] &= ~0x2000u;
-                    PlayersData[other_id].diplo_treaties[faction_id] &= ~0x2000u;
-                    dispatch_pair = true;
-                }
-            }
-        }
-        if (dispatch_pair) {
-            const uint32_t relation_before_callbacks =
-                PlayersData[faction_id].diplo_treaties[other_id];
-            if ((relation_before_callbacks & 1u) != 0) {
-                enemies_trade_tech(faction_id, other_id);
-            } else {
-                bool open_encounter = false;
-                if ((relation_before_callbacks & 2u) != 0 &&
-                    (GameDataStateStorage.fields_.game_state_ & 0x200u) != 0) {
-                    open_encounter = true;
-                } else {
-                    const int empath_guild_owner = GameDataStateStorage.fields_.secret_project_.empath_guild();
-                    if (empath_guild_owner >= 0) {
-                        const int project_base_owner =
-                            Bases[empath_guild_owner].faction_id_current;
-                        open_encounter = project_base_owner == faction_id ||
-                                         project_base_owner == other_id;
-                    }
-                    if (!open_encounter &&
-                        ((relation_before_callbacks & 0x20000000u) != 0 ||
-                         ((relation_before_callbacks & 8u) != 0 &&
-                          (relation_before_callbacks & 0x10000000u) != 0)))
-                        open_encounter = true;
-                }
-                if (open_encounter)
-                    encounter(faction_id, other_id, -1, -1, 0, 0);
-            }
-
-            treaty_on(faction_id, other_id, 0x80000000u);
-            PlayersData[faction_id].diplo_treaties[other_id] &= ~0x04000000u;
-            PlayersData[other_id].diplo_treaties[faction_id] &= ~0x04000000u;
-        }
+        threshold = max(threshold,
+            ((PlayersData[faction_id].diplo_treaties[i] & DTREATY_TREATY)
+             && !(PlayersData[faction_id].diplo_treaties[i] & 0x20))
+                ? PlayersData[i].planet_busters / 2 : PlayersData[i].planet_busters);
     }
-
-    // action_sat_attack reads its base argument only for type 4;
-    // that attack path overwrites the carried index before use.
-    // Native 0x5600B1..0x5603FB writes a base output reused by the terminal
-    // orbital-attack path; keep this owner-local value live across both walks.
-    int last_territory_base_id = 0;
-    for (int human_peer = 1; human_peer < MaxPlayerNum; ++human_peer) {
-        const uint32_t opponent_bit = 1u << static_cast<unsigned>(human_peer);
-        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu & opponent_bit) == 0) continue;
-        uint32_t relation = PlayersData[faction_id].diplo_treaties[human_peer];
-        // No contact is a native branch around both territory() and the
-        // relationship score, not a valid score of zero.
-        if ((relation & 8u) == 0) continue;
-
-        int territory_score = 0;
-        int territory_count = 0;
-        const int spoke_age = diplo_sub(
-            GameDataStateStorage.fields_.turn_current_num_, PlayersData[human_peer].diplo_spoke[faction_id]);
-        if (!(spoke_age < 4 && GameDataStateStorage.fields_.sunspot_duration_ <= 0 &&
-              (relation & 0x20u) == 0)) {
-            territory_score = territory(faction_id, human_peer, 1,
-                                        &last_territory_base_id,
-                                        &territory_count);
-        }
-
-        if (territory_score != 0 && human_peer == ConsoleGlobal.faction_id_ &&
-            (PlayersData[faction_id].diplo_treaties[human_peer] & 0x10u) == 0) {
-            relation = PlayersData[faction_id].diplo_treaties[human_peer];
-            bool territory_finish = true;
-            if (GameDataStateStorage.fields_.sunspot_duration_ > 0) {
-                diplomacy_check(human_peer, faction_id, 0);
-                if (DiploScratchFA60 == 0 &&
-                    (PlayersData[faction_id].diplo_treaties[human_peer] & 0x20u) == 0) {
-                    const int threat_margin = diplo_add(
-                        diplo_add(DiploFriction,
-                                  diplo_mul(2, PlayersData[human_peer].integrity_blemishes)),
-                        territory_score);
-                    const int threshold = diplo_mul(
-                        2, diplo_sub(9, PlayersData[faction_id].ai_fight));
-                    if (threat_margin < threshold) territory_finish = false;
-                }
-
-                if (territory_finish) {
-                    relation = PlayersData[faction_id].diplo_treaties[human_peer];
-                    if ((relation & 2u) != 0) {
-                        PlayersData[faction_id].diplo_treaties[human_peer] |= 0x800u;
-                    } else if ((relation & 0xC00u) == 0) {
-                        PlayersData[faction_id].diplo_treaties[human_peer] |=
-                            (relation & 0x20u) != 0 ? 0x800u : 0x400u;
-                    }
-                }
-            } else if ((relation & 2u) != 0) {
-                if (territory_score >= 5) {
-                    FactionDiplomacyFlags[faction_id] |= 4u;
-                    PendingDiplomacyFlags[human_peer][faction_id] |= 4u;
-                } else if (((GameDataStateStorage.fields_.turn_current_num_ + faction_id) & 3) == 0) {
-                    FactionDiplomacyFlags[faction_id] |= 0x20u;
-                    PendingDiplomacyFlags[human_peer][faction_id] |= 0x20u;
-                }
-            } else {
-                const int agenda = PlayersData[faction_id].diplo_agenda[human_peer];
-                if ((agenda & 0x800u) != 0 ||
-                    ((agenda & 0x400u) != 0 && territory_count != 0)) {
-                    FactionDiplomacyFlags[faction_id] |= 0x18u;
-                    PendingDiplomacyFlags[human_peer][faction_id] |= 0x18u;
-                } else if ((relation & 0x20u) != 0 && territory_count == 0) {
-                    FactionDiplomacyFlags[faction_id] |= 8u;
-                    PendingDiplomacyFlags[human_peer][faction_id] |= 8u;
-                    const int maximum = diplo_add(
-                        territory_score, diplo_mul(5,
-                            diplo_add(PlayersData[human_peer].integrity_blemishes, 1)));
-                    if (static_cast<int>(random(0, maximum)) > 10) {
-                        PendingDiplomacyFlags[human_peer][faction_id] |= 0x10u;
-                        if (human_peer == ConsoleGlobal.faction_id_)
-                            FactionDiplomacyFlags[faction_id] |= 0x10u;
-                    }
-                } else if (((GameDataStateStorage.fields_.turn_current_num_ + faction_id) & 3) == 0) {
-                    FactionDiplomacyFlags[faction_id] |= 8u;
-                    PendingDiplomacyFlags[human_peer][faction_id] |= 8u;
-                    const int integrity_and_territory = diplo_add(
-                        PlayersData[human_peer].integrity_blemishes, territory_count);
-                    int maximum = diplo_add(
-                        territory_score, diplo_mul(5, integrity_and_territory));
-                    if ((relation & 0x20u) != 0)
-                        maximum = diplo_add(maximum, 5);
-                    if (static_cast<int>(random(0, maximum)) > 10) {
-                        PendingDiplomacyFlags[human_peer][faction_id] |= 0x10u;
-                        if (human_peer == ConsoleGlobal.faction_id_)
-                            FactionDiplomacyFlags[faction_id] |= 0x10u;
-                    }
-                }
-            }
-
-            if (territory_finish && FactionDiplomacyFlags[faction_id] != 0 &&
-                IsMultiplayerNet == 0 && IsMultiplayerPBEM == 0) {
-                communicate(human_peer, faction_id, 0);
-                treaty_on(human_peer, faction_id, 0x88000008u);
-            }
-        }
-
-        {
-            const int turn_parity = static_cast<int>(
-                static_cast<uint32_t>(GameDataStateStorage.fields_.turn_current_num_) & 1u);
-            const int score_numerator = diplo_add(
-                diplo_add(territory_score, turn_parity), 3);
-            int score = score_numerator / 5;
-            relation = PlayersData[faction_id].diplo_treaties[human_peer];
-            const bool has_pact = (relation & DTREATY_PACT) != 0;
-
-            if (has_pact) {
-                if (vendetta_count != 0) {
-                    score = diplo_add(score, diplo_sub(1, vendetta_count));
-                } else {
-                    const int actor_tech_half = PlayersData[faction_id].tech_ranking / 2;
-                    const int other_tech_half = PlayersData[human_peer].tech_ranking / 2;
-                    const int actor_ai_margin = diplo_sub(
-                        diplo_sub(PlayersData[faction_id].ai_tech,
-                                  PlayersData[faction_id].ai_power),
-                        PlayersData[faction_id].ai_fight);
-                    if (other_tech_half >
-                        diplo_add(diplo_add(actor_ai_margin, actor_tech_half), 5))
-                        score = diplo_add(score, 1);
-                    if (actor_tech_half > diplo_add(other_tech_half, 5))
-                        score = diplo_sub(score, 1);
-
-                    if (PlayersData[human_peer].ranking >
-                            diplo_add(PlayersData[faction_id].ranking, 1) &&
-                        PlayersData[human_peer].diff_level != 0)
-                        score = diplo_add(score, 1);
-                }
-
-                relation = PlayersData[faction_id].diplo_treaties[human_peer];
-                if ((relation & 0x01000000u) == 0) {
-                    for (int rival = 1; rival < MaxPlayerNum; ++rival) {
-                        const uint32_t actor_to_rival =
-                            PlayersData[faction_id].diplo_treaties[rival];
-                        const uint32_t other_to_rival =
-                            PlayersData[human_peer].diplo_treaties[rival];
-                        if ((actor_to_rival & 0x10u) != 0 &&
-                            (other_to_rival & 8u) != 0 &&
-                            (other_to_rival & 0x10u) == 0)
-                            score = diplo_add(score, 1);
-                    }
-                }
-
-                if ((GameDataStateStorage.fields_.game_rules_ & 0x1000u) != 0 &&
-                    PlayersData[faction_id].ranking < 6 &&
-                    GameDataStateStorage.fields_.turn_current_num_ >= 200 &&
-                    score >= 0)
-                    score = -1;
-            } else {
-                if ((GameDataStateStorage.fields_.game_rules_ & 0x40u) != 0 &&
-                    (GameDataStateStorage.fields_.turn_current_num_ & 1) != 0)
-                    score = diplo_add(score, 1);
-
-                int opponent_strength = PlayersData[human_peer].mil_strength_1;
-                int opponent_scale = diplo_mul(opponent_strength, 3);
-                if (opponent_scale < 1) opponent_scale = 1;
-                if (opponent_scale > 99999) opponent_scale = 99999;
-                const int actor_strength = PlayersData[faction_id].mil_strength_1;
-                score = diplo_add(score, diplo_mul(actor_strength, 2) / opponent_scale);
-
-                int actor_scale = diplo_mul(actor_strength, 3);
-                if (actor_scale < 1) actor_scale = 1;
-                if (actor_scale > 99999) actor_scale = 99999;
-                score = diplo_add(score, diplo_mul(-2, opponent_strength) / actor_scale);
-                if (great_satan(human_peer, 0) != 0) score = diplo_add(score, 1);
-                if (aah_ooga(human_peer, -1) != 0) score = diplo_add(score, 1);
-            }
-
-            if ((GameDataStateStorage.fields_.turn_current_num_ & 1) != 0) {
-                const int category = Players[faction_id].soc_ideology_category;
-                if (category >= 0 && Players[faction_id].soc_ideology_model != 0) {
-                    const int opponent_model = static_cast<int>(
-                        PlayersData[human_peer].soc_category_pending.models_[category]);
-                    if (opponent_model == Players[faction_id].soc_ideology_model)
-                        score = diplo_sub(score, 1);
-                    else if (opponent_model != 0)
-                        score = diplo_add(score, 1);
-                }
-            }
-
-            score = diplo_add(score, PlayersData[faction_id].ai_fight);
-            if ((GameDataStateStorage.fields_.turn_current_num_ & 3) == 0) {
-                relation = PlayersData[faction_id].diplo_treaties[human_peer];
-                if ((relation & 2u) != 0)
-                    score = diplo_sub(score, 1);
-
-                const int actor_rank =
-                    PlayersData[faction_id].ranking;
-                const int other_rank =
-                    PlayersData[human_peer].ranking;
-                if (actor_rank >= 6 && other_rank >= 6) {
-                    score = diplo_add(score, 3);
-                } else if (actor_rank >= 5 && other_rank >= 5) {
-                    if (GameDataStateStorage.fields_.turn_current_num_ >= 100)
-                        score = diplo_add(score, 1);
-                } else {
-                    const int difference = diplo_sub(other_rank, actor_rank);
-                    const int difference_sign = difference > 0 ? 1 :
-                                                difference < 0 ? -1 : 0;
-                    const int rounded_difference = diplo_add(difference, difference_sign);
-                    const int term = diplo_sub(3 * difference_sign,
-                                               rounded_difference / 2);
-                    score = diplo_add(score, term);
-                }
-
-                if (PlayersData[human_peer].energy_reserves >
-                        PlayersData[faction_id].energy_reserves &&
-                    strcmp(Players[faction_id].filename, "MORGAN") == 0)
-                    score = diplo_add(score, 1);
-
-                if (PlayersData[human_peer].tech_ranking >
-                    PlayersData[faction_id].tech_ranking) {
-                    const int actor_tech_margin = diplo_add(
-                        diplo_sub(PlayersData[faction_id].ai_power,
-                                  PlayersData[faction_id].ai_tech), 1);
-                    score = diplo_add(score, actor_tech_margin);
-                }
-            }
-
-            relation = PlayersData[faction_id].diplo_treaties[human_peer];
-            if ((relation & DTREATY_PACT) != 0 &&
-                (GameDataStateStorage.fields_.game_rules_ & 0x1000u) != 0 &&
-                PlayersData[human_peer].ranking >
-                    PlayersData[faction_id].ranking &&
-                GameDataStateStorage.fields_.turn_current_num_ >= 200 && score > 0)
-                score = 0;
-
-            PlayersData[faction_id].diplo_treaties[human_peer] &= ~0x200u;
-            PlayersData[human_peer].diplo_treaties[faction_id] &= ~0x200u;
-            relation = PlayersData[faction_id].diplo_treaties[human_peer];
-            if ((relation & 0x10u) == 0 || score >= 0)
-                cause_friction(faction_id, human_peer, score);
-        }
-    }
-
-    // Native terminal/orbital tail 0x56083A..0x560ACD consumes the carried
-    // territory output and repeats attacks until its availability gate fails.
-    int threshold = 0;
-    for (int rival = 1; rival < MaxPlayerNum; ++rival) {
-        if (rival == faction_id) continue;
-        const uint32_t relation = PlayersData[faction_id].diplo_treaties[rival];
-        if ((relation & 1u) != 0) continue;
-
-        int value = PlayersData[rival].planet_busters;
-        if ((relation & 2u) != 0 && (relation & 0x20u) == 0) {
-            const int adjusted = diplo_sub(value, value < 0 ? -1 : 0);
-            value = adjusted / 2;
-            if (adjusted < 0 && adjusted % 2 != 0)
-                value = diplo_sub(value, 1);
-        }
-        if (threshold > value) continue;
-        threshold = value;
-    }
-
-    const int initial_available = diplo_sub(
-        static_cast<int>(PlayersData[faction_id].satellites_[3]),
-        static_cast<int>(PlayersData[faction_id].sat_odp_deployed));
-    if (initial_available <= threshold) return;
-
-    int carried_base_scan_index = last_territory_base_id;
-    for (;;) {
-        bool performed_attack = false;
-        for (int target = 1; target < MaxPlayerNum; ++target) {
-            const uint32_t relation =
-                PlayersData[faction_id].diplo_treaties[target];
-            if ((relation & 0x810u) == 0) continue;
-
-            const int target_orbital_defense =
-                static_cast<int>(PlayersData[target].satellites_[3]);
-            if (static_cast<int>(PlayersData[faction_id].satellites_[3]) <=
-                target_orbital_defense)
+    int attack_type = 0;
+    while ((int)(PlayersData[faction_id].satellites_[3] - PlayersData[faction_id].sat_odp_deployed) > threshold
+           && attack_type >= 0) {
+        attack_type = -1;
+        for (i = 1; i < MaxPlayerNum; i++) {
+            if (!(PlayersData[faction_id].diplo_treaties[i] & 0x810)
+                || PlayersData[faction_id].satellites_[3] <= PlayersData[i].satellites_[3]) {
                 continue;
-
-            if (target_orbital_defense != 0 &&
-                target_orbital_defense >= PlayersData[faction_id].planet_busters) {
-                action_sat_attack(faction_id, target, 3,
-                                  carried_base_scan_index);
-                performed_attack = true;
-                break;
             }
-
-            int empath_facility_count = 0;
-            int base_scan_index = 0;
-            for (; base_scan_index < GameDataStateStorage.fields_.base_current_count_; ++base_scan_index) {
-                if (Bases[base_scan_index].faction_id_current == target) {
-                    int byte_index = 0;
-                    int mask = 0;
-                    bitmask(0x29, &byte_index, &mask);
-                    if ((Bases[base_scan_index].facilities_built[byte_index] & mask) != 0)
-                        ++empath_facility_count;
+            if (PlayersData[i].satellites_[3]
+                && (int)PlayersData[i].satellites_[3] >= PlayersData[faction_id].planet_busters) {
+                attack_type = 3;
+            } else {
+                pod_count = 0;
+                for (base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
+                    if (Bases[base_id].faction_id_current == i && has_fac(FAC_GEOSYNC_SURVEY_POD, base_id, 0)) {
+                        pod_count++;
+                    }
                 }
-            }
-            carried_base_scan_index = base_scan_index;
-
-            int attack_type = -1;
-            if (PlayersData[target].satellites_[1] != 0) {
-                attack_type = 1;
-            } else if (PlayersData[target].satellites_[2] != 0) {
-                attack_type = 2;
-            } else if (PlayersData[target].satellites_[0] != 0) {
-                attack_type = 0;
-            } else if (empath_facility_count != 0) {
-                attack_type = 4;
-            }
-            if (attack_type < 0) continue;
-
-            int attack_base_id = carried_base_scan_index;
-            if (attack_type == 4) {
-                int candidate = 0;
-                bool found_candidate = false;
-                for (; candidate < GameDataStateStorage.fields_.base_current_count_; ++candidate) {
-                    carried_base_scan_index = candidate;
-                    if (Bases[candidate].faction_id_current == target) {
-                        int byte_index = 0;
-                        int mask = 0;
-                        bitmask(0x29, &byte_index, &mask);
-                        if ((Bases[candidate].facilities_built[byte_index] & mask) != 0) {
-                            attack_base_id = candidate;
-                            found_candidate = true;
+                if (PlayersData[i].satellites_[1]) {
+                    attack_type = 1;
+                } else if (PlayersData[i].satellites_[2]) {
+                    attack_type = 2;
+                } else if (PlayersData[i].satellites_[0]) {
+                    attack_type = 0;
+                } else if (pod_count) {
+                    attack_type = 4;
+                    for (base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
+                        if (Bases[base_id].faction_id_current == i && has_fac(FAC_GEOSYNC_SURVEY_POD, base_id, 0)) {
                             break;
                         }
                     }
+                } else if (PlayersData[i].satellites_[3]) {
+                    attack_type = 3;
+                } else {
+                    continue;
                 }
-                if (!found_candidate)
-                    carried_base_scan_index = candidate;
-                attack_base_id = carried_base_scan_index;
             }
-
-            action_sat_attack(faction_id, target, attack_type, attack_base_id);
-            performed_attack = true;
+            action_sat_attack(faction_id, i, attack_type, base_id);
             break;
         }
-
-        if (!performed_attack) return;
-        if (diplo_sub(static_cast<int>(PlayersData[faction_id].satellites_[3]),
-                      static_cast<int>(PlayersData[faction_id].sat_odp_deployed)) <=
-            threshold)
-            return;
     }
 }
