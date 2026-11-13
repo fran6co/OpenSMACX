@@ -458,7 +458,16 @@ void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
     MainInterfaceGlobal.set_font(&font1_, &font3_, &font2_, 0);
 
     char digits[80];
+    // 0x004B665E: max_width lives in [ebp-0x28] with dead stores kept; that
+    // slot later holds item_x + item_width (0x004B82C9, read 0x004B8401).
     int max_width = 0;
+    // Shared image slots: [ebp-0x14] holds the base x in the seen loop, the
+    // text widths and the visible-item count (0x004B67E9, 0x004B731E,
+    // 0x004B8237); [ebp-0x24] holds the base y and the stack row height
+    // (0x004B67F6, 0x004B8179). One reused variable each, which also keeps the
+    // loop reading them from the frame instead of from Bases.
+    int col;
+    int row;
     int veh = ConsoleGlobal.selected_vehicle_;
     int x;
     int y;
@@ -481,23 +490,26 @@ void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
                     veh = -1;
                 } else if (base_id >= 0) {
                     int seen;
-                    if ((PlayersData[Bases[base_id].faction_id_current]
-                             .diplo_treaties[ConsoleGlobal.faction_id_] & 1)
-                        || spying(Bases[base_id].faction_id_current)) {
-                        seen = 1;
-                    } else {
+                    // 0x004B67BF/0x004B67CC: both tests jump forward to the
+                    // shared seen = 1 block, which the image places after the
+                    // first jmp inside the loop (a queued else arm).
+                    if (!(PlayersData[Bases[base_id].faction_id_current]
+                              .diplo_treaties[ConsoleGlobal.faction_id_] & 1)
+                        && !spying(Bases[base_id].faction_id_current)) {
                         seen = 0;
-                        int base_x = Bases[base_id].x;
-                        int base_y = Bases[base_id].y;
+                        col = Bases[base_id].x;
+                        row = Bases[base_id].y;
                         for (int i = 0; i < 8; i++) {
-                            int x2 = wrap_map_x(VehMoveDeltaX[i] + base_x);
-                            int y2 = VehMoveDeltaY[i] + base_y;
+                            int x2 = wrap_map_x(VehMoveDeltaX[i] + col);
+                            int y2 = VehMoveDeltaY[i] + row;
                             if (on_map(x2, y2)
                                 && veh_who(x2, y2) == ConsoleGlobal.faction_id_) {
                                 seen = 1;
                                 break;
                             }
                         }
+                    } else {
+                        seen = 1;
                     }
                     if (!((Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_
                            || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
@@ -575,9 +587,9 @@ void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
             strcat(StringTemp, digits);
             MainInterfaceGlobal.write_l(StringTemp, text_x, line_y);
             line_y += row_pitch;
-            if ((map_loc(x, y)->val3 & 0xC0) < 0x80
+            if ((map_loc(x, y)->val3 & ~0x3F) < 0x80
                 && (!(map_loc(x, y)->bit & BIT_FUNGUS)
-                    || (map_loc(x, y)->climate & 0xE0) < 0x40)
+                    || (map_loc(x, y)->climate & ~0x1F) < ALT_BIT_OCEAN_SHELF)
                 && !(map_loc(x, y)->bit & (BIT_FARM | BIT_MONOLITH))
                 && (crop < 2
                     || has_tech(Rules.tech_three_nutrients_sqr, ConsoleGlobal.faction_id_)
@@ -606,7 +618,7 @@ void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
             if (!(map_loc(x, y)->bit & (BIT_THERMAL_BORE | BIT_MONOLITH))
                 && !(map_loc(x, y)->bit & BIT_MINE)
                 && (!(map_loc(x, y)->bit & BIT_FUNGUS)
-                    || (map_loc(x, y)->climate & 0xE0) < 0x40)
+                    || (map_loc(x, y)->climate & ~0x1F) < ALT_BIT_OCEAN_SHELF)
                 && mine_yield(ConsoleGlobal.faction_id_, -1, x, y, 1) > minerals) {
                 StringTemp[0] = '\0';
                 strcat(StringTemp, " ");
@@ -632,7 +644,7 @@ void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
             if (!(map_loc(x, y)->bit & (BIT_THERMAL_BORE | BIT_MONOLITH))
                 && !(map_loc(x, y)->bit & BIT_SOLAR_TIDAL)
                 && (!(map_loc(x, y)->bit & BIT_FUNGUS)
-                    || (map_loc(x, y)->climate & 0xE0) < 0x40)) {
+                    || (map_loc(x, y)->climate & ~0x1F) < ALT_BIT_OCEAN_SHELF)) {
                 StringTemp[0] = '\0';
                 strcat(StringTemp, " ");
                 strcat(StringTemp, " ");
@@ -666,7 +678,9 @@ void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
                 line_y += row_pitch;
             }
             StringTemp[0] = '\0';
-            strcat(StringTemp, label_get(alt >= 0 ? 0x2c / 4 : 0x30 / 4));
+            // 0x004B727D: two branch loads joined before one get call.
+            strcat(StringTemp, StringTable.get(alt >= 0 ? Labels.strings_ptr[0x2c / 4]
+                                                        : Labels.strings_ptr[0x30 / 4]));
             strcat(StringTemp, ": ");
             int elevation = elev_at(x, y);
             if (elevation < 0) {
@@ -675,7 +689,7 @@ void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
             _itoa(elevation, digits, 10);
             strcat(StringTemp, digits);
             strcat(StringTemp, label_get(0x34 / 4));
-            int text_width = MainInterfaceGlobal.write_l(StringTemp, text_x, line_y);
+            col = MainInterfaceGlobal.write_l(StringTemp, text_x, line_y);
             line_y += row_pitch;
             if (alt < 0) {
                 if (GameDataStateStorage.fields_.climate_sea_level_delta_ < 0
@@ -707,7 +721,7 @@ void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
                 strcat(StringTemp, "&");
                 strcat(StringTemp, " ");
             }
-            max_width = max_width > text_width ? max_width : text_width;
+            max_width = max_width > col ? max_width : col;
             if (alt >= 0) {
                 strcat(StringTemp,
                        label_get(0x50 / 4 + ((map_loc(x, y)->climate >> 3) & 3)));
@@ -722,7 +736,7 @@ void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
                     strcat(StringTemp, StringTable.get(Natural[0].name_short));
                 }
                 if ((map_loc(x, y)->bit2 & 0x80000004) == BIT2_JUNGLE
-                    && (map_loc(x, y)->climate & 0xE0) >= 0x60) {
+                    && (map_loc(x, y)->climate & ~0x1F) >= ALT_BIT_SHORE_LINE) {
                     strcat(StringTemp, StringTable.get(Natural[2].name_short));
                 }
                 if ((map_loc(x, y)->bit2 & 0x80000008) == BIT2_URANIUM) {
@@ -756,7 +770,7 @@ void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
                     strcat(StringTemp, label_get(0x3a8 / 4));
                 }
                 if ((map_loc(x, y)->bit & BIT_FUNGUS)
-                    && (map_loc(x, y)->climate & 0xE0) >= 0x40) {
+                    && (map_loc(x, y)->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF) {
                     if (strlen(StringTemp)) {
                         strcat(StringTemp, ", ");
                     }
@@ -768,7 +782,7 @@ void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
                     strcat(StringTemp, label_get(0x48c / 4));
                 }
                 if (strlen(StringTemp)) {
-                    text_width = MainInterfaceGlobal.write_l(StringTemp, text_x, line_y);
+                    col = MainInterfaceGlobal.write_l(StringTemp, text_x, line_y);
                     line_y += row_pitch;
                 }
             } else {
@@ -778,21 +792,21 @@ void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
                     strcat(StringTemp, StringTable.get(Natural[15].name_short));
                 }
                 if ((map_loc(x, y)->bit2 & BIT2_FRESH)
-                    && (map_loc(x, y)->climate & 0xE0) < 0x60) {
+                    && (map_loc(x, y)->climate & ~0x1F) < ALT_BIT_SHORE_LINE) {
                     strcat(StringTemp, StringTable.get(Natural[7].name_short));
                 }
                 if ((map_loc(x, y)->bit2 & 0x80000400) == BIT2_GEOTHERMAL) {
                     strcat(StringTemp, StringTable.get(Natural[10].name_short));
                 }
                 if ((map_loc(x, y)->bit & BIT_FUNGUS)
-                    && (map_loc(x, y)->climate & 0xE0) >= 0x40) {
+                    && (map_loc(x, y)->climate & ~0x1F) >= ALT_BIT_OCEAN_SHELF) {
                     if (strlen(StringTemp)) {
                         strcat(StringTemp, ", ");
                     }
                     strcat(StringTemp, label_get(0x398 / 4));
                 }
                 if (strlen(StringTemp)) {
-                    text_width = MainInterfaceGlobal.write_l(StringTemp, text_x, line_y);
+                    col = MainInterfaceGlobal.write_l(StringTemp, text_x, line_y);
                     line_y += row_pitch;
                 }
             }
@@ -893,7 +907,7 @@ void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
     }
     int item_width = (MapWinCaptionScale > 0
         ? MapWinCaptionScale * 100 / MapWinCaptionDivisor : 50) + 11;
-    int row_height = MainInterfaceGlobal.status_hit_rect().bottom
+    row = MainInterfaceGlobal.status_hit_rect().bottom
         - MainInterfaceGlobal.status_hit_rect().top - 12;
     int count = 0;
     int base_id = base_at(x, y);
@@ -910,25 +924,26 @@ void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
          stacked = veh_next_stack_id(stacked)) {
         count++;
     }
-    int visible = (area.right - area.left) / (item_width + 5);
-    if (count <= visible) {
+    col = (area.right - area.left) / (item_width + 5);
+    if (count <= col) {
         MainInterfaceGlobal.flat_button(8).hide();
         MainInterfaceGlobal.flat_button(9).hide();
         MainInterfaceGlobal.flat_button(10).hide();
     } else {
         area.left = MainInterfaceGlobal.stack_button_rect().right + 1;
         area.right = MainInterfaceGlobal.adjacent_panel_right_rect().left - 1;
-        item_width = (area.right - area.left) / visible - 5;
+        item_width = (area.right - area.left) / col - 5;
         MainInterfaceGlobal.flat_button(8).show(0);
         MainInterfaceGlobal.flat_button(10).show(0);
     }
     int item_x = area.left;
     int item_y = area.top;
-    area.right = item_x + item_width;
+    max_width = item_x + item_width;
+    area.right = max_width;
     area.left -= 2;
     area.right += 2;
     area.top -= 2;
-    area.bottom = item_y + row_height + 2;
+    area.bottom = item_y + row + 2;
     MainInterfaceGlobal.set_clip(&area);
     int drawn = 0;
     area.left += 2;
@@ -954,12 +969,12 @@ void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
         }
         area.left += item_width + 5;
         area.right += item_width + 5;
-        item_x = item_x + item_width + 5;
+        item_x = max_width + 5;
     }
     if (!MainInterfaceStatusRedrawFlag && veh >= 0) {
         stack_sort_2(veh);
     }
-    for (int v = veh_top(veh); v >= 0 && drawn < visible;
+    for (int v = veh_top(veh); v >= 0 && drawn < col;
          v = veh_next_stack_id(v), drawn++) {
         area.left -= 2;
         area.top -= 2;
@@ -983,7 +998,9 @@ void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
             _itoa(turns + 1, digits, 10);
             strcat(StringTemp, digits);
             strcat(StringTemp, " ");
-            strcat(StringTemp, label_get(turns != 1 ? 0xc4 / 4 : 0xc0 / 4));
+            // 0x004B85E5: two branch loads joined before one get call.
+            strcat(StringTemp, StringTable.get(turns != 1 ? Labels.strings_ptr[0xc4 / 4]
+                                                          : Labels.strings_ptr[0xc0 / 4]));
             MainInterfaceGlobal.set_text_color(0xfb, 3, 1, 1);
         } else {
             say_stats_3(StringTemp, Vehs[v].proto_id);
@@ -1158,9 +1175,11 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
             || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) {
             int home_base_id = Vehs[vehicle_id].home_base_id;
             StringTemp[0] = '\0';
-            strcat(StringTemp, home_base_id < 0
-                ? label_get(0x308 / 4)
-                : Bases[home_base_id].name_string);
+            if (home_base_id < 0) {
+                strcat(StringTemp, label_get(0x308 / 4));
+            } else {
+                strcat(StringTemp, Bases[home_base_id].name_string);
+            }
             line_y = MainInterfaceGlobal.wrap(StringTemp, content_x, line_y,
                                   area.right - area.left);
             if (Vehs[vehicle_id].faction_id == ConsoleGlobal.faction_id_) {
@@ -1319,12 +1338,18 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
     MainInterfaceGlobal.set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
     MainInterfaceGlobal.restore_clip();
     if (base_id >= 0) {
-        base_draw(&MainInterfaceGlobal, base_id,
+        // 0x4B5DFF/0x4B5E54: each base_draw's Buffer* conversion (neg/sbb/and)
+        // is computed before the caption-scale ternary, as the vehicle half's
+        // first veh_draw does with its named pointer: a fresh named value per
+        // call, not the argument expression.
+        Buffer *buffer = &MainInterfaceGlobal;
+        base_draw(buffer, base_id,
                   (area.right - (MapWinCaptionScale > 0
                       ? MapWinCaptionScale * 100 / MapWinCaptionDivisor : 75)
                    - area.left) / 2 + content_x,
                   content_y, -4, 0x40);
-        base_draw(&MainInterfaceGlobal, base_id,
+        buffer = &MainInterfaceGlobal;
+        base_draw(buffer, base_id,
                   (area.right - (MapWinCaptionScale > 0
                       ? MapWinCaptionScale * 100 / MapWinCaptionDivisor : 75)
                    - area.left) / 2 + content_x,

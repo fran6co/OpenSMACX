@@ -962,14 +962,21 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
         offense = get_basic_offense(veh_id_atk, veh_id_def, psi_combat_type, is_bombard, false);
         if (VehPrototypes[Vehs[veh_id_atk].proto_id].plan != PLAN_INFO_WARFARE) {
             if (veh_id_def >= 0 && !combat_type) { // checking if isn't wpn vs wpn ; air toggle
+                // 0x00502193: one tile address for both reads; the altitude
+                // is an int `& ~0x1F` compare (`and edx, ~0x1f; cmp 0x40; jl`).
                 if (bit_at(Vehs[veh_id_def].x, Vehs[veh_id_def].y) & BIT_FUNGUS
-                    && altitude_at(Vehs[veh_id_def].x, Vehs[veh_id_def].y) >= ALT_BIT_OCEAN_SHELF
-                    && ((Vehs[veh_id_atk].proto_id < MaxVehProtoFactionNum
+                    && (map_loc(Vehs[veh_id_def].x, Vehs[veh_id_def].y)->climate & ~0x1F)
+                        >= ALT_BIT_OCEAN_SHELF) {
+                    // 0x005021AD: the attacker's faction is loaded as an int
+                    // before the proto test and compared as an int below.
+                    int faction_id_fungus = Vehs[veh_id_atk].faction_id;
+                    if (((Vehs[veh_id_atk].proto_id < MaxVehProtoFactionNum
                         && get_proto_offense_rating(Vehs[veh_id_atk].proto_id) < 0)
-                        || has_project(SP_PHOLUS_MUTAGEN, Vehs[veh_id_atk].faction_id))
-                    && get_proto_offense_rating(Vehs[veh_id_def].proto_id) >= 0) {
-                    offense += offense / 2;
-                    add_bat(0, 50, label_get(338)); // "Fungus"
+                        || has_project(SP_PHOLUS_MUTAGEN, faction_id_fungus))
+                        && get_proto_offense_rating(Vehs[veh_id_def].proto_id) >= 0) {
+                        offense += offense / 2;
+                        add_bat(0, 50, label_get(338)); // "Fungus"
+                    }
                 }
                 if (psi_combat_type & 2
                     && (VehPrototypes[Vehs[veh_id_atk].proto_id].weapon_id == WPN_RESONANCE_LASER
@@ -1008,13 +1015,20 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                         label_get(1108)); // "Alien Offense"
                 }
             }
-            if (psi_combat_type && Vehs[veh_id_atk].faction_id) {
-                if (PlayersData[Vehs[veh_id_atk].faction_id].soc_effect_active.values_[SocialEffect::PLANET]
+            if (psi_combat_type) {
+                // 0x00502665: `mov al, [faction]; test al, al; je; and eax,
+                // 0xff`: a BYTE local (an int local gives `xor; mov al; test
+                // eax, eax`). Its PlayersData index (esi) is reused after the
+                // get/strcpy calls with no Vehs re-read, so it is a local,
+                // and all three uses go through it.
+                uint8_t faction_id_planet = Vehs[veh_id_atk].faction_id;
+                if (faction_id_planet
+                    && PlayersData[faction_id_planet].soc_effect_active.values_[SocialEffect::PLANET]
                     && Rules.combat_pct_psi_atk_bonus_planet) {
-                    add_bat(0, PlayersData[Vehs[veh_id_atk].faction_id]
+                    add_bat(0, PlayersData[faction_id_planet]
                         .soc_effect_active.values_[SocialEffect::PLANET]
                         * Rules.combat_pct_psi_atk_bonus_planet, label_get(625)); // "Planet"
-                    offense = (PlayersData[Vehs[veh_id_atk].faction_id]
+                    offense = (PlayersData[faction_id_planet]
                         .soc_effect_active.values_[SocialEffect::PLANET]
                         * Rules.combat_pct_psi_atk_bonus_planet + 100) * offense / 100;
                 }
@@ -1092,15 +1106,19 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                                 label_get(576));
                         }
                     }
+                    // 0x00502DC4: rocky is an int compare (`cmp eax, 0x80; jge`).
                     if (Rules.combat_pct_mobile_open_ground && !combat_type && base_id_def < 0
                         && terrain_def == 2
-                        && rocky_at(x_def, y_def) < TERRAIN_BIT_ROCKY
-                        && speed_proto(Vehs[veh_id_atk].proto_id) > Rules.move_rate_roads
-                        && speed_proto(Vehs[veh_id_atk].proto_id)
-                            >= speed_proto(Vehs[veh_id_def].proto_id)) {
-                        offense = (Rules.combat_pct_mobile_open_ground + 100) * offense / 100;
-                        // "Mobile in open"
-                        add_bat(0, Rules.combat_pct_mobile_open_ground, label_get(611));
+                        && (map_loc(x_def, y_def)->val3 & ~0x3F) < TERRAIN_BIT_ROCKY
+                        && speed_proto(Vehs[veh_id_atk].proto_id) > Rules.move_rate_roads) {
+                        // 0x00502DFB: the attacker's speed is fetched (esi)
+                        // before the defender's, then `cmp def, esi; jg`.
+                        int speed_atk = speed_proto(Vehs[veh_id_atk].proto_id);
+                        if (speed_atk >= speed_proto(Vehs[veh_id_def].proto_id)) {
+                            offense = (Rules.combat_pct_mobile_open_ground + 100) * offense / 100;
+                            // "Mobile in open"
+                            add_bat(0, Rules.combat_pct_mobile_open_ground, label_get(611));
+                        }
                     }
                     if (Rules.combat_pct_def_vs_mobile_rough && !combat_type
                         && (terrain_def > 2 || base_id_def >= 0)
@@ -1114,17 +1132,18 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                         offense = (Rules.combat_pct_atk_road + 100) * offense / 100;
                         add_bat(0, Rules.combat_pct_atk_road, label_get(606)); // "Road Attack"
                     }
+                    // 0x00503029: signed int altitude compares (`sar`, `and ~0x1f`, `jle`).
                     if (Rules.combat_pen_pct_atk_lwr_elev && !combat_type
-                        && altitude_at(x_def, y_def)
-                        > altitude_at(Vehs[veh_id_atk].x, Vehs[veh_id_atk].y)
+                        && (map_loc(x_def, y_def)->climate & ~0x1F)
+                        > (map_loc(Vehs[veh_id_atk].x, Vehs[veh_id_atk].y)->climate & ~0x1F)
                         && !has_abil(Vehs[veh_id_atk].proto_id, ABL_ANTIGRAV_STRUTS)) {
                         // "Uphill"
                         add_bat(1, Rules.combat_pen_pct_atk_lwr_elev, label_get(441));
                         defense = (Rules.combat_pen_pct_atk_lwr_elev + 100) * defense / 100;
                     }
                     if (Rules.combat_pct_atk_higher_elev && !combat_type
-                        && altitude_at(Vehs[veh_id_atk].x, Vehs[veh_id_atk].y)
-                        > altitude_at(x_def, y_def)
+                        && (map_loc(Vehs[veh_id_atk].x, Vehs[veh_id_atk].y)->climate & ~0x1F)
+                        > (map_loc(x_def, y_def)->climate & ~0x1F)
                         && !has_abil(Vehs[veh_id_def].proto_id, ABL_ANTIGRAV_STRUTS)) {
                         add_bat(0, Rules.combat_pct_atk_higher_elev, label_get(330)); // "Downhill"
                         offense = (Rules.combat_pct_atk_higher_elev + 100) * offense / 100;
@@ -1195,7 +1214,11 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                     if (fac_modifier >= 2) {
                         def_multi = fac_modifier;
                     }
-                    if (fac_modifier <= 2
+                    // 0x00503517: `jne` on the flags of `cmp fac_modifier, 2`
+                    // after `def_multi = fac_modifier`, and the `jl` arm (def_multi
+                    // still 2) threads straight in: the test is on def_multi,
+                    // which is always >= 2 here.
+                    if (def_multi == 2
                         && (veh_id_atk < 0
                             || !has_abil(Vehs[veh_id_atk].proto_id, ABL_BLINK_DISPLACER))
                         && Rules.combat_pct_base_def) {
@@ -1212,22 +1235,25 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                 }
                 if (Rules.combat_pct_infantry_vs_base && !combat_type
                     && base_id_def >= 0 && Vehs[veh_id_atk].faction_id) {
-                    const int infantry_proto = Vehs[veh_id_atk].proto_id;
-                    if ((infantry_proto >= MaxVehProtoFactionNum
-                        || (get_proto_offense_rating(infantry_proto) >= 0
-                            && infantry_proto != BSC_SPORE_LAUNCHER))
-                        && !get_proto_triad(infantry_proto)
-                        && Chassis[VehPrototypes[infantry_proto].chassis_id].speed == 1) {
+                    // 0x00503641: the proto id stays a 16-bit value
+                    // (`cmp ax, 0x40`, `cmp ax, 0xf`, movsx per use): no int local.
+                    if ((Vehs[veh_id_atk].proto_id >= MaxVehProtoFactionNum
+                        || (get_proto_offense_rating(Vehs[veh_id_atk].proto_id) >= 0
+                            && Vehs[veh_id_atk].proto_id != BSC_SPORE_LAUNCHER))
+                        && !get_proto_triad(Vehs[veh_id_atk].proto_id)
+                        && Chassis[VehPrototypes[Vehs[veh_id_atk].proto_id].chassis_id].speed == 1) {
                         offense = (Rules.combat_pct_infantry_vs_base + 100) * offense / 100;
                         // "Infantry vs. Base"
                         add_bat(0, Rules.combat_pct_infantry_vs_base, label_get(547));
                     }
                 }
+                // 0x00503747: one tile address, int compares
+                // (`and ecx, ~0x3f; cmp 0x80; jge`, `and edx, ~0x1f; cmp 0x40; jge`).
                 if (is_artillery && def_multi <= 2 && base_id_def < 0
-                    && rocky_at(x_def, y_def) < TERRAIN_BIT_ROCKY
+                    && (map_loc(x_def, y_def)->val3 & ~0x3F) < TERRAIN_BIT_ROCKY
                     && !(bit_at(x_def, y_def) & BIT_FOREST)
                     && (!(bit_at(x_def, y_def) & BIT_FUNGUS)
-                        || altitude_at(x_def, y_def) < ALT_BIT_OCEAN_SHELF)) {
+                        || (map_loc(x_def, y_def)->climate & ~0x1F) < ALT_BIT_OCEAN_SHELF)) {
                     def_multi = 3;
                     display_def = Labels.strings_ptr[525]; // "Open Ground"
                 }
@@ -1266,22 +1292,27 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                         int x_radius = wrap_map_x(x_def + RadiusOffsetX[i]);
                         int y_radius = y_def + RadiusOffsetY[i];
                         if (on_map(x_radius, y_radius) && is_sensor(x_radius, y_radius)) {
-                            BOOL has_sensor;
+                            // 0x00503ABB..0x00503B31: no materialised flag. The
+                            // ocean arm ends `jne next; jmp join`, the land arm
+                            // (laid out after it) `jl join; jne next` and falls
+                            // into the join.
                             if (is_ocean(x_radius, y_radius)) {
                                 // Preserve the unchecked lookup result.
-                                has_sensor = Bases[base_find(x_radius, y_radius)].faction_id_current
-                                    == Vehs[veh_id_def].faction_id;
+                                if (Bases[base_find(x_radius, y_radius)].faction_id_current
+                                    != Vehs[veh_id_def].faction_id) {
+                                    continue;
+                                }
                             } else {
                                 int faction_id_terr = whose_territory(Vehs[veh_id_def].faction_id,
                                     x_radius, y_radius, NULL, false);
-                                has_sensor = faction_id_terr < 0
-                                    || faction_id_terr == Vehs[veh_id_def].faction_id;
-                            }
-                            if (has_sensor) {
-                                sensor_def |= 1;
-                                if (is_sensor(x_radius, y_radius) > 1) {
-                                    sensor_def |= 2;
+                                if (faction_id_terr >= 0
+                                    && faction_id_terr != Vehs[veh_id_def].faction_id) {
+                                    continue;
                                 }
+                            }
+                            sensor_def |= 1;
+                            if (is_sensor(x_radius, y_radius) > 1) {
+                                sensor_def |= 2;
                             }
                         }
                     }
@@ -1588,10 +1619,13 @@ int __cdecl boom(int x, int y, int flags) {
 // RECOVERY_OBJECT: v2 0x00915068 0x009155F0 _?working_buffer@?1??boom@@YAHHHH@Z@4VBuffer@@A 0x00504AA0
     static Buffer working_buffer;
 
+    // [C1] 0x504B86..0x504C15: the image stores veh_a/veh_b/animation_state
+    // only after every array initialiser (and its `and eax,0x70` comes after
+    // `xor ecx,ecx`), so the three are assigned after the arrays.
+    int veh_a;            // EBP-0x1C
+    int veh_b;            // EBP-0x14
+    int animation_state;  // EBP-0x20
     // Explosion colour group by faction; read by the Flic draw (0x0050595A).
-    int veh_a = VehDrawSelection689F28;  // EBP-0x1C
-    int veh_b = VehDrawSelection689F2C;  // EBP-0x14
-    int animation_state = flags & 0x70;
     int faction_color_group[8] = { 0, 5, 2, 10, 9, 11, 0, 2 };
     // EBP-0x10: PSI flag in the sprite path, Flic size numerator otherwise.
     // The post-loop FX test (0x0050550C) reads it in both modes.
@@ -1603,6 +1637,9 @@ int __cdecl boom(int x, int y, int flags) {
         // These two share stack with active_windows (EBP-0x94..-0x78).
         int flic_divisor[4] = { 2, 2, 2, 2 };
         int flic_size[4] = { 3, 4, 5, 5 };
+        veh_a = VehDrawSelection689F28;
+        veh_b = VehDrawSelection689F2C;
+        animation_state = flags & 0x70;
         if (animation_state) {
             if ((flags & 0x20) && !working_buffer.init(300, 0xf8, 0, nullptr) &&
                 !animation.init(&working_buffer, "buster.flc", 0, 0, 0)) {
@@ -1664,6 +1701,8 @@ int __cdecl boom(int x, int y, int flags) {
     int pixel_x[8];
     int pixel_y[8];
     int slot;
+    // [C2] Set to a constant by every arm; only the snapshot gate reads it.
+    int sprite_explosion;
 
     for (slot = 0; slot < 8; ++slot) {
         active_windows[slot] = 0;
@@ -1706,21 +1745,35 @@ int __cdecl boom(int x, int y, int flags) {
         pixel_x[slot] += MapWinTable[slot]->tile_pixel_width_ / 2;
         pixel_y[slot] += MapWinTable[slot]->tile_pixel_height_;
 
+        // [C2] 0x504EF5..0x505363: the animation arm falls straight into the
+        // snapshot block (0x50505E) and both sprite arms are laid out after
+        // its first `jmp 0x5054BC`, each jumping back to 0x50505E (0x5051D7,
+        // 0x5052EB, 0x505322, 0x505346, 0x505360). The old trailing
+        // `if (!(flags & 0x60)) continue;` was an unconditional jump that
+        // flushed the queued else arms right after the animation arm. The
+        // gate below is a plain forward branch; the sprite arms set a
+        // constant flag so VC6 threads their exits past the 0x60 test
+        // (council_action rule). With no fall-through predecessor at
+        // 0x50505E the three FX::play tails also stop cross-jumping
+        // (0x5052E6, 0x50531D, 0x50535B).
         if (animation_state) {
+            sprite_explosion = 0;
             const int width = size_or_psi * 300 / divisor_or_bank;
             pixel_x[slot] -= (MapWinCaptionScale > 0
                 ? MapWinCaptionScale * width / MapWinCaptionDivisor
                 : (MapWinTable[slot]->zoom_offset_ + 16) * width / 16) / 2;
             const int height = size_or_psi * 248 / divisor_or_bank;
-            pixel_y[slot] = pixel_y[slot] -
+            // [C3] 0x504F97..0x504FB4: the image scales the height, then
+            // computes size*60/div once before the scale test (one idiv
+            // [ebp-0xC], no per-arm copy), then updates pixel_y in one go.
+            const int scaled_height = MapWinCaptionScale > 0
+                ? MapWinCaptionScale * height / MapWinCaptionDivisor
+                : (MapWinTable[slot]->zoom_offset_ + 16) * height / 16;
+            const int lift = size_or_psi * 60 / divisor_or_bank;
+            pixel_y[slot] = pixel_y[slot] - scaled_height +
                 (MapWinCaptionScale > 0
-                    ? MapWinCaptionScale * height / MapWinCaptionDivisor
-                    : (MapWinTable[slot]->zoom_offset_ + 16) * height / 16) +
-                (MapWinCaptionScale > 0
-                    ? MapWinCaptionScale * (size_or_psi * 60 / divisor_or_bank) /
-                          MapWinCaptionDivisor
-                    : (MapWinTable[slot]->zoom_offset_ + 16) *
-                          (size_or_psi * 60 / divisor_or_bank) / 16);
+                    ? MapWinCaptionScale * lift / MapWinCaptionDivisor
+                    : (MapWinTable[slot]->zoom_offset_ + 16) * lift / 16);
             {
                 const int rect_height = MapWinCaptionScale > 0 ? MapWinCaptionScale * height / MapWinCaptionDivisor : (MapWinTable[slot]->zoom_offset_ + 16) * height / 16;
                 const int rect_width = MapWinCaptionScale > 0 ? MapWinCaptionScale * width / MapWinCaptionDivisor : (MapWinTable[slot]->zoom_offset_ + 16) * width / 16;
@@ -1729,59 +1782,72 @@ int __cdecl boom(int x, int y, int flags) {
                 rects[slot].right = pixel_x[slot] + rect_width;
                 rects[slot].bottom = pixel_y[slot] + rect_height;
             }
-            if (!(flags & 0x60)) {
-                continue;
-            }
-        } else if (flags & 1) {
-            pixel_x[slot] -= MapWinCaptionScale > 0
-                ? MapWinCaptionScale * (g_XI_BOOM_VEH_SPRITES[0].width() / 2) /
-                      MapWinCaptionDivisor
-                : (MapWinTable[slot]->zoom_offset_ + 16) *
-                      (g_XI_BOOM_VEH_SPRITES[0].width() / 2) / 16;
-            pixel_y[slot] -= MapWinCaptionScale > 0
-                ? MapWinCaptionScale * g_XI_BOOM_VEH_SPRITES[0].height() /
-                      MapWinCaptionDivisor
-                : (MapWinTable[slot]->zoom_offset_ + 16) *
-                      g_XI_BOOM_VEH_SPRITES[0].height() / 16;
-            {
-                const int rect_height = MapWinCaptionScale > 0 ? MapWinCaptionScale * g_XI_BOOM_VEH_SPRITES[0].height() / MapWinCaptionDivisor : (MapWinTable[slot]->zoom_offset_ + 16) * g_XI_BOOM_VEH_SPRITES[0].height() / 16;
-                const int rect_width = MapWinCaptionScale > 0 ? MapWinCaptionScale * g_XI_BOOM_VEH_SPRITES[0].width() / MapWinCaptionDivisor : (MapWinTable[slot]->zoom_offset_ + 16) * g_XI_BOOM_VEH_SPRITES[0].width() / 16;
-                rects[slot].left = pixel_x[slot];
-                rects[slot].top = pixel_y[slot];
-                rects[slot].right = pixel_x[slot] + rect_width;
-                rects[slot].bottom = pixel_y[slot] + rect_height;
-            }
         } else {
-            pixel_x[slot] -= MapWinCaptionScale > 0
-                ? MapWinCaptionScale * (g_XF_BOOM_VEH_SPRITES[0].width() / 2) /
-                      MapWinCaptionDivisor
-                : (MapWinTable[slot]->zoom_offset_ + 16) *
-                      (g_XF_BOOM_VEH_SPRITES[0].width() / 2) / 16;
-            pixel_y[slot] -= MapWinCaptionScale > 0
-                ? MapWinCaptionScale * g_XF_BOOM_VEH_SPRITES[0].height() /
-                      MapWinCaptionDivisor
-                : (MapWinTable[slot]->zoom_offset_ + 16) *
-                      g_XF_BOOM_VEH_SPRITES[0].height() / 16;
-            {
-                const int rect_height = MapWinCaptionScale > 0 ? MapWinCaptionScale * g_XF_BOOM_VEH_SPRITES[0].height() / MapWinCaptionDivisor : (MapWinTable[slot]->zoom_offset_ + 16) * g_XF_BOOM_VEH_SPRITES[0].height() / 16;
-                const int rect_width = MapWinCaptionScale > 0 ? MapWinCaptionScale * g_XF_BOOM_VEH_SPRITES[0].width() / MapWinCaptionDivisor : (MapWinTable[slot]->zoom_offset_ + 16) * g_XF_BOOM_VEH_SPRITES[0].width() / 16;
-                rects[slot].left = pixel_x[slot];
-                rects[slot].top = pixel_y[slot];
-                rects[slot].right = pixel_x[slot] + rect_width;
-                rects[slot].bottom = pixel_y[slot] + rect_height;
-            }
-            if (flags & 0x100) {
-                g_FX.play(0x3d, x, y);
-            } else if (Vehs[veh_b].proto_id == BSC_SPORE_LAUNCHER) {
-                g_FX.play(0x5a, Vehs[veh_b].x, Vehs[veh_b].y);
-            } else if (VehPrototypes[Vehs[veh_a].proto_id].chassis_id !=
-                       CHSI_MISSILE) {
-                g_FX.play(0x3e, x, y);
+            sprite_explosion = 1;
+            if (flags & 1) {
+                // [C4] 0x5050E4..0x5050F6: width()/2 is formed once before
+                // the scale test (`mov edx,eax; sar edx,1; test ebx,ebx`).
+                const int half_width = g_XI_BOOM_VEH_SPRITES[0].width() / 2;
+                pixel_x[slot] -= MapWinCaptionScale > 0
+                    ? MapWinCaptionScale * half_width / MapWinCaptionDivisor
+                    : (MapWinTable[slot]->zoom_offset_ + 16) * half_width / 16;
+                pixel_y[slot] -= MapWinCaptionScale > 0
+                    ? MapWinCaptionScale * g_XI_BOOM_VEH_SPRITES[0].height() /
+                          MapWinCaptionDivisor
+                    : (MapWinTable[slot]->zoom_offset_ + 16) *
+                          g_XI_BOOM_VEH_SPRITES[0].height() / 16;
+                {
+                    const int rect_height = MapWinCaptionScale > 0 ? MapWinCaptionScale * g_XI_BOOM_VEH_SPRITES[0].height() / MapWinCaptionDivisor : (MapWinTable[slot]->zoom_offset_ + 16) * g_XI_BOOM_VEH_SPRITES[0].height() / 16;
+                    const int rect_width = MapWinCaptionScale > 0 ? MapWinCaptionScale * g_XI_BOOM_VEH_SPRITES[0].width() / MapWinCaptionDivisor : (MapWinTable[slot]->zoom_offset_ + 16) * g_XI_BOOM_VEH_SPRITES[0].width() / 16;
+                    rects[slot].left = pixel_x[slot];
+                    rects[slot].top = pixel_y[slot];
+                    rects[slot].right = pixel_x[slot] + rect_width;
+                    rects[slot].bottom = pixel_y[slot] + rect_height;
+                }
+            } else {
+                // [C4] 0x5051DC..0x5051EE: same for the XF bank.
+                const int half_width = g_XF_BOOM_VEH_SPRITES[0].width() / 2;
+                pixel_x[slot] -= MapWinCaptionScale > 0
+                    ? MapWinCaptionScale * half_width / MapWinCaptionDivisor
+                    : (MapWinTable[slot]->zoom_offset_ + 16) * half_width / 16;
+                pixel_y[slot] -= MapWinCaptionScale > 0
+                    ? MapWinCaptionScale * g_XF_BOOM_VEH_SPRITES[0].height() /
+                          MapWinCaptionDivisor
+                    : (MapWinTable[slot]->zoom_offset_ + 16) *
+                          g_XF_BOOM_VEH_SPRITES[0].height() / 16;
+                {
+                    const int rect_height = MapWinCaptionScale > 0 ? MapWinCaptionScale * g_XF_BOOM_VEH_SPRITES[0].height() / MapWinCaptionDivisor : (MapWinTable[slot]->zoom_offset_ + 16) * g_XF_BOOM_VEH_SPRITES[0].height() / 16;
+                    const int rect_width = MapWinCaptionScale > 0 ? MapWinCaptionScale * g_XF_BOOM_VEH_SPRITES[0].width() / MapWinCaptionDivisor : (MapWinTable[slot]->zoom_offset_ + 16) * g_XF_BOOM_VEH_SPRITES[0].width() / 16;
+                    rects[slot].left = pixel_x[slot];
+                    rects[slot].top = pixel_y[slot];
+                    rects[slot].right = pixel_x[slot] + rect_width;
+                    rects[slot].bottom = pixel_y[slot] + rect_height;
+                }
+                if (flags & 0x100) {
+                    g_FX.play(0x3d, x, y);
+                } else if (Vehs[veh_b].proto_id == BSC_SPORE_LAUNCHER) {
+                    g_FX.play(0x5a, Vehs[veh_b].x, Vehs[veh_b].y);
+                } else if (VehPrototypes[Vehs[veh_a].proto_id].chassis_id !=
+                           CHSI_MISSILE) {
+                    g_FX.play(0x3e, x, y);
+                }
             }
         }
 
-        if (!(flags & 2) || (flags & 0x20)) {
-            if (!(flags & 0x40)) {
+        // [C2] 0x505053: `test al,0x60; je 0x5054B9` on the animation path only.
+        if (sprite_explosion || (flags & 0x60)) {
+            if (!(flags & 2) || (flags & 0x20)) {
+                if (!(flags & 0x40)) {
+                    original_screen_snapshots[slot].init(
+                        rects[slot].right - rects[slot].left,
+                        rects[slot].bottom - rects[slot].top, 0, nullptr);
+                    MapWinTable[slot]->copy(&original_screen_snapshots[slot],
+                        pixel_x[slot], pixel_y[slot], 0, 0,
+                        original_screen_snapshots[slot].pixel_width(),
+                        original_screen_snapshots[slot].pixel_height());
+                    continue;
+                }
+            } else if (!(flags & 0x40)) {
                 original_screen_snapshots[slot].init(
                     rects[slot].right - rects[slot].left,
                     rects[slot].bottom - rects[slot].top, 0, nullptr);
@@ -1789,35 +1855,26 @@ int __cdecl boom(int x, int y, int flags) {
                     pixel_x[slot], pixel_y[slot], 0, 0,
                     original_screen_snapshots[slot].pixel_width(),
                     original_screen_snapshots[slot].pixel_height());
-                continue;
+                if (flags & 8) {
+                    VehDrawSuppressedVehicle = VehDrawSelection689F2C;
+                } else {
+                    VehDrawSuppressedVehicle = VehDrawSelection689F28;
+                }
+                MapWinTable[slot]->draw_tile(x, y, 0);
+                VehDrawSuppressedVehicle = -1;
             }
-        } else if (!(flags & 0x40)) {
-            original_screen_snapshots[slot].init(
+            redrawn_map_snapshots[slot].init(
                 rects[slot].right - rects[slot].left,
                 rects[slot].bottom - rects[slot].top, 0, nullptr);
-            MapWinTable[slot]->copy(&original_screen_snapshots[slot],
+            MapWinTable[slot]->copy(&redrawn_map_snapshots[slot],
                 pixel_x[slot], pixel_y[slot], 0, 0,
+                redrawn_map_snapshots[slot].pixel_width(),
+                redrawn_map_snapshots[slot].pixel_height());
+            original_screen_snapshots[slot].copy(MapWinTable[slot], 0, 0,
+                pixel_x[slot], pixel_y[slot],
                 original_screen_snapshots[slot].pixel_width(),
                 original_screen_snapshots[slot].pixel_height());
-            if (flags & 8) {
-                VehDrawSuppressedVehicle = VehDrawSelection689F2C;
-            } else {
-                VehDrawSuppressedVehicle = VehDrawSelection689F28;
-            }
-            MapWinTable[slot]->draw_tile(x, y, 0);
-            VehDrawSuppressedVehicle = -1;
         }
-        redrawn_map_snapshots[slot].init(
-            rects[slot].right - rects[slot].left,
-            rects[slot].bottom - rects[slot].top, 0, nullptr);
-        MapWinTable[slot]->copy(&redrawn_map_snapshots[slot],
-            pixel_x[slot], pixel_y[slot], 0, 0,
-            redrawn_map_snapshots[slot].pixel_width(),
-            redrawn_map_snapshots[slot].pixel_height());
-        original_screen_snapshots[slot].copy(MapWinTable[slot], 0, 0,
-            pixel_x[slot], pixel_y[slot],
-            original_screen_snapshots[slot].pixel_width(),
-            original_screen_snapshots[slot].pixel_height());
     }
 
     if (flags & 0x60) {
@@ -1894,12 +1951,17 @@ int __cdecl boom(int x, int y, int flags) {
             if (!active_windows[slot]) {
                 continue;
             }
+            // [C5] 0x5058C6..0x5058EE: MapWinTable[slot] and its zoom are
+            // loaded before the scale test (`mov eax,[ecx+0x1DD98]` ahead of
+            // `jle`), and ecx stays live into the sprite arms' Buffer
+            // conversion (0x505999, 0x505A20).
+            const int zoom = MapWinTable[slot]->zoom_offset_;
             if (MapWinCaptionScale > 0) {
                 SpriteScaleNumerator = MapWinCaptionScale;
                 SpriteScaleDenominator = MapWinCaptionDivisor;
             } else {
-                SpriteScaleNumerator = MapWinTable[slot]->zoom_offset_ + 16;
                 SpriteScaleDenominator = 16;
+                SpriteScaleNumerator = zoom + 16;
             }
             if (animation_state) {
                 animation.decode_stored_frame();
@@ -1909,19 +1971,25 @@ int __cdecl boom(int x, int y, int flags) {
                     divisor_or_bank << 4,
                     ExplosionColorTables[faction_color_group[Vehs[veh_a].faction_id]]);
             } else if (play) {
-                Sprite *const sprite =
-                    &g_XI_BOOM_VEH_SPRITES[divisor_or_bank * 16 + frame];
-                sprite->draw_multi_table_dest(MapWinTable[slot],
-                    sprite->transparent_index(), pixel_x[slot], pixel_y[slot],
-                    ExplosionColorTables[palette_row]);
+                // [C6] 0x505999..0x5059DE: the destination conversion is
+                // formed before the sprite address; no sprite local.
+                g_XI_BOOM_VEH_SPRITES[divisor_or_bank * 16 + frame]
+                    .draw_multi_table_dest(MapWinTable[slot],
+                        g_XI_BOOM_VEH_SPRITES[divisor_or_bank * 16 + frame]
+                            .transparent_index(),
+                        pixel_x[slot], pixel_y[slot],
+                        ExplosionColorTables[palette_row]);
             } else {
                 const int bank = (flags & 0x100) ? 3
                     : (flags & 0x80) ? 2
                     : VehPrototypes[Vehs[veh_b].proto_id].reactor_id >= 2;
-                Sprite *const sprite = &g_XF_BOOM_VEH_SPRITES[bank * 16 + frame];
-                sprite->draw_multi_table_dest(MapWinTable[slot],
-                    sprite->transparent_index(), pixel_x[slot], pixel_y[slot],
-                    ExplosionColorTables[bank == 3 ? 6 : 0]);
+                // [C6] 0x505A20..0x505A4B: conversion, then sprite address.
+                g_XF_BOOM_VEH_SPRITES[bank * 16 + frame]
+                    .draw_multi_table_dest(MapWinTable[slot],
+                        g_XF_BOOM_VEH_SPRITES[bank * 16 + frame]
+                            .transparent_index(),
+                        pixel_x[slot], pixel_y[slot],
+                        ExplosionColorTables[bank == 3 ? 6 : 0]);
             }
             MapWinTable[slot]->update(&rects[slot], 0);
             if (IsMultiplayerNet) {
@@ -2518,9 +2586,9 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
     int def_id;             // [ebp-0x18] best defender; bombard: stack walker
     int def_strength;       // [ebp-0x1c] battle_compute defense out
     int base_id;            // [ebp-0x20] base_at(target) or -1
-    int move_charge;        // [ebp-0x24] movement charged for the attack
-    int retreat;            // [ebp-0x24] withdraw HP budget (0x508C9F)
-    int scan_dir;           // [ebp-0x24] withdraw scan index (0x509400)
+    int move_charge;        // [ebp-0x24] movement charged for the attack; one
+                            //   variable, reused as the withdraw HP budget
+                            //   (0x508C9F) and the withdraw scan index (0x509400)
     int src_y;              // [ebp-0x28] attacker tile y
     int src_x;              // [ebp-0x2c] attacker tile x
     int booty_count;        // [ebp-0x30] battle_kill 3rd out
@@ -2692,28 +2760,25 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
                 g_BattleWin.pulse_timer();
             } else if (!(att_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)) {
                 // 0x507295: AI attacker policy
-                int def_human = (1 << def_faction) &
-                                GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
+                // 0x507295: one combined test, one store at 0x507399. The
+                // defender-human test runs after the first two.
                 if (has_treaty(att_faction, def_faction, DTREATY_ATROCITY_VICTIM) ||
                     (PlayersData[att_faction].flags & PFLAG_COMMIT_ATROCIT_WANTONLY) ||
-                    (def_human &&
+                    (((1 << def_faction) &
+                      GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) &&
                      GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_UN_CHARTER] >
-                         GameDataStateStorage.fields_.council_resolution_count_[PROP_REINSTATE_UN_CHARTER])) {
+                         GameDataStateStorage.fields_.council_resolution_count_[PROP_REINSTATE_UN_CHARTER]) ||
+                    (((1 << def_faction) &
+                      GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) &&
+                     has_treaty(att_faction, def_faction, DTREATY_WANT_REVENGE) &&
+                     PlayersData[def_faction].integrity_blemishes +
+                             (((GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY) &&
+                               (PlayersData[def_faction].ranking > PlayersData[att_faction].ranking ||
+                                PlayersData[def_faction].diplo_unk4[att_faction] >
+                                    PlayersData[att_faction].diplo_unk4[def_faction]))
+                                  ? (PlayersData[att_faction].ai_fight + 1) * 3
+                                  : 0) >= 6)) {
                     Vehs[veh_id].state = nerve_state | VSTATE_USED_NERVE_GAS;
-                } else if (def_human &&
-                           has_treaty(att_faction, def_faction, DTREATY_WANT_REVENGE)) {
-                    int rivalry;
-                    if ((GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY) &&
-                        (PlayersData[def_faction].ranking > PlayersData[att_faction].ranking ||
-                         PlayersData[def_faction].diplo_unk4[att_faction] >
-                             PlayersData[att_faction].diplo_unk4[def_faction])) {
-                        rivalry = (PlayersData[att_faction].ai_fight + 1) * 3;
-                    } else {
-                        rivalry = 0;
-                    }
-                    if (PlayersData[def_faction].integrity_blemishes + rivalry >= 6) {
-                        Vehs[veh_id].state = nerve_state | VSTATE_USED_NERVE_GAS;
-                    }
                 }
             }
             // 0x5073A7
@@ -2763,7 +2828,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
     if (VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_INFO_WARFARE &&
         VehPrototypes[Vehs[def_id].proto_id].plan != PLAN_ALIEN_ARTIFACT) {
         bool notify = false;
-        if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << def_faction)) {
+        if ((1 << def_faction) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) {
             // 0x507583: the DEFENDER's view of the attacker
             uint32_t d2a = PlayersData[def_faction].diplo_treaties[att_faction];
             if (d2a & (DTREATY_TREATY | DTREATY_TRUCE)) {
@@ -3123,10 +3188,12 @@ L_50835D:
             // 0x50864B .. 0x50876A: never take the unit below `keep`
             int keep;   // esi
             if (base_id < 0 && !(map_loc(target_x, target_y)->bit & BIT_BUNKER)) {
-                keep = (100 - (get_triad(def_id) == TRIAD_LAND
-                                   ? Rules.max_pct_dmg_art_vs_units_open
-                                   : Rules.max_pct_dmg_art_vs_units_sea))
-                       * proto_power(def_id) + 99;
+                // 0x5086A2: `100 - pct` is computed before proto_power here
+                // (right operand first), unlike the bunker arm at 0x508712
+                keep = proto_power(def_id)
+                       * (100 - (get_triad(def_id) == TRIAD_LAND
+                                     ? Rules.max_pct_dmg_art_vs_units_open
+                                     : Rules.max_pct_dmg_art_vs_units_sea)) + 99;
             } else {
                 // 0x508712
                 keep = (100 - Rules.max_pct_dmg_art_vs_unit_base_bnkr) * proto_power(def_id) + 99;
@@ -3184,7 +3251,7 @@ L_50835D:
                         GameDataStateStorage.fields_.game_more_preferences_ &= ~MPREF_ADV_PAUSE_AFTER_BATTLES;
                         prefs_save(0);
                     }
-                } else if ((GetAsyncKeyState(VK_SHIFT) & 0xFF00) == 0   // mov dl,ah / test dl,dl
+                } else if (!HIBYTE(GetAsyncKeyState(VK_SHIFT))   // 0x5089DF: xor edx,edx / mov dl,ah
                            && !(GameDataStateStorage.fields_.game_preferences_ & PREF_ADV_FAST_BATTLE_RESOLUTION)
                            && !IsMultiplayerNet && bombard_boomed) {
                     clock_wait(200);
@@ -3235,7 +3302,7 @@ L_50835D:
         ConsoleStatusWin.draw(veh_id, def_id, att_strength, def_strength, mode);
         ConsoleStatusWin.set_field_15D4(1);
         flush_input();
-        if ((GetAsyncKeyState(VK_SHIFT) & 0xFF00) == 0 && !(mode & 1)) {   // 0x508C49
+        if (!HIBYTE(GetAsyncKeyState(VK_SHIFT)) && !(mode & 1)) {   // 0x508C49: mov cl,ah
             veh_scoot(veh_id, src_x, src_y, dir, 1);
         }
         stack_put(veh_id, src_x, src_y);
@@ -3244,7 +3311,7 @@ L_50835D:
     }
 
     // 0x508C99: withdraw threshold. speed(def_id) is called before speed(veh_id).
-    retreat = 0;
+    move_charge = 0;
     if (speed(def_id, 1) > speed(veh_id, 1)
         && mode == 0
         && get_offense_rating(def_id) != 0
@@ -3257,7 +3324,7 @@ L_50835D:
         && base_id < 0
         && !(map_loc(target_x, target_y)->bit & (BIT_BUNKER | BIT_AIRBASE))
         && stack_check(def_id, 1, -1, -1, -1) == 1) {
-        retreat = (veh_cur_hp(def_id) + 1) / 2;   // 0x508DFE calls range
+        move_charge = (veh_cur_hp(def_id) + 1) / 2;   // 0x508DFE calls range
     }
 
     // 0x508E30: marine detachment threshold
@@ -3305,10 +3372,12 @@ L_50835D:
 
         if (roll_atk > roll_def) {
             // 0x5091DB: the defender takes def_step
-            int dmg = static_cast<uint8_t>(
-                Vehs[def_id].dmg_incurred += static_cast<uint8_t>(def_step));
+            // 0x5091F4: the stored byte is zero-extended only after the
+            // display/round_div tests (no separate int copy)
+            Vehs[def_id].dmg_incurred += static_cast<uint8_t>(def_step);
             if (display && round_div &&
-                dmg / (round_div * def_step) != (dmg - def_step) / (round_div * def_step)) {
+                Vehs[def_id].dmg_incurred / (round_div * def_step) !=
+                    (Vehs[def_id].dmg_incurred - def_step) / (round_div * def_step)) {
                 // ((dmg - def_step) / div is evaluated first and spilled to [ebp-0x74].)
                 last_hit = 2;
                 ConsoleStatusWin.draw(veh_id, def_id, att_strength, def_strength, mode);
@@ -3326,55 +3395,56 @@ L_50835D:
                 if (marine <= 0 && rand() % 100 < 50) goto L_50973a;
             }
             // 0x50936C: withdrawal (the defender's HP, [ebp-0x08])
-            if (retreat == 0) continue;
+            if (move_charge == 0) continue;
             if (veh_cur_hp(def_id) == 0) continue;
-            retreat -= def_step;
-            if (retreat > 0) continue;
+            move_charge -= def_step;
+            if (move_charge > 0) continue;
 
             // 0x5093F1: pick the free tile that turns furthest from the attack.
             // rx/ry are written for every examined direction.
             best_dir = -1;
             best_angle = 0;
-            for (scan_dir = 0; scan_dir < 8; scan_dir++) {
-                rx = wrap_map_x(VehMoveDeltaX[scan_dir] + target_x);
-                ry = VehMoveDeltaY[scan_dir] + target_y;
+            for (move_charge = 0; move_charge < 8; move_charge++) {
+                rx = wrap_map_x(VehMoveDeltaX[move_charge] + target_x);
+                ry = VehMoveDeltaY[move_charge] + target_y;
                 if (!on_map(rx, ry)) continue;
                 if (zoc_move(rx, ry, def_faction)) continue;
-                int triad = get_triad(def_id);
-                if (triad != TRIAD_AIR &&
-                    is_ocean(rx, ry) != (triad == TRIAD_SEA)) continue;
+                // 0x5094A9: the chassis triad byte stays in cl for both compares
+                if (get_triad(def_id) != TRIAD_AIR &&
+                    is_ocean(rx, ry) != (get_triad(def_id) == TRIAD_SEA)) continue;
                 if (goody_at(rx, ry)) continue;
                 Map *tile = map_loc(rx, ry);   // ecx, reused by anything_at below
-                if ((tile->bit & BIT_FUNGUS) && (tile->climate & 0xE0) >= 0x40
+                if ((tile->bit & BIT_FUNGUS) && (tile->climate & ~0x1F) >= 0x40
                     && !has_project(SP_PHOLUS_MUTAGEN, def_faction)) {
-                    int dp = Vehs[def_id].proto_id;
-                    if (dp >= MaxVehProtoFactionNum) continue;
-                    if (get_proto_offense_rating(dp) >= 0 && dp != BSC_SPORE_LAUNCHER) continue;
+                    // 0x509555: the short proto_id is compared directly (cmp dx)
+                    if (!(Vehs[def_id].proto_id < MaxVehProtoFactionNum
+                          && (Weapon[VehPrototypes[Vehs[def_id].proto_id].weapon_id].offense_rating < 0
+                              || Vehs[def_id].proto_id == BSC_SPORE_LAUNCHER))) continue;
                 }
                 // 0x509594
                 int who = anything_at(rx, ry);
                 if (who >= 0 && who != def_faction &&
                     !has_treaty(who, def_faction, DTREATY_PACT)) continue;
                 // 0x5095CC: angular distance from the reversed attack direction
-                int angle = scan_dir - (dir ^ 4);
-                if (angle < 0) angle = (dir ^ 4) - scan_dir;
-                angle &= 7;
+                // 0x5095D4: non-negative arm inline, negative arm after the jmp
+                int angle = (move_charge - (dir ^ 4) >= 0 ? move_charge - (dir ^ 4)
+                                                       : (dir ^ 4) - move_charge) & 7;
                 if (angle > 4) angle = 8 - angle;
                 if (angle > 2 && angle > best_angle) {
                     best_angle = angle;
-                    best_dir = scan_dir;
+                    best_dir = move_charge;
                 }
             }
             // 0x509612
             if (best_dir >= 0) goto L_509923;
-            retreat = 0;
+            move_charge = 0;
         } else {
             // 0x509629: the attacker takes atk_step (ties go to the defender)
-            int dmg = static_cast<uint8_t>(
-                Vehs[veh_id].dmg_incurred += static_cast<uint8_t>(atk_step));
+            Vehs[veh_id].dmg_incurred += static_cast<uint8_t>(atk_step);
             if (!display) continue;
             if (!round_div) continue;
-            if (dmg / (round_div * atk_step) == (dmg - atk_step) / (round_div * atk_step)) continue;
+            if (Vehs[veh_id].dmg_incurred / (round_div * atk_step) ==
+                (Vehs[veh_id].dmg_incurred - atk_step) / (round_div * atk_step)) continue;
             last_hit = 1;
             ConsoleStatusWin.draw(veh_id, def_id, att_strength, def_strength, mode);
             boom(src_x, src_y, 9);
@@ -3454,22 +3524,15 @@ L_509980:
                         // 0x509B44
                         boom(target_x, target_y,
                              (veh_cur_hp(def_id) ? 1 : 2) | 8);
-                    } else if (last_hit == 2) {
-                        // 0x509BBF
-                        if (IsMultiplayerNet ||
-                            veh_cur_hp(def_id) == 0) {
-                            // 0x509C2F
-                            boom(target_x, target_y,
-                                 (veh_cur_hp(def_id) != 0 ? 0 : 2) | 8);
-                        }
-                    } else if (IsMultiplayerNet) {
-                        // 0x509C2C
-                        boom(target_x, target_y,
-                             (veh_cur_hp(def_id) != 0 ? 0 : 2) | 8);
-                    } else {
-                        // 0x509B44
+                    } else if (last_hit != 2 && !IsMultiplayerNet) {
+                        // 0x509B2E -> 0x509B44 (the block shared with the duel arm)
                         boom(target_x, target_y,
                              (veh_cur_hp(def_id) ? 1 : 2) | 8);
+                    } else if (IsMultiplayerNet ||
+                               veh_cur_hp(def_id) == 0) {
+                        // 0x509BBF / 0x509C2C: one boom block for both tests
+                        boom(target_x, target_y,
+                             (veh_cur_hp(def_id) != 0 ? 0 : 2) | 8);
                     }
                 } else if (single) {
                     // 0x509CB4: attacker destroyed in a one-exchange duel
@@ -3708,7 +3771,8 @@ L_509980:
             }
             // 0x50ABD3 (sets/dec/and idiom)
             {
-                int t = damaged_count - (kill_count + booty_count);
+                // 0x50ABD9: kill is loaded first, then `booty + kill` is one add
+                int t = damaged_count - (booty_count + kill_count);
                 damaged_count = t < 0 ? 0 : t;
             }
             stack_id = stack_fix(veh_at(target_x, target_y));
@@ -3764,8 +3828,9 @@ L_509980:
                 nerve_gas = (pop + 1) / 2;
                 Bases[base_id].population_size = pop - nerve_gas;   // byte
                 if (is_objective(base_id)) {
-                    int p = Bases[base_id].population_size;
-                    Bases[base_id].population_size = p < 1 ? 1 : p;   // unconditional store
+                    // 0x50AE52: byte compare, movsx only in the keep arm; unconditional store
+                    Bases[base_id].population_size = Bases[base_id].population_size < 1
+                                                         ? 1 : Bases[base_id].population_size;
                 }
                 // 0x50AE6C
                 if (Bases[base_id].population_size <= 0) {
@@ -3897,7 +3962,12 @@ L_50b203:
                 parse_num(0, kill_count);
                 parse_num(1, damaged_count);
                 clear();
-                says((att_faction == ConsoleGlobal.faction_id_) == (atk_left != 0) ? "NUMGOT" : "NUMLOST");
+                // 0x50B471: each arm pushes its literal; the says() calls merge
+                if ((att_faction == ConsoleGlobal.faction_id_) == (atk_left != 0)) {
+                    says("NUMGOT");
+                } else {
+                    says("NUMLOST");
+                }
                 if (kill_count > 1) {
                     if (damaged_count) {
                         says("2");
@@ -3914,15 +3984,15 @@ L_50b203:
             if (def_faction == ConsoleGlobal.faction_id_) {
                 clear();
                 says("THEIRBOOTY");
-                if (has_treaty(att_faction, def_faction, DTREATY_VENDETTA)) {
-                    // 0x50B4AF
-                    say_num(range(booty_count, 1, 2));   // range called
-                    veh_battle_msg(StringTemp, 0);
-                } else {
+                // 0x50B3E2: jne to the vendetta arm; the noun arm falls through
+                if (!has_treaty(att_faction, def_faction, DTREATY_VENDETTA)) {
                     parse_says(0, get_noun(att_faction), -1, -1);
                     say_num(3);
-                    veh_battle_msg(StringTemp, 0);
+                } else {
+                    // 0x50B4AF
+                    say_num(range(booty_count, 1, 2));   // range called
                 }
+                veh_battle_msg(StringTemp, 0);
             } else if (att_faction == ConsoleGlobal.faction_id_) {
                 // 0x50B4DA
                 clear();

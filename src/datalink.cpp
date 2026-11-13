@@ -3375,9 +3375,11 @@ void Datalink::init() {
     const int top = WinScreenHeight - MainInterfaceGlobal.panel_height() - content_height;
 
     interface_update_rect_ = MainInterfaceGlobal.main_layout_rect();
+    // [A] 0x004293FB..0x00429411 stores left, right, top, bottom (the
+    // L,R,T,B habit of every other rect adjustment in this function).
     category_rect_.left = 30;
-    category_rect_.top = 7;
     category_rect_.right = 230;
+    category_rect_.top = 7;
     category_rect_.bottom = 0x1b;
     field_103EC_ = 0xe6;
     field_103F0_ = side_width + 0x143;
@@ -3389,8 +3391,10 @@ void Datalink::init() {
     illustration_rect_.right = 0x177;
     illustration_rect_.bottom = 0xab;
 
-    title_rect_.left = 0xdb;
+    // [B] 0x00429468..0x0042948B stores title top, left, right, bottom right
+    // after the illustration rect (speculative: may instead be scheduling).
     title_rect_.top = 7;
+    title_rect_.left = 0xdb;
     title_rect_.right = 0x302;
     title_rect_.bottom = 0x22;
     RECT &description_rect = description_rect_;
@@ -3398,7 +3402,7 @@ void Datalink::init() {
     description_rect.top = 0x24;
     description_rect.right = 0x302;
     description_rect.bottom = side_width / 2 + 0xb4;
-    // Original 4294D0/4294F2 passes the member itself to UnionRect.
+    // Image 4294D0/4294F2 passes the member itself to UnionRect.
     // Keep the later detail-box geometry bound to that same live rectangle.
     RECT &lower_description_rect = lower_description_rect_;
     lower_description_rect.left = 0xdb;
@@ -3450,14 +3454,17 @@ void Datalink::init() {
         rect.bottom -= 0x18;
     }
 
+    // [F] 0x004296A3..0x004296E1: bottom is derived from the stored top
+    // (lea ecx,[eax+0x14] / add eax,0x14), never side_width+0x162 directly;
+    // [16] stores left, right, top, bottom.
     topic_button_bounds_[16].left = 0x98;
-    topic_button_bounds_[16].top = side_width + 0x14e;
     topic_button_bounds_[16].right = 0x18e;
-    topic_button_bounds_[16].bottom = side_width + 0x162;
+    topic_button_bounds_[16].top = side_width + 0x14e;
+    topic_button_bounds_[16].bottom = topic_button_bounds_[16].top + 0x14;
     topic_button_bounds_[17].left = 0x192;
-    topic_button_bounds_[17].top = side_width + 0x14e;
     topic_button_bounds_[17].right = 0x288;
-    topic_button_bounds_[17].bottom = side_width + 0x162;
+    topic_button_bounds_[17].top = side_width + 0x14e;
+    topic_button_bounds_[17].bottom = topic_button_bounds_[17].top + 0x14;
 
     if (!wide) {
         auxiliary_font10_.init(DefaultFontFace, 12, 4);
@@ -3515,10 +3522,15 @@ void Datalink::init() {
 
     // The legacy parent computation reaches Console's real Win base. Its
     // static conversion applies the compiler's current virtual-base layout.
+    // [G] 0x004299C7..0x00429A23: the parent is converted first and kept in
+    // a frame slot ([ebp-0x20]); height then width are computed before any
+    // push, and left/top are reloaded for their own pushes.
+    Win *parent = static_cast<Win *>(&ConsoleGlobal);
+    const int frame_height = entry_frame_rect_.bottom - entry_frame_rect_.top;
+    const int frame_width = entry_frame_rect_.right - entry_frame_rect_.left;
     GraphicWin::init(entry_frame_rect_.left, entry_frame_rect_.top,
-                     entry_frame_rect_.right - entry_frame_rect_.left,
-                     entry_frame_rect_.bottom - entry_frame_rect_.top,
-                     0, 0x1000000, static_cast<Win *>(&ConsoleGlobal), 0, 0);
+                     frame_width, frame_height,
+                     0, 0x1000000, parent, 0, 0);
     GraphicWin::fill(9);
 
     rect.left = 0x17;
@@ -3606,9 +3618,12 @@ void Datalink::init() {
     button->redraw();
     button->hide();
 
+    // [H] 0x00429E3E/0x00429ED7/0x00429F70: the image adjusts bottom, right,
+    // top, left (ours bottom, top, right, left); spell the three StringBox
+    // rects in the L,R,T,B order used by every other rect in this function.
     rect.left = interface_update_rect_.left + 3;
-    rect.top = interface_update_rect_.top + 3;
     rect.right = interface_update_rect_.right - 3;
+    rect.top = interface_update_rect_.top + 3;
     rect.bottom = interface_update_rect_.bottom - 3;
     blurb_box_.init(rect.left, rect.top, rect.right - rect.left,
                     rect.bottom - rect.top,
@@ -3618,9 +3633,10 @@ void Datalink::init() {
     blurb_box_.Buffer::set_text_color2(0x96, -1, 1, 1);
     blurb_box_.Buffer::set_text_color_hyper(0x96, -1, 1, 1);
 
+    // [H] same order as above.
     rect.left = panel_rect_.left + 3;
-    rect.top = panel_rect_.top + 3;
     rect.right = panel_rect_.right - 3;
+    rect.top = panel_rect_.top + 3;
     rect.bottom = panel_rect_.bottom - 3;
     concept_box_.init(rect.left, rect.top, rect.right - rect.left,
                       rect.bottom - rect.top,
@@ -3630,9 +3646,10 @@ void Datalink::init() {
     concept_box_.Buffer::set_text_color2(0x96, -1, 1, 1);
     concept_box_.Buffer::set_text_color_hyper(0x96, -1, 1, 1);
 
+    // [H] same order as above.
     rect.left = lower_description_rect.left + 6;
-    rect.top = lower_description_rect.top + 6;
     rect.right = lower_description_rect.right - 6;
+    rect.top = lower_description_rect.top + 6;
     rect.bottom = lower_description_rect.bottom - 6;
     detail_box_.init(rect.left, rect.top, rect.right - rect.left,
                      rect.bottom - rect.top,
