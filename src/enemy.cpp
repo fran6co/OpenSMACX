@@ -4137,7 +4137,14 @@ int __cdecl enemy_planet_buster(int vehicle_id) {
                     }
                 }
                 int veh_id_hit = stack_fix(veh_at(x, y));
-                if (veh_id_hit >= 0) {
+                if (veh_id_hit < 0) {
+                    if (!i) {
+                        score = -9999;
+                        break;
+                    }
+                    continue;
+                }
+                {
                     if (Vehs[veh_id_hit].faction_id == faction_id) {
                         score -= stack_check(veh_id_hit, 7, -1, -1, -1) * PlayersData[faction_id].ranking;
                     } else {
@@ -4156,9 +4163,6 @@ int __cdecl enemy_planet_buster(int vehicle_id) {
                         }
                         score += value;
                     }
-                } else if (!i) {
-                    score = -9999;
-                    break;
                 }
             }
             const int defense = PlayersData[target_faction].satellites_[3]

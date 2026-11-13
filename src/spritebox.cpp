@@ -468,18 +468,9 @@ static inline SpriteStruct *sprite_list_next_entry(SpriteList &list) {
     return list.current_->sprite_payload();
 }
 
-static inline StringStructPayload *current_string_payload(StringList &list) {
-    return list.head_ ? list.current_->string_payload() : 0;
-}
-
 static inline Sprite *next_sprite(SpriteList &list) {
     sprite_list_next_entry(list);
     return list.current_ ? current_sprite_payload(list)->sprite_ : 0;
-}
-
-static inline char *next_text(StringList &list) {
-    list.next_entry();
-    return list.current_ ? current_string_payload(list)->text : 0;
 }
 
 // ORIGINAL: 0x00610970 ?calculate_dimensions@SpriteBox@@QAEHXZ 0x00610970-0x00610C4A FILE
@@ -501,7 +492,22 @@ int SpriteBox::calculate_dimensions() {
     for (int i = 0; i < count; ++i) {
         // The image reads payload+4 even without a list head.
         Sprite *const sprite = next_sprite(list_);
-        char *const label = next_text(Dialog::item_list_);
+        StringStruct &items = Dialog::item_list_;
+        if (items.head_ != 0) {
+            items.current_ = items.current_->next;
+            ++items.current_position_;
+            if (items.current_position_ == items.entry_count_) {
+                items.current_position_ = 0;
+            }
+        }
+        char *label;
+        if (items.current_ != 0) {
+            StringStructPayload *const payload = items.head_ != 0
+                ? items.current_->string_payload() : 0;
+            label = payload->text;
+        } else {
+            label = 0;
+        }
         int width = sprite->width() * static_cast<int>(field_1C_)
                     / static_cast<int>(field_20_);
         if (static_cast<int>(field_54_) > width) width = field_54_;

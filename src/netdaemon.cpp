@@ -3633,6 +3633,43 @@ uint32_t __cdecl random(int min, int max);
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00534400 0x00538944 0x0053895C 0x0053640D
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00534400 0x0053895C 0x005389AC 0x00536958
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00534400 0x005389AC 0x005389E8 0x00536DC4
+// WORKAROUND(inline): process_message (0x534400) expands these three DiploWin
+// steps in place (0x1508/0x1509/0x150A store offer_count_/offer_state_ and call
+// check_done/redraw/message_data directly) and the image has no out-of-line
+// copies. Spelled as inline members here their expansion supplies the budget
+// that makes the six early ~Popup teardowns call ~FlatButton out of line, as
+// the image does; written out raw they spend nothing. diplowin.cpp's
+// out-of-line definitions are only reached from here and become unused.
+inline void DiploWin::receive_clear_offer() {
+    offer_count_[1] = 0;
+    redraw();
+}
+
+inline void DiploWin::receive_channel_status(int status) {
+    offer_state_[1] = status;
+    check_done();
+    redraw();
+}
+
+inline void DiploWin::receive_maybe_deal(int sender) {
+  if (offer_state_[0] == 1 && offer_state_[1] == 1) {
+    message_data(0x150B, sender, 0, 0, 0, 0);
+  } else {
+    message_data(0x150C, sender, offer_state_[0], offer_state_[1], 0, 0);
+  }
+}
+
+// The image cross-jumps the three LOCK FAILED tails (0x1202/0x1203 into
+// 0x1204's copy) the way an inline body's expansions merge; the repeated
+// block was one inline helper. Name provisional.
+static inline void progress_backoff() {
+    if (!NetDaemonProgressLastTick) {
+        NetDaemonProgressLastTick = timeGetTime();
+    }
+    NetDaemonProgressInterval =
+        timeGetTime() - NetDaemonProgressLastTick > 5000 ? 5000 : 1000;
+}
+
 // ORIGINAL: 0x00534400 ?process_message@NetDaemon@@QAEXPADKH@Z 0x00534400-0x005388B9;0x0065E0C2-0x0065E442 FILE
 // Historical seed status: the following TRIED describes the superseded
 // first-band-only body, not the dispatch arms now implemented below.
@@ -3827,31 +3864,19 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
     case 0x1202:
         log_say("From Server: LOCK FAILED", 0, 0, 0);
         channels_[0].leading_words_[2] = 2;
-        if (!NetDaemonProgressLastTick) {
-            NetDaemonProgressLastTick = timeGetTime();
-        }
-        NetDaemonProgressInterval =
-            timeGetTime() - NetDaemonProgressLastTick > 5000 ? 5000 : 1000;
+        progress_backoff();
         break;
 
     case 0x1203:
         log_say("From Server: LOCK FAILED GLOBAL", 0, 0, 0);
         channels_[0].leading_words_[2] = 3;
-        if (!NetDaemonProgressLastTick) {
-            NetDaemonProgressLastTick = timeGetTime();
-        }
-        NetDaemonProgressInterval =
-            timeGetTime() - NetDaemonProgressLastTick > 5000 ? 5000 : 1000;
+        progress_backoff();
         break;
 
     case 0x1204:
         log_say("From Server: LOCK FAILED UPKEEP", 0, 0, 0);
         channels_[0].leading_words_[2] = 4;
-        if (!NetDaemonProgressLastTick) {
-            NetDaemonProgressLastTick = timeGetTime();
-        }
-        NetDaemonProgressInterval =
-            timeGetTime() - NetDaemonProgressLastTick > 5000 ? 5000 : 1000;
+        progress_backoff();
         break;
 
     case 0x1205:
@@ -3931,18 +3956,14 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
                                  & 0xFF) > 2) {
                     int next_faction;
                     for (next_faction = 1; next_faction < 8; ++next_faction) {
-                        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_
-                             & (1 << next_faction))
-                            && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_
-                                & (1 << next_faction))
+                        if (is_alive(next_faction) && is_human(next_faction)
                             && !(channels_[0].leading_words_[0] & (1 << next_faction))) {
-                            break;
+                            goto slowpoke_found;
                         }
                     }
-                    if (next_faction >= 8) {
-                        MultiWindow.draw(0);
-                        break;
-                    }
+                    MultiWindow.draw(0);
+                    break;
+                slowpoke_found:
                     parse_says(0, get_title_inline(next_faction), -1, -1);
                     parse_says(1, get_name_inline(next_faction), -1, -1);
                     parse_says(2, get_noun(next_faction), -1, -1);
@@ -5070,16 +5091,20 @@ move_veh_ack:
         process_slots_[packet->faction_].identity_ = (int8_t)packet->payload_18_;
         process_slots_[packet->faction_].field_26_ = (uint8_t)packet->payload_14_;
         process_slots_[packet->faction_].field_25_ = (uint8_t)packet->payload_10_;
-        if (packet->opcode_ & 0x2000) {
-            packet->opcode_ = (int16_t)((packet->opcode_ & 0xDFFF) | 0x4000);
+        // WORKAROUND(type): the image tests `test ah,0x20` and rewrites with
+        // `and eax,0xdfff`: an unsigned 16-bit opcode (the switch reads it so).
+        if ((unsigned short)packet->opcode_ & 0x2000) {
+            packet->opcode_ = (int16_t)(((unsigned short)packet->opcode_ & 0xDFFF) | 0x4000);
             send_message(message, message_size, 0);
         }
         break;
 
     case 0x1F02: case 0x2F02: case 0x4F02:
         NetWinSessionOptions.fields_ = *(NetWinSessionOptionsState *)(message + 0x10);
-        if (packet->opcode_ & 0x2000) {
-            packet->opcode_ = (int16_t)((packet->opcode_ & 0xDFFF) | 0x4000);
+        // WORKAROUND(type): the image tests `test ah,0x20` and rewrites with
+        // `and eax,0xdfff`: an unsigned 16-bit opcode (the switch reads it so).
+        if ((unsigned short)packet->opcode_ & 0x2000) {
+            packet->opcode_ = (int16_t)(((unsigned short)packet->opcode_ & 0xDFFF) | 0x4000);
             send_message(message, message_size, 0);
         } else {
             NetWinDialog.on_redraw();
@@ -5088,8 +5113,10 @@ move_veh_ack:
 
     case 0x1F03: case 0x2F03: case 0x4F03:
         NetWinSessionData.fields_ = *(NetWinSessionBlock *)(message + 0x10);
-        if (packet->opcode_ & 0x2000) {
-            packet->opcode_ = (int16_t)((packet->opcode_ & 0xDFFF) | 0x4000);
+        // WORKAROUND(type): the image tests `test ah,0x20` and rewrites with
+        // `and eax,0xdfff`: an unsigned 16-bit opcode (the switch reads it so).
+        if ((unsigned short)packet->opcode_ & 0x2000) {
+            packet->opcode_ = (int16_t)(((unsigned short)packet->opcode_ & 0xDFFF) | 0x4000);
             send_message(message, message_size, 0);
         } else {
             NetWinDialog.on_redraw();
@@ -5213,13 +5240,10 @@ move_veh_ack:
             if (NetDaemonNet.primary_state_.leading_words_[0] == 0) {
                 break;
             }
-            uint8_t alive = GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
             int next_faction;
             for (next_faction = GameDataStateStorage.fields_.net_turn_faction_ + 1;
                  next_faction < 8; next_faction++) {
-                unsigned int bit = 1 << next_faction;
-                if ((alive & bit)
-                    && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & bit)) {
+                if (is_alive(next_faction) && is_human(next_faction)) {
                     break;
                 }
             }
@@ -5237,13 +5261,10 @@ move_veh_ack:
         if (bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF) <= 2) {
             break;
         }
-        uint8_t alive = GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
         int next_faction;
         for (next_faction = 1; next_faction < 8; next_faction++) {
-            unsigned int bit = 1 << next_faction;
-            if ((alive & bit)
-                && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & bit)
-                && !(channels_[0].leading_words_[0] & bit)) {
+            if (is_alive(next_faction) && is_human(next_faction)
+                && !(channels_[0].leading_words_[0] & (1 << next_faction))) {
                 break;
             }
         }
