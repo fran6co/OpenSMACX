@@ -1579,7 +1579,7 @@ extern "C" void __cdecl sub_5cdd10(int count, int *cursor,
 }
 
 // Register evidence: runtime in ECX, encoded byte count in EDX.
-// ORIGINAL: 0x005CA310 sub_5ca310 0x005CA310-0x005CA6BC
+// ORIGINAL: 0x005CA310 sub_5ca310 0x005CA310-0x005CA6BC BYTE_EXACT
 // symbol    @sub_5ca310@8
 // kind      game
 // TRIED: __fastcall(ecx,edx) two-arg signature + large local buffer for __alloca_probe reaches MISMATCH #3 (prologue); several output scratch locals (sub_5cdd10/5cdb90/5ce6e3 args) use fresh locals rather than the exact original stack slot, since those callees are opaque and their slot placement doesn't affect this body.
