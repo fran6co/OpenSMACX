@@ -79,18 +79,18 @@ class EditBox : public GraphicWin {
   // RECOVERY_MEMBER: v1 EditBox text_ 0xA14 0x00614E50
   char text_[256];  // 0xA14
   uint32_t field_B14_;  // 0xB14
-  uint32_t field_B18_;  // 0xB18
+  int field_B18_;  // 0xB18
   uint32_t field_B1C_;  // 0xB1C
   uint32_t field_B20_;  // 0xB20
   uint32_t field_B24_;  // 0xB24
   uint32_t field_B28_;  // 0xB28
   uint32_t field_B2C_;  // 0xB2C
-  uint32_t field_B30_;  // 0xB30
-  uint32_t field_B34_;  // 0xB34
+  int field_B30_;  // 0xB30
+  int field_B34_;  // 0xB34
   uint32_t field_B38_;  // 0xB38
   uint32_t field_B3C_;  // 0xB3C
-  uint32_t field_B40_;  // 0xB40
-  uint32_t field_B44_;  // 0xB44
+  int field_B40_;  // 0xB40
+  int field_B44_;  // 0xB44
   uint32_t field_B48_;  // 0xB48
   // RECOVERY_MEMBER: v2 EditBox time_ Time 0xB4C 0x00614E50
   Time time_;  // 0xB4C, the IDB's trailing member; the class ends at 0xB74

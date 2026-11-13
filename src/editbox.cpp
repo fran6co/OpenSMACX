@@ -126,8 +126,8 @@ void EditBox::pass_dialog_focus() {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00616030.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
 // symbol    ?text_position@EditBox@@QAEHH@Z
 int EditBox::text_position(int x) {
-    if (x < static_cast<int>(field_B34_)) return static_cast<int>(field_B18_);
-    x -= static_cast<int>(field_B34_);
+    if (x < field_B34_) return field_B18_;
+    x -= field_B34_;
     char masked[256];
     char *text;
     if (field_B3C_ & 2) {
@@ -136,7 +136,7 @@ int EditBox::text_position(int x) {
         for (char *p = masked; *p; ++p) *p = '*';
         text = masked;
     } else {
-        text = text_ + static_cast<int>(field_B18_);
+        text = text_ + field_B18_;
     }
     if (*text == 0) return 0;
     const int length = static_cast<int>(strlen(text));
@@ -145,9 +145,9 @@ int EditBox::text_position(int x) {
         if (Buffer::text_width(text, count) > x) break;
         ++count;
     }
-    if (count < static_cast<int>(field_B44_))
-        return static_cast<int>(field_B18_) + count - 1;
-    return static_cast<int>(field_B18_) + count;
+    if (count < field_B44_)
+        return field_B18_ + count - 1;
+    return field_B18_ + count;
 }
 
 // 615F50. Preserve the second mask read, strict width inequality, width read
@@ -166,15 +166,15 @@ int EditBox::text_fits() {
     if (field_B3C_ & 2) {
         int available = dib_.bmiHeader.biWidth;
         int width = Buffer::text_width(masked,
-            static_cast<int>(field_B44_ - field_B18_));
-        if (width >= available - static_cast<int>(field_B34_) * 2) {
+            field_B44_ - field_B18_);
+        if (width >= available - field_B34_ * 2) {
             return 0;
         }
     } else {
         int available = dib_.bmiHeader.biWidth;
-        int width = Buffer::text_width(text_ + static_cast<int>(field_B18_),
-            static_cast<int>(field_B44_ - field_B18_));
-        if (width >= available - static_cast<int>(field_B34_) * 2) {
+        int width = Buffer::text_width(text_ + field_B18_,
+            field_B44_ - field_B18_);
+        if (width >= available - field_B34_ * 2) {
             return 0;
         }
     }
@@ -194,23 +194,24 @@ int EditBox::on_key_click(int character, int) {
     }
     char ch = static_cast<char>(character);
     if (field_B40_ != field_B44_) {
-        if (static_cast<int>(field_B40_) < static_cast<int>(field_B44_)) {
-            text_[static_cast<int>(field_B40_)] = ch;
-            if (static_cast<int>(field_B44_ - field_B40_) > 1) {
-                memmove(text_ + static_cast<int>(field_B40_) + 1,
-                    text_ + static_cast<int>(field_B44_),
-                    strlen(text_ + static_cast<int>(field_B44_)) + 1);
+        if (field_B40_ < field_B44_) {
+            text_[field_B40_] = ch;
+            if (field_B44_ - field_B40_ > 1) {
+                memmove(text_ + field_B40_ + 1,
+                    text_ + field_B44_,
+                    strlen(text_ + field_B44_) + 1);
             }
-            field_B40_ = field_B44_ = field_B40_ + 1;
+            field_B44_ = field_B40_ + 1;
         } else {
-            text_[static_cast<int>(field_B44_)] = ch;
-            if (static_cast<int>(field_B40_ - field_B44_) > 1) {
-                memmove(text_ + static_cast<int>(field_B44_) + 1,
-                    text_ + static_cast<int>(field_B40_),
-                    strlen(text_ + static_cast<int>(field_B40_)) + 1);
+            text_[field_B44_] = ch;
+            if (field_B40_ - field_B44_ > 1) {
+                memmove(text_ + field_B44_ + 1,
+                    text_ + field_B40_,
+                    strlen(text_ + field_B40_) + 1);
             }
-            field_B40_ = field_B44_ = field_B44_ + 1;
+            ++field_B44_;
         }
+        field_B40_ = field_B44_;
     } else {
         if (strlen(text_) == 255) {
             MessageBeep(0);
@@ -280,7 +281,7 @@ int EditBox::on_key_down(int key) {
     }
     case 0x25:
     case 0x64: {
-        int delta = static_cast<int>(field_B44_);
+        int delta = field_B44_;
         if (!delta) {
             if (!(field_B38_ & 1)) {
                 field_B40_ = 0;
@@ -301,7 +302,7 @@ int EditBox::on_key_down(int key) {
             }
         }
         field_B44_ -= delta;
-        if (static_cast<int>(field_B44_) < static_cast<int>(field_B18_)) field_B18_ = field_B44_;
+        if (field_B44_ < field_B18_) field_B18_ = field_B44_;
         if (!(flags & 1)) field_B40_ = field_B44_;
         redraw();
         break;
@@ -312,7 +313,7 @@ int EditBox::on_key_down(int key) {
             return 1;
         }
         if (field_B44_ != field_B40_) {
-            if (static_cast<int>(field_B40_) < static_cast<int>(field_B44_)) {
+            if (field_B40_ < field_B44_) {
                 memmove(&text_[field_B40_], &text_[field_B44_], strlen(&text_[field_B44_]) + 1);
                 field_B44_ = field_B40_ + 1;
             } else {
@@ -332,7 +333,7 @@ int EditBox::on_key_down(int key) {
         }
         --field_B44_;
         field_B40_ = field_B44_;
-        if (static_cast<int>(field_B44_) < static_cast<int>(field_B18_)) field_B18_ = field_B44_;
+        if (field_B44_ < field_B18_) field_B18_ = field_B44_;
         redraw();
         break;
     case 0x2e:
@@ -341,7 +342,7 @@ int EditBox::on_key_down(int key) {
             return 1;
         }
         if (field_B44_ != field_B40_) {
-            if (static_cast<int>(field_B40_) < static_cast<int>(field_B44_)) {
+            if (field_B40_ < field_B44_) {
                 memmove(&text_[field_B40_], &text_[field_B44_], strlen(&text_[field_B44_]) + 1);
                 field_B44_ = field_B40_;
             } else {
@@ -355,7 +356,7 @@ int EditBox::on_key_down(int key) {
             memmove(&text_[field_B44_], &text_[field_B44_ + 1], strlen(&text_[field_B44_ + 1]) + 1);
         }
         field_B40_ = field_B44_;
-        if (static_cast<int>(field_B44_) < static_cast<int>(field_B18_)) field_B18_ = field_B44_;
+        if (field_B44_ < field_B18_) field_B18_ = field_B44_;
         redraw();
         break;
     case 0x24:
@@ -371,7 +372,7 @@ int EditBox::on_key_down(int key) {
         while (p > text_) {
             int available = dib_.bmiHeader.biWidth;
             int width = Buffer::text_width(p);
-            if (width >= available - static_cast<int>(field_B34_) * 2) break;
+            if (width >= available - field_B34_ * 2) break;
             --p;
         }
         if (p != text_) ++p;
@@ -414,7 +415,7 @@ void EditBox::on_redraw() {
     Buffer::restore_clip();
     GraphicWin::fill(field_B1C_);
     RECT area = rect2_;
-    for (int i = 0; i < static_cast<int>(field_B30_); i++) {
+    for (int i = 0; i < field_B30_; i++) {
         Buffer::box(&area, field_B28_, field_B2C_);
         area.left++;
         area.right--;
@@ -444,7 +445,7 @@ void EditBox::on_redraw() {
     if (field_B40_ != field_B44_) {
         int x;
         int width;
-        if (static_cast<int>(field_B40_) > static_cast<int>(field_B44_)) {
+        if (field_B40_ > field_B44_) {
             if (field_B3C_ & 2) {
                 x = Buffer::text_width(masked, field_B44_ - field_B18_);
                 x += field_B34_;
@@ -455,7 +456,7 @@ void EditBox::on_redraw() {
                 width = Buffer::text_width(text_ + field_B44_, field_B40_ - field_B44_);
             }
         } else {
-            const int start = max(static_cast<int>(field_B40_), static_cast<int>(field_B18_));
+            const int start = max(field_B40_, field_B18_);
             if (field_B3C_ & 2) {
                 x = Buffer::text_width(masked, start - field_B18_);
                 x += field_B34_;
