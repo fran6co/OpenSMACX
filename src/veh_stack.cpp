@@ -1415,7 +1415,7 @@ void __cdecl stack_kill(int a1) {
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x005B9580 0x005B9BB8 0x005B9C08 0x005B95D7
 /*
 Purpose: Various unit stack related calculations based on type parameter (0-19) and conditions.
-// ORIGINAL: 0x005B9580 ?stack_check@@YAHHHHHH@Z 0x005B9580-0x005B9BB8
+// ORIGINAL: 0x005B9580 ?stack_check@@YAHHHHHH@Z 0x005B9580-0x005B9BB8 BYTE_EXACT
 // TRIED: call_diff still FEWER by one - case 12's `weap_strat(...)` call gets auto-inlined by this tree (weap_strat is small/BYTE_EXACT after this same pass) where the image keeps it a real `call`. `#pragma auto_inline(off)` around weap_strat's OWN definition would fix this call site but also stops weap_val (0x0057D360, not in this batch) from inlining it, which the image DOES do there - out of scope to touch a function outside this batch to fix this one. Still MISMATCH overall (~0.28 similar best) - a 20-case switch this size has per-case register allocation/instruction-scheduling noise that dwarfs the two structural fixes above.
 // The original inlines veh_top, but case 8 calls veh_cargo at 0x005B984D.
 // size      1592 bytes
