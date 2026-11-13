@@ -1088,6 +1088,15 @@ raw field access where the original used inline accessors.
   variable per role reused by every loop.
 - **A flag kept in a dead incoming-argument slot** and re-tested after a
   loop is that parameter reused.
+- **/Ob2 has a per-callee size cap separate from caller budget**: a
+  function no caller in the unit expands is over the cap by its own
+  source size. Find the excess by deleting one statement at a time and
+  checking C4711; member calls on subobjects/global objects cost more
+  than plain calls.
+- **Import vs thunk calls bind to the latest declaration**: a plain
+  redeclaration after the SDK's dllimport one sends every later call in
+  the unit (inline bodies included) through the thunk; one unit cannot mix
+  both by declaration order.
 - **Canonicalised forms (not levers).** `f(a) < f(b)` and its mirrored or
   negated forms give the same call order; `a * b` vs `b * a` compile
   identically.
