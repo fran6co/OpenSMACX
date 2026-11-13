@@ -494,6 +494,27 @@ int EditGroup::calculate_dimensions() {
     return 0;
 }
 
+// WORKAROUND(decl): 611D94..611D9A null-tests the cell RECT's address and
+// returns 3, the shape of an inline RECT-taking EditBox::init overload that
+// FileWin::init (613A3D) and NetWin::exec (482A3E) expand too.
+static inline int editgroup_init_box(EditBox *box, RECT *rect, Win *parent,
+                                     int focus_wrap) {
+    if (rect == 0) {
+        return 3;
+    }
+    return box->init(rect->left, rect->top, rect->right - rect->left,
+                     rect->bottom - rect->top, parent, focus_wrap);
+}
+
+// WORKAROUND(decl): 611EB8..611EDE keeps the box in one register for the
+// cursor reset, strlen and the redraw call, the shape of one inline EditBox
+// member that selects the whole text and redraws.
+static inline void editgroup_select_all(EditBox *box) {
+    box->field_B40_ = 0;
+    box->field_B44_ = strlen(box->text_);
+    box->redraw();
+}
+
 // ORIGINAL: 0x00611AF0 ?attach@EditGroup@@QAEHPAUGraphicWin@@HHH@Z 0x00611AF0-0x00611F79;0x00663047-0x0066305C FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00611af0.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x611af0 complete control/data-access review and src/editgroup.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // TRIED: no source-level trick reproduced the SEH frame (the trigger here is a heap `new EditBox` + placement ctor, not a local by-value object of non-trivial type, so LEVER #1 does not apply); the two virtual-base displacements (vtable[4], vtable[8], read fresh per the disassembly's own re-fetch pattern) were kept as raw offset arithmetic rather than named fields, matching the "class deliberately empty" note; VCall extended to slot062 (used on the freshly built EditBox) purely by declaration-order padding. The row/column geometry (x0/cellRight/halfStore/y0) is a best-effort re-derivation from the register shuffle and likely has the least fidelity of the eight; the call ORDER and TARGETS (calculate_dimensions, GraphicWin::init, three set_text_color + set_font pairs, the delete-old/new/ctor/init/set_text sequence per cell) are transcribed directly from the disassembly. Diverges at #0.
@@ -508,31 +529,30 @@ int EditGroup::attach(GraphicWin *parent, int x, int y, int flags) {
                                         Dialog::field_60_, 0, flags, parent, 0, 0);
     if (result != 0) return result;
 
-    Buffer *const buffer = static_cast<Buffer *>(static_cast<GraphicWin *>(this));
-    buffer->set_text_color(Dialog::text_color_a_, Dialog::text_color_b_,
+    Buffer::set_text_color(Dialog::text_color_a_, Dialog::text_color_b_,
                            Dialog::text_color_c_, Dialog::text_color_d_);
-    buffer->set_text_color2(Dialog::text_color_2a_, Dialog::text_color_2b_,
+    Buffer::set_text_color2(Dialog::text_color_2a_, Dialog::text_color_2b_,
                             Dialog::text_color_2c_, Dialog::text_color_2d_);
-    buffer->set_text_color3(Dialog::text_color_3a_, Dialog::text_color_3b_,
+    Buffer::set_text_color3(Dialog::text_color_3a_, Dialog::text_color_3b_,
                             Dialog::text_color_3c_, Dialog::text_color_3d_);
-    buffer->set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
+    Buffer::set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
 
     const int margin = static_cast<int>(Dialog::field_44_);
     const int cell_height = static_cast<int>(Dialog::field_68_) - margin;
-    const int initial_top = margin >> 1;
-    const int initial_bottom = cell_height + initial_top;
+    const int box_width = static_cast<int>(Dialog::field_64_) - margin * 2 -
+                          label_width_;
     const int base_left = static_cast<int>(Dialog::field_34_) + margin * 2 +
                           label_width_;
-    const int base_right = static_cast<int>(Dialog::field_64_) +
-                           static_cast<int>(Dialog::field_34_);
+    const int base_top = margin >> 1;
+    RECT base;
+    base.left = base_left;
+    base.right = box_width + base_left;
+    base.top = base_top;
+    base.bottom = cell_height + base_top;
     int index = 0;
     for (int column = 0; column < Dialog::column_count_; ++column) {
-        const int column_offset =
-            column * static_cast<int>(Dialog::field_64_);
-        const int left = base_left + column_offset;
-        const int right = base_right + column_offset;
-        int top = initial_top;
-        int bottom = initial_bottom;
+        RECT cell = base;
+        offset_rect(&cell, static_cast<int>(Dialog::field_64_) * column, 0);
         for (int row = 0; row < Dialog::row_count_; ++row) {
             if (boxes_[index] != 0) {
                 delete boxes_[index];
@@ -540,10 +560,7 @@ int EditGroup::attach(GraphicWin *parent, int x, int y, int flags) {
             boxes_[index] = new EditBox();
             if (boxes_[index] == 0) return 4;
 
-            const int box_width = right - left;
-            const int box_height = bottom - top;
-            const int box_result = boxes_[index]->init(
-                left, top, box_width, box_height, this, 1);
+            const int box_result = editgroup_init_box(boxes_[index], &cell, this, 1);
             if (box_result != 0) return box_result;
 
             // Original 0x611DD2 tests AH bit 0x10 of Dialog::field_20_.
@@ -560,14 +577,10 @@ int EditGroup::attach(GraphicWin *parent, int x, int y, int flags) {
             boxes_[index]->field_B2C_ = field_B0_;
             boxes_[index]->field_B30_ = field_B4_;
             boxes_[index]->field_B34_ = Dialog::field_40_;
-            boxes_[index]->field_B40_ = 0;
-            boxes_[index]->field_B44_ = strlen(boxes_[index]->text_);
-            boxes_[index]->redraw();
+            editgroup_select_all(boxes_[index]);
             boxes_[index]->show(0);
 
-            const int row_step = static_cast<int>(Dialog::field_68_);
-            top += row_step;
-            bottom += row_step;
+            offset_rect(&cell, 0, static_cast<int>(Dialog::field_68_));
             ++index;
         }
     }
@@ -578,12 +591,6 @@ int EditGroup::attach(GraphicWin *parent, int x, int y, int flags) {
 // ORIGINAL: 0x00612450 ?on_redraw@EditGroup@@QAEXXZ 0x00612450-0x00612669 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00612450.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x612450 complete control/data-access review and src/editgroup.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?on_redraw@EditGroup@@UAEXXZ
-// Guarded label write, inlined: the image converts the receiver first.
-static inline void edit_group_write_l(EditGroup *group, char *text, RECT *rect) {
-    if (text != 0) {
-        group->Buffer::write_l(text, rect, strlen(text));
-    }
-}
 
 // Advance the label cursor and read the new entry's text. The original reads
 // payload->text even when head is null; that unsafe path is kept.
@@ -614,33 +621,27 @@ void EditGroup::on_redraw() {
 
     const int base_left = static_cast<int>(Dialog::field_34_) +
                           static_cast<int>(Dialog::field_40_);
-    const int base_right = base_left + static_cast<int>(Dialog::field_64_);
     const int base_top = static_cast<int>(Dialog::field_44_) >> 1;
-    const int base_bottom = static_cast<int>(Dialog::field_68_) -
-                            static_cast<int>(Dialog::field_44_) + base_top;
+    RECT base;
+    base.left = base_left;
+    base.right = base.left + static_cast<int>(Dialog::field_64_);
+    base.top = base_top;
+    base.bottom = static_cast<int>(Dialog::field_68_) -
+                  static_cast<int>(Dialog::field_44_) + base_top;
 
     item_list_.seek_pos(-1);
 
     int column = 0;
     while (column < Dialog::column_count_) {
-        RECT label_area;
-        label_area.left = base_left;
-        label_area.top = base_top;
-        label_area.right = base_right;
-        label_area.bottom = base_bottom;
-        const int column_offset =
-            column * static_cast<int>(Dialog::field_64_);
-        label_area.left += column_offset;
-        label_area.right += column_offset;
+        RECT label_area = base;
+        offset_rect(&label_area, static_cast<int>(Dialog::field_64_) * column, 0);
 
         int row = 0;
         while (row < Dialog::row_count_) {
             char *const label = edit_group_next_label(&item_list_);
-            edit_group_write_l(this, label, &label_area);
+            Buffer::write_l(label, &label_area);
 
-            const int row_step = static_cast<int>(Dialog::field_68_);
-            label_area.top += row_step;
-            label_area.bottom += row_step;
+            offset_rect(&label_area, 0, static_cast<int>(Dialog::field_68_));
             ++row;
         }
         ++column;

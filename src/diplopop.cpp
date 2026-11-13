@@ -48,9 +48,8 @@ void __cdecl slide_hide(GraphicWin *window, int mode);
 // ORIGINAL: 0x0043F2B0 ?start@DiploPop@@QAEXH@Z 0x0043F2B0-0x0043F5B5 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0043f2b0.cpp", "image:terranx_original.exe:0x0043F2B0", "source:docs/recovery/subobject-sites.csv:MainInterface22DFC"], "reason": "Recover the genuine diplomacy popup startup using embedded Flic/Time members, borrowed faction Sprite objects and MainInterface sprite11. Native same-faction fast path, FLIC failure/fallback and stored-frame update remain distinct."}
 void DiploPop::start(int faction_id) {
-    Buffer *canvas = static_cast<Buffer *>(this);
-    BasePop::set_def_external_window(this, 0, 0, canvas->pixel_width(), canvas->pixel_height());
-    const bool alternate_size = WinScreenWidth != 800;
+    BasePop::set_def_external_window(this, 0, 0, Buffer::pixel_width(), Buffer::pixel_height());
+    const int alternate_size = WinScreenWidth != 800;
     diplomacy_check(ConsoleGlobal.faction_id_, faction_id, 0);
     if (counterpart_faction_ != faction_id) {
         counterpart_faction_ = faction_id;
@@ -67,27 +66,25 @@ void DiploPop::start(int faction_id) {
         } else {
             strcat(StringTemp, Players[faction_id].is_leader_female ? "f_" : "m_");
         }
-        int mood = static_cast<int32_t>(static_cast<uint32_t>(DiploFriction) * 3) / 20;
-        if (mood < 0) mood = 0;
-        else if (mood > 2) mood = 2;
+        const int mood = range(
+            static_cast<int32_t>(static_cast<uint32_t>(DiploFriction) * 3) / 20, 0, 2);
         char number[80];
         _itoa(mood, number, 10);
         strcat(StringTemp, number);
         strcat(StringTemp, ".flc");
-        Buffer *destination = static_cast<Buffer *>(&MainInterfaceGlobal);
-        if (flic2_.init(destination, StringTemp,
+        if (flic2_.init(static_cast<Buffer *>(&MainInterfaceGlobal), StringTemp,
                         alternate_size ? 26 : 22, alternate_size ? 90 : 80, 1)) {
             return;
         }
         flic2_.set_transparent_index(9);
-        const int x = static_cast<int32_t>(portrait_text_rect_.left + 1);
-        const int difference = static_cast<int32_t>(portrait_text_rect_.bottom - portrait_text_rect_.top);
-        const int y = static_cast<int32_t>(portrait_text_rect_.top + difference / 4 + 1);
+        RECT *r = &portrait_text_rect_;
+        const int x = r->left + 1;
+        const int y = (r->bottom - r->top) / 4 + r->top + 1;
         StringTemp[0] = '\0';
         strcat(StringTemp, Players[faction_id].filename);
         strcat(StringTemp, ".flc");
-        if (flic1_.init(destination, StringTemp, x, y, 0)) {
-            if (flic1_.init(destination, const_cast<char *>("faction.flc"), x, y, 0)) {
+        if (flic1_.init(static_cast<Buffer *>(&MainInterfaceGlobal), StringTemp, x, y, 0)) {
+            if (flic1_.init(static_cast<Buffer *>(&MainInterfaceGlobal), const_cast<char *>("faction.flc"), x, y, 0)) {
                 return;
             }
         }

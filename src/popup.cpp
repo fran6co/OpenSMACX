@@ -20,6 +20,9 @@
 // symbol    ??_GPopup@@UAEPAXI@Z
 // kind      game
 #define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
+// WORKAROUND(decl): POP2 (0x4051F5) and POP3 call next_entry (0x00402500)
+// out of line at every budget level.
+#define STRINGSTRUCT_NEXT_ENTRY_OUT_OF_LINE
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include <shellapi.h>
@@ -50,6 +53,7 @@
 #include "console.h"
 #include "game.h"
 #include "interface_palette.h"
+#include "rectangle_operations.h"
 #include "palette.h"
 #include "general.h"
 #include "faction.h"
@@ -843,13 +847,26 @@ static inline StringStructPayload *current_payload(StringList &list) {
     return list.head_ ? list.current_->string_payload() : 0;
 }
 
+// POP2 and POP3 build the same joined history text (identical loops, both
+// joining with BufferJoinSpace and calling next_entry out of line).
+static inline void popup_history_text(StringList &history, int count) {
+    for (int i = 0; i < count; i++) {
+        if (i != 0) {
+            strcat(StringTemp, BufferJoinSpace);
+        }
+        history.next_entry();
+        // The image reads payload+4 even when the current entry exists
+        // without a list head; preserve that unchecked address-4 load.
+        strcat(StringTemp,
+               history.current_ ? current_payload(history)->text : 0);
+    }
+}
+
 int __cdecl POP2(const char *a1, const char *a2, int a3) {
     // Popup's real base/member lifetime is the native local object.
     Popup pop;
 
-    pop.start(
-        PopupStartCaption, a1, -1,
-        static_cast<char *>(0), 0, static_cast<GraphicWin *>(0));
+    pop.start(a1);
 
     int total = pop.unit_ids_.entry_count_;
     *StringTemp = 0;
@@ -878,11 +895,11 @@ int __cdecl POP2(const char *a1, const char *a2, int a3) {
                 ++idx;
             } while (idx < 8);
         } else if (a3 >= 0) {
-            const uint8_t idx2 = Bases[a3].faction_id_current;
+            const int idx2 = Bases[a3].faction_id_current;
             if (is_human(idx2)) {
                 queue_message(MessageWinDeferredBaseMessages[idx2], a3 | 0x40000000);
             }
-        } else if (a3 != -1) {
+        } else if (a3 < -1) {
             int neg = -1 - a3;
             if (is_human(neg) && is_alive(neg)) {
                 queue_message(MessageWinDeferredBaseMessages[neg], 0x10000000);
@@ -898,19 +915,17 @@ int __cdecl POP2(const char *a1, const char *a2, int a3) {
     }
 
     if (a2 != 0) {
-        int w;
-        int h;
-        if (Buffer::get_pcx_dimensions(a2, &h, &w) ==
+        int size[2];
+        if (Buffer::get_pcx_dimensions(a2, &size[1], &size[0]) ==
             0) {
             // These are the owned picture and caller-picture roles of the real Popup.
             Sprite &sprite = pop.owned_picture();
-            if (sprite.init(const_cast<char *>(a2), h, w) == 0) {
+            if (sprite.init(const_cast<char *>(a2), size[1], size[0]) == 0) {
                 pop.set_caller_picture(&sprite);
             }
         }
     }
-    int result = pop.exec(0, nullptr);
-    return result;
+    return pop.exec();
 }
 
 // ORIGINAL: 0x004055A0 ?POP3@@YAXPBDPBDHHH@Z 0x004055A0-0x00405910;0x00650839-0x006508CD
@@ -922,20 +937,10 @@ void __cdecl POP3(const char *section, const char *unused, int recipient,
     Popup popup;
     popup.start(section);
 
-    StringList &history = popup.unit_ids_;
-    const int history_count = history.entry_count_;
+    const int total = popup.unit_ids_.entry_count_;
     StringTemp[0] = 0;
-    history.seek_pos(-1);
-    for (int history_index = 0; history_index < history_count;
-         ++history_index) {
-        if (history_index != 0) {
-            strcat(StringTemp, " ");
-        }
-        history.next_entry();
-        // The image reads payload+4 even without a list head.
-        strcat(StringTemp,
-               history.current_ ? current_payload(history)->text : 0);
-    }
+    popup.unit_ids_.seek_pos(-1);
+    popup_history_text(popup.unit_ids_, total);
 
     if (IsMultiplayerPBEM != 0) {
         if (recipient > 0) {
@@ -1293,8 +1298,8 @@ int Popup::on_draw_background() {
     anchor.right -= 9;
   }
   anchor.left -= 3;
-  anchor.top -= 3;
   anchor.right += 3;
+  anchor.top -= 3;
   if (field_30D4_ != 0) {
     box_sprite(&anchor, &InterfaceBoxStyles[0]);
     y += field_30E4_ + field_30D4_;
@@ -1308,46 +1313,30 @@ int Popup::on_draw_background() {
   // 0x406181 skips the stores at 0x40619D..0x4061AD; with no anchor,
   // 0x406205 reads the unwritten rectangle. Preserve that original error path.
   if (dialogs_.kind_ != -1) {
-    description.left = x;
-    description.top = y;
-    description.right = dialogs_.Dialog::field_5C_ + x;
-    description.bottom = dialogs_.Dialog::field_60_ + y;
+    set_rectangle_dimensions(&description, x, y, dialogs_.Dialog::field_5C_,
+                             dialogs_.Dialog::field_60_);
     if (field_30D4_ != 0) {
       description.left = anchor.left;
       description.right = anchor.right;
     }
   }
 
-  int final_left;
-  int final_top;
-  int final_right;
-  int final_bottom;
   if (field_30D4_ != 0) {
     if (dialogs_.kind_ != -1 && caller_sprite_ == 0) {
       UnionRect(&outer, &description, &anchor);
-      final_left = outer.left;
-      final_top = outer.top;
-      final_right = outer.right;
-      final_bottom = outer.bottom;
     } else {
-      final_left = anchor.left;
-      final_top = anchor.top;
-      final_right = anchor.right;
-      final_bottom = anchor.bottom;
+      outer = anchor;
     }
   } else {
     // Native reads these locals here even when kind_ == -1 skipped their
     // writes; preserve only that original no-anchor path.
-    final_left = description.left;
-    final_top = description.top;
-    final_right = description.right;
-    final_bottom = description.bottom;
+    outer = description;
   }
 
-  outer.left = final_left - 3;
-  outer.right = final_right + 3;
-  outer.top = final_top - 3;
-  outer.bottom = final_bottom + 3;
+  outer.left -= 3;
+  outer.right += 3;
+  outer.top -= 3;
+  outer.bottom += 3;
   box_sprite(&outer, &InterfaceBoxStyles[3]);
   }
   return external_window_ == 0;
