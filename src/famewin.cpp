@@ -250,6 +250,16 @@ int FameWin::on_key_click(int, int code) {
   return 1;
 }
 
+// The image loads right before left (and bottom before top) for the award
+// and faction cell grids, the order a small RECT* width helper gives.
+static inline int famewin_rect_width(const RECT *rect) {
+  return rect->right - rect->left;
+}
+
+static inline int famewin_rect_height(const RECT *rect) {
+  return rect->bottom - rect->top;
+}
+
 // ORIGINAL: 0x00448400 ?init@FameWin@@QAEHXZ 0x00448400-0x00448D60;0x00654E90-0x00654EA5 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00448400.cpp", "Pinned original owner review: original clip resets and absent-record branches, CharUpperA import, difficulty-label capitalization and exact demote tail copying."], "reason": "Recover FameWin owner behavior through existing GraphicWin/Buffer bases, owned buttons and sprites, and typed HallOfFame/Player records; retain historical seed identity and extents without a measurement claim."}
 // TRIED: full transcription landed (MISMATCH #1, no SEH frame reproduced). Used a plain local `Buffer localBuf;` since ~Buffer() is declared here (unlike the sibling StringStruct cases) - RAII reproduces the real destructor call on every return path, matching the disassembly exactly. Did not use the now-retired hypothesis umbrella's FameWin field names per the brief's warning; every FameWin/BaseButton field access is a raw self+offset cast, cross-checked against the raw bytes (not Ghidra) for both BaseButton::init 8-arg calls.
@@ -297,8 +307,8 @@ failed:
     return 1;
   }
 
-  Sprite *sprite = sprites_;
   field_A14_ = 1;
+  Sprite *sprite = sprites_;
   for (int column = 0; column < 6; ++column) {
     field_A18_ = 1;
     for (int row = 0; row < 2; ++row) {
@@ -309,12 +319,9 @@ failed:
     field_A14_ += 0x50;
   }
 
-  const int cell_width =
-      (awards_rect_.right - awards_rect_.left) / 6;
-  field_A1C_ = cell_width;
-  field_A14_ = (cell_width - 0x4F) / 2 + awards_rect_.left;
-  field_A18_ = (awards_rect_.bottom - awards_rect_.top - 0x4F) / 2 +
-               awards_rect_.top;
+  field_A1C_ = famewin_rect_width(&awards_rect_) / 6;
+  field_A14_ = ((int)field_A1C_ - 0x4F) / 2 + awards_rect_.left;
+  field_A18_ = (famewin_rect_height(&awards_rect_) - 0x4F) / 2 + awards_rect_.top;
 
   for (int award = 0; award < 6; ++award) {
     FlatButton &button = flatButtons2_[award];
@@ -331,16 +338,14 @@ failed:
     button.hide();
   }
 
-  const int cell_height =
-      (factions_rect_.right - factions_rect_.left) / 7;
-  field_A1C_ = cell_height;
-  field_A14_ = (cell_height - 0x46) / 2 + factions_rect_.left;
-  field_A18_ = (factions_rect_.bottom - factions_rect_.top - 0x46) / 2 +
-               factions_rect_.top;
+  field_A1C_ = famewin_rect_width(&factions_rect_) / 7;
+  field_A14_ = ((int)field_A1C_ - 0x46) / 2 + factions_rect_.left;
+  field_A18_ = (famewin_rect_height(&factions_rect_) - 0x46) / 2 + factions_rect_.top;
   buttonGroup_.init(0x15, 0);
   selectedRecord_ = static_cast<uint32_t>(-1);
 
-  for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+  for (int i = 0; i < MaxPlayerNum - 1; ++i) {
+    const int faction = i + 1;
     StringTemp[0] = '\0';
     parse_set(Players[faction].is_leader_female, FALSE);
     strcat(StringTemp, Players[faction].title_leader);
@@ -353,9 +358,9 @@ failed:
     parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
     strcat(StringTemp, Players[faction].noun_faction);
 
-    FlatButton &button = flatButtons1_[faction - 1];
+    FlatButton &button = flatButtons1_[i];
     set_rectangle_dimensions(&cell_rect_,
-                  (faction - 1) * static_cast<int>(field_A1C_) + field_A14_,
+                  i * static_cast<int>(field_A1C_) + field_A14_,
                   field_A18_, 0x46, 0x46);
     button.init(0, faction, cell_rect_.left, cell_rect_.top, cell_rect_.right - cell_rect_.left,
                 cell_rect_.bottom - cell_rect_.top, this, 0);
@@ -484,14 +489,17 @@ void FameWin::on_redraw() {
       flatButtons2_[award].redraw();
     }
 
+    const int landscape_x = landscape_rect_.left + 9;
+    const int landscape_y = landscape_rect_.top + 10;
     FactionsArt[faction].diplomacy_landscape.draw(
         this, FactionsArt[faction].diplomacy_landscape.transparent_index(),
-        landscape_rect_.left + 9, landscape_rect_.top + 10);
-    set_clip(&details_rect_);
-    field_A14_ = details_rect_.left + 3;
-    field_A18_ = details_rect_.top + 3;
-    field_A1C_ = details_rect_.right - details_rect_.left - 6;
-    field_A20_ = details_rect_.bottom - details_rect_.top - 6;
+        landscape_x, landscape_y);
+    RECT *details = &details_rect_;
+    set_clip(details);
+    field_A14_ = details->left + 3;
+    field_A18_ = details->top + 3;
+    field_A1C_ = details->right - details->left - 6;
+    field_A20_ = details->bottom - details->top - 6;
 
     if ((record->award_flags & 1) != 0) {
       StringTemp[0] = '\0';

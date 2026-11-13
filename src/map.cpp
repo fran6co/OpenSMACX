@@ -654,7 +654,7 @@ BOOL __cdecl convoy(int veh_id, int base_id) {
     }
     int region_base = region_at(Bases[base_id].x, Bases[base_id].y);
     if (region_base == region_at(Bases[home_base_id].x, Bases[home_base_id].y)
-        && ((triad == TRIAD_SEA) == (region_base >= 64))) {
+        && ((region_base >= 64) == (get_triad(veh_id) == TRIAD_SEA))) {
         return true; // same region, by land or sea
     }
     if (triad) {
