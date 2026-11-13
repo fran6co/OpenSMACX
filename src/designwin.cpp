@@ -1999,7 +1999,7 @@ void DesignWin::on_iface_group_clicked(int, int, int) {
 // ---- the interface table's own slots -------------------------------------
 
 // Real slot44 workshop handler; compiler owns the local Popup lifetime.
-// ORIGINAL: 0x00438460 ?on_button_clicked@DesignWin@@QAEXH@Z 0x00438460-0x004395E1;0x00654010-0x006541FC
+// ORIGINAL: 0x00438460 ?on_button_clicked@DesignWin@@QAEXH@Z 0x00438460-0x004395E1;0x00654010-0x006541FC BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/unrecovered/00438460.cpp", "task:designwin-button-owner", "Front virtual slot44 dispatches here; real Players/PlayersData, VehPrototypes, Weapon/Armor, design-selection globals and NetDaemon own referenced state. Retire, upgrade and component branches retain native order; helper design selection remains unfinished."], "reason": "Recover the complete DesignWin button operation using actual C++ owners and automatic Popup lifetime. Original main/cold spans and seed lessons remain restoration evidence, not game acceptance."}
 // symbol    ?on_button_clicked@DesignWin@@UAEXH@Z
 // TRIED: fresh-temporary destructor sequencing for the Popup/Scroll/ BasePop/Dialogs teardown tail (same technique as Console::editor_diff, 0x004DD6F0) instead of hand-replaying the SEH funclet's exact interleave - compiles, MISMATCH #10 push/mov, sim ~0.59 on the framed row.
