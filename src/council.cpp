@@ -1067,6 +1067,8 @@ void __cdecl council_action(int proposal, int faction_id) {
                 } else {
                     GameDataStateStorage.fields_.game_state_ |= STATE_UNK_1;
                     EndgameExitReason = 10;
+                    PlayersData[faction_id].flags |= PFLAG_UNK_20000;
+                    return;
                 }
             } else {
                 council_parse_leader(faction_id);
@@ -1076,11 +1078,9 @@ void __cdecl council_action(int proposal, int faction_id) {
                 } else {
                     GameDataStateStorage.fields_.game_state_ |= STATE_UNK_1;
                     EndgameExitReason = 11;
+                    PlayersData[faction_id].flags |= PFLAG_UNK_20000;
+                    return;
                 }
-            }
-            if (!candidate_found) {
-                PlayersData[faction_id].flags |= PFLAG_UNK_20000;
-                return;
             }
         }
         if (!candidate_found) {
@@ -1112,6 +1112,7 @@ void __cdecl council_action(int proposal, int faction_id) {
     }
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0052C880 0x0052DA98 0x0052DAC0 0x0052CE00
 // ORIGINAL: 0x0052C880 ?call_council@@YAXH@Z 0x0052C880-0x0052DA98;0x0065DB70-0x0065DF45
 // RECOVERY_BINDING: v1 {"reason":"Recover the complete faction-taking council dialog in its existing owner with genuine automatic Popup and Sprite lifetimes, typed game/faction storage and live post-modal reads.","evidence":["Pinned52C880 and its65DB70 lifetime tail establish the proposal selection, cooldown and network dispatch paths.","Existing Rules.min_turns_councils and Players/PlayersData members account for the observed storage; no executable-address aliases or manual vtable writes.","The original s14 local is initialized only on eligible proposal1 paths; alternate_selection retains that unresolved stack-residue obligation rather than inventing a default."]}
 // TRIED: literal register/goto transcription of all ~85 branches and the 10-entry switch resolved from the image; Popup+embedded Scroll+ 2 embedded FlatButton locals (BasePop+0x3230=Scroll start, Scroll+0xAAC/0x15F8=flat_button_left_/right_, matching the SEH thunks at 0x65DB99/0x65DBA7); vtable-reassert writes before every close() and the per-site EH state bytes are compiler artifacts, not transcribed. #18 first divergence still open.

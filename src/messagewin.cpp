@@ -435,8 +435,7 @@ int MessageWin::init() {
     RECT *rect = &bounds_;
     *rect = MainInterfaceGlobal.message_bounds_;
 
-    listBox_.close();
-    listBox_.Dialog::init(rect, static_cast<Heap *>(0));
+    listBox_.init(rect, static_cast<Heap *>(0));
     listBox_.Dialog::field_38_ = 3;
     listBox_.Dialog::field_3C_ = 3;
     listBox_.Dialog::field_6C_ = 0;

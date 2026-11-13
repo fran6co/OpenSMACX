@@ -140,9 +140,9 @@ void DiploPop::init() {
 
     // The native temporary is a real Flic: init reads decoded_width(), then
     // its ordinary destructor closes the file and destroys Buffer/Palette.
+    RECT rect;
     layout_flic.init(static_cast<Buffer *>(this),
                      const_cast<char *>("faction.flc"), 0, 0, 0);
-    RECT rect;
     int frame_width = 0x28;
     if (layout_flic.decoded_width() >= 0x28) {
         frame_width = layout_flic.decoded_width();
@@ -151,16 +151,15 @@ void DiploPop::init() {
 
     rect = MainInterfaceGlobal.rect2();
     rect.right = rect.left - 3;
-    diplopop_set_rect(&right_panel_button_rect_,
-                      MainInterfaceGlobal.right_frame_rect().right
-                          - MainInterfaceGlobal.rect3().right
-                          + MainInterfaceGlobal.right_frame_rect().left,
-                      rect.top, rect.right, rect.bottom);
+    rect.left = MainInterfaceGlobal.right_frame_rect().right
+                - MainInterfaceGlobal.rect3().right
+                + MainInterfaceGlobal.right_frame_rect().left;
+    right_panel_button_rect_ = rect;
 
     rect = MainInterfaceGlobal.right_frame_rect();
     diplopop_expand_rect(&rect, -4, -4);
-    diplopop_set_rect(&frame_inset_rect_, rect.left, rect.top, rect.right,
-                      right_panel_button_rect_.top - 6);
+    rect.bottom = right_panel_button_rect_.top - 6;
+    frame_inset_rect_ = rect;
 
     content_rect_ = MainInterfaceGlobal.lower_frame_rect();
     diplopop_expand_rect(&content_rect_, -4, -4);
@@ -191,13 +190,14 @@ void DiploPop::init() {
     bioscan_picture_rect_.top = bioscan_title_rect_.bottom + 2;
 
     register_iface(4);
-    font1_.init(DefaultFontFace, 10, 0);
-    if (WinScreenWidth == 0x320) {
-        font2_.init(DefaultFontFace, 10, 0);
-        font3_.init(DefaultFontFace, 12, 1);
-    } else {
+    if (WinScreenWidth != 0x320) {
+        font1_.init(DefaultFontFace, 10, 0);
         font2_.init(DefaultFontFace, 12, 0);
         font3_.init(DefaultFontFace, 14, 1);
+    } else {
+        font1_.init(DefaultFontFace, 10, 0);
+        font2_.init(DefaultFontFace, 10, 0);
+        font3_.init(DefaultFontFace, 12, 1);
     }
 
     GraphicWin::init(0, 0, 0x2BC,
@@ -912,121 +912,112 @@ int DiploPop::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned43FA90..44007F; screenwidth800 portrait branch; Buffer wrap field at receiver454; MainInterface Buffer receiver7AEC64; font2/3 and faction portrait typed layouts. Ranking reads96C9E4 PlayerData+4, not misleading94C9E4 Mood. Repeated spying calls and live local-faction loads preserved; host controls verify drawing phases/treaty priority/call ordering."], "reason": "Recover complete two-panel diplomacy display as a genuine nonvirtual DiploPop member, using actual Buffer bases, embedded fonts/portrait assets and source-owned faction state rather than raw self offsets."}
 // TRIED: transcription mixing Ghidra's control-flow structure with a raw-asm re-derivation of the RECT field-to-stack-slot mapping for the box_sprite/draw_mono/draw calls, since Ghidra's own local_XX names there did not correspond to their literal ebp offsets (proven by cross-checking the Y-formula against the confirmed slot layout: RECT starts at ebp-0x10, not ebp-0x14 as the naming implied) - trusted raw asm for that part, and Ghidra's formulas/call order for the later (mechanical) string-building/wrap/write_l portion. The `Sprite* portrait = g_0078ee74 + leaderIdx*0x65c` stride and its iWidth_/iHeight_/cTransparentIndex_ field reads were confirmed against Sprite's catalogued layout. Reaches MISMATCH #4 ('push' vs 'mov'); did not chase the exact prologue/register-allocation shape further given the function's size.
 void DiploPop::draw_info() {
-    Buffer *const canvas = static_cast<Buffer *>(&MainInterfaceGlobal);
-    const RECT source = rect1_;
-    int left_edge = source.left;
-    const int top_edge = source.top;
-    const int bottom_edge = source.bottom;
-    int right_edge = ((source.right - left_edge) + 3) / 2 - 3 + left_edge;
+    int panel = 0;
+    RECT box = rect1_;
+    box.right = ((box.right - box.left) + 3) / 2 - 3 + box.left;
+    Buffer::set_wrap_width(15);
 
-    static_cast<Buffer *>(this)->set_wrap_width(15);
-    for (int panel = 0; panel < 2; ++panel) {
-        RECT frame = {left_edge, top_edge, right_edge, bottom_edge};
-        canvas->box_sprite(&frame, &InterfaceBoxStyles[0]);
+    do {
+        RECT r = box;
+        MainInterfaceGlobal.box_sprite(&r, &InterfaceBoxStyles[0]);
+        r.left += 3;
+        r.right -= 3;
+        r.top += 3;
+        r.bottom -= 3;
 
-        int left = left_edge + 3;
-        int right = right_edge - 3;
-        int top = top_edge + 3;
-        int bottom = bottom_edge - 3;
         const int faction = panel == 0 ? counterpart_faction_
                                        : ConsoleGlobal.faction_id_;
         Sprite *const portrait = &FactionsArt[faction].diplomacy_logo;
-
         if (WinScreenWidth == 800) {
-            const int portrait_y = ((bottom - portrait->height()) - top) / 2 + top;
-            const int portrait_x = ((right - portrait->width()) - left) / 2 + left;
-            portrait->draw_mono(canvas, portrait->transparent_index(),
-                                portrait_x, portrait_y, 0x41, 1, 1);
+            portrait->draw_mono(&MainInterfaceGlobal, portrait->transparent_index(),
+                                (r.right - portrait->width() - r.left) / 2 + r.left,
+                                (r.bottom - portrait->height() - r.top) / 2 + r.top,
+                                0x41, 1, 1);
         } else {
-            portrait->draw(canvas, portrait->transparent_index(), left,
-                           font_line_advance(font3_) + top + 3, 1, 1);
+            portrait->draw(&MainInterfaceGlobal, portrait->transparent_index(), r.left,
+                           font_line_advance(font3_) + r.top + 3, 1, 1);
         }
 
-        canvas->set_text_color(ChatItemIdTable[faction], -1, 1, 1);
-        canvas->set_font(&font3_, nullptr, nullptr, nullptr);
+        MainInterfaceGlobal.set_text_color(ChatItemIdTable[faction], -1, 1, 1);
+        MainInterfaceGlobal.set_font(&font3_, nullptr, nullptr, nullptr);
         StringTemp[0] = '\0';
         strcat(StringTemp, Players[faction].name_leader);
         CharUpperA(StringTemp);
 
-        RECT name_area = {left, top + 2, right,
-                          font_line_advance(font3_) + top};
-        int text_y = canvas->wrap_cent(StringTemp, &name_area);
+        RECT name_area = r;
+        name_area.bottom = font_line_advance(font3_) + name_area.top;
+        name_area.top += 2;
+        int y = MainInterfaceGlobal.wrap_cent(StringTemp, &name_area);
         if (WinScreenWidth != 800) {
-            left += 2 + portrait->width();
+            r.left += portrait->width() + 2;
         }
 
-        canvas->set_text_color(0xA0, -1, 1, 1);
-        right -= 3;
-        top += 3;
-        bottom -= 3;
-        const int text_x = left + 3;
-        canvas->set_font(&font2_, nullptr, nullptr, nullptr);
-        text_y += 3;
+        MainInterfaceGlobal.set_text_color(0xA0, -1, 1, 1);
+        r.left += 3;
+        r.right -= 3;
+        r.top += 3;
+        r.bottom -= 3;
+        int x = r.left;
+        y += 3;
+        Font *const body_font = &font2_;
+        MainInterfaceGlobal.set_font(body_font, nullptr, nullptr, nullptr);
 
         if (panel == 0) {
             StringTemp[0] = '\0';
             strcat(StringTemp, label_get(0xE98 / 4));
             strcat(StringTemp, ": ");
-
             const uint32_t relation =
                 PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction];
-            int relation_label;
-            if ((relation & DTREATY_PACT) != 0) {
-                relation_label = 0xA14 / 4;
-            } else if ((relation & DTREATY_TREATY) != 0) {
-                relation_label = 0xA10 / 4;
-            } else if ((relation & DTREATY_TRUCE) != 0) {
-                relation_label = 0xA0C / 4;
-            } else if ((relation & DTREATY_VENDETTA) != 0) {
-                relation_label = 0xA1C / 4;
+            LPSTR relation_label;
+            if (relation & DTREATY_PACT) {
+                relation_label = Labels.strings_ptr[0xA14 / 4];
+            } else if (relation & DTREATY_TREATY) {
+                relation_label = Labels.strings_ptr[0xA10 / 4];
+            } else if (relation & DTREATY_TRUCE) {
+                relation_label = Labels.strings_ptr[0xA0C / 4];
+            } else if (relation & DTREATY_VENDETTA) {
+                relation_label = Labels.strings_ptr[0xA1C / 4];
             } else {
-                relation_label = 0x64 / 4;
+                relation_label = Labels.strings_ptr[0x64 / 4];
             }
-            strcat(StringTemp, label_get(relation_label));
+            strcat(StringTemp, StringTable.get(relation_label));
             CharUpperA(StringTemp);
-            text_y = canvas->wrap(StringTemp, text_x, text_y, right - text_x);
+            y = MainInterfaceGlobal.wrap(StringTemp, x, y, r.right - x);
         }
 
         StringTemp[0] = '\0';
         strcat(StringTemp, label_get(0xE9C / 4));
         strcat(StringTemp, ": ");
-        const int espionage = spying(faction);
-        strcat(StringTemp, label_get(espionage == 0 ? 0xEA0 / 4 : 0x614 / 4));
-        text_y = canvas->wrap(StringTemp, text_x, text_y, right - text_x);
+        strcat(StringTemp, StringTable.get(spying(faction) ? Labels.strings_ptr[0x614 / 4]
+                                                           : Labels.strings_ptr[0xEA0 / 4]));
+        y = MainInterfaceGlobal.wrap(StringTemp, x, y, r.right - x);
 
-        if (faction == ConsoleGlobal.faction_id_ || spying(faction) != 0) {
+        if (faction == ConsoleGlobal.faction_id_ || spying(faction)) {
             StringTemp[0] = '\0';
             strcat(StringTemp, label_get(0x90 / 4));
             strcat(StringTemp, ": ");
-            char amount[80];
-            _itoa(PlayersData[faction].energy_reserves - PlayersData[faction].hurry_cost_total,
-                  amount, 10);
-            strcat(StringTemp, amount);
-            text_y = canvas->write_l(StringTemp, text_x, text_y,
-                                     static_cast<int>(strlen(StringTemp)));
-            text_y += font_line_advance(font2_);
+            say_num(PlayersData[faction].energy_reserves
+                    - PlayersData[faction].hurry_cost_total);
+            MainInterfaceGlobal.write_l(StringTemp, x, y);
+            y += font_line_advance(*body_font);
         }
 
         StringTemp[0] = '\0';
         strcat(StringTemp, label_get(0x37C / 4));
         strcat(StringTemp, ": ");
-        const int next_y = canvas->write_l(StringTemp, text_x, text_y,
-                                           static_cast<int>(strlen(StringTemp)));
+        x = MainInterfaceGlobal.write_l(StringTemp, x, y);
 
         StringTemp[0] = '\0';
-        int might_index = 7 - PlayersData[faction].ranking;
-        if (might_index < 0) might_index = 0;
-        else if (might_index > 6) might_index = 6;
-        char *const might = StringTable.get(Might[might_index].adj_start);
-        say_special(StringTemp, might, faction);
+        say_special(StringTemp,
+                    StringTable.get(Might[range(7 - PlayersData[faction].ranking, 0, 6)].adj_start),
+                    faction);
         CharUpperA(StringTemp);
-        canvas->write_l(StringTemp, next_y, text_y,
-                        static_cast<int>(strlen(StringTemp)));
+        MainInterfaceGlobal.write_l(StringTemp, x, y);
 
-        const int step = (right_edge - left_edge) + 3;
-        left_edge += step;
-        right_edge += step;
-    }
+        const int step = (box.right - box.left) + 3;
+        box.left += step;
+        box.right += step;
+    } while (++panel < 2);
 }
 
 // ORIGINAL: 0x00539970 sub_539970 0x00539970-0x00539998 BYTE_EXACT

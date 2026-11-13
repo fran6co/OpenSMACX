@@ -820,7 +820,7 @@ int Popup::on_exec() {
 // ORIGINAL: 0x0050B8D0 ?POP3@@YAXPBDHHH@Z 0x0050B8D0-0x0050B8EF BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["original:terranx_original.exe:0x0050B8D0-0x0050B8EF", "source:src/popup.cpp:typed owner", "source:src/popup.h:POP3 overload declarations", "original:0x004055A0 full POP3 target", "seed:retained original source identity 0x0050B8D0"], "reason": "The short POP3 entry is a typed overload that delegates its original arguments to the full POP3 owner."}
 // body src/popup.h
-// symbol    ?POP3@@YAXPBDHHH@Z
+// symbol    ?POP3@@YAHPBDHHH@Z
 // BODY IN popup.h, as `MEASURED inline`.
 
 // ORIGINAL: 0x00405140 ?POP2@@YAHPBDPBDH@Z 0x00405140-0x0040559B;0x0065078F-0x00650839
@@ -930,9 +930,10 @@ int __cdecl POP2(const char *a1, const char *a2, int a3) {
 
 // ORIGINAL: 0x004055A0 ?POP3@@YAXPBDPBDHHH@Z 0x004055A0-0x00405910;0x00650839-0x006508CD
 // RECOVERY_BINDING: v1 {"evidence": ["original:terranx_original.exe:0x004055A0-0x00405910", "original:terranx_original.exe:0x00650839-0x006508CD", "source:src/popup.cpp:typed owner", "source:src/popup.h:Popup lifecycle", "source:src/basepop.h:unit_ids_ StringList member", "source:src/stringstruct.h:StringList cursor and payload API", "source:src/messagewin.cpp:MessageWinDeferredBaseMessages owner", "source:src/map.h:map bounds", "seed:retained original source identity 0x004055A0"], "reason": "The full POP3 operation belongs to the real Popup entry lifetime; it builds the unit-history text from the owned StringList, then routes to the existing interface message or typed per-faction PBEM queue."}
-// symbol    ?POP3@@YAXPBD0HHH@Z
-void __cdecl POP3(const char *section, const char *unused, int recipient,
-                  int x, int y) {
+// symbol    ?POP3@@YAHPBD0HHH@Z
+// POP3 returns zero (xor eax,eax at 0x405902 before the epilogue).
+int __cdecl POP3(const char *section, const char *unused, int recipient,
+                 int x, int y) {
     (void)unused;
     Popup popup;
     popup.start(section);
@@ -954,9 +955,10 @@ void __cdecl POP3(const char *section, const char *unused, int recipient,
                 }
             }
         }
-        return;
+        return 0;
     }
     MainInterfaceGlobal.set_message(StringTemp, 0x5F, 0, 1, 1);
+    return 0;
 }
 
 // This overload calls the CRT length routine in the original, rather than

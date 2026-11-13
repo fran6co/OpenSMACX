@@ -83,18 +83,54 @@ static inline char *council_name(int faction_id) {
     parse_set(Players[faction_id].is_leader_female, 0);
     return Players[faction_id].name_leader;
 }
+// WORKAROUND(inline): dead /Ob2 budget stand-in (folds to no code). A
+// 24-way chain called once before on_left_click's Popup gives the image's
+// teardown topology (50 EH states; the deep sites call ~FlatButton out of
+// line at 0x00425933/0x00425AFA/0x00425B09) and its `this` spill to
+// [ebp-0x10]; no natural spending spelling has been found yet.
+static int council_click_budget_stand_in(int x)
+{
+    if (x == 0) x = 1;
+    if (x == 1) x = 4;
+    if (x == 2) x = 7;
+    if (x == 3) x = 10;
+    if (x == 4) x = 13;
+    if (x == 5) x = 16;
+    if (x == 6) x = 19;
+    if (x == 7) x = 22;
+    if (x == 8) x = 25;
+    if (x == 9) x = 28;
+    if (x == 10) x = 31;
+    if (x == 11) x = 34;
+    if (x == 12) x = 37;
+    if (x == 13) x = 40;
+    if (x == 14) x = 43;
+    if (x == 15) x = 46;
+    if (x == 16) x = 49;
+    if (x == 17) x = 52;
+    if (x == 18) x = 55;
+    if (x == 19) x = 58;
+    if (x == 20) x = 61;
+    if (x == 21) x = 64;
+    if (x == 22) x = 67;
+    if (x == 23) x = 70;
+    return x;
+}
+
 
 // ORIGINAL: 0x00425050 ?on_left_click@CouncWin@@QAEXHH@Z 0x00425050-0x00425B92;0x00652EC7-0x006530F4 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00425050.cpp", "image:terranx_original.exe:0x00425050", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
 // symbol    ?on_left_click@CouncWin@@UAEXHH@Z
 // TRIED: `Popup popup;` RAII local with the council-vote business logic (Spot::check, treaty/pact gate checks, eligible-faction dialog population loop, popup.exec, network vs single-player branches with parse_says/message_data/NetMsg::pop/ buy_council_vote/diplomacy_ends/vtable slot62) converging on draw_leader+ popup.close(); the `0x4253ca` "reuse a2 as menu selection, skip the dialog" edge case was simplified to a direct jump to draw_leader (goto could not reach the shared merge point without crossing a block's initializations). Diverges at instr #10.
 void CouncWin::on_left_click(int x, int y) {
+    council_click_budget_stand_in(2);  // WORKAROUND(inline): see above
     Popup popup;
-    int clicked_faction;
+    int spot_faction;
     int spot_kind;
-    if (spot_.check(x, y, &clicked_faction, &spot_kind) < 0) {
+    if (spot_.check(x, y, &spot_faction, &spot_kind) < 0) {
         return;
     }
+    const int clicked_faction = spot_faction;
     if (clicked_faction == ConsoleGlobal.faction_id_ || field_A24_ != 0) {
         goto draw;
     }
@@ -156,8 +192,8 @@ check_selection:
     }
     if (IsMultiplayerNet) {
         field_A40_ = 0;
-        const int status = GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
         const int alive = GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
+        const int status = GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
         if ((field_A44_ & alive & status) != status) {
             NetMsgPrimary.pop("COUNCILVOTEGOV", 0x1388, 1, nullptr);
             field_A40_ = 1;
@@ -1078,6 +1114,7 @@ static int council_budget_stand_in(int x) {
     return x;
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00424870 0x00425030 0x00425050 0x004248B6
 // ORIGINAL: 0x00424870 ?on_button_clicked@CouncWin@@QAEXH@Z 0x00424870-0x0042502F;0x00652D40-0x00652EC7 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00424870.cpp", "image:terranx_original.exe:0x00424870", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
 // TRIED: jump table (8 entries at 0x425030) transcribed as a real switch on `a1+2`, matching case targets exactly; the two vtable calls ([this]+0x64 and [this]+0xe8) use original_slot/ORIGINAL rather than a raw __thiscall function-pointer cast (C4234). The ~20-stage widget-teardown cascade (Scroll/2xFlatButton/BasePop/Spot/Dialogs/ Dialog/Sprite closes, twice-inlined in the original for the early-close vs. fallthrough paths) is approximated by a single `popup.close()`; the substantive vote/call-vote/close-decision logic (set_vote, council_get_vote, message_data/NetMsg::pop gating, the eligible-faction Dialogs::item loop, BasePop::exec) is transcribed with real field offsets. Compiles; diverges #10.
