@@ -736,7 +736,6 @@ void MapWin::editor(int tile_x, int tile_y, int erase) {
     int radius = MapEditorBrushId;
     if (radius > 1) --radius;
     int limit = RadiusRange[radius];
-    int width = MapLongitudeBounds;
     int first = 0;
     int changed = 0;
     int stop = 0;
@@ -762,11 +761,11 @@ void MapWin::editor(int tile_x, int tile_y, int erase) {
             if (index >= limit) break;
             int x = tile_x + RadiusOffsetX[index];
             if ((MapIsFlat & 1) == 0) {
-                if (x < 0) x += width;
-                else if (x >= width) x -= width;
+                if (x < 0) x += MapLongitudeBounds;
+                else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
             }
             const int y = tile_y + RadiusOffsetY[index];
-            if (y >= 0 && y < MapLatitudeBounds && x >= 0 && x < width) {
+            if (y >= 0 && y < MapLatitudeBounds && x >= 0 && x < MapLongitudeBounds) {
                 switch (MapEditorPaintId) {
                 case 0:
                     if (field_1DD8C_ != 0) {
@@ -789,10 +788,13 @@ void MapWin::editor(int tile_x, int tile_y, int erase) {
                     const int rocky = map_loc(x, y)->val3 >> 6;
                     if (erase != 0) {
                         rocky_set(x, y, range(rocky - 1, 0, 2));
-                        if (rocky != 0) changed = 1;
+                        if (rocky != 0) goto rocky_changed;
                     } else {
                         rocky_set(x, y, range(rocky + 1, 0, 2));
-                        if (rocky < 2) changed = 1;
+                        if (rocky < 2) {
+                        rocky_changed:
+                            changed = 1;
+                        }
                     }
                     break;
                 }
@@ -952,7 +954,6 @@ void MapWin::editor(int tile_x, int tile_y, int erase) {
                 }
                 for (int faction = 1; faction < 8; ++faction)
                     synch_bit(x, y, faction);
-                width = MapLongitudeBounds;
             }
             index += index == 0 ? 1 : step;
             if (stop != 0) break;
@@ -968,38 +969,18 @@ void MapWin::editor(int tile_x, int tile_y, int erase) {
     if (MapEditorPaintId != 0 && MapEditorPaintId != 2) {
         if (MapEditorPaintId == 0x12 && changed != 0) {
             world_climate();
-            for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
-                MapWin *const window = MapWinTable[slot];
-                if (window != nullptr && (slot == 0 || window->view_active_ != 0)) {
-                    window->draw_map(1);
-                }
-            }
+            ::draw_map(1);
         } else if (used_outer_ring == 0 && MapEditorBrushId == 0 &&
                    changed <= 1) {
             if (changed != 0) {
-                for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
-                    MapWin *const window = MapWinTable[slot];
-                    if (window != nullptr && (slot == 0 || window->view_active_ != 0)) {
-                        window->draw_radius(tile_x, tile_y, 0, 2);
-                    }
-                }
+                ::draw_radius(tile_x, tile_y, 0, 2);
             }
         } else {
-            for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
-                MapWin *const window = MapWinTable[slot];
-                if (window != nullptr && (slot == 0 || window->view_active_ != 0)) {
-                    window->draw_map(1);
-                }
-            }
+            ::draw_map(1);
         }
     } else if (river_changed != 0) {
         world_climate();
-        for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
-            MapWin *const window = MapWinTable[slot];
-            if (window != nullptr && (slot == 0 || window->view_active_ != 0)) {
-                window->draw_map(1);
-            }
-        }
+        ::draw_map(1);
     }
 }
 
@@ -1015,19 +996,9 @@ void MapWin::UNK4(int tile_x, int tile_y) {
         MapEditorPaintId == 0x12) {
         world_climate();
 
-        for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
-            MapWin *const window = MapWinTable[slot];
-            if (window != nullptr && (slot == 0 || window->view_active_ != 0)) {
-                window->draw_map(1);
-            }
-        }
+        ::draw_map(1);
     } else {
-        for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
-            MapWin *const window = MapWinTable[slot];
-            if (window != nullptr && (slot == 0 || window->view_active_ != 0)) {
-                window->draw_map(1);
-            }
-        }
+        ::draw_map(1);
     }
 }
 
@@ -1855,6 +1826,8 @@ void MapWin::draw_map(int draw_type) {
     // incremental flag is set (46A595..46A5A4); there is no zero store.
     int old_x;
     int old_y;
+    int mouse_x;
+    int mouse_y;
 
     if (field_1DDAC_ != 0 || field_1DDB0_ != 0) {
         field_21A44_ = 0;
@@ -1905,16 +1878,24 @@ void MapWin::draw_map(int draw_type) {
             // 46A676..46A690 computes the Y pair before either wrap.
             const int top = field_1DDA8_;
             const int bottom = field_1DDD8_ + field_1DDD0_ + top;
-            // Two inlined wraps: MapIsFlat & 1 is tested twice (46A698, 46A6C1).
-            left = wrap_map_x(left);
-            right = wrap_map_x(right);
-            // 46A6DA..46A6FC: a 16-byte struct assignment through a fresh
-            // copy of the destination address (VC6 copies the pointer for a
-            // block move when the pointer stays live), then left/right are
-            // adjusted through the original pointer, which forces the reload.
-            rect.left = left;
+            // 46A693..46A6D7: the flat flag is a named local (spilled to
+            // [ebp-0x14]); the first wrap lays its flat arm out first
+            // (je to the wrap code), the second tests the flag with jne.
+            const int flat = MapIsFlat & 1;
+            const int x1 = flat ? left
+                : left < 0 ? left + (int)MapLongitudeBounds
+                : left >= (int)MapLongitudeBounds ? left - (int)MapLongitudeBounds : left;
+            int x2 = right;
+            if (!flat) {
+                if (right < 0) {
+                    x2 = right + MapLongitudeBounds;
+                } else if (right >= (int)MapLongitudeBounds) {
+                    x2 = right - MapLongitudeBounds;
+                }
+            }
+            rect.left = x1;
             rect.top = top;
-            rect.right = right;
+            rect.right = x2;
             rect.bottom = bottom;
             MapTileDamageRect *const damage = &horizontal_damage_;
             *damage = rect;
@@ -1929,30 +1910,26 @@ void MapWin::draw_map(int draw_type) {
             vertical_damage_.bottom = 0;
         } else {
             int left;
-            int top;
             int right;
             int bottom;
             if (old_y < field_1DDA8_) {
-                top = field_1DDD8_ + field_1DDD0_ + old_y - 1;
+                rect.top = field_1DDD8_ + field_1DDD0_ + old_y - 1;
                 left = field_1DDA4_;
                 right = field_1DDD4_ + field_1DDCC_ + left;
-                bottom = top - old_y + field_1DDA8_;
+                bottom = rect.top - old_y + field_1DDA8_;
             } else {
                 left = field_1DDA4_;
                 right = field_1DDD4_ + field_1DDCC_ + left;
-                top = field_1DDA8_;
-                bottom = top - field_1DDA8_ + old_y;
+                rect.top = field_1DDA8_;
+                bottom = rect.top - field_1DDA8_ + old_y;
             }
             left = wrap_map_x(left);
             right = wrap_map_x(right);
+            rect.left = left;
+            rect.right = right;
+            rect.bottom = bottom;
             MapTileDamageRect *const damage = &vertical_damage_;
-            {
-                MapTileDamageRect *const edges = damage;
-                edges->left = left;
-                edges->top = top;
-                edges->right = right;
-                edges->bottom = bottom;
-            }
+            *damage = rect;
             // 46A7CA: add ecx,-4 (not sub ecx,4).
             damage->top += -4;
             damage->bottom += 4;
@@ -2069,27 +2046,25 @@ void MapWin::draw_map(int draw_type) {
             gen_map(faction, draw_type < 0);
         } else {
             vertical_pixels.top -= 10;
-            const MapTileDamageRect saved_vertical = vertical_damage_;
+            rect = vertical_damage_;
             vertical_damage_.left = horizontal_damage_.right;
             Buffer::set_clip(&horizontal_pixels);
             int faction = (GameDataStateStorage.fields_.game_state_ & 0x80) != 0
                               ? -1 : ConsoleGlobal.faction_id_;
             gen_map(faction, draw_type < 0);
-            vertical_damage_ = saved_vertical;
+            vertical_damage_ = rect;
 
             // Save this rectangle AFTER the first generation: that call
             // may have changed it. The old seed omitted this second save.
-            const MapTileDamageRect saved_horizontal = horizontal_damage_;
+            rect = horizontal_damage_;
             horizontal_damage_.left = horizontal_damage_.right;
             Buffer::set_clip(&vertical_pixels);
             faction = (GameDataStateStorage.fields_.game_state_ & 0x80) != 0
                           ? -1 : ConsoleGlobal.faction_id_;
             gen_map(faction, draw_type < 0);
-            horizontal_damage_ = saved_horizontal;
+            horizontal_damage_ = rect;
         }
         if (field_1DD80_ != 0) {
-            int mouse_x;
-            int mouse_y;
             ConsoleGlobal.get_mouse_pos(&mouse_x, &mouse_y);
             on_mouse_move(mouse_x, mouse_y);
         }
@@ -6646,11 +6621,12 @@ Purpose: Generate the whole visible map - background, terrain, vehicles,
 // discarded). inline_depth(0) suppresses all of these, which is why the old
 // body had to hand-copy them.
 void MapWin::gen_map(int a1, int a2) {
+    int i;
     if (a2 == 0) {
         if ((field_1DD70_ & 0x82000000) == 0 && field_21A44_ == 0) {
             GraphicWin::fill(0x41);
         }
-        for (int i = 0; i < field_1DDD0_ + field_1DDD8_ + 1; i++) {
+        for (i = 0; i < field_1DDD0_ + field_1DDD8_ + 1; i++) {
             const int row = field_1DDA8_ + i;
             int col = field_1DDA4_ + (i & 1);
             const int count = (i & 1) ? field_1DDCC_ : field_1DDD4_;
@@ -6680,7 +6656,7 @@ void MapWin::gen_map(int a1, int a2) {
         }
     }
 
-    for (int i = 0; i < field_1DDD0_ + field_1DDD8_ + 1; i++) {
+    for (i = 0; i < field_1DDD0_ + field_1DDD8_ + 1; i++) {
         const int row = field_1DDA8_ + i;
         int col = field_1DDA4_ + (i & 1);
         const int count = (i & 1) ? field_1DDCC_ : field_1DDD4_;
@@ -6732,7 +6708,7 @@ void MapWin::gen_map(int a1, int a2) {
     draw_base_names();
 
     if ((field_1DD70_ & 0x2000) != 0) {
-        for (int i = 0; i < field_1DDD0_ + field_1DDD8_ + 1; i++) {
+        for (i = 0; i < field_1DDD0_ + field_1DDD8_ + 1; i++) {
             const int row = field_1DDA8_ + i;
             int col = field_1DDA4_ + (i & 1);
             const int count = (i & 1) ? field_1DDCC_ : field_1DDD4_;

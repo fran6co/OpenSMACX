@@ -400,7 +400,7 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
         SpriteScaleNumerator = 1;
         SpriteScaleDenominator = 1;
     }
-    if (tech > 0x60) {
+    if (tech >= 0x61) {
         if (tech >= 0x59) return 1;
         page_pen_y_ += row_pitch_;
         const int fake_vehicle = veh_fake(tech - 0x61, faction_id_);
