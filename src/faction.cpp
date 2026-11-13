@@ -5842,62 +5842,59 @@ int __cdecl energy_trade(int faction, int other) {
         return 1;
     }
 
-    {
-        int principal;
-        int reserve;
-        int surcharge;
-        int payment;
-        reserve = PlayersData[other].energy_reserves;
-        if (PlayersData[other].tech_commerce_bonus < PlayersData[faction].tech_commerce_bonus)
-            principal = reserve / 4;
-        else if (PlayersData[other].tech_commerce_bonus == PlayersData[faction].tech_commerce_bonus)
-            principal = reserve / 3;
-        else principal = reserve / 2;
-        if (reserve < PlayersData[faction].energy_reserves && strcmp(Players[other].filename, "MORGAN"))
-            principal = 0;
-        if (PlayersData[faction].loan_balance[other] || PlayersData[other].loan_balance[faction])
-            principal = 0;
-        if (has_treaty(other, faction, DTREATY_VENDETTA | DTREATY_WANT_REVENGE)) principal = 0;
-        if (!has_treaty(other, faction, DTREATY_TREATY) || principal < 10)
-            principal = 0;
-        surcharge = (((DiploScratchFA78 + 10) + ((PlayersData[other].tech_commerce_bonus - PlayersData[faction].tech_commerce_bonus) * 2)) * 5);
-        if (has_treaty(faction, other, DTREATY_PACT)) {
+    int principal;
+    int surcharge;
+    int payment;
+    if (PlayersData[other].tech_commerce_bonus < PlayersData[faction].tech_commerce_bonus)
+        principal = PlayersData[other].energy_reserves / 4;
+    else if (PlayersData[other].tech_commerce_bonus == PlayersData[faction].tech_commerce_bonus)
+        principal = PlayersData[other].energy_reserves / 3;
+    else principal = PlayersData[other].energy_reserves / 2;
+    if (PlayersData[other].energy_reserves < PlayersData[faction].energy_reserves
+        && strcmp(Players[other].filename, "MORGAN"))
+        principal = 0;
+    if (PlayersData[faction].loan_balance[other] || PlayersData[other].loan_balance[faction])
+        principal = 0;
+    if (has_treaty(other, faction, DTREATY_VENDETTA | DTREATY_WANT_REVENGE)) principal = 0;
+    if (!has_treaty(other, faction, DTREATY_TREATY) || principal < 10)
+        principal = 0;
+    surcharge = (((DiploScratchFA78 + 10) + ((PlayersData[other].tech_commerce_bonus - PlayersData[faction].tech_commerce_bonus) * 2)) * 5);
+    if (has_treaty(faction, other, DTREATY_PACT)) {
+        surcharge = (surcharge - 10);
+        if (PlayersData[other].ranking > PlayersData[faction].ranking)
             surcharge = (surcharge - 10);
-            if (PlayersData[other].ranking > PlayersData[faction].ranking)
-                surcharge = (surcharge - 10);
-        }
-        surcharge = surcharge < 0 ? 0 : surcharge;
-        payment = ((10 - DiploScratchFA78) * 10);
-        if (payment < 20) payment = 20;
-        if (!principal) {
+    }
+    surcharge = surcharge < 0 ? 0 : surcharge;
+    payment = ((10 - DiploScratchFA78) * 10);
+    if (payment < 20) payment = 20;
+    if (!principal) {
 reject_energy:
-            StringTemp[0] = 0;
-            strcat(StringTemp, "REJENERGY");
-            int pick = random(0, 2);
-            _itoa(pick, number, 10);
-            strcat(StringTemp, number);
-            X_pops(StringTemp, 0x100000, FactionDiplomacyPortraits[other], pop_wait);
-            return 0;
-        }
-        {
-            const int total = ((surcharge + 100) * principal) / 100;
-            if (payment < 10 || total < 10) payment = 10;
-            else if (total < payment) payment = total;
-            const int periods = ((total - 1) + payment) / payment;
-            const int balance = (periods * payment);
-            parse_num(0, principal);
-            parse_num(1, periods);
-            parse_num(2, payment);
-            parse_set(Players[faction].is_leader_female, FALSE);
-            parse_says(0, Players[faction].title_leader, -1, -1);
-            parse_set(Players[faction].is_leader_female, FALSE);
-            parse_says(1, Players[faction].name_leader, -1, -1);
-            StringTemp[0] = 0;
-            strcat(StringTemp, "ENERGYLOAN");
-            _itoa((periods != 1) + 1, number, 10);
-            strcat(StringTemp, number);
-            if (!X_pops(StringTemp, 0x100000, FactionDiplomacyPortraits[other], pop_wait))
-                return 0;
+        StringTemp[0] = 0;
+        strcat(StringTemp, "REJENERGY");
+        int pick = random(0, 2);
+        _itoa(pick, number, 10);
+        strcat(StringTemp, number);
+        X_pops(StringTemp, 0x100000, FactionDiplomacyPortraits[other], pop_wait);
+        return 0;
+    }
+    {
+        const int total = ((surcharge + 100) * principal) / 100;
+        if (payment < 10 || total < 10) payment = 10;
+        else if (payment > total) payment = total;
+        const int periods = ((total - 1) + payment) / payment;
+        const int balance = (periods * payment);
+        parse_num(0, principal);
+        parse_num(1, periods);
+        parse_num(2, payment);
+        parse_set(Players[faction].is_leader_female, FALSE);
+        parse_says(0, Players[faction].title_leader, -1, -1);
+        parse_set(Players[faction].is_leader_female, FALSE);
+        parse_says(1, Players[faction].name_leader, -1, -1);
+        StringTemp[0] = 0;
+        strcat(StringTemp, "ENERGYLOAN");
+        _itoa((periods != 1) + 1, number, 10);
+        strcat(StringTemp, number);
+        if (X_pops(StringTemp, 0x100000, FactionDiplomacyPortraits[other], pop_wait)) {
             // Native541067..54106D stores the rounded balance and the
             // period count, not the per-period amount displayed in slot2.
             net_loan(faction, other, balance, periods);
@@ -5905,6 +5902,7 @@ reject_energy:
             return 1;
         }
     }
+    return 0;
 }
 
 // ORIGINAL: 0x00544E40 ?propose_treaty@@YAHHH@Z 0x00544E40-0x00545D55

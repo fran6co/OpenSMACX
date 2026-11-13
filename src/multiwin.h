@@ -40,6 +40,13 @@ class MultiWin : public GraphicWin {
   void hide();
   void init();
   void UNK2();
+  // WORKAROUND(decl): three undefined declarations keep MultiWin's member
+  // count at its value before field_A38_..field_A44_ became one RECT;
+  // with fewer, give_hints, terraform, corner_the_market, synch and
+  // setup_player change in other units (guide 2.5, header vetting).
+  void decl_count_stand_in_1();
+  void decl_count_stand_in_2();
+  void decl_count_stand_in_3();
   unsigned int panel_open() const { return panel_open_; }
 
  private:
@@ -54,10 +61,9 @@ class MultiWin : public GraphicWin {
   unsigned int field_A2C_;
   unsigned int field_A30_;
   unsigned int field_A34_;
-  unsigned int field_A38_;
-  unsigned int field_A3C_;
-  unsigned int field_A40_;
-  unsigned int field_A44_;
+  // +0xA38: the panel rectangle. init fills it and passes its address to
+  // GraphicWin::init (0x0047A1B1); UNK2 resets it.
+  RECT bounds_;
   unsigned int field_A48_;
   unsigned int field_A4C_;
   unsigned int field_A50_;

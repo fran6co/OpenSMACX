@@ -93,10 +93,10 @@ void MultiWin::UNK2() {
     if (IsMultiplayerNet != 0) {
         total += sprite4_.height() + footer_height + 0x0E;
     }
-    field_A38_ = 0;
-    field_A3C_ = 0;
-    field_A40_ = 0x8A;
-    field_A44_ = static_cast<unsigned int>(total);
+    bounds_.left = 0;
+    bounds_.top = 0;
+    bounds_.right = 0x8A;
+    bounds_.bottom = total;
     StatusFlags |= 0x40;
 }
 
@@ -989,10 +989,8 @@ void MultiWin::init() {
     if (IsMultiplayerNet) {
         height += 0x0E + sprite7_.height() + sprite4_.height();
     }
-    // WORKAROUND(type): the image fills and passes the member RECT at +0xA38
-    // (0x0047A1B1) and later reads its bottom at +0xA44; multiwin.h still
-    // spells it as four uint32 fields.
-    RECT *const bounds = reinterpret_cast<RECT *>(&field_A38_);
+    // The image fills the member through its address (0x0047A221).
+    RECT *const bounds = &bounds_;
     bounds->left = 0;
     bounds->top = 0;
     bounds->right = 0x8A;
@@ -1001,7 +999,7 @@ void MultiWin::init() {
     GraphicWin::init(bounds, 0, 0x01000000, &MainInterfaceGlobal, 0, 0);
     GraphicWin::fill(9);
 
-    int top = static_cast<int>(field_A44_) - (sprite7_.height() + sprites1_[0].height()) / 2;
+    int top = bounds_.bottom - (sprite7_.height() + sprites1_[0].height()) / 2;
     if (IsMultiplayerNet) {
         flat_button2_.init(StringTable.get(Labels.strings_ptr[0x110]), 0, 10, top,
                            sprites1_[0].width(), sprites1_[0].height(),

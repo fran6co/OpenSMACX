@@ -140,13 +140,6 @@ void __cdecl thumb_routine(int faction) {
     PopupModalActive = 0;
 }
 
-static unsigned char config_game_original_rule_byte(int selected) {
-    // The pinned expression uses unchecked native Player stride. Its one
-    // observed adjacent-storage case is represented through its real owner.
-    if (selected == MaxPlayerNum) return static_cast<unsigned char>(MapLandmark[23].name[4]);
-    return static_cast<unsigned char>(Players[selected].rule_flags);
-}
-
 /*
 Purpose: Swap the opening logo the desktop shows: load the PCX named a1 into
          a local Buffer, blit it into the opening GraphicWin's Buffer base
@@ -279,8 +272,8 @@ int __cdecl init_opening(const char *filename) {
 int __cdecl config_game(int mode) {
     Popup popup;
     SetupWin setup;
-    int human_mask;     // [ebp-0x10]
     int selected;       // [ebp-0x14]
+    int human_mask;     // [ebp-0x10]
     int time_choice;    // register only (0x0058A5B2 -> 0x0058B98A)
     char gender_text[0x50];     // [ebp-0xA8]
     char first_special[0x18];   // [ebp-0x58]
@@ -345,9 +338,10 @@ rules_menu:
         }
         if (choice == 1) {
             GameDataStateStorage.fields_.game_rules_ &= 0xFFFF0000;
-            GameDataStateStorage.fields_.game_rules_ |=
-                GameDataStateStorage.fields_.diff_level_current_ ? AlphaIniPrefs.rules & 0xFFFF
-                    : (AlphaIniPrefs.rules & 0xFDFF) | 0x200;
+            GameDataStateStorage.fields_.game_rules_ =
+                GameDataStateStorage.fields_.diff_level_current_
+                    ? GameDataStateStorage.fields_.game_rules_ | (AlphaIniPrefs.rules & 0xFFFF)
+                    : GameDataStateStorage.fields_.game_rules_ | ((AlphaIniPrefs.rules & 0xFDFF) | 0x200);
             GameDataStateStorage.fields_.game_state_ =
                 (GameDataStateStorage.fields_.game_state_ & 0xFE7FFFFF) | AlphaIniPrefs.semaphore;
             goto select_faction;
@@ -427,434 +421,476 @@ store_single_faction:
         GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ =
             static_cast<unsigned char>(1 << selected);
 time_controls:
-        if (IsMultiplayerNet) {
-            time_controls_dialog(&popup);
-            popup.set_value(AlphaIniPrefs.time_controls);
-            time_choice = popup.exec();
-            if (time_choice >= 0) goto store_time_controls;
-            if (!(GameDataStateStorage.fields_.game_rules_ & 0x00100000)) goto select_faction;
-            if (mode != 2) goto rules_menu;
-            goto difficulty_menu;
-        }
-        goto finish;
-    }
+        if (!IsMultiplayerNet) goto finish;
+        time_controls_dialog(&popup);
+        popup.set_value(AlphaIniPrefs.time_controls);
+        time_choice = popup.exec();
+        if (time_choice >= 0) goto store_time_controls;
+        if (!(GameDataStateStorage.fields_.game_rules_ & 0x00100000)) goto select_faction;
+        if (mode != 2) goto rules_menu;
+        goto difficulty_menu;
+    } else {
+        if (ExpansionEnabled && !(mode & 2)) {
+            int picked;     // [ebp-0x2C]
+            PickWinGlobal.init(thumb_routine, mode, ConfigFactionDetailMode);
+            {
+                for (int i = 1; i < 8; ++i) {
+                    if (mode == 2 &&
+                        !(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << i))) continue;
+                    StringTemp[0] = 0;
+                    if (strcmp(Players[i].filename, "JENN282")) {
+                        strcat(StringTemp, Players[i].formal_name_faction);
+                        strcat(StringTemp, "|");
+                        strcat(StringTemp, "(");
+                        strcat(StringTemp, Players[i].desc_name_faction);
+                        strcat(StringTemp, ")");
+                    } else {
+                        strcat(StringTemp, "RANDOM");
+                    }
+                    PickWinGlobal.listBox_.item(StringTemp, i);
+                }
+            }
+            PickWinGlobal.listBox_.attach(&PickWinGlobal,
+                PickWinGlobal.listBox_.Dialog::window_x_,
+                PickWinGlobal.listBox_.Dialog::window_y_, 0x80020);
+            DefaultPrefs.faction_id = range(DefaultPrefs.faction_id, 1, 7);
+            PickWinGlobal.listBox_.set_selected_id(DefaultPrefs.faction_id);
+            PickWinGlobal.field_5DB4_ = PickWinGlobal.listBox_.Dialog::get_selected_id();
+            PickWinGlobal.listBox_.set_selection_callback(thumb_routine);
+            thumb_routine(DefaultPrefs.faction_id);
+            picked = PickWinGlobal.go_girl();
+            if (picked < 0) {
+                if (bit_count(human_mask) > 1 && selected > 0 && (human_mask & (1 << selected))) {
+                    human_mask &= ~(1 << selected);
+                    for (int f = 1; f < human_mask; ++f) {
+                        if (human_mask & (1 << f)) {
+                            selected = f;
+                            break;
+                        }
+                    }
+                    PickWinGlobal.GraphicWin::close();
+                    goto pbem_selection;
+                }
+                ConfigFactionPreview.close();
+                PickWinGlobal.GraphicWin::close();
+                do_all_draws();
+                goto difficulty_menu;
+            }
+            DefaultPrefs.faction_id = picked;
+            if (IsMultiplayerPBEM && (human_mask & (1 << picked))) {
+                X_pop("FACTIONTAKEN", 0);
+                goto select_faction;
+            }
+            selected = picked;
+            if (PickWinGlobal.field_5DA4_ == 0x105) {
+                picked = rand() % 7 + 1;
+                selected = picked;
+                ConfigFactionPreview.close();
+                PickWinGlobal.GraphicWin::close();
+                goto random_name;
+            }
+            if (PickWinGlobal.field_5DA4_ == 0x107) {
+                ConfigFactionDetailMode = !ConfigFactionDetailMode;
+                goto select_faction;
+            }
+            if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000) {
+                StringTemp[0] = 0;
+                strcat(StringTemp, "voices\\");
+                strcat(StringTemp, Players[picked].filename);
+                strcat(StringTemp, ".mp3");
+                g_WAVE_GENERAL.unload();
+                g_WAVE_GENERAL.load(StringTemp);
+                g_WAVE_GENERAL.play();
+            }
+            if (PickWinGlobal.field_5DA4_) {
+                if (!strcmp(Players[picked].filename, "JENN282")) goto select_faction;
+                if (PickWinGlobal.field_5DA4_) goto edit_names_expansion;
+            }
+random_name:
+            while (strcmp(Players[picked].filename, "JENN282")) {
+                StringTemp[0] = 0;
+                strcat(StringTemp, "NAME");
+                if (Players[picked].is_leader_female && PickWinGlobal.field_5DA4_ != 0x105)
+                    strcat(StringTemp, "2");
+                if (PickWinGlobal.field_5DA4_ == 0x105) strcat(StringTemp, "3");
+                int answer = X_pop_ask(StringTemp, 0x17,
+                    PickWinGlobal.field_5DA4_ == 0x105 ? ConfigRandomLeaderInitial
+                                                       : Players[picked].name_leader,
+                    0, 0);
+                ConfigFactionPreview.close();
+                if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000)
+                    g_WAVE_GENERAL.Sound::fade(0x7D0);
+                if (answer) goto select_faction;
+                PickWinGlobal.GraphicWin::close();
+                strcpy(Players[picked].name_leader, ParseStrBuffer[0].str);
+                if (!ConsoleGroupAction) goto parse_factions;
+                if (PickWinGlobal.field_5DA4_ != 0x105) goto edit_names_expansion;
+                Players[picked].is_leader_female = !Players[picked].is_leader_female;
+            }
+            ConfigFactionPreview.close();
+            PickWinGlobal.GraphicWin::close();
+            goto parse_factions;
 
-    if (ExpansionEnabled && !(mode & 2)) {
-        int picked;     // [ebp-0x2C]
-        PickWinGlobal.init(thumb_routine, mode, ConfigFactionDetailMode);
+edit_names_expansion:
+            for (;;) {
+                strcpy(gender_text, StringTable.get(Players[picked].is_leader_female
+                    ? Labels.strings_ptr[739] : Labels.strings_ptr[738]));
+                popup.start("CUSTOMNAMES", 0x44);
+                {
+                    char *label = label_get(174);
+                    popup.dialogs().EditGroup::edit(label, Players[picked].name_leader, 0x17);
+                }
+                {
+                    char *label = label_get(175);
+                    popup.dialogs().EditGroup::edit(label, Players[picked].formal_name_faction, 0x27);
+                }
+                {
+                    char *label = label_get(176);
+                    popup.dialogs().EditGroup::edit(label, Players[picked].noun_faction, 0x17);
+                }
+                {
+                    char *label = label_get(177);
+                    popup.dialogs().EditGroup::edit(label, Players[picked].adj_name_faction, 0x17);
+                }
+                {
+                    char *label = label_get(483);
+                    popup.dialogs().EditGroup::edit(label, Players[picked].title_leader, 0x17);
+                }
+                {
+                    char *label = label_get(484);
+                    popup.dialogs().EditGroup::edit(label, Players[picked].adj_leader, 0x17);
+                }
+                {
+                    char *label = label_get(485);
+                    popup.dialogs().EditGroup::edit(label, gender_text, 0x17);
+                }
+                int answer = popup.exec();
+                if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000)
+                    g_WAVE_GENERAL.Sound::fade(0x7D0);
+                if (answer < 0) {
+                    popup.close();
+                    goto select_faction;
+                }
+                if (!popup.input_poll_state()) break;
+                if (picked) {
+                    read_faction(&Players[picked], 0);
+                    load_faction_art(picked);
+                }
+            }
+            ConfigFactionPreview.close();
+            PickWinGlobal.GraphicWin::close();
+            strcpy(Players[picked].name_leader, ParseStrBuffer[0].str);
+            strcpy(Players[picked].formal_name_faction, ParseStrBuffer[1].str);
+            strcpy(Players[picked].noun_faction, ParseStrBuffer[2].str);
+            strcpy(Players[picked].adj_name_faction, ParseStrBuffer[3].str);
+            strcpy(Players[picked].title_leader, ParseStrBuffer[4].str);
+            strcpy(Players[picked].adj_leader, ParseStrBuffer[5].str);
+            Players[picked].is_leader_female = !_strnicmp(gender_text, label_get(739), 1);
+            goto select_faction;
+        }
+
+        popup.start("FACTIONX", 0x40);
         {
             for (int i = 1; i < 8; ++i) {
                 if (mode == 2 &&
                     !(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << i))) continue;
                 StringTemp[0] = 0;
-                if (strcmp(Players[i].filename, "JENN282")) {
-                    strcat(StringTemp, Players[i].formal_name_faction);
-                    strcat(StringTemp, "|");
-                    strcat(StringTemp, "(");
-                    strcat(StringTemp, Players[i].desc_name_faction);
-                    strcat(StringTemp, ")");
-                } else {
-                    strcat(StringTemp, "RANDOM");
-                }
-                PickWinGlobal.listBox_.item(StringTemp, i);
+                strcat(StringTemp, Players[i].formal_name_faction);
+                strcat(StringTemp, "|");
+                strcat(StringTemp, "(");
+                strcat(StringTemp, Players[i].desc_name_faction);
+                strcat(StringTemp, ")");
+                popup.item(StringTemp, i);
             }
         }
-        PickWinGlobal.listBox_.attach(&PickWinGlobal,
-            PickWinGlobal.listBox_.Dialog::window_x_,
-            PickWinGlobal.listBox_.Dialog::window_y_, 0x80020);
-        DefaultPrefs.faction_id = range(DefaultPrefs.faction_id, 1, 7);
-        PickWinGlobal.listBox_.set_selected_id(DefaultPrefs.faction_id);
-        PickWinGlobal.field_5DB4_ = PickWinGlobal.listBox_.Dialog::get_selected_id();
-        PickWinGlobal.listBox_.set_selection_callback(thumb_routine);
-        thumb_routine(DefaultPrefs.faction_id);
-        picked = PickWinGlobal.go_girl();
-        if (picked < 0) {
-            if (bit_count(human_mask) > 1 && selected > 0 && (human_mask & (1 << selected))) {
-                human_mask &= ~(1 << selected);
-                for (int f = 1; f < human_mask; ++f) {
-                    if (human_mask & (1 << f)) {
-                        selected = f;
-                        break;
+        {
+            int faction;    // esi
+            popup.set_value(mode & 2 ? ConsoleGlobal.faction_id_ : DefaultPrefs.faction_id);
+            popup.dialogs().ListBox::set_selection_callback(thumb_routine);
+            thumb_routine(mode & 2 ? ConsoleGlobal.faction_id_ : DefaultPrefs.faction_id);
+            faction = popup.exec();
+            if (faction < 0) {
+                if (bit_count(human_mask) > 1 && selected > 0 && (human_mask & (1 << selected))) {
+                    human_mask &= ~(1 << selected);
+                    for (int f = 1; f < human_mask; ++f) {
+                        if (human_mask & (1 << f)) {
+                            selected = f;
+                            break;
+                        }
                     }
+                    goto pbem_selection;
                 }
-                PickWinGlobal.GraphicWin::close();
-                goto pbem_selection;
+                ConfigFactionPreview.close();
+                if (mode == 2) goto difficulty_menu;
+                goto rules_menu;
             }
-            ConfigFactionPreview.close();
-            PickWinGlobal.GraphicWin::close();
-            do_all_draws();
-            goto difficulty_menu;
-        }
-        DefaultPrefs.faction_id = picked;
-        if (IsMultiplayerPBEM && (human_mask & (1 << picked))) {
-            X_pop("FACTIONTAKEN", 0);
-            goto select_faction;
-        }
-        selected = picked;
-        if (PickWinGlobal.field_5DA4_ == 0x105) {
-            picked = rand() % 7 + 1;
-            selected = picked;
-            ConfigFactionPreview.close();
-            PickWinGlobal.GraphicWin::close();
-            goto random_name;
-        }
-        if (PickWinGlobal.field_5DA4_ == 0x107) {
-            ConfigFactionDetailMode = !ConfigFactionDetailMode;
-            goto select_faction;
-        }
-        if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000) {
-            StringTemp[0] = 0;
-            strcat(StringTemp, "voices\\");
-            strcat(StringTemp, Players[picked].filename);
-            strcat(StringTemp, ".mp3");
-            g_WAVE_GENERAL.unload();
-            g_WAVE_GENERAL.load(StringTemp);
-            g_WAVE_GENERAL.play();
-        }
-        if (PickWinGlobal.field_5DA4_) {
-            if (!strcmp(Players[picked].filename, "JENN282")) goto select_faction;
-            if (PickWinGlobal.field_5DA4_) goto edit_names_expansion;
-        }
-random_name:
-        while (strcmp(Players[picked].filename, "JENN282")) {
-            StringTemp[0] = 0;
-            strcat(StringTemp, "NAME");
-            if (Players[picked].is_leader_female && PickWinGlobal.field_5DA4_ != 0x105)
-                strcat(StringTemp, "2");
-            if (PickWinGlobal.field_5DA4_ == 0x105) strcat(StringTemp, "3");
-            int answer = X_pop_ask(StringTemp, 0x17,
-                PickWinGlobal.field_5DA4_ == 0x105 ? ConfigRandomLeaderInitial
-                                                   : Players[picked].name_leader,
-                0, 0);
-            ConfigFactionPreview.close();
-            if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000)
-                g_WAVE_GENERAL.Sound::fade(0x7D0);
-            if (answer) goto select_faction;
-            PickWinGlobal.GraphicWin::close();
-            strcpy(Players[picked].name_leader, ParseStrBuffer[0].str);
-            if (!ConsoleGroupAction) goto parse_factions;
-            if (PickWinGlobal.field_5DA4_ != 0x105) goto edit_names_expansion;
-            Players[picked].is_leader_female = !Players[picked].is_leader_female;
-        }
-        ConfigFactionPreview.close();
-        PickWinGlobal.GraphicWin::close();
-        goto parse_factions;
-
-edit_names_expansion:
-        for (;;) {
-            strcpy(gender_text, label_get(Players[picked].is_leader_female ? 739 : 738));
-            popup.start("CUSTOMNAMES", 0x44);
-            popup.dialogs().EditGroup::edit(label_get(174), Players[picked].name_leader, 0x17);
-            popup.dialogs().EditGroup::edit(label_get(175), Players[picked].formal_name_faction, 0x27);
-            popup.dialogs().EditGroup::edit(label_get(176), Players[picked].noun_faction, 0x17);
-            popup.dialogs().EditGroup::edit(label_get(177), Players[picked].adj_name_faction, 0x17);
-            popup.dialogs().EditGroup::edit(label_get(483), Players[picked].title_leader, 0x17);
-            popup.dialogs().EditGroup::edit(label_get(484), Players[picked].adj_leader, 0x17);
-            popup.dialogs().EditGroup::edit(label_get(485), gender_text, 0x17);
-            int answer = popup.exec();
-            if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000)
-                g_WAVE_GENERAL.Sound::fade(0x7D0);
-            if (answer < 0) {
-                popup.close();
+            if (!(mode & 2)) DefaultPrefs.faction_id = faction;
+            if (IsMultiplayerPBEM && (human_mask & (1 << faction))) {
+                X_pop("FACTIONTAKEN", 0);
                 goto select_faction;
             }
-            if (!popup.input_poll_state()) break;
-            if (picked) {
-                read_faction(&Players[picked], 0);
-                load_faction_art(picked);
+            selected = faction;
+            if (popup.input_poll_state() == 2) {
+                ConfigFactionDetailMode = !ConfigFactionDetailMode;
+                goto select_faction;
             }
-        }
-        ConfigFactionPreview.close();
-        PickWinGlobal.GraphicWin::close();
-        strcpy(Players[picked].name_leader, ParseStrBuffer[0].str);
-        strcpy(Players[picked].formal_name_faction, ParseStrBuffer[1].str);
-        strcpy(Players[picked].noun_faction, ParseStrBuffer[2].str);
-        strcpy(Players[picked].adj_name_faction, ParseStrBuffer[3].str);
-        strcpy(Players[picked].title_leader, ParseStrBuffer[4].str);
-        strcpy(Players[picked].adj_leader, ParseStrBuffer[5].str);
-        Players[picked].is_leader_female = !_strnicmp(gender_text, label_get(739), 1);
-        goto select_faction;
-    }
-
-    popup.start("FACTIONX", 0x40);
-    {
-        for (int i = 1; i < 8; ++i) {
-            if (mode == 2 &&
-                !(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << i))) continue;
-            StringTemp[0] = 0;
-            strcat(StringTemp, Players[i].formal_name_faction);
-            strcat(StringTemp, "|");
-            strcat(StringTemp, "(");
-            strcat(StringTemp, Players[i].desc_name_faction);
-            strcat(StringTemp, ")");
-            popup.item(StringTemp, i);
-        }
-    }
-    {
-        int faction;    // esi
-        popup.set_value(mode & 2 ? ConsoleGlobal.faction_id_ : DefaultPrefs.faction_id);
-        popup.dialogs().ListBox::set_selection_callback(thumb_routine);
-        thumb_routine(mode & 2 ? ConsoleGlobal.faction_id_ : DefaultPrefs.faction_id);
-        faction = popup.exec();
-        if (faction < 0) {
-            if (bit_count(human_mask) > 1 && selected > 0 && (human_mask & (1 << selected))) {
-                human_mask &= ~(1 << selected);
-                for (int f = 1; f < human_mask; ++f) {
-                    if (human_mask & (1 << f)) {
-                        selected = f;
-                        break;
-                    }
+            if (popup.input_poll_state() == 3) {
+                ConfigFactionPreview.close();
+                if (X_pop_ask("RELOADFAC", 0x50, Players[faction].filename, 0, 0)) goto select_faction;
+                strcpy(Players[faction].filename, ParseStrBuffer[0].str);
+                strcpy(Players[faction].search_key, ParseStrBuffer[0].str);
+                if (faction) {
+                    read_faction(&Players[faction], 0);
+                    load_faction_art(faction);
                 }
-                goto pbem_selection;
+                compute_faction_modifiers(faction);
+                goto select_faction;
             }
-            ConfigFactionPreview.close();
-            if (mode == 2) goto difficulty_menu;
-            goto rules_menu;
-        }
-        if (!(mode & 2)) DefaultPrefs.faction_id = faction;
-        if (IsMultiplayerPBEM && (human_mask & (1 << faction))) {
-            X_pop("FACTIONTAKEN", 0);
-            goto select_faction;
-        }
-        selected = faction;
-        if (popup.input_poll_state() == 2) {
-            ConfigFactionDetailMode = !ConfigFactionDetailMode;
-            goto select_faction;
-        }
-        if (popup.input_poll_state() == 3) {
-            ConfigFactionPreview.close();
-            if (X_pop_ask("RELOADFAC", 0x50, Players[faction].filename, 0, 0)) goto select_faction;
-            strcpy(Players[faction].filename, ParseStrBuffer[0].str);
-            strcpy(Players[faction].search_key, ParseStrBuffer[0].str);
-            if (faction) {
-                read_faction(&Players[faction], 0);
-                load_faction_art(faction);
+            if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000) {
+                StringTemp[0] = 0;
+                strcat(StringTemp, "voices\\");
+                strcat(StringTemp, Players[faction].filename);
+                strcat(StringTemp, ".mp3");
+                g_WAVE_GENERAL.unload();
+                g_WAVE_GENERAL.load(StringTemp, 0x100);
+                g_WAVE_GENERAL.play();
             }
-            compute_faction_modifiers(faction);
-            goto select_faction;
-        }
-        if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000) {
-            StringTemp[0] = 0;
-            strcat(StringTemp, "voices\\");
-            strcat(StringTemp, Players[faction].filename);
-            strcat(StringTemp, ".mp3");
-            g_WAVE_GENERAL.unload();
-            g_WAVE_GENERAL.load(StringTemp, 0x100);
-            g_WAVE_GENERAL.play();
-        }
-        if (!popup.input_poll_state()) {
-            StringTemp[0] = 0;
-            strcat(StringTemp, "NAME");
-            if (Players[faction].is_leader_female) strcat(StringTemp, "2");
-            int answer = X_pop_ask(StringTemp, 0x17, Players[faction].name_leader, 0, 0);
-            ConfigFactionPreview.close();
-            if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000)
-                g_WAVE_GENERAL.Sound::fade(0x7D0);
-            if (answer) goto select_faction;
+            if (!popup.input_poll_state()) {
+                StringTemp[0] = 0;
+                strcat(StringTemp, "NAME");
+                if (Players[faction].is_leader_female) strcat(StringTemp, "2");
+                int answer = X_pop_ask(StringTemp, 0x17, Players[faction].name_leader, 0, 0);
+                ConfigFactionPreview.close();
+                if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000)
+                    g_WAVE_GENERAL.Sound::fade(0x7D0);
+                if (answer) goto select_faction;
+                strcpy(Players[faction].name_leader, ParseStrBuffer[0].str);
+                if (!ConsoleGroupAction) goto parse_factions;
+            }
+            for (;;) {
+                strcpy(gender_text, StringTable.get(Players[faction].is_leader_female
+                    ? Labels.strings_ptr[739] : Labels.strings_ptr[738]));
+                popup.start("CUSTOMNAMES", 0x44);
+                {
+                    char *label = label_get(174);
+                    popup.dialogs().EditGroup::edit(label, Players[faction].name_leader, 0x17);
+                }
+                {
+                    char *label = label_get(175);
+                    popup.dialogs().EditGroup::edit(label, Players[faction].formal_name_faction, 0x27);
+                }
+                {
+                    char *label = label_get(176);
+                    popup.dialogs().EditGroup::edit(label, Players[faction].noun_faction, 0x17);
+                }
+                {
+                    char *label = label_get(177);
+                    popup.dialogs().EditGroup::edit(label, Players[faction].adj_name_faction, 0x17);
+                }
+                {
+                    char *label = label_get(483);
+                    popup.dialogs().EditGroup::edit(label, Players[faction].title_leader, 0x17);
+                }
+                {
+                    char *label = label_get(484);
+                    popup.dialogs().EditGroup::edit(label, Players[faction].adj_leader, 0x17);
+                }
+                {
+                    char *label = label_get(485);
+                    popup.dialogs().EditGroup::edit(label, gender_text, 0x17);
+                }
+                int answer = popup.exec();
+                if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000)
+                    g_WAVE_GENERAL.Sound::fade(0x7D0);
+                ConfigFactionPreview.close();
+                if (answer < 0) goto select_faction;
+                if (!popup.input_poll_state()) break;
+                if (faction) {
+                    read_faction(&Players[faction], 0);
+                    load_faction_art(faction);
+                }
+            }
             strcpy(Players[faction].name_leader, ParseStrBuffer[0].str);
-            if (!ConsoleGroupAction) goto parse_factions;
+            strcpy(Players[faction].formal_name_faction, ParseStrBuffer[1].str);
+            strcpy(Players[faction].noun_faction, ParseStrBuffer[2].str);
+            strcpy(Players[faction].adj_name_faction, ParseStrBuffer[3].str);
+            strcpy(Players[faction].title_leader, ParseStrBuffer[4].str);
+            strcpy(Players[faction].adj_leader, ParseStrBuffer[5].str);
+            Players[faction].is_leader_female = !_strnicmp(gender_text, label_get(739), 1);
         }
-        for (;;) {
-            strcpy(gender_text, label_get(Players[faction].is_leader_female ? 739 : 738));
-            popup.start("CUSTOMNAMES", 0x44);
-            popup.dialogs().EditGroup::edit(label_get(174), Players[faction].name_leader, 0x17);
-            popup.dialogs().EditGroup::edit(label_get(175), Players[faction].formal_name_faction, 0x27);
-            popup.dialogs().EditGroup::edit(label_get(176), Players[faction].noun_faction, 0x17);
-            popup.dialogs().EditGroup::edit(label_get(177), Players[faction].adj_name_faction, 0x17);
-            popup.dialogs().EditGroup::edit(label_get(483), Players[faction].title_leader, 0x17);
-            popup.dialogs().EditGroup::edit(label_get(484), Players[faction].adj_leader, 0x17);
-            popup.dialogs().EditGroup::edit(label_get(485), gender_text, 0x17);
-            int answer = popup.exec();
-            if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000)
-                g_WAVE_GENERAL.Sound::fade(0x7D0);
-            ConfigFactionPreview.close();
-            if (answer < 0) goto select_faction;
-            if (!popup.input_poll_state()) break;
-            if (faction) {
-                read_faction(&Players[faction], 0);
-                load_faction_art(faction);
-            }
-        }
-        strcpy(Players[faction].name_leader, ParseStrBuffer[0].str);
-        strcpy(Players[faction].formal_name_faction, ParseStrBuffer[1].str);
-        strcpy(Players[faction].noun_faction, ParseStrBuffer[2].str);
-        strcpy(Players[faction].adj_name_faction, ParseStrBuffer[3].str);
-        strcpy(Players[faction].title_leader, ParseStrBuffer[4].str);
-        strcpy(Players[faction].adj_leader, ParseStrBuffer[5].str);
-        Players[faction].is_leader_female = !_strnicmp(gender_text, label_get(739), 1);
-    }
 
 parse_factions:
-    if (mode == 0) prefs_save(1);
-    {
-        int custom_count;   // [ebp-0x24]
-        int special_count;  // edi
-        int special_a;      // [ebp-0x18]
-        int special_b;      // [ebp-0x20]
-        custom_count = 14;
-        special_count = 0;
-        special_a = 0;
-        special_b = 0;
-        first_special[0] = 0;
-        if (!text_open(AlphaxFileID, "CUSTOMFACTIONS")) {
-            text_get();
-            while (*text_item()) {
-                ++custom_count;
-                text_get();
-            }
-        }
+        if (mode == 0) prefs_save(1);
         {
-            for (int i = 1; i < 8; ++i) {
-                if (strcmp(Players[i].filename, "JENN282") && (Players[i].rule_flags & 0x80)) {
-                    ++special_count;
-                    if (special_count == 1) strcat(first_special, Players[i].filename);
-                }
-            }
-        }
-        if (special_count == 1) {
-            int last_random = 0;
-            {
-                for (int i = 1; i < 8; ++i) {
-                    if (!strcmp(Players[i].filename, "JENN282")) last_random = i;
-                }
-            }
-            if (last_random) {
-                if (text_open(AlphaxFileID, "NEWFACTIONS")) goto select_faction;
-                text_get();
-                for (int skip = 0; skip < 5; ++skip) text_get();
-                strcpy(Players[last_random].filename, text_item());
-                if (!strcmp(Players[last_random].filename, first_special)) {
-                    text_get();
-                    strcpy(Players[last_random].filename, text_item());
-                }
-                strcpy(Players[last_random].search_key, Players[last_random].filename);
-                read_faction(&Players[last_random], 0);
-                load_faction_art(last_random);
-            }
-        } else if (!special_count && rand() % 2) {
-            int start = rand() % 7;
-            for (int attempt = start; 1 - start + attempt < 8; ++attempt) {
-                int i = attempt % 7;
-                if (!strcmp(Players[i + 1].filename, "JENN282")) {
-                    if (!special_a) special_a = i + 1;
-                    else if (!special_b) special_b = i + 1;
-                }
-            }
-        }
-        if (!special_a || !special_b) {
+            int custom_count;   // [ebp-0x24]
+            int special_count;  // edi
+            int special_a;      // [ebp-0x18]
+            int special_b;      // [ebp-0x20]
+            custom_count = 14;
+            special_count = 0;
             special_a = 0;
             special_b = 0;
-        }
-        {
-            for (int i = 1; i < 8; ++i) {   // [ebp-0x1C]
-                if (strcmp(Players[i].filename, "JENN282")) continue;
-                if (special_a == i) {
+            first_special[0] = 0;
+            if (!text_open(AlphaxFileID, "CUSTOMFACTIONS")) {
+                text_get();
+                while (*text_item()) {
+                    ++custom_count;
+                    text_get();
+                }
+            }
+            {
+                for (int i = 1; i < 8; ++i) {
+                    if (strcmp(Players[i].filename, "JENN282") && (Players[i].rule_flags & 0x80)) {
+                        ++special_count;
+                        if (special_count == 1) strcat(first_special, Players[i].filename);
+                    }
+                }
+            }
+            if (special_count == 1) {
+                int last_random = 0;
+                {
+                    for (int i = 1; i < 8; ++i) {
+                        if (!strcmp(Players[i].filename, "JENN282")) last_random = i;
+                    }
+                }
+                if (last_random) {
                     if (text_open(AlphaxFileID, "NEWFACTIONS")) goto select_faction;
                     text_get();
                     for (int skip = 0; skip < 5; ++skip) text_get();
-                    strcpy(Players[i].filename, text_item());
-                    strcpy(Players[i].search_key, Players[i].filename);
-                    if (i) {
-                        read_faction(&Players[i], 0);
-                        load_faction_art(i);
-                    }
-                } else if (special_b == i) {
-                    if (text_open(AlphaxFileID, "NEWFACTIONS")) goto select_faction;
-                    text_get();
-                    for (int skip = 0; skip < 6; ++skip) text_get();
-                    strcpy(Players[i].filename, text_item());
-                    strcpy(Players[i].search_key, Players[i].filename);
-                    if (i) {
-                        read_faction(&Players[i], 0);
-                        load_faction_art(i);
-                    }
-                } else {
-                    int row;    // ebx
-                    do {
-                        int residue;
-                        do {
-                            residue = rand() % custom_count;
-                        } while (residue == 12 || residue == 13);
-                        switch (residue / 7) {
-                        case 0:
-                            if (text_open(AlphaxFileID, "FACTIONS")) goto select_faction;
-                            break;
-                        case 1:
-                            if (text_open(AlphaxFileID, "NEWFACTIONS")) goto select_faction;
-                            break;
-                        case 2:
-                            if (text_open(AlphaxFileID, "CUSTOMFACTIONS")) goto select_faction;
-                            break;
-                        }
-                        row = residue % 7;
+                    strcpy(Players[last_random].filename, text_item());
+                    if (!strcmp(Players[last_random].filename, first_special)) {
                         text_get();
-                        for (int skip = 0; skip < row; ++skip) text_get();
+                        strcpy(Players[last_random].filename, text_item());
+                    }
+                    strcpy(Players[last_random].search_key, Players[last_random].filename);
+                    read_faction(&Players[last_random], 0);
+                    load_faction_art(last_random);
+                }
+            } else if (!special_count && rand() % 2) {
+                int start = rand() % 7;
+                for (int attempt = start; 1 - start + attempt < 8; ++attempt) {
+                    int i = attempt % 7;
+                    if (!strcmp(Players[i + 1].filename, "JENN282")) {
+                        if (!special_a) special_a = i + 1;
+                        else if (!special_b) special_b = i + 1;
+                    }
+                }
+            }
+            if (!special_a || !special_b) {
+                special_a = 0;
+                special_b = 0;
+            }
+            {
+                for (int i = 1; i < 8; ++i) {   // [ebp-0x1C]
+                    if (strcmp(Players[i].filename, "JENN282")) continue;
+                    if (special_a == i) {
+                        if (text_open(AlphaxFileID, "NEWFACTIONS")) goto select_faction;
+                        text_get();
+                        for (int skip = 0; skip < 5; ++skip) text_get();
                         strcpy(Players[i].filename, text_item());
                         strcpy(Players[i].search_key, Players[i].filename);
-                        for (int other = 1; other < 8; ++other) {
-                            if (i != other && !strcmp(Players[i].filename, Players[other].filename)) {
-                                row = -1;
-                                other = 8;
-                            }
-                        }
-                        if (row + 1 && i) {
+                        if (i) {
                             read_faction(&Players[i], 0);
                             load_faction_art(i);
                         }
-                    } while (row == -1);
+                    } else if (special_b == i) {
+                        if (text_open(AlphaxFileID, "NEWFACTIONS")) goto select_faction;
+                        text_get();
+                        for (int skip = 0; skip < 6; ++skip) text_get();
+                        strcpy(Players[i].filename, text_item());
+                        strcpy(Players[i].search_key, Players[i].filename);
+                        if (i) {
+                            read_faction(&Players[i], 0);
+                            load_faction_art(i);
+                        }
+                    } else {
+                        int row;    // ebx
+                        do {
+                            int residue;
+                            do {
+                                residue = rand() % custom_count;
+                            } while (residue == 12 || residue == 13);
+                            switch (residue / 7) {
+                        case 0:
+                                if (text_open(AlphaxFileID, "FACTIONS")) goto select_faction;
+                                break;
+                        case 1:
+                                if (text_open(AlphaxFileID, "NEWFACTIONS")) goto select_faction;
+                                break;
+                        case 2:
+                                if (text_open(AlphaxFileID, "CUSTOMFACTIONS")) goto select_faction;
+                                break;
+                            }
+                            row = residue % 7;
+                            text_get();
+                            for (int skip = 0; skip < row; ++skip) text_get();
+                            strcpy(Players[i].filename, text_item());
+                            strcpy(Players[i].search_key, Players[i].filename);
+                            for (int other = 1; other < 8; ++other) {
+                                if (i != other && !strcmp(Players[i].filename, Players[other].filename)) {
+                                    row = -1;
+                                    other = 8;
+                                }
+                            }
+                            if (row + 1 && i) {
+                                read_faction(&Players[i], 0);
+                                load_faction_art(i);
+                            }
+                        } while (row == -1);
+                    }
                 }
             }
         }
-    }
-    load_flags();
-    if (ExpansionEnabled && !IsMultiplayerNet && !IsMultiplayerPBEM &&
-        (config_game_original_rule_byte(selected) & 0x80)) {
-        GameDataStateStorage.fields_.game_rules_ =
-            (GameDataStateStorage.fields_.game_rules_ & ~0x200) | 0x140;
-    }
-    if (mode & 1) goto pbem_commit;
-    do_all_draws();
+        load_flags();
+        if (ExpansionEnabled && !IsMultiplayerNet && !IsMultiplayerPBEM &&
+            (Players[selected].rule_flags & RFLAG_ALIEN)) {
+            GameDataStateStorage.fields_.game_rules_ =
+                (GameDataStateStorage.fields_.game_rules_ & ~0x200) | 0x140;
+        }
+        if (mode & 1) goto pbem_commit;
+        do_all_draws();
 
 pbem_selection:
-    if (!IsMultiplayerPBEM) goto store_single_faction;
-    {
-        int bit = 1 << selected;    // edi
-        human_mask |= bit;
-        popup.start("HOTSEATADD0", 0x40);
+        if (!IsMultiplayerPBEM) goto store_single_faction;
         {
-            for (int i = 1; i < 8; ++i) {
-                if (human_mask & (1 << i)) {
-                    if (X_text_open(ScriptPopupFile, "MULTISTRING")) break;
-                    text_get();
-                    parse_set(Players[i].is_leader_female, 0);
-                    parse_says(0, Players[i].title_leader, -1, -1);
-                    parse_set(Players[i].is_leader_female, 0);
-                    parse_says(1, Players[i].name_leader, -1, -1);
-                    parse_set(Players[i].noun_gender, Players[i].is_noun_plural);
-                    parse_says(2, Players[i].noun_faction, -1, -1);
-                    StringTemp[0] = 0;
-                    parse_string(TextBufferGetPtr, StringTemp);
-                    popup.string(StringTemp);
+            int bit = 1 << selected;    // edi
+            human_mask |= bit;
+            popup.start("HOTSEATADD0", 0x40);
+            {
+                for (int i = 1; i < 8; ++i) {
+                    if (human_mask & (1 << i)) {
+                        if (X_text_open(ScriptPopupFile, "MULTISTRING")) break;
+                        text_get();
+                        parse_set(Players[i].is_leader_female, 0);
+                        parse_says(0, Players[i].title_leader, -1, -1);
+                        parse_set(Players[i].is_leader_female, 0);
+                        parse_says(1, Players[i].name_leader, -1, -1);
+                        parse_set(Players[i].noun_gender, Players[i].is_noun_plural);
+                        parse_says(2, Players[i].noun_faction, -1, -1);
+                        StringTemp[0] = 0;
+                        parse_string(TextBufferGetPtr, StringTemp);
+                        popup.string(StringTemp);
+                    }
                 }
             }
+            popup.start("HOTSEATADD1", 0x80);
+            int added = popup.exec();
+            if (added) {
+                if (added < 0) human_mask &= ~bit;
+                goto select_faction;
+            }
         }
-        popup.start("HOTSEATADD1", 0x80);
-        int added = popup.exec();
-        if (added) {
-            if (added < 0) human_mask &= ~bit;
-            goto select_faction;
-        }
-    }
 pbem_commit:
-    if (!IsMultiplayerPBEM) goto store_single_faction;
-    GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ =
-        static_cast<unsigned char>(human_mask);
-    for (selected = 1; selected < 8; ++selected) {
-        if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << selected)) break;
+        if (!IsMultiplayerPBEM) goto store_single_faction;
+        GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ =
+            static_cast<unsigned char>(human_mask);
+        for (selected = 1; selected < 8; ++selected) {
+            if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << selected)) break;
+        }
+        if (selected >= 8) selected = 1;
+        ConsoleGlobal.faction_id_ = selected;
+        goto time_controls;
     }
-    if (selected >= 8) selected = 1;
-    ConsoleGlobal.faction_id_ = selected;
-    goto time_controls;
 
 store_time_controls:
     AlphaIniPrefs.time_controls = time_choice;
