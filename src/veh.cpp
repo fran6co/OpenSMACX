@@ -1122,7 +1122,7 @@ void __cdecl say_stats_2(LPSTR stat, int proto_id) {
 Purpose: Generate verbose stats string for specified prototype. Used by Design Workshop and Military
          Command Nexus. Replaced existing non-safe strcat with string. Reworked to integrate with
          existing C code.
-// ORIGINAL: 0x0057DAA0 ?say_stats@@YAXPADHPAD@Z 0x0057DAA0-0x0057DED8
+// ORIGINAL: 0x0057DAA0 ?say_stats@@YAXPADHPAD@Z 0x0057DAA0-0x0057DED8 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:57DCEA-57DCF0 strcat references682E90 comma-space-NUL", "pinned:57DDF0 triad arms separately append682820 space-NUL before localized Sea/Air labels"], "reason": "Retain the original comma-space separator followed by the separate triad space. The visible doubled space is original formatting, not a new output correction. Complete formatter matching and runtime remain obligations."}
 // symbol    ?say_stats@@YAXPADH0@Z
 // TRIED: std::string body called 82 vs the image's 44 (call_diff); rebuilt
