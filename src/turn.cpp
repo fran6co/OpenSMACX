@@ -4610,7 +4610,7 @@ skip_upkeep_synch:
                 TurnRedrawPending = 1;
                 while (TurnRedrawPending != 0) {
                     if (ExitTurnLoop != 0) break;
-                    wait_task();
+                    wait_loop();  // 0x0052951C calls wait_loop (0x0051F200), not wait_task
                 }
             }
             CouncilPendingMessageArgs[0] = -1;

@@ -369,7 +369,8 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
         unk1 &= ~0xc0;
     }
     if ((unk1 & 0x40) && faction_id > 0 && proto_id >= 0
-        && has_abil(proto_id, ABL_AMPHIBIOUS)) {
+        // 0x0059A5BD pushes 4: the original tests ABL_CLOAKED here.
+        && has_abil(proto_id, ABL_CLOAKED)) {
         unk1 &= ~0x40;
     }
     BOOL threat = unk1 & 0x80;
