@@ -1282,7 +1282,7 @@ void __cdecl call_council(int faction_id) {
         strcat(StringTemp, StringTable.get(Proposal[proposal].description));
         popup.dialogs().item(StringTemp, proposal);
         rendered_count++;
-        if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) {
+        if (is_human(faction_id)) {
             continue;
         }
         // Source fields named unk_29/unk_30 are independently anchored at
@@ -1319,15 +1319,15 @@ void __cdecl call_council(int faction_id) {
         return;
     }
     int selection;
-    if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) {
+    if (is_human(faction_id)) {
         selection = popup.exec(0, 0);
     } else {
         selection = selected_proposal;
     }
     if (alien_alive && selection == PROP_UNITE_SUPREME_LEADER) {
         if (faction_id == ConsoleGlobal.faction_id_
-                && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit)) {
-            NetMsgPrimary.pop("NOTWHILEALIENSLIVE", 0xFFFFEC78, 0, "council_sm.pcx");
+                && is_human(faction_id)) {
+            NetMsgPrimary.pop("NOTWHILEALIENSLIVE", "council_sm.pcx");
         }
         return;
     }
@@ -1340,15 +1340,15 @@ void __cdecl call_council(int faction_id) {
     if (selection
             && !((GameDataStateStorage.fields_.game_state_ & 0x80)
                  && (GameDataStateStorage.fields_.game_state_ & 0x1000)
-                 && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit))) {
+                 && is_human(faction_id))) {
         int due = (faction_id == GameDataStateStorage.fields_.governor_faction_) ? delay / 2 : delay;
         if (turn - PlayersData[faction_id].council_call_turn < due) {
             if (faction_id == ConsoleGlobal.faction_id_
-                    && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit)) {
+                    && is_human(faction_id)) {
                 parse_num(0, game_year(PlayersData[ConsoleGlobal.faction_id_].council_call_turn));
                 parse_num(1, Rules.min_turns_councils);
                 parse_num(2, Rules.min_turns_councils / 2);
-                NetMsgPrimary.pop("COUNCILRECENTCALL", 0xFFFFEC78, 0, "council_sm.pcx");
+                NetMsgPrimary.pop("COUNCILRECENTCALL", "council_sm.pcx");
             }
             return;
         }
@@ -1357,18 +1357,18 @@ void __cdecl call_council(int faction_id) {
     if (turn - last_turn < delay
             && !((GameDataStateStorage.fields_.game_state_ & 0x80)
                  && (GameDataStateStorage.fields_.game_state_ & 0x1000)
-                 && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit))) {
+                 && is_human(faction_id))) {
         if (faction_id == ConsoleGlobal.faction_id_
-                && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit)) {
+                && is_human(faction_id)) {
             parse_num(0, game_year(last_turn));
             parse_num(1, Rules.min_turns_councils);
-            NetMsgPrimary.pop("COUNCILRECENTPROP", 0xFFFFEC78, 0, "council_sm.pcx");
+            NetMsgPrimary.pop("COUNCILRECENTPROP", "council_sm.pcx");
         }
         return;
     }
 
     if (IsMultiplayerNet) {
-        if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit)) {
+        if (!is_human(faction_id)) {
             CouncilPendingMessageArgs[0] = faction_id;
             CouncilPendingMessageArgs[1] = selection;
             CouncilPendingMessageArgs[2] = selected_faction;
