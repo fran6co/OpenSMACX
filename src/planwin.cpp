@@ -416,18 +416,6 @@ static inline bool planwin_base_known_to_faction(const Base &base, int faction) 
         || (base.visibility & (1 << faction)) != 0;
 }
 
-static inline bool planwin_tile_has_known_base(int x, int y, int faction) {
-    int base_index;
-    for (base_index = 0; base_index < GameDataStateStorage.fields_.base_current_count_; ++base_index) {
-        const Base &base = Bases[base_index];
-        if (planwin_base_known_to_faction(base, faction)
-            && base.x == x && base.y == y) {
-            return true;
-        }
-    }
-    return false;
-}
-
 // ORIGINAL: 0x0048AF30 ?on_redraw@PlanWin@@QAEXXZ 0x0048AF30-0x0048B3B7
 // RECOVERY_BINDING: v1 {"evidence": ["image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x0048AF30:0048AF30-0048B3B7", "source:src/planwin.h:PlanWin and genuine MapWin/GraphicWin interfaces", "source:src/faction.h:PlayerData, battle faction state and label declarations", "recovery/tasks/planwin-battle-owner-coverage.json"], "reason": "Use the pinned native body with the real typed owner and preserve the seed's original identity and history."}
 // symbol    ?on_redraw@PlanWin@@UAEXXZ
@@ -439,60 +427,75 @@ void PlanWin::on_redraw() {
     // and the patterned lines are the inlined draw_line member.
     buffer_.copy(this, 0, 0, dib_.bmiHeader.biWidth, -dib_.bmiHeader.biHeight);
 
-    int base_draw_index;
-    for (base_draw_index = 0; base_draw_index < GameDataStateStorage.fields_.base_current_count_;
-         ++base_draw_index) {
-        const Base &base = Bases[base_draw_index];
-        if (!planwin_base_known_to_faction(base, ConsoleGlobal.faction_id_)) continue;
+    // One base counter, one line counter and one pixel pair serve every
+    // loop: the image keeps each in a single frame slot (base counter
+    // [ebp-4] in the draw loop and the endpoint search, line counter
+    // [ebp-0xc] in both line loops, pixels [ebp-0x18]/[ebp-8]).
+    int base_index;
+    int line_index;
+    int pixel_x, pixel_y;
+    for (base_index = 0; base_index < GameDataStateStorage.fields_.base_current_count_;
+         ++base_index) {
+        if (!planwin_base_known_to_faction(Bases[base_index], ConsoleGlobal.faction_id_)) continue;
 
         int intersects_plan_line = 0;
         if (field_21A6C_ != 0) {
-            int base_line_index;
-            for (base_line_index = 0; base_line_index < line_count_;
-                 ++base_line_index) {
-                const PlanLineRecord &record = line_records_[base_line_index];
-                if (base.x == record.x1 && base.y == record.y1) {
+            for (line_index = 0; line_index < line_count_;
+                 ++line_index) {
+                if (Bases[base_index].x == line_records_[line_index].x1
+                    && Bases[base_index].y == line_records_[line_index].y1) {
                     intersects_plan_line = 1;
                 }
-                if (base.x == record.x2 && base.y == record.y2) {
+                if (Bases[base_index].x == line_records_[line_index].x2
+                    && Bases[base_index].y == line_records_[line_index].y2) {
                     intersects_plan_line = 1;
                 }
             }
         }
 
-        int pixel_x, pixel_y;
-        tile_to_pixel(base.x, base.y, &pixel_x, &pixel_y);
-        base_draw(this, base_draw_index, pixel_x,
+        tile_to_pixel(Bases[base_index].x, Bases[base_index].y, &pixel_x, &pixel_y);
+        base_draw(this, base_index, pixel_x,
                   pixel_y - field_1DDC0_, zoom_offset_,
                   0x100 | ((field_21A6C_ != 0 && intersects_plan_line) ? 0x200 : 0));
     }
 
-    int vehicle_line_index;
-    for (vehicle_line_index = 0; vehicle_line_index < line_count_;
-         ++vehicle_line_index) {
-        const PlanLineRecord &record = line_records_[vehicle_line_index];
+    for (line_index = 0; line_index < line_count_;
+         ++line_index) {
         int endpoint_index;
         for (endpoint_index = 0; endpoint_index < 2; ++endpoint_index) {
-            const int endpoint_x = endpoint_index != 0 ? record.x1 : record.x2;
-            const int endpoint_y = endpoint_index != 0 ? record.y1 : record.y2;
-            if (planwin_tile_has_known_base(endpoint_x, endpoint_y, ConsoleGlobal.faction_id_))
-                continue;
+            int endpoint_x, endpoint_y;
+            if (endpoint_index != 0) {
+                endpoint_x = line_records_[line_index].x1;
+                endpoint_y = line_records_[line_index].y1;
+            } else {
+                endpoint_x = line_records_[line_index].x2;
+                endpoint_y = line_records_[line_index].y2;
+            }
+            for (base_index = 0;
+                 base_index < GameDataStateStorage.fields_.base_current_count_;
+                 ++base_index) {
+                if (planwin_base_known_to_faction(Bases[base_index], ConsoleGlobal.faction_id_)
+                    && Bases[base_index].x == endpoint_x
+                    && Bases[base_index].y == endpoint_y)
+                    goto next_endpoint;
+            }
 
-            int pixel_x, pixel_y;
             tile_to_pixel(endpoint_x, endpoint_y, &pixel_x, &pixel_y);
             pixel_y -= field_1DDC0_;
-            const int vehicle_id = veh_fake(2, ConsoleGlobal.faction_id_);
-            veh_draw(this, vehicle_id, pixel_x, pixel_y,
-                     zoom_offset_, 0x100 | (field_21A6C_ ? 0x200 : 0), 1);
+            {
+                const int vehicle_id = veh_fake(2, ConsoleGlobal.faction_id_);
+                veh_draw(this, vehicle_id, pixel_x, pixel_y,
+                         zoom_offset_, 0x100 | (field_21A6C_ ? 0x200 : 0), 1);
+            }
+        next_endpoint:;
         }
     }
 
-    int pattern_line_index;
-    for (pattern_line_index = 0; pattern_line_index < line_count_;
-         ++pattern_line_index) {
-        const PlanLineRecord &record = line_records_[pattern_line_index];
+    for (line_index = 0; line_index < line_count_;
+         ++line_index) {
+        const PlanLineRecord &record = line_records_[line_index];
         draw_line(record.x1, record.y1, record.x2, record.y2,
-                  line_colors_[pattern_line_index]);
+                  line_colors_[line_index]);
     }
 
     // Native indirect call is Win slot 63, named on_update() in GraphicWin.

@@ -494,14 +494,16 @@ void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
                     && !(map_loc(x, y)->visibility & (1 << ConsoleGlobal.faction_id_))) {
                     veh = -1;
                 } else if (base_id >= 0) {
-                    int seen;
+                    // The dead a5 argument is reused as the "seen" flag: the
+                    // image keeps it in [ebp+0x18] and tests it after the
+                    // loop instead of threading the constants (0x004B6821).
                     // 0x004B67BF/0x004B67CC: both tests jump forward to the
-                    // shared seen = 1 block, which the image places after the
+                    // shared a5 = 1 block, which the image places after the
                     // first jmp inside the loop (a queued else arm).
                     if (!(PlayersData[Bases[base_id].faction_id_current]
                               .diplo_treaties[ConsoleGlobal.faction_id_] & 1)
                         && !spying(Bases[base_id].faction_id_current)) {
-                        seen = 0;
+                        a5 = 0;
                         col = Bases[base_id].x;
                         row = Bases[base_id].y;
                         for (int i = 0; i < 8; i++) {
@@ -509,17 +511,17 @@ void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
                             int y2 = VehMoveDeltaY[i] + row;
                             if (on_map(x2, y2)
                                 && veh_who(x2, y2) == ConsoleGlobal.faction_id_) {
-                                seen = 1;
+                                a5 = 1;
                                 break;
                             }
                         }
                     } else {
-                        seen = 1;
+                        a5 = 1;
                     }
                     if (!((Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_
                            || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
                            || (Bases[base_id].visibility & (1 << ConsoleGlobal.faction_id_)))
-                          && seen)) {
+                          && a5)) {
                         veh = -1;
                     }
                 } else if (!((Vehs[top].faction_id == ConsoleGlobal.faction_id_

@@ -557,14 +557,30 @@ static inline StringStructPayload *listbox_current_payload(StringStruct *list) {
     return list->head_ != 0 ? list->current_->string_payload() : 0;
 }
 
+// WORKAROUND(decl): StringStruct::current_entry's body (0x00402530); a
+// visible header body (STRINGSTRUCT_CURRENT_ENTRY_INLINE) also expands it in
+// on_left_down, which the image calls out of line.
+static inline StringStructPayload *listbox_current_entry(StringStruct *list) {
+    if (list->head_) {
+        return list->current_->string_payload();
+    }
+    return 0;
+}
+
 // The current entry's line count, or zero when the list head is null.
 static inline int listbox_current_lines(StringStruct *list) {
-    return list->head_ != 0 ? static_cast<int32_t>(list->current_->string_payload()->field_C_) : 0;
+    if (list->head_) {
+        return static_cast<int32_t>(listbox_current_entry(list)->field_C_);
+    }
+    return 0;
 }
 
 // The current entry's text, or null when the list head is null.
 static inline char *listbox_current_text(StringStruct *list) {
-    return list->head_ != 0 ? list->current_->string_payload()->text : 0;
+    if (list->head_) {
+        return listbox_current_entry(list)->text;
+    }
+    return 0;
 }
 
 /*
@@ -639,8 +655,8 @@ void ListBox::draw_item(int index) {
         const int along = (static_cast<int>(Dialog::field_64_)
                            + static_cast<int>(Dialog::field_44_))
             * (relative / Dialog::row_count_);
-        row.left += along;
         row.right += along;
+        row.left += along;
         const int across = (static_cast<int>(Dialog::field_68_)
                             + static_cast<int>(Dialog::field_44_))
             * (relative % Dialog::row_count_);
