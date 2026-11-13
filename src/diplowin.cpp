@@ -1473,27 +1473,6 @@ void DiploWin::kill_offer(int a1, int a2) {
     }
 }
 
-void DiploWin::receive_clear_offer() {
-    offer_count_[1] = 0;
-    redraw();
-}
-
-void DiploWin::receive_channel_status(int status) {
-    offer_state_[1] = status;
-    check_done();
-    redraw();
-}
-
-// fields are read in the same conjunction/order as the original dispatcher;
-// the 0x150C payload deliberately sends A24 at +10 and A28 at +14.
-void DiploWin::receive_maybe_deal(int sender) {
-  if (offer_state_[0] == 1 && offer_state_[1] == 1) {
-    message_data(0x150B, sender, 0, 0, 0, 0);
-  } else {
-    message_data(0x150C, sender, offer_state_[0], offer_state_[1], 0, 0);
-  }
-}
-
 // ORIGINAL: 0x00441490 ?add_offer@DiploWin@@QAEXHHH@Z 0x00441490-0x004415B9 FILE BYTE_EXACT
 // size      297 bytes
 // prototype void (__thiscall ?add_offer@DiploWin@@QAEXHHH@Z)(DiploWin* this, int, int, int)

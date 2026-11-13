@@ -408,6 +408,35 @@ class DiploWin : public GraphicWin, public SubInterface {
   EditBox editBox_;  // 0xDA7C, IDB `editBox`, size == sizeof(EditBox) == 0xB74
 };
 
+// process_message (0x534400) expands these three receive steps in place
+// (0x1508/0x1509/0x150A store offer_count_/offer_state_ and call
+// check_done/redraw/message_data directly); the image has no out-of-line
+// copies, so they are header inlines. Their expansion supplies the budget
+// that makes process_message's early ~Popup teardowns call ~FlatButton out of
+// line, as the image does; written out raw they spend nothing.
+// WORKAROUND(decl): only TUs defining DIPLOWIN_RECEIVE_INLINE see the bodies
+// (netdaemon.cpp, the only caller); the original header set is unknown.
+#ifdef DIPLOWIN_RECEIVE_INLINE
+inline void DiploWin::receive_clear_offer() {
+    offer_count_[1] = 0;
+    redraw();
+}
+
+inline void DiploWin::receive_channel_status(int status) {
+    offer_state_[1] = status;
+    check_done();
+    redraw();
+}
+
+inline void DiploWin::receive_maybe_deal(int sender) {
+  if (offer_state_[0] == 1 && offer_state_[1] == 1) {
+    message_data(0x150B, sender, 0, 0, 0, 0);
+  } else {
+    message_data(0x150C, sender, offer_state_[0], offer_state_[1], 0, 0);
+  }
+}
+#endif
+
 void __cdecl clear_hotseat_chat();
 extern "C" void __cdecl sub_441040(int a1, int a2);
 extern "C" void __cdecl sub_441100(int faction_id, int faction_id_with);

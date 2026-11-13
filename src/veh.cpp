@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #define VEH_BUNGLIST_VISIBLE  // stand-in: see BungList in veh.h
+#define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h (design_workshop's start, item and exec)
 #include "stdafx.h"
 #include "popup.h"
 #include "basepop.h"
@@ -4618,6 +4619,14 @@ void __cdecl hq_list_draw(GraphicWin *window, int prototype, int flags,
 
 extern uint32_t UpgradePromptAnswered;
 
+// WORKAROUND(inline): dead /Ob2 budget probe (folds to no code). The image's
+// EH map has 56 states, teardown sites (1,2,5,6,6,7+9,7+13), and its call
+// sequence expands ~Scroll at the action-0 return but not at the mode return,
+// and ~Dialogs/~StringList/~Heap one level further at the DESIGNNO and final
+// returns. Thirteen probes after the action-0 return and one after the
+// DESIGNNO return reproduce both exactly (a 2-D probe grid; no other placement
+// does); the natural spend the original had there is not found yet.
+static inline void dw_probe(int x) { if (x == 1) x = 8; if (x == 2) x = 9; if (x == 3) x = 10; }
 // ORIGINAL: 0x00583E30 ?design_workshop@@YAHHH@Z 0x00583E30-0x00584B4B;0x0065FFD0-0x00660239
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned583E30..584B4B and65FFD0..660239; preserved git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00583e30.cpp; mode-zero list bypass, nonzero64-prototype scan,128 sorted list rows, ordered0/2/3/4/default action chain and native Popup cleanup funclets.", "Native5842DB tests priorflags8 before setting200; upgrade scan skips selected/inactive rows, passes faction/replacement/selected/zero, reports only scan exhaustion and rebuilds the entire list. Rename5845AE copies shared prompt result into the prototype name. Callback60BCDF return is discarded; real hq_list_draw owns preview behavior.", "Existing DesignWin/Popup/Dialog owners, WorkshopFaction/PreviewZoom and source-owned prototype/player storage; recovery/tasks/designwin-owner-coverage.json. Existing NetMsgPrimary fixed-address facade and unfinished callee behavior remain separate dependencies; no byte, runtime or game acceptance claim."], "reason": "Recover the complete production workshop dependency through real lexical Popup lifetime, typed dialog and prototype ownership, native list/action flow and source-owned preview callback. Preserve its original identity, seed and historical obligations instead of a link-only placeholder."}
 // TRIED: the two "layout" division computations (0x583F94-0x584054) simplified the signed-rounding cdq/and/sar idiom to a plain shift for the likely-positive case; the upgrade-candidate scan (0x5843D5-0x5843EB) approximated the per-slot style comparison rather than tracing every register precisely.
@@ -4712,6 +4721,7 @@ again:
     const uint32_t action = popup.input_poll_state();
     if (action == 0)
         return -1;
+    dw_probe(0);dw_probe(1);dw_probe(2);dw_probe(3);dw_probe(4);dw_probe(5);dw_probe(6);dw_probe(7);dw_probe(8);dw_probe(9);dw_probe(10);dw_probe(11);dw_probe(12);
     if (action == 2) {
         char *prototype_name = VehPrototypes[selected].veh_name;
         if (X_pop_ask("DESIGNNAME", 31, prototype_name, 0, 0) != 0)
@@ -4739,14 +4749,14 @@ again:
         int slot;
         for (slot = 0; slot < MaxVehProtoFactionNum; ++slot) {
             const int candidate_id = faction_id * MaxVehProtoFactionNum + slot;
+            const uint16_t flags = VehPrototypes[candidate_id].flags;
             if (candidate_id != selected
-                && VehPrototypes[candidate_id].flags & PROTO_ACTIVE
+                && flags & PROTO_ACTIVE
                 && !(VehPrototypes[candidate_id].obsolete_factions & (1 << faction_id))
-                && VehPrototypes[candidate_id].flags & 4
+                && flags & 4
                 && VehPrototypes[candidate_id].plan == VehPrototypes[selected].plan
                 && VehPrototypes[candidate_id].unk_1 == VehPrototypes[selected].unk_1
-                && Chassis[VehPrototypes[candidate_id].chassis_id].triad
-                    == Chassis[VehPrototypes[selected].chassis_id].triad) {
+                && get_proto_triad(candidate_id) == get_proto_triad(selected)) {
                 upgrade_prototype(faction_id, candidate_id, selected, 0);
                 break;
             }
@@ -4765,6 +4775,7 @@ again:
         NetMsgPrimary.pop("DESIGNNO", 0x1388, 0, 0);
         return -1;
     }
+    dw_probe(0);
     VehPrototypes[selected].flags &= ~0x80;
     return TutWinDesWindow.exec(faction_id, selected);
 }

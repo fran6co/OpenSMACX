@@ -26,6 +26,7 @@
 #define VEH_BUNGLIST_VISIBLE  // WORKAROUND(decl): synch addresses BungList directly; see veh.h
 #define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h
 #define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
+#define DIPLOWIN_RECEIVE_INLINE  // stand-in: see the receive steps in diplowin.h
 #include "stdafx.h"
 #include <mmsystem.h>
 #include "netdaemon.h"
@@ -3633,32 +3634,6 @@ uint32_t __cdecl random(int min, int max);
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00534400 0x00538944 0x0053895C 0x0053640D
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00534400 0x0053895C 0x005389AC 0x00536958
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00534400 0x005389AC 0x005389E8 0x00536DC4
-// WORKAROUND(inline): process_message (0x534400) expands these three DiploWin
-// steps in place (0x1508/0x1509/0x150A store offer_count_/offer_state_ and call
-// check_done/redraw/message_data directly) and the image has no out-of-line
-// copies. Spelled as inline members here their expansion supplies the budget
-// that makes the six early ~Popup teardowns call ~FlatButton out of line, as
-// the image does; written out raw they spend nothing. diplowin.cpp's
-// out-of-line definitions are only reached from here and become unused.
-inline void DiploWin::receive_clear_offer() {
-    offer_count_[1] = 0;
-    redraw();
-}
-
-inline void DiploWin::receive_channel_status(int status) {
-    offer_state_[1] = status;
-    check_done();
-    redraw();
-}
-
-inline void DiploWin::receive_maybe_deal(int sender) {
-  if (offer_state_[0] == 1 && offer_state_[1] == 1) {
-    message_data(0x150B, sender, 0, 0, 0, 0);
-  } else {
-    message_data(0x150C, sender, offer_state_[0], offer_state_[1], 0, 0);
-  }
-}
-
 // The image cross-jumps the three LOCK FAILED tails (0x1202/0x1203 into
 // 0x1204's copy) the way an inline body's expansions merge; the repeated
 // block was one inline helper. Name provisional.
@@ -3703,7 +3678,7 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
         message_data(0x1505, faction, 0, 0, 0, 0);
     }
 
-    switch (static_cast<unsigned short>(packet->opcode_)) {
+    switch (packet->opcode_) {
     case 0xF0D:
         NetWinDialog.setup_faction_data((MessageFactionData *)message);
         break;
@@ -5091,20 +5066,16 @@ move_veh_ack:
         process_slots_[packet->faction_].identity_ = (int8_t)packet->payload_18_;
         process_slots_[packet->faction_].field_26_ = (uint8_t)packet->payload_14_;
         process_slots_[packet->faction_].field_25_ = (uint8_t)packet->payload_10_;
-        // WORKAROUND(type): the image tests `test ah,0x20` and rewrites with
-        // `and eax,0xdfff`: an unsigned 16-bit opcode (the switch reads it so).
-        if ((unsigned short)packet->opcode_ & 0x2000) {
-            packet->opcode_ = (int16_t)(((unsigned short)packet->opcode_ & 0xDFFF) | 0x4000);
+        if (packet->opcode_ & 0x2000) {
+            packet->opcode_ = (packet->opcode_ & 0xDFFF) | 0x4000;
             send_message(message, message_size, 0);
         }
         break;
 
     case 0x1F02: case 0x2F02: case 0x4F02:
         NetWinSessionOptions.fields_ = *(NetWinSessionOptionsState *)(message + 0x10);
-        // WORKAROUND(type): the image tests `test ah,0x20` and rewrites with
-        // `and eax,0xdfff`: an unsigned 16-bit opcode (the switch reads it so).
-        if ((unsigned short)packet->opcode_ & 0x2000) {
-            packet->opcode_ = (int16_t)(((unsigned short)packet->opcode_ & 0xDFFF) | 0x4000);
+        if (packet->opcode_ & 0x2000) {
+            packet->opcode_ = (packet->opcode_ & 0xDFFF) | 0x4000;
             send_message(message, message_size, 0);
         } else {
             NetWinDialog.on_redraw();
@@ -5113,10 +5084,8 @@ move_veh_ack:
 
     case 0x1F03: case 0x2F03: case 0x4F03:
         NetWinSessionData.fields_ = *(NetWinSessionBlock *)(message + 0x10);
-        // WORKAROUND(type): the image tests `test ah,0x20` and rewrites with
-        // `and eax,0xdfff`: an unsigned 16-bit opcode (the switch reads it so).
-        if ((unsigned short)packet->opcode_ & 0x2000) {
-            packet->opcode_ = (int16_t)(((unsigned short)packet->opcode_ & 0xDFFF) | 0x4000);
+        if (packet->opcode_ & 0x2000) {
+            packet->opcode_ = (packet->opcode_ & 0xDFFF) | 0x4000;
             send_message(message, message_size, 0);
         } else {
             NetWinDialog.on_redraw();
@@ -5145,7 +5114,7 @@ move_veh_ack:
         int lobby_slot = packet->faction_;
         if (packet->opcode_ & 0x2000) {
             int previous_faction;
-            packet->opcode_ = (int16_t)((packet->opcode_ & 0xDFFF) | 0x4000);
+            packet->opcode_ = (packet->opcode_ & 0xDFFF) | 0x4000;
             if (lobby_slot != -1) {
                 previous_faction = NetWinLobbyRows.rows_[lobby_slot].faction_or_color_;
             }
@@ -5286,7 +5255,7 @@ move_veh_ack:
 
     // A reply that completes the pending channel request clears its marker.
     if (channels_[1].leading_words_[1] && (packet->opcode_ & 0x4000)
-        && static_cast<unsigned short>(packet->opcode_) == (channels_[1].leading_words_[1] | 0x4000)
+        && packet->opcode_ == (channels_[1].leading_words_[1] | 0x4000)
         && packet->faction_ == ConsoleGlobal.faction_id_) {
         channels_[1].leading_words_[1] = 0;
     }

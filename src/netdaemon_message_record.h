@@ -22,7 +22,7 @@
 // The two bytes after opcode are observed unwritten in the native stack record;
 // keep them unresolved and do not value-initialize the local object.
 struct MessageDataRecord {
-    int16_t opcode_;
+    unsigned short opcode_;
     unsigned char unresolved_2_[2];
     int faction_;
     uint32_t timestamp_;
@@ -51,7 +51,7 @@ static_assert(offsetof(MessageDataRecord, payload_1C_) == 0x1C,
               "message_data fourth payload field offset");
 
 struct MessageVehicleRecord {
-    int16_t opcode_;
+    unsigned short opcode_;
     unsigned char unresolved_2_[2];
     int32_t faction_;
     uint32_t time_;
@@ -74,7 +74,7 @@ static_assert(offsetof(MessageVehicleRecord, field_14_) == 0x14,
               "vehicle message second payload offset");
 
 struct MessageLockRecord {
-    int16_t opcode_;
+    unsigned short opcode_;
     unsigned char unresolved_2_[2];
     int32_t faction_;
     uint32_t time_;
@@ -109,7 +109,7 @@ static_assert(offsetof(MessageLockRecord, field_24_) == 0x24,
               "lock message sixth payload offset");
 
 struct MessageBaseTextRecord {
-    int16_t opcode_;
+    unsigned short opcode_;
     unsigned char unresolved_2_[2];
     int32_t faction_;
     uint32_t time_;
@@ -135,7 +135,7 @@ static_assert(offsetof(MessageBaseTextRecord, text_) == 0x14,
 // builders; the raw bulk sender also leaves data_[8..31] unwritten. These
 // objects must not be value-initialized merely to make the wire deterministic.
 struct MessageBigDataRecord {
-    int16_t opcode_;
+    unsigned short opcode_;
     unsigned char unresolved_2_[2];
     int faction_;
     uint32_t timestamp_;
@@ -144,7 +144,7 @@ struct MessageBigDataRecord {
 };
 
 struct MessageLandmarkRecord {
-    int16_t opcode_;
+    unsigned short opcode_;
     unsigned char unresolved_2_[2];
     int faction_;
     uint32_t timestamp_;
