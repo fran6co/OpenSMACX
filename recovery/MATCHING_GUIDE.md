@@ -90,8 +90,15 @@ Tooling traps:
   --strip-symbol=.ef in out`, never in place on a qualified input).
 - In callers of thousands of instructions, flat probes grow the budget as much
   as they spend; use branchy probes to measure missing spend.
+- `RECOVERY_ASSOCIATED` switch lines may sit at the end of the file, away
+  from their function: grep before adding one; a duplicate makes `measure`
+  print nothing.
 - Wine reads stdin: run batch compiles inside `while read` loops with
   `</dev/null`, or the loop stops silently after a few units.
+- Wine is case-insensitive: object names differing only in case overwrite
+  each other; use unique lowercase names in screening scripts.
+- For functions with in-text jump tables, `measure` similarity counts the
+  table bytes past `ret`; compare body-only mnemonic ratios.
 - `/tmp` is a small tmpfs; keep large output under the worktree's `build/`.
 - `permute --candidates` can give identical distances for variants that
   `measure` scores differently (extent-mismatched functions); confirm with
@@ -148,6 +155,9 @@ without `/Oy-`).
   caller expands it, no copy is emitted. The copy's image position therefore
   names the function that needed it. A 219-byte plain member
   (StatusWin::redraw) is never auto-inlined.
+- **Out of line at one site:** `(obj.*&C::f)()` still expands a header inline;
+  a non-const local member pointer `void (C::*p)() = &C::f; (obj.*p)();`
+  keeps the call (NetDaemon::reset in menu_proc).
 - **Definition order and keywords.** Definition order is not a reliable
   lever: plain functions defined after their caller usually stay calls, but
   window_proc's static handlers and free functions defined after it were
@@ -259,6 +269,14 @@ arms both return; end the function with that if/else, not a trailing return
   decisions (window_proc). A probe with more than about four chained ifs is
   itself refused and emits calls; use many one-if probes.
 
+  Dead calls in an always-false `if` measure a shortfall; use arguments
+  that add no new literals: new literals in a canary unit flip other
+  functions (do_checksums vs end_of_game).
+
+  Teardown depth can follow the caller's written size rather than dead
+  spend: replacing three written-out Buffer calls with one existing inline
+  helper made a drawer's teardown one stage shallower where probes did not.
+
   Keep a dead probe (a static helper of chained `if (x == k) x = c;` called with
   a constant, which folds to zero code) only as `WORKAROUND(inline)` when no
   natural spelling is found.
@@ -275,6 +293,11 @@ arms both return; end the function with that if/else, not a trailing return
   inflate each caller's own size, so every teardown expands one level too deep
   (call_off_vendetta had 48 states against 22). Restore the helper calls
   file-wide first.
+
+Shared return teardowns: when several `~Popup` return sites share one
+teardown copy in the image, the source had one `return` that the other sites
+reached by `goto`, placed at the source position of the latest sharing site
+(control_turn).
 
 State order follows test order: in Popup functions whose rejection blocks the
 image lays out far away, teardown states are numbered in the order of the
@@ -364,6 +387,10 @@ for v in p[1:]:
   Gate new bodies per TU (`#ifdef`, tagged `WORKAROUND(decl)`), and keep a
   header change only when the scoped `check-matches --since` shows gains and no
   losses.
+- **Flipping a canary back.** When a rewrite elsewhere in a unit flips a
+  canary, look for an equivalent spelling inside the rewritten function
+  that compiles to the same code for that function (an if/else assignment
+  folded into one `||` expression restored end_of_game).
 - **Extern-name count.** Codegen in a TU depends on how many *distinct* extern
   variable names it declares; the names and their lengths don't matter, and
   repeated declarations and enumerators don't count (action_give stays exact
@@ -373,11 +400,30 @@ for v in p[1:]:
   `WORKAROUND(decl)` declarations shadowed by element macros, then compare
   every TU's objects function by function (the IfaceColorTable change touched
   only load_interface).
+- **One unit both expanding and calling a function** means the original was a
+  header inline everywhere and the unit emits a pick-any copy; a strong
+  definition elsewhere then gives LNK2005, so make that definition `inline`
+  (COMDAT) too. A file-local twin of an inline member is not budget-neutral:
+  it may expand where the member would be refused, and masked measurement
+  hides wrong call targets at refused sites.
+- **Budget probes are non-monotone** (12x1 and 6x2 matched where 8x2, 10x1
+  and 16x1 did not): sweep chain size against count.
+- **Pick-any copy without a caller:** put `MEASURED` on the class declaration
+  and define the body `inline` in the owning unit (dllexport on the
+  definition alone fails with C2375); units seeing the body emit their own
+  COMDAT copies (StringStruct::current_entry).
+- **A local initialised from a dead parameter** is coalesced into that
+  parameter's slot; the image's fresh slot needs the parameter to stay live.
 - **Moving an out-of-line member body into its header:** guard it per unit
   (`#ifdef X_INLINE` around the body, the plain declaration in `#else`); the
   unit emitting the copy defines the guard too and the copy stays exact.
   Unguarded, Font::line_advance in font.h (148 includers) flipped 29
   functions in 21 units; guarded, only the three target units changed.
+- **Turning a header inline into a call per unit.** An explicit `inline`
+  member defined at the end of the unit, after its callers, stays a call
+  there and is emitted as a pick-any COMDAT (a non-inline definition gives
+  LNK2005). Check every function measured in that unit's compile context:
+  destructor copies it emits may need an inline twin of the same body.
 - **Swapping one declaration for one is safe.** Replacing a free declaration
   with a member declaration in win.h (142 includers) changed no function in
   any other unit; the flips above come from adding or removing declarations.
@@ -386,6 +432,10 @@ for v in p[1:]:
   `measurement.unit_flag_sets` or every recover command refuses. (Before
   2026-11-12, unpinned units were measured under both global trials and the
   better score kept, so a /Oy- unit could be reported from a frameless compile.)
+- **The extern-name count is a window, not a threshold,** and it moves with
+  the other function bodies (action_give needed >=4, then >=6, then 14-16
+  extra names as action_terraform changed). After rewriting a function in a
+  canary unit, sweep 0-24 extra names and keep the middle of the window.
 - **Include position.** A header's position in the include order can flip ties
   even when it arrives later anyway. Dropping an unused direct include is a
   faithful lever.
@@ -419,6 +469,10 @@ for v in p[1:]:
 - **`cmp reg,1; jle` back-edges** come from `j <= 1`; `j < 2` gives `cmp 2; jl`.
 - **A byte test of `enable_mask_` against `1 << f`** is `is_human(f)`
   (human_mask_ is byte 0 of that union).
+- **Writable fixed-stride string slots.** strcat sources at a fixed stride
+  (e.g. 0x18) with zero padding, in .data before the unit's other globals,
+  are a writable `char[N][stride]` table, not literals (load_music's ambience
+  names); pooled literals would let VC6 cross-jump identical arms.
 - **One literal address pushed several times** in an unpooled image function
   is a named global string object (SocialWinColonSpaceText, BufferJoinSpace),
   not a literal. Conversely, identical literals the image keeps separate but
@@ -427,6 +481,15 @@ for v in p[1:]:
 - **Materialised compare after a counting loop** (`xor; cmp; setl; test; je`
   with the count in a dead parameter slot) is an inline helper taking the
   counter by reference and returning the comparison.
+- **Shared final `return 0`.** When the image's last `if (x) return 0;` is a
+  `jne` into an earlier `pop...ret` copy, write `if (!x) return v; return 0;`:
+  every `return 0` then cross-jumps to one epilogue (veh_draw lost 21
+  instructions).
+- **Clamp stored before tested.** `f = expr; f = max(0, min(N - 1, (int)f));`
+  reproduces the image's store-then-overwrite.
+- **Fix a unit's literal count as a whole.** Removing a duplicated literal in
+  a canary unit flips other functions (shoot_it vs action_give) even when
+  the image has fewer literals.
 - **Strict refusal with a masked BYTE_EXACT.** First check for `$SG`
   relocations without a `RECOVERY_LITERAL` binding (seed them from the image's
   push operands); import bindings are global, so a second copy is an error.
@@ -451,6 +514,23 @@ for v in p[1:]:
   `void` leaves the object code identical. When a mangled name changes, keep
   the historical name on the ORIGINAL line and add or update a `// symbol`
   line with the new one; measure, record and check-claims follow it.
+- **Deferred register saves.** When the image saves only the registers it
+  needs before an early `return K` and pushes the rest after the guard, the
+  rest of the source reached one return: end the arms in a single
+  `return x;` with a result variable (VC6 still tail-duplicates the
+  epilogue). A return inside an arm puts every push in the prologue.
+- **A destructor that does not store its own vptrs at entry** is
+  compiler-generated; a user-declared empty destructor always stores them.
+- **`if (++p->member == n)` through a pointer** gives `inc edx; mov eax, edx;
+  mov [member], edx; cmp eax, ...`; local forms do not.
+- **Fill loops.** A plain `for` fill of 0/1 compiles to `rep stosd`, so
+  `rep stosd` alone does not prove a memset.
+- **`extern "C"` loses EH.** Under /GX an `extern "C"` definition with
+  destructible locals compiles with no EH frame; if the image has an fs:[0]
+  frame, the original had C++ linkage.
+- **A header-inline copy emitted from another unit** that calls a member the
+  measured unit defines: wrap that member in `#pragma auto_inline(off)` in
+  the measured unit, when the copy is its only caller there (~StringBox).
 - **Missing `void`.** An `int` function with a separate epilogue at each exit and
   no zero register was `void`. The catalogue's mangled return type can be wrong.
 - **StringList locals.** In drawer functions they call
@@ -461,6 +541,13 @@ for v in p[1:]:
   definition when the host unit's `/Oy` differs. A `MEASURED` (dllexport) inline
   is emitted into every includer and perturbs them; prefer plain `inline` when
   the owner emits the copy through a real call.
+- **Tail merging needs `continue`.** In `while (1) { switch (...) {...} }`
+  identical case tails ending in `break;` are not cross-jumped; ending in
+  `continue;` they are (parse_string).
+- **Virtual-base Buffer members.** `Buffer::f()` on `this` has no null check;
+  binding `Buffer &b = *this` or passing `*this` to a free helper adds one.
+  When the image's inline body is a Buffer member, give it a per-TU-guarded
+  Buffer member rather than a free helper.
 - **Tail merging follows source form.** VC6 cross-jumps tails that are
   identical in its internal form, not in bytes. When the image keeps identical
   tails separate, spell each differently (`a = b = X;` vs `a = X; b = a;`, or
@@ -473,6 +560,25 @@ for v in p[1:]:
   conditional `if (x) goto fail;` jumps to the shared copy. For an image's
   private copy with the status store after the receiver set-up, write
   `{ const int r = f(); if (r) { status = r; goto fail; } }` (Video::load).
+- **List-node allocation template** (StringStruct, ServiceProviderList,
+  SpriteList, JackalVoiceRx add): entries `allocator_ ? new(allocator_) T :
+  new(owner) T`; payloads `if (allocator_) x = new(allocator_) P; else x =
+  new(owner) P;`. Signature: per-arm EH flag bits in a frame local
+  (`or al,N`) and paired cleanup funclets calling placement delete
+  0x00402320. A class-scope operator delete hides a global placement delete
+  (no cleanup state); `::new(args)` finds it. In cleanup funclets an lvalue
+  placement argument is re-read, an rvalue (inline function result) spilled.
+- **`new (std::nothrow) X` drops the EH frame.** A `push -1/handler/fs:[0]`
+  frame around an image `new X` that ours lacks is plain global `new X`.
+- **Signed compares on masked high bytes.** `(x & 0xFF000000) < K` compiles
+  unsigned (jae); the image's `and; cmp; jge` is `(x >> 24) < k`,
+  `(x & ~0xFFFFFF) < K` or an int cast of the masked value.
+- **Invented intermediate bases.** If our constructor stores an extra derived
+  vftable stage the image lacks, or a generated deleting destructor calls an
+  empty `??1`, the class has an invented intermediate base: derive from the
+  real base directly (ListPayloadBase).
+- **Moving a member's definition to another unit:** leave an `inline` twin in
+  the original unit if callers there expanded it.
 - **Class operator new.** A dead store of 0 to a frame local, with no EH
   frame, beside `new` of classes with virtual bases is the construction flag
   of a class `operator new` without a matching placement delete. Global
@@ -482,6 +588,10 @@ for v in p[1:]:
 - **Sprite draw overload.** When every `Sprite::draw(this, s.transparent_index(),
   x, y)` site forms `lea ecx, sprite` before reading `[ecx+8]`, the original
   called an inline draw overload on the sprite that reads its own index.
+- **Ten distinct 0x50-byte frame buffers**, one per `_itoa` + strcat, are ten
+  expansions of the `say_num(int)` header inline; write say_num per site.
+- **`static Sprite *const p = &g_X;`** is not constant-folded: it emits a
+  data object and a load. Where the image pushes the address, write `&g_X`.
 - **Unwind-only destructors.** A destructor whose only image caller is an
   unwind funclet, with its copy inside a TU's range, is a header-inline
   COMDAT; defining it in its own TU blocks every expansion (~UV2Player).
@@ -506,6 +616,12 @@ for v in p[1:]:
     literals in the image tells which arm came first in the source.
   - A block reached only by gotos was usually written inline at its *first*
     unconditional goto in source order (order_veh's 59512c block).
+  - A loop whose bottom repeats its top guard and jumps past it (`init; je
+    body; jmp fail`) was a `goto label` back to a label before the guard;
+    an `exit(N)` that falls into the next block is `exit(N); break;`
+    inside `while (1) { if (x) break; ... }`.
+  - The image's `je target` over a fall-through arm ending in `goto` is
+    `if (x != k) { A; goto J; }` followed by the target label.
   - One label per join: two adjacent labels where the second is reached
     only by a backward goto skipping a reload push the return sites between
     them out of line (probe). Write an else arm as `else`, not as a goto to a
@@ -581,6 +697,22 @@ for v in p[1:]:
 - **label_get vs written-out order.** A `label_get(k)` argument is evaluated
   before the other arguments; `StringTable.get(Labels.strings_ptr[k])` at its
   own position. Pick per site from the image.
+- **Struct copy after in-place edits.** A whole RECT/vector assignment shows
+  as dword moves through a pointer that reload some fields and forward
+  others; stores back into a local block before such a copy mean the
+  original modified the source in place (MCIVideo::load, Caviar::init).
+- **`x = max(a, f())`** evaluates f twice (`cmp; jle; call f again`); a
+  single conditional store is `max(a, b)` of plain values.
+- **Coordinate wrap with the flat arm first.** An image x-wrap testing
+  MapIsFlat with `je` to the wrap code and a fall-through flat arm is a
+  ternary: `x2 = (MapIsFlat & 1) ? t : t < 0 ? t + W : t >= W ? t - W : t`
+  (wrap_map_x and if-chains give jne layout).
+- **`int s = A || B; if (!s && C) return;`** threads both constant stores
+  (the `s = 1` block lands at the next unconditional jump).
+- **Member stores vs inline setter.** When the image writes a member array's
+  fields this-relative right after writes through the member's own register,
+  the original stored the fields directly; an inline setter makes its
+  receiver a pointer register (BaseWin::init's slice colours).
 - **Rect argument order.** A small static inline computing `r->right -
   r->left` loads right then left and puts the width in the first register;
   the written-out expression loads left first. A place-rect helper
@@ -588,11 +720,26 @@ for v in p[1:]:
 - **Store-to-load forwarding.** VC6 forwards stored rect values into later
   argument loads through the same named pointer local (`RECT *r = &m`);
   writing `&m` at each use gives the image's re-loads and frees a frame temp.
+- **A selection kept in an incoming argument slot** is the parameter reused
+  (`y = X_pop(...)`), not a new local. Field stores through a receiver
+  register (`lea esi,[ebx+off]` then `[esi+..]`) mark an inline accessor or
+  a list-pointer local.
 - **A named local passed to one call** (`int s = ...; f(x, s)`) can shift
   registers across the function; pass the expression inline (quayle).
 - **`cond ? !a() : !b()`** materialises a bool (neg/sbb/inc); the image's
   per-arm `test; je` is `if (!L) { if (!a()) goto found; } else if (!b())
   goto found;`.
+- **`if (c) return p; return NULL;` becomes branchless** (neg/sbb/and). When
+  the image has separate epilogues with a store after the test, put the store
+  in each arm: `if (c) { *out = 0; return p; } *out = 0; return NULL;`.
+- **Value reuse across a byte store.** A `T &e = arr[i]` reference lets VC6
+  reuse a loaded byte field across a store to a neighbouring field;
+  `arr[i].f` at each use reloads, as the image does.
+- **`a == b` of two setcc values:** VC6 evaluates the side containing an
+  inline call first; keep the getter call on the side the image computes
+  first (convoy: `(x >= K) == (get_triad(v) == C)`).
+- **A loop counter holding `i + 1` mid-body with no increment at the end**
+  is `for (i = 0; ...; ++i) { faction = i + 1; ... }`.
 - **Commutative order through a pointer local.** VC6 canonicalises
   `(m.left + m.right) / 2` on directly read members, so swapping operands does
   nothing; reading through `RECT *r = &m;` gives the other load order with
@@ -621,6 +768,9 @@ for v in p[1:]:
 - **Nested label_get in an argument list.** When the image calls get after the
   outer call's other pushes, write `StringTable.get(Labels.strings_ptr[k])`;
   the forceinline label_get hoists the call ahead of them (PrefWin::init).
+- **The comparison literal survives.** `x >= 4` gives `cmp 4; jge`, `x > 3`
+  gives `cmp 3; jg`; an off-by-one constant with a different jcc in an
+  aligned diff names the original spelling (fixed 9 sites in base_terraform).
 - **Canonicalised forms (not levers).** `f(a) < f(b)` and its mirrored or
   negated forms give the same call order; `a * b` vs `b * a` compile
   identically.
@@ -634,6 +784,20 @@ for v in p[1:]:
 - **Number-normalising diff filters hide wrong field offsets.** Compare
   relocation symbol plus displacement against the image address (an
   `assistant_city` vs `insult_leader` read only showed up that way).
+- **Register with stack write-back is a split live range** (measured
+  2026-11-13). When the image keeps a local V in ebx/esi/edi for part of a
+  function and stores every assignment to a frame or dead-parameter slot
+  (`mov ebx,K; mov [slot],ebx`, reloads at joins), VC6 split V: V had the
+  register over its dense part and a shorter, hotter local took it in
+  between. Memory-homed locals are never cached in callee-saved registers
+  across calls, so if ours keeps V memory-only, another local holds that
+  register across V's piece. List each register's occupants in the image
+  and ours and fix the balance of uses (a missing or extra re-read, a named
+  local the original re-read, an initialisation placed elsewhere): the
+  victim flips on 2-4 uses. Declaration order, taking the address (real
+  `&x` makes a local memory-only) and address-taking inside inline helpers
+  do not produce or remove it. This is a whole-function equilibrium:
+  diagnose, don't expect a one-line fix.
 - **Spill reloads in exactly reversed order** at loop boundaries: a known
   blocker, so skip.
 
@@ -643,11 +807,18 @@ for v in p[1:]:
 - **A frame larger than the locals.** Either a block-scoped buffer overlapped a
   later inlined local, or the original read fields directly instead of caching
   them.
+- **Function vs block scope** is a lever for frame packing and for VC6's
+  merging of identical code: with function-scope temporaries identical case
+  bodies merge whole; block-scoped ones stop the merge but pack into a
+  separate overlap region with a different slot order.
 - **Same-size local arrays** ignore declaration order and names too; putting
   buffers in disjoint block scopes makes them overlap as the image does
   (ProdPicker::calculate's facility loop reusing the vehicle loop's buffers).
 - **Same-type objects' slots** (several Popups and a GraphicWin) did not
   depend on declaration order or names across 240 variants.
+- **Frame 4 bytes short with an untouched slot below a per-faction array:**
+  the array was `[MaxPlayerNum]` indexed by faction id from 1, so element 0
+  is never touched (CouncWin::init's support[]).
 - **Frame-resident size pairs** (get_pcx_dimensions outputs at
   [ebp-0x14]/[ebp-0x10], width higher) are `int size[2]` read as
   `(&size[1], &size[0])`; named scalars move into dead parameter slots.
