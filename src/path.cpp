@@ -994,7 +994,8 @@ int Path::move(int veh_id, int faction_id) {
     // a different bit than the outer one.
     } else if (veh_moves(veh_id) <= Rules.move_rate_roads) {
         flags |= 0x100;
-        if (veh_moves(veh_id) <= (uint32_t)((Vehs[veh_id].proto_id != BSC_MIND_WORMS) + 1)) {
+        // Signed compare (jg at 0x0059BD68): no unsigned cast on the bound.
+        if (veh_moves(veh_id) <= (Vehs[veh_id].proto_id != BSC_MIND_WORMS) + 1) {
             flags |= 0x1000;
         }
     }

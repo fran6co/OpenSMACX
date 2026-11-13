@@ -2464,10 +2464,16 @@ void MapWin::on_mouse_move(int pixel_x, int pixel_y) {
                 }
 
                 StringTemp[0] = '\0';
-                strcat(StringTemp, StringTable.get(
-                    ConsoleGlobal.field_23D10_ == 8 ? Labels.strings_ptr[410]
-                    : field_1DD84_ != 0           ? Labels.strings_ptr[433]
-                                                  : Labels.strings_ptr[411]));
+                // One strcat per arm: the image pops this strcat's arguments
+                // on their own (add esp, 8) before the next call, which only
+                // happens when the call ends an arm; the arms then cross-jump.
+                if (ConsoleGlobal.field_23D10_ == 8) {
+                    strcat(StringTemp, label_get(410));
+                } else if (field_1DD84_ != 0) {
+                    strcat(StringTemp, label_get(433));
+                } else {
+                    strcat(StringTemp, label_get(411));
+                }
                 strcat(StringTemp, " ");
                 say_loc(StringTemp, tile_x, tile_y, 0, 2, 0);
                 strcat(StringTemp, ": ");
@@ -6879,9 +6885,9 @@ static inline void set_alt_cache(MapWin *w, int x, int y, int corner, int value)
 
 static inline void set_alt_detail(MapWin *w, int x, int y, int corner, int value) {
     if (w->owned_ != 0 && corner != 0) {
-        const int shift = corner * 4 - 4;
         TerrainCacheEntry &entry =
             w->owned_[(MapLongitudeBounds >> 1) * y + (x >> 1)];
+        const int shift = corner * 4 - 4;
         entry.altitude_detail = static_cast<unsigned short>(
             (~(0xF << shift) & entry.altitude_detail) | ((value & 0xF) << shift));
     }

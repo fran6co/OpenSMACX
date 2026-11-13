@@ -368,8 +368,10 @@ int EditBox::on_key_down(int key) {
         field_B44_ = strlen(text_);
         if (!(field_B38_ & 1)) field_B40_ = field_B44_;
         char *p = &text_[field_B44_];
-        while (p > text_
-               && Buffer::text_width(p) < dib_.bmiHeader.biWidth - static_cast<int>(field_B34_) * 2) {
+        while (p > text_) {
+            int available = dib_.bmiHeader.biWidth;
+            int width = Buffer::text_width(p);
+            if (width >= available - static_cast<int>(field_B34_) * 2) break;
             --p;
         }
         if (p != text_) ++p;

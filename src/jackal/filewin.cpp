@@ -437,6 +437,16 @@ char *FileWin::load() {
     return field_638_ == 0x12C ? 0 : selected_path_;
 }
 
+// WORKAROUND(decl): the image forms the list's Dialog base once (add eax,
+// edi) and reads window_x_/window_y_ through it after loading the parent:
+// the shape of an inline ListBox::attach overload that supplies its own
+// position. Its header declaration is unknown; this stand-in carries it.
+static inline int filewin_attach_list(ListBox *list, GraphicWin *parent,
+                                      int flags) {
+    return list->ListBox::attach(parent, list->window_x_, list->window_y_,
+                                 flags);
+}
+
 // ORIGINAL: 0x00614360 ?UNK3@FileWin@@QAEHPAD@Z 0x00614360-0x00614694
 // TRIED: MISMATCH #0 'sub' vs 'push' - original is FPO'd (no ebp frame, ebp free as a GP register); the rebuilt body gets a standard ebp frame instead. Not chased (820B, heaviest Win32-API surface in this batch: GetCurrentDirectoryA/ SetCurrentDirectoryA/DlgDirListA/FindFirstFileA/FindClose/ SendMessageA/GetLastError all called indirectly through the IAT-slot globals, matching the disasm's `call dword ptr [addr]` sites). `edi` = self+0x286c (the embedded ListBox) is constant for the whole function body past its one `lea`; the two vbtable-adjusted calls (remove_all, final slot001) go through a `StringStructThunk`/`VCall` shim built from the raw `*(int*)(*(int*)lb+N)` displacement, not from a modelled virtual-base layout.
 // symbol    ?populate_directory@FileWin@@QAEHPAD@Z
@@ -514,9 +524,7 @@ int FileWin::populate_directory(char *directory) {
     }
 
     const int attach_or_refresh_result = !list_box_.has_dib_bits()
-        ? list->ListBox::attach(
-              modal_window_,
-              list->window_x_, list->window_y_,
+        ? filewin_attach_list(list, modal_window_,
               FileWinInitSharedParameters.field_00_ != 0
                   ? FileWinInitSharedParameters.field_00_
                   : 0x80060)
@@ -616,7 +624,10 @@ int FileWin::init(char *, GraphicWin *parent, FileWinConstruct *parameters) {
 
   init_edit_box(edit_box_, &edit_box_bounds_, static_cast<Win *>(parent), 0);
   edit_box_.field_B14_ = 0x104;
-  edit_box_.show(0);
+  // The image forms the receiver (lea ecx) before reading its vtable through
+  // ecx: show is called through a pointer to the box.
+  EditBox *const edit = &edit_box_;
+  edit->show(0);
 
   result = init_button(flat_button2_, BasePopDefaultOkText, -1,
                        parameters->button2_bounds_, static_cast<Win *>(parent), 0);
@@ -630,14 +641,17 @@ int FileWin::init(char *, GraphicWin *parent, FileWinConstruct *parameters) {
     return result;
   }
 
-  list_box_.close();
-  result = list_box_.Dialog::init(&list_box_bounds_, 0);
+  // Dialog::init's virtual-base adjustment adds the list pointer held in esi
+  // (add ecx, esi): close and init are called through a pointer to the list.
+  ListBox *const list = &list_box_;
+  list->close();
+  result = list->Dialog::init(&list_box_bounds_, 0);
   if (result != 0) {
     return result;
   }
 
   list_box_.field_8_ = 1;
-  list_box_.field_34_ =
+  list->field_34_ =
       (shared_sprite0_.width() * 3) / 2;
   list_box_.set_draw_callback(&FileWin::filebox_draw);
 
