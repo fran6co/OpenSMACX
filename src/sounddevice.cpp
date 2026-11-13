@@ -2383,7 +2383,7 @@ Purpose: Build the device singleton in two vtable stages: the base's vtable
          constructor iterator (their destructor rides along for the
          unreachable unwind path), the device's own vtable (0x0066E0E8)
          publishes, and the trailing dword clears. The SEH frame is omitted.
-// ORIGINAL: 0x004C4DD0 ??0Wave_Device@@QAE@XZ 0x004C4DD0-0x004C4E5E;0x00659EA0-0x00659EB2
+// ORIGINAL: 0x004C4DD0 ??0Wave_Device@@QAE@XZ 0x004C4DD0-0x004C4E5E;0x00659EA0-0x00659EB2 BYTE_EXACT
 // size      179 bytes
 // prototype void (__thiscall ??0Wave_Device@@QAE@XZ)(Wave_Device* this)
 // callers   1   call targets   2
