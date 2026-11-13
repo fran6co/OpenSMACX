@@ -106,7 +106,17 @@ class FlatButton : public BaseButton {
  private:
   uint32_t field_AB8_;  // 0x0ab8
   // Original 607CF0 walks three columns, resetting each of these runs.
+#ifdef FLATBUTTON_SLICE_COLOURS_PUBLIC
+  // WORKAROUND(decl): BaseWin::init (0x41FFE5..0x420171) stores these three
+  // colours this-relative (esi+0x10FAC...) after writing the slice icons
+  // through the button pointer, i.e. as direct member stores, not through
+  // set_slice_colours' receiver.
+ public:
   uint32_t field_ABC_[3];
+ private:
+#else
+  uint32_t field_ABC_[3];
+#endif
   BoxSpriteParams *border_styles_[3];  // 0xAC8, borrowed style records
   // ReportIf4A431B..432F stores three borrowed Sprite pointers here;
   // constructor/close clear them without destroying the sprites.

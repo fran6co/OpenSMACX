@@ -42,6 +42,7 @@
 #define BASEWIN_INLINE_BODIES  // recompute/delete_queue/exit bodies in basewin.h
 #define MAPWIN_TILE_IN_VIEW_INLINE  // MapWin::tile_in_view body in mapwin.h
 #define BUFFER_WRITE_RIGHT_L3  // guarded Buffer::write_right_l(text, x, y)
+#define FLATBUTTON_SLICE_COLOURS_PUBLIC  // direct field_ABC_ stores in init
 #include "stdafx.h"
 #include "font_metrics.h"
 #include "interface_fonts.h"
@@ -7113,35 +7114,10 @@ namespace {
 void base_init_rect(RECT &rect, int left, int top, int right, int bottom) {
     rect.left = left; rect.top = top; rect.right = right; rect.bottom = bottom;
 }
-void base_init_inset(RECT &rect, int amount) {
-    rect.left += amount; rect.top += amount;
-    rect.right -= amount; rect.bottom -= amount;
-}
-void base_init_label(int label_offset, bool upper) {
-    StringTemp[0] = 0;
-    strcat(StringTemp, label_get(label_offset / 4));
-    if (upper) CharUpperA(StringTemp);
-}
-void base_init_button(FlatButton &button, const char *caption, int id,
-                      const RECT &rect, Win *parent) {
-    button.init(caption, id, rect.left, rect.top,
-                rect.right - rect.left, rect.bottom - rect.top, parent, 0);
-}
-// Keep the three distinct borrowed runs distinct; these are existing config
-// rows, not vtables or ownership transfers. All nine pointers are Sprite*.
-void base_init_button_slices(FlatButton &button, int sprite, int colours) {
-    button.set_slice_icons(&g_BASEWIN_SPRITES[sprite],
-                          &g_BASEWIN_SPRITES[sprite + 3],
-                          &g_BASEWIN_SPRITES[sprite + 6],
-                          &g_BASEWIN_SPRITES[sprite + 1],
-                          &g_BASEWIN_SPRITES[sprite + 4],
-                          &g_BASEWIN_SPRITES[sprite + 7],
-                          &g_BASEWIN_SPRITES[sprite + 2],
-                          &g_BASEWIN_SPRITES[sprite + 5],
-                          &g_BASEWIN_SPRITES[sprite + 8]);
-    button.set_slice_colours(TextColourTable[colours],
-                            TextColourTable[colours + 1],
-                            TextColourTable[colours + 2]);
+int base_rect_height(const RECT *rect) { return rect->bottom - rect->top; }
+void base_expand_rect(RECT *rect, int horizontal, int vertical) {
+    rect->left -= horizontal; rect->right += horizontal;
+    rect->top -= vertical; rect->bottom += vertical;
 }
 }
 
@@ -7151,8 +7127,10 @@ void base_init_button_slices(FlatButton &button, int sprite, int colours) {
 // TRIED: binding fates. This body IS a full transcription, so it is the one of the four a rename can home; 66 of the 72 bindings resolve to names the tree already carries or to literals, and only the ten below need deciding. Reading them is the remaining work: ALREADY NAMED ELSEWHERE 0x0066931C game.h's function-pointer slot;  0x00669328 console.h's runtime slot;  0x0066AA40 the float -10000.0f (basewin.h documents it) 0x00682824 "BASENAME";  0x00682830 "INVERTLIST";  0x00682E60 "fx\\menu2.wav";  0x00682E70 "ter1wreck.pcx";  0x00682E80 "interface.pcx"  - .rdata literals, spelled as literals 0x00691B2C DefaultFontFace (font.h);  0x006A7528 InvertEntryTable and 0x006EEE60 InvertEntryCount (basewin.cpp);  0x006EEE68 g_BASEWIN_WAVE 0x0077A5C8..0x0077A8B4  Sprite g_BASEWIN_SPRITES[0..16] - sprite.cpp names the array at 0x77A5C8 with a 0x2C stride, so these seventeen are indexes into it, not seventeen bindings 0x0078D5A0 BoxSpriteStyle3;  0x0078D690 BoxSpriteStyle9 (dipedit.cpp); 0x007ACBB8 g_RAINFALL_DOUBLE_TILE_SPRITES[0] (sprite.cpp) 0x007AE820 MainInterfaceGlobal;  0x009156B0 ConsoleGlobal; 0x009B7B1C / 0x009B7B20 WinScreenWidth / WinScreenHeight; 0x009B7D00 TextBufferGetPtr;  0x009B86A0 the string temp; 0x009B90D8 StringTable;  0x009B90F8 Labels; 0x00689370 BaseIDCurrentSelected;  0x0090EA30 BaseCurrent() 0x0041AF40 BaseWin::timer_callback's own address - a function reference wearing a data binding, so it needs the callee declared, not a name 0x00652A9F and the 0x00652A94-0x00652AA9 span - the EH scope table, the compiler's STILL UNNAMED, with what the body does with each 0x006734E0  0x00696D14  0x0078D708  0x007ACBC0  0x007AE7FC 0x007AF59C..0x007AF5DC (a run of 17 dwords whose +0x14 dword, 0x7AF5B0, is the RECT BaseWin::init insets into its own rects - see BattleWin::on_status's block in battlewin.cpp, which names 0x7AF5B0 InterfaceScreenRect and proves the four-dword read) 0x008C6C54..0x008C6C68  0x008C6D1C / 0x008C6D20  0x0090D978
 void BaseWin::init() {
     int index;
+    int y;
+    Sprite *sprite;
     Buffer assets;  // Real local lifetime, including exceptional cleanup.
-    RECT area;
+    RECT r;
     int window_height;
 
     field_40B00_ = -1;
@@ -7179,8 +7157,9 @@ void BaseWin::init() {
         base_init_rect(nutrient_outer_rect_, 27, 33, 163, 143);
         base_init_rect(production_outer_rect_, 166, 260, 699, 349);
         production_content_rect_ = production_outer_rect_;
-        window_height = WinScreenHeight - MainInterfaceGlobal.field_D7C_;
-        if (window_height > 398) window_height = 398;
+        const int available = WinScreenHeight - static_cast<int>(MainInterfaceGlobal.field_D7C_);
+        if (available > 398) window_height = 398;
+        else window_height = available;
     } else {
         base_init_rect(rect1_, 166, 33, 560, 257);
         base_init_rect(commerce_report_rect_, 30, 170, 160, 293);
@@ -7193,13 +7172,11 @@ void BaseWin::init() {
         base_init_rect(nutrient_title_rect_, 30, 36, 160, 56);
         base_init_rect(nutrient_outer_rect_, 27, 33, 163, 143);
         base_init_rect(production_outer_rect_, 166, 260, 699, 349);
-        RECT &production = production_content_rect_;
-        production = production_outer_rect_;
-        const int half_old_height = (production.bottom - production.top) / 2;
-        const int shift = production.bottom - production.top + 3;
-        production.top += shift;
-        production.bottom += shift;
-        const int half_new_height = (production.bottom - production.top) / 2;
+        RECT *production = &production_content_rect_;
+        *production = production_outer_rect_;
+        const int half_old_height = base_rect_height(production) / 2;
+        offset_rect(production, 0, base_rect_height(production) + 3);
+        const int half_new_height = base_rect_height(production) / 2;
         commerce_report_rect_.top += half_new_height;
         commerce_report_rect_.bottom += half_new_height;
         commerce_outer_rect_.top += half_old_height;
@@ -7210,66 +7187,68 @@ void BaseWin::init() {
         commerce_outer_rect_.bottom += half_old_height;
         nutrient_content_rect_.bottom += half_old_height;
         nutrient_outer_rect_.bottom += half_old_height;
-        base_init_rect(rect6_, 381, production.bottom - production.top + 360,
-                       619, production.bottom - production.top + 380);
-        base_init_rect(rect7_, 131, production.bottom - production.top + 360,
-                       369, production.bottom - production.top + 380);
-        window_height = production.bottom - production.top + 401;
+        set_rectangle_dimensions(&rect6_, 381, base_rect_height(production) + 360, 238, 20);
+        set_rectangle_dimensions(&rect7_, 131, base_rect_height(production) + 360, 238, 20);
+        window_height = base_rect_height(production) + 401;
     }
-    base_init_rect(rect5_, commerce_outer_rect_.left,
-                   commerce_outer_rect_.bottom + 3,
-                   commerce_outer_rect_.right, rect6_.top - 6);
+    r = commerce_outer_rect_;
+    r.top = r.bottom + 3;
+    r.bottom = rect6_.top - 6;
+    rect5_ = r;
     selected_queue_slot_ = 0;
     field_40B30_ = 0;
     garrison_rect_ = MainInterfaceGlobal.lower_frame_rect_;
-    base_init_inset(garrison_rect_, 4);
+    base_expand_rect(&garrison_rect_, -4, -4);
     garrison_rect_.left -= 4;  // Original removes only the left inset again.
     queue_help_rect_ = MainInterfaceGlobal.rect4_;
     queue_help_rect_.right = (queue_help_rect_.right - queue_help_rect_.left) * 7 / 12;
-    base_init_inset(queue_help_rect_, 4);
-    base_init_rect(flash_rect_b_, queue_help_rect_.right + 3,
-                   queue_help_rect_.bottom - 23,
-                   garrison_rect_.left - 7, queue_help_rect_.bottom - 3);
-    base_init_rect(flash_rect_a_, queue_help_rect_.right + 3,
-                   queue_help_rect_.bottom - 45,
-                   garrison_rect_.left - 7, queue_help_rect_.bottom - 25);
-    const RECT &main_frame = MainInterfaceGlobal.rect4_;
-    base_init_rect(queue_outer_rect_, queue_help_rect_.right + 4,
-                   main_frame.top + 4, main_frame.right - 4,
-                   flash_rect_a_.top - 7);
-    base_init_rect(queue_title_rect_, queue_help_rect_.right + 7,
-                   main_frame.top + 7, main_frame.right - 7,
-                   flash_rect_a_.top - 10);
+    base_expand_rect(&queue_help_rect_, -4, -4);
+    r = queue_help_rect_;
+    r.left = queue_help_rect_.right + 3;
+    r.right = garrison_rect_.left - 7;
+    r.bottom -= 3;
+    r.top = r.bottom - 20;
+    flash_rect_b_ = r;
+    offset_rect(&r, 0, -22);
+    flash_rect_a_ = r;
+    r = MainInterfaceGlobal.rect4_;
+    r.left = queue_help_rect_.right + 4;
+    r.top += 4;
+    r.right -= 4;
+    r.bottom = flash_rect_a_.top - 7;
+    queue_outer_rect_ = r;
+    base_expand_rect(&r, -3, -3);
+    queue_title_rect_ = r;
     queue_title_rect_.bottom = queue_title_rect_.top + 20;
-    base_init_rect(queue_content_rect_, queue_help_rect_.right + 7,
-                   main_frame.top + 7, main_frame.right - 7,
-                   flash_rect_a_.top - 10);
+    queue_content_rect_ = r;
     queue_content_rect_.top = queue_title_rect_.bottom + 2;
     queue_button_rect_ = queue_title_rect_;
-    const RECT &lower_frame = MainInterfaceGlobal.info_panel_frame_;
-    base_init_rect(population_rect_, lower_frame.left + 4,
-                   lower_frame.bottom - 58, lower_frame.right - 62,
-                   lower_frame.bottom - 4);
-    info_title_rect_ = lower_frame;
+    r = MainInterfaceGlobal.info_panel_frame_;
+    base_expand_rect(&r, -4, -4);
+    population_rect_ = r;
+    population_rect_.top = r.bottom - 54;
+    population_rect_.right = MainInterfaceGlobal.info_panel_frame_.right - 62;
+    info_title_rect_ = MainInterfaceGlobal.info_panel_frame_;
     info_title_rect_.bottom = population_rect_.top;
-    base_init_inset(info_title_rect_, 4);
+    base_expand_rect(&info_title_rect_, -4, -4);
     ++info_title_rect_.bottom;
-    base_init_rect(rect12_, population_rect_.right + 7,
-                   population_rect_.top + 3, lower_frame.right - 7,
-                   population_rect_.bottom - 3);
-    const RECT &right_frame = MainInterfaceGlobal.right_frame_rect_;
-    interface_help_rect_ = right_frame;
-    base_init_inset(interface_help_rect_, 4);
-    base_init_rect(supported_title_rect_, right_frame.left + 7,
-                   right_frame.top + 7, right_frame.right - 7,
-                   right_frame.bottom - 7);
+    r = population_rect_;
+    r.left = r.right + 4;
+    r.right = MainInterfaceGlobal.info_panel_frame_.right - 4;
+    base_expand_rect(&r, -3, -3);
+    rect12_ = r;
+    r = MainInterfaceGlobal.right_frame_rect_;
+    base_expand_rect(&r, -4, -4);
+    interface_help_rect_ = r;
+    base_expand_rect(&r, -3, -3);
+    supported_title_rect_ = r;
     supported_title_rect_.bottom = supported_title_rect_.top + 20;
-    base_init_rect(supported_content_rect_, right_frame.left + 7,
-                   supported_title_rect_.bottom + 2, right_frame.right - 7,
-                   right_frame.bottom - 7);
-    base_init_rect(rect20_, rect2_.left + 3, rect2_.bottom - 23,
-                   rect2_.right - 3, rect2_.bottom - 3);
-
+    supported_content_rect_ = r;
+    supported_content_rect_.top = supported_title_rect_.bottom + 2;
+    r = rect2_;
+    base_expand_rect(&r, -3, -3);
+    r.top = r.bottom - 20;
+    rect20_ = r;
     font1_.init(DefaultFontFace, 14, 1);
     if (text_open("BASENAME", "INVERTLIST") == 0) {
         text_get();
@@ -7300,56 +7279,58 @@ void BaseWin::init() {
     camera_angles_.values[1] = 0.0f;
     camera_angles_.values[2] = 0.785f;
     caviar_apply_rotation(camera_angles_.values, &camera_rotation_);
-    camera_rotation_.values[2][0] = -camera_rotation_.values[2][0];
-    camera_rotation_.values[2][1] = -camera_rotation_.values[2][1];
-    camera_rotation_.values[2][2] = -camera_rotation_.values[2][2];
+    float x = -camera_rotation_.values[2][0];
+    camera_rotation_.values[2][0] = x;
+    float yy = -camera_rotation_.values[2][1];
+    camera_rotation_.values[2][1] = yy;
+    float z = -camera_rotation_.values[2][2];
+    camera_rotation_.values[2][2] = z;
     VOX_Vect camera;
-    camera.values[0] = camera_rotation_.values[2][0] * -10000.0f;
-    camera.values[1] = camera_rotation_.values[2][1] * -10000.0f;
-    camera.values[2] = camera_rotation_.values[2][2] * -10000.0f;
+    camera.values[0] = x * -10000.0f;
+    camera.values[1] = yy * -10000.0f;
+    camera.values[2] = z * -10000.0f;
     caviar_.set_camera_direct(&camera, &camera_rotation_);
     caviar_.set_scaling(0.18f);
-    caviar_.shadow_vector().values[0] = 0.0f;
-    caviar_.shadow_vector().values[1] = 0.0f;
-    caviar_.shadow_vector().values[2] = 1.0f;
-    caviar_.light_vector().values[0] = 0.0f;
-    caviar_.light_vector().values[1] = 0.0f;
-    caviar_.light_vector().values[2] = 1.0f;
+    camera.values[0] = 0.0f;
+    camera.values[1] = 0.0f;
+    camera.values[2] = 1.0f;
+    caviar_.shadow_vector() = camera;
+    caviar_.light_vector() = camera;
     time_.init(BaseWin::timer_callback, 0, this, 50, 5);
-    GraphicWin::init((WinScreenWidth - 726) / 2,
-        WinScreenHeight - MainInterfaceGlobal.field_D7C_ - window_height,
-        758, window_height, 0, 0x05000000,
-        static_cast<Win *>(&ConsoleGlobal), 0, 0);
+    const int left = (WinScreenWidth - 726) / 2;
+    const int top = WinScreenHeight - MainInterfaceGlobal.field_D7C_ - window_height;
+    GraphicWin::init(left, top, 758, window_height, 0, 0x05000000,
+        static_cast<Win *>(static_cast<GraphicWin *>(&ConsoleGlobal)), 0, 0);
     GraphicWin::fill(9);
-    area = *buffer_working_rect();
-    area.left += 23; area.right -= 55; area.bottom += 3;
-    Buffer::box_sprite(&area, &InterfaceBoxStyles[9]);
-    base_init_rect(area, 27, 4, 699, 30);
-    Buffer::box_sprite(&area, &InterfaceBoxStyles[12]);
-    UnionRect(&area, &rect6_, &rect7_);
-    base_init_inset(area, -3);
-    Buffer::box_sprite(&area, &InterfaceBoxStyles[3]);
+    r = *buffer_working_rect();
+    r.left += 23; r.right -= 55; r.bottom += 3;
+    Buffer::box_sprite(&r, &InterfaceBoxStyles[9]);
+    base_init_rect(r, 27, 4, 699, 30);
+    Buffer::box_sprite(&r, &InterfaceBoxStyles[12]);
+    UnionRect(&r, &rect6_, &rect7_);
+    base_expand_rect(&r, 3, 3);
+    Buffer::box_sprite(&r, &InterfaceBoxStyles[3]);
 
     assets.load_pcx("ter1wreck.pcx", 0, 10, 236);
-    for (index = 0; index < 3; ++index)
-        sprites7_[index].extract(&assets, WinFillColour, 768,
-                                1 + index * 49, 48, 48, 0);
+    sprite = &sprites7_[0];
+    for (index = 0, y = 1; index < 3; ++index, y += 49, ++sprite)
+        sprite->extract(&assets, WinFillColour, 768, y, 48, 48, 0);
     assets.load_pcx("interface.pcx", 0, 10, 236);
-    for (index = 0; index < 3; ++index)
-        sprites8_[index].extract(&assets, WinFillColour, 247,
-                                1 + index * 21, 20, 20, 0);
-    for (index = 0; index < 3; ++index)
-        sprites8_[3 + index].extract(&assets, WinFillColour, 268,
-                                1 + index * 21, 21, 20, 0);
-    for (index = 0; index < 3; ++index)
-        sprites8_[6 + index].extract(&assets, WinFillColour, 290,
-                                64 + index * 36, 20, 35, 0);
-    for (index = 0; index < 3; ++index)
-        sprites8_[9 + index].extract(&assets, WinFillColour, 311,
-                                64 + index * 36, 20, 35, 0);
-    for (index = 0; index < 3; ++index)
-        sprites8_[12 + index].extract(&assets, WinFillColour, 332,
-                                1 + index * 49, 48, 48, 0);
+    sprite = &sprites8_[0];
+    for (index = 0, y = 1; index < 3; ++index, y += 21, ++sprite)
+        sprite->extract(&assets, WinFillColour, 247, y, 20, 20, 0);
+    sprite = &sprites8_[3];
+    for (index = 0, y = 1; index < 3; ++index, y += 21, ++sprite)
+        sprite->extract(&assets, WinFillColour, 268, y, 21, 20, 0);
+    sprite = &sprites8_[6];
+    for (index = 0, y = 64; index < 3; ++index, y += 36, ++sprite)
+        sprite->extract(&assets, WinFillColour, 290, y, 20, 35, 0);
+    sprite = &sprites8_[9];
+    for (index = 0, y = 64; index < 3; ++index, y += 36, ++sprite)
+        sprite->extract(&assets, WinFillColour, 311, y, 20, 35, 0);
+    sprite = &sprites8_[12];
+    for (index = 0, y = 1; index < 3; ++index, y += 49, ++sprite)
+        sprite->extract(&assets, WinFillColour, 332, y, 48, 48, 0);
     sprites1_[0].extract(&assets, WinFillColour, 397, 1, 20, 20, 0);
     sprites1_[1].extract(&assets, WinFillColour, 418, 1, 20, 20, 0);
     sprites3_[0].extract(&assets, WinFillColour, 397, 22, 20, 20, 0);
@@ -7359,100 +7340,191 @@ void BaseWin::init() {
     sprite4_.extract(&assets, WinFillColour, 397, 64, 20, 20, 0);
     sprite5_.extract(&assets, WinFillColour, 418, 64, 20, 20, 0);
     sprite6_.extract(&assets, WinFillColour, 439, 64, 20, 20, 0);
-
-    base_init_label(0x77C, true);
-    base_init_button(flatButtons_[20], StringTemp, 20, queue_button_rect_, &MainInterfaceGlobal);
-    flatButtons_[20].set_bubble_text(label_get(0xC30 / 4));
-    base_init_label(0x108, false);
-    base_init_rect(previous_button_rect_, info_title_rect_.left + 3,
-        info_title_rect_.top + 3,
-        info_title_rect_.left + 3 + sprites8_[6].width(),
-        info_title_rect_.top + 3 + sprites8_[6].height());
-    base_init_button(flatButtons_[2], 0, 2, previous_button_rect_, &MainInterfaceGlobal);
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x77C / 4));
+    CharUpperA(StringTemp);
+    flatButtons_[20].init(StringTemp, 20, queue_button_rect_.left, queue_button_rect_.top,
+        queue_button_rect_.right - queue_button_rect_.left, queue_button_rect_.bottom - queue_button_rect_.top, &MainInterfaceGlobal, 0);
+    flatButtons_[20].set_bubble_text(StringTable.get(Labels.strings_ptr[0xC30 / 4]));
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x108 / 4));
+    r = info_title_rect_;
+    r.left += 3;
+    r.top += 3;
+    r.right = r.left + sprites8_[6].width();
+    r.bottom = r.top + sprites8_[6].height();
+    previous_button_rect_ = r;
+    flatButtons_[2].init(0, 2, previous_button_rect_.left, previous_button_rect_.top,
+        previous_button_rect_.right - previous_button_rect_.left, previous_button_rect_.bottom - previous_button_rect_.top, &MainInterfaceGlobal, 0);
     flatButtons_[2].set_report_icons(&sprites8_[6], &sprites8_[7], &sprites8_[8]);
     flatButtons_[2].set_bubble_text(StringTemp);
-    base_init_label(0x104, false);
-    next_button_rect_ = previous_button_rect_;
-    next_button_rect_.right = info_title_rect_.right - 3;
-    next_button_rect_.left = next_button_rect_.right - sprites8_[6].width();
-    base_init_button(flatButtons_[3], 0, 3, next_button_rect_, &MainInterfaceGlobal);
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x104 / 4));
+    r.right = info_title_rect_.right - 3;
+    r.left = r.right - sprites8_[6].width();
+    next_button_rect_ = r;
+    flatButtons_[3].init(0, 3, next_button_rect_.left, next_button_rect_.top,
+        next_button_rect_.right - next_button_rect_.left, next_button_rect_.bottom - next_button_rect_.top, &MainInterfaceGlobal, 0);
     flatButtons_[3].set_report_icons(&sprites8_[9], &sprites8_[10], &sprites8_[11]);
     flatButtons_[3].set_field_A14(1);
     flatButtons_[3].set_bubble_text(StringTemp);
-    base_init_label(0x194, true);
-    base_init_button(flatButtons_[0], StringTemp, 0, rect6_, this);
-    base_init_label(0x1F4, true);
-    base_init_button(flatButtons_[1], StringTemp, 1, rect7_, this);
-    base_init_label(0x814, true);
-    base_init_button(flatButtons_[12], StringTemp, 12, flash_rect_a_, &MainInterfaceGlobal);
-    flatButtons_[12].set_bubble_text(label_get(0xC28 / 4));
-    base_init_label(0xAC, true);
-    base_init_button(flatButtons_[13], StringTemp, 13, flash_rect_b_, &MainInterfaceGlobal);
-    flatButtons_[13].set_bubble_text(label_get(0xC2C / 4));
-    base_init_label(0x4FC, true);
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x194 / 4));
+    CharUpperA(StringTemp);
+    flatButtons_[0].init(StringTemp, 0, rect6_.left, rect6_.top,
+        rect6_.right - rect6_.left, rect6_.bottom - rect6_.top, this, 0);
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x1F4 / 4));
+    CharUpperA(StringTemp);
+    flatButtons_[1].init(StringTemp, 1, rect7_.left, rect7_.top,
+        rect7_.right - rect7_.left, rect7_.bottom - rect7_.top, this, 0);
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x814 / 4));
+    CharUpperA(StringTemp);
+    flatButtons_[12].init(StringTemp, 12, flash_rect_a_.left, flash_rect_a_.top,
+        flash_rect_a_.right - flash_rect_a_.left, flash_rect_a_.bottom - flash_rect_a_.top, &MainInterfaceGlobal, 0);
+    flatButtons_[12].set_bubble_text(StringTable.get(Labels.strings_ptr[0xC28 / 4]));
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0xAC / 4));
+    CharUpperA(StringTemp);
+    flatButtons_[13].init(StringTemp, 13, flash_rect_b_.left, flash_rect_b_.top,
+        flash_rect_b_.right - flash_rect_b_.left, flash_rect_b_.bottom - flash_rect_b_.top, &MainInterfaceGlobal, 0);
+    flatButtons_[13].set_bubble_text(StringTable.get(Labels.strings_ptr[0xC2C / 4]));
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x4FC / 4));
+    CharUpperA(StringTemp);
     base_init_rect(rect10_, 169, 234, 297, 254);
-    base_init_button(flatButtons_[10], StringTemp, 10, rect10_, this);
-    flatButtons_[10].set_bubble_text(label_get(0xC1C / 4));
-    base_init_label(0xD4, true);
+    flatButtons_[10].init(StringTemp, 10, rect10_.left, rect10_.top,
+        rect10_.right - rect10_.left, rect10_.bottom - rect10_.top, this, 0);
+    flatButtons_[10].set_bubble_text(StringTable.get(Labels.strings_ptr[0xC1C / 4]));
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0xD4 / 4));
+    CharUpperA(StringTemp);
     base_init_rect(rect9_, 299, 234, 427, 254);
-    base_init_button(flatButtons_[9], StringTemp, 9, rect9_, this);
-    flatButtons_[9].set_bubble_text(label_get(0xC20 / 4));
-    base_init_label(0x4F8, true);
+    flatButtons_[9].init(StringTemp, 9, rect9_.left, rect9_.top,
+        rect9_.right - rect9_.left, rect9_.bottom - rect9_.top, this, 0);
+    flatButtons_[9].set_bubble_text(StringTable.get(Labels.strings_ptr[0xC20 / 4]));
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x4F8 / 4));
+    CharUpperA(StringTemp);
     base_init_rect(rect11_, 429, 234, 557, 254);
-    base_init_button(flatButtons_[11], StringTemp, 11, rect11_, this);
-    flatButtons_[11].set_bubble_text(label_get(0xC24 / 4));
-    base_init_label(0x824, true);
+    flatButtons_[11].init(StringTemp, 11, rect11_.left, rect11_.top,
+        rect11_.right - rect11_.left, rect11_.bottom - rect11_.top, this, 0);
+    flatButtons_[11].set_bubble_text(StringTable.get(Labels.strings_ptr[0xC24 / 4]));
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x824 / 4));
+    CharUpperA(StringTemp);
     base_init_rect(rect14_, 30, 7, 142, 27);
-    base_init_button(flatButtons_[4], StringTemp, 4, rect14_, this);
-    base_init_button_slices(flatButtons_[4], 9, 62);
-    flatButtons_[4].set_bubble_text(label_get(0xC08 / 4));
-    base_init_label(0x828, true);
+    flatButtons_[4].init(StringTemp, 4, rect14_.left, rect14_.top,
+        rect14_.right - rect14_.left, rect14_.bottom - rect14_.top, this, 0);
+    flatButtons_[4].set_slice_icons(&g_BASEWIN_SPRITES[9], &g_BASEWIN_SPRITES[12], &g_BASEWIN_SPRITES[15],
+        &g_BASEWIN_SPRITES[10], &g_BASEWIN_SPRITES[13], &g_BASEWIN_SPRITES[16],
+        &g_BASEWIN_SPRITES[11], &g_BASEWIN_SPRITES[14], &g_BASEWIN_SPRITES[17]);
+    flatButtons_[4].field_ABC_[0] = TextColourTable[62];
+    flatButtons_[4].field_ABC_[1] = TextColourTable[63];
+    flatButtons_[4].field_ABC_[2] = TextColourTable[64];
+    flatButtons_[4].set_bubble_text(StringTable.get(Labels.strings_ptr[0xC08 / 4]));
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x828 / 4));
+    CharUpperA(StringTemp);
     base_init_rect(rect15_, 144, 7, 256, 27);
-    base_init_button(flatButtons_[5], StringTemp, 5, rect15_, this);
-    base_init_button_slices(flatButtons_[5], 9, 62);
-    flatButtons_[5].set_bubble_text(label_get(0xC0C / 4));
-    base_init_label(0xA54, true);
+    flatButtons_[5].init(StringTemp, 5, rect15_.left, rect15_.top,
+        rect15_.right - rect15_.left, rect15_.bottom - rect15_.top, this, 0);
+    flatButtons_[5].set_slice_icons(&g_BASEWIN_SPRITES[9], &g_BASEWIN_SPRITES[12], &g_BASEWIN_SPRITES[15],
+        &g_BASEWIN_SPRITES[10], &g_BASEWIN_SPRITES[13], &g_BASEWIN_SPRITES[16],
+        &g_BASEWIN_SPRITES[11], &g_BASEWIN_SPRITES[14], &g_BASEWIN_SPRITES[17]);
+    flatButtons_[5].field_ABC_[0] = TextColourTable[62];
+    flatButtons_[5].field_ABC_[1] = TextColourTable[63];
+    flatButtons_[5].field_ABC_[2] = TextColourTable[64];
+    flatButtons_[5].set_bubble_text(StringTable.get(Labels.strings_ptr[0xC0C / 4]));
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0xA54 / 4));
+    CharUpperA(StringTemp);
     base_init_rect(rect16_, 258, 7, 258 + sprites8_[0].width(), 7 + sprites8_[0].height());
-    base_init_button(flatButtons_[18], 0, 18, rect16_, this);
+    flatButtons_[18].init(0, 18, rect16_.left, rect16_.top,
+        rect16_.right - rect16_.left, rect16_.bottom - rect16_.top, this, 0);
     flatButtons_[18].set_report_icons(&sprites8_[0], &sprites8_[1], &sprites8_[2]);
     flatButtons_[18].set_bubble_text(StringTemp);
-    flatButtons_[18].set_slice_colours(TextColourTable[65], TextColourTable[66], TextColourTable[67]);
-    base_init_label(0x724, true);
+    flatButtons_[18].field_ABC_[0] = TextColourTable[65];
+    flatButtons_[18].field_ABC_[1] = TextColourTable[66];
+    flatButtons_[18].field_ABC_[2] = TextColourTable[67];
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x724 / 4));
+    CharUpperA(StringTemp);
     base_init_rect(rect8_, 280, 7, 446, 27);
-    base_init_button(flatButtons_[8], StringTemp, 8, rect8_, this);
-    base_init_button_slices(flatButtons_[8], 0, 65);
-    flatButtons_[8].set_bubble_text(label_get(0xC18 / 4));
-    base_init_label(0xA54, true);
+    flatButtons_[8].init(StringTemp, 8, rect8_.left, rect8_.top,
+        rect8_.right - rect8_.left, rect8_.bottom - rect8_.top, this, 0);
+    flatButtons_[8].set_slice_icons(&g_BASEWIN_SPRITES[0], &g_BASEWIN_SPRITES[3], &g_BASEWIN_SPRITES[6],
+        &g_BASEWIN_SPRITES[1], &g_BASEWIN_SPRITES[4], &g_BASEWIN_SPRITES[7],
+        &g_BASEWIN_SPRITES[2], &g_BASEWIN_SPRITES[5], &g_BASEWIN_SPRITES[8]);
+    flatButtons_[8].field_ABC_[0] = TextColourTable[65];
+    flatButtons_[8].field_ABC_[1] = TextColourTable[66];
+    flatButtons_[8].field_ABC_[2] = TextColourTable[67];
+    flatButtons_[8].set_bubble_text(StringTable.get(Labels.strings_ptr[0xC18 / 4]));
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0xA54 / 4));
+    CharUpperA(StringTemp);
     base_init_rect(rect17_, 448, 7, 448 + sprites8_[0].width(), 7 + sprites8_[0].height());
-    base_init_button(flatButtons_[19], 0, 19, rect17_, this);
+    flatButtons_[19].init(0, 19, rect17_.left, rect17_.top,
+        rect17_.right - rect17_.left, rect17_.bottom - rect17_.top, this, 0);
     flatButtons_[19].set_report_icons(&sprites8_[0], &sprites8_[1], &sprites8_[2]);
     flatButtons_[19].set_bubble_text(StringTemp);
-    flatButtons_[19].set_slice_colours(TextColourTable[65], TextColourTable[66], TextColourTable[67]);
-    base_init_label(0x82C, true);
+    flatButtons_[19].field_ABC_[0] = TextColourTable[65];
+    flatButtons_[19].field_ABC_[1] = TextColourTable[66];
+    flatButtons_[19].field_ABC_[2] = TextColourTable[67];
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x82C / 4));
+    CharUpperA(StringTemp);
     base_init_rect(rect18_, 470, 7, 582, 27);
-    base_init_button(flatButtons_[6], StringTemp, 6, rect18_, this);
-    base_init_button_slices(flatButtons_[6], 9, 62);
-    flatButtons_[6].set_bubble_text(label_get(0xC10 / 4));
-    base_init_label(0x830, true);
+    flatButtons_[6].init(StringTemp, 6, rect18_.left, rect18_.top,
+        rect18_.right - rect18_.left, rect18_.bottom - rect18_.top, this, 0);
+    flatButtons_[6].set_slice_icons(&g_BASEWIN_SPRITES[9], &g_BASEWIN_SPRITES[12], &g_BASEWIN_SPRITES[15],
+        &g_BASEWIN_SPRITES[10], &g_BASEWIN_SPRITES[13], &g_BASEWIN_SPRITES[16],
+        &g_BASEWIN_SPRITES[11], &g_BASEWIN_SPRITES[14], &g_BASEWIN_SPRITES[17]);
+    flatButtons_[6].field_ABC_[0] = TextColourTable[62];
+    flatButtons_[6].field_ABC_[1] = TextColourTable[63];
+    flatButtons_[6].field_ABC_[2] = TextColourTable[64];
+    flatButtons_[6].set_bubble_text(StringTable.get(Labels.strings_ptr[0xC10 / 4]));
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x830 / 4));
+    CharUpperA(StringTemp);
     base_init_rect(rect19_, 584, 7, 696, 27);
-    base_init_button(flatButtons_[7], StringTemp, 7, rect19_, this);
-    base_init_button_slices(flatButtons_[7], 9, 62);
-    flatButtons_[7].set_bubble_text(label_get(0xC14 / 4));
-    base_init_label(0xA58, true);
-    base_init_button(flatButtons_[16], 0, 16, rect12_, &MainInterfaceGlobal);
+    flatButtons_[7].init(StringTemp, 7, rect19_.left, rect19_.top,
+        rect19_.right - rect19_.left, rect19_.bottom - rect19_.top, this, 0);
+    flatButtons_[7].set_slice_icons(&g_BASEWIN_SPRITES[9], &g_BASEWIN_SPRITES[12], &g_BASEWIN_SPRITES[15],
+        &g_BASEWIN_SPRITES[10], &g_BASEWIN_SPRITES[13], &g_BASEWIN_SPRITES[16],
+        &g_BASEWIN_SPRITES[11], &g_BASEWIN_SPRITES[14], &g_BASEWIN_SPRITES[17]);
+    flatButtons_[7].field_ABC_[0] = TextColourTable[62];
+    flatButtons_[7].field_ABC_[1] = TextColourTable[63];
+    flatButtons_[7].field_ABC_[2] = TextColourTable[64];
+    flatButtons_[7].set_bubble_text(StringTable.get(Labels.strings_ptr[0xC14 / 4]));
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0xA58 / 4));
+    CharUpperA(StringTemp);
+    flatButtons_[16].init(0, 16, rect12_.left, rect12_.top,
+        rect12_.right - rect12_.left, rect12_.bottom - rect12_.top, &MainInterfaceGlobal, 0);
     flatButtons_[16].set_report_icons(&sprites8_[12], &sprites8_[13], &sprites8_[14]);
     flatButtons_[16].set_bubble_text(StringTemp);
-    base_init_label(0xA58, true);
-    base_init_button(flatButton_, 0, 16, rect12_, &MainInterfaceGlobal);
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0xA58 / 4));
+    CharUpperA(StringTemp);
+    flatButton_.init(0, 16, rect12_.left, rect12_.top,
+        rect12_.right - rect12_.left, rect12_.bottom - rect12_.top, &MainInterfaceGlobal, 0);
     flatButton_.set_report_icons(&sprites7_[0], &sprites7_[1], &sprites7_[2]);
     flatButton_.set_bubble_text(StringTemp);
-    base_init_label(0xD38, true);
-    base_init_button(flatButtons_[21], StringTemp, 21, rect20_, this);
-    flatButtons_[21].set_bubble_text(label_get(0xD3C / 4));
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0xD38 / 4));
+    CharUpperA(StringTemp);
+    flatButtons_[21].init(StringTemp, 21, rect20_.left, rect20_.top,
+        rect20_.right - rect20_.left, rect20_.bottom - rect20_.top, this, 0);
+    flatButtons_[21].set_bubble_text(StringTable.get(Labels.strings_ptr[0xD3C / 4]));
     if (!expanded) {
-        base_init_label(0xA4C, true);
-        base_init_rect(rect13_, 169, 263, 169 + sprites8_[3].width(), 263 + sprites8_[3].height());
-        base_init_button(flatButtons_[17], 0, 17, rect13_, this);
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0xA4C / 4));
+    CharUpperA(StringTemp);
+    base_init_rect(rect13_, 169, 263, 169 + sprites8_[3].width(), 263 + sprites8_[3].height());
+    flatButtons_[17].init(0, 17, rect13_.left, rect13_.top,
+        rect13_.right - rect13_.left, rect13_.bottom - rect13_.top, this, 0);
         flatButtons_[17].set_report_icons(&sprites8_[3], &sprites8_[4], &sprites8_[5]);
         flatButtons_[17].set_bubble_text(StringTemp);
     }
@@ -7461,12 +7533,12 @@ void BaseWin::init() {
     // with the second when a derived painter has stateful behavior.
     for (index = 0; index < 22; ++index) {
         flatButtons_[index].hide();
-        static_cast<Buffer *>(&flatButtons_[index])->set_font(&font1_, 0, 0, 0);
+        flatButtons_[index].set_font(&font1_, 0, 0, 0);
         flatButtons_[index].redraw();
         flatButtons_[index].redraw();
     }
     flatButton_.hide();
-    static_cast<Buffer *>(&flatButton_)->set_font(&font1_, 0, 0, 0);
+    flatButton_.set_font(&font1_, 0, 0, 0);
     flatButton_.redraw();
     flatButton_.redraw();
 }

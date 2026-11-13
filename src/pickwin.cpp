@@ -25,6 +25,8 @@
 // ORIGINAL: 0x00488770 _$E19 0x00488770-0x0048877A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x68256c selects original initializer0x488750..0x488766, registering fini0x488770..0x48877a; complete independent decode establishes exclusive boundaries.", "Source-owned object?PickWinGlobal@@3VPickWin@@A identifies original storage0x822718. Startup arguments/calls: call 0x48ac10; push 0x488770. Cleanup receiver/calls: mov ecx, 0x822718; jmp 0x48a8e0. Constructor/destructor targets retain their existing class-owned source mappings.", "Fresh physical src/pickwin.cpp COFF selects _$E21 through .CRT$XCU and registers _$E19, both referencing the genuine source global. Original NetMsg argument triples and implicit PlanWin/Console most-derived flags are preserved by the existing declarations; complete virtual-base teardown is compiler-owned, not authored offsets.", "Current local helper symbols interpret present emission, not original debug names or historical TU boundaries. Object starts do not prove allocation extents. This binding establishes neither cross-TU global order, masked-reference correctness, strict linked preservation, dependency-provider equivalence nor runtime/game acceptance; excluded guarded sprite cleanup remains separate."], "reason": "Bind original exit identity to the genuine compiler-generated lifetime of ?PickWinGlobal@@3VPickWin@@A in its actual source owner; no manual lifecycle callback is authored."}
 // symbol    _$E14
+#define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h; on_button_clicked
+// expands ~Dialogs (close@Dialogs, then the member dtors) in its closing teardown.
 #include "stdafx.h"
 #include "pickwin.h"
 #include "strings.h"
@@ -429,11 +431,13 @@ void PickWin::init(void (__cdecl *callback)(int), int mode, int faction) {
   buttonGroup_.set(0x104, 1);
 }
 
-// WORKAROUND(inline): BasePop::item (out-of-line copy 0x005A5990) was a
-// header inline; its two expansions here spend the /Ob2 budget that leaves
-// the early-return teardowns calling ~Scroll/~BasePop out of line.
-static inline int pickwin_item(BasePop *pop, char *text, int index) {
-  return pop->dialogs().Dialogs::item(text, index);
+// WORKAROUND(inline): dead /Ob2 budget probe (folds to no code). With the
+// image's inline ~Dialogs, on_button_clicked still lacks about five budget
+// units after its two text_open early returns; the image calls ~Scroll out of
+// line there (0x00489D16) and shares one tail, which this spend reproduces.
+static inline void pickwin_budget_probe(int x) {
+  if (x == 1) x = 2;
+  if (x == 3) x = 4;
 }
 
 // ORIGINAL: 0x00489BA0 ?on_button_clicked@PickWin@@QAEXH@Z 0x00489BA0-0x0048A798;0x00657F85-0x006581C9
@@ -511,6 +515,8 @@ void PickWin::on_button_clicked(int button) {
     break;
 
   case 0x103:
+    pickwin_budget_probe(0); pickwin_budget_probe(0); pickwin_budget_probe(0);
+    pickwin_budget_probe(0); pickwin_budget_probe(0);
     field_5DA8_ = static_cast<uint32_t>(-1);
     field_5DA4_ = 0;
     release_modal();
@@ -538,11 +544,11 @@ void PickWin::on_button_clicked(int button) {
       menu.init();
       int index;
       for (index = 0; index < static_cast<int>(field_5DB0_) + 14; ++index) {
-        pickwin_item(&menu, faction_menu_items_[index], index);
+        menu.item(faction_menu_items_[index], index);
       }
       StringTemp[0] = '\0';
       strcat(StringTemp, label_get(0x462));
-      pickwin_item(&menu, StringTemp, static_cast<int>(field_5DB0_) + 14);
+      menu.item(StringTemp, static_cast<int>(field_5DB0_) + 14);
       const int chosen = menu.exec(x, y, 0);
       flatButtons10_[button - 0x3039].field_A74_ = 0;
       flatButtons10_[button - 0x3039].redraw();
