@@ -129,11 +129,11 @@ class DiploPop : public GraphicWin, public SubInterface {
   // RECOVERY_MEMBER: v2 DiploPop flic2_ Flic 0x15CC 0x0043EFF0
   Flic flic2_;
   uint32_t field_20B0_;  // 0x20B0
-  Sprite *landscape_sprite_;  // 0x20B4, borrowed faction artwork
+  Sprite *datalink_sprite_;   // 0x20B4, borrowed faction datalink artwork
   Sprite *frame_sprite_;      // 0x20B8, borrowed MainInterface member
-  Sprite *portrait_sprite_;   // 0x20BC, borrowed faction artwork
-  // Borrowed faction-HQ portrait used by draw_hq; not owned or destroyed.
-  Sprite *hq_sprite_;  // 0x20C0
+  Sprite *logo_sprite_;       // 0x20BC, borrowed faction diplomacy logo
+  // Borrowed faction diplomacy landscape drawn by draw_hq; not owned.
+  Sprite *landscape_sprite_;  // 0x20C0
   RECT bioscan_title_rect_;  // +0x20C4
   RECT bioscan_picture_rect_;  // +0x20D4
   RECT portrait_text_rect_;  // +0x20E4

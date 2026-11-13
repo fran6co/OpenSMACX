@@ -58,10 +58,10 @@ void DiploPop::start(int faction_id) {
         counterpart_faction_ = faction_id;
         frame_sprite_ = MainInterfaceGlobal.diplomacy_frame_sprite();
         // 0x0043F32C..50: +0x20B4 takes the datalink sprite, +0x20BC the
-        // logo and +0x20C0 the landscape (the member names predate this).
-        landscape_sprite_ = &FactionsArt[faction_id].datalink;
-        portrait_sprite_ = &FactionsArt[faction_id].diplomacy_logo;
-        hq_sprite_ = &FactionsArt[faction_id].diplomacy_landscape;
+        // logo and +0x20C0 the landscape.
+        datalink_sprite_ = &FactionsArt[faction_id].datalink;
+        logo_sprite_ = &FactionsArt[faction_id].diplomacy_logo;
+        landscape_sprite_ = &FactionsArt[faction_id].diplomacy_landscape;
         set_iface_mode();
 
         StringTemp[0] = '\0';
@@ -303,7 +303,7 @@ void DiploPop::draw_portrait() {
     text.right -= 1;
     text.top += 1;
     text.bottom -= 1;
-    text.top += landscape_sprite_->height();
+    text.top += datalink_sprite_->height();
     MainInterfaceGlobal.hline(text.left, text.right, text.top,
         MainInterfaceGlobal.get_pixel(text.left - 1, text.top));
 
@@ -701,8 +701,8 @@ void DiploPop::draw_hq() {
     MainInterfaceGlobal.write_cent_l(StringTemp, &text);
 
     area.top = text.bottom + 1;
-    hq_sprite_->draw(&MainInterfaceGlobal, hq_sprite_->transparent_index(),
-        (area.right - hq_sprite_->width() - area.left) / 2 + area.left,
+    landscape_sprite_->draw(&MainInterfaceGlobal, landscape_sprite_->transparent_index(),
+        (area.right - landscape_sprite_->width() - area.left) / 2 + area.left,
         area.top, 1, 1);
     MainInterfaceGlobal.soft_update(&frame_inset_rect_);
 }

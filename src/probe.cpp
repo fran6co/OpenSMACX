@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#define BASEPOP_FRIEND_PROBE  // WORKAROUND(decl): see basepop.h
 
 #include "probe.h"
 #include "base.h"
@@ -331,6 +332,13 @@ int __cdecl success_rates(int id, int morale, int diff_modifier, int base_id) {
 #include <cstring>
 #include "tutwin.h"
 #include "crt_random_inline.h"
+// WORKAROUND(decl): probe's four `timeGetTime() & 1` coin flips call the
+// WINMM thunk 0x005A58D0 in the image, not the import slot; a plain
+// (non-dllimport) redeclaration routes calls through the thunk. The two
+// random_reseed(timeGetTime()) sites call the import slot in the image and
+// now go through the thunk too: VC6 binds every call to the latest
+// declaration, so one unit cannot reproduce both.
+extern "C" DWORD WINAPI timeGetTime(void);
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0059F120 0x005A5838 0x005A5850 0x005A1795
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x0059F120 0x005A5850 0x005A5860 0x005A178F
@@ -447,39 +455,39 @@ int __cdecl probe(int veh_id, int base_id, int veh_id_tgt, int mode) {
             if (!Buffer::get_pcx_dimensions(
                     is_alien ? "al_infil_sm.pcx" : "infil_sm.pcx",
                     &pcx_width, &pcx_height)
-                && !popup.owned_picture().init(
+                && !popup.sprite_.init(
                     is_alien ? "al_infil_sm.pcx" : "infil_sm.pcx",
                     pcx_width, pcx_height)) {
-                popup.select_owned_picture();
+                popup.caller_sprite_ = &popup.sprite_;
             }
             if (X_text_open(ScriptPopupFile, "PROBEMENU")) {
                 return 0;
             }
             text_get();
             if (!(PlayersData[faction].diplo_treaties[faction_tgt] & 0x1000)) {
-                popup.dialogs().item(TextBufferGetPtr, 0);
+                popup.dialogs_.item(TextBufferGetPtr, 0);
             }
             text_get();
             if (Rules.tgl_probe_can_steal_tech) {
-                popup.dialogs().item(TextBufferGetPtr, 1);
+                popup.dialogs_.item(TextBufferGetPtr, 1);
             }
             text_get();
-            popup.dialogs().item(TextBufferGetPtr, 2);
+            popup.dialogs_.item(TextBufferGetPtr, 2);
             text_get();
-            popup.dialogs().item(TextBufferGetPtr, 3);
+            popup.dialogs_.item(TextBufferGetPtr, 3);
             text_get();
-            popup.dialogs().item(TextBufferGetPtr, 4);
+            popup.dialogs_.item(TextBufferGetPtr, 4);
             text_get();
             if (has_fac(FAC_HEADQUARTERS, base_id, 0)) {
-                popup.dialogs().item(TextBufferGetPtr, 5);
+                popup.dialogs_.item(TextBufferGetPtr, 5);
             }
             text_get();
             if (!has_fac(FAC_HEADQUARTERS, base_id, 0)) {
-                popup.dialogs().item(TextBufferGetPtr, 6);
+                popup.dialogs_.item(TextBufferGetPtr, 6);
             }
             text_get();
             if (has_flag10_tech) {
-                popup.dialogs().item(TextBufferGetPtr, 7);
+                popup.dialogs_.item(TextBufferGetPtr, 7);
             }
             if (ExpansionEnabled && !IsMultiplayerNet) {
                 text_get();
@@ -494,7 +502,7 @@ int __cdecl probe(int veh_id, int base_id, int veh_id_tgt, int mode) {
                         }
                     }
                     if (found) {
-                        popup.dialogs().item(TextBufferGetPtr, 8);
+                        popup.dialogs_.item(TextBufferGetPtr, 8);
                     }
                 }
             }
@@ -719,14 +727,14 @@ L_59fb64:
         popup.start(PopupStartCaption, "VIRUS", -1, 0, 0, 0);
         if (stack_check(veh_at(Bases[base_id].x, Bases[base_id].y),
                         2, 5, -1, -1)) {
-            popup.dialogs().item(label_get(0x404), 0x62);
+            popup.dialogs_.item(label_get(0x404), 0x62);
         }
         for (int fac = 1; fac < 70; fac++) {
             if (fac != 1
                 && (fac != FAC_PRESSURE_DOME
                     || !is_ocean(Bases[base_id].x, Bases[base_id].y))
                 && has_fac(fac, base_id, 0)) {
-                popup.dialogs().item(StringTable.get(Facility[fac].name), fac);
+                popup.dialogs_.item(StringTable.get(Facility[fac].name), fac);
             }
         }
         StringTemp[0] = '\0';
@@ -735,9 +743,9 @@ L_59fb64:
         strcat(StringTemp, "(");
         strcat(StringTemp, label_get(0xF9));
         strcat(StringTemp, ")");
-        popup.dialogs().item(StringTemp, 0);
+        popup.dialogs_.item(StringTemp, 0);
         parse_it(ScriptPopupFile, "ABORTSTRING");
-        popup.dialogs().item(StringTemp, 0x63);
+        popup.dialogs_.item(StringTemp, 0x63);
         sabotage_id = popup.exec(0, nullptr);
         if (sabotage_id < 0) {
             return 0;
@@ -1301,7 +1309,7 @@ L_5a2dcd:
                     && !X_text_open(ScriptPopupFile, "FRAMEMENU")) {
                     text_get();
                     parse_string(TextBufferGetPtr, StringTemp);
-                    popup.dialogs().item(StringTemp, 0);
+                    popup.dialogs_.item(StringTemp, 0);
                     text_get();
                     mode = 0;
                     for (int i = 1; i < MaxPlayerNum; i++) {
@@ -1347,7 +1355,7 @@ L_5a2dcd:
         } else {
             local_4c = morale_veh(veh_id, 1, 0);
         }
-        if (rnd(local_4c / 2
+        if ((int)rnd(local_4c / 2
                 - range(PlayersData[faction_tgt].soc_effect_active.values_[SocialEffect::PROBE]
                         + bonus, -2, 0) + 1, "PROBEBUST") < diff_modifier) {
             if (!ProbeHasAlgoEnhancement || ProbeTargetHasHSA || (timeGetTime() & 1)) {
@@ -1540,10 +1548,10 @@ L_5a2dcd:
             popup.start("FREEWHO", 0x40);
             if (!Buffer::get_pcx_dimensions(is_alien ? "al_infil_sm.pcx" : "infil_sm.pcx",
                                             &pcx_width, &pcx_height)
-                && !popup.owned_picture().init(
+                && !popup.sprite_.init(
                        is_alien ? (char *)"al_infil_sm.pcx" : (char *)"infil_sm.pcx",
                        pcx_width, pcx_height)) {
-                popup.select_owned_picture();
+                popup.caller_sprite_ = &popup.sprite_;
             }
             for (int k = 15; k < 21; k++) {
                 if (FactionMonuments[faction_tgt].records_[k].achieved_) {
@@ -1590,7 +1598,7 @@ L_5a2dcd:
                     }
                 }
             }
-            ConsoleInfoWin.set_redraw_phase(0);
+            ConsoleInfoWin.redraw_phase_ = 0;
             ConsoleGlobal.update_data(0);
             PlayersData[faction].diplo_friction[local_64] = 0;
             net_treaty_off(local_64, faction, 0x20, 1);
@@ -1956,16 +1964,16 @@ L_5a4b28:
                     if (Players[faction].rule_flags & RFLAG_ALIEN) {
                         if (!Buffer::get_pcx_dimensions("al_cap_sm.pcx",
                                 &pcx_width, &pcx_height)
-                            && !popup.owned_picture().init((char *)"al_cap_sm.pcx",
+                            && !popup.sprite_.init((char *)"al_cap_sm.pcx",
                                 pcx_width, pcx_height)) {
-                            popup.select_owned_picture();
+                            popup.caller_sprite_ = &popup.sprite_;
                         }
                     } else {
                         if (!Buffer::get_pcx_dimensions("capture_sm.pcx",
                                 &pcx_width, &pcx_height)
-                            && !popup.owned_picture().init((char *)"capture_sm.pcx",
+                            && !popup.sprite_.init((char *)"capture_sm.pcx",
                                 pcx_width, pcx_height)) {
-                            popup.select_owned_picture();
+                            popup.caller_sprite_ = &popup.sprite_;
                         }
                     }
                 }
@@ -1987,16 +1995,16 @@ L_5a4b28:
                 if (Players[faction].rule_flags & RFLAG_ALIEN) {
                     if (!Buffer::get_pcx_dimensions("al_cap_sm.pcx",
                             &pcx_width, &pcx_height)
-                        && !popup.owned_picture().init((char *)"al_cap_sm.pcx",
+                        && !popup.sprite_.init((char *)"al_cap_sm.pcx",
                             pcx_width, pcx_height)) {
-                        popup.select_owned_picture();
+                        popup.caller_sprite_ = &popup.sprite_;
                     }
                 } else {
                     if (!Buffer::get_pcx_dimensions("capture_sm.pcx",
                             &pcx_width, &pcx_height)
-                        && !popup.owned_picture().init((char *)"capture_sm.pcx",
+                        && !popup.sprite_.init((char *)"capture_sm.pcx",
                             pcx_width, pcx_height)) {
-                        popup.select_owned_picture();
+                        popup.caller_sprite_ = &popup.sprite_;
                     }
                 }
             }
@@ -2015,16 +2023,16 @@ L_5a4b28:
                 if (Players[faction].rule_flags & RFLAG_ALIEN) {
                     if (!Buffer::get_pcx_dimensions("al_cap_sm.pcx",
                             &pcx_width, &pcx_height)
-                        && !popup.owned_picture().init((char *)"al_cap_sm.pcx",
+                        && !popup.sprite_.init((char *)"al_cap_sm.pcx",
                             pcx_width, pcx_height)) {
-                        popup.select_owned_picture();
+                        popup.caller_sprite_ = &popup.sprite_;
                     }
                 } else {
                     if (!Buffer::get_pcx_dimensions("capture_sm.pcx",
                             &pcx_width, &pcx_height)
-                        && !popup.owned_picture().init((char *)"capture_sm.pcx",
+                        && !popup.sprite_.init((char *)"capture_sm.pcx",
                             pcx_width, pcx_height)) {
-                        popup.select_owned_picture();
+                        popup.caller_sprite_ = &popup.sprite_;
                     }
                 }
             }

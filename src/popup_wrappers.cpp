@@ -37,6 +37,7 @@
 #include "alpha.h"
 #include "veh.h"
 #include "map.h"
+#include "base.h"
 #include "mapwin.h"
 #include "spritebox.h"
 #include "sprite.h"
@@ -242,15 +243,9 @@ int __cdecl popb(LPCSTR text_label, int warning_mask, int sound_id,
         popup.item(label_get(0xB4 / 4), 1);
         if ((warning_mask & 8) != 0 && BaseCurrent->population_size > 1
             && IsMultiplayerNet == 0) {
-            int facility_offset;
-            int facility_mask;
-            bitmask(0x23, &facility_offset, &facility_mask);
-            const int has_facility =
-                (Bases[BaseIDCurrentSelected].facilities_built[facility_offset]
-                 & static_cast<uint8_t>(facility_mask)) != 0;
-            // Nerve stapling needs POLICE >= 0, a punishment sphere adding 2.
+            // Nerve stapling needs POLICE >= 0, a Brood Pit adding 2.
             if (PlayersData[faction].soc_effect_pending.values_[SocialEffect::POLICE]
-                    + has_facility * 2 >= 0) {
+                    + has_fac_built(FAC_BROOD_PIT, BaseIDCurrentSelected) * 2 >= 0) {
                 popup.item(label_get(0x7AC / 4), 3);
             }
         }

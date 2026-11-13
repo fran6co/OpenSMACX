@@ -197,6 +197,13 @@ class BasePop : public GraphicWin {
 #ifdef BASEPOP_FRIEND_SETUPWIN
   friend class SetupWin;
 #endif
+  // WORKAROUND(decl): probe 0x0059F120 reads sprite_, caller_sprite_ and
+  // dialogs_ straight off its Popup local (no owned_picture /
+  // select_owned_picture / dialogs accessor in the image); only probe.cpp
+  // defines the guard, as for PopMenu above.
+#ifdef BASEPOP_FRIEND_PROBE
+  friend int __cdecl probe(int veh_id, int base_id, int veh_id_tgt, int mode);
+#endif
   // The image's own free popup drivers do the same - read external_window_,
   // field_3100_ and the dialogs_ member straight off the instance they exec.
   // pop_ask additionally walks dialogs_' Dialog virtual base for the item
