@@ -35,6 +35,9 @@
 // WORKAROUND(decl): the string writers call next_entry (0x00402500) out of
 // line at every site.
 #define STRINGSTRUCT_NEXT_ENTRY_OUT_OF_LINE
+// WORKAROUND(decl): current_text expands current_entry (0x005E3637) while
+// the string writers' copies of it call 0x00402530.
+#define STRINGSTRUCT_CURRENT_ENTRY_INLINE
 #include "stdafx.h"
 
 // Distinct writable string cells observed at the original call sites.
@@ -7065,11 +7068,14 @@ int Buffer::wrap(char * a1, RECT * a2) {
 //        [ebp-8]/[ebp-0xc] parameter copies. The switch reaches the image's
 //        block order only with `}` taking its escape in the then-branch and
 //        jumping to `]`'s shared `next_slot = 0` arm.
+// LEVER (2026-11-13): the image tests the font slot once per call site and
+//        keeps a separate "found" tail in each arm (0x005DC624/0x005DC642,
+//        0x005DC682/0x005DC6C7), and the null-a2 exit shares the final
+//        `return 0`. Left: the image keeps `this` in edi and segment at
+//        [ebp-4]; this spelling swaps them (a `volatile` segment reproduces
+//        the image's allocation but adds reloads).
 char *Buffer::find_line_break_l(char * a1, int * a2, int a3) {
-    if (a2 == 0) {
-        return 0;
-    }
-    {
+    if (a2 != 0) {
         if (!fonts_[0]) {
             fonts_[0] = FontDefault;
         }
@@ -7138,17 +7144,26 @@ char *Buffer::find_line_break_l(char * a1, int * a2, int a3) {
             }
             next_slot = field_514_;
         chosen:
-            found = fonts_[field_514_]
-                        ? fonts_[field_514_]->find_line_break_l(
-                              segment, a2, static_cast<int>(cursor - segment))
-                        : fonts_[0]->find_line_break_l(
-                              segment, a2, static_cast<int>(cursor - segment));
-            if (found != 0) {
-                markup_pending_ = 0;
-                if (found[-1] == ' ' || found == segment) {
-                    return found;
+            if (fonts_[field_514_]) {
+                found = fonts_[field_514_]->find_line_break_l(
+                    segment, a2, static_cast<int>(cursor - segment));
+                if (found != 0) {
+                    markup_pending_ = 0;
+                    if (found[-1] == ' ' || found == segment) {
+                        return found;
+                    }
+                    return const_cast<char *>(memrchr(a1, found, ' '));
                 }
-                return const_cast<char *>(memrchr(a1, found, ' '));
+            } else {
+                found = fonts_[0]->find_line_break_l(
+                    segment, a2, static_cast<int>(cursor - segment));
+                if (found != 0) {
+                    markup_pending_ = 0;
+                    if (found[-1] == ' ' || found == segment) {
+                        return found;
+                    }
+                    return const_cast<char *>(memrchr(a1, found, ' '));
+                }
             }
 
             const int pending = markup_pending_;
@@ -7170,21 +7185,30 @@ char *Buffer::find_line_break_l(char * a1, int * a2, int a3) {
             field_514_ = next_slot;
             --a3;
         }
-        found = fonts_[field_514_]
-                    ? fonts_[field_514_]->find_line_break_l(
-                          segment, a2, static_cast<int>(cursor - segment))
-                    : fonts_[0]->find_line_break_l(
-                          segment, a2, static_cast<int>(cursor - segment));
-        if (found != 0) {
-            markup_pending_ = 0;
-            if (found[-1] == ' ' || found == segment) {
-                return found;
+        if (fonts_[field_514_]) {
+            found = fonts_[field_514_]->find_line_break_l(
+                segment, a2, static_cast<int>(cursor - segment));
+            if (found != 0) {
+                markup_pending_ = 0;
+                if (found[-1] == ' ' || found == segment) {
+                    return found;
+                }
+                return const_cast<char *>(memrchr(a1, found, ' '));
             }
-            return const_cast<char *>(memrchr(a1, found, ' '));
+        } else {
+            found = fonts_[0]->find_line_break_l(
+                segment, a2, static_cast<int>(cursor - segment));
+            if (found != 0) {
+                markup_pending_ = 0;
+                if (found[-1] == ' ' || found == segment) {
+                    return found;
+                }
+                return const_cast<char *>(memrchr(a1, found, ' '));
+            }
         }
         markup_pending_ = 0;
-        return 0;
     }
+    return 0;
 }
 
 // ORIGINAL: 0x005DE580 ?change_color@Buffer@@QAEHHH@Z 0x005DE580-0x005DE721 BYTE_EXACT
@@ -10398,26 +10422,9 @@ Purpose: Return the current StringList text, or null when the list is empty.
 Return Value: mutable text, or null when head_ is null
 Status: Complete
 */
-// WORKAROUND(inline): file-local twin of StringStruct::current_entry
-// (0x00402530), whose out-of-line copy stringstruct.cpp defines (a header
-// inline visible here would emit a second COMDAT copy, since the string
-// writers call it out of line). current_text expands it under its head test
-// (the 0x005E3637 `mov eax,[eax+8]; mov eax,[eax+4]` chase). The image's
-// copies of current_text inside the two writers call 0x00402530 instead
-// (0x005DAE38, 0x005DB118): the original header expanded current_entry, and
-// /Ob2 refused it there at depth 2. With STRINGSTRUCT_CURRENT_ENTRY_INLINE
-// this unit reproduces that but emits a pick-any copy that collides with
-// stringstruct.cpp's out-of-line definition (LNK2005).
-static inline StringStructPayload *buffer_current_entry(StringStruct *list) {
-    if (list->head_) {
-        return list->current_->string_payload();
-    }
-    return 0;
-}
-
 char *StringList::current_text() {
     if (head_) {
-        return buffer_current_entry(this)->text;
+        return current_entry()->text;
     }
     return 0;
 }

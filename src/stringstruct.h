@@ -308,7 +308,7 @@ class StringStruct : public virtual StringAllocationBase {
   // and the image's own symbols spell them PAX (void *); this tree's emitted
   // names are carried by `// symbol` facts under the markers, which is what
   // resolves the claims.
-  StringStructPayload *current_entry();
+  MEASURED StringStructPayload *current_entry();
   MEASURED StringStructPayload *next_entry();
   MEASURED int seek_id(int id);
   MEASURED void remove_all();
@@ -565,7 +565,9 @@ MEASURED inline StringStructPayload *StringStruct::next_entry() {
 // CheckBox/RadioButton draw_item, ...) and expanded inline under a head test
 // elsewhere: sub_441040's `mov eax,[eax+8]; mov edx,[eax+4]` chase at
 // 0x004410AF and StringList::current_text 0x005E3630. stringstruct.cpp keeps
-// the out-of-line copy.
+// the out-of-line copy, defined `inline` there (pick-any COMDAT) so that
+// buffer.cpp, which both expands it and calls it, can see this body; the
+// declaration is MEASURED so every unit with the body keeps its copy.
 // WORKAROUND(decl): the body is visible only in TUs that define
 // STRINGSTRUCT_CURRENT_ENTRY_INLINE. Plain visibility in every includer
 // re-ties register choices in 46 of 138 includers that never call it

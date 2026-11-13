@@ -308,7 +308,12 @@ Purpose: Return the current string-list payload.
 Return Value: Current payload, or zero when the list is empty
 Status: Complete
 */
-StringStructPayload *StringStruct::current_entry() {
+// WORKAROUND(inline): the original header defined current_entry inline in
+// every unit; 0x00402530 is a pick-any copy, and buffer.cpp both expands it
+// (current_text 0x005E3637) and calls it (0x005DAE38, 0x005DB118), so its
+// own copy is a COMDAT too. The MEASURED declaration in stringstruct.h keeps
+// this unit's copy emitted without a caller.
+inline StringStructPayload *StringStruct::current_entry() {
     if (head_) {
         return current_->string_payload();
     }
