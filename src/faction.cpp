@@ -5723,7 +5723,7 @@ int __cdecl buy_tech(int faction_id, int other_faction_id, int action,
     return 1;
 }
 
-// ORIGINAL: 0x00540630 ?energy_trade@@YAHHH@Z 0x00540630-0x005410F3
+// ORIGINAL: 0x00540630 ?energy_trade@@YAHHH@Z 0x00540630-0x005410F3 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:diplomacy-actions-owner-coverage", "Pinned540630-5410F3 full decoded instructions and verified literal keys68D74C-68D7CC", "Native54067D other-to-actor pact row;5406F1 tech_ranking35C;540D81/540D93 commerce304;54093B/54094A scaled3/4;540F15 wrapped signed product divided100;54106D storesperiodcount", "historical seed:src/unrecovered/00540630.cpp", "Pinned540958/540960/540967: load F800, unguarded byte at GameTechAchieved9A6670+F800, bit_count;54096F..54098F: subtract1, clamp1..99, signed divide. Independent outgoing FAA8 may be valid when F800=-1; neighboring-storage runtime effects remain unverified."], "reason": "Recover complete faction freebie, energy-for-technology and loan flows through existing typed faction/global owners and real popup/parser/network services. Preserve directed treaty rows, technology versus commerce ranking, wrapped signed valuation, live modal selections, network transfer order, native period-count loan field and the original unguarded selected-technology bitmap read. Invalid-index runtime effects, matching and game acceptance remain unproved."}
 // symbol    ?energy_trade@@YAHHH@Z
 // TRIED: full goto/label transcription mirroring Ghidra's control flow 1:1 (verified array strides/index scaling against raw disasm at the entry points); diverges at insn #11, near the DAT_0093fab0 tech-stage dispatch (call vs mov) - likely bVar2 computed via a branchy compare sequence in the original rather than a plain OR.
