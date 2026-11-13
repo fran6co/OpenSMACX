@@ -30,6 +30,7 @@
 // WORKAROUND(decl): opt in to the header's inline StringStruct::current_entry
 // (sub_441040 expands it at 0x004410AF; see stringstruct.h).
 #define STRINGSTRUCT_CURRENT_ENTRY_INLINE
+#define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h; on_button_clicked
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "diplowin.h"
@@ -1567,6 +1568,19 @@ found:
 // Historical seed finding: Original inherited fields8/C/10/14/18 are zeroed; trailing StringList pending fields are not silently initialized.
 // Historical seed finding: Prior attribution to game.cpp and raw-pointer constructor experiments are historical, not proof of original translation-unit ownership.
 
+// WORKAROUND(inline): the image expands get_title (0x005590A0) and get_name
+// (0x00559060) in on_button_clicked (one faction load per pair at 0x441CCF);
+// faction.h declares them out of line (same stand-in as quaylewin.cpp).
+static inline char *diplo_get_title(int faction) {
+  parse_set(Players[faction].is_leader_female, 0);
+  return Players[faction].title_leader;
+}
+
+static inline char *diplo_get_name(int faction) {
+  parse_set(Players[faction].is_leader_female, 0);
+  return Players[faction].name_leader;
+}
+
 // Superseded seed removal retains historical Git provenance below.
 // ORIGINAL: 0x004415C0 ?on_button_clicked@DiploWin@@QAEXH@Z 0x004415C0-0x004424C6;0x00654A50-0x00654CEA
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/unrecovered/004415c0.cpp", "task:diplowin-button-handler-owner", "Pinned native button+2 fifteen-way dispatch, original local Popup lifetime; corrected final offline random state writes and row-directed treaty checks. Primary table slot44; real SubInterface remains independent. Preserve observed gender/plural assignment order."], "reason": "Recover this complete operation in its genuine C++ popup/diplomacy owner using actual members, virtual dispatch and typed shared dependencies; retain original identity, spans, claims and seed discoveries."}
@@ -1579,24 +1593,6 @@ void DiploWin::on_button_clicked(int button_id) {
   Popup popup;
 
   switch (button_id) {
-    case -2:
-    case 4:
-      release_modal();
-      break;
-
-    case -1:
-      break;
-
-    case 0:
-      offer_count_[0] = 0;
-      message_data(0x1508, faction_id_with_, 0, 0, 0, 0);
-      release_modal();
-      break;
-
-    case 1:
-      ConsoleGlobal.chat(0);
-      break;
-
     case 2:
       DiploOffersDirty = 1;
       offer_state_[0] = 1;
@@ -1616,12 +1612,13 @@ void DiploWin::on_button_clicked(int button_id) {
       if (IsMultiplayerNet != 0 || IsMultiplayerPBEM != 0) break;
 
       offer_count_[1] = 0;
-      if (rand() % 2 != 0) {
-        const int amount = rand() % 50;
-        add_offer(1, 1, (amount * 5 + 5) * 5);
-      } else {
+      const int energy_offer = rand() % 2;
+      if (energy_offer == 0) {
         add_offer(1, 0, rand() % 89);
         if (rand() % 3 != 0) add_offer(1, 0, rand() % 89);
+      } else {
+        const int amount = rand() % 50;
+        add_offer(1, 1, (amount * 5 + 5) * 5);
       }
 
       // The original switch deliberately falls through: rolls 0, 1 and 2
@@ -1648,6 +1645,41 @@ void DiploWin::on_button_clicked(int button_id) {
       break;
     }
 
+    case -2:
+    case 4:
+      release_modal();
+      break;
+
+    case 11:
+      add_offer(0, 2, 0);
+      break;
+
+    case 10:
+      add_offer(0, 3, 0);
+      break;
+
+    case 9:
+      add_offer(0, 4, 0);
+      break;
+
+    case 6: {
+      int requested_energy = 0;
+      for (int i = 0; i < offer_count_[0]; ++i) {
+        if (offer_type_[0][i] == 1) requested_energy = offer_value_[0][i];
+      }
+      if (X_pop_ask_number("DIPLOENERGY", requested_energy, pop_wait) != 0)
+        return;
+
+      int amount = ParseNumTable[0];
+      const int available = PlayersData[faction_id_].energy_reserves;
+      if (amount > available) {
+        amount = available;
+        ParseNumTable[0] = amount;
+      }
+      add_offer(0, 1, amount);
+      break;
+    }
+
     case 5: {
       popup.start(PopupStartCaption, "DIPLOTECH", -1, 0, 0x40);
       Dialogs &dialogs = popup.dialogs();
@@ -1665,11 +1697,11 @@ void DiploWin::on_button_clicked(int button_id) {
         }
         if (already_offered) continue;
 
-        const bool counterpart_has_tech = has_tech(tech, faction_id_with_);
+        const int counterpart_lacks_tech = !has_tech(tech, faction_id_with_);
         StringTemp[0] = 0;
-        if (counterpart_has_tech) strcat(StringTemp, "*");
+        if (!counterpart_lacks_tech) strcat(StringTemp, "*");
         say_tech(StringTemp, tech, 1);
-        if (Language == 0 && counterpart_has_tech)
+        if (Language == 0 && !counterpart_lacks_tech)
           strcat(StringTemp, " (already has)");
         dialogs.item(StringTemp, tech);
         ++line_count;
@@ -1678,9 +1710,9 @@ void DiploWin::on_button_clicked(int button_id) {
       for (int faction = 1; faction < MaxPlayerNum; ++faction) {
         if (faction == faction_id_ || faction == faction_id_with_) continue;
         if (!is_alive(static_cast<uint32_t>(faction))) continue;
-        if ((PlayersData[faction_id_with_].diplo_treaties[faction] & 8) == 0)
+        if ((PlayersData[faction_id_].diplo_treaties[faction] & 8) == 0)
           continue;
-        if ((PlayersData[faction].diplo_treaties[faction_id_with_] & 8) != 0)
+        if ((PlayersData[faction_id_with_].diplo_treaties[faction] & 8) != 0)
           continue;
 
         const int tech_id = faction + 0x59;
@@ -1716,30 +1748,40 @@ void DiploWin::on_button_clicked(int button_id) {
       if (line_count == 0) return;
       const int chosen = popup.exec(0, pop_wait);
       if (chosen < 0) return;
-      add_offer(0, 5, chosen);
+      add_offer(0, 0, chosen);
       break;
     }
 
-    case 6: {
-      int requested_energy = 0;
-      for (int i = 0; i < offer_count_[0]; ++i) {
-        if (offer_type_[0][i] == 1) requested_energy = offer_value_[0][i];
-      }
-      if (X_pop_ask_number("DIPLOENERGY", requested_energy, pop_wait) != 0)
-        return;
+    case 1:
+      ConsoleGlobal.chat(0);
+      break;
 
-      int amount = ParseNumTable[0];
-      const int available = PlayersData[faction_id_].energy_reserves;
-      if (amount > available) {
-        amount = available;
-        ParseNumTable[0] = amount;
+    case 0:
+      offer_count_[0] = 0;
+      message_data(0x1508, faction_id_with_, 0, 0, 0, 0);
+      redraw();
+      break;
+
+    case 12: {
+      parse_says(0, diplo_get_title(faction_id_with_), -1, -1);
+      parse_says(1, diplo_get_name(faction_id_with_), -1, -1);
+      parse_says(2, get_noun(faction_id_with_), -1, -1);
+
+      if ((PlayersData[faction_id_].diplo_treaties[faction_id_with_] & 1) == 0) {
+        X_pop("DONTHAVEPACT", 0);
+        break;
       }
-      add_offer(0, 1, amount);
+      if (X_pop("REALLYENDPACT", pop_wait) == 0) break;
+      if (diplo_lock(0x32) == 0) {
+        net_pact_ends(faction_id_, faction_id_with_, 1);
+        diplo_unlock();
+      }
+      DiploOffersDirty = 1;
       break;
     }
+
 
     case 7: {
-      const int other = faction_id_with_;
       for (int tech = 0; tech < 0x59; ++tech) {
         if (!has_tech(tech, faction_id_)) continue;
 
@@ -1750,16 +1792,16 @@ void DiploWin::on_button_clicked(int button_id) {
             break;
           }
         }
-        if (already_offered || has_tech(tech, other)) continue;
+        if (already_offered || has_tech(tech, faction_id_with_)) continue;
         add_offer(0, 0, tech);
       }
 
       for (int faction = 1; faction < MaxPlayerNum; ++faction) {
-        if (faction == faction_id_ || faction == other) continue;
+        if (faction == faction_id_ || faction == faction_id_with_) continue;
         if (!is_alive(static_cast<uint32_t>(faction))) continue;
         if ((PlayersData[faction_id_].diplo_treaties[faction] & 8) == 0)
           continue;
-        if ((PlayersData[other].diplo_treaties[faction] & 8) != 0) continue;
+        if ((PlayersData[faction_id_with_].diplo_treaties[faction] & 8) != 0) continue;
 
         const int tech_id = faction + 0x59;
         bool already_offered = false;
@@ -1782,24 +1824,18 @@ void DiploWin::on_button_clicked(int button_id) {
 
       for (int faction = 1; faction < MaxPlayerNum; ++faction) {
         if (faction == faction_id_ || faction == faction_id_with_) continue;
-        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << faction)) == 0
-            && (PlayersData[faction_id_].diplo_treaties[faction] & 8) == 0
-            && (PlayersData[faction_id_with_].diplo_treaties[faction] & 8) == 0)
+        if ((PlayersData[faction_id_].diplo_treaties[faction] & 8) == 0
+            && (PlayersData[faction_id_with_].diplo_treaties[faction] & 8) == 0
+            && !is_human(faction))
           continue;
 
-        GenderDefault = Players[faction].is_leader_female;
+        ++line_count;
         StringTemp[0] = 0;
-        PluralityDefault = 0;
-        parse_says(0, Players[faction].title_leader, -1, -1);
-        GenderDefault = Players[faction].is_leader_female;
-        PluralityDefault = 0;
-        parse_says(1, Players[faction].name_leader, -1, -1);
-        GenderDefault = Players[faction].noun_gender;
-        PluralityDefault = Players[faction].is_noun_plural;
-        parse_says(2, Players[faction].noun_faction, -1, -1);
+        parse_says(0, diplo_get_title(faction), -1, -1);
+        parse_says(1, diplo_get_name(faction), -1, -1);
+        parse_says(2, get_noun(faction), -1, -1);
         parse_it(ScriptPopupFile, "ATTACKSTRING");
         dialogs.item(StringTemp, faction);
-        ++line_count;
       }
 
       if (line_count > 0) {
@@ -1811,43 +1847,8 @@ void DiploWin::on_button_clicked(int button_id) {
       break;
     }
 
-    case 9:
-      add_offer(0, 4, 0);
+    case -1:
       break;
-
-    case 10:
-      add_offer(0, 3, 0);
-      break;
-
-    case 11:
-      add_offer(0, 2, 0);
-      break;
-
-    case 12: {
-      const int other = faction_id_with_;
-      GenderDefault = Players[other].is_leader_female;
-      parse_says(0, Players[other].title_leader, -1, -1);
-      GenderDefault = Players[other].is_leader_female;
-      parse_says(1, Players[other].name_leader, -1, -1);
-      // Preserve the seed's observed assignments: it writes the Player word
-      // at +0x300 to GenderDefault and +0x2FC to PluralityDefault here.
-      GenderDefault = Players[other].is_noun_plural;
-      PluralityDefault = Players[other].noun_gender;
-      parse_says(2, Players[other].noun_faction, -1, -1);
-
-      if ((PlayersData[faction_id_].diplo_treaties[other] & 1) == 0) {
-        X_pop("DONTHAVEPACT", 0);
-        break;
-      }
-      if (X_pop("REALLYENDPACT", pop_wait) == 0) break;
-      if (diplo_lock(0x32) == 0) {
-        net_pact_ends(faction_id_, other, 1);
-        diplo_unlock();
-      }
-      DiploOffersDirty = 1;
-      break;
-    }
-
     default:
       break;
   }

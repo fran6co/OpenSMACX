@@ -204,6 +204,14 @@ class Dialog {
   uint32_t field_48_;
   int field_4C_;
   uint32_t field_50_;
+#ifdef DIALOG_LAYOUT_SETTERS
+  // WORKAROUND(decl): per-unit guard. The image leaves a dead
+  // `lea reg,[ebp+reg-base]` of the Dialog virtual base right after its
+  // +0x34 and +0x50 stores in design_workshop (0x584000, 0x584054) but not
+  // after +0x48 (0x584039): inline setters (guide 3.2). Names unknown.
+  void set_field_34(uint32_t value) { field_34_ = value; }
+  void set_field_50(uint32_t value) { field_50_ = value; }
+#endif
   // Grid dimensions: +0x54 is the signed column count and +0x58 the signed
   // row count. The pinned control handlers compare these with signed branches
   // (for example CheckBox 0x60F93B and SpriteBox 0x6114C2); producers store

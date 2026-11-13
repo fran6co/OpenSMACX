@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #define VEH_BUNGLIST_VISIBLE  // stand-in: see BungList in veh.h
+#define DIALOG_LAYOUT_SETTERS  // stand-in: see Dialog::set_field_34/50 in dialog.h (design_workshop)
 #define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h (design_workshop's start, item and exec)
 #include "stdafx.h"
 #include "popup.h"
@@ -4622,6 +4623,8 @@ void __cdecl hq_list_draw(GraphicWin *window, int prototype, int flags,
     SpriteScaleDenominator = 1;
 }
 
+extern char SocialWinCommaSpaceText[];
+extern char SocialWinColonSpaceText[];
 extern uint32_t UpgradePromptAnswered;
 
 // WORKAROUND(inline): dead /Ob2 budget probe (folds to no code). The image's
@@ -4678,11 +4681,11 @@ again:
     int width = MapWinCaptionScale > 0
         ? 132 * MapWinCaptionScale / MapWinCaptionDivisor
         : 132 * (zoom + 16) / 16;
-    popup.dialogs().field_34_ = width * 2 + 3;
+    popup.dialogs().set_field_34(width * 2 + 3);
     popup.dialogs().field_48_ = MapWinCaptionScale > 0
         ? 75 * MapWinCaptionScale / MapWinCaptionDivisor
         : 75 * (zoom + 16) / 16;
-    popup.dialogs().field_50_ = 8;
+    popup.dialogs().set_field_50(8);
 
     for (int row = 0; row < 128; ++row) {
         const int prototype_id = ProtoSortIds[row];
