@@ -2314,12 +2314,20 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
         }
         if (mine_tech) {
             if (bonus == 2 /* mineral */ || rockiness == ROCKINESS_ROCKY) {
-                // BUG(original): the ternary yields 3 or 2, both true, so this always holds.
-                if (!crop || (crop >= (int)has_farm ? 3 : 2)) {
+                if (crop) {
+                    // BUG(original): the ternary yields 3 or 2, both true, so this always holds.
+                    if (crop >= (int)has_farm ? 3 : 2) {
+                        order = ORDER_MINE;
+                    }
+                } else {
                     order = ORDER_MINE;
                 }
             }
-            if (bonus != 2 || rockiness != ROCKINESS_ROCKY) {
+            // The image's both-mineral-and-rocky arm stores ORDER_MINE again,
+            // tail-merged with the energy-bonus store (0x00565AA2 -> 0x00565AED).
+            if (bonus == 2 && rockiness == ROCKINESS_ROCKY) {
+                order = ORDER_MINE;
+            } else {
                 if (rockiness != ROCKINESS_ROCKY && Rules.tgl_nutrient_effect_with_mine < 0) {
                     int worked = crop + (has_farm ? 0 : 1);
                     if (worked > 1) {
@@ -2447,7 +2455,7 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
     if (rainfall && elev && rockiness == ROCKINESS_ROLLING && GameDataStateStorage.fields_.turn_current_num_ < 50) {
         plant_value++;
     }
-    int result = order;
+    int result;
     if (has_tech(Terraforming[TERRA_FOREST].prerequisite_tech[0], faction_id)
         && rockiness < ROCKINESS_ROCKY && !has_mine && !has_forest
         && (!has_farm || (!elev && rainfall < 2 && !is_human(faction_id)))
@@ -2459,6 +2467,8 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
             || (faction_id == ConsoleGlobal.faction_id_
                 && (GameDataStateStorage.fields_.game_preferences_ & PREF_AUTO_FORMER_PLANT_FORESTS)))) {
         result = ORDER_PLANT_FOREST;
+    } else {
+        result = order;
     }
     if (has_tech(Terraforming[TERRA_PLANT_FUNGUS].prerequisite_tech[0], faction_id)
         && !is_human(faction_id)) {
@@ -2852,6 +2862,7 @@ static inline int alien_dist(int x_point_a, int y_point_a, int x_point_b, int y_
 int __cdecl alien_move(int veh_id) {
     int dir_selected = -1;
     int i;
+    int best_score;
     if (!veh_moves(veh_id)) {
         return 0;
     }
@@ -2971,7 +2982,7 @@ int __cdecl alien_move(int veh_id) {
         move_dir = Vehs[veh_id].facing;
     }
     if (can_arty(Vehs[veh_id].proto_id, true)) {
-        int best_score = 0;
+        best_score = 0;
         int best_offset = -1;
         for (i = 0; i < 25; i++) {
             int x2 = wrap_map_x(x + RadiusOffsetX[i]);
@@ -3045,7 +3056,7 @@ int __cdecl alien_move(int veh_id) {
             dir_selected = -1;
         }
     }
-    int best_score = 0;
+    best_score = 0;
     const int morale = morale_alien(-1, 0);
     // Not reset per tile: only the 12345 sea-base sentinel survives the test below.
     int score;
@@ -4126,28 +4137,28 @@ int __cdecl enemy_planet_buster(int vehicle_id) {
                     }
                 }
                 int veh_id_hit = stack_fix(veh_at(x, y));
-                if (veh_id_hit < 0) {
-                    if (!i) {
-                        score = -9999;
-                        break;
-                    }
-                } else if (Vehs[veh_id_hit].faction_id == faction_id) {
-                    score -= stack_check(veh_id_hit, 7, -1, -1, -1) * PlayersData[faction_id].ranking;
-                } else {
-                    int value = stack_check(veh_id_hit, 7, -1, -1, -1)
-                        * PlayersData[Vehs[veh_id_hit].faction_id].ranking;
-                    int region = region_at(Vehs[veh_id_hit].x, Vehs[veh_id_hit].y);
-                    if (region < 64) {
-                        if (PlayersData[faction_id].region_base_plan[region] == 2) {
-                            value *= 2;
-                        } else if (PlayersData[faction_id].region_base_plan[region]) {
-                            value /= 2;
-                            if (!PlayersData[faction_id].region_total_bases[region]) {
+                if (veh_id_hit >= 0) {
+                    if (Vehs[veh_id_hit].faction_id == faction_id) {
+                        score -= stack_check(veh_id_hit, 7, -1, -1, -1) * PlayersData[faction_id].ranking;
+                    } else {
+                        int value = stack_check(veh_id_hit, 7, -1, -1, -1)
+                            * PlayersData[Vehs[veh_id_hit].faction_id].ranking;
+                        int region = region_at(Vehs[veh_id_hit].x, Vehs[veh_id_hit].y);
+                        if (region < 64) {
+                            if (PlayersData[faction_id].region_base_plan[region] == 2) {
+                                value *= 2;
+                            } else if (PlayersData[faction_id].region_base_plan[region]) {
                                 value /= 2;
+                                if (!PlayersData[faction_id].region_total_bases[region]) {
+                                    value /= 2;
+                                }
                             }
                         }
+                        score += value;
                     }
-                    score += value;
+                } else if (!i) {
+                    score = -9999;
+                    break;
                 }
             }
             const int defense = PlayersData[target_faction].satellites_[3]
