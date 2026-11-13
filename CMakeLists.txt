@@ -808,43 +808,25 @@ set_target_properties(OpenSMACX PROPERTIES
 # in this build needs it pinned, because nothing imports by name.
 target_compile_options(OpenSMACX PRIVATE $<$<COMPILE_LANGUAGE:CXX>:/W4>)
 
-# Optimized C++ profile, per source. The original pooled strings (/Gf, implied
-# by /O2) in some units and not in others: the explicit /O2-minus-/Gf list
-# reproduces /O2 on every function /Gf does not touch, while these units'
-# measured functions (faction's encounter, console_commands'
-# corner_the_market) match only unpooled; netwin stores identical literals
-# at separate addresses ("{"/"}" five times at 0x6868E0-0x686904 for
-# draw_session_info, "CUSTOMFACTIONS" at 0x686908 and 0x686930 for
-# setup_faction_data). VC6 has no /Gf-, so /O2 cannot be
-# global. Their recovery recipes already keep /Oy-, so /Oy is not listed.
-# OPENSMACX_UNPOOLED_OY_SOURCES are unpooled units that, unlike those, keep
-# frame-pointer omission: net_class's send_packet_type stores its identical
-# "Oh no!! Send failed!" literal twice (0x697700, 0x697738) and its measured
-# functions address arguments through ESP, so /O2's /Oy is listed explicitly.
-# The profile is prepended so each unit's own options (/Oy-, /Oi-, /Ob1, /Z7)
-# still follow it; /Ob2 follows the profile because /O2 alone means /Ob1.
-set(OPENSMACX_UNPOOLED_SOURCES
-    src/faction.cpp
-    src/faction_treaty.cpp
-    src/aggression.cpp
-    src/enemy.cpp
-    src/probe.cpp
-    src/councwin.cpp
-    src/turn.cpp
-    src/setup.cpp
-    src/colortables.cpp
-    src/console_commands.cpp
-    src/base.cpp
-    src/veh.cpp
-    src/game.cpp
-    src/datalink.cpp
-    src/netwin.cpp
-    src/maininterface.cpp
-    src/council.cpp
-    src/orders.cpp)
-set(OPENSMACX_UNPOOLED_OY_SOURCES
-    src/net_class.cpp)
+# Optimized C++ profile, per source. The original was built without string
+# pooling (/Gf, implied by /O2) almost everywhere: identical literals sit at
+# separate addresses per use ("{"/"}" five times at 0x6868E0-0x686904 for
+# netwin's draw_session_info, net_class's "Oh no!! Send failed!" at 0x697700
+# and 0x697738, terraforming_actions' "space_sm.pcx" once per popp arm), and
+# literal addresses are almost never shared between units, which link-wide
+# merged /Gf COMDATs would be. A 2026-11-11 scan of every mapped function's
+# literal pushes found unpooled evidence in 46 units, too few repeats to tell
+# in 59, and pooled evidence only in the AnimaTek Caviar library
+# (caviar_loader pushes "CPU not supported" from two functions and "No room
+# for color table" twice in one through a single address each), so every unit
+# gets /O2's expansion minus /Gf and only the Caviar library keeps /O2. VC6
+# has no /Gf-, so the expansion is spelled out. /Oy and /Oi are part of it
+# except in units whose own options disable them (/Oy-, /Oi-): both spellings
+# together make VC6 warn D4025, which fails the reproducibility pass. The profile is prepended so each unit's own
+# options (/Oy-, /Oi-, /Ob1, /Z7) still follow it; /Ob2 follows the profile
+# because /O2 alone means /Ob1.
 function(opensmacx_apply_optimization target)
+    cmake_parse_arguments(PARSE_ARGV 1 arg "POOLED" "" "")
     get_target_property(target_sources ${target} SOURCES)
     get_target_property(target_dir ${target} SOURCE_DIR)
     set(optimized "$<CONFIG:Release,RelWithDebInfo>")
@@ -853,26 +835,31 @@ function(opensmacx_apply_optimization target)
             continue()
         endif()
         cmake_path(ABSOLUTE_PATH source BASE_DIRECTORY "${target_dir}" OUTPUT_VARIABLE absolute)
-        cmake_path(RELATIVE_PATH absolute BASE_DIRECTORY "${PROJECT_SOURCE_DIR}" OUTPUT_VARIABLE relative)
-        if(relative IN_LIST OPENSMACX_UNPOOLED_SOURCES)
-            set(profile /Og /Oi /Ot /Gs /Gy /Ob2)
-        elseif(relative IN_LIST OPENSMACX_UNPOOLED_OY_SOURCES)
-            set(profile /Og /Oi /Ot /Oy /Gs /Gy /Ob2)
-        else()
+        get_property(existing SOURCE "${absolute}" TARGET_DIRECTORY ${target} PROPERTY COMPILE_OPTIONS)
+        if(arg_POOLED)
             set(profile /O2 /Ob2)
+        else()
+            set(profile /Og)
+            if(NOT existing MATCHES "/Oi-")
+                list(APPEND profile /Oi)
+            endif()
+            list(APPEND profile /Ot)
+            if(NOT existing MATCHES "/Oy-")
+                list(APPEND profile /Oy)
+            endif()
+            list(APPEND profile /Gs /Gy /Ob2)
         endif()
         set(options)
         foreach(flag IN LISTS profile)
             list(APPEND options "$<${optimized}:${flag}>")
         endforeach()
-        get_property(existing SOURCE "${absolute}" TARGET_DIRECTORY ${target} PROPERTY COMPILE_OPTIONS)
         set_property(SOURCE "${absolute}" TARGET_DIRECTORY ${target}
             PROPERTY COMPILE_OPTIONS ${options} ${existing})
     endforeach()
 endfunction()
 opensmacx_apply_optimization(OpenSMACX)
 opensmacx_apply_optimization(jackal)
-opensmacx_apply_optimization(caviar)
+opensmacx_apply_optimization(caviar POOLED)
 
 
 

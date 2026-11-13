@@ -1066,7 +1066,7 @@ Status: Complete
 int __cdecl popup_faction_datalinks(int faction_id) {
     // Native44CA90 uses this exact NUL-terminated label. Both comparison
     // profiles emit its independent ten-byte literal COMDAT in this TU.
-    // RECOVERY_LITERAL: v1 0x0068469C 0x006846A6 ??_C@_09COKO@DATALINKS?$AA@ 0x0044CA90
+    // RECOVERY_LITERAL: v1 0x0068469C 0x006846A6 $SG54691 0x0044CA90
     return X_pop(Players[faction_id].filename, "DATALINKS",
                                0);
 }
@@ -1199,13 +1199,13 @@ Status: Product body; measure before granting a byte claim.
 void __cdecl help_create_link(char *out, char *label, char *id) {
 // The help-link grammar uses these prefix, separator and closing tokens in order.
 // Bounds cover the literal payload, not surrounding allocation or lifetime.
-// RECOVERY_LITERAL: v1 0x00683544 0x0068354B ??_C@_06OJDK@$LINK?$DM?$AA@ 0x0044CB80
+// RECOVERY_LITERAL: v1 0x00683544 0x0068354B $SG54716 0x0044CB80
     strcat(out, "$LINK<");
     strcat(out, label);
-// RECOVERY_LITERAL: v1 0x00683540 0x00683542 ??_C@_01KPOD@?$DN?$AA@ 0x0044CB80
+// RECOVERY_LITERAL: v1 0x00683540 0x00683542 $SG54717 0x0044CB80
     strcat(out, "=");
     strcat(out, id);
-// RECOVERY_LITERAL: v1 0x0068353C 0x0068353E ??_C@_01FAFK@?$DO?$AA@ 0x0044CB80
+// RECOVERY_LITERAL: v1 0x0068353C 0x0068353E $SG54718 0x0044CB80
     strcat(out, ">");
 }
 

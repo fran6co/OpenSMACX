@@ -432,32 +432,6 @@ extern Sprite g_TER1_SOIL_ENRICHER_SPRITES[5];    // 0x0079A710, sprite.cpp
 extern Sprite g_TER1_MINE_SPRITE;                 // 0x00776A50, sprite.cpp
 extern Sprite g_TER1_SOLAR_COLLECTOR_SPRITE;      // 0x007991F8, sprite.cpp
 
-// WORKAROUND(decl): seventeen unreferenced extern names. The image pushes the
-// sprite addresses directly (no pointer objects), and dropping the four old
-// static pointer objects moved action_give's (0x004CEDE0) bistable reload
-// tie at its loop join; VC6 codegen in this unit depends on the number of
-// distinct extern variable names (MATCHING_GUIDE 2.5). Measured window with
-// the current action_terraform and shoot_it: 16-18 names keep action_give
-// exact, 0-15 and 19-24 do not. Remove when the unit's real declaration set
-// is known.
-extern int ActionGiveDeclTie01;
-extern int ActionGiveDeclTie02;
-extern int ActionGiveDeclTie03;
-extern int ActionGiveDeclTie04;
-extern int ActionGiveDeclTie05;
-extern int ActionGiveDeclTie06;
-extern int ActionGiveDeclTie07;
-extern int ActionGiveDeclTie08;
-extern int ActionGiveDeclTie09;
-extern int ActionGiveDeclTie10;
-extern int ActionGiveDeclTie11;
-extern int ActionGiveDeclTie12;
-extern int ActionGiveDeclTie13;
-extern int ActionGiveDeclTie14;
-extern int ActionGiveDeclTie15;
-extern int ActionGiveDeclTie16;
-extern int ActionGiveDeclTie17;
-
 /*
 Purpose: Perform one terraforming action on a unit's tile, over its stack.
 // ORIGINAL: 0x004C9B00 ?action_terraform@@YAHHHH@Z 0x004C9B00-0x004CA76B
