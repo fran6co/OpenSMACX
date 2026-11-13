@@ -19,9 +19,7 @@
 // RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x004AE760-0x004AE781", "Pinned class constructor ??0SetupWin@@QAE@XZ at 0x004AD880 stores original class/view table VA 0x66d8e8 at 0x004AD957 (mov dword ptr [esi], 0x66d8e8); the current genuine owner vftable ??_7SetupWin@@6BWin@@@ selects generated ??_GSetupWin@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_ESetupWin@@UAEPAXI@Z (mode 2).", "Pinned ??_GSetupWin@@UAEPAXI@Z at 0x004AE760 calls the source-mapped ??1SetupWin@@QAE@XZ at 0x004AE790, then tests byte ptr [ebp + 8], 1; je 0x4ae77a bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/setupwin.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original SetupWin scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
 // symbol    ??_GSetupWin@@UAEPAXI@Z
 // kind      game
-// WORKAROUND(noinline): do_menu_rightside calls StringStruct::remove_all
-// out of line at both list clears (0x004ADC07, 0x004ADC7B).
-#define STRINGSTRUCT_REMOVE_ALL_OUT_OF_LINE
+#define SETUPWIN_DTOR_CLOSE_WRITTEN_OUT
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "setupwin.h"

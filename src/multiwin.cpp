@@ -251,10 +251,9 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
 // TRIED: transcribed from Ghidra's decompilation (which resolved the dataflow cleanly) with member calls fixed up (Spot::add, Buffer::set_font/set_text_color/write_cent_l, Strings::get, AlphaNet::who_2_pid, Net::get_player_name, NetMsg::pop, FX::play, message_data, wave_it) and the two `(x<0)?0:x` clamp bit-tricks written as plain clamps rather than neg/sbb/and. Compiles; diverges at instruction #3 (prologue - local frame size/shape, not chased further).
 // symbol    ?draw_time@MultiWin@@QAEXPAUtagRECT@@H@Z
 void MultiWin::draw_time(RECT *bounds, int draw_type) {
-  Buffer *canvas = static_cast<Buffer *>(this);
   spot_.add(0, 2, bounds->left, bounds->top,
             bounds->right - bounds->left, bounds->bottom - bounds->top);
-  canvas->set_font(&font2_, 0, 0, 0);
+  Buffer::set_font(&font2_, 0, 0, 0);
 
   // These locals are written only on the draw_type path in the original.
   // Keep the original uninitialized read behavior on the other path.
@@ -265,12 +264,13 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
   unsigned int countdown_ms;
   char number[80];
 
+  const int council = TurnRedrawPending;
   if (draw_type != 0) {
     ++MultiWinState7FFF7C;
     if (NetBusyCount == 0 &&
         NetDaemonNet.primary_state_.trailing_words_[3] == 0 &&
         NetDaemonProgressInterval == 0) {
-      if (TurnRedrawPending == 0) {
+      if (council == 0) {
         local_14 = 0;
         local_10 = NetDaemonWaitTicks > 0 ? 1u : 0u;
         union SignedDword {
@@ -299,23 +299,17 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
     }
   }
 
-  int signed_time;
-  if (TurnRedrawPending == 0) {
-    signed_time = NetDaemonWaitTicks;
-  } else {
-    signed_time = static_cast<int32_t>(CouncilWindow.field_A3C_);
+  int signed_time = NetDaemonWaitTicks < 0 ? 0 : NetDaemonWaitTicks;
+  if (council != 0) {
+    const int council_time = static_cast<int32_t>(CouncilWindow.field_A3C_);
+    signed_time = council_time < 0 ? 0 : council_time;
   }
-  countdown_ms = signed_time < 0 ? 0u : static_cast<uint32_t>(signed_time);
-  union RoundedTime {
-    uint32_t bits;
-    int32_t value;
-  } rounded_seconds;
-  rounded_seconds.bits = countdown_ms + 999u;
-  const int total_seconds = rounded_seconds.value / 1000;
+  countdown_ms = static_cast<uint32_t>(signed_time);
+  const int total_seconds = (signed_time + 999) / 1000;
   minutes = total_seconds / 60;
-  local_c = total_seconds % 60;
+  local_c = total_seconds - minutes * 60;
 
-  if (TurnRedrawPending != 0) {
+  if (council != 0) {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x7e8 / 4));
     CharUpperA(StringTemp);
@@ -323,37 +317,30 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
     _itoa(minutes, number, 10);
     strcat(StringTemp, number);
     strcat(StringTemp, ":");
-    if (local_c < 10) strcat(StringTemp, "0");
+    if (local_c <= 9) strcat(StringTemp, "0");
     _itoa(local_c, number, 10);
     strcat(StringTemp, number);
-    canvas->set_text_color(0xe4, -1, 1, 1);
-    canvas->write_cent_l(StringTemp, bounds, strlen(StringTemp));
+    Buffer::set_text_color(0xe4, -1, 1, 1);
+    Buffer::write_cent_l(StringTemp, bounds);
     if (local_10 == 0) {
-      MultiWinState7FFF78 = local_c;
-      return;
+      goto done;
     }
     if (countdown_ms != 0) {
-      MultiWinState7FFF78 = local_c;
-      return;
+      goto done;
     }
     if (CouncilWindow.field_A24_ != 0) {
-      MultiWinState7FFF78 = local_c;
-      return;
+      goto done;
     }
     if (CouncilDialogActive == 0) {
-      MultiWinState7FFF78 = local_c;
-      return;
+      goto done;
     }
     if (CouncilWindow.leader_label_kind_[ConsoleGlobal.faction_id_] != 0) {
-      MultiWinState7FFF78 = local_c;
-      return;
+      goto done;
     }
     message_data(0x2601, 0, ConsoleGlobal.faction_id_, -3, 0, 0);
-    MultiWinState7FFF78 = local_c;
-    return;
+    goto done;
   }
 
-  int text_length;
   if (ConsoleControlTurnActive != 0) {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x410 / 4));
@@ -361,8 +348,8 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
     strcat(StringTemp, " ");
     _itoa(NetUpkeepPhase, number, 10);
     strcat(StringTemp, number);
-    text_length = static_cast<int>(strlen(StringTemp));
-    goto write_clock_text;
+    Buffer::write_cent_l(StringTemp, bounds);
+    goto done;
   }
 
   if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) != 0 &&
@@ -372,16 +359,15 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
         1u << (GameDataStateStorage.fields_.net_turn_faction_ & 0x1f);
     if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
          faction_bit) == 0) {
-      MultiWinState7FFF78 = local_c;
-      return;
+      goto done;
     }
     StringTemp[0] = 0;
     const int player_id = NetDaemonNet.who_2_pid(
         GameDataStateStorage.fields_.net_turn_faction_);
     strcat(StringTemp, NetDaemonNet.get_player_name(player_id));
-    canvas->set_text_color(0xe4, -1, 1, 1);
-    text_length = static_cast<int>(strlen(StringTemp));
-    goto write_clock_text;
+    Buffer::set_text_color(0xe4, -1, 1, 1);
+    Buffer::write_cent_l(StringTemp, bounds);
+    goto done;
   }
 
   if (draw_type != 0 &&
@@ -392,11 +378,11 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
         1u << (ConsoleGlobal.faction_id_ & 0x1f);
     if (countdown_ms == 0 &&
         (NetDaemonNet.factions_waiting_mask() & local_faction_bit) == 0 &&
-        MultiWinState7FFF78 != 0) {
+        local_c != MultiWinState7FFF78) {
       GameDataStateStorage.fields_.game_state_ |= 0x800;
       if (local_10 != 0) wave_it(0x21);
     }
-    if (minutes == 0 && local_c != 0 && local_c < 0x10 &&
+    if (minutes == 0 && local_c != 0 && local_c <= 0x0F &&
         local_c != MultiWinState7FFF78 && ConsoleControlTurnActive == 0 &&
         (GameDataStateStorage.fields_.game_state_ & 0x800) == 0 &&
         (NetDaemonNet.factions_waiting_mask() & local_faction_bit) == 0) {
@@ -410,7 +396,12 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
   StringTemp[0] = 0;
   strcat(StringTemp, label_get(0x40c / 4));
   strcat(StringTemp, ": ");
-  if (NetDaemonNet.primary_state_.trailing_words_[3] == 0) {
+  if (NetDaemonNet.primary_state_.trailing_words_[3] != 0) {
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x988 / 4));
+    strcat(StringTemp, ": ");
+    strcat(StringTemp, label_get(0x444 / 4));
+  } else {
     if (ConsoleControlTurnActive != 0) {
       StringTemp[0] = 0;
       strcat(StringTemp, label_get(0x988 / 4));
@@ -423,26 +414,19 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
       _itoa(minutes, number, 10);
       strcat(StringTemp, number);
       strcat(StringTemp, ":");
-      if (local_c < 10) strcat(StringTemp, "0");
+      if (local_c <= 9) strcat(StringTemp, "0");
       _itoa(local_c, number, 10);
       strcat(StringTemp, number);
     }
-  } else {
-    StringTemp[0] = 0;
-    strcat(StringTemp, label_get(0x988 / 4));
-    strcat(StringTemp, ": ");
-    strcat(StringTemp, label_get(0x444 / 4));
   }
 
   if (local_14 == 0 || (MultiWinState7FFF7C & 1u) == 0) {
-    canvas->set_text_color(0xe4, -1, 1, 1);
+    Buffer::set_text_color(0xe4, -1, 1, 1);
   } else {
-    canvas->set_text_color(0, -1, 1, 1);
+    Buffer::set_text_color(0, -1, 1, 1);
   }
-  text_length = static_cast<int>(strlen(StringTemp));
-
-write_clock_text:
-  canvas->write_cent_l(StringTemp, bounds, text_length);
+  Buffer::write_cent_l(StringTemp, bounds);
+done:
   MultiWinState7FFF78 = local_c;
 }
 
@@ -883,12 +867,15 @@ void MultiWin::on_right_click(int x, int y) {
     strcat(StringTemp, " ");
     PluralityDefault = 0;
     GenderDefault = Players[faction].is_leader_female;
-    strcat(StringTemp, Players[faction].title_leader);
+    char *const title = Players[faction].title_leader;
+    strcat(StringTemp, title);
     strcat(StringTemp, " ");
-    parse_set(Players[faction].is_leader_female, 0);
-    strcat(StringTemp, Players[faction].name_leader);
+    PluralityDefault = 0;
+    GenderDefault = Players[faction].is_leader_female;
+    char *const name = Players[faction].name_leader;
+    strcat(StringTemp, name);
     menu.add_item(1, StringTemp);
-    menu.add_item(2, StringTable.get(Labels.strings_ptr[0x9F4 / 4]));
+    menu.add_item(2, label_get(0x9F4 / 4));
 
     if (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 7) {
         menu.add_separator(0x63);
@@ -986,31 +973,40 @@ void MultiWin::init() {
     sprite7_.extract(&bitmap, WinFillColour, 1, 0x38, 0x8A, 0x18, 0);
     sprite6_.extract(&bitmap, WinFillColour, 1, 0x51, 0x8A, 0x12, 0);
 
+    int y = 1;
     for (int i = 0; i < 3; ++i) {
-        const int y = 1 + i * 0x0F + (i == 1 ? 0x1E : 0);
-        sprites2_[i].extract(&bitmap, WinFillColour, 0x106, y, 0x0E, 0x0E, 0);
+        sprites2_[i].extract(&bitmap, WinFillColour, 0x106,
+                             (i != 1 ? 0 : 0x1E) + y, 0x0E, 0x0E, 0);
+        y += 0x0F;
     }
+    y = 1;
     for (int sprite_index = 0; sprite_index < 3; ++sprite_index) {
-        sprites1_[sprite_index].extract(&bitmap, WinFillColour, 0x8C,
-                            1 + sprite_index * 0x13, 0x79, 0x12, 0);
+        sprites1_[sprite_index].extract(&bitmap, WinFillColour, 0x8C, y, 0x79, 0x12, 0);
+        y += 0x13;
     }
 
     int height = sprite5_.height() * 7 + sprite7_.height() + sprite3_.height();
     if (IsMultiplayerNet) {
         height += 0x0E + sprite7_.height() + sprite4_.height();
     }
-    RECT bounds = {0, 0, 0x8A, height};
+    // WORKAROUND(type): the image fills and passes the member RECT at +0xA38
+    // (0x0047A1B1) and later reads its bottom at +0xA44; multiwin.h still
+    // spells it as four uint32 fields.
+    RECT *const bounds = reinterpret_cast<RECT *>(&field_A38_);
+    bounds->left = 0;
+    bounds->top = 0;
+    bounds->right = 0x8A;
+    bounds->bottom = height;
     StatusFlags |= 0x40;
-    GraphicWin::init(&bounds, 0, 0x01000000, &MainInterfaceGlobal, 0, 0);
+    GraphicWin::init(bounds, 0, 0x01000000, &MainInterfaceGlobal, 0, 0);
     GraphicWin::fill(9);
 
-    const int button_height = sprites1_[0].height();
-    int top = height - (sprite7_.height() + button_height) / 2;
+    int top = static_cast<int>(field_A44_) - (sprite7_.height() + sprites1_[0].height()) / 2;
     if (IsMultiplayerNet) {
-        flat_button2_.init(label_get(0x110), 0, 10, top,
-                           sprites1_[0].width(), button_height,
+        flat_button2_.init(StringTable.get(Labels.strings_ptr[0x110]), 0, 10, top,
+                           sprites1_[0].width(), sprites1_[0].height(),
                            static_cast<Win *>(this), 0);
-        flat_button2_.on_modal();
+        flat_button2_.hide();
         flat_button2_.set_report_icons(&sprites1_[0], &sprites1_[1], &sprites1_[2]);
         flat_button2_.set_slice_colours(0x65, 0x41, 0x41);
         flat_button2_.redraw();
@@ -1018,27 +1014,22 @@ void MultiWin::init() {
     }
     top -= sprite5_.height();
 
-    const int faction = ConsoleGlobal.faction_id_;
-    if (!ExpansionEnabled || !(Players[faction].rule_flags & RFLAG_ALIEN)) {
-        flat_button1_.init(label_get(0x1FA), 1, 10, top,
-                           sprites1_[0].width(), button_height,
+    if (!ExpansionEnabled || !(Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN)) {
+        flat_button1_.init(StringTable.get(Labels.strings_ptr[0x1FA]), 1, 10, top,
+                           sprites1_[0].width(), sprites1_[0].height(),
                            static_cast<Win *>(this), 0);
-        flat_button1_.on_modal();
+        flat_button1_.hide();
         flat_button1_.set_report_icons(&sprites1_[0], &sprites1_[1], &sprites1_[2]);
         flat_button1_.set_slice_colours(0x65, 0x41, 0x41);
         flat_button1_.redraw();
     }
 
-    int move_x;
-    int move_y;
     if (WinScreenWidth == 800) {
-        move_y = dib_.bmiHeader.biHeight + 0x166;
-        move_x = 800 - dib_.bmiHeader.biWidth;
+        Win::move(800 - dib_.bmiHeader.biWidth, dib_.bmiHeader.biHeight + 0x166);
     } else {
-        move_y = dib_.bmiHeader.biHeight - 0xFF + WinScreenHeight;
-        move_x = (WinScreenWidth + 0x400) / 2 - dib_.bmiHeader.biWidth;
+        Win::move((WinScreenWidth + 0x400) / 2 - dib_.bmiHeader.biWidth,
+                  dib_.bmiHeader.biHeight + WinScreenHeight - 0xFF);
     }
-    Win::move(move_x, move_y);
     panel_open_ = 0;
     if (IsMultiplayerNet) Win::show(0);
 

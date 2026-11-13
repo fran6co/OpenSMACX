@@ -73,823 +73,6 @@ static const char CustomMapPopupLabel[] = "CUSTOMMAP";
 static const char CustomMapXKey[] = "Custom Map X";
 static const char CustomMapYKey[] = "Custom Map Y";
 static const char VeryLargeMapLabel[] = "VERYLARGEMAP";
-// WORKAROUND(inline): dead /Ob2 budget probe, not recovered code. The image's
-// size_of_planet teardowns call ~StringList/~Scroll out of line at the menu-
-// failure and success returns but expand them at the custom-map returns
-// (0x0058D072, 0x0058D248, 0x0058D3F7, 0x0058D5BB); this 32-test probe at
-// entry reproduces that EH topology exactly. The original spent the same
-// budget on inline calls not yet identified.
-static int size_of_planet_budget_probe(int x)
-{
-    if (x == 0) x = 1;
-    if (x == 1) x = 4;
-    if (x == 2) x = 7;
-    if (x == 3) x = 10;
-    if (x == 4) x = 13;
-    if (x == 5) x = 16;
-    if (x == 6) x = 19;
-    if (x == 7) x = 22;
-    if (x == 8) x = 25;
-    if (x == 9) x = 28;
-    if (x == 10) x = 31;
-    if (x == 11) x = 34;
-    if (x == 12) x = 37;
-    if (x == 13) x = 40;
-    if (x == 14) x = 43;
-    if (x == 15) x = 46;
-    if (x == 16) x = 49;
-    if (x == 17) x = 52;
-    if (x == 18) x = 55;
-    if (x == 19) x = 58;
-    if (x == 20) x = 61;
-    if (x == 21) x = 64;
-    if (x == 22) x = 67;
-    if (x == 23) x = 70;
-    if (x == 24) x = 73;
-    if (x == 25) x = 76;
-    if (x == 26) x = 79;
-    if (x == 27) x = 82;
-    if (x == 28) x = 85;
-    if (x == 29) x = 88;
-    if (x == 30) x = 91;
-    if (x == 31) x = 94;
-    return x;
-}
-
-
-
-// ORIGINAL: 0x0058CED0 ?size_of_planet@@YAHH@Z 0x0058CED0-0x0058D6A4;0x006607D7-0x00660989
-// RECOVERY_BINDING: v1 {"evidence": ["task:newgame-menu-owner", "historical seed:src/unrecovered/0058ced0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete mapped native control flow", "source:existing SetupWin/Popup/Buffer/NetDaemon owner declarations; provisional bounded945820 and9B2074 objects, not raw image aliases"], "reason": "Source-owned new-game/menu family preserving complete original identity, auxiliary spans and historical seed findings; existing genuine object lifetimes and typed member owners. Unfinished bodies remain explicit, not implementation coverage."}
-// TRIED: real Popup/SetupWin RAII locals with Popup::start()'s six args re-derived from push order (p1 is the fixed 0x9b8aa8 char* buffer, not the GraphicWin* - this is backwards from what an earlier sibling function assumed), plus text_open/text_get/text_item/EditGroup::edit/ prefs_get/X_pop/Path::init argument order verified against raw disasm; compiles, MISMATCH #24 (past the prologue and into the item-list loop - likely the itemNum2/itemCount stack array layout or the loop bound).
-int __cdecl size_of_planet(int mode) {
-    size_of_planet_budget_probe(2);  // WORKAROUND(inline): see above
-    Popup popup;
-    SetupWin setup;
-    popup.start(WorldSizePopupLabel, mode != 2 ? 0x40 : 0);
-
-    int width;
-    MapSetupStatus = 1;
-    if (text_open(AlphaxFileID, "WORLDSIZE")) {
-        MapSizePlanet = 2;
-        width = 0x28;
-        MapLatitudeBounds = 0x50;
-    } else {
-        {
-            int width_for_choice[32];
-            int height_for_choice[32];
-            text_get();
-            int item_count = text_item_number();
-            if (item_count > 0x20) item_count = 0x20;
-            for (int item = 0; item < item_count; ++item) {
-                text_get();
-                StringTemp[0] = 0;
-                strcat(StringTemp, text_item());
-                popup.item(StringTemp, item);
-                width_for_choice[item] = text_item_number();
-                height_for_choice[item] = text_item_number();
-            }
-            StringTemp[0] = 0;
-            strcat(StringTemp, label_get(0x1104 / 4));
-            popup.item(StringTemp, 0x63);
-
-            int choice = static_cast<int>(AlphaIniPrefs.custom_world[0]);
-            popup.set_value(choice);
-            if (mode == 1) {
-                MapSizePlanet = static_cast<uint32_t>(choice);
-            } else {
-                if (mode == 2) choice = popup.exec();
-                else choice = setup.do_menu(&popup, 1, 0);
-                MapSizePlanet = static_cast<uint32_t>(choice);
-                if (choice < 0) {
-                    return 1;
-                }
-                // 0x0058D12F: the popup's at-key poll flag (+0x3100) asks
-                // for a random size; a menu choice other than "custom" is
-                // remembered.
-                if (popup.input_poll_state() != 0) {
-                    choice = rand() % 5;
-                    MapSizePlanet = static_cast<uint32_t>(choice);
-                } else if (choice != 0x63) {
-                    AlphaIniPrefs.custom_world[0] = static_cast<uint32_t>(choice);
-                }
-            }
-            if (choice == 0x63) {
-            } else {
-                width = width_for_choice[choice];
-                MapLatitudeBounds = height_for_choice[choice];
-                goto size_complete;
-            }
-        }
-
-        {
-            popup.start(CustomMapPopupLabel, 0x44);
-            const int pref_x = prefs_get(CustomMapXKey, 0x28, 0);
-            const int pref_y = prefs_get(CustomMapYKey, 0x50, 0);
-            char number[80];
-            StringTemp[0] = 0;
-            _itoa(pref_x, number, 10);
-            strcat(StringTemp, number);
-            {
-                LPSTR label = label_get(0x1108 / 4);
-                popup.dialogs().edit(label, StringTemp, 8);
-            }
-            StringTemp[0] = 0;
-            _itoa(pref_y, number, 10);
-            strcat(StringTemp, number);
-            {
-                LPSTR label = label_get(0x110C / 4);
-                popup.dialogs().edit(label, StringTemp, 8);
-            }
-
-            if (popup.exec() < 0) {
-                return 1;
-            }
-            int custom_width = atoi(ParseStrBuffer[0].str);
-            int custom_height = atoi(ParseStrBuffer[1].str);
-            if (custom_width >= 0x10) {
-                if (custom_width > 0x100) custom_width = 0x100;
-            } else custom_width = 0x10;
-            if (custom_height >= 0x10) {
-                if (custom_height > 0x100) custom_height = 0x100;
-            } else custom_height = 0x10;
-            if (custom_width > 0x80 || custom_height > 0x80) {
-                if (X_pop(VeryLargeMapLabel, 0) != 0) {
-                    return 1;
-                }
-            }
-            prefs_put(CustomMapXKey, custom_width, 0);
-            prefs_put(CustomMapYKey, custom_height, 0);
-            MapLatitudeBounds = custom_height;
-            width = custom_width;
-        }
-    }
-
-size_complete:
-    MapLongitudeBounds = width * 2;
-    prefs_save(0);
-    if (mode < 2) {
-        map_init();
-        Paths.init();
-    }
-    WorldClimateWorldWin.field_239BC_ |= 8;
-    return 0;
-}
-
-
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x0058C2A0 0x0058CE9C 0x0058CEB4 0x0058C3C9
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x0058C2A0 0x0058CEB4 0x0058CECC 0x0058C715
-// ORIGINAL: 0x0058C2A0 ?custom_planet@@YAHHH@Z 0x0058C2A0-0x0058CE9C;0x006605A5-0x006607D7
-// RECOVERY_BINDING: v1 {"evidence": ["task:newgame-menu-owner", "historical seed:src/unrecovered/0058c2a0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete mapped native control flow", "source:existing SetupWin/Popup/Buffer/NetDaemon owner declarations; provisional bounded945820 and9B2074 objects, not raw image aliases"], "reason": "Source-owned new-game/menu family preserving complete original identity, auxiliary spans and historical seed findings; existing genuine object lifetimes and typed member owners. Unfinished bodies remain explicit, not implementation coverage."}
-// TRIED: exact 12-case image/message switch (jump table at 0x58ce9c) transcribed as a representative subset, not all 12 cases; Popup/SetupWin/Buffer[3] RAII locals reproduce the close cascade shape but not every StringStruct/list-walk detail.
-int __cdecl custom_planet(int show_preview, int use_saved_choices) {
-    Popup popup;
-    Buffer previews[3];
-    SetupWin setup;
-    int slots[6] = {1, 3, 6, 5, 0, 0};
-    char filename[64];
-
-    if (show_preview) {
-        setup.overlay_buffers_[0] = &previews[0];
-        setup.overlay_buffers_[1] = &previews[1];
-        setup.overlay_buffers_[2] = &previews[2];
-    }
-    memset(&MapOceanCoverage, 0, 6 * sizeof(int));
-
-    for (int i = 1; i < 7; i++) {
-        int slot = slots[i - 1];
-        if (!slot) {
-            continue;
-        }
-        MapStorage.metadata_.planet_rules_[slot] = AlphaIniPrefs.custom_world[slot];
-        if (use_saved_choices) {
-            continue;
-        }
-        StringTemp[0] = 0;
-        strcat(StringTemp, "WORLD");
-        if (show_preview) {
-            switch (slot) {
-            case 1:
-                filename[0] = 0;
-                strcat(filename, "S1L1C1.PCX");
-                { for (int image = 0; image < 3; image++) {
-                    filename[1] = '1' + image;
-                    filename[3] = range(MapNativeLifeForms + 1, 1, 3) + '0';
-                    filename[5] = range(MapCloudCover + 1, 1, 3) + '0';
-                    previews[image].load_pcx(filename, 0, 10, 0xEC);
-                    if (WinScreenWidth == 800) {
-                        setup.overlay_x_[image] = 449;
-                        setup.overlay_y_[image] = -168;
-                    } else {
-                        setup.overlay_x_[image] = WinScreenWidth - previews[0].pixel_width();
-                        setup.overlay_y_[image] = 0;
-                    }
-                } }
-                strcat(StringTemp, "LAND");
-                break;
-            case 3:
-                previews[0].load_pcx(WinScreenWidth == 800 ? "moon1_800.pcx" : "MOON1.PCX", 0, 10, 0xEC);
-                previews[1].load_pcx(WinScreenWidth == 800 ? "moon2_800.pcx" : "MOON2.PCX", 0, 10, 0xEC);
-                previews[2].load_pcx(WinScreenWidth == 800 ? "moon3_800.pcx" : "MOON3.PCX", 0, 10, 0xEC);
-                setup.overlay_x_[0] = 0;
-                setup.overlay_y_[0] = 0;
-                setup.overlay_x_[1] = 0;
-                setup.overlay_y_[1] = 0;
-                setup.overlay_x_[2] = 0;
-                setup.overlay_y_[2] = 0;
-                strcat(StringTemp, "TIDES");
-                break;
-            case 4:
-                strcat(StringTemp, "ORBIT");
-                break;
-            case 5:
-                filename[0] = 0;
-                strcat(filename, "S1L1C1.PCX");
-                { for (int image = 0; image < 3; image++) {
-                    filename[1] = range(MapOceanCoverage + 1, 1, 3) + '0';
-                    filename[3] = range(MapNativeLifeForms + 1, 1, 3) + '0';
-                    filename[5] = '1' + image;
-                    previews[image].load_pcx(filename, 0, 10, 0xEC);
-                    if (WinScreenWidth == 800) {
-                        setup.overlay_x_[image] = 449;
-                        setup.overlay_y_[image] = -168;
-                    } else {
-                        setup.overlay_x_[image] = WinScreenWidth - previews[0].pixel_width();
-                        setup.overlay_y_[image] = 0;
-                    }
-                } }
-                strcat(StringTemp, "CLOUDS");
-                break;
-            case 6:
-                filename[0] = 0;
-                strcat(filename, "S1L1C1.PCX");
-                { for (int image = 0; image < 3; image++) {
-                    filename[1] = range(MapOceanCoverage + 1, 1, 3) + '0';
-                    filename[3] = '1' + image;
-                    filename[5] = range(MapCloudCover + 1, 1, 3) + '0';
-                    previews[image].load_pcx(filename, 0, 10, 0xEC);
-                    if (WinScreenWidth == 800) {
-                        setup.overlay_x_[image] = 449;
-                        setup.overlay_y_[image] = -168;
-                    } else {
-                        setup.overlay_x_[image] = WinScreenWidth - previews[0].pixel_width();
-                        setup.overlay_y_[image] = 0;
-                    }
-                } }
-                strcat(StringTemp, "LIFE");
-                break;
-            }
-        } else {
-            switch (slot) {
-            case 1:
-                strcat(StringTemp, "LAND");
-                break;
-            case 3:
-                strcat(StringTemp, "TIDES");
-                break;
-            case 4:
-                strcat(StringTemp, "ORBIT");
-                break;
-            case 5:
-                strcat(StringTemp, "CLOUDS");
-                break;
-            case 6:
-                strcat(StringTemp, "LIFE");
-                break;
-            }
-        }
-        popup.start(StringTemp, 0x40);
-        popup.set_value(AlphaIniPrefs.custom_world[slot]);
-        int choice = show_preview ? setup.do_menu(&popup, 1, 0) : popup.exec();
-        MapStorage.metadata_.planet_rules_[slot] = choice;
-        if (choice < 0) {
-            return 1;
-        }
-        if (popup.input_poll_state()) {
-            MapStorage.metadata_.planet_rules_[slot] = -1;
-        } else {
-            AlphaIniPrefs.custom_world[slot] = choice;
-        }
-    }
-
-    if (show_preview) {
-        setup.overlay_buffers_[0] = 0;
-        setup.overlay_buffers_[1] = 0;
-        setup.overlay_buffers_[2] = 0;
-    }
-    MapLandCoverage = 2 - MapOceanCoverage;
-    prefs_save(0);
-    return 0;
-}
-
-
-// Random planet settings shared by map_menu and multiplayer_init; both
-// images expand it inline (multiplayer_init keeps only the ocean, land and
-// orbit stores plus the erosion roll's rand() call, as it overrides the rest).
-static inline void random_planet_rules() {
-    if (IsMultiplayerNet) {
-        MapOceanCoverage = 0;
-    } else {
-        const int ocean_roll = rand() % 7;
-        MapOceanCoverage = 2 - range((ocean_roll + 1) / 2, 0, 2);
-    }
-    MapLandCoverage = 2 - MapOceanCoverage;
-    const int erosion_roll = rand() % 6;
-    MapPlanetaryOrbit = 1;
-    MapCloudCover = 1;
-    MapNativeLifeForms = 1;
-    MapErosiveForces = (erosion_roll + 5) / 5;
-}
-
-static const char MapMenuTitle[] = "MAPMENU";
-static const char MapXPlanetPath[] = "maps\\xplanet.mp";
-static const char MapXPlanetXPath[] = "maps\\xplanetx.mp";
-
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x0058D6B0 0x0058DB18 0x0058DB2C 0x0058D778
-// ORIGINAL: 0x0058D6B0 ?map_menu@@YAHH@Z 0x0058D6B0-0x0058DB17;0x00660989-0x00660A96
-// RECOVERY_BINDING: v1 {"evidence": ["task:newgame-menu-owner", "historical seed:src/unrecovered/0058d6b0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete mapped native control flow", "source:existing SetupWin/Popup/Buffer/NetDaemon owner declarations; provisional bounded945820 and9B2074 objects, not raw image aliases"], "reason": "Source-owned new-game/menu family preserving complete original identity, auxiliary spans and historical seed findings; existing genuine object lifetimes and typed member owners. Unfinished bodies remain explicit, not implementation coverage."}
-// TRIED: MISMATCH #11. Real SetupWin/Popup/Buffer/Spot/StringStruct locals (Popup embeds Scroll+2 FlatButtons per the scaffold) do produce the SEH frame and destructor-chain shape, but local declaration order/count likely differs from the original's stack layout past instruction 11.
-int __cdecl map_menu(int quick_start) {
-    SetupWin setup;
-    Popup popup;
-    setup.opening_window_snapshot_ = opening_window();
-    int choice;
-
-map_menu_retry:
-    MapSetupStatus = 0;
-    popup.start(PopupStartCaption, MapMenuTitle, -1, 0, 0, 0);
-    choice = static_cast<int>(DefaultPrefs.map_type);
-    popup.set_value(choice);
-    if (quick_start == 0) choice = setup.do_menu(&popup, 1, quick_start);
-    if (choice < 0) return 1;
-
-    DefaultPrefs.map_type = static_cast<uint32_t>(choice);
-    prefs_save(0);
-map_menu_dispatch:
-    switch (choice) {
-    case 0:
-    case 1:
-        if (size_of_planet(quick_start) != 0) goto map_menu_retry;
-        if (MapSetupStatus != 0) {
-            if (choice == 1) {
-                // A cancelled custom planet re-runs the size choice, not the menu.
-                if (custom_planet(1, quick_start) != 0) {
-                    goto map_menu_dispatch;
-                }
-                break;
-            }
-            random_planet_rules();
-        }
-        break;
-    case 2:
-        if (load_map_daemon(const_cast<char *>(MapXPlanetPath)) != 0)
-            goto map_menu_retry;
-        world_climate();
-        break;
-    case 3:
-        if (load_map_daemon(const_cast<char *>(MapXPlanetXPath)) != 0)
-            goto map_menu_retry;
-        world_climate();
-        break;
-    case 4:
-        if (load_map() == 0) {
-            world_climate();
-            break;
-        }
-        quick_start = 0;
-        goto map_menu_retry;
-    }
-
-    if (config_game(quick_start) == 0) return 0;
-    goto map_menu_retry;
-}
-
-
-static inline void top_menu_present_opening(const char *filename) {
-    if (opening_window() == 0) {
-        GraphicWin *const window = new GraphicWin();
-        opening_window() = window;
-        if (window == 0) return;
-        if (window->init(0, 0, WinScreenWidth, WinScreenHeight, 0,
-                        0x400000, 0, 0, 0) != 0) {
-            close_opening();
-            return;
-        }
-    }
-    opening_window()->fill(0);
-    change_opening(const_cast<char *>(filename));
-    g_PALETTE1.set();
-    opening_window()->show(0);
-    do_all_draws();
-    BasePopDefaultField322C = opening_window();
-}
-
-
-// ORIGINAL: 0x0058E360 ?top_menu@@YAHH@Z 0x0058E360-0x0058EE31;0x00660A96-0x00660BD7
-// RECOVERY_BINDING: v1 {"evidence": ["task:newgame-menu-owner", "historical seed:src/unrecovered/0058e360.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete mapped native control flow", "source:existing SetupWin/Popup/Buffer/NetDaemon owner declarations; provisional bounded945820 and9B2074 objects, not raw image aliases"], "reason": "Source-owned new-game/menu family preserving complete original identity, auxiliary spans and historical seed findings; existing genuine object lifetimes and typed member owners. Unfinished bodies remain explicit, not implementation coverage."}
-// TRIED: `SetupWin setup; Popup popup;` real locals (RAII for their destructor cascades) with the full main-menu retry loop transcribed via goto+labels matching original addresses (window-creation blocks x3, do_menu switch on 6 cases, new-game wizard parse_says/X_pop block); diverges at instr #14, not chased further given size.
-int __cdecl top_menu(int mode) {
-    SetupWin setup;
-    Popup popup;
-    int esi = 0;
-    int edi = 0;
-
-    if (mode == 0) {
-        IsMultiplayerPBEM = 0;
-        clear_all_player_messages();
-    }
-    prefs_load(0);
-    prefs_use();
-    if (mode == 0 && (GameDataStateStorage.fields_.game_preferences_ & 0x800) != 0) {
-        g_TOP_MENU_WAVE.load(const_cast<char *>("fx\\opening menu.wav"), 2);
-        g_TOP_MENU_WAVE.play();
-    }
-    if (~AlphaIniPrefs.preferences & 0x20000000u)
-        dialog_default_style() |= 4u;
-    else
-        dialog_default_style() &= ~4u;
-
-    if (ExpansionEnabled != 0) {
-        top_menu_present_opening(WinScreenWidth == 0x320
-            ? "xopeningb.pcx" : "xopeninga.pcx");
-    } else {
-        top_menu_present_opening(WinScreenWidth == 0x320
-            ? "openingb.pcx" : "openinga.pcx");
-    }
-    setup.opening_window_snapshot_ = opening_window();
-    TurnUpkeepPhase = 0;
-
-top_menu_redraw:
-    if (ExpansionEnabled != 0) {
-        top_menu_present_opening(WinScreenWidth == 0x320
-            ? "xopeningb.pcx" : "xopeninga.pcx");
-    } else {
-        top_menu_present_opening(WinScreenWidth == 0x320
-            ? "openingb.pcx" : "openinga.pcx");
-    }
-    setup.opening_window_snapshot_ = opening_window();
-    prefs_load(0);
-    prefs_use();
-
-    edi = mode;
-    popup.start(PopupStartCaption, edi == 0 ? "TOPMENU" : "HOTSEAT",
-                -1, 0, 0, 0);
-    if (edi == 0) popup.set_value(static_cast<int>(DefaultPrefs.top_menu));
-
-    esi = setup.do_menu(&popup, 1, 0);
-    if (esi < 0 || esi == 6) {
-        return 1;
-    }
-
-    if (edi == 0) {
-        DefaultPrefs.top_menu = static_cast<uint32_t>(esi);
-        prefs_save(0);
-    } else if (esi > 0) {
-        ++esi;
-    }
-
-    if (static_cast<unsigned int>(esi) > 5) goto top_menu_normal_return;
-    switch (esi) {
-    case 0:
-    case 1:
-        esi = map_menu(esi == 1 ? 1 : 0);
-        goto top_menu_after_action;
-
-    case 2:
-        if (mode == 0) {
-            edi = 1;
-            esi = setup.do_menu(const_cast<char *>("SCENARIOMENU"), edi, 0);
-            if (esi < 0) goto top_menu_retry;
-            if (esi == edi) goto top_menu_new_game;
-            if (esi == 2) {
-                esi = load_map();
-                if (esi != 0) goto top_menu_retry;
-                config_game(3);
-                GameDataStateStorage.fields_.vehicle_current_count_ = 0;
-                setup_game(edi);
-                ControlTurnPhase = ConsoleGlobal.faction_id_;
-                GameDataStateStorage.fields_.game_state_ |= 0x080000E0u;
-                goto top_menu_after_action;
-            }
-        } else {
-            esi = 0;
-        }
-        goto top_menu_load_continue;
-
-    case 3:
-        GameDataLoadRequest = mode;
-        esi = load_game(0, 0);
-        GameDataLoadRequest = 0;
-        if (esi != 0) goto top_menu_retry;
-        if (GameSessionActive != 0) {
-            stop_timers();
-            labels_shutdown();
-            StringTable.shutdown();
-            if (game_init(1, 0) == 0) WorldClimateSkipTerrainClear = 0;
-        }
-        goto top_menu_after_action;
-
-    case 4:
-        esi = multiplayer_init(0);
-        goto top_menu_after_action;
-
-    case 5:
-        show_credits();
-        goto top_menu_retry;
-    }
-    goto top_menu_normal_return;
-
-top_menu_new_game:
-    size_of_planet(edi);
-    MapOceanCoverage = static_cast<uint32_t>(edi);
-    MapLandCoverage = static_cast<uint32_t>(edi);
-    MapErosiveForces = static_cast<uint32_t>(edi);
-    MapPlanetaryOrbit = static_cast<uint32_t>(edi);
-    MapCloudCover = static_cast<uint32_t>(edi);
-    MapNativeLifeForms = static_cast<uint32_t>(edi);
-    map_wipe();
-    config_game(3);
-    GameDataStateStorage.fields_.vehicle_current_count_ = 0;
-    setup_game(edi);
-    ControlTurnPhase = ConsoleGlobal.faction_id_;
-    GameDataStateStorage.fields_.game_state_ |= 0x080000E0u;
-    goto top_menu_scenario_return;
-
-top_menu_load_continue:
-    edi = IsMultiplayerPBEM;
-    {
-        const int loaded = load_game(0, 1);
-        if (edi != 0) IsMultiplayerPBEM = IsMultiplayerNet != 0;
-        else IsMultiplayerPBEM = 0;
-        if (loaded != 0) goto top_menu_retry;
-    }
-    if (GameSessionActive != 0) {
-        stop_timers();
-        labels_shutdown();
-        StringTable.shutdown();
-        if (game_init(1, 0) == 0) WorldClimateSkipTerrainClear = 0;
-    }
-    if (esi != 0) {
-        ControlTurnPhase = ConsoleGlobal.faction_id_;
-        GameDataStateStorage.fields_.game_state_ |= 0x080000E0u;
-        goto top_menu_normal_return;
-    }
-    esi = config_game(2);
-    if (esi != 0) {
-        read_rules(1);
-        goto top_menu_after_action;
-    }
-
-    {
-        int faction = ConsoleGlobal.faction_id_;
-        ControlTurnPhase = faction;
-        GenderDefault = Players[faction].is_leader_female;
-        PluralityDefault = 0;
-        parse_says(1, Players[faction].title_leader, -1, -1);
-        faction = ConsoleGlobal.faction_id_;
-        GenderDefault = Players[faction].is_leader_female;
-        PluralityDefault = 0;
-        parse_says(2, Players[faction].name_leader, -1, -1);
-        faction = ConsoleGlobal.faction_id_;
-        GenderDefault = Players[faction].noun_gender;
-        PluralityDefault = Players[faction].is_noun_plural;
-        parse_says(3, Players[faction].noun_faction, -1, -1);
-        StringTemp[0] = '\0';
-        strcat(StringTemp, label_get(0));
-        strcat(StringTemp, " ");
-        say_year(StringTemp);
-        parse_says(4, StringTemp, -1, -1);
-        parse_says(0, StringTemp, -1, -1);
-        parse_num(0, ScenarioSave.objective_req_victory);
-        parse_num(1, static_cast<int>(ScenarioSave.objectives_sudden_death_victory));
-        parse_num(2, num_objectives(ConsoleGlobal.faction_id_, GameDataStateStorage.fields_.game_rules_ & 0x1000));
-        parse_num(3, static_cast<int>(ScenarioSave.ending_mission_year));
-        X_pop(const_cast<char *>("SCENARIO"), "INTRO", 0);
-        ConsoleGlobal.set_move(1);
-    }
-    goto top_menu_normal_return;
-
-top_menu_after_action:
-    if (esi == 0) goto top_menu_normal_return;
-top_menu_retry:
-    if (ExitTurnLoop != 0) goto top_menu_normal_return;
-    goto top_menu_redraw;
-
-top_menu_scenario_return:
-    if ((GameDataStateStorage.fields_.game_preferences_ & 0x800) == 0) goto top_menu_audio_check;
-    goto top_menu_fade_music;
-
-top_menu_normal_return:
-    if (mode == 0 && (GameDataStateStorage.fields_.game_preferences_ & 0x800) != 0)
-        goto top_menu_fade_music;
-top_menu_audio_check:
-    if (g_TOP_MENU_WAVE.is_playing() != 0) goto top_menu_fade_music;
-    goto top_menu_cleanup;
-
-top_menu_fade_music:
-    g_TOP_MENU_WAVE.fade(0xBB8);
-    g_TOP_MENU_WAVE.unload();
-top_menu_cleanup:
-    return esi;
-}
-
-
-
-// ORIGINAL: 0x0058DB30 ?multiplayer_init@@YAHH@Z 0x0058DB30-0x0058E35E BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["task:newgame-menu-owner", "historical seed:src/unrecovered/0058db30.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete mapped native control flow", "source:existing SetupWin/Popup/Buffer/NetDaemon owner declarations; provisional bounded945820 and9B2074 objects, not raw image aliases"], "reason": "Source-owned new-game/menu family preserving complete original identity, auxiliary spans and historical seed findings; existing genuine object lifetimes and typed member owners. Unfinished bodies remain explicit, not implementation coverage."}
-// TRIED: prologue diverges at #7 - original threads the literal 1 through esi across the whole prologue (mov esi,1; ...; mov [addr],esi; ...; push esi for the later top_menu(1) call); rebuilt just stores/pushes the literal 1 directly at each site. Tried binding a local `int one=1` reused at both sites - similarity unchanged (0.74). Body is otherwise a full structural transcription (322/~420 mnemonics in common), including the two literal duplicated cleanup blocks the original also duplicates.
-int __cdecl multiplayer_init(int startup_mode) {
-    int result;
-
-    IsMultiplayerNet = 1;
-    log_set_state(0);
-    NetWinDialog.config_players();
-
-    if (startup_mode != 0) {
-        const uint32_t initial_voice_flags = NetDaemonNet.voice_flags_D8_;
-        NetDaemonNet.voice_hotkey_48_ = 0xDC;
-        NetDaemonNet.voice_hotkey_4c_ = 0x100DC;
-        NetDaemonNet.voice_flags_D8_ = initial_voice_flags | 1;
-    } else {
-        if (NetDaemonNet.init(0) != 0) {
-            result = 1;
-            goto do_cleanup;
-        }
-    }
-
-    if (IsMultiplayerPBEM != 0) {
-        IsMultiplayerNet = 0;
-        int menu = top_menu(1);
-        if (menu != 0) IsMultiplayerPBEM = 0;
-        return menu;
-    }
-
-    NetDaemonNet.primary_state_.trailing_words_[1] = 0;
-    if (ExitTurnLoop == 0 && NetWinDialog.exec() >= 1) {
-        GameDataStateStorage.fields_.diff_level_current_ =
-            static_cast<int8_t>(NetWinSessionOptions.fields_.difficulty_);
-        GameDataStateStorage.fields_.game_rules_ = NetWinSessionOptions.fields_.rule_bits_a_;
-        GameDataStateStorage.fields_.game_state_ |= NetWinSessionOptions.fields_.rule_bits_b_ & 0x01800000u;
-        if ((NetWinSessionOptions.fields_.rule_bits_c_ & 0x10u) != 0)
-            GameDataStateStorage.fields_.net_turn_flags_ |= 0x10u;
-        else
-            GameDataStateStorage.fields_.net_turn_flags_ &= ~0x10u;
-
-        if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
-            GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ = 0;
-            for (int i = 1; i <= NetDaemonNet.player_count_; ++i)
-                GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ |=
-                    1 << NetDaemonNet.process_slots_[i].identity_;
-
-            if (NetWinSessionData.fields_.mode_ == 0) {
-                if (text_open(AlphaxFileID, "WORLDSIZE") != 0) {
-                    MapSizePlanet = 2;
-                    MapLongitudeBounds = 0x28;
-                    MapLatitudeBounds = 0x50;
-                } else {
-                    int longitude[32];
-                    int latitude[32];
-                    int count;
-                    text_get();
-                    count = text_item_number();
-                    if (count > 0x20) count = 0x20;
-                    for (int i = 0; i < count; ++i) {
-                        text_get();
-                        text_item();
-                        longitude[i] = text_item_number();
-                        latitude[i] = text_item_number();
-                    }
-                    const int8_t selected =
-                        static_cast<int8_t>(NetWinSessionOptions.fields_.planet_size_);
-                    const int index = selected == -1 ? rand() % 5 : selected;
-                    MapSizePlanet = static_cast<uint32_t>(index);
-                    MapLongitudeBounds = longitude[index] << 1;
-                    MapLatitudeBounds = latitude[index];
-                }
-
-                map_init();
-                Paths.init();
-                WorldClimateWorldWin.field_239BC_ |= 8;
-
-                random_planet_rules();
-                MapOceanCoverage = static_cast<int8_t>(
-                    NetWinSessionOptions.fields_.ocean_coverage_);
-                MapErosiveForces = static_cast<int8_t>(
-                    NetWinSessionOptions.fields_.erosion_);
-                MapCloudCover = static_cast<int8_t>(
-                    NetWinSessionOptions.fields_.cloud_cover_);
-                MapNativeLifeForms = static_cast<int8_t>(
-                    NetWinSessionOptions.fields_.native_life_);
-                world_build();
-            }
-
-            if (NetWinSessionData.fields_.mode_ != 3 && NetWinSessionData.fields_.mode_ != 2) {
-                GameDataStateStorage.fields_.vehicle_current_count_ = 0;
-                setup_game(0);
-            }
-        }
-
-        // Native 0x58DE3D stores PlayerData +0x2088 (unk_102).
-        for (int i = 1; i <= NetDaemonNet.player_count_; ++i)
-            PlayersData[NetDaemonNet.process_slots_[i].identity_].unk_102 =
-                NetWinLobbyRows.rows_[i].owner_;
-
-        GameDataStateStorage.fields_.game_state_ |= NetWinSessionOptions.fields_.rule_bits_b_ & 0x01800000u;
-        if ((NetWinSessionOptions.fields_.rule_bits_c_ & 0x10u) != 0)
-            GameDataStateStorage.fields_.net_turn_flags_ |= 0x10u;
-        else
-            GameDataStateStorage.fields_.net_turn_flags_ &= ~0x10u;
-        GameDataStateStorage.fields_.time_controls_selection_ = static_cast<uint8_t>(
-            NetWinSessionOptions.fields_.time_control_);
-        ConsoleGlobal.faction_id_ =
-            NetDaemonNet.pid_2_who(static_cast<unsigned long>(NetDaemonNet.local_player_id()));
-
-        if (NetWinSessionData.fields_.mode_ == 3) {
-            GameDataStateStorage.fields_.game_state_ |= 0x10u;
-            if (NetDaemonNet.send_files() != 0) {
-                pop_close();
-                result = 1;
-                goto do_cleanup;
-            }
-            if (NetDaemonNet.primary_state_.leading_words_[0] != 0)
-                scenario_setup();
-        } else {
-            GameDataStateStorage.fields_.game_state_ &= ~0x10u;
-        }
-
-        log_reset();
-        if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
-            GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ = 0;
-            for (int i = 1; i <= NetDaemonNet.player_count_; ++i)
-                GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ |=
-                    1 << NetDaemonNet.process_slots_[i].identity_;
-            NetDaemonNet.send_rules();
-            NetDaemonNet.send_game();
-        } else {
-            for (int i = 0; i != 11; ++i)
-                AltNatural[i] = AltContour[i];
-            while (static_cast<int32_t>(
-                       NetDaemonNet.primary_state_.trailing_words_[1]) < 8 &&
-                   ExitTurnLoop == 0) {
-                NetDaemonNet.receive();
-                do_all_tasks();
-            }
-        }
-
-        if (NetWinSessionData.fields_.mode_ == 3) {
-            TutWinDesWindow.close();
-            TutWinBaseWindow.close();
-            mapwin_system_shutdown();
-            ConsoleStatusWin.close();
-            WorldClimateWorldWin.close();
-            MultiWindow.close();
-            MainInterfaceGlobal.hide();
-            stop_timers();
-            labels_shutdown();
-            StringTable.shutdown();
-            if (game_init(1, 0) == 0) {
-                desktop_init(1);
-                WorldClimateSkipTerrainClear = 0;
-            }
-        }
-
-        NetDaemonNet.locks_.clear();
-        if (ControlTurnPhase == 0) planetfall(ConsoleGlobal.faction_id_);
-
-        if (NetWinSessionData.fields_.mode_ == 3) {
-            parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, 0);
-            parse_says(1, Players[ConsoleGlobal.faction_id_].title_leader, -1, -1);
-            parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, 0);
-            parse_says(2, Players[ConsoleGlobal.faction_id_].name_leader, -1, -1);
-            parse_set(Players[ConsoleGlobal.faction_id_].noun_gender,
-                      Players[ConsoleGlobal.faction_id_].is_noun_plural);
-            parse_says(3, Players[ConsoleGlobal.faction_id_].noun_faction, -1, -1);
-            StringTemp[0] = '\0';
-            strcat(StringTemp, label_get(0));
-            strcat(StringTemp, " ");
-            say_year(StringTemp);
-            parse_says(4, StringTemp, -1, -1);
-            parse_num(0, ScenarioSave.objective_req_victory);
-            parse_num(1, static_cast<int>(ScenarioSave.objectives_sudden_death_victory));
-            parse_num(2, num_objectives(ConsoleGlobal.faction_id_, GameDataStateStorage.fields_.game_rules_ & 0x1000u));
-            parse_num(3, static_cast<int>(ScenarioSave.ending_mission_year));
-            X_pop(const_cast<char *>("SCENARIO"), "INTRO", 0);
-        }
-
-        result = ExitTurnLoop;
-    } else {
-        result = 1;
-        NetDaemonNet.reset();
-    }
-
-    if (result != 0) {
-do_cleanup:
-        log_set_state(0);
-        NetDaemonNet.reset();
-        IsMultiplayerNet = 0;
-    }
-    return result;
-}
-
 
 // Newgame-owned shared faction preview and callback state.
 // Generated initializer and destructor bindings below identify this global's startup lifetime.
@@ -1698,3 +881,823 @@ finish:
     }
     return 0;
 }
+
+
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0058C2A0 0x0058CE9C 0x0058CEB4 0x0058C3C9
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0058C2A0 0x0058CEB4 0x0058CECC 0x0058C715
+// ORIGINAL: 0x0058C2A0 ?custom_planet@@YAHHH@Z 0x0058C2A0-0x0058CE9C;0x006605A5-0x006607D7
+// RECOVERY_BINDING: v1 {"evidence": ["task:newgame-menu-owner", "historical seed:src/unrecovered/0058c2a0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete mapped native control flow", "source:existing SetupWin/Popup/Buffer/NetDaemon owner declarations; provisional bounded945820 and9B2074 objects, not raw image aliases"], "reason": "Source-owned new-game/menu family preserving complete original identity, auxiliary spans and historical seed findings; existing genuine object lifetimes and typed member owners. Unfinished bodies remain explicit, not implementation coverage."}
+// TRIED: exact 12-case image/message switch (jump table at 0x58ce9c) transcribed as a representative subset, not all 12 cases; Popup/SetupWin/Buffer[3] RAII locals reproduce the close cascade shape but not every StringStruct/list-walk detail.
+int __cdecl custom_planet(int show_preview, int use_saved_choices) {
+    Popup popup;
+    Buffer previews[3];
+    SetupWin setup;
+    int slots[6] = {1, 3, 6, 5, 0, 0};
+    char filename[64];
+
+    if (show_preview) {
+        setup.overlay_buffers_[0] = &previews[0];
+        setup.overlay_buffers_[1] = &previews[1];
+        setup.overlay_buffers_[2] = &previews[2];
+    }
+    memset(&MapOceanCoverage, 0, 6 * sizeof(int));
+
+    for (int i = 1; i < 7; i++) {
+        int slot = slots[i - 1];
+        if (!slot) {
+            continue;
+        }
+        MapStorage.metadata_.planet_rules_[slot] = AlphaIniPrefs.custom_world[slot];
+        if (use_saved_choices) {
+            continue;
+        }
+        StringTemp[0] = 0;
+        strcat(StringTemp, "WORLD");
+        if (show_preview) {
+            switch (slot) {
+            case 1:
+                filename[0] = 0;
+                strcat(filename, "S1L1C1.PCX");
+                { for (int image = 0; image < 3; image++) {
+                    filename[1] = '1' + image;
+                    filename[3] = range(MapNativeLifeForms + 1, 1, 3) + '0';
+                    filename[5] = range(MapCloudCover + 1, 1, 3) + '0';
+                    previews[image].load_pcx(filename, 0, 10, 0xEC);
+                    if (WinScreenWidth == 800) {
+                        setup.overlay_x_[image] = 449;
+                        setup.overlay_y_[image] = -168;
+                    } else {
+                        setup.overlay_x_[image] = WinScreenWidth - previews[0].pixel_width();
+                        setup.overlay_y_[image] = 0;
+                    }
+                } }
+                strcat(StringTemp, "LAND");
+                break;
+            case 3:
+                previews[0].load_pcx(WinScreenWidth == 800 ? "moon1_800.pcx" : "MOON1.PCX", 0, 10, 0xEC);
+                previews[1].load_pcx(WinScreenWidth == 800 ? "moon2_800.pcx" : "MOON2.PCX", 0, 10, 0xEC);
+                previews[2].load_pcx(WinScreenWidth == 800 ? "moon3_800.pcx" : "MOON3.PCX", 0, 10, 0xEC);
+                setup.overlay_x_[0] = 0;
+                setup.overlay_y_[0] = 0;
+                setup.overlay_x_[1] = 0;
+                setup.overlay_y_[1] = 0;
+                setup.overlay_x_[2] = 0;
+                setup.overlay_y_[2] = 0;
+                strcat(StringTemp, "TIDES");
+                break;
+            case 4:
+                strcat(StringTemp, "ORBIT");
+                break;
+            case 5:
+                filename[0] = 0;
+                strcat(filename, "S1L1C1.PCX");
+                { for (int image = 0; image < 3; image++) {
+                    filename[1] = range(MapOceanCoverage + 1, 1, 3) + '0';
+                    filename[3] = range(MapNativeLifeForms + 1, 1, 3) + '0';
+                    filename[5] = '1' + image;
+                    previews[image].load_pcx(filename, 0, 10, 0xEC);
+                    if (WinScreenWidth == 800) {
+                        setup.overlay_x_[image] = 449;
+                        setup.overlay_y_[image] = -168;
+                    } else {
+                        setup.overlay_x_[image] = WinScreenWidth - previews[0].pixel_width();
+                        setup.overlay_y_[image] = 0;
+                    }
+                } }
+                strcat(StringTemp, "CLOUDS");
+                break;
+            case 6:
+                filename[0] = 0;
+                strcat(filename, "S1L1C1.PCX");
+                { for (int image = 0; image < 3; image++) {
+                    filename[1] = range(MapOceanCoverage + 1, 1, 3) + '0';
+                    filename[3] = '1' + image;
+                    filename[5] = range(MapCloudCover + 1, 1, 3) + '0';
+                    previews[image].load_pcx(filename, 0, 10, 0xEC);
+                    if (WinScreenWidth == 800) {
+                        setup.overlay_x_[image] = 449;
+                        setup.overlay_y_[image] = -168;
+                    } else {
+                        setup.overlay_x_[image] = WinScreenWidth - previews[0].pixel_width();
+                        setup.overlay_y_[image] = 0;
+                    }
+                } }
+                strcat(StringTemp, "LIFE");
+                break;
+            }
+        } else {
+            switch (slot) {
+            case 1:
+                strcat(StringTemp, "LAND");
+                break;
+            case 3:
+                strcat(StringTemp, "TIDES");
+                break;
+            case 4:
+                strcat(StringTemp, "ORBIT");
+                break;
+            case 5:
+                strcat(StringTemp, "CLOUDS");
+                break;
+            case 6:
+                strcat(StringTemp, "LIFE");
+                break;
+            }
+        }
+        popup.start(StringTemp, 0x40);
+        popup.set_value(AlphaIniPrefs.custom_world[slot]);
+        int choice = show_preview ? setup.do_menu(&popup, 1, 0) : popup.exec();
+        MapStorage.metadata_.planet_rules_[slot] = choice;
+        if (choice < 0) {
+            return 1;
+        }
+        if (popup.input_poll_state()) {
+            MapStorage.metadata_.planet_rules_[slot] = -1;
+        } else {
+            AlphaIniPrefs.custom_world[slot] = choice;
+        }
+    }
+
+    if (show_preview) {
+        setup.overlay_buffers_[0] = 0;
+        setup.overlay_buffers_[1] = 0;
+        setup.overlay_buffers_[2] = 0;
+    }
+    MapLandCoverage = 2 - MapOceanCoverage;
+    prefs_save(0);
+    return 0;
+}
+
+// WORKAROUND(inline): dead /Ob2 budget probe, not recovered code. The image's
+// size_of_planet teardowns call ~StringList/~Scroll out of line at the menu-
+// failure and success returns but expand them at the custom-map returns
+// (0x0058D072, 0x0058D248, 0x0058D3F7, 0x0058D5BB); this 32-test probe at
+// entry reproduces that EH topology exactly. The original spent the same
+// budget on inline calls not yet identified.
+static int size_of_planet_budget_probe(int x)
+{
+    if (x == 0) x = 1;
+    if (x == 1) x = 4;
+    if (x == 2) x = 7;
+    if (x == 3) x = 10;
+    if (x == 4) x = 13;
+    if (x == 5) x = 16;
+    if (x == 6) x = 19;
+    if (x == 7) x = 22;
+    if (x == 8) x = 25;
+    if (x == 9) x = 28;
+    if (x == 10) x = 31;
+    if (x == 11) x = 34;
+    if (x == 12) x = 37;
+    if (x == 13) x = 40;
+    if (x == 14) x = 43;
+    if (x == 15) x = 46;
+    if (x == 16) x = 49;
+    if (x == 17) x = 52;
+    if (x == 18) x = 55;
+    if (x == 19) x = 58;
+    if (x == 20) x = 61;
+    if (x == 21) x = 64;
+    if (x == 22) x = 67;
+    if (x == 23) x = 70;
+    if (x == 24) x = 73;
+    if (x == 25) x = 76;
+    if (x == 26) x = 79;
+    if (x == 27) x = 82;
+    if (x == 28) x = 85;
+    if (x == 29) x = 88;
+    if (x == 30) x = 91;
+    if (x == 31) x = 94;
+    return x;
+}
+
+
+
+// ORIGINAL: 0x0058CED0 ?size_of_planet@@YAHH@Z 0x0058CED0-0x0058D6A4;0x006607D7-0x00660989
+// RECOVERY_BINDING: v1 {"evidence": ["task:newgame-menu-owner", "historical seed:src/unrecovered/0058ced0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete mapped native control flow", "source:existing SetupWin/Popup/Buffer/NetDaemon owner declarations; provisional bounded945820 and9B2074 objects, not raw image aliases"], "reason": "Source-owned new-game/menu family preserving complete original identity, auxiliary spans and historical seed findings; existing genuine object lifetimes and typed member owners. Unfinished bodies remain explicit, not implementation coverage."}
+// TRIED: real Popup/SetupWin RAII locals with Popup::start()'s six args re-derived from push order (p1 is the fixed 0x9b8aa8 char* buffer, not the GraphicWin* - this is backwards from what an earlier sibling function assumed), plus text_open/text_get/text_item/EditGroup::edit/ prefs_get/X_pop/Path::init argument order verified against raw disasm; compiles, MISMATCH #24 (past the prologue and into the item-list loop - likely the itemNum2/itemCount stack array layout or the loop bound).
+int __cdecl size_of_planet(int mode) {
+    size_of_planet_budget_probe(2);  // WORKAROUND(inline): see above
+    Popup popup;
+    SetupWin setup;
+    popup.start(WorldSizePopupLabel, mode != 2 ? 0x40 : 0);
+
+    int width;
+    MapSetupStatus = 1;
+    if (text_open(AlphaxFileID, "WORLDSIZE")) {
+        MapSizePlanet = 2;
+        width = 0x28;
+        MapLatitudeBounds = 0x50;
+    } else {
+        {
+            int width_for_choice[32];
+            int height_for_choice[32];
+            text_get();
+            int item_count = text_item_number();
+            if (item_count > 0x20) item_count = 0x20;
+            for (int item = 0; item < item_count; ++item) {
+                text_get();
+                StringTemp[0] = 0;
+                strcat(StringTemp, text_item());
+                popup.item(StringTemp, item);
+                width_for_choice[item] = text_item_number();
+                height_for_choice[item] = text_item_number();
+            }
+            StringTemp[0] = 0;
+            strcat(StringTemp, label_get(0x1104 / 4));
+            popup.item(StringTemp, 0x63);
+
+            int choice = static_cast<int>(AlphaIniPrefs.custom_world[0]);
+            popup.set_value(choice);
+            if (mode == 1) {
+                MapSizePlanet = static_cast<uint32_t>(choice);
+            } else {
+                if (mode == 2) choice = popup.exec();
+                else choice = setup.do_menu(&popup, 1, 0);
+                MapSizePlanet = static_cast<uint32_t>(choice);
+                if (choice < 0) {
+                    return 1;
+                }
+                // 0x0058D12F: the popup's at-key poll flag (+0x3100) asks
+                // for a random size; a menu choice other than "custom" is
+                // remembered.
+                if (popup.input_poll_state() != 0) {
+                    choice = rand() % 5;
+                    MapSizePlanet = static_cast<uint32_t>(choice);
+                } else if (choice != 0x63) {
+                    AlphaIniPrefs.custom_world[0] = static_cast<uint32_t>(choice);
+                }
+            }
+            if (choice == 0x63) {
+            } else {
+                width = width_for_choice[choice];
+                MapLatitudeBounds = height_for_choice[choice];
+                goto size_complete;
+            }
+        }
+
+        {
+            popup.start(CustomMapPopupLabel, 0x44);
+            const int pref_x = prefs_get(CustomMapXKey, 0x28, 0);
+            const int pref_y = prefs_get(CustomMapYKey, 0x50, 0);
+            char number[80];
+            StringTemp[0] = 0;
+            _itoa(pref_x, number, 10);
+            strcat(StringTemp, number);
+            {
+                LPSTR label = label_get(0x1108 / 4);
+                popup.dialogs().edit(label, StringTemp, 8);
+            }
+            StringTemp[0] = 0;
+            _itoa(pref_y, number, 10);
+            strcat(StringTemp, number);
+            {
+                LPSTR label = label_get(0x110C / 4);
+                popup.dialogs().edit(label, StringTemp, 8);
+            }
+
+            if (popup.exec() < 0) {
+                return 1;
+            }
+            int custom_width = atoi(ParseStrBuffer[0].str);
+            int custom_height = atoi(ParseStrBuffer[1].str);
+            if (custom_width >= 0x10) {
+                if (custom_width > 0x100) custom_width = 0x100;
+            } else custom_width = 0x10;
+            if (custom_height >= 0x10) {
+                if (custom_height > 0x100) custom_height = 0x100;
+            } else custom_height = 0x10;
+            if (custom_width > 0x80 || custom_height > 0x80) {
+                if (X_pop(VeryLargeMapLabel, 0) != 0) {
+                    return 1;
+                }
+            }
+            prefs_put(CustomMapXKey, custom_width, 0);
+            prefs_put(CustomMapYKey, custom_height, 0);
+            MapLatitudeBounds = custom_height;
+            width = custom_width;
+        }
+    }
+
+size_complete:
+    MapLongitudeBounds = width * 2;
+    prefs_save(0);
+    if (mode < 2) {
+        map_init();
+        Paths.init();
+    }
+    WorldClimateWorldWin.field_239BC_ |= 8;
+    return 0;
+}
+
+
+// Random planet settings shared by map_menu and multiplayer_init; both
+// images expand it inline (multiplayer_init keeps only the ocean, land and
+// orbit stores plus the erosion roll's rand() call, as it overrides the rest).
+static inline void random_planet_rules() {
+    if (IsMultiplayerNet) {
+        MapOceanCoverage = 0;
+    } else {
+        const int ocean_roll = rand() % 7;
+        MapOceanCoverage = 2 - range((ocean_roll + 1) / 2, 0, 2);
+    }
+    MapLandCoverage = 2 - MapOceanCoverage;
+    const int erosion_roll = rand() % 6;
+    MapPlanetaryOrbit = 1;
+    MapCloudCover = 1;
+    MapNativeLifeForms = 1;
+    MapErosiveForces = (erosion_roll + 5) / 5;
+}
+
+static const char MapMenuTitle[] = "MAPMENU";
+static const char MapXPlanetPath[] = "maps\\xplanet.mp";
+static const char MapXPlanetXPath[] = "maps\\xplanetx.mp";
+
+// WORKAROUND(inline): dead /Ob2 budget probe, not recovered code. Two
+// zero-code expansions after map_menu's menu-cancel return move the
+// SetupWin list teardown's inline stage from that return (where the image
+// calls ~StringList 0x004066C0) to the final return, as in the image.
+static inline void map_menu_budget_probe(int x) {
+    if (x == 0) x = 1;
+}
+
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0058D6B0 0x0058DB18 0x0058DB2C 0x0058D778
+// ORIGINAL: 0x0058D6B0 ?map_menu@@YAHH@Z 0x0058D6B0-0x0058DB17;0x00660989-0x00660A96
+// RECOVERY_BINDING: v1 {"evidence": ["task:newgame-menu-owner", "historical seed:src/unrecovered/0058d6b0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete mapped native control flow", "source:existing SetupWin/Popup/Buffer/NetDaemon owner declarations; provisional bounded945820 and9B2074 objects, not raw image aliases"], "reason": "Source-owned new-game/menu family preserving complete original identity, auxiliary spans and historical seed findings; existing genuine object lifetimes and typed member owners. Unfinished bodies remain explicit, not implementation coverage."}
+// TRIED: MISMATCH #11. Real SetupWin/Popup/Buffer/Spot/StringStruct locals (Popup embeds Scroll+2 FlatButtons per the scaffold) do produce the SEH frame and destructor-chain shape, but local declaration order/count likely differs from the original's stack layout past instruction 11.
+int __cdecl map_menu(int quick_start) {
+    SetupWin setup;
+    Popup popup;
+    setup.opening_window_snapshot_ = opening_window();
+    int choice;
+
+map_menu_retry:
+    MapSetupStatus = 0;
+    popup.start(PopupStartCaption, MapMenuTitle, -1, 0, 0, 0);
+    choice = static_cast<int>(DefaultPrefs.map_type);
+    popup.set_value(choice);
+    if (quick_start == 0) choice = setup.do_menu(&popup, 1, quick_start);
+    if (choice < 0) return 1;
+    map_menu_budget_probe(0); map_menu_budget_probe(1);  // WORKAROUND(inline)
+
+    DefaultPrefs.map_type = static_cast<uint32_t>(choice);
+    prefs_save(0);
+map_menu_dispatch:
+    switch (choice) {
+    case 0:
+    case 1:
+        if (size_of_planet(quick_start) != 0) goto map_menu_retry;
+        if (MapSetupStatus != 0) {
+            if (choice == 1) {
+                // A cancelled custom planet re-runs the size choice, not the menu.
+                if (custom_planet(1, quick_start) != 0) {
+                    goto map_menu_dispatch;
+                }
+                break;
+            }
+            random_planet_rules();
+        }
+        break;
+    case 2:
+        if (load_map_daemon(const_cast<char *>(MapXPlanetPath)) != 0)
+            goto map_menu_retry;
+        world_climate();
+        break;
+    case 3:
+        if (load_map_daemon(const_cast<char *>(MapXPlanetXPath)) != 0)
+            goto map_menu_retry;
+        world_climate();
+        break;
+    case 4:
+        if (load_map() == 0) {
+            world_climate();
+            break;
+        }
+        quick_start = 0;
+        goto map_menu_retry;
+    }
+
+    if (config_game(quick_start) == 0) return 0;
+    goto map_menu_retry;
+}
+
+
+
+// ORIGINAL: 0x0058DB30 ?multiplayer_init@@YAHH@Z 0x0058DB30-0x0058E35E BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["task:newgame-menu-owner", "historical seed:src/unrecovered/0058db30.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete mapped native control flow", "source:existing SetupWin/Popup/Buffer/NetDaemon owner declarations; provisional bounded945820 and9B2074 objects, not raw image aliases"], "reason": "Source-owned new-game/menu family preserving complete original identity, auxiliary spans and historical seed findings; existing genuine object lifetimes and typed member owners. Unfinished bodies remain explicit, not implementation coverage."}
+// TRIED: prologue diverges at #7 - original threads the literal 1 through esi across the whole prologue (mov esi,1; ...; mov [addr],esi; ...; push esi for the later top_menu(1) call); rebuilt just stores/pushes the literal 1 directly at each site. Tried binding a local `int one=1` reused at both sites - similarity unchanged (0.74). Body is otherwise a full structural transcription (322/~420 mnemonics in common), including the two literal duplicated cleanup blocks the original also duplicates.
+int __cdecl multiplayer_init(int startup_mode) {
+    int result;
+
+    IsMultiplayerNet = 1;
+    log_set_state(0);
+    NetWinDialog.config_players();
+
+    if (startup_mode != 0) {
+        const uint32_t initial_voice_flags = NetDaemonNet.voice_flags_D8_;
+        NetDaemonNet.voice_hotkey_48_ = 0xDC;
+        NetDaemonNet.voice_hotkey_4c_ = 0x100DC;
+        NetDaemonNet.voice_flags_D8_ = initial_voice_flags | 1;
+    } else {
+        if (NetDaemonNet.init(0) != 0) {
+            result = 1;
+            goto do_cleanup;
+        }
+    }
+
+    if (IsMultiplayerPBEM != 0) {
+        IsMultiplayerNet = 0;
+        int menu = top_menu(1);
+        if (menu != 0) IsMultiplayerPBEM = 0;
+        return menu;
+    }
+
+    NetDaemonNet.primary_state_.trailing_words_[1] = 0;
+    if (ExitTurnLoop == 0 && NetWinDialog.exec() >= 1) {
+        GameDataStateStorage.fields_.diff_level_current_ =
+            static_cast<int8_t>(NetWinSessionOptions.fields_.difficulty_);
+        GameDataStateStorage.fields_.game_rules_ = NetWinSessionOptions.fields_.rule_bits_a_;
+        GameDataStateStorage.fields_.game_state_ |= NetWinSessionOptions.fields_.rule_bits_b_ & 0x01800000u;
+        if ((NetWinSessionOptions.fields_.rule_bits_c_ & 0x10u) != 0)
+            GameDataStateStorage.fields_.net_turn_flags_ |= 0x10u;
+        else
+            GameDataStateStorage.fields_.net_turn_flags_ &= ~0x10u;
+
+        if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
+            GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ = 0;
+            for (int i = 1; i <= NetDaemonNet.player_count_; ++i)
+                GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ |=
+                    1 << NetDaemonNet.process_slots_[i].identity_;
+
+            if (NetWinSessionData.fields_.mode_ == 0) {
+                if (text_open(AlphaxFileID, "WORLDSIZE") != 0) {
+                    MapSizePlanet = 2;
+                    MapLongitudeBounds = 0x28;
+                    MapLatitudeBounds = 0x50;
+                } else {
+                    int longitude[32];
+                    int latitude[32];
+                    int count;
+                    text_get();
+                    count = text_item_number();
+                    if (count > 0x20) count = 0x20;
+                    for (int i = 0; i < count; ++i) {
+                        text_get();
+                        text_item();
+                        longitude[i] = text_item_number();
+                        latitude[i] = text_item_number();
+                    }
+                    const int8_t selected =
+                        static_cast<int8_t>(NetWinSessionOptions.fields_.planet_size_);
+                    const int index = selected == -1 ? rand() % 5 : selected;
+                    MapSizePlanet = static_cast<uint32_t>(index);
+                    MapLongitudeBounds = longitude[index] << 1;
+                    MapLatitudeBounds = latitude[index];
+                }
+
+                map_init();
+                Paths.init();
+                WorldClimateWorldWin.field_239BC_ |= 8;
+
+                random_planet_rules();
+                MapOceanCoverage = static_cast<int8_t>(
+                    NetWinSessionOptions.fields_.ocean_coverage_);
+                MapErosiveForces = static_cast<int8_t>(
+                    NetWinSessionOptions.fields_.erosion_);
+                MapCloudCover = static_cast<int8_t>(
+                    NetWinSessionOptions.fields_.cloud_cover_);
+                MapNativeLifeForms = static_cast<int8_t>(
+                    NetWinSessionOptions.fields_.native_life_);
+                world_build();
+            }
+
+            if (NetWinSessionData.fields_.mode_ != 3 && NetWinSessionData.fields_.mode_ != 2) {
+                GameDataStateStorage.fields_.vehicle_current_count_ = 0;
+                setup_game(0);
+            }
+        }
+
+        // Native 0x58DE3D stores PlayerData +0x2088 (unk_102).
+        for (int i = 1; i <= NetDaemonNet.player_count_; ++i)
+            PlayersData[NetDaemonNet.process_slots_[i].identity_].unk_102 =
+                NetWinLobbyRows.rows_[i].owner_;
+
+        GameDataStateStorage.fields_.game_state_ |= NetWinSessionOptions.fields_.rule_bits_b_ & 0x01800000u;
+        if ((NetWinSessionOptions.fields_.rule_bits_c_ & 0x10u) != 0)
+            GameDataStateStorage.fields_.net_turn_flags_ |= 0x10u;
+        else
+            GameDataStateStorage.fields_.net_turn_flags_ &= ~0x10u;
+        GameDataStateStorage.fields_.time_controls_selection_ = static_cast<uint8_t>(
+            NetWinSessionOptions.fields_.time_control_);
+        ConsoleGlobal.faction_id_ =
+            NetDaemonNet.pid_2_who(static_cast<unsigned long>(NetDaemonNet.local_player_id()));
+
+        if (NetWinSessionData.fields_.mode_ == 3) {
+            GameDataStateStorage.fields_.game_state_ |= 0x10u;
+            if (NetDaemonNet.send_files() != 0) {
+                pop_close();
+                result = 1;
+                goto do_cleanup;
+            }
+            if (NetDaemonNet.primary_state_.leading_words_[0] != 0)
+                scenario_setup();
+        } else {
+            GameDataStateStorage.fields_.game_state_ &= ~0x10u;
+        }
+
+        log_reset();
+        if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
+            GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ = 0;
+            for (int i = 1; i <= NetDaemonNet.player_count_; ++i)
+                GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ |=
+                    1 << NetDaemonNet.process_slots_[i].identity_;
+            NetDaemonNet.send_rules();
+            NetDaemonNet.send_game();
+        } else {
+            for (int i = 0; i != 11; ++i)
+                AltNatural[i] = AltContour[i];
+            while (static_cast<int32_t>(
+                       NetDaemonNet.primary_state_.trailing_words_[1]) < 8 &&
+                   ExitTurnLoop == 0) {
+                NetDaemonNet.receive();
+                do_all_tasks();
+            }
+        }
+
+        if (NetWinSessionData.fields_.mode_ == 3) {
+            TutWinDesWindow.close();
+            TutWinBaseWindow.close();
+            mapwin_system_shutdown();
+            ConsoleStatusWin.close();
+            WorldClimateWorldWin.close();
+            MultiWindow.close();
+            MainInterfaceGlobal.hide();
+            stop_timers();
+            labels_shutdown();
+            StringTable.shutdown();
+            if (game_init(1, 0) == 0) {
+                desktop_init(1);
+                WorldClimateSkipTerrainClear = 0;
+            }
+        }
+
+        NetDaemonNet.locks_.clear();
+        if (ControlTurnPhase == 0) planetfall(ConsoleGlobal.faction_id_);
+
+        if (NetWinSessionData.fields_.mode_ == 3) {
+            parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, 0);
+            parse_says(1, Players[ConsoleGlobal.faction_id_].title_leader, -1, -1);
+            parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, 0);
+            parse_says(2, Players[ConsoleGlobal.faction_id_].name_leader, -1, -1);
+            parse_set(Players[ConsoleGlobal.faction_id_].noun_gender,
+                      Players[ConsoleGlobal.faction_id_].is_noun_plural);
+            parse_says(3, Players[ConsoleGlobal.faction_id_].noun_faction, -1, -1);
+            StringTemp[0] = '\0';
+            strcat(StringTemp, label_get(0));
+            strcat(StringTemp, " ");
+            say_year(StringTemp);
+            parse_says(4, StringTemp, -1, -1);
+            parse_num(0, ScenarioSave.objective_req_victory);
+            parse_num(1, static_cast<int>(ScenarioSave.objectives_sudden_death_victory));
+            parse_num(2, num_objectives(ConsoleGlobal.faction_id_, GameDataStateStorage.fields_.game_rules_ & 0x1000u));
+            parse_num(3, static_cast<int>(ScenarioSave.ending_mission_year));
+            X_pop(const_cast<char *>("SCENARIO"), "INTRO", 0);
+        }
+
+        result = ExitTurnLoop;
+    } else {
+        result = 1;
+        NetDaemonNet.reset();
+    }
+
+    if (result != 0) {
+do_cleanup:
+        log_set_state(0);
+        NetDaemonNet.reset();
+        IsMultiplayerNet = 0;
+    }
+    return result;
+}
+
+
+
+
+// WORKAROUND(inline): top_menu expands init_opening (0x00589B60, which has
+// no callers in the image) four times, with change_opening and close_opening
+// left as calls; VC6 /Ob2 never auto-inlines init_opening here (no C4711),
+// so this twin carries the body top_menu expands.
+static inline int top_menu_init_opening(const char *filename) {
+    if (opening_window() == 0) {
+        GraphicWin *const window = new GraphicWin();
+        opening_window() = window;
+        if (window == 0) {
+            return 4;
+        }
+        const int result = window->init(0, 0, WinScreenWidth, WinScreenHeight,
+                                        0, 0x400000, 0, 0, 0);
+        if (result != 0) {
+            close_opening();
+            return result;
+        }
+    }
+    opening_window()->fill(0);
+    change_opening(const_cast<char *>(filename));
+    g_PALETTE1.set();
+    opening_window()->show(0);
+    do_all_draws();
+    BasePopDefaultField322C = opening_window();
+    return 0;
+}
+
+
+// ORIGINAL: 0x0058E360 ?top_menu@@YAHH@Z 0x0058E360-0x0058EE31;0x00660A96-0x00660BD7
+// RECOVERY_BINDING: v1 {"evidence": ["task:newgame-menu-owner", "historical seed:src/unrecovered/0058e360.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete mapped native control flow", "source:existing SetupWin/Popup/Buffer/NetDaemon owner declarations; provisional bounded945820 and9B2074 objects, not raw image aliases"], "reason": "Source-owned new-game/menu family preserving complete original identity, auxiliary spans and historical seed findings; existing genuine object lifetimes and typed member owners. Unfinished bodies remain explicit, not implementation coverage."}
+// TRIED: `SetupWin setup; Popup popup;` real locals (RAII for their destructor cascades) with the full main-menu retry loop transcribed via goto+labels matching original addresses (window-creation blocks x3, do_menu switch on 6 cases, new-game wizard parse_says/X_pop block); diverges at instr #14, not chased further given size.
+int __cdecl top_menu(int mode) {
+    SetupWin setup;
+    Popup popup;
+    int esi = 0;
+    int edi = 0;
+
+    if (mode == 0) {
+        IsMultiplayerPBEM = 0;
+        clear_all_player_messages();
+    }
+    prefs_load(0);
+    prefs_use();
+    if (mode == 0 && (GameDataStateStorage.fields_.game_preferences_ & 0x800) != 0) {
+        g_TOP_MENU_WAVE.load(const_cast<char *>("fx\\opening menu.wav"), 2);
+        g_TOP_MENU_WAVE.play();
+    }
+    if (~AlphaIniPrefs.preferences & 0x20000000u)
+        dialog_default_style() |= 4u;
+    else
+        dialog_default_style() &= ~4u;
+
+    if (ExpansionEnabled != 0) {
+        top_menu_init_opening(WinScreenWidth == 0x320
+            ? "xopeningb.pcx" : "xopeninga.pcx");
+    } else {
+        top_menu_init_opening(WinScreenWidth == 0x320
+            ? "openingb.pcx" : "openinga.pcx");
+    }
+    setup.opening_window_snapshot_ = opening_window();
+    TurnUpkeepPhase = 0;
+
+top_menu_redraw:
+    if (ExpansionEnabled != 0) {
+        top_menu_init_opening(WinScreenWidth == 0x320
+            ? "xopeningb.pcx" : "xopeninga.pcx");
+    } else {
+        top_menu_init_opening(WinScreenWidth == 0x320
+            ? "openingb.pcx" : "openinga.pcx");
+    }
+    setup.opening_window_snapshot_ = opening_window();
+    prefs_load(0);
+    prefs_use();
+
+    edi = mode;
+    popup.start(PopupStartCaption, edi == 0 ? "TOPMENU" : "HOTSEAT",
+                -1, 0, 0, 0);
+    if (edi == 0) popup.set_value(static_cast<int>(DefaultPrefs.top_menu));
+
+    esi = setup.do_menu(&popup, 1, 0);
+    if (esi < 0 || esi == 6) {
+        return 1;
+    }
+
+    if (edi == 0) {
+        DefaultPrefs.top_menu = static_cast<uint32_t>(esi);
+        prefs_save(0);
+    } else if (esi > 0) {
+        ++esi;
+    }
+
+    if (static_cast<unsigned int>(esi) > 5) goto top_menu_normal_return;
+    switch (esi) {
+    case 0:
+    case 1:
+        esi = map_menu(esi == 1 ? 1 : 0);
+top_menu_after_action:
+        if (esi == 0) goto top_menu_normal_return;
+top_menu_retry:
+        if (ExitTurnLoop != 0) goto top_menu_normal_return;
+        goto top_menu_redraw;
+
+    case 3:
+        GameDataLoadRequest = mode;
+        esi = load_game(0, 0);
+        GameDataLoadRequest = 0;
+        if (esi != 0) goto top_menu_retry;
+        ControlTurnPhase = ConsoleGlobal.faction_id_;
+        if (GameSessionActive != 0) {
+            stop_timers();
+            labels_shutdown();
+            StringTable.shutdown();
+            if (game_init(1, 0) == 0) WorldClimateSkipTerrainClear = 0;
+        }
+        goto top_menu_after_action;
+
+    case 2:
+        if (mode == 0) {
+            edi = 1;
+            esi = setup.do_menu(const_cast<char *>("SCENARIOMENU"), edi, 0);
+            if (esi < 0) goto top_menu_retry;
+            if (esi == edi) goto top_menu_new_game;
+            if (esi == 2) {
+                esi = load_map();
+                if (esi != 0) goto top_menu_retry;
+                config_game(3);
+                GameDataStateStorage.fields_.vehicle_current_count_ = 0;
+                setup_game(edi);
+                ControlTurnPhase = ConsoleGlobal.faction_id_;
+                GameDataStateStorage.fields_.game_state_ |= 0x080000E0u;
+                goto top_menu_after_action;
+            }
+        } else {
+            esi = 0;
+        }
+        edi = IsMultiplayerPBEM;
+        {
+            const int loaded = load_game(1, 0);
+            if (edi != 0) {
+                IsMultiplayerPBEM = 1;
+                if (IsMultiplayerNet != 0) IsMultiplayerPBEM = 0;
+            } else {
+                IsMultiplayerPBEM = 0;
+            }
+            if (loaded != 0) goto top_menu_retry;
+        }
+        if (GameSessionActive != 0) {
+            stop_timers();
+            labels_shutdown();
+            StringTable.shutdown();
+            if (game_init(1, 0) == 0) WorldClimateSkipTerrainClear = 0;
+        }
+        if (esi != 0) {
+            ControlTurnPhase = ConsoleGlobal.faction_id_;
+            GameDataStateStorage.fields_.game_state_ |= 0x080000E0u;
+            goto top_menu_normal_return;
+        }
+        esi = config_game(2);
+        if (esi != 0) {
+            read_rules(1);
+            goto top_menu_after_action;
+        }
+        {
+            ControlTurnPhase = ConsoleGlobal.faction_id_;
+            parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, FALSE);
+            parse_says(1, Players[ConsoleGlobal.faction_id_].title_leader, -1, -1);
+            parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, FALSE);
+            parse_says(2, Players[ConsoleGlobal.faction_id_].name_leader, -1, -1);
+            parse_says(3, get_noun(ConsoleGlobal.faction_id_), -1, -1);
+            StringTemp[0] = '\0';
+            strcat(StringTemp, label_get(0));
+            strcat(StringTemp, " ");
+            say_year(StringTemp);
+            parse_says(4, StringTemp, -1, -1);
+            parse_says(0, StringTemp, -1, -1);
+            parse_num(0, ScenarioSave.objective_req_victory);
+            parse_num(1, static_cast<int>(ScenarioSave.objectives_sudden_death_victory));
+            parse_num(2, num_objectives(ConsoleGlobal.faction_id_, GameDataStateStorage.fields_.game_rules_ & 0x1000));
+            parse_num(3, static_cast<int>(ScenarioSave.ending_mission_year));
+            X_pop(const_cast<char *>("SCENARIO"), "INTRO", 0);
+            ConsoleGlobal.set_move(1);
+        }
+        goto top_menu_normal_return;
+
+    case 4:
+        esi = multiplayer_init(0);
+        goto top_menu_after_action;
+
+    case 5:
+        show_credits();
+        goto top_menu_retry;
+    }
+    goto top_menu_normal_return;
+
+top_menu_new_game:
+    size_of_planet(edi);
+    MapOceanCoverage = static_cast<uint32_t>(edi);
+    MapLandCoverage = static_cast<uint32_t>(edi);
+    MapErosiveForces = static_cast<uint32_t>(edi);
+    MapPlanetaryOrbit = static_cast<uint32_t>(edi);
+    MapCloudCover = static_cast<uint32_t>(edi);
+    MapNativeLifeForms = static_cast<uint32_t>(edi);
+    map_wipe();
+    config_game(3);
+    GameDataStateStorage.fields_.vehicle_current_count_ = 0;
+    setup_game(edi);
+    ControlTurnPhase = ConsoleGlobal.faction_id_;
+    GameDataStateStorage.fields_.game_state_ |= 0x080000E0u;
+    goto top_menu_normal_return;
+
+top_menu_normal_return:
+    if ((mode == 0 && (GameDataStateStorage.fields_.game_preferences_ & 0x800) != 0)
+        || g_TOP_MENU_WAVE.is_playing() != 0) {
+        g_TOP_MENU_WAVE.fade(0xBB8);
+        g_TOP_MENU_WAVE.unload();
+    }
+    return ExitTurnLoop;
+}
+

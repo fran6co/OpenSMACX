@@ -273,7 +273,7 @@ void __cdecl buy_council_vote(int faction, int other, int proposal, int choice) 
         count = 0;
         for (player = 1; player < MaxPlayerNum; player++) {
             if (player != other) {
-                if (council_votes(other) < council_votes(player)) {
+                if (council_votes(player) > council_votes(other)) {
                     count++;
                 }
             }
@@ -3833,7 +3833,10 @@ void __cdecl give_a_base(int base_id, int new_owner) {
     int old_owner = Bases[base_id].faction_id_current;
     int y = Bases[base_id].y;
     for (int i = 0; i < 21; i++) {
-        int x_radius = wrap_map_x(x + RadiusOffsetX[i]);
+        int x_raw = x + RadiusOffsetX[i];
+        int x_radius = (MapIsFlat & 1) ? x_raw
+            : x_raw < 0 ? x_raw + MapLongitudeBounds
+            : x_raw >= MapLongitudeBounds ? x_raw - MapLongitudeBounds : x_raw;
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius)) {
             map_loc(x_radius, y_radius)->visibility |= 1 << new_owner;
