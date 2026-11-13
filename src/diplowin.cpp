@@ -1584,7 +1584,7 @@ static inline char *diplo_get_name(int faction) {
 }
 
 // Superseded seed removal retains historical Git provenance below.
-// ORIGINAL: 0x004415C0 ?on_button_clicked@DiploWin@@QAEXH@Z 0x004415C0-0x004424C6;0x00654A50-0x00654CEA
+// ORIGINAL: 0x004415C0 ?on_button_clicked@DiploWin@@QAEXH@Z 0x004415C0-0x004424C6;0x00654A50-0x00654CEA BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/unrecovered/004415c0.cpp", "task:diplowin-button-handler-owner", "Pinned native button+2 fifteen-way dispatch, original local Popup lifetime; corrected final offline random state writes and row-directed treaty checks. Primary table slot44; real SubInterface remains independent. Preserve observed gender/plural assignment order."], "reason": "Recover this complete operation in its genuine C++ popup/diplomacy owner using actual members, virtual dispatch and typed shared dependencies; retain original identity, spans, claims and seed discoveries."}
 // symbol    ?on_button_clicked@DiploWin@@UAEXH@Z
 // TRIED: 15-way jump table (resolved in the brief) transcribed as a switch/goto over (a1+2); same Popup-teardown-cascade shape as the other DiploWin/PickWin siblings, plus one extra pair of vtable-relative writes (self and self+0x444) for an embedded RadioButton this function's Dialogs region has that the others don't. Cases 5/6/8/9 (tech-trade and base-swap proposal loops) are the largest handlers and were transcribed at "good faith" fidelity - the array-scan/skip conditions and REL() bit tests were matched to the raw bytes but not independently re-verified a second time given the time remaining. sim 0.12-0.34.
