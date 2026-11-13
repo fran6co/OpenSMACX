@@ -10167,7 +10167,6 @@ if (communicate_special_war_selected_base_id < 0) {
 if (wants_to_speak(faction_id, faction_id_with) == 0) {
     goto communicate_special_war_ransom_finish; // native 0x005562D9
 }
-clear();
 parse_says(0, get_title(faction_id), -1, -1);
 parse_says(1, get_name(faction_id), -1, -1);
 parse_says(2, Bases[communicate_special_war_selected_base_id]
