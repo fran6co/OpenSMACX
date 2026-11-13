@@ -25,14 +25,8 @@ class MonuWin : public GraphicWin {
   int origin_y_;                 // +0xA18
   int window_width_;             // +0xA1C
   int window_height_;            // +0xA20
-  int client_left_;              // +0xA24
-  int client_top_;               // +0xA28
-  int client_right_;             // +0xA2C
-  int client_bottom_;            // +0xA30
-  int field_A34_;
-  int field_A38_;
-  int field_A3C_;
-  int field_A40_;
+  RECT client_rect_;             // +0xA24
+  RECT scratch_rect_;            // +0xA34; 16-byte struct copies at 0x47620E
   int frame_or_page_;            // +0xA44
   int field_A48_;
   int selection_pending_;        // +0xA4C

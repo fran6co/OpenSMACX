@@ -3080,7 +3080,7 @@ int __cdecl alien_move(int veh_id) {
                 }
                 score = 12345;
             }
-            if (!is_ocean(x, y) && !get_triad(veh_id) && veh_who(x2, y2) > 0) {
+            if (is_ocean(x, y) && !get_triad(veh_id) && veh_who(x2, y2) > 0) {
                 continue;
             }
         }
@@ -4083,7 +4083,7 @@ int __cdecl enemy_planet_buster(int vehicle_id) {
                 } else if (!(PlayersData[faction_id].flags & PFLAG_COMMIT_ATROCIT_WANTONLY)) {
                     const int difficulty = (GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY)
                         ? 6 : PlayersData[target_faction].diff_level;
-                    if (PlayersData[target_faction].ai_fight
+                    if (PlayersData[target_faction].integrity_blemishes
                             + (GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_UN_CHARTER]
                                 > GameDataStateStorage.fields_.council_resolution_count_[PROP_REINSTATE_UN_CHARTER]) * 4
                             + difficulty + score < 11) {
@@ -4483,17 +4483,12 @@ int __cdecl enemy_move(int veh_id) {
     if (Vehs[veh_id].order_auto_type == 4 || Vehs[veh_id].order_auto_type == 5) {
         goto L_56c6d3;
     }
-    if (Vehs[veh_id].order_auto_type == 1) {
+    if (Vehs[veh_id].order_auto_type == 1 || Vehs[veh_id].order_auto_type == 2) {
         goto L_56c2f0;
     }
-    if (Vehs[veh_id].order_auto_type == 2) {
-        goto L_56c2f4;
-    }
-    if (Vehs[veh_id].order_auto_type == 6) {
-        goto L_56bf5f;
-    }
-    if (has_abil(Vehs[veh_id].proto_id, 0x2000) && !Vehs[veh_id].order_auto_type
-        && (GameDataStateStorage.fields_.game_more_preferences_ & 8)) {
+    if (Vehs[veh_id].order_auto_type == 6
+        || (has_abil(Vehs[veh_id].proto_id, 0x2000) && !Vehs[veh_id].order_auto_type
+            && (GameDataStateStorage.fields_.game_more_preferences_ & 8))) {
         goto L_56bf5f;
     }
     if (Vehs[veh_id].order_auto_type != 7) {
@@ -4512,7 +4507,12 @@ int __cdecl enemy_move(int veh_id) {
         Vehs[veh_id].order = ORDER_SENSOR_ARRAY;
         goto L_578f46;
     }
-    go_to(veh_id, 0x73, tx, ty);
+    {
+        // WORKAROUND(noinline): the image calls go_to (0x56BF4E) at every
+        // one of its 41 sites here; ours had budget left for this first one.
+        void (__cdecl *const go_to_call)(int, char, int, int) = go_to;
+        go_to_call(veh_id, 0x73, tx, ty);
+    }
     return 0;
 
 L_56bf5f:
@@ -4579,7 +4579,6 @@ L_56c2d1:
 
 L_56c2f0:
     if (Vehs[veh_id].order_auto_type == 2) {
-L_56c2f4:
         if (!has_tech(Terraforming[TERRA_MAGTUBE].prerequisite_tech[0], faction_id)) {
             Vehs[veh_id].order_auto_type = 1;
         }
@@ -7567,13 +7566,9 @@ L_574a88:
                     if (PlayersData[faction_id].diplo_treaties[owner] & 1) {
                         continue;
                     }
-                    if (PlayersData[faction_id].diplo_treaties[owner] & 0xC10) {
-                        if (j) {
-                            m = 1;
-                        }
-                    } else {
+                    if (!(PlayersData[faction_id].diplo_treaties[owner] & 0xC10)) {
                         if (PlayersData[faction_id].diplo_treaties[owner] & 2) {
-                            if (!((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (uint8_t)(1 << owner))
+                            if (!((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << owner))
                                 || !j
                                 || GameDataStateStorage.fields_.turn_current_num_
                                     - PlayersData[owner].diplo_spoke[faction_id] < 16) {
@@ -7584,7 +7579,7 @@ L_574a88:
                                 continue;
                             }
                         } else if (PlayersData[faction_id].diplo_treaties[owner] & 4) {
-                            if (!((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (uint8_t)(1 << owner))
+                            if (!((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << owner))
                                 || GameDataStateStorage.fields_.turn_current_num_
                                     - PlayersData[owner].diplo_spoke[faction_id] < 16) {
                                 continue;
@@ -7593,6 +7588,8 @@ L_574a88:
                         if (!(PlayersData[faction_id].diplo_treaties[owner] & 8) && j && !(i & 0x100)) {
                             m = 1;
                         }
+                    } else if (j) {
+                        m = 1;
                     }
                 }
                 owner = veh_who(tx, ty);

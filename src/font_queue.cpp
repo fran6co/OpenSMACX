@@ -487,6 +487,9 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
     int start_x[8], start_y[8], end_x[8], end_y[8];
     int margin_x[8], margin_y[8];
     RECT area[8];
+    RECT intersection;
+    RECT end_clip;
+    RECT start_clip;
     int i;
 
     VehDrawPositionY = tile_y;
@@ -509,8 +512,6 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
             if (scoot_tile_visible(MapWinTable[i], tile_x, tile_y) ||
                 scoot_tile_visible(MapWinTable[i], next_x, next_y)) {
                 RECT origin;
-                RECT end_clip;
-                RECT start_clip;
                 active[i] = 1;
                 MapWinTable[i]->tile_to_pixel(tile_x, tile_y, &start_x[i], &start_y[i]);
                 MapWinTable[i]->tile_to_pixel(next_x, next_y, &end_x[i], &end_y[i]);
@@ -557,8 +558,6 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
             if (i && !MapWinTable[i]->view_active_) continue;
             if (scoot_tile_visible(MapWinTable[i], tile_x, tile_y) ||
                 scoot_tile_visible(MapWinTable[i], next_x, next_y)) {
-                RECT end_clip;
-                RECT start_clip;
                 active[i] = 1;
                 MapWinTable[i]->tile_to_pixel(tile_x, tile_y, &start_x[i], &start_y[i]);
                 MapWinTable[i]->tile_to_pixel(next_x, next_y, &end_x[i], &end_y[i]);
@@ -604,7 +603,6 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
             for (i = 0; i < 8; ++i) {
                 if (active[i]) {
                     RECT moving;
-                    RECT intersection;
                     set_rectangle_dimensions(&moving, start_x[i], start_y[i],
                         area[i].right - area[i].left, area[i].bottom - area[i].top);
                     if (IntersectRect(&intersection, &moving, &area[i])) {
@@ -632,7 +630,6 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
             for (i = 0; i < 8; ++i) {
                 if (active[i]) {
                     RECT moving;
-                    RECT intersection;
                     set_rectangle_dimensions(&moving,
                         static_cast<int>(position[i].x_), static_cast<int>(position[i].y_),
                         area[i].right - area[i].left, area[i].bottom - area[i].top);

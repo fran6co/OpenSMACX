@@ -3536,7 +3536,7 @@ the link font - `unk_1_` when negative, `height_ + unk_1_` when not, which is
 the same reading `Win::flip` needs for its bubble.
 
 Twenty links is the ceiling, and the image says so out loud: a twenty-first
-raises `MessageBoxA(0, "Maximum hypertext links exceeded", "WARNING!", 0)`
+raises `MessageBoxA(0, "Maximum hypertext links exceeded!", "WARNING!", 0)`
 and then carries on drawing.
 */
 // LEVER (2026-11-11): the image's scan loops are the hand-written
@@ -3575,7 +3575,7 @@ int Buffer::write_multi_font_raw_l(LPSTR text, int x_coord, int y_coord,
                 markup_pending_ = 1;
                 next_slot = 3;
                 if (static_cast<int>(++link_count_) > 20) {
-                    MessageBoxA(nullptr, "Maximum hypertext links exceeded",
+                    MessageBoxA(nullptr, "Maximum hypertext links exceeded!",
                                 "WARNING!", 0);
                 }
                 goto chosen;

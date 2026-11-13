@@ -4421,7 +4421,7 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
             }
             message_data(0x2308, 0, 0, 0, 0, 0);
         }
-        order_veh(veh_id, packet->payload_14_, 2);
+        ::order_veh(veh_id, packet->payload_14_, 2);
 move_veh_ack:
         log_say("Acknowledging MOVE VEH", faction, 0, 0);
         if (!primary_state_.leading_words_[0]) {
@@ -5897,11 +5897,11 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
                     // that branch's gotos (image 0x533C14/0x533C20), where this
                     // branch's sete and message exits reach them too.
                     local_turn = 0;
-                    if ((GameDataStateStorage.fields_.game_rules_ & 0x10) && !ConsoleControlTurnActive) {
+                    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) && !ConsoleControlTurnActive) {
                         local_turn = GameDataStateStorage.fields_.net_turn_faction_ == ConsoleGlobal.faction_id_;
                     }
                     if (local_turn
-                        || !((GameDataStateStorage.fields_.game_rules_ & 0x10) && !ConsoleControlTurnActive)
+                        || !((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) && !ConsoleControlTurnActive)
                             && NetDaemonNet.primary_state_.leading_words_[0]) {
                     notify_spock:
                         SpockNotifyPending = 1;
@@ -5928,11 +5928,11 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
                         if (!ConsoleGroupAction) GetAsyncKeyState(VK_CONTROL);
                     }
                     local_turn = 0;
-                    if ((GameDataStateStorage.fields_.game_rules_ & 0x10) && !ConsoleControlTurnActive) {
+                    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) && !ConsoleControlTurnActive) {
                         local_turn = GameDataStateStorage.fields_.net_turn_faction_ == ConsoleGlobal.faction_id_;
                     }
                     if (local_turn
-                        || !((GameDataStateStorage.fields_.game_rules_ & 0x10) && !ConsoleControlTurnActive)
+                        || !((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) && !ConsoleControlTurnActive)
                             && NetDaemonNet.primary_state_.leading_words_[0]) {
                         goto notify_spock;
                     }

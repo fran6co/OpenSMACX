@@ -82,10 +82,10 @@ int MonuWin::init() {
   if (!field_A48_) {
     origin_x_ = 0;
     origin_y_ = 0;
-    client_left_ = 0;
-    client_top_ = 0;
-    client_right_ = window_width_;
-    client_bottom_ = window_height_;
+    client_rect_.left = 0;
+    client_rect_.top = 0;
+    client_rect_.right = window_width_;
+    client_rect_.bottom = window_height_;
     GraphicWin::init(0, 0, 0x320, 0x258, MonuWinWindowedTitle, 0x1000000, 0, 0, 0);
   } else {
     const int width = window_width_;
@@ -94,10 +94,10 @@ int MonuWin::init() {
     const int y = (0x300 - height) / 2;
     origin_x_ = x;
     origin_y_ = y;
-    client_left_ = x;
-    client_top_ = y;
-    client_right_ = x + width;
-    client_bottom_ = y + height;
+    client_rect_.left = x;
+    client_rect_.top = y;
+    client_rect_.right = x + width;
+    client_rect_.bottom = y + height;
     GraphicWin::init((WinScreenWidth - 0x400) / 2, WinScreenHeight - 0x300, 0x400, 0x300,
                      MonuWinFullscreenTitle, 0x1000000, 0, 0, 0);
   }
@@ -222,30 +222,30 @@ int MonuWin::init() {
   rects_366C_[5].top = 0x1FF;
   rects_366C_[5].right = 0x297;
   rects_366C_[5].bottom = 0x231;
-  offset_rect(&rects_3134_[0], client_left_, client_top_);
-  offset_rect(&rects_3134_[3], client_left_, client_top_);
-  offset_rect(&rects_3134_[4], client_left_, client_top_);
-  offset_rect(&rects_3134_[5], client_left_, client_top_);
-  offset_rect(&rects_3134_[6], client_left_, client_top_);
-  offset_rect(&rects_3134_[7], client_left_, client_top_);
-  offset_rect(&rects_3134_[8], client_left_, client_top_);
-  offset_rect(&rects_3134_[9], client_left_, client_top_);
-  offset_rect(&rects_3134_[10], client_left_, client_top_);
-  offset_rect(&rects_3134_[11], client_left_, client_top_);
-  offset_rect(&rects_3134_[12], client_left_, client_top_);
-  offset_rect(&rects_3134_[13], client_left_, client_top_);
-  offset_rect(&rects_3134_[14], client_left_, client_top_);
-  offset_rect(&rects_3134_[15], client_left_, client_top_);
-  offset_rect(&rects_3134_[16], client_left_, client_top_);
-  offset_rect(&rects_3134_[1], client_left_, client_top_);
-  offset_rect(&rects_3134_[2], client_left_, client_top_);
-  offset_rect(&rects_366C_[6], client_left_, client_top_);
-  offset_rect(&rects_366C_[0], client_left_, client_top_);
-  offset_rect(&rects_366C_[1], client_left_, client_top_);
-  offset_rect(&rects_366C_[2], client_left_, client_top_);
-  offset_rect(&rects_366C_[3], client_left_, client_top_);
-  offset_rect(&rects_366C_[4], client_left_, client_top_);
-  offset_rect(&rects_366C_[5], client_left_, client_top_);
+  offset_rect(&rects_3134_[0], client_rect_.left, client_rect_.top);
+  offset_rect(&rects_3134_[3], client_rect_.left, client_rect_.top);
+  offset_rect(&rects_3134_[4], client_rect_.left, client_rect_.top);
+  offset_rect(&rects_3134_[5], client_rect_.left, client_rect_.top);
+  offset_rect(&rects_3134_[6], client_rect_.left, client_rect_.top);
+  offset_rect(&rects_3134_[7], client_rect_.left, client_rect_.top);
+  offset_rect(&rects_3134_[8], client_rect_.left, client_rect_.top);
+  offset_rect(&rects_3134_[9], client_rect_.left, client_rect_.top);
+  offset_rect(&rects_3134_[10], client_rect_.left, client_rect_.top);
+  offset_rect(&rects_3134_[11], client_rect_.left, client_rect_.top);
+  offset_rect(&rects_3134_[12], client_rect_.left, client_rect_.top);
+  offset_rect(&rects_3134_[13], client_rect_.left, client_rect_.top);
+  offset_rect(&rects_3134_[14], client_rect_.left, client_rect_.top);
+  offset_rect(&rects_3134_[15], client_rect_.left, client_rect_.top);
+  offset_rect(&rects_3134_[16], client_rect_.left, client_rect_.top);
+  offset_rect(&rects_3134_[1], client_rect_.left, client_rect_.top);
+  offset_rect(&rects_3134_[2], client_rect_.left, client_rect_.top);
+  offset_rect(&rects_366C_[6], client_rect_.left, client_rect_.top);
+  offset_rect(&rects_366C_[0], client_rect_.left, client_rect_.top);
+  offset_rect(&rects_366C_[1], client_rect_.left, client_rect_.top);
+  offset_rect(&rects_366C_[2], client_rect_.left, client_rect_.top);
+  offset_rect(&rects_366C_[3], client_rect_.left, client_rect_.top);
+  offset_rect(&rects_366C_[4], client_rect_.left, client_rect_.top);
+  offset_rect(&rects_366C_[5], client_rect_.left, client_rect_.top);
   for (i = 1; i < MaxPlayerNum; i++) {
     StringTemp[0] = '\0';
     strcat(StringTemp, Players[i].filename);
@@ -301,27 +301,27 @@ int MonuWin::init() {
   monu_set_rect(&icon_rects_[4], 0x7F, 0x1F4, 0x14B, 0x233);
   sprites_3244_[5].extract(&temporary, WinFillColour, 0xCE, 1, 0xD5, 0x3F, 0);
   monu_set_rect(&icon_rects_[5], 0x1DC, 0x1F4, 0x2B1, 0x233);
-  offset_rect(&icon_rects_[0], client_left_, client_top_);
-  offset_rect(&icon_rects_[1], client_left_, client_top_);
-  offset_rect(&icon_rects_[2], client_left_, client_top_);
-  offset_rect(&icon_rects_[3], client_left_, client_top_);
-  offset_rect(&icon_rects_[4], client_left_, client_top_);
-  offset_rect(&icon_rects_[5], client_left_, client_top_);
+  offset_rect(&icon_rects_[0], client_rect_.left, client_rect_.top);
+  offset_rect(&icon_rects_[1], client_rect_.left, client_rect_.top);
+  offset_rect(&icon_rects_[2], client_rect_.left, client_rect_.top);
+  offset_rect(&icon_rects_[3], client_rect_.left, client_rect_.top);
+  offset_rect(&icon_rects_[4], client_rect_.left, client_rect_.top);
+  offset_rect(&icon_rects_[5], client_rect_.left, client_rect_.top);
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(0xA64 / 4));
   if (field_A48_) {
-    field_A34_ = 0x338;
-    field_A38_ = 0x2EB;
-    field_A3C_ = 0x400;
-    field_A40_ = 0x300;
+    scratch_rect_.left = 0x338;
+    scratch_rect_.top = 0x2EB;
+    scratch_rect_.right = 0x400;
+    scratch_rect_.bottom = 0x300;
   } else {
-    field_A34_ = 0x258;
-    field_A38_ = 0x243;
-    field_A3C_ = 0x320;
-    field_A40_ = 0x258;
+    scratch_rect_.left = 0x258;
+    scratch_rect_.top = 0x243;
+    scratch_rect_.right = 0x320;
+    scratch_rect_.bottom = 0x258;
   }
-  button_first_.init(StringTemp, 0x3E7, field_A34_, field_A38_, field_A3C_ - field_A34_,
-                     field_A40_ - field_A38_, this, 0);
+  button_first_.init(StringTemp, 0x3E7, scratch_rect_.left, scratch_rect_.top, scratch_rect_.right - scratch_rect_.left,
+                     scratch_rect_.bottom - scratch_rect_.top, this, 0);
   button_first_.set_border_styles(&InterfaceBoxStyles[47], &InterfaceBoxStyles[46],
                                   &InterfaceBoxStyles[45]);
   button_first_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
@@ -330,18 +330,18 @@ int MonuWin::init() {
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(0xB60 / 4));
   if (field_A48_) {
-    field_A34_ = 0x338;
-    field_A38_ = 0x2EB;
-    field_A3C_ = 0x400;
-    field_A40_ = 0x300;
+    scratch_rect_.left = 0x338;
+    scratch_rect_.top = 0x2EB;
+    scratch_rect_.right = 0x400;
+    scratch_rect_.bottom = 0x300;
   } else {
-    field_A34_ = 0x258;
-    field_A38_ = 0x243;
-    field_A3C_ = 0x320;
-    field_A40_ = 0x258;
+    scratch_rect_.left = 0x258;
+    scratch_rect_.top = 0x243;
+    scratch_rect_.right = 0x320;
+    scratch_rect_.bottom = 0x258;
   }
-  button_second_.init(StringTemp, 0x3E7, field_A34_, field_A38_, field_A3C_ - field_A34_,
-                      field_A40_ - field_A38_, this, 0);
+  button_second_.init(StringTemp, 0x3E7, scratch_rect_.left, scratch_rect_.top, scratch_rect_.right - scratch_rect_.left,
+                      scratch_rect_.bottom - scratch_rect_.top, this, 0);
   button_second_.set_border_styles(&InterfaceBoxStyles[47], &InterfaceBoxStyles[46],
                                    &InterfaceBoxStyles[45]);
   button_second_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
@@ -358,6 +358,8 @@ int MonuWin::init() {
 // symbol    ?on_redraw@MonuWin@@UAEXXZ
 void MonuWin::on_redraw() {
   StringList description;
+  char number[80];
+  int order[15];
   int i;
   int j;
   int row;
@@ -921,7 +923,6 @@ void MonuWin::on_redraw() {
       panel.copy(this, 0x155, 0x174, rects_3134_[2].left, rects_3134_[2].top,
                  0x258, 0x168);
     } else {
-      char number[12];
       strcat(StringTemp, "monbig");
       _itoa(type, number, 10);
       strcat(StringTemp, number);
@@ -939,7 +940,6 @@ void MonuWin::on_redraw() {
     } else {
       buffer_first_.copy(this, 0x70, 0x54, 0, 0, 0x320, 0x258);
     }
-    int order[15];
     for (i = 0; i < 15; i++) {
       if (FactionMonuments[preview_faction_or_page_].records_[i].achieved_) {
         order[i] = i;
@@ -961,14 +961,12 @@ void MonuWin::on_redraw() {
     for (row = 0; row < 15; row++) {
       if (order[row] != -1
           && FactionMonuments[preview_faction_or_page_].records_[order[row]].achieved_) {
-        // WORKAROUND(type): +0xA34..+0xA40 are one RECT in the image (a
-        // 16-byte struct copy at 0x47620E); monuwin.h declares four ints.
-        *reinterpret_cast<RECT *>(&field_A34_) = rects_3134_[row + 3];
+        scratch_rect_ = rects_3134_[row + 3];
         sprites_2C0C_[order[row]].draw(this,
                                        sprites_2C0C_[order[row]].transparent_index(),
-                                       field_A34_, field_A38_);
-        spot_.add(order[row], 0, field_A34_, field_A38_,
-                  field_A3C_ - field_A34_, field_A40_ - field_A38_);
+                                       scratch_rect_.left, scratch_rect_.top);
+        spot_.add(order[row], 0, scratch_rect_.left, scratch_rect_.top,
+                  scratch_rect_.right - scratch_rect_.left, scratch_rect_.bottom - scratch_rect_.top);
       }
     }
     selected_monument_type_ = FactionMonuments[preview_faction_or_page_].latest_type_;
@@ -996,14 +994,14 @@ void MonuWin::on_redraw() {
     }
     if (count) {
       int last = count - 1;
-      *reinterpret_cast<RECT *>(&field_A34_) = icon_rects_[last / 2 * 2];
+      scratch_rect_ = icon_rects_[last / 2 * 2];
       sprites_3244_[last / 2 * 2].draw(this, sprites_3244_[last / 2 * 2].transparent_index(),
-                                      field_A34_, field_A38_);
+                                      scratch_rect_.left, scratch_rect_.top);
       if (last) {
-        *reinterpret_cast<RECT *>(&field_A34_) = icon_rects_[(last - 1) / 2 * 2 + 1];
+        scratch_rect_ = icon_rects_[(last - 1) / 2 * 2 + 1];
         sprites_3244_[(last - 1) / 2 * 2 + 1].draw(
             this, sprites_3244_[(last - 1) / 2 * 2 + 1].transparent_index(),
-            field_A34_, field_A38_);
+            scratch_rect_.left, scratch_rect_.top);
       }
       for (i = 0, type = 15; i < count; i++, type++) {
         if (!FactionMonuments[preview_faction_or_page_].records_[type].achieved_) {
