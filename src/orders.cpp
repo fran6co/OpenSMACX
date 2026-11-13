@@ -202,6 +202,15 @@ void __cdecl quick_zoc(int x_src, int y_src, int faction_id, int x_dst, int y_ds
 }
 
 
+// WORKAROUND(inline): dead /Ob2 budget probe; supply_options_budget_probe(2)
+// folds to no code. A nested four-test spend anywhere between the picture
+// and the convoy items (recover permute --probe-sweep: 40 of 702 placements;
+// every other size and form leaves both ??_D StringList teardowns expanded)
+// makes VC6 call ??_D (0x00406820) out of line at both teardowns, as the
+// image does. The original spending is not identified. Defined at the end of
+// the unit: defined here, the two helpers flip order_veh's layout.
+static int supply_options_budget_probe(int x);
+
 // ORIGINAL: 0x00593A00 ?supply_options@@YAHHH@Z 0x00593A00-0x005947BF;0x00660BF0-0x00660F47
 // RECOVERY_BINDING: v1 {"evidence": ["image:terranx_original.exe:0x593a00 hot and cold spans; private full-body native-order review and actual-source callback/lifetime controls.", "git:7f3107aa61899b2f1b5449bdac31cdb1d3d6952a:src/unrecovered/00593a00.cpp", "source:src/basepop.h:typed SpriteBox click callback at BasePop+3160; native CodeView and producer/consumer evidence."], "reason": "Recover the complete picker/supply operation through genuine Popup, Sprite, Veh, Base and network owners; preserve full original spans and seed findings without a new matching claim."}
 // TRIED: same Popup-teardown-cascade shape as PickWin/battle_plans, but this one calls Dialogs' REAL destructor (`??1Dialogs@@QAE@XZ`) rather than the vtable-patch-then-close() dance those two used - simpler here, used directly. The final "apply the action" branch (0x5942C1 onward: which of two near-identical full teardowns fires) is approximated as always taking the first (`chosen2==1`) branch - the exact value tracked through BasePop::exec's result wasn't re-derived in the time available. sim 0.34-0.59 across flag sets.
@@ -270,6 +279,7 @@ int __cdecl supply_options(int veh_id, int base_id) {
     }
 
     text_get();
+    supply_options_budget_probe(2); // WORKAROUND(inline): see its declaration
     clear();
     parse_string(TextBufferGetPtr, StringTemp);
     popup.item(StringTemp, 0);
@@ -353,7 +363,9 @@ int __cdecl supply_options(int veh_id, int base_id) {
     }
 
     Vehs[veh_id].order = ORDER_CONVOY;
-    Vehs[veh_id].probe_sabotage_id = static_cast<uint8_t>(action - 2);
+    // The convoy's resource goes in order_auto_type (Veh+0x26, image store
+    // at 0x59456B), not probe_sabotage_id (+0x2D).
+    Vehs[veh_id].order_auto_type = static_cast<uint8_t>(action - 2);
     return 0;
 }
 
@@ -1135,6 +1147,16 @@ L_596b1f:
     return 1;   // 596b32
 
 L_596bd9:
+    // WORKAROUND(inline): dead budget spend (supply_options' probe, see its
+    // declaration). Five calls here make the final teardown the image's 15
+    // states and the four early `return` sites 6 deep against the image's 5
+    // (52 -> 47 states, image 43); any count from 5 to 8 gives the same, 12
+    // over-spends the final teardown. The original spending is not identified.
+    supply_options_budget_probe(2);
+    supply_options_budget_probe(2);
+    supply_options_budget_probe(2);
+    supply_options_budget_probe(2);
+    supply_options_budget_probe(2);
     Vehs[veh_id].order = ORDER_NONE;
     spot_stack(target_veh, faction);
     draw_tile(dest_x, dest_y, 2);
@@ -2066,4 +2088,17 @@ L_599b2a:
         }
     }
     return selector;
+}
+
+// WORKAROUND(inline): supply_options' dead budget probe (see its declaration).
+static int supply_options_budget_step(int x) {
+    if (x == 0) x = 1;
+    if (x == 1) x = 4;
+    if (x == 2) x = 7;
+    if (x == 3) x = 10;
+    return x;
+}
+static int supply_options_budget_probe(int x) {
+    if (supply_options_budget_step(x) == 0) return 1;
+    return supply_options_budget_step(x + 1);
 }

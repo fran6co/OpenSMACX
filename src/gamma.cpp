@@ -131,7 +131,7 @@ double Gamma::exec(Palette *target, float initial_gamma, int apply_only) {
     ok->field_AE4_ = 0;
     ok->field_ACC_ = 0;
     ok->field_AF0_ = 0;
-    ok->redraw();
+    pushButton1_.redraw();
 
     PushButton *cancel = &pushButton2_;
     gamma_button_init(cancel, BasePopDefaultCancelText, -2, &rect5_, this);
@@ -249,26 +249,31 @@ void Gamma::adjust_pal(double gamma) {
     if (target_palette_ == 0) return;
 
     for (int index = 0; index < 236; ++index) {
-        double red = target_palette_->entries_[index + 10].peRed * GammaComponentScale;
-        double green = target_palette_->entries_[index + 10].peGreen * GammaComponentScale;
-        double blue = target_palette_->entries_[index + 10].peBlue * GammaComponentScale;
-        red = pow(red, 1.0 / gamma);
-        green = pow(green, 1.0 / gamma);
-        blue = pow(blue, 1.0 / gamma);
+        // Both channel sets are arrays: the image keeps the three doubles
+        // in one ascending 8-byte run and never coalesces the last into the
+        // dead `gamma` slot, which named scalars do.
+        double rgb[3];
+        rgb[0] = target_palette_->entries_[index + 10].peRed * GammaComponentScale;
+        rgb[1] = target_palette_->entries_[index + 10].peGreen * GammaComponentScale;
+        rgb[2] = target_palette_->entries_[index + 10].peBlue * GammaComponentScale;
+        rgb[0] = pow(rgb[0], 1.0 / gamma);
+        rgb[1] = pow(rgb[1], 1.0 / gamma);
+        rgb[2] = pow(rgb[2], 1.0 / gamma);
 
-        if (red < 0.0) red = 0.0;
-        else if (red > 1.0) red = 1.0;
-        if (green < 0.0) green = 0.0;
-        else if (green > 1.0) green = 1.0;
-        if (blue < 0.0) blue = 0.0;
-        else if (blue > 1.0) blue = 1.0;
+        if (rgb[0] < 0.0) rgb[0] = 0.0;
+        else if (rgb[0] > 1.0) rgb[0] = 1.0;
+        if (rgb[1] < 0.0) rgb[1] = 0.0;
+        else if (rgb[1] > 1.0) rgb[1] = 1.0;
+        if (rgb[2] < 0.0) rgb[2] = 0.0;
+        else if (rgb[2] > 1.0) rgb[2] = 1.0;
 
-        const int red_byte = static_cast<int>(red * 235.99);
-        const int green_byte = static_cast<int>(green * 235.99);
-        const int blue_byte = static_cast<int>(blue * 235.99);
-        target_palette_->entries_[index + 10].peRed = static_cast<BYTE>(red_byte);
-        target_palette_->entries_[index + 10].peGreen = static_cast<BYTE>(green_byte);
-        target_palette_->entries_[index + 10].peBlue = static_cast<BYTE>(blue_byte);
+        int bytes[3];
+        bytes[0] = static_cast<int>(rgb[0] * 235.99);
+        bytes[1] = static_cast<int>(rgb[1] * 235.99);
+        bytes[2] = static_cast<int>(rgb[2] * 235.99);
+        target_palette_->entries_[index + 10].peRed = static_cast<BYTE>(bytes[0]);
+        target_palette_->entries_[index + 10].peGreen = static_cast<BYTE>(bytes[1]);
+        target_palette_->entries_[index + 10].peBlue = static_cast<BYTE>(bytes[2]);
     }
     target_palette_->reseed();
     target_palette_->set();

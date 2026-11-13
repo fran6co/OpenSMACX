@@ -496,7 +496,12 @@ void PickWin::on_button_clicked(int button) {
         listBox_.item(StringTemp, faction);
       }
     }
-    listBox_.ListBox::attach(this, listBox_.Dialog::window_x_, listBox_.Dialog::window_y_, 0x80020);
+    {
+      // Through a pointer: the image forms ListBox's this and both position
+      // reads off the list box's own address in edi.
+      ListBox *box = &listBox_;
+      box->ListBox::attach(this, box->Dialog::window_x_, box->Dialog::window_y_, 0x80020);
+    }
     listBox_.set_selected_id((field_5DA0_ & 2) ? ConsoleGlobal.faction_id_
                                                : DefaultPrefs.faction_id);
     listBox_.set_selection_callback(field_6238_);
@@ -544,11 +549,11 @@ void PickWin::on_button_clicked(int button) {
       menu.init();
       int index;
       for (index = 0; index < static_cast<int>(field_5DB0_) + 14; ++index) {
-        menu.item(faction_menu_items_[index], index);
+        menu.dialogs().item(faction_menu_items_[index], index);
       }
       StringTemp[0] = '\0';
       strcat(StringTemp, label_get(0x462));
-      menu.item(StringTemp, static_cast<int>(field_5DB0_) + 14);
+      menu.dialogs().item(StringTemp, static_cast<int>(field_5DB0_) + 14);
       const int chosen = menu.exec(x, y, 0);
       flatButtons10_[button - 0x3039].field_A74_ = 0;
       flatButtons10_[button - 0x3039].redraw();
@@ -587,7 +592,12 @@ void PickWin::on_button_clicked(int button) {
           listBox_.item(StringTemp, row);
         }
       }
-      listBox_.ListBox::attach(this, listBox_.Dialog::window_x_, listBox_.Dialog::window_y_, 0x80020);
+      {
+        // Through a pointer: the image forms ListBox's this and both position
+        // reads off the list box's own address in edi.
+        ListBox *box = &listBox_;
+        box->ListBox::attach(this, box->Dialog::window_x_, box->Dialog::window_y_, 0x80020);
+      }
       listBox_.set_selected_id(faction);
       listBox_.set_selection_callback(field_6238_);
       field_6238_(faction);
