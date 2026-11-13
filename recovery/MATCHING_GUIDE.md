@@ -93,6 +93,11 @@ Tooling traps:
 - `RECOVERY_ASSOCIATED` switch lines may sit at the end of the file, away
   from their function: grep before adding one; a duplicate makes `measure`
   print nothing.
+- Run only one `recover` command at a time per worktree, even on different
+  prefixes: concurrent measure/diff runs in one worktree fail silently.
+- A greedy per-hunk search over a rewrite finds real gains but also keeps
+  half-applied pairs that change behaviour (a store without its read, a
+  dropped assignment, a duplicated call): review every kept hunk.
 - Wine reads stdin: run batch compiles inside `while read` loops with
   `</dev/null`, or the loop stops silently after a few units.
 - Wine is case-insensitive: object names differing only in case overwrite
@@ -320,6 +325,17 @@ for v in p[1:]:
         sites[-1] += 1
 ```
 
+The StringList/StringStruct destructor chain is pinned by its exact
+out-of-line copies (0x4066C0, 0x401060, 0x402970: `~X() { close(); }` with an
+inline close). Moving those definitions in or out of the class, adding
+`virtual`, or dropping MEASURED leaves every inline decision unchanged. When a
+Popup caller expands ~StringList/~StringStruct where the image calls it, that
+is the caller's budget (2-16 branchy dead probes reproduce the image:
+draw_social at 8, pop_click at 2, top_menu at 14): look for the missing
+natural spend. A census of 94 Popup-family functions found ours deeper than
+the image in 26 and shallower in 2: recovered bodies under-spend, typically
+raw field access where the original used inline accessors.
+
 ### 2.4 Linear subscripts in nested loops
 
 - **Source shape.** Nested loops over a grid were written with a linear
@@ -424,6 +440,10 @@ for v in p[1:]:
   there and is emitted as a pick-any COMDAT (a non-inline definition gives
   LNK2005). Check every function measured in that unit's compile context:
   destructor copies it emits may need an inline twin of the same body.
+- **Member count counts declarations.** Turning N data members into one
+  struct member perturbs includers; adding back exactly the removed number
+  of member declarations of any kind restores identical objects
+  (multiwin.h bounds_).
 - **Swapping one declaration for one is safe.** Replacing a free declaration
   with a member declaration in win.h (142 includers) changed no function in
   any other unit; the flips above come from adding or removing declarations.
@@ -502,6 +522,13 @@ for v in p[1:]:
   rebuilt from WORDs (FORWARD_WM_*), and x/y kept in incoming argument slots
   mean a windowsx.h `HANDLE_MSG` switch; the handlers are the unreferenced
   statics right after the procedure.
+- **Interlocked counters read through pointers.** If the image reads a
+  ring cursor through `lea reg,[this+off]; mov eax,[reg]` at each use and
+  loads a counter before the slot-index divide, the counter is volatile
+  (sub_5ca230 became exact). A `push ecx` frame slot in a fastcall
+  function can be the register parameter spilled under pressure.
+- **Walking output pointer.** `lea eax,[edx+4]` then `add eax,4` steps with
+  stores at negative offsets is `*out++ = ...` with the increments hoisted.
 - **Struct fields vs separate globals.** Through a global struct (directly or
   via a pointer) VC6 orders a join's reloads of its fields differently from
   separate objects. If the image reloads them in the other order, the
@@ -626,6 +653,9 @@ for v in p[1:]:
     only by a backward goto skipping a reload push the return sites between
     them out of line (probe). Write an else arm as `else`, not as a goto to a
     block elsewhere; keep if-chains whole (`else if (x == 2) {...}`).
+  - A labeled block reached by fall-through and by later gotos is placed
+    after the block holding the last goto, splitting it; a small labeled
+    tail is duplicated into the fall-through instead.
   - A goto target is placed after the *last* goto that reaches it, whatever
     the source order. For an image block that an earlier arm falls into and
     later arms jump back to, have the later arms set a flag the join tests
@@ -659,6 +689,9 @@ for v in p[1:]:
   helper's parameter; raw `?:`/`|=` spellings produce no store.
 - **The image repeats a compare or reload VC6 would fold.** That is an inline
   helper boundary: wrap the subexpression in a small static inline.
+- **Separate jump sites mean separate arms.** Two `mov reg, K; jmp shared`
+  sites in the image come from two source arms with the same store, not one
+  `||` condition.
 - **The diff reads as "a different program" (N instructions against M)** in a
   function with `jmp [4*reg+table]`. The in-body jump table lacks its
   `RECOVERY_ASSOCIATED: v1 switch_targets` annotation. Add it from the image's
@@ -771,6 +804,23 @@ for v in p[1:]:
 - **The comparison literal survives.** `x >= 4` gives `cmp 4; jge`, `x > 3`
   gives `cmp 3; jg`; an off-by-one constant with a different jcc in an
   aligned diff names the original spelling (fixed 9 sites in base_terraform).
+- **`max(0, x - K)` as a condition** gives `add eax,-K; test; jl; je`;
+  `x - K > 0` gives `sub; test; jle`, `x > K` gives `cmp; jle`.
+- **Tail-merge direction follows source order.** When VC6 cross-jumps
+  identical tails, the copy in the branch written last stays in place and
+  earlier branches jump to it; the image's merge target names the last
+  branch.
+- **`lea/inc; test; je` against -1** is `x + 1 != 0`; `x != -1` gives `cmp`.
+- **Late sprite address** (formed after every position argument, its
+  transparent byte read last) means an inline overload without the index
+  argument.
+- **A named difference local used twice** (`const int w = r - l; if (w <
+  f()) g(w)`) loads the subtrahend into a register first; writing the
+  expression at each use gives `sub reg,[mem]` plus a dead-slot store.
+- **A probe that only works after the final `return`** is paying for the
+  closing-brace phantom teardown: the original had no top-level return,
+  typically a `for (;;)` body left only through returns. Wrap the body
+  instead of keeping the probe (top_menu).
 - **Canonicalised forms (not levers).** `f(a) < f(b)` and its mirrored or
   negated forms give the same call order; `a * b` vs `b * a` compile
   identically.
