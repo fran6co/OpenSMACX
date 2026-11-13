@@ -65,3 +65,35 @@ def test_trial_scoring_compiles_dependency_units_under_their_own_recipe(tmp_path
     # The target unit never borrows a dependency compile or another flag set.
     with pytest.raises(ValueError, match="compiler command failed"):
         _trial_object(unit, raws, cache, dependency, unit, (), list(unpooled))
+
+
+def test_trial_scoring_compiles_the_target_debug_type_twin_from_the_trial_text(tmp_path):
+    # Strict associated-data verification asks for a debug-typed twin of the
+    # target unit: its own pinned trial (e.g. /W4 /Oy-) plus the layout flags.
+    # That twin is compiled from the trial text under exactly those flags.
+    from match_recovery.source_permute import _trial_object
+    unit, other = tmp_path / "unit.cpp", tmp_path / "other.cpp"
+    pinned, layout = ("/O2", "/W4", "/Oy-", "-c"), ("/Z7",)
+    raws, cache, twins = {pinned: b"trial"}, {}, []
+
+    def dependency(path, arguments, trial):
+        raise AssertionError("the target unit never compiles as a dependency")
+
+    def twin(trial):
+        twins.append(trial)
+        return b"twin:" + " ".join(trial).encode()
+
+    assert _trial_object(unit, raws, cache, dependency, unit, (), pinned + layout,
+                         compile_twin=twin, layout_flags=layout) == b"twin:/O2 /W4 /Oy- -c /Z7"
+    assert twins == [pinned + layout]
+    # Only a grid trial followed by exactly the layout suffix qualifies.
+    for refused in (("/O2", "-c") + layout, pinned + ("/Zi",), layout):
+        with pytest.raises(ValueError, match="compiler command failed"):
+            _trial_object(unit, raws, cache, dependency, unit, (), refused, compile_twin=twin, layout_flags=layout)
+    with pytest.raises(ValueError, match="compiler command failed"):
+        _trial_object(unit, raws, cache, dependency, unit, ("-DX",), pinned + layout,
+                      compile_twin=twin, layout_flags=layout)
+    # Without a twin compiler the request is still refused, never substituted.
+    with pytest.raises(ValueError, match="compiler command failed"):
+        _trial_object(unit, raws, cache, dependency, unit, (), pinned + layout)
+    assert twins == [pinned + layout]

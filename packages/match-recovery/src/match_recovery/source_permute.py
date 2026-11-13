@@ -322,20 +322,31 @@ def _locate_body(record, relative: str, texts: dict, symbol_format: str, root: P
 
 # ------------------------------------------------------------------ driver
 
-def _trial_object(unit: Path, raws: dict, dependencies: dict, compile_dependency, path, arguments, trial) -> bytes:
+def _trial_object(unit: Path, raws: dict, dependencies: dict, compile_dependency, path, arguments, trial,
+                  compile_twin=None, layout_flags=()) -> bytes:
     """The trial's own TU object, or an unchanged dependency TU compiled once.
 
     Strict associated-data verification also compiles the selected evidence
     closure: other translation units under their own recipes. Those files are
     not mutated, so their real objects are compiled once and reused; the trial
     overlay never stands in for another unit or another flag set.
+
+    The same verifier may ask for a debug-typed twin of the target unit: one
+    of its grid trials followed by the configured layout flags. That object
+    is compiled from the trial text itself under exactly those flags
+    (``compile_twin``), never substituted by the untyped grid object.
     """
     trial = tuple(trial)
     if Path(path).resolve() == Path(unit).resolve():
-        if tuple(arguments) or trial not in raws:
-            raise ValueError("compiler command failed: permute trial grid lacks "
-                             f"the requested target flags {' '.join(trial)}")
-        return raws[trial]
+        if not tuple(arguments):
+            if trial in raws:
+                return raws[trial]
+            layout = tuple(layout_flags)
+            if (compile_twin is not None and layout and len(trial) > len(layout)
+                    and trial[-len(layout):] == layout and trial[:-len(layout)] in raws):
+                return compile_twin(trial)
+        raise ValueError("compiler command failed: permute trial grid lacks "
+                         f"the requested target flags {' '.join(trial)}")
     key = (Path(path).resolve(), tuple(arguments), trial)
     if key not in dependencies:
         dependencies[key] = compile_dependency(*key)
@@ -464,10 +475,20 @@ def permute_source(root: Path, target: str, *, image: Path, in_file=None, iterat
     failures = []
     originals = {}
 
-    def compile_grid(text: str | None, flag_sets=grid) -> list:
+    # Debug-typed twin trials (a grid trial plus the layout flags) that strict
+    # associated-data verification requested; later trials compile them with
+    # their grid, concurrently, instead of one at a time after scoring.
+    twin_trials = []
+    timings["twin_compiles"] = 0
+
+    def trials() -> tuple:
+        return grid + tuple(twin_trials)
+
+    def compile_grid(text: str | None, flag_sets=None) -> list:
         """[("object", bytes) | ("failed", diagnostic)] per flag set; None text compiles the real file."""
+        flag_sets = trials() if flag_sets is None else flag_sets
         if pool is not None:
-            return compile_texts([text])[0]
+            return compile_texts([text], flag_sets)[0]
         started = time.monotonic()
         results = []
         try:
@@ -484,13 +505,14 @@ def permute_source(root: Path, target: str, *, image: Path, in_file=None, iterat
         finally:
             timings["compile_seconds"] += time.monotonic() - started
 
-    def compile_texts(text_list) -> list:
+    def compile_texts(text_list, flag_sets=None) -> list:
+        flag_sets = trials() if flag_sets is None else flag_sets
         if pool is None:
-            return [compile_grid(text) for text in text_list]
+            return [compile_grid(text, flag_sets) for text in text_list]
         started = time.monotonic()
         try:
             return pool.run(_slot_compile, [(str(unit), None if text is None else host,
-                                             None if text is None else text.encode("utf-8"), grid)
+                                             None if text is None else text.encode("utf-8"), flag_sets)
                                             for text in text_list])
         finally:
             timings["compile_seconds"] += time.monotonic() - started
@@ -525,16 +547,44 @@ def permute_source(root: Path, target: str, *, image: Path, in_file=None, iterat
         finally:
             timings["compile_seconds"] += time.monotonic() - started
 
-    def trial_object(raws, path, arguments, trial):
-        return _trial_object(unit, raws, dependencies, compile_dependency, path, arguments, trial)
+    def compile_twin(text, twins, trial):
+        """The trial text compiled under one extra flag set (a debug-typed twin)."""
+        if trial in twins:
+            kind, data = twins[trial]
+            if kind != "object":
+                raise ValueError(data)
+            return data
+        if trial not in twin_trials:
+            twin_trials.append(trial)
+        timings["twin_compiles"] += 1
+        started = time.monotonic()
+        try:
+            if pool is None:
+                return bytes(compiler.overlay(unit, {host: text.encode("utf-8")}, (), trial))
+            (kind, data), = pool.run(_slot_compile, [(str(unit), host, text.encode("utf-8"), (trial,))],
+                                     slot=0)[0]
+            if kind != "object":
+                raise ValueError(data)
+            return data
+        finally:
+            timings["compile_seconds"] += time.monotonic() - started
 
-    def score_objects(results):
-        if not results or results[-1][0] == "failed" or len(results) != len(grid):
+    def trial_object(raws, twins, text, path, arguments, trial):
+        return _trial_object(unit, raws, dependencies, compile_dependency, path, arguments, trial,
+                             compile_twin=lambda flags: compile_twin(text, twins, flags),
+                             layout_flags=settings.layout_flags)
+
+    def score_objects(results, text, sent):
+        own = results[:len(grid)]
+        if len(own) != len(grid) or any(kind == "failed" for kind, _data in own):
             failures.append(results[-1][1] if results else "no compile result")
             return None
-        raws = {flags: data for flags, (_kind, data) in zip(grid, results)}
+        raws = {flags: data for flags, (_kind, data) in zip(grid, own)}
+        twins = dict(zip(sent[len(grid):], results[len(grid):]))
+        timings["twin_compiles"] += len(results) - len(grid)
         measured = compare_unit([record], image, unit, (), grid, shared,
-                                compiler=lambda path, arguments, trial: trial_object(raws, path, arguments, trial),
+                                compiler=lambda path, arguments, trial: trial_object(raws, twins, text, path,
+                                                                                     arguments, trial),
                                 root=root, targets=references,
                                 fragment_pairs=(eh_group,) if eh_group else ())
         comparison = measured.results[0][1]
@@ -596,11 +646,13 @@ def permute_source(root: Path, target: str, *, image: Path, in_file=None, iterat
             raise
 
     def score(body_text: str):
-        return score_objects(current(lambda: compile_grid(splice(body_text))))
+        text, sent = splice(body_text), trials()
+        return score_objects(current(lambda: compile_grid(text, sent)), text, sent)
 
     def score_many(body_texts):
-        return [score_objects(results)
-                for results in current(lambda: compile_texts([splice(text) for text in body_texts]))]
+        texts, sent = [splice(body_text) for body_text in body_texts], trials()
+        return [score_objects(results, text, sent)
+                for results, text in zip(current(lambda: compile_texts(texts, sent)), texts)]
 
     def unified(body_text: str) -> str:
         return "".join(difflib.unified_diff(
@@ -686,7 +738,8 @@ def permute_source(root: Path, target: str, *, image: Path, in_file=None, iterat
         "best_contains_stand_in_probe": stand_in,
         "compiler_slots": [name for name, _environment in slots] if slots else None,
         "jobs": len(slots) if slots else 1,
-        "compiles": compiles + control_compiles, "search_compiles": compiles,
+        "compiles": compiles + control_compiles + timings["twin_compiles"], "search_compiles": compiles,
+        "debug_type_twin_compiles": timings["twin_compiles"],
         "control_compiles": control_compiles,
         "compile_failures": result.compile_failures, "cache_hits": result.cache_hits,
         "minimize_compiles": result.minimize_compiles * len(grid), "reverted_hunks": result.reverted_hunks,
