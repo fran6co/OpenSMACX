@@ -31,6 +31,7 @@
 // (sub_441040 expands it at 0x004410AF; see stringstruct.h).
 #define STRINGSTRUCT_CURRENT_ENTRY_INLINE
 #define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h; on_button_clicked
+#define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "diplowin.h"
@@ -42,6 +43,7 @@
 
 #include "console.h"
 #include "faction.h"
+#include "faction_inline.h"
 #include "game.h"
 #include "interface_palette.h"
 #include "technology.h"
@@ -1586,6 +1588,19 @@ static inline char *diplo_get_name(int faction) {
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/unrecovered/004415c0.cpp", "task:diplowin-button-handler-owner", "Pinned native button+2 fifteen-way dispatch, original local Popup lifetime; corrected final offline random state writes and row-directed treaty checks. Primary table slot44; real SubInterface remains independent. Preserve observed gender/plural assignment order."], "reason": "Recover this complete operation in its genuine C++ popup/diplomacy owner using actual members, virtual dispatch and typed shared dependencies; retain original identity, spans, claims and seed discoveries."}
 // symbol    ?on_button_clicked@DiploWin@@UAEXH@Z
 // TRIED: 15-way jump table (resolved in the brief) transcribed as a switch/goto over (a1+2); same Popup-teardown-cascade shape as the other DiploWin/PickWin siblings, plus one extra pair of vtable-relative writes (self and self+0x444) for an embedded RadioButton this function's Dialogs region has that the others don't. Cases 5/6/8/9 (tech-trade and base-swap proposal loops) are the largest handlers and were transcribed at "good faith" fidelity - the array-scan/skip conditions and REL() bit tests were matched to the raw bytes but not independently re-verified a second time given the time remaining. sim 0.12-0.34.
+// WORKAROUND(inline): on_button_clicked scans side 0's offers for a tech
+// (type 0) entry five times with identical code. Written out, the function
+// keeps one more unit of /Ob2 budget than the image and its last early
+// ~Popup teardown (and the case 12 GenderDefault stores) come out one level
+// deeper; one small inline scan helper reproduces the image exactly. The
+// original helper's name and home are unknown.
+static inline bool diplo_tech_offered(const int *types, const int *values,
+                                      int count, int value) {
+  for (int i = 0; i < count; ++i)
+    if (types[i] == 0 && values[i] == value) return true;
+  return false;
+}
+
 void DiploWin::on_button_clicked(int button_id) {
   // The image's large local frame is one Popup/BasePop object. Its Dialogs,
   // Scroll, buttons, lists, Sprite and Heap are real owned subobjects, so the
@@ -1670,32 +1685,22 @@ void DiploWin::on_button_clicked(int button_id) {
       if (X_pop_ask_number("DIPLOENERGY", requested_energy, pop_wait) != 0)
         return;
 
-      int amount = ParseNumTable[0];
-      const int available = PlayersData[faction_id_].energy_reserves;
-      if (amount > available) {
-        amount = available;
-        ParseNumTable[0] = amount;
-      }
-      add_offer(0, 1, amount);
+      if (ParseNumTable[0] > PlayersData[faction_id_].energy_reserves)
+        ParseNumTable[0] = PlayersData[faction_id_].energy_reserves;
+      add_offer(0, 1, ParseNumTable[0]);
       break;
     }
 
     case 5: {
       popup.start(PopupStartCaption, "DIPLOTECH", -1, 0, 0x40);
-      Dialogs &dialogs = popup.dialogs();
       int line_count = 0;
 
       for (int tech = 0; tech < 0x59; ++tech) {
         if (!has_tech(tech, faction_id_)) continue;
 
-        bool already_offered = false;
-        for (int i = 0; i < offer_count_[0]; ++i) {
-          if (offer_type_[0][i] == 0 && offer_value_[0][i] == tech) {
-            already_offered = true;
-            break;
-          }
-        }
-        if (already_offered) continue;
+        if (diplo_tech_offered(offer_type_[0], offer_value_[0], offer_count_[0],
+                               tech))
+          continue;
 
         const int counterpart_lacks_tech = !has_tech(tech, faction_id_with_);
         StringTemp[0] = 0;
@@ -1703,50 +1708,39 @@ void DiploWin::on_button_clicked(int button_id) {
         say_tech(StringTemp, tech, 1);
         if (Language == 0 && !counterpart_lacks_tech)
           strcat(StringTemp, " (already has)");
-        dialogs.item(StringTemp, tech);
+        popup.item(StringTemp, tech);
         ++line_count;
       }
 
       for (int faction = 1; faction < MaxPlayerNum; ++faction) {
         if (faction == faction_id_ || faction == faction_id_with_) continue;
         if (!is_alive(static_cast<uint32_t>(faction))) continue;
-        if ((PlayersData[faction_id_].diplo_treaties[faction] & 8) == 0)
+        if (has_treaty(faction_id_, faction, 8) == 0)
           continue;
-        if ((PlayersData[faction_id_with_].diplo_treaties[faction] & 8) != 0)
+        if (has_treaty(faction_id_with_, faction, 8) != 0)
           continue;
 
         const int tech_id = faction + 0x59;
-        bool already_offered = false;
-        for (int i = 0; i < offer_count_[0]; ++i) {
-          if (offer_type_[0][i] == 0 && offer_value_[0][i] == tech_id) {
-            already_offered = true;
-            break;
-          }
-        }
-        if (already_offered) continue;
+        if (diplo_tech_offered(offer_type_[0], offer_value_[0], offer_count_[0],
+                               tech_id))
+          continue;
 
         StringTemp[0] = 0;
         say_tech(StringTemp, tech_id, 1);
-        dialogs.item(StringTemp, tech_id);
+        popup.item(StringTemp, tech_id);
         ++line_count;
       }
 
-      bool includes_end_treaties = false;
-      for (int i = 0; i < offer_count_[0]; ++i) {
-        if (offer_type_[0][i] == 0 && offer_value_[0][i] == 0x270F) {
-          includes_end_treaties = true;
-          break;
-        }
-      }
-      if (!includes_end_treaties) {
+      if (!diplo_tech_offered(offer_type_[0], offer_value_[0], offer_count_[0],
+                              0x270F)) {
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x132));
-        dialogs.item(StringTemp, 0x270F);
+        popup.item(StringTemp, 0x270F);
         ++line_count;
       }
 
       if (line_count == 0) return;
-      const int chosen = popup.exec(0, pop_wait);
+      const int chosen = popup.exec(pop_wait);
       if (chosen < 0) return;
       add_offer(0, 0, chosen);
       break;
@@ -1767,7 +1761,7 @@ void DiploWin::on_button_clicked(int button_id) {
       parse_says(1, diplo_get_name(faction_id_with_), -1, -1);
       parse_says(2, get_noun(faction_id_with_), -1, -1);
 
-      if ((PlayersData[faction_id_].diplo_treaties[faction_id_with_] & 1) == 0) {
+      if (has_treaty(faction_id_, faction_id_with_, 1) == 0) {
         X_pop("DONTHAVEPACT", 0);
         break;
       }
@@ -1785,33 +1779,23 @@ void DiploWin::on_button_clicked(int button_id) {
       for (int tech = 0; tech < 0x59; ++tech) {
         if (!has_tech(tech, faction_id_)) continue;
 
-        bool already_offered = false;
-        for (int i = 0; i < offer_count_[0]; ++i) {
-          if (offer_type_[0][i] == 0 && offer_value_[0][i] == tech) {
-            already_offered = true;
-            break;
-          }
-        }
-        if (already_offered || has_tech(tech, faction_id_with_)) continue;
+        if (diplo_tech_offered(offer_type_[0], offer_value_[0], offer_count_[0], tech)
+            || has_tech(tech, faction_id_with_))
+          continue;
         add_offer(0, 0, tech);
       }
 
       for (int faction = 1; faction < MaxPlayerNum; ++faction) {
         if (faction == faction_id_ || faction == faction_id_with_) continue;
         if (!is_alive(static_cast<uint32_t>(faction))) continue;
-        if ((PlayersData[faction_id_].diplo_treaties[faction] & 8) == 0)
+        if (has_treaty(faction_id_, faction, 8) == 0)
           continue;
-        if ((PlayersData[faction_id_with_].diplo_treaties[faction] & 8) != 0) continue;
+        if (has_treaty(faction_id_with_, faction, 8) != 0) continue;
 
         const int tech_id = faction + 0x59;
-        bool already_offered = false;
-        for (int i = 0; i < offer_count_[0]; ++i) {
-          if (offer_type_[0][i] == 0 && offer_value_[0][i] == tech_id) {
-            already_offered = true;
-            break;
-          }
-        }
-        if (!already_offered) add_offer(0, 0, tech_id);
+        if (!diplo_tech_offered(offer_type_[0], offer_value_[0], offer_count_[0],
+                                tech_id))
+          add_offer(0, 0, tech_id);
       }
       add_offer(0, 0, 0x270F);
       break;
@@ -1819,13 +1803,12 @@ void DiploWin::on_button_clicked(int button_id) {
 
     case 8: {
       popup.start(PopupStartCaption, "DIPLOVENDETTA", -1, 0, 0x40);
-      Dialogs &dialogs = popup.dialogs();
       int line_count = 0;
 
       for (int faction = 1; faction < MaxPlayerNum; ++faction) {
         if (faction == faction_id_ || faction == faction_id_with_) continue;
-        if ((PlayersData[faction_id_].diplo_treaties[faction] & 8) == 0
-            && (PlayersData[faction_id_with_].diplo_treaties[faction] & 8) == 0
+        if (has_treaty(faction_id_, faction, 8) == 0
+            && has_treaty(faction_id_with_, faction, 8) == 0
             && !is_human(faction))
           continue;
 
@@ -1835,11 +1818,11 @@ void DiploWin::on_button_clicked(int button_id) {
         parse_says(1, diplo_get_name(faction), -1, -1);
         parse_says(2, get_noun(faction), -1, -1);
         parse_it(ScriptPopupFile, "ATTACKSTRING");
-        dialogs.item(StringTemp, faction);
+        popup.item(StringTemp, faction);
       }
 
       if (line_count > 0) {
-        const int chosen = popup.exec(0, pop_wait);
+        const int chosen = popup.exec(pop_wait);
         if (chosen >= 0) add_offer(0, 5, chosen);
       } else {
         NetMsgPrimary.pop("DIPLONOVENDETTA", 0x1388, 0, 0);
