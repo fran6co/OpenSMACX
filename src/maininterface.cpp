@@ -112,6 +112,9 @@ extern int WindowAnimationFrameDelay;
 #include "win.h"
 #include "autosound.h"
 
+// Shared separator objects the image pushes instead of unit literals.
+extern const char BufferJoinSpace[];
+
 // Original dword writes/reads in45D170,45C3A0,45CA40 respectively.
 // Independently read initial bytes:7D3934/7D3938/7D3944 all zero;
 // 68526C is initialized to one. Names retain bounded observed roles.
@@ -984,14 +987,14 @@ void MainInterface::set_date(char *) {
     int y = rect.top;
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0));
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     say_year(StringTemp);
     // The image keeps a null test of the StringTemp address before strlen.
     if (StringTemp) write_l(StringTemp, x, y, strlen(StringTemp));
     y += text_line_height();
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x90 / 4));
-    strcat(StringTemp, ": ");
+    strcat(StringTemp, SocialWinColonSpaceText);
     char number[80];
     _itoa(static_cast<int>(static_cast<uint32_t>(PlayersData[ConsoleGlobal.faction_id_].energy_reserves)
           - PlayersData[ConsoleGlobal.faction_id_].hurry_cost_total), number, 10);

@@ -56,6 +56,9 @@
 #include "stringstruct.h"
 #include "wave.h"
 
+// Shared separator objects the image pushes instead of unit literals.
+extern const char BufferJoinSpace[];
+
 extern Sprite g_TECH_ICON_SPRITES[MaxTechnologyNum];
 void __cdecl design_new_veh(int faction_id, int proto_id);
 void __cdecl help_tech_info(Popup *popup, int tech_id, int faction_id);
@@ -183,7 +186,7 @@ void __cdecl say_tech(LPSTR output, int tech_id, BOOL category_lvl) {
             // " " and "(" are TWO separate appends - the image calls strcat
             // with 0x00682820 (" ") and then 0x00682E9C ("("), and there is no
             // " (" literal anywhere in it to fold the pair into.
-            strcat(output, " ");
+            strcat(output, BufferJoinSpace);
             strcat(output, "(");
             strcat(output, label_get(629 + tech_category(tech_id))); // 'E#', 'D#', 'B#', 'C#'
             _itoa(tech_recurse(tech_id, 0), num_buf, 10);
@@ -194,11 +197,11 @@ void __cdecl say_tech(LPSTR output, int tech_id, BOOL category_lvl) {
         int faction_id = tech_id - MaxTechnologyNum;
         if (!Language) {
             strcat(output, Players[faction_id].adj_name_faction);
-            strcat(output, " ");
+            strcat(output, BufferJoinSpace);
             strcat(output, label_get(487)); // 'Comm Frequency'
         } else {
             strcat(output, label_get(487)); // 'Comm Frequency'
-            strcat(output, " ");
+            strcat(output, BufferJoinSpace);
             strcat(output, "(");
             GenderDefault = Players[faction_id].noun_gender;
             PluralityDefault = Players[faction_id].is_noun_plural;
@@ -207,7 +210,7 @@ void __cdecl say_tech(LPSTR output, int tech_id, BOOL category_lvl) {
         }
     } else {
         strcat(output, VehPrototypes[tech_id - 97].veh_name);
-        strcat(output, " ");
+        strcat(output, BufferJoinSpace);
         strcat(output, label_get(185)); // 'Prototype'
     }
 }
@@ -919,7 +922,7 @@ void __cdecl tech_secret(int tech_id, int faction_id) {
     StringTemp[0] = '\0';
     // The independent tech_achieved announcement at 5BC490 appends the
     // same caption prefix from 6916F0; retain that shared literal identity.
-    // RECOVERY_LITERAL: v1 0x006916F0 0x006916FA $SG60396 0x005BB000
+    // RECOVERY_LITERAL: v1 0x006916F0 0x006916FA $SG60392 0x005BB000
     strcat(StringTemp, "THESECRET");
     say_num(faction_id != ConsoleGlobal.faction_id_);
     X_pop(StringTemp, 0);
@@ -1296,7 +1299,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
         tech_id == Terraforming[TERRA_FOREST].prerequisite_tech[0] && !IsMultiplayerNet) {
         parse_say(0, Technology[tech_id].name, -1, -1);
         // Original TREETIME argument at 0x005BBC5E; independent literal storage.
-        // RECOVERY_LITERAL: v1 0x0069178C 0x00691795 $SG60564 0x005BB000
+        // RECOVERY_LITERAL: v1 0x0069178C 0x00691795 $SG60560 0x005BB000
         X_pop(TutorialPopupCaption, "TREETIME", nullptr);
     }
 
@@ -2213,7 +2216,7 @@ int __cdecl tech_selection(int faction) {
             return PlayersData[faction].tech_id_researching;
         }
     }
-    // RECOVERY_LITERAL: v1 0x0069180C 0x00691818 $SG60930 0x005BE380
+    // RECOVERY_LITERAL: v1 0x0069180C 0x00691818 $SG60926 0x005BE380
     const int result = tech_pick(faction, 0, -1, 0);
     PlayersData[faction].tech_id_researching = result;
     if (IsMultiplayerNet != 0) {
@@ -2232,8 +2235,8 @@ int __cdecl tech_selection(int faction) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// RECOVERY_LITERAL: v1 0x00691828 0x00691845 $SG60959 0x005BE530
-// RECOVERY_LITERAL: v1 0x00691818 0x00691827 $SG60945 0x005BE530
+// RECOVERY_LITERAL: v1 0x00691828 0x00691845 $SG60955 0x005BE530
+// RECOVERY_LITERAL: v1 0x00691818 0x00691827 $SG60941 0x005BE530
 /*
 Purpose: Finish one faction's research turn: log the tech being researched,
          or when the faction finishes (no PBEM/human gate applies) commit

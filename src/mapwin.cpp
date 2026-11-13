@@ -1,4 +1,8 @@
-/*
+
+
+// Shared separator objects the image pushes instead of unit literals.
+extern const char BufferJoinSpace[];
+extern char SocialWinColonSpaceText[];/*
  * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
  * Copyright (C) 2013-2021 Brendan Casey
  *
@@ -531,7 +535,7 @@ void MapWin::init(int mode, int update) {
     } else {
         strcat(StringTemp, label_get(0x1D));
         if (map_view_index_ != 0) {
-            strcat(StringTemp, " ");
+            strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, "#");
             char number[80];
             _itoa(map_view_index_ + 1, number, 10);
@@ -541,9 +545,9 @@ void MapWin::init(int mode, int update) {
             GenderDefault = Players[ConsoleGlobal.faction_id_].noun_gender;
             PluralityDefault = Players[ConsoleGlobal.faction_id_].is_noun_plural;
             strcat(StringTemp, Players[ConsoleGlobal.faction_id_].formal_name_faction);
-            strcat(StringTemp, ": ");
+            strcat(StringTemp, SocialWinColonSpaceText);
             strcat(StringTemp, label_get(0));
-            strcat(StringTemp, " ");
+            strcat(StringTemp, BufferJoinSpace);
             say_year(StringTemp);
         }
     }
@@ -2449,16 +2453,16 @@ void MapWin::on_mouse_move(int pixel_x, int pixel_y) {
                 } else {
                     strcat(StringTemp, label_get(411));
                 }
-                strcat(StringTemp, " ");
+                strcat(StringTemp, BufferJoinSpace);
                 say_loc(StringTemp, tile_x, tile_y, 0, 2, 0);
-                strcat(StringTemp, ": ");
+                strcat(StringTemp, SocialWinColonSpaceText);
                 strcat(StringTemp, label_get(412));
                 strcat(StringTemp, " = ");
                 char number[80];
                 _itoa(MapDestinationCost / Rules.move_rate_roads, number, 10);
                 strcat(StringTemp, number);
                 if (MapDestinationCost % Rules.move_rate_roads != 0) {
-                    strcat(StringTemp, " ");
+                    strcat(StringTemp, BufferJoinSpace);
                     _itoa(MapDestinationCost % Rules.move_rate_roads, number, 10);
                     strcat(StringTemp, number);
                     strcat(StringTemp, "/");
@@ -5302,37 +5306,37 @@ void MapWin::gen_overlays(int x, int y) {
         int color = 0xFF;
         switch (PlayersData[faction].goals[goal_index].type) {
         case 0:
-// RECOVERY_LITERAL: v1 0x00686360 0x00686362 $SG62762 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686360 0x00686362 $SG62757 0x004688E0
             strcat(StringTemp, "a");
             color = 0xF9;
             break;
         case 2:
-// RECOVERY_LITERAL: v1 0x00686364 0x00686366 $SG62764 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686364 0x00686366 $SG62759 0x004688E0
             strcat(StringTemp, "d");
             color = 0xFB;
             break;
         case 9:
-// RECOVERY_LITERAL: v1 0x00686368 0x0068636A $SG62766 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686368 0x0068636A $SG62761 0x004688E0
             strcat(StringTemp, "f");
             color = 0xFA;
             break;
         case 8:
-// RECOVERY_LITERAL: v1 0x0068636C 0x0068636E $SG62768 0x004688E0
+// RECOVERY_LITERAL: v1 0x0068636C 0x0068636E $SG62763 0x004688E0
             strcat(StringTemp, "c");
             color = 0xFE;
             break;
         case 6:
-// RECOVERY_LITERAL: v1 0x00686370 0x00686372 $SG62770 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686370 0x00686372 $SG62765 0x004688E0
             strcat(StringTemp, "n");
             color = 0xFC;
             break;
         case 41:
-// RECOVERY_LITERAL: v1 0x00686374 0x00686376 $SG62772 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686374 0x00686376 $SG62767 0x004688E0
             strcat(StringTemp, "^");
             color = 0xFF;
             break;
         case 3:
-// RECOVERY_LITERAL: v1 0x00686378 0x0068637A $SG62774 0x004688E0
+// RECOVERY_LITERAL: v1 0x00686378 0x0068637A $SG62769 0x004688E0
             strcat(StringTemp, "s");
             color = 0xFD;
             break;
@@ -5432,7 +5436,7 @@ void MapWin::draw_base_names() {
                 strcat(text, "(");
                 strcat(text, StringTable.get(PlansShortName[
                     PlayersData[base.faction_id_current].region_base_plan[region]]));
-                strcat(text, ": ");
+                strcat(text, SocialWinColonSpaceText);
                 // 0x0046819D/0x004685B6: two strcat statements cross-jumped
                 // at their shared push/call, each cleaned up by add esp,8.
                 const int production_id = base.queue_production_id[0];
@@ -5474,7 +5478,7 @@ void MapWin::draw_base_names() {
                 if (is_objective(base_id) &&
                     (GameDataStateStorage.fields_.game_rules_ & 0x20000000U) == 0) {
                     strcat(text, label_get(898));
-                    strcat(text, ": ");
+                    strcat(text, SocialWinColonSpaceText);
                     CharUpperA(text);
                 } else if ((base.governor & GOV_ACTIVE) != 0 &&
                            (base.governor & GOV_MANAGES_PRODUCTION) != 0) {
@@ -5490,7 +5494,7 @@ void MapWin::draw_base_names() {
                     } else {
                         strcat(text, label_get(649));
                     }
-                    strcat(text, ": ");
+                    strcat(text, SocialWinColonSpaceText);
                 }
                 // 0x0046819D/0x004685B6: two strcat statements cross-jumped
                 // at their shared push/call, each cleaned up by add esp,8.
@@ -6046,7 +6050,7 @@ void MapWin::draw_wars() {
         StringTemp[0] = '\0';
         parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
         strcat(StringTemp, Players[faction].noun_faction);
-        strcat(StringTemp, ": ");
+        strcat(StringTemp, SocialWinColonSpaceText);
         Buffer::set_text_color(InfoFactionTextColors[faction], 0, 1, 1);
         width = Buffer::write_l(StringTemp, width, y);
         if (max_width <= width) {

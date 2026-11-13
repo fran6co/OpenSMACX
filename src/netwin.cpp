@@ -53,6 +53,9 @@
 #include "xpops.h"     // x_pop_caption_label for lobby validation prompts
 #include <stdlib.h>      // _itoa
 
+// Shared separator objects the image pushes instead of unit literals.
+extern const char BufferJoinSpace[];
+
 // Shared original chat separators, also used by the general string formatter.
 extern char SocialWinColonSpaceText[];
 
@@ -952,9 +955,9 @@ void NetWin::draw_session_info() {
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
     strcat(StringTemp, label_get(0xFA4 / 4));
-    strcat(StringTemp, ": ");
+    strcat(StringTemp, SocialWinColonSpaceText);
     strcat(StringTemp, "}");
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, StringTable.get(Difficulty[range(
         static_cast<int8_t>(NetWinSessionOptions.fields_.difficulty_), 0, 6)]));
     written = Buffer::write_l(StringTemp, col, row);
@@ -970,9 +973,9 @@ void NetWin::draw_session_info() {
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
     strcat(StringTemp, label_get(0x100C / 4));
-    strcat(StringTemp, ": ");
+    strcat(StringTemp, SocialWinColonSpaceText);
     strcat(StringTemp, "}");
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, StringTable.get(
         TimeControl[NetWinSessionOptions.fields_.time_control_].name));
     written = Buffer::write_l(StringTemp, col, row);
@@ -988,9 +991,9 @@ void NetWin::draw_session_info() {
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
     strcat(StringTemp, label_get(0x1078 / 4));
-    strcat(StringTemp, ": ");
+    strcat(StringTemp, SocialWinColonSpaceText);
     strcat(StringTemp, "}");
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
         strcat(StringTemp, NetWinSessionData.fields_.scenario_text_wire_tail_);
     } else {
@@ -998,19 +1001,19 @@ void NetWin::draw_session_info() {
     }
     switch (NetWinSessionData.fields_.mode_) {
     case 3:
-        strcat(StringTemp, " ");
+        strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, "(");
         strcat(StringTemp, label_get(0x1014 / 4));
         strcat(StringTemp, ")");
         break;
     case 2:
-        strcat(StringTemp, " ");
+        strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, "(");
         strcat(StringTemp, label_get(0x1018 / 4));
         strcat(StringTemp, ")");
         break;
     case 1:
-        strcat(StringTemp, " ");
+        strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, "(");
         strcat(StringTemp, label_get(0x10 / 4));
         strcat(StringTemp, ")");
@@ -1031,15 +1034,15 @@ void NetWin::draw_session_info() {
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
     strcat(StringTemp, label_get(0xFAC / 4));
-    strcat(StringTemp, ": ");
+    strcat(StringTemp, SocialWinColonSpaceText);
     strcat(StringTemp, "}");
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
         _itoa(NetWinSessionOptions.fields_.option_4_, tally, 10);
         strcat(StringTemp, tally);
-        strcat(StringTemp, " ");
+        strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, "X");
-        strcat(StringTemp, " ");
+        strcat(StringTemp, BufferJoinSpace);
         _itoa(NetWinSessionOptions.fields_.option_5_, tally, 10);
         strcat(StringTemp, tally);
     } else if (static_cast<int8_t>(NetWinSessionOptions.fields_.planet_size_) == -1) {
@@ -1071,9 +1074,9 @@ void NetWin::draw_session_info() {
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
     strcat(StringTemp, label_get(0xFB0 / 4));
-    strcat(StringTemp, ": ");
+    strcat(StringTemp, SocialWinColonSpaceText);
     strcat(StringTemp, "}");
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
         text = Labels.strings_ptr[0x1000 / 4];
     } else if (static_cast<int8_t>(NetWinSessionOptions.fields_.ocean_coverage_) == -1) {
@@ -1105,9 +1108,9 @@ void NetWin::draw_session_info() {
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
     strcat(StringTemp, label_get(0xFB4 / 4));
-    strcat(StringTemp, ": ");
+    strcat(StringTemp, SocialWinColonSpaceText);
     strcat(StringTemp, "}");
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
         text = Labels.strings_ptr[0x1000 / 4];
     } else if (static_cast<int8_t>(NetWinSessionOptions.fields_.erosion_) == -1) {
@@ -1139,9 +1142,9 @@ void NetWin::draw_session_info() {
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
     strcat(StringTemp, label_get(0xFB8 / 4));
-    strcat(StringTemp, ": ");
+    strcat(StringTemp, SocialWinColonSpaceText);
     strcat(StringTemp, "}");
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
         text = Labels.strings_ptr[0x1000 / 4];
     } else if (static_cast<int8_t>(NetWinSessionOptions.fields_.native_life_) == -1) {
@@ -1173,9 +1176,9 @@ void NetWin::draw_session_info() {
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
     strcat(StringTemp, label_get(0xFBC / 4));
-    strcat(StringTemp, ": ");
+    strcat(StringTemp, SocialWinColonSpaceText);
     strcat(StringTemp, "}");
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     if (NetWinSessionData.fields_.scenario_text_wire_tail_[0] != 0) {
         text = Labels.strings_ptr[0x1000 / 4];
     } else if (static_cast<int8_t>(NetWinSessionOptions.fields_.cloud_cover_) == -1) {
@@ -1227,9 +1230,9 @@ void NetWin::draw_session_info() {
         StringTemp[0] = 0;
         strcat(StringTemp, "{");
         strcat(StringTemp, label_get(0x113C / 4));
-        strcat(StringTemp, ": ");
+        strcat(StringTemp, SocialWinColonSpaceText);
         strcat(StringTemp, "}");
-        strcat(StringTemp, " ");
+        strcat(StringTemp, BufferJoinSpace);
         _itoa(unclaimed, tally, 10);
         strcat(StringTemp, tally);
         avail = field.right - col - 10;
@@ -1354,8 +1357,8 @@ void NetWin::draw_player_names() {
                    NetDaemonNet.get_player_name(NetDaemonNet.process_slots_[row + 1].pid_));
         }
         if (NetWinLobbyRows.rows_[row + 1].faction_or_color_ != -1) {
-            strcat(StringTemp, ": ");
-            strcat(StringTemp, " ");
+            strcat(StringTemp, SocialWinColonSpaceText);
+            strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, NetWinLobbyRows.rows_[row + 1].leader_name_);
             // Count the earlier rows whose name text matches, and append
             // the tally when there is one.
@@ -1710,8 +1713,8 @@ void NetWin::draw_factions() {
                 goto named;
             }
         }
-        strcat(StringTemp, ": ");
-        strcat(StringTemp, " ");
+        strcat(StringTemp, SocialWinColonSpaceText);
+        strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, NetWinLobbyRows.rows_[index + 1].noun_faction_);
     named:
         Buffer::write_l(StringTemp, &field);

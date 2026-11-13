@@ -97,6 +97,10 @@
 #include "netwin.h"
 #include "deletionlist.h"
 
+// Shared separator objects the image pushes instead of unit literals.
+extern const char BufferJoinSpace[];
+extern char SocialWinCommaSpaceText[];
+
 extern Wave g_CRASH_LANDING_WAVE;
 extern int ConsoleNoMapOverrideLatch;
 
@@ -978,13 +982,13 @@ char *__cdecl get_pact(int faction_id) {
     return StringTable.get(Labels.strings_ptr[noun != 0 ? 0xca : 0xc9]);
 }
 
-// RECOVERY_LITERAL: v1 0x0068FAAC 0x0068FAAE $SG65299 0x0058F610
-// RECOVERY_LITERAL: v1 0x0068FAA0 0x0068FAA2 $SG65297 0x0058F610
-// RECOVERY_LITERAL: v1 0x0068FA98 0x0068FA9A $SG65293 0x0058F610
-// RECOVERY_LITERAL: v1 0x0068FA9C 0x0068FA9E $SG65296 0x0058F610
-// RECOVERY_LITERAL: v1 0x0068FA94 0x0068FA96 $SG65290 0x0058F610
-// RECOVERY_LITERAL: v1 0x0068FAA8 0x0068FAAA $SG65298 0x0058F610
-// RECOVERY_LITERAL: v1 0x0068FA90 0x0068FA93 $SG65288 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FAAC 0x0068FAAE $SG65300 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FAA0 0x0068FAA2 $SG65298 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FA98 0x0068FA9A $SG65294 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FA9C 0x0068FA9E $SG65297 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FA94 0x0068FA96 $SG65291 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FAA8 0x0068FAAA $SG65299 0x0058F610
+// RECOVERY_LITERAL: v1 0x0068FA90 0x0068FA93 $SG65289 0x0058F610
 // ORIGINAL: 0x0058F610 ?say_special@@YAXPADPADH@Z 0x0058F610-0x0058F6F6 BYTE_EXACT
 // LEVER: the eight fixed-address bindings are .rdata STRING LITERALS, read
 //         out of the image with image_data.py and spelled as the text, the
@@ -3230,15 +3234,15 @@ int GameDataPlayerCountSnapshot;
 // NOTE: code bytes match the image with relocations masked; recover measure
 //       refuses it while ConsoleInfoWin/WorldClimateWorldWin lack bounded
 //       object spans. The image keeps two "unitfound_sm.pcx" literals (unpooled).
-// RECOVERY_LITERAL: v1 0x00691BF8 0x00691C09 $SG66510 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C0C 0x00691C19 $SG66511 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C1C 0x00691C2D $SG66514 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C30 0x00691C3B $SG66515 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C3C 0x00691C4C $SG66518 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C4C 0x00691C58 $SG66519 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C58 0x00691C60 $SG66526 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C60 0x00691C72 $SG66528 0x005BED20
-// RECOVERY_LITERAL: v1 0x00691C74 0x00691C7F $SG66529 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691BF8 0x00691C09 $SG66511 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C0C 0x00691C19 $SG66512 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C1C 0x00691C2D $SG66515 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C30 0x00691C3B $SG66516 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C3C 0x00691C4C $SG66519 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C4C 0x00691C58 $SG66520 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C58 0x00691C60 $SG66527 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C60 0x00691C72 $SG66529 0x005BED20
+// RECOVERY_LITERAL: v1 0x00691C74 0x00691C7F $SG66530 0x005BED20
 int __cdecl do_unity_crash(int x, int y, int faction_id) {
     const uint32_t event = MapTiles[static_cast<int>(MapLongitude) * y + (x >> 1)].bit2;
     if ((event & 0x80004000u) != 0x4000u) {
@@ -3437,11 +3441,11 @@ int __cdecl save_game(int mode) {
 
     parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, 0);
     strcat(StringTemp, Players[ConsoleGlobal.faction_id_].name_leader);
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x2D0 / 4]));
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, get_noun(ConsoleGlobal.faction_id_));
-    strcat(StringTemp, ", ");
+    strcat(StringTemp, SocialWinCommaSpaceText);
     say_year(StringTemp);
 
     char name[256];
@@ -3727,7 +3731,7 @@ again:
     parse_says(3, get_noun(ConsoleGlobal.faction_id_), -1, -1);
     StringTemp[0] = '\0';
     strcat(StringTemp, load_game_label(0));
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     say_year(StringTemp);
     parse_says(4, StringTemp, -1, -1);
     choice = X_pops("LOADGAME", 0x40,

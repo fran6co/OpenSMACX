@@ -69,6 +69,11 @@
 #include "designwin.h" // Crawler animation advances while the design window is visible.
 #include "vector.h"  // vector_add operates on actual three-float arrays.
 
+// Shared separator objects the image pushes instead of unit literals.
+extern const char BufferJoinSpace[];
+extern char SocialWinColonSpaceText[];
+extern char SocialWinCommaSpaceText[];
+
 int __cdecl popp(const char *title, const char *label, int channel,
                  const char *picture, int(__cdecl *callback)());
 
@@ -160,7 +165,7 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
                 || Weapon[weapon_id].offense_rating < Armor[armor_id].defense_rating
                 || ability_flags & ABL_ARTILLERY)) {
             strcat(output, StringTable.get(Ability[ability_id].abbreviation));
-            strcat(output, " ");
+            strcat(output, BufferJoinSpace);
             break;
         }
     }
@@ -249,8 +254,8 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
                 strcat(alternate, StringTable.get(Armor[armor_id].name_short));
             }
         }
-        strcat(output, " ");
-        strcat(alternate, " ");
+        strcat(output, BufferJoinSpace);
+        strcat(alternate, BufferJoinSpace);
         strcat(output, StringTable.get(Chassis[chassis_id].defsv_1_name));
         if (unique && prototype_id & 1) {
             strcat(alternate, StringTable.get(quality && not_sea
@@ -270,8 +275,8 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
                 strcat(alternate, StringTable.get(Weapon[weapon_id].name_short));
             }
         }
-        strcat(output, " ");
-        strcat(alternate, " ");
+        strcat(output, BufferJoinSpace);
+        strcat(alternate, BufferJoinSpace);
         strcat(output, StringTable.get(Chassis[chassis_id].defsv_1_name));
         if (unique && prototype_id & 1) {
             strcat(alternate, StringTable.get(quality && not_sea
@@ -283,19 +288,19 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
     } else if (Chassis[chassis_id].missile && Weapon[weapon_id].offense_rating >= 99) {
         strcat(output, StringTable.get(Reactor[reactor_id - 1].name_short));
         strcat(alternate, StringTable.get(Reactor[reactor_id - 1].name_short));
-        strcat(output, " ");
-        strcat(alternate, " ");
+        strcat(output, BufferJoinSpace);
+        strcat(alternate, BufferJoinSpace);
         strcat(output, StringTable.get(Weapon[weapon_id].name_short));
         strcat(alternate, StringTable.get(Weapon[weapon_id].name_short));
     } else if (Chassis[chassis_id].missile && (weapon_id == 24 || weapon_id == 25)) {
         strcat(output, StringTable.get(Weapon[weapon_id].name_short));
         strcat(alternate, StringTable.get(Weapon[weapon_id].name_short));
-        strcat(output, " ");
-        strcat(alternate, " ");
+        strcat(output, BufferJoinSpace);
+        strcat(alternate, BufferJoinSpace);
         strcat(output, StringTable.get(Reactor[reactor_id - 1].name_short));
         strcat(alternate, StringTable.get(Reactor[reactor_id - 1].name_short));
-        strcat(output, " ");
-        strcat(alternate, " ");
+        strcat(output, BufferJoinSpace);
+        strcat(alternate, BufferJoinSpace);
         strcat(output, StringTable.get(Chassis[chassis_id].offsv_1_name));
         strcat(alternate, StringTable.get(Chassis[chassis_id].offsv_1_name));
     } else {
@@ -303,8 +308,8 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
             if (reactor_id > 1) {
                 strcat(output, StringTable.get(Reactor[reactor_id - 1].name_short));
                 strcat(alternate, StringTable.get(Reactor[reactor_id - 1].name_short));
-                strcat(output, " ");
-                strcat(alternate, " ");
+                strcat(output, BufferJoinSpace);
+                strcat(alternate, BufferJoinSpace);
             }
             if ((Weapon[weapon_id].mode != 7 || chassis_id != 3)
                 && (Weapon[weapon_id].mode != 9 || Chassis[chassis_id].triad != TRIAD_LAND
@@ -317,8 +322,8 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
                     strcat(output, StringTable.get(Chassis[chassis_id].offsv_1_name));
                     strcat(alternate, StringTable.get(Chassis[chassis_id].offsv_2_name));
                 }
-                strcat(output, " ");
-                strcat(alternate, " ");
+                strcat(output, BufferJoinSpace);
+                strcat(alternate, BufferJoinSpace);
             }
         }
         if (!unique) {
@@ -328,25 +333,25 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
         }
         if (Weapon[weapon_id].mode < 3) {
             if (ability_flags & ABL_ARTILLERY) {
-                strcat(output, " ");
+                strcat(output, BufferJoinSpace);
                 strcat(output, label_get(0x87C / 4));
-                strcat(alternate, " ");
+                strcat(alternate, BufferJoinSpace);
                 strcat(alternate, label_get(0x880 / 4));
             } else if (ability_flags & ABL_AMPHIBIOUS && Chassis[chassis_id].speed == 1
                        && Weapon[weapon_id].offense_rating > Armor[armor_id].defense_rating) {
-                strcat(output, " ");
+                strcat(output, BufferJoinSpace);
                 strcat(output, label_get(0x998 / 4));
-                strcat(alternate, " ");
+                strcat(alternate, BufferJoinSpace);
                 strcat(alternate, label_get(0x99C / 4));
             } else {
-                strcat(output, " ");
+                strcat(output, BufferJoinSpace);
                 if (lower) {
                     strcat(output, StringTable.get(Reactor[reactor_id - 1].name_short));
                 } else {
                     strcat(output, StringTable.get(quality && not_sea
                         ? Chassis[chassis_id].offsv_lrg_name : Chassis[chassis_id].offsv_1_name));
                 }
-                strcat(alternate, " ");
+                strcat(alternate, BufferJoinSpace);
                 if (lower) {
                     strcat(alternate, StringTable.get(Reactor[reactor_id - 1].name_short));
                 } else {
@@ -387,7 +392,7 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
                     }
                 } else {
                     char number[80];
-                    strcat(output, " ");
+                    strcat(output, BufferJoinSpace);
                     strcat(output, StringTable.get(Labels.strings_ptr[0xE5C / 4]));
                     _itoa(2, number, 10);
                     strcat(output, number);
@@ -413,7 +418,7 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
                     }
                 } else {
                     char number[80];
-                    strcat(alternate, " ");
+                    strcat(alternate, BufferJoinSpace);
                     strcat(alternate, StringTable.get(Labels.strings_ptr[0xE5C / 4]));
                     _itoa(2, number, 10);
                     strcat(alternate, number);
@@ -1100,11 +1105,11 @@ void __cdecl say_stats_2(LPSTR stat, int proto_id) {
     _itoa(speed, num_buf, 10);
     strcat(stat, num_buf);
     if (get_proto_triad(proto_id) == TRIAD_SEA) {
-        strcat(stat, " ");
+        strcat(stat, BufferJoinSpace);
         strcat(stat, label_get(163)); // 'Sea'
     }
     if (get_proto_triad(proto_id) == TRIAD_AIR) {
-        strcat(stat, " ");
+        strcat(stat, BufferJoinSpace);
         strcat(stat, label_get(162)); // 'Air'
     }
     if (VehPrototypes[proto_id].reactor_id > 1) {
@@ -1155,7 +1160,7 @@ void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer) {
         && !VehPrototypes[proto_id].ability_flags) {
         char *name = PlansFullName[3]; // 'Explore/Defense'
         strcat(stat, StringTable.get(name));
-        strcat(stat, ", ");
+        strcat(stat, SocialWinCommaSpaceText);
     } else if (Weapon[VehPrototypes[proto_id].weapon_id].mode < 3) { // Projectile, energy, missile
         if (VehPrototypes[proto_id].plan != PLAN_DEFENSIVE || (get_proto_offense_rating(proto_id) >= 0 && get_proto_offense_rating(proto_id) <= get_proto_defense_rating(proto_id))) {
             char *name = PlansShortName[VehPrototypes[proto_id].plan];
@@ -1164,7 +1169,7 @@ void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer) {
             char *name = Labels.strings_ptr[312]; // 'Combat'
             strcat(stat, StringTable.get(name));
         }
-        strcat(stat, ", ");
+        strcat(stat, SocialWinCommaSpaceText);
     }
     if (get_proto_offense_rating(proto_id) < 0) {
         strcat(stat, label_get(196)); // 'Psi'
@@ -1189,7 +1194,7 @@ append_spacer:
                 strcat(stat, ")");
             }
             if (get_proto_triad(proto_id)) { // sea, air
-                strcat(stat, ", "); // Original separator; the later triad space remains.
+                strcat(stat, SocialWinCommaSpaceText); // Original separator; the later triad space remains.
             }
             goto append_triad;
         }
@@ -1203,7 +1208,7 @@ append_spacer:
             strcat(stat, num_buf);
             strcat(stat, ")");
         }
-        strcat(stat, ", ");
+        strcat(stat, SocialWinCommaSpaceText);
     }
     if (get_proto_defense_rating(proto_id) < 0) {
         strcat(stat, label_get(196)); // 'Psi'
@@ -1222,15 +1227,15 @@ append_spacer:
     }
 append_triad:
     if (get_proto_triad(proto_id) == TRIAD_SEA) {
-        strcat(stat, " ");
+        strcat(stat, BufferJoinSpace);
         strcat(stat, label_get(163)); // 'Sea'
     }
     if (get_proto_triad(proto_id) == TRIAD_AIR) {
-        strcat(stat, " ");
+        strcat(stat, BufferJoinSpace);
         strcat(stat, label_get(162)); // 'Air'
     }
     if (VehPrototypes[proto_id].reactor_id > 1) {
-        strcat(stat, " ");
+        strcat(stat, BufferJoinSpace);
         strcat(stat, "(");
         strcat(stat, "*");
         _itoa(VehPrototypes[proto_id].reactor_id, num_buf, 10);
@@ -4702,18 +4707,18 @@ again:
             strcat(StringTemp, "|");
             if (VehPrototypes[prototype_id].obsolete_factions & (1 << faction_id)) {
                 strcat(StringTemp, label_get(0x368 / 4));
-                strcat(StringTemp, ", ");
+                strcat(StringTemp, SocialWinCommaSpaceText);
             }
             if (!(VehPrototypes[prototype_id].flags & 4) && prototype_id >= MaxVehProtoFactionNum) {
                 strcat(StringTemp, label_get(0x2e4 / 4));
-                strcat(StringTemp, ", ");
+                strcat(StringTemp, SocialWinCommaSpaceText);
             }
             strcat(StringTemp, label_get(0x160 / 4));
-            strcat(StringTemp, ": ");
+            strcat(StringTemp, SocialWinColonSpaceText);
             const int cost = cost_factor(faction_id, 1, -1) * VehPrototypes[prototype_id].cost;
             _itoa(cost, number, 10);
             strcat(StringTemp, number);
-            strcat(StringTemp, ", ");
+            strcat(StringTemp, SocialWinCommaSpaceText);
             say_stats(StringTemp, prototype_id, 0);
         }
         popup.item(StringTemp, prototype_id);

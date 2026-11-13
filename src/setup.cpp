@@ -136,6 +136,9 @@
 #include "socialwin.h"
 #include "game_data_state_window.h"
 
+// Shared separator objects the image pushes instead of unit literals.
+extern const char BufferJoinSpace[];
+
 extern Wave g_CRASH_LANDING_WAVE;
 extern int ConsoleNoMapOverrideLatch;
 
@@ -1046,7 +1049,7 @@ int __cdecl setup_player(int faction, int conqueror, int retry) {
             PlayersData[faction].saved_queue_size[queue] = 0;
             StringTemp[0] = 0;
             strcat(StringTemp, label_get(0x984 / 4));
-            strcat(StringTemp, " ");
+            strcat(StringTemp, BufferJoinSpace);
             _itoa(queue + 1, number, 10);  // 5B116D: the shared number buffer.
             strcat(StringTemp, number);
             strcpy(PlayersData[faction].saved_queue_name[queue], StringTemp);

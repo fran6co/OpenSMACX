@@ -523,6 +523,9 @@ int BattleWin::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
 #include <stdlib.h>
 #include <string.h>
 
+// Shared separator objects the image pushes instead of unit literals.
+extern char SocialWinColonSpaceText[];
+
 // These six objects are already defined in sprite.cpp at the observed image
 // addresses. sprite.h does not currently expose declarations for the family.
 extern Sprite g_BATTLE_MIND_WORM_SPRITE;
@@ -747,7 +750,7 @@ again:
                 Weapon[VehPrototypes[Vehs[first_vehicle_id].proto_id].weapon_id].name));
         }
         if (attack_odds >= 0 && defense_odds >= 0) {
-            strcat(StringTemp, ": ");
+            strcat(StringTemp, SocialWinColonSpaceText);
             if (first_vehicle_id == second_vehicle_id
                 && (!(flags & 2)
                     || Chassis[VehPrototypes[Vehs[first_vehicle_id].proto_id].chassis_id].triad == 1)) {
@@ -770,7 +773,7 @@ again:
     StringTemp[0] = '\0';
     say_morale(first_vehicle_id,
                first_vehicle_id == second_vehicle_id ? first_faction : second_faction);
-    strcat(StringTemp, ": ");
+    strcat(StringTemp, SocialWinColonSpaceText);
     const int side = first_vehicle_id == second_vehicle_id;
     const int morale = ((int)VehBasicBattleMorale[side] - 2) * 100 / 8;
     if (morale >= 0) {
@@ -795,7 +798,7 @@ again:
 
     StringTemp[0] = '\0';
     strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x520 / 4]));
-    strcat(StringTemp, ": ");
+    strcat(StringTemp, SocialWinColonSpaceText);
     strcat(StringTemp, "{");
     say_num((first_vehicle_id == second_vehicle_id ? defense_odds : attack_odds) >> 8);
     strcat(StringTemp, ".");
@@ -810,7 +813,7 @@ again:
 
     StringTemp[0] = '\0';
     strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x1E4 / 4]));
-    strcat(StringTemp, ": ");
+    strcat(StringTemp, SocialWinColonSpaceText);
     strcat(StringTemp, "{");
     say_num(range(proto_power(first_vehicle_id) - Vehs[first_vehicle_id].dmg_incurred, 0, 9999));
     strcat(StringTemp, "}");

@@ -5562,7 +5562,7 @@ void __cdecl name_base(int faction_id, LPSTR name_out, BOOL is_final, BOOL is_se
     GenderDefault = Players[faction_id].noun_gender;
     PluralityDefault = Players[faction_id].is_noun_plural;
     strcat(name_out, Players[faction_id].noun_faction);
-    strcat(name_out, " ");
+    strcat(name_out, BufferJoinSpace);
     char digits[80];
     _itoa(++offset, digits, 10);
     strcat(name_out, digits);
@@ -8858,7 +8858,7 @@ void __cdecl make_base_unique(int base_id) {
     if (collisions != 0) {
         Bases[base_id].name_string[21] = 0;
         // make_base_unique passes this one-byte delimiter to strcat; collision digits use a separate buffer.
-// RECOVERY_LITERAL: v1 0x00689F08 0x00689F0A $SG65005 0x004F7FE0
+// RECOVERY_LITERAL: v1 0x00689F08 0x00689F0A $SG65004 0x004F7FE0
         strcat(Bases[base_id].name_string, "-");
         char digits[0x50];
         _itoa(collisions + 1, digits, 10);
@@ -10615,11 +10615,11 @@ int __cdecl upgrade_prototype(int faction_id, int proto_id_new,
             int i;
             StringTemp[0] = '\0';
             strcat(StringTemp, VehPrototypes[proto_id_old].veh_name);
-            strcat(StringTemp, " ");
+            strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, "(");
             say_stats_2(StringTemp, proto_id_old);
             if (VehPrototypes[proto_id_old].ability_flags) {
-                strcat(StringTemp, " ");
+                strcat(StringTemp, BufferJoinSpace);
                 for (i = 0; i < MaxAbilityNum; i++) {
                     if (has_abil(proto_id_old, 1 << i)) {
                         strcat(StringTemp, StringTable.get(Ability[i].abbreviation));
@@ -10631,11 +10631,11 @@ int __cdecl upgrade_prototype(int faction_id, int proto_id_new,
 
             StringTemp[0] = '\0';
             strcat(StringTemp, VehPrototypes[proto_id_new].veh_name);
-            strcat(StringTemp, " ");
+            strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, "(");
             say_stats_2(StringTemp, proto_id_new);
             if (VehPrototypes[proto_id_new].ability_flags) {
-                strcat(StringTemp, " ");
+                strcat(StringTemp, BufferJoinSpace);
                 for (i = 0; i < MaxAbilityNum; i++) {
                     if (has_abil(proto_id_new, 1 << i)) {
                         strcat(StringTemp, StringTable.get(Ability[i].abbreviation));
@@ -10733,6 +10733,9 @@ no_energy:
 #include "worldwin.h"
 #include <string.h>
 #include <stdlib.h>
+
+// Shared separator objects the image pushes instead of unit literals.
+extern const char BufferJoinSpace[];
 
 extern int BaseProductionZoomRequested;
 extern int BaseProductionUnitCreationDisabled;

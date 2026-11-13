@@ -44,6 +44,9 @@
 #include "netmsg.h"  // NetMsgPrimary - the sprite callbacks pop INJAIL
 #include "netdaemon.h"  // NetDaemonNet - the sprite callbacks lock and synch
 
+// Shared separator objects the image pushes instead of unit literals.
+extern const char BufferJoinSpace[];
+
 
 // WORKAROUND(inline): file-local twin of Popup::set_picture, whose
 // out-of-line copy is 0x00559000. The image's popv and veh_pick expand it
@@ -410,7 +413,7 @@ int __cdecl veh_pick(int veh_id, const char *label, int flags) {
         do {
             StringTemp[0] = '\0';
             say_morale(listed_vehicle, 0);
-            ::strcat(StringTemp, " ");
+            ::strcat(StringTemp, BufferJoinSpace);
             ::strcat(StringTemp, VehPrototypes[Vehs[listed_vehicle].proto_id].veh_name);
             pop_set_picture(popup, &sprite, listed_vehicle, StringTemp);
             listed_vehicle = Vehs[listed_vehicle].next_veh_id_stack;

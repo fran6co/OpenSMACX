@@ -58,6 +58,9 @@
 #include "statuswin.h"
 #include "flic.h"
 
+// Shared separator objects the image pushes instead of unit literals.
+extern const char BufferJoinSpace[];
+
 // Existing process-wide audio owner defined in wave.cpp.
 extern Wave g_TOP_MENU_WAVE;
 void __cdecl world_build();
@@ -295,12 +298,12 @@ difficulty_menu:
                 StringTemp[0] = 0;
                 strcat(StringTemp, StringTable.get(Difficulty[i]));
                 if (i == 0) {
-                    strcat(StringTemp, " ");
+                    strcat(StringTemp, BufferJoinSpace);
                     strcat(StringTemp, "(");
                     strcat(StringTemp, label_get(113));
                     strcat(StringTemp, ")");
                 } else if (i == 5) {
-                    strcat(StringTemp, " ");
+                    strcat(StringTemp, BufferJoinSpace);
                     strcat(StringTemp, "(");
                     strcat(StringTemp, label_get(114));
                     strcat(StringTemp, ")");
@@ -1490,7 +1493,7 @@ int __cdecl multiplayer_init(int startup_mode) {
             parse_says(3, Players[ConsoleGlobal.faction_id_].noun_faction, -1, -1);
             StringTemp[0] = '\0';
             strcat(StringTemp, label_get(0));
-            strcat(StringTemp, " ");
+            strcat(StringTemp, BufferJoinSpace);
             say_year(StringTemp);
             parse_says(4, StringTemp, -1, -1);
             parse_num(0, ScenarioSave.objective_req_victory);
@@ -1694,7 +1697,7 @@ int __cdecl top_menu(int mode) {
                 parse_says(3, get_noun(ConsoleGlobal.faction_id_), -1, -1);
                 StringTemp[0] = '\0';
                 strcat(StringTemp, label_get(0));
-                strcat(StringTemp, " ");
+                strcat(StringTemp, BufferJoinSpace);
                 say_year(StringTemp);
                 parse_says(4, StringTemp, -1, -1);
                 parse_says(0, StringTemp, -1, -1);

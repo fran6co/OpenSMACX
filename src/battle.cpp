@@ -1155,7 +1155,7 @@ int __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, int
                     // after clearing the shared buffer; add_bat copies the text.
                     StringTemp[0] = '\0';
                     strcat(StringTemp, label_get(331)); // "Terrain"
-                    strcat(StringTemp, " ");
+                    strcat(StringTemp, BufferJoinSpace);
                     strcat(StringTemp, "(");
                     strcat(StringTemp, StringTable.get(VehBattleDisplayTerrain));
                     strcat(StringTemp, ")");
@@ -2527,6 +2527,9 @@ int __cdecl battle_fight(int veh_id, int dir, int mode, int allow_interceptor,
 
 #include "battlewin.h"
 #include "council.h"
+
+// Shared separator objects the image pushes instead of unit literals.
+extern const char BufferJoinSpace[];
 
 // Current hit points. battle_fight goes through it at every site: written
 // out by hand, the expression inflated the function's own /Ob2 budget and

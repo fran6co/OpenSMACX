@@ -35,6 +35,10 @@
 #include "popup.h"
 #include <stdlib.h>     // _itoa
 
+// Shared separator objects the image pushes instead of unit literals.
+extern const char BufferJoinSpace[];
+extern char SocialWinColonSpaceText[];
+
 // Existing source-owned storage, defined in netdaemon.cpp/game.cpp. The
 // original body reads the wait accumulator and turn-control word directly.
 extern int NetDaemonWaitTicks;
@@ -313,7 +317,7 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x7e8 / 4));
     CharUpperA(StringTemp);
-    strcat(StringTemp, ": ");
+    strcat(StringTemp, SocialWinColonSpaceText);
     _itoa(minutes, number, 10);
     strcat(StringTemp, number);
     strcat(StringTemp, ":");
@@ -345,7 +349,7 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x410 / 4));
     CharUpperA(StringTemp);
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     _itoa(NetUpkeepPhase, number, 10);
     strcat(StringTemp, number);
     Buffer::write_cent_l(StringTemp, bounds);
@@ -395,17 +399,17 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
 
   StringTemp[0] = 0;
   strcat(StringTemp, label_get(0x40c / 4));
-  strcat(StringTemp, ": ");
+  strcat(StringTemp, SocialWinColonSpaceText);
   if (NetDaemonNet.primary_state_.trailing_words_[3] != 0) {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x988 / 4));
-    strcat(StringTemp, ": ");
+    strcat(StringTemp, SocialWinColonSpaceText);
     strcat(StringTemp, label_get(0x444 / 4));
   } else {
     if (ConsoleControlTurnActive != 0) {
       StringTemp[0] = 0;
       strcat(StringTemp, label_get(0x988 / 4));
-      strcat(StringTemp, ": ");
+      strcat(StringTemp, SocialWinColonSpaceText);
       strcat(StringTemp, label_get(0x410 / 4));
     } else if (GameDataStateStorage.fields_.time_controls_selection_ == 0) {
       StringTemp[0] = 0;
@@ -527,7 +531,7 @@ void MultiWin::draw(int draw_type) {
     draw_sprite(sprite5_, this, 0, y);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x80c / 4));
-    strcat(StringTemp, ": ");
+    strcat(StringTemp, SocialWinColonSpaceText);
     strcat(StringTemp, BufferJoinSpace);
     char votes_text[84];
     const int votes = council_votes(ConsoleGlobal.faction_id_);
@@ -864,12 +868,12 @@ void MultiWin::on_right_click(int x, int y) {
 
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x9F0 / 4));
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     PluralityDefault = 0;
     GenderDefault = Players[faction].is_leader_female;
     char *const title = Players[faction].title_leader;
     strcat(StringTemp, title);
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     PluralityDefault = 0;
     GenderDefault = Players[faction].is_leader_female;
     char *const name = Players[faction].name_leader;

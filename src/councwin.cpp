@@ -61,6 +61,10 @@ CouncWin CouncilWindow;
 #include "console.h"     // ConsoleGlobal's local faction id
 #include "netmsg.h"      // NetMsgPrimary
 
+// Shared separator objects the image pushes instead of unit literals.
+extern const char BufferJoinSpace[];
+extern char SocialWinColonSpaceText[];
+
 // WORKAROUND(inline): BasePop::item and BasePop::exec(callback) were header
 // inlines (out-of-line copies 0x005A5990 and 0x00558FC0); their expansions
 // spend the /Ob2 budget that leaves on_left_click's first three teardowns
@@ -170,7 +174,7 @@ void CouncWin::on_left_click(int x, int y) {
                 eligible(faction)) {
                 StringTemp[0] = '\0';
                 strcat(StringTemp, council_title(faction));
-                strcat(StringTemp, " ");
+                strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, council_name(faction));
                 council_pop_item(&popup, StringTemp, faction);
                 // Native 0x425324 preselects the local faction's own entry.
@@ -366,7 +370,7 @@ redraw:
         StringTemp[0] = '\0';
         if (field_A1C_ == 1) {
             strcat(StringTemp, label_get(0xe10 / 4));
-            strcat(StringTemp, ": ");
+            strcat(StringTemp, SocialWinColonSpaceText);
             const int leader = static_cast<int>(field_A20_);
             parse_set(Players[leader].is_leader_female, 0);
             strcat(StringTemp, Players[leader].name_leader);
@@ -392,7 +396,7 @@ redraw:
             StringTemp[0] = '\0';
             parse_set(Players[faction].is_leader_female, 0);
             strcat(StringTemp, Players[faction].name_leader);
-            strcat(StringTemp, ": ");
+            strcat(StringTemp, SocialWinColonSpaceText);
             int votes = 0;
             for (int voter = 1; voter < MaxPlayerNum; ++voter) {
                 if ((Players[voter].rule_flags & RFLAG_ALIEN) == 0
@@ -432,7 +436,7 @@ redraw:
         MainInterfaceGlobal.Buffer::set_text_color(0xfa, -1, 1, 1);
         StringTemp[0] = '\0';
         strcat(StringTemp, label_get(0x7bc / 4));
-        strcat(StringTemp, ": ");
+        strcat(StringTemp, SocialWinColonSpaceText);
         say_num(votes);
         council_write_l(StringTemp, &line);
 
@@ -446,7 +450,7 @@ redraw:
         MainInterfaceGlobal.Buffer::set_text_color(0xf9, -1, 1, 1);
         StringTemp[0] = '\0';
         strcat(StringTemp, label_get(0x7c0 / 4));
-        strcat(StringTemp, ": ");
+        strcat(StringTemp, SocialWinColonSpaceText);
         say_num(votes);
         council_write_right(StringTemp, &line);
     }
@@ -1025,7 +1029,7 @@ void CouncWin::on_redraw() {
         if (field_A1C_ != 0) {
             if (field_A1C_ == 1) {
                 strcat(StringTemp, label_get(0xe10 / 4));
-                strcat(StringTemp, ": ");
+                strcat(StringTemp, SocialWinColonSpaceText);
                 const int faction = field_A20_;
                 parse_set(Players[faction].is_leader_female, 0);
                 strcat(StringTemp, Players[faction].name_leader);
@@ -1038,7 +1042,7 @@ void CouncWin::on_redraw() {
             const int faction = field_A20_;
             parse_set(Players[faction].is_leader_female, 0);
             strcat(StringTemp, Players[faction].name_leader);
-            strcat(StringTemp, " ");
+            strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, label_get(
                 GameDataStateStorage.fields_.governor_faction_ == static_cast<int>(field_A28_)
                     ? 0x200 : 0x1fd));
@@ -1049,7 +1053,7 @@ void CouncWin::on_redraw() {
         if (field_A1C_ != 0) {
             strcat(StringTemp, label_get(0x7e0 / 4));
             if (field_A1C_ == 1) {
-                strcat(StringTemp, " ");
+                strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, "(");
                 strcat(StringTemp, label_get(0xe6c / 4));
                 strcat(StringTemp, ")");
@@ -1754,7 +1758,7 @@ void CouncWin::draw_leader(int factionID) {
         badgeRect.bottom -= 0x14;
         _itoa(leader_tech_[factionID], number, 10);
         strcat(StringTemp, number);
-        strcat(StringTemp, " ");
+        strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, StringTable.get(leader_tech_[factionID] != 1 ? Labels.strings_ptr[0x80C / 4]
                                                                   : Labels.strings_ptr[0x808 / 4]));
         CharUpperA(StringTemp);

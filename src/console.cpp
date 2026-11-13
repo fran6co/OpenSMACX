@@ -139,6 +139,9 @@ int __cdecl veh_init(int prototype, int faction, int x, int y);
 #include <cstdlib>
 #include <cstring>
 
+// Shared separator objects the image pushes instead of unit literals.
+extern char SocialWinColonSpaceText[];
+
 void __cdecl draw_cursor();                               // 0x0046AE00
 void __cdecl ambience_veh(int vehicle);
 
@@ -2164,7 +2167,7 @@ void Console::erase_landmark(int x_coord, int y_coord) {
 
     const int landmark_id = find_landmark(x_coord, y_coord, 1);
     if (landmark_id < 0) {
-// RECOVERY_LITERAL: v1 0x0068A994 0x0068A9A1 $SG63350 0x00516490
+// RECOVERY_LITERAL: v1 0x0068A994 0x0068A9A1 $SG63351 0x00516490
         NetMsgPrimary.pop("LANDMARKNONE", 5000, 0, nullptr);
         return;
     }
@@ -2175,7 +2178,7 @@ void Console::erase_landmark(int x_coord, int y_coord) {
     }
 
     parse_says(0, MapLandmark[landmark_id].name, -1, -1);
-// RECOVERY_LITERAL: v1 0x0068A9B0 0x0068A9BD $SG63353 0x00516490
+// RECOVERY_LITERAL: v1 0x0068A9B0 0x0068A9BD $SG63354 0x00516490
     if (X_pop("LANDMARKKILL", nullptr) == 0) {
         return;
     }
@@ -3883,25 +3886,25 @@ void Console::use_time_bonus() {
     if (!IsMultiplayerNet) return;
     if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) &&
         GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
-// RECOVERY_LITERAL: v1 0x0068AA48 0x0068AA50 $SG63811 0x00517060
+// RECOVERY_LITERAL: v1 0x0068AA48 0x0068AA50 $SG63812 0x00517060
         NetMsgPrimary.pop("SIMULNO", 5000, 0, nullptr);
         return;
     }
     const int faction = ConsoleGlobal.faction_id_;
     if (PlayersData[faction].time_bonus_count <= 0) {
         parse_num(0, TimeControl[selection].refresh);
-// RECOVERY_LITERAL: v1 0x0068AA50 0x0068AA5E $SG63814 0x00517060
+// RECOVERY_LITERAL: v1 0x0068AA50 0x0068AA5E $SG63815 0x00517060
         NetMsgPrimary.pop("NOTIMEBONUSES", 5000, 0, nullptr);
         return;
     }
     if (GameDataStateStorage.fields_.game_state_ & 0x800) {
-// RECOVERY_LITERAL: v1 0x0068AA60 0x0068AA6D $SG63816 0x00517060
+// RECOVERY_LITERAL: v1 0x0068AA60 0x0068AA6D $SG63817 0x00517060
         NetMsgPrimary.pop("NOBONUSATEND", 5000, 0, nullptr);
         return;
     }
     if ((GameDataStateStorage.fields_.game_state_ & 2) &&
         ((1u << faction_id_) & NetDaemonNet.primary_state_.trailing_words_[6])) {
-// RECOVERY_LITERAL: v1 0x0068AA70 0x0068AA7C $SG63818 0x00517060
+// RECOVERY_LITERAL: v1 0x0068AA70 0x0068AA7C $SG63819 0x00517060
         NetMsgPrimary.pop("NOBONUSDONE", 5000, 0, nullptr);
         return;
     }
@@ -4153,8 +4156,8 @@ void Console::retire_game() { // 0x00514B30
         (IsMultiplayerNet || IsMultiplayerPBEM) &&
         bit_count(static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) > 1) != 0;
     const char *const prompt = multiple_players ? retire_wimpout :
-// RECOVERY_LITERAL: v1 0x0068A828 0x0068A836 $SG63945 0x00514B30
-// RECOVERY_LITERAL: v1 0x0068A838 0x0068A845 $SG63946 0x00514B30
+// RECOVERY_LITERAL: v1 0x0068A828 0x0068A836 $SG63946 0x00514B30
+// RECOVERY_LITERAL: v1 0x0068A838 0x0068A845 $SG63947 0x00514B30
         (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) ? "REALLYRETIRE2" : "REALLYRETIRE";
     if (!X_pop(prompt, nullptr)) {
         return;
@@ -4187,7 +4190,7 @@ void Console::retire_game() { // 0x00514B30
     }
     GameRestartQueued = !closed_network;
     ExitTurnLoop = 1;
-// RECOVERY_LITERAL: v1 0x0068A848 0x0068A86C $SG63956 0x00514B30
+// RECOVERY_LITERAL: v1 0x0068A848 0x0068A86C $SG63957 0x00514B30
     log_say("Retire*****************************", 0, 0, 0);
 }
 
@@ -6973,7 +6976,7 @@ int Console::on_key_click(int a1, int a2) {
                 say_num(value);
                 strcat(StringTemp, " Veh ");
                 say_num(veh_id);
-                strcat(StringTemp, ": ");
+                strcat(StringTemp, SocialWinColonSpaceText);
                 strcat(StringTemp, get_adjective(vehicle.faction_id));
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, VehPrototypes[vehicle.proto_id].veh_name);

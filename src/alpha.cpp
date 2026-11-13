@@ -62,6 +62,10 @@ static char ArmorNameBadKey[] = "BADARMKEY";
 #include "textindex.h"
 #include "veh.h"
 
+// Shared separator objects the image pushes instead of unit literals.
+extern const char BufferJoinSpace[];
+extern char SocialWinCommaSpaceText[];
+
 // Equal text does not imply one original object: the pinned operands below
 // identify separate instances. These role names and const arrays describe the
 // reconstruction; original declarations, qualifiers and full bounds are unknown.
@@ -674,7 +678,7 @@ BOOL __cdecl read_basic_rules() {
     return false;
 }
 
-// RECOVERY_LITERAL: v1 0x0068F2FC 0x0068F30A $SG51293 0x00585E30
+// RECOVERY_LITERAL: v1 0x0068F2FC 0x0068F30A $SG51294 0x00585E30
 /*
 Purpose: Parse the #TECHNOLOGY section inside the alpha(x).txt with a duplicate entry check.
 // ORIGINAL: 0x00585E30 ?read_tech@@YAHXZ 0x00585E30-0x00585FDB BYTE_EXACT
@@ -2338,7 +2342,7 @@ static __forceinline void prefs_put_inline(LPCSTR key_name, int value, BOOL tgl_
     WritePrivateProfileStringA(PrefsSection, key_name, StringTemp, PrefsFile);
 }
 
-// RECOVERY_LITERAL: v1 0x00690208 0x00690215 $SG51984 0x0059E5D0
+// RECOVERY_LITERAL: v1 0x00690208 0x00690215 $SG51985 0x0059E5D0
 /*
 Purpose: Save the most common preferences from memory to the game's ini. 
 // ORIGINAL: 0x0059E5D0 ?prefs_save@@YAXH@Z 0x0059E5D0-0x0059E946 BYTE_EXACT
@@ -2385,7 +2389,7 @@ void __cdecl prefs_save(BOOL save_factions) {
     StringTemp[0] = 0;
     for (uint32_t i = 0; i < 7; i++) {
         say_num(AlphaIniPrefs.custom_world[i]);
-        strcat(StringTemp, ", ");
+        strcat(StringTemp, SocialWinCommaSpaceText);
     }
     prefs_put("Custom World", StringTemp);
     prefs_put("Time Controls", AlphaIniPrefs.time_controls, false);
@@ -2394,7 +2398,7 @@ void __cdecl prefs_save(BOOL save_factions) {
             if (ExpansionEnabled) {
                 StringTemp[0] = 0;
                 strcat(StringTemp, "Faction");
-                strcat(StringTemp, " ");
+                strcat(StringTemp, BufferJoinSpace);
                 say_num(i);
                 prefs_put(StringTemp, Players[i].filename);
             }

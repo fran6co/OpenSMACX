@@ -82,6 +82,11 @@
 #include "console_commands.h"
 #include "win_pointer.h"  // corner_the_market (0x4E2000) needs Win::grab_pointer's inline body visible in this TU
 
+// Shared separator objects the image pushes instead of unit literals.
+extern const char BufferJoinSpace[];
+extern char SocialWinColonSpaceText[];
+extern char SocialWinCommaSpaceText[];
+
 void __cdecl base_kill(int base_id);
 int __cdecl wants_to_speak(int faction_id, int other_faction_id);
 void __cdecl action_oblit(int vehicle_id, int base_id);
@@ -139,13 +144,6 @@ char *__cdecl get_noun_phrase(int phrase_id, int faction_id);            // 0x00
 int __cdecl popv(char *caption, const char *label, int vehicle, int flags);
 void __cdecl action_gate(int vehicle_id, int base_id);
 extern int __cdecl pop_wait();
-// stand-in: this redeclaration of faction.h's corner_market is a file-state
-// lever. It gives corner_the_market (0x004E2000) the image's ecx/edx choice for
-// its Rules + turn sum; without it the tie flips with unrelated TU content.
-int __cdecl corner_market(int faction_id);                   // 0x0059EE50 ?corner_market@@YAHH@Z
-// stand-in: a second file-state lever for the same tie, needed after the
-// editor_eliminate/editor_view/editor_diplomacy rewrites.
-int __cdecl eliminate_player(int faction_id, int a2);       // 0x005B3380
 
 // Original go_to writes this flag around the PlanWindow selection callback.
 // RECOVERY_OBJECT: v1 0x00688348 ?GoToPreviewActive@@3HA
@@ -697,11 +695,11 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
         }
         StringTemp[0] = '\0';
         strcat(StringTemp, VehPrototypes[Vehs[veh_id].proto_id].veh_name);
-        strcat(StringTemp, " ");
+        strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, "(");
         say_stats_2(StringTemp, Vehs[veh_id].proto_id);
         if (VehPrototypes[Vehs[veh_id].proto_id].ability_flags) {
-            strcat(StringTemp, " ");
+            strcat(StringTemp, BufferJoinSpace);
             for (int i = 0; i < MaxAbilityNum; i++) {
                 if (has_abil(Vehs[veh_id].proto_id, 1 << i)) {
                     strcat(StringTemp, StringTable.get(Ability[i].abbreviation));
@@ -839,11 +837,11 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
             }
             StringTemp[0] = '\0';
             strcat(StringTemp, VehPrototypes[proto_id].veh_name);
-            strcat(StringTemp, " ");
+            strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, "(");
             say_stats_2(StringTemp, proto_id);
             if (VehPrototypes[proto_id].ability_flags) {
-                strcat(StringTemp, " ");
+                strcat(StringTemp, BufferJoinSpace);
                 for (int j = 0; j < MaxAbilityNum; j++) {
                     if (has_abil(proto_id, 1 << j)) {
                         strcat(StringTemp, StringTable.get(Ability[j].abbreviation));
@@ -853,7 +851,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
             strcat(StringTemp, ")");
             strcat(StringTemp, "|");
             strcat(StringTemp, label_get(88));
-            strcat(StringTemp, ": ");
+            strcat(StringTemp, SocialWinColonSpaceText);
             char cost_text[80];
             _itoa(choice, cost_text, 10);
             strcat(StringTemp, cost_text);
@@ -884,11 +882,11 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
 
     StringTemp[0] = '\0';
     strcat(StringTemp, VehPrototypes[Vehs[veh_id].proto_id].veh_name);
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, "(");
     say_stats_2(StringTemp, Vehs[veh_id].proto_id);
     if (VehPrototypes[Vehs[veh_id].proto_id].ability_flags) {
-        strcat(StringTemp, " ");
+        strcat(StringTemp, BufferJoinSpace);
         for (int i = 0; i < MaxAbilityNum; i++) {
             if (has_abil(Vehs[veh_id].proto_id, 1 << i)) {
                 strcat(StringTemp, StringTable.get(Ability[i].abbreviation));
@@ -900,11 +898,11 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
 
     StringTemp[0] = '\0';
     strcat(StringTemp, VehPrototypes[choice].veh_name);
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, "(");
     say_stats_2(StringTemp, choice);
     if (VehPrototypes[choice].ability_flags) {
-        strcat(StringTemp, " ");
+        strcat(StringTemp, BufferJoinSpace);
         for (int i = 0; i < MaxAbilityNum; i++) {
             if (has_abil(choice, 1 << i)) {
                 strcat(StringTemp, StringTable.get(Ability[i].abbreviation));
@@ -2397,14 +2395,14 @@ void Console::go_to(int subject, int order, int grouped) {
             } else {
                 strcat(StringTemp, " ");
                 strcat(StringTemp, label_get(0xFA));
-                strcat(StringTemp, ": ");
+                strcat(StringTemp, SocialWinColonSpaceText);
                 char distance_text[80];
                 _itoa(cursor_dist(source_x, source_y, Bases[id].x, Bases[id].y), distance_text, 10);
                 strcat(StringTemp, distance_text);
                 if (sorting == 1) {
-                    strcat(StringTemp, ", ");
+                    strcat(StringTemp, SocialWinCommaSpaceText);
                     strcat(StringTemp, label_get(0x243));
-                    strcat(StringTemp, ": ");
+                    strcat(StringTemp, SocialWinColonSpaceText);
                     char size_text[80];
                     _itoa(Bases[id].population_size, size_text, 10);
                     strcat(StringTemp, size_text);
@@ -2973,8 +2971,8 @@ void Console::explore(int veh_id) {
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d8fa0.cpp", "source:src/alpha.h", "pinned:0x004D8FF4 dword value 3 store before supply_options at 0x004D8FFE", "source:src/netdaemon.h:channels_ at 0x1B68 and LockStateEntry::leading_words_[3] at 0xC", "source:src/console.cpp:supply_options reads the same source-owned action flags"], "reason": "Seed 004d8fa0 identifies the Console convoy order and lock lifecycle; typed Veh, Base and RulesResource records replace receiver and table offsets. The resource label run at 0x0094615C is Resource[0].name_plural, with the singular member selected for a yield of one. The original pre-panel dword value 3 write at 0x004D8FF4 targets the already-owned NetDaemonNet.channels_[0].leading_words_[3], whose singleton-relative offset 0x1B74 identifies 0x0093E904. Preserve that write before supply_options without adding duplicate storage or claiming full matching/acceptance."}
 // Original convoy pushes at 004D9057/004D911D select distinct writable strings.
 // Current NUL-terminated literals have separate complete COMDATs, not lifetime proof.
-// RECOVERY_LITERAL: v1 0x00688ED4 0x00688EDF $SG63960 0x004D8FA0
-// RECOVERY_LITERAL: v1 0x00688EE0 0x00688EEE $SG63968 0x004D8FA0
+// RECOVERY_LITERAL: v1 0x00688ED4 0x00688EDF $SG63950 0x004D8FA0
+// RECOVERY_LITERAL: v1 0x00688EE0 0x00688EEE $SG63958 0x004D8FA0
 void Console::convoy(int veh_id) {
     if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, 0) != 0) {
         return;
@@ -3228,10 +3226,10 @@ void Console::assemble() { // 0x004D95F0
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004D9970 ?editor_on@Console@@QAEXXZ 0x004D9970-0x004D9AC5 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d9970.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
-// RECOVERY_LITERAL: v1 0x00688F3C 0x00688F46 $SG64097 0x004D999D
-// RECOVERY_LITERAL: v1 0x00688F48 0x00688F53 $SG64099 0x004D99B4
-// RECOVERY_LITERAL: v1 0x00688F54 0x00688F5D $SG64102 0x004D99F9
-// RECOVERY_LITERAL: v1 0x00688F60 0x00688F6A $SG64104 0x004D9A11
+// RECOVERY_LITERAL: v1 0x00688F3C 0x00688F46 $SG64087 0x004D999D
+// RECOVERY_LITERAL: v1 0x00688F48 0x00688F53 $SG64089 0x004D99B4
+// RECOVERY_LITERAL: v1 0x00688F54 0x00688F5D $SG64092 0x004D99F9
+// RECOVERY_LITERAL: v1 0x00688F60 0x00688F6A $SG64094 0x004D9A11
 void Console::editor_on() {
     if ((IsMultiplayerNet || IsMultiplayerPBEM) &&
         !(GameDataStateStorage.fields_.game_state_ & 0x61) &&
@@ -3943,7 +3941,7 @@ void DipEdit::init(int faction_index) {
     // The window title: "<label 866> <faction noun>", upper-cased in place.
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(866));
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     const int faction = faction_index_;
     GenderDefault = Players[faction].noun_gender;
     PluralityDefault = Players[faction].is_noun_plural;
@@ -4920,7 +4918,7 @@ void Console::editor_edit_veh(int vehicle_id) {
 
     StringTemp[0] = '\0';
     strcat(StringTemp, VehPrototypes[Vehs[vehicle_id].proto_id].veh_name);
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, "(");
     append_decimal(StringTemp, vehicle_id);
     strcat(StringTemp, ")");

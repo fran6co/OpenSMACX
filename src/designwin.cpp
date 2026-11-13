@@ -65,6 +65,11 @@
 #include "rectangle_operations.h"
 #include <cstring>
 
+// Shared separator objects the image pushes instead of unit literals.
+extern const char BufferJoinSpace[];
+extern char SocialWinColonSpaceText[];
+extern char SocialWinCommaSpaceText[];
+
 // The part picker and its DesignWin callers share implementation visibility.
 // Their original normal exits expand SelectPartWin's close/reset and member
 // cleanup, while its ordinary standalone close/destructor identities also
@@ -1790,7 +1795,7 @@ void DesignWin::select_name() {
     // The original prompt token at 0x006838F4 is DESIGNNAME.
 // The retained prototype-name prompt identifies DESIGNNAME independently of measurement.
 // Bounds cover the literal payload, not surrounding allocation or lifetime.
-// RECOVERY_LITERAL: v1 0x006838F4 0x006838FF $SG61458 0x0043BE30
+// RECOVERY_LITERAL: v1 0x006838F4 0x006838FF $SG61460 0x0043BE30
     if (X_pop_ask("DESIGNNAME", 31, name, 0, 0) == 0) {
         if (strlen(ParseStrBuffer[0].str) == 0) {
             prototype_name_[0] = 0;
@@ -3970,7 +3975,7 @@ void DesignWin::draw_armor(int redraw) {
     if (Armor[protoArmorType_].mode < 3) {
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0xA6C / 4));
-        strcat(StringTemp, " ");
+        strcat(StringTemp, BufferJoinSpace);
         if (Armor[protoArmorType_].defense_rating < 0) {
             strcat(StringTemp, label_get(0x310 / 4));
         } else {
@@ -4007,7 +4012,7 @@ void DesignWin::draw_reactor(int redraw) {
     StringTemp[0] = 0;
     if (protoAbilityFlags_ & 0x8000) {
         strcat(StringTemp, label_get(0x584 / 4));
-        strcat(StringTemp, " ");
+        strcat(StringTemp, BufferJoinSpace);
     }
     char *name = Reactor[protoReactorType_ - 1].name;
     strcat(StringTemp, StringTable.get(name));
@@ -4034,7 +4039,7 @@ void DesignWin::draw_reactor(int redraw) {
     Buffer::set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x1E4 / 4));
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     char number[80];
     _itoa(protoReactorType_, number, 10);
     strcat(StringTemp, number);
@@ -4057,8 +4062,8 @@ void DesignWin::draw_special_1(int redraw) {
     title.right -= 5;
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x228 / 4));
-    strcat(StringTemp, " ");
-// RECOVERY_LITERAL: v1 0x00683554 0x00683556 $SG62154 0x00435B30
+    strcat(StringTemp, BufferJoinSpace);
+// RECOVERY_LITERAL: v1 0x00683554 0x00683556 $SG62152 0x00435B30
     strcat(StringTemp, "1"); // Original first special-ability title numeral.
     CharUpperA(StringTemp);
     Buffer::set_text_color(TextColourTable[156], TextColourTable[157], 1, 1);
@@ -4078,8 +4083,8 @@ void DesignWin::draw_special_1(int redraw) {
     strcat(StringTemp, "{");
     char *name = Ability[protoAbilityIDs_[0]].name;
     strcat(StringTemp, StringTable.get(name));
-    strcat(StringTemp, ": ");
-    strcat(StringTemp, " ");
+    strcat(StringTemp, SocialWinColonSpaceText);
+    strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, "}");
     char *description = Ability[protoAbilityIDs_[0]].description;
     strcat(StringTemp, StringTable.get(description));
@@ -4103,8 +4108,8 @@ void DesignWin::draw_special_2(int redraw) {
     title.right -= 5;
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x228 / 4));
-    strcat(StringTemp, " ");
-// RECOVERY_LITERAL: v1 0x00683560 0x00683562 $SG62170 0x00435DE0
+    strcat(StringTemp, BufferJoinSpace);
+// RECOVERY_LITERAL: v1 0x00683560 0x00683562 $SG62165 0x00435DE0
     strcat(StringTemp, "2"); // Original second special-ability title numeral.
     CharUpperA(StringTemp);
     Buffer::set_text_color(TextColourTable[156], TextColourTable[157], 1, 1);
@@ -4124,8 +4129,8 @@ void DesignWin::draw_special_2(int redraw) {
     strcat(StringTemp, "{");
     char *name = Ability[protoAbilityIDs_[1]].name;
     strcat(StringTemp, StringTable.get(name));
-    strcat(StringTemp, ": ");
-    strcat(StringTemp, " ");
+    strcat(StringTemp, SocialWinColonSpaceText);
+    strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, "}");
     char *description = Ability[protoAbilityIDs_[1]].description;
     strcat(StringTemp, StringTable.get(description));
@@ -4254,13 +4259,13 @@ void DesignWin::draw_vehicle(int redraw) {
         if (protoAbilityFlags_ & (1 << i)) {
             if (strlen(StringTable.get(Ability[i].abbreviation)) != 0) {
                 if (strlen(ability_names) != 0) {
-                    strcat(ability_names, ", ");               // 0x682e90
+                    strcat(ability_names, SocialWinCommaSpaceText);               // 0x682e90
                 }
                 strcat(ability_names, StringTable.get(Ability[i].abbreviation));
             }
         }
     }
-    strcat(StringTemp, " ");                              // 0x682820
+    strcat(StringTemp, BufferJoinSpace);                              // 0x682820
     strcat(StringTemp, ability_names);
     Buffer::write_cent_l(StringTemp, &dest);              // inline null-check wrapper
     stats_rect_ = dest;                                   // lea ecx,[esi+0xb3c] struct copy
@@ -4272,7 +4277,7 @@ void DesignWin::draw_vehicle(int redraw) {
         Buffer::set_font(&font2_, 0, 0, 0);
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x360 / 4));
-        strcat(StringTemp, ": ");                         // 0x682e94
+        strcat(StringTemp, SocialWinColonSpaceText);                         // 0x682e94
         _itoa(transport_val(protoChassisType_, protoAbilityFlags_, protoReactorType_),
               numbuf, 10);
         strcat(StringTemp, numbuf);
@@ -4327,13 +4332,13 @@ void DesignWin::draw_vehicle(int redraw) {
     StringTemp[0] = 0;
     strcat(StringTemp, "{");                              // 0x68357c
     strcat(StringTemp, label_get(0x160 / 4));
-    strcat(StringTemp, ": ");                             // 0x682e94
-    strcat(StringTemp, " ");                              // 0x682820
+    strcat(StringTemp, SocialWinColonSpaceText);                             // 0x682e94
+    strcat(StringTemp, BufferJoinSpace);                              // 0x682820
     strcat(StringTemp, "}");                              // 0x683580
     if (cost < protoReactorType_) {
         strcat(StringTemp, "(");                          // 0x682e9c
         strcat(StringTemp, label_get(0x1e8 / 4));
-        strcat(StringTemp, ": ");                         // 0x682e94
+        strcat(StringTemp, SocialWinColonSpaceText);                         // 0x682e94
         total_cost = protoReactorType_ * mineralCostFactor_;   // mov reactor; imul [factor]
         _itoa(total_cost, numbuf, 10);
         strcat(StringTemp, numbuf);
@@ -4440,8 +4445,8 @@ void DesignWin::draw_vehicle(int redraw) {
             StringTemp[0] = 0;
             strcat(StringTemp, "{");                          // 0x683588
             strcat(StringTemp, label_get(0x2fc / 4));
-            strcat(StringTemp, ": ");                         // 0x682e94
-            strcat(StringTemp, " ");                          // 0x682820
+            strcat(StringTemp, SocialWinColonSpaceText);                         // 0x682e94
+            strcat(StringTemp, BufferJoinSpace);                          // 0x682820
             strcat(StringTemp, "}");                          // 0x68358c
             _itoa(total_cost, numbuf, 10);
             strcat(StringTemp, numbuf);
@@ -4494,7 +4499,7 @@ void DesignWin::draw_vehicle(int redraw) {
         strcat(StringTemp, "{");                              // 0x683594
         strcat(StringTemp, preset_names_[8]);                 // +0x143d8
         strcat(StringTemp, "}");                              // 0x683598
-        strcat(StringTemp, " ");
+        strcat(StringTemp, BufferJoinSpace);
         if (Weapon[protoWeaponType_].offense_rating < 0) {
             strcat(StringTemp, label_get(0x310 / 4));
         } else if (Weapon[protoWeaponType_].offense_rating >= 0x63) {
@@ -4508,7 +4513,7 @@ void DesignWin::draw_vehicle(int redraw) {
         strcat(StringTemp, "{");                              // 0x6835a0
         strcat(StringTemp, preset_names_[14]);                // +0x144e6
         strcat(StringTemp, "}");                              // 0x6835a4
-        strcat(StringTemp, " ");
+        strcat(StringTemp, BufferJoinSpace);
         _itoa(Weapon[protoWeaponType_].cost, numbuf, 10);     // zero-extended byte
         strcat(StringTemp, numbuf);
         Buffer::write_l(StringTemp, x, y);                            // guarded, 0x5dcea0
@@ -4519,7 +4524,7 @@ void DesignWin::draw_vehicle(int redraw) {
     strcat(StringTemp, "{");                                  // 0x6835a8
     strcat(StringTemp, preset_names_[9]);                     // +0x14405
     strcat(StringTemp, "}");                                  // 0x6835ac
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     if (Armor[protoArmorType_].mode < 3) {                    // unsigned (jae)
         if (Armor[protoArmorType_].defense_rating < 0) {
             strcat(StringTemp, label_get(0x310 / 4));
@@ -4535,10 +4540,10 @@ void DesignWin::draw_vehicle(int redraw) {
     strcat(StringTemp, "{");                                  // 0x6835b0
     strcat(StringTemp, preset_names_[10]);                    // +0x14432
     strcat(StringTemp, "}");                                  // 0x6835b4
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, StringTable.get(Triad[Chassis[protoChassisType_].triad]));
     StringTemp[4] = 0;                                        // bug-for-bug truncation
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     _itoa(speed_proto(0x3f) / Rules.move_rate_roads, numbuf, 10);  // idiv [0x949738]
     strcat(StringTemp, numbuf);
     Buffer::write_l(StringTemp, x, y);
@@ -4548,7 +4553,7 @@ void DesignWin::draw_vehicle(int redraw) {
     strcat(StringTemp, "{");                                  // 0x6835b8
     strcat(StringTemp, preset_names_[11]);                    // +0x1445f
     strcat(StringTemp, "}");                                  // 0x6835bc
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     _itoa(protoReactorType_, numbuf, 10);
     strcat(StringTemp, numbuf);
     Buffer::write_l(StringTemp, x, y);
@@ -4558,7 +4563,7 @@ void DesignWin::draw_vehicle(int redraw) {
     strcat(StringTemp, "{");                                  // 0x6835c0
     strcat(StringTemp, preset_names_[12]);                    // +0x1448c
     strcat(StringTemp, "}");                                  // 0x6835c4
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     if (protoAbilityIDs_[0] < 0) {
         strcat(StringTemp, "-");                              // 0x6835c8
     } else {
@@ -4579,7 +4584,7 @@ void DesignWin::draw_vehicle(int redraw) {
     strcat(StringTemp, "{");                                  // 0x6835cc
     strcat(StringTemp, preset_names_[13]);                    // +0x144b9
     strcat(StringTemp, "}");                                  // 0x6835d0
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     if (protoAbilityIDs_[1] < 0) {                            // loaded into esi (this dead)
         strcat(StringTemp, "-");                              // 0x6835d4
     } else {
@@ -5387,7 +5392,7 @@ void DesignWin::draw_flash() {
         for (int i = 0; i < MaxAbilityNum; ++i) {
             if ((VehPrototypes[Vehs[unit_id].proto_id].ability_flags & (1 << i))
                 && strlen(StringTable.get(Ability[i].abbreviation)) != 0) {
-                strcat(StringTemp, ", ");
+                strcat(StringTemp, SocialWinCommaSpaceText);
                 char *abbreviation = Ability[i].abbreviation;
                 strcat(StringTemp, StringTable.get(abbreviation));
             }
@@ -5542,11 +5547,11 @@ void DesignWin::select_special(int which) {
 
         StringTemp[0] = 0;
         strcat(StringTemp, StringTable.get(Ability[i].name));
-        strcat(StringTemp, ": ");
+        strcat(StringTemp, SocialWinColonSpaceText);
         strcat(StringTemp, StringTable.get(Ability[i].description));
         strcat(StringTemp, "|");
         strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x58]));
-        strcat(StringTemp, ": ");
+        strcat(StringTemp, SocialWinColonSpaceText);
 
         int cost = Ability[i].cost_factor;
         if (cost < 0) {
@@ -5560,7 +5565,7 @@ void DesignWin::select_special(int which) {
                     ratio = 2;
                 }
                 say_num(ratio);
-                strcat(StringTemp, " ");
+                strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, "(");
                 strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x7C]));
                 strcat(StringTemp, "/");
@@ -5570,7 +5575,7 @@ void DesignWin::select_special(int which) {
             }
             case -2:
                 say_num(Weapon[protoWeaponType_].cost - 1);
-                strcat(StringTemp, " ");
+                strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, "(");
                 strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x7C]));
                 strcat(StringTemp, "-1");
@@ -5578,7 +5583,7 @@ void DesignWin::select_special(int which) {
                 break;
             case -3:
                 say_num(Armor[protoArmorType_].cost - 1);
-                strcat(StringTemp, " ");
+                strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, "(");
                 strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x55]));
                 strcat(StringTemp, "-1");
@@ -5586,7 +5591,7 @@ void DesignWin::select_special(int which) {
                 break;
             case -4:
                 say_num(Chassis[protoChassisType_].speed - 1);
-                strcat(StringTemp, " ");
+                strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, "(");
                 strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x2C5]));
                 strcat(StringTemp, "-1");
@@ -5595,7 +5600,7 @@ void DesignWin::select_special(int which) {
             case -5:
                 say_num(Armor[protoArmorType_].cost
                         + Weapon[protoWeaponType_].cost - 2);
-                strcat(StringTemp, " ");
+                strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, "(");
                 strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x7C]));
                 strcat(StringTemp, "+");
@@ -5606,7 +5611,7 @@ void DesignWin::select_special(int which) {
             case -6:
                 say_num(Chassis[protoChassisType_].speed
                         + Weapon[protoWeaponType_].cost - 2);
-                strcat(StringTemp, " ");
+                strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, "(");
                 strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x7C]));
                 strcat(StringTemp, "+");
@@ -5617,7 +5622,7 @@ void DesignWin::select_special(int which) {
             case -7:
                 say_num(Chassis[protoChassisType_].speed
                         + Armor[protoArmorType_].cost - 2);
-                strcat(StringTemp, " ");
+                strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, "(");
                 strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x55]));
                 strcat(StringTemp, "+");
@@ -5633,7 +5638,7 @@ void DesignWin::select_special(int which) {
             } else {
                 say_num(cost);
             }
-            strcat(StringTemp, " ");
+            strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, "(");
             strcat(StringTemp,
                    StringTable.get(Triad[Chassis[protoChassisType_].triad]));

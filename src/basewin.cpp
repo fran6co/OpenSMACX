@@ -1,4 +1,9 @@
-/*
+
+
+// Shared separator objects the image pushes instead of unit literals.
+extern const char BufferJoinSpace[];
+extern char SocialWinColonSpaceText[];
+extern char SocialWinCommaSpaceText[];/*
  * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
  * Copyright (C) 2013-2021 Brendan Casey
  *
@@ -290,12 +295,12 @@ void BaseWin::pop_click(int position, int, int, int) {
             // ops_bonus, psych_bonus and research_bonus are consecutive and
             // walked in step with Energy's three abbreviations.
             if ((&Citizen[i].ops_bonus)[k]) {
-                if (strlen(text)) strcat(text, ", ");
+                if (strlen(text)) strcat(text, SocialWinCommaSpaceText);
                 strcat(text, "+");
                 char number[80];
                 _itoa((&Citizen[i].ops_bonus)[k], number, 10);
                 strcat(text, number);
-                strcat(text, " ");
+                strcat(text, BufferJoinSpace);
                 strcat(text, StringTable.get(Energy[k].abbrev));
             }
         }
@@ -731,7 +736,7 @@ void BaseWin::draw_flash(int redraw_mode) {
     for (int ability = 0; ability < 29; ++ability) {
         if (has_abil(Vehs[vehicle_id].proto_id, 1 << ability)
             && strlen(StringTable.get(Ability[ability].abbreviation))) {
-            strcat(StringTemp, ", ");
+            strcat(StringTemp, SocialWinCommaSpaceText);
             strcat(StringTemp, StringTable.get(Ability[ability].abbreviation));
         }
     }
@@ -764,14 +769,14 @@ void BaseWin::draw_flash(int redraw_mode) {
             } else {
                 StringTemp[0] = 0;
                 strcat(StringTemp, label_get(0x1C / 4));
-                strcat(StringTemp, ": ");
+                strcat(StringTemp, SocialWinColonSpaceText);
                 const int moves = veh_moves(vehicle_id);
                 const int whole = moves / Rules.move_rate_roads;
                 const int fraction = moves % Rules.move_rate_roads;
                 _itoa(whole, number, 10);
                 strcat(StringTemp, number);
                 if (fraction) {
-                    strcat(StringTemp, " ");
+                    strcat(StringTemp, BufferJoinSpace);
                     _itoa(fraction, number, 10);
                     strcat(StringTemp, number);
                     strcat(StringTemp, "/");
@@ -784,7 +789,7 @@ void BaseWin::draw_flash(int redraw_mode) {
         if (Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].missile) {
             StringTemp[0] = 0;
             strcat(StringTemp, label_get(0x30C / 4));
-            strcat(StringTemp, ": ");
+            strcat(StringTemp, SocialWinColonSpaceText);
             const int next_x = MainInterfaceGlobal.write_l(StringTemp, x, y);
             StringTemp[0] = 0;
             const int remaining = veh_moves(vehicle_id);
@@ -817,7 +822,7 @@ void BaseWin::draw_flash(int redraw_mode) {
         if (veh_cargo(vehicle_id)) {
             StringTemp[0] = 0;
             strcat(StringTemp, label_get(0x360 / 4));
-            strcat(StringTemp, ": ");
+            strcat(StringTemp, SocialWinColonSpaceText);
             const int stacked = stack_veh(vehicle_id, 0);
             _itoa(veh_cargo(vehicle_id) - stacked, number, 10);
             strcat(StringTemp, number);
@@ -831,7 +836,7 @@ void BaseWin::draw_flash(int redraw_mode) {
     if (Vehs[vehicle_id].dmg_incurred) {
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x628 / 4));
-        strcat(StringTemp, ": ");
+        strcat(StringTemp, SocialWinColonSpaceText);
         const int next_x = MainInterfaceGlobal.write_l(StringTemp, x, y);
         MainInterfaceGlobal.set_text_color(0xFA, -1, 1, 1);
         if (Vehs[vehicle_id].dmg_incurred >= proto_power(vehicle_id) / 3)
@@ -861,7 +866,7 @@ void BaseWin::draw_flash(int redraw_mode) {
             StringTemp[0] = 0;
             strcat(StringTemp, "[");
             strcat(StringTemp, label_get(0x71C / 4));
-            strcat(StringTemp, ": ");
+            strcat(StringTemp, SocialWinColonSpaceText);
             _itoa(turns + 1, number, 10);
             strcat(StringTemp, number);
             strcat(StringTemp, "]");
@@ -1250,7 +1255,7 @@ void BaseWin::rename() {
     // The pinned BaseWin::rename call references bytes 52 45 4E 41 4D 45 00
     // at 0x682C70. This writable-data correspondence says nothing about
     // runtime immutability or linker selection.
-    // RECOVERY_LITERAL: v1 0x682C70 0x682C77 $SG62525 0x41A2B0
+    // RECOVERY_LITERAL: v1 0x682C70 0x682C77 $SG62518 0x41A2B0
     if (X_pop_ask("RENAME", 0x18, BaseCurrent->name_string, nullptr, 0)) {
         NetDaemonNet.unlock_base(BaseIDCurrentSelected);
         return;
@@ -2532,7 +2537,7 @@ void BaseWin::draw_production(int update_mode) {
             StringTemp[0] = 0;
             strcat(StringTemp, label_get(185));
             MainInterfaceGlobal.set_font(&unit_font, 0, 0, 0);
-            strcat(StringTemp, " ");
+            strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, "+");
             const int factor = prototype_factor(vehicle_id);
             _itoa(factor, number, 10);
@@ -2691,7 +2696,7 @@ void BaseWin::draw_production(int update_mode) {
                 strcat(StringTemp, label_get(49));
                 CharUpperA(StringTemp);
                 strcat(StringTemp, ":");
-                strcat(StringTemp, " ");
+                strcat(StringTemp, BufferJoinSpace);
                 if (gross_cost > current_minerals) {
                     const int remaining = gross_cost - current_minerals;
                     _itoa(range((BaseCurrent->mineral_surplus + remaining - 1)
@@ -3657,7 +3662,7 @@ void BaseWin::draw_energy_alloc(int update_mode) {
     Buffer::set_text_color(TextColourTable[86], TextColourTable[87], 1, 1);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(36));
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, label_get(654));
     CharUpperA(StringTemp);
     if (!wide) {
@@ -3700,7 +3705,7 @@ void BaseWin::draw_energy_alloc(int update_mode) {
     Buffer::write_right_l(StringTemp, &text);
     row.left = text.right;
     StringTemp[0] = 0;
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, label_get(36));
     CharUpperA(StringTemp);
     strcat(StringTemp, "  +");
@@ -3718,10 +3723,10 @@ void BaseWin::draw_energy_alloc(int update_mode) {
     row.left = text.right;
     Buffer::set_text_color(TextColourTable[84], TextColourTable[85], 1, 1);
     StringTemp[0] = 0;
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, label_get(95));
     CharUpperA(StringTemp);
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, "=");
     row.left = Buffer::write_l(StringTemp, &row);
     text.right = row.left + 29;
@@ -3765,7 +3770,7 @@ void BaseWin::draw_energy_alloc(int update_mode) {
     Buffer::write_right_l(StringTemp, &text);
     row.left = text.right;
     StringTemp[0] = 0;
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, label_get(36));
     CharUpperA(StringTemp);
     strcat(StringTemp, "  +");
@@ -3780,10 +3785,10 @@ void BaseWin::draw_energy_alloc(int update_mode) {
     row.left = text.right;
     Buffer::set_text_color(TextColourTable[84], TextColourTable[85], 1, 1);
     StringTemp[0] = 0;
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, label_get(95));
     CharUpperA(StringTemp);
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, "=");
     row.left = Buffer::write_l(StringTemp, &row);
     text.right = row.left + 29;
@@ -3827,7 +3832,7 @@ void BaseWin::draw_energy_alloc(int update_mode) {
     Buffer::write_right_l(StringTemp, &text);
     row.left = text.right;
     StringTemp[0] = 0;
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, label_get(36));
     CharUpperA(StringTemp);
     strcat(StringTemp, "  +");
@@ -3842,10 +3847,10 @@ void BaseWin::draw_energy_alloc(int update_mode) {
     row.left = text.right;
     Buffer::set_text_color(TextColourTable[84], TextColourTable[85], 1, 1);
     StringTemp[0] = 0;
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, label_get(95));
     CharUpperA(StringTemp);
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, "=");
     row.left = Buffer::write_l(StringTemp, &row);
     text.right = row.left + 29;
@@ -3969,7 +3974,7 @@ void BaseWin::draw_garrison(int update_mode) {
         if ((GameDataStateStorage.fields_.game_state_ & 0x40)
             && (GameDataStateStorage.fields_.game_state_ & 0x1000)) {
             char number[80];
-            strcat(StringTemp, " ");
+            strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, "(");
             _itoa(vehicle, number, 10);
             strcat(StringTemp, number);
@@ -5591,7 +5596,7 @@ void BaseWin::draw_info(int update_mode) {
     StringTemp[0] = 0;
     strcat(StringTemp, BaseCurrent->name_string);
     if (BaseCurrent->faction_id_current != ConsoleGlobal.faction_id_) {
-        strcat(StringTemp, " ");
+        strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, "(");
         const int faction = BaseCurrent->faction_id_current;
         parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
@@ -5648,7 +5653,7 @@ void BaseWin::draw_misc(int update_mode) {
 
     StringTemp[0] = 0;
     Buffer::set_text_color(TextColourTable[106], TextColourTable[107], 1, 1);
-    strcat(StringTemp, " ");
+    strcat(StringTemp, BufferJoinSpace);
     say_year(StringTemp);
     Buffer::write_l(StringTemp, x, y);
 
@@ -5657,7 +5662,7 @@ void BaseWin::draw_misc(int update_mode) {
     const int faction = BaseCurrent->faction_id_current;
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(36));
-    strcat(StringTemp, ": ");
+    strcat(StringTemp, SocialWinColonSpaceText);
     Buffer::set_text_color(TextColourTable[104], TextColourTable[105], 1, 1);
     x = Buffer::write_l(StringTemp, x, y);
 
@@ -5673,8 +5678,8 @@ void BaseWin::draw_misc(int update_mode) {
     x = panel.left;
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(958));
-    strcat(StringTemp, ": ");
-    strcat(StringTemp, " ");
+    strcat(StringTemp, SocialWinColonSpaceText);
+    strcat(StringTemp, BufferJoinSpace);
     _itoa(BaseCurrent->eco_damage, number, 10);
     strcat(StringTemp, number);
     if (BaseCurrent->eco_damage == 0) {
@@ -5866,37 +5871,37 @@ draw_map:
         StringTemp[0] = 0;
         if (BaseCurrent->event & 0x200) {
             strcat(StringTemp, label_get(760));
-            strcat(StringTemp, ": ");
+            strcat(StringTemp, SocialWinColonSpaceText);
             strcat(StringTemp, label_get(758));
             Buffer::set_text_color(TextColourTable[90], TextColourTable[91], 1, 1);
         } else if (BaseCurrent->event & 0x400) {
             strcat(StringTemp, label_get(761));
-            strcat(StringTemp, ": ");
+            strcat(StringTemp, SocialWinColonSpaceText);
             strcat(StringTemp, label_get(759));
             Buffer::set_text_color(TextColourTable[90], TextColourTable[91], 1, 1);
         } else if (BaseCurrent->event & 0x800) {
             strcat(StringTemp, label_get(762));
-            strcat(StringTemp, ": ");
+            strcat(StringTemp, SocialWinColonSpaceText);
             strcat(StringTemp, label_get(758));
             Buffer::set_text_color(TextColourTable[94], TextColourTable[95], 1, 1);
         } else if (BaseCurrent->event & 0x1000) {
             strcat(StringTemp, label_get(763));
-            strcat(StringTemp, ": ");
+            strcat(StringTemp, SocialWinColonSpaceText);
             strcat(StringTemp, label_get(759));
             Buffer::set_text_color(TextColourTable[94], TextColourTable[95], 1, 1);
         } else if (BaseCurrent->event & 0x2000) {
             strcat(StringTemp, label_get(764));
-            strcat(StringTemp, ": ");
+            strcat(StringTemp, SocialWinColonSpaceText);
             strcat(StringTemp, label_get(758));
             Buffer::set_text_color(TextColourTable[86], TextColourTable[87], 1, 1);
         } else if (BaseCurrent->event & 0x4000) {
             strcat(StringTemp, label_get(765));
-            strcat(StringTemp, ": ");
+            strcat(StringTemp, SocialWinColonSpaceText);
             strcat(StringTemp, label_get(759));
             Buffer::set_text_color(TextColourTable[86], TextColourTable[87], 1, 1);
         } else if (GameDataStateStorage.fields_.dust_cloud_duration_ > 0) {
             strcat(StringTemp, label_get(766));
-            strcat(StringTemp, ": ");
+            strcat(StringTemp, SocialWinColonSpaceText);
             strcat(StringTemp, label_get(759));
             Buffer::set_text_color(TextColourTable[86], TextColourTable[87], 1, 1);
         }
@@ -6092,7 +6097,7 @@ void BaseWin::draw_commerce(int update_mode) {
             strcat(StringTemp, "+");
             _itoa(score, amount, 10);
             strcat(StringTemp, amount);
-            strcat(StringTemp, " ");
+            strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, label_get(36));
             CharUpperA(StringTemp);
             Buffer::write_cent_l(StringTemp, &report);
@@ -6127,7 +6132,7 @@ void BaseWin::draw_commerce(int update_mode) {
             CharUpperA(StringTemp);
             if (PlayersData[faction].sanction_turns == 0
                 && PlayersData[partner].sanction_turns == 0) {
-                strcat(StringTemp, ": ");
+                strcat(StringTemp, SocialWinColonSpaceText);
                 strcat(StringTemp, "+");
                 _itoa(BaseCommerceReceipts[slot], amount, 10);
                 strcat(StringTemp, amount);
@@ -6147,10 +6152,10 @@ void BaseWin::draw_commerce(int update_mode) {
                 if (BaseCommercePartnerReceipts[slot] != BaseCommerceReceipts[slot]) {
                     Buffer::set_text_color(ChatItemIdTable[partner], -1, 1, 1);
                     StringTemp[0] = 0;
-                    strcat(StringTemp, " ");
+                    strcat(StringTemp, BufferJoinSpace);
                     strcat(StringTemp, "(");
                     strcat(StringTemp, label_get(648));
-                    strcat(StringTemp, " ");
+                    strcat(StringTemp, BufferJoinSpace);
                     strcat(StringTemp, "+");
                     char partner_amount[80];
                     _itoa(BaseCommercePartnerReceipts[slot], partner_amount, 10);
@@ -6161,7 +6166,7 @@ void BaseWin::draw_commerce(int update_mode) {
             } else {
                 Buffer::set_text_color(TextColourTable[110], TextColourTable[111], 1, 1);
                 strcat(StringTemp, label_get(450));
-                strcat(StringTemp, " ");
+                strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, "(");
                 char turns[80];
                 _itoa(PlayersData[faction].sanction_turns > PlayersData[partner].sanction_turns
@@ -6314,7 +6319,7 @@ void BaseWin::draw_nutrients(int update_mode) {
     strcat(StringTemp, label_get(BaseCurrent->nutrient_surplus < 0 ? 51 : 47));
     if (BaseCurrent->nutrient_surplus <= 0 && remaining > 0) {
         if (BaseCurrent->nutrient_surplus == 0) {
-            strcat(StringTemp, ": ");
+            strcat(StringTemp, SocialWinColonSpaceText);
             strcat(StringTemp, "-");
             strcat(StringTemp, label_get(50));
             strcat(StringTemp, "-");
@@ -6324,10 +6329,10 @@ void BaseWin::draw_nutrients(int update_mode) {
     } else {
         char number[80];
         turns = range(turns, 0, 9999);
-        strcat(StringTemp, ": ");
+        strcat(StringTemp, SocialWinColonSpaceText);
         _itoa(turns, number, 10);
         strcat(StringTemp, number);
-        strcat(StringTemp, " ");
+        strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, turns != 1 ? label_get(49) : label_get(48));
     }
     Buffer::write_cent_text(StringTemp, content.left,
@@ -7036,7 +7041,7 @@ void BaseWin::draw_facilities(int update_mode) {
         } else Buffer::set_text_color(TextColourTable[122], TextColourTable[123], 1, 1);
         strcat(StringTemp, StringTable.get(Facility[facility].name));
         if (facility == 8 && (BaseCurrent->state & 0x400u)) {
-            strcat(StringTemp, " "); strcat(StringTemp, "(");
+            strcat(StringTemp, BufferJoinSpace); strcat(StringTemp, "(");
             strcat(StringTemp, label_get(0x3A0 / 4)); strcat(StringTemp, ")");
         }
         const int width = content.right - content.left;

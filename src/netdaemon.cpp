@@ -1606,6 +1606,10 @@ int NetDaemon::end_of_event(int faction_id, int turn_value) {
 
 #include "netdaemon_message_record.h"
 
+// Shared separator objects the image pushes instead of unit literals.
+extern const char BufferJoinSpace[];
+extern char SocialWinColonSpaceText[];
+
 // Borrowed wire view over the layout already owned by message_data's sender.
 // Read one field at a time: MOVE packets have only two payload words, while
 // AIRDROP/DOUBLE CROSS have three, and diplomacy commands can use all four.
@@ -2118,12 +2122,12 @@ void __cdecl rebuild_base_bits() {
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00532C30 0x00532DA4 0x00532DC0 0x00532C47
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x00532C30 0x00532DC0 0x00532DF1 0x00532C41
-// RECOVERY_LITERAL: v1 0x0068C594 0x0068C5A5 $SG64093 0x00532C30
-// RECOVERY_LITERAL: v1 0x0068C5C8 0x0068C5DA $SG64099 0x00532C30
-// RECOVERY_LITERAL: v1 0x0068C584 0x0068C592 $SG64091 0x00532C30
-// RECOVERY_LITERAL: v1 0x0068C5A8 0x0068C5B7 $SG64095 0x00532C30
-// RECOVERY_LITERAL: v1 0x0068C5B8 0x0068C5C7 $SG64097 0x00532C30
-// RECOVERY_LITERAL: v1 0x0068C5DC 0x0068C5EB $SG64101 0x00532C30
+// RECOVERY_LITERAL: v1 0x0068C594 0x0068C5A5 $SG64094 0x00532C30
+// RECOVERY_LITERAL: v1 0x0068C5C8 0x0068C5DA $SG64100 0x00532C30
+// RECOVERY_LITERAL: v1 0x0068C584 0x0068C592 $SG64092 0x00532C30
+// RECOVERY_LITERAL: v1 0x0068C5A8 0x0068C5B7 $SG64096 0x00532C30
+// RECOVERY_LITERAL: v1 0x0068C5B8 0x0068C5C7 $SG64098 0x00532C30
+// RECOVERY_LITERAL: v1 0x0068C5DC 0x0068C5EB $SG64102 0x00532C30
 // ORIGINAL: 0x00532C30 ?synch_display@@YAXHHHH@Z 0x00532C30-0x00532DA2 FILE BYTE_EXACT
 // size      370 bytes
 // prototype 
@@ -2233,7 +2237,7 @@ void __cdecl synch_display(int stage, int arg1, int arg2, int arg3) {
 // (2026-09-04).
 // Pinned arguments identify these NUL-terminated keys in the original;
 // the literal spans cover their text and terminators, not surrounding storage.
-// RECOVERY_LITERAL: v1 0x0068C340 0x0068C34C $SG64112 0x00531020
+// RECOVERY_LITERAL: v1 0x0068C340 0x0068C34C $SG64113 0x00531020
 int NetDaemon::lock_veh(int *veh_id, int target, int payload_1C,
                         int payload_20, int payload_18) {
     if (IsMultiplayerNet == 0) {
@@ -5021,10 +5025,10 @@ move_veh_ack:
             strcat(StringTemp, get_player_name(sender_id));
         } else {
             strcat(StringTemp, get_title_inline(packet->faction_));
-            strcat(StringTemp, " ");
+            strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, get_name_inline(packet->faction_));
         }
-        strcat(StringTemp, ": ");
+        strcat(StringTemp, SocialWinColonSpaceText);
         strcat(StringTemp, message + 0x10);
         MainInterfaceGlobal.chat(StringTemp, packet->faction_);
         break;

@@ -28,6 +28,9 @@
 #include "factionprofilewin.h"
 #include "rectangle_operations.h"
 
+// Shared separator objects the image pushes instead of unit literals.
+extern const char BufferJoinSpace[];
+
 extern int TextColourTable[195];
 extern uint32_t EditBoxDefaultB20;
 extern uint32_t EditBoxDefaultB24;
@@ -508,21 +511,21 @@ void __cdecl time_controls_dialog(Popup *popup) {
             char unit_text[80];
             _itoa(TimeControl[index].turn, turn_text, 10);
             strcat(StringTemp, turn_text);
-            strcat(StringTemp, " ");
+            strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, label_get(0x468 / 4));
-            strcat(StringTemp, " ");
+            strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, label_get(0x1094 / 4));
-            strcat(StringTemp, " ");
+            strcat(StringTemp, BufferJoinSpace);
 
             _itoa(TimeControl[index].base, base_text, 10);
             strcat(StringTemp, base_text);
-            strcat(StringTemp, " ");
+            strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, label_get(0x46C / 4));
             strcat(StringTemp, " + ");
 
             _itoa(TimeControl[index].unit, unit_text, 10);
             strcat(StringTemp, unit_text);
-            strcat(StringTemp, " ");
+            strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, label_get(0x470 / 4));
         } else {
             strcat(StringTemp, label_get(0x474 / 4));
