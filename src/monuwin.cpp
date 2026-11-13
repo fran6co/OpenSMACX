@@ -51,6 +51,17 @@ char MonuWinWindowedTitle[4];
 // RECOVERY_OBJECT: v2 0x007FD640 0x007FD644 ?MonuWinFullscreenTitle@@3PADA 0x00472230
 char MonuWinFullscreenTitle[4];
 
+// WORKAROUND(decl): the image schedules each icon rectangle's four stores
+// between the next extract call's argument pushes, which an inline
+// four-store helper reproduces and plain member stores do not; the original
+// helper's name and home are unknown.
+static inline void monu_set_rect(RECT *rect, int left, int top, int right, int bottom) {
+  rect->left = left;
+  rect->top = top;
+  rect->right = right;
+  rect->bottom = bottom;
+}
+
 // Main initialization pass.  The coordinate tables and sprite source
 // rectangles below are the observed constructor-owned UI data; all storage
 // is addressed through its recovered members rather than through self+offset.
@@ -279,35 +290,17 @@ int MonuWin::init() {
     }
   }
   sprites_3244_[0].extract(&temporary, WinFillColour, 0x116, 0x41, 0x4E, 0x3F, 0);
-  icon_rects_[0].left = 0xFD;
-  icon_rects_[0].top = 0x1F4;
-  icon_rects_[0].right = 0x14B;
-  icon_rects_[0].bottom = 0x233;
+  monu_set_rect(&icon_rects_[0], 0xFD, 0x1F4, 0x14B, 0x233);
   sprites_3244_[1].extract(&temporary, WinFillColour, 0x165, 0x41, 0x49, 0x3F, 0);
-  icon_rects_[1].left = 0x1DC;
-  icon_rects_[1].top = 0x1F4;
-  icon_rects_[1].right = 0x225;
-  icon_rects_[1].bottom = 0x233;
+  monu_set_rect(&icon_rects_[1], 0x1DC, 0x1F4, 0x225, 0x233);
   sprites_3244_[2].extract(&temporary, WinFillColour, 1, 0x41, 0x8D, 0x3F, 0);
-  icon_rects_[2].left = 0xBE;
-  icon_rects_[2].top = 0x1F4;
-  icon_rects_[2].right = 0x14B;
-  icon_rects_[2].bottom = 0x233;
+  monu_set_rect(&icon_rects_[2], 0xBE, 0x1F4, 0x14B, 0x233);
   sprites_3244_[3].extract(&temporary, WinFillColour, 0x8F, 0x41, 0x86, 0x3F, 0);
-  icon_rects_[3].left = 0x1DC;
-  icon_rects_[3].top = 0x1F4;
-  icon_rects_[3].right = 0x262;
-  icon_rects_[3].bottom = 0x233;
+  monu_set_rect(&icon_rects_[3], 0x1DC, 0x1F4, 0x262, 0x233);
   sprites_3244_[4].extract(&temporary, WinFillColour, 1, 1, 0xCC, 0x3F, 0);
-  icon_rects_[4].left = 0x7F;
-  icon_rects_[4].top = 0x1F4;
-  icon_rects_[4].right = 0x14B;
-  icon_rects_[4].bottom = 0x233;
+  monu_set_rect(&icon_rects_[4], 0x7F, 0x1F4, 0x14B, 0x233);
   sprites_3244_[5].extract(&temporary, WinFillColour, 0xCE, 1, 0xD5, 0x3F, 0);
-  icon_rects_[5].left = 0x1DC;
-  icon_rects_[5].top = 0x1F4;
-  icon_rects_[5].right = 0x2B1;
-  icon_rects_[5].bottom = 0x233;
+  monu_set_rect(&icon_rects_[5], 0x1DC, 0x1F4, 0x2B1, 0x233);
   offset_rect(&icon_rects_[0], client_left_, client_top_);
   offset_rect(&icon_rects_[1], client_left_, client_top_);
   offset_rect(&icon_rects_[2], client_left_, client_top_);

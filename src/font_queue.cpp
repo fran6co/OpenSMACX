@@ -700,9 +700,9 @@ Font *BaseDrawFont;
 // symbol    ?base_draw@@YAXPAVBuffer@@HHHHH@Z
 void __cdecl base_draw(Buffer *target, int base_id, int pixel_x, int pixel_y,
                        int style, int flags) {
-    int faction = Bases[base_id].faction_id_current;
-    int y = Bases[base_id].y;
     int x = Bases[base_id].x;
+    int y = Bases[base_id].y;
+    int faction = Bases[base_id].faction_id_current;
     RECT rect;
 
     // At distant zoom, show the base as a colored lozenge.
@@ -787,9 +787,8 @@ void __cdecl base_draw(Buffer *target, int base_id, int pixel_x, int pixel_y,
                                  BaseDrawFont->width(measure) + 5,
                                  BaseDrawFont->pixel_height() + 4);
 
-        int occupied = veh_who(x, y) >= 0;
-        int revealed = 0;
-        if (!occupied) {
+        int revealed = veh_who(x, y) >= 0;
+        if (!revealed) {
             if ((PlayersData[Bases[base_id].faction_id_current]
                      .diplo_treaties[ConsoleGlobal.faction_id_] & 1)
                 || spying(Bases[base_id].faction_id_current)

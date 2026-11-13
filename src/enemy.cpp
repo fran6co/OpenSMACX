@@ -3524,7 +3524,7 @@ int __cdecl air_power(int veh_id, int a2, int a3, int *a4, int *a5) {
                         pods++;
                     }
                     if (pods) {
-                        if ((1 << owner) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) {
+                        if (is_human(owner)) {
                             weight *= 2;
                         }
                         if (PlayersData[owner].ranking == 7) {

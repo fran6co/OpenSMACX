@@ -539,7 +539,7 @@ void __cdecl monolith(int veh_id) {
             veh_skip(veh_id);
             draw_tile(x, y, 2);
             if (faction == ConsoleGlobal.faction_id_) {
-                NetMsgPrimary.pop("MONOLITHHEAL", 5000, 0, "monolith_sm.pcx");
+                veh_battle_msg("MONOLITHHEAL", "monolith_sm.pcx");
                 GameDataStateStorage.fields_.game_state_ |= 4u;
             }
         } else if (!(Vehs[veh_id].state & VSTATE_MONOLITH_UPGRADED)) {
@@ -547,7 +547,7 @@ void __cdecl monolith(int veh_id) {
             if (faction == ConsoleGlobal.faction_id_
                 && !(GameDataStateStorage.fields_.game_more_preferences_ & 0x800u)
                 && !IsMultiplayerNet) {
-                NetMsgPrimary.pop("SEEMONOLITH", -5000, 0, "monolith_sm.pcx");
+                NetMsg::pop("SEEMONOLITH", "monolith_sm.pcx");
                 GameDataStateStorage.fields_.game_state_ |= 4u;
             }
         }
@@ -595,9 +595,9 @@ void __cdecl monolith(int veh_id) {
         if (Vehs[veh_id].state & VSTATE_MONOLITH_UPGRADED || morale_veh(veh_id, 1, 0) >= 6) {
             if (faction == ConsoleGlobal.faction_id_) {
                 if (GameDataStateStorage.fields_.game_more_preferences_ & 0x800u) {
-                    NetMsgPrimary.pop("MONOLITHHEAL", 5000, 0, "monolith_sm.pcx");
+                    veh_battle_msg("MONOLITHHEAL", "monolith_sm.pcx");
                 } else {
-                    NetMsgPrimary.pop("MONOLITHHEAL", -5000, 0, "monolith_sm.pcx");
+                    NetMsg::pop("MONOLITHHEAL", "monolith_sm.pcx");
                 }
                 GameDataStateStorage.fields_.game_state_ |= 4u;
             }
@@ -636,17 +636,17 @@ void __cdecl monolith(int veh_id) {
             _itoa(value != 0, decimal, 10);
             strcat(StringTemp, decimal);
             if (GameDataStateStorage.fields_.game_more_preferences_ & 0x800u) {
-                NetMsgPrimary.pop(StringTemp, 5000, 0, "monolith_sm.pcx");
+                veh_battle_msg(StringTemp, "monolith_sm.pcx");
             } else {
-                NetMsgPrimary.pop(StringTemp, -5000, 0, "monolith_sm.pcx");
+                NetMsg::pop(StringTemp, "monolith_sm.pcx");
             }
             GameDataStateStorage.fields_.game_state_ |= 4u;
         }
     } else if (faction == ConsoleGlobal.faction_id_) {
         if (GameDataStateStorage.fields_.game_more_preferences_ & 0x800u) {
-            NetMsgPrimary.pop("MONOLITHNO", 5000, 0, "monolith_sm.pcx");
+            veh_battle_msg("MONOLITHNO", "monolith_sm.pcx");
         } else {
-            NetMsgPrimary.pop("MONOLITHNO", -5000, 0, "monolith_sm.pcx");
+            NetMsg::pop("MONOLITHNO", "monolith_sm.pcx");
         }
     }
 }
@@ -2125,6 +2125,9 @@ static inline int wrap_map_x_flat_first(int x) {
     return x;
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0057A660 0x0057CDE8 0x0057CE30 0x0057A9BF
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0057A660 0x0057CE30 0x0057CE40 0x0057C451
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0057A660 0x0057CE40 0x0057CE50 0x0057C531
 // ORIGINAL: 0x0057A660 ?goody_box@@YAHHH@Z 0x0057A660-0x0057CDE6
 // RECOVERY_BINDING: v1 {"evidence": ["task:goody-box-owner", "pinned:57A660..57CDE6 whole dispatcher; original two-int ABI, unused second parameter and seed findings preserved.", "pinned:A8D2 live vehicle x/y retry reload; spawned vehicle prototype/chassis triad read after veh_init; separate event9 and cases12..17 radius paths.", "pinned:B4D8..B874 relocation stack_veh/stack_put/render/focus/spot_all order;CC16..CDE6 retry/resource/overflow gates;A9A1 GameRules reload.", "source:existing Veh/PlayerData/Base/Map/technology declarations and bounded shared radius arrays; map-window public draw_tile_fixup APIs own original render calls.", "historical seed:src/unrecovered/0057a660.cpp mapping and parsed dispatch findings retained."], "reason": "Recover the complete original pod outcome dispatcher through source-owned vehicle, faction, base, technology and map state; retain original identity/spans and historical seed findings, without executable calls or raw storage aliases."}
 // Rewritten from the image 2026-11-08 (0.86 full-text): the redirect cases continue a real
@@ -2207,8 +2210,8 @@ reroll:
         if (is_local) {
             parse_num(0, amount);
             g_FX.play(0x16);
-            NetMsgPrimary.pop(is_sea ? "GOODYHYDROGEN" : "GOODYURANIUM", -5000, 0,
-                              is_sea ? 0 : "supply_sm.pcx");
+            NetMsg::pop(is_sea ? "GOODYHYDROGEN" : "GOODYURANIUM",
+                        is_sea ? 0 : "supply_sm.pcx");
             g_FX.fade(0x16);
             ConsoleInfoWin.on_redraw();
         }
@@ -2226,7 +2229,7 @@ reroll:
         }
         if (is_local) {
             g_FX.play(0x26);
-            NetMsgPrimary.pop("GOODYRIVER", 5000, 0, "supply_sm.pcx");
+            veh_battle_msg("GOODYRIVER", "supply_sm.pcx");
         }
         bit_set(x, y, 0x100, 1);
         world_climate();
@@ -2246,7 +2249,7 @@ reroll:
             }
             if (is_local) {
                 g_FX.play(0x16);
-                NetMsgPrimary.pop(is_sea ? "GOODYSONAR" : "GOODYVIEW", 5000, 0, "supply_sm.pcx");
+                veh_battle_msg(is_sea ? "GOODYSONAR" : "GOODYVIEW", "supply_sm.pcx");
                 g_FX.fade(0x16);
                 draw_map(1);
             }
@@ -2285,7 +2288,7 @@ reroll:
         world_climate();
         draw_map(1);
         if (is_local) {
-            NetMsgPrimary.pop("GOODYQUAKE", -5000, 0, "quake_sm.pcx");
+            NetMsg::pop("GOODYQUAKE", "quake_sm.pcx");
             if (tut_check(0x800)) {
                 TutorialWindow.tut_map("TERRAFORM", x, y, -1, 0, 0, -1, -1);
             }
@@ -2342,8 +2345,8 @@ reroll:
         }
         if (attempts >= 1000) goto reroll;
         if (is_local) {
-            NetMsgPrimary.pop(is_sea ? "GOODYWAVE" : "GOODYGATE", -5000, 0,
-                              is_sea ? 0 : "stars_sm.pcx");
+            NetMsg::pop(is_sea ? "GOODYWAVE" : "GOODYGATE",
+                        is_sea ? 0 : "stars_sm.pcx");
         }
         Vehs[veh_id].moves_expended = 0;
         Vehs[veh_id].order = 0;
@@ -2388,9 +2391,9 @@ reroll:
                     if (is_local) {
                         parse_says(1, Bases[base_id].name_string, -1, -1);
                         if (is_sea) {
-                            NetMsgPrimary.pop("GOODYBUILD", -5000, 0, "indbm_sm.pcx");
+                            NetMsg::pop("GOODYBUILD", "indbm_sm.pcx");
                         } else {
-                            NetMsgPrimary.pop("GOODYBUILD", -5000, 0, "indbm_sm.pcx");
+                            NetMsg::pop("GOODYBUILD", "indbm_sm.pcx");
                         }
                     }
                     return 0;
@@ -2435,9 +2438,9 @@ reroll:
         draw_tile(x, y, 2);
         if (is_local) {
             if (is_sea) {
-                NetMsgPrimary.pop("GOODYARTIFACT", -5000, 0, "art_dis_sm.pcx");
+                NetMsg::pop("GOODYARTIFACT", "art_dis_sm.pcx");
             } else {
-                NetMsgPrimary.pop("GOODYARTIFACT", -5000, 0, "art_dis_sm.pcx");
+                NetMsg::pop("GOODYARTIFACT", "art_dis_sm.pcx");
             }
             g_FX.fade(0x1B);
         }
@@ -2467,7 +2470,7 @@ reroll:
         }
         if (is_local) {
             g_FX.play(9);
-            NetMsgPrimary.pop("GOODYFUNGUS", -5000, 0, "fung_sm.pcx");
+            NetMsg::pop("GOODYFUNGUS", "fung_sm.pcx");
         }
         site_radius(x, y, 0);
         for (int i = 0; i < 9; i++) {
@@ -2582,14 +2585,14 @@ reroll:
             parse_says(0, VehPrototypes[unit_id].veh_name, -1, -1);
             if (unit_id == BSC_BATTLE_OGRE_MK1 || unit_id == BSC_BATTLE_OGRE_MK2 || unit_id == BSC_BATTLE_OGRE_MK3) {
                 if (is_sea) {
-                    NetMsgPrimary.pop("OGREPOD", 5000, 0, "ogre_sm.pcx");
+                    veh_battle_msg("OGREPOD", "ogre_sm.pcx");
                 } else {
-                    NetMsgPrimary.pop("OGREPOD", -5000, 0, "ogre_sm.pcx");
+                    NetMsg::pop("OGREPOD", "ogre_sm.pcx");
                 }
             } else if (is_sea) {
-                NetMsgPrimary.pop("GOODYPOD", 5000, 0, "supply_sm.pcx");
+                veh_battle_msg("GOODYPOD", "supply_sm.pcx");
             } else {
-                NetMsgPrimary.pop("GOODYPOD", -5000, 0, "supply_sm.pcx");
+                NetMsg::pop("GOODYPOD", "supply_sm.pcx");
             }
         }
         return 0;
@@ -2611,9 +2614,9 @@ reroll:
                     parse_set(Players[other].noun_gender, Players[other].is_noun_plural);
                     parse_says(2, Players[other].noun_faction, -1, -1);
                     if (is_sea) {
-                        NetMsgPrimary.pop("GOODYCOMM", 5000, 0, "supply_sm.pcx");
+                        veh_battle_msg("GOODYCOMM", "supply_sm.pcx");
                     } else {
-                        NetMsgPrimary.pop("GOODYCOMM", -5000, 0, "supply_sm.pcx");
+                        NetMsg::pop("GOODYCOMM", "supply_sm.pcx");
                     }
                 }
                 return 0;
@@ -2644,7 +2647,7 @@ reroll:
             int roots = 0;
             for (int j = 0; j < 2; j++) {
                 const int preq = (&Technology[tech_id].preq_tech_1)[j];
-                if (preq == -1) {
+                if ((&Technology[tech_id].preq_tech_1)[j] == -1) {
                     roots++;
                 }
                 if (preq >= 0 && Technology[preq].preq_tech_1 == -1
@@ -2670,9 +2673,9 @@ reroll:
                 parse_say(0, Technology[tech_id].name, -1, -1);
             }
             if (is_sea) {
-                NetMsgPrimary.pop(StringTemp, 5000, 0, "supply_sm.pcx");
+                veh_battle_msg(StringTemp, "supply_sm.pcx");
             } else {
-                NetMsgPrimary.pop(StringTemp, -5000, 0, "supply_sm.pcx");
+                NetMsg::pop(StringTemp, "supply_sm.pcx");
             }
         }
         tech_achieved(faction_id, tech_id, 0, 0);
@@ -2747,21 +2750,21 @@ reroll:
         if (!changed) goto reroll;
         if (is_local) {
             if (is_sea) {
-                NetMsgPrimary.pop("GOODYKELP", -5000, 0, "kelp_sm.pcx");
+                NetMsg::pop("GOODYKELP", "kelp_sm.pcx");
                 return 0;
             }
             switch (which) {
             case 0:
-                NetMsgPrimary.pop("GOODYFOREST", -5000, 0, "forgr_sm.pcx");
+                NetMsg::pop("GOODYFOREST", "forgr_sm.pcx");
                 return 0;
             case 1:
-                NetMsgPrimary.pop("GOODYFARM", -5000, 0, "forgr_sm.pcx");
+                NetMsg::pop("GOODYFARM", "forgr_sm.pcx");
                 return 0;
             case 2:
-                NetMsgPrimary.pop("GOODYMINE", -5000, 0, "supply_sm.pcx");
+                NetMsg::pop("GOODYMINE", "supply_sm.pcx");
                 return 0;
             case 3:
-                NetMsgPrimary.pop("GOODYSOLAR", -5000, 0, "supply_sm.pcx");
+                NetMsg::pop("GOODYSOLAR", "supply_sm.pcx");
                 return 0;
             }
         }
@@ -2796,7 +2799,7 @@ reroll:
             goto reroll;
         }
         if (is_sea) {
-            if (kind > (GameDataStateStorage.fields_.game_state_ >> 20 & 1) + 12) goto reroll;
+            if (kind > static_cast<int>(GameDataStateStorage.fields_.game_state_ >> 20 & 1) + 12) goto reroll;
             Vehs[veh_id].moves_expended += Rules.move_rate_roads;
         }
         int spawned = 0;
@@ -2853,11 +2856,11 @@ reroll:
         if (is_local) {
             g_FX.play(0x11);
             if (spore) {
-                NetMsgPrimary.pop(is_sea ? "GOODYISLE" : "GOODYWORMS", -5000, 0,
-                                  is_sea ? "isle_sm.pcx" : "sporlnch_sm.pcx");
+                NetMsg::pop(is_sea ? "GOODYISLE" : "GOODYWORMS",
+                            is_sea ? "isle_sm.pcx" : "sporlnch_sm.pcx");
             } else {
-                NetMsgPrimary.pop(is_sea ? "GOODYISLE" : "GOODYWORMS", -5000, 0,
-                                  is_sea ? "isle_sm.pcx" : "mindworm_sm.pcx");
+                NetMsg::pop(is_sea ? "GOODYISLE" : "GOODYWORMS",
+                            is_sea ? "isle_sm.pcx" : "mindworm_sm.pcx");
             }
             g_FX.fade(0x11);
         }
@@ -2896,13 +2899,13 @@ reroll:
         Vehs[clone_id].dmg_incurred = Vehs[veh_id].dmg_incurred;
         parse_says(0, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
         if (is_local) {
-            NetMsgPrimary.pop("GOODYCLONE", -5000, 0, "clone_sm.pcx");
+            NetMsg::pop("GOODYCLONE", "clone_sm.pcx");
         }
         return 0;
     }
     case 9999:
         if (is_local) {
-            NetMsgPrimary.pop(is_sea ? "GOODYWHIRLPOOL" : "GOODYVANISH", 5000, 0, 0);
+            veh_battle_msg(is_sea ? "GOODYWHIRLPOOL" : "GOODYVANISH", 0);
         }
         kill(veh_id);
         return 1;
@@ -2928,7 +2931,7 @@ reroll:
                 wave_it(0x29);
             }
             parse_say(0, Labels.strings_ptr[91 + resource], -1, -1);
-            NetMsgPrimary.pop("GOODYRESOURCE", 5000, 0, "supply_sm.pcx");
+            veh_battle_msg("GOODYRESOURCE", "supply_sm.pcx");
         }
         draw_tile(x, y, 2);
         if (rand() % 3 && !retry) {

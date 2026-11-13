@@ -890,11 +890,10 @@ int __cdecl veh_fake(int proto_id, int faction_id);
 // both inline it - and a plain function is never an /Ob1 inline candidate.
 // The `// ORIGINAL:` marker stays in veh.cpp.
 MEASURED inline int __cdecl proto_power(int veh_id) {
-    int proto_id = Vehs[veh_id].proto_id;
-    if (VehPrototypes[proto_id].plan == PLAN_ALIEN_ARTIFACT) {
+    if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_ALIEN_ARTIFACT) {
         return 1;
     }
-    return range(VehPrototypes[proto_id].reactor_id, 1, 100) * 10;
+    return range(VehPrototypes[Vehs[veh_id].proto_id].reactor_id, 1, 100) * 10;
 }
 
 // INLINE: the image has no get_proto_triad - it open-codes what this names.
