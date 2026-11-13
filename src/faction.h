@@ -481,7 +481,8 @@ struct PlayerData {
     int unk_66;
     int unk_67;
     int unk_68;
-    char unk_69[4];
+    // game_data's legacy PlayerData import copies this as one dword.
+    int unk_69;
     // upgrade 0x4D11F5..0x4D121B reads/writes this byte run at
     // PlayersData + 0x858 (original 0x96D238), with faction stride 0x20CC.
     // RECOVERY_MEMBER: v1 PlayerData proto_id_active 0x858 0x004D06C0

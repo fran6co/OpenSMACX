@@ -2255,6 +2255,16 @@ typedef char GameDataHeaderWireVersionOffset[
 // game_data expands this four-way transfer at every block (the image makes
 // 50 encrypt_read/encrypt_write and 60 fread/fwrite calls); forwarding to the
 // nested map_data_block/map_data_plain_block pair left most sites as calls.
+// WORKAROUND(inline): StringStruct::current_id (0x00401640) is out of line
+// in this tree; game_data expands it with the receiver formed first
+// (`lea eax,[list]` before the head test, 0x005A885A).
+static inline int game_data_current_id(StringStruct *list) {
+    if (list->head_) {
+        return list->current_->id;
+    }
+    return 0;
+}
+
 static int game_data_candidate_transfer(FILE *file, void *buffer,
                                         unsigned int byte_count) {
     if (GameDataEncryptedMode) {
@@ -2402,7 +2412,7 @@ struct GameDataPlayerV3 {                       // 0x20BC bytes (0x82F dwords)
     int unk_66;                                 // 0x0844
     int unk_67;                                 // 0x0848
     int unk_68;                                 // 0x084C  -> 0x0850
-    int unk_69;                                 // 0x0850  -> 0x0854 (dword copy; new is char[4])
+    int unk_69;                                 // 0x0850  -> 0x0854
     uint8_t proto_id_active[512];               // 0x0854  -> 0x0858
     uint8_t proto_id_queue[512];                // 0x0A54  -> 0x0A58
     int16_t proto_id_lost[512];                 // 0x0C54  -> 0x0C58
@@ -2719,8 +2729,7 @@ int __cdecl game_data(FILE *file, int write_mode) {
                 PlayersData[v].unk_66 = rows[v].unk_66;
                 PlayersData[v].unk_67 = rows[v].unk_67;
                 PlayersData[v].unk_68 = rows[v].unk_68;
-                // WORKAROUND(type): image copies unk_69 as one dword; PlayerData declares char[4].
-                *(int *)PlayersData[v].unk_69 = rows[v].unk_69;
+                PlayersData[v].unk_69 = rows[v].unk_69;
                 for (k = 0; k < 512; k++) {                 // one loop, three statements
                     PlayersData[v].proto_id_active[k] = rows[v].proto_id_active[k];
                     PlayersData[v].proto_id_queue[k] = rows[v].proto_id_queue[k];
@@ -3052,9 +3061,7 @@ int __cdecl game_data(FILE *file, int write_mode) {
                 return 1;
             for (int index = 0; index < string_count; ++index) {
                 list.seek_pos(index);
-                // WORKAROUND(inline): current_id() and current_text() are
-                // out of line in this tree; the image expands both here.
-                string_id = list.head_ ? list.current_->id : 0;
+                string_id = game_data_current_id(&list);
                 if (fwrite(&string_id, 4, 1, file) == 0)
                     return 1;
                 strcpy(StringTemp, list.head_
@@ -3099,9 +3106,7 @@ int __cdecl game_data(FILE *file, int write_mode) {
                     return 1;
                 for (int index = 0; index < string_count; ++index) {
                     list.seek_pos(index);
-                    // WORKAROUND(inline): current_id() and current_text() are
-                    // out of line in this tree; the image expands both here.
-                    string_id = list.head_ ? list.current_->id : 0;
+                    string_id = game_data_current_id(&list);
                     if (fwrite(&string_id, 4, 1, file) == 0)
                         return 1;
                     strcpy(StringTemp, list.head_
