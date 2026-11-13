@@ -1976,7 +1976,7 @@ void ReportWin::draw_labs() {
         // 0x49970D: prerequisites. The one-prerequisite arm is laid out
         // first and its final box_sprite tail-merges with the two-arm's.
         if (prerequisite1 < 0 || prerequisite2 < 0) {
-            if (prerequisite1 != -1) {
+            if (prerequisite1 + 1 != 0) {
                 // 0x49972B..0x499862
                 labs_line(field_A28_, lab_center_y_, lab_prerequisite_x_,
                           lab_center_y_, field_59A0_, field_59A4_, 0);
@@ -2659,6 +2659,17 @@ and the arrow head.
 // styles are shared InterfaceBoxStyles elements 3/5 (base 0x78D528: socialwin
 // already re-homed element 3/6 the same way), and its 0x75AFD0 sprite is
 // g_IFACE_TECH_TREE_ARROW_SPRITES (stride 0x2C, so stB*4 == 44*style_flag).
+// Image shape: every rectangle is addressed as the member itself (the image
+// forms lea esi,[edi+0xE258] at each use, so no pointer local), four-value
+// fills evaluate all coordinates before the stores (report_set_rect), the
+// 7-pixel shrink reloads the right edge (inflate_frame on the member), and
+// each arrow evaluates the Buffer conversion and sprite address before the
+// positions (the late-sprite report_sprite_draw form).
+// LEVER: register equilibrium. The image keeps only `this` (edi) in a
+// callee-saved register and half in [ebp-8]; ours enregisters half in ebx,
+// so the Buffer pointer spills to a dead parameter slot. Tried: non-const,
+// assignment-in-expression, recomputed half, a y local, block-scoped mid,
+// declaration order; none moved it.
 */
 void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
                           int x_offset, int line_height, int style_select) {
@@ -2668,72 +2679,76 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
     const int half = line_height / 2;
     // The image keeps the row centre in the line-height parameter's slot.
     line_height = static_cast<int>(lab_center_y_) + half;
-    RECT *const rect = &report_work_rect_;
 
     if (first_id == static_cast<int>(lab_center_x_)) {
-        // 0x49B49D
-        const int mid = (static_cast<int>(lab_prerequisite_x_)
+        // 0x49B49D. The midpoint reuses first_id: the image keeps it in that
+        // parameter's slot in both halves (0x49B4BE, 0x49B735).
+        first_id = (static_cast<int>(lab_prerequisite_x_)
             + static_cast<int>(lab_center_x_) + x_offset) / 2 - 2;
         if (branch_id != static_cast<int>(lab_upper_inner_y_)
             && branch_id != static_cast<int>(lab_lower_inner_y_)) {
             // 0x49B4D3
-            rect->right = mid + 7;
-            rect->top = line_height;
-            rect->left = static_cast<int>(lab_prerequisite_x_) + x_offset - 4;
-            rect->bottom = line_height + 20;
-            inflate_frame(rect, -7, 0);
+            report_set_rect(&report_work_rect_,
+                static_cast<int>(lab_prerequisite_x_) + x_offset - 4, line_height,
+                first_id + 7, line_height + 20);
+            inflate_frame(&report_work_rect_, -7, 0);
             report_work_rect_.bottom -= 7;
-            host->Buffer::set_clip(rect);
-            inflate_frame(rect, 7, 0);
+            host->Buffer::set_clip(&report_work_rect_);
+            inflate_frame(&report_work_rect_, 7, 0);
             report_work_rect_.bottom += 7;
             if (style_select) {
-                host->Buffer::box_sprite(rect, &InterfaceBoxStyles[5]);
+                host->Buffer::box_sprite(&report_work_rect_, &InterfaceBoxStyles[5]);
+                host->Buffer::restore_clip();
             } else {
-                host->Buffer::box_sprite(rect, &InterfaceBoxStyles[3]);
+                host->Buffer::box_sprite(&report_work_rect_, &InterfaceBoxStyles[3]);
+                host->Buffer::restore_clip();
             }
         } else {
             // 0x49B57C
-            rect->left = static_cast<int>(lab_prerequisite_x_) + x_offset + 3;
-            rect->top = static_cast<int>(lab_upper_inner_y_) + half;
-            rect->right = mid;
-            rect->bottom = static_cast<int>(lab_lower_inner_y_) + half;
+            report_set_rect(&report_work_rect_,
+                static_cast<int>(lab_prerequisite_x_) + x_offset + 3,
+                static_cast<int>(lab_upper_inner_y_) + half, first_id,
+                static_cast<int>(lab_lower_inner_y_) + half);
             if (branch_id == static_cast<int>(lab_upper_inner_y_)) {
                 report_work_rect_.bottom = line_height;
             } else {
                 report_work_rect_.top = line_height + 1;
             }
-            host->Buffer::set_clip(rect);
-            rect->bottom = static_cast<int>(lab_lower_inner_y_) + half;
-            rect->left = static_cast<int>(lab_prerequisite_x_) + x_offset - 4;
-            rect->top = static_cast<int>(lab_upper_inner_y_) + half;
-            rect->right = mid;
-            host->Buffer::box_sprite(rect, style_select ? &InterfaceBoxStyles[5]
-                                                         : &InterfaceBoxStyles[3]);
+            host->Buffer::set_clip(&report_work_rect_);
+            // UNSURE: the image's push-select shape here and at 0x49B650 and
+            // 0x49BBA9 (je; push; jmp; push; call) is an if/else of two
+            // box_sprite calls, but that spelling flips the canary
+            // on_iface_button_clicked through unit coupling; the earlier
+            // ternary stays.
+            report_set_rect(&report_work_rect_,
+                static_cast<int>(lab_prerequisite_x_) + x_offset - 4,
+                static_cast<int>(lab_upper_inner_y_) + half, first_id,
+                static_cast<int>(lab_lower_inner_y_) + half);
+            host->Buffer::box_sprite(&report_work_rect_,
+                style_select ? &InterfaceBoxStyles[5] : &InterfaceBoxStyles[3]);
+            host->Buffer::restore_clip();
         }
-        host->Buffer::restore_clip();
         // 0x49B62F
-        rect->left = mid - 7;
-        rect->top = line_height;
-        rect->right = static_cast<int>(lab_center_x_) + 4;
-        rect->bottom = line_height + 20;
-        inflate_frame(rect, -7, 0);
+        report_set_rect(&report_work_rect_,
+            first_id - 7, line_height,
+            static_cast<int>(lab_center_x_) + 4, line_height + 20);
+        inflate_frame(&report_work_rect_, -7, 0);
         report_work_rect_.bottom -= 7;
-        host->Buffer::set_clip(rect);
-        inflate_frame(rect, 7, 0);
+        host->Buffer::set_clip(&report_work_rect_);
+        inflate_frame(&report_work_rect_, 7, 0);
         report_work_rect_.bottom += 7;
-        host->Buffer::box_sprite(rect, style_select ? &InterfaceBoxStyles[5]
-                                                     : &InterfaceBoxStyles[3]);
+        host->Buffer::box_sprite(&report_work_rect_,
+            style_select ? &InterfaceBoxStyles[5] : &InterfaceBoxStyles[3]);
         host->Buffer::restore_clip();
         // 0x49B6C1
-        Sprite *arrow = &g_IFACE_TECH_TREE_ARROW_SPRITES[style_select ? 2 : 0];
-        arrow->draw(host, arrow->transparent_index(),
-                    static_cast<int>(lab_center_x_) - 10,
-                    static_cast<int>(lab_center_y_) + half - 6);
+        report_sprite_draw(&g_IFACE_TECH_TREE_ARROW_SPRITES[style_select ? 2 : 0], host,
+                           static_cast<int>(lab_center_x_) - 10,
+                           static_cast<int>(lab_center_y_) + half - 6);
         return;
     }
 
     // 0x49B710
-    const int mid = (static_cast<int>(field_59A8_) + static_cast<int>(lab_child_x_)
+    first_id = (static_cast<int>(field_59A8_) + static_cast<int>(lab_child_x_)
         + static_cast<int>(lab_center_x_)) / 2 - 2;
     if (second_id != static_cast<int>(lab_three_child_upper_y_)
         && second_id != static_cast<int>(lab_three_child_lower_y_)) {
@@ -2742,118 +2757,111 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
             if (second_id != static_cast<int>(lab_upper_inner_y_)
                 && second_id != static_cast<int>(lab_lower_inner_y_)) {
                 // 0x49B77A: the arrow is drawn before the line.
-                Sprite *arrow = &g_IFACE_TECH_TREE_ARROW_SPRITES[style_select ? 2 : 0];
-                arrow->draw(host, arrow->transparent_index(),
-                            static_cast<int>(lab_child_x_) - 10, line_height - 6);
-                rect->right = static_cast<int>(lab_child_x_) + 4;
-                rect->top = line_height;
-                rect->left = mid - 7;
-                rect->bottom = line_height + 20;
-                inflate_frame(rect, -7, 0);
+                report_sprite_draw(&g_IFACE_TECH_TREE_ARROW_SPRITES[style_select ? 2 : 0], host,
+                                   static_cast<int>(lab_child_x_) - 10,
+                                   line_height - 6);
+                report_set_rect(&report_work_rect_,
+                    first_id - 7, line_height,
+                    static_cast<int>(lab_child_x_) + 4, line_height + 20);
+                inflate_frame(&report_work_rect_, -7, 0);
                 report_work_rect_.bottom -= 7;
-                host->Buffer::set_clip(rect);
-                inflate_frame(rect, 7, 0);
+                host->Buffer::set_clip(&report_work_rect_);
+                inflate_frame(&report_work_rect_, 7, 0);
                 report_work_rect_.bottom += 7;
             } else {
                 // 0x49B836
-                report_work_rect_.left = mid;
-                rect->top = static_cast<int>(lab_upper_inner_y_) + half;
-                rect->right = static_cast<int>(lab_child_x_) - 3;
-                rect->bottom = static_cast<int>(lab_lower_inner_y_) + half;
+                report_set_rect(&report_work_rect_,
+                    first_id,
+                    static_cast<int>(lab_upper_inner_y_) + half, static_cast<int>(lab_child_x_) - 3,
+                    static_cast<int>(lab_lower_inner_y_) + half);
                 if (second_id == static_cast<int>(lab_upper_inner_y_)) {
                     report_work_rect_.bottom = line_height;
-                    Sprite *arrow = &g_IFACE_TECH_TREE_ARROW_SPRITES[style_select ? 2 : 0];
-                    arrow->draw(host, arrow->transparent_index(),
-                                static_cast<int>(lab_child_x_) - 10,
-                                static_cast<int>(lab_upper_inner_y_) + half - 6);
+                    report_sprite_draw(&g_IFACE_TECH_TREE_ARROW_SPRITES[style_select ? 2 : 0], host,
+                                       static_cast<int>(lab_child_x_) - 10,
+                                       static_cast<int>(lab_upper_inner_y_) + half - 6);
                 } else {
                     report_work_rect_.top = line_height + 1;
-                    Sprite *arrow = &g_IFACE_TECH_TREE_ARROW_SPRITES[style_select ? 2 : 0];
-                    arrow->draw(host, arrow->transparent_index(),
-                                static_cast<int>(lab_child_x_) - 10,
-                                static_cast<int>(lab_lower_inner_y_) + half - 7);
+                    report_sprite_draw(&g_IFACE_TECH_TREE_ARROW_SPRITES[style_select ? 2 : 0], host,
+                                       static_cast<int>(lab_child_x_) - 10,
+                                       static_cast<int>(lab_lower_inner_y_) + half - 7);
                 }
-                host->Buffer::set_clip(rect);
-                rect->top = static_cast<int>(lab_upper_inner_y_) + half;
-                rect->left = mid;
-                rect->right = static_cast<int>(lab_child_x_) + 4;
-                rect->bottom = static_cast<int>(lab_lower_inner_y_) + half;
+                host->Buffer::set_clip(&report_work_rect_);
+                report_set_rect(&report_work_rect_,
+                    first_id,
+                    static_cast<int>(lab_upper_inner_y_) + half, static_cast<int>(lab_child_x_) + 4,
+                    static_cast<int>(lab_lower_inner_y_) + half);
             }
         } else {
             // 0x49B95C
-            report_work_rect_.left = mid;
-            rect->top = static_cast<int>(lab_four_child_top_y_) + half;
-            rect->right = static_cast<int>(lab_child_x_) - 3;
-            rect->bottom = static_cast<int>(lab_four_child_bottom_y_) + half;
+            report_set_rect(&report_work_rect_,
+                first_id,
+                static_cast<int>(lab_four_child_top_y_) + half, static_cast<int>(lab_child_x_) - 3,
+                static_cast<int>(lab_four_child_bottom_y_) + half);
             if (second_id == static_cast<int>(lab_four_child_top_y_)) {
                 report_work_rect_.bottom = line_height;
-                Sprite *arrow = &g_IFACE_TECH_TREE_ARROW_SPRITES[style_select ? 2 : 0];
-                arrow->draw(host, arrow->transparent_index(),
-                            static_cast<int>(lab_child_x_) - 10,
-                            static_cast<int>(lab_four_child_top_y_) + half - 6);
+                report_sprite_draw(&g_IFACE_TECH_TREE_ARROW_SPRITES[style_select ? 2 : 0], host,
+                                   static_cast<int>(lab_child_x_) - 10,
+                                   static_cast<int>(lab_four_child_top_y_) + half - 6);
             } else {
                 report_work_rect_.top = line_height + 1;
-                Sprite *arrow = &g_IFACE_TECH_TREE_ARROW_SPRITES[style_select ? 2 : 0];
-                arrow->draw(host, arrow->transparent_index(),
-                            static_cast<int>(lab_child_x_) - 10,
-                            static_cast<int>(lab_four_child_bottom_y_) + half - 7);
+                report_sprite_draw(&g_IFACE_TECH_TREE_ARROW_SPRITES[style_select ? 2 : 0], host,
+                                   static_cast<int>(lab_child_x_) - 10,
+                                   static_cast<int>(lab_four_child_bottom_y_) + half - 7);
             }
-            host->Buffer::set_clip(rect);
-            rect->top = static_cast<int>(lab_four_child_top_y_) + half;
-            rect->left = mid;
-            rect->right = static_cast<int>(lab_child_x_) + 4;
-            rect->bottom = static_cast<int>(lab_four_child_bottom_y_) + half;
+            host->Buffer::set_clip(&report_work_rect_);
+            report_set_rect(&report_work_rect_,
+                first_id,
+                static_cast<int>(lab_four_child_top_y_) + half, static_cast<int>(lab_child_x_) + 4,
+                static_cast<int>(lab_four_child_bottom_y_) + half);
         }
     } else {
         // 0x49BA82
-        report_work_rect_.left = mid;
-        rect->top = static_cast<int>(lab_three_child_upper_y_) + half;
-        rect->right = static_cast<int>(lab_child_x_) - 3;
-        rect->bottom = static_cast<int>(lab_three_child_lower_y_) + half;
+        report_set_rect(&report_work_rect_,
+            first_id,
+            static_cast<int>(lab_three_child_upper_y_) + half, static_cast<int>(lab_child_x_) - 3,
+            static_cast<int>(lab_three_child_lower_y_) + half);
         if (second_id == static_cast<int>(lab_three_child_upper_y_)) {
             report_work_rect_.bottom = line_height;
-            Sprite *arrow = &g_IFACE_TECH_TREE_ARROW_SPRITES[style_select ? 2 : 0];
-            arrow->draw(host, arrow->transparent_index(),
-                        static_cast<int>(lab_child_x_) - 10,
-                        static_cast<int>(lab_three_child_upper_y_) + half - 6);
+            report_sprite_draw(&g_IFACE_TECH_TREE_ARROW_SPRITES[style_select ? 2 : 0], host,
+                               static_cast<int>(lab_child_x_) - 10,
+                               static_cast<int>(lab_three_child_upper_y_) + half - 6);
         } else {
             report_work_rect_.top = line_height + 1;
-            Sprite *arrow = &g_IFACE_TECH_TREE_ARROW_SPRITES[style_select ? 2 : 0];
-            arrow->draw(host, arrow->transparent_index(),
-                        static_cast<int>(lab_child_x_) - 10,
-                        static_cast<int>(lab_three_child_lower_y_) + half - 7);
+            report_sprite_draw(&g_IFACE_TECH_TREE_ARROW_SPRITES[style_select ? 2 : 0], host,
+                               static_cast<int>(lab_child_x_) - 10,
+                               static_cast<int>(lab_three_child_lower_y_) + half - 7);
         }
-        host->Buffer::set_clip(rect);
-        rect->top = static_cast<int>(lab_three_child_upper_y_) + half;
-        rect->left = mid;
-        rect->right = static_cast<int>(lab_child_x_) + 4;
-        rect->bottom = static_cast<int>(lab_three_child_lower_y_) + half;
+        host->Buffer::set_clip(&report_work_rect_);
+        report_set_rect(&report_work_rect_,
+            first_id,
+            static_cast<int>(lab_three_child_upper_y_) + half, static_cast<int>(lab_child_x_) + 4,
+            static_cast<int>(lab_three_child_lower_y_) + half);
     }
     // 0x49BBA9
-    host->Buffer::box_sprite(rect, style_select ? &InterfaceBoxStyles[5]
-                                                 : &InterfaceBoxStyles[3]);
+    host->Buffer::box_sprite(&report_work_rect_,
+        style_select ? &InterfaceBoxStyles[5] : &InterfaceBoxStyles[3]);
     host->Buffer::restore_clip();
     // 0x49BBCF
-    rect->left = static_cast<int>(field_59A8_) + static_cast<int>(lab_center_x_) - 4;
-    rect->top = line_height;
+    report_work_rect_.left = static_cast<int>(field_59A8_) + static_cast<int>(lab_center_x_) - 4;
+    report_work_rect_.top = line_height;
     if (style_select) {
-        rect->right = mid + 7;
-        rect->bottom = line_height + 20;
-        inflate_frame(rect, -7, 0);
+        report_work_rect_.right = first_id + 7;
+        report_work_rect_.bottom = line_height + 20;
+        inflate_frame(&report_work_rect_, -7, 0);
         report_work_rect_.bottom -= 7;
-        host->Buffer::set_clip(rect);
-        inflate_frame(rect, 7, 0);
+        host->Buffer::set_clip(&report_work_rect_);
+        inflate_frame(&report_work_rect_, 7, 0);
         report_work_rect_.bottom += 7;
-        host->Buffer::box_sprite(rect, &InterfaceBoxStyles[5]);
+        host->Buffer::box_sprite(&report_work_rect_, &InterfaceBoxStyles[5]);
     } else {
-        rect->right = mid + 7;
-        rect->bottom = line_height + 20;
-        inflate_frame(rect, -7, 0);
+        report_work_rect_.right = first_id + 7;
+        report_work_rect_.bottom = line_height + 20;
+        inflate_frame(&report_work_rect_, -7, 0);
         report_work_rect_.bottom -= 7;
-        host->Buffer::set_clip(rect);
-        inflate_frame(rect, 7, 0);
+        host->Buffer::set_clip(&report_work_rect_);
+        inflate_frame(&report_work_rect_, 7, 0);
         report_work_rect_.bottom += 7;
-        host->Buffer::box_sprite(rect, &InterfaceBoxStyles[3]);
+        host->Buffer::box_sprite(&report_work_rect_, &InterfaceBoxStyles[3]);
     }
     host->Buffer::restore_clip();
 }
