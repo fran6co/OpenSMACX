@@ -2996,7 +2996,7 @@ int __cdecl propose_proto(int faction_id, int chassis_id, int weapon_id,
         if (VehPrototypes[slot].chassis_id == chassis_id
             && VehPrototypes[slot].weapon_id == weapon_id
             && VehPrototypes[slot].armor_id == armor_id
-            && !(VehPrototypes[slot].ability_flags ^ ability_flags)
+            && VehPrototypes[slot].ability_flags == (uint32_t)ability_flags
             && VehPrototypes[slot].reactor_id == reactor_id
             && !DesignConsiderOverride
             && GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id)) {
@@ -3007,8 +3007,8 @@ int __cdecl propose_proto(int faction_id, int chassis_id, int weapon_id,
             && VehPrototypes[slot].armor_id == armor_id
             && !((VehPrototypes[slot].ability_flags ^ ability_flags)
                 & PrototypeAbilityCompatibilityMask)
-            && (VehPrototypes[slot].ability_flags
-                    == (VehPrototypes[slot].ability_flags & ability_flags)
+            && ((VehPrototypes[slot].ability_flags & ability_flags)
+                    == VehPrototypes[slot].ability_flags
                 || !is_human(faction_id))
             && VehPrototypes[slot].reactor_id == reactor_id) {
             if (design_category == -2) {
@@ -4625,7 +4625,10 @@ extern uint32_t UpgradePromptAnswered;
 // and ~Dialogs/~StringList/~Heap one level further at the DESIGNNO and final
 // returns. Thirteen probes after the action-0 return and one after the
 // DESIGNNO return reproduce both exactly (a 2-D probe grid; no other placement
-// does); the natural spend the original had there is not found yet.
+// does); the natural spend the original had there is not found yet. Dialog
+// inline setters for field_34_/field_50_ (they reproduce the image's dead
+// `lea reg,[ebp+reg-0x320c]` after each store) and reading the action at each
+// test leave the required probe count unchanged.
 static inline void dw_probe(int x) { if (x == 1) x = 8; if (x == 2) x = 9; if (x == 3) x = 10; }
 // ORIGINAL: 0x00583E30 ?design_workshop@@YAHHH@Z 0x00583E30-0x00584B4B;0x0065FFD0-0x00660239
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned583E30..584B4B and65FFD0..660239; preserved git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00583e30.cpp; mode-zero list bypass, nonzero64-prototype scan,128 sorted list rows, ordered0/2/3/4/default action chain and native Popup cleanup funclets.", "Native5842DB tests priorflags8 before setting200; upgrade scan skips selected/inactive rows, passes faction/replacement/selected/zero, reports only scan exhaustion and rebuilds the entire list. Rename5845AE copies shared prompt result into the prototype name. Callback60BCDF return is discarded; real hq_list_draw owns preview behavior.", "Existing DesignWin/Popup/Dialog owners, WorkshopFaction/PreviewZoom and source-owned prototype/player storage; recovery/tasks/designwin-owner-coverage.json. Existing NetMsgPrimary fixed-address facade and unfinished callee behavior remain separate dependencies; no byte, runtime or game acceptance claim."], "reason": "Recover the complete production workshop dependency through real lexical Popup lifetime, typed dialog and prototype ownership, native list/action flow and source-owned preview callback. Preserve its original identity, seed and historical obligations instead of a link-only placeholder."}
@@ -4666,13 +4669,14 @@ again:
     WorkshopFaction = faction_id;
     PopupModalState = 5;
     popup.dialogs().set_draw_callback(&hq_list_draw);
+    const int zoom = WorkshopPreviewZoom;
     int width = MapWinCaptionScale > 0
         ? 132 * MapWinCaptionScale / MapWinCaptionDivisor
-        : 132 * (WorkshopPreviewZoom + 16) / 16;
+        : 132 * (zoom + 16) / 16;
     popup.dialogs().field_34_ = width * 2 + 3;
     popup.dialogs().field_48_ = MapWinCaptionScale > 0
         ? 75 * MapWinCaptionScale / MapWinCaptionDivisor
-        : 75 * (WorkshopPreviewZoom + 16) / 16;
+        : 75 * (zoom + 16) / 16;
     popup.dialogs().field_50_ = 8;
 
     for (int row = 0; row < 128; ++row) {
@@ -4749,9 +4753,10 @@ again:
         int slot;
         for (slot = 0; slot < MaxVehProtoFactionNum; ++slot) {
             const int candidate_id = faction_id * MaxVehProtoFactionNum + slot;
+            if (candidate_id == selected)
+                continue;
             const uint16_t flags = VehPrototypes[candidate_id].flags;
-            if (candidate_id != selected
-                && flags & PROTO_ACTIVE
+            if (flags & PROTO_ACTIVE
                 && !(VehPrototypes[candidate_id].obsolete_factions & (1 << faction_id))
                 && flags & 4
                 && VehPrototypes[candidate_id].plan == VehPrototypes[selected].plan
@@ -4771,7 +4776,8 @@ again:
         }
         goto again;
     }
-    if (selected / MaxVehProtoFactionNum == 0) {
+    int owner = selected / MaxVehProtoFactionNum;
+    if (owner == 0) {
         NetMsgPrimary.pop("DESIGNNO", 0x1388, 0, 0);
         return -1;
     }
