@@ -1319,7 +1319,7 @@ static inline void append_upper_name(LPSTR name) {
 // The unpooled TU still has one "TECH" object for draw_tech and the copy
 // draw_entry expands: both sites go through this helper's literal.
 static inline void append_tech_topic() {
-    // RECOVERY_LITERAL: v1 0x006834D8 0x006834DD $SG55024 0x00430B30
+    // RECOVERY_LITERAL: v1 0x006834D8 0x006834DD $SG55023 0x00430B30
     strcat(StringTemp, "TECH");
 }
 

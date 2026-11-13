@@ -5255,7 +5255,7 @@ int __cdecl base_at(int x, int y) {
     }
     if (!BaseAtErrorGuard) {
         // This base_at diagnostic passes its own format literal to log_say, with x and y as separate values.
-// RECOVERY_LITERAL: v1 0x00689390 0x006893A8 $SG63621 0x004E3A50
+// RECOVERY_LITERAL: v1 0x00689390 0x006893A8 $SG63620 0x004E3A50
         log_say("Base Bits Error  (x, y)", x, y, 0);
     }
     if (!(GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE)) {
@@ -5270,7 +5270,7 @@ int __cdecl base_at(int x, int y) {
         parse_num(0, x);
         parse_num(1, y);
         // This base_at popup key is a separate literal argument from the diagnostic format string above.
-// RECOVERY_LITERAL: v1 0x006893A8 0x006893B0 $SG63625 0x004E3A50
+// RECOVERY_LITERAL: v1 0x006893A8 0x006893B0 $SG63624 0x004E3A50
         X_pop("BASEBIT", NULL);
     }
     BaseAtErrorGuard = 0;
@@ -8858,7 +8858,7 @@ void __cdecl make_base_unique(int base_id) {
     if (collisions != 0) {
         Bases[base_id].name_string[21] = 0;
         // make_base_unique passes this one-byte delimiter to strcat; collision digits use a separate buffer.
-// RECOVERY_LITERAL: v1 0x00689F08 0x00689F0A $SG65004 0x004F7FE0
+// RECOVERY_LITERAL: v1 0x00689F08 0x00689F0A $SG65003 0x004F7FE0
         strcat(Bases[base_id].name_string, "-");
         char digits[0x50];
         _itoa(collisions + 1, digits, 10);
