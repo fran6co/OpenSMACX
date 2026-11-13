@@ -942,6 +942,152 @@ raw field access where the original used inline accessors.
 - **Fix before reverting.** When a faithful change breaks a claim, diagnose
   and repair the break (widening scope is fine) before considering a
   revert; revert only if no repair exists and the change is not faithful.
+- **Read a switch's jump-table case order first.** A case-order mismatch
+  accounted for most of DiploWin::on_button_clicked's 0.51.
+- **When every probe placement gives the same EH topology**, spend is not
+  the lever: compare teardown call sequences (a missing
+  DIALOGS_DTOR_INLINE there).
+- **Guarded class members still change the opting-in unit's codegen**:
+  re-measure that unit's near-misses too.
+- **A per-TU `#define X_DTOR_INLINE` flips ties in earlier functions**;
+  defining the inline body in the unit just before the caller that needs
+  it gives the same expansion and leaves earlier functions alone.
+- **`f(g() - h())` pushes the outer constants first**; a local
+  `int c = g() - h();` evaluates both calls before them.
+- **`if (s < 1 || h < 1) v = 1; else if (s > h) v = h; else v = s;`** with
+  s its own temporary gives three separate stores; clamping in place gives
+  store-then-overwrite.
+- **A dead `test` of a flag with no branch** is an if/else with identical
+  arms: VC6 folds `c ? K : K` completely.
+- **A raw mask test vs an accessor can trade early-site for late-site
+  teardown depth** at the same total: compare per-site sequences.
+- **Legacy save-format conversions are member-by-member** assignments and
+  loops over typed row structs after one whole-row memcpy; memcpy-per-field
+  helpers compile to a different program (game_data 0.83 -> 0.956).
+- **A counted dword loop over consecutively named scalars** means the
+  original had an array; VC6 never folds separate scalars into a loop.
+- **Sweep flat probe counts to at least 16** before concluding spend cannot
+  fix an early-return EH site (load_map needed ten).
+- **A per-arm wrap store** (each arm stores the wrapped coordinate to its
+  slot) is a written-out ternary over a temporary; `wrap_map_x` or an
+  if-chain stores once after the join (Path::sensors).
+- **An inline-only member with an out-of-line copy and no callers**:
+  `MEASURED` on the member's own declaration plus an `inline` definition
+  emits the copy and lets callers expand it (gen_tile).
+- **Masked wrong target from a guarded wrapper.** `popup.item()` /
+  `popup.exec(cb)` without POPUP_WRAPPERS_INLINE call BasePop's
+  out-of-line copy; masked measurement hides the wrong target. Define the
+  guard whenever the wrappers are used.
+- **A named index local inside an inline helper blocks cross-expansion
+  CSE** (`int proto_id = Vehs[v].proto_id;` in proto_power); indexing at
+  each use lets VC6 keep a field in a register across expansions.
+- **Constant-left loop compares** (`9 > i`) let VC6 compare the
+  strength-reduced subscript and keep a scaled twin of `i`; `i < 9` keeps
+  the plain `[reg*4+table]` index (world_site).
+- **A materialised `neg/sbb/neg` flag stored before its test** is a header
+  inline returning the value (has_fac), not a direct bit test.
+- **Message wrappers move teardown depth**: `veh_battle_msg` vs direct
+  `NetMsgPrimary.pop` changes every Popup site's depth; try which sites
+  originally used the wrapper.
+- **Re-sweep budget stand-ins after restoring a natural helper**: the
+  helper supplies some of the spend the stand-in covered.
+- **Whose setter left the dead lea**: `[vbo+edi+off]` with edi =
+  &member is a derived-class member (ListBox); `lea ecx,[vbo+esi+off];
+  mov [ecx+x]` is a base-class setter (Dialog).
+- **A register copy feeding two stores at each if/else arm's end** is
+  each arm assigning only `a`, then one `b = a;` after the if/else;
+  chained `b = a = v` uses one register (EditBox::on_key_click).
+- **Field types from jcc and operand width**: signed jumps on 32-bit
+  accesses mean `int`; a byte cast is not evidence of a 16-bit type
+  without movsx/movzx or word operations.
+- **A block-scope array takes a slot of its own size**: a larger image
+  slot means a disjoint-scope sibling shares it.
+- **Folding N scalar members into one array needs N-1 compensating
+  member declarations** to stay counter-neutral (typedef names count,
+  static members do not); anonymous-union stand-ins cannot be balanced
+  reliably, and header-level unions renumber every includer's `$SG`/`$L`
+  labels (plan a project-wide rebind).
+- **`NetMsgPrimary.pop(label, 0xFFFFEC78, 0, icon)` is the two-argument
+  inline `pop(label, icon)`** (body `pop(label, -5000, 0, target)`): the
+  inline restores Popup callers' missing spend; check every -5000 pop.
+- **Leftover budget after the last early return is conserved** among the
+  last few return sites and the final teardown: probes there only move
+  it; matching needs real spend placed earlier.
+- **Declaration order and scope do not move scalar frame slots or
+  callee-saved register choice** (facilities_click, draw_expenses,
+  reset_territory, repair_phase: every variant byte-identical); slot
+  rotations and register equilibria need a change in the uses.
+- **`veh_battle_msg` vs direct pop changes depth by count, not position**:
+  shallow early sites with a deeper final teardown means the original
+  caller was larger.
+- **A shell `timeout` around `recover permute` loses the report**; use
+  `--time-limit`.
+- **Sibling block-scope arrays share from the high end**: a buffer N bytes
+  into a larger array's slot means sibling scopes; give the larger array
+  its own `{ }` block around its live range.
+- **Unreferenced local arrays get no frame space**, even with `(void)x;`.
+- **A shallower first return site than later ones** (a destructor called
+  out of line at site 1, expanded later) is structural; probes starve
+  later sites first.
+- **Other shared punctuation objects**: "(" 0x682E9C, ")" 0x682E98 and
+  "$LINK<" / "=" / ">" 0x683544/0x683540/0x68353C are pushed from many
+  units; unpooled units cannot share literals, so these are named globals.
+  Declaring real shared objects can also replace extern-name pads
+  (reportif: 5 real names for 5 pads).
+- **Accessor conversion is per site, not wholesale**: the image keeps
+  some mask tests raw (with `1 << faction` in a register); converting
+  those makes teardown sites shallower than the image.
+- **Unlisted in-text jump tables**: when the original span stops before
+  in-text tables, add `RECOVERY_ASSOCIATED: v1 switch_targets <func>
+  <start> <end> <jmp>` per table.
+- **Header inline edits rename every includer's literals**: refused
+  claims with "strict selected evidence result: unknown" while masked
+  exact need `rebind-literals`, not a revert.
+- **Constant member stores interleaved with the next call's pushes** come
+  from an inline helper taking them as parameters.
+- **A stored `1<<f` tested later** is a named `self_bit` local: keep the
+  raw mask test there; `is_human()` fits where the image recomputes it.
+- **dec/jne down-counters with separate stepping coordinate slots** are
+  `for (i = 0, x = X0; i < N; i++, x += DX)` with i used only in the
+  subscript; `X0 + i*DX` at the use gives a compare on the reduced value.
+- **`lea r,[eax+K]; cmp r,BOUND` on a counter from 0** is `for (k = K;
+  k < BOUND; k++)` with uses written `k - K` (`if (k - K)` gives test).
+- **A null-tested this-to-virtual-base conversion before each call**
+  means `this` was passed at each site, not a cached base pointer.
+- **A nested call inside a call with constant arguments** pushes the
+  constants first; `int a = f(k); g(0, T[a].name, -1, -1)` evaluates the
+  call before the pushes.
+- **`c ? inline_a : inline_b` as a condition materialises setl**;
+  `(c && a) || (!c && b)` gives branch-only code.
+- **Taking a free function's address stops its auto-inlining** in later
+  functions of the unit; it is not a per-site noinline lever.
+- **Unpooled tails merge only up to the first distinct literal**: shared
+  named objects let identical tails cross-jump fully.
+- **Goto into an if body**: `if (t == 1 || t == 2) goto A; ... A: if (t
+  == 2) {...}` lets VC6 thread the second test as the image's je pair; a
+  goto to the inner label inverts the test instead.
+- **`(uint8_t)(1 << f)` shifts a byte register**; the image's dword shift
+  is `(1 << f)` without the cast.
+- **VC6 folds a switch variable's case constant into array indices**: an
+  image with `index*K` hoisted before the jump table is not reproduced by
+  a copy local or a reload.
+- **A loaded index kept across a byte store between two RMWs** is a named
+  local: `int idx = s.f; A[idx]--; s.b = v; B[idx]++;` (give_a_base).
+- **A merged early `return 0` can be allocation, not structure**: when
+  the image schedules `xor eax,eax` before a final store there is no
+  common tail to merge.
+- **A canary can flip from a neighbour's loop shape**, independent of
+  literals or declarations (action_give vs action_airdrop's is_seen
+  loop): re-sweep the canary's window rather than revert the faithful
+  neighbour.
+- **Induction-pointer bias follows spelling**: `const T &r = arr[i]`
+  anchors the pointer at field 0; `arr[i].f` at each use (or passing
+  `arr[i]` to an inline taking `const T &`) anchors it where the image
+  does.
+- **Sibling loops sharing one counter slot** need one function-scope
+  variable per role reused by every loop.
+- **A flag kept in a dead incoming-argument slot** and re-tested after a
+  loop is that parameter reused.
 - **Canonicalised forms (not levers).** `f(a) < f(b)` and its mirrored or
   negated forms give the same call order; `a * b` vs `b * a` compile
   identically.
