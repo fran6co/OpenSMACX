@@ -322,8 +322,11 @@ void Datalink::draw_unit() {
         _itoa(Chassis[VehPrototypes[id].chassis_id].range, number, 10);
         strcat(StringTemp, number);
         strcat(StringTemp, " ");
-        strcat(StringTemp, Chassis[VehPrototypes[id].chassis_id].range == 1
-                               ? label_get(0xC0 / 4) : label_get(0xC4 / 4));
+        if (Chassis[VehPrototypes[id].chassis_id].range == 1) {
+            strcat(StringTemp, label_get(0xC0 / 4));
+        } else {
+            strcat(StringTemp, label_get(0xC4 / 4));
+        }
         strcat(StringTemp, "}");
         description.pending_text_ = StringTemp;
         description.field_20_ = 4;
@@ -335,8 +338,8 @@ void Datalink::draw_unit() {
     strcat(StringTemp, ": ");
     strcat(StringTemp, " ");
     strcat(StringTemp, "{");
-    _itoa(cost_factor(ConsoleGlobal.faction_id_, 1, -1) * VehPrototypes[id].cost,
-          number, 10);
+    const int cost = cost_factor(ConsoleGlobal.faction_id_, 1, -1) * VehPrototypes[id].cost;
+    _itoa(cost, number, 10);
     strcat(StringTemp, number);
     strcat(StringTemp, "}");
     description.pending_text_ = StringTemp;

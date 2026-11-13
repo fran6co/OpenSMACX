@@ -730,7 +730,7 @@ int __cdecl get_basic_offense(int veh_id_atk, int veh_id_def,
 int __cdecl get_basic_defense(int veh_id_def, int veh_id_atk,
                                         int psi_combat_type, BOOL is_bombard);
 void __cdecl add_bat(int type, int modifier, LPCSTR display_str);
-void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, 
+int __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, 
                                       int *defense_out, int combat_type);
 int __cdecl best_defender(int veh_id_def, int veh_id_atk, BOOL check_artillery);
 void __cdecl invasions(int base_id);

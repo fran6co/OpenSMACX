@@ -881,7 +881,7 @@ void __cdecl add_bat(int type, int modifier, LPCSTR display_str) {
 /*
 Purpose: Calculate the battle outcome between two units.
 // ORIGINAL: 0x00501DA0 ?battle_compute@@YAXHHPAHPAHH@Z 0x00501DA0-0x005044C4
-// symbol    ?battle_compute@@YAXHHPAH0H@Z
+// symbol    ?battle_compute@@YAHHHPAH0H@Z
 // LEVER: THE SEH FRAME WAS A std::string. The terrain modifier was built with
 //        `std::string terrain_modifier = label_get(331); ... .c_str()`, and
 //        basic_string's destructor made VC6 emit an unwind frame the image
@@ -909,10 +909,10 @@ Purpose: Calculate the battle outcome between two units.
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x004E3A50 0x004E3B80 0x004E3EF0 0x005010C0 0x005015B0 0x00501940 0x0050BA00 0x00581170 0x005B9F20 0x005BF010 0x005BF1F0 0x005C13B0 0x006169A0 0x00645460 0x00645470
-Return Value: n/a
+Return Value: 0 (the image ends in xor eax,eax at 0x5044BE)
 Status: Complete - testing
 */
-void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, int *defense_out,
+int __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, int *defense_out,
                             int combat_type) {
     int offense = 8;
     int defense = 8;
@@ -1413,6 +1413,7 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
     if (defense_out) {
         *defense_out = defense;
     }
+    return 0;
 }
 
 // proto_power() by prototype: best_defender expands it twice.
