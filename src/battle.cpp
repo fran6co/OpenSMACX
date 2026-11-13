@@ -2676,8 +2676,9 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
 
     // 0x506D33
     if (can_arty(Vehs[veh_id].proto_id, TRUE) && can_arty(Vehs[def_id].proto_id, TRUE)) {
-        if (get_triad(veh_id) == TRIAD_LAND ||
-            mode || !is_ocean(target_x, target_y)) {
+        if (get_triad(veh_id) == TRIAD_LAND) {
+            mode |= 2;
+        } else if (mode || !is_ocean(target_x, target_y)) {
             mode |= 2;
         }
     }
