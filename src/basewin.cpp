@@ -287,12 +287,11 @@ void BaseWin::pop_click(int position, int, int, int) {
         for (int k = 0; k < 3; ++k) {
             // ops_bonus, psych_bonus and research_bonus are consecutive and
             // walked in step with Energy's three abbreviations.
-            const int bonus = (&Citizen[i].ops_bonus)[k];
-            if (bonus) {
+            if ((&Citizen[i].ops_bonus)[k]) {
                 if (strlen(text)) strcat(text, ", ");
                 strcat(text, "+");
                 char number[80];
-                _itoa(bonus, number, 10);
+                _itoa((&Citizen[i].ops_bonus)[k], number, 10);
                 strcat(text, number);
                 strcat(text, " ");
                 strcat(text, StringTable.get(Energy[k].abbrev));
@@ -317,11 +316,11 @@ void BaseWin::pop_click(int position, int, int, int) {
     } else {
         if (current == 999) {
             int freed;
-            if (field_40B4C_) {
+            if (!field_40B4C_) {
+                freed = farm_get(field_40B44_, field_40B48_);
+            } else {
                 for (freed = 20; freed > 0; --freed)
                     if (BaseCurrent->resource_sqr_radius & (1 << freed)) break;
-            } else {
-                freed = farm_get(field_40B44_, field_40B48_);
             }
             if (freed > 0) BaseCurrent->resource_sqr_radius &= ~(1 << freed);
             position = BaseCurrent->specialist_total++;
@@ -1741,8 +1740,7 @@ void BaseWin::production(int a1, int a2) {
     for (i = 0; i <= BaseCurrent->queue_size; ++i) {
         const int id = BaseCurrent->queue_production_id[i];
         if (id >= 0) {
-            uint8_t &queued = PlayersData[faction].proto_id_queue[id];
-            queued = static_cast<uint8_t>(queued - 1);
+            PlayersData[faction].proto_id_queue[id]--;
         }
     }
 
@@ -1776,8 +1774,7 @@ setup:
             for (i = 0; i <= BaseCurrent->queue_size; ++i) {
                 const int id = BaseCurrent->queue_production_id[i];
                 if (id >= 0) {
-                    uint8_t &queued = PlayersData[faction].proto_id_queue[id];
-                    queued = static_cast<uint8_t>(queued + 1);
+                    PlayersData[faction].proto_id_queue[id]++;
                 }
             }
             return;
@@ -1795,8 +1792,7 @@ setup:
                 for (i = 0; i <= BaseCurrent->queue_size; ++i) {
                     const int id = BaseCurrent->queue_production_id[i];
                     if (id >= 0) {
-                        uint8_t &queued = PlayersData[faction].proto_id_queue[id];
-                        queued = static_cast<uint8_t>(queued + 1);
+                        PlayersData[faction].proto_id_queue[id]++;
                     }
                 }
                 return;
@@ -1894,8 +1890,7 @@ setup:
                         for (i = 0; i <= BaseCurrent->queue_size; ++i) {
                             const int id = BaseCurrent->queue_production_id[i];
                             if (id >= 0) {
-                                uint8_t &queued = PlayersData[faction].proto_id_queue[id];
-                                queued = static_cast<uint8_t>(queued + 1);
+                                PlayersData[faction].proto_id_queue[id]++;
                             }
                         }
                         return;
@@ -1951,8 +1946,7 @@ setup:
     for (i = 0; i <= BaseCurrent->queue_size; ++i) {
         const int id = BaseCurrent->queue_production_id[i];
         if (id >= 0) {
-            uint8_t &queued = PlayersData[faction].proto_id_queue[id];
-            queued = static_cast<uint8_t>(queued + 1);
+            PlayersData[faction].proto_id_queue[id]++;
         }
     }
 
