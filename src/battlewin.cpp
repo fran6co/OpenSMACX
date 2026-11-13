@@ -534,320 +534,296 @@ extern Sprite g_BATTLE_SEALURK_SPRITE;
 
 // ORIGINAL: 0x00421B50 ?battle_report@BattleWin@@QAEXHHHHH@Z 0x00421B50-0x00422BFC;0x00652BA0-0x00652BCB
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00421b50.cpp:original hot and cold spans", "pinned terranx_original.exe SHA256:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_battlewin_battle_report_behavior.py", "recovery/tests/battlewin_battle_report_host_control.cpp"], "reason": "Recover the complete two-vehicle battle report through the real SubInterface owner, embedded Time, local Font lifetimes, MainInterface canvas, typed vehicle rules and inline battle modifier text rows."}
-// TRIED: real `Font font_c4/font_9c/font_ec;` locals reproduce the 3-Font RAII/SEH shape and the early-return dtor cascade, but the "away from base" separator/style checks and the odds/ wrap text-building tail (0x422781-0x422f00) are approximated rather than a literal per-instruction transcription.
+// Rewritten from the image (2026-11-13): two written-out portrait blocks, the
+// report re-entered by `goto again` with first_vehicle_id replaced, ten
+// say_num expansions (one 0x50 buffer each). Restored original behaviour:
+// proto 15 shows the spore launcher and 19 the fungal tower (jump table at
+// 0x00422BFC); the hit points subtract Veh::dmg_incurred (+0x10), not
+// year_end_lurking; the destroyed/artifact label uses the flag-1 font
+// (ebp-0x9c), the second font passed to set_font.
 void BattleWin::battle_report(int first_vehicle_id, int second_vehicle_id,
                               int attack_odds, int defense_odds, int flags) {
-    Font font_normal;
-    Font font_small;
-    Font font_detail;
+    Font font_main;
+    Font font_alt;
+    Font font_third;
 
     if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] != 10) {
         return;
     }
 
-    const bool wide_layout = WinScreenWidth != 0x320;
-    const int panel_height = wide_layout ? 75 : 50;
-    const int font_size = wide_layout ? 12 : 10;
-    Buffer &canvas = static_cast<Buffer &>(MainInterfaceGlobal);
-
-    for (int rect_index = 0; rect_index != 4; ++rect_index) {
-        canvas.box_sprite(&battle_rects_[rect_index], &InterfaceBoxStyles[0]);
-    }
+    const int wide = WinScreenWidth != 800;
+    MainInterfaceGlobal.box_sprite(&battle_rects_[0], &InterfaceBoxStyles[0]);
+    MainInterfaceGlobal.box_sprite(&battle_rects_[1], &InterfaceBoxStyles[0]);
+    MainInterfaceGlobal.box_sprite(&battle_rects_[2], &InterfaceBoxStyles[0]);
+    MainInterfaceGlobal.box_sprite(&battle_rects_[3], &InterfaceBoxStyles[0]);
     MainInterfaceGlobal.redraw_complete();
     MainInterfaceGlobal.soft_update();
 
-    font_normal.init(DefaultFontFace, font_size, 0);
-    font_small.init(DefaultFontFace, font_size, 2);
-    font_detail.init(DefaultFontFace, font_size, 1);
-    canvas.set_font(&font_normal, &font_detail, &font_small, 0);
-    canvas.set_text_color(MessageWinTextColor, -1, 1, 1);
+    int panel_height = WinScreenWidth != 800 ? 75 : 50;
+    const int font_size = WinScreenWidth != 800 ? 12 : 10;
+    font_main.init(DefaultFontFace, font_size, 0);
+    font_third.init(DefaultFontFace, font_size, 2);
+    font_alt.init(DefaultFontFace, font_size, 1);
+    MainInterfaceGlobal.set_font(&font_main, &font_alt, &font_third, 0);
+    MainInterfaceGlobal.set_text_color(MessageWinTextColor, -1, 1, 1);
 
-    Veh &first = Vehs[first_vehicle_id];
-    Veh &second = Vehs[second_vehicle_id];
-    VehPrototype &first_proto = VehPrototypes[first.proto_id];
-    VehPrototype &second_proto = VehPrototypes[second.proto_id];
-    const int first_faction = first.faction_id;
-    const int second_faction = second.faction_id;
-
-    const bool same_special_plan =
-        first_proto.plan == 0x0B && second_proto.plan == 0x0B;
-    bool alternate_combat_label = false;
-    if (attack_odds >= 0 && defense_odds >= 0) {
-        alternate_combat_label =
-            Weapon[first_proto.weapon_id].offense_rating < 0 ||
-            Armor[second_proto.armor_id].defense_rating < 0 ||
-            first_faction == 0;
+    int psi_label = 0;
+    const int both_artifacts =
+        VehPrototypes[Vehs[first_vehicle_id].proto_id].plan == 0x0B
+        && VehPrototypes[Vehs[second_vehicle_id].proto_id].plan == 0x0B;
+    if (attack_odds >= 0 && defense_odds >= 0
+        && (Weapon[VehPrototypes[Vehs[first_vehicle_id].proto_id].weapon_id].offense_rating < 0
+            || Armor[VehPrototypes[Vehs[second_vehicle_id].proto_id].armor_id].defense_rating < 0
+            || !Vehs[first_vehicle_id].faction_id)) {
+        psi_label = 1;
     }
+    const int first_faction = Vehs[first_vehicle_id].faction_id;
+    const int second_faction = Vehs[second_vehicle_id].faction_id;
+    RECT inner_first = battle_rects_[0];
+    inner_first.left += 3;
+    inner_first.top += 3;
+    inner_first.right -= 3;
+    inner_first.bottom -= 3;
+    RECT inner_second = battle_rects_[1];
+    inner_second.left += 3;
+    inner_second.top += 3;
+    inner_second.right -= 3;
+    inner_second.bottom -= 3;
+    MainInterfaceGlobal.set_font(find_font(14, 1), 0, 0, 0);
 
-    // Portrait area 0x50 belongs to the first argument, and 0x60 to the
-    // second. Each sprite is centered independently in the native panel.
-    const int portrait_vehicle_ids[2] = {first_vehicle_id, second_vehicle_id};
-    const int portrait_factions[2] = {first_faction, second_faction};
-    canvas.set_font(find_font(14, 1), 0, 0, 0);
-    for (int side = 0; side != 2; ++side) {
-        const int rect_slot = side + 2;
-        RECT &portrait_rect = battle_rects_[rect_slot];
-        Sprite *portrait;
-        if (portrait_factions[side] != 0) {
-            portrait = &FactionsArt[portrait_factions[side]].council_small;
-        } else {
-            const int portrait_proto_id =
-                Vehs[portrait_vehicle_ids[side]].proto_id;
-            switch (portrait_proto_id) {
-            case 9:  portrait = &g_BATTLE_ISLE_DEEP_SPRITE; break;
-            case 10: portrait = &g_BATTLE_LOCUSTS_CHIRON_SPRITE; break;
-            case 14: portrait = &g_BATTLE_SEALURK_SPRITE; break;
-            case 15: portrait = &g_BATTLE_FUNGAL_TOWER_SPRITE; break;
-            case 19: portrait = &g_BATTLE_SPORE_LAUNCHER_SPRITE; break;
-            default: portrait = &g_BATTLE_MIND_WORM_SPRITE; break;
-            }
+    // Portrait of the first vehicle's faction (or native) in rect 2.
+    Sprite *portrait;
+    if (first_faction) {
+        portrait = &FactionsArt[first_faction].council_small;
+    } else {
+        switch (Vehs[first_vehicle_id].proto_id) {
+        case 9: portrait = &g_BATTLE_ISLE_DEEP_SPRITE; break;
+        case 10: portrait = &g_BATTLE_LOCUSTS_CHIRON_SPRITE; break;
+        case 19: portrait = &g_BATTLE_FUNGAL_TOWER_SPRITE; break;
+        case 15: portrait = &g_BATTLE_SPORE_LAUNCHER_SPRITE; break;
+        case 14: portrait = &g_BATTLE_SEALURK_SPRITE; break;
+        default: portrait = &g_BATTLE_MIND_WORM_SPRITE; break;
         }
-        const int x = portrait_rect.left +
-            ((portrait_rect.right - portrait_rect.left) - portrait->width()) / 2;
-        const int y = portrait_rect.top - portrait_rect.left + x;
-        portrait->draw(&canvas, portrait->transparent_index(), x, y, 1, 1);
-
-        RECT name_rect;
-        name_rect.left = portrait_rect.left + 3;
-        name_rect.top = y + portrait->height() + 3;
-        name_rect.right = portrait_rect.right - 3;
-        name_rect.bottom = portrait_rect.bottom - 3;
-        const int faction = portrait_factions[side];
-        canvas.set_text_color(ChatItemIdTable[faction], ChatShadowColors[faction],
-                              1, 1);
-        canvas.wrap_cent(Players[faction].formal_name_faction, &name_rect);
     }
+    int x = battle_rects_[2].left
+        + (battle_rects_[2].right - battle_rects_[2].left - portrait->width()) / 2;
+    int y = battle_rects_[2].top - battle_rects_[2].left + x;
+    portrait->draw(&MainInterfaceGlobal, portrait->transparent_index(), x, y, 1, 1);
+    RECT name_rect = battle_rects_[2];
+    name_rect.left += 3;
+    name_rect.top = y + portrait->height() + 3;
+    name_rect.right -= 3;
+    name_rect.bottom -= 3;
+    MainInterfaceGlobal.set_text_color(ChatItemIdTable[first_faction],
+                                       ChatShadowColors[first_faction], 1, 1);
+    MainInterfaceGlobal.wrap_cent(Players[first_faction].formal_name_faction, &name_rect);
 
-    RECT name_bounds;
-    UnionRect(&name_bounds, &battle_rects_[2], &battle_rects_[3]);
-    RECT report_inner[2];
-    for (int panel = 0; panel != 2; ++panel) {
-        report_inner[panel].left = battle_rects_[panel].left + 3;
-        report_inner[panel].top = battle_rects_[panel].top + 3;
-        report_inner[panel].right = battle_rects_[panel].right - 3;
-        report_inner[panel].bottom = battle_rects_[panel].bottom - 3;
+    // Portrait of the second vehicle's faction in rect 3.
+    if (second_faction) {
+        portrait = &FactionsArt[second_faction].council_small;
+    } else {
+        switch (Vehs[second_vehicle_id].proto_id) {
+        case 9: portrait = &g_BATTLE_ISLE_DEEP_SPRITE; break;
+        case 10: portrait = &g_BATTLE_LOCUSTS_CHIRON_SPRITE; break;
+        case 19: portrait = &g_BATTLE_FUNGAL_TOWER_SPRITE; break;
+        case 15: portrait = &g_BATTLE_SPORE_LAUNCHER_SPRITE; break;
+        case 14: portrait = &g_BATTLE_SEALURK_SPRITE; break;
+        default: portrait = &g_BATTLE_MIND_WORM_SPRITE; break;
+        }
     }
+    x = battle_rects_[3].left
+        + (battle_rects_[3].right - battle_rects_[3].left - portrait->width()) / 2;
+    y = battle_rects_[3].top - battle_rects_[3].left + x;
+    portrait->draw(&MainInterfaceGlobal, portrait->transparent_index(), x, y, 1, 1);
+    name_rect = battle_rects_[3];
+    name_rect.left += 3;
+    name_rect.top = y + portrait->height() + 3;
+    name_rect.right -= 3;
+    name_rect.bottom -= 3;
+    MainInterfaceGlobal.set_text_color(ChatItemIdTable[second_faction],
+                                       ChatShadowColors[second_faction], 1, 1);
+    MainInterfaceGlobal.wrap_cent(Players[second_faction].formal_name_faction, &name_rect);
+    UnionRect(&name_rect, &battle_rects_[2], &battle_rects_[3]);
 
-    // Preserve the image's swap-and-repeat loop: each pass paints one input
-    // vehicle and the second pass is reached by replacing the live id with
-    // second_vehicle_id. Equal IDs naturally terminate after one pass.
-    int current_vehicle_id = first_vehicle_id;
-    int text_y = 0;
-    int text_x = 0;
-    int text_width = 0;
-    do {
-        const bool current_is_second = current_vehicle_id == second_vehicle_id;
-        const RECT &native_panel = battle_rects_[current_is_second ? 1 : 0];
-        const RECT &native_clip = report_inner[current_is_second ? 1 : 0];
-        text_x = native_clip.left;
-        text_y = native_clip.top;
-        text_width = native_clip.right - native_clip.left;
-
-        canvas.set_clip(const_cast<RECT *>(&native_clip));
-
-        Veh &vehicle = Vehs[current_vehicle_id];
-        VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
-        const int faction = vehicle.faction_id;
-
-        if (wide_layout) {
-            const int icon_x = text_x +
-                ((text_width / 2) - panel_height) / 2;
-            veh_draw(&canvas, current_vehicle_id, icon_x, text_y,
-                     0, 0, 0);
-
-            const int initial_turn_count = prototype.plan == 0x0C
-                ? 1 : range(prototype.reactor_id, 1, 100) * 10;
-            const int remaining_turns =
-                range(initial_turn_count - vehicle.year_end_lurking, 0, 9999);
-            if (remaining_turns == 0) {
-                canvas.set_font(&font_small, 0, 0, 0);
-                canvas.set_text_color(0x6A, 0, 1, 1);
-                int label_offset;
-                if (prototype.plan == 0x0C) {
-                    label_offset = 0x4A0;
-                } else if (faction != 0) {
-                    label_offset = 0x498;
-                } else {
-                    label_offset = 0x49C;
-                }
-                StringTemp[0] = '\0';
-                strcat(StringTemp, label_get(label_offset / 4));
-                canvas.write_cent_l(StringTemp, text_x,
-                                    text_y + panel_height / 4,
-                                    text_width / 2,
-                                    static_cast<int>(strlen(StringTemp)));
-            }
-        }
-
-        StringTemp[0] = '\0';
-        if (faction != 0 && faction != ConsoleGlobal.faction_id_ &&
-            Language == 0) {
-            strcat(StringTemp, Players[faction].adj_name_faction);
-            strcat(StringTemp, BufferJoinSpace);
-        }
-        strcat(StringTemp, prototype.veh_name);
-        if (faction != 0 && faction != ConsoleGlobal.faction_id_ &&
-            Language != 0) {
-            strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, "(");
-            GenderDefault = static_cast<int>(Players[faction].noun_gender);
-            PluralityDefault = Players[faction].is_noun_plural;
-            strcat(StringTemp, Players[faction].noun_faction);
-            strcat(StringTemp, ")");
-        }
-        if ((GameDataStateStorage.fields_.game_state_ & 0x80) != 0) {
-            char vehicle_number[40];
-            strcat(StringTemp, "(");
-            _itoa(current_vehicle_id, vehicle_number, 10);
-            strcat(StringTemp, vehicle_number);
-            strcat(StringTemp, ")");
-        }
-
-        const int faction_color_slot = current_is_second ? second_faction
-                                                         : first_faction;
-        const int panel_width = native_panel.right - native_panel.left;
-        const int write_width = wide_layout ? text_width / 2 : text_width;
-        const int row_y = text_y + (wide_layout ? panel_height : 4);
-        canvas.set_font(find_font(wide_layout ? 16 : 12, 1), 0, 0, 0);
-        canvas.set_text_color(ChatItemIdTable[faction_color_slot],
-                              ChatShadowColors[faction_color_slot], 1, 1);
-        int cursor_y = canvas.wrap_cent(StringTemp, text_x, row_y, write_width);
-
-        canvas.set_font(&font_normal, 0, 0, 0);
-        canvas.set_text_color(MessageWinTextColor, -1, 1, 1);
-        StringTemp[0] = '\0';
-        say_stats_3(StringTemp, vehicle.proto_id);
-        const int stats_width = text_width / 2;
-        const int stats_x = wide_layout ? text_x + text_width / 2 : text_x;
-        const int stats_y = wide_layout ? text_y + 5 : cursor_y;
-        cursor_y = canvas.wrap(StringTemp, stats_x, stats_y, stats_width);
-
-        if (!same_special_plan) {
+    // Each pass reports first_vehicle_id; the second pass replaces it with
+    // second_vehicle_id. Equal ids stop after one pass.
+again:
+    int width;
+    int text_x;
+    int text_y;
+    if (first_vehicle_id != second_vehicle_id) {
+        width = inner_first.right - inner_first.left;
+        text_x = inner_first.left;
+        text_y = inner_first.top;
+        MainInterfaceGlobal.set_clip(&inner_first);
+    } else {
+        width = inner_second.right - inner_second.left;
+        text_x = inner_second.left;
+        text_y = inner_second.top;
+        MainInterfaceGlobal.set_clip(&inner_second);
+    }
+    int half_width;
+    if (wide) {
+        half_width = width / 2;
+        veh_draw(&MainInterfaceGlobal, first_vehicle_id,
+                 text_x + (half_width - panel_height) / 2, text_y,
+                 WinScreenWidth != 800 ? 0 : -5, 0, 0);
+        // WORKAROUND(noinline): the image expands proto_power here but calls
+        // both range() copies out of line (0x00422F00); the later written-out
+        // sum expands them. The original spent more /Ob2 budget before this.
+        int (__cdecl *const range_call)(int, int, int) = range;
+        if (!range_call((VehPrototypes[Vehs[first_vehicle_id].proto_id].plan == PLAN_ALIEN_ARTIFACT
+                             ? 1
+                             : range_call(VehPrototypes[Vehs[first_vehicle_id].proto_id].reactor_id, 1, 100) * 10)
+                            - Vehs[first_vehicle_id].dmg_incurred,
+                        0, 9999)) {
+            const int label_y = text_y + panel_height / 2 / 2;
+            MainInterfaceGlobal.set_font(&font_alt, 0, 0, 0);
+            MainInterfaceGlobal.set_text_color(0x6A, 0, 1, 1);
             StringTemp[0] = '\0';
-            if (alternate_combat_label) {
-                strcat(StringTemp, label_get(0x310 / 4));
+            if (VehPrototypes[Vehs[first_vehicle_id].proto_id].plan == 0x0C) {
+                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x4A0 / 4]));
+            } else if (!Vehs[first_vehicle_id].faction_id) {
+                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x49C / 4]));
             } else {
-                const bool use_weapon_branch =
-                    current_vehicle_id != second_vehicle_id ||
-                    ((flags & 2) != 0 &&
-                     Chassis[prototype.chassis_id].triad != 1);
-                if (use_weapon_branch) {
-                    strcat(StringTemp, StringTable.get(
-                        Weapon[prototype.weapon_id].name));
-                } else {
-                    strcat(StringTemp, StringTable.get(
-                        Armor[prototype.armor_id].name));
-                }
+                strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x498 / 4]));
             }
-
-            if (attack_odds >= 0 && defense_odds >= 0) {
-                strcat(StringTemp, ": ");
-                const bool native_attack_line =
-                    current_vehicle_id != second_vehicle_id ||
-                    ((flags & 2) != 0 &&
-                     Chassis[prototype.chassis_id].triad != 1);
-                const int psi_triad =
-                    Chassis[second_proto.chassis_id].triad;
-                char detail_number[40];
-                if (native_attack_line) {
-                    if (alternate_combat_label) {
-                        _itoa(static_cast<int>(Rules.psi_combat_ratio_atk[
-                                  psi_triad]),
-                              detail_number, 10);
-                    } else {
-                        _itoa(offense_proto(vehicle.proto_id, -1, 0),
-                              detail_number, 10);
-                    }
-                } else {
-                    if (alternate_combat_label) {
-                        _itoa(static_cast<int>(Rules.psi_combat_ratio_def[
-                                  psi_triad]),
-                              detail_number, 10);
-                    } else {
-                        _itoa(armor_proto(vehicle.proto_id, -1, 0),
-                              detail_number, 10);
-                    }
-                }
-                strcat(StringTemp, detail_number);
-            }
-            cursor_y = canvas.wrap(StringTemp, stats_x, cursor_y, stats_width);
+            MainInterfaceGlobal.write_cent_text(StringTemp, text_x, label_y, half_width);
         }
+    }
 
+    int column_x = text_x;
+    int row_y = wide ? panel_height : 4;
+    row_y += text_y;
+    StringTemp[0] = '\0';
+    if (Vehs[first_vehicle_id].faction_id
+        && Vehs[first_vehicle_id].faction_id != ConsoleGlobal.faction_id_ && !Language) {
+        strcat(StringTemp, Players[Vehs[first_vehicle_id].faction_id].adj_name_faction);
+        strcat(StringTemp, BufferJoinSpace);
+    }
+    strcat(StringTemp, VehPrototypes[Vehs[first_vehicle_id].proto_id].veh_name);
+    if (Vehs[first_vehicle_id].faction_id
+        && Vehs[first_vehicle_id].faction_id != ConsoleGlobal.faction_id_ && Language) {
+        strcat(StringTemp, BufferJoinSpace);
+        strcat(StringTemp, "(");
+        parse_set(Players[Vehs[first_vehicle_id].faction_id].noun_gender,
+                  Players[Vehs[first_vehicle_id].faction_id].is_noun_plural);
+        strcat(StringTemp, Players[Vehs[first_vehicle_id].faction_id].noun_faction);
+        strcat(StringTemp, ")");
+    }
+    if (GameDataStateStorage.fields_.game_state_ & 0x80) {
+        strcat(StringTemp, "(");
+        say_num(first_vehicle_id);
+        strcat(StringTemp, ")");
+    }
+    MainInterfaceGlobal.set_font(find_font(WinScreenWidth != 800 ? 16 : 12, 1), 0, 0, 0);
+    MainInterfaceGlobal.set_text_color(
+        ChatItemIdTable[first_vehicle_id == second_vehicle_id ? second_faction : first_faction],
+        ChatShadowColors[first_vehicle_id == second_vehicle_id ? second_faction : first_faction],
+        1, 1);
+    row_y = MainInterfaceGlobal.wrap_cent(StringTemp, text_x, row_y, wide ? width / 2 : width);
+    MainInterfaceGlobal.set_font(&font_main, 0, 0, 0);
+    MainInterfaceGlobal.set_text_color(MessageWinTextColor, -1, 1, 1);
+    if (wide) {
+        column_x = text_x + width / 2;
+        row_y = text_y + 5;
+    }
+    StringTemp[0] = '\0';
+    say_stats_3(StringTemp, Vehs[first_vehicle_id].proto_id);
+    half_width = width / 2;
+    row_y = MainInterfaceGlobal.wrap(StringTemp, column_x, row_y, half_width);
+
+    if (!both_artifacts) {
         StringTemp[0] = '\0';
-        say_morale(current_vehicle_id,
-                   current_is_second ? first_faction : second_faction);
-        strcat(StringTemp, ": ");
-        const int side_index = current_is_second ? 1 : 0;
-        const int scaled_morale = static_cast<int>(
-            (static_cast<int>(VehBasicBattleMorale[side_index]) - 2) * 100);
-        const int morale_percent =
-            (scaled_morale + ((scaled_morale >> 31) & 7)) >> 3;
-        if (morale_percent >= 0) strcat(StringTemp, "+");
-        char morale_text[40];
-        _itoa(morale_percent, morale_text, 10);
-        strcat(StringTemp, morale_text);
+        if (psi_label) {
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x310 / 4]));
+        } else if (first_vehicle_id == second_vehicle_id
+                   && (!(flags & 2)
+                       || Chassis[VehPrototypes[Vehs[first_vehicle_id].proto_id].chassis_id].triad == 1)) {
+            strcat(StringTemp, StringTable.get(
+                Armor[VehPrototypes[Vehs[first_vehicle_id].proto_id].armor_id].name));
+        } else {
+            strcat(StringTemp, StringTable.get(
+                Weapon[VehPrototypes[Vehs[first_vehicle_id].proto_id].weapon_id].name));
+        }
+        if (attack_odds >= 0 && defense_odds >= 0) {
+            strcat(StringTemp, ": ");
+            if (first_vehicle_id == second_vehicle_id
+                && (!(flags & 2)
+                    || Chassis[VehPrototypes[Vehs[first_vehicle_id].proto_id].chassis_id].triad == 1)) {
+                if (psi_label) {
+                    say_num(Rules.psi_combat_ratio_def[
+                        Chassis[VehPrototypes[Vehs[second_vehicle_id].proto_id].chassis_id].triad]);
+                } else {
+                    say_num(armor_proto(Vehs[first_vehicle_id].proto_id, -1, 0));
+                }
+            } else if (psi_label) {
+                say_num(Rules.psi_combat_ratio_atk[
+                    Chassis[VehPrototypes[Vehs[second_vehicle_id].proto_id].chassis_id].triad]);
+            } else {
+                say_num(offense_proto(Vehs[first_vehicle_id].proto_id, -1, 0));
+            }
+        }
+        row_y = MainInterfaceGlobal.wrap(StringTemp, column_x, row_y, half_width);
+    }
+
+    StringTemp[0] = '\0';
+    say_morale(first_vehicle_id,
+               first_vehicle_id == second_vehicle_id ? first_faction : second_faction);
+    strcat(StringTemp, ": ");
+    const int side = first_vehicle_id == second_vehicle_id;
+    const int morale = ((int)VehBasicBattleMorale[side] - 2) * 100 / 8;
+    if (morale >= 0) {
+        strcat(StringTemp, "+");
+    }
+    say_num(morale);
+    strcat(StringTemp, "%");
+    strcat(StringTemp, BufferJoinSpace);
+    strcat(StringTemp, BufferJoinSpace);
+    row_y = MainInterfaceGlobal.wrap(StringTemp, column_x, row_y, half_width);
+    for (int i = 0; i < (int)VehBattleModCount[side]; i++) {
+        StringTemp[0] = '\0';
+        strcat(StringTemp, VehBattleDisplay[side * 4 + i]);
+        strcat(StringTemp, BufferJoinSpace);
+        if (VehBattleModifier[side * 4 + i] >= 0) {
+            strcat(StringTemp, "+");
+        }
+        say_num(VehBattleModifier[side * 4 + i]);
         strcat(StringTemp, "%");
-        strcat(StringTemp, BufferJoinSpace);
-        strcat(StringTemp, BufferJoinSpace);
-        cursor_y = canvas.wrap(StringTemp, stats_x, cursor_y, stats_width);
+        row_y = MainInterfaceGlobal.wrap(StringTemp, column_x, row_y, half_width);
+    }
 
-        const int modifier_count = static_cast<int>(VehBattleModCount[side_index]);
-        for (int modifier_index = 0; modifier_index < modifier_count;
-             ++modifier_index) {
-            StringTemp[0] = '\0';
-            strcat(StringTemp, VehBattleDisplay[side_index * 4 + modifier_index]);
-            strcat(StringTemp, BufferJoinSpace);
-            const int modifier = VehBattleModifier[side_index * 4 + modifier_index];
-            if (modifier >= 0) strcat(StringTemp, "+");
-            char modifier_text[40];
-            _itoa(modifier, modifier_text, 10);
-            strcat(StringTemp, modifier_text);
-            strcat(StringTemp, "%");
-            cursor_y = canvas.wrap(StringTemp, stats_x, cursor_y, stats_width);
-        }
+    StringTemp[0] = '\0';
+    strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x520 / 4]));
+    strcat(StringTemp, ": ");
+    strcat(StringTemp, "{");
+    say_num((first_vehicle_id == second_vehicle_id ? defense_odds : attack_odds) >> 8);
+    strcat(StringTemp, ".");
+    const int hundredths =
+        ((first_vehicle_id == second_vehicle_id ? defense_odds : attack_odds) & 0xFF) * 100 >> 8;
+    if (hundredths < 10) {
+        strcat(StringTemp, "0");
+    }
+    say_num(hundredths);
+    strcat(StringTemp, "}");
+    row_y = MainInterfaceGlobal.wrap(StringTemp, column_x, row_y, half_width);
 
-        StringTemp[0] = '\0';
-        strcat(StringTemp, label_get(0x520 / 4));
-        strcat(StringTemp, ": ");
-        strcat(StringTemp, "{");
-        const int packed_odds = current_vehicle_id == second_vehicle_id
-            ? defense_odds : attack_odds;
-        char whole_text[40];
-        _itoa(packed_odds >> 8, whole_text, 10);
-        strcat(StringTemp, whole_text);
-        strcat(StringTemp, ".");
-        const int fraction = ((packed_odds & 0xFF) * 100) >> 8;
-        if (fraction <= 9) strcat(StringTemp, "0");
-        char fraction_text[40];
-        _itoa(fraction, fraction_text, 10);
-        strcat(StringTemp, fraction_text);
-        strcat(StringTemp, "}");
-        cursor_y = canvas.wrap(StringTemp, stats_x, cursor_y, stats_width);
+    StringTemp[0] = '\0';
+    strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x1E4 / 4]));
+    strcat(StringTemp, ": ");
+    strcat(StringTemp, "{");
+    say_num(range(proto_power(first_vehicle_id) - Vehs[first_vehicle_id].dmg_incurred, 0, 9999));
+    strcat(StringTemp, "}");
+    MainInterfaceGlobal.wrap(StringTemp, column_x, row_y, half_width);
 
-        StringTemp[0] = '\0';
-        strcat(StringTemp, label_get(0x1E4 / 4));
-        strcat(StringTemp, ": ");
-        strcat(StringTemp, "{");
-        const VehPrototype &remaining_proto =
-            VehPrototypes[Vehs[current_vehicle_id].proto_id];
-        int remaining_turns = remaining_proto.plan == 0x0C
-            ? 1 : range(remaining_proto.reactor_id, 1, 100) * 10;
-        remaining_turns -= vehicle.year_end_lurking;
-        if (remaining_turns < 0) remaining_turns = 0;
-        if (remaining_turns > 0x270F) remaining_turns = 0x270F;
-        char turns_text[40];
-        _itoa(remaining_turns, turns_text, 10);
-        strcat(StringTemp, turns_text);
-        strcat(StringTemp, "}");
-        canvas.wrap(StringTemp, stats_x, cursor_y, stats_width);
-
-        if (current_vehicle_id == second_vehicle_id) break;
-        current_vehicle_id = second_vehicle_id;
-    } while (true);
+    if (first_vehicle_id != second_vehicle_id) {
+        first_vehicle_id = second_vehicle_id;
+        goto again;
+    }
 
     MapWinCaptionScale = -1;
     MapWinCaptionDivisor = -1;
-    canvas.restore_clip();
+    MainInterfaceGlobal.restore_clip();
     MainInterfaceGlobal.update(0);
     do_non_input();
     time_.pulse(&teardown_00422ec0, 0, 0x1388, 5);

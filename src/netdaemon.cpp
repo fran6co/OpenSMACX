@@ -5380,6 +5380,7 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
     if (!IsMultiplayerNet) return;
 
     header = reinterpret_cast<SyncHeaderPrefix *>(packet);
+    size = 8;
     switch (opcode) {
     case 0x00:
         if (!outgoing && static_cast<int>(primary_state_.trailing_words_[1]) >= 0) {
@@ -5597,7 +5598,6 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
         break;
     case 0x09:
     case 0x0C:
-        size = 8;
         break;
     }
 

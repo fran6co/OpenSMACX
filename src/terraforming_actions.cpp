@@ -359,7 +359,7 @@ int __cdecl contribution(int veh_id, int terraform_id) {
 
 // 0x009A64B4, two dwords: the TERRA_* bits the local player has already been
 // shown a first-time popup for, [0] land and [1] sea - indexed by the same
-// not-ocean test that picks Terraforming[]'s preq_tech from its _sea twin.
+// below-shore-line (ocean) test that picks Terraforming[]'s preq_tech from its _sea twin.
 // 0x009A64B4
 
 // 0x009B22DC and 0x009B22E0 close the run map.cpp binds as
@@ -431,10 +431,29 @@ extern Sprite g_TER1_FARM_SPRITES[5];             // 0x00791FC8, sprite.cpp
 extern Sprite g_TER1_SOIL_ENRICHER_SPRITES[5];    // 0x0079A710, sprite.cpp
 extern Sprite g_TER1_MINE_SPRITE;                 // 0x00776A50, sprite.cpp
 extern Sprite g_TER1_SOLAR_COLLECTOR_SPRITE;      // 0x007991F8, sprite.cpp
-static Sprite *const VehSpriteFARM = &g_TER1_FARM_SPRITES[3];
-static Sprite *const VehSpriteSOIL = &g_TER1_SOIL_ENRICHER_SPRITES[3];
-static Sprite *const VehSpriteMINE = &g_TER1_MINE_SPRITE;
-static Sprite *const VehSpriteSOLAR = &g_TER1_SOLAR_COLLECTOR_SPRITE;
+
+// WORKAROUND(decl): fifteen unreferenced extern names. The image pushes the
+// sprite addresses directly (no pointer objects), and dropping the four old
+// static pointer objects moved action_give's (0x004CEDE0) bistable reload
+// tie at its loop join; VC6 codegen in this unit depends on the number of
+// distinct extern variable names (MATCHING_GUIDE 2.5). Measured window with
+// the current action_terraform: 14-16 names keep action_give exact, 0-13 and
+// 17-24 do not. Remove when the unit's real declaration set is known.
+extern int ActionGiveDeclTie01;
+extern int ActionGiveDeclTie02;
+extern int ActionGiveDeclTie03;
+extern int ActionGiveDeclTie04;
+extern int ActionGiveDeclTie05;
+extern int ActionGiveDeclTie06;
+extern int ActionGiveDeclTie07;
+extern int ActionGiveDeclTie08;
+extern int ActionGiveDeclTie09;
+extern int ActionGiveDeclTie10;
+extern int ActionGiveDeclTie11;
+extern int ActionGiveDeclTie12;
+extern int ActionGiveDeclTie13;
+extern int ActionGiveDeclTie14;
+extern int ActionGiveDeclTie15;
 
 /*
 Purpose: Perform one terraforming action on a unit's tile, over its stack.
@@ -459,6 +478,15 @@ Purpose: Perform one terraforming action on a unit's tile, over its stack.
 // two are the same slot and the slip is invisible; for any other faction the
 // guard answers a different slot than the one used. Transcribed as written -
 // both sides are the image's.
+// Rewritten from the image (2026-11-13). Restored original behaviour: the
+// rockiness surcharge applies to TERRA_SOLAR_TIDAL (jump-table slot 0 is
+// action 3 at 0x004CA76C), signed, not to the mine; the friction test reads
+// PlayersData[faction].diplo[tile owner] & 0x11 and the pact test the
+// reverse pair (0x004CA3AD/0x004CA3CA); the raise/lower/condenser reports run
+// for every such action, also after a forest harvest, instead of only on a
+// harvested raise.
+// The tile is re-addressed after each call (map_loc), the query pass clamps
+// with range() and tests veh_moves(), and the stack walks use veh_top().
 Return Value: 1 when the action ran, 0 when it only reported progress.
 Status: MISMATCH.
 */
@@ -466,136 +494,102 @@ Status: MISMATCH.
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004C9B00 0x004CA78C 0x004CA7B0 0x004CA0E6
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004C9B00 0x004CA7B0 0x004CA7F0 0x004CA5A9
 int __cdecl action_terraform(int veh_id, int action, int do_it) {
-    const int veh_count_before = GameDataStateStorage.fields_.vehicle_current_count_;
     const int y = Vehs[veh_id].y;
     const int x = Vehs[veh_id].x;
-    const uint8_t faction = Vehs[veh_id].faction_id;
-    Map *tile = map_tiles()
-        + ((x >> 1) + y * MapLongitude);
-    const int not_ocean = (tile->climate & 0xE0) < ALT_BIT_SHORE_LINE;
+    const int faction = Vehs[veh_id].faction_id;
+    Map *tile = map_loc(x, y);
+    // Below the shore line; indexes the land/sea preq_tech and announced mask.
+    const int is_ocean = (tile->climate >> 5) < ALT_SHORE_LINE;
+    const int veh_count_before = GameDataStateStorage.fields_.vehicle_current_count_;
 
     if (action == TERRA_ROAD) {
-        if (tile->bit & BIT_ROAD) {
-            if (has_tech(not_ocean != 0
-                                  ? Terraforming[TERRA_MAGTUBE].prerequisite_tech[1]
-                                  : Terraforming[TERRA_MAGTUBE].prerequisite_tech[0],
-                              faction)) {
-                action = TERRA_MAGTUBE;
-            }
+        if (tile->bit & BIT_ROAD
+            && has_tech(Terraforming[TERRA_MAGTUBE].prerequisite_tech[is_ocean], faction)) {
+            action = TERRA_MAGTUBE;
         }
-    } else if (action == TERRA_FARM && (tile->bit & BIT_FARM) != 0
-               && (tile->climate & 0xE0) > 0x5F) {
-        if (has_tech(not_ocean != 0
-                              ? Terraforming[TERRA_FARM].prerequisite_tech[1]
-                              : Terraforming[TERRA_FARM].prerequisite_tech[0],
-                          faction)) {
+    } else if (action == TERRA_FARM && tile->bit & BIT_FARM
+               && (tile->climate >> 5) >= ALT_SHORE_LINE) {
+        // The farm's own preq_tech gates the soil enricher upgrade.
+        if (has_tech(Terraforming[TERRA_FARM].prerequisite_tech[is_ocean], faction)) {
             action = TERRA_SOIL_ENR;
         }
     }
 
-    if (do_it != 0) {
+    if (do_it) {
         Vehs[veh_id].order = (uint8_t)(action + 4);
     }
 
     int base_time = Terraforming[action].rate;
     switch (action) {
-    case TERRA_MINE: {
-        const uint32_t bonus = ((uint32_t)(tile->val3 >> 6) * base_time) / 2;
-        base_time = base_time + bonus;
-        break;
-    }
     case TERRA_ROAD:
     case TERRA_MAGTUBE:
         base_time = sub_4c99d0(x, y);
         break;
     case TERRA_REMOVE_FUNGUS:
-        if (has_abil(Vehs[veh_id].proto_id, 0x2000)) {
-            base_time = base_time / 2;
+        if (has_abil(Vehs[veh_id].proto_id, ABL_FUNGICIDAL)) {
+            base_time /= 2;
         }
         break;
-    default:
+    case TERRA_SOLAR_TIDAL:
+        base_time += (map_loc(x, y)->val3 >> 6) * base_time / 2;
         break;
     }
 
-    const uint8_t faction_bit = (uint8_t)(1 << (faction & 0x1F));
-    if (!(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) && GameDataStateStorage.fields_.diff_level_current_ > 3
-        && base_time > 3) {
+    const int faction_bit = 1 << faction;
+    if (!(faction_bit & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)
+        && GameDataStateStorage.fields_.diff_level_current_ > 3 && base_time > 3) {
         base_time--;
     }
+    const int time_needed = base_time * 2;
 
     int turns_accum = 0;
     int progress_accum = 0;
-    if (veh_id >= 0) {
-        int stack_bottom = veh_id;
-        int16_t prev = Vehs[stack_bottom].prev_veh_id_stack;
-        while (prev >= 0) {
-            stack_bottom = prev;
-            prev = Vehs[stack_bottom].prev_veh_id_stack;
-        }
-        for (int v = stack_bottom; v >= 0; v = Vehs[v].next_veh_id_stack) {
-            if (v != veh_id && (int8_t)Vehs[v].order == (int8_t)(action + 4)) {
-                if (do_it == 0) {
-                    turns_accum += contribution(v, action);
-                    progress_accum += Vehs[v].terraforming_turns;
-                } else {
-                    Vehs[veh_id].terraforming_turns =
-                        Vehs[veh_id].terraforming_turns
-                        + Vehs[v].terraforming_turns;
-                    Vehs[v].terraforming_turns = 0;
-                }
+    for (int v = veh_top(veh_id); v >= 0; v = Vehs[v].next_veh_id_stack) {
+        if (v != veh_id && Vehs[v].order == action + 4) {
+            if (!do_it) {
+                turns_accum += contribution(v, action);
+                progress_accum += Vehs[v].terraforming_turns;
+            } else {
+                Vehs[veh_id].terraforming_turns =
+                    Vehs[veh_id].terraforming_turns + Vehs[v].terraforming_turns;
+                Vehs[v].terraforming_turns = 0;
             }
         }
     }
+    turns_accum += contribution(veh_id, action);
+    progress_accum += Vehs[veh_id].terraforming_turns;
 
-    {
-        turns_accum += contribution(veh_id, action);
-        progress_accum += Vehs[veh_id].terraforming_turns;
-    }
-
-    if (do_it == 0) {
-        const int cur_speed = speed(veh_id, 0);
-        const int since_move = cur_speed - Vehs[veh_id].moves_expended;
-        if (since_move >= 0
-            && (since_move > 999 || cur_speed != Vehs[veh_id].moves_expended)) {
+    if (!do_it) {
+        if (veh_moves(veh_id)) {
             progress_accum += turns_accum;
         }
-        progress_accum = base_time * 2 - progress_accum;
-        if (turns_accum < 1) {
-            turns_accum = 1;
-        } else if (turns_accum > 0xFF) {
-            return (progress_accum + 0xFE) / 0xFF;
-        }
-        return (progress_accum - 1 + turns_accum) / turns_accum;
+        progress_accum = time_needed - progress_accum;
+        turns_accum = range(turns_accum, 1, 255);
+        return (progress_accum + turns_accum - 1) / turns_accum;
     }
 
     veh_skip(veh_id);
-    const uint8_t progress_before = Vehs[veh_id].terraforming_turns;
-    Vehs[veh_id].terraforming_turns = progress_before + (uint8_t)turns_accum;
-    if ((tile->bit & BIT_BASE_IN_TILE) != 0 && (tile->val2 & 0xF) < 8) {
-        Vehs[veh_id].order = ORDER_NONE;
-        return 0;
+    Vehs[veh_id].terraforming_turns += turns_accum;
+    if (map_loc(x, y)->bit & BIT_BASE_IN_TILE) {
+        const int owner = map_loc(x, y)->val2 & 0xF;
+        if (owner < 8 && owner >= 0) {
+            Vehs[veh_id].order = ORDER_NONE;
+            return 0;
+        }
     }
-    if ((int)(uint8_t)(progress_before + (uint8_t)turns_accum) < base_time * 2) {
+    if (Vehs[veh_id].terraforming_turns < time_needed) {
         draw_tile(x, y, 2);
         TutWinBaseWindow.check_veh(veh_id);
         return 0;
     }
     Vehs[veh_id].terraforming_turns = 0;
-    if (veh_id >= 0) {
-        int stack_bottom = veh_id;
-        int16_t prev = Vehs[stack_bottom].prev_veh_id_stack;
-        while (prev >= 0) {
-            stack_bottom = prev;
-            prev = Vehs[stack_bottom].prev_veh_id_stack;
-        }
-        for (int v = stack_bottom; v >= 0; v = Vehs[v].next_veh_id_stack) {
-            if ((int8_t)Vehs[v].order == (int8_t)(action + 4)) {
-                Vehs[v].order = ORDER_NONE;
-            }
+    for (v = veh_top(veh_id); v >= 0; v = Vehs[v].next_veh_id_stack) {
+        if (Vehs[v].order == action + 4) {
+            Vehs[v].order = ORDER_NONE;
         }
     }
 
-    const uint32_t tile_flags = tile->bit;
+    const uint32_t had_forest = map_loc(x, y)->bit & BIT_FOREST;
     bit_set(x, y, Terraforming[action].bit_incompatible, 0);
     bit_set(x, y, Terraforming[action].bit, 1);
     synch_bit(x, y, faction);
@@ -603,12 +597,6 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
     case TERRA_REMOVE_FUNGUS:
     case TERRA_PLANT_FUNGUS:
         site_radius(x, y, 0);
-        break;
-    case TERRA_CONDENSER:
-    case TERRA_THERMAL_BORE:
-        site_radius(x, y, 0);
-        world_climate();
-        draw_map(1);
         break;
     case TERRA_AQUIFER:
         bit_set(x, y, 0x100, 1);
@@ -625,197 +613,161 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
         world_climate();
         draw_map(1);
         break;
-    case TERRA_LEVEL_TERRAIN: {
-        uint8_t rocky = tile->val3;
-        if (rocky & 0xC0) {
-            rocky_set(x, y, (rocky >> 6) - 1);
+    case TERRA_LEVEL_TERRAIN:
+        if (map_loc(x, y)->val3 >> 6) {
+            rocky_set(x, y, (map_loc(x, y)->val3 >> 6) - 1);
             site_radius(x, y, 0);
         }
         break;
-    }
-    default:
+    case TERRA_CONDENSER:
+    case TERRA_THERMAL_BORE:
+        site_radius(x, y, 0);
+        world_climate();
+        draw_map(1);
         break;
     }
 
-    int base_idx = -1;
-    if ((Terraforming[action].bit & 0x1208050) != 0) {
-        base_idx = base_find(x, y, faction);
-        if (base_idx >= 0 && BaseFindDist < 3) {
-            Bases[base_idx].state |= 0x100;
+    if (Terraforming[action].bit & 0x1208050) {
+        const int base_id = base_find(x, y, faction);
+        if (base_id >= 0 && BaseFindDist <= 2) {
+            Bases[base_id].state |= 0x100;
         }
         if (action == TERRA_THERMAL_BORE && faction == ConsoleGlobal.faction_id_
-            && base_idx >= 0 && Bases[base_idx].faction_id_current == faction) {
-            parse_says(0, Bases[base_idx].name_string, -1, -1);
+            && base_id >= 0 && Bases[base_id].faction_id_current == faction) {
+            parse_says(0, Bases[base_id].name_string, -1, -1);
             NetMsgPrimary.pop(VehLabelBOREHOLEMINE, 5000, 0, 0);
         }
     }
 
-    if ((tile_flags & BIT_FOREST) == 0
-        || ((map_tiles()
-             + ((x >> 1) + y * MapLongitude))
-                ->bit
-            & BIT_FOREST)
-            != 0
-        || ((map_tiles()
-             + ((x >> 1) + y * MapLongitude))
-                ->climate
-            & 0xE0)
-            < ALT_BIT_SHORE_LINE) {
-        if (action == TERRA_RAISE_LAND || action == TERRA_LOWER_LAND
-            || action == TERRA_CONDENSER) {
-            goto forest_shared;
-        }
-    } else if (action != TERRA_RAISE_LAND) {
+    // A cleared forest yields minerals to the home (or nearest) base.
+    if (had_forest && !(map_loc(x, y)->bit & BIT_FOREST)
+        && (map_loc(x, y)->climate >> 5) >= ALT_SHORE_LINE && action != TERRA_RAISE_LAND) {
         int near_base = Vehs[veh_id].home_base_id;
-        if (near_base < 0) {
-            near_base = base_find(x, y, faction);
-        }
-        if (near_base >= 0) {
-            const int forest_val = Bases[near_base].minerals_accumulated
-                + Rules.minerals_harvesting_forest;
-            Bases[near_base].minerals_accumulated = forest_val;
-            Bases[near_base].minerals_accumulated_2 = forest_val;
-            Bases[near_base].production_id_last =
-                Bases[near_base].queue_production_id[0];
-            if (faction == ConsoleGlobal.faction_id_ && (faction_bit & GameDataStateStorage.fields_.lock_masks_.enable_mask_) != 0
-                && Rules.minerals_harvesting_forest != 0) {
+        if (near_base >= 0 || (near_base = base_find(x, y, faction)) >= 0) {
+            Bases[near_base].minerals_accumulated += Rules.minerals_harvesting_forest;
+            Bases[near_base].minerals_accumulated_2 = Bases[near_base].minerals_accumulated;
+            Bases[near_base].production_id_last = Bases[near_base].queue_production_id[0];
+            if (faction == ConsoleGlobal.faction_id_
+                && faction_bit & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_
+                && Rules.minerals_harvesting_forest) {
                 parse_says(0, Bases[near_base].name_string, -1, -1);
                 parse_num(0, Rules.minerals_harvesting_forest);
                 NetMsgPrimary.pop(VehLabelHARVESTFOREST, 5000, 0, 0);
             }
             TutWinBaseWindow.check_base(near_base);
         }
-        goto forest_shared;
-    } else {
+    }
+
+    if (action == TERRA_RAISE_LAND || action == TERRA_LOWER_LAND || action == TERRA_CONDENSER) {
         if (TerraformTileFaction >= 0
-            && !(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (uint8_t)(1 << (TerraformTileFaction & 0x1F)))
-            && (faction_bit & GameDataStateStorage.fields_.lock_masks_.enable_mask_) != 0
-            && (PlayersData[TerraformTileFaction].diplo_treaties[faction]
-                & 0x11)
-                == 0) {
-            if ((PlayersData[faction].diplo_treaties[TerraformTileFaction]
-                 & 0x20)
-                == 0) {
-                cause_friction(TerraformTileFaction, faction, 5);
-            } else {
+            && !((1 << TerraformTileFaction) & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)
+            && faction_bit & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_
+            && !(PlayersData[faction].diplo_treaties[TerraformTileFaction] & 0x11)) {
+            if (PlayersData[TerraformTileFaction].diplo_treaties[faction] & 0x20) {
                 set_treaty(TerraformTileFaction, faction, 0x400, 1);
+            } else {
+                cause_friction(TerraformTileFaction, faction, 5);
             }
         }
         if (TerraformDrownedBaseId >= 0) {
             parse_says(0, Bases[TerraformDrownedBaseId].name_string, -1, -1);
             parse_says(1, Players[faction].adj_name_faction, -1, -1);
-            const char *msg = faction == ConsoleGlobal.faction_id_ ? VehLabelTERRAMINE
-                                                      : VehLabelTERRAYOURS;
-            NetMsgPrimary.pop(msg, 5000, 0, 0);
+            if (faction == ConsoleGlobal.faction_id_) {
+                NetMsgPrimary.pop(VehLabelTERRAMINE, 5000, 0, 0);
+            } else {
+                NetMsgPrimary.pop(VehLabelTERRAYOURS, 5000, 0, 0);
+            }
         }
+        // BUG IN THE ORIGINAL (see above): gates on the local player's slot,
+        // reads the acting faction's.
         if (MapBaseIdClosestSubmergedVeh[ConsoleGlobal.faction_id_] >= 0) {
-            const int drown_base = MapBaseIdClosestSubmergedVeh[faction];
-            parse_says(0, Bases[drown_base].name_string, -1, -1);
+            parse_says(0, Bases[MapBaseIdClosestSubmergedVeh[faction]].name_string, -1, -1);
             parse_says(1, Players[faction].adj_name_faction, -1, -1);
-            const char *msg = faction == ConsoleGlobal.faction_id_ ? VehLabelDROWNMINE
-                                                      : VehLabelDROWNYOURS;
-            NetMsgPrimary.pop(msg, 5000, 0, 0);
+            if (faction == ConsoleGlobal.faction_id_) {
+                NetMsgPrimary.pop(VehLabelDROWNMINE, 5000, 0, 0);
+            } else {
+                NetMsgPrimary.pop(VehLabelDROWNYOURS, 5000, 0, 0);
+            }
         }
     }
 
-forest_shared:
     synch_bit(x, y, faction);
     draw_tiles(x, y, 2);
-    if (veh_count_before == GameDataStateStorage.fields_.vehicle_current_count_) {
+    if (veh_count_before != GameDataStateStorage.fields_.vehicle_current_count_) {
+        TutWinBaseWindow.GraphicWin::redraw();
+    } else {
         TutWinBaseWindow.check_veh(veh_id);
         TutWinBaseWindow.check_loc(x, y, 2);
-    } else {
-        TutWinBaseWindow.GraphicWin::redraw();
     }
 
-    if (faction != ConsoleGlobal.faction_id_) {
-        return 1;
-    }
-
-    if ((Vehs[veh_id].state & VSTATE_UNK_200) != 0
-        && (GameDataStateStorage.fields_.game_preferences_ & 0x20) != 0 && IsMultiplayerNet == 0) {
-        const uint32_t bit = 1 << (action & 0x1F);
-        uint32_t seen = GameDataStateStorage.fields_.terraform_announced_mask_[not_ocean];
-        if ((bit & seen) == 0) {
-            const uint32_t new_mask = seen | bit;
-            GameDataStateStorage.fields_.terraform_announced_mask_[not_ocean] = new_mask;
-            Sprite *sprite = 0;
-            const char *msg = 0;
-            int noun = veh_id;
-            bool do_popup = true;
-            if (not_ocean == 0) {
-                switch (action) {
-                case TERRA_FARM:
-                    sprite = VehSpriteFARM;
-                    noun = -1;
-                    msg = VehLabelMADEFARM;
-                    break;
-                case TERRA_SOIL_ENR:
-                    sprite = VehSpriteSOIL;
-                    noun = -1;
-                    msg = VehLabelMADESOIL;
-                    break;
-                case TERRA_MINE:
-                    sprite = VehSpriteMINE;
-                    noun = -1;
-                    msg = VehLabelMADEMINE;
-                    break;
-                case TERRA_SOLAR_TIDAL:
-                    sprite = VehSpriteSOLAR;
-                    noun = -1;
-                    msg = VehLabelMADESOLAR;
-                    break;
-                case TERRA_FOREST:
-                    msg = VehLabelMADEFOREST;
-                    break;
-                case TERRA_ROAD:
-                    msg = VehLabelMADEROAD;
-                    break;
-                case TERRA_MAGTUBE:
-                    msg = VehLabelMADETUBE;
-                    break;
-                case TERRA_SENSOR:
-                    msg = VehLabelMADESENSOR;
-                    break;
-                case TERRA_CONDENSER:
-                    msg = VehLabelMADECONDENSER;
-                    break;
-                case TERRA_THERMAL_BORE:
-                    msg = VehLabelMADEBOREHOLE;
-                    break;
-                case TERRA_AQUIFER:
-                    msg = VehLabelMADEAQUIFER;
-                    break;
-                default:
-                    GameDataStateStorage.fields_.terraform_announced_mask_[not_ocean] = ~bit & new_mask;
-                    do_popup = false;
-                    break;
+    if (faction == ConsoleGlobal.faction_id_) {
+        if (Vehs[veh_id].state & VSTATE_UNK_200
+            && GameDataStateStorage.fields_.game_preferences_ & 0x20 && !IsMultiplayerNet) {
+            const uint32_t bit = 1 << action;
+            uint32_t seen = GameDataStateStorage.fields_.terraform_announced_mask_[is_ocean];
+            if (!(bit & seen)) {
+                seen |= bit;
+                GameDataStateStorage.fields_.terraform_announced_mask_[is_ocean] = seen;
+                if (!is_ocean) {
+                    switch (action) {
+                    case TERRA_FARM:
+                        TutorialWindow.tut_map(VehLabelMADEFARM, x, y, -1, &g_TER1_FARM_SPRITES[3], 1, -1, -1);
+                        break;
+                    case TERRA_SOIL_ENR:
+                        TutorialWindow.tut_map(VehLabelMADESOIL, x, y, -1, &g_TER1_SOIL_ENRICHER_SPRITES[3], 1, -1, -1);
+                        break;
+                    case TERRA_MINE:
+                        TutorialWindow.tut_map(VehLabelMADEMINE, x, y, -1, &g_TER1_MINE_SPRITE, 1, -1, -1);
+                        break;
+                    case TERRA_SOLAR_TIDAL:
+                        TutorialWindow.tut_map(VehLabelMADESOLAR, x, y, -1, &g_TER1_SOLAR_COLLECTOR_SPRITE, 1, -1, -1);
+                        break;
+                    case TERRA_FOREST:
+                        TutorialWindow.tut_map(VehLabelMADEFOREST, x, y, veh_id, 0, 1, -1, -1);
+                        break;
+                    case TERRA_ROAD:
+                        TutorialWindow.tut_map(VehLabelMADEROAD, x, y, veh_id, 0, 1, -1, -1);
+                        break;
+                    case TERRA_MAGTUBE:
+                        TutorialWindow.tut_map(VehLabelMADETUBE, x, y, veh_id, 0, 1, -1, -1);
+                        break;
+                    case TERRA_SENSOR:
+                        TutorialWindow.tut_map(VehLabelMADESENSOR, x, y, veh_id, 0, 1, -1, -1);
+                        break;
+                    case TERRA_AQUIFER:
+                        TutorialWindow.tut_map(VehLabelMADEAQUIFER, x, y, veh_id, 0, 1, -1, -1);
+                        break;
+                    case TERRA_CONDENSER:
+                        TutorialWindow.tut_map(VehLabelMADECONDENSER, x, y, veh_id, 0, 1, -1, -1);
+                        break;
+                    case TERRA_THERMAL_BORE:
+                        TutorialWindow.tut_map(VehLabelMADEBOREHOLE, x, y, veh_id, 0, 1, -1, -1);
+                        break;
+                    default:
+                        GameDataStateStorage.fields_.terraform_announced_mask_[is_ocean] = seen & ~bit;
+                        break;
+                    }
+                } else {
+                    switch (action) {
+                    case TERRA_FARM:
+                        TutorialWindow.tut_map(VehLabelMADESEAFARM, x, y, -1, &g_TER1_FARM_SPRITES[3], 1, -1, -1);
+                        break;
+                    case TERRA_MINE:
+                        TutorialWindow.tut_map(VehLabelMADESEAMINE, x, y, -1, &g_TER1_MINE_SPRITE, 1, -1, -1);
+                        break;
+                    case TERRA_SOLAR_TIDAL:
+                        TutorialWindow.tut_map(VehLabelMADESEASOLAR, x, y, -1, &g_TER1_SOLAR_COLLECTOR_SPRITE, 1, -1, -1);
+                        break;
+                    default:
+                        GameDataStateStorage.fields_.terraform_announced_mask_[is_ocean] = seen & ~bit;
+                        break;
+                    }
                 }
-            } else if (action == TERRA_FARM) {
-                sprite = VehSpriteFARM;
-                msg = VehLabelMADESEAFARM;
-                noun = -1;
-            } else if (action == TERRA_MINE) {
-                sprite = VehSpriteMINE;
-                msg = VehLabelMADESEAMINE;
-                noun = -1;
-            } else if (action == TERRA_SOLAR_TIDAL) {
-                sprite = VehSpriteSOLAR;
-                msg = VehLabelMADESEASOLAR;
-                noun = -1;
-            } else {
-                GameDataStateStorage.fields_.terraform_announced_mask_[not_ocean] = ~bit & new_mask;
-                do_popup = false;
-            }
-            if (do_popup) {
-                TutorialWindow.tut_map(msg, x, y, noun, sprite, 1, -1, -1);
             }
         }
     }
-
-    if (faction == ConsoleGlobal.faction_id_ && Vehs[veh_id].order == ORDER_NONE
-        && !(Vehs[veh_id].state & VSTATE_UNK_200)
-        && VehTerraformStingLatch == 0) {
+    if (faction == ConsoleGlobal.faction_id_ && !Vehs[veh_id].order
+        && !(Vehs[veh_id].state & VSTATE_UNK_200) && !VehTerraformStingLatch) {
         VehTerraformStingLatch = 1;
         wave_it(0x14);
         ambience(0xCF);
