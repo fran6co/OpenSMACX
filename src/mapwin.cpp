@@ -65,6 +65,9 @@ extern char SocialWinColonSpaceText[];/*
 // ORIGINAL: 0x004620A0 _$E24 0x004620A0-0x004620B4 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682540 selects initializer0x462080..0x462098 and registers exit0x4620a0..0x4620b4; complete independent decode establishes both ends.", "Original operations identify storage0x7d4060, source object?FarmMapWindow@@3VMapWin@@A. MainInterface uses constructor45EF10/destructor45EB80; FarmMap uses virtual-base constructor4626E0 with hidden most-derived argument1 and exit receiver7F5ACC calling own-part420F90 then virtual GraphicWin5D4DD0.", "Fresh physical mapwin.cpp COFF selects _$E26 via .CRT$XCU and registers _$E24, both naming the genuine global. The corrected declarations and actual linked table initialize MainInterface before FarmMap, matching original slots682534/682540; C++ owns reverse destruction and virtual-base lifetime.", "Current compiler-local symbols interpret present emission, not original debug names or historical TU identity. The bounded two-object ordering does not establish complete CRT order, strict linked preservation, runtime or game acceptance."], "reason": "Bind original exit to genuine source-owned ?FarmMapWindow@@3VMapWin@@A compiler-generated lifetime after correcting declaration order; no hand-authored callback or explicit virtual-base flag."}
 // symbol    _$E14
+// click's base-routing Popup uses BasePop's item and exec() wrappers, which
+// expand to the image's direct Dialogs::item and exec(0, 0) calls.
+#define POPUP_WRAPPERS_INLINE
 #define MAPWIN_TILE_IN_VIEW_INLINE  // MapWin::tile_in_view body (basewin.h)
 // WORKAROUND(decl): Buffer's guarded three-argument write_cent_l (buffer.h).
 #define BUFFER_WRITE_CENT_XY_INLINE
@@ -3614,11 +3617,9 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
     // in the original the two lived in disjoint block scopes.
     uint8_t coast_remap[0x100];
     uint8_t territory_mask[0x100];
-    char numbuf[80];
     Vert rocky_uv[12];
     Vert ocean_uv[16];
     Vert edge_vertices[16];
-    Vert edge_uv[16];
     Vert land_uv[12];
     Vert land_vertices[12];
     int ocean_zvals[4];
@@ -4000,6 +4001,10 @@ LAB_00463b55:
             }
         }
     }
+    {
+    // 0x463FD3..0x465433: edge_uv lives in this block; numbuf, in the
+    // sibling readout block, shares its frame bytes (-0x238 inside -0x268).
+    Vert edge_uv[16];
     // 463F9F-46401E initializes four quads, not eight vertices.
     edge_vertex = 0;
     for (corner = 0; corner < 4; ++corner) {
@@ -4603,6 +4608,7 @@ LAB_0046441f:
             }
         }
     }
+    }
 
     // THE RIVER OVERLAYS (sites 16/17): the corner river mask the
     // diagonal walk collects selects the receiver row.
@@ -5092,6 +5098,7 @@ nexus_done:
     // tests StringTemp's address before strlen at 0x46675D, 0x466844,
     // 0x466970 and 0x466A94) on one frame RECT ([ebp-0xA4]).
     if (window != 0) {
+        char numbuf[80];
         RECT text_rect;
         if ((a6 & 4) != 0) {
             StringTemp[0] = 0;
@@ -6092,10 +6099,25 @@ void MapWin::draw_wars() {
     }
 }
 
+// WORKAROUND(inline): dead /Ob2 budget probe for MapWin::click. The image's
+// first 18 return sites tear the Popup down five states deep and the last
+// three six deep, final seven (116 EH states); without spend after the
+// right_menu return ours keeps sites 8-20 a level deeper (125 states). Eight
+// constant calls of this folded chain reproduce the image's unwind map
+// exactly; no natural spelling for that spend has been found yet.
+static inline int click_probe(int x) {
+    if (x == 1) x = 7;
+    if (x == 2) x = 9;
+    if (x == 3) x = 11;
+    if (x == 4) x = 13;
+    return x;
+}
+
 // Original0x0046D5D0 handles a map click as one Popup lifetime spanning the
 // editor, base-routing, cursor-order and map-selection paths. The local
 // cursor mode is captured before Console::selected clears it; this is also
 // the value consumed by the order dispatch near the end of the original.
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0046D5D0 0x0046EB68 0x0046EB90 0x0046E1B7
 // ORIGINAL: 0x0046D5D0 ?click@MapWin@@QAEXHHH@Z 0x0046D5D0-0x0046EB68;0x00655959-0x00655E92 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/0046d5d0.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance.", "Pinned 0x0046DB35..48 dereferences base_find's result without a sign/range check; pinned 0x0046DC14 tests only negative dialog results; 0x0046DD67..76 writes Base + 0x110 + 2*selected_triad without a bounds check. src/base.h owns auto-forward words at 0x110, 0x112, 0x114 and padding_0 at 0x116."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; preserve unchecked original lookup/index paths and retain seed/historical obligations."}
 // Historical seed status only: the following TRIED text describes the old
@@ -6185,9 +6207,9 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
             strcat(StringTemp, "(");
             say_base(StringTemp, Bases[editor_tool].auto_forward_slots[triad]);
             strcat(StringTemp, ")");
-            popup.dialogs().item(StringTemp, triad);
+            popup.item(StringTemp, triad);
         }
-        int selected_triad = popup.exec(0, nullptr);
+        int selected_triad = popup.exec();
         if (selected_triad >= 0) {
             // 0x0046DC1A reads both bases' regions before any test.
             int source_region = region_at(Bases[editor_tool].x, Bases[editor_tool].y);
@@ -6338,6 +6360,9 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
             right_menu(tile_x, tile_y, pixel_x, pixel_y);
             return;
         }
+        // WORKAROUND(inline): budget probe, see click_probe.
+        click_probe(100); click_probe(101); click_probe(102); click_probe(103);
+        click_probe(104); click_probe(105); click_probe(106); click_probe(107);
     }
 
     if (map_view_index_ == 0) {

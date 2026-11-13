@@ -657,6 +657,18 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
     return 1;
 }
 
+// WORKAROUND(inline): expand_rect (scroll.cpp) is a plain out-of-line
+// function in this tree; pick expands it inline twice (0x00487DA3 and
+// 0x00487DD6: the inset 3 held in a register, subtracted from right/bottom
+// and added to left/top).
+static inline RECT *picktech_expand_rect(RECT *rect, int horizontal, int vertical) {
+    rect->left -= horizontal;
+    rect->right += horizontal;
+    rect->top -= vertical;
+    rect->bottom += vertical;
+    return rect;
+}
+
 // Full typed PickTech::pick candidate. Repository integration remains coordinator-owned.
 // Four simultaneous automatic Popups own all Scroll, Spot, Dialogs and button lifetimes.
 // ORIGINAL: 0x00486510 ?pick@PickTech@@QAEHHHHPAD@Z 0x00486510-0x00488655;0x006576A0-0x00657C12
@@ -708,7 +720,6 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
     for (i = 0; i < MaxTechnologyNum; ++i)
         technology_ids_[i] = -1;
     flag = 0;
-    char number_buffer[80];
     for (int category = 0; category < 4; ++category) {
         for (int tech_id = 0; tech_id < MaxTechnologyNum; ++tech_id) {
             if (count >= 0) {
@@ -751,8 +762,7 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
             say_tech(StringTemp, tech_id, FALSE);
             if (tech_id == TECH_TRANT) {
                 strcat(StringTemp, BufferJoinSpace);
-                _itoa(PlayersData[faction].theory_of_everything + 1, number_buffer, 10);
-                strcat(StringTemp, number_buffer);
+                say_num(PlayersData[faction].theory_of_everything + 1);
             }
             if (count == 0 &&
                 (!has_tech(Technology[tech_id].preq_tech_1, faction) ||
@@ -953,6 +963,11 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                 title_height = 14;
                 header_height = 18;
             }
+        } else if (WinScreenWidth == 800) {
+            // 0x0048797C keeps a dead `cmp eax, 0x320` here: both arms of
+            // the screen-width test store the same sizes.
+            title_height = 10;
+            header_height = 12;
         } else {
             title_height = 10;
             header_height = 12;
@@ -976,28 +991,25 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
         row_count_ = rows;
         cell_width_ = items <= 8 ? WinScreenWidth / columns - 20
                                  : (WinScreenWidth - 20) / columns;
-        cell_width_ = min(cell_width_, WinScreenWidth / 3);
-        cell_height_ = (3 * cell_width_) / 2;
-        cell_height_ = max(cell_height_, WinScreenHeight / 2);
+        const int cell_width = min(cell_width_, WinScreenWidth / 3);
+        cell_width_ = cell_width;
+        const int cell_height = (3 * cell_width) / 2;
+        cell_height_ = cell_height;
+        cell_height_ = max(cell_height, WinScreenHeight / 2);
         if (cell_height_ * rows + 29 > WinScreenHeight)
             cell_height_ = items <= 8 ? WinScreenHeight / rows - 40
                                       : (WinScreenHeight - 69) / rows;
         row_pitch_ = 10;
-        GraphicWin::init(0, 0, (cell_width_ + 1) * columns + 1,
+        GraphicWin::init(0, 0, (cell_width + 1) * columns + 1,
             (cell_height_ + 1) * rows + 30, 0, 0x05000800, 0, 0, 0);
         Win::center();
         field_16C_ = 29;
         RECT frame = Buffer::clip_rect();
         Buffer::box_sprite(&frame, &InterfaceBoxStyles[9]);
-        frame.right -= 3;
-        frame.top += 3;
-        frame.left += 3;
+        picktech_expand_rect(&frame, -3, -3);
         frame.bottom = frame.top + 23;
         Buffer::box_sprite(&frame, &InterfaceBoxStyles[6]);
-        frame.right -= 3;
-        frame.left += 3;
-        frame.bottom -= 3;
-        frame.top += 3;
+        picktech_expand_rect(&frame, -3, -3);
         StringTemp[0] = '\0';
         strcat(StringTemp, popup.caption_text());
         CharUpperA(StringTemp);
