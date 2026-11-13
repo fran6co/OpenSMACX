@@ -115,6 +115,13 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   friend class MessageWin;
 #endif
  public:
+#ifdef LISTBOX_FRIEND_MESSAGEWIN
+  // WORKAROUND(decl): MessageWin::init stores Dialog +0x48 through the
+  // ListBox pointer register (0x00471ECC `mov [eax+edi+0x48]`, edi =
+  // &listBox_), the form of an inline ListBox member reaching its Dialog
+  // virtual base. Name unknown; guarded with the friend above.
+  void set_dialog_field_48(uint32_t value) { field_48_ = value; }
+#endif
   // AlphaSave's show/hide tests the Win state of this embedded list, reached
   // through ListBox's GraphicWin virtual base in the original image.
   bool has_scroll_flags() const { return (iFlags_ & 0xC) != 0; }

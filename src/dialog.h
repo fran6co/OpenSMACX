@@ -212,6 +212,13 @@ class Dialog {
   void set_field_34(uint32_t value) { field_34_ = value; }
   void set_field_50(uint32_t value) { field_50_ = value; }
 #endif
+#ifdef DIALOG_LAYOUT_SETTERS2
+  // WORKAROUND(decl): per-unit guard. MessageWin::init leaves the same dead
+  // `lea reg,[reg+esi+0x64]` after its +0x6C and +0x4C stores (0x471E27,
+  // 0x471EA9) but not after +0x38/+0x3C/+0x48/+0xB4. Names unknown.
+  void set_field_4C(int value) { field_4C_ = value; }
+  void set_field_6C(uint32_t value) { field_6C_ = value; }
+#endif
   // Grid dimensions: +0x54 is the signed column count and +0x58 the signed
   // row count. The pinned control handlers compare these with signed branches
   // (for example CheckBox 0x60F93B and SpriteBox 0x6114C2); producers store

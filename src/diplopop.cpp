@@ -94,7 +94,7 @@ void DiploPop::start(int faction_id) {
         time2_.init(diplo_portrait_timer_callback, 0, this, 2000, 5);
         uint32_t interval = flic2_.header_interval();
         if (interval > 5) {
-            if (interval == 0) interval = 100;
+            if (interval <= 0) interval = 100;
             time1_.init(diplo_bioscan_timer_callback, 0, this, interval, 5);
         }
     } else {

@@ -23,6 +23,8 @@
 // symbol    _$E14
 // WORKAROUND(decl): see listbox.h; MessageWin::init writes ListBox state directly.
 #define LISTBOX_FRIEND_MESSAGEWIN
+#define DIALOG_LAYOUT_SETTERS   // stand-in: Dialog::set_field_34 (dialog.h)
+#define DIALOG_LAYOUT_SETTERS2  // stand-in: Dialog::set_field_4C/6C (dialog.h)
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "messagewin.h"
@@ -438,7 +440,7 @@ int MessageWin::init() {
     listBox_.init(rect, static_cast<Heap *>(0));
     listBox_.Dialog::field_38_ = 3;
     listBox_.Dialog::field_3C_ = 3;
-    listBox_.Dialog::field_6C_ = 0;
+    listBox_.Dialog::set_field_6C(0);
     listBox_.set_dialog_font(&font_, &font_, &font_);
     listBox_.field_2C_ = 0;
     listBox_.field_10_ = 0;
@@ -446,9 +448,9 @@ int MessageWin::init() {
     listBox_.set_dialog_text_color(0, -1, 1, 1);
     listBox_.set_dialog_text_color2(255, -1, 1, 1);
     listBox_.set_dialog_text_color3(255, -1, 1, 1);
-    listBox_.Dialog::field_4C_ = 1;
-    listBox_.Dialog::field_48_ = (rect->bottom - rect->top) / 5;
-    listBox_.Dialog::field_34_ = (rect->bottom - rect->top) / 4;
+    listBox_.Dialog::set_field_4C(1);
+    listBox_.set_dialog_field_48((rect->bottom - rect->top) / 5);
+    listBox_.Dialog::set_field_34((rect->bottom - rect->top) / 4);
     listBox_.draw_callback_ = &MessageWin::listbox_draw;
     listBox_.fill_callback_ = &MessageWin::listbox_fill;
     listBox_.write_callback_ = &MessageWin::listbox_write;

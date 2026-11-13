@@ -76,6 +76,14 @@ static inline int council_pop_exec(BasePop *pop, int (__cdecl *callback)()) {
     return pop->exec(0, callback);
 }
 
+// Every living human faction is seated in the council (field_A44_ bits).
+static int council_humans_present(uint32_t seated) {
+    const uint32_t masks = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
+    const int humans = masks & 0xFF;
+    const int alive = (masks >> 8) & 0xFF;
+    return (static_cast<int>(seated) & alive & humans) == humans;
+}
+
 // WORKAROUND(inline): file-local twins of get_title/get_name (0x005590A0,
 // 0x00559060); on_left_click expands them in place (no calls in its image)
 // and their spend leaves its early teardowns calling ~Scroll out of line.
@@ -88,7 +96,7 @@ static inline char *council_name(int faction_id) {
     return Players[faction_id].name_leader;
 }
 // WORKAROUND(inline): dead /Ob2 budget stand-in (folds to no code). A
-// 24-way chain called once before on_left_click's Popup gives the image's
+// 16-way chain called once before on_left_click's Popup gives the image's
 // teardown topology (50 EH states; the deep sites call ~FlatButton out of
 // line at 0x00425933/0x00425AFA/0x00425B09) and its `this` spill to
 // [ebp-0x10]; no natural spending spelling has been found yet.
@@ -110,14 +118,6 @@ static int council_click_budget_stand_in(int x)
     if (x == 13) x = 40;
     if (x == 14) x = 43;
     if (x == 15) x = 46;
-    if (x == 16) x = 49;
-    if (x == 17) x = 52;
-    if (x == 18) x = 55;
-    if (x == 19) x = 58;
-    if (x == 20) x = 61;
-    if (x == 21) x = 64;
-    if (x == 22) x = 67;
-    if (x == 23) x = 70;
     return x;
 }
 
@@ -196,14 +196,12 @@ check_selection:
     }
     if (IsMultiplayerNet) {
         field_A40_ = 0;
-        const int alive = GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
-        const int status = GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
-        if ((field_A44_ & alive & status) != status) {
+        if (!council_humans_present(field_A44_)) {
             NetMsgPrimary.pop("COUNCILVOTEGOV", 0x1388, 1, nullptr);
             field_A40_ = 1;
             goto draw;
         }
-        if ((clicked_bit & status) != 0) {
+        if ((clicked_bit & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) != 0) {
             CommlinkPending = 1;
             CommlinkFaction = clicked_faction;
             message_data(0x1501, clicked_faction, ConsoleGlobal.faction_id_,
@@ -1083,13 +1081,6 @@ void CouncWin::on_redraw() {
 
 // Slot 44 of the front vtable - the catalogue's
 // ?on_button_clicked@CouncWin@@QAEXH@Z, 0x00424870, 1983 bytes.
-// Every living human faction is seated in the council (field_A44_ bits).
-static int council_humans_present(uint32_t seated) {
-    const uint32_t masks = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
-    const int humans = masks & 0xFF;
-    const int alive = (masks >> 8) & 0xFF;
-    return (static_cast<int>(seated) & alive & humans) == humans;
-}
 
 // stand-in: a dead, constant-folded helper that only spends /Ob2 inline
 // budget. The image's two ~Popup teardowns in on_button_clicked show it spent
@@ -1173,11 +1164,10 @@ void CouncWin::on_button_clicked(int button_id) {
                 options.item(label_get(0x7c4 / 4), 0);
                 for (int faction = 1; faction < MaxPlayerNum; ++faction) {
                     if ((Players[faction].rule_flags & RFLAG_ALIEN) == 0
-                        && (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << faction)) != 0
+                        && is_alive(faction)
                         && eligible(faction) != 0) {
                         StringTemp[0] = '\0';
-                        GenderDefault = Players[faction].is_leader_female;
-                        PluralityDefault = 0;
+                        parse_set(Players[faction].is_leader_female, 0);
                         strcat(StringTemp, Players[faction].name_leader);
                         options.item(StringTemp, faction);
                     }
