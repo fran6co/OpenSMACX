@@ -2622,7 +2622,9 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
         int x = Bases[base_id].x;
         int y = Bases[base_id].y;
         Map *tile = map_loc(x, y);
-        if (base_who(x, y) >= 0) {
+        // The image tests the vehicle bit, 2, at 0x0053AEFC, 0x0053B0A4 and
+        // 0x0053B0BF: these three are veh_who, not base_who.
+        if (veh_who(x, y) >= 0) {
             if (owner == faction) {
                 int limit = stack_check(veh_at(x, y), 14, -1, -1, -1);
                 int threat = 0;
@@ -2672,11 +2674,11 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
                     continue;
                 }
                 if (owner == faction) {
-                    if (base_who(near_x, near_y) == other) {
+                    if (veh_who(near_x, near_y) == other) {
                         DiploScratchFA50++;
                         break;
                     }
-                } else if (base_who(near_x, near_y) == faction) {
+                } else if (veh_who(near_x, near_y) == faction) {
                     DiploScratchFA58 = base_id; // Original stores the base index, including zero.
                     DiploScratchFA98 += Bases[base_id].population_size * 8;
                     break;
@@ -3870,9 +3872,10 @@ void __cdecl give_a_base(int base_id, int new_owner) {
                 continue;
             }
         }
-        PlayersData[old_owner].proto_id_active[Vehs[veh_id].proto_id]--;
+        int proto_id = Vehs[veh_id].proto_id;
+        PlayersData[old_owner].proto_id_active[proto_id]--;
         Vehs[veh_id].faction_id = (uint8_t)new_owner;
-        PlayersData[new_owner].proto_id_active[Vehs[veh_id].proto_id]++;
+        PlayersData[new_owner].proto_id_active[proto_id]++;
         Vehs[veh_id].home_base_id = (int16_t)base_id;
         Vehs[veh_id].moves_expended = 0;
         if (Vehs[veh_id].order != ORDER_HOLD) {
@@ -4356,7 +4359,8 @@ void __cdecl make_gift(int giver, int receiver) {
         popup_label[0] = 0;
         strcat(popup_label, "GAVETECH");
         if (gift_value >= 0x10) {
-            if (has_treaty(receiver, giver, DTREATY_VENDETTA | DTREATY_WANT_REVENGE) &&
+            // The image's mask is 0x60 at 0x0054804F, 0x00548426 and 0x00548C1D.
+            if (has_treaty(receiver, giver, DTREATY_WANT_REVENGE | DTREATY_UNK_40) &&
                 DiploFriction != 0)
                 strcat(popup_label, "2");
             else
@@ -4436,7 +4440,7 @@ void __cdecl make_gift(int giver, int receiver) {
         StringTemp[0] = 0;
         strcat(StringTemp, "GAVEENERGY");
         if (favored) {
-            if (has_treaty(receiver, giver, DTREATY_VENDETTA | DTREATY_WANT_REVENGE)
+            if (has_treaty(receiver, giver, DTREATY_WANT_REVENGE | DTREATY_UNK_40)
                 || great_satan(giver, 0)) {
                 strcat(StringTemp, "2");
             } else {
@@ -4495,7 +4499,7 @@ void __cdecl make_gift(int giver, int receiver) {
         strcat(gift_result_key, "BASEGIFT");
         if (favored) {
             const bool existing_pact_or_treaty =
-                has_treaty(receiver, giver, DTREATY_VENDETTA | DTREATY_WANT_REVENGE) != 0;
+                has_treaty(receiver, giver, DTREATY_WANT_REVENGE | DTREATY_UNK_40) != 0;
             const char *suffix = (existing_pact_or_treaty ||
                                   great_satan(giver, 0) != 0) ? "2" : "1";
             strcat(gift_result_key, suffix);
@@ -8255,7 +8259,8 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
                     clear();
                     parse_set(Players[candidate].is_leader_female, FALSE);
                     strcat(StringTemp, Players[candidate].title_leader);
-                    strcat(StringTemp, "|");
+                    // The image appends BufferJoinSpace (0x00682820) here (0x0054FC9A).
+                    strcat(StringTemp, BufferJoinSpace);
                     parse_set(Players[candidate].is_leader_female, FALSE);
                     strcat(StringTemp, Players[candidate].name_leader);
                     popup.item(StringTemp, candidate);
@@ -10055,7 +10060,9 @@ communicate_pact_offer_fallthrough:
         range(PlayersData[faction_id_with].tech_commerce_bonus -
                   PlayersData[faction_id].tech_commerce_bonus, 0, 99) +
             (strcmp(Players[faction_id_with].filename, "HIVE") == 0) +
-            ((GameDataStateStorage.fields_.game_rules_ >> 12) & 1) +
+            // WORKAROUND(type): the image's compare is signed (jge at 0x00555E6C)
+            // while game_rules_ is uint32_t; the rule bit was probably an int-promoted field.
+            static_cast<int>((GameDataStateStorage.fields_.game_rules_ >> 12) & 1) +
             (DiploScratchFA8C != 0) + 3) {
         goto communicate_special_war_rival_gates;
     }
@@ -10220,7 +10227,9 @@ if (has_treaty(faction_id_with, faction_id, 0x10) && wants_to_speak(faction_id, 
     communicate_truce_limit = range(communicate_stack_c, 0,
                                     PlayersData[faction_id_with].current_num_bases + 1);
     if (communicate_truce_result) {
-        if (random(0, communicate_truce_limit) >= DiploScratchFA98 && !DiploScratchFA24) {
+        // Signed in the image (jl at 0x00556543).
+        if (static_cast<int>(random(0, communicate_truce_limit)) >= DiploScratchFA98
+            && !DiploScratchFA24) {
             goto communicate_late_score_declined;
         }
         if (DiploScratchF800 >= 0 &&

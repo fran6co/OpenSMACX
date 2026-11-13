@@ -4750,8 +4750,9 @@ void Console::give_hints() {
         }
     }
 
-    // 0x512B90 cursor-tile filter: the inline veh_who owner test.
-    if (veh_who(cursor_x, cursor_y) >= 0) {
+    // 0x512B90 cursor-tile filter: the inline base_who owner test (the image
+    // tests the base bit, 1, at 0x00512BB6).
+    if (base_who(cursor_x, cursor_y) >= 0) {
         return;
     }
 
@@ -5055,8 +5056,9 @@ void Console::give_hints() {
         }
     }
 
-    // 0x5136B7 enemy-vehicle scan; skips tiles the inline veh_who reports as
-    // occupied, and re-reads the vehicle's faction byte for each parse.
+    // 0x5136B7 enemy-vehicle scan; skips tiles the inline base_who reports as
+    // owned (the image tests the base bit, 1, at 0x0051384E), and re-reads the
+    // vehicle's faction byte for each parse.
     if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x10000000) == 0) {
         for (int enemy_veh_i = 0; enemy_veh_i < 8; ++enemy_veh_i) {
             const int x = wrap_map_x(cursor_x + VehMoveDeltaX[enemy_veh_i]);
@@ -5064,7 +5066,7 @@ void Console::give_hints() {
             if (!on_map(x, y)) {
                 continue;
             }
-            if (veh_who(x, y) >= 0) {
+            if (base_who(x, y) >= 0) {
                 continue;
             }
             const int vehicle = veh_at(x, y);
@@ -5829,15 +5831,12 @@ void Console::menu_proc(int command) {
         new_base(selected_vehicle_);
         break;
     case 0x304:
-        {
-            const Veh &vehicle = Vehs[selected_vehicle_];
-            const VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
-            if (Chassis[prototype.chassis_id].triad == TRIAD_AIR &&
-                Weapon[prototype.weapon_id].mode != 0) {
-                automate(selected_vehicle_, 0xC);
-            } else {
-                automate(selected_vehicle_, 3);
-            }
+        // The image tests offense_rating (Weapon+0x8) at 0x0051C81C.
+        if (Chassis[VehPrototypes[Vehs[selected_vehicle_].proto_id].chassis_id].triad == TRIAD_AIR &&
+            Weapon[VehPrototypes[Vehs[selected_vehicle_].proto_id].weapon_id].offense_rating != 0) {
+            automate(selected_vehicle_, 0xC);
+        } else {
+            automate(selected_vehicle_, 3);
         }
         break;
     case 0x302: oblit(selected_vehicle_); break;

@@ -11738,7 +11738,8 @@ production_again:
         if (VehPrototypes[proto_id].plan == PLAN_COLONIZATION) {
             if (BaseCurrent->state & 0x2000000
                 || !PlayersData[faction_id].ai_power
-                || PlayersData[faction_id].pop_total > 8) {
+                // The image reads current_num_bases (+0x105C) here (0x004F1147).
+                || PlayersData[faction_id].current_num_bases > 8) {
                 BaseCurrent->state |= 0x1000000;
             }
             BaseCurrent->state |= 0x2000000;
