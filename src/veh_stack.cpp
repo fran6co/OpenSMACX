@@ -481,6 +481,23 @@ MEASURED inline int __cdecl veh_can_leave_stack(int veh_id) {
 
 
 
+// WORKAROUND(noinline): spot_stack as spot_all expands it at its first three
+// sites, where the image keeps spot_tile a real call (0x5B6E6E, 0x5B6FF5,
+// 0x5B730F) and inlines veh_top; the later sites inline spot_tile instead.
+inline void __cdecl spot_stack_tile_call(int veh_id, int faction_id) {
+    void (__cdecl *const tile_fn)(int, int, int) = spot_tile;
+    if (veh_id >= 0 && on_map(Vehs[veh_id].x, Vehs[veh_id].y)) {
+        tile_fn(Vehs[veh_id].x, Vehs[veh_id].y, faction_id);
+    }
+    for (int id = veh_top(veh_id); id >= 0; id = Vehs[id].next_veh_id_stack) {
+        Vehs[id].visibility |= (uint8_t)(1 << faction_id);
+        if (faction_id) {
+            Vehs[id].flags &= ~(VFLAG_LURKER | VFLAG_INVISIBLE);
+        }
+    }
+}
+
+
 // Transcribed from the image in its block order (2026-11-12): the faction's
 // pre-scan of the 49/25 sensor ring, the 25/9 visibility ring, the outer
 // ring's edge reveal, the stack's own spot_stack pass, then two separate
@@ -682,7 +699,7 @@ void __cdecl spot_all(int veh_id, int toggle) {
     for (int v = veh_top(veh_id); v >= 0; v = Vehs[v].next_veh_id_stack) {
         int owner = Vehs[v].faction_id;
         if (owner != faction_id) {
-            spot_stack(v, owner);
+            spot_stack_tile_call(v, owner);
         }
     }
     // spot_all first contact loop, image 0x5B6EE2 (i = 0) .. 0x5B7CEC (inc/test).
@@ -711,7 +728,7 @@ void __cdecl spot_all(int veh_id, int toggle) {
                 && base_who(x, y) < 0) {
                 // 0x5B6FC2: spot_stack inlined (spot_tile call 0x5B5700, veh_top inlined;
                 // the `if (faction_id)` guard folded away because sensor_faction > 0)
-                spot_stack(veh_id, sensor_faction);
+                spot_stack_tile_call(veh_id, sensor_faction);
                 // 0x5B7056
                 if (!(PlayersData[faction_id].diplo_treaties[sensor_faction] & 7) && toggle) {
                     if (triad == TRIAD_LAND) {
@@ -757,7 +774,7 @@ void __cdecl spot_all(int veh_id, int toggle) {
             if (!leave
                 || !(PlayersData[faction_id].diplo_treaties[Bases[base_id].faction_id_current] & 8)) {
                 // 0x5B72CE: spot_stack inlined (spot_tile call, veh_top inlined)
-                spot_stack(veh_id, Bases[base_id].faction_id_current);
+                spot_stack_tile_call(veh_id, Bases[base_id].faction_id_current);
             }
             // 0x5B737F
             if (triad == TRIAD_LAND
