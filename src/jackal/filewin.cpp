@@ -651,7 +651,7 @@ int FileWin::init(char *, GraphicWin *parent, FileWinConstruct *parameters) {
   }
 
   list_box_.field_8_ = 1;
-  list->field_34_ =
+  list_box_.field_34_ =
       (shared_sprite0_.width() * 3) / 2;
   list_box_.set_draw_callback(&FileWin::filebox_draw);
 

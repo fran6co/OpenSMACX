@@ -276,7 +276,7 @@ int EditBox::on_key_down(int key) {
         // 615985 rereads this flag after the text_fits calls.
         if (!(field_B38_ & 1)) field_B40_ = field_B44_;
         redraw();
-        return 1;
+        break;
     }
     case 0x25:
     case 0x64: {
@@ -304,7 +304,7 @@ int EditBox::on_key_down(int key) {
         if (static_cast<int>(field_B44_) < static_cast<int>(field_B18_)) field_B18_ = field_B44_;
         if (!(flags & 1)) field_B40_ = field_B44_;
         redraw();
-        return 1;
+        break;
     }
     case 8:
         if (field_B38_) {
@@ -334,7 +334,7 @@ int EditBox::on_key_down(int key) {
         field_B40_ = field_B44_;
         if (static_cast<int>(field_B44_) < static_cast<int>(field_B18_)) field_B18_ = field_B44_;
         redraw();
-        return 1;
+        break;
     case 0x2e:
         if (field_B38_) {
             MessageBeep(0);
@@ -357,7 +357,7 @@ int EditBox::on_key_down(int key) {
         field_B40_ = field_B44_;
         if (static_cast<int>(field_B44_) < static_cast<int>(field_B18_)) field_B18_ = field_B44_;
         redraw();
-        return 1;
+        break;
     case 0x24:
         field_B44_ = 0;
         if (!(field_B38_ & 1)) field_B40_ = 0;
@@ -382,6 +382,10 @@ int EditBox::on_key_down(int key) {
     default:
         return 0;
     }
+    // Arrow, Backspace and Delete break to one shared return: the image
+    // keeps Delete's redraw tail and jumps Backspace into it, while Home
+    // and End return on their own.
+    return 1;
 }
 
 // 615270. Do not cache the mask flag across drawing calls; original reloads

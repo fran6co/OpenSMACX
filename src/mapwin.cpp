@@ -6185,13 +6185,9 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
             ::draw_map(1);
         } else {
             world_climate();
-            for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
-                MapWin *const window = MapWinTable[slot];
-                if (window != nullptr &&
-                    (slot == 0 || window->view_active_ != 0)) {
-                    window->draw_map(1);
-                }
-            }
+            // The free redraw-all (0x46B190): the image calls it in the
+            // other arm and expands it here (0x46D986..9B3).
+            ::draw_map(1);
         }
         return;
     }
