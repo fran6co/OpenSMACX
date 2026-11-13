@@ -2660,7 +2660,7 @@ Purpose: Advance the mmio ring buffer by one read: when the pending offset
 
 // Typed owner implementation; native ABI/output, original reference targets
 // and exceptional behavior remain restoration obligations, not owner stubs.
-// ORIGINAL: 0x005CA230 sub_5ca230 0x005CA230-0x005CA308
+// ORIGINAL: 0x005CA230 sub_5ca230 0x005CA230-0x005CA308 BYTE_EXACT
 // symbol    ?sub_5ca230@MediaRuntime@@QAIHHH@Z
 // size      216 bytes
 // prototype int (__fastcall sub_5ca230)(int *ring, int size, int kind)
