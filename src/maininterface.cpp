@@ -488,10 +488,10 @@ int MainInterface::init(int) {
         assets.load_pcx("console_x_A.pcx", 0, 10, 236);
     else
         assets.load_pcx("console_x2_A.pcx", 0, 10, 236);
-    for (i = 0; i < 2; i++) {
-        for (j = 0; j < 5; j++)
-            sprites6_[i * 5 + j].extract(&assets, WinFillColour, 1 + i * 191,
-                                         1 + j * 27, 190, 26, 0);
+    for (i = 0, x = 1; i < 2; i++, x += 191) {
+        for (j = 0, y = 1; j < 5; j++, y += 27)
+            sprites6_[i * 5 + j].extract(&assets, WinFillColour, x, y,
+                                         190, 26, 0);
     }
     if (WinScreenWidth == 800) {
         sprites4_[0].extract(&assets, WinFillColour, 194, 136, 131, 51, 0);
@@ -540,15 +540,15 @@ int MainInterface::init(int) {
     sprites1_[2].extract(&assets, WinFillColour, 1, 341, 32, 25, 0);
     sprites1_[3].extract(&assets, WinFillColour, 1, 367, 32, 34, 0);
     assets.load_pcx("interface.pcx", 0, 10, 236);
-    for (i = 0; i < 3; i++) {
-        sprites7_[i].extract(&assets, WinFillColour, 532, 143 + i * 33, 54, 32, 0);
-        sprites7_[i + 3].extract(&assets, WinFillColour, 587, 143 + i * 33, 54, 32, 0);
+    for (i = 0, y = 143; i < 3; i++, y += 33) {
+        sprites7_[i].extract(&assets, WinFillColour, 532, y, 54, 32, 0);
+        sprites7_[i + 3].extract(&assets, WinFillColour, 587, y, 54, 32, 0);
     }
     sprite11_.extract(&assets, WinFillColour, 212, 1, 9, 147, 0);
     for (i = 0; i < 2; i++) {
-        for (j = 0; j < 3; j++)
-            sprites12_[i * 3 + j].extract(&assets, WinFillColour, 397 + j * 13,
-                                          153 + i * 43, 12, 42, 0);
+        for (j = 0, x = 397; j < 3; j++, x += 13)
+            sprites12_[i * 3 + j].extract(&assets, WinFillColour, x, 153 + i * 43,
+                                          12, 42, 0);
     }
     x = 350;
     y = 245;
@@ -703,7 +703,7 @@ int MainInterface::init(int) {
     r.right = r.left + sprites9_[0].width();
     r.bottom = r.top + sprites9_[0].height();
     for (k = 11; k < 36; k++) {
-        if (k != 11) {
+        if (k - 11) {
             if ((k - 11) % 5 == 0)
                 offset_rect(&r, r.right - r.left + 1, (r.top - r.bottom - 1) * 4);
             else
@@ -719,7 +719,7 @@ int MainInterface::init(int) {
     r.right = r.left + sprites10_[0].width();
     r.bottom = r.top + sprites10_[0].height();
     for (k = 36; k < 42; k++) {
-        if (k != 36) {
+        if (k - 36) {
             if ((k - 36) % 3 == 0)
                 offset_rect(&r, r.right - r.left + 1, (r.top - r.bottom - 1) * 2);
             else
@@ -3172,7 +3172,7 @@ void __cdecl slide_hide(GraphicWin *window, int mode) {
         const int wide = WinScreenWidth != 0x320;
         const int frame_edge = wide ? 0xee : 0x5e;
         const int frame_divisor = (IsMultiplayerNet != 0
-                                   || MapMouseFeedbackBusy != 0
+                                   || UnkGlobal0093A934 != 0
                                    || ConsoleControlTurnActive != 0) ? 3 : 5;
         RECT area = window->Buffer::clip_rect();
         window->client_to_screen(&area);
@@ -3247,7 +3247,7 @@ void __cdecl slide_hide(GraphicWin *window, int mode) {
             do {
                 do_sound();
                 int delay;
-                if (MapMouseFeedbackBusy == 0 && ConsoleControlTurnActive == 0)
+                if (UnkGlobal0093A934 == 0 && ConsoleControlTurnActive == 0)
                     delay = WindowAnimationFrameDelay;
                 else
                     delay = WindowAnimationFrameDelay / 2;

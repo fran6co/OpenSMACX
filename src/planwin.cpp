@@ -409,11 +409,11 @@ static inline bool planwin_base_known_to_faction(const Base &base, int faction) 
     if ((PlayersData[faction].flags & PFLAG_MAP_REVEALED) == 0) {
         const int tile_index = base.y * MapLongitude
                              + (base.x >> 1);
-        if ((MapTiles[tile_index].visibility & (1U << (faction & 31))) == 0)
+        if ((MapTiles[tile_index].visibility & (1 << faction)) == 0)
             return false;
     }
     return base.faction_id_current == faction
-        || (base.visibility & (1U << (faction & 31))) != 0;
+        || (base.visibility & (1 << faction)) != 0;
 }
 
 static inline bool planwin_tile_has_known_base(int x, int y, int faction) {
@@ -434,20 +434,16 @@ static inline bool planwin_tile_has_known_base(int x, int y, int faction) {
 void PlanWin::on_redraw() {
     if (field_21A68_ == 0) return;
 
-    // Native entry receives the GraphicWin virtual-base address. This true
-    // override relies on the measured VC6 member-reference fold; it performs
-    // no explicit receiver arithmetic.
-    GraphicWin *const surface = static_cast<GraphicWin *>(this);
-    Buffer *const surface_buffer = static_cast<Buffer *>(surface);
-    buffer_.copy(surface_buffer, 0, 0, surface->dib_.bmiHeader.biWidth,
-                 -surface->dib_.bmiHeader.biHeight);
+    // Each `this` -> Buffer conversion is written at its use: the image
+    // re-derives it with a null test at every call (0x0048AF47, 0x0048B0A7),
+    // and the patterned lines are the inlined draw_line member.
+    buffer_.copy(this, 0, 0, dib_.bmiHeader.biWidth, -dib_.bmiHeader.biHeight);
 
-    int faction = ConsoleGlobal.faction_id_;
     int base_draw_index;
     for (base_draw_index = 0; base_draw_index < GameDataStateStorage.fields_.base_current_count_;
          ++base_draw_index) {
         const Base &base = Bases[base_draw_index];
-        if (!planwin_base_known_to_faction(base, faction)) continue;
+        if (!planwin_base_known_to_faction(base, ConsoleGlobal.faction_id_)) continue;
 
         int intersects_plan_line = 0;
         if (field_21A6C_ != 0) {
@@ -455,8 +451,10 @@ void PlanWin::on_redraw() {
             for (base_line_index = 0; base_line_index < line_count_;
                  ++base_line_index) {
                 const PlanLineRecord &record = line_records_[base_line_index];
-                if ((base.x == record.x1 && base.y == record.y1)
-                    || (base.x == record.x2 && base.y == record.y2)) {
+                if (base.x == record.x1 && base.y == record.y1) {
+                    intersects_plan_line = 1;
+                }
+                if (base.x == record.x2 && base.y == record.y2) {
                     intersects_plan_line = 1;
                 }
             }
@@ -464,12 +462,9 @@ void PlanWin::on_redraw() {
 
         int pixel_x, pixel_y;
         tile_to_pixel(base.x, base.y, &pixel_x, &pixel_y);
-        const int flags = 0x100
-            | ((field_21A6C_ != 0 && intersects_plan_line) ? 0x200 : 0);
-        base_draw(surface_buffer, base_draw_index, pixel_x,
-                  pixel_y - field_1DDC0_, zoom_offset_, flags);
-        // The original refreshes faction after the draw callback.
-        faction = ConsoleGlobal.faction_id_;
+        base_draw(this, base_draw_index, pixel_x,
+                  pixel_y - field_1DDC0_, zoom_offset_,
+                  0x100 | ((field_21A6C_ != 0 && intersects_plan_line) ? 0x200 : 0));
     }
 
     int vehicle_line_index;
@@ -480,39 +475,28 @@ void PlanWin::on_redraw() {
         for (endpoint_index = 0; endpoint_index < 2; ++endpoint_index) {
             const int endpoint_x = endpoint_index != 0 ? record.x1 : record.x2;
             const int endpoint_y = endpoint_index != 0 ? record.y1 : record.y2;
-            if (planwin_tile_has_known_base(endpoint_x, endpoint_y, faction))
+            if (planwin_tile_has_known_base(endpoint_x, endpoint_y, ConsoleGlobal.faction_id_))
                 continue;
 
             int pixel_x, pixel_y;
             tile_to_pixel(endpoint_x, endpoint_y, &pixel_x, &pixel_y);
             pixel_y -= field_1DDC0_;
             const int vehicle_id = veh_fake(2, ConsoleGlobal.faction_id_);
-            const int flags = 0x100 | (field_21A6C_ ? 0x200 : 0);
-            veh_draw(surface_buffer, vehicle_id, pixel_x, pixel_y,
-                     zoom_offset_, flags, 1);
-            faction = ConsoleGlobal.faction_id_;
+            veh_draw(this, vehicle_id, pixel_x, pixel_y,
+                     zoom_offset_, 0x100 | (field_21A6C_ ? 0x200 : 0), 1);
         }
     }
 
     int pattern_line_index;
     for (pattern_line_index = 0; pattern_line_index < line_count_;
          ++pattern_line_index) {
-        const PlanLineRecord record = line_records_[pattern_line_index];
-        const int color = line_colors_[pattern_line_index];
-        int x1, y1, x2, y2;
-        tile_to_pixel(record.x1, record.y1, &x1, &y1);
-        tile_to_pixel(record.x2, record.y2, &x2, &y2);
-        x1 += field_1DDBC_;
-        y1 += field_1DDC0_;
-        x2 += field_1DDBC_;
-        y2 += field_1DDC0_;
-        surface_buffer->line(x1, y1, x2, y2, 0,
-                             color,
-                             4, 4, PlanLineCounter);
+        const PlanLineRecord &record = line_records_[pattern_line_index];
+        draw_line(record.x1, record.y1, record.x2, record.y2,
+                  line_colors_[pattern_line_index]);
     }
 
     // Native indirect call is Win slot 63, named on_update() in GraphicWin.
-    surface->on_update();
+    on_update();
 }
 
 // ORIGINAL: 0x0048AE40 ?add_line@PlanWin@@QAEXHHHHH@Z 0x0048AE40-0x0048AE90 FILE BYTE_EXACT

@@ -557,6 +557,11 @@ static inline StringStructPayload *listbox_current_payload(StringStruct *list) {
     return list->head_ != 0 ? list->current_->string_payload() : 0;
 }
 
+// The current entry's line count, or zero when the list head is null.
+static inline int listbox_current_lines(StringStruct *list) {
+    return list->head_ != 0 ? static_cast<int32_t>(list->current_->string_payload()->field_C_) : 0;
+}
+
 // The current entry's text, or null when the list head is null.
 static inline char *listbox_current_text(StringStruct *list) {
     return list->head_ != 0 ? list->current_->string_payload()->text : 0;
@@ -596,7 +601,8 @@ void ListBox::draw_item(int index) {
     if (Dialog::field_4C_ == 1) {
         int occupied = 0;
         this->Dialog::item_list_.seek_pos(static_cast<int>(field_18_) - 1);
-        for (int i = 0; i < index - static_cast<int>(field_18_); ++i) {
+        const int steps = index - static_cast<int>(field_18_);
+        for (int i = 0; i < steps; ++i) {
             StringList *const list = &this->Dialog::item_list_;
             StringStructEntry *const head = list->head_;
             if (head != 0) {
@@ -610,18 +616,15 @@ void ListBox::draw_item(int index) {
         }
         const int offset = (static_cast<int>(Dialog::field_68_)
                             + static_cast<int>(Dialog::field_44_)) * occupied;
-        row.bottom += offset;
         row.top += offset;
+        row.bottom += offset;
         StringList *const list = &this->Dialog::item_list_;
         StringStructEntry *const head = list->head_;
         if (head != 0) {
             StringStructEntry *const next = list->current_->next;
-            int position = list->current_position_;
             const int count = list->entry_count_;
-            ++position;
-            list->current_position_ = position;
             list->current_ = next;
-            if (position == count)
+            if (++list->current_position_ == count)
                 list->current_position_ = 0;
         }
         const int span = list->current_ != 0
@@ -763,21 +766,21 @@ frame_done:
     if (selected == 0) {
         {
             const int pad = static_cast<int>(field_2C_) + 1;
-            row.right -= pad;
             row.left += static_cast<int>(Dialog::field_34_) + pad;
+            row.right -= pad;
         }
         Buffer::set_clip(&row);
 
         char *separator = strchr(listbox_current_text(&this->Dialog::item_list_), '|');
         if (separator == 0) {
-            if ((Dialog::item_list_.head_ != 0 ? static_cast<int32_t>(Dialog::item_list_.current_->string_payload()->field_C_) : 0) > 1) {
+            if (listbox_current_lines(&this->Dialog::item_list_) > 1) {
                 Buffer::wrap(listbox_current_text(&this->Dialog::item_list_), &row);
             } else {
                 Buffer::write_l(listbox_current_text(&this->Dialog::item_list_), &row);
             }
         } else {
             *separator = 0;
-            if ((Dialog::item_list_.head_ != 0 ? static_cast<int32_t>(Dialog::item_list_.current_->string_payload()->field_C_) : 0) > 1) {
+            if (listbox_current_lines(&this->Dialog::item_list_) > 1) {
                 Buffer::wrap(listbox_current_text(&this->Dialog::item_list_), &row);
             } else {
                 Buffer::write_l(listbox_current_text(&this->Dialog::item_list_), &row);
@@ -807,21 +810,21 @@ frame_done:
 
         {
             const int pad = static_cast<int>(field_2C_) + 1;
-            row.right -= pad;
             row.left += static_cast<int>(Dialog::field_34_) + pad;
+            row.right -= pad;
         }
         Buffer::set_clip(&row);
 
         char *separator = strchr(listbox_current_text(&this->Dialog::item_list_), '|');
         if (separator == 0) {
-            if ((Dialog::item_list_.head_ != 0 ? static_cast<int32_t>(Dialog::item_list_.current_->string_payload()->field_C_) : 0) > 1) {
+            if (listbox_current_lines(&this->Dialog::item_list_) > 1) {
                 Buffer::wrap(listbox_current_text(&this->Dialog::item_list_), &row);
             } else {
                 Buffer::write_l(listbox_current_text(&this->Dialog::item_list_), &row);
             }
         } else {
             *separator = 0;
-            if ((Dialog::item_list_.head_ != 0 ? static_cast<int32_t>(Dialog::item_list_.current_->string_payload()->field_C_) : 0) > 1) {
+            if (listbox_current_lines(&this->Dialog::item_list_) > 1) {
                 Buffer::wrap(listbox_current_text(&this->Dialog::item_list_), &row);
             } else {
                 Buffer::write_l(listbox_current_text(&this->Dialog::item_list_), &row);
