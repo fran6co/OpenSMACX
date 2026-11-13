@@ -8,6 +8,8 @@ smoke test, with the ratchet in tools/ keeping the strict machinery.
 """
 
 import struct
+from dataclasses import replace
+from types import SimpleNamespace
 from pathlib import Path
 
 import pytest
@@ -675,6 +677,70 @@ def test_the_split_declines_when_the_body_does_not_end_there():
     assert asm._split_at(a_listing(longer), 2).code_bytes is None
     # ... and with a `ret` exactly there, it is taken.
     assert asm._split_at(a_listing(TAIL_BODY + JUMP_TABLE), 3).code_bytes == 3
+
+
+# `jmp [eax*4 + table]; xor eax, eax; ret; mov edi, edi` then a two-entry
+# jump table at +12, as VC6 lays it: the `mov edi, edi` is the `npad` that
+# aligns the table, and the table's words are zeros the linker fills.
+SWITCH_CODE = b"\xFF\x24\x85" + bytes(4) + b"\x33\xC0\xC3\x8B\xFF"
+SWITCH_OBJECT = SWITCH_CODE + bytes(8)
+
+
+def a_switch_object(table_label=12, case_label=7):
+    """A one-section COFF object for `_f` whose relocations are VC6's: the
+    `jmp` reaches its table FORWARD through a label of its own section, and
+    the table's entries point BACK at a case label."""
+    def symbol(name, value, section, storage):
+        return name.encode().ljust(8, b"\0") + struct.pack("<IhHBB", value, section, 0, storage, 0)
+    symbols = [symbol("_f", 0, 1, 2), symbol("$L1", table_label, 1, 6),
+               symbol("$L2", case_label, 1, 6)]
+    relocations = [(3, 1), (12, 2), (16, 2)]               # (field, symbol)
+    at = 60 + len(SWITCH_OBJECT)
+    table = at + 10 * len(relocations)
+    header = struct.pack("<HHIIIHH", 0x14C, 1, 0, table, len(symbols), 0, 0)
+    section = b".text\0\0\0" + struct.pack("<IIIIIIHHI", 0, 0, len(SWITCH_OBJECT), 60, at,
+                                           0, len(relocations), 0, 0x60501020)
+    return (header + section + SWITCH_OBJECT
+            + b"".join(struct.pack("<IIH", field, index, 6) for field, index in relocations)
+            + b"".join(symbols) + struct.pack("<I", 4))
+
+
+def test_the_object_names_its_own_table_start():
+    """The first table byte is the lowest FORWARD self-section DIR32 target;
+    the table's own entries point back and do not count."""
+    record = SimpleNamespace(symbol="_f", name="f")
+    assert asm._object_table_start(a_switch_object(), record, len(SWITCH_OBJECT)) == 12
+
+
+def test_the_split_follows_the_object_when_the_extent_misses():
+    """A body a few bytes longer than the shipped one keeps its table out of
+    the instructions: the object's table start is the boundary, and the
+    `npad` before it is data, where the catalogued span leaves the image's."""
+    compiled = replace(a_listing(SWITCH_OBJECT), table_start=12)
+    split = asm._split_at(compiled, 8)        # the original's code is 8 bytes
+    assert split.code_bytes == 10
+    assert [i.mnemonic for i in split.instructions] == ["jmp", "xor", "ret"]
+    # ... and the extent, when it does end the body, is still the boundary.
+    assert asm._split_at(compiled, 10).code_bytes == 10
+
+
+@pytest.mark.parametrize("start", (11, 9))
+def test_the_object_boundary_keeps_the_guard(start):
+    """Mid-instruction, or after something that is not a terminator, the
+    object's word proves nothing about the tail and the split declines."""
+    compiled = replace(a_listing(SWITCH_OBJECT), table_start=start)
+    assert asm._split_at(compiled, 8).code_bytes is None
+
+
+def test_an_object_split_body_of_another_length_is_not_a_match():
+    """Accounting only: a body whose code is longer than the shipped one is
+    a MISMATCH even though its table now sits on the data side."""
+    shipped = b"\xFF\x24\x85" + bytes(4) + b"\xC3"
+    original = a_listing(shipped + b"\x8B\xFF\x8B\xFF" + bytes(8), code_bytes=len(shipped))
+    compiled = replace(a_listing(SWITCH_OBJECT), table_start=12)
+    result = asm.compare_asm(original, compiled)
+    assert result.verdict != "BYTE_EXACT"
+    assert result.compiled_instructions == 3
 
 
 def test_a_body_with_no_tail_is_unchanged():

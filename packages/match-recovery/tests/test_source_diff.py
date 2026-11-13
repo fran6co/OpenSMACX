@@ -132,6 +132,22 @@ def test_captured_source_texts_reject_conflicting_quotes_and_missing_anchors(tmp
         listing_source_texts(one_quote, '_f', {header: 'int f() { return 0; }\n'}, {1, 2})
 
 
+def test_blank_source_anchors_match_only_blank_rows(tmp_path):
+    # VC6 /FAcs prints a blank source line as an anchor with no text; the
+    # captured row at that number must be blank too.
+    header = (tmp_path / 'owner.hpp').resolve()
+    other = (tmp_path / 'other.hpp').resolve()
+    text = '_f PROC NEAR\n; 1 : int f() {\n; 2 : \n; 3 : return 0; }\n_f ENDP\n'
+    source = 'int f() {\n\nreturn 0; }\n'
+    assert listing_source_texts(text, '_f', {header: source, other: 'int f() {\nx;\nreturn 0; }\n'},
+                                {1, 2, 3}) == (header, source)
+    with pytest.raises(ValueError, match='identify one'):
+        listing_source_texts(text, '_f', {header: 'int f() {\nx;\nreturn 0; }\n'}, {1, 2, 3})
+    # Blank rows alone identify no file.
+    with pytest.raises(ValueError, match='nonblank'):
+        listing_source_texts('_f PROC NEAR\n; 2 : \n_f ENDP\n', '_f', {header: source}, {2})
+
+
 def test_captured_source_labels_never_resolve_or_reopen_live_paths(monkeypatch):
     def forbidden(*_args, **_kwargs):
         raise AssertionError('captured source matching must not read the filesystem')

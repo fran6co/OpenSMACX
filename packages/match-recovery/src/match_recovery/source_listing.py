@@ -93,8 +93,12 @@ def _selected_quotes(text: str, symbol: str, anchors: set[int]) -> dict[int, str
             active = False
             continue
         if active:
+            # VC6 /FAcs prints a blank or whitespace-only source line as an
+            # anchor with no text (a `switch` or loop spans them). Its quote
+            # is the empty string, and it still has to match: the captured
+            # source row at that number must be blank too.
             match = re.match(r";\s*(\d+)\s*:(.*)", row)
-            if match and int(match[1]) in anchors and match[2].strip():
+            if match and int(match[1]) in anchors:
                 number, quote = int(match[1]), match[2].strip()
                 previous = quotes.get(number)
                 if previous is not None and previous != quote:
@@ -104,6 +108,9 @@ def _selected_quotes(text: str, symbol: str, anchors: set[int]) -> dict[int, str
         raise ValueError("compiler listing does not contain one complete selected procedure")
     if not anchors or set(quotes) != anchors:
         raise ValueError("compiler listing lacks source quotes for every selected anchor")
+    if not any(quotes.values()):
+        # Blank rows alone identify no file.
+        raise ValueError("compiler listing has no nonblank source quote for the selected anchors")
     return quotes
 
 

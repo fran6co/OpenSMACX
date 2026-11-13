@@ -75,6 +75,10 @@ class Listing:
                                      # `CodeReference` per DIR32/REL32 field,
                                      # so a masked field can still be asked
                                      # where it points - see `reference_mismatches`
+    table_start: int | None = None   # compiled side only: the first byte
+                                     # of in-section data (a `switch` table)
+                                     # by the object's own relocations - see
+                                     # `_object_table_start`; None when none
     bounded: bool = False            # compiled side only: longer than its
                                      # original span, which must not be read
                                      # past - a local function's neighbor is
@@ -870,6 +874,60 @@ def build_reference_targets(functions, objects=()) -> ReferenceTargets:
         local={key: next(iter(values)) for key, values in local.items() if len(values) == 1})
 
 
+def _selected_subject(obj: bytes, record: DecompilationState):
+    """(records, symbol) for the record's selected body, or None if unclear.
+
+    Mirrors the selection in `_coff_function_masked`; when that cannot be
+    reproduced unambiguously the caller learns nothing from the object.
+    """
+    try:
+        parsed = CoffRecords(obj)
+    except ValueError:
+        return None
+    wanted = record.symbol or record.name
+    found = [item for item in parsed.symbols.values()
+             if item.section > 0 and item.storage in (2, 3)
+             and (item.name == wanted
+                  or (not record.symbol and item.storage == 2 and item.name == "_" + record.name))]
+    if len({(item.value, item.section) for item in found}) != 1:
+        return None
+    return parsed, found[0]
+
+
+def _object_table_start(obj: bytes, record: DecompilationState,
+                        code_size: int) -> int | None:
+    """Where the selected body's in-section data begins, by the object's own
+    word, or None when the object shows none.
+
+    A `switch` addresses its tables FORWARD: `jmp [reg*4 + $L]` and
+    `mov reg8, [reg + $L]` carry a DIR32 to a label of the body's own section
+    lying after the instruction, while the table's entries point BACK at case
+    labels. Code reaches code through REL32 displacements, never through an
+    absolute self-section address, so the lowest forward self-section DIR32
+    target is the first table byte. This is read from the compiled object, not
+    from the original's extent, so a body whose code is a few bytes longer or
+    shorter than the shipped one still has its tables accounted as data.
+    """
+    selected = _selected_subject(obj, record)
+    if selected is None:
+        return None
+    parsed, subject = selected
+    section = parsed.sections[subject.section - 1]
+    starts = []
+    for va, index, kind in section.relocations:
+        target = parsed.symbols.get(index)
+        if kind != 0x0006 or target is None or target.section != subject.section:
+            continue
+        field = va - subject.value
+        if not 0 <= field <= code_size - 4:
+            continue
+        addend = int.from_bytes(section.data[va:va + 4], "little", signed=True)
+        at = target.value + addend - subject.value
+        if field < at < code_size:
+            starts.append(at)
+    return min(starts, default=None)
+
+
 def _subject_references(obj: bytes, record: DecompilationState,
                         code_size: int) -> tuple[CodeReference, ...]:
     """The relocated fields of the record's selected body, or () if unclear.
@@ -878,18 +936,10 @@ def _subject_references(obj: bytes, record: DecompilationState,
     reproduced unambiguously, no reference is reported and the comparison is
     the masked one it always was.
     """
-    try:
-        parsed = CoffRecords(obj)
-    except ValueError:
+    selected = _selected_subject(obj, record)
+    if selected is None:
         return ()
-    wanted = record.symbol or record.name
-    found = [item for item in parsed.symbols.values()
-             if item.section > 0 and item.storage in (2, 3)
-             and (item.name == wanted
-                  or (not record.symbol and item.storage == 2 and item.name == "_" + record.name))]
-    if len({(item.value, item.section) for item in found}) != 1:
-        return ()
-    subject = found[0]
+    parsed, subject = selected
     section = parsed.sections[subject.section - 1]
     rows = []
     for va, index, kind in section.relocations:
@@ -1079,7 +1129,8 @@ def subject_asm(obj: bytes, record: DecompilationState,
     except LocalExtentExceeded as longer:
         code, mask, bounded = longer.code, longer.mask, True
     return Listing(code=code, base=record.address, mask=mask, flags=flags, bounded=bounded,
-                   references=_subject_references(obj, record, len(code)))
+                   references=_subject_references(obj, record, len(code)),
+                   table_start=_object_table_start(obj, record, len(code)))
 
 
 # ------------------------------------------------------------------ disasm
@@ -1217,17 +1268,48 @@ def _split_at(compiled: Listing, extent: int) -> Listing:
     """
     if len(compiled.code) <= extent or compiled.code_bytes is not None:
         return compiled
-    at = 0
-    for instruction in compiled.instructions:
-        at += instruction.size
-        if at < extent:
-            continue
-        if at > extent:                     # not on an instruction boundary
-            return compiled
-        if not instruction.mnemonic.startswith(_TERMINATORS):
-            return compiled
-        return replace(compiled, code_bytes=extent)
+    end = _body_end(compiled, extent, padding=False)
+    if end is not None:
+        return replace(compiled, code_bytes=end)
+    # THE OBJECT'S OWN BOUNDARY, when the original's extent is not it. A
+    # register or slot tie that moves the compiled code by a few bytes made
+    # the extent miss, and the tables were then decoded as junk
+    # instructions. The object says where its tables begin (`table_start`,
+    # from its relocations); that boundary is taken under the same guard,
+    # with the alignment `npad` VC6 lays between the terminator and the
+    # table moved to the data side - where the catalogued span, which ends
+    # on the terminator, leaves the image's own `npad`. Only the accounting
+    # changes: a body of a different length cannot be BYTE_EXACT, because
+    # its whole extent and its data still have to agree byte for byte.
+    start = compiled.table_start
+    if start is not None and 0 < start < len(compiled.code):
+        end = _body_end(compiled, start, padding=True)
+        if end is not None:
+            return replace(compiled, code_bytes=end)
     return compiled
+
+
+# VC6's `npad` fill before a 4-aligned `switch` table: the one- to
+# three-byte forms. Only these may stand between a terminator and a table.
+_NPAD = (b"\x90", b"\x8b\xff", b"\x8d\x49\x00")
+
+
+def _body_end(compiled: Listing, boundary: int, *, padding: bool) -> int | None:
+    """Where the code ends if decoding `compiled` up to `boundary` lands
+    exactly on it and the last instruction - past at most three bytes of
+    `npad` when `padding` - is a `ret` or an unconditional `jmp`; else None.
+    """
+    instructions = _decode(compiled.code[:boundary], compiled.base)
+    if sum(instruction.size for instruction in instructions) != boundary:
+        return None                         # not on an instruction boundary
+    end, fill = boundary, 0
+    while (padding and instructions and bytes(instructions[-1].bytes) in _NPAD
+           and fill + instructions[-1].size <= 3):
+        fill += instructions[-1].size
+        end -= instructions.pop().size
+    if instructions and instructions[-1].mnemonic.startswith(_TERMINATORS):
+        return end
+    return None
 
 
 def _data_divergence(original: Listing, compiled: Listing) -> int | None:
