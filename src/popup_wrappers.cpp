@@ -1,5 +1,6 @@
 // veh_pick uses BasePop::set_sprite_layout, which only this TU sees.
 #define BASEPOP_SET_SPRITE_LAYOUT
+#define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
 /*
  * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
  * Copyright (C) 2013-2021 Brendan Casey
@@ -79,41 +80,52 @@ void __cdecl parse_it(char *file_name, const char *section) {
 int __cdecl popp(LPCSTR caption, LPCSTR label, int flags, LPCSTR picture,
                  int (__cdecl *callback)()) {
     Popup popup;
-    char *alternative = nullptr;
     if (strcmp(caption, ScriptPopupFile) == 0
         || strcmp(caption, "SCRIPT.txt") == 0) {
+        char *alternative;
+        FILE *file;
         if (Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) {
-            if (ExpansionEnabled) {
-                FILE *file = fopen("alienIscript.txt", "rb");
-                if (file) {
-                    fclose(file);
-                    alternative = PopupStartAltFile1;
-                }
+            if (!ExpansionEnabled) {
+                goto plain;
             }
-        } else if (ExpansionEnabled && PopupDialogFactionID > 0
-                   && PopupDialogFactionID < 8
-                   && (Players[PopupDialogFactionID].rule_flags & RFLAG_ALIEN)) {
-            FILE *file = fopen("alienuscript.txt", "rb");
+            file = fopen("alienIscript.txt", "rb");
+            if (!file) {
+                goto missing;
+            }
+            fclose(file);
+            alternative = PopupStartAltFile1;
+        } else {
+            if (!ExpansionEnabled || PopupDialogFactionID <= 0
+                || PopupDialogFactionID >= 8
+                || !(Players[PopupDialogFactionID].rule_flags & RFLAG_ALIEN)) {
+                goto plain;
+            }
+            file = fopen("alienuscript.txt", "rb");
             if (file) {
                 fclose(file);
                 alternative = PopupStartAltFile2;
+            } else {
+missing:
+                popup.start(const_cast<char *>(caption), label, -1, nullptr,
+                            flags, nullptr);
+                goto shown;
             }
         }
-    }
-    if (alternative) {
         if (popup.start(alternative, label, -1, nullptr, flags, nullptr) != 0) {
             popup.start(const_cast<char *>(caption), label, -1, nullptr,
                         flags, nullptr);
         }
     } else {
+plain:
         popup.start(const_cast<char *>(caption), label, -1, nullptr,
                     flags, nullptr);
     }
+shown:
     if (picture) {
         int size[2];
-        if (Buffer::get_pcx_dimensions(picture, &size[0], &size[1]) == 0
-            && popup.owned_picture().init(const_cast<char *>(picture), size[0],
-                                          size[1]) == 0) {
+        if (Buffer::get_pcx_dimensions(picture, &size[1], &size[0]) == 0
+            && popup.owned_picture().init(const_cast<char *>(picture), size[1],
+                                          size[0]) == 0) {
             popup.select_owned_picture();
         }
     }
@@ -235,8 +247,8 @@ int __cdecl popb(LPCSTR text_label, int warning_mask, int sound_id,
     }
 
     if (caller_picture != 0) {
-        popup.set_caller_picture(popup.picture_enabled() ? nullptr : caller_picture);
-        popup.configure_sprite_dialog(caller_picture);
+        popup.set_picture(caller_picture, 0, 0);
+        popup.set_sprite_layout(2, 1);
     }
 
     int result = popup.exec(0, 0);

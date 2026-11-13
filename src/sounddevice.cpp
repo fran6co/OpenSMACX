@@ -2393,6 +2393,12 @@ Purpose: Build the device singleton in two vtable stages: the base's vtable
 Return Value: n/a (the redirect answers the object pointer)
 Status: Complete
 */
+// WORKAROUND(decl): a nothrow redeclaration, as in sound.cpp. The image's
+// constructor calls memset after the group array without opening an
+// array-complete unwind state, so the original treated the call as
+// non-throwing.
+extern "C" void * __cdecl memset(void *, int, size_t) throw();
+
 Wave_Device::Wave_Device() {
     memset(&field_20_, 0, 4);
 }

@@ -242,13 +242,9 @@ static inline StringStructPayload *stringbox_next_entry(StringStruct *list) {
         return 0;
     }
 
-    StringStructEntry *next = list->current_->next;
-    int position = list->current_position_;
-    list->current_ = next;
-    int count = list->entry_count_;
-    ++position;
-    list->current_position_ = position;
-    if (position == count) {
+    // The image's `inc edx; mov eax, edx` copy is a member pre-increment.
+    list->current_ = list->current_->next;
+    if (++list->current_position_ == list->entry_count_) {
         list->current_position_ = 0;
     }
     return list->current_->string_payload();

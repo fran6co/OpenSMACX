@@ -522,6 +522,9 @@ void __cdecl ProdPicker::UNK2(int, ProdPicker *picker) {
 // TMPASSOC switch_targets 0x00492FA0 0x00493A70 0x00493A94 0x004934B8
 // TMPASSOC switch_targets 0x00492FA0 0x00493A94 0x00493AA4 0x0049389C
 // TMPASSOC switch_selector 0x00492FA0 0x00493AA4 0x00493AE6 0x00493896
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00492FA0 0x00493A70 0x00493A94 0x004934B8
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00492FA0 0x00493A94 0x00493AA4 0x0049389C
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x00492FA0 0x00493AA4 0x00493AE6 0x00493896
 // ORIGINAL: 0x00492FA0 ?calculate@ProdPicker@@QAEXXZ 0x00492FA0-0x00493A6D FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00492fa0.cpp", "Pinned original coordinator review: actual label-pointer dereference, camera word3F48F5C3, static cdecl callback ABI, row-end clamps and modal-parent/button suppression order."], "reason": "Recover ProdPicker owner behavior through existing window bases, owned StringLists/controls and typed Base/Caviar camera state; preserve historical seed identity and extents as restoration obligations, not current match claims."}
 // TRIED: void return confirmed (0,1,2,3 are switch-derived flag bits; 9999/999999 are itoa() display clamps, not status codes - the single `ret` has no `mov eax,K` before it, eax at exit is whatever Font::init() last returned). Structural transcription via named ProdPicker::field_XXXX_ members instead of raw pointer casts didn't close the divergence; prologue shape differs (#0 push vs sub) from local layout, not a wrong op.
@@ -646,18 +649,28 @@ void ProdPicker::calculate() {
         effect[0] = 0;
         say_stats_3(effect, id);
         if (has_proto_cost) flags = 0x80;
-        prod_a_.pending_text_ = name;
-        prod_a_.field_20_ = edbc_unit(id) | flags | 0x20;
-        prod_a_.field_24_ = 0;
-        prod_a_.add(id);
-        prod_b_.pending_text_ = stats;
-        prod_b_.field_20_ = 0;
-        prod_b_.field_24_ = 0;
-        prod_b_.add(0);
-        prod_c_.pending_text_ = effect;
-        prod_c_.field_20_ = 0;
-        prod_c_.field_24_ = 0;
-        prod_c_.add(0);
+        {
+            const int kind = edbc_unit(id) | flags | 0x20;
+            StringList *list = &prod_a_;
+            list->pending_text_ = name;
+            list->field_20_ = kind;
+            list->field_24_ = 0;
+            list->add(id);
+        }
+        {
+            StringList *list = &prod_b_;
+            list->pending_text_ = stats;
+            list->field_20_ = 0;
+            list->field_24_ = 0;
+            list->add(0);
+        }
+        {
+            StringList *list = &prod_c_;
+            list->pending_text_ = effect;
+            list->field_20_ = 0;
+            list->field_24_ = 0;
+            list->add(0);
+        }
         if (id == queued_id) field_A774_ = field_A818_;
         field_A818_++;
     }
@@ -709,18 +722,28 @@ void ProdPicker::calculate() {
         if (strlen(StringTable.get(Facility[i].effect))) {
             strcat(effect, StringTable.get(Facility[i].effect));
         }
-        prod_a_.pending_text_ = name;
-        prod_a_.field_20_ = edbc_fac(i) | 0x10;
-        prod_a_.field_24_ = 0;
-        prod_a_.add(i);
-        prod_b_.pending_text_ = stats;
-        prod_b_.field_20_ = 0;
-        prod_b_.field_24_ = 0;
-        prod_b_.add(0);
-        prod_c_.pending_text_ = effect;
-        prod_c_.field_20_ = 0;
-        prod_c_.field_24_ = 0;
-        prod_c_.add(0);
+        {
+            const int kind = edbc_fac(i) | 0x10;
+            StringList *list = &prod_a_;
+            list->pending_text_ = name;
+            list->field_20_ = kind;
+            list->field_24_ = 0;
+            list->add(i);
+        }
+        {
+            StringList *list = &prod_b_;
+            list->pending_text_ = stats;
+            list->field_20_ = 0;
+            list->field_24_ = 0;
+            list->add(0);
+        }
+        {
+            StringList *list = &prod_c_;
+            list->pending_text_ = effect;
+            list->field_20_ = 0;
+            list->field_24_ = 0;
+            list->add(0);
+        }
         if (-i == queued_id) field_A774_ = field_A818_;
         field_A818_++;
     }

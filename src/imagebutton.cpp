@@ -236,9 +236,9 @@ void ImageButton::on_redraw() {
             ++bevel_count;
         }
         if (sprite_ != 0) {
-            const int width = rectangle.right - rectangle.left;
-            if (width < sprite_->source_width()) {
-                sprite_->draw(this, sprite_->transparent_index(), x, y, width,
+            if (rectangle.right - rectangle.left < sprite_->source_width()) {
+                sprite_->draw(this, sprite_->transparent_index(), x, y,
+                              rectangle.right - rectangle.left,
                               sprite_->source_width());
             } else {
                 sprite_->draw(this, sprite_->transparent_index(), x, y, 1, 1);
