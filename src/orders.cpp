@@ -61,6 +61,7 @@
 #include "caviar.h"
 #include "font.h"
 #include "font_queue.h"
+#include "faction_inline.h"
 #include "crt_random_inline.h"
 #include "infowin.h"
 #include "worldwin.h"
@@ -208,7 +209,7 @@ int __cdecl supply_options(int veh_id, int base_id) {
     Popup popup;
     const int owner = Vehs[veh_id].faction_id;
 
-    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << owner)) == 0) {
+    if (!is_human(owner)) {
         return 0;
     }
     if (Vehs[veh_id].order == ORDER_ROAD_TO || Vehs[veh_id].order == ORDER_MAGTUBE_TO ||
@@ -223,7 +224,7 @@ int __cdecl supply_options(int veh_id, int base_id) {
 
     const int base_owner = Bases[base_id].faction_id_current;
     if (owner != base_owner &&
-        (PlayersData[owner].diplo_treaties[base_owner] & 1u) == 0) {
+        !has_treaty(owner, base_owner, 1)) {
         return 0;
     }
 
@@ -243,7 +244,7 @@ int __cdecl supply_options(int veh_id, int base_id) {
     }
     parse_num(0, Bases[base_id].minerals_accumulated);
     parse_num(1, queued_cost);
-    popup.start(PopupStartCaption, "SUPPLYUNIT", -1, 0, 0, 0);
+    popup.start("SUPPLYUNIT");
 
     // Each branch names its picture twice: the image keeps four separate
     // literals (0x68FC34/0x68FC44 al_col_sm.pcx, 0x68FC54/0x68FC64
@@ -269,7 +270,7 @@ int __cdecl supply_options(int veh_id, int base_id) {
     }
 
     text_get();
-    StringTemp[0] = '\0';
+    clear();
     parse_string(TextBufferGetPtr, StringTemp);
     popup.item(StringTemp, 0);
     int item_count = 1;
@@ -310,7 +311,7 @@ int __cdecl supply_options(int veh_id, int base_id) {
     int action;
     if (owner == ConsoleGlobal.faction_id_
         && (NetDaemonNet.channels_[0].leading_words_[3] & 1u) != 0) {
-        action = popup.exec(0, 0);
+        action = popup.exec();
         if (action == 0) {
             return 0;
         }

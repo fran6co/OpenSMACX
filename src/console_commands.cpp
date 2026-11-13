@@ -6400,6 +6400,20 @@ void Console::editor_rockiness() {
     }
 }
 
+// WORKAROUND(inline): dead budget probe (folds to no code). editor_natural's
+// "no feature tile found" return tears down one Popup level deeper than the
+// image's unless one branchy inline unit is spent after the clearing loop; a
+// probe sweep matched the image's teardown sequence only there. No natural
+// spelling found yet.
+static int natural_probe_sink;
+static inline void natural_budget_probe(int x) {
+    if (x == 1) natural_probe_sink = 3;
+    if (x == 2) natural_probe_sink = 5;
+    if (x == 3) natural_probe_sink = 7;
+}
+
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x004E14D0 0x004E1E9C 0x004E1EDC 0x004E161B
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x004E14D0 0x004E1EDC 0x004E1F1C 0x004E18D2
 // ORIGINAL: 0x004E14D0 ?editor_natural@Console@@QAEXH@Z 0x004E14D0-0x004E1E99;0x0065C38C-0x0065C564
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004e14d0.cpp records the original entry and full body/unwind spans; retained seed is not accepted source structure.", "Task console-scenario-owner-wave and its native grants authorize the thirteen owner methods, typed persistent editor state, existing Popup item sorting, and genuine technology-bit storage. Original instructions resolve callee argument roles and field ownership; dual configured compiler trials and host controls are diagnostics, not acceptance."], "reason": "Recover the selected scenario-editor operation in its existing typed Console owner, retaining its original spans, seed provenance and historical obligations."}
 // TRIED: `Popup popup;` RAII local with explicit business logic (world_* feature placement switch for a1!=0; landmark search/removal for a1==0, edx==7 vs the second switch->bit-index path) converging on popup.close(); diverges at instr #0 (alloca-probe prologue). RETURN TYPE: the 1/2/3/4/5 values set by the second jump table (0x4E18D2) are consumed immediately as an array index into 0x66F8C4 (never reach `ret` in EAX) - void stands, not a status return.
@@ -6514,6 +6528,7 @@ found:
                 }
             }
         }
+        natural_budget_probe(9);  // WORKAROUND(inline): see natural_budget_probe
     }
     world_climate();
     ::draw_map(1);

@@ -1580,160 +1580,166 @@ int __cdecl top_menu(int mode) {
     setup.opening_window_snapshot_ = opening_window();
     TurnUpkeepPhase = 0;
 
-top_menu_redraw:
-    if (ExpansionEnabled != 0) {
-        top_menu_init_opening(WinScreenWidth == 0x320
-            ? "xopeningb.pcx" : "xopeninga.pcx");
-    } else {
-        top_menu_init_opening(WinScreenWidth == 0x320
-            ? "openingb.pcx" : "openinga.pcx");
-    }
-    setup.opening_window_snapshot_ = opening_window();
-    prefs_load(0);
-    prefs_use();
-
-    edi = mode;
-    popup.start(PopupStartCaption, edi == 0 ? "TOPMENU" : "HOTSEAT",
-                -1, 0, 0, 0);
-    if (edi == 0) popup.set_value(static_cast<int>(DefaultPrefs.top_menu));
-
-    esi = setup.do_menu(&popup, 1, 0);
-    if (esi < 0 || esi == 6) {
-        return 1;
-    }
-
-    if (edi == 0) {
-        DefaultPrefs.top_menu = static_cast<uint32_t>(esi);
-        prefs_save(0);
-    } else if (esi > 0) {
-        ++esi;
-    }
-
-    if (static_cast<unsigned int>(esi) > 5) goto top_menu_normal_return;
-    switch (esi) {
-    case 0:
-    case 1:
-        esi = map_menu(esi == 1 ? 1 : 0);
-top_menu_after_action:
-        if (esi == 0) goto top_menu_normal_return;
-top_menu_retry:
-        if (ExitTurnLoop != 0) goto top_menu_normal_return;
-        goto top_menu_redraw;
-
-    case 3:
-        GameDataLoadRequest = mode;
-        esi = load_game(0, 0);
-        GameDataLoadRequest = 0;
-        if (esi != 0) goto top_menu_retry;
-        ControlTurnPhase = ConsoleGlobal.faction_id_;
-        if (GameSessionActive != 0) {
-            stop_timers();
-            labels_shutdown();
-            StringTable.shutdown();
-            if (game_init(1, 0) == 0) WorldClimateSkipTerrainClear = 0;
+    // The menu is a loop that only leaves through its returns. The loop as the
+    // last statement keeps the closing-brace teardown of setup and popup in
+    // the EH tables; with a trailing return the early return's ~Popup inlines
+    // three levels deeper than the image's.
+    for (;;) {
+    top_menu_redraw:
+        if (ExpansionEnabled != 0) {
+            top_menu_init_opening(WinScreenWidth == 0x320
+                ? "xopeningb.pcx" : "xopeninga.pcx");
+        } else {
+            top_menu_init_opening(WinScreenWidth == 0x320
+                ? "openingb.pcx" : "openinga.pcx");
         }
-        goto top_menu_after_action;
+        setup.opening_window_snapshot_ = opening_window();
+        prefs_load(0);
+        prefs_use();
 
-    case 2:
-        if (mode == 0) {
-            edi = 1;
-            esi = setup.do_menu(const_cast<char *>("SCENARIOMENU"), edi, 0);
-            if (esi < 0) goto top_menu_retry;
-            if (esi == edi) goto top_menu_new_game;
-            if (esi == 2) {
-                esi = load_map();
-                if (esi != 0) goto top_menu_retry;
-                config_game(3);
-                GameDataStateStorage.fields_.vehicle_current_count_ = 0;
-                setup_game(edi);
+        edi = mode;
+        popup.start(PopupStartCaption, edi == 0 ? "TOPMENU" : "HOTSEAT",
+                    -1, 0, 0, 0);
+        if (edi == 0) popup.set_value(static_cast<int>(DefaultPrefs.top_menu));
+
+        esi = setup.do_menu(&popup, 1, 0);
+        if (esi < 0 || esi == 6) {
+            return 1;
+        }
+
+        if (edi == 0) {
+            DefaultPrefs.top_menu = static_cast<uint32_t>(esi);
+            prefs_save(0);
+        } else if (esi > 0) {
+            ++esi;
+        }
+
+        if (static_cast<unsigned int>(esi) > 5) goto top_menu_normal_return;
+        switch (esi) {
+        case 0:
+        case 1:
+            esi = map_menu(esi == 1 ? 1 : 0);
+    top_menu_after_action:
+            if (esi == 0) goto top_menu_normal_return;
+    top_menu_retry:
+            if (ExitTurnLoop != 0) goto top_menu_normal_return;
+            goto top_menu_redraw;
+
+        case 3:
+            GameDataLoadRequest = mode;
+            esi = load_game(0, 0);
+            GameDataLoadRequest = 0;
+            if (esi != 0) goto top_menu_retry;
+            ControlTurnPhase = ConsoleGlobal.faction_id_;
+            if (GameSessionActive != 0) {
+                stop_timers();
+                labels_shutdown();
+                StringTable.shutdown();
+                if (game_init(1, 0) == 0) WorldClimateSkipTerrainClear = 0;
+            }
+            goto top_menu_after_action;
+
+        case 2:
+            if (mode == 0) {
+                edi = 1;
+                esi = setup.do_menu(const_cast<char *>("SCENARIOMENU"), edi, 0);
+                if (esi < 0) goto top_menu_retry;
+                if (esi == edi) goto top_menu_new_game;
+                if (esi == 2) {
+                    esi = load_map();
+                    if (esi != 0) goto top_menu_retry;
+                    config_game(3);
+                    GameDataStateStorage.fields_.vehicle_current_count_ = 0;
+                    setup_game(edi);
+                    ControlTurnPhase = ConsoleGlobal.faction_id_;
+                    GameDataStateStorage.fields_.game_state_ |= 0x080000E0u;
+                    goto top_menu_after_action;
+                }
+            } else {
+                esi = 0;
+            }
+            edi = IsMultiplayerPBEM;
+            {
+                const int loaded = load_game(1, 0);
+                if (edi != 0) {
+                    IsMultiplayerPBEM = 1;
+                    if (IsMultiplayerNet != 0) IsMultiplayerPBEM = 0;
+                } else {
+                    IsMultiplayerPBEM = 0;
+                }
+                if (loaded != 0) goto top_menu_retry;
+            }
+            if (GameSessionActive != 0) {
+                stop_timers();
+                labels_shutdown();
+                StringTable.shutdown();
+                if (game_init(1, 0) == 0) WorldClimateSkipTerrainClear = 0;
+            }
+            if (esi != 0) {
                 ControlTurnPhase = ConsoleGlobal.faction_id_;
                 GameDataStateStorage.fields_.game_state_ |= 0x080000E0u;
+                goto top_menu_normal_return;
+            }
+            esi = config_game(2);
+            if (esi != 0) {
+                read_rules(1);
                 goto top_menu_after_action;
             }
-        } else {
-            esi = 0;
-        }
-        edi = IsMultiplayerPBEM;
-        {
-            const int loaded = load_game(1, 0);
-            if (edi != 0) {
-                IsMultiplayerPBEM = 1;
-                if (IsMultiplayerNet != 0) IsMultiplayerPBEM = 0;
-            } else {
-                IsMultiplayerPBEM = 0;
+            {
+                ControlTurnPhase = ConsoleGlobal.faction_id_;
+                parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, FALSE);
+                parse_says(1, Players[ConsoleGlobal.faction_id_].title_leader, -1, -1);
+                parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, FALSE);
+                parse_says(2, Players[ConsoleGlobal.faction_id_].name_leader, -1, -1);
+                parse_says(3, get_noun(ConsoleGlobal.faction_id_), -1, -1);
+                StringTemp[0] = '\0';
+                strcat(StringTemp, label_get(0));
+                strcat(StringTemp, " ");
+                say_year(StringTemp);
+                parse_says(4, StringTemp, -1, -1);
+                parse_says(0, StringTemp, -1, -1);
+                parse_num(0, ScenarioSave.objective_req_victory);
+                parse_num(1, static_cast<int>(ScenarioSave.objectives_sudden_death_victory));
+                parse_num(2, num_objectives(ConsoleGlobal.faction_id_, GameDataStateStorage.fields_.game_rules_ & 0x1000));
+                parse_num(3, static_cast<int>(ScenarioSave.ending_mission_year));
+                X_pop(const_cast<char *>("SCENARIO"), "INTRO", 0);
+                ConsoleGlobal.set_move(1);
             }
-            if (loaded != 0) goto top_menu_retry;
-        }
-        if (GameSessionActive != 0) {
-            stop_timers();
-            labels_shutdown();
-            StringTable.shutdown();
-            if (game_init(1, 0) == 0) WorldClimateSkipTerrainClear = 0;
-        }
-        if (esi != 0) {
-            ControlTurnPhase = ConsoleGlobal.faction_id_;
-            GameDataStateStorage.fields_.game_state_ |= 0x080000E0u;
             goto top_menu_normal_return;
-        }
-        esi = config_game(2);
-        if (esi != 0) {
-            read_rules(1);
+
+        case 4:
+            esi = multiplayer_init(0);
             goto top_menu_after_action;
-        }
-        {
-            ControlTurnPhase = ConsoleGlobal.faction_id_;
-            parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, FALSE);
-            parse_says(1, Players[ConsoleGlobal.faction_id_].title_leader, -1, -1);
-            parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, FALSE);
-            parse_says(2, Players[ConsoleGlobal.faction_id_].name_leader, -1, -1);
-            parse_says(3, get_noun(ConsoleGlobal.faction_id_), -1, -1);
-            StringTemp[0] = '\0';
-            strcat(StringTemp, label_get(0));
-            strcat(StringTemp, " ");
-            say_year(StringTemp);
-            parse_says(4, StringTemp, -1, -1);
-            parse_says(0, StringTemp, -1, -1);
-            parse_num(0, ScenarioSave.objective_req_victory);
-            parse_num(1, static_cast<int>(ScenarioSave.objectives_sudden_death_victory));
-            parse_num(2, num_objectives(ConsoleGlobal.faction_id_, GameDataStateStorage.fields_.game_rules_ & 0x1000));
-            parse_num(3, static_cast<int>(ScenarioSave.ending_mission_year));
-            X_pop(const_cast<char *>("SCENARIO"), "INTRO", 0);
-            ConsoleGlobal.set_move(1);
+
+        case 5:
+            show_credits();
+            goto top_menu_retry;
         }
         goto top_menu_normal_return;
 
-    case 4:
-        esi = multiplayer_init(0);
-        goto top_menu_after_action;
+    top_menu_new_game:
+        size_of_planet(edi);
+        MapOceanCoverage = static_cast<uint32_t>(edi);
+        MapLandCoverage = static_cast<uint32_t>(edi);
+        MapErosiveForces = static_cast<uint32_t>(edi);
+        MapPlanetaryOrbit = static_cast<uint32_t>(edi);
+        MapCloudCover = static_cast<uint32_t>(edi);
+        MapNativeLifeForms = static_cast<uint32_t>(edi);
+        map_wipe();
+        config_game(3);
+        GameDataStateStorage.fields_.vehicle_current_count_ = 0;
+        setup_game(edi);
+        ControlTurnPhase = ConsoleGlobal.faction_id_;
+        GameDataStateStorage.fields_.game_state_ |= 0x080000E0u;
+        goto top_menu_normal_return;
 
-    case 5:
-        show_credits();
-        goto top_menu_retry;
+    top_menu_normal_return:
+        if ((mode == 0 && (GameDataStateStorage.fields_.game_preferences_ & 0x800) != 0)
+            || g_TOP_MENU_WAVE.is_playing() != 0) {
+            g_TOP_MENU_WAVE.fade(0xBB8);
+            g_TOP_MENU_WAVE.unload();
+        }
+        return ExitTurnLoop;
     }
-    goto top_menu_normal_return;
-
-top_menu_new_game:
-    size_of_planet(edi);
-    MapOceanCoverage = static_cast<uint32_t>(edi);
-    MapLandCoverage = static_cast<uint32_t>(edi);
-    MapErosiveForces = static_cast<uint32_t>(edi);
-    MapPlanetaryOrbit = static_cast<uint32_t>(edi);
-    MapCloudCover = static_cast<uint32_t>(edi);
-    MapNativeLifeForms = static_cast<uint32_t>(edi);
-    map_wipe();
-    config_game(3);
-    GameDataStateStorage.fields_.vehicle_current_count_ = 0;
-    setup_game(edi);
-    ControlTurnPhase = ConsoleGlobal.faction_id_;
-    GameDataStateStorage.fields_.game_state_ |= 0x080000E0u;
-    goto top_menu_normal_return;
-
-top_menu_normal_return:
-    if ((mode == 0 && (GameDataStateStorage.fields_.game_preferences_ & 0x800) != 0)
-        || g_TOP_MENU_WAVE.is_playing() != 0) {
-        g_TOP_MENU_WAVE.fade(0xBB8);
-        g_TOP_MENU_WAVE.unload();
-    }
-    return ExitTurnLoop;
 }
 

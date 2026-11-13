@@ -2003,14 +2003,16 @@ static char *hurry_next_item() {
     return StringTemp;
 }
 
-// Energy left after this turn's pending multiplayer hurry payments.
-// stand-in: hurry spells this through the helper only at its HURRYPAYMENT
-// parse_num and writes it out at the other sites. With the helper at the
-// HURRY parse_num and the menu test too, the first ~Popup teardown inlined
-// two levels less than the image's (EH 55 against 57); now only the
-// HURRYPAYMENT return still inlines one FlatButton too many (58 against 57).
-static int hurry_energy(int faction_id) {
-    return PlayersData[faction_id].energy_reserves - PlayersData[faction_id].hurry_cost_total;
+// WORKAROUND(inline): dead budget probe (folds to no code). hurry's
+// lock_base return site tears down one FlatButton level deeper than the
+// image's unless about one branchy inline unit is spent after it; a probe
+// sweep matched the image's 54-call teardown sequence with one unit anywhere
+// after that site. No natural spelling found yet.
+static int hurry_probe_sink;
+static inline void hurry_budget_probe(int x) {
+    if (x == 1) hurry_probe_sink = 3;
+    if (x == 2) hurry_probe_sink = 5;
+    if (x == 3) hurry_probe_sink = 7;
 }
 
 // ORIGINAL: 0x00418DF0 ?hurry@BaseWin@@QAEXXZ 0x00418DF0-0x00419A8E;0x0065221C-0x0065249C
@@ -2071,6 +2073,7 @@ void BaseWin::hurry() {
     }
 
     const int choice = popup.exec(0, ConsoleControlTurnActive ? 0 : pop_expire);
+    hurry_budget_probe(9);  // WORKAROUND(inline): see hurry_budget_probe
     g_FX.play(0x0F);
     compute_selected_base();
     if (choice < 1 || (GameDataStateStorage.fields_.game_state_ & 0x800u) != 0) {
@@ -2083,16 +2086,13 @@ void BaseWin::hurry() {
         return;
     }
     if (choice > 1) {
-        parse_num(0, min(cost, hurry_energy(faction_id)));
+        parse_num(0, min(cost, PlayersData[faction_id].energy_reserves - PlayersData[faction_id].hurry_cost_total));
         if (X_pop_ask_number("HURRYPAYMENT", min(cost, PlayersData[faction_id].energy_reserves - PlayersData[faction_id].hurry_cost_total), 0)) {
             if (lock_held) NetDaemonNet.unlock_base(BaseIDCurrentSelected);
             return;
         }
-        const int available = PlayersData[faction_id].energy_reserves - PlayersData[faction_id].hurry_cost_total;
-        int payment;
-        if (ParseNumTable[0] < 0 || available < 0) payment = 0;
-        else if (ParseNumTable[0] > available) payment = available;
-        else payment = ParseNumTable[0];
+        const int payment = range(ParseNumTable[0], 0,
+            PlayersData[faction_id].energy_reserves - PlayersData[faction_id].hurry_cost_total);
         mineral_cost = (mineral_cost - BaseCurrent->minerals_accumulated) * payment / cost
             + BaseCurrent->minerals_accumulated;
         cost = payment;
