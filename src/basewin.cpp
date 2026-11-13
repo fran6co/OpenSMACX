@@ -4952,961 +4952,613 @@ void BaseWin::update_gov_buttons() {
 }
 // ORIGINAL: 0x00412AA0 ?draw_expenses@BaseWin@@QAEXH@Z 0x00412AA0-0x00414B38;0x00651B61-0x00651B76
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00412AA0; original spans remain load-bearing.", "Retired seed provenance git:ac469904:src/unrecovered/00412aa0.cpp; historical transcription conflicts remain evidence, not runtime targets.", "image:41E8D0 owns panel geometry; source:src/basewin.h owns real GraphicWin/Buffer and existing Base/Player/Veh/Rules receivers."], "reason": "Recover the complete BaseWin draw_expenses panel using genuine owned rectangles, automatic Font lifetime and existing application globals, retaining original branch/call order and unchecked input obligations."}
-void BaseWin::draw_expenses(int a1) {
-    typedef unsigned int uint;
+// The image's absolute values are branchy (test; jl/jge; neg) rather than the
+// /Oi intrinsic (cdq; xor; sub).
+#define EXPENSE_ABS(x) ((x) >= 0 ? (x) : -(x))
 
-    Font local_font;
-    RECT saved_clip, panel, frame, title, line, tile_rect;
+void BaseWin::draw_expenses(int update_mode) {
+    Font font;
+    RECT saved_clip;
+    RECT clip;
+    char number[80];
+    RECT box;
+    int wide;
+    int deficit;
+    int mineral_cost;
+    RECT row;
+    int energy;
+    int width;
+    int mineral_cons;
+    int nutrient_cons;
+    int nutrient;
+    int energy_ineff;
+    int mineral;
+    int span;
+    int energy_cost;
+    RECT title;
+    RECT tile;
+    RECT line;
+    int count;
+    int unit;
+    int v;
+    int eq_x;
+    int i;
 
-    int param_2 = a1;
+    wide = WinScreenWidth != 800;
+    deficit = 0;
+    if (wide) {
+        draw_energy_alloc(update_mode);
+    } else if (flatButtons_[17].selected_state() && update_mode < 2) {
+        draw_energy_alloc(update_mode);
+        return;
+    }
+    font.init(DefaultFontFace, 12, 1);
+    clip = production_outer_rect_;
+    saved_clip = Buffer::rect1_;
+    Buffer::set_clip(&clip);
+    box.left = 23;
+    box.top = 0;
+    box.right = 703;
+    box.bottom = 404;
+    Buffer::box_sprite(&box, &InterfaceBoxStyles[9]);
+    Buffer::box_sprite(&production_outer_rect_, &InterfaceBoxStyles[3]);
+    box.left = 298;
+    box.top = 263;
+    box.right = 697;
+    box.bottom = 325;
+    Buffer::box_sprite(&box, &InterfaceBoxStyles[0]);
+    box = production_outer_rect_;
 
-    int iVar2;
-    int uVar3;
-    size_t sVar4;
-    int iVar5;
-    int iVar6;
-    uint uVar7;
-    int uVar9;
-    char local_f0[80];
-    uint local_90;
-    int local_8c;
-    int local_88;
-    uint local_84;
-    int local_80;
-    int local_7c;
-    int local_78;
-    int local_74;
-    int local_70;
-    int local_6c;
-    int local_68;
-    int local_64;
-    int local_60;
-    int local_5c;
-    int local_58;
-    int local_54;
-    int local_28;
-    int local_14;
+    energy_ineff = BaseCurrent->energy_inefficiency;
+    energy_cost = BaseCurrent->energy_consumption + energy_ineff;
+    energy = BaseCurrent->energy_surplus;
+    nutrient = BaseCurrent->nutrient_surplus;
+    nutrient_cons = BaseCurrent->nutrient_consumption;
+    count = nutrient_cons + BaseCurrent->nutrient_inefficiency;
+    mineral_cons = BaseCurrent->mineral_consumption;
+    mineral_cost = BaseCurrent->mineral_inefficiency + mineral_cons;
+    mineral = BaseCurrent->mineral_surplus;
 
-  local_90 = (uint)(WinScreenWidth != 800);
-  local_8c = 0;
-  if (local_90 == 0) {
-    if ((flatButtons_[17].selected_state() != 0) && (param_2 < 2)) {
-      draw_energy_alloc(param_2);
-      return;
+    span = max(EXPENSE_ABS(energy) + energy_cost,
+               max(EXPENSE_ABS(mineral) + mineral_cost, EXPENSE_ABS(nutrient) + count));
+    unit = (int)max(1.0f, min(5.0f, 194.0f / span));
+    span = 194 / unit + 1;
+    width = unit * span;
+
+    line.left = 169;
+    line.top = 263;
+    line.right = 696;
+    line.bottom = 283;
+    row = line;
+    Buffer::set_font(&font, NULL, NULL, NULL);
+
+    // ---- Nutrients (help rectangle 1) ----
+    title = line;
+    expenses_help_rects_[1] = line;
+    title.right = 296;
+    if (!wide) {
+        title.left = 191;
+    } else {
+        title.left = production_outer_rect_.left + 3;
     }
-  }
-  else {
-    draw_energy_alloc(param_2);
-  }
-  local_font.init(DefaultFontFace, 0xc, 1);
-  panel.left = production_outer_rect_.left;
-  panel.top = production_outer_rect_.top;
-  panel.right = production_outer_rect_.right;
-  panel.bottom = production_outer_rect_.bottom;
-  saved_clip.left = Buffer::current_clip().left;
-  saved_clip.top = Buffer::current_clip().top;
-  saved_clip.right = Buffer::current_clip().right;
-  saved_clip.bottom = Buffer::current_clip().bottom;
-  Buffer::set_clip(&panel);
-  frame.left = 0x17;
-  frame.top = 0;
-  frame.right = 0x2bf;
-  frame.bottom = 0x194;
-  Buffer::box_sprite(&frame, &InterfaceBoxStyles[9]);
-  Buffer::box_sprite(&production_outer_rect_, &InterfaceBoxStyles[3]);
-  frame.left = 0x12a;
-  frame.top = 0x107;
-  frame.right = 0x2b9;
-  frame.bottom = 0x145;
-  Buffer::box_sprite(&frame, &InterfaceBoxStyles[0]);
-  frame.left = production_outer_rect_.left;
-  frame.top = production_outer_rect_.top;
-  frame.right = production_outer_rect_.right;
-  frame.bottom = production_outer_rect_.bottom;
-  local_60 = BaseCurrent->energy_inefficiency;
-  local_74 = BaseCurrent->energy_surplus;
-  local_54 = BaseCurrent->energy_consumption + local_60;
-  local_64 = BaseCurrent->nutrient_surplus;
-  local_68 = BaseCurrent->nutrient_consumption;
-  local_14 = local_68 + BaseCurrent->nutrient_inefficiency;
-  local_6c = BaseCurrent->mineral_consumption;
-  local_88 = BaseCurrent->mineral_inefficiency + local_6c;
-  local_5c = BaseCurrent->mineral_surplus;
-  local_70 = local_74;
-  if (local_74 < 0) {
-    local_70 = -local_74;
-  }
-  iVar2 = local_5c;
-  if (local_5c < 0) {
-    iVar2 = -local_5c;
-  }
-  iVar6 = local_64;
-  if (local_64 < 0) {
-    iVar6 = -local_64;
-  }
-  if (iVar6 + local_14 < iVar2 + local_88) {
-    local_28 = local_5c;
-    if (local_5c < 0) {
-      local_28 = -local_5c;
+    Buffer::box_sprite(&title, &InterfaceBoxStyles[6]);
+    title.left += 3;
+    title.right -= 3;
+    title.top += 3;
+    title.bottom -= 3;
+    Buffer::set_text_color(TextColourTable[90], TextColourTable[91], 1, 1);
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(520));
+    CharUpperA(StringTemp);
+    Buffer::write_cent_l(StringTemp, &title);
+
+    v = BaseCurrent->intake_2[RSC_NUTRIENTS];
+    line.right -= 3;
+    line.top += 3;
+    line.bottom -= 3;
+    line.left = 307;
+    StringTemp[0] = 0;
+    if (v >= 0) {
+        Buffer::set_text_color(TextColourTable[90], TextColourTable[91], 1, 1);
+    } else {
+        Buffer::set_text_color(TextColourTable[110], TextColourTable[111], 1, 1);
     }
-    local_28 = local_28 + local_88;
-  }
-  else {
-    local_28 = local_64;
-    if (local_64 < 0) {
-      local_28 = -local_64;
+    if (v < 0) {
+        strcat(StringTemp, "-");
+        line.left = Buffer::write_l(StringTemp, &line);
+        StringTemp[0] = 0;
     }
-    local_28 = local_28 + local_14;
-  }
-  if (local_28 < local_70 + local_54) {
-    local_58 = local_74;
-    if (local_74 < 0) {
-      local_58 = -local_74;
+    if (EXPENSE_ABS(v) < 100 && v >= 0) {
+        _itoa(0, number, 10);
+        strcat(StringTemp, number);
+        line.left = Buffer::write_l(StringTemp, &line);
+        StringTemp[0] = 0;
     }
-    local_58 = local_58 + local_54;
-  }
-  else {
-    iVar2 = local_5c;
-    if (local_5c < 0) {
-      iVar2 = -local_5c;
+    if (EXPENSE_ABS(v) < 10) {
+        _itoa(0, number, 10);
+        strcat(StringTemp, number);
+        line.left = Buffer::write_l(StringTemp, &line);
+        StringTemp[0] = 0;
     }
-    iVar6 = local_64;
-    if (local_64 < 0) {
-      iVar6 = -local_64;
+    _itoa(EXPENSE_ABS(v), number, 10);
+    strcat(StringTemp, number);
+    line.left = Buffer::write_l(StringTemp, &line);
+    StringTemp[0] = 0;
+    strcat(StringTemp, " - ");
+    line.left = Buffer::write_l(StringTemp, &line);
+    StringTemp[0] = 0;
+    v = count;
+    if (v < 100) {
+        _itoa(0, number, 10);
+        strcat(StringTemp, number);
+        line.left = Buffer::write_l(StringTemp, &line);
+        StringTemp[0] = 0;
     }
-    if (iVar6 + local_14 < local_88 + iVar2) {
-      local_58 = local_5c;
-      if (local_5c < 0) {
-        local_58 = -local_5c;
-      }
-      local_58 = local_58 + local_88;
+    if (v < 10) {
+        _itoa(0, number, 10);
+        strcat(StringTemp, number);
+        line.left = Buffer::write_l(StringTemp, &line);
+        StringTemp[0] = 0;
     }
-    else {
-      local_58 = local_64;
-      if (local_64 < 0) {
-        local_58 = -local_64;
-      }
-      local_58 = local_58 + local_14;
+    _itoa(EXPENSE_ABS(v), number, 10);
+    strcat(StringTemp, number);
+    strcat(StringTemp, BufferJoinSpace);
+    strcat(StringTemp, BufferJoinSpace);
+    line.left = Buffer::write_l(StringTemp, &line);
+    StringTemp[0] = 0;
+    tile.left = line.left;
+    tile.right = line.left + max(1, unit - 1);
+    tile.top = (line.bottom - line.top - font.pixel_height()) / 2 + line.top;
+    tile.bottom = tile.top + font.pixel_height();
+    count = 0;
+    if (nutrient > 0) {
+        for (i = 0; i < nutrient_cons; i++) {
+            Buffer::tile(&sprites3_[0], tile.left, tile.top, tile.left, tile.top,
+                         tile.right - tile.left, tile.bottom - tile.top);
+            tile.left += unit;
+            tile.right += unit;
+            count++;
+        }
+        for (i = 0; i < span - nutrient - nutrient_cons; i++) {
+            fill(&tile, 0xF0);
+            tile.left += unit;
+            tile.right += unit;
+            count++;
+        }
+        for (i = 0; i < nutrient; i++) {
+            Buffer::tile(&sprites3_[1], tile.left, tile.top, tile.left, tile.top,
+                         tile.right - tile.left, tile.bottom - tile.top);
+            tile.left += unit;
+            tile.right += unit;
+            count++;
+        }
+    } else {
+        for (i = 0; i < nutrient_cons; i++) {
+            Buffer::tile(&sprites3_[0], tile.left, tile.top, tile.left, tile.top,
+                         tile.right - tile.left, tile.bottom - tile.top);
+            tile.left += unit;
+            tile.right += unit;
+            count++;
+        }
+        for (i = 0; i < EXPENSE_ABS(nutrient); i++) {
+            Buffer::tile(&sprite5_, tile.left, tile.top, tile.left, tile.top,
+                         tile.right - tile.left, tile.bottom - tile.top);
+            tile.left += unit;
+            tile.right += unit;
+            count++;
+        }
     }
-  }
-  {
-    // Native 412D5C divides by the maximum span just computed, not the
-    // energy total: the retained seed used the wrong local here.
-    double ratioF = 194.0 / static_cast<double>(local_58);
-    double lowerBoundF = 1.0;
-    double upperBoundF = 5.0;
-    if (ratioF > upperBoundF) {
-      ratioF = upperBoundF;
-    } else if (!(ratioF >= lowerBoundF)) {
-      ratioF = lowerBoundF;
+    for (i = count; i < span; i++) {
+        fill(&tile, 0xF0);
+        tile.left += unit;
+        tile.right += unit;
     }
-    iVar2 = static_cast<int>(ratioF);
-  }
-  line.right = 0x2b8;
-  line.bottom = 0x11b;
-  local_7c = 0x2b8;
-  local_78 = 0x11b;
-  local_58 = (0xc2 / iVar2) + 1;
-  local_70 = iVar2 * local_58;
-  line.top = 0x107;
-  local_80 = 0x107;
-  line.left = 0xa9;
-  local_84 = 0xa9;
-  Buffer::set_font(&local_font,0,0,0);
-  title.bottom = line.bottom;
-  title.top = line.top;
-  expenses_help_rects_[1].left = line.left;
-  expenses_help_rects_[1].top = line.top;
-  title.right = 0x128;
-  expenses_help_rects_[1].right = line.right;
-  expenses_help_rects_[1].bottom = line.bottom;
-  if (local_90 == 0) {
-    title.left = 0xbf;
-  }
-  else {
+    line.left += width;
+    StringTemp[0] = 0;
+    strcat(StringTemp, "  =  ");
+    v = nutrient;
+    if (v < 0) {
+        Buffer::set_text_color(TextColourTable[110], TextColourTable[111], 1, 1);
+    } else {
+        Buffer::set_text_color(TextColourTable[92], TextColourTable[93], 1, 1);
+    }
+    if (v >= 0) {
+        strcat(StringTemp, "+");
+        line.left = Buffer::write_l(StringTemp, &line);
+    } else {
+        deficit = 1;
+        strcat(StringTemp, "-");
+        line.left = Buffer::write_l(StringTemp, &line);
+    }
+    StringTemp[0] = 0;
+    if (EXPENSE_ABS(v) < 100) {
+        _itoa(0, number, 10);
+        strcat(StringTemp, number);
+        line.left = Buffer::write_l(StringTemp, &line);
+        StringTemp[0] = 0;
+    }
+    if (EXPENSE_ABS(v) < 10) {
+        _itoa(0, number, 10);
+        strcat(StringTemp, number);
+        line.left = Buffer::write_l(StringTemp, &line);
+        StringTemp[0] = 0;
+    }
+    _itoa(EXPENSE_ABS(v), number, 10);
+    strcat(StringTemp, number);
+    Buffer::write_l(StringTemp, &line);
+
+    // ---- Minerals (help rectangle 2) ----
+    row.top += 21;
+    row.bottom += 21;
+    line = row;
+    expenses_help_rects_[2] = row;
+    title = row;
+    title.right = 296;
+    Buffer::box_sprite(&title, &InterfaceBoxStyles[6]);
+    title.left += 3;
+    title.top += 3;
+    title.right -= 3;
+    title.bottom -= 3;
+    Buffer::set_text_color(TextColourTable[94], TextColourTable[95], 1, 1);
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(40));
+    CharUpperA(StringTemp);
+    Buffer::write_cent_l(StringTemp, &title);
+
+    v = BaseCurrent->intake_2[RSC_MINERALS];
+    line.right -= 3;
+    line.top += 3;
+    line.bottom -= 3;
+    line.left = 307;
+    StringTemp[0] = 0;
+    if (v >= 0) {
+        Buffer::set_text_color(TextColourTable[94], TextColourTable[95], 1, 1);
+    } else {
+        Buffer::set_text_color(TextColourTable[110], TextColourTable[111], 1, 1);
+    }
+    if (v < 0) {
+        strcat(StringTemp, "-");
+        line.left = Buffer::write_l(StringTemp, &line);
+        StringTemp[0] = 0;
+    }
+    if (EXPENSE_ABS(v) < 100 && v >= 0) {
+        _itoa(0, number, 10);
+        strcat(StringTemp, number);
+        line.left = Buffer::write_l(StringTemp, &line);
+        StringTemp[0] = 0;
+    }
+    if (EXPENSE_ABS(v) < 10) {
+        _itoa(0, number, 10);
+        strcat(StringTemp, number);
+        line.left = Buffer::write_l(StringTemp, &line);
+        StringTemp[0] = 0;
+    }
+    _itoa(EXPENSE_ABS(v), number, 10);
+    strcat(StringTemp, number);
+    line.left = Buffer::write_l(StringTemp, &line);
+    StringTemp[0] = 0;
+    strcat(StringTemp, " - ");
+    wide = line.left;
+    line.left = Buffer::write_l(StringTemp, &line);
+    StringTemp[0] = 0;
+    v = mineral_cost;
+    if (v < 100) {
+        _itoa(0, number, 10);
+        strcat(StringTemp, number);
+        line.left = Buffer::write_l(StringTemp, &line);
+        StringTemp[0] = 0;
+    }
+    if (v < 10) {
+        _itoa(0, number, 10);
+        strcat(StringTemp, number);
+        line.left = Buffer::write_l(StringTemp, &line);
+        StringTemp[0] = 0;
+    }
+    _itoa(EXPENSE_ABS(v), number, 10);
+    strcat(StringTemp, number);
+    strcat(StringTemp, BufferJoinSpace);
+    strcat(StringTemp, BufferJoinSpace);
+    Buffer::set_text_color(TextColourTable[94], TextColourTable[95], 1, 1);
+    line.left = Buffer::write_l(StringTemp, &line);
+    StringTemp[0] = 0;
+    tile.left = line.left;
+    tile.right = line.left + max(1, unit - 1);
+    tile.top = (line.bottom - line.top - font.pixel_height()) / 2 + line.top;
+    tile.bottom = tile.top + font.pixel_height();
+    count = 0;
+    if (mineral > 0) {
+        for (i = 0; i < mineral_cons; i++) {
+            Buffer::tile(&sprites2_[0], tile.left, tile.top, tile.left, tile.top,
+                         tile.right - tile.left, tile.bottom - tile.top);
+            tile.left += unit;
+            tile.right += unit;
+            count++;
+        }
+        for (i = 0; i < span - mineral - mineral_cons; i++) {
+            fill(&tile, 0xF0);
+            tile.left += unit;
+            tile.right += unit;
+            count++;
+        }
+        for (i = 0; i < mineral; i++) {
+            Buffer::tile(&sprites2_[1], tile.left, tile.top, tile.left, tile.top,
+                         tile.right - tile.left, tile.bottom - tile.top);
+            tile.left += unit;
+            tile.right += unit;
+            count++;
+        }
+    } else {
+        if (mineral < 0) {
+            deficit = 1;
+        }
+        for (i = 0; i < mineral_cons; i++) {
+            Buffer::tile(&sprites2_[0], tile.left, tile.top, tile.left, tile.top,
+                         tile.right - tile.left, tile.bottom - tile.top);
+            tile.left += unit;
+            tile.right += unit;
+            count++;
+        }
+        for (i = 0; i < EXPENSE_ABS(mineral); i++) {
+            Buffer::tile(&sprite5_, tile.left, tile.top, tile.left, tile.top,
+                         tile.right - tile.left, tile.bottom - tile.top);
+            tile.left += unit;
+            tile.right += unit;
+            count++;
+        }
+    }
+    for (i = count; i < span; i++) {
+        fill(&tile, 0xF0);
+        tile.left += unit;
+        tile.right += unit;
+    }
+    line.left += width;
+    StringTemp[0] = 0;
+    strcat(StringTemp, "  =  ");
+    v = mineral;
+    if (v < 0) {
+        Buffer::set_text_color(TextColourTable[110], TextColourTable[111], 1, 1);
+    } else if (BaseCurrent->queue_production_id[0] == -FAC_STOCKPILE_ENERGY) {
+        Buffer::set_text_color(TextColourTable[128], TextColourTable[129], 1, 1);
+    } else {
+        Buffer::set_text_color(TextColourTable[96], TextColourTable[97], 1, 1);
+    }
+    if (v >= 0) {
+        strcat(StringTemp, "+");
+        line.left = Buffer::write_l(StringTemp, &line);
+    } else {
+        strcat(StringTemp, "-");
+        line.left = Buffer::write_l(StringTemp, &line);
+    }
+    StringTemp[0] = 0;
+    if (EXPENSE_ABS(v) < 100) {
+        _itoa(0, number, 10);
+        strcat(StringTemp, number);
+        line.left = Buffer::write_l(StringTemp, &line);
+        StringTemp[0] = 0;
+    }
+    if (EXPENSE_ABS(v) < 10) {
+        _itoa(0, number, 10);
+        strcat(StringTemp, number);
+        line.left = Buffer::write_l(StringTemp, &line);
+        StringTemp[0] = 0;
+    }
+    _itoa(EXPENSE_ABS(v), number, 10);
+    strcat(StringTemp, number);
+    if (v >= 0 && BaseCurrent->queue_production_id[0] == -FAC_STOCKPILE_ENERGY) {
+        strcat(StringTemp, "*");
+    }
+    Buffer::write_l(StringTemp, &line);
+
+    // ---- Energy (help rectangle 0) ----
+    row.top += 21;
+    row.bottom += 21;
+    line = row;
+    expenses_help_rects_[0] = row;
+    title = row;
+    title.right = 296;
     title.left = production_outer_rect_.left + 3;
-  }
-  Buffer::box_sprite(&title, &InterfaceBoxStyles[6]);
-  title.left = title.left + 3;
-  title.right = title.right + -3;
-  title.bottom = title.bottom + -3;
-  title.top = title.top + 3;
-  Buffer::set_text_color(TextColourTable[90],TextColourTable[91],1,1);
-  StringTemp[0] = 0;
-  strcat(StringTemp, label_get(520));
-  CharUpperA(StringTemp);
-  sVar4 = strlen(StringTemp);
-  Buffer::write_cent_l(StringTemp, &title, sVar4);
-  iVar6 = BaseCurrent->intake_2[RSC_NUTRIENTS];
-  line.right = line.right + -3;
-  line.top = line.top + 3;
-  line.bottom = line.bottom + -3;
-  line.left = 0x133;
-  StringTemp[0] = 0;
-  uVar3 = TextColourTable[110];
-  uVar9 = TextColourTable[111];
-  if (-1 < iVar6) {
-    uVar3 = TextColourTable[90];
-    uVar9 = TextColourTable[91];
-  }
-  Buffer::set_text_color(uVar3,uVar9,1,1);
-  iVar5 = iVar6;
-  if (iVar6 < 0) {
-    strcat(StringTemp, "-");
-    sVar4 = strlen(StringTemp);
-    line.left = Buffer::write_l(StringTemp, &line, sVar4);
+    Buffer::box_sprite(&title, &InterfaceBoxStyles[6]);
+    title.left += 3;
+    title.top += 3;
+    title.right -= 3;
+    title.bottom -= 3;
+    Buffer::set_text_color(TextColourTable[86], TextColourTable[87], 1, 1);
     StringTemp[0] = 0;
-    iVar5 = -iVar6;
-  }
-  if (iVar5 < 100) {
-    if (-1 < iVar6) {
-      _itoa(0,local_f0,10);
-      strcat(StringTemp, local_f0);
-      sVar4 = strlen(StringTemp);
-      line.left = Buffer::write_l(StringTemp, &line, sVar4);
-      StringTemp[0] = 0;
-      goto LAB_00413015;
-    }
-LAB_0041301d:
-    iVar5 = -iVar6;
-  }
-  else {
-LAB_00413015:
-    iVar5 = iVar6;
-    if (iVar6 < 0) goto LAB_0041301d;
-  }
-  if (iVar5 < 10) {
-    _itoa(0,local_f0,10);
-    strcat(StringTemp, local_f0);
-    sVar4 = strlen(StringTemp);
-    line.left = Buffer::write_l(StringTemp, &line, sVar4);
-    StringTemp[0] = 0;
-  }
-  if (iVar6 < 0) {
-    iVar6 = -iVar6;
-  }
-  _itoa(iVar6,local_f0,10);
-  strcat(StringTemp, local_f0);
-  sVar4 = strlen(StringTemp);
-  line.left = Buffer::write_l(StringTemp, &line, sVar4);
-  StringTemp[0] = 0;
-  strcat(StringTemp, " - ");
-  sVar4 = strlen(StringTemp);
-  line.left = Buffer::write_l(StringTemp, &line, sVar4);
-  iVar6 = local_14;
-  StringTemp[0] = 0;
-  if (local_14 < 100) {
-    _itoa(0,local_f0,10);
-    strcat(StringTemp, local_f0);
-    sVar4 = strlen(StringTemp);
-    line.left = Buffer::write_l(StringTemp, &line, sVar4);
-  }
-  StringTemp[0] = 0;
-  if (iVar6 < 10) {
-    _itoa(0,local_f0,10);
-    strcat(StringTemp, local_f0);
-    sVar4 = strlen(StringTemp);
-    line.left = Buffer::write_l(StringTemp, &line, sVar4);
-  }
-  StringTemp[0] = 0;
-  if (iVar6 < 0) {
-    iVar6 = -iVar6;
-  }
-  _itoa(iVar6,local_f0,10);
-  strcat(StringTemp, local_f0);
-  strcat(StringTemp, " ");
-  strcat(StringTemp, " ");
-  sVar4 = strlen(StringTemp);
-  tile_rect.left = Buffer::write_l(StringTemp, &line, sVar4);
-  StringTemp[0] = 0;
-  local_28 = 1;
-  if (0 < iVar2 + -1) {
-    local_28 = iVar2 + -1;
-  }
-  tile_rect.right = local_28 + tile_rect.left;
-  tile_rect.top = ((line.bottom - line.top) - local_font.pixel_height()) / 2 + line.top;
-  tile_rect.bottom = tile_rect.top + local_font.pixel_height();
-  local_14 = 0;
-
-  line.left = tile_rect.left;
-  if (local_64 < 1) {
-    if (0 < local_68) {
-
-      local_14 = local_68;
-      iVar6 = local_68;
-      do {
-        Buffer::tile(&sprites3_[0], tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
-                     tile_rect.bottom - tile_rect.top);
-        tile_rect.left = tile_rect.left + iVar2;
-        tile_rect.right = tile_rect.right + iVar2;
-        iVar6 = iVar6 + -1;
-      } while (iVar6 != 0);
-    }
-    iVar6 = 0;
-    while( true ) {
-      iVar5 = local_64;
-      if (local_64 < 0) {
-        iVar5 = -local_64;
-      }
-      if (iVar5 <= iVar6) break;
-      Buffer::tile(&sprite5_, tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
-                   tile_rect.bottom - tile_rect.top);
-      tile_rect.left = tile_rect.left + iVar2;
-      tile_rect.right = tile_rect.right + iVar2;
-      local_14 = local_14 + 1;
-      iVar6 = iVar6 + 1;
-    }
-  }
-  else {
-    if (0 < local_68) {
-
-      local_14 = local_68;
-      iVar6 = local_68;
-      do {
-        Buffer::tile(&sprites3_[0], tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
-                     tile_rect.bottom - tile_rect.top);
-        tile_rect.left = tile_rect.left + iVar2;
-        tile_rect.right = tile_rect.right + iVar2;
-        iVar6 = iVar6 + -1;
-      } while (iVar6 != 0);
-    }
-    iVar6 = (local_58 - local_64) - local_68;
-    if (0 < iVar6) {
-      local_14 = local_14 + iVar6;
-      local_28 = iVar6;
-      do {
-        this->fill(&tile_rect,0xf0);
-        tile_rect.left = tile_rect.left + iVar2;
-        tile_rect.right = tile_rect.right + iVar2;
-        local_28 = local_28 + -1;
-      } while (local_28 != 0);
-      local_28 = 0;
-    }
-    if (0 < local_64) {
-      local_28 = local_64;
-      local_14 = local_14 + local_64;
-      do {
-        Buffer::tile(&sprites3_[1], tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
-                     tile_rect.bottom - tile_rect.top);
-        tile_rect.left = tile_rect.left + iVar2;
-        tile_rect.right = tile_rect.right + iVar2;
-        local_28 = local_28 + -1;
-      } while (local_28 != 0);
-      local_28 = 0;
-    }
-  }
-  if (local_14 < local_58) {
-    local_28 = local_58 - local_14;
-    do {
-      this->fill(&tile_rect,0xf0);
-      tile_rect.left = tile_rect.left + iVar2;
-      tile_rect.right = tile_rect.right + iVar2;
-      local_28 = local_28 + -1;
-    } while (local_28 != 0);
-  }
-  line.left = line.left + local_70;
-  StringTemp[0] = 0;
-  strcat(StringTemp, "  =  ");
-  iVar6 = local_64;
-  uVar3 = TextColourTable[92];
-  uVar9 = TextColourTable[93];
-  if (local_64 < 0) {
-    uVar3 = TextColourTable[110];
-    uVar9 = TextColourTable[111];
-  }
-  Buffer::set_text_color(uVar3,uVar9,1,1);
-  if (iVar6 < 0) {
-    local_8c = 1;
-    strcat(StringTemp, "-");
-    sVar4 = strlen(StringTemp);
-  }
-  else {
-    strcat(StringTemp, "+");
-    sVar4 = strlen(StringTemp);
-  }
-  line.left = Buffer::write_l(StringTemp, &line, sVar4);
-  StringTemp[0] = 0;
-  iVar5 = iVar6;
-  if (iVar6 < 0) {
-    iVar5 = -iVar6;
-  }
-  if (iVar5 < 100) {
-    _itoa(0,local_f0,10);
-    strcat(StringTemp, local_f0);
-    sVar4 = strlen(StringTemp);
-    line.left = Buffer::write_l(StringTemp, &line, sVar4);
-  }
-  StringTemp[0] = 0;
-  iVar5 = iVar6;
-  if (iVar6 < 0) {
-    iVar5 = -iVar6;
-  }
-  if (iVar5 < 10) {
-    _itoa(0,local_f0,10);
-    strcat(StringTemp, local_f0);
-    sVar4 = strlen(StringTemp);
-    line.left = Buffer::write_l(StringTemp, &line, sVar4);
-  }
-  StringTemp[0] = 0;
-  if (iVar6 < 0) {
-    iVar6 = -iVar6;
-  }
-  _itoa(iVar6,local_f0,10);
-  strcat(StringTemp, local_f0);
-  sVar4 = strlen(StringTemp);
-  Buffer::write_l(StringTemp, &line, sVar4);
-  line.right = local_7c;
-  local_80 = local_80 + 0x15;
-  line.left = local_84;
-  expenses_help_rects_[2].left = local_84;
-  title.left = local_84;
-  expenses_help_rects_[2].top = local_80;
-  local_78 = local_78 + 0x15;
-  expenses_help_rects_[2].right = local_7c;
-  expenses_help_rects_[2].bottom = local_78;
-  title.right = 0x128;
-  title.top = local_80;
-  title.bottom = local_78;
-  line.top = local_80;
-  line.bottom = local_78;
-  Buffer::box_sprite(&title, &InterfaceBoxStyles[6]);
-  title.left = title.left + 3;
-  title.top = title.top + 3;
-  title.right = title.right + -3;
-  title.bottom = title.bottom + -3;
-  Buffer::set_text_color(TextColourTable[94],TextColourTable[95],1,1);
-  StringTemp[0] = 0;
-  strcat(StringTemp, label_get(40));
-  CharUpperA(StringTemp);
-  sVar4 = strlen(StringTemp);
-  Buffer::write_cent_l(StringTemp, &title, sVar4);
-  iVar6 = BaseCurrent->intake_2[RSC_MINERALS];
-  line.right = line.right + -3;
-  line.top = line.top + 3;
-  line.bottom = line.bottom + -3;
-  line.left = 0x133;
-  StringTemp[0] = 0;
-  uVar3 = TextColourTable[110];
-  uVar9 = TextColourTable[111];
-  if (-1 < iVar6) {
-    uVar3 = TextColourTable[94];
-    uVar9 = TextColourTable[95];
-  }
-  Buffer::set_text_color(uVar3,uVar9,1,1);
-  iVar5 = iVar6;
-  if (iVar6 < 0) {
-    strcat(StringTemp, "-");
-    sVar4 = strlen(StringTemp);
-    line.left = Buffer::write_l(StringTemp, &line, sVar4);
-    StringTemp[0] = 0;
-    iVar5 = -iVar6;
-  }
-  if (iVar5 < 100) {
-    if (-1 < iVar6) {
-      _itoa(0,local_f0,10);
-      strcat(StringTemp, local_f0);
-      sVar4 = strlen(StringTemp);
-      line.left = Buffer::write_l(StringTemp, &line, sVar4);
-      StringTemp[0] = 0;
-      goto LAB_00413885;
-    }
-LAB_0041388d:
-    iVar5 = -iVar6;
-  }
-  else {
-LAB_00413885:
-    iVar5 = iVar6;
-    if (iVar6 < 0) goto LAB_0041388d;
-  }
-  if (iVar5 < 10) {
-    _itoa(0,local_f0,10);
-    strcat(StringTemp, local_f0);
-    sVar4 = strlen(StringTemp);
-    line.left = Buffer::write_l(StringTemp, &line, sVar4);
-    StringTemp[0] = 0;
-  }
-  if (iVar6 < 0) {
-    iVar6 = -iVar6;
-  }
-  _itoa(iVar6,local_f0,10);
-  strcat(StringTemp, local_f0);
-  sVar4 = strlen(StringTemp);
-  line.left = Buffer::write_l(StringTemp, &line, sVar4);
-  StringTemp[0] = 0;
-  strcat(StringTemp, " - ");
-  local_90 = line.left;
-  sVar4 = strlen(StringTemp);
-  line.left = Buffer::write_l(StringTemp, &line, sVar4);
-  iVar6 = local_88;
-  StringTemp[0] = 0;
-  if (local_88 < 100) {
-    _itoa(0,local_f0,10);
-    strcat(StringTemp, local_f0);
-    sVar4 = strlen(StringTemp);
-    line.left = Buffer::write_l(StringTemp, &line, sVar4);
-  }
-  StringTemp[0] = 0;
-  if (iVar6 < 10) {
-    _itoa(0,local_f0,10);
-    strcat(StringTemp, local_f0);
-    sVar4 = strlen(StringTemp);
-    line.left = Buffer::write_l(StringTemp, &line, sVar4);
-  }
-  StringTemp[0] = 0;
-  if (iVar6 < 0) {
-    iVar6 = -iVar6;
-  }
-  _itoa(iVar6,local_f0,10);
-  strcat(StringTemp, local_f0);
-  strcat(StringTemp, " ");
-  strcat(StringTemp, " ");
-  Buffer::set_text_color(TextColourTable[94],TextColourTable[95],1,1);
-  sVar4 = strlen(StringTemp);
-  tile_rect.left = Buffer::write_l(StringTemp, &line, sVar4);
-  StringTemp[0] = 0;
-  local_28 = 1;
-  if (0 < iVar2 + -1) {
-    local_28 = iVar2 + -1;
-  }
-  tile_rect.right = local_28 + tile_rect.left;
-  tile_rect.top = ((line.bottom - line.top) - local_font.pixel_height()) / 2 + line.top;
-  tile_rect.bottom = tile_rect.top + local_font.pixel_height();
-  local_14 = 0;
-
-  line.left = tile_rect.left;
-  if (local_5c < 1) {
-    if (local_5c < 0) {
-      local_8c = 1;
-    }
-    if (0 < local_6c) {
-
-      local_14 = local_6c;
-      iVar6 = local_6c;
-      do {
-        Buffer::tile(&sprites2_[0], tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
-                     tile_rect.bottom - tile_rect.top);
-        tile_rect.left = tile_rect.left + iVar2;
-        tile_rect.right = tile_rect.right + iVar2;
-        iVar6 = iVar6 + -1;
-      } while (iVar6 != 0);
-    }
-    iVar6 = 0;
-    while( true ) {
-      iVar5 = local_5c;
-      if (local_5c < 0) {
-        iVar5 = -local_5c;
-      }
-      if (iVar5 <= iVar6) break;
-      Buffer::tile(&sprite5_, tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
-                   tile_rect.bottom - tile_rect.top);
-      tile_rect.left = tile_rect.left + iVar2;
-      tile_rect.right = tile_rect.right + iVar2;
-      local_14 = local_14 + 1;
-      iVar6 = iVar6 + 1;
-    }
-  }
-  else {
-    if (0 < local_6c) {
-
-      local_14 = local_6c;
-      iVar6 = local_6c;
-      do {
-        Buffer::tile(&sprites2_[0], tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
-                     tile_rect.bottom - tile_rect.top);
-        tile_rect.left = tile_rect.left + iVar2;
-        tile_rect.right = tile_rect.right + iVar2;
-        iVar6 = iVar6 + -1;
-      } while (iVar6 != 0);
-    }
-    iVar6 = (local_58 - local_5c) - local_6c;
-    if (0 < iVar6) {
-      local_14 = local_14 + iVar6;
-      local_28 = iVar6;
-      do {
-        this->fill(&tile_rect,0xf0);
-        tile_rect.left = tile_rect.left + iVar2;
-        tile_rect.right = tile_rect.right + iVar2;
-        local_28 = local_28 + -1;
-      } while (local_28 != 0);
-      local_28 = 0;
-    }
-    if (0 < local_5c) {
-      local_28 = local_5c;
-      local_14 = local_14 + local_5c;
-      do {
-        Buffer::tile(&sprites2_[1], tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
-                     tile_rect.bottom - tile_rect.top);
-        tile_rect.left = tile_rect.left + iVar2;
-        tile_rect.right = tile_rect.right + iVar2;
-        local_28 = local_28 + -1;
-      } while (local_28 != 0);
-      local_28 = 0;
-    }
-  }
-  if (local_14 < local_58) {
-    local_28 = local_58 - local_14;
-    do {
-      this->fill(&tile_rect,0xf0);
-      tile_rect.left = tile_rect.left + iVar2;
-      tile_rect.right = tile_rect.right + iVar2;
-      local_28 = local_28 + -1;
-    } while (local_28 != 0);
-  }
-  line.left = line.left + local_70;
-  StringTemp[0] = 0;
-  strcat(StringTemp, "  =  ");
-  iVar6 = local_5c;
-  uVar3 = TextColourTable[110];
-  uVar9 = TextColourTable[111];
-  if ((-1 < local_5c) &&
-     (uVar3 = TextColourTable[96], uVar9 = TextColourTable[97], BaseCurrent->queue_production_id[0] == -0x45)) {
-    uVar3 = TextColourTable[128];
-    uVar9 = TextColourTable[129];
-  }
-  Buffer::set_text_color(uVar3,uVar9,1,1);
-  if (iVar6 < 0) {
-    strcat(StringTemp, "-");
-    sVar4 = strlen(StringTemp);
-  }
-  else {
-    strcat(StringTemp, "+");
-    sVar4 = strlen(StringTemp);
-  }
-  line.left = Buffer::write_l(StringTemp, &line, sVar4);
-  StringTemp[0] = 0;
-  iVar5 = iVar6;
-  if (iVar6 < 0) {
-    iVar5 = -iVar6;
-  }
-  if (iVar5 < 100) {
-    _itoa(0,local_f0,10);
-    strcat(StringTemp, local_f0);
-    sVar4 = strlen(StringTemp);
-    line.left = Buffer::write_l(StringTemp, &line, sVar4);
-  }
-  StringTemp[0] = 0;
-  iVar5 = iVar6;
-  if (iVar6 < 0) {
-    iVar5 = -iVar6;
-  }
-  if (iVar5 < 10) {
-    _itoa(0,local_f0,10);
-    strcat(StringTemp, local_f0);
-    sVar4 = strlen(StringTemp);
-    line.left = Buffer::write_l(StringTemp, &line, sVar4);
-  }
-  StringTemp[0] = 0;
-  iVar5 = iVar6;
-  if (iVar6 < 0) {
-    iVar5 = -iVar6;
-  }
-  _itoa(iVar5,local_f0,10);
-  strcat(StringTemp, local_f0);
-  if ((-1 < iVar6) && (BaseCurrent->queue_production_id[0] == -0x45)) {
-    strcat(StringTemp, "*");
-  }
-  sVar4 = strlen(StringTemp);
-  Buffer::write_l(StringTemp, &line, sVar4);
-  line.right = local_7c;
-  local_80 = local_80 + 0x15;
-  local_78 = local_78 + 0x15;
-  expenses_help_rects_[0].left = local_84;
-  expenses_help_rects_[0].top = local_80;
-  expenses_help_rects_[0].right = local_7c;
-  line.left = local_84;
-  expenses_help_rects_[0].bottom = local_78;
-  title.left = production_outer_rect_.left + 3;
-  title.right = 0x128;
-  title.top = local_80;
-  title.bottom = local_78;
-  line.top = local_80;
-  line.bottom = local_78;
-  Buffer::box_sprite(&title, &InterfaceBoxStyles[6]);
-  title.left = title.left + 3;
-  title.top = title.top + 3;
-  title.right = title.right + -3;
-  title.bottom = title.bottom + -3;
-  Buffer::set_text_color(TextColourTable[86],TextColourTable[87],1,1);
-  StringTemp[0] = 0;
-  strcat(StringTemp, label_get(36));
-  CharUpperA(StringTemp);
-  sVar4 = strlen(StringTemp);
-  Buffer::write_cent_l(StringTemp, &title, sVar4);
-  iVar6 = BaseCurrent->intake_2[RSC_ENERGY];
-  line.right = line.right + -3;
-  line.top = line.top + 3;
-  line.bottom = line.bottom + -3;
-  line.left = 0x133;
-  StringTemp[0] = 0;
-  uVar3 = TextColourTable[110];
-  uVar9 = TextColourTable[111];
-  if (-1 < iVar6) {
-    uVar3 = TextColourTable[86];
-    uVar9 = TextColourTable[87];
-  }
-  Buffer::set_text_color(uVar3,uVar9,1,1);
-  iVar5 = iVar6;
-  if (iVar6 < 0) {
-    strcat(StringTemp, "-");
-    sVar4 = strlen(StringTemp);
-    line.left = Buffer::write_l(StringTemp, &line, sVar4);
-    StringTemp[0] = 0;
-    iVar5 = -iVar6;
-  }
-  if (iVar5 < 100) {
-    if (-1 < iVar6) {
-      _itoa(0,local_f0,10);
-      strcat(StringTemp, local_f0);
-      sVar4 = strlen(StringTemp);
-      line.left = Buffer::write_l(StringTemp, &line, sVar4);
-      StringTemp[0] = 0;
-      goto LAB_00414178;
-    }
-LAB_00414180:
-    iVar5 = -iVar6;
-  }
-  else {
-LAB_00414178:
-    iVar5 = iVar6;
-    if (iVar6 < 0) goto LAB_00414180;
-  }
-  if (iVar5 < 10) {
-    _itoa(0,local_f0,10);
-    strcat(StringTemp, local_f0);
-    sVar4 = strlen(StringTemp);
-    line.left = Buffer::write_l(StringTemp, &line, sVar4);
-    StringTemp[0] = 0;
-  }
-  if (iVar6 < 0) {
-    iVar6 = -iVar6;
-  }
-  _itoa(iVar6,local_f0,10);
-  strcat(StringTemp, local_f0);
-  sVar4 = strlen(StringTemp);
-  line.left = Buffer::write_l(StringTemp, &line, sVar4);
-  StringTemp[0] = 0;
-  strcat(StringTemp, " - ");
-  sVar4 = strlen(StringTemp);
-  line.left = Buffer::write_l(StringTemp, &line, sVar4);
-  iVar6 = local_54;
-  StringTemp[0] = 0;
-  if (local_54 < 100) {
-    _itoa(0,local_f0,10);
-    strcat(StringTemp, local_f0);
-    sVar4 = strlen(StringTemp);
-    line.left = Buffer::write_l(StringTemp, &line, sVar4);
-  }
-  StringTemp[0] = 0;
-  if (iVar6 < 10) {
-    _itoa(0,local_f0,10);
-    strcat(StringTemp, local_f0);
-    sVar4 = strlen(StringTemp);
-    line.left = Buffer::write_l(StringTemp, &line, sVar4);
-  }
-  StringTemp[0] = 0;
-  if (iVar6 < 0) {
-    iVar6 = -iVar6;
-  }
-  _itoa(iVar6,local_f0,10);
-  strcat(StringTemp, local_f0);
-  strcat(StringTemp, " ");
-  strcat(StringTemp, " ");
-  sVar4 = strlen(StringTemp);
-  tile_rect.left = Buffer::write_l(StringTemp, &line, sVar4);
-  StringTemp[0] = 0;
-  local_54 = 1;
-  if (0 < iVar2 + -1) {
-    local_54 = iVar2 + -1;
-  }
-  tile_rect.right = local_54 + tile_rect.left;
-  tile_rect.top = ((line.bottom - line.top) - local_font.pixel_height()) / 2 + line.top;
-  tile_rect.bottom = tile_rect.top + local_font.pixel_height();
-  local_14 = 0;
-
-  line.left = tile_rect.left;
-  if (local_74 < 0) {
-    local_8c = 1;
-    if (0 < local_60) {
-
-      local_14 = local_60;
-      iVar6 = local_60;
-      do {
-        Buffer::tile(&sprite5_, tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
-                     tile_rect.bottom - tile_rect.top);
-        tile_rect.left = tile_rect.left + iVar2;
-        tile_rect.right = tile_rect.right + iVar2;
-        iVar6 = iVar6 + -1;
-      } while (iVar6 != 0);
-    }
-    for (iVar6 = 0; iVar6 < -local_74; iVar6 = iVar6 + 1) {
-      Buffer::tile(&sprite5_, tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
-                   tile_rect.bottom - tile_rect.top);
-      tile_rect.left = tile_rect.left + iVar2;
-      tile_rect.right = tile_rect.right + iVar2;
-      local_14 = local_14 + 1;
-    }
-  }
-  else {
-    if (0 < local_60) {
-
-      local_14 = local_60;
-      iVar6 = local_60;
-      do {
-        Buffer::tile(&sprite5_, tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
-                     tile_rect.bottom - tile_rect.top);
-        tile_rect.left = tile_rect.left + iVar2;
-        tile_rect.right = tile_rect.right + iVar2;
-        iVar6 = iVar6 + -1;
-      } while (iVar6 != 0);
-    }
-    iVar6 = (local_58 - local_74) - local_60;
-    if (0 < iVar6) {
-      local_14 = local_14 + iVar6;
-      do {
-        this->fill(&tile_rect,0xf0);
-        tile_rect.left = tile_rect.left + iVar2;
-        tile_rect.right = tile_rect.right + iVar2;
-        iVar6 = iVar6 + -1;
-      } while (iVar6 != 0);
-    }
-    if (0 < local_74) {
-
-      local_14 = local_14 + local_74;
-      iVar6 = local_74;
-      do {
-        Buffer::tile(&sprites1_[1], tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
-                     tile_rect.bottom - tile_rect.top);
-        tile_rect.left = tile_rect.left + iVar2;
-        tile_rect.right = tile_rect.right + iVar2;
-        iVar6 = iVar6 + -1;
-      } while (iVar6 != 0);
-    }
-  }
-  if (local_14 < local_58) {
-    iVar6 = local_58 - local_14;
-    do {
-      this->fill(&tile_rect,0xf0);
-      tile_rect.left = tile_rect.left + iVar2;
-      tile_rect.right = tile_rect.right + iVar2;
-      iVar6 = iVar6 + -1;
-    } while (iVar6 != 0);
-  }
-  uVar7 = line.left + local_70;
-  StringTemp[0] = 0;
-  line.left = uVar7;
-  strcat(StringTemp, "  =  ");
-  iVar2 = local_74;
-  uVar3 = TextColourTable[88];
-  uVar9 = TextColourTable[89];
-  if (local_74 < 0) {
-    uVar3 = TextColourTable[110];
-    uVar9 = TextColourTable[111];
-  }
-  Buffer::set_text_color(uVar3,uVar9,1,1);
-  if (iVar2 < 0) {
-    strcat(StringTemp, "-");
-    sVar4 = strlen(StringTemp);
-  }
-  else {
-    strcat(StringTemp, "+");
-    sVar4 = strlen(StringTemp);
-  }
-  line.left = Buffer::write_l(StringTemp, &line, sVar4);
-  StringTemp[0] = 0;
-  iVar6 = iVar2;
-  if (iVar2 < 0) {
-    iVar6 = -iVar2;
-  }
-  if (iVar6 < 100) {
-    _itoa(0,local_f0,10);
-    strcat(StringTemp, local_f0);
-    sVar4 = strlen(StringTemp);
-    line.left = Buffer::write_l(StringTemp, &line, sVar4);
-  }
-  StringTemp[0] = 0;
-  iVar6 = iVar2;
-  if (iVar2 < 0) {
-    iVar6 = -iVar2;
-  }
-  if (iVar6 < 10) {
-    _itoa(0,local_f0,10);
-    strcat(StringTemp, local_f0);
-    sVar4 = strlen(StringTemp);
-    line.left = Buffer::write_l(StringTemp, &line, sVar4);
-  }
-  StringTemp[0] = 0;
-  if (iVar2 < 0) {
-    iVar2 = -iVar2;
-  }
-  _itoa(iVar2,local_f0,10);
-  strcat(StringTemp, local_f0);
-  sVar4 = strlen(StringTemp);
-  line.left = Buffer::write_l(StringTemp, &line, sVar4);
-  Buffer::set_text_color(TextColourTable[84],TextColourTable[85],1,1);
-  line.bottom = local_78 + 0x15;
-  line.top = local_80 + 0x15;
-  line.left = local_84;
-  line.right = local_7c;
-  Buffer::box_sprite(&line, &InterfaceBoxStyles[6]);
-  StringTemp[0] = 0;
-  line.left = uVar7;
-  strcat(StringTemp, "  =  ");
-  if (local_8c == 0) {
-    strcat(StringTemp, label_get(52));
+    strcat(StringTemp, label_get(36));
     CharUpperA(StringTemp);
-  }
-  else {
-    Buffer::set_text_color(TextColourTable[110],TextColourTable[111],1,1);
-    strcat(StringTemp, label_get(697));
-  }
-  sVar4 = strlen(StringTemp);
-  Buffer::write_l(StringTemp, &line, sVar4);
-  Buffer::set_text_color(TextColourTable[84],TextColourTable[85],1,1);
-  line.left = local_90;
-  line.right = local_90;
-  StringTemp[0] = 0;
-  strcat(StringTemp, label_get(655));
-  CharUpperA(StringTemp);
-  sVar4 = strlen(StringTemp);
-  Buffer::write_right_l(StringTemp, &line, sVar4);
-  StringTemp[0] = 0;
-  strcat(StringTemp, " - ");
-  sVar4 = strlen(StringTemp);
-  iVar6 = Buffer::write_l(StringTemp, &line, sVar4);
-  iVar2 = local_60;
-  line.left = iVar6 + 5;
-  StringTemp[0] = 0;
-  if (local_60 != 0) {
-    strcat(StringTemp, "(");
-  }
-  strcat(StringTemp, label_get(656));
-  if (iVar2 != 0) {
-    strcat(StringTemp, " + ");
-  }
-  CharUpperA(StringTemp);
-  sVar4 = strlen(StringTemp);
-  uVar7 = Buffer::write_l(StringTemp, &line, sVar4);
-  if (local_60 != 0) {
-    Buffer::set_text_color(TextColourTable[110],TextColourTable[111],1,1);
+    Buffer::write_cent_l(StringTemp, &title);
+
+    v = BaseCurrent->intake_2[RSC_ENERGY];
+    line.right -= 3;
+    line.top += 3;
+    line.bottom -= 3;
+    line.left = 307;
     StringTemp[0] = 0;
-    strcat(StringTemp, label_get(56));
+    if (v >= 0) {
+        Buffer::set_text_color(TextColourTable[86], TextColourTable[87], 1, 1);
+    } else {
+        Buffer::set_text_color(TextColourTable[110], TextColourTable[111], 1, 1);
+    }
+    if (v < 0) {
+        strcat(StringTemp, "-");
+        line.left = Buffer::write_l(StringTemp, &line);
+        StringTemp[0] = 0;
+    }
+    if (EXPENSE_ABS(v) < 100 && v >= 0) {
+        _itoa(0, number, 10);
+        strcat(StringTemp, number);
+        line.left = Buffer::write_l(StringTemp, &line);
+        StringTemp[0] = 0;
+    }
+    if (EXPENSE_ABS(v) < 10) {
+        _itoa(0, number, 10);
+        strcat(StringTemp, number);
+        line.left = Buffer::write_l(StringTemp, &line);
+        StringTemp[0] = 0;
+    }
+    _itoa(EXPENSE_ABS(v), number, 10);
+    strcat(StringTemp, number);
+    line.left = Buffer::write_l(StringTemp, &line);
+    StringTemp[0] = 0;
+    strcat(StringTemp, " - ");
+    line.left = Buffer::write_l(StringTemp, &line);
+    StringTemp[0] = 0;
+    v = energy_cost;
+    if (v < 100) {
+        _itoa(0, number, 10);
+        strcat(StringTemp, number);
+        line.left = Buffer::write_l(StringTemp, &line);
+        StringTemp[0] = 0;
+    }
+    if (v < 10) {
+        _itoa(0, number, 10);
+        strcat(StringTemp, number);
+        line.left = Buffer::write_l(StringTemp, &line);
+        StringTemp[0] = 0;
+    }
+    _itoa(EXPENSE_ABS(v), number, 10);
+    strcat(StringTemp, number);
+    strcat(StringTemp, BufferJoinSpace);
+    strcat(StringTemp, BufferJoinSpace);
+    line.left = Buffer::write_l(StringTemp, &line);
+    StringTemp[0] = 0;
+    tile.left = line.left;
+    tile.right = line.left + max(1, unit - 1);
+    tile.top = (line.bottom - line.top - font.pixel_height()) / 2 + line.top;
+    tile.bottom = tile.top + font.pixel_height();
+    count = 0;
+    if (energy >= 0) {
+        for (i = 0; i < energy_ineff; i++) {
+            Buffer::tile(&sprite5_, tile.left, tile.top, tile.left, tile.top,
+                         tile.right - tile.left, tile.bottom - tile.top);
+            tile.left += unit;
+            tile.right += unit;
+            count++;
+        }
+        for (i = 0; i < span - energy - energy_ineff; i++) {
+            fill(&tile, 0xF0);
+            tile.left += unit;
+            tile.right += unit;
+            count++;
+        }
+        for (i = 0; i < energy; i++) {
+            Buffer::tile(&sprites1_[1], tile.left, tile.top, tile.left, tile.top,
+                         tile.right - tile.left, tile.bottom - tile.top);
+            tile.left += unit;
+            tile.right += unit;
+            count++;
+        }
+    } else {
+        deficit = 1;
+        for (i = 0; i < energy_ineff; i++) {
+            Buffer::tile(&sprite5_, tile.left, tile.top, tile.left, tile.top,
+                         tile.right - tile.left, tile.bottom - tile.top);
+            tile.left += unit;
+            tile.right += unit;
+            count++;
+        }
+        for (i = 0; i < EXPENSE_ABS(energy); i++) {
+            Buffer::tile(&sprite5_, tile.left, tile.top, tile.left, tile.top,
+                         tile.right - tile.left, tile.bottom - tile.top);
+            tile.left += unit;
+            tile.right += unit;
+            count++;
+        }
+    }
+    for (i = count; i < span; i++) {
+        fill(&tile, 0xF0);
+        tile.left += unit;
+        tile.right += unit;
+    }
+    line.left += width;
+    eq_x = line.left;
+    StringTemp[0] = 0;
+    strcat(StringTemp, "  =  ");
+    v = energy;
+    if (v < 0) {
+        Buffer::set_text_color(TextColourTable[110], TextColourTable[111], 1, 1);
+    } else {
+        Buffer::set_text_color(TextColourTable[88], TextColourTable[89], 1, 1);
+    }
+    if (v >= 0) {
+        strcat(StringTemp, "+");
+        line.left = Buffer::write_l(StringTemp, &line);
+    } else {
+        strcat(StringTemp, "-");
+        line.left = Buffer::write_l(StringTemp, &line);
+    }
+    StringTemp[0] = 0;
+    if (EXPENSE_ABS(v) < 100) {
+        _itoa(0, number, 10);
+        strcat(StringTemp, number);
+        line.left = Buffer::write_l(StringTemp, &line);
+        StringTemp[0] = 0;
+    }
+    if (EXPENSE_ABS(v) < 10) {
+        _itoa(0, number, 10);
+        strcat(StringTemp, number);
+        line.left = Buffer::write_l(StringTemp, &line);
+        StringTemp[0] = 0;
+    }
+    _itoa(EXPENSE_ABS(v), number, 10);
+    strcat(StringTemp, number);
+    line.left = Buffer::write_l(StringTemp, &line);
+    Buffer::set_text_color(TextColourTable[84], TextColourTable[85], 1, 1);
+
+    // ---- Net line ----
+    row.top += 21;
+    row.bottom += 21;
+    line = row;
+    Buffer::box_sprite(&line, &InterfaceBoxStyles[6]);
+    line.left = eq_x;
+    StringTemp[0] = 0;
+    strcat(StringTemp, "  =  ");
+    if (deficit) {
+        Buffer::set_text_color(TextColourTable[110], TextColourTable[111], 1, 1);
+        strcat(StringTemp, label_get(697));
+    } else {
+        strcat(StringTemp, label_get(52));
+        CharUpperA(StringTemp);
+    }
+    Buffer::write_l(StringTemp, &line);
+    Buffer::set_text_color(TextColourTable[84], TextColourTable[85], 1, 1);
+    line.left = wide;
+    line.right = wide;
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(655));
     CharUpperA(StringTemp);
-    line.left = uVar7;
-    sVar4 = strlen(StringTemp);
-    line.left = Buffer::write_l(StringTemp, &line, sVar4);
-    Buffer::set_text_color(TextColourTable[84],TextColourTable[85],1,1);
-    sVar4 = strlen(")");
-    Buffer::write_l(const_cast<char *>(")"), &line, sVar4);
-  }
-  if (param_2 == 0) {
-    this->soft_update(&production_outer_rect_);
-  }
-  else {
-    this->update(&production_outer_rect_, 0);
-  }
-  Buffer::set_clip(&saved_clip);
-  return;
+    Buffer::write_right_l(StringTemp, &line);
+    StringTemp[0] = 0;
+    strcat(StringTemp, " - ");
+    line.left = Buffer::write_l(StringTemp, &line) + 5;
+    StringTemp[0] = 0;
+    if (energy_ineff) {
+        strcat(StringTemp, "(");
+    }
+    strcat(StringTemp, label_get(656));
+    if (energy_ineff) {
+        strcat(StringTemp, " + ");
+    }
+    CharUpperA(StringTemp);
+    v = Buffer::write_l(StringTemp, &line);
+    if (energy_ineff) {
+        Buffer::set_text_color(TextColourTable[110], TextColourTable[111], 1, 1);
+        StringTemp[0] = 0;
+        strcat(StringTemp, label_get(56));
+        CharUpperA(StringTemp);
+        line.left = v;
+        line.left = Buffer::write_l(StringTemp, &line);
+        Buffer::set_text_color(TextColourTable[84], TextColourTable[85], 1, 1);
+        Buffer::write_l(")", &line);
+    }
+    if (update_mode) {
+        update(&production_outer_rect_, 0);
+    } else {
+        soft_update(&production_outer_rect_);
+    }
+    Buffer::set_clip(&saved_clip);
 }
+#undef EXPENSE_ABS
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00415B20 ?draw_info@BaseWin@@QAEXH@Z 0x00415B20-0x00415DCE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00415b20.cpp", "src/basewin.h", "src/base.h", "src/faction.h", "src/maininterface.h", "src/buffer.h"], "reason": "Recover the base title panel through owned BaseWin rectangles and Sprite dimensions, MainInterface's Buffer and shared frame styles, and typed Base/Player name and grammar fields. The seed retains compiler/reference evidence."}
