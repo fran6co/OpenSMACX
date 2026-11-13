@@ -356,7 +356,7 @@ void CheckBox::draw_item(int position, int state, int) {
 // vbtable[2] (byte offset 8) is the Dialog base offset, and a Buffer member
 // sits at GraphicWin_base + 0x444.
 // Deleted seed provenance: git:5ab1f8ce:src/unrecovered/0060ed10.cpp
-// ORIGINAL: 0x0060ED10 ?calculate_dimensions@CheckBox@@QAEHXZ 0x0060ED10-0x0060F02B FILE
+// ORIGINAL: 0x0060ED10 ?calculate_dimensions@CheckBox@@QAEHXZ 0x0060ED10-0x0060F02B FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060ed10.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60ed10 complete control/data-access review and src/jackal/checkbox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 int CheckBox::calculate_dimensions() {
     if (Dialog::item_list_.entry_count_ == 0) {
