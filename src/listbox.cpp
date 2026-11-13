@@ -585,24 +585,18 @@ void ListBox::draw_item(int index) {
         return;
     }
 
-    // At 0x0060B80C..0x0060B818 the pinned body passes this RECT to
-    // set_clip; the final box at 0x0060C18E..0x0060C19D uses the same edges.
-    // Its base is (field_40, field_38, field_64-field_40, field_38+field_68).
-    // Variable spans advance top/bottom (0x0060B6A3..0x0060B716); grid
-    // quotient/remainder offsets advance left/right and top/bottom respectively
-    // (0x0060B72D..0x0060B775).
+    // 0x0060B547..0x0060B597: the base row (0, 0, field_64, field_68) offset
+    // by (field_40, field_38); the offset arguments share the frame slots
+    // the callback result and selection flag reuse later.
     RECT row;
     set_rectangle_dimensions(&row, 0, 0, Dialog::field_64_, Dialog::field_68_);
-    {
-        const int dx = Dialog::field_40_, dy = Dialog::field_38_;
-        row.left += dx; row.top += dy; row.right += dx; row.bottom += dy;
-    }
+    offset_rect(&row, Dialog::field_40_, Dialog::field_38_);
     row.right -= Dialog::field_40_ * 2;
 
     if (Dialog::field_4C_ == 1) {
-        this->Dialog::item_list_.seek_pos(static_cast<int>(field_18_) - 1);
         int occupied = 0;
-        for (int count = index - static_cast<int>(field_18_); count > 0; --count) {
+        this->Dialog::item_list_.seek_pos(static_cast<int>(field_18_) - 1);
+        for (int i = 0; i < index - static_cast<int>(field_18_); ++i) {
             StringList *const list = &this->Dialog::item_list_;
             StringStructEntry *const head = list->head_;
             if (head != 0) {
@@ -616,16 +610,18 @@ void ListBox::draw_item(int index) {
         }
         const int offset = (static_cast<int>(Dialog::field_68_)
                             + static_cast<int>(Dialog::field_44_)) * occupied;
-        row.top += offset;
         row.bottom += offset;
+        row.top += offset;
         StringList *const list = &this->Dialog::item_list_;
         StringStructEntry *const head = list->head_;
         if (head != 0) {
             StringStructEntry *const next = list->current_->next;
-            int position = list->current_position_ + 1;
+            int position = list->current_position_;
+            const int count = list->entry_count_;
+            ++position;
             list->current_position_ = position;
             list->current_ = next;
-            if (position == list->entry_count_)
+            if (position == count)
                 list->current_position_ = 0;
         }
         const int span = list->current_ != 0
@@ -634,25 +630,26 @@ void ListBox::draw_item(int index) {
         row.bottom = (static_cast<int>(Dialog::field_68_) + static_cast<int>(Dialog::field_44_)) * span
             - static_cast<int>(Dialog::field_44_) + row.top;
     } else {
+        // 0x0060B71C..0x0060B775 applies the column offset before it divides
+        // again for the row offset.
         const int relative = index - static_cast<int>(field_18_);
-        const int columns = Dialog::row_count_;
         const int along = (static_cast<int>(Dialog::field_64_)
                            + static_cast<int>(Dialog::field_44_))
-            * (relative / columns);
-        const int across = (static_cast<int>(Dialog::field_68_)
-                            + static_cast<int>(Dialog::field_44_))
-            * (relative % columns);
+            * (relative / Dialog::row_count_);
         row.left += along;
         row.right += along;
+        const int across = (static_cast<int>(Dialog::field_68_)
+                            + static_cast<int>(Dialog::field_44_))
+            * (relative % Dialog::row_count_);
         row.top += across;
         row.bottom += across;
     }
 
-    if (Dialog::item_list_.entry_count_ <= index) {
+    if (index >= Dialog::item_list_.entry_count_) {
         return;
     }
 
-    int selected = 0;
+    int selected;
     if (field_4_ == 0) {
         selected = Dialog::selected_position_ == index;
     } else {
@@ -707,43 +704,41 @@ void ListBox::draw_item(int index) {
     if (callback_result == 0) {
         Win *const parent = Win::parent_window();
         if (parent != 0) {
-            int state = 2;
-            if (selected == 0) {
-                state = Dialog::field_F0_ == static_cast<uint32_t>(index) ? 1 : 0;
+            int state;
+            if (selected != 0) {
+                state = 2;
+            } else {
+                state = Dialog::field_F0_ == static_cast<uint32_t>(index);
             }
             callback_result = parent->on_dialog_item_back_draw(this, item_id, state, &row);
-            if (callback_result == 0) {
-                if (Win::has_listbox_backfill_flag()) {
-                    GraphicWin *const live_parent =
-                        static_cast<GraphicWin *>(Win::parent_window());
-                    if (live_parent != 0) {
-                        Buffer *const parent_canvas =
-                            static_cast<Buffer *>(live_parent);
-                        parent_canvas->copy(this, Dialog::window_x_, Dialog::window_y_, 0, 0,
-                                            Buffer::pixel_width(),
-                                            Buffer::pixel_height());
-                    } else {
-                        GraphicWin::fill(static_cast<int>(Dialog::field_6C_));
-                    }
-                } else {
-                    GraphicWin::fill(static_cast<int>(Dialog::field_6C_));
-                }
+            // 0x0060BB61: a parent that drew the background also skips the
+            // Dialog border below.
+            if (callback_result != 0) {
+                goto frame_done;
+            }
+            GraphicWin *live_parent;
+            if ((iFlags_ & 0x80000) != 0
+                && (live_parent = static_cast<GraphicWin *>(Win::parent_window())) != 0) {
+                live_parent->copy(this, Dialog::window_x_, Dialog::window_y_, 0, 0,
+                                  Buffer::pixel_width(), Buffer::pixel_height());
+            } else {
+                GraphicWin::fill(static_cast<int>(Dialog::field_6C_));
             }
         }
 
-        RECT border = *GraphicWin::buffer_working_rect();
-        const int border_count = static_cast<int>(Dialog::field_B4_);
-        if (border_count > 0) {
-            for (int edge = 0; edge < border_count; ++edge) {
+        {
+            RECT border = *GraphicWin::buffer_working_rect();
+            for (int edge = 0; edge < static_cast<int>(Dialog::field_B4_); ++edge) {
                 Buffer::box(&border, static_cast<int>(Dialog::field_AC_),
                             static_cast<int>(Dialog::field_B0_));
                 ++border.left;
-                --border.bottom;
-                ++border.top;
                 --border.right;
+                ++border.top;
+                --border.bottom;
             }
         }
     }
+frame_done:
 
     // The original rechecks the live count after frame callbacks. If a
     // callback removed this row, it leaves the current cursor untouched.
@@ -757,11 +752,8 @@ void ListBox::draw_item(int index) {
     }
 
     if (write_callback_ != 0) {
-        char *callback_text = Dialog::item_list_.head_ == 0
-            ? 0 : Dialog::item_list_.current_->string_payload()->text;
-        const int written = write_callback_(this, Dialog::pos_to_id(index),
-                                            index, &row, callback_text);
-        if (written != 0) {
+        if (write_callback_(this, Dialog::pos_to_id(index), index, &row,
+                            listbox_current_text(&this->Dialog::item_list_)) != 0) {
             return;
         }
     }
@@ -769,42 +761,38 @@ void ListBox::draw_item(int index) {
     // 60BD3B splits two exclusive complete text paths. The unselected
     // path returns at 60BF3B; the selected path continues to its border.
     if (selected == 0) {
-        row.right = row.right - (static_cast<int>(field_2C_) + 1);
-        row.left = row.left + static_cast<int>(Dialog::field_34_)
-            + static_cast<int>(field_2C_) + 1;
+        {
+            const int pad = static_cast<int>(field_2C_) + 1;
+            row.right -= pad;
+            row.left += static_cast<int>(Dialog::field_34_) + pad;
+        }
         Buffer::set_clip(&row);
 
         char *separator = strchr(listbox_current_text(&this->Dialog::item_list_), '|');
         if (separator == 0) {
             if ((Dialog::item_list_.head_ != 0 ? static_cast<int32_t>(Dialog::item_list_.current_->string_payload()->field_C_) : 0) > 1) {
-                Buffer::wrap((Dialog::item_list_.head_ != 0 ? Dialog::item_list_.current_->string_payload()->text : 0), &row);
+                Buffer::wrap(listbox_current_text(&this->Dialog::item_list_), &row);
             } else {
-                char *text = (Dialog::item_list_.head_ != 0 ? Dialog::item_list_.current_->string_payload()->text : 0);
-                if (text != 0) {
-                    Buffer::write_l(text, &row, static_cast<int>(strlen(text)));
-                }
+                Buffer::write_l(listbox_current_text(&this->Dialog::item_list_), &row);
             }
         } else {
             *separator = 0;
             if ((Dialog::item_list_.head_ != 0 ? static_cast<int32_t>(Dialog::item_list_.current_->string_payload()->field_C_) : 0) > 1) {
-                Buffer::wrap((Dialog::item_list_.head_ != 0 ? Dialog::item_list_.current_->string_payload()->text : 0), &row);
+                Buffer::wrap(listbox_current_text(&this->Dialog::item_list_), &row);
             } else {
-                char *text = (Dialog::item_list_.head_ != 0 ? Dialog::item_list_.current_->string_payload()->text : 0);
-                if (text != 0) {
-                    Buffer::write_l(text, &row, static_cast<int>(strlen(text)));
-                }
+                Buffer::write_l(listbox_current_text(&this->Dialog::item_list_), &row);
             }
             *separator = '|';
             ++separator;
-            if (separator != 0) {
-                Buffer::write_right_l(separator, &row,
-                                      static_cast<int>(strlen(separator)));
-            }
+            Buffer::write_right_l(separator, &row);
         }
 
         // Both original text arms restore the inset before the final clip.
-        row.left -= static_cast<int>(field_2C_) + 1;
-        row.right += static_cast<int>(field_2C_) + 1;
+        {
+            const int pad = static_cast<int>(field_2C_) + 1;
+            row.left -= pad;
+            row.right += pad;
+        }
         row.left -= static_cast<int>(Dialog::field_34_);
         Buffer::set_clip(&row);
         return;
@@ -817,45 +805,41 @@ void ListBox::draw_item(int index) {
             }
         }
 
-        row.right = row.right - (static_cast<int>(field_2C_) + 1);
-        row.left = row.left + static_cast<int>(Dialog::field_34_)
-            + static_cast<int>(field_2C_) + 1;
+        {
+            const int pad = static_cast<int>(field_2C_) + 1;
+            row.right -= pad;
+            row.left += static_cast<int>(Dialog::field_34_) + pad;
+        }
         Buffer::set_clip(&row);
 
         char *separator = strchr(listbox_current_text(&this->Dialog::item_list_), '|');
         if (separator == 0) {
             if ((Dialog::item_list_.head_ != 0 ? static_cast<int32_t>(Dialog::item_list_.current_->string_payload()->field_C_) : 0) > 1) {
-                Buffer::wrap((Dialog::item_list_.head_ != 0 ? Dialog::item_list_.current_->string_payload()->text : 0), &row);
+                Buffer::wrap(listbox_current_text(&this->Dialog::item_list_), &row);
             } else {
-                char *text = (Dialog::item_list_.head_ != 0 ? Dialog::item_list_.current_->string_payload()->text : 0);
-                if (text != 0) {
-                    Buffer::write_l(text, &row, static_cast<int>(strlen(text)));
-                }
+                Buffer::write_l(listbox_current_text(&this->Dialog::item_list_), &row);
             }
         } else {
             *separator = 0;
             if ((Dialog::item_list_.head_ != 0 ? static_cast<int32_t>(Dialog::item_list_.current_->string_payload()->field_C_) : 0) > 1) {
-                Buffer::wrap((Dialog::item_list_.head_ != 0 ? Dialog::item_list_.current_->string_payload()->text : 0), &row);
+                Buffer::wrap(listbox_current_text(&this->Dialog::item_list_), &row);
             } else {
-                char *text = (Dialog::item_list_.head_ != 0 ? Dialog::item_list_.current_->string_payload()->text : 0);
-                if (text != 0) {
-                    Buffer::write_l(text, &row, static_cast<int>(strlen(text)));
-                }
+                Buffer::write_l(listbox_current_text(&this->Dialog::item_list_), &row);
             }
             *separator = '|';
             ++separator;
-            if (separator != 0) {
-                Buffer::write_right_l(separator, &row,
-                                      static_cast<int>(strlen(separator)));
-            }
+            Buffer::write_right_l(separator, &row);
         }
 
         // Both original text arms restore the inset before the final clip.
-        row.left -= static_cast<int>(field_2C_) + 1;
-        row.right += static_cast<int>(field_2C_) + 1;
+        {
+            const int pad = static_cast<int>(field_2C_) + 1;
+            row.left -= pad;
+            row.right += pad;
+        }
         row.left -= static_cast<int>(Dialog::field_34_);
         Buffer::set_clip(&row);
-        if (callback_result == 0 && field_2C_ > 0) {
+        if (callback_result == 0) {
             for (int edge = 0; edge < static_cast<int>(field_2C_); ++edge) {
                 Buffer::box(&row, static_cast<int>(field_24_),
                             static_cast<int>(field_28_));

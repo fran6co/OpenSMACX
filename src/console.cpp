@@ -4384,34 +4384,11 @@ enemy_vehicle_found:
     goto finish_turn;
 }
 
-static int give_hints_wrap_x(int x) {
-    if ((MapIsFlat & 1) == 0) {
-        if (x < 0) x += MapLongitudeBounds;
-        else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
-    }
-    return x;
-}
-static bool give_hints_in_map(int x, int y) {
-    return x >= 0 && x < static_cast<int>(MapLongitudeBounds) &&
-           y >= 0 && y < static_cast<int>(MapLatitudeBounds);
-}
-static void give_hints_parse_faction_identity(int faction) {
-    GenderDefault = Players[faction].is_leader_female;
-    PluralityDefault = 0;
-    parse_says(1, Players[faction].title_leader, -1, -1);
-    GenderDefault = Players[faction].is_leader_female;
-    PluralityDefault = 0;
-    parse_says(2, Players[faction].name_leader, -1, -1);
-    GenderDefault = Players[faction].noun_gender;
-    PluralityDefault = Players[faction].is_noun_plural;
-    parse_says(3, Players[faction].noun_faction, -1, -1);
-}
-
 // ORIGINAL: 0x00511BB0 ?give_hints@Console@@QAEXXZ 0x00511BB0-0x00513B85
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned511BB0..513B85; retained git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00511bb0.cpp; original vehicle-turn caller513BD5", "Initial state2000 branch511C37 encloses early cards and colonist scan; clearstate enters51222C. Tutorial stage511E71 is TutorialWindow+53C0 via set_tour_stage, not separate DesignTutorState73396C. Colonist tail uses ConsoleGlobal faction and always returns; scan ownership uses faction snapshot across whose_territory.", "Native51318A..197 evaluates unowned or own-faction candidate sites, skips hostile-owned ones. Enemy-base scan exhaustion5136AE..B7 continues enemyvehicle/territory hints, never explorationchecker. Matchingpod513596 enters5135E6; valid six-sprite index uses captured triad and bounded coordinates. Historical intermediate source added a defensive bounds check under an earlier permission; faithful-milestone recovery supersedes that deviation and restores the unchecked original dispatch.", "Shared terra epilogue5134E1..F5 calls tut_map then GameState|400; farm writes before its call. All33 distinct original caption literals independently read bounded from pinned data. Actual Sprite sizeof2C and existing banks govern indices; no fixed executable data/function aliases.", "recovery/tasks/console-scenario-owner-wave.json; complete-owner expansion and corrected native-flow history retained; actual-source host controls required", "Pinned 0x5134xx..0x5135E6 predecessor walks the eight RadiusBase offsets, wraps longitude on round maps, rejects y outside [0,MapLatitudeBounds) and x outside [0,MapLongitudeBounds), requires goody_at, and retains the first candidate whose terrain triad matches the selected vehicle.", "Pinned 0x5135E6 calls tut_check(0x2000) before any Unity sprite-index arithmetic; rejection returns immediately. On acceptance, 0x5135FB..0x513623 computes (5*y+7*x) / 3 with signed idiv and forms the captured sea/land discriminator plus 2*remainder; 0x513628..0x513639 performs the indexed table-address calculation and draw call with no intervening range branch.", "Current source's matching-pod inputs are captured only after give_hints_in_map accepts bounded coordinates; selected_is_sea is the captured sea/land discriminator and the native modulo result selects one of the six existing g_TER1_UNITY_POD_SPRITES. Preserve callback/checker ordering and the unchecked native indexed dispatch; do not add an invalid-index runtime scenario."], "reason": "Recover the complete Console tutorial-hint owner using typed vehicle/design/rules/map/faction storage, real tutorial windows and source-owned sprite banks. Preserve original identity, seed and historical obligations; no matching or runtime acceptance is implied. Restore the original unchecked Unity-pod dispatch after the checker; earlier behavior-fix permission is superseded by the faithful milestone."}
 // TRIED: literal per-instruction register simulation (eax/ebx/ecx/edx/esi/edi as locals) with goto-labeled control flow matching every branch target; not tried: reconstructing idiomatic per-block source (member/local variable reuse) that would let the compiler's CSE match the original's code size - rebuilt is 4555 bytes against 8149 original, same first divergence at the prologue (push vs sub), so the whole body likely needs restructuring, not a single-instruction fix.
 void Console::give_hints() {
-// 0x511BBE tests the selected vehicle's state before any other work.
+    // 0x511BBE tests the selected vehicle's state before any other work.
     const int entry_vehicle = selected_vehicle_;
     if ((Vehs[entry_vehicle].state & 0x4200u) != 0 || IsMultiplayerNet != 0 ||
         TutWinBaseWindow.is_visible() != 0 ||
@@ -4420,7 +4397,7 @@ void Console::give_hints() {
     }
 
     // The image reloads the selected vehicle after the visibility calls, then
-    // keeps these signed coordinates through the early cards and site scan.
+    // keeps these signed coordinates through the whole function.
     const int cursor_x = Vehs[selected_vehicle_].x;
     const int cursor_y = Vehs[selected_vehicle_].y;
     int proto_id;
@@ -4439,7 +4416,7 @@ void Console::give_hints() {
             return;
         }
 
-        // LAB_00511D12 is reached both when the first card is ineligible and
+        // 0x511D12 is reached both when the first card is ineligible and
         // when tut_check(8)/the turn gate rejects it. The checker side effect
         // therefore remains even when the turn is already 25 or later.
         proto_id = Vehs[selected_vehicle_].proto_id;
@@ -4450,9 +4427,9 @@ void Console::give_hints() {
             return;
         }
 
-        // LAB_00511D74, including the native active-count == 1 condition and
-        // its sea-triad exclusion (triad value 1). The message and caption
-        // inputs are rebuilt from the then-current selection after the checker.
+        // 0x511D74, including the active-count == 1 condition and its
+        // sea-triad exclusion (triad value 1). The message and caption inputs
+        // are rebuilt from the then-current selection after the checker.
         proto_id = Vehs[selected_vehicle_].proto_id;
         if (VehPrototypes[proto_id].plan == PLAN_TERRAFORMING &&
             PlayersData[faction_id_].proto_id_active[proto_id] == 1 &&
@@ -4473,156 +4450,151 @@ void Console::give_hints() {
                 return;
             }
         }
-    // LAB_00511E99: the one-time colonization map scan is restricted to the
-    // native plan-8/land/ability/flag combination. The source's 240 iterations
-    // index the existing 289-entry RadiusOffset tables beginning at element 49.
-    proto_id = Vehs[selected_vehicle_].proto_id;
-    const int chassis_id = VehPrototypes[proto_id].chassis_id;
-    if (VehPrototypes[proto_id].plan == PLAN_COLONIZATION &&
-        Chassis[chassis_id].triad == TRIAD_LAND &&
-        (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x1000000u) == 0) {
-        int best_site = 0;
-        int best_x = -1;
-        int best_y = -1;
-        ConsoleGlobal.focus(cursor_x, cursor_y, ConsoleGlobal.faction_id_);
-        for (int radius = 0; radius < 240; ++radius) {
-            int candidate_x = cursor_x + RadiusOffsetX[49 + radius];
-            if ((MapIsFlat & 1) == 0) {
-                if (candidate_x < 0) {
-                    candidate_x += MapLongitudeBounds;
-                } else if (candidate_x >= MapLongitudeBounds) {
-                    candidate_x -= MapLongitudeBounds;
+        // 0x511E99: the one-time colonization map scan is restricted to the
+        // plan-8/land/flag combination. The 240 iterations index the existing
+        // 289-entry RadiusOffset tables beginning at element 49.
+        proto_id = Vehs[selected_vehicle_].proto_id;
+        const int chassis_id = VehPrototypes[proto_id].chassis_id;
+        if (VehPrototypes[proto_id].plan == PLAN_COLONIZATION &&
+            Chassis[chassis_id].triad == TRIAD_LAND &&
+            (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x1000000u) == 0) {
+            int best_site = 0;
+            int best_x = -1;
+            int best_y = -1;
+            ConsoleGlobal.focus(cursor_x, cursor_y, ConsoleGlobal.faction_id_);
+            for (int radius = 0; radius < 240; ++radius) {
+                // The image keeps `MapIsFlat & 1` in a frame local and lays
+                // the flat (unwrapped) arm first, before the wrapping arm.
+                int raw_x = cursor_x + RadiusOffsetX[49 + radius];
+                const int flat = MapIsFlat & 1;
+                int x;
+                if (flat) {
+                    x = raw_x;
+                } else if (raw_x < 0) {
+                    x = raw_x + MapLongitudeBounds;
+                } else {
+                    if (raw_x >= MapLongitudeBounds) {
+                        raw_x -= MapLongitudeBounds;
+                    }
+                    x = raw_x;
                 }
-            }
-            const int candidate_y = cursor_y + RadiusOffsetY[49 + radius];
-            if (candidate_y < 0 || candidate_y >= MapLatitudeBounds ||
-                candidate_x < 0 || candidate_x >= MapLongitudeBounds) {
-                continue;
-            }
-
-            // The native body assumes the primary map window exists; this is
-            // deliberately not replaced by a new null-window recovery path.
-            Map &candidate = *map_loc(candidate_x, candidate_y);
-            if ((candidate.climate & 0xE0u) > 0x60u) {
-                const int altitude = candidate.climate >> 5;
-                if (candidate_y - altitude + 3 <
-                    MapWinTable[0]->field_1DDA8_ + 2) {
+                const int y = cursor_y + RadiusOffsetY[49 + radius];
+                if (!on_map(x, y)) {
                     continue;
                 }
-            }
-            MapWin *map_window = MapWinTable[0];
-            if (candidate_y < map_window->field_1DDA8_ + 2 ||
-                candidate_y >= map_window->field_1DDA8_ +
-                    map_window->field_1DDD0_ + map_window->field_1DDD8_ - 2) {
-                continue;
-            }
 
-            int viewport_x = candidate_x;
-            if ((MapIsFlat & 1) == 0) {
-                map_window = MapWinTable[0];
-                if (viewport_x < map_window->field_1DDA4_ + 2) {
-                    viewport_x += MapLongitudeBounds;
+                // The primary map window is assumed to exist, as in the image;
+                // MapWinTable[0] is reloaded in each test group.
+                if ((map_loc(x, y)->climate & ~0x1F) > 0x60 &&
+                    y - (map_loc(x, y)->climate >> 5) + 3 <
+                        MapWinTable[0]->field_1DDA8_ + 2) {
+                    continue;
                 }
-                if (viewport_x >= map_window->field_1DDA4_ +
-                        map_window->field_1DDCC_ + map_window->field_1DDD4_ - 2) {
-                    viewport_x -= MapLongitudeBounds;
+                if (y < MapWinTable[0]->field_1DDA8_ + 2 ||
+                    y >= MapWinTable[0]->field_1DDD8_ + MapWinTable[0]->field_1DDD0_ +
+                             MapWinTable[0]->field_1DDA8_ - 2) {
+                    continue;
+                }
+                int screen_x = x;
+                if (!flat) {
+                    if (screen_x < MapWinTable[0]->field_1DDA4_ + 2) {
+                        screen_x = MapLongitudeBounds + x;
+                    }
+                    if (screen_x >= MapWinTable[0]->field_1DDD4_ +
+                                        MapWinTable[0]->field_1DDCC_ +
+                                        MapWinTable[0]->field_1DDA4_ - 2) {
+                        screen_x -= MapLongitudeBounds;
+                    }
+                }
+                if (screen_x < MapWinTable[0]->field_1DDA4_ + 2 ||
+                    screen_x >= MapWinTable[0]->field_1DDD4_ +
+                                    MapWinTable[0]->field_1DDCC_ +
+                                    MapWinTable[0]->field_1DDA4_ - 2) {
+                    continue;
+                }
+                // Both region bytes are read after the viewport checks.
+                if (map_loc(x, y)->region != map_loc(cursor_x, cursor_y)->region) {
+                    continue;
+                }
+                // The faction is read once before whose_territory and kept
+                // across the call (0x5120B1).
+                const int faction = faction_id_;
+                if (whose_territory(faction, x, y, 0, 0) != faction) {
+                    continue;
+                }
+                if ((PlayersData[faction].flags & 0x200u) == 0 &&
+                    (map_loc(x, y)->visibility & (1 << faction)) == 0) {
+                    continue;
+                }
+                if ((map_loc(x, y)->bit & 0x20u) != 0 &&
+                    (map_loc(x, y)->climate & ~0x1F) >= 0x40) {
+                    continue;
+                }
+                if ((map_loc(x, y)->val3 & ~0x3F) > 0x40) {
+                    continue;
+                }
+
+                int site;
+                if ((map_loc(x, y)->bit & 0x1000u) != 0) {
+                    site = 0;
+                } else {
+                    site = map_loc(x, y)->val2 >> 4;
+                    if (site == 0) {
+                        site = world_site(x, y, 0);
+                        site_set(x, y, site);
+                    }
+                }
+                if (site >= best_site) {
+                    best_site = site;
+                    best_x = x;
+                    best_y = y;
                 }
             }
-            map_window = MapWinTable[0];
-            if (viewport_x < map_window->field_1DDA4_ + 2 ||
-                viewport_x >= map_window->field_1DDA4_ +
-                    map_window->field_1DDCC_ + map_window->field_1DDD4_ - 2) {
-                continue;
-            }
-            // Native reloads both region bytes each iteration, after the
-            // visibility/viewport checks; don't cache the cursor tile field.
-            if (candidate.region != map_loc(cursor_x, cursor_y)->region) {
-                continue;
-            }
-            const int candidate_faction = faction_id_;
-            if (whose_territory(candidate_faction, candidate_x, candidate_y,
-                                0, 0) != candidate_faction) {
-                continue;
-            }
-            const uint32_t faction_bit = 1u << (candidate_faction & 31);
-            if ((PlayersData[candidate_faction].flags & 0x200u) == 0 &&
-                (candidate.visibility & faction_bit) == 0) {
-                continue;
-            }
-            if ((candidate.bit & 0x20u) != 0 &&
-                (candidate.climate & 0xE0u) >= 0x40u) {
-                continue;
-            }
-            if ((candidate.val3 & 0xC0u) > 0x40u) {
-                continue;
-            }
 
-            int site;
-            if ((candidate.bit & 0x1000u) != 0) {
-                site = 0;
-            } else if ((candidate.val2 >> 4) != 0) {
-                site = candidate.val2 >> 4;
-            } else {
-                site = world_site(candidate_x, candidate_y, 0);
-                site_set(candidate_x, candidate_y, site);
+            ::clear();
+            say_base(StringTemp, Vehs[selected_vehicle_].home_base_id);
+            parse_says(0, StringTemp, -1, -1);
+            if ((Players[ConsoleGlobal.faction_id_].rule_flags & 0x100u) == 0) {
+                TutorialWindow.tut_map("NEWCOLONIST", cursor_x, cursor_y,
+                                       selected_vehicle_, 0, 0x1000000,
+                                       best_x, best_y);
             }
-            if (site >= best_site) {
-                best_site = site;
-                best_x = candidate_x;
-                best_y = candidate_y;
-            }
+            return;
         }
+    }
 
-        ::clear();
-        say_base(StringTemp, Vehs[selected_vehicle_].home_base_id);
-        parse_says(0, StringTemp, -1, -1);
-        if ((Players[ConsoleGlobal.faction_id_].rule_flags & 0x100u) == 0) {
-            TutorialWindow.tut_map("NEWCOLONIST", cursor_x, cursor_y,
-                                   selected_vehicle_, 0, 0x1000000,
-                                   best_x, best_y);
-        }
+    // 0x51222C first checks the tutorial window's persistent stop flag, then
+    // snapshots whether the selected prototype is a sea-triad unit into an
+    // int frame local (sete into a dword).
+    if (TutorialWindow.tutorial_blocked()) {
         return;
     }
+    proto_id = Vehs[selected_vehicle_].proto_id;
+    const int selected_is_sea =
+        Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_SEA;
+
+    if (Vehs[selected_vehicle_].dmg_incurred != 0 && tut_check(0x200000) != 0) {
+        TutorialWindow.tut_map("DAMAGED", cursor_x, cursor_y, selected_vehicle_,
+                               0, 0, -1, -1);
+        return;
     }
 
-
-// 0x51222C first checks the tutorial window's persistent stop flag, then
-// snapshots whether the selected prototype is a sea-triad unit into local_14.
-if (TutorialWindow.tutorial_blocked()) {
-    return;
-}
-proto_id = Vehs[selected_vehicle_].proto_id;
-bool selected_is_sea =
-    Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_SEA;
-
-if (Vehs[selected_vehicle_].dmg_incurred != 0 && tut_check(0x200000) != 0) {
-    TutorialWindow.tut_map("DAMAGED", cursor_x, cursor_y, selected_vehicle_,
-                           0, 0, -1, -1);
-    return;
-}
-
-// LAB_005122A9: these checks apply only to land chassis. The terrain altitude
-// test is the cursor tile's `(climate & 0xE0) >= 0x60` condition.
-proto_id = Vehs[selected_vehicle_].proto_id;
-if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_LAND &&
-    (map_loc(cursor_x, cursor_y)->climate & 0xE0u) >= 0x60u) {
-    for (int offset = 0; offset < 0x20; offset += 4) {
-            int x = cursor_x + VehMoveDeltaX[offset / 4];
-            if ((MapIsFlat & 1) == 0) {
-                if (x < 0) {
-                    x += MapLongitudeBounds;
-                } else if (x >= MapLongitudeBounds) {
-                    x -= MapLongitudeBounds;
-                }
-            }
-            const int y = cursor_y + VehMoveDeltaY[offset / 4];
-            if (y < 0 || y >= MapLatitudeBounds || x < 0 ||
-                x >= MapLongitudeBounds) {
+    // 0x5122A9: these checks apply only to land chassis on a land cursor tile.
+    // The sea and air cards below are therefore nested in the land test, as
+    // the image's branch to 0x512B8A has it.
+    proto_id = Vehs[selected_vehicle_].proto_id;
+    if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_LAND &&
+        !is_ocean(cursor_x, cursor_y)) {
+        // The image compares the neighbour's prototype ID itself with 8.
+        for (int worm_i = 0; worm_i < 8; ++worm_i) {
+            const int x = wrap_map_x(cursor_x + VehMoveDeltaX[worm_i]);
+            const int y = cursor_y + VehMoveDeltaY[worm_i];
+            if (!on_map(x, y)) {
                 continue;
             }
             const int nearby = veh_at(x, y);
             if (nearby < 0 || Vehs[nearby].faction_id != 0 ||
-                VehPrototypes[Vehs[nearby].proto_id].plan != PLAN_COLONIZATION) {
+                Vehs[nearby].proto_id != 8) {
                 continue;
             }
             if (tut_check(0x4000000) != 0) {
@@ -4630,346 +4602,359 @@ if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_LAND &&
                                        0, -1, -1);
                 return;
             }
-    }
+        }
 
-// LAB_005124E9 fast-unit card: the current chassis must be land triad, speed
-// exactly 2, the weapon must have nonzero offense, and the tutorial bit must
-// be newly accepted. Name/stat parsing uses fresh selection reads after calls.
-proto_id = Vehs[selected_vehicle_].proto_id;
-if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_LAND &&
-    Chassis[VehPrototypes[proto_id].chassis_id].speed == 2 &&
-    Weapon[VehPrototypes[proto_id].weapon_id].offense_rating != 0 &&
-    tut_check(0x2000000) != 0) {
-    StringTemp[0] = '\0';
-    say_stats_3(StringTemp, Vehs[selected_vehicle_].proto_id);
-    parse_says(1, StringTemp, -1, -1);
-    proto_id = Vehs[selected_vehicle_].proto_id;
-    parse_says(0, VehPrototypes[proto_id].veh_name, -1, -1);
-    TutorialWindow.tut_map("FASTUNIT", cursor_x, cursor_y, selected_vehicle_,
-                           0, 0, -1, -1);
-    return;
-}
-
-// LAB_00512503 artillery card. The signed int8 offense comparison deliberately
-// remains > 1; the native JLE treats a byte such as psi's -1 as signed here.
-proto_id = Vehs[selected_vehicle_].proto_id;
-if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_LAND &&
-    Chassis[VehPrototypes[proto_id].chassis_id].speed == 1 &&
-    Weapon[VehPrototypes[proto_id].weapon_id].offense_rating > 1 &&
-    can_arty(proto_id, 1) == 0 && tut_check(0x40000000) != 0) {
-    StringTemp[0] = '\0';
-    say_stats_3(StringTemp, Vehs[selected_vehicle_].proto_id);
-    parse_says(1, StringTemp, -1, -1);
-    proto_id = Vehs[selected_vehicle_].proto_id;
-    parse_says(0, VehPrototypes[proto_id].veh_name, -1, -1);
-    TutorialWindow.tut_map("ARTYUNIT", cursor_x, cursor_y, selected_vehicle_,
-                           0, 0, -1, -1);
-    return;
-}
-
-// LAB_00512602 big-artillery card is the complementary can_arty==true case.
-proto_id = Vehs[selected_vehicle_].proto_id;
-if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_LAND &&
-    can_arty(proto_id, 1) != 0 && tut_check(0x80000000u) != 0) {
-    proto_id = Vehs[selected_vehicle_].proto_id;
-    parse_says(0, VehPrototypes[proto_id].veh_name, -1, -1);
-    TutorialWindow.tut_map("BIGUNIT", cursor_x, cursor_y, selected_vehicle_,
-                           0, 0, -1, -1);
-    return;
-}
-
-// LAB_005126BD/LAB_00512739: the native shown flags are distinct from
-// TutWinFlags9A64BC. Already-shown bits are ORed again, then flow continues.
-proto_id = Vehs[selected_vehicle_].proto_id;
-if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_SEA) {
-    if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x20) == 0) {
-        TutorialWindow.tut_map("NEWSHIP", cursor_x, cursor_y, selected_vehicle_,
-                               0, 0, -1, -1);
-        GameDataStateStorage.fields_.tutorial_flags_ |= 0x20;
-        return;
-    }
-    GameDataStateStorage.fields_.tutorial_flags_ |= 0x20;
-}
-// Native reloads the selection/prototype/chassis after the sea-card path;
-// keep this independent so callback-visible changes affect the air branch.
-proto_id = Vehs[selected_vehicle_].proto_id;
-if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_AIR) {
-    if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x40) == 0) {
-        TutorialWindow.tut_map("NEWAIR", cursor_x, cursor_y, selected_vehicle_,
-                               0, 0, -1, -1);
-        GameDataStateStorage.fields_.tutorial_flags_ |= 0x40;
-        return;
-    }
-    GameDataStateStorage.fields_.tutorial_flags_ |= 0x40;
-}
-
-// LAB_005127B5 base-defense card. The population/force/prototype thresholds
-// select the shared defense path; the weak-base suffix is checked only after
-// stats/name parsing, with a fresh current prototype.
-const int cursor_base = base_at(cursor_x, cursor_y);
-if (cursor_base >= 0 &&
-    Bases[cursor_base].faction_id_current == faction_id_) {
-    const int current_proto = Vehs[selected_vehicle_].proto_id;
-    const Base &base = Bases[cursor_base];
-    if (base.population_size > 2 ||
-        PlayersData[faction_id_].total_mil_veh > 3 ||
-        PlayersData[faction_id_].proto_id_active[current_proto] > 1) {
-        if (enemy_move(~selected_vehicle_) != 0 &&
-            (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x800000u) == 0) {
+        // 0x5123BE fast-unit card: the current chassis must be land triad,
+        // speed exactly 2, the weapon must have nonzero offense, and the
+        // tutorial bit must be newly accepted.
+        proto_id = Vehs[selected_vehicle_].proto_id;
+        if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_LAND &&
+            Chassis[VehPrototypes[proto_id].chassis_id].speed == 2 &&
+            Weapon[VehPrototypes[proto_id].weapon_id].offense_rating != 0 &&
+            tut_check(0x2000000) != 0) {
             StringTemp[0] = '\0';
             say_stats_3(StringTemp, Vehs[selected_vehicle_].proto_id);
-            parse_says(2, StringTemp, -1, -1);
-            parse_says(0, base.name_string, -1, -1);
+            parse_says(1, StringTemp, -1, -1);
             proto_id = Vehs[selected_vehicle_].proto_id;
-            parse_says(1, VehPrototypes[proto_id].veh_name, -1, -1);
-
-            proto_id = Vehs[selected_vehicle_].proto_id;
-            const VehPrototype &prototype = VehPrototypes[proto_id];
-            const bool weak_defensive_design =
-                prototype.plan == PLAN_DEFENSIVE &&
-                Weapon[prototype.weapon_id].offense_rating == 1 &&
-                Armor[prototype.armor_id].defense_rating > 1;
-            TutorialWindow.tut_map(weak_defensive_design ? "DEFENDIT2" : "DEFENDIT",
-                                   cursor_x, cursor_y, selected_vehicle_, 0,
-                                   0x800000, -1, -1);
+            parse_says(0, VehPrototypes[proto_id].veh_name, -1, -1);
+            TutorialWindow.tut_map("FASTUNIT", cursor_x, cursor_y, selected_vehicle_,
+                                   0, 0, -1, -1);
             return;
         }
-    }
-}
 
-// LAB_00512959 empty-base scan. The image checks the current weapon before
-// iterating, visits BaseCurrentCount with 0x134-byte records, and calls
-// tut_check2 before the independent every-20-turn fallback.
-proto_id = Vehs[selected_vehicle_].proto_id;
-if (GameDataStateStorage.fields_.turn_current_num_ >= 0x14 &&
-    (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x4000000u) == 0 &&
-    Weapon[VehPrototypes[proto_id].weapon_id].offense_rating != 0) {
-    for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
-        const Base &base = Bases[base_id];
-        if (base.faction_id_current != faction_id_ ||
-            veh_at(base.x, base.y) >= 0 || base.population_size == 1) {
-            continue;
+        // 0x5124E9: speed-1 land unit with signed offense > 1 that cannot
+        // bombard. The image shows the BIGUNIT caption here (0x5125EC).
+        proto_id = Vehs[selected_vehicle_].proto_id;
+        if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_LAND &&
+            Chassis[VehPrototypes[proto_id].chassis_id].speed == 1 &&
+            Weapon[VehPrototypes[proto_id].weapon_id].offense_rating > 1 &&
+            can_arty(proto_id, 1) == 0 && tut_check(0x40000000) != 0) {
+            StringTemp[0] = '\0';
+            say_stats_3(StringTemp, Vehs[selected_vehicle_].proto_id);
+            parse_says(1, StringTemp, -1, -1);
+            proto_id = Vehs[selected_vehicle_].proto_id;
+            parse_says(0, VehPrototypes[proto_id].veh_name, -1, -1);
+            TutorialWindow.tut_map("BIGUNIT", cursor_x, cursor_y, selected_vehicle_,
+                                   0, 0, -1, -1);
+            return;
         }
 
-        MapWin *map_window = MapWinTable[0];
-        if (base.y >= 0 && base.y < MapLatitudeBounds && base.x >= 0 &&
-            base.x < MapLongitudeBounds) {
-            const uint8_t climate = map_loc(base.x, base.y)->climate;
-            if ((climate & 0xE0u) > 0x60u) {
-                const int altitude = climate >> 5;
-                if (base.y - altitude + 3 < map_window->field_1DDA8_ + 2) {
-                    continue;
+        // 0x512602: the can_arty case shows ARTYUNIT; StringTemp is cleared
+        // before the name parse.
+        proto_id = Vehs[selected_vehicle_].proto_id;
+        if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_LAND &&
+            can_arty(proto_id, 1) != 0 && tut_check(0x80000000u) != 0) {
+            StringTemp[0] = '\0';
+            proto_id = Vehs[selected_vehicle_].proto_id;
+            parse_says(0, VehPrototypes[proto_id].veh_name, -1, -1);
+            TutorialWindow.tut_map("ARTYUNIT", cursor_x, cursor_y, selected_vehicle_,
+                                   0, 0, -1, -1);
+            return;
+        }
+
+        // 0x5126BD/0x512739: the shown flags are distinct from
+        // TutWinFlags9A64BC. Already-shown bits are ORed again, then flow
+        // continues.
+        proto_id = Vehs[selected_vehicle_].proto_id;
+        if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_SEA) {
+            if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x20) == 0) {
+                TutorialWindow.tut_map("NEWSHIP", cursor_x, cursor_y, selected_vehicle_,
+                                       0, 0, -1, -1);
+                GameDataStateStorage.fields_.tutorial_flags_ |= 0x20;
+                return;
+            }
+            GameDataStateStorage.fields_.tutorial_flags_ |= 0x20;
+        }
+        proto_id = Vehs[selected_vehicle_].proto_id;
+        if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_AIR) {
+            if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x40) == 0) {
+                TutorialWindow.tut_map("NEWAIR", cursor_x, cursor_y, selected_vehicle_,
+                                       0, 0, -1, -1);
+                GameDataStateStorage.fields_.tutorial_flags_ |= 0x40;
+                return;
+            }
+            GameDataStateStorage.fields_.tutorial_flags_ |= 0x40;
+        }
+
+        // 0x5127B5 base-defense card. enemy_move receives -1 - selection
+        // (`or eax,-1; sub eax,ecx`).
+        const int cursor_base = base_at(cursor_x, cursor_y);
+        if (cursor_base >= 0 &&
+            Bases[cursor_base].faction_id_current == faction_id_) {
+            const int current_proto = Vehs[selected_vehicle_].proto_id;
+            const Base &base = Bases[cursor_base];
+            if (base.population_size > 2 ||
+                PlayersData[faction_id_].total_mil_veh > 3 ||
+                PlayersData[faction_id_].proto_id_active[current_proto] > 1) {
+                if (enemy_move(-1 - selected_vehicle_) != 0 &&
+                    (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x800000u) == 0) {
+                    StringTemp[0] = '\0';
+                    say_stats_3(StringTemp, Vehs[selected_vehicle_].proto_id);
+                    parse_says(2, StringTemp, -1, -1);
+                    parse_says(0, base.name_string, -1, -1);
+                    proto_id = Vehs[selected_vehicle_].proto_id;
+                    parse_says(1, VehPrototypes[proto_id].veh_name, -1, -1);
+
+                    // 0x5128F7: defensive plan whose armor beats its weapon,
+                    // and whose weapon offense is exactly 1.
+                    proto_id = Vehs[selected_vehicle_].proto_id;
+                    const VehPrototype &prototype = VehPrototypes[proto_id];
+                    TutorialWindow.tut_map(
+                        prototype.plan == PLAN_DEFENSIVE &&
+                                Armor[prototype.armor_id].defense_rating >
+                                    Weapon[prototype.weapon_id].offense_rating &&
+                                Weapon[prototype.weapon_id].offense_rating == 1
+                            ? "DEFENDIT2"
+                            : "DEFENDIT",
+                        cursor_x, cursor_y, selected_vehicle_, 0,
+                        0x800000, -1, -1);
+                    return;
                 }
             }
         }
-        if (base.y < map_window->field_1DDA8_ + 2 ||
-            base.y >= map_window->field_1DDA8_ + map_window->field_1DDD0_ +
-                map_window->field_1DDD8_ - 2) {
-            continue;
-        }
 
-        int viewport_x = base.x;
-        if ((MapIsFlat & 1) == 0) {
-            if (viewport_x < map_window->field_1DDA4_ + 2) {
-                viewport_x += MapLongitudeBounds;
+        // 0x512959 empty-base scan. The image checks the current weapon before
+        // iterating and calls tut_check2 before the every-20-turn fallback.
+        // A shown card leaves the loop and continues at 0x512B87; it does not
+        // return.
+        proto_id = Vehs[selected_vehicle_].proto_id;
+        if (GameDataStateStorage.fields_.turn_current_num_ >= 0x14 &&
+            (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x4000000u) == 0 &&
+            Weapon[VehPrototypes[proto_id].weapon_id].offense_rating != 0) {
+            for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_;
+                 ++base_id) {
+                if (Bases[base_id].faction_id_current != faction_id_ ||
+                    veh_at(Bases[base_id].x, Bases[base_id].y) >= 0 ||
+                    Bases[base_id].population_size == 1) {
+                    continue;
+                }
+
+                // Signed coordinates and one MapWinTable[0] read (0x5129FD);
+                // the altitude test is guarded by its own on_map.
+                const int y = Bases[base_id].y;
+                int x = Bases[base_id].x;
+                MapWin *map_window = MapWinTable[0];
+                if (on_map(x, y) && (map_loc(x, y)->climate & ~0x1F) > 0x60 &&
+                    y - (map_loc(x, y)->climate >> 5) + 3 <
+                        map_window->field_1DDA8_ + 2) {
+                    continue;
+                }
+                if (y < map_window->field_1DDA8_ + 2 ||
+                    y >= map_window->field_1DDD8_ + map_window->field_1DDD0_ +
+                             map_window->field_1DDA8_ - 2) {
+                    continue;
+                }
+                if (!(MapIsFlat & 1)) {
+                    if (x < map_window->field_1DDA4_ + 2) {
+                        x += MapLongitudeBounds;
+                    }
+                    if (x >= map_window->field_1DDD4_ + map_window->field_1DDCC_ +
+                                 map_window->field_1DDA4_ - 2) {
+                        x -= MapLongitudeBounds;
+                    }
+                }
+                if (x < map_window->field_1DDA4_ + 2 ||
+                    x >= map_window->field_1DDD4_ + map_window->field_1DDCC_ +
+                             map_window->field_1DDA4_ - 2) {
+                    continue;
+                }
+                if (tut_check2(0x100) != 0 ||
+                    GameDataStateStorage.fields_.turn_current_num_ % 20 == 0) {
+                    parse_says(0, Bases[base_id].name_string, -1, -1);
+                    TutorialWindow.tut_map("EMPTYBASE", Bases[base_id].x,
+                                           Bases[base_id].y, -1, 0,
+                                           0x4000000, -1, -1);
+                    break;
+                }
             }
-            if (viewport_x >= map_window->field_1DDA4_ +
-                    map_window->field_1DDCC_ + map_window->field_1DDD4_ - 2) {
-                viewport_x -= MapLongitudeBounds;
-            }
-        }
-        if (viewport_x < map_window->field_1DDA4_ + 2 ||
-            viewport_x >= map_window->field_1DDA4_ +
-                map_window->field_1DDCC_ + map_window->field_1DDD4_ - 2) {
-            continue;
-        }
-        if (tut_check2(0x100) != 0 || GameDataStateStorage.fields_.turn_current_num_ % 20 == 0) {
-            parse_says(0, base.name_string, -1, -1);
-            TutorialWindow.tut_map("EMPTYBASE", base.x, base.y, -1, 0,
-                                   0x4000000, -1, -1);
-            return;
         }
     }
-}
-}
 
-// LAB_00512B90 cursor-tile owner filter. The native signed JGE after masking
-// a nibble is equivalent here because the value is in [0,15].
-const Map &cursor_tile = *map_loc(cursor_x, cursor_y);
-if ((cursor_tile.bit & 1u) != 0 && (cursor_tile.val2 & 0x0Fu) < 8) {
-    return;
-}
+    // 0x512B90 cursor-tile filter: the inline veh_who owner test.
+    if (veh_who(cursor_x, cursor_y) >= 0) {
+        return;
+    }
 
-// 0x512BCE artifact card; tut_check's bit is recorded before map display.
-proto_id = Vehs[selected_vehicle_].proto_id;
-if (VehPrototypes[proto_id].plan == PLAN_ALIEN_ARTIFACT &&
-    tut_check(0x1000000) != 0) {
-    TutorialWindow.tut_map("ARTIFACT", cursor_x, cursor_y, selected_vehicle_,
-                           0, 0, -1, -1);
-    return;
-}
-
-// The native calls tut_check2 before examining the prototype ID, so its flag
-// side effect remains when the current design is not one of the three Ogre IDs.
-if (tut_check2(0x20000) != 0) {
+    // 0x512BCE artifact card; tut_check's bit is recorded before map display.
     proto_id = Vehs[selected_vehicle_].proto_id;
-    if (proto_id == 0x10 || proto_id == 0x11 || proto_id == 0x12) {
+    if (VehPrototypes[proto_id].plan == PLAN_ALIEN_ARTIFACT &&
+        tut_check(0x1000000) != 0) {
+        TutorialWindow.tut_map("ARTIFACT", cursor_x, cursor_y, selected_vehicle_,
+                               0, 0, -1, -1);
+        return;
+    }
+
+    // tut_check2 runs before the prototype test, so its flag side effect
+    // remains when the current design is not one of the three Ogre IDs. The
+    // image compares the 16-bit prototype field directly.
+    if (tut_check2(0x20000) != 0 &&
+        (Vehs[selected_vehicle_].proto_id == 0x10 ||
+         Vehs[selected_vehicle_].proto_id == 0x11 ||
+         Vehs[selected_vehicle_].proto_id == 0x12)) {
         TutorialWindow.tut_map("GETOGRE", cursor_x, cursor_y, selected_vehicle_,
                                0, 0, -1, -1);
         return;
     }
-}
 
-// LAB_00512C82 nearby native-unit hints. Each candidate uses RadiusBase's
-// first eight entries; a successful checker draws and returns, otherwise the
-// loop continues and falls through to 0x512D4E.
-for (int offset = 0; offset < 0x20; offset += 4) {
-    int x = cursor_x + VehMoveDeltaX[offset / 4];
-    if ((MapIsFlat & 1) == 0) {
-        if (x < 0) {
-            x += MapLongitudeBounds;
-        } else if (x >= MapLongitudeBounds) {
-            x -= MapLongitudeBounds;
+    // 0x512C82 nearby native-unit hints. A rejected spore-launcher checker
+    // still falls through to the sealurk prototype test.
+    for (int native_i = 0; native_i < 8; ++native_i) {
+        const int x = wrap_map_x(cursor_x + VehMoveDeltaX[native_i]);
+        const int y = cursor_y + VehMoveDeltaY[native_i];
+        if (!on_map(x, y)) {
+            continue;
         }
-    }
-    const int y = cursor_y + VehMoveDeltaY[offset / 4];
-    if (y < 0 || y >= MapLatitudeBounds || x < 0 ||
-        x >= MapLongitudeBounds) {
-        continue;
-    }
-    const int nearby = veh_at(x, y);
-    if (nearby < 0 || Vehs[nearby].faction_id != 0) {
-        continue;
-    }
-    const int nearby_proto = Vehs[nearby].proto_id;
-    if (nearby_proto == 0x0F) {
-        if (tut_check2(0x80000) != 0) {
+        const int nearby = veh_at(x, y);
+        if (nearby < 0 || Vehs[nearby].faction_id != 0) {
+            continue;
+        }
+        if (Vehs[nearby].proto_id == 0x0F && tut_check2(0x80000) != 0) {
             TutorialWindow.tut_map("SPORELAUNCHER", x, y, nearby, 0,
                                    0, -1, -1);
             return;
         }
-    } else if (nearby_proto == 0x0E && tut_check2(0x40000) != 0) {
-        TutorialWindow.tut_map("SEALURK", x, y, nearby, 0, 0, -1, -1);
+        if (Vehs[nearby].proto_id == 0x0E && tut_check2(0x40000) != 0) {
+            TutorialWindow.tut_map("SEALURK", x, y, nearby, 0, 0, -1, -1);
+            return;
+        }
+    }
+
+    // 0x512D4E resource scan: occupied tiles (inline anything_at), tile
+    // exclusions, goody suppression, then a switch on bonus_at. The card
+    // re-reads bonus_at inside the tut_map argument list.
+    for (int bonus_i = 0; bonus_i < 8; ++bonus_i) {
+        const int x = wrap_map_x(cursor_x + VehMoveDeltaX[bonus_i]);
+        const int y = cursor_y + VehMoveDeltaY[bonus_i];
+        if (!on_map(x, y)) {
+            continue;
+        }
+        if (anything_at(x, y) >= 0) {
+            continue;
+        }
+        if ((map_loc(x, y)->bit & 0x81E02850u) != 0) {
+            continue;
+        }
+        if (goody_at(x, y) != 0) {
+            continue;
+        }
+        switch (bonus_at(x, y, 0)) {
+        case 1:
+            if (tut_check(0x20000) != 0) {
+                TutorialWindow.tut_map("BONUSNUTRIENT", x, y, -1,
+                    &g_TER1_SEA_LAND_RESOURCE_SPRITES[
+                        (selected_is_sea + bonus_at(x, y, 0) * 2 - 2) * 2],
+                    0, -1, -1);
+                return;
+            }
+            break;
+        case 2:
+            if (tut_check(0x40000) != 0) {
+                TutorialWindow.tut_map("BONUSMINERALS", x, y, -1,
+                    &g_TER1_SEA_LAND_RESOURCE_SPRITES[
+                        (selected_is_sea + bonus_at(x, y, 0) * 2 - 2) * 2],
+                    0, -1, -1);
+                return;
+            }
+            break;
+        case 3:
+            if (tut_check(0x80000) != 0) {
+                TutorialWindow.tut_map("BONUSENERGY", x, y, -1,
+                    &g_TER1_SEA_LAND_RESOURCE_SPRITES[
+                        (selected_is_sea + bonus_at(x, y, 0) * 2 - 2) * 2],
+                    0, -1, -1);
+                return;
+            }
+            break;
+        }
+    }
+
+    // 0x512EA9: the cursor tile's fungus cards. The altitude band is an int
+    // local (`and al,0E0h` then dword compares); the land arm comes first.
+    if ((map_loc(cursor_x, cursor_y)->bit & 0x20u) != 0) {
+        const int altitude = map_loc(cursor_x, cursor_y)->climate & 0xE0;
+        if (altitude >= 0x40) {
+            if (altitude >= 0x60) {
+                if (tut_check(0x100) != 0) {
+                    TutorialWindow.tut_map("FUNGUSAMUNGUS", cursor_x, cursor_y, -1,
+                                           0, 0, -1, -1);
+                    return;
+                }
+            } else if (tut_check(0x8000) != 0) {
+                TutorialWindow.tut_map("FUNGUSSEA", cursor_x, cursor_y, -1,
+                                       0, 0, -1, -1);
+                return;
+            }
+        }
+    }
+
+    // 0x513022: tutorial-state gate; colonization-site advice. A tile with
+    // bit 0x1000 scores 0 without calling world_site.
+    if ((GameDataStateStorage.fields_.game_state_ & 0x400u) != 0) {
         return;
     }
-}
-
-
-{
-// 0x512D4E resource scan: RadiusBase order, coordinate wrapping, tile
-    // exclusions, goody suppression, bonus lookup, checker, second bonus_at
-    // read, then sprite selection. Tut-map returns immediately in each case.
-    for (int radius = 0; radius < 8; ++radius) {
-        const int x = give_hints_wrap_x(cursor_x + VehMoveDeltaX[radius]);
-        const int y = cursor_y + VehMoveDeltaY[radius];
-        if (!give_hints_in_map(x, y)) continue;
-        Map &tile = *map_loc(x, y);
-        if ((tile.bit & 3u) != 0 && (tile.val2 & 0x0Fu) < 8) continue;
-        if ((tile.bit & 0x81E02850u) != 0) continue;
-        if (goody_at(x, y) != 0) continue;
-        int bonus = bonus_at(x, y, 0);
-        if (bonus == 1 && tut_check(0x20000)) {
-            bonus = bonus_at(x, y, 0);
-            const int sprite_index = 2 * static_cast<int>(selected_is_sea) +
-                                     4 * (bonus - 1);
-            TutorialWindow.tut_map("BONUSNUTRIENT", x, y, -1,
-                 &g_TER1_SEA_LAND_RESOURCE_SPRITES[sprite_index], 0, -1, -1);
-            return;
-        }
-        if (bonus == 2 && tut_check(0x40000)) {
-            bonus = bonus_at(x, y, 0);
-            const int sprite_index = 2 * static_cast<int>(selected_is_sea) +
-                                     4 * (bonus - 1);
-            TutorialWindow.tut_map("BONUSMINERALS", x, y, -1,
-                 &g_TER1_SEA_LAND_RESOURCE_SPRITES[sprite_index], 0, -1, -1);
-            return;
-        }
-        if (bonus == 3 && tut_check(0x80000)) {
-            bonus = bonus_at(x, y, 0);
-            const int sprite_index = 2 * static_cast<int>(selected_is_sea) +
-                                     4 * (bonus - 1);
-            TutorialWindow.tut_map("BONUSENERGY", x, y, -1,
-                 &g_TER1_SEA_LAND_RESOURCE_SPRITES[sprite_index], 0, -1, -1);
-            return;
-        }
-    }
-
-    // The selected cursor tile's fungus-water/land cards follow the neighbor
-    // scan. Native tests bit 0x20, then the altitude band, with distinct masks.
-    Map &cursor_tile = *map_loc(cursor_x, cursor_y);
-    if ((cursor_tile.bit & 0x20u) != 0) {
-        const uint8_t altitude_band = cursor_tile.climate & 0xE0u;
-        if (altitude_band >= 0x40u && altitude_band < 0x60u &&
-            tut_check(0x8000)) {
-            TutorialWindow.tut_map("FUNGUSSEA", cursor_x, cursor_y, -1, 0, 0, -1, -1);
-            return;
-        }
-        if (altitude_band >= 0x60u && tut_check(0x100)) {
-            TutorialWindow.tut_map("FUNGUSAMUNGUS", cursor_x, cursor_y, -1, 0, 0, -1, -1);
-            return;
-        }
-    }
-
-    // 0x513022: tutorial-state gate; colonization-site advice. The current
-    // tile's site is initialized/read before the neighbor scan, and each
-    // candidate updates its site through the real world_site/site_set owners.
-    if ((GameDataStateStorage.fields_.game_state_ & 0x400u) != 0) return;
     proto_id = Vehs[selected_vehicle_].proto_id;
     if (VehPrototypes[proto_id].plan == PLAN_COLONIZATION &&
         (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x10000u) == 0) {
-        Map &here = *map_loc(cursor_x, cursor_y);
-        int site = (here.bit & 0x1000u) ? 0 : (here.val2 >> 4);
-        if (site == 0) {
-            site = world_site(cursor_x, cursor_y, 0);
-            site_set(cursor_x, cursor_y, site);
+        int site;
+        if ((map_loc(cursor_x, cursor_y)->bit & 0x1000u) != 0) {
+            site = 0;
+        } else {
+            site = map_loc(cursor_x, cursor_y)->val2 >> 4;
+            if (site == 0) {
+                site = world_site(cursor_x, cursor_y, 0);
+                site_set(cursor_x, cursor_y, site);
+            }
         }
-        if (site < 4) {
-            const int region = map_loc(cursor_x, cursor_y)->region;
-            if (site < PlayersData[faction_id_].unk_82[region]) return;
+        if (site < 4 &&
+            site < PlayersData[faction_id_].unk_82[map_loc(cursor_x, cursor_y)->region]) {
+            return;
         }
-        bool better_site_in_unowned_region = false;
-        for (int i = 0; i < 21; ++i) {
-            const int x = give_hints_wrap_x(cursor_x + RadiusOffsetX[i]);
-            const int y = cursor_y + RadiusOffsetY[i];
-            if (!give_hints_in_map(x, y)) continue;
+        for (int site_i = 0; site_i < 21; ++site_i) {
+            const int x = wrap_map_x(cursor_x + RadiusOffsetX[site_i]);
+            const int y = cursor_y + RadiusOffsetY[site_i];
+            if (!on_map(x, y)) {
+                continue;
+            }
             const int owner = whose_territory(faction_id_, x, y, 0, 0);
-            if (owner >= 0 && owner != faction_id_) continue;
-            Map &candidate = *map_loc(x, y);
+            if (owner >= 0 && owner != faction_id_) {
+                continue;
+            }
             int candidate_site;
-            if ((candidate.bit & 0x1000u) != 0) {
+            if ((map_loc(x, y)->bit & 0x1000u) != 0) {
                 candidate_site = 0;
             } else {
-                candidate_site = candidate.val2 >> 4;
+                candidate_site = map_loc(x, y)->val2 >> 4;
                 if (candidate_site == 0) {
                     candidate_site = world_site(x, y, 0);
                     site_set(x, y, candidate_site);
                 }
             }
             if (candidate_site > site) {
-                better_site_in_unowned_region = true;
-                break;
+                return;
             }
         }
-        if (better_site_in_unowned_region) return;
         TutorialWindow.tut_map("BUILDHERE", cursor_x, cursor_y, selected_vehicle_, 0,
-             0x10000, -1, -1);
+                               0x10000, -1, -1);
         return;
     }
 
-    // 0x51323A terraforming chain, only for plan 9 when the entry-captured
-    // local_14 is false. BaseFindDist and BaseCurrent are written/read by the
-    // actual base_find owner, not synthesized from a radius test.
+    // 0x51323A terraforming chain, only for plan 9 when the captured sea flag
+    // is false. BaseFindDist and BaseCurrent are written/read by base_find.
+    // The improvement tests form one else-if chain: a rejected flag/tile test
+    // skips straight to the sensor card (0x513433).
     proto_id = Vehs[selected_vehicle_].proto_id;
     if (VehPrototypes[proto_id].plan == PLAN_TERRAFORMING && !selected_is_sea) {
         const int base_id = base_find(cursor_x, cursor_y, faction_id_);
-        if (base_id < 0) return;
+        if (base_id < 0) {
+            return;
+        }
         if (BaseFindDist <= 2) {
             if (at_goal(faction_id_, 0x29, cursor_x, cursor_y) != 0 &&
                 (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x200000u) == 0) {
                 parse_says(0, BaseCurrent->name_string, -1, -1);
                 if ((map_loc(cursor_x, cursor_y)->bit & 0x40u) != 0) {
                     TutorialWindow.tut_map("TERRARAISE", cursor_x, cursor_y, -1, 0,
-                         0x200000, -1, -1);
+                                           0x200000, -1, -1);
                 }
                 GameDataStateStorage.fields_.game_state_ |= 0x400u;
                 return;
@@ -4977,42 +4962,44 @@ for (int offset = 0; offset < 0x20; offset += 4) {
 
             const int improve = can_terraform(faction_id_, cursor_x, cursor_y,
                                               0, base_id);
-            if (improve == 4 &&
-                (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x100000u) == 0 &&
-                (map_loc(cursor_x, cursor_y)->bit & 0x800000u) == 0) {
-                GameDataStateStorage.fields_.game_state_ |= 0x400u;
-                parse_says(0, Bases[base_id].name_string, -1, -1);
-                TutorialWindow.tut_map("TERRAFARM", cursor_x, cursor_y, -1,
-                     &g_TER1_FARM_SPRITES[3], 0x100000, -1, -1);
-                return;
-            }
-            if (improve == 6 &&
-                (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x40000u) == 0) {
-                TutorialWindow.tut_map("TERRAMINE", cursor_x, cursor_y, -1,
-                     &g_TER1_MINE_SPRITE, 0x40000, -1, -1);
-                GameDataStateStorage.fields_.game_state_ |= 0x400u;
-                return;
-            }
-            if (improve == 7 &&
-                (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x20000u) == 0) {
-                TutorialWindow.tut_map("TERRASOLAR", cursor_x, cursor_y, -1,
-                     &g_TER1_SOLAR_COLLECTOR_SPRITE, 0x20000, -1, -1);
-                GameDataStateStorage.fields_.game_state_ |= 0x400u;
-                return;
-            }
-            if (improve == 8 &&
-                (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x400000u) == 0) {
-                TutorialWindow.tut_map("TERRAFOREST", cursor_x, cursor_y, -1, 0,
-                     0x400000, -1, -1);
-                GameDataStateStorage.fields_.game_state_ |= 0x400u;
-                return;
+            if (improve == 4) {
+                // 0x513344 tests tile bit 0x8000 (`test dh,80h`).
+                if ((GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x100000u) == 0 &&
+                    (map_loc(cursor_x, cursor_y)->bit & 0x8000u) == 0) {
+                    GameDataStateStorage.fields_.game_state_ |= 0x400u;
+                    parse_says(0, Bases[base_id].name_string, -1, -1);
+                    TutorialWindow.tut_map("TERRAFARM", cursor_x, cursor_y, -1,
+                                           &g_TER1_FARM_SPRITES[3], 0x100000, -1, -1);
+                    return;
+                }
+            } else if (improve == 6) {
+                if ((GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x40000u) == 0) {
+                    TutorialWindow.tut_map("TERRAMINE", cursor_x, cursor_y, -1,
+                                           &g_TER1_MINE_SPRITE, 0x40000, -1, -1);
+                    GameDataStateStorage.fields_.game_state_ |= 0x400u;
+                    return;
+                }
+            } else if (improve == 7) {
+                if ((GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x20000u) == 0) {
+                    TutorialWindow.tut_map("TERRASOLAR", cursor_x, cursor_y, -1,
+                                           &g_TER1_SOLAR_COLLECTOR_SPRITE, 0x20000, -1, -1);
+                    GameDataStateStorage.fields_.game_state_ |= 0x400u;
+                    return;
+                }
+            } else if (improve == 8) {
+                if ((GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x400000u) == 0) {
+                    TutorialWindow.tut_map("TERRAFOREST", cursor_x, cursor_y, -1, 0,
+                                           0x400000, -1, -1);
+                    GameDataStateStorage.fields_.game_state_ |= 0x400u;
+                    return;
+                }
             }
 
             if ((at_goal(faction_id_, 0x79, cursor_x, cursor_y) != 0 ||
                  good_sensor(ConsoleGlobal.faction_id_, cursor_x, cursor_y) != 0) &&
                 (GameDataStateStorage.fields_.tutwin_flags_9a64bc_ & 0x2000000u) == 0) {
                 TutorialWindow.tut_map("TERRASENSOR", cursor_x, cursor_y, -1, 0,
-                     0x2000000, -1, -1);
+                                       0x2000000, -1, -1);
                 GameDataStateStorage.fields_.game_state_ |= 0x400u;
                 return;
             }
@@ -5022,111 +5009,143 @@ for (int offset = 0; offset < 0x20; offset += 4) {
                 ((tile_flags & 0x10u) != 0 ||
                  at_goal(faction_id_, 9, cursor_x, cursor_y) != 0)) {
                 TutorialWindow.tut_map("TERRAROAD", cursor_x, cursor_y, -1, 0,
-                     0x80000, -1, -1);
+                                       0x80000, -1, -1);
                 GameDataStateStorage.fields_.game_state_ |= 0x400u;
                 return;
             }
         }
     }
 
-    // The exploration/goody scan checks the 8-tile RadiusBase sequence for a
-    // pod on matching sea/land terrain. A matching pod branches directly to
-    // the shared 0x5135E6 card tail.
-    bool matching_pod = false;
-    int pod_x = cursor_x;
-    int pod_y = cursor_y;
+    // 0x513505 exploration scan: the first goody whose ocean-ness equals the
+    // captured sea flag shows the card directly from inside the loop.
     if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x2000) == 0) {
-        for (int i = 0; i < 8; ++i) {
-            const int x = give_hints_wrap_x(cursor_x + VehMoveDeltaX[i]);
-            const int y = cursor_y + VehMoveDeltaY[i];
-            if (!give_hints_in_map(x, y) || goody_at(x, y) == 0) continue;
-            const bool shallow_or_land = (map_loc(x, y)->climate & 0xE0u) < 0x60u;
-            if (shallow_or_land == selected_is_sea) {
-                matching_pod = true;
-                pod_x = x;
-                pod_y = y;
-                break;
+        for (int pod_i = 0; pod_i < 8; ++pod_i) {
+            const int x = wrap_map_x(cursor_x + VehMoveDeltaX[pod_i]);
+            const int y = cursor_y + VehMoveDeltaY[pod_i];
+            if (!on_map(x, y)) {
+                continue;
+            }
+            if (goody_at(x, y) == 0) {
+                continue;
+            }
+            if (is_ocean(x, y) == selected_is_sea) {
+                if (tut_check(0x2000) == 0) {
+                    return;
+                }
+                TutorialWindow.tut_map("EXPLORATION", x, y, -1,
+                    &g_TER1_UNITY_POD_SPRITES[selected_is_sea +
+                                              ((x * 7 + y * 5) % 3) * 2],
+                    0, -1, -1);
+                return;
             }
         }
     }
 
-    // A matching goody is the only route to LAB_005135E6 / EXPLORATION.
-    // Preserve the native checker-before-index/draw order and unchecked
-    // computed sprite-table access.
-    if (matching_pod) {
-        if (!tut_check(0x2000)) return;
-        const int remainder = (5 * pod_y + 7 * pod_x) % 3;
-        const int sprite_index = static_cast<int>(selected_is_sea) + remainder * 2;
-        TutorialWindow.tut_map("EXPLORATION", pod_x, pod_y, -1,
-             &g_TER1_UNITY_POD_SPRITES[sprite_index], 0, -1, -1);
-        return;
-    }
-
-    // 0x5135AD enemy-base scan. Its exhaustion proceeds to 0x5136B7, not to
-    // the exploration checker. A previously set base flag bypasses this scan
-    // but still proceeds to the same enemy-vehicle scan.
+    // 0x5135AD enemy-base scan. Its exhaustion proceeds to 0x5136B7. The
+    // owner byte is re-read from the base record for each leader/noun parse.
     if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x8000000) == 0) {
-        for (int i = 0; i < 8; ++i) {
-            const int x = give_hints_wrap_x(cursor_x + VehMoveDeltaX[i]);
-            const int y = cursor_y + VehMoveDeltaY[i];
-            if (!give_hints_in_map(x, y)) continue;
+        for (int enemy_base_i = 0; enemy_base_i < 8; ++enemy_base_i) {
+            const int x = wrap_map_x(cursor_x + VehMoveDeltaX[enemy_base_i]);
+            const int y = cursor_y + VehMoveDeltaY[enemy_base_i];
+            if (!on_map(x, y)) {
+                continue;
+            }
             const int base_id = base_at(x, y);
-            if (base_id < 0) continue;
-            const int base_faction = Bases[base_id].faction_id_current;
-            if (base_faction == faction_id_) continue;
-            if (!tut_check(0x8000000)) return;
+            if (base_id < 0) {
+                continue;
+            }
+            if (Bases[base_id].faction_id_current == faction_id_) {
+                continue;
+            }
+            if (tut_check(0x8000000) == 0) {
+                return;
+            }
             parse_says(0, Bases[base_id].name_string, -1, -1);
-            give_hints_parse_faction_identity(base_faction);
+            GenderDefault = Players[Bases[base_id].faction_id_current].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(1, Players[Bases[base_id].faction_id_current].title_leader, -1, -1);
+            GenderDefault = Players[Bases[base_id].faction_id_current].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(2, Players[Bases[base_id].faction_id_current].name_leader, -1, -1);
+            GenderDefault = Players[Bases[base_id].faction_id_current].noun_gender;
+            PluralityDefault = Players[Bases[base_id].faction_id_current].is_noun_plural;
+            parse_says(3, Players[Bases[base_id].faction_id_current].noun_faction, -1, -1);
             TutorialWindow.tut_map("ENEMYBASE", x, y, -1, 0, 0, -1, -1);
             return;
         }
     }
 
-    // Native 0x5136B7 enemy-vehicle scan follows either an exhausted base
-    // scan or the pre-set base-hint bit. Its own independent flag controls it.
+    // 0x5136B7 enemy-vehicle scan; skips tiles the inline veh_who reports as
+    // occupied, and re-reads the vehicle's faction byte for each parse.
     if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x10000000) == 0) {
-        for (int i = 0; i < 8; ++i) {
-            const int x = give_hints_wrap_x(cursor_x + VehMoveDeltaX[i]);
-            const int y = cursor_y + VehMoveDeltaY[i];
-            if (!give_hints_in_map(x, y)) continue;
-            Map &tile = *map_loc(x, y);
-            if ((tile.bit & 1u) != 0 && (tile.val2 & 0x0Fu) < 8) continue;
+        for (int enemy_veh_i = 0; enemy_veh_i < 8; ++enemy_veh_i) {
+            const int x = wrap_map_x(cursor_x + VehMoveDeltaX[enemy_veh_i]);
+            const int y = cursor_y + VehMoveDeltaY[enemy_veh_i];
+            if (!on_map(x, y)) {
+                continue;
+            }
+            if (veh_who(x, y) >= 0) {
+                continue;
+            }
             const int vehicle = veh_at(x, y);
-            if (vehicle < 0) continue;
-            const int other_faction = Vehs[vehicle].faction_id;
-            if (other_faction == faction_id_ || other_faction == 0) continue;
-            if (!tut_check(0x10000000)) return;
-            give_hints_parse_faction_identity(other_faction);
+            if (vehicle < 0) {
+                continue;
+            }
+            if (Vehs[vehicle].faction_id == faction_id_ || Vehs[vehicle].faction_id == 0) {
+                continue;
+            }
+            if (tut_check(0x10000000) == 0) {
+                return;
+            }
+            GenderDefault = Players[Vehs[vehicle].faction_id].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(1, Players[Vehs[vehicle].faction_id].title_leader, -1, -1);
+            GenderDefault = Players[Vehs[vehicle].faction_id].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(2, Players[Vehs[vehicle].faction_id].name_leader, -1, -1);
+            GenderDefault = Players[Vehs[vehicle].faction_id].noun_gender;
+            PluralityDefault = Players[Vehs[vehicle].faction_id].is_noun_plural;
+            parse_says(3, Players[Vehs[vehicle].faction_id].noun_faction, -1, -1);
             TutorialWindow.tut_map("ENEMYVEH", x, y, vehicle, 0, 0, -1, -1);
             return;
         }
     }
 
-    // 0x5138B3 territory edge scan. It compares each candidate owner against
-    // the cursor tile owner, then emits only the
-    // first edge faction meeting the two comparisons.
+    // 0x5138B3 territory edge scan. The candidate owner is tested against
+    // this faction before its sign, then against the cursor tile's owner.
     if ((GameDataStateStorage.fields_.tutorial_flags_ & 0x20000000) == 0) {
-        for (int i = 0; i < 8; ++i) {
-            const int x = give_hints_wrap_x(cursor_x + VehMoveDeltaX[i]);
-            const int y = cursor_y + VehMoveDeltaY[i];
-            if (!give_hints_in_map(x, y)) continue;
-            const Map &tile = *map_loc(x, y);
-            if ((tile.bit & 3u) != 0 && (tile.val2 & 0x0Fu) < 8) continue;
-            const int candidate_owner = whose_territory(faction_id_, x, y,
-                                                        0, 0);
-            if (candidate_owner < 0 || candidate_owner == faction_id_) continue;
-            const int again_cursor_owner = whose_territory(
-                faction_id_, cursor_x, cursor_y, 0, 0);
-            if (again_cursor_owner == candidate_owner) continue;
-            if (!tut_check(0x20000000)) return;
-            give_hints_parse_faction_identity(candidate_owner);
+        for (int terr_i = 0; terr_i < 8; ++terr_i) {
+            const int x = wrap_map_x(cursor_x + VehMoveDeltaX[terr_i]);
+            const int y = cursor_y + VehMoveDeltaY[terr_i];
+            if (!on_map(x, y)) {
+                continue;
+            }
+            if (anything_at(x, y) >= 0) {
+                continue;
+            }
+            const int owner = whose_territory(faction_id_, x, y, 0, 0);
+            if (owner == faction_id_ || owner < 0) {
+                continue;
+            }
+            if (whose_territory(faction_id_, cursor_x, cursor_y, 0, 0) == owner) {
+                continue;
+            }
+            if (tut_check(0x20000000) == 0) {
+                return;
+            }
+            GenderDefault = Players[owner].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(1, Players[owner].title_leader, -1, -1);
+            GenderDefault = Players[owner].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(2, Players[owner].name_leader, -1, -1);
+            GenderDefault = Players[owner].noun_gender;
+            PluralityDefault = Players[owner].is_noun_plural;
+            parse_says(3, Players[owner].noun_faction, -1, -1);
             TutorialWindow.tut_map("ENEMYTERR", x, y, -1, 0, 0, -1, -1);
             return;
         }
     }
-}
-
-
 }
 
 // ORIGINAL: 0x00514050 ?human_turn@Console@@QAEXXZ 0x00514050-0x005147DA FILE BYTE_EXACT
@@ -5648,8 +5667,9 @@ void Console::menu_proc(int command) {
 
     TutorialWindow.reset();
     go_reset();
+    // 0x51BCAE..0x51BD41 is Console::cursor_off (0x510520) expanded.
+    // WORKAROUND(inline): written out; a cursor_off() call stays out of line here.
     field_23D10_ = 0;
-
     for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
         MapWin *const window = MapWinTable[slot];
         if (window == nullptr || (slot != 0 && window->view_active_ == 0)) {
@@ -5695,9 +5715,12 @@ void Console::menu_proc(int command) {
         terraform(selected_vehicle_, command - 0x900);
     }
 
+    // Case bodies follow the image's body addresses (0x51BEA5..0x51CEA4).
+    // Several are Console members expanded in place; each is written as the
+    // call so /Ob2 expands it the way the image does.
     switch (command) {
-    case 0x51: GameDataStateStorage.fields_.game_more_preferences_ |= 0x200000; alpha_menu_.check(selected_vehicle_); X_pop("MENUDETAIL", 0); break;
-    case 0x52: GameDataStateStorage.fields_.game_more_preferences_ &= ~0x200000u; alpha_menu_.check(selected_vehicle_); X_pop("MENUSIMPLE", 0); break;
+    case 0x51: menu_detail(); break;            // 0x516930 expanded
+    case 0x52: menu_simple(); break;            // 0x516970 expanded
     case 0x53: set_preferences(); break;
     case 0x55: set_adv_preferences(); break;
     case 0x54: set_base_preferences(); break;
@@ -5707,6 +5730,8 @@ void Console::menu_proc(int command) {
     case 0x59: save_game(0); break;
     case 0x5A: load_proc(0, 0); break;
     case 0x5B: retire_game(); break;
+    // WORKAROUND(inline): new_game (0x514D30) and quit_game (0x514990) are
+    // expanded in the image; calls to them stay out of line here.
     case 0x5C:
         if (IsMultiplayerNet != 0) break;
         if (X_pop(IsMultiplayerPBEM == 0
@@ -5722,7 +5747,7 @@ void Console::menu_proc(int command) {
             if ((GameDataStateStorage.fields_.game_rules_ & 0x400) != 0 && IsMultiplayerPBEM == 0) auto_save();
             if (IsMultiplayerNet != 0) {
                 NetDaemonNet.hang_up();
-                NetDaemonNet.reset();
+                { void (NetDaemon::*reset_call)() = &NetDaemon::reset; (NetDaemonNet.*reset_call)(); }  // WORKAROUND(noinline): the image calls 0x51DD00 here
                 IsMultiplayerNet = 0;
             }
             ExitTurnLoop = 1;
@@ -5744,7 +5769,7 @@ void Console::menu_proc(int command) {
             if ((GameDataStateStorage.fields_.game_rules_ & 0x400) != 0 && IsMultiplayerPBEM == 0) auto_save();
             if (IsMultiplayerNet != 0) {
                 NetDaemonNet.hang_up();
-                NetDaemonNet.reset();
+                { void (NetDaemon::*reset_call)() = &NetDaemon::reset; (NetDaemonNet.*reset_call)(); }  // WORKAROUND(noinline): the image calls 0x51DD00 here
                 IsMultiplayerNet = 0;
             }
             ExitTurnLoop = 1;
@@ -5754,11 +5779,44 @@ void Console::menu_proc(int command) {
     case 0x103: design_new_veh(ConsoleGlobal.faction_id_, -1); break;
     case 0x105: social_select(ConsoleGlobal.faction_id_); break;
     case 0x106:
-        if ((GameDataStateStorage.fields_.game_rules_ & 0x200) == 0) break;
-        set_ai(ConsoleGlobal.faction_id_);
+        // 0x514F50 expanded under the AI-priorities rule.
+        if ((GameDataStateStorage.fields_.game_rules_ & 0x200) != 0) {
+            // WORKAROUND(inline): set_ai written out; a call stays out of line here.
+            const int faction_id = ConsoleGlobal.faction_id_;
+            int *growth = &PlayersData[faction_id].ai_growth;
+            int *tech = &PlayersData[faction_id].ai_tech;
+            int *wealth = &PlayersData[faction_id].ai_wealth;
+            int *power = &PlayersData[faction_id].ai_power;
+            int flags = (*growth != 0) ? 1 : 0;
+            if (*tech != 0) {
+                flags |= 2;
+            } else {
+                flags &= ~2;
+            }
+            if (*wealth != 0) {
+                flags |= 4;
+            } else {
+                flags &= ~4;
+            }
+            if (*power != 0) {
+                flags |= 8;
+            } else {
+                flags &= ~8;
+            }
+            PopupWriteCheckState = static_cast<int>(flags);
+            if (x_pop_short(ConsoleStrTechRandom, 1, (NullCallback)0) >= 0) {
+                *growth = (char)PopupWriteCheckState & 1u;
+                *tech = ((char)PopupWriteCheckState & 2u) >> 1;
+                *wealth = ((char)PopupWriteCheckState & 4u) >> 2;
+                *power = ((char)PopupWriteCheckState & 8u) >> 3;
+                synch_ai(faction_id);
+            }
+        }
         break;
     case 0x107:
-        if ((GameDataStateStorage.fields_.game_rules_ & 0x200) == 0) set_tech(ConsoleGlobal.faction_id_);
+        if ((GameDataStateStorage.fields_.game_rules_ & 0x200) == 0) {
+            set_tech(ConsoleGlobal.faction_id_);
+        }
         break;
     case 0x114: corner_the_market(); break;
     case 0x115: show_scen_objectives(); break;
@@ -5772,83 +5830,48 @@ void Console::menu_proc(int command) {
     case 0x110: monument(0); break;
     case 0x111: hall_of_fame(0); break;
     case 0x113:
-        if (MultiWindow.panel_open() != 0) MultiWindow.hide();
-        else MultiWindow.show();
+        if (MultiWindow.panel_open() != 0) {
+            MultiWindow.hide();
+        } else {
+            MultiWindow.show();
+        }
         break;
     case 0x200:
-        if (edit_lock() == 0) set_move(0);
-        else NetMsgPrimary.pop("PROTECTED", 5000, 0, nullptr);
+        if (edit_lock() == 0) {
+            set_move(0);
+        } else {
+            NetMsgPrimary.pop("PROTECTED", 5000, 0, nullptr);
+        }
         break;
     case 0x201:
-        if (ConsoleGlobal.cursor_active_ != 0) reset_turn_view();
-        break;
-    case 0x203: case 0x204: case 0x205: case 0x206: case 0x207: case 0x208: zoom(command, 0); break;
-    case 0x209:
-        GameDataStateStorage.fields_.game_more_preferences_ ^= 0x10000;
-        if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x10000) == 0)
-            alpha_menu_.uncheck_menu_item(2, 0x209);
-        else alpha_menu_.check_menu_item(2, 0x209);
-        AlphaIniPrefs.more_preferences = GameDataStateStorage.fields_.game_more_preferences_;
-        prefs_save(0); ::draw_map(1); break;
-    case 0x20A:
-        GameDataStateStorage.fields_.game_preferences_ ^= 0x100;
-        if ((GameDataStateStorage.fields_.game_preferences_ & 0x100) == 0)
-            alpha_menu_.uncheck_menu_item(2, 0x20A);
-        else alpha_menu_.check_menu_item(2, 0x20A);
-        AlphaIniPrefs.preferences = GameDataStateStorage.fields_.game_preferences_;
-        prefs_save(0); ::draw_map(1); break;
-    case 0x20B:
-        GameDataStateStorage.fields_.game_preferences_ ^= 0x200;
-        if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) == 0)
-            alpha_menu_.uncheck_menu_item(2, 0x20B);
-        else alpha_menu_.check_menu_item(2, 0x20B);
-        AlphaIniPrefs.preferences = GameDataStateStorage.fields_.game_preferences_;
-        prefs_save(0); ::draw_map(1); break;
-    case 0x20C:
-        MapWinTable[0]->field_1DD70_ ^= 0x40000;
-        ::draw_map(1); break;
-    case 0x20F: survey(); break;
-    case 0x210:
-        {
-            uint32_t prefs = GameDataStateStorage.fields_.game_more_preferences_;
-            if ((prefs & 0x1000) == 0) {
-                if ((prefs & 0x2000) == 0) prefs |= 0x2000;
-                else prefs |= 0x1000;
-            } else prefs &= ~0x3000u;
-            GameDataStateStorage.fields_.game_more_preferences_ = prefs;
-            AlphaIniPrefs.more_preferences = prefs;
-            prefs_save(0); ::draw_map(1); break;
+        if (ConsoleGlobal.cursor_active_ != 0) {
+            reset_turn_view();
         }
+        break;
+    case 0x203:
+    case 0x204:
+    case 0x205:
+    case 0x206:
+    case 0x207:
+    case 0x208:
+        zoom(command, 0);
+        break;
+    case 0x209: toggle_flatten(); break;        // 0x515640 expanded
+    case 0x20A: toggle_grid(); break;           // 0x5156A0 expanded
+    case 0x20B: toggle_base_grid(); break;      // 0x5156F0 expanded
+    case 0x20C: toggle_dest(); break;           // 0x515740 expanded
+    case 0x20F: survey(); break;
+    case 0x210: base_names(); break;            // 0x515600 expanded
     case 0x211: name_landmark(-1, -1); break;
     case 0x20D:
         StatusFlags = 0;
-        desktop_init(1); break;
+        desktop_init(1);
+        break;
     case 0x212: erase_landmark(-1, -1); break;
-    case 0x215:
-        {
-            const uint32_t base_flag = MapWinTable[0]->field_1DD70_ & 0x400000;
-            for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
-                MapWin *const window = MapWinTable[slot];
-                if (window == nullptr ||
-                    (slot != 0 && window->view_active_ == 0)) continue;
-                if (base_flag == 0) {
-                    window->field_1DD70_ |= 0x400000;
-                    window->draw_base_dest(1);
-                } else {
-                    window->field_1DD70_ &= ~0x400000u;
-                    window->draw_map(1);
-                }
-            }
-            break;
-        }
+    case 0x215: toggle_patrol(); break;         // 0x515EF0 expanded
     case 0x213: go_to(-1, -2, 0); break;
-    case 0x214:
-        {
-            const int index = ConsoleGlobal.cursor_history_index_;
-            MapWinTable[0]->set_center(ConsoleGlobal.cursor_history_x_[index],
-                ConsoleGlobal.cursor_history_y_[index], 1);
-            break;
-        }
+    case 0x214: center(); break;                // 0x515400 expanded
+    // WORKAROUND(inline): prev_cursor (0x510A60) written out; a call stays out of line.
     case 0x216:
         field_23BF8_ = 0;
         if (survey_mode_ != 0) { survey_mode_ = 0; MapWinTable[0]->draw_map(1); }
@@ -5863,36 +5886,48 @@ void Console::menu_proc(int command) {
             ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]);
         break;
     case 0x217: next_cursor(); break;
-    case 0x300: case 0x301: new_base(selected_vehicle_); break;
+    case 0x300:
+    case 0x301:
+        new_base(selected_vehicle_);
+        break;
     case 0x304:
         {
             const Veh &vehicle = Vehs[selected_vehicle_];
             const VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
-            const bool air_combat =
-                Chassis[prototype.chassis_id].triad == TRIAD_AIR &&
-                Weapon[prototype.weapon_id].mode != 0;
-            automate(selected_vehicle_, air_combat ? 0xC : 3);
-            break;
+            if (Chassis[prototype.chassis_id].triad == TRIAD_AIR &&
+                Weapon[prototype.weapon_id].mode != 0) {
+                automate(selected_vehicle_, 0xC);
+            } else {
+                automate(selected_vehicle_, 3);
+            }
         }
+        break;
     case 0x302: oblit(selected_vehicle_); break;
     case 0x305: arty(selected_vehicle_); break;
     case 0x306: automate(selected_vehicle_, 10); break;
     case 0x307: automate(selected_vehicle_, 0xB); break;
-    case 0x309: case 0x30A: use_ability(selected_vehicle_); break;
+    // 0x309 and 0x30A have separate (identical) bodies in the image.
+    case 0x309: use_ability(selected_vehicle_); break;
+    case 0x30A: use_ability(selected_vehicle_); break;
     case 0x310: go_to(selected_vehicle_, -3, 0); break;
     case 0x311: destroy(selected_vehicle_); break;
     case 0x308: convoy(selected_vehicle_); break;
     case 0x312:
-        if (ConsoleGlobal.cursor_active_ == 0)
+        if (ConsoleGlobal.cursor_active_ == 0) {
             disband(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
-                   ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]);
-        else disband(selected_vehicle_);
+                    ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]);
+        } else {
+            disband(selected_vehicle_);
+        }
         break;
     case 0x313:
-        if (edit_lock() == 0)
+        // Separate "PROTECTED" literal from case 0x200's (0x68AD7C vs 0x68AD70).
+        if (edit_lock() != 0) {
+            NetMsgPrimary.pop("PROTECTED", 5000, 0, nullptr);
+        } else {
             activate(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
                      ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 1);
-        else NetMsgPrimary.pop("PROTECTED", 5000, 0, nullptr);
+        }
         break;
     case 0x314: automate(selected_vehicle_, 0); break;
     case 0x315: hold(selected_vehicle_, 0); break;
@@ -5902,7 +5937,10 @@ void Console::menu_proc(int command) {
     case 0x320: designate(selected_vehicle_); break;
     case 0x321: sentry(selected_vehicle_, 0); break;
     case 0x322: sentry(selected_vehicle_, 10); break;
-    case 0x316: case 0x317: go_home(selected_vehicle_); break;
+    case 0x316:
+    case 0x317:
+        go_home(selected_vehicle_);
+        break;
     case 0x318: go_to(selected_vehicle_, 0x18, 0); break;
     case 0x31B: explore(selected_vehicle_); break;
     case 0x319: go_to(selected_vehicle_, 0x18, 1); break;
@@ -5911,7 +5949,10 @@ void Console::menu_proc(int command) {
     case 0x323: skip(selected_vehicle_); break;
     case 0x600: editor_on(); break;
     case 0x324: set_patrol(selected_vehicle_); break;
-    case 0x108: case 0x701: help_topic(2, 0); break;
+    case 0x108:
+    case 0x701:
+        help_topic(2, 0);
+        break;
     case 0x702: help_topic(0, 0); break;
     case 0x703: help_topic(1, 0); break;
     case 0x704: help_topic(0xE, 0); break;
@@ -5938,14 +5979,12 @@ void Console::menu_proc(int command) {
     case 0x804: time_controls(); break;
     case 0x805: zoom_to_upkeep_base(); break;
     case 0x806: use_time_bonus(); break;
-    case 0x807: case 0x808: end_my_turn(); break;
-    case 0x750: show_credits(); break;
-    case 0x751:
-        parse_says(0, ConsoleVersionRelease, -1, -1);
-        parse_says(1, ConsoleVersionBuildDate, -1, -1);
-        popp(ScriptPopupFile, ConsoleStrVersionControlX, 0,
-             ConsoleStrAcLogoSm, (NullCallback)0);
+    case 0x807:
+    case 0x808:
+        end_my_turn();
         break;
+    case 0x750: show_credits(); break;
+    case 0x751: show_version(); break;          // 0x517180 expanded
     case 0x9F0: road_to(selected_vehicle_, 0x1B); break;
     case 0x9F8: automate(selected_vehicle_, 4); break;
     case 0x9F9: automate(selected_vehicle_, 5); break;
@@ -5963,10 +6002,12 @@ void Console::menu_proc(int command) {
     switch (command) {
     case 0x601:
         GameDataStateStorage.fields_.game_state_ ^= 0x80;
-        if ((GameDataStateStorage.fields_.game_state_ & 0x80) == 0 || (GameDataStateStorage.fields_.game_state_ & 0x40) == 0)
-            MainInterfaceGlobal.flat_button_[2].hide();
-        else
+        if ((GameDataStateStorage.fields_.game_state_ & 0x80) != 0 &&
+            (GameDataStateStorage.fields_.game_state_ & 0x40) != 0) {
             MainInterfaceGlobal.flat_button_[2].show(0);
+        } else {
+            MainInterfaceGlobal.flat_button_[2].hide();
+        }
         ::draw_map(1);
         WorldClimateWorldWin.GraphicWin::redraw();
         desktop_update();
@@ -6169,104 +6210,64 @@ int ConsoleKeyCycleState = -2;
 // kind      game
 // symbol    ?on_key_click@Console@@UAEHHH@Z
 int Console::on_key_click(int a1, int a2) {
+    // Frame slots (pinned image): [ebp-0x28] consumed, [ebp-0x18] report_log,
+    // [ebp-0x24] normalized, [ebp-0x36] key_text, [ebp-0x2C] net_lock,
+    // [ebp-0x20]/[ebp-0x30] x/y (mouse position, '&' repair coordinates, map
+    // checksum coordinates and the pan destinations share these two slots),
+    // [ebp-0x540..-0x90] the sixteen say_num buffers of the checksum report.
+    int consumed = 0;
+    Log report_log;
+    int normalized;
+    char key_text[2];
+    int net_lock;
+    int x;
+    int y;
 
-// ---- flattened from fragments/01-first-command-and-character-switches.inc ----
-// Native body prelude and digit fallback, pinned offsets 0x5178C0..0x51803E.
-// This section declares the method-local Log/latches, applies the first modal
-// input router and joins the first byte dispatch in fragment 14.
-
-// Common per-entry native return value is 1; every branch reaches the one
-// cleanup edge at 0x51B648. `a1` is the character/key value at [ebp+8], and
-// `a2` is the event command at [ebp+0xC]. Native 0x6466EF is a locale-aware
-// lowercase conversion and is represented by `tolower(a1)`. Its keyboard
-// trace call at 0x626350 is the source-owned log_say_hex overload.
-
-int normalized_character;
-Log native_handler_log; // native entry constructs at 0x625FB0; epilogue destroys it
-char native_key_character[2];
-char native_decimal_buffer[16];
-int native_editor_lock;
-int native_command_consumed = 0; // native stack local [ebp-0x28]
-int native_original_key;
-int native_mode_flag;
-
-// Native entry guards 0x5178F3..0x517910 run after the local Log has been
-// constructed and before the first sparse event table. The command mask is
-// applied to the original a2 dword, not to its low byte.
-if (ExitTurnLoop != 0 ||
-    (static_cast<unsigned int>(a2) & 0xFFFCFFFFu) == 0x12u) {
-    goto native_done;
-}
-
-// The first sparse event switch (0x51B690; a2 base 0x30041, 58 bytes) has
-// six individual byte writes and the ConsoleTimer command. The neutral
-// ConsoleKeyByteRegion owner is provisional as described beside its definition;
-// its six byte cells cover observed stores only and assert no original
-// allocation capacity or terminator.
-switch (a2) {
-case 0x30050: ConsoleKeyByteRegion[0] = 'p'; break;
-case 0x30049: ConsoleKeyByteRegion[1] = 'i'; break;
-case 0x30052: ConsoleKeyByteRegion[2] = 'r'; break;
-case 0x30041: ConsoleKeyByteRegion[3] = 'a'; break;
-case 0x30054: ConsoleKeyByteRegion[4] = 't'; break;
-case 0x30045: ConsoleKeyByteRegion[5] = 'e'; break;
-case 0x3007A:
-    // Native reads ConsoleTimer.id_event_ at +4 (not count_), stops an active
-    // timer and stores 0x10 to LockEnableMask's low byte, or starts the
-    // callback with (param=0,count=100,resolution=5) and clears that byte.
-    // Both arms store only the human-faction byte (0x517978, 0x517990).
-    if (ConsoleTimer.has_timer()) {
-        ConsoleTimer.stop();
-        reinterpret_cast<unsigned char &>(
-            GameDataStateStorage.fields_.lock_masks_.enable_mask_) = 0x10;
-    } else {
-        reinterpret_cast<unsigned char &>(
-            GameDataStateStorage.fields_.lock_masks_.enable_mask_) = 0;
-        ConsoleTimer.start(auto_play_callback, 0, 100, 5);
+    if (ExitTurnLoop != 0) {
+        return 1;
     }
-    break;
-default:
-    break;
-}
+    if ((a2 & 0xFFFCFFFF) == 0x12) {
+        return 1;
+    }
 
-// After that event switch, native calls AlphaMenu::hide at 0x9380DC. This is
-// the already modeled ConsoleGlobal.alpha_menu_ member (Console +0x22A2C).
-// Then it tests MapBaseDisplayOverride and either sets
-// ConsoleNoMapOverrideLatch or enters the later command router.
-
-ConsoleGlobal.alpha_menu_.hide();
-if (MapBaseDisplayOverride == 0) {
-    ConsoleNoMapOverrideLatch = 1;
-    goto native_done;
-}
-
-if (TutorialWindow.reset() != 0 && (a2 == 0x0D || a2 == 0x1B)) {
-    goto native_done;
-}
-if (a2 == 0x91) {
-    MainInterfaceGlobal.draw_edit_pane();
-}
-
-// Native Enter/Space panel handoff (0x5179F0..0x517AB7). Both the gate word
-// and ButtonGroup belong to the live MainInterface object.
-{
-    bool enter_space_handoff = false;
-    if (a2 == 0x0D || a1 == 0x20) {
-        // 0x5179FB..0x517A2B: an open message, the modal gate, or the
-        // default button state outside the base window all hand off.
-        if (NetMsgPrimary.is_active() != 0 ||
-            NetMsgSecondary.is_active() != 0 ||
-            MainInterfaceGlobal.input_gate_state() != 0 ||
-            (MainInterfaceGlobal.button_group(0).field_84_ == 0x3E8 &&
-             TutWinBaseWindow.is_visible() == 0)) {
-            enter_space_handoff = true;
+    switch (a2) {
+    case 0x30050: ConsoleKeyByteRegion[0] = 'p'; break;
+    case 0x30049: ConsoleKeyByteRegion[1] = 'i'; break;
+    case 0x30052: ConsoleKeyByteRegion[2] = 'r'; break;
+    case 0x30041: ConsoleKeyByteRegion[3] = 'a'; break;
+    case 0x30054: ConsoleKeyByteRegion[4] = 't'; break;
+    case 0x30045: ConsoleKeyByteRegion[5] = 'e'; break;
+    case 0x3007A:
+        if (ConsoleTimer.has_timer()) {
+            ConsoleTimer.stop();
+            GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ = 0x10;
+        } else {
+            GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ = 0;
+            ConsoleTimer.start(auto_play_callback, 0, 100, 5);
         }
+        break;
     }
-    if (enter_space_handoff == false && a2 == 0x0D &&
-        (ConsoleGlobal.alpha_menu_.is_visible() != 0 || MultiWindow.panel_open() != 0)) {
-        enter_space_handoff = true;
+
+    ConsoleGlobal.alpha_menu_.hide();
+    if (MapBaseDisplayOverride == 0) {
+        ConsoleNoMapOverrideLatch = 1;
+        return 1;
     }
-    if (enter_space_handoff != false) {
+    if (TutorialWindow.reset() != 0 && (a2 == 0x0D || a2 == 0x1B)) {
+        return 1;
+    }
+    if (a2 == 0x91) {
+        MainInterfaceGlobal.draw_edit_pane();
+    }
+
+    if (((a2 == 0x0D || a1 == ' ') &&
+         (NetMsgPrimary.is_active() || NetMsgSecondary.is_active() ||
+          MainInterfaceGlobal.input_gate_state() != 0 ||
+          (MainInterfaceGlobal.button_group(0).field_84_ == 0x3E8 &&
+           TutWinBaseWindow.is_visible() == 0))) ||
+        (a2 == 0x0D &&
+         (ConsoleGlobal.alpha_menu_.is_visible() != 0 ||
+          MultiWindow.panel_open() != 0))) {
         if (TutWinBaseWindow.is_visible() == 0) {
             MainInterfaceGlobal.button_group(0).button_click(0x3E9);
         }
@@ -6279,1839 +6280,1009 @@ if (a2 == 0x91) {
         if (MainInterfaceGlobal.input_gate_state() != 0) {
             MainInterfaceGlobal.clear_message();
         }
-        if (NetMsgPrimary.is_active() != 0 ||
-            NetMsgSecondary.is_active() != 0) {
-            // 0x51B634: an open message is dismissed, both popups closed.
-            NetMsgPrimary.close();
-            NetMsgSecondary.close();
-            goto native_done;
+        if (NetMsgPrimary.is_active() || NetMsgSecondary.is_active()) {
+            // The image lays this block out last, falling into the epilogue.
+            goto close_messages;
         }
     }
-}
-ConsoleInfoWin.reset();
-ConsoleStatusWin.reset();
 
-if (a2 >= 0x60 && a2 <= 0x69) {
-    a1 = 0;
-}
-if (a2 == 0x0D && (GameDataStateStorage.fields_.game_state_ & 0x80u) != 0 &&
-    (MapWinTable[0]->field_1DD70_ & 0x4000u) != 0) {
-    const int history = ConsoleGlobal.cursor_history_index_;
-    int vehicle_id = veh_at(ConsoleGlobal.cursor_history_x_[history],
-                            ConsoleGlobal.cursor_history_y_[history]);
-    while (vehicle_id >= 0) {
-        const Veh &vehicle = Vehs[vehicle_id];
-        if (vehicle.order == 0x18) {
-            Paths.move(vehicle_id, vehicle.faction_id);
-            ::draw_map(1);
-            goto native_done;
-        }
-        if (vehicle.next_veh_id_stack < 0) {
-            ::draw_map(1);
-            goto native_done;
-        }
-        vehicle_id = vehicle.next_veh_id_stack;
+    ConsoleInfoWin.reset();
+    ConsoleStatusWin.reset();
+    if (a2 >= 0x60 && a2 <= 0x69) {
+        a1 = 0;
     }
-    ::draw_map(1);
-    goto native_done;
-}
 
-// Native 0x517B81..A2 normalizes the key and logs the raw key/event pair.
-normalized_character = tolower(a1);
-native_key_character[0] = static_cast<char>(a1);
-native_key_character[1] = '\0';
-log_say_hex("Key: ", native_key_character, a1, a2, 0);
-
-// Native 0x517BA7..0x517BDF derives [ebp-0x2C] only for network games. A
-// nonzero ConsoleControlTurnActive (0x93A938) sets the local latch and takes the immediate
-// cleanup edge. With it clear, either nonzero lock-state sentinel sets the
-// latch but continues; only when both are zero does the latch remain clear.
-native_editor_lock = 0;
-if (IsMultiplayerNet != 0) {
-    if (ConsoleControlTurnActive != 0) {
-        native_editor_lock = 1;
-        goto native_done;
-    } else if (NetDaemonNet.channels_[1].payload_.flags != 0 ||
-               NetDaemonNet.primary_state_.leading_words_[2] != 0) {
-        native_editor_lock = 1;
-    }
-}
-
-// ---- flattened from fragments/00-map-cursor-pre-modal-corridor.inc ----
-// Native 0x517BDF..0x517FB7. ESI is the Console virtual GraphicWin receiver;
-// all accesses below are expressed through its real MapWin/Console/Veh owners.
-// Native slot17 is MapWin::on_mouse_move; the earlier 0x5EC8A0 call is the
-// inherited Win::get_mouse_pos operation.
-{
-    const uint32_t map_cursor_mode = field_23D10_;
-    const int selected_map_slot = MapWinSelectedSlot;
-    const int selected_vehicle_id = selected_vehicle_;
-    if (map_cursor_mode == 1 && selected_map_slot >= 0 &&
-        selected_vehicle_id >= 0 && ConsoleGlobal.cursor_active_ != 0) {
-        if (normalized_character == 'j') {
-            MapWin *const toggle_map = MapWinTable[selected_map_slot];
-            toggle_map->field_1DD84_ =
-                toggle_map->field_1DD84_ == 0 ? 1u : 0u;
-            int mouse_x = 0;
-            int mouse_y = 0;
-            MapWinTable[selected_map_slot]->get_mouse_pos(&mouse_x, &mouse_y);
-            MapWin *const j_after_mouse_map = MapWinTable[selected_map_slot];
-            j_after_mouse_map->on_mouse_move(mouse_x, mouse_y);
-            goto native_done;
+    if (a2 == 0x0D && (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0 &&
+        (MapWinTable[0]->field_1DD70_ & 0x4000) != 0) {
+        // UNCERTAIN (0x517B39): the image retests the current id for < 0
+        // after the order test; this loop has no such test.
+        for (int veh_id = veh_at(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                                 ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]);
+             veh_id >= 0; veh_id = Vehs[veh_id].next_veh_id_stack) {
+            if (Vehs[veh_id].order == 0x18) {
+                Paths.move(veh_id, Vehs[veh_id].faction_id);
+                break;
+            }
         }
-        if (normalized_character == 'g' || a1 == 0x20) {
-            Veh &selected_vehicle = Vehs[selected_vehicle_id];
-            if ((selected_vehicle.state & 0x01000200u) == 0x01000200u) {
-                if (selected_vehicle.waypoint_count >= 3) {
-                    selected_vehicle.waypoint_count = 0;
+        ::draw_map(1);
+        return 1;
+    }
+
+    normalized = tolower(a1);
+    key_text[0] = static_cast<char>(a1);
+    key_text[1] = '\0';
+    log_say_hex("Key: ", key_text, a1, a2, 0);
+
+    if (IsMultiplayerNet != 0 &&
+        (ConsoleControlTurnActive != 0 ||
+         NetDaemonNet.channels_[1].payload_.flags != 0 ||
+         NetDaemonNet.primary_state_.leading_words_[2] != 0)) {
+        net_lock = 1;
+        if (ConsoleControlTurnActive != 0) {
+            return 1;
+        }
+    } else {
+        net_lock = 0;
+    }
+
+    if (field_23D10_ == 1 && MapWinSelectedSlot >= 0 && selected_vehicle_ >= 0 &&
+        ConsoleGlobal.cursor_active_ != 0) {
+        if (normalized == 'j') {
+            MapWin **const map_slot = &MapWinTable[MapWinSelectedSlot];
+            (*map_slot)->field_1DD84_ = (*map_slot)->field_1DD84_ == 0;
+            (*map_slot)->get_mouse_pos(&x, &y);
+            (*map_slot)->on_mouse_move(x, y);
+            return 1;
+        }
+        if (normalized == 'g' || normalized == ' ') {
+            if ((Vehs[selected_vehicle_].state & 0x01000200) == 0x01000200) {
+                if (Vehs[selected_vehicle_].waypoint_count < 3) {
+                    ++Vehs[selected_vehicle_].waypoint_count;
                 } else {
-                    ++selected_vehicle.waypoint_count;
+                    Vehs[selected_vehicle_].waypoint_count = 0;
                 }
-            } else if ((selected_vehicle.state & 0x02000000u) == 0) {
-                selected_vehicle.state |= 0x02000000u;
-                selected_vehicle.patrol_current_point = 0;
-                selected_vehicle.waypoint_count = 1;
+            } else if ((Vehs[selected_vehicle_].state & 0x02000000) == 0) {
+                Vehs[selected_vehicle_].state |= 0x02000000;
+                Vehs[selected_vehicle_].patrol_current_point = 0;
+                Vehs[selected_vehicle_].waypoint_count = 1;
             } else {
-                ++selected_vehicle.waypoint_count;
-                if (selected_vehicle.waypoint_count >= 4) {
-                    selected_vehicle.state &= ~0x02000000u;
-                    selected_vehicle.waypoint_count = 0;
+                ++Vehs[selected_vehicle_].waypoint_count;
+                if (Vehs[selected_vehicle_].waypoint_count >= 4) {
+                    Vehs[selected_vehicle_].state &= ~0x02000000;
+                    Vehs[selected_vehicle_].waypoint_count = 0;
                 }
             }
-            int mouse_x = 0;
-            int mouse_y = 0;
-            MapWinTable[selected_map_slot]->get_mouse_pos(&mouse_x, &mouse_y);
-            MapWin *const g_after_mouse_map = MapWinTable[selected_map_slot];
-            g_after_mouse_map->feedback_hover_y_ = -1;
-            g_after_mouse_map->field_1DE0C_ = static_cast<uint32_t>(-1);
-            g_after_mouse_map->on_mouse_move(mouse_x, mouse_y);
-            goto native_done;
+            MapWin **const map_slot = &MapWinTable[MapWinSelectedSlot];
+            (*map_slot)->get_mouse_pos(&x, &y);
+            (*map_slot)->feedback_hover_y_ = -1;
+            (*map_slot)->field_1DE0C_ = static_cast<uint32_t>(-1);
+            (*map_slot)->on_mouse_move(x, y);
+            return 1;
         }
-
-        Veh &selected_vehicle = Vehs[selected_vehicle_id];
-        selected_vehicle.state &= ~0x02000200u;
-        selected_vehicle.order = 0;
+        Vehs[selected_vehicle_].state &= ~0x02000200;
+        Vehs[selected_vehicle_].order = 0;
     }
 
-    // Map-mode 8 updates the active primary window's route-point counter.
-    // ESI is Console+0x23D94 here; its -0x6014 read rebases to the existing
-    // MapWin::field_1DD80_ at front offset 0x1DD80.
-    if (field_23D10_ == 8 && field_1DD80_ != 0 &&
-        selected_vehicle_ >= 0 &&
-        ConsoleGlobal.cursor_active_ != 0 &&
-        (normalized_character == ' ' || normalized_character == 'g')) {
-        Veh &selected_vehicle = Vehs[selected_vehicle_];
-        if (selected_vehicle.waypoint_count >= 3) {
-            selected_vehicle.waypoint_count = 0;
+    if (field_23D10_ == 8 && field_1DD80_ != 0 && selected_vehicle_ >= 0 &&
+        ConsoleGlobal.cursor_active_ != 0 && (normalized == ' ' || normalized == 'g')) {
+        if (Vehs[selected_vehicle_].waypoint_count < 3) {
+            ++Vehs[selected_vehicle_].waypoint_count;
         } else {
-            ++selected_vehicle.waypoint_count;
+            Vehs[selected_vehicle_].waypoint_count = 0;
         }
-        int mouse_x = 0;
-        int mouse_y = 0;
-        MapWinTable[0]->get_mouse_pos(&mouse_x, &mouse_y);
-        MapWin *const mode8_after_mouse_map = MapWinTable[0];
-        mode8_after_mouse_map->field_1DE0C_ = static_cast<uint32_t>(-1);
-        MapWinTable[0]->on_mouse_move(mouse_x, mouse_y);
-        goto native_done;
+        MapWinTable[0]->get_mouse_pos(&x, &y);
+        MapWinTable[0]->field_1DE0C_ = static_cast<uint32_t>(-1);
+        MapWinTable[0]->on_mouse_move(x, y);
+        return 1;
     }
 
-    // Pan commands in a flagged window consume the character and event before
-    // the shared go_reset/cursor restoration path.
-    for (size_t pan_window_slot = 0;
-         pan_window_slot < MapWinTableSlots; ++pan_window_slot) {
-        MapWin *const window = MapWinTable[pan_window_slot];
-        if (window == 0 ||
-            (pan_window_slot != 0 && window->view_active_ == 0)) {
-            continue;
-        }
-        if ((window->field_1DD70_ & 0x00400000u) != 0 &&
-            (normalized_character == 'g' || normalized_character == 'p')) {
-            a2 = 0;
-            a1 = 0;
-            normalized_character = 0;
+    size_t pan_slot;
+    for (pan_slot = 0; pan_slot < MapWinTableSlots; ++pan_slot) {
+        MapWin *const window = MapWinTable[pan_slot];
+        if (window != 0 && (pan_slot == 0 || window->view_active_ != 0)) {
+            if ((window->field_1DD70_ & 0x00400000) != 0 &&
+                (normalized == 'g' || normalized == 'p')) {
+                a2 = 0;
+                a1 = 0;
+                normalized = 0;
+            }
         }
     }
-    if (field_23D10_ != 0 &&
-        (normalized_character == 'g' || normalized_character == 'p')) {
+    if (field_23D10_ != 0 && (normalized == 'g' || normalized == 'p')) {
         a2 = 0;
         a1 = 0;
-        normalized_character = 0;
+        normalized = 0;
     }
 
     go_reset();
+    // 0x517EDB..0x517F71 is Console::cursor_off (0x510520) expanded.
+    // WORKAROUND(inline): written out; a cursor_off() call stays out of line in this unit (menu_proc).
     field_23D10_ = 0;
-    for (size_t cursor_window_slot = 0;
-         cursor_window_slot < MapWinTableSlots; ++cursor_window_slot) {
-        MapWin *const window = MapWinTable[cursor_window_slot];
-        if (window == 0 ||
-            (cursor_window_slot != 0 && window->view_active_ == 0)) {
-            continue;
+    size_t cursor_slot;
+    for (cursor_slot = 0; cursor_slot < MapWinTableSlots; ++cursor_slot) {
+        MapWin *const window = MapWinTable[cursor_slot];
+        if (window != 0 && (cursor_slot == 0 || window->view_active_ != 0)) {
+            if (window->cursor_sprite_ != 0 || window->cursor_resource_id_ != 0x7F00) {
+                window->set_cursor(0x7F00);
+                window->cursor_resource_id_ = 0x7F00;
+                window->cursor_sprite_ = 0;
+            }
+            const uint32_t flags = MapWinTable[cursor_slot]->field_1DD70_;
+            if ((flags & 0x00C40000) != 0) {
+                MapWinTable[cursor_slot]->field_1DD70_ = flags & 0xFF3BFFFF;
+                MapWinTable[cursor_slot]->draw_map(1);
+            }
+            do_non_input();
         }
-        if (window->cursor_sprite_ != 0 ||
-            window->cursor_resource_id_ != 0x7F00) {
-            window->set_cursor(0x7F00);
-            window->cursor_resource_id_ = 0x7F00;
-            window->cursor_sprite_ = 0;
-        }
-        MapWin *const cursor_flags_window = MapWinTable[cursor_window_slot];
-        if ((cursor_flags_window->field_1DD70_ & 0x00C40000u) != 0) {
-            cursor_flags_window->field_1DD70_ &= ~0x00C40000u;
-            MapWin *const cursor_redraw_window = MapWinTable[cursor_window_slot];
-            cursor_redraw_window->draw_map(1);
-        }
-        do_non_input();
     }
 
-    if (a2 == 0x0D &&
-        IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 5) {
+    if (a2 == 0x0D && IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 5) {
         ReportIfGlobal.done();
         if (TutWinBaseWindow.is_visible() != 0) {
             TutWinBaseWindow.exit();
         }
-        goto native_done;
+        return 1;
     }
-}
 
-// Native 0x517FB8 tests TutWinBaseWindow::is_visible before the 0x51B6CC
-// event table. The false edge targets 0x518179 and bypasses both the modal
-// table and the numeric/raw-character handlers below.
-if (TutWinBaseWindow.is_visible() == 0) {
-    if (MainInterfaceGlobal.button_group(0).field_84_ == 0x3E8) {
+    if (TutWinBaseWindow.is_visible() != 0) {
+        // Table 0x51B6CC; its prev/next bodies are shared with the
+        // character table's ','/'.' routes at 0x5180D3/0x5180E2.
+        switch (a2) {
+        case 0x0D:
+        case 0x1B:
+            TutWinBaseWindow.exit();
+            return 1;
+        case 0x21:
+        case 0x25:
+        case 0x64:
+        case 0x69:
+            TutWinBaseWindow.prev();
+            return 1;
+        case 0x22:
+        case 0x27:
+        case 0x63:
+        case 0x66:
+            TutWinBaseWindow.next();
+            return 1;
+        default:
+            if (normalized >= '0' && normalized <= '9') {
+                if (net_lock == 0 ||
+                    (UnkGlobal0093A934 != 0 &&
+                     (NetDaemonNet.primary_state_.trailing_words_[7] &
+                      (1 << ConsoleGlobal.faction_id_)) == 0)) {
+                    TutWinBaseWindow.production(normalized - '0', 0);
+                }
+                return 1;
+            }
+            // Table 0x51B73C/0x51B764, input normalized - 0x2B.
+            switch (normalized) {
+            case 'p':
+                if (net_lock == 0 ||
+                    (UnkGlobal0093A934 != 0 &&
+                     (NetDaemonNet.primary_state_.trailing_words_[7] &
+                      (1 << ConsoleGlobal.faction_id_)) == 0)) {
+                    TutWinBaseWindow.production(0, 0);
+                }
+                return 1;
+            case 'c':
+                if (net_lock == 0 ||
+                    (UnkGlobal0093A934 != 0 &&
+                     (NetDaemonNet.primary_state_.trailing_words_[7] &
+                      (1 << ConsoleGlobal.faction_id_)) == 0)) {
+                    TutWinBaseWindow.production(0, 0);
+                }
+                return 1;
+            case 'h':
+                if (net_lock == 0) {
+                    TutWinBaseWindow.hurry();
+                }
+                return 1;
+            case ',':
+            case '<':
+                TutWinBaseWindow.prev();
+                return 1;
+            case '.':
+            case '>':
+            case 'n':
+                TutWinBaseWindow.next();
+                return 1;
+            case 'r':
+                TutWinBaseWindow.rename();
+                return 1;
+            case 'e':
+                if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) != 0) {
+                    TutWinBaseWindow.base_editor();
+                }
+                return 1;
+            case '-':
+            case '_':
+                if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) != 0) {
+                    TutWinBaseWindow.focus();
+                    if (BaseCurrent->population_size > 1) {
+                        --BaseCurrent->population_size;
+                        TutWinBaseWindow.recompute(0);
+                    }
+                }
+                break;
+            case '+':
+            case '=':
+                if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) != 0) {
+                    TutWinBaseWindow.focus();
+                    if (BaseCurrent->population_size < 99) {
+                        ++BaseCurrent->population_size;
+                    }
+                    TutWinBaseWindow.recompute(0);
+                }
+                break;
+            }
+            consumed = 1;
+            break;
+        }
+    } else if (MainInterfaceGlobal.button_group(0).field_84_ == 0x3E8) {
         MainInterfaceGlobal.button_group(0).button_click(0x3E9);
     }
-    goto native_after_basewindow_raw_map;
-}
 
-// Modal BaseWin event routing (native table 0x51B6CC, index a2-0x0D,
-// count 0x5D), only after the native visible-window guard:
-switch (a2) {
-case 0x0D: // Enter
-case 0x1B: // Escape
-    TutWinBaseWindow.exit();
-    goto native_done;
-case 0x21: // Page Up
-case 0x25: // Left
-case 0x64: // keypad 4
-case 0x69: // keypad 9
-    TutWinBaseWindow.prev();
-    goto native_done;
-case 0x22: // Page Down
-case 0x27: // Right
-case 0x63: // keypad 3
-case 0x66: // keypad 6
-    TutWinBaseWindow.next();
-    goto native_done;
-default:
-    break;
-}
-
-// Native numeric-key fallback after modal routing. The digit is the normalized
-// character [ebp-0x24], not a2. Native guards are editor/network-sensitive:
-// edit-lock state must be clear; in editor mode UnkGlobal0093A934 must be set;
-// and NetDaemonNet's faction mask bit for ConsoleGlobal.faction_id_ must be
-// clear. Once those have been established by the translated common prelude:
-if (normalized_character >= '0' && normalized_character <= '9') {
-    const int digit = normalized_character - '0';
-    if (native_editor_lock != 0 &&
-        (UnkGlobal0093A934 == 0 ||
-         (NetDaemonNet.primary_state_.trailing_words_[7] &
-          (1u << faction_id_)) != 0)) {
-        goto native_done;
+    if (a2 == 0x2000D) {
+        ConsoleGlobal.end_my_turn();
+        return 1;
     }
-    TutWinBaseWindow.production(digit, 0);
-    goto native_done;
-}
-
-
-// ---- flattened from fragments/14-base-window-character-routes.inc ----
-// INCOMPLETE C++ body fragment for the first normalized-character map
-// (dispatch table at 0x51B73C, lookup bytes at 0x51B764; index is
-// [ebp-0x24]-0x2B, where [ebp-0x24] is tolower(a1)). This precedes the
-// separate raw-a1 0x51B7AC character table.
-// Receiver 0x006A7628 is the source-owned TutWinBaseWindow object.
-
-// The first raw-key map covers every input in [0x2B,0x72]. Its default table
-// entry is not a fallthrough: native 0x518170 sets the command-consumed local
-// and continues to the 0x2000D/0x20020 command tests, then the scenario gate.
-if (normalized_character >= 0x2B && normalized_character <= 0x72) {
-switch (normalized_character) {
-case 'p':
-case 'c':
-    if (!native_editor_lock ||
-        (UnkGlobal0093A934 != 0 &&
-         (NetDaemonNet.primary_state_.trailing_words_[7] &
-          (1u << faction_id_)) == 0)) {
-        TutWinBaseWindow.production(0, 0);
+    if (a2 == 0x20020) {
+        ConsoleGlobal.use_time_bonus();
+        return 1;
     }
-    goto native_done;
-case 'h':
-    if (!native_editor_lock) {
-        TutWinBaseWindow.hurry();
-    }
-    goto native_done;
-case ',':
-case '<':
-    TutWinBaseWindow.prev();
-    goto native_done;
-case '.':
-case '>':
-case 'n':
-    TutWinBaseWindow.next();
-    goto native_done;
-case 'r':
-    TutWinBaseWindow.rename();
-    goto native_done;
-case 'e':
-    if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) != 0) {
-        TutWinBaseWindow.base_editor();
-    }
-    goto native_done;
-case '-':
-case '_':
-    if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) != 0) {
-        TutWinBaseWindow.focus();
-        if (BaseCurrent->population_size > 1) {
-            --BaseCurrent->population_size;
-            TutWinBaseWindow.recompute(0);
-        }
-    }
-    native_command_consumed = 1;
-    goto native_after_base_character;
-case '+':
-case '=':
-    if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) != 0) {
-        TutWinBaseWindow.focus();
-        // 0x51815C: at the cap only the increment is skipped.
-        if (BaseCurrent->population_size < 0x63) {
-            ++BaseCurrent->population_size;
-        }
-        TutWinBaseWindow.recompute(0);
-    }
-    native_command_consumed = 1;
-    goto native_after_base_character;
-default:
-    native_command_consumed = 1;
-    goto native_after_base_character;
-}
-} else {
-    // Native unsigned range failure at 0x518044 also falls to 0x518170.
-    native_command_consumed = 1;
-}
 
-// Native false-visible edge enters 0x518179 here, after bypassing the raw
-// BaseWin key map at 0x51803E..0x518170. Both edges share these command-ID
-// tests and then the native command-consumed/secondary-character routing.
-native_after_basewindow_raw_map:
-native_after_base_character:
-if (a2 == 0x2000D) {
-    end_my_turn();
-    goto native_done;
-}
-if (a2 == 0x20020) {
-    use_time_bonus();
-    goto native_done;
-}
-if (native_command_consumed != 0) {
-    goto native_scenario_editor_gate;
-}
-
-// Evidence from the 0x51B764 map: normalized ','/'<' target 0x5180D3 prev;
-// '.'/'>'/'n' target 0x5180E2 next; 'r' renames; normalized 'e' targets
-// 0x518100 and preference-gates BaseWin::base_editor;
-// 0x51811C/140 call BaseWin::focus, then modify BaseCurrent.population_size
-// at Base+6 (bounds 1..99) and call BaseWin::recompute(0). The six mapped
-// character groups above are mechanically derived from the PeImage table.
-// Native 0x518059/080 are BaseWin::production(0,0), gated by the preserved
-// editor latch, UnkGlobal0093A934 and lock_state_[0].trailing_words_[8];
-// 0x5180BB is BaseWin::hurry(), with the native editor-latch guard.
-
-
-// ---- flattened from fragments/01b-secondary-character-table.inc ----
-// Native secondary character table 0x51B7AC, after the 0x51B764 BaseWin
-// lookup and its command-consumed join.
-switch (a1) {
-case '+':
-    custom_my_faction();
-    goto native_done;
-
-case ',':
-    if (!native_editor_lock) {
-        corner_the_market();
-    }
-    goto native_done;
-
-case '=':
-    if ((GameDataStateStorage.fields_.game_state_ & 0x10u) != 0 || ScenarioSave.objective_req_victory < 0x2328 ||
-        static_cast<int>(ScenarioSave.objectives_sudden_death_victory) < 0x2328) {
-        show_scen_objectives();
-    }
-    goto native_done;
-
-case 'D':
-    if (!native_editor_lock) {
-        if (ConsoleGlobal.cursor_active_ != 0 &&
-            ConsoleGlobal.selected_vehicle_ >= 0) {
-            disband(ConsoleGlobal.selected_vehicle_);
-        } else {
-            const int cursor = ConsoleGlobal.cursor_history_index_;
-            disband(ConsoleGlobal.cursor_history_x_[cursor],
-                    ConsoleGlobal.cursor_history_y_[cursor]);
-        }
-    }
-    goto native_done;
-
-// 0x5181EA..0x518218: each zoom key flushes pending input afterwards.
-case 'Z': zoom(0x205, 0); flush_input(); goto native_done;
-case 'X': zoom(0x206, 0); flush_input(); goto native_done;
-case 'z': zoom(0x203, 0); flush_input(); goto native_done;
-case 'x': zoom(0x204, 0); flush_input(); goto native_done;
-
-case 'c': {
-    const int cursor = ConsoleGlobal.cursor_history_index_;
-    MapWinTable[0]->set_center(ConsoleGlobal.cursor_history_x_[cursor],
-                               ConsoleGlobal.cursor_history_y_[cursor], 1);
-    goto native_done;
-}
-case 'e':
-    if (!native_editor_lock) {
-        social_select(ConsoleGlobal.faction_id_);
-    }
-    goto native_done;
-case 't': survey(); goto native_done;
-case 'u':
-    if (!native_editor_lock) {
-        design_new_veh(ConsoleGlobal.faction_id_, -1);
-    }
-    goto native_done;
-default:
-    break;
-}
-
-
-// ---- flattened from fragments/02-uppercase-and-scenario-switches.inc ----
-// Native key-handler dispatch region.
-// Depends on first-command fragment state and still omits the later command
-// tables/shared tails; this is not an independent member definition.
-
-// The native case-table 0x51B830 is keyed by a1 in [0x41,0x76]. It is only
-// entered when Console::edit_lock() is false. Exact active character groups:
-// A=0, P=1, T=2, '^'=3, J=4, j=5, R=6, v=7; all other table bytes route to
-// the shared 0x5185B0 branch.
-// Native first calls edit_lock(); when blocked, only `v` or `a` produces the
-// synchronous PROTECTED notification (literal 0x68AAA4). It calls edit_lock()
-// again before entering the key table, so preserve both reads around callback.
-if (edit_lock() != 0 && (a1 == 'v' || a1 == 'a')) {
-    NetMsgPrimary.pop("PROTECTED", 5000, 0, 0);
-}
-
-if (edit_lock() == 0) {
-switch (a1) {
-case 'A':
-    if (!native_editor_lock) { // previously established native [ebp-0x2C]
-        automate(selected_vehicle_, 0);
-    }
-    goto native_shared_after_key;
-case 'P':
-    if (IsMultiplayerNet) {
-        MultiWindow.on_button_clicked(2);
-    }
-    goto native_shared_after_key;
-case 'T':
-    time_controls();
-    goto native_shared_after_key;
-case '^':
-    use_time_bonus();
-    goto native_shared_after_key;
-case 'J':
-    assemble();
-    goto native_shared_after_key;
-case 'j':
-    go_to(selected_vehicle_, 0x18, 1);
-    goto native_shared_after_key;
-case 'R':
-    {
-    // 0x518417: the AI-priorities rule opens set_ai (expanded here), any
-    // other game the tech-goal picker.
-    if ((GameDataStateStorage.fields_.game_rules_ & 0x200u) != 0) {
-        // WORKAROUND(inline): Console::set_ai written out; the image expands
-        // it with its last two popup_set_write_check_bit calls out of line
-        // (0x51846E, 0x51847C), which this unit's budget does not reproduce.
-        const int faction = ConsoleGlobal.faction_id_;
-        PopupWriteCheckState = PlayersData[faction].ai_growth != 0 ? 1 : 0;
-        if (PlayersData[faction].ai_tech != 0) {
-            PopupWriteCheckState |= 2;
-        } else {
-            PopupWriteCheckState &= ~2;
-        }
-        popup_set_write_check_bit(2, PlayersData[faction].ai_wealth);
-        popup_set_write_check_bit(3, PlayersData[faction].ai_power);
-        if (x_pop_short(ConsoleStrTechRandom, 1, 0) >= 0) {
-            PlayersData[faction].ai_growth = (char)PopupWriteCheckState & 1u;
-            PlayersData[faction].ai_tech = ((char)PopupWriteCheckState & 2u) >> 1;
-            PlayersData[faction].ai_wealth = ((char)PopupWriteCheckState & 4u) >> 2;
-            PlayersData[faction].ai_power = ((char)PopupWriteCheckState & 8u) >> 3;
-            synch_ai(faction);
-        }
-    } else {
-        set_tech(ConsoleGlobal.faction_id_);
-    }
-    goto native_shared_after_key;
-    }
-case 'v':
-    {
-    if (!native_editor_lock) {
-        if (ConsoleGlobal.cursor_active_ == 0) {
-            set_move(0);
-        } else {
-            ambience(0x1E);
-            field_23BF8_ = 1;
-            field_23BFC_ = 1;
-            const int had_survey = survey_mode_;
-            survey_mode_ = 0;
-            cursor_active_ = 0;
-            if (had_survey != 0) {
-                MapWinTable[0]->draw_map(1);
+    if (consumed == 0) {
+        // Table 0x51B7AC/0x51B7E0, input a1 - 0x2B.
+        switch (a1) {
+        case 'Z':
+            zoom(0x205, 0);
+            flush_input();
+            return 1;
+        case 'X':
+            zoom(0x206, 0);
+            flush_input();
+            return 1;
+        case 'z':
+            zoom(0x203, 0);
+            flush_input();
+            return 1;
+        case 'x':
+            zoom(0x204, 0);
+            flush_input();
+            return 1;
+        case 't':
+            survey();
+            return 1;
+        case 'e':
+            if (net_lock == 0) {
+                social_select(ConsoleGlobal.faction_id_);
             }
-            ::draw_cursor();
+            return 1;
+        case 'u':
+            if (net_lock == 0) {
+                design_new_veh(faction_id_, -1);
+            }
+            return 1;
+        case 'c':
+            center();  // 0x515400 expanded
+            return 1;
+        case 'D':
+            if (net_lock == 0) {
+                if (ConsoleGlobal.cursor_active_ != 0 && ConsoleGlobal.selected_vehicle_ >= 0) {
+                    disband(selected_vehicle_);
+                } else {
+                    disband(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                            ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]);
+                }
+            }
+            return 1;
+        case ',':
+            if (net_lock == 0) {
+                corner_the_market();
+            }
+            return 1;
+        case '=':
+            if ((GameDataStateStorage.fields_.game_state_ & 0x10) != 0 ||
+                ScenarioSave.objective_req_victory < 0x2328 ||
+                static_cast<int>(ScenarioSave.objectives_sudden_death_victory) < 0x2328) {
+                show_scen_objectives();
+            }
+            return 1;
+        case '+':
+            custom_my_faction();
+            return 1;
+        }
+
+        if (edit_lock() != 0 && (a1 == 'v' || a1 == 'a')) {
+            NetMsgPrimary.pop("PROTECTED", 5000, 0, 0);
+        }
+        if (edit_lock() == 0) {
+            // Table 0x51B830/0x51B854, input a1 - 0x41.
+            switch (a1) {
+            case 'A':
+                if (net_lock == 0) {
+                    automate(selected_vehicle_, 0);
+                }
+                break;
+            case 'P':
+                if (IsMultiplayerNet != 0) {
+                    MultiWindow.on_button_clicked(2);
+                }
+                break;
+            case 'T':
+                time_controls();
+                break;
+            case '^':
+                use_time_bonus();
+                break;
+            case 'J':
+                assemble();
+                break;
+            case 'j':
+                go_to(selected_vehicle_, 0x18, 1);
+                break;
+            case 'R':
+                if ((GameDataStateStorage.fields_.game_rules_ & 0x200) != 0) {
+                    // WORKAROUND(inline): Console::set_ai written out; the image expands
+                    // it with its last two popup_set_write_check_bit calls out of line
+                    // (0x51846E, 0x51847C), which this unit's budget does not reproduce.
+                    const int faction = ConsoleGlobal.faction_id_;
+                    PopupWriteCheckState = PlayersData[faction].ai_growth != 0 ? 1 : 0;
+                    if (PlayersData[faction].ai_tech != 0) {
+                        PopupWriteCheckState |= 2;
+                    } else {
+                        PopupWriteCheckState &= ~2;
+                    }
+                    popup_set_write_check_bit(2, PlayersData[faction].ai_wealth);
+                    popup_set_write_check_bit(3, PlayersData[faction].ai_power);
+                    if (x_pop_short(ConsoleStrTechRandom, 1, 0) >= 0) {
+                        PlayersData[faction].ai_growth = (char)PopupWriteCheckState & 1u;
+                        PlayersData[faction].ai_tech = ((char)PopupWriteCheckState & 2u) >> 1;
+                        PlayersData[faction].ai_wealth = ((char)PopupWriteCheckState & 4u) >> 2;
+                        PlayersData[faction].ai_power = ((char)PopupWriteCheckState & 8u) >> 3;
+                        synch_ai(faction);
+                    }
+                } else {
+                    set_tech(ConsoleGlobal.faction_id_);
+                }
+                break;
+            case 'v':
+                if (net_lock == 0) {
+                    if (ConsoleGlobal.cursor_active_ == 0) {
+                        set_move(0);
+                    } else {
+                        ambience(0x1E);
+                        cursor_active_ = 0;
+                        field_23BF8_ = 1;
+                        field_23BFC_ = 1;
+                        if (survey_mode_ != 0) {
+                            survey_mode_ = 0;
+                            MapWinTable[0]->draw_map(1);
+                        }
+                        ::draw_cursor();
+                        ConsoleInfoWin.change(0);
+                        ConsoleStatusWin.redraw();
+                        MapWinTable[0]->main_caption();
+                        alpha_menu_.check(selected_vehicle_);
+                        focus(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                              ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_],
+                              faction_id_);
+                    }
+                }
+                break;
+            }
+        }
+
+        switch (normalized) {
+        case '~':
+            if ((GameDataStateStorage.fields_.game_state_ & 0x60) == 0) {
+                if (ConsoleKeyCycleState == -1 ? IsMultiplayerNet == 0
+                                               : ConsoleKeyCycleState < 4) {
+                    ++ConsoleKeyCycleState;
+                }
+                if (ConsoleKeyCycleState < (IsMultiplayerNet != 0 ? 4 : 0)) {
+                    break;
+                }
+            }
+            GameDataStateStorage.fields_.game_state_ ^= STATE_DEBUG_MODE;
+            if (IsMultiplayerNet != 0 &&
+                (GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0 &&
+                (GameDataStateStorage.fields_.game_state_ & 0x20) == 0) {
+                GameDataStateStorage.fields_.game_state_ |= 0xA0;
+            }
+            set_dirty();
+            ::draw_map(1);
+            WorldClimateWorldWin.redraw();
             ConsoleInfoWin.change(0);
             ConsoleStatusWin.redraw();
             MapWinTable[0]->main_caption();
-
-            alpha_menu_.check(selected_vehicle_);
-            const int cursor = ConsoleGlobal.cursor_history_index_;
-            focus(ConsoleGlobal.cursor_history_x_[cursor],
-                  ConsoleGlobal.cursor_history_y_[cursor], faction_id_);
+            break;
+        case ':':
+            if (ConsoleKeyCycleState == -1) {
+                ConsoleKeyCycleState = 0;
+            }
+            break;
         }
     }
-    goto native_shared_after_key;
-    }
-default:
-    break;
-}
-}
 
-native_shared_after_key:
-// Native 0x5185B0 handles the character produced by the normalization path.
-if (normalized_character == ':' && ConsoleKeyCycleState == -1) {
-    ConsoleKeyCycleState = 0;
-}
-
-// 0x5185C5: with game_state_ & 0x60 the debug toggle needs no key cycle.
-if (normalized_character == '~') {
-    if ((GameDataStateStorage.fields_.game_state_ & 0x60u) == 0) {
-    int cycle = ConsoleKeyCycleState;
-    if (cycle == -1) {
-        if (!IsMultiplayerNet) {
-            ++cycle;
-        }
-    } else if (cycle < 4) {
-        ++cycle;
-    }
-    ConsoleKeyCycleState = cycle;
-
-    const int threshold = IsMultiplayerNet ? 4 : 0;
-    if (cycle < threshold) {
-        goto native_debug_toggle_done;
-    }
-    }
-    {
-        GameDataStateStorage.fields_.game_state_ ^= 0x1000u;
-        if (IsMultiplayerNet && (GameDataStateStorage.fields_.game_state_ & 0x1000u) != 0 &&
-            (GameDataStateStorage.fields_.game_state_ & 0x20u) == 0) {
-            GameDataStateStorage.fields_.game_state_ |= 0xA0u;
-        }
-
-        set_dirty();
-        ::draw_map(1);
-        WorldClimateWorldWin.redraw();
-        ConsoleInfoWin.change(0);
-        ConsoleStatusWin.redraw();
-        MapWinTable[0]->main_caption();
-    }
-}
-native_debug_toggle_done:
-
-// When GameState has STATE_SCENARIO_EDITOR and the earlier event was not
-// handled, the native 0x51B88C switch (input = normalized_character-0x21,
-// count 0x59) has five active non-default entries. The `y` route's MainInterface button
-// callback is typed in fragment 10; other active routes follow below.
-// 0x51867A..0x51868A: outside the editor, or with the key consumed, the
-// editor table and its command dispatch are skipped (0x51A413 / 0x51A2C2).
-if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) == 0 ||
-    native_command_consumed != 0) {
-    goto native_scenario_editor_gate;
-}
-if (normalized_character == 'y' &&
-    (GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) != 0 &&
-    native_command_consumed == 0) {
-    GameDataStateStorage.fields_.game_state_ ^= STATE_OMNISCIENT_VIEW;
-    if ((GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0 &&
-        (GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) != 0) {
-        MainInterfaceGlobal.flat_button_[2].show(0);
-    } else {
-        MainInterfaceGlobal.flat_button_[2].hide();
-    }
-    set_dirty();
-    ::draw_map(1);
-    WorldClimateWorldWin.redraw();
-    desktop_update();
-    ConsoleInfoWin.change(0);
-    ConsoleStatusWin.redraw();
-    MapWinTable[0]->main_caption();
-    goto native_editor_command_dispatch;
-}
-
-// Remaining active native entries (verified mechanically from
-// byte_lookups[0x0051B8A4] in dispatch-map.json):
-//   '@' / 0x40 -> 0x51872B random/retry loop; CRT rand plus do_task;
-//   ';' / 0x3B -> 0x518863 scenario-mask/string helper, then interlude;
-//   '&' / 0x26 -> 0x5188C7 vehicle/map bounds and linked-stack repair;
-//   '!' / 0x21 -> 0x518BB1 checksum/base/report construction (not interlude);
-//   'y' / 0x79 -> 0x5186AE omniscient toggle and flat_button_[2] show/hide;
-//   default -> 0x519F9C command-number dispatch.
-// The byte-index map is authoritative; in particular, the native interlude
-// call is in `;` (0x3B), not `!` (0x21). Route fragments 09-12 contain the
-// source-typed R/y/;/@ behavior; final assembly must preserve their exact
-// incoming guards and shared continuation targets.
-
-
-// ---- flattened from fragments/23-scenario-character-routes.inc ----
-// Assembled 0x51B88C character-table routes. This file is included from the
-// method body after fragment 02 and before command dispatch fragment 03.
-// The table is reached only for the native scenario-editor state and only
-// after native_command_consumed remains clear; keep each table target's own
-// switch route and its continuation distinct.
-
-if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) != 0 &&
-    native_command_consumed == 0) {
-    switch (normalized_character) {
-    case '@':
-        {
-
-// ---- flattened from fragments/12-at-hotkey-random-pump.inc ----
-// Native key-handler dispatch region.
-// from 0x51B8A4 input 0x40/index 3 to target 0x51872B. This native route has
-// no exit edge: it continually samples rand() and pumps the typed do_task()
-// message loop. Counter locals whose increments never affect a branch are
-// omitted; every controlling counter and every random/pump call is retained.
-
-{
-    int range = 0xA0;
-    int passes = 1;
-    int samples_per_round = 0x14;
-    int successes_remaining = 0x1E;
-    int widening_rounds = 4;
-    int widened = 0;
-
-    for (;;) {
-        if (successes_remaining != 0 && samples_per_round != 0) {
-            while (successes_remaining != 0 && samples_per_round != 0) {
-                int range_sample = 0;
-                if (range - 1 > 0) {
-                    range_sample = rand() % range;
+    if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) != 0 && consumed == 0) {
+        // Table 0x51B88C/0x51B8A4, input normalized - 0x21.
+        switch (normalized) {
+        case 'y':
+            GameDataStateStorage.fields_.game_state_ ^= STATE_OMNISCIENT_VIEW;
+            if ((GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0 &&
+                (GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) != 0) {
+                MainInterfaceGlobal.flat_button_[2].show(0);
+            } else {
+                MainInterfaceGlobal.flat_button_[2].hide();
+            }
+            set_dirty();
+            ::draw_map(1);
+            WorldClimateWorldWin.redraw();
+            desktop_update();
+            ConsoleInfoWin.change(0);
+            ConsoleStatusWin.redraw();
+            MapWinTable[0]->main_caption();
+            break;
+        case '@': {
+            // This route never leaves its sampling/pump loop. The locals sit
+            // in dead slots of the parameters and earlier locals.
+            int high_count = 0;
+            int low_count = 0;
+            int widened = 0;
+            int range = 0xA0;
+            int passes = 1;
+            int rounds = 4;
+            int remaining = 0x1E;
+            int samples = 0x14;
+            for (;;) {
+                while (remaining != 0 && samples != 0) {
+                    const int range_sample = range - 1 > 0 ? rand() % range : 0;
+                    if (range_sample > rand() % 0x30) {
+                        --samples;
+                        ++high_count;
+                    } else {
+                        --remaining;
+                        ++low_count;
+                    }
                 }
-                const int comparison_sample = rand() % 0x30;
-                if (range_sample > comparison_sample) {
-                    --samples_per_round;
+                if (remaining == 0) {
+                    if (--passes > 0) {
+                        remaining = 0x1E;
+                        widened = 0;
+                        range = 0xA0;
+                        do_task();
+                    } else {
+                        rounds = 4;
+                        passes = 1;
+                        remaining = 0x1E;
+                        samples = 0x14;
+                        widened = 0;
+                        range = 0xA0;
+                        do_task();
+                    }
                 } else {
-                    --successes_remaining;
+                    if ((range + 0x2F > 0 ? rand() % (range + 0x30) : 0) < 0x30 && widened == 0) {
+                        widened = 1;
+                        range += range / 2;
+                    }
+                    if (--rounds > 0) {
+                        samples = 0x14;
+                        do_task();
+                    } else {
+                        rounds = 4;
+                        passes = 1;
+                        remaining = 0x1E;
+                        samples = 0x14;
+                        range = 0xA0;
+                        do_task();
+                    }
                 }
             }
         }
-
-        if (successes_remaining == 0) {
-            --passes;
-            if (passes > 0) {
-                successes_remaining = 0x1E;
-                widened = 0;
-                range = 0xA0;
-                do_task();
-                continue;
+        case ';':
+            if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0 &&
+                X_pop_ask_number("EDITINTERLUDE", ConsoleInterludeSelection, 0) == 0) {
+                const int interlude_id = atoi(ParseStrBuffer[0].str);
+                ConsoleInterludeSelection = interlude_id;
+                GameDataStateStorage.fields_.game_interlude_flags_ &= ~(1 << interlude_id);
+                interlude(interlude_id, 0, 1, 0);
             }
-
-            widening_rounds = 4;
-            passes = 1;
-            successes_remaining = 0x1E;
-            samples_per_round = 0x14;
-            widened = 0;
-            range = 0xA0;
-            do_task();
-            continue;
-        }
-
-        // 0x5187F7: a non-positive range skips the sample but still widens.
-        if ((range + 0x2F <= 0 || rand() % (range + 0x30) < 0x30) &&
-            widened == 0) {
-            widened = 1;
-            range += range / 2;
-        }
-
-        --widening_rounds;
-        if (widening_rounds > 0) {
-            samples_per_round = 0x14;
-            do_task();
-            continue;
-        }
-
-        // 0x51883A: the exhausted widening rounds keep `widened`.
-        widening_rounds = 4;
-        passes = 1;
-        successes_remaining = 0x1E;
-        samples_per_round = 0x14;
-        range = 0xA0;
-        do_task();
-    }
-}
-
-
-        }
-        break;
-    case ';':
-
-// ---- flattened from fragments/11-semicolon-interlude-prompt-owner-gap.inc ----
-// Native key-handler dispatch region.
-// from 0x51B8A4 input 0x3B/index 2 to native target 0x518863.
-// Native guard is GameState bit 0x1000. The selector storage is a standalone
-// zero-initialized dword touched only by this Console route in the pinned
-// image. `ConsoleInterludeSelection` is a provisional source-owned name; the
-// evidence proves a four-byte touched extent, not the complete original object
-// extent or its original C++ spelling.
-
-if ((GameDataStateStorage.fields_.game_state_ & 0x1000u) != 0) {
-    // Native 0x518871 reads 0x939FCC as the current EDITINTERLUDE number,
-    // and 0x5188AB stores the accepted result there.
-    const int current_interlude_selection = ConsoleInterludeSelection;
-    if (X_pop_ask_number("EDITINTERLUDE", current_interlude_selection,
-                         0) == 0) {
-        const int interlude_id = atoi(ParseStrBuffer[0].str);
-        // After a successful popup the native write at 0x5188AB publishes
-        // this value to the same selector cell.
-        ConsoleInterludeSelection = interlude_id;
-        const unsigned int bit =
-            1u << (static_cast<unsigned int>(interlude_id) & 31u);
-        GameDataStateStorage.fields_.game_interlude_flags_ &= ~bit;
-        interlude(interlude_id, 0, 1, 0);
-    }
-}
-
-// Continue to shared scenario-editor/gameplay dispatch.
-
-        break;
-    case '&':
-
-// ---- flattened from fragments/13-ampersand-audit-route.inc ----
-// Native key-handler dispatch region.
-// The non-debug validator and stack-link repair paths below are translated
-// from the native loop edges. The debug report's faction text is
-// Players[faction].adj_name_faction: Players starts at 0x946A50, typed member
-// offset +0x304, with Player's independently asserted native stride 0x59C.
-
-if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) == 0) {
-    if (IsMultiplayerNet != 0) {
-        goto native_editor_command_dispatch;
-    }
-
-    bool found_invalid_vehicle = false;
-    // 0x5188EB..0x5189E1: all three scans count with selected_vehicle_
-    // itself, which is left at -1 (or the vehicle count) afterwards.
-    for (selected_vehicle_ = GameDataStateStorage.fields_.vehicle_current_count_ - 1; selected_vehicle_ >= 0;
-         --selected_vehicle_) {
-        const int bounds_vehicle_id = selected_vehicle_;
-        const Veh &vehicle = Vehs[bounds_vehicle_id];
-        if (vehicle.x < 0 || vehicle.x >= MapLongitudeBounds ||
-            vehicle.y < 0 || vehicle.y >= MapLatitudeBounds) {
-            veh_kill(bounds_vehicle_id);
-            danger("Killed a baddy!", "", 0, 0, 0);
-            found_invalid_vehicle = true;
-        }
-    }
-
-    for (selected_vehicle_ = GameDataStateStorage.fields_.vehicle_current_count_ - 1; selected_vehicle_ >= 0;
-         --selected_vehicle_) {
-        const int stack_vehicle_id = selected_vehicle_;
-        const Veh &vehicle = Vehs[stack_vehicle_id];
-        if (vehicle.next_veh_id_stack == stack_vehicle_id ||
-            vehicle.prev_veh_id_stack == stack_vehicle_id) {
-            const int x = vehicle.x;
-            const int y = vehicle.y;
-            const int lifted_vehicle = veh_lift(stack_vehicle_id);
-            veh_drop(lifted_vehicle, x, y);
-            danger("Found a baddy!", "", 0, 0, 0);
-            found_invalid_vehicle = true;
-        }
-    }
-
-    if (found_invalid_vehicle) {
-        danger("Game fixed!", "", 0, 0, 0);
-    }
-    goto native_editor_command_dispatch;
-}
-
-if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0) {
-    for (selected_vehicle_ = 0; selected_vehicle_ < GameDataStateStorage.fields_.vehicle_current_count_; ++selected_vehicle_) {
-        const int debug_vehicle_id = selected_vehicle_;
-        const Veh &vehicle = Vehs[debug_vehicle_id];
-        if (vehicle.next_veh_id_stack != debug_vehicle_id &&
-            vehicle.prev_veh_id_stack != debug_vehicle_id) {
-            continue;
-        }
-
-        StringTemp[0] = '\0';
-        strcat(StringTemp, Players[vehicle.faction_id].adj_name_faction);
-        strcat(StringTemp, " ");
-        strcat(StringTemp, VehPrototypes[vehicle.proto_id].veh_name);
-        strcat(StringTemp, "(");
-        char number[16];
-        _itoa(vehicle.x, number, 10);
-        strcat(StringTemp, number);
-        strcat(StringTemp, ",");
-        _itoa(vehicle.y, number, 10);
-        strcat(StringTemp, number);
-        strcat(StringTemp, ")");
-
-        danger("Funny Unit", StringTemp, debug_vehicle_id,
-               vehicle.prev_veh_id_stack, vehicle.next_veh_id_stack);
-    }
-    goto native_editor_command_dispatch;
-}
-
-        break;
-    case '!':
-        if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) != 0) {
-
-// ---- flattened from fragments/16-checksum-base-report.inc ----
-// Native key-handler dispatch region.
-// This is the checked-in, typed translation of the report filename/header
-// and per-Base checksum loop only. Continue with later report families and
-// the shared 0x519F9C dispatcher before assembling the member. The debug
-// guard intentionally remains open for sequential fragment 17 and later
-// report slices; close it only at the actual native branch continuation.
-
-if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0) {
-    StringTemp[0] = '\0';
-    strcat(StringTemp, "Checksum");
-    _itoa(faction_id_, native_decimal_buffer, 10);
-    strcat(StringTemp, native_decimal_buffer);
-    strcat(StringTemp, ".TXT");
-
-    native_handler_log.init(StringTemp);
-    native_handler_log.reset();
-    native_handler_log.set_state(TRUE);  // 0x518C2C: the report is logged
-    native_handler_log.say("BASE CHECKSUMS", 0, 0, 0, 0);
-
-    for (int checksum_base_id = 0; checksum_base_id < GameDataStateStorage.fields_.base_current_count_; ++checksum_base_id) {
-        Base &base = Bases[checksum_base_id];
-        uint8_t value = checksum(reinterpret_cast<char *>(&base), 7, 0);
-        value = checksum(reinterpret_cast<char *>(&base.nutrients_accumulated),
-                          4, value);
-        value = checksum(reinterpret_cast<char *>(&base.minerals_accumulated),
-                          4, value);
-        value = checksum(reinterpret_cast<char *>(&base.queue_size), 4, value);
-        value = checksum(reinterpret_cast<char *>(&base.queue_production_id[0]),
-                          4, value);
-        value = checksum(reinterpret_cast<char *>(&base.resource_sqr_radius),
-                          4, value);
-        value = checksum(reinterpret_cast<char *>(&base.spec[0]),
-                          8, value);
-        value = checksum(reinterpret_cast<char *>(&base.facilities_built[0]),
-                          9, value);
-
-        StringTemp[0] = '\0';
-        _itoa(value, native_decimal_buffer, 10);
-        strcat(StringTemp, native_decimal_buffer);
-        strcat(StringTemp, " Base ");
-        _itoa(checksum_base_id, native_decimal_buffer, 10);
-        strcat(StringTemp, native_decimal_buffer);
-        native_handler_log.say(StringTemp, base.name_string, value, 0, 0);
-    }
-
-    native_handler_log.say(" ", 0, 0, 0, 0);
-    native_handler_log.say("LEADER CHECKSUMS", 0, 0, 0, 0);
-// Evidence: the active `!` table entry is input 0x21/index 0 -> 0x518BB1.
-// This block is entered only with GameState bit 0x1000. It initializes the
-// local Log with "Checksum" + faction_id + ".TXT", resets it, emits
-// "BASE CHECKSUMS", then scans BaseCurrentCount records at stride 0x134.
-// Each checksum input/length follows 0x518C48..0x518CC6 in order; Base layout
-// fields and sizeof(Base)==0x134 are source-owned in base.h; the following
-// leader, technology and player reports retain the same outer scan order.
-
-
-// ---- flattened from fragments/17-player-diplomacy-report.inc ----
-// Native key-handler dispatch region.
-// faction loop. Native starts at faction 1 and stops when the next Player
-// pointer reaches Players[8]+0x2FC; thus source bounds are 1 <= owner < 8.
-// The six outer owner scalar/social/satellite groups precede these seven
-// diplomacy rows and remain in the same native outer loop.
-
-{
-    for (int owner_faction = 1; owner_faction < MaxPlayerNum;
-         ++owner_faction) {
-    PlayerData &report_player = PlayersData[owner_faction];
-
-    native_handler_log.say(" ", 0, 0, 0, 0);
-    GenderDefault = Players[owner_faction].noun_gender;
-    PluralityDefault = Players[owner_faction].is_noun_plural;
-    native_handler_log.say(Players[owner_faction].noun_faction, 0, 0, 0, 0);
-
-    StringTemp[0] = '\0';
-    _itoa(report_player.tech_accumulated, native_decimal_buffer, 10);
-    strcat(StringTemp, native_decimal_buffer);
-    strcat(StringTemp, " Research");
-    native_handler_log.say(StringTemp, 0, 0, 0, 0);
-
-    StringTemp[0] = '\0';
-    _itoa(report_player.tech_id_researching, native_decimal_buffer, 10);
-    strcat(StringTemp, native_decimal_buffer);
-    strcat(StringTemp, " Researching");
-    native_handler_log.say(StringTemp, 0, 0, 0, 0);
-
-    StringTemp[0] = '\0';
-    _itoa(report_player.planet_ecology, native_decimal_buffer, 10);
-    strcat(StringTemp, native_decimal_buffer);
-    strcat(StringTemp, " Planet");
-    native_handler_log.say(StringTemp, 0, 0, 0, 0);
-
-    StringTemp[0] = '\0';
-    _itoa(report_player.energy_reserves, native_decimal_buffer, 10);
-    strcat(StringTemp, native_decimal_buffer);
-    strcat(StringTemp, " Energy");
-    native_handler_log.say(StringTemp, 0, 0, 0, 0);
-
-    StringTemp[0] = '\0';
-    _itoa(report_player.integrity_blemishes, native_decimal_buffer, 10);
-    strcat(StringTemp, native_decimal_buffer);
-    strcat(StringTemp, " Blacken");
-    native_handler_log.say(StringTemp, 0, 0, 0, 0);
-
-    for (int social_index = 0; social_index < 4; ++social_index) {
-        StringTemp[0] = '\0';
-        _itoa(static_cast<int>(report_player.soc_category_pending.models_[social_index]),
-              native_decimal_buffer, 10);
-        strcat(StringTemp, native_decimal_buffer);
-        strcat(StringTemp, " Social");
-        _itoa(social_index, native_decimal_buffer, 10);
-        strcat(StringTemp, native_decimal_buffer);
-        native_handler_log.say(StringTemp, 0, 0, 0, 0);
-    }
-
-    for (int satellite_index = 0; satellite_index < 4; ++satellite_index) {
-        StringTemp[0] = '\0';
-        _itoa(static_cast<int>(report_player.satellites_[satellite_index]),
-              native_decimal_buffer, 10);
-        strcat(StringTemp, native_decimal_buffer);
-        strcat(StringTemp, " Satellites");
-        _itoa(satellite_index, native_decimal_buffer, 10);
-        strcat(StringTemp, native_decimal_buffer);
-        native_handler_log.say(StringTemp, 0, 0, 0, 0);
-    }
-
-    for (int treaty_faction = 0; treaty_faction < MaxPlayerNum; ++treaty_faction) {
-        StringTemp[0] = '\0';
-        _itoa(static_cast<int>(report_player.diplo_treaties[treaty_faction]),
-              native_decimal_buffer, 10);
-        strcat(StringTemp, native_decimal_buffer);
-        strcat(StringTemp, " Treaties with ");
-        GenderDefault = Players[treaty_faction].noun_gender;
-        PluralityDefault = Players[treaty_faction].is_noun_plural;
-        strcat(StringTemp, Players[treaty_faction].noun_faction);
-        native_handler_log.say(StringTemp, 0, 0, 0, 0);
-    }
-
-    for (int agenda_faction = 0; agenda_faction < MaxPlayerNum; ++agenda_faction) {
-        StringTemp[0] = '\0';
-        _itoa(report_player.diplo_agenda[agenda_faction], native_decimal_buffer, 10);
-        strcat(StringTemp, native_decimal_buffer);
-        strcat(StringTemp, " Agenda with ");
-        GenderDefault = Players[agenda_faction].noun_gender;
-        PluralityDefault = Players[agenda_faction].is_noun_plural;
-        strcat(StringTemp, Players[agenda_faction].noun_faction);
-        native_handler_log.say(StringTemp, 0, 0, 0, 0);
-    }
-
-    for (int friction_faction = 0; friction_faction < MaxPlayerNum; ++friction_faction) {
-        StringTemp[0] = '\0';
-        _itoa(report_player.diplo_friction[friction_faction], native_decimal_buffer, 10);
-        strcat(StringTemp, native_decimal_buffer);
-        strcat(StringTemp, " Friction with ");
-        GenderDefault = Players[friction_faction].noun_gender;
-        PluralityDefault = Players[friction_faction].is_noun_plural;
-        strcat(StringTemp, Players[friction_faction].noun_faction);
-        native_handler_log.say(StringTemp, 0, 0, 0, 0);
-    }
-
-    for (int patience_faction = 0; patience_faction < MaxPlayerNum; ++patience_faction) {
-        StringTemp[0] = '\0';
-        _itoa(static_cast<signed char>(report_player.diplo_patience[patience_faction]),
-              native_decimal_buffer, 10);
-        strcat(StringTemp, native_decimal_buffer);
-        strcat(StringTemp, " Patience with ");
-        GenderDefault = Players[patience_faction].noun_gender;
-        PluralityDefault = Players[patience_faction].is_noun_plural;
-        strcat(StringTemp, Players[patience_faction].noun_faction);
-        native_handler_log.say(StringTemp, 0, 0, 0, 0);
-    }
-
-    for (int merc_faction = 0; merc_faction < MaxPlayerNum; ++merc_faction) {
-        StringTemp[0] = '\0';
-        _itoa(report_player.diplo_merc[merc_faction], native_decimal_buffer, 10);
-        strcat(StringTemp, native_decimal_buffer);
-        strcat(StringTemp, " Merc with ");
-        GenderDefault = Players[merc_faction].noun_gender;
-        PluralityDefault = Players[merc_faction].is_noun_plural;
-        strcat(StringTemp, Players[merc_faction].noun_faction);
-        native_handler_log.say(StringTemp, 0, 0, 0, 0);
-    }
-
-    for (int spoke_faction = 0; spoke_faction < MaxPlayerNum; ++spoke_faction) {
-        StringTemp[0] = '\0';
-        _itoa(report_player.diplo_spoke[spoke_faction], native_decimal_buffer, 10);
-        strcat(StringTemp, native_decimal_buffer);
-        strcat(StringTemp, " Spoke with ");
-        GenderDefault = Players[spoke_faction].noun_gender;
-        PluralityDefault = Players[spoke_faction].is_noun_plural;
-        strcat(StringTemp, Players[spoke_faction].noun_faction);
-        native_handler_log.say(StringTemp, 0, 0, 0, 0);
-    }
-
-    for (int wrongs_faction = 0; wrongs_faction < MaxPlayerNum; ++wrongs_faction) {
-        StringTemp[0] = '\0';
-        _itoa(report_player.diplo_wrongs[wrongs_faction], native_decimal_buffer, 10);
-        strcat(StringTemp, native_decimal_buffer);
-        strcat(StringTemp, " Wrongs with ");
-        GenderDefault = Players[wrongs_faction].noun_gender;
-        PluralityDefault = Players[wrongs_faction].is_noun_plural;
-        strcat(StringTemp, Players[wrongs_faction].noun_faction);
-        native_handler_log.say(StringTemp, 0, 0, 0, 0);
-    }
-    }
-}
-
-// Native ranges: [0x51904F,0x5190E4) diplo_treaties, [0x5190E4,0x519179)
-// diplo_agenda, [0x519179,0x51920E) diplo_friction, [0x51920E,0x5192A2)
-// signed-byte diplo_patience, [0x5192A2,0x519337) diplo_merc, and
-// [0x519337,0x5193CC) diplo_spoke. Each scans the eight Player records at
-// stride 0x59C; the source members and both grammatical defaults are typed.
-
-
-// ---- flattened from fragments/18-vehicle-checksum-report.inc ----
-// Native key-handler dispatch region.
-// checksum section. Place after fragments 16 and 17, still inside the
-// original GameState debug guard. Map checksums and record enumerations follow.
-
-native_handler_log.say(" ", 0, 0, 0, 0);
-native_handler_log.say("UNIT CHECKSUMS", 0, 0, 0, 0);
-for (int checksum_vehicle_id = 0; checksum_vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++checksum_vehicle_id) {
-    Veh &vehicle = Vehs[checksum_vehicle_id];
-    uint8_t value = checksum(reinterpret_cast<char *>(&vehicle.x), 2, 0);
-    value = checksum(reinterpret_cast<char *>(&vehicle.y), 2, value);
-    value = checksum(reinterpret_cast<char *>(&vehicle.proto_id), 3, value);
-    value = checksum(reinterpret_cast<char *>(&vehicle.morale), 1, value);
-    value = checksum(reinterpret_cast<char *>(&vehicle.moves_expended), 1,
-                      value);
-    value = checksum(reinterpret_cast<char *>(&vehicle.home_base_id), 2,
-                      value);
-
-    StringTemp[0] = '\0';
-    _itoa(value, native_decimal_buffer, 10);
-    strcat(StringTemp, native_decimal_buffer);
-    strcat(StringTemp, " Veh ");
-    _itoa(checksum_vehicle_id, native_decimal_buffer, 10);
-    strcat(StringTemp, native_decimal_buffer);
-    strcat(StringTemp, ": ");
-    strcat(StringTemp, Players[vehicle.faction_id].adj_name_faction);
-    strcat(StringTemp, " ");
-    strcat(StringTemp, VehPrototypes[vehicle.proto_id].veh_name);
-    native_handler_log.say(StringTemp, 0, value, 0, 0);
-}
-
-// Pinned native checks at [Veh+0, +2, +0xA, +0x24, +0x28, +0x2E) with byte
-// lengths 2,2,3,1,1,2 and rolling uint8 seed; the Veh array stride is 0x34.
-// The row appends the native vehicle ordinal, faction adjective, and prototype
-// name, then passes the checksum as Log::say's first integer parameter.
-
-
-// ---- flattened from fragments/19-map-checksum-report.inc ----
-// Native key-handler dispatch region.
-// checksum section. Follow unit checksums; continue with base/vehicle detail
-// rows before closing the debug-report guard.
-
-native_handler_log.say(" ", 0, 0, 0, 0);
-native_handler_log.say("MAP CHECKSUMS", 0, 0, 0, 0);
-for (int map_y = 0; map_y < MapLatitudeBounds; ++map_y) {
-    int map_x = map_y & 1;
-    for (; map_x < MapLongitudeBounds; map_x += 2) {
-        Map &tile = MapTiles[MapLongitude * map_y + (map_x >> 1)];
-        uint8_t value = checksum(reinterpret_cast<char *>(&tile.climate), 1, 0);
-        value = checksum(reinterpret_cast<char *>(&tile.region), 1, value);
-        value = checksum(reinterpret_cast<char *>(&tile.bit), 4, value);
-        value = checksum(reinterpret_cast<char *>(&tile.contour), 1, value);
-        value = checksum(reinterpret_cast<char *>(&tile.territory), 1, value);
-        value = checksum(reinterpret_cast<char *>(&tile.bit_visible[0]), 1, value);
-
-        StringTemp[0] = '\0';
-        _itoa(value, native_decimal_buffer, 10);
-        strcat(StringTemp, native_decimal_buffer);
-        strcat(StringTemp, " (");
-        _itoa(map_x, native_decimal_buffer, 10);
-        strcat(StringTemp, native_decimal_buffer);
-        strcat(StringTemp, ",");
-        _itoa(map_y, native_decimal_buffer, 10);
-        strcat(StringTemp, native_decimal_buffer);
-        strcat(StringTemp, ")");
-        native_handler_log.say(StringTemp, 0, value, 0, 0);
-    }
-}
-
-// Native report walks y=0..MapLatitudeBounds-1 and x=(y&1), +=2, with one
-// Map record per pair of horizontal map coordinates. Its checksum covers
-// offsets {0,3,8,1,7,0xC} for {1,1,4,1,1,2} bytes, then logs x and y. Map's
-// source-owned stride is 0x2C. Confirmed source translation of the native
-// formatting pieces matches the bounded literals in native-literals.json.
-
-
-// ---- flattened from fragments/20-base-enumeration-report.inc ----
-// Native key-handler dispatch region.
-// enumeration. Follow map checksums; UNIT ENUMERATION follows this block.
-
-native_handler_log.say(" ", 0, 0, 0, 0);
-native_handler_log.say("BASE ENUMERATION", 0, 0, 0, 0);
-for (int enumerated_base_id = 0; enumerated_base_id < GameDataStateStorage.fields_.base_current_count_; ++enumerated_base_id) {
-    Base &base = Bases[enumerated_base_id];
-
-    native_handler_log.say(" ", 0, 0, 0, 0);
-    StringTemp[0] = '\0';
-    _itoa(enumerated_base_id, native_decimal_buffer, 10);
-    strcat(StringTemp, native_decimal_buffer);
-    strcat(StringTemp, BufferJoinSpace);
-    strcat(StringTemp, base.name_string);
-    native_handler_log.say(StringTemp, 0, 0, 0, 0);
-
-    StringTemp[0] = '\0';
-    _itoa(static_cast<int>(base.x), native_decimal_buffer, 10);
-    strcat(StringTemp, native_decimal_buffer);
-    strcat(StringTemp, " X");
-    native_handler_log.say(StringTemp, 0, 0, 0, 0);
-
-    StringTemp[0] = '\0';
-    _itoa(static_cast<int>(base.y), native_decimal_buffer, 10);
-    strcat(StringTemp, native_decimal_buffer);
-    strcat(StringTemp, " Y");
-    native_handler_log.say(StringTemp, 0, 0, 0, 0);
-
-    StringTemp[0] = '\0';
-    _itoa(static_cast<int>(base.population_size), native_decimal_buffer, 10);
-    strcat(StringTemp, native_decimal_buffer);
-    strcat(StringTemp, " Size");
-    native_handler_log.say(StringTemp, 0, 0, 0, 0);
-
-    StringTemp[0] = '\0';
-    _itoa(static_cast<int>(base.faction_id_former), native_decimal_buffer, 10);
-    strcat(StringTemp, native_decimal_buffer);
-    strcat(StringTemp, " Former");
-    native_handler_log.say(StringTemp, 0, 0, 0, 0);
-
-    StringTemp[0] = '\0';
-    _itoa(base.nutrients_accumulated, native_decimal_buffer, 10);
-    strcat(StringTemp, native_decimal_buffer);
-    strcat(StringTemp, " Nutrient");
-    native_handler_log.say(StringTemp, 0, 0, 0, 0);
-
-    StringTemp[0] = '\0';
-    _itoa(base.minerals_accumulated, native_decimal_buffer, 10);
-    strcat(StringTemp, native_decimal_buffer);
-    strcat(StringTemp, " Minerals");
-    native_handler_log.say(StringTemp, 0, 0, 0, 0);
-
-    StringTemp[0] = '\0';
-    _itoa(static_cast<int>(base.queue_size), native_decimal_buffer, 10);
-    strcat(StringTemp, native_decimal_buffer);
-    strcat(StringTemp, " Num Making");
-    native_handler_log.say(StringTemp, 0, 0, 0, 0);
-
-    StringTemp[0] = '\0';
-    _itoa(base.queue_production_id[0], native_decimal_buffer, 10);
-    strcat(StringTemp, native_decimal_buffer);
-    strcat(StringTemp, " Making");
-    native_handler_log.say(StringTemp, 0, 0, 0, 0);
-
-    StringTemp[0] = '\0';
-    _itoa(base.resource_sqr_radius, native_decimal_buffer, 10);
-    strcat(StringTemp, native_decimal_buffer);
-    strcat(StringTemp, " Radius");
-    native_handler_log.say(StringTemp, 0, 0, 0, 0);
-
-    for (int specialist_word = 0; specialist_word < 2; ++specialist_word) {
-        StringTemp[0] = '\0';
-        _itoa(static_cast<int>(base.spec[specialist_word]), native_decimal_buffer, 10);
-        strcat(StringTemp, native_decimal_buffer);
-        strcat(StringTemp, specialist_word == 0 ? " Spec 0" : " Spec 1");
-        native_handler_log.say(StringTemp, 0, 0, 0, 0);
-    }
-
-    for (int facility_index = 0; facility_index < 9; ++facility_index) {
-        StringTemp[0] = '\0';
-        _itoa(static_cast<int>(base.facilities_built[facility_index]),
-              native_decimal_buffer, 10);
-        strcat(StringTemp, native_decimal_buffer);
-        strcat(StringTemp, " Fac");
-        _itoa(facility_index, native_decimal_buffer, 10);
-        strcat(StringTemp, native_decimal_buffer);
-        native_handler_log.say(StringTemp, 0, 0, 0, 0);
-    }
-}
-
-// Native source row offsets are Base+0,+2,+6,+5,+0x3C,+0x40,+0x4C,+0x50,
-// +0x78,+0x84,+0x88,+0x8C..+0x94; source Base fields and 0x134 stride own
-// every access. The fixed facility loop is exactly nine bytes, not the full
-// source member's twelve-byte extent. Bounded source strings were retained in
-// native-literals.json. Verify each call's pushed argument order when the
-// report slices are assembled.
-
-
-// ---- flattened from fragments/21-unit-enumeration-report.inc ----
-// Native key-handler dispatch region.
-// enumeration, followed by its final danger notification in fragment 22.
-
-native_handler_log.say(" ", 0, 0, 0, 0);
-native_handler_log.say("UNIT ENUMERATION", 0, 0, 0, 0);
-for (int unit_vehicle_id = 0; unit_vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++unit_vehicle_id) {
-    Veh &vehicle = Vehs[unit_vehicle_id];
-
-    native_handler_log.say(" ", 0, 0, 0, 0);
-    StringTemp[0] = '\0';
-    _itoa(unit_vehicle_id, native_decimal_buffer, 10);
-    strcat(StringTemp, native_decimal_buffer);
-    strcat(StringTemp, BufferJoinSpace);
-    strcat(StringTemp, Players[vehicle.faction_id].adj_name_faction);
-    strcat(StringTemp, BufferJoinSpace);
-    strcat(StringTemp, VehPrototypes[vehicle.proto_id].veh_name);
-    native_handler_log.say(StringTemp, 0, 0, 0, 0);
-
-    StringTemp[0] = '\0';
-    _itoa(static_cast<int>(vehicle.x), native_decimal_buffer, 10);
-    strcat(StringTemp, native_decimal_buffer);
-    strcat(StringTemp, " X");
-    native_handler_log.say(StringTemp, 0, 0, 0, 0);
-
-    StringTemp[0] = '\0';
-    _itoa(static_cast<int>(vehicle.y), native_decimal_buffer, 10);
-    strcat(StringTemp, native_decimal_buffer);
-    strcat(StringTemp, " Y");
-    native_handler_log.say(StringTemp, 0, 0, 0, 0);
-
-    StringTemp[0] = '\0';
-    _itoa(static_cast<int>(vehicle.proto_id), native_decimal_buffer, 10);
-    strcat(StringTemp, native_decimal_buffer);
-    strcat(StringTemp, " proto");
-    native_handler_log.say(StringTemp, 0, 0, 0, 0);
-
-    StringTemp[0] = '\0';
-    _itoa(static_cast<int>(vehicle.faction_id), native_decimal_buffer, 10);
-    strcat(StringTemp, native_decimal_buffer);
-    strcat(StringTemp, " who");
-    native_handler_log.say(StringTemp, 0, 0, 0, 0);
-
-    StringTemp[0] = '\0';
-    _itoa(static_cast<int>(vehicle.dmg_incurred), native_decimal_buffer, 10);
-    strcat(StringTemp, native_decimal_buffer);
-    strcat(StringTemp, " damage");
-    native_handler_log.say(StringTemp, 0, 0, 0, 0);
-
-    StringTemp[0] = '\0';
-    _itoa(static_cast<int>(vehicle.morale), native_decimal_buffer, 10);
-    strcat(StringTemp, native_decimal_buffer);
-    strcat(StringTemp, " morale");
-    native_handler_log.say(StringTemp, 0, 0, 0, 0);
-
-    StringTemp[0] = '\0';
-    _itoa(static_cast<int>(vehicle.moves_expended), native_decimal_buffer, 10);
-    strcat(StringTemp, native_decimal_buffer);
-    strcat(StringTemp, " moves");
-    native_handler_log.say(StringTemp, 0, 0, 0, 0);
-
-    StringTemp[0] = '\0';
-    _itoa(static_cast<int>(vehicle.home_base_id), native_decimal_buffer, 10);
-    strcat(StringTemp, native_decimal_buffer);
-    strcat(StringTemp, " home");
-    native_handler_log.say(StringTemp, 0, 0, 0, 0);
-}
-
-// Native receiver starts at Vehs[0]+0x0A (proto_id), then advances by the
-// source-owned Veh stride 0x34. Signed word reads are x, y, proto_id and
-// home_base_id; byte reads for faction, damage, morale and moves are zero
-// extended. All listed members are source-owned in veh.h.
-
-
-// ---- flattened from fragments/22-checksum-danger-tail.inc ----
-// Native key-handler dispatch region.
-// After all report sections, the native method presents this synchronous
-// notification, then converges on command dispatch at 0x519F9C.
-
-native_handler_log.set_state(FALSE);  // 0x519F8A
-danger("Made CHECKSUM FILE", "", 0, 0, 0);
-
-        }
-        // Close the outer GameState::STATE_SCENARIO_EDITOR guard separately
-        // from the nested debug-report guard closed immediately above.
-        }
-        break;
-    default:
-        break;
-    }
-}
-
-native_editor_command_dispatch:
-
-// ---- flattened from fragments/03-editor-command-tables.inc ----
-// Native key-handler dispatch region.
-// These switches are selected by a2 command IDs after the main input mode
-// transitions. They are not the same domain as the character switches.
-
-switch (a2) {
-// 0x51B900, a2 in [0x10070,0x1007B], native input base 0x10070.
-case 0x10070: editor_veh(); break;
-case 0x10071: tech_advance(ConsoleGlobal.faction_id_); break;
-case 0x10072: editor_view(); break;
-case 0x10073: editor_energy(); break;
-case 0x10074: editor_date(); break;
-case 0x10075: editor_eliminate(); break;
-case 0x10076: show_replay(); break;
-case 0x10077: show_movies(); break;
-case 0x10078: editor_diplomacy(); break;
-case 0x10079: editor_rules(); break;
-case 0x1007A: editor_scen_rules(); break;
-case 0x1007B: editor_scen_param(); break;
-// 0x51A082: the single 0x20071 id opens the tech editor.
-case 0x20071: editor_tech(); break;
-
-// 0x51B930, a2 in [0x20074,0x20078] (targets 0x51A0B0..0x51A0F0).
-case 0x20074: editor_save(); break;
-case 0x20075: editor_kill_vehicles(); break;
-case 0x20077: editor_reset_tech(); break;
-case 0x20078: editor_personality(); break;
-case 0x20076:
-    // Preserved dependency: this function remains seed-only and cannot be
-    // replaced by an empty local definition. The native call passes slot 1.
-    save_game(1);
-    break;
-
-// The neighboring command is tested outside the 0x51B930 table.
-case 0x30070: editor_edit_veh(-1); break;
-
-// 0x51B944, a2 in [0x30071,0x3007B]. The 0x30071 arm is a faction-specific
-// 0x59-record scan. Native does not call tech_advance here: it tests the
-// ownership predicate and prerequisite sentinels, marks every eligible
-// GameTechAchieved bit, and adds two to tech_ranking per newly granted record.
-case 0x30071:
-    {
-        const int faction = ConsoleGlobal.faction_id_;
-        int granted_count = 0;
-        for (int tech_id = 0; tech_id < MaxTechnologyNum; ++tech_id) {
-            if (has_tech(tech_id, faction) != 0) continue;
-            if (Technology[tech_id].preq_tech_1 < TechNone) continue;
-            if (Technology[tech_id].preq_tech_2 < TechNone) continue;
-
-            int bit_offset;
-            int bit_mask;
-            bitmask(tech_id, &bit_offset, &bit_mask);
-            GameDataStateStorage.fields_.game_tech_achieved_[tech_id] = static_cast<uint8_t>(
-                GameDataStateStorage.fields_.game_tech_achieved_[tech_id] | (1u << faction));
-            ++PlayersData[faction].tech_ranking;
-            ++PlayersData[faction].tech_ranking;
-            ++granted_count;
-        }
-        if (granted_count == 0) {
-            PlayersData[faction].tech_ranking = 1;
-            for (int tech_id = 0; tech_id < MaxTechnologyNum; ++tech_id) {
-                GameDataStateStorage.fields_.game_tech_achieved_[tech_id] = static_cast<uint8_t>(
-                    GameDataStateStorage.fields_.game_tech_achieved_[tech_id] & ~(1u << faction));
+            break;
+        case '&':
+            if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) == 0) {
+                if (IsMultiplayerNet != 0) {
+                    break;
+                }
+                int repaired = 0;
+                for (selected_vehicle_ = GameDataStateStorage.fields_.vehicle_current_count_ - 1;
+                     selected_vehicle_ >= 0; --selected_vehicle_) {
+                    if (!::on_map(Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y)) {
+                        veh_kill(selected_vehicle_);
+                        danger("Killed a baddy!", "", 0, 0, 0);
+                        repaired = 1;
+                    }
+                }
+                for (selected_vehicle_ = GameDataStateStorage.fields_.vehicle_current_count_ - 1;
+                     selected_vehicle_ >= 0; --selected_vehicle_) {
+                    if (Vehs[selected_vehicle_].prev_veh_id_stack == selected_vehicle_ ||
+                        Vehs[selected_vehicle_].next_veh_id_stack == selected_vehicle_) {
+                        x = Vehs[selected_vehicle_].x;
+                        y = Vehs[selected_vehicle_].y;
+                        veh_lift(selected_vehicle_);
+                        veh_drop(selected_vehicle_, x, y);
+                        danger("Found a baddy!", "", 0, 0, 0);
+                        repaired = 1;
+                    }
+                }
+                if (repaired != 0) {
+                    danger("Game fixed!", "", 0, 0, 0);
+                }
+                break;
             }
-        }
-    }
-    break;
-case 0x30072: editor_diff(); break;
-case 0x30073: break; // target is the native no-op continuation 0x51A2C2
-case 0x30074: editor_load(); break;
-case 0x30075: editor_reload(); break;
-case 0x30076: load_proc(1, 0); break;
-case 0x30077: editor_reset_faction(); break;
-case 0x30078: editor_strategy(); break;
-case 0x30079: editor_lock2(); break;
-case 0x3007A: break; // target is the native no-op continuation 0x51A2C2
-case 0x3007B: editor_scen_victory(); break;
-default:
-    break;
-}
-
-// Keep the guarded single-id selection event distinct from table 0x51B944:
-// a2 == 0x30070 enters editor_edit_veh(-1) directly at 0x51A0FF. The native
-// branch at a2 == 0x40008 enters editor_undo() at 0x51A2B7.
-if (a2 == 0x40008) {
-    editor_undo();
-}
-
-// This fragment ends before the map-view hotkey and later faction/gameplay
-// character tables; their code is in progress. Direct menu/owner methods above
-// use the class declarations already present in console.h. The seed-only
-// save_game body is an outside-owner dependency, not a forwarding stand-in.
-
-
-// ---- flattened from fragments/04-scenario-editor-character-table.inc ----
-// Native key-handler dispatch region.
-// Native enters the 0x51B970 byte table only when GameState has
-// STATE_SCENARIO_EDITOR and the earlier command-consumed local is clear.
-native_scenario_editor_gate:
-if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) != 0 &&
-    native_command_consumed == 0) {
-switch (normalized_character) {
-case '$':
-    if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0) {
-        MapWinTable[0]->field_1DD70_ ^= 4;
-    }
-    ::draw_map(1);
-    break;
-case '%':
-    if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0) {
-        MapWinTable[0]->field_1DD70_ ^= 0x2000;
-    }
-    ::draw_map(1);
-    break;
-case '*':
-    if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0) {
-        MapWinTable[0]->field_1DD70_ ^= 0x10000;
-    }
-    ::draw_map(1);
-    break;
-case '1': editor_paints(0); break;
-case '2': editor_paints(1); break;
-case '3': editor_paints(2); break;
-case '4': editor_paints(3); break;
-case '5': editor_paints(4); break;
-case '6': editor_terrain(); break;
-case '7': editor_set_brush(); break;
-case '8': editor_climate(); break;
-case '9': editor_generate(); break;
-case '0': editor_fast(); break;
-default:
-    // The byte table sends every other normalized byte to the shared
-    // 0x51A3F8 tail, which sets the WorldClimateWin repaint latch and refreshes
-    // WorldClimateWorldWin. It does not consume arbitrary editor characters.
-    break;
-}
-// The native explicit 0 key calls editor_fast() at 0x51A389; the 7/8/9 keys
-// call editor_set_brush/editor_climate/editor_generate. Keep this as the
-// exact table mapping rather than renumbering the editor tools by intuition.
-
-// Shared 0x51A3F8 tail reached after this table, including default entries:
-// set WorldWin's redraw latch bit 4 and repaint it. Only the three view
-// toggles above redraw the map first (0x51A3EE).
-WorldClimateWorldWin.field_239BC_ |= 4;
-WorldClimateWorldWin.GraphicWin::redraw();
-} else if (edit_lock() == 0) {
-    // 0x51A413: outside the editor, '*' zooms to the upkeep base and the
-    // digits 1..6 open a commlink to the matching other faction.
-    if (normalized_character == '*') {
-        zoom_to_upkeep_base();
-    }
-    if (a2 >= '1' && a2 <= '6') {
-        int faction = a2 - '0';
-        if (faction >= ConsoleGlobal.faction_id_) {
-            ++faction;
-        }
-        if ((PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] &
-             DTREATY_COMMLINK) != 0 ||
-            (GameDataStateStorage.fields_.game_state_ & 0x80u) != 0 ||
-            has_project(4, ConsoleGlobal.faction_id_) ||
-            ((*reinterpret_cast<const unsigned char *>(
-                  &GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
-              (1 << faction)) != 0 &&
-             auto_contact() != 0)) {
-            commlink_attempt(faction);
-        }
-    }
-}
-
-// 0x51A4CB: 'w' and Tab skip the unit (or wait) unless the editor locks it.
-if (normalized_character == 'w' || a2 == 9) {
-    if (native_editor_lock == 0 && native_command_consumed == 0 &&
-        edit_lock() == 0) {
-        if (ConsoleGlobal.cursor_active_ == 0) {
-            set_move(0);
-        } else {
-            wait(selected_vehicle_);
-        }
-    } else if (edit_lock() != 0) {
-        NetMsgPrimary.pop("PROTECTED", 5000, 0, 0);
-    }
-}
-
-
-// ---- flattened from fragments/05-report-menu-and-enter-handlers.inc ----
-// Native key-handler dispatch region.
-// Candidate translation of the active 0x51B9C0 key table and adjacent direct
-// commands. The common 0x10051/0x20051 confirmation path is represented below;
-// coordinator review still owns whole-function integration and source binding.
-
-// Native 0x51A53E compares the command before entering this table: exactly
-// 0x20043 calls Console::chat(0), while larger IDs dispatch at 0x51AC11.
-if (a2 == 0x20043) {
-    chat(0);
-    goto native_command_done;
-}
-if (a2 > 0x20043) {
-    goto native_mode_command_tables;
-}
-
-if (a2 == 0x77) {
-    report_score(0);
-    goto native_command_done;
-}
-
-switch (a2) {
-case 0x13: // Ctrl+S/native save menu action
-    // 0x51A57A: only a network game reacts.
-    if (IsMultiplayerNet == 0) {
-        goto native_command_done;
-    }
-    if ((NetDaemonNet.primary_state_.trailing_words_[3] &
-         (1u << ConsoleGlobal.faction_id_)) != 0) {
-        message_data(0x4C01, 0, 0, 0, 0, 0);
-        MultiWindow.draw(0);
-        goto native_command_done;
-    }
-    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
-        // Native pushes target=null and channel=0 before duration and label;
-        // these are all four explicit parameters of the owned NetMsg method.
-        NetMsgPrimary.pop("SIMULNOT", 5000, 0, 0);
-        MultiWindow.draw(0);
-        goto native_command_done;
-    }
-    message_data(0x4C00, 0, 0, 0, 0, 0);
-    MultiWindow.draw(0);
-    goto native_command_done;
-case 0x1B: // Escape
-    // 0x51A5F6: an open report window takes the escape first.
-    if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 5) {
-        ReportIfGlobal.done();
-        goto native_command_done;
-    }
-    {
-        const char *confirmation = "REALLYQUIT";
-        if ((IsMultiplayerNet != 0 || IsMultiplayerPBEM != 0) &&
-            bit_count(static_cast<int>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu)) > 1) {
-            confirmation = ConsoleReallyWimpOut;
-        }
-        if (X_pop(confirmation, 0) != 0) {
-            if (IsMultiplayerPBEM != 0) {
-                GameDataStateStorage.fields_.lock_masks_.enable_mask_ &= ~(1u << ConsoleGlobal.faction_id_);
-                save_game(0);
-            }
-            if ((GameDataStateStorage.fields_.game_rules_ & 0x400u) != 0 &&
-                IsMultiplayerPBEM == 0) {
-                auto_save();
-            }
-            if (IsMultiplayerNet != 0) {
-                NetDaemonNet.hang_up();
-                NetDaemonNet.reset();
-                IsMultiplayerNet = 0;
-            }
-            ExitTurnLoop = 1;
-            log_say("Quit***********************************", 0, 0, 0);
-        }
-    }
-    goto native_command_done;
-case 0x08: // Backspace: clear cursor selection/order and refresh UI state
-    if (native_command_consumed != 0) {
-        goto native_done;
-    }
-    field_23BF8_ = 0;
-    if (survey_mode_ != 0) {
-        survey_mode_ = 0;
-        MapWinTable[0]->draw_map(1);
-    }
-    MapWinTable[0]->draw_cursor();
-    if (cursor_active_ != 0) {
-        ambience(0x1E);
-        cursor_active_ = 0;
-        field_23BF8_ = 1;
-        field_23BFC_ = 1;
-        if (survey_mode_ != 0) {
-            survey_mode_ = 0;
-            MapWinTable[0]->draw_map(1);
-        }
-        ::draw_cursor();
-        ConsoleInfoWin.change(0);
-        ConsoleStatusWin.redraw();
-        MapWinTable[0]->main_caption();
-        alpha_menu_.check(selected_vehicle_);
-    }
-    --cursor_history_index_;
-    if (cursor_history_index_ < 0) {
-        cursor_history_index_ = 0x1F;
-    }
-    {
-        const int history = cursor_history_index_;
-        const int x = cursor_history_x_[history];
-        const int y = cursor_history_y_[history];
-        ConsoleStatusWin.set_loc(x, y);
-        MapWinTable[0]->focus(x, y);
-    }
-    goto native_map_pan_route;
-case 0x70: DatalinkMain.exec(0x0E, 0); goto native_command_done;
-case 0x71: report_labs(); goto native_command_done;
-case 0x72: report_energy(); goto native_command_done;
-case 0x73: report_ops(); goto native_command_done;
-case 0x74: report_projects(); goto native_command_done;
-case 0x75: report_sat(); goto native_command_done;
-case 0x76: report_security(); goto native_command_done;
-case 0x78: hall_of_fame(0); goto native_command_done;
-case 0x79: monument(0); goto native_command_done;
-case 0x7A:
-    if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x200000u) != 0) {
-        GameDataStateStorage.fields_.game_more_preferences_ &= ~0x200000u;
-        ConsoleGlobal.alpha_menu_.check(ConsoleGlobal.selected_vehicle_);
-        X_pop("MENUSIMPLE", 0);
-    } else {
-        GameDataStateStorage.fields_.game_more_preferences_ |= 0x200000u;
-        ConsoleGlobal.alpha_menu_.check(ConsoleGlobal.selected_vehicle_);
-        X_pop("MENUDETAIL", 0);
-    }
-    goto native_command_done;
-case 0x7B:
-    MainInterfaceGlobal.on_iface_button_clicked(0x3EC);
-    goto native_command_done;
-case 0x0D:
-case 0x1000D: // Enter/remote command: activate the current cursor base
-    if ((GameDataStateStorage.fields_.game_state_ & STATE_UNK_2) != 0 && edit_lock() == 0) {
-        field_23BE4_ = 0;
-        field_23BE8_ = 0;
-        goto native_command_done;
-    }
-    {
-        const int history = cursor_history_index_;
-        const int x = cursor_history_x_[history];
-        const int y = cursor_history_y_[history];
-        const int base_id = base_at(x, y);
-        if (base_id >= 0) {
-            const Base &base = Bases[base_id];
-            const int owner = base.faction_id_current;
-            const int local_faction = faction_id_;
-            const bool omniscient = (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0;
-            const bool visible =
-                (base.visibility & (1u << local_faction)) != 0;
-            if (owner == local_faction || visible || omniscient) {
-                if (omniscient || owner == local_faction || spying(owner)) {
-                    TutWinBaseWindow.zoom(base_id, 0);
+            for (selected_vehicle_ = 0;
+                 selected_vehicle_ < GameDataStateStorage.fields_.vehicle_current_count_;
+                 ++selected_vehicle_) {
+                if (Vehs[selected_vehicle_].prev_veh_id_stack == selected_vehicle_ ||
+                    Vehs[selected_vehicle_].next_veh_id_stack == selected_vehicle_) {
+                    ::clear();
+                    strcat(StringTemp, get_adjective(Vehs[selected_vehicle_].faction_id));
+                    strcat(StringTemp, BufferJoinSpace);
+                    strcat(StringTemp, VehPrototypes[Vehs[selected_vehicle_].proto_id].veh_name);
+                    strcat(StringTemp, BufferJoinSpace);
+                    strcat(StringTemp, "(");
+                    say_num(Vehs[selected_vehicle_].x);
+                    strcat(StringTemp, ",");
+                    say_num(Vehs[selected_vehicle_].y);
+                    strcat(StringTemp, ")");
+                    danger("Funny Unit", StringTemp, selected_vehicle_,
+                           Vehs[selected_vehicle_].prev_veh_id_stack,
+                           Vehs[selected_vehicle_].next_veh_id_stack);
                 }
             }
+            break;
+        case '!':
+            if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) == 0) {
+                break;
+            }
+            ::clear();
+            strcat(StringTemp, "Checksum");
+            say_num(ConsoleGlobal.faction_id_);
+            strcat(StringTemp, ".TXT");
+            report_log.init(StringTemp);
+            report_log.reset();
+            report_log.set_state(TRUE);
+            report_log.say("BASE CHECKSUMS", 0, 0, 0, 0);
+            for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
+                Base &base = Bases[base_id];
+                uint8_t value = checksum(reinterpret_cast<char *>(&base), 7, 0);
+                value = checksum(reinterpret_cast<char *>(&base.nutrients_accumulated), 4, value);
+                value = checksum(reinterpret_cast<char *>(&base.minerals_accumulated), 4, value);
+                value = checksum(reinterpret_cast<char *>(&base.queue_size), 4, value);
+                value = checksum(reinterpret_cast<char *>(&base.queue_production_id[0]), 4, value);
+                value = checksum(reinterpret_cast<char *>(&base.resource_sqr_radius), 4, value);
+                value = checksum(reinterpret_cast<char *>(&base.spec[0]), 8, value);
+                value = checksum(reinterpret_cast<char *>(&base.facilities_built[0]), 9, value);
+                ::clear();
+                say_num(value);
+                strcat(StringTemp, " Base ");
+                say_num(base_id);
+                report_log.say(StringTemp, base.name_string, value, 0, 0);
+            }
+            report_log.say(" ", 0, 0, 0, 0);
+            report_log.say("LEADER CHECKSUMS", 0, 0, 0, 0);
+            for (int faction_id = 1; faction_id < MaxPlayerNum; ++faction_id) {
+                PlayerData &player = PlayersData[faction_id];
+                report_log.say(" ", 0, 0, 0, 0);
+                report_log.say(get_noun(faction_id), 0, 0, 0, 0);
+                ::clear();
+                say_num(player.tech_accumulated);
+                strcat(StringTemp, " Research");
+                report_log.say(StringTemp, 0, 0, 0, 0);
+                ::clear();
+                say_num(player.tech_id_researching);
+                strcat(StringTemp, " Researching");
+                report_log.say(StringTemp, 0, 0, 0, 0);
+                ::clear();
+                say_num(player.planet_ecology);
+                strcat(StringTemp, " Planet");
+                report_log.say(StringTemp, 0, 0, 0, 0);
+                ::clear();
+                say_num(player.energy_reserves);
+                strcat(StringTemp, " Energy");
+                report_log.say(StringTemp, 0, 0, 0, 0);
+                ::clear();
+                say_num(player.integrity_blemishes);
+                strcat(StringTemp, " Blacken");
+                report_log.say(StringTemp, 0, 0, 0, 0);
+                for (int social = 0; social < 4; ++social) {
+                    ::clear();
+                    say_num(static_cast<int>(player.soc_category_pending.models_[social]));
+                    strcat(StringTemp, " Social");
+                    say_num(social);
+                    report_log.say(StringTemp, 0, 0, 0, 0);
+                }
+                for (int satellite = 0; satellite < 4; ++satellite) {
+                    ::clear();
+                    say_num(static_cast<int>(player.satellites_[satellite]));
+                    strcat(StringTemp, " Satellites");
+                    say_num(satellite);
+                    report_log.say(StringTemp, 0, 0, 0, 0);
+                }
+                for (int other = 0; other < MaxPlayerNum; ++other) {
+                    ::clear();
+                    say_num(static_cast<int>(player.diplo_treaties[other]));
+                    strcat(StringTemp, " Treaties with ");
+                    strcat(StringTemp, get_noun(other));
+                    report_log.say(StringTemp, 0, 0, 0, 0);
+                }
+                for (other = 0; other < MaxPlayerNum; ++other) {
+                    ::clear();
+                    say_num(player.diplo_agenda[other]);
+                    strcat(StringTemp, " Agenda with ");
+                    strcat(StringTemp, get_noun(other));
+                    report_log.say(StringTemp, 0, 0, 0, 0);
+                }
+                for (other = 0; other < MaxPlayerNum; ++other) {
+                    ::clear();
+                    say_num(static_cast<int>(player.diplo_friction[other]));
+                    strcat(StringTemp, " Friction with ");
+                    strcat(StringTemp, get_noun(other));
+                    report_log.say(StringTemp, 0, 0, 0, 0);
+                }
+                for (other = 0; other < MaxPlayerNum; ++other) {
+                    ::clear();
+                    say_num(player.diplo_patience[other]);
+                    strcat(StringTemp, " Patience with ");
+                    strcat(StringTemp, get_noun(other));
+                    report_log.say(StringTemp, 0, 0, 0, 0);
+                }
+                for (other = 0; other < MaxPlayerNum; ++other) {
+                    ::clear();
+                    say_num(player.diplo_merc[other]);
+                    strcat(StringTemp, " Merc with ");
+                    strcat(StringTemp, get_noun(other));
+                    report_log.say(StringTemp, 0, 0, 0, 0);
+                }
+                for (other = 0; other < MaxPlayerNum; ++other) {
+                    ::clear();
+                    say_num(player.diplo_spoke[other]);
+                    strcat(StringTemp, " Spoke with ");
+                    strcat(StringTemp, get_noun(other));
+                    report_log.say(StringTemp, 0, 0, 0, 0);
+                }
+                for (other = 0; other < MaxPlayerNum; ++other) {
+                    ::clear();
+                    say_num(player.diplo_wrongs[other]);
+                    strcat(StringTemp, " Wrongs with ");
+                    strcat(StringTemp, get_noun(other));
+                    report_log.say(StringTemp, 0, 0, 0, 0);
+                }
+            }
+            report_log.say(" ", 0, 0, 0, 0);
+            report_log.say("UNIT CHECKSUMS", 0, 0, 0, 0);
+            for (int veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; ++veh_id) {
+                Veh &vehicle = Vehs[veh_id];
+                uint8_t value = checksum(reinterpret_cast<char *>(&vehicle.x), 2, 0);
+                value = checksum(reinterpret_cast<char *>(&vehicle.y), 2, value);
+                value = checksum(reinterpret_cast<char *>(&vehicle.proto_id), 3, value);
+                value = checksum(reinterpret_cast<char *>(&vehicle.morale), 1, value);
+                value = checksum(reinterpret_cast<char *>(&vehicle.moves_expended), 1, value);
+                value = checksum(reinterpret_cast<char *>(&vehicle.home_base_id), 2, value);
+                ::clear();
+                say_num(value);
+                strcat(StringTemp, " Veh ");
+                say_num(veh_id);
+                strcat(StringTemp, ": ");
+                strcat(StringTemp, get_adjective(vehicle.faction_id));
+                strcat(StringTemp, BufferJoinSpace);
+                strcat(StringTemp, VehPrototypes[vehicle.proto_id].veh_name);
+                report_log.say(StringTemp, 0, value, 0, 0);
+            }
+            report_log.say(" ", 0, 0, 0, 0);
+            report_log.say("MAP CHECKSUMS", 0, 0, 0, 0);
+            {
+                // The image walks the tile records with one running pointer,
+                // never re-derived from the coordinates.
+                Map *tile = MapTiles;
+                for (y = 0; y < MapLatitudeBounds; ++y) {
+                    for (x = y & 1; x < MapLongitudeBounds; x += 2) {
+                        uint8_t value = checksum(reinterpret_cast<char *>(&tile->climate), 1, 0);
+                        value = checksum(reinterpret_cast<char *>(&tile->region), 1, value);
+                        value = checksum(reinterpret_cast<char *>(&tile->bit), 4, value);
+                        value = checksum(reinterpret_cast<char *>(&tile->contour), 1, value);
+                        value = checksum(reinterpret_cast<char *>(&tile->territory), 1, value);
+                        value = checksum(reinterpret_cast<char *>(&tile->bit_visible[0]), 1, value);
+                        ::clear();
+                        say_num(value);
+                        strcat(StringTemp, " (");
+                        say_num(x);
+                        strcat(StringTemp, ",");
+                        say_num(y);
+                        strcat(StringTemp, ")");
+                        report_log.say(StringTemp, 0, value, 0, 0);
+                        ++tile;
+                    }
+                }
+            }
+            report_log.say(" ", 0, 0, 0, 0);
+            report_log.say("BASE ENUMERATION", 0, 0, 0, 0);
+            for (base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
+                Base &base = Bases[base_id];
+                report_log.say(" ", 0, 0, 0, 0);
+                ::clear();
+                say_num(base_id);
+                strcat(StringTemp, BufferJoinSpace);
+                strcat(StringTemp, base.name_string);
+                report_log.say(StringTemp, 0, 0, 0, 0);
+                ::clear();
+                say_num(base.x);
+                strcat(StringTemp, " X");
+                report_log.say(StringTemp, 0, 0, 0, 0);
+                ::clear();
+                say_num(base.y);
+                strcat(StringTemp, " Y");
+                report_log.say(StringTemp, 0, 0, 0, 0);
+                ::clear();
+                say_num(base.population_size);
+                strcat(StringTemp, " Size");
+                report_log.say(StringTemp, 0, 0, 0, 0);
+                ::clear();
+                say_num(base.faction_id_former);
+                strcat(StringTemp, " Former");
+                report_log.say(StringTemp, 0, 0, 0, 0);
+                ::clear();
+                say_num(base.nutrients_accumulated);
+                strcat(StringTemp, " Nutrient");
+                report_log.say(StringTemp, 0, 0, 0, 0);
+                ::clear();
+                say_num(base.minerals_accumulated);
+                strcat(StringTemp, " Minerals");
+                report_log.say(StringTemp, 0, 0, 0, 0);
+                ::clear();
+                say_num(base.queue_size);
+                strcat(StringTemp, " Num Making");
+                report_log.say(StringTemp, 0, 0, 0, 0);
+                ::clear();
+                say_num(base.queue_production_id[0]);
+                strcat(StringTemp, " Making");
+                report_log.say(StringTemp, 0, 0, 0, 0);
+                ::clear();
+                say_num(base.resource_sqr_radius);
+                strcat(StringTemp, " Radius");
+                report_log.say(StringTemp, 0, 0, 0, 0);
+                ::clear();
+                say_num(static_cast<int>(base.spec[0]));
+                strcat(StringTemp, " Spec 0");
+                report_log.say(StringTemp, 0, 0, 0, 0);
+                ::clear();
+                say_num(static_cast<int>(base.spec[1]));
+                strcat(StringTemp, " Spec 1");
+                report_log.say(StringTemp, 0, 0, 0, 0);
+                for (int facility = 0; facility < 9; ++facility) {
+                    ::clear();
+                    say_num(base.facilities_built[facility]);
+                    strcat(StringTemp, " Fac");
+                    say_num(facility);
+                    report_log.say(StringTemp, 0, 0, 0, 0);
+                }
+            }
+            report_log.say(" ", 0, 0, 0, 0);
+            report_log.say("UNIT ENUMERATION", 0, 0, 0, 0);
+            for (veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; ++veh_id) {
+                Veh &vehicle = Vehs[veh_id];
+                report_log.say(" ", 0, 0, 0, 0);
+                ::clear();
+                say_num(veh_id);
+                strcat(StringTemp, BufferJoinSpace);
+                strcat(StringTemp, get_adjective(vehicle.faction_id));
+                strcat(StringTemp, BufferJoinSpace);
+                strcat(StringTemp, VehPrototypes[vehicle.proto_id].veh_name);
+                report_log.say(StringTemp, 0, 0, 0, 0);
+                ::clear();
+                say_num(vehicle.x);
+                strcat(StringTemp, " X");
+                report_log.say(StringTemp, 0, 0, 0, 0);
+                ::clear();
+                say_num(vehicle.y);
+                strcat(StringTemp, " Y");
+                report_log.say(StringTemp, 0, 0, 0, 0);
+                ::clear();
+                say_num(vehicle.proto_id);
+                strcat(StringTemp, " proto");
+                report_log.say(StringTemp, 0, 0, 0, 0);
+                ::clear();
+                say_num(vehicle.faction_id);
+                strcat(StringTemp, " who");
+                report_log.say(StringTemp, 0, 0, 0, 0);
+                ::clear();
+                say_num(vehicle.dmg_incurred);
+                strcat(StringTemp, " damage");
+                report_log.say(StringTemp, 0, 0, 0, 0);
+                ::clear();
+                say_num(vehicle.morale);
+                strcat(StringTemp, " morale");
+                report_log.say(StringTemp, 0, 0, 0, 0);
+                ::clear();
+                say_num(vehicle.moves_expended);
+                strcat(StringTemp, " moves");
+                report_log.say(StringTemp, 0, 0, 0, 0);
+                ::clear();
+                say_num(vehicle.home_base_id);
+                strcat(StringTemp, " home");
+                report_log.say(StringTemp, 0, 0, 0, 0);
+            }
+            report_log.set_state(FALSE);
+            danger("Made CHECKSUM FILE", "", 0, 0, 0);
+            break;
+        }
+
+        // Editor command ids: tables 0x51B900, 0x51B930 and 0x51B944.
+        switch (a2) {
+        case 0x10070: editor_veh(); break;
+        case 0x10071: tech_advance(ConsoleGlobal.faction_id_); break;
+        case 0x10072: editor_view(); break;
+        case 0x10073: editor_energy(); break;
+        case 0x10074: editor_date(); break;
+        case 0x10075: editor_eliminate(); break;
+        case 0x10076: show_replay(); break;
+        case 0x10077: show_movies(); break;
+        case 0x10078: editor_diplomacy(); break;
+        case 0x10079: editor_rules(); break;
+        case 0x1007A: editor_scen_rules(); break;
+        case 0x1007B: editor_scen_param(); break;
+        case 0x20071: editor_tech(); break;
+        case 0x20074: editor_save(); break;
+        case 0x20075: editor_kill_vehicles(); break;
+        case 0x20077: editor_reset_tech(); break;
+        case 0x20078: editor_personality(); break;
+        case 0x20076: save_game(1); break;
+        case 0x30070: editor_edit_veh(-1); break;
+        case 0x30071: {
+            int granted = 0;
+            // UNCERTAIN (0x51A1C5/0x51A1F0): the image ends the scan one
+            // record before Transcendent Thought and guards the second
+            // ranking step with a test that is always true inside it.
+            for (int tech_id = 0; tech_id < MaxTechnologyNum - 1; ++tech_id) {
+                if (has_tech(tech_id, ConsoleGlobal.faction_id_) == 0 &&
+                    Technology[tech_id].preq_tech_1 >= TechNone &&
+                    Technology[tech_id].preq_tech_2 >= TechNone) {
+                    ++granted;
+                    int bit_offset;
+                    int bit_mask;
+                    bitmask(tech_id, &bit_offset, &bit_mask);
+                    GameDataStateStorage.fields_.game_tech_achieved_[tech_id] |= 1 << faction_id_;
+                    ++PlayersData[faction_id_].tech_ranking;
+                    if (tech_id < MaxTechnologyNum) {
+                        ++PlayersData[faction_id_].tech_ranking;
+                    }
+                }
+            }
+            if (granted == 0) {
+                PlayersData[faction_id_].tech_ranking = 1;
+                for (int tech_id = 0; tech_id < MaxTechnologyNum; ++tech_id) {
+                    GameDataStateStorage.fields_.game_tech_achieved_[tech_id] &= ~(1 << faction_id_);
+                }
+            }
+            break;
+        }
+        case 0x30072: editor_diff(); break;
+        case 0x30074: editor_load(); break;
+        case 0x30075: editor_reload(); break;
+        case 0x30077: editor_reset_faction(); break;
+        case 0x30078: editor_strategy(); break;
+        case 0x3007B: editor_scen_victory(); break;
+        case 0x30076: load_proc(1, 0); break;
+        case 0x30079: editor_lock2(); break;
+        case 0x40008: editor_undo(); break;
         }
     }
-    goto native_command_done;
-case 0x10008: // advance cursor history, then share native map/cursor routing
-    if (native_command_consumed == 0) { // native stack local [ebp-0x28]
-        ConsoleGlobal.next_cursor();
-        goto native_map_pan_route;
-    }
-    goto native_done;
-default:
-    break; // all other byte-table indexes reach native 0x51B078
-}
 
-// The native direct-command tail is deliberately kept separate from the
-// 0x51B9C0 byte table. These IDs do not alias the later 0x200xx preferences.
-if (a2 == 0x1004E) {
-    if (native_command_consumed != 0) {
-        goto native_done;
-    }
-    name_landmark(-1, -1);
-    goto native_map_pan_route;
-}
-if (a2 == 0x20041) {
-    set_auto_preferences();
-    goto native_command_done;
-}
-if (a2 == 0x20042) {
-    if (native_command_consumed != 0) {
-        goto native_done;
-    }
-    go_to(-1, -2, 0);
-    goto native_map_pan_route;
-}
-if (a2 == 0x10051) {
-    retire_game();
-    goto native_retirement_confirmation;
-}
-goto native_command_done;
-
-// Native 0x10051 reaches this block after retire_game(); 0x20051 enters the
-// same block directly from the 0x51BA60 table. They share this exact tail.
-native_retirement_confirmation:
-{
-    // Native asks about ending the active multiplayer/PBEM game after the
-    // optional preceding retire operation. Its tail is shared by both IDs.
-    const char *quit_confirmation = "REALLYQUIT";
-    if ((IsMultiplayerNet != 0 || IsMultiplayerPBEM != 0) &&
-        bit_count(static_cast<int>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu)) > 1) {
-        quit_confirmation = ConsoleReallyWimpOut;
-    }
-    if (X_pop(quit_confirmation, 0) != 0) {
-        if (IsMultiplayerPBEM != 0) {
-            GameDataStateStorage.fields_.lock_masks_.enable_mask_ &= ~(1u << ConsoleGlobal.faction_id_);
-            save_game(0);
+    if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) != 0 && consumed == 0) {
+        // Table 0x51B970/0x51B9A8, input normalized - 0x24.
+        switch (normalized) {
+        case '1': editor_paints(0); break;
+        case '2': editor_paints(1); break;
+        case '3': editor_paints(2); break;
+        case '4': editor_paints(3); break;
+        case '5': editor_paints(4); break;
+        case '6': editor_terrain(); break;
+        case '7': editor_set_brush(); break;
+        case '8': editor_climate(); break;
+        case '9': editor_generate(); break;
+        case '0': editor_fast(); break;
+        case '$':
+            if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0) {
+                MapWinTable[0]->field_1DD70_ ^= 4;
+            }
+            ::draw_map(1);
+            break;
+        case '%':
+            if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0) {
+                MapWinTable[0]->field_1DD70_ ^= 0x2000;
+            }
+            ::draw_map(1);
+            break;
+        case '*':
+            if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0) {
+                MapWinTable[0]->field_1DD70_ ^= 0x10000;
+            }
+            ::draw_map(1);
+            break;
         }
-        if ((GameDataStateStorage.fields_.game_rules_ & 0x400u) != 0 && IsMultiplayerPBEM == 0) {
-            auto_save();
+        WorldClimateWorldWin.field_239BC_ |= 4;
+        WorldClimateWorldWin.GraphicWin::redraw();
+    } else if (edit_lock() == 0) {
+        if (normalized == '*') {
+            zoom_to_upkeep_base();
         }
-        if (IsMultiplayerNet != 0) {
-            NetDaemonNet.hang_up();
-            NetDaemonNet.reset();
-            IsMultiplayerNet = 0;
+        if (a2 >= '1' && a2 <= '6') {
+            int faction = a2 - '0';
+            if (faction >= ConsoleGlobal.faction_id_) {
+                ++faction;
+            }
+            if ((PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & DTREATY_COMMLINK) != 0 ||
+                (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0 ||
+                has_project(4, ConsoleGlobal.faction_id_) ||
+                (is_human(faction) && auto_contact() != 0)) {
+                commlink_attempt(faction);
+            }
         }
-        ExitTurnLoop = 1;
-        log_say("Quit***********************************", 0, 0, 0);
     }
-}
-goto native_command_done;
 
-// Native 0x51B078 tests stack local [ebp-0x28] before entering 0x51B081.
-// Most successful command handlers arrive with it clear and continue through
-// the shared map/cursor router; the handful of earlier consumed-key paths
-// take the common cleanup edge directly.
-native_command_done:
-if (native_command_consumed != 0) {
-    goto native_done;
-}
-goto native_map_pan_route;
-
-// Native adjacent command overrides represented here:
-// - 0x77 calls report_score(0); 0x1000D enters Enter/base selection;
-// - 0x10008 advances cursor history when the native consumed local is clear;
-// - 0x1004E names the current landmark; 0x10051 retires then performs the
-//   separate native post-retire transition; 0x20041 opens automation prefs;
-//   0x20042 invokes go_to(-1,-2,0).
-
-
-// ---- flattened from fragments/06-preference-and-mode-command-tables.inc ----
-// Native late mode/preferences command families, native 0x51AC11..0x51B146.
-// Includes 0x51BA60 (command IDs 0x20047..0x2005A) and 0x51BAB0 (byte-map
-// domain 0x30041..0x30073); the substantial setting/network branches and the
-// map-panel key layout cases continue in fragment 07.
-
-native_mode_command_tables:
-
-switch (a2) {
-case 0x20047:
-    GameDataStateStorage.fields_.game_preferences_ ^= 0x100;
-    if ((GameDataStateStorage.fields_.game_preferences_ & 0x100) != 0) {
-        alpha_menu_.check_menu_item(2, 0x20A);
-    } else {
-        alpha_menu_.uncheck_menu_item(2, 0x20A);
+    if (normalized == 'w' || a2 == 9) {
+        if (net_lock == 0 && consumed == 0 && edit_lock() == 0) {
+            if (ConsoleGlobal.cursor_active_ == 0) {
+                set_move(0);
+            } else {
+                wait(selected_vehicle_);
+            }
+        } else if (edit_lock() != 0) {
+            NetMsgPrimary.pop("PROTECTED", 5000, 0, 0);
+        }
     }
-    AlphaIniPrefs.preferences = GameDataStateStorage.fields_.game_preferences_;
-    prefs_save(0);
-    ::draw_map(1);
-    break;
-case 0x20049: set_audiovisual(); break;
-case 0x2004B: editor_on(); break;
-case 0x2004C:
-    // The native branch skips the load only when multiplayer is active and
-    // GameState's STATE_DEBUG_MODE bit is clear (test at 0x51ACE5..0x51ACF5).
-    if (IsMultiplayerNet == 0 || (GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0) {
-        load_proc(0, 0);
-    }
-    break;
-case 0x2004D: set_map_display(); break;
-case 0x2004E:
-    if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x1000) != 0) {
-        GameDataStateStorage.fields_.game_more_preferences_ &= ~0x3000u;
-    } else if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x2000) != 0) {
-        GameDataStateStorage.fields_.game_more_preferences_ |= 0x1000;
-    } else {
-        GameDataStateStorage.fields_.game_more_preferences_ |= 0x2000;
-    }
-    AlphaIniPrefs.more_preferences = GameDataStateStorage.fields_.game_more_preferences_;
-    prefs_save(0);
-    ::draw_map(1);
-    break;
-case 0x2004F: set_adv_preferences(); break;
-case 0x20050: set_preferences(); break;
-case 0x20051:
-    // Native 0x20051 branches directly to 0x51AA0D, unlike 0x10051 which
-    // first calls retire_game() and then falls into this same tail.
-    goto native_retirement_confirmation;
-case 0x20053:
-    save_game(0);
-    break;
-case 0x20057: set_base_preferences(); break;
-// 0x51AC39/0x51AC58: a consumed key ends here; otherwise the zoom
-// continues straight into the layout router at 0x51B081.
-case 0x2005A:
-    if (native_command_consumed != 0) goto native_done;
-    zoom(0x207, 0);
-    goto native_map_pan_route;
-case 0x20058:
-    if (native_command_consumed != 0) goto native_done;
-    zoom(0x208, 0);
-    goto native_map_pan_route;
-// The original 0x51AC11 comparison dispatches this exact raw event before
-// the later layout/key routing; after the popup, preserve the common tail.
-case 0x20073:
-    parse_says(0, ConsoleVersionRelease, -1, -1);
-    parse_says(1, ConsoleVersionBuildDate, -1, -1);
-    popp(ScriptPopupFile, ConsoleStrVersionControlX, 0,
-         ConsoleStrAcLogoSm, (NullCallback)0);
-    break;
-default:
-    break;
-}
 
-// The 0x51BAB0 lookup is keyed by a2 codes in [0x30041,0x30073]. Its active
-// bytes are exact and sparse: 0x30041, 0x30047, 0x3004C, 0x3004E, 0x30051,
-// 0x30057, 0x30058, 0x30073; all other bytes use the native shared no-op.
-switch (a2) {
-case 0x30041:
-    MapWinTable[0]->field_1DD70_ ^= 0x40000;
-    ::draw_map(1);
-    break;
-case 0x30047:
-    GameDataStateStorage.fields_.game_preferences_ ^= 0x200;
-    if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) != 0) {
-        alpha_menu_.check_menu_item(2, 0x20B);
-    } else {
-        alpha_menu_.uncheck_menu_item(2, 0x20B);
-    }
-    AlphaIniPrefs.preferences = GameDataStateStorage.fields_.game_preferences_;
-    prefs_save(0);
-    ::draw_map(1);
-    break;
-case 0x3004C:
-    // 0x51ACFB: the load dialog opens unconditionally.
-    load_proc(0, 0);
-    break;
-case 0x3004E:
-    // 0x51AFF5: erase the landmark under the cursor, then the layout router.
-    if (native_command_consumed != 0) goto native_done;
-    erase_landmark(-1, -1);
-    goto native_map_pan_route;
-case 0x30051:
-    {
-        // Console::new_game expanded (0x0051AE3F): a network game refuses.
+    // One switch: tables 0x51B9C0 (0x08..0x76), 0x51BA60 (0x20047..0x2005A)
+    // and 0x51BAB0 (0x30041..0x30073) plus the direct ids. Cases follow the
+    // image's body addresses 0x51A57A..0x51B073.
+    switch (a2) {
+    case 0x13:
         if (IsMultiplayerNet == 0) {
-            const char *confirmation = "REALLYQUIT";
-            if (IsMultiplayerPBEM != 0 &&
-                bit_count(static_cast<int>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu)) > 1) {
-                confirmation = ConsoleReallyWimpOut;
-            }
-            if (X_pop(confirmation, 0) != 0) {
-                if (IsMultiplayerPBEM != 0) {
-                    GameDataStateStorage.fields_.lock_masks_.enable_mask_ &= ~(1u << ConsoleGlobal.faction_id_);
+            break;
+        }
+        if ((NetDaemonNet.primary_state_.trailing_words_[3] & (1 << ConsoleGlobal.faction_id_)) != 0) {
+            message_data(0x4C01, 0, 0, 0, 0, 0);
+            MultiWindow.draw(0);
+            break;
+        }
+        if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) != 0) {
+            NetMsgPrimary.pop("SIMULNOT", 5000, 0, 0);
+            MultiWindow.draw(0);
+            break;
+        }
+        message_data(0x4C00, 0, 0, 0, 0, 0);
+        MultiWindow.draw(0);
+        break;
+    case 0x1B:
+        if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 5) {
+            ReportIfGlobal.done();
+            break;
+        }
+        // 0x51A615..0x51A6A9 is Console::quit_game (0x514990) expanded.
+        // WORKAROUND(inline): written out; a quit_game() call stays out of line in this unit (menu_proc).
+        {
+            const char *prompt;
+            if ((IsMultiplayerNet || IsMultiplayerPBEM) &&
+                bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 255) > 1) prompt = ConsoleReallyWimpOut;
+            else prompt = "REALLYQUIT";
+            if (X_pop(prompt, 0) != 0) {
+                if (IsMultiplayerPBEM) {
+                    GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &=
+                        static_cast<unsigned char>(~(1u << ConsoleGlobal.faction_id_));
                     save_game(0);
                 }
-                if ((GameDataStateStorage.fields_.game_rules_ & 0x400u) != 0 &&
-                    IsMultiplayerPBEM == 0) {
-                    auto_save();
-                }
-                if (IsMultiplayerNet != 0) {
+                if ((GameDataStateStorage.fields_.game_rules_ & 0x400) && !IsMultiplayerPBEM) auto_save();
+                if (IsMultiplayerNet) {
                     NetDaemonNet.hang_up();
                     NetDaemonNet.reset();
                     IsMultiplayerNet = 0;
@@ -8119,283 +7290,408 @@ case 0x30051:
                 ExitTurnLoop = 1;
                 log_say("Quit***********************************", 0, 0, 0);
             }
-            if (ExitTurnLoop != 0) {
-                GameRestartQueued = 1;
+        }
+        break;
+    case 0x08:
+        if (consumed != 0) {
+            return 1;
+        }
+        // 0x51A6B7..0x51A7B4 is Console::prev_cursor (0x510A60) expanded.
+        // WORKAROUND(inline): written out; a prev_cursor() call stays out of line in this unit (menu_proc).
+        field_23BF8_ = 0;
+        if (survey_mode_ != 0) {
+            survey_mode_ = 0;
+            MapWinTable[0]->draw_map(1);
+        }
+        MapWinTable[0]->draw_cursor();
+        if (ConsoleGlobal.cursor_active_ != 0) {
+            ambience(0x1E);
+            cursor_active_ = 0;
+            field_23BF8_ = 1;
+            field_23BFC_ = 1;
+            if (survey_mode_ != 0) {
+                survey_mode_ = 0;
+                MapWinTable[0]->draw_map(1);
+            }
+            ::draw_cursor();
+            ConsoleInfoWin.change(0);
+            ConsoleStatusWin.redraw();
+            MapWinTable[0]->main_caption();
+            alpha_menu_.check(selected_vehicle_);
+        }
+        if (--cursor_history_index_ < 0) {
+            cursor_history_index_ = 0x1F;
+        }
+        ConsoleStatusWin.set_loc(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                                 ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]);
+        MapWinTable[0]->focus(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                              ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]);
+        goto map_keys;
+    case 0x70: DatalinkMain.exec(0x0E, 0); break;
+    case 0x71: report_labs(); break;
+    case 0x72: report_energy(); break;
+    case 0x73: report_ops(); break;
+    case 0x74: report_projects(); break;
+    case 0x75: report_sat(); break;
+    case 0x76: report_security(); break;
+    case 0x77: report_score(0); break;
+    case 0x79: hall_of_fame(0); break;
+    case 0x78: monument(0); break;
+    case 0x7A:
+        if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x200000) != 0) {
+            menu_simple();  // 0x516970 expanded
+        } else {
+            menu_detail();  // 0x516930 expanded
+        }
+        break;
+    case 0x10008:
+        if (consumed != 0) {
+            return 1;
+        }
+        next_cursor();
+        goto map_keys;
+    case 0x7B:
+        MainInterfaceGlobal.on_iface_button_clicked(0x3EC);
+        break;
+    case 0x0D:
+    case 0x1000D: {
+        if ((GameDataStateStorage.fields_.game_state_ & STATE_UNK_2) != 0 && edit_lock() == 0) {
+            field_23BE4_ = 0;
+            field_23BE8_ = 0;
+            break;
+        }
+        const int base_id = base_at(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                                    ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]);
+        if (base_id < 0) {
+            break;
+        }
+        const int owner = Bases[base_id].faction_id_current;
+        if (owner == ConsoleGlobal.faction_id_ ||
+            (Bases[base_id].visibility & (1 << ConsoleGlobal.faction_id_)) != 0 ||
+            (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0) {
+            if ((GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0 ||
+                owner == ConsoleGlobal.faction_id_ || spying(owner) != 0) {
+                TutWinBaseWindow.zoom(base_id, 0);
             }
         }
         break;
     }
-case 0x30057:
-    GameDataStateStorage.fields_.game_more_preferences_ ^= 1;
-    ::draw_map(1);
-    prefs_save(0);
-    break;
-case 0x30058:
-    if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x10000u) != 0) {
-        GameDataStateStorage.fields_.game_more_preferences_ &= ~0x10000u;
-        alpha_menu_.uncheck_menu_item(2, 0x209);
-    } else {
-        GameDataStateStorage.fields_.game_more_preferences_ |= 0x10000u;
-        alpha_menu_.check_menu_item(2, 0x209);
+    case 0x10051:
+        retire_game();
+        // fall through: 0x20051 enters the confirmation at 0x51AA0D.
+    case 0x20051:
+        // 0x51AA0D..0x51ABA4 is Console::quit_game (0x514990) expanded.
+        // WORKAROUND(inline): written out; a quit_game() call stays out of line in this unit (menu_proc).
+        {
+            const char *prompt;
+            if ((IsMultiplayerNet || IsMultiplayerPBEM) &&
+                bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 255) > 1) prompt = ConsoleReallyWimpOut;
+            else prompt = "REALLYQUIT";
+            if (X_pop(prompt, 0) != 0) {
+                if (IsMultiplayerPBEM) {
+                    GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &=
+                        static_cast<unsigned char>(~(1u << ConsoleGlobal.faction_id_));
+                    save_game(0);
+                }
+                if ((GameDataStateStorage.fields_.game_rules_ & 0x400) && !IsMultiplayerPBEM) auto_save();
+                if (IsMultiplayerNet) {
+                    NetDaemonNet.hang_up();
+                    NetDaemonNet.reset();
+                    IsMultiplayerNet = 0;
+                }
+                ExitTurnLoop = 1;
+                log_say("Quit***********************************", 0, 0, 0);
+            }
+        }
+        break;
+    case 0x1004E:
+        if (consumed != 0) {
+            return 1;
+        }
+        name_landmark(-1, -1);
+        goto map_keys;
+    case 0x20041:
+        set_auto_preferences();
+        break;
+    case 0x20042:
+        if (consumed != 0) {
+            return 1;
+        }
+        go_to(-1, -2, 0);
+        goto map_keys;
+    case 0x20043:
+        chat(0);
+        break;
+    case 0x2005A:
+        if (consumed != 0) {
+            return 1;
+        }
+        zoom(0x207, 0);
+        goto map_keys;
+    case 0x20058:
+        if (consumed != 0) {
+            return 1;
+        }
+        zoom(0x208, 0);
+        goto map_keys;
+    case 0x20050: set_preferences(); break;
+    case 0x2004F: set_adv_preferences(); break;
+    case 0x20057: set_base_preferences(); break;
+    case 0x20049: set_audiovisual(); break;
+    case 0x2004D: set_map_display(); break;
+    case 0x2004B: editor_on(); break;
+    case 0x20053: save_game(0); break;
+    case 0x2004C:
+        if (IsMultiplayerNet != 0 && (GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) == 0) {
+            break;
+        }
+        // fall through into 0x3004C's body at 0x51ACFB.
+    case 0x3004C:
+        load_proc(0, 0);
+        break;
+    case 0x2004E: base_names(); break;          // 0x515600 expanded
+    case 0x20047: toggle_grid(); break;         // 0x5156A0 expanded
+    case 0x20073: show_version(); break;        // 0x517180 expanded
+    case 0x30058: toggle_flatten(); break;      // 0x515640 expanded
+    case 0x30057:
+        GameDataStateStorage.fields_.game_more_preferences_ ^= 1;
+        ::draw_map(1);
+        prefs_save(0);
+        break;
+    case 0x30051:
+        // 0x51AE3F..0x51AFF0 is Console::new_game (0x514D30) expanded.
+        // WORKAROUND(inline): written out; a new_game() call stays out of line in this unit (menu_proc).
+        if (IsMultiplayerNet) break;
+        {
+            const char *prompt;
+            if (IsMultiplayerPBEM && bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 255) > 1)
+                prompt = ConsoleReallyWimpOut;
+            else prompt = "REALLYQUIT";
+            if (X_pop(prompt, 0)) {
+                if (IsMultiplayerPBEM) {
+                    GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &=
+                        static_cast<unsigned char>(~(1u << ConsoleGlobal.faction_id_));
+                    save_game(0);
+                }
+                if ((GameDataStateStorage.fields_.game_rules_ & 0x400) && !IsMultiplayerPBEM) auto_save();
+                if (IsMultiplayerNet) {
+                    NetDaemonNet.hang_up();
+                    NetDaemonNet.reset();
+                    IsMultiplayerNet = 0;
+                }
+                ExitTurnLoop = 1;
+                log_say("Quit***********************************", 0, 0, 0);
+            }
+            if (ExitTurnLoop) GameRestartQueued = 1;
+        }
+        break;
+    case 0x3004E:
+        if (consumed != 0) {
+            return 1;
+        }
+        erase_landmark(-1, -1);
+        goto map_keys;
+    case 0x30047: toggle_base_grid(); break;    // 0x5156F0 expanded
+    case 0x30041: toggle_dest(); break;         // 0x515740 expanded
+    case 0x30073: show_credits(); break;
     }
-    AlphaIniPrefs.more_preferences = GameDataStateStorage.fields_.game_more_preferences_;
-    prefs_save(0);
-    ::draw_map(1);
-    break;
-case 0x30073:
-    show_credits();
-    break;
-default:
-    break; // table value 8 routes to native 0x51B078
-}
-// Every mode-table route ends at 0x51B078's consumed test.
-goto native_command_done;
 
-// The next three tables (0x51BB08, 0x51BB28, 0x51BB48) are not ordinary
-// character actions. They select editor/map-panel layout modes. Their exact
-// bases are respectively 0x21/count8, 0x62/count8, and 0x10026/count0x43.
-// Targets 0x51B14D/1E9/248/2AC perform signed divide-by-3 viewport math on
-// MapWin slot-zero fields 0x1DDCC..0x1DDD8, wrap X with map longitude and call
-// MapWin::set_center. The common 0x51B1A4.. tail gates on cursor/selected
-// vehicle, Console::edit_lock(), and updates Console cursor history or hover
-// state. Keep signed divisions, edge clamping, longitude wrapping, and the
-// selected-vehicle source distinct while translating the remaining lines.
+    if (consumed != 0) {
+        return 1;
+    }
 
-
-// ---- flattened from fragments/07-layout-and-map-pan.inc ----
-// Native key-handler dispatch region.
-// Contains the mapped layout events, map pan, cursor movement, selected-unit
-// mode handling and shared cursor/vehicle key continuation.
-
-native_map_pan_route:
-
-// 0x51B081 preserves the independent 0x20000 mode flag, and when set strips
-// both high control bits before the byte/direct key lookups.
-native_original_key = a2;
-native_mode_flag = a2 & 0x20000;
-if (native_mode_flag != 0) {
-    a2 &= ~0x30000;
-}
-
-// The first layout table is indexed from 0x21 through 0x28 (8 entries).
-// Native maps those eight keys to mode values 0,2,4,6,5,7,1,3 respectively.
-// The second table is indexed from 0x62 through 0x69 and maps to
-// 3,2,5, native-shared,1,6,7,0. Both later store this in the input slot.
-// The mapped values are cursor direction modes and go to the distinct
-// 0x51B324 movement/action block. Key 0x65 instead lands at shared 0x51B1A4.
-switch (a2) {
-case 0x21: a2 = 0; goto native_cursor_move_mode;
-case 0x22: a2 = 2; goto native_cursor_move_mode;
-case 0x23:
-    a2 = 4;
-    goto native_cursor_move_mode;
-case 0x24: a2 = 6; goto native_cursor_move_mode;
-case 0x25: a2 = 5; goto native_cursor_move_mode;
-case 0x26: a2 = 7; goto native_cursor_move_mode;
-case 0x27: a2 = 1; goto native_cursor_move_mode;
-case 0x28: a2 = 3; goto native_cursor_move_mode;
-case 0x61: a2 = 4; goto native_cursor_move_mode;
-case 0x62: a2 = 3; goto native_cursor_move_mode;
-case 0x63: a2 = 2; goto native_cursor_move_mode;
-case 0x64: a2 = 5; goto native_cursor_move_mode;
-case 0x65:
-    break;
-case 0x66: a2 = 1; goto native_cursor_move_mode;
-case 0x67: a2 = 6; goto native_cursor_move_mode;
-case 0x68: a2 = 7; goto native_cursor_move_mode;
-case 0x69: a2 = 0; goto native_cursor_move_mode;
-default:
-    break;
-}
-
-// The 0x51BB5C byte map's input domain is [0x10026, 0x10069], count 0x43;
-// its active events are 0x10026/0x10068 (north), 0x10027/0x10066 (east),
-// 0x10028/0x10062 (south), and 0x10064 (west). Direct 0x10025 also enters
-// the west-pan target at 0x51B248. The native map is in dispatch-map.json.
-{
-    MapWin *map_window = MapWinTable[0];
-    if (a2 == 0x10025 || a2 == 0x10026 || a2 == 0x10027 ||
-        a2 == 0x10028 || a2 == 0x10062 || a2 == 0x10064 ||
-        a2 == 0x10066 || a2 == 0x10068) {
-        int destination_x = map_window->center_x_;
-        int destination_y = map_window->center_y_;
-        if (a2 == 0x10026 || a2 == 0x10068) {
-            // Native signed multiply-high sequence is truncating signed / 3.
-            int step = (map_window->field_1DDD0_ + 2) / 3;
-            if (step < 0 || map_window->field_1DDA8_ < 0) {
-                step = 0;
-            } else if (step > map_window->field_1DDA8_) {
-                step = map_window->field_1DDA8_;
+map_keys:
+    {
+        // 0x51B081: with the 0x20000 bit both high control bits are
+        // stripped for the key lookup only; veh_key/cursor_key below still
+        // receive the unmodified a2.
+        const int mode = a2 & 0x20000;
+        int key = a2;
+        if (mode != 0) {
+            key &= ~0x30000;
+        }
+        int direction;
+        // Tables 0x51BB08 (0x21..0x28), 0x51BB28 (0x62..0x69) and
+        // 0x51BB48/0x51BB5C (0x10026..0x10068), plus 0x61 and 0x10025.
+        switch (key) {
+        case 0x61:
+        case 0x23:
+            direction = 4;
+        move_direction:
+            if (mode != 0 && (a2 & 0x10000) != 0) {
+                if (direction == 5) {
+                    ConsoleStatusWin.arrow_left();
+                } else if (direction == 1) {
+                    ConsoleStatusWin.arrow_right();
+                }
+                return 1;
             }
-            destination_y -= step;
-        } else if (a2 == 0x10028 || a2 == 0x10062) {
-            int step = (map_window->field_1DDD0_ + 2) / 3;
-            const int maximum = MapLatitudeBounds -
-                2 * map_window->field_1DDD8_ - map_window->field_1DDA8_ + 1;
-            if (step < 0 || maximum < 0) {
-                step = 0;
-            } else if (step > maximum) {
-                step = maximum;
-            }
-            destination_y += step;
-        } else {
-            int step = (map_window->field_1DDCC_ + 2) / 3;
-            // West/east use the signed horizontal step without a latitude
-            // clamp; only the longitude wrap below belongs to these routes.
-            if (a2 == 0x10025 || a2 == 0x10064) {
-                destination_x -= step;
-            } else {
-                destination_x += step;
-            }
-
-            if ((MapIsFlat & 1) == 0) {
-                if (destination_x < 0) {
-                    destination_x += MapLongitudeBounds;
-                } else if (destination_x >= MapLongitudeBounds) {
-                    destination_x -= MapLongitudeBounds;
+            if (ConsoleGlobal.cursor_active_ != 0) {
+                if (edit_lock() == 0) {
+                    if (net_lock != 0) {
+                        return 1;
+                    }
+                    if (selected_vehicle_ < 0) {
+                        return 1;
+                    }
+                    if (mode != 0) {
+                        Vehs[selected_vehicle_].order = 0x19;
+                        Vehs[selected_vehicle_].waypoint_x[0] = static_cast<int16_t>(direction);
+                        Vehs[selected_vehicle_].waypoint_x[1] = Vehs[selected_vehicle_].x;
+                        Vehs[selected_vehicle_].waypoint_y[1] = Vehs[selected_vehicle_].y;
+                        return 1;
+                    }
+                    if (not_my_turn() != 0) {
+                        NetMsgPrimary.pop("SIMULNO", 5000, 0, 0);
+                        return 1;
+                    }
+                    if (veh_ready(selected_vehicle_) == 0) {
+                        NetMsgPrimary.pop("UNITMOVED", 5000, 0, 0);
+                        field_23BE4_ = 0;
+                        return 1;
+                    }
+                    NetDaemonNet.order_veh(selected_vehicle_, direction, 0);
+                    return 1;
+                }
+                if (ConsoleGlobal.cursor_active_ != 0) {
+                    ambience(0x1E);
+                    cursor_active_ = 0;
+                    field_23BF8_ = 1;
+                    field_23BFC_ = 1;
+                    if (survey_mode_ != 0) {
+                        survey_mode_ = 0;
+                        MapWinTable[0]->draw_map(1);
+                    }
+                    ::draw_cursor();
+                    ConsoleInfoWin.change(0);
+                    ConsoleStatusWin.redraw();
+                    MapWinTable[0]->main_caption();
+                    alpha_menu_.check(selected_vehicle_);
                 }
             }
+            {
+                const int step_x = ::wrap_map_x(
+                    ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_] +
+                    VehMoveDeltaX[direction]);
+                const int step_y = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_] +
+                                   VehMoveDeltaY[direction];
+                if (::on_map(step_x, step_y)) {
+                    field_23BF8_ = 0;
+                    if (survey_mode_ != 0) {
+                        survey_mode_ = 0;
+                        MapWinTable[0]->draw_map(1);
+                    }
+                    MapWinTable[0]->draw_cursor();
+                    cursor_next(step_x, step_y);
+                    ConsoleStatusWin.redraw();
+                    field_23BF8_ = 1;
+                    field_23BFC_ = 1;
+                    MapWinTable[0]->draw_cursor();
+                    MapWinTable[0]->focus(step_x, step_y);
+                }
+            }
+            return 1;
+        case 0x21:
+        case 0x69:
+            direction = 0;
+            goto move_direction;
+        case 0x27:
+        case 0x66:
+            direction = 1;
+            goto move_direction;
+        case 0x22:
+        case 0x63:
+            direction = 2;
+            goto move_direction;
+        case 0x28:
+        case 0x62:
+            direction = 3;
+            goto move_direction;
+        case 0x25:
+        case 0x64:
+            direction = 5;
+            goto move_direction;
+        case 0x24:
+        case 0x67:
+            direction = 6;
+            goto move_direction;
+        case 0x26:
+        case 0x68:
+            direction = 7;
+            goto move_direction;
+        case 0x10026:
+        case 0x10068: {
+            MapWin *const map_window = MapWinTable[0];
+            y = map_window->center_y_ -
+                ::range((map_window->field_1DDD0_ + 2) / 3, 0, map_window->field_1DDA8_);
+            if (y != map_window->center_y_) {
+                map_window->set_center(map_window->center_x_, y, 1);
+            }
+            break;
         }
-
-        if (destination_x != map_window->center_x_ ||
-            destination_y != map_window->center_y_) {
-            map_window->set_center(destination_x, destination_y, 1);
+        case 0x10028:
+        case 0x10062: {
+            MapWin *const map_window = MapWinTable[0];
+            y = ::range((map_window->field_1DDD0_ + 2) / 3, 0,
+                        MapLatitudeBounds - 2 * map_window->field_1DDD8_ -
+                            map_window->field_1DDA8_ + 1) +
+                map_window->center_y_;
+            if (y != map_window->center_y_) {
+                map_window->set_center(map_window->center_x_, y, 1);
+            }
+            break;
+        }
+        case 0x10025:
+        case 0x10064: {
+            MapWin *const map_window = MapWinTable[0];
+            x = ::wrap_map_x(map_window->center_x_ - (map_window->field_1DDCC_ + 2) / 3);
+            if (x != map_window->center_x_) {
+                map_window->set_center(x, map_window->center_y_, 1);
+            }
+            break;
+        }
+        case 0x10027:
+        case 0x10066: {
+            MapWin *const map_window = MapWinTable[0];
+            x = ::wrap_map_x((map_window->field_1DDCC_ + 2) / 3 + map_window->center_x_);
+            if (x != map_window->center_x_) {
+                map_window->set_center(x, map_window->center_y_, 1);
+            }
+            break;
+        }
         }
     }
-}
 
-goto native_cursor_common;
-
-native_cursor_move_mode:
-// 0x51B0B7..0x51B31F: with both mode bits, west and east step the status
-// window's arrows instead of the cursor; every other direction stops.
-if (native_mode_flag != 0 && (native_original_key & 0x10000) != 0) {
-    if (a2 == 5) {
-        ConsoleStatusWin.arrow_left();
-    } else if (a2 == 1) {
-        ConsoleStatusWin.arrow_right();
-    }
-    goto native_done;
-}
-// 0x51B324 movement-mode handler. With no active cursor (or after native's
-// editor-lock deactivation sequence), move one signed map step from history.
-if (cursor_active_ != 0) {
-    if (edit_lock() == 0) {
-        if (native_editor_lock != 0) {
-            goto native_done;
+    if (ConsoleGlobal.cursor_active_ != 0) {
+        if (edit_lock() == 0) {
+            if (ConsoleGlobal.selected_vehicle_ >= 0) {
+                veh_key(a1, normalized, a2);
+            }
+            return 1;
         }
-        if (selected_vehicle_ < 0) {
-            goto native_done;
-        }
-        if (native_mode_flag != 0) {
-            Veh &vehicle = Vehs[selected_vehicle_];
-            vehicle.order = 0x19;
-            vehicle.waypoint_x[0] = static_cast<int16_t>(a2);
-            vehicle.waypoint_x[1] = vehicle.x;
-            vehicle.waypoint_y[1] = vehicle.y;
-            goto native_done;
-        }
-        if (not_my_turn() != 0) {
-            NetMsgPrimary.pop("SIMULNO", 5000, 0, 0);
-            goto native_done;
-        }
-        if (veh_ready(selected_vehicle_) == 0) {
-            NetMsgPrimary.pop("UNITMOVED", 5000, 0, 0);
-            field_23BE4_ = 0;
-            goto native_done;
-        }
-        NetDaemonNet.order_veh(selected_vehicle_, a2, 0);
-        goto native_done;
-    }
-    ambience(0x1E);
-    field_23BF8_ = 1;
-    field_23BFC_ = 1;
-    const uint32_t previous_survey_mode = survey_mode_;
-    cursor_active_ = 0;
-    if (previous_survey_mode != 0) {
-        survey_mode_ = 0;
-        MapWinTable[0]->draw_map(1);
-    }
-    ::draw_cursor();
-    ConsoleInfoWin.change(0);
-    ConsoleStatusWin.redraw();
-    MapWinTable[0]->main_caption();
-    alpha_menu_.check(selected_vehicle_);
-}
-
-{
-    const int history = cursor_history_index_;
-    int x = cursor_history_x_[history] + VehMoveDeltaX[a2];
-    int y = cursor_history_y_[history] + VehMoveDeltaY[a2];
-    if ((MapIsFlat & 1) == 0) {
-        if (x < 0) {
-            x += MapLongitudeBounds;
-        } else if (x >= MapLongitudeBounds) {
-            x -= MapLongitudeBounds;
+        if (ConsoleGlobal.cursor_active_ != 0) {
+            ambience(0x1E);
+            cursor_active_ = 0;
+            field_23BF8_ = 1;
+            field_23BFC_ = 1;
+            if (survey_mode_ != 0) {
+                survey_mode_ = 0;
+                MapWinTable[0]->draw_map(1);
+            }
+            ::draw_cursor();
+            ConsoleInfoWin.change(0);
+            ConsoleStatusWin.redraw();
+            MapWinTable[0]->main_caption();
+            alpha_menu_.check(selected_vehicle_);
         }
     }
-    if (y >= 0 && y < MapLatitudeBounds && x >= 0 &&
-        x < MapLongitudeBounds) {
-        field_23BF8_ = 0;
-        MapWin *const map_window = MapWinTable[0];
-        if (survey_mode_ != 0) {
-            survey_mode_ = 0;
-            map_window->draw_map(1);
-        }
-        map_window->draw_cursor();
-        cursor_next(x, y);
-        ConsoleStatusWin.redraw();
-        field_23BF8_ = 1;
-        field_23BFC_ = 1;
-        map_window->draw_cursor();
-        map_window->focus(x, y);
-    }
-}
-goto native_done;
+    cursor_key(a1, normalized, a2);
+    return 1;
 
-native_cursor_common:
-if (cursor_active_ == 0) {
-    cursor_key(a1, normalized_character, a2);
-    goto native_done;
-}
-if (edit_lock() == 0) {
-    if (selected_vehicle_ < 0) {
-        goto native_done;
-    }
-    veh_key(a1, normalized_character, a2);
-    goto native_done;
-}
-ambience(0x1E);
-field_23BF8_ = 1;
-field_23BFC_ = 1;
-{
-    const uint32_t previous_survey_mode = survey_mode_;
-    cursor_active_ = 0;
-    if (previous_survey_mode != 0) {
-        survey_mode_ = 0;
-        MapWinTable[0]->draw_map(1);
-    }
-}
-::draw_cursor();
-ConsoleInfoWin.change(0);
-ConsoleStatusWin.redraw();
-MapWinTable[0]->main_caption();
-alpha_menu_.check(selected_vehicle_);
-cursor_key(a1, normalized_character, a2);
-goto native_done;
-
-
-// ---- flattened from fragments/15-common-epilogue.inc ----
-// Shared return edge at native 0x51B648/0x51B64F.
-// Declare one automatic `Log` in the enclosing member body: native constructs
-// it at entry with Log::Log (0x625FB0) and destroys it on this common edge
-// with Log::~Log (0x626020). Its scope is the whole handler, matching the
-// native SEH lifetime. Keep the ordinary source-owned class lifetime instead
-// of spelling calls through addresses.
-
-native_done:
-return 1;
-
+close_messages:
+    NetMsgPrimary.close();
+    NetMsgSecondary.close();
+    return 1;
 }
 
 // ORIGINAL: 0x0051DF00 ?on_nc_left_down@thunk1_Console@@QAEXHH@Z 0x0051DF00-0x0051DF08 FILE BYTE_EXACT

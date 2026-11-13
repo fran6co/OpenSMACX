@@ -328,6 +328,19 @@ void __cdecl bung_momma() {
     static_cast<Win &>(box).Win::show(0);
 }
 
+// WORKAROUND(decl): file-local stand-in for the original's inline
+// InflateRect-style helper. MainInterface::init never calls the user32
+// InflateRect import; it loads the edges in left/right/top/bottom order and
+// adds a register holding the (negative) amount to right and bottom
+// (0x00459C17..C2A, 0x0045B2D1..2E1), the same shape reportif.cpp's
+// byte-exact inflate_frame and designwin.cpp's design_inflate_rect expand to.
+static inline void main_interface_inflate_rect(RECT *rect, int dx, int dy) {
+    rect->left -= dx;
+    rect->right += dx;
+    rect->top -= dy;
+    rect->bottom += dy;
+}
+
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00459680 0x0045B500 0x0045B52C 0x0045B1DC
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x00459680 0x0045B52C 0x0045B545 0x0045B1D6
 // ORIGINAL: 0x00459680 ?init@MainInterface@@QAEHH@Z 0x00459680-0x0045B500;0x00655730-0x00655745 FILE
@@ -336,88 +349,124 @@ int MainInterface::init(int) {
     Buffer assets;
     const int screen_height_on_entry = WinScreenHeight;
     const int screen_width_on_entry = WinScreenWidth;
+    RECT r;
+    int i, j, k, tool, x, y;
     field_1EAC8_ = 0;
     memset(InterfaceRegistry, 0, sizeof(InterfaceRegistry));
     memset(IfaceIdToSlotStorage, 0, sizeof(IfaceIdToSlotStorage));
-    field_4_ = 0;
-    register_iface_mode(0, this);
+    // The image stores through this+0xA14 with no null test: the inline
+    // SubInterface::register_iface member, not a pointer conversion.
+    register_iface(0);
     alert_ = -1;
-    field_216E8_ = iface_redraw_pending_ = multiwin_visibility_state_ = 0;
+    field_216E8_ = 0;
+    iface_redraw_pending_ = 0;
+    multiwin_visibility_state_ = 0;
+    field_4_ = 0;
     spot_.init(1);
     field_D7C_ = 213;
-    SetRect(&rect4_, 4, 56, 245, 252);
+    // No SetRect: every rectangle is stored field by field. rect4_ is set in
+    // both arms (the image hoists only its first store above the branch).
     if (WinScreenWidth == 800) {
-        SetRect(&right_frame_rect_, 555, 57, 796, 253);
-        SetRect(&info_panel_frame_, 261, 66, 540, 172);
-        SetRect(&lower_frame_rect_, 244, 188, 544, 252);
-        SetRect(&window_bounds_, 0, 343, 800, 600);
-        SetRect(&menu_button_rect_, 10, 20, 116, 34);
-        SetRect(&multiplayer_button_rect_, 684, 22, 790, 36);
-        SetRect(&menu_animation_bounds_, 116, 0, 247, 51);
-        SetRect(&multiplayer_animation_bounds_, 516, 17, 682, 65);
-        SetRect(&title_bounds_, 253, 0, 586, 43);
+        set_rectangle_dimensions(&rect4_, 4, 56, 241, 196);
+        set_rectangle_dimensions(&right_frame_rect_, 555, 57, 241, 196);
+        set_rectangle_dimensions(&info_panel_frame_, 261, 66, 279, 106);
+        set_rectangle_dimensions(&lower_frame_rect_, 244, 188, 300, 64);
+        set_rectangle_dimensions(&window_bounds_, 0, 343, 800, 257);
+        set_rectangle_dimensions(&menu_button_rect_, 10, 20, 106, 14);
+        set_rectangle_dimensions(&multiplayer_button_rect_, 684, 22, 106, 14);
+        set_rectangle_dimensions(&menu_animation_bounds_, 116, 0, 131, 51);
+        set_rectangle_dimensions(&multiplayer_animation_bounds_, 516, 17, 166, 48);
+        set_rectangle_dimensions(&title_bounds_, 253, 0, 333, 43);
         if (assets.load_pcx("console_A.pcx", 0, 10, 236)) return 1;
     } else {
-        SetRect(&right_frame_rect_, 779, 56, 1020, 252);
-        SetRect(&info_panel_frame_, 262, 66, 763, 172);
-        SetRect(&lower_frame_rect_, 244, 188, 768, 252);
-        const int x = (screen_width_on_entry - 1024) / 2;
-        SetRect(&window_bounds_, x, screen_height_on_entry - 257,
-                x + 1024, screen_height_on_entry);
-        SetRect(&menu_button_rect_, 11, 20, 117, 34);
-        SetRect(&multiplayer_button_rect_, 908, 22, 1014, 36);
-        SetRect(&menu_animation_bounds_, 118, 0, 282, 60);
-        SetRect(&multiplayer_animation_bounds_, 742, 10, 906, 74);
-        SetRect(&title_bounds_, 282, 0, 787, 42);
+        set_rectangle_dimensions(&rect4_, 4, 56, 241, 196);
+        set_rectangle_dimensions(&right_frame_rect_, 779, 56, 241, 196);
+        set_rectangle_dimensions(&info_panel_frame_, 262, 66, 501, 106);
+        set_rectangle_dimensions(&lower_frame_rect_, 244, 188, 524, 64);
+        // 0x00459943..998: bottom is recomputed as (height - 257) + 257 and
+        // right as x + 1024, the (x, y, width, height) helper's expansion.
+        set_rectangle_dimensions(&window_bounds_, (screen_width_on_entry - 1024) / 2,
+                                 screen_height_on_entry - 257, 1024, 257);
+        set_rectangle_dimensions(&menu_button_rect_, 11, 20, 106, 14);
+        set_rectangle_dimensions(&multiplayer_button_rect_, 908, 22, 106, 14);
+        set_rectangle_dimensions(&menu_animation_bounds_, 118, 0, 164, 60);
+        set_rectangle_dimensions(&multiplayer_animation_bounds_, 742, 10, 164, 64);
+        set_rectangle_dimensions(&title_bounds_, 282, 0, 505, 42);
     }
     rect1_ = info_panel_frame_;
     rect1_.bottom += 62;
     lower_animation_bounds_ = lower_frame_rect_;
     lower_animation_bounds_.top += 62;
-    const int height = window_bounds_.bottom - window_bounds_.top;
-    SetRect(&bottom_bounds_, 244, height - 96, 779, height);
-    SetRect(&scroll_up_rect_, info_panel_frame_.right - 29, info_panel_frame_.top + 9,
-            info_panel_frame_.right - 9, info_panel_frame_.top + 29);
-    SetRect(&scroll_down_rect_, info_panel_frame_.right - 29, info_panel_frame_.bottom - 29,
-            info_panel_frame_.right - 9, info_panel_frame_.bottom - 9);
-    SetRect(&editor_tab_rect_, scroll_up_rect_.left, scroll_up_rect_.bottom + 5,
-            scroll_up_rect_.right, scroll_down_rect_.top - 5);
-    SetRect(&message_bounds_, info_panel_frame_.left + 7, info_panel_frame_.top + 7,
-            scroll_down_rect_.left - 10, info_panel_frame_.bottom - 7);
+    set_rectangle_dimensions(&bottom_bounds_, 244,
+                             window_bounds_.bottom - window_bounds_.top - 96, 535, 96);
+    // One local RECT (ebp-0x28..-0x1C) is reshaped and copied out for each
+    // derived rectangle.
+    r = info_panel_frame_;
+    r.top += 9;
+    r.bottom = r.top + 20;
+    r.right -= 9;
+    r.left = r.right - 20;
+    scroll_up_rect_ = r;
+    r.bottom = info_panel_frame_.bottom - 9;
+    r.top = r.bottom - 20;
+    scroll_down_rect_ = r;
+    r.top = scroll_up_rect_.bottom + 5;
+    r.bottom = scroll_down_rect_.top - 5;
+    editor_tab_rect_ = r;
+    r = info_panel_frame_;
+    main_interface_inflate_rect(&r, -1, -1);
+    r.right = scroll_down_rect_.left - 4;
+    main_interface_inflate_rect(&r, -6, -6);
+    message_bounds_ = r;
     status_left_rect_ = rect4_;
-    status_left_rect_.right = (rect4_.right - rect4_.left) * 7 / 12;
-    InflateRect(&status_left_rect_, -4, -4);
+    status_left_rect_.right = (status_left_rect_.right - status_left_rect_.left) * 7 / 12;
+    main_interface_inflate_rect(&status_left_rect_, -4, -4);
     status_hit_rect_ = lower_frame_rect_;
-    InflateRect(&status_hit_rect_, -4, -4);
+    main_interface_inflate_rect(&status_hit_rect_, -4, -4);
     status_hit_rect_.left = status_left_rect_.right + 3;
     status_right_rect_ = rect4_;
-    status_right_rect_.left = status_left_rect_.right + 4;
-    status_right_rect_.top += 4; status_right_rect_.right -= 4;
+    status_right_rect_.left = status_left_rect_.right;
+    main_interface_inflate_rect(&status_right_rect_, -4, -4);
     status_right_rect_.bottom = status_hit_rect_.top - 3;
-    SetRect(&end_turn_rect_, right_frame_rect_.left + 4, right_frame_rect_.top + 5,
-            right_frame_rect_.left + 237, right_frame_rect_.top + 28);
-    SetRect(&tutorial_bounds_, right_frame_rect_.left + 1, end_turn_rect_.bottom + 4,
-            right_frame_rect_.right - 1, 0);
-    tutorial_bounds_.bottom = tutorial_bounds_.top +
-        (tutorial_bounds_.right - tutorial_bounds_.left) / 2;
-    SetRect(&rect3_, right_frame_rect_.right - 60, right_frame_rect_.bottom - 38,
-            right_frame_rect_.right - 6, right_frame_rect_.bottom - 6);
-    rect2_ = rect3_;
-    OffsetRect(&rect2_, rect3_.left - rect3_.right - 2, 0);
-    SetRect(&date_rect_, right_frame_rect_.left + 6, right_frame_rect_.bottom - 38,
-            rect2_.left - 3, right_frame_rect_.bottom - 6);
+    r = right_frame_rect_;
+    r.left += 4;
+    r.top += 5;
+    r.bottom = r.top + 23;
+    r.right = r.left + 233;
+    end_turn_rect_ = r;
+    r = right_frame_rect_;
+    main_interface_inflate_rect(&r, -1, 0);
+    r.top = end_turn_rect_.bottom + 4;
+    r.bottom = r.top + (r.right - r.left) / 2;
+    tutorial_bounds_ = r;
+    r = right_frame_rect_;
+    main_interface_inflate_rect(&r, -6, -6);
+    r.top = r.bottom - 32;
+    r.left = r.right - 54;
+    rect3_ = r;
+    offset_rect(&r, r.left - r.right - 2, 0);
+    rect2_ = r;
+    r = right_frame_rect_;
+    main_interface_inflate_rect(&r, -6, -6);
+    r.top = r.bottom - 32;
+    r.right = rect2_.left - 3;
+    date_rect_ = r;
     font1_.init(DefaultFontFace, 14, 1);
     font2_.init(DefaultFontFace, 12, 0);
     font3_.init(DefaultFontFace, 12, 1);
     if (assets.load_pcx(WinScreenWidth == 800 ? "console_A.pcx" : "console2_A.pcx",
                         0, 10, 236)) return 1;
-    spot_.add(5, 0, &end_turn_rect_);
+    spot_.add(5, 0, end_turn_rect_.left, end_turn_rect_.top,
+              end_turn_rect_.right - end_turn_rect_.left,
+              end_turn_rect_.bottom - end_turn_rect_.top);
     GraphicWin::init(window_bounds_.left, window_bounds_.top,
-                    window_bounds_.right - window_bounds_.left, height,
-                    0, 0x1400000, 0, 0, 0);
-    Buffer &canvas = *static_cast<Buffer *>(this);
-    assets.copy(&canvas, 0, 0, assets.pixel_width(), assets.pixel_height(),
-                0, 0, canvas.pixel_width(), canvas.pixel_height());
+                     window_bounds_.right - window_bounds_.left,
+                     window_bounds_.bottom - window_bounds_.top,
+                     0, 0x1400000, 0, 0, 0);
+    // `this` converts to Buffer * (null-tested in the image) as the copy
+    // destination; the destination size is read through this directly.
+    assets.copy(this, 0, 0, assets.pixel_width(), assets.pixel_height(),
+                0, 0, Buffer::pixel_width(), Buffer::pixel_height());
     if (WinScreenWidth == 800) {
         sprites13_[0].init("iface_up_A.pcx", 0, 0);
         sprites13_[1].init("iface_down_A.pcx", 0, 0);
@@ -425,15 +474,22 @@ int MainInterface::init(int) {
         sprites13_[0].init("iface_up2_A.pcx", 0, 0);
         sprites13_[1].init("iface_down2_A.pcx", 0, 0);
     }
-    sprites13_[0].iWidth_ = sprites13_[1].iWidth_ = 535;
-    sprites13_[0].iHeight_ = sprites13_[1].iHeight_ = 96;
-    flic2_.init(&canvas, "turn.flc", end_turn_rect_.left, end_turn_rect_.top, 1);
-    assets.load_pcx(WinScreenWidth == 800 ? "console_x_A.pcx" : "console_x2_A.pcx",
-                    0, 10, 236);
-    int i, frame;
-    for (i = 0; i < 10; ++i)
-        sprites6_[i].extract(&assets, WinFillColour, 1 + (i / 5) * 191,
-                            1 + (i % 5) * 27, 190, 26, 0);
+    sprites13_[0].iWidth_ = 535;
+    sprites13_[1].iWidth_ = 535;
+    sprites13_[0].iHeight_ = 96;
+    sprites13_[1].iHeight_ = 96;
+    flic2_.init(this, "turn.flc", end_turn_rect_.left, end_turn_rect_.top, 1);
+    // Two pushes merged into one call (0x0045A021..035): an if/else, not
+    // a selected pointer like the console_A load above.
+    if (WinScreenWidth == 800)
+        assets.load_pcx("console_x_A.pcx", 0, 10, 236);
+    else
+        assets.load_pcx("console_x2_A.pcx", 0, 10, 236);
+    for (i = 0; i < 2; i++) {
+        for (j = 0; j < 5; j++)
+            sprites6_[i * 5 + j].extract(&assets, WinFillColour, 1 + i * 191,
+                                         1 + j * 27, 190, 26, 0);
+    }
     if (WinScreenWidth == 800) {
         sprites4_[0].extract(&assets, WinFillColour, 194, 136, 131, 51, 0);
         sprites4_[1].extract(&assets, WinFillColour, 194, 188, 166, 48, 0);
@@ -457,162 +513,296 @@ int MainInterface::init(int) {
             sprites5_[2*i+1].extract(&assets, WinFillColour, 549,
                                     1 + i * 65, 164, 64, 0);
     }
-    for (i = 0; i < 3; ++i)
-        sprites8_[i].extract(&assets, WinFillColour, 1, 217 + i*15, 106, 14, 0);
-    const int columns[4] = {683, 699, 708, 717};
-    const int widths[4] = {15, 8, 8, 15};
-    const int column_offset = WinScreenWidth == 800 ? 0 : 30;
-    for (i = 0; i < 4; ++i)
-        sprites2_[i].extract(&assets, WinFillColour, columns[i] + column_offset,
-                            1, widths[i], 529, 0);
-    const int rows[4] = {279, 306, 341, 367};
-    const int heights[4] = {26, 34, 25, 34};
-    for (i = 0; i < 4; ++i)
-        sprites1_[i].extract(&assets, WinFillColour, 1, rows[i], 32, heights[i], 0);
+    // 0x0045A36F..3D6 steps r.top/r.bottom (ebp-0x24/-0x1C) by the height + 1.
+    r.top = 217;
+    r.bottom = 231;
+    for (i = 0; i < 3; i++) {
+        sprites8_[i].extract(&assets, WinFillColour, 1, r.top, 106,
+                             r.bottom - r.top, 0);
+        offset_rect(&r, 0, r.bottom - r.top + 1);
+    }
+    if (WinScreenWidth == 800) {
+        sprites2_[0].extract(&assets, WinFillColour, 683, 1, 15, 529, 0);
+        sprites2_[1].extract(&assets, WinFillColour, 699, 1, 8, 529, 0);
+        sprites2_[2].extract(&assets, WinFillColour, 708, 1, 8, 529, 0);
+        sprites2_[3].extract(&assets, WinFillColour, 717, 1, 15, 529, 0);
+    } else {
+        sprites2_[0].extract(&assets, WinFillColour, 713, 1, 15, 529, 0);
+        sprites2_[1].extract(&assets, WinFillColour, 729, 1, 8, 529, 0);
+        sprites2_[2].extract(&assets, WinFillColour, 738, 1, 8, 529, 0);
+        sprites2_[3].extract(&assets, WinFillColour, 747, 1, 15, 529, 0);
+    }
+    sprites1_[0].extract(&assets, WinFillColour, 1, 279, 32, 26, 0);
+    sprites1_[1].extract(&assets, WinFillColour, 1, 306, 32, 34, 0);
+    sprites1_[2].extract(&assets, WinFillColour, 1, 341, 32, 25, 0);
+    sprites1_[3].extract(&assets, WinFillColour, 1, 367, 32, 34, 0);
     assets.load_pcx("interface.pcx", 0, 10, 236);
-    for (i = 0; i < 6; ++i)
-        sprites7_[i].extract(&assets, WinFillColour, 532 + (i/3)*55,
-                            143 + (i%3)*33, 54, 32, 0);
+    for (i = 0; i < 3; i++) {
+        sprites7_[i].extract(&assets, WinFillColour, 532, 143 + i * 33, 54, 32, 0);
+        sprites7_[i + 3].extract(&assets, WinFillColour, 587, 143 + i * 33, 54, 32, 0);
+    }
     sprite11_.extract(&assets, WinFillColour, 212, 1, 9, 147, 0);
-    for (i = 0; i < 6; ++i)
-        sprites12_[i].extract(&assets, WinFillColour, 397 + (i%3)*13,
-                             153 + (i/3)*43, 12, 42, 0);
-    for (i = 0; i < 25; ++i) {
-        for (frame = 0; frame < 3; ++frame)
-            sprites9_[3*i+frame].extract(&assets, WinFillColour,
-                350 + (i%8)*44, 245 + (i/8)*57 + frame*19, 43, 18, 0);
+    for (i = 0; i < 2; i++) {
+        for (j = 0; j < 3; j++)
+            sprites12_[i * 3 + j].extract(&assets, WinFillColour, 397 + j * 13,
+                                          153 + i * 43, 12, 42, 0);
     }
-    for (i = 0; i < 18; ++i)
-        sprites10_[i].extract(&assets, WinFillColour, 465 + (i/3)*25,
-                             438 + (i%3)*25, 24, 24, 0);
+    x = 350;
+    y = 245;
+    for (i = 0; i < 25; i++) {
+        if (i) {
+            if (i % 8 == 0) {
+                x = 350;
+                y += 57;
+            } else {
+                x += 44;
+            }
+        }
+        for (j = 0; j < 3; j++)
+            sprites9_[i * 3 + j].extract(&assets, WinFillColour, x, y + j * 19,
+                                         43, 18, 0);
+    }
+    for (i = 0; i < 6; i++) {
+        for (j = 0; j < 3; j++)
+            sprites10_[i * 3 + j].extract(&assets, WinFillColour, 465 + i * 25,
+                                          438 + j * 25, 24, 24, 0);
+    }
     assets.close();
-    int top = status_hit_rect_.top +
-        (status_hit_rect_.bottom - status_hit_rect_.top - sprites12_[0].height()) / 2;
-    SetRect(&stack_button_rect_, status_hit_rect_.left + 4, top,
-            status_hit_rect_.left + 4 + sprites12_[0].width(), top + sprites12_[0].height());
-    SetRect(&adjacent_panel_left_rect_, lower_frame_rect_.left, top,
-            lower_frame_rect_.left + sprites12_[0].width(), top + sprites12_[0].height());
-    adjacent_panel_right_rect_ = adjacent_panel_left_rect_;
-    OffsetRect(&adjacent_panel_right_rect_, status_hit_rect_.right - sprites12_[0].width() - 4
-               - adjacent_panel_right_rect_.left, 0);
-    canvas.set_font(&font1_, 0, 0, 0);
-    canvas.set_text_color(64, -1, 1, 1);
-    for (i = 0; i < 4; ++i) button_group_[i].init(i, i >= 2);
-    RECT *rects[11] = {&scroll_up_rect_, &scroll_down_rect_, &editor_tab_rect_,
-        &menu_button_rect_, &multiplayer_button_rect_, 0, &rect2_, &rect3_,
-        &stack_button_rect_, &adjacent_panel_left_rect_, &adjacent_panel_right_rect_};
-    // Buttons are initialized in the original order: down, up, editor, menu,
-    // multiplayer, the two map selectors and the three stack controls.
-    const int order[10] = {1, 0, 2, 3, 4, 6, 7, 8, 9, 10};
-    for (int step = 0; step < 10; ++step) {
-        i = order[step];
-        RECT &r = *rects[i];
-        char *caption = 0;
-        if (i < 3) {
-            StringTemp[0] = 0;
-            strcat(StringTemp, label_get(i == 0 ? 0xAC0/4 : i == 1 ? 0xABC/4 : 0xDBC/4));
-            StringTemp[1] = 0;
-            caption = StringTemp;
-        } else if (i == 3 || i == 4) caption = label_get(i == 3 ? 0x9C0/4 : 0x83C/4);
-        flat_button_[i].init(caption, 1000+i, r.left, r.top,
-                            r.right-r.left, r.bottom-r.top, this, 0);
-        if (i < 3) {
-            flat_button_[i].set_bubble_text(label_get(i == 0 ? 0xC44/4 : i == 1 ? 0xC48/4 : 0xDC0/4));
-            if (i == 2) {
-                flat_button_[i].set_border_styles(&InterfaceBoxStyles[27], &InterfaceBoxStyles[28], &InterfaceBoxStyles[29]);
-                flat_button_[i].hide();
-            }
-            if (i == 2) {
-                for (int j = 0; j < 3; ++j) {
-                    button_group_[0].add(&flat_button_[j]);
-                    static_cast<Buffer *>(&flat_button_[j])->set_font(&font1_, 0, 0, 0);
-                    flat_button_[j].redraw(); flat_button_[j].redraw();
-                }
-                button_group_[0].set(1, 1);
-            }
-        } else if (i == 3 || i == 4) {
-            flat_button_[i].field_AD4_[0] = &sprites8_[0];
-            flat_button_[i].field_AD4_[1] = i == 3 ? &sprites8_[1] : 0;
-            flat_button_[i].field_AD4_[2] = &sprites8_[2];
-            static_cast<Buffer *>(&flat_button_[i])->set_font(&font1_, 0, 0, 0);
-            flat_button_[i].redraw();
-            flat_button_[i].set_text_color(64, -1, 1, 1);
-            flat_button_[i].field_ABC_[0] = 101;
-            flat_button_[i].field_ABC_[1] = flat_button_[i].field_ABC_[2] = 65;
-            flat_button_[i].redraw();
-            flat_button_[i].set_bubble_text(label_get(i == 3 ? 0xC3C/4 : 0xC40/4));
-        } else if (i == 6 || i == 7) {
-            flat_button_[i].set_bubble_text(label_get(i == 6 ? 0x4C8/4 : 0xF20/4));
-            for (frame = 0; frame < 3; ++frame)
-                flat_button_[i].field_AD4_[frame] = &sprites7_[3*(i-6)+frame];
-            if (i == 7) {
-                for (int j = 6; j < 8; ++j) {
-                    button_group_[1].add(&flat_button_[j]); flat_button_[j].redraw();
-                }
-                button_group_[1].set(1006, 1);
-            }
-        } else {
-            flat_button_[i].hide();
-            int sprite = i == 10 ? 3 : 0;
-            for (frame = 0; frame < 3; ++frame)
-                flat_button_[i].field_AD4_[frame] = &sprites12_[sprite+frame];
+    r = status_hit_rect_;
+    r.left += 4;
+    r.top += (r.bottom - sprites12_[0].height() - r.top) / 2;
+    r.right = r.left + sprites12_[0].width();
+    r.bottom = r.top + sprites12_[0].height();
+    stack_button_rect_ = r;
+    r = status_hit_rect_;
+    r.left = lower_frame_rect_.left;
+    r.top += (r.bottom - sprites12_[0].height() - r.top) / 2;
+    r.right = r.left + sprites12_[0].width();
+    r.bottom = r.top + sprites12_[0].height();
+    adjacent_panel_left_rect_ = r;
+    offset_rect(&r, -r.left, 0);
+    offset_rect(&r, status_hit_rect_.right - (r.right - r.left) - 4, 0);
+    adjacent_panel_right_rect_ = r;
+    Buffer::set_font(&font1_, 0, 0, 0);
+    Buffer::set_text_color(64, -1, 1, 1);
+    button_group_[0].init(0, 0);
+    button_group_[1].init(1, 0);
+    button_group_[2].init(2, 1);
+    button_group_[3].init(3, 1);
+    // Scroll-down, scroll-up and editor-tab buttons: a one-character caption
+    // cut from their labels.
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0xABC / 4));
+    StringTemp[1] = 0;
+    flat_button_[1].init(StringTemp, 1001, scroll_down_rect_.left, scroll_down_rect_.top,
+                         scroll_down_rect_.right - scroll_down_rect_.left,
+                         scroll_down_rect_.bottom - scroll_down_rect_.top, this, 0);
+    flat_button_[1].set_bubble_text(label_get(0xC48 / 4));
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0xAC0 / 4));
+    StringTemp[1] = 0;
+    flat_button_[0].init(StringTemp, 1000, scroll_up_rect_.left, scroll_up_rect_.top,
+                         scroll_up_rect_.right - scroll_up_rect_.left,
+                         scroll_up_rect_.bottom - scroll_up_rect_.top, this, 0);
+    flat_button_[0].set_bubble_text(label_get(0xC44 / 4));
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0xDBC / 4));
+    StringTemp[1] = 0;
+    flat_button_[2].init(StringTemp, 1002, editor_tab_rect_.left, editor_tab_rect_.top,
+                         editor_tab_rect_.right - editor_tab_rect_.left,
+                         editor_tab_rect_.bottom - editor_tab_rect_.top, this, 0);
+    flat_button_[2].set_border_styles(&InterfaceBoxStyles[27], &InterfaceBoxStyles[28],
+                                      &InterfaceBoxStyles[29]);
+    flat_button_[2].set_bubble_text(label_get(0xDC0 / 4));
+    flat_button_[2].hide();
+    for (i = 0; i < 3; i++) {
+        button_group_[0].add(&flat_button_[i]);
+        flat_button_[i].Buffer::set_font(&font1_, 0, 0, 0);
+        flat_button_[i].redraw();
+        flat_button_[i].redraw();
+    }
+    button_group_[0].set(1, 1);
+    flat_button_[3].init(label_get(0x9C0 / 4), 1003, menu_button_rect_.left,
+                         menu_button_rect_.top,
+                         menu_button_rect_.right - menu_button_rect_.left,
+                         menu_button_rect_.bottom - menu_button_rect_.top, this, 0);
+    flat_button_[3].field_AD4_[0] = &sprites8_[0];
+    flat_button_[3].field_AD4_[1] = &sprites8_[1];
+    flat_button_[3].field_AD4_[2] = &sprites8_[2];
+    flat_button_[3].Buffer::set_font(&font1_, 0, 0, 0);
+    flat_button_[3].redraw();
+    flat_button_[3].set_text_color(64, -1, 1, 1);
+    flat_button_[3].set_slice_colours(101, 65, 65);
+    flat_button_[3].redraw();
+    flat_button_[3].set_bubble_text(label_get(0xC3C / 4));
+    flat_button_[4].init(label_get(0x83C / 4), 1004, multiplayer_button_rect_.left,
+                         multiplayer_button_rect_.top,
+                         multiplayer_button_rect_.right - multiplayer_button_rect_.left,
+                         multiplayer_button_rect_.bottom - multiplayer_button_rect_.top,
+                         this, 0);
+    flat_button_[4].field_AD4_[0] = &sprites8_[0];
+    flat_button_[4].field_AD4_[1] = &sprites8_[1];
+    flat_button_[4].field_AD4_[2] = &sprites8_[2];
+    flat_button_[4].Buffer::set_font(&font1_, 0, 0, 0);
+    flat_button_[4].redraw();
+    flat_button_[4].set_text_color(64, -1, 1, 1);
+    flat_button_[4].set_slice_colours(101, 65, 65);
+    flat_button_[4].redraw();
+    flat_button_[4].set_bubble_text(label_get(0xC40 / 4));
+    flat_button_[6].init(0, 1006, rect2_.left, rect2_.top, rect2_.right - rect2_.left,
+                         rect2_.bottom - rect2_.top, this, 0);
+    flat_button_[6].set_bubble_text(label_get(0x4C8 / 4));
+    flat_button_[6].field_AD4_[0] = &sprites7_[0];
+    flat_button_[6].field_AD4_[1] = &sprites7_[1];
+    flat_button_[6].field_AD4_[2] = &sprites7_[2];
+    flat_button_[7].init(0, 1007, rect3_.left, rect3_.top, rect3_.right - rect3_.left,
+                         rect3_.bottom - rect3_.top, this, 0);
+    flat_button_[7].set_bubble_text(label_get(0xF20 / 4));
+    flat_button_[7].field_AD4_[0] = &sprites7_[3];
+    flat_button_[7].field_AD4_[1] = &sprites7_[4];
+    flat_button_[7].field_AD4_[2] = &sprites7_[5];
+    for (i = 6; i < 8; i++) {
+        button_group_[1].add(&flat_button_[i]);
+        flat_button_[i].redraw();
+    }
+    button_group_[1].set(1006, 1);
+    flat_button_[8].init(0, 1008, stack_button_rect_.left, stack_button_rect_.top,
+                         stack_button_rect_.right - stack_button_rect_.left,
+                         stack_button_rect_.bottom - stack_button_rect_.top, this, 0);
+    flat_button_[8].hide();
+    flat_button_[8].field_AD4_[0] = &sprites12_[0];
+    flat_button_[8].field_AD4_[1] = &sprites12_[1];
+    flat_button_[8].field_AD4_[2] = &sprites12_[2];
+    flat_button_[9].init(0, 1009, adjacent_panel_left_rect_.left,
+                         adjacent_panel_left_rect_.top,
+                         adjacent_panel_left_rect_.right - adjacent_panel_left_rect_.left,
+                         adjacent_panel_left_rect_.bottom - adjacent_panel_left_rect_.top,
+                         this, 0);
+    flat_button_[9].hide();
+    flat_button_[9].field_AD4_[0] = &sprites12_[0];
+    flat_button_[9].field_AD4_[1] = &sprites12_[1];
+    flat_button_[9].field_AD4_[2] = &sprites12_[2];
+    flat_button_[10].init(0, 1010, adjacent_panel_right_rect_.left,
+                          adjacent_panel_right_rect_.top,
+                          adjacent_panel_right_rect_.right - adjacent_panel_right_rect_.left,
+                          adjacent_panel_right_rect_.bottom - adjacent_panel_right_rect_.top,
+                          this, 0);
+    flat_button_[10].hide();
+    flat_button_[10].field_AD4_[0] = &sprites12_[3];
+    flat_button_[10].field_AD4_[1] = &sprites12_[4];
+    flat_button_[10].field_AD4_[2] = &sprites12_[5];
+    // Editor buttons 11..35: five rows per column, stepping r down a row and
+    // back up to the next column. The image rebases k to k - 11
+    // (cmp k - 11 + 11 < 36).
+    r = info_panel_frame_;
+    main_interface_inflate_rect(&r, -7, -7);
+    r.top += (r.bottom - sprites9_[0].height() * 5 - r.top - 4) / 2;
+    r.right = r.left + sprites9_[0].width();
+    r.bottom = r.top + sprites9_[0].height();
+    for (k = 11; k < 36; k++) {
+        if (k != 11) {
+            if ((k - 11) % 5 == 0)
+                offset_rect(&r, r.right - r.left + 1, (r.top - r.bottom - 1) * 4);
+            else
+                offset_rect(&r, 0, r.bottom - r.top + 1);
         }
+        editor_button_rects_[k - 11] = r;
     }
-    int left = info_panel_frame_.left + 7;
-    top = info_panel_frame_.top + 7;
-    top += (info_panel_frame_.bottom - 7 - 5*sprites9_[0].height() - top - 4) / 2;
-    for (i = 0; i < 25; ++i) {
-        SetRect(&editor_button_rects_[i], left + (i/5)*(sprites9_[0].width()+1),
-            top + (i%5)*(sprites9_[0].height()+1),
-            left + (i/5)*(sprites9_[0].width()+1) + sprites9_[0].width(),
-            top + (i%5)*(sprites9_[0].height()+1) + sprites9_[0].height());
+    // Brush buttons 36..41: three rows per column, right of the editor block.
+    r = info_panel_frame_;
+    main_interface_inflate_rect(&r, -7, -7);
+    r.top += (r.bottom - (sprites10_[0].height() * 3 + 2) - r.top) / 2;
+    r.left = editor_button_rects_[24].right + 9;
+    r.right = r.left + sprites10_[0].width();
+    r.bottom = r.top + sprites10_[0].height();
+    for (k = 36; k < 42; k++) {
+        if (k != 36) {
+            if ((k - 36) % 3 == 0)
+                offset_rect(&r, r.right - r.left + 1, (r.top - r.bottom - 1) * 2);
+            else
+                offset_rect(&r, 0, r.bottom - r.top + 1);
+        }
+        brush_button_rects_[k - 36] = r;
     }
-    left = editor_button_rects_[24].right + 9;
-    top = info_panel_frame_.top + 7;
-    top += (info_panel_frame_.bottom - 7 - 3*sprites10_[0].height() - 2 - top) / 2;
-    for (i = 0; i < 6; ++i) {
-        SetRect(&brush_button_rects_[i], left + (i/3)*(sprites10_[0].width()+1),
-            top + (i%3)*(sprites10_[0].height()+1),
-            left + (i/3)*(sprites10_[0].width()+1) + sprites10_[0].width(),
-            top + (i%3)*(sprites10_[0].height()+1) + sprites10_[0].height());
-    }
-    editor_panel_rect_.left = editor_panel_rect_.right = 0;
-    for (i = 0; i < 25; ++i) {
-        RECT &r = editor_button_rects_[i];
-        UnionRect(&editor_panel_rect_, &editor_panel_rect_, &r);
-        FlatButton &b = flat_button_[i+11];
-        b.init(0, 1011+i, r.left, r.top, r.right-r.left, r.bottom-r.top, this, 0);
-        b.hide();
-        for (frame = 0; frame < 3; ++frame) b.field_AD4_[frame] = &sprites9_[3*i+frame];
-        int tool = i - 6;
-        if (i >= 6 && i <= 20) {
-            for (int t = 0; t < 20; ++t) if (Terraforming[t].bit == 0 && tool >= t) ++tool;
-            b.set_bubble_text(StringTable.get(Terraforming[tool].name));
+    editor_panel_rect_.left = 0;
+    editor_panel_rect_.right = 0;
+    for (k = 11; k < 36; k++) {
+        UnionRect(&editor_panel_rect_, &editor_panel_rect_, &editor_button_rects_[k - 11]);
+        // Live in ebx across init/hide: the image derives the id as tool + 1017.
+        tool = k - 17;
+        flat_button_[k].init(0, k + 1000, editor_button_rects_[k - 11].left,
+                             editor_button_rects_[k - 11].top,
+                             editor_button_rects_[k - 11].right - editor_button_rects_[k - 11].left,
+                             editor_button_rects_[k - 11].bottom - editor_button_rects_[k - 11].top,
+                             this, 0);
+        flat_button_[k].hide();
+        flat_button_[k].field_AD4_[0] = &sprites9_[(k - 11) * 3];
+        flat_button_[k].field_AD4_[1] = &sprites9_[(k - 11) * 3 + 1];
+        flat_button_[k].field_AD4_[2] = &sprites9_[(k - 11) * 3 + 2];
+        if (k >= 17 && k <= 31) {
+            for (j = 0; j < 20; j++) {
+                if (Terraforming[j].bit == 0 && tool >= j) tool++;
+            }
+            flat_button_[k].set_bubble_text(StringTable.get(Terraforming[tool].name));
         } else {
             StringTemp[0] = 0;
-            if (i < 6) strcat(StringTemp, label_get(0xEBC/4 + i));
-            else if (i == 21) strcat(StringTemp, StringTable.get(Natural[2].name_short));
-            else if (i == 22) strcat(StringTemp, StringTable.get(Natural[6].name_short));
-            else if (i == 23) strcat(StringTemp, StringTable.get(Natural[3].name_short));
-            else if (i == 24) strcat(StringTemp, StringTable.get(Natural[10].name_short));
-            b.set_bubble_text(StringTemp);
+            switch (k - 11) {
+              case 0:
+                strcat(StringTemp, label_get(0xEBC / 4));
+                break;
+              case 1:
+                strcat(StringTemp, label_get(0xEC0 / 4));
+                break;
+              case 2:
+                strcat(StringTemp, label_get(0xEC4 / 4));
+                break;
+              case 3:
+                strcat(StringTemp, label_get(0xEC8 / 4));
+                break;
+              case 4:
+                strcat(StringTemp, label_get(0xECC / 4));
+                break;
+              case 5:
+                strcat(StringTemp, label_get(0xED0 / 4));
+                break;
+              case 21:
+                strcat(StringTemp, StringTable.get(Natural[2].name_short));
+                break;
+              case 22:
+                strcat(StringTemp, StringTable.get(Natural[6].name_short));
+                break;
+              case 23:
+                strcat(StringTemp, StringTable.get(Natural[3].name_short));
+                break;
+              case 24:
+                strcat(StringTemp, StringTable.get(Natural[10].name_short));
+                break;
+            }
+            flat_button_[k].set_bubble_text(StringTemp);
         }
-        button_group_[2].add(&b);
+        button_group_[2].add(&flat_button_[k]);
     }
-    InflateRect(&editor_panel_rect_, 3, 3);
+    main_interface_inflate_rect(&editor_panel_rect_, 3, 3);
     button_group_[2].set(1011, 1);
-    editor_tools_rect_.left = editor_tools_rect_.right = 0;
+    editor_tools_rect_.left = 0;
+    editor_tools_rect_.right = 0;
     if (WinScreenWidth != 800) {
-        for (i = 0; i < 6; ++i) {
-            RECT &r = brush_button_rects_[i];
-            UnionRect(&editor_tools_rect_, &editor_tools_rect_, &r);
-            FlatButton &b = flat_button_[36+i];
-            b.init(0, 1036+i, r.left, r.top, r.right-r.left, r.bottom-r.top, this, 0);
-            b.hide();
-            for (frame = 0; frame < 3; ++frame) b.field_AD4_[frame] = &sprites10_[3*i+frame];
-            b.set_bubble_text(label_get(0xF64/4+i)); button_group_[3].add(&b);
+        for (k = 36; k < 42; k++) {
+            UnionRect(&editor_tools_rect_, &editor_tools_rect_, &brush_button_rects_[k - 36]);
+            flat_button_[k].init(0, k + 1000, brush_button_rects_[k - 36].left,
+                                 brush_button_rects_[k - 36].top,
+                                 brush_button_rects_[k - 36].right - brush_button_rects_[k - 36].left,
+                                 brush_button_rects_[k - 36].bottom - brush_button_rects_[k - 36].top,
+                                 this, 0);
+            flat_button_[k].hide();
+            flat_button_[k].field_AD4_[0] = &sprites10_[(k - 36) * 3];
+            flat_button_[k].field_AD4_[1] = &sprites10_[(k - 36) * 3 + 1];
+            flat_button_[k].field_AD4_[2] = &sprites10_[(k - 36) * 3 + 2];
+            flat_button_[k].set_bubble_text(label_get(0xF64 / 4 + k - 36));
+            button_group_[3].add(&flat_button_[k]);
         }
-        InflateRect(&editor_tools_rect_, 3, 3); button_group_[3].set(1036, 1);
+        main_interface_inflate_rect(&editor_tools_rect_, 3, 3);
+        button_group_[3].set(1036, 1);
     }
     editor_text_rect_ = editor_tools_rect_;
     editor_text_rect_.left = editor_tools_rect_.right + 3;
