@@ -1243,6 +1243,23 @@ VoxRenderRecord *__cdecl vox_create_record(
         return 0;
     }
 
+    // 0x00639547-0x00639578: both clip windows start empty, their mins at
+    // +0x7FFF and maxes at -0x7FFF, extents and the draw origin at 0.
+    record->primary_clip_.left_ = 0x7FFF;
+    record->primary_clip_.top_ = 0x7FFF;
+    record->primary_clip_.right_ = (uint32_t)-0x7FFF;
+    record->primary_clip_.bottom_ = (uint32_t)-0x7FFF;
+    record->primary_clip_.width_ = 0;
+    record->primary_clip_.height_ = 0;
+    record->secondary_clip_.left_ = 0x7FFF;
+    record->secondary_clip_.top_ = 0x7FFF;
+    record->secondary_clip_.right_ = (uint32_t)-0x7FFF;
+    record->secondary_clip_.bottom_ = (uint32_t)-0x7FFF;
+    record->secondary_clip_.width_ = 0;
+    record->secondary_clip_.height_ = 0;
+    record->draw_left_ = 0;
+    record->draw_top_ = 0;
+
     // Original bound setup sign-extends each low word. The descriptor's
     // full dwords still control the later row-table allocation path.
     record->draw_right_ =

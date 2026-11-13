@@ -2304,7 +2304,8 @@ void __cdecl enemy_diplomacy(int faction_id) {
         attack_type = -1;
         for (i = 1; i < MaxPlayerNum; i++) {
             if (!(PlayersData[faction_id].diplo_treaties[i] & 0x810)
-                || PlayersData[faction_id].satellites_[3] <= PlayersData[i].satellites_[3]) {
+                // Signed compare in the image (jle, 0x00560928).
+                || (int)PlayersData[faction_id].satellites_[3] <= (int)PlayersData[i].satellites_[3]) {
                 continue;
             }
             if (PlayersData[i].satellites_[3]

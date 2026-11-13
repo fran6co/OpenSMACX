@@ -450,7 +450,8 @@ void InfoWin::setup_text() {
             strcat(text, "}");
             k = 5;
             strcpy(row_text_[pane][4], text);
-            if (GameDataStateStorage.fields_.ranking_faction_id_unk1_ > 0) {
+            // Signed test in the image (test/jle, 0x004577F4).
+            if ((int)GameDataStateStorage.fields_.ranking_faction_id_unk1_ > 0) {
                 text[0] = 0;
                 strcat(text, label_get(0x428 / 4));
                 strcat(text, SocialWinColonSpaceText);
@@ -575,8 +576,10 @@ void InfoWin::setup_text() {
                             - static_cast<int16_t>(FactionRankingHistory[turn * MaxPlayerNum + k])
                                 / y_divisor - 1;
                         if (turn > 1) {
+                            // strcmp, not strstr (0x00457D0C): every faction but
+                            // the Spartans takes the text colour.
                             MainInterfaceGlobal.line(last_x, last_y, x, plot_y,
-                                strstr(Players[k].search_key, "SPARTANS")
+                                strcmp(Players[k].search_key, "SPARTANS")
                                     ? InfoFactionTextColors[k]
                                     : InfoFactionShadowColors[k]);
                         }

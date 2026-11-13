@@ -1460,7 +1460,7 @@ void Console::terraform(int vehicle_id, int terraform_id) { // 0x004D3470
     }
 
     // order and order_sea are read as a two-entry run.
-    parse_says(6, (&Order[terraform_id + 4].order)[is_sea], -1, -1);
+    parse_say(6, (&Order[terraform_id + 4].order)[is_sea], -1, -1); // parse_say, 0x004D3647
 
     if (Terraforming[terraform_id].prerequisite_tech[is_sea] < -1) {
         if (Terraforming[terraform_id].prerequisite_tech[!is_sea] < -1) {
@@ -1505,7 +1505,7 @@ void Console::terraform(int vehicle_id, int terraform_id) { // 0x004D3470
     if (Terraforming[terraform_id].bit != 0 &&
         (bit_at(x, y) & Terraforming[terraform_id].bit) == Terraforming[terraform_id].bit) {
         // name and name_sea are read as a two-entry run.
-        parse_says(0, (&Terraforming[terraform_id].name)[is_sea], -1, -1);
+        parse_say(0, (&Terraforming[terraform_id].name)[is_sea], -1, -1); // 0x004D396C
         veh_battle_msg("ALREADYBUILT", nullptr);
         return;
     }
@@ -1767,7 +1767,7 @@ void Console::terraform(int vehicle_id, int terraform_id) { // 0x004D3470
                 for (int i = 0; i < 20; ++i) {
                     if ((Terraforming[i].bit & conflict) != 0) {
                         // name and name_sea are read as a two-entry run.
-                        parse_says(0, (&Terraforming[i].name)[final_altitude < 0x60], -1, -1);
+                        parse_say(0, (&Terraforming[i].name)[final_altitude < 0x60], -1, -1); // 0x004D4CBF
                         if (X_pop("MIMIMI", nullptr) == 0) {
                             return;
                         }
@@ -4997,13 +4997,14 @@ void Console::editor_edit_veh(int vehicle_id) {
         ConsoleGlobal.update_data(0);
     } else if (ConsoleGroupAction == 2) {
         StringTemp[0] = '\0';
-        append_decimal(StringTemp, static_cast<uint8_t>(Vehs[vehicle_id].order));
+        // Fields +0x10 and +0xF (0x004DDFB5/0x004DE027, 0x004DE1A7/0x004DE1C2).
+        append_decimal(StringTemp, Vehs[vehicle_id].dmg_incurred);
         parse_says(0, StringTemp, -1, -1);
         StringTemp[0] = '\0';
         append_decimal(StringTemp, Vehs[vehicle_id].moves_expended);
         parse_says(1, StringTemp, -1, -1);
         StringTemp[0] = '\0';
-        append_decimal(StringTemp, Vehs[vehicle_id].dmg_incurred);
+        append_decimal(StringTemp, Vehs[vehicle_id].year_end_lurking);
         parse_says(2, StringTemp, -1, -1);
         if (Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].range > 1) {
             StringTemp[0] = '\0';
@@ -5017,9 +5018,9 @@ void Console::editor_edit_veh(int vehicle_id) {
         if (popup.exec(0, nullptr) < 0) {
             return;
         }
-        Vehs[vehicle_id].order = static_cast<int8_t>(atoi(ParseStrBuffer[0].str));
+        Vehs[vehicle_id].dmg_incurred = static_cast<uint8_t>(atoi(ParseStrBuffer[0].str));
         Vehs[vehicle_id].moves_expended = static_cast<uint8_t>(atoi(ParseStrBuffer[1].str));
-        Vehs[vehicle_id].dmg_incurred = static_cast<uint8_t>(atoi(ParseStrBuffer[2].str));
+        Vehs[vehicle_id].year_end_lurking = static_cast<uint8_t>(atoi(ParseStrBuffer[2].str));
         if (Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].range > 1) {
             Vehs[vehicle_id].terraforming_turns = static_cast<uint8_t>(atoi(ParseStrBuffer[3].str));
         }

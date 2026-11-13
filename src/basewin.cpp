@@ -786,7 +786,9 @@ void BaseWin::draw_flash(int redraw_mode) {
                 y = MainInterfaceGlobal.wrap(StringTemp, x, y, area.right - area.left);
             }
         }
-        if (Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].missile) {
+        // Chassis range (+0x4A), not missile, at all five reads
+        // (0x0040DAD3/0x0040DBAB/0x0040DC2F/0x0040DC9D/0x0040DCDA).
+        if (Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].range) {
             StringTemp[0] = 0;
             strcat(StringTemp, label_get(0x30C / 4));
             strcat(StringTemp, SocialWinColonSpaceText);
@@ -794,23 +796,23 @@ void BaseWin::draw_flash(int redraw_mode) {
             StringTemp[0] = 0;
             const int remaining = veh_moves(vehicle_id);
             _itoa((speed(vehicle_id, 0)
-                       * (Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].missile
+                       * (Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].range
                           + (remaining == 0) - Vehs[vehicle_id].terraforming_turns)
                    - Vehs[vehicle_id].moves_expended) / Rules.move_rate_roads,
                   number, 10);
             strcat(StringTemp, number);
             strcat(StringTemp, "/");
             _itoa(speed(vehicle_id, 0)
-                      * Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].missile
+                      * Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].range
                       / Rules.move_rate_roads,
                   number, 10);
             strcat(StringTemp, number);
             MainInterfaceGlobal.set_text_color(0xFA, -1, 1, 1);
             if (Vehs[vehicle_id].terraforming_turns
                 && Vehs[vehicle_id].terraforming_turns
-                       >= Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].missile / 2)
+                       >= Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].range / 2)
                 MainInterfaceGlobal.set_text_color(0xFB, -1, 1, 1);
-            if (Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].missile == 1
+            if (Chassis[VehPrototypes[Vehs[vehicle_id].proto_id].chassis_id].range == 1
                 && veh_moves(vehicle_id) <= speed(vehicle_id, 0) / 2)
                 MainInterfaceGlobal.set_text_color(0xFB, -1, 1, 1);
             if (action_home(vehicle_id, -1))
@@ -1939,7 +1941,7 @@ setup:
                     if (Vehs[veh_id].faction_id == BaseCurrent->faction_id_current) {
                         const uint8_t plan = VehPrototypes[Vehs[veh_id].proto_id].plan;
                         if (plan == 12 || plan == 10) {
-                            Vehs[veh_id].year_end_lurking = 0;
+                            Vehs[veh_id].order = 0; // +0x11 (0x00417D69)
                             Vehs[veh_id].state &= ~VSTATE_UNK_200;
                             if (IsMultiplayerNet) synch_veh(veh_id);
                         }
@@ -2696,7 +2698,8 @@ void BaseWin::draw_production(int update_mode) {
             if (BaseCurrent->mineral_surplus > 0) {
                 strcat(StringTemp, label_get(49));
                 CharUpperA(StringTemp);
-                strcat(StringTemp, ":");
+                // ": " then the join space - two spaces (0x0040EF26).
+                strcat(StringTemp, SocialWinColonSpaceText);
                 strcat(StringTemp, BufferJoinSpace);
                 if (gross_cost > current_minerals) {
                     const int remaining = gross_cost - current_minerals;

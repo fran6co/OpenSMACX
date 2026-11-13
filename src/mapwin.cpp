@@ -5611,27 +5611,29 @@ int MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
             WorldClimateWorldWin.set_world_map();
             MainInterfaceGlobal.button_group(1).set(0x3EE, 1);
             return 0;
-        case 0x323:
+        // Item ids per the image's jump table (0x0046D554): 0x321/0x322
+        // centre, 0x323 zoom in, 0x324 zoom out, 0x325 reset.
+        case 0x321:
             MapWinTable[0]->set_center(tile_x, tile_y, 1);
             return 0;
-        case 0x324:
+        case 0x322:
             set_center(tile_x, tile_y, 1);
             return 0;
         // 0x0046C406: the three zoom cases share one store + Win slot 62
         // (redraw, +0xF8) tail.
-        case 0x325:
+        case 0x323:
             if (zoom_offset_ < 0) {
                 zoom = zoom_offset_ + 2;
                 goto set_zoom;
             }
             break;
-        case 0x321:
+        case 0x324:
             if (zoom_offset_ > -0xE) {
                 zoom = zoom_offset_ - 2;
                 goto set_zoom;
             }
             break;
-        case 0x322:
+        case 0x325:
             zoom = -8;
             if (zoom_offset_ != zoom) {
             set_zoom:
