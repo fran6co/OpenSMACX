@@ -871,7 +871,7 @@ void __cdecl add_bat(int type, int modifier, LPCSTR display_str) {
     if (offset >= 4) {
         return;
     }
-    VehBattleModCount[type] = offset + 1;
+    VehBattleModCount[type]++;
     int index = type * 4 + offset;
     VehBattleModifier[index] = modifier;
     // Native strcpy writes the row itself; no pointer is stored or loaded.

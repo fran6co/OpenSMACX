@@ -5241,11 +5241,11 @@ int DesignWin::design_it() {
                               "unit_sm.pcx", pop_wait);
             }
             if (!result) {
-                return 0;
+                goto refused;
             }
             if (IsMultiplayerNet) {
                 if (diplo_lock(0x32)) {
-                    return 0;
+                    goto refused;
                 }
                 message_data(0x2415, 0, protoID_, factionID_, 0, 0);
                 NetDaemonNet.await_exec(0);
@@ -5281,6 +5281,11 @@ settled:
     synch_proto(protoID_);
     prune_protos(factionID_, protoID_, 1);
     return 1;
+
+// 0x004382C2: one shared `return 0` (with its own xor) serves the
+// overwrite refusal and the diplo_lock failure.
+refused:
+    return 0;
 }
 
 
