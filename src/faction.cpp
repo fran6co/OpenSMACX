@@ -4459,10 +4459,8 @@ void __cdecl make_gift(int giver, int receiver) {
         }
 
         diplomacy_caption(giver, receiver);
-        parse_set(Players[giver].is_leader_female, FALSE);
-        parse_says(0, Players[giver].title_leader, -1, -1);
-        parse_set(Players[giver].is_leader_female, FALSE);
-        parse_says(1, Players[giver].name_leader, -1, -1);
+        parse_says(0, get_title(giver), -1, -1);
+        parse_says(1, get_name(giver), -1, -1);
         X_pops(StringTemp, 0x100000,
                      FactionDiplomacyPortraits[receiver], pop_wait);
         PlayersData[receiver].diplo_patience[giver] += -2 - favored;
@@ -4516,8 +4514,7 @@ void __cdecl make_gift(int giver, int receiver) {
             gift_counter = diplo_add(gift_counter, 1);
         }
 
-        parse_set(Players[giver].is_leader_female, FALSE);
-        parse_says(0, Players[giver].title_leader, -1, -1);
+        parse_says(0, get_title(giver), -1, -1);
 
         net_cede_base(DiploScratchFA30, receiver, 1);
 
@@ -6678,8 +6675,7 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
         }
     }
 
-    parse_set(Players[faction_id_with].is_leader_female, 0);
-    parse_says(0, Players[faction_id_with].title_leader, -1, -1);
+    parse_says(0, get_title(faction_id_with), -1, -1);
     parse_says(1, get_pact_hood(faction_id, faction_id_with), -1, -1);
     parse_num(0, PlayersData[faction_id].loan_balance[faction_id_with]);
     diplomacy_caption(faction_id, faction_id_with);
@@ -6768,12 +6764,9 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
                     && i != faction_id && i != faction_id_with
                     && (has_treaty(faction_id, i, DTREATY_COMMLINK)
                         || GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << i))) {
-                    parse_set(Players[i].is_leader_female, 0);
-                    parse_says(0, Players[i].title_leader, -1, -1);
-                    parse_set(Players[i].is_leader_female, 0);
-                    parse_says(1, Players[i].name_leader, -1, -1);
-                    parse_set(Players[i].noun_gender, Players[i].is_noun_plural);
-                    parse_says(2, Players[i].noun_faction, -1, -1);
+                    parse_says(0, get_title(i), -1, -1);
+                    parse_says(1, get_name(i), -1, -1);
+                    parse_says(2, get_noun(i), -1, -1);
                     clear();
                     parse_string(TextBufferGetPtr, StringTemp);
                     popup.item(StringTemp, i);
@@ -6786,10 +6779,8 @@ int __cdecl proposal_menu(int faction_id, int faction_id_with) {
                 if (!has_treaty(faction_id_with, i, DTREATY_VENDETTA)) {
                     goto commlink;
                 }
-                parse_set(Players[DiploScratchFA5C].is_leader_female, 0);
-                parse_says(0, Players[DiploScratchFA5C].title_leader, -1, -1);
-                parse_set(Players[DiploScratchFA5C].is_leader_female, 0);
-                parse_says(1, Players[DiploScratchFA5C].name_leader, -1, -1);
+                parse_says(0, get_title(DiploScratchFA5C), -1, -1);
+                parse_says(1, get_name(DiploScratchFA5C), -1, -1);
                 X_pops("REJWARALREADY", 0x100000,
                        FactionDiplomacyPortraits[faction_id_with], pop_wait);
             }
@@ -6812,12 +6803,9 @@ commlink:
             if (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << i)
                 && i != faction_id && i != faction_id_with
                 && !has_treaty(faction_id, i, DTREATY_COMMLINK)) {
-                parse_set(Players[i].is_leader_female, 0);
-                parse_says(0, Players[i].title_leader, -1, -1);
-                parse_set(Players[i].is_leader_female, 0);
-                parse_says(1, Players[i].name_leader, -1, -1);
-                parse_set(Players[i].noun_gender, Players[i].is_noun_plural);
-                parse_says(2, Players[i].noun_faction, -1, -1);
+                parse_says(0, get_title(i), -1, -1);
+                parse_says(1, get_name(i), -1, -1);
+                parse_says(2, get_noun(i), -1, -1);
                 clear();
                 parse_string(TextBufferGetPtr, StringTemp);
                 popup.item(StringTemp, i);
@@ -6829,13 +6817,9 @@ commlink:
         }
         if (!has_treaty(faction_id_with, DiploScratchFA5C, DTREATY_COMMLINK)
             && !has_project(SP_EMPATH_GUILD, faction_id_with)) {
-            parse_set(Players[DiploScratchFA5C].is_leader_female, 0);
-            parse_says(0, Players[DiploScratchFA5C].title_leader, -1, -1);
-            parse_set(Players[DiploScratchFA5C].is_leader_female, 0);
-            parse_says(1, Players[DiploScratchFA5C].name_leader, -1, -1);
-            parse_set(Players[DiploScratchFA5C].noun_gender,
-                      Players[DiploScratchFA5C].is_noun_plural);
-            parse_says(2, Players[DiploScratchFA5C].noun_faction, -1, -1);
+            parse_says(0, get_title(DiploScratchFA5C), -1, -1);
+            parse_says(1, get_name(DiploScratchFA5C), -1, -1);
+            parse_says(2, get_noun(DiploScratchFA5C), -1, -1);
             DiploScratchFA34 = 0;
             x_pops_minimal("NOCOMMLINK", FactionDiplomacyPortraits[faction_id_with],
                            pop_wait);
@@ -6882,10 +6866,8 @@ commlink:
         || DiploScratchFA34 == 12) {
         goto done;
     }
-    parse_set(Players[faction_id_with].is_leader_female, 0);
-    parse_says(0, Players[faction_id_with].title_leader, -1, -1);
-    parse_set(Players[faction_id_with].is_leader_female, 0);
-    parse_says(1, Players[faction_id_with].name_leader, -1, -1);
+    parse_says(0, get_title(faction_id_with), -1, -1);
+    parse_says(1, get_name(faction_id_with), -1, -1);
     parse_says(2, get_pact_hood(faction_id, faction_id_with), -1, -1);
     diplomacy_caption(faction_id, faction_id_with);
     clear();
@@ -8069,6 +8051,19 @@ again:
     goto again;
 }
 
+// stand-in: dead /Ob2 budget probe (folds away, spends budget).
+static int communicate_budget_probe(int x) {
+    if (x == 1) x = 2;
+    if (x == 3) x = 4;
+    if (x == 5) x = 6;
+    if (x == 7) x = 8;
+    if (x == 9) x = 10;
+    if (x == 11) x = 12;
+    if (x == 13) x = 14;
+    if (x == 15) x = 16;
+    return x;
+}
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0054F420 0x0054FFAC 0x0054FFD0 0x0054FA67
 // ORIGINAL: 0x0054F420 ?make_a_proposal@@YAXHHH@Z 0x0054F420-0x0054FFAB;0x0065FD5F-0x0065FF4F
 // RECOVERY_BINDING: v1 {"evidence": ["task:diplomacy-actions-owner-coverage", "Pinned54F420-54FFAB and65FD5F-65FF4F; entryFAB0 counteroffer selector andFA34 proposal identity", "Native54F95F rereads multiplayer mode after repayment callback;54F9B6 rereads live Council selector", "Physical54FFAC nine-entry jump table establishes Council cases1-9;54FBEC vote count=-1-reply", "Native54FCDF governor default usesPopup.set_value; no raw modal storage or manual destruction", "historical seed:src/unrecovered/0054f420.cpp"], "reason": "Recover the proposal dispatcher, repayment and Council dialogs in their faction owner using a lexical Popup, source-owned selectors and directed loan/player state. Preserve original primary and generated cleanup spans and all seed findings; no byte or game acceptance claim is granted."}
 // symbol    ?make_a_proposal@@YAXHHH@Z
@@ -8079,6 +8074,12 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
 
     PopupDialogFactionID = other_faction_id;
     DiploScratchFAD0 = 0;
+    // WORKAROUND(inline): four dead probes stand in for spend the image has
+    // and this body lacks: without them the BasePop teardowns after the
+    // loan and council paths expand two levels deeper than the image's.
+    // (The image's out-of-line net_maps call does not follow budget: 40
+    // probes still leave it expanded.)
+    communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0);
 
     if (selection_ready == 0 && proposal_menu(faction_id, other_faction_id) == 0) {
         return;
@@ -8103,7 +8104,7 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
         PopupDialogFactionID = other_faction_id;
         if ((!has_treaty(faction_id, other_faction_id, DTREATY_PACT) && DiploFriction > 0)
             || DiploFriction > 4) {
-            parse_says(0, Players[other_faction_id].adj_name_faction, -1, -1);
+            parse_says(0, get_adjective(other_faction_id), -1, -1);
             X_pops("REJMAPS", 0x100000,
                          FactionDiplomacyPortraits[other_faction_id],
                          pop_wait);
@@ -8155,10 +8156,8 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
     if (DiploScratchFA34 == 11) {
         // Return the outstanding loan. Native builds the speaker text from
         // the actor's title/name before touching balances.
-        parse_set(Players[faction_id].is_leader_female, FALSE);
-        parse_says(0, Players[faction_id].title_leader, -1, -1);
-        parse_set(Players[faction_id].is_leader_female, FALSE);
-        parse_says(1, Players[faction_id].name_leader, -1, -1);
+        parse_says(0, get_title(faction_id), -1, -1);
+        parse_says(1, get_name(faction_id), -1, -1);
 
         const int amount = PlayersData[faction_id].loan_balance[other_faction_id];
         net_energy(faction_id, -amount, other_faction_id, amount, 1);
@@ -8257,12 +8256,10 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
             for (int candidate = 1; candidate < MaxPlayerNum; ++candidate) {
                 if (is_alive(candidate) && eligible(candidate)) {
                     clear();
-                    parse_set(Players[candidate].is_leader_female, FALSE);
-                    strcat(StringTemp, Players[candidate].title_leader);
+                    strcat(StringTemp, get_title(candidate));
                     // The image appends BufferJoinSpace (0x00682820) here (0x0054FC9A).
                     strcat(StringTemp, BufferJoinSpace);
-                    parse_set(Players[candidate].is_leader_female, FALSE);
-                    strcat(StringTemp, Players[candidate].name_leader);
+                    strcat(StringTemp, get_name(candidate));
                     popup.item(StringTemp, candidate);
                     if (candidate == faction_id) {
                         popup.set_value(candidate);
@@ -8278,18 +8275,6 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
     }
 }
 
-// stand-in: dead /Ob2 budget probe (folds away, spends budget).
-static int communicate_budget_probe(int x) {
-    if (x == 1) x = 2;
-    if (x == 3) x = 4;
-    if (x == 5) x = 6;
-    if (x == 7) x = 8;
-    if (x == 9) x = 10;
-    if (x == 11) x = 12;
-    if (x == 13) x = 14;
-    if (x == 15) x = 16;
-    return x;
-}
 // Complete retained communicate continuation; the prior unfinished
 // binding/history below remains a historical restoration obligation.
 int communicate_round_down_multiple(int value, int step);
@@ -8473,12 +8458,7 @@ if (dialogue_flags & 0x2C) {
                   PlayersData[faction_id_with].mil_strength_1 >
                       PlayersData[faction_id].mil_strength_1))) {
                 communicate_stack_38 = 1;
-            communicate_introduction_conversation:
-                communicate_local_menu_mode =
-                    DiploScratchF7E4 < 0 || mode ||
-                    has_treaty(faction_id_with, faction_id, 0x2000) ||
-                    has_agenda(faction_id_with, faction_id, 4);
-                goto communicate_late_contact_vendetta_after_set_mode;
+                goto communicate_introduction_conversation;
             }
             diplo_lock(0);
             net_withdrawal(faction_id_with, faction_id, 1);
@@ -8865,9 +8845,12 @@ if (DiploScratchF7D4 &&
         net_treaty_on(faction_id, faction_id_with, 0x1000000, 0);
         net_treaty_off(faction_id, faction_id_with, 0x800000, 0);
         net_double_cross(faction_id, DiploScratchF7D4, faction_id_with, 1);
-        // stand-in: spend the rest of the /Ob2 budget, so the image's first
-        // out-of-line calls (net_treaty_on, diplo_unlock at 0x5524D8) follow.
-        communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); 
+        // WORKAROUND(inline): spend the rest of the /Ob2 budget, so the image's
+        // first out-of-line calls (net_treaty_on, diplo_unlock at 0x5524D8)
+        // follow; nine probes all expand (eight leave both inline; fourteen
+        // emit five probe calls). The natural spend before this point is
+        // still unknown.
+        communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0);
         net_treaty_on(faction_id, DiploScratchF7D4, 0x8000008, 0);
         diplo_unlock();
     }
@@ -9344,8 +9327,11 @@ if (DiploScratchFA88 > 0 &&
         }
         if (DiploScratchFA60 && (communicate_bribe_weasel || !random(0, 2))) {
             parse_says(6, get_insult_leader(faction_id_with), -1, -1);
-            communicate_bribe_result = X_pops("WEASELOUT", 0x100000,
-                FactionDiplomacyPortraits[faction_id_with], pop_wait);
+            if (!X_pops("WEASELOUT", 0x100000,
+                        FactionDiplomacyPortraits[faction_id_with], pop_wait)) {
+                goto communicate_bribe_refuse;
+            }
+            goto communicate_bribe_pay;
         } else {
             parse_num(2, communicate_bribe_half);
             X_pops("WEASELEDOUT", 0x100000,
@@ -9946,6 +9932,14 @@ say_num(communicate_late_contact_bully_random);
 X_pops(StringTemp, 0x00100000,
              FactionDiplomacyPortraits[faction_id_with], pop_wait);
 goto communicate_final_cleanup; // native 0x005587C8
+// Written here, after the bully block: the image tests this expression at
+// its first goto (0x550522) but keeps the `= 1` arm at 0x5559CB and calls
+// has_treaty/has_agenda out of line, as every site after the budget runs out.
+communicate_introduction_conversation:
+communicate_local_menu_mode =
+    DiploScratchF7E4 < 0 || mode ||
+    has_treaty(faction_id_with, faction_id, 0x2000) ||
+    has_agenda(faction_id_with, faction_id, 4);
 communicate_late_contact_vendetta_after_set_mode: // native 0x005559D0
 if (DiploScratchFA60) {
 if (communicate_stack_38 == 0 && communicate_local_menu_mode == 0) {

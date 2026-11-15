@@ -1588,7 +1588,7 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
     memset(a_694, 0, sizeof(a_694));
     l_148 = 0;
     for (i = 0; i < 64; i++) {
-        if (GameDataStateStorage.fields_.secret_project_[i] == BaseIDCurrentSelected) {
+        if (GameDataStateStorage.fields_.secret_project_.project_base[i] == BaseIDCurrentSelected) {
             l_148++;
         }
         if (has_project(i, l_8)) {
@@ -4571,7 +4571,7 @@ L_4ff11f:
                     if (l_28 < 3 && l_74 < 2) {
                         weight /= 2;
                         if (!(BaseCurrent->state & 8)
-                            && GameDataStateStorage.fields_.secret_project_[base_id] == -1
+                            && GameDataStateStorage.fields_.secret_project_.project_base[base_id] == -1
                             && a_130[0] > -FacilitySPStart) {
                             a_114[0] = 9999999;
                             l_74 = 0;
