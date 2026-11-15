@@ -368,7 +368,7 @@ class NetDaemon : public AlphaNet {
   // enemy_veh reaches it after its own await_synch, asking the daemon to run
   // the vehicle's order; mode 1 is the only value any caller passes.
   int action(int veh_id, int mode);
-  uint32_t unlock_veh();
+  void unlock_veh();
 
   // Storage the image proves is here: its own methods reach 0x1BD0.
   // Extent only - this class carries no size assertion, and the bound is a floor.
@@ -386,7 +386,40 @@ class NetDaemon : public AlphaNet {
   // RECOVERY_MEMBER: v1 NetDaemon primary_state_ 0x1B30 0x005389F0
   PrimaryLockStateTail primary_state_;
   // RECOVERY_MEMBER: v1 NetDaemon channels_ 0x1B68 0x005389F0
+  // WORKAROUND(type): the channel words the wait/lock cluster touches are
+  // single-level members in the original. Every access to 0x1B74 is absolute
+  // (0x0093E904), and wait (0x005303B0) only fits /Ob2's per-callee size cap -
+  // which the image's expansions into await_exec/await_synch/unlock_base and
+  // add_global require - when its save/restore names a direct member; any
+  // channels_[i].f[j] spelling is over the cap. Likewise unlock (0x00530D00)
+  // is only affordable inside order_veh's await_exec expansion (0x00531EA9)
+  // with direct members. Overlaid on channels_ until the layout around them
+  // is reconstructed and the other users are converted. Only netdaemon.cpp
+  // opts in (NETDAEMON_FLAT_CHANNELS): the union changes the inline cost of
+  // channels_ accesses, and reportif.cpp's ReportIf::on_iface_button_clicked
+  // (0x004A6330) reorders two loads under it.
+#ifdef NETDAEMON_FLAT_CHANNELS
+  union {
+    LockStateEntry channels_[2];
+    struct {
+      uint32_t channel0_leading_words_[3];
+      uint32_t action_mode_;          // 0x1B74 = channels_[0].leading_words_[3]
+      int *locked_veh_;               // 0x1B78 = channels_[0].payload_
+      uint32_t channel0_trailing_words_[10];
+      uint32_t channel1_leading_words_[2];
+      uint32_t lock_held_;            // 0x1BAC = channels_[1].leading_words_[2]
+      uint32_t exec_pending_;         // 0x1BB0 = channels_[1].leading_words_[3]
+      uint32_t channel1_payload_;
+      uint32_t synch_pending_;        // 0x1BB8 = channels_[1].trailing_words_[0]
+      uint32_t channel1_trailing_words_[2];
+      uint32_t veh_locked_;           // 0x1BC4 = channels_[1].trailing_words_[3]
+      uint32_t lock_word_1BC8_;       // 0x1BC8 = channels_[1].trailing_words_[4]
+      uint32_t move_requests_;        // 0x1BCC = channels_[1].trailing_words_[5]
+    };
+  };
+#else
   LockStateEntry channels_[2];
+#endif
   // The constructor leaves the file-index pointer and save rows untouched.
   // RECOVERY_MEMBER: v1 NetDaemon file_index_records_ 0x1BE0 0x0052ED40
   NetDaemonFileIndexRecord *file_index_records_;
@@ -399,6 +432,15 @@ class NetDaemon : public AlphaNet {
   // Extent only: this is not proof of complete original sizeof.
   // Separate NetPlayerDropped93F65C and network flags93F660 remain globals.
 };
+#ifdef NETDAEMON_FLAT_CHANNELS
+static_assert(offsetof(NetDaemon, action_mode_) == 0x1B74, "overlaid action mode");
+static_assert(offsetof(NetDaemon, locked_veh_) == 0x1B78, "overlaid vehicle slot");
+static_assert(offsetof(NetDaemon, lock_held_) == 0x1BAC, "overlaid lock flag");
+static_assert(offsetof(NetDaemon, exec_pending_) == 0x1BB0, "overlaid exec wait flag");
+static_assert(offsetof(NetDaemon, synch_pending_) == 0x1BB8, "overlaid synch wait flag");
+static_assert(offsetof(NetDaemon, veh_locked_) == 0x1BC4, "overlaid vehicle lock flag");
+static_assert(offsetof(NetDaemon, move_requests_) == 0x1BCC, "overlaid move request count");
+#endif
 
 // Net::get and NetDaemon::process_message are not recovered yet; the Net the
 // daemon reads from is THE OBJECT below, at 0x0093CD90 in the image - REAL
