@@ -110,6 +110,16 @@ void MultiWin::UNK2() {
 // ORIGINAL: 0x00478630 ?draw_player@MultiWin@@QAEXHHPAURECT@@@Z 0x00478630-0x00478BDB
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00478630.cpp", "src/multiwin.h", "src/faction.h", "src/maininterface.h", "historical/superseded rationale: The original row painter uses MultiWin's owned Spot, sprite array and first font, typed faction names and treaties, and shared chat colors. Network turn-state suffixes remain pending their global owners.", "pinned 0x478630..0x478BDB: icon variant 0/1/2 selection from MultiWindowContactStatusMask and channels_[1].trailing_words_[6], with vertical centering always using sprites2_[0].height()", "pinned 0x478851..0x478919 preserves the separate offline treaty route and tests target Players[faction_id].rule_flags RFLAG_AQUATIC for the 0x10 treaty", "pinned 0x478919..0x478B17 uses typed GameDataStateWindow, NetDaemonNet primary/channel/lock state, NetUpkeepPhase, and a captured channel-0 selection word; lock state is reread after PlayerLock::active()", "pinned literals 0x686788/78C/790/794/798/79C/7A0 decode as *, (*), (+), (-), (*), (?), (@)"], "reason": "Recover the complete original MultiWin row painter through its owned sprite/hotspot, player, game, network and string-table state. Keep the offline treaty branch distinct from the multiplayer status suffix and its later control-turn treaty gate; preserve original callback and repeated-read ordering."}
 // symbol    ?draw_player@MultiWin@@QAEXHHPAUtagRECT@@@Z
+// WORKAROUND(inline): the image forms the sprite address (lea ecx) and then
+// reads its transparent byte through it (0x0047877A/0x00478793), after the
+// position arguments: an inline draw overload that reads the sprite's own
+// index. sprite.h declares none; adding one there perturbs its includers.
+static inline int multiwin_sprite_draw(Sprite *sprite, Buffer *destination, int x, int y,
+                                       int numerator, int denominator) {
+  return sprite->draw(destination, sprite->transparent_index(), x, y, numerator,
+                      denominator);
+}
+
 #pragma optimize("y", off)
 void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
   char number[80];
@@ -149,10 +159,10 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
     } else {
       variant = (NetDaemonNet.channels_[1].trailing_words_[6] & (1 << faction_id)) ? 2 : 0;
     }
-    sprites2_[variant].draw(this, sprites2_[variant].transparent_index(), icon_rect.left,
-                            (icon_rect.bottom - sprites2_[0].height() - icon_rect.top) / 2
-                                + icon_rect.top,
-                            1, 1);
+    multiwin_sprite_draw(&sprites2_[variant], this, icon_rect.left,
+                         (icon_rect.bottom - sprites2_[0].height() - icon_rect.top) / 2
+                             + icon_rect.top,
+                         1, 1);
   }
   set_text_color(ChatItemIdTable[faction_id], ChatShadowColors[faction_id], 1, 1);
 
@@ -191,26 +201,36 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
       uint32_t faction_bit = 1 << faction_id;
       int local_faction = ConsoleGlobal.faction_id_;
       uint32_t in_turn = faction_bit & selected_turn_word;
-      if (in_turn && ConsoleControlTurnActive) {
-        strcat(StringTemp, label_get(0x42C / 4));
-        strcat(StringTemp, BufferJoinSpace);
-        _itoa(NetUpkeepPhase, number, 10);
-        strcat(StringTemp, number);
+      if (in_turn) {
+        if (!ConsoleControlTurnActive) {
+          if (!(GameDataStateStorage.fields_.game_state_ & 0x80) &&
+              !(selected_turn_word & (1 << local_faction))) {
+            goto not_in_turn;
+          }
+        } else {
+          strcat(StringTemp, label_get(0x42C / 4));
+          strcat(StringTemp, BufferJoinSpace);
+          _itoa(NetUpkeepPhase, number, 10);
+          strcat(StringTemp, number);
+        }
       } else if (ConsoleControlTurnActive) {
         strcat(StringTemp, "*");
         strcat(StringTemp, label_get(0x42C / 4));
         strcat(StringTemp, BufferJoinSpace);
         _itoa(NetUpkeepPhase, number, 10);
         strcat(StringTemp, number);
-      } else if (!in_turn ||
-                 (!(GameDataStateStorage.fields_.game_state_ & 0x80) &&
-                  !(selected_turn_word & (1 << local_faction)))) {
+      } else {
+      not_in_turn:
         if (turn_flags) {
           int net_turn_faction = GameDataStateStorage.fields_.net_turn_faction_;
           if (net_turn_faction == faction_id) {
             strcat(StringTemp, "(*)");
           } else if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) {
-            strcat(StringTemp, faction_id > net_turn_faction ? "(+)" : "(-)");
+            if (faction_id > net_turn_faction) {
+              strcat(StringTemp, "(+)");
+            } else {
+              strcat(StringTemp, "(-)");
+            }
           }
         } else if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) {
           if ((selected_turn_word & (1 << local_faction)) ||

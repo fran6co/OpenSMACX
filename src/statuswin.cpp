@@ -420,6 +420,14 @@ StatusWin ConsoleStatusWin;  // 0x008C5568
 
 // Fixed-slot bindings carried from 004b6570.cpp
 
+// WORKAROUND(inline): draw_status expands Spot::add's RECT form in place
+// (six-argument call 0x005FA960 with right-left/bottom-top read from a RECT
+// copy at [ebp-0x38]); the out-of-line copy 0x0047A6F0 stays in multiwin.cpp.
+static inline int status_spot_add(Spot *spot, int position, int type, RECT *rect) {
+    return spot->add(position, type, rect->left, rect->top,
+                     rect->right - rect->left, rect->bottom - rect->top);
+}
+
 // ORIGINAL: 0x004B6570 ?draw_status@StatusWin@@QAEXHHHHH@Z 0x004B6570-0x004B8825 FILE
 // DEFERRED: genuinely more tractable than this pass reached - frame is only 0xD8 bytes (no embedded C++ objects the way the other six addresses in this batch have; this is plain locals only), and the member map shows this function itself touches exactly ONE StatusWin field (field_15DC_, a plain store at 0x004B6588 - every other offset the tool lists belongs to a SIBLING StatusWin method shown for context, not to draw_status). The remaining size (8885B, 2569 instructions, 829 Ghidra lines) is volume, not structural depth: it is a base-stats HUD renderer, dominated by _strcat(86)/?get@Strings@@(35)/_strlen(28)/?write_l@Buffer@@(15)/ __itoa(12)/?set_text_color@Buffer@@(9) - build a label string, draw it - interleaved with ~25 one-off game-data queries (?mine_yield@@, ?energy_yield@@, ?base_at@@, ?veh_at@@, ?bonus_at@@, ?has_tech@@, ?spying@@, ?base_draw@@, ?kill_type@Spot@@, ...) each needing its own argument set read off the disassembly. Ghidra also reports five "Removing unreachable block" warnings, meaning its own CFG differs from the raw disassembly's in at least five places - a real structural question (dead branches from an inlined constant vs. a genuine goto target this decompile mis-collapsed), not yet checked.
 // UNBLOCKER: because per-call risk is genuinely low here (a wrong string
@@ -442,10 +450,12 @@ StatusWin ConsoleStatusWin;  // 0x008C5568
 // Typed StatusWin::draw_status recovery from the pinned native body.
 // Retained KUNA pseudocode was used only as a control-flow aid; all data and
 // calls below are expressed through current source owners.
-void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
+// The dead battle-report parameters are reused: the image keeps the vehicle
+// in [ebp+8] and the tile x in [ebp+0x14]; separate locals pack differently.
+void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
     field_15DC_ = 0;
-    if (a1 >= 0 && a2 >= 0) {
-        g_BattleWin.battle_report(a1, a2, a3, a4, a5);
+    if (veh >= 0 && a2 >= 0) {
+        g_BattleWin.battle_report(veh, a2, a3, x, a5);
         return;
     }
     if (IfaceIdToSlotStorage[ActiveIfaceIdStorage]) {
@@ -465,16 +475,20 @@ void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
     char digits[80];
     // 0x004B665E: max_width lives in [ebp-0x28] with dead stores kept; that
     // slot later holds item_x + item_width (0x004B82C9, read 0x004B8401).
-    int max_width = 0;
-    // Shared image slots: [ebp-0x14] holds the base x in the seen loop, the
-    // text widths and the visible-item count (0x004B67E9, 0x004B731E,
-    // 0x004B8237); [ebp-0x24] holds the base y and the stack row height
-    // (0x004B67F6, 0x004B8179). One reused variable each, which also keeps the
-    // loop reading them from the frame instead of from Bases.
+    // WORKAROUND(volatile): the image keeps max_width and alt in the frame
+    // ([ebp-0x28], [ebp-0x1c]) and keeps max_width's dead max() stores
+    // (0x004B726B, 0x004B75DC); a plain int is enregistered or dead-store
+    // eliminated, which also moves `this` out of [ebp-0x18], drops the edi
+    // zero register at entry and shrinks the frame to 0xD4. The original
+    // reason these two stay in memory is unknown.
+    volatile int max_width = 0;
+    // Shared image slots: [ebp-0x14] holds the text widths and the visible
+    // item count (0x004B731E, 0x004B8237); [ebp-0x24] holds the stack row
+    // height (0x004B8179). One reused variable each.
     int col;
     int row;
-    int veh = ConsoleGlobal.selected_vehicle_;
-    int x;
+    volatile int alt;
+    veh = ConsoleGlobal.selected_vehicle_;
     int y;
     if (ConsoleGlobal.cursor_active_ && veh >= 0
         && GameDataStateStorage.fields_.turn_current_num_
@@ -486,49 +500,45 @@ void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
         y = iTileY_;
         veh = GameDataStateStorage.fields_.turn_current_num_ ? veh_at(x, y) : -1;
         int base_id = base_at(x, y);
-        if (veh >= 0) {
-            int top = veh_top(veh);
-            if (top >= 0 && Vehs[veh].faction_id != ConsoleGlobal.faction_id_
-                && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) {
-                if (!(PlayersData[ConsoleGlobal.faction_id_].flags & 0x200)
-                    && !(map_loc(x, y)->visibility & (1 << ConsoleGlobal.faction_id_))) {
-                    veh = -1;
-                } else if (base_id >= 0) {
-                    // The dead a5 argument is reused as the "seen" flag: the
-                    // image keeps it in [ebp+0x18] and tests it after the
-                    // loop instead of threading the constants (0x004B6821).
-                    // 0x004B67BF/0x004B67CC: both tests jump forward to the
-                    // shared a5 = 1 block, which the image places after the
-                    // first jmp inside the loop (a queued else arm).
-                    if (!(PlayersData[Bases[base_id].faction_id_current]
-                              .diplo_treaties[ConsoleGlobal.faction_id_] & 1)
-                        && !spying(Bases[base_id].faction_id_current)) {
-                        a5 = 0;
-                        col = Bases[base_id].x;
-                        row = Bases[base_id].y;
-                        for (int i = 0; i < 8; i++) {
-                            int x2 = wrap_map_x(VehMoveDeltaX[i] + col);
-                            int y2 = VehMoveDeltaY[i] + row;
-                            if (on_map(x2, y2)
-                                && veh_who(x2, y2) == ConsoleGlobal.faction_id_) {
-                                a5 = 1;
-                                break;
-                            }
+        int top = veh_top(veh);
+        if (top >= 0 && Vehs[veh].faction_id != ConsoleGlobal.faction_id_
+            && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) {
+            if (!(PlayersData[ConsoleGlobal.faction_id_].flags & 0x200)
+                && !(map_loc(x, y)->visibility & (1 << ConsoleGlobal.faction_id_))) {
+                veh = -1;
+            } else if (base_id >= 0) {
+                // The dead a5 argument is reused as the "seen" flag: the
+                // image keeps it in [ebp+0x18] and tests it after the
+                // loop instead of threading the constants (0x004B6821).
+                // 0x004B67BF/0x004B67CC: both tests jump forward to the
+                // shared a5 = 1 block, which the image places after the
+                // first jmp inside the loop (a queued else arm).
+                if (!(PlayersData[Bases[base_id].faction_id_current]
+                          .diplo_treaties[ConsoleGlobal.faction_id_] & 1)
+                    && !spying(Bases[base_id].faction_id_current)) {
+                    a5 = 0;
+                    for (int i = 0; i < 8; i++) {
+                        int x2 = wrap_map_x(Bases[base_id].x + VehMoveDeltaX[i]);
+                        int y2 = Bases[base_id].y + VehMoveDeltaY[i];
+                        if (on_map(x2, y2)
+                            && veh_who(x2, y2) == ConsoleGlobal.faction_id_) {
+                            a5 = 1;
+                            break;
                         }
-                    } else {
-                        a5 = 1;
                     }
-                    if (!((Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_
-                           || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
-                           || (Bases[base_id].visibility & (1 << ConsoleGlobal.faction_id_)))
-                          && a5)) {
-                        veh = -1;
-                    }
-                } else if (!((Vehs[top].faction_id == ConsoleGlobal.faction_id_
-                              && (Vehs[top].flags & 0x440) != 0x440)
-                             || (Vehs[top].visibility & (1 << ConsoleGlobal.faction_id_)))) {
+                } else {
+                    a5 = 1;
+                }
+                if (!((Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_
+                       || (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
+                       || (Bases[base_id].visibility & (1 << ConsoleGlobal.faction_id_)))
+                      && a5)) {
                     veh = -1;
                 }
+            } else if (!((Vehs[top].faction_id == ConsoleGlobal.faction_id_
+                          && (Vehs[top].flags & 0x440) != 0x440)
+                         || (Vehs[top].visibility & (1 << ConsoleGlobal.faction_id_)))) {
+                veh = -1;
             }
         }
     }
@@ -665,7 +675,7 @@ void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
             }
             line_y += row_pitch;
         } else {
-            int alt = alt_at(x, y) - 3;
+            alt = alt_at(x, y) - 3;
             MainInterfaceGlobal.set_text_color(TextColourTable[18], TextColourTable[19], 1, 1);
             if (alt < 0) {
                 StringTemp[0] = '\0';
@@ -961,8 +971,9 @@ void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
         drawn = 1;
         base_draw(&MainInterfaceGlobal, base_id, item_x + 11, item_y - 1, -8, 0x40);
         base_draw(&MainInterfaceGlobal, base_id, item_x, item_y - 1, 0, 0x1800);
-        spot_.add(base_id, 11, area.left, area.top, area.right + 5 - area.left,
-                  area.bottom - area.top);
+        RECT spot_rect = area;
+        spot_rect.right += 5;
+        status_spot_add(&spot_, base_id, 11, &spot_rect);
         if (base_id == sel_base) {
             area.left -= 2;
             area.right += 2;
@@ -1039,8 +1050,9 @@ void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
             area.top += 2;
             area.bottom -= 2;
         }
-        spot_.add(v, 0, area.left, area.top, area.right + 5 - area.left,
-                  area.bottom - area.top);
+        RECT spot_rect = area;
+        spot_rect.right += 5;
+        status_spot_add(&spot_, v, 0, &spot_rect);
         item_x += item_width + 5;
         area.left += item_width + 5;
         area.right += item_width + 5;

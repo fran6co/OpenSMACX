@@ -4676,7 +4676,8 @@ void __cdecl load_vehicles() {
 
     // Chassis 0..8 are walked and skipped; the UNITS rows start at 9.
     for (chassis = 0; chassis < 19; ++chassis) {
-        source_y = 2 + (chassis - 9) * 77;
+        row = chassis - 9;
+        source_y = 2 + row * 77;
         if (chassis < 9) {
             continue;
         }
@@ -4696,7 +4697,7 @@ void __cdecl load_vehicles() {
              ++variant, source_x += 102) {
             int sheet_x = source_x;
             int sheet_y = source_y;
-            if (chassis == 18) {
+            if (row == 9) {
                 sheet_x = 716;
                 sheet_y = 233;
             }
