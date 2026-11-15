@@ -478,7 +478,7 @@ Scroll *Popup::on_listbox_scroll_delete(Scroll *scroll) {
     return 0;
 }
 
-// ORIGINAL: 0x00404A80 ?hide@Popup@@QAEXXZ 0x00404A80-0x00404AFF FILE
+// ORIGINAL: 0x00404A80 ?hide@Popup@@QAEXXZ 0x00404A80-0x00404AFF FILE BYTE_EXACT
 // symbol    ?hide@Popup@@UAEXXZ
 // size      127 bytes
 // prototype void (__thiscall ?hide@Popup@@QAEXXZ)(Popup* this)

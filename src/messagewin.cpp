@@ -423,7 +423,7 @@ int __cdecl MessageWin::listbox_write(GraphicWin *target, int item_id, int,
 // The archived seed remains as historical evidence; this product body has a
 // native binding and currently measures a mismatch.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00471D50 ?init@MessageWin@@QAEXXZ 0x00471D50-0x00471F66;0x00655F75-0x00655F8A
+// ORIGINAL: 0x00471D50 ?init@MessageWin@@QAEXXZ 0x00471D50-0x00471F66;0x00655F75-0x00655F8A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00471d50.cpp", "image:0x00471D50"], "reason": "The archived constructor-stage method initializes MessageWin font, pane bounds, embedded ListBox Dialog and callback slots."}
 // symbol    ?init@MessageWin@@QAEHXZ
 int MessageWin::init() {
