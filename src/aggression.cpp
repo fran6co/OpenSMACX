@@ -236,9 +236,6 @@ void __cdecl double_cross(int faction_id, int partner_id, int victim_id) {
                 }
                 set_treaty(partner_id, faction_id, 0x20, 1);
             }
-            if (victim_id >= 0) {
-                cause_friction(victim_id, faction_id, -2);
-            }
         } else if (victim_id >= 0) {
             if (is_human(faction_id)) {
                 if (PlayersData[partner_id].diplo_agenda[faction_id] & 0x400) {
@@ -249,9 +246,9 @@ void __cdecl double_cross(int faction_id, int partner_id, int victim_id) {
                 }
                 set_treaty(partner_id, faction_id, 0x20, 1);
             }
-            if (victim_id >= 0) {
-                cause_friction(victim_id, faction_id, -2);
-            }
+        }
+        if (victim_id >= 0) {
+            cause_friction(victim_id, faction_id, -2);
         }
     }
     treaty_on(faction_id, partner_id, 0x10);

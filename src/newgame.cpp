@@ -172,16 +172,16 @@ hand-writing a funclet.
 */
 int __cdecl change_opening(char *filename) {
     Buffer buf;
-    if (opening_window() == 0) {
+    if (OpeningWindow == 0) {
         return 7;
     }
     buf.load_pcx(filename, 0, 10, 0xec);
-    GraphicWin *window = opening_window();
+    GraphicWin *window = OpeningWindow;
     // The dimensions use GraphicWin itself after the load callback; only the
     // Buffer copy argument conversion is null-conditional.
     buf.copy(window, 0, 0, buf.pixel_width(), buf.pixel_height(), 0, 0,
              window->pixel_width(), window->pixel_height());
-    opening_window()->on_update();
+    OpeningWindow->on_update();
     return 0;
 }
 
@@ -206,12 +206,12 @@ Return Value: n/a
 */
 void __cdecl close_opening() {
     Win *console_window = &ConsoleGlobal;
-    GraphicWin *opening = opening_window();
+    GraphicWin *opening = OpeningWindow;
     // Publish the ordinary C++ conversion to the fallback parent window.
     BasePopDefaultField322C = console_window;
     if (opening != 0) {
         delete opening;
-        opening_window() = 0;
+        OpeningWindow = 0;
     }
 }
 
@@ -236,29 +236,7 @@ int __cdecl init_opening(const char *filename) {
     }
 
     OpeningWindow->fill(0);
-    {
-        Buffer local_buffer;
-        if (OpeningWindow != 0) {
-            local_buffer.load_pcx(filename, 0, 10, 0xEC);
-
-            // Native reload after load_pcx supplies the copy destination and
-            // its metrics. The null arm only nulls the copy destination; the
-            // following metrics reads are unconditional in the original.
-            GraphicWin *const copy_window = OpeningWindow;
-            Buffer *const destination =
-                copy_window != 0 ? static_cast<Buffer *>(copy_window) : 0;
-            const int target_width = copy_window->pixel_width();
-            const int target_height = copy_window->pixel_height();
-            local_buffer.copy(destination, 0, 0, local_buffer.pixel_width(),
-                              local_buffer.pixel_height(), 0, 0, target_width,
-                              target_height);
-
-            // The native body reloads the slot after copy, independently of
-            // the receiver used above, before virtual on_update dispatch.
-            OpeningWindow->on_update();
-        }
-    } // Buffer's natural destructor runs before palette realization.
-
+    change_opening(const_cast<char *>(filename));
     g_PALETTE1.set();
     OpeningWindow->show(0);
     do_all_draws();
@@ -1267,7 +1245,7 @@ static inline void map_menu_budget_probe(int x) {
 int __cdecl map_menu(int quick_start) {
     SetupWin setup;
     Popup popup;
-    setup.opening_window_snapshot_ = opening_window();
+    setup.opening_window_snapshot_ = OpeningWindow;
     int choice;
 
 map_menu_retry:
@@ -1523,12 +1501,15 @@ do_cleanup:
 
 // WORKAROUND(inline): top_menu expands init_opening (0x00589B60, which has
 // no callers in the image) four times, with change_opening and close_opening
-// left as calls; VC6 /Ob2 never auto-inlines init_opening here (no C4711),
-// so this twin carries the body top_menu expands.
+// left as calls. VC6 /Ob2 never auto-inlines the plain init_opening here (its
+// source is over the per-callee size cap), so this twin carries the body top_menu
+// expands. Measured: `MEASURED int __cdecl init_opening(const char *)` in
+// game.h plus an `inline` definition keeps 0x00589B60 exact and gives top_menu
+// identical code, which would retire this twin (header change, not vetted).
 static inline int top_menu_init_opening(const char *filename) {
-    if (opening_window() == 0) {
+    if (OpeningWindow == 0) {
         GraphicWin *const window = new GraphicWin();
-        opening_window() = window;
+        OpeningWindow = window;
         if (window == 0) {
             return 4;
         }
@@ -1539,12 +1520,12 @@ static inline int top_menu_init_opening(const char *filename) {
             return result;
         }
     }
-    opening_window()->fill(0);
+    OpeningWindow->fill(0);
     change_opening(const_cast<char *>(filename));
     g_PALETTE1.set();
-    opening_window()->show(0);
+    OpeningWindow->show(0);
     do_all_draws();
-    BasePopDefaultField322C = opening_window();
+    BasePopDefaultField322C = OpeningWindow;
     return 0;
 }
 
@@ -1580,7 +1561,7 @@ int __cdecl top_menu(int mode) {
         top_menu_init_opening(WinScreenWidth == 0x320
             ? "openingb.pcx" : "openinga.pcx");
     }
-    setup.opening_window_snapshot_ = opening_window();
+    setup.opening_window_snapshot_ = OpeningWindow;
     TurnUpkeepPhase = 0;
 
     // The menu is a loop that only leaves through its returns. The loop as the
@@ -1596,7 +1577,7 @@ int __cdecl top_menu(int mode) {
             top_menu_init_opening(WinScreenWidth == 0x320
                 ? "openingb.pcx" : "openinga.pcx");
         }
-        setup.opening_window_snapshot_ = opening_window();
+        setup.opening_window_snapshot_ = OpeningWindow;
         prefs_load(0);
         prefs_use();
 

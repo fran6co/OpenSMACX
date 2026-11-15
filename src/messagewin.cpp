@@ -175,9 +175,10 @@ inline void MessageWin::remove_selected_message() {
 void MessageWin::add_message(char *text, int item_id) {
     if (ConsoleGlobal.message_count_ != 0) {
         listBox_.item_list_.seek_pos(ConsoleGlobal.message_count_ - 1);
-        if (current_message_text(listBox_.item_list_) != 0 && item_id == 0 &&
-            strcmp(text, current_message_text(listBox_.item_list_)) == 0) {
-            return;
+        if (current_message_text(listBox_.item_list_) != 0) {
+            if (item_id == 0 && strcmp(text, current_message_text(listBox_.item_list_)) == 0) {
+                return;
+            }
         }
     }
 
@@ -444,7 +445,7 @@ int MessageWin::init() {
     listBox_.set_dialog_font(&font_, &font_, &font_);
     listBox_.field_2C_ = 0;
     listBox_.field_10_ = 0;
-    listBox_.field_14_ = static_cast<uint32_t>(-1);
+    listBox_.clear_selection_index();
     listBox_.set_dialog_text_color(0, -1, 1, 1);
     listBox_.set_dialog_text_color2(255, -1, 1, 1);
     listBox_.set_dialog_text_color3(255, -1, 1, 1);
@@ -453,7 +454,7 @@ int MessageWin::init() {
     listBox_.Dialog::set_field_34((rect->bottom - rect->top) / 4);
     listBox_.draw_callback_ = &MessageWin::listbox_draw;
     listBox_.fill_callback_ = &MessageWin::listbox_fill;
-    listBox_.write_callback_ = &MessageWin::listbox_write;
+    listBox_.set_write_callback(&MessageWin::listbox_write);
     listBox_.Dialog::field_B4_ = 0;
     listBox_.attach(&MainInterfaceGlobal, rect->left, bounds_.top, 0x1000000);
     ConsoleGlobal.message_count_ = 0;

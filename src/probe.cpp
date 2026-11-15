@@ -287,7 +287,7 @@ int __cdecl success_rates(int id, int morale, int diff_modifier, int base_id) {
         }
         int survival_rate = 100 - loss_rate;
         if (ProbeTargetHasHSA) {
-            // BUG IN THE ORIGINAL: this hits success_rate a second time instead
+            // BUG IN THE SHIPPED GAME: this hits success_rate a second time instead
             // of halving survival_rate - the image's ProbeTargetHasHSA branch
             // here divides edi (still holding success_rate) rather than esi
             // (survival_rate). Reproduced deliberately; a "fixed" version that

@@ -508,15 +508,19 @@ Scroll *Popup::on_listbox_scroll_delete(Scroll *scroll) {
 void Popup::hide() {
     if (is_visible()) {
         const int auto_hide_selector = static_cast<int>(field_30AC_) / 10000;
-        if (auto_hide_selector != 1000) {
-            if (external_window_ == 0) {
-                if (MainInterfaceGlobal.is_visible()) {
-                    if (auto_hide_selector == 0 || auto_hide_selector == 5) {
-                        if (scroll_.is_visible()) {
-                            scroll_hide(this, &scroll_);
-                        }
-                        slide_hide(this, 0);
+        // The 1000 selector's own hide-and-return arm is what makes the image
+        // save edi in the prologue (deferred-save rule).
+        if (auto_hide_selector == 1000) {
+            this->Win::hide();
+            return;
+        }
+        if (external_window_ == 0) {
+            if (MainInterfaceGlobal.is_visible()) {
+                if (auto_hide_selector == 0 || auto_hide_selector == 5) {
+                    if (scroll_.is_visible()) {
+                        scroll_hide(this, &scroll_);
                     }
+                    slide_hide(this, 0);
                 }
             }
         }
