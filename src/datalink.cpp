@@ -94,6 +94,12 @@ static inline void dl_draw_scaled(Buffer *buffer, Sprite *sprite, int x, int y,
                                   int numerator, int denominator) {
     sprite->draw(buffer, sprite->transparent_index(), x, y, numerator, denominator);
 }
+// The facility and project icons are scaled by the illustration width the
+// image computes right then left (0x0042F5A3, 0x0042FBC3), as a RECT* helper
+// does; the written-out difference loads left first.
+static inline int dl_rect_width(const RECT *rect) {
+    return rect->right - rect->left;
+}
 // WORKAROUND(inline): the faction, facility and project drawers spend more
 // /Ob2 budget before their Popup teardown than written-out calls do: the
 // image calls ~StringList (0x004066C0) out of line for both BasePop lists
@@ -304,7 +310,7 @@ void Datalink::draw_unit() {
     description.add(0);
     if (VehPrototypes[id].carry_capacity) {
         StringTemp[0] = 0;
-        strcat(StringTemp, label_get(0x360 / 4));
+        strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x360 / 4]));
         strcat(StringTemp, SocialWinColonSpaceText);
         strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, "{");
@@ -319,7 +325,7 @@ void Datalink::draw_unit() {
     if (Chassis[VehPrototypes[id].chassis_id].triad == 2
         && Chassis[VehPrototypes[id].chassis_id].range) {
         StringTemp[0] = 0;
-        strcat(StringTemp, label_get(0x30C / 4));
+        strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x30C / 4]));
         strcat(StringTemp, SocialWinColonSpaceText);
         strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, "{");
@@ -327,7 +333,7 @@ void Datalink::draw_unit() {
         strcat(StringTemp, number);
         strcat(StringTemp, BufferJoinSpace);
         if (Chassis[VehPrototypes[id].chassis_id].range == 1) {
-            strcat(StringTemp, label_get(0xC0 / 4));
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xC0 / 4]));
         } else {
             strcat(StringTemp, label_get(0xC4 / 4));
         }
@@ -436,7 +442,7 @@ void Datalink::draw_chassis() {
     description.add(0);
     if (Chassis[id].cargo) {
         StringTemp[0] = 0;
-        strcat(StringTemp, label_get(0x360 / 4));
+        strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x360 / 4]));
         strcat(StringTemp, SocialWinColonSpaceText);
         strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, "{");
@@ -954,9 +960,9 @@ void Datalink::draw_facility() {
     set_text_color(0xE0, -1, 1, 1);
     dl_upper_name(Facility[id].name);
     write_cent_l(StringTemp, &title_rect_);
-    int span = illustration_rect_.right - illustration_rect_.left;
     dl_draw_scaled(this, &g_FACILITY_ICON_SPRITES[id], illustration_rect_.left,
-                   illustration_rect_.top, span, g_FACILITY_ICON_SPRITES[id].width());
+                   illustration_rect_.top, dl_rect_width(&illustration_rect_),
+                   g_FACILITY_ICON_SPRITES[id].width());
     rect.left += illustration_rect_.right - illustration_rect_.left + 6;
     parse_num(0, cost_factor(ConsoleGlobal.faction_id_, 1, -1) * Facility[id].cost);
     parse_num(1, fac_maint(id, ConsoleGlobal.faction_id_));
@@ -1007,7 +1013,7 @@ void Datalink::draw_project() {
     // 42FBEC loads the first project sprite's +0x18, without indexing it.
     dl_draw_scaled(this, &g_SECRET_PROJECT_ICON_SPRITES[id - 70],
                    illustration_rect_.left, illustration_rect_.top,
-                   illustration_rect_.right - illustration_rect_.left,
+                   dl_rect_width(&illustration_rect_),
                    g_SECRET_PROJECT_ICON_SPRITES[0].width());
     const int project = id - 70;
     rect.left += illustration_rect_.right - illustration_rect_.left + 6;

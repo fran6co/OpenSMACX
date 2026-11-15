@@ -1638,17 +1638,16 @@ int __cdecl eliminate_player(int faction, int conqueror) {
             ++PlayersData[conqueror].unk_108;
         if (faction == ConsoleGlobal.faction_id_) return 1;
     }
-    int successor = conqueror;
-    if (successor < 0) {
-        successor = 0;
-    } else if (successor > 0) {
-        set_treaty(faction, successor, 0x2030, 1);
+    if (conqueror < 0) {
+        conqueror = 0;
+    } else if (conqueror > 0) {
+        set_treaty(faction, conqueror, 0x2030, 1);
     }
     draw_map(1);
     parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
     parse_says(0, Players[faction].noun_faction, -1, -1);
-    parse_set(Players[successor].noun_gender, Players[successor].is_noun_plural);
-    parse_says(1, Players[successor].noun_faction, -1, -1);
+    parse_set(Players[conqueror].noun_gender, Players[conqueror].is_noun_plural);
+    parse_says(1, Players[conqueror].noun_faction, -1, -1);
     parse_set(Players[faction].is_leader_female, 0);
     parse_says(2, Players[faction].title_leader, -1, -1);
     parse_set(Players[faction].is_leader_female, 0);
@@ -1656,12 +1655,12 @@ int __cdecl eliminate_player(int faction, int conqueror) {
     parse_says(4, get_his_her(faction, 0), -1, -1);
     StringTemp[0] = '\0';
     strcat(StringTemp, "WIPEOUT");
-    if (!successor) {
+    if (!conqueror) {
         char number[80];
         _itoa(2, number, 10);
         strcat(StringTemp, number);
     } else {
-        if (successor == ConsoleGlobal.faction_id_) strcat(StringTemp, "YOU");
+        if (conqueror == ConsoleGlobal.faction_id_) strcat(StringTemp, "YOU");
         char number[80];
         _itoa(restored != 0, number, 10);
         strcat(StringTemp, number);
@@ -1675,12 +1674,12 @@ int __cdecl eliminate_player(int faction, int conqueror) {
     } else {
         popp(ScriptPopupFile, StringTemp, 0, restored ? "escpod_sm.pcx" : portrait, 0);
     }
-    if (!restored) mon_killed_faction(successor, faction);
+    if (!restored) mon_killed_faction(conqueror, faction);
     if (!IsMultiplayerNet && (GameDataStateStorage.fields_.game_preferences_ & 0x10000000)
-        && successor == ConsoleGlobal.faction_id_ && !restored) {
+        && conqueror == ConsoleGlobal.faction_id_ && !restored) {
         amovie_project(Players[faction].filename);
-    } else if (restored && !IsMultiplayerNet && successor == ConsoleGlobal.faction_id_) {
-        int chance = (PlayersData[successor].diplo_treaties[faction] & 0x1000) ? 2 : 4;
+    } else if (restored && !IsMultiplayerNet && conqueror == ConsoleGlobal.faction_id_) {
+        int chance = (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 0x1000) ? 2 : 4;
         if (!bounded_crt_random(chance)) {
             int first = veh_find(0, 0, faction, -1);
             if (first >= 0) {
@@ -1690,7 +1689,7 @@ int __cdecl eliminate_player(int faction, int conqueror) {
                     x = wrap_map_x(Vehs[first].x + RadiusOffsetX[offset]);
                     y = Vehs[first].y + RadiusOffsetY[offset];
                     if (on_map(x, y)) {
-                        spot_loc(x, y, successor);
+                        spot_loc(x, y, conqueror);
                     }
                 }
                 int vehicle = first;
@@ -1701,7 +1700,7 @@ int __cdecl eliminate_player(int faction, int conqueror) {
                     Vehs[vehicle].visibility = 0;
                     if (VehPrototypes[Vehs[vehicle].proto_id].plan == 8 && !marked) {
                         marked = 1;
-                        Vehs[vehicle].visibility = (uint8_t)(1 << successor);
+                        Vehs[vehicle].visibility = (uint8_t)(1 << conqueror);
                     }
                 }
                 // The original deliberately retains the last radius coordinates.
