@@ -4780,14 +4780,14 @@ int __cdecl propose_pact(int myFac, int otherFac) {
     parse_set(Players[myFac].is_leader_female, 0);
     parse_says(2, Players[myFac].name_leader, -1, -1);
     char number[80];
-    if (DiplomacyProposalMode == 3 && DiploScratchFA24) {
+    if (DiplomacyProposalMode == 3) {
+        if (!DiploScratchFA24) goto reject;
         net_set_treaty(otherFac, myFac, 0x2000000, 1, 0);
         pact_of_brotherhood(myFac, otherFac);
         return 1;
     }
-    // ? Image lays this rejection block inline (fall-through of `test score;
-    // jne main`); our compile of the same || test sank it to the function end.
-    if (DiplomacyProposalMode == 3 || !score) {
+    if (!score) {
+    reject:
         if ((DiploScratchFA78 > 2 || DiploScratchFA2C) && (DiploScratchFA98 || DiploFriction <= 2)
             && !has_treaty(otherFac, myFac, 0x20)) {
             X_pops("REJPACTMEEK", 0x100000, FactionDiplomacyPortraits[otherFac], pop_wait);

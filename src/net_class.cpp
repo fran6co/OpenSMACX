@@ -3103,7 +3103,6 @@ Purpose: Net::check_message - remember a player's message stamp, answering
 
 // ORIGINAL: 0x00632FA0 ?check_message@Net@@QAEHKK@Z 0x00632FA0-0x00633007
 // symbol    ?check_message@Net@@QAEHKK@Z
-// TRIED: do-while loop form (same #21 jne/je divergence); reordering the i==0x10 branch did not change it.
 // Historical emitted-symbol hint: ?net_check_message_redirect@@YIHPAX0KK@Z
 // size      103 bytes
 // prototype int (__thiscall ?check_message@Net@@QAEHKK@Z)(Net* this, unsigned int, unsigned int)
@@ -3132,11 +3131,14 @@ int Net::check_message(unsigned long player, unsigned long stamp) {
         return 0;
     }
     uint32_t *last = &players_[slot].field_4_;
+    int result;
     if (*last >= stamp) {
-        return 1;
+        result = 1;
+    } else {
+        result = 0;
+        *last = stamp;
     }
-    *last = stamp;
-    return 0;
+    return result;
 }
 
 // ORIGINAL: 0x00632300 ?set_polling@Net@@QAEXH@Z 0x00632300-0x0063234F BYTE_EXACT

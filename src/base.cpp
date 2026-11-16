@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h
+#define PLANET_BUSTER2_OUT_OF_LINE  // see planet_buster2 in veh.h
 #include "stdafx.h"
 #include "popup.h"
 #include "base.h"
@@ -3471,10 +3472,7 @@ L_4fcf70:
     {
         int armor = arm_strat(VehPrototypes[l_14].armor_id, l_8);
         int weap;
-        // WORKAROUND(noinline): called out of line at 0x004FD4B5, as in
-        // base_hurry; this unit saw only planet_buster2's declaration.
-        uint32_t (__cdecl *const buster)(int) = planet_buster2;
-        if (buster(l_14)) {
+        if (planet_buster2(l_14)) {
             weap = 50;
         } else {
             weap = weap_strat(VehPrototypes[l_14].weapon_id, l_8);
@@ -6276,8 +6274,8 @@ void __cdecl base_hurry() {
         return;
     }
     int production_id = BaseCurrent->queue_production_id[0];
-    int hurry = 0;
     int facility_index = production_id < 0 ? -production_id : 0;
+    int hurry = 0;
     int cost = facility_index
         ? Facility[facility_index].cost
         : veh_cost(production_id, BaseIDCurrentSelected, nullptr);
@@ -6320,12 +6318,7 @@ void __cdecl base_hurry() {
         } else {
             hurry = PlayersData[faction].energy_reserves / 10;
         }
-        // WORKAROUND(noinline): the image calls planet_buster2's copy at
-        // 0x005004F0 here and in base_build (0x004FD4B5); only battle.cpp's
-        // owner expands it, so this unit saw a plain declaration. veh.h keeps
-        // the header inline for battle.cpp.
-        uint32_t (__cdecl *const buster)(int) = planet_buster2;
-        if (buster(production_id) && !PlayersData[faction].planet_busters) {
+        if (planet_buster2(production_id) && !PlayersData[faction].planet_busters) {
             for (int i = 1; i < MaxPlayerNum; i++) {
                 if (i != faction
                     && (PlayersData[faction].diplo_treaties[i] & DTREATY_VENDETTA)
