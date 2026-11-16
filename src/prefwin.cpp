@@ -90,8 +90,9 @@ extern int MessageWinTextColor, MessageWinTextBackground;
 // stored gamma scalar to the integer value written to the preferences file.
 // RECOVERY_OBJECT: v2 0x006846A8 0x006846AC ?PrefWinGammaCorrection@@3MA 0x00491400
 float PrefWinGammaCorrection = 1.0f;
-// RECOVERY_OBJECT: v2 0x0066D58C 0x0066D590 _PrefWinGammaScale 0x00491400
-const float PrefWinGammaScale = 100.0f;
+// The 100.0 factor at 0x0066D58C is the compiler's float literal for the
+// `* 100.0f` in on_button_clicked (it is fmul's memory operand, loaded after
+// the correction), not a named object.
 
 namespace {
 
@@ -1396,7 +1397,7 @@ void PrefWin::on_button_clicked(int button_id) {
       PrefWinGammaCorrection = static_cast<float>(
           gamma.exec(&g_PALETTE1, PrefWinGammaCorrection, 0));
       prefs_put("Gamma Correction",
-          static_cast<int>(PrefWinGammaScale * PrefWinGammaCorrection), 0);
+          static_cast<int>(PrefWinGammaCorrection * 100.0f), 0);
       break;
     case 0x5E:
       if (field_A14_ == 2) {

@@ -200,23 +200,7 @@ void TutWin::on_button_clicked(int button_id) {
     if (field_53B8_ != 0) {
         release_modal();
     }
-    if (field_53D4_ != 0) {
-        field_53A4_ = 0;
-        hide();
-        field_53D4_->on_update();
-        do_all_draws();
-    }
-
-    field_53D4_ = 0;
-    field_53A4_ = 0;
-    field_5380_ = -1;
-    field_537C_ = -1;
-    field_539C_ = -1;
-    field_53A8_ = 0;
-    field_53AC_ = -1;
-    field_53B8_ = 0;
-    field_53C4_ = 0;
-    TutWinShownFlag = 0;
+    reset();
 
     field_53BC_ = button_id < 0 ? button_id + 1 : button_id;
     if (button_id < -1) {
