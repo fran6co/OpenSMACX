@@ -4965,7 +4965,7 @@ int NetDaemon::maybe_lock(int *veh_id, int flag, int payload_1C, int payload_20,
       ++move_requests_;
       // The image compares the count SIGNED here (`jle`), not unsigned.
       if (1 < static_cast<int>(move_requests_)) {
-        // RECOVERY_LITERAL: v1 0x0068C474 0x0068C480 $SG65560 0x00531700
+        // RECOVERY_LITERAL: v1 0x0068C474 0x0068C480 $SG65470 0x00531700
         NetMsgPrimary.pop("MOVEPENDING", 0, 2, 0);
       }
     }
