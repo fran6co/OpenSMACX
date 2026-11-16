@@ -5244,16 +5244,19 @@ int DesignWin::design_it() {
                 result = popp(ScriptTxtID, "OVERWRITEPROTO", 0,
                               "unit_sm.pcx", pop_wait);
             }
+            // 0x004382C2: the refusal returns inline; the diplo_lock failure
+            // arm is an else return that VC6 tail-merges into it.
             if (!result) {
-                goto refused;
+                return 0;
             }
             if (IsMultiplayerNet) {
-                if (diplo_lock(0x32)) {
-                    goto refused;
+                if (!diplo_lock(0x32)) {
+                    message_data(0x2415, 0, protoID_, factionID_, 0, 0);
+                    NetDaemonNet.await_exec(0);
+                    diplo_unlock();
+                } else {
+                    return 0;
                 }
-                message_data(0x2415, 0, protoID_, factionID_, 0, 0);
-                NetDaemonNet.await_exec(0);
-                diplo_unlock();
             } else {
                 retire_proto(protoID_, factionID_);
             }
@@ -5286,10 +5289,6 @@ settled:
     prune_protos(factionID_, protoID_, 1);
     return 1;
 
-// 0x004382C2: one shared `return 0` (with its own xor) serves the
-// overwrite refusal and the diplo_lock failure.
-refused:
-    return 0;
 }
 
 

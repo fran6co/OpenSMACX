@@ -992,7 +992,7 @@ int __cdecl setup_player(int faction, int conqueror, int retry) {
     int failed = 0;
     int duplicate = 0;
     char number[80];
-    char prototype_name[32];
+    char prototype_name[80];
     // No Player/PlayerData references: the image recomputes faction*0x59C
     // and faction*0x20CC per section and never forms a record pointer.
     for (int previous = 1; previous < faction; ++previous)
@@ -1312,10 +1312,12 @@ search:
                 if (BaseFindDist < 6) continue;
                 // 5B20F4: map_loc formed again after the calls.
                 int quality;
-                if (map_loc(rx, ry)->bit & 0x1000) quality = 0;
+                Map *site_tile = map_loc(rx, ry);
+                if (site_tile->bit & 0x1000) quality = 0;
                 else {
-                    quality = candidate.val2 >> 4;
-                    if (!quality) {
+                    int site = site_tile->val2 >> 4;
+                    if (site) quality = site;
+                    else {
                         quality = world_site(rx, ry, 0);
                         site_set(rx, ry, quality);
                     }
