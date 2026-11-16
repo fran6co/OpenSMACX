@@ -3101,7 +3101,7 @@ Purpose: Net::check_message - remember a player's message stamp, answering
          MessageBox the original would show if the player table could ever
          be null.
 
-// ORIGINAL: 0x00632FA0 ?check_message@Net@@QAEHKK@Z 0x00632FA0-0x00633007
+// ORIGINAL: 0x00632FA0 ?check_message@Net@@QAEHKK@Z 0x00632FA0-0x00633007 BYTE_EXACT
 // symbol    ?check_message@Net@@QAEHKK@Z
 // Historical emitted-symbol hint: ?net_check_message_redirect@@YIHPAX0KK@Z
 // size      103 bytes
