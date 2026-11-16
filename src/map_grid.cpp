@@ -189,7 +189,7 @@ void __cdecl map_shutdown() {
 }
 /*
 Purpose: Initialize map variables.
-// ORIGINAL: 0x00590ED0 ?map_init@@YAXXZ 0x00590ED0-0x00591036
+// ORIGINAL: 0x00590ED0 ?map_init@@YAXXZ 0x00590ED0-0x00591036 BYTE_EXACT
 // LEVER: `sprintf_s(MapFilePath, 80, "maps\\%s.%s", label_get(676), MapExtension)`
 //        was ONE call the image never makes - it builds the path by hand into
 //        StringTemp ("no C++ library" idiom): StringTemp[0]=0; strcat "maps\\";
