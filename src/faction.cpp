@@ -7091,13 +7091,7 @@ int __cdecl propose_attack(int actor, int other) {
 
     if (has_treaty(other, actor, DTREATY_PACT) && has_treaty(other, actor, DTREATY_HAVE_SURRENDERED)) {
         if (DiplomacyProposalMode == 3 || DiplomacyProposalMode == 1) {
-            // ? Laid out here (54666E) and re-entered from 54722F; its
-            // net_treaty_on else-arm (547397) sits right before `incited`,
-            // and the success return must follow 0x16 in source order.
-        accept:
-            diplo_lock(0);
-            net_treaty_on(other, target, 0x80000018, 0);
-            goto incited;
+            goto accept;
         }
     } else {
         if (!has_treaty(other, actor, DTREATY_PACT)) {
@@ -7257,16 +7251,21 @@ int __cdecl propose_attack(int actor, int other) {
     }
     ConsoleInfoWin.set_redraw_phase(0);
     ConsoleGlobal.update_data(0);
-    if (accepted) {
-        goto accept;
+    if (!accepted) {
+        if (!offered) {
+            parse_says(0, get_title(target), -1, -1);
+            parse_says(1, get_name(target), -1, -1);
+            parse_says(2, get_him_her(target, 0), -1, -1);
+            X_pops("REJWAR", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
+        }
+        return 1;
     }
-    if (!offered) {
-        parse_says(0, get_title(target), -1, -1);
-        parse_says(1, get_name(target), -1, -1);
-        parse_says(2, get_him_her(target, 0), -1, -1);
-        X_pops("REJWAR", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
-    }
-    return 1;
+    // Written here, after the bribe's returning rejection, and entered early by
+    // goto: VC6 lays the block out at that early goto (54666E), as the image does,
+    // and its re-entry from the bribe test becomes the jne at 54722F.
+accept:
+    diplo_lock(0);
+    net_treaty_on(other, target, 0x80000018, 0);
 
 incited:
     net_set_treaty(other, target, 0x40, 1, 0);
