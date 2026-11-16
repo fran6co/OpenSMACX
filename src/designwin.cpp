@@ -5576,14 +5576,8 @@ void DesignWin::select_special(int which) {
         if (cost < 0) {
             switch (cost) {
             case -1: {
-                int ratio = Weapon[protoWeaponType_].cost
-                            / Armor[protoArmorType_].cost;
-                if (ratio < 0) {
-                    ratio = 0;
-                } else if (ratio > 2) {
-                    ratio = 2;
-                }
-                say_num(ratio);
+                say_num(range(Weapon[protoWeaponType_].cost
+                              / Armor[protoArmorType_].cost, 0, 2));
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, SocialWinOpenParenText);
                 strcat(StringTemp, label_get(0x7C));
@@ -5674,7 +5668,7 @@ void DesignWin::select_special(int which) {
         return;
     }
 
-    int choice = popup.exec(0, pop_wait);
+    int choice = popup.exec(pop_wait);
     if (choice < 0) {
         return;
     }

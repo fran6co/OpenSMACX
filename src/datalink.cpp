@@ -36,6 +36,7 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682074 selects initializer0x428f90..0x428fa6, registering exit0x428fb0..0x428fba. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x703ea0 bound to?DatalinkMain@@3VDatalink@@A.", "Original startup instruction evidence: [[\"0x428f90\", \"mov\", \"ecx, 0x703ea0\"], [\"0x428f95\", \"call\", \"0x428fc0\"], [\"0x428f9a\", \"push\", \"0x428fb0\"], [\"0x428f9f\", \"call\", \"0x645398\"], [\"0x428fa4\", \"pop\", \"ecx\"], [\"0x428fa5\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x428fb0\", \"mov\", \"ecx, 0x703ea0\"], [\"0x428fb5\", \"jmp\", \"0x432290\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/datalink.cpp COFF selects _$E21 via .CRT$XCU, registering _$E19. Startup relocation targets: [\"?DatalinkMain@@3VDatalink@@A\", \"??0Datalink@@QAE@XZ\", \"_$E19\", \"_atexit\"]; exit targets: [\"?DatalinkMain@@3VDatalink@@A\", \"??1Datalink@@UAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f2c0; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned ?DatalinkMain@@3VDatalink@@A; preserve complete original identity and remaining restoration/structure obligations."}
 // symbol    _$E14
 #define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h
+#define BUFFER_WRITE_RIGHT_L3  // guarded Buffer::write_right_l(text, x, y)
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "game.h"  // shared state-window owner
@@ -85,9 +86,12 @@ char *DatalinkHelpFile = DatalinkHelpFileText;
 // RECOVERY_OBJECT: v2 0x00691B04 0x00691B08 ?DatalinkBlurbFile@@3PADA 0x00430B30
 char *DatalinkBlurbFile = DatalinkBlurbFileText;
 
-// draw_terraform passes this writable empty string. Only its initial NUL is
-// established; the complete original storage extent remains unresolved.
-// RECOVERY_OBJECT: v1 0x0071F238 ?DatalinkTerraformExtraText@@3PADA
+// draw_terraform passes this writable empty string (0x004317B4). Only its
+// initial NUL is established: the bound below is that one byte, a lower
+// bound on the original storage, which ends at or before the next object
+// (g_DESIGNWIN_WAVE, 0x0071F240); the 8-aligned start after DatalinkMain's
+// end (0x0071F234) suggests a new .bss contribution.
+// RECOVERY_OBJECT: v2 0x0071F238 0x0071F239 ?DatalinkTerraformExtraText@@3PADA 0x004317B4
 char DatalinkTerraformExtraText[1];
 
 static inline void dl_body_colors(Datalink *self, int link_color) {
@@ -918,7 +922,10 @@ void Datalink::draw_terraform() {
     parse_num(0, link);
     parse_num(1, Terraforming[action].rate);
     if (action == 5 || action == 6 || action == 3) {
-        parse_says(2, label_get(0x1110 / 4), -1, -1);
+        // Written out: label_get here takes the help-file name into eax at
+        // the next popup.start (0x004317F6 loads it into ecx), one byte
+        // short of the image.
+        parse_says(2, StringTable.get(Labels.strings_ptr[0x1110 / 4]), -1, -1);
     } else {
         parse_says(2, DatalinkTerraformExtraText, -1, -1);
     }
@@ -1116,11 +1123,9 @@ void Datalink::draw_social() {
                     StringTemp[0] = 0;
                     _itoa(value, number, 10);
                     strcat(StringTemp, number);
-                    // 0x0043041E tests the buffer address before strlen, the
-                    // guarded full-length writer form.
-                    if (StringTemp != 0) {
-                        write_right_l(StringTemp, x, y, strlen(StringTemp));
-                    }
+                    // 0x0043041E tests the buffer address before strlen: the
+                    // guarded full-length writer.
+                    write_right_l(StringTemp, x, y);
                     StringTemp[0] = 0;
                     strcat(StringTemp, BufferJoinSpace);
                     char link[20];
@@ -3393,12 +3398,15 @@ void Datalink::init() {
     const int top = WinScreenHeight - MainInterfaceGlobal.panel_height() - content_height;
 
     interface_update_rect_ = MainInterfaceGlobal.main_layout_rect();
-    // [A] 0x004293FB..0x00429411 stores left, right, top, bottom (the
-    // L,R,T,B habit of every other rect adjustment in this function).
-    category_rect_.left = 30;
-    category_rect_.right = 230;
-    category_rect_.top = 7;
-    category_rect_.bottom = 0x1b;
+    // [A] 0x004293FB..0x00429411 stores left, right, top, bottom; written
+    // left, top, right, bottom through a reference, VC6 schedules them that
+    // way and holds 7/0xE6 in the image's ecx/eax (direct member stores
+    // reorder and swap them).
+    RECT &category_rect = category_rect_;
+    category_rect.left = 30;
+    category_rect.top = 7;
+    category_rect.right = 230;
+    category_rect.bottom = 0x1b;
     field_103EC_ = 0xe6;
     field_103F0_ = side_width + 0x143;
     field_103E4_ = 0x1e;
@@ -3410,11 +3418,15 @@ void Datalink::init() {
     illustration_rect_.bottom = 0xab;
 
     // [B] 0x00429468..0x0042948B stores title top, left, right, bottom right
-    // after the illustration rect (speculative: may instead be scheduling).
-    title_rect_.top = 7;
-    title_rect_.left = 0xdb;
-    title_rect_.right = 0x302;
-    title_rect_.bottom = 0x22;
+    // after the illustration rect. The image keeps the dead `left = 0xDB`
+    // store (0x00429475) that title_left overwrites below: the first stores
+    // went through a reference, like description_rect's (whose dead 0xDB
+    // store at 0x004294A4 also survives); direct member stores drop it.
+    RECT &title_rect = title_rect_;
+    title_rect.top = 7;
+    title_rect.left = 0xdb;
+    title_rect.right = 0x302;
+    title_rect.bottom = 0x22;
     RECT &description_rect = description_rect_;
     description_rect.left = 0xdb;
     description_rect.top = 0x24;
@@ -3441,10 +3453,11 @@ void Datalink::init() {
     entry_update_rect.top -= 3;
     entry_update_rect.bottom += 3;
     entry_clip_rect_ = panel_rect_;
-    entry_frame_rect_.left = left;
-    entry_frame_rect_.top = top;
-    entry_frame_rect_.right = left + 0x340;
-    entry_frame_rect_.bottom = top + content_height;
+    RECT &entry_frame_rect = entry_frame_rect_;
+    entry_frame_rect.left = left;
+    entry_frame_rect.top = top;
+    entry_frame_rect.right = left + 0x340;
+    entry_frame_rect.bottom = top + content_height;
 
     // Native row stores establish eighteen consecutive RECTs; index 16 is
     // deliberately overwritten after the two panel-row loops.
@@ -3479,10 +3492,13 @@ void Datalink::init() {
     topic_button_bounds_[16].right = 0x18e;
     topic_button_bounds_[16].top = side_width + 0x14e;
     topic_button_bounds_[16].bottom = topic_button_bounds_[16].top + 0x14;
-    topic_button_bounds_[17].left = 0x192;
-    topic_button_bounds_[17].right = 0x288;
-    topic_button_bounds_[17].top = side_width + 0x14e;
-    topic_button_bounds_[17].bottom = topic_button_bounds_[17].top + 0x14;
+    // Through a reference, as the frame and title rects above: brings the
+    // [17] stores to the image's order (0x004296C8..0x004296EC).
+    RECT &bounds17 = topic_button_bounds_[17];
+    bounds17.left = 0x192;
+    bounds17.right = 0x288;
+    bounds17.top = side_width + 0x14e;
+    bounds17.bottom = bounds17.top + 0x14;
 
     if (!wide) {
         auxiliary_font10_.init(DefaultFontFace, 12, 4);
