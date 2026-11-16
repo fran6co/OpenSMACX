@@ -73,7 +73,7 @@ class DiploWin : public GraphicWin, public SubInterface {
   void set_offer_state(int side, int state) {
     (side == 0 ? offer_state_[0] : offer_state_[1]) = state;
   }
-  void receive_maybe_deal(int sender);
+  void receive_maybe_deal(const int &sender);
 
  public:
   void hide();
@@ -428,7 +428,7 @@ inline void DiploWin::receive_channel_status(int status) {
     GraphicWin::redraw();
 }
 
-inline void DiploWin::receive_maybe_deal(int sender) {
+inline void DiploWin::receive_maybe_deal(const int &sender) {
   if (offer_state_[0] == 1 && offer_state_[1] == 1) {
     message_data(0x150B, sender, 0, 0, 0, 0);
   } else {
