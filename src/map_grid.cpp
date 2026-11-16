@@ -1085,7 +1085,7 @@ int __cdecl treaty_using_faction(int x, int y, int faction_id) {
 }
 /*
 Purpose: Determine the tile's mineral count that translates to rockiness.
-// ORIGINAL: 0x00591F00 ?minerals_at@@YAHHH@Z 0x00591F00-0x00592007
+// ORIGINAL: 0x00591F00 ?minerals_at@@YAHHH@Z 0x00591F00-0x00592007 BYTE_EXACT
 // LEVER: three fixes, 2/113 -> 13/113 (0.529 similar). (1) SIGNED / 2 IS NOT
 //        >> 1: the image's `avg` computation carries the `cdq;sub;sar`
 //        round-toward-zero fixup, so `avg` (and the `x/2`, `avg/2` subterms
