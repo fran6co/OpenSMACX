@@ -802,19 +802,6 @@ MEASURED inline void __cdecl lock_set(int x, int y, int faction_id) {
 // Map owns this lookup and its same-unit landmark removal consumer.
 int __cdecl find_landmark(int x, int y, int radius_range_offset);
 
-// map_init and map_read expand this storage cleanup in the image. The mapped
-// map_shutdown entry remains out-of-line for callers whose original code calls it.
-inline void __cdecl release_map_storage() {
-    if (map_tiles()) {
-        free(map_tiles());
-    }
-    if (MapAbstract()) {
-        free(MapAbstract());
-    }
-    map_tiles() = 0;
-    MapAbstract() = 0;
-}
-
 MEASURED void __cdecl map_shutdown();
 
 void __cdecl alt_set(int x, int y, int altitude);

@@ -457,7 +457,137 @@ time_controls:
         if (mode != 2) goto rules_menu;
         goto difficulty_menu;
     } else {
-        if (ExpansionEnabled && !(mode & 2)) {
+        if (!ExpansionEnabled || (mode & 2)) {
+            popup.start("FACTIONX", 0x40);
+            {
+                for (int i = 1; i < 8; ++i) {
+                    if (mode == 2 &&
+                        !(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << i))) continue;
+                    StringTemp[0] = 0;
+                    strcat(StringTemp, Players[i].formal_name_faction);
+                    strcat(StringTemp, "|");
+                    strcat(StringTemp, SocialWinOpenParenText);
+                    strcat(StringTemp, Players[i].desc_name_faction);
+                    strcat(StringTemp, SocialWinCloseParenText);
+                    popup.item(StringTemp, i);
+                }
+            }
+            {
+                int faction;    // esi
+                popup.set_value(mode & 2 ? ConsoleGlobal.faction_id_ : DefaultPrefs.faction_id);
+                popup.dialogs().ListBox::set_selection_callback(thumb_routine);
+                thumb_routine(mode & 2 ? ConsoleGlobal.faction_id_ : DefaultPrefs.faction_id);
+                faction = popup.exec();
+                if (faction < 0) {
+                    if (bit_count(human_mask) > 1 && selected > 0 && (human_mask & (1 << selected))) {
+                        human_mask &= ~(1 << selected);
+                        for (int f = 1; f < human_mask; ++f) {
+                            if (human_mask & (1 << f)) {
+                                selected = f;
+                                break;
+                            }
+                        }
+                        goto pbem_selection;
+                    }
+                    ConfigFactionPreview.close();
+                    if (mode == 2) goto difficulty_menu;
+                    goto rules_menu;
+                }
+                if (!(mode & 2)) DefaultPrefs.faction_id = faction;
+                if (IsMultiplayerPBEM && (human_mask & (1 << faction))) {
+                    X_pop("FACTIONTAKEN", 0);
+                    goto select_faction;
+                }
+                selected = faction;
+                if (popup.input_poll_state() == 2) {
+                    ConfigFactionDetailMode = !ConfigFactionDetailMode;
+                    goto select_faction;
+                }
+                if (popup.input_poll_state() == 3) {
+                    ConfigFactionPreview.close();
+                    if (X_pop_ask("RELOADFAC", 0x50, Players[faction].filename, 0, 0)) goto select_faction;
+                    strcpy(Players[faction].filename, ParseStrBuffer[0].str);
+                    strcpy(Players[faction].search_key, ParseStrBuffer[0].str);
+                    if (faction) {
+                        read_faction(&Players[faction], 0);
+                        load_faction_art(faction);
+                    }
+                    compute_faction_modifiers(faction);
+                    goto select_faction;
+                }
+                if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000) {
+                    StringTemp[0] = 0;
+                    strcat(StringTemp, "voices\\");
+                    strcat(StringTemp, Players[faction].filename);
+                    strcat(StringTemp, ".mp3");
+                    g_WAVE_GENERAL.unload();
+                    g_WAVE_GENERAL.load(StringTemp, 0x100);
+                    g_WAVE_GENERAL.play();
+                }
+                if (!popup.input_poll_state()) {
+                    StringTemp[0] = 0;
+                    strcat(StringTemp, "NAME");
+                    if (Players[faction].is_leader_female) strcat(StringTemp, "2");
+                    int answer = X_pop_ask(StringTemp, 0x17, Players[faction].name_leader, 0, 0);
+                    ConfigFactionPreview.close();
+                    if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000)
+                        g_WAVE_GENERAL.Sound::fade(0x7D0);
+                    if (answer) goto select_faction;
+                    strcpy(Players[faction].name_leader, ParseStrBuffer[0].str);
+                    if (!ConsoleGroupAction) goto parse_factions;
+                }
+                for (;;) {
+                    strcpy(gender_text, StringTable.get(Players[faction].is_leader_female
+                        ? Labels.strings_ptr[739] : Labels.strings_ptr[738]));
+                    popup.start("CUSTOMNAMES", 0x44);
+                    {
+                        char *label = label_get(174);
+                        popup.dialogs().EditGroup::edit(label, Players[faction].name_leader, 0x17);
+                    }
+                    {
+                        char *label = label_get(175);
+                        popup.dialogs().EditGroup::edit(label, Players[faction].formal_name_faction, 0x27);
+                    }
+                    {
+                        char *label = label_get(176);
+                        popup.dialogs().EditGroup::edit(label, Players[faction].noun_faction, 0x17);
+                    }
+                    {
+                        char *label = label_get(177);
+                        popup.dialogs().EditGroup::edit(label, Players[faction].adj_name_faction, 0x17);
+                    }
+                    {
+                        char *label = label_get(483);
+                        popup.dialogs().EditGroup::edit(label, Players[faction].title_leader, 0x17);
+                    }
+                    {
+                        char *label = label_get(484);
+                        popup.dialogs().EditGroup::edit(label, Players[faction].adj_leader, 0x17);
+                    }
+                    {
+                        char *label = label_get(485);
+                        popup.dialogs().EditGroup::edit(label, gender_text, 0x17);
+                    }
+                    int answer = popup.exec();
+                    if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000)
+                        g_WAVE_GENERAL.Sound::fade(0x7D0);
+                    ConfigFactionPreview.close();
+                    if (answer < 0) goto select_faction;
+                    if (!popup.input_poll_state()) break;
+                    if (faction) {
+                        read_faction(&Players[faction], 0);
+                        load_faction_art(faction);
+                    }
+                }
+                strcpy(Players[faction].name_leader, ParseStrBuffer[0].str);
+                strcpy(Players[faction].formal_name_faction, ParseStrBuffer[1].str);
+                strcpy(Players[faction].noun_faction, ParseStrBuffer[2].str);
+                strcpy(Players[faction].adj_name_faction, ParseStrBuffer[3].str);
+                strcpy(Players[faction].title_leader, ParseStrBuffer[4].str);
+                strcpy(Players[faction].adj_leader, ParseStrBuffer[5].str);
+                Players[faction].is_leader_female = !_strnicmp(gender_text, label_get(739), 1);
+            }
+        } else {
             int picked;     // [ebp-0x2C]
             PickWinGlobal.init(thumb_routine, mode, ConfigFactionDetailMode);
             {
@@ -614,136 +744,6 @@ edit_names_expansion:
             strcpy(Players[picked].adj_leader, ParseStrBuffer[5].str);
             Players[picked].is_leader_female = !_strnicmp(gender_text, label_get(739), 1);
             goto select_faction;
-        }
-
-        popup.start("FACTIONX", 0x40);
-        {
-            for (int i = 1; i < 8; ++i) {
-                if (mode == 2 &&
-                    !(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << i))) continue;
-                StringTemp[0] = 0;
-                strcat(StringTemp, Players[i].formal_name_faction);
-                strcat(StringTemp, "|");
-                strcat(StringTemp, SocialWinOpenParenText);
-                strcat(StringTemp, Players[i].desc_name_faction);
-                strcat(StringTemp, SocialWinCloseParenText);
-                popup.item(StringTemp, i);
-            }
-        }
-        {
-            int faction;    // esi
-            popup.set_value(mode & 2 ? ConsoleGlobal.faction_id_ : DefaultPrefs.faction_id);
-            popup.dialogs().ListBox::set_selection_callback(thumb_routine);
-            thumb_routine(mode & 2 ? ConsoleGlobal.faction_id_ : DefaultPrefs.faction_id);
-            faction = popup.exec();
-            if (faction < 0) {
-                if (bit_count(human_mask) > 1 && selected > 0 && (human_mask & (1 << selected))) {
-                    human_mask &= ~(1 << selected);
-                    for (int f = 1; f < human_mask; ++f) {
-                        if (human_mask & (1 << f)) {
-                            selected = f;
-                            break;
-                        }
-                    }
-                    goto pbem_selection;
-                }
-                ConfigFactionPreview.close();
-                if (mode == 2) goto difficulty_menu;
-                goto rules_menu;
-            }
-            if (!(mode & 2)) DefaultPrefs.faction_id = faction;
-            if (IsMultiplayerPBEM && (human_mask & (1 << faction))) {
-                X_pop("FACTIONTAKEN", 0);
-                goto select_faction;
-            }
-            selected = faction;
-            if (popup.input_poll_state() == 2) {
-                ConfigFactionDetailMode = !ConfigFactionDetailMode;
-                goto select_faction;
-            }
-            if (popup.input_poll_state() == 3) {
-                ConfigFactionPreview.close();
-                if (X_pop_ask("RELOADFAC", 0x50, Players[faction].filename, 0, 0)) goto select_faction;
-                strcpy(Players[faction].filename, ParseStrBuffer[0].str);
-                strcpy(Players[faction].search_key, ParseStrBuffer[0].str);
-                if (faction) {
-                    read_faction(&Players[faction], 0);
-                    load_faction_art(faction);
-                }
-                compute_faction_modifiers(faction);
-                goto select_faction;
-            }
-            if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000) {
-                StringTemp[0] = 0;
-                strcat(StringTemp, "voices\\");
-                strcat(StringTemp, Players[faction].filename);
-                strcat(StringTemp, ".mp3");
-                g_WAVE_GENERAL.unload();
-                g_WAVE_GENERAL.load(StringTemp, 0x100);
-                g_WAVE_GENERAL.play();
-            }
-            if (!popup.input_poll_state()) {
-                StringTemp[0] = 0;
-                strcat(StringTemp, "NAME");
-                if (Players[faction].is_leader_female) strcat(StringTemp, "2");
-                int answer = X_pop_ask(StringTemp, 0x17, Players[faction].name_leader, 0, 0);
-                ConfigFactionPreview.close();
-                if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000)
-                    g_WAVE_GENERAL.Sound::fade(0x7D0);
-                if (answer) goto select_faction;
-                strcpy(Players[faction].name_leader, ParseStrBuffer[0].str);
-                if (!ConsoleGroupAction) goto parse_factions;
-            }
-            for (;;) {
-                strcpy(gender_text, StringTable.get(Players[faction].is_leader_female
-                    ? Labels.strings_ptr[739] : Labels.strings_ptr[738]));
-                popup.start("CUSTOMNAMES", 0x44);
-                {
-                    char *label = label_get(174);
-                    popup.dialogs().EditGroup::edit(label, Players[faction].name_leader, 0x17);
-                }
-                {
-                    char *label = label_get(175);
-                    popup.dialogs().EditGroup::edit(label, Players[faction].formal_name_faction, 0x27);
-                }
-                {
-                    char *label = label_get(176);
-                    popup.dialogs().EditGroup::edit(label, Players[faction].noun_faction, 0x17);
-                }
-                {
-                    char *label = label_get(177);
-                    popup.dialogs().EditGroup::edit(label, Players[faction].adj_name_faction, 0x17);
-                }
-                {
-                    char *label = label_get(483);
-                    popup.dialogs().EditGroup::edit(label, Players[faction].title_leader, 0x17);
-                }
-                {
-                    char *label = label_get(484);
-                    popup.dialogs().EditGroup::edit(label, Players[faction].adj_leader, 0x17);
-                }
-                {
-                    char *label = label_get(485);
-                    popup.dialogs().EditGroup::edit(label, gender_text, 0x17);
-                }
-                int answer = popup.exec();
-                if (GameDataStateStorage.fields_.game_more_preferences_ & 0x4000)
-                    g_WAVE_GENERAL.Sound::fade(0x7D0);
-                ConfigFactionPreview.close();
-                if (answer < 0) goto select_faction;
-                if (!popup.input_poll_state()) break;
-                if (faction) {
-                    read_faction(&Players[faction], 0);
-                    load_faction_art(faction);
-                }
-            }
-            strcpy(Players[faction].name_leader, ParseStrBuffer[0].str);
-            strcpy(Players[faction].formal_name_faction, ParseStrBuffer[1].str);
-            strcpy(Players[faction].noun_faction, ParseStrBuffer[2].str);
-            strcpy(Players[faction].adj_name_faction, ParseStrBuffer[3].str);
-            strcpy(Players[faction].title_leader, ParseStrBuffer[4].str);
-            strcpy(Players[faction].adj_leader, ParseStrBuffer[5].str);
-            Players[faction].is_leader_female = !_strnicmp(gender_text, label_get(739), 1);
         }
 
 parse_factions:

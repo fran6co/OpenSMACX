@@ -742,8 +742,8 @@ void MapWin::editor(int tile_x, int tile_y, int erase) {
         field_1DD94_ = tile_y;
     }
 
-    int step = MapEditorBrushId == 1 ? 2 : 1;
     int radius = MapEditorBrushId;
+    int step = radius == 1 ? 2 : 1;
     if (radius > 1) --radius;
     int limit = RadiusRange[radius];
     int first = 0;
@@ -965,7 +965,7 @@ void MapWin::editor(int tile_x, int tile_y, int erase) {
                 for (int faction = 1; faction < 8; ++faction)
                     synch_bit(x, y, faction);
             }
-            index += index == 0 ? 1 : step;
+            index += index != 0 ? step : 1;
             if (stop != 0) break;
         }
         ++pass;
