@@ -185,7 +185,9 @@ def _type_records(obj: Coff):
     """Read the standalone type stream shared by class and object observers."""
     sections = [section for section in obj.sections if section.name == ".debug$T"]
     if len(sections) != 1 or any(section.name == ".debug$P" for section in obj.sections):
-        raise ValueError("requires one standalone CodeView type section")
+        refusal = getattr(obj, "debug_type_twin_refusal", None)
+        raise ValueError("requires one standalone CodeView type section"
+                         + (f" (debug-typed twin refused: {refusal})" if refusal else ""))
     cursor = Cursor(sections[0].data)
     if cursor.number("<I") != 2:
         raise ValueError("unsupported CodeView type signature")

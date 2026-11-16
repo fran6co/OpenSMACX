@@ -137,6 +137,8 @@ class Coff(CoffRecords):
     # Optional debug_type_twin.DebugTypeTwin, attached only after it is proved
     # to differ from this object by standalone CodeView records alone.
     debug_type_twin = None
+    # Why a debug-typed twin was refused, reported where types were needed.
+    debug_type_twin_refusal = None
 
     def __init__(self, data: bytes):
         machine, _, _, _, _, optional, _ = _unpack("<HHIIIHH", data, 0)

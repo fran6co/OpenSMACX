@@ -6,7 +6,9 @@ CodeView types (`/Z7`) for their extents. A second, debug-typed compile of the
 same unit may supply them only after this module proves that it is the same
 object apart from its `.debug$S`/`.debug$T` records: every other section,
 relocation identity, symbol, COMDAT selection/ownership and weak edge must be
-equal under an explicit section renumbering. Line-number fields that debug
+equal under an explicit section renumbering. The renumbering may reorder
+COMDAT sections, paired by the external names they define (`/Z7` can emit
+compiler thunks in another order); the comparison then verifies the pairing. Line-number fields that debug
 records add (section-definition line counts, function-definition links and
 `.bf`/`.lf`/`.ef` symbols) and the label symbols `/Z7` adds for named C++
 `goto` labels (storage class 6, `$label$N`, defined in a code section, with
@@ -31,6 +33,7 @@ import struct
 from .pe_coff import weak_external
 
 _DEBUG = (".debug$S", ".debug$T")
+_COMDAT = 0x1000  # IMAGE_SCN_LNK_COMDAT
 _DEBUG_FUNCTION_STORAGE = 101  # .bf/.lf/.ef line-number function records
 _FILE_STORAGE = 103
 # Compiler-numbered local labels, EH tables and literals. Debug records shift
@@ -144,6 +147,64 @@ def _symbols(obj, mapping, *, twin):
     return rows, key
 
 
+def _external_anchors(obj, numbers):
+    """External names each section defines; a COMDAT's leader is among them."""
+    anchors = {number: set() for number in numbers}
+    for symbol in obj.symbols.values():
+        if symbol.section in anchors and symbol.storage == 2:
+            anchors[symbol.section].add(symbol.name)
+    return {number: frozenset(names) for number, names in anchors.items()}
+
+
+def _unique_children(obj, numbers, paired):
+    """Unpaired associative children keyed by (parent, name), when unique."""
+    keys = {number: (obj.associations[number], obj.sections[number - 1].name)
+            for number in numbers if number not in paired and number in obj.associations}
+    counts = Counter(keys.values())
+    return {key: number for number, key in keys.items() if counts[key] == 1}
+
+
+def _section_mapping(plain, twin, kept) -> dict[int, int]:
+    """Pair twin sections with plain ones; every pairing is verified afterwards.
+
+    `/Z7` may emit COMDAT sections in a different order (measured: VC6
+    adjustor/vtordisp thunks such as `??_EMultiWin@@WEEE@AEPAXI@Z`, whose
+    order also varies with the checkout path). A COMDAT section defining a
+    set of external names that is unique on both sides pairs by those names;
+    an associative child pairs with the same-named child of its paired
+    parent when that is unique; everything else keeps its relative order.
+    The mapping only proposes a renumbering: the caller still compares every
+    section's bytes, relocations, symbols and COMDAT ownership through it, so
+    a wrong pairing refuses rather than proving anything.
+    """
+    plain_numbers = list(range(1, len(plain.sections) + 1))
+    plain_anchors, twin_anchors = _external_anchors(plain, plain_numbers), _external_anchors(twin, kept)
+
+    def unique(anchors, sections):
+        counts = Counter(anchors.values())
+        return {names: number for number, names in anchors.items()
+                if names and counts[names] == 1 and sections[number - 1].flags & _COMDAT}
+
+    plain_unique, twin_unique = unique(plain_anchors, plain.sections), unique(twin_anchors, twin.sections)
+    mapping = {number: plain_unique[names] for names, number in twin_unique.items() if names in plain_unique}
+    while True:
+        plain_children = _unique_children(plain, plain_numbers, set(mapping.values()))
+        added = {number: plain_children[(mapping[parent], name)]
+                 for (parent, name), number in _unique_children(twin, kept, set(mapping)).items()
+                 if parent in mapping and (mapping[parent], name) in plain_children}
+        if not added:
+            break
+        mapping.update(added)
+    rest_twin = [number for number in kept if number not in mapping]
+    rest_plain = [number for number in plain_numbers if number not in set(mapping.values())]
+    if len(rest_twin) != len(rest_plain):
+        raise ValueError("debug-typed twin changes the non-debug section count")
+    mapping.update(zip(rest_twin, rest_plain))
+    if sorted(mapping.values()) != plain_numbers:
+        raise ValueError("debug-typed twin section pairing is not one to one")
+    return mapping
+
+
 def prove_debug_type_twin(plain, twin) -> DebugTypeTwin:
     """Prove that `twin` differs from `plain` only by standalone debug records."""
     if has_debug_records(plain):
@@ -159,7 +220,7 @@ def prove_debug_type_twin(plain, twin) -> DebugTypeTwin:
     kept = [number for number in range(1, len(twin.sections) + 1) if number not in debug]
     if len(kept) != len(plain.sections):
         raise ValueError("debug-typed twin changes the non-debug section count")
-    mapping = {number: plain_number for plain_number, number in enumerate(kept, 1)}
+    mapping = _section_mapping(plain, twin, kept)
     identity = {number: number for number in range(1, len(plain.sections) + 1)}
     plain_symbols, plain_key = _symbols(plain, identity, twin=False)
     twin_symbols, twin_key = _symbols(twin, mapping, twin=True)

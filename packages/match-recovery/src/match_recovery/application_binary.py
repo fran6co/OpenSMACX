@@ -922,10 +922,12 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
                 except (OSError, ValueError) as error:
                     debug_type_twins[key] = (None, {**receipt, "result": "refused",
                                                     "reason": str(error)})
-            witness, _receipt = debug_type_twins[key]
+            witness, receipt = debug_type_twins[key]
             if witness is not None:
                 obj.debug_type_twin = witness
                 changed = True
+            else:
+                obj.debug_type_twin_refusal = receipt["reason"]
         return changed
 
     for flags in flag_sets:

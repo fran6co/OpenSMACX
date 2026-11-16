@@ -198,3 +198,67 @@ def test_numbered_label_tolerance_does_not_cover_referenced_or_data_labels():
                    ("$L59741", 0, 2, 0, 6, bytes(18))):   # with an auxiliary record
         with pytest.raises(ValueError, match="symbol table"):
             prove_debug_type_twin(plain_object(), twin_object(extra=(symbol,)))
+
+
+THUNK_A, THUNK_B = ("_thunk_a", b"\xc3"), ("_thunk_b", b"\x90\xc3")
+
+
+def thunk_plain(first=THUNK_A, second=THUNK_B):
+    # Sections: 1 and 2 .text COMDATs, 3 .data
+    parts = [(".text", first[1], (), TEXT), (".text", second[1], (), TEXT), (".data", VALUE, (), DATA)]
+    symbols = [(".text", 0, 1, 0, 3, section_aux(len(first[1]), selection=2)),
+               (first[0], 0, 1, 0x20, (first + (2,))[2], b""),
+               (".text", 0, 2, 0, 3, section_aux(len(second[1]), selection=2)),
+               (second[0], 0, 2, 0x20, (second + (2,))[2], b""),
+               ("_parent", 0, 3, 0, 2, b"")]
+    return build(parts, symbols)
+
+
+def thunk_twin(first=THUNK_B, second=THUNK_A):
+    # Sections: 1 .debug$S, 2 and 3 .text COMDATs, 4 .debug$T, 5 .data
+    debug = struct.pack("<I", 2) + record(0x1008, struct.pack("<IIH", TYPE_INDEX, 0, 0) + b"\x06parent")
+    parts = [(".debug$S", debug, ((12, 6, 11), (16, 6, 10)), DEBUG),
+             (".text", first[1], (), TEXT), (".text", second[1], (), TEXT),
+             (".debug$T", struct.pack("<I", 2) + TYPES, (), DEBUG),
+             (".data", VALUE, (), DATA)]
+    symbols = [(".text", 0, 2, 0, 3, section_aux(len(first[1]), selection=2)),
+               (first[0], 0, 2, 0x20, (first + (2,))[2], b""),
+               (".text", 0, 3, 0, 3, section_aux(len(second[1]), selection=2)),
+               (second[0], 0, 3, 0x20, (second + (2,))[2], b""),
+               ("_parent", 0, 5, 0, 2, b"")]
+    return build(parts, symbols)
+
+
+def test_reordered_comdat_sections_pair_by_their_external_names():
+    # Measured on VC6 (multiwin.cpp, basewin.cpp): /Z7 can emit adjustor
+    # thunk COMDATs in another order than the measured plain compile.
+    plain = thunk_plain()
+    witness = prove_debug_type_twin(plain, thunk_twin())
+    assert witness.plain_section(2) == 2 and witness.plain_section(3) == 1
+    plain.debug_type_twin = witness
+    layout = data_layout(plain, "_parent")
+    assert (layout["section"], layout["offset"], layout["size"]) == (3, 0, 16)
+    # Same order still pairs positionally.
+    assert prove_debug_type_twin(thunk_plain(), thunk_twin(THUNK_A, THUNK_B)).plain_section(2) == 1
+
+
+def test_reordered_comdat_pairing_still_compares_every_section():
+    # A pairing by name proposes the renumbering; different bytes refuse.
+    with pytest.raises(ValueError, match="changes section .text"):
+        prove_debug_type_twin(thunk_plain(), thunk_twin(("_thunk_b", b"\xcc\xc3"), THUNK_A))
+    # Sections without a unique external name keep their relative order, so
+    # a reordering the names cannot explain refuses.
+    unnamed_a, unnamed_b = ("$L1", b"\xc3", 3), ("$L2", b"\x90\xc3", 3)  # static only
+    with pytest.raises(ValueError, match="changes section .text|symbol table"):
+        prove_debug_type_twin(thunk_plain(("_same", b"\xc3"), ("_same", b"\x90\xc3")),
+                              thunk_twin(("_same", b"\x90\xc3"), ("_same", b"\xc3")))
+    with pytest.raises(ValueError, match="changes section .text|symbol table"):
+        prove_debug_type_twin(thunk_plain(unnamed_a, unnamed_b), thunk_twin(unnamed_b, unnamed_a))
+
+
+def test_type_section_refusal_names_the_refused_twin():
+    plain = plain_object()
+    plain.debug_type_twin_refusal = "debug-typed twin changes the COFF symbol table"
+    with pytest.raises(ValueError, match=r"standalone CodeView type section \(debug-typed twin refused: "
+                                         r"debug-typed twin changes the COFF symbol table\)"):
+        data_layout(plain, "_parent")
