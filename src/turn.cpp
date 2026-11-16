@@ -1683,7 +1683,8 @@ void __cdecl alien_fauna() {
         int best_x = -1;
         int best_y;  // original leaves this uninitialised
         for (int dir = 0; dir < 8; ++dir) {
-            x2 = wrap_map_x(x + VehMoveDeltaX[dir]);
+            int tx = x + VehMoveDeltaX[dir];
+            x2 = (MapIsFlat & 1) ? tx : (tx < 0 ? tx + MapLongitudeBounds : (tx >= MapLongitudeBounds ? tx - MapLongitudeBounds : tx));
             y2 = y + VehMoveDeltaY[dir];
             if (!on_map(x2, y2)) continue;
             Map *cand = map_loc(x2, y2);
@@ -1863,19 +1864,16 @@ void __cdecl alien_fauna() {
     // Unreachable: the loop only exits with attempt at the limit.
     if (attempt >= MapNativeLifeForms * 2 + 2) return;
 
-    int count;
     if (!very_early) {
         if (GameDataStateStorage.fields_.game_tech_achieved_[TECH_CENTPSI] ||
             GameDataStateStorage.fields_.game_tech_achieved_[TECH_QUANTUM]) {
             veh_init(10, 0, x, y);
         }
-        // Unguarded Bases[base_id] read.
-        count = (Bases[base_id].population_size *
+    }
+    // Unguarded Bases[base_id] read.
+    int count = very_early ? 1 : (Bases[base_id].population_size *
                  ((GameDataStateStorage.fields_.game_state_ & STATE_PERIHELION_ACTIVE) ? 2 : 1) *
                  (MapNativeLifeForms + 1) + 3) / 4;
-    } else {
-        count = 1;
-    }
 
     int direction = 21;
     int notice_sent = 0;
@@ -4584,15 +4582,14 @@ skip_upkeep_synch:
         flags = 0;
         UpgradePromptAnswered = 0;
         for (i = 0x40; i < MaxVehProtoNum; ++i) {
-            VehPrototype &prototype = VehPrototypes[i];
-            const uint16_t proto_flags = prototype.flags;
+            const uint16_t proto_flags = VehPrototypes[i].flags;
             if ((proto_flags & 1u) != 0) {
                 const int faction = i / 64;
                 const int faction_bit = 1 << faction;
-                if ((prototype.obsolete_factions & faction_bit) == 0 &&
+                if ((VehPrototypes[i].obsolete_factions & faction_bit) == 0 &&
                     static_cast<short>(proto_flags & 0x100u) != 0) {
                     flags = 1;
-                    prototype.flags = static_cast<uint16_t>(proto_flags & 0xFEFFu);
+                    VehPrototypes[i].flags = static_cast<uint16_t>(proto_flags & 0xFEFFu);
                     if (faction == ConsoleGlobal.faction_id_ &&
                         (GameDataStateStorage.fields_.game_more_preferences_ & 0x100000u) != 0) {
                         upgrade_prototypes(ConsoleGlobal.faction_id_,
