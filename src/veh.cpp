@@ -70,6 +70,9 @@
 #include "designwin.h" // Crawler animation advances while the design window is visible.
 #include "vector.h"  // vector_add operates on actual three-float arrays.
 
+// Shared punctuation objects the image pushes instead of unit literals.
+extern char SocialWinCloseParenText[];
+extern char SocialWinOpenParenText[];
 // Shared separator objects the image pushes instead of unit literals.
 extern const char BufferJoinSpace[];
 extern char SocialWinColonSpaceText[];
@@ -941,7 +944,7 @@ void __cdecl say_offense(LPSTR stat, int proto_id) {
         strcat(stat, "<");
     }
     if (can_arty(proto_id, true)) {
-        strcat(stat, "(");
+        strcat(stat, SocialWinOpenParenText);
     }
     int off_rating = offense_proto(proto_id, -1, 0);
     _itoa(off_rating, num_buf, 10);
@@ -962,7 +965,7 @@ void __cdecl say_offense(LPSTR stat, int proto_id) {
         strcat(stat, "!");
     }
     if (can_arty(proto_id, true)) {
-        strcat(stat, ")");
+        strcat(stat, SocialWinCloseParenText);
     }
     if (has_abil(proto_id, ABL_AIR_SUPERIORITY)) {
         strcat(stat, ">");
@@ -1189,10 +1192,10 @@ append_spacer:
             char *full_name = PlansFullName[Weapon[VehPrototypes[proto_id].weapon_id].mode];
             strcat(stat, StringTable.get(full_name));
             if (VehPrototypes[proto_id].plan == PLAN_NAVAL_TRANSPORT) {
-                strcat(stat, "(");
+                strcat(stat, SocialWinOpenParenText);
                 _itoa(VehPrototypes[proto_id].carry_capacity, num_buf, 10);
                 strcat(stat, num_buf);
-                strcat(stat, ")");
+                strcat(stat, SocialWinCloseParenText);
             }
             if (get_proto_triad(proto_id)) { // sea, air
                 strcat(stat, SocialWinCommaSpaceText); // Original separator; the later triad space remains.
@@ -1204,10 +1207,10 @@ append_spacer:
             strcat(stat, StringTable.get(name));
         }
         if (VehPrototypes[proto_id].plan == PLAN_NAVAL_TRANSPORT) {
-            strcat(stat, "(");
+            strcat(stat, SocialWinOpenParenText);
             _itoa(VehPrototypes[proto_id].carry_capacity, num_buf, 10);
             strcat(stat, num_buf);
-            strcat(stat, ")");
+            strcat(stat, SocialWinCloseParenText);
         }
         strcat(stat, SocialWinCommaSpaceText);
     }
@@ -1237,11 +1240,11 @@ append_triad:
     }
     if (VehPrototypes[proto_id].reactor_id > 1) {
         strcat(stat, BufferJoinSpace);
-        strcat(stat, "(");
+        strcat(stat, SocialWinOpenParenText);
         strcat(stat, "*");
         _itoa(VehPrototypes[proto_id].reactor_id, num_buf, 10);
         strcat(stat, num_buf);
-        strcat(stat, ")");
+        strcat(stat, SocialWinCloseParenText);
     }
 }
 
@@ -3267,11 +3270,11 @@ void __cdecl retire_proto(int prototype_id, int faction_id) {
 static inline void parse_prototype_report(int parse_id, int design_id) {
     StringTemp[0] = '\0';
     ::strcat(StringTemp, VehPrototypes[design_id].veh_name);
-    ::strcat(StringTemp, " ");
-    ::strcat(StringTemp, "(");
+    ::strcat(StringTemp, BufferJoinSpace);
+    ::strcat(StringTemp, SocialWinOpenParenText);
     say_stats_2(StringTemp, design_id);
     if (VehPrototypes[design_id].ability_flags != 0) {
-        ::strcat(StringTemp, " ");
+        ::strcat(StringTemp, BufferJoinSpace);
         for (int ability_id = 0; ability_id < MaxAbilityNum; ++ability_id) {
             if ((VehPrototypes[design_id].ability_flags
                  & (1u << ability_id)) == 0) continue;
@@ -3279,7 +3282,7 @@ static inline void parse_prototype_report(int parse_id, int design_id) {
                 Ability[ability_id].abbreviation));
         }
     }
-    ::strcat(StringTemp, ")");
+    ::strcat(StringTemp, SocialWinCloseParenText);
     parse_says(parse_id, StringTemp, -1, -1);
 }
 

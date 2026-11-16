@@ -73,6 +73,10 @@ char SocialWinTutorialName[] = "SOCWIN";           // 0x006874BC
 char SocialWinCommaSpaceText[] = ", ";             // 0x00682E90
 // RECOVERY_OBJECT: v2 0x00682E94 0x00682E97 ?SocialWinColonSpaceText@@3PADA 0x004AFB60
 char SocialWinColonSpaceText[] = ": ";             // 0x00682E94
+// RECOVERY_OBJECT: v2 0x00682E98 0x00682E9A ?SocialWinCloseParenText@@3PADA 0x00590B88
+char SocialWinCloseParenText[] = ")";              // 0x00682E98
+// RECOVERY_OBJECT: v2 0x00682E9C 0x00682E9E ?SocialWinOpenParenText@@3PADA 0x00590B58
+char SocialWinOpenParenText[] = "(";               // 0x00682E9C
 // RECOVERY_OBJECT: v2 0x00687480 0x00687483 ?SocialWinPercentSpaceTextA@@3PADA 0x004AFB60
 char SocialWinPercentSpaceTextA[] = "% ";           // 0x00687480
 // RECOVERY_OBJECT: v2 0x00687484 0x00687487 ?SocialWinPercentSpaceTextB@@3PADA 0x004AFB60
@@ -886,11 +890,11 @@ void SocialWin::draw_social(int a1) {
     do_sound();
 }
 
-// The pinned text at 0x00682EA0 is the percent character and its terminator.
-// Its complete allocation extent remains unproved; this names only the text
-// consumed by the three allocation renderers.
-// RECOVERY_OBJECT: v1 0x00682EA0 _PercentText
-static const char PercentText[] = "%";
+// The pinned text at 0x00682EA0 is the percent character and its terminator,
+// the last of the shared punctuation run; BaseWin, InfoWin and ProdPicker
+// renderers push the same object.
+// RECOVERY_OBJECT: v4 0x00682EA0 0x00682EA2 _PercentText 0x004B08A0 target ?PercentText@@3PADA
+char PercentText[] = "%";
 
 
 typedef void (__cdecl *SoundHookFn)(char *);

@@ -1,5 +1,4 @@
 
-
 // Shared separator objects the image pushes instead of unit literals.
 extern const char BufferJoinSpace[];
 extern char SocialWinColonSpaceText[];/*
@@ -118,6 +117,10 @@ extern char SocialWinColonSpaceText[];/*
 #include "win_pointer.h"
 #include <cstring>
 #include <stdlib.h>
+
+// Shared punctuation objects the image pushes instead of unit literals.
+extern char SocialWinCloseParenText[];
+extern char SocialWinOpenParenText[];
 
 // Eight pointer slots, initially zero; startup publishes slot0 at0x0058F1C1
 // after constructing slots1..7. draw_tile bounds its walk at0x007D3C5C.
@@ -5440,7 +5443,7 @@ void MapWin::draw_base_names() {
                 const int region = map_loc(base.x, base.y)->region;
                 // 0x0046812E: the line reuses the name buffer.
                 text[0] = '\0';
-                strcat(text, "(");
+                strcat(text, SocialWinOpenParenText);
                 strcat(text, StringTable.get(PlansShortName[
                     PlayersData[base.faction_id_current].region_base_plan[region]]));
                 strcat(text, SocialWinColonSpaceText);
@@ -5452,7 +5455,7 @@ void MapWin::draw_base_names() {
                 } else {
                     strcat(text, StringTable.get(Facility[-production_id].name));
                 }
-                strcat(text, ")");
+                strcat(text, SocialWinCloseParenText);
                 Buffer::write_cent_l(text, pixel_x + field_1DDBC_,
                              pixel_y + static_cast<int>(field_1DDC8_) * 7 / 2 +
                                  font_line_advance(font_a_));
@@ -5481,7 +5484,7 @@ void MapWin::draw_base_names() {
                 }
             } else {
                 text[0] = '\0';
-                strcat(text, "(");
+                strcat(text, SocialWinOpenParenText);
                 if (is_objective(base_id) &&
                     (GameDataStateStorage.fields_.game_rules_ & 0x20000000U) == 0) {
                     strcat(text, label_get(898));
@@ -5511,7 +5514,7 @@ void MapWin::draw_base_names() {
                 } else {
                     strcat(text, StringTable.get(Facility[-production_id].name));
                 }
-                strcat(text, ")");
+                strcat(text, SocialWinCloseParenText);
                 Buffer::write_cent_l(text, pixel_x + field_1DDBC_,
                              pixel_y + static_cast<int>(field_1DDC8_) * 7 / 2 +
                                  font_line_advance(font_a_));
@@ -6206,9 +6209,9 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
             StringTemp[0] = '\0';
             strcat(StringTemp, StringTable.get(Triad[triad]));
             strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, "(");
+            strcat(StringTemp, SocialWinOpenParenText);
             say_base(StringTemp, Bases[editor_tool].auto_forward_slots[triad]);
-            strcat(StringTemp, ")");
+            strcat(StringTemp, SocialWinCloseParenText);
             popup.item(StringTemp, triad);
         }
         int selected_triad = popup.exec();

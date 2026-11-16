@@ -28,6 +28,10 @@
 #include "factionprofilewin.h"
 #include "rectangle_operations.h"
 
+// Shared punctuation objects the image pushes instead of unit literals.
+extern char SocialWinCloseParenText[];
+extern char SocialWinOpenParenText[];
+
 // Shared separator objects the image pushes instead of unit literals.
 extern const char BufferJoinSpace[];
 
@@ -503,7 +507,7 @@ void __cdecl time_controls_dialog(Popup *popup) {
         StringTemp[0] = '\0';
         strcat(StringTemp, StringTable.get(TimeControl[index].name));
         strcat(StringTemp, "|");
-        strcat(StringTemp, "(");
+        strcat(StringTemp, SocialWinOpenParenText);
 
         if (index != 0) {
             char turn_text[80];
@@ -531,7 +535,7 @@ void __cdecl time_controls_dialog(Popup *popup) {
             strcat(StringTemp, label_get(0x474 / 4));
         }
 
-        strcat(StringTemp, ")");
+        strcat(StringTemp, SocialWinCloseParenText);
         popup->dialogs().item(StringTemp, index);
     }
 }

@@ -53,6 +53,10 @@
 #include "xpops.h"     // x_pop_caption_label for lobby validation prompts
 #include <stdlib.h>      // _itoa
 
+// Shared punctuation objects the image pushes instead of unit literals.
+extern char SocialWinCloseParenText[];
+extern char SocialWinOpenParenText[];
+
 // Shared separator objects the image pushes instead of unit literals.
 extern const char BufferJoinSpace[];
 
@@ -1002,21 +1006,21 @@ void NetWin::draw_session_info() {
     switch (NetWinSessionData.fields_.mode_) {
     case 3:
         strcat(StringTemp, BufferJoinSpace);
-        strcat(StringTemp, "(");
+        strcat(StringTemp, SocialWinOpenParenText);
         strcat(StringTemp, label_get(0x1014 / 4));
-        strcat(StringTemp, ")");
+        strcat(StringTemp, SocialWinCloseParenText);
         break;
     case 2:
         strcat(StringTemp, BufferJoinSpace);
-        strcat(StringTemp, "(");
+        strcat(StringTemp, SocialWinOpenParenText);
         strcat(StringTemp, label_get(0x1018 / 4));
-        strcat(StringTemp, ")");
+        strcat(StringTemp, SocialWinCloseParenText);
         break;
     case 1:
         strcat(StringTemp, BufferJoinSpace);
-        strcat(StringTemp, "(");
+        strcat(StringTemp, SocialWinOpenParenText);
         strcat(StringTemp, label_get(0x10 / 4));
-        strcat(StringTemp, ")");
+        strcat(StringTemp, SocialWinCloseParenText);
         break;
     }
     bottom = Buffer::wrap(StringTemp, col, row,

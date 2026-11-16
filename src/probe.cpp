@@ -26,6 +26,9 @@
 #include "map.h"
 #include "faction_inline.h"  // has_treaty, expanded in corner_market
 
+// Shared punctuation objects the image pushes instead of unit literals.
+extern char SocialWinCloseParenText[];
+extern char SocialWinOpenParenText[];
 extern uint32_t LockEnableMask;  // 0x009A64E8, defined in lock.cpp
 
 BOOL ProbeHasAlgoEnhancement;  // 0x00945B30
@@ -740,9 +743,9 @@ L_59fb64:
         StringTemp[0] = '\0';
         strcat(StringTemp, prod_name);
         strcat(StringTemp, BufferJoinSpace);
-        strcat(StringTemp, "(");
+        strcat(StringTemp, SocialWinOpenParenText);
         strcat(StringTemp, label_get(0xF9));
-        strcat(StringTemp, ")");
+        strcat(StringTemp, SocialWinCloseParenText);
         popup.dialogs_.item(StringTemp, 0);
         parse_it(ScriptPopupFile, "ABORTSTRING");
         popup.dialogs_.item(StringTemp, 0x63);

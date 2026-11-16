@@ -69,6 +69,10 @@
 #include "rectangle_operations.h"
 #include <cstring>
 
+// Shared punctuation objects the image pushes instead of unit literals.
+extern char SocialWinCloseParenText[];
+extern char SocialWinOpenParenText[];
+
 // Shared separator objects the image pushes instead of unit literals.
 extern const char BufferJoinSpace[];
 extern char SocialWinColonSpaceText[];
@@ -4343,13 +4347,13 @@ void DesignWin::draw_vehicle(int redraw) {
     strcat(StringTemp, BufferJoinSpace);                              // 0x682820
     strcat(StringTemp, "}");                              // 0x683580
     if (cost < protoReactorType_) {
-        strcat(StringTemp, "(");                          // 0x682e9c
+        strcat(StringTemp, SocialWinOpenParenText);                          // 0x682e9c
         strcat(StringTemp, label_get(0x1e8 / 4));
         strcat(StringTemp, SocialWinColonSpaceText);                         // 0x682e94
         total_cost = protoReactorType_ * mineralCostFactor_;   // mov reactor; imul [factor]
         _itoa(total_cost, numbuf, 10);
         strcat(StringTemp, numbuf);
-        strcat(StringTemp, ")");                          // 0x682e98
+        strcat(StringTemp, SocialWinCloseParenText);                          // 0x682e98
     } else {
         total_cost = mineralCostFactor_ * cost;           // mov factor; imul edi
         _itoa(total_cost, numbuf, 10);
@@ -4690,14 +4694,14 @@ void DesignWin::draw_info() {
     } else {
         strcat(StringTemp, label_get(0xC34 / 4));
         strcat(StringTemp, BufferJoinSpace);
-        strcat(StringTemp, "(");
+        strcat(StringTemp, SocialWinOpenParenText);
         strcat(StringTemp, label_get(0xE48 / 4));
         strcat(StringTemp, " #");
         char number[80];
         int slot = protoID_ % 64 + 1;
         _itoa(slot, number, 10);
         strcat(StringTemp, number);
-        strcat(StringTemp, ")");
+        strcat(StringTemp, SocialWinCloseParenText);
         CharUpperA(StringTemp);
     }
 
@@ -5025,9 +5029,9 @@ void DesignWin::draw_stack() {
                     -1, 1, 1);
                 strcat(StringTemp, label_get(0xE40 / 4));
                 strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, "(");
+                strcat(StringTemp, SocialWinOpenParenText);
                 say_num(proto_id % 64 + 1);
-                strcat(StringTemp, ")");
+                strcat(StringTemp, SocialWinCloseParenText);
             } else {
                 say_num(proto_id % 64 + 1);
                 strcat(StringTemp, ". ");
@@ -5067,9 +5071,9 @@ void DesignWin::draw_stack() {
             if ((GameDataStateStorage.fields_.game_state_ & 0x40)
                 && (GameDataStateStorage.fields_.game_state_ & 0x1000)) {
                 strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, "(");
+                strcat(StringTemp, SocialWinOpenParenText);
                 say_num(proto_id);
-                strcat(StringTemp, ")");
+                strcat(StringTemp, SocialWinCloseParenText);
             }
             MainInterfaceGlobal.Buffer::write_cent_l(StringTemp, &label);
             spot1_.add(proto_id, 0, rc.left, rc.top, rc.right - rc.left,
@@ -5399,7 +5403,7 @@ void DesignWin::draw_flash() {
         y = rc.top;
         const int line_left = rc.left;
         StringTemp[0] = '\0';
-        strcat(StringTemp, "(");
+        strcat(StringTemp, SocialWinOpenParenText);
         say_stats_3(StringTemp, Vehs[unit_id].proto_id);
         for (int i = 0; i < MaxAbilityNum; ++i) {
             if ((VehPrototypes[Vehs[unit_id].proto_id].ability_flags & (1 << i))
@@ -5409,7 +5413,7 @@ void DesignWin::draw_flash() {
                 strcat(StringTemp, StringTable.get(abbreviation));
             }
         }
-        strcat(StringTemp, ")");
+        strcat(StringTemp, SocialWinCloseParenText);
         y = MainInterfaceGlobal.Buffer::wrap_cent(
             StringTemp, line_left, y, rc.right - rc.left) + 3;
 
@@ -5582,69 +5586,69 @@ void DesignWin::select_special(int which) {
                 }
                 say_num(ratio);
                 strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, "(");
+                strcat(StringTemp, SocialWinOpenParenText);
                 strcat(StringTemp, label_get(0x7C));
                 strcat(StringTemp, "/");
                 strcat(StringTemp, label_get(0x55));
-                strcat(StringTemp, ")");
+                strcat(StringTemp, SocialWinCloseParenText);
                 break;
             }
             case -2:
                 say_num(Weapon[protoWeaponType_].cost - 1);
                 strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, "(");
+                strcat(StringTemp, SocialWinOpenParenText);
                 strcat(StringTemp, label_get(0x7C));
                 strcat(StringTemp, "-1");
-                strcat(StringTemp, ")");
+                strcat(StringTemp, SocialWinCloseParenText);
                 break;
             case -3:
                 say_num(Armor[protoArmorType_].cost - 1);
                 strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, "(");
+                strcat(StringTemp, SocialWinOpenParenText);
                 strcat(StringTemp, label_get(0x55));
                 strcat(StringTemp, "-1");
-                strcat(StringTemp, ")");
+                strcat(StringTemp, SocialWinCloseParenText);
                 break;
             case -4:
                 say_num(Chassis[protoChassisType_].speed - 1);
                 strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, "(");
+                strcat(StringTemp, SocialWinOpenParenText);
                 strcat(StringTemp, label_get(0x2C5));
                 strcat(StringTemp, "-1");
-                strcat(StringTemp, ")");
+                strcat(StringTemp, SocialWinCloseParenText);
                 break;
             case -5:
                 say_num(Armor[protoArmorType_].cost
                         + Weapon[protoWeaponType_].cost - 2);
                 strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, "(");
+                strcat(StringTemp, SocialWinOpenParenText);
                 strcat(StringTemp, label_get(0x7C));
                 strcat(StringTemp, "+");
                 strcat(StringTemp, label_get(0x55));
                 strcat(StringTemp, "-2");
-                strcat(StringTemp, ")");
+                strcat(StringTemp, SocialWinCloseParenText);
                 break;
             case -6:
                 say_num(Chassis[protoChassisType_].speed
                         + Weapon[protoWeaponType_].cost - 2);
                 strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, "(");
+                strcat(StringTemp, SocialWinOpenParenText);
                 strcat(StringTemp, label_get(0x7C));
                 strcat(StringTemp, "+");
                 strcat(StringTemp, label_get(0x2C5));
                 strcat(StringTemp, "-2");
-                strcat(StringTemp, ")");
+                strcat(StringTemp, SocialWinCloseParenText);
                 break;
             case -7:
                 say_num(Chassis[protoChassisType_].speed
                         + Armor[protoArmorType_].cost - 2);
                 strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, "(");
+                strcat(StringTemp, SocialWinOpenParenText);
                 strcat(StringTemp, label_get(0x55));
                 strcat(StringTemp, "+");
                 strcat(StringTemp, label_get(0x2C5));
                 strcat(StringTemp, "-2");
-                strcat(StringTemp, ")");
+                strcat(StringTemp, SocialWinCloseParenText);
                 break;
             }
         } else if (Ability[i].flags & 0x400) {
@@ -5655,10 +5659,10 @@ void DesignWin::select_special(int which) {
                 say_num(cost);
             }
             strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, "(");
+            strcat(StringTemp, SocialWinOpenParenText);
             strcat(StringTemp,
                    StringTable.get(Triad[Chassis[protoChassisType_].triad]));
-            strcat(StringTemp, ")");
+            strcat(StringTemp, SocialWinCloseParenText);
         } else {
             say_num(cost);
         }

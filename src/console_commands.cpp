@@ -23,7 +23,6 @@
 // 0x00688360 to corner_the_market's at 0x006891B0, with DipEdit's
 // on_button_clicked literal (0x00688F78) between editor_who and
 // editor_reset_faction. The filename is ours.
-#define JACKALVOICERX_CLEAR_OUT_OF_LINE  // stand-in: register ties in corner_the_market (0x004E2000)
 #define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h
 #include "stdafx.h"
 #define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h (editor_tech's start(label, value))
@@ -666,6 +665,10 @@ void Console::unload(int veh_id) {
     set_move(1);
 }
 
+// Shared punctuation objects the image pushes instead of unit literals.
+extern char SocialWinCloseParenText[];
+extern char SocialWinOpenParenText[];
+
 // ORIGINAL: 0x004D06C0 ?upgrade@Console@@QAEHH@Z 0x004D06C0-0x004D2218;0x0065A090-0x0065A559
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004d06c0.cpp", "image:0x004D06C0-0x004D2218 and 0x0065A090-0x0065A559"], "reason": "Recover Console vehicle upgrade through real Popup lifetime, loaded design tables, faction-local candidate selection and live human/AI transaction state. Preserve the original seed and complete ordinary/unwind spans; native locks, callbacks, picture selection and completion publication identify the owner and argument roles."}
 // TRIED: mismatch #0 - Popup/BasePop declared as real C++ locals (Popup ctor + explicit close()) rather than the original's staggered same-slot vtable pokes; the 0x40-entry candidate scan uses Vehs[]/VehPrototypes[] (0x952828/0x9AB868, stride 0x34) by raw offset, and the "single auto-selected candidate" fast path is approximated (falls through rather than tracking which slot was picked) - faithful call order and eligibility conditions, not byte fidelity.
@@ -696,7 +699,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
         StringTemp[0] = '\0';
         strcat(StringTemp, VehPrototypes[Vehs[veh_id].proto_id].veh_name);
         strcat(StringTemp, BufferJoinSpace);
-        strcat(StringTemp, "(");
+        strcat(StringTemp, SocialWinOpenParenText);
         say_stats_2(StringTemp, Vehs[veh_id].proto_id);
         if (VehPrototypes[Vehs[veh_id].proto_id].ability_flags) {
             strcat(StringTemp, BufferJoinSpace);
@@ -706,7 +709,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
                 }
             }
         }
-        strcat(StringTemp, ")");
+        strcat(StringTemp, SocialWinCloseParenText);
         parse_says(0, StringTemp, -1, -1);
         popup.start("WHICHUPGRADE", 0x40);
 
@@ -838,7 +841,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
             StringTemp[0] = '\0';
             strcat(StringTemp, VehPrototypes[proto_id].veh_name);
             strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, "(");
+            strcat(StringTemp, SocialWinOpenParenText);
             say_stats_2(StringTemp, proto_id);
             if (VehPrototypes[proto_id].ability_flags) {
                 strcat(StringTemp, BufferJoinSpace);
@@ -848,7 +851,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
                     }
                 }
             }
-            strcat(StringTemp, ")");
+            strcat(StringTemp, SocialWinCloseParenText);
             strcat(StringTemp, "|");
             strcat(StringTemp, label_get(88));
             strcat(StringTemp, SocialWinColonSpaceText);
@@ -883,7 +886,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
     StringTemp[0] = '\0';
     strcat(StringTemp, VehPrototypes[Vehs[veh_id].proto_id].veh_name);
     strcat(StringTemp, BufferJoinSpace);
-    strcat(StringTemp, "(");
+    strcat(StringTemp, SocialWinOpenParenText);
     say_stats_2(StringTemp, Vehs[veh_id].proto_id);
     if (VehPrototypes[Vehs[veh_id].proto_id].ability_flags) {
         strcat(StringTemp, BufferJoinSpace);
@@ -893,13 +896,13 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
             }
         }
     }
-    strcat(StringTemp, ")");
+    strcat(StringTemp, SocialWinCloseParenText);
     parse_says(0, StringTemp, -1, -1);
 
     StringTemp[0] = '\0';
     strcat(StringTemp, VehPrototypes[choice].veh_name);
     strcat(StringTemp, BufferJoinSpace);
-    strcat(StringTemp, "(");
+    strcat(StringTemp, SocialWinOpenParenText);
     say_stats_2(StringTemp, choice);
     if (VehPrototypes[choice].ability_flags) {
         strcat(StringTemp, BufferJoinSpace);
@@ -909,7 +912,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
             }
         }
     }
-    strcat(StringTemp, ")");
+    strcat(StringTemp, SocialWinCloseParenText);
     parse_says(1, StringTemp, -1, -1);
 
     int cost = upgrade_cost(faction_id, choice, Vehs[veh_id].proto_id) * 10;
@@ -2139,10 +2142,10 @@ void Console::go_to(int subject, int order, int grouped) {
         for (int i = 0; i < MaxTriadNum; i++) {
             StringTemp[0] = '\0';
             strcat(StringTemp, StringTable.get(Triad[i]));
-            strcat(StringTemp, " ");
-            strcat(StringTemp, "(");
+            strcat(StringTemp, BufferJoinSpace);
+            strcat(StringTemp, SocialWinOpenParenText);
             say_base(StringTemp, Bases[base_id].auto_forward_slots[i]);
-            strcat(StringTemp, ")");
+            strcat(StringTemp, SocialWinCloseParenText);
             popup.item(StringTemp, i);
         }
         triad = popup.exec();
@@ -2262,9 +2265,9 @@ void Console::go_to(int subject, int order, int grouped) {
         int count = 0;
         if (order == -1) {
             StringTemp[0] = '\0';
-            strcat(StringTemp, "(");
+            strcat(StringTemp, SocialWinOpenParenText);
             strcat(StringTemp, label_get(0xFB));
-            strcat(StringTemp, ")");
+            strcat(StringTemp, SocialWinCloseParenText);
             popup.item(StringTemp, 9999);
             count = 1;
         }
@@ -2371,29 +2374,29 @@ void Console::go_to(int subject, int order, int grouped) {
             strcat(StringTemp, Bases[id].name_string);
             strcat(StringTemp, "|");
             if (Bases[id].faction_id_current != faction) {
-                strcat(StringTemp, " ");
-                strcat(StringTemp, "(");
+                strcat(StringTemp, BufferJoinSpace);
+                strcat(StringTemp, SocialWinOpenParenText);
                 strcat(StringTemp, get_noun(Bases[id].faction_id_current));
-                strcat(StringTemp, ")");
+                strcat(StringTemp, SocialWinCloseParenText);
             }
             if (artifact && Bases[id].faction_id_current == faction) {
                 if (id == GameDataStateStorage.fields_.secret_project_.universal_translator()) {
-                    strcat(StringTemp, " ");
-                    strcat(StringTemp, "(");
+                    strcat(StringTemp, BufferJoinSpace);
+                    strcat(StringTemp, SocialWinOpenParenText);
                     strcat(StringTemp, StringTable.get(Facility[FAC_UNIVERSAL_TRANSLATOR].name));
-                    strcat(StringTemp, ")");
+                    strcat(StringTemp, SocialWinCloseParenText);
                 } else if (has_fac(FAC_NETWORK_NODE, id, 0) && !(Bases[id].state & 0x400)) {
-                    strcat(StringTemp, " ");
-                    strcat(StringTemp, "(");
+                    strcat(StringTemp, BufferJoinSpace);
+                    strcat(StringTemp, SocialWinOpenParenText);
                     strcat(StringTemp, label_get(0x131));
-                    strcat(StringTemp, ")");
+                    strcat(StringTemp, SocialWinCloseParenText);
                 }
             }
             if (order == -3) {
-                strcat(StringTemp, " ");
+                strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, label_get((Bases[id].state & 0x20000000) ? 0x212 : 0x211));
             } else {
-                strcat(StringTemp, " ");
+                strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, label_get(0xFA));
                 strcat(StringTemp, SocialWinColonSpaceText);
                 char distance_text[80];
@@ -4919,9 +4922,9 @@ void Console::editor_edit_veh(int vehicle_id) {
     StringTemp[0] = '\0';
     strcat(StringTemp, VehPrototypes[Vehs[vehicle_id].proto_id].veh_name);
     strcat(StringTemp, BufferJoinSpace);
-    strcat(StringTemp, "(");
+    strcat(StringTemp, SocialWinOpenParenText);
     append_decimal(StringTemp, vehicle_id);
-    strcat(StringTemp, ")");
+    strcat(StringTemp, SocialWinCloseParenText);
     if (x_pop_short("EDITVEH", 0x41, nullptr) < 0) {
         return;
     }
@@ -5236,6 +5239,8 @@ void Console::editor_view() {
         StringTemp[0] = 0;
         parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
         strcat(StringTemp, Players[faction].formal_name_faction);
+        // WORKAROUND(decl): the image pushes SocialWinOpenParenText/CloseParenText
+        // here; naming them flips corner_the_market's (0x004E2000) add-register tie.
         strcat(StringTemp, "(");
         parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
         strcat(StringTemp, Players[faction].noun_faction);

@@ -47,6 +47,11 @@
 #include "technology.h"
 #include <cstring>
 
+// Shared punctuation objects the image pushes instead of unit literals.
+extern char SocialWinCloseParenText[];
+extern char SocialWinOpenParenText[];
+extern char PercentText[];  // shared "%" (0x00682EA0)
+
 // Process-wide InfoWin lifecycle; original table callback 0x004562C0
 // constructs the object at 0x007AD2A0 and registers its teardown.
 // Extent: ctor 0x00459500 builds button_ (PushButton, asserted 0xB00) at +0x9D0,
@@ -167,17 +172,17 @@ void InfoWin::setup_text() {
             strcat(text, "{");
             infowin_append_number(text, (10 - PlayersData[faction].se_alloc_labs
                                          - PlayersData[faction].se_alloc_psych) * 10);
-            strcat(text, "%");
+            strcat(text, PercentText);
             strcat(text, BufferJoinSpace);
             strcat(text, BufferJoinSpace);
-            strcat(text, "(");
+            strcat(text, SocialWinOpenParenText);
             if (NetIncomeGlobal >= 0) {
                 strcat(text, "+");
             }
             infowin_append_number(text, NetIncomeGlobal);
             strcat(text, "/");
             strcat(text, label_get(0x30));
-            strcat(text, ")");
+            strcat(text, SocialWinCloseParenText);
             strcat(text, "}");
             strcpy(row_text_[pane][2], text);
             text[0] = 0;
@@ -185,7 +190,7 @@ void InfoWin::setup_text() {
             strcat(text, SocialWinColonSpaceText);
             strcat(text, "{");
             infowin_append_number(text, PlayersData[faction].se_alloc_psych * 10);
-            strcat(text, "%");
+            strcat(text, PercentText);
             strcat(text, "}");
             strcpy(row_text_[pane][3], text);
             text[0] = 0;
@@ -193,15 +198,15 @@ void InfoWin::setup_text() {
             strcat(text, SocialWinColonSpaceText);
             strcat(text, "{");
             infowin_append_number(text, PlayersData[faction].se_alloc_labs * 10);
-            strcat(text, "%");
+            strcat(text, PercentText);
             if (BreakthroughTurnsGlobal < 9000) {
                 strcat(text, BufferJoinSpace);
                 strcat(text, BufferJoinSpace);
-                strcat(text, "(");
+                strcat(text, SocialWinOpenParenText);
                 infowin_append_number(text, BreakthroughTurnsGlobal);
                 strcat(text, BufferJoinSpace);
                 strcat(text, label_get(0x31));
-                strcat(text, ")");
+                strcat(text, SocialWinCloseParenText);
             }
             strcat(text, "}");
             k = 5;

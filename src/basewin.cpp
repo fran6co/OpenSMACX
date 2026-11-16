@@ -1,5 +1,4 @@
 
-
 // Shared separator objects the image pushes instead of unit literals.
 extern const char BufferJoinSpace[];
 extern char SocialWinColonSpaceText[];
@@ -95,6 +94,11 @@ extern char SocialWinCommaSpaceText[];/*
 #include "win_pointer.h"
 #include <cstdint>
 #include <cstring>
+
+// Shared punctuation objects the image pushes instead of unit literals.
+extern char SocialWinCloseParenText[];
+extern char SocialWinOpenParenText[];
+extern char PercentText[];  // shared "%" (0x00682EA0)
 
 // Existing shared text.pcx palette publication, owned by palette.cpp.
 extern int PopupWriteCheckState;
@@ -731,7 +735,7 @@ void BaseWin::draw_flash(int redraw_mode) {
     int y = area.top;
     const int line = font_line_advance(normal);
     StringTemp[0] = 0;
-    strcat(StringTemp, "(");
+    strcat(StringTemp, SocialWinOpenParenText);
     say_stats_3(StringTemp, Vehs[vehicle_id].proto_id);
     for (int ability = 0; ability < 29; ++ability) {
         if (has_abil(Vehs[vehicle_id].proto_id, 1 << ability)
@@ -740,7 +744,7 @@ void BaseWin::draw_flash(int redraw_mode) {
             strcat(StringTemp, StringTable.get(Ability[ability].abbreviation));
         }
     }
-    strcat(StringTemp, ")");
+    strcat(StringTemp, SocialWinCloseParenText);
     y = MainInterfaceGlobal.wrap_cent(StringTemp, x, y, area.right - area.left);
     if ((Vehs[vehicle_id].faction_id && VehPrototypes[Vehs[vehicle_id].proto_id].plan < 8)
         || (VehPrototypes[Vehs[vehicle_id].proto_id].plan == 11
@@ -2545,7 +2549,7 @@ void BaseWin::draw_production(int update_mode) {
             const int factor = prototype_factor(vehicle_id);
             _itoa(factor, number, 10);
             strcat(StringTemp, number);
-            strcat(StringTemp, "%");
+            strcat(StringTemp, PercentText);
             content.top = MainInterfaceGlobal.wrap_cent(StringTemp,
                 center_x, text_y, 0);
         }
@@ -3700,7 +3704,7 @@ void BaseWin::draw_energy_alloc(int update_mode) {
     StringTemp[0] = 0;
     _itoa(econ_pct * 10, number, 10);
     strcat(StringTemp, number);
-    strcat(StringTemp, "%");
+    strcat(StringTemp, PercentText);
     Buffer::write_right_l(StringTemp, &text);
     text.right = 376;
     StringTemp[0] = 0;
@@ -3765,7 +3769,7 @@ void BaseWin::draw_energy_alloc(int update_mode) {
     StringTemp[0] = 0;
     _itoa(labs_pct * 10, number, 10);
     strcat(StringTemp, number);
-    strcat(StringTemp, "%");
+    strcat(StringTemp, PercentText);
     Buffer::write_right_l(StringTemp, &text);
     text.right = 376;
     StringTemp[0] = 0;
@@ -3827,7 +3831,7 @@ void BaseWin::draw_energy_alloc(int update_mode) {
     StringTemp[0] = 0;
     _itoa(psych_pct * 10, number, 10);
     strcat(StringTemp, number);
-    strcat(StringTemp, "%");
+    strcat(StringTemp, PercentText);
     Buffer::write_right_l(StringTemp, &text);
     text.right = 376;
     StringTemp[0] = 0;
@@ -3979,10 +3983,10 @@ void BaseWin::draw_garrison(int update_mode) {
             && (GameDataStateStorage.fields_.game_state_ & 0x1000)) {
             char number[80];
             strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, "(");
+            strcat(StringTemp, SocialWinOpenParenText);
             _itoa(vehicle, number, 10);
             strcat(StringTemp, number);
-            strcat(StringTemp, ")");
+            strcat(StringTemp, SocialWinCloseParenText);
         }
         MainInterfaceGlobal.set_font(&font, nullptr, nullptr, nullptr);
         MainInterfaceGlobal.set_text_color(TextColourTable[112], TextColourTable[113], 1, 1);
@@ -5601,11 +5605,11 @@ void BaseWin::draw_info(int update_mode) {
     strcat(StringTemp, BaseCurrent->name_string);
     if (BaseCurrent->faction_id_current != ConsoleGlobal.faction_id_) {
         strcat(StringTemp, BufferJoinSpace);
-        strcat(StringTemp, "(");
+        strcat(StringTemp, SocialWinOpenParenText);
         const int faction = BaseCurrent->faction_id_current;
         parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
         strcat(StringTemp, Players[faction].noun_faction);
-        strcat(StringTemp, ")");
+        strcat(StringTemp, SocialWinCloseParenText);
     }
     CharUpperA(StringTemp);
 
@@ -6173,14 +6177,14 @@ void BaseWin::draw_commerce(int update_mode) {
                 Buffer::set_text_color(TextColourTable[110], TextColourTable[111], 1, 1);
                 strcat(StringTemp, label_get(450));
                 strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, "(");
+                strcat(StringTemp, SocialWinOpenParenText);
                 char turns[80];
                 _itoa(PlayersData[faction].sanction_turns > PlayersData[partner].sanction_turns
                           ? PlayersData[faction].sanction_turns
                           : PlayersData[partner].sanction_turns,
                       turns, 10);
                 strcat(StringTemp, turns);
-                strcat(StringTemp, ")");
+                strcat(StringTemp, SocialWinCloseParenText);
                 CharUpperA(StringTemp);
                 Buffer::write_l(StringTemp, detail_x, detail_y);
             }
@@ -7047,8 +7051,8 @@ void BaseWin::draw_facilities(int update_mode) {
         } else Buffer::set_text_color(TextColourTable[122], TextColourTable[123], 1, 1);
         strcat(StringTemp, StringTable.get(Facility[facility].name));
         if (facility == 8 && (BaseCurrent->state & 0x400u)) {
-            strcat(StringTemp, BufferJoinSpace); strcat(StringTemp, "(");
-            strcat(StringTemp, label_get(0x3A0 / 4)); strcat(StringTemp, ")");
+            strcat(StringTemp, BufferJoinSpace); strcat(StringTemp, SocialWinOpenParenText);
+            strcat(StringTemp, label_get(0x3A0 / 4)); strcat(StringTemp, SocialWinCloseParenText);
         }
         const int width = content.right - content.left;
         while (font.width(StringTemp) > width) {

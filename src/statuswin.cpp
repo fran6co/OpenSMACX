@@ -55,6 +55,10 @@
 #include "tutwin.h"
 #include "veh.h"
 
+// Shared punctuation objects the image pushes instead of unit literals.
+extern char SocialWinCloseParenText[];
+extern char SocialWinOpenParenText[];
+
 // Shared separator objects the image pushes instead of unit literals.
 extern const char BufferJoinSpace[];
 extern char SocialWinColonSpaceText[];
@@ -870,10 +874,10 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
     if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR)
         && (GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE)) {
         StringTemp[0] = '\0';
-        strcat(StringTemp, "(");
+        strcat(StringTemp, SocialWinOpenParenText);
         _itoa(region_at(x, y), digits, 10);
         strcat(StringTemp, digits);
-        strcat(StringTemp, ")");
+        strcat(StringTemp, SocialWinCloseParenText);
         MainInterfaceGlobal.set_text_color(TextColourTable[18], TextColourTable[19], 1, 1);
         MainInterfaceGlobal.write_l(StringTemp, area.left + 2, area.bottom - row_pitch);
     }
@@ -881,14 +885,14 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
          && (GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE))
         || line_y < area.bottom - row_pitch) {
         StringTemp[0] = '\0';
-        strcat(StringTemp, "(");
+        strcat(StringTemp, SocialWinOpenParenText);
         _itoa(x, digits, 10);
         strcat(StringTemp, digits);
         strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, SocialWinCommaSpaceText);
         _itoa(y, digits, 10);
         strcat(StringTemp, digits);
-        strcat(StringTemp, ")");
+        strcat(StringTemp, SocialWinCloseParenText);
         MainInterfaceGlobal.set_text_color(TextColourTable[18], TextColourTable[19], 1, 1);
         MainInterfaceGlobal.write_right_l(StringTemp, area.right - 2,
                                           area.bottom - row_pitch);
@@ -1029,10 +1033,10 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
                 && (GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE)) {
                 char id_digits[80];
                 strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, "(");
+                strcat(StringTemp, SocialWinOpenParenText);
                 _itoa(v, id_digits, 10);
                 strcat(StringTemp, id_digits);
-                strcat(StringTemp, ")");
+                strcat(StringTemp, SocialWinCloseParenText);
             }
             MainInterfaceGlobal.set_text_color(TextColourTable[20], TextColourTable[21], 1, 1);
         }
@@ -1132,10 +1136,10 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
         strcat(StringTemp, VehPrototypes[Vehs[vehicle_id].proto_id].veh_name);
         if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) &&
             (GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE)) {
-            strcat(StringTemp, "(");
+            strcat(StringTemp, SocialWinOpenParenText);
             _itoa(vehicle_id, digits, 10);
             strcat(StringTemp, digits);
-            strcat(StringTemp, ")");
+            strcat(StringTemp, SocialWinCloseParenText);
         }
         MainInterfaceGlobal.set_text_color(TextColourTable[12], TextColourTable[13], 1, 1);
         line_y = MainInterfaceGlobal.wrap_cent(&font3_, StringTemp, content_x, line_y,
@@ -1148,19 +1152,19 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
                 strcat(StringTemp,
                        Players[Vehs[vehicle_id].faction_id].adj_name_faction);
             } else {
-                strcat(StringTemp, "(");
+                strcat(StringTemp, SocialWinOpenParenText);
                 parse_set(Players[Vehs[vehicle_id].faction_id].noun_gender,
                           Players[Vehs[vehicle_id].faction_id].is_noun_plural);
                 strcat(StringTemp,
                        Players[Vehs[vehicle_id].faction_id].noun_faction);
-                strcat(StringTemp, ")");
+                strcat(StringTemp, SocialWinCloseParenText);
             }
             line_y = MainInterfaceGlobal.wrap_cent(StringTemp, content_x, line_y,
                                        area.right - area.left);
         }
 
         StringTemp[0] = '\0';
-        strcat(StringTemp, "(");
+        strcat(StringTemp, SocialWinOpenParenText);
         say_stats_3(StringTemp, Vehs[vehicle_id].proto_id);
         if (Vehs[vehicle_id].state & VSTATE_DESIGNATE_DEFENDER) {
             strcat(StringTemp, "#");
@@ -1172,7 +1176,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
                 strcat(StringTemp, StringTable.get(Ability[ability].abbreviation));
             }
         }
-        strcat(StringTemp, ")");
+        strcat(StringTemp, SocialWinCloseParenText);
         line_y = MainInterfaceGlobal.wrap_cent(StringTemp, content_x, line_y,
                                    area.right - area.left);
         if ((Vehs[vehicle_id].faction_id != 0
@@ -1382,10 +1386,10 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
         if ((GameDataStateStorage.fields_.game_state_ & STATE_SCENARIO_EDITOR) &&
             (GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE)) {
             strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, "(");
+            strcat(StringTemp, SocialWinOpenParenText);
             _itoa(base_id, digits, 10);
             strcat(StringTemp, digits);
-            strcat(StringTemp, ")");
+            strcat(StringTemp, SocialWinCloseParenText);
         }
         line_y = MainInterfaceGlobal.wrap_cent(&font3_, StringTemp, content_x, line_y,
                                    area.right - area.left);
@@ -1395,12 +1399,12 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
                 strcat(StringTemp,
                        Players[Bases[base_id].faction_id_current].adj_name_faction);
             } else {
-                strcat(StringTemp, "(");
+                strcat(StringTemp, SocialWinOpenParenText);
                 parse_set(Players[Bases[base_id].faction_id_current].noun_gender,
                           Players[Bases[base_id].faction_id_current].is_noun_plural);
                 strcat(StringTemp,
                        Players[Bases[base_id].faction_id_current].noun_faction);
-                strcat(StringTemp, ")");
+                strcat(StringTemp, SocialWinCloseParenText);
             }
             line_y = MainInterfaceGlobal.wrap_cent(StringTemp, content_x, line_y,
                                        area.right - area.left);
@@ -1465,14 +1469,14 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
             }
             if (Bases[base_id].queue_production_id[0] != -69) {
                 strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, "(");
+                strcat(StringTemp, SocialWinOpenParenText);
                 _itoa(Bases[base_id].minerals_accumulated, digits, 10);
                 strcat(StringTemp, digits);
                 strcat(StringTemp, "/");
                 cost *= cost_factor(Bases[base_id].faction_id_current, 1, -1);
                 _itoa(cost, digits, 10);
                 strcat(StringTemp, digits);
-                strcat(StringTemp, ")");
+                strcat(StringTemp, SocialWinCloseParenText);
             }
             if (strlen(StringTemp)) {
                 line_y = MainInterfaceGlobal.wrap_cent(StringTemp, content_x, line_y,
@@ -1736,11 +1740,11 @@ void __cdecl say_morale(LPSTR morale_output, int veh_id, int faction_id_vs_nativ
         }
         if(VehMoraleModifierCount) {
             strcat(morale_output, BufferJoinSpace);
-            strcat(morale_output, "(");
+            strcat(morale_output, SocialWinOpenParenText);
             for (int i = 0; i < VehMoraleModifierCount; i++) {
                 strcat(morale_output, "+");
             }
-            strcat(morale_output, ")");
+            strcat(morale_output, SocialWinCloseParenText);
         }
         VehMoraleModifierCount -= morale_penalty;
         if (Vehs[veh_id].state & VSTATE_DESIGNATE_DEFENDER) {
@@ -1780,7 +1784,7 @@ void __cdecl say_orders(char *text, int veh_id) {
     if ((state & 0x00000200u) != 0
         && (state & 0x01000200u) != 0x01000200u
         && ((state & 0x02000200u) != 0x02000200u || prefix_state)) {
-        ::strcat(text, "(");
+        ::strcat(text, SocialWinOpenParenText);
         if (Vehs[veh_id].order_auto_type == 10) {
             prefix[0] = '\0';
             ::strcat(prefix, label_get(0x6F0 / 4));
@@ -1799,7 +1803,7 @@ void __cdecl say_orders(char *text, int veh_id) {
         } else {
             ::strcat(text, label_get(0x62C / 4));
         }
-        ::strcat(text, ")");
+        ::strcat(text, SocialWinCloseParenText);
         ::strcat(text, BufferJoinSpace);
     }
 
@@ -1841,14 +1845,14 @@ void __cdecl say_orders(char *text, int veh_id) {
             ::strcat(text, BufferJoinSpace);
             say_base(text, Vehs[veh_id].home_base_id);
         } else {
-            ::strcat(text, "(");
+            ::strcat(text, SocialWinOpenParenText);
             const int yield = resource_yield(
                 Vehs[veh_id].order_auto_type, Vehs[veh_id].faction_id,
                 Vehs[veh_id].home_base_id, Vehs[veh_id].x, Vehs[veh_id].y);
             _itoa(yield, number, 10);
             ::strcat(text, number);
             ::strcat(text, label_get(0x5EC / 4));
-            ::strcat(text, ")");
+            ::strcat(text, SocialWinCloseParenText);
             ::strcat(text, BufferJoinSpace);
         }
     }

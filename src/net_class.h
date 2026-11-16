@@ -183,8 +183,8 @@ inline JackalVoiceRx::~JackalVoiceRx() {
 // Header-visible: ~Net (0x004E34D0) expands it; 0x00538EC0 is the
 // out-of-line copy ~AlphaNet/~NetDaemon call.
 // stand-in: a TU defining JACKALVOICERX_CLEAR_OUT_OF_LINE sees only the
-// declaration; netdaemon.cpp does, so ~AlphaNet calls it as the image does,
-// and console_commands.cpp does, as the visible body flips its register ties.
+// declaration; netdaemon.cpp does, so ~AlphaNet calls it out of line as the
+// image does.
 #ifndef JACKALVOICERX_CLEAR_OUT_OF_LINE
 inline void JackalVoiceRx::clear() {
   if (head_) {

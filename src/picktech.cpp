@@ -41,6 +41,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include "win_pointer.h"
+
+// Shared punctuation objects the image pushes instead of unit literals.
+extern char SocialWinCloseParenText[];
+extern char SocialWinOpenParenText[];
 void __cdecl help_any();
 int __cdecl tut_check2(int);
 extern char *TutorialPopupCaption;
@@ -529,9 +533,9 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
             strcat(StringTemp, picktech_name(Facility[i].name));
             if (i < FacilitySPStart) {
                 strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, "(");
+                strcat(StringTemp, SocialWinOpenParenText);
                 strcat(StringTemp, picktech_name(Facility[i].effect));
-                strcat(StringTemp, ")");
+                strcat(StringTemp, SocialWinCloseParenText);
             }
             if (i < FacilitySPStart || page_state_ == 0) strcat(StringTemp, "}");
             UNK1(StringTemp);
@@ -558,13 +562,13 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
             strcat(StringTemp, "{");
             strcat(StringTemp, picktech_name(Chassis[chassis_id].offsv_1_name));
             strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, "(");
+            strcat(StringTemp, SocialWinOpenParenText);
             strcat(StringTemp, StringTable.get(Triad[Chassis[chassis_id].triad]));
             strcat(StringTemp, BufferJoinSpace);
             _itoa(static_cast<int>(Chassis[chassis_id].speed),
                   number_buffer, 10);
             strcat(StringTemp, number_buffer);
-            strcat(StringTemp, ")");
+            strcat(StringTemp, SocialWinCloseParenText);
             strcat(StringTemp, "}");
             UNK1(StringTemp);
         }
@@ -576,13 +580,13 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
             strcat(StringTemp, "{");
             strcat(StringTemp, picktech_name(Armor[armor_id].name));
             strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, "(");
+            strcat(StringTemp, SocialWinOpenParenText);
             if (Armor[armor_id].defense_rating < 0) {
                 picktech_add_label(0x310 / 4);
             } else {
                 _itoa(static_cast<int>(Armor[armor_id].defense_rating), number_buffer, 10);
                 strcat(StringTemp, number_buffer);
-                strcat(StringTemp, ")");
+                strcat(StringTemp, SocialWinCloseParenText);
                 strcat(StringTemp, "}");
             }
             UNK1(StringTemp);
@@ -595,7 +599,7 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
             strcat(StringTemp, "{");
             strcat(StringTemp, picktech_name(Weapon[weapon_id].name));
             strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, "(");
+            strcat(StringTemp, SocialWinOpenParenText);
             if (Weapon[weapon_id].offense_rating != 0) {
                 if (Weapon[weapon_id].offense_rating < 0) {
                     picktech_add_label(0x310 / 4);
@@ -614,7 +618,7 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
                       secondary_buffer, 10);
                 strcat(StringTemp, secondary_buffer);
             }
-            strcat(StringTemp, ")");
+            strcat(StringTemp, SocialWinCloseParenText);
             strcat(StringTemp, "}");
             UNK1(StringTemp);
         }
@@ -625,7 +629,7 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
             StringTemp[0] = '\0';
             strcat(StringTemp, picktech_name(Reactor[reactor_id].name));
             strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, "(");
+            strcat(StringTemp, SocialWinOpenParenText);
             // Native485D8B truncates this label to one byte too.
             text_buffer[0] = '\0';
             strcat(text_buffer, StringTable.get(Labels.strings_ptr[0x13c / 4]));
@@ -634,7 +638,7 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
             strcat(StringTemp, SocialWinColonSpaceText);
             _itoa(reactor_id + 1, secondary_buffer, 10);
             strcat(StringTemp, secondary_buffer);
-            strcat(StringTemp, ")");
+            strcat(StringTemp, SocialWinCloseParenText);
             UNK1(StringTemp);
         }
     }
@@ -776,9 +780,9 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                         strcat(StringTemp, "+");
                     } else {
                         noted = 1;
-                        strcat(StringTemp, "(");
+                        strcat(StringTemp, SocialWinOpenParenText);
                         strcat(StringTemp, label_get(0x458 / 4));
-                        strcat(StringTemp, ")");
+                        strcat(StringTemp, SocialWinCloseParenText);
                     }
                 }
                 if (tech_id == Rules.tech_three_minerals_sqr) {
@@ -786,9 +790,9 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                         strcat(StringTemp, "+");
                     } else {
                         noted = 1;
-                        strcat(StringTemp, "(");
+                        strcat(StringTemp, SocialWinOpenParenText);
                         strcat(StringTemp, label_get(0x45C / 4));
-                        strcat(StringTemp, ")");
+                        strcat(StringTemp, SocialWinCloseParenText);
                     }
                 }
                 if (tech_id == Rules.tech_three_energy_sqr) {
@@ -796,9 +800,9 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                         strcat(StringTemp, "+");
                     } else {
                         noted = 1;
-                        strcat(StringTemp, "(");
+                        strcat(StringTemp, SocialWinOpenParenText);
                         strcat(StringTemp, label_get(0x460 / 4));
-                        strcat(StringTemp, ")");
+                        strcat(StringTemp, SocialWinCloseParenText);
                     }
                 }
                 for (i = 0; i < MaxVehProtoFactionNum; ++i) {
@@ -807,11 +811,11 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                         if (noted) {
                             strcat(StringTemp, "+");
                         } else {
-                            strcat(StringTemp, "(");
+                            strcat(StringTemp, SocialWinOpenParenText);
                             strcat(StringTemp, label_get(0x314 / 4));
                             strcat(StringTemp, SocialWinColonSpaceText);
                             strcat(StringTemp, VehPrototypes[i].veh_name);
-                            strcat(StringTemp, ")");
+                            strcat(StringTemp, SocialWinCloseParenText);
                             noted = 1;
                         }
                     }
@@ -821,11 +825,11 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                         if (noted) {
                             strcat(StringTemp, "+");
                         } else {
-                            strcat(StringTemp, "(");
+                            strcat(StringTemp, SocialWinOpenParenText);
                             strcat(StringTemp, label_get(0x13C / 4));
                             strcat(StringTemp, SocialWinColonSpaceText);
                             strcat(StringTemp, StringTable.get(Reactor[i].name));
-                            strcat(StringTemp, ")");
+                            strcat(StringTemp, SocialWinCloseParenText);
                             noted = 1;
                         }
                     }
@@ -836,11 +840,11 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                             strcat(StringTemp, "+");
                         } else {
                             noted = 1;
-                            strcat(StringTemp, "(");
+                            strcat(StringTemp, SocialWinOpenParenText);
                             strcat(StringTemp, label_get(0x80 + (Weapon[i].offense_rating != 0)));
                             strcat(StringTemp, SocialWinColonSpaceText);
                             strcat(StringTemp, StringTable.get(Weapon[i].name));
-                            strcat(StringTemp, ")");
+                            strcat(StringTemp, SocialWinCloseParenText);
                         }
                     }
                 }
@@ -850,11 +854,11 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                             strcat(StringTemp, "+");
                         } else {
                             noted = 1;
-                            strcat(StringTemp, "(");
+                            strcat(StringTemp, SocialWinOpenParenText);
                             strcat(StringTemp, label_get(0x154 / 4));
                             strcat(StringTemp, SocialWinColonSpaceText);
                             strcat(StringTemp, StringTable.get(Armor[i].name));
-                            strcat(StringTemp, ")");
+                            strcat(StringTemp, SocialWinCloseParenText);
                         }
                     }
                 }
@@ -864,11 +868,11 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                             strcat(StringTemp, "+");
                         } else {
                             noted = 1;
-                            strcat(StringTemp, "(");
+                            strcat(StringTemp, SocialWinOpenParenText);
                             strcat(StringTemp, label_get(0x140 / 4));
                             strcat(StringTemp, SocialWinColonSpaceText);
                             strcat(StringTemp, StringTable.get(Chassis[i].offsv_1_name));
-                            strcat(StringTemp, ")");
+                            strcat(StringTemp, SocialWinCloseParenText);
                         }
                     }
                 }
@@ -877,14 +881,14 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                         if (noted) {
                             strcat(StringTemp, "+");
                         } else if (i < FacilitySPStart || base_project(i - FacilitySPStart) == -1) {
-                            strcat(StringTemp, "(");
+                            strcat(StringTemp, SocialWinOpenParenText);
                             strcat(StringTemp, StringTable.get(i >= FacilitySPStart
                                 ? Labels.strings_ptr[0x2CC / 4]
                                 : Labels.strings_ptr[0x26C / 4]));
                             noted = 1;
                             strcat(StringTemp, SocialWinColonSpaceText);
                             strcat(StringTemp, StringTable.get(Facility[i].name));
-                            strcat(StringTemp, ")");
+                            strcat(StringTemp, SocialWinCloseParenText);
                         }
                     }
                 }
@@ -897,9 +901,9 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                                 strcat(StringTemp, "+");
                             } else {
                                 noted = 1;
-                                strcat(StringTemp, "(");
+                                strcat(StringTemp, SocialWinOpenParenText);
                                 strcat(StringTemp, StringTable.get((&Order[i + 4].order)[sea]));
-                                strcat(StringTemp, ")");
+                                strcat(StringTemp, SocialWinCloseParenText);
                             }
                         }
                     }
@@ -910,11 +914,11 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                             strcat(StringTemp, "+");
                         } else {
                             noted = 1;
-                            strcat(StringTemp, "(");
+                            strcat(StringTemp, SocialWinOpenParenText);
                             strcat(StringTemp, label_get(0x270 / 4));
                             strcat(StringTemp, SocialWinColonSpaceText);
                             strcat(StringTemp, StringTable.get(Ability[i].name));
-                            strcat(StringTemp, ")");
+                            strcat(StringTemp, SocialWinCloseParenText);
                         }
                     }
                 }
@@ -924,11 +928,11 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                             strcat(StringTemp, "+");
                         } else {
                             noted = 1;
-                            strcat(StringTemp, "(");
+                            strcat(StringTemp, SocialWinOpenParenText);
                             strcat(StringTemp, label_get(0x4D0 / 4));
                             strcat(StringTemp, SocialWinColonSpaceText);
                             strcat(StringTemp, StringTable.get(Citizen[i].singular_name));
-                            strcat(StringTemp, ")");
+                            strcat(StringTemp, SocialWinCloseParenText);
                         }
                     }
                 }
@@ -936,11 +940,11 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                     if ((Technology[i].preq_tech_1 == tech_id ||
                          Technology[i].preq_tech_2 == tech_id) && !noted) {
                         noted = 1;
-                        strcat(StringTemp, "(");
+                        strcat(StringTemp, SocialWinOpenParenText);
                         strcat(StringTemp, label_get(0x274 / 4));
                         strcat(StringTemp, SocialWinColonSpaceText);
                         strcat(StringTemp, StringTable.get(Technology[i].name));
-                        strcat(StringTemp, ")");
+                        strcat(StringTemp, SocialWinCloseParenText);
                     }
                 }
             }

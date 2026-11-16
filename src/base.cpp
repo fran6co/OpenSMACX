@@ -50,6 +50,9 @@
 #include "worldwin.h"
 #include "crt_random_inline.h"
 
+// Shared punctuation objects the image pushes instead of unit literals.
+extern char SocialWinCloseParenText[];
+extern char SocialWinOpenParenText[];
 // Recovery spelling (name unknown): has_fac() on the selected base, one
 // inline level deep. The image keeps that nested has_fac() as a real call
 // where VC6's inline budget runs out (base_minerals, base_doctors).
@@ -10616,7 +10619,7 @@ int __cdecl upgrade_prototype(int faction_id, int proto_id_new,
             StringTemp[0] = '\0';
             strcat(StringTemp, VehPrototypes[proto_id_old].veh_name);
             strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, "(");
+            strcat(StringTemp, SocialWinOpenParenText);
             say_stats_2(StringTemp, proto_id_old);
             if (VehPrototypes[proto_id_old].ability_flags) {
                 strcat(StringTemp, BufferJoinSpace);
@@ -10626,13 +10629,13 @@ int __cdecl upgrade_prototype(int faction_id, int proto_id_new,
                     }
                 }
             }
-            strcat(StringTemp, ")");
+            strcat(StringTemp, SocialWinCloseParenText);
             parse_says(0, StringTemp, -1, -1);
 
             StringTemp[0] = '\0';
             strcat(StringTemp, VehPrototypes[proto_id_new].veh_name);
             strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, "(");
+            strcat(StringTemp, SocialWinOpenParenText);
             say_stats_2(StringTemp, proto_id_new);
             if (VehPrototypes[proto_id_new].ability_flags) {
                 strcat(StringTemp, BufferJoinSpace);
@@ -10642,7 +10645,7 @@ int __cdecl upgrade_prototype(int faction_id, int proto_id_new,
                     }
                 }
             }
-            strcat(StringTemp, ")");
+            strcat(StringTemp, SocialWinCloseParenText);
             parse_says(1, StringTemp, -1, -1);
 
             parse_num(0, cost);

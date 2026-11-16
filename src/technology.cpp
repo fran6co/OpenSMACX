@@ -56,6 +56,9 @@
 #include "stringstruct.h"
 #include "wave.h"
 
+// Shared punctuation objects the image pushes instead of unit literals.
+extern char SocialWinCloseParenText[];
+extern char SocialWinOpenParenText[];
 // Shared separator objects the image pushes instead of unit literals.
 extern const char BufferJoinSpace[];
 
@@ -187,11 +190,11 @@ void __cdecl say_tech(LPSTR output, int tech_id, BOOL category_lvl) {
             // with 0x00682820 (" ") and then 0x00682E9C ("("), and there is no
             // " (" literal anywhere in it to fold the pair into.
             strcat(output, BufferJoinSpace);
-            strcat(output, "(");
+            strcat(output, SocialWinOpenParenText);
             strcat(output, label_get(629 + tech_category(tech_id))); // 'E#', 'D#', 'B#', 'C#'
             _itoa(tech_recurse(tech_id, 0), num_buf, 10);
             strcat(output, num_buf);
-            strcat(output, ")");
+            strcat(output, SocialWinCloseParenText);
         }
     } else if (tech_id < 97) {
         int faction_id = tech_id - MaxTechnologyNum;
@@ -202,11 +205,11 @@ void __cdecl say_tech(LPSTR output, int tech_id, BOOL category_lvl) {
         } else {
             strcat(output, label_get(487)); // 'Comm Frequency'
             strcat(output, BufferJoinSpace);
-            strcat(output, "(");
+            strcat(output, SocialWinOpenParenText);
             GenderDefault = Players[faction_id].noun_gender;
             PluralityDefault = Players[faction_id].is_noun_plural;
             strcat(output, Players[faction_id].noun_faction);
-            strcat(output, ")");
+            strcat(output, SocialWinCloseParenText);
         }
     } else {
         strcat(output, VehPrototypes[tech_id - 97].veh_name);

@@ -26,6 +26,9 @@
 #include "base.h"
 #include "map.h"
 
+// Shared punctuation objects the image pushes instead of unit literals.
+extern char SocialWinCloseParenText[];
+extern char SocialWinOpenParenText[];
 // Shared punctuation storage remains owned by socialwin.cpp.
 extern char SocialWinColonSpaceText[];
 
@@ -63,7 +66,7 @@ void __cdecl say_reactor(char *text, int reactor_id, int with_detail) {
     strcat(text, strings->get(name));
     if (with_detail != 0) {
         strcat(text, BufferJoinSpace);
-        strcat(text, "(");
+        strcat(text, SocialWinOpenParenText);
         LPSTR label = Labels.strings_ptr[0x13C / 4];
         LPSTR detail = strings->get(label);
         strcat(StringTemp, detail);
@@ -71,7 +74,7 @@ void __cdecl say_reactor(char *text, int reactor_id, int with_detail) {
         char number[80];
         _itoa(reactor_id + 1, number, 10);
         strcat(text, number);
-        strcat(text, ")");
+        strcat(text, SocialWinCloseParenText);
     }
 }
 
@@ -86,7 +89,7 @@ void __cdecl say_weapon(char *text, int weapon_id, int with_detail) {
     strcat(output, strings->get(name));
     if (with_detail != 0) {
         strcat(output, BufferJoinSpace);
-        strcat(output, "(");
+        strcat(output, SocialWinOpenParenText);
         if (Weapon[weapon_id].offense_rating != 0) {
             LPSTR label = Labels.strings_ptr[0x204 / 4];
             strcat(output, strings->get(label));
@@ -106,7 +109,7 @@ void __cdecl say_weapon(char *text, int weapon_id, int with_detail) {
             LPSTR label = Labels.strings_ptr[0x284 / 4];
             strcat(output, strings->get(label));
         }
-        strcat(output, ")");
+        strcat(output, SocialWinCloseParenText);
     }
 }
 
@@ -121,7 +124,7 @@ void __cdecl say_armor(char *text, int armor_id, int with_detail) {
     strcat(output, strings->get(name));
     if (with_detail != 0) {
         strcat(output, BufferJoinSpace);
-        strcat(output, "(");
+        strcat(output, SocialWinOpenParenText);
         LPSTR label = Labels.strings_ptr[0x154 / 4];
         LPSTR detail = strings->get(label);
         strcat(StringTemp, detail);
@@ -137,7 +140,7 @@ void __cdecl say_armor(char *text, int armor_id, int with_detail) {
         for (int i = 0; i < Armor[armor_id].mode; ++i) {
             strcat(output, SayArmorModeStarText);
         }
-        strcat(output, ")");
+        strcat(output, SocialWinCloseParenText);
     }
 }
 
@@ -151,7 +154,7 @@ void __cdecl say_chassis(char *text, int chassis_id, int with_detail) {
     strcat(text, strings->get(name));
     if (with_detail != 0) {
         strcat(text, BufferJoinSpace);
-        strcat(text, "(");
+        strcat(text, SocialWinOpenParenText);
         LPSTR label = Labels.strings_ptr[0x140 / 4];
         LPSTR detail = strings->get(label);
         strcat(StringTemp, detail);
@@ -174,7 +177,7 @@ void __cdecl say_chassis(char *text, int chassis_id, int with_detail) {
         }
         strcat(text, StringTable.get(triad_label));
 close_detail:
-        strcat(text, ")");
+        strcat(text, SocialWinCloseParenText);
     }
 }
 
@@ -186,12 +189,12 @@ void __cdecl say_techs(char *text, int tech_id, int with_detail) {
     say_tech(text, tech_id, with_detail);
     if (with_detail != 0) {
         strcat(text, BufferJoinSpace);
-        strcat(text, "(");
+        strcat(text, SocialWinOpenParenText);
         LPSTR *label_table = Labels.strings_ptr;
         LPSTR label = label_table[0x274 / 4];
         LPSTR detail = StringTable.get(label);
         strcat(StringTemp, detail);
-        strcat(text, ")");
+        strcat(text, SocialWinCloseParenText);
     }
 }
 
@@ -232,11 +235,11 @@ void __cdecl say_facility(char *text, int facility_id, int with_cost) {
     strcat(text, strings->get(name));
     if (with_cost != 0) {
         strcat(text, BufferJoinSpace);
-        strcat(text, "(");
+        strcat(text, SocialWinOpenParenText);
         LPSTR label = Labels.strings_ptr[0x9B];
         LPSTR detail = strings->get(label);
         strcat(StringTemp, detail);
-        strcat(text, ")");
+        strcat(text, SocialWinCloseParenText);
     }
 }
 
@@ -268,13 +271,13 @@ void __cdecl say_ability(char *text, int ability_id, int with_detail) {
     strcat(text, s1);
     if (with_detail != 0) {
         strcat(text, BufferJoinSpace);
-        strcat(text, "(");
+        strcat(text, SocialWinOpenParenText);
         LPSTR *label_table = Labels.strings_ptr;
         Strings *strings = &StringTable;
         LPSTR label = label_table[0xA4];
         LPSTR detail = strings->get(label);
         strcat(StringTemp, detail);
-        strcat(text, ")");
+        strcat(text, SocialWinCloseParenText);
     }
 }
 
@@ -305,10 +308,10 @@ void __cdecl say_society(char *text, int society_id, int with_model) {
     strcat(text, strings->get(type));
     if (with_model != 0) {
         strcat(text, BufferJoinSpace);
-        strcat(text, "(");
+        strcat(text, SocialWinOpenParenText);
         char *model = label_get(0x45);
         strcat(StringTemp, model);
-        strcat(text, ")");
+        strcat(text, SocialWinCloseParenText);
     }
 }
 // Source-level formatter-family grouping proposed for the current tree.
@@ -356,15 +359,13 @@ void __cdecl say_project(char *output, int project_id, int with_cost) {
     strcat(output, string_table.get(project_name));
     if (with_cost != 0) {
         strcat(output, BufferJoinSpace);
-        strcat(output, "(");
+        strcat(output, SocialWinOpenParenText);
         LPSTR cost_label = Labels.strings_ptr[179];
         strcat(StringTemp, StringTable.get(cost_label));
-        strcat(output, ")");
+        strcat(output, SocialWinCloseParenText);
     }
 }
 
-// RECOVERY_LITERAL: v1 0x00682E9C 0x00682E9E ??_C@_01GFI@?$CI?$AA@ 0x00590BA0
-// RECOVERY_LITERAL: v1 0x00682E98 0x00682E9A ??_C@_01KMMP@?$CJ?$AA@ 0x00590BA0
 // ORIGINAL: 0x00590BA0 ?say_vehicles@@YAXPAXHH@Z 0x00590BA0-0x00590C14 FILE BYTE_EXACT
 // symbol    ?say_vehicles@@YAXPADHH@Z
 // size      116 bytes
@@ -430,10 +431,10 @@ void __cdecl say_vehicles(char *text, int chassis_id, int with_height) {
     strcat(text, VehPrototypes[chassis_id].veh_name);
     if (with_height != 0) {
         strcat(text, BufferJoinSpace);
-        strcat(text, "(");
+        strcat(text, SocialWinOpenParenText);
         LPSTR label = Labels.strings_ptr[0x314 / 4];
         strcat(StringTemp, StringTable.get(label));
-        strcat(text, ")");
+        strcat(text, SocialWinCloseParenText);
     }
 }
 

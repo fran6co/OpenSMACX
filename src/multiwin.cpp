@@ -49,6 +49,10 @@ extern uint32_t MultiWinState7FFF7C;
 static_assert(offsetof(PlayerData, time_bonus_count) == 0x2054,
               "MultiWin time-bonus source offset");
 static const char CaretSeparator[] = "^";  // original string at 0x006867C0
+// The rank separator after a player number; MultiDebug::on_redraw pushes the
+// same object.
+// RECOVERY_OBJECT: v2 0x006867E0 0x006867E3 ?MultiWinDotSpaceText@@3PADA 0x00478630
+char MultiWinDotSpaceText[] = ". ";               // 0x006867E0
 
 // MultiWin::draw_time_bonus_markers, original 0x00479270. Add the supplied
 // rectangle to the time-bonus hotspot and render its caret markers.
@@ -169,7 +173,7 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
   StringTemp[0] = 0;
   _itoa(row, number, 10);
   strcat(StringTemp, number);
-  strcat(StringTemp, ". ");
+  strcat(StringTemp, MultiWinDotSpaceText);
   GenderDefault = Players[faction_id].is_leader_female;
   PluralityDefault = 0;
   strcat(StringTemp, Players[faction_id].name_leader);

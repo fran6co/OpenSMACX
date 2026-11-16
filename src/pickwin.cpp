@@ -40,6 +40,10 @@
 #include "interface_palette.h"
 #include "popmenu.h"
 #include "rectangle_operations.h"
+
+// Shared punctuation objects the image pushes instead of unit literals.
+extern char SocialWinCloseParenText[];
+extern char SocialWinOpenParenText[];
 extern int TextColourTable[195];
 
 // Original caption834D6C is passed synchronously to Win::init, which
@@ -476,9 +480,9 @@ void PickWin::on_button_clicked(int button) {
         if (strcmp(Players[faction].filename, "JENN282") != 0) {
           strcat(StringTemp, Players[faction].formal_name_faction);
           strcat(StringTemp, "|");
-          strcat(StringTemp, "(");
+          strcat(StringTemp, SocialWinOpenParenText);
           strcat(StringTemp, Players[faction].desc_name_faction);
-          strcat(StringTemp, ")");
+          strcat(StringTemp, SocialWinCloseParenText);
         } else {
           strcat(StringTemp, label_get(0x462));
         }
@@ -572,9 +576,9 @@ void PickWin::on_button_clicked(int button) {
           if (strcmp(Players[row].filename, "JENN282") != 0) {
             strcat(StringTemp, Players[row].formal_name_faction);
             strcat(StringTemp, "|");
-            strcat(StringTemp, "(");
+            strcat(StringTemp, SocialWinOpenParenText);
             strcat(StringTemp, Players[row].desc_name_faction);
-            strcat(StringTemp, ")");
+            strcat(StringTemp, SocialWinCloseParenText);
           } else {
             strcat(StringTemp, label_get(0x462));
           }

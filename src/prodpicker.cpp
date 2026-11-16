@@ -42,6 +42,10 @@
 #include "buffer.h"   // BoxSpriteParams, InterfaceBoxStyles
 #include <cstring>
 
+// Shared punctuation objects the image pushes instead of unit literals.
+extern char SocialWinCloseParenText[];
+extern char SocialWinOpenParenText[];
+extern char PercentText[];  // shared "%" (0x00682EA0)
 void __cdecl slide_show(GraphicWin *window, int mode);
 void __cdecl slide_hide(GraphicWin *window, int mode);
 void __cdecl scroll_show(GraphicWin *window, Scroll *scroll);
@@ -226,7 +230,7 @@ void ProdPicker::draw_item(int item, int update) {
             char number[80];
             _itoa(factor, number, 10);
             strcat(StringTemp, number);
-            strcat(StringTemp, "%");
+            strcat(StringTemp, PercentText);
             write_cent_l(StringTemp, &cell);
         }
     } else {
@@ -583,13 +587,13 @@ void ProdPicker::calculate() {
         name[0] = 0;
         strcat(name, VehPrototypes[id].veh_name);
         if (GameDataStateStorage.fields_.game_state_ & 0x80) {
-            strcat(name, "(");
+            strcat(name, SocialWinOpenParenText);
             _itoa(PlayersData[field_A76C_].proto_id_active[id], active, 10);
             strcat(name, active);
             strcat(name, "/");
             _itoa(PlayersData[field_A76C_].proto_id_queue[id], queued, 10);
             strcat(name, queued);
-            strcat(name, ")");
+            strcat(name, SocialWinCloseParenText);
         }
 
         stats[0] = 0;
@@ -625,13 +629,13 @@ void ProdPicker::calculate() {
                   turns, 10);
             strcat(stats, turns);
             if (cost != proto_cost && VehPrototypes[id].plan != 8) {
-                strcat(stats, "(");
+                strcat(stats, SocialWinOpenParenText);
                 char retool[80];
                 _itoa(range((BaseCurrent->mineral_surplus + cost - 1)
                             / BaseCurrent->mineral_surplus, 0, 999999),
                       retool, 10);
                 strcat(stats, retool);
-                strcat(stats, ")");
+                strcat(stats, SocialWinCloseParenText);
             }
             strcat(stats, " ");
             strcat(stats, label_get(49));
@@ -671,9 +675,9 @@ void ProdPicker::calculate() {
 
         name[0] = 0;
         if (i == 1) {
-            strcat(name, "(");
+            strcat(name, SocialWinOpenParenText);
             strcat(name, label_get(140));
-            strcat(name, ")");
+            strcat(name, SocialWinCloseParenText);
             strcat(name, " ");
         }
         strcat(name, StringTable.get(Facility[i].name));

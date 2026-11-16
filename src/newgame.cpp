@@ -58,6 +58,9 @@
 #include "statuswin.h"
 #include "flic.h"
 
+// Shared punctuation objects the image pushes instead of unit literals.
+extern char SocialWinCloseParenText[];
+extern char SocialWinOpenParenText[];
 // Shared separator objects the image pushes instead of unit literals.
 extern const char BufferJoinSpace[];
 
@@ -277,14 +280,14 @@ difficulty_menu:
                 strcat(StringTemp, StringTable.get(Difficulty[i]));
                 if (i == 0) {
                     strcat(StringTemp, BufferJoinSpace);
-                    strcat(StringTemp, "(");
+                    strcat(StringTemp, SocialWinOpenParenText);
                     strcat(StringTemp, StringTable.get(Labels.strings_ptr[113]));
-                    strcat(StringTemp, ")");
+                    strcat(StringTemp, SocialWinCloseParenText);
                 } else if (i == 5) {
                     strcat(StringTemp, BufferJoinSpace);
-                    strcat(StringTemp, "(");
+                    strcat(StringTemp, SocialWinOpenParenText);
                     strcat(StringTemp, StringTable.get(Labels.strings_ptr[114]));
-                    strcat(StringTemp, ")");
+                    strcat(StringTemp, SocialWinCloseParenText);
                 }
                 popup.item(StringTemp, i);
             }
@@ -422,9 +425,9 @@ time_controls:
                     if (strcmp(Players[i].filename, "JENN282")) {
                         strcat(StringTemp, Players[i].formal_name_faction);
                         strcat(StringTemp, "|");
-                        strcat(StringTemp, "(");
+                        strcat(StringTemp, SocialWinOpenParenText);
                         strcat(StringTemp, Players[i].desc_name_faction);
-                        strcat(StringTemp, ")");
+                        strcat(StringTemp, SocialWinCloseParenText);
                     } else {
                         strcat(StringTemp, "RANDOM");
                     }
@@ -578,9 +581,9 @@ edit_names_expansion:
                 StringTemp[0] = 0;
                 strcat(StringTemp, Players[i].formal_name_faction);
                 strcat(StringTemp, "|");
-                strcat(StringTemp, "(");
+                strcat(StringTemp, SocialWinOpenParenText);
                 strcat(StringTemp, Players[i].desc_name_faction);
-                strcat(StringTemp, ")");
+                strcat(StringTemp, SocialWinCloseParenText);
                 popup.item(StringTemp, i);
             }
         }

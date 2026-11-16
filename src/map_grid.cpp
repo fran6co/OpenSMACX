@@ -113,6 +113,10 @@ uint32_t AltContour[11] = {
 uint32_t AltNatural[11] = {
 #include "terrain_altitude_natural.inc"
 };
+
+// Shared punctuation objects the image pushes instead of unit literals.
+extern char SocialWinCloseParenText[];
+extern char SocialWinOpenParenText[];
 static_assert(sizeof(AltNaturalDefault) == 44, "default altitude table extent");
 static_assert(sizeof(AltContour) == 44, "river contour table extent");
 static_assert(sizeof(AltNatural) == 44, "mutable altitude table extent");
@@ -1343,13 +1347,13 @@ skip_first_check:
 
 trailer:
     if (trailer_mode == 1 || (trailer_mode == 2 && base_id < 0)) {
-        strcat(text, "(");
+        strcat(text, SocialWinOpenParenText);
         _itoa(x, number, 10);
         strcat(text, number);
         strcat(text, SocialWinCommaSpaceText);
         _itoa(y, number, 10);
         strcat(text, number);
-        strcat(text, ")");
+        strcat(text, SocialWinCloseParenText);
 
         int flags = GameDataStateStorage.fields_.game_state_;
         if ((flags & 0x40) != 0 && (flags & 0x1000) != 0) {

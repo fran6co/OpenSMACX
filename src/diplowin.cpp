@@ -53,6 +53,10 @@
 #include "jackal/font_metrics.h"
 #include "general.h"  // swap for the hot-seat pair callbacks
 
+// Shared punctuation objects the image pushes instead of unit literals.
+extern char SocialWinCloseParenText[];
+extern char SocialWinOpenParenText[];
+
 // Shared original chat separators, also used by the general string formatter.
 extern char SocialWinColonSpaceText[];
 
@@ -552,7 +556,7 @@ void DiploWin::on_redraw() {
   strcat(StringTemp, label_get(0x748 / 4));
   strcat(StringTemp, BufferJoinSpace);
   strcat(StringTemp, BufferJoinSpace);
-  strcat(StringTemp, "(");
+  strcat(StringTemp, SocialWinOpenParenText);
   strcat(StringTemp, label_get(0x788 / 4));
   strcat(StringTemp, SocialWinColonSpaceText);
   strcat(StringTemp, "{");
@@ -576,7 +580,7 @@ void DiploWin::on_redraw() {
     Buffer::set_text_color2(0xFB, -1, 1, 1);
   }
   strcat(StringTemp, "}");
-  strcat(StringTemp, ")");
+  strcat(StringTemp, SocialWinCloseParenText);
   Buffer::write_cent_l(StringTemp, &area);
 
   if (MainInterfaceTileFlag != 0) {

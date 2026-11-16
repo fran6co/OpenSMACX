@@ -68,6 +68,9 @@
 #include "designwin.h" // Crawler animation advances while the design window is visible.
 #include "vector.h"  // vector_add operates on actual three-float arrays.
 
+// Shared punctuation objects the image pushes instead of unit literals.
+extern char SocialWinCloseParenText[];
+extern char SocialWinOpenParenText[];
 
 /*
 Purpose: Calculate maximum range a faction's units can drop (air drops, Drop Pods).
@@ -1156,9 +1159,9 @@ int __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, int
                     StringTemp[0] = '\0';
                     strcat(StringTemp, label_get(331)); // "Terrain"
                     strcat(StringTemp, BufferJoinSpace);
-                    strcat(StringTemp, "(");
+                    strcat(StringTemp, SocialWinOpenParenText);
                     strcat(StringTemp, StringTable.get(VehBattleDisplayTerrain));
-                    strcat(StringTemp, ")");
+                    strcat(StringTemp, SocialWinCloseParenText);
                     add_bat(1, 10 * (5 * terrain_def - 10), StringTemp);
                 }
                 // Raw label pointers: StringTable.get runs once, at the add_bat.

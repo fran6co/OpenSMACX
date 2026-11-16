@@ -31,6 +31,10 @@
 #include "console.h"   // ConsoleGlobal, the object at 0x009156B0
 #include "mapwin.h"    // MainInterfaceGlobal, the object at 0x007AE820
 
+// Shared punctuation objects the image pushes instead of unit literals.
+extern char SocialWinCloseParenText[];
+extern char SocialWinOpenParenText[];
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00422C50 ?clear@BattleWin@@QAEXXZ 0x00422C50-0x00422CB5 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:terranx_original.exe:0x422C50-0x422CB5;src/recovered/units/00422c50.cpp:historical exact seed;src/battlewin.h:four contiguous native RECT arguments at30/40/50/60"], "reason": "Recover the original four-rectangle clear operation through the genuine BattleWin rectangle members and shared MainInterfaceGlobal canvas; preserve source and seed obligations."}
@@ -708,16 +712,16 @@ again:
     if (Vehs[first_vehicle_id].faction_id
         && Vehs[first_vehicle_id].faction_id != ConsoleGlobal.faction_id_ && Language) {
         strcat(StringTemp, BufferJoinSpace);
-        strcat(StringTemp, "(");
+        strcat(StringTemp, SocialWinOpenParenText);
         parse_set(Players[Vehs[first_vehicle_id].faction_id].noun_gender,
                   Players[Vehs[first_vehicle_id].faction_id].is_noun_plural);
         strcat(StringTemp, Players[Vehs[first_vehicle_id].faction_id].noun_faction);
-        strcat(StringTemp, ")");
+        strcat(StringTemp, SocialWinCloseParenText);
     }
     if (GameDataStateStorage.fields_.game_state_ & 0x80) {
-        strcat(StringTemp, "(");
+        strcat(StringTemp, SocialWinOpenParenText);
         say_num(first_vehicle_id);
-        strcat(StringTemp, ")");
+        strcat(StringTemp, SocialWinCloseParenText);
     }
     MainInterfaceGlobal.set_font(find_font(WinScreenWidth != 800 ? 16 : 12, 1), 0, 0, 0);
     MainInterfaceGlobal.set_text_color(

@@ -39,6 +39,9 @@
 #include "wave.h"
 #include "buffer.h"
 
+// Shared punctuation objects the image pushes instead of unit literals.
+extern char SocialWinCloseParenText[];
+extern char SocialWinOpenParenText[];
 // Original pointer cell 0x00691B1C selects the MENU script name at
 // 0x00691B9C; menu_init passes the cell's value to every text_open.
 // RECOVERY_OBJECT: v1 0x00691B9C ?MenuScriptFileText@@3PADA
@@ -608,7 +611,7 @@ expansion_gate:
                     strcat(StringTemp, StringTable.get((&Order[i + 4].order)[sea]));
                     turns = action_terraform(veh_id, i, 0);
                     strcat(StringTemp, BufferJoinSpace);
-                    strcat(StringTemp, "(");
+                    strcat(StringTemp, SocialWinOpenParenText);
                     _itoa(turns + 1, turn_text, 10);
                     strcat(StringTemp, turn_text);
                     strcat(StringTemp, BufferJoinSpace);
@@ -617,7 +620,7 @@ expansion_gate:
                     } else {
                         strcat(StringTemp, label_get(0x31));
                     }
-                    strcat(StringTemp, ")");
+                    strcat(StringTemp, SocialWinCloseParenText);
                     strcat(StringTemp, "|");
                     strcat(StringTemp, StringTable.get(Terraforming[i].shortcuts));
                     rename_menu_item(9, i + 0x900, StringTemp);

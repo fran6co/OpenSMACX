@@ -37,6 +37,9 @@
 #include "terraforming.h"
 #include "shared_word.h"
 
+// Shared punctuation objects the image pushes instead of unit literals.
+extern char SocialWinCloseParenText[];
+extern char SocialWinOpenParenText[];
 // help_tech_info pushes the shared separators 0x00682820 (" ") and
 // 0x00682E90 (", ") rather than unit literals.
 extern const char BufferJoinSpace[];
@@ -347,10 +350,10 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             TechnologyHelpEntryKind = 0x62;
             TechnologyHelpEntryName = record.offsv_1_name;
             strcat(buf, BufferJoinSpace);
-            strcat(buf, "(");
+            strcat(buf, SocialWinOpenParenText);
             _itoa(record.speed, numbuf, 10);
             strcat(buf, numbuf);
-            strcat(buf, ")");
+            strcat(buf, SocialWinCloseParenText);
             flushed = *buf;
             if (a4 >= 0 && flushed) {
                 a1(buf);
@@ -386,7 +389,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             TechnologyHelpEntryKind = 0x63;
             TechnologyHelpEntryName = Weapon[idx].name;
             strcat(buf, BufferJoinSpace);
-            strcat(buf, "(");
+            strcat(buf, SocialWinOpenParenText);
             if (Weapon[idx].offense_rating < 0) {
                 strcat(buf, label_get(0x310 / 4));
             } else if (Weapon[idx].mode < 3) {
@@ -395,7 +398,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             } else {
                 strcat(buf, label_get(0x200 / 4));
             }
-            strcat(buf, ")");
+            strcat(buf, SocialWinCloseParenText);
             if (a4 >= 0) {
                 flushed = *buf;
                 if (flushed) {
@@ -435,14 +438,14 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             TechnologyHelpEntryKind = 0x64;
             TechnologyHelpEntryName = Armor[idx].name;
             strcat(buf, BufferJoinSpace);
-            strcat(buf, "(");
+            strcat(buf, SocialWinOpenParenText);
             if (Armor[idx].defense_rating < 0) {
                 strcat(buf, label_get(0x310 / 4));
             } else {
                 _itoa(Armor[idx].defense_rating, numbuf, 10);
                 strcat(buf, numbuf);
             }
-            strcat(buf, ")");
+            strcat(buf, SocialWinCloseParenText);
             if (a4 >= 0) {
                 flushed = *buf;
                 if (flushed) {
@@ -549,7 +552,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
                 strcat(buf, "^");
             }
             if (record.free_tech == a2) {
-                strcat(buf, "(");
+                strcat(buf, SocialWinOpenParenText);
             }
             int category = (ctr >= 0x46) ? 0xB : 0xA;
             DatalinkMain.construct_id(idbuf,
@@ -561,7 +564,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
                 strcat(buf, BufferJoinSpace);
                 char *s2 = label_get(0x4DC / 4);
                 strcat(buf, s2);
-                strcat(buf, ")");
+                strcat(buf, SocialWinCloseParenText);
             }
             if (a4 >= 0 && *buf != 0) {
                 a1(buf);
@@ -1190,6 +1193,15 @@ void __cdecl help_topic(unsigned int topic, int index) {
     DatalinkMain.exec(topic, index);
 }
 
+// The help-link markup tokens, pushed as shared objects by every unit that
+// writes a $LINK<text=id> reference (Datalink and ReportWin renderers too).
+// RECOVERY_OBJECT: v2 0x00683544 0x0068354B ?HelpLinkOpenText@@3PADA 0x0044CB87
+char HelpLinkOpenText[] = "$LINK<";                 // 0x00683544
+// RECOVERY_OBJECT: v2 0x00683540 0x00683542 ?HelpLinkEqualsText@@3PADA 0x0044CB9C
+char HelpLinkEqualsText[] = "=";                    // 0x00683540
+// RECOVERY_OBJECT: v2 0x0068353C 0x0068353E ?HelpLinkCloseText@@3PADA 0x0044CBB1
+char HelpLinkCloseText[] = ">";                     // 0x0068353C
+
 /*
 Purpose: Append one clickable cross-reference to a caller-owned help buffer.
          The original strings at 0x00683544/40/3C are "$LINK<", "=" and
@@ -1202,16 +1214,11 @@ Return Value: n/a
 Status: Product body; measure before granting a byte claim.
 */
 void __cdecl help_create_link(char *out, char *label, char *id) {
-// The help-link grammar uses these prefix, separator and closing tokens in order.
-// Bounds cover the literal payload, not surrounding allocation or lifetime.
-// RECOVERY_LITERAL: v1 0x00683544 0x0068354B $SG54702 0x0044CB80
-    strcat(out, "$LINK<");
+    strcat(out, HelpLinkOpenText);
     strcat(out, label);
-// RECOVERY_LITERAL: v1 0x00683540 0x00683542 $SG54703 0x0044CB80
-    strcat(out, "=");
+    strcat(out, HelpLinkEqualsText);
     strcat(out, id);
-// RECOVERY_LITERAL: v1 0x0068353C 0x0068353E $SG54704 0x0044CB80
-    strcat(out, ">");
+    strcat(out, HelpLinkCloseText);
 }
 
 // Superseded seed removal retains historical Git provenance below.

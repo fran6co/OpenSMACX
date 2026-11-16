@@ -61,6 +61,10 @@ CouncWin CouncilWindow;
 #include "console.h"     // ConsoleGlobal's local faction id
 #include "netmsg.h"      // NetMsgPrimary
 
+// Shared punctuation objects the image pushes instead of unit literals.
+extern char SocialWinCloseParenText[];
+extern char SocialWinOpenParenText[];
+
 // Shared separator objects the image pushes instead of unit literals.
 extern const char BufferJoinSpace[];
 extern char SocialWinColonSpaceText[];
@@ -1060,9 +1064,9 @@ void CouncWin::on_redraw() {
             strcat(StringTemp, label_get(0x7e0 / 4));
             if (field_A1C_ == 1) {
                 strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, "(");
+                strcat(StringTemp, SocialWinOpenParenText);
                 strcat(StringTemp, label_get(0xe6c / 4));
-                strcat(StringTemp, ")");
+                strcat(StringTemp, SocialWinCloseParenText);
             }
         } else {
             strcat(StringTemp, label_get(0x804 / 4));
