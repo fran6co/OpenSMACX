@@ -708,7 +708,7 @@ raw field access where the original used inline accessors.
   raw stores then `strcat(..., Players[f].title_leader)` give edx; a named local
   assigned after the stores gives eax; one assigned before the stores gives
   ecx. An image span equal to an accessor's body does not prove the accessor
-  was a header inline (get_title/get_name as faction.h inlines were rejected).
+  was a header inline (get_title/get_name became faction.h MEASURED inlines on 2026-11-16, measured neutral).
 - **The image calls `memcpy`/`memset` out of line.** Wrap the function in
   `#pragma function(...)` … `#pragma intrinsic(...)`.
 - **A `vector_dist`-style computation is inlined.** Write a two-level static
@@ -1299,6 +1299,292 @@ raw field access where the original used inline accessors.
   ours uses test/immediates, one dead zero store flips the allocation;
   the original had one more zero use that emits no code (unfound in
   MapWin::init).
+- **A per-unit header twin emits its own out-of-line COMDAT where /Ob2
+  refuses it**: bind it with RECOVERY_SHARED to the original body it
+  duplicates (remove_all_walk -> 0x00402970), or strict reports an
+  unbound reference.
+- **Functions with RECOVERY_ASSOCIATED switch tables are checked on their
+  whole evidence closure**, including the content of every vtable their
+  inline teardowns reference; for an unexplained "strict selected
+  evidence result: unknown", wrap match_recovery.source.asm.verify_records
+  and dump its dict.
+- **Separate early-return epilogues need a different final return**: a
+  function ending in `return 0` cross-jumps every early `return 0` into
+  it; put the shared failure block inside the last test's `if` (goto'd
+  from earlier tests) and end with the success return (check_for_lobby).
+- **A separate original unit is the only reason a first-site plain
+  callee stays a call**: when one caller calls every same-unit plain
+  function out of line while all other callers expand them, compile the
+  caller alone and compare (base_build).
+- **Two unused dwords just below right/bottom-style frame slots are a
+  RECT whose left/top were scalarised**: build a RECT local and copy it
+  (on_redraw_nc frame 0x5c -> 0x64).
+- **A guard `je` to the shared epilogue with every callee-saved register
+  pushed in the prologue** is `if (ok) { ... }`, not an early return
+  (which lets VC6 defer pushes).
+- **Negations computed straight into loop registers** come from
+  `for (y = -y; ...)`, not separate negation statements.
+- **A wrapped coordinate computed per arm and stored once after the
+  join** is a written-out ternary over a temporary; assigning
+  wrap_map_x() to a frame-homed variable stores in each arm.
+- **An else arm deferred past the next jump** is a ternary assignment
+  `v = c ? K : expr;`; if/else forms lay it inline.
+- **A `T &r = Global[i]` reference stops VC6 moving a later load ahead of
+  a store through r**; index the global directly when the image does.
+- **Literal audit**: count `$SG` per unit against the image's literal run
+  and list `$SG`s referenced more than once; a shared pair where the image
+  has one per site is a helper the original wrote per site (macro or
+  written out).
+- **Literal order exposes negated chains**: when unpooled literal
+  addresses put a later-laid-out arm's texts first, the source tested the
+  negated condition first (`if (!A || !B) {X} else {Y}`), and a message
+  duplicated across arms was one site (shoot, shoot_it).
+- **`switch (v)` constant-propagates v into each case**; the image's
+  hoisted `v*size` before the jump table is not reproduced by switching
+  on a re-read field (MonuWin::on_redraw, unsolved).
+- **Review every permute variant's hunk**: random search can rank a
+  behaviour-changing mutation best (a dropped loop increment).
+- **A local function-pointer call stand-in is not budget-neutral**:
+  replacing it with a plain call changes later /Ob2 decisions; re-sweep
+  dead probes after removing one.
+- **A shared `return 0` EH teardown is emitted at the first return-0 site
+  in layout order**: to place it after the last failure, chain the early
+  sites as `if (A) {...} else if (B) {...} else { rest }` falling into one
+  final `return 0` (gotos change the frame slot order) (join_session).
+- **Goto-terminated then-blocks are deferred like goto targets**:
+  `if (c) { msg; goto done; }` lays out like `if (c) goto L; ... L: msg;
+  goto done;`, in the source order of the gotos; literal order shows
+  where the original wrote them (order_veh).
+- **`fld [var]; fmul [rdata]` means a float literal** (`var * 100.0f`):
+  a named `const float` is loaded first whatever the operand order.
+- **Separate saved values copied into a RECT with an unused dword beside
+  them and `xor reg,reg` stored into left** were a `RECT saved` with
+  left = 0 copied whole (MultiWin::draw).
+- **Where a `= 0` initialisation sits decides whether VC6 keeps zero in a
+  register.**
+- **A `this`-to-base null check (neg/sbb/and) before an unrelated branch**
+  means a named base-pointer local initialised there.
+- **No `and ecx,0x1f` before `shl` means plain `1 << x`**; write it at each
+  use when the image recomputes it.
+- **To call a base-class inline out of line without a null check**, use a
+  derived member pointer `int (Derived::*p)(...) = &Base::f;`.
+- **A member RECT stored through `lea reg,[this+off]` from four registers
+  is a whole copy from a local RECT**; `RECT r = *p` keeps a dead field
+  store that a `RECT &` alone does not (DesignWin::init).
+- **Merged `label_get` tails with an unfolded `add eax,K` index** are
+  `strcat(StringTemp, label_get(...))` written in each arm.
+- **Unfolded constants are separate statements** (`v -= C1;`); one
+  expression folds them.
+- **Comparison operand order is kept**: `cmp call_result, local; jle` is
+  `if (f() > local)`.
+- **Literal audit tool**: scratchpad wx/litaudit.py counts each
+  function's image literal references against the object's `$SG`
+  relocations; it caught a function pushing another function's objects
+  (pick_map).
+- **`#pragma auto_inline(off)` around a plain (non-`inline`) definition
+  keeps it out of line** with plain call sites, reproducing a local
+  function-pointer stand-in's object exactly; /Ob2 otherwise auto-inlines
+  a plain function even when defined after its only caller. It does not
+  affect explicit `inline` header functions (base_build/has_fac_built).
+- **Byte reads of an enable mask let VC6 fold a later reload into a memory
+  operand**; `is_human(f)` gives the image's separate load (chat).
+- **BYTE_EXACT claims mask relocation targets**: a claimed function can
+  still push the wrong object (another function's literal, a duplicate
+  unbound stand-in for a bound pointer cell). Run scratchpad
+  wx/litaudit_all.py, which compares each function's image references
+  with ours as sets keyed by text or bound base (robust to reordering),
+  including its section on exact claims.
+- **A literal object referenced from a non-owner function means the
+  owner was expanded there**; if the caller's references collapse to one
+  site, the original called it at every site and VC6 merged the
+  expansions (process_message: 18 end_of_event copies -> calls).
+- **Message blocks written at their tests restore early teardown spend
+  that probes were hiding** in big Popup functions (order_veh).
+- **Under unpooling an expanded callee's literal keeps the callee's place
+  in the image's literal run**: a literal ahead of its function's run
+  means an earlier same-unit callee was expanded; call it instead of a
+  hand copy (tech_achieved/tech_secret).
+- **An inline's buffer sharing a slot with a caller buffer** means the
+  caller's buffer was block-scoped.
+- **Removing even unused declarations from a shared header renumbers
+  `$SG` labels in every includer**: pair it with a project-wide
+  rebind-literals.
+- **A register-held 1 returned once at a failure join** is a flag local
+  (`BOOL result = true; ... result = false; if (result) cleanup(); return
+  result;`) (map_init).
+- **A lone `dec eax` falling into a shared `return K` in a nested switch**
+  is an explicit `case N: return K;` beside `default: return K;`.
+- **A goto-target block written after the cleanup keeps the image's
+  layout while its literals take the later source position** (tour).
+- **A whole-map loop walking `add eax,0x2c`** is
+  `tile = map_tiles(); for (...; i++, tile++)`; `map_tiles()[i]` reloads
+  the base each iteration.
+- **When the image enters one block from several arms, write it once**:
+  VC6 does not merge our duplicated copies (world_rainfall).
+- **`static const` arrays and const local statics go to .rdata**: drop
+  `const` when the image object is in .data.
+- **Header-inline literals emit as `??_C` COMDATs the linker merges**:
+  bind them with `RECOVERY_LITERAL: v2 merged`, one per using unit.
+- **Two identical literals in one unpooled function are two `$SG`
+  objects**; one image object means the original passed it through one
+  expression (an inline helper's parameter or a local pointer).
+- **Case order from literal order**: in a big jump-table switch the
+  image's unpooled literal order is the original case order (literals are
+  emitted in parse order); reordering cases to match can restore
+  cross-jumps that only happen in that order (process_message).
+- **Shared-literal census** (scratchpad w1b10/census.py): a literal
+  referenced by two image functions belongs to one; if our other
+  function has its own copy of the text, it is a hand copy.
+- **In big functions, rank candidates by image-only/ours-only diff
+  lines, not permute distance** (register shifts dominate distance).
+- **Shared tail-merge target**: when the image cross-jumps several tails
+  into the last copy and ours into the first, write the tail once after the
+  last site as a label and goto it (locals skipped by the goto must be
+  declare-then-assign for C2362) (give_hints).
+- **A fixed store just above a per-faction array inside its loop** is an
+  out-of-bounds `arr[MaxPlayerNum] = ...` in the original; VC6 reserves
+  that dword (drone_riot).
+- **Probes cannot fix a destructor expanded at our early returns that the
+  image calls**: if no probe changes the EH state count, spend is not the
+  lever (make_gift).
+- **Before moving a helper to another unit, check every same-unit caller
+  that expands it** (0x402320).
+- **Visible but unused header inlines flip ties in a unit**: gate new
+  shared helpers per unit and fix flipped functions by spelling (a named
+  temporary for a repeated call result).
+- **An expanded same-unit function that also keeps an uncalled out-of-line
+  copy** is `MEASURED inline` on the definition (plain definitions are not
+  auto-inlined there); earlier declarations also need MEASURED (C2375).
+- **A census "expansion" at fuzzy similarity (~0.8) needs confirmation**
+  from writes to the callee's own globals (clear_council_notify was a
+  false positive).
+- **Small compare-chain switches are laid out by value**; source case
+  order then shows only in literal order.
+- **A search loop that breaks and re-tests `i >= N`** was `goto found`
+  from inside the loop with the not-found code after it.
+- **Call pushes hoisted above `test eax; je`** mean an if/else whose arms
+  make the same call with the same trailing arguments.
+- **An expanded inline re-reading its argument at each use** had a
+  reference parameter (or was a macro); a virtual the image calls
+  directly inside an inline was a qualified `Base::f()` call.
+- **VC6 numbers a call's literal arguments right to left**: in
+  `f("A", "B")`, "B" gets the lower `$SG` and address.
+- **A literal inside an inline body is a `??_C` COMDAT even in unpooled
+  units**, placed after the caller's own literals.
+- **A callee tail `if (r != 0) return 0; return 1;` folds into the
+  caller's `if (!f())` test when expanded**; `return r == 0;` leaves a
+  sete/test pair.
+- **Define new shared inlines in a narrow header**: one inline added to a
+  wide header flipped an exact includer.
+- **A head re-check after an inline seek survives only when the seek and
+  the accessor go through different object expressions** (internal_receive).
+- **Two arms ending in the same call with separate tests**:
+  `if (c ? A && !f() : B && !f()) g();` keeps both f() calls and one g().
+- **A scratch buffer in its own slot beside a block-scoped buffer** is
+  function-scoped in the original (block scope lets VC6 overlap them).
+- **Declaration count before a function couples to register ties**:
+  removing N externs from an included header shifts every later `$SG` by
+  N and can flip a tie in an unrelated includer (on_iface_button_clicked
+  is exact only at its current count). Treat such flips as counter
+  coupling; leave harmless unused declarations rather than pad.
+- **Destructor-chain spelling is not a budget lever** (2026-11-16
+  investigation): respelling ~Popup/~BasePop/~Scroll bodies changed
+  nothing, every out-of-line destructor copy is exact, and 36 of 46 exact
+  Popup functions need no probe. Teardown-depth probes are caller-local
+  missing spend: look for natural accessor spellings per function.
+- **File-local helper twins usually stand in for original header
+  inlines** (expand_rect, StringStruct accessors, get_title/get_name,
+  Spot::add RECT, has_fac layers): the image's out-of-line copies have
+  one or two callers. Move them to a header only after per-unit
+  measurement; header edits shift `$SG` counters, so rebind before
+  reading losses.
+- **has_fac calls bitmask directly** (image 0x00421670); the extra
+  has_fac_built layer starved callers' budgets.
+- **`if (!a || b) {T} else {E}` and `if (a && !b) {E} else {T}` compile
+  identically** but emit literals in source order: let the image's literal
+  order choose the arm written first.
+- **A function exact only under /GF can be a tie on its count of distinct
+  address constants** (ReportIf::draw_security/draw_intel flipped at the
+  unpooled switch; sharing any two pairs restores them, but the image has
+  distinct addresses, so the real source difference is still open).
+- **An arm returning before a flag-tested join loses the shared tail**:
+  let it fall to the join's `if (!flag) return;` (council_action).
+- **Definition position never gates explicit inlines** (micro-tested
+  2026-11-16): an `inline` callee defined after an inline caller or plain
+  caller, even if first declared non-inline, is still expanded; VC6
+  decides at the end of the unit.
+- **Only an if/else assignment keeps a materialised setne**:
+  `(x & 1) != 0`, `!!`, `?:` all fold back to the masked value; `if (x & 1)
+  f = 1; else f = 0;` gives xor/test/setne at the arm's start.
+- **A named call-result local swaps lea base/index**: write the call
+  inside the expression, with unrelated stores after the statement.
+- **A frame 4 bytes larger with an array fill starting at `[ebp-N+4]`** is
+  an array declared one larger and indexed from 1.
+- **Step a pointer-held RECT with `offset_rect(cell, 0, rect_height(&src) +
+  K)`** when the image computes the step once; separate `+=` reloads.
+- **One null check per base conversion through a member**: write
+  `static_cast<Base *>(&member)` at each use; a cached two-step cast gives
+  two checks; call base members as `member.Base::f()`.
+- **A branchy push sequence after shared pushes is an if/else of two
+  identical calls**; a `?:` argument compiles branchless (setcc).
+- **Dead probes go stale**: re-sweep count and chain length whenever the
+  unit changes.
+- **/Ob2 per-callee cost excludes the call's argument expressions**: under
+  pressure, source order decides which site is refused; member-access
+  depth counts only inside the callee's own body. draw_active has spare
+  budget, so its two out-of-line range calls (also at 0x004221BC/DB and
+  0x0050AB85) are still unexplained.
+- **A frame 4 bytes larger with one untouched dword just above an
+  array's last element**: the array was declared one larger, indexed from
+  0 (base_support).
+- **VC6 propagates a constant only from compares on a named local**: if
+  the image still runs a later test, the earlier compare read the field.
+- **`c == K ? A : B` as a condition materialises sete/setl**; the image's
+  branchy form is `(c != K || A) && (c == K || B)`.
+- **One added goto shifts later `$SG` numbers**: losses elsewhere after it
+  are counter coupling.
+- **VC6 hoists a call nested in an argument list ahead of every other
+  argument**: an argument the image evaluates before the call and spills
+  was computed in an earlier statement.
+- **Early-site teardowns DO respond to spend, if the spend is real**
+  (corrects an earlier note): probes built as one long if-chain (>~4 ifs)
+  are refused by /Ob2 and spend nothing, so older probe sweeps were
+  invalid. Use many separate 1-3-if probe calls. Only the gap between two
+  return sites matters; teardown decisions run in circular source order
+  starting at the first return site after the last spend region, so the
+  sites just before the spend lose depth first (pop_click: 8 three-if
+  calls after the third return reproduce all five image teardowns).
+  One-statement accessors (label_get, input_poll_state, set_value) spend
+  budget too: recovery-added wrappers can over-spend (popb). Reproducer:
+  scratchpad mx/.
+- **Consecutive early returns before any call merge their teardown
+  tails**; one combined return gets full per-site depth.
+- **N adjacent globals cleared with `xor eax,eax` + N stores and no zero
+  register** were one block clear (intrinsic memset) in the original;
+  separate `= 0` stores count toward VC6's zero-register choice
+  (battle_compute/battle_init).
+- **The last `break` in source order places a loop's after-loop block**:
+  end with `if (flag) { label: ...; return; } break;` to lay it last.
+- **Mid-body nop runs matching a call sequence's length are post-link
+  patches**: write the call; if only those bytes then differ, it is an
+  exclusion candidate, not a matching target (filefind_init).
+- **A loop's exit tail written inside the loop schedules differently.**
+  `for (;;) { if (ok) { tail; return p; } body }` loads and stores the tail
+  in a different order from `while (!ok) { body } tail;`. Heap::get
+  0x005D4680 became exact this way after six tail respellings tied.
+- **Read the field, not a local copy, when the image reloads it.**
+  `x = rec->f; if (x >= 0) y = x + 1;` keeps a `mov ecx,eax; inc ecx`
+  copy; reading `rec->f` at each use gives the image's reload
+  (vox_create_record 0x006393C0).
+- **A single-site re-sweep moves one teardown level per step.** When the
+  image keeps a different intermediate state rather than more or fewer,
+  spend is not the lever (draw_social 0x00430090).
+- **Tool trap:** `recover permute --candidates` replacements are scoped to
+  the function body; a deck cannot add a helper before the function.
+  Edit the file and `measure` instead.
+- **VC5 file statics:** caviar's objects name file-static data
+  `_name$S<n>`; v2 RECOVERY_OBJECT bindings on those statics do not
+  resolve yet (framework gap), so referencing functions measure REFUSED.
 - **Canonicalised forms (not levers).** `f(a) < f(b)` and its mirrored or
   negated forms give the same call order; `a * b` vs `b * a` compile
   identically.
