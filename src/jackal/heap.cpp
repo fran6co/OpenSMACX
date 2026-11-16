@@ -254,7 +254,13 @@ Return Value: Memory pointer with address to requested size
 Status: Complete
 */
 LPVOID Heap::get(int req_size) {
-    while (static_cast<int>(free_size_) < req_size) {
+    for (;;) {
+        if (static_cast<int>(free_size_) >= req_size) {
+            LPVOID free_mem_addr = current_;
+            free_size_ -= req_size;
+            current_ = LPVOID(size_t(current_) + req_size);
+            return free_mem_addr;
+        }
         if (err_flags_ & 1) {
             return NULL; // error
         }
@@ -286,8 +292,4 @@ LPVOID Heap::get(int req_size) {
         base_size_ += 1024;
         free_size_ += 1024;
     }
-    LPVOID free_mem_addr = current_;
-    free_size_ -= req_size;
-    current_ = LPVOID(size_t(current_) + req_size);
-    return free_mem_addr;
 }

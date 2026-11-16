@@ -1065,9 +1065,11 @@ void Datalink::draw_project() {
 // WORKAROUND(inline): draw_social's image calls the first BasePop list's
 // ~StringList (0x004066C0) out of line at 0x00430642 and expands only the
 // second (0x0043068F); written out, ours expands both (21 EH states against
-// the image's 20). This dead branchy spend, called after the last expansion,
-// reproduces the image's 20-state unwind topology; the original's natural
-// spend is not identified.
+// the image's 20). Two calls of this dead branchy spend give 20 states (re-swept
+// 2026-11-16: 0-10 calls at four positions; position is irrelevant). The final
+// teardown still keeps state 13 where the image keeps 12 (13,10,9 vs 12,10,9):
+// spend drops 12 before 13, so the remaining difference is the teardown's
+// composition, not budget. The original's natural spend is not identified.
 static inline void dl_social_budget_probe(int x) {
     if (x == 1) x = 2;
     if (x == 2) x = 3;
@@ -1146,10 +1148,6 @@ void Datalink::draw_social() {
             }
         }
     }
-    dl_social_budget_probe(0);  // WORKAROUND(inline): see the helper
-    dl_social_budget_probe(0);  // WORKAROUND(inline): see the helper
-    dl_social_budget_probe(0);  // WORKAROUND(inline): see the helper
-    dl_social_budget_probe(0);  // WORKAROUND(inline): see the helper
     dl_social_budget_probe(0);  // WORKAROUND(inline): see the helper
     dl_social_budget_probe(0);  // WORKAROUND(inline): see the helper
 }

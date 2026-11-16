@@ -1267,13 +1267,12 @@ VoxRenderRecord *__cdecl vox_create_record(
     record->draw_right_ =
         static_cast<int>(static_cast<int16_t>(static_cast<uint16_t>(
             setup_block->colour_width_))) - 1;
-    const int height_minus_1 =
+    record->draw_bottom_ =
         static_cast<int>(static_cast<int16_t>(static_cast<uint16_t>(
             setup_block->height_))) - 1;
-    record->draw_bottom_ = height_minus_1;
-    if (record->draw_right_ >= 0 && height_minus_1 >= 0) {
+    if (record->draw_right_ >= 0 && record->draw_bottom_ >= 0) {
         record->draw_width_ = record->draw_right_ + 1;
-        record->draw_height_ = height_minus_1 + 1;
+        record->draw_height_ = record->draw_bottom_ + 1;
     } else {
         record->draw_width_ = 0;
         record->draw_height_ = 0;
