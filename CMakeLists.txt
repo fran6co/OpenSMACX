@@ -202,7 +202,6 @@ set(OPENSMACX_SOURCES
     src/danger.cpp
     src/directdraw.cpp
     src/number_parsing.cpp
-    src/scenario_undo.cpp
     src/crt_random.cpp
     src/graphicwin.cpp
     src/graphicwin_events.cpp
@@ -582,9 +581,6 @@ set_source_files_properties(src/gamma.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
 # The split unit is an inferred boundary, not a historical filename.
 set_source_files_properties(src/movie_media_decoder_g6.cpp PROPERTIES COMPILE_OPTIONS "/G6")
 
-# Preserve the measured frame-based context of the scenario-editor undo owner.
-# General's unrelated helpers retain their independently measured default recipe.
-set_source_files_properties(src/scenario_undo.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Retain standalone compiler type evidence for these source-owned global/member
 # groups. This adds observability, not a different optimization/frame policy;
 # reference checks consume each production object's own types and relocations.
