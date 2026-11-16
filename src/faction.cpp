@@ -1365,9 +1365,12 @@ Purpose: Add the specific site to the faction's site goals for the specified til
 Return Value: n/a
 Status: Complete
 */
+// WORKAROUND(decl): console.cpp owns this object (0x00939FF0); no shared header declares it yet.
+extern char ConsoleEmptyText[];
+
 void __cdecl add_site(int faction_id, int type, int priority, int x, int y) {
     if ((x ^ y) & 1 && GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) {
-        danger("Bad SITE", "", x, y, type);
+        danger("Bad SITE", ConsoleEmptyText, x, y, type);
     }
     for (int i = 0; i < MaxSitesNum; i++) {
         if (PlayersData[faction_id].sites[i].x == x && PlayersData[faction_id].sites[i].y == y
@@ -3897,18 +3900,9 @@ void __cdecl pact_ends(int faction_id, int partner_id) {
     withdraw[1] = pact_withdraw(partner_id, faction_id);
     draw_map(1);
 
-    if (faction_id != ConsoleGlobal.faction_id_ && partner_id != ConsoleGlobal.faction_id_) {
-        // Neither side is the local player: announce only to an observer.
-        if (spying(faction_id) || spying(partner_id)
-            || (static_cast<uint8_t>(GameDataStateStorage.fields_.game_state_) & 0x80)
-            || has_treaty(ConsoleGlobal.faction_id_, faction_id, DTREATY_PACT)
-            || has_treaty(ConsoleGlobal.faction_id_, partner_id, DTREATY_PACT)) {
-            say_faction_noun(0, faction_id);
-            say_faction_noun(1, partner_id);
-            parse_says(2, get_pact_hood(faction_id, partner_id), -1, -1);
-            X_pop("ENDPACT3", 0);
-        }
-    } else {
+    // Literal order (ENDPACT1/2 before ENDPACT3) puts the local player's
+    // arm first in the source; VC6 lays the observer arm out first.
+    if (faction_id == ConsoleGlobal.faction_id_ || partner_id == ConsoleGlobal.faction_id_) {
         int use_withdraw;
         if (faction_id == ConsoleGlobal.faction_id_) {
             say_faction_noun(0, partner_id);
@@ -3929,6 +3923,15 @@ void __cdecl pact_ends(int faction_id, int partner_id) {
                         (IsMultiplayerNet ? 0 : 0x100000) | 0x80, nullptr);
         }
         popup.exec(0, nullptr);
+    } else if (spying(faction_id) || spying(partner_id)
+            || (static_cast<uint8_t>(GameDataStateStorage.fields_.game_state_) & 0x80)
+            || has_treaty(ConsoleGlobal.faction_id_, faction_id, DTREATY_PACT)
+            || has_treaty(ConsoleGlobal.faction_id_, partner_id, DTREATY_PACT)) {
+        // Neither side is the local player: announce only to an observer.
+        say_faction_noun(0, faction_id);
+        say_faction_noun(1, partner_id);
+        parse_says(2, get_pact_hood(faction_id, partner_id), -1, -1);
+        X_pop("ENDPACT3", 0);
     }
 }
 
@@ -4796,19 +4799,15 @@ int __cdecl propose_pact(int myFac, int otherFac) {
         if (DiplomacyProposalMode == 3) {
             return 0;
         }
-        if (!has_treaty(otherFac, myFac, 0x20) && DiploScratchFA78 <= 2
-            && !DiploScratchFA2C) {
-            if (!great_satan(myFac, 0) && !DiploScratchFA3C) {
-                if (PlayersData[otherFac].ranking <= PlayersData[myFac].ranking
-                    && DiploFriction <= 10) {
-                    parse_says(3, get_noun_phrase(otherFac, 9), -1, -1);
-                    X_pops("REJPACT", 0x100000, FactionDiplomacyPortraits[otherFac], pop_wait);
-                    return 1;
-                }
-                parse_says(3, get_noun_phrase(otherFac, 9), -1, -1);
-                X_pops("REJPACTPOWER", 0x100000, FactionDiplomacyPortraits[otherFac], pop_wait);
-                return 1;
-            }
+        // Literal order (HATE, AHEAD, POWER, then REJPACT) gives the source
+        // chain; VC6 lays the arms out in reverse.
+        if (has_treaty(otherFac, myFac, 0x20) || DiploScratchFA78 > 2 || DiploScratchFA2C) {
+            parse_says(3, get_phrase(myFac, 5), -1, -1);
+            X_pops("REJPACTHATE", 0x100000, FactionDiplomacyPortraits[otherFac], pop_wait);
+            PlayersData[otherFac].diplo_patience[myFac]++;
+            return 1;
+        }
+        if (great_satan(myFac, 0) || DiploScratchFA3C) {
             parse_says(3, get_phrase(myFac, 3), -1, -1);
             clear();
             strcat(StringTemp, "REJPACTAHEAD");
@@ -4817,9 +4816,14 @@ int __cdecl propose_pact(int myFac, int otherFac) {
             X_pops(StringTemp, 0x100000, FactionDiplomacyPortraits[otherFac], pop_wait);
             return 1;
         }
-        parse_says(3, get_phrase(myFac, 5), -1, -1);
-        X_pops("REJPACTHATE", 0x100000, FactionDiplomacyPortraits[otherFac], pop_wait);
-        PlayersData[otherFac].diplo_patience[myFac]++;
+        if (PlayersData[otherFac].ranking > PlayersData[myFac].ranking
+            || DiploFriction > 10) {
+            parse_says(3, get_noun_phrase(otherFac, 9), -1, -1);
+            X_pops("REJPACTPOWER", 0x100000, FactionDiplomacyPortraits[otherFac], pop_wait);
+            return 1;
+        }
+        parse_says(3, get_noun_phrase(otherFac, 9), -1, -1);
+        X_pops("REJPACT", 0x100000, FactionDiplomacyPortraits[otherFac], pop_wait);
         return 1;
     }
     int other_commerce = PlayersData[otherFac].tech_commerce_bonus;
@@ -5933,19 +5937,21 @@ int __cdecl propose_treaty(int actor, int other)
         if (DiplomacyProposalMode == 3) {
             return 0;
         }
-        if (!(has_treaty(other, actor, 0x20)) && DiploScratchFA78 <= 4) {
-            if (DiploScratchFA3C) {
-                parse_says(4, get_noun_phrase(other, 9), -1, -1);
-                parse_says(5, get_phrase(actor, 3), -1, -1);
-                X_pops("REJTREATYAHEAD", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
-                return 1;
-            }
-            X_pops("REJTREATY", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
+        // Literal order (HATE before AHEAD and REJTREATY) gives the source
+        // chain; VC6 lays the HATE arm out last.
+        if (has_treaty(other, actor, 0x20) || DiploScratchFA78 > 4) {
+            parse_set(Players[actor].is_leader_female, 0);
+            parse_says(4, Players[actor].insult_leader, -1, -1);
+            X_pops("REJTREATYHATE", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
             return 1;
         }
-        parse_set(Players[actor].is_leader_female, 0);
-        parse_says(4, Players[actor].insult_leader, -1, -1);
-        X_pops("REJTREATYHATE", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
+        if (DiploScratchFA3C) {
+            parse_says(4, get_noun_phrase(other, 9), -1, -1);
+            parse_says(5, get_phrase(actor, 3), -1, -1);
+            X_pops("REJTREATYAHEAD", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
+            return 1;
+        }
+        X_pops("REJTREATY", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
         return 1;
     }
     int treaty_score = (PlayersData[actor].energy_reserves + DiploScratchFA78)
@@ -6066,44 +6072,46 @@ int __cdecl propose_treaty(int actor, int other)
             ConsoleGlobal.update_data(0);
         }
     }
-    if (accepted && (!should_offer_technology || offer_made)) {
-        if ((DiplomacyProposalMode == 4 || DiplomacyProposalMode == 5) && offer_taken) {
-            DiploScratchF7E8 = 0;
-        }
-        if (partner_id && !DiploScratchFA8C) {
-            parse_set(Players[actor].is_leader_female, 0);
-            parse_says(5, Players[actor].title_leader, -1, -1);
-            parse_set(Players[partner_id].noun_gender, Players[partner_id].is_noun_plural);
-            parse_says(6, Players[partner_id].noun_faction, -1, -1);
-            if (!X_pops("GIMMEHELP", 0x100000, FactionDiplomacyPortraits[other], pop_wait)) {
-                if ((partner_threat
-                        || (int)GameDataStateStorage.fields_.faction_rankings_[7] == actor
-                        || DiploScratchFA78 > 3 || DiplomacyProposalMode == 1)
-                    && !offer_taken && strcmp(Players[other].filename, "GAIANS")) {
-                    X_pops("REJTREATYNOHELP", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
-                    PlayersData[other].diplo_patience[actor]++;
-                    return 1;
-                }
-            } else {
-                diplo_lock(0);
-                net_treaty_off(actor, other, DTREATY_UNK_800000, 0);
-                net_double_cross(actor, partner_id, other, 1);
-                diplo_unlock();
-                DiploScratchF7E8 = 0;
-                DiploScratchFA4C = 0;
+    // Literal order (the bribe rejections before GIMMEHELP) puts the
+    // rejection arm first in the source; VC6 lays it out last.
+    if (!accepted || (should_offer_technology && !offer_made)) {
+        if (!offer_made) {
+            if (DiplomacyProposalMode == 1) {
+                return 0;
             }
+            X_pops("REJTREATYBADBRIBE", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
+            return 1;
         }
-        make_treaty(actor, other);
+        X_pops("REJTREATYNOBRIBE", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
         return 1;
     }
-    if (!offer_made) {
-        if (DiplomacyProposalMode == 1) {
-            return 0;
-        }
-        X_pops("REJTREATYBADBRIBE", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
-        return 1;
+    if ((DiplomacyProposalMode == 4 || DiplomacyProposalMode == 5) && offer_taken) {
+        DiploScratchF7E8 = 0;
     }
-    X_pops("REJTREATYNOBRIBE", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
+    if (partner_id && !DiploScratchFA8C) {
+        parse_set(Players[actor].is_leader_female, 0);
+        parse_says(5, Players[actor].title_leader, -1, -1);
+        parse_set(Players[partner_id].noun_gender, Players[partner_id].is_noun_plural);
+        parse_says(6, Players[partner_id].noun_faction, -1, -1);
+        if (!X_pops("GIMMEHELP", 0x100000, FactionDiplomacyPortraits[other], pop_wait)) {
+            if ((partner_threat
+                    || (int)GameDataStateStorage.fields_.faction_rankings_[7] == actor
+                    || DiploScratchFA78 > 3 || DiplomacyProposalMode == 1)
+                && !offer_taken && strcmp(Players[other].filename, "GAIANS")) {
+                X_pops("REJTREATYNOHELP", 0x100000, FactionDiplomacyPortraits[other], pop_wait);
+                PlayersData[other].diplo_patience[actor]++;
+                return 1;
+            }
+        } else {
+            diplo_lock(0);
+            net_treaty_off(actor, other, DTREATY_UNK_800000, 0);
+            net_double_cross(actor, partner_id, other, 1);
+            diplo_unlock();
+            DiploScratchF7E8 = 0;
+            DiploScratchFA4C = 0;
+        }
+    }
+    make_treaty(actor, other);
     return 1;
 }
 
@@ -10340,17 +10348,7 @@ communicate_late_truce_tech_complete:
                     }
                 }
             } else {
-                net_set_agenda(faction_id_with, faction_id, 8, 1, 0);
-                net_treaty_on(faction_id_with, faction_id, 0x20, 1);
-communicate_late_score_declined:
-                parse_says(0, get_title(faction_id), -1, -1);
-                parse_says(1, get_name(faction_id), -1, -1);
-                parse_says(2, get_adjective_insult_faction(faction_id), -1, -1);
-                X_pops("MOREWAR", 0x100000,
-                       FactionDiplomacyPortraits[faction_id_with], pop_wait);
-                PlayersData[faction_id].diplo_spoke[faction_id_with] =
-                    GameDataStateStorage.fields_.turn_current_num_;
-                goto communicate_final_cleanup;
+                goto communicate_more_war;
             }
         }
         DiploScratchF7E4 = GameDataStateStorage.fields_.turn_current_num_;
@@ -10376,6 +10374,21 @@ communicate_late_score_declined:
         X_pops("TRUCEYOUPAY", 0x100000,
                FactionDiplomacyPortraits[faction_id_with], pop_wait);
     }
+    goto communicate_special_war_late_exit;
+    // Literal order (MOREWAR after TRUCEYOUPAY) places this block here in
+    // the source; VC6 lays it out after the TRUCEMEPAY arm's jump.
+communicate_more_war:
+    net_set_agenda(faction_id_with, faction_id, 8, 1, 0);
+    net_treaty_on(faction_id_with, faction_id, 0x20, 1);
+communicate_late_score_declined:
+    parse_says(0, get_title(faction_id), -1, -1);
+    parse_says(1, get_name(faction_id), -1, -1);
+    parse_says(2, get_adjective_insult_faction(faction_id), -1, -1);
+    X_pops("MOREWAR", 0x100000,
+           FactionDiplomacyPortraits[faction_id_with], pop_wait);
+    PlayersData[faction_id].diplo_spoke[faction_id_with] =
+        GameDataStateStorage.fields_.turn_current_num_;
+    goto communicate_final_cleanup;
 }
 
 communicate_special_war_late_exit: // native 0x00556CDE

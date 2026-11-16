@@ -1340,7 +1340,31 @@ void __cdecl base_change(int base_id, int production_id) {
         }
     }
     if (!new_unbuilt || new_count) return;
-    if (old_relevant && (!old_count || base_project(-previous - 70) != -1)) {
+    // Literal order (BEGINPROJECT before CHANGEPROJECT) puts the new-project
+    // arm first in the source; VC6 lays the change arm out first.
+    if (!old_relevant || (old_count && base_project(-previous - 70) == -1)) {
+        if (!(PlayersData[faction].secret_project_intel[word] & mask)) {
+            if (GameDataStateStorage.fields_.sunspot_duration_ > 0 && project != 31) return;
+            parse_set(Players[faction].is_leader_female, 0);
+            parse_says(0, Players[faction].title_leader, -1, -1);
+            parse_set(Players[faction].is_leader_female, 0);
+            parse_says(1, Players[faction].name_leader, -1, -1);
+            parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
+            parse_says(2, Players[faction].noun_faction, -1, -1);
+            parse_say(3, Facility[facility].name, -1, -1);
+            if (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 1) {
+                wave_it(36);
+            } else {
+                wave_it(38);
+            }
+            popp(ScriptPopupFile, "BEGINPROJECT", 0, "secproj_sm.pcx", 0);
+            PlayersData[faction].secret_project_intel[word] |= mask;
+        }
+        if (project == 31) {
+            interlude(11, 0, 1, 0);
+            GameDataStateStorage.fields_.game_interlude_flags_ |= 0x400;
+        }
+    } else {
         for (other = 0; other < GameDataStateStorage.fields_.base_current_count_; ++other)
             if (Bases[other].faction_id_current == faction
                 && Bases[other].queue_production_id[0] == previous)
@@ -1356,28 +1380,6 @@ void __cdecl base_change(int base_id, int production_id) {
         PlayersData[faction].secret_project_intel[word] |= mask;
         bitmask((previous < 0 ? -previous : previous) - 70, &word, &mask);
         PlayersData[faction].secret_project_intel[word] &= ~mask;
-        return;
-    }
-    if (!(PlayersData[faction].secret_project_intel[word] & mask)) {
-        if (GameDataStateStorage.fields_.sunspot_duration_ > 0 && project != 31) return;
-        parse_set(Players[faction].is_leader_female, 0);
-        parse_says(0, Players[faction].title_leader, -1, -1);
-        parse_set(Players[faction].is_leader_female, 0);
-        parse_says(1, Players[faction].name_leader, -1, -1);
-        parse_set(Players[faction].noun_gender, Players[faction].is_noun_plural);
-        parse_says(2, Players[faction].noun_faction, -1, -1);
-        parse_say(3, Facility[facility].name, -1, -1);
-        if (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 1) {
-            wave_it(36);
-        } else {
-            wave_it(38);
-        }
-        popp(ScriptPopupFile, "BEGINPROJECT", 0, "secproj_sm.pcx", 0);
-        PlayersData[faction].secret_project_intel[word] |= mask;
-    }
-    if (project == 31) {
-        interlude(11, 0, 1, 0);
-        GameDataStateStorage.fields_.game_interlude_flags_ |= 0x400;
     }
 }
 

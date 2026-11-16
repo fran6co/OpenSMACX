@@ -274,6 +274,11 @@ inline void *VoiceReceiverEntry::operator new(size_t size, Heap *owner) throw() 
             StringAllocationHeap = owner;
             return memory;
         }
+        // Inline-function literals are VC6 COMDATs: the image keeps one copy
+        // of each (0x682700/0x682724) that every unit's inline allocator
+        // shares (StringStruct::add 0x401100, ServiceStruct::add 0x401760).
+        // RECOVERY_LITERAL: v2 merged 0x00682700 0x00682722 ??_C@_0CC@JCEM@out?5of?5heap?5space?5in?5new?5functio@ 0x00401760
+        // RECOVERY_LITERAL: v2 merged 0x00682724 0x0068272D ??_C@_08JLBK@Aborting?$AA@ 0x00401760
         MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
         exit(3);
     }
@@ -2349,27 +2354,13 @@ int Net::session_picker_dialog() {
     return 4;
   }
 
-  static char choose_title[] = "Would you like to...?";
-  static char create_or_join[] = "Start a new session or...";
-  static char find_session[] = "Search for an existing one?";
-  static char no_sessions[] =
-      "No sessions are currently running.  Would you like to try again?";
-  static char yes_text[] = "Yes";
-  static char no_text[] = "No";
-  static char create_text[] = "Create Session";
-  // The session list's button has its own copy of the text (0x697AB0).
-  static char list_create_text[] = "Create Session";
-  static char session_name_text[] = "Session Name:";
-  static char player_limit_text[] = "Maximum Players:";
-  static char session_password_text[] = "Session Password (Optional):";
-  static char player_name_text[] = "Your Name:";
-  static char password_required_text[] =
-      "Password required for this session:";
+  // Every caption is a plain literal in the unit's own run (0x697A04..
+  // 0x697B10); the list button's "Create Session" is its own copy (0x697AB0).
 
   if (popup->init(0x10, 0) != 0) goto fail;
-  popup->string(choose_title);
-  popup->dialogs().Dialogs::item(create_or_join, 0);
-  popup->dialogs().Dialogs::item(find_session, 1);
+  popup->string("Would you like to...?");
+  popup->dialogs().Dialogs::item("Start a new session or...", 0);
+  popup->dialogs().Dialogs::item("Search for an existing one?", 1);
   if (popup->exec(0, 0) == 0) goto create;
 
   // Search: enumerate, and while nothing is running offer to retry. The
@@ -2378,10 +2369,10 @@ int Net::session_picker_dialog() {
   while (1) {
     if (sessions.entry_count_ != 0) break;
     if (popup->init(0x10, 0) != 0) goto fail;
-    popup->string(no_sessions);
-    popup->dialogs().Dialogs::item(yes_text, 0);
-    popup->dialogs().Dialogs::item(no_text, 1);
-    popup->button(create_text);
+    popup->string("No sessions are currently running.  Would you like to try again?");
+    popup->dialogs().Dialogs::item("Yes", 0);
+    popup->dialogs().Dialogs::item("No", 1);
+    popup->button("Create Session");
     {
       const int retry_choice = popup->exec(0, 0);
       if (popup->input_poll_state() == 1) goto create;
@@ -2407,7 +2398,7 @@ list:
           row);
     }
   }
-  popup->button(list_create_text);
+  popup->button("Create Session");
   {
     const int selected_row = popup->exec(0, 0);
     if (selected_row == -1) goto fail;
@@ -2422,11 +2413,11 @@ create:
   if (popup->init(0x44, 0) != 0) goto fail;
   {
     popup->set_width(0x190);
-    popup->dialogs().EditGroup::edit(session_name_text, 0, 0x32);
+    popup->dialogs().EditGroup::edit("Session Name:", 0, 0x32);
     char default_players[12];
     char *const players_text = _itoa(0x10, default_players, 10);
-    popup->dialogs().EditGroup::edit(player_limit_text, players_text, 2);
-    popup->dialogs().EditGroup::edit(session_password_text, 0, 0x32);
+    popup->dialogs().EditGroup::edit("Maximum Players:", players_text, 2);
+    popup->dialogs().EditGroup::edit("Session Password (Optional):", 0, 0x32);
     // Native 0x63156D resolves the Dialog virtual-base displacement from
     // Dialogs' vbtable, then writes 1 to Dialog::field_4C_. Qualification is
     // required so C++ applies that genuine shared-virtual-base adjustment.
@@ -2460,9 +2451,9 @@ created:
 
 join:
   if (popup->init(4, 0) == 0) {
-    popup->dialogs().EditGroup::edit(player_name_text, 0, 0x32);
+    popup->dialogs().EditGroup::edit("Your Name:", 0, 0x32);
     if (session->password_ != 0 && session->password_[0] != 0) {
-      popup->dialogs().EditGroup::edit(password_required_text, 0, 0x32);
+      popup->dialogs().EditGroup::edit("Password required for this session:", 0, 0x32);
     }
     // The original ignores the credentials dialog's result and releases the
     // popup before joining.

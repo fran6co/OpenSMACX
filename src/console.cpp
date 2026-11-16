@@ -441,6 +441,11 @@ int ConsoleControlTurnActive;
 char ConsoleChatInput[1] = {0};
 // RECOVERY_OBJECT: v1 0x00939FEC ?LandmarkDefaultName@@3PADA
 char LandmarkDefaultName[1] = {0};
+// The empty second string every debug danger() call passes: cursor_next
+// (5109B0), four on_key_click sites and faction's add_site (579B95) all push
+// this one zero-filled object, so it is named storage, not a per-site literal.
+// RECOVERY_OBJECT: v1 0x00939FF0 ?ConsoleEmptyText@@3PADA
+char ConsoleEmptyText[1] = {0};
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00515770 ?chat@Console@@QAEXH@Z 0x00515770-0x005158F4
@@ -466,29 +471,30 @@ void Console::chat(int target_faction) {
         return;
     }
 
-    if (network.primary_state_.session_phase_ >= 2) {
-        const unsigned int enabled = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff;
-        if ((enabled & network.field_1BD0_) != enabled) {
-            for (int faction = 1; faction < 8; ++faction) {
-                const int bit = 1 << faction;
-                if (!is_human(faction)) continue;
-                if (target_faction > 0) {
-                    if (faction != target_faction) continue;
-                } else if (CommlinkPending) {
-                    if (faction != CommlinkFaction) continue;
-                } else if (!TurnRedrawPending &&
-                           !(network.field_1BD0_ & bit)) {
-                    continue;
-                }
-                message_chat(0x1e00, faction, message);
-                log_say("Sent CHAT", message, faction, 0, 0);
+    // Literal order (ALL(2) at 0x68A91C before "Sent CHAT" at 0x68A930) puts
+    // the broadcast arm first in the source; VC6 lays it out last.
+    unsigned int enabled;
+    if (network.primary_state_.session_phase_ < 2
+        || ((enabled = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff)
+            & network.field_1BD0_) == enabled) {
+        message_chat(0x4e00, 0, message);
+        log_say("Sent CHAT ALL(2)", message, 0, 0, 0);
+    } else {
+        for (int faction = 1; faction < 8; ++faction) {
+            const int bit = 1 << faction;
+            if (!is_human(faction)) continue;
+            if (target_faction > 0) {
+                if (faction != target_faction) continue;
+            } else if (CommlinkPending) {
+                if (faction != CommlinkFaction) continue;
+            } else if (!TurnRedrawPending &&
+                       !(network.field_1BD0_ & bit)) {
+                continue;
             }
-            return;
+            message_chat(0x1e00, faction, message);
+            log_say("Sent CHAT", message, faction, 0, 0);
         }
     }
-
-    message_chat(0x4e00, 0, message);
-    log_say("Sent CHAT ALL(2)", message, 0, 0, 0);
 }
 
 // FREE FUNCTIONS THE CONSOLE BODIES CALL that no header in src/ declares yet.
@@ -1476,9 +1482,7 @@ Status: Complete
 void Console::cursor_next(int x_coord, int y_coord) {
     if (((x_coord ^ y_coord) & 1) != 0) {
         if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0) {
-// Original add_site independently passes the same zero-fill empty-string address as danger's second string argument; see its pinned call at 0x00579B95..0x00579B9F.
-// RECOVERY_LITERAL: v1 0x00939FF0 0x00939FF1 $SG63191 0x00579B70
-            danger(CursorNextDangerMsg1, "", x_coord,
+            danger(CursorNextDangerMsg1, ConsoleEmptyText, x_coord,
                   y_coord, 0);
         }
         if ((x_coord & 1) != 0) {
@@ -6730,7 +6734,7 @@ int Console::on_key_click(int a1, int a2) {
                      selected_vehicle_ >= 0; --selected_vehicle_) {
                     if (!::on_map(Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y)) {
                         veh_kill(selected_vehicle_);
-                        danger("Killed a baddy!", "", 0, 0, 0);
+                        danger("Killed a baddy!", ConsoleEmptyText, 0, 0, 0);
                         repaired = 1;
                     }
                 }
@@ -6742,12 +6746,12 @@ int Console::on_key_click(int a1, int a2) {
                         y = Vehs[selected_vehicle_].y;
                         veh_lift(selected_vehicle_);
                         veh_drop(selected_vehicle_, x, y);
-                        danger("Found a baddy!", "", 0, 0, 0);
+                        danger("Found a baddy!", ConsoleEmptyText, 0, 0, 0);
                         repaired = 1;
                     }
                 }
                 if (repaired != 0) {
-                    danger("Game fixed!", "", 0, 0, 0);
+                    danger("Game fixed!", ConsoleEmptyText, 0, 0, 0);
                 }
                 break;
             }
@@ -7044,7 +7048,7 @@ int Console::on_key_click(int a1, int a2) {
                 report_log.say(StringTemp, 0, 0, 0, 0);
             }
             report_log.set_state(FALSE);
-            danger("Made CHECKSUM FILE", "", 0, 0, 0);
+            danger("Made CHECKSUM FILE", ConsoleEmptyText, 0, 0, 0);
             break;
         }
 

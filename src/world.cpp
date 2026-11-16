@@ -2829,8 +2829,9 @@ void __cdecl world_rivers() {
                 continue;
             }
             // A fresh source: forget every earlier river's path first.
-            for (i = 0; i < MapArea; i++) {
-                map_tiles()[i].bit2 &= 0xff7fffff;
+            tile = map_tiles();
+            for (i = 0; i < MapArea; i++, tile++) {
+                tile->bit2 &= 0xff7fffff;
             }
             random_reseed(y * 0x2f + x * 0x1f);
             int river_dir = random(0, 4);
@@ -2848,9 +2849,9 @@ void __cdecl world_rivers() {
                 int cand_weight[3];
                 int cand_dir[3];
                 int cand_split[3];
+                int turn = (random(0, 2) + (river_dir - (step_parity & 1))) & 3;
                 int cand_count = 0;
                 int total_weight = 0;
-                int turn = (random(0, 2) + (river_dir - (step_parity & 1))) & 3;
                 int straight = river_dir ^ 2;
                 int best_contour = 9999;
                 int weight_base = 8;
@@ -2858,7 +2859,9 @@ void __cdecl world_rivers() {
                     if (dir == straight) {
                         continue;
                     }
-                    int next_x = wrap_map_x(RiverStepX[dir] + cur_x);
+                    int t = RiverStepX[dir] + cur_x;
+                    int flat = MapIsFlat & 1;
+                    int next_x = flat ? t : t < 0 ? t + MapLongitudeBounds : t >= (int)MapLongitudeBounds ? t - MapLongitudeBounds : t;
                     int next_y = RiverStepY[dir] + cur_y;
                     if (!on_map(next_x, next_y)) {
                         continue;
@@ -2871,7 +2874,8 @@ void __cdecl world_rivers() {
                         if (next->bit & BIT_RIVERBED) {
                             int rivers = 0;
                             for (int j = 0; j < 4; j++) {
-                                int jx = wrap_map_x(RiverStepX[j] + next_x);
+                                int tj = RiverStepX[j] + next_x;
+                                int jx = flat ? tj : tj < 0 ? tj + MapLongitudeBounds : tj >= (int)MapLongitudeBounds ? tj - MapLongitudeBounds : tj;
                                 int jy = RiverStepY[j] + next_y;
                                 if (on_map(jx, jy) && (map_loc(jx, jy)->bit & BIT_RIVERBED)) {
                                     rivers++;
@@ -2903,7 +2907,8 @@ void __cdecl world_rivers() {
                             if (k == (dir ^ 2)) {
                                 continue;
                             }
-                            int kx = wrap_map_x(RiverStepX[k] + next_x);
+                            int tk = RiverStepX[k] + next_x;
+                            int kx = flat ? tk : tk < 0 ? tk + MapLongitudeBounds : tk >= (int)MapLongitudeBounds ? tk - MapLongitudeBounds : tk;
                             int ky = RiverStepY[k] + next_y;
                             if (!on_map(kx, ky)) {
                                 continue;
@@ -2956,7 +2961,8 @@ void __cdecl world_rivers() {
                         }
                         pick -= cand_weight[i];
                     }
-                    cur_x = wrap_map_x(RiverStepX[river_dir] + cur_x);
+                    int ts = RiverStepX[river_dir] + cur_x;
+                    cur_x = (MapIsFlat & 1) ? ts : ts < 0 ? ts + MapLongitudeBounds : ts >= (int)MapLongitudeBounds ? ts - MapLongitudeBounds : ts;
                     cur_y = cur_y + RiverStepY[river_dir];
                     int alt = map_loc(cur_x, cur_y)->climate >> 5;
                     if (alt != band) {
@@ -2990,16 +2996,18 @@ void __cdecl world_rivers() {
                 map_loc(cur_x, cur_y)->bit |= BIT_RIVER_LAKE;
             }
             river_count++;
-            for (i = 0; i < MapArea; i++) {
-                if (map_tiles()[i].bit2 & 0x800000) {
-                    map_tiles()[i].bit |= BIT_RIVER;
+            tile = map_tiles();
+            for (i = 0; i < MapArea; i++, tile++) {
+                if (tile->bit2 & 0x800000) {
+                    tile->bit |= BIT_RIVER;
                 }
             }
         }
         do_all_non_input();
     }
-    for (i = 0; i < MapArea; i++) {
-        map_tiles()[i].bit2 &= 0xff7fffff;
+    tile = map_tiles();
+    for (i = 0; i < MapArea; i++, tile++) {
+        tile->bit2 &= 0xff7fffff;
     }
 }
 
@@ -3335,8 +3343,9 @@ void __cdecl world_rainfall() {
     int saved_faction = ConsoleGlobal.faction_id_;
     TerraformDrownedBaseId = -1;
     TerraformTileFaction = -1;
-    for (int i = 0; i < MapArea; i++) {
-        MapTiles[i].unk_1 = 0;
+    Map *tile = map_tiles();
+    for (int i = 0; i < MapArea; i++, tile++) {
+        tile->unk_1 = 0;
     }
 
     int y;
@@ -3484,42 +3493,28 @@ void __cdecl world_rainfall() {
                         && rain_carry) {
                         rain_carry--;
                     }
-                } else if (altitude < 3) {
-                    cloud_count = 0;
-                    rain_carry = 1;
-                    if (pass2_count) {
-                        pass2_count += -1 - cloud_cover;
-                        if (pass2_count < 1) {
-                            pass2_count = 0;
-                            cloud_count = 0;
-                            if (cloud_cover || altitude < 3) {
-                                rain_carry = 1;
-                            }
-                        }
-                    }
-                } else if (!rain_carry) {
-                    if (pass2_count) {
-                        pass2_count += -1 - cloud_cover;
-                        if (pass2_count < 1) {
-                            pass2_count = 0;
-                            cloud_count = 0;
-                            if (cloud_cover || altitude < 3) {
-                                rain_carry = 1;
-                            }
-                        }
-                    }
-                } else if (pass2_count) {
-                    pass2_count += -1 - cloud_cover;
-                    if (pass2_count < 1) {
-                        pass2_count = 0;
+                } else {
+                    // One shared decay block (image 0x5C4C6B/0x5C4C72): the
+                    // altitude-3 arms thread into it.
+                    if (altitude < 3) {
                         cloud_count = 0;
-                        if (cloud_cover || altitude < 3) {
-                            rain_carry = 1;
-                        }
+                        rain_carry = 1;
                     }
-                } else if (++cloud_count > cloud_cover * 4 + 2) {
-                    rain_carry = 0;
-                    cloud_count = 0;
+                    if (altitude < 3 || !rain_carry || pass2_count) {
+                        if (pass2_count) {
+                            pass2_count += -1 - cloud_cover;
+                            if (pass2_count < 1) {
+                                pass2_count = 0;
+                                cloud_count = 0;
+                                if (cloud_cover || altitude < 3) {
+                                    rain_carry = 1;
+                                }
+                            }
+                        }
+                    } else if (++cloud_count > cloud_cover * 4 + 2) {
+                        rain_carry = 0;
+                        cloud_count = 0;
+                    }
                 }
                 if (tile->bit & BIT_RIVER) {
                     if ((x >> 1) % 3 && adjustment < 0) {
