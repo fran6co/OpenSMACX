@@ -3309,10 +3309,7 @@ void Win::on_paint(RECT *area) {
             PaletteActive->entries_[index].peGreen,
             PaletteActive->entries_[index].peBlue));
     // A failed brush skips the rest, the context unreleased.
-    if (brush == nullptr) {
-        return;
-    }
-    {
+    if (brush != nullptr) {
         if (source == nullptr) {
             FillRect(hdc, area, brush);
         } else {
@@ -3328,10 +3325,8 @@ void Win::on_paint(RECT *area) {
                 // tile; `abs` really is called (0x00644F3A).
                 x = x > 0 ? width - abs(x) % width : -x;
                 y = y > 0 ? height - abs(y) % height : -y;
-                x = -x;
-                y = -y;
-                for (; y < area->bottom; y += height) {
-                    for (int px = x; px < area->right; px += width) {
+                for (y = -y; y < area->bottom; y += height) {
+                    for (int px = -x; px < area->right; px += width) {
                         source->copy_to_window(this, 0, 0, px, y,
                             source->pixel_width(),
                             source->pixel_height());
@@ -6617,12 +6612,11 @@ void Win::on_redraw_nc(RECT * area, int flags) {
 
     int clientH = this->client_rect_.bottom - this->client_rect_.top;
     int clientW = this->client_rect_.right - this->client_rect_.left;
-    int outerW = this->outer_rect_.right - this->outer_rect_.left;
-    int frameLeft = this->border_thickness_ - 1;
-    int frameRight = outerW + 2 + frameLeft;
-    int frameTop = capHeight - 1;
     int bottomY = clientH - bottomThick;
-    int frameBottom = (bottomY - capHeight) + 2 + frameTop;
+    RECT frame;
+    make_rect(&frame, this->border_thickness_ - 1, capHeight - 1,
+              (this->outer_rect_.right - this->outer_rect_.left) + 2,
+              (bottomY - capHeight) + 2);
     int i;
 
     // ---- edge 0: top caption bar (buffer1_) ----
@@ -6646,14 +6640,14 @@ void Win::on_redraw_nc(RECT * area, int flags) {
                 this->buffer1_->box(&r, this->field_120_, this->field_124_);
                 r.left++; r.right--; r.top++; r.bottom--;
             }
-            r.left = frameLeft; r.top = frameTop; r.right = frameRight; r.bottom = frameBottom;
+            r = frame;
             for (i = 0; i < (int)this->field_128_; i++) {
                 this->buffer1_->box(&r, this->field_124_, this->field_120_);
                 r.left--; r.right++; r.top--; r.bottom++;
             }
             if (this->field_E0_ != 0) {
                 int inset = this->field_128_;
-                make_rect(&r, inset, inset, clientW - inset * 2, capHeight - inset * 2);
+                make_rect(&r, inset, inset, clientW - (inset << 1), capHeight - (inset << 1));
                 this->buffer1_->set_text_color(this->field_104_, this->field_108_, this->field_10C_, this->field_110_);
                 this->buffer1_->set_font(this->field_F8_, 0, 0, 0);
                 this->buffer1_->set_clip(&r);
@@ -6693,7 +6687,7 @@ void Win::on_redraw_nc(RECT * area, int flags) {
                 this->buffer4_->box(&r, this->field_120_, this->field_124_);
                 r.left++; r.right--; r.top++; r.bottom--;
             }
-            r.left = frameLeft; r.top = frameTop; r.right = frameRight; r.bottom = frameBottom;
+            r = frame;
             offset_rect(&r, 0, (this->client_rect_.top - this->client_rect_.bottom) + bottomThick);
             for (i = 0; i < (int)this->field_128_; i++) {
                 this->buffer4_->box(&r, this->field_124_, this->field_120_);
@@ -6726,7 +6720,7 @@ void Win::on_redraw_nc(RECT * area, int flags) {
                 this->buffer3_->box(&r, this->field_120_, this->field_124_);
                 r.left++; r.right--; r.top++; r.bottom--;
             }
-            r.left = frameLeft; r.top = frameTop; r.right = frameRight; r.bottom = frameBottom;
+            r = frame;
             offset_rect(&r, 0, -capHeight);
             for (i = 0; i < (int)this->field_128_; i++) {
                 this->buffer3_->box(&r, this->field_124_, this->field_120_);
@@ -6761,7 +6755,7 @@ void Win::on_redraw_nc(RECT * area, int flags) {
                 this->buffer2_->box(&r, this->field_120_, this->field_124_);
                 r.left++; r.right--; r.top++; r.bottom--;
             }
-            r.left = frameLeft; r.top = frameTop; r.right = frameRight; r.bottom = frameBottom;
+            r = frame;
             offset_rect(&r, (this->client_rect_.left - this->client_rect_.right) + this->border_thickness_, -capHeight);
             for (i = 0; i < (int)this->field_128_; i++) {
                 this->buffer2_->box(&r, this->field_124_, this->field_120_);

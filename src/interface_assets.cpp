@@ -5284,10 +5284,10 @@ void __cdecl load_interface(int mode) {
     FlatButtonDefaultTopLeft[0] = &g_BASEWIN_SPRITES[18];
     FlatButtonDefaultTopLeft[1] = &g_BASEWIN_SPRITES[21];
     FlatButtonDefaultTopLeft[2] = &g_BASEWIN_SPRITES[24];
+    FlatButtonDefaultTopRight[0] = &g_BASEWIN_SPRITES[20];
     FlatButtonDefaultTopTiles[0] = &g_BASEWIN_SPRITES[19];
     FlatButtonDefaultTopRight[2] = &g_BASEWIN_SPRITES[26];
     FlatButtonDefaultTopTiles[2] = &g_BASEWIN_SPRITES[25];
-    FlatButtonDefaultTopRight[0] = &g_BASEWIN_SPRITES[20];
 
     InterfaceAltCaptionHeight = g_UNUSED_SPRITE_VAR29.source_height() + g_UNUSED_SPRITE_VAR29.top_offset();
     InterfaceAltBorderThickness = g_UNUSED_SPRITE_VAR27.source_width() + g_UNUSED_SPRITE_VAR27.left_offset();
