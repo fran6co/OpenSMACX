@@ -536,7 +536,7 @@ void MapWin::init(int mode, int update) {
         if (mode != 3) {
             strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x1E]));
         } else {
-            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x204]));
+            strcat(StringTemp, label_get(0x204));
         }
     } else {
         strcat(StringTemp, label_get(0x1D));
@@ -548,8 +548,7 @@ void MapWin::init(int mode, int update) {
             strcat(StringTemp, number);
         } else {
             StringTemp[0] = '\0';
-            GenderDefault = Players[ConsoleGlobal.faction_id_].noun_gender;
-            PluralityDefault = Players[ConsoleGlobal.faction_id_].is_noun_plural;
+            parse_set(Players[ConsoleGlobal.faction_id_].noun_gender, Players[ConsoleGlobal.faction_id_].is_noun_plural);
             strcat(StringTemp, Players[ConsoleGlobal.faction_id_].formal_name_faction);
             strcat(StringTemp, SocialWinColonSpaceText);
             strcat(StringTemp, label_get(0));

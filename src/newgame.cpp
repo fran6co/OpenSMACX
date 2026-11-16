@@ -888,12 +888,9 @@ pbem_selection:
                     if (human_mask & (1 << i)) {
                         if (X_text_open(ScriptPopupFile, "MULTISTRING")) break;
                         text_get();
-                        parse_set(Players[i].is_leader_female, 0);
-                        parse_says(0, Players[i].title_leader, -1, -1);
-                        parse_set(Players[i].is_leader_female, 0);
-                        parse_says(1, Players[i].name_leader, -1, -1);
-                        parse_set(Players[i].noun_gender, Players[i].is_noun_plural);
-                        parse_says(2, Players[i].noun_faction, -1, -1);
+                        parse_says(0, get_title(i), -1, -1);
+                        parse_says(1, get_name(i), -1, -1);
+                        parse_says(2, get_noun(i), -1, -1);
                         StringTemp[0] = 0;
                         parse_string(TextBufferGetPtr, StringTemp);
                         popup.string(StringTemp);
@@ -1663,10 +1660,8 @@ int __cdecl top_menu(int mode) {
             }
             {
                 ControlTurnPhase = ConsoleGlobal.faction_id_;
-                parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, FALSE);
-                parse_says(1, Players[ConsoleGlobal.faction_id_].title_leader, -1, -1);
-                parse_set(Players[ConsoleGlobal.faction_id_].is_leader_female, FALSE);
-                parse_says(2, Players[ConsoleGlobal.faction_id_].name_leader, -1, -1);
+                parse_says(1, get_title(ConsoleGlobal.faction_id_), -1, -1);
+                parse_says(2, get_name(ConsoleGlobal.faction_id_), -1, -1);
                 parse_says(3, get_noun(ConsoleGlobal.faction_id_), -1, -1);
                 StringTemp[0] = '\0';
                 strcat(StringTemp, label_get(0));

@@ -6406,7 +6406,7 @@ again:
                 strcat(StringTemp, "|");
                 strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x4D8 / 4]));
             }
-            popup.dialogs().item(StringTemp, facility);
+            popup.item(StringTemp, facility);
         }
         if (previous >= 0) popup.set_value(previous);
         const int selected = popup.exec(0, 0);
