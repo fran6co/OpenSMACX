@@ -190,6 +190,44 @@ int __cdecl change_opening(char *filename) {
 
 
 
+// WORKAROUND(inline): game_reload (0x0058F450, game.cpp) is expanded here and
+// in multiplayer_init, so the original declared it inline in a header;
+// this twin stands in until game.h carries that body.
+static inline int newgame_game_reload(int mode, int reload) {
+    if (mode != 0) {
+        TutWinDesWindow.close();
+        TutWinBaseWindow.close();
+        mapwin_system_shutdown();
+        ConsoleStatusWin.close();
+        WorldClimateWorldWin.GraphicWin::close();
+        MultiWindow.GraphicWin::close();
+        MainInterfaceGlobal.Win::hide();
+    }
+    stop_timers();
+    labels_shutdown();
+    StringTable.shutdown();
+    if (game_init(1, reload) != 0) {
+        return 1;
+    }
+    if (mode != 0) {
+        desktop_init(1);
+    }
+    WorldClimateSkipTerrainClear = 0;
+    return 0;
+}
+
+
+// WORKAROUND(inline): game.cpp, prefwin.cpp and top_menu write the same
+// preferences-to-dialog-style if/else; the image loads the style word before
+// the test and stores it once, as an inline helper would. This twin supplies
+// top_menu's missing depth-1 spend (its EH topology matches with it).
+static inline void tm_dialog_style(uint32_t preferences) {
+    if (~preferences & 0x20000000u)
+        dialog_default_style() |= 4u;
+    else
+        dialog_default_style() &= ~4u;
+}
+
 /*
 Purpose: Publish the Console's Win base for popup parenting, then destroy
          the owned opening window and clear its pointer.
@@ -219,12 +257,30 @@ void __cdecl close_opening() {
 }
 
 
+// WORKAROUND(inline): dead spend for init_opening's top_menu expansions;
+// a constant argument folds it to no code.
+static inline int init_opening_spend(int x) {
+    if (x == 1) x = 3;
+    if (x == 2) x = 5;
+    if (x == 4) x = 7;
+    return x;
+}
+
+
 // ORIGINAL: 0x00589B60 ?init_opening@@YAHPBD@Z 0x00589B60-0x00589D29;0x0066026A-0x0066028A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:opening-window-lifetime-owner", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:589B60..589D29;66026A..66028A", "source:src/unrecovered/00589b60.cpp complete original identity/spans and seed lessons retained; Buffer::pixel_height already negates the top-down DIB height."], "reason": "Recover opening-window construction, loading, presentation and popup-parent publication through genuine GraphicWin and Buffer lifetimes. Each callback-sensitive shared-slot reload is independent; no added null guard or failure-path behavior change."}
-int __cdecl init_opening(const char *filename) {
-    if (OpeningWindow == 0) {
+// A header inline (MEASURED in game.h): top_menu expands it four times with
+// change_opening and close_opening left as calls; this pick-any copy has no
+// caller in the image.
+inline int __cdecl init_opening(const char *filename) {
+    // WORKAROUND(inline): top_menu calls close_opening out of line at all
+    // four expansions; two dead branchy expansions here supply the depth-2
+    // spend that refuses it (no natural spelling found yet).
+    init_opening_spend(0);
+    init_opening_spend(1);
+    if (opening_window() == 0) {
         GraphicWin *const window = new GraphicWin();
-        OpeningWindow = window;
+        opening_window() = window;
         if (window == 0) {
             return 4;
         }
@@ -238,12 +294,12 @@ int __cdecl init_opening(const char *filename) {
         }
     }
 
-    OpeningWindow->fill(0);
+    opening_window()->fill(0);
     change_opening(const_cast<char *>(filename));
     g_PALETTE1.set();
-    OpeningWindow->show(0);
+    opening_window()->show(0);
     do_all_draws();
-    BasePopDefaultField322C = static_cast<Win *>(OpeningWindow);
+    BasePopDefaultField322C = opening_window();
     return 0;
 }
 
@@ -1445,20 +1501,7 @@ int __cdecl multiplayer_init(int startup_mode) {
         }
 
         if (NetWinSessionData.fields_.mode_ == 3) {
-            TutWinDesWindow.close();
-            TutWinBaseWindow.close();
-            mapwin_system_shutdown();
-            ConsoleStatusWin.close();
-            WorldClimateWorldWin.close();
-            MultiWindow.close();
-            MainInterfaceGlobal.hide();
-            stop_timers();
-            labels_shutdown();
-            StringTable.shutdown();
-            if (game_init(1, 0) == 0) {
-                desktop_init(1);
-                WorldClimateSkipTerrainClear = 0;
-            }
+            newgame_game_reload(1, 0);
         }
 
         NetDaemonNet.locks_.clear();
@@ -1502,37 +1545,6 @@ do_cleanup:
 
 
 
-// WORKAROUND(inline): top_menu expands init_opening (0x00589B60, which has
-// no callers in the image) four times, with change_opening and close_opening
-// left as calls. VC6 /Ob2 never auto-inlines the plain init_opening here (its
-// source is over the per-callee size cap), so this twin carries the body top_menu
-// expands. Measured: `MEASURED int __cdecl init_opening(const char *)` in
-// game.h plus an `inline` definition keeps 0x00589B60 exact and gives top_menu
-// identical code, which would retire this twin (header change, not vetted).
-static inline int top_menu_init_opening(const char *filename) {
-    if (OpeningWindow == 0) {
-        GraphicWin *const window = new GraphicWin();
-        OpeningWindow = window;
-        if (window == 0) {
-            return 4;
-        }
-        const int result = window->init(0, 0, WinScreenWidth, WinScreenHeight,
-                                        0, 0x400000, 0, 0, 0);
-        if (result != 0) {
-            close_opening();
-            return result;
-        }
-    }
-    OpeningWindow->fill(0);
-    change_opening(const_cast<char *>(filename));
-    g_PALETTE1.set();
-    OpeningWindow->show(0);
-    do_all_draws();
-    BasePopDefaultField322C = OpeningWindow;
-    return 0;
-}
-
-
 // ORIGINAL: 0x0058E360 ?top_menu@@YAHH@Z 0x0058E360-0x0058EE31;0x00660A96-0x00660BD7
 // RECOVERY_BINDING: v1 {"evidence": ["task:newgame-menu-owner", "historical seed:src/unrecovered/0058e360.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:complete mapped native control flow", "source:existing SetupWin/Popup/Buffer/NetDaemon owner declarations; provisional bounded945820 and9B2074 objects, not raw image aliases"], "reason": "Source-owned new-game/menu family preserving complete original identity, auxiliary spans and historical seed findings; existing genuine object lifetimes and typed member owners. Unfinished bodies remain explicit, not implementation coverage."}
 // TRIED: `SetupWin setup; Popup popup;` real locals (RAII for their destructor cascades) with the full main-menu retry loop transcribed via goto+labels matching original addresses (window-creation blocks x3, do_menu switch on 6 cases, new-game wizard parse_says/X_pop block); diverges at instr #14, not chased further given size.
@@ -1552,32 +1564,28 @@ int __cdecl top_menu(int mode) {
         g_TOP_MENU_WAVE.load(const_cast<char *>("fx\\opening menu.wav"), 2);
         g_TOP_MENU_WAVE.play();
     }
-    if (~AlphaIniPrefs.preferences & 0x20000000u)
-        dialog_default_style() |= 4u;
-    else
-        dialog_default_style() &= ~4u;
+    tm_dialog_style(AlphaIniPrefs.preferences);
 
     if (ExpansionEnabled != 0) {
-        top_menu_init_opening(WinScreenWidth == 0x320
+        init_opening(WinScreenWidth == 0x320
             ? "xopeningb.pcx" : "xopeninga.pcx");
     } else {
-        top_menu_init_opening(WinScreenWidth == 0x320
+        init_opening(WinScreenWidth == 0x320
             ? "openingb.pcx" : "openinga.pcx");
     }
     setup.opening_window_snapshot_ = OpeningWindow;
     TurnUpkeepPhase = 0;
 
-    // The menu is a loop that only leaves through its returns. The loop as the
-    // last statement keeps the closing-brace teardown of setup and popup in
-    // the EH tables; with a trailing return the early return's ~Popup inlines
-    // three levels deeper than the image's.
+    // The menu loop is left only through gotos to the shared exit below; the
+    // function ends in a top-level return, so it has no closing-brace
+    // teardown (the image has two teardown sites, not three).
     for (;;) {
     top_menu_redraw:
         if (ExpansionEnabled != 0) {
-            top_menu_init_opening(WinScreenWidth == 0x320
+            init_opening(WinScreenWidth == 0x320
                 ? "xopeningb.pcx" : "xopeninga.pcx");
         } else {
-            top_menu_init_opening(WinScreenWidth == 0x320
+            init_opening(WinScreenWidth == 0x320
                 ? "openingb.pcx" : "openinga.pcx");
         }
         setup.opening_window_snapshot_ = OpeningWindow;
@@ -1619,10 +1627,7 @@ int __cdecl top_menu(int mode) {
             if (esi != 0) goto top_menu_retry;
             ControlTurnPhase = ConsoleGlobal.faction_id_;
             if (GameSessionActive != 0) {
-                stop_timers();
-                labels_shutdown();
-                StringTable.shutdown();
-                if (game_init(1, 0) == 0) WorldClimateSkipTerrainClear = 0;
+                newgame_game_reload(0, 0);
             }
             goto top_menu_after_action;
 
@@ -1657,10 +1662,7 @@ int __cdecl top_menu(int mode) {
                 if (loaded != 0) goto top_menu_retry;
             }
             if (GameSessionActive != 0) {
-                stop_timers();
-                labels_shutdown();
-                StringTable.shutdown();
-                if (game_init(1, 0) == 0) WorldClimateSkipTerrainClear = 0;
+                newgame_game_reload(0, 0);
             }
             if (esi != 0) {
                 ControlTurnPhase = ConsoleGlobal.faction_id_;
@@ -1719,14 +1721,14 @@ int __cdecl top_menu(int mode) {
         ControlTurnPhase = ConsoleGlobal.faction_id_;
         GameDataStateStorage.fields_.game_state_ |= 0x080000E0u;
         goto top_menu_normal_return;
-
-    top_menu_normal_return:
-        if ((mode == 0 && (GameDataStateStorage.fields_.game_preferences_ & 0x800) != 0)
-            || g_TOP_MENU_WAVE.is_playing() != 0) {
-            g_TOP_MENU_WAVE.fade(0xBB8);
-            g_TOP_MENU_WAVE.unload();
-        }
-        return ExitTurnLoop;
     }
+
+top_menu_normal_return:
+    if ((mode == 0 && (GameDataStateStorage.fields_.game_preferences_ & 0x800) != 0)
+        || g_TOP_MENU_WAVE.is_playing() != 0) {
+        g_TOP_MENU_WAVE.fade(0xBB8);
+        g_TOP_MENU_WAVE.unload();
+    }
+    return ExitTurnLoop;
 }
 

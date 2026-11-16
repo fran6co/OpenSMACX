@@ -436,7 +436,7 @@ extern GraphicWin *OpeningWindow;
 inline GraphicWin *&opening_window() {
   return OpeningWindow;
 }
-int __cdecl init_opening(const char *filename);
+MEASURED int __cdecl init_opening(const char *filename);
 
 MEASURED BOOL __cdecl not_my_turn();
 
