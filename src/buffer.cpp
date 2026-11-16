@@ -2832,7 +2832,11 @@ int Buffer::text_width(LPSTR text, int len) {
         fonts_[0] = FontDefault;
     }
     LPSTR segment = text;
-    int width = 0;
+    // WORKAROUND(type): the image accumulates the width in the dead `text`
+    // parameter's home ([ebp+8], 0x005DC7EC/0x005DC966/0x005DC9F6); no
+    // plain local takes that slot.
+    int &width = *reinterpret_cast<int *>(&text);
+    width = 0;
     if (!markup_enabled_) {
         return fonts_[0]->width(segment, len);
     }
@@ -4513,6 +4517,12 @@ Purpose: Tile a source buffer across a rectangle of this one, stepping the
 //        copy overloads above and flic.cpp's six sites use; VC6 devirtualizes
 //        it to the image's direct call at 0x005DA9BB. The allocator residual
 //        above (frame 0x28 vs 0x24) is unchanged by the lever.
+// LEVER (2026-11-16): the frame residual was the row reset. With `x =
+//        startX` at the top of the row loop VC6 gives the rectangle edges
+//        one fresh slot; set before the loop and restored after each row,
+//        every scalar packs into a dead parameter home and the frame is
+//        the image's 0x24 (40 -> 118 of 144). Left: `this`/x take
+//        esi/edi the other way round.
 */
 int Buffer::tile(Buffer *source, int src_x, int src_y, int x, int y, int w,
                  int h) {
@@ -4564,12 +4574,15 @@ int Buffer::tile(Buffer *source, int src_x, int src_y, int x, int y, int w,
         tilesY++;
     }
 
+    // The row start is set before the loop and restored at the end of each
+    // row (0x005DA9C5), not at the top of the next one.
+    x = startX;
     for (int row = 0; row < tilesY; ++row) {
-        x = startX;
         for (int column = 0; column < tilesX; ++column) {
             source->copy(this, 0, 0, x, y, tileWidth, tileHeight);
             x += tileWidth;
         }
+        x = startX;
         y += tileHeight;
     }
 
@@ -4879,12 +4892,15 @@ int Buffer::tile_mask(Buffer *mask, int src_x, int src_y, int x, int y, int w,
         tilesY++;
     }
 
+    // The row start is set before the loop and restored at the end of each
+    // row, as in Buffer::tile.
+    x = startX;
     for (int row = 0; row < tilesY; ++row) {
-        x = startX;
         for (int column = 0; column < tilesX; ++column) {
             mask->copy_mask(this, 0, 0, x, y, tileWidth, tileHeight, color);
             x += tileWidth;
         }
+        x = startX;
         y += tileHeight;
     }
 
@@ -4961,12 +4977,15 @@ int Buffer::tile(Sprite *sprite, int src_x, int src_y, int x, int y, int w,
         tilesY++;
     }
 
+    // The row start is set before the loop and restored at the end of each
+    // row, as in Buffer::tile.
+    x = startX;
     for (int row = 0; row < tilesY; ++row) {
-        x = startX;
         for (int column = 0; column < tilesX; ++column) {
             sprite->draw(this, sprite->cTransparentIndex_, x, y, 1, 1);
             x += tileWidth;
         }
+        x = startX;
         y += tileHeight;
     }
 
@@ -9654,6 +9673,8 @@ BufferSpecialText::~BufferSpecialText() {
 // palette-backed (init flag 4), otherwise a palette-relative index. A textual
 // macro, as the image shows: 0x005DBE98/0x005DBEBD re-read the colour word
 // from memory in the index arm instead of reusing the loaded table index.
+// Both write_raw_l sites use it; VC6 merges the two SetTextColor calls of
+// the run-colour site into one (0x005DC08A).
 #define BUFFER_SET_TEXT_COLOR(color)                                          \
     if ((init_flags_ & 4) != 0)                                               \
         SetTextColor(hdc2_, RGB(dib_.bmiColors[color].rgbRed,                 \
@@ -9661,8 +9682,6 @@ BufferSpecialText::~BufferSpecialText() {
                                 dib_.bmiColors[color].rgbBlue));              \
     else                                                                      \
         SetTextColor(hdc2_, (WORD)(color) | 0x10ff0000)
-// One physical line: the symbol-fact writer refuses '?' in a spliced #define.
-#define BUFFER_TEXT_COLOR(color) ((init_flags_ & 4) != 0 ? RGB(dib_.bmiColors[color].rgbRed, dib_.bmiColors[color].rgbGreen, dib_.bmiColors[color].rgbBlue) : (COLORREF)((WORD)(color) | 0x10ff0000))
 
 // ORIGINAL: 0x005DBD00 ?write_raw_l@Buffer@@QAEHPADHHH@Z 0x005DBD00-0x005DC2C3 FILE
 // TRIED: near-verbatim transcription of the (clean, no-SEH) Ghidra decompilation via `int *p = (int*)this;` field indexing (cross-checked against raw asm offsets: 0x50/0x58/0x60/0x520 /0x52c/0x53c/0x54c/0x55c/0x56c all confirmed). The five `call dword ptr [0x6690xx]` sites are real Win32 GDI calls (SetBkMode/SelectObject/SetTextColor/TextOutA/GetStockObject, identified via Ghidra's WinAPI signatures) dispatched through the catalogued IAT-slot globals via a typedef'd function pointer, matching the original's indirect-call-through-memory shape. The two `(**(code**)(*piVar1+N))(piVar1,arg)` heap callbacks are cast as `__stdcall(int,int)` rather than routed through the VCall thiscall shim, since the disassembly pushes the receiver as an explicit stack arg instead of leaving it in ecx. The Font::width() receiver index (uStack_10 vs uStack_8 vs a third stack slot) is not fully disambiguated across all five call sites - used uStack_10 uniformly as the closest guess. Reaches MISMATCH #0 ('sub' vs 'push'): the original has no EBP frame (esp-relative addressing throughout), which a plain C++ local-variable body does not reproduce.
@@ -9724,7 +9743,7 @@ int Buffer::write_raw_l(char *text, int x, int y, int length) {
             char *delimiter = strchr(cursor, '~');
             int segment_length = delimiter != 0
                 ? static_cast<int>(delimiter - cursor) : remaining;
-            SetTextColor(hdc2_, BUFFER_TEXT_COLOR(text_parameters_[0][color_slot]));
+            BUFFER_SET_TEXT_COLOR(text_parameters_[0][color_slot]);
             TextOutA(hdc2_, x, y, cursor, segment_length);
             if (delimiter == 0) {
                 SelectObject(hdc2_, GetStockObject(SYSTEM_FONT));
@@ -9746,19 +9765,21 @@ int Buffer::write_raw_l(char *text, int x, int y, int length) {
         }
         SetTextColor(hdc2_, (WORD)special_texts_[special].color_ | 0x10ff0000);
         TextOutA(hdc2_, x, y, cursor, segment_length);
-        int advanced = fonts_[font_slot]->width(cursor, segment_length) + x;
+        // The pen moves in place (`x += ...`, 0x005DC17D-0x005DC194): the
+        // image keeps the measured width, not a second end-of-run local.
+        int run_width = fonts_[font_slot]->width(cursor, segment_length);
         RECT &bounds = special_texts_[special].bounds[second_bounds];
         bounds.left = x;
         bounds.top = y;
-        bounds.right = advanced;
+        bounds.right = run_width + x;
         bounds.bottom = bounds_height + y;
         cursor += segment_length + 1;
+        x += run_width;
         remaining -= segment_length + 1;
-        x = advanced;
         if (static_cast<int>(field_528_) >= 0) {
             SelectObject(hdc2_, GetStockObject(SYSTEM_FONT));
             release_hdc(1);
-            return fonts_[font_slot]->width(text, length) + advanced;
+            return fonts_[font_slot]->width(text, length) + x;
         }
     }
 }
