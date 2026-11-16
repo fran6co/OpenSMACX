@@ -1212,7 +1212,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
             if (faction_id_with == -1) {
                 parse_say(2, Facility[FAC_PLANETARY_DATALINKS].name, -1, -1);
             } else {
-                parse_says(2, label_get(215), -1, -1);
+                parse_says(2, StringTable.get(Labels.strings_ptr[215]), -1, -1);
             }
         }
         int blurb_mode = 0;
