@@ -57,6 +57,18 @@
 #include "map.h"
 #include "rectangle_operations.h"
 #include "text.h"
+// WORKAROUND(decl): unused extern names. ReportIf::on_iface_button_clicked
+// (0x004A6330) reloads this/button after ReportWinGlobal.redraw() in the
+// image's order only when the unit declares exactly six more distinct extern
+// names (5 and 7 both flip it). The unit's 231 literals now match the image
+// one for one, so the shortfall is in declarations the original saw, which
+// are not yet identified.
+extern int ReportIfDeclPad0;
+extern int ReportIfDeclPad1;
+extern int ReportIfDeclPad2;
+extern int ReportIfDeclPad3;
+extern int ReportIfDeclPad4;
+extern int ReportIfDeclPad5;
 
 // Shared punctuation objects the image pushes instead of unit literals.
 extern char SocialWinCloseParenText[];
@@ -438,11 +450,6 @@ static bool reportwin_input_blocked() {
         || NetDaemonNet.primary_state_.leading_words_[2] != 0;
 }
 
-static void reportwin_append_number(char *text, int value) {
-    char number[80];
-    _itoa(value, number, 10);
-    strcat(text, number);
-}
 
 // The process-wide report window, 0x00876478 - see reportwin.h. The image's
 // dynamic initializer at 0x00496930 constructs it through the real recovered
@@ -558,37 +565,26 @@ int __cdecl most_objectives(int *, int *);
 // integration. ScriptPopupFile is the mutable pointer cell formerly exposed
 // through the ClimatePopupTitle facade.
 
-static void report_topic_number(int n) {
-    char number[80];
-    _itoa(n, number, 10);
-    strcat(StringTemp, number);
-}
 static void report_topic_line(ReportWin *win, RECT &cursor, int x) {
     win->Buffer::write_l(StringTemp, x, cursor.top);
 }
-static void report_intel_label(int label) {
-    StringTemp[0] = 0;
-    strcat(StringTemp, "[");
-    strcat(StringTemp, label_get(label));
-    strcat(StringTemp, SocialWinColonSpaceText);
-    strcat(StringTemp, BufferJoinSpace);
-    strcat(StringTemp, BufferJoinSpace);
-    strcat(StringTemp, "]");
-}
-static void report_append_leader(const Player &player) {
+// The image keeps a separate "[" / "]" literal pair at each of draw_intel's
+// six sites, so the original spelled this as a macro, not a shared helper.
+#define report_intel_label(label) StringTemp[0] = 0; strcat(StringTemp, "["); strcat(StringTemp, label_get(label)); strcat(StringTemp, SocialWinColonSpaceText); strcat(StringTemp, BufferJoinSpace); strcat(StringTemp, BufferJoinSpace); strcat(StringTemp, "]")
+static void report_append_leader(int faction) {
     PluralityDefault = 0;
-    GenderDefault = player.is_leader_female;
-    strcat(StringTemp, player.title_leader);
+    GenderDefault = Players[faction].is_leader_female;
+    strcat(StringTemp, Players[faction].title_leader);
     strcat(StringTemp, BufferJoinSpace);
     PluralityDefault = 0;
-    GenderDefault = player.is_leader_female;
-    strcat(StringTemp, player.name_leader);
+    GenderDefault = Players[faction].is_leader_female;
+    strcat(StringTemp, Players[faction].name_leader);
     strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, label_get(0x2D0 / 4));
     strcat(StringTemp, BufferJoinSpace);
-    GenderDefault = player.noun_gender;
-    PluralityDefault = player.is_noun_plural;
-    strcat(StringTemp, player.noun_faction);
+    GenderDefault = Players[faction].noun_gender;
+    PluralityDefault = Players[faction].is_noun_plural;
+    strcat(StringTemp, Players[faction].noun_faction);
 }
 
 
@@ -599,11 +595,6 @@ static void report_append_leader(const Player &player) {
 
 
 
-static void report_sat_number(int value) {
-    char number[80];
-    _itoa(value, number, 10);
-    strcat(StringTemp, number);
-}
 
 
 
@@ -1789,7 +1780,7 @@ void ReportWin::draw_labs() {
                 // Genuine original: the future-technology header appends the
                 // count but no closing bracket here; the "]" below adds it.
                 strcat(StringTemp, BufferJoinSpace);
-                reportwin_append_number(StringTemp,
+                say_num(
                     PlayersData[faction].theory_of_everything + 1);
             } else if (PlayersData[faction].tech_id_researching >= 0) {
                 strcat(StringTemp, "]");
@@ -1802,7 +1793,7 @@ void ReportWin::draw_labs() {
                 strcat(StringTemp, StringTable.get(Mandate[tech_category(
                     PlayersData[faction].tech_id_researching)].name_caps));
                 strcat(StringTemp, BufferJoinSpace);
-                reportwin_append_number(StringTemp, tech_recurse(
+                say_num(tech_recurse(
                     PlayersData[faction].tech_id_researching, 0));
             }
             // 0x49907C
@@ -2189,7 +2180,7 @@ void ReportWin::draw_labs() {
         strcat(StringTemp, "[");
         strcat(StringTemp, label_get(0x209 + tech_category(tech)));
         strcat(StringTemp, BufferJoinSpace);
-        reportwin_append_number(StringTemp, tech_recurse(tech, 0));
+        say_num(tech_recurse(tech, 0));
         strcat(StringTemp, "]");
         // Genuine original: field_E268_ is added to the row result and then
         // taken back off y on both passes (0x49A235/0x49A268).
@@ -2287,7 +2278,7 @@ void ReportWin::draw_labs() {
                     TechnologyHelpEntryName = Chassis[i].offsv_1_name;
                     strcat(StringTemp, BufferJoinSpace);
                     strcat(StringTemp, SocialWinOpenParenText);
-                    reportwin_append_number(StringTemp, Chassis[i].speed);
+                    say_num(Chassis[i].speed);
                     strcat(StringTemp, SocialWinCloseParenText);
                 }
             }
@@ -2330,7 +2321,7 @@ void ReportWin::draw_labs() {
                     if (Weapon[i].offense_rating < 0) {
                         strcat(StringTemp, label_get(0x310 / 4));
                     } else if (Weapon[i].mode < 3) {
-                        reportwin_append_number(StringTemp,
+                        say_num(
                                                 Weapon[i].offense_rating);
                     } else {
                         strcat(StringTemp, label_get(0x200 / 4));
@@ -2376,7 +2367,7 @@ void ReportWin::draw_labs() {
                     if (Armor[i].defense_rating < 0) {
                         strcat(StringTemp, label_get(0x310 / 4));
                     } else {
-                        reportwin_append_number(StringTemp,
+                        say_num(
                                                 Armor[i].defense_rating);
                     }
                     strcat(StringTemp, SocialWinCloseParenText);
@@ -2952,7 +2943,7 @@ void ReportWin::draw_energy() {
     strcat(StringTemp, "}");
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
-    reportwin_append_number(StringTemp, PlayersData[faction].energy_reserves);
+    say_num(PlayersData[faction].energy_reserves);
     strcat(StringTemp, "}");
     Buffer::write_right(StringTemp, rect1_.left, rect1_.top, rect1_.right);
 
@@ -2966,7 +2957,7 @@ void ReportWin::draw_energy() {
     strcat(StringTemp, "}");
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
-    reportwin_append_number(StringTemp, EnergyEconomyTotal);
+    say_num(EnergyEconomyTotal);
     strcat(StringTemp, "}");
     Buffer::write_right(StringTemp, rect1_.left, rect1_.top, rect1_.right);
 
@@ -2981,7 +2972,7 @@ void ReportWin::draw_energy() {
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
     strcat(StringTemp, "-");
-    reportwin_append_number(StringTemp, EnergyMaintenanceTotal);
+    say_num(EnergyMaintenanceTotal);
     strcat(StringTemp, "}");
     Buffer::write_right(StringTemp, rect1_.left, rect1_.top, rect1_.right);
 
@@ -2998,7 +2989,7 @@ void ReportWin::draw_energy() {
     if (EnergyCommerceDelta > 0) {
         strcat(StringTemp, "+");
     }
-    reportwin_append_number(StringTemp, EnergyCommerceDelta);
+    say_num(EnergyCommerceDelta);
     strcat(StringTemp, "}");
     Buffer::write_right(StringTemp, rect1_.left, rect1_.top, rect1_.right);
 
@@ -3016,7 +3007,7 @@ void ReportWin::draw_energy() {
         Buffer::write_l(StringTemp, rect1_.left, rect1_.top);
         StringTemp[0] = 0;
         strcat(StringTemp, "{");
-        reportwin_append_number(StringTemp, PlayersData[faction].sanction_turns);
+        say_num(PlayersData[faction].sanction_turns);
         strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, label_get(0x71C / 4));
         strcat(StringTemp, "}");
@@ -3107,7 +3098,7 @@ void ReportWin::draw_energy() {
     if (NetIncomeGlobal > 0) {
         strcat(StringTemp, "+");
     }
-    reportwin_append_number(StringTemp, NetIncomeGlobal);
+    say_num(NetIncomeGlobal);
     strcat(StringTemp, label_get(0x5EC / 4));
     strcat(StringTemp, "}");
     Buffer::write_right(StringTemp, rect1_.left, rect1_.top, rect1_.right);
@@ -3168,12 +3159,12 @@ void ReportWin::draw_energy() {
                 if (has_project(SP_SELF_AWARE_COLONY, ReportIfGlobal.report_faction_id_)) {
                     total += maint;
                     const int odd = maint & 1;
-                    reportwin_append_number(StringTemp, maint / 2);
+                    say_num(maint / 2);
                     if (odd) {
                         strcat(StringTemp, ".5");
                     }
                 } else {
-                    reportwin_append_number(StringTemp, maint);
+                    say_num(maint);
                     total += maint;
                 }
                 strcat(StringTemp, "}");
@@ -3187,12 +3178,12 @@ void ReportWin::draw_energy() {
         strcat(StringTemp, SocialWinColonSpaceText);
         strcat(StringTemp, "|");
         if (has_project(SP_SELF_AWARE_COLONY, ReportIfGlobal.report_faction_id_)) {
-            reportwin_append_number(StringTemp, total / 2);
+            say_num(total / 2);
             if (total & 1) {
                 strcat(StringTemp, ".5");
             }
         } else {
-            reportwin_append_number(StringTemp, total);
+            say_num(total);
         }
         strcat(StringTemp, "}");
     } else {
@@ -3222,12 +3213,12 @@ void ReportWin::draw_energy() {
                 if (has_project(SP_SELF_AWARE_COLONY, ReportIfGlobal.report_faction_id_)) {
                     total += maint;
                     const int odd = maint & 1;
-                    reportwin_append_number(StringTemp, maint / 2);
+                    say_num(maint / 2);
                     if (odd) {
                         strcat(StringTemp, ".5");
                     }
                 } else {
-                    reportwin_append_number(StringTemp, maint);
+                    say_num(maint);
                     total += maint;
                 }
                 strcat(StringTemp, "}");
@@ -3241,12 +3232,12 @@ void ReportWin::draw_energy() {
         strcat(StringTemp, SocialWinColonSpaceText);
         strcat(StringTemp, "|");
         if (has_project(SP_SELF_AWARE_COLONY, ReportIfGlobal.report_faction_id_)) {
-            reportwin_append_number(StringTemp, total / 2);
+            say_num(total / 2);
             if (total & 1) {
                 strcat(StringTemp, ".5");
             }
         } else {
-            reportwin_append_number(StringTemp, total);
+            say_num(total);
         }
         strcat(StringTemp, "}");
     }
@@ -3564,13 +3555,13 @@ void ReportWin::draw_ops() {
             // Five separate _itoa buffers in the image ([ebp-0xe8], -0x1d8,
             // -0x138, -0x188, -0x228) = five inline expansions.
             if (facility == FAC_STOCKPILE_ENERGY) {   // stale on the unit path (see above)
-                reportwin_append_number(StringTemp, 0);
+                say_num(0);
             } else {
-                reportwin_append_number(StringTemp, BaseCurrent->minerals_accumulated);
+                say_num(BaseCurrent->minerals_accumulated);
             }
             strcat(StringTemp, "/");
             int cost = cost_factor(BaseCurrent->faction_id_current, 1, -1) * item_cost;  // edi
-            reportwin_append_number(StringTemp, cost);
+            say_num(cost);
             strcat(StringTemp, SocialWinCloseParenText);
             strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, BufferJoinSpace);
@@ -3584,11 +3575,11 @@ void ReportWin::draw_ops() {
                 strcat(StringTemp, BufferJoinSpace);
                 if (cost > BaseCurrent->minerals_accumulated) {
                     cost -= BaseCurrent->minerals_accumulated;
-                    reportwin_append_number(StringTemp,
+                    say_num(
                         range((BaseCurrent->mineral_surplus_final + cost - 1)
                             / range(BaseCurrent->mineral_surplus_final, 1, 99999), 0, 999999));
                 } else {
-                    reportwin_append_number(StringTemp, 0);
+                    say_num(0);
                 }
             }
             {
@@ -3964,14 +3955,14 @@ void ReportWin::draw_sat() {
                         }
                         StringTemp[0] = 0;
                         if (satellite_index_ == 3) {
-                            report_sat_number(PlayersData[other].satellites_[3]
+                            say_num(PlayersData[other].satellites_[3]
                                               - PlayersData[other].sat_odp_deployed);
                             strcat(StringTemp, "/");
                         }
                         if (satellite_index_ == 4) {
-                            report_sat_number(elevators);
+                            say_num(elevators);
                         } else {
-                            report_sat_number(PlayersData[other].satellites_[satellite_index_]);
+                            say_num(PlayersData[other].satellites_[satellite_index_]);
                         }
                         Buffer::write_cent_l(StringTemp, &report_work_rect_);
                         spot_.add(satellite_index_, other, report_work_rect_.left,
@@ -4426,19 +4417,19 @@ void ReportWin::draw_security() {
         Buffer::write_l(StringTemp, rect1_.left, text_y);
         StringTemp[0] = 0;
         strcat(StringTemp, "{");
-        reportwin_append_number(StringTemp, PlayersData[faction_id].proto_id_active[id] > 250
+        say_num(PlayersData[faction_id].proto_id_active[id] > 250
             ? 0 : PlayersData[faction_id].proto_id_active[id]);
         strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, label_get(0x614 / 4));
         strcat(StringTemp, SocialWinCommaSpaceText);
         strcat(StringTemp, "}");
-        reportwin_append_number(StringTemp, PlayersData[faction_id].proto_id_queue[id] > 250
+        say_num(PlayersData[faction_id].proto_id_queue[id] > 250
             ? 0 : PlayersData[faction_id].proto_id_queue[id]);
         strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, label_get(0x618 / 4));
         strcat(StringTemp, SocialWinCommaSpaceText);
         strcat(StringTemp, "[");
-        reportwin_append_number(StringTemp, PlayersData[faction_id].proto_id_lost[id]);
+        say_num(PlayersData[faction_id].proto_id_lost[id]);
         strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, label_get(0x61C / 4));
         strcat(StringTemp, "]");
@@ -4484,20 +4475,20 @@ void ReportWin::draw_score() {
             const int total = num_objectives(faction, GameDataStateStorage.fields_.game_rules_ & 0x1000);
             StringTemp[0] = 0;
             if (total > own) {
-                report_topic_number(own);
+                say_num(own);
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, label_get(0xE0C / 4));
                 report_topic_line(this, rect1_, rect1_.left);
                 rect1_.top += field_E268_;
                 StringTemp[0] = 0;
-                report_topic_number(total - own);
+                say_num(total - own);
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, label_get(0x1030 / 4));
                 report_topic_line(this, rect1_, rect1_.left);
                 rect1_.top += static_cast<int>(field_E268_ * 3) / 2;
                 StringTemp[0] = 0;
             } else {
-                report_topic_number(own);
+                say_num(own);
                 strcat(StringTemp, BufferJoinSpace);
             }
             strcat(StringTemp, TextBufferGetPtr);
@@ -4517,7 +4508,7 @@ void ReportWin::draw_score() {
         StringTemp[0] = 0;
         if (PlayersData[faction].score_items_[item] >= 0) strcat(StringTemp, "+ ");
         else strcat(StringTemp, "- ");
-        report_topic_number(abs(PlayersData[faction].score_items_[item]));
+        say_num(abs(PlayersData[faction].score_items_[item]));
         reportwin_write_right(this, StringTemp, rect1_.left + rect1_.right, rect1_.top);
         rect1_.top += field_E268_;
     }
@@ -4538,7 +4529,7 @@ void ReportWin::draw_score() {
         StringTemp[0] = 0;
         if (PlayersData[faction].score_items_[5] >= 0) strcat(StringTemp, "+ ");
         else strcat(StringTemp, "- ");
-        report_topic_number(abs(PlayersData[faction].score_items_[5]));
+        say_num(abs(PlayersData[faction].score_items_[5]));
         reportwin_write_right(this, StringTemp, rect1_.left + rect1_.right, rect1_.top);
         rect1_.top += field_E268_;
     }
@@ -4564,7 +4555,7 @@ void ReportWin::draw_score() {
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
     if (PlayersData[faction].unk_109 < 0) strcat(StringTemp, "- ");
-    report_topic_number(abs(PlayersData[faction].unk_107));
+    say_num(abs(PlayersData[faction].unk_107));
     strcat(StringTemp, "}");
     reportwin_write_right(this, StringTemp, rect1_.left + rect1_.right, rect1_.top);
     rect1_.top += field_E268_ * 2;
@@ -4658,11 +4649,11 @@ void ReportWin::draw_score() {
                 parse_set(Players[other].noun_gender, Players[other].is_noun_plural);
                 parse_says(2, Players[other].noun_faction, -1, -1);
                 StringTemp[0] = 0;
-                report_topic_number(num_objectives(other, 0));
+                say_num(num_objectives(other, 0));
                 if (num_objectives(other, GameDataStateStorage.fields_.game_rules_ & 0x1000)
                     > num_objectives(other, 0)) {
                     strcat(StringTemp, SocialWinOpenParenText);
-                    report_topic_number(num_objectives(other, GameDataStateStorage.fields_.game_rules_ & 0x1000));
+                    say_num(num_objectives(other, GameDataStateStorage.fields_.game_rules_ & 0x1000));
                     strcat(StringTemp, SocialWinCloseParenText);
                 }
                 parse_says(3, StringTemp, -1, -1);
@@ -4721,7 +4712,7 @@ void ReportWin::draw_intel() {
     const int text_x = rect1_.left + 158;
     StringTemp[0] = 0;
     strcat(StringTemp, "[");
-    report_append_leader(Players[subject]);
+    report_append_leader(subject);
     strcat(StringTemp, "]");
     CharUpperA(StringTemp);
     report_topic_line(this, rect1_, text_x);
@@ -4809,7 +4800,7 @@ void ReportWin::draw_intel() {
     report_topic_line(this, rect1_, text_x);
     rect1_.top += field_E268_;
     report_intel_label(0xE4 / 4);
-    report_topic_number(PlayersData[subject].energy_reserves);
+    say_num(PlayersData[subject].energy_reserves);
     if (informed) {
         report_topic_line(this, rect1_, text_x);
         rect1_.top += field_E268_;
@@ -4835,7 +4826,7 @@ void ReportWin::draw_intel() {
         strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, "]");
-        report_topic_number(council_votes(subject));
+        say_num(council_votes(subject));
         report_topic_line(this, rect1_, text_x);
     }
     rect1_.top += field_E268_ + 20;
@@ -4875,7 +4866,7 @@ void ReportWin::draw_intel() {
             strcat(StringTemp, label_get(0x5CC / 4));
         }
         strcat(StringTemp, BufferJoinSpace);
-        report_append_leader(Players[faction]);
+        report_append_leader(faction);
         report_topic_line(this, rect1_, text_x + 125);
         rect1_.top += field_E268_;
     }

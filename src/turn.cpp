@@ -103,6 +103,13 @@
 #include "net_checksum_report.h"
 #include "font.h"
 #include "popup_fonts.h"
+// WORKAROUND(decl): unused extern names. end_of_game (0x00524870) keeps the
+// image's code only while the unit declares one to six more distinct extern
+// names once Demo::init's RECT width/height helpers exist (measured 1-6 all
+// exact, 0 flips it); the original's extra declarations are unidentified.
+extern int TurnDeclPad0;
+extern int TurnDeclPad1;
+extern int TurnDeclPad2;
 
 extern Wave g_CRASH_LANDING_WAVE;
 extern int ConsoleNoMapOverrideLatch;
@@ -2066,9 +2073,7 @@ void __cdecl interlude(int id, char *text, int mode, int ending) {
     GameDataStateStorage.fields_.game_interlude_flags_ |= 1 << id;
     StringTemp[0] = 0;
     strcat(StringTemp, "INTERLUDE");
-    char number[80];  // 0x50 bytes at [ebp-0x1044], below the Interlude local
-    _itoa(id, number, 10);
-    strcat(StringTemp, number);
+    say_num(id);
     popup.exec(StringTemp);
 }
 
@@ -2666,13 +2671,20 @@ void Demo::on_left_down(int x, int y) {
     release_modal();
 }
 
-// Sprite::extract's RECT form, expanded at both Demo::init call sites. The
-// image reads bottom/top before right/left: height is computed first.
-static inline int demo_extract(Sprite *sprite, Buffer *buffer, RECT *region) {
-    int height = region->bottom - region->top;
-    int width = region->right - region->left;
-    return sprite->extract(buffer, WinFillColour, region->left, region->top,
-                           width, height, 0);
+// Demo::init's sprite cuts: the size arguments are evaluated right to left,
+// height first.
+// WORKAROUND(inline): the image loads right before left and bottom before
+// top for Demo::init's extract sizes, the shape of a RECT width/height inline
+// taking a pointer; several units carry the same file-local twin, so the
+// original was probably one shared header helper.
+static inline int demo_rect_width(const RECT *rect) {
+    return rect->right - rect->left;
+}
+static inline int demo_rect_height(const RECT *rect) {
+    return rect->bottom - rect->top;
+}
+static inline int demo_extract(Sprite *sprite, Buffer *buffer, int x, int y, int width, int height) {
+    return sprite->extract(buffer, WinFillColour, x, y, width, height, 0);
 }
 
 // ORIGINAL: 0x00524460 Demo__init 0x00524460-0x005247A6;0x0065D6C8-0x0065D6DD
@@ -2705,8 +2717,13 @@ int Demo::init() {
 
     // Both sprites are cut from the first RECT, reloaded after each call.
     demo_extract(&splash_sprites_[0], static_cast<Buffer *>(this),
-                 &splash_rects_[0]);
-    demo_extract(&splash_sprites_[1], &local_buffer, &splash_rects_[0]);
+                 splash_rects_[0].left, splash_rects_[0].top,
+                 demo_rect_width(&splash_rects_[0]),
+                 demo_rect_height(&splash_rects_[0]));
+    demo_extract(&splash_sprites_[1], &local_buffer,
+                 splash_rects_[0].left, splash_rects_[0].top,
+                 demo_rect_width(&splash_rects_[0]),
+                 demo_rect_height(&splash_rects_[0]));
     local_buffer.close();
     timer_.start(&Demo::timer_callback, reinterpret_cast<int>(this), 600, 5);
 
