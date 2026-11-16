@@ -2184,8 +2184,22 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
             }
         }
         if (PlayersData[defender].satellites_[3]) {
-            if (!IsMultiplayerNet && GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << defender)
-                && defender == ConsoleGlobal.faction_id_) {
+            // Image literal order: the must-sacrifice texts precede the
+            // human prompt's, so that arm was written first.
+            if (IsMultiplayerNet || !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << defender))
+                || defender != ConsoleGlobal.faction_id_) {
+                if (defender == ConsoleGlobal.faction_id_) {
+                    if (fungal_attack) {
+                        popp(ScriptPopupFile, "FWEMUSTSAC", 0, "space_sm.pcx", 0);
+                    } else {
+                        popp(ScriptPopupFile, "TWEMUSTSAC", 0, "space_sm.pcx", 0);
+                    }
+                } else if (attacker == ConsoleGlobal.faction_id_) {
+                    parse_set(Players[defender].noun_gender, Players[defender].is_noun_plural);
+                    parse_says(0, Players[defender].noun_faction, -1, -1);
+                    popp(ScriptPopupFile, "THEYMUSTSAC", 0, "space_sm.pcx", 0);
+                }
+            } else {
                 parse_num(0, PlayersData[defender].satellites_[3]);
                 int base_id = base_find(x, y);
                 parse_says(0, Bases[base_id].name_string, -1, -1);
@@ -2199,16 +2213,6 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
                 if (dismissed) {
                     goto flechette_failed;
                 }
-            } else if (defender == ConsoleGlobal.faction_id_) {
-                if (fungal_attack) {
-                    popp(ScriptPopupFile, "FWEMUSTSAC", 0, "space_sm.pcx", 0);
-                } else {
-                    popp(ScriptPopupFile, "TWEMUSTSAC", 0, "space_sm.pcx", 0);
-                }
-            } else if (attacker == ConsoleGlobal.faction_id_) {
-                parse_set(Players[defender].noun_gender, Players[defender].is_noun_plural);
-                parse_says(0, Players[defender].noun_faction, -1, -1);
-                popp(ScriptPopupFile, "THEYMUSTSAC", 0, "space_sm.pcx", 0);
             }
             PlayersData[defender].satellites_[3]--;
             if ((int)(PlayersData[defender].satellites_[3] - PlayersData[defender].sat_odp_deployed) < 0) {

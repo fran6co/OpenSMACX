@@ -262,12 +262,19 @@ int __cdecl shoot(int atk_factionID, int def_factionID, int xDest, int yDest) {
             }
         }
         // The live inventory is reread after the Flechette scan.
-        if (!PlayersData[def_factionID].satellites_[3]) {
-            goto failed;
-        }
-        // The image tests only the low human-mask byte (`test byte ptr`).
-        if (!IsMultiplayerNet && is_human(def_factionID)) {
-            if (def_factionID == ConsoleGlobal.faction_id_) {
+        if (PlayersData[def_factionID].satellites_[3]) {
+            // The image tests only the low human-mask byte (`test byte ptr`).
+            // Its literal order puts WEMUSTSAC/THEYMUSTSAC before BUSTERSAC,
+            // so the must-sacrifice arm was written first.
+            if (IsMultiplayerNet || !is_human(def_factionID)
+                || def_factionID != ConsoleGlobal.faction_id_) {
+                if (def_factionID == ConsoleGlobal.faction_id_) {
+                    popp(ScriptPopupFile, "WEMUSTSAC", 0, "space_sm.pcx", 0);
+                } else if (atk_factionID == ConsoleGlobal.faction_id_) {
+                    parse_says(0, get_noun(def_factionID), -1, -1);
+                    popp(ScriptPopupFile, "THEYMUSTSAC", 0, "space_sm.pcx", 0);
+                }
+            } else {
                 parse_num(0, PlayersData[def_factionID].satellites_[3]);
                 // base_find runs before parse_says pushes its arguments.
                 const int near_base = base_find(xDest, yDest);
@@ -276,15 +283,19 @@ int __cdecl shoot(int atk_factionID, int def_factionID, int xDest, int yDest) {
                 if (popp(ScriptPopupFile, "BUSTERSAC", 0, "space_sm.pcx", 0)) {
                     goto failed;
                 }
-            } else if (atk_factionID == ConsoleGlobal.faction_id_) {
-                parse_says(0, get_noun(def_factionID), -1, -1);
-                popp(ScriptPopupFile, "THEYMUSTSAC", 0, "space_sm.pcx", 0);
             }
-        } else if (def_factionID == ConsoleGlobal.faction_id_) {
-            popp(ScriptPopupFile, "WEMUSTSAC", 0, "space_sm.pcx", 0);
-        } else if (atk_factionID == ConsoleGlobal.faction_id_) {
-            parse_says(0, get_noun(def_factionID), -1, -1);
-            popp(ScriptPopupFile, "THEYMUSTSAC", 0, "space_sm.pcx", 0);
+        } else {
+        failed:
+            if (adjacent_flechette) {
+                if (def_factionID == ConsoleGlobal.faction_id_) {
+                    parse_says(1, get_adjective(atk_factionID), -1, -1);
+                    popp(ScriptPopupFile, "WEFAILEDFLECHETTE", 0, "space_sm.pcx", 0);
+                } else if (atk_factionID == ConsoleGlobal.faction_id_) {
+                    parse_says(1, get_adjective(def_factionID), -1, -1);
+                    popp(ScriptPopupFile, "THEYFAILEDFLECHETTE", 0, "space_sm.pcx", 0);
+                }
+            }
+            return 0;
         }
         --PlayersData[def_factionID].satellites_[3];
         if (static_cast<int>(PlayersData[def_factionID].satellites_[3]
@@ -309,18 +320,6 @@ int __cdecl shoot(int atk_factionID, int def_factionID, int xDest, int yDest) {
         }
     }
     return 1;
-
-failed:
-    if (adjacent_flechette) {
-        if (def_factionID == ConsoleGlobal.faction_id_) {
-            parse_says(1, get_adjective(atk_factionID), -1, -1);
-            popp(ScriptPopupFile, "WEFAILEDFLECHETTE", 0, "space_sm.pcx", 0);
-        } else if (atk_factionID == ConsoleGlobal.faction_id_) {
-            parse_says(1, get_adjective(def_factionID), -1, -1);
-            popp(ScriptPopupFile, "THEYFAILEDFLECHETTE", 0, "space_sm.pcx", 0);
-        }
-    }
-    return 0;
 }
 
 // Inlined: the doubled vector_dist halved once.
@@ -371,7 +370,7 @@ int __cdecl planet_busting(int veh_id, int x, int y) {
             const int defender = Bases[base_id].faction_id_current;
             if (faction != defender && !notified[defender]) {
                 intercepted = shoot(faction, defender, blast_x, blast_y);
-                if (intercepted != 0) break;
+                if (intercepted != 0) goto loop_exit;
                 notified[defender] = 1;
             }
             continue;
@@ -388,6 +387,7 @@ int __cdecl planet_busting(int veh_id, int x, int y) {
             notified[defender] = 1;
         }
     }
+loop_exit:
 
     const int territory_owner = whose_territory(faction, x, y, 0, 0);
     if (territory_owner >= 0 && territory_owner != faction &&
@@ -426,9 +426,9 @@ int __cdecl planet_busting(int veh_id, int x, int y) {
         }
         const int stack_id = stack_fix(veh_at(blast_x, blast_y));
         if (stack_id >= 0) {
-            const int defender = Vehs[stack_id].faction_id;
-            if (blame_vehicle < 0 && defender != faction) {
-                blame_vehicle = defender;
+            if (blame_vehicle < 0) {
+                const int defender = Vehs[stack_id].faction_id;
+                if (defender != faction) blame_vehicle = defender;
             }
             stack_kill(stack_id);
         }
