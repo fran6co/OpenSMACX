@@ -57,6 +57,7 @@
 #include "map.h"
 #include "rectangle_operations.h"
 #include "text.h"
+#include "help_link.h"
 // WORKAROUND(decl): unused extern names. ReportIf::on_iface_button_clicked
 // (0x004A6330) reloads this/button after ReportWinGlobal.redraw() in the
 // image's order only when the unit declares exactly six more distinct extern
@@ -69,13 +70,23 @@ extern int ReportIfDeclPad2;
 extern int ReportIfDeclPad3;
 extern int ReportIfDeclPad4;
 extern int ReportIfDeclPad5;
+// WORKAROUND(decl): counter coupling. After faction.h began defining
+// get_name/get_title and this unit switched to help_link.h, the same
+// this/button reload order also needs 7-10 more distinct unused function
+// declarations (6 or fewer and 12 flip it; extern variables no longer move
+// it). Only 0x004A6330 changes in the unit's object.
+void ReportIfDeclFnPad0();
+void ReportIfDeclFnPad1();
+void ReportIfDeclFnPad2();
+void ReportIfDeclFnPad3();
+void ReportIfDeclFnPad4();
+void ReportIfDeclFnPad5();
+void ReportIfDeclFnPad6();
+void ReportIfDeclFnPad7();
 
 // Shared punctuation objects the image pushes instead of unit literals.
 extern char SocialWinCloseParenText[];
 extern char SocialWinOpenParenText[];
-extern char HelpLinkOpenText[];
-extern char HelpLinkEqualsText[];
-extern char HelpLinkCloseText[];
 
 extern char *DatalinkHelpFile;
 // Every report renderer pushes these shared separator objects (0x00682820
@@ -2232,11 +2243,7 @@ void ReportWin::draw_labs() {
                         // Reactor link ids are one-based.
                         DatalinkMain.construct_id(id, 5, i + 1);
                         LPSTR name = StringTable.get(Reactor[i].name);
-                        strcat(StringTemp, HelpLinkOpenText);
-                        strcat(StringTemp, name);
-                        strcat(StringTemp, HelpLinkEqualsText);
-                        strcat(StringTemp, id);
-                        strcat(StringTemp, HelpLinkCloseText);
+                        help_create_link(StringTemp, name, id);
                     }
                 }
             }
@@ -2266,11 +2273,7 @@ void ReportWin::draw_labs() {
                     } else {
                         DatalinkMain.construct_id(id, 4, i);
                         LPSTR name = StringTable.get(Chassis[i].offsv_1_name);
-                        strcat(StringTemp, HelpLinkOpenText);
-                        strcat(StringTemp, name);
-                        strcat(StringTemp, HelpLinkEqualsText);
-                        strcat(StringTemp, id);
-                        strcat(StringTemp, HelpLinkCloseText);
+                        help_create_link(StringTemp, name, id);
                     }
                     // Pinned 0x49A5FC/0x49A606: kind, then the raw name, on
                     // both passes.
@@ -2307,11 +2310,7 @@ void ReportWin::draw_labs() {
                     } else {
                         DatalinkMain.construct_id(id, 6, i);
                         LPSTR name = StringTable.get(Weapon[i].name);
-                        strcat(StringTemp, HelpLinkOpenText);
-                        strcat(StringTemp, name);
-                        strcat(StringTemp, HelpLinkEqualsText);
-                        strcat(StringTemp, id);
-                        strcat(StringTemp, HelpLinkCloseText);
+                        help_create_link(StringTemp, name, id);
                     }
                     TechnologyHelpEntryKind = 0x63;
                     TechnologyHelpEntryName = Weapon[i].name;
@@ -2354,11 +2353,7 @@ void ReportWin::draw_labs() {
                     } else {
                         DatalinkMain.construct_id(id, 7, i);
                         LPSTR name = StringTable.get(Armor[i].name);
-                        strcat(StringTemp, HelpLinkOpenText);
-                        strcat(StringTemp, name);
-                        strcat(StringTemp, HelpLinkEqualsText);
-                        strcat(StringTemp, id);
-                        strcat(StringTemp, HelpLinkCloseText);
+                        help_create_link(StringTemp, name, id);
                     }
                     TechnologyHelpEntryKind = 0x64;
                     TechnologyHelpEntryName = Armor[i].name;
@@ -2398,11 +2393,7 @@ void ReportWin::draw_labs() {
                     } else {
                         DatalinkMain.construct_id(id, 8, i);
                         LPSTR name = StringTable.get(Ability[i].name);
-                        strcat(StringTemp, HelpLinkOpenText);
-                        strcat(StringTemp, name);
-                        strcat(StringTemp, HelpLinkEqualsText);
-                        strcat(StringTemp, id);
-                        strcat(StringTemp, HelpLinkCloseText);
+                        help_create_link(StringTemp, name, id);
                     }
                 }
             }
@@ -2432,11 +2423,7 @@ void ReportWin::draw_labs() {
                         strcat(StringTemp, VehPrototypes[i].veh_name);
                     } else {
                         DatalinkMain.construct_id(id, 3, i);
-                        strcat(StringTemp, HelpLinkOpenText);
-                        strcat(StringTemp, VehPrototypes[i].veh_name);
-                        strcat(StringTemp, HelpLinkEqualsText);
-                        strcat(StringTemp, id);
-                        strcat(StringTemp, HelpLinkCloseText);
+                        help_create_link(StringTemp, VehPrototypes[i].veh_name, id);
                     }
                 }
             }
@@ -2475,11 +2462,7 @@ void ReportWin::draw_labs() {
                             DatalinkMain.construct_id(id, 0xB, i);
                         }
                         LPSTR name = StringTable.get(Facility[i].name);
-                        strcat(StringTemp, HelpLinkOpenText);
-                        strcat(StringTemp, name);
-                        strcat(StringTemp, HelpLinkEqualsText);
-                        strcat(StringTemp, id);
-                        strcat(StringTemp, HelpLinkCloseText);
+                        help_create_link(StringTemp, name, id);
                     }
                     if (Facility[i].free_tech == tech) {
                         strcat(StringTemp, BufferJoinSpace);
