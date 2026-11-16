@@ -3780,8 +3780,10 @@ int Net::join_session(NetAllocationNode *session, char *player_name,
                 free_if_set(allocation_node_.session_name_);
                 allocation_node_.session_name_ = 0;
             }
-            free_if_set(allocation_node_.password_);
-            allocation_node_.password_ = 0;
+            if (allocation_node_.password_ != 0) {
+                free(allocation_node_.password_);
+                allocation_node_.password_ = 0;
+            }
 
             memset(&requested, 0, sizeof(requested));
             requested.dwSize = sizeof(requested);
@@ -3824,6 +3826,10 @@ int Net::join_session(NetAllocationNode *session, char *player_name,
         // join request's dwUser1 (zeroed, or stale when no session was
         // passed), not the remote version just compared (0x0062E72E,
         // 0x0062E78F read [esp+0xc8]).
+        // Both warning arms fall into the closing return 0, whose Font
+        // teardown the image lays out after close() (0x0062EA28); written as
+        // separate returns they shared one pop_caption tail and the teardown
+        // moved to the first failure site.
         if (static_cast<int>(descriptor->dwUser1) > static_cast<int>(field_44_)) {
             parse_num(0, field_44_);
             parse_num(1, requested.dwUser1);
@@ -3831,111 +3837,109 @@ int Net::join_session(NetAllocationNode *session, char *player_name,
             older_version_shadow.init("Times New Roman", 0xE, 2);
             pop_caption("jackal.txt", "CLIENTOLDERVERSION", 0);
             NetDirectPlay->Close();
-            return 0;
-        }
-        if (static_cast<int>(descriptor->dwUser1) < static_cast<int>(field_44_)) {
+        } else if (static_cast<int>(descriptor->dwUser1) < static_cast<int>(field_44_)) {
             parse_num(0, field_44_);
             parse_num(1, requested.dwUser1);
             older_version_font.init("Times New Roman", 0xE, 0);
             older_version_shadow.init("Times New Roman", 0xE, 2);
             pop_caption("jackal.txt", "CLIENTNEWERVERSION", 0);
             NetDirectPlay->Close();
-            return 0;
-        }
-        free(descriptor);
-
-        DPNAME player_descriptor;
-        memset(&player_descriptor, 0, sizeof(player_descriptor));
-        player_descriptor.dwSize = sizeof(player_descriptor);
-        player_descriptor.lpszLongNameA = player_name;
-
-        unsigned char player_data =
-            static_cast<unsigned char>((voice_flags_D8_ >> 0x10) & 1);
-        if ((voice_flags_D8_ & 2) != 0) {
-            player_data |= 2;
-        }
-
-        // process.h declares exactly void (__cdecl *)(void *); NetThreadInfo is
-        // the evidenced Net+4 record passed to the worker.
-        _beginthread(&net_receive_thread, 0, &thread_info_);
-
-        result = NetDirectPlay->CreatePlayer(
-            &local_player_id_, &player_descriptor, thread_info_.events_[2],
-            &player_data, 1, 0);
-        if (result != DP_OK) {
-            return 0;
-        }
-
-        const DWORD host_flag = voice_flags_D8_ & 0x10000;
-        if (host_flag != 0) {
-            host_player_id_ = local_player_id_;
-        }
-        // The SDK callback can change the process-wide interface. The native
-        // host descriptor update tests the live pointer after CreatePlayer.
-        if (NetDirectPlay != 0 && host_flag != 0) {
-            DWORD live_size;  // uninitialised in the image (0x0062E879)
-            NetDirectPlay->GetSessionDesc(0, &live_size);
-            DPSESSIONDESC2 *live = static_cast<DPSESSIONDESC2 *>(
-                mem_get(static_cast<int>(live_size)));
-            NetDirectPlay->GetSessionDesc(live, &live_size);
-            live->dwFlags |= DPSESSION_JOINDISABLED;
-            NetDirectPlay->SetSessionDesc(live, 0);
-            if (live != 0) {
-                free(live);
-            }
-        }
-
-        if (local_player_id_ == host_player_id_) {
-            sub_632cc0(player_name, static_cast<int>(local_player_id_),
-                       static_cast<unsigned char>(player_data & 0xFF));
-        }
-
-        // The image reuses descriptor_size's slot, again uninitialised.
-        NetDirectPlay->GetSessionDesc(0, &descriptor_size);
-        DPSESSIONDESC2 *live = static_cast<DPSESSIONDESC2 *>(
-            mem_get(static_cast<int>(descriptor_size)));
-        if (live == 0) {
-            return 0;
-        }
-        result = NetDirectPlay->GetSessionDesc(live, &descriptor_size);
-        if (result != DP_OK) {
-            free(live);
-            return 0;
-        }
-
-        if (live->lpszSessionNameA != 0) {
-            const size_t length = strlen(live->lpszSessionNameA) + 1;
-            allocation_node_.session_name_ =
-                static_cast<char *>(mem_get(static_cast<int>(length)));
-            *allocation_node_.session_name_ = 0;
-            strcat(allocation_node_.session_name_, live->lpszSessionNameA);
         } else {
-            // The image calls mem_get(1) and discards its result on this branch.
-            mem_get(1);
-            allocation_node_.session_name_ = 0;
-        }
-        if (password != 0 && password[0] != 0) {
-            const size_t length = strlen(password) + 1;
-            allocation_node_.password_ =
-                static_cast<char *>(mem_get(static_cast<int>(length)));
-            *allocation_node_.password_ = 0;
-            strcat(allocation_node_.password_, password);
-        }
-        allocation_node_.instance_guid_ = live->guidInstance;
-        allocation_node_.session_flags_ = live->dwFlags;
-        allocation_node_.max_players_ = live->dwMaxPlayers;
-        free(live);
+            free(descriptor);
 
-        const DWORD start_time = timeGetTime();
-        while (field_6DC_ == 0 && timeGetTime() - start_time < 10000) {
-            do_task();
-        }
-        if (field_6DC_ == 0) {
+            DPNAME player_descriptor;
+            memset(&player_descriptor, 0, sizeof(player_descriptor));
+            player_descriptor.dwSize = sizeof(player_descriptor);
+            player_descriptor.lpszLongNameA = player_name;
+
+            unsigned char player_data =
+                static_cast<unsigned char>((voice_flags_D8_ >> 0x10) & 1);
+            if ((voice_flags_D8_ & 2) != 0) {
+                player_data |= 2;
+            }
+
+            // process.h declares exactly void (__cdecl *)(void *); NetThreadInfo is
+            // the evidenced Net+4 record passed to the worker.
+            _beginthread(&net_receive_thread, 0, &thread_info_);
+
+            result = NetDirectPlay->CreatePlayer(
+                &local_player_id_, &player_descriptor, thread_info_.events_[2],
+                &player_data, 1, 0);
+            if (result != DP_OK) {
+                return 0;
+            }
+
+            const DWORD host_flag = voice_flags_D8_ & 0x10000;
+            if (host_flag != 0) {
+                host_player_id_ = local_player_id_;
+            }
+            // The SDK callback can change the process-wide interface. The native
+            // host descriptor update tests the live pointer after CreatePlayer.
+            if (NetDirectPlay != 0 && host_flag != 0) {
+                DWORD live_size;  // uninitialised in the image (0x0062E879)
+                NetDirectPlay->GetSessionDesc(0, &live_size);
+                DPSESSIONDESC2 *live = static_cast<DPSESSIONDESC2 *>(
+                    mem_get(static_cast<int>(live_size)));
+                NetDirectPlay->GetSessionDesc(live, &live_size);
+                live->dwFlags |= DPSESSION_JOINDISABLED;
+                NetDirectPlay->SetSessionDesc(live, 0);
+                if (live != 0) {
+                    free(live);
+                }
+            }
+
+            if (local_player_id_ == host_player_id_) {
+                sub_632cc0(player_name, static_cast<int>(local_player_id_),
+                           static_cast<unsigned char>(player_data & 0xFF));
+            }
+
+            // The image reuses descriptor_size's slot, again uninitialised.
+            NetDirectPlay->GetSessionDesc(0, &descriptor_size);
+            DPSESSIONDESC2 *live = static_cast<DPSESSIONDESC2 *>(
+                mem_get(static_cast<int>(descriptor_size)));
+            if (live == 0) {
+                return 0;
+            }
+            result = NetDirectPlay->GetSessionDesc(live, &descriptor_size);
+            if (result != DP_OK) {
+                free(live);
+                return 0;
+            }
+
+            if (live->lpszSessionNameA != 0) {
+                const size_t length = strlen(live->lpszSessionNameA) + 1;
+                allocation_node_.session_name_ =
+                    static_cast<char *>(mem_get(static_cast<int>(length)));
+                *allocation_node_.session_name_ = 0;
+                strcat(allocation_node_.session_name_, live->lpszSessionNameA);
+            } else {
+                // The image calls mem_get(1) and discards its result on this branch.
+                mem_get(1);
+                allocation_node_.session_name_ = 0;
+            }
+            if (password != 0 && password[0] != 0) {
+                const size_t length = strlen(password) + 1;
+                allocation_node_.password_ =
+                    static_cast<char *>(mem_get(static_cast<int>(length)));
+                *allocation_node_.password_ = 0;
+                strcat(allocation_node_.password_, password);
+            }
+            allocation_node_.instance_guid_ = live->guidInstance;
+            allocation_node_.session_flags_ = live->dwFlags;
+            allocation_node_.max_players_ = live->dwMaxPlayers;
+            free(live);
+
+            const DWORD start_time = timeGetTime();
+            while (field_6DC_ == 0 && timeGetTime() - start_time < 10000) {
+                do_task();
+            }
+            if (field_6DC_ != 0) {
+                return static_cast<int>(local_player_id_);
+            }
             close();
-            return 0;
         }
-        return static_cast<int>(local_player_id_);
     }
+    return 0;
 }
 
 

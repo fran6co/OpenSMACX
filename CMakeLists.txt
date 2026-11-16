@@ -165,6 +165,7 @@ set(OPENSMACX_SOURCES
     src/alphanet_records.cpp
     src/autosound.cpp
     src/base.cpp
+    src/base_build.cpp
     src/score.cpp
     src/basebutton.cpp
     src/basepop.cpp
@@ -546,6 +547,7 @@ set_source_files_properties(src/alphanet.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Mixed generic/application owners retain their independently measured defaults.
 set_source_files_properties(
     src/base.cpp
+    src/base_build.cpp
     src/score.cpp
     src/multiwin.cpp
     src/socialwin.cpp
@@ -583,6 +585,7 @@ set_source_files_properties(src/movie_media_decoder_g6.cpp PROPERTIES COMPILE_OP
 set_property(SOURCE
     src/alpha.cpp
     src/base.cpp
+    src/base_build.cpp
     src/faction.cpp
     src/aggression.cpp
     src/score.cpp

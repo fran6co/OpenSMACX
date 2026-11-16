@@ -1112,6 +1112,25 @@
           "-c"
         ]
       },
+      "src/base_build.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/Og",
+          "/Oi",
+          "/Ot",
+          "/Gs",
+          "/Gy",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "/Z7",
+          "-c"
+        ]
+      },
       "src/newtechwin.cpp": {
         "flags": [
           "/nologo",
