@@ -8074,12 +8074,14 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
 
     PopupDialogFactionID = other_faction_id;
     DiploScratchFAD0 = 0;
-    // WORKAROUND(inline): four dead probes stand in for spend the image has
+    // WORKAROUND(inline): six dead probes stand in for spend the image has
     // and this body lacks: without them the BasePop teardowns after the
-    // loan and council paths expand two levels deeper than the image's.
+    // loan and council paths expand deeper than the image's (0, 2, 8 and 12
+    // probes give 922, 875, 802 and 698 instructions against 808).
     // (The image's out-of-line net_maps call does not follow budget: 40
-    // probes still leave it expanded.)
-    communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0);
+    // probes still leave it expanded; see the call below.)
+    communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0);
+    communicate_budget_probe(0); communicate_budget_probe(0); communicate_budget_probe(0);
 
     if (selection_ready == 0 && proposal_menu(faction_id, other_faction_id) == 0) {
         return;
@@ -8113,7 +8115,13 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
                          FactionDiplomacyPortraits[other_faction_id],
                          pop_wait);
             PlayersData[other_faction_id].diplo_patience[faction_id] += 2;
-            net_maps(faction_id, other_faction_id, 1);
+            {
+                // WORKAROUND(noinline): the image calls net_maps (0x00539580)
+                // here (0x0054F625) and at all three communicate sites, while
+                // battle_plans expands it; 40 dead probes still expand it here.
+                void (__cdecl *const maps)(int, int, int) = net_maps;
+                maps(faction_id, other_faction_id, 1);
+            }
             DiplomacyMapTransferChanged = 1;
         }
         return;

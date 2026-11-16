@@ -3429,7 +3429,10 @@ L_4fcf70:
     {
         int armor = arm_strat(VehPrototypes[l_14].armor_id, l_8);
         int weap;
-        if (planet_buster2(l_14)) {
+        // WORKAROUND(noinline): called out of line at 0x004FD4B5, as in
+        // base_hurry; this unit saw only planet_buster2's declaration.
+        uint32_t (__cdecl *const buster)(int) = planet_buster2;
+        if (buster(l_14)) {
             weap = 50;
         } else {
             weap = weap_strat(VehPrototypes[l_14].weapon_id, l_8);
@@ -6254,11 +6257,12 @@ void __cdecl base_hurry() {
                 hurry = PlayersData[faction].energy_reserves
                     / ((PlayersData[faction].ai_wealth + 2) * 10);
             } else {
-                uint8_t plan = VehPrototypes[production_id].plan;
                 uint8_t regional_plan = PlayersData[faction].region_base_plan[region];
-                if (regional_plan == plan
-                    || (plan == PLAN_TERRAFORMING && regional_plan == PLAN_COLONIZATION)
-                    || (plan == PLAN_COMBAT && regional_plan <= 2)) {
+                if (regional_plan == VehPrototypes[production_id].plan
+                    || (VehPrototypes[production_id].plan == PLAN_TERRAFORMING
+                        && regional_plan == PLAN_COLONIZATION)
+                    || (VehPrototypes[production_id].plan == PLAN_COMBAT
+                        && regional_plan <= 2)) {
                     hurry = PlayersData[faction].energy_reserves
                         / ((PlayersData[faction].ai_wealth + 2) * 25
                            - PlayersData[faction].ai_power * 10);
@@ -6274,7 +6278,12 @@ void __cdecl base_hurry() {
         } else {
             hurry = PlayersData[faction].energy_reserves / 10;
         }
-        if (planet_buster2(production_id) && !PlayersData[faction].planet_busters) {
+        // WORKAROUND(noinline): the image calls planet_buster2's copy at
+        // 0x005004F0 here and in base_build (0x004FD4B5); only battle.cpp's
+        // owner expands it, so this unit saw a plain declaration. veh.h keeps
+        // the header inline for battle.cpp.
+        uint32_t (__cdecl *const buster)(int) = planet_buster2;
+        if (buster(production_id) && !PlayersData[faction].planet_busters) {
             for (int i = 1; i < MaxPlayerNum; i++) {
                 if (i != faction
                     && (PlayersData[faction].diplo_treaties[i] & DTREATY_VENDETTA)
@@ -6375,8 +6384,8 @@ void __cdecl base_hurry() {
         || (GameDataStateStorage.fields_.game_state_ & STATE_UNK_1)) {
         return;
     }
-    if (cost_factor(BaseCurrent->faction_id_current, 1, -1) * Facility[facility_index].cost
-            > BaseCurrent->mineral_surplus + BaseCurrent->minerals_accumulated) {
+    if (BaseCurrent->mineral_surplus + BaseCurrent->minerals_accumulated
+            < cost_factor(BaseCurrent->faction_id_current, 1, -1) * Facility[facility_index].cost) {
         return;
     }
     parse_says(0, Players[BaseCurrent->faction_id_current].adj_name_faction, -1, -1);
