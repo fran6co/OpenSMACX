@@ -1990,7 +1990,7 @@ void __cdecl enemy_diplomacy(int faction_id) {
     }
     int vendetta_count = 0;
     for (i = 1; i < MaxPlayerNum; i++) {
-        if (i == faction_id || !is_alive(i)) {
+        if (faction_id == i || !is_alive(i)) {
             continue;
         }
         if (PlayersData[faction_id].diplo_treaties[i] & DTREATY_VENDETTA) {
@@ -2007,7 +2007,7 @@ void __cdecl enemy_diplomacy(int faction_id) {
             }
         }
         if (PlayersData[faction_id].diplo_treaties[i] & 0x400) {
-            int odds = range(8 - ((PlayersData[faction_id].diplo_agenda[i] >> 9) & 2)
+            int odds = range(8 - ((static_cast<unsigned>(PlayersData[faction_id].diplo_agenda[i]) >> 9) & 2)
                              - PlayersData[i].integrity_blemishes, 1, 8);
             if (!bounded_crt_random(odds) || (PlayersData[faction_id].diplo_treaties[i] & DTREATY_PACT)) {
                 if (PlayersData[faction_id].diplo_treaties[i] & DTREATY_PACT) {
