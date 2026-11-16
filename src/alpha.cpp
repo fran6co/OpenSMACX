@@ -493,7 +493,7 @@ Status: Complete
 
 /*
 Purpose: Parse the #RULES & #WORLDBUILDER sections inside the alpha(x).txt.
-// ORIGINAL: 0x00585170 ?read_basic_rules@@YAHXZ 0x00585170-0x00585E26
+// ORIGINAL: 0x00585170 ?read_basic_rules@@YAHXZ 0x00585170-0x00585E26 BYTE_EXACT
 // LEVER: the ten `Rules.tech_* = tech_item();` sites now match the image's
 //        call pattern (`text_get; text_item; tech_name` per site, confirmed
 //        against `osmx calls`) now that `tech_item` is `MEASURED inline` in
