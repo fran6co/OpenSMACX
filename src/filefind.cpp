@@ -206,7 +206,16 @@ int __cdecl filefind_init(LPCSTR file_check, BOOL is_complete) {
             return response;
         }
         // The popup's own input state is independent of start's return.
-        if (popup->input_poll_state() == 1) {
+        // The image has nine 0x90 bytes here (0x600545..0x60054D) in place
+        // of `popup->exec(0, 0);`: writing that call compiles to
+        // `push ebx; push ebx; mov ecx, edi; call BasePop::exec` (exactly
+        // nine bytes) and makes every other byte of this function equal the
+        // image. SMAC's terran.exe has the same nine nops at the same point
+        // of its separately compiled copy. The shipped executables were
+        // patched after linking so the NOCD popup is never run modally;
+        // the call is left out to keep the shipped behaviour.
+        switch (popup->input_poll_state()) {
+        case 1:
             // if user response is to retry -> loop around again
             continue;
         }

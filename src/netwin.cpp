@@ -3159,19 +3159,19 @@ int NetWin::pick_pass(int payload) {
             X_pop("DIFFERENTPASSWORDS", nullptr);
             continue;
         }
-        if (!faction_mode) {
-            break;
+        if (faction_mode) {
+        check:
+            // Native 47CD43..47CD4C checks the live post-modal allocation.
+            if (faction_records_[faction].owner_ != entered_hash) {
+                X_pop("BADPASSWORD", nullptr);
+                return 0;
+            }
+            pick_pass_budget_probe(0);  // WORKAROUND(inline): see the helper
+            pick_pass_budget_probe(0);  // WORKAROUND(inline): see the helper
+            NetWinLobbyRows.rows_[slot].owner_ = entered_hash;
+            return 1;
         }
-    check:
-        // Native 47CD43..47CD4C checks the live post-modal allocation.
-        if (faction_records_[faction].owner_ != entered_hash) {
-            X_pop("BADPASSWORD", nullptr);
-            return 0;
-        }
-        pick_pass_budget_probe(0);  // WORKAROUND(inline): see the helper
-        pick_pass_budget_probe(0);  // WORKAROUND(inline): see the helper
-        NetWinLobbyRows.rows_[slot].owner_ = entered_hash;
-        return 1;
+        break;
     }
     NetWinLobbyRows.rows_[slot].owner_ = entered_hash;
     memcpy(&updated, &NetWinLobbyRows.rows_[slot], 0x17C);
