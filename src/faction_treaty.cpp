@@ -2312,10 +2312,13 @@ void __cdecl enemy_diplomacy(int faction_id) {
                 && (int)PlayersData[i].satellites_[3] >= PlayersData[faction_id].planet_busters) {
                 attack_type = 3;
             } else {
-                pod_count = 0;
+                // Its own counter, not territory's address-taken pod_count:
+                // the image keeps it in vendetta_count's dead slot (ebp-0x14)
+                // while pod_count's out-slot is ebp-0x1C (frame 0x34).
+                int pods = 0;
                 for (base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
                     if (Bases[base_id].faction_id_current == i && has_fac(FAC_GEOSYNC_SURVEY_POD, base_id, 0)) {
-                        pod_count++;
+                        pods++;
                     }
                 }
                 if (PlayersData[i].satellites_[1]) {
@@ -2324,7 +2327,7 @@ void __cdecl enemy_diplomacy(int faction_id) {
                     attack_type = 2;
                 } else if (PlayersData[i].satellites_[0]) {
                     attack_type = 0;
-                } else if (pod_count) {
+                } else if (pods) {
                     attack_type = 4;
                     for (base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
                         if (Bases[base_id].faction_id_current == i && has_fac(FAC_GEOSYNC_SURVEY_POD, base_id, 0)) {
