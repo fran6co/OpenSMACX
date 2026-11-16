@@ -145,9 +145,8 @@ int NewTechWin::on_key_click(int, int) {
 // font.h, map.h, console.h and buffer.h are current owners of these APIs.
 extern BoxSpriteParams InterfaceStandardPopupBoxStyle;
 extern Sprite g_TECH_ICON_SPRITES[MaxTechnologyNum];
-// The pinned image's null-terminated data at VA 0x00682820 is one ASCII
-// space; this source-owned literal preserves the Transcendent Thought separator.
-static const char NewTechCentempSuffix[] = " ";
+// The Transcendent Thought separator is the shared space object
+// BufferJoinSpace (0x00682820, buffer.h), not a unit-owned copy.
 
 // WORKAROUND(inline): 0x00483E1A forms the sprite address before reading its
 // transparent index (+8): an inline draw_mono overload that reads the index
@@ -264,7 +263,7 @@ void NewTechWin::on_redraw() {
         // PlayersData+0x368 is theory_of_everything; the neutral member name
         // and exact offset are already independently established in
         // faction.h and consumed by picktech/faction/reportif.
-        strcat(StringTemp, NewTechCentempSuffix);
+        strcat(StringTemp, BufferJoinSpace);
         char number[80];
         _itoa(PlayersData[faction_snapshot].theory_of_everything,
               number, 10);

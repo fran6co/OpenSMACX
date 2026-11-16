@@ -1327,11 +1327,14 @@ uint32_t BufferField520Default = 1;
 uint32_t BufferFillRowGap;
 
 
-namespace {
-
 // 0x00696BF8. Every PCX the game ships is prefixed with this and a NUL;
-// `load_pcx` steps over both when it finds them.
-const char PcxAssetPrefix[] = "monkey sweats on a tuesday";
+// `load_pcx` steps over both when it finds them. One writable .data object
+// shared by load_pcx and get_pcx_dimensions (four pushes each), not a
+// per-function literal or a read-only constant.
+// RECOVERY_OBJECT: v1 0x00696BF8 ?PcxAssetPrefix@@3PADA
+char PcxAssetPrefix[] = "monkey sweats on a tuesday";
+
+namespace {
 
 // The pinned PCX writer copies all 0x80 bytes after assigning only the named
 // fields below; retain the untouched palette and reserved byte ranges in this

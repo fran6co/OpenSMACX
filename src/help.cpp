@@ -44,6 +44,7 @@ extern char SocialWinOpenParenText[];
 // 0x00682E90 (", ") rather than unit literals.
 extern const char BufferJoinSpace[];
 extern char SocialWinCommaSpaceText[];
+extern char SocialWinColonSpaceText[];
 
 
 // Native4050A0 publishes this buffer and44CBD0 consumes it. The existing
@@ -240,7 +241,7 @@ void __cdecl tech_heck(void (__cdecl *a1)(char *), int a2) {
                 StringTemp[0] = 0;
                 strcat(StringTemp, TechnologyHelpSeparatorText);
                 strcat(StringTemp, label_get(0x7C8 / 4));
-                strcat(StringTemp, ": ");
+                strcat(StringTemp, SocialWinColonSpaceText);
                 LPSTR name = Proposal[proposal].name;
                 strcat(StringTemp, StringTable.get(name));
                 strcpy(TextBufferGetPtr, StringTemp);
@@ -303,7 +304,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
                     strcat(buf, "^");
                     char *s = label_get(0x234 / 4);
                     strcat(buf, s);
-                    strcat(buf, ": ");
+                    strcat(buf, SocialWinColonSpaceText);
                 } else {
                     strcat(buf, SocialWinCommaSpaceText);
                 }
@@ -336,7 +337,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
                     strcat(buf, "^");
                     char *s = label_get(0x120 / 4);
                     strcat(buf, s);
-                    strcat(buf, ": ");
+                    strcat(buf, SocialWinColonSpaceText);
                 } else {
                     strcat(buf, SocialWinCommaSpaceText);
                 }
@@ -375,7 +376,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
                     strcat(buf, "^");
                     char *s = label_get(0x124 / 4);
                     strcat(buf, s);
-                    strcat(buf, ": ");
+                    strcat(buf, SocialWinColonSpaceText);
                 } else {
                     strcat(buf, SocialWinCommaSpaceText);
                 }
@@ -424,7 +425,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
                     strcat(buf, "^");
                     char *s = label_get(0x128 / 4);
                     strcat(buf, s);
-                    strcat(buf, ": ");
+                    strcat(buf, SocialWinColonSpaceText);
                 } else {
                     strcat(buf, SocialWinCommaSpaceText);
                 }
@@ -472,7 +473,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
                     strcat(buf, "^");
                     char *s = label_get(0x12C / 4);
                     strcat(buf, s);
-                    strcat(buf, ": ");
+                    strcat(buf, SocialWinColonSpaceText);
                 } else {
                     strcat(buf, SocialWinCommaSpaceText);
                 }
@@ -510,7 +511,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
                     strcat(buf, "^");
                     char *s = label_get(0x318 / 4);
                     strcat(buf, s);
-                    strcat(buf, ": ");
+                    strcat(buf, SocialWinColonSpaceText);
                 } else {
                     strcat(buf, SocialWinCommaSpaceText);
                 }
@@ -544,7 +545,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
                     strcat(buf, "^");
                     char *s = label_get(0x110 / 4);
                     strcat(buf, s);
-                    strcat(buf, ": ");
+                    strcat(buf, SocialWinColonSpaceText);
                 } else {
                     strcat(buf, SocialWinCommaSpaceText);
                 }
@@ -588,7 +589,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
                             strcat(buf, "^");
                             char *s = label_get(0x118 / 4);
                             strcat(buf, s);
-                            strcat(buf, ": ");
+                            strcat(buf, SocialWinColonSpaceText);
                         } else {
                             strcat(buf, SocialWinCommaSpaceText);
                         }
@@ -619,7 +620,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
                     strcat(buf, "^");
                     char *s = label_get(0x4CC / 4);
                     strcat(buf, s);
-                    strcat(buf, ": ");
+                    strcat(buf, SocialWinColonSpaceText);
                 } else {
                     strcat(buf, SocialWinCommaSpaceText);
                 }
@@ -648,7 +649,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
                     strcat(buf, "^");
                     char *s = label_get(0x130 / 4);
                     strcat(buf, s);
-                    strcat(buf, ": ");
+                    strcat(buf, SocialWinColonSpaceText);
                 } else {
                     strcat(buf, SocialWinCommaSpaceText);
                 }

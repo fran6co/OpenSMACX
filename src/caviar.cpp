@@ -2216,21 +2216,20 @@ int Caviar::init() {
     close();
 
     for (int index = 0; index < 200; ++index) {
-        VoxInstance &instance = slots_[index];
-        instance.instance_colour_ = static_cast<uint8_t *>(mem_get(1));
-        if (instance.instance_colour_ == 0) {
+        slots_[index].instance_colour_ = static_cast<uint8_t *>(mem_get(1));
+        if (slots_[index].instance_colour_ == 0) {
             close();
             return 4;
         }
-        instance.instance_vector_ =
+        slots_[index].instance_vector_ =
             static_cast<VOX_Vect *>(mem_get(0xC));
-        if (instance.instance_vector_ == 0) {
+        if (slots_[index].instance_vector_ == 0) {
             close();
             return 4;
         }
-        instance.instance_matrix_ =
+        slots_[index].instance_matrix_ =
             static_cast<VOX_Matrix *>(mem_get(0x24));
-        if (instance.instance_matrix_ == 0) {
+        if (slots_[index].instance_matrix_ == 0) {
             close();
             return 4;
         }

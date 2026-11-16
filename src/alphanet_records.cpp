@@ -133,6 +133,11 @@ void AlphaNetLedger::on_remove(NetAllocationNode *payload) {
 
 
 
+// The inline allocators' fatal-box text is one linker-merged literal pair
+// shared by every unit that expands them (stringstruct, alphanet_records,
+// net_class): the image pushes 0x00682700 and 0x00682724 from all of them.
+// RECOVERY_LITERAL: v2 merged 0x00682700 0x00682722 ??_C@_0CC@JCEM@out?5of?5heap?5space?5in?5new?5functio@ 0x00401D80
+// RECOVERY_LITERAL: v2 merged 0x00682724 0x0068272D ??_C@_08JLBK@Aborting?$AA@ 0x00401D80
 /*
 Purpose: Build and link one selection node for the container this owns:
          the same two-stage allocate (0x1c node, 0x60 payload) with the

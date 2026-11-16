@@ -325,8 +325,10 @@ done:
     if (Language == 1) { // French : handling for poor translations
         // Six inline 20-byte French prefix rows; the observed table window
         // does not establish any broader original allocation or source name.
-        // RECOVERY_OBJECT: v2 0x006972D4 0x0069734C _?part_speech@?HL@??parse_string@@YAHPAD0@Z@4QAY0BE@$$CBDA 0x00625880
-        static const char part_speech[6][20] = {
+        // The rows sit in writable .data (0x006972D4), so the static is not
+        // const: a const local static would land in .rdata.
+        // RECOVERY_OBJECT: v2 0x006972D4 0x0069734C _?part_speech@?IF@??parse_string@@YAHPAD0@Z@4PAY0BE@DA 0x00625880
+        static char part_speech[6][20] = {
             " de ", " le ", " la ", "De ", "Le ", "La "
         };
         LPSTR first = output_base;

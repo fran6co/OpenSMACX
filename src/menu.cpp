@@ -30,22 +30,10 @@
 #include "console.h"
 #include "general.h"  // mem_get for Menu's owned label copies
 
-// Their containing source object/literal identities still need a coordinated
-// ownership decision; don't bind them at fixed addresses.
-
-// Complete source-level transcriptions established so far:
-
-namespace {
-char MenuEntryPadding[] = "  ";
-// RECOVERY_OBJECT: v1 0x00696E48 ?MenuComputeLeftSpace@?%src/menu.cpp@@3PADA
-char MenuComputeLeftSpace[] = " ";
-// RECOVERY_OBJECT: v1 0x00696E4C ?MenuComputeRightSpace@?%src/menu.cpp@@3PADA
-char MenuComputeRightSpace[] = " ";
-char MenuLeftDownMargin[] = " ";
-char MenuMouseMoveMargin[] = " ";
-char MenuMnemonicMargin[] = " ";
-char MenuRedrawMargin[] = " ";
-}
+// The entry padding and text-width margins are per-site literals: the image
+// pushes eight distinct objects 0x00696E40 "  ", 0x00696E44 "  ", then
+// 0x00696E48..0x00696E5C " " in function order (add_menu, UNK10, compute x2,
+// on_left_down, mouse_move, on_key_click, on_redraw), not shared named arrays.
 
 // Provisional Menu-owned source objects only: the pinned image places both
 // coordinates in zero-initialized data. Their complete native xref census is
@@ -142,7 +130,7 @@ int Menu::add_menu(int menu_id, char *text, int left_justified) {
     } else {
         strcat(entries_[slot].text, text);
     }
-    strcat(entries_[slot].text, MenuEntryPadding);
+    strcat(entries_[slot].text, "  ");
 
     if (entries_[slot].pull_down) delete entries_[slot].pull_down;
     entries_[slot].pull_down = new PullDown;
@@ -208,7 +196,7 @@ int Menu::UNK10(int menu_id, char *text) {
                 entries_[index].text + strlen(entries_[index].text);
         strcat(entries_[index].text, after_ampersand);
     }
-    strcat(entries_[index].text, MenuEntryPadding);
+    strcat(entries_[index].text, "  ");
     compute();
     return 0;
 }
@@ -228,12 +216,12 @@ void Menu::compute() {
 
     Font *const left_font = MenuDefaultFont;
     const int available_width = pixel_width();
-    const int left_label_width = left_font->width(MenuComputeLeftSpace);
+    const int left_label_width = left_font->width(" ");
     int left_space = available_width - left_label_width;
 
     Font *const right_font = MenuDefaultFont;
     const int line_height = right_font->height_ * 2;
-    int right_space = right_font->width(MenuComputeRightSpace);
+    int right_space = right_font->width(" ");
 
     for (int i = 0; i < count_; ++i) {
         MenuEntry &entry = entries_[i];
@@ -290,7 +278,7 @@ void Menu::on_left_down(int x, int y) {
     } else {
         hide_menus();
         field_A24_ = new_index;
-        x = spot_.get_rect_at(new_index).left - text_width(MenuLeftDownMargin);
+        x = spot_.get_rect_at(new_index).left - text_width(" ");
         y = pixel_height();
         client_to_screen(&x, &y);
         redraw();
@@ -336,7 +324,7 @@ void Menu::mouse_move(int x, int y) {
 
     entries_[field_A24_].pull_down->hide();
     field_A24_ = new_index;
-    point.x = spot_.get_rect_at(new_index).left - text_width(MenuMouseMoveMargin);
+    point.x = spot_.get_rect_at(new_index).left - text_width(" ");
     point.y = pixel_height();
     ClientToScreen(HandleMain, &point);
     redraw();
@@ -463,7 +451,7 @@ search_menu_mnemonics:
         }
         field_A24_ = index;
         POINT point;
-        point.x = spot_.get_rect_at(field_A24_).left - text_width(MenuMnemonicMargin);
+        point.x = spot_.get_rect_at(field_A24_).left - text_width(" ");
         point.y = pixel_height();  // 5FC1B8: neg of the raw height field
         ClientToScreen(HandleMain, &point);
         flush_input();
@@ -488,7 +476,7 @@ void Menu::on_redraw() {
     // Entries are laid out across the bar: left-justified ones advance the
     // left edge, right-justified ones pull the right edge in.
     fill(MenuDefaultColor1);
-    int margin = text_width(MenuRedrawMargin);
+    int margin = text_width(" ");
     int inset = -margin;
     RECT rect = clip_rect();
     rect.left -= inset;

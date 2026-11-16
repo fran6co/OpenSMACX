@@ -230,7 +230,8 @@ uint32_t BasePopDefaultButtonColors[4][3] = {
     {0x00000001, 0x00000001, 0x00000001}};  // 0x00696F24
 
 // THE TWENTY CONFIG DIRECTIVE KEYWORDS BasePop::start (0x00601BF0) compares
-// each '#' line against, one inline .data literal per keyword at
+// each '#' line against are written as literals at their _strnicmp calls in
+// start(): one inline .data literal per keyword at
 // 0x00696F64..0x00696FEC. Read out of the shipped image with image_data.py
 // and verified byte for byte: "x ", "y " and "col " carry their trailing
 // space, and the directive's own name is what each handler then parses -
@@ -241,26 +242,6 @@ uint32_t BasePopDefaultButtonColors[4][3] = {
 // characters than several of these strings run - itemlist and text/wave/fade
 // per the start artifact's CORRECTIONS - so a keyword's compare length is NOT
 // its strlen here; take each length off the image's own call site.
-char BasePopKeywordXs[] = "xs";           // 0x00696F64
-char BasePopKeywordYs[] = "ys";           // 0x00696F68
-char BasePopKeywordX[] = "x ";            // 0x00696F6C
-char BasePopKeywordY[] = "y ";            // 0x00696F70
-char BasePopKeywordCol[] = "col ";        // 0x00696F74
-char BasePopKeywordCaption[] = "caption";  // 0x00696F7C
-char BasePopKeywordCheckbox[] = "checkbox";  // 0x00696F84
-char BasePopKeywordEditbox[] = "editbox";   // 0x00696F90
-char BasePopKeywordListbox[] = "listbox";   // 0x00696F98
-char BasePopKeywordActive[] = "active";     // 0x00696FA0
-char BasePopKeywordText[] = "text";         // 0x00696FA8
-char BasePopKeywordItemlist[] = "itemlist";  // 0x00696FB0
-char BasePopKeywordButton[] = "button";     // 0x00696FBC
-char BasePopKeywordExtra[] = "extra";       // 0x00696FC4
-char BasePopKeywordWave[] = "wave";         // 0x00696FCC
-char BasePopKeywordVol[] = "vol";           // 0x00696FD4
-char BasePopKeywordPitch[] = "pitch";       // 0x00696FD8
-char BasePopKeywordFade[] = "fade";         // 0x00696FE0
-char BasePopKeywordPan[] = "pan";           // 0x00696FE8
-char BasePopKeywordSprite[] = "sprite";     // 0x00696FEC
 
 namespace {
 
@@ -3299,7 +3280,7 @@ int BasePop::UNK2() {
 // LEVER: A CONFIG-SCRIPT PARSER, one directive per arm. The image reads the
 //        text table a line at a time; lines that do not start with '#' are
 //        popup items, and a '#' line is matched against the twenty keywords
-//        at 0x00696F64..0x00696FEC (the BasePopKeyword* arrays below) with
+//        at 0x00696F64..0x00696FEC (literals at the calls below) with
 //        _strnicmp(tok + 1, keyword, len) - tok[0] IS the '#'. The lengths
 //        and the token offsets are in the table at the head of the switch.
 // LEVER: VC6 DEFERS THE __CDECL CLEANUP, and the transcription that reads the
@@ -3407,7 +3388,7 @@ int BasePop::start(char *text_file, const char *text_label, int value,
         if (tok[0] == '#') {
             // THE DIRECTIVE TABLE. (keyword, compare length, token offset N).
             // Converter is atoi unless the comment says otherwise.
-            if (_strnicmp(tok + 1, BasePopKeywordXs, 2) == 0) {
+            if (_strnicmp(tok + 1, "xs", 2) == 0) {
                 purge_spaces(tok + 3);
                 purge_leading(tok + 3);
                 // The whole directive is ignored for an external window.
@@ -3416,7 +3397,7 @@ int BasePop::start(char *text_file, const char *text_label, int value,
                 }
                 continue;
             }
-            if (_strnicmp(tok + 1, BasePopKeywordYs, 2) == 0) {
+            if (_strnicmp(tok + 1, "ys", 2) == 0) {
                 purge_spaces(tok + 3);
                 purge_leading(tok + 3);
                 if (external_window_ == 0) {
@@ -3424,31 +3405,31 @@ int BasePop::start(char *text_file, const char *text_label, int value,
                 }
                 continue;
             }
-            if (_strnicmp(tok + 1, BasePopKeywordX, 2) == 0) {
+            if (_strnicmp(tok + 1, "x ", 2) == 0) {
                 purge_spaces(tok + 2);
                 purge_leading(tok + 2);
                 set_loc(atoi(tok + 2), 0x2000);
                 continue;
             }
-            if (_strnicmp(tok + 1, BasePopKeywordY, 2) == 0) {
+            if (_strnicmp(tok + 1, "y ", 2) == 0) {
                 purge_spaces(tok + 2);
                 purge_leading(tok + 2);
                 set_loc(0x2000, atoi(tok + 2));
                 continue;
             }
-            if (_strnicmp(tok + 1, BasePopKeywordCol, 4) == 0) {
+            if (_strnicmp(tok + 1, "col ", 4) == 0) {
                 purge_spaces(tok + 4);
                 purge_leading(tok + 4);
                 dialogs_.Dialog::field_4C_ = atoi(tok + 4);
                 continue;
             }
-            if (_strnicmp(tok + 1, BasePopKeywordCaption, 7) == 0) {
+            if (_strnicmp(tok + 1, "caption", 7) == 0) {
                 purge_spaces(tok + 8);
                 purge_leading(tok + 8);
                 UNK1(tok + 8);
                 continue;
             }
-            if (_strnicmp(tok + 1, BasePopKeywordCheckbox, 8) == 0) {
+            if (_strnicmp(tok + 1, "checkbox", 8) == 0) {
                 field_30A8_ |= 1;
                 dialogs_.kind_ = 1;
                 purge_spaces(tok + 9);
@@ -3458,12 +3439,12 @@ int BasePop::start(char *text_file, const char *text_label, int value,
                 }
                 continue;
             }
-            if (_strnicmp(tok + 1, BasePopKeywordEditbox, 7) == 0) {
+            if (_strnicmp(tok + 1, "editbox", 7) == 0) {
                 field_30A8_ |= 4;
                 dialogs_.kind_ = 4;
                 continue;
             }
-            if (_strnicmp(tok + 1, BasePopKeywordListbox, 7) == 0) {
+            if (_strnicmp(tok + 1, "listbox", 7) == 0) {
                 field_30A8_ |= 2;
                 dialogs_.kind_ = 2;
                 purge_spaces(tok + 8);
@@ -3473,27 +3454,27 @@ int BasePop::start(char *text_file, const char *text_label, int value,
                 }
                 continue;
             }
-            if (_strnicmp(tok + 1, BasePopKeywordActive, 6) == 0) {
+            if (_strnicmp(tok + 1, "active", 6) == 0) {
                 purge_spaces(tok + 7);
                 purge_leading(tok + 7);
                 value_ = atoi(tok + 7);
                 continue;
             }
-            if (_strnicmp(tok + 1, BasePopKeywordText, 4) == 0) {
+            if (_strnicmp(tok + 1, "text", 4) == 0) {
                 add_as_escaped = 1;
                 continue;
             }
-            if (_strnicmp(tok + 1, BasePopKeywordItemlist, 5) == 0) {
+            if (_strnicmp(tok + 1, "itemlist", 5) == 0) {
                 add_as_escaped = 0;
                 continue;
             }
-            if (_strnicmp(tok + 1, BasePopKeywordButton, 6) == 0) {
+            if (_strnicmp(tok + 1, "button", 6) == 0) {
                 purge_spaces(tok + 7);
                 purge_leading(tok + 7);
                 button(tok + 7);
                 continue;
             }
-            if (_strnicmp(tok + 1, BasePopKeywordExtra, 5) == 0) {
+            if (_strnicmp(tok + 1, "extra", 5) == 0) {
                 purge_spaces(tok + 6);
                 purge_leading(tok + 6);
                 field_30AC_ = atoi(tok + 6);
@@ -3504,7 +3485,7 @@ int BasePop::start(char *text_file, const char *text_label, int value,
             // the pair by 0x118 from text_block_a_).
             // WORKAROUND(type): text_block_a_/text_block_b_ are two members;
             // the image indexes them as one two-element array (imul 0x118).
-            if (_strnicmp(tok + 1, BasePopKeywordWave, 4) == 0) {
+            if (_strnicmp(tok + 1, "wave", 4) == 0) {
                 token = tok + 5;
                 if (tok[5] == '2') {
                     which = 1;
@@ -3521,7 +3502,7 @@ int BasePop::start(char *text_file, const char *text_label, int value,
                 strcat((&text_block_a_)[which].text, token);
                 continue;
             }
-            if (_strnicmp(tok + 1, BasePopKeywordVol, 3) == 0) {
+            if (_strnicmp(tok + 1, "vol", 3) == 0) {
                 token = tok + 4;
                 if (tok[4] == '2') {
                     which = 1;
@@ -3534,7 +3515,7 @@ int BasePop::start(char *text_file, const char *text_label, int value,
                 (&text_block_a_)[which].field_108_ = atol(token);
                 continue;
             }
-            if (_strnicmp(tok + 1, BasePopKeywordPitch, 5) == 0) {
+            if (_strnicmp(tok + 1, "pitch", 5) == 0) {
                 token = tok + 6;
                 if (tok[6] == '2') {
                     which = 1;
@@ -3547,7 +3528,7 @@ int BasePop::start(char *text_file, const char *text_label, int value,
                 (&text_block_a_)[which].field_110_ = atoi(token);
                 continue;
             }
-            if (_strnicmp(tok + 1, BasePopKeywordFade, 4) == 0) {
+            if (_strnicmp(tok + 1, "fade", 4) == 0) {
                 token = tok + 5;
                 if (tok[5] == '2') {
                     which = 1;
@@ -3560,7 +3541,7 @@ int BasePop::start(char *text_file, const char *text_label, int value,
                 (&text_block_a_)[which].field_10C_ = atol(token);
                 continue;
             }
-            if (_strnicmp(tok + 1, BasePopKeywordPan, 3) == 0) {
+            if (_strnicmp(tok + 1, "pan", 3) == 0) {
                 token = tok + 4;
                 if (tok[4] == '2') {
                     which = 1;
@@ -3573,7 +3554,7 @@ int BasePop::start(char *text_file, const char *text_label, int value,
                 (&text_block_a_)[which].field_114_ = atoi(token);
                 continue;
             }
-            if (_strnicmp(tok + 1, BasePopKeywordSprite, 6) == 0) {
+            if (_strnicmp(tok + 1, "sprite", 6) == 0) {
                 purge_spaces(tok + 7);
                 purge_leading(tok + 7);
                 if (Buffer::get_pcx_dimensions(tok + 7, &width, &height) == 0) {

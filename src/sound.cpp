@@ -376,6 +376,29 @@ HMODULE SoundDllModule;
 // RECOVERY_OBJECT: v2 0x0090DB24 0x0090DB50 ?SoundDllProcs@@3PAPAXA 0x004C5E50
 SoundDllProcsTable SoundDllProcs;
 
+// The version warnings are named read-only objects, not unit literals: the
+// image pushes .rdata 0x0066E258/0x0066E2F0/0x0066E370 and one shared caption
+// 0x0066E2D8 for all three calls, laid out message, caption, message, message.
+// Names are descriptive; the original spelling is unknown.
+extern const char SoundVersionGameDllWarning[];
+extern const char SoundVersionWarningCaption[];
+extern const char SoundVersionJackalGameWarning[];
+extern const char SoundVersionJackalDllWarning[];
+// RECOVERY_OBJECT: v1 0x0066E258 ?SoundVersionGameDllWarning@@3QBDB
+const char SoundVersionGameDllWarning[] =
+    "The sound header files used in the game do not match the ones used in "
+    "sound.dll. Check all sound.h and sound device.h versions!";
+// RECOVERY_OBJECT: v1 0x0066E2D8 ?SoundVersionWarningCaption@@3QBDB
+const char SoundVersionWarningCaption[] = "Sound Version Warning";
+// RECOVERY_OBJECT: v1 0x0066E2F0 ?SoundVersionJackalGameWarning@@3QBDB
+const char SoundVersionJackalGameWarning[] =
+    "The sound header files used by jackal do not match the ones used by the "
+    "game. Check all sound.h and sound device.h versions!";
+// RECOVERY_OBJECT: v1 0x0066E370 ?SoundVersionJackalDllWarning@@3QBDB
+const char SoundVersionJackalDllWarning[] =
+    "The sound header files used by jackal do not match the ones used in "
+    "sound.dll. ";
+
 int __cdecl load_sound_dll() {
     if (SoundDllModule == 0) {
         SoundDllModule = LoadLibraryA(".\\soundx.dll");
@@ -394,21 +417,16 @@ int __cdecl load_sound_dll() {
 
         unsigned int version = get_sound_version();
         if ((version & 0xff00) != 0x100) {
-            sound_version_warning("The sound header files used in the game do not match "
-                       "the ones used in sound.dll. Check all sound.h and "
-                       "sound device.h versions!",
-                       "Sound Version Warning");
+            sound_version_warning(SoundVersionGameDllWarning,
+                                  SoundVersionWarningCaption);
         }
         if (sound_header_version() != 1) {
-            sound_version_warning("The sound header files used by jackal do not match "
-                       "the ones used by the game. Check all sound.h and "
-                       "sound device.h versions!",
-                       "Sound Version Warning");
+            sound_version_warning(SoundVersionJackalGameWarning,
+                                  SoundVersionWarningCaption);
         }
         if (sound_header_version() != ((version >> 8) & 0xff)) {
-            sound_version_warning("The sound header files used by jackal do not match "
-                       "the ones used in sound.dll. ",
-                       "Sound Version Warning");
+            sound_version_warning(SoundVersionJackalDllWarning,
+                                  SoundVersionWarningCaption);
         }
     }
     return 0;

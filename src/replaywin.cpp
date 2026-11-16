@@ -122,9 +122,8 @@ void ReplayWin::close() {
 
 // The original calls save_daemon with the bare autosave name, then reloads
 // its .SAV path after the replay window closes. Both image strings are at
-// 0x00691408 and 0x00691424 respectively.
-static const char ReplaySaveName[] = "Alpha Centauri Autosave 1";
-static const char ReplaySaveFile[] = "Alpha Centauri Autosave 1.SAV";
+// 0x00691408 and 0x00691424 respectively: ordinary .data literals of this
+// unit, following its "Replay: " text, not read-only named objects.
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005ADBF0 ?show_replay@@YAXXZ 0x005ADBF0-0x005ADE7B;0x00662240-0x00662355 BYTE_EXACT
@@ -133,14 +132,14 @@ static const char ReplaySaveFile[] = "Alpha Centauri Autosave 1.SAV";
 void __cdecl show_replay() {
     ReplayWin replay;
     WorldClimateSkipTerrainClear = 2;
-    save_daemon(const_cast<char *>(ReplaySaveName));
+    save_daemon("Alpha Centauri Autosave 1");
     GameDataStateStorage.fields_.game_state_ |= 0x80;
 
     replay.init();
     replay.close();
 
     do_all_draws();
-    load_daemon(ReplaySaveFile, 0);
+    load_daemon("Alpha Centauri Autosave 1.SAV", 0);
     flush_input();
     WorldClimateSkipTerrainClear = 0;
 }

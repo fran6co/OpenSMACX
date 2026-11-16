@@ -68,12 +68,14 @@ BOOL Strings::init(size_t mem_size) {
     if (Heap::init(mem_size)) {
         return true; // allocation failed
     }
-    // Both pinned strlen/strcpy arguments select 6971FC. The six literal
+    // Both pinned strlen/strcpy arguments select the one object 6971FC (the
+    // inlined put() parameter: one literal, not one per call). The six literal
     // bytes precede alignment padding and the independently used labels keys.
-    // RECOVERY_LITERAL: v1 0x006971FC 0x00697202 ??_C@_05BHIP@?9Nil?9?$AA@ 0x006168F0
-    size_t len = strlen("-Nil-") + 1;
+    // RECOVERY_LITERAL: v1 0x006971FC 0x00697202 $SG49946 0x006168F0
+    LPCSTR input = "-Nil-";
+    size_t len = strlen(input) + 1;
     LPSTR table_addr = LPSTR(Heap::get(len));
-    strcpy(table_addr, "-Nil-");
+    strcpy(table_addr, input);
     is_populated_ = true;
     return false; // successful
 }

@@ -99,6 +99,11 @@ void StringStruct::on_remove(void *) { }
 // WORKAROUND(decl): the original overloads were probably class members of
 // the list nodes; these global forms stand in for them without a header
 // change.
+// The inline allocators' fatal-box text is one linker-merged literal pair
+// shared by every unit that expands them (stringstruct, alphanet_records,
+// net_class): the image pushes 0x00682700 and 0x00682724 from all of them.
+// RECOVERY_LITERAL: v2 merged 0x00682700 0x00682722 ??_C@_0CC@JCEM@out?5of?5heap?5space?5in?5new?5functio@ 0x00401100
+// RECOVERY_LITERAL: v2 merged 0x00682724 0x0068272D ??_C@_08JLBK@Aborting?$AA@ 0x00401100
 inline void *__cdecl operator new(size_t size, Heap *heap) throw() {
     void *memory = heap->get(size);
     if (memory != 0) {
