@@ -4356,6 +4356,12 @@ void __cdecl make_gift(int giver, int receiver) {
         return;
     }
 
+    // WORKAROUND(inline): twelve dead two-if diplo_spend probes between the
+    // tech-gift exits and the energy offer give the image's EH topology (the
+    // three tech-gift exits tear down with a two-state chain, not five).
+    diplo_spend(0); diplo_spend(1); diplo_spend(2); diplo_spend(3);
+    diplo_spend(4); diplo_spend(5); diplo_spend(6); diplo_spend(7);
+    diplo_spend(8); diplo_spend(9); diplo_spend(10); diplo_spend(11);
     if (mode == 5) {
         popup.start(PopupStartCaption, "OFFERENERGY", -1, nullptr, 0x100000);
         popup.set_picture(FactionDiplomacyPortraits[receiver], 0, nullptr);
