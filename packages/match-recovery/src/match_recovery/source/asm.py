@@ -1458,8 +1458,13 @@ def compare_regions(pairs: tuple[tuple[Listing, Listing], ...], *,
         if previous_end is not None and original.base < previous_end:
             raise ValueError("original regions must be ordered and non-overlapping")
         previous_end = original.base + len(original.code)
-        if original.code_bytes != candidate.code_bytes or (
-                original.code_bytes is not None and len(original.code) != len(candidate.code)):
+        # The candidate's boundary may differ from the span's: a body of
+        # another length split at its object's own table start keeps its
+        # tables as data (see `eh_region_listings`), and `compare_asm`
+        # reports the differing tail. An image tail is never read without
+        # a candidate tail of the same extent to compare it against.
+        if (original.code_bytes is not None
+                and (candidate.code_bytes is None or len(original.code) != len(candidate.code))):
             raise ValueError("region comparison requires matching code/data boundaries")
         for listing in (original, candidate):
             if not listing.code:
@@ -1548,6 +1553,29 @@ def compare_regions(pairs: tuple[tuple[Listing, Listing], ...], *,
     )
 
 
+def _section_table_start(parsed: Coff, section: int, code: bytes,
+                         relocations) -> int | None:
+    """`_object_table_start` for one whole code section of a multi-span body
+    (an EH root or its cold region).
+
+    The code is the section's raw data, so symbol values and relocation
+    offsets are already section offsets: the lowest FORWARD DIR32 target in
+    the section's own section is its first table byte.
+    """
+    starts = []
+    for item in relocations:
+        if item.kind is not RelocationKind.ABSOLUTE32:
+            continue
+        target = parsed.symbols.get(int(item.target))
+        if target is None or target.section != section:
+            continue
+        addend = int.from_bytes(code[item.offset:item.offset + 4], "little", signed=True)
+        at = target.value + addend
+        if item.offset < at < len(code):
+            starts.append(at)
+    return min(starts, default=None)
+
+
 def eh_region_listings(compiled: RegionCandidate, bound, image: PeImage) -> list[tuple[Listing, Listing]]:
     """(original, compiled) listings of each bound EH region, relocations masked on both sides."""
     pairs = []
@@ -1569,22 +1597,28 @@ def eh_region_listings(compiled: RegionCandidate, bound, image: PeImage) -> list
         candidate = Listing(region.code, low,
                             mask=frozenset(item.offset + byte
                                 for item in region.relocations for byte in range(4)),
-                            flags=compiled.flags, references=references)
+                            flags=compiled.flags, references=references,
+                            table_start=_section_table_start(parsed, region.section,
+                                                              region.code, region.relocations))
         # A switch's jump tables ride the COMDAT past the mapped code span,
         # as in the single-span path (`_split_at`): when the candidate's
-        # instructions end exactly at the span with a terminator and the
-        # tail carries relocations, compare that tail as data against the
-        # image's own bytes after the span. Pure alignment fill keeps the
-        # region comparison's own envelope rule.
+        # instructions end with a terminator - at the span, or failing that
+        # at the object's own table start - and the tail carries
+        # relocations, compare that tail as data against the image's own
+        # bytes after the span. A body of another length keeps its tables
+        # on the data side too, so its instruction count is the body's; it
+        # still cannot be BYTE_EXACT. Pure alignment fill keeps the region
+        # comparison's own envelope rule.
         span_size = region.original.end - region.original.start
         split = _split_at(candidate, span_size)
-        if (split.code_bytes == span_size
-                and any(offset >= span_size for offset in candidate.mask)):
-            extended = Span(low, low + len(region.code))
-            original = Listing(image.read(extended), low, code_bytes=span_size,
-                               mask=frozenset(offset + byte
-                                   for offset in image.absolute_sites(extended)
-                                   for byte in range(4)))
+        if (split.code_bytes is not None
+                and any(offset >= split.code_bytes for offset in candidate.mask)):
+            if len(region.code) > span_size:
+                extended = Span(low, low + len(region.code))
+                original = Listing(image.read(extended), low, code_bytes=span_size,
+                                   mask=frozenset(offset + byte
+                                       for offset in image.absolute_sites(extended)
+                                       for byte in range(4)))
             candidate = split
         pairs.append((original, candidate))
     return pairs
@@ -2115,7 +2149,8 @@ def _diagnostic_listings(obj: bytes, record: DecompilationState, exe: Path,
         code, relocations, _alignment = parsed.section_subject(number)
         mask = frozenset(item.offset + byte for item in relocations for byte in range(4)
                          if item.offset + byte < len(code))
-        compiled = Listing(code=code, base=low, mask=mask, flags=label)
+        compiled = Listing(code=code, base=low, mask=mask, flags=label,
+                           table_start=_section_table_start(parsed, number, code, relocations))
         end = len(compiled.code)
         while end > 0 and compiled.code[end - 1] in (0x90, 0xCC):
             end -= 1
@@ -2126,6 +2161,18 @@ def _diagnostic_listings(obj: bytes, record: DecompilationState, exe: Path,
         while cut > 0 and image_code[cut - 1] in (0x90, 0xCC):
             cut -= 1
         original = Listing(code=image_code[:cut], base=low, mask=_image_mask(exe, low, low + cut))
+        # As in the single-span branch: a region whose COMDAT carries its
+        # switch tables past the span reads the image's copy of them, and
+        # `compare_asm` splits the candidate at the span or, for a body of
+        # another length, at its own table start - so the tables are
+        # compared as data, never counted as instructions.
+        if len(compiled.code) > cut:
+            try:
+                original = Listing(code=_pe_bytes(exe, low, len(compiled.code)), base=low,
+                                   code_bytes=cut,
+                                   mask=_image_mask(exe, low, low + len(compiled.code)))
+            except ValueError:
+                pass
         pairs.append((original, compiled))
     return pairs, tuple(notes)
 

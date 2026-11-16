@@ -743,6 +743,37 @@ def test_an_object_split_body_of_another_length_is_not_a_match():
     assert result.compiled_instructions == 3
 
 
+def test_a_multi_span_section_names_its_own_table_start():
+    """An EH root's whole section is its region, so its relocations name
+    the table start directly, as `_object_table_start` does for a symbol."""
+    parsed = asm.Coff(a_switch_object())
+    code, relocations, _alignment = parsed.section_subject(1)
+    assert asm._section_table_start(parsed, 1, code, relocations) == 12
+
+
+def test_an_eh_region_of_another_length_keeps_its_tables_as_data():
+    """A two-span body whose root is a few bytes longer than the shipped one
+    splits at its object's table start, so the table is compared as data
+    and the instruction count is the body's - still never a match."""
+    from match_recovery.model import Span
+    parsed = asm.Coff(a_switch_object())
+    code, relocations, _alignment = parsed.section_subject(1)
+    shipped = b"\xFF\x24\x85" + bytes(4) + b"\xC3"
+    image_bytes = shipped + b"\x8B\xFF\x8B\xFF" + bytes(8)
+    image = SimpleNamespace(
+        read=lambda span: image_bytes[span.start - 0x401000:span.end - 0x401000],
+        absolute_sites=lambda span: frozenset())
+    region = SimpleNamespace(original=Span(0x401000, 0x401000 + len(shipped)), section=1,
+                             code=code, relocations=relocations)
+    candidate = asm.RegionCandidate(a_switch_object(), "_f", FLAGS, ())
+    (original, compiled), = asm.eh_region_listings(candidate, (region,), image)
+    assert compiled.code_bytes == 10 and original.code_bytes == len(shipped)
+    assert len(original.code) == len(compiled.code)
+    result = asm.compare_regions(((original, compiled),))
+    assert result.verdict != "BYTE_EXACT"
+    assert result.compiled_instructions == 3
+
+
 def test_a_body_with_no_tail_is_unchanged():
     original = a_listing(TAIL_BODY)
     compiled = a_listing(TAIL_BODY)
