@@ -2484,6 +2484,7 @@ join:
   picker_spend(13); picker_spend(14); picker_spend(15); picker_spend(16);
   picker_spend(17); picker_spend(18); picker_spend(19); picker_spend(20);
   picker_spend(21); picker_spend(22); picker_spend(23); picker_spend(24);
+  picker_spend(25); picker_spend(26);
   name_buffer[0] = 0;
   strcat(name_buffer, ParseStrBuffer[0].str);
   return join_session(session, name_buffer, 0);

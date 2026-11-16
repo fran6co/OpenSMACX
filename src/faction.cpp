@@ -17,6 +17,10 @@
  */
 #define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h
 #define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
+// WORKAROUND(noinline): no faction function expands StringStruct::remove_all;
+// proposal_menu's final StringList teardowns call 0x00402970 at 0x0054F289,
+// 0x0054F2BC, 0x0054F30F and 0x0054F342 where a visible body is expanded.
+#define STRINGSTRUCT_REMOVE_ALL_OUT_OF_LINE
 #include "stdafx.h"
 #include "worldwin.h"
 #include "general.h"
@@ -4399,9 +4403,12 @@ void __cdecl make_gift(int giver, int receiver) {
         ConsoleInfoWin.set_redraw_phase(0);
         ConsoleGlobal.update_data(0);
 
-        int accumulated = 0;
-        int remaining = amount / 5;
-        int divisor = 2;
+        int accumulated;
+        int remaining;
+        int divisor;
+        accumulated = 0;
+        divisor = 2;
+        remaining = amount / 5;
         int bucket = 10;
         while (remaining > 0) {
             accumulated += range(remaining, 0, bucket) / divisor;
@@ -6606,8 +6613,8 @@ void __cdecl battle_routine(int base_id) {
 // symbol    ?proposal_menu@@YAHHH@Z
 // TRIED: byte-exact prologue global-write order (a64cc load/cmp interleaved between fa30/fa7c/f7cc/fab0/fa34/fa5c in the original, sequential here); the six-panel Popup/Dialogs dispatch, item()/exec() gating and faction-loop strides are transcribed from raw disasm + the (uncorrupted for this function) Ghidra hypothesis cross-checked against it - diverges first at #11, in the prologue.
 int __cdecl proposal_menu(int faction_id, int faction_id_with) {
-    int commlink_count = 0;
     int contact_count = 0;
+    int commlink_count = 0;
     Popup popup;
     int i;
     int base_id;

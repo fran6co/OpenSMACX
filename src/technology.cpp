@@ -1082,7 +1082,8 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
     }
 
     if (tech_id >= 0x59 && tech_id < 0x61) {
-        treaty_on(faction_id, tech_id - 0x59, 8);
+        int treaty_id = tech_id - 0x59;
+        treaty_on(faction_id, treaty_id, 8);
         return;
     }
 
