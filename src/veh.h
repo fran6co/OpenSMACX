@@ -18,6 +18,7 @@
 #pragma once
 #include <stdio.h>
 #include <stddef.h>
+#include <string.h>
 #include "time.h"  // battle_init resets the timer family's shared hold flag.
 
 // Prototype history is privately owned by prototype_history.cpp. Its genuine
@@ -697,7 +698,7 @@ extern uint32_t VehBasicBattleMorale[2];  // 0x00912420
 extern int VehMoraleModifierCount;
 // Battle related globals
 // Fills to VehBattleUnkTgl: 2 * 4 ends exactly at 0x0091561C.
-extern uint32_t VehBattleModCount[2];  // 0x00915614
+extern int VehBattleModCount[2];  // 0x00915614 (signed: add_bat tests it with jge)
 extern BOOL VehBattleUnkTgl;  // 0x0091561C
 // 2 types x 4 modifier slots (add_bat's `type * 4 + offset`), ends 0x00915610.
 extern int VehBattleModifier[8];  // 0x009155F0
@@ -851,11 +852,13 @@ MEASURED uint32_t __cdecl planet_buster2(int proto_id);
 
 uint32_t __cdecl planet_buster(int veh_id);
 
+// The image clears 0x00915614..0x00915623 with `xor eax,eax` and four stores
+// and no zero register: one 16-byte intrinsic block clear spanning
+// VehBattleModCount[2], VehBattleUnkTgl and TimerHoldFlag (0x00915620). No
+// indexed access covers all four, so they stay separate objects; the clear
+// relies on their adjacent link order (relocations 0x00915614..0x00915620).
 MEASURED inline void __cdecl battle_init() {
-    VehBattleModCount[0] = 0;
-    VehBattleModCount[1] = 0;
-    VehBattleUnkTgl = false;
-    TimerHoldFlag = 0;
+    memset(VehBattleModCount, 0, 16);
 }
 
 MEASURED inline int __cdecl veh_moves(int veh_id) {

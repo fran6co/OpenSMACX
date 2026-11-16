@@ -866,19 +866,20 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl add_bat(int type, int modifier, LPCSTR display_str) {
-    // TODO: Revise global offsets once all references are decompiled.
     if (!modifier) {
         return;
     }
-    int offset = VehBattleModCount[type];
-    if (offset >= 4) {
+    if (VehBattleModCount[type] >= 4) {
         return;
     }
-    VehBattleModCount[type]++;
-    int index = type * 4 + offset;
-    VehBattleModifier[index] = modifier;
-    // Native strcpy writes the row itself; no pointer is stored or loaded.
-    strcpy(VehBattleDisplay[index], display_str);
+    // A signed count tested in place (`jge`), then post-incremented: inlined
+    // into battle_compute the loaded count is copied (`mov edx, esi; inc
+    // esi`) and the copy indexes the rows. Separate subscripts let a
+    // constant type fold its row offset into the bases (`add ecx,
+    // 0x90f694`, `[edx*4 + 0x915600]`) and keep add_bat exact.
+    int offset = VehBattleModCount[type]++;
+    VehBattleModifier[type * 4 + offset] = modifier;
+    strcpy(VehBattleDisplay[type * 4 + offset], display_str);
 }
 
 /*
@@ -1115,9 +1116,9 @@ int __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, int
                         && (map_loc(x_def, y_def)->val3 & ~0x3F) < TERRAIN_BIT_ROCKY
                         && speed_proto(Vehs[veh_id_atk].proto_id) > Rules.move_rate_roads) {
                         // 0x00502DFB: the attacker's speed is fetched (esi)
-                        // before the defender's, then `cmp def, esi; jg`.
+                        // before the defender's, then `cmp def, esi; jg`: the call is the left operand.
                         int speed_atk = speed_proto(Vehs[veh_id_atk].proto_id);
-                        if (speed_atk >= speed_proto(Vehs[veh_id_def].proto_id)) {
+                        if (speed_proto(Vehs[veh_id_def].proto_id) <= speed_atk) {
                             offense = (Rules.combat_pct_mobile_open_ground + 100) * offense / 100;
                             // "Mobile in open"
                             add_bat(0, Rules.combat_pct_mobile_open_ground, label_get(611));
@@ -1541,8 +1542,8 @@ LPSTR VehBattleDisplayTerrain;
 uint32_t VehBasicBattleMorale[2];  // 0x00912420
 // Original battle_init at 0x00501D32 clears the start; add_bat at 0x00501D5D/0x00501D70 indexes counters; no bounds claim.
 // Extent: compiled sizeof 0x8; next mapped object at 0x0091561C.
-// RECOVERY_OBJECT: v2 0x00915614 0x0091561C ?VehBattleModCount@@3PAIA 0x0042287B
-uint32_t VehBattleModCount[2];  // 0x00915614
+// RECOVERY_OBJECT: v2 0x00915614 0x0091561C ?VehBattleModCount@@3PAHA 0x0042287B
+int VehBattleModCount[2];  // 0x00915614
 // Original battle_init/planet_busting write 0x0091561C; kill and alt_set read it.
 // RECOVERY_OBJECT: v1 0x0091561C ?VehBattleUnkTgl@@3HA
 BOOL VehBattleUnkTgl;  // 0x0091561C
