@@ -1186,6 +1186,15 @@ static inline void design_inflate_rect(RECT *rect, int dx, int dy) {
     rect->bottom += dy;
 }
 
+static inline RECT *design_set_rect(RECT *rect, int left, int top, int right,
+                                    int bottom) {
+    rect->left = left;
+    rect->top = top;
+    rect->right = right;
+    rect->bottom = bottom;
+    return rect;
+}
+
 static inline void design_inset_rect(RECT *dst, const RECT *src, int inset) {
     dst->left = src->left + inset;
     dst->top = src->top + inset;
@@ -1244,14 +1253,25 @@ int DesignWin::init() {
     // +0xDB0's lower frame.
     info_panel_rect_ = MainInterfaceGlobal.info_frame_rect();
     design_inflate_rect(&info_panel_rect_, -4, -4);
-    design_inset_rect(&frame_rect_, &MainInterfaceGlobal.right_frame_rect(), 4);
-    design_inset_rect(&caption_rect_, &frame_rect_, 3);
+    // 0x0043C4FF..0x0043C581: the four edges stay in registers from the
+    // frame through the caption to A7C; each rectangle is stored through
+    // its own pointer.
+    int edge_left = MainInterfaceGlobal.right_frame_rect().left + 4;
+    int edge_top = MainInterfaceGlobal.right_frame_rect().top + 4;
+    int edge_right = MainInterfaceGlobal.right_frame_rect().right - 4;
+    int edge_bottom = MainInterfaceGlobal.right_frame_rect().bottom - 4;
+    design_set_rect(&frame_rect_, edge_left, edge_top, edge_right, edge_bottom);
+    edge_left += 3;
+    edge_top += 3;
+    edge_right -= 3;
+    edge_bottom -= 3;
+    design_set_rect(&caption_rect_, edge_left, edge_top, edge_right, edge_bottom);
     caption_rect_.bottom = caption_rect_.top + 21;
     // A7C..A88 get the caption rectangle as it was BEFORE the bottom was
-    // replaced (A88 = frame bottom - 3, 0x0043C57E stores edi); only the top
-    // is then moved below the caption.
+    // replaced; only the top is then moved below the caption.
     // WORKAROUND(type): field_A7C_..field_A88_ are a RECT in the original.
-    design_inset_rect(reinterpret_cast<RECT *>(&field_A7C_), &frame_rect_, 3);
+    design_set_rect(reinterpret_cast<RECT *>(&field_A7C_), edge_left, edge_top,
+                    edge_right, edge_bottom);
     field_A80_ = caption_rect_.bottom + 3;
 
     spot2_.init(6);
@@ -1298,13 +1318,12 @@ int DesignWin::init() {
     // Two columns of seven automatic-design buttons (ids 9..22).
     X_text_open(ScriptPopupFile, "DESIGNAUTO");
     int column_x = static_cast<int>(field_A7C_);
-    const int grid_width =
-        static_cast<int>(field_A84_ - column_x + 3) / 2 - 3;
+    int grid_width = static_cast<int>(field_A84_ - column_x + 3) / 2 - 3;
     DesignGridButtonIndex = 0;
     int row;
     int column;
-    for (row = 0; row < 2; ++row) {
-        int y = static_cast<int>(field_A80_);
+    int y = static_cast<int>(field_A80_);
+    for (row = 0; row < 2; ++row, y = static_cast<int>(field_A80_)) {
         for (column = 0; column < 7; ++column) {
             text_get();
             CharUpperA(TextBufferGetPtr);
@@ -1330,35 +1349,39 @@ int DesignWin::init() {
 
     // Five lower action rows.
     RECT *const working = buffer_working_rect();
-    int left = working->left + 0x1B;
-    int top = working->top;  // [ebp-0x30]: the image stores it and never reads it
-    int right = working->right - 0x20;
-    int bottom = working->bottom - 0x14;
-    int edge = (right - 0x1B - left + 3) / 5 - 3 + left;
-    const int row_top = bottom - 0x14;
-    (void)top;
+    // The image's four contiguous slots [ebp-0x34..-0x28] are this RECT
+    // (left/right walk the rows, bottom is spilled before the loop, and
+    // top is stored at 0x0043C8D9 and never read). Our compile still drops
+    // the dead top store and lands one slot over the image's 0x5E0 frame.
+    RECT row_rect;
+    row_rect.left = working->left + 0x1B;
+    row_rect.top = working->top;
+    row_rect.right = working->right - 0x20;
+    row_rect.bottom = working->bottom - 0x14;
+    row_rect.right = (row_rect.right - 0x1B - row_rect.left + 3) / 5 - 3 + row_rect.left;
+    const int row_top = row_rect.bottom - 0x14;
     for (row = 0; row < 5; ++row) {
-        lower_panel_rows_[row].left = left;
+        lower_panel_rows_[row].left = row_rect.left;
         lower_panel_rows_[row].top = row_top;
-        lower_panel_rows_[row].right = edge;
-        lower_panel_rows_[row].bottom = bottom;
-        const int step = edge - left + 3;
-        left += step;
-        edge += step;
+        lower_panel_rows_[row].right = row_rect.right;
+        lower_panel_rows_[row].bottom = row_rect.bottom;
+        const int step = row_rect.right - row_rect.left + 3;
+        row_rect.left += step;
+        row_rect.right += step;
     }
     field_B5C_rect_ = lower_panel_rows_[lower_panel_done];
-    const int vertical_delta = row_top - bottom - 6;
+    const int vertical_delta = row_top - row_rect.bottom - 6;
     field_B5C_rect_.top += vertical_delta;
     field_B5C_rect_.bottom += vertical_delta;
     field_B6C_rect_ = field_B5C_rect_;
-    const int last_step = edge - left + 3;
+    const int last_step = row_rect.right - row_rect.left + 3;
     field_B6C_rect_.left += last_step;
     field_B6C_rect_.right += last_step;
     field_B4C_rect_ = lower_panel_rows_[lower_panel_cancel];
     field_B4C_rect_.top += vertical_delta;
     field_B4C_rect_.bottom += vertical_delta;
     field_B7C_rect_ = field_B4C_rect_;
-    const int back_step = left - edge - 3;
+    const int back_step = row_rect.left - row_rect.right - 3;
     field_B7C_rect_.left += back_step;
     field_B7C_rect_.right += back_step;
 
