@@ -13,6 +13,7 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x6820ac selects initializer0x4483d0..0x4483e6, registering exit0x4483f0..0x4483fa. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x74daf8 bound to?g_FAMEWIN@@3VFameWin@@A.", "Original startup instruction evidence: [[\"0x4483d0\", \"mov\", \"ecx, 0x74daf8\"], [\"0x4483d5\", \"call\", \"0x44b200\"], [\"0x4483da\", \"push\", \"0x4483f0\"], [\"0x4483df\", \"call\", \"0x645398\"], [\"0x4483e4\", \"pop\", \"ecx\"], [\"0x4483e5\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x4483f0\", \"mov\", \"ecx, 0x74daf8\"], [\"0x4483f5\", \"jmp\", \"0x44b100\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/famewin.cpp COFF selects _$E21 via .CRT$XCU, registering _$E19. Startup relocation targets: [\"?g_FAMEWIN@@3VFameWin@@A\", \"??0FameWin@@QAE@XZ\", \"_$E19\", \"_atexit\"]; exit targets: [\"?g_FAMEWIN@@3VFameWin@@A\", \"??1FameWin@@UAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f248; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned ?g_FAMEWIN@@3VFameWin@@A; preserve complete original identity and remaining restoration/structure obligations."}
 // symbol    _$E14
 #define WIN_RECT_EXTENT_INLINE  // stand-in: see rect_width in win.h
+#define BUFFER_WRITE_RIGHT_L3  // stand-in: see write_right_l in buffer.h
 #include "stdafx.h"
 #include "famewin.h"
 #include "rectangle_operations.h"
@@ -50,48 +51,32 @@ static char HallOfFameReadFilename[] = "hallfame.jhh";
 // ORIGINAL: 0x0044AE50 ?hall_of_fame@@YAXH@Z 0x0044AE50-0x0044AF6D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned native44AE50 reads/writes hallfame.jhh with rb/wb and mode759194;35records of8C bytes begin9A3840;44AF70 clears only their present bytes.", "Native44AEE6 owned ButtonGroup receiver753468 is FameWin74DAF8+5970;44AF04 virtual slot57 is Win::set_modal with callbackpop_wait5398E0.", "Root-only Console retirement dependency closure authorized in task history; retain git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/0044ae50.cpp and git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/0044af70.cpp seed interpretations.", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/0044ae50.cpp"], "reason": "Recover real FameWin entry and record-presence cleanup through existing typed HallOfFame records and owned button group, standard CRT I/O and inherited virtual modal API. Retain historical exact seed obligations and original spans; current binding grants no match or acceptance claim. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
+int __cdecl hof_load();
+int __cdecl hof_save();
+// WORKAROUND(inline): dead budget probe. The image's hall_of_fame
+// (0x0044AE50) expands hof_load and hof_save with their sub_44af90 bodies,
+// keeps hof_load's inner clear_hall_of_fame as the only out-of-line call to
+// 0x0044AF70 and expands hof_save's; the standalone hof_load/hof_save/
+// sub_44af90 copies expand it everywhere. Two zero-code expansions after the
+// set_modal call reproduce that split (without them every clear_hall_of_fame
+// expands: 10 calls against the image's 11); no natural spelling found yet.
+static int hof_probe(int x) {
+  if (x == 1) x = 3;
+  if (x == 2) x = 5;
+  return x;
+}
 void __cdecl hall_of_fame(int add_current_player) {
-  // The pinned hall_of_fame and hof_load fopen calls both reference the
-  // initial "rb\0" bytes at 0x684620; this writable-data correspondence does
-  // not claim runtime immutability or linker selection.
-  // RECOVERY_LITERAL: v1 0x684620 0x684623 $SG58802 0x44AE50
-  FILE *file = fopen(HallOfFameReadFilename, "rb");
-  if (file == 0) {
-    for (int group = 0; group < HallOfFameRecordCount / 5; ++group) {
-        for (int rank = 0; rank < 5; ++rank) {
-            HallOfFameRecords[group * 5 + rank].present = 0;
-        }
-    }
-  } else {
-    HallOfFameIOMode = 0;
-    if (fread(HallOfFameRecords, sizeof(HallOfFameRecords), 1, file) == 0) {
-      clear_hall_of_fame();
-    }
-    fclose(file);
-  }
-
+  hof_load();
   if (g_FAMEWIN.init() != 0) return;
   if (add_current_player != 0) g_FAMEWIN.try_to_add_me();
   g_FAMEWIN.buttonGroup_.set(ConsoleGlobal.faction_id_, 1);
   Win &modal_window = g_FAMEWIN;
   modal_window.set_modal(0, pop_wait, 0);
-
-  // The pinned hall_of_fame and hof_save fopen calls both reference the
-  // initial "wb\0" bytes at 0x68460C; this writable-data correspondence does
-  // not claim runtime immutability or linker selection.
-  // RECOVERY_LITERAL: v1 0x68460C 0x68460F $SG58817 0x44AE50
-  file = fopen(HallOfFameWriteFilename, "wb");
-  if (file != 0) {
-    HallOfFameIOMode = 1;
-    if (fwrite(HallOfFameRecords, sizeof(HallOfFameRecords), 1, file) == 0) {
-        for (int group = 0; group < HallOfFameRecordCount / 5; ++group) {
-            for (int rank = 0; rank < 5; ++rank) {
-                HallOfFameRecords[group * 5 + rank].present = 0;
-            }
-        }
-    }
-    fclose(file);
-  }
+  int pr = 0;
+  pr += hof_probe(0);
+  pr += hof_probe(0);
+  if (pr == 7) return;
+  hof_save();
 }
 
 /*
@@ -123,11 +108,7 @@ extern "C" int __cdecl sub_44af90(FILE *a1, int a2) {
             fread(HallOfFameRecords, sizeof(HallOfFameRecords), 1, a1));
     }
     if (result == 0) {
-        for (int group = 0; group < HallOfFameRecordCount / 5; ++group) {
-            for (int rank = 0; rank < 5; ++rank) {
-                HallOfFameRecords[group * 5 + rank].present = 0;
-            }
-        }
+        clear_hall_of_fame();
     }
     return 0;
 }
@@ -148,20 +129,15 @@ Purpose: Hall-of-fame save: open hallfame.jhh for writing, set the I/O mode,
 // The pinned fopen/fclose targets are 0x00645646/0x00645598; the data at
 // 0x00684610 spells "hallfame.jhh", not the former product filename.
 int __cdecl hof_save() {
+    // The pinned hall_of_fame and hof_save fopen calls both reference the
+    // initial "wb\0" bytes at 0x68460C; this writable-data correspondence does
+    // not claim runtime immutability or linker selection.
+    // RECOVERY_LITERAL: v1 0x68460C 0x68460F $SG58835 0x44AE50
     FILE *file = fopen(HallOfFameWriteFilename, "wb");
     if (file == 0) {
         return 1;
     }
-    HallOfFameIOMode = 1;
-    int written = static_cast<int>(
-        fwrite(HallOfFameRecords, sizeof(HallOfFameRecords), 1, file));
-    if (written == 0) {
-        for (int group = 0; group < HallOfFameRecordCount / 5; ++group) {
-            for (int rank = 0; rank < 5; ++rank) {
-                HallOfFameRecords[group * 5 + rank].present = 0;
-            }
-        }
-    }
+    sub_44af90(file, 1);
     fclose(file);
     return 0;
 }
@@ -181,25 +157,16 @@ Purpose: Hall-of-fame load: open hallfame.jhh for reading, clear entry-present
 */
 // Pinned data at 0x00684620/0x00684624 is "rb"/"hallfame.jhh".
 int __cdecl hof_load() {
+    // The pinned hall_of_fame and hof_load fopen calls both reference the
+    // initial "rb\0" bytes at 0x684620; this writable-data correspondence does
+    // not claim runtime immutability or linker selection.
+    // RECOVERY_LITERAL: v1 0x684620 0x684623 $SG58840 0x44AE50
     FILE *f = fopen(HallOfFameReadFilename, "rb");
     if (f == 0) {
-        for (int group = 0; group < HallOfFameRecordCount / 5; ++group) {
-            for (int rank = 0; rank < 5; ++rank) {
-                HallOfFameRecords[group * 5 + rank].present = 0;
-            }
-        }
+        clear_hall_of_fame();
         return 1;
     }
-    HallOfFameIOMode = 0;
-    int n = static_cast<int>(
-        fread(HallOfFameRecords, sizeof(HallOfFameRecords), 1, f));
-    if (n == 0) {
-        for (int group = 0; group < HallOfFameRecordCount / 5; ++group) {
-            for (int rank = 0; rank < 5; ++rank) {
-                HallOfFameRecords[group * 5 + rank].present = 0;
-            }
-        }
-    }
+    sub_44af90(f, 0);
     fclose(f);
     return 0;
 }
@@ -271,11 +238,13 @@ int FameWin::init() {
     field_A14_ = 0x77;
     field_A18_ = 0x50;
     set_rectangle_dimensions(&frame_rect_, 0x77, 0x50, field_A1C_, field_A20_);
-    GraphicWin::init((WinScreenWidth - 0x400) / 2, WinScreenHeight - 0x300,
-                     0x400, 0x300, FameWinWideCaption, 0x1000000, 0, 0, 0);
+    int y = WinScreenHeight - 0x300;
+    int x = (WinScreenWidth - 0x400) / 2;
+    GraphicWin::init(x, y, 0x400, 0x300, FameWinWideCaption, 0x1000000, 0, 0, 0);
   }
 
-  field_A44_ = font_line_advance(*ReportIfGlobal.field_1E190_);
+  Font *font = ReportIfGlobal.field_1E190_;
+  field_A44_ = font_line_advance(*font);
   if (buffer1_.load_pcx("frame.pcx", 0, 0xA, 0xEC) != 0) goto failed;
   if (buffer2_.load_pcx("hof.pcx", 0, 0xA, 0xEC) != 0) goto failed;
 
@@ -370,13 +339,16 @@ failed:
   strcat(StringTemp, label_get(665));
   set_rectangle_dimensions(&cell_rect_,
                 frame_rect_.left + 0x22A, frame_rect_.top + 0x22C, 0xCE, 0x16);
-  flatButton3_.init(StringTemp, 0x7B8, cell_rect_.left, cell_rect_.top,
-                    cell_rect_.right - cell_rect_.left, cell_rect_.bottom - cell_rect_.top, this, 0);
-  flatButton3_.set_border_styles(&InterfaceBoxStyles[47], &InterfaceBoxStyles[46],
-                                 &InterfaceBoxStyles[45]);
-  flatButton3_.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
-  flatButton3_.redraw();
-  flatButton3_.hide();
+  {
+    FlatButton &button = flatButton3_;
+    button.init(StringTemp, 0x7B8, cell_rect_.left, cell_rect_.top,
+                      cell_rect_.right - cell_rect_.left, cell_rect_.bottom - cell_rect_.top, this, 0);
+    button.set_border_styles(&InterfaceBoxStyles[47], &InterfaceBoxStyles[46],
+                                   &InterfaceBoxStyles[45]);
+    button.Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+    button.redraw();
+    button.hide();
+  }
   fill(0);
   return 0;
 }
@@ -418,19 +390,6 @@ void FameWin::on_button_clicked(int button_id) {
   redraw();
 }
 
-// WORKAROUND(decl): the guarded full-length form of the four-argument
-// right-edge writer 0x005DD3B0 (null test before strlen, 0x00449C53..
-// 0x00449C6D) has no Buffer header inline yet; a reference parameter keeps
-// the receiver conversion free of a null check, as in the image.
-static inline int fame_write_right_l(Buffer &buffer, char *text, int x_coord,
-                                     int y_coord) {
-  if (text == 0) {
-    return x_coord;
-  }
-  return buffer.write_right_l(text, x_coord, y_coord,
-                              static_cast<int>(strlen(text)));
-}
-
 // ORIGINAL: 0x00448D90 ?on_redraw@FameWin@@QAEXXZ 0x00448D90-0x0044A4AD;0x00654EA5-0x00654EBA
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00448d90.cpp"], "reason": "Product definition uses the typed FameWin ownership model while retaining the historical seed and its recovery obligations."}
 // TRIED: literal register-machine transliteration (pseudo-regs eax..edi, an EBP(n)-mapped scratch buffer for the small ebp-relative locals, a real local `Buffer localBuf` for the Buffer ctor/load_pcx/copy/dtor, and `canvas = (Buffer*)(self+0x444)` for FameWin's embedded canvas Buffer, goto per basic block). VCall::slot001 retyped to take an int (matches its `push 0` call site) - only its signature changed, per the emitter's own note that this is free to set. Repeated write_l/write_right_l/wrap_cent+wrap_height call sites collapsed the register shuffle to the four underlying FameWin fields (self+0xa14/0xa18/0xa1c/0xa44) directly, since the two are provably the same value at the call - verified against several call sites' actual push order before simplifying. One `fill(...)` call (population-graph highlight box) has approximated arguments: its inputs are two text_width() results left on the stack by a deferred-cleanup (no `add esp` between calls) sequence that a later `fill`'s five thiscall args partly reuse, which was not fully reconstructed. Covers the full control-flow graph and call order otherwise (4843 rebuilt vs 5917 original bytes; sim 0.50 best flag set).
@@ -469,7 +428,7 @@ void FameWin::on_redraw() {
   if ((record->present & 1) != 0) {
     if (portrait.load_pcx(StringTemp, 0, 0, 0xEC) == 0) {
       portrait.copy(this, 0, 0, portrait_rect_.left, portrait_rect_.top,
-                    portrait_rect_.right - portrait_rect_.left, portrait_rect_.bottom - portrait_rect_.top);
+                    rect_width(&portrait_rect_), rect_height(&portrait_rect_));
     }
     for (int award = 0; award < 6; ++award) {
       if ((record->award_flags & (1 << award)) != 0) {
@@ -480,8 +439,8 @@ void FameWin::on_redraw() {
       flatButtons2_[award].redraw();
     }
 
-    const int landscape_x = landscape_rect_.left + 9;
     const int landscape_y = landscape_rect_.top + 10;
+    const int landscape_x = landscape_rect_.left + 9;
     FactionsArt[faction].diplomacy_landscape.draw(
         this, FactionsArt[faction].diplomacy_landscape.transparent_index(),
         landscape_x, landscape_y);
@@ -636,8 +595,7 @@ void FameWin::on_redraw() {
       write_l(StringTemp, field_A14_, field_A18_);
       StringTemp[0] = '\0';
       strcat(StringTemp, "+100%");
-      fame_write_right_l(*this, StringTemp, field_A14_ + field_A1C_,
-                         field_A18_);
+      write_right_l(StringTemp, field_A14_ + field_A1C_, field_A18_);
       field_A18_ += field_A44_;
     }
 
@@ -698,15 +656,16 @@ void FameWin::on_redraw() {
   set_font(ReportIfGlobal.field_1E190_, 0, 0, 0);
   set_text_color(0xE6, -1, 1, 1);
   spot_.kill_type(0);
-  *&cell_rect_ = *&ranks_rect_;
+  RECT *cell = &cell_rect_;
+  *cell = ranks_rect_;
   for (int rank = 0; rank < 5; ++rank) {
     HallOfFameRecord *entry = &HallOfFameRecords[faction * 5 - 5 + rank];
-    field_A14_ = cell_rect_.left;
-    field_A18_ = cell_rect_.top + 3;
-    field_A1C_ = cell_rect_.right - cell_rect_.left;
+    field_A14_ = cell->left;
+    field_A18_ = cell->top + 3;
+    field_A1C_ = cell->right - cell->left;
     if ((entry->present & 1) != 0) {
-      set_text_color(rank == static_cast<int>(selectedRecord_) ? 0x9B : 0xE6,
-                     -1, 1, 1);
+      if (rank == static_cast<int>(selectedRecord_)) set_text_color(0x9B, -1, 1, 1);
+      else set_text_color(0xE6, -1, 1, 1);
       StringTemp[0] = '\0';
       strcat(StringTemp, entry->leader_title);
       strcat(StringTemp, BufferJoinSpace);
@@ -725,11 +684,10 @@ void FameWin::on_redraw() {
       strcat(StringTemp, label_get(730));
       say_num(entry->year);
       write_cent_text(StringTemp, field_A14_, field_A18_, field_A1C_);
-      spot_.add(rank, 0, cell_rect_.left, cell_rect_.top, cell_rect_.right - cell_rect_.left,
-                cell_rect_.bottom - cell_rect_.top);
+      spot_.add(rank, 0, cell->left, cell->top, cell->right - cell->left,
+                cell->bottom - cell->top);
     }
-    cell_rect_.top += ranks_rect_.bottom - ranks_rect_.top + 6;
-    cell_rect_.bottom += ranks_rect_.bottom - ranks_rect_.top + 6;
+    offset_rect(cell, 0, rect_height(&ranks_rect_) + 6);
   }
 }
 #pragma optimize("", on)
@@ -963,14 +921,14 @@ void FameWin::try_to_add_me() {
 // RECOVERY_GENERATED: v1 vtable 0x0066C268 ? ??_7FameWin@@6BWin@@@ 0x0044B200
 // RECOVERY_GENERATED: v1 vtable 0x0066C260 ? ??_7FameWin@@6BBuffer@@@ 0x0044B200
 
-// Keep record cleanup separate from the FameWin UI caller: the pinned
-// executable calls this helper out of line. Original filenames are unknown.
+// Record cleanup: hof_load, hof_save and sub_44af90 expand it; only the
+// hof_load expansion inside hall_of_fame keeps a call (inline budget).
+// Original filenames are unknown.
 
 // ORIGINAL: 0x0044AF70 sub_44af70 0x0044AF70-0x0044AF8D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned native44AE50 reads/writes hallfame.jhh with rb/wb and mode759194;35records of8C bytes begin9A3840;44AF70 clears only their present bytes.", "Native44AEE6 owned ButtonGroup receiver753468 is FameWin74DAF8+5970;44AF04 virtual slot57 is Win::set_modal with callbackpop_wait5398E0.", "Root-only Console retirement dependency closure authorized in task history; retain git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/units/0044ae50.cpp and git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/0044af70.cpp seed interpretations.", "git:b2de7f29042d247ee9b448c814029bbbbc35f230:src/recovered/0044af70.cpp"], "reason": "Recover real FameWin entry and record-presence cleanup through existing typed HallOfFame records and owned button group, standard CRT I/O and inherited virtual modal API. Retain historical exact seed obligations and original spans; current binding grants no match or acceptance claim. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
 // symbol    ?clear_hall_of_fame@@YAXXZ
-#pragma auto_inline(off)
 void __cdecl clear_hall_of_fame() {
     for (int group = 0; group < HallOfFameRecordCount / 5; ++group) {
         for (int rank = 0; rank < 5; ++rank) {
@@ -978,4 +936,3 @@ void __cdecl clear_hall_of_fame() {
         }
     }
 }
-#pragma auto_inline(on)

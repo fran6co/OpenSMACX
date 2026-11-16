@@ -3082,16 +3082,15 @@ Status: Compiler-generated CheckBox complete-object destructor, emitted from
 // and the closing brace (0x00406C00), but in full at the BADPASSWORD return
 // (EH predecessors 5,5,5,2,5,2); written out, every site expands fully. Dead
 // branchy spend placed after the BADPASSWORD return reproduces that unwind
-// topology; the original's natural spend there is not identified.
+// topology; the original's natural spend there is not identified. Two
+// five-test probes also leave the image's inline NetWinLobbyRow::reset in
+// the sub_47b1d0 expansion (eight-test probes call it out of line).
 static inline void pick_pass_budget_probe(int x) {
     if (x == 1) x = 2;
     if (x == 2) x = 3;
     if (x == 3) x = 4;
     if (x == 4) x = 5;
     if (x == 5) x = 6;
-    if (x == 6) x = 7;
-    if (x == 7) x = 8;
-    if (x == 8) x = 9;
 }
 int NetWin::pick_pass(int payload) {
     // Native 47C9A2..47C9C2 resets the copy row before the popup exists.

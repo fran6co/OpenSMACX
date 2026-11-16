@@ -574,14 +574,15 @@ void WorldWin::draw_box() {
 // ORIGINAL: 0x004C3EC0 ?on_redraw@WorldWin@@QAEXXZ 0x004C3EC0-0x004C4227
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x004C3EC0-0x004C4227 disassembly via recover inspect; src/recovered/units/004c3ec0.cpp seed has no implementation."], "reason": "Recover WorldWin redraw control flow through owned MapWin and Buffer subobjects while recording base-only overlay as an unfinished dependency."}
 // symbol    ?on_redraw@WorldWin@@UAEXXZ
+#pragma optimize("y", on)
 void WorldWin::on_redraw() {
-    int scale = 6;
+    int scale;
     if (MapWinCaptionScale > 0) {
-        scale = MapWinCaptionScale * 50 / MapWinCaptionDivisor;
+        scale = (MapWinCaptionScale * 50) / MapWinCaptionDivisor;
+    } else {
+        scale = 6;
     }
     const int cell_size = ((scale + 1) / 4) * 4;
-    Buffer *map_surface = static_cast<Buffer *>(
-        static_cast<GraphicWin *>(&mapWin_));
     if (field_239BC_ & 8) {
         field_239BC_ |= 4;
         field_A14_ = static_cast<int32_t>(
@@ -607,28 +608,23 @@ void WorldWin::on_redraw() {
             set_dirty();
             mapWin_.GraphicWin::fill(0);
         } else {
-            buffer2_.copy(map_surface, 0, 0, 0, 0, field_A14_, field_A18_);
+            buffer2_.copy(static_cast<Buffer *>(&mapWin_), 0, 0, 0, 0, field_A14_, field_A18_);
         }
         mapWin_.field_1DD70_ = 0x80000000;
         mapWin_.draw_map(0);
-        map_surface->copy(&buffer2_, 0, 0, 0, 0, field_A14_, field_A18_);
+        mapWin_.Buffer::copy(&buffer2_, 0, 0, 0, 0, field_A14_, field_A18_);
         clear_dirty();
     }
     if (field_239BC_ & 6) {
-        buffer2_.copy(map_surface, 0, 0, 0, 0, field_A14_, field_A18_);
+        buffer2_.copy(static_cast<Buffer *>(&mapWin_), 0, 0, 0, 0, field_A14_, field_A18_);
         mapWin_.field_1DD70_ = 0x80000080;
         mapWin_.gen_bases_only();
-        map_surface->copy(&buffer1_, 0, 0, 0, 0, field_A14_, field_A18_);
+        mapWin_.Buffer::copy(&buffer1_, 0, 0, 0, 0, field_A14_, field_A18_);
     }
-    const int client_width = Buffer::dib_.bmiHeader.biWidth;
-    const int client_height = static_cast<int>(
-        0u - static_cast<uint32_t>(Buffer::dib_.bmiHeader.biHeight));
-    if (client_width >= field_A14_ &&
-        client_height >= field_A18_) {
-        field_239C4_ = static_cast<int>(
-            static_cast<uint32_t>(client_width) - field_A14_) / 2;
-        field_239C8_ = -(static_cast<int>(
-            static_cast<uint32_t>(Buffer::dib_.bmiHeader.biHeight) + field_A18_) / 2);
+    if (Buffer::dib_.bmiHeader.biWidth >= field_A14_ &&
+        -Buffer::dib_.bmiHeader.biHeight >= field_A18_) {
+        field_239C4_ = (Buffer::dib_.bmiHeader.biWidth - field_A14_) / 2;
+        field_239C8_ = -((Buffer::dib_.bmiHeader.biHeight + field_A18_) / 2);
         buffer1_.copy(static_cast<Buffer *>(this), 0, 0,
                       field_239C4_, field_239C8_,
                       mapWin_.GraphicWin::dib_.bmiHeader.biWidth,
@@ -638,13 +634,15 @@ void WorldWin::on_redraw() {
         Buffer::release_hdc(1);
         buffer1_.copy(static_cast<Buffer *>(this), 0, 0,
                       field_A14_, field_A18_, 0, 0,
-                      client_width, client_height);
+                      Buffer::dib_.bmiHeader.biWidth,
+                      -Buffer::dib_.bmiHeader.biHeight);
         field_239C4_ = 0;
         field_239C8_ = 0;
     }
     draw_box();
     field_239BC_ = 0;
 }
+#pragma optimize("", on)
 
 // ORIGINAL: 0x004C4230 ?UNK2@WorldWin@@QAEXH@Z 0x004C4230-0x004C43F0 BYTE_EXACT
 // symbol    ?refresh_world_map@WorldWin@@QAEXH@Z
