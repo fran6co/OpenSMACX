@@ -2957,6 +2957,14 @@ void Console::center() {
     console_map_win()->set_center(ConsoleGlobal.cursor_history_x_[slot], ConsoleGlobal.cursor_history_y_[slot], 1);
 }
 
+// ORIGINAL: 0x00515430 sub_515430 0x00515430-0x00515443 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/00515430.cpp", "task:owned-helper-coverage-batch", "StatusFlags939ED8 is already owned by statuswin.cpp; native515430 clears it before desktop_init(1)."], "reason": "Recover a complete native helper through genuine source owners and SDK calls, preserving original identity, extent and historical obligations. Source home is not proof of original TU or complete-game acceptance."}
+// symbol    ?reset_status_and_initialize_desktop@@YAXXZ
+void __cdecl reset_status_and_initialize_desktop() {
+    StatusFlags = 0;
+    desktop_init(1);
+}
+
 // ORIGINAL: 0x005169B0 ?base_me@Console@@QAEXXZ 0x005169B0-0x005169E6 BYTE_EXACT
 // size      54 bytes
 // prototype void (__thiscall ?base_me@Console@@QAEXXZ)(Console* this)
@@ -5803,10 +5811,7 @@ void Console::menu_proc(int command) {
     case 0x20F: survey(); break;
     case 0x210: base_names(); break;            // 0x515600 expanded
     case 0x211: name_landmark(-1, -1); break;
-    case 0x20D:
-        StatusFlags = 0;
-        desktop_init(1);
-        break;
+    case 0x20D: reset_status_and_initialize_desktop(); break;  // 0x515430 expanded
     case 0x212: erase_landmark(-1, -1); break;
     case 0x215: toggle_patrol(); break;         // 0x515EF0 expanded
     case 0x213: go_to(-1, -2, 0); break;

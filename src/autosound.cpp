@@ -276,25 +276,3 @@ Purpose: The compiler-generated scalar deleting destructor: re-install the
 Return Value: the object pointer
 Status: Complete
 */
-
-/*
-Purpose: Legacy sound processing hook retained as a no-op.
-// ORIGINAL: 0x005FD2B0 ?do_sound@@YAHXZ 0x005FD2B0-0x005FD2B3 BYTE_EXACT
-// body      src/autosound.cpp
-// CORRECTED from ?do_sound@@YAXXZ
-//   body is `xor eax, eax; ret` - a void function would emit `ret` alone
-// size      3 bytes
-// prototype 
-// callers   21   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// notes     Runtime redirect installed by DllMain after byte-signature validation
-Return Value: zero
-Status: Complete
-*/
-// The pinned caller scan found 36 direct CALL edges to this hook in mapped
-// spans. Its original body is the three-byte `xor eax, eax; ret` at 0x5FD2B0.
-int __cdecl do_sound() {
-    return 0;
-}
