@@ -10730,7 +10730,25 @@ if (PlayersData[faction_id].atrocities != 0) {
             }
             if (has_treaty(communicate_late_contact_rank, faction_id,
                            0x00040000) != 0) {
-                goto communicate_late_contact_third_party_atrocity;
+                // Unpooled literal order puts this block first in the source
+                // (0x0068E3D4 before SELFATROCITY's 0x0068E3E8); VC6 lays it
+                // out late and cross-jumps its tail into the block below.
+                parse_says(0, get_title(faction_id), -1, -1);
+                parse_says(1, get_name(faction_id), -1, -1);
+                parse_says(2, get_noun(communicate_late_contact_rank), -1, -1);
+                X_pops("COMMITTEDATROCITY", 0x00100000,
+                             FactionDiplomacyPortraits[faction_id_with], pop_wait);
+                if (has_treaty(faction_id_with, faction_id, 0x00200000) == 0) {
+                    if (PlayersData[faction_id].atrocities > 1) {
+                        PlayersData[faction_id].atrocities = (PlayersData[faction_id].atrocities - 1);
+                    }
+                    if (PlayersData[faction_id].integrity_blemishes > 1) {
+                        PlayersData[faction_id].integrity_blemishes = (PlayersData[faction_id].integrity_blemishes - 1);
+                    }
+                }
+                net_set_treaty(faction_id_with, faction_id, 0x00200000, 1, 0);
+                net_set_treaty(faction_id_with, faction_id, 0x00400000, 0, 0);
+                goto communicate_late_contact_atrocity_done;
             }
         }
     }
@@ -10750,25 +10768,6 @@ if (PlayersData[faction_id].atrocities != 0) {
     net_set_treaty(faction_id_with, faction_id, 0x00400000, 0, 0);
     goto communicate_late_contact_atrocity_done;
 }
-// The native outer-attempt guard also skips the committed-atrocity block
-// when actor.atrocities is zero; the label is not a fallthrough continuation.
-goto communicate_late_contact_atrocity_done;
-communicate_late_contact_third_party_atrocity:
-parse_says(0, get_title(faction_id), -1, -1);
-parse_says(1, get_name(faction_id), -1, -1);
-parse_says(2, get_noun(communicate_late_contact_rank), -1, -1);
-X_pops("COMMITTEDATROCITY", 0x00100000,
-             FactionDiplomacyPortraits[faction_id_with], pop_wait);
-if (has_treaty(faction_id_with, faction_id, 0x00200000) == 0) {
-    if (PlayersData[faction_id].atrocities > 1) {
-        PlayersData[faction_id].atrocities = (PlayersData[faction_id].atrocities - 1);
-    }
-    if (PlayersData[faction_id].integrity_blemishes > 1) {
-        PlayersData[faction_id].integrity_blemishes = (PlayersData[faction_id].integrity_blemishes - 1);
-    }
-}
-net_set_treaty(faction_id_with, faction_id, 0x00200000, 1, 0);
-net_set_treaty(faction_id_with, faction_id, 0x00400000, 0, 0);
 communicate_late_contact_atrocity_done: // native 0x557AC0
 if (has_treaty(faction_id, faction_id_with, 1) != 0) {
     parse_says(0, get_pact(faction_id), -1, -1);

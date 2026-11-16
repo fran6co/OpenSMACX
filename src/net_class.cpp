@@ -140,6 +140,7 @@ extern char SocialWinCommaSpaceText[];
 // {02D1B480-D680-11D0-821E-44454F5454} that control_game passes in as `guid`
 // and that game.cpp keeps its own copy of, so it is spelled once more here
 // rather than shared: game.cpp's is file-local and this one is too.
+// RECOVERY_OBJECT: v2 0x00697548 0x00697558 _NetLobbyAppGuid 0x0062D9E0
 static const GUID NetLobbyAppGuid = {
     0x02D1B480, 0xD680, 0x11D0, {0x82, 0x1E, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00}};
 
@@ -2344,6 +2345,7 @@ int Net::session_picker_dialog() {
   AlphaNetLedger sessions;
   NetSessionPickerWin picker;
   NetAllocationNode *session;
+  char default_players[12];
 
   if (buffer_6E0_ == 0) {
     return 0;
@@ -2414,7 +2416,6 @@ create:
   {
     popup->set_width(0x190);
     popup->dialogs().EditGroup::edit("Session Name:", 0, 0x32);
-    char default_players[12];
     char *const players_text = _itoa(0x10, default_players, 10);
     popup->dialogs().EditGroup::edit("Maximum Players:", players_text, 2);
     popup->dialogs().EditGroup::edit("Session Password (Optional):", 0, 0x32);
@@ -2479,12 +2480,16 @@ fail:
 
 // The ledger's current payload, guarded by head_; the image folds this copy
 // into StringStruct::current_entry (0x00402530).
+// WORKAROUND(noinline): session_picker_dialog calls this out of line
+// (0x00631434 -> 0x00402530); defined after it, /Ob2 would expand it.
+#pragma auto_inline(off)
 NetAllocationNode *AlphaNetStringStruct::current_entry() {
   if (head_) {
     return current_->payload_;
   }
   return 0;
 }
+#pragma auto_inline(on)
 
 // Unreferenced in the pinned image (no call, jump or data reference).
 // Original effect: return without modifying EAX; callee stack cleanup 0 bytes.
@@ -3319,8 +3324,8 @@ int __cdecl internal_receive(NetThreadInfo *thread_info) {
     // 6327FD retains this pointer across Receive, even if the provider changes
     // the record's buffer member while filling the originally supplied block.
     unsigned char *const bytes = static_cast<unsigned char *>(thread_info->buffer_);
-    DWORD from = 0;
     DWORD size = net->field_6E4_;
+    DWORD from = 0;
     DWORD to = net->local_player_id_;
     const HRESULT receive_result = thread_info->direct_play_->Receive(
         &from, &to, 3, bytes, &size);
@@ -3330,8 +3335,7 @@ int __cdecl internal_receive(NetThreadInfo *thread_info) {
                                 static_cast<unsigned long>(-1));
             PostThreadMessageA(thread_info->thread_id_, 0x402, 0, 0);
             SetEvent(thread_info->events_[1]);
-            return receive_result == DP_OK;
-        }
+        } else {
 
         size -= 0x0C;
         NetPacketEnvelope *const packet =
@@ -3361,20 +3365,10 @@ int __cdecl internal_receive(NetThreadInfo *thread_info) {
         case 0x200:
             if (net->check_message(from, packet->sequence_4_) == 0) {
                 net->voice_flags_D8_ &= 0xBFFFFFFF;
-                if (receivers.head_ != 0) {
-                    receivers.cursor_index_ = 0;
-                    receivers.cursor_ = receivers.head_;
-                    for (index = 0; index < receivers.count_; ++index) {
-                        if (receivers.cursor_->id_ == static_cast<int>(from)) {
-                            // Incoming 0x200 calls slot +88 (start), not the
-                            // Sound stop slot, despite clearing this flag.
-                            (receivers.head_ != 0
-                                ? receivers.cursor_->payload_ : 0)->start();
-                            break;
-                        }
-                        ++receivers.cursor_index_;
-                        receivers.cursor_ = receivers.cursor_->next_;
-                    }
+                // Incoming 0x200 calls slot +88 (start), not the Sound
+                // stop slot, despite clearing this flag.
+                if (net->jackal_voice_rx_.seek_id(from)) {
+                    receivers.current_entry()->start();
                 }
             }
             break;
@@ -3383,33 +3377,20 @@ int __cdecl internal_receive(NetThreadInfo *thread_info) {
             memset(&voice_packet, 0, sizeof(voice_packet));
             voice_packet.cchBuffer = static_cast<LONG>(size);
             voice_packet.pchBuffer = reinterpret_cast<HPSTR>(bytes + 8);
-            voice_packet.pchNext = reinterpret_cast<HPSTR>(bytes + 8);
-            voice_packet.pchEndRead =
-                reinterpret_cast<HPSTR>(bytes + 8 + size);
-            if (receivers.head_ != 0) {
-                receivers.cursor_index_ = 0;
-                receivers.cursor_ = receivers.head_;
-                for (index = 0; index < receivers.count_; ++index) {
-                    if (receivers.cursor_->id_ == static_cast<int>(from)) {
-                        // Original rechecks head, then still calls through a
-                        // null payload if that recheck fails.
-                        VoiceRxAllocation *const voice = receivers.head_ != 0
-                            ? receivers.cursor_->payload_ : 0;
-                        const int level = voice->get_nbuffers();
-                        if (static_cast<int>((net->field_6DC_ - 1) * level) < 0xC8) {
-                            voice->add_buffer(&voice_packet);
-                        }
-                        if ((get_sound_version() & 1) != 0) {
-                            if (level > 4 && voice->is_playing() == 0) {
-                                voice->start();
-                            }
-                        } else if (level > 15 && voice->is_playing() == 0) {
-                            voice->start();
-                        }
-                        break;
-                    }
-                    ++receivers.cursor_index_;
-                    receivers.cursor_ = receivers.cursor_->next_;
+            voice_packet.pchNext = voice_packet.pchBuffer;
+            voice_packet.pchEndRead = voice_packet.pchBuffer + voice_packet.cchBuffer;
+            if (net->jackal_voice_rx_.seek_id(from)) {
+                // Original rechecks head, then still calls through a null
+                // payload if that recheck fails.
+                VoiceRxAllocation *const voice = receivers.current_entry();
+                const int level = voice->get_nbuffers();
+                if (static_cast<int>((net->field_6DC_ - 1) * level) < 0xC8) {
+                    voice->add_buffer(&voice_packet);
+                }
+                if ((get_sound_version() & 1) != 0
+                        ? level > 4 && voice->is_playing() == 0
+                        : level > 15 && voice->is_playing() == 0) {
+                    voice->start();
                 }
             }
             break;
@@ -3426,7 +3407,7 @@ int __cdecl internal_receive(NetThreadInfo *thread_info) {
                 for (index = 0; index < 16; ++index) {
                     if (net->players_[index].field_0_ != 0 &&
                         net->players_[index].field_8_ != 0) {
-                        return receive_result == DP_OK;
+                        goto done;
                     }
                 }
                 SetEvent(thread_info->events_[0]);
@@ -3442,9 +3423,11 @@ int __cdecl internal_receive(NetThreadInfo *thread_info) {
             packet->type_flags_ = (packet->type_flags_ & 0xFFFB) | 2;
             thread_info->direct_play_->Send(net->local_player_id_, to, 0,
                                             bytes, 0x0C);
-            return receive_result == DP_OK;
+            break;
+        }
         }
     }
+done:
     return receive_result == DP_OK;
 }
 

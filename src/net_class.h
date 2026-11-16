@@ -149,6 +149,32 @@ class JackalVoiceRx : public virtual StringAllocationBase {
   MEASURED void clear();
   void remove_id(unsigned long id);
   int add_player(int player_id); // original sub_633180
+#ifdef NET_CLASS_VOICE_NODE_NEW
+  // WORKAROUND(decl): internal_receive (0x006329B3, 0x00632A6B) expands the
+  // list's seek-by-id walk and the head-checked current payload read; the
+  // same pair as StringStruct::seek_id/current_entry. Visible only in
+  // net_class.cpp.
+  int seek_id(int id) {
+    if (head_) {
+      cursor_index_ = 0;
+      cursor_ = head_;
+      for (int traversed = 0; traversed < count_; traversed++) {
+        if (cursor_->id_ == id) {
+          return 1;
+        }
+        cursor_index_++;
+        cursor_ = cursor_->next_;
+      }
+    }
+    return 0;
+  }
+  VoiceRxAllocation *current_entry() {
+    if (head_) {
+      return cursor_->payload_;
+    }
+    return 0;
+  }
+#endif
 
  private:
   // 0x00538EC0 advances through entry+0xC, stores the cursor, and clears
