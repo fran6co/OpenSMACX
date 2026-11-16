@@ -541,6 +541,29 @@ def test_strict_row_reason_names_reference_failures_and_stays_silent_without_evi
     assert strict_row_reason({"result": Result.UNKNOWN, "variants": [{"result": Result.UNKNOWN}]}) is None
 
 
+def test_strict_row_reason_reads_per_span_components_and_names_unbound_artifacts():
+    from match_recovery.source.asm import strict_row_reason
+
+    artifact = {"offset": 0x3A2, "symbol": "$SG58774", "result": Result.UNKNOWN,
+                "binding": {"kind": "compiler_artifact", "symbol": "$SG58774"}}
+    # Code plus its `.text$x` funclets: the components live on each span.
+    row = {"result": Result.UNKNOWN, "variants": [{"result": Result.UNKNOWN, "spans": [
+        {"result": Result.UNKNOWN, "references": Result.UNKNOWN,
+         "relocations": [{"offset": 6, "symbol": "$L1", "result": Result.PASS}, artifact]},
+        {"result": Result.PASS}]}]}
+    reason = strict_row_reason(row)
+    assert reason.startswith("strict body proof unknown: unbound compiler artifact relocation(s): "
+                             "+0x3a2 $SG58774; bind each literal with `RECOVERY_LITERAL`")
+    # A failed component on any span still reports a failure first.
+    row["variants"][0]["spans"][1] = {"result": Result.FAIL, "differing_offsets": [2],
+                                      "comparison_span": {"start": 0x1000}}
+    assert strict_row_reason(row) == ("strict body proof failed: 1 non-relocation byte(s) differ at "
+                                      "+0x2 (0x00001002)")
+    # An unknown target that is not a compiler artifact says nothing.
+    assert strict_row_reason({"result": Result.UNKNOWN, "variants": [{"result": Result.UNKNOWN, "spans": [
+        {"result": Result.UNKNOWN, "relocations": [{"offset": 1, "result": Result.UNKNOWN}]}]}]}) is None
+
+
 def test_associated_owner_verdict_does_not_depend_on_selected_file_mates(tmp_path, monkeypatch):
     from match_recovery.source import asm
 

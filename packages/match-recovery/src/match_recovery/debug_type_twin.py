@@ -8,8 +8,11 @@ object apart from its `.debug$S`/`.debug$T` records: every other section,
 relocation identity, symbol, COMDAT selection/ownership and weak edge must be
 equal under an explicit section renumbering. Line-number fields that debug
 records add (section-definition line counts, function-definition links and
-`.bf`/`.lf`/`.ef` symbols) are the only tolerated differences. Anything else
-refuses; the plain object then remains without type evidence.
+`.bf`/`.lf`/`.ef` symbols) and the label symbols `/Z7` adds for named C++
+`goto` labels (storage class 6, `$label$N`, defined in a code section, with
+no auxiliary record and no relocation from any non-debug section) are the only
+tolerated differences. Anything else refuses; the plain object then remains
+without type evidence.
 
 Layout readers resolve a measured extent in the twin and translate only its
 section number back into the plain object's numbering.
@@ -30,6 +33,9 @@ _FILE_STORAGE = 103
 # Compiler-numbered local labels, EH tables and literals. Debug records shift
 # their counters; a local's identity is its defining section and offset.
 _NUMBERED_LOCAL = re.compile(r"\$(?:L|T|SG|S)\d+")
+_LABEL_STORAGE = 6
+# A named source label as `/Z7` records it for CodeView: `$<name>$<counter>`.
+_SOURCE_LABEL = re.compile(r"\$[A-Za-z_][A-Za-z0-9_]*\$\d+")
 
 
 @dataclass(frozen=True)
@@ -88,6 +94,8 @@ def _symbols(obj, mapping, *, twin):
             name = "<compiler-numbered local>"
         return (name, symbol.value, section, symbol.type, symbol.storage)
 
+    referenced = {target for number in mapping for _offset, target, _kind
+                  in obj.sections[number - 1].relocations}
     rows = Counter()
     for index, symbol in obj.symbols.items():
         if symbol.storage == _FILE_STORAGE:
@@ -103,6 +111,11 @@ def _symbols(obj, mapping, *, twin):
                 raise ValueError("unsupported debug-typed twin function record")
             continue
         raw = obj.auxiliary.get(index, b"")
+        if (twin and symbol.storage == _LABEL_STORAGE and symbol.section > 0 and symbol.type == 0
+                and not raw and index not in referenced and _SOURCE_LABEL.fullmatch(symbol.name)
+                and obj.sections[symbol.section - 1].flags & 0x20):
+            # A goto label's CodeView name; the plain object never needs it.
+            continue
         if not raw:
             aux = ("none",)
         elif symbol.storage == 105:

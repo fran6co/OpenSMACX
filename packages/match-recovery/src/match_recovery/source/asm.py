@@ -2246,36 +2246,55 @@ def strict_row_reason(row: dict, *, limit: int = 4) -> str | None:
 
     variants = [variant for variant in row.get("variants", ())
                 if isinstance(variant, dict) and variant.get("result") != Result.PASS]
-    for variant in (*variants, row):
-        parts = []
-        if variant.get("boundary") == Result.FAIL:
-            parts.append("compiled boundary differs")
-        offsets = variant.get("differing_offsets") or []
-        if offsets:
-            parts.append(f"{len(offsets)} non-relocation byte(s) differ at " + addresses(variant, offsets))
-        elif variant.get("bytes") == Result.FAIL:
-            parts.append("body bytes differ")
-        for field, label in (("missing_absolute_relocations", "original absolute relocation(s) missing at"),
-                             ("extra_absolute_relocations", "extra compiled absolute relocation(s) at"),
-                             ("unexpected_constant_base_relocations", "rebased constant(s) at")):
-            sites = variant.get(field) or []
-            if sites:
-                parts.append(f"{label} " + addresses(variant, sites))
-        wrong = [item for item in variant.get("relocations", ()) or ()
-                 if isinstance(item, dict) and item.get("result") == Result.FAIL]
-        if wrong:
-            parts.append("relocated target(s) differ: " + ", ".join(
-                f"+{item.get('offset', 0):#x} {item.get('symbol', item.get('target'))}"
-                + (f" ({item['reason']})" if item.get("reason") else "")
-                for item in wrong[:limit]) + (f" and {len(wrong) - limit} more" if len(wrong) > limit else ""))
-            if any(re.fullmatch(r"\$SG[0-9]+", str(item.get("symbol", ""))) for item in wrong):
-                # Positional VC6 string labels renumber when a header changes.
-                parts.append("if a $SG literal binding went stale, run `recover rebind-literals --unit <this TU>`")
-        if not parts and variant.get("references") == Result.FAIL:
-            parts.append("references differ")
-        if parts:
-            return "strict body proof failed: " + "; ".join(parts)
-    return None
+    unknown = None
+    for outer in (*variants, row):
+        # A multi-span body (for example code plus its `.text$x` unwind
+        # funclets) states its component results per span.
+        for variant in (outer, *(span for span in outer.get("spans", ()) or ()
+                                 if isinstance(span, dict) and span.get("result") != Result.PASS)):
+            parts = []
+            if variant.get("boundary") == Result.FAIL:
+                parts.append("compiled boundary differs")
+            offsets = variant.get("differing_offsets") or []
+            if offsets:
+                parts.append(f"{len(offsets)} non-relocation byte(s) differ at " + addresses(variant, offsets))
+            elif variant.get("bytes") == Result.FAIL:
+                parts.append("body bytes differ")
+            for field, label in (("missing_absolute_relocations", "original absolute relocation(s) missing at"),
+                                 ("extra_absolute_relocations", "extra compiled absolute relocation(s) at"),
+                                 ("unexpected_constant_base_relocations", "rebased constant(s) at")):
+                sites = variant.get(field) or []
+                if sites:
+                    parts.append(f"{label} " + addresses(variant, sites))
+            wrong = [item for item in variant.get("relocations", ()) or ()
+                     if isinstance(item, dict) and item.get("result") == Result.FAIL]
+            if wrong:
+                parts.append("relocated target(s) differ: " + ", ".join(
+                    f"+{item.get('offset', 0):#x} {item.get('symbol', item.get('target'))}"
+                    + (f" ({item['reason']})" if item.get("reason") else "")
+                    for item in wrong[:limit]) + (f" and {len(wrong) - limit} more" if len(wrong) > limit else ""))
+                if any(re.fullmatch(r"\$SG[0-9]+", str(item.get("symbol", ""))) for item in wrong):
+                    # Positional VC6 string labels renumber when a header changes.
+                    parts.append("if a $SG literal binding went stale, run `recover rebind-literals --unit <this TU>`")
+            if not parts and variant.get("references") == Result.FAIL:
+                parts.append("references differ")
+            if parts:
+                return "strict body proof failed: " + "; ".join(parts)
+            artifacts = [item for item in variant.get("relocations", ()) or ()
+                         if isinstance(item, dict) and item.get("result") == Result.UNKNOWN
+                         and (item.get("binding") or {}).get("kind") == "compiler_artifact"]
+            if artifacts and unknown is None:
+                # An unplaced compiler-emitted target (typically an unbound
+                # `$SG` string label) leaves the references unknown, never
+                # failed; say which instead of a bare "unknown".
+                unknown = ("strict body proof unknown: unbound compiler artifact relocation(s): " + ", ".join(
+                    f"+{item.get('offset', 0):#x} {item.get('symbol', item.get('target'))}"
+                    for item in artifacts[:limit]) + (f" and {len(artifacts) - limit} more"
+                                                      if len(artifacts) > limit else ""))
+                if any(re.fullmatch(r"\$SG[0-9]+", str(item.get("symbol", ""))) for item in artifacts):
+                    unknown += ("; bind each literal with `RECOVERY_LITERAL` from the image's operand, or run "
+                                "`recover rebind-literals --unit <this TU>` if an existing binding went stale")
+    return unknown
 
 
 def compare_unit(records, exe: Path | str, source: Path | str,
@@ -2439,12 +2458,18 @@ def compare_unit(records, exe: Path | str, source: Path | str,
                     # A failed body proof states its own component results;
                     # never let an unrelated evidence check stand in for it.
                     diagnostic = strict_row_reason(row)
+                body_unknown = None
+                if diagnostic and diagnostic.startswith("strict body proof unknown"):
+                    # An unknown body reference yields to a refused evidence
+                    # check, which is reported first when both are present.
+                    body_unknown, diagnostic = diagnostic, None
                 if not diagnostic:
                     checks = strict.get("selected_evidence", {}).get("checks", [])
                     diagnostic = next((f"selected evidence {item.get('symbol')} in {item.get('unit')} "
                                        f"is {item.get('result')}: {item['reason']}"
                                        for item in checks
                                        if item.get("reason") and item.get("result") != Result.PASS), None)
+                diagnostic = diagnostic or body_unknown
                 if not diagnostic and row:
                     reference_report = row.get("diagnostic")
                     if isinstance(reference_report, dict):

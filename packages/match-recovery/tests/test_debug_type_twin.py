@@ -141,3 +141,39 @@ def test_precompiled_types_and_plain_debug_records_are_refused():
         prove_debug_type_twin(plain_object(), twin)
     with pytest.raises(ValueError, match="already carries"):
         prove_debug_type_twin(twin_object(), twin_object())
+
+
+GOTO_LABEL = ("$not_in_turn$58438", 0, 2, 0, 6, b"")  # twin numbering: .text is section 2
+
+
+def test_twin_only_goto_label_names_are_tolerated():
+    # /Z7 records a named C++ goto label as a storage-class-6 `$name$N`
+    # symbol in its code section; the plain object has none.
+    prove_debug_type_twin(plain_object(), twin_object(extra=(GOTO_LABEL,)))
+    # The debug records may refer to it; they are not compared.
+    twin = twin_object(extra=(GOTO_LABEL,))
+    debug = twin.sections[0]
+    twin.sections = (type(debug)(debug.data, (*debug.relocations, (4, 10, 6)), debug.flags, debug.name),
+                     *twin.sections[1:])
+    prove_debug_type_twin(plain_object(), twin)
+
+
+def test_goto_label_tolerance_does_not_cover_linkable_or_other_symbols():
+    # Referenced from a non-debug section.
+    twin = twin_object(extra=(GOTO_LABEL,))
+    data = twin.sections[4]
+    twin.sections = (*twin.sections[:4], type(data)(data.data, ((0, 10, 6),), data.flags, data.name))
+    with pytest.raises(ValueError, match="symbol table|relocations"):
+        prove_debug_type_twin(plain_object(), twin)
+    for symbol in (("$not_in_turn$58438", 0, 5, 0, 6, b""),          # in a data section
+                   ("$not_in_turn$58438", 0, 2, 0, 3, b""),          # another storage class
+                   ("$not_in_turn$58438", 0, 2, 0, 6, bytes(18)),    # with an auxiliary record
+                   ("_not_in_turn", 0, 2, 0, 6, b""),                # not a `$name$N` label
+                   ("$not_in_turn$x", 0, 2, 0, 6, b"")):
+        with pytest.raises(ValueError, match="symbol table"):
+            prove_debug_type_twin(plain_object(), twin_object(extra=(symbol,)))
+    # Only the twin's extra labels are tolerated; the plain object never
+    # carries them.
+    with pytest.raises(ValueError, match="symbol table"):
+        prove_debug_type_twin(plain_object(extra=(("$not_in_turn$58438", 0, 1, 0, 6, b""),)),
+                              twin_object(extra=(GOTO_LABEL,)))
