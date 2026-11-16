@@ -1123,7 +1123,9 @@ int __cdecl minerals_at(int x, int y) {
     }
     int avg = (x + y) / 2;
     int x_diff = x - avg;
-    int val1 = (x_diff / 2) + MapRandSeed + 2 * (x_diff / 2) + 2 * (avg / 2);
+    // 3 * (x_diff / 2), not x_diff/2 + 2 * (x_diff / 2): the image sums
+    // (half + seed) + 2 * half + 2 * (avg / 2) without regrouping the doubles.
+    int val1 = 3 * (x_diff / 2) + MapRandSeed + 2 * (avg / 2);
     int val2 = (val1 - 2 * (x_diff & 1) - (avg & 1)) & 3;
     int alt = alt_at(x, y);
     int type = alt - ALT_SHORE_LINE;
@@ -1158,11 +1160,11 @@ int __cdecl minerals_at(int x, int y) {
         switch (val2) {
           case 0:
             return 1;
+          case 2:
+            return (val1 & 4) ? 2 : 1;
           case 1:
           case 3:
             return 0;
-          case 2:
-            return (val1 & 4) ? 2 : 1;
           default:
             return ~val2 & 1;
         }

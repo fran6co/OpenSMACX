@@ -93,8 +93,9 @@ void ReplayWin::init() {
     flat_button_.set_border_styles(&InterfaceBoxStyles[27],
                                     &InterfaceBoxStyles[29],
                                     &InterfaceBoxStyles[29]);
-    flat_button_.Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
-    flat_button_.redraw();
+    FlatButton *button = &flat_button_;
+    button->Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+    button->redraw();
     map_win_.show(0);
     map_win_.field_1DD70_ |= 0x2000000;
 
