@@ -20,6 +20,7 @@
 // compile_context src/interface_assets.cpp
 // symbol    ??_GGamma@@UAEPAXI@Z
 // kind      game
+#define WIN_RECT_EXTENT_INLINE  // stand-in: see rect_width in win.h
 #include "stdafx.h"
 #include "gamma.h"
 #include "worldwin.h"
@@ -54,12 +55,6 @@ static inline void gamma_button_init(PushButton *button, LPCSTR text, int id,
     button->init(text, id, rect->left, rect->top, rect->right - rect->left,
                  rect->bottom - rect->top, parent, 0);
 }
-static inline int gamma_rect_width(RECT *rect) {
-    return rect->right - rect->left;
-}
-static inline int gamma_rect_height(RECT *rect) {
-    return rect->bottom - rect->top;
-}
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005C8E60 ?exec@Gamma@@QAEXPAUPalette@@MH@Z 0x005C8E60-0x005C9325
@@ -81,19 +76,19 @@ double Gamma::exec(Palette *target, float initial_gamma, int apply_only) {
     const int screen_height = WinScreenHeight;
     const int screen_width = WinScreenWidth;
     set_rectangle_dimensions(&rect1_, 0, 0, 236, 32);
-    offset_rect(&rect1_, (screen_width - gamma_rect_width(&rect1_)) / 2,
-                (screen_height - gamma_rect_height(&rect1_)) / 2);
+    offset_rect(&rect1_, (screen_width - rect_width(&rect1_)) / 2,
+                (screen_height - rect_height(&rect1_)) / 2);
     rect2_ = rect1_;
-    offset_rect(&rect2_, 0, gamma_rect_height(&rect2_) + 3);
+    offset_rect(&rect2_, 0, rect_height(&rect2_) + 3);
     rect3_ = rect1_;
-    offset_rect(&rect3_, 0, gamma_rect_height(&rect1_) + 3);
+    offset_rect(&rect3_, 0, rect_height(&rect1_) + 3);
     gamma_inset(&rect3_, 0, 4);
     rect4_ = rect3_;
-    offset_rect(&rect4_, 0, gamma_rect_height(&rect4_) + 3);
-    rect4_.right = rect4_.left + (gamma_rect_width(&rect4_) + 3) / 2 - 3;
+    offset_rect(&rect4_, 0, rect_height(&rect4_) + 3);
+    rect4_.right = rect4_.left + (rect_width(&rect4_) + 3) / 2 - 3;
     rect4_.bottom = rect4_.top + 20;
     rect5_ = rect4_;
-    offset_rect(&rect5_, gamma_rect_width(&rect5_) + 3, 0);
+    offset_rect(&rect5_, rect_width(&rect5_) + 3, 0);
 
     font_.init("Arial", 14, 1);
     GraphicWin::init(0, 0, screen_width, screen_height, 0, 0,

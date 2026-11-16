@@ -12,6 +12,7 @@
 // ORIGINAL: 0x004483F0 _$E19 0x004483F0-0x004483FA FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x6820ac selects initializer0x4483d0..0x4483e6, registering exit0x4483f0..0x4483fa. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x74daf8 bound to?g_FAMEWIN@@3VFameWin@@A.", "Original startup instruction evidence: [[\"0x4483d0\", \"mov\", \"ecx, 0x74daf8\"], [\"0x4483d5\", \"call\", \"0x44b200\"], [\"0x4483da\", \"push\", \"0x4483f0\"], [\"0x4483df\", \"call\", \"0x645398\"], [\"0x4483e4\", \"pop\", \"ecx\"], [\"0x4483e5\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x4483f0\", \"mov\", \"ecx, 0x74daf8\"], [\"0x4483f5\", \"jmp\", \"0x44b100\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/famewin.cpp COFF selects _$E21 via .CRT$XCU, registering _$E19. Startup relocation targets: [\"?g_FAMEWIN@@3VFameWin@@A\", \"??0FameWin@@QAE@XZ\", \"_$E19\", \"_atexit\"]; exit targets: [\"?g_FAMEWIN@@3VFameWin@@A\", \"??1FameWin@@UAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f248; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned ?g_FAMEWIN@@3VFameWin@@A; preserve complete original identity and remaining restoration/structure obligations."}
 // symbol    _$E14
+#define WIN_RECT_EXTENT_INLINE  // stand-in: see rect_width in win.h
 #include "stdafx.h"
 #include "famewin.h"
 #include "rectangle_operations.h"
@@ -250,16 +251,6 @@ int FameWin::on_key_click(int, int code) {
   return 1;
 }
 
-// The image loads right before left (and bottom before top) for the award
-// and faction cell grids, the order a small RECT* width helper gives.
-static inline int famewin_rect_width(const RECT *rect) {
-  return rect->right - rect->left;
-}
-
-static inline int famewin_rect_height(const RECT *rect) {
-  return rect->bottom - rect->top;
-}
-
 // ORIGINAL: 0x00448400 ?init@FameWin@@QAEHXZ 0x00448400-0x00448D60;0x00654E90-0x00654EA5 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00448400.cpp", "Pinned original owner review: original clip resets and absent-record branches, CharUpperA import, difficulty-label capitalization and exact demote tail copying."], "reason": "Recover FameWin owner behavior through existing GraphicWin/Buffer bases, owned buttons and sprites, and typed HallOfFame/Player records; retain historical seed identity and extents without a measurement claim."}
 // TRIED: full transcription landed (MISMATCH #1, no SEH frame reproduced). Used a plain local `Buffer localBuf;` since ~Buffer() is declared here (unlike the sibling StringStruct cases) - RAII reproduces the real destructor call on every return path, matching the disassembly exactly. Did not use the now-retired hypothesis umbrella's FameWin field names per the brief's warning; every FameWin/BaseButton field access is a raw self+offset cast, cross-checked against the raw bytes (not Ghidra) for both BaseButton::init 8-arg calls.
@@ -319,9 +310,9 @@ failed:
     field_A14_ += 0x50;
   }
 
-  field_A1C_ = famewin_rect_width(&awards_rect_) / 6;
+  field_A1C_ = rect_width(&awards_rect_) / 6;
   field_A14_ = ((int)field_A1C_ - 0x4F) / 2 + awards_rect_.left;
-  field_A18_ = (famewin_rect_height(&awards_rect_) - 0x4F) / 2 + awards_rect_.top;
+  field_A18_ = (rect_height(&awards_rect_) - 0x4F) / 2 + awards_rect_.top;
 
   for (int award = 0; award < 6; ++award) {
     FlatButton &button = flatButtons2_[award];
@@ -338,9 +329,9 @@ failed:
     button.hide();
   }
 
-  field_A1C_ = famewin_rect_width(&factions_rect_) / 7;
+  field_A1C_ = rect_width(&factions_rect_) / 7;
   field_A14_ = ((int)field_A1C_ - 0x46) / 2 + factions_rect_.left;
-  field_A18_ = (famewin_rect_height(&factions_rect_) - 0x46) / 2 + factions_rect_.top;
+  field_A18_ = (rect_height(&factions_rect_) - 0x46) / 2 + factions_rect_.top;
   buttonGroup_.init(0x15, 0);
   selectedRecord_ = static_cast<uint32_t>(-1);
 

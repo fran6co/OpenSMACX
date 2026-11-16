@@ -17,6 +17,7 @@
 // its three-state EH layout; see stringstruct.h.
 #define FONT_LINE_ADVANCE_INLINE
 #define STRINGSTRUCT_CTOR_OUT_OF_LINE
+#define WIN_RECT_EXTENT_INLINE  // stand-in: see rect_width in win.h
 #include "stdafx.h"
 #include "quaylewin.h"
 #include "alpha.h"
@@ -226,8 +227,6 @@ static inline char *quayle_get_name(int faction) {
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 004956D0; retained seed git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004956d0.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations."}
 // TRIED: local StringStruct/Buffer objects reproduce the ctor/dtor calls but MSVC did not regenerate the original's SEH/EH unwind frame (push -1; push handler; fs:[0] chain) from source-level RAII alone here; body is a faithful, compiling transcription (MISMATCH #0, prologue only) - see call order, field offsets and vtable-adjustor reads below for the parts that are semantically verified against raw disassembly.
 // symbol    ?on_redraw@QuayleWin@@UAEXXZ
-static inline int quayle_rect_width(const RECT *rect) { return rect->right - rect->left; }
-
 // WORKAROUND(inline): the image expands the RECT form of Spot::add
 // (0x0047A6F0, emitted out of line by MultiWin) at 0x00495FF3.
 static inline int quayle_spot_add(Spot *spot, int position, int type, RECT *rect) {
@@ -255,7 +254,7 @@ void QuayleWin::on_redraw() {
   set_clip(&title_rect_);
   parse_it("Holobook", "BOOKTITLE");
   wrap_cent(StringTemp, title_rect_.left, title_rect_.top,
-            quayle_rect_width(&title_rect_));
+            rect_width(&title_rect_));
   set_font(ReportIfGlobal.field_1E1B0_, 0, 0, 0);
   set_text_color(0x63, -1, 1, 1);
 
@@ -265,7 +264,7 @@ void QuayleWin::on_redraw() {
     if (Language == 0) {
       parse_it("Holobook", "BOOKINTRO");
       wrap_cent(StringTemp, introduction_rect_.left, introduction_rect_.top,
-                quayle_rect_width(&introduction_rect_));
+                rect_width(&introduction_rect_));
     } else {
       temporary[0] = 0;
       strcat(temporary, "BOOKLIST");
@@ -275,7 +274,7 @@ void QuayleWin::on_redraw() {
       parse_says(1, quayle_get_name(faction), Players[faction].is_leader_female, -1);
       parse_it("Holobook", temporary);
       wrap_cent(StringTemp, introduction_rect_.left, introduction_rect_.top,
-                quayle_rect_width(&introduction_rect_));
+                rect_width(&introduction_rect_));
     }
     restore_clip();
     StringTemp[0] = 0;
@@ -330,7 +329,7 @@ void QuayleWin::on_redraw() {
     set_clip(&introduction_rect_);
     parse_it("Holobook", "BOOKINTRO");
     wrap_cent(StringTemp, introduction_rect_.left, introduction_rect_.top,
-              quayle_rect_width(&introduction_rect_));
+              rect_width(&introduction_rect_));
     if (Language == 0) {
       restore_clip();
       Font *font = ReportIfGlobal.field_1E1A8_;
@@ -358,7 +357,7 @@ void QuayleWin::on_redraw() {
         }
         field_A14_ = chapter_list_rect_.left;
         field_A18_ = text_scratch_rect_.top;
-        field_A1C_ = quayle_rect_width(&chapter_list_rect_);
+        field_A1C_ = rect_width(&chapter_list_rect_);
         field_A20_ = wrap_height(StringTemp, field_A1C_);
         quayle_place_rect(&text_scratch_rect_, field_A14_, field_A18_ - field_A20_ - 6, field_A1C_, field_A20_);
         quayle_spot_add(&spot_, page, 0, &text_scratch_rect_);

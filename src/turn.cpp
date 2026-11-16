@@ -21,6 +21,7 @@
 // rendezvous and control_game, in image order. The boundary is inferred from
 // the CRT init table and subject change; council.cpp follows without a marker.
 #define NETDAEMON_RESET_INLINE  // stand-in: see NetDaemon::reset in netdaemon.h
+#define WIN_RECT_EXTENT_INLINE  // stand-in: see rect_width in win.h
 #include "stdafx.h"
 
 // Original read_tamper/set_tamper at 0x0051E000/0x0051E090 use these registry exports through the SDK.
@@ -104,12 +105,15 @@
 #include "font.h"
 #include "popup_fonts.h"
 // WORKAROUND(decl): unused extern names. end_of_game (0x00524870) keeps the
-// image's code only while the unit declares one to six more distinct extern
-// names once Demo::init's RECT width/height helpers exist (measured 1-6 all
-// exact, 0 flips it); the original's extra declarations are unidentified.
+// image's code only inside a window of extra distinct extern names (with
+// win.h's rect_width/rect_height visible: 5-7 and 9-10 exact, 4 and 8 flip
+// it); the original's extra declarations are unidentified.
 extern int TurnDeclPad0;
 extern int TurnDeclPad1;
 extern int TurnDeclPad2;
+extern int TurnDeclPad3;
+extern int TurnDeclPad4;
+extern int TurnDeclPad5;
 
 extern Wave g_CRASH_LANDING_WAVE;
 extern int ConsoleNoMapOverrideLatch;
@@ -2028,7 +2032,7 @@ void __cdecl interlude(int id, char *text, int mode, int ending) {
     for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; ++i) {
         if (Bases[i].faction_id_current == ConsoleGlobal.faction_id_) {
             int value = Bases[i].population_size;
-            if (has_fac_built(FAC_HEADQUARTERS, i)) value += 999;
+            if (has_fac(FAC_HEADQUARTERS, i, 0)) value += 999;
             if (value > best_value) {
                 best_value = value;
                 best_base = i;
@@ -2483,7 +2487,11 @@ void __cdecl reset_territory() {
 // Historical object identity moved to GameDataStateStorage; see the transport manifest.
 
 
-void __cdecl climactic_changes() {
+// WORKAROUND(inline): the image expands this body into turn_upkeep
+// (0x005258C0, sharing its SEARISING/SEAFALLING literals) and also keeps an
+// out-of-line copy with no callers. A plain definition is not auto-inlined
+// there; `inline` expands it and dllexport keeps the copy (exact both ways).
+MEASURED inline void __cdecl climactic_changes() {
     int sign;
 
     if (GameDataStateStorage.fields_.climate_sea_level_delta_ != 0) {
@@ -2673,16 +2681,6 @@ void Demo::on_left_down(int x, int y) {
 
 // Demo::init's sprite cuts: the size arguments are evaluated right to left,
 // height first.
-// WORKAROUND(inline): the image loads right before left and bottom before
-// top for Demo::init's extract sizes, the shape of a RECT width/height inline
-// taking a pointer; several units carry the same file-local twin, so the
-// original was probably one shared header helper.
-static inline int demo_rect_width(const RECT *rect) {
-    return rect->right - rect->left;
-}
-static inline int demo_rect_height(const RECT *rect) {
-    return rect->bottom - rect->top;
-}
 static inline int demo_extract(Sprite *sprite, Buffer *buffer, int x, int y, int width, int height) {
     return sprite->extract(buffer, WinFillColour, x, y, width, height, 0);
 }
@@ -2718,12 +2716,12 @@ int Demo::init() {
     // Both sprites are cut from the first RECT, reloaded after each call.
     demo_extract(&splash_sprites_[0], static_cast<Buffer *>(this),
                  splash_rects_[0].left, splash_rects_[0].top,
-                 demo_rect_width(&splash_rects_[0]),
-                 demo_rect_height(&splash_rects_[0]));
+                 rect_width(&splash_rects_[0]),
+                 rect_height(&splash_rects_[0]));
     demo_extract(&splash_sprites_[1], &local_buffer,
                  splash_rects_[0].left, splash_rects_[0].top,
-                 demo_rect_width(&splash_rects_[0]),
-                 demo_rect_height(&splash_rects_[0]));
+                 rect_width(&splash_rects_[0]),
+                 rect_height(&splash_rects_[0]));
     local_buffer.close();
     timer_.start(&Demo::timer_callback, reinterpret_cast<int>(this), 600, 5);
 
@@ -3224,23 +3222,7 @@ void __cdecl turn_upkeep() {
     GameDataStateStorage.fields_.mission_year_current_ = game_year(GameDataStateStorage.fields_.turn_current_num_);
     MapWinTable[0]->main_caption();
 
-    if (GameDataStateStorage.fields_.climate_sea_level_delta_ != 0) {
-        GameDataStateStorage.fields_.climate_rise_accum_ += GameDataStateStorage.fields_.climate_rise_step_;
-        if (GameDataStateStorage.fields_.climate_rise_accum_ >= GameDataStateStorage.fields_.climate_rise_limit_) {
-            GameDataStateStorage.fields_.climate_rise_accum_ -= GameDataStateStorage.fields_.climate_rise_limit_;
-            int step = GameDataStateStorage.fields_.climate_sea_level_delta_ > 0 ? 1
-                : (GameDataStateStorage.fields_.climate_sea_level_delta_ < 0 ? -1 : 0);
-            MapSeaLevel += step;
-            GameDataStateStorage.fields_.climate_sea_level_delta_ -= step;
-            world_climate();
-            draw_map(1);
-            if (step > 0) {
-                popp(ScriptPopupFile, "SEARISING", 0, "searis_sm.pcx", 0);
-            } else {
-                popp(ScriptPopupFile, "SEAFALLING", 0, "seafal_sm.pcx", 0);
-            }
-        }
-    }
+    climactic_changes();
 
     alien_fauna();
     do_fungal_towers();
@@ -3312,6 +3294,10 @@ void __cdecl turn_upkeep() {
     }
 
     random_events(0);
+    // ascent()'s body as the image expands it here (shared ASCENT and
+    // asctran_sm.pcx literals). Calling ascent() instead stays exact only
+    // with game.h's declaration `MEASURED void __cdecl ascent();` and a
+    // `MEASURED inline` definition (proposed; game.h is outside this unit).
     if (GameDataStateStorage.fields_.turn_current_num_ == 0x4b
         && has_tech(Facility[FAC_BIOLOGY_LAB].preq_tech, ConsoleGlobal.faction_id_)) {
         interlude(1, 0, 1, 0);
@@ -3909,7 +3895,8 @@ void __cdecl faction_upkeep(int faction_id) {
             PlayersData[faction_id].corner_market_turn =
                 GameDataStateStorage.fields_.turn_current_num_ + Rules.turns_corner_gbl_energy_mrkt;
             PlayersData[faction_id].corner_market_active = corner_market(faction_id);
-            PlayersData[faction_id].energy_reserves -= corner_market(faction_id);
+            const int cost = corner_market(faction_id);
+            PlayersData[faction_id].energy_reserves -= cost;
             parse_set(Players[faction_id].is_leader_female, 0);
             parse_says(0, Players[faction_id].title_leader, -1, -1);
             parse_set(Players[faction_id].is_leader_female, 0);

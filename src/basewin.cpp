@@ -47,6 +47,7 @@ extern char SocialWinCommaSpaceText[];/*
 #define MAPWIN_TILE_IN_VIEW_INLINE  // MapWin::tile_in_view body in mapwin.h
 #define BUFFER_WRITE_RIGHT_L3  // guarded Buffer::write_right_l(text, x, y)
 #define FLATBUTTON_SLICE_COLOURS_PUBLIC  // direct field_ABC_ stores in init
+#define WIN_RECT_EXTENT_INLINE  // stand-in: see rect_width in win.h
 #include "stdafx.h"
 #include "font_metrics.h"
 #include "interface_fonts.h"
@@ -7103,7 +7104,6 @@ namespace {
 void base_init_rect(RECT &rect, int left, int top, int right, int bottom) {
     rect.left = left; rect.top = top; rect.right = right; rect.bottom = bottom;
 }
-int base_rect_height(const RECT *rect) { return rect->bottom - rect->top; }
 void base_expand_rect(RECT *rect, int horizontal, int vertical) {
     rect->left -= horizontal; rect->right += horizontal;
     rect->top -= vertical; rect->bottom += vertical;
@@ -7163,9 +7163,9 @@ void BaseWin::init() {
         base_init_rect(production_outer_rect_, 166, 260, 699, 349);
         RECT *production = &production_content_rect_;
         *production = production_outer_rect_;
-        const int half_old_height = base_rect_height(production) / 2;
-        offset_rect(production, 0, base_rect_height(production) + 3);
-        const int half_new_height = base_rect_height(production) / 2;
+        const int half_old_height = rect_height(production) / 2;
+        offset_rect(production, 0, rect_height(production) + 3);
+        const int half_new_height = rect_height(production) / 2;
         commerce_report_rect_.top += half_new_height;
         commerce_report_rect_.bottom += half_new_height;
         commerce_outer_rect_.top += half_old_height;
@@ -7176,9 +7176,9 @@ void BaseWin::init() {
         commerce_outer_rect_.bottom += half_old_height;
         nutrient_content_rect_.bottom += half_old_height;
         nutrient_outer_rect_.bottom += half_old_height;
-        set_rectangle_dimensions(&rect6_, 381, base_rect_height(production) + 360, 238, 20);
-        set_rectangle_dimensions(&rect7_, 131, base_rect_height(production) + 360, 238, 20);
-        window_height = base_rect_height(production) + 401;
+        set_rectangle_dimensions(&rect6_, 381, rect_height(production) + 360, 238, 20);
+        set_rectangle_dimensions(&rect7_, 131, rect_height(production) + 360, 238, 20);
+        window_height = rect_height(production) + 401;
     }
     r = commerce_outer_rect_;
     r.top = r.bottom + 3;
@@ -7549,12 +7549,6 @@ void BaseWin::on_scrolling(int code, int position) {
   on_scrolled(code, position);
 }
 
-// Descriptive recovery operation; this name does not identify an original
-// entry. farm_get's copied rect1_.left register needs the inline boundary.
-static inline int basewin_rect_width(const RECT *rect) {
-    return rect->right - rect->left;
-}
-
 /*
 Purpose: Map a click on the base screen's farm panel back to the tile it
          picks: unproject the 0x60-by-0x30 half-scale sprite pixel through
@@ -7573,7 +7567,7 @@ Status: Coverage transcription of the retained seed
         The original unchecked indexing is retained.
 */
 int BaseWin::farm_get(int a1, int a2) {
-    a1 += 0xc0 - basewin_rect_width(&rect1_) / 2 - rect1_.left;
+    a1 += 0xc0 - rect_width(&rect1_) / 2 - rect1_.left;
     if (a1 >= 0 && a1 < 0x180) {
         a2 -= rect1_.top;
         if (a2 >= 0 && a2 < 0xc0) {
