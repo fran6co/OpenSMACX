@@ -3379,9 +3379,11 @@ void Datalink::exec(unsigned int topic, int index) {
 }
 
 
-// WORKAROUND(inline): expand_rect (scroll.cpp) is a plain out-of-line
-// function in this tree; init expands it inline (0x00429537: the 3 held in
-// eax for right/bottom, -3 immediates for left/top).
+// WORKAROUND(inline): twin of win.h's gated expand_rect. Defining
+// WIN_EXPAND_RECT_INLINE in this unit flips set_cat_social (0x0042B630) to
+// MNEMONIC_ONLY, as defining WIN_RECT_EXTENT_INLINE does; init expands it
+// inline (0x00429537: the 3 held in eax for right/bottom, -3 immediates for
+// left/top).
 static inline RECT *datalink_expand_rect(RECT *rect, int horizontal, int vertical) {
     rect->left -= horizontal;
     rect->right += horizontal;

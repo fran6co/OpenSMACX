@@ -27,6 +27,7 @@
 // symbol    _$E14
 #define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h; on_button_clicked
 // expands ~Dialogs (close@Dialogs, then the member dtors) in its closing teardown.
+#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #include "stdafx.h"
 #include "pickwin.h"
 #include "strings.h"
@@ -170,18 +171,6 @@ extern char PickWinCaptionBuffer[];  // initial VA 0x00834D6C; capacity unknown
 extern PickWin PickWinGlobal;        // initialized by the native .CRT wrapper
 void __cdecl list_was_dblclicked(int faction_id);
 
-// WORKAROUND(inline): expand_rect (scroll.cpp) is out of line in this tree;
-// init and on_redraw expand it (0x00488C5C header inset by 4, 0x00488D91
-// list inset by 3, 0x0048969E header inset by 3: left/right/top/bottom with
-// the negated amount held in eax; 0x00489759 group right +0x12 then +3).
-static inline RECT *pickwin_expand_rect(RECT *rect, int horizontal, int vertical) {
-  rect->left -= horizontal;
-  rect->right += horizontal;
-  rect->top -= vertical;
-  rect->bottom += vertical;
-  return rect;
-}
-
 // WORKAROUND(inline): init shifts the list RECT with `add reg,-0x12` on left
 // and right only (0x00488DB6), the shape of an inlined offset helper whose
 // vertical delta folded away.
@@ -299,7 +288,7 @@ void PickWin::init(void (__cdecl *callback)(int), int mode, int faction) {
 
   set_rectangle_dimensions(&frame_rect_, 0, 0, field_A1C_, field_A20_);
   header_panel_rect_ = frame_rect_;
-  pickwin_expand_rect(&header_panel_rect_, -4, -4);
+  expand_rect(&header_panel_rect_, -4, -4);
   header_panel_rect_.bottom = header_panel_rect_.top + 0x1E;
   field_A14_ = header_panel_rect_.left + 1;
   field_A18_ = header_panel_rect_.bottom + 4;
@@ -312,7 +301,7 @@ void PickWin::init(void (__cdecl *callback)(int), int mode, int faction) {
   field_A14_ = header_panel_rect_.left + 0x159;
   set_rectangle_dimensions(&list_area_rect_, header_panel_rect_.left + 0x15B, field_6268_ + 3,
                            header_panel_rect_.right - header_panel_rect_.left - 0x15E, 0x88);
-  pickwin_expand_rect(&list_area_rect_, -3, -3);
+  expand_rect(&list_area_rect_, -3, -3);
   pickwin_offset_rect(&list_area_rect_, -0x12, 0);
 
   int row = 0;
@@ -654,19 +643,19 @@ void PickWin::on_redraw() {
   GraphicWin::fill(9);
   Buffer::box_sprite(&frame_rect_, &InterfaceBoxStyles[9]);
   Buffer::box_sprite(&header_panel_rect_, &InterfaceBoxStyles[3]);
-  pickwin_expand_rect(&header_panel_rect_, -3, -3);
+  expand_rect(&header_panel_rect_, -3, -3);
   Buffer::box_sprite(&header_panel_rect_, &InterfaceBoxStyles[6]);
   StringTemp[0] = '\0';
   strcat(StringTemp, label_get(0x45A));
   Buffer::write_cent_l(StringTemp, &header_panel_rect_);
-  pickwin_expand_rect(&header_panel_rect_, 3, 3);
+  expand_rect(&header_panel_rect_, 3, 3);
 
   RECT group;
   group.left = list_area_rect_.left;
   group.top = list_area_rect_.top;
   group.right = list_area_rect_.right + 0x12;
   group.bottom = list_area_rect_.bottom;
-  pickwin_expand_rect(&group, 3, 3);
+  expand_rect(&group, 3, 3);
   Buffer::box_sprite(&group, &InterfaceBoxStyles[3]);
 
   int selected = listBox_.Dialog::get_selected_id();

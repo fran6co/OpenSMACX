@@ -15,6 +15,7 @@
 // (0x00402970) out of line (0x00485403) while its closing destructor walk
 // expands the same body inline (0x00485EB0); see stringstruct.h.
 #define STRINGSTRUCT_REMOVE_ALL_CALLED
+#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "picktech.h"
@@ -661,18 +662,6 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
     return 1;
 }
 
-// WORKAROUND(inline): expand_rect (scroll.cpp) is a plain out-of-line
-// function in this tree; pick expands it inline twice (0x00487DA3 and
-// 0x00487DD6: the inset 3 held in a register, subtracted from right/bottom
-// and added to left/top).
-static inline RECT *picktech_expand_rect(RECT *rect, int horizontal, int vertical) {
-    rect->left -= horizontal;
-    rect->right += horizontal;
-    rect->top -= vertical;
-    rect->bottom += vertical;
-    return rect;
-}
-
 // Full typed PickTech::pick candidate. Repository integration remains coordinator-owned.
 // Four simultaneous automatic Popups own all Scroll, Spot, Dialogs and button lifetimes.
 // ORIGINAL: 0x00486510 ?pick@PickTech@@QAEHHHHPAD@Z 0x00486510-0x00488655;0x006576A0-0x00657C12
@@ -1010,10 +999,10 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
         field_16C_ = 29;
         RECT frame = Buffer::clip_rect();
         Buffer::box_sprite(&frame, &InterfaceBoxStyles[9]);
-        picktech_expand_rect(&frame, -3, -3);
+        expand_rect(&frame, -3, -3);
         frame.bottom = frame.top + 23;
         Buffer::box_sprite(&frame, &InterfaceBoxStyles[6]);
-        picktech_expand_rect(&frame, -3, -3);
+        expand_rect(&frame, -3, -3);
         StringTemp[0] = '\0';
         strcat(StringTemp, popup.caption_text());
         CharUpperA(StringTemp);

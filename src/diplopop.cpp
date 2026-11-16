@@ -21,6 +21,7 @@
 // kind      game
 // ORIGINAL: 0x00440EF0 ??_EDiploPop@@WEEE@AEPAXI@Z 0x00440EF0-0x00440EFB FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor at 0x0043EFF0 installs Buffer table 0x0066B470 at this+0x444; its first slot points to 0x00440EF0.", "Pinned entry 0x00440EF0 has exactly eleven bytes: SUB ECX,0x444 then JMP to already mapped primary deleting destructor 0x00440EC0, followed by INT3 padding.", "Owner diplopop.cpp physical COFF emits eleven-byte COMDAT ??_EDiploPop@@WEEE@AEPAXI@Z; Buffer table ??_7DiploPop@@6BBuffer@@@ selects it, and its REL32 targets weak ??_EDiploPop@@UAEPAXI@Z with scalar ??_GDiploPop@@UAEPAXI@Z fallback.", "The genuine GraphicWin:Win,Buffer hierarchy provides the receiver adjustment. Independent original constructor/table/body and physical COFF review supports this binding; local equality does not prove full linked table selection or runtime acceptance."], "reason": "Bind the original Buffer-view deleting receiver adjustment to the genuine DiploPop compiler-emitted operation. The symbol names this tree emits, not an original debug name; no adapter body is authored."}
+#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #include "stdafx.h"
 #include "font_metrics.h"
 #include "interface_fonts.h"
@@ -109,17 +110,6 @@ void DiploPop::start(int faction_id) {
     MainInterfaceGlobal.soft_update(flic1_.update_rect());
 }
 
-// WORKAROUND(inline): expand_rect (scroll.cpp) is a plain out-of-line
-// function in this tree; init expands it inline (0x0044086F: +4 to
-// left/top and a register holding -4 added to right/bottom).
-static inline RECT *diplopop_expand_rect(RECT *rect, int horizontal, int vertical) {
-    rect->left -= horizontal;
-    rect->right += horizontal;
-    rect->top -= vertical;
-    rect->bottom += vertical;
-    return rect;
-}
-
 // WORKAROUND(decl): file-local RECT setter stand-in (original name unknown);
 // 0x00440923 stores the button rectangle through a pointer copy.
 static inline void diplopop_set_rect(RECT *rect, int left, int top, int right,
@@ -162,16 +152,16 @@ void DiploPop::init() {
     right_panel_button_rect_ = rect;
 
     rect = MainInterfaceGlobal.right_frame_rect();
-    diplopop_expand_rect(&rect, -4, -4);
+    expand_rect(&rect, -4, -4);
     rect.bottom = right_panel_button_rect_.top - 6;
     frame_inset_rect_ = rect;
 
     content_rect_ = MainInterfaceGlobal.lower_frame_rect();
-    diplopop_expand_rect(&content_rect_, -4, -4);
+    expand_rect(&content_rect_, -4, -4);
 
     rect1_ = MainInterfaceGlobal.main_layout_rect();
-    diplopop_expand_rect(&rect1_, -4, -4);
-    diplopop_expand_rect(&rect1_, -3, -3);
+    expand_rect(&rect1_, -4, -4);
+    expand_rect(&rect1_, -3, -3);
 
     rect = rect1_;
     rect.top = rect.bottom - 20;
@@ -182,12 +172,12 @@ void DiploPop::init() {
     rect1_.bottom = rect.top - 3;
 
     rect = MainInterfaceGlobal.main_frame_rect();
-    diplopop_expand_rect(&rect, -4, -4);
+    expand_rect(&rect, -4, -4);
     diplopop_set_rect(&portrait_text_rect_, rect.right - frame_width - 2, rect.top,
                       rect.right, rect.bottom);
 
     rect = MainInterfaceGlobal.main_frame_rect();
-    diplopop_expand_rect(&rect, -4, -4);
+    expand_rect(&rect, -4, -4);
     rect.right = portrait_text_rect_.left - 3;
     bioscan_title_rect_ = rect;
     bioscan_title_rect_.bottom = bioscan_title_rect_.top + 20;

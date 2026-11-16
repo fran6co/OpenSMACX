@@ -37,6 +37,7 @@
 // 0x00612A70, not the out-of-line copy 0x00558FE0).
 #define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h
 #define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
+#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #include "stdafx.h"
 #include "font_metrics.h"
 #include "interface_fonts.h"
@@ -1173,17 +1174,6 @@ DesignWin::DesignWin() {
     prototype_name_[0] = 0;
 }
 
-// WORKAROUND(decl): file-local stand-in for the original's inline rectangle
-// helper. 0x0043C4DA..4FC / 0x0043C48A..4AC load the four edges in
-// left/right/top/bottom order and add a register holding -3/-4 to right and
-// bottom (an InflateRect-style helper called with a negative amount).
-static inline void design_inflate_rect(RECT *rect, int dx, int dy) {
-    rect->left -= dx;
-    rect->right += dx;
-    rect->top -= dy;
-    rect->bottom += dy;
-}
-
 // ORIGINAL: 0x0043C270 ?init@DesignWin@@QAEXXZ 0x0043C270-0x0043D0B7;0x006546C5-0x006546DA FILE
 // RECOVERY_BINDING: v1 {"evidence": ["seed:src/unrecovered/0043c270.cpp", "image:0x0043c270; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
 // symbol    ?init@DesignWin@@QAEHXZ
@@ -1223,11 +1213,11 @@ int DesignWin::init() {
     field_B0C_rect_.left = MainInterfaceGlobal.main_frame_rect().left + 4;
     preview_panel_rect_ = MainInterfaceGlobal.main_frame_rect();
     preview_panel_rect_.bottom = field_B0C_rect_.top;
-    design_inflate_rect(&preview_panel_rect_, -3, -3);
+    expand_rect(&preview_panel_rect_, -3, -3);
     // 0x0043C4AF copies +0xDA0 (0x007AF5C0), the info panel frame, not
     // +0xDB0's lower frame.
     info_panel_rect_ = MainInterfaceGlobal.info_frame_rect();
-    design_inflate_rect(&info_panel_rect_, -4, -4);
+    expand_rect(&info_panel_rect_, -4, -4);
     // 0x0043C4FF..0x0043C581: the four edges stay in registers from the
     // frame through the caption to A7C; each rectangle is a whole-RECT copy
     // through its own pointer (lea ebx), and the caption bottom is kept in a

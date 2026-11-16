@@ -48,6 +48,7 @@ extern char SocialWinCommaSpaceText[];/*
 #define BUFFER_WRITE_RIGHT_L3  // guarded Buffer::write_right_l(text, x, y)
 #define FLATBUTTON_SLICE_COLOURS_PUBLIC  // direct field_ABC_ stores in init
 #define WIN_RECT_EXTENT_INLINE  // stand-in: see rect_width in win.h
+#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #include "stdafx.h"
 #include "font_metrics.h"
 #include "interface_fonts.h"
@@ -7127,10 +7128,6 @@ namespace {
 void base_init_rect(RECT &rect, int left, int top, int right, int bottom) {
     rect.left = left; rect.top = top; rect.right = right; rect.bottom = bottom;
 }
-void base_expand_rect(RECT *rect, int horizontal, int vertical) {
-    rect->left -= horizontal; rect->right += horizontal;
-    rect->top -= vertical; rect->bottom += vertical;
-}
 }
 
 // ORIGINAL: 0x0041E8D0 ?init@BaseWin@@QAEXXZ 0x0041E8D0-0x00420A3D;0x00652A94-0x00652AA9
@@ -7210,11 +7207,11 @@ void BaseWin::init() {
     selected_queue_slot_ = 0;
     field_40B30_ = 0;
     garrison_rect_ = MainInterfaceGlobal.lower_frame_rect_;
-    base_expand_rect(&garrison_rect_, -4, -4);
+    expand_rect(&garrison_rect_, -4, -4);
     garrison_rect_.left -= 4;  // Original removes only the left inset again.
     queue_help_rect_ = MainInterfaceGlobal.rect4_;
     queue_help_rect_.right = (queue_help_rect_.right - queue_help_rect_.left) * 7 / 12;
-    base_expand_rect(&queue_help_rect_, -4, -4);
+    expand_rect(&queue_help_rect_, -4, -4);
     r = queue_help_rect_;
     r.left = queue_help_rect_.right + 3;
     r.right = garrison_rect_.left - 7;
@@ -7229,36 +7226,36 @@ void BaseWin::init() {
     r.right -= 4;
     r.bottom = flash_rect_a_.top - 7;
     queue_outer_rect_ = r;
-    base_expand_rect(&r, -3, -3);
+    expand_rect(&r, -3, -3);
     queue_title_rect_ = r;
     queue_title_rect_.bottom = queue_title_rect_.top + 20;
     queue_content_rect_ = r;
     queue_content_rect_.top = queue_title_rect_.bottom + 2;
     queue_button_rect_ = queue_title_rect_;
     r = MainInterfaceGlobal.info_panel_frame_;
-    base_expand_rect(&r, -4, -4);
+    expand_rect(&r, -4, -4);
     population_rect_ = r;
     population_rect_.top = r.bottom - 54;
     population_rect_.right = MainInterfaceGlobal.info_panel_frame_.right - 62;
     info_title_rect_ = MainInterfaceGlobal.info_panel_frame_;
     info_title_rect_.bottom = population_rect_.top;
-    base_expand_rect(&info_title_rect_, -4, -4);
+    expand_rect(&info_title_rect_, -4, -4);
     ++info_title_rect_.bottom;
     r = population_rect_;
     r.left = r.right + 4;
     r.right = MainInterfaceGlobal.info_panel_frame_.right - 4;
-    base_expand_rect(&r, -3, -3);
+    expand_rect(&r, -3, -3);
     rect12_ = r;
     r = MainInterfaceGlobal.right_frame_rect_;
-    base_expand_rect(&r, -4, -4);
+    expand_rect(&r, -4, -4);
     interface_help_rect_ = r;
-    base_expand_rect(&r, -3, -3);
+    expand_rect(&r, -3, -3);
     supported_title_rect_ = r;
     supported_title_rect_.bottom = supported_title_rect_.top + 20;
     supported_content_rect_ = r;
     supported_content_rect_.top = supported_title_rect_.bottom + 2;
     r = rect2_;
-    base_expand_rect(&r, -3, -3);
+    expand_rect(&r, -3, -3);
     r.top = r.bottom - 20;
     rect20_ = r;
     font1_.init(DefaultFontFace, 14, 1);
@@ -7312,7 +7309,7 @@ void BaseWin::init() {
     base_init_rect(r, 27, 4, 699, 30);
     Buffer::box_sprite(&r, &InterfaceBoxStyles[12]);
     UnionRect(&r, &rect6_, &rect7_);
-    base_expand_rect(&r, 3, 3);
+    expand_rect(&r, 3, 3);
     Buffer::box_sprite(&r, &InterfaceBoxStyles[3]);
 
     assets.load_pcx("ter1wreck.pcx", 0, 10, 236);

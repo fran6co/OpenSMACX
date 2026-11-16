@@ -19,6 +19,7 @@
 // RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x006256D0-0x006256EE", "Pinned class constructor ??0ImageButton@@QAE@XZ at 0x006252E0 stores original class/view table VA 0x670a94 at 0x006252E8 (mov dword ptr [esi], 0x670a94); the current genuine owner vftable ??_7ImageButton@@6BWin@@@ selects generated ??_GImageButton@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_EImageButton@@UAEPAXI@Z (mode 2).", "Pinned ??_GImageButton@@UAEPAXI@Z at 0x006256D0 calls the source-mapped ??1ImageButton@@QAE@XZ at 0x00625310, then tests byte ptr [esp + 8], 1; je 0x6256e8 bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/imagebutton.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original ImageButton scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
 // symbol    ??_GImageButton@@UAEPAXI@Z
 // kind      game
+#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #include "stdafx.h"
 #include "palette.h"
 #include <cstring>
@@ -179,17 +180,6 @@ int ImageButton::init(Sprite *sprite, LPCSTR name, int id, int x, int y,
     return BaseButton::init(name, id, x, y, width, height, parent, style_flag);
 }
 
-// WORKAROUND(inline): expand_rect (scroll.cpp) is out of line in this tree;
-// on_redraw expands its (-1, -1) form after each box (`++left; --right;
-// ++top; --bottom`), as PushButton::on_redraw does.
-static inline RECT *imagebutton_expand_rect(RECT *rect, int horizontal, int vertical) {
-    rect->left -= horizontal;
-    rect->right += horizontal;
-    rect->top -= vertical;
-    rect->bottom += vertical;
-    return rect;
-}
-
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x006253D0 ?on_redraw@ImageButton@@QAEXXZ 0x006253D0-0x006256CC BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original ctor6252E8 installs Win table670A94; its slot12 at670AC4 selects6253D0. GraphicWin::redraw5D5A70 dispatches that slot. The slot-12 virtual now carries the original on_redraw name shared with Dialog slot2 (journal events 134/138), so this override dispatches under the image's own spelling; pending MapWin/PlanWin receiver restoration is unchanged.", "Complete6253D0..6256CC uses HandleMain, WinCallbackWindow, PaletteActive, inherited Win parent, Buffer rect2 and BaseButton label/colors/state. Its second focus outline reloads A94 at625487; all box calls share one mutable local rectangle. Centering reads fresh rect2 after outlines; later draws reload sprite_ but retain those centers.", "Sprite displayed dimensions at18/1C determine centers while source pixel width10 determines horizontal scaling. Pressed state is selected once; bevel colors/thickness are live through box calls and text displacement reloads thickness after Sprite::draw. Signed wrapping arithmetic and arithmetic-half semantics are explicit.", "Preserve src/recovered/units/006253d0.cpp as seed evidence. The original null-at-centering then nonnull-at-draw condition exposes uninitialized coordinates; no zero-coordinate behavior is introduced. That pending behavior boundary, caption creation, remaining hierarchy and dependency runtime remain unproved."], "reason": "Recover the complete ImageButton painter as the genuine Win slot12 override, using existing borrowed Sprite and inherited button/Buffer state rather than raw offsets or image addresses."}
@@ -207,11 +197,11 @@ void ImageButton::on_redraw() {
     int bevel_count = 0;
     if (field_A94_ != 0xFFFFFFFFU) {
         box(&rectangle, static_cast<int>(field_A94_), static_cast<int>(field_A94_));
-        imagebutton_expand_rect(&rectangle, -1, -1);
+        expand_rect(&rectangle, -1, -1);
         if (is_dialog_focus() != 0) {
             box(&rectangle, static_cast<int>(field_A94_),
                 static_cast<int>(field_A94_));
-            imagebutton_expand_rect(&rectangle, -1, -1);
+            expand_rect(&rectangle, -1, -1);
             bevel_count = 1;
         }
     }
@@ -232,7 +222,7 @@ void ImageButton::on_redraw() {
         while (bevel_count < static_cast<int>(bevel_thickness_)) {
             box(&rectangle, static_cast<int>(bevel_upper_),
                 static_cast<int>(bevel_lower_));
-            imagebutton_expand_rect(&rectangle, -1, -1);
+            expand_rect(&rectangle, -1, -1);
             ++bevel_count;
         }
         if (sprite_ != 0) {
@@ -248,7 +238,7 @@ void ImageButton::on_redraw() {
         while (bevel_count < static_cast<int>(bevel_thickness_)) {
             box(&rectangle, static_cast<int>(bevel_lower_),
                 static_cast<int>(bevel_upper_));
-            imagebutton_expand_rect(&rectangle, -1, -1);
+            expand_rect(&rectangle, -1, -1);
             ++bevel_count;
         }
         if (sprite_ != 0) {

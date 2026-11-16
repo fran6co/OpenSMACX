@@ -22,6 +22,7 @@
 // the CRT init table and subject change; council.cpp follows without a marker.
 #define NETDAEMON_RESET_INLINE  // stand-in: see NetDaemon::reset in netdaemon.h
 #define WIN_RECT_EXTENT_INLINE  // stand-in: see rect_width in win.h
+#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #include "stdafx.h"
 
 // Original read_tamper/set_tamper at 0x0051E000/0x0051E090 use these registry exports through the SDK.
@@ -3959,16 +3960,6 @@ void __cdecl crash_landing(int faction_id);
 // ORIGINAL: 0x005275B0 ?control_turn@@YAXXZ 0x005275B0-0x00528E94;0x0065D6DD-0x0065DB67 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:6167e270cb6ddcd091b2294560a31b1ec1372cef:src/unrecovered/005275b0.cpp: full original identity/spans and useful historical findings", "ConsoleInfoWin original object7AD2A0 owns suppression memberAC at7AD34C; native527A70/527C9E set1/0; init4592A0 and timer_proc459150 confirm ownership.", "OfferResetCells, PendingDiplomacyFlags and FactionDiplomacyFlags retain original flattened indexing through their actual typed owners.", "Initial text at93AA04/08/0C is proven loader-zero and only read by observed consumers; one-byte source bounds are lower-bound interpretations, not claims of complete original capacity or absence of indirect writers.", "Complete native cleanup-route review supports one real Popup owner; matching and exceptional cleanup restoration remain unfinished.", "recovery/tasks/control-turn-owner-oct5.json", "recovery/tests/test_control_turn_actual_source.py"], "reason": "Recover complete turn orchestration through existing genuine application owners and automatic Popup lifetime. Preserve original branch ordering and error behavior; all primary and exceptional spans remain restoration obligations, not a claim of current native lifetime/byte/runtime equivalence."}
 // TRIED: mismatch #11 near prologue (xor vs push) - popup/end_game_pop declared as real C++ locals rather than the original's staggered same-slot vtable-poke construction; the "big dialog" tail (Dialogs/Spot/ListBox/CheckBox/EditGroup/ SpriteBox/StringStruct x2/Sprite) is reached by raw offset casts into BasePop's own dialogs_/spot_/sprite_ members, not by a modelled derived class - faithful call order/args, not byte fidelity. Main loop, faction dispatch, diplomacy/ tech/council logic transcribed directly from the disasm.
-// WORKAROUND(inline): expand_rect (scroll.cpp) is out of line in this tree;
-// control_turn expands it at each status-frame inset (0x00527853: the negated
-// amount held in esi, added to left/top and subtracted from right/bottom).
-static inline RECT *turn_expand_rect(RECT *rect, int horizontal, int vertical) {
-    rect->left -= horizontal;
-    rect->right += horizontal;
-    rect->top -= vertical;
-    rect->bottom += vertical;
-    return rect;
-}
 // WORKAROUND(inline): dead /Ob2 spend. The image tears its first return site
 // (end_of_game(1)) and the shared ExitTurnLoop/end_of_game(0) site down
 // shallower than this body otherwise does (calls ~FlatButton 0x00406880 and
@@ -4046,23 +4037,23 @@ turn_loop:
                 RECT frame;
                 frame = MainInterfaceGlobal.status_left_rect_;
                 MainInterfaceGlobal.Buffer::box_sprite(&frame, &InterfaceBoxStyles[21]);
-                turn_expand_rect(&frame, -3, -3);
+                expand_rect(&frame, -3, -3);
                 MainInterfaceGlobal.Buffer::box_sprite(&frame, &InterfaceBoxStyles[18]);
                 frame = MainInterfaceGlobal.status_right_rect_;
                 MainInterfaceGlobal.Buffer::box_sprite(&frame, &InterfaceBoxStyles[21]);
-                turn_expand_rect(&frame, -3, -3);
+                expand_rect(&frame, -3, -3);
                 MainInterfaceGlobal.Buffer::box_sprite(&frame, &InterfaceBoxStyles[18]);
                 frame = MainInterfaceGlobal.status_hit_rect_;
                 MainInterfaceGlobal.Buffer::box_sprite(&frame, &InterfaceBoxStyles[21]);
-                turn_expand_rect(&frame, -3, -3);
+                expand_rect(&frame, -3, -3);
                 MainInterfaceGlobal.Buffer::box_sprite(&frame, &InterfaceBoxStyles[18]);
                 frame = MainInterfaceGlobal.tutorial_bounds_;
                 MainInterfaceGlobal.Buffer::box_sprite(&frame, &InterfaceBoxStyles[21]);
-                turn_expand_rect(&frame, -3, -3);
+                expand_rect(&frame, -3, -3);
                 MainInterfaceGlobal.Buffer::box_sprite(&frame, &InterfaceBoxStyles[18]);
                 frame = MainInterfaceGlobal.message_bounds_;
                 MainInterfaceGlobal.Buffer::box_sprite(&frame, &InterfaceBoxStyles[21]);
-                turn_expand_rect(&frame, -3, -3);
+                expand_rect(&frame, -3, -3);
                 MainInterfaceGlobal.Buffer::box_sprite(&frame, &InterfaceBoxStyles[18]);
                 frame = MainInterfaceGlobal.date_rect_;
                 MainInterfaceGlobal.Buffer::box_sprite(&frame, &InterfaceBoxStyles[18]);

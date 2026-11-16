@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #include "stdafx.h"
 #include "rectangle_operations.h"
 #include "sound.h"
@@ -877,6 +878,7 @@ void Scroll::on_redraw() {
 /*
 Purpose: Expand a rectangle horizontally and vertically.
 // ORIGINAL: 0x00606F00 sub_606f00 0x00606F00-0x00606F2B BYTE_EXACT
+// body      src/win.h
 // LEVER: the long_from_bits/uint32_t round trip on plain LONG subtraction was dead weight the image never does (no overflow-defined behavior needed for these fields); direct `RECT` member arithmetic on the `volatile RECT*` matches the mnemonics exactly (2/16 -> 11/16).
 // LEVER: the `volatile RECT *ordered_rect` alias was itself the remaining wall, not a fix for anything read twice - every field here is written once and read once. Reading `rect->field` directly (compound `-=`/`+=`, no volatile handle) let VC6 fold the param-then-field load order the image has instead of forcing a `mov edx, [eax]` ahead of the `ecx` load through the alias. 11/16 -> BYTE_EXACT 16/16.
 // symbol    ?expand_rect@@YAPAUtagRECT@@PAU1@HH@Z
@@ -889,13 +891,7 @@ Purpose: Expand a rectangle horizontally and vertically.
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
-RECT *__cdecl expand_rect(RECT *rect, int horizontal, int vertical) {
-    rect->left -= horizontal;
-    rect->right += horizontal;
-    rect->top -= vertical;
-    rect->bottom += vertical;
-    return rect;
-}
+// BODY IN win.h, as `MEASURED inline`.
 
 /*
 Purpose: Set the scrollbar thickness and reset its thumb rectangle.

@@ -11,6 +11,7 @@
 // RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x005FA770-0x005FA78E", "Pinned class constructor ??0PullDown@@QAE@XZ at 0x005F8800 stores original class/view table VA 0x66ff40 at 0x005F8808 (mov dword ptr [esi], 0x66ff40); the current genuine owner vftable ??_7PullDown@@6BWin@@@ selects generated ??_GPullDown@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_EPullDown@@UAEPAXI@Z (mode 2).", "Pinned ??_GPullDown@@UAEPAXI@Z at 0x005FA770 calls the source-mapped ??1PullDown@@QAE@XZ at 0x005F88A0, then tests byte ptr [esp + 8], 1; je 0x5fa788 bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/pulldown.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original PullDown scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
 // symbol    ??_GPullDown@@UAEPAXI@Z
 // kind      game
+#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #include "stdafx.h"
 #include "font_metrics.h"
 #include "general.h"
@@ -191,20 +192,6 @@ void PullDown::mouse_move(int, int y) {
   pulldown_update(old_selected, selected_);
 }
 
-// WORKAROUND(inline): expand_rect (scroll.cpp 0x00606F00, scroll.h) is out of
-// line in this tree, but PullDown expands it in place: pulldown_update widens
-// and narrows each row by PullDownTextPadding (neg eax; sub left; add right at
-// 0x005FA19F, 0x005FA21B, 0x005FA542) and on_redraw insets the border
-// (0x005F9995), the row (neg at 0x005F99F5) and the selected-row backfill
-// (neg at 0x005F9B7C). The original header's inline status is unknown.
-static inline RECT *pulldown_expand_rect(RECT *rect, int horizontal, int vertical) {
-  rect->left -= horizontal;
-  rect->right += horizontal;
-  rect->top -= vertical;
-  rect->bottom += vertical;
-  return rect;
-}
-
 // ORIGINAL: 0x005F9F60 ?pulldown_update@PullDown@@QAEXHH@Z 0x005F9F60-0x005FA6AB
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005f9f60.cpp", "image:terranx_original.exe:0x005F9F60", "Native row flags and old/new redraw asymmetry, callback modes and padding reloads; mnemonic metrics use Font internal_leading at+14. UNK1 resets members after clearing items and closing; outside hover forwards screen coordinates to Menu.", "recovery/tasks/interface-contract-report-closure.json four-method owner closure"], "reason": "Recover the bounded original in its genuine PullDown owner using actual members, owned callbacks and Buffer/GraphicWin behavior. Retain seed and historical obligations; this binding grants no current match or runtime claim."}
 // TRIED: mechanical Ghidra-shape transcription, with the four scalar "rect-ish" locals (left/top/right/bottom passed as &local_20) promoted to a real RECT so fill/write_l/write_right_l/ soft_update get valid contiguous storage instead of relying on adjacent-local layout; fill() moved from Buffer to GraphicWin (real receiver is `this`, not the Buffer at self+0x444). Original prologue is frameless (`sub esp,0x38; push ebx...`); not chased to byte-exact given size (1867 bytes).
@@ -215,7 +202,7 @@ void PullDown::pulldown_update(int old_selected, int new_selected) {
   const int height = text_line_height();
   int top = PullDownBorderPadding;
   RECT base = {0, top, width, top + height};
-  pulldown_expand_rect(&base, -(PullDownTextPadding + top), 0);
+  expand_rect(&base, -(PullDownTextPadding + top), 0);
   RECT row;
 
   if (old_selected != -1) {
@@ -263,9 +250,9 @@ void PullDown::pulldown_update(int old_selected, int new_selected) {
           if (field_F38_ != 0) {
             field_F38_(this, 1, &row);
           } else {
-            pulldown_expand_rect(&row, PullDownTextPadding, 0);
+            expand_rect(&row, PullDownTextPadding, 0);
             fill(&row, PullDownDefaultBackground);
-            pulldown_expand_rect(&row, -PullDownTextPadding, 0);
+            expand_rect(&row, -PullDownTextPadding, 0);
           }
           if ((flags & 2u) != 0) {
             set_text_color(PullDownDefaultTextColor, -1, 1, 1);
@@ -276,9 +263,9 @@ void PullDown::pulldown_update(int old_selected, int new_selected) {
           if (field_F38_ != 0) {
             field_F38_(this, 0, &row);
           } else {
-            pulldown_expand_rect(&row, PullDownTextPadding, 0);
+            expand_rect(&row, PullDownTextPadding, 0);
             fill(&row, PullDownDefaultTextColor);
-            pulldown_expand_rect(&row, -PullDownTextPadding, 0);
+            expand_rect(&row, -PullDownTextPadding, 0);
           }
           if ((flags & 2u) != 0) {
             set_text_color(PullDownDefaultSelectedTextColor, -1, 1, 1);
@@ -307,7 +294,7 @@ void PullDown::pulldown_update(int old_selected, int new_selected) {
           write_right_l(right_text, &row, static_cast<int>(strlen(right_text)));
         }
       }
-      pulldown_expand_rect(&row, PullDownTextPadding, 0);
+      expand_rect(&row, PullDownTextPadding, 0);
       soft_update(&row);
     }
   }
@@ -357,9 +344,9 @@ void PullDown::pulldown_update(int old_selected, int new_selected) {
           if (field_F38_ != 0) {
             field_F38_(this, 1, &row);
           } else {
-            pulldown_expand_rect(&row, PullDownTextPadding, 0);
+            expand_rect(&row, PullDownTextPadding, 0);
             fill(&row, PullDownDefaultBackground);
-            pulldown_expand_rect(&row, -PullDownTextPadding, 0);
+            expand_rect(&row, -PullDownTextPadding, 0);
           }
           if ((flags & 2u) != 0) {
             set_text_color(PullDownDefaultTextColor, -1, 1, 1);
@@ -403,7 +390,7 @@ void PullDown::pulldown_update(int old_selected, int new_selected) {
           write_right_l(right_text, &row, static_cast<int>(strlen(right_text)));
         }
       }
-      pulldown_expand_rect(&row, PullDownTextPadding, 0);
+      expand_rect(&row, PullDownTextPadding, 0);
       soft_update(&row);
     }
   }
@@ -1432,9 +1419,9 @@ void PullDown::on_redraw() {
       // 0x005F9967..0x005F998F: all four edges loaded, then inc/dec/inc/dec
       // in left/right/top/bottom order, then stored - the inlined
       // expand_rect(-1, -1), not four separate read-modify-writes.
-      pulldown_expand_rect(&rect, -1, -1);
+      expand_rect(&rect, -1, -1);
     }
-    pulldown_expand_rect(&rect, PullDownBorderPadding, PullDownBorderPadding);
+    expand_rect(&rect, PullDownBorderPadding, PullDownBorderPadding);
   }
 
   // The width is taken before the line-height call (0x005F99BD..0x005F99C7);
@@ -1446,7 +1433,7 @@ void PullDown::on_redraw() {
   rect.top = PullDownBorderPadding;
   rect.right = width;
   rect.bottom = PullDownBorderPadding + line_height;
-  pulldown_expand_rect(&rect, -(PullDownTextPadding + PullDownBorderPadding), 0);
+  expand_rect(&rect, -(PullDownTextPadding + PullDownBorderPadding), 0);
 
   for (int index = 0; index < item_count_; ++index) {
     char *text = items_[index].text;
@@ -1486,9 +1473,9 @@ void PullDown::on_redraw() {
           if (field_F38_ != 0) {
             field_F38_(this, 1, &rect);
           } else {
-            pulldown_expand_rect(&rect, PullDownTextPadding, 0);
+            expand_rect(&rect, PullDownTextPadding, 0);
             fill(&rect, PullDownDefaultBackground);
-            pulldown_expand_rect(&rect, -PullDownTextPadding, 0);
+            expand_rect(&rect, -PullDownTextPadding, 0);
           }
           if ((flags & 2) != 0) {
             set_text_color(PullDownDefaultTextColor, -1, 1, 1);

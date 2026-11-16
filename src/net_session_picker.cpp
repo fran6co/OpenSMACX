@@ -1,5 +1,6 @@
 // The original TU calls StringStruct::remove_all out of line (0x0063C7C0).
 #define STRINGSTRUCT_REMOVE_ALL_OUT_OF_LINE
+#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #include "stdafx.h"
 #include "net_session_picker.h"
 #include "alphanet_inline.h"
@@ -170,17 +171,6 @@ void NetSessionPickerWin::on_redraw() {
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor/destructor calls and direct accesses establish the GraphicWin base, ordered Time/Heap/ListBox/PushButton/list members, and observed tail through +0x37A4. The descriptive owner name and complete original allocation remain unproved.", "The integer timer adapter checks nonzero context; the distinct nullary focus member does not. Pinned table 0x670DDC establishes slot 12 at 0x670E0C -> 0x63C9D0 and slot 44 at 0x670E8C -> 0x63C3A0. Automatic owner destruction replaces manual table staging and executable-address forwarding.", "The Net caller retains one automatic picker, original unchecked copies and invalid-node error paths, and password-pointer reloads after modal execution. Indirect event linkage, precise unwind correspondence, historical matching and full linked/runtime fidelity remain obligations."], "reason": "Typed session-picker ownership and its Net receiver-backed caller, preserving the original entries and compiler-generated lifetime identities."}
 // symbol    ?draw_selected_rows@NetSessionPickerWin@@QAEXXZ
 // TRIED: `this` is GraphicWin* (esi passed straight to ?fill@GraphicWin@@ with no offset, and buffer_ member at self+0x444 matches every Buffer:: call site's `lea ecx,[esi+0x444]`), reading a RECT from self+0x374c and driving a nested box()-drawing loop, then (if Dialog::get_selected_id() is nonzero) reinterpreting that int return as a pointer into an unrelated list-cursor structure (+0x20/+0x34/+0x38/+0x3c/+0x40) to walk entries and write_l() their text - transcribed as raw offset arithmetic since that structure does not match the catalogued Dialog field layout at those offsets. Compiles and matches the first 6 instructions; diverges at #6 (original hoists `ebx = esi+0x374c` once and reuses it for all three RECT reads for the whole function, rebuilt recomputes the offset at each use) - register allocation, not source form.
-// WORKAROUND(inline): expand_rect (scroll.cpp) is a plain out-of-line
-// function in this tree; draw_selected_rows expands it inline (0x0063CC24:
-// the negated inset held in eax, subtracted from left/top, added to
-// right/bottom).
-static inline RECT *picker_expand_rect(RECT *rect, int horizontal, int vertical) {
-  rect->left -= horizontal;
-  rect->right += horizontal;
-  rect->top -= vertical;
-  rect->bottom += vertical;
-  return rect;
-}
 
 // WORKAROUND(inline): NetTextListBase::seek_pos (net_class.cpp) is out of
 // line in this tree; draw_selected_rows expands it inline (0x0063CC5B..
@@ -237,7 +227,7 @@ void NetSessionPickerWin::draw_selected_rows() {
       ++rect.top;
       --rect.bottom;
     }
-    picker_expand_rect(&rect, tail_.boxes_per_row_, tail_.boxes_per_row_);
+    expand_rect(&rect, tail_.boxes_per_row_, tail_.boxes_per_row_);
     rect.top += tail_.row_height_;
     rect.bottom += tail_.row_height_;
   }
@@ -258,7 +248,7 @@ void NetSessionPickerWin::draw_selected_rows() {
 
   rect = *rows;
   rect.bottom = tail_.row_height_ + rect.top;
-  picker_expand_rect(&rect, -tail_.boxes_per_row_, -tail_.boxes_per_row_);
+  expand_rect(&rect, -tail_.boxes_per_row_, -tail_.boxes_per_row_);
 
   picker_seek_pos(list, -1);
   Buffer::set_text_color(tail_.selected_text_color_b_,

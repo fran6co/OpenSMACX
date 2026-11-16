@@ -32,6 +32,7 @@
 // symbol    _$E21
 // WORKAROUND(decl): implicit ~NewTechWin; see newtechwin.h.
 #define NEWTECHWIN_IMPLICIT_DTOR
+#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "newtechwin.h"
@@ -302,16 +303,6 @@ static inline void newtechwin_set_words(uint32_t *rect, int left, int top, int r
 }
 
 
-// WORKAROUND(inline): expand_rect (scroll.cpp) is out of line in this tree;
-// the StringBox loop at 0x0048438C..4843AA adds 4 to left/top and a register
-// holding -4 to right/bottom, the expand_rect(rect, -4, -4) shape.
-static inline void newtechwin_expand_rect(RECT *rect, int horizontal, int vertical) {
-    rect->left -= horizontal;
-    rect->right += horizontal;
-    rect->top -= vertical;
-    rect->bottom += vertical;
-}
-
 // WORKAROUND(inline): 0x00484783..4847A7 is a non-rotated loop whose head
 // runs the modal pass, hide and redraw before the -1 test, the shape of a
 // break test on an inline helper (VC6 rotates every other loop form).
@@ -411,7 +402,7 @@ void NewTechWin::exec(int technology_id, int other_faction_id) {
     boxes[3] = row_rects_[3];
     for (int box_index = 0; box_index < 4; ++box_index) {
         RECT *const rect = &boxes[box_index];
-        newtechwin_expand_rect(rect, -4, -4);
+        expand_rect(rect, -4, -4);
         StringBox &box = stringBoxes_[box_index];
         box.init(rect->left, rect->top, rect->right - rect->left,
                  rect->bottom - rect->top, this, 0, -1);

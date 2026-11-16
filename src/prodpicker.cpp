@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #include "stdafx.h"
 // WORKAROUND(decl): calculate calls StringStruct::remove_all (0x00402970)
 // out of line for all three lists (0x00492FC3..0x00492FE9).
@@ -765,17 +766,6 @@ void ProdPicker::calculate() {
 }
 
 
-// WORKAROUND(inline): expand_rect (scroll.cpp) is a plain out-of-line
-// function in this tree; exec's footer expands it inline (0x00494F48: the
-// inset 3 held in eax, applied left/right/top/bottom).
-static inline RECT *prodpicker_expand_rect(RECT *rect, int horizontal, int vertical) {
-    rect->left -= horizontal;
-    rect->right += horizontal;
-    rect->top -= vertical;
-    rect->bottom += vertical;
-    return rect;
-}
-
 // ORIGINAL: 0x00494700 ?exec@ProdPicker@@QAEHPAUBase@@HPAUGraphicWin@@H@Z 0x00494700-0x0049515F;0x00658C1E-0x00658C3E FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00494700.cpp", "Pinned original coordinator review: actual label-pointer dereference, camera word3F48F5C3, static cdecl callback ABI, row-end clamps and modal-parent/button suppression order."], "reason": "Recover ProdPicker owner behavior through existing window bases, owned StringLists/controls and typed Base/Caviar camera state; preserve historical seed identity and extents as restoration obligations, not current match claims."}
 // TRIED: faithful field/call transcription (two local Buffer RAII objects, real BaseButton/Scroll/Caviar calls) diverges at instr #14 (lea vs xor), early prologue-area register choice; not chased further given the 2687-byte SEH-frame scope.
@@ -981,7 +971,7 @@ int ProdPicker::exec(Base *base, int factionId, GraphicWin *owner, int modal) {
             flatButtons_[buttonIndex].redraw();
         }
 
-        box_sprite(prodpicker_expand_rect(&footer, 3, 3), &InterfaceBoxStyles[3]);
+        box_sprite(expand_rect(&footer, 3, 3), &InterfaceBoxStyles[3]);
     }
 
     if (field_B68_ != 0) {

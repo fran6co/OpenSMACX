@@ -1,4 +1,5 @@
 #define WIN_RECT_EXTENT_INLINE  // stand-in: see rect_width in win.h
+#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #include "stdafx.h"
 // ORIGINAL: 0x0045F710 ??_GInterlude@@UAEPAXI@Z 0x0045F710-0x0045F731 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original instruction/call evidence retained from src/deleting_thunks.cpp", "source:src/interlude.h: real GraphicWin base, embedded StringList and Buffer, compiler-generated deleting/adjustor lifecycle"], "reason": "Original member/callback/lifetime identity is owned by genuine Interlude C++ hierarchy; actual emitted symbol replaces the retired raw receiver shim, preserving historical spans and claims."}
@@ -80,12 +81,6 @@ void Interlude::on_redraw() {
 // shift and the centring offset in a register added to top and bottom (an
 // inlined parameter), and their inline cost is what leaves the first close()
 // in exec() calling remove_all out of line while the last one expands it.
-static inline void rect_inset(RECT *rect, int dx, int dy) {
-    rect->left -= dx;
-    rect->right += dx;
-    rect->top -= dy;
-    rect->bottom += dy;
-}
 static inline void rect_shift_y(RECT *rect, int dy) {
     rect->top += dy;
     rect->bottom += dy;
@@ -113,7 +108,7 @@ void Interlude::exec(char *section) {
     *rect = clip_rect();
     const int inset_height = (rect->bottom - rect->top) / -6;
     const int inset_width = (rect->right - rect->left) / -6;
-    rect_inset(&text_rect_, inset_width, inset_height);
+    expand_rect(&text_rect_, inset_width, inset_height);
     text_rect_.right += (rect->right - rect->left) / -3;
     rect->left = min(rect->left, 25);
     if (!strcmp(section, "INTERLUDE21") || !strcmp(section, "INTERLUDE22")) {

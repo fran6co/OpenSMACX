@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #include "stdafx.h"
 #include "editbox.h"
 #include "graphicwin.h"
@@ -396,12 +397,6 @@ int EditBox::on_key_down(int key) {
 // ORIGINAL: 0x00615270 ?on_redraw@EditBox@@QAEXXZ 0x00615270-0x00615627
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00615270.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
 // symbol    ?on_redraw@EditBox@@UAEXXZ
-static inline void editbox_inflate(RECT *rect, int dx, int dy) {
-    rect->left -= dx;
-    rect->right += dx;
-    rect->top -= dy;
-    rect->bottom += dy;
-}
 
 void EditBox::on_redraw() {
     char masked[256];
@@ -422,7 +417,7 @@ void EditBox::on_redraw() {
         area.top++;
         area.bottom--;
     }
-    editbox_inflate(&area, field_B30_ - field_B34_, field_B30_);
+    expand_rect(&area, field_B30_ - field_B34_, field_B30_);
     const int y = -(Buffer::text_line_height() + dib_.bmiHeader.biHeight) >> 1;
     if (field_B48_) {
         int x;

@@ -26,6 +26,7 @@ extern const char BufferJoinSpace[];
 // ORIGINAL: 0x004AE9D0 _$E19 0x004AE9D0-0x004AE9DA FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x6825f0 selects initializer0x4ae9b0..0x4ae9c6, registering exit0x4ae9d0..0x4ae9da. Root independent complete decode confirms exclusive RET/JMP bounds; original/source-owned storage is0x8a6270 bound to?TutWinSocWindow@@3VSocialWin@@A.", "Original startup instruction evidence: [[\"0x4ae9b0\", \"mov\", \"ecx, 0x8a6270\"], [\"0x4ae9b5\", \"call\", \"0x4ae9e0\"], [\"0x4ae9ba\", \"push\", \"0x4ae9d0\"], [\"0x4ae9bf\", \"call\", \"0x645398\"], [\"0x4ae9c4\", \"pop\", \"ecx\"], [\"0x4ae9c5\", \"ret\", \"\"]]. Original exit instruction evidence: [[\"0x4ae9d0\", \"mov\", \"ecx, 0x8a6270\"], [\"0x4ae9d5\", \"jmp\", \"0x4b3c80\"]]. Preserve constructor arguments, array counts/strides, registration and reverse destruction without authored callback stand-ins.", "Fresh complete build-iveupb5l physical src/socialwin.cpp COFF selects _$E21 via .CRT$XCU, registering _$E19. Startup relocation targets: [\"?TutWinSocWindow@@3VSocialWin@@A\", \"??0SocialWin@@QAE@XZ\", \"_$E19\", \"_atexit\"]; exit targets: [\"?TutWinSocWindow@@3VSocialWin@@A\", \"??1SocialWin@@UAE@XZ\"]. Actual linked helper occurs once at CRT slot0x63f2d4; selected same-owner order agrees with the pinned order.", "BaseWin/DesignWin definitions now precede their Wave globals as pinned. Existing DesignWin Wave mappings retain original names/spans and current helper overrides after fresh emission proof. Scalar constructor effects and array construction/cleanup belong to genuine source globals, classes and compiler-generated lifetime machinery.", "Current local labels are emission interpretations, not original debug names or recovered historical TU boundaries. Start bindings grant no allocation extent. Selected same-owner linked order is not full CRT/global-order, retained-selection, reference-target, dependency-provider, runtime or full-game acceptance. Guarded callbacks excluded; no claim grant or bug fix."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned ?TutWinSocWindow@@3VSocialWin@@A; preserve complete original identity and remaining restoration/structure obligations."}
 // symbol    _$E14
+#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #include "stdafx.h"
 #include "font_metrics.h"
 #include "socialwin.h"
@@ -721,14 +722,6 @@ void __stdcall main_interface_bubble_callback(char *text, int x, int y) {
 // Historical SocBaseIdProbe/Compare at 0x009A6568/0x009A6574 are
 // SecretProject.network_backbone/cloning_vats, not independent selectors.
 
-static inline RECT *social_expand_rect(RECT *rect, int horizontal, int vertical) {
-    rect->left -= horizontal;
-    rect->right += horizontal;
-    rect->top -= vertical;
-    rect->bottom += vertical;
-    return rect;
-}
-
 static inline void social_draw_icon(Sprite *sprite, Buffer *dest, int x, int y) {
     sprite->draw(dest, sprite->transparent_index(), x, y, 1, 1);
 }
@@ -775,7 +768,7 @@ void SocialWin::draw_social(int a1) {
     RECT rect = *header;
     Buffer::set_clip(&rect);
     Buffer::box_sprite(&rect, &InterfaceBoxStyles[3]);
-    social_expand_rect(&rect, -3, -3);
+    expand_rect(&rect, -3, -3);
     RECT title = rect;
     title.bottom = title.top + 20;
     Buffer::box_sprite(&title, &InterfaceBoxStyles[6]);
@@ -911,12 +904,12 @@ void SocialWin::on_redraw() {
     RECT panel;
     UnionRect(&panel, &tooltipLabs_, &tooltipPsych_);
     UnionRect(&panel, &panel, &tooltipEconomy_);
-    social_expand_rect(&panel, 3, 3);
+    expand_rect(&panel, 3, 3);
     MainInterfaceGlobal.Buffer::box_sprite(&panel, &InterfaceBoxStyles[3]);
 
     UnionRect(&panel, &tutRect11_, &tutRect13_);
     UnionRect(&panel, &panel, &tutRect12_);
-    social_expand_rect(&panel, 3, 3);
+    expand_rect(&panel, 3, 3);
     Buffer::box_sprite(&panel, &InterfaceBoxStyles[3]);
 
     draw_presets();
@@ -1000,7 +993,7 @@ void SocialWin::draw_psych_alloc() {
     MainInterfaceGlobal.Buffer::restore_clip();
     MainInterfaceGlobal.Buffer::box_sprite(&local_rect, &InterfaceBoxStyles[6]);
 
-    social_expand_rect(&local_rect, -3, -3);
+    expand_rect(&local_rect, -3, -3);
 
     RECT box_rect = local_rect;
     box_rect.left += 0x17;
@@ -1053,7 +1046,7 @@ void SocialWin::draw_economy_alloc() {
     RECT panel = tooltipEconomy_;
     MainInterfaceGlobal.Buffer::restore_clip();
     MainInterfaceGlobal.Buffer::box_sprite(&panel, &InterfaceBoxStyles[6]);
-    social_expand_rect(&panel, -3, -3);
+    expand_rect(&panel, -3, -3);
 
     RECT title = panel;
     title.left += 0x17;
@@ -1105,7 +1098,7 @@ void SocialWin::draw_labs_alloc() {
     RECT panel = tooltipLabs_;
     MainInterfaceGlobal.Buffer::restore_clip();
     MainInterfaceGlobal.Buffer::box_sprite(&panel, &InterfaceBoxStyles[6]);
-    social_expand_rect(&panel, -3, -3);
+    expand_rect(&panel, -3, -3);
 
     RECT title = panel;
     title.left += 0x17;
@@ -1162,7 +1155,7 @@ void SocialWin::draw_faction_basal() {
     Buffer::set_clip(&panel);
     Buffer::box_sprite(&panel, &InterfaceBoxStyles[3]);
 
-    social_expand_rect(&panel, -3, -3);
+    expand_rect(&panel, -3, -3);
     RECT title = panel;
     title.bottom = title.top + 0x14;
     Buffer::box_sprite(&title, &InterfaceBoxStyles[6]);
@@ -2221,7 +2214,7 @@ void SocialWin::draw_info() {
 
     rect.top = title.bottom + 2;
     MainInterfaceGlobal.Buffer::box_sprite(&rect, &InterfaceBoxStyles[0]);
-    social_expand_rect(&rect, -3, -3);
+    expand_rect(&rect, -3, -3);
     MainInterfaceGlobal.Buffer::set_font(&font5_, 0, 0, 0);
 
     // Original 0x96CC28 is PlayersData::soc_upheaval_cost_paid at +0x248.
@@ -2410,7 +2403,7 @@ void SocialWin::init(int faction_id) {
 
     // 0x4B2848: two constants (4 and -4) = the expand helper with -4, -4.
     tutRect14_ = MainInterfaceGlobal.info_panel_frame();
-    social_expand_rect(&tutRect14_, -4, -4);
+    expand_rect(&tutRect14_, -4, -4);
 
     tutRect1_.left = 0x271;
     tutRect1_.top = 4;
@@ -2466,8 +2459,8 @@ void SocialWin::init(int faction_id) {
     // plus the 3-pixel gap. 0x4B2BD7 keeps the copy's dead left store.
     rect = MainInterfaceGlobal.lower_frame_rect();
     rect.left = MainInterfaceGlobal.main_frame_rect().left;
-    social_expand_rect(&rect, -4, -4);
-    social_expand_rect(&rect, -3, -3);
+    expand_rect(&rect, -4, -4);
+    expand_rect(&rect, -3, -3);
     rect.right = rect.left + (rect.right - rect.left + 3) / 3 - 3;
     tooltipEconomy_ = rect;
     offset_rect(&rect, rect.right - rect.left + 3, 0);
@@ -2478,12 +2471,12 @@ void SocialWin::init(int faction_id) {
     tooltipLabs_ = rect;
 
     rect = MainInterfaceGlobal.main_frame_rect();
-    social_expand_rect(&rect, -4, -4);
+    expand_rect(&rect, -4, -4);
     rect.bottom = tooltipLabs_.top - 6;
     tutRect9_ = rect;
 
     tooltipEffects_ = MainInterfaceGlobal.right_frame_rect();
-    social_expand_rect(&tooltipEffects_, -4, -4);
+    expand_rect(&tooltipEffects_, -4, -4);
 
     // Header toggle boxes, two per panel: economy -> [3],[4], psych ->
     // [7],[8], labs -> [5],[6] (image order 0x4B2D1F..0x4B2EE9).

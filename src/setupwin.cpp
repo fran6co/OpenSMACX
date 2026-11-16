@@ -23,6 +23,7 @@
 // WORKAROUND(decl): basepop.h's guarded friend; image 0x004AE225..0x004AE22E
 // reaches pos_to_id through the popup's dialogs_ member, not dialogs().
 #define BASEPOP_FRIEND_SETUPWIN
+#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "setupwin.h"
@@ -215,17 +216,6 @@ static inline void setupwin_set_rect(RECT *rect, int left, int top, int right,
     rect->bottom = bottom;
 }
 
-// WORKAROUND(inline): expand_rect (scroll.cpp) is a plain out-of-line
-// function in this tree; do_menu_rightside expands it inline (0x004ADFE0:
-// the 4 held in ebx for +left/-right, then -left/+right after the caption).
-static inline RECT *setupwin_expand_rect(RECT *rect, int horizontal, int vertical) {
-    rect->left -= horizontal;
-    rect->right += horizontal;
-    rect->top -= vertical;
-    rect->bottom += vertical;
-    return rect;
-}
-
 // ORIGINAL: 0x004ADB70 ?do_menu_rightside@SetupWin@@QAEHPADH@Z 0x004ADB70-0x004AE336;0x0065960C-0x00659697
 // RECOVERY_BINDING: v1 {"evidence": ["pinned 4ADB70..4AE336 and EH65960C..659697", "historical seed src/unrecovered/004adb70.cpp", "full owner/pending native overlay and observed current QAEHPADH symbol", "actual-source host controls with original text-get ordering, signed DIB geometry, Popup selection and explicit/automatic cleanup"], "reason": "Complete SetupWin right-side menu through genuine inherited members and Popup/Dialog APIs, preserving native branch, error-path and cleanup order; no original-address forwarding."}
 // kind      game
@@ -374,10 +364,10 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
         Buffer::set_text_color(0x42, -1, 1, 1);
         title_rect.top += 0x1F;
         title_rect.bottom = title_rect.top + 0x1A;
-        setupwin_expand_rect(&title_rect, -4, -2);
+        expand_rect(&title_rect, -4, -2);
         Buffer::write_cent_l(token, &title_rect);
         --row_count_;
-        setupwin_expand_rect(&title_rect, 4, 0);
+        expand_rect(&title_rect, 4, 0);
         title_rect.bottom = buffer2_.pixel_height();
         title_rect.top = 0x14 - buffer2_.dib_.bmiHeader.biHeight;
         title_rect.bottom += title_rect.top;
@@ -473,7 +463,7 @@ void SetupWin::draw_item(int position, int selected) {
                       buffer2_.dib_.bmiHeader.biWidth,
                       buffer2_.pixel_height());
 
-        setupwin_expand_rect(&row, -4, -2);
+        expand_rect(&row, -4, -2);
         offset_rect(&row, 8, 0);
 
         if (position >= 0) {

@@ -20,6 +20,7 @@
 // compile_context src/alphasave.cpp
 // symbol    ??_GFlatButton@@UAEPAXI@Z
 // kind      game
+#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #include "stdafx.h"
 #include "flatbutton.h"
 #include "win.h"
@@ -415,18 +416,6 @@ void FlatButton::on_mouse_leave(int x, int y) {
 }
 
 
-// WORKAROUND(inline): expand_rect (scroll.cpp) is a plain out-of-line
-// function in this tree; on_redraw expands it inline (0x00608208: each
-// `++left; --right; ++top; --bottom` run after a box is its (-1, -1) form,
-// and 0x00608456 holds the text margin 3 in eax for left/right).
-static inline RECT *flatbutton_expand_rect(RECT *rect, int horizontal, int vertical) {
-    rect->left -= horizontal;
-    rect->right += horizontal;
-    rect->top -= vertical;
-    rect->bottom += vertical;
-    return rect;
-}
-
 // ORIGINAL: 0x00607E50 ?on_redraw@FlatButton@@QAEXXZ 0x00607E50-0x006084F9
 // RECOVERY_BINDING: v1 {"evidence": ["task:pulldown-flatbutton-renderer-and-sprite-ownership", "historical seed:src/unrecovered/00607e50.cpp", "Pinned original00607E50; full native instructions, current class and producer/consumer closure."], "reason": "Recover the complete redraw in its genuine virtual C++ owner using real source-owned members, callbacks, sprites and Buffer operations; pointer configuration is borrowed, not owned."}
 // symbol    ?on_redraw@FlatButton@@UAEXXZ
@@ -520,26 +509,26 @@ void FlatButton::on_redraw() {
     int count = 0;
     if (field_A94_ != 0xFFFFFFFFU) {
       box(&rectangle, static_cast<int>(field_A94_), static_cast<int>(field_A94_));
-      flatbutton_expand_rect(&rectangle, -1, -1);
+      expand_rect(&rectangle, -1, -1);
       // WORKAROUND(decl): the image tests `not edx; test dh,0x10` on the
       // parent's flags (0x00608238), the form of `~iFlags_ & 0x1000`; Win
       // has no accessor for it and iFlags_ is protected.
       if ((~parent_window()->has_dialog_focus_flag() & 0x1000) && is_dialog_focus() != 0) {
         box(&rectangle, static_cast<int>(field_A94_), static_cast<int>(field_A94_));
-        flatbutton_expand_rect(&rectangle, -1, -1);
+        expand_rect(&rectangle, -1, -1);
         count = 1;
       }
     }
     if (field_A9C_ == 0) {
       while (count < static_cast<int>(bevel_thickness_)) {
         box(&rectangle, static_cast<int>(bevel_upper_), static_cast<int>(bevel_lower_));
-        flatbutton_expand_rect(&rectangle, -1, -1);
+        expand_rect(&rectangle, -1, -1);
         ++count;
       }
     } else {
       while (count < static_cast<int>(bevel_thickness_)) {
         box(&rectangle, static_cast<int>(bevel_lower_), static_cast<int>(bevel_upper_));
-        flatbutton_expand_rect(&rectangle, -1, -1);
+        expand_rect(&rectangle, -1, -1);
         ++count;
       }
       offset_rect(&rectangle, bevel_thickness_, bevel_thickness_);
@@ -562,7 +551,7 @@ void FlatButton::on_redraw() {
         wrap_cent(name_, rectangle.left + 3, y, rectangle.right - rectangle.left - 6);
         return;
       }
-      flatbutton_expand_rect(&rectangle, -3, 0);
+      expand_rect(&rectangle, -3, 0);
       rectangle.right -= text_width("...");
       set_clip(&rectangle);
       write_l(name_, &rectangle);

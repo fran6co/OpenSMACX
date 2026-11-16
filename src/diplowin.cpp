@@ -32,6 +32,7 @@
 #define STRINGSTRUCT_CURRENT_ENTRY_INLINE
 #define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h; on_button_clicked
 #define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
+#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "diplowin.h"
@@ -121,18 +122,6 @@ void __cdecl DiploWin::string_callback(int faction_id, int unused) {
 // File-local helpers (place above DiploWin::exec; they replace the old
 // by-value `inset_rect` at the top of diplowin.cpp, which exec no longer uses).
 //
-// WORKAROUND(decl): stand-ins for the original's inline RECT helpers
-// (scroll.cpp's expand_rect is out of line in this tree). 0x443F99..443FA6
-// adds +0x17 to left and -0x17 to right; 0x443FED..444012 adds +3 / a
-// register holding -3 (left,right then top,bottom); 0x4440C1/4440C3 subtract
-// and add the same width/-7 quotient: expand_rect with a negative amount.
-static inline void diplo_expand_rect(RECT *rect, int horizontal, int vertical) {
-  rect->left -= horizontal;
-  rect->right += horizontal;
-  rect->top -= vertical;
-  rect->bottom += vertical;
-}
-
 // 0x443FBA..443FD1 / 0x444140..44415E / 0x4444F9..444515 load all four
 // source edges through a copy of the source pointer, then +n/-n (dead
 // top/bottom copies included when the vertical amount is zero).
@@ -189,13 +178,13 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
 
   // 0x443F82: the outer window, shrunk 0x17 each side, then 0x20 more on the right.
   set_rectangle_dimensions(&rect_EDC_, 0, 0, 0x340, window_height);
-  diplo_expand_rect(&rect_EDC_, -0x17, 0);
+  expand_rect(&rect_EDC_, -0x17, 0);
   rect_EDC_.right -= 0x20;
 
   // 0x443FB2: title strip = outer inset 4, then 3, then 0x14 tall.
   diplo_inset_rect(&rc, &rect_EDC_, 4, 4);
   rect_F4C_ = rc;
-  diplo_expand_rect(&rect_F4C_, -3, -3);
+  expand_rect(&rect_F4C_, -3, -3);
   rect_F4C_.bottom = rect_F4C_.top + 0x14;
 
   // 0x444024: two leader panes under the title strip, gap 2.
@@ -209,7 +198,7 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
   rc = rect_EDC_;
   rc.bottom -= 0x1A;
   rc.top = rc.bottom - 0x14;
-  diplo_expand_rect(&rc, (rc.right - rc.left) / -7, 0);
+  expand_rect(&rc, (rc.right - rc.left) / -7, 0);
   rc.right = rc.left + (rc.right - rc.left + 2) / 3 - 2;
   button_rects_[2] = rc;
   offset_rect(&rc, rc.right - rc.left + 2, 0);
@@ -263,7 +252,7 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
     UnionRect(&rc, &rc, &button_rects_[index]);
   }
   UnionRect(&rect_FAC_, &rc, &rect_F9C_);
-  diplo_expand_rect(&rect_FAC_, 3, 3);
+  expand_rect(&rect_FAC_, 3, 3);
 
   rc.left = 0;
   rc.right = 0;
@@ -273,7 +262,7 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
     UnionRect(&rc, &rc, &button_rects_[index]);
   }
   UnionRect(&rect_FCC_, &rc, &rect_FBC_);
-  diplo_expand_rect(&rect_FCC_, 3, 3);
+  expand_rect(&rect_FCC_, 3, 3);
 
   // 0x444421: MainInterface frames inset 7, each split into a 0x14 header
   // and the body 3 below it.

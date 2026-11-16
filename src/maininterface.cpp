@@ -39,6 +39,7 @@ Status: Complete
 // RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x0045F1C0-0x0045F1E1", "Pinned class constructor ??0MainInterface@@QAE@XZ at 0x0045EF10 stores original class/view table VA 0x66c598 at 0x0045F196 (mov dword ptr [esi], 0x66c598); the current genuine owner vftable ??_7MainInterface@@6BWin@@@ selects generated ??_GMainInterface@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_EMainInterface@@UAEPAXI@Z (mode 2).", "Pinned ??_GMainInterface@@UAEPAXI@Z at 0x0045F1C0 calls the source-mapped ??1MainInterface@@QAE@XZ at 0x0045EB80, then tests byte ptr [ebp + 8], 1; je 0x45f1da bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/maininterface.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original MainInterface scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
 // symbol    ??_GMainInterface@@UAEPAXI@Z
 // kind      game
+#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #include "stdafx.h"
 #include "rectangle_operations.h"
 #include "interface_fonts.h"
@@ -331,19 +332,6 @@ void __cdecl bung_momma() {
     static_cast<Win &>(box).Win::show(0);
 }
 
-// WORKAROUND(decl): file-local stand-in for the original's inline
-// InflateRect-style helper. MainInterface::init never calls the user32
-// InflateRect import; it loads the edges in left/right/top/bottom order and
-// adds a register holding the (negative) amount to right and bottom
-// (0x00459C17..C2A, 0x0045B2D1..2E1), the same shape reportif.cpp's
-// byte-exact inflate_frame and designwin.cpp's design_inflate_rect expand to.
-static inline void main_interface_inflate_rect(RECT *rect, int dx, int dy) {
-    rect->left -= dx;
-    rect->right += dx;
-    rect->top -= dy;
-    rect->bottom += dy;
-}
-
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00459680 0x0045B500 0x0045B52C 0x0045B1DC
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x00459680 0x0045B52C 0x0045B545 0x0045B1D6
 // ORIGINAL: 0x00459680 ?init@MainInterface@@QAEHH@Z 0x00459680-0x0045B500;0x00655730-0x00655745 FILE
@@ -417,19 +405,19 @@ int MainInterface::init(int) {
     r.bottom = scroll_down_rect_.top - 5;
     editor_tab_rect_ = r;
     r = info_panel_frame_;
-    main_interface_inflate_rect(&r, -1, -1);
+    expand_rect(&r, -1, -1);
     r.right = scroll_down_rect_.left - 4;
-    main_interface_inflate_rect(&r, -6, -6);
+    expand_rect(&r, -6, -6);
     message_bounds_ = r;
     status_left_rect_ = rect4_;
     status_left_rect_.right = (status_left_rect_.right - status_left_rect_.left) * 7 / 12;
-    main_interface_inflate_rect(&status_left_rect_, -4, -4);
+    expand_rect(&status_left_rect_, -4, -4);
     status_hit_rect_ = lower_frame_rect_;
-    main_interface_inflate_rect(&status_hit_rect_, -4, -4);
+    expand_rect(&status_hit_rect_, -4, -4);
     status_hit_rect_.left = status_left_rect_.right + 3;
     status_right_rect_ = rect4_;
     status_right_rect_.left = status_left_rect_.right;
-    main_interface_inflate_rect(&status_right_rect_, -4, -4);
+    expand_rect(&status_right_rect_, -4, -4);
     status_right_rect_.bottom = status_hit_rect_.top - 3;
     r = right_frame_rect_;
     r.left += 4;
@@ -438,19 +426,19 @@ int MainInterface::init(int) {
     r.right = r.left + 233;
     end_turn_rect_ = r;
     r = right_frame_rect_;
-    main_interface_inflate_rect(&r, -1, 0);
+    expand_rect(&r, -1, 0);
     r.top = end_turn_rect_.bottom + 4;
     r.bottom = r.top + (r.right - r.left) / 2;
     tutorial_bounds_ = r;
     r = right_frame_rect_;
-    main_interface_inflate_rect(&r, -6, -6);
+    expand_rect(&r, -6, -6);
     r.top = r.bottom - 32;
     r.left = r.right - 54;
     rect3_ = r;
     offset_rect(&r, r.left - r.right - 2, 0);
     rect2_ = r;
     r = right_frame_rect_;
-    main_interface_inflate_rect(&r, -6, -6);
+    expand_rect(&r, -6, -6);
     r.top = r.bottom - 32;
     r.right = rect2_.left - 3;
     date_rect_ = r;
@@ -698,7 +686,7 @@ int MainInterface::init(int) {
     // back up to the next column. The image rebases k to k - 11
     // (cmp k - 11 + 11 < 36).
     r = info_panel_frame_;
-    main_interface_inflate_rect(&r, -7, -7);
+    expand_rect(&r, -7, -7);
     r.top += (r.bottom - sprites9_[0].height() * 5 - r.top - 4) / 2;
     r.right = r.left + sprites9_[0].width();
     r.bottom = r.top + sprites9_[0].height();
@@ -713,7 +701,7 @@ int MainInterface::init(int) {
     }
     // Brush buttons 36..41: three rows per column, right of the editor block.
     r = info_panel_frame_;
-    main_interface_inflate_rect(&r, -7, -7);
+    expand_rect(&r, -7, -7);
     r.top += (r.bottom - (sprites10_[0].height() * 3 + 2) - r.top) / 2;
     r.left = editor_button_rects_[24].right + 9;
     r.right = r.left + sprites10_[0].width();
@@ -785,7 +773,7 @@ int MainInterface::init(int) {
         }
         button_group_[2].add(&flat_button_[k]);
     }
-    main_interface_inflate_rect(&editor_panel_rect_, 3, 3);
+    expand_rect(&editor_panel_rect_, 3, 3);
     button_group_[2].set(1011, 1);
     editor_tools_rect_.left = 0;
     editor_tools_rect_.right = 0;
@@ -804,7 +792,7 @@ int MainInterface::init(int) {
             flat_button_[k].set_bubble_text(label_get(0xF64 / 4 + k - 36));
             button_group_[3].add(&flat_button_[k]);
         }
-        main_interface_inflate_rect(&editor_tools_rect_, 3, 3);
+        expand_rect(&editor_tools_rect_, 3, 3);
         button_group_[3].set(1036, 1);
     }
     editor_text_rect_ = editor_tools_rect_;

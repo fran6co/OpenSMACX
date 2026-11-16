@@ -29,6 +29,7 @@
 // symbol    _$E15
 // WORKAROUND(decl): see vector.h; veh_scoot calls 0x006343C0 out of line at 0x0055A1BB.
 #define VECTOR_CTOR_OUT_OF_LINE
+#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "font_queue.h"
@@ -483,17 +484,6 @@ static inline void scoot_set_rect(RECT *rect, int left, int top, int right, int 
     rect->bottom = bottom;
 }
 
-// WORKAROUND(inline): expand_rect (scroll.cpp) is a plain out-of-line
-// function in this tree; veh_scoot expands it in place (0x0055A976..: left and
-// top lowered, right and bottom raised by the quarter margins).
-static inline RECT *scoot_expand_rect(RECT *rect, int horizontal, int vertical) {
-    rect->left -= horizontal;
-    rect->right += horizontal;
-    rect->top -= vertical;
-    rect->bottom += vertical;
-    return rect;
-}
-
 // ORIGINAL: 0x0055A150 ?veh_scoot@@YAXHHHHH@Z 0x0055A150-0x0055AF11;0x0065FF70-0x0065FFC7
 // RECOVERY_BINDING: v1 {"evidence": ["Original55A175..55A1D9 constructs Buffer[8],Vector[8],singleton Vector,Vector[8], with reverse normal teardown55AEA7..55AEFB and EH65FF70..65FFC7. Use genuine value subtraction, mutating scale and compound operations. Preserve flags1 turn-only cleanup, flags4000 immediate redraw, fresh MapWinTable receivers and preference reads, source/destination copy direction, wrap and timing. Original55A29D/55A65C skips active-slot zeroing for null MapWinTable entries; later reads55AA60/55AC10/55AE26 retain the indeterminate-stack quirk. Buffer array [EBP-2EF8,EBP-2B8) is disjoint from active flags [EBP-B0,EBP-90). Null-slot runtime effects remain unverified, not normalized to inactive.", "Preserve existing seed identity and complete original spans. Source binding is not a measured matching or runtime claim."], "reason": "Recover real movement animation with automatic Buffer and Vector lifetime rather than raw stack/return-slot scaffolding."}
 void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int flags) {
@@ -609,7 +599,7 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
                 UnionRect(&area[i], &end_clip, &start_clip);
                 margin_x[i] = (area[i].right - area[i].left) / 4;
                 margin_y[i] = (area[i].bottom - area[i].top) / 4;
-                scoot_expand_rect(&area[i], margin_x[i], margin_y[i]);
+                expand_rect(&area[i], margin_x[i], margin_y[i]);
                 saved[i].init(area[i].right - area[i].left, area[i].bottom - area[i].top, 0, 0);
                 // Implicit receiver conversion: the image applies the virtual
                 // base offset here without the null test an argument gets.

@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #include "stdafx.h"
 #include "pushbutton.h"
 #include "gamma.h"
@@ -93,18 +94,6 @@ Purpose: Destroy PushButton through its real BaseButton subobject.
 PushButton::~PushButton() {
 }
 
-// WORKAROUND(inline): expand_rect (scroll.cpp) is a plain out-of-line
-// function in this tree; on_redraw expands it inline (0x0062C194: the negated
-// bevel thickness held in edx, applied left/right/top/bottom; each `++left;
-// --right; ++top; --bottom` run after a box is its (-1, -1) form).
-static inline RECT *pushbutton_expand_rect(RECT *rect, int horizontal, int vertical) {
-    rect->left -= horizontal;
-    rect->right += horizontal;
-    rect->top -= vertical;
-    rect->bottom += vertical;
-    return rect;
-}
-
 // ORIGINAL: 0x0062C110 ?on_redraw@PushButton@@QAEXXZ 0x0062C110-0x0062C82D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned PushButton table 0x670C60 slot 12 selects 0x62C110.", "The original body consumes all eighteen AB8..AFC words as Sprite receivers/tile arguments. pushbutton.cpp copies the table into those words; game.cpp publishes six borrowed sprite pointers and nulls the other twelve.", "The retained seed TRIED note documents the two parallel nine-sprite sets and pressed-state nesting; both branches remain in this source body."], "reason": "Recover the complete inherited-buffer painter in PushButton, using typed Sprite consumers and its actual BaseButton/GraphicWin hierarchy."}
 // kind      game
@@ -120,7 +109,7 @@ void PushButton::on_redraw() {
 
     if (field_AC8_ != 0) {
         int draw_count = 0;
-        pushbutton_expand_rect(&rectangle, -static_cast<int>(bevel_thickness_),
+        expand_rect(&rectangle, -static_cast<int>(bevel_thickness_),
                                -static_cast<int>(bevel_thickness_));
 
         // Keep the original signed, top-down DIB member at each bottom/tile
@@ -240,7 +229,7 @@ void PushButton::on_redraw() {
         if (field_A94_ != 0xFFFFFFFFU) {
             box(&rectangle, static_cast<int>(field_A94_),
                         static_cast<int>(field_A94_));
-            pushbutton_expand_rect(&rectangle, -1, -1);
+            expand_rect(&rectangle, -1, -1);
             // WORKAROUND(decl): the image tests `not ecx; test ch,0x10` on the
             // parent's flags (0x0062C6D7), the form of `~iFlags_ & 0x1000`; Win
             // has no accessor for it and iFlags_ is protected.
@@ -248,7 +237,7 @@ void PushButton::on_redraw() {
                 is_dialog_focus() != 0) {
                 box(&rectangle, static_cast<int>(field_A94_),
                             static_cast<int>(field_A94_));
-                pushbutton_expand_rect(&rectangle, -1, -1);
+                expand_rect(&rectangle, -1, -1);
                 bevel_count = 1;
             }
         }
@@ -257,14 +246,14 @@ void PushButton::on_redraw() {
             while (bevel_count < static_cast<int>(bevel_thickness_)) {
                 box(&rectangle, static_cast<int>(bevel_upper_),
                             static_cast<int>(bevel_lower_));
-                pushbutton_expand_rect(&rectangle, -1, -1);
+                expand_rect(&rectangle, -1, -1);
                 ++bevel_count;
             }
         } else {
             while (bevel_count < static_cast<int>(bevel_thickness_)) {
                 box(&rectangle, static_cast<int>(bevel_lower_),
                             static_cast<int>(bevel_upper_));
-                pushbutton_expand_rect(&rectangle, -1, -1);
+                expand_rect(&rectangle, -1, -1);
                 ++bevel_count;
             }
             offset_rect(&rectangle, bevel_thickness_, bevel_thickness_);
