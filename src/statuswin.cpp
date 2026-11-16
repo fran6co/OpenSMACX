@@ -496,7 +496,7 @@ void StatusWin::draw_status(int veh, int a2, int a3, int x, int a5) {
     int y;
     if (ConsoleGlobal.cursor_active_ && veh >= 0
         && GameDataStateStorage.fields_.turn_current_num_
-        && Vehs[veh].x == iTileX_ && Vehs[veh].y == iTileY_) {
+        && iTileX_ == Vehs[veh].x && iTileY_ == Vehs[veh].y) {
         x = Vehs[veh].x;
         y = Vehs[veh].y;
     } else {

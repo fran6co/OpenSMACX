@@ -1201,7 +1201,6 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
     TechnologyHelpEntryName = reinterpret_cast<LPSTR>(-1);
     TechnologyHelpEntryKind = -1;
 
-    char num_text[80];
     if (faction_id == ConsoleGlobal.faction_id_ || (GameDataStateStorage.fields_.game_state_ & 0x80)) {
         StringTemp[0] = 0;
         say_tech(StringTemp, tech_id, FALSE);
@@ -1218,6 +1217,9 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
         }
         int blurb_mode = 0;
         if (faction_id == ConsoleGlobal.faction_id_) {
+            // Block scope: the image reuses this buffer's slot for the
+            // expanded tech_secret's own buffer ([ebp-0x84]).
+            char num_text[80];
             StringTemp[0] = 0;
             strcat(StringTemp, "TECH");
             _itoa(tech_id, num_text, 10);
@@ -1466,13 +1468,9 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
     if (GameDataStateStorage.fields_.turn_current_num_ && was_new &&
         (Technology[tech_id].flags & TFLAG_SECRETS)) {
         PlayersData[faction_id].flags |= 0x40;
-        parse_say(0, Technology[tech_id].name, -1, -1);
-        parse_says(1, Players[faction_id].adj_name_faction, -1, -1);
-        StringTemp[0] = 0;
-        strcat(StringTemp, "THESECRET");
-        _itoa(faction_id != ConsoleGlobal.faction_id_, num_text, 10);
-        strcat(StringTemp, num_text);
-        X_pop(StringTemp, nullptr);
+        // tech_secret, expanded here by /Ob2: the image pushes its own
+        // "THESECRET" literal (0x6916F0, allocated before this function's).
+        tech_secret(tech_id, faction_id);
         log_say("Learning a SECRET", leader_name, faction_id, tech_id,
                 GameDataStateStorage.fields_.game_tech_achieved_[tech_id]);
     }

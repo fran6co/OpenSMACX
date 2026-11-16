@@ -657,10 +657,6 @@ int WinKeyModifiers;         // 0x009B7B18
 int WinViewOriginX;          // 0x009B7A70
 // RECOVERY_OBJECT: v1 0x009B7A74 ?WinViewOriginY@@3HA
 int WinViewOriginY;          // 0x009B7A74
-const char WinMsgTooManyChildren[] = "Too many children";            // 0x00696D80
-const char WinMsgIncreaseMaxChildren[] = "Increase #define MAX_CHILDREN";  // 0x00696D60
-const char WinMsgTooManyParents[] = "Too many parents";              // 0x00696DB4
-const char WinMsgIncreaseMaxParents[] = "Increase #define MAX_PARENTS";    // 0x00696D94
 const char WinMdebugCode[] = "mdebug";                               // 0x00696DF8
 // RECOVERY_OBJECT: v2 0x009B7AA8 0x009B7AAC ?WinTrackingMode@@3HA 0x005F7580
 int WinTrackingMode;       // 0x009B7AA8
@@ -2289,10 +2285,6 @@ int __cdecl Win::set_display_mode(int width, int height, int depth, int tgl) {
     return WinDisplayInit.init(width, height, depth, tgl);
 }
 
-// `JackalClass` is at 0x00696DC8 and again at 0x00696DD4 - the image holds
-// two copies, one for the registration and one for the creation, and the
-// operand is relocated either way, so the literal is the honest spelling.
-static const char WinClassName[] = "JackalClass";
 
 /*
 // ORIGINAL: 0x005F01F0 ?init_class@Win@@QAAHPAD@Z 0x005F01F0-0x005F04D4;0x00662CCC-0x00662CE1 BYTE_EXACT
@@ -2371,22 +2363,20 @@ int __cdecl Win::init_class(LPSTR window_name) {
     wndclass.hCursor = nullptr;
     wndclass.hbrBackground = static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));
     wndclass.lpszMenuName = nullptr;
-    wndclass.lpszClassName = WinClassName;
+    // `JackalClass` is at 0x00696DC8 and again at 0x00696DD4: one per-site
+    // literal for the registration and one for the creation (unpooled).
+    // RECOVERY_LITERAL: v1 0x00696DC8 0x00696DD4 $SG53580 0x005F01F0
+    wndclass.lpszClassName = "JackalClass";
 
-    // TWO COPIES OF ONE STRING, which is why both calls can be handed
-    // `WinClassName`. The image passes 0x696DC8 here and 0x696DD4 to
-    // CreateWindowExA, and both hold "JackalClass" - VC6 pooled neither, so
-    // the literal appears twice. Read out of the image rather than assumed:
-    // the operands are relocations, so the byte comparison masks them and
-    // could not have told the difference either way.
     if (RegisterClassA(&wndclass) == 0) {
         return 1;
     }
 
     WinScreenWidth = GetSystemMetrics(SM_CXSCREEN);
     WinScreenHeight = GetSystemMetrics(SM_CYSCREEN);
+    // RECOVERY_LITERAL: v1 0x00696DD4 0x00696DE0 $SG53583 0x005F01F0
     HandleMain = CreateWindowExA(
-        WS_EX_APPWINDOW, WinClassName, window_name, WS_POPUP,
+        WS_EX_APPWINDOW, "JackalClass", window_name, WS_POPUP,
         0, 0, WinScreenWidth, WinScreenHeight,
         nullptr, nullptr, WinInstance, nullptr);
 
@@ -6044,8 +6034,11 @@ int Win::init(int x, int y, int width, int height, char * caption,
         // The original checks the freshly closed receiver, not its parent.
         if (this->child_count_ == 150) {
             this->close();
-            MessageBoxA(
-                0, WinMsgTooManyChildren, WinMsgIncreaseMaxChildren, 0);
+            // Per-site literals in the image (the caption, pushed first,
+            // was allocated first): 0x00696D60 and 0x00696D80.
+            // RECOVERY_LITERAL: v1 0x00696D80 0x00696D92 $SG54824 0x005EBD80
+            // RECOVERY_LITERAL: v1 0x00696D60 0x00696D7E $SG54823 0x005EBD80
+            MessageBoxA(0, "Too many children", "Increase #define MAX_CHILDREN", 0);
             // MEASURED at 0x005EBFC4: `push 4; call 0x644dff` - the CRT's exit with
             // status 4, not a member call.
             exit(4);
@@ -6056,8 +6049,9 @@ int Win::init(int x, int y, int width, int height, char * caption,
     } else {
         if (WinRootCount == 0x28) {
             this->close();
-            MessageBoxA(
-                0, WinMsgTooManyParents, WinMsgIncreaseMaxParents, 0);
+            // RECOVERY_LITERAL: v1 0x00696DB4 0x00696DC5 $SG54828 0x005EBD80
+            // RECOVERY_LITERAL: v1 0x00696D94 0x00696DB1 $SG54827 0x005EBD80
+            MessageBoxA(0, "Too many parents", "Increase #define MAX_PARENTS", 0);
             exit(4);
         }
         // add_parent (0x005F5080), expanded here the same way.
