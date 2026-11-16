@@ -2536,8 +2536,9 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
         DiploScratchF7F0 = 1;
     }
     DiploFriction = static_cast<int>(PlayersData[other].diplo_friction[faction]);
-    DiploScratchFA78 = range(PlayersData[faction].integrity_blemishes
+    int blemishes = range(PlayersData[faction].integrity_blemishes
         - PlayersData[faction].diplo_unk1[other], 0, 99);
+    DiploScratchFA78 = blemishes;
     int ideology = 0;
     int category = Players[other].soc_ideology_category;
     if (category >= 0 && Players[other].soc_ideology_model
