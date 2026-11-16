@@ -1860,7 +1860,7 @@ Purpose: Probe the DirectPlay lobby for a connection the command line asked
          which lands in the 0x9BE600 word every other Net entry point tests as
          the "net play is live" flag.
 
-// ORIGINAL: 0x0062D9E0 ?check_for_lobby@Net@@QAEHPADPAU_GUID@@HH@Z 0x0062D9E0-0x0062DF16
+// ORIGINAL: 0x0062D9E0 ?check_for_lobby@Net@@QAEHPADPAU_GUID@@HH@Z 0x0062D9E0-0x0062DF16 BYTE_EXACT
 // symbol    ?check_for_lobby@Net@@QAEHPADPAU_GUID@@HH@Z
 // size      1334 bytes
 // prototype int (__thiscall ?check_for_lobby@Net@@QAEHPADPAU_GUID@@HH@Z)(Net* this, char*, _GUID*, int, int)
