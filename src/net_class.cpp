@@ -94,7 +94,6 @@
 // symbol    ?enumerate_session_callback@@YGHPBUDPSESSIONDESC2@@PAKKPAX@Z
 // WORKAROUND(decl): JackalVoiceRx::add_player node allocation (net_class.h).
 #define NET_CLASS_VOICE_NODE_NEW
-#define ALPHANET_LEDGER_DTOR_CALLED  // see alphanet.h
 #define ALPHANET_CURRENT_ENTRY_DECL  // see alphanet.h
 #include "stdafx.h"
 #include <process.h>
@@ -2331,6 +2330,12 @@ int Net::choose_service() {
     return result;
 }
 
+// Dead /Ob2 budget probe for session_picker_dialog (folds to no code).
+static inline void picker_spend(int x) {
+  if (x == 1) x = 2;
+  if (x == 2) x = 3;
+}
+
 // Descriptive method name only. The pinned 0x631050 entry proves a Net
 // receiver, but not its original source identifier. The original local window
 // is constructed/closed here; the separate modal BasePop is obtained from
@@ -2347,6 +2352,10 @@ int Net::session_picker_dialog() {
   NetSessionPickerWin picker;
   NetAllocationNode *session;
   char default_players[12];
+  // One unchecked strcat destination at frame+0x58 (0x18 bytes below the
+  // integer-to-text buffer at frame+0x70): the session name before
+  // create_session and the player name before a password-less join.
+  char name_buffer[0x18];
 
   if (buffer_6E0_ == 0) {
     return 0;
@@ -2436,44 +2445,48 @@ create:
 
 created:
   {
-    // The native local begins at frame+0x58 and the integer-to-text buffer
-    // begins at frame+0x70, leaving 0x18 bytes for this unchecked strcat
-    // destination. Preserve that small local rather than widening it.
-    char session_name[0x18];
-    session_name[0] = 0;
-    strcat(session_name, ParseStrBuffer[0].str);
+    name_buffer[0] = 0;
+    strcat(name_buffer, ParseStrBuffer[0].str);
     if (ParseStrBuffer[2].str[0] != 0) {
-      session = create_session(session_name, atoi(ParseStrBuffer[1].str),
+      session = create_session(name_buffer, atoi(ParseStrBuffer[1].str),
                                ParseStrBuffer[2].str);
     } else {
-      session = create_session(session_name, atoi(ParseStrBuffer[1].str), 0);
+      session = create_session(name_buffer, atoi(ParseStrBuffer[1].str), 0);
     }
     if (session == 0) goto fail;
   }
 
 join:
-  if (popup->init(4, 0) == 0) {
-    popup->dialogs().EditGroup::edit("Your Name:", 0, 0x32);
-    if (session->password_ != 0 && session->password_[0] != 0) {
-      popup->dialogs().EditGroup::edit("Password required for this session:", 0, 0x32);
-    }
-    // The original ignores the credentials dialog's result and releases the
-    // popup before joining.
-    popup->exec(0, 0);
-    delete popup;
-    // The pinned code reloads the node's password pointer after the modal
-    // dialog. If a password is present it uses both parse buffers; if not, it
-    // snapshots the player name through the unchecked strcat local and passes
-    // a null password.
-    if (session->password_ != 0 && session->password_[0] != 0) {
-      return join_session(session, ParseStrBuffer[0].str, ParseStrBuffer[1].str);
-    } else {
-      char player_name[0x18];
-      player_name[0] = 0;
-      strcat(player_name, ParseStrBuffer[0].str);
-      return join_session(session, player_name, 0);
-    }
+  // The fail exit is the function's last block; the image lays it out right
+  // after this test (0x00631645) and numbers its teardown states last.
+  if (popup->init(4, 0) != 0) goto fail;
+  popup->dialogs().EditGroup::edit("Your Name:", 0, 0x32);
+  if (session->password_ != 0 && session->password_[0] != 0) {
+    popup->dialogs().EditGroup::edit("Password required for this session:", 0, 0x32);
   }
+  // The original ignores the credentials dialog's result and releases the
+  // popup before joining.
+  popup->exec(0, 0);
+  delete popup;
+  // The pinned code reloads the node's password pointer after the modal
+  // dialog. If a password is present it uses both parse buffers; if not, it
+  // snapshots the player name through the unchecked strcat local and passes
+  // a null password.
+  if (session->password_ != 0 && session->password_[0] != 0) {
+    return join_session(session, ParseStrBuffer[0].str, ParseStrBuffer[1].str);
+  }
+  // WORKAROUND(inline): dead probes after the password exit; the image
+  // expands the local ledger's destructor only at the no-password exit and
+  // calls 0x004E34B0 at the fail exit, which needs this much spend here.
+  picker_spend(1); picker_spend(2); picker_spend(3); picker_spend(4);
+  picker_spend(5); picker_spend(6); picker_spend(7); picker_spend(8);
+  picker_spend(9); picker_spend(10); picker_spend(11); picker_spend(12);
+  picker_spend(13); picker_spend(14); picker_spend(15); picker_spend(16);
+  picker_spend(17); picker_spend(18); picker_spend(19); picker_spend(20);
+  picker_spend(21); picker_spend(22); picker_spend(23); picker_spend(24);
+  name_buffer[0] = 0;
+  strcat(name_buffer, ParseStrBuffer[0].str);
+  return join_session(session, name_buffer, 0);
 fail:
   delete popup;
   return 0;

@@ -6783,9 +6783,16 @@ commlink:
         }
         if (!has_treaty(faction_id_with, DiploScratchFA5C, DTREATY_COMMLINK)
             && !has_project(SP_EMPATH_GUILD, faction_id_with)) {
-            parse_says(0, get_title(DiploScratchFA5C), -1, -1);
-            parse_says(1, get_name(DiploScratchFA5C), -1, -1);
-            parse_says(2, get_noun(DiploScratchFA5C), -1, -1);
+            // WORKAROUND(inline): the three getters written out (same bytes);
+            // as get_title/get_name/get_noun they spend the budget the image's
+            // ATTACKSTRING exit (done) needs for its expanded ~Scroll teardown.
+            parse_set(Players[DiploScratchFA5C].is_leader_female, 0);
+            parse_says(0, Players[DiploScratchFA5C].title_leader, -1, -1);
+            parse_set(Players[DiploScratchFA5C].is_leader_female, 0);
+            parse_says(1, Players[DiploScratchFA5C].name_leader, -1, -1);
+            parse_set(Players[DiploScratchFA5C].noun_gender,
+                      Players[DiploScratchFA5C].is_noun_plural);
+            parse_says(2, Players[DiploScratchFA5C].noun_faction, -1, -1);
             DiploScratchFA34 = 0;
             x_pops_minimal("NOCOMMLINK", FactionDiplomacyPortraits[faction_id_with],
                            pop_wait);
@@ -7969,6 +7976,9 @@ again:
             swap(&DiploScratchF800, &DiploScratchF80C);
             friction_delta = DiploScratchF814 / 8;
         } else if (dialog_result == 2) {
+            // WORKAROUND(inline): with the dead block after the loop, gives the
+            // REJTECHSECOND exit the image's ten-state teardown (0x00543321).
+            diplo_spend(30);
             if (!has_treaty(partner, actor, 1)
                 || !has_treaty(partner, actor, 0x2000000)) {
                 if (!strcmp(Players[partner].filename, "HIVE") ||
@@ -7990,6 +8000,13 @@ again:
     }
 
     diplo_spend(10);  // WORKAROUND(inline)
+    // WORKAROUND(inline): dead stores that only grow tech_trade's /Ob2 budget;
+    // without them the probe above trades the REJTECHSECOND depth against
+    // the earlier five-state exits (zero-sum; the original caller was larger).
+    if (0) {
+        DiploScratchFA60 = 0; DiploScratchFA60 = 1; DiploScratchFA60 = 2;
+        DiploScratchFA60 = 3; DiploScratchFA60 = 4;
+    }
     // 0x541EBC
     if (request_mode) {
         net_treaty_on(partner, actor, 0x1000000, 0);

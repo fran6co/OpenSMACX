@@ -177,14 +177,10 @@ class AlphaNetLedger : public AlphaNetStringStruct {
   // RECOVERY_GENERATED: v1 vtable 0x0066EAE8 0x0066EAF0 ??_7AlphaNetLedger@@6BAlphaNetStringStruct@@@ 0x004E2490
   virtual int on_insert(NetAllocationNode *payload);
   virtual void on_remove(NetAllocationNode *payload);
-#if defined(ALPHANET_LEDGER_DTOR_CALLED)
-  // WORKAROUND(noinline): session_picker_dialog calls the copy 0x004E3350
-  // at the teardowns of its local ledger (0x00631215), while the copy
-  // 0x00633010 of ~NetSessionPickerWin expands it; the original header body
-  // was visible and /Ob2 refused it there. net_class.cpp sees this
-  // declaration only.
-  ~AlphaNetLedger();
-#elif defined(ALPHANET_REMOVE_ALL_CALLED)
+  // session_picker_dialog sees this body: /Ob2 expands it only at its
+  // no-password exit (0x00631997); its other exits call 0x004E3350 or the
+  // complete-object copy 0x004E34B0.
+#if defined(ALPHANET_REMOVE_ALL_CALLED)
   ~AlphaNetLedger() { close_walk(); }
 #else
   ~AlphaNetLedger() { close(); }
