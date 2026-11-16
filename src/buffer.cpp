@@ -9683,7 +9683,7 @@ BufferSpecialText::~BufferSpecialText() {
     else                                                                      \
         SetTextColor(hdc2_, (WORD)(color) | 0x10ff0000)
 
-// ORIGINAL: 0x005DBD00 ?write_raw_l@Buffer@@QAEHPADHHH@Z 0x005DBD00-0x005DC2C3 FILE
+// ORIGINAL: 0x005DBD00 ?write_raw_l@Buffer@@QAEHPADHHH@Z 0x005DBD00-0x005DC2C3 FILE BYTE_EXACT
 // TRIED: near-verbatim transcription of the (clean, no-SEH) Ghidra decompilation via `int *p = (int*)this;` field indexing (cross-checked against raw asm offsets: 0x50/0x58/0x60/0x520 /0x52c/0x53c/0x54c/0x55c/0x56c all confirmed). The five `call dword ptr [0x6690xx]` sites are real Win32 GDI calls (SetBkMode/SelectObject/SetTextColor/TextOutA/GetStockObject, identified via Ghidra's WinAPI signatures) dispatched through the catalogued IAT-slot globals via a typedef'd function pointer, matching the original's indirect-call-through-memory shape. The two `(**(code**)(*piVar1+N))(piVar1,arg)` heap callbacks are cast as `__stdcall(int,int)` rather than routed through the VCall thiscall shim, since the disassembly pushes the receiver as an explicit stack arg instead of leaving it in ecx. The Font::width() receiver index (uStack_10 vs uStack_8 vs a third stack slot) is not fully disambiguated across all five call sites - used uStack_10 uniformly as the closest guess. Reaches MISMATCH #0 ('sub' vs 'push'): the original has no EBP frame (esp-relative addressing throughout), which a plain C++ local-variable body does not reproduce.
 // Native complete closure; the seed discarded atoi's result. Original ordinary
 // and shadow colors/offsets use the selected color bank; preserve that indexing.
