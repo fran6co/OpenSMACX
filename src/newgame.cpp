@@ -100,6 +100,10 @@ static const char CustomMapPopupLabel[] = "CUSTOMMAP";
 static const char CustomMapXKey[] = "Custom Map X";
 static const char CustomMapYKey[] = "Custom Map Y";
 static const char VeryLargeMapLabel[] = "VERYLARGEMAP";
+// size_of_planet writes the custom size back through its own two texts
+// (image 0x68F880/0x68F890), not the read keys.
+static const char CustomMapXPutKey[] = "Custom Map X";
+static const char CustomMapYPutKey[] = "Custom Map Y";
 
 // Newgame-owned shared faction preview and callback state.
 // Generated initializer and destructor bindings below identify this global's startup lifetime.
@@ -1231,8 +1235,8 @@ int __cdecl size_of_planet(int mode) {
                     return 1;
                 }
             }
-            prefs_put(CustomMapXKey, custom_width, 0);
-            prefs_put(CustomMapYKey, custom_height, 0);
+            prefs_put(CustomMapXPutKey, custom_width, 0);
+            prefs_put(CustomMapYPutKey, custom_height, 0);
             MapLatitudeBounds = custom_height;
             width = custom_width;
         }
@@ -1582,7 +1586,7 @@ int __cdecl top_menu(int mode) {
         prefs_use();
 
         edi = mode;
-        popup.start(PopupStartCaption, edi == 0 ? "TOPMENU" : "HOTSEAT",
+        popup.start(PopupStartCaption, edi != 0 ? "HOTSEAT" : "TOPMENU",
                     -1, 0, 0, 0);
         if (edi == 0) popup.set_value(static_cast<int>(DefaultPrefs.top_menu));
 

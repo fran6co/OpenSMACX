@@ -1389,8 +1389,8 @@ search:
                 ExitTurnLoop = 1;
             }
             // 5B2504: two full call setups, tail-merged at 5B2520.
-            if (!conqueror && !Language) X_pop("YOULOSE2", 0);
-            else X_pop("YOULOSE", 0);
+            if (conqueror || Language) X_pop("YOULOSE", 0);
+            else X_pop("YOULOSE2", 0);
             if (faction == ConsoleGlobal.faction_id_) {
                 GameDataStateStorage.fields_.game_state_ |= 1;
                 EndgameExitReason = conqueror ? 7 : 15;
@@ -1772,14 +1772,19 @@ extern int TutorialFlags2;
 // faction's ideology is reset to -1/0/-1 before the draw, and the effect scan
 // indexes values_ directly. Left: the social loop's i/rejected register choice
 // and the image's separate (unpooled) "BELIEVE"/"DRONE"/"HIVE" literals.
+// The image passes zero-filled 0x945E78/0x945E7C cells, not literals, as
+// the cleared "Latest Save"/"Latest Scenario" values; nothing else
+// references either cell. Names are descriptive.
+// RECOVERY_OBJECT: v1 0x00945E78 ?LatestSaveCleared@@3PADA
+char LatestSaveCleared[4];
+// RECOVERY_OBJECT: v1 0x00945E7C ?LatestScenarioCleared@@3PADA
+char LatestScenarioCleared[4];
+
 void __cdecl setup_game(int reload) {
     GameDataStateStorage.fields_.legacy_game_save_name_[0] = 0;
 
-    // The image passes zero-filled 0x945E78/0x945E7C strings to these keys.
-    // Pinned-image initial bytes are NUL, and no other absolute references to
-    // either cell exist; the existing prefs_put overload consumes the values.
-    prefs_put("Latest Save", "");
-    prefs_put("Latest Scenario", "");
+    prefs_put("Latest Save", LatestSaveCleared);
+    prefs_put("Latest Scenario", LatestScenarioCleared);
     if (GameDataStateStorage.fields_.diff_level_current_ == 0 && reload == 0 &&
         prefs_get("DontResetBeginnerPrefs", 0, 0) == 0) {
         prefs_load(1);

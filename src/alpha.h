@@ -717,6 +717,9 @@ static const int MaxDiffNum = 6;
 extern LPSTR Difficulty[MaxDiffNum];
 
 extern LPCSTR AlphaxFileID;
+// WORKAROUND(decl): the SCRIPT file name is ScriptPopupFile (0x00691B0C,
+// game.h); this declaration has no definition and no user, but removing it
+// shifts includers' counters (custom_planet 0.978 -> 0.926).
 extern LPCSTR ScriptTxtID;
 // THE RULES OBJECTS ARE REAL STORAGE, not typed pointers into the image.
 // In the shipped binary each address below is zero-initialised data

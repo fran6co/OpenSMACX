@@ -1515,7 +1515,9 @@ void TutWin::tour() {
     if (field_53C0_ == 0) {
         StringTemp[0] = 0;
         strcat(StringTemp, "TOUR1");
-        if (ConsoleGlobal.cursor_active_ && ConsoleGlobal.selected_vehicle_ >= 0) {
+        if (!ConsoleGlobal.cursor_active_ || ConsoleGlobal.selected_vehicle_ < 0) {
+            strcat(StringTemp, "B");
+        } else {
             short proto_id = Vehs[ConsoleGlobal.selected_vehicle_].proto_id;
             if (proto_id != 2) {
                 parse_says(0, VehPrototypes[proto_id].veh_name, -1, -1);
@@ -1523,8 +1525,6 @@ void TutWin::tour() {
             } else {
                 parse_says(0, VehPrototypes[2].veh_name, -1, -1);
             }
-        } else {
-            strcat(StringTemp, "B");
         }
         if (!tut_map(StringTemp,
                      ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
@@ -1830,70 +1830,7 @@ void TutWin::tour() {
         if (fungus_x >= 0 && !tut_map("TOURFUNGUS", fungus_x, fungus_y, -1, 0, 2, -1, -1)) {
             goto tour_cleanup;
         }
-        if (TutWinClimateGate945830) {
-            WorldClimateWorldWin.show_all();
-        }
-        do_all_draws();
-        if (!ConsoleGlobal.alpha_menu_.is_visible()) {
-            ConsoleGlobal.alpha_menu_.show();
-        }
-        tour_iface_rect(&MainInterfaceGlobal.menu_button_rect_, &x, &y);
-        if (!tut_win(MapWinTable[0], "TOURMENU", x, y, 0, 2, -1, -1)) {
-            goto tour_cleanup;
-        }
-        ConsoleGlobal.alpha_menu_.hide();
-        if (!MultiWindow.panel_open()) {
-            MultiWindow.show();
-        }
-        tour_iface_rect(&MainInterfaceGlobal.multiplayer_button_rect_, &x, &y);
-        if (!tut_win(MapWinTable[0], "TOURCOMMLINK", x, y, 0, 2, -1, -1)) {
-            goto tour_cleanup;
-        }
-        MultiWindow.hide();
-        tour_iface_rect(&MainInterfaceGlobal.status_left_rect_, &x, &y);
-        if (!tut_win(MapWinTable[0], "TOURUNITSINFO", x, y, 0, 2, -1, -1)) {
-            goto tour_cleanup;
-        }
-        tour_iface_rect(&MainInterfaceGlobal.status_right_rect_, &x, &y);
-        if (!tut_win(MapWinTable[0], "TOURTERRAININFO", x, y, 0, 2, -1, -1)) {
-            goto tour_cleanup;
-        }
-        tour_iface_rect(&MainInterfaceGlobal.status_hit_rect_, &x, &y);
-        if (!tut_win(MapWinTable[0], "TOURSTACKINFO", x, y, 0, 2, -1, -1)) {
-            goto tour_cleanup;
-        }
-        tour_iface_rect(&MainInterfaceGlobal.message_bounds_, &x, &y);
-        if (!tut_win(MapWinTable[0], "TOURMESSAGEINFO", x, y, 0, 2, -1, -1)) {
-            goto tour_cleanup;
-        }
-        tour_iface_rect(&MainInterfaceGlobal.scroll_up_rect_, &x, &y);
-        if (!tut_win(MapWinTable[0], "TOURBUTTONMESSAGE", x, y, 0, 2, -1, -1)) {
-            goto tour_cleanup;
-        }
-        tour_iface_rect(&MainInterfaceGlobal.scroll_down_rect_, &x, &y);
-        if (!tut_win(MapWinTable[0], "TOURBUTTONINFO", x, y, 0, 2, -1, -1)) {
-            goto tour_cleanup;
-        }
-        tour_iface_rect(&MainInterfaceGlobal.tutorial_bounds_, &x, &y);
-        if (!tut_win(MapWinTable[0], "TOURWORLDINFO", x, y, 0, 2, -1, -1)) {
-            goto tour_cleanup;
-        }
-        tour_iface_rect(&MainInterfaceGlobal.date_rect_, &x, &y);
-        if (!tut_win(MapWinTable[0], "TOURDATEINFO", x, y, 0, 2, -1, -1)) {
-            goto tour_cleanup;
-        }
-        if (!ConsoleGlobal.cursor_active_
-            || GameDataStateStorage.fields_.turn_current_num_ > 1) {
-            goto tour_cleanup;
-        }
-        reset();
-        field_53B4_ = 0;
-        if (site_x <= 0) {
-            site_x = ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
-            site_y = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
-        }
-        tut_map("TOUROVER", site_x, site_y, ConsoleGlobal.selected_vehicle_, 0, 0, -1, -1);
-        return;
+        goto tour_menu;
     }
 
     if (!tut_map("TOURMAP",
@@ -1962,6 +1899,75 @@ tour_cleanup:
     desktop_update();
     field_53B4_ = 0;
     reset();
+    return;
+
+    // Written after the cleanup: the image's literals for this block follow
+    // TOURFORMDONE although the block is laid out first.
+tour_menu:
+    if (TutWinClimateGate945830) {
+        WorldClimateWorldWin.show_all();
+    }
+    do_all_draws();
+    if (!ConsoleGlobal.alpha_menu_.is_visible()) {
+        ConsoleGlobal.alpha_menu_.show();
+    }
+    tour_iface_rect(&MainInterfaceGlobal.menu_button_rect_, &x, &y);
+    if (!tut_win(MapWinTable[0], "TOURMENU", x, y, 0, 2, -1, -1)) {
+        goto tour_cleanup;
+    }
+    ConsoleGlobal.alpha_menu_.hide();
+    if (!MultiWindow.panel_open()) {
+        MultiWindow.show();
+    }
+    tour_iface_rect(&MainInterfaceGlobal.multiplayer_button_rect_, &x, &y);
+    if (!tut_win(MapWinTable[0], "TOURCOMMLINK", x, y, 0, 2, -1, -1)) {
+        goto tour_cleanup;
+    }
+    MultiWindow.hide();
+    tour_iface_rect(&MainInterfaceGlobal.status_left_rect_, &x, &y);
+    if (!tut_win(MapWinTable[0], "TOURUNITSINFO", x, y, 0, 2, -1, -1)) {
+        goto tour_cleanup;
+    }
+    tour_iface_rect(&MainInterfaceGlobal.status_right_rect_, &x, &y);
+    if (!tut_win(MapWinTable[0], "TOURTERRAININFO", x, y, 0, 2, -1, -1)) {
+        goto tour_cleanup;
+    }
+    tour_iface_rect(&MainInterfaceGlobal.status_hit_rect_, &x, &y);
+    if (!tut_win(MapWinTable[0], "TOURSTACKINFO", x, y, 0, 2, -1, -1)) {
+        goto tour_cleanup;
+    }
+    tour_iface_rect(&MainInterfaceGlobal.message_bounds_, &x, &y);
+    if (!tut_win(MapWinTable[0], "TOURMESSAGEINFO", x, y, 0, 2, -1, -1)) {
+        goto tour_cleanup;
+    }
+    tour_iface_rect(&MainInterfaceGlobal.scroll_up_rect_, &x, &y);
+    if (!tut_win(MapWinTable[0], "TOURBUTTONMESSAGE", x, y, 0, 2, -1, -1)) {
+        goto tour_cleanup;
+    }
+    tour_iface_rect(&MainInterfaceGlobal.scroll_down_rect_, &x, &y);
+    if (!tut_win(MapWinTable[0], "TOURBUTTONINFO", x, y, 0, 2, -1, -1)) {
+        goto tour_cleanup;
+    }
+    tour_iface_rect(&MainInterfaceGlobal.tutorial_bounds_, &x, &y);
+    if (!tut_win(MapWinTable[0], "TOURWORLDINFO", x, y, 0, 2, -1, -1)) {
+        goto tour_cleanup;
+    }
+    tour_iface_rect(&MainInterfaceGlobal.date_rect_, &x, &y);
+    if (!tut_win(MapWinTable[0], "TOURDATEINFO", x, y, 0, 2, -1, -1)) {
+        goto tour_cleanup;
+    }
+    if (!ConsoleGlobal.cursor_active_
+        || GameDataStateStorage.fields_.turn_current_num_ > 1) {
+        goto tour_cleanup;
+    }
+    reset();
+    field_53B4_ = 0;
+    if (site_x <= 0) {
+        site_x = ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
+        site_y = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
+    }
+    tut_map("TOUROVER", site_x, site_y, ConsoleGlobal.selected_vehicle_, 0, 0, -1, -1);
+    return;
 }
 #pragma auto_inline(off)
 

@@ -202,6 +202,12 @@ Purpose: Initialize map variables.
 //        tail) - a VC6 register-allocation heuristic, not a source shape;
 //        no rewrite of the two null-checks (`!= 0`, ternary, guard clause)
 //        changed which register VC6 picked.
+// LEVER: edi is a `result` flag: true at entry, cleared after the fixup,
+//        and one `if (result) map_shutdown();` (the same-unit body, not a
+//        hand copy) at the join; VC6 threads the success path to
+//        `xor eax,eax` and the first failure past the known-null free.
+//        MapArea multiplies the halved bounds again rather than reading
+//        MapLongitude back. Exact.
 // symbol    ?map_init@@YAHXZ
 // size      358 bytes
 // prototype
@@ -213,6 +219,7 @@ Return Value: n/a
 Status: Complete
 */
 BOOL __cdecl map_init() {
+    BOOL result = true;
     StringTemp[0] = 0;
     strcat(StringTemp, "maps\\");
     strcat(StringTemp, label_get(676));
@@ -220,7 +227,7 @@ BOOL __cdecl map_init() {
     strcpy((LPSTR)MapFilePath, StringTemp);
     strcat((LPSTR)MapFilePath, MapExtension);
     MapLongitude = MapLongitudeBounds / 2;
-    MapArea = MapLongitude * MapLatitudeBounds;
+    MapArea = (MapLongitudeBounds / 2) * MapLatitudeBounds;
     MapAreaSqRoot = quick_root(MapArea);
     map_tiles() = 0;
     map_tiles() = (Map *)mem_get(MapArea * sizeof(Map));
@@ -231,11 +238,13 @@ BOOL __cdecl map_init() {
         MapAbstract() = (uint8_t *)mem_get(MapAbstractArea);
         if (MapAbstract()) {
             mapwin_terrain_fixup();
-            return false;
+            result = false;
         }
     }
-    release_map_storage();
-    return true;
+    if (result) {
+        map_shutdown();
+    }
+    return result;
 }
 /*
 Purpose: Reset the map to a blank state. Doesn't wipe unk_1 and territory fields.
@@ -332,7 +341,7 @@ Return Value: Did an error occur? true/false
 Status: Complete
 */
 BOOL __cdecl map_read(FILE *map_file) {
-    release_map_storage();
+    map_shutdown();
     if (!fread(&MapStorage, 0xAA4, 1, map_file)) {
         return true;
     }
@@ -1135,6 +1144,7 @@ int __cdecl minerals_at(int x, int y) {
         switch (val2) {
           case 0: return 0;
           case 1: return 1;
+          case 2: return 2;
           default: return 2;
         }
       case 1:
@@ -1559,7 +1569,10 @@ remove_landmark:
 // RECOVERY_BINDING: v1 {"evidence": ["git:7e269a283e888ff1ee459699529fb7ce8c44b171:src/recovered/units/005927d0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json"], "reason": "Recover landmark clearing through real Map members, shared source-owned lookup arrays and MapWin callbacks. Preserve the duplicate Flat-table clear, numeric9,999,999 cache sentinel, store-before-clear order and native absence of extra window/bounds guards. Historical mappings and seed lessons are retained; no new byte/layout/runtime/linked-preservation claim."}
 void __cdecl delete_landmark(int x, int y) {
     uint32_t *const field = &map_loc(x, y)->bit2;
-    const uint32_t old_flags = *field;
+    // WORKAROUND(volatile): the image keeps old_flags in a frame slot
+    // ([ebp-4]) and re-reads it at every flag test, leaving edi for the
+    // second tile pointer; a plain local takes edx and spills the pointer.
+    volatile uint32_t old_flags = *field;
     if (old_flags == 0) {
         return;
     }

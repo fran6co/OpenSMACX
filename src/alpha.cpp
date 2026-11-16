@@ -116,7 +116,6 @@ const char *PrefsSection = "Alpha Centauri";       // 0x006900D0
 // the "ALPHAX" literal at 0x00691B58.
 // RECOVERY_OBJECT: v2 0x00691AFC 0x00691B00 ?AlphaxFileID@@3PBDB 0x0048207D
 LPCSTR AlphaxFileID = "ALPHAX";
-LPCSTR ScriptTxtID = "SCRIPT";
 // Alpha owns the parsed #COMPASS pointer IDs populated by read_rules.
 // RECOVERY_OBJECT: v1 0x00945D48 ?Compass@@3PAPADA
 LPSTR Compass[MaxCompassNum];      // 0x00945D48
@@ -1422,7 +1421,7 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
         return true;
     }
     text_clear_index();
-    text_make_index(ScriptTxtID);
+    text_make_index(ScriptPopupFile);
     text_make_index(AlphaxFileID);
     if (read_tech()) {
         return true;

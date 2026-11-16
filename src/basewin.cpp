@@ -7239,15 +7239,7 @@ void BaseWin::init() {
     r.top = r.bottom - 20;
     rect20_ = r;
     font1_.init(DefaultFontFace, 14, 1);
-    if (text_open("BASENAME", "INVERTLIST") == 0) {
-        text_get();
-        InvertEntryCount = text_item_number();
-        for (index = 0; index < InvertEntryCount; ++index) {
-            text_get();
-            strcpy(InvertEntries[index], TextBufferGetPtr);
-        }
-        text_close();
-    }
+    load_inverts();
     buffer2_.init(100, 50, 0, 0);
     g_RAINFALL_DOUBLE_TILE_SPRITES[0].draw(&buffer2_,
         g_RAINFALL_DOUBLE_TILE_SPRITES[0].transparent_index(), 0, 0, 1, 1);

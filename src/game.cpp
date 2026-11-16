@@ -476,12 +476,8 @@ int __cdecl encrypt_read(void *buffer, unsigned int size, unsigned int count, FI
 
 int __cdecl encrypt_write(void *buffer, unsigned int size, unsigned int count, FILE *file);
 
-static const char MapHeaderText[] = "TERRANMAP";
-
 // RECOVERY_OBJECT: v1 0x00690D88 _SaveHeaderText
 static const char SaveHeaderText[] = "TERRAN";
-
-static const char OpenFileMode[] = "rb";
 
 static const char GameSaveReadMode[] = "rb";
 
@@ -489,6 +485,14 @@ static const char GameSaveHeaderText[] = "TERRAN";
 
 // RECOVERY_OBJECT: v1 0x00690DAC _MapSaveHeaderText
 static const char MapSaveHeaderText[] = "TERRANMAP";
+
+// load_map_daemon's own three texts (image 0x690DB8, 0x690DBC, 0x690DC4);
+// its saved-game header is not save_daemon's object.
+static const char OpenFileMode[] = "rb";
+
+static const char LoadMapSaveHeaderText[] = "TERRAN";
+
+static const char MapHeaderText[] = "TERRANMAP";
 
 // RECOVERY_OBJECT: v1 0x00690F50 _MapFileFilterPattern
 static const char MapFileFilterPattern[] = "*.";
@@ -945,7 +949,7 @@ int __cdecl load_map_daemon(char *path) {
     int result = 2;
     char header[256];
     header_check(header, file);
-    const char *expected_header = is_saved_game ? SaveHeaderText : MapHeaderText;
+    const char *expected_header = is_saved_game ? LoadMapSaveHeaderText : MapHeaderText;
     if (strcmp(header, expected_header) == 0) {
         result = 3;
         int version;
