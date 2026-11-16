@@ -1195,13 +1195,6 @@ void __cdecl help_topic(unsigned int topic, int index) {
     DatalinkMain.exec(topic, index);
 }
 
-// The image's help-link tokens at 0x00683544/40/3C are help_create_link's
-// own linker-merged literals (datalink.h). These arrays remain only for
-// ReportWin's written-out links until that unit calls the helper.
-char HelpLinkOpenText[] = "$LINK<";                 // 0x00683544
-char HelpLinkEqualsText[] = "=";                    // 0x00683540
-char HelpLinkCloseText[] = ">";                     // 0x0068353C
-
 /*
 Purpose: Append one clickable cross-reference to a caller-owned help buffer.
          The original strings at 0x00683544/40/3C are "$LINK<", "=" and

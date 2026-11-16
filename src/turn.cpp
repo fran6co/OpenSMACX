@@ -3966,9 +3966,12 @@ void __cdecl crash_landing(int faction_id);
 // keeps ~Dialogs 0x00406910 out of line there; per-site depths 5,5,6,6,7+13,
 // 7+13,7+18). The five expand_rect insets before the password loop supply
 // the spend two probes there used to; two expansions after the faction loop
-// still give 5,6,6,6,7+13,7+13,7+18 (none: 7+18 at the sixth site). Their
-// original spending call sites are unknown, and the second site (save
-// failed, ExitTurnLoop set) stays one level deep under every placement tried.
+// keep 7+13 at the sixth site (none: 7+18). The second site (save failed,
+// ExitTurnLoop set) needs seven one-if expansions in the gap between it and
+// the next return (any position in that gap; six or fewer, or fewer branchy
+// probes, change nothing): teardown decisions start at the first return after
+// the last spend region, so spend there makes the earlier site shallower.
+// Their original spending call sites are unknown.
 static inline int control_turn_spend(int k) { if (k == 1) k = 2; return k; }
 void __cdecl control_turn() {
     int retry_count = 0;
@@ -4077,6 +4080,11 @@ turn_loop:
                                 if (ExitTurnLoop != 0) {
                                     return;
                                 }
+                                // WORKAROUND(inline): see control_turn_spend.
+                                control_turn_spend(30); control_turn_spend(31);
+                                control_turn_spend(32); control_turn_spend(33);
+                                control_turn_spend(34); control_turn_spend(35);
+                                control_turn_spend(36);
                                 continue;
                             }
                             ExitTurnLoop = 1;

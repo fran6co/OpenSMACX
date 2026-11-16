@@ -456,11 +456,11 @@ int __cdecl wants_prop(int faction, int proposal, int option) {
                         }
                     }
                     if ((PlayersData[faction].diplo_treaties[option] & DTREATY_PACT) == 0) {
-                        if (((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF) & option_bit)
+                        if (((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & option_bit)
                             && PlayersData[option].diff_level >= 3 && score > -2) {
                             score--;
                         }
-                        if (((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF) & option_bit)
+                        if (((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & option_bit)
                             && (GameDataStateStorage.fields_.game_rules_ & 0x40) != 0 && score > -2) {
                             score--;
                         }
@@ -485,8 +485,7 @@ int __cdecl wants_prop(int faction, int proposal, int option) {
             if (flag && (PlayersData[faction].diplo_treaties[option] & DTREATY_PACT) == 0) {
                 score = score > 0 ? 0 : score;  // setg/dec/and
             }
-            const uint32_t humans = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF;
-            if (!(humans & 1 << faction) && !(humans & option_bit)) {
+            if (!((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 1 << faction) && !((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & option_bit)) {
                 break;
             }
             if (PlayersData[faction].diplo_treaties[option] & 0x08000000u) {
