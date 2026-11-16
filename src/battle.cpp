@@ -370,7 +370,11 @@ int __cdecl planet_busting(int veh_id, int x, int y) {
             const int defender = Bases[base_id].faction_id_current;
             if (faction != defender && !notified[defender]) {
                 intercepted = shoot(faction, defender, blast_x, blast_y);
-                if (intercepted != 0) goto loop_exit;
+                // break, not a goto past the loop: VC6 compiles the missing
+                // final return of an int function that contains a label as a
+                // jump back to that label, which re-ran the interception,
+                // kill and strike forever; the image falls into its epilogue.
+                if (intercepted != 0) break;
                 notified[defender] = 1;
             }
             continue;
@@ -387,7 +391,6 @@ int __cdecl planet_busting(int veh_id, int x, int y) {
             notified[defender] = 1;
         }
     }
-loop_exit:
 
     const int territory_owner = whose_territory(faction, x, y, 0, 0);
     if (territory_owner >= 0 && territory_owner != faction &&
@@ -874,12 +877,15 @@ void __cdecl add_bat(int type, int modifier, LPCSTR display_str) {
     }
     // A signed count tested in place (`jge`), then post-incremented: inlined
     // into battle_compute the loaded count is copied (`mov edx, esi; inc
-    // esi`) and the copy indexes the rows. Separate subscripts let a
-    // constant type fold its row offset into the bases (`add ecx,
-    // 0x90f694`, `[edx*4 + 0x915600]`) and keep add_bat exact.
+    // esi`) and the copy indexes the rows. One shared row index measures
+    // closer in battle_compute than separate subscripts (1602 against 1620
+    // differing rows), although separate subscripts fold a constant type's
+    // row offset into the display base (`add ecx, 0x90f694`) as the image
+    // does; add_bat itself is exact either way.
     int offset = VehBattleModCount[type]++;
-    VehBattleModifier[type * 4 + offset] = modifier;
-    strcpy(VehBattleDisplay[type * 4 + offset], display_str);
+    int index = type * 4 + offset;
+    VehBattleModifier[index] = modifier;
+    strcpy(VehBattleDisplay[index], display_str);
 }
 
 /*
