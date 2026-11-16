@@ -213,8 +213,9 @@ void PullDown::pulldown_update(int old_selected, int new_selected) {
   // border + text padding (neg eax at 0x005F9F8B), then copied per row.
   const int width = pixel_width();
   const int height = text_line_height();
-  RECT base = {0, PullDownBorderPadding, width, PullDownBorderPadding + height};
-  pulldown_expand_rect(&base, -(PullDownTextPadding + PullDownBorderPadding), 0);
+  int top = PullDownBorderPadding;
+  RECT base = {0, top, width, top + height};
+  pulldown_expand_rect(&base, -(PullDownTextPadding + top), 0);
   RECT row;
 
   if (old_selected != -1) {
@@ -230,9 +231,10 @@ void PullDown::pulldown_update(int old_selected, int new_selected) {
     row.top += row_offset;
     row.bottom += row_offset;
 
-    char *const text = items_[old_selected].text;
-    char *const right_text = items_[old_selected].right_text;
-    const uint32_t flags = items_[old_selected].flags;
+    PullDownItem *const item = &items_[old_selected];
+    char *const text = item->text;
+    const uint32_t flags = item->flags;
+    char *const right_text = item->right_text;
     char *const mnemonic = items_[old_selected].mnemonic;
     if ((flags & 1u) != 0) {
       if ((flags & 8u) != 0) {
@@ -285,7 +287,7 @@ void PullDown::pulldown_update(int old_selected, int new_selected) {
           }
         }
 
-        char *const label = items_[old_selected].text;
+        char *const label = item->text;
         if (label != 0) {
           write_l(label, &row, static_cast<int>(strlen(label)));
         }
@@ -323,9 +325,10 @@ void PullDown::pulldown_update(int old_selected, int new_selected) {
     row.top += row_offset;
     row.bottom += row_offset;
 
-    char *const text = items_[new_selected].text;
-    char *const right_text = items_[new_selected].right_text;
-    const uint32_t flags = items_[new_selected].flags;
+    PullDownItem *const item = &items_[new_selected];
+    char *const text = item->text;
+    const uint32_t flags = item->flags;
+    char *const right_text = item->right_text;
     char *const mnemonic = items_[new_selected].mnemonic;
     if ((flags & 1u) != 0) {
       if ((flags & 8u) != 0) {
@@ -378,7 +381,7 @@ void PullDown::pulldown_update(int old_selected, int new_selected) {
           }
         }
 
-        char *const label = items_[new_selected].text;
+        char *const label = item->text;
         if (label != 0) {
           write_l(label, &row, static_cast<int>(strlen(label)));
         }
