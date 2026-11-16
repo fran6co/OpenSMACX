@@ -284,6 +284,21 @@ static inline int wants_prop_candidate(int option, int &count) {
     return count < 2;
 }
 
+// WORKAROUND(inline): has_fac's tail (is_built / queue_count test) with the
+// bitmask call left at the site. Expanding has_fac (or any inline that
+// contains the bitmask call) turns wants_prop's Bases loop cursor into a
+// 0-based offset plus an absolute Bases displacement; the image walks a
+// pointer at &Bases[0].y (0x52BA12 `mov [ebp+0x10], 0x97D042`). Writing the
+// call at the site keeps the pointer cursor; this tail keeps the image's
+// materialised, dead-stored flag ([ebp-0x1c], neg/sbb/neg).
+inline BOOL wants_prop_built(int bits, int queue_count) {
+    BOOL is_built = bits != 0;
+    if (is_built || !queue_count) {
+        return is_built;
+    }
+    return false;
+}
+
 // Score council proposal alternatives through the native ten-case dispatch.
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0052AEB0 0x0052BE34 0x0052BE60 0x0052AECA
 // ORIGINAL: 0x0052AEB0 ?wants_prop@@YAHHHH@Z 0x0052AEB0-0x0052BE32
@@ -697,9 +712,13 @@ int __cdecl wants_prop(int faction, int proposal, int option) {
                     weight = -1;
                 }
             } else if (dir > 0) {
-                // has_fac inline: [ebp-0x18] offset, [ebp-0x14] mask,
+                // has_fac(FAC_PRESSURE_DOME, i, 0) written out (see
+                // wants_prop_built): [ebp-0x18] offset, [ebp-0x14] mask,
                 // [ebp-0x1c] materialized is_built (neg/sbb/neg).
-                if (!has_fac(FAC_PRESSURE_DOME, i, 0)
+                int offset;
+                int mask;
+                bitmask(FAC_PRESSURE_DOME, &offset, &mask);
+                if (!wants_prop_built(Bases[i].facilities_built[offset] & mask, 0)
                     || (map_loc(x, y)->climate & 0xE0) != ALT_BIT_SHORE_LINE) {
                     // Image loads AltNatural[3] (edi) first, then rises (ebx),
                     // `add ebx, edi` -> rises + AltNatural[3] (uncertain order).
