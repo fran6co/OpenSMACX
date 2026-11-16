@@ -18,6 +18,15 @@ bindings: a uniform label shift that every proven binding admits, otherwise a
 unique assignment that keeps their relative label order. Anything still
 ambiguous, or disagreeing across configured trials, is reported, not guessed.
 
+Before that, identical duplicates are narrowed by the functions that use the
+literal: the binding's evidence function (its fourth field) and the mapped
+function enclosing its line, when the unit maps and compiles them and their
+original bodies address the literal. Each fresh body's ``$SGn`` relocations are
+matched against the original body's absolute operand sites for the literal. A
+label relocated at the same body offset as such a site decides; otherwise a
+label that is the only content-equal candidate the function references at all.
+Every such function must decide, and all must agree, or nothing is narrowed.
+
 A pooled ``??_C@`` name is stable while its TU pools strings. When the TU's
 recipe stops pooling, the fresh object no longer defines that name: the literal
 is then a static label too. Such a stale pooled binding is re-identified by
@@ -39,10 +48,11 @@ from .literal_writer import rewrite_literal_symbols
 from .mapping_check import build_units
 from .match_scope import affected_units, changed_files
 from .measurement import Measurement
-from .model import Result
+from .model import Result, Span
 from .pe_coff import Coff, PeImage
 from .records import read_json
 from .source.publication import publish
+from .source.reader import read_file
 from .source_inventory import image_pin
 from .source_replica import artifact_parent
 
@@ -87,6 +97,91 @@ def _candidates(binding, obj, labels, image) -> tuple[list[int], str | None]:
     return sorted(found), None
 
 
+def _context_choice(binding, candidates, obj, image, context) -> tuple[int | None, str]:
+    """One candidate proven by one original function's own relocations, else a reason.
+
+    ``context`` is (emitted symbol, original body start, original body end).
+    Only content-equal candidates are considered, so the choice can never name
+    bytes that differ from the image.
+    """
+    name, start, end = context
+    defined = {(item.section, item.value) for item in obj.symbols.values()
+               if item.name == name and item.section > 0 and item.storage in (2, 3)}
+    if len(defined) != 1:
+        return None, f"{name} is not uniquely defined in the fresh object"
+    (number, value), = defined
+    section = obj.sections[number - 1]
+    others = sorted(item.value for item in obj.symbols.values()
+                    if item.section == number and item.storage in (2, 3) and item.value > value)
+    limit = min(others, default=len(section.data))
+    wanted = set(candidates)
+    referenced = {}
+    for offset, target, kind in section.relocations:
+        match = STATIC_STRING.fullmatch(obj.symbols[target].name)
+        if (kind == 6 and match and value <= offset < limit and int(match.group(1)) in wanted
+                and int.from_bytes(section.data[offset:offset + 4], "little") == 0):
+            referenced.setdefault(int(match.group(1)), set()).add(offset - value)
+    exact = sorted(label for label, offsets in referenced.items()
+                   if offsets & context_sites(binding, image, start, end))
+    if len(exact) == 1:
+        return exact[0], "context_relocation"
+    if not exact and len(referenced) == 1:
+        label, = referenced
+        return label, "context_reference"
+    return None, (f"{name} relocations do not separate the candidates: "
+                  + (", ".join(f"$SG{label}" for label in sorted(referenced)) or "none referenced"))
+
+
+def context_sites(binding, image, start, end) -> set[int]:
+    """Body offsets of the original function's absolute operands addressing the literal."""
+    return {offset for offset in image.absolute_sites(Span(start, end))
+            if int.from_bytes(image.read(Span(start + offset, start + offset + 4)), "little")
+            == binding.span.start}
+
+
+def _narrowed(binding, candidates, obj, image, contexts, row) -> list[int]:
+    """Narrow identical duplicates by the functions that use the literal.
+
+    Two original functions can witness a binding: its evidence function (the
+    fourth field) and the mapped function whose annotation encloses the
+    binding's line. Each one whose original body addresses the literal must
+    decide, and all deciders must agree; otherwise nothing is narrowed and the
+    unit-wide shift/order rules (which refuse ambiguity) still apply.
+    """
+    if len(candidates) < 2 or contexts is None:
+        return candidates
+    by_address, markers = contexts
+    addresses = [binding.evidence.address]
+    before = [address for line, address in markers if line < binding.line]
+    if before and before[-1] not in addresses:
+        addresses.append(before[-1])
+    choices, notes = set(), []
+    for address in addresses:
+        context = by_address.get(address)
+        if context is None:
+            notes.append(f"0x{address:08X} is not mapped in this unit")
+            continue
+        try:
+            if not context_sites(binding, image, context[1], context[2]):
+                notes.append(f"0x{address:08X} has no original operand addressing the literal")
+                continue
+        except ValueError as error:
+            notes.append(f"0x{address:08X} original body is unreadable: {error}")
+            continue
+        choice, note = _context_choice(binding, candidates, obj, image, context)
+        if choice is None:
+            row["context"] = note
+            return candidates
+        choices.add(choice)
+        notes.append(f"{note} 0x{address:08X}")
+    if len(choices) != 1:
+        row["context"] = ("context functions disagree: " if choices else "") + "; ".join(notes)
+        return candidates
+    choice, = choices
+    row["context"] = f"$SG{choice} by " + "; ".join(note for note in notes if note.startswith("context_"))
+    return [choice]
+
+
 def _ordered(sets: list[set[int]]) -> list[set[int]]:
     """Prune candidates to those in some strictly increasing assignment."""
     sets = [set(item) for item in sets]
@@ -102,7 +197,7 @@ def _ordered(sets: list[set[int]]) -> list[set[int]]:
     return sets
 
 
-def plan_unit(bindings, obj, image) -> tuple[list[dict], int | None]:
+def plan_unit(bindings, obj, image, contexts=None) -> tuple[list[dict], int | None]:
     """Return one row per ``$SG`` binding and the uniform shift applied, if any.
 
     Row status: ``valid`` (keeps its symbol), ``rebind`` (new symbol proven)
@@ -119,7 +214,7 @@ def plan_unit(bindings, obj, image) -> tuple[list[dict], int | None]:
         if reason is not None:
             row.update(status="unproven", reason=reason)
         else:
-            proven.append((binding, candidates, row))
+            proven.append((binding, _narrowed(binding, candidates, obj, image, contexts, row), row))
         rows.append(row)
     if not proven:
         return rows, None
@@ -172,7 +267,7 @@ def _stale_pooled(bindings, obj) -> list:
             if item.symbol.startswith(POOLED_PREFIX) and item.symbol not in defined]
 
 
-def plan_pooled(bindings, static_rows, static_bindings, obj, image) -> list[dict]:
+def plan_pooled(bindings, static_rows, static_bindings, obj, image, contexts=None) -> list[dict]:
     """Rows for stale pooled bindings; ``static_rows`` supply layout anchors.
 
     A unique content match is proven by content. Identical duplicates are
@@ -199,6 +294,8 @@ def plan_pooled(bindings, static_rows, static_bindings, obj, image) -> list[dict
                "end": f"0x{binding.span.end:08X}", "previous": binding.symbol,
                "symbol": binding.symbol, "candidates": [f"$SG{value}" for value in candidates]}
         rows.append(row)
+        if reason is None:
+            candidates = _narrowed(binding, candidates, obj, image, contexts, row)
         if reason is not None:
             row.update(status="unproven", reason=reason)
         elif len(candidates) == 1:
@@ -251,6 +348,21 @@ def _verify(unit_bindings, rows, obj, image) -> None:
         if row["line"] in failed:
             row.update(status="unproven", symbol=row["previous"],
                        reason=f"proposed label fails the literal check: {failed[row['line']]}")
+
+
+def _unit_contexts(path: Path):
+    """({original address: (emitted symbol, body start, body end)}, [(marker line, address)]) in ``path``."""
+    by_address, markers = {}, []
+    try:
+        records = read_file(path)
+    except (OSError, ValueError):
+        return by_address, markers
+    for record in records:
+        if record.image_spans and (record.symbol or record.name):
+            start, end = record.image_spans[0]
+            by_address.setdefault(record.address, (record.symbol or record.name, start, end))
+            markers.append((record.line, record.address))
+    return by_address, sorted(markers)
 
 
 def rebind_literals(root: Path, image_path: Path, *, units=None, since=None, write=False,
@@ -312,6 +424,7 @@ def rebind_literals(root: Path, image_path: Path, *, units=None, since=None, wri
         # A v2 merged declaration states linker merging; it is not a TU-private label.
         pooled = [item for item in by_unit[unit]
                   if item.symbol.startswith(POOLED_PREFIX) and not item.merged]
+        contexts = _unit_contexts(root / unit)
         trials, plans, error = [], [], None
         for flags in settings.flags_for(unit):
             try:
@@ -323,8 +436,8 @@ def rebind_literals(root: Path, image_path: Path, *, units=None, since=None, wri
                 error = str(failure)
                 trials.append({"flags": list(flags), "result": Result.UNKNOWN, "reason": error})
                 break
-            rows, shift = plan_unit(static, obj, image) if static else ([], None)
-            rows = rows + plan_pooled(_stale_pooled(pooled, obj), rows, static, obj, image)
+            rows, shift = plan_unit(static, obj, image, contexts) if static else ([], None)
+            rows = rows + plan_pooled(_stale_pooled(pooled, obj), rows, static, obj, image, contexts)
             rows.sort(key=lambda row: row["line"])
             _verify(by_unit[unit], rows, obj, image)
             plans.append((rows, shift))

@@ -270,3 +270,140 @@ def test_relocation_mismatch_on_a_static_label_hints_at_rebinding():
     assert "rebind-literals --unit" in strict_row_reason(row)
     row["relocations"][0]["symbol"] = "_g"
     assert "rebind-literals" not in strict_row_reason(row)
+
+
+# Evidence-function relocations: the original f (0x401000) pushes ABC2 at body offset 1.
+def code_image(target=ABC2, *, shared=False):
+    """``shared``: g (0x401010) pushes the same literal at its offset 1 too."""
+    data = bytearray(image())
+    struct.pack_into("<II", data, 0x98 + 96 + 5 * 8, 0x1100, 12)  # base relocation directory
+    data[512:517] = b"\x68" + struct.pack("<I", target)
+    data[528:533] = b"\x68" + struct.pack("<I", target)
+    struct.pack_into("<IIHH", data, 512 + 0x100, 0x1000, 12, 0x3001, 0x3011 if shared else 0)
+    return bytes(data)
+
+
+def code_obj(labels, references, *, other=()):
+    """``labels`` as in ``obj``; .text holds ``?f@@YAXXZ`` then ``?g@@YAXXZ`` at 0x10.
+
+    ``references`` / ``other`` are (body offset, label number) DIR32 sites in f / g.
+    """
+    data, values = b"", []
+    for number, contents in labels:
+        values.append((number, len(data)))
+        data += contents + bytes(-len(contents) % 4)
+    text = bytes(32)  # DIR32 addends are zero
+    base = 20 + 2 * 40
+    names = [".data", *(f"$SG{number}" for number, _ in labels), "?f@@YAXXZ", "?g@@YAXXZ"]
+    strings, table = b"", {}
+    for name in names:
+        if len(name) > 8:
+            table[name] = 4 + len(strings)
+            strings += name.encode() + b"\0"
+
+    def entry(name, value, section, storage, aux=0):
+        raw = name.encode().ljust(8, b"\0") if name not in table else struct.pack("<II", 0, table[name])
+        return raw + struct.pack("<IhHBB", value, section, 0x20 if section == 2 else 0, storage, aux)
+    symbols = entry(".data", 0, 1, 3, 1) + struct.pack("<IHHIHB3s", len(data), 0, 0, 0, 0, 0, bytes(3))
+    index = {}
+    for number, value in values:
+        index[number] = 2 + len(index)
+        symbols += entry(f"$SG{number}", value, 1, 3)
+    symbols += entry("?f@@YAXXZ", 0, 2, 2) + entry("?g@@YAXXZ", 0x10, 2, 2)
+    sites = [(offset, number) for offset, number in references] + [(0x10 + offset, number) for offset, number in other]
+    relocations = b"".join(struct.pack("<IIH", offset, index[number], 6) for offset, number in sites)
+    text_at, relocations_at = base + len(data), base + len(data) + len(text)
+    symbols_at = relocations_at + len(relocations)
+    header = struct.pack("<HHIIIHH", 0x14C, 2, 0, symbols_at, 4 + len(values), 0, 0)
+    sections = (b".data\0\0\0" + struct.pack("<IIIIIIHHI", 0, 0, len(data), base, 0, 0, 0, 0, 0xC0300040)
+                + b".text\0\0\0" + struct.pack("<IIIIIIHHI", 0, 0, len(text), text_at, relocations_at, 0,
+                                               len(sites), 0, 0x60500020))
+    return (header + sections + data + text + relocations + symbols
+            + struct.pack("<I", 4 + len(strings)) + strings)
+
+
+@pytest.fixture
+def code_project(project):
+    raw = code_image()
+    (project / "original.exe").write_bytes(raw)
+    (project / "code/PIN").write_text("sha256 " + hashlib.sha256(raw).hexdigest() + "\n")
+    return project
+
+
+def context_source(project, symbol):
+    path = project / "code/f.cc"
+    path.write_bytes(("// ORIGINAL: 0x00401000 ?f@@YAXXZ 0x00401000-0x00401010\r\nvoid f() {\r\n"
+                      + literal(ABC2, ABC2 + 4, symbol) + "}\r\n").encode())
+    return path
+
+
+def code_run(project, labels, references, write=False, **options):
+    return rebind_literals(project, project / "original.exe", write=write,
+                           compiler=lambda *_: code_obj(labels, references, **options))
+
+
+ABCS = ((100, b"abc\0"), (101, b"abc\0"), (102, b"hello\0"))
+
+
+def test_evidence_function_relocation_resolves_several_shifts(code_project):
+    # Stale $SG104: shifts -4 and -3 both fit the duplicates; f's own site names $SG101.
+    path = context_source(code_project, "$SG104")
+    before = path.read_bytes()
+    report = code_run(code_project, ABCS, [(1, 101)], other=[(1, 100)], write=True)
+    row, = report["units"][0]["bindings"]
+    assert (row["status"], row["symbol"]) == ("rebound", "$SG101")
+    assert row["context"] == "$SG101 by context_relocation 0x00401000" and row["candidates"] == ["$SG100", "$SG101"]
+    assert path.read_bytes() == before.replace(b"$SG104", b"$SG101")
+    row, = code_run(code_project, ABCS, [(1, 101)], other=[(1, 100)])["units"][0]["bindings"]
+    assert (row["status"], row["symbol"]) == ("valid", "$SG101")
+
+
+def test_evidence_function_relocation_moves_a_content_valid_wrong_copy(code_project):
+    # $SG100 holds the bytes, but f emits its literal as $SG101: shift 0 no longer wins.
+    context_source(code_project, "$SG100")
+    report = code_run(code_project, ABCS, [(1, 101)], other=[(1, 100)])
+    assert rows(report) == [("$SG100", "$SG101", "rebind")]
+
+
+def test_evidence_function_reference_away_from_the_site_still_decides(code_project):
+    # f is not byte-exact (its push moved), but it references only one candidate.
+    context_source(code_project, "$SG104")
+    report = code_run(code_project, ABCS, [(5, 100)], other=[(1, 101)])
+    row, = report["units"][0]["bindings"]
+    assert (row["status"], row["symbol"], row["context"]) == ("rebind", "$SG100", "$SG100 by context_reference 0x00401000")
+
+
+def test_evidence_function_that_cannot_separate_duplicates_is_refused(code_project):
+    path = context_source(code_project, "$SG104")
+    before = path.read_bytes()
+    # f references both copies away from the original site: no choice.
+    report = code_run(code_project, ABCS, [(5, 100), (9, 101)], write=True)
+    row, = report["units"][0]["bindings"]
+    assert row["status"] == "unproven" and "several uniform label shifts" in row["reason"]
+    assert "?f@@YAXXZ relocations do not separate the candidates: $SG100, $SG101" == row["context"]
+    assert report["result"] == "unknown" and not report["persisted"] and path.read_bytes() == before
+    # A relocation at the very site to a label with different bytes is never a candidate.
+    labels = ((100, b"abc\0"), (101, b"abc\0"), (102, b"abd\0"))
+    row, = code_run(code_project, labels, [(1, 102)], write=True)["units"][0]["bindings"]
+    assert row["status"] == "unproven" and row["candidates"] == ["$SG100", "$SG101"]
+    assert "none referenced" in row["context"] and path.read_bytes() == before
+
+
+def test_evidence_and_enclosing_functions_must_agree(code_project):
+    # A shared original literal: the binding sits in g, its evidence is f, and
+    # both original bodies push it, but each compiled body has its own copy.
+    raw = code_image(shared=True)
+    (code_project / "original.exe").write_bytes(raw)
+    (code_project / "code/PIN").write_text("sha256 " + hashlib.sha256(raw).hexdigest() + "\n")
+    path = code_project / "code/f.cc"
+    path.write_bytes(("// ORIGINAL: 0x00401000 ?f@@YAXXZ 0x00401000-0x00401010\r\nvoid f() {\r\n}\r\n"
+                      "// ORIGINAL: 0x00401010 ?g@@YAXXZ 0x00401010-0x00401020\r\nvoid g() {\r\n"
+                      + literal(ABC2, ABC2 + 4, "$SG100") + "}\r\n").encode())
+    report = code_run(code_project, ABCS, [(1, 101)], other=[(1, 100)])
+    row, = report["units"][0]["bindings"]
+    assert (row["status"], row["symbol"]) == ("valid", "$SG100"), "no narrowing: shift 0 still holds"
+    assert row["context"].startswith("context functions disagree: ")
+    # When both compiled bodies reference the same copy, they agree.
+    row, = code_run(code_project, ABCS, [(1, 101)], other=[(1, 101)])["units"][0]["bindings"]
+    assert (row["status"], row["symbol"]) == ("rebind", "$SG101")
+    assert row["context"] == "$SG101 by context_relocation 0x00401000; context_relocation 0x00401010"
