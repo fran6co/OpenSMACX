@@ -478,8 +478,10 @@ L_5949b3:
         territory = whose_territory(faction, Vehs[veh_id].waypoint_x[0],
                                     Vehs[veh_id].waypoint_y[0], NULL, 0);
         if (territory >= 0 && territory != faction
-            && !(PlayersData[faction].diplo_treaties[territory] & 0xC11))
-            goto L_5962dc;
+            && !(PlayersData[faction].diplo_treaties[territory] & 0xC11)) {
+            Vehs[veh_id].order = ORDER_NONE;
+            goto done;
+        }
     }
 
     // 594a5f: alien artifact entering a friendly base.
@@ -562,8 +564,42 @@ L_5949b3:
     }
 
     // 594e09
-    if (direction >= 8)
-        goto L_5962f2;
+    if (direction >= 8) {
+        if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_AIR
+                && Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range != 0
+                && (NetDaemonNet.action_mode_ & 1) != 0
+                && faction == ConsoleGlobal.faction_id_
+                && base_who(dest_x, dest_y) < 0
+                && (bit_at(dest_x, dest_y) & BIT_AIRBASE) == 0) {
+            for (int v = veh_top(veh_id); v >= 0; v = veh_next_stack_id(v)) {
+                // Tests the mover, not the stack member (bug kept).
+                if (has_abil(Vehs[veh_id].proto_id, ABL_CARRIER))
+                    goto L_596573;
+                if (VehPrototypes[Vehs[v].proto_id].plan == PLAN_SUPPLY_CONVOY
+                        && Chassis[VehPrototypes[Vehs[v].proto_id].chassis_id].triad == TRIAD_AIR)
+                    goto L_596573;
+            }
+            if (veh_moves(veh_id)
+                    && (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range == 1
+                        || Vehs[veh_id].terraforming_turns != 0)) {
+                action_home(veh_id, 0);
+                if (Vehs[veh_id].order == ORDER_MOVE_TO) {
+                    if (IsMultiplayerNet && !ConsoleControlTurnActive) {
+                        synch_veh(veh_id);
+                        NetDaemonNet.await_synch();
+                    }
+                    return 0;   // 5964cf
+                }
+            }
+        }
+    L_596573:
+        selector = 1;
+        if ((NetDaemonNet.action_mode_ & 2) == 0)
+            goto done;
+        veh_skip(veh_id);
+        Vehs[veh_id].state &= ~0x40U;
+        goto L_598cb9;
+    }
     Vehs[veh_id].state |= 4;
     if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_INFO_WARFARE
         && owner >= 0 && faction != owner) {
@@ -594,7 +630,23 @@ L_5949b3:
                 && (Vehs[veh_id].waypoint_x[0] != Bases[base_id].x
                     || Vehs[veh_id].waypoint_y[0] != Bases[base_id].y))
                 goto L_595083;
-            goto L_5965a3;
+            if (owner == ConsoleGlobal.faction_id_) {
+                ConsoleGlobal.focus(src_x, src_y, faction);
+                if (!IsMultiplayerNet)
+                    clock_wait(400);
+                stack_veh(veh_id, 1);
+                veh_scoot(veh_id, src_x, src_y, direction, 0);
+                stack_put(veh_id, src_x, src_y);
+                draw_tile(dest_x, dest_y, 2);
+            }
+            if (probe(veh_id, base_id, -1, 1) && IsMultiplayerNet && !ConsoleControlTurnActive
+                    && (NetDaemonNet.action_mode_ & 1) != 0
+                    && (NetDaemonNet.action_mode_ & 2) == 0) {
+                synch_veh(veh_id);
+                NetDaemonNet.await_synch();
+                return 1;   // 596667
+            }
+            goto done;
         }
         if (!(PlayersData[faction].diplo_treaties[owner] & 1)) {
             if (target_veh >= 0 && stack_check(target_veh, 2, PLAN_INFO_WARFARE, -1, -1))
@@ -603,8 +655,11 @@ L_5949b3:
             if (probe(veh_id, -1, target_veh, 1) && IsMultiplayerNet
                 && !ConsoleControlTurnActive
                 && (NetDaemonNet.action_mode_ & 1)
-                && !(NetDaemonNet.action_mode_ & 2))
-                goto L_5966e0;
+                && !(NetDaemonNet.action_mode_ & 2)) {
+                synch_veh(veh_id);
+                NetDaemonNet.await_synch();
+                return 1;   // 5966f6
+            }
             if (GameDataStateStorage.fields_.vehicle_current_count_ != group_count_at_entry)
                 goto L_599b2a;
             if (target_veh >= 0)
@@ -628,18 +683,39 @@ L_595083:
                     goto done;
                 goto L_59512c;
             } else {
-                if (!has_abil(Vehs[veh_id].proto_id, ABL_AMPHIBIOUS))
-                    goto L_59676f;
+                if (!has_abil(Vehs[veh_id].proto_id, ABL_AMPHIBIOUS)) {
+                    if (faction == ConsoleGlobal.faction_id_
+                            && (NetDaemonNet.action_mode_ & 1) != 0) {
+                        parse_say(0, Ability[abil_index(ABL_AMPHIBIOUS)].name, -1, -1);
+                        NetMsgPrimary.pop("AMPHIBBASE", 5000, 0, NULL);
+                    }
+                    goto done;
+                }
             }
         } else {
             // 5952c6: own unit/base on an ocean tile: transport check.
-            if (stack_check(target_veh, 8, faction, -1, -1) <= 0) {
-                if (base_id < 0)
-                    goto L_596884;
-                if (!has_abil(Vehs[veh_id].proto_id, ABL_AMPHIBIOUS)
-                    && !stack_check(target_veh, 2, PLAN_NAVAL_TRANSPORT, -1, -1)
-                    && !stack_check(veh_id, 2, PLAN_NAVAL_TRANSPORT, -1, -1))
-                    goto L_5967cf;
+            if (stack_check(target_veh, 8, faction, -1, -1) <= 0
+                && (base_id < 0
+                    || (!has_abil(Vehs[veh_id].proto_id, ABL_AMPHIBIOUS)
+                        && !stack_check(target_veh, 2, PLAN_NAVAL_TRANSPORT, -1, -1)
+                        && !stack_check(veh_id, 2, PLAN_NAVAL_TRANSPORT, -1, -1)))) {
+                if (base_id >= 0 && !has_abil(Vehs[veh_id].proto_id, ABL_AMPHIBIOUS)
+                        && !stack_check(target_veh, 2, PLAN_NAVAL_TRANSPORT, -1, -1)
+                        && !stack_check(veh_id, 2, PLAN_NAVAL_TRANSPORT, -1, -1)) {
+                    if (faction == ConsoleGlobal.faction_id_
+                            && (NetDaemonNet.action_mode_ & 1) != 0) {
+                        parse_say(0, Ability[abil_index(ABL_AMPHIBIOUS)].name, -1, -1);
+                        NetMsgPrimary.pop("AMPHIBBASE2", 5000, 0, NULL);
+                    }
+                    goto done;
+                }
+                if (stack_check(target_veh, 2, PLAN_NAVAL_TRANSPORT, -1, -1)
+                        && faction == ConsoleGlobal.faction_id_
+                        && (NetDaemonNet.action_mode_ & 1) != 0) {
+                    NetMsgPrimary.pop(stack_check(target_veh, 2, PLAN_NAVAL_TRANSPORT, -1, -1) > 1
+                                          ? "FULLTRANSPORTS" : "FULLTRANSPORT", 5000, 0, NULL);
+                }
+                goto done;
             }
             if (base_id < 0)
                 flag_68 = 1;
@@ -653,8 +729,43 @@ L_595083:
         && VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_INFO_WARFARE
         && target_veh < 0
         && zoc_move(src_x, src_y, faction)
-        && zoc_move(dest_x, dest_y, faction))
-        goto L_5968f2;
+        && zoc_move(dest_x, dest_y, faction)) {
+        if (faction != ConsoleGlobal.faction_id_ || stealth
+                || (NetDaemonNet.action_mode_ & 1) == 0)
+            goto done;
+        g_FX.play(13);
+        if (faction == ConsoleGlobal.faction_id_ && !IsMultiplayerNet
+                && ((GameDataStateStorage.fields_.game_preferences_ & 0x20) != 0
+                    || (PlayersData[faction].diff_level <= 1
+                        && (++OrderVehTutorialNoticeCounter & 3) == 1))) {
+
+            parse_say(0, Ability[abil_index(ABL_CLOAKED)].name, -1, -1);
+            quick_zoc(src_x, src_y, faction, dest_x, dest_y, &zoc_x1, &zoc_y1);
+            quick_zoc(dest_x, dest_y, faction, src_x, src_y, &zoc_x2, &zoc_y2);
+            TutorialWindow.tut_map("ZOCMSG", zoc_x1, zoc_y1, veh_id, NULL, 0, zoc_x2, zoc_y2);
+        }
+        if (IsMultiplayerNet)
+            goto done;
+        probed = 0;
+        {
+        for (int dir = 0; dir < 8; dir++) {
+            int x = wrap_map_x(dest_x + VehMoveDeltaX[dir]);
+            int y = dest_y + VehMoveDeltaY[dir];
+            if (!on_map(x, y))
+                continue;
+            int spotted = stack_fix(veh_at(x, y));
+            if (spotted >= 0 && Vehs[spotted].faction_id != faction
+                    && !(PlayersData[faction].diplo_treaties[Vehs[spotted].faction_id] & 1)
+                    && !(faction_bit & Vehs[spotted].visibility)) {
+                spot_loc(x, y, faction);
+                probed = 1;
+            }
+        }
+        }
+        if (probed)
+            draw_radius(dest_x, dest_y, 1, 2);
+        goto done;
+    }
 
     // 5953ba: supply convoy entering a base.
     if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_SUPPLY_CONVOY
@@ -663,8 +774,11 @@ L_595083:
         if (!(NetDaemonNet.action_mode_ & 2)) {
             if (!shown)
                 goto done;
-            if (IsMultiplayerNet && !ConsoleControlTurnActive)
-                goto L_596b1f;
+            if (IsMultiplayerNet && !ConsoleControlTurnActive) {
+                synch_veh(veh_id);
+                NetDaemonNet.await_synch();
+                return 1;   // 596b32
+            }
         } else {
             if (shown)
                 goto done;
@@ -740,8 +854,31 @@ L_595083:
             else
                 spawn_proto = BSC_MIND_WORMS;
             target_veh = veh_init(spawn_proto, 0, dest_x, dest_y);
-            if (target_veh >= 0)
-                goto L_596bd9;
+            if (target_veh >= 0) {
+                // WORKAROUND(inline): dead budget spend (supply_options' probe, see
+                // its declaration). With every message block written at its test
+                // (literal order) and no probe, the sites are 6,6,6,6,7,16 deep
+                // against the image's 5,5,5,5,7,15; five to eight of these calls,
+                // anywhere in the body, give the final teardown's 15. No position or
+                // count moves the four early sites (structural, not spend). The
+                // original spending is not identified.
+                supply_options_budget_probe(2);
+                supply_options_budget_probe(2);
+                supply_options_budget_probe(2);
+                supply_options_budget_probe(2);
+                supply_options_budget_probe(2);
+                Vehs[veh_id].order = ORDER_NONE;
+                spot_stack(target_veh, faction);
+                draw_tile(dest_x, dest_y, 2);
+                bit_set(dest_x, dest_y, 0x100000, 1);
+                if (faction == ConsoleGlobal.faction_id_) {
+                    g_FX.play(13);
+                    parse_says(0, get_adjective(owner), -1, -1);
+                    parse_says(1, VehPrototypes[Vehs[target_veh].proto_id].veh_name, -1, -1);
+                    NetMsgPrimary.pop(dest_ocean ? "ISLESPOTTED" : "WORMSSPOTTED", 5000, 0, NULL);
+                }
+                goto done;
+            }
             goto L_596052;
         }
     }
@@ -760,8 +897,18 @@ L_595137:
     }
     if (probed)
         goto done;
-    if (Vehs[target_veh].flags & 0x400)
-        goto L_596c9f;
+    if (Vehs[target_veh].flags & 0x400) {
+        Vehs[veh_id].order = ORDER_NONE;
+        spot_stack(target_veh, faction);
+        draw_tile(dest_x, dest_y, 2);
+        if (faction == ConsoleGlobal.faction_id_) {
+            g_FX.play(13);
+            parse_says(0, get_adjective(owner), -1, -1);
+            parse_says(1, VehPrototypes[Vehs[target_veh].proto_id].veh_name, -1, -1);
+            NetMsgPrimary.pop(owner ? "SPOTTED" : "SPOTTED0", 5000, 0, NULL);
+        }
+        goto done;
+    }
     if ((Vehs[target_veh].faction_id != faction
          || (Vehs[target_veh].flags & 0x440) == 0x440)
         && !(faction_bit & Vehs[target_veh].visibility)
@@ -769,8 +916,16 @@ L_595137:
         if (base_id >= 0)
             goto L_595734;
         if ((NetDaemonNet.action_mode_ & 1)
-            && faction == ConsoleGlobal.faction_id_)
-            goto L_596d5d;
+            && faction == ConsoleGlobal.faction_id_) {
+            Vehs[veh_id].order = ORDER_NONE;
+            spot_stack(target_veh, faction);
+            draw_tile(dest_x, dest_y, 2);
+            g_FX.play(13);
+            parse_says(0, get_adjective(owner), -1, -1);
+            parse_says(1, VehPrototypes[Vehs[target_veh].proto_id].veh_name, -1, -1);
+            NetMsgPrimary.pop(owner ? "SPOTTED" : "SPOTTED0", 5000, 0, NULL);
+            goto done;
+        }
     }
     // 59521f
     if (base_id >= 0)
@@ -802,8 +957,20 @@ L_595734:
     }
     if (src_ocean && triad == TRIAD_LAND
         && !has_abil(Vehs[veh_id].proto_id, ABL_AMPHIBIOUS)
-        && VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_INFO_WARFARE)
-        goto L_596ec0;
+        && VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_INFO_WARFARE) {
+        {
+            int ability = abil_index(ABL_AMPHIBIOUS);
+            if (faction == ConsoleGlobal.faction_id_
+                    && (NetDaemonNet.action_mode_ & 1) != 0) {
+                parse_say(0, Ability[ability].name, -1, -1);
+                if (base_who(src_x, src_y) >= 0)
+                    NetMsgPrimary.pop("AMPHIBBASE", 5000, 0, NULL);
+                else
+                    NetMsgPrimary.pop("NOTAMPHIB", 5000, 0, NULL);
+            }
+        }
+        goto done;
+    }
 
     // 5957d7
     if (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].mode == WPN_MODE_INFOWAR
@@ -843,8 +1010,45 @@ L_595734:
                 picked = popp(ScriptPopupFile, "ENEMYPROBE", 0, "capture_sm.pcx", NULL);
             if (!picked)
                 goto done;
-            if (picked == 1)
-                goto L_596fbc;
+            if (picked == 1) {
+            L_596fbc:
+                if (faction == ConsoleGlobal.faction_id_ || owner == ConsoleGlobal.faction_id_) {
+                    ConsoleGlobal.focus(src_x, src_y, faction);
+                    stack_veh(veh_id, 1);
+                    veh_scoot(veh_id, src_x, src_y, direction, 0);
+                    stack_put(veh_id, src_x, src_y);
+                    draw_tile(src_x, src_y, 2);
+                }
+                {
+                    int best_base = -1;
+                    int best_pop = -1;
+                    for (int b = 0; b < GameDataStateStorage.fields_.base_current_count_; b++) {
+                        if (Bases[b].faction_id_current == owner && Bases[b].population_size > best_pop) {
+                            best_pop = Bases[b].population_size;
+                            best_base = b;
+                        }
+                    }
+                    if (best_base >= 0) {
+                        stack_put(target_veh, Bases[best_base].x, Bases[best_base].y);
+                        Vehs[target_veh].visibility = 0;
+                        parse_says(2, Bases[best_base].name_string, -1, -1);
+                    } else if (((1 << owner)
+                                & static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) == 0) {
+                        veh_kill(target_veh);
+                    }
+                }
+                draw_tile(dest_x, dest_y, 2);
+                if (owner == ConsoleGlobal.faction_id_) {
+                    parse_says(0, get_adjective(faction), -1, -1);
+                    parse_says(1, order_title(owner), -1, -1);
+                    NetMsgPrimary.pop("GOTMYPROBE", 5000, 0, NULL);
+                } else if (faction == ConsoleGlobal.faction_id_) {
+                    parse_says(0, get_adjective(owner), -1, -1);
+                    parse_says(1, order_title(faction), -1, -1);
+                    NetMsgPrimary.pop("GOTYOURPROBE", 5000, 0, NULL);
+                }
+                goto done;
+            }
             goto L_595a92;
         }
         if (faction == ConsoleGlobal.faction_id_) {
@@ -972,6 +1176,41 @@ L_595e1b:
         }
     }
     log_say("Captured", 0, 0, 0);
+    goto L_596052;
+
+L_5971ce:
+    Vehs[target_veh].flags |= 0x2000;
+    if (faction == ConsoleGlobal.faction_id_)
+        NetMsgPrimary.pop("WORMNOCAPTURE", 5000, 0, NULL);
+    log_say("No Capture", 0, 0, 0);
+    goto L_59724d;
+
+L_597216:
+    log_say("Agitated", 0, 0, 0);
+    if (faction == ConsoleGlobal.faction_id_)
+        NetMsgPrimary.pop("WORMSAGITATED", 5000, 0, NULL);
+
+L_59724d:
+    flag_6c = 1;
+    switch (battle_fight(veh_id, direction, 0, 1, 0)) {
+    case 0:
+        goto done;
+    default:
+        selector = 0;
+        goto done;
+    case 1:
+        veh_id = GameDataStateStorage.fields_.vehicle_selection_follow_limit_;
+        dest_x = src_x;
+        dest_y = src_y;
+        flag_74 = 1;
+        goody = 0;
+        goto L_598cb9;
+    }
+
+L_59729d:
+    selector = battle_fight(veh_id, direction, 0, 1, 0) == 0;
+    goto done;
+
 
 L_596052:
     if (src_ocean) {
@@ -980,8 +1219,14 @@ L_596052:
         if (triad == TRIAD_LAND && target_veh < 0
                 && !has_abil(Vehs[veh_id].proto_id, ABL_AMPHIBIOUS)
                 && base_who(src_x, src_y) >= 0
-                && !stack_check(veh_id, 2, PLAN_NAVAL_TRANSPORT, -1, -1))
-            goto L_5972bd;
+                && !stack_check(veh_id, 2, PLAN_NAVAL_TRANSPORT, -1, -1)) {
+            if (faction == ConsoleGlobal.faction_id_
+                    && (NetDaemonNet.action_mode_ & 1) != 0) {
+                parse_say(0, Ability[abil_index(ABL_AMPHIBIOUS)].name, -1, -1);
+                NetMsgPrimary.pop("AMPHIBBASE2", 5000, 0, NULL);
+            }
+            goto done;
+        }
     } else {
         if (dest_ocean)
             goto L_597345;
@@ -1033,281 +1278,6 @@ L_596052:
             goto done;
         }
     }
-
-L_5962dc:
-    Vehs[veh_id].order = ORDER_NONE;
-    goto done;
-
-L_5962f2:
-    if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_AIR
-            && Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range != 0
-            && (NetDaemonNet.action_mode_ & 1) != 0
-            && faction == ConsoleGlobal.faction_id_
-            && base_who(dest_x, dest_y) < 0
-            && (bit_at(dest_x, dest_y) & BIT_AIRBASE) == 0) {
-        for (int v = veh_top(veh_id); v >= 0; v = veh_next_stack_id(v)) {
-            // Tests the mover, not the stack member (bug kept).
-            if (has_abil(Vehs[veh_id].proto_id, ABL_CARRIER))
-                goto L_596573;
-            if (VehPrototypes[Vehs[v].proto_id].plan == PLAN_SUPPLY_CONVOY
-                    && Chassis[VehPrototypes[Vehs[v].proto_id].chassis_id].triad == TRIAD_AIR)
-                goto L_596573;
-        }
-        if (veh_moves(veh_id)
-                && (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].range == 1
-                    || Vehs[veh_id].terraforming_turns != 0)) {
-            action_home(veh_id, 0);
-            if (Vehs[veh_id].order == ORDER_MOVE_TO) {
-                if (IsMultiplayerNet && !ConsoleControlTurnActive) {
-                    synch_veh(veh_id);
-                    NetDaemonNet.await_synch();
-                }
-                return 0;   // 5964cf
-            }
-        }
-    }
-L_596573:
-    selector = 1;
-    if ((NetDaemonNet.action_mode_ & 2) == 0)
-        goto done;
-    veh_skip(veh_id);
-    Vehs[veh_id].state &= ~0x40U;
-    goto L_598cb9;
-
-L_5965a3:
-    if (owner == ConsoleGlobal.faction_id_) {
-        ConsoleGlobal.focus(src_x, src_y, faction);
-        if (!IsMultiplayerNet)
-            clock_wait(400);
-        stack_veh(veh_id, 1);
-        veh_scoot(veh_id, src_x, src_y, direction, 0);
-        stack_put(veh_id, src_x, src_y);
-        draw_tile(dest_x, dest_y, 2);
-    }
-    if (probe(veh_id, base_id, -1, 1) && IsMultiplayerNet && !ConsoleControlTurnActive
-            && (NetDaemonNet.action_mode_ & 1) != 0
-            && (NetDaemonNet.action_mode_ & 2) == 0) {
-        synch_veh(veh_id);
-        NetDaemonNet.await_synch();
-        return 1;   // 596667
-    }
-    goto done;
-
-L_5966e0:
-    synch_veh(veh_id);
-    NetDaemonNet.await_synch();
-    return 1;   // 5966f6
-
-L_59676f:
-    if (faction == ConsoleGlobal.faction_id_
-            && (NetDaemonNet.action_mode_ & 1) != 0) {
-        parse_say(0, Ability[abil_index(ABL_AMPHIBIOUS)].name, -1, -1);
-        NetMsgPrimary.pop("AMPHIBBASE", 5000, 0, NULL);
-    }
-    goto done;
-
-L_5967cf:
-    if (base_id >= 0 && !has_abil(Vehs[veh_id].proto_id, ABL_AMPHIBIOUS)
-            && !stack_check(target_veh, 2, PLAN_NAVAL_TRANSPORT, -1, -1)
-            && !stack_check(veh_id, 2, PLAN_NAVAL_TRANSPORT, -1, -1)) {
-        if (faction == ConsoleGlobal.faction_id_
-                && (NetDaemonNet.action_mode_ & 1) != 0) {
-            parse_say(0, Ability[abil_index(ABL_AMPHIBIOUS)].name, -1, -1);
-            NetMsgPrimary.pop("AMPHIBBASE2", 5000, 0, NULL);
-        }
-        goto done;
-    }
-L_596884:
-    if (stack_check(target_veh, 2, PLAN_NAVAL_TRANSPORT, -1, -1)
-            && faction == ConsoleGlobal.faction_id_
-            && (NetDaemonNet.action_mode_ & 1) != 0) {
-        NetMsgPrimary.pop(stack_check(target_veh, 2, PLAN_NAVAL_TRANSPORT, -1, -1) > 1
-                              ? "FULLTRANSPORTS" : "FULLTRANSPORT", 5000, 0, NULL);
-    }
-    goto done;
-
-L_5968f2:
-    if (faction != ConsoleGlobal.faction_id_ || stealth
-            || (NetDaemonNet.action_mode_ & 1) == 0)
-        goto done;
-    g_FX.play(13);
-    if (faction == ConsoleGlobal.faction_id_ && !IsMultiplayerNet
-            && ((GameDataStateStorage.fields_.game_preferences_ & 0x20) != 0
-                || (PlayersData[faction].diff_level <= 1
-                    && (++OrderVehTutorialNoticeCounter & 3) == 1))) {
-
-        parse_say(0, Ability[abil_index(ABL_CLOAKED)].name, -1, -1);
-        quick_zoc(src_x, src_y, faction, dest_x, dest_y, &zoc_x1, &zoc_y1);
-        quick_zoc(dest_x, dest_y, faction, src_x, src_y, &zoc_x2, &zoc_y2);
-        TutorialWindow.tut_map("ZOCMSG", zoc_x1, zoc_y1, veh_id, NULL, 0, zoc_x2, zoc_y2);
-    }
-    if (IsMultiplayerNet)
-        goto done;
-    probed = 0;
-    {
-    for (int dir = 0; dir < 8; dir++) {
-        int x = wrap_map_x(dest_x + VehMoveDeltaX[dir]);
-        int y = dest_y + VehMoveDeltaY[dir];
-        if (!on_map(x, y))
-            continue;
-        int spotted = stack_fix(veh_at(x, y));
-        if (spotted >= 0 && Vehs[spotted].faction_id != faction
-                && !(PlayersData[faction].diplo_treaties[Vehs[spotted].faction_id] & 1)
-                && !(faction_bit & Vehs[spotted].visibility)) {
-            spot_loc(x, y, faction);
-            probed = 1;
-        }
-    }
-    }
-    if (probed)
-        draw_radius(dest_x, dest_y, 1, 2);
-    goto done;
-
-L_596b1f:
-    synch_veh(veh_id);
-    NetDaemonNet.await_synch();
-    return 1;   // 596b32
-
-L_596bd9:
-    // WORKAROUND(inline): dead budget spend (supply_options' probe, see its
-    // declaration). Five calls here make the final teardown the image's 15
-    // states and the four early `return` sites 6 deep against the image's 5
-    // (52 -> 47 states, image 43); any count from 5 to 8 gives the same, 12
-    // over-spends the final teardown. The original spending is not identified.
-    supply_options_budget_probe(2);
-    supply_options_budget_probe(2);
-    supply_options_budget_probe(2);
-    supply_options_budget_probe(2);
-    supply_options_budget_probe(2);
-    Vehs[veh_id].order = ORDER_NONE;
-    spot_stack(target_veh, faction);
-    draw_tile(dest_x, dest_y, 2);
-    bit_set(dest_x, dest_y, 0x100000, 1);
-    if (faction == ConsoleGlobal.faction_id_) {
-        g_FX.play(13);
-        parse_says(0, get_adjective(owner), -1, -1);
-        parse_says(1, VehPrototypes[Vehs[target_veh].proto_id].veh_name, -1, -1);
-        NetMsgPrimary.pop(dest_ocean ? "ISLESPOTTED" : "WORMSSPOTTED", 5000, 0, NULL);
-    }
-    goto done;
-
-L_596c9f:
-    Vehs[veh_id].order = ORDER_NONE;
-    spot_stack(target_veh, faction);
-    draw_tile(dest_x, dest_y, 2);
-    if (faction == ConsoleGlobal.faction_id_) {
-        g_FX.play(13);
-        parse_says(0, get_adjective(owner), -1, -1);
-        parse_says(1, VehPrototypes[Vehs[target_veh].proto_id].veh_name, -1, -1);
-        NetMsgPrimary.pop(owner ? "SPOTTED" : "SPOTTED0", 5000, 0, NULL);
-    }
-    goto done;
-
-L_596d5d:
-    Vehs[veh_id].order = ORDER_NONE;
-    spot_stack(target_veh, faction);
-    draw_tile(dest_x, dest_y, 2);
-    g_FX.play(13);
-    parse_says(0, get_adjective(owner), -1, -1);
-    parse_says(1, VehPrototypes[Vehs[target_veh].proto_id].veh_name, -1, -1);
-    NetMsgPrimary.pop(owner ? "SPOTTED" : "SPOTTED0", 5000, 0, NULL);
-    goto done;
-
-L_596ec0:
-    {
-        int ability = abil_index(ABL_AMPHIBIOUS);
-        if (faction == ConsoleGlobal.faction_id_
-                && (NetDaemonNet.action_mode_ & 1) != 0) {
-            parse_say(0, Ability[ability].name, -1, -1);
-            if (base_who(src_x, src_y) >= 0)
-                NetMsgPrimary.pop("AMPHIBBASE", 5000, 0, NULL);
-            else
-                NetMsgPrimary.pop("NOTAMPHIB", 5000, 0, NULL);
-        }
-    }
-    goto done;
-
-L_596fbc:
-    if (faction == ConsoleGlobal.faction_id_ || owner == ConsoleGlobal.faction_id_) {
-        ConsoleGlobal.focus(src_x, src_y, faction);
-        stack_veh(veh_id, 1);
-        veh_scoot(veh_id, src_x, src_y, direction, 0);
-        stack_put(veh_id, src_x, src_y);
-        draw_tile(src_x, src_y, 2);
-    }
-    {
-        int best_base = -1;
-        int best_pop = -1;
-        for (int b = 0; b < GameDataStateStorage.fields_.base_current_count_; b++) {
-            if (Bases[b].faction_id_current == owner && Bases[b].population_size > best_pop) {
-                best_pop = Bases[b].population_size;
-                best_base = b;
-            }
-        }
-        if (best_base >= 0) {
-            stack_put(target_veh, Bases[best_base].x, Bases[best_base].y);
-            Vehs[target_veh].visibility = 0;
-            parse_says(2, Bases[best_base].name_string, -1, -1);
-        } else if (((1 << owner)
-                    & static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) == 0) {
-            veh_kill(target_veh);
-        }
-    }
-    draw_tile(dest_x, dest_y, 2);
-    if (owner == ConsoleGlobal.faction_id_) {
-        parse_says(0, get_adjective(faction), -1, -1);
-        parse_says(1, order_title(owner), -1, -1);
-        NetMsgPrimary.pop("GOTMYPROBE", 5000, 0, NULL);
-    } else if (faction == ConsoleGlobal.faction_id_) {
-        parse_says(0, get_adjective(owner), -1, -1);
-        parse_says(1, order_title(faction), -1, -1);
-        NetMsgPrimary.pop("GOTYOURPROBE", 5000, 0, NULL);
-    }
-    goto done;
-
-L_5971ce:
-    Vehs[target_veh].flags |= 0x2000;
-    if (faction == ConsoleGlobal.faction_id_)
-        NetMsgPrimary.pop("WORMNOCAPTURE", 5000, 0, NULL);
-    log_say("No Capture", 0, 0, 0);
-    goto L_59724d;
-
-L_597216:
-    log_say("Agitated", 0, 0, 0);
-    if (faction == ConsoleGlobal.faction_id_)
-        NetMsgPrimary.pop("WORMSAGITATED", 5000, 0, NULL);
-
-L_59724d:
-    flag_6c = 1;
-    switch (battle_fight(veh_id, direction, 0, 1, 0)) {
-    case 0:
-        goto done;
-    default:
-        selector = 0;
-        goto done;
-    case 1:
-        veh_id = GameDataStateStorage.fields_.vehicle_selection_follow_limit_;
-        dest_x = src_x;
-        dest_y = src_y;
-        flag_74 = 1;
-        goody = 0;
-        goto L_598cb9;
-    }
-
-L_59729d:
-    selector = battle_fight(veh_id, direction, 0, 1, 0) == 0;
-    goto done;
-
-L_5972bd:
-    if (faction == ConsoleGlobal.faction_id_
-            && (NetDaemonNet.action_mode_ & 1) != 0) {
-        parse_say(0, Ability[abil_index(ABL_AMPHIBIOUS)].name, -1, -1);
-        NetMsgPrimary.pop("AMPHIBBASE2", 5000, 0, NULL);
-    }
-    goto done;
-
-// 59731d (DISEMBARKFAIL) is written inline in the disembark block above.
-
 
 L_597345:
     if (base_id >= 0) {

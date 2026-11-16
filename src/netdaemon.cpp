@@ -3649,7 +3649,7 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
                            -1, -1);
                 parse_num(0, NetDaemonFileTransferProgress);
                 PopupModalState = 6;
-                x_pop_caption_flags(ScriptPopupFile, "MPSENDFILE", 0x214200, 0);
+                x_pop_caption_flags(ScriptPopupFile, "MPRECEIVEFILE", 0x214200, 0);
                 PopupModalState = 0;
                 --NetDaemonFileTransferProgress;
             }
@@ -4277,18 +4277,7 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
         ::order_veh(veh_id, packet->payload_14_, 2);
 move_veh_ack:
         log_say("Acknowledging MOVE VEH", faction, 0, 0);
-        if (!primary_state_.leading_words_[0]) {
-            deletion_list_.set_sequence_bits(sequence);
-        }
-        if (faction == ConsoleGlobal.faction_id_) {
-            if (field_1BC0_) {
-                log_say("Remaining Locked2", 0, 0, 0);
-                field_1BC0_ = 0;
-                message_data(0x2214, 0, 0, 0, 0, 0);
-            } else {
-                exec_pending_ = 0;
-            }
-        }
+        end_of_event(faction, sequence);
         break;
     }
     case 0x4403: {
@@ -4298,18 +4287,7 @@ move_veh_ack:
         my_srand(packet->timestamp_);
         action_airdrop(veh_id, x, y, 2);
         log_say("Acknowledging AIRDROP", faction, 0, 0);
-        if (!primary_state_.leading_words_[0]) {
-            deletion_list_.set_sequence_bits(sequence);
-        }
-        if (faction == ConsoleGlobal.faction_id_) {
-            if (field_1BC0_) {
-                log_say("Remaining Locked2", 0, 0, 0);
-                field_1BC0_ = 0;
-                message_data(0x2214, 0, 0, 0, 0, 0);
-            } else {
-                exec_pending_ = 0;
-            }
-        }
+        end_of_event(faction, sequence);
         break;
     }
     case 0x4402: {
@@ -4319,18 +4297,7 @@ move_veh_ack:
         NetDaemonNet.action_mode_ = 2;
         battle_fight(veh_id, packet->payload_14_, 1, 1, 0);
         log_say("Acknowledging ARTY", faction, 0, 0);
-        if (!primary_state_.leading_words_[0]) {
-            deletion_list_.set_sequence_bits(sequence);
-        }
-        if (faction == ConsoleGlobal.faction_id_) {
-            if (field_1BC0_) {
-                log_say("Remaining Locked2", 0, 0, 0);
-                field_1BC0_ = 0;
-                message_data(0x2214, 0, 0, 0, 0, 0);
-            } else {
-                exec_pending_ = 0;
-            }
-        }
+        end_of_event(faction, sequence);
         break;
     }
     case 0x4404:
@@ -4338,18 +4305,7 @@ move_veh_ack:
                 Vehs[packet->payload_10_].order);
         my_srand(packet->timestamp_);
         ::action(packet->payload_10_);
-        if (!primary_state_.leading_words_[0]) {
-            deletion_list_.set_sequence_bits(sequence);
-        }
-        if (faction == ConsoleGlobal.faction_id_) {
-            if (field_1BC0_) {
-                log_say("Remaining Locked2", 0, 0, 0);
-                field_1BC0_ = 0;
-                message_data(0x2214, 0, 0, 0, 0, 0);
-            } else {
-                exec_pending_ = 0;
-            }
-        }
+        end_of_event(faction, sequence);
         break;
     case 0x4417: {
         int veh_id = packet->payload_10_;
@@ -4358,18 +4314,7 @@ move_veh_ack:
         my_srand(packet->timestamp_);
         action_tectonic(veh_id, x, y);
         log_say("Acknowledging TECTONIC", faction, 0, 0);
-        if (!primary_state_.leading_words_[0]) {
-            deletion_list_.set_sequence_bits(sequence);
-        }
-        if (faction == ConsoleGlobal.faction_id_) {
-            if (field_1BC0_) {
-                log_say("Remaining Locked2", 0, 0, 0);
-                field_1BC0_ = 0;
-                message_data(0x2214, 0, 0, 0, 0, 0);
-            } else {
-                exec_pending_ = 0;
-            }
-        }
+        end_of_event(faction, sequence);
         break;
     }
     case 0x4418: {
@@ -4379,18 +4324,7 @@ move_veh_ack:
         my_srand(packet->timestamp_);
         action_fungal(veh_id, x, y);
         log_say("Acknowledging FUNGAL", faction, 0, 0);
-        if (!primary_state_.leading_words_[0]) {
-            deletion_list_.set_sequence_bits(sequence);
-        }
-        if (faction == ConsoleGlobal.faction_id_) {
-            if (field_1BC0_) {
-                log_say("Remaining Locked2", 0, 0, 0);
-                field_1BC0_ = 0;
-                message_data(0x2214, 0, 0, 0, 0, 0);
-            } else {
-                exec_pending_ = 0;
-            }
-        }
+        end_of_event(faction, sequence);
         break;
     }
     case 0x4405: {
@@ -4400,18 +4334,7 @@ move_veh_ack:
         int veh_id = packet->payload_10_;
         action_terraform(veh_id, packet->payload_14_ - 4, 1);
         Vehs[veh_id].order = (int8_t)packet->payload_18_;
-        if (!primary_state_.leading_words_[0]) {
-            deletion_list_.set_sequence_bits(sequence);
-        }
-        if (faction == ConsoleGlobal.faction_id_) {
-            if (field_1BC0_) {
-                log_say("Remaining Locked2", 0, 0, 0);
-                field_1BC0_ = 0;
-                message_data(0x2214, 0, 0, 0, 0, 0);
-            } else {
-                exec_pending_ = 0;
-            }
-        }
+        end_of_event(faction, sequence);
         break;
     }
     case 0x4406:
@@ -4419,36 +4342,14 @@ move_veh_ack:
                 packet->payload_10_, packet->payload_14_);
         my_srand(packet->timestamp_);
         action_destroy(packet->payload_10_, packet->payload_14_, -1, -1);
-        if (!primary_state_.leading_words_[0]) {
-            deletion_list_.set_sequence_bits(sequence);
-        }
-        if (faction == ConsoleGlobal.faction_id_) {
-            if (field_1BC0_) {
-                log_say("Remaining Locked2", 0, 0, 0);
-                field_1BC0_ = 0;
-                message_data(0x2214, 0, 0, 0, 0, 0);
-            } else {
-                exec_pending_ = 0;
-            }
-        }
+        end_of_event(faction, sequence);
         break;
     case 0x4413:
         log_say("From Server: DESTROY TERRAIN2", packet->payload_10_,
                 packet->payload_14_, packet->payload_18_);
         my_srand(packet->timestamp_);
         action_destroy(packet->payload_10_, 0, packet->payload_14_, packet->payload_18_);
-        if (!primary_state_.leading_words_[0]) {
-            deletion_list_.set_sequence_bits(sequence);
-        }
-        if (faction == ConsoleGlobal.faction_id_) {
-            if (field_1BC0_) {
-                log_say("Remaining Locked2", 0, 0, 0);
-                field_1BC0_ = 0;
-                message_data(0x2214, 0, 0, 0, 0, 0);
-            } else {
-                exec_pending_ = 0;
-            }
-        }
+        end_of_event(faction, sequence);
         break;
     case 0x4407:
         log_say("From Server: KILL VEH", packet->faction_, packet->payload_10_, 0);
@@ -4458,54 +4359,21 @@ move_veh_ack:
         } else {
             kill(packet->payload_10_);
         }
-        if (!primary_state_.leading_words_[0]) {
-            deletion_list_.set_sequence_bits(sequence);
-        }
-        if (faction == ConsoleGlobal.faction_id_) {
-            if (field_1BC0_) {
-                log_say("Remaining Locked2", 0, 0, 0);
-                field_1BC0_ = 0;
-                message_data(0x2214, 0, 0, 0, 0, 0);
-            } else {
-                exec_pending_ = 0;
-            }
-        }
+        end_of_event(faction, sequence);
         break;
     case 0x4416:
         log_say("From Server: GIVE VEH", packet->faction_,
                 packet->payload_10_, packet->payload_14_);
         my_srand(packet->timestamp_);
         action_give(packet->payload_10_, packet->payload_14_);
-        if (!primary_state_.leading_words_[0]) {
-            deletion_list_.set_sequence_bits(sequence);
-        }
-        if (faction == ConsoleGlobal.faction_id_) {
-            if (field_1BC0_) {
-                log_say("Remaining Locked2", 0, 0, 0);
-                field_1BC0_ = 0;
-                message_data(0x2214, 0, 0, 0, 0, 0);
-            } else {
-                exec_pending_ = 0;
-            }
-        }
+        end_of_event(faction, sequence);
         break;
     case 0x4408:
         log_say("From Server: BUILD BASE", message + 0x14, packet->faction_,
                 packet->payload_10_, 0);
         my_srand(packet->timestamp_);
         action_build(packet->payload_10_, message + 0x14);
-        if (!primary_state_.leading_words_[0]) {
-            deletion_list_.set_sequence_bits(sequence);
-        }
-        if (faction == ConsoleGlobal.faction_id_) {
-            if (field_1BC0_) {
-                log_say("Remaining Locked2", 0, 0, 0);
-                field_1BC0_ = 0;
-                message_data(0x2214, 0, 0, 0, 0, 0);
-            } else {
-                exec_pending_ = 0;
-            }
-        }
+        end_of_event(faction, sequence);
         break;
     case 0x4409: {
         int veh_id = packet->payload_10_;
@@ -4513,18 +4381,7 @@ move_veh_ack:
         my_srand(packet->timestamp_);
         action_oblit(veh_id, packet->payload_14_);
         log_say("Acknowledging OBLIT", 0, 0, 0);
-        if (!primary_state_.leading_words_[0]) {
-            deletion_list_.set_sequence_bits(sequence);
-        }
-        if (faction == ConsoleGlobal.faction_id_) {
-            if (field_1BC0_) {
-                log_say("Remaining Locked2", 0, 0, 0);
-                field_1BC0_ = 0;
-                message_data(0x2214, 0, 0, 0, 0, 0);
-            } else {
-                exec_pending_ = 0;
-            }
-        }
+        end_of_event(faction, sequence);
         break;
     }
     case 0x4410: {
@@ -4532,18 +4389,7 @@ move_veh_ack:
         log_say("From Server: GATE", packet->faction_, veh_id, packet->payload_14_);
         action_gate(veh_id, packet->payload_14_);
         log_say("Acknowledging GATE", 0, 0, 0);
-        if (!primary_state_.leading_words_[0]) {
-            deletion_list_.set_sequence_bits(sequence);
-        }
-        if (faction == ConsoleGlobal.faction_id_) {
-            if (field_1BC0_) {
-                log_say("Remaining Locked2", 0, 0, 0);
-                field_1BC0_ = 0;
-                message_data(0x2214, 0, 0, 0, 0, 0);
-            } else {
-                exec_pending_ = 0;
-            }
-        }
+        end_of_event(faction, sequence);
         break;
     }
     case 0x4411:
@@ -4557,18 +4403,7 @@ move_veh_ack:
                 packet->payload_10_, packet->payload_14_);
         my_srand(packet->timestamp_);
         retire_proto(packet->payload_10_, packet->payload_14_);
-        if (!primary_state_.leading_words_[0]) {
-            deletion_list_.set_sequence_bits(sequence);
-        }
-        if (faction == ConsoleGlobal.faction_id_) {
-            if (field_1BC0_) {
-                log_say("Remaining Locked2", 0, 0, 0);
-                field_1BC0_ = 0;
-                message_data(0x2214, 0, 0, 0, 0, 0);
-            } else {
-                exec_pending_ = 0;
-            }
-        }
+        end_of_event(faction, sequence);
         break;
     case 0x4412:
         log_say("From Server: SATELLITE ATTACK", packet->payload_10_,
@@ -4579,36 +4414,14 @@ move_veh_ack:
         action_sat_attack(packet->payload_10_, packet->payload_14_,
                           packet->payload_18_, packet->payload_1C_);
         log_say("Acknowledging SATELLITE ATTACK", 0, 0, 0);
-        if (!primary_state_.leading_words_[0]) {
-            deletion_list_.set_sequence_bits(sequence);
-        }
-        if (faction == ConsoleGlobal.faction_id_) {
-            if (field_1BC0_) {
-                log_say("Remaining Locked2", 0, 0, 0);
-                field_1BC0_ = 0;
-                message_data(0x2214, 0, 0, 0, 0, 0);
-            } else {
-                exec_pending_ = 0;
-            }
-        }
+        end_of_event(faction, sequence);
         break;
     case 0x4414:
         log_say("From Server: NERVE STAPLE", packet->payload_10_, 0, 0);
         my_srand(packet->timestamp_);
         action_staple(packet->payload_10_);
         log_say("Acknowledging NERVE STAPLE", 0, 0, 0);
-        if (!primary_state_.leading_words_[0]) {
-            deletion_list_.set_sequence_bits(sequence);
-        }
-        if (faction == ConsoleGlobal.faction_id_) {
-            if (field_1BC0_) {
-                log_say("Remaining Locked2", 0, 0, 0);
-                field_1BC0_ = 0;
-                message_data(0x2214, 0, 0, 0, 0, 0);
-            } else {
-                exec_pending_ = 0;
-            }
-        }
+        end_of_event(faction, sequence);
         break;
     case 0x4440:
         log_say("From Server: DOUBLE CROSS", packet->payload_10_,
@@ -4616,18 +4429,7 @@ move_veh_ack:
         my_srand(packet->timestamp_);
         double_cross(packet->payload_10_, packet->payload_14_, packet->payload_18_);
         // This arm rereads sequence and faction from the packet.
-        if (!primary_state_.leading_words_[0]) {
-            deletion_list_.set_sequence_bits(packet->sequence_);
-        }
-        if (packet->faction_ == ConsoleGlobal.faction_id_) {
-            if (field_1BC0_) {
-                log_say("Remaining Locked2", 0, 0, 0);
-                field_1BC0_ = 0;
-                message_data(0x2214, 0, 0, 0, 0, 0);
-            } else {
-                exec_pending_ = 0;
-            }
-        }
+        end_of_event(packet->faction_, packet->sequence_);
         break;
     case 0x4441: {
         log_say_hex("Received TREATY ON", packet->payload_10_,
