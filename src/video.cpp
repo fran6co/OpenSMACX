@@ -169,8 +169,8 @@ void Video::close() {
 #pragma intrinsic(memset)
 #endif
 
-// RECOVERY_LITERAL: v1 0x0069887C 0x00698891 ??_C@_0BF@GKCP@decode_frame_process?$AA@ 0x00636FC0
-// RECOVERY_LITERAL: v1 0x006988A0 0x006988B3 ??_C@_0BD@MDIC@read_frame_process?$AA@ 0x00636FC0
+// RECOVERY_LITERAL: v1 0x0069887C 0x00698891 $SG47515 0x00636FC0
+// RECOVERY_LITERAL: v1 0x006988A0 0x006988B3 $SG47520 0x00636FC0
 // ORIGINAL: 0x00636FC0 ?process@Video@@QAEXXZ 0x00636FC0-0x0063706F FILE BYTE_EXACT
 // symbol    ?process@Video@@QAEXXZ
 // LEVER: one 32-bit `flags` load reused for the first `& 0x8000`/`& 0x10` pair (matches the original's single `mov eax` feeding both `test ah,0x80` and `test al,0x10`), fresh byte reloads for every later `& 0x10` check (matches the repeated `mov al, [esi+0x4ac]` after each intervening call), and `while (r != 0 && (r = decode_frame(0)) != 0) r = play_frame();` for the tail loop. First try, byte exact.

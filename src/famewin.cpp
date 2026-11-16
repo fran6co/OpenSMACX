@@ -53,7 +53,7 @@ void __cdecl hall_of_fame(int add_current_player) {
   // The pinned hall_of_fame and hof_load fopen calls both reference the
   // initial "rb\0" bytes at 0x684620; this writable-data correspondence does
   // not claim runtime immutability or linker selection.
-  // RECOVERY_LITERAL: v1 0x684620 0x684623 ??_C@_02JKAF@rb?$AA@ 0x44AE50
+  // RECOVERY_LITERAL: v1 0x684620 0x684623 $SG58800 0x44AE50
   FILE *file = fopen(HallOfFameReadFilename, "rb");
   if (file == 0) {
     for (int group = 0; group < HallOfFameRecordCount / 5; ++group) {
@@ -78,7 +78,7 @@ void __cdecl hall_of_fame(int add_current_player) {
   // The pinned hall_of_fame and hof_save fopen calls both reference the
   // initial "wb\0" bytes at 0x68460C; this writable-data correspondence does
   // not claim runtime immutability or linker selection.
-  // RECOVERY_LITERAL: v1 0x68460C 0x68460F ??_C@_02NGAF@wb?$AA@ 0x44AE50
+  // RECOVERY_LITERAL: v1 0x68460C 0x68460F $SG58815 0x44AE50
   file = fopen(HallOfFameWriteFilename, "wb");
   if (file != 0) {
     HallOfFameIOMode = 1;

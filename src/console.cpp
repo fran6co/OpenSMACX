@@ -1477,7 +1477,7 @@ void Console::cursor_next(int x_coord, int y_coord) {
     if (((x_coord ^ y_coord) & 1) != 0) {
         if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0) {
 // Original add_site independently passes the same zero-fill empty-string address as danger's second string argument; see its pinned call at 0x00579B95..0x00579B9F.
-// RECOVERY_LITERAL: v1 0x00939FF0 0x00939FF1 ??_C@_00A@?$AA@ 0x00579B70
+// RECOVERY_LITERAL: v1 0x00939FF0 0x00939FF1 $SG63191 0x00579B70
             danger(CursorNextDangerMsg1, "", x_coord,
                   y_coord, 0);
         }
@@ -2166,7 +2166,7 @@ void Console::erase_landmark(int x_coord, int y_coord) {
 
     const int landmark_id = find_landmark(x_coord, y_coord, 1);
     if (landmark_id < 0) {
-// RECOVERY_LITERAL: v1 0x0068A994 0x0068A9A1 $SG63408 0x00516490
+// RECOVERY_LITERAL: v1 0x0068A994 0x0068A9A1 $SG63407 0x00516490
         NetMsgPrimary.pop("LANDMARKNONE", 5000, 0, nullptr);
         return;
     }
@@ -2177,7 +2177,7 @@ void Console::erase_landmark(int x_coord, int y_coord) {
     }
 
     parse_says(0, MapLandmark[landmark_id].name, -1, -1);
-// RECOVERY_LITERAL: v1 0x0068A9B0 0x0068A9BD $SG63411 0x00516490
+// RECOVERY_LITERAL: v1 0x0068A9B0 0x0068A9BD $SG63410 0x00516490
     if (X_pop("LANDMARKKILL", nullptr) == 0) {
         return;
     }
