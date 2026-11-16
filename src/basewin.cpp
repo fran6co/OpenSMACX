@@ -6661,7 +6661,7 @@ void base_panel_sprite(Sprite &sprite, Buffer *canvas, int x, int y) {
 // The fourth argument is the right-button selector; the middle pair is x/y.
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0040B140 0x0040BFE4 0x0040C010 0x0040B996
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x0040B140 0x0040C010 0x0040C06A 0x0040B990
-// ORIGINAL: 0x0040B140 ?garrison_click@BaseWin@@QAEXHHHH@Z 0x0040B140-0x0040BFE3;0x00651A78-0x00651A8D
+// ORIGINAL: 0x0040B140 ?garrison_click@BaseWin@@QAEXHHHH@Z 0x0040B140-0x0040BFE3;0x00651A78-0x00651A8D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0040B140; retired seed provenance git:ac469904:src/unrecovered/0040b140.cpp; all original spans and historical obligations retained.", "image:41E8D0 initializes existing Font/FlatButton/Sprite/RECT and Caviar camera members; 420A70 tears down the same declaration order.", "image:41AF5B supplies ConsoleGlobal GraphicWin virtual-base receiver939444; qualified Console callback leaves the result intact.", "image:40B8F8 borrows the vehicle-ID pointer in NetDaemon row1 payload; normal menu cancel-1 reads inherited GraphicWinA0C. Undefined icon-spacing/invalid-index/modal-borrow inputs remain explicit."], "reason": "Genuine BaseWin owner with actual members, automatic base/member lifetimes and native callback receivers, not fixed executable-address forwarding or raw self-offset access."}
 // TRIED: literal goto-per-branch transcription of the repeated viewport/recenter check (4 occurrences) simplified to one shared boolean form each time, not the exact per-occurrence instruction sharing (e.g. the 0x40b581/0x40bf94 cross-jump).
 void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
