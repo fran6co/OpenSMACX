@@ -680,10 +680,6 @@ void BaseWin::facilities_click(int facility, int, int, int) {
 // TextColourTable is the genuine 195-int text.pcx palette owner at8C6B5C;
 // title indices82/83 and normal indices14/15, not separate globals.
 
-namespace {
-void base_panel_inset(RECT &rect, int amount);
-}
-
 // ORIGINAL: 0x0040D250 ?draw_flash@BaseWin@@QAEXH@Z 0x0040D250-0x0040E35B;0x00651AA2-0x00651ACD
 // RECOVERY_BINDING: v1 {"evidence": ["git:649230f6:src/unrecovered/0040d250.cpp", "source:src/basewin.h", "image:0x40d250"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
 void BaseWin::draw_flash(int redraw_mode) {
@@ -727,9 +723,9 @@ void BaseWin::draw_flash(int redraw_mode) {
     MainInterfaceGlobal.box_sprite(&area, &style);
     MainInterfaceGlobal.set_clip(&panel);
     area = queue_help_rect_;
-    base_panel_inset(area, 3);
+    expand_rect(&area, -3, -3);
     MainInterfaceGlobal.box_sprite(&area, &InterfaceBoxStyles[0]);
-    base_panel_inset(area, 3);
+    expand_rect(&area, -3, -3);
     if (WinScreenWidth == 800) normal.init(DefaultFontFace, 10, 0);
     else normal.init(DefaultFontFace, 12, 0);
     title.init(DefaultFontFace, 12, 1);
@@ -749,7 +745,7 @@ void BaseWin::draw_flash(int redraw_mode) {
     MainInterfaceGlobal.set_text_color(TextColourTable[82], TextColourTable[83], 1, 1);
     MainInterfaceGlobal.set_font(&title, 0, 0, 0);
     area.top = MainInterfaceGlobal.wrap_cent(StringTemp, &area);
-    base_panel_inset(area, 2);
+    expand_rect(&area, -2, -2);
     area.bottom -= font_line_advance(normal);
     MainInterfaceGlobal.set_font(&normal, 0, 0, 0);
     MainInterfaceGlobal.set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
@@ -2493,9 +2489,9 @@ void BaseWin::draw_production(int update_mode) {
     MainInterfaceGlobal.set_clip(&panel);
 
     content = *help;
-    base_panel_inset(content, 3);
+    expand_rect(&content, -3, -3);
     MainInterfaceGlobal.box_sprite(&content, &InterfaceBoxStyles[0]);
-    base_panel_inset(content, 3);
+    expand_rect(&content, -3, -3);
 
     spot1_.kill_type(5);
     spot1_.add(0, 5, help->left, help->top, help->right - help->left,
@@ -3681,7 +3677,7 @@ void BaseWin::draw_energy_alloc(int update_mode) {
         text.left = production_content_rect_.left + 3;
     }
     Buffer::box_sprite(&text, &InterfaceBoxStyles[6]);
-    base_panel_inset(text, 3);
+    expand_rect(&text, -3, -3);
     Buffer::set_text_color(TextColourTable[86], TextColourTable[87], 1, 1);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(36));
@@ -3703,7 +3699,7 @@ void BaseWin::draw_energy_alloc(int update_mode) {
     text = row;
     text.right = 297;
     Buffer::box_sprite(&text, &InterfaceBoxStyles[6]);
-    base_panel_inset(text, 3);
+    expand_rect(&text, -3, -3);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(366));
     CharUpperA(StringTemp);
@@ -3765,7 +3761,7 @@ void BaseWin::draw_energy_alloc(int update_mode) {
     text = row;
     text.right = 297;
     Buffer::box_sprite(&text, &InterfaceBoxStyles[6]);
-    base_panel_inset(text, 3);
+    expand_rect(&text, -3, -3);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(60));
     CharUpperA(StringTemp);
@@ -3824,7 +3820,7 @@ void BaseWin::draw_energy_alloc(int update_mode) {
     text = row;
     text.right = 297;
     Buffer::box_sprite(&text, &InterfaceBoxStyles[6]);
-    base_panel_inset(text, 3);
+    expand_rect(&text, -3, -3);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(318));
     CharUpperA(StringTemp);
@@ -5718,7 +5714,7 @@ void BaseWin::draw_farm(int update_mode) {
     RECT saved_clip = Buffer::current_clip();
     Buffer::set_clip(&panel);
     Buffer::box_sprite(rect, &InterfaceBoxStyles[15]);
-    base_panel_inset(panel, 1);
+    expand_rect(&panel, -1, -1);
     fill(&panel, 0x41);
     spot2_.kill_type(0);
     spot2_.add(0, 0, rect->left, rect->top,
@@ -6226,7 +6222,7 @@ void BaseWin::draw_nutrients(int update_mode) {
     // One RECT local serves the title and then the content panel (EBP-1C).
     RECT content = nutrient_title_rect_;
     Buffer::box_sprite(&content, &InterfaceBoxStyles[6]);
-    base_panel_inset(content, 3);
+    expand_rect(&content, -3, -3);
     Buffer::set_font(&font1_, nullptr, nullptr, nullptr);
     Buffer::set_text_color(TextColourTable[82], TextColourTable[83], 1, 1);
     StringTemp[0] = 0;
@@ -6236,7 +6232,7 @@ void BaseWin::draw_nutrients(int update_mode) {
 
     content = nutrient_content_rect_;
     Buffer::box_sprite(&content, &InterfaceBoxStyles[0]);
-    base_panel_inset(content, 3);
+    expand_rect(&content, -3, -3);
     Buffer::set_font(&font, nullptr, nullptr, nullptr);
     Buffer::set_text_color(TextColourTable[104], TextColourTable[105], 1, 1);
 
@@ -6651,10 +6647,6 @@ int BaseWin::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
 
 
 namespace {
-void base_panel_inset(RECT &rect, int amount) {
-    rect.left += amount; rect.right -= amount;
-    rect.top += amount; rect.bottom -= amount;
-}
 int base_native_clamp(int value, int lower, int upper) {
     // Both limits and their order are explicit in the original branches.
     if (value < lower || upper < lower) return lower;
@@ -6751,10 +6743,12 @@ void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
     // Cases in the image's block order (jump table 0x40BFE4).
     switch (action) {
     case 1:
+        // RECOVERY_LITERAL: v1 0x006828DC 0x006828E1 $SG65097 0x0040B140
         if (veh_jail(vehicle_id)) X_pop("JAIL", 0);
         else { Vehs[vehicle_id].order = 0; synch_veh(vehicle_id); NetDaemonNet.await_synch(); }
         break;
     case 2:
+        // RECOVERY_LITERAL: v1 0x006828E4 0x006828E9 $SG65101 0x0040B140
         if (veh_jail(vehicle_id)) { X_pop("JAIL", 0); break; }
         Vehs[vehicle_id].order = 0;
         Vehs[vehicle_id].state &= 0xFCFFBDFFu;
@@ -6782,10 +6776,12 @@ void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
         zoom(Vehs[vehicle_id].home_base_id, 0);
         return;
     case 10:
+        // RECOVERY_LITERAL: v1 0x006828EC 0x006828F1 $SG65112 0x0040B140
         if (veh_jail(vehicle_id)) X_pop("JAIL", 0);
         else { sleep(vehicle_id); synch_veh(vehicle_id); NetDaemonNet.await_synch(); }
         break;
     case 11:
+        // RECOVERY_LITERAL: v1 0x006828F4 0x006828F9 $SG65116 0x0040B140
         if (veh_jail(vehicle_id)) X_pop("JAIL", 0);
         else { Vehs[vehicle_id].order = 2; synch_veh(vehicle_id); NetDaemonNet.await_synch(); }
         break;
@@ -6796,6 +6792,7 @@ void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
         else if (ReportWinGlobal.is_visible()) ReportWinGlobal.redraw();
         return;
     case 30:
+        // RECOVERY_LITERAL: v1 0x006828FC 0x00682901 $SG65124 0x0040B140
         if (veh_jail(vehicle_id)) { X_pop("JAIL", 0); break; }
         Vehs[vehicle_id].state &= 0xFCFFBDFFu;
         Vehs[vehicle_id].order = 24;
@@ -6841,7 +6838,7 @@ void BaseWin::draw_supported(int update_mode) {
     // One RECT local serves the title and then the content panel (EBP-28).
     RECT content = supported_title_rect_;
     MainInterfaceGlobal.box_sprite(&content, &InterfaceBoxStyles[6]);
-    base_panel_inset(content, 3);
+    expand_rect(&content, -3, -3);
     MainInterfaceGlobal.set_font(&font1_, 0, 0, 0);
     MainInterfaceGlobal.set_text_color(TextColourTable[82], TextColourTable[83], 1, 1);
     StringTemp[0] = 0; strcat(StringTemp, label_get(0x100 / 4)); CharUpperA(StringTemp);
@@ -6849,7 +6846,7 @@ void BaseWin::draw_supported(int update_mode) {
     MainInterfaceGlobal.set_font(&font, 0, 0, 0);
     content = supported_content_rect_;
     MainInterfaceGlobal.box_sprite(&content, &InterfaceBoxStyles[0]);
-    base_panel_inset(content, 3);
+    expand_rect(&content, -3, -3);
     const int faction = BaseCurrent->faction_id_current;
     const int scale = MapWinCaptionScale, divisor = MapWinCaptionDivisor;
     if (scale > 0) {
@@ -6993,7 +6990,7 @@ void BaseWin::draw_facilities(int update_mode) {
     StringTemp[0] = 0;
     // One RECT local serves the title and then the content panel (EBP-20).
     RECT content = facilities_title_rect_;
-    Buffer::box_sprite(&content, &InterfaceBoxStyles[6]); base_panel_inset(content, 3);
+    Buffer::box_sprite(&content, &InterfaceBoxStyles[6]); expand_rect(&content, -3, -3);
     Buffer::set_font(&font1_, 0, 0, 0);
     strcat(StringTemp, label_get(0x110 / 4));
     Buffer::set_text_color(TextColourTable[82], TextColourTable[83], 1, 1);
@@ -7003,7 +7000,7 @@ void BaseWin::draw_facilities(int update_mode) {
     Buffer::set_text_color(TextColourTable[104], TextColourTable[105], 1, 1);
     content = rect2_;
     if (flatButtons_[21].is_visible()) content.bottom = rect20_.top;
-    Buffer::box_sprite(&content, &InterfaceBoxStyles[0]); base_panel_inset(content, 3);
+    Buffer::box_sprite(&content, &InterfaceBoxStyles[0]); expand_rect(&content, -3, -3);
     const int row_height = font_line_advance(font);
     int capacity = (content.bottom - content.top) / row_height;
     if (font_line_advance(font) * capacity + font.pixel_height() <= content.bottom - content.top) ++capacity;

@@ -29,6 +29,7 @@
 // StringStruct::StringStruct (0x00401000) out of line (0x00480956), giving
 // its three-state EH layout; see stringstruct.h.
 #define STRINGSTRUCT_CTOR_OUT_OF_LINE
+#define WIN_EXPAND_RECT_INLINE  // stand-in: see expand_rect in win.h
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "netwin.h"
@@ -2526,13 +2527,6 @@ static inline void netwin_set_column(RECT *rows, int left, int top, int right,
     }
 }
 
-static inline void netwin_inflate_rect(RECT *rect, int dx, int dy) {
-    rect->left -= dx;
-    rect->top -= dy;
-    rect->right += dx;
-    rect->bottom += dy;
-}
-
 // ORIGINAL: 0x00482490 ?exec@NetWin@@QAEHXZ 0x00482490-0x00482D84
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/00482490.cpp; original identity and primary482490..482D84 span retained", "Pinned original 0x004824C2 pushes callback 0x00483820, count 7, stride 0x17C and the stack array at EBP-0xAB0 before calling 0x00402EE0; originally the helper calls the callback with each element as ECX. Current source uses a seven-element array of constructed payload wrappers; VC6 supplies its non-EH ??_H iterator and the wrapper constructor returns the receiver, matching the original 0x483820 ABI. 0x00483820 writes offsets 0, 1, 2, 3, 4 and 0x178, matching the constructed row payload. Global wire rows remain passive; this composition does not assert an original class hierarchy.", "recovery/tasks/netwin-owner-coverage.json; revisions1-3 authorize coupled ownership and consumer changes; no matching or runtime acceptance implied."], "reason": "Recover the complete lobby window lifecycle with typed setup rectangles, existing controls, stack-local lobby rows and real receiver-free callbacks."}
 // TRIED: full transcription treating `self` as `int *` (matches the original's word-indexed field layout exactly); vtable slot057 retyped to (int,int,int) in this file's VCall, verified against raw disasm; UnionRect/CharUpperA reached via the IAT slot pattern. Reaches MISMATCH #6 'xor' vs 'mov' (register allocation), not chased further given size (2292 bytes).
@@ -2614,7 +2608,7 @@ int NetWin::exec() {
     netwin_set_rect(&setup_rects_[1], 7, 0x3A, 0x134, 0x180);
     netwin_set_rect(&setup_rects_[2], 7, 0x24, 0x134, 0x38);
     ::UnionRect(&setup_rects_[3], &setup_rects_[1], &setup_rects_[2]);
-    netwin_inflate_rect(&setup_rects_[3], 3, 3);
+    expand_rect(&setup_rects_[3], 3, 3);
     netwin_set_rect(&setup_rects_[4], 0x13D, 0x24, 0x319, 0x38);
     netwin_set_rect(&setup_rects_[5], 0x13A, 0x21, 0x31C, 0xEB);
 
@@ -2643,7 +2637,7 @@ int NetWin::exec() {
     netwin_set_rect(&setup_rects_[43], 0x13D, 0xF1, 0x319, 0x162);
     netwin_set_rect(&setup_rects_[44], 0x13D, 0x164, 0x319, 0x180);
     ::UnionRect(&setup_rects_[45], &setup_rects_[43], &setup_rects_[44]);
-    netwin_inflate_rect(&setup_rects_[45], 3, 3);
+    expand_rect(&setup_rects_[45], 3, 3);
 
     netwin_set_rect(&setup_rects_[46], 7, 0x189, 0x319, 0x19D);
     netwin_set_rect(&setup_rects_[48], 0x1B, 0x19F, 0x18F, 0x251);
@@ -2651,7 +2645,7 @@ int NetWin::exec() {
     netwin_set_rect(&setup_rects_[49], 0x1A5, 0x19F, 0x319, 0x251);
     ::UnionRect(&rect, &setup_rects_[46], &setup_rects_[48]);
     ::UnionRect(&setup_rects_[47], &rect, &setup_rects_[49]);
-    netwin_inflate_rect(&setup_rects_[47], 3, 3);
+    expand_rect(&setup_rects_[47], 3, 3);
     stringBox_.init(setup_rects_[43].left + 3, setup_rects_[43].top + 3,
                     setup_rects_[43].right - setup_rects_[43].left - 6,
                     setup_rects_[43].bottom - setup_rects_[43].top - 6, this, nullptr, -1);
