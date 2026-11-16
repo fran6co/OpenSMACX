@@ -3732,11 +3732,7 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
         if (packet->payload_14_ >= 0) {
             if (packet->payload_14_ > 1) {
                 if (packet->payload_14_ == 2) {
-                    parse_says(0, Players[project_faction].adj_name_faction, -1, -1);
-                    parse_say(1, Facility[FacilitySPStart + related_id].name, -1, -1);
-                    parse_says(2, get_noun(project_faction), -1, -1);
-                    parse_say(3, project->name, -1, -1);
-                    NetMsgPrimary.pop("CHANGEPROJECT", 5000, 2, 0);
+                    goto project_changed;
                 }
             } else {
                 parse_says(0, get_title_inline(project_faction), -1, -1);
@@ -3752,6 +3748,13 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
                 }
             }
         }
+        break;
+    project_changed:
+        parse_says(0, Players[project_faction].adj_name_faction, -1, -1);
+        parse_say(1, Facility[FacilitySPStart + related_id].name, -1, -1);
+        parse_says(2, get_noun(project_faction), -1, -1);
+        parse_say(3, project->name, -1, -1);
+        NetMsgPrimary.pop("CHANGEPROJECT", 5000, 2, 0);
         break;
     }
 
@@ -3825,8 +3828,12 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
             break;
         }
         log_say("(Sending: Lock OK)", 0, 0, 0);
-        if ((message[0x18] & 2) && locks_.check_global_2(who)) {
-            message_data(0x2216, who, 0, 0, 0, 0);
+        if (message[0x18] & 2) {
+            if (locks_.check_global_2(who)) {
+                message_data(0x2216, who, 0, 0, 0, 0);
+            } else {
+                message_data(0x1201, who, 0, 0, 0, 0);
+            }
         } else {
             message_data(0x1201, who, 0, 0, 0, 0);
         }
@@ -3876,7 +3883,10 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
         break;
 
     case 0x2215:
-        if (!SpockHelpActive && !TurnControlWord93A954) {
+        if (SpockHelpActive || TurnControlWord93A954) {
+            log_say("(Sending: Lock failed -- REJECT)", 0, 0, 0);
+            message_data(0x1208, who, 0, 0, 0, 0);
+        } else {
             log_say("From Client: ADD LOCK", who, packet->payload_10_, packet->payload_14_);
             if (locks_.add_lock(who, packet->payload_18_, packet->payload_10_,
                                 packet->payload_14_)) {
@@ -3886,9 +3896,6 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
                 log_say("(Sending: Add OK)", 0, 0, 0);
                 message_data(0x1207, who, 0, 0, 0, 0);
             }
-        } else {
-            log_say("(Sending: Lock failed -- REJECT)", 0, 0, 0);
-            message_data(0x1208, who, 0, 0, 0, 0);
         }
         break;
 
@@ -3952,14 +3959,13 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
             for (next_faction = GameDataStateStorage.fields_.net_turn_faction_ + 1;
                  next_faction < 8; next_faction++) {
                 if (is_alive(next_faction) && is_human(next_faction)) {
-                    break;
+                    goto next_found;
                 }
             }
-            if (next_faction >= 8) {
-                NextTurnReady = 1;
-            } else {
-                message_data(0x4309, 0, next_faction, 0, 0, 0);
-            }
+            NextTurnReady = 1;
+            break;
+        next_found:
+            message_data(0x4309, 0, next_faction, 0, 0, 0);
             break;
         }
         if (bit_count((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF)
@@ -3973,12 +3979,11 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
         for (next_faction = 1; next_faction < 8; next_faction++) {
             if (is_alive(next_faction) && is_human(next_faction)
                 && !(field_1B68_ & (1 << next_faction))) {
-                break;
+                goto laggard_found;
             }
         }
-        if (next_faction >= 8) {
-            break;
-        }
+        break;
+    laggard_found:
         parse_says(0, get_title_inline(next_faction), -1, -1);
         parse_says(1, get_name_inline(next_faction), -1, -1);
         parse_says(2, get_noun(next_faction), -1, -1);
@@ -4740,28 +4745,24 @@ move_veh_ack:
             popup.start("COMMDIPLO");
             popup.set_picture(FactionDiplomacyPortraits[sender], 0, 0);
             int response = popup.exec(pop_expire);
-            if (!(GameDataStateStorage.fields_.game_state_ & 0x800)) {
-                if (response) {
-                    if (response == 4) {
-                        report_intel(sender);
-                        continue;
-                    } else {
-                        if (response == 3) {
-                            MultiWindowContactStatusMask |= sender_bit;
-                        }
-                        message_data(0x1503, sender, response == 2, 0, 0, 0);
-                        break;
-                    }
-                } else {
-                    message_data(0x1502, sender, 0, 0, 0, 0);
-                    CommlinkPending = 1;
-                    diplo(ConsoleGlobal.faction_id_, sender);
-                    break;
-                }
-            } else {
+            if (GameDataStateStorage.fields_.game_state_ & 0x800) {
                 message_data(0x1503, sender, response == 2, 0, 0, 0);
                 break;
             }
+            if (!response) {
+                message_data(0x1502, sender, 0, 0, 0, 0);
+                CommlinkPending = 1;
+                diplo(ConsoleGlobal.faction_id_, sender);
+                break;
+            }
+            if (response != 4) {
+                if (response == 3) {
+                    MultiWindowContactStatusMask |= sender_bit;
+                }
+                message_data(0x1503, sender, response == 2, 0, 0, 0);
+                break;
+            }
+            report_intel(sender);
         }
         break;
     }
@@ -4799,11 +4800,11 @@ move_veh_ack:
         parse_says(0, get_title_inline(packet->faction_), -1, -1);
         parse_says(1, get_name_inline(packet->faction_), -1, -1);
         switch (packet->payload_10_) {
-        case 1:
-            NetMsgPrimary.pop("DIPLOREFUSE1", 5000, 0, 0);
-            break;
         case 0:
             NetMsgPrimary.pop("DIPLOREFUSE", 5000, 0, 0);
+            break;
+        case 1:
+            NetMsgPrimary.pop("DIPLOREFUSE1", 5000, 0, 0);
             break;
         }
         break;
@@ -5192,12 +5193,12 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
         size = GameDataStateStorage.fields_.turn_current_num_ << 4;
         break;
     case 0x21:
+        size = 4;
         if (!outgoing && primary_state_.trailing_words_[1] == 6) {
             NetMsgPrimary.pop("SYNCHINGREPLAY", 0, 1, 0);
             do_all_draws();
             primary_state_.trailing_words_[1] = 7;
         }
-        size = 4;
         break;
     case 0x22:
         size = ReplayEventBytes;

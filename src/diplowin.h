@@ -419,13 +419,13 @@ class DiploWin : public GraphicWin, public SubInterface {
 #ifdef DIPLOWIN_RECEIVE_INLINE
 inline void DiploWin::receive_clear_offer() {
     offer_count_[1] = 0;
-    redraw();
+    GraphicWin::redraw();
 }
 
 inline void DiploWin::receive_channel_status(int status) {
     offer_state_[1] = status;
     check_done();
-    redraw();
+    GraphicWin::redraw();
 }
 
 inline void DiploWin::receive_maybe_deal(int sender) {
