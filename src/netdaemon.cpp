@@ -27,7 +27,6 @@
 #define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h
 #define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
 #define DIPLOWIN_RECEIVE_INLINE  // stand-in: see the receive steps in diplowin.h
-#define NETDAEMON_FLAT_CHANNELS  // the original flat channel words; see netdaemon.h
 #include "stdafx.h"
 #include <mmsystem.h>
 #include "netdaemon.h"

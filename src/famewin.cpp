@@ -750,7 +750,7 @@ void FameWin::on_redraw() {
 void FameWin::on_left_click(int x, int y) {
   if ((NetDaemonNet.primary_state_.trailing_words_[6] &
        (1u << ConsoleGlobal.faction_id_)) == 0 &&
-      NetDaemonNet.channels_[1].payload_.flags == 0 &&
+      NetDaemonNet.field_1BB4_ == 0 &&
       NetDaemonNet.primary_state_.leading_words_[2] == 0) {
     // The original increments Spot::check's -1-or-index result and branches
     // on zero; the index range keeps that increment representable.

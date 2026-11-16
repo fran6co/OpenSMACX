@@ -5480,7 +5480,7 @@ int __cdecl commlink_attempter(int faction_id, int contact_flags) {
 
     if (IsMultiplayerNet != 0 &&
         (ConsoleControlTurnActive != 0 ||
-         NetDaemonNet.channels_[1].payload_.flags != 0))
+         NetDaemonNet.field_1BB4_ != 0))
         return 1;
     return 0;
 }

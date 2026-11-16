@@ -434,7 +434,7 @@ static bool reportwin_input_blocked() {
     return ConsoleControlTurnActive != 0
         || (NetDaemonNet.primary_state_.trailing_words_[6]
             & (1 << ConsoleGlobal.faction_id_)) != 0
-        || NetDaemonNet.channels_[1].payload_.flags != 0
+        || NetDaemonNet.field_1BB4_ != 0
         || NetDaemonNet.primary_state_.leading_words_[2] != 0;
 }
 
@@ -6046,10 +6046,7 @@ void ReportIf::on_iface_button_clicked(int button) {
         flatButtonsA_[button - 1].set_report_page_state(2);
         flatButtonsA_[button - 1].redraw();
         report(ReportIfGlobal.field_8_, button, report_selection_);
-        // A jump to the shared exit, not a return: either an early return or
-        // an else branch reloads the security block's this/button registers
-        // in the opposite order from the image.
-        goto done;
+        return;
     }
     if (field_8_ == 4 && report_faction_id_ == ConsoleGlobal.faction_id_) {
         switch (button) {
@@ -6215,8 +6212,6 @@ void ReportIf::on_iface_button_clicked(int button) {
     case 7: report_security(); break;
     case 8: report_score(0); break;
     }
-done:
-    ;
 }
 
 /*

@@ -1,5 +1,4 @@
 // Per-vehicle enemy movement, using genuine source-owned game APIs.
-#define NETDAEMON_FLAT_CHANNELS  // the original flat channel words; see netdaemon.h
 #include "stdafx.h"
 #include "alpha.h"
 #include "base.h"

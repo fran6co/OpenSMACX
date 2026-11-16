@@ -2157,7 +2157,7 @@ void __cdecl set_time_controls() {
     }
 
     const int event_bonus = TimeControl[GameDataStateStorage.fields_.time_controls_selection_].event *
-        static_cast<int>(NetDaemonNet.channels_[1].trailing_words_[8]);
+        static_cast<int>(NetDaemonNet.field_1BD8_);
     if (active_factions != 0) {
         const int candidate =
             (weighted_base_count + eligible_vehicle_support) / active_factions +
@@ -4397,7 +4397,7 @@ Status: Coverage transcription - unclaimed body, seed
 */
 int __cdecl net_upkeep_phase(int phase) {
     char number_buffer[0x50];
-    uint32_t &sent_mask = NetDaemonNet.channels_[0].leading_words_[1];
+    uint32_t &sent_mask = NetDaemonNet.field_1B6C_;
     uint32_t &ack_mask = NetDaemonNet.primary_state_.trailing_words_[7];
 
     sent_mask |= 1u << ConsoleGlobal.faction_id_;
@@ -4910,7 +4910,7 @@ void __cdecl net_end_of_turn() {
 
     log_say(NetEndTurnEnterEndTurnLog,
             static_cast<int>(NetDaemonNet.factions_waiting_mask()),
-            NetDaemonNet.channels_[0].leading_words_[0],
+            NetDaemonNet.field_1B68_,
             GameDataStateStorage.fields_.game_state_ & 2u);
     g_FX.play(0x22);
     GameDataStateStorage.fields_.game_state_ |= 2u;
@@ -4921,7 +4921,7 @@ void __cdecl net_end_of_turn() {
     if (NetDaemonNet.primary_state_.leading_words_[0] == 0) {
         NetDaemonNet.factions_waiting_mask() |= 1u << local_faction;
     }
-    NetDaemonNet.channels_[0].leading_words_[0] |= 1u << local_faction;
+    NetDaemonNet.field_1B68_ |= 1u << local_faction;
     MultiWindow.draw(0);
 
     if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
@@ -4940,7 +4940,7 @@ void __cdecl net_end_of_turn() {
                  static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) == 0 &&
                 (NetDaemonNet.primary_state_.leading_words_[0] == 0 ||
                  (NetDaemonNet.locks_.any_locks() == 0 &&
-                  NetDaemonNet.channels_[0].trailing_words_[0] == 0))) {
+                  NetDaemonNet.field_1B7C_ == 0))) {
                 break;
             }
             if (ExitTurnLoop != 0 || (GameDataStateStorage.fields_.game_state_ & 2u) == 0) {
@@ -5004,7 +5004,7 @@ after_wait:
 proceed_next_turn:
     log_say(NetEndTurnProceedingToNextTurnLog, 0, 0, 0);
     NetDaemonNet.primary_state_.trailing_words_[7] = 0;
-    NetDaemonNet.channels_[0].leading_words_[1] = 0;
+    NetDaemonNet.field_1B6C_ = 0;
     NetUpkeepPhase = 0;
     ConsoleControlTurnActive = 1;
     if (TutWinBaseWindow.is_visible() != 0) {
@@ -5098,13 +5098,13 @@ void __cdecl net_control_turn() {
     for (;;) {
         log_say(NetControlTurnClearTurnSemaphore,
                 NetDaemonNet.primary_state_.trailing_words_[6],
-                NetDaemonNet.channels_[0].leading_words_[0], 0);
+                NetDaemonNet.field_1B68_, 0);
         NetDaemonNet.primary_state_.trailing_words_[6] = 0;
-        NetDaemonNet.channels_[0].leading_words_[0] = 0;
+        NetDaemonNet.field_1B68_ = 0;
         NetDaemonNet.primary_state_.trailing_words_[0] = 1;
         // The adjacent 0x93E968 store is distinct from the message count and
         // precedes it in the image.
-        NetDaemonNet.channels_[1].trailing_words_[8] = 0;
+        NetDaemonNet.field_1BD8_ = 0;
         NetDaemonNet.network_message_count() = 0;
         NextTurnReady = 0;
         InterfaceMessageWin.clear();

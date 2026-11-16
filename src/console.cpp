@@ -153,7 +153,7 @@ void Console::set_move(int force_update) {
         if (ConsoleControlTurnActive != 0) {
             return;
         }
-        if (NetDaemonNet.channels_[1].payload_.flags != 0) {
+        if (NetDaemonNet.field_1BB4_ != 0) {
             return;
         }
         if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
@@ -450,7 +450,7 @@ void Console::chat(int target_faction) {
 
     NetDaemon &network = NetDaemonNet;
     if (ConsoleControlTurnActive &&
-        (network.channels_[0].leading_words_[1] & (1 << ConsoleGlobal.faction_id_)) == 0 &&
+        (network.field_1B6C_ & (1 << ConsoleGlobal.faction_id_)) == 0 &&
         network.primary_state_.trailing_words_[3] == 0) {
         NetMsgPrimary.pop("FINISHUPKEEP", 1000, 0, 0);
         return;
@@ -468,7 +468,7 @@ void Console::chat(int target_faction) {
 
     if (network.primary_state_.session_phase_ >= 2) {
         const unsigned int enabled = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff;
-        if ((enabled & network.channels_[1].trailing_words_[6]) != enabled) {
+        if ((enabled & network.field_1BD0_) != enabled) {
             for (int faction = 1; faction < 8; ++faction) {
                 const int bit = 1 << faction;
                 if (!(*reinterpret_cast<const unsigned char *>(
@@ -478,7 +478,7 @@ void Console::chat(int target_faction) {
                 } else if (CommlinkPending) {
                     if (faction != CommlinkFaction) continue;
                 } else if (!TurnRedrawPending &&
-                           !(network.channels_[1].trailing_words_[6] & bit)) {
+                           !(network.field_1BD0_ & bit)) {
                     continue;
                 }
                 message_chat(0x1e00, faction, message);
@@ -3842,7 +3842,7 @@ void Console::cursor_key(int, int character, int) {
         }
     }
     case 'a':
-        if (!NetDaemonNet.channels_[1].payload_.flags) {
+        if (!NetDaemonNet.field_1BB4_) {
             const int i = ConsoleGlobal.cursor_history_index_;
             activate(ConsoleGlobal.cursor_history_x_[i],
                      ConsoleGlobal.cursor_history_y_[i], 1);
@@ -3857,7 +3857,7 @@ void Console::cursor_key(int, int character, int) {
         break;
     }
     case 'g':
-        if (!ConsoleControlTurnActive && !NetDaemonNet.channels_[1].payload_.flags) {
+        if (!ConsoleControlTurnActive && !NetDaemonNet.field_1BB4_) {
             const int i = ConsoleGlobal.cursor_history_index_;
             const int base = base_at(ConsoleGlobal.cursor_history_x_[i],
                                      ConsoleGlobal.cursor_history_y_[i]);
@@ -5372,7 +5372,7 @@ finish_turn:
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/005171d0.cpp", "image:terranx_original.exe:0x005171D0", "Pinned key selector tables5177E4/517844 and accelerator targets517898; native selection reloads between dispatch stages preserve callback effects."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
 // TRIED: MISMATCH #3 push-vs-mov in the prologue; hoisting the two guard reads into locals before the branch did not change register allocation order. Full switch/goto structure otherwise matches.
 void Console::veh_key(int key, int character, int command) {
-    const int lock_flags = NetDaemonNet.channels_[1].payload_.flags;
+    const int lock_flags = NetDaemonNet.field_1BB4_;
     if (IsMultiplayerNet != 0 && character != 'a') {
         if (ConsoleControlTurnActive != 0) return;
         if (lock_flags != 0) return;
@@ -5683,7 +5683,7 @@ void Console::menu_proc(int command) {
 
     if (IsMultiplayerNet != 0) {
         if (ConsoleControlTurnActive != 0 ||
-            NetDaemonNet.channels_[1].payload_.flags != 0 ||
+            NetDaemonNet.field_1BB4_ != 0 ||
             NetDaemonNet.primary_state_.leading_words_[2] != 0) {
             const int command_group = (command >> 8) & 0xFF;
             if (command_group != 0 && command_group != 7 &&
@@ -6257,7 +6257,7 @@ int Console::on_key_click(int a1, int a2) {
 
     if (IsMultiplayerNet != 0 &&
         (ConsoleControlTurnActive != 0 ||
-         NetDaemonNet.channels_[1].payload_.flags != 0 ||
+         NetDaemonNet.field_1BB4_ != 0 ||
          NetDaemonNet.primary_state_.leading_words_[2] != 0)) {
         net_lock = 1;
         if (ConsoleControlTurnActive != 0) {

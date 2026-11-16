@@ -1325,8 +1325,8 @@ void Console::activate(int x, int y, int current_selection) {
     int vehicle;
     log_say("Console ACTIVATE", x, y, 0);
     if (IsMultiplayerNet) {
-        if (NetDaemonNet.channels_[1].leading_words_[2] ||
-            NetDaemonNet.channels_[1].payload_.flags) return;
+        if (NetDaemonNet.lock_held_ ||
+            NetDaemonNet.field_1BB4_) return;
         if (((NetDaemonNet.primary_state_.trailing_words_[6] & (1u << ConsoleGlobal.faction_id_)) &&
              !(GameDataStateStorage.fields_.net_turn_flags_ & 0x10)) || ConsoleControlTurnActive) {
             vehicle = veh_at(x, y);
@@ -1406,7 +1406,7 @@ activate:
             ::draw_tile(Vehs[vehicle].x, Vehs[vehicle].y, 1);
             if (!ConsoleGlobal.cursor_active_ && !(GameDataStateStorage.fields_.game_state_ & 2) &&
                 (!IsMultiplayerNet || (!ConsoleControlTurnActive &&
-                 !NetDaemonNet.channels_[1].payload_.flags))) {
+                 !NetDaemonNet.field_1BB4_))) {
                 if (popv(ScriptPopupFile, "ALREADYMOVED2", vehicle, 0))
                     set_move(0);
             } else if (IsMultiplayerNet) {
@@ -1781,10 +1781,10 @@ void Console::terraform(int vehicle_id, int terraform_id) { // 0x004D3470
         }
     }
 
-    if (NetDaemonNet.channels_[1].leading_words_[3] != 0) {
+    if (NetDaemonNet.exec_pending_ != 0) {
         log_say("I think I've already got my lock", 0, 0, 0);
     }
-    if (NetDaemonNet.channels_[1].leading_words_[3] != 0 ||
+    if (NetDaemonNet.exec_pending_ != 0 ||
         NetDaemonNet.lock_veh(&vehicle_id, 0, -1, -1, 0) == 0) {
         Vehs[vehicle_id].order = static_cast<uint8_t>(terraform_id + 4);
         synch_veh(vehicle_id);
@@ -2982,7 +2982,7 @@ void Console::convoy(int veh_id) {
     }
     const int base_id = base_at(Vehs[veh_id].x, Vehs[veh_id].y);
     if (base_id >= 0) {
-        NetDaemonNet.channels_[0].leading_words_[3] = 3;
+        NetDaemonNet.action_mode_ = 3;
         supply_options(veh_id, base_id);
         NetDaemonNet.unlock_veh();
         return;

@@ -5827,7 +5827,7 @@ int MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
     int net_mask;     // esi
     if (IsMultiplayerNet != 0) {
         net_blocked = ConsoleControlTurnActive != 0 ||
-                      NetDaemonNet.channels_[1].payload_.flags != 0 ||
+                      NetDaemonNet.field_1BB4_ != 0 ||
                       NetDaemonNet.primary_state_.leading_words_[2] != 0;
         net_mask = (1 << ConsoleGlobal.faction_id_) &
                    static_cast<int>(NetDaemonNet.primary_state_.trailing_words_[6]);

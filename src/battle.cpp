@@ -2667,7 +2667,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
         !Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].missile &&
         !stack_check(target_veh, 6, ABL_AIR_SUPERIORITY, -1, -1) &&
         allow_interceptor &&
-        (NetDaemonNet.channels_[0].leading_words_[3] & 2)) {
+        (NetDaemonNet.action_mode_ & 2)) {
         intercepted = interceptor(Vehs[target_veh].faction_id, att_faction,
                                   target_x, target_y);
     }
@@ -2738,7 +2738,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
     if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & att_bit) &&
         VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_INFO_WARFARE &&
         (VehPrototypes[Vehs[def_id].proto_id].plan != PLAN_ALIEN_ARTIFACT || base_id >= 0) &&
-        (NetDaemonNet.channels_[0].leading_words_[3] & 1) &&
+        (NetDaemonNet.action_mode_ & 1) &&
         (!IsMultiplayerNet || !intercepted)) {
         if (break_treaty(att_faction, def_faction,
                          DTREATY_PACT | DTREATY_TREATY | DTREATY_COMMLINK)) {
@@ -2753,7 +2753,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
         Armor[VehPrototypes[Vehs[def_id].proto_id].armor_id].defense_rating >= 0) {
         // 0x5071A7: in a net game without bit 0 this skips the clear and synch_veh
         // but still runs the 0x5073BC test
-        if (!IsMultiplayerNet || (NetDaemonNet.channels_[0].leading_words_[3] & 1)) {
+        if (!IsMultiplayerNet || (NetDaemonNet.action_mode_ & 1)) {
             nerve_state = Vehs[veh_id].state & ~VSTATE_USED_NERVE_GAS;
             Vehs[veh_id].state = nerve_state;
             if (att_faction == ConsoleGlobal.faction_id_ &&
@@ -2795,7 +2795,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
             }
         }
         // 0x5073BC
-        if ((NetDaemonNet.channels_[0].leading_words_[3] & 2) &&
+        if ((NetDaemonNet.action_mode_ & 2) &&
             (Vehs[veh_id].state & VSTATE_USED_NERVE_GAS)) {
             nerve_gas = 1;
         }
@@ -2806,7 +2806,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
         Vehs[veh_id].state &= ~VSTATE_UNK_40000;
     }
     if (!(Vehs[veh_id].state & VSTATE_UNK_1000) &&
-        (NetDaemonNet.channels_[0].leading_words_[3] & 2)) {
+        (NetDaemonNet.action_mode_ & 2)) {
         // 0x507405
         if (att_faction != 0 &&
             Vehs[veh_id].proto_id != BSC_SPORE_LAUNCHER &&
@@ -2826,7 +2826,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
     // 0x5074F4
     Vehs[veh_id].state = (Vehs[veh_id].state & ~VSTATE_UNK_1000) | VSTATE_UNK_4;
     Vehs[def_id].state |= VSTATE_UNK_4;
-    if (!(NetDaemonNet.channels_[0].leading_words_[3] & 2)) {
+    if (!(NetDaemonNet.action_mode_ & 2)) {
         return 0;
     }
     Vehs[veh_id].state |= VSTATE_UNK_40;
@@ -3006,7 +3006,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
     }
 
     // 0x507CA4: local human odds prompts
-    if ((NetDaemonNet.channels_[0].leading_words_[3] & 1) && !intercepted &&
+    if ((NetDaemonNet.action_mode_ & 1) && !intercepted &&
         (static_cast<uint8_t>(att_bit) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) &&
         att_faction == ConsoleGlobal.faction_id_ && mode == 0 &&
         !Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].missile &&
@@ -3027,7 +3027,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
             }
             // 0x507E26
             g_BattleWin.pulse_timer();
-            if (NetDaemonNet.channels_[0].leading_words_[3] & 2) {
+            if (NetDaemonNet.action_mode_ & 2) {
                 Vehs[veh_id].moves_expended -= static_cast<uint8_t>(move_charge);
             }
             Vehs[veh_id].order = ORDER_NONE;
@@ -3106,7 +3106,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
                  0, "hasty_sm.pcx", 0) == 0) {
             // 0x508301
             g_BattleWin.pulse_timer();
-            if (NetDaemonNet.channels_[0].leading_words_[3] & 2) {
+            if (NetDaemonNet.action_mode_ & 2) {
                 Vehs[veh_id].moves_expended -= static_cast<uint8_t>(move_charge);
             }
             Vehs[veh_id].order = ORDER_NONE;

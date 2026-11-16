@@ -1545,10 +1545,10 @@ char VehLabelMADEAIRDROP2[] = "MADEAIRDROP";
 // RECOVERY_BINDING: v1 {"evidence": ["git:276d612614085e5d57743cf8cc92903d9468e346:src/unrecovered/004cc360.cpp retained signature/extents and complete seed; no historical claim copied", "Coordinator full pinned original instruction decode 004CC360..004CD051, typed source owner fields and corrected original call/branch evidence", "recovery/tests/test_airdrop_network.py actual-body directional treaty and network reentrancy controls; not linked/runtime/game acceptance"], "reason": "Recover complete typed airdrop admission/interception, landing selection, stack movement, capture and post-drop updates. Preserve unsigned damage storage with integer thresholds and directional treaty evidence; referenced unfinished dependencies remain explicit, not game acceptance."}
 // TRIED: direct field-for-field transcription (validation chain of terrain/ZOC/treaty/AA checks, each guarding a NetMsg::pop error-return; airdrop-site scoring loop; base-capture tail) diverges at instr #7 (push vs xor), early register-allocation choice; not chased further given the 3313-byte scope.
 int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
-    NetDaemonNet.channels_[0].leading_words_[3] = mode;
+    NetDaemonNet.action_mode_ = mode;
     const int faction_id = Vehs[veh_id].faction_id;
     if (cursor_dist(Vehs[veh_id].x, Vehs[veh_id].y, x, y) > drop_range(faction_id)) {
-        if (NetDaemonNet.channels_[0].leading_words_[3] & 1 && faction_id == ConsoleGlobal.faction_id_) {
+        if (NetDaemonNet.action_mode_ & 1 && faction_id == ConsoleGlobal.faction_id_) {
             parse_num(0, Rules.max_airdrop_sans_orb_insert);
             if (Players[faction_id].rule_flags & 0x80) {
                 NetMsgPrimary.pop(VehLabelDROPRANGE, VehIconAL_DROP_SM_PCX);
@@ -1559,7 +1559,7 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
         return 0;
     }
     if ((map_loc(x, y)->climate & ~0x1F) < ALT_BIT_SHORE_LINE) {
-        if (NetDaemonNet.channels_[0].leading_words_[3] & 1 && faction_id == ConsoleGlobal.faction_id_) {
+        if (NetDaemonNet.action_mode_ & 1 && faction_id == ConsoleGlobal.faction_id_) {
             if (Players[faction_id].rule_flags & 0x80) {
                 NetMsgPrimary.pop(VehLabelDROPSEA, VehIconAL_DROP_SM_PCX2);
                 return 0;
@@ -1571,7 +1571,7 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
     int owner = veh_who(x, y);
     if (owner >= 0 && owner != faction_id
         && !(PlayersData[faction_id].diplo_treaties[owner] & DTREATY_PACT)) {
-        if (NetDaemonNet.channels_[0].leading_words_[3] & 1 && faction_id == ConsoleGlobal.faction_id_) {
+        if (NetDaemonNet.action_mode_ & 1 && faction_id == ConsoleGlobal.faction_id_) {
             if (Players[faction_id].rule_flags & 0x80) {
                 NetMsgPrimary.pop(VehLabelDROPUNIT, VehIconAL_DROP_SM_PCX3);
                 return 0;
@@ -1581,7 +1581,7 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
         return 0;
     }
     if (!get_proto_offense_rating(Vehs[veh_id].proto_id) && zoc_move(x, y, faction_id)) {
-        if (NetDaemonNet.channels_[0].leading_words_[3] & 1 && faction_id == ConsoleGlobal.faction_id_) {
+        if (NetDaemonNet.action_mode_ & 1 && faction_id == ConsoleGlobal.faction_id_) {
             if (Players[faction_id].rule_flags & 0x80) {
                 NetMsgPrimary.pop(VehLabelNONCOMDROP, VehIconAL_DROP_SM_PCX4);
                 return 0;
@@ -1594,7 +1594,7 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
     if (owner >= 0 && owner != faction_id
         && !(PlayersData[faction_id].diplo_treaties[owner] & DTREATY_PACT)) {
         if (!get_proto_offense_rating(Vehs[veh_id].proto_id)) {
-            if (NetDaemonNet.channels_[0].leading_words_[3] & 1 && faction_id == ConsoleGlobal.faction_id_) {
+            if (NetDaemonNet.action_mode_ & 1 && faction_id == ConsoleGlobal.faction_id_) {
                 if (Players[faction_id].rule_flags & 0x80) {
                     NetMsgPrimary.pop(VehLabelNONCOMDROP3, VehIconAL_DROP_SM_PCX5);
                     return 0;
@@ -1603,7 +1603,7 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
             }
             return 0;
         }
-        if (NetDaemonNet.channels_[0].leading_words_[3] & 1 && faction_id == ConsoleGlobal.faction_id_
+        if (NetDaemonNet.action_mode_ & 1 && faction_id == ConsoleGlobal.faction_id_
             && break_treaty(faction_id, owner, 7)) {
             return 0;
         }
@@ -1620,7 +1620,7 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
                     && (has_fac(FAC_AEROSPACE_COMPLEX, base_id, 0)
                         || has_project(SP_CLOUDBASE_ACADEMY, owner_radius)
                         || stack_check(veh_at(x_radius, y_radius), 2, PLAN_AIR_SUPERIORITY, -1, -1))) {
-                    if (NetDaemonNet.channels_[0].leading_words_[3] & 1 && faction_id == ConsoleGlobal.faction_id_) {
+                    if (NetDaemonNet.action_mode_ & 1 && faction_id == ConsoleGlobal.faction_id_) {
                         parse_says(0, Bases[base_id].name_string, -1, -1);
                         if (Players[faction_id].rule_flags & 0x80) {
                             NetMsgPrimary.pop(VehLabelAIRDEFENSES, VehIconALAIR_SM_PCX);
@@ -1633,7 +1633,7 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
             }
         }
     }
-    if (NetDaemonNet.channels_[0].leading_words_[3] & 2) {
+    if (NetDaemonNet.action_mode_ & 2) {
         int goody = goody_at(x, y);
         int is_seen = faction_id == ConsoleGlobal.faction_id_
             || anything_at(x, y) == ConsoleGlobal.faction_id_
@@ -1820,12 +1820,12 @@ void __cdecl action_arty(int veh_id, int x, int y) {
     if (direction < 0) return;
 
     if (IsMultiplayerNet == 0) {
-        NetDaemonNet.channels_[0].leading_words_[3] = 3;
+        NetDaemonNet.action_mode_ = 3;
         battle_fight(veh_id, direction, 1, 1, nullptr);
         return;
     }
     if (NetDaemonNet.maybe_lock(&veh_id, 0, 0, x, y, 4) != 0) return;
-    NetDaemonNet.channels_[0].leading_words_[3] = 1;
+    NetDaemonNet.action_mode_ = 1;
     if (battle_fight(veh_id, direction, 1, 1, nullptr) != 0) {
         NetDaemonNet.unlock_veh();
     } else {

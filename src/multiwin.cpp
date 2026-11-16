@@ -152,9 +152,9 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
 
   uint32_t selected_turn_word;
   if (ConsoleControlTurnActive) {
-    selected_turn_word = NetDaemonNet.channels_[0].leading_words_[1];
+    selected_turn_word = NetDaemonNet.field_1B6C_;
   } else {
-    selected_turn_word = NetDaemonNet.channels_[0].leading_words_[0];
+    selected_turn_word = NetDaemonNet.field_1B68_;
   }
   if (IsMultiplayerNet &&
       (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id))) {
@@ -162,7 +162,7 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
     if (MultiWindowContactStatusMask & (1 << faction_id)) {
       variant = 1;
     } else {
-      variant = (NetDaemonNet.channels_[1].trailing_words_[6] & (1 << faction_id)) ? 2 : 0;
+      variant = (NetDaemonNet.field_1BD0_ & (1 << faction_id)) ? 2 : 0;
     }
     multiwin_sprite_draw(&sprites2_[variant], this, icon_rect.left,
                          (icon_rect.bottom - sprites2_[0].height() - icon_rect.top) / 2
@@ -245,7 +245,7 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
               if (NetDaemonNet.locks_.records_[faction_id].active()) {
                 strcat(StringTemp, "(?)");
               } else if (NetDaemonNet.primary_state_.leading_words_[0] &&
-                         NetDaemonNet.channels_[0].trailing_words_[0] && faction_bit) {
+                         NetDaemonNet.field_1B7C_ && faction_bit) {
                 strcat(StringTemp, "(@)");
               }
             }
@@ -860,12 +860,12 @@ void MultiWin::on_left_click(int x, int y) {
         const uint32_t bit = 1u << faction;
         if (MultiWindowContactStatusMask & bit) {
             MultiWindowContactStatusMask &= ~bit;
-            NetDaemonNet.channels_[1].trailing_words_[6] |= bit;
+            NetDaemonNet.field_1BD0_ |= bit;
             draw(0);
             return;
         }
-        if (NetDaemonNet.channels_[1].trailing_words_[6] & bit) {
-            NetDaemonNet.channels_[1].trailing_words_[6] &= ~bit;
+        if (NetDaemonNet.field_1BD0_ & bit) {
+            NetDaemonNet.field_1BD0_ &= ~bit;
             draw(0);
             return;
         }
@@ -961,10 +961,10 @@ void MultiWin::on_right_click(int x, int y) {
         if (mask & bit) {
             mask &= ~bit;
             MultiWindowContactStatusMask = mask;
-            NetDaemonNet.channels_[1].trailing_words_[6] |= bit;
+            NetDaemonNet.field_1BD0_ |= bit;
             draw(0);
-        } else if (NetDaemonNet.channels_[1].trailing_words_[6] & bit) {
-            NetDaemonNet.channels_[1].trailing_words_[6] &= ~bit;
+        } else if (NetDaemonNet.field_1BD0_ & bit) {
+            NetDaemonNet.field_1BD0_ &= ~bit;
             draw(0);
         } else {
             MultiWindowContactStatusMask |= bit;

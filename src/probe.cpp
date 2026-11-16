@@ -383,7 +383,7 @@ int __cdecl probe(int veh_id, int base_id, int veh_id_tgt, int mode) {
         && get_triad(veh_id) != TRIAD_SEA
         && !has_abil(Vehs[veh_id].proto_id, ABL_AMPHIBIOUS)) {
         if (faction == ConsoleGlobal.faction_id_ && mode && HUMAN_BIT(faction)
-            && (NetDaemonNet.channels_[0].leading_words_[3] & 1)) {
+            && (NetDaemonNet.action_mode_ & 1)) {
             int ability = abil_index(ABL_AMPHIBIOUS);
             parse_say(0, Ability[ability].name, -1, -1);
             NetMsgPrimary.pop("PROBEABILAMPHIBIOUS", 5000, 0, 0);
@@ -395,7 +395,7 @@ int __cdecl probe(int veh_id, int base_id, int veh_id_tgt, int mode) {
         && !is_ocean(Vehs[veh_id].x, Vehs[veh_id].y)
         && !has_abil(Vehs[veh_id].proto_id, ABL_AMPHIBIOUS)) {
         if (faction == ConsoleGlobal.faction_id_ && mode && HUMAN_BIT(faction)
-            && (NetDaemonNet.channels_[0].leading_words_[3] & 1)) {
+            && (NetDaemonNet.action_mode_ & 1)) {
             int ability = abil_index(ABL_AMPHIBIOUS);
             parse_say(0, Ability[ability].name, -1, -1);
             NetMsgPrimary.pop("PROBEABILAMPHIBIOUS2", 5000, 0, 0);
@@ -411,7 +411,7 @@ int __cdecl probe(int veh_id, int base_id, int veh_id_tgt, int mode) {
             if (!mode && HUMAN_BIT(faction)) {
                 return 0;
             }
-            if ((NetDaemonNet.channels_[0].leading_words_[3] & 2) && mode) {
+            if ((NetDaemonNet.action_mode_ & 2) && mode) {
                 ProbeTargetHasHSA = 1;
             } else {
                 return 1;
@@ -421,7 +421,7 @@ int __cdecl probe(int veh_id, int base_id, int veh_id_tgt, int mode) {
         if (!mode && HUMAN_BIT(faction)) {
             return 0;
         }
-        if ((NetDaemonNet.channels_[0].leading_words_[3] & 2) && mode) {
+        if ((NetDaemonNet.action_mode_ & 2) && mode) {
             if (faction == ConsoleGlobal.faction_id_) {
                 parse_says(0, Players[faction_tgt].adj_name_faction, -1, -1);
                 NetMsgPrimary.pop("HUNTERSEEKER", "huntsk_sm.pcx");
@@ -452,7 +452,7 @@ int __cdecl probe(int veh_id, int base_id, int veh_id_tgt, int mode) {
 
     if (base_id >= 0) {
         if (faction == ConsoleGlobal.faction_id_ && HUMAN_BIT(faction)
-            && (NetDaemonNet.channels_[0].leading_words_[3] & 1)) {
+            && (NetDaemonNet.action_mode_ & 1)) {
             parse_says(1, Players[faction_tgt].adj_name_faction, -1, -1);
             popup.start(PopupStartCaption, "PROBE", -1, 0, 0x40, 0);
             if (!Buffer::get_pcx_dimensions(
@@ -525,7 +525,7 @@ int __cdecl probe(int veh_id, int base_id, int veh_id_tgt, int mode) {
     }
 
 L_59fb64:
-    if (!action && (NetDaemonNet.channels_[0].leading_words_[3] & 2)) {
+    if (!action && (NetDaemonNet.action_mode_ & 2)) {
         if (!(PlayersData[faction].diplo_treaties[faction_tgt] & 0x1000)) {
             set_treaty(faction, faction_tgt, 0x1000, 1);
             if (faction == ConsoleGlobal.faction_id_) {
@@ -544,7 +544,7 @@ L_59fb64:
         }
     }
     if (faction == ConsoleGlobal.faction_id_ && HUMAN_BIT(faction)
-        && (NetDaemonNet.channels_[0].leading_words_[3] & 1)
+        && (NetDaemonNet.action_mode_ & 1)
         && (PlayersData[faction].diplo_treaties[faction_tgt] & 7)
         && (!(PlayersData[faction_tgt].diplo_treaties[faction] & 1)
             || !(PlayersData[faction_tgt].diplo_treaties[faction] & 0x2000000))
@@ -564,7 +564,7 @@ L_59fb64:
         if (Bases[base_id].state & 0x40) {
             diff_modifier = 1;
             if (faction == ConsoleGlobal.faction_id_ && HUMAN_BIT(faction)
-                && (NetDaemonNet.channels_[0].leading_words_[3] & 1)) {
+                && (NetDaemonNet.action_mode_ & 1)) {
                 parse_says(0, Bases[base_id].name_string, -1, -1);
                 success_rates(1, morale_veh(veh_id, 1, 0), -1, base_id);
                 if (!success_rates(2, morale_veh(veh_id, 1, 0), 1, base_id)) {
@@ -602,7 +602,7 @@ L_59fb64:
             if (success_rates(2, morale_veh(veh_id, 1, 0), diff_modifier + 1,
                               base_id)) {
                 int choice;
-                if (!(NetDaemonNet.channels_[0].leading_words_[3] & 2)) {
+                if (!(NetDaemonNet.action_mode_ & 2)) {
                     choice = popp(ScriptPopupFile, "DECIPHER", 0x40,
                                   is_alien ? "al_infil_sm.pcx" : "infil_sm.pcx",
                                   0);
@@ -627,7 +627,7 @@ L_59fb64:
                 goto L_59fb64;
             }
             if (faction == ConsoleGlobal.faction_id_
-                && (NetDaemonNet.channels_[0].leading_words_[3] & 2)) {
+                && (NetDaemonNet.action_mode_ & 2)) {
                 NetMsgPrimary.pop("STOLENOTHING", 0);
                 return 0;
             }
@@ -637,7 +637,7 @@ L_59fb64:
         if (Bases[base_id].state & 0x400000) {
             diff_modifier = 1;
             if (faction == ConsoleGlobal.faction_id_ && HUMAN_BIT(faction)
-                && (NetDaemonNet.channels_[0].leading_words_[3] & 1)) {
+                && (NetDaemonNet.action_mode_ & 1)) {
                 parse_says(0, Bases[base_id].name_string, -1, -1);
                 success_rates(1, morale_veh(veh_id, 1, 0), -1, base_id);
                 if (!success_rates(2, morale_veh(veh_id, 1, 0), 1, base_id)) {
@@ -709,7 +709,7 @@ L_59fb64:
     {
         int choice;
         if (faction == ConsoleGlobal.faction_id_ && HUMAN_BIT(faction)
-            && (NetDaemonNet.channels_[0].leading_words_[3] & 1)) {
+            && (NetDaemonNet.action_mode_ & 1)) {
             if (success_rates(2, morale_veh(veh_id, 1, 0), 1, base_id)) {
                 choice = popp(ScriptPopupFile, "ADVVIRUS", 0,
                               is_alien ? "al_infil_sm.pcx" : "infil_sm.pcx", 0);
@@ -726,7 +726,7 @@ L_59fb64:
     }
     diff_modifier = 1;
     if (faction == ConsoleGlobal.faction_id_ && HUMAN_BIT(faction)
-        && (NetDaemonNet.channels_[0].leading_words_[3] & 1)) {
+        && (NetDaemonNet.action_mode_ & 1)) {
         popup.start(PopupStartCaption, "VIRUS", -1, 0, 0, 0);
         if (stack_check(veh_at(Bases[base_id].x, Bases[base_id].y),
                         2, 5, -1, -1)) {
@@ -763,7 +763,7 @@ L_59fb64:
     }
     if (has_fac(FAC_HEADQUARTERS, base_id, 0)) {
         if (faction == ConsoleGlobal.faction_id_ && HUMAN_BIT(faction)
-            && (NetDaemonNet.channels_[0].leading_words_[3] & 1)) {
+            && (NetDaemonNet.action_mode_ & 1)) {
             parse_says(0, Bases[base_id].name_string, -1, -1);
             parse_says(1, Players[faction_tgt].adj_name_faction, -1, -1);
             success_rates(2, morale_veh(veh_id, 1, 0), 2, base_id);
@@ -774,7 +774,7 @@ L_59fb64:
         }
     } else if (sabotage_id == FAC_PERIMETER_DEFENSE || sabotage_id == FAC_TACHYON_FIELD) {
     if (faction == ConsoleGlobal.faction_id_ && HUMAN_BIT(faction)
-        && (NetDaemonNet.channels_[0].leading_words_[3] & 1)) {
+        && (NetDaemonNet.action_mode_ & 1)) {
         parse_says(0, Bases[base_id].name_string, -1, -1);
         parse_say(1, Facility[sabotage_id].name, -1, -1);
         success_rates(2, morale_veh(veh_id, 1, 0), 2, base_id);
@@ -815,13 +815,13 @@ L_59fb64:
         diff_modifier = 1;
         if (!success_rates(1, morale_veh(veh_id, 1, 0), 1, base_id)) {
             if (faction == ConsoleGlobal.faction_id_ && HUMAN_BIT(faction)
-                && (NetDaemonNet.channels_[0].leading_words_[3] & 1)) {
+                && (NetDaemonNet.action_mode_ & 1)) {
                 NetMsgPrimary.pop("NOASSASSIN", nullptr);
             }
             return 0;
         }
         if (faction == ConsoleGlobal.faction_id_ && HUMAN_BIT(faction)
-            && (NetDaemonNet.channels_[0].leading_words_[3] & 1)
+            && (NetDaemonNet.action_mode_ & 1)
             && !popp(ScriptPopupFile, "ASSASSIN", 0,
                      is_alien ? "al_infil_sm.pcx" : "infil_sm.pcx", nullptr)) {
             return 0;
@@ -836,7 +836,7 @@ L_59fb64:
             return 0;
         }
         if (faction == ConsoleGlobal.faction_id_ && HUMAN_BIT(faction)
-            && (NetDaemonNet.channels_[0].leading_words_[3] & 1)
+            && (NetDaemonNet.action_mode_ & 1)
             && !popp(ScriptPopupFile, "FREEWILLY", 0,
                      is_alien ? "al_infil_sm.pcx" : "infil_sm.pcx", nullptr)) {
             return 0;
@@ -850,7 +850,7 @@ L_59fb64:
         if (Chassis[VehPrototypes[Vehs[veh_id_tgt].proto_id].chassis_id].triad == TRIAD_AIR
             && !has_abil(Vehs[veh_id].proto_id, ABL_AIR_SUPERIORITY)) {
             if (faction == ConsoleGlobal.faction_id_ && mode && HUMAN_BIT(faction)
-                && (NetDaemonNet.channels_[0].leading_words_[3] & 1)) {
+                && (NetDaemonNet.action_mode_ & 1)) {
                 int ability = abil_index(ABL_AIR_SUPERIORITY);
                 parse_say(0, Ability[ability].name, -1, -1);
                 NetMsgPrimary.pop("PROBEABILSUPERIORITY", 5000, 0, nullptr);
@@ -877,7 +877,7 @@ L_59fb64:
             }
             if (Players[faction_tgt].rule_flags & RFLAG_MINDCONTROL) {
                 if (faction == ConsoleGlobal.faction_id_ && (human_mask & (1 << faction)) && mode
-                    && (NetDaemonNet.channels_[0].leading_words_[3] & 1)) {
+                    && (NetDaemonNet.action_mode_ & 1)) {
                     parse_says(0, Players[faction_tgt].adj_name_faction, -1, -1);
                     NetMsgPrimary.pop("MINDIMMUNITY2", nullptr);
                 }
@@ -917,7 +917,7 @@ L_59fb64:
             case 8:
             case 9:
                 if (faction == ConsoleGlobal.faction_id_ && (human_mask & (1 << faction)) && mode
-                    && (NetDaemonNet.channels_[0].leading_words_[3] & 1)) {
+                    && (NetDaemonNet.action_mode_ & 1)) {
                     parse_says(0, Players[faction_tgt].adj_name_faction, -1, -1);
                     NetMsgPrimary.pop("IMMUNITY", nullptr);
                 }
@@ -1007,7 +1007,7 @@ L_59fb64:
             if (HUMAN_BIT(faction)) {
                 int choice;
                 if (faction == ConsoleGlobal.faction_id_
-                    && (NetDaemonNet.channels_[0].leading_words_[3] & 1)) {
+                    && (NetDaemonNet.action_mode_ & 1)) {
                     parse_num(0, cost);
                     parse_num(1, PlayersData[faction].energy_reserves);
                     success_rates(1, morale_veh(veh_id, 1, 0), 0, -1);
@@ -1026,7 +1026,7 @@ L_59fb64:
                 }
                 diff_modifier = choice - 1;
             }
-            if (NetDaemonNet.channels_[0].leading_words_[3] & 2) {
+            if (NetDaemonNet.action_mode_ & 2) {
                 PlayersData[faction].energy_reserves -= cost;
                 if (faction == ConsoleGlobal.faction_id_) {
                     ConsoleGlobal.update_data(0); // image cross-jumps to 5a2dc1
@@ -1036,7 +1036,7 @@ L_59fb64:
         }
         // 5a201d
         if (faction == ConsoleGlobal.faction_id_ && mode && HUMAN_BIT(faction)
-            && (NetDaemonNet.channels_[0].leading_words_[3] & 1)) {
+            && (NetDaemonNet.action_mode_ & 1)) {
             NetMsgPrimary.pop("ALIENPROBE", nullptr);
         }
         return 0;
@@ -1061,7 +1061,7 @@ L_59fb64:
                 goto L_5a2571; // image: 5a2574
             }
             if (faction == ConsoleGlobal.faction_id_
-                && (NetDaemonNet.channels_[0].leading_words_[3] & 1)) {
+                && (NetDaemonNet.action_mode_ & 1)) {
                 parse_says(0, Players[faction_tgt].adj_name_faction, -1, -1);
                 NetMsgPrimary.pop("MINDIMMUNITY", nullptr);
             }
@@ -1102,7 +1102,7 @@ L_59fb64:
                 goto L_59fb64;
             }
             if (faction == ConsoleGlobal.faction_id_
-                && (NetDaemonNet.channels_[0].leading_words_[3] & 1)) {
+                && (NetDaemonNet.action_mode_ & 1)) {
                 parse_says(0, Players[faction_tgt].adj_name_faction, -1, -1);
                 NetMsgPrimary.pop("IMMUNITY", nullptr);
             }
@@ -1242,7 +1242,7 @@ L_5a2aa4:
     if (HUMAN_BIT(faction)) {
         int tc_level;
         if (faction == ConsoleGlobal.faction_id_
-            && (NetDaemonNet.channels_[0].leading_words_[3] & 1)) {
+            && (NetDaemonNet.action_mode_ & 1)) {
             parse_says(0, Bases[base_id].name_string, -1, -1);
             parse_num(0, cost);
             parse_num(1, PlayersData[faction].energy_reserves);
@@ -1271,7 +1271,7 @@ L_5a2aa4:
             diff_modifier = 1;
         }
     }
-    if (NetDaemonNet.channels_[0].leading_words_[3] & 2) {
+    if (NetDaemonNet.action_mode_ & 2) {
         PlayersData[faction].energy_reserves -= cost;
         PlayersData[faction].mind_control_total += 4;
         PlayersData[faction_tgt].diplo_mind_control[faction] += 4;
@@ -1305,7 +1305,7 @@ L_5a2dcd:
             }
         } else if (!HUMAN_BIT(faction_tgt)) {
             if (faction == ConsoleGlobal.faction_id_
-                && (NetDaemonNet.channels_[0].leading_words_[3] & 1)) {
+                && (NetDaemonNet.action_mode_ & 1)) {
                 popup.start(PopupStartCaption, "FRAME", -1, 0, 0, 0);
                 success_rates(2, morale_veh(veh_id, 1, 0), diff_modifier, base_id);
                 if (success_rates(3, morale_veh(veh_id, 1, 0), diff_modifier + 1, base_id)
@@ -1343,7 +1343,7 @@ L_5a2dcd:
             diff_modifier++;
         }
     }
-    if (!(NetDaemonNet.channels_[0].leading_words_[3] & 2)) {
+    if (!(NetDaemonNet.action_mode_ & 2)) {
         return 1;
     }
     {

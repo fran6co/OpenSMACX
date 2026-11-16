@@ -6679,8 +6679,8 @@ void base_panel_sprite(Sprite &sprite, Buffer *canvas, int x, int y) {
 void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
     PullDown menu;
     if (Vehs[vehicle_id].faction_id != ConsoleGlobal.faction_id_) return;
-    if (IsMultiplayerNet && (NetDaemonNet.channels_[1].leading_words_[2]
-        || NetDaemonNet.channels_[1].payload_.flags || ConsoleControlTurnActive)) return;
+    if (IsMultiplayerNet && (NetDaemonNet.lock_held_
+        || NetDaemonNet.field_1BB4_ || ConsoleControlTurnActive)) return;
     if (!right && (GameDataStateStorage.fields_.game_more_preferences_ & 0x40000u)) {
         if (IsMultiplayerNet && veh_selectable(vehicle_id)
             && Vehs[vehicle_id].order == 0
