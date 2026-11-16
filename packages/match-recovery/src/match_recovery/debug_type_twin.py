@@ -11,7 +11,10 @@ records add (section-definition line counts, function-definition links and
 `.bf`/`.lf`/`.ef` symbols) and the label symbols `/Z7` adds for named C++
 `goto` labels (storage class 6, `$label$N`, defined in a code section, with
 no auxiliary record and no relocation from any non-debug section) are the only
-tolerated differences. Anything else refuses; the plain object then remains
+tolerated differences. Compiler-numbered `$L<n>` labels (storage class 6, in a
+code section, no auxiliary record) that no non-debug section relocates are
+not linkable content in either object; `/Z7` adds such scope labels for its
+CodeView records, so both sides drop them before comparing. Anything else refuses; the plain object then remains
 without type evidence.
 
 Layout readers resolve a measured extent in the twin and translate only its
@@ -34,6 +37,7 @@ _FILE_STORAGE = 103
 # their counters; a local's identity is its defining section and offset.
 _NUMBERED_LOCAL = re.compile(r"\$(?:L|T|SG|S)\d+")
 _LABEL_STORAGE = 6
+_NUMBERED_LABEL = re.compile(r"\$L\d+")
 # A named source label as `/Z7` records it for CodeView: `$<name>$<counter>`.
 _SOURCE_LABEL = re.compile(r"\$[A-Za-z_][A-Za-z0-9_]*\$\d+")
 
@@ -111,6 +115,10 @@ def _symbols(obj, mapping, *, twin):
                 raise ValueError("unsupported debug-typed twin function record")
             continue
         raw = obj.auxiliary.get(index, b"")
+        if (symbol.storage == _LABEL_STORAGE and symbol.section > 0 and not raw
+                and index not in referenced and _NUMBERED_LABEL.fullmatch(symbol.name)
+                and obj.sections[symbol.section - 1].flags & 0x20):
+            continue  # An unreferenced numbered label; never a link target.
         if (twin and symbol.storage == _LABEL_STORAGE and symbol.section > 0 and symbol.type == 0
                 and not raw and index not in referenced and _SOURCE_LABEL.fullmatch(symbol.name)
                 and obj.sections[symbol.section - 1].flags & 0x20):

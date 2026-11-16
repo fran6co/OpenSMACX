@@ -1961,7 +1961,8 @@ Status: Complete
 // The original Scroll constructor at 0x006051D0 installs its Win view at
 // 0x00605214 (0x00669D58) and Buffer view at 0x0060521A (0x00669D50,
 // this+0x444). The real GraphicWin-derived owner emits these two tables.
-// These are addresspoint bindings only; original table extents and contents
-// remain unverified. Current compiler table sizes do not establish them.
-// RECOVERY_GENERATED: v1 vtable 0x00669D58 ? ??_7Scroll@@6BWin@@@ 0x006051D0
-// RECOVERY_GENERATED: v1 vtable 0x00669D50 ? ??_7Scroll@@6BBuffer@@@ 0x006051D0
+// Each extent ends where the next table starts in the pinned image (the
+// Buffer view at its Win view, the Win view at the next class's table), not
+// at a compiler table size; strict content checks then cover every slot.
+// RECOVERY_GENERATED: v1 vtable 0x00669D58 0x00669EC0 ??_7Scroll@@6BWin@@@ 0x006051D0
+// RECOVERY_GENERATED: v1 vtable 0x00669D50 0x00669D58 ??_7Scroll@@6BBuffer@@@ 0x006051D0

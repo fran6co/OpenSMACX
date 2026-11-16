@@ -3,6 +3,8 @@
 Bindings may resolve references to table starts without proving table contents.
 Every such table retains a separate content result; missing extents stay UNKNOWN.
 No original operand or candidate section length supplies a missing source fact.
+A `??_E` weak slot resolves only through a `weak_selection` qualification of
+the observed link; without one it stays `linker_selection_required`.
 """
 
 from collections import defaultdict
@@ -59,7 +61,20 @@ def generated_coverage(bindings, objects):
     return rows
 
 
-def _entries(binding, obj, section, image, external, source_symbols):
+def _weak_target(obj, symbol, external, weak_selections):
+    """Source target of a weak slot whose linker default the link observed."""
+    if weak_selections is None:
+        return None, None
+    fallback, mode = weak_external(obj, symbol)
+    if mode != 2 or weak_selections.fallback(symbol.name) != fallback.name:
+        return None, None
+    target = external.get(fallback.name)
+    if fallback.storage != 2 or type(target) is not int or not 0 <= target <= 0xFFFFFFFF:
+        return None, None
+    return fallback.name, target
+
+
+def _entries(binding, obj, section, image, external, source_symbols, weak_selections=None):
     """Position-based observations, never an inferred original table extent.
 
     For an unbounded table, a word read after its start may already belong to
@@ -99,8 +114,12 @@ def _entries(binding, obj, section, image, external, source_symbols):
             if symbol.storage == 105:
                 try:
                     fallback, mode = weak_external(obj, symbol)
+                    selected, _ = _weak_target(obj, symbol, external, weak_selections)
                     detail["linker_fallback"] = {"symbol": fallback.name,
-                        "search": {1: "no_library", 2: "library", 3: "alias"}[mode], "selection": "unverified"}
+                        "search": {1: "no_library", 2: "library", 3: "alias"}[mode],
+                        "selection": "observed_link" if selected else "unverified"}
+                    if selected is None and weak_selections is not None and symbol.name in weak_selections.refused:
+                        detail["linker_fallback"]["refusal"] = weak_selections.refused[symbol.name]
                 except ValueError as error:
                     detail["metadata_error"] = str(error)
             row["relocations"].append(detail)
@@ -114,6 +133,11 @@ def _entries(binding, obj, section, image, external, source_symbols):
             symbol = obj.symbols[relocations[0][0]]
             target = external.get(symbol.name) if symbol.storage == 2 else None
             if symbol.storage == 105:
+                try:
+                    _, target = _weak_target(obj, symbol, external, weak_selections)
+                except ValueError:
+                    target = None
+            if symbol.storage == 105 and target is None:
                 row["observation"] = "linker_selection_required"
             elif type(target) is not int or not 0 <= target <= 0xFFFFFFFF:
                 row["observation"] = "unresolved_source_target"
@@ -227,7 +251,7 @@ def _check_vbtable(binding, unit, section, image):
     return row
 
 
-def check_generated(bindings, objects, image, external_targets):
+def check_generated(bindings, objects, image, external_targets, *, weak_selections=None):
     pin = hashlib.sha256(image.data).hexdigest()
     targets, rows, emitted = {}, [], []
     for binding in bindings:
@@ -277,7 +301,8 @@ def check_generated(bindings, objects, image, external_targets):
                "interpretation_id": binding.interpretation_id,
                "source": {"path": binding.path, "line": binding.line},
                "definition": Result.PASS, "content": Result.UNKNOWN,
-               "diagnostic": _entries(binding, obj, section, image, external, source_symbols)}
+               "diagnostic": _entries(binding, obj, section, image, external, source_symbols,
+                                      weak_selections)}
         if binding.span is None:
             row["reason"] = "original table extent is not declared; content remains unverified"
         else:
@@ -300,11 +325,20 @@ def check_generated(bindings, objects, image, external_targets):
                     relocations.append(Relocation(offset, RelocationKind.ABSOLUTE32, str(index)))
                     if symbol.storage == 2 and symbol.name in external:
                         resolved[str(index)] = external[symbol.name]
+                    elif symbol.storage == 105:
+                        fallback, target = _weak_target(obj, symbol, external, weak_selections)
+                        if fallback is not None:
+                            resolved[str(index)] = target
                 proof = compare_bound_code(binding.span, original, section.data,
                                            tuple(relocations), resolved,
                                            original_absolute_sites=image.absolute_sites(binding.span))
                 for relocation in proof.get("relocations", []):
-                    relocation["symbol"] = obj.symbols[int(relocation["target"])].name
+                    symbol = obj.symbols[int(relocation["target"])]
+                    relocation["symbol"] = symbol.name
+                    if symbol.storage == 105 and str(relocation["target"]) in resolved:
+                        relocation["weak_selection"] = {
+                            "fallback": weak_selections.fallback(symbol.name), "basis": "observed_link",
+                            "evidence": weak_selections.evidence}
                 row.update(content=proof["result"], proof=proof)
             except ValueError as error:
                 row["reason"] = str(error)

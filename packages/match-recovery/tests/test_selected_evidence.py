@@ -827,3 +827,23 @@ def test_body_unit_object_without_layout_flags_stays_unknown(tmp_path):
     report = verify(root, compile)
     assert report["result"] == Result.UNKNOWN
     assert "debug_type_twins" not in report
+
+
+def test_table_emitted_by_several_units_contributes_every_copy_s_slot_references():
+    from types import SimpleNamespace
+    from match_recovery.pe_coff import Section, Symbol
+    from match_recovery.selected_evidence import _generated_references
+
+    def table_object(slot):
+        return SimpleNamespace(
+            symbols={0: Symbol(0, "??_7Widget@@6B@", 0, 1, 0, 2), 1: Symbol(1, slot, 0, 0, 0x20, 2)},
+            sections=(Section(bytes(4), ((0, 1, 6),), 0x40001040, ".rdata"),))
+
+    binding = SimpleNamespace(symbol="??_7Widget@@6B@")
+    objects = {"src/a.cpp": table_object("_shared_stub"), "src/b.cpp": table_object("_other_stub")}
+    assert _generated_references(binding, objects) == {
+        ("src/a.cpp", "_shared_stub", 2), ("src/b.cpp", "_other_stub", 2)}
+    doubled = table_object("_shared_stub")
+    doubled.symbols[2] = Symbol(2, "??_7Widget@@6B@", 0, 1, 0, 2)
+    with pytest.raises(ValueError, match="ambiguous generated table"):
+        _generated_references(binding, {"src/a.cpp": doubled})

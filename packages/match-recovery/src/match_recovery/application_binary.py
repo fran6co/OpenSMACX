@@ -82,7 +82,7 @@ def observe_compiled_selection(bindings, selected, object_bindings, generated_bi
                                objects, image, externals, *, errors=None,
                                import_bindings=(), shared_bindings=(), literal_bindings=(),
                                fragments=(), associated_bindings=(), unit_extensions=None,
-                               _weak_scope=None):
+                               _weak_scope=None, link_observation=None):
     """Observe selected function rows and their complete typed evidence closure.
 
     The returned object deliberately has no aggregate acceptance/result field.
@@ -125,7 +125,7 @@ def observe_compiled_selection(bindings, selected, object_bindings, generated_bi
                                         if item.origin.entity_id not in measurement_ids),
         selected_object_targets=evidence.object_targets,
         selected_object_contents=evidence.object_contents,
-        _weak_scope=_weak_scope)
+        _weak_scope=_weak_scope, link_observation=link_observation)
     function_rows, object_rows, generated_rows, import_rows, shared_rows, literal_rows = checked
     rows_by_id = {row.get("entity_id"): row for row in function_rows
                   if row.get("entity_id") in selected}
@@ -626,7 +626,7 @@ def check_compiled(bindings, object_bindings, generated_bindings, objects, image
 def _compiled_evidence(bindings, object_bindings, generated_bindings, objects, image, externals, *, errors=None,
                        import_bindings=(), shared_bindings=(), literal_bindings=(), fragments=(),
                        associated_bindings=(), function_support_bindings=(), selected_object_targets=None,
-                       selected_object_contents=None, _weak_scope=None):
+                       selected_object_contents=None, _weak_scope=None, link_observation=None):
     """Resolve targets from product objects, never from a retention probe."""
     _validate_compiled_namespaces((*bindings, *function_support_bindings), object_bindings, generated_bindings,
                                   import_bindings, shared_bindings, externals)
@@ -647,14 +647,24 @@ def _compiled_evidence(bindings, object_bindings, generated_bindings, objects, i
     imports, checked_imports = import_targets(import_bindings, objects, image)
     active_literals = [item for item in literal_bindings if item.unit in objects or item.unit in (errors or {})]
     literal_targets, checked_literals = check_literals(active_literals, objects, image, errors=errors)
-    generated_targets, checked_generated = check_generated(generated_bindings, objects, image, {**externals, **data_targets})
+    # Only a configured observed link adds weak-slot selections (weak_selection).
+    weak_options = {}
+    if link_observation is not None:
+        from .weak_selection import qualify_weak_fallbacks
+        weak_names = {symbol.name for obj in objects.values() for symbol in obj.symbols.values()
+                      if symbol.storage == 105}
+        weak_options["weak_selections"] = qualify_weak_fallbacks(weak_names, objects, link_observation)
+    generated_targets, checked_generated = check_generated(generated_bindings, objects, image, {**externals, **data_targets},
+                                                           **weak_options)
     shared_targets, checked_shared = check_shared(shared_bindings, objects, image,
         {**externals, **data_targets, **generated_targets}, import_targets=imports,
         literal_targets=literal_targets, errors=errors,
-        merged_literal_names=_merged_literal_names(literal_bindings, object_bindings))
+        merged_literal_names=_merged_literal_names(literal_bindings, object_bindings),
+        **({"link_observation": link_observation} if link_observation is not None else {}))
     externals = {**externals, **shared_targets}
     if shared_bindings:
-        generated_targets, checked_generated = check_generated(generated_bindings, objects, image, {**externals, **data_targets})
+        generated_targets, checked_generated = check_generated(generated_bindings, objects, image, {**externals, **data_targets},
+                                                               **weak_options)
     from .object_data import check_initial_data
     bounded = [item for item in content_bindings if item.span is not None
                and (item.unit in objects or item.unit in (errors or {}))]
@@ -733,6 +743,16 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
     # import_contracts); register-preservation proofs may cross those calls.
     from .import_contracts import declare_toolchain_import_contracts
     declare_toolchain_import_contracts(root, image)
+    # A configured build-directory link may qualify `??_E` weak vftable slots
+    # (weak_selection). An unusable observation leaves them unresolved.
+    link_observation, link_observation_report = None, None
+    if settings.link_observation is not None:
+        from .weak_selection import read_link_observation
+        try:
+            link_observation = read_link_observation(root, dict(settings.link_observation))
+            link_observation_report = {"result": Result.PASS, **link_observation.evidence}
+        except (OSError, ValueError) as error:
+            link_observation_report = {"result": Result.UNKNOWN, "reason": str(error)}
     object_bindings = read_objects(root, snapshot["image_sha256"], inputs=source_inputs)
     literal_bindings = read_literals(root, snapshot["image_sha256"], inputs=source_inputs)
     associated_bindings = read_associated(root, snapshot["image_sha256"], inputs=source_inputs)
@@ -1066,7 +1086,8 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
             import_bindings=active_imports, shared_bindings=active_shared, literal_bindings=active_literals,
             fragments=fragment_bindings, associated_bindings=associated_bindings,
             selected_object_targets=(active_objects.object_targets if active_objects is not None else None),
-            selected_object_contents=(active_objects.object_contents if active_objects is not None else None))
+            selected_object_contents=(active_objects.object_contents if active_objects is not None else None),
+            link_observation=link_observation)
         checked_functions, checked_objects, checked_generated, checked_imports, checked_shared, checked_literals = checked
         # An explicit header/body path is an independent source attribution
         # obligation. Exact emitted bytes cannot validate a pointer to a
@@ -1229,6 +1250,7 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
         elif Result.FAIL in table_results and overall != Result.UNKNOWN:
             overall = Result.FAIL
     return {"task_id": selection_label, "check": "scoped_binary_references", "result": overall,
+            **({"weak_link_observation": link_observation_report} if link_observation_report else {}),
             "input_fingerprint": digest(before), "functions": rows, "counts": dict(sorted(counts.items())),
             "compile_attempts": attempts + body_attribution.compile_attempts,
             "body_attribution_compile_attempts": body_attribution.compile_attempts,

@@ -4170,5 +4170,5 @@ Status: Complete
 */
 // body src/basepop.h
 // BODY IN basepop.h, as an in-class `MEASURED` inline member.
-// RECOVERY_GENERATED: v1 vtable 0x006698D4 ? ??_7BasePop@@6BWin@@@ 0x00600860
-// RECOVERY_GENERATED: v1 vtable 0x006698CC ? ??_7BasePop@@6BBuffer@@@ 0x00600860
+// RECOVERY_GENERATED: v1 vtable 0x006698D4 0x00669A58 ??_7BasePop@@6BWin@@@ 0x00600860
+// RECOVERY_GENERATED: v1 vtable 0x006698CC 0x006698D4 ??_7BasePop@@6BBuffer@@@ 0x00600860

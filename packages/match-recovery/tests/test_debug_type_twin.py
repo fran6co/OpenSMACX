@@ -177,3 +177,24 @@ def test_goto_label_tolerance_does_not_cover_linkable_or_other_symbols():
     with pytest.raises(ValueError, match="symbol table"):
         prove_debug_type_twin(plain_object(extra=(("$not_in_turn$58438", 0, 1, 0, 6, b""),)),
                               twin_object(extra=(GOTO_LABEL,)))
+
+
+SCOPE_LABEL = ("$L59741", 0, 2, 0, 6, b"")  # twin numbering: .text is section 2
+
+
+def test_unreferenced_numbered_scope_labels_added_by_z7_are_tolerated():
+    # Measured on VC6 (stringstruct.cpp): /Z7 adds unreferenced `$L<n>` labels
+    # in code sections for its CodeView scope records.
+    prove_debug_type_twin(plain_object(), twin_object(extra=(SCOPE_LABEL, ("$L59740", 0, 2, 0, 6, b""))))
+
+
+def test_numbered_label_tolerance_does_not_cover_referenced_or_data_labels():
+    twin = twin_object(extra=(SCOPE_LABEL,))
+    data = twin.sections[4]
+    twin.sections = (*twin.sections[:4], type(data)(data.data, ((0, 10, 6),), data.flags, data.name))
+    with pytest.raises(ValueError, match="symbol table|relocations"):
+        prove_debug_type_twin(plain_object(), twin)
+    for symbol in (("$L59741", 0, 5, 0, 6, b""),          # in a data section
+                   ("$L59741", 0, 2, 0, 6, bytes(18))):   # with an auxiliary record
+        with pytest.raises(ValueError, match="symbol table"):
+            prove_debug_type_twin(plain_object(), twin_object(extra=(symbol,)))

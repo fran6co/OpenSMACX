@@ -86,13 +86,21 @@ def _object_references(binding, obj):
 
 
 def _generated_references(binding, objects):
-    matches = [(unit, obj, symbol) for unit, obj in objects.items()
-               for symbol in obj.symbols.values()
-               if symbol.name == binding.symbol and symbol.storage == 2 and symbol.section > 0]
-    if len(matches) != 1:
-        return set()
-    unit, obj, symbol = matches[0]
-    return _relocation_names(unit, obj, (symbol.section,))
+    """Every emitted copy's slot references, unit-qualified.
+
+    A table emitted by several TUs (VC6 COMDAT copies) is content-checked in
+    each of them, so each copy's slot targets belong to the closure. A copy
+    with more than one definition in one object stays ambiguous.
+    """
+    names = set()
+    for unit, obj in objects.items():
+        matches = [symbol for symbol in obj.symbols.values()
+                   if symbol.name == binding.symbol and symbol.storage == 2 and symbol.section > 0]
+        if len(matches) > 1:
+            raise ValueError("ambiguous generated table definition")
+        if matches:
+            names.update(_relocation_names(unit, obj, (matches[0].section,)))
+    return names
 
 
 def _closure_object_group(binding, all_objects):

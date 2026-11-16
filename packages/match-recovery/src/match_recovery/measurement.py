@@ -93,6 +93,9 @@ class Measurement:
     environment: tuple[str, ...]
     unit_flag_sets: tuple[tuple[str, tuple[int, ...]], ...] = ()
     unit_explicit_flags: tuple[tuple[str, tuple[str, ...]], ...] = ()
+    # Optional build-directory link (map/image/inputs/log, root-relative) whose
+    # MAP may qualify `??_E` weak vftable slots; see weak_selection.
+    link_observation: tuple[tuple[str, str], ...] | None = None
 
     @classmethod
     def read(cls, root: Path):
@@ -101,7 +104,7 @@ class Measurement:
         value = project.get("measurement")
         fields = {"backend", "compiler_profile", "flag_sets", "layout_flags", "unit_extensions", "inputs", "input_roots"}
         if (not isinstance(value, dict) or not fields <= set(value)
-                or set(value) - fields - {"unit_flag_sets", "require_unit_flag_sets"}):
+                or set(value) - fields - {"unit_flag_sets", "require_unit_flag_sets", "link_observation"}):
             raise ValueError("measurement configuration requires backend, compiler_profile, flag_sets, layout_flags, unit_extensions, inputs and input_roots")
         require_pins = value.get("require_unit_flag_sets", False)
         if type(require_pins) is not bool:
@@ -212,10 +215,19 @@ class Measurement:
             normalized_units.append((path, tuple(indices)))
         if require_pins:
             _require_unit_recipes(root, project, source, value["unit_extensions"], unit_flag_sets)
+        link_observation = value.get("link_observation")
+        if link_observation is not None:
+            if (not isinstance(link_observation, dict)
+                    or set(link_observation) != {"map", "image", "inputs", "log"}):
+                raise ValueError("measurement link_observation requires exactly map, image, inputs and log")
+            for path in link_observation.values():
+                relative_path(path)
+            link_observation = tuple(sorted(link_observation.items()))
         return cls(value["backend"], value["compiler_profile"], flag_sets,
                    tuple(value["layout_flags"]), tuple(value["unit_extensions"]), inputs,
                    tuple(sorted(roots)), source, tuple(sorted(environment)),
-                   tuple(sorted(normalized_units)), tuple(sorted(normalized_explicit_flags)))
+                   tuple(sorted(normalized_units)), tuple(sorted(normalized_explicit_flags)),
+                   link_observation)
 
     def flags_for(self, path):
         """Return this TU's configured trials, or all global trials if unpinned."""

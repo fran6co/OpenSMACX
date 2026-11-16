@@ -1666,6 +1666,31 @@ not change an interpretation's identity; changing or removing a mapping preserve
 the old interpretation for explicit independent supersession or retraction.
 Neither that review nor an unknown extent establishes table-content correctness.
 
+A strict record measurement whose owner has associated data checks every table
+its evidence closure reaches, in every unit that emits a copy; each copy's slot
+targets (including RECOVERY_SHARED stubs) join that closure. Two slot kinds
+depend on the linker rather than one object, and resolve only through the
+build-directory link configured as `measurement.link_observation` (`map`,
+`image`, `inputs`, `log` under `build/`, produced by `cmake --build build`;
+see `match_recovery.weak_selection`):
+
+- A `??_E` deleting slot is a mode-2 weak external whose default is `??_G`.
+  It resolves to the `??_G` source binding only when every compiled closure
+  object records that same default, none defines the `??_E` name strongly,
+  the observed link's inputs still hash as recorded, its MAP agrees with its
+  executable, and that MAP places `??_E` and `??_G` once each at the same VA
+  from the same owner. Otherwise the slot stays `linker_selection_required`.
+- A RECOVERY_SHARED body whose COMDAT copies differ between units (for
+  example a frame-keeping `/Oy-` copy beside a frameless one) passes only when
+  the MAP places the symbol from one owner that is uniquely one compiled
+  closure unit whose copy passes, the carrier passes, and every failing copy is
+  a COMDAT that link therefore discarded. Unknown copies still refuse.
+  `recover check-data` applies the same rule to its shared-body checks.
+
+The observation is the last link of `build/`: rebuild before measuring.
+Units outside the measured closure are taken as that link observed them; a
+missing, partial or changed observation leaves both slot kinds unresolved.
+
 The same `RECOVERY_GENERATED` annotation supports `v1 vbtable` for an MSVC
 `??_8` symbol. A vbtable is a vector of signed 32-bit offsets, not a vftable
 of relocated function pointers. Its emitted definition must be an isolated

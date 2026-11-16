@@ -56,6 +56,16 @@ def check_data(root: Path, image_path: Path, *, symbols=None, compiler=None):
               {b.symbol for b in imports}, {b.symbol for b in shared}]
     if any(group & other for i, group in enumerate(groups) for other in groups[:i]):
         raise ValueError("conflicting function/object/generated/import bindings")
+    # A configured build-directory link may select among differing shared
+    # COMDAT copies (see shared_binary); an unusable one selects nothing.
+    link_observation, link_observation_report = None, None
+    if settings.link_observation is not None:
+        from .weak_selection import read_link_observation
+        try:
+            link_observation = read_link_observation(root, dict(settings.link_observation))
+            link_observation_report = {"result": Result.PASS, **link_observation.evidence}
+        except (OSError, ValueError) as error:
+            link_observation_report = {"result": Result.UNKNOWN, "reason": str(error)}
     flags_list = tuple(flags + settings.layout_flags for flags in settings.flag_sets)
     compiler = compiler if compiler is not None else Compiler(root, profile=settings.compiler_profile)
     rows, literal_rows, dependencies, shared_checks, attempts = [], [], [], [], 0
@@ -119,7 +129,8 @@ def check_data(root: Path, image_path: Path, *, symbols=None, compiler=None):
         shared_targets, checked_shared = check_shared(active_shared, objects, image,
             {**resolved_functions, **targets, **tables}, import_targets=imported, literal_targets=local_targets, errors=errors,
             merged_literal_names=frozenset({b.symbol for b in literals})
-            - object_reserved_literal_symbols(literals, bindings))
+            - object_reserved_literal_symbols(literals, bindings),
+            **({"link_observation": link_observation} if link_observation is not None else {}))
         shared_checks.extend({**row, "flags": list(effective(row["unit"], flags)), "graph_flags": list(flags)}
                              for row in checked_shared)
         measured = check_initial_data(selected, objects, image,
@@ -136,6 +147,7 @@ def check_data(root: Path, image_path: Path, *, symbols=None, compiler=None):
     results = {row["result"] for row in shared_checks} | set(counts)
     result = Result.FAIL if Result.FAIL in results else Result.UNKNOWN if Result.UNKNOWN in results else Result.PASS
     return {"check": "original_initial_data", "schema_version": 1, "result": result,
+            **({"link_observation": link_observation_report} if link_observation_report else {}),
             "objects": rows, "selected_objects": len(selected), "counts": dict(counts),
             "literals": literal_rows, "selected_literals": len(selected_literals),
             "shared_functions": shared_checks,

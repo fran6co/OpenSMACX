@@ -169,6 +169,8 @@
     "backend": "pe-coff-i386",
     "compiler_profile": "application",
     "require_unit_flag_sets": true,
+    "link_observation": {"map": "build/OpenSMACX.map", "image": "build/OpenSMACX.exe",
+                         "inputs": "build/OpenSMACX.link.inputs.json", "log": "build/OpenSMACX.link.log"},
     "unit_flag_sets": {
       "src/jackal/filewin.cpp": {
         "flags": [

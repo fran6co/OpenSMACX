@@ -1483,6 +1483,6 @@ Purpose: Compiler-generated deleting adjustor through RadioButton virtual
 // RECOVERY_GENERATED: v1 vbtable 0x00670A60 ? ??_8Dialogs@@7BCheckBox@@@ 0x00612830
 // RECOVERY_GENERATED: v1 vbtable 0x00670A54 ? ??_8Dialogs@@7BSpriteBox@@@ 0x00612830
 // RECOVERY_GENERATED: v1 vbtable 0x00670A48 ? ??_8Dialogs@@7BEditGroup@@@ 0x00612830
-// RECOVERY_GENERATED: v1 vtable 0x00669BE8 ? ??_7Dialogs@@6BWin@@@ 0x00612830
-// RECOVERY_GENERATED: v1 vtable 0x00669BE0 ? ??_7Dialogs@@6BBuffer@@@ 0x00612830
-// RECOVERY_GENERATED: v1 vtable 0x00669BD4 ? ??_7Dialogs@@6B@ 0x00612830
+// RECOVERY_GENERATED: v1 vtable 0x00669BE8 0x00669D50 ??_7Dialogs@@6BWin@@@ 0x00612830
+// RECOVERY_GENERATED: v1 vtable 0x00669BE0 0x00669BE8 ??_7Dialogs@@6BBuffer@@@ 0x00612830
+// RECOVERY_GENERATED: v1 vtable 0x00669BD4 0x00669BE0 ??_7Dialogs@@6B@ 0x00612830

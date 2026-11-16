@@ -485,3 +485,57 @@ def test_candidate_decks_follow_new_shared_reference_with_private_owner_controls
         assert len(row["shared_functions"]) == 2
         assert row["object_dependencies"][0]["result"] == ("unknown" if bad_replica else "pass")
     assert path.read_bytes() == original
+
+
+def _observed_link(symbol, owner, *, address=0x401000, function=True, owners=None):
+    from match_recovery.msvc_link_map import Public
+    from match_recovery.weak_selection import LinkObservation
+    return LinkObservation({symbol: (Public(symbol, 1, 0, address, function, owner),)},
+                           {"map_sha256": "0" * 64}, owners if owners is not None else {owner.casefold(): 1})
+
+
+def test_observed_link_discards_a_differing_comdat_copy_only_for_its_selected_owner():
+    bindings, objects, image = fixture()
+    binding = replace(bindings[0], symbol="_f", unit="code/methods.h",
+                      compiler_unit="code/z-carrier.cc")
+    objects[binding.compiler_unit] = Coff(code_object({"_f": b"\xc3"}))
+    objects["code/other.cc"] = Coff(code_object({"_f": b"\x90"}))
+    targets, rows = check_shared([binding], objects, image, {},
+                                 link_observation=_observed_link("_f", "z-carrier.cc.obj"))
+    assert targets == {"_f": 0x401000} and rows[0]["result"] == "pass"
+    discarded, = [row for row in rows[0]["copies"] if row["unit"] == "code/other.cc"]
+    assert discarded["result"] == "fail"
+    assert discarded["observed_link"]["disposition"] == "discarded_comdat_copy"
+    assert discarded["observed_link"]["selected_unit"] == "code/z-carrier.cc"
+    assert rows[0]["bytes"] == "pass"
+
+
+@pytest.mark.parametrize("damage", ["none", "failing_owner", "two_rows", "data_row", "archive_member",
+                                    "duplicate_basename", "unknown_owner"])
+def test_observed_link_cannot_excuse_a_copy_without_a_unique_passing_selection(damage):
+    from match_recovery.msvc_link_map import Public
+    bindings, objects, image = fixture()
+    binding = replace(bindings[0], symbol="_f", unit="code/methods.h",
+                      compiler_unit="code/z-carrier.cc")
+    objects[binding.compiler_unit] = Coff(code_object({"_f": b"\xc3"}))
+    objects["code/other.cc"] = Coff(code_object({"_f": b"\x90"}))
+    observation = _observed_link("_f", "z-carrier.cc.obj")
+    if damage == "none":
+        observation = None
+    elif damage == "failing_owner":
+        observation = _observed_link("_f", "other.cc.obj")
+    elif damage == "two_rows":
+        row = observation.publics["_f"][0]
+        observation.publics["_f"] = (row, replace(row, owner="other.cc.obj"))
+    elif damage == "data_row":
+        observation = _observed_link("_f", "z-carrier.cc.obj", function=False)
+    elif damage == "archive_member":
+        observation = _observed_link("_f", "lib.lib(z-carrier.cc.obj)")
+    elif damage == "duplicate_basename":
+        observation = _observed_link("_f", "z-carrier.cc.obj", owners={"z-carrier.cc.obj": 2})
+    else:
+        observation = _observed_link("_f", "absent.cc.obj")
+    targets, rows = check_shared([binding], objects, image, {}, link_observation=observation)
+    assert not targets and rows[0]["result"] == "fail"
+    assert not any("observed_link" in row for row in rows[0]["copies"])
+

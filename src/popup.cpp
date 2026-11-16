@@ -1436,7 +1436,8 @@ int Popup::on_dialog_item_back_draw(GraphicWin *a1, int, int a3, RECT *a4) {
 // The original Popup constructor at 0x004048A0 installs its Win view at
 // 0x004048D9 (0x006695C8) and Buffer view at 0x004048DF (0x006695C0,
 // this+0x444). The real BasePop-derived owner emits these two tables.
-// These are addresspoint bindings only; original table extents and contents
-// remain unverified. Current compiler table sizes do not establish them.
+// Each extent ends where the next table starts in the pinned image (the
+// Buffer view at its Win view, the Win view at the next class's table), not
+// at a compiler table size; strict content checks then cover every slot.
 // RECOVERY_GENERATED: v1 vtable 0x006695C8 0x0066974C ??_7Popup@@6BWin@@@ 0x004048A0
-// RECOVERY_GENERATED: v1 vtable 0x006695C0 ? ??_7Popup@@6BBuffer@@@ 0x004048A0
+// RECOVERY_GENERATED: v1 vtable 0x006695C0 0x006695C8 ??_7Popup@@6BBuffer@@@ 0x004048A0
