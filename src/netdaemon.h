@@ -99,7 +99,7 @@ static_assert(offsetof(PrimaryLockStateTail, session_phase_) == 0x10,
 static_assert(offsetof(PrimaryLockStateTail, trailing_words_) == 0x14,
               "primary trailing words follow the session phase");
 // WORKAROUND(decl): the former two-entry view of the flat channel words
-// (0x1B68-0x1BDF), no longer used by any member or access. Deleting this
+// (0x1B68-0x1BDF), used only by reset's WORKAROUND(type) stores. Deleting this
 // declaration with its three static_asserts flips buy_council_vote
 // (0x0053EB50, a block-layout tie) and faction_upkeep (0x00527290, an add
 // operand tie); deleting only the static_asserts flips
@@ -289,34 +289,45 @@ class NetDaemon : public AlphaNet {
     primary_state_.trailing_words_[7] = 0;
     primary_state_.trailing_words_[6] = 0;
 
-    field_1B6C_ = 0;
-    field_1B68_ = 0;
-    field_1B7C_ = 0;
-    field_1BA8_ = 0;
-    field_1BA0_ = 0;
-    field_1BA4_ = 0;
-    move_requests_ = 0;
-    lock_word_1BC8_ = 0;
+    // WORKAROUND(type): the flat words are stored through the former
+    // two-entry LockStateEntry view. The image calls this reset out of line
+    // (0x0051DD00) inside menu_proc's quit_game expansion (0x51C0F9) while
+    // on_key_click and quit_game itself expand it: the original body costs
+    // /Ob2 more than eighteen flat-member stores do. With flat names menu_proc
+    // expands it (0.990 -> 0.950); spend placed in menu_proc does not move
+    // it, two non-folding compares inside reset do, and so does this view.
+    // Emitted code is unchanged at every site. Accessors, chained stores,
+    // memset, a primary_state_ reference and a local view pointer were
+    // neutral or (the pointer) changed reset's own code. The original
+    // spelling of the extra cost is unknown.
+    reinterpret_cast<LockStateEntry *>(&field_1B68_)[0].leading_words_[1] = 0;
+    reinterpret_cast<LockStateEntry *>(&field_1B68_)[0].leading_words_[0] = 0;
+    reinterpret_cast<LockStateEntry *>(&field_1B68_)[0].trailing_words_[0] = 0;
+    reinterpret_cast<LockStateEntry *>(&field_1B68_)[1].leading_words_[1] = 0;
+    reinterpret_cast<LockStateEntry *>(&field_1B68_)[0].trailing_words_[9] = 0;
+    reinterpret_cast<LockStateEntry *>(&field_1B68_)[1].leading_words_[0] = 0;
+    reinterpret_cast<LockStateEntry *>(&field_1B68_)[1].trailing_words_[5] = 0;
+    reinterpret_cast<LockStateEntry *>(&field_1B68_)[1].trailing_words_[4] = 0;
 
     primary_state_.trailing_words_[3] = 0;
     primary_state_.trailing_words_[4] = 0;
     primary_state_.trailing_words_[5] = 0;
-    veh_locked_ = 0;
-    field_1BC0_ = 0;
-    exec_pending_ = 0;
-    lock_held_ = 0;
-    field_1BB4_ = 0;
+    reinterpret_cast<LockStateEntry *>(&field_1B68_)[1].trailing_words_[3] = 0;
+    reinterpret_cast<LockStateEntry *>(&field_1B68_)[1].trailing_words_[2] = 0;
+    reinterpret_cast<LockStateEntry *>(&field_1B68_)[1].leading_words_[3] = 0;
+    reinterpret_cast<LockStateEntry *>(&field_1B68_)[1].leading_words_[2] = 0;
+    reinterpret_cast<LockStateEntry *>(&field_1B68_)[1].payload_.flags = 0;
     primary_state_.session_phase_ = 0;
     primary_state_.trailing_words_[0] = 0;
-    field_1BD8_ = 0;
-    field_1BD4_ = 0;
+    reinterpret_cast<LockStateEntry *>(&field_1B68_)[1].trailing_words_[8] = 0;
+    reinterpret_cast<LockStateEntry *>(&field_1B68_)[1].trailing_words_[7] = 0;
     primary_state_.trailing_words_[1] = 0;
     primary_state_.trailing_words_[2] = 0;
-    field_1BD0_ = 0xFF;
-    locked_veh_ = nullptr;
+    reinterpret_cast<LockStateEntry *>(&field_1B68_)[1].trailing_words_[6] = 0xFF;
+    reinterpret_cast<LockStateEntry *>(&field_1B68_)[0].payload_.vehicle_selection_follow = nullptr;
 
-    for (int i = 0; i < 8; ++i) {
-        faction_masks_[i] = 0;
+    for (int i = 1; i <= 8; ++i) {
+        reinterpret_cast<LockStateEntry *>(&field_1B68_)[0].trailing_words_[i] = 0;
     }
 
     locks_.clear();

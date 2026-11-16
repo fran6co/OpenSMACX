@@ -881,7 +881,7 @@ void NetWin::on_redraw() {
 // 0x0090E8EC/F0/F4 are the three rule-bit members of the options record.
 // 0x0093E8C0 is NetDaemonNet.primary_state_.leading_words_[0] (+0x1B30),
 // initialized by NetDaemon's constructor; it is shared with TurnsAssigned,
-// not a separate global or the later channels_ array.
+// not a separate global or one of the flat members from 0x1B68 on.
 
 // 0x0080A6F0 - the planet-size name count beside the fixed dialog (the
 // names occupy world_size_labels_: 32 rows at native 0x80-byte stride.
