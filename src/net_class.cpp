@@ -875,7 +875,7 @@ static_assert(offsetof(NetPeerPlayerRecord, flags_) == 0x24, "peer snapshot flag
 
 static int __stdcall net_group_player_callback(unsigned long player_id, unsigned long, const DPNAME *, unsigned long, void *);
 
-// ORIGINAL: 0x0062F390 sub_62f390 0x0062F390-0x0062F89D
+// ORIGINAL: 0x0062F390 sub_62f390 0x0062F390-0x0062F89D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x00631A60 callsite passes (buffer, size, voice_key, 0x100, 0).", "Pinned 0x0062F390 body uses the shared NetPlayerTable, Net FIFO, DirectPlay send interface, events and timeout UI.", "No byte claim is transferred or granted; preserve the native indeterminate pending/retry stack reads."], "reason": "Recover the group sender as a real Net member; pinned process_voice passes data, byte count, destination, packet type and flags in that order."}
 // symbol    ?send_group_flagged@Net@@QAEHPAXHJGI@Z
 #if defined(_MSC_VER) && _MSC_VER == 1200
@@ -1501,7 +1501,7 @@ int Net::create_group(char *group_name) {
 // Group callback evidence: NetPlayer.field_8_ is the acknowledgement flag
 // at +8; field_C_ is the per-peer retry tick at +0xC. Existing exact 0x58
 // stride/16-slot extent is independently established by Net and player APIs.
-// ORIGINAL: 0x0062EEA0 ?send_group@Net@@QAEHPAXHJH@Z 0x0062EEA0-0x0062F38C
+// ORIGINAL: 0x0062EEA0 ?send_group@Net@@QAEHPAXHJH@Z 0x0062EEA0-0x0062F38C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned62EEA0..62F38C; retained git:06163ca7db005f89326ea0681a26af574b6ae2c3:src/unrecovered/0062eea0.cpp; genuine NetPlayer/FIFO/DirectPlay owners.", "Native62EFDD loads ESI with players_+0x15C before the clear loop and 62F036..62F044 scans [ESI] (NetPlayer +8), so the search selects the first player the group callback marked, not the first nonzero DPID. Native62F06E..62F080 writes only that pending/retry slot;62F14A..62F199 later reads all sixteen entries. Native62F0A2..62F0B9 initializes every base-time slot from one tick."], "reason": "Recover the original group send and retry operation through genuine Net state and the SDK, preserving its untouched pending/retry stack entries and separate full base-time initialization. The deterministic all-peer repair remains in Git history for the later improvement milestone."}
 #if defined(_MSC_VER) && _MSC_VER == 1200
 #pragma function(memcpy)
