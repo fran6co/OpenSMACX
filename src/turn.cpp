@@ -2687,7 +2687,7 @@ static inline int demo_extract(Sprite *sprite, Buffer *buffer, int x, int y, int
     return sprite->extract(buffer, WinFillColour, x, y, width, height, 0);
 }
 
-// ORIGINAL: 0x00524460 Demo__init 0x00524460-0x005247A6;0x0065D6C8-0x0065D6DD
+// ORIGINAL: 0x00524460 Demo__init 0x00524460-0x005247A6;0x0065D6C8-0x0065D6DD BYTE_EXACT
 // symbol    ?init@Demo@@QAEHXZ
 // kind      game
 int Demo::init() {
