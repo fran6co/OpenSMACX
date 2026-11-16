@@ -1158,7 +1158,7 @@ Purpose: Create the scene render record: allocate it, copy the colour and
          shadow tables for the descriptor's pixel size, fill the clip bounds
          and viewport extents, then run the per-CPU-rank init handler. The
          record pointer, or 0 on any failure.
-// ORIGINAL: 0x006393C0 sub_6393c0 0x006393C0-0x00639612 FILE
+// ORIGINAL: 0x006393C0 sub_6393c0 0x006393C0-0x00639612 FILE BYTE_EXACT
 // symbol    ?vox_create_record@@YAPAUVoxRenderRecord@@HPAX0PAUCaviarSceneSetupDescriptorCandidate@@H@Z
 // NAMED RETURN 2026-08-30: the catalogue's K (unsigned long) decorates a
 // pointer - the body allocates a VoxRenderRecord and every caller stores it
