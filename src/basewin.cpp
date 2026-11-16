@@ -5995,8 +5995,11 @@ void BaseWin::draw_pop(int update_mode) {
                         - BaseCurrent->specialist_total) mood = 2;
                 if (i >= BaseCurrent->population_size - BaseCurrent->super_drone_total
                         - BaseCurrent->specialist_total) mood = 3;
+                // The image computes y before Random::get and spills it across
+                // the call: a named local, not an argument expression.
+                const int y = cell.top + (cell.bottom - cell.top - 48) / 2;
                 pop_sprite_at(&MainInterfaceGlobal, g_CITIZEN_LG_CURSOR_SPRITES, random.get(0, 2), mood,
-                    cell.left, cell.top + (cell.bottom - cell.top - 48) / 2);
+                    cell.left, y);
                 spot1_.add(-1, 1, cell.left, cell.top, cell.right - cell.left, cell.bottom - cell.top);
             } else {
                 const int specialist = i - (BaseCurrent->population_size - BaseCurrent->specialist_total);
