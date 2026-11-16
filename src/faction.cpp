@@ -17,9 +17,11 @@
  */
 #define DIALOGS_DTOR_INLINE  // stand-in: see ~Dialogs in dialogs.h
 #define POPUP_WRAPPERS_INLINE  // stand-in: see the BasePop wrappers in basepop.h
-// WORKAROUND(noinline): no faction function expands StringStruct::remove_all;
-// proposal_menu's final StringList teardowns call 0x00402970 at 0x0054F289,
-// 0x0054F2BC, 0x0054F30F and 0x0054F342 where a visible body is expanded.
+// WORKAROUND(noinline): proposal_menu's final StringList teardowns call
+// 0x00402970 at 0x0054F289, 0x0054F2BC, 0x0054F30F and 0x0054F342 where a
+// visible body is expanded. The unit's one image expansion is propose_attack's
+// last StringList teardown (between its calls at 0x00547A89 and 0x00547B5C),
+// which this source calls out of line with or without the guard.
 #define STRINGSTRUCT_REMOVE_ALL_OUT_OF_LINE
 #include "stdafx.h"
 #include "worldwin.h"
