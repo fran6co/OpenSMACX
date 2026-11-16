@@ -48,6 +48,21 @@ def weak_external(obj, symbol: Symbol) -> tuple[Symbol, int]:
     return obj.symbols[target], mode
 
 
+def static_name_matches(name: str, storage: int, declared: str) -> bool:
+    """Whether a COFF symbol (name, storage class) defines `declared`.
+
+    MSVC 5.0 (CL 11.00) decorates file-scope statics with a per-object
+    sequence suffix (`_name$S15392`); VC6 emits the plain name. The suffix is
+    accepted only on a storage-class-3 (static) symbol, so callers that
+    require exactly one match still refuse when several spellings coexist.
+    """
+    if name == declared:
+        return True
+    base, marker, sequence = name.rpartition("$S")
+    return (storage == 3 and bool(marker) and base == declared
+            and sequence.isascii() and sequence.isdigit())
+
+
 @dataclass(frozen=True)
 class Section:
     data: bytes

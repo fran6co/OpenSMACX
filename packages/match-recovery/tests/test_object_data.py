@@ -249,3 +249,41 @@ def test_class_array_resolves_only_one_complete_same_stream_type(damage):
     types = forward + fields + definition + array + (definition if damage == "duplicate" else b"")
     obj = Coff(data_fixture(bytes(12), type_index=0x1003, types=types))
     assert proof(bytes(12), obj)["content"] == ("pass" if damage is None else "unknown")
+
+
+@pytest.mark.parametrize("name,storage,expected", [
+    ("_g", 2, True), ("_g", 3, True), ("_g$S12", 3, True), ("_g$S12", 2, False),
+    ("_g$S", 3, False), ("_g$Sx", 3, False), ("_gg$S1", 3, False), ("_g$S1$S2", 3, False)])
+def test_vc5_static_suffix_is_accepted_only_on_static_storage(name, storage, expected):
+    from match_recovery.pe_coff import static_name_matches
+    assert static_name_matches(name, storage, "_g") is expected
+
+
+def test_vc5_suffixed_static_resolves_its_declared_name_unless_ambiguous():
+    from match_recovery.object_source import _local_data_symbol
+    obj = Coff(data_fixture(storage=3, definition=b"_g$S12"))
+    assert data_layout(obj, "_g")["offset"] == 0 and _local_data_symbol(obj, "_g") is obj.symbols[0]
+    assert proof(obj=obj)["content"] == "pass"
+    obj.symbols[2] = replace(obj.symbols[0], index=2, name="_g$S13", value=4)
+    with pytest.raises(ValueError, match="one defined external or static"):
+        data_layout(obj, "_g")
+    assert _local_data_symbol(obj, "_g") is None
+    external = Coff(data_fixture(storage=2, definition=b"_g$S12"))
+    with pytest.raises(ValueError, match="one defined external or static"):
+        data_layout(external, "_g")
+
+
+def test_static_pointer_initializer_resolves_a_vc5_suffixed_same_owner_static():
+    obj = Coff(data_fixture(bytes(8), type_index=0x403, relocations=((0, 1, 6),), storage=3,
+                            reference=b"_h$S7"))
+    obj.symbols[1] = replace(obj.symbols[1], storage=3, section=1, value=4)
+    raw = data_image(struct.pack("<I", 0x402000), 0)
+    image = PeImage(raw, hashlib.sha256(raw).hexdigest())
+    origin = Origin(hashlib.sha256(raw).hexdigest(), "pe:va", 0x401000)
+    binding = ObjectBinding(origin, "_g", "code/global.cc", 1, Span(0x401000, 0x401004), origin)
+    check = lambda local: check_initial_data((binding,), {binding.unit: obj}, image, {},
+                                             local_data_targets=local)[0]["content"]
+    assert check({}) == "unknown"
+    assert check({(binding.unit, "_h"): 0x402000}) == "pass"
+    assert check({(binding.unit, "_h"): 0x402004}) == "fail"
+    assert check({("code/other.cc", "_h"): 0x402000}) == "unknown"

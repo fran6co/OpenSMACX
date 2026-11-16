@@ -7,6 +7,7 @@ This observes compiler storage extent, not original extent or C++ lifetime.
 """
 
 from .codeview import Cursor, _fields, _type_records, _unqualified_type
+from .pe_coff import static_name_matches
 from .object_source import _MEMBER_SEGMENT, _ROOT_ARRAY_SEGMENT, array_slice_bounds
 
 
@@ -104,7 +105,8 @@ def data_layout(obj, name):
     if witness is not None:
         # Only a proved debug-typed twin of this same object supplies types.
         return witness.remap(data_layout(witness.twin, name))
-    definitions = [s for s in obj.symbols.values() if s.name == name and s.storage in (2, 3)
+    definitions = [s for s in obj.symbols.values() if s.storage in (2, 3)
+                   and static_name_matches(s.name, s.storage, name)
                    and s.section > 0 and not s.type & 0x20]
     if len(definitions) != 1:
         raise ValueError("requires one defined external or static COFF data symbol")

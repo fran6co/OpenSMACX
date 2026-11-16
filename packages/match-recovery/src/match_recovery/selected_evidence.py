@@ -13,6 +13,7 @@ from pathlib import Path
 
 from .components import relative_path
 from .model import Result
+from .pe_coff import static_name_matches
 
 
 @dataclass(frozen=True)
@@ -166,9 +167,10 @@ def select_evidence(functions, selected, objects, object_bindings, generated_bin
             # A declared TU literal resolves first in its own unit, exactly as
             # check_objects does; a same-name merged object is not borrowed.
             return []
-        return [item for item in all_objects if item.emitted_symbol == symbol
-                and ((storage == 2 and not item.target_local)
-                     or (storage == 3 and item.unit == unit))]
+        return [item for item in all_objects
+                if ((storage == 2 and not item.target_local and item.emitted_symbol == symbol)
+                    or (storage == 3 and item.unit == unit
+                        and static_name_matches(symbol, storage, item.emitted_symbol)))]
 
     content_owners = {}
 

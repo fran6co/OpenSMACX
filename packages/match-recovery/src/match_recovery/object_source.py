@@ -12,6 +12,7 @@ import re
 from match_recovery.model import Origin, Span, digest, require_text
 from match_recovery.components import relative_path
 from .source_config import SourceConfiguration
+from .pe_coff import static_name_matches
 
 
 PREFIX = "// RECOVERY_OBJECT:"
@@ -353,7 +354,8 @@ def validate_object_symbol_ownership(bindings) -> None:
 
 def _local_data_symbol(obj, name):
     """One named static data definition, never an entire section placement."""
-    matches = [symbol for symbol in obj.symbols.values() if symbol.name == name]
+    matches = [symbol for symbol in obj.symbols.values()
+               if static_name_matches(symbol.name, symbol.storage, name)]
     if len(matches) != 1:
         return None
     symbol, = matches

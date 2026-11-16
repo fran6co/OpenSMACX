@@ -181,6 +181,9 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
         definition = _local_data_symbol(obj, key[1]) if obj is not None else None
         if definition is not None:
             checked_local_data[key] = (definition.index, value)
+    # A checked definition is identified by its symbol index, so a VC5
+    # `$S<n>`-suffixed static still resolves under its declared name.
+    local_definitions = {(key[0], index): value for key, (index, value) in checked_local_data.items()}
     local_names = {item.symbol for item in all_bindings if item.local_only}
     global_names = ({item.symbol for item in all_bindings if not item.local_only}
                     | externals.keys() | imports.keys())
@@ -320,13 +323,12 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
                         # to content search or exports a same-name global.
                         if literals[local_key] is not None:
                             targets[str(index)] = literals[local_key]
-                    elif local_key in local_data:
+                    elif local_key in local_data or (binding.unit, index) in local_definitions:
                         # Recheck this exact definition even for explicit API
                         # callers. Never infer a section base from a data start
                         # or resolve a weak/external/duplicate name through it.
-                        definition = checked_local_data.get(local_key)
-                        if definition is not None and definition[0] == index:
-                            targets[str(index)] = definition[1]
+                        if (binding.unit, index) in local_definitions:
+                            targets[str(index)] = local_definitions[(binding.unit, index)]
                     elif base is not None:
                         targets[str(index)] = base + symbol.value
                     elif symbol.storage == 2 and symbol.name in externals:

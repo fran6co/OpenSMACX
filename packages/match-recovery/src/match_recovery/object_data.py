@@ -10,6 +10,7 @@ import hashlib
 from .binary import Relocation, RelocationKind, compare_bound_code
 from .codeview_data import data_layout
 from .model import Result
+from .pe_coff import static_name_matches
 
 
 MAX_OBJECT_BYTES = 16 * 1024 * 1024
@@ -58,6 +59,18 @@ def referenced_initial_object_units(selected, bindings, objects):
             if kind == 6 and start <= offset <= end - 4 and symbol.storage == 2 and symbol.name in owners:
                 required.add(owners[symbol.name])
     return frozenset(required)
+
+
+def _suffixed_static(obj, unit, index, local_data_targets):
+    """The declared TU-local key whose unique definition is this VC5 `$S<n>` static."""
+    from .object_source import _local_data_symbol
+    name = obj.symbols[index].name
+    keys = [key for key in local_data_targets
+            if key[0] == unit and static_name_matches(name, 3, key[1])]
+    if len(keys) != 1:
+        return None
+    definition = _local_data_symbol(obj, keys[0][1])
+    return keys[0] if definition is not None and definition.index == index else None
 
 
 def check_initial_data(bindings, objects, image, targets, *, literal_targets=None,
@@ -149,6 +162,9 @@ def check_initial_data(bindings, objects, image, targets, *, literal_targets=Non
                         resolved[str(index)] = literal_targets[local_key]
                 elif symbol.storage == 3 and local_key in local_data_targets:
                     resolved[str(index)] = local_data_targets[local_key]
+                elif symbol.storage == 3 and (declared := _suffixed_static(obj, binding.unit, index,
+                                                                         local_data_targets)):
+                    resolved[str(index)] = local_data_targets[declared]
                 elif symbol.storage == 2 and symbol.name in targets and symbol.section >= 0:
                     if symbol.section == 0 and symbol.value:
                         continue  # COFF common allocation is not a selected definition.
